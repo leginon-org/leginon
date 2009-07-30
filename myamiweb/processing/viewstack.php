@@ -25,6 +25,7 @@ $stackId=$_GET['stackId'];
 $substack=$_GET['substack'];
 $refinement=$_GET['refinement'];
 $refinetype=$_GET['refinetype'];
+$junksort=$_GET['junksort'];
 $subprtls=False;
 $substacktype = (array_key_exists('comm_param',$_POST)) ? $_POST['comm_param'] : $_GET['subtype'];
 $iter1= (array_key_exists('iter1',$_POST)) ? $_POST['iter1'] : $_GET['itr1'];
@@ -274,6 +275,13 @@ function createOtrVolume() {
 	}
 }
 
+function applyJunkCutoff() {
+	var index = $('selectedIndex').value
+	if (index!="") {
+		window.open("applyJunkCutoff.php?expId="+expId+"&stackId="+stackId+"&partnum="+index+"",'height=250,width=400');
+	}
+}
+
 function createSubStack() {
 	var index = $('excludedIndex').value
 	window.open("subStack.php?expId="+expId+"&sId="+stackId+"&exclude="+index+"",'height=250,width=400');
@@ -353,6 +361,10 @@ if (($clusterId || $alignId) && $maxangle > 5) {
 	$includebuttons .= "<input type='button' value='Create RCT Volume' onClick='createRctVolume()'>\n";
 	$includebuttons .= "<input type='button' value='Create OTR Volume' onClick='createOtrVolume()'>\n";
 }
+if ($junksort) {
+	$includebuttons .= "<input type='button' value='Apply cutoff' onClick='applyJunkCutoff()'>\n";
+}
+
 // Upload Template
 if ($stackId || $clusterId || $alignId)
 	$includebuttons .= "<input id='uploadbutton' type='button' value='Create Templates' onclick='uploadTemplate();'>\n";

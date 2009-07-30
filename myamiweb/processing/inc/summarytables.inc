@@ -37,6 +37,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 
 	
 	$stackname = $stackdata['shownstackname'];
+	$stackfile = $stackdata['path']."/".$stackdata['name'];
 	$j = "Stack Info: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>"
 		.$stackname."</a> (ID: $stackid)\n";
 	if ($stackdata['hidden'] == 1) {
@@ -55,6 +56,11 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		$centered = True;
 	}
 
+	// if particles were junk sorted, set junk sorted variable
+	if ($stackdata['junksorted'] == 1) {
+		$junksorted = True;
+	}
+
 	$stacktable.= "<table border='0' width='700' >\n";
 	$stackavg = $stackdata['path']."/average.mrc";
 	$badstackavg = $stackdata['path']."/badaverage.mrc";
@@ -65,6 +71,9 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=150' height='150'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i>\n";
 		if (!$centered) $stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
+		if (!$junksorted) $stacktable.= "<br /><a href='sortJunk.php?expId=$expId&sId=$stackid&junksort=1'>[Sort Junk]</a>\n";
+		if ($junksorted) $stacktable.= "<br /><a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&junksort=1'>[Apply Junk Cutoff]</a>\n";
+
 		$stacktable.= "<br /><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
 		$stacktable.= "</td>\n";
 		if ($centered && file_exists($badstackavg)) {
@@ -87,6 +96,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		$stacktable.= "<td align='center' rowspan='30' align='center' valign='top'>";
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=80' height='80'><br/>\n";
 		$stacktable.= "<i>average</i>\n";
+		if ($junksorted) $stacktable.= "<br /><a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&junksort=1'>[Apply Junk Cutoff]</a>\n";
 		$stacktable.= "</td></tr>\n\n";
 	} #endif
 
@@ -131,7 +141,6 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		$display_keys['file size'] = getStackSize($stackdata);
 	}
 
-	$stackfile = $stackdata['path']."/".$stackdata['name'];
 	if ($mini) {
 		$display_keys['path'] = "<font size='-2'>".$stackdata['path']
 			."/<a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid'>"
