@@ -2,19 +2,16 @@
 # Example script for fitting one map in another without the graphical user
 # interface.
 #
-#			 chimera --nogui fitnogui.py
+#			 chimera --nogui apChimAlign.py
 #
-# It can also be run using the graphical Chimera interface using File/Open.
-#
-# The rotation and translation to perform the fit are output.
-#
-# Only a local optimization is done so the initial position must be close
-# to the correct fit.
 #
 
+# python
 import os
+import sys
 import glob
 import random
+# chimera
 from chimera import runCommand
 from VolumeViewer import open_volume_file
 from VolumeViewer.volume import default_settings
@@ -72,24 +69,31 @@ def fit_map_in_map(map1, map2,
 
 # -----------------------------------------------------------------------------
 ### set files
-maindir = '/home/vossman/initmodels/'
-map1_path = maindir+'pdb.mrc'
+maindir = '/ami/data16/appion/09mar04b/models/emanmodel28'
+map1_path = os.path.join(maindir, 'reconpdb.mrc')
 
 map1 = open_volume_file(map1_path)[0]
 map1.set_parameters(surface_levels = [1.0])
-mrcfiles = glob.glob(maindir+'*.mrc')
+mrcfiles = glob.glob(os.path.join(maindir, '*.mrc'))
+aligndir = os.path.join(maindir, 'align/')
+if not os.path.isdir(aligndir):
+	os.mkdir(aligndir)
+prefix = os.path.join(aligndir, 'align')
 N = len(mrcfiles)
 random.shuffle(mrcfiles)
 for i,mrcfile in enumerate(mrcfiles):
 	if os.path.basename(mrcfile)[:5] == "align":
 		continue
-	new_path = (maindir+"align/align"+os.path.basename(mrcfile))
+	new_path = (prefix+os.path.basename(mrcfile))
 	if os.path.isfile(new_path):
+		print "----------"
 		continue
-	print "\n==============================\n", os.path.basename(mrcfile), "\n==============================\n"
+	print "\n==============================\n", 
+		os.path.basename(mrcfile), 
+		"\n==============================\n"
 	map2 = open_volume_file(mrcfile)[0]
 	map2.set_parameters(surface_levels = [1.0])
-	new_path = (maindir+"align/align"+os.path.basename(mrcfile))
+	new_path = (prefix+os.path.basename(mrcfile))
 	fit_map_in_map(map1, map2, map1_threshold=1.0)
 	runCommand('vop #1 resample onGrid #0 modelId %d'%(i+N))
 	runCommand('volume #%d save %s'%(i+N, new_path))
@@ -98,5 +102,8 @@ for i,mrcfile in enumerate(mrcfiles):
 	runCommand('close #%d'%(i+N))
 
 
+if __name__ == "__main__":
+	sys.stderr.write("usage: chimera --nogui apChimAlign.py")
+	sys.exit(1)
 
 
