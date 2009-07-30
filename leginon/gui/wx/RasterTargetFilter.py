@@ -4,6 +4,7 @@
 # see http://ami.scripps.edu/software/leginon-license
 
 import wx
+import ImagePanelTools
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
@@ -37,6 +38,7 @@ class Panel(gui.wx.TargetFilter.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
 		self.toolbar.Realize()
 
+		#self.imagepanel = gui.wx.TargetPanel.EllipseTargetImagePanel(self, -1)
 		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255))
 		self.imagepanel.selectiontool.setDisplayed('preview', True)
@@ -75,6 +77,10 @@ class Panel(gui.wx.TargetFilter.Panel):
 	def setAlternateOffset(self):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, True)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
+
+	def setEllipseParams(self,params):
+		if params:
+			self.node.autoRasterEllipse(params)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -202,3 +208,4 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		s,a = self.node.autoSpacingAngle()
 		self.widgets['raster spacing'].SetValue(s)
 		self.widgets['raster angle'].SetValue(a)
+
