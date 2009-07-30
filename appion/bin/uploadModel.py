@@ -138,7 +138,8 @@ class UploadModelScript(appionScript.AppionScript):
 		if self.params['symmetry'] is None:
 			self.params['symdata'] = densitydata['symmetry']
 			self.params['symmetry'] = self.params['symdata']['eman_name']
-		self.params['res'] = float(densitydata['resolution'])
+		if densitydata['resolution']:
+			self.params['res'] = float(densitydata['resolution'])
 		self.params['file'] = os.path.join(densitydata['path']['path'], densitydata['name'])
 		if self.params['newapix'] is None:
 			self.params['newapix'] = self.params['oldapix']
