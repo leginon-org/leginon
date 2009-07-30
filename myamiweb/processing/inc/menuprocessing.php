@@ -492,18 +492,6 @@ if ($expId) {
 		);
 	}
 
-
-	/* 3d Density Volumes */
-	if ($threedvols = $particle->get3dDensitysFromSession($sessionId)) {
-		$num3dvols = count($threedvols);
-	}
-	if ($num3dvols >= 1) {
-		$nruns[]=array(
-			'name'=>"<a href='upgradeVolume.php?expId=$sessionId'>3d Density Volumes</a>",
-			'result'=>"<a href='densitysummary.php?expId=$sessionId'>$num3dvols complete</a>",
-		);
-	}
-
 	if ( (array)$nruns ) {
 		$data[]=array(
 		      'action'=>array($action, $celloption),
@@ -553,6 +541,26 @@ if ($expId) {
 			      'result'=>array($totresult),
 			      'newrun'=>array($nruns, $celloption),
 			      );
+	}
+
+	/* 3d Density Volumes */
+	$action = "3d Density Volumes";
+	$nruns=array();
+	if ($threedvols = $particle->get3dDensitysFromSession($sessionId)) {
+		$num3dvols = count($threedvols);
+	}
+	if ($num3dvols >= 1) {
+		$nruns[]=array(
+			'result'=>"<a href='densitysummary.php?expId=$sessionId'>$num3dvols complete</a>",
+		);
+	}
+	$totresult = ($num3dvols>0) ? "<a href='densitysummary.php?expId=$sessionId'>$num3dvols</a>" : "";
+	if ( (array)$nruns ) {
+		$data[]=array(
+		      'action'=>array($action, $celloption),
+		      'result'=>array($totresult),
+		      'newrun'=>array($nruns, $celloption),
+		      );
 	}
 
 	// display the tomography menu only if there are tilt serieses

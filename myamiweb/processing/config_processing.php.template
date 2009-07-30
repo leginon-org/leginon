@@ -8,9 +8,6 @@
  *
  */
 
-// --- define processing web tools nase --- //
-define('PROCESSING_BASE_URL', "/dbem/processing/");
-
 // --- Processing database --- //
 $PROCESSING_DB_HOST = "";
 $PROCESSING_DB_USER = "";

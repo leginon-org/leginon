@@ -223,10 +223,8 @@ function runUploadStack() {
 		echo"
 		<table class='tableborder' width='600' border='1'>
 			<tr><td colspan='2'>
-				<font size='+2'>
 					<b>Upload Stack Command:</b><br/>
 					$command
-				</font>
 			</td></tr>
 			<tr><td>project</td><td>".$_SESSION['projectId']."</td></tr>
 			<tr><td>session</td><td>$session</td></tr>

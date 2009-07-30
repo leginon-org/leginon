@@ -459,9 +459,9 @@ function runTemplateCorrelator() {
 		echo"
 			<table width='600'>
 			<tr><td colspan='2'>
-			<font size='+1'>
 			<b>Template Correlation Picker Command:</b><br>
-			$command</font><hr>
+			$command
+			<hr>
 			</td></tr>";
 		$i = 0;
 		foreach ( split(",", $templateliststr) as $templateid ) {
