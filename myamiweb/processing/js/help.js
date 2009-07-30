@@ -37,7 +37,7 @@ var help = {
 		'kfactor' : 'The k-factor for dogpicker defines the sloppiness in diameter of the picked particles.  A k-factor of 1.00001 gives only the exact diameter (1.0 is not allowed), but a k-factor of 5.0 will pick a wide range of sizes.  Cannot be used with multi-scale dogpicker: numslices or sizerange',
 		'numslices' : 'Defines the number of different sizes (or slices) to break up the size range into for separating particles of different size.',
 		'sizerange' : 'Defines the range of sizes for separating particles of different size.',
-		'invert' : 'If the density of your template is opposite the density of your micrographs, use this flag.  For example, if you are using a template created from negatively-stained data to process ice images, check this box.',
+		'invert' : 'Mathematical pickers (e.g., DoG picker) always pick white particles. Also, if the density of your template is opposite the density of your micrographs, use this flag.',
 		'nojpegs' : 'Do NOT write out the summary jpegs for image assessor.',
 		'edgethresh' : 'The threshold set for edge detection.  ACE searches a range of values to determine a good threshold, but this value should be increased if there are more edges in the power spectrum than in the ring.  Decrease if no edges are detected.',
 		'pfact' : 'Location of the upper cutoff frequency.  If thon rings extend beyond the power spectrum cutoff frequency, increase this value.  In cases of low signal to noise ratio with few thon rings, decrease this value.',
