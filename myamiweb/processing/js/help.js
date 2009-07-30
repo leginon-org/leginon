@@ -117,7 +117,7 @@ var help = {
 		'planereg' : 'Fit a 2D plane to the image and subtract, similar to a high pass filter',
 		'peaktype' : 'The determines how the center of the particle is found. Default for leginon hole finder is center of mass, but you may get better results with maximum. WARNING: Christopher needs to update pyami on cluster for maximum to work, so use center of mass',
 		'doubles' : 'Each particle must be picked twice. Picked by more than one template or DoG slice',
-		'griddim' : 'Self-organizing maps create a large two grid and each grid point is a class average. E.g., 4x3 grid gives 12 class averages',
+		'griddim' : 'Self-organizing maps create a large 2D array of images, each image is a class average. E.g., 4x3 grid gives 12 class averages',
 		'uploadproject' : 'Project to which the uploading session belongs to.  If the session exists, the project must match correctly',
 		'uploadsession' : 'Images can be uploaded to an existing session or a new one.  Only images with unique names can be uploaded into the same session',
 		'host' : 'Instrument host as defined in Leginon where particular combinations of scope and camera are available',
@@ -128,6 +128,16 @@ var help = {
 		'rctcenter' : 'In RCT, the particle Euler angles are fixed, but the particles are not centered. Through an interative process the volume is projected in the direction of the particle and cross-correlated, then the particle is shifted to its correct location.',
 		'snapfilter' : 'Fixed low pass filter used in rendering volume snapshot, leave it blank to use the FSC 0.5 result for each iteration',
 		'snapzoom' : 'Zoom in the volume data to see the volume better for a large boxsize',
+		'roi' : 'Define inner and outher radii used to compute rotational spectra (power spectrun of Fourier transform in polar coordinates)',
+		'spectrainnerradius' : 'Select the radius at which the symmetry of interest began to appear',
+		'spectraouterradius' : 'Select the radius at which the symmetry of interest disappear',
+		'smoothnessfactor'   : 'Defines how simmilar two output spectra should be. This is called regularization and prevent the algorithm from divergence. In order to optain an optimal smoothnes factor an optimization is done between the initial and final regularization parameters',
+		'initregulfact'      : 'Initial smoothness factor (Default = 1000)' ,   
+		'finalregulfact'     : 'Final smoothness factor (Default = 200)'  ,  
+		'incrementregulfact' : 'Increment smoothness factor (Default = 5)' ,   
+		'symmetryrange'      : 'Range of symmetries that should be analyzed',   
+		'spectralowharmonic'       : 'Smaller symmetry that should be analyzed (default =1)',   
+		'spectrahighharmonic'      : 'Higher  symmetry that should be analyzed (default = 15)',   
 
 /******* IMAGIC terms ********/
 
