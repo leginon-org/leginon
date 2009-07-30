@@ -3777,14 +3777,18 @@ class particledata {
 	function get3dDensitysFromSession($sessionId, $showHidden=False) {
 		$q="SELECT "
 			."  dens.*, "
-			."  path.`path` AS path, "
-			."  iterid.`REF|ApRefinementRunData|refinementRun` AS refrun "
-			."FROM Ap3dDensityData as dens "
+			."  path.`path` AS path ";
+		if ($this->mysql->SQLTableExists('ApRefinementData')) {
+			$q .= ", iterid.`REF|ApRefinementRunData|refinementRun` AS refrun ";
+		}
+		$q .=	"FROM Ap3dDensityData as dens "
 			."LEFT JOIN ApPathData AS path "
-			."  ON dens.`REF|ApPathData|path` = path.`DEF_id` "
-			."LEFT JOIN ApRefinementData AS iterid "
-			."  ON dens.`REF|ApRefinementData|iterid` = iterid.`DEF_id` "
-			."WHERE "
+			."  ON dens.`REF|ApPathData|path` = path.`DEF_id` ";
+		if ($this->mysql->SQLTableExists('ApRefinementData')) {
+			$q .=	"LEFT JOIN ApRefinementData AS iterid "
+				."  ON dens.`REF|ApRefinementData|iterid` = iterid.`DEF_id` ";
+		}
+		$q .= "WHERE "
 			."  dens.`REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden )
 			$q .= " AND ( dens.`hidden` = 0 OR dens.`hidden` IS NULL ) ";
@@ -3796,14 +3800,18 @@ class particledata {
 	function get3dDensityFromId($densityId) {
 		$q="SELECT "
 			."  dens.*, "
-			."  path.`path` AS path, "
-			."  iterid.`REF|ApRefinementRunData|refinementRun` AS refrun "
-			."FROM Ap3dDensityData as dens "
+			."  path.`path` AS path ";
+		if ($this->mysql->SQLTableExists('ApRefinementData')) {
+			$q .= ", iterid.`REF|ApRefinementRunData|refinementRun` AS refrun ";
+		}
+		$q .=	"FROM Ap3dDensityData as dens "
 			."LEFT JOIN ApPathData AS path "
-			."  ON dens.`REF|ApPathData|path` = path.`DEF_id` "
-			."LEFT JOIN ApRefinementData AS iterid "
-			."  ON dens.`REF|ApRefinementData|iterid` = iterid.`DEF_id` "
-			."WHERE "
+			."  ON dens.`REF|ApPathData|path` = path.`DEF_id` ";
+		if ($this->mysql->SQLTableExists('ApRefinementData')) {
+			$q .=	"LEFT JOIN ApRefinementData AS iterid "
+				."  ON dens.`REF|ApRefinementData|iterid` = iterid.`DEF_id` ";
+		}
+		$q .= "WHERE "
 			."  dens.`DEF_id` = '$densityId' ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r[0];
