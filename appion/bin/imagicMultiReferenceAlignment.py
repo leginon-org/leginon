@@ -519,12 +519,14 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		subprocess.Popen("chmod 775 "+str(scalingbatchfile), shell=True)
 		os.chdir(self.params['rundir'])
 		apIMAGIC.executeImagicBatchFile(scalingbatchfile)
-		logfile = open(os.path.join(self.params['rundir'], "prepareStack.log"))
-		loglines = logfile.readlines()
-		for line in loglines:
-			if re.search("ERROR in program", line):
-				apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: prepareStack.log")
-               	apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-preptime), "cyan")
+		lf = os.path.join(self.params['rundir'], "prepareStack.log")
+		if os.path.isfile(lf):
+			logfile = open(lf)
+			loglines = logfile.readlines()
+			for line in loglines:
+				if re.search("ERROR in program", line):
+					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: prepareStack.log")
+		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-preptime), "cyan")
 
 		### set new boxsize, done only after scaling is complete
 		if self.params['bin'] is not None:
