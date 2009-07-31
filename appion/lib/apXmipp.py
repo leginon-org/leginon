@@ -118,6 +118,7 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 		first = last+1
 		last += filesperdir
 		if last > numpart:
+			i+=1
 			last = numpart
 		subdir += 1
 	f.close()
@@ -131,6 +132,12 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 	"""
 	takes a selfile and creates an EMAN stack
 	"""
+	selfile = os.path.abspath(selfile)
+	stackfile = os.path.abspath(stackfile)
+	if stackfile[-4:] != ".hed":
+		apDisplay.printWarning("Stack file does not end in .hed")
+		stackfile = stackfile[:-4]+".hed"
+
 	apDisplay.printColor("Merging files into a stack, this can take a while", "cyan")
 
 	starttime = time.time()
@@ -204,6 +211,7 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 	### merge stacks
 	apFile.removeStack(stackfile, warn=False)
 	apImagicFile.mergeStacks(stacklist, stackfile)
+	print stackfile
 	filepart = apFile.numImagesInStack(stackfile)
 	if filepart != numpart:
 		apDisplay.printError("number merged particles (%d) not equal number expected particles (%d)"%
