@@ -19,8 +19,9 @@ import apDisplay
 import apFile
 from apSpider import filters
 ## pyami
-from pyami import mrc, imagefun, spider
+from pyami import mrc, imagefun, spider, fftengine
 
+ffteng = fftengine.fftEngine()
 #=========================
 def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 		planeReg=True, median=0, invert=False, pixlimit=0, msg=True):
@@ -243,6 +244,58 @@ def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8, msg=True):
 		apDisplay.printWarning("High Pass Filter failed")
 		return imgarray
 	return filtimg
+
+#=========================
+def maskHighPassFilter(imgarray, apix=1.0, bin=1, zero_res=0.0, one_res=0.0, msg=True):
+	"""
+	high pass filter that ensures the fft values within zero_radius is zero to avoid
+	interference of really strong structure factors, only works right for square image
+	"""
+	if one_res is None or one_res < 1 or zero_res < 1 or imgarray.shape[0] < 256:
+		if msg is True:
+			apDisplay.printMsg("skipping high pass filter")
+		return(imgarray)
+	shape = imgarray.shape
+	zero_radius = apix*min(shape)/2.0/zero_res/bin
+	one_radius = apix*min(shape)/2.0/one_res/bin
+	print zero_radius, one_radius
+	try:
+		filtimg = _maskHighPassFilter(imgarray,zero_radius, one_radius)
+	except:
+		raise
+		apDisplay.printWarning("Mask High Pass Filter failed")
+		return imgarray
+	return filtimg
+
+def _maskHighPassFilter(a,zero_radius,one_radius):
+	if zero_radius == 0 or zero_radius > one_radius:
+		return a
+	fft = ffteng.transform(a)
+	fft = imagefun.swap_quadrants(fft)
+	_center_mask(fft,zero_radius,one_radius)
+	bfft = imagefun.swap_quadrants(fft)
+	b = ffteng.itransform(bfft)
+	return b
+
+def _gradient(cs_shape,zeroradius):
+	oneradius = min(cs_shape[0]/2.0,cs_shape[1]/2.0)
+	a = numpy.indices(cs_shape)
+	cut = zeroradius/float(oneradius)
+	radii = numpy.hypot(a[0,:]-(cs_shape[0]/2.0-0.5),a[1,:]-(cs_shape[1]/2.0-0.5))/oneradius	
+	def _grad(r):
+		return (r-cut)/(1-cut)
+	g = numpy.piecewise(radii,[radii < cut,numpy.logical_and(radii < 1, radii >=cut),
+         radii>=1-cut],[0,_grad,1])
+	return g
+
+def _center_mask(a, zero_radius,one_radius):
+	shape = a.shape
+	center = shape[0]/2, shape[1]/2
+	center_square = a[center[0]-one_radius:center[0]+one_radius, center[1]-one_radius:center[1]+one_radius]
+	cs_shape = center_square.shape
+	cs_center = cs_shape[0]/2, cs_shape[1]/2
+	circ = _gradient(cs_shape,zero_radius)
+	center_square[:] = center_square * circ.astype(center_square.dtype)
 
 #=========================
 def planeRegression(imgarray, msg=True):

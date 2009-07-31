@@ -18,6 +18,7 @@ import apDatabase
 import apCtf
 import apParam
 import apFile
+from pyami import mrc
 
 class Ace2Loop(appionLoop2.AppionLoop):
 
@@ -81,12 +82,20 @@ class Ace2Loop(appionLoop2.AppionLoop):
 	def processImage(self, imgdata):
 
 		bestdef, bestconf = apCtf.getBestAceTwoValueForImage(imgdata, msg=True)
-				
+		apix = apDatabase.getPixelSize(imgdata)
+		if (not (self.params['onepass'] and self.params['zeropass'])):
+			maskhighpass = False
+			ace2inputpath = os.path.join(imgdata['session']['image path'],imgdata['filename']+".mrc")
+		else:
+			maskhighpass = True
+			filterimg = apImage.maskHighPassFilter(imgdata['image'],apix,1,self.params['zeropass'],self.params['onepass'])
+			ace2inputpath = os.path.join(self.params['rundir'],imgdata['filename']+".mrc")
+			mrc.write(filterimg,ace2inputpath)
 		inputparams = {
-			'input': os.path.join(imgdata['session']['image path'],imgdata['filename']+".mrc"),
+			'input': ace2inputpath,
 			'cs': self.params['cs'],
 			'kv': imgdata['scope']['high tension']/1000.0,
-			'apix': apDatabase.getPixelSize(imgdata),
+			'apix': apix,
 			'binby': self.params['bin'],
 		}
 
@@ -124,7 +133,8 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		ace2proc.wait()
 
 		### check if ace2 worked
-		imagelog = imgdata['filename']+".mrc"+".ctf.txt"
+		basename = os.path.basename(ace2inputpath)
+		imagelog = basename+".ctf.txt"
 		if not os.path.isfile(imagelog) and self.stats['count'] <= 1:
 			### ace2 always crashes on first image??? .fft_wisdom file??
 			time.sleep(1)
@@ -205,6 +215,8 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			ps = numpy.where(ps < cutoff, ps, cutoff)
 			apImage.arrayToJpeg(ps, jpegfile,msg=False)
 			apFile.removeFile(mrcfile)
+		if maskhighpass and os.path.isfile(ace2inputpath):
+			apFile.removeFile(ace2inputpath)
 
 		#print self.ctfvalues
 
