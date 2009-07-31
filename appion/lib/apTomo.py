@@ -51,8 +51,12 @@ def getImageList(tiltserieslist):
 		if imagedata['label'] != 'projection':
 			realist.append(imagedata)
 	return realist
-	
+
 def orderImageList(imagelist):
+	'''This is complex because the two start tilt images are often sorted wrong if
+			just use alpha tilt.  Therefore, a fake alpha tilt value is created based
+			on the tilt image collected next in time
+	'''
 	if not imagelist:
 		apDisplay.printWarning('No images in image list.')
 		return
@@ -62,12 +66,13 @@ def orderImageList(imagelist):
 	tiltangledict = {}
 	for i,imagedata in enumerate(imagelist):
 		tilt = imagedata['scope']['stage position']['a']*180/3.14159
-		if tilt < tiltseries['tilt start']+0.01 and tilt > tiltseries['tilt start']-0.01:
+		if tilt < tiltseries['tilt start']+0.02 and tilt > tiltseries['tilt start']-0.02:
+			qimage = leginondata.AcquisitionImageData()
 			nextimagedata = imagelist[i+1]
 			nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
 			direction = (nexttilt - tilt)
 			# switch group in getCorrelationPeak not here
-			tilt = tilt+0.001*direction
+			tilt = tilt+0.02*direction
 		tiltangledict[tilt] = imagedata
 	tiltkeys = tiltangledict.keys()
 	tiltkeys.sort()
@@ -90,14 +95,14 @@ def getOrderedImageListCorrelation(imagelist, bin):
 	second_group = False 
 	for i,imagedata in enumerate(imagelist):
 		tilt = imagedata['scope']['stage position']['a']*180/3.14159
-		if tilt < tiltseries['tilt start']+0.01 and tilt > tiltseries['tilt start']-0.01:
+		if tilt < tiltseries['tilt start']+0.02 and tilt > tiltseries['tilt start']-0.02:
 			nextimagedata = imagelist[i+1]
 			nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
 			direction = (nexttilt - tilt)
 				# switch group in getCorrelationPeak not here
 			if i == 0:
 				second_group = False
-			tilt = tilt+0.001*direction
+			tilt = tilt+0.02*direction
 		try:
 			correlationpeak[tilt],allpeaks,second_group = getCorrelationPeak(correlator,bin, tiltseries, tilt, imagedata,allpeaks,second_group)
 		except:
