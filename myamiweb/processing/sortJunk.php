@@ -86,7 +86,7 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 		echo "<tr><td width='100' align='center'>\n";
 		echo "  <img src='img/xmipp_logo.png' width='128'>\n";
 		echo "</td><td>\n";
-		echo "  <h3><a href='runRotKerDenSom.php?expId=$expId&alignId=$alignId'>Xmipp Rotational Kerden Self-Organizing Map</a></h3>";
+		echo "  <h3>Xmipp Sort by Statistics</h3>";
 		echo "  This function sort the particles in stack by how close they are to the average. "
 			."In general, this will sort the particles by how likely that they are junk. "
 			."After sorting the particles a new stack will be created, you will then have to "
