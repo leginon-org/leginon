@@ -111,6 +111,7 @@ class AppionScript(object):
 		progrunq['progname'] = prognameq
 		progrunq['username'] = userq
 		progrunq['hostname'] = hostq
+		progrunq.insert(force=True)
 
 		for paramname in self.params.keys():
 			paramnameq = appionData.ScriptParamName()
