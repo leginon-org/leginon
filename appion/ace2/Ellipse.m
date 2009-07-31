@@ -211,10 +211,15 @@
 	f64 E1 = general[EX];
 	f64 F1 = general[FX];
 	
-	u32 minr = BOUND(0,bounds[YLO]-1.0,maxrow);
-	u32 maxr = BOUND(0,bounds[YHI]+1.0,maxrow);
-	u32 minc = BOUND(0,bounds[XLO]-1.0,maxcol);
-	u32 maxc = BOUND(0,bounds[XHI]+1.0,maxcol);
+//	u32 minr = BOUND(0,bounds[YLO]-1.0,maxrow);
+//	u32 maxr = BOUND(0,bounds[YHI]+1.0,maxrow);
+//	u32 minc = BOUND(0,bounds[XLO]-1.0,maxcol);
+//	u32 maxc = BOUND(0,bounds[XHI]+1.0,maxcol);
+
+	u32 minr = 0;
+	u32 maxr = maxrow;
+	u32 minc = 0;
+	u32 maxc = maxcol;
 	
 	f64 * image = [array data];
 	
