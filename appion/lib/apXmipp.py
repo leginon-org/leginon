@@ -11,7 +11,7 @@ import apEMAN
 import apFile
 import apParam
 import apImagicFile
-from pyami import spider
+from pyami import spider, mem
 from apSpider import operations
 
 #======================
@@ -68,7 +68,7 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 
 	starttime = time.time()
 	boxsize = apFile.getBoxSize(stackfile)
-	filesperdir = 1e9/(boxsize[0]**2)/16.
+	filesperdir = int(1e9/(boxsize[0]**2)/16.)
 	if filesperdir > 4096:
 		filesperdir = 4096
 	if numpart is None:
@@ -152,9 +152,10 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 
 	### Set variables
 	boxsize = apFile.getBoxSize(filelist[0])
-	partperiter = 1e9/(boxsize[0]**2)/16.
+	partperiter = int(1e9/(boxsize[0]**2)/16.)
 	if partperiter > 4096:
 		partperiter = 4096
+	apDisplay.printMsg("Using %d particle per iteration"%(partperiter))
 	numpart = len(filelist)
 	if numpart < partperiter:
 		partperiter = numpart
@@ -163,12 +164,18 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 	imgnum = 0
 	stacklist = []
 	stackroot = stackfile[:-4]
+	### get memory in kB
+	startmem = mem.active()
 	while imgnum < len(filelist):
 		filename = filelist[imgnum]
 		index = imgnum % partperiter
 		if imgnum % 100 == 0:
 			sys.stderr.write(".")
-		if index == 0:
+			#sys.stderr.write("%03.1fM %d\n"%((mem.active()-startmem)/1024., index))
+			if mem.active()-startmem > 2e5:
+				apDisplay.printError("Out of memory")
+		if index < 1:
+			#print "img num", imgnum
 			### deal with large stacks, reset loop
 			if imgnum > 0:
 				sys.stderr.write("\n")
@@ -178,8 +185,8 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 				apFile.removeStack(stackname, warn=False)
 				apImagicFile.writeImagic(stackarray, stackname, msg=False)
 				perpart = (time.time()-starttime)/imgnum
-				apDisplay.printColor("particle %d of %d :: %s per part :: %s remain"%
-					(imgnum+1, numpart, apDisplay.timeString(perpart), 
+				apDisplay.printColor("part %d of %d :: %.1fM mem :: %s/part :: %s remain"%
+					(imgnum+1, numpart, (mem.active()-startmem)/1024. , apDisplay.timeString(perpart), 
 					apDisplay.timeString(perpart*(numpart-imgnum))), "blue")
 			stackarray = []
 		### merge particles
