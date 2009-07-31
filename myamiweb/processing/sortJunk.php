@@ -13,6 +13,7 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -33,12 +34,13 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 
 	$stackId=$_GET['sId'];
 
+
 	// save other params to url formaction
 	$formAction.=($stackId) ? "&sId=$stackId" : "";
 
 	// Set any existing parameters in form
 	$description = $_POST['description'];
-	$runid = ($_POST['runid']) ? $_POST['runid'] : 'sortjunk'.$stackId;
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'sortjunk'.$stackId;
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
 	if (!$stackId) $stackId = $_POST['stackId'];
 
@@ -53,9 +55,13 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title,$heading,$javafunctions);
+	if (!$stackId) {
+		echo "<font color='#990000' size='+2'>ERROR: no stack was defined</font>";
+		exit(1);
+	}
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='red'>$extra</font>\n<hr />\n";
+		echo "<font color='#990000'>$extra</font>\n<hr />\n";
 	}
   
 	echo "<form name='viewerform' method='post' action='$formAction'>\n";
@@ -73,15 +79,37 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 	<TABLE BORDER=3 CLASS=tableborder>";
 	echo"
 	<TR>
-		<TD VALIGN='TOP'>\n";
-	echo"
-					<b>Stack information:</b> <br />
-					name & path: $filename <br />	
-					ID: $stackId<br />
-                                        <input type='hidden' name='stackId' value='$stackId'>
-					<br />\n";
-	echo docpop('runid','<b>Run Name:</b> ');
-	echo "<input type='text' name='runid' value='$runid'><br />\n";
+		<TD VALIGN='TOP' align='center'>\n";
+
+	// Information table
+	echo "<table border='1' class='tableborder' width='640'>";
+		echo "<tr><td width='100' align='center'>\n";
+		echo "  <img src='img/xmipp_logo.png' width='128'>\n";
+		echo "</td><td>\n";
+		echo "  <h3><a href='runRotKerDenSom.php?expId=$expId&alignId=$alignId'>Xmipp Rotational Kerden Self-Organizing Map</a></h3>";
+		echo "  This function sort the particles in stack by how close they are to the average. "
+			."In general, this will sort the particles by how likely that they are junk. "
+			."After sorting the particles a new stack will be created, you will then have to "
+			."select at which point the junk starts and <b>Apply junk cutoff</b>. "
+			."The second function, <b>Apply junk cutoff</b> will then create a third stack with no junk in it. "
+			."<br/>For more information, please see the following "
+			."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/SortByStatistics'>Xmipp webpage"
+			."&nbsp;<img border='0' src='img/external.png'></a>. "
+			."<br/><br/>";
+		echo "</td></tr>";
+	echo "</table>";
+
+	echo "<hr/>\n";
+
+	// Stack info
+	echo stacksummarytable($stackId, True);
+	echo "<hr/><br/>\n";
+	echo"<input type='hidden' name='stackId' value='$stackId'>\n";
+
+
+
+	echo docpop('runname','<b>Run Name:</b> ');
+	echo "<input type='text' name='runname' value='$runname'><br />\n";
 	echo "<b>Description:</b><br />\n";
 	echo "<textarea name='description' rows='3'cols='70'>$description</textarea>\n";
 	echo "<br />\n";
@@ -107,7 +135,7 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 function runSortJunk() {
 	$expId = $_GET['expId'];
 
-	$runid=$_POST['runid'];
+	$runname=$_POST['runname'];
 	$stackId=$_POST['stackId'];
 	$outdir=$_POST['outdir'];
 	$commit=$_POST['commit'];
@@ -116,16 +144,16 @@ function runSortJunk() {
 
 	//make sure a description is provided
 	$description=$_POST['description'];
-	if (!$runid) createSortJunkForm("<b>ERROR:</b> Specify a runid");
+	if (!$runname) createSortJunkForm("<b>ERROR:</b> Specify a runname");
 	if (!$description) createSortJunkForm("<B>ERROR:</B> Enter a brief description");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$procdir = $outdir.$runid;
+	$procdir = $outdir.$runname;
 
 	//putting together command
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="-n $runid ";
+	$command.="-n $runname ";
 	$command.="-s $stackId ";
 	$command.="-d \"$description\" ";
 	$command.= ($commit=='on') ? "-C " : "--no-commit ";
@@ -137,7 +165,7 @@ function runSortJunk() {
 
 		if (!($user && $password)) createSortJunkForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
 		// if errors:
 		if ($sub) createSortJunkForm("<b>ERROR:</b> $sub");
 		exit();
@@ -152,7 +180,7 @@ function runSortJunk() {
 	<b>sortJunkStack.py command:</b><br />
 	$command
 	</td></tr>\n";
-	echo "<tr><td>run id</td><td>$runid</td></tr>\n";
+	echo "<tr><td>run id</td><td>$runname</td></tr>\n";
 	echo "<tr><td>stack id</td><td>$stackId</td></tr>\n";
 	echo "<tr><td>description</td><td>$description</td></tr>\n";
 	echo "<tr><td>outdir</td><td>$procdir</td></tr>\n";
