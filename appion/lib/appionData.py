@@ -1057,6 +1057,7 @@ class ApRefinementData(Data):
 			('classAverage', str),
 			('classVariance', str),
 			('volumeDensity',str),
+			('exemplar',int),
 			('emanClassAvg',str),
 			('MsgPGoodClassAvg', str),
 			('SpiCoranGoodClassAvg',str),
