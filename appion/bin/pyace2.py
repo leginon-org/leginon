@@ -28,6 +28,12 @@ class Ace2Loop(appionLoop2.AppionLoop):
 	to estimate the CTF in images
 	"""
 
+	def setupParserOptions(self):
+		self.parser.add_option("--onepass", dest="onepass", type="float",
+			help="Mask High pass filter radius for end of gradient mask in Angstroms", metavar="FLOAT")
+		self.parser.add_option("--zeropass", dest="zeropass", type="float",
+			help="Mask High pass filter radius for zero mask in Angstroms", metavar="FLOAT")
+
 	#======================
 	def setProcessingDirName(self):	
 		self.processdirname = "ctf"
