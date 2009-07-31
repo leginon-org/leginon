@@ -90,10 +90,10 @@ class rotKerdenSOMScript(appionScript.AppionScript):
             help="Y dimension", metavar="#")
         self.parser.add_option("--numpart", dest="numpart", type="int", 
             help="Number of particles, default all in stack", metavar="#")
-        self.convergemodes = ( "normal", "fast", "slow" )
-        self.parser.add_option("--converge", dest="converge",
-            help="Convergence criteria mode", metavar="MODE", 
-            type="choice", choices=self.convergemodes, default="normal" )
+        #self.convergemodes = ( "normal", "fast", "slow" )
+        #self.parser.add_option("--converge", dest="converge",
+        #    help="Convergence criteria mode", metavar="MODE", 
+        #    type="choice", choices=self.convergemodes, default="normal" )
         #Regularization factors
         self.parser.add_option("-i", "--initregulfact", dest="initregulfact", type="float", 
             help="Initial Regularization Factor", metavar="#", default=1000.)
@@ -143,7 +143,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
         #rotkerdenson['mask_diam'] = 2.0*self.params['maskrad']
         rotkerdenson['x_dimension'] = self.params['xdim']
         rotkerdenson['y_dimension'] = self.params['ydim']
-        rotkerdenson['convergence'] = self.params['converge']
+        #rotkerdenson['convergence'] = self.params['converge']
         rotkerdenson['run_seconds'] = time.time()-self.t0
         rotkerdenson['initregulfact'] = self.params['initregulfact']
         rotkerdenson['finalregulfact'] = self.params['finalregulfact']
@@ -288,15 +288,26 @@ class rotKerdenSOMScript(appionScript.AppionScript):
         rc(('xtick','ytick','axes'), labelsize=5.0)#fontsize
     
         #read code vector
+        #compute y maximum
         ymax=0.
+
+        for rowNo in range(numberCodevectors):
+            line=f1.readline()
+            splitLine=line.split()
+            for colNo in arange(numberHarmonic):
+                if ymax < float(splitLine[colNo]):
+                  ymax = float(splitLine[colNo])
+        f1.close()
+        f1=open(codeVectorFileName,'r')
+        #skip first line
+        line=f1.readline()
+        print "ymax ", ymax
         for rowNo in range(numberCodevectors):
             line=f1.readline()
             splitLine=line.split()
             #print line
             del data[:]
             for colNo in arange(numberHarmonic):
-                if ymax < float(splitLine[colNo]):
-                 ymax = float(splitLine[colNo])
                 data.append(splitLine[colNo])
     
             #clear previous plot
@@ -331,12 +342,12 @@ class rotKerdenSOMScript(appionScript.AppionScript):
              )
         )
         ### convergence criteria
-        if self.params['converge'] == "fast":
-            kerdencmd += " -eps 1e-5 "
-        elif self.params['converge'] == "slow":
-            kerdencmd += " -eps 1e-9 "
-        else:
-            kerdencmd += " -eps 1e-7 "
+        #if self.params['converge'] == "fast":
+        #    kerdencmd += " -eps 1e-5 "
+        #elif self.params['converge'] == "slow":
+        #    kerdencmd += " -eps 1e-9 "
+        #else:
+        #    kerdencmd += " -eps 1e-7 "
     
         logging.debug(kerdencmd)
         apDisplay.printColor(kerdencmd, "cyan")
