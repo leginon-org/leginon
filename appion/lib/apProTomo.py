@@ -72,7 +72,7 @@ def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 	f.write('\n\n\n END\n\n')
 	f.close()
 
-def createRefineDefaults(imgref, indir, outdir, tmp=None):
+def createRefineDefaults(imgref, indir, outdir, tmp=''):
 	refinedict={}
 	refinedict['imgref']=imgref
 	refinedict['bckbody']=100
