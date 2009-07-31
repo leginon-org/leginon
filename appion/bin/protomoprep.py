@@ -3,6 +3,7 @@
 import leginondata
 import sys
 import apProTomo
+import apTomo
 import math
 import os
 from pyami import correlator, peakfinder
@@ -12,9 +13,7 @@ import apParam
 
 def getTiltSeriesFromId(tiltid):
 	seriesdata=leginondata.TiltSeriesData.direct_query(tiltid)
-	imageq=leginondata.AcquisitionImageData()
-	imageq['tilt series']=seriesdata
-	imgtree=imageq.query(readimages=False)
+	imgtree=apTomo.getImageList([seriesdata])
 	return imgtree
 
 def getPredictionDataForImage(imagedata):
@@ -22,9 +21,6 @@ def getPredictionDataForImage(imagedata):
 	q['image']=imagedata
 	predictiondata=q.query()
 	return predictiondata
-
-def sortImagesByAlpha(x,y):
-	return int(math.floor(x['scope']['stage position']['a']-y['scope']['stage position']['a']))
 
 def alignZeroShiftImages(imgtree,zerotilts):
 	"""Align 0 degree images for tilt series where data is collect in two halves"""
@@ -90,11 +86,9 @@ if __name__=='__main__':
 	apParam.createDirectory(cleandir,warning=False)
 	apParam.createDirectory(rawdir,warning=False)
 	
-	imgtree=getTiltSeriesFromId(inputparams['tiltid'])
-	imgtree.sort(sortImagesByAlpha)
-	
+	imgtree= getTiltSeriesFromId(inputparams['tiltid'])
+	tiltkeys,imgtree,mrcfiles = apTomo.orderImageList(imgtree)
 	ptdict={}
-		
 	zerotilts=[]
 	
 	for n in range(len(imgtree)):
