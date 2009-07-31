@@ -268,7 +268,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
 	$diam = ($_POST['diam']) ? $_POST['diam'] : $defdiam;
-	$threadcheck = ($_POST['threadfindem']=='off') ? '' : 'CHECKED';
+	//$threadcheck = ($_POST['threadfindem']=='off') ? '' : 'CHECKED';
 	$keepallcheck = ($_POST['keepall']=='on') ? 'CHECKED' : '';
 	$mirrorsv = ($_POST['mirrors']=='on') ? 'CHECKED' : '';
 
@@ -283,13 +283,14 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 
 	createAppionLoopTable($sessiondata, $defrunname, "extract");
 
+	/*
 	if ($numtemplatesused > 1) {
 		echo "<input type='checkbox' name='threadfindem' $threadcheck>\n";
 		echo "Use multi-processor threading\n";
 		echo "<br />\n";
 	} else {
 		echo "<input type='hidden' name='threadfindem' value='off'>";
-	}
+	}*/
 
 	echo "<input type='checkbox' name='keepall' $keepallcheck>\n";
 	echo "Do not delete .dwn.mrc files after finishing\n";
@@ -353,7 +354,7 @@ function runTemplateCorrelator() {
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
-	$thread = ($_POST['threadfindem']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	//$thread = ($_POST['threadfindem']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$keepall = ($_POST['keepall']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$mirrors = ($_POST['mirrors']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 
@@ -405,8 +406,8 @@ function runTemplateCorrelator() {
 	$command.="--template-list=$templateliststr ";
 	$command.="--range-list=$rangeliststr ";
 
-	if ($_POST['threadfindem']=='on')
-		$command.="--thread-findem ";
+	//if ($_POST['threadfindem']=='on')
+	//	$command.="--thread-findem ";
 	if ($_POST['keepall']=='on')
 		$command.="--keep-all ";
 	if ($_POST['mirrors']=='on')
@@ -476,7 +477,7 @@ function runTemplateCorrelator() {
 		}
 		echo"<tr><td>range list string</td><td>$rangeliststr</td></tr>";
 		echo"<tr><td>testimage</td><td>$testimage</td></tr>";
-		echo"<tr><td>thread findem</td><td>$thread</td></tr>";
+		//echo"<tr><td>thread findem</td><td>$thread</td></tr>";
 		echo"<tr><td>keep all .dwn.mrc</td><td>$keepall</td></tr>";
 		echo"<tr><td>use mirrors</td><td>$mirrors</td></tr>";
 		appionLoopSummaryTable($_POST);
