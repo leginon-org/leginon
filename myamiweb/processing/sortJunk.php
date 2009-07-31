@@ -149,14 +149,15 @@ function runSortJunk() {
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$procdir = $outdir.$runname;
+	$rundir = $outdir.$runname;
 
 	//putting together command
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="-n $runname ";
-	$command.="-s $stackId ";
-	$command.="-d \"$description\" ";
-	$command.= ($commit=='on') ? "-C " : "--no-commit ";
+	$command.="--runname=$runname ";
+	$command.="--rundir=$rundir ";
+	$command.="--stack-id=$stackId ";
+	$command.="--description=\"$description\" ";
+	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
 	// submit job to cluster
 	if ($_POST['process']=="Sort Junk") {
@@ -182,6 +183,7 @@ function runSortJunk() {
 	</td></tr>\n";
 	echo "<tr><td>run id</td><td>$runname</td></tr>\n";
 	echo "<tr><td>stack id</td><td>$stackId</td></tr>\n";
+	echo "<tr><td>rundir</td><td>$rundir</td></tr>\n";
 	echo "<tr><td>description</td><td>$description</td></tr>\n";
 	echo "<tr><td>outdir</td><td>$procdir</td></tr>\n";
 	echo"</table>\n";

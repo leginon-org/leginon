@@ -13,6 +13,7 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -38,7 +39,7 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 
 	// Set any existing parameters in form
 	$description = $_POST['description'];
-	$runid = ($_POST['runid']) ? $_POST['runid'] : 'cenali'.$stackId;
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'centered'.$stackId;
 	$mask = ($_POST['mask']) ? $_POST['mask'] : '';
 	$maxshift = ($_POST['maxshift']) ? $_POST['maxshift'] : '';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
@@ -72,29 +73,53 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 	$boxsize = $stackp['boxSize']/$stackp['bin'];
 	echo "<input type='hidden' name='box' value='$boxsize'>\n";
 
-	echo"
-	<TABLE BORDER=3 CLASS=tableborder>";
-	echo"
-	<TR>
-		<TD VALIGN='TOP'>\n";
-	echo"
-					<b>Stack information:</b> <br />
-					name & path: $filename <br />	
-					ID: $stackId<br />
-                                        <input type='hidden' name='stackId' value='$stackId'>
-					<br />\n";
-	echo docpop('runid','<b>Run Name:</b> ');
-	echo "<input type='text' name='runid' value='$runid'><br />\n";
+	echo"<table border=3 class=tableborder>";
+	echo"<tr><td valign='top' align='center'>\n";
+
+	// Information table
+	echo "<table border='1' class='tableborder' width='640'>";
+		echo "<tr><td width='100' align='center'>\n";
+		echo "  <img src='img/eman_logo.png' width='128'>\n";
+		echo "</td><td>\n";
+		echo "  <h3>EMAN CenAlignInt</h3>";
+		echo "  This function sort the particles in stack by how close they are to the average. "
+			."This iteratively centers a set of particles, using only integer shifts to avoid interpolation artifacts. "
+			."<a href='http://ncmi.bcm.tmc.edu/homes/stevel/EMAN/doc/progs/cenalignint.html'>EMAN webpage"
+			."&nbsp;<img border='0' src='img/external.png'></a>. "
+			."<br/><br/>";
+		echo "</td></tr>";
+	echo "</table>";
+	echo "<hr/><br/>\n";
+
+	// Stack info
+	echo stacksummarytable($stackId, True);
+	echo "<hr/><br/>\n";
+	echo"<input type='hidden' name='stackId' value='$stackId'>\n";
+
+	echo"<table border='0'>";
+	echo"<tr><td valign='top' align='left'>\n";
+
+	echo docpop('runname','<b>Run Name:</b> ');
+	echo "<input type='text' name='runname' value='$runname'><br />\n";
+	echo "<br/>\n";
+
 	echo "<b>Description:</b><br />\n";
 	echo "<textarea name='description' rows='3'cols='70'>$description</textarea>\n";
-	echo "<br />\n";
-	echo docpop('mask','Outer Mask: ');
-	echo "<input type='text' name='mask' value='$mask' size='4'> (radius in pixels)<br />\n";
+	echo "<br/><br/>\n";
+
+	echo docpop('mask','Outer Mask Radius: ');
+	echo "<input type='text' name='mask' value='$mask' size='4'> (in pixels)<br />\n";
+	echo "<br/>\n";
+
 	echo docpop('maxshift', 'Maximum Shift: ');
-	echo "<input type='text' name='maxshift' value='$maxshift' size='4'> (pixels)<br />\n";
+	echo "<input type='text' name='maxshift' value='$maxshift' size='4'> (in pixels)<br />\n";
+	echo "<br/><br/>\n";
+
 	echo "<input type='checkbox' name='commit' $commitcheck>\n";
 	echo docpop('commit','<b>Commit stack to database');
-	echo "<br />\n";
+	echo "<br/>\n";
+	echo "</td></tr></table>\n";
+
 	echo "</td>
   </tr>
   <tr>
@@ -114,7 +139,7 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 function runCenterParticles() {
 	$expId = $_GET['expId'];
 
-	$runid=$_POST['runid'];
+	$runname=$_POST['runname'];
 	$stackId=$_POST['stackId'];
 	$outdir=$_POST['outdir'];
 	$commit=$_POST['commit'];
@@ -126,27 +151,28 @@ function runCenterParticles() {
 
 	//make sure a description is provided
 	$description=$_POST['description'];
-	if (!$runid) createCenterForm("<b>ERROR:</b> Specify a runid");
+	if (!$runname) createCenterForm("<b>ERROR:</b> Specify a runname");
 	if (!$description) createCenterForm("<B>ERROR:</B> Enter a brief description");
 
 	// make sure diameter & max shifts are within box size
 	if ($mask > $box/2) createCenterForm("<b>ERROR:</b> Mask radius too large, must be smaller than ".round($box/2)." pixels");
 	if ($maxshift > $box/2) createCenterForm("<b>ERROR:</b> Shift too large, must be smaller than ".round($box/2)." pixels");
 
-	if ($mask) $runid.='_'.$mask;
-	if ($maxshift) $runid.='_'.$maxshift;
+	if ($mask) $runname.='_'.$mask;
+	if ($maxshift) $runname.='_'.$maxshift;
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$procdir = $outdir.$runid;
+	$rundir = $outdir.$runname;
 
 	//putting together command
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="-n $runid ";
-	$command.="-s $stackId ";
-	if ($mask) $command.="-m ".$mask." ";
-	if ($maxshift) $command.="-x ".$maxshift." ";
-	$command.="-d \"$description\" ";
-	$command.= ($commit=='on') ? "-C " : "--no-commit ";
+	$command.="--runname=$runname ";
+	$command.="--rundir=$rundir ";
+	$command.="--stack-id=$stackId ";
+	if ($mask) $command.="--mask=$mask ";
+	if ($maxshift) $command.="--maxshift=$maxshift ";
+	$command.="--description=\"$description\" ";
+	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
 	// submit job to cluster
 	if ($_POST['process']=="Center Particles") {
@@ -155,7 +181,7 @@ function runCenterParticles() {
 
 		if (!($user && $password)) createCenterForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
 		// if errors:
 		if ($sub) createCenterForm("<b>ERROR:</b> $sub");
 		exit();
@@ -170,10 +196,12 @@ function runCenterParticles() {
 	<b>centerParticleStack.py command:</b><br />
 	$command
 	</td></tr>\n";
-	echo "<tr><td>run id</td><td>$runid</td></tr>\n";
+	echo "<tr><td>run name</td><td>$runname</td></tr>\n";
 	echo "<tr><td>stack id</td><td>$stackId</td></tr>\n";
 	echo "<tr><td>description</td><td>$description</td></tr>\n";
-	echo "<tr><td>outdir</td><td>$procdir</td></tr>\n";
+	echo "<tr><td>rundir</td><td>$rundir</td></tr>\n";
+	echo "<tr><td>mask</td><td>$mask</td></tr>\n";
+	echo "<tr><td>maxshift</td><td>$maxshift</td></tr>\n";
 	echo"</table>\n";
 	processing_footer();
 }
