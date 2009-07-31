@@ -152,7 +152,7 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 
 	### Set variables
 	boxsize = apFile.getBoxSize(filelist[0])
-	partperiter = int(1e9/(boxsize[0]**2)/16.)
+	partperiter = int(1e9/(boxsize[0]**2)/32.)
 	if partperiter > 4096:
 		partperiter = 4096
 	apDisplay.printMsg("Using %d particle per iteration"%(partperiter))
@@ -172,8 +172,8 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 		if imgnum % 100 == 0:
 			sys.stderr.write(".")
 			#sys.stderr.write("%03.1fM %d\n"%((mem.active()-startmem)/1024., index))
-			if mem.active()-startmem > 2e5:
-				apDisplay.printError("Out of memory")
+			if mem.active()-startmem > 2e6:
+				apDisplay.printWarning("Out of memory")
 		if index < 1:
 			#print "img num", imgnum
 			### deal with large stacks, reset loop
