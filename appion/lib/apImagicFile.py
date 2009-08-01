@@ -241,7 +241,9 @@ def writeImagic(array, filename, msg=True):
 				shape = part.shape
 				if not shape in boxsizes:
 					boxsizes.append(shape)
-			apDisplay.printError("your particles have different boxsizes: "+str(boxsizes))
+			if len(boxsizes) > 1:
+				apDisplay.printError("your particles have different boxsizes: "+str(boxsizes))
+			apDisplay.printError("unknown error in particle list to numpy array conversion")
 
 	t0 = time.time()
 	if msg is True:
