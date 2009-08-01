@@ -230,6 +230,9 @@ def writeImagic(array, filename, msg=True):
 		none
 	"""
 	if isinstance(array, list):
+		if len(array) == 0:
+			apDisplay.printWarning("writeImagic: no particles to write")
+			return
 		try:
 			array = numpy.asarray(array, dtype=numpy.float32)
 		except:
