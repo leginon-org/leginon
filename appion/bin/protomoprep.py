@@ -114,7 +114,7 @@ if __name__=='__main__':
 		imgpath=imgtree[n]['session']['image path']
 		presetname=imgtree[n]['preset']['name']
 		imgprefix=presetname+imgtree[n]['filename'].split(presetname)[-1]
-		imgname=imgprefix+'.mrc'
+		imgname=imgprefix+'.img'
 		imdict['filename']=imgprefix
 		
 		#create symlinks to files
@@ -138,7 +138,8 @@ if __name__=='__main__':
 	apProTomo.writeTiltFile(inputparams['tiltfile'],inputparams['seriesname'],ptdict)
 	
 	#write parameter file
-	refineparamdict=apProTomo.createRefineDefaults(refimg,os.getcwd(),os.getcwd())
+	refineparamdict=apProTomo.createRefineDefaults(refimg,
+		os.path.join(os.getcwd(),'raw/'),os.path.join(os.getcwd(),'out/'))
 	apProTomo.writeRefineParamFile(refineparamdict,inputparams['seriesname']+'.param')
 	
 	#if tar is specified, create big tarball
