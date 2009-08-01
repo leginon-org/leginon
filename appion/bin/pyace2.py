@@ -28,11 +28,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 	to estimate the CTF in images
 	"""
 
-	def setupParserOptions(self):
-		self.parser.add_option("--onepass", dest="onepass", type="float",
-			help="Mask High pass filter radius for end of gradient mask in Angstroms", metavar="FLOAT")
-		self.parser.add_option("--zeropass", dest="zeropass", type="float",
-			help="Mask High pass filter radius for zero mask in Angstroms", metavar="FLOAT")
+
 
 	#======================
 	def setProcessingDirName(self):	
@@ -286,7 +282,10 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			action="store_true", help="Refine the defocus after initial ACE with 2d cross-correlation")
 		self.parser.add_option("--verbose", dest="verbose", default=False,
 			action="store_true", help="Show all ace2 messages")
-
+		self.parser.add_option("--onepass", dest="onepass", type="float",
+			help="Mask High pass filter radius for end of gradient mask in Angstroms", metavar="FLOAT")
+		self.parser.add_option("--zeropass", dest="zeropass", type="float",
+			help="Mask High pass filter radius for zero mask in Angstroms", metavar="FLOAT")
 		#self.parser.add_option("--refineapix", dest="refineapix", default=False,
 		#	action="store_true", help="Refine the pixel size")
 
