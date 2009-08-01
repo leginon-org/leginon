@@ -20,12 +20,18 @@ def executeImagicBatchFile(filename, verbose=False, logfile=None):
 			logf = open(logfile, 'a')
 			process = subprocess.Popen(filename, shell=True, stdout=logf, stderr=logf)
 		elif verbose is False:
-			process = subprocess.Popen(filename, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#			process = subprocess.Popen(filename, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			devnull = open('/dev/null', 'w')
+			process = subprocess.Popen(filename, shell=True, stdout=devnull, stderr=devnull)
 		else:
 			process = subprocess.Popen(filename, shell=True)
 		if verbose is True:
-			process.wait()
+#			process.wait()
+			out, err = process.communicate()
+			if out is not None and err is not None:
+				print "IMAGIC error", out, err
 		else:
+			out, err = process.communicate()
 			### continuous check
 			waittime = 0.01
 			while process.poll() is None:
