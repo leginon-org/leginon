@@ -42,7 +42,7 @@ if ($reconRuns) {
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'final image', 'recon name', 'description', '',
+	$display_keys = array ( 'final image', 'recon name', 'description', 'path', '',
 		'stack info', 'num parts', 'box size', 'pixel size',  '',
 		'model info', 'model symm',  '',
 		'FSC&frac12; Rmeasure resolution', 'avg median<br/>euler jump',);
@@ -62,6 +62,7 @@ if ($reconRuns) {
 
 		// GET INFO
 		$reconname = $reconrun['name'];
+		$path = $reconrun['path'];
 
 		$stackid = $reconrun['REF|ApStackData|stack'];
 		$stackcount = commafy($particle->getNumStackParticles($stackid));
@@ -96,6 +97,7 @@ if ($reconRuns) {
 		$html .= "<td><font size='+1'><a href='reconreport.php?expId=$expId&reconId=$reconid'>$reconname</a></font>"
 			." <br/><i>(ID: $reconid)</i></td>\n";
 		$html .= "<td><font size=-2>$descDiv</font></td>\n";
+		$html .= "<td><font size=-2>$path</font></td>\n";
 		$html .= "<td bgcolor='#dddddd'></td>\n";
 
 		// stack info
