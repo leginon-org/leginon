@@ -102,6 +102,9 @@ def getOnlyStackData(stackid, msg=True):
 
 #===============
 def getStackParticle(stackid, partnum, nodie=False):
+	if partnum <= 0:	
+		apDisplay.printMsg("cannot get particle %d from stack %d"%(partnum,stackid))
+	#apDisplay.printMsg("getting particle %d from stack %d"%(partnum,stackid))
 	stackparticleq = appionData.ApStackParticlesData()
 	stackparticleq['stack'] = appionData.ApStackData.direct_query(stackid)
 	stackparticleq['particleNumber'] = partnum
