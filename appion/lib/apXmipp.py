@@ -92,15 +92,14 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 	### make particle files
 	partlistdocfile = "partlist.doc"
 	f = open(partlistdocfile, "w")
-	i = 0
 	first = 1
-	i = 0
+	index = 0
 	t0 = time.time()
-	while i < numpart:
+	while index < numpart:
 		### read images
 		stackimages = apImagicFile.readImagic(stackfile, first=first, last=last, msg=False)
-		if i > 10:
-			esttime = (time.time()-t0)/float(i+1)*float(numpart-i)
+		if index > 10:
+			esttime = (time.time()-t0)/float(index+1)*float(numpart-index)
 			apDisplay.printMsg("dirnum %d at partnum %d to %d of %d, %s remain"
 				%(subdir, first, last, numpart, apDisplay.timeString(esttime)))
 		else:
@@ -109,16 +108,15 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 
 		### write images
 		for partimg in stackimages['images']:
-			partfile = os.path.join(partdir, str(subdir), "part%06d.spi"%(i))
+			partfile = os.path.join(partdir, str(subdir), "part%06d.spi"%(index))
 			spider.write(partimg, partfile)
 			f.write(os.path.abspath(partfile)+" 1\n")
-			i += 1
+			index += 1
 
 		### setup for next subdir
 		first = last+1
 		last += filesperdir
 		if last > numpart:
-			i+=1
 			last = numpart
 		subdir += 1
 	f.close()
