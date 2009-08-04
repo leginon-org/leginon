@@ -14,7 +14,21 @@ require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/summarytables.inc";
-  
+
+function getNumClassesFromFile ($imagicfile) {
+	$hedfile = $imagicfile;
+	if (substr($imagicfile, -4) == ".img")
+		$hedfile = substr($imagicfile, 0, -4).".hed";
+	if (!file_exists($hedfile)) {
+		echo "MISSING HED FILE: $hedfile<br/>";
+		return 0;
+	}
+	$size = filesize($hedfile);
+	//echo "SIZE $size<br/>";
+	$numclass = ceil($size/1024.0/2.0);
+	return $numclass;
+}
+
 // check if reconstruction is specified
 if (!$reconId = $_GET['reconId'])
 	$reconId=false;
@@ -145,11 +159,8 @@ $iterations = $particle->getIterationInfo($reconId);
 $initpngs = array();
 $initdir = opendir($initmodel['path']);
 
-while ($f = readdir($initdir)){
-	if (eregi($initmodelname.'.*\.png$',$f)) {
-		$initpngs[] = $f;
-	}
-}
+$initpngs = glob($initdir."/".$initmodelname.'.*\.png');
+
 sort($initpngs);
 
 # get list of png files in directory
@@ -174,6 +185,7 @@ $html .= "</tr>\n";
 # show info for each iteration
 //sort($iterations);
 foreach ($iterations as $iteration){
+	//echo print_r($iteration)."<br/>";
 	$ref=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
 	$refinementData=$ref[0];
 	// set as exemplar if submitted
@@ -189,8 +201,9 @@ foreach ($iterations as $iteration){
 	// set background color of line based on exemplar
 	$bg = ($refinementData['exemplar']) ? "#EEEEEE" : "#FFFFFF";
 
-	$numclasses=$particle->getNumClasses($refinementData['DEF_id']);
+
 	$res = $particle->getResolutionInfo($iteration['REF|ApResolutionData|resolution']);
+	//echo print_r($res)."<br/>";
 	$RMeasure = $particle->getRMeasureInfo($iteration['REF|ApRMeasureData|rMeasure']);
 	$fscid = ($res) ? $refinementData['DEF_id'] : False;
 	$fscfile = ($res) ? $refinerun['path'].'/'.$res['fscfile'] : "None" ;
@@ -214,8 +227,8 @@ foreach ($iterations as $iteration){
 		}
 		if ($refinementData[$clsavgfield]) {
 			$clsavgs[$type] = $refinementData[$clsavgfield]; 
-			//$badprtls[$type]=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'bad', $type, True);
-			//$goodprtls[$type]=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'good', $type, True);
+			$badprtls[$type]=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'bad', $type, True);
+			$goodprtls[$type]=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'good', $type, True);
 		}
 	}
 	# old data has no class average distinction, only eman bad particles
@@ -262,15 +275,21 @@ foreach ($iterations as $iteration){
   
 	$html .="<td bgcolor='$bg'><table>";
 	$html .= "<TR><td bgcolor='$bg'>";
-	$html .= "$numclasses classes<br />\n";
+
+	$goodclassavgfile = 0;
 	foreach ($refinetypes as $type) {
 		$infokey = ($type=='SpiCoran' || $type=='EMAN') ? '&k=1' : '';
 		if (array_key_exists($type,$clsavgs)) {
 			$rtype = $type;
 			$clsavgfile = $refinerun['path'].'/'.$clsavgs[$rtype];
+			if (file_exists($clsavgfile))
+				$goodclassavgfile = $clsavgfile;
 			$html .= "<a target='stackview' href='viewstack.php?file=".$clsavgfile.$infokey."'>".$clsavgs[$rtype]."</a><br>";
 		}
 	}
+	//echo "CLASS FILE: $goodclassavgfile<br/>";
+	$numclasses = getNumClassesFromFile($goodclassavgfile);
+	$html .= "$numclasses classes<br />\n";
 
 	//Euler plots
 	$firsteulerimg='';
