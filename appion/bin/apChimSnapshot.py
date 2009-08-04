@@ -47,6 +47,8 @@ class ChimSnapShots(object):
 				self.snapshot_icosahedral()
 			elif self.symmetry[0] == 'd':
 				self.snapshot_dsym()
+			elif self.symmetry[:4] == 'ribo':
+				self.snapshot_ribosome()
 			elif self.symmetry == 'c1':
 				self.snapshot_asymmetric()
 			else:
@@ -415,7 +417,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def snapshot_ribosome(self):
-		self.hideDust(50)
+		self.hideDust(150)
 		for s in self.surfaces:
 			self.color_surface_height(s)
 		self.writeMessageToLog("turn: get top view")
@@ -430,7 +432,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def snapshot_asymmetric(self):
-		self.hideDust(50)
+		self.hideDust(150)
 		for s in self.surfaces:
 			self.color_surface_height(s)
 		#self.writeMessageToLog("turn: get front view")
