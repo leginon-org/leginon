@@ -858,6 +858,75 @@ def getSessionDataFromReconId(reconid):
 	sessiondata = partdata['particle']['selectionrun']['session']
 	return sessiondata
 
+#==================
+#==================
+def getGoodBadParticlesFromReconId(reconid):
+	"""
+	Goes through existing recons and caches the number of good and bad particles
+	"""
+	import sinedon
+	import MySQLdb
+	dbconf = sinedon.getConfig('appionData')
+	db     = MySQLdb.connect(**dbconf)
+	cursor = db.cursor()
+
+	refinerundata = appionData.ApRefinementRunData.direct_query(reconid)
+	refineq = appionData.ApRefinementData()
+	refineq['refinementRun'] = refinerundata
+	refinedatas = refineq.query()
+	for refinedata in refinedatas:
+		t0 = time.time()
+		print "Iteration %d"%(refinedata['iteration'])
+		goodbadq = appionData.ApRefineGoodBadParticleData()
+		goodbadq['refine'] = refinedata
+		goodbaddata = goodbadq.query()
+		if goodbaddata:
+			continue
+		fields = {
+			'good_normal': getParticleCount(refinedata.dbid, cursor, 'thrown_out', False),
+			'bad_normal':  getParticleCount(refinedata.dbid, cursor, 'thrown_out', True),
+			'good_coran':  getParticleCount(refinedata.dbid, cursor, 'coran_keep', True), 
+			'bad_coran':   getParticleCount(refinedata.dbid, cursor, 'coran_keep', False),  
+			'good_msgp':   getParticleCount(refinedata.dbid, cursor, 'msgp_keep', True),  
+			'bad_msgp':    getParticleCount(refinedata.dbid, cursor, 'msgp_keep', False),  
+		}
+		print fields
+		goodbadq = appionData.ApRefineGoodBadParticleData()
+		goodbadq['refine'] = refinedata
+		goodbadq['good_normal'] = fields['good_normal']
+		goodbadq['bad_normal'] = fields['bad_normal']
+		goodbadq['good_coran'] = fields['good_coran']
+		goodbadq['bad_coran'] = fields['bad_coran']
+		goodbadq['good_msgp'] = fields['good_msgp']
+		goodbadq['bad_msgp'] = fields['bad_msgp']
+		goodbadq.insert()
+		apDisplay.printMsg("Completed in %s"%(apDisplay.timeString(time.time()-t0)))
+	return
+
+#=====================
+def getParticleCount(refineid, cursor, name="thrown_out", isone=True):
+	query = (
+		"SELECT \n"
+		+"  count(part.`DEF_id`) AS count \n"
+		+"FROM `ApParticleClassificationData` as part \n"
+		+"WHERE \n"
+		+"  part.`REF|ApRefinementData|refinement` = "+str(refineid)+" \n" 
+		+"AND \n"
+	)
+	if isone is True:
+		query += "  part.`%s` = 1 \n"%(name)
+	else:
+		query += " ( part.`%s` != 1 OR part.`%s` IS NULL )\n"%(name, name)
+	#print query
+	cursor.execute(query)
+	results = cursor.fetchall()
+	if not results:
+		print query
+		apDisplay.printError("Failed to get particle counts")
+	#print results
+	count = results[0][0]
+	#print count
+	return int(count)
 
 #==================
 #==================
