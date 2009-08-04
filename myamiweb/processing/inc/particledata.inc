@@ -2893,7 +2893,9 @@ class particledata {
 		  ."FROM ApFSCData "
 		  ."WHERE `REF|ApRefinementData|refinementData` = $id "
 		  ."ORDER BY pix";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
 
@@ -3197,11 +3199,27 @@ class particledata {
 	function getIterationInfo ($reconId,$iteration=0) {
 		$q = "SELECT * "
 				."FROM `ApRefinementData` r "
-				."LEFT JOIN `ApRefinementParamsData` p "
-				."ON (r.`REF|ApRefinementParamsData|refinementParams` = p.`DEF_id`) "
 				."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' "
 				."ORDER BY r.`iteration` ASC ";
+		$r = $this->mysql->getSQLResult($q);	
+		if ($r[0]['REF|ApRefinementParamsData|refinementParams']) {
+			$q = "SELECT * "
+					."FROM `ApRefinementData` r "
+					."LEFT JOIN `ApRefinementParamsData` p "
+					."ON (r.`REF|ApRefinementParamsData|refinementParams` = p.`DEF_id`) "
+					."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' "
+					."ORDER BY r.`iteration` ASC ";
+		} elseif ($r[0]['REF|ApXmippRefineFixedParamsData|xmippRefineParams']) {
+			$q = "SELECT * "
+					."FROM `ApRefinementData` r "
+					."LEFT JOIN `ApXmippRefineFixedParamsData` p "
+					."ON (r.`REF|ApXmippRefineFixedParamsData|xmippRefineParams` = p.`DEF_id`) "
+					."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' "
+					."ORDER BY r.`iteration` ASC ";
+		}
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		if ($iteration >0) {
 			return $r[$iteration-1];
 		}
@@ -3242,6 +3260,31 @@ class particledata {
 	}
 
 	function getSubsetParticlesInStack ($refinementDataId, $subset, $refinetype='EMAN', $count=False) {
+		//check for cached values
+		$q = "SELECT * "
+			."FROM `ApRefineGoodBadParticleData` gb "
+			."WHERE gb.`REF|ApRefinementData|refine` = '$refinementDataId' ";
+		$r = $this->mysql->getSQLResult($q);
+		if (count($r) && $count) {
+			//using cached values
+			if ($refinetype == 'SpiCoran') {
+				if ($subset=='bad')
+					return $r[0]['bad_coran'];
+				else
+					return $r[0]['good_coran'];
+			} elseif ($refinetype == 'MsgP') {
+				if ($subset=='bad')
+					return $r[0]['bad_msgp'];
+				else
+					return $r[0]['good_msgp'];
+			} else {
+				if ($subset=='bad')
+					return $r[0]['bad_normal'];
+				else
+					return $r[0]['good_normal'];
+			}
+		}
+		//Fall back to old method
 		$q = "SELECT particleNumber as p ";
 		if ($count) $q = "SELECT count(particleNumber) as p ";
 		$q .= "FROM `ApParticleClassificationData` apcd "
