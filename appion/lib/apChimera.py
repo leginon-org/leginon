@@ -210,7 +210,7 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 #=========================================
 def runChimeraScript(chimscript):
 	#apDisplay.printColor("Trying to use chimera for model imaging","cyan")
-	apParam.resetVirtualFrameBuffer()
+	#apParam.resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
 		os.environ['CHIMERA'] = chimpath
@@ -242,13 +242,13 @@ def colorToString(color):
 		return "0.71:0.06:0.00,None,0.71:0.06:0.00"
 	if color == "orange":
 		apDisplay.printColor("using color ORANGE", "orange")
-		return "0.94:0.57:0.00,None,0.94:0.57:0.00"
+		return "0.90:0.57:0.00,None,0.94:0.57:0.00"
 	if color == "yellow":
 		apDisplay.printColor("using color YELLOW", "yellow")
-		return "0.95:0.95:0.00,None,0.95:0.95:0.00"
+		return "0.99:0.89:0.00,None,0.95:0.95:0.00"
 	if color == "green":
 		apDisplay.printColor("using color GREEN", "green")
-		return "0.31:0.55:0.15,None,0.31:0.55:0.15"
+		return "0.28:0.59:0.00,None,0.28:0.59:0.00"
 	if color == "blue":
 		apDisplay.printColor("using color BLUE", "blue")
 		return "0.00:0.21:0.75,None,0.00:0.21:0.75"
