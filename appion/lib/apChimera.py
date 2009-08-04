@@ -210,7 +210,7 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 #=========================================
 def runChimeraScript(chimscript):
 	#apDisplay.printColor("Trying to use chimera for model imaging","cyan")
-	#apParam.resetVirtualFrameBuffer()
+	apParam.resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
 		os.environ['CHIMERA'] = chimpath
