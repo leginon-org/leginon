@@ -1096,16 +1096,16 @@ class ApRefinementParamsData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApRefinementParamsData=ApRefinementParamsData
 
-
 class ApXmippRefineFixedParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('ang', float),
 			('Niter', int),
 			('maskFilename', str),
 			('maskRadius', int),
 			('innerRadius', float),
 			('outerRadius', float),
-			('symmetryGroup', str),
+			('symmetryGroup', ApSymmetryData),
 			('computeResol', bool),
 			('dolowpassfilter', bool),
 			('usefscforfilter', bool),
@@ -1168,6 +1168,20 @@ class ApParticleClassificationData(Data):
 		)
 	typemap = classmethod(typemap)
 leginondata.ApParticleClassificationData=ApParticleClassificationData
+
+class ApRefineGoodBadParticleData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('refine', ApRefinementData),
+			('good_normal', int),
+			('bad_normal', int),
+			('good_coran', int),
+			('bad_coran', int),
+			('good_msgp', int),
+			('bad_msgp', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApRefineGoodBadParticleData=ApRefineGoodBadParticleData
 
 class ApEulerJumpData(Data):
 	def typemap(cls):
