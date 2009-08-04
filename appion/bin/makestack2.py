@@ -396,7 +396,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		apix = apDatabase.getPixelSize(imgdata)
 		bestctfvalue, bestconf = apCtf.getBestAceTwoValueForImage(imgdata, msg=True)
-
+		
 		if bestctfvalue is None:
 			apDisplay.printWarning("No ACE2 ctf estimation for current image")
 			self.badprocess = True
@@ -431,18 +431,23 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apDisplay.printError("ctfvaluesfile does not exist")
 
 		ace2exe = self.getACE2Path()
-		ace2cmd = (ace2exe+" -ctf %s -apix %.3f -img %s -wiener 0.1" % (ctfvaluesfile, apix, inimgpath))
+		outfile = os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
+		
+		ace2cmd = (ace2exe+" -ctf %s -apix %.3f -img %s -wiener 0.1 -out %s" % (ctfvaluesfile, apix, inimgpath,outfile))
 		apDisplay.printMsg("ace2 command: "+ace2cmd)
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
 
-		### hate to do this but have to, MATLAB's bad fftw3 library gets linked otherwise
-		hostname = socket.gethostname()
-		try:
-			user = os.getlogin()
-		except:
-			user = None
-		if hostname[:5] == "guppy" or (user != "craigyk" and user != "vossman"):
-			ace2cmd = "unset LD_LIBRARY_PATH; "+ace2cmd
+#		Commented this out because ace2.exe and ace2correct.exe are now staticallt compiled and don't need
+#		to link to anything		
+#
+#		### hate to do this but have to, MATLAB's bad fftw3 library gets linked otherwise
+#		hostname = socket.gethostname()
+#		try:
+#			user = os.getlogin()
+#		except:
+#			user = None
+#		if hostname[:5] == "guppy" or (user != "craigyk" and user != "vossman"):
+#			ace2cmd = "unset LD_LIBRARY_PATH; "+ace2cmd
 
 		#apEMAN.executeEmanCmd(ace2cmd, showcmd=True)
 		if self.params['verbose'] is True:
@@ -467,10 +472,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			aceoutf.close()
 			aceerrf.close()
 
-		outfile = os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
-
 		if not os.path.isfile(outfile):
-			apDisplay.printError("ACE 2 failed to create image file")
+			apDisplay.printError("ACE 2 failed to create image file:\n%s" % outfile)
 
 		return outfile
 
