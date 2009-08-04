@@ -70,7 +70,8 @@ def fit_map_in_map(map1, map2,
 # -----------------------------------------------------------------------------
 ### set files
 maindir = '/ami/data16/appion/09mar04b/models/emanmodel28'
-map1_path = os.path.join(maindir, 'reconpdb.mrc')
+maindir = '/home/vossman/Documents/papers/initmodel/initmodels-figure'
+map1_path = os.path.join(maindir, 'reconemdb.mrc')
 
 map1 = open_volume_file(map1_path)[0]
 map1.set_parameters(surface_levels = [1.0])
@@ -88,9 +89,9 @@ for i,mrcfile in enumerate(mrcfiles):
 	if os.path.isfile(new_path):
 		print "----------"
 		continue
-	print "\n==============================\n", 
+	print ("\n==============================\n", 
 		os.path.basename(mrcfile), 
-		"\n==============================\n"
+		"\n==============================\n")
 	map2 = open_volume_file(mrcfile)[0]
 	map2.set_parameters(surface_levels = [1.0])
 	new_path = (prefix+os.path.basename(mrcfile))
