@@ -234,20 +234,48 @@ def runChimeraScript(chimscript):
 #=========================================
 #=========================================
 def colorToString(color):
+	color = color.lower()
+	apDisplay.printMsg("selecting color: "+color)
+	### primary colors
 	if color == "red":
-		return "0.6:0.0:0.0,None,0.6:0.0:0.0"
-	elif color == "orange":
-		return "0.6:0.2:0.0,None,0.6:0.2:0.0"
-	elif color == "yellow":
-		return "0.8:0.6:0.0,None,0.8:0.6:0.0"
-	elif color == "green":
-		return "0.0:0.6:0.0,None,0.0:0.6:0.0"
-	elif color == "blue":
-		return "0.0:0.0:0.6,None,0.0:0.0:0.6"
-	elif color == "violet":
-		return "0.6:0.2:0.6,None,0.6:0.2:0.6"
-	else:
-		return "None,None,None"
+		apDisplay.printColor("using color RED", "red")
+		return "0.71:0.06:0.00,None,0.71:0.06:0.00"
+	if color == "orange":
+		apDisplay.printColor("using color ORANGE", "orange")
+		return "0.94:0.57:0.00,None,0.94:0.57:0.00"
+	if color == "yellow":
+		apDisplay.printColor("using color YELLOW", "yellow")
+		return "0.95:0.95:0.00,None,0.95:0.95:0.00"
+	if color == "green":
+		apDisplay.printColor("using color GREEN", "green")
+		return "0.31:0.55:0.15,None,0.31:0.55:0.15"
+	if color == "blue":
+		apDisplay.printColor("using color BLUE", "blue")
+		return "0.00:0.21:0.75,None,0.00:0.21:0.75"
+	if color == "violet":
+		apDisplay.printColor("using color VIOLET", "violet")
+		return "0.39:0.00:0.51,None,0.39:0.00:0.51"
+	### seconary colors
+	if color == "red-orange":
+		apDisplay.printColor("using color RED_ORANGE", "red")
+		return "0.91:0.28:0.00,None,0.91:0.28:0.00"
+	if color == "yellow-orange" or color == "gold":
+		apDisplay.printColor("using color GOLD", "yellow")
+		return "0.94:0.70:0.00,None,0.94:0.70:0.00"
+	if color == "yellow-green" or color == "limegreen":
+		apDisplay.printColor("using color LIMEGREEN", "yellow")
+		return "0.65:0.74:0.07,None,0.65:0.74:0.07"
+	if color == "blue-green" or color == "cyan":
+		apDisplay.printColor("using color CYAN", "cyan")
+		return "0.00:0.54:0.77,None,0.00:0.54:0.77"
+	if color == "blue-violet" or color == "purple":
+		apDisplay.printColor("using color PURPLE", "violet")
+		return "0.18:0.00:0.48,None,0.18:0.00:0.48"
+	if color == "red-violet" or color == "maroon" or color == "magenta":
+		apDisplay.printColor("using color MAROON", "magenta")
+		return "0.49:0.07:0.22,None,0.49:0.07:0.22"
+	#else:
+	return "None,None,None"
 
 #=========================================
 #=========================================
