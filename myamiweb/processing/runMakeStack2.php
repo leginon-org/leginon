@@ -489,8 +489,8 @@ function runMakestack() {
 	// check defocus cutoffs
 	//echo "MIN :: $_POST[dfmin] :: $_POST[dbmin]<br/>\n";
 	//echo "MAX :: $_POST[dfmax] :: $_POST[dbmax]<br/>\n";
-	$dfmin = ($_POST['dfmin']<=$_POST['dbmin']) ? '' : $_POST['dfmin'];
-	$dfmax = ($_POST['dfmax']>=$_POST['dbmax']) ? '' : $_POST['dfmax'];
+	$dfmin = ($_POST['dfmin']>=$_POST['dbmin']) ? '' : $_POST['dfmin'];
+	$dfmax = ($_POST['dfmax']<=$_POST['dbmax']) ? '' : $_POST['dfmax'];
 	// mask assessment
 	$massessname=$_POST['massessname'];
 
