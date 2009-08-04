@@ -182,6 +182,7 @@ class UploadReconScript(appionScript.AppionScript):
 			### coran keep plot
 			if self.params['package']=='EMAN/SpiCoran':
 				apCoranPlot.makeCoranKeepPlot(reconrunid)
+			apRecon.getGoodBadParticlesFromReconId(reconrunid)
 
 #=====================
 #=====================
