@@ -1495,11 +1495,9 @@ class ApImagic3dRefineRunData(Data):
 		return Data.typemap() + (
 			('project|projects|project', int),
 			('runname', str),
-#			('norefclass', ApNoRefClassRunData),
-#			('clusterclass', ApClusteringStackData),
 			('imagic3d0run', ApImagic3d0Data),
+			('initialMode', ApInitialModelData),
 			('stackrun', ApStackData),
-#			('templatestack', ApTemplateStackData),
 			('radius', int),
 			('boxsize', int),
 			('pixelsize', float),
