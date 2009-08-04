@@ -626,7 +626,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		if self.params['stackid'] is not None:
 			refineq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		refineq['runname'] = self.params['runname']
-		refineq['imagic3d0run'] = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
+		if self.params['imagic3d0id'] is not None:
+			refineq['imagic3d0run'] = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
+		else:
+			refineq['initialModel'] = appionData.ApInitialModelData.direct_query(self.params['modelid'])
 		refineq['description'] = self.params['description']
 		refineq['pixelsize'] = self.params['apix']
 		refineq['boxsize'] = self.params['boxsize']
