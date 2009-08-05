@@ -467,7 +467,7 @@ if ($expId) {
 	/* IMAGIC Common Lines */
 	$imagiccluster3d0=$particle->get3d0ClusterModelsFromSessionId($sessionId);
 	$imagicts3d0=$particle->get3d0TemplateStackModelsFromSessionId($sessionId);
-	if ($imagiccluster3d0 || $imagicts3d0) {
+	if ($clusterdone > 0 || $tsdone > 0) {
 		if (is_array($imagiccluster3d0) && is_array($imagicts3d0)) $imagic3d0data = array_merge($imagiccluster3d0,$imagicts3d0);
 		elseif (is_array($imagiccluster3d0) && !is_array($imagicts3d0)) $imagic3d0data = $imagiccluster3d0;
 		else $imagic3d0data = $imagicts3d0;
@@ -476,7 +476,7 @@ if ($expId) {
 		$threed0run = count($subclusterjobs['create3d0']['running']);
 		$threed0queue = count($subclusterjobs['create3d0']['queued']);
 		$threedresults[] = ($numimagic3d0 == 0) ? "" : "<a href='imagic3dRefine.php?expId=$sessionId&3d0=true'>$numimagic3d0 complete</a>";
-		$threedresults[] = ($threed0run == 0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=create3d0'>$threed0run 3d0 running</a>";
+		$threedresults[] = ($threed0run == 0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=create3d0'>$threed0run running</a>";
 		
 	}
 
