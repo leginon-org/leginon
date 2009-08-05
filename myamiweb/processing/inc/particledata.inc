@@ -3403,25 +3403,6 @@ class particledata {
 		return $r;
 	}
 
-	function getNumClasses ($refinementDataId) {
-		$q = "SELECT count(*) AS `num` FROM "
-				."(SELECT ROUND(`euler2`, 4) AS e1, ROUND(`euler1`, 4) AS e2 "
-				."FROM `ApParticleClassificationData` "
-				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
-				."GROUP BY e1,e2) "
-				."AS `uniqEulers`";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0]['num'];
-	}
-
-	//function getEulerIds ($refinementDataId) {
-	//	$q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
-	//			."FROM `ApParticleClassificationData` "
-	//			."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' ";
-	//	$r = $this->mysql->getSQLResult($q);
-	//	return $r;
-	//}
-
 	function getAverageMedianJump ($refineRunId) {
 		$q = "SELECT "
 			."COUNT(e.`median`) AS count, "
