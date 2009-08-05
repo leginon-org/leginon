@@ -106,3 +106,10 @@ except:
 # user
 USERNAME = configparser.get('User', 'fullname')
 
+try:
+	emailhost = configparser.get('Email', 'host')
+	emailuser = configparser.get('Email', 'user')
+	emailfrom = configparser.get('Email', 'from')
+	emailto = configparser.get('Email', 'to')
+except:
+	emailhost = emailuser = emailfrom = emailto = None

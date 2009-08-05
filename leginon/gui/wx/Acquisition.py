@@ -160,6 +160,12 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz_evaluate2.Add(wx.StaticText(self, -1, 'and'))
 		sz_evaluate2.Add(self.widgets['high mean'])
 		sz_evaluate.Add(sz_evaluate2)
+		sz_evaluate3 = wx.BoxSizer(wx.HORIZONTAL)
+
+		passwordbut = wx.Button(self, -1, 'Enter Password')
+		self.Bind(wx.EVT_BUTTON, self.onEnterPassword, passwordbut)
+		sz_evaluate3.Add(passwordbut)
+		sz_evaluate.Add(sz_evaluate3)
 
 		sz_transform = wx.GridBagSizer(0, 0)
 		label = wx.StaticText(self, -1, 'Adjust target using')
@@ -206,6 +212,12 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]
+
+	def onEnterPassword(self, evt):
+		dialog = wx.PasswordEntryDialog(self, 'Enter Password:')
+		dialog.ShowModal()
+		self.node.setEmailPassword(dialog.GetValue())
+		dialog.Destroy()
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'acquisition'

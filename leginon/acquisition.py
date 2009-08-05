@@ -25,6 +25,9 @@ import gui.wx.Presets
 import navigator
 import numpy
 from pyami import arraystats, imagefun, ordereddict
+import smtplib
+import emailnotification
+import leginonconfig
 
 class NoMoveCalibration(targetwatcher.PauseRepeatException):
 	pass
@@ -710,11 +713,35 @@ class Acquisition(targetwatcher.TargetWatcher):
 		statsdata['image'] = imagedata
 		self.publish(statsdata, database=True)
 
+	def setEmailPassword(self, password):
+		self.emailpassword = password
+
+	def emailBadImageStats(self, stats):
+		s = smtplib.SMTP()
+		s.connect(leginonconfig.emailhost)
+		s.login(leginonconfig.emailuser, self.emailpassword)
+
+		subject = 'LEGINON: bad image stats'
+		text = str(stats)
+
+		mes = emailnotification.makeMessage(leginonconfig.emailfrom, leginonconfig.emailto, subject, text)
+		s.sendmail(leginonconfig.emailfrom, leginonconfig.emailto, mes.as_string())
+
 	def evaluateStats(self, imagearray):
 		mean = arraystats.mean(imagearray)
 		if mean > self.settings['high mean']:
+			try:
+				self.emailBadImageStats(mean)
+			except:
+				raise
+				self.logger.info('could not email')
 			raise BadImageStats('image mean too high')
 		if mean < self.settings['low mean']:
+			try:
+				self.emailBadImageStats(mean)
+			except:
+				raise
+				self.logger.info('could not email')
 			raise BadImageStats('image mean too low')
 
 	def publishImage(self, imdata):
