@@ -566,19 +566,24 @@ function modelsummarytable($modelid, $mini=false) {
 	return $modeltable;
 }
 
-function templateStackEntry($stackInfo, $hidden=False){
+function templateStackEntry($stackInfo, $hidden=False, $mini=False){
         $templateId=$stackInfo['DEF_id'];
         $expId = (int) $_GET['expId'];
-        if ($_POST['updateDesc'.$templateId]) {
-                updateDescription('ApTemplateImageData', $templateId, $_POST['newdescription'.$templateId]);
-                $stackInfo['description']=$_POST['newdescription'.$templateId];
-        }
+	if (!$mini) {
+	        if ($_POST['updateDesc'.$templateId]) {
+	                updateDescription('ApTemplateImageData', $templateId, $_POST['newdescription'.$templateId]);
+	                $stackInfo['description']=$_POST['newdescription'.$templateId];
+	        }
+	}
         $filename = $stackInfo['path'] ."/".$stackInfo['templatename'];
 
         // create the image template table
         $j = "Template ID: $templateId";
-        if ($hidden) $j.= " <input class='edit' type='submit' name='unhideTemplate".$templateId."' value='unhide'>";
-        else $j.= " <input class='edit' type='submit' name='hideTemplate".$templateId."' value='hide'>";
+	
+	if (!$mini) {
+	        if ($hidden) $j.= " <input class='edit' type='submit' name='unhideTemplate".$templateId."' value='unhide'>";
+        	else $j.= " <input class='edit' type='submit' name='hideTemplate".$templateId."' value='hide'>";
+	}
         $templatetable.= apdivtitle($j);
         $templatetable.="<table border='0' cellpadding='5'>\n";
         $templatetable.="<tr><td valign='top'>\n";
@@ -592,9 +597,12 @@ function templateStackEntry($stackInfo, $hidden=False){
         $templatetable.="<b>Description: </b>";
 
         # add edit button to description if logged in
-        $descDiv = ($_SESSION['username']) ? editButton($templateId,$stackInfo['description']) : $stackInfo['description'];
-        $templatetable.=$descDiv;
-        $templatetable.="<a href='viewstack.php?file=$filename&expId=$expId&templateStackId=$templateId'><b>View Template Stack</b></a>";
+	if (!$mini) {
+        	$descDiv = ($_SESSION['username']) ? editButton($templateId,$stackInfo['description']) : $stackInfo['description'];
+        	$templatetable.=$descDiv;
+	}
+	else $templatetable.=$stackInfo['description']."<br>";
+        $templatetable.="<a target=tsview href='viewstack.php?file=$filename&expId=$expId&templateStackId=$templateId'><b>View Template Stack</b></a>";
         $templatetable.="</td></tr>\n";
         $templatetable.="</table>\n";
         return $templatetable;
