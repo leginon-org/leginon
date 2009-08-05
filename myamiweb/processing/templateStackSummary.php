@@ -12,6 +12,7 @@ require "inc/particledata.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/processing.inc";
+require "inc/summarytables.inc";
 
 $expId = (int) $_GET['expId'];
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
@@ -76,37 +77,4 @@ else echo "<B>Project does not contain any template stacks.</B>\n";
 processing_footer();
 exit;
 
-function templateStackEntry($stackInfo, $hidden=False){
-	$templateId=$stackInfo['DEF_id'];
-	$expId = (int) $_GET['expId'];
-	if ($_POST['updateDesc'.$templateId]) {
-		updateDescription('ApTemplateImageData', $templateId, $_POST['newdescription'.$templateId]);
-		$stackInfo['description']=$_POST['newdescription'.$templateId];
-	}
-	$filename = $stackInfo['path'] ."/".$stackInfo['templatename'];
-	
-	// create the image template table
-	$j = "Template ID: $templateId";
-	if ($hidden) $j.= " <input class='edit' type='submit' name='unhideTemplate".$templateId."' value='unhide'>";
-	else $j.= " <input class='edit' type='submit' name='hideTemplate".$templateId."' value='hide'>";
-	$templatetable.= apdivtitle($j);
-	$templatetable.="<table border='0' cellpadding='5'>\n";
-	$templatetable.="<tr><td valign='top'>\n";
-	$templatetable.="<img src='loadimg.php?filename=$filename&s=100' width='100'></td>\n";
-	$templatetable.="<td>\n";
-	$templatetable.="<B>Pixel Size:</B>  $stackInfo[apix]<br>\n";
-	$templatetable.="<B>Box Size: </B> $stackInfo[boxsize]<br>\n";
-	$templatetable.="<B>File: </B>";
-	$templatetable.=$filename;
-	$templatetable.="<br />\n";
-	$templatetable.="<b>Description: </b>";
-
-	# add edit button to description if logged in
-	$descDiv = ($_SESSION['username']) ? editButton($templateId,$stackInfo['description']) : $stackInfo['description'];
-	$templatetable.=$descDiv;
-	$templatetable.="<a href='viewstack.php?file=$filename&expId=$expId&templateStackId=$templateId'><b>View Template Stack</b></a>";
-	$templatetable.="</td></tr>\n";
-	$templatetable.="</table>\n";
-	return $templatetable;
-}
 ?>
