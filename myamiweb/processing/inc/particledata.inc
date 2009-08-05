@@ -3209,11 +3209,11 @@ class particledata {
 					."ON (r.`REF|ApRefinementParamsData|refinementParams` = p.`DEF_id`) "
 					."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' "
 					."ORDER BY r.`iteration` ASC ";
-		} elseif ($r[0]['REF|ApXmippRefineFixedParamsData|xmippRefineParams']) {
+		} elseif ($r[0]['REF|ApXmippRefineIterationParamsData|xmippRefineParams']) {
 			$q = "SELECT * "
 					."FROM `ApRefinementData` r "
-					."LEFT JOIN `ApXmippRefineFixedParamsData` p "
-					."ON (r.`REF|ApXmippRefineFixedParamsData|xmippRefineParams` = p.`DEF_id`) "
+					."LEFT JOIN `ApXmippRefineIterationParamsData` p "
+					."ON (r.`REF|ApXmippRefineIterationParamsData|xmippRefineParams` = p.`DEF_id`) "
 					."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' "
 					."ORDER BY r.`iteration` ASC ";
 		}
