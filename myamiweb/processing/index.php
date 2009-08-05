@@ -15,6 +15,20 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/summarytables.inc";
 
+function getNumClassesFromFile ($imagicfile) {
+	$hedfile = $imagicfile;
+	if (substr($imagicfile, -4) == ".img")
+		$hedfile = substr($imagicfile, 0, -4).".hed";
+	if (!file_exists($hedfile)) {
+		echo "MISSING HED FILE: $hedfile<br/>";
+		return 0;
+	}
+	$size = filesize($hedfile);
+	//echo "SIZE $size<br/>";
+	$numclass = ceil($size/1024.0/2.0);
+	return $numclass;
+}
+
 $leginondata = new leginondata();
 
 // check if coming directly from a session
@@ -117,7 +131,6 @@ foreach ($reconRuns as $recon) {
 	$syminfo = $particle->getSymInfo($recon['REF|ApSymmetryData|symmetry']);
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
-	$numclasses=$particle->getNumClasses($reconid);
 	$res = $particle->getResolutionInfo($recon['REF|ApResolutionData|resolution']);
 	$RMeasure = $particle->getRMeasureInfo($recon['REF|ApRMeasureData|rMeasure']);
 	$fscid = ($res) ? $reconid : False;
@@ -174,14 +187,16 @@ foreach ($reconRuns as $recon) {
 	$reshtml.="</td></tr></table>\n";
 
 	// gather class information
-	$classhtml = "$numclasses classes\n";
+
+	$classhtml = "";
 	foreach ($refinetypes as $type) {
 		if (array_key_exists($type,$clsavgs)) {
 			$clsavgfile = $recon['path'].'/'.$clsavgs[$type];
 			$classhtml .= "<br /><a target='stackview' href='viewstack.php?file=$clsavgfile'>".$clsavgs[$type]."</a>";
 		}
 	}
-
+	$numclasses = getNumClassesFromFile($clsavgfile);
+	$classhtml .= "$numclasses classes\n";
 	//Euler plots
 	$eulerhtml = "<table border='0'><tr>\n";
 	foreach ($pngimages['eulerfiles'] as $eulername) {
