@@ -419,7 +419,7 @@ if ($expId) {
 
 	}
 
-	// ab initial reconstruction tools
+	// ab initio reconstruction tools
 	$action = "Ab Initio Reconstruction";
 	$nruns=array();
 
@@ -475,22 +475,12 @@ if ($expId) {
 		$threed0done = count($subclusterjobs['create3d0']['done']);
 		$threed0run = count($subclusterjobs['create3d0']['running']);
 		$threed0queue = count($subclusterjobs['create3d0']['queued']);
-		$threedresults[] = ($numimagic3d0 == 0) ? "" : "<a href='imagic3dRefine.php?expId=$sessionId&3d0=true'>$numimagic3d0 3d0 complete</a>";
+		$threedresults[] = ($numimagic3d0 == 0) ? "" : "<a href='imagic3dRefine.php?expId=$sessionId&3d0=true'>$numimagic3d0 complete</a>";
 		$threedresults[] = ($threed0run == 0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=create3d0'>$threed0run 3d0 running</a>";
 		
 	}
-/*
-	if ($imagic3drefrun=$particle->getImagic3dRefinementRunsFromSessionId($sessionId)) {
-		$numimagicrefinements = count($imagic3drefrun);
-		$refinedone = count($subclusterjobs['imagic3dRefine']['done']);
-		$refinerun = count($subclusterjobs['imagic3dRefine']['running']);
-		$refinequeue = count($subclusterjobs['imagic3dRefine']['queued']);
-		$threedresults[] = ($numimagicrefinements==0) ? "" : "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$numimagicrefinements complete</a>";
-		$threedresults[] = ($refinerun == 0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$refinerun running</a>";
-		
-	}
-*/	
-	if ($aligndone >= 1 || $norefdone >= 1) {
+
+	if ($aligndone >= 1 || $tsdone >=1) {
 		$nruns[]=array(
 			'name'=>"<a href='selectClassAveragesFor3d0.php?expId=$sessionId'>IMAGIC Common Lines</a>",
 			'result'=>$threedresults
@@ -506,7 +496,6 @@ if ($expId) {
 	}
 
 	// display reconstructions only if there is a stack
-	#echo "Stack: $stackruns;";
 	if ($stackruns > 0) {
 		// for every uploaded job, subtract a submitted job
 		// if all submitted jobs are uploaded, it should be 0
@@ -521,6 +510,7 @@ if ($expId) {
 		$ejq = count($subclusterjobs['removeJumpers']['queued']);
 		$ejrun = count($subclusterjobs['removeJumpers']['running']);
 
+		// check for how many EMAN reconstructions have finished / running / queued
 		$reconresults[] = ($jobqueue>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobqueue queued</a>" : "";
 		$reconresults[] = ($jobrun>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobrun running</a>" : "";
 		$reconresults[] = ($jobincomp>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
@@ -529,6 +519,16 @@ if ($expId) {
 
 		$totresult = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns</a>" : "";
 
+		// check for how many IMAGIC reconstructions have finished / running / queued
+		$imq = count($subclusterjobs['imagic3dRefine']['queued']);
+		$imrun = count($subclusterjobs['imagic3dRefine']['running']);
+		$imdone = count($particle->getImagic3dRefinementRunsFromSessionId($sessionId));
+		$imreconresults = array();
+		$imreconresults[] = ($imq>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imq queued</a>" : "";
+		$imreconresults[] = ($imrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imrun running</a>" : "";
+		$imreconresults[] = ($imdone>0) ? "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$imdone complete</a>" : "";
+
+		// list out refinement jobs in the web menu
 		$nruns=array();
 //		if ($_SESSION['loggedin']) {
 		if (TRUE) {
@@ -538,14 +538,18 @@ if ($expId) {
 					 );
 			$nruns[] = "<a href='frealignJobGen.php?expId=$sessionId'>Frealign Refinement</a>" ;
 			$nruns[] = "<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>";
-		} else {
+			$nruns[] = array(
+					 'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
+					 'result'=>$imreconresults,
+					 );
+			} else {
 			$nruns[] = "<font color='888888'><i>please login first</i></font>";
 		}
 		$data[]=array(
-			      'action'=>array($action, $celloption),
-			      'result'=>array($totresult),
-			      'newrun'=>array($nruns, $celloption),
-			      );
+	      'action'=>array($action, $celloption),
+	      'result'=>array($totresult),
+	      'newrun'=>array($nruns, $celloption),
+	      );
 	}
 
 	/* 3d Density Volumes */
@@ -562,10 +566,10 @@ if ($expId) {
 	$totresult = ($num3dvols>0) ? "<a href='densitysummary.php?expId=$sessionId'>$num3dvols</a>" : "";
 	if ( (array)$nruns ) {
 		$data[]=array(
-		      'action'=>array($action, $celloption),
-		      'result'=>array($totresult),
-		      'newrun'=>array($nruns, $celloption),
-		      );
+	      'action'=>array($action, $celloption),
+	      'result'=>array($totresult),
+	      'newrun'=>array($nruns, $celloption),
+	   );
 	}
 
 	// display the tomography menu only if there are tilt serieses
@@ -591,28 +595,28 @@ if ($expId) {
 
 		$nruns=array();
 		$nruns[]=array (
-				'name'=>"<a href='runTomoMaker.php?expId=$sessionId'>Create full tomogram</a>",
-				'result'=>$sresults,
-				);
+			'name'=>"<a href='runTomoMaker.php?expId=$sessionId'>Create full tomogram</a>",
+			'result'=>$sresults,
+			);
 		$nruns[]=array (
-				'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload tomogram</a>",
-				'result'=>$sresults,
-				);
+			'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload tomogram</a>",
+			'result'=>$sresults,
+			);
 		$nruns[]=array (
-				'name'=>"<a href='runSubTomogram.php?expId=$sessionId'>Create tomogram subvolume</a>",
-				'result'=>$sresults,
-				);
+			'name'=>"<a href='runSubTomogram.php?expId=$sessionId'>Create tomogram subvolume</a>",
+			'result'=>$sresults,
+			);
 		$nruns[]=array (
-				'name'=>"<a href='runTomoAverage.php?expId=$sessionId'>Average subvolumes</a>",
-				'result'=> ($avgtomoruns>0) ? "<a href='tomoavgsummary.php?expId=$sessionId'>$avgtomoruns complete</a>" : "",
-				);
+			'name'=>"<a href='runTomoAverage.php?expId=$sessionId'>Average subvolumes</a>",
+			'result'=> ($avgtomoruns>0) ? "<a href='tomoavgsummary.php?expId=$sessionId'>$avgtomoruns complete</a>" : "",
+			);
 
 
 		$data[]=array(
-			      'action'=>array($action, $celloption),
-			      'result'=>array($totresult),
-			      'newrun'=>array($nruns, $celloption),
-			      );
+	      'action'=>array($action, $celloption),
+	      'result'=>array($totresult),
+	      'newrun'=>array($nruns, $celloption),
+	      );
 	}
 
 	// upload model & template tools
@@ -631,9 +635,9 @@ if ($expId) {
 	  "<a href='viewtemplates.php?expId=$sessionId'>$templates available</a>";
 
 	$nruns[]=array(
-		       'name'=>"<a href='uploadtemplate.php?expId=$sessionId'>Upload template</a>",
-		       'result'=>$result,
-		       );
+		'name'=>"<a href='uploadtemplate.php?expId=$sessionId'>Upload template</a>",
+		'result'=>$result,
+	);
 
 	$result = ($models==0) ? "" :
 	  "<a href='viewmodels.php?expId=$sessionId'>$models available</a>";
@@ -652,10 +656,10 @@ if ($expId) {
 	);
 
 	$data[]=array(
-		      'action'=>array($action, $celloption),
-		      'result'=>array(),
-		      'newrun'=>array($nruns, $celloption),
-		      );
+		'action'=>array($action, $celloption),
+		'result'=>array(),
+		'newrun'=>array($nruns, $celloption),
+		);
 
 	// image assessment and contamination finding
 	$action = "Img Assessment";
