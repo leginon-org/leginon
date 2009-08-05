@@ -1,0 +1,31 @@
+; Description: reseqence images according to list
+; Input:
+;   list of images to resequence
+;   images to rename
+; Output:
+;   images named sequentially according to list
+
+FR
+?IN.List of images (dir/doc)?<imglist>
+FR
+?IN.Images template (dir/ser***)?<imgtmpl>
+FR
+?OUT.Images template (dir/out***)?<outtmpl>
+
+; ~~~~~ start ~~~~~
+UD N x21
+<imglist>
+UD E
+DO LB1 x11=1,x21
+  UD IC x11,x22
+  <imglist>
+
+  CP
+  <imgtmpl>x22
+  <outtmpl>x11
+
+LB1
+UD ICE
+<imglist>
+
+RE

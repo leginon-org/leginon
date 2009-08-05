@@ -1,0 +1,36 @@
+(x20) ;radius
+; reconstruct using bp cg
+
+FR
+?IN.List of aligned particles (dir/goodlist)?<pcllist>
+FR
+?IN.Angles doc (dir/rctangles)?<angles>
+FR
+?IN.Tilted particles template (dir/ser@*****)?<pcltmpl>
+FR
+?OUT.Volume?<vol>
+
+; ~~~~~ start ~~~~~
+
+UD N x21
+<pcllist>
+UD E
+
+VM
+echo -n Backprojecting <vol> from {%F7.1%x21} tilted particles..
+
+BP CG
+<pcltmpl>
+<pcllist>
+(x20)         ;radius
+<angles>
+n             ;no symmetry
+<vol>
+(1.0e-5,0.0)  ;error, chi^2 limits
+(25,1)        ;iterations, 1st derivative mode
+(2000)        ;lambda - higher=less sensitive to noise
+
+VM
+echo .done.
+
+RE

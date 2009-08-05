@@ -1,0 +1,78 @@
+;Converts euler angles from tiltAlign into standard Spider RCT docs
+;version 20090121
+FR
+?IN.Euler angles for each particle from tiltAlign (dir/eulers)?<angles>
+FR
+?OUT.Output directory for dcb**** and tlist (dir)?<outdir>
+
+; ~~~~~ start ~~~~~
+
+UD N x21
+<angles>
+SD IC NEW
+tiltlist_ic
+(6,x21)
+
+VM
+echo Writing euler angles from tiltStackAlign into dcb docs and sertlist.
+
+x40=0 ;micronumber
+x41=0 ;zero
+x32=0 ;initial psi
+x33=0 ;initial tta
+x34=0 ;initial phi
+DO LB1 x11=1,x21 ;for each particle
+  ;     key,psi,tta,phi ;tiltaxis,tilt,-untiltaxis
+  UD IC x11,x22,x23,x24
+  <angles>
+  x24=-x24 ;untiltaxis=-phi
+  x30=0
+  IF(x22.ne.x32)x30=1 ;newpsi
+  IF(x23.ne.x33)x30=1 ;newtta
+  IF(x24.ne.x34)x30=1 ;newphi
+  IF(x30.eq.1)THEN ;found next tilted micro
+    IF(x40.gt.0)THEN ;close dcb
+      SD E
+      <outdir>/dcb{****x40}
+    ENDIF
+    x40=x40+1 ;increment micnum
+    VM
+    echo "  Micro"{****x40}
+    x42=0 ;number of particles from this micro
+    SD / PARAMETERS
+    <outdir>/dcb{****x40}
+    SD 1,x41,x41,x41,x41,x41,x41
+    <outdir>/dcb{****x40}
+    SD / FITTED FLAG
+    <outdir>/dcb{****x40}
+    SD 2,x41,x41,x41,x41,x41,x41
+    <outdir>/dcb{****x40}
+    SD / (X0,Y0) FOR LEFT IMAGE, (X0,Y0) FOR RIGHT IMAGE, REDUCTION FACTOR
+    <outdir>/dcb{****x40}
+    SD 3,x41,x41,x41,x41,x41,x41
+    <outdir>/dcb{****x40}
+    SD / TILT ANGLE (THETA), UNTILTED IMAGE AXIS, TILTED IMAGE AXIS
+    <outdir>/dcb{****x40}
+    ;    tta,uax,tax
+    SD 4,x23,x24,x22,x41,x41,x41
+    <outdir>/dcb{****x40}
+    x32=x22 ;store psi = tax
+    x33=x23 ;store tta = tta
+    x34=x24 ;store phi = uax
+  ENDIF
+  x42=x42+1 ;particle num from micro
+  ;     key,pcl,mic, x , y ,pnum,cc
+  SD IC x11,x11,x40,x41,x41,x42,x41
+  tiltlist_ic
+LB1 ;next particle
+UD ICE
+<angles>
+SD IC COPY
+tiltlist_ic
+<outdir>/sertlist
+SD IC END
+tiltlist_ic
+SD E
+<outdir>/dcb{****x40}
+
+RE

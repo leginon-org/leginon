@@ -1,0 +1,104 @@
+(x20) ;maskradius
+; Syntax: @pclnorm(radius)
+; Description:
+;   ramps and normalizes images from list
+; Input:
+;   particle radius (about 10-20% larger than particle) 
+;   noise image made with @noisewin or use MO for gaussian noise model
+
+FR
+?IN.List of images in stack (dir/list)?<list>
+FR
+?IN.Image template (dir/in@******)?<stack>
+FR
+?IN.Noise image (dir/file)?<noise>
+FR
+?OUT.Normalized images template (dir/out@******)?<out>
+
+; ~~~~~ start ~~~~~
+
+; RAMP AND COPY NOISE FILE TO MEMORY
+RA
+<noise>
+_2
+
+; CHECK FOR NaN IN RAMPED NOISE
+FS
+_2
+FI x69
+<noise>
+(9) ;avg
+IF(x69.gt.0)GOTO LB17
+IF(x69.le.0)GOTO LB17
+  VM
+  echo Noise file has ramping error.
+  EN
+LB17
+
+; FIND SIZE OF IMAGE
+UD IC 1,x31
+<list>
+FS
+<stack>x31
+FI x21,x22
+<stack>x31
+12,2       ; nsam,nrow
+
+;x30=INT( ((2*(x21**2))**0.5)/2 * 0.9) ;90% distance from center to corner
+x30=int(x21/2) ;maximum radius
+
+IF(x20.ge.x30)THEN
+  x20=INT(x21 * 2.5 / 6) ;new normalization radius
+  VM
+  echo '*** Normalization radius is too big...reset ***'
+  IF(x20.lt.1)THEN
+    VM
+    echo ERROR...radius is too small.
+    EN
+  ENDIF
+ENDIF
+VM
+echo Normalization radius is {%F7.1%x20}
+
+; MAKE A MASK FILE
+MO
+_3
+x21,x22
+C
+x20
+
+; INVERT MASK - PIXELS OF THE PARTICLE ARE EXCLUDED FROM NORMALIZATION
+NEG
+_3
+_4
+
+UD N x38
+<list>
+
+VM
+echo -n Ramping and Contrast Enhancing {%F7.1%x38} particles...
+
+DO LB1 x11 = 1,x38 
+   UD IC x11,x31
+   <list>
+
+   RA
+   <stack>x31
+   _3
+
+   ; NORMALIZE AS PER HISTOGRAM
+   CE FIT
+   _2  ; ramped noise
+   _3  ; ramped particle
+   _4  ; inverted mask
+   <out>x31
+
+LB1
+UD ICE
+<list>
+
+VM
+echo Normalization complete.
+
+RE
+

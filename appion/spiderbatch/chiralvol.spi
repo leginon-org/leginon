@@ -1,0 +1,170 @@
+(x20) ;boxsize
+; Syntax: @chiralvol(boxsize)
+; Description:
+; chiral 3d shape with 4 protrusions of different size/shape
+
+FR
+?OUT.Chiral volume (dir/vol)?<vol>
+
+; ~~~~~ start ~~~~~
+VM
+echo -n Making chiral volume..
+x21=int(x20/3) ;length of cylinders
+x22=int(x20/2)+1 ;center of box
+;find radius
+x30=25
+x24=x20/x30-int(x20/x30) ;round up or down
+x25=1 ;round up
+IF(x24.lt.0.5)x25=0 ;round down
+x23=int(x20/x30)+x25 ;radius
+IF(x23.lt.1)x23=1 ;radius must be at least 1
+
+VM
+echo -n Cylinder radius {%F7.1%x23}..
+;---protrusion #1 = skinny cylinder with two spheres
+x25=x23
+MO 3
+_1
+x20,x20,x20
+C ; cylinder
+(0) ; volume background
+Y ; direction of cylinder
+x25,x21 ; radius,height
+x22,x21 ; x,y center
+x22,(1.0) ; z,density
+Q  ; quit
+
+x25=x23*2 ;outer radius
+x26=0 ;inner radius
+x27=int(x20/6)+x25-1 ;ypos = halfbox - cylinderLength + sphereRadius
+MO 3 ;sphere
+_2
+x20,x20,x20
+SP ;sphere
+N ;not from doc
+(1) ;voxel density
+x25,x26 ;outer inner
+(x22,x27,x22) ;x-center,y,z-center
+(0,0,0) ;end
+
+x25=x23*2 ;outer radius
+x26=0 ;inner radius
+x27=int(x20/6)+x25*2.5 ;ypos = halfbox - cylinderLength + sphereRadius*2.5
+MO 3 ;sphere
+_3
+x20,x20,x20
+SP ;sphere
+N ;not from doc
+(1) ;voxel density
+x25,x26 ;outer inner
+(x22,x27,x22) ;x-center,y,z-center
+(0,0,0) ;end
+
+;---protrusion #2 = skinny cylinder with one sphere
+AD
+_1 ;cylinder
+_2 ;sphere
+_4
+*
+
+RT 3D ;rotate cylinder 2
+_4
+_5
+(109.5),(0),(0)
+
+;---protrusion #3 = fat cylinder
+x25=x23*2
+MO 3
+_4
+x20,x20,x20
+C ; cylinder
+(0) ; volume background
+Y ; direction of cylinder
+x25,x21 ; radius,height
+x22,x21 ; x,y center
+x22,(1.0) ; z,density
+Q  ; quit
+
+RT 3D ;rotate cylinder 3
+_4
+_6
+(109.5),(120),(0)
+
+;---protrusion #4 = spiral
+x25=x23*2 ;sphere and helix radii
+x26=x25*2 ;#spheres
+MO 3
+_4
+x21,x21,x21 ;small box = length of cylinder
+H ; helix
+(1) ; volume density
+x25,x25 ; sphere and helix radii
+x26,(1.0) ; #spheres,#turns
+
+x25=int((x20-x21)/2)+1 ;x,z position
+x26=x22-x21 ;ypos=center-spiralLength
+PD
+_4
+_7
+x20,x20,x20
+M ;minimum
+x25,x26,x25 ;topleft coordinates
+
+RT 3D
+_7
+_4 ;overwritten
+(109.5),(240),(0)
+
+;---central sphere
+x25=x23*4 ;outer radius
+x26=0 ;inner radius
+MO 3 ;sphere on cylinder #2
+_7
+x20,x20,x20
+SP ;sphere
+N ;not from doc
+(1) ;voxel density
+x25,x26 ;outer inner
+(x22,x22,x22) ;x,y,z
+(0,0,0) ;end
+
+;---combine shapes
+AD
+_1 ;cylinder#1
+_2 ;sphere#1
+_8 ;output
+_3 ;sphere#2
+_5 ;protrusion#2
+_6 ;protrusion#3
+_4 ;protrusion#4
+_7 ;central sphere
+*
+
+;---remove densities above 1 and below 0
+TH
+_8
+<vol>
+C  ;both sides
+(1.0),(0)
+
+DE
+_1
+DE
+_2
+DE
+_3
+DE
+_4
+DE
+_5
+DE
+_6
+DE
+_7
+DE
+_8
+
+VM
+echo <vol> written.
+
+RE

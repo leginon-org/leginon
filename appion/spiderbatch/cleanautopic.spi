@@ -1,0 +1,141 @@
+; Syntax: @cleanautopic
+; Description: writes goodcords**** in autopic directory
+;
+; first use checkpics to be sure all micros have been categorized
+; assumes autopic directory contains sel****/catdoc**** and sel****/cords_doc
+;   categorize (1=bad,2=good,>3=tail)
+;   rules:
+;     1) good overrides either bad or tail
+;     2) bad overrides tail
+;     3) first uncontested tail overrides any further categorization
+
+FR
+?IN.Autopic directory (dir)?<picdir>
+FR
+?IN.Categorization doc template (cat****)?<cattmpl>
+FR
+?IN.List of picked and classified micros (dir/miclist)?<miclist>
+
+; ~~~~~ start ~~~~~
+VM
+echo Writing <picdir>/'good_cords**** for each categorized particle.'
+
+UD N x21
+<miclist>
+
+DO LB1 x11=1,x21 ;for each micro
+UD IC x11,x22
+<miclist>
+
+x99=0
+IQ FI x99
+<picdir>/sel{****x22}/cords_doc
+IF(x99.eq.0)THEN
+  VM
+  echo ERROR...Coordinated doc {****x22} does not exist
+  EN
+ENDIF
+x99=0
+IQ FI x99
+<picdir>/sel{****x22}/<cattmpl>x22
+IF(x99.eq.0)THEN
+  VM
+  echo ERROR...Categorization doc {****x22} does not exist
+  EN
+ENDIF
+
+DOC SORT ;sort coordinates by pclnum
+<picdir>/sel{****x22}/cords_doc
+<picdir>/cordstemp{****x22}
+(3)
+Y
+
+DOC SORT ;sort categorization doc by pclnum
+<picdir>/sel{****x22}/<cattmpl>x22
+<picdir>/catdoctemp{****x22}
+(1)
+Y
+
+UD N x23
+<picdir>/cordstemp{****x22}
+SD IC NEW
+goodcords_ic
+(4),x23
+UD N x28
+<picdir>/catdoctemp{****x22}
+
+VM
+echo -n Micro{****x22} with {****x23} pics..
+
+x29=1 ; start searching catdoc from this key
+x30=0 ; found tail indicator
+x35=0 ; goodpic counter
+DO LB2 x12=1,x23 ; for each pic
+  UD IC x12,x24,x25,x26,x27 ;x,y,pclnum,cc
+  <picdir>/cordstemp{****x22}
+
+  x31=0 ; found bad indicator
+  x32=0 ; found good indicator
+  IF(x30.gt.0)GOTO LB90 ; tail has been found
+
+  DO LB3 x13=x29,x28 ; for each cat
+    UD IC x13,x33,x34
+    <picdir>/catdoctemp{****x22}
+
+    IF(x33.eq.x26)THEN ; this particle was categorized
+      IF(x34.eq.1)x31=1 ; bad
+      IF(x34.eq.2)x32=1 ; good
+      IF(x34.ge.3)x30=1 ; tail
+    ENDIF
+    IF(x33.gt.x26)THEN ; no category for this pic
+      x29=x13 ; start next search of catdoc from this key 
+      GOTO LB90
+    ENDIF
+  LB3  ; next cat x13
+  LB90  ; done searching cat doc
+
+  ;what's the score for this pic
+  IF(x32.gt.0)THEN ; its good
+    x31=0 ;override bad
+    x30=0 ;override tail
+  ENDIF
+  IF(x31.gt.0)GOTO LB91 ; its bad - don't write it
+  IF(x30.gt.0)GOTO LB92 ; its tail - go to next micro
+
+  x35=x35+1 ;good counter
+  SD IC x35,x24,x25,x26,x27
+  goodcords_ic      ;  <picdir>/goodpic{****x22}
+
+  LB91 ; goto next pic
+LB2 ; for each pic x12
+VM
+echo -n .tail not found..
+LB92 ; found tail, cleanup and goto next micro
+UD ICE
+<picdir>/cordstemp{****x22}
+UD ICE
+<picdir>/catdoctemp{****x22}
+
+DE
+<picdir>/cordstemp{****x22}
+DE
+<picdir>/catdoctemp{****x22}
+
+IF(x35.gt.0)THEN
+  SD IC COPY
+  goodcords_ic
+  <picdir>/goodcords{****x22}
+ENDIF
+SD IC END
+goodcords_ic
+
+x36=x23-x35 ;number of bad pics
+
+VM
+echo .{****x35} good and {****x36} bad.
+
+LB1 ; next micro x11
+UD ICE
+<miclist>
+
+RE

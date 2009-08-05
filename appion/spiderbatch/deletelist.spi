@@ -1,0 +1,24 @@
+; Syntax: @deletelist
+; Descriptionn:
+;   delete files listed in first register of doc file
+
+FR
+?IN.Template of files to delete (dir/tmpl***)?<tmpl>
+FR
+?IN.List of files to delete (dir/list)?<list>
+
+; ~~~~~ start ~~~~~
+UD N x21
+<list>
+DO LB1 x11=1,x21
+  UD IC x11,x22
+  <list>
+
+  DE
+  <tmpl>x22
+
+LB1
+UD ICE
+<list>
+
+RE

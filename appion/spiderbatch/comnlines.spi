@@ -1,0 +1,436 @@
+;Common Lines
+;Ed Brignole (version 20090309)
+
+;Description:
+;  Runs common-lines (OP) and back-projection (BP 3F) for specified images
+;  Then make corresponding reprojections of volume (PJ 3Q)
+;  And writes correlation of match between image and projection
+;Output:
+;  op_euler***res** ;euler angles,shift,ccc (imgnum=key)
+;  op_vol***res**   ;volumes from each random initiation at each resolution
+;  op_pj***res**    ;reprojections (tip: view with montage-from-doc in web)
+;  op_report        ;doc reporting OP_Round,Resolution,#Iterations,MeanCCC
+
+FR
+?IN.Template for images (dir/avg@****)?<avgtmpl>
+FR
+?IN.List of images (dir/list)?<avglist> 
+FR
+?IN.Number of randomly initiated rounds (#, 5)?[oprounds]
+FR
+?IN.Starting resolution (# Angstroms, 40)?[resinit]
+FR
+?IN.Ending resolution (# Angstroms, 20)?[resfinal]
+FR
+?IN.Number of resolution steps (#, 3)?[ressteps]
+FR
+?IN.Pixel size (A/pix, 3.5)?[Apix]
+FR
+?IN.Bin for angle search, final volume is full size (#, 2)?[bin]
+FR
+?IN.Theta steps (# degrees, 10)?[theta]
+FR
+?OUT.Directory to create (dir)?<outdir>
+
+; ~~~~~ start ~~~~~
+
+VM
+echo '  ~~~~~ WELCOME TO COMMON LINES ~~~~~'
+
+;CHECK INPUT
+x70=int([oprounds])
+IF(x70.ne.[oprounds])THEN
+  VM
+  echo ERROR...Number of OP rounds must be an integer. Continuing with {**x70}.
+ELSE
+  x70=[oprounds]
+ENDIF
+IF(x70.lt.1)THEN
+  x70=1
+  VM
+  echo ERROR..Number of OP rounds must be at least one. Continuing with {**x70}.
+ENDIF
+
+x71=int([ressteps])
+IF(x71.ne.[ressteps])THEN
+  VM
+  echo ERROR..Number of resolution steps must be an integer. Continuing with {**x71}.
+ELSE
+  x71=[ressteps]
+ENDIF
+IF(x71.lt.1)THEN
+  x71=1
+  VM
+  echo ERROR..Number of resolution steps must be at least one. Continuing with {**x71}.
+ENDIF
+
+;FIND IMAGE SIZE TO INITIALIZE STACKS AND MAKE MASKS
+UD N x20
+<avglist>
+IF(x20.lt.3)THEN
+  VM
+  echo ERROR..There are only {*x20} images. You must have at least 3 for common lines.
+  EN
+ENDIF
+UD x20,x21
+<avglist>
+UD E
+FS
+<avgtmpl>x21
+FI x22
+<avgtmpl>x21
+(12) ;nsam
+x24=int(x22*3/7) ;radius for projection and CCC
+x25=int(x22*1/4) ;radius for shift search
+x29=x22/2+1      ;image center for shift search
+
+x42=int(x22/[bin])    ;binned image size for OP
+x23=int(x22/[bin]*3/4) ;1D line = 75% of image size
+
+;1D line must be odd, fourier friendly number (not large prime)
+IF(x23.lt.23)GOTO LB92   ;x23 has no factors greater than 23
+  VM
+  echo -n Initial line length {%F7.1%x23} pixels. Searching for odd, non-prime line length
+  x43=x23-int(x23/2)*2   ;remainder of x23/2
+  IF(x43.eq.0)x23=x23+1  ;make line length odd
+
+  ;find closest non-prime odd number including x23
+  DO LB10 x46=1,7 ;search self and 6 other closest odd numbers
+    x47=x23+int(x46/2)*2*cos((x46-1)*180) ;increment length by 2 with oscillate -/+ sign
+    VM
+    echo -n " "{%F7.1%x47}
+
+    x44=x47     ;initialize largest factor with current line length
+    x45=3       ;first factor to check (it's odd so skip 2)
+    DO LB9 x19=1,100 ;do up to 100 searches for factors of x44 that are >=23
+      x43=x44-int(x44/x45)*x45 ;x43=remainder of x44/x45
+      IF(x43.eq.0)THEN ;x45 is a factor of x44
+        x44=x44/x45    ;set new largest factor x44
+        IF(x44.lt.23)THEN ;found line length that is odd and has small prime factors
+          x23=x47
+          VM
+          echo ""
+          GOTO LB92 ;x23 has no factors greater than 23, exit loop
+        ENDIF
+      ELSE
+        x45=x45+2   ;increment factor by 2 since factor of an odd number must be odd
+      ENDIF
+      IF(x45.ge.23)GOTO LB93 ;do not search factors >=23
+      IF(x45.gt.x44)GOTO LB93 ;do not search factors greater than value
+    LB9 ;next factor
+    LB93 ;factor exceeded 23 or x44
+  LB10 ;search next length
+  VM
+  echo 'An odd, non-prime length could not be determined for the 1D line'
+  EN
+LB92 ;x23 has no factors greater than x23
+VM
+echo Common line will have a 1D length of {%F7.1%x23} pixels.
+
+MS ;initialize stack for sequential averages ;all file numbers for OP(#-#)
+_1@
+(x42,x42,1)
+(x20)
+
+x26=0 ;initial maxfilenum
+DO LB6 x16=1,x20 ;put images in sequential stack
+  UD IC x16,x21
+  <avglist>
+  IF([bin].gt.1))THEN
+    DC S
+    <avgtmpl>x21
+    _1@{******x16}
+    ([bin],[bin])
+  ELSE
+    CP
+    <avgtmpl>x21
+    _1@{******x16}
+  ENDIF
+  IF(x21.gt.x26)x26=x21 ;find maxfilenum
+LB6
+
+MS ;initialize stack for reprojections
+_2@
+x22,x22,(1)
+x26 ;highest image
+
+MS ;initialize stack for shifted images
+_4@
+x22,x22,(1)
+x26 ;highest image
+    
+MS ;initialize stack for CCC, masks
+_3@
+x22,x22,(1)
+(4)
+
+MO ;make mask for CCC
+_3@01
+x22,x22
+C
+x24
+
+MO ;make mask for shift search
+_3@02
+x22,x22
+C
+x25
+
+;PRESET
+FR L
+<outpfx>op  ;output doc prefix (dir/pfx_res**vol**) and (dir/pfx_res**euler**)
+FR L
+[maxcycles]200 ;?IN.Maximum number of OP iterations (#, 100)?
+;x39=x20*[maxcycles] ;maxkeys = #images * #cycles
+
+VM ;echo "if(! -d <outdir>) mkdir -p <outdir>"|csh
+mkdir <outdir>
+
+DE
+<outdir>/<outpfx>_report
+SD /    Random OP   Resolution    Iterations    Mean CCC
+<outdir>/<outpfx>_report
+
+x30=0        ;counter for "succesfull" OP runs at this resolution
+DO LB1 x11=1,x70 ;for each random run of OP
+  VM
+  echo Random Angles Generated To Initialize Common Lines Round {**x11}
+
+  ;GENERATE RANDOM EULER ANGLE DOC FILES TO INITIALIZE EACH OP RUN
+  SD IC NEW
+  eulers_ic
+  (3,x20)
+
+  DO LB5 x15=1,x20
+    x31=ran(x15)*(360)
+    x32=90-asi(ran(x15)*2-1) ;equator needs more projections
+    x33=ran(x15)*(360)
+
+    SD IC x15,x31,x32,x33
+    eulers_ic
+  LB5
+  SD IC COPY
+  eulers_ic
+  <outdir>/<outpfx>_initeuler{***x11}
+  SD IC END
+  eulers_ic
+
+  DO LB4 x14=1,x71 ;for each resolution decrease step
+    IF(x71.eq.1)THEN ;avoid division by zero
+      x27=([Apix]*[bin]/[resinit]) ;freq (1/pix)
+      x28=[resinit]                ;res (A)
+    ELSE
+      x27=([Apix]*[bin]/([resinit]+([resfinal]-[resinit])/(x71-1)*(x14-1))) ;freq (1/pix)
+      x28=[resinit]+([resfinal]-[resinit])/(x71-1)*(x14-1)                  ;res (A)
+    ENDIF
+    IF(x27.gt.0.5)THEN
+      VM
+      echo '   'Resolution {%F7.1%x28} is too low for [Apix]' A/pixel.'
+      GOTO LB90
+    ENDIF
+    VM
+    echo -n '   Resolution'{%F7.1%x28}.
+
+    OP
+    _1@****** ;<avgtmpl>
+    (1-x20)   ;(<file_num>)
+    (x23)     ;length of line
+    (0.0,x27) ;min,max frequency
+    ([theta])
+    ([maxcycles])
+    <outdir>/<outpfx>_initeuler{***x11}
+    <outdir>/<outpfx>_eulertmp1
+
+    ;CHECK IF MODEL CONVERGED BEFORE MAXIMUM ALLOWED ITERATIONS
+    DOC REN
+    <outdir>/<outpfx>_eulertmp1
+    <outdir>/<outpfx>_eulertmp2
+    DE
+    <outdir>/<outpfx>_eulertmp1
+
+    UD N x38 ;how many iterations*avgs
+    <outdir>/<outpfx>_eulertmp2
+    UD E
+    
+    x37=(x38/x20) ;number of iterations = number of eulers / number of averages
+    IF(x37.ge.[maxcycles])THEN ;volume did not converge in fewer than max number of iterations
+      VM
+      echo .OP did not converge in less than [maxcycles] iterations.
+      GOTO LB91
+    ENDIF
+    VM
+    echo .Converged in {%F7.1%x37} iterations..Backproject initial volume.
+
+    x60=x38-x20+1
+    ;SAVE EULER ANGLES FROM LAST ITERATION (KEY=IMAGE NUMBER)
+    x61=0
+    DO LB3 x13=x60,x38 ;for each angle
+      x61=x61+1
+      UD IC x13,x31,x32,x33 ;fortunately UD IC reads from last instance of x13
+      <outdir>/<outpfx>_eulertmp2
+      UD IC x61,x21
+      <avglist>
+      SD x21,x31,x32,x33
+      <outdir>/<outpfx>_eulertmp3
+    LB3
+    SD E
+    <outdir>/<outpfx>_eulertmp3
+    UD ICE
+    <outdir>/<outpfx>_eulertmp2
+    DE
+    <outdir>/<outpfx>_eulertmp2
+    IF(x61.ne.x20)THEN
+      VM
+      echo ERROR..Angles were not read correctly.
+      EN
+    ENDIF
+
+    ;BACKPROJECT VOLUME FROM FULL SIZED AVERAGES    
+    BP 3F
+    <avgtmpl>
+    <avglist>
+    <outdir>/<outpfx>_eulertmp3
+    *
+    _5 ;volume
+    
+    ;CP
+    ;_5
+    ;<outdir>/<outpfx>_initvol{***x11}res{**x14}
+    
+    ;SHIFT IMPROVEMENT BY MATCHING IMAGES TO REPROJECTIONS (cycle through CCN/SH-BP-CCC)
+    ; -THIS ALSO COULD BE DONE WITH ADDITIONAL ANGULAR IMPROVEMENT BY APSH-
+    PJ 3Q
+    _5  ;volume
+    x24 ;radius
+    <avglist>
+    <outdir>/<outpfx>_eulertmp3
+    _2@******
+    
+    SD IC NEW
+    shift_ic
+    (3,x20)
+    x69=0 ;mean CCC
+    DO LB7 x17=1,x20 ;foreach image
+      UD IC x17,x21
+      <avglist>
+      
+      CC C x85
+      <avgtmpl>x21
+      _2@{******x21}
+      _3@02 ;mask
+      
+      x69=x69+x85      
+
+      CC N
+      _2@{******x21}
+      <avgtmpl>x21
+      _3@03 ;cc-image
+      
+      MU
+      _3@03 ;cc-image
+      _3@02 ;cc-mask
+      _3@04
+      
+      PK M x81,x82,x83,x84
+      _3@04 ;masked cc-image
+      x29,x29
+      
+      SH
+      <avgtmpl>x21
+      _4@{******x21}
+      x83,x84
+
+      SD IC x17,x21,x83,x84
+      shift_ic
+    LB7 ;next image
+    SD IC COPY
+    shift_ic
+    <outdir>/<outpfx>_shifttmp1
+    SD IC END
+    shift_ic
+    x69=x69/x20
+    VM
+    echo -n '   '.Pre-shift Mean CCC {%F7.2%x69}..Backproject <outpfx>_vol{***x11}res{**x14}.
+    
+    BP 3F ;make final back-projection
+    _4@****** ;shifted images
+    <avglist>
+    <outdir>/<outpfx>_eulertmp3
+    *
+    <outdir>/<outpfx>_vol{***x11}res{**x14}
+    
+    ;RECORD CROSS CORRELATION BETWEEN IMAGE AND REPROJECTION
+    PJ 3Q
+    <outdir>/<outpfx>_vol{***x11}res{**x14}
+    x24 ;radius
+    <avglist>
+    <outdir>/<outpfx>_eulertmp3
+    _2@******
+    
+    DE
+    <outdir>/<outpfx>_euler{***x11}res{**x14}
+
+    SD /        psi         theta          phi        x-shift       y-shift        ccc
+    <outdir>/<outpfx>_euler{***x11}res{**x14}
+    x68=0 ;mean CCC
+    DO LB8 x18=1,x20
+      UD IC x18,x21,x83,x84
+      <outdir>/<outpfx>_shifttmp1
+      UD IC x21,x31,x32,x33
+      <outdir>/<outpfx>_eulertmp3
+      
+      CC C x66
+      _4@{******x21}
+      _2@{******x21}
+      _3@02 ;mask
+      
+      SD x21,x31,x32,x33,x83,x84,x66
+      <outdir>/<outpfx>_euler{***x11}res{**x14}
+      
+      x68=x68+x66
+    LB8
+    x68=x68/x20
+    UD ICE
+    <outdir>/<outpfx>_shifttmp1
+    DE
+    <outdir>/<outpfx>_shifttmp1
+    UD ICE
+    <outdir>/<outpfx>_eulertmp3
+    DE
+    <outdir>/<outpfx>_eulertmp3
+    
+    CP ;write reprojections to disk
+    _2@
+    <outdir>/<outpfx>_pj{***x11}res{**x14}@
+    x26 ;not required if writing to disk
+    
+    VM
+    echo .Post-shift Mean CCC {%F7.2%x68}.
+    
+    LB91 ;Did not converge
+    x30=(x30+1)
+    ;  key,vol,res,iter,meanccc
+    SD x30,x11,x28,x37,x68
+    <outdir>/<outpfx>_report
+    LB90
+  LB4 ;next resolution
+  DE
+  <outdir>/<outpfx>_initeuler{***x11}
+LB1 ;next random OP
+SD E
+<outdir>/<outpfx>_report
+UD ICE
+<avglist>
+
+DE
+_1 ;(binned) images stack for OP
+DE
+_2 ;reprojection stack
+DE
+_3 ;stack with masks and correlation images
+DE
+_4 ;shifted images stack
+DE
+_5 ;volume
+
+RE

@@ -1,0 +1,824 @@
+(x20) ;radius
+; Syntax: @symdetect(radius)
+; Description: determines if image displays symmetry
+;   uses ft of rotational ccc to initially determine symmetry and to center image
+;   then uses rotational power spectra (ft of polar image) to find symmetry and confidence
+;   radius is required to distinguish particle from background in calculation of significance
+;   uses incore images _1 through _9 (do not use these images in scripts that call this one)
+;    score function:
+;      =0 if no symdetected
+;      +1 for peak
+;      +2 if peak is GCD of next peak
+;      +2 if next peak is GCD of peak
+;      +1 if peak and next peak share GCD
+
+FR
+?IN.Image (dir/image)?<img>
+FR
+?OUT.Symmetry assessment doc (dir/doc)?<symdoc>
+
+; ~~~~~ start ~~~~~
+; ---- MODULE 1: power spectra of rotational cc to find symmetry and center image ----
+x28=2 ; degrees per rotation
+
+CP
+<img>
+_1
+
+FS ;find image size
+_1
+FI x21
+_1
+(12) ;nsam
+
+x31=int(x21/2)+1 ;image center
+x32=int(x21/10)+1 ;peak search within +/-10th image size
+
+PT ;mask for cc-image
+_3
+x21,x21 ;size
+C       ;circle
+x31,x31 ;center
+x32     ;radius
+N       ;done
+
+x32=x32/3 ;filter=1/3*circleradius
+BC      ;blur edges of mask
+_3      ;inimg
+_2      ;outimg
+L       ;lowpass
+x32,x32 ;filtersize
+(0.5)   ;weight
+
+x30=(360/x28)+1 ;rotations to sample including 0 and 360
+BL ;blank array to store cc
+_4
+(x30,1,1)
+N
+(0)
+
+SD IC NEW
+symdetect1_ic
+(4),x30
+DO LB6 x16=1,x30 ;for each rotation
+  x33=x28*(x16-1) ;rotation starting with zero
+  RT SQ
+  _1
+  _5
+  x33   ;rt
+  (0,0) ;x,y
+
+  CC N
+  _5    ;rt-img
+  _1    ;ref-img
+  _3    ;output cc-image
+
+  MU
+  _3 ;cc-image
+  _2 ;mask
+  _5 ;output
+  *
+  ;    x01,y01,xsh,ysh,max
+  PK M x41,x42,x43,x44,x45
+  _5      ;masked cc-image
+  x31,x31 ;image center
+
+  RP ;store peak in array image
+  _4
+  x16,(1)
+  x45
+
+  x43=-x43 ;xshift relative to original image
+  x44=-x44 ;yshift relative to original image
+  ;         psi,ccc,xsh,ysh
+  SD IC x16,x33,x45,x43,x44
+  symdetect1_ic
+LB6
+FT ;fourier of rotational cc
+_4
+_9
+
+DE
+_1 ;img
+DE
+_3 ;cc-img
+DE
+_4 ;rt-cc
+DE
+_5 ;masked cc-img
+
+SD IC COPY
+symdetect1_ic
+symrt_tmp
+SD IC END
+symdetect1_ic
+
+;--save only relevant pixels and normalize
+FS  ;get size of ft
+_9
+FI x40
+_9
+(12)
+
+RP ;replace 0-order maximum
+_9
+(1,1)
+(0)
+
+; is max odd or even, then start at pixel 3 or 4
+;     xi, yi, xo, yo,max
+PK M x41,x42,x43,x44,x45 ;position of max (x41) odd or even
+_9
+(1,1)
+
+;round max frequency x41 to whole number
+x42=x41-int(x41) ;decimal
+IF(x42.lt.0.5)x41=int(x41)
+IF(x42.ge.0.5)x41=int(x41)+1
+;is x41 odd or even?
+x42=x41/2-int(x41/2)
+IF(x42.eq.0.0)x41=2 ;even
+IF(x42.ne.0.0)x41=1 ;odd
+x40=int((x40-x41)/2) ;record every other pixel from x41 to x40
+
+BL ;to store normalized ft
+_8
+(x40,1)
+N
+(0)
+
+x43=0 ;sum _8
+DO LB7 x17=1,x40 ;record each frequency
+  x44=(x17*2)+x41 ;every other pixel starting at x41+2
+  GP x45
+  _9
+  (x44,1)
+
+  RP
+  _8
+  (x17,1)
+  x45
+
+  x43=x43+x45 ;sum
+LB7 ;write next frequency for trimmed ft
+DE
+_9
+
+AR ;normalize amplitude
+_8
+_9
+P1/x43
+
+DE
+_8
+
+;CP
+;_9
+;<img>ccft
+
+LI D
+_9
+symccft_tmp
+R
+(1)
+
+
+;--calculate symmetry from ft image
+VM
+echo -n 'Using ccc-ft: '
+
+FS
+_9
+FI x57,x58
+_9
+(9,10) ;avg,sd
+DE
+_9
+
+x59=x57+(x58*2) ;threshold for first peak = mean + 2stdev
+
+DOC SORT
+symccft_tmp
+symcfsrt_tmp
+(1)
+Y
+
+UD IC x40,x41,x42 ;read maximum
+symcfsrt_tmp
+UD IC x42,x51 ;check unsorted - keys must match for centering later
+symccft_tmp
+IF(x51.ne.x41)THEN
+  VM
+  echo Error...symccft_tmp keys do not match nsam.
+  EN
+ENDIF
+VM
+echo MaxSym at {%F7.1%x42}
+;VM
+;echo Threshold is {%F7.3%x59}, Avg is {%F7.3%x57}, SD is {%F7.3%x58}, Max is {%F7.3%x41}
+
+IF(x41.lt.x59)THEN ;peak amplitude is too low
+  VM
+  echo No peak in cc-ft.  Symmetry undetermined - probably asymmetric.
+  x50=1 ;asymmetric
+  x49=0
+  GOTO LB90
+ELSE
+  x50=x42    ;best sym
+  x49=1      ;increment score
+ENDIF
+
+x39=x40-1 ;read every pixel
+DO LB8 x18=1,x39 ;for each pixel
+  x41=x40-x18 ;starting one from bottom of list
+  ;         psi,ccc
+  UD IC x41,x44,x45 ;read peak2
+  symcfsrt_tmp
+
+  IF(x44.lt.x59)GOTO LB90 ;peak value is below threshold - end search
+
+  ;find greatest symmetry that divides peak1(x50), peak2, and peak2-peak1
+  x47=x45 ;dividend=next peak
+  x46=x50 ;divisor=best peak so far
+  ;x48=x47-x46 ;distance-not needed GCD(a,b)=GCD(a,(b-a))=GCD((b-a),b)
+  DO LB9 x19=1,30 ;up to 30 iterations - should use WHILE statement
+    x48=x47-(int(x47/x46))*x46 ;x48=remainder(x47/x46)=mod(x47,x46)
+    IF(x48.eq.0)GOTO LB91 ;if x48=0 then gcd=x46
+    x47=x46 ;nextdividend=divisor
+    x46=x48 ;nextdivisor=remainder
+  LB9  ;next iteration
+  VM
+  echo GCD not found after 30 iterations!
+  GOTO LB90 ;gcd not found
+
+  LB91 ;found gcd
+  ;does gcd=peak1 or gcd=peak2
+  IF(x46.eq.x50)THEN ;best peak is GCD of next peak
+    VM
+    echo Best peakis GCD of next peak {%F7.1%x45}
+    x49=x49+2 ;increment score
+    GOTO LB92
+  ENDIF
+  IF(x46.eq.x45)THEN ;next peak is GCD of best peak
+    VM
+    echo Next peak {%F7.1%x45} is GCD {%F7.1%x46}
+    ;x50=x45 ;new best peak = next peak
+    x49=x49+2 ;increment score
+    GOTO LB92
+  ENDIF
+  VM
+  echo Next peak {%F7.1%x45} shares GCD {%F7.1%x46}
+  x49=x49+1
+  IF(x46.eq.1.0)GOTO LB90 ; neither peak was gcd, gcd = 1
+
+  LB92 ;gcd = peak1 or peak2
+LB8  ;next peak
+LB90 ;no more peaks
+
+UD ICE
+symcfsrt_tmp
+DE
+symcfsrt_tmp
+UD ICE
+symccft_tmp
+DE
+symccft_tmp
+
+x39=x40/4
+IF(x50.gt.x39)THEN ;best peak > length/4
+  x27=1 ;don't allow symmetry greater than twice length of ft
+  x49=0 ;reset score
+  VM
+  echo Symmetry of {%F7.1%x50} 'is too high (>' {%F7.1%x39} '), Set symmetry to 1.0'
+ELSE
+  x27=x50 ;symmetry
+ENDIF
+
+VM
+echo Symmetry={%F7.1%x27}, Score={%F7.1%x49}
+
+; --- center image - critical for rotational power spectra ---
+x37=0 ;sum x
+x38=0 ;sum y
+DO LB10 x11=1,x27 ;for each symmetry unit
+  x34=(360/x27)*x11 ;psi=(360/sym)*loop
+  x35=(x34/x28)+1   ;key=psi/interval+1 <firstline=0degrees,lastline=360degrees
+
+  ;         psi,ccc,xsh,ysh
+  UD IC x35,x51,x52,x53,x54
+  symrt_tmp
+
+  x50=abs(x34-x51)
+  IF(x50.gt.x28)THEN ;psi doesn't equal rotation (error within sampling interval)
+    VM
+    echo Error ... Rotations do not correspond.
+    EN
+  ENDIF
+  x37=x37+x53 ;sum x
+  x38=x38+x54 ;sum y
+LB10
+UD ICE
+symrt_tmp
+DE
+symrt_tmp
+
+x88=-x37/x27 ;mean x-shift
+x89=-x38/x27 ;mean y-shift
+
+SH
+<img>
+_9
+(x88,x89)
+VM
+echo Image shifted by {%F7.1%x88},{%F7.1%x89} to center.
+
+;variables to retain x27=sym,x40=length,x42=max,x49=gcds,x88=xsh,x89=ysh
+;images retained _2=mask, _9=shifted image
+;-------------------------------------------------------------------;
+; --- MODULE 2: polar - ft to determine symmetry with statistics ---;
+x21=int(x21/2) ;radius of image
+PO
+_9 ;sh-img
+_3
+(5,x21) ;inner,outer radius (exclude 4 inner rings)
+F ;full circle
+
+;CP ; copy polar image to file
+;_3
+;<img>po
+
+FS  ;find nrows (ie radii) that must be searched
+_3
+FI x22,x23
+_3
+(12,2) ;nsam,nrow
+
+x24=x21-4
+IF(x23.ne.x24)THEN
+  VM
+  echo Error...Polar image has {%F7.1%x23} rows but {%F7.1%x24} radii were used
+  EN
+ENDIF
+
+; --- FT of whole image is irrelevant - just find size ---
+FT ;find nsam of ft of polar image
+_3
+_4
+FS
+_4
+FI x25 ; length of ft of each row
+_4
+(12) ;nsam
+DE
+_4
+
+; --- now add the FT of each row (ie. average ft at each radius) ---
+; --- more like a radial average than a rotational average ---
+x19=x20-4 ;last row of particle
+x23=x19+1 ;first row of background
+
+DO LB1 x11=1,x19 ;window each nrow of particle
+  WI
+  _3 ;polar img
+  _4 ;one radius
+  (x25,1) ;size (nsam,nrow)
+  (1,x11) ;topleft (nsam,nrow)
+
+  FT ;ft of row
+  _4
+  _5
+
+  AR ;weight by radius
+  _5
+  _4
+  P1*x11
+
+  IF(x11.eq.1)THEN
+    CP
+    _4
+    _6 ;initialize running sum
+  ELSE
+    AD
+    _4
+    _6
+    _7
+    *
+
+    CP
+    _7
+    _6 ;summed ft of particle
+  ENDIF
+LB1 ;next nrow(ie radius)
+
+; use background subtraction to enhance signal
+DO LB2 x12=x23,x24 ; for each nrow of background
+  WI
+  _3 ;polar img
+  _4 ;one radius
+  (x22,1) ;size (nsam,nrow)
+  (1,x12) ;topleft (nsam,nrow)
+
+  FT ;ft of row
+  _4
+  _5
+
+  IF(x12.eq.x23)THEN
+    CP
+    _5
+    _7 ;initialize running sum
+  ELSE
+    AD
+    _5
+    _7
+    _8
+    *
+
+    CP
+    _8
+    _7 ;summed ft of background
+  ENDIF
+LB2
+DE
+_3 ;polarimage
+DE
+_4 ;window of polar image
+DE
+_5 ;ft of window of polar image
+DE
+_8 ;sum of ft-win-po
+
+; --- write every other pixel up to halfway ---
+x22=int(x22/4) ;1/4th pixels
+IF(x40.lt.x22)x22=x40 ;not longer than cc-ft
+BL
+_4 ; array to store po-ft of particle
+(x22,1,1)
+N
+(0)
+
+CP
+_4
+_5 ; to store po-ft of background
+
+;is max odd or even
+RP ; remove 0-order peak
+_6
+(1,1)
+(0)
+;     xi, yi, xo, yo,max
+PK M x31,x32,x33,x34,x35
+_6
+(1,1)
+
+x32=x31-int(x31)   ;decimal
+IF(x32.lt.0.5)x31=int(x31)
+IF(x32.ge.0.5)x31=int(x31)+1
+x32=x31/2-int(x31/2)
+IF(x32.eq.0.0)x31=2 ;even - start at 4th pixel
+IF(x32.ne.0.0)x31=1 ;odd - start at 3rd pixel
+
+;normalize by sum of intensities
+x32=0 ;sum particle
+x33=0 ;sum background
+DO LB3 x13=1,x22 ;for each nsam
+  x34=(x13*2)+x31 ;every other pixel + (odd or even)
+  GP x35
+  _6 ;sum(win(ft(po)))
+  (x34,1)
+
+  x35=abs(x35)
+
+  RP
+  _4
+  (x13,1)
+  x35
+
+  x32=x32+x35 ;running sum of intensities
+
+  GP x35
+  _7 ;sum(win(ft(po)))
+  (x34,1)
+
+  x35=abs(x35)
+
+  RP
+  _5
+  (x13,1)
+  x35
+
+  x33=x33+x35 ;running sum of intensities
+LB3
+DE
+_6
+DE
+_7
+
+IF(x32.eq.0)THEN
+  VM
+  echo Error...Ft-Po has no intensities.
+ENDIF
+IF(x33.eq.0)x33=1
+
+AR ; normalize by sum of intensities
+_5
+_6
+P1/x33
+DE
+_5
+
+;CP
+;_6
+;<img>ftb
+
+AR ; normalize by sum of intensities
+_4
+_5
+P1/x32
+DE
+_4
+
+;CP
+;_5
+;<img>fta
+
+;--- calculate symmetry from ft of polar image
+VM
+echo -n 'Using polar-ft: '
+
+FS
+_5
+FI x57,x58
+_5
+(9,10) ;avg,sd
+
+x59=x57+(x58*2) ;threshold for first peak
+
+LI D
+_5
+sympoft_tmp
+R
+(1)
+
+DOC SORT
+sympoft_tmp
+sympfsrt_tmp
+(1)
+Y
+
+UD IC x22,x31,x32 ;read max
+sympfsrt_tmp
+UD IC x32,x51
+sympoft_tmp
+IF(x51.ne.x31)THEN
+  VM
+  echo Error...sympoft_tmp keys do not match nsam.
+  EN
+ENDIF
+VM
+echo MaxSym at {%F7.1%x32} 
+;VM
+;echo Threshold is {%F7.3%x59}, Avg is {%F7.3%x57}, SD is {%F7.3%x58}, Max is {%F7.3%x31}
+
+IF(x31.lt.x59)THEN ;peak is too low
+  VM
+  echo No peak in cc-ft.  Symmetry not strong enough to be determined - assumed assymetric.
+  x50=1  ;sym
+  x39=0  ;score
+  GOTO LB94
+ELSE
+  x50=x32  ;best sym so far
+  x39=1    ;score
+ENDIF
+
+;x59=(x57+x31)/2 ;new threshold midway between average and max
+x30=x22-1  ; read every pixel
+DO LB4 x14=1,x30 ;for each pixel
+  x35=x22-x14 ;starting one from bottom of list
+  ;         ccc,sym
+  UD IC x35,x33,x34
+  sympfsrt_tmp
+
+  IF(x33.lt.x59)GOTO LB94 ;peak is below threshold (x59) - end search
+
+  ;find greatest symmetry that divides peak1, peak2 and peak2-peak1
+  x36=x50
+  x37=x34
+  DO LB5 x15=1,30 ;up to 30 cycles to find gcd
+    x38=x37-(int(x37/x36))*x36 ;remainder=x38
+    IF(x38.eq.0)GOTO LB95 ;if remainder=0 then gcd=x36
+    x37=x36 ;nextdividend=divisor
+    x36=x38 ;nextdivisor=remainder
+  LB5 ;next interation 
+  VM
+  echo GCD not found after 30 iterations!
+  GOTO LB93 ;gcd not found
+
+  LB95 ;found gcd
+  ;does gcd=peak1 or peak2
+  IF(x36.eq.x50)THEN ;keep x50
+    VM
+    echo Best Peak is GCD of next peak {%F7.1%x34}
+    x39=x39+2
+    GOTO LB93
+  ENDIF
+  IF(x36.eq.x34)THEN ;new x50
+    VM
+    echo Next Peak {%F7.1%x34} is GCD {%F7.1%x36}
+    ;x50=x34 ;new sym
+    x39=x39+2   ;new score
+    GOTO LB93 ;next peak
+  ENDIF
+  VM
+  echo Next peak {%F7.1%x34} shares GCD {%F7.1%x36}
+  x39=x39+1
+  IF(x36.eq.1.0)GOTO LB94 ; neither peak was gcd, gcd = 1
+
+  LB93 ;gcd = peak1 or peak2, next peak
+LB4  ;nest peak
+LB94 ;no more peaks
+
+UD ICE
+sympfsrt_tmp
+DE
+sympfsrt_tmp
+UD ICE
+sympoft_tmp
+DE
+sympoft_tmp
+
+x38=x22/4 ; symmetry can't be more than 1/4 of ft
+IF(x50.gt.x38)THEN
+  VM
+  echo Symmetry of {%F7.1%x50} is too high. Maximum is {%F7.1%x38}.
+  x28=1
+  x39=0
+ELSE
+  x28=x50
+ENDIF
+
+VM
+echo Symmetry={%F7.1%x28}, Score={%F7.1%x39}
+
+DE
+_5
+DE
+_6
+
+;-----------------------------------------------------------------;
+;--- MODULE 3: determine if cc-ft or po-ft has better solution ---;
+; x27 vs x28 (sym) - which has best sum of cc's - find sumCCC for each
+
+;Calculate meanccc of ccft and poft
+IF(x27.eq.1)THEN ;cc-ft symmetry = 1
+  x48=1 ;meanccc
+ELSE ;calculate meanccc
+  x29=x27-1 ;symmetry -1
+  x48=0
+  DO LB12 x12=1,x29 ; excludes 360 which is 1
+    x30=360/x27*x12 ;angle
+
+    RT SQ
+    _9
+    _8
+    x30   ;rotation
+    (0,0) ;shift
+
+    CC N
+    _8 ;rotated image
+    _9 ;reference image
+    _8 ;cc image
+
+    MU
+    _8 ;cc-image
+    _2 ;mask
+    _3
+    *
+
+    ;     xi, yi, xo, yo,max
+    PK M x31,x32,x33,x34,x35
+    _3
+    (1,1)
+      
+    x48=x48+x35
+  LB12
+  x48=x48/x29 ;meanccc
+  DE
+  _3
+  DE
+  _8
+ENDIF ;meanccc of cc-ft = x48
+
+IF(x27.eq.x28)THEN ;x27(symccft) and x28(sympoft) are the same
+  x50=x27
+  x51=x39+x49 ;total score
+  x52=x48
+  GOTO LB96   ;write symmetry
+ENDIF
+
+IF(x28.eq.1)THEN ;po-ft symmetry = 1
+  x38=1 ;meanccc
+ELSE ;calculate meanccc
+  x29=x28-1
+  x38=0
+  DO LB13 x13=1,x29 ;foreach symmetry rotation
+    x30=360/x28*x13 ;angle
+      
+    RT SQ
+    _9
+    _8
+    x30   ;rotation
+    (0,0) ;shift
+
+    CC N
+    _8 ;rotated image
+    _9 ;reference image
+    _8 ;cc image
+
+    MU
+    _8  ;cc-image
+    _2  ;mask
+    _3
+
+    ;     xi, yi, xo, yo,max
+    PK M x31,x32,x33,x34,x35
+    _3
+    (1,1)
+
+    x38=x38+x35
+  LB13 ;next symmetry rotation
+  x38=x38/x29 ;meanccc
+  DE
+  _3
+  DE
+  _8
+ENDIF ;meanccc of po-ft = x38
+DE
+_2 ;mask
+DE
+_9 ;sh-img
+
+;then disagreement between cc-ft and cc-po
+;higher score is more likely to be correct
+IF(x49.gt.x39)THEN ;ccft is better than poft
+  x50=x27
+  x51=x49
+  x52=x48
+  GOTO LB96   ;write symmetry
+ENDIF
+IF(x39.gt.x49)THEN ;poft is better than ccft
+  x50=x28
+  x51=x39
+  x52=x38
+  GOTO LB96   ;write symmetry
+ENDIF
+
+;then have same score
+;which has highest average ccc
+IF(x48.gt.x38)THEN
+  x50=x27
+  x51=x49
+  x52=x48
+  GOTO LB96   ;write symmetry
+ELSE
+  x50=x28
+  x51=x39
+  x52=x38
+  GOTO LB96   ;write symmetry
+ENDIF
+
+;then have same cc_avg
+;which is a multiple of the other
+x52=x27/x28-int(x27/x28)
+x53=x28/x27-int(x28/x27)
+IF(x52.eq.0)THEN ;x27 is a multiple of x28
+  x50=x28
+  x51=x39
+  x52=x38
+  GOTO LB96   ;write symmetry
+ENDIF
+IF(x53.eq.0)THEN ;x28 is a multiple of x27
+  x50=x27
+  x51=x49
+  x52=x48
+  GOTO LB96   ;write symmetry
+ENDIF
+;are they multiples of a factor (gcd test)
+
+;then not integer multiples of one another - just set sym to 1
+VM
+echo Symmetries do not agree, have same score, are not integer multiples, and have same rt-cc.
+x50=1
+x51=0
+x52=0
+
+LB96 ;write symmetry
+;    sym,cav,xsh,ysh
+SD 1,x50,x52,x88,x89
+<symdoc>
+SD E
+<symdoc>
+
+VM
+echo Symmetry is {%F7.1%x50} with total score {%F7.1%x51} and ccc_avg={%F7.2%x52}
+
+RE

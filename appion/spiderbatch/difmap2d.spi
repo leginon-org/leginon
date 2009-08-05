@@ -1,0 +1,77 @@
+; Syntax: @difmap2d
+; Description: makes a 2d difference image
+;   1) normalizes image histograms within masked area
+;     recommended mask covers entire particle
+;   2) removes darkest densities from reference and image before subtracting
+;   3) threshold difference image to further remove the darkest densities
+
+FR
+?IN.Image (dir/avg)?<img>
+FR
+?IN.Reference image to subtract (dir/refimg)?<ref>
+FR
+?IN.Mask that covers area to normalize (dir/mask)?<mask>
+FR
+?OUT.Difference image (dir/dif***)?<dif>
+
+; ~~~~~ start ~~~~~
+
+;---Contrast normalize average to reference
+FS M x22,x23,x24,x25 ;find particle max,min,avg,std
+<ref>
+<mask>
+
+FS M x32,x33,x34,x35
+<img>
+<mask>
+
+AR
+<img>
+_3  ;nimg
+(P1-x34+x24)*x25/x35 ;(p1-mean(img)+mean(ref))*std(ref)/std(img)
+;CE FIT
+
+;---Threshold to remove lowest densities
+x20=(x24+2*x23)/3 ;threshold
+
+TH
+<ref>
+_2
+B
+x20
+
+TH
+_3 ;nimg
+_4 ;tnimg
+B
+x20
+
+;---Subtract images
+SU
+_4 ;tnimg
+_2 ;tref
+_3 ;<dif>x30
+*
+
+;---Threshold difference image to remove darkest region
+FS M x32,x33,x34,x35
+_3 ;difimg
+<mask>
+
+x36=x34-1*x35 ;threshold mean-1std
+IF(x36.lt.x33)x36=(2*x34+x33)/3 ;between mean and min
+TH F
+_3 ;difimg
+<dif>x30
+B   ;below
+x36 ;threshold
+x36 ;replace
+
+DE
+_2
+DE
+_3
+DE
+_4
+
+RE

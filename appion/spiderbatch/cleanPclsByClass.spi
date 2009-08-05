@@ -1,0 +1,128 @@
+; Syntax: @cleanParticleList (20090710)
+; Description:
+;   removes particles that are in rejected groups in final two MRA iterations
+
+FR
+?IN.List of rejected classes (dir/list)?<badgrplist>
+RR x20
+?IN.Number of consecutive alignment rounds (2)?
+FR
+?IN.Iterative classification folder (dir, contains r**/grp***)?<alndir>
+FR
+?IN.List of aligned particles (dir/serlist)?<pcllist>
+FR
+?OUT.Cleaned particle list (dir/cleanlist)?<newlist>
+
+; ~~~~~ start ~~~~~
+;FR
+;?IN.Template for first set of groups (dir/grp***)?<grptmpl1>
+;FR
+;?IN.Template for second set of groups (dir/grp***)?<grptmpl2>
+;x20=2
+
+UD N x21
+<badgrplist>
+UD E
+
+VM
+echo Removing particles of {%F7.1%x21} bad classes...
+
+VM
+rm -f <newlist>tmpnum.$DATEXT
+VM
+ls -1d <alndir>/r*/grp_count.$DATEXT | wc -l | nl -s ' 1   ' > <newlist>tmpnum.$DATEXT
+
+UD 1,x30
+<newlist>tmpnum
+UD E
+
+DOC COMBINE
+<alndir>/r{**x30}/grp***  ;<grptmpl1>  ;
+<badgrplist>
+<newlist>tmp1
+
+UD N x22
+<newlist>tmp1
+UD E
+
+VM
+echo '  'Iteration {**x30} has {%F7.1%x22} bad particles.
+
+x31=x30
+IF(x20.eq.1)GOTO LB90
+
+x29=x20-1
+DO LB1 x11=1,x29
+  x31=x30-x11 ;iteration
+
+  DOC COMBINE
+  <alndir>/r{**x31}/grp***  ;<grptmpl2>  ;
+  <badgrplist>
+  <newlist>tmpcomb
+
+  UD N x23
+  <newlist>tmpcomb
+  UD E
+  
+  VM
+  echo -n '  'Iteration {**x31} has {%F7.1%x23} bad particles..
+
+  ;particles that were in bad groups again
+  DOC AND
+  <newlist>tmp1     ;1st file
+  <newlist>tmpcomb  ;2nd file
+  <newlist>tmpand   ;out file
+  (1)               ;column to compare
+  
+  VM
+  rm -f <newlist>tmpcomb.$DATEXT
+  
+  DOC REN
+  <newlist>tmpand
+  <newlist>tmp2
+
+  UD N x25
+  <newlist>tmp2
+  UD E
+
+  IF(x23.lt.x22)x22=x23 ;x22=lesser of(x22,x23)
+  x24=x25/x22*100
+
+  VM
+  echo '.with '{%F7.1%x25}' ('{%F7.1%x24}'% ) overlap.'
+  
+  IF(x25.gt.x22)THEN
+    VM
+    echo ERROR..More bad particles than possible.
+    EN
+  ENDIF
+
+  x22=x25 ;store number of particles for next round
+
+  VM
+  mv <newlist>tmp2.$DATEXT <newlist>tmp1.$DATEXT
+LB1
+
+LB90 ;skip to here if one iteration
+DOC SUBTRACT
+<pcllist>
+<newlist>tmp1
+<newlist>tmp
+(1) ;first column
+
+DOC REN
+<newlist>tmp
+<newlist>
+
+UD N x26
+<newlist>
+UD E
+
+VM
+echo Bad particles removed from <pcllist> to make <newlist> with {%F7.1%x26} good particles.
+
+VM
+rm -f <newlist>tmp*.$DATEXT
+
+RE
+

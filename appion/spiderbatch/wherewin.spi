@@ -1,0 +1,101 @@
+; Description:
+;   display location of particles on micro
+; Input:
+;   coordinates file has pcl#,x,y in first three columns
+
+FR
+?IN.Undecimated micro (dir/img)?<micro>
+FR  ; coords doc pcl#,x,y
+?IN.Partice coordinates doc (dir/doc)?<cords>
+RR x23
+?IN.Coordinate bin factor (#)?
+FR
+?OUT.Marked micro (dir/img)?<outimg>
+RR x24
+?OUT.Bin marked micro (#)?<outdec>
+
+; ~~~~~ start ~~~~~
+FI x21,x22
+<micro>
+(12,2)   ; HEADER KEYS FOR NSAM NROW
+
+DC S
+<micro>
+_1
+x24,x24
+
+FS
+_1
+FI x29,x30,x35
+_1
+(9,10,7) ;avg,std,max
+
+MO
+_2
+(40,40) ;dimensions
+C ;circle
+(15) ;radius
+
+MO
+_3
+(40,40) ;dimensions
+C ;circle
+(12) ;radius
+
+SU
+_2
+_3
+_4
+*
+
+DE
+_2
+DE
+_3
+
+FS
+_4
+FI x31,x32
+_4
+(7,8) ;max,min
+
+x33=(x35)/(x31-x32) ;slope = (maxA)/(maxB-minB)
+x34=-1*x32*x33 ;yint = 0-minB*slope
+AR ;scale max to +1std , min to 0
+_4
+_5
+x33*P1+x34 ;mx+b
+
+DE
+_4
+
+; HOW MANY PARTICLES
+UD N x25
+<cords>
+VM
+echo -n Marking {%F7.1%x25} particles on <micro> ..
+
+DO LB2 x12=1,x25  ;FOR EACH PARTICLE
+  UD IC x12,x28,x26,x27  ; pic,x,y
+  <cords>
+
+  x26=x26*x23/x24-20 ;topleftx
+  x27=x27*x23/x24-20 ;toplefty
+  
+  PA
+  _5
+  _1
+  x26,x27
+
+LB2  ;NEXT PARTICLE
+UD ICE
+<cords>
+
+CP
+_1
+<outimg>
+
+VM
+echo .done.
+
+RE

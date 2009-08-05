@@ -1,0 +1,48 @@
+; Syntax: @cp2tif
+; Description: copies images from spider to tiff
+; Input:
+;   images template
+;   number of images to convert
+;     enter 0 to specify images from a list
+
+FR
+?IN.Template of spider images (dir/file*****)?<imgtmpl>
+FR
+?IN.List or number of images (50 or dir/doc)?<imglist>
+FR
+?OUT.Template of tiff images (dir/file*****)?<outtmpl>
+
+; ~~~~~ start ~~~~~
+x20=0
+IQ FI x20
+<imglist>
+
+IF(x20.eq.1)THEN
+  UD N x21
+  <imglist>
+ELSE
+  x21=<imglist>
+ENDIF
+
+DO LB1 x11=1,x21
+
+x22=x11
+IF(x20.eq.1)THEN
+  UD IC x11,x22
+  <imglist>
+ENDIF
+
+VM
+echo -n Copy image {%F7.1%x22}..
+
+CP TO TIFF
+<imgtmpl>x22     ; INPUT IMAGE
+<outtmpl>x22     ; OUTPUT IMAGE
+
+LB1
+IF(x20.eq.1)THEN
+  UD ICE
+  <imglist>
+ENDIF
+
+RE

@@ -1,0 +1,244 @@
+; Description:
+;   Combine particles from up to 5 datasets into one stack
+;   Particle inter(extra)polation must be done before hand
+;     **preprocess particles with same normalizations and filters first**
+;   Procedure terminates if a particle list doesn't exist for a data set.
+; Output:
+;   ser@****** = stack of particles
+;   serlist    = list of particles, with dataset, and old particle number
+;   dataset_count = list with number of particles from each dataset
+; Ed Brignole, v2009.08.03
+
+;DATASET 1
+FR L
+<list1>/buckbeak/usr/brignole/08febD22/rali4/serkeeplist
+FR L
+<pcl1>/buckbeak/usr/brignole/08febD22/ser2/mfseru@******
+;DATASET 2
+FR L
+<list2>/buckbeak/usr/brignole/06marD22/iral1/serkeeplist
+FR L
+<pcl2>/buckbeak/usr/brignole/06marD22/iser/mfiser@******
+;DATASET 3
+FR L
+<list3>/buckbeak/usr/brignole/06aprKSQ/iral1/serkeeplist
+FR L
+<pcl3>/buckbeak/usr/brignole/06aprKSQ/iser/mfiser@******
+;DATASET 4
+FR L
+<list4>/buckbeak/usr/brignole/07marDH/iral1/serkeeplist
+FR L
+<pcl4>/buckbeak/usr/brignole/07marDH/iser/mfiser@******
+;DATASET 5
+FR L
+<list5>/buckbeak2/usr/brignole/07marDHn/iral2_50/serkeeplist
+FR L
+<pcl5>/buckbeak2/usr/brignole/07marDHn/iser2/mfiser@******
+
+FR L   ;output directory
+<dir>ser1
+
+; ~~~~ start ~~~~
+MD
+set mp
+(0)
+
+; ---- INITIALIZE ----
+VM
+mkdir -p <dir>
+
+SD /    dataset     firstnum      lastnum
+<dir>/dataset_count
+
+SD IC NEW
+serlist_ic
+(3,199999) ;newnum,dataset,oldnum
+
+x20=0 ;particle counter
+
+; ---- DATASET 1 ----
+IQ FI x99
+<list1>
+IF(x99.eq.0)GOTO LB99
+
+x18=1 ;dataset 1
+x19=x20+1 ;first particle
+UD N x21
+<list1>
+
+VM
+echo -n Adding {%F7.1%x21} particles from <list1> to <dir>/ser..
+DO LB1 x11=1,x21 ;loop 1
+  UD IC x11,x31
+  <list1>
+
+  x20=x20+1
+  CP
+  <pcl1>x31
+  <dir>/ser@{******x20}
+
+  SD IC x20,x20,x18,x31
+  serlist_ic
+
+LB1
+UD ICE
+<list1>
+
+SD x18,x18,x19,x20
+<dir>/dataset_count
+
+VM
+echo .done.
+
+; ---- DATASET 2 ----
+IQ FI x99
+<list2>
+IF(x99.eq.0)GOTO LB99
+
+x18=2 ;dataset 2
+x19=x20+1 ;first particle
+UD N x21
+<list2>
+
+VM
+echo -n Adding {%F7.1%x21} particles from <list2> to <dir>/ser..
+DO LB2 x11=1,x21
+  UD IC x11,x31
+  <list2>
+
+  x20=x20+1
+  CP
+  <pcl2>x31
+  <dir>/ser@{******x20}
+
+  SD IC x20,x20,x18,x31
+  serlist_ic
+
+LB2
+UD ICE
+<list2>
+
+SD x18,x18,x19,x20
+<dir>/dataset_count
+
+VM
+echo .done.
+
+; ---- DATASET 3 ----
+IQ FI x99
+<list3>
+IF(x99.eq.0)GOTO LB99
+
+x18=3 ;dataset 3
+x19=x20+1 ;first particle
+UD N x21
+<list3>
+
+VM
+echo -n Adding {%F7.1%x21} particles from <list3> to <dir>/ser..
+DO LB3 x11=1,x21
+  UD IC x11,x31
+  <list3>
+
+  x20=x20+1
+  CP
+  <pcl3>x31
+  <dir>/ser@{******x20}
+
+  SD IC x20,x20,x18,x31
+  serlist_ic
+
+LB3
+UD ICE
+<list3>
+
+SD x18,x18,x19,x20
+<dir>/dataset_count
+
+VM
+echo .done.
+
+; ---- DATASET 4 ----
+IQ FI x99
+<list4>
+IF(x99.eq.0)GOTO LB99
+
+x18=4 ;dataset 4
+x19=x20+1 ;first particle
+UD N x21
+<list4>
+
+VM
+echo -n Adding {%F7.1%x21} particles from <list4> to <dir>/ser..
+DO LB4 x11=1,x21
+  UD IC x11,x31
+  <list4>
+
+  x20=x20+1
+  CP
+  <pcl4>x31
+  <dir>/ser@{******x20}
+
+  SD IC x20,x20,x18,x31
+  serlist_ic
+
+LB4
+UD ICE
+<list4>
+
+SD x18,x18,x19,x20
+<dir>/dataset_count
+
+VM
+echo .done.
+
+; ---- DATASET 5 ----
+IQ FI x99
+<list5>
+IF(x99.eq.0)GOTO LB99
+
+x18=5 ;dataset 5
+x19=x20+1 ;first particle
+UD N x21
+<list5>
+
+VM
+echo -n Adding {%F7.1%x21} particles from <list5> to <dir>/ser..
+DO LB5 x11=1,x21
+  UD IC x11,x31
+  <list5>
+
+  x20=x20+1
+  CP
+  <pcl5>x31
+  <dir>/ser@{******x20}
+
+  SD IC x20,x20,x18,x31
+  serlist_ic
+
+LB5
+UD ICE
+<list5>
+
+SD x18,x18,x19,x20
+<dir>/dataset_count
+
+VM
+echo .done.
+
+LB99
+; ---- CLEAN UP ----
+SD E
+<dir>/dataset_count
+
+; ---- WRITE STACK AND PARTICLE LIST ----
+SD IC COPY
+serlist_ic
+<dir>/serlist
+SD IC END
+serlist_ic
+
+VM
+echo Combined dataset stack <dir>/ser contains {%F7.1%x20} particles.
+
+EN D

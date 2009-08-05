@@ -1,0 +1,270 @@
+(x12,x61,x52,x55,x51,x41,x64,x54,x56,x76,x86,x77,x11)
+; Syntax: @ali3d
+;------------------------
+;last modified on 08/08/05
+;by Yuriy Chaban
+;
+;modified on 08/23/04
+;by Mayya A. Sedova
+;
+;initial version by
+;by John L. Craighead
+;------------------------
+; x61 - number of images in current defocus group
+; x52 - image size
+; x55 - total number of images in data set
+; x51 - object radius
+; x41 - angular separation between reference projections
+; x64 - (x64*x41) = angular change treshold
+; x54 - first radius for rotational alignment
+; x56 - last radius for rotational alignment
+; x76 - previous refinement round
+; x86 - current refinement round
+; x77 - defocus group number
+; x11 - range for restricted ang search (from stepsize file; 0.0 =>no restriction)
+;.....................................................................
+;  inline buffers used: _1,_2,_3 and _9 as a stack
+;.....................................................................
+FR;   vct{***x76}
+?IN.Reference volume (dir/vol)?<refvol>
+
+FR;   _7@
+?IN.Prefix for original particles stack (dir/istack@)?<instack>
+
+FR;   _8@
+?IN/OUT.Prefix for prealigned particles stack (dir/ostack@)?<outstack>
+
+FR;   apsh{***x86}
+?OUT.APSH parameters doc (dir/apshdoc)?<newapsh>
+
+FR;   angvoea
+?OUT.Projection angles doc (dir/angles)?<pjangles>
+
+FR;   apsh{***x76}
+?IN.APSH parameters doc from previous step (dir/oldapshdoc)?<oldapsh>
+
+FR;   apshrange001
+?IN.APSH range file (dir/range001)?<range>
+
+FR;   jump{***x86}
+?IN.Jump track file for this round (dir/jump)?<jump>
+
+FR;   defgrpdoc{***x77}
+?IN.Defgrp images doc (dir/defgrpdoc)?<defdoc>
+
+;.....................................................................
+;
+; ~~~~~ start ~~~~~
+MD
+VB ON
+
+x78=1.0
+;
+; Generate document file with angles required to calculate reference projections
+; x53 - number of reference projections
+;
+VO EA,x53
+x41
+(0.0,90.0)
+(0.0,359.9)
+<pjangles>
+;
+; Make and empty in-line stack to store reference projections
+;
+MS
+_9@
+X52,X52,X78
+X53
+;
+; Calculate and store reference projections
+;
+PJ 3Q
+<refvol>
+x51
+x78-x53
+<pjangles>
+_9@*****
+;
+; Now retrieve parameters for image alignment
+; First search range and step size for translational alignment
+;  prior,range,step
+ud x76,x57,x59
+<range>
+ud e
+;
+; Calculate "angle change threshold" for current round by multiplying the
+; separation between references by a fixed factor x64
+;
+x12=x41*x64
+;
+; Check to see if there is an AP SH output document file from a previous round
+;
+iq fi x60
+<oldapsh>
+; 
+if(x60.eq.0.0) then
+;vm
+;echo "APSH. APSH file from previous step was not found. No restriction to angular search."
+;
+if(x12.eq.0)then
+AP SH
+_9@*****
+x78-x53
+x57,x59
+x54,x56
+<pjangles>
+<outstack>*****
+<defdoc>
+*
+(0.0,x12)
+(1)
+<newapsh>
+
+else
+
+AP SH
+_9@*****
+x78-x53
+x57,x59
+x54,x56
+<pjangles>
+<outstack>*****
+<defdoc>
+start_apsh{***x77}
+(0.0,x12)
+(1)
+<newapsh>
+
+endif
+;
+else
+;
+AP SH
+_9@*****
+x78-x53
+x57,x59
+x54,x56
+<pjangles>
+<outstack>*****
+<defdoc>
+<oldapsh>
+x11,x12
+(1)
+<newapsh>
+;
+endif
+;
+;Delete pre-aligned image stack and calculate new ones
+;
+DE
+<outstack>
+;
+; Create and indexed in-line stack to store new aligned images
+;
+MS I
+<outstack>
+X52,X52,X78
+x61
+x55
+;
+; x87 is a key counter for the "jump" file
+;
+x87=1
+;
+; Create in-line array for saving "jump" file
+;
+sd ic new
+jump_array
+(6,x61)
+;
+; Now run loop that will align all particles and create
+; "jump" file
+;
+do lb5 h=x78,x61
+x70=h
+;
+; Read AP SH output file that contains alignment parameters
+;
+ud ic,x70,x67,x68,x69,x21,x26,x47,x48,x49,x10,x71,x22,x23,x24,x25,x29
+<newapsh>
+;
+; Now use parameters to align particle
+;
+rt sq
+<instack>{*****x26}
+<outstack>{*****x26}
+x47
+x48,x49
+;
+; Now take care of "jump" file
+;
+if(x76.eq.1)then
+;
+x85=0
+;
+; This will set jump number for all particles to 0 after first round
+;
+; Parameters of the jump file:
+;
+; x87-counter (key)
+; x26-No of experimental particle
+; x85-No of jumps over delta Theta
+; x71-Angular difference betw. previous and current projection
+; x67,x68,x69 - Psi,Theta,Phi, correspondingly.
+;
+sd ic x87,x26,x85,x71,x67,x68,x69
+jump_array
+x87=x87+1
+;
+else
+;
+ud ic,x87,x89,x85
+final/defgrp{***x77}/jump{***x76}
+;
+if(x71.ge.x12)then
+;
+x85=x85+1
+;
+sd ic x87,x26,x85,x71,x67,x68,x69
+jump_array
+x87=x87+1
+else
+sd ic x87,x26,x85,x71,x67,x68,x69
+jump_array
+x87=x87+1
+;
+endif
+endif
+;
+lb5
+;
+; Now copy in-line jump_array to actual jump file and close it 
+;
+sd ic copy
+jump_array
+<jump>
+;
+sd ic end
+jump_array
+;
+; Close in-line files
+;
+if(x76.gt.1)then
+ud ice
+final/defgrp{***x77}/jump{***x76}
+endif
+;
+ud ice
+<newapsh>
+;
+; remove inline files (where references were saved)
+de
+_9@
+;
+; remove temporary files (temp. reference projection angles)
+;
+de
+<pjangles>
+;
+;
+RE

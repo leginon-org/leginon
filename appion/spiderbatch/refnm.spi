@@ -1,0 +1,127 @@
+(x80) ; particle radius
+; Syntax: @refnm(radius)
+; Description:
+;  nonmirrored reference alignment using AP NQ
+; Output: 
+;  alignment parameters apnq_doc
+
+; Then use @refgrp to make class averages and class membership
+
+FR
+?IN.List of particles to align (dir/file)?<pcllist>
+FR
+?IN.Particles template (dir/ser@*****)?<pcltmpl>
+FR
+?IN.List of reference images (dir/file)?<reflist>
+FR
+?IN.References template (dir/tmp***)?<reftmpl>
+FR
+?OUT.Existing directory (dir)?<outdir>
+
+; ~~~~~ start ~~~~~
+; HOW MANY PARTICLES
+UD N x81
+<pcllist>
+UD N x85
+<reflist>
+
+VM
+echo -n Aligning {%F9.1%x81} particles to {%F7.1%x85} references..
+
+; CHECK DIMENSIONS OF FIRST PARTICLE AND REFERENCE
+UD 1,x84
+<pcllist>
+FS
+<pcltmpl>x84
+FI x82,x83
+<pcltmpl>x84
+12,2
+
+UD 1,x86
+<reflist>
+FS
+<reftmpl>x86
+FI x87,x88
+<reftmpl>x86
+12,2
+
+x89=0
+IF(x87.ne.x82)THEN
+  VM
+  echo 'ERROR: Particles are' {%F7.1%x82} NROW but References are {%F7.1%x87} NROW
+  x89=1
+ENDIF
+IF(x88.ne.x83)THEN
+  VM
+  echo 'ERROR: Particles are' {%F7.1%x83} NSAM but References are {%F7.1%x88} NSAM
+  x89=1
+ENDIF
+IF(x89.eq.1)THEN
+  EN
+ENDIF
+
+x79=1 ; inner radius
+x84=((x82/2)-x80-3)   ; search range = image radius - particle radius - 2
+IF(x84.lt.0)x84=0     ; search range must be nonnegative
+
+; ALIGN PROJECTIONS AND PARTICLES
+VM
+echo -n .Radius {%F7.1%x79} to {%F7.1%x80}, Translation {%F7.1%x84} ..
+
+VM
+cp <pcllist>.$DATEXT <outdir>/pcllist_temp.$DATEXT
+x89=0
+IQ FI x89
+<outdir>/apnq_doc
+IF(x89.eq.1)THEN ; pick up where it left off
+  UD N x71
+  <outdir>/apnq_doc
+  x81=x81-x71 ; how many particles to go
+  VM
+  tail -{******x81} <pcllist>.$DATEXT > <outdir>/pcllist_temp.$DATEXT
+  VM
+  echo Resuming prior ref-alignment in <outdir>...
+ENDIF
+
+AP NQ
+<reftmpl>
+<reflist>
+x84,(1)
+x79,x80
+<pcltmpl>
+<outdir>/pcllist_temp
+<outdir>/apnq_doc
+
+x89=0
+;SD IC NEW
+;mockrefangles
+;(3),x85
+;DO LB2 x12=1,x85
+;SD IC x12,x89,x89,x89 ; phi theta psi are zero
+;mockrefangles
+;LB2
+
+;AP SH
+;<reftmpl>      ; REFERENCE PROJECTIONS TEMPLATE
+;<reflist>      ; SELECTION OF REFERENCE PROJECTIONS OR DOC
+;x84,(1)        ; TRANSLATION RANGE AND STEP SIZE
+;x79,x80        ; FIRST AND LAST RING
+;mockrefangles  ; in core angles of 
+;<pcltmpl>      ; PARTICLES TEMPLATE
+;<outdir>/pcllist_temp  ; SELECTION OF PARTICLES OR DOC
+;*          ; angles
+;(0.0)      ; no angle range and threshold
+;(0)        ; no mirror
+;<outdir>/apsh_doc ; ALIGNMENT OUTPUT DOC
+
+;SD IC END
+;mockrefangles
+
+VM
+rm -f <outdir>/pcllist_temp.$DATEXT
+
+VM
+echo .done.
+
+RE
+

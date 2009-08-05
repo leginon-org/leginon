@@ -1,0 +1,137 @@
+; Reference Free Alignment Procedure
+; version 20090204
+
+FR L    ;list of particles to align
+<pcllist>pcl/serulist
+FR L    ;particle template
+<pcltmpl>pcl/mfnseru@******
+RR x21  ;radius for alignment (pix)
+0   ;if <5, then radius determined automatically
+FR L    ;output directory for initial 10xAPSR
+<alndir>fa1
+
+;Reference image to orient all alignment rounds
+FR L    ;resized refimage - will use this if it exists
+<refimg>None
+FR L    ;if <refimg> not found then resizes <oldref> to make <refimg>
+<oldref>None
+RR x27  ;A/pix of <oldref>
+2.26
+RR x24  ;A/pix of particles
+4.2
+;If <refimg> and <oldref> do not exist, then orients alignment results to self
+
+; ~~~~~ let the fun begin ~~~~~
+
+x26=10   ;number of apsrrounds
+
+IF(x21.lt.5)THEN
+  VM
+  echo Radius entered was too small..finding a new radius.
+  AS R
+  <pcltmpl>
+  <pcllist>
+  A
+  _20 ;av
+  _21 ;va
+  
+  @findradius(x21)
+  _20
+  
+  DE
+  _20
+  DE
+  _21
+  VM
+  echo Proceeding with alignment radius of {%F7.1%x21}.
+ENDIF
+
+@fraln(x21,x26) ;radius,rounds
+<pcllist>
+<pcltmpl>
+*
+<alndir>
+
+x99=0
+IQ FI x99
+<refimg>
+IF(x99.eq.1)GOTO LB90 ;newref exists - skip ahead
+
+x99=0
+IQ FI x99
+<oldref>
+IF(x99.eq.0)THEN ;refimg does not exist either
+  VM
+  echo -n 'Could not find a reference image to align apsr results. '
+  @alnapsr(x21)
+  <alndir>
+  <pcllist>
+  (1) ;align averages without reference
+  
+  @orientbymirrors(x91,x92,x93)
+  <alndir>/lastiav
+  <alndir>/orientiav
+
+  VM
+  echo Created <alndir>'/orientiav as reference to align apsrresults.'
+  @alnapsr(x21)
+  <alndir>
+  <pcllist>
+  (3)
+  <alndir>/orientiav
+  
+  GOTO LB91 ;skip alignment to reference below
+ENDIF
+
+VM
+echo Making <refimg> from <oldref>.
+IF(x27.eq.x24)THEN ; apix(ref)=apix2(pcls)
+  CP
+  <oldref>
+  <refimg>
+ELSE
+  ;get size of refimg
+  FS
+  <oldref>
+  FI x33
+  <oldref>
+  (12) ; nsam
+
+  ;get size of particles
+  UD N x20
+  <pcllist>
+  UD IC x20,x33
+  <pcllist>
+  FS
+  <pcltmpl>x33
+  FI x25
+  <pcltmpl>x33
+  (12)
+  x32=x27/x24 ;scale factor
+  x32=int(x33*x32)+1  ;scaled image size
+
+  @resizeimg(x27,x24,x25) ;inApix,outApix,Size
+  <oldref>
+  <refimg>
+ENDIF
+
+LB90 ; skip to here if <refimg> already exists
+
+@alnapsr(x21)
+<alndir>
+<pcllist>
+(3) ;freealign avgs, orient to ref, then use avg to refalign avgs
+<refimg>
+
+LB91 ; skip to here if no reference exists
+
+@apsrstat
+<alndir>
+
+DE
+<alndir>/apsrsum
+
+VM
+echo Reference-free alignment complete - Next apply transformation and do classification.
+
+EN D

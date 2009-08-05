@@ -1,0 +1,354 @@
+;tiltpairs version 20090213
+; DESCRIPTION:
+;   projects a volume to make a mock random conical tilt data set
+; OUTPUT:
+;   tilted particles: sert@******
+;   untilted particles: seru@******
+;   euler docs: serteulers & serueulers
+;   particle list: serlist
+;   dcb doc: dcb0001
+;   micros: tilted micro0001 and untilted micro0002
+;     odd particles nonmirrored projections
+;     even particles mirrored projection
+
+FR
+?IN.Volume to project?<vol>
+RR x30
+?IN.Tilt angle from goniometer (-55)?
+RR x31
+?IN.Untilted axis rotation (10)?
+RR x32
+?IN.Tilted axis rotation (15)?
+FR
+?OUT.Existing directory (dir)?<dir>
+
+; ~~~~~ start ~~~~~
+
+FS
+<vol>
+FI x20
+<vol>
+(12)
+
+x21=360 ;number of 1 degree rotations
+x22=x21*2 ;total number of particles ;mirror & nonmirror
+
+SD IC NEW ;store pclnum,psi,tta,phi,rt
+serueuler_ic
+(4,x22)
+
+SD IC NEW ;store pclnum,psi,tta,phi,rt
+serteuler_ic
+(4,x22)
+
+SD IC NEW ;store pclnum,psi,tta,phi,rt
+seru_unroteuler_ic
+(4,x22)
+
+SD IC NEW ;store pclnum,psi,tta,phi,rt
+sert_unroteuler_ic
+(4,x22)
+
+VM
+echo Making euler docs for {%F7.1%x22} particles..
+
+;first loop - no untilt or tilt axis rotation
+DO LB1 x11=1,x21 ;for each in-plane rotation
+  x23=x11-1 ;inplane rotations start from 0
+
+  ;--- first do non-mirrored projection ---  
+  x24=(x11*2)-1 ;particle number
+
+  SA E x27,x28,x29
+  (0,0,0) ;flip volume
+  (x23,0,0) ;inplane rotate
+
+  SD IC x24,x29,x28,x27
+  seru_unroteuler_ic
+  
+  x25=x29+x31 ;add untilted inplane
+  SD IC x24,x25,x28,x27
+  serueuler_ic
+  
+  SA E x27,x28,x29 ;calculate tilt particle angle
+  x27,x28,x29
+  (0,x30,0)
+
+  SD IC x24,x29,x28,x27,x23
+  sert_unroteuler_ic
+  
+  x25=x29+x32 ;add tilted inplane
+  SD IC x24,x25,x28,x27,x23
+  serteuler_ic
+  
+  ;--- now do mirrored projection ---  
+  x24=(x11*2) ;particle number
+
+  SA E x27,x28,x29
+  (0,180,0) ;flip volume
+  (x23,0,0) ;inplane rotate
+
+  SD IC x24,x29,x28,x27,x23
+  seru_unroteuler_ic
+  
+  x25=x29+x31 ;add untilted inplane
+  SD IC x24,x25,x28,x27,x23
+  serueuler_ic
+  
+  SA E x27,x28,x29 ;calculate tilt particle angle
+  x27,x28,x29
+  (0,x30,0)  ;tilt volume
+
+  SD IC x24,x29,x28,x27,x23
+  sert_unroteuler_ic
+  
+  x25=x29+x32 ;add tilted inplane
+  SD IC x24,x25,x28,x27,x23
+  serteuler_ic
+  
+  x15=x11/60
+  x16=int(x11/60)
+  IF(x15.eq.x16)THEN
+    VM
+    echo . {%F7.1%x11} degrees
+  ELSE
+    VM
+    echo -n '.'
+  ENDIF
+LB1
+SD IC COPY
+serueuler_ic
+<dir>/serueulers
+SD IC END
+serueuler_ic
+
+SD IC COPY
+seru_unroteuler_ic
+<dir>/seru_unroteulers
+SD IC END
+seru_unroteuler_ic
+
+SD IC COPY
+serteuler_ic
+<dir>/serteulers
+SD IC END
+serteuler_ic
+
+SD IC COPY
+sert_unroteuler_ic
+<dir>/sert_unroteulers
+SD IC END
+sert_unroteuler_ic
+
+VM
+echo .done.
+VM
+echo -n '  Projecting untilted particles..'
+
+x26=int(x20/2)-2 ;projection radius
+
+PJ 3Q
+<vol>
+x26
+(1-x22)
+<dir>/serueulers
+<dir>/seru@******
+
+PJ 3Q
+<vol>
+x26
+(1-x22)
+<dir>/seru_unroteulers
+<dir>/seru_unrot@******
+DE
+<dir>/seru_unroteulers
+
+VM
+echo done.
+VM
+echo -n '  Projecting tilted particles..'
+
+PJ 3Q
+<vol>
+x26
+(1-x22)
+<dir>/serteulers
+<dir>/sert@******
+
+PJ 3Q
+<vol>
+x26
+(1-x22)
+<dir>/sert_unroteulers
+<dir>/sert_unrot@******
+DE
+<dir>/sert_unroteulers
+
+VM
+echo done.
+
+;---put particles into micros
+VM
+echo 'Putting particles into tilt pair micros'
+
+x51=int(x22**0.5) ;number of particles in short dimension (rows)
+x52=x22/x51 ;number of particles in long dimension (columns)
+x53=x52-int(x52) ;find remainder
+IF(x53.gt.0)x52=int(x52)+1
+
+;size of micros
+x33=3*x20 ;interval between particle coordinates
+x34=int(x33*x52/cos(45))   ;microsize in short dimension(y) = bigbox*rows*~1.4
+x35=int(x33*x52/cos(45))   ;microsize in long dimension(x)  = bigbox*columns*~1.4
+x36=int(x35/2)+1   ;center of micro
+x37=int((x35-(x33*x52))/2) ;initial top leftx = (microx-interval*columns)/2
+x38=int((x34-(x33*x51))/2) ;initial top lefty = (microy-interval*rows)/2
+x39=int(x20/2) ;topleft of particle = (size)/2
+
+BL
+_1
+(x35,x35,1)
+N
+(0)
+
+CP
+_1
+_2
+
+SD IC NEW
+dcu_ic
+(3,x22)
+
+SD IC NEW
+dct_ic
+(3,x22)
+
+SD IC NEW
+serlist_ic
+(2,x22)
+
+x54=1 ;micro-number
+
+x55=0 ;column
+x56=1 ;row
+VM
+echo -n ' row{***x56}  '
+DO LB2 x12=1,x22
+
+  x55=x55+1
+  IF(x55.gt.x52)THEN ;if this column is beyond last column
+    x55=1 ;first column
+    x99=x12-1
+    VM ;end row
+    echo ' '{%F7.1%x99}
+    x56=x56+1 ;start a new row
+    VM
+    echo -n ' row{***x56}  .'
+  ELSE
+    x99=x55/10-int(x55/10)
+    IF(x99.eq.0)THEN
+      VM ;every 10th column
+      echo -n '0'
+    ELSE
+      VM
+      echo -n '.'
+    ENDIF
+  ENDIF
+
+  ;center coordinate of particle
+  x40=x37+(x55-1)*x33+x33/2 ;topleft0 + column*interval + interval/2
+  x41=x38+(x56-1)*x33+x33/2 ;topleft0 + row*interval + interval/2
+  
+  x42=(x40-x36)*cos(-x31)-(x41-x36)*sin(-x31)+x36
+  x43=(x40-x36)*sin(-x31)+(x41-x36)*cos(-x31)+x36
+  
+  SD IC x12,x12,x42,x43
+  dcu_ic
+  
+  x44=x40-x39 ;adjust x-coord to topleft
+  x45=x41-x39 ;adjust y-coord to topleft
+
+  IN ;insert
+  <dir>/seru_unrot@{******x12}
+  _1
+  x44,x45 ;topleft
+  
+  ;center coordinate of particle
+  x40=x37+((x55-1)*x33+x33/2)*cos(x30) ;tilt compresses x-axis
+  x42=(x40-x36)*cos(-x32)-(x41-x36)*sin(-x32)+x36
+  x43=(x40-x36)*sin(-x32)+(x41-x36)*cos(-x32)+x36
+
+  SD IC x12,x12,x42,x43
+  dct_ic
+  
+  x44=x40-x39 ;adjust x-coord to topleft
+  
+  IN ;insert
+  <dir>/sert_unrot@{******x12}
+  _2
+  x44,x45 topleft
+
+  ;         pcl,mic
+  SD IC x12,x12,x54
+  serlist_ic
+LB2
+
+SD IC COPY
+serlist_ic
+<dir>/serlist
+SD IC END
+serlist_ic
+
+SD IC COPY
+dcu_ic
+<dir>/dcu0001
+SD IC END
+dcu_ic
+
+SD IC COPY
+dct_ic
+<dir>/dct0001
+SD IC END
+dct_ic
+
+DE
+<dir>/seru_unrot
+DE
+<dir>/sert_unrot
+
+RT SQ ;tilted micro0001
+_2
+<dir>/micro0001
+x32,(1)
+(0,0)
+
+DE
+_2
+
+RT SQ ;untilted micro0002
+_1
+<dir>/micro0002
+x31,(1)
+(0,0)
+
+DE
+_1
+
+VM
+echo '  Tilted micros written.'
+
+DE
+<dir>/dcb0001
+x30=abs(x30)
+SD 1,x30,x31,x32
+<dir>/dcb0001
+SD 2,x30,x31,x32
+<dir>/dcb0001
+SD 3,x30,x31,x32
+<dir>/dcb0001
+SD 4,x30,x31,x32
+<dir>/dcb0001
+SD E
+<dir>/dcb0001
+
+RE

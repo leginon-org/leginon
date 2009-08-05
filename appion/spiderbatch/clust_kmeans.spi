@@ -1,0 +1,80 @@
+(x21,x22) ;numfactors,numgrps
+; Syntax: @clust_kmeans(nfact,ngrps)
+; Description:
+;  performs K-means clustering after correspondence analysis
+;  if nfact=0 then will ask for discontinuous factors
+; Output:
+;   kmlist, km***, kmav@***, kmva@***
+
+FR
+?IN.CorAn prefix (assumes _IMC)?<prefix>
+IF(x21.eq.0)THEN
+  FR
+  ?IN.Factors to keep ((1,2-10,20))?<factors>
+ENDIF
+FR
+?IN.Aligned particles template (dir/rtp@*****)?<pcltmpl>
+
+; ~~~~~ start ~~~~~
+
+IF(x21.eq.0)THEN ;discontinuous factors
+  VM
+  echo -n Generating {%F7.1%x22} k-means classes with discontinuous factors..
+
+  ;intergrp,intragrp,coleman,harabasz,daviesbouldin
+  CL KM x91,x92,x93,x94,x95
+  <prefix>_IMC
+  x22     ;numgrps
+  <factors> ;factors
+  (0)       ;weight
+  (1457)    ;just a random number
+  <prefix>_km***
+  <prefix>_kmlist
+ELSE ;continuous factors
+  VM
+  echo -n Generating {%F7.1%x22} k-means classes with {%F7.1%x21} factors..
+
+  ;intergrp,intragrp,coleman,harabasz,daviesbouldin
+  CL KM x91,x92,x93,x94,x95
+  <prefix>_IMC
+  x22     ;numgrps
+  (1-x21) ;factors
+  (0)     ;weight
+  (1457)  ;just a random number
+  <prefix>_km***
+  <prefix>_kmlist
+ENDIF
+
+DE
+<prefix>_kmlist
+
+SD IC NEW
+kmlist_ic
+(2),x22 ;cols,keys
+
+DO LB1 x11=1,x22 ;for each class
+  UD N x42  ; how many images in this class
+  <prefix>_km{***x11}
+  UD E
+
+  SD IC x11,x11,x42 ; essentially doc key but that command doesn't work on cluster
+  kmlist_ic
+
+  AS R
+  <pcltmpl>              ; IMAGE TEMPLATE
+  <prefix>_km{***x11}    ; LIST OF IMAGES
+  A     ; ALL IMAGES
+  <prefix>_kmav@{***x11} ; AVERAGE IMAGE
+  <prefix>_kmva@{***x11} ; VARIANCE IMAGE
+LB1
+
+SD IC COPY
+kmlist_ic
+<prefix>_kmlist
+SD IC END
+kmlist_ic
+
+VM
+echo .done.
+
+RE

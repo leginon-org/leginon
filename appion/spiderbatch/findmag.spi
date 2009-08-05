@@ -1,0 +1,257 @@
+(x81,x82) ; (Apix1,Apix2) !!x82 will be overwritten!!
+; Syntax: @findmag(apix1,apix2)
+; Description:
+;   Compares magnification between two images or volumes
+;   by adjusting until best Apix is found after 20 interpolations
+;   Exits prematurely if correlation of 1.0 is found
+;   Displays "+" and "-" to indicate extrapolating/interpolating
+;   Displays "*" to indicate a new best CCC
+;   Testing this script calculated Apix within 2% of actual Apix 
+;
+; Input: x81 and x82 are used to initialize the search
+;        reference image/volume
+;        image/volume to compare
+; Output: returns best Apix for image2 in x82
+
+FR
+?IN.Reference image or volume (dir/img)?<img1>
+FR
+?IN.Second image or volume (dir/img)?<img2>
+
+; ~~~~~ start ~~~~~
+
+IF(x81.le.0)THEN
+  VM
+  echo ERROR..Apix of Image/Volume1 must be greater than 0.
+  EN
+ENDIF
+IF(x82.le.0)THEN
+  VM
+  echo ERROR..Apix of Image/Volume2 must be greater than 0.
+  EN
+ENDIF
+
+FS
+<img1>
+FI x21,x22,x23
+<img1>
+(12,2,1) ;nsam,nrow,nslice
+
+IF(x21.ne.x22)THEN
+  VM
+  echo ERROR..Image/Volume1 dimensions must be square.
+  EN
+ENDIF
+IF(x23.ne.1)THEN
+  IF(x23.ne.x21)THEN
+    VM
+    echo ERROR..Volume1 dimensions must be square.
+    EN
+  ENDIF
+ENDIF
+
+FS
+<img2>
+FI x24,x25,x26
+<img2>
+(12,2,1) ;nsam,nrow,nslice
+
+IF(x24.ne.x25)THEN
+  VM
+  echo ERROR..Image/Volume2 dimensions must be square.
+  EN
+ENDIF
+IF(x26.ne.1)THEN
+  IF(x26.ne.x24)THEN
+    VM
+    echo ERROR..Volume2 dimensions must be square.
+    EN
+  ENDIF
+ENDIF
+
+VM
+echo -n 'Calibrating Apix:'
+
+x38=0 ;initial ccc
+x39=0 ;max ccc
+x90=1 ;initial search direction positive
+x83=x82 ;initialize lastApix2
+DO LB1 x11=0,20 ;do 21 steps to find best mag
+  x80=0.3*exp(-0.2*x11) ;additive factor (decreases from ~0.25xApix to ~0.01xApix in 20 shrinking steps)
+  IF(x11.eq.0) x80=0 ;initially just use old Apix2
+
+  x83=x83+(x82*x80*x90) ;newApix2=lastApix2 + (oldApix2*factor*direction)
+  IF(x90.eq.1)THEN ; increase Apix
+    VM
+    echo -n ' +'
+  ENDIF
+  IF(x90.eq.-1)THEN ;ELSE ;decrease Apix
+    VM
+    echo -n ' -'
+  ENDIF
+  ;VM
+  ;echo -n ' '{%F7.3%x83}
+
+  IF(x83.le.0)THEN
+    VM
+    echo ERROR..negative Apix.
+    EN
+  ENDIF
+
+  ;1)interpolate to smallest Apix
+  ;2)pad to largest size
+
+  IF(x81.gt.x83)THEN ;img1 has larger Apix - interpolate img1 to same
+    x41=int(x21*(x81/x83)) ;newPix1 = oldPix1*Apix1/Apix2
+    IF(x23.ne.1)THEN ;volume
+      x43=int(x23*(x81/x83))
+    ENDIF
+    IP
+    <img1>
+    _1
+    x41,x41,x43
+    ;VM
+    ;echo -n ' Interp1 to '{%F7.1%x41}
+  ELSE
+    x41=x21 ;newPix1 nsam,nrow
+    x43=x23 ;newPix1 nslice
+    CP
+    <img1>
+    _1
+  ENDIF
+  IF(x81.lt.x83)THEN ;img2 has larger Apix - interpolate img2 to same
+    x44=int(x24*(x83/x81)) ;newPix2 = oldPix2*Apix2/Apix1
+    IF(x26.ne.1)THEN
+      x46=int(x26*(x83/x81))
+    ENDIF
+    IP
+    <img2>
+    _2
+    x44,x44,x46
+    ;VM
+    ;echo -n ' Interp2 to '{%F7.1%x44}
+  ELSE
+    x44=x24 ;newPix2 nsam,nrow
+    x46=x26 ;newPix2 nslice
+    CP
+    <img2>
+    _2
+  ENDIF
+
+  ;now pad to images to same size (larger of x41 or x44)
+  x45=x41 ;  IF(x41.ge.x44)x45=x41 ;image2 smaller - pad to same as image1
+  IF(x44.gt.x41)x45=x44 ;image1 smaller - pad to same as image2 
+  x42=x45/2-int(x45/2)
+  IF(x42.ne.0)x45=x45+1 ;must be even number
+  ;VM
+  ;echo -n ' 'Pad to {%F7.1%x45}
+
+  ;if volume pad to larger of x43 and x46
+  IF(x43.eq.1)GOTO LB91
+  x47=x43 ;IF(x43.ge.x46)x47=x43
+  IF(x46.gt.x43)x47=x46
+  x42=x47/2-int(x47/2)
+  IF(x42.ne.0)x47=x47+1
+  ;VM
+  ;echo -n ' and '{%F7.1%x47}
+  LB91 ;image not volume
+
+  x48=int((x45-x41)/2) +1 ;topleft x,y
+  x49=int((x47-x43)/2) +1 ;topleft z
+  PD
+  _1
+  _3
+  x45,x45,x47 ;newdimensions
+  B ;pad with border average
+  x48,x48,x49 ;topleft
+
+  x48=int((x45-x44)/2) +1 ;topleft x,y
+  x49=int((x47-x46)/2) +1 ;topleft z
+  PD
+  _2
+  _4
+  x45,x45,x47 ;new dimensions
+  B ;pad with border average
+  x48,x48,x49 ;topleft
+
+  CC N ;normalized cross-correlation
+  _3 ;img1
+  _4 ;img2
+  _5 ;ccf
+
+  FS
+  _5
+  FI x30,x31,x32
+  _5
+  (12,2,1)
+
+  x33=x30/4 ;mask radius
+  x34=int(x30/2)+1 ;mask center
+  IF(x32.eq.1)THEN ;image
+    PT
+    _6
+    (x30,x31) ;dimensions
+    C
+    (x34,x34) ;center of circle
+    (x33) ;radius
+    N ;end
+  ENDIF
+  IF(x32.gt.1)THEN ;volume
+    MO 3
+    _6
+    (x30,x31,x32) ;dimensions
+    SP  ;sphere
+    N
+    (1.0)   ;density
+    (x33,0) ;outer/inner radius
+    (x34,x34,x34) ;center of sphere
+    (0,0,0) ;exit
+  ENDIF
+
+  FS M x36,x30,x31,x32
+  _5 ;cc-image
+  _6 ;mask
+
+  ;VM
+  ;echo -n '  '{%F5.3%x36}
+  IF(x36.gt.x39)THEN ;new best ccc
+    x39=x36 ;store best ccc
+    x40=x83 ;store best Apix
+    VM
+    echo -n '*'
+  ;ELSE
+  ;  VM
+  ;  echo ' '
+  ENDIF
+  IF(x36.ge.0.999) GOTO LB90 ;found ideal correlation
+
+  IF(x36.lt.x38)THEN
+    x90=x90*(-1) ;if ccc decreased from previous round then start searching in opposite direction
+  ENDIF
+
+  x38=x36 ;store current ccc for next round
+
+  DE
+  _1
+  DE
+  _2
+  DE
+  _3
+  DE
+  _4
+  DE
+  _5
+  DE
+  _6
+LB1
+LB90 ;found ideal correlation
+
+;x81=x81*x82/x40 ; newApix1=oldApix1*(oldApix2/bestApix2)
+x82=x40 ;x82*x40/x82
+
+VM
+echo ''
+VM
+echo Best correlation {%F7.3%x39}: if img1 is {%F7.3%x81} then img2 is {%F7.3%x82} 
+
+RE

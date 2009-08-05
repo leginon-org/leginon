@@ -1,0 +1,76 @@
+; Syntax: @defocus
+; Description: 
+;   estimates defocus from 2D power spectra using TF ED
+; Output:
+;    defocus : doc file of defocus estimates
+;    ctf***  : (deleted) doc files (1 for each input) with spectrum, envelope, noise 
+
+FR
+?IN.List of micros (dir/file)?<miclist>
+FR
+?IN.Power spectra prefix (dir/pow assumes ****)?<pow>
+RR x55
+?IN.Pixel Size (A/Pix)?
+RR x56
+?IN.Spherical aberration (Cs)?
+RR x57
+?IN.Amplitude contrast ratio (0-1, usually ~0.1)?
+RR x58
+?IN.Acceleration voltage (kV)?
+FR
+?OUT.Existing output folder (dir)?<outdir>
+
+; ~~~~~ start ~~~~~
+
+UD N x40
+<miclist>
+
+VM
+echo -n Calculating defocuses from {%F7.1%x40} power spectra..
+
+;convert kV to lambda from table
+x53=0
+IF(x58.eq.100)x53=0.03701
+IF(x58.eq.120)x53=0.03349
+IF(x58.eq.140)x53=0.03074
+IF(x58.eq.160)x53=0.02851
+IF(x58.eq.180)x53=0.02665
+IF(x58.eq.200)x53=0.02508
+IF(x58.eq.300)x53=0.01969
+IF(x58.eq.400)x53=0.01644
+IF(x53.eq.0)THEN
+  VM
+  echo Cannot determine acceleration voltage for {%F7.%x58} kV
+  EN
+ENDIF
+
+SD /       micro     defocus     def.corr     astig.ang    astig.mag    cutoff.freq
+<outdir>/defocus
+
+DO LB1 x11=1,x40
+UD IC x11,x41
+<miclist>
+
+   TF ED x12,x13,x14,x15,x16 ;ang,mag,astdef,overdef,cutoff
+   <pow>{****x41}      ; input 2D spectrum
+   (x55,x56)           ; pixel size (A), spherical aberration (mm)
+   (x53)               ; lambda
+   (x57)               ; ampl. contrast ratio
+   <outdir>/ctftmp     ; output doc file
+
+   DE
+   <outdir>/ctftmp
+
+   SD x11,x41,x15,x14,x12,x13,x16
+   <outdir>/defocus
+
+LB1 ;next micro
+UD ICE
+<miclist>
+SD E
+<outdir>/defocus
+
+VM
+echo .done.
+
+RE

@@ -1,0 +1,79 @@
+; Syntax: @mergesubclasslists
+; Description:
+;   after classification of class-averages
+;   combines particle membership lists of merged classes
+; Output:
+;   list of superclasses: prefix_mrglist
+;   particle membership list for each superclass: prefix_mrg***
+
+FR
+?IN.List of superclasses (dir/pfx_thrk or kmlist)?<classlist>
+FR
+?IN.Template for superclass lists (dir/pfx_thr*** or _km***)?<classtmpl>
+FR
+?IN.Template for subclass lists (dir/thr***)?<subtmpl>
+FR
+?OUT.Prefix for merged lists (dir/pfx assumes _mrglist and mrg***)?<pfx>
+
+; ~~~~~ start ~~~~~
+;for each superclass
+UD N x21
+<classlist>   ;<superpfx>_thrk
+UD E
+x25=0    ; subclass counter
+x28=0    ; particle counter
+
+VM
+echo -n Merging into {%F7.1%x21} classes <pfx>
+VM
+echo -n '_mrg*** and _mrglist..'
+
+SD IC NEW
+mrglist_ic
+(3),x21
+
+DO LB1 x11=1,x21  ; for each superclass
+  UD IC x11,x22,x23 ;superclassnum,#subclasses
+  <classlist>   ;<superpfx>_thrk
+
+  ;for each subclass
+  UD N x24
+  <classtmpl>x22   ;<superpfx>_thr{***x22}
+  UD E
+  IF(x23.ne.x24)THEN
+    VM
+    echo Error...number of subclasses in superclass {%F7.1%x22} does not agree
+    EN
+  ENDIF
+
+  DOC COMBINE
+  <subtmpl>
+  <classtmpl>x22   ;<superpfx>_thr{***x22}
+  <pfx>_mrg{***x22}
+
+  UD N x27
+  <pfx>_mrg{***x22}
+  UD E
+
+  x25=x25+x23 ; increment subclass counter
+  x28=x28+x27 ; increment particle counter
+
+  SD IC x11,x22,x23,x27 ;classnum,#subclasses,#particles
+  mrglist_ic
+LB1 ; for each superclass x11
+UD ICE
+<classlist>   ;<superpfx>_thrk
+
+SD IC COPY
+mrglist_ic
+<pfx>_mrglist
+SD IC E
+mrglist_ic
+
+VM
+echo -n .from {%F7.1%x25} subclasses with 
+;{%F8.3%x28}
+VM
+echo ' '{******x28} particles.
+
+RE

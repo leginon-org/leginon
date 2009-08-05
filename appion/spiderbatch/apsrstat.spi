@@ -1,0 +1,200 @@
+; apsrstat
+; input:
+;    results from fraln followed by alnapsr (lasti** and lastd**)
+; output: 
+;    apsrerr = rotational and shift error for each apsr round
+;    apsrsum = alignment rounds average - a useless operation
+
+FR
+?IN.APSR directory (dir)?<apsrdir>
+
+; ~~~~~ start ~~~~~
+MD
+vb off
+
+x99=0
+IQ FI x99
+<apsrdir>/alignlist
+IF(x99.eq.0)THEN
+  VM
+  echo <apsrdir>/alignlist not found. First you must run fraln.
+  EN
+ENDIF
+
+UD N x21
+<apsrdir>/alignlist
+UD x21,x25
+<apsrdir>/alignlist
+UD E
+
+x99=0
+IQ FI x99
+<apsrdir>/lastd{**x25}
+IF(x99.eq.0)THEN
+  VM
+  echo <apsrdir>/lastd{**x25} not found. First you must run alnapsr.
+  EN
+ENDIF
+
+UD N x26
+<apsrdir>/lastd{**x25}
+UD E
+
+;SD /    Particle     Rotation     X-shift      Y-shift      Rt-err      Sh-err
+;<apsrdir>/apsrsum
+SD IC NEW
+summary_ic
+(6),x26
+
+BL ;track error in image
+_1
+x21,(2)
+N
+(0)
+
+DOC COMBINE  ; combine docs so that only requires one incore file
+<apsrdir>/lastd**
+<apsrdir>/alignlist
+<apsrdir>/lastdall_tmp
+
+VM
+echo Calculating deviation of each round of alignment from average alignment.
+
+DO LB1 x11=1,x26 ; for each particle
+  ;---calculate mean alignment for this particle---
+  x50=0 ;sum of rotation vector x component
+  x51=0 ;sum of rotation vector y component
+  x52=0 ;sum of shift x
+  x53=0 ;sum of shift y
+  x54=x11 ;pclkey
+  DO LB8 x18=1,x21 ;for each alignment param
+    UD IC x54,x30,x31,x32,x33 ; pclnum,rt,x,y
+    <apsrdir>/lastdall_tmp
+
+    x50=x50+COS(x31)  ;rtx
+    x51=x51+SIN(x31)  ;rty
+    x52=x52+x32  ;shx
+    x53=x53+x33  ;shy
+
+    x54=x54+x26 ;key number for next alignment parameter
+  LB8 ;next alignment param
+
+  ;---calculate mean rotation for this particle---
+  x64=x50/x21 ;mean(rtx)=sum(rtx)/rounds
+  x65=x51/x21 ;mean(rty)=sum(rty)/rounds
+  ;keep all angles positive 0 to 360
+  IF(x64.eq.0)THEN ;avoid division by zero
+    IF(x65.lt.0)x67=270
+    IF(x65.ge.0)x67=90
+   ;IF(x65.eq.0)x67=NaN ;rotation vectors cancel implies symmetry
+  ENDIF
+  IF(x64.gt.0)THEN ;quadrant1or4
+    IF(x65.lt.0)x67=ata(x65/x64)+360 ;quadrant4
+    IF(x65.ge.0)x67=ata(x65/x64) ; quadrant1
+  ENDIF
+  IF(x64.lt.0)x67=ata(x65/x64)+180 ;quadrant 2or4
+  x61=COS(x67) ;mean(rtx)
+  x62=SIN(x67) ;mean(rty)
+
+  ;---calculate mean shift for this particle---
+  x68=x52/x21  ;mean(shx)
+  x69=x53/x21  ;mean(shy)
+
+  ;---calculate deviation of each alignment parameter from mean---
+  x55=0  ;pclrterr
+  x56=0  ;pclsherr
+  x54=x11
+  DO LB9 x19=1,x21  ;for each alignment round of this particle
+    UD IC x54,x30,x31,x32,x33 ; pclnum,rt,x,y
+    <apsrdir>/lastdall_tmp
+    
+    ;---calculate rotational deviation---
+    ;angle=aco(v1.v2/|v1|x|v2|) or angle=2*asi((sqr(dx^2+dy^2))/2)
+    x20=(SQR((COS(x31)-x61)**2+(SIN(x31)-x62)**2))/2
+    IF(x20.gt.1)x20=1  ;fixes floating point error
+    x20=2*(ASI(x20))
+    x55=x55+x20 ;cumulative rterr for particle
+    
+    ;track cumulative rotational error for each round
+    GP x57
+    _1
+    x19,(1)
+    x57=x57+x20  ;cumulative rterr for round
+    RP
+    _1
+    x19,(1)
+    x57
+
+    ;---calculate translation deviation---
+    x70=((x32-x68)**2+(x33-x69)**2)**0.5 ;distance from mean position
+    x56=x56+x70 ;cumulative sherr  for particle
+    
+    ;track cumulative translational error for each round
+    GP x58
+    _1
+    x19,(2)
+    x58=x58+x70  ;cumulative sherr for round
+    RP
+    _1
+    x19,(2)
+    x58
+
+    x54=x54+x26 ;key number for next alignment parameter
+  LB9 ;next alignment param
+  x66=x55/x21 ;average rotation deviation
+  x79=x56/x21 ;average shift deviation
+
+  ;         pcl,rt ,xsh,ysh,rtd,shd
+  SD IC x11,x30,x67,x68,x69,x66,x79
+  summary_ic
+LB1 ; next particle x11
+UD ICE
+<apsrdir>/lastdall_tmp
+DE
+<apsrdir>/lastdall_tmp
+SD IC COPY
+summary_ic
+<apsrdir>/apsrsum
+SD IC E
+summary_ic
+
+;---divide cumulative error by number of particles---
+SD /     ROUND      RT-ERR      SH-ERR
+<apsrdir>/apsrerr
+x23=0 ;average rotation deviation for all rounds
+x24=0 ;average shift deviation for all rounds
+DO LB2 x12=1,x21 ;for each round of apsr
+  GP x57
+  _1
+  x12,(1)
+  GP x58
+  _1
+  x12,(2)
+
+  x90=x57/x26 ;rterr/numpcls
+  x80=x58/x26 ;sherr/numpcls
+
+  VM
+  echo '   'Round {**x12} deviates by {%F7.1%x90} degrees and {%F7.1%x80} pixels. 
+
+  SD x12,x12,x90,x80
+  <apsrdir>/apsrerr
+
+  x23=x23+x90
+  x24=x24+x80
+LB2 ;next round
+SD E
+<apsrdir>/apsrerr
+;CP
+;_1
+;<apsrdir>/apsreri
+DE
+_1
+
+x23=x23/x21 ; average rotation deviation = sum rotation deviation / number rounds
+x24=x24/x21 ; average translation deviation
+
+VM
+echo The average particle deviates by {%F7.1%x23} degrees rotation and {%F7.1%x24} pixels shift
+
+RE

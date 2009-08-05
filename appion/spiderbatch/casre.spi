@@ -1,0 +1,48 @@
+; CA SRE LOOP
+; displays eigenimages for each factor classified
+
+FR
+?IN.CAS PREFIX (dir/cor ASSUMES _IMC/EIG)?<prefix>
+FR
+?IN.CLASSIFICATION MASK (dir/mask)?<mask>
+
+; ~~~~~ start ~~~~~
+
+VM
+head -1 [prefix]_EIG.$DATEXT | nl -s '  5  ' > [prefix]_EIGhead.$DATEXT
+
+UD 1,x21
+[prefix]_EIGhead
+UD E
+DE
+[prefix]_EIGhead
+
+x22=1
+IF(x21.eq.0)x21=x22
+
+DO LB1 x11=x22,x21
+
+CA SRE           ; call reconstitute eigenimage
+<prefix>         ; cas prefix
+x11              ; factor used
+<prefix>_sre@{**x11}   ; output file
+
+NEG
+<prefix>_sre@{**x11}   ; output file
+_1
+
+MU
+_1
+<mask>
+<prefix>_srn@{**x11}
+*
+
+LB1  ; next factor
+
+VM
+echo Eigenimages <prefix>_sre and _srn for factors {**x22} through {**x21}.
+
+DE
+_1
+
+RE

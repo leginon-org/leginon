@@ -1,0 +1,333 @@
+; Description:
+;   Mask particles for focused alignment
+;   (If you have only one class or classes are well-oriented to mask, just use @maskshift)
+; Procedure:
+;   1) Orients class averages to refimage (with mirroring)
+;   2) Masks class averages and orients to masked refimage (without mirroring)
+;   3) Combines class orientation parameters with particle alignment parameters
+;   4) Masks particles and shifts masked region to center of image
+; Output:
+;   alnavgdoc = doc for aligning averages prior to masking
+;   maskedavg@ = masked class averages (not centered)
+;   maskalndoc = particle alignment params adjusted for alignment of class averages
+;     output docs are in PRXYM format (pcl,rt,x,y,class/mr)
+;   centerdoc = doc containing rt,x,y to center masked particles
+;   maskstack@ = stack of aligned-masked-centered particles
+;   avgmasked@ = class averages of masked particles
+; Dependencies: @maskshift, @rtmr, @combinealign
+
+; ~~~~~ Input ~~~~~
+FR L   ;Mask
+<mask>thipbctopmsk
+
+FR L   ;Ref-image that corresponds with mask
+<ref>ksq_ipshmrav
+
+FR L   ;List of classes
+<grplist>ral5a/r20/grp_count
+
+FR L   ;Template for class averages
+<avgtmpl>ral5a/avg***
+
+FR L   ;Template for class particle lists
+<grptmpl>ral5a/r20/grp***
+
+FR L   ;Unaligned particle template
+<pcltmpl>ser2/mfseru@******
+
+FR L   ;Particle alignment doc
+<alndoc>ral5a/bp1/alncomb
+
+UD N x23,x20
+<alndoc>
+IF(x20.eq.3)THEN ;apsr
+  FR L ;List of aligned particles
+  <apsrlist>ser2/serlist
+ENDIF
+
+RR x19 ;Particle alignment radius (pixels)
+25
+
+; ~~~~~ Output ~~~~~
+FR L   ;Output directory to create
+<outdir>ral5a/masktest1
+
+; ~~~~~ Start ~~~~~
+MD
+vb off
+
+MD     ;Number of processors
+set mp
+(0)
+
+;---align class averages to refimage---
+UD N x21
+<grplist>
+UD x21,x31
+<grplist>
+
+FS
+<avgtmpl>x31
+FI x26,x27
+<avgtmpl>x31
+(12),(2)
+
+x29=x26/2-x19-3 ;search range
+
+VM
+mkdir <outdir>
+
+VM
+echo -n Aligning {%F7.1%x21} class averages to <ref>..
+
+CP
+<ref>
+_11
+
+AP MQ
+_**
+(11)
+x29,(1)
+(1),x19
+<avgtmpl>
+<grplist>
+<outdir>/avg_apmqdoc
+
+VM
+echo .done.
+
+@rtmr
+<outdir>/avg_apmqdoc
+<avgtmpl>
+<outdir>/rtavg@*****
+
+;---mask/center aligned averages---
+@maskshift
+<grplist>
+<outdir>/rtavg@*****
+<mask>
+<outdir>/maskedavg@*****
+<outdir>/avcenterdoc
+
+DE
+<outdir>/rtavg
+
+;---mask/center refimage---
+UD 1,x57,x58,x59
+<outdir>/avcenterdoc
+UD E
+
+MM C   ; mask
+<mask>
+_11 ;avg overwritten!
+
+SH ;center the masked average of class averages
+_11 ; maskavg
+_12  ;<outdir>/maskavg
+x58,x59
+
+DE
+_11
+
+;---align masked,centered averages to masked,centered refimage---
+VM
+echo -n Aligning masked averages to masked refimage..
+
+AP NQ
+_**
+(12)
+x29,(1)
+(1),x19
+<outdir>/maskedavg@*****
+<grplist>
+<outdir>/maskav_apmqdoc
+
+DE
+_12
+
+DE
+<outdir>/maskedavg
+
+VM
+echo .done.
+
+;---combine class alignment params---
+@combinealign
+<outdir>/avg_apmqdoc
+<outdir>/avcenterdoc
+<outdir>/cenav_alndoc
+
+DE
+<outdir>/avg_apmqdoc
+DE
+<outdir>/avcenterdoc
+
+@combinealign
+<outdir>/cenav_alndoc
+<outdir>/maskav_apmqdoc
+<outdir>/cenmask_alndoc
+
+DE
+<outdir>/cenav_alndoc
+DE
+<outdir>/maskav_apmqdoc
+
+;---uncenter class alignment---
+x67=-1*x57
+x68=-1*x58
+x69=-1*x59
+SD 1,x67,x68,x69
+<outdir>/uncenterdoc
+SD E
+
+@combinealign
+<outdir>/cenmask_alndoc
+<outdir>/uncenterdoc
+<outdir>/alnavgdoc
+
+DE
+<outdir>/cenmask_alndoc
+DE
+<outdir>/uncenterdoc
+
+;---write class alignment for each particle---
+VM
+echo 'Combining individual particle alignments with uncentered class alignment:'
+
+UD N x23 ;number of particles
+<alndoc>
+
+SD IC NEW
+pclclassaln_ic
+(5),x23 ;at most x23 particles
+
+UD N x21 ;number of groups
+<outdir>/alnavgdoc
+
+x30=0 ;set particle counter
+
+DO LB4 x14=1,x21 ;for each group
+  ;         grp,rt ,xsh,ysh,mr
+  UD IC x14,x31,x32,x33,x34,x91
+  <outdir>/alnavgdoc
+  
+  x41=x31*(x91/abs(x91)) ;grp&mr
+
+  UD N x22
+  <grptmpl>x31
+  DO LB5 x15=1,x22 ;for each particle in group
+    UD IC x15,x35
+    <grptmpl>x31
+    
+    x30=x30+1
+    ;         pcl,rt ,xsh,ysh,gmr
+    SD IC x30,x35,x32,x33,x34,x41
+    pclclassaln_ic
+  LB5  ; next particle x15
+  UD ICE
+  <grptmpl>x31
+LB4  ; next group x14
+UD ICE
+<outdir>/alnavgdoc
+
+SD IC COPY
+pclclassaln_ic
+<outdir>/pclclassaln_tmp
+SD IC E
+pclclassaln_ic
+
+DOC SORT
+<outdir>/pclclassaln_tmp
+<outdir>/pclclassaln
+(1)
+Y
+
+DE
+<outdir>/pclclassaln_tmp
+
+;---combine particle alignment with the uncentered class alignment---
+IF(x20.eq.3)THEN
+  @combinealign
+  <alndoc>
+  <apsrlist>
+  <outdir>/pclclassaln
+  <outdir>/maskalndoc
+ELSE
+  @combinealign
+  <alndoc>
+  <outdir>/pclclassaln
+  <outdir>/maskalndoc
+ENDIF
+
+UD N x24  ; how many classified particles
+<outdir>/pclclassaln
+UD x24,x45
+<outdir>/pclclassaln
+UD E
+
+DE
+<outdir>/pclclassaln
+
+MS
+_11@
+x26,x27,(1) ;imgsize
+x45         ;largest number
+
+@rtmr
+<outdir>/maskalndoc
+<pcltmpl>
+_11@******
+
+;CP ;copy to disk, then overwrite with masked
+;_11@
+;<outdir>/maskstack@
+
+;---finally mask/center particles---
+@maskshift
+<outdir>/maskalndoc
+_11@******
+<mask>
+<outdir>/maskstack@******
+<outdir>/centerdoc
+
+DE
+_11
+
+;---average masked particles to be sure it worked---
+
+@rtmr
+<outdir>/alnavgdoc
+<avgtmpl>
+<outdir>/maskedavg@***
+
+VM
+echo -n Writing masked averages and class averages of masked particles..
+
+DO LB1 x11=1,x21 ;for each class
+  UD IC x11,x31
+  <grplist>
+
+  AS R
+  <outdir>/maskstack@******
+  <grptmpl>x31
+  A
+  <outdir>/avgmasked@{***x31}
+  _13
+
+  MM C
+  <mask>
+  <outdir>/maskedavg@{***x31}
+LB1
+UD ICE
+<grplist>
+
+DE
+_13
+
+VM
+echo .done.
+
+VM
+echo Masked {%F7.1%x24} of {%F7.1%x23} particles in {%F7.1%x21} classes
+
+EN D

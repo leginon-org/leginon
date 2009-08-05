@@ -1,0 +1,41 @@
+; Syntax: @eigenhist
+; Description:
+;   generates and plots factor variance histogram using python and gnuplot
+; Output: <prefix>_eighist and <prefix>_eigplot
+
+FR
+?IN.CorAn prefix (dir/prefix assumes _EIG)?<prefix>
+
+; ~~~~~ start ~~~~~
+
+VM
+head -1 <prefix>_EIG.$DATEXT | nl -s ' 5' > <prefix>_EIGhead.$DATEXT
+
+UD 1,x21 ;how many factors
+<prefix>_EIGhead
+UD E
+
+x23=x21+1
+
+VM
+head -{**x23} <prefix>_EIG.$DATEXT > <prefix>_EIGtrim.$DATEXT
+
+; Call eigenhist.py inputtxt outputtxt > gnuplotcommands
+VM
+echo -n Executing ${SPPROC_DIR}/eigenhist.py ..
+
+VM
+python ${SPPROC_DIR}/eigenhist.py <prefix>_EIGtrim.$DATEXT <prefix>_EIGhist.$DATEXT > <prefix>_eigplot
+
+VM
+gnuplot -persist <prefix>_eigplot
+
+DE
+<prefix>_EIGtrim
+DE
+<prefix>_EIGhead
+
+VM
+echo .done.
+
+RE

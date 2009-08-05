@@ -1,0 +1,80 @@
+(x20,x21,x22) ;inApix,outApix,outSize
+; Syntax: @resizeimg(inApix,outApix,outSize)
+; Description:
+;  interpolates/extrapolates an image by a given factor 
+;  and crops/pads to a given size
+
+FR
+?IN.Image (dir/img)?<in>
+FR
+?OUT.Image (dir/img)?<out>
+
+; ~~~~~ start ~~~~~
+
+x99=0
+IQ FI x99
+<in>
+IF(x99.eq.0)THEN
+  VM
+  echo ERROR...<in> does not exist!
+  EN
+ENDIF
+
+FS
+<in>
+FI x24,x25,x26
+<in>
+(12,2,1)
+
+x23=x20/x21 ;rescale by this factor ( inApix/outApix )
+x24=int(x24*x23) ;ipSize
+x25=int(abs(x24-x22)/2)+1 ;topleftCorner
+
+IF(x26.ne.1)THEN ;it's a volume
+  x26=int(x26*x23) ;ipSlice
+  x27=x25 ;topLeftSlice
+  x28=x22 ;newSizeSlice
+  IF(x26.ne.x24)THEN ;it's not square
+    VM
+    echo ERROR..dimensions of volume are not equal.
+  ENDIF
+ELSE ;it's an image
+  x27=1 ;topLeftSlice
+  x28=1 ;newSizeSlice
+ENDIF
+
+IP
+<in>
+_2 
+(x24,x24,x26)
+
+IF(x22.lt.x24)THEN ;interpolated image is larger than intended
+  WI
+  _2
+  <out>
+  (x22,x22,x28) ;newSizeNsam,newSizeNrow,newSizeSlice
+  (x25,x25,x27) ;topLeftNsam,topLeftNrow,topLeftSlice
+ENDIF
+
+IF(x22.gt.x24)THEN ;interpolated image is smaller than intended
+  PD
+  _2
+  <out>
+  (x22,x22,x28) ;newSizeNsam,newSizeNrow,newSizeSlice
+  B ;use border
+  (x25,x25,x27) ;topLeftNsam,topLeftNrow,topLeftSlice
+ENDIF
+
+IF(x22.eq.x24)THEN ;interpolated image is same size as intended
+  CP
+  _2
+  <out>
+ENDIF
+
+DE
+_2
+
+VM
+echo <in> resized.
+
+RE

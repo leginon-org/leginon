@@ -1,0 +1,194 @@
+(x51,x52,x53,x50) ; radius,filt1,filt6,apix
+; Syntax: @rctshiftrefine(radius,lopass1,lopass6,apix)
+; version 20090303 Ed Brignole; original script by Pawel A. Penczek
+; Description:
+;   Iterates 6-times:
+;   1) translational refinement by CC 2D images with reprojection.
+;   2) backproject a new 3D reconstruction from the shifted particles.
+; Input:
+;   radius for projection of volume and backprojection of particles
+;   lowpass filter applied to vol001 (in Angstroms)
+;   lowpass filter applied to vol006 (in Angstroms)
+;   pixel size (Angstroms/pixel)
+;   tilted particles template and list
+;   euler angles doc for particles
+;   initial volume (vol000)
+; Output:
+;   From each iteration: vol*** fvol*** shift***
+;   shift params in SAP format
+
+FR
+?IN.List of particles (dir/grp001)?<pcllist>
+FR
+?IN.Tilted particle template (ser/sert@*****)?<sert>
+FR
+?IN.Angles doc (dir/rctangles)?<angles>
+FR
+?IN.Preliminary volume (dir/volume)?<vol>
+FR
+?OUT.Refinement directory to create (dir)?<dir>
+
+; ~~~~~ start ~~~~~
+x63=0
+VM 
+mkdir -p <dir>
+
+; make indexed inline stack for temporary shifted particles
+DOC SORT  ; sort by pclnum to find max (x78)
+<pcllist>
+<dir>/listsort
+(1)
+Y
+
+UD N x77
+<dir>/listsort
+UD x77,x78
+<dir>/listsort
+UD E
+DE
+<dir>/listsort
+
+FS
+<sert>x78
+FI x20
+<sert>x78
+(12)
+
+x54=int(x20/2)+1 ;center ;x54=int(x20/2) ;window size
+x55=int(x20/4)+1 ;radius ;x55=int(x20/4)+1 ;window topleft
+x56=x20/2+1 ;-x55 ;center of window = center of particle - topleft
+
+PT
+_3 ;mask
+x20,x20 ;size
+C       ;circle
+x54,x54 ;center
+x55     ;radius
+N       ;no continue
+
+CP  ;copy starting volume into <dir>/vol000
+<vol>
+<dir>/fvol000
+
+VM
+echo -n Shift refining <vol>..
+DO LB1 x11=1,6 ; 6 iterations of translational refinement
+  VM
+  echo -n {*x11}..
+  x76=x11-1
+
+  MS I ;make indexed stack for projections
+  _2@
+  x20,x20,(1)
+  x77 ;numpcls
+  x78 ;maxnum
+
+  MS I ;make indexed stack for shifted images
+  _1@
+  x20,x20,(1)
+  x77
+  x78
+
+  ;project 3D volumes using Eulerian angles.  2D projections are <dir>/newprj*****
+  PJ 3Q
+  <dir>/fvol{***x76}
+  x51
+  <pcllist>
+  <angles>
+  _2@****** ;projections
+
+  SD IC NEW
+  shift_ic
+  (4),x78
+  ;calculate projections of 3D in the directions of original projections
+  DO LB2 x21=1,x77 ; for each particle
+    UD IC x21,x22
+    <pcllist>
+
+    ;crosscorrelate particle to its corresponding projection 
+    CC N
+    _2@{******x22} ;projection
+    <sert>x22      ;reference image
+    _5             ;normalized cross-correlation image
+
+    ;only allow shift up to 1/4 image size by cropping cc_image
+    MU
+    _5 ;cc-image
+    _3 ;mask
+    _6
+    *
+    
+    ;search for peak crosscorrelations, store xy shifts as x83 x84
+    ; identifies shift of ser to match prj
+    PK M x81,x82,x83,x84
+    _6
+    x56,x56
+
+    ;should shift be opposite for mirrored particles?
+    ;UD IC x22,x23,x24,x25 ;get projection angles for this particle
+    ;<angles>
+    
+    ;shift image
+    SH
+    <sert>x22
+    _1@{******x22}
+    x83,x84
+
+    ;store the shift parameters (SAP format)
+    SD IC x21,x22,x63,x83,x84 ;pclnum,rt=0,xsh,ysh
+    shift_ic
+  LB2 ; end loop for each particles
+  UD ICE
+  <pcllist>
+
+  SD IC COPY
+  shift_ic
+  <dir>/shift{***x11}
+  SD IC END
+  shift_ic
+
+  ;back project projections to make a 3D volume in Fourier space.
+  BP 3F
+  _1@******
+  <pcllist>
+  <angles>
+  *
+  <dir>/vol{***x11}
+
+  ;set filter for volume (gradually decrease)
+  x30=x52+((x53-x52)*(x11-1)/5) ;initial + (final-initial)/5*(iter-1)
+  ;should actually match filter to the resolution of volume
+  ;may also want to include particle filtration to same resolution
+  IF(x30.eq.0)THEN
+    CP
+    <dir>/vol{***x11}
+    <dir>/fvol{***x11}
+  ELSE
+    x31=x50/x30 ;1/pix
+    x32=x50/(x30*2/3) ;1/pix
+    ;lowpass filter the volume  
+    FQ
+    <dir>/vol{***x11}
+    <dir>/fvol{***x11}
+    (7) ;butterlowpass
+    x31,x32 ;start,stop frequency
+  ENDIF
+  DE
+  _1 ;stack
+  DE
+  _2 ;stack
+LB1
+UD ICE
+<pcllist>
+
+DE
+_3 ;mask
+DE
+_5 ;cc
+DE
+_6 ;win
+
+VM
+echo done.
+
+RE

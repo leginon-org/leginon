@@ -1,0 +1,31 @@
+; unstack.spi
+; copies images from stack
+; useful for copying from dmf
+;
+FR
+?IN.Image list (dir/doc)?<imglist>
+FR
+?IN.Stack prefix (dir/stack@)?<stack>
+FR
+?OUT.Images template (dir/ser*****)?<imgtmpl>
+
+; ~~~~~ start ~~~~~
+UD N x21
+<imglist>
+UD E
+VM
+echo UNSTACKING {%F7.1%x21} IMAGES ACCORDING TO IMAGE LIST
+
+DO LB1 x11=1,x21
+UD IC x11,x22
+<imglist>
+
+CP
+<stack>{******x22}
+<imgtmpl>x22
+
+LB1 ; next image x11
+UD ICE
+<imglist>
+
+RE

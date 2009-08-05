@@ -1,0 +1,163 @@
+(x21,x22,x23) ;outrt,outsx,outsy
+; Syntax: @orientbymirrors(rt,xs,ys)
+; Description:
+; uses mirrors to center and rotationally align an image to vertical orientation
+; assumes that the center of object is already within 33% imagesize of center
+; Warning: this only works in recent versions of spider (OR R command)
+
+FR
+?IN.Image (dir/file)?<in>
+FR
+?OUT.Image (dir/file)?<out>
+
+; ~~~~~ start ~~~~~
+VM
+echo -n Orienting <in> using mirrored images..
+
+CP
+<in>
+_1
+
+; find yshift
+MR
+_1
+_2
+X ;interchange rows
+
+CC N
+_1
+_2
+_4
+
+; find xshift
+MR
+_1
+_2
+Y ;interchange columns
+
+CC N
+_1
+_2
+_5
+
+; find xshift and yshift
+MR
+_2
+_3
+X ;interchange columns
+
+CC N
+_1
+_3
+_6
+
+;only allow shift within radius of 1/3 image
+FS
+_1
+FI x29
+_1
+(12) ;nsam
+
+x30=x29/3
+
+MO
+_2
+x29,x29
+C ;circle
+x30
+
+x30=x29/10 ;soften edges
+
+BC
+_2
+_3
+L   ;lowpass
+x30,x30   ;filtersize
+(1.0)   ;weight
+
+TH
+_3
+_2
+C
+(1.0,0.0)
+
+MU
+_4
+_2
+_3
+*
+
+MU
+_5
+_2
+_4
+*
+
+MU
+_6
+_2
+_5
+
+x30=(x29/2)+1 center of image
+PK M x31,x32,x33,x34 ;x34 is -yshift
+_3
+x30,x30
+PK M x41,x42,x43,x44 ;x43 is -xshift
+_4
+x30,x30
+PK M x51,x52,x53,x54 ;x53,x54 is -xshift,-yshift
+_5
+x30,x30
+
+x32=-(x43+x53)/4
+x33=-(x34+x54)/4
+
+SH
+_1
+_2
+x32,x33
+
+;now that image is centered, orient symmetrically about vertical axis
+
+MR
+_2
+_3
+X ;vertical mirror
+
+x30=x29/3 ;radius 1/3 imagesize
+OR R x34,x35 ;rotation alignment x34= rt,x35=peak
+_2 ;image = mrimage
+_3 ;refimage
+(2,x30,1) ;inner,outer,step
+H ;180 search
+(1) ;numpeaks
+
+x34=x34/2 ;halfrotation
+x31=0
+SA P x21,x22,x23
+x31,x32,x33
+x34,x31,x31
+
+RT SQ
+_1
+<out>
+x21,(1)
+x22,x23
+
+DE
+_1
+DE
+_2
+DE
+_3
+DE
+_4
+DE
+_5
+DE
+_6
+
+VM
+echo <out> written.
+
+RE

@@ -1,0 +1,316 @@
+;classification of apsr-rounds or refgrps
+;version 20090505
+;  *run this after fraln or refal
+;  *classify particles from each apsr-round or refgrp
+;  *within each class do 1 apsr round
+;  *after this procedure: run mergeclasses
+; Output:
+;   avggrp/grpdoc = list of class averages
+;   avggrp/thr***** = list of particles for each class
+;   avggrp/avg@   = stack of class averages
+;   avggrp/alnav@ = stack of aligned class averages
+;   apsrgrp/i@    = stack of free-aligned class averages
+;   apsrgrp/alni@ = stack of aligned i@
+
+FR L  ;image stack
+<pcltmpl>pcl/mfnseru@******
+FR L  ;list of particles
+<pcllist>pcl/serulist
+FR L  ;directory with alignment params (lastd** or apnq_doc)
+<alndir>fa1
+FR L  ;undecimated mask
+<mask>pcl/circlemask
+RR x20  ;number of classes to generate per apsr round
+100
+RR x22  ;number of factors
+25
+RR x17  ;weight factors by variance
+0.1  ;0=don't weight, 1=weight, 0.5=halfweight, etc
+RR x18  ;decimation factor to speed classification
+2
+RR x34  ;radius for alignment of undecimated averages
+0    ;if <5 then radius determined automatically
+FR L  ;reference image for orienting class averages
+<refimg>fa1/orientiav
+FR L  ;output directory
+<outdir>cl1
+
+; ~~~~~ start ~~~~~
+MD
+set mp
+(0)
+
+MD
+vb off
+
+;x22=[factors]
+;x17=[weight]
+;x20=[classes]
+;x18=[bin]
+;x34=[radius]
+
+VM ; make classification directory
+mkdir -p <outdir>
+VM
+mkdir -p <outdir>/avggrp
+
+DC S
+<mask>
+_11
+x18,x18
+
+x90=0
+IQ FI x90
+<alndir>/alignlist
+IF(x90.eq.1)THEN ;alignment was apsr
+  x99=3 ;apsr
+  VM
+  echo Your particles were aligned using APSR.
+  VM
+  cp <alndir>/alignlist.$DATEXT <outdir>/iter.$DATEXT
+  GOTO LB89
+ENDIF
+
+x90=0
+IQ FI x90
+<alndir>/grp_count
+IF(x90.eq.1)THEN
+  VM
+  cp <alndir>/grp_count.$DATEXT <outdir>/iter.$DATEXT
+  VM
+  echo Your particles were reference aligned.
+  x90=0
+  IQ FI x90
+  <alndir>/apsh_doc
+  IF(x90.eq.1)THEN
+    x99=1 ;apsh
+    @rtmr
+    <alndir>/apsh_doc
+    <pcltmpl>
+    <outdir>/rtp@******
+    GOTO LB89
+  ENDIF
+  x90=0
+  IQ FI x90
+  <alndir>/apnq_doc
+  IF(x90.eq.1)THEN
+    x99=2
+    @rtmr
+    <alndir>/apnq_doc
+    <pcltmpl>
+    <outdir>/rtp@******
+    GOTO LB89
+  ENDIF  
+ENDIF
+VM
+echo EXITING...<alndir> does not contain alignlist or grp_count
+EN
+
+LB89 ;skip to here if alignment params found
+
+UD N x21
+<outdir>/iter
+
+x26=x21*x20 ;totalclasses=#rounds * #classes/round
+
+SD IC NEW
+grpdoc_ic
+(5,x26)
+
+x25=0 ;division counter
+x29=0 ;class counter
+DO LB1 x11=1,x21 ;for each iteration/group
+  UD IC x11,x12
+  <outdir>/iter
+
+  x90=0
+  IQ FI x90 ;was classification already done
+  <outdir>/r{**x11}_thresh
+  IF(x90.eq.1)GOTO LB90
+
+  IF(x99.eq.3)THEN
+    VM
+    echo '--- Classifying APSR round' {**x12} '---'
+
+    @rtmr
+    <alndir>/lastd{**x12}
+    <pcltmpl>
+    <outdir>/rtp@******
+    UD N x23
+    <alndir>/lastd{**x12}
+    UD E
+    x24=int((x23+x23/x20*x21)/10000) ; #divisions = (#pcls+(#pcls/class*#apsrrounds))/10000
+    IF(x24.gt.1)THEN ;try to have at least 50 particles per class
+      @dividelist(x24) ;divide into number of iterations
+      <alndir>/lastd{**x12}
+      <outdir>/pcltmp**
+      x25=x25+1
+      IF(x25.gt.x24)x25=1
+      VM
+      echo "   Too many particles to classify..using divided list "{**x25} of {**x24}
+      VM
+      cp <outdir>/pcltmp{**x25}.$DATEXT <outdir>/pcldoc{**x12}.$DATEXT
+      DE A
+      <outdir>/pcltmp01
+    ELSE
+      VM
+      cp <alndir>/lastd{**x12}.$DATEXT <outdir>/pcldoc{**x12}.$DATEXT
+    ENDIF
+  ELSE ;IF(x99.le.2)THEN
+    VM
+    echo '--- Classifying APSH/NQ class' {**x12} '---'
+
+    DOC SORT
+    <alndir>/grp{***x12}
+    <outdir>/pcldoc{**x12}
+    (1)
+    Y
+  ENDIF
+
+  @dcs(x18)
+  <outdir>/rtp@******       ; pcltmpl to average
+  <outdir>/pcldoc{**x12}    ; pcllist
+  <outdir>/drtp@******      ; pcltmpl to classify
+
+  @classifyauto(x22,x17,x20)
+  <outdir>/drtp@*****       ; pcltmpl to classify
+  <outdir>/rtp@*****        ; pcltmpl to average
+  <outdir>/pcldoc{**x12}    ; pcllist
+  _11                       ; mask
+  <outdir>/r{**x11}         ; prefix
+
+  DE
+  <outdir>/pcldoc{**x12}
+
+  LB90 ;skip to here if classification was already done
+
+  UD 1,x36,x37,x38,x39
+  <outdir>/r{**x11}_thresh
+  UD E
+  
+  IF(x38.eq.0)THEN ;threshold was 0, used k-means
+    UD N x28 ; how many classes
+    <outdir>/r{**x11}_kmlist
+  ELSE
+    UD N x28 
+    <outdir>/r{**x11}_thrk
+  ENDIF
+  VM
+  echo ...moving {%F7.1%x28} class averages to avggrp directory
+
+  DO LB3 x13=1,x28 ; for each resulting class
+    x29=x29+1 ; class counter
+
+    IF(x38.eq.0)THEN
+      VM
+      mv -f <outdir>/r{**x11}_km{***x13}.$DATEXT <outdir>/avggrp/list{*****x29}.$DATEXT
+
+      CP
+      <outdir>/r{**x11}_kmav@{***x13}
+      <outdir>/avggrp/avg@{*****x29}
+
+      UD IC x13,x30,x31
+      <outdir>/r{**x11}_kmlist
+    ELSE
+      VM
+      mv -f <outdir>/r{**x11}_thr{***x13}.$DATEXT <outdir>/avggrp/list{*****x29}.$DATEXT
+
+      CP
+      <outdir>/r{**x11}_avg@{***x13}
+      <outdir>/avggrp/avg@{*****x29}
+
+      UD IC x13,x30,x31
+      <outdir>/r{**x11}_thrk
+    ENDIF
+
+    SD IC x29,x29,x11,x12,x30,x31 ;class# apsr# div# grp# numpcls
+    grpdoc_ic
+  LB3 ; next class x13
+  IF(x38.eq.0)THEN
+    UD ICE
+    <outdir>/r{**x11}_kmlist
+    DE
+    <outdir>/r{**x11}_kmva
+    DE
+    <outdir>/r{**x11}_kmav
+  ELSE
+    UD ICE
+    <outdir>/r{**x11}_thrk
+    DE
+    <outdir>/r{**x11}_var
+    DE
+    <outdir>/r{**x11}_avg
+  ENDIF
+
+  DE
+  <outdir>/drtp
+LB1 ; next apsr round x11
+SD IC COPY
+grpdoc_ic
+<outdir>/grpdoc
+SD IC END
+grpdoc_ic
+DE
+<outdir>/rtp
+UD ICE
+<outdir>/iter
+DE
+<outdir>/iter
+DE
+_11 ;mask
+
+; --- SECOND HALF OF PROCEDURE ---
+; --- align class averages
+IF(x34.lt.5)THEN
+  VM
+  echo Radius entered was too small..finding a new radius.
+  AS R
+  <outdir>/avggrp/avg@*****
+  <outdir>/grpdoc
+  A
+  _20
+  _21
+
+  @findradius(x34)
+  _20  
+
+  DE
+  _20
+  DE
+  _21
+  VM
+  echo Proceeding with alignment radius of {%F7.1%x34}.
+ENDIF
+
+MD
+set mp
+(1)
+
+@alnimg(x34)
+<outdir>/avggrp/avg@*****
+<outdir>/grpdoc
+(3) ; refalign to oriented apsr-average
+<refimg>
+<outdir>/avggrp/alnavg   ; prefix for doc av va stack
+
+; --- align freealigned class averages
+VM
+mkdir -p <outdir>/apsrgrp
+
+@apsrgrps(x34) ; free align particles within classes
+<outdir>/grpdoc           ; list of groups
+<outdir>/avggrp/list***** ; particle lists template
+<pcltmpl>                 ; particle template
+<outdir>/apsrgrp/         ; output prefix
+
+@alnimg(x34)
+<outdir>/apsrgrp/i*****
+<outdir>/grpdoc
+(3) ; refalign
+<refimg>
+<outdir>/apsrgrp/alni   ; prefix for stack doc av va 
+
+VM
+echo Now handselect best averages, classify and merge docs
+
+EN D

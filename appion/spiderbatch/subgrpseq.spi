@@ -1,0 +1,65 @@
+; @subgrpseq 
+; Description:
+;   resequences averages and lists from multiple classifications (ie, cordiv)
+;   to facilitate subsequent superclassification
+;
+; Input:
+;   list of classes (ie. view_count)
+;   prefix from classification (ie. coran/cor)
+; Output:
+;   resequenced class averages (<outpfx>i*****)
+;   resequenced class lists (<outpfx>d*****)
+;   doc with newnum,div,class,#pcls (<outpfx>seqlist)
+
+FR
+?IN.List of classes (dir/list)?<classlist>
+FR
+?IN.Prefix of image lists (dir/prefix assumes ***_thrk and ***_avg)?<classpfx>
+FR 
+?OUT.Prefix for sequential images and lists (dir/pfx)?<outpfx>
+
+; ~~~~~ start ~~~~~
+x99=0 ; subgroup counter
+
+UD N x20
+<classlist>
+
+SD /    Newnumber   Class    Subclass   Numpcls
+<outpfx>seqlist
+
+DO LB1 x11=1,x20 ; for each class
+  UD IC x11,x21
+  <classlist>
+
+  UD N x22
+  <classpfx>{***x21}_thrk
+
+  DO LB2 x12=1,x22 ; for each subclass
+    UD IC x12,x23,x24 ; number of particles in group
+    <classpfx>{***x21}_thrk
+
+    x99=x99+1
+    VM
+    mv <classpfx>{***x21}_thr{***x12}.$DATEXT <outpfx>d{*****x99}.$DATEXT
+
+    CP
+    <classpfx>{***x21}_avg{***x12}
+    <outpfx>i@{*****x99}
+
+    DE
+    <classpfx>{***x21}_avg{***x12}
+
+    SD x99,x99,x21,x12,x24 ;newnum,class,subclass,#pcls
+    <outpfx>seqlist
+
+  LB2 ; next subclass x12
+  UD ICE
+  <classpfx>{***x21}_thrk
+
+LB1 ; next class x11
+UD ICE
+<classlist>
+SD E
+<outpfx>seqlist
+
+RE

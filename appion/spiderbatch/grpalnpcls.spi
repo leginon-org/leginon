@@ -1,0 +1,104 @@
+; Syntax: @grpalnpcls
+; Description: writes group alignment to individual particles
+;   now accepts any input format (06302007)
+; Input:
+;   alignment doc with grp,rt,x,y
+;   list of particles in each class
+; Output:
+;   doc in PRXYM format pcl,rt,x,y,class
+
+FR
+?IN.Alignment parameters for class averages (dir/doc)?<alndoc>
+
+UD N x21,x31
+<alndoc>
+IF(x31.eq.3)THEN
+  FR
+  ?IN.List of aligned class averages (dir/list)?<list>
+ENDIF
+
+FR
+?IN.Template for class particle lists (dir/classlist***)?<tmpl>
+
+FR
+?OUT.Particle alignment doc (dir/doc)?<outdoc>
+
+; ~~~~~ start ~~~~~
+
+VM
+echo -n Writing class alignment for each particle..
+
+;---find number of particles---
+x20=0 ; particle counter
+
+UD N x21
+<alndoc>
+DO LB3 x13=1,x21
+  UD IC x13,x22
+  <alndoc>
+
+  UD N x23
+  <tmpl>x22
+
+  x20=x20+x23
+LB3
+
+;---find each particle's class alignment---
+SD IC NEW
+outdoc
+(5),x20
+
+x20=0 ; particle counter
+UD N x21
+<alndoc>
+DO LB1 x11=1,x21 ; for each group
+  IF(x31.eq.15)THEN
+    UD IC x11,x91,x92,x93,x94,x22,x23,x24,x25
+    <alndoc>
+  ENDIF
+  IF(x31.eq.7)THEN
+    UD IC x11,x92,x92,x23,x24,x25,x22
+    <alndoc>
+  ENDIF
+  IF(x31.eq.3)THEN
+    UD IC x11,x23,x24,x25
+    <alndoc>
+    UD IC x11,x22
+    <list>
+  ENDIF
+  IF(x31.eq.4)THEN
+    UD IC x11,x22,x23,x24,x25
+    <alndoc>
+  ENDIF
+
+  UD N x26
+  <tmpl>x22
+  DO LB2 x12=1,x26 ; read particles from each group doc
+    UD IC x12,x27
+    <tmpl>x22
+
+    x20=x20+1
+    SD IC x20,x27,x23,x24,x25,x22
+    outdoc
+  LB2
+  UD ICE
+  <tmpl>x22
+LB1
+UD ICE
+<alndoc>
+
+IF(x31.eq.3)THEN
+  UD ICE
+  <list>
+ENDIF
+
+SD IC COPY
+outdoc
+<outdoc>
+SD IC END
+outdoc
+
+VM
+echo <outdoc> ..done.
+
+RE

@@ -1,0 +1,181 @@
+;merges similar classes then does fraln in each superclass
+;version 20090729; Ed Brignole
+;  *run this after makeclasses.spi
+;  *merge similar classes by classification
+;  *within each superclass do specified number of free-alignment rounds
+;  *after this procedure: use lastiav*** as references for iterative classificationn/alignment
+
+;---Classification Input---
+FR L       ;List of classes
+<clalist>cl1/grpdoc
+FR L       ;Class averages
+<clavgs>cl1/apsrgrp/alni@*****
+FR L       ;Mask for classification
+<mask>pcl/circlemask
+RR x97     ;Number of classes to generate
+10
+RR x95     ;Number of factors
+25
+RR x96     ;Scale of factor weights
+0.1
+RR x98     ;Decimation used for classification
+2
+;---Classification Output---
+FR L       ;Output directory
+<outdir>cl1/apsrcl1
+FR L       ;Classification prefix
+<prefix>c
+;---Alignment of Particles in Superclass---
+FR L       ;Class particle lists
+<cltmpl>cl1/avggrp/list*****
+FR L       ;Particle template
+<pcltmpl>pcl/mfnseru@******
+RR x99     ;Radius for alignment
+25
+RR x94     ;Number of apsrrounds
+5
+FR L       ;Reference to orient apsr averages
+<reftmpl>fa1/orientiav
+
+; ~~~~~ start ~~~~~
+MD
+set mp
+(0)
+
+MD
+vb off
+
+;x98=[bin]
+;x95=[factors]
+;x96=[weight]
+;x97=[classes]
+;x99=[radius]
+;x94=[alnrnds]
+
+x90=0
+IQ FI x90
+<outdir>/lastiav{***x97}
+IF(x90.eq.1)GOTO LB90
+
+DC S
+<mask>
+_11
+x98,x98
+
+VM
+mkdir -p <outdir>
+
+@dcs(x98)
+<clavgs>
+<clalist>
+<outdir>/tmpdavg@******
+
+@classifyauto(x95,x96,x97)
+<outdir>/tmpdavg@******
+<clavgs>
+<clalist>
+_11
+<outdir>/<prefix>
+
+DE
+<outdir>/tmpdavg
+DE
+_11
+
+UD 1,x31,x32,x33,x34
+<outdir>/<prefix>_thresh
+UD E
+
+IF(x33.eq.0)THEN
+  @mergesubclasslists
+  <outdir>/<prefix>_kmlist
+  <outdir>/<prefix>_km***
+  <cltmpl>
+  <outdir>/<prefix>
+ELSE
+  @mergesubclasslists
+  <outdir>/<prefix>_thrk
+  <outdir>/<prefix>_thr***
+  <cltmpl>
+  <outdir>/<prefix>
+ENDIF
+
+UD N x21
+<outdir>/<prefix>_mrglist
+
+SD /    CLASS    MEAN-RT-ERR    MEAN-SH-ERR
+<outdir>/<prefix>_alignerror
+
+DO LB1 x11=1,x21 ; for each group
+  UD IC x11,x22
+  <outdir>/<prefix>_mrglist
+
+  VM
+  echo ---- Free-align particles in Class {***x22} ----
+
+  MD
+  set mp
+  (1)
+
+  @fraln(x99,x94)
+  <outdir>/<prefix>_mrg{***x22} 
+  <pcltmpl>
+  *
+  <outdir>/apsr{***x22} ;apsrdir
+
+  @alnapsr(x99)
+  <outdir>/apsr{***x22} ;apsrdir
+  <outdir>/<prefix>_mrg{***x22}  ;list of aligned particles
+  (3)                   ;refalign to oriented average
+  <reftmpl> ;x22        ;reference image
+
+  MD
+  set mp
+  (0)
+
+  AS R
+  <outdir>/apsr{***x22}/lasti**
+  (1-10)
+  A
+  <outdir>/lastiav{***x22}
+  <outdir>/lastiva{***x22}
+
+  DE
+  <outdir>/lastiva{***x22}
+
+  @apsrstat
+  <outdir>/apsr{***x22}
+
+  x25=0 ; rotation error
+  x26=0 ; shift error
+  DO LB2 x12=1,x94
+    UD IC x12,x10,x23,x24
+    <outdir>/apsr{***x22}/apsrerr
+
+    x25=x25+x23
+    x26=x26+x24
+  LB2
+  UD ICE
+  <outdir>/apsr{***x22}/apsrerr
+
+  ;avgerror=totalerror/numrounds
+  x25=x25/x94 ;rotation error
+  x26=x26/x94 ;shift error
+
+  SD x11,x11,x25,x26
+  <outdir>/<prefix>_alignerror
+  
+  ; ---remove intermediate apsr results, keep only averages of alignments---
+  VM
+  rm -fr <outdir>/apsr{***x22}/
+
+LB1 ;next group
+SD E
+<outdir>/<prefix>_alignerror
+UD ICE
+<outdir>/<prefix>_mrglist
+
+LB90
+
+EN D
+

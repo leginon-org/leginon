@@ -1,0 +1,129 @@
+(x23,x38,x53) ; Apix,half,3sig 
+; Syntax: @rescalc(apix,half,3sig)
+; Description: resolution calculator
+; Input:
+;   correlation doc with freq,dph,cor,3sig,pix
+;   A/pix (x23)
+; Output:
+;   doc with half, 3sigma, and total correlation
+;   0.5-correlation (x38) and 3sigma correlation (x53)
+
+FR
+?IN.Fourier correlation doc (dir/doc)?<frcdoc>
+FR
+?OUT.Resolution doc (dir/doc)?<outdoc>
+
+; ~~~~~ start ~~~~~
+
+UD N x21
+<frcdoc>
+UD E
+
+;---- 0.5 crossing ----
+x22=0.5
+DO LB1 x11=1,x21 ; first loop calculate 0.5-resolution
+  ;        freq,dph,frc,crt,pix
+  UD IC x11,x31,x32,x33,x34,x35
+  <frcdoc>
+
+  IF(x33.lt.x22)GOTO LB90 ;frc has dropped below
+
+  x36=x31  ;freq above 0.5 = x1
+  x37=x33  ;correlation above 0.5 = y1
+LB1 ;next frequency
+x38=0
+VM
+echo WARNING: FSC never crossed 0.5 correlation
+GOTO LB91 ;skip 0.5 intercept calculation
+
+LB90 ;found 0.5 corssing
+;interpolate crossing 0.5
+;  b=y1-m*x1
+;  m=((y2-y1)/(x2-x1))
+;  y3=m*x3+b 
+;  or x3=(y3-b)/m or x3=(y3-(y1-m*x1))/m or x3=((y3-y1)/m)+x1
+IF(x36.eq.x31)THEN ;horizontal line has slope of zero in denominator
+  VM
+  echo 'ERROR..FSC has horizontal crossing of {%F2.2%x22} correlation (division by slope=0)'
+  VM
+  echo '   First point: 'At 1/{%F7.2%x36} pix-1 correlation is {%F7.2%x37}
+  VM
+  echo '   Second point: 'At 1/{%F7.2%x31} pix-1 correlation is {%F7.2%x33}
+  EN
+ENDIF
+;x3=(y3 - y1)/((y2 - y1)/(x2 - x1))+x1
+x38=(x22-x37)/((x33-x37)/(x31-x36))+x36
+
+LB91 ;never crossed 0.5
+x38=x38/x23 ;convert from 1/pix to 1/A
+
+;---- 3sigma crossing ----
+x47=0 ;initialize frc
+x48=1 ;initialize crit
+DO LB2 x12=3,x21 ; second loop calculate 3sigma-resolution
+  ;first two points are first cross over find next = start loop at 3
+  ;        freq,dph,frc,crt,pix
+  UD IC x12,x41,x42,x43,x44,x45
+  <frcdoc>
+
+  IF(x47.ge.x48)THEN ; frc was greater than 3sigma
+    IF(x43.lt.x44)GOTO LB98 ; frc is less than 3sigma
+  ENDIF
+
+  x46=x41 ; x1-res
+  x47=x43 ; y1-frc
+  x48=x44 ; y1-crit
+LB2 ;next frequency
+;if x12=x21 then frc never crossed 3sigma
+x53=0
+VM
+echo WARNING: FSC never crossed 3sigma correlation
+GOTO LB97 ;skip 3sigma intercept calculation
+
+LB98 ; found 3sigma crosssing
+;calculate point of intersection of frc and crit lines
+;  m1*x+b1=m2*x+b2
+;  or x=(b2-b1)/(m1-m2)
+IF(x46.eq.x41)THEN
+  VM
+  echo DIV BY ZERO...calculating intersection of 3sigma and frc...check point {**x12} of frc doc
+ENDIF
+x49=(x48-x44)/(x46-x41) ; slope crit = m1
+x50=(x47-x43)/(x46-x41) ; slope frc = m2
+x51=x48-(x49*x46) ; intercept crit = b1
+x52=x47-(x50*x46) ; intercept frc = b2
+x53=(x52-x41)/(x49-x50) ; x-intersection of crit & frc lines
+
+LB97 ;never crossed 3sigma (x53=0)
+x53=x53/x23 ; convert from 1/pix to 1/A
+
+;---- sum significant information ----
+x47=0 ; sum
+x46=0 ; initial freq
+DO LB3 x13=1,x21 ; third loop sums all information in frc above 3sigma function
+  UD IC x13,x41,x42,x43,x44,x45 ;freq,dph,frc,crt,pix
+  <frcdoc>
+  IF(x46.ne.0)THEN ;first loop
+    ;sum statictically significant information (above 3sigma noise)
+    IF(x43.gt.x44)x47=x47+((x43-x44)*(x41-x46)) ;area between frc and 3sigma
+  ENDIF
+  x46=x41
+LB3 ; next x13
+UD ICE
+<frcdoc>
+
+IF(x38.ne.0)x38=1/x38
+IF(x53.ne.0)x53=1/x53
+IF(x47.ne.0)x47=1/x47
+
+SD /   0.5crit (A)    3sigma (A)     total (A)
+<outdoc> 
+SD 1,x38,x53,x47
+<outdoc>
+SD E
+<outdoc>
+
+VM
+echo {%F7.1%x38}A at 0.5 and {%F7.1%x53}A at 3sigma for {%F7.1%x47}A total information
+
+RE

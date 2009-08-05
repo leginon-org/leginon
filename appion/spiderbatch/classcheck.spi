@@ -1,0 +1,193 @@
+(x23) ; pixel size (A/pix)
+; Syntax: @classcheck(apix)
+; Description:
+;   checks homogeneity of class and return 1-0 for good-bad as a criteria for rejection
+; Output doc: mean ccc to avg (0-1), 0.5 sig crit (A), 3-sig integral (1/A), score
+;   mean ccc to avg measures how far each image is from the group average
+;      - this can be a criteria for excluding images that cause the class to fail 
+;      - might be better if some pixels were weighted as in coran
+;   0.5 sig crit measures how much detail
+;   3-sig crit is how much information over random
+; WARNING - NONE OF THESE MEASURES ARE CONSISTENT WIH CATEGORIZATION BY VISUAL INSPECTION OF DATA
+
+FR
+?IN.LIST OF CLASSES (dir/doc)?<classlist>
+FR
+?IN.PARTICLE LIST TEMPLATE (dir/doc***)?<pcllist>
+FR
+?IN.ALIGNED PARTICLES (dir/ser*****)?<pcltmpl>
+FR
+?IN.MASK (dir/mask)?<mask>
+FR
+?OUT.PASS BACK DOC (dir/scoredoc)?<scoredoc>
+
+; ~~~~~ start ~~~~~
+
+SD /     class     mean_ccc   frc0.5 (A)    3sig_sum (A)    overall score
+<scoredoc>
+UD N x19
+<classlist>
+DO LB4 x14=1,x19 ; foreach class
+UD IC x14,x24
+<classlist>
+
+x60=0 ; mean ccc
+x38=0 ; 0.5 frc
+x39=0 ; frc-3sig
+UD N x20
+<pcllist>x24
+IF(x20.lt.10)THEN
+VM
+echo Class {%F7.1%x24} - Not enough images for rejection criteria.
+GOTO LB95
+ENDIF
+
+; --- how similar are particles to the average
+;;;;;;;calculate average ccc
+AS R
+<pcltmpl>
+<pcllist>x24
+a
+_1
+_2
+
+DO LB3 x13=1,x20 ; foreach particle
+UD IC x13,x61
+<pcllist>x24
+
+CC C x62
+<pcltmpl>x61
+_1 ; average image
+<mask>
+
+x60=x60+x62
+
+LB3 ; loop to find mean ccc
+UD ICE
+<pcllist>x24
+
+x60=x60/x20 ; average ccc
+
+; --- how similar are half-averages
+;;;;;;;calculate frc
+AS R
+<pcltmpl>
+<pcllist>x24
+o ; odd-even
+_1 ; avg1
+_3 ; var1
+_2 ; avg2
+_4 ; var2
+
+MU
+_1
+<mask>
+_3
+*
+
+MU
+_2
+<mask>
+_4
+*
+
+RF
+_3  ; first image
+_4  ; second image
+(1) ; ring width
+(0.8),(1.2)  ; low and hi scale factor +-20%
+tempfrcdoc
+
+DOC REN
+tempfrcdoc  ; input frcdoc
+renfrcdoc   ; output frcdoc
+
+DE
+tempfrcdoc
+
+UD N x21
+renfrcdoc
+x22=0.5
+
+DO LB1 x11=1,x21 ; first loop calculate 0.5-resolution
+UD IC x11,x31,x32,x33,x34,x35 ;freq,dph,frc,crt,pix
+renfrcdoc
+
+IF(x33.lt.x22)GOTO LB99
+; otherwise frc still above 0.5
+x36=x31 ; radius above 0.5 = x1
+x37=x33 ; correlation above 0.5 = y1
+
+LB1 ; next x11
+x38=0 ; frc never crossed 0.5
+GOTO LB96
+LB99 ; escape 0.5-sig loop
+; interpolate crossing 0.5
+;b=y1-m*x1
+;m=((y1-y2)/(x1-x2))
+;y3=m*x3+b
+; or x3=(y3-b)/m or x3=(y3-(y1-m*x1))/m or x3=((y3-y1)/m)+x1
+IF(x36.eq.x31)THEN ;horizontal line has slope of zero
+; not possible becuase this point is below and previous point was above 0.5
+VM
+echo Error..freq1 {%F7.3%x36}'1/pix' at frc {%F7.3%x37}, freq2 {%F7.3%x31} '1/pix' at frc {%F7.3%x33}
+ELSE
+x38=(x22-x37)/((x37-x33)/(x36-x31))+x36
+ENDIF
+x38=x38/x23 ; convert from 1/pix to 1/A
+x38=1/x38   ; convert to A
+LB96
+;;; find difference in area of frc and 3-sigma
+x39=0
+x12=1
+UD IC x12,x46,x42,x47,x48,x45 ;RADIUS,DPH,FRC,FRCCRIT,PIXELS
+renfrcdoc
+x46=0
+DO LB2 x12=1,x21 ; integrate information above 3-sigma
+UD IC x12,x41,x42,x43,x44,x45 ;RADIUS,DPH,FRC,FRCCRIT,PIXELS
+renfrcdoc
+
+IF(x47.ge.x48)THEN ; frc was higher than 3-sig crit last round
+ IF(x43.lt.x44)GOTO LB98 ; frc has crossed 3-sig crit
+ENDIF
+
+x39=x39+(x43-x44)*((x41-x46)/x23) ; running sum of difference between frc and 3sig-crit
+
+x46=x41 ; x1-res
+x47=x43 ; y1-frc
+x48=x44 ; y1-crit
+
+LB2 ; next x12
+x39=0 ;frc never crossed 3-sigma
+GOTO LB97
+LB98 ; escape 3-sig loop
+x49=(x48-x44)/(x46-x41) ; slope crit = m1
+x50=(x47-x43)/(x46-x41) ; slope frc = m2
+x51=x48-(x49*x46) ; y-intercept crit = b1
+x52=x47-(x50*x46) ; y-intercept frc = b2
+x53=(x52-x41)/(x49-x50) ; x-intersection of crit & frc
+x54=x49*x53+x51 ; y-intersection of crit & frc
+
+x39=x39+(((x47+x54)/2)-((x48+x54)/2))*((x53-x46)/x23)
+
+LB97 ; res at 3sigma is infinite (x39=0)
+
+UD ICE
+renfrcdoc
+DE
+renfrcdoc
+
+LB95 ; less than 10 particles - x60,x38,x39=0
+; compute overall score how? which parameter is best
+; class(x24),ccc(x60),0.5frc(x38),frc-3sig(x39)
+SD x14,x24,x60,x38,x39
+<scoredoc>
+
+LB4 ; next class x14
+UD ICE
+<classlist>
+SD E
+<scoredoc>
+
+RE
+

@@ -1,0 +1,70 @@
+; Syntax: @rawmicros2spi
+; Description:
+;   converts micrographs from raw to spider format
+;     assumes conversion from 8-bit scanner
+;   decimate by a factor of 2 for ice or 3 for neg stain
+;   requires micros to have four digit suffix ****
+;   follows tiftoraw.idl which writes list containing mic num and size
+; Input: 
+;   micro****.raw
+;   list of micros
+; Output: 
+;   micro****.spi
+;   microd****.spi
+
+FR
+?IN.Micros prefix (dir/mic assumes ****)?<micpfx>
+FR
+?IN.List of micros (dir/list)?<miclist>
+RR x22
+?IN.Decimation Factor (2 for ice, 3 for neg stain)?
+
+; ~~~~~ start ~~~~~
+x23=x22*4
+
+; find number of micrographs
+UD N x11
+<miclist>
+
+VM
+echo Converting {%F7.1%x11} raw micros to spi..
+
+DO LB1 x12=1,x11
+  ; read size of micrograph
+  UD IC x12,x13,x14,x15
+  <miclist>
+  
+  VM
+  echo -n '  Micro' {****x13}..
+  
+  CP FROM RAW
+  <micpfx>{****x13}.raw
+  (8)
+  (x15,x14,1)
+  (0)
+  _1
+  
+  VM
+  echo -n decimating..
+  
+  DC S
+  _1
+  <micpfx>{****x13}
+  x22,x22
+  
+  DC S
+  _1
+  <micpfx>d{****x13}
+  x23,x23
+  
+  VM
+  echo .done.
+  
+  DE
+  _1
+  
+LB1
+UD ICE
+<miclist>
+
+RE

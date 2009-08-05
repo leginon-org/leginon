@@ -1,0 +1,31 @@
+; Description: makes class averages
+
+FR
+?IN.List of classes (dir/list)?<classlist>
+FR
+?IN.Template for class particle lists (dir/class***)?<classtmpl>
+FR
+?IN.Template for particles (dir/ser@*****)?<pcltmpl>
+FR
+?OUT.Prefix (dir/pfx will append _avg*** and _var***)?<outpfx> 
+
+; ~~~~~ start ~~~~~
+
+UD N x21
+<classlist>
+DO LB1 x11=1,x21
+  UD IC x11,x22
+  <classlist>
+
+  AS R
+  <pcltmpl>
+  <classtmpl>x22
+  A
+  <outpfx>_avg{***x22}
+  <outpfx>_var{***x22}
+LB1
+UD ICE
+<classlist>
+
+RE
+

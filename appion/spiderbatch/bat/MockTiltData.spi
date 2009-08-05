@@ -1,0 +1,97 @@
+;make test rct micros
+
+RR x21  ;A/pix
+2.1
+
+RR x22  ;SNR
+1
+
+RR x24  ;mp
+0
+
+; ~~~~~ let the fun begin ~~~~~
+MD
+set mp
+(x24)
+
+VM
+mkdir -p vol
+
+@makeFootballers
+vol
+
+VM
+mkdir -p mics
+
+@mockTiltPair
+vol/dude3d001
+(-60) ;tiltangle
+(10)  ;untilted inplane
+(15)  ;tilted inplane
+mics
+
+@listfiles
+mics/micro****
+mics/miclist
+(1000)
+
+AS R
+mics/seru@******
+mics/serlist
+A
+mics/seruav
+mics/seruva
+
+@findradius(x26)
+mics/seruav
+
+FS
+mics/seruav
+FI x31,x32
+mics/seruav
+(12,2)
+
+MO
+circlemask
+(x31,x32)
+C
+(x26)
+
+VM
+echo -n Simulating EM micros..
+UD N x25
+mics/miclist
+UD E
+DO LB1 x11=1,x25 ;add noise and ctf to micros
+  @2dEmSim
+  mics/micro{****x11}
+  (-1) ;negstain
+  (x22) ;snr
+  (x21) ;apix
+  (120) ;kV
+  (1000) ;defocus (A)
+  (0) ;astig
+  (0) ;astig-angle
+  (0.1) ;amplitude contrast
+  (0.1) ;gaussian envelope halfwidth (1/A)
+  mics/newmic{****x11}
+LB1
+
+VM
+echo .done.
+
+@wherewin
+mics/newmic0001 ;micro
+mics/dct0001 ;coordinates
+(1)  ;coordinate bin
+mics/markmic0001 ;marked micro
+(5) ;bin image
+
+@wherewin
+mics/newmic0002 ;micro
+mics/dcu0001 ;coordinates
+(1)  ;coordinate bin
+mics/markmic0002 ;marked micro
+(5) ;bin image
+
+EN D
