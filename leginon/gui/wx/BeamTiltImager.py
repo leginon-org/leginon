@@ -70,7 +70,7 @@ class Panel(gui.wx.Acquisition.Panel):
 
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,True)
 
 class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
