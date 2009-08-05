@@ -34,6 +34,22 @@ $stackdatas = $particle->getAlignStackIdsWithAnalysis($expId, $projectId);
 
 if ($tsdatas || $stackdatas) echo "<form name='stackform' method='post' action='$formAction'>\n";
 
+// information table
+
+echo "<table border='1' class='tableborder' width='640'>";
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <h3>Angular Reconstitution</h3>";
+	echo " <b> Angular reconstitution is a method for determining the euler angles of input 2-D images and "
+		."is generally only used with class averages whose signal-to-noise ratio is high. "
+		."The 3d0 model generator at hand will perform this euler search on an input stack of class averages, "
+		."followed by a 3-D reconstruction & automasking procedure. It is advised to either (1) select "
+		."the best class averages to create a \"template stack\" for 3d0 generation or (2) proceed directly "
+		."with any of the class averages coming from the Alignment and Classification pipeline. </b>"
+		."<br/><br/>";
+	echo "</td></tr>";
+echo "</table>";
+
+
 if ($tsdatas) {
 	echo "<h2>Template Stack List</h2>\n";
 	foreach ($tsdatas as $tsdata) {
@@ -44,7 +60,8 @@ if ($tsdatas) {
 		echo "</table>\n";
 		echo "<br/>\n";
 	}
-}		
+}
+else echo "<br><br><B>Session does not contain any template stacks.</B>\n";		
 	
 if ($stackdatas) {
 	echo "<h2>Cluster Stack List</h2>\n";
@@ -64,11 +81,7 @@ if ($stackdatas) {
 		}
 	}
 }
-
-if ($tsdatas || $stackdatas) echo "</form>\n";
-else {
-	echo "<B>Session does not contain any aligned stacks.</B>\n";
-}
+else echo "<br><br><B>Session does not contain any aligned stacks.</B>\n";
 
 processing_footer();
 exit;
