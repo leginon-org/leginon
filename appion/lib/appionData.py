@@ -1051,7 +1051,7 @@ class ApRefinementData(Data):
 		return Data.typemap() + (
 			('refinementRun', ApRefinementRunData),
 			('refinementParams', ApRefinementParamsData),
-			('xmippRefineParams', ApXmippRefineFixedParamsData),
+			('xmippRefineParams', ApXmippRefineIterationParamsData),
 			('iteration', int),
 			('resolution', ApResolutionData),
 			('rMeasure', ApRMeasureData),
@@ -1099,13 +1099,13 @@ leginondata.ApRefinementParamsData=ApRefinementParamsData
 class ApXmippRefineFixedParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('ang', float),
 			('Niter', int),
 			('maskFilename', str),
 			('maskRadius', int),
 			('innerRadius', float),
 			('outerRadius', float),
 			('symmetryGroup', ApSymmetryData),
+			('fourierMaxFrequencyOfInterest', float),
 			('computeResol', bool),
 			('dolowpassfilter', bool),
 			('usefscforfilter', bool),
@@ -1124,7 +1124,6 @@ class ApXmippRefineIterationParamsData(Data):
 			('discardPercentage', float),
 			('reconstructionMethod', str),
 			('ARTLambda', float),
-			('fourierMaxFrequencyOfInterest', float),
 			('constantToAddToFiltration', float),
 		)
 	typemap = classmethod(typemap)
