@@ -150,26 +150,22 @@ class EdIterAlignScript(appionScript.AppionScript):
 		### setup aligned stack
 		alignstackq = appionData.ApAlignStackData()
 		alignstackq['alignrun'] = alignrunq
-		alignstackq['iteration'] = self.params['numiter']
 		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
-		#final class averages
-		avgstack = os.path.join(self.params['rundir'], "avg")
-		emancmd = "proc2d "+avgstack+".spi "+avgstack+".hed"
-		apEMAN.executeEmanCmd(emancmd)
-		alignstackq['refstackfile'] = ("avg.hed")
-		#averaged results
-		averagedstack = os.path.join(self.params['rundir'], "average.mrc")
-		emancmd = "proc2d "+avgstack+".spi "+averagedstack+" average"
-		apEMAN.executeEmanCmd(emancmd)
+		# stack of aligned particles
+		alignstackq['imagicfile'] = "alignstack.hed"
+		# final class averages
+		alignstackq['refstackfile'] = "avg.hed"
+		# averaged results
 		alignstackq['avgmrcfile'] = "average.mrc"
-		#check to be sure files exist
-		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile']) #averaged results
-		if not os.path.isfile(avgmrcfile):
-			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
+		# check to be sure dbpaths to files are correct
 		refstackfile = os.path.join(self.params['rundir'], alignstackq['refstackfile']) #final averages
 		if not os.path.isfile(refstackfile):
 			apDisplay.printError("could not find reference stack file: "+refstackfile)
+		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile']) #averaged results
+		if not os.path.isfile(avgmrcfile):
+			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
 		alignstackq['stack'] = self.stack['data']
+		alignstackq['iteration'] = self.params['numiter']
 		alignstackq['boxsize'] = math.floor(self.stack['boxsize']/self.params['bin'])
 		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
 		alignstackq['description'] = self.params['description']
@@ -181,6 +177,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 			alignstackq.insert() #alignstackq contains alignrunq which contains editrunq
 
 		### setup data from each iteration
+		apDisplay.printColor("Inserting average and variance images from each iteration, please wait", "cyan")
 		reflist = []
 		for j in range(self.params['numiter']):
 			iternum = j+1
@@ -309,24 +306,21 @@ class EdIterAlignScript(appionScript.AppionScript):
 		return spiderstack
 
 	#=====================
-	def convertSpiderStack(self, spiderstack):
+	def convertStack2Imagic(self, spiderstack):
 		"""
 		converts spider stack to imagicstack
 		"""
-		emancmd  = "proc2d "
 		if not os.path.isfile(spiderstack):
 			apDisplay.printError("stackfile does not exist: "+spiderstack)
-		emancmd += spiderstack+" "
 
-		imagicstack = os.path.join(self.params['rundir'], "alignstack.hed")
+		imagicstack = os.path.splitext(spiderstack)[0]+".hed"
 		apFile.removeFile(imagicstack, warn=True)
-		emancmd += imagicstack+" "
+		emancmd = "proc2d "+spiderstack+" "+imagicstack+" "
 
 		starttime = time.time()
-		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
+		apDisplay.printColor("Converting "+spiderstack+" to Imagic", "cyan")
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
-		return imagicstack
 
 	#=====================
 	def createTemplateStack(self):
@@ -417,41 +411,41 @@ class EdIterAlignScript(appionScript.AppionScript):
 		f.close()
 
 		### read / write batch file
-		globalbatch = os.path.join(apParam.getAppionDirectory(), "spiderbatch/procs/ital.spi")
-		localbatch =  os.path.join(self.params['rundir'], "ital.spi")
+		globalbatch = os.path.join(apParam.getAppionDirectory(), "spiderbatch/bat/IterativeClassifyAlign.spi")
+		localbatch =  os.path.join(self.params['rundir'], "IterativeClassifyAlign.spi")
 		gf = open(globalbatch, "r")
 		lf = open(localbatch, "w")
 		modify = True
 		for line in gf:
 			if modify is True:
-				if re.match("\[pcllist\]", line):
-					### sequential list of particle numbers
-					lf.write("[pcllist]"+spyder.fileFilter(partsel)+"\n")
-				elif re.match("\[pcltmpl\]", line):
+				if re.match("\<pcltmpl\>", line):
 					### spider stack of particles
-					lf.write("[pcltmpl]"+spyder.fileFilter(spiderstack)+"@****** \n")	
+					lf.write("<pcltmpl>"+spyder.fileFilter(spiderstack)+"@****** \n")	
+				elif re.match("\<pcllist\>", line):
+					### sequential list of particle numbers
+					lf.write("<pcllist>"+spyder.fileFilter(partsel)+"\n")
 				elif re.match("\[radius\]", line):
 					### particle radius in pixels
 					pixrad = int(self.params['partrad']/self.stack['apix']/self.params['bin'])
 					lf.write("[radius]%d\n"%(pixrad))
-				elif re.match("\[reftmpl\]", line):
+				elif re.match("\<reftmpl\>", line):
 					### spider stack of templates
-					lf.write("[reftmpl]"+spyder.fileFilter(templatestack)+"@*** \n")
-				elif re.match("\[reflist\]", line):
+					lf.write("<reftmpl>"+spyder.fileFilter(templatestack)+"@*** \n")
+				elif re.match("\<reflist\>", line):
 					### sequential list of reference numbers
-					lf.write("[reflist]"+spyder.fileFilter(refsel)+"\n")
-				elif re.match("\[dir\]", line):
+					lf.write("<reflist>"+spyder.fileFilter(refsel)+"\n")
+				elif re.match("\<ref\>", line):
+					### orientation reference
+					lf.write("<ref>"+spyder.fileFilter(orientref)+"\n")
+				elif re.match("\<dir\>", line):
 					### sub-directory, we use "."
-					lf.write("[dir].\n")
+					lf.write("<dir>.\n")
 				elif re.match("\[iter\]", line):
 					### number of ref-based iterations
 					lf.write("[iter]%d\n"%(self.params['numiter']))
-				elif re.match("\[apsrtest\]", line):
+				elif re.match("\[alnrnds\]", line):
 					### number of ref-free subroutine iterations 
-					lf.write("[apsrtest]%d\n"%(self.params['freealigns']))
-				elif re.match("\[ref\]", line):
-					### orientation reference
-					lf.write("[ref]"+spyder.fileFilter(orientref)+"\n")
+					lf.write("[alnrnds]%d\n"%(self.params['freealigns']))
 				elif re.match("\[mp\]", line):
 					### number of processors
 					lf.write("[mp]%d\n"%(self.params['nproc']))
@@ -460,14 +454,31 @@ class EdIterAlignScript(appionScript.AppionScript):
 					lf.write(line)
 			else:
 				lf.write(line)
+				
+		return localbatch
+		
 
 	#=====================
-	def runSpiderBatch(self):
+	def runSpiderBatch(self, localbatch, spiderstack):
 		### set SPPROC_DIR environment variable
 		spiprocdir = os.path.join(apParam.getAppionDirectory(), "spiderbatch/")
+		
+		### run Iterative Classification and Alignment
 		mySpider = spyder.SpiderSession(logo=True, spiderprocdir=spiprocdir, projext=".spi", term=True, verbose=True)
-		mySpider.toSpider("@ital")
+		batchheadname = localbatch.split('.')[0]
+		mySpider.toSpider("@%s" % batchheadname)
 		mySpider.close()
+		###output is class averages, variances, particle lists, and alignment parameters
+		### write aligned stack
+		if not os.path.isfile("apshdoc.spi"):
+			apDisplay.printError("Doc file, "+apshdoc.spi+" does not exist.")
+		else:
+			mySpider = spyder.SpiderSession(logo=True, spiderprocdir=spiprocdir, projext=".spi", term=True, verbose=True)
+			mySpider.toSpider("@rtmr",				#spider script for rotate,shift,mirror
+				"apshdoc",					#input transformation doc
+				"%s@******" % spyder.fileFilter(spiderstack),	#input particles
+				"alignstack@******") 				#output aligned particles
+			mySpider.close()
 
 
 	#=====================
@@ -495,11 +506,14 @@ class EdIterAlignScript(appionScript.AppionScript):
 
 		###################################################################
 		aligntime = time.time()
+		
 		### create batch file
-		self.setupBatchFile(spiderstack, templatestack, orientref)
+		batchfilepath = self.setupBatchFile(spiderstack, templatestack, orientref)
+		
 		### run the spider alignment
 		apDisplay.printColor("Running iterative ref-classification and free-alignment with spider","cyan")
-		self.runSpiderBatch()
+		self.runSpiderBatch( batchfilepath, spiderstack )
+		
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 		###################################################################
@@ -507,14 +521,19 @@ class EdIterAlignScript(appionScript.AppionScript):
 		### remove unaligned spider stack
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		apFile.removeFile(spiderstack, warn=False)
-
-		###output is class averages, variances, paricle lists and alignment parameters
-		###imagicstack = self.convertSpiderStack(alignedstack) ###there is not aligned stack
-
-		#check to be sure files exist
-		avgfile = os.path.join(self.params['rundir'], "avg.spi") #class averages
+		
+		### check to be sure files exist
+		avgfile = os.path.join(self.params['rundir'], "alignstack.spi") #class averages
 		if not os.path.isfile(avgfile):
-			apDisplay.printError("SPIDER did not run correcly")
+			apDisplay.printError("Final stack of aligned particles does not exist.")
+
+		### convert stacks to imagic
+		self.convertStack2Imagic("alignstack.spi")
+		self.convertStack2Imagic("avg.spi")
+		
+		### make alignment average in mrc format
+		emancmd = "proc2d avg.spi average.mrc average"
+		apEMAN.executeEmanCmd(emancmd)
 
 		inserttime = time.time()
 		if self.params['commit'] is True:
