@@ -640,6 +640,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		else:
 			imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
+		self.imagedata = imagedata
 		targetdata = emtarget['target']
 		if targetdata is not None and 'grid' in targetdata and targetdata['grid'] is not None:
 			imagedata['grid'] = targetdata['grid']
