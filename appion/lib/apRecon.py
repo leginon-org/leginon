@@ -874,6 +874,7 @@ def getGoodBadParticlesFromReconId(reconid):
 	refineq = appionData.ApRefinementData()
 	refineq['refinementRun'] = refinerundata
 	refinedatas = refineq.query()
+	r0 = time.time()
 	for refinedata in refinedatas:
 		t0 = time.time()
 		print "Iteration %d"%(refinedata['iteration'])
@@ -900,7 +901,8 @@ def getGoodBadParticlesFromReconId(reconid):
 		goodbadq['good_msgp'] = fields['good_msgp']
 		goodbadq['bad_msgp'] = fields['bad_msgp']
 		goodbadq.insert()
-		apDisplay.printMsg("Completed in %s"%(apDisplay.timeString(time.time()-t0)))
+		apDisplay.printMsg("Iter completed in %s"%(apDisplay.timeString(time.time()-t0)))
+	apDisplay.printMsg("Refine completed in %s"%(apDisplay.timeString(time.time()-r0)))
 	return
 
 #=====================
