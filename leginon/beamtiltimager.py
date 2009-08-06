@@ -105,7 +105,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		split = self.settings['tableau split']
 		self.tabimage = tableau.splitTableau(image, split)
 		self.tabscale = None
-		self.displayTableau(self.tabimage)
+		self.displayTableau()
 
 	def insertTableau(self, imagedata, angle, rad):
 		image = imagedata['image']
@@ -135,7 +135,8 @@ class BeamTiltImager(acquisition.Acquisition):
 			rad = radinc * self.tableaurads[i]
 			tab.insertImage(im, angle=ang, radius=rad)
 		self.tabimage,self.tabscale = tab.render()
-		self.displayTableau(self.tabimage)
+		self.displayTableau()
+		self.saveTableau()
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
@@ -184,7 +185,8 @@ class BeamTiltImager(acquisition.Acquisition):
 			newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
 			self.instrument.tem.BeamTilt = newbt
 			self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
-			status,imagedata = acquisition.Acquisition.acquire(self, presetdata, emtarget, channel= channel)
+			status = acquisition.Acquisition.acquire(self, presetdata, emtarget, channel= channel)
+			imagedata = self.imagedata
 			self.instrument.tem.BeamTilt = oldbt
 			angle = anglelist[i]
 			rad = radlist[i]
@@ -259,9 +261,9 @@ class BeamTiltImager(acquisition.Acquisition):
 		except:
 			pass
 
-	def displayTableau(self, im):
+	def displayTableau(self):
 		try:
-			self.setImage(im, 'Tableau')
+			self.setImage(self.tabimage, 'Tableau')
 		except:
 			pass
 
@@ -392,3 +394,19 @@ class BeamTiltImager(acquisition.Acquisition):
 			(self.ctfvalues['defocus1']*1.0e6, self.ctfvalues['defocus2']*1.0e6, self.ctfvalues['angle_astigmatism'],pererror ))
 
 		return self.ctfvalues
+
+	def saveTableau(self):
+		init = self.imagedata
+		tabim = self.tabimage
+		filename = init['filename'] + '_tableau'
+		cam = leginondata.CameraEMData(initializer=init['camera'])
+		tab_bin = self.settings['tableau binning']
+		new_bin = {'x':tab_bin*cam['binning']['x'], 'y':tab_bin*cam['binning']['y']}
+		cam['dimension'] = {'x':tabim.shape[1],'y':tabim.shape[0]}
+		cam['binning'] = new_bin
+
+		tabimdata = leginondata.AcquisitionImageData(initializer=self.imagedata, image=self.tabimage, filename=filename, camera=cam)
+		tabimdata.insert(force=True)
+		self.logger.info('Saved tableau.')
+
+
