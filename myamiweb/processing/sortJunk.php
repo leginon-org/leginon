@@ -96,6 +96,13 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 			."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/SortByStatistics'>Xmipp webpage"
 			."&nbsp;<img border='0' src='img/external.png'></a>. "
 			."<br/><br/>";
+		echo "  If you use this function, please, cite: "
+            ."<br/><br/>"
+            ."C.O.S. Sorzano, R. Marabini, J. Velazquez-Muriel, J.R. Bilbao-Castro, S.H.W. Scheres, "
+            ."J.M. Carazo, A. Pascual-Montano. XMIPP: a new generation of an open-source image "
+            ."processing package for Electron Microscopy. <i>J. Struct. Biol.</i> 148(2), 194-204, (<b>2008</b>)<br/>"
+			."<br/><br/>";
+        
 		echo "</td></tr>";
 	echo "</table>";
 
