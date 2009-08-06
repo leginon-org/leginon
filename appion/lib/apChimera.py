@@ -11,12 +11,24 @@ import colorsys
 import subprocess
 #appion
 import apFile
-import apEMAN
 import apParam
 import apDisplay
-import apVolume
+from pyami import mrc
 
 hsvalue = 0.4
+
+#================	
+def isValidVolume(volfile):
+	"""
+	Checks to see if a MRC volume is valid
+	"""
+	if not os.path.isfile(volfile):
+		return False
+	volarray = mrc.read(volfile)
+	if volarray.std() < 1e-6:
+		apDisplay.printWarning("Volume has zero standard deviation")
+		return False
+	return True
 
 #=========================================
 #=========================================
@@ -27,7 +39,7 @@ def setVolumeMass(volumefile, apix=1.0, mass=1.0, rna=0.0):
 	
 	use RNA to set the percentage of RNA in the structure
 	"""
-	if apVolume.isValidVolume(volumefile) is False:
+	if isValidVolume(volumefile) is False:
 		apDisplay.printError("Volume file is not valid")
 
 	procbin = apParam.getExecPath("proc2d")
@@ -52,7 +64,7 @@ def setVolumeMass(volumefile, apix=1.0, mass=1.0, rna=0.0):
 #=========================================
 def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 		contour=None, zoom=1.0, sym=None, color=None, silhouette=True, mass=None):
-	if apVolume.isValidVolume(density) is False:
+	if isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	if box is None:
 		boxdims = apFile.getBoxSize(density)
@@ -76,7 +88,8 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	else:
 		lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0 norm=0,1' % (density, tmpf, apix, filtres))
 	apDisplay.printMsg("Low pass filtering model for images")
-	apEMAN.executeEmanCmd(lpcmd)
+	proc = subprocess.Popen(lpcmd, shell=True)
+	proc.wait()
 	os.environ['CHIMTEMPVOL'] = tmpf
 
 	if mass is not None:
@@ -97,7 +110,7 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 	"""
 	create mrc of central slice for viruses
 	"""
-	if apVolume.isValidVolume(density) is False:
+	if isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	if tmpfile is None:
 		tmpfile = density
@@ -110,17 +123,19 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 	hedcmd = ('proc3d %s %s' % (tmpfile, tmphed))
 	if sym.lower()[:4] != 'icos':
 		hedcmd = hedcmd + " rot=90"
-	apEMAN.executeEmanCmd(hedcmd)
+	proc = subprocess.Popen(hedcmd, shell=True)
+	proc.wait()
 	pngslice = density + '.slice.png'
 	slicecmd = ('proc2d %s %s first=%i last=%i' % (tmphed, pngslice, halfbox, halfbox))
-	apEMAN.executeEmanCmd(slicecmd)
+	proc = subprocess.Popen(slicecmd, shell=True)
+	proc.wait()
 	apFile.removeStack(tmphed, warn=False)
 	return
 
 #=========================================
 #=========================================
 def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
-	if apVolume.isValidVolume(density) is False:
+	if isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
 	os.environ['CHIMVOL'] = density
@@ -158,7 +173,7 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 #=========================================
 #=========================================
 def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=False):
-	if apVolume.isValidVolume(density) is False:
+	if isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
 	os.environ['CHIMVOL'] = density
@@ -201,7 +216,8 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 			imagestr += image+" "
 		imagemagickcmd1 += imagestr+finalgif
 		apFile.removeFile(finalgif)
-		apEMAN.executeEmanCmd(imagemagickcmd1, verbose=False, showcmd=False)
+		proc = subprocess.Popen(imagemagickcmd1, shell=True)
+		proc.wait()
 		#if os.path.isfile(finalgif):
 		apFile.removeFilePattern(density+".*[0-9][0-9].png")
 	return
