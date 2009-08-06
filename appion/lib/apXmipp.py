@@ -82,6 +82,9 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 		last = filesperdir
 		subdir = 1
 	else:
+		filesperdir = numpart+1
+		apDisplay.printMsg("Splitting "+str(numpart)+" particles into 1 folder with "
+			+str(filesperdir)+" particles per folder")
 		apParam.createDirectory(os.path.join(partdir, "1"))
 		last = numpart
 		subdir = 1
@@ -227,6 +230,7 @@ def createSubFolders(partdir, numpart, filesperdir):
 	dirnum = 0
 	while i < numpart:
 		dirnum += 1
-		apParam.createDirectory(os.path.join(partdir, str(dirnum)))
+		apParam.createDirectory(os.path.join(partdir, str(dirnum)), warning=False)
 		i += filesperdir
 	return dirnum
+
