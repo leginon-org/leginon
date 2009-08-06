@@ -73,6 +73,7 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 		filesperdir = 4096
 	if numpart is None:
 		numpart = apFile.numImagesInStack(stackfile)
+		apDisplay.printMsg("Found "+str(numpart)+" particles in stack")
 	apParam.createDirectory(partdir)
 	if numpart > filesperdir:
 		numdir = createSubFolders(partdir, numpart, filesperdir)
@@ -98,9 +99,8 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 	first = 1
 	index = 0
 	t0 = time.time()
-	while index < numpart:
+	while index < numpart and first < numpart:
 		### read images
-		stackimages = apImagicFile.readImagic(stackfile, first=first, last=last, msg=False)
 		if index > 10:
 			esttime = (time.time()-t0)/float(index+1)*float(numpart-index)
 			apDisplay.printMsg("dirnum %d at partnum %d to %d of %d, %s remain"
@@ -108,6 +108,9 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 		else:
 			apDisplay.printMsg("dirnum %d at partnum %d to %d of %d"
 				%(subdir, first, last, numpart))
+		#print first, last, numpart, index
+		stackimages = apImagicFile.readImagic(stackfile, first=first, last=last, msg=False)
+		#print stackimages['images'].shape
 
 		### write images
 		for partimg in stackimages['images']:
@@ -123,6 +126,8 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 			last = numpart
 		subdir += 1
 	f.close()
+	if index < numpart:
+		apDisplay.printError("Did not write all particles out, the stack header does not match the stack data")
 
 	apDisplay.printColor("finished breaking stack in "+apDisplay.timeString(time.time()-starttime), "cyan")
 	return partlistdocfile
