@@ -46,11 +46,12 @@ IF(x99.eq.1)THEN
   <alndir>/grp_count
 ENDIF
 
-SD /     class      positive      mirror
-<alndir>/grp_count
-
 UD N x41,x40
 <alndoc>
+UD E
+
+SD /     class      positive      mirror
+<alndir>/grp_count
 
 ;CLASS TRACKER
 x44=0 ;classnum tracker
