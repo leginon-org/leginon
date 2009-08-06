@@ -17,7 +17,18 @@ from pyami import mrc
 
 hsvalue = 0.4
 
-#================	
+#=========================================
+#=========================================
+def getSnapPath():
+	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimSnapshot.py")
+	if not os.path.isfile(chimsnappath):
+		libdir = os.path.dirname(__file__)
+		chimsnappath = os.path.join(libdir, "apChimSnapshot.py")
+	if not os.path.isfile(chimsnappath):
+		apDisplay.printError("Could not find file: apChimSnapshot.py")
+
+#=========================================
+#=========================================
 def isValidVolume(volfile):
 	"""
 	Checks to see if a MRC volume is valid
@@ -159,7 +170,7 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 	os.environ['CHIMIMGSIZE'] = "1024"
 	### unused
 	#'CHIMBACK',  'CHIMIMGSIZE', 'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
-	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimSnapshot.py")
+	chimsnappath = getSnapPath()
 	apDisplay.printColor("running Chimera Snapshot for sym "+str(sym), "cyan")
 	runChimeraScript(chimsnappath)
 
@@ -197,7 +208,7 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 	os.environ['CHIMIMGSIZE'] = "200"
 	### unused
 	#'CHIMBACK',  'CHIMIMGSIZE', 'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
-	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimSnapshot.py")
+	chimsnappath = getSnapPath()
 	apDisplay.printColor("running Chimera Animation for sym "+str(sym), "cyan")
 	runChimeraScript(chimsnappath)
 	image1 = density+".001.png"
