@@ -26,6 +26,7 @@ def getSnapPath():
 		chimsnappath = os.path.join(libdir, "apChimSnapshot.py")
 	if not os.path.isfile(chimsnappath):
 		apDisplay.printError("Could not find file: apChimSnapshot.py")
+	return chimsnappath
 
 #=========================================
 #=========================================
@@ -236,6 +237,9 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 #=========================================
 #=========================================
 def runChimeraScript(chimscript):
+	if not chimscript or not os.path.isfile(chimscript):
+		print chimscript
+		apDisplay.printError("Could not find file: apChimSnapshot.py")
 	#apDisplay.printColor("Trying to use chimera for model imaging","cyan")
 	apParam.resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
