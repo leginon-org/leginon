@@ -46,7 +46,7 @@ def getStackParticlesFromId(stackid, msg=True):
 	stackdata = appionData.ApStackData.direct_query(stackid)
 	stackq = appionData.ApStackParticlesData()
 	stackq['stack'] = stackdata
-	stackpartdata = stackq.query()
+	stackpartdata = stackq.query(readimages=False)
 	if not stackpartdata:
 		apDisplay.printWarning("failed to get particles of stackid="+str(stackid))
 	if msg is True:
