@@ -173,7 +173,7 @@ foreach ($display_keys as $p) {
 	if ($p == 'iteration') $html .= "0";
 	elseif ($p == 'snapshot') {
 		foreach ($initpngs as $snapshot) {
-			$snapfile = $initmodel['path'].'/'.$snapshot;
+			$snapfile = $snapshot;
 			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>"
 				."<img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></A>\n";
 		}
@@ -296,8 +296,8 @@ foreach ($iterations as $iteration){
 	$eulerSelect = "<select name='eulerplot".$iteration['iteration']."' onChange='switchEulerImg(".$iteration['iteration'].",this.options(this.selectedIndex).value)'>\n";
 	foreach ($pngimages['eulerfiles'] as $eulername) {
 		if (eregi($reconId."_".$iteration['iteration']."\.png$", $eulername)) {
-			$eulerfile = $refinerun['path'].'/'.$eulername;
-			$opname = ereg_replace("euler","",$eulername);
+			$eulerfile = $eulername;
+			$opname = ereg_replace("euler","",basename($eulername));
 			$opname = ereg_replace("-".$reconId."_".$iteration['iteration']."\.png$","",$opname);
 			if (file_exists($eulerfile)) {
 				$eulerSelect.= "<option value='$eulerfile'>$opname</option>\n";
@@ -348,7 +348,7 @@ foreach ($iterations as $iteration){
 	$html .= "<td bgcolor='$bg'>\n";
 	foreach ($pngimages['pngfiles'] as $snapshot) {
 		if (eregi($iteration['volumeDensity'],$snapshot)) {
-			$snapfile = $refinerun['path'].'/'.$snapshot;
+			$snapfile = $snapshot;
 			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>"
 				."<img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></a>\n";
 		}
@@ -389,7 +389,7 @@ foreach ($iterations as $iteration){
 			$html .= "</td><td>\n";
 			foreach ($procimgs['pngfiles'] as $s) {
 			  	if (eregi($p['name'],$s)) {
-					$sfile = $p['path'].'/'.$s;
+					$sfile = $s;
 					$html .= "<a href='loadimg.php?filename=$sfile' target='snapshot'>"
 						."<img src='loadimg.php?s=80&filename=$sfile' height='80'></a>\n";
 				}
