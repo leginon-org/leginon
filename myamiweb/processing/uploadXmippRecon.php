@@ -43,7 +43,6 @@ function createUploadReconForm($extra=false, $title='UploadXmippRecon.py Launche
   $particle = new particledata();
 
   // if uploading a specific recon, get recon info from database & job file
-  $package='XMIPP';
   if ($jobId) {
     $jobinfo = $particle->getJobInfoFromId($jobId);
     $jobrunid = ereg_replace('\.job$','',$jobinfo['name']);
@@ -53,7 +52,7 @@ function createUploadReconForm($extra=false, $title='UploadXmippRecon.py Launche
     foreach ($f as $line) {
       if (preg_match('/^\#\sstackId:\s/',$line)) $stackid=ereg_replace('# stackId: ','',trim($line));
       elseif (preg_match('/^\#\smodelId:\s/',$line)) $modelid=ereg_replace('# modelId: ','',trim($line));
-      if ($stackid && $modelid && $package) break;
+      if ($stackid && $modelid) break;
     }
   }
 
@@ -83,7 +82,6 @@ function createUploadReconForm($extra=false, $title='UploadXmippRecon.py Launche
   echo "<input type='hidden' name='outdir' value='$sessionpath'>\n";
   
   // Set any existing parameters in form
-  $package = ($_POST['package']) ? $_POST['package'] : $package;
   $contour = ($_POST['contour']) ? $_POST['contour'] : '2.0';
   $mass = ($_POST['mass']) ? $_POST['mass'] : '';
   $zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.0';
@@ -233,10 +231,6 @@ function runUploadRecon() {
 	if ($_POST['model']) $model=$_POST['model'];
 	if (!$model) createUploadReconForm("<B>ERROR:</B> Select the initial model used");
   
-	//make sure a package was chosen
-	$package=$_POST['package'];
-	if (!$package) createUploadReconForm("<B>ERROR:</B> Enter the reconstruction process used");
-
 	//make sure a description was entered
 	$description=$_POST['description'];
 	if (!$description) createUploadReconForm("<B>ERROR:</B> Enter a description of the reconstruction");
