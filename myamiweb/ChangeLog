@@ -1,0 +1,44 @@
+----------------------
+dbem - ChangeLog
+----------------------
+
+2009-07-22
+Release dbem_1_5
+		- new image constrast interface
+		- image comment, hide, examplar
+		- add processing web tool for appion
+		- imagic/spider stack viewer
+		- require mrc_1_5 php module
+		- update to use project_1_2
+
+2009-03-17
+Release dbem_1_4_6
+		- fix default settings
+
+2008-11-06 
+Release dbem_1_4_5
+		- fix display in admin
+		- update to use with project_1_1 package
+		- check if php modules are loaded
+
+2008-03-20 
+Release dbem_1_4_4
+		- display image comment entered in Leginon
+		- xml viewer dataset updated
+		- new default database setings in admin page
+
+2008-03-01 
+Release dbem_1_4_3
+		- tomogram viewer
+		- RCT viewer
+		- option to connect a "Project database"
+		- default database setings in admin page
+
+2006-02-24 
+Release dbem_1_4_2
+	PHP code for image viewers, XML import/export for applications and calibrations, admin tools for intruments, users.
+	Reports generation included.
+
+	Module compatible with apache2
+	XML dataset support
+	PHP5 compatible!
