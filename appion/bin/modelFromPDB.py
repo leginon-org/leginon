@@ -175,7 +175,6 @@ class modelFromPDB(appionScript.AppionScript):
 
 		### chimera imaging
 		apChimera.renderSnapshots(mrcname, contour=1.5, zoom=1.0, sym=self.params['symdata']['eman_name'])
-		apChimera.renderAnimation(mrcname, contour=1.5, zoom=1.0, sym=self.params['symdata']['eman_name'])
 
 		### upload it
 		self.uploadDensity(mrcname)

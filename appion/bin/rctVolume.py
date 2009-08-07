@@ -327,7 +327,6 @@ class rctVolumeScript(appionScript.AppionScript):
 				apDisplay.printMsg("Using scale by mass method")
 				apChimera.setVolumeMass(mrcvolfile, apix=apix, mass=self.params['mass'])
 			apChimera.renderSnapshots(mrcvolfile, self.params['contour'], self.params['zoom'], 'c1')
-			apChimera.renderAnimation(mrcvolfile, self.params['contour'], self.params['zoom'], 'c1')
 		return mrcvolfile
 
 	#=====================

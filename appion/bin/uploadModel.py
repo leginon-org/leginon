@@ -257,8 +257,6 @@ class UploadModelScript(appionScript.AppionScript):
 			contour = 1.0
 		apChimera.renderSnapshots(newmodelpath, contour=self.params['contour'], 
 			zoom=self.params['zoom'], sym=self.params['symdata']['eman_name'])
-		apChimera.renderAnimation(newmodelpath, contour=self.params['contour'], 
-			zoom=self.params['zoom'], sym=self.params['symdata']['eman_name'])
 
 
 		self.insertModel()

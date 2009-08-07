@@ -160,7 +160,6 @@ class modelFromEMDB(appionScript.AppionScript):
 
 		### chimera imaging
 		apChimera.renderSnapshots(mrcname, contour=1.5, zoom=1.0, sym='c1')
-		apChimera.renderAnimation(mrcname, contour=1.5, zoom=1.0, sym='c1')
 
 		### upload it
 		self.uploadDensity(mrcname)
