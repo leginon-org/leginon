@@ -48,6 +48,12 @@ echo "  <h3><a href='jumpSubStack.php?expId=$expId'>Jumpers SubStack</a></h3>";
 echo "  make a substack based on particle 'jumpers' from a reconstruction.";
 echo "</td></tr>";
 
+echo "<tr><td>";
+echo "  <h3><a href='runStackIntoPicks.php?expId=$expId'>Convert Stack into Particle Picks</a></h3>";
+echo "  take an existing stack and create a particle picking run. "
+	." This is good for creating a new stack based on an existing stack with a bigger boxsize .";
+echo "</td></tr>";
+
 echo "</table>";
 processing_footer();
 exit;
