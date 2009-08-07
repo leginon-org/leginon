@@ -1270,7 +1270,10 @@ function getPngList($dir) {
 
 	//get pngs
 	//echo "GLOB: ".$dir."/".'*\.png';
-	$pngfiles = glob($dir."/".'*\.png');
+	$pngfiles1 = glob($dir."/*\.png");
+	$pngfiles2 = glob($dir."/*/*\.png");
+	$pngfiles3 = glob($dir."/*/*/*\.png");
+	$pngfiles = array_merge($pngfiles1, $pngfiles2, $pngfiles3);
 	//print_r($pngfiles)."<br/>";
 	if (count($pngfiles) < 2)
 		return $pngimages;
@@ -1279,9 +1282,9 @@ function getPngList($dir) {
 	$eulerstr = 'euler.*\.png$';
 	foreach ($pngfiles as $pngfile) {
 		if (eregi($eulerstr, $pngfile))
-			$pngimages['eulerfiles'][] = basename($pngfile);
+			$pngimages['eulerfiles'][] = $pngfile;
 		else
-			$pngimages['pngfiles'][] = basename($pngfile);
+			$pngimages['pngfiles'][] = $pngfile;
 	}
 	sort($pngimages['pngfiles']);
 	sort($pngimages['eulerfiles']);
