@@ -528,6 +528,16 @@ if ($expId) {
 		$imreconresults[] = ($imrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imrun running</a>" : "";
 		$imreconresults[] = ($imdone>0) ? "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$imdone complete</a>" : "";
 
+		$xmippreconqueue = count($subclusterjobs['xmipprecon']['queued']);
+		$xmippreconrun = count($subclusterjobs['xmipprecon']['running']);
+		$xmipprecondone = count($subclusterjobs['xmipprecon']['done']);
+		$numxmipprecon = 0;
+		$xmippreconupload = $xmipprecondone - $numxmipprecon;
+		$xmippreconresults[] = ($xmippreconqueue>0) ? "<a href='checkjobs.php?expId=$sessionId'>$xmippreconqueue queued</a>" : "";
+		$xmippreconresults[] = ($xmippreconrun>0) ? "<a href='checkjobs.php?expId=$sessionId'>$xmippreconrun running</a>" : "";
+		$xmippreconresults[] = ($xmippreconupload>0) ? "<a href='uploadXmippRecon.php?expId=$sessionId'>$xmippreconupload ready for upload</a>" : "";
+		$xmippreconresults[] = ($numxmipprecon>0) ? "<a href='reconsummary.php?expId=$sessionId'>$numxmipprecon complete</a>" : "";
+
 		// list out refinement jobs in the web menu
 		$nruns=array();
 //		if ($_SESSION['loggedin']) {
@@ -538,6 +548,10 @@ if ($expId) {
 					 );
 			$nruns[] = "<a href='frealignJobGen.php?expId=$sessionId'>Frealign Refinement</a>" ;
 			$nruns[] = "<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>";
+			$nruns[] = array(
+					 'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
+					 'result'=>$xmippreconresults,
+					 );
 			$nruns[] = array(
 					 'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
 					 'result'=>$imreconresults,
