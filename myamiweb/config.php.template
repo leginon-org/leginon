@@ -55,7 +55,9 @@ $SQL_HOSTS['name1']['db'] = 'dbemdata';
 */
 
 // --- add plugins --- //
-addplugin('processing');
+
+### uncomment to enable processing web pages
+# addplugin("processing");
 
 // --- Leginon Viewer login --- //
 define('ENABLE_LOGIN', false);

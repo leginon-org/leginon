@@ -9,7 +9,9 @@
 
 require "inc/leginon.inc";
 require "inc/project.inc";
-require "inc/particledata.inc";
+if (defined('PROCESSING')) {
+	$ptcl = (@require "inc/particledata.inc") ? true : false;
+}
 
 
 // --- Set  experimentId
@@ -279,7 +281,9 @@ $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 		$ds['defocus'][]=$cstats;
 	}
 	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-	echo displayCTFstats($ds, $display_keys);
+	if ($ptcl) {
+		echo displayCTFstats($ds, $display_keys);
+	}
 ?>
 </td>
 </tr>
@@ -308,6 +312,7 @@ if (!empty($comments)) {
 $minconf = (is_numeric($_POST['mconf'])) ? $_POST['mconf'] 
 		: (is_numeric($_GET['mconf']) ? $_GET['mconf'] : false);
 
+if ($ptcl) {
 echo divtitle("CTF");
 $sessionId=$expId;
 $particle = new particledata();
@@ -348,11 +353,10 @@ if ($particle->hasCtfData($sessionId)) {
 		echo '<a href="processing/showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vs=1">[sql]</a>';
 		$display_keys = array ( 'name', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
 		echo displayCTFstats($bestctf, $display_keys);
+		} else { echo "Database Error"; }
+	} else {
+		echo "no CTF information available";
 	}
-	else echo "Database Error";
-}
-else {
-        echo "no CTF information available";
 }
 ?>
 
@@ -363,7 +367,7 @@ else {
 <?php
 echo divtitle("Particles");
 $sessionId=$expId;
-if ($particle->hasParticleData($sessionId)) {
+if ($ptcl && $particle->hasParticleData($sessionId)) {
 	$inspectcheck=($_POST['onlyinspected']=='on') ? 'CHECKED' : '';
 	$mselexval=(is_numeric($_POST['mselex'])) ? $_POST['mselex'] 
 			: (is_numeric($_GET['mselex']) ? $_GET['mselex'] : false);

@@ -9,7 +9,9 @@
 
 require "inc/leginon.inc";
 require "inc/viewer.inc";
-require "inc/particledata.inc";
+if (defined('PROCESSING')) {
+	$ptcl = (@require "inc/particledata.inc") ? true : false;
+}
 
 // display data tree ?
 $displaytreevalue  = ($_POST) ? (($_POST['datatree']=='on') ? "off" : "on") : "off";
@@ -65,9 +67,11 @@ if ($displaytree)
 $types = $leginondata->getMatrixCalibrationTypes();
 
 // --- getCTF Info, if any
-$ctf = new particledata;
-$runId = $ctf->getLastCtfRun($sessionId);
-$ctfdata  = $ctf->getCtfInfoFromImageId($imgId);
+if ($ptcl) {
+	$ctf = new particledata;
+	$runId = $ctf->getLastCtfRun($sessionId);
+	$ctfdata  = $ctf->getCtfInfoFromImageId($imgId);
+}
 
 $ctf_display_fields = array (
 	'defocus1',

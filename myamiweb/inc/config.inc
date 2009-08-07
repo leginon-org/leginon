@@ -4,6 +4,7 @@ function addplugin($path, $name='') {
 	if (empty($name)) {
 		$name=strtoupper($path);
 	}
+	define($name, true);
 	define($name."_BASE_URL", BASE_URL.$path."/");
 	$base = $_SERVER['DOCUMENT_ROOT'] . '/' . BASE_URL;
 	$path = $base . $path;

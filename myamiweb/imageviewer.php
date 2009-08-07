@@ -3,7 +3,9 @@ require "inc/leginon.inc";
 require "inc/viewer.inc";
 require "inc/project.inc";
 require "inc/cachedb.inc";
-$ptcl = (@require "inc/particledata.inc") ? true : false;
+if (defined('PROCESSING')) {
+	$ptcl = (@require "inc/particledata.inc") ? true : false;
+}
 
 $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
 $projectId = ($_POST['projectId']) ? $_POST['projectId'] : $_GET['projectId'];
@@ -82,11 +84,7 @@ $viewer->add($view1);
 
 $javascript .= $viewer->getJavascriptInit();
 viewer_header('image viewer', $javascript, 'initviewer()');
-?>
-<a class="header" target="summary" href="summary.php?expId=<?php echo $sessionId ?>">[summary]</a>
-<a class="header" target="processing" href="processing/index.php?expId=<?php echo $sessionId; ?>">[processing]</a>
-<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId=<?php echo $sessionId; ?>">[make jpgs]</a>
-<?php
+viewer_menu($sessionId);
 $viewer->display();
 viewer_footer();
 ?>

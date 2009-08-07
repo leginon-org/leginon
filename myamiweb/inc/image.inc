@@ -348,7 +348,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			}
 		
 		}
-		if ($p['newptcl']) {
+		if ($p['newptcl'] && defined('PROCESSING')) {
 				list($pon, $diam)=explode(";", $p['newptcl']['info']);
 				require "inc/particledata.inc";
 				require "inc/histogram.inc";

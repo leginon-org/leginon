@@ -1388,6 +1388,15 @@ echo '
 ';
 }
 
+function viewer_menu($sessionId) {
+	$str = '<a class="header" target="summary" href="summary.php?expId='.$sessionId.'">[summary]</a> ';
+	if (defined('PROCESSING')) {
+		$str.='<a class="header" target="processing" href="processing/index.php?expId='.$sessionId.'">[processing]</a> ';
+	}
+	$str.='<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId='.$sessionId.'">[make jpgs]</a>';
+	echo $str;
+}
+
 function insertlog($username, $ip, $info) {
   global $DB_HOST, $DB_USER, $DB_PASS, $DB;
   $data['username']=$username;
