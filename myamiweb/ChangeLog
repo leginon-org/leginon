@@ -2,6 +2,10 @@
 dbem - ChangeLog
 ----------------------
 
+2009-08-07
+Release dbem_1_5_1
+		- allow to disable processing plugin
+
 2009-07-22
 Release dbem_1_5
 		- new image constrast interface
