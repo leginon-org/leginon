@@ -324,10 +324,13 @@ def updateHeaderUsingArray(header, a):
 	header['amean'] = stats['mean']
 	header['rms'] = stats['std']
 
-	header['xorigin'] = nx / 2.0 
-	header['yorigin'] = ny / 2.0
-	header['zorigin'] = nz / 2.0
-
+	### changed next lines to be equivalent to proc3d origin=0,0,0
+	header['xorigin'] = 0
+	header['yorigin'] = 0
+	header['zorigin'] = 0
+	header['nxstart'] = nx/-2
+	header['nystart'] = ny/-2
+	header['nzstart'] = nz/-2
 
 int32dtype = numpy.dtype('Int32')
 float32dtype = numpy.dtype('Float32')
