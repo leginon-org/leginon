@@ -240,7 +240,7 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 	stackq['pixelsize'] = oldstackdata['pixelsize']
 	stackq['project|projects|project'] = oldstackdata['project|projects|project']
 	if sorted is True:
-		stackq['sorted'] = True
+		stackq['junksorted'] = True
 	if centered is True:
 		stackq['centered'] = True
 		if 'mask' in params:
