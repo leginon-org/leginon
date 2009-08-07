@@ -83,7 +83,8 @@ class StackIntoPicksScript(appionScript.AppionScript):
 		selectrunq['manparams'] = manualparamsq
 
 		### insert particles
-		dupfields = ('image', 'xcoord', 'ycoord', 'diameter',)
+		dupfields = ('image', 'xcoord', 'ycoord', 'diameter', 
+			'correlation', 'template', 'peakmoment', 'peakstddev', 'peakarea',)
 		apDisplay.printMsg("Inserting particles into database")
 		count = 0
 		t0 = time.time()
@@ -99,10 +100,9 @@ class StackIntoPicksScript(appionScript.AppionScript):
 			oldpartdata = stackpart['particle']
 			newpartq = appionData.ApParticleData()
 			newpartq['selectionrun'] = selectrunq
-			newpartq['image'] = oldpartdata['image']
-			newpartq['xcoord'] = oldpartdata['xcoord']
-			newpartq['ycoord'] = oldpartdata['ycoord']
-			newpartq['diameter'] = oldpartdata['diameter']
+			### copy old values
+			for field in dupfields:
+				newpartq[field] = oldpartdata[field]
 			if self.params['commit'] is True:
 				newpartq.insert()
 		apDisplay.printMsg("Completed in %s"%(apDisplay.timeString(time.time()-t0)))
