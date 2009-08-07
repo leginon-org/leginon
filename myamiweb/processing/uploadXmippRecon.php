@@ -207,7 +207,7 @@ function runUploadRecon() {
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
  
-	$command.="uploadRecon.py ";
+	$command.="uploadXmippRefine.py ";
 
 	$particle = new particledata();
 
@@ -258,9 +258,7 @@ function runUploadRecon() {
 	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--runname=$runid ";
 	$command.="--stackid=$stack ";
-	$command.="--modelid=$model ";
-	if (!$jobId) $command.="--rundir=$runpath ";
-	if ($jobId) $command.="--jobid=$jobId ";
+	$command.="--rundir=$runpath ";
 	if ($mass) $command.="--mass=$mass ";
   
 	// submit job to cluster
@@ -269,7 +267,7 @@ function runUploadRecon() {
 		$password = $_SESSION['password'];
 
 		if (!($user && $password)) createUploadReconForm("<b>ERROR:</b> Enter a user name and password");
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploadrecon');
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploadXmippRefine');
 		// if errors:
 		if ($sub) createUploadReconForm("<b>ERROR:</b> $sub");
 		exit;
@@ -279,7 +277,7 @@ function runUploadRecon() {
 	echo"
 	<table class='tableborder' width='600' border='1'>
 	<tr><td colspan='2'>
-	<b>UploadRecon Command:</b><br>
+	<b>UploadXmippRefine Command:</b><br>
 	$command
 	</td></tr>
 	<tr><td>run name</td><td>$runid</td></tr>
