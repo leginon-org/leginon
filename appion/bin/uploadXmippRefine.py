@@ -195,14 +195,15 @@ class uploadXmippRefineScript(appionScript.AppionScript):
             apEulerDraw.createEulerImages(int(runq.dbid), i, path=self.params['rundir'])
             
             # Generate the reconstruction plots
-            proc = subprocess.Popen("ln -s "+mainq['volumeDensity']+" tmp.mrc", shell=True)
-            proc.wait()
-            print os.getcwd()
-            apChimera.filterAndChimera(density="tmp.mrc",
+            #proc = subprocess.Popen("ln -s "+mainq['volumeDensity']+" tmp.mrc", shell=True)
+            #proc.wait()
+            #print os.getcwd()
+            densityfile = os.path.join(self.params['rundir'], mainq['volumeDensity'])
+            apChimera.filterAndChimera(density=densityfile,
                 res=resolq['half'], apix=self.stack['apix'], 
                 chimtype='snapshot', sym=protocolPrm["SymmetryGroup"],
                 mass=self.params['mass'])
-            os.unlink("tmp.mrc")
+            #os.unlink("tmp.mrc")
 
 #=====================
 if __name__ == "__main__":
