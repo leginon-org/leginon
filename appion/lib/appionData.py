@@ -755,6 +755,16 @@ class ApSpiderClusteringParamsData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApSpiderClusteringParamsData=ApSpiderClusteringParamsData
 
+class ApMessagePassingClusterParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('mask_diam', float),
+			('iterations', int),
+			('run_seconds', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApMessagePassingClusterParamsData=ApMessagePassingClusterParamsData
+
 class ApKerDenSOMParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -799,6 +809,7 @@ class ApClusteringRunData(Data):
 			('spiderparams', ApSpiderClusteringParamsData),
 			('kerdenparams', ApKerDenSOMParamsData),
 			('rotkerdenparams', ApRotKerDenSOMParamsData),
+			('mspparams', ApMessagePassingClusterParamsData),
 			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
