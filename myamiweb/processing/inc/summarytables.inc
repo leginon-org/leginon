@@ -507,6 +507,17 @@ function clustersummarytable($clusterrunid, $mini=false) {
 			$clustertable .= "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
 				."View montage as a stack for further processing</a><br/>\n";
 			$clustertable .= "</ul>\n";
+		} elseif ($clusterrun['REF|ApAffinityPropagationClusterParamsData|affpropparams']) {
+			// Affinity Propagation only has one cluster data
+			$clusterdata = $clusterdatas[0];
+			$clusterid = $clusterdata['clusterid'];
+			$clustertable .= "<b>Type:</b> <i>Affinity Propagation Cluster</i><br/><br/>\n";
+
+			$clustertable .= "<ul>\n";
+			$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
+			$clustertable .= "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
+				."View class averages</a><br/>\n";
+			$clustertable .= "</ul>\n";
 		}
 		foreach ($clusterdatas as $clusterdata) {
 			$clusterid = $clusterdata['clusterid'];
@@ -566,6 +577,8 @@ function modelsummarytable($modelid, $mini=false) {
 	return $modeltable;
 }
 
+/****************************************
+****************************************/
 function templateStackEntry($stackInfo, $hidden=False, $mini=False){
         $templateId=$stackInfo['DEF_id'];
         $expId = (int) $_GET['expId'];
