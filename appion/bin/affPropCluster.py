@@ -23,7 +23,7 @@ from pyami import mrc
 
 #=====================
 #=====================
-class MsgPassingClusterScript(appionScript.AppionScript):
+class AffinityPropagationClusterScript(appionScript.AppionScript):
 	#=====================
 	def getCCValue(self, imgarray1, imgarray2):
 		ccs = stats.pearsonr(numpy.ravel(imgarray1), numpy.ravel(imgarray2))
@@ -50,7 +50,7 @@ class MsgPassingClusterScript(appionScript.AppionScript):
 	#=====================
 	#=====================
 	#=====================
-	def runMessagePassing(self, alignedstack):
+	def fillSimilarityMatrix(self, alignedstack):
 		### Get initial correlation values
 		### this is really, really slow
 		imagicdict = apImagicFile.readImagic(alignedstack)
@@ -82,55 +82,85 @@ class MsgPassingClusterScript(appionScript.AppionScript):
 
 		### Write similarities
 		apDisplay.printMsg("Dumping CC values to file")
-		Sarr = []
-		f1 = open('similarities.dat', 'w')
+		simlist = []
+		similarfile = "similarities.dat"
+		f1 = open(similarfile, 'w')
 		for i in range(0, numpart):
 			for j in range(i+1, numpart):
 			   str1 = "%d %d %.10f\n" % (i+1, j+1, ccmatrix[i,j])
 			   f1.write(str1)
 			   str2 = "%d %d %.10f\n" % (j+1, i+1, ccmatrix[j,i])
 			   f1.write(str2)
-			   Sarr.append(ccmatrix[i,j])
+			   simlist.append(ccmatrix[i,j])
 		f1.close()
-		
+
+		return similarfile, simlist
+
+	#=====================
+	#=====================
+	#=====================
+	def setPreferences(self, simlist):
 		### Preference value stats
-		prefarray = numpy.asarray(Sarr, dtype=numpy.float32)
+		prefarray = numpy.asarray(simlist, dtype=numpy.float32)
 		apDisplay.printMsg("CC stats:\n %.5f +/- %.5f\n %.5f <> %.5f"
 			%(prefarray.mean(), prefarray.std(), prefarray.min(), prefarray.max()))	
 
 		### Determine median preference value
-		apDisplay.printMsg("Determine median preference value")
-		Sarr.sort()
-		index = int(len(Sarr)*0.5)
-		medianpref = Sarr[index]
-		prefvalue = medianpref
-		#prefvalue = -3.0
-		
-		apDisplay.printMsg("Final preference value %.3f"%(prefvalue))
+		if self.params['preftype'] is 'minlessrange':
+			apDisplay.printMsg("Determine minimum minus total range (fewer classes) preference value")
+			simarray = numpy.asarray(simlist)
+			prefvalue = simarray.min() - (simarray.max() - simarray.min())
+		elif self.params['preftype'] is 'minimum':
+			apDisplay.printMsg("Determine minimum (few classes) preference value")
+			simarray = numpy.asarray(simlist)
+			prefvalue = simarray.min()
+		else:
+			apDisplay.printMsg("Determine median (normal classes) preference value")
+			simlist.sort()
+			index = int(len(simlist)*0.5)
+			medianpref = simlist[index]
+			prefvalue = medianpref
+
+		apDisplay.printColor("Final preference value %.6f"%(prefvalue), "cyan")
 
 		### Dumping median preference value
-		apDisplay.printMsg("Dumping median preference value to file")
-		f1 = open('preferences.dat', 'w')
+		preffile = 'preferences.dat'
+		apDisplay.printMsg("Dumping preference value to file")
+		f1 = open(preffile, 'w')
 		for i in range(0,numpart):
 			f1.write('%.10f\n' % (prefvalue))
 		f1.close()
 
+		return preffile
+
+	#=====================
+	#=====================
+	#=====================
+	def runAffinityPropagation(self, alignedstack):
+		### Get initial correlation values
+		### this is really, really slow
+		similarfile, simlist = self.fillSimilarityMatrix(alignedstack)
+
+		### Preference value stats
+		preffile = self.setPreferences(simlist)
+
 		### run apcluster.exe program
+		outfile = "clusters.out"
 		apDisplay.printMsg("Run apcluster.exe program")
 		apclusterexe = os.path.join(apParam.getAppionDirectory(), "bin/apcluster.exe")
-		apFile.removeFile("clusters.out")
-		clustercmd = apclusterexe+" similarities.dat preferences.dat clusters.out"
+		apFile.removeFile(outfile)
+		clustercmd = apclusterexe+" "+similarfile+" "+preffile+" "+outfile
 		clusttime = time.time()
 		proc = subprocess.Popen(clustercmd, shell=True)
 		proc.wait()
 		apDisplay.printMsg("apCluster time: "+apDisplay.timeString(time.time()-clusttime))
 
-		if not os.path.isfile("clusters.out"):
+		if not os.path.isfile(outfile):
 			apDisplay.printError("apCluster did not run")
 
 		### Parse apcluster output file: clusters.out
-		apDisplay.printMsg("Parse apcluster output file: clusters.out")
-		clustf = open('clusters.out')
+		apDisplay.printMsg("Parse apcluster output file: "+outfile)
+		clustf = open(outfile, "r")
 		### each line is the particle and the number is the class
 		partnum = 0
 		classes = {}
@@ -161,12 +191,12 @@ class MsgPassingClusterScript(appionScript.AppionScript):
 			classavgarray = classdatarray.mean(0)
 			#mrc.write(classavgarray, 'subcls%04d.mrc'%(classnum))
 			classavgdata.append(classavgarray)
-		apFile.removeStack("classaverage.hed")
-		apImagicFile.writeImagic(classavgdata, "classaverage.hed")
+		apFile.removeStack("classaverage-"+self.timestamp+".hed")
+		apImagicFile.writeImagic(classavgdata, "classaverage-"+self.timestamp+".hed")
 
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage("Usage: %prog --alignstack=ID --mask=# [ --num-part=# ]")
+		self.parser.set_usage("Usage: %prog --alignstack=ID [ --num-part=# ]")
 
 		### integers
 		self.parser.add_option("-s", "--alignstack", dest="alignstackid", type="int",
@@ -178,6 +208,11 @@ class MsgPassingClusterScript(appionScript.AppionScript):
 		### floats
 		self.parser.add_option("-m", "--mask", "--maskrad", dest="maskrad", type="float",
 			help="Mask radius for particle coran (in Angstoms)", metavar="#")
+		### choices
+		self.prefvalues = ( "median", "minimum", "minlessrange" )
+		self.parser.add_option("--preftype", "--preference-type", dest="preftype",
+			help="Set preference value type", metavar="TYPE", 
+			type="choice", choices=self.prefvalues, default="median" )
 
 	#=====================
 	def checkConflicts(self):
@@ -198,7 +233,7 @@ class MsgPassingClusterScript(appionScript.AppionScript):
 		self.params['rundir'] = os.path.join(uppath, "coran", self.params['runname'])
 
 	#=====================
-	def checkMspRun(self):
+	def checkAffPropRun(self):
 		# create a norefParam object
 		clusterrunq = appionData.ApClusteringRunData()
 		clusterrunq['runname'] = self.params['runname']
@@ -252,44 +287,114 @@ class MsgPassingClusterScript(appionScript.AppionScript):
 		return alignedstack
 
 	#=====================
-	def estimateRunTime(self):
-		timeperpart = 1.0
-		runtime = (self.numpart**2)*timeperpart
-		apDisplay.printColor("Running message passing this can take awhile, estimated time: "+
-			apDisplay.timeString(runtime), "cyan")
+	#=====================
+	#=====================
+	def insertAffinityPropagationRun(self):
+		### Preliminary data
+		projectid = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
+		alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		numclass = self.params['xdim']*self.params['ydim']
+		pathdata = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 
-	#=====================
-	#=====================
-	#=====================
-	def insertMessagePassingRun(self):
+		### Affinity Propagation Params object
+		affpropq = appionData.ApAffinityPropagationClusterParamsData()
+		affpropq['mask_diam'] = 2.0*self.params['maskrad']
+		affpropq['run_seconds'] = time.time()-self.t0
+		affpropq['preference_type'] = self.params['preftype']
+
+		### Align Analysis Run object
+		analysisq = appionData.ApAlignAnalysisRunData()
+		analysisq['runname'] = self.params['runname']
+		analysisq['path'] = pathdata
+		analysisq['description'] = self.params['description']
+		analysisq['alignstack'] = alignstackdata
+		analysisq['hidden'] = False
+		analysisq['project|projects|project'] = projectid
+		### linked through cluster not analysis
+
+		### Clustering Run object
+		clusterrunq = appionData.ApClusteringRunData()
+		clusterrunq['runname'] = self.params['runname']
+		clusterrunq['description'] = self.params['description']
+		clusterrunq['boxsize'] = alignstackdata['boxsize']
+		clusterrunq['pixelsize'] = alignstackdata['pixelsize']
+		clusterrunq['num_particles'] = self.params['numpart']
+		clusterrunq['alignstack'] = alignstackdata
+		clusterrunq['project|projects|project'] = projectid
+		clusterrunq['analysisrun'] = analysisq
+		clusterrunq['affpropparams'] = affpropq
+
+		### Clustering Stack object
+		clusterstackq = appionData.ApClusteringStackData()
+		clusterstackq['avg_imagicfile'] = "classaverage-"+self.timestamp+".hed"
+		clusterstackq['num_classes'] = numclass
+		clusterstackq['clusterrun'] = clusterrunq
+		clusterstackq['path'] = pathdata
+		clusterstackq['hidden'] = False
+		imagicfile = os.path.join(self.params['rundir'], clusterstackq['avg_imagicfile'])
+		if not os.path.isfile(imagicfile):
+			apDisplay.printError("could not find average stack file: "+imagicfile)
+
+		### looping over clusters
+		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
+		for i in range(numclass):
+			classnum = i+1
+			classroot = "%s.%d"% (self.timestamp, classnum-1)
+			classdocfile = os.path.join(self.params['rundir'], classroot)
+			partlist = self.readClassDocFile(classdocfile)
+
+			### Clustering Particle object
+			clusterrefq = appionData.ApClusteringReferenceData()
+			clusterrefq['refnum'] = classnum
+			clusterrefq['clusterrun'] = clusterrunq
+			clusterrefq['path'] = pathdata
+			clusterrefq['num_particles'] = len(partlist)
+			clusterrefq['ssnr_resolution'] = self.cluster_resolution[i]
+
+			### looping over particles
+			sys.stderr.write(".")
+			for partnum in partlist:
+				alignpartdata = self.getAlignParticleData(partnum, alignstackdata)
+
+				### Clustering Particle objects
+				clusterpartq = appionData.ApClusteringParticlesData()
+				clusterpartq['clusterstack'] = clusterstackq
+				clusterpartq['alignparticle'] = alignpartdata
+				clusterpartq['partnum'] = partnum
+				clusterpartq['refnum'] = classnum
+				clusterpartq['clusterreference'] = clusterrefq
+
+				### finally we can insert parameters
+				if self.params['commit'] is True:
+					clusterpartq.insert()
 		return
 
 	#=====================
 	def start(self):
 		self.runtime = 0
-		self.checkMspRun()
+		self.checkAffPropRun()
 		self.numpart = self.getNumAlignedParticles()
 		alignedstack = self.prepareStack()
 		self.estimateRunTime()
 
-		### run message passing
-		msptime = time.time()
-		self.runMessagePassing(alignedstack)
-		msptime = time.time() - msptime
+		### run Affinity Propagation
+		aptime = time.time()
+		self.runAffinityPropagation(alignedstack)
+		aptime = time.time() - aptime
 
 		### insert into database
 		inserttime = time.time()
-		self.runtime = msptime
-		self.insertMessagePassingRun()
+		self.runtime = aptime
+		self.insertAffinityPropagationRun()
 		inserttime = time.time() - inserttime
 
-		apDisplay.printMsg("Message passing time: "+apDisplay.timeString(msptime))
+		apDisplay.printMsg("Affinity propagation time: "+apDisplay.timeString(aptime))
 		apDisplay.printMsg("Database Insertion time: "+apDisplay.timeString(inserttime))
 
 if __name__ == '__main__':
-	msp = MsgPassingClusterScript()
-	msp.start()
-	msp.close()
+	ap = AffinityPropagationClusterScript()
+	ap.start()
+	ap.close()
 
 
 
