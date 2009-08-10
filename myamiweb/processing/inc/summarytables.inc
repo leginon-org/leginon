@@ -518,6 +518,9 @@ function clustersummarytable($clusterrunid, $mini=false) {
 			$clustertable .= "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
 				."View class averages</a><br/>\n";
 			$clustertable .= "</ul>\n";
+		} else {
+			$clustertable .= "<b>Type:</b> <i>Unknown type of clustering</i><br/>\n";
+			$clustertable .= "<ul>\n";
 		}
 		foreach ($clusterdatas as $clusterdata) {
 			$clusterid = $clusterdata['clusterid'];
