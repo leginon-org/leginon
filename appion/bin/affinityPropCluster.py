@@ -18,6 +18,7 @@ import apImagicFile
 import apFile
 import apEMAN
 import appionData
+import apProject
 from pyami import mrc
 
 
@@ -100,17 +101,19 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 	#=====================
 	#=====================
 	def setPreferences(self, simlist):
+		numpart = len(simlist)
 		### Preference value stats
 		prefarray = numpy.asarray(simlist, dtype=numpy.float32)
 		apDisplay.printMsg("CC stats:\n %.5f +/- %.5f\n %.5f <> %.5f"
 			%(prefarray.mean(), prefarray.std(), prefarray.min(), prefarray.max()))	
 
 		### Determine median preference value
-		if self.params['preftype'] is 'minlessrange':
+		print self.params['preftype']
+		if self.params['preftype'] == 'minlessrange':
 			apDisplay.printMsg("Determine minimum minus total range (fewer classes) preference value")
 			simarray = numpy.asarray(simlist)
 			prefvalue = simarray.min() - (simarray.max() - simarray.min())
-		elif self.params['preftype'] is 'minimum':
+		elif self.params['preftype'] == 'minimum':
 			apDisplay.printMsg("Determine minimum (few classes) preference value")
 			simarray = numpy.asarray(simlist)
 			prefvalue = simarray.min()
@@ -194,14 +197,16 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 		apFile.removeStack("classaverage-"+self.timestamp+".hed")
 		apImagicFile.writeImagic(classavgdata, "classaverage-"+self.timestamp+".hed")
 
+		return classes
+
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage("Usage: %prog --alignstack=ID [ --num-part=# ]")
+		self.parser.set_usage("Usage: %prog --alignid=ID [ --num-part=# ]")
 
 		### integers
-		self.parser.add_option("-s", "--alignstack", dest="alignstackid", type="int",
+		self.parser.add_option("-s", "--alignid", "--alignstack", dest="alignstackid", type="int",
 			help="Stack database id", metavar="ID#")
-		self.parser.add_option("--num-part", dest="numpart", type="int",
+		self.parser.add_option("--numpart", dest="numpart", type="int",
 			help="Number of particles to use in classification", metavar="#")
 		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=1,
 			help="Particle binning", metavar="#")
@@ -253,12 +258,9 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 	#=====================
 	def getNumAlignedParticles(self):
 		t0 = time.time()
-		partq = appionData.ApAlignParticlesData()
 		self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
-		partq['alignstack'] = self.alignstackdata
-		partdata = partq.query()
-		numpart = len(partdata)
-		del partdata
+		oldalignedstack = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['imagicfile'])
+		numpart = apFile.numImagesInStack(oldalignedstack)
 		apDisplay.printMsg("numpart="+str(numpart)+" in "+apDisplay.timeString(time.time()-t0))
 		return numpart
 
@@ -289,11 +291,11 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 	#=====================
 	#=====================
 	#=====================
-	def insertAffinityPropagationRun(self):
+	def insertAffinityPropagationRun(self, classes):
 		### Preliminary data
+		numclass = len(classes.keys())
 		projectid = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
 		alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
-		numclass = self.params['xdim']*self.params['ydim']
 		pathdata = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 
 		### Affinity Propagation Params object
@@ -337,11 +339,12 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 
 		### looping over clusters
 		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
-		for i in range(numclass):
+		for i,classkey in enumerate(classes.keys()):
 			classnum = i+1
+			partlist = classes[classkey]
+			#print "MINIMUM: ", min(partlist)
 			classroot = "%s.%d"% (self.timestamp, classnum-1)
 			classdocfile = os.path.join(self.params['rundir'], classroot)
-			partlist = self.readClassDocFile(classdocfile)
 
 			### Clustering Particle object
 			clusterrefq = appionData.ApClusteringReferenceData()
@@ -349,7 +352,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 			clusterrefq['clusterrun'] = clusterrunq
 			clusterrefq['path'] = pathdata
 			clusterrefq['num_particles'] = len(partlist)
-			clusterrefq['ssnr_resolution'] = self.cluster_resolution[i]
+			#clusterrefq['ssnr_resolution'] = self.cluster_resolution[i]
 
 			### looping over particles
 			sys.stderr.write(".")
@@ -370,22 +373,29 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 		return
 
 	#=====================
+	def getAlignParticleData(self, partnum, alignstackdata):
+		alignpartq = appionData.ApAlignParticlesData()
+		alignpartq['alignstack'] = alignstackdata
+		alignpartq['partnum'] = partnum
+		alignparts = alignpartq.query(results=1)
+		return alignparts[0]
+
+	#=====================
 	def start(self):
 		self.runtime = 0
 		self.checkAffPropRun()
 		self.numpart = self.getNumAlignedParticles()
 		alignedstack = self.prepareStack()
-		self.estimateRunTime()
 
 		### run Affinity Propagation
 		aptime = time.time()
-		self.runAffinityPropagation(alignedstack)
+		classes = self.runAffinityPropagation(alignedstack)
 		aptime = time.time() - aptime
 
 		### insert into database
 		inserttime = time.time()
 		self.runtime = aptime
-		self.insertAffinityPropagationRun()
+		self.insertAffinityPropagationRun(classes)
 		inserttime = time.time() - inserttime
 
 		apDisplay.printMsg("Affinity propagation time: "+apDisplay.timeString(aptime))
