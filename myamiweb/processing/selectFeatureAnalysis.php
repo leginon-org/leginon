@@ -101,6 +101,22 @@ echo "  This function applies the Kerden SOM to rotational symmetric particles. 
 echo "</td></tr>";
 
 
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/affinityprop.png' width='64'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runAffinityProp.php?expId=$expId&alignId=$alignId'>Cluster by Affinity Propagation</a></h3>";
+echo "  An algorithm that identifies exemplars among data points and forms clusters of data points"
+	." around these exemplars. It operates by simultaneously considering all data point as potential"
+	." exemplars and exchanging messages between data points until a good set of exemplars and "
+	." clusters emerges, please see the following "
+	."<a href='http://www.psi.toronto.edu/affinitypropagation/'>affinity propagation webpage"
+	."&nbsp;<img border='0' src='img/external.png'></a> and "
+	."<a href='http://www.psi.toronto.edu/affinitypropagation/faq.html'>FAQ"
+	."&nbsp;<img border='0' src='img/external.png'></a>. "
+	."<br/><br/>";
+echo "</td></tr>";
+
+
 echo "</table>";
 
 processing_footer();
