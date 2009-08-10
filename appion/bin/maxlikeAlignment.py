@@ -354,24 +354,21 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.estimateIterTime()
 		self.dumpParameters()
 
-		### process stack to local temp file
-
-		proccmd = "proc2d "+self.stack['file']+" temp.hed apix="+str(self.stack['apix'])
+		### process stack to local file
+		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
+		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
 		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
 			clipsize = int(self.clipsize)*self.params['bin']
 			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
 		proccmd += " last="+str(self.params['numpart']-1)
-		apEMAN.executeEmanCmd(proccmd, verbose=True)
-
-		### process stack to final file
-		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
-		proccmd = "proc2d temp.hed "+self.params['localstack']+" apix="+str(self.stack['apix']*self.params['bin'])
 		if self.params['highpass'] is not None and self.params['highpass'] > 1:
 			proccmd += " hp="+str(self.params['highpass'])
 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
 			proccmd += " lp="+str(self.params['lowpass'])
 		apEMAN.executeEmanCmd(proccmd, verbose=True)
-		apFile.removeStack("temp.hed")
+		if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
+			apDisplay.printError("Missing particles in stack")
+
 
 		### convert stack into single spider files
 		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
