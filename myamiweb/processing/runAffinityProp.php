@@ -60,6 +60,10 @@ function createAffinityPropForm($extra=false, $title='affPropCluster.py Launcher
 	$javascript .= "	if (stackArray[1]) {\n";
 	$javascript .= "		var maxmask = Math.floor(stackArray[2]*stackArray[1]/3);\n";
 	$javascript .= "		document.viewerform.maskrad.value = maxmask;\n";
+	$javascript .= "		var bestbin = Math.floor(stackArray[2]/64);\n";
+	$javascript .= "		if (bestbin < 1) {\n";
+	$javascript .= "			var bestbin = 1 ;}\n";
+	$javascript .= "		document.viewerform.bin.value = bestbin;\n";
 	$javascript .= "	}\n";
 	$javascript .= "}\n";
 	$javascript .= "</script>\n";
@@ -90,6 +94,7 @@ function createAffinityPropForm($extra=false, $title='affPropCluster.py Launcher
 	while (file_exists($sessionpathval.'affprop'.($analysisruns+1)))
 		$analysisruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'affprop'.($analysisruns+1);
+	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$rundescrval = $_POST['description'];
 	if ($selectAlignId)
 		$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $particle->getNumAlignStackParticles($selectAlignId);
@@ -184,6 +189,11 @@ function createAffinityPropForm($extra=false, $title='affPropCluster.py Launcher
 	echo "<br/>\n";
 	echo "<br/>\n";
 
+	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4' onChange='estimatetime()'>\n";
+	echo docpop('partbin','Particle binning');
+	echo "<br/>\n";
+	echo "<br/>\n";
+
 	echo "Preference value setting";
 	echo "<br/>\n";
 	echo "&nbsp;&nbsp;<select name='preftype' ";
@@ -192,6 +202,7 @@ function createAffinityPropForm($extra=false, $title='affPropCluster.py Launcher
 	echo " <option value='minimum'>Minimum value, fewer number of classes</option>\n";
 	echo " <option value='minlessrange'>Minimum minus the range, fewest number of classes</option>\n";
 	echo "</select>\n";
+	echo "<br/>\n";
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='5'>\n";
@@ -232,6 +243,7 @@ function runAffinityProp() {
 	$stackval=$_POST['stackid'];
 	list($stackid,$apix,$boxsz,$totpart) = split('\|--\|',$stackval);
 	$maskrad=$_POST['maskrad'];
+	$bin=$_POST['bin'];
 	$numpart=$_POST['numpart'];
 	$preftype = $_POST['preftype'];
 
@@ -268,6 +280,7 @@ function runAffinityProp() {
 	$command.="--preftype=$preftype ";
 	$command.="--alignid=$stackid ";
 	$command.="--maskrad=$maskrad ";
+	$command.="--bin=$bin ";
 	$command.="--numpart=$numpart ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
@@ -285,7 +298,7 @@ function runAffinityProp() {
 		exit;
 	}
 	else {
-		processing_header("Kernel Probability Density Estimator Self-Organizing Map","Kernel Probability Density Estimator Self-Organizing Map");
+		processing_header("Clustering by Affinity Propagation","Clustering by Affinity Propagation");
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>
@@ -296,6 +309,7 @@ function runAffinityProp() {
 		<tr><td>stack id</td><td>$stackid</td></tr>
 		<tr><td>num part</td><td>$numpart</td></tr>
 		<tr><td>run dir</td><td>$rundir</td></tr>
+		<tr><td>binning</td><td>$bin</td></tr>
 		<tr><td>preference type</td><td>$preftype</td></tr>
 		<tr><td>commit</td><td>$commit</td></tr>
 		</table>\n";
