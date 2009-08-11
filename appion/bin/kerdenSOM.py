@@ -57,7 +57,10 @@ class kerdenSOMScript(appionScript.AppionScript):
 
 	#======================
 	def setRunDir(self):
-		self.params['rundir'] = os.getcwd()
+		self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		path = self.alignstackdata['path']['path']
+		uppath = os.path.abspath(os.path.join(path, ".."))
+		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
 
 	#======================
 	def insertKerDenSOM(self):
