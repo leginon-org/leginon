@@ -103,6 +103,7 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		self.settings['ellipse b'] = b2
 		self.settings['ellipse angle'] = angledeg
 		self.setSettings(self.settings)
+		self.onTest()
 		return a2, b2, angledeg
 
 	def makeRaster(self):
