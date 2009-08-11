@@ -65,10 +65,11 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 	takes the stack file and creates single spider files ready for processing
 	"""
 	apDisplay.printColor("Breaking up spider stack into single files, this can take a while", "cyan")
+	apDisplay.printMsg("stack: "+stackfile)
 
 	starttime = time.time()
 	boxsize = apFile.getBoxSize(stackfile)
-	filesperdir = int(1e9/(boxsize[0]**2)/16.)
+	filesperdir = int(1e9/(boxsize[0]**2)/8.)
 	if filesperdir > 4096:
 		filesperdir = 4096
 	if numpart is None:
@@ -165,7 +166,7 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 
 	### Set variables
 	boxsize = apFile.getBoxSize(filelist[0])
-	partperiter = int(1e9/(boxsize[0]**2)/32.)
+	partperiter = int(1e9/(boxsize[0]**2)/16.)
 	if partperiter > 4096:
 		partperiter = 4096
 	apDisplay.printMsg("Using %d particle per iteration"%(partperiter))
