@@ -152,3 +152,6 @@ def numImagesInStack(imgfile, boxsize=None):
 	else:
 		apDisplay.printError("numImagesInStack() requires an IMAGIC or SPIDER stacks")
 	return numimg
+
+
+
