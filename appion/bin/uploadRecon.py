@@ -137,6 +137,7 @@ class UploadReconScript(appionScript.AppionScript):
 		### make sure that the stack & model IDs exist in database
 		emanJobFile = apRecon.findEmanJobFile(self.params)
 		self.params['stack'] = apStack.getOnlyStackData(self.params['stackid'])
+		self.params['stackmapping'] = apRecon.partnum2defid(self.params['stackid'])
 		self.params['model'] = apRecon.getModelData(self.params['modelid'])
 		self.params['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 

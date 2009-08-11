@@ -318,12 +318,16 @@ def insertRefinementRun(params):
 	earlyresult=runq.query(results=1)
 	if earlyresult:
 		apDisplay.printWarning("Run already exists in the database.\nIdentical data will not be reinserted")
+	# empty <> than None for Sinedon query
+	paramdescription = params['description']
+	if not paramdescription:
+		paramdescription=None
 
 	runq['jobfile']=params['jobinfo']
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
 	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
-	runq['description']=params['description']
+	runq['description']=paramdescription
 	runq['initialModel']=params['model']
 
 	result=runq.query(results=1)
@@ -352,7 +356,7 @@ def insertRefinementRun(params):
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
 	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
-	runq['description']=params['description']
+	runq['description']=paramdescription
 	runq['package']=params['package']
 	runq['initialModel']=params['model']
 
@@ -636,14 +640,11 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			else:
 				msgk=None
 			# find particle in stack database
-			stackpq = appionData.ApStackParticlesData()
-			stackpq['stack'] = params['stack']
-			stackpq['particleNumber'] = prtlnum
-			stackpartdatas = stackpq.query(results=1)
+			defid = params['stackmapping'][prtlnum]
+			stackp = appionData.ApStackParticlesData.direct_query(defid)
 
-			if not stackpartdatas:
+			if not stackp:
 				apDisplay.printError("particle "+str(prtlnum)+" not in stack id="+str(params['stack'].dbid))
-			stackp = stackpartdatas[0]
 
 			# insert classification info
 			prtlaliq['refinement']=refineq
@@ -857,6 +858,24 @@ def getSessionDataFromReconId(reconid):
 	partdata = apStack.getOneParticleFromStackId(stackid, msg=False)
 	sessiondata = partdata['particle']['selectionrun']['session']
 	return sessiondata
+
+import sinedon
+import MySQLdb
+import MySQLdb.cursors
+def partnum2defid(stackid):
+	config = sinedon.getConfig('appionData')
+	c = MySQLdb.connect(**config)
+	cur = c.cursor(MySQLdb.cursors.DictCursor)
+	cur.execute('SELECT * from ApStackParticlesData where `REF|ApStackData|stack` = %s' % (stackid,))
+	d = {}
+	while True:
+		row = cur.fetchone()
+		if row is None:
+			break
+		defid = row['DEF_id']
+		num = row['particleNumber']
+		d[num] = defid
+	return d
 
 #==================
 #==================
