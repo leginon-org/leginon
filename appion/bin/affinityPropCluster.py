@@ -27,6 +27,7 @@ from pyami import mrc
 class AffinityPropagationClusterScript(appionScript.AppionScript):
 	#=====================
 	def getCCValue(self, imgarray1, imgarray2):
+		### faster cc, thanks Jim
 		ccs = stats.pearsonr(numpy.ravel(imgarray1), numpy.ravel(imgarray2))
 		return ccs[0]
 
@@ -54,26 +55,52 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 	def fillSimilarityMatrix(self, alignedstack):
 		### Get initial correlation values
 		### this is really, really slow
+
+		numpart = apFile.numImagesInStack(alignedstack)
+
+		similarfile = "similarities.dat"
+		if os.path.isfile(similarfile):
+			simf = open(similarfile, 'r')
+			simlist = []
+			count = 0
+			for line in simf:
+				count += 1
+				sline = line.strip()
+				slist = sline.split()
+				ccval = float(slist[2])
+				simlist.append(ccval)
+			simf.close()
+			apDisplay.printMsg("There are %d lines in the sim file: %s"%(count, similarfile))
+			if count == numpart*(numpart-1):
+				### we have a valid file already
+				return similarfile, simlist
+
+		### read data and estimate time
 		imagicdict = apImagicFile.readImagic(alignedstack)
 		partarray = imagicdict['images']
-		#print partarray.shape
 		numpart = partarray.shape[0]
 		boxsize = partarray.shape[1]
-		ccmatrix = numpy.ones((numpart, numpart), dtype=numpy.float32)
 		#timeper = 27.0e-9
 		timeper = 17.0e-9
 		apDisplay.printMsg("Computing CC values in about %s"
 			%(apDisplay.timeString(timeper*numpart**2*boxsize**2)))
+
+		### Computing CC values
+		simf = open(similarfile, 'w')
 		cctime = time.time()
-		if os.path.isfile("cccache.numpy"):
-			ccmatrix = numpy.load("cccache.numpy")
-		else:
-			for i in range(0, numpart):
-				for j in range(i+1, numpart):
-					ccval = self.getCCValue(partarray[i],partarray[j])
-					ccmatrix[i,j] = ccval
-					ccmatrix[j,i] = ccval
-			ccmatrix.dump("cccache.numpy")
+		simlist = []
+		for i in range(0, numpart):
+			if i % 100 == 99:
+				sys.stderr.write(".")
+			for j in range(i+1, numpart):
+				ccval = self.getCCValue(partarray[i],partarray[j])
+				str1 = "%05d %05d %.10f\n" % (i+1, j+1, ccval)
+				simf.write(str1)
+				str2 = "%05d %05d %.10f\n" % (j+1, i+1, ccval)
+				simf.write(str2)
+				simlist.append(ccval)
+		sys.stderr.write("\n")
+		simf.close()
 		del partarray
 		del imagicdict['images']
 		apDisplay.printMsg("CC calc time: %s :: %s per part :: %s per part per pixel"
@@ -81,26 +108,13 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 			apDisplay.timeString((time.time()-cctime)/numpart**2),
 			apDisplay.timeString((time.time()-cctime)/numpart**2/boxsize**2)))
 
-		### Write similarities
-		apDisplay.printMsg("Dumping CC values to file")
-		simlist = []
-		similarfile = "similarities.dat"
-		f1 = open(similarfile, 'w')
-		for i in range(0, numpart):
-			for j in range(i+1, numpart):
-			   str1 = "%d %d %.10f\n" % (i+1, j+1, ccmatrix[i,j])
-			   f1.write(str1)
-			   str2 = "%d %d %.10f\n" % (j+1, i+1, ccmatrix[j,i])
-			   f1.write(str2)
-			   simlist.append(ccmatrix[i,j])
-		f1.close()
-
 		return similarfile, simlist
 
 	#=====================
 	#=====================
 	#=====================
 	def setPreferences(self, simlist):
+		print simlist[:5]
 		numpart = len(simlist)
 		### Preference value stats
 		prefarray = numpy.asarray(simlist, dtype=numpy.float32)
