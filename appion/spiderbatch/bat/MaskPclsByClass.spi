@@ -24,7 +24,7 @@ FR L   ;Ref-image that corresponds with mask
 <ref>ksq_ipshmrav
 
 FR L   ;List of classes
-<grplist>ral5a/r20/grp_count
+<grplist>ral5a/r20/grplist
 
 FR L   ;Template for class averages
 <avgtmpl>ral5a/avg***

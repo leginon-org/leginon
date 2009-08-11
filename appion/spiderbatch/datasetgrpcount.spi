@@ -1,5 +1,5 @@
 ; Description:
-;   splits grp_count into each dataset (only works for 4 datasets)
+;   splits grplist into each dataset (only works for 4 datasets)
 
 FR
 ?IN.List of classes (dir/grplist)?<grplist>
@@ -9,66 +9,122 @@ FR
 ?IN.List of datasets and particle numbers (dir/datasets)?<datalist>
 
 FR
-?OUT.List counting particles from each dataset in each class (dir/datasetgrp_count)?<outdoc>
+?OUT.List counting particles from each dataset in each class (dir/dataset_grplist)?<outdoc>
 
 ; ~~~~~ start ~~~~~
-;MD
-;SET MP
-;(0)
 
-UD N x21
+UD N x21 ;numgrps
 <grplist>
-UD N x23
+UD N x23 ;numdatasets
 <datalist>
 
-IF(x23.gt.4)THEN
+IF(x23.gt.10)THEN
   VM
-  echo ERROR...can only handle up to 4 datasets
+  echo ERROR..Can only handle up to 10 datasets!
   EN
 ENDIF
+IF(x23.eq.1)THEN
+  VM
+  echo WARNING: Only one dataset. Nothing to sort!
+  GOTO LB99
+ENDIF
 
-x24=x23+1
+x24=x23+1 ;numcolumns=numdatasets+1
 SD IC NEW
 grpcounter_ic
 x24,x21
 
 DO LB1 x11=1,x21 ;for each group
-UD IC x11,x31
-<grplist>
+  UD IC x11,x31
+  <grplist>
 
-x61=0
-x62=0
-x63=0
-x64=0
-
-UD N x22
-<grptmpl>x31
-DO LB2 x12=1,x22 ;for each particle in group
-UD IC x12,x41
-<grptmpl>x31
-
-  DO LB3 x13=1,x23 ;search for dataset
-    UD IC x13,x51,x52,x53
-    <datalist>
-    IF(x41.le.x53)THEN
-      IF(x13.eq.1)x61=x61+1
-      IF(x13.eq.2)x62=x62+1
-      IF(x13.eq.3)x63=x63+1
-      IF(x13.eq.4)x64=x64+1
-      GOTO LB90 ;particle recorded go to next
-    ENDIF
-  LB3 ;next dataset
   VM
-  echo ERROR..Particle not found!
-  EN
-  LB90
-LB2 ;next particle
+  echo -n Sorting group {***x31} into data sets..
 
-SD IC x11,x31,x61,x62,x63,x64
-grpcounter_ic
+  ;reset dataset counters  
+  x61=0
+  x62=0
+  x63=0
+  x64=0
+  x65=0
+  x66=0
+  x67=0
+  x68=0
+  x69=0
+  x60=0
 
-UD IC END
-<grptmpl>x31
+  UD N x22
+  <grptmpl>x31
+  DO LB2 x12=1,x22 ;for each particle in group
+    UD IC x12,x41
+    <grptmpl>x31
+
+    DO LB3 x13=1,x23 ;search for dataset
+      ;         set,1st,last
+      UD IC x13,x51,x52,x53
+      <datalist>
+      IF(x41.le.x53)THEN
+        IF(x13.eq.1)x61=x61+1
+        IF(x13.eq.2)x62=x62+1
+        IF(x13.eq.3)x63=x63+1
+        IF(x13.eq.4)x64=x64+1
+        IF(x13.eq.5)x65=x65+1
+        IF(x13.eq.6)x66=x66+1
+        IF(x13.eq.7)x67=x67+1
+        IF(x13.eq.8)x68=x68+1
+        IF(x13.eq.9)x69=x69+1
+        IF(x13.eq.10)x60=x60+1
+        GOTO LB90 ;particle counted, go to next
+      ENDIF
+    LB3 ;next dataset
+    VM
+    echo ERROR: Particle {%F7.1%x41} was not found in any dataset!
+    EN
+    LB90
+  LB2 ;next particle
+
+  IF(x23.eq.2)THEN
+    SD IC x11,x31,x61,x62
+    grpcounter_ic
+  ENDIF
+  IF(x23.eq.3)THEN
+    SD IC x11,x31,x61,x62,x63
+    grpcounter_ic
+  ENDIF
+  IF(x23.eq.4)THEN
+    SD IC x11,x31,x61,x62,x63,x64
+    grpcounter_ic
+  ENDIF
+  IF(x23.eq.5)THEN
+    SD IC x11,x31,x61,x62,x63,x64,x65
+    grpcounter_ic
+  ENDIF
+  IF(x23.eq.6)THEN
+    SD IC x11,x31,x61,x62,x63,x64,x65,x66
+    grpcounter_ic
+  ENDIF
+  IF(x23.eq.7)THEN
+    SD IC x11,x31,x61,x62,x63,x64,x65,x66,x67
+    grpcounter_ic
+  ENDIF
+  IF(x23.eq.8)THEN
+    SD IC x11,x31,x61,x62,x63,x64,x65,x66,x67,x68
+    grpcounter_ic
+  ENDIF
+  IF(x23.eq.9)THEN
+    SD IC x11,x31,x61,x62,x63,x64,x65,x66,x67,x68,x69
+    grpcounter_ic
+  ENDIF
+  IF(x23.eq.10)THEN
+    SD IC x11,x31,x61,x62,x63,x64,x65,x66,x67,x68,x69,x60
+    grpcounter_ic
+  ENDIF
+
+  UD IC END
+  <grptmpl>x31
+
+  VM
+  echo .done.
 
 LB1 ;next group
 UD IC END
@@ -82,4 +138,5 @@ grpcounter_ic
 SD IC END
 grpcounter_ic
 
+LB99
 RE

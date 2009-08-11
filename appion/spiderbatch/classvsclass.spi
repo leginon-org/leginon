@@ -6,8 +6,8 @@
 ;     2) then classify within a different region
 
 ; Input
-;  1) list of 1st classes (cor_thrk or grp_count)
-;  2) template of particle lists for 1st subclasses (cor_mrg*** or grp*** or cor_thr***)
+;  1) list of 1st classes
+;  2) template of particle lists for 1st subclasses
 ;  3) list of 2nd subclasses
 ;  4) template of particle lists for 2nd subclasses
 ;  5) prefix for output documents 
@@ -20,27 +20,27 @@ FR
 FR
 ?IN.PARTICLE LIST FROM INITIAL CLASSIFICATION (dir/grp***)?<classtmpl1>
 FR
-?IN.LIST OF CLASSES FROM SECOND CLASSIFICATION (dir/mrglist)?<classlist2>
+?IN.LIST OF CLASSES FROM SECOND CLASSIFICATION (dir/list2)?<classlist2>
 FR
-?IN.PARTICLE LIST FROM SECOND CLASSIFICATION (dir/mrg***)?<classtmpl2>
+?IN.PARTICLE LIST FROM SECOND CLASSIFICATION (dir/grp***)?<classtmpl2>
 FR
 ?OUT.OUTPUT DOC PREFIX (dir/prfx will append _1v2table and _***v***)?<outpfx>
 
 ; ~~~~~ start ~~~~~
 MD
-VB OFF
+vb off
 
 UD N x21 ; how many classes
 <classlist1>
 VM
 echo -n {%F7.1%x21} classes from first classification and' '
 IF(x21.gt.50)THEN
-echo ERROR...cannot have more than 50 classes!
-EN
+  echo ERROR: Cannot have more than 50 classes!
+  EN
 ENDIF
 IF(x21.lt.2)THEN
-echo ERROR...cannot have less than 2 classes!
-EN
+  echo ERROR: Cannot have less than 2 classes!
+  EN
 ENDIF
 
 UD N x22

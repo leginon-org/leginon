@@ -1,5 +1,5 @@
 ; Procedure: Backprojection of RCT volumes for each class
-; version 20090722
+;   Ed Brignole version 20090722
 
 FR L     ;list of all tilted particles (contains micronum in 2nd column)
 <sertlist>pcl/sertlist
@@ -26,7 +26,7 @@ FR L     ;tiltdirection - if this is wrong your volumes will be mirrored!
 [tiltindex]1 ;far from focus (1=left,2=right,3=top,4=bottom)
 
 FR L     ;list of classes
-<grplist>ital1/r20/grp_count
+<grplist>ital1/r20/grplist
 
 FR L     ;classlists template
 <grptmpl>ital1/r20/grp***

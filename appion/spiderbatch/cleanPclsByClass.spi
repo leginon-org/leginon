@@ -1,4 +1,5 @@
-; Syntax: @cleanParticleList (20090710)
+; Syntax: @cleanParticleList 
+;   Ed Brignole, version 20090710
 ; Description:
 ;   removes particles that are in rejected groups in final two MRA iterations
 
@@ -30,7 +31,7 @@ echo Removing particles of {%F7.1%x21} bad classes...
 VM
 rm -f <newlist>tmpnum.$DATEXT
 VM
-ls -1d <alndir>/r*/grp_count.$DATEXT | wc -l | nl -s ' 1   ' > <newlist>tmpnum.$DATEXT
+ls -1d <alndir>/r*/grplist.$DATEXT | wc -l | nl -s ' 1   ' > <newlist>tmpnum.$DATEXT
 
 UD 1,x30
 <newlist>tmpnum

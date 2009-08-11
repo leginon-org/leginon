@@ -10,15 +10,15 @@
 ;   n<stack> = normalized-cropped/interpolated-centered particle stack
 ;   fn<stack> = filtered particle stack
 ;   mfn<stack> = masked/filtered particle stack
-; version 20090717
+; version 20090807
 
 FR L   ;directory containing particles
 <pcldir>pcl
 
-FR L   ;particle stackname in ./pcldir (assumes @******)
+FR L   ;particle stackname (in ./pcldir/, assumes @******)
 <stack>seru
 
-FR L   ;particle list (will make if doesn't exist)
+FR L   ;particle list (ex. dir/pcllist) (will make if doesn't exist)
 <list>pcl/serulist
 
 RR x24 ;pixelsize (A/pixel)

@@ -12,8 +12,8 @@ FR
 ?OUT.Directory to make (dir/outdir)?<outdir>
 
 ; ~~~~~ start ~~~~~ 
-x61=5  ; inner ring
-x63=x62*2  ; diameter particle size (must be less than image size)
+x61=5  ;inner ring
+x63=x62*2  ;diameter particle size (must be less than image size)
 
 IF(x21.ge.100)THEN
   VM
@@ -22,18 +22,16 @@ IF(x21.ge.100)THEN
 ENDIF
 
 VM
-mkdir <outdir>
+mkdir -p <outdir>
 
 SD IC NEW
 iterdoc_ic
 (2),x21
 
 VM
-echo {**x21} Rounds of APSR reference-free alignment
-VM
-echo -n <outdir>..APSR round.
+echo -n {**x21} Rounds of reference-free alignment..<outdir>..
 
-DO LB1 x11=1,x21
+DO LB1 x11=1,x21 ;foreach round
 
 VM
 echo -n {**x11}'.'
@@ -98,6 +96,6 @@ SD IC END
 iterdoc_ic
 
 VM
-echo Alignments completed.
+echo .done.
 
 RE

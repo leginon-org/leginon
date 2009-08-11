@@ -1,19 +1,16 @@
-; Syntax: @rtshgrpav
+; Syntax: @refgrp
 ;   Ed Brignole 2008.09.28
 ; Description: 
-;   combines former refgrp.spi and rtsq.spi
-;   groups particles into classes after reference alignment
+;   groups particles according to multi-reference alignment
 ;   rotates/mirrors images according to alignment
-;   generates class averages
-
+;   generates class averages, variances, and particle membership lists
 ; Input:
 ;   alignment doc (format automatically detected)
 ;    * apsh format: 15 column (psi,tta,phi,grp,pcl#,rt,xsh,ysh,nrefs,dif,cc,rt,xsh,ysh,mr)
 ;    * apxq format: 7 column (grpmr,cc,rt,xsh,ysh,pcl#)
 ;    * prxym format: 5 column (pcl#,rt,xsh,ysh,grpmr)
-;
 ; Output:
-;   grp_count: key,ref,num+,num-
+;   grplist: key,ref,num+,num-
 ;   grp*** : key,pclnum,rt,xsh,ysh,grpmr = PRXYM format
 ;   avg*** : class average
 ;   var*** : class variance
@@ -40,10 +37,10 @@ ENDIF
 
 x99=0
 IQ FI x99
-<alndir>/grp_count
+<alndir>/grplist
 IF(x99.eq.1)THEN
   DE
-  <alndir>/grp_count
+  <alndir>/grplist
 ENDIF
 
 UD N x41,x40
@@ -51,7 +48,7 @@ UD N x41,x40
 UD E
 
 SD /     class      positive      mirror
-<alndir>/grp_count
+<alndir>/grplist
 
 ;CLASS TRACKER
 x44=0 ;classnum tracker
@@ -110,7 +107,7 @@ IF(x40.eq.15)THEN ;;;;;;;;;;;;BEGIN APSH SORTING AND COUNTING MODULE;;;;;;;;;;;;
       IF(x11.gt.1)THEN ;(NOT ON FIRST LOOP)
         x20=x20+1 ;increment class counter
         SD x20,x44,x42,x43
-        <alndir>/grp_count
+        <alndir>/grplist
         IF(x45.gt.0)THEN ;there are particles in this class
           SD IC COPY
           grpdoc_ic
@@ -183,9 +180,9 @@ IF(x40.eq.15)THEN ;;;;;;;;;;;;BEGIN APSH SORTING AND COUNTING MODULE;;;;;;;;;;;;
   ;CLOSE CLASS LIST
   x20=x20+1
   SD x20,x44,x42,x43
-  <alndir>/grp_count
+  <alndir>/grplist
   SD E
-  <alndir>/grp_count
+  <alndir>/grplist
 
   ;SAVE LAST CLASS
   SD IC COPY
@@ -265,7 +262,7 @@ IF(x40.eq.7)THEN ;;;;;;;;;;;;BEGIN APXQ SORTING AND COUNTING MODULE;;;;;;;;;;;;
       IF(x11.gt.1)THEN ;(NOT ON FIRST LOOP)
         x20=x20+1 ;increment class counter
         SD x20,x44,x42,x43
-        <alndir>/grp_count
+        <alndir>/grplist
         IF(x45.gt.0)THEN ;there are particles in this class
           SD IC COPY
           grpdoc_ic
@@ -338,9 +335,9 @@ IF(x40.eq.7)THEN ;;;;;;;;;;;;BEGIN APXQ SORTING AND COUNTING MODULE;;;;;;;;;;;;
   ;CLOSE CLASS LIST
   x20=x20+1
   SD x20,x44,x42,x43
-  <alndir>/grp_count
+  <alndir>/grplist
   SD E
-  <alndir>/grp_count
+  <alndir>/grplist
 
   ;SAVE LAST CLASS
   SD IC COPY
@@ -420,7 +417,7 @@ IF(x40.eq.5)THEN ;;;;;;;;;;;;BEGIN PRXYM SORTING AND COUNTING MODULE;;;;;;;;;;;;
       IF(x11.gt.1)THEN ;(NOT ON FIRST LOOP)
         x20=x20+1 ;increment class counter
         SD x20,x44,x42,x43
-        <alndir>/grp_count
+        <alndir>/grplist
         IF(x45.gt.0)THEN ;there are particles in this class
           SD IC COPY
           grpdoc_ic
@@ -493,9 +490,9 @@ IF(x40.eq.5)THEN ;;;;;;;;;;;;BEGIN PRXYM SORTING AND COUNTING MODULE;;;;;;;;;;;;
   ;CLOSE CLASS LIST
   x20=x20+1
   SD x20,x44,x42,x43
-  <alndir>/grp_count
+  <alndir>/grplist
   SD E
-  <alndir>/grp_count
+  <alndir>/grplist
 
   ;SAVE LAST CLASS
   SD IC COPY

@@ -1,8 +1,8 @@
 (x30,x31,x32) ; lowpass(A),highpass(A),pixsize(A/pix)
 ; syntax: @filter(x30,x31,x32)
 ; description: low and high pass butterworth filters particles
-; lower end of low pass is 2/3*lowpass (eg. 18 A will taper off to 12 A)
-; upper end of high pass is 4/3*highpass (eg. 300 A will taper off to 400 A)
+;   50% low pass is 2/3*lowpass (eg. 18 A will to taper to half at 12 A)
+;   50% high pass is 4/3*highpass (eg. 300 A will taper to half at 400 A)
 ;
 ; enter 0 to ignore high or low pass filter
 
@@ -31,10 +31,16 @@ IF(x56.le.0)GOTO LB90 ; highpass only
 
 IF(x57.le.0)GOTO LB91 ; lowpass only
 
+;----- do both filters: low pass then high pass -----
 VM
 echo -n .{%F7.1%x30} to {%F7.1%x56} A and {%F7.1%x57} to {%F7.1%x31} A..
 
-;do both filters: low pass then high pass
+IF(x30.ge.x31)THEN
+  VM
+  echo ERROR: Low pass is higher than high pass!
+  EN
+ENDIF
+
 x65=x32/x30
 x66=x32/x56
 x67=x32/x57
@@ -64,6 +70,7 @@ UD ICE
 GOTO LB99 ; exit
 
 LB90 ;highpass only
+;----- do high pass only -----
 VM
 echo -n .{%F7.1%x57} to {%F7.1%x31} A..
 
@@ -86,6 +93,7 @@ UD ICE
 GOTO LB99 ; exit
 
 LB91 ; lowpass only
+;----- do low pass only -----
 VM
 echo -n at {%F7.1%x30} to {%F7.1%x56} A...
 

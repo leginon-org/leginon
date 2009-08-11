@@ -25,7 +25,7 @@ FR L       ;Output directory
 <outdir>cl1/apsrcl1
 FR L       ;Classification prefix
 <prefix>c
-;---Alignment of Particles in Superclass---
+;---Alignment of Particles in Superclasses---
 FR L       ;Class particle lists
 <cltmpl>cl1/avggrp/list*****
 FR L       ;Particle template
@@ -35,7 +35,7 @@ RR x99     ;Radius for alignment
 RR x94     ;Number of apsrrounds
 5
 FR L       ;Reference to orient apsr averages
-<reftmpl>fa1/orientiav
+<reftmpl>cl1/apsrgrp/alniav
 
 ; ~~~~~ start ~~~~~
 MD

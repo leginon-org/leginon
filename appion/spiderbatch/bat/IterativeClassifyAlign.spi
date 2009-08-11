@@ -66,7 +66,7 @@ UD E
 
 x99=0
 IQ FI x99
-<dir>/r00/grp_count
+<dir>/r00/grplist
 IF(x99.eq.0)THEN
   VM
   echo '____ Centering '{%F7.1%x21}' reference images ____'
@@ -83,7 +83,7 @@ IF(x99.eq.0)THEN
   <reflist>
 
   VM
-  cp <reflist>.$DATEXT <dir>/r00/grp_count.$DATEXT
+  cp <reflist>.$DATEXT <dir>/r00/grplist.$DATEXT
 ELSE
   VM
   echo '____ Already centered '{%F7.1%x21}' reference images ____'
@@ -115,7 +115,7 @@ DO LB4 x14=1,x23 ;for each iteration of multi-reference classification/free-alig
     @refnm(x20)
     <pcllist>
     <pcltmpl>
-    <dir>/r{**x24}/grp_count
+    <dir>/r{**x24}/grplist
     <dir>/r{**x24}/apsrav***
     <dir>/r{**x14}
 
@@ -126,7 +126,7 @@ DO LB4 x14=1,x23 ;for each iteration of multi-reference classification/free-alig
 
     @alnimg(x20) ;orient averages to reference
     <dir>/r{**x14}/avg***
-    <dir>/r{**x14}/grp_count
+    <dir>/r{**x14}/grplist
     (4) ;refalign    
     <ref>
     <dir>/r{**x14}/alnav   ;prefix for av va @*** and doc
@@ -144,7 +144,7 @@ DO LB4 x14=1,x23 ;for each iteration of multi-reference classification/free-alig
 
   IF(x14.gt.1)THEN
     @jumpers
-    <dir>/r{**x24}/grp_count
+    <dir>/r{**x24}/grplist
     <dir>/r{**x24}/grp***
     <dir>/r{**x14}/grp***
     <dir>/r{**x14}/jumplist
@@ -164,7 +164,7 @@ DO LB4 x14=1,x23 ;for each iteration of multi-reference classification/free-alig
   ENDIF
 
   UD N x21
-  <dir>/r{**x14}/grp_count
+  <dir>/r{**x14}/grplist
   
   VM
   echo '____ Free-align '{%F7.1%x25}' times within '{%F7.1%x21}' reference groups ____'
@@ -175,7 +175,7 @@ DO LB4 x14=1,x23 ;for each iteration of multi-reference classification/free-alig
   
   DO LB1 x11=1,x21 ;for each class
     UD IC x11,x22
-    <dir>/r{**x14}/grp_count
+    <dir>/r{**x14}/grplist
 
     x99=0
     IQ FI x99
@@ -270,7 +270,7 @@ DO LB4 x14=1,x23 ;for each iteration of multi-reference classification/free-alig
   LB1 ;next reference group
 
   UD ICE
-  <dir>/r{**x14}/grp_count
+  <dir>/r{**x14}/grplist
   
   SD IC COPY
   classapsrerr_ic
@@ -296,7 +296,7 @@ echo '     ____ Final reference-alignment within' {%F7.1%x21} 'groups ____'
 ;apsh each group to its apsrav using appropriate radius
 DO LB5 x15=1,x21 ;for each reference class
   UD IC x15,x22
-  <dir>/r{**x14}/grp_count
+  <dir>/r{**x14}/grplist
 
   x30=0
   SD x22,x30,x30,x30
@@ -370,13 +370,13 @@ DO LB5 x15=1,x21 ;for each reference class
   _11
 LB5
 UD ICE
-<dir>/r{**x14}/grp_count
+<dir>/r{**x14}/grplist
 DE
 <dir>/apshangles_tmp
 
 DOC COMBINE ;keys are renumbered - no longer correspond with particle number
 <dir>/apshsrt***
-<dir>/r{**x14}/grp_count
+<dir>/r{**x14}/grplist
 <dir>/apshdoc
 
 VM

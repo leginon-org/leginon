@@ -73,10 +73,10 @@ ENDIF
 
 x90=0
 IQ FI x90
-<alndir>/grp_count
+<alndir>/grplist
 IF(x90.eq.1)THEN
   VM
-  cp <alndir>/grp_count.$DATEXT <outdir>/iter.$DATEXT
+  cp <alndir>/grplist.$DATEXT <outdir>/iter.$DATEXT
   VM
   echo Your particles were reference aligned.
   x90=0
@@ -103,7 +103,7 @@ IF(x90.eq.1)THEN
   ENDIF  
 ENDIF
 VM
-echo EXITING...<alndir> does not contain alignlist or grp_count
+echo EXITING...<alndir> does not contain alignlist or grplist
 EN
 
 LB89 ;skip to here if alignment params found
