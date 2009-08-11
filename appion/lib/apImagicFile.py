@@ -159,6 +159,8 @@ def readImagic(filename, first=1, last=None, msg=True):
 
 #===============	
 def readImagicHeader(headerfilename):
+
+
 	headfile=open(headerfilename,'rb')
 	
 	# Header information for each image contained in 256 4-byte chunks
@@ -173,7 +175,13 @@ def readImagicHeader(headerfilename):
 	header={}
 	imgnum=i[0]
 	imgfollow=i[1]
-	header['nimg']=imgnum+imgfollow
+	numimg1 = imgnum+imgfollow
+	numimg2 = int('%d' % (os.stat(headerfilename)[6]/1024))
+	if numimg1 != numimg2:
+		apDisplay.printWarning("Number of particles from header (%d) does not match the data (%d)"
+			%(numimg1, numimg2))
+		#apDisplay.printWarning("Sadly, this is fairly common, so I will use the number from the data")
+	header['nimg'] = numimg2
 	header['npix']=i[11]
 	header['lines']=i[12]
 	header['rows']=i[13]
