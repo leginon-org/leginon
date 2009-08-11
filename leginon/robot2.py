@@ -725,10 +725,24 @@ class Robot2(node.Node):
 				return gridlocation['gridId']
 		return self.newGrid(gridboxid, gridnumber)
 
+	def publishEMGridData(self,gridid):
+		try:
+			projectdata = project.ProjectData()
+		except project.NotConnectedError, e:
+			self.logger.error('Failed to get grid labels: %s' % e)
+			return None
+		gridinfo = projectdata.getGridInfo(gridid)
+		emgriddata = leginondata.EMGridData()
+		emgriddata['name'] = gridinfo['label']
+		emgriddata['project'] = gridinfo['projectId']
+		self.publish(emgriddata, database=True)
+		return emgriddata
+
 	def makeGridData(self, gridnumber):
 		gridid = self.getGridID(self.gridtrayid, gridnumber)
 		if gridid is None:
 			return None
+		emgriddata = self.publishEMGridData(gridid)
 		initializer = {'grid ID': gridid}
 		querydata = leginondata.GridData(initializer=initializer)
 		griddatalist = self.research(querydata)
@@ -736,7 +750,7 @@ class Robot2(node.Node):
 		for griddata in griddatalist:
 			if griddata['insertion'] > insertion:
 				insertion = griddata['insertion']
-		initializer = {'grid ID': gridid, 'insertion': insertion + 1}
+		initializer = {'grid ID': gridid, 'insertion': insertion + 1, 'emgrid': emgriddata}
 		griddata = leginondata.GridData(initializer=initializer)
 		self.publish(griddata, database=True)
 		return griddata
