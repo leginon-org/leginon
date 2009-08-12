@@ -79,7 +79,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		anglelist.append(None)
 		radlist.append(0)
 
-		if self.settings['sites'] == 0:
+		if self.settings['sites'] == 0 or self.settings['tableau type'] == 'split image':
 			return tiltlist, anglelist, radlist
 		angleinc = 2*3.14159/self.settings['sites']
 		startangle = self.settings['startangle'] * numpy.pi / 180.0
@@ -106,6 +106,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		self.tabimage = tableau.splitTableau(image, split)
 		self.tabscale = None
 		self.displayTableau()
+		self.saveTableau()
 
 	def insertTableau(self, imagedata, angle, rad):
 		image = imagedata['image']
