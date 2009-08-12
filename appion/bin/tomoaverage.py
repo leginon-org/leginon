@@ -10,6 +10,7 @@ import apStack
 import apTomo
 import apImod
 import apAlignment
+import apDisplay
 from pyami import mrc
 
 class Test(appionScript.AppionScript):
@@ -93,7 +94,7 @@ class Test(appionScript.AppionScript):
 						if self.params['commit']:
 							apTomo.insertTomoAvgParticle(avgrundata,subtomodata,alignp,shiftz)
 			if i < 1:
-				apDisplay,printError('no subtomogram qualifies for averaging')
+				apDisplay.printError('no subtomogram qualifies for averaging')
 			else:
 				avgvol = sumvol / i
 			avgvolfilename = sessionname+"_"+self.params['runname']+".mrc"
