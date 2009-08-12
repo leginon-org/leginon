@@ -4,6 +4,7 @@ import leginondata
 import sys
 import apProTomo
 import apTomo
+import apImod
 import math
 import os
 from pyami import correlator, peakfinder
@@ -60,6 +61,16 @@ def shiftHalfSeries(shiftdict,ptdict, lastimg):
 			print "shifting image", key
 		else:
 			break
+
+def modifyShiftByImodprexg(ptdict,imgshape):
+	ycen=imgshape[0]/2
+	xcen=imgshape[1]/2
+	keys=ptdict.keys()
+	keys.sort()
+	transforms = apImod.readTransforms('09feb18c_006.prexg')	
+	for key in keys:
+		ptdict[key]['x']=transforms[key-1][-2]+xcen
+		ptdict[key]['y']=transforms[key-1][-1]+ycen
 
 def parseOptions():
 	parser=OptionParser()
@@ -133,13 +144,14 @@ if __name__=='__main__':
 	print
 	shiftdict=alignZeroShiftImages(imgtree,zerotilts)
 	shiftHalfSeries(shiftdict,ptdict,zerotilts[0])
-	
+
+	#modifyShiftByImodprexg(ptdict,imgtree[0]['image'].shape)	
 	#write tilt file
 	apProTomo.writeTiltFile(inputparams['tiltfile'],inputparams['seriesname'],ptdict)
 	
 	#write parameter file
 	refineparamdict=apProTomo.createRefineDefaults(refimg,
-		os.path.join(os.getcwd(),'raw/'),os.path.join(os.getcwd(),'out/'))
+		os.path.join(os.getcwd(),'raw'),os.path.join(os.getcwd(),'out'))
 	apProTomo.writeRefineParamFile(refineparamdict,inputparams['seriesname']+'.param')
 	
 	#if tar is specified, create big tarball

@@ -127,8 +127,8 @@ def createRefineDefaults(imgref, indir, outdir, tmp=''):
 	refinedict['mapsmp']=1
 	
 	refinedict['sffx']='.img'
-	refinedict['inp']=indir
-	refinedict['out']=outdir
+	refinedict['inp']=indir+'/'
+	refinedict['out']=outdir+'/'
 	refinedict['tmp']=tmp
 	refinedict['cor']='.xcf'
 	return refinedict
@@ -141,3 +141,27 @@ def writeRefineParamFile(refinedict,paramfile):
 		f.write('%s=%s\n' % (key, val))
 	f.close()
 
+def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix):
+	center = (1024,1024)
+	protomotltfile = protomoprefix+"-fitted.tlt"
+	imodtltfile = imodprefix+".prexg"
+	f=open(protomotltfile,'r')
+	fout = open(imodtltfile,'w')
+	lines = f.readlines()
+	rotations = []
+	origins = []
+	for line in lines:
+		if (line.find('ORIGIN') >= 0):
+			items = line.split()
+			origins.append((float(items[-3]),float(items[-2]))) 
+		elif (line.find('ROTATION') >= 0):
+			items = line.split()
+			rotations.append(float(items[-1]))
+	for i in range(0,len(rotations)):
+		theta = rotations[i] * 3.14159 / 180.0
+		#theta = 0.0
+		shift = (origins[i][0]-center[0],origins[i][1]-center[1])
+		outline = '%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (
+			math.cos(theta),-math.sin(theta),math.sin(theta),math.cos(theta),-shift[0],-shift[1])
+		fout.write(outline)
+	fout.close()
