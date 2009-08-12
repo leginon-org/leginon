@@ -246,13 +246,14 @@ def transformVolume(volumepath,operation):
 #	Command for transform tomogram
 # for example, flipyz flip y and z axis (transpose, and results in handness change)
 # clip flipyz 09feb18c_002_full.rec temp.mrc
+# clip rotx 09feb18c_002_full.rec temp.mrc
 		"""	
 		volumedir = os.path.dirname(volumepath)
 		volumefilename = os.path.basename(volumepath)
-		flipyzfilename = volumefilename+".flipyz"
+		transformedfilename = volumefilename+"."+operation
 		inputparams = {
 			'recon': os.path.join(volumedir, volumefilename),
-			'out': os.path.join(volumedir, flipyzfilename),
+			'out': os.path.join(volumedir, transformedfilename),
 		}
 		commands = []
 		inputparams['3d'] = inputparams['out']
@@ -261,29 +262,37 @@ def transformVolume(volumepath,operation):
 				% (operation,inputparams['recon'],inputparams['out'],
 				)
 			)
-		writeCommandAndRun(volumedir,'flipYZ',commands,[inputparams['out'],'flipYZ.log'])
-		return os.path.join(volumedir,flipyzfilename)
+		writeCommandAndRun(volumedir,operation,commands,[inputparams['out'],operation+'.log'])
+		return os.path.join(volumedir,transformedfilename)
 
-def pad(volumepath,originalshape,finalshape,bin=1):
-	# This padding is only in x and y direction symmetrically
+def pad(volumepath,originalshape,finalshape,bin=1,order='XZY'):
+	# This padding is only in x and y direction symmetrically and assume
+	# XYZ order of the full tomogram
 	volumedir = os.path.dirname(volumepath)
 	volumefilename = os.path.basename(volumepath)
 	padfilename = volumefilename+".pad"
+	padpath = os.path.join(volumedir, padfilename)
 	inputparams = {
 		'in': os.path.join(volumedir, volumefilename),
-		'out': os.path.join(volumedir, padfilename),
-		'padxwidth': (finalshape[1]/bin - originalshape[1]) / 2,
-		'padywidth': (finalshape[0]/bin - originalshape[0]) / 2,
+		'out': padpath,
+		'padwidth': 
+			{'X':(finalshape[1]/bin - originalshape[1]) / 2,
+				'Y':(finalshape[0]/bin - originalshape[0]) / 2,
+				'Z':0
+			},
 	}
+	padstring = ""
+	for axis in order:
+		padstring += "%d " % (inputparams['padwidth'][axis])
 	commands = [
 		"$taperoutvol",
 		inputparams['in'],
 		inputparams['out'],
 		"/",
-		"%d %d 0" % (inputparams['padxwidth'],inputparams['padywidth']),
+		padstring
 	]
 	writeCommandAndRun(volumedir,'volumepad',commands,[inputparams['out'],'volumepad.log'])
-	return volumepath
+	return padpath
 
 def projectFullZ(processdir, runname, seriesname,bin=1,rotx=True,flipyz=False):
 		"""
