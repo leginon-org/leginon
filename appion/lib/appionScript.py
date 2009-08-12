@@ -18,6 +18,7 @@ import apParam
 import apFile
 import apProject
 import appionData
+import apWebScript
 #leginon
 import sinedon
 from pyami import mem
@@ -37,6 +38,8 @@ class AppionScript(object):
 		self.t0 = time.time()
 		self.createDefaultStats()
 		self.timestamp = apParam.makeTimestamp()
+		self.argdict = {}
+		self.optdict = {}
 		apDisplay.printMsg("Time stamp: "+self.timestamp)
 		self.functionname = apParam.getFunctionName(sys.argv[0])
 		apDisplay.printMsg("Function name: "+self.functionname)
@@ -93,6 +96,101 @@ class AppionScript(object):
 		self.onInit()
 
 	#=====================
+	def argumentFromParamDest(self, dest):
+		"""
+		For a given optparse destination (dest, e.g., 'runname') 
+			this will determine the command line
+			argument (e.g., -n)
+		"""
+		if len(self.argdict) == 0:
+			for opt in self.parser.option_list:
+				arg = str(opt.get_opt_string.im_self)
+				if '/' in arg:
+					args = arg.split('/')
+					arg = args[-1:][0]
+				self.argdict[opt.dest] = arg
+				self.optdict[opt.dest] = opt
+		if dest in self.argdict:
+			return self.argdict[dest]
+		return "????"
+
+	#=====================
+	def usageFromParamDest(self, dest, value):
+		"""
+		For a given optparse destination (dest, e.g., 'commit') 
+			and value (e.g., 'False') this will generate the command line
+			usage (e.g., '--no-commit')
+		"""
+		usage = ""
+		if value is None:
+			return ""
+		argument = self.argumentFromParamDest(dest)
+		if not dest in self.optdict:
+			return ""
+		optaction = self.optdict[dest].action
+		if optaction == 'store':
+			opttype = self.optdict[dest].type
+			value = str(value)
+			if not ' ' in value:
+				usage = argument+"="+value
+			else:
+				usage = argument+"='"+value+"'"
+		elif optaction == 'store_true' or optaction == 'store_false':
+			storage = 'store_'+str(value).lower()
+			for opt in self.parser.option_list:
+				if opt.dest == dest and opt.action == storage:
+					arg = str(opt.get_opt_string.im_self)
+					if '/' in arg:
+						args = arg.split('/')
+						arg = args[-1:][0]
+					usage = arg
+		return usage
+
+	#=====================
+	def getSessionData(self):
+		sessiondata = None
+		if 'sessionname' in self.params:
+			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		elif not sessiondata and 'session' in self.params and isinstance(self.params['session'],str):
+			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		elif not sessiondata and 'stackid' in self.params:
+			import apStack
+			sessiondata = apStack.getSessionDataFromStackId(self.params['session'])
+		else:
+			s = re.search('/([0-9][0-9][a-z][a-z][a-z][0-9][0-9][^/]*)/', self.params['rundir'])
+			if s:
+				self.params['sessionname'] = s.groups()[0]
+				sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		return sessiondata
+
+	#=====================
+	def getClusterJobData(self):
+		partq = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		clustq = appionData.ApClusterJobData()
+		clustq['path'] = partq
+		clustdatas = clustq.query()
+		if not clustdatas:
+			### insert a cluster job
+			clustq['name'] = self.params['runname']+".appionsub.job"
+			clustq['clusterpath'] = partq
+			clustq['user'] = apParam.getUsername()
+			clustq['cluster'] = apParam.getHostname()
+			clustq['status'] = "R"
+			clustq['session'] = self.getSessionData()
+			### need a proper way to create a jobtype
+			clustq['jobtype'] = self.functionname.lower()
+			return clustq
+		elif len(clustdatas) == 1:
+			### we have an entry
+			### we need to say that we are running
+			apWebScript.setJobToRun(clustdatas[0].dbid)
+			return clustdatas[0]
+		else:
+			### special case: more than one job with given path
+			apDisplay.printWarning("More than one cluster job has this path")
+			return clustdatas[0]
+
+	#=====================
 	def uploadScriptData(self):
 		"""
 		Using tables to track program run parameters in a generic fashion
@@ -106,12 +204,17 @@ class AppionScript(object):
 
 		hostq = appionData.ScriptHostName()
 		hostq['name'] = apParam.getHostname()
+		hostq['ip'] = apParam.getHostIP()
+		hostq['system'] = apParam.getSystemName()
+		hostq['distro'] = apParam.getLinuxDistro()
+		hostq['arch'] = apParam.getMachineArch()
 
 		progrunq = appionData.ScriptProgramRun()
 		progrunq['progname'] = prognameq
 		progrunq['username'] = userq
 		progrunq['hostname'] = hostq
-		progrunq.insert(force=True)
+		progrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		progrunq['job'] = self.getClusterJobData()
 
 		for paramname in self.params.keys():
 			paramnameq = appionData.ScriptParamName()
@@ -120,6 +223,10 @@ class AppionScript(object):
 
 			paramvalueq = appionData.ScriptParamValue()
 			paramvalueq['value'] = str(self.params[paramname])
+			usage = self.usageFromParamDest(paramname, self.params[paramname])
+			print "usage: ", usage
+			paramvalueq['usage'] = usage
+
 			paramvalueq['paramname'] = paramnameq
 			paramvalueq['progrun'] = progrunq
 			if self.params['commit'] is True:
@@ -128,14 +235,14 @@ class AppionScript(object):
 	#=====================
 	def checkForDuplicateCommandLineInputs(self):
 		args = sys.argv[1:]
-		argdict = {}
+		argmdict = {}
 		for arg in args:
 			elements=arg.split('=')
 			opt = elements[0].lower()
 			if opt[0] == "-":
-				if opt in argdict:
+				if opt in argmdict:
 					apDisplay.printError("Multiple arguments were supplied for argument: "+str(opt))
-				argdict[opt] = True
+				argmdict[opt] = True
 
 	#=====================
 	def createDefaultStats(self):
@@ -194,6 +301,8 @@ class AppionScript(object):
 			apDisplay.printMsg("Run directory:\n "+self.params['rundir'])
 			apDisplay.printColor("Total run time:\t"+apDisplay.timeString(time.time()-self.t0),"green")
 		apParam.killVirtualFrameBuffer()
+		clustdata = self.getClusterJobData()
+		apWebScript.setJobToDone(clustdata.dbid)
 
 	#=====================
 	def setupGlobalParserOptions(self):

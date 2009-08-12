@@ -11,6 +11,7 @@ from string import lowercase
 ## appion
 import apDisplay
 
+#=====================
 def getAppionDirectory():
 	"""
 	Used by appionLoop
@@ -39,6 +40,7 @@ def getAppionDirectory():
 		"Did you source useappion.sh?")
 
 
+#=====================
 def makeTimestamp():
 	datestamp = time.strftime("%y%b%d").lower()
 	hourstamp = lowercase[(time.localtime()[3])%26]
@@ -48,6 +50,7 @@ def makeTimestamp():
 	timestamp = datestamp+hourstamp+minstamp
 	return timestamp
 
+#=====================
 def getFunctionName(arg=None):
 	"""
 	Sets the name of the function
@@ -59,6 +62,7 @@ def getFunctionName(arg=None):
 	functionname = os.path.splitext(functionname)[0]
 	return functionname
 
+#=====================
 def getUsername():
 	try:
 		user = os.getlogin() #os.environ.get('USER')
@@ -66,13 +70,56 @@ def getUsername():
 		user = "unknown"
 	return user
 
+#=====================
 def getHostname():
-	try:
-		host = socket.gethostname()
-	except:
-		host = "unknown"
+	host = None
+	if len(os.name) > 2:
+		host = os.uname()[1]
+	if not host:
+		try:
+			host = socket.gethostname()
+			#host = socket.gethostbyaddr(socket.gethostname())[0]
+		except:
+			host = "unknown"
 	return host
 
+#=====================
+def getSystemName():
+	try:
+		system = os.uname()[0].lower()
+	except:
+		system = "unknown"
+	return system
+
+#=====================
+def getLinuxDistro():
+	try:
+		flavfile = "/etc/redhat-release"
+		if os.path.isfile(flavfile):
+			f = open(flavfile, "r")
+			flavor = f.readline().strip()
+			f.close()
+	except:
+		flavor = None
+	return flavor
+
+#=====================
+def getMachineArch():
+	try:
+		arch = os.uname()[4]
+	except:
+		arch = None
+	return arch
+
+#=====================
+def getHostIP():
+	try:
+		ip = socket.gethostbyaddr(socket.gethostname())[2][0]
+	except:
+		ip = None
+	return ip
+
+#=====================
 def getLogHeader():
 	#WRITE INFO
 	user = getUsername()
@@ -80,6 +127,7 @@ def getLogHeader():
 	logheader = "[ "+user+"@"+host+": "+time.asctime()+" ]\n"
 	return logheader
 
+#=====================
 def writeFunctionLog(cmdlist, params=None, logfile=None, msg=True):
 	"""
 	Used by appionLoop
@@ -111,6 +159,7 @@ def writeFunctionLog(cmdlist, params=None, logfile=None, msg=True):
 	f.close()
 	return logfile
 
+#=====================
 def parseWrappedLines(lines):
 	goodlines=[]
 	add=False
@@ -131,6 +180,7 @@ def parseWrappedLines(lines):
 
 	return goodlines
 
+#=====================
 def closeFunctionLog(params=None, logfile=None, msg=True, stats=None):
 	"""
 	Used by appionLoop
@@ -165,6 +215,7 @@ def closeFunctionLog(params=None, logfile=None, msg=True, stats=None):
 	f.write(out)
 	f.close()
 
+#=====================
 def createDirectory(path, mode=0777, warning=True):
 	"""
 	Used by appionLoop
@@ -180,6 +231,7 @@ def createDirectory(path, mode=0777, warning=True):
 		apDisplay.printError("Could not create directory, '"+path+"'\nCheck the folder write permissions")
 	return True
 
+#=====================
 def makedirs(name, mode=0777):
 	"""
 	Works like mkdir, except that any intermediate path segment (not
@@ -198,6 +250,7 @@ def makedirs(name, mode=0777):
 		os.chmod(name, mode)
 	return
 
+#=====================
 def convertParserToParams(parser):
 	parser.disable_interspersed_args()
 	(options, args) = parser.parse_args()
@@ -213,6 +266,7 @@ def convertParserToParams(parser):
 			params[i.dest] = getattr(options, i.dest)
 	return params
 
+#=====================
 def getXversion():
 	xcmd = "X -version"
 	proc = subprocess.Popen(xcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -227,6 +281,7 @@ def getXversion():
 	return None
 
 
+#=====================
 def versionToNumber(version):
 	num = 0
 	nums = version.split(".")
@@ -235,6 +290,7 @@ def versionToNumber(version):
 			num += float(val)/(100**i)
 	return num
 
+#=====================
 def resetVirtualFrameBuffer():
 	logf = open("xvfb.log", "a")
 	xvfbcmd = "killall Xvfb\n"
@@ -264,11 +320,13 @@ def resetVirtualFrameBuffer():
 	time.sleep(2)
 	logf.close()
 
+#=====================
 def killVirtualFrameBuffer():
 	xvfbcmd = "killall Xvfb\n"
 	proc = subprocess.Popen(xvfbcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	proc.wait()
 
+#=====================
 def getFontPath(msg=True):
 	pathlist = [
 		"/usr/share/X11/fonts/misc",
@@ -283,6 +341,7 @@ def getFontPath(msg=True):
 	apDisplay.printWarning("Xvfb: could not find Font Path")
 	return " "
 
+#=====================
 def getSecureFile(msg=True):
 	"""
 	This file comes with xorg-x11-server-Xorg in Fedora 7,8
@@ -300,6 +359,7 @@ def getSecureFile(msg=True):
 	apDisplay.printWarning("Xvfb: could not find Security File")
 	return " "
 
+#=====================
 def getRgbFile(msg=True):
 	"""
 	This file comes with xorg-x11-server-Xorg in Fedora 7,8
@@ -320,6 +380,7 @@ def getRgbFile(msg=True):
 	apDisplay.printWarning("Xvfb: could not find RGB File")
 	return " "
 
+#=====================
 def getNumProcessors(msg=True):
 	proc = subprocess.Popen("cat /proc/cpuinfo | grep processor", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	proc.wait()
@@ -328,6 +389,7 @@ def getNumProcessors(msg=True):
 		apDisplay.printMsg("Found "+str(nproc)+" processors on this machine")
 	return nproc
 
+#=====================
 def setUmask(msg=False):
 	if os.getgid() == 773:
 		prev = os.umask(002)
@@ -338,6 +400,7 @@ def setUmask(msg=False):
 	if msg is True:
 		apDisplay.printMsg("Umask changed from "+str(prev)+" to "+str(curr))
 
+#=====================
 def getExecPath(exefile, die=False):
 	proc = subprocess.Popen("which "+exefile, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	out = proc.stdout

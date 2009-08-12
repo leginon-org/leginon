@@ -25,6 +25,8 @@ class ScriptProgramRun(Data):
 			('progname', ScriptProgramName),
 			('username', ScriptUserName),
 			('hostname', ScriptHostName),
+			('path', ApPathData),
+			('job', ApClusterJobData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ScriptProgramRun=ScriptProgramRun
@@ -50,6 +52,7 @@ class ScriptParamValue(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('value', str),
+			('usage', str),
 			('paramname', ScriptParamName),
 			('progrun', ScriptProgramRun),
 		)
@@ -68,6 +71,10 @@ class ScriptHostName(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
+			('ip', str),
+			('system', str),
+			('distro', str),
+			('arch', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ScriptHostName=ScriptHostName
