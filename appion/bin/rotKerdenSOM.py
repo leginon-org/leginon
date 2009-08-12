@@ -337,6 +337,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		KerDenSOM stands for "Kernel Probability Density Estimator Self-Organizing Map".
 		It maps a set of high dimensional input vectors into a two-dimensional grid.
 		"""
+		kerdentime = time.time()
 		apDisplay.printMsg("Running KerDen SOM")
 		outstamp = os.path.join(self.params['rundir'], self.timestamp)
 		kerdencmd = ( "xmipp_classify_kerdensom -verb 1 -i %s \
@@ -365,6 +366,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		#09jul23l52.cod
 		inputSpecrtaFile=outstamp+'.cod'
 		logging.debug('code vector file name ' + inputSpecrtaFile)
+		apDisplay.printMsg("KerDen SOM complete in %s"%(apDisplay.timeString(time.time()-kerdentime)))
 		self.createKerdenSOMPlots()
 		return
 
@@ -376,6 +378,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		This program looks fo the position of the center of symmetry in an image.
 
 		"""
+		centertime = time.time()
 		apDisplay.printMsg("Running find_center2d")
 		#ROB
 		logging.debug(' starting runFindCenter ')
@@ -409,7 +412,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 
 		logging.debug(' runFindCenter Xoffset Yoffset ' + str(self.xOffset) + " " + str(self.yOffset))
 		time.sleep(1)
-
+		apDisplay.printMsg("Find center complete in %s"%(apDisplay.timeString(time.time()-centertime)))
 		return
 
 	#======================
@@ -422,6 +425,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		energy percentage as a function of the radius, with extension .SPT.
 
 		"""
+		spectratime = time.time()
 		apDisplay.printMsg("Running make_spectra")
 		logging.debug('Inside make_spectra')
 		#ROB
@@ -445,6 +449,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		proc = subprocess.Popen(makespectracmd, shell=True,stdout=subprocess.PIPE)
 		proc.wait()
 
+		apDisplay.printMsg("Spectra calculation complete in %s"%(apDisplay.timeString(time.time()-spectratime)))
 		time.sleep(1)
 
 		return tempFileNameforSpectra
