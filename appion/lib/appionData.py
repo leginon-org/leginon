@@ -24,7 +24,7 @@ class ScriptProgramRun(Data):
 			('progname', ScriptProgramName),
 			('username', ScriptUserName),
 			('hostname', ScriptHostName),
-			('path', ApPathData),
+			('rundir', ApPathData),
 			('job', ApClusterJobData),
 		)
 	typemap = classmethod(typemap)
