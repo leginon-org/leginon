@@ -76,8 +76,6 @@ class tomoMaker(appionScript.AppionScript):
 		if self.params['stackId'] is not None or self.params['selexonId'] is not None:
 			if int(self.params['sizex']) < 1 or int(self.params['sizey']) < 1:
 				apDisplay.printError("must enter non-zero subvolume size")
-			if int(self.params['sizez']) is None:
-				self.params['sizez'] = self.params['thickness']
 			if int(self.params['bin']) < 1:
 				apDisplay.printError("binning must be larger or equal to 1")
 
@@ -104,6 +102,11 @@ class tomoMaker(appionScript.AppionScript):
 			sessiondata = fulltomodata['session']
 			seriesname = fulltomodata['name'].rstrip('_full')
 			fullbin = fulltomodata['alignment']['bin']
+			fulltomopath = os.path.join(fulltomodata['path']['path'], seriesname+"_full.rec")
+			fulltomoheader = mrc.readHeaderFromFile(fulltomopath)
+			fulltomoshape = fulltomoheader['shape']
+			if self.params['sizez'] > fulltomoshape[1]*fullbin :
+				self.params['sizez'] = fulltomoshape[1]*fullbin
 			subrunname = self.params['subrunname']
 			volumeindex = apTomo.getLastVolumeIndex(fulltomodata) + 1
 			dimension = {'x':int(self.params['sizex']),'y':int(self.params['sizey']),'z':int(self.params['sizez'])}
