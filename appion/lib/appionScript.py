@@ -121,12 +121,12 @@ class AppionScript(object):
 			and value (e.g., 'False') this will generate the command line
 			usage (e.g., '--no-commit')
 		"""
-		usage = ""
+		usage = None
 		if value is None:
-			return ""
+			return None
 		argument = self.argumentFromParamDest(dest)
 		if not dest in self.optdict:
-			return ""
+			return None
 		optaction = self.optdict[dest].action
 		if optaction == 'store':
 			opttype = self.optdict[dest].type
@@ -210,10 +210,11 @@ class AppionScript(object):
 		hostq['arch'] = apParam.getMachineArch()
 
 		progrunq = appionData.ScriptProgramRun()
+		progrunq['runname'] = self.params['runname']
 		progrunq['progname'] = prognameq
 		progrunq['username'] = userq
 		progrunq['hostname'] = hostq
-		progrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		progrunq['rundir'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		progrunq['job'] = self.getClusterJobData()
 
 		for paramname in self.params.keys():
@@ -224,12 +225,11 @@ class AppionScript(object):
 			paramvalueq = appionData.ScriptParamValue()
 			paramvalueq['value'] = str(self.params[paramname])
 			usage = self.usageFromParamDest(paramname, self.params[paramname])
-			print "usage: ", usage
+			#print "usage: ", usage
 			paramvalueq['usage'] = usage
-
 			paramvalueq['paramname'] = paramnameq
 			paramvalueq['progrun'] = progrunq
-			if self.params['commit'] is True:
+			if usage is not None and self.params['commit'] is True:
 				paramvalueq.insert()
 
 	#=====================
