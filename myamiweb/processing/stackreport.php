@@ -43,7 +43,7 @@ $particle = new particledata();
 	$stackparts = $particle->getStackParticles($stackId);
 
 	$stackfile=$s['path']."/".$s['name'];
-	echo "<font size='+2'>View Stack: <A TARGET='stackview' HREF='viewstack.php?stackId=$stackId&file=$stackfile'>$s[name]</a></font><br/>\n";
+	echo '<span style="font-size:18px">View Stack: <a target="stackview" href="viewstack.php?stackId='.$stackId.'&file='.$stackfile.'">'.$s['name'].'</a></span><br>'."\n";	
 
 //Report stack parameters
 	$exclude_fields = array('DEF_id','DEF_timestamp','count','REF|ApPathData|path','boxSize','selectionstacks');
