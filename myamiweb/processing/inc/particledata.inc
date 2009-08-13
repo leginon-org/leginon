@@ -1778,6 +1778,7 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
+
 	function getStacksFromSelectionRun ($pickrunid) {
 		$q = "SELECT sp1.`REF|ApStackData|stack` as stackid, "
 		."sp1.`REF|ApStackRunData|stackRun` as stackrunid, "
