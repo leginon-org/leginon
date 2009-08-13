@@ -64,6 +64,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			action="store_true", help="use mirrors in alignment to capture different particle orientations")
 		self.parser.add_option("--no-mirror", dest="mirror", default=True,
 			action="store_false", help="DO NOT use mirrors in alignment to capture different particle orientations")
+		self.parser.add_option("--center", dest="center", default=False,
+			action="store_true", help="center particles against total sum prior to MRA")
 		self.parser.add_option("--max_shift_orig", dest="max_shift_orig", type="float", default="0.2",
 			help="maximum radial shift during MRA", metavar="float")
 #		self.parser.add_option("--max_shift_this", dest="max_shift_this", type="float",
@@ -164,8 +166,36 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("EOF\n")
 			append_log = True
 
-		### multi-reference alignment		
+		### alignment	
 
+		### do centering operation at the beginning, if specified
+		if self.params['center'] is True:		
+			if self.params['nproc'] > 1:
+				f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+					" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/alimass.e_mpi <<EOF")
+				if append_log is True:
+					f.write(" >> multiReferenceAlignment.log\n")
+				else:
+					f.write(" > multiReferenceAlignment.log\n")
+				f.write("YES\n")
+				f.write(str(self.params['nproc'])+"\n")
+			else:
+				f.write("/usr/local/IMAGIC/align/alimass.e <<EOF")
+				if append_log is True:
+					f.write(" >> multiReferenceAlignment.log\n")
+				else:
+					f.write(" > multiReferenceAlignment.log\n")
+				f.write("NO\n")
+			f.write("start\n")
+			f.write("start_cent\n")
+			f.write("TOTSUM\n")
+			f.write("CCF\n")
+			f.write(str(self.params['max_shift_orig'])+"\n")
+			f.write("5\n")
+			f.write("EOF\n")
+			append_log = True	
+
+		### now proceed with MRA
 		if self.params['nproc'] > 1:
 			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 				" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/mralign.e_mpi <<EOF")
@@ -182,13 +212,15 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			else:
 				f.write(" > multiReferenceAlignment.log\n")
 			f.write("NO\n")
-			
 		f.write("FRESH\n")
 		f.write("ALIGNMENT\n")
 		f.write("ALL\n")
 		f.write("ROTATION_FIRST\n")
 		f.write("CCF\n")
-		f.write("start\n")
+		if self.params['center'] is True:
+			f.write("start_cent\n")
+		else:
+			f.write("start\n")
 		f.write("alignstack\n")
 		f.write("start\n")
 		f.write("references\n")
@@ -200,7 +232,11 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("NO\n")
 		f.write("NO\n")
 		f.write(str(self.params['max_shift_orig'])+"\n")
+		if self.params['center'] is True:
+			f.write(str(self.params['max_shift_orig'])+"\n")
 		f.write("-180,180\n")
+		if self.params['center'] is True:
+			f.write("-180,180\n")
 		f.write("INTERACTIVE\n")
 		f.write(str(self.params['samp_param'])+"\n")
 		f.write(str(self.params['minrad'])+","+str(self.params['maxrad'])+"\n")
@@ -576,6 +612,9 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		os.rename(alignstack+".norm.img", alignstack[:-4]+".img")
 
 		### remove copied stack
+		if self.params['center'] is True:
+			while os.path.isfile(os.path.join(self.params['rundir'], "start_cent.img")):
+				apFile.removeStack(os.path.join(self.params['rundir'], "start_cent.img"))
 		while os.path.isfile(os.path.join(self.params['rundir'], "start.img")):
 			apFile.removeStack(os.path.join(self.params['rundir'], "start.img"))
 
