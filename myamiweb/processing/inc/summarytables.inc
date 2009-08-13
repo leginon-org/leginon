@@ -180,6 +180,14 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		$display_keys['density']=($stackdata['inverted']==1) ? 'inverted' : 'not inverted';
 		$display_keys['normalization']=($stackdata['normalized']==1) ? 'no' : 'yes';
 		if ($stackdata['tiltangle'] && $stackdata['tiltangle']!='all') $display_keys['tilt angle'] = $stackdata['tiltangle'];
+		//$partruns = $particle->getParticleRunsFromStack($stackid);
+		//print_r($partruns);
+		$partrun = $particle->getStackSelectionRun($stackid);
+		//print_r($partrun);
+		if($partrun) {
+			$parturl = "particlerunreport.php?expId=$expId&rId=".$partrun[0]['selectionid'];
+			$display_keys['selection run'] = "<a href='$parturl'>".$partrun[0]['name']."</a> (".$partrun[0]['selectionid'].")";;
+		}
 	}
 	//echo print_r($stackdata)."<br/><br/>";
 	//$display_keys['file type']=$stackdata['fileType'];
