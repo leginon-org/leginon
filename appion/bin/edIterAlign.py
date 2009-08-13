@@ -471,7 +471,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		###output is class averages, variances, particle lists, and alignment parameters
 		### write aligned stack
 		if not os.path.isfile("apshdoc.spi"):
-			apDisplay.printError("Doc file, "+apshdoc.spi+" does not exist.")
+			apDisplay.printError("Doc file, apshdoc.spi does not exist.")
 		else:
 			mySpider = spyder.SpiderSession(logo=True, spiderprocdir=spiprocdir, projext=".spi", term=True, verbose=True)
 			mySpider.toSpider("@rtmr",				#spider script for rotate,shift,mirror
