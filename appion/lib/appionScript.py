@@ -160,7 +160,7 @@ class AppionScript(object):
 			s = re.search('/([0-9][0-9][a-z][a-z][a-z][0-9][0-9][^/]*)/', self.params['rundir'])
 			if s:
 				self.params['sessionname'] = s.groups()[0]
-				sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+				sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		return sessiondata
 
 	#=====================
