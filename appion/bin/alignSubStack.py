@@ -102,6 +102,8 @@ class subStackScript(appionScript.AppionScript):
 		apDisplay.printMsg("Include list: "+str(includelist))
 
 		### get particles from align or cluster stack
+		apDisplay.printMsg("Querying database for particles")
+		q0 = time.time()
 		if self.params['alignid'] is not None:
 			alignpartq =  appionData.ApAlignParticlesData()
 			alignpartq['alignstack'] = self.alignstackdata
@@ -110,6 +112,7 @@ class subStackScript(appionScript.AppionScript):
 			clusterpartq = appionData.ApClusteringParticlesData()
 			clusterpartq['clusterstack'] = self.clusterstackdata
 			particles = clusterpartq.query()
+		apDisplay.printMsg("Complete in "+apDisplay.timeString(time.time()-q0))
 
 		### write included particles to text file
 		includeParticle = []
