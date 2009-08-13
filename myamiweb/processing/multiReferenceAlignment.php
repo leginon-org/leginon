@@ -107,6 +107,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	$bestbin = floor($boxsz/100);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
 	$mirror = ($_POST['mirror']=="on" || !$_POST['process']) ? 'checked' : '';
+	$center = ($_POST['center']=="on" || !$_POST['process']) ? 'checked' : '';
 
 	// number of processors defaulted to 8
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
@@ -246,6 +247,9 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 		<INPUT TYPE='checkbox' NAME='inverttempl' $inverttempl>";
 	echo 	docpop('invert', " Invert reference density before alignment<br>");
 	echo"
+		<INPUT TYPE='checkbox' NAME='center' $center>";
+	echo	docpop('center', " Center particles prior to MRA<br>");
+	echo"
 		<INPUT TYPE='checkbox' NAME='mirror' $mirror>";
 	echo	docpop('mirror', " Mirror Alignment<br>");
 	echo"
@@ -305,6 +309,7 @@ function runAlignment() {
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$inverttempl = ($_POST['inverttempl']=="on") ? 'inverttempl' : '';
 	$mirror = ($_POST['mirror']=="on" || !$_POST['process']) ? 'checked' : '';
+	$center = ($_POST['center']=="on" || !$_POST['process']) ? 'checked' : '';
 
 	//make sure a session was selected
 	$description=$_POST['description'];
@@ -352,6 +357,7 @@ function runAlignment() {
 
 	if ($mirror) $command.="--mirror ";
 	else $command.="--no-mirror ";
+	if ($center) $command.="--center ";
 	$command.="--max_shift_orig=$max_shift_orig ";
 	$command.="--samp_param=$samp_param ";
 	$command.="--minrad=$minrad ";
