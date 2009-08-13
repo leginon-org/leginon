@@ -21,7 +21,7 @@ if ($_POST) {
 	createStackIntoPicksForm();
 }
 
-function createStackIntoPicksForm($extra=false, $title='stackIntoPicks.py Launcher', $heading='Combine Stack') {
+function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $heading='Run Stack Into Picks') {
 	$expId = $_GET['expId'];
 	$projectId = (int) getProjectFromExpId($expId);
 	//echo "Project ID: ".$projectId." <br/>\n";
@@ -112,7 +112,7 @@ function runStackIntoPicks() {
 	$command.="--commit ";
 
 	// submit job to cluster
-	if ($_POST['process']=="Run Combine Stack") {
+	if ($_POST['process']=="Run Stack Into Picks") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 		if (!($user && $password))
@@ -123,11 +123,11 @@ function runStackIntoPicks() {
 			createStackIntoPicksForm("<b>ERROR:</b> $sub");
 		exit;
 	} else {
-		processing_header("Combine Stack Params","Combine Stack  Params");
+		processing_header("Run Stack Into Picks","Run Stack Into Picks");
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>
-		<b>Combine Stack Command:</b><br />
+		<b>Run Stack Into Picks:</b><br />
 		$command
 		</td></tr>
 		<tr><td>run id</td><td>$runname</td></tr>
