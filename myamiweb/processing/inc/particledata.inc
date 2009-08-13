@@ -37,7 +37,9 @@ class particledata {
 		return $r[0];
 	}
 
+	//------ -------------------- ---------//
 	//------ General DB summary functions ---------//
+	//------ -------------------- ---------//
 
 	function getTotalAceStats(){
 		$q = "SELECT count(DISTINCT `REF|ApAceRunData|acerun`) AS runs, "
@@ -150,7 +152,9 @@ class particledata {
 		return $r[0];
 	}
 
+	//------ -------------------- ---------//
 	//------ Tomo functions ---------//
+	//------ -------------------- ---------//
 
 	function getTomoAlignmentInfo($alignrunId){
 		$q =  "SELECT a.`DEF_id` as DEF_id, "
@@ -835,7 +839,10 @@ class particledata {
 		return $stats;
 	}
 
+	//------ -------------------- ---------//
 	//-------particle functions --------//
+	//------ -------------------- ---------//
+
 	function displayParameters ($title,$params,$exclude_fields,$expId) {
 		//standard parameter table display
 
@@ -4047,6 +4054,79 @@ class particledata {
 			."  model.`DEF_id` = '$imagic3d0Id'";
 		$r = $this->mysql->getSQLResult($q);
 
+		return $r;
+	}
+
+	//------ -------------------- ---------//
+	//------ Loop again functions ---------//
+	//------ -------------------- ---------//
+
+	function getLoopProgramRuns () {
+		$q = "SELECT DISTINCT "
+			."   progrun.`DEF_id` AS id "
+			."FROM ScriptProgramRun as progrun "
+			."LEFT JOIN ScriptParamValue AS paramvalue "
+			."  ON paramvalue.`REF|ScriptProgramRun|progrun` = progrun.`DEF_id` "
+			."LEFT JOIN ScriptParamName AS paramname "
+			."  ON paramvalue.`REF|ScriptParamName|paramname` = paramname.`DEF_id` "
+			."WHERE "
+			."  progrun.`REF|ApClusterJobData|job` IS NOT NULL "
+			."AND "
+			."  paramname.`name` = 'preset' "
+			."; ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+
+	function getProgramRunParams ($progrunid) {
+		$q = "SELECT "
+			."   progrun.`DEF_id` AS id,  "
+			."   progname.`name` AS progname,  "
+			."   progrun.`runname` AS runname,  "
+			."   session.`name` AS sessionname,  "
+			."   username.`name` AS username "
+			."FROM ScriptProgramRun as progrun "
+			."LEFT JOIN ScriptProgramName AS progname "
+			."  ON progrun.`REF|ScriptProgramName|progname` = progname.`DEF_id` "
+			."LEFT JOIN ScriptUserName AS username "
+			."  ON progrun.`REF|ScriptUserName|username` = username.`DEF_id` "
+			."LEFT JOIN ApClusterJobData AS job "
+			."  ON progrun.`REF|ApClusterJobData|job` = job.`DEF_id` "
+			."LEFT JOIN ".DB.".SessionData AS session "
+			."  ON job.`REF|leginondata|SessionData|session` = session.`DEF_id` "
+			."WHERE "
+			."  progrun.`DEF_id` = $progrunid "
+			."; ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r[0])."<br/><br/>\n";
+		return $r[0];
+	}
+
+	function getProgramCommands ($progrunid) {
+		$q = "SELECT "
+			."   paramvalue.*, paramname.*,  "
+			."   session.`name` AS sessionname  "
+			."FROM ScriptParamValue as paramvalue "
+			."LEFT JOIN ScriptParamName AS paramname "
+			."  ON paramvalue.`REF|ScriptParamName|paramname` = paramname.`DEF_id` "
+
+			."LEFT JOIN ScriptProgramRun AS progrun "
+			."  ON paramvalue.`REF|ScriptProgramRun|progrun` = progrun.`DEF_id` "
+			."LEFT JOIN ApClusterJobData AS job "
+			."  ON progrun.`REF|ApClusterJobData|job` = job.`DEF_id` "
+			."LEFT JOIN ".DB.".SessionData AS session "
+			."  ON job.`REF|leginondata|SessionData|session` = session.`DEF_id` "
+
+			."WHERE "
+			."  paramvalue.`REF|ScriptProgramRun|progrun` = $progrunid "
+			."ORDER BY LENGTH(paramvalue.`value`) "
+			."; ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
 
