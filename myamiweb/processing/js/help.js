@@ -213,6 +213,7 @@ var help = {
 		'numiter_mra' : 'Number of Iterations for multi-reference alignment. IMAGIC limits this value to 5, since the good images will typically be ready after 2 or 3 iterations, whereas the bad images go on forever',
 		'minrad' : 'Specify which radial parts of the images are to be included in the rotational alignment. The suggested value of 0 means that the starting point is the center of the image',
 		'maxrad' : 'Specify which radial parts of the images are to be included in the rotational alignment. The suggested value of 0.7 means that all radii up to 70% of the image will be included in the search',
+		'center' : 'perform a centering operation against the total particle sum prior to multi-reference alignment',
 
 		/*** Synthetic Dataset Creation ***/
 		'projcount' : 'number of projections to be made from the input model. If an even distribution is chosen, this value will be approximate, and the number of projections will be rounded up to the closest number giving an even, equivalent distribution of all angular views',
