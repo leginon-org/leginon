@@ -77,8 +77,11 @@ function selectLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 	// --- Get Loop Data --- //
 	$particle = new particledata();
 	$loopruns = $particle->getLoopProgramRuns();
+	//echo "LOOP RUNS: '";
 	//print_r($loopruns);
-	if (count($loopruns) == 0) {
+	//echo ($loopruns);
+	//echo "'";
+	if (!$loopruns || count($loopruns) == 0) {
 		echo "<b>Project does not appion loop runs.</b>\n";
 		exit(1);
 	}
