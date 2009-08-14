@@ -1,5 +1,7 @@
 ### webscripting
 
+#python
+import MySQLdb
 #appion
 import apProject
 import appionData
