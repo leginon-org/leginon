@@ -184,6 +184,10 @@ if ($expId) {
 	// in case weren't submitted by web:
 	$totruns = $tdone+$trun+$tq+$ddone+$drun+$dq+$mdone+$mrun+$mq;
 	if  ($prtlruns > $totruns) $totruns = $prtlruns;
+	if ($looprundatas = $particle->getLoopProgramRuns()) {
+		$loopruns=count($looprundatas);
+	}
+
 
 	$result = ($prtlruns==0) ? "" :
 		"<a href='prtlreport.php?expId=$sessionId'>$prtlruns</a>\n";
@@ -201,7 +205,11 @@ if ($expId) {
 			'name'=>"<a href='runManualPicker.php?expId=$sessionId'>Manual Picking</a>",
 			'result'=>$mresults,
 			);
-
+	if ($loopruns > 0) {
+		$nrun[] = array(
+				'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
+				);
+	}
 	$maxangle = $particle->getMaxTiltAngle($sessionId);
 	if ($maxangle > 5) {
 		$nrun[] ="<a href='runTiltAligner.php?expId=$sessionId'>Align and Edit Tilt Pairs</a>";
@@ -259,7 +267,11 @@ if ($expId) {
 			'name'=>"<a href='runCtfTilt.php?expId=$sessionId'>CtfTilt Estimation</a>",
 			'result'=>$ctftiltresults,
 			);
-
+	if ($loopruns > 0) {
+		$nruns[] = array(
+				'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
+				);
+	}
 
 	$data[]=array(
 		'action'=>array($action, $celloption),
