@@ -5,7 +5,11 @@ import subprocess
 import shutil
 import numpy
 import scipy.ndimage as ndimage
-from tomography import tiltcorrelator
+try:
+	from tomography import tiltcorrelator
+	no_wx = False
+except:
+	no_wx = True
 import leginondata
 from pyami import arraystats, mrc, imagefun, numpil,correlator, peakfinder
 import appionData
