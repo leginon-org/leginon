@@ -210,7 +210,7 @@ function runTomoMaker() {
 		$command.="--othertilt=$tiltseriesnumber ";
 	}	
 	// submit job to cluster
-	if ($_POST['process']=="Create Tomogram") {
+	if ($_POST['process']=="Make Tomogram") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
