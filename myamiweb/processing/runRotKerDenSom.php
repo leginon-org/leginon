@@ -73,7 +73,7 @@ function createrotKerDenSOMForm($extra=false, $title='rotKerdenSOM.py Launcher',
 	}
   
 	echo"
-       <FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+	   <FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
@@ -98,17 +98,17 @@ function createrotKerDenSOMForm($extra=false, $title='rotKerdenSOM.py Launcher',
 	else
 		$numpart = ($_POST['numpart']) ? $_POST['numpart'] : 0;
 
-    $spectrainnerradius = ($_POST['spectrainnerradius']) ? $_POST['spectrainnerradius'] : '1';
-    $spectraouterradius =  $_POST['spectraouterradius'];
+	$spectrainnerradius = ($_POST['spectrainnerradius']) ? $_POST['spectrainnerradius'] : '1';
+	$spectraouterradius =  $_POST['spectraouterradius'];
 
-    $initregulfact       = $_POST['initregulfact']       ? $_POST['initregulfact'] : '1000';;
-    $finalregulfact      = $_POST['finalregulfact']      ? $_POST['finalregulfact'] : '200';;
-    $incrementregulfact  = $_POST['incrementregulfact']  ? $_POST['incrementregulfact'] : '5';;
+	$initregulfact       = $_POST['initregulfact']       ? $_POST['initregulfact'] : '1000';;
+	$finalregulfact      = $_POST['finalregulfact']      ? $_POST['finalregulfact'] : '200';;
+	$incrementregulfact  = $_POST['incrementregulfact']  ? $_POST['incrementregulfact'] : '5';;
 
-    $spectralowharmonic  = $_POST['spectralowharmonic']  ? $_POST['spectralowharmonic'] : '1';;
-    $spectrahighharmonic = $_POST['spectrahighharmonic'] ? $_POST['spectrahighharmonic'] : '15';;
+	$spectralowharmonic  = $_POST['spectralowharmonic']  ? $_POST['spectralowharmonic'] : '1';;
+	$spectrahighharmonic = $_POST['spectrahighharmonic'] ? $_POST['spectrahighharmonic'] : '15';;
 
-    echo"
+	echo"
 	<table border='0' class='tableborder'>
 	<tr>
 		<td valign='top'>\n";
@@ -197,7 +197,7 @@ function createrotKerDenSOMForm($extra=false, $title='rotKerdenSOM.py Launcher',
 	echo "</td></tr></table>\n";
 	echo "<br/>\n";
 
-    echo docpop('roi','Region Of Interest:'); 
+	echo docpop('roi','Region Of Interest:'); 
 	echo "<br/>\n";
 	echo "<INPUT TYPE='text' NAME='spectrainnerradius' VALUE='$spectrainnerradius' SIZE='3'>\n";
 	echo docpop('spectrainnerradius','inner radius (pixels)'); 
@@ -206,32 +206,32 @@ function createrotKerDenSOMForm($extra=false, $title='rotKerdenSOM.py Launcher',
 	echo "<br/>\n";
 	echo "<br/>\n";
 
-    echo docpop('EO','Expert Options Below (defaults are usually OK):'); 
-    echo "<br/><br/>\n";
+	echo docpop('EO','Expert Options Below (defaults are usually OK):'); 
+	echo "<br/><br/>\n";
 
-    echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='5'>\n";
-    echo docpop('numpart','Number of particles to use');
-    echo "<br/>\n";
+	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='5'>\n";
+	echo docpop('numpart','Number of particles to use');
+	echo "<br/>\n";
 
-    echo docpop('symmetryrange','Symmetry Range'); 
-    echo "<br/>\n";
-    echo "<INPUT TYPE='text' NAME='spectralowharmonic' VALUE='$spectralowharmonic' SIZE='3'>\n";
-    echo docpop('spectralowharmonic','lower harmonic'); 
-    echo "<INPUT TYPE='text' NAME='spectrahighharmonic' VALUE='$spectrahighharmonic' SIZE='3'>\n";
-    echo docpop('spectrahighharmonic','higher harmonic');
-    echo "<br/>\n";
+	echo docpop('symmetryrange','Symmetry Range'); 
+	echo "<br/>\n";
+	echo "<INPUT TYPE='text' NAME='spectralowharmonic' VALUE='$spectralowharmonic' SIZE='3'>\n";
+	echo docpop('spectralowharmonic','lower harmonic'); 
+	echo "<INPUT TYPE='text' NAME='spectrahighharmonic' VALUE='$spectrahighharmonic' SIZE='3'>\n";
+	echo docpop('spectrahighharmonic','higher harmonic');
+	echo "<br/>\n";
 
-    echo docpop('smoothnessfactor','Smoothness factor:'); 
-    echo "<br/>\n";
+	echo docpop('smoothnessfactor','Smoothness factor:'); 
+	echo "<br/>\n";
 
-    echo "<INPUT TYPE='text' NAME='initregulfact' VALUE='$initregulfact' SIZE='3'>\n";
-    echo docpop('initregulfact','initial value '); 
-    echo "<INPUT TYPE='text' NAME='finalregulfact' VALUE='$finalregulfact' SIZE='3'>\n";
-    echo docpop('finalregulfact','final value');
-    echo "<INPUT TYPE='text' NAME='incrementregulfact' VALUE='$incrementregulfact' SIZE='3'>\n";
-    echo docpop('incrementregulfact','increment');
-    echo "<br/>\n";
-    echo "<br/>\n";
+	echo "<INPUT TYPE='text' NAME='initregulfact' VALUE='$initregulfact' SIZE='3'>\n";
+	echo docpop('initregulfact','initial value '); 
+	echo "<INPUT TYPE='text' NAME='finalregulfact' VALUE='$finalregulfact' SIZE='3'>\n";
+	echo docpop('finalregulfact','final value');
+	echo "<INPUT TYPE='text' NAME='incrementregulfact' VALUE='$incrementregulfact' SIZE='3'>\n";
+	echo docpop('incrementregulfact','increment');
+	echo "<br/>\n";
+	echo "<br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
@@ -269,15 +269,15 @@ function runrotKerDenSOM() {
 	$ydim=$_POST['ydim'];
 	$numpart=$_POST['numpart'];
 
-    $spectrainnerradius=$_POST['spectrainnerradius'];
-    $spectraouterradius=$_POST['spectraouterradius'];
+	$spectrainnerradius=$_POST['spectrainnerradius'];
+	$spectraouterradius=$_POST['spectraouterradius'];
 
-    $initregulfact       = $_POST['initregulfact'];
-    $finalregulfact      = $_POST['finalregulfact'];
-    $incrementregulfact  = $_POST['incrementregulfact'];
+	$initregulfact       = $_POST['initregulfact'];
+	$finalregulfact      = $_POST['finalregulfact'];
+	$incrementregulfact  = $_POST['incrementregulfact'];
 
-    $spectralowharmonic  = $_POST['spectralowharmonic'];
-    $spectrahighharmonic = $_POST['spectrahighharmonic'];
+	$spectralowharmonic  = $_POST['spectralowharmonic'];
+	$spectrahighharmonic = $_POST['spectrahighharmonic'];
 
 	//make sure a session was selected
 	$description=$_POST['description'];
@@ -290,13 +290,13 @@ function runrotKerDenSOM() {
 
 	if ($numpart < 4)
 		createrotKerDenSOMForm("<B>ERROR:</B> Must have more than 4 particles");
-    if ($spectrainnerradius <1) 
+	if ($spectrainnerradius <1) 
 		createrotKerDenSOMForm("<B>ERROR:</B> inner radius must be a positive number");
-    if ($spectraouterradius <1) 
-        createrotKerDenSOMForm("<B>ERROR:</B> outter radius must be a positive number");
-    if ($spectraouterradius < $spectrainnerradius) 
-        createrotKerDenSOMForm("<B>ERROR:</B> outter radius must be greater than inner radius");
-    
+	if ($spectraouterradius <1) 
+		createrotKerDenSOMForm("<B>ERROR:</B> outter radius must be a positive number");
+	if ($spectraouterradius < $spectrainnerradius) 
+		createrotKerDenSOMForm("<B>ERROR:</B> outter radius must be greater than inner radius");
+	
 	if ($xdim > 15 || $ydim > 15)
 		createrotKerDenSOMForm("<B>ERROR:</B> Dimensions must be less than 16");
 
@@ -313,10 +313,10 @@ function runrotKerDenSOM() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
-    /*./rotKerdenSOM.py --projectid=237 --rundir=/ami/data00/appion/09jul20b/align/rotkerden2 
-    --description="ty" --runname=rotkerden1 --alignid=3 --xdim=5 
-    --ydim=5 --numpart=1000 --commit --spectrainnerradius  14 --spectraouterradius 18; 
-    */
+	/*./rotKerdenSOM.py --projectid=237 --rundir=/ami/data00/appion/09jul20b/align/rotkerden2 
+	--description="ty" --runname=rotkerden1 --alignid=3 --xdim=5 
+	--ydim=5 --numpart=1000 --commit --spectrainnerradius  14 --spectraouterradius 18; 
+	*/
 	$command ="rotKerdenSOM.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--rundir=$rundir ";
@@ -327,23 +327,24 @@ function runrotKerDenSOM() {
 	$command.="--ydim=$ydim ";
 	$command.="--numpart=$numpart ";
 
-    $command.="--spectrainnerradius    $spectrainnerradius   ";
-    $command.="--spectraouterradius    $spectraouterradius   ";
-    if ($initregulfact)
-        $command.="--initregulfact         $initregulfact        ";
-    if ($finalregulfact)
-        $command.="--finalregulfact        $finalregulfact       ";
-    if ($incrementregulfact)
-        $command.="--incrementregulfact    $incrementregulfact   ";
+	$command.="--spectrainnerradius=$spectrainnerradius ";
+	$command.="--spectraouterradius=$spectraouterradius ";
+	if ($initregulfact)
+		$command.="--initregulfact=$initregulfact ";
+	if ($finalregulfact)
+		$command.="--finalregulfact=$finalregulfact ";
+	if ($incrementregulfact)
+		$command.="--incrementregulfact=$incrementregulfact ";
 
-    if ($spectralowharmonic)
-        $command.="--spectralowharmonic    $spectralowharmonic   ";
-    if ($spectrahighharmonic)
-        $command.="--spectrahighharmonic   $spectrahighharmonic  ";
+	if ($spectralowharmonic)
+		$command.="--spectralowharmonic=$spectralowharmonic ";
+	if ($spectrahighharmonic)
+		$command.="--spectrahighharmonic=$spectrahighharmonic ";
 
-
-    if ($commit) $command.="--commit ";
-	else $command.="--no-commit ";
+	if ($commit)
+		$command.="--commit ";
+	else
+		$command.="--no-commit ";
 
 	// submit job to cluster
 	if ($_POST['process']=="Run KerDen SOM") {
@@ -356,9 +357,9 @@ function runrotKerDenSOM() {
 		// if errors:
 		if ($sub) createrotKerDenSOMForm("<b>ERROR:</b> $sub");
 		exit;
-	}
-	else {
-		processing_header("Kernel Probability Density Estimator Self-Organizing Map","Kernel Probability Density Estimator Self-Organizing Map");
+	} else {
+		processing_header("Kernel Probability Density Estimator Self-Organizing Map Applied to Rotational Spectra",
+			"Kernel Probability Density Estimator Self-Organizing Map Applied to Rotational Spectra");
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>
