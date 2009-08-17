@@ -213,6 +213,7 @@ class PresetsManager(node.Node):
 		'optimize cycle': True,
 		'mag only': True,
 		'apply offset': False,
+		'valves': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.MeasureDoseEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
@@ -283,7 +284,22 @@ class PresetsManager(node.Node):
 			self.locknode = None
 			self._lock.release()
 
+	def closeValves(self):
+		if self.settings['valves']:
+			self.instrument.tem.ColumnValves = 'closed'
+
+	def openValves(self):
+		if self.settings['valves']:
+			self.instrument.tem.ColumnValves = 'open'
+
 	def changePreset(self, ievent):
+		self.closeValves()
+		try:
+			self._changePreset(ievent)
+		finally:
+			self.openValves()
+
+	def _changePreset(self, ievent):
 		'''
 		callback for received PresetChangeEvent from client
 		'''
@@ -677,8 +693,12 @@ class PresetsManager(node.Node):
 		return self.presetsclient.getPresetsFromDB(sessiondata)
 
 	def cycleToScope(self, presetname):
-		self._cycleToScope(presetname)
-		self.panel.presetsEvent()
+		self.closeValves()
+		try:
+			self._cycleToScope(presetname)
+			self.panel.presetsEvent()
+		finally:
+			self.openValves()
 
 	def _cycleToScope(self, presetname, dofinal=True, keep_shift=False):
 		'''

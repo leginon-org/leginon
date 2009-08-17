@@ -835,7 +835,20 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		evt = gui.wx.Events.SetImageEvent(image, typename=None)
 		self.beamdialog.GetEventHandler().AddPendingEvent(evt)
 
-	def displayBeamShift(self, beamshift):
+	def disableBeamAdjust(self, magnification):
+		self.beamdialog.bautocenter.Enable(False)
+		self.beamdialog.bcommit.Enable(False)
+		self.beamdialog.bacquire.Enable(False)
+		self.beamdialog.magnification.SetLabel('Preset magnification: %d' % (magnification))
+		self.beamdialog.beamshift.SetLabel('No valid Beam Shift Calibration Available')
+	def enableBeamAdjust(self, magnification,beamshift):
+		self.beamdialog.bautocenter.Enable(False)
+		self.beamdialog.bcommit.Enable(False)
+		self.beamdialog.bacquire.Enable(True)
+		self.beamdialog.magnification.SetLabel('Acquiring magnification: %d' % (magnification))
+		self.displayBeamShift(beamshift)
+
+	def displayBeamShift(self,beamshift):
 		self.beamdialog.beamshift.SetLabel('current beam shift:  x: %.4e,  y: %.4e' % (beamshift['x'], beamshift['y']))
 
 	def onFromScope(self, evt):
@@ -953,6 +966,8 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['mag only'] = wx.CheckBox(self, -1, 'Cycle magnification only')
 		self.widgets['apply offset'] = wx.CheckBox(self, -1, 'Apply stage tilt axis offset to all image shifts')
 
+		self.widgets['valves'] = wx.CheckBox(self, -1, 'Close column valves during preset change')
+
 		szpausetime = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Pause')
 		szpausetime.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -971,6 +986,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['mag only'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['apply offset'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['close valves'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
@@ -1224,13 +1240,15 @@ class BeamDialog(wx.Dialog):
 		self.bcycle = wx.CheckBox(self, -1, 'Cycle for each adjustment')
 		self.bcycle.SetValue(True)
 		self.beamshift = wx.StaticText(self, -1, 'current beam shift:')
+		self.magnification = wx.StaticText(self, -1, 'Acquiring magnification:')
 
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.bacquire, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.bautocenter, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.bcommit, (0, 2), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.bcycle, (0, 3), (1, 1), wx.ALIGN_CENTER)
-		szbutton.Add(self.beamshift, (1, 0), (1, 4), wx.ALIGN_CENTER)
+		szbutton.Add(self.magnification, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.beamshift, (1, 1), (1, 4), wx.ALIGN_CENTER)
 
 		### merge buttons and imageviewer
 		szmain = wx.GridBagSizer(5,5)
