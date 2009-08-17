@@ -1262,10 +1262,10 @@ class PresetsManager(node.Node):
 		by client nodes which request that presets and targets
 		be tightly coupled.
 		'''
-		self.closeValves()
 
 		## first cycle through presets before sending the final one
 		if self.currentpreset is None or self.currentpreset['name'] != newpresetname:
+			self.closeValves()
 			self._cycleToScope(newpresetname, dofinal=False)
 
 		self.logger.info('Going to target and to preset %s' % (newpresetname,))
