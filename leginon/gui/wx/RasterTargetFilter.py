@@ -207,4 +207,5 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		s,a = self.node.autoSpacingAngle()
 		self.widgets['raster spacing'].SetValue(s)
 		self.widgets['raster angle'].SetValue(a)
+		self.dialog.setNodeSettings()
 
