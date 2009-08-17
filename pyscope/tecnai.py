@@ -960,11 +960,16 @@ class Tecnai(tem.TEM):
 			return 'closed'
 
 	def setColumnValvePosition(self, state):
-		if state == 'closed':
+                position = self.getColumnValvePosition()
+		if position == 'open' and state == 'closed':
 			self.tecnai.Vacuum.ColumnValvesOpen = 0
-		elif state == 'open':
+			time.sleep(2)
+		elif position == 'closed' and state == 'open':
 			self.tecnai.Vacuum.ColumnValvesOpen = 1
-		else:
+			time.sleep(3) # extra time for camera retract
+		elif state in ('open','closed'):
+                        pass
+                else:
 			raise ValueError
 
 	def getVacuumStatus(self):
