@@ -149,6 +149,7 @@ class ImagePanel(wx.Panel):
 		# bind panel events
 		self.panel.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
 		self.panel.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
+		self.panel.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
 		self.panel.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
 		self.panel.Bind(wx.EVT_PAINT, self.OnPaint)
 		self.panel.Bind(wx.EVT_SIZE, self.OnSize)
@@ -595,6 +596,17 @@ class ImagePanel(wx.Panel):
 		for tool in self.tools:
 			tool.OnRightClick(evt)
 		self._onRightClick(evt)
+
+	#--------------------
+	def _onRightDown(self, evt):
+		pass
+
+	#--------------------
+	def OnRightDown(self, evt):
+		for tool in self.tools:
+			if hasattr(tool, 'OnRightDown'):
+				tool.OnRightDown(evt)
+		self._onRightDown(evt)
 
 	#--------------------
 	def drawToolTip(self, dc, x, y, strings):

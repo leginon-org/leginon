@@ -338,11 +338,18 @@ class RecordMotionTool(ImageTool):
 		self.start = None
 		self.xypath = []
 		self.ellipse = []
+		self.left_or_right = None
+		self.ellipse_params = None
+		self.ellipsepoint = None
+		self.ellipsepointaxis = None
+		self.ellipsepointangle = None
+		self.start_ellipse_params = None
 		self.lastx = 0
 		self.lasty = 0
 
 	def OnLeftDown(self, evt):
 		if self.button.GetToggle():
+			self.left_or_right = 'left'
 			self.xypath = []
 			self.ellipse = []
 			if self.start is not None:
@@ -354,9 +361,40 @@ class RecordMotionTool(ImageTool):
 
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
+			self.left_or_right = None
 			self.start = None
 			self.ellipse = self.ellipsePoints(self.xypath)
 			self.imagepanel.UpdateDrawing()
+
+	def distance(self, p1, p2):
+		return math.hypot(p2[0]-p1[0], p2[1]-p1[1])
+
+	def OnRightDown(self, evt):
+		if self.button.GetToggle():
+			if not self.ellipse_params:
+				return
+			self.left_or_right = 'right'
+			self.start = self.imagepanel.view2image((evt.m_x, evt.m_y))
+			self.start_ellipse_params = dict(self.ellipse_params)
+
+			# Find nearest key point of ellipse 
+			keypointaxes = pyami.ellipse.ellipseKeyPoints(**self.ellipse_params)
+			keypoints = keypointaxes.keys()
+			closestdist = self.distance(keypoints[0], self.start)
+			closestpoint = keypoints[0]
+			for point in keypoints[1:]:
+				dist = self.distance(self.start, point)
+				if dist < closestdist:
+					closestdist = dist
+					closestpoint = point
+			self.ellipsepoint = closestpoint
+			self.ellipsepointaxis = keypointaxes[closestpoint]['axis']
+			self.ellipsepointangle = keypointaxes[closestpoint]['angle']
+
+	def OnRightClick(self, evt):
+		if self.button.GetToggle():
+			self.left_or_right = None
+			self.start = None
 
 	def ellipsePoints(self, points):
 		try:
@@ -367,18 +405,64 @@ class RecordMotionTool(ImageTool):
 		if params is None:
 			## ellipse not fit
 			return []
+		self.ellipse_params = params
+		return self.drawEllipse()
+
+	def drawEllipse(self):
 		angleinc = 5 * 3.14159 / 180.0
-		ellipsepoints = pyami.ellipse.ellipsePoints(angleinc,  **params)
-		idcevt = EllipseFoundEvent(self.imagepanel, params)
+		ellipsepoints = pyami.ellipse.ellipsePoints(angleinc,  **self.ellipse_params)
+		idcevt = EllipseFoundEvent(self.imagepanel, self.ellipse_params)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		return ellipsepoints
-	
+
+	def updateEllipse(self, deltaparams):
+		for key in ('a','b','angle'):
+			if key in deltaparams:
+				self.ellipse_params[key] += deltaparams[key]
+		if 'center' in deltaprams:
+			oldcenter = self.ellipse_params['center']
+			dcenter = deltaparams['center']
+			newcenter = oldcenter[0] + dcenter[0], oldcenter[1] + dcenter[1]
+			self.ellipse_params['center'] = newcenter
+		self.drawEllipse()
+
 	#--------------------
 	def OnMotion(self, evt, dc):
-		if self.button.GetToggle() and self.start is not None:
-			x,y = self.imagepanel.view2image((evt.m_x, evt.m_y))
-			self.xypath.append((x,y))
-			return True
+		if self.button.GetToggle():
+			if self.left_or_right == 'left':
+				x,y = self.imagepanel.view2image((evt.m_x, evt.m_y))
+				self.xypath.append((x,y))
+				return True
+			elif self.left_or_right == 'right':
+				if not self.ellipse_params:
+					return False
+				# calculate distance dragged
+				x,y = self.imagepanel.view2image((evt.m_x, evt.m_y))
+				dx = x - self.start[0]
+				dy = y - self.start[1]
+				print ' XY', dx,dy
+				# calculate new key point
+				newellipseparams = dict(self.start_ellipse_params)
+				print 'AXIS', self.ellipsepointaxis
+				newx = self.ellipsepoint[0]+dx
+				newy = self.ellipsepoint[1]+dy
+				if self.ellipsepointaxis == 'center':
+					newellipseparams['center'] = newx,newy
+				else:
+					newvect = newx-newellipseparams['center'][0], newy-newellipseparams['center'][1]
+					newdist = math.hypot(*newvect)
+					newellipseparams[self.ellipsepointaxis] = newdist
+					newangle = math.atan2(*newvect)
+					while newangle < 0:
+						newangle += 2*math.pi
+					print 'pointangle', self.ellipsepointangle
+					print 'newangle', newangle
+					dangle = newangle - self.ellipsepointangle
+					print 'dangle', dangle
+					#newellipseparams['alpha'] += dangle
+				self.ellipse_params = newellipseparams
+				self.ellipse = self.drawEllipse()
+				self.imagepanel.UpdateDrawing()
 		return False
 
 	#--------------------
