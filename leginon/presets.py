@@ -293,13 +293,6 @@ class PresetsManager(node.Node):
 			self.instrument.tem.ColumnValvePosition = 'open'
 
 	def changePreset(self, ievent):
-		self.closeValves()
-		try:
-			self._changePreset(ievent)
-		finally:
-			self.openValves()
-
-	def _changePreset(self, ievent):
 		'''
 		callback for received PresetChangeEvent from client
 		'''
@@ -497,7 +490,7 @@ class PresetsManager(node.Node):
 		self.logger.info('calculated image shift to center tilt axis: %s' % (ishift,))
 		return ishift
 
-	def toScope(self, pname, magonly=False, outputevent=True, final=False):
+	def toScope(self, pname, magonly=False, final=False):
 		'''
 		'''
 		presetdata = self.presetByName(pname)
@@ -505,6 +498,8 @@ class PresetsManager(node.Node):
 			message = 'Preset change failed: no such preset %s' % (pname,)
 			self.logger.error(message)
 			raise PresetChangeError(message)
+
+		self.closeValves()
 
 		mymin = presetdata['defocus range min']
 		mymax = presetdata['defocus range max']
@@ -599,7 +594,8 @@ class PresetsManager(node.Node):
 		else:
 			self.currentpreset = presetdata
 		self.logger.info(endmessage)
-		if outputevent:
+		if final:
+			self.openValves()
 			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
 
 	def _fromScope(self, name, temname=None, camname=None, parameters=None):
@@ -693,12 +689,8 @@ class PresetsManager(node.Node):
 		return self.presetsclient.getPresetsFromDB(sessiondata)
 
 	def cycleToScope(self, presetname):
-		self.closeValves()
-		try:
-			self._cycleToScope(presetname)
-			self.panel.presetsEvent()
-		finally:
-			self.openValves()
+		self._cycleToScope(presetname)
+		self.panel.presetsEvent()
 
 	def _cycleToScope(self, presetname, dofinal=True, keep_shift=False):
 		'''
@@ -735,7 +727,7 @@ class PresetsManager(node.Node):
 		if self.currentpreset is None:
 			self.logger.info('First preset change, changing preset and forcing cycle')
 			try:
-				self.toScope(presetname, outputevent=False)
+				self.toScope(presetname, final=False)
 			except PresetChangeError:
 				return
 			force = True
@@ -770,7 +762,7 @@ class PresetsManager(node.Node):
 		## go to every preset in thiscycle except the last
 		for pname in thiscycle[:-1]:
 			try:
-				self.toScope(pname, magonly)
+				self.toScope(pname, magonly, final=False)
 			except PresetChangeError:
 				return
 
@@ -1270,6 +1262,8 @@ class PresetsManager(node.Node):
 		by client nodes which request that presets and targets
 		be tightly coupled.
 		'''
+		self.closeValves()
+
 		## first cycle through presets before sending the final one
 		if self.currentpreset is None or self.currentpreset['name'] != newpresetname:
 			self._cycleToScope(newpresetname, dofinal=False)
@@ -1387,6 +1381,7 @@ class PresetsManager(node.Node):
 		self.currentpreset = newpreset
 		message = 'Preset (with target) changed to %s' % (name,)
 		self.logger.info(message)
+		self.openValves()
 		self.outputEvent(event.PresetChangedEvent(name=name, preset=newpreset))
 
 	def getValue(self, instrument_type, instrument_name, parameter, event):
@@ -1658,7 +1653,7 @@ class PresetsManager(node.Node):
 		beamshift = self.instrument.tem.BeamShift
 		self.panel.displayBeamShift(beamshift)
 		# return to original preset
-		self.toScope(preset['name'])
+		self.toScope(preset['name'], final=True)
 
 	def autoBeamCenter(self, cycle):
 		im = self.beamimagedata['image']
