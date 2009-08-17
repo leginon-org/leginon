@@ -1346,11 +1346,11 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 	def researchMagCalibration(self, tem, cam, ht, mag, axis):
 		qinst = leginondata.StageModelMagCalibrationData(magnification=mag, axis=axis)
 		qinst['high tension'] = ht
-		if cam is None:
+		if tem is None:
 			qinst['tem'] = self.instrument.getTEMData()
 		else:
 			qinst['tem'] = tem
-		if tem is None:
+		if cam is None:
 			qinst['ccdcamera'] = self.instrument.getCCDCameraData()
 		else:
 			qinst['ccdcamera'] = cam
