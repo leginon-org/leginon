@@ -9,6 +9,7 @@
 import ccdcamera
 import sys
 import numpy
+import time
 
 try:
     import pythoncom
@@ -158,10 +159,14 @@ class Gatan(ccdcamera.CCDCamera):
             return False
 
     def setInserted(self, value):
-        if value:
+        inserted = self.getInserted()
+        if not inserted and value:
             self.camera.Insert()
-        else:
+        elif inserted and not value:
             self.camera.Retract()
+        else:
+            return
+        time.sleep(5)
 
     def getInserted(self):
         if self.camera.IsInserted:
