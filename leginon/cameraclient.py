@@ -8,8 +8,17 @@ class CameraClient(object):
 		self.repeat_scopedata = None
 		self.repeat_cameradata = None
 
-	def acquireCameraImageData(self, repeatconfig=False, scopeclass=leginondata.ScopeEMData):
+	def acquireCameraImageData(self, repeatconfig=False, scopeclass=leginondata.ScopeEMData, allow_retracted=False):
 		'''Acquire a raw image from the currently configured CCD camera'''
+		if not allow_retracted:
+			try:
+				inserted = self.instrument.ccdcamera.Inserted
+			except:
+				inserted = True
+			if not inserted:
+				self.logger.info('inserting camera')
+				self.instrument.ccdcamera.Inserted = True
+
 		imagedata = leginondata.CameraImageData()
 		imagedata['session'] = self.session
 		if repeatconfig and None not in (self.repeat_scopedata, self.repeat_cameradata):
