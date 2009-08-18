@@ -381,7 +381,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		centertime = time.time()
 		apDisplay.printMsg("Running find_center2d")
 		#ROB
-		logging.debug(' starting runFindCenter ')
+		apDisplay.printMsg(' starting runFindCenter ')
 		ncolumns = xSizeVoxel
 		row = xSizeVoxel
 		spectraouterradius = int (self.params['spectraouterradius'])
@@ -405,12 +405,18 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		stdout_value = proc.communicate()[0]
 		print stdout_value
 		stdout_value=stdout_value.split()
-		aux = stdout_value[12].split(',')[0]
-		#new variables with outdata
-		self.xOffset = float (aux)
-		self.yOffset = float (stdout_value[15])
+		if len(stdout_value) > 11 and ',' in stdout_value[12]:
+			aux = stdout_value[12].split(',')[0]
+			#new variables with outdata
+			self.xOffset = float (aux)
+			self.yOffset = float (stdout_value[15])
+		else:
+			self.xOffset = 0
+			self.yOffset = 0
 
-		logging.debug(' runFindCenter Xoffset Yoffset ' + str(self.xOffset) + " " + str(self.yOffset))
+
+
+		apDisplay.printMsg(' runFindCenter Xoffset Yoffset ' + str(self.xOffset) + " " + str(self.yOffset))
 		time.sleep(1)
 		apDisplay.printMsg("Find center complete in %s"%(apDisplay.timeString(time.time()-centertime)))
 		return
