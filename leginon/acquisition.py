@@ -547,7 +547,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
 			stageposition = self.instrument.tem.getStagePosition()
 			stagea = stageposition['a']
-			if self.settings['adjust time by tilt'] and stagea > 10 * 3.14159 / 180:
+			if self.settings['adjust time by tilt'] and abs(stagea) > 10 * 3.14159 / 180:
 				camdata = leginondata.CameraEMData()
 				camdata.friendly_update(presetdata)
 				old_time = camdata['exposure time']
@@ -605,11 +605,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
 		try:
 			tnum = emtarget['target']['number']
+			tkey = emtarget.dbid
 		except:
 			tnum = None
+			tkey = None
 		print tnum, 'MOVEANDPRESETPAUSE START'
 		t0 = time.time()
-		self.timedebug[tnum] = t0
+		self.timedebug[tkey] = t0
 		if 'consecutive' in self.timedebug:
 			print tnum, '************************************* CONSECUTIVE', t0 - self.timedebug['consecutive']
 		self.timedebug['consecutive'] = t0
@@ -642,8 +644,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def acquirePublishDisplayWait(self, presetdata, emtarget, channel):
 		try:
 			tnum = emtarget['target']['number']
+			tkey = emtarget.dbid
 		except:
 			tnum = None
+			tkey = None
 		print tnum, 'APDW START'
 		t0 = time.time()
 		if presetdata['film']:
@@ -657,8 +661,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			imagedata['grid'] = targetdata['grid']
 		self.publishDisplayWait(imagedata)
 		print tnum, 'APDW DONE', time.time() - t0
-		ttt = time.time() - self.timedebug[tnum]
-		del self.timedebug[tnum]
+		ttt = time.time() - self.timedebug[tkey]
+		del self.timedebug[tkey]
 		print tnum, '************* TOTAL ***', ttt
 
 	def publishDisplayWait(self, imagedata):
