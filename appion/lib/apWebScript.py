@@ -27,6 +27,9 @@ def setJobStatus(jobid, status):
 
 	### cluster job data
 	clustdata = appionData.ApClusterJobData.direct_query(jobid)
+	if not clustdata:
+		print "Did not find jobid=%d"%(jobid)
+		return False
 
 	### do the query
 	dbconf = sinedon.getConfig('appionData')
@@ -38,7 +41,7 @@ def setJobStatus(jobid, status):
 		+"SET \n"
 		+"  job.`status` = '"+str(newstat)+"' \n" 
 		+"WHERE \n"
-		+"  job.`DEF_id` = "+str(jobid)+" \n"
+		+"  job.`DEF_id` = "+str(clustdata.dbid)+" \n"
 	)
 	cursor.execute(query)
 	if getJobStatus(jobid) == newstat:
