@@ -38,7 +38,7 @@ def setJobStatus(jobid, status):
 		+"SET \n"
 		+"  job.`status` = '"+str(newstat)+"' \n" 
 		+"WHERE \n"
-		+"  job.`DEF_id` = "+str(clustdata.dbid)+" \n"
+		+"  job.`DEF_id` = "+str(jobid)+" \n"
 	)
 	cursor.execute(query)
 	if getJobStatus(jobid) == newstat:
