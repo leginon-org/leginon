@@ -286,11 +286,11 @@ class PresetsManager(node.Node):
 
 	def closeValves(self):
 		if self.settings['valves']:
-			self.instrument.tem.ColumnValvePosition = 'closed'
+			self.instrument.tem.BeamBlank = 'on'
 
 	def openValves(self):
 		if self.settings['valves']:
-			self.instrument.tem.ColumnValvePosition = 'open'
+			self.instrument.tem.BeamBlank = 'off'
 
 	def changePreset(self, ievent):
 		'''
