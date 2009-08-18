@@ -8,10 +8,10 @@ class CameraClient(object):
 		self.exposure_done_event = threading.Event()
 		self.readout_done_event = threading.Event()
 
-	def resetCameraEvents(self):
-		self.exposure_start_event.reset()
-		self.exposure_done_event.reset()
-		self.readout_done_event.reset()
+	def clearCameraEvents(self):
+		self.exposure_start_event.clear()
+		self.exposure_done_event.clear()
+		self.readout_done_event.clear()
 
 	def waitExposureDone(self):
 		self.exposure_done_event.wait()

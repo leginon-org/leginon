@@ -631,7 +631,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.exposeSpecimen(pretime)
 		args = (presetdata, emtarget, channel)
 		if self.settings['background']:
-			self.resetCameraEvents()
+			self.clearCameraEvents()
 			t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
 			t.start()
 			self.waitExposureDone()
