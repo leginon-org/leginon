@@ -18,6 +18,24 @@ def ellipsePoints(angleinc, center, a, b, alpha):
 		points.append((row,col))
 	return points
 
+def ellipseKeyPoints(center, a, b, alpha):
+	'''
+	Calulate the points at each end of the ellipse axes.
+	'''
+	points = ellipsePoints(numpy.pi/2.0, center, a, b, alpha)
+	keypoints = {}
+	center = tuple(center)
+	keypoints[center] = {'axis': 'center', 'angle': None}
+	axes = ['a','b']
+	for i in range(4):
+		axis = axes[i%2]
+		angle = alpha+i*numpy.pi/2.0
+		while angle < 0:
+			angle += 2*numpy.pi
+		keypoints[points[i]] = {'axis': axis, 'angle': angle}
+	print 'KEYPOINTs', keypoints
+	return keypoints
+
 def drawEllipse(shape, angleinc, center, a, b, alpha):
 	'''
 	Generate a zero initialized image array with an ellipse drawn
