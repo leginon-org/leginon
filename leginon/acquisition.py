@@ -24,6 +24,7 @@ import gui.wx.Acquisition
 import gui.wx.Presets
 import navigator
 import numpy
+import math
 from pyami import arraystats, imagefun, ordereddict
 import smtplib
 import emailnotification
@@ -139,6 +140,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'save integer': False,
 		'background': False,
 		'use parent tilt': False,
+		'adjust time by tilt': False,
 		'reset tilt': False,
 		'evaluate stats': False,
 		'high mean': 2**16,
@@ -543,6 +545,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 					if status == 'error':
 						return status
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
+			stageposition = self.instrument.tem.getStagePosition()
+			stagea = stageposition['a']
+			if self.settings['adjust time by tilt'] and stagea > 10 * 3.14159 / 180:
+				camdata = leginondata.CameraEMData()
+				camdata.friendly_update(presetdata)
+				old_time = camdata['exposure time']
+				new_time = old_time / math.cos(stagea)
+				if new_time > 5000 or new_time <= 1:
+					self.logger.warning('Ignore unreasonable exposure time at %d ms' % new_time)
+					new_time = old_time
+				camdata['exposure time'] = new_time
+				self.logger.info('scale exposure time from %d to %d by cos(%d)' % (old_time,new_time,int(stagea*180/3.14159)))
+				self.instrument.setData(camdata)
 			self.onTarget = True
 			self.setStatus('processing')
 			return status

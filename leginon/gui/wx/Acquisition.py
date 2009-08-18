@@ -88,6 +88,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['drift between'] = wx.CheckBox(self, -1, 'Declare drift between targets')
 		self.widgets['background'] = wx.CheckBox(self, -1, 'Acquire in the background')
 		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
+		self.widgets['adjust time by tilt'] = wx.CheckBox(self, -1, 'Adjust exposure time by tilt')
 		self.widgets['reset tilt'] = wx.CheckBox(self, -1, 'Untilt stage when queue is done')
 
 		# simulate loop settings
@@ -146,7 +147,13 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz_save.Add(self.widgets['save image'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_save.Add(self.widgets['save integer'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-
+		sz_tilt = wx.GridBagSizer(0, 0)
+		sz_tilt.Add(self.widgets['adjust time by tilt'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz_tilt.Add(self.widgets['use parent tilt'], (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz_tilt.Add(self.widgets['reset tilt'], (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 
 		self.widgets['evaluate stats'] = wx.CheckBox(self, -1, 'Prompt user if image stats fail:')
 		self.widgets['low mean'] = FloatEntry(self, -1, chars=6)
@@ -191,11 +198,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['display image'], (7, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['use parent tilt'], (8, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['reset tilt'], (9, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(sz_evaluate, (10, 0), (1, 1),
+		sz_misc.Add(sz_evaluate, (8, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
 		szright = wx.GridBagSizer(3, 3)
@@ -206,7 +209,8 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_save, (2,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sbszsim, (3,0), (6,1), wx.ALIGN_BOTTOM)
+		sz.Add(sz_tilt, (3,0), (2,1), wx.ALIGN_BOTTOM)
+		sz.Add(sbszsim, (5,0), (4,1), wx.ALIGN_BOTTOM)
 		sz.Add(sz_misc, (2,1), (8,1), wx.ALIGN_TOP)
 		sz.Add(szright, (0,2),(11,1), wx.ALIGN_CENTER_VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)

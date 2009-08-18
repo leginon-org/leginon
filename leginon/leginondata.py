@@ -1506,6 +1506,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('save integer', bool),
 			('background', bool),
 			('use parent tilt', bool),
+			('adjust time by tilt', bool),
 			('reset tilt', bool),
 			('evaluate stats', bool),
 			('high mean', float),
