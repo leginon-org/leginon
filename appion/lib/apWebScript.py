@@ -36,7 +36,7 @@ def setJobStatus(jobid, status):
 		"UPDATE \n"
 		+"  `ApClusterJobData` as job \n"
 		+"SET \n"
-		+"  job.`status` = "+str(newstat)+" \n" 
+		+"  job.`status` = '"+str(newstat)+"' \n" 
 		+"WHERE \n"
 		+"  job.`DEF_id` = "+str(clustdata.dbid)+" \n"
 	)
