@@ -1,8 +1,38 @@
 import leginondata
+import threading
 
 class CameraClient(object):
 	def __init__(self):
 		self.resetRepeatConfig()
+		self.exposure_start_event = threading.Event()
+		self.exposure_done_event = threading.Event()
+		self.readout_done_event = threading.Event()
+
+	def resetCameraEvents(self):
+		self.exposure_start_event.reset()
+		self.exposure_done_event.reset()
+		self.readout_done_event.reset()
+
+	def waitExposureDone(self):
+		self.exposure_done_event.wait()
+
+	def waitReadoutDone(self):
+		self.readout_done_event.wait()
+
+	def startExposureTimer(self):
+		'''
+		We want to approximate when the CCD exposure is done,
+		but not wait for the readout, which can take a lot longer.
+		This will set a timer that will generate an event when
+		we think the exposure should be done.
+		'''
+		extratime = 1.0
+		print tnum, 'Extra time for exposure: %s (tune this lower to save time)' % (extratime,)
+		exposure_seconds = self.instrument.ccdcamera.ExposureTime / 1000.0
+		waittime = exposure_seconds + extratime
+		t = threading.Timer(waittime, self.exposure_done_event.set)
+		self.exposure_start_event.set()
+		t.start()
 
 	def resetRepeatConfig(self):
 		self.repeat_scopedata = None
@@ -36,5 +66,7 @@ class CameraClient(object):
 			imagedata['camera'] = cameradata
 			self.repeat_scopedata = imagedata['scope']
 			self.repeat_cameradata = imagedata['camera']
+		self.startExposureTimer()
 		imagedata['image'] = self.instrument.ccdcamera.Image
+		self.readout_done_event.set()
 		return imagedata

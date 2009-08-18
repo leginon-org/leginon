@@ -616,14 +616,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.exposeSpecimen(pretime)
 		args = (presetdata, emtarget, channel)
 		if self.settings['background']:
+			self.resetCameraEvents()
 			t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
 			t.start()
-			extratime = 1.0
-			print tnum, 'EXPOSURE OVERHEAD (tune this):', extratime
-			waittime = presetdata['exposure time'] / 1000.0 + extratime
-			print tnum, 'EXPOSURE TIME', presetdata['exposure time']
-			print tnum, 'TOTAL EXPOSURE TIME', waittime
-			time.sleep(waittime)
+			self.waitExposureDone()
 		else:
 			self.acquirePublishDisplayWait(*args)
 		return status
