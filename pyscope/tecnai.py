@@ -60,6 +60,12 @@ class Tecnai(tem.TEM):
 			raise RuntimeError('unable to initialize Tecnai interface, %s' % msg)
 
 		try:
+			self.tom = win32com.client.Dispatch('TEM.Instrument.1')
+		except pythoncom.com_error, (hr, msg, exc, arg):
+			print 'unable to initialize TOM Moniker interface, %s' % msg
+                        self.tom = None
+
+		try:
 			self.lowdose = win32com.client.Dispatch('LDServer.LdSrv')
 		except pythoncom.com_error, (hr, msg, exc, arg):
 			print 'unable to initialize low dose interface, %s' % msg
@@ -1100,3 +1106,8 @@ class Tecnai(tem.TEM):
 				else:
 					raise RuntimeError(text)
 
+	def setEmission(self, value):
+                self.tom.Gun.Emission = value
+
+        def getEmission(self):
+                return self.tom.Gun.Emission
