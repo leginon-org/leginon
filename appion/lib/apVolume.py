@@ -105,7 +105,8 @@ def getModelDimensions(mrcfile):
 	vol=mrc.read(mrcfile)
 	(x,y,z)=vol.shape
 	if x!=y!=z:
-		apDisplay.printError("starting model is not a cube")
+		apDisplay.printWarning("starting model is not a cube")
+		return max(x,y,z)
 	return x
 
 #================
