@@ -27,7 +27,7 @@ class CameraClient(object):
 		we think the exposure should be done.
 		'''
 		extratime = 1.0
-		print tnum, 'Extra time for exposure: %s (tune this lower to save time)' % (extratime,)
+		print 'Extra time for exposure: %s (tune this lower to save time)' % (extratime,)
 		exposure_seconds = self.instrument.ccdcamera.ExposureTime / 1000.0
 		waittime = exposure_seconds + extratime
 		t = threading.Timer(waittime, self.exposure_done_event.set)
