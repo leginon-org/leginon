@@ -113,6 +113,12 @@ class MosaicTargetMaker(TargetMaker):
 	def getState(self):
 		# tem/camera from preset?
 		self.logger.debug('Getting current instrument state...')
+		presetname = self.settings['preset']
+		preset = self.presetsclient.getPresetByName(presetname)
+		temname = preset['tem']['name']
+		self.instrument.setTEM(temname)
+		camname = preset['ccdcamera']['name']
+		self.instrument.setCCDCamera(camname)
 		try:
 			scope = self.instrument.getData(leginondata.ScopeEMData)
 		except:
