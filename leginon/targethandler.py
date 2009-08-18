@@ -125,6 +125,7 @@ class TargetHandler(object):
 		if not self.queueidleactive:
 			return
 		self.instrument.tem.ColumnValvePosition = 'closed'
+		self.instrument.tem.Emission = False
 		print 'column valves closed and exiting leginon'
 		self.logger.warning('column valves closed')
 		self.queueidleactive = False
