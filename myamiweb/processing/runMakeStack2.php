@@ -154,6 +154,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$invcheck = ($_POST['density']=='invert' || !$_POST['process']) ? 'CHECKED' : '';
 	// normalization check (checked by default)
 	$normcheck = ($_POST['normalize']=='on' || !$_POST['process']) ? 'CHECKED' : '';
+	$overridecheck = ($_POST['override']=='on') ? 'CHECKED' : '';
 	echo "<table border=0 class=tableborder>\n";
 	echo "<tr>\n";
 	echo "<td valign='TOP'>\n";
@@ -306,6 +307,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<input type='text' name='boxsize' size='5' value='$boxszval'>\n";
 	echo docpop('boxsize','Box Size');
 	echo "(Unbinned, in pixels)<br />\n";
+	echo "<input type='checkbox' name='override' $overridecheck>\n";
+	echo "<font size='-2'>(override boxsize)</font><br/>\n";
 	echo "<br/>\n";
 
 	echo "<b>Filter Values:</b><br/>";
@@ -452,16 +455,19 @@ function runMakestack() {
 		createMakestackForm("<b>ERROR:</b> Specify a box size");
 	if (!is_numeric($boxsize))
 		createMakestackForm("<b>ERROR:</b> Box size must be an integer");
-	global $goodboxes;
-	foreach ($goodboxes as $box) {
-		if ($box == $boxsize)
-			break;
-		elseif ($box > $boxsize) {
-			$bigbox = $box;
-			createMakestackForm("<b>ERROR:</b> Bad prime number in boxsize, try using $smallbox or $bigbox instead");
-			exit;
-		}
-		$smallbox = $box;
+
+	if ($_POST['override'] != 'on') {
+		global $goodboxes;
+		foreach ($goodboxes as $box) {
+			if ($box == $boxsize)
+				break;
+			elseif ($box > $boxsize) {
+				$bigbox = $box;
+				createMakestackForm("<b>ERROR:</b> Bad prime number in boxsize, try using $smallbox or $bigbox instead");
+				exit;
+			}
+			$smallbox = $box;
+		}	
 	}
 
 	// lp filter
