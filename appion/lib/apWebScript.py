@@ -3,7 +3,6 @@
 #python
 import MySQLdb
 #appion
-import apProject
 import appionData
 #leginon
 import sinedon
@@ -43,7 +42,11 @@ def setJobStatus(jobid, status):
 		+"WHERE \n"
 		+"  job.`DEF_id` = "+str(clustdata.dbid)+" \n"
 	)
-	cursor.execute(query)
+	try:
+		cursor.execute(query)
+	except:
+		print "MySQL query failed:\n======\n%s"%(query)
+		return False
 	if getJobStatus(jobid) == newstat:
 		return True
 	return False
