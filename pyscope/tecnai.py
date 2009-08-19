@@ -1107,7 +1107,7 @@ class Tecnai(tem.TEM):
 					raise RuntimeError(text)
 
 	def setEmission(self, value):
-                self.tom.Gun.Emission = value
+		self.tom.Gun.Emission = value
 
-        def getEmission(self):
-                return self.tom.Gun.Emission
+	def getEmission(self):
+		return self.tom.Gun.Emission
