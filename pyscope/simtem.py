@@ -78,6 +78,8 @@ class SimTEM(tem.TEM):
 		self.main_screen_positions = ['up', 'down']
 		self.main_screen_position = self.main_screen_positions[0]
 		self.columnvalveposition = 'open'
+		self.emission = 'on'
+		self.BeamBlank = 'on'
 
 	def getColumnValvePositions(self):
 		return ['open', 'closed']
@@ -278,3 +280,15 @@ class SimTEM(tem.TEM):
 
 	def setTurboPump(self, value):
 			self.turbo = value
+
+	def setEmission(self, value):
+		self.emission = value
+
+	def getEmission(self):
+		return self.emission
+
+	def getBeamBlank(self):
+		return self.BeamBlank
+		
+	def setBeamBlank(self, bb):
+			self.BeamBlank = bb
