@@ -181,6 +181,7 @@ def copyTemplatesToOutdir(params, timestamp=None):
 			shutil.copyfile(old, new)
 			newlist.append(base)
 			#and only allow user read access just so they don't get deleted
+			#os.lchmod(new, 0666)
 			os.chmod(new, 0666)
 	params['templatelist'] = newlist
 	apDisplay.printColor("New template List:","green")

@@ -293,7 +293,7 @@ class AppionScript(object):
 		if loadavg > 2.0:
 			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
 			time.sleep(loadavg**2)
-		apParam.closeFunctionLog(params=self.params, logfile=self.logfile, msg=(not self.quiet))
+		apParam.closeFunctionLog(functionname=self.functionname, logfile=self.logfile, msg=(not self.quiet))
 		apFile.removeFile("spider.log")
 		if self.quiet is False:
 			apDisplay.printMsg("Ended at "+time.strftime("%a, %d %b %Y %H:%M:%S"))

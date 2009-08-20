@@ -112,9 +112,11 @@ def getMachineArch():
 	return arch
 
 #=====================
-def getHostIP():
+def getHostIP(hostname=None):
 	try:
-		ip = socket.gethostbyaddr(socket.gethostname())[2][0]
+		if hostname is None:
+			hostname = socket.gethostname()
+		ip = socket.gethostbyaddr(hostname)[2][0]
 	except:
 		ip = None
 	return ip
@@ -128,14 +130,12 @@ def getLogHeader():
 	return logheader
 
 #=====================
-def writeFunctionLog(cmdlist, params=None, logfile=None, msg=True):
+def writeFunctionLog(cmdlist, logfile=None, msg=True):
 	"""
 	Used by appionLoop
 	"""
 	if logfile is not None:
 		pass
-	elif params is not None and 'functionLog' in params and params['functionLog'] is not None:
-		logfile = params['functionLog']
 	else:
 		logfile = getFunctionName(sys.argv[0])+".log"
 	if msg is True:
@@ -181,14 +181,14 @@ def parseWrappedLines(lines):
 	return goodlines
 
 #=====================
-def closeFunctionLog(params=None, logfile=None, msg=True, stats=None):
+def closeFunctionLog(functionname=None, logfile=None, msg=True, stats=None):
 	"""
 	Used by appionLoop
 	"""
 	if logfile is not None:
 		pass
-	elif params is not None and params['functionLog'] is not None:
-		logfile = params['functionLog']
+	elif functionname is not None:
+		logfile = functionname+".log"
 	else:
 		logfile = "function.log"
 	if msg is True:
@@ -206,8 +206,8 @@ def closeFunctionLog(params=None, logfile=None, msg=True, stats=None):
 	#WRITE INFO
 	timestamp = "["+time.asctime()+"]\n"
 	out="finished run"
-	if 'functionname' in params:
-		out += " of "+params['functionname']
+	if functionname is not None:
+		out += " of "+functionname
 	out += "\n"
 	f=open(logfile,'a')
 	f.write(timestamp)
@@ -247,6 +247,7 @@ def makedirs(name, mode=0777):
 			return
 	if not os.path.isdir(name):
 		os.mkdir(name, mode)
+		#os.lchmod(name, mode)
 		os.chmod(name, mode)
 	return
 
