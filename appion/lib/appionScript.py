@@ -155,7 +155,7 @@ class AppionScript(object):
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		elif not sessiondata and 'stackid' in self.params:
 			import apStack
-			sessiondata = apStack.getSessionDataFromStackId(self.params['session'])
+			sessiondata = apStack.getSessionDataFromStackId(self.params['stackid'])
 		else:
 			s = re.search('/([0-9][0-9][a-z][a-z][a-z][0-9][0-9][^/]*)/', self.params['rundir'])
 			if s:
