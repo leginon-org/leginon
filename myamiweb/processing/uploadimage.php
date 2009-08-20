@@ -244,9 +244,8 @@ function runUploadImage() {
 	$command.="--description=\"$description\" ";
 	if ($tiltgroup >= 2)
 		$command.="--tiltgroup=$tiltgroup ";
-	
 	// submit job to cluster
-	if ($_POST['process']=="Upload Images") {
+	if ($_POST['process']=="Upload Image") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
