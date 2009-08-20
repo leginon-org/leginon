@@ -12,12 +12,11 @@ import apDatabase
 import apDisplay
 import apProject
 #leginon
-import gui.wx.SetupWizard
 import leginondata
 import project
 import leginonconfig
 #pyami
-from pyami import mrc, jpg
+from pyami import mrc
 
 class ImageLoader(appionLoop2.AppionLoop):
 	#=====================

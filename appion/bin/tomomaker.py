@@ -28,6 +28,11 @@ import apDisplay
 import apDatabase
 import apParticle
 import apStack
+try:
+	no_wx = False
+	import wx
+except ImportError:
+	no_wx = True
 
 #=====================
 #=====================
@@ -64,6 +69,8 @@ class tomoMaker(appionScript.AppionScript):
 			apDisplay.printError("There is no tilt series specified, use one of: "+str(self.xmethods))
 		if self.params['xmethod'] not in self.xmethods:
 			apDisplay.printError("No valid correlation method specified")
+		if self.params['xmethod'] == 'leginon' and no_wx:
+			apDisplay.printError("Leginon tiltcorrelater can not be used without wx. Try another one")
 		if self.params['rundir'] is not None:
 			apDisplay.printError("Directory requirement too complex for simple specification, better skip it")
 		if self.params['runname'] is None:
