@@ -250,13 +250,13 @@ function runUploadImage() {
 		$password = $_SESSION['password'];
 
 		if (!($user && $password)) createUploadImageForm("<B>ERROR:</B> You must be logged in to submit");
-
-		$sub = submitAppionJob($command,$outdir,$sessionname,$expId,'uploadimage',True);
+		$fakerunname = 'imageloader';
+		$sub = submitAppionJob($command,$outdir,$fakerunname,$expId,'uploadimage',True);
 		// if errors:
 		if ($sub) createUploadImageForm("<b>ERROR:</b> $sub");
 
 		// check that upload finished properly
-		$jobf = $outdir.'/'.$sessionname.'/'.$runname.'.appionsub.log';
+		$jobf = $outdir.$fakerunname.'/'.$fakerunname.'.appionsub.log';
 		$status = "Images were uploaded";
 		if (file_exists($jobf)) {
 			$jf = file($jobf);
