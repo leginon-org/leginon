@@ -15,7 +15,8 @@ import apParam
 import apDisplay
 from pyami import mrc
 
-hsvalue = 0.4
+satvalue = 0.9
+hsvalue = 0.5
 
 #=========================================
 #=========================================
@@ -316,6 +317,7 @@ def getColorString():
 	first = hourColor()
 	#print "first", first
 	third = dayColor()
+	#third = secondColor()
 	#print "third", third
 	colortuple = first+",None,"+third
 	#print colortuple
@@ -325,7 +327,7 @@ def getColorString():
 #=========================================
 def dayColor():
 	hue = ((time.time()/(24*3600.))%365)/365
-	rgbindex = colorsys.hsv_to_rgb(hue, 1, hsvalue)
+	rgbindex = colorsys.hsv_to_rgb(hue, satvalue, hsvalue)
 	colorstr = "%.1f:%.1f:%.1f"%(rgbindex[0], rgbindex[1], rgbindex[2])
 	return colorstr
 
@@ -333,7 +335,7 @@ def dayColor():
 #=========================================
 def hourColor():
 	hue = ((time.time()/3600.)%24)/24
-	rgbindex = colorsys.hsv_to_rgb(hue, 1, hsvalue)
+	rgbindex = colorsys.hsv_to_rgb(hue, satvalue, hsvalue)
 	colorstr = "%.1f:%.1f:%.1f"%(rgbindex[0], rgbindex[1], rgbindex[2])
 	return colorstr
 
@@ -341,15 +343,15 @@ def hourColor():
 #=========================================
 def minuteColor():
 	hue = ((time.time()/60.)%60)/60
-	rgbindex = colorsys.hsv_to_rgb(hue, 1, hsvalue)
+	rgbindex = colorsys.hsv_to_rgb(hue, satvalue, hsvalue)
 	colorstr = "%.1f:%.1f:%.1f"%(rgbindex[0], rgbindex[1], rgbindex[2])
 	return colorstr
 
 #=========================================
 #=========================================
 def secondColor():
-	hue = (time.time()%60.)/60
-	rgbindex = colorsys.hsv_to_rgb(hue, 1, hsvalue)
+	hue = ((time.time()/10.)%60)/60
+	rgbindex = colorsys.hsv_to_rgb(hue, satvalue, hsvalue)
 	colorstr = "%.1f:%.1f:%.1f"%(rgbindex[0], rgbindex[1], rgbindex[2])
 	return colorstr
 
@@ -357,7 +359,7 @@ def secondColor():
 #=========================================
 def randomColor():
 	hue = random.random()
-	rgbindex = colorsys.hsv_to_rgb(hue, 1, hsvalue)
+	rgbindex = colorsys.hsv_to_rgb(hue, satvalue, hsvalue)
 	colorstr = "%.1f:%.1f:%.1f"%(rgbindex[0], rgbindex[1], rgbindex[2])
 	return colorstr
 
