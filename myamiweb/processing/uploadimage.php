@@ -258,6 +258,8 @@ function runUploadImage() {
 		// check that upload finished properly
 		$jobf = $outdir.$fakerunname.'/'.$fakerunname.'.appionsub.log';
 		$status = "Images were uploaded";
+		if ($warning)
+			$warning=ereg_replace("Will append","Appended",$warning);
 		if (file_exists($jobf)) {
 			$jf = file($jobf);
 			$jfnum = count($jf);
@@ -271,7 +273,7 @@ function runUploadImage() {
 		}
 		else $status = "Job did not run, contact the appion team";
 		processing_header("Image Upload", "Image Upload");
-		echo "$status\n";
+		echo "<p>$status</p>";
 	}
 
 	else processing_header("UploadImage Command","UploadImage Command");
