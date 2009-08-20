@@ -291,12 +291,13 @@ def versionToNumber(version):
 	return num
 
 #=====================
-def resetVirtualFrameBuffer():
+def resetVirtualFrameBuffer(killall=False):
 	logf = open("xvfb.log", "a")
-	xvfbcmd = "killall Xvfb\n"
-	logf.write(xvfbcmd)
-	proc = subprocess.Popen(xvfbcmd, shell=True, stdout=logf, stderr=logf)
-	proc.wait()
+	if killall is True:
+		xvfbcmd = "killall Xvfb\n"
+		logf.write(xvfbcmd)
+		proc = subprocess.Popen(xvfbcmd, shell=True, stdout=logf, stderr=logf)
+		proc.wait()
 	port = 1
 	fontpath = getFontPath()
 	securfile = getSecureFile()
@@ -319,12 +320,30 @@ def resetVirtualFrameBuffer():
 	os.environ["DISPLAY"] = ":"+portstr
 	time.sleep(2)
 	logf.close()
+	return port
 
 #=====================
-def killVirtualFrameBuffer():
-	xvfbcmd = "killall Xvfb\n"
-	proc = subprocess.Popen(xvfbcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+def killVirtualFrameBuffer(port=None):
+	if port is None:
+		xvfbcmd = "killall Xvfb\n"
+		proc = subprocess.Popen(xvfbcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		proc.wait()
+		return
+	xvfbcmd = "ps -ef | grep -i xvfb | grep %d"%(port)
+	proc = subprocess.Popen(xvfbcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	stdout = proc.stdout
 	proc.wait()
+	lines = proc.stdout.readlines()
+	for line in lines:
+		if 'Xvfb' in line:
+			bits = line.strip().split()
+			if len(bits) > 0:
+				xvfbcmd = "kill -9 "+bits[1]
+				proc = subprocess.Popen(xvfbcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+				proc.wait()
+				apDisplay.printMsg("Killed Xvfb on prt %d"%(port))
+				return
+	return
 
 #=====================
 def getFontPath(msg=True):

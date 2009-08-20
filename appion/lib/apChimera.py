@@ -241,7 +241,7 @@ def runChimeraScript(chimscript):
 		print chimscript
 		apDisplay.printError("Could not find file: apChimSnapshot.py")
 	#apDisplay.printColor("Trying to use chimera for model imaging","cyan")
-	apParam.resetVirtualFrameBuffer()
+	port = apParam.resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
 		os.environ['CHIMERA'] = chimpath
@@ -260,6 +260,7 @@ def runChimeraScript(chimscript):
 	proc = subprocess.Popen(rendercmd, shell=True, stdout=logf, stderr=logf)
 	proc.wait()
 	logf.close()
+	apParam.killVirtualFrameBuffer(port)
 	return
 
 #=========================================
