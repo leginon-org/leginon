@@ -3,7 +3,7 @@
 """
 function to calculate the surface area of thresholded 3d numpy array
 
-import surfarea
+from pyami import surfarea
 pixarea = surfarea.surfaceArea(array)
 area = pixarea * (apix**2)
 """
