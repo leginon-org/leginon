@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+"""
+function to calculate the surface area of thresholded 3d numpy array
+
+import surfarea
+pixarea = surfarea.surfaceArea(array)
+area = pixarea * (apix**2)
+"""
+
 import os
 import sys
 import time
