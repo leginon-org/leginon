@@ -37,7 +37,7 @@ def findValues():
 	"""
 	for i in range(64):
 		footprint = intToFootprint(i)
-		weight = surfaceWeight(footprint)
+		weight = surfaceWeightByIfs(footprint)
 		sys.stdout.write("%.4f, "%(weight))
 		#i2 = footprintToInt(footprint)
 		#print i, footprint, i2
@@ -49,7 +49,7 @@ def footprintToInt(footprint):
 	Takes a footprint and returns an integer
 	"""
 	#return int(footprint[0] + 2*footprint[1] + 4*footprint[2] + 8*footprint[4] + 16*footprint[5] + 32*footprint[6])
-	return int(numpy.dot(footprint, dotarray))
+	return int(numpy.dot(footprint, dotarray)+0.5)
 
 #======================
 def intToFootprint(n):
@@ -158,40 +158,38 @@ def surfaceArea(volume):
 	return surfaceAreaByInts(volume)
 
 #======================
-def surfaceAreaByIfs(volume):
+def surfaceAreaByIfs(volume, test=False):
 	surf = ndimage.generic_filter(volume, surfaceWeightByIfs, footprint=footprint)
 	surfarea = surf.sum()
 
-	"""
-	#testing
-	Scounts = []
-	for i in Svalues:
-		Smatrix = numpy.where(abs(surf-i) < 0.01, 1.0, 0.0)
-		Scounts.append(Smatrix.sum())
-	Sarray = numpy.array(Scounts)
-	#total = Sarray[1:].sum()
-	#print Sarray/total
-	print numpy.array(Sarray, dtype=numpy.int16)
-	"""
+	if test is True:
+		#testing
+		Scounts = []
+		for i in Svalues:
+			Smatrix = numpy.where(abs(surf-i) < 0.01, 1.0, 0.0)
+			Scounts.append(Smatrix.sum())
+		Sarray = numpy.array(Scounts)
+		#total = Sarray[1:].sum()
+		#print numpy.around(Sarray/total*100.0,3)
+		print numpy.array(Sarray, dtype=numpy.int16)
 
 	return  surfarea
 
 #======================
-def surfaceAreaByInts(volume):
+def surfaceAreaByInts(volume, test=False):
 	surf = ndimage.generic_filter(volume, surfaceWeightByInts, footprint=footprint)
 	surfarea = surf.sum()
 
-	"""
-	#testing
-	Scounts = []
-	for i in Svalues:
-		Smatrix = numpy.where(abs(surf-i) < 0.01, 1.0, 0.0)
-		Scounts.append(Smatrix.sum())
-	Sarray = numpy.array(Scounts)
-	#total = Sarray[1:].sum()
-	#print Sarray/total
-	print numpy.array(Sarray, dtype=numpy.int16)
-	"""
+	if test is True:
+		#testing
+		Scounts = []
+		for i in Svalues:
+			Smatrix = numpy.where(abs(surf-i) < 0.01, 1.0, 0.0)
+			Scounts.append(Smatrix.sum())
+		Sarray = numpy.array(Scounts)
+		#total = Sarray[1:].sum()
+		#print numpy.around(Sarray/total*100.0,3)
+		print numpy.array(Sarray, dtype=numpy.int16)
 
 	return  surfarea
 
@@ -200,6 +198,7 @@ def surfaceAreaByInts(volume):
 #======================
 def randomSurface():
 	### create a random array
+	print "Creating a random array"
 	import random
 	shape = []
 	for i in range(3):
@@ -225,10 +224,10 @@ def randomSurface():
 #======================
 def readMrc():
 	if len(sys.argv) <= 1:
-		return False
+		return numpy.zeros((1,1,1))
 	mrcfile = sys.argv[1]
 	if not os.path.isfile(mrcfile):
-		return False
+		return numpy.zeros((1,1,1))
 	import mrc
 	voldata = mrc.read(mrcfile)
 	array = numpy.where(voldata > 0.5, 1.0, 0.0)
@@ -237,17 +236,17 @@ def readMrc():
 #======================
 def testSurface():
 	array = readMrc()
-	if not array:
+	if array.shape[0] < 2:
 		array = randomSurface()
 	print "Shape of array: ", array.shape
 
 	tifs = time.time()
-	surfareabyifs = surfaceAreaByIfs(array)
+	surfareabyifs = surfaceAreaByIfs(array, test=True)
 	print "Surface area by ifs = %.3f pixels"%(surfareabyifs)
 	fifs = time.time()
 
 	tints = time.time()
-	surfareabyints = surfaceAreaByInts(array)
+	surfareabyints = surfaceAreaByInts(array, test=True)
 	print "Surface area by ints = %.3f pixels"%(surfareabyints)
 	fints = time.time()
 
@@ -269,3 +268,5 @@ def testSurface():
 if __name__ == "__main__":
 	#findValues()
 	testSurface()
+
+
