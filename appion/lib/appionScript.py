@@ -301,8 +301,9 @@ class AppionScript(object):
 			apDisplay.printMsg("Run directory:\n "+self.params['rundir'])
 			apDisplay.printColor("Total run time:\t"+apDisplay.timeString(time.time()-self.t0),"green")
 		apParam.killVirtualFrameBuffer()
-		clustdata = self.getClusterJobData()
-		apWebScript.setJobToDone(clustdata.dbid)
+		if self.params['commit'] is True:
+			clustdata = self.getClusterJobData()
+			apWebScript.setJobToDone(clustdata.dbid)
 
 	#=====================
 	def setupGlobalParserOptions(self):
