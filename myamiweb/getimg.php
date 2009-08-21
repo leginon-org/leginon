@@ -122,9 +122,18 @@ if ($g) {
 		$info=$leginondata->getSessionInfo($sessionId);
 		$tag=$projectdata->getSample($info);
 		$margin=10;
-		$tagoffset=strlen($tag)*6+$margin;
-		$xpos=imagesx($img)-$tagoffset;
-		imagestringshadow($img, 2, $xpos, 10, $tag, imagecolorallocate($img,255,255,255));
+		$ypos=10;
+		$wx = imagesx($img);
+		$taglen = strlen($tag);
+		$filenamelen = strlen($filename);
+		$tagoffset = $taglen*6+$margin;
+		$xpos = $wx - $tagoffset;
+		$strlength = ($taglen + $filenamelen ) * 6 + 2 * $margin + 5;
+		if ($wx<$strlength) {
+			// --- display sample 12 pix under, if filename is too long
+			$ypos+=12;
+		}
+		imagestringshadow($img, 2, $xpos, $ypos, $tag, imagecolorallocate($img,255,255,255));
 	}
 
 	$filename = ereg_replace('mrc$', $ext, $filename);
