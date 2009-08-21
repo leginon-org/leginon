@@ -153,9 +153,9 @@ def intToWeight(n):
 #======================
 #======================
 #======================
-def surfaceArea(volume):
+def surfaceArea(volume, test=False):
 	### ints is faster because of the conversion
-	return surfaceAreaByInts(volume)
+	return surfaceAreaByInts(volume, test)
 
 #======================
 def surfaceAreaByIfs(volume, test=False):
