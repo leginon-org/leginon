@@ -299,8 +299,8 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 
 
 class ClickAndTargetImagePanel(TargetImagePanel):
-	def __init__(self, parent, id, disable=False, mode="horizontal"):
-		TargetImagePanel.__init__(self, parent, id, mode)
+	def __init__(self, parent, id, disable=False, imagesize=(512,512),mode="horizontal"):
+		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
 		if mode == "vertical":
 			self.clicktool = self.addTool(gui.wx.ImagePanelTools.ClickTool(self, self.toolsizer, disable))
 		else:
@@ -314,8 +314,8 @@ class ClickAndTargetImagePanel(TargetImagePanel):
 		self.clicktool.onImageClickDone(evt)
 
 class EllipseTargetImagePanel(TargetImagePanel):
-	def __init__(self, parent, id, disable=False, mode="horizontal"):
-		TargetImagePanel.__init__(self, parent, id, mode)
+	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
+		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
 		self.addTool(gui.wx.ImagePanelTools.RecordMotionTool(self, self.toolsizer))
 		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
 		self.sizer.Layout()
@@ -329,8 +329,8 @@ class EllipseTargetImagePanel(TargetImagePanel):
 ##################################
 
 class TargetOutputPanel(TargetImagePanel):
-	def __init__(self, parent, id, callback=None, tool=True):
-		TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
+	def __init__(self, parent, id, callback=None, imagesize=(512,512), tool=True):
+		TargetImagePanel.__init__(self, parent, id, callback=callback, imagesize=imagesize, tool=tool)
 
 		self.quit = wx.Button(self, -1, 'Quit')
 		self.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
