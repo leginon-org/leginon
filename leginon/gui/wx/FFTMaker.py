@@ -16,10 +16,9 @@ from gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
-import gui.wx.ImagePanel
+import gui.wx.TargetPanel
 
 class Panel(gui.wx.Node.Panel):
-	imagepanelclass = gui.wx.ImagePanel.ImagePanel
 	icon = 'fftmaker'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
@@ -40,13 +39,14 @@ class Panel(gui.wx.Node.Panel):
 		self.addImagePanel()
 
 		self.szmain.AddGrowableCol(0)
+		self.szmain.AddGrowableRow(1)
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
 	def addImagePanel(self):
 		# image
-		self.imagepanel = self.imagepanelclass(self, -1)
+		self.imagepanel = gui.wx.TargetPanel.EllipseTargetImagePanel(self, -1,imagesize=(512,512))
 		self.imagepanel.addTypeTool('Power', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Power', True)
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
