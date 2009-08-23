@@ -145,6 +145,12 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		if self.settingsdialog.widgets['force annotate'].GetValue():
 			self.onCommentTool(None)
 
+	def onSetRobotGrid(self):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
+
+	def onUnsetRobotGrid(self):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, True)
+
 	def onSettingsTool(self, evt):
 		if self.settingsdialog.ShowModal() == wx.ID_OK:
 			self.node.initSameCorrection()
