@@ -310,6 +310,8 @@ class MakeTargetListEvent(ControlEvent):
 	def typemap(cls):
 		return ControlEvent.typemap() + (
 			('grid', leginondata.GridData),
+			('grid location', int),
+			('tray label', str),
 		)
 	typemap = classmethod(typemap)
 
