@@ -29,6 +29,7 @@ from pyami import arraystats, imagefun, ordereddict
 import smtplib
 import emailnotification
 import leginonconfig
+import gridlabeler
 
 class NoMoveCalibration(targetwatcher.PauseRepeatException):
 	pass
@@ -59,7 +60,6 @@ def setImageFilename(imagedata):
 	else:
 		presetstr = imagedata['preset']['name']
 	mystr = numberstr + presetstr
-
 	rootname = getRootName(imagedata, listlabel)
 	parts = []
 	parts.append(rootname)
@@ -78,36 +78,32 @@ def getRootName(imagedata, listlabel=False):
 	get the root name of an image from its parent
 	'''
 	parent_target = imagedata['target']
-	gridlabel = not listlabel
+	usegridlabel = not listlabel
 	if parent_target is None:
 		## there is no parent target
 		## create my own root name
-		return newRootName(imagedata, gridlabel)
+		return newRootName(imagedata, usegridlabel)
 
 	parent_image = parent_target['image']
 	if parent_image is None:
 		## there is no parent image
-		return newRootName(imagedata, gridlabel)
+		return newRootName(imagedata, usegridlabel)
 
 	## use root name from parent image
 	parent_root = parent_image['filename']
 	if parent_root:
 		return parent_root
 	else:
-		return newRootName(imagedata, gridlabel)
+		return newRootName(imagedata, usegridlabel)
 
-def newRootName(imagedata, gridlabel):
+def newRootName(imagedata, usegridlabel):
 	parts = []
 	sessionstr = imagedata['session']['name']
 	parts.append(sessionstr)
-	if gridlabel:
+	if usegridlabel:
 		if 'grid' in imagedata and imagedata['grid'] is not None:
-			if 'grid ID' in imagedata['grid'] and imagedata['grid']['grid ID'] is not None:
-				grididstr = 'GridID%05d' % (imagedata['grid']['grid ID'],)
-				parts.append(grididstr)
-			if 'insertion' in imagedata['grid'] and imagedata['grid']['insertion'] is not None:
-				insertionstr = 'Insertion%03d' % (imagedata['grid']['insertion'],)
-				parts.append(insertionstr)
+			gridlabel = gridlabeler.getGridLabel(imagedata['grid'])
+			parts.append(gridlabel)
 	sep = '_'
 	name = sep.join(parts)
 	return name
@@ -148,7 +144,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
-										event.ImageProcessDoneEvent, event.AcquisitionImagePublishEvent] \
+										event.MakeTargetListEvent,
+										event.ImageProcessDoneEvent,
+										event.AcquisitionImagePublishEvent] \
 								+ presets.PresetsClient.eventinputs \
 								+ navigator.NavigatorClient.eventinputs
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs \
@@ -168,6 +166,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.addEventInput(event.AcquisitionImagePublishEvent, self.handleDriftImage)
 		self.addEventInput(event.DriftMonitorResultEvent, self.handleDriftResult)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
+		self.addEventInput(event.MakeTargetListEvent, self.setGrid)
 		self.driftdone = threading.Event()
 		self.driftimagedone = threading.Event()
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
@@ -187,6 +186,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.simloopstop = threading.Event()
 		self.received_image_drift = threading.Event()
 		self.requested_drift = None
+		self.grid = None
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -659,6 +659,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		targetdata = emtarget['target']
 		if targetdata is not None and 'grid' in targetdata and targetdata['grid'] is not None:
 			imagedata['grid'] = targetdata['grid']
+		else:
+			if self.grid:
+				imagedata['grid'] = self.grid
 		self.publishDisplayWait(imagedata)
 		print tnum, 'APDW DONE', time.time() - t0
 		ttt = time.time() - self.timedebug[tkey]
@@ -817,7 +820,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				return
 			presetnames = self.settings['preset order']
 			currentpreset = self.presetsclient.getPresetByName(presetnames[0])
-		targetdata = self.newSimulatedTarget(preset=currentpreset)
+		targetdata = self.newSimulatedTarget(preset=currentpreset,grid=self.grid)
 		self.publish(targetdata, database=True)
 		## change to 'processing' just like targetwatcher does
 		proctargetdata = leginondata.AcquisitionImageTargetData(initializer=targetdata, status='processing')
@@ -874,3 +877,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if value.mover:
 				movetypes.append(key)
 		return movetypes
+	def setGrid(self,evt):
+		if evt['grid'] is None:
+			self.grid = None
+			self.logger.info('Remove filename grid prefix')
+			return
+		grid = evt['grid']
+		self.grid = grid
+		label = gridlabeler.getGridLabel(grid)
+		self.logger.info('Add grid prefix as '+label)
