@@ -865,8 +865,9 @@ class Robot2(node.Node):
 
 	def handleGridDataCollectionDone(self, ievent):
 		# ...
-		if self.settings['pause']:
+		if self.settings['pause'] and ievent:
 			# pause for user check
+			self.logger.info('setting status')
 			self.setStatus('user input')
 			self.logger.info('waiting for user to continue...')
 			self.usercontinue.clear()
@@ -875,11 +876,15 @@ class Robot2(node.Node):
 			self.setStatus('processing')
 			self.logger.info('continuing')
 
+		self.logger.info('extracting')
 		self.panel.extractingGrid()
 		self.extractcondition.acquire()
 		self.extractinfo = (None, None)
 		self.extractcondition.notify()
 		self.extractcondition.release()
+		evt = event.MakeTargetListEvent()
+		evt['grid'] = None
+		self.outputEvent(evt)
 
 	def getTrayLabels(self):
 		self.traysFromDB()
@@ -919,9 +924,11 @@ class Robot2(node.Node):
 		return [int(i['location']) for i in gridlocations],gridlabels
 
 	def gridInserted(self, gridnumber):
+		evt = event.MakeTargetListEvent()
+		evt['grid'] = self.makeGridData(gridnumber)
+		evt['grid location'] = gridnumber
+		evt['tray label'] = self.gridtraylabels[self.gridtrayid]
 		if self.simulate or self.settings['simulate']:
-			evt = event.MakeTargetListEvent()
-			evt['grid'] = self.makeGridData(gridnumber)
 			if evt['grid'] is None:
 				self.logger.error('Data collection event not sent')
 			else:
@@ -934,8 +941,6 @@ class Robot2(node.Node):
 		self.scopeReadyForImaging()
 
 		self.logger.info('Outputting data collection event')
-		evt = event.MakeTargetListEvent()
-		evt['grid'] = self.makeGridData(gridnumber)
 		if evt['grid'] is None:
 			self.logger.error('Data collection event not sent')
 		else:
