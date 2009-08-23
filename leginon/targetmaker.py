@@ -14,6 +14,7 @@ import instrument
 import targethandler
 import gui.wx.MosaicTargetMaker
 import gui.wx.Node
+import gridlabeler
 
 class AtlasError(Exception):
 	pass
@@ -188,25 +189,7 @@ class MosaicTargetMaker(TargetMaker):
 		else:
 			# generated from external event
 			grid = evt['grid']
-			parts = []
-			gridname = ''
-			if 'emgrid' in grid and grid['emgrid'] is not None and grid['emgrid']['name']:
-				# new, shorter style with grid name
-				if grid['emgrid']['project'] is not None:
-					gridname = ('Prj%03d'% grid['emgrid']['project'])+'_'
-				gridname = (gridname + grid['emgrid']['name']).replace(' ','_')
-				leadlabels = ['','i']
-			else:
-				# old style
-				gridname = '%05d' % grid['grid ID']
-				leadlabels = ['Grid','Insertion']
-			grididstr = leadlabels[0]+gridname
-			parts.append(grididstr)
-			if 'insertion' in grid and grid['insertion'] is not None:
-				insertionstr = '%s%03d' % (leadlabels[1],grid['insertion'])
-				parts.append(insertionstr)
-			sep = '_'
-			label = sep.join(parts)
+			label = gridlabeler.getGridLabel(grid)
 			targetlist = self.newTargetList(mosaic=True, label=label)
 		self.logger.debug('Target list created')
 		return targetlist, grid
