@@ -76,12 +76,6 @@ class Registration(object):
 				prepmatrix1 *= untiltmatrix1 
 				prepmatrix2 *= untiltmatrix2 
 		matrix = self.register(array1, array2)
-		print "---untiltmatrix1"
-		print prepmatrix1
-		print "---untiltmatrix2"
-		print prepmatrix2.I
-		print "---registermatrix"
-		print matrix
 		finalmatrix = matrix * prepmatrix1 * prepmatrix2.I
 		return finalmatrix
 			
@@ -438,7 +432,7 @@ class TransformManager(node.Node, TargetTransformer):
 		pixels = dim['x'] * dim['y']
 		pixeltype = str(imagedata['image'].dtype)
 		## Fix me: Not sure what image list should go in here nor naming of the file
-		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
+		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype,grid=oldimage['grid'])
 		version = self.recentImageVersion(oldimage)
 		imagedata['version'] = version + 1
 		## set the 'filename' value
