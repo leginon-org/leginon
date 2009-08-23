@@ -311,13 +311,13 @@ class TargetHandler(object):
 		targetdata = self.newTarget(grid=grid, drow=drow, dcol=dcol, number=number, session=self.session, image=None, **kwargs)
 		return targetdata
 
-	def newSimulatedTarget(self, preset=None):
+	def newSimulatedTarget(self, preset=None,grid=None):
 		## current state of TEM, but use preset
 		scopedata = self.instrument.getData(leginondata.ScopeEMData)
 		scopedata.friendly_update(preset)
 		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
 		nextnumber = lastnumber + 1
-		newtarget = self.newTarget(drow=0, dcol=0, number=nextnumber, type='simulated', scope=scopedata, preset=preset)
+		newtarget = self.newTarget(drow=0, dcol=0, number=nextnumber, type='simulated', scope=scopedata, preset=preset, grid=grid)
 		return newtarget
 
 	def getReferenceTarget(self):
