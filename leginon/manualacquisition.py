@@ -21,6 +21,7 @@ import calibrationclient
 import copy
 from pyami import arraystats, imagefun
 import numpy
+import gridlabeler
 
 class AcquireError(Exception):
 	pass
@@ -29,6 +30,12 @@ class ManualAcquisition(node.Node):
 	panelclass = gui.wx.ManualAcquisition.Panel
 	settingsclass = leginondata.ManualAcquisitionSettingsData
 	eventoutputs = node.Node.eventoutputs + [event.AcquisitionImagePublishEvent]
+	eventinputs = (
+		node.Node.eventinputs +
+		[
+			event.MakeTargetListEvent
+		]
+	)
 	defaultsettings = {
 		'camera settings': None,
 		'screen up': False,
@@ -53,6 +60,7 @@ class ManualAcquisition(node.Node):
 		self.loopstop = threading.Event()
 		self.loopstop.set()
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		self.addEventInput(event.MakeTargetListEvent, self.setGrid)
 
 		self.lowdosemode = None
 		self.defocus = None
@@ -64,6 +72,7 @@ class ManualAcquisition(node.Node):
 		self.gridmapping = {}
 		self.gridbox = None
 		self.grid = None
+		self.gridlabel = None
 
 		self.instrument = instrument.Proxy(self.objectservice,
 																				self.session,
@@ -170,6 +179,8 @@ class ManualAcquisition(node.Node):
 
 	def setImageFilename(self, imagedata):
 		prefix = self.session['name']
+		if self.gridlabel:
+			prefix += '_'+self.gridlabel
 		digits = 5
 		suffix = 'ma'
 		extension = 'mrc'
@@ -205,8 +216,12 @@ class ManualAcquisition(node.Node):
 				gridinfo = self.gridmapping[self.grid]
 				griddata = leginondata.GridData()
 				griddata['grid ID'] = gridinfo['gridId']
+				emgriddata = leginondata.EMGridData(name=gridinfo['label'],project=gridinfo['projectId'])
+				griddata['emgrid'] = emgriddata
 				acquisitionimagedata['grid'] = griddata
-	
+				self.gridlabel = gridlabeler.getGridLabel(griddata)	
+			else:
+				self.gridlabel = ''
 			acquisitionimagedata['label'] = self.settings['image label']
 	
 			self.setImageFilename(acquisitionimagedata)
@@ -342,7 +357,8 @@ class ManualAcquisition(node.Node):
 			key = '%d - %s' % (gridlocation['location'], grid['label'])
 			self.gridmapping[key] = {'gridId': gridlocation['gridId'],
 																'location': gridlocation['location'],
-																'label': grid['label']}
+																'label': grid['label'],
+																'projectId': grid['projectId']}
 		keys = self.gridmapping.keys()
 		keys.sort(self.cmpGridLabel)
 		return keys
@@ -533,9 +549,18 @@ class ManualAcquisition(node.Node):
 		imageq['session'] = sessiondata
 		images = self.research(imageq, readimages=False, results=1)
 		return images[0]
-	
-				
 
-			
-			
-		
+	def setGrid(self,evt):
+		if evt['grid'] is None:
+			self.gridmapping = {}
+			self.grid = None
+			self.gridlabel = None
+			self.logger.info('Remove filename grid prefix')
+			self.panel.onUnsetRobotGrid()
+			return
+		griddata = evt['grid']
+		self.getGrids(evt['tray label'])
+		self.grid = '%d - %s' % (evt['grid location'], griddata['emgrid']['name'])
+		self.gridlabel = gridlabeler.getGridLabel(griddata)
+		self.logger.info('Add grid prefix as '+self.gridlabel)
+		self.panel.onSetRobotGrid()
