@@ -49,6 +49,8 @@ def getSpecificImagesFromDB(imglist):
 	for imgname in imglist:
 		if imgname[-4:] == ".mrc":
 			imgname = imgname[:-4]
+		if '/' in imgname:
+			imgname = os.path.basename(imgname)
 		imgquery = leginondata.AcquisitionImageData(filename=imgname)
 		imgres   = imgquery.query(readimages=False, results=1)
 		if len(imgres) >= 1:
