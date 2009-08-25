@@ -11,7 +11,7 @@
 import node
 import event
 import leginondata
-from pyami import mrc,correlator, peakfinder, ordereddict
+from pyami import correlator, peakfinder, ordereddict
 import calibrationclient
 import math
 import numpy
@@ -98,7 +98,6 @@ class CorrelationRegistration(Registration):
 		self.correlator.setImage(0,array1)
 		self.correlator.setImage(1,array2)
 		corrimage = self.correlator.phaseCorrelate()
-		mrc.write(corrimage,'corr.mrc')
 		self.node.setImage(corrimage, 'Correlation')
 		peak = self.peakfinder.subpixelPeak(newimage=corrimage)
 		self.node.setTargets([(peak[1],peak[0])], 'Peak')
