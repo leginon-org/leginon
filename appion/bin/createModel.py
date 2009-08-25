@@ -240,15 +240,16 @@ class createModelScript(appionScript.AppionScript):
 			classnum = int(part['refnum'])-1
 			emanstackpartnum = alignpart['stackpart']['particleNumber']-1
 
-			if includelist and classnum in includelist:
-				includeParticle.append(emanstackpartnum)
-				#f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
-			elif excludelist and not classnum in excludelist:
-				includeParticle.append(emanstackpartnum)
-				#f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
-			else:
+			if includelist and classnum not in includelist:
 				excludeParticle += 1
 				#f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+			elif excludelist and classnum in excludelist:
+				excludeParticle += 1
+				#f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+			else:
+				includeParticle.append(emanstackpartnum)
+				#f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
+
 		#f.close()
 		sys.stderr.write("\n")
 		includeParticle.sort()
