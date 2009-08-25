@@ -10,6 +10,8 @@
 
 import sinedon.data as data
 import gui.wx.Manager
+import version
+print 'Leginon version:  ', version.getVersion()
 
 def start(options=None):
 	m = gui.wx.Manager.App(None, options=options)
