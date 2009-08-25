@@ -1128,6 +1128,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('mag only', bool),
 			('apply offset', bool),
 			('valves', bool),
+			('smallsize', int),
 		)
 	typemap = classmethod(typemap)
 

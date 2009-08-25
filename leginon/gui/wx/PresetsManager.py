@@ -967,6 +967,11 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['apply offset'] = wx.CheckBox(self, -1, 'Apply stage tilt axis offset to all image shifts')
 
 		self.widgets['valves'] = wx.CheckBox(self, -1, 'Close column valves during preset change')
+		szsmallsize = wx.BoxSizer(wx.HORIZONTAL)
+		smallsizelab = wx.StaticText(self, -1, 'Small image size (for dose image, etc.)')
+		self.widgets['smallsize'] = IntEntry(self, -1, chars=6)
+		szsmallsize.Add(smallsizelab)
+		szsmallsize.Add(self.widgets['smallsize'])
 
 		szpausetime = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Pause')
@@ -987,6 +992,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['mag only'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['apply offset'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['valves'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szsmallsize, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 

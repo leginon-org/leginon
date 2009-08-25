@@ -214,6 +214,7 @@ class PresetsManager(node.Node):
 		'mag only': True,
 		'apply offset': False,
 		'valves': False,
+		'smallsize': 512,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.MeasureDoseEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
@@ -970,7 +971,8 @@ class PresetsManager(node.Node):
 	def _acquireDoseImage(self, preset, display=True):
 		acquirestr = 'dose'
 		binning = preset['binning']
-		imagedata =  self._acquireSpecialImage(preset, acquirestr, mode='center', imagelength=512, binning=binning)
+		smallsize = self.settings['smallsize']
+		imagedata =  self._acquireSpecialImage(preset, acquirestr, mode='center', imagelength=smallsize, binning=binning)
 		
 		if imagedata is None:
 			return
@@ -1096,7 +1098,8 @@ class PresetsManager(node.Node):
 					simdose = scale * newpreset['dose']
 					self.updatePreset(sim['name'], {'dose': simdose}, updatedose=False)
 
-	def getSimilarLook(self,camname,magdict,imagelength=512):
+	def getSimilarLook(self,camname,magdict):
+		imagelength = self.settings['smallsize']
 		if len(magdict) != 2:
 			self.logger.warning('Error calculating similar look camera binning')
 			return None, None
@@ -1197,7 +1200,8 @@ class PresetsManager(node.Node):
 
 	def _acquireAlignImage(self, preset, mode='bin', binning=None):
 		acquirestr = 'align'
-		return self._acquireSpecialImage(preset, acquirestr, mode=mode, imagelength=512, binning=binning)
+		smallsize = self.settings['smallsize']
+		return self._acquireSpecialImage(preset, acquirestr, mode=mode, imagelength=smallsize, binning=binning)
 
 	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None, binning=None):
 		errstr = 'Acquire %s image failed: ' %(acquirestr) +'%s'
