@@ -59,6 +59,7 @@ class MosaicTargetMaker(TargetMaker):
 		'max targets': 128,
 		'max size': 16384,
 		'mosaic center': 'stage center',
+		'ignore request': False,
 	}
 	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -195,7 +196,7 @@ class MosaicTargetMaker(TargetMaker):
 		return targetlist, grid
 
 	def _makeAtlas(self, evt):
-		if evt['grid'] is None:
+		if evt['grid'] is None or self.settings['ignore request']:
 			return
 		args = self._calculateAtlas(evt)
 		kwargs = {'evt': evt}

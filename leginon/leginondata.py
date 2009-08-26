@@ -1104,6 +1104,7 @@ class MosaicTargetMakerSettingsData(SettingsData):
 			('max targets', int),
 			('max size', int),
 			('mosaic center', str),
+			('ignore request', bool),
 		)
 	typemap = classmethod(typemap)
 
