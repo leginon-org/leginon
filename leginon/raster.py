@@ -67,10 +67,10 @@ def createIndices2(a,b,angle,offset=False,odd=False,tiltoffset=(0,0)):
 	cos = math.cos(angle)
 	sin = math.sin(angle)
 	maxab = math.ceil(max(a,b))
-	if offset and maxab % 2:
+	if offset and not maxab % 2:
 		# keep center offset pattern consistent
 		maxab = maxab + 1
-	maxind = 3 + 2 * maxab
+	maxind = 2 + 2 * maxab
 	shape = maxind,maxind
 	ind = numpy.indices(shape, numpy.float32)
 	if offset:
@@ -82,27 +82,32 @@ def createIndices2(a,b,angle,offset=False,odd=False,tiltoffset=(0,0)):
 		ind[1] = ind[1] + tiltoffset[1]
 	center0 = shape[0] / 2.0
 	center1 = shape[1] / 2.0
+	print "offset", ind[0][0][0]
 	ind[0] = ind[0] - center0
 	ind[1] = ind[1] - center1
 	indices = zip(ind[0].flat, ind[1].flat)
 	goodindices = []
 	for index in indices:
+		good = False
 		row = abs(index[0]*cos-index[1]*sin)
 		col = abs(index[0]*sin+index[1]*cos)
-		if (col/a)**2+(row/b)**2 <= 1:
-			goodindices.append(index)
-		for delta in (0.0,0.1,0.2,0.3,0.4,0.5):
-			if row > delta:
-				testrow = row - delta
-			else:
-				testrow = row
-			if col > delta:
-				testcol = col - delta
-			else:
-				testcol = col
-			if (testcol/a)**2+(testrow/b)**2 <= 1:
-				goodindices.append(index)
-				break
+		testrange = (0.0,0.1,0.2,0.3,0.4,0.5)
+		for deltarow in testrange:
+			for deltacol in testrange:
+				if row > deltarow:
+					testrow = row - deltarow
+				else:
+					testrow = row
+				if col > deltacol:
+					testcol = col - deltacol
+				else:
+					testcol = col
+				if (testcol/a)**2+(testrow/b)**2 <= 1:
+					goodindices.append(index)
+					good = True
+					break
+			if good:
+					break
 	return goodindices
 
 def createRaster2(spacing, angle, limit):
