@@ -385,6 +385,9 @@ if ($expId) {
 		if ($tstacks=$particle->getTemplateStacksFromProject($projectId)) {
 			$tsdone  = count($tstacks);
 		}
+		if ($tstacks_session=$particle->getTemplateStacksFromSession($sessionId)) {
+			$tsdone_session = count($tstacks_session);
+		}
 		$tsruns  = count($subclusterjobs['templatestack']['running']);
 		$tsqueue  = count($subclusterjobs['templatestack']['queued']);
 		$tsresults[] = ($tsdone==0) ? "" : "<a href='selectTemplateStack.php?expId=$sessionId'>$tsdone complete</a>";
@@ -479,7 +482,7 @@ if ($expId) {
 	/* IMAGIC Common Lines */
 	$imagiccluster3d0=$particle->get3d0ClusterModelsFromSessionId($sessionId);
 	$imagicts3d0=$particle->get3d0TemplateStackModelsFromSessionId($sessionId);
-	if ($clusterdone > 0 || $tsdone > 0) {
+	if ($clusterdone > 0 || $tsdone_session > 0) {
 		if (is_array($imagiccluster3d0) && is_array($imagicts3d0)) $imagic3d0data = array_merge($imagiccluster3d0,$imagicts3d0);
 		elseif (is_array($imagiccluster3d0) && !is_array($imagicts3d0)) $imagic3d0data = $imagiccluster3d0;
 		else $imagic3d0data = $imagicts3d0;
@@ -490,9 +493,6 @@ if ($expId) {
 		$threedresults[] = ($numimagic3d0 == 0) ? "" : "<a href='imagic3dRefine.php?expId=$sessionId&3d0=true'>$numimagic3d0 complete</a>";
 		$threedresults[] = ($threed0run == 0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=create3d0'>$threed0run running</a>";
 		
-	}
-
-	if ($aligndone >= 1 || $tsdone >=1) {
 		$nruns[]=array(
 			'name'=>"<a href='selectClassAveragesFor3d0.php?expId=$sessionId'>IMAGIC Common Lines</a>",
 			'result'=>$threedresults
