@@ -79,6 +79,9 @@ class Panel(gui.wx.Node.Panel):
 		evt = gui.wx.Events.EnablePlayButtonEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
+	def onOriginalTarget(self,targetcenter):
+		pass
+
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)

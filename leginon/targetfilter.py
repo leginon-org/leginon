@@ -155,6 +155,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		acq = []
 		foc = []
 		preview = []
+		original = []
 		if oldtargetlistdata['image'] is not None:
 			halfrows = oldtargetlistdata['image']['camera']['dimension']['y'] / 2
 			halfcols = oldtargetlistdata['image']['camera']['dimension']['x'] / 2
@@ -183,6 +184,15 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		self.setTargets(acq, 'acquisition', block=True)
 		self.setTargets(foc, 'focus', block=True)
 		self.setTargets(preview, 'preview', block=True)
+		for oldtarget in self.goodoldtargets:
+			drow = oldtarget['delta row']
+			dcol = oldtarget['delta column']
+			x = dcol + halfcols
+			y = drow + halfrows
+			disptarget = x,y
+			original.append(disptarget)
+		self.panel.onOriginalTarget(original)
+		self.setTargets(original, 'original')	
 
 	def getAllTargetCount(self,alltargetdata):
 		parentimgs =[]
