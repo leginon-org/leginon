@@ -195,6 +195,8 @@ class MosaicTargetMaker(TargetMaker):
 		return targetlist, grid
 
 	def _makeAtlas(self, evt):
+		if evt['grid'] is None:
+			return
 		args = self._calculateAtlas(evt)
 		kwargs = {'evt': evt}
 		self._publishAtlas(*args, **kwargs)
