@@ -321,9 +321,6 @@ class EllipseTargetImagePanel(TargetImagePanel):
 		self.sizer.Layout()
 		self.Fit()
 
-	def setEllipseParams(self,params):
-		if params:
-			self.parent.setEllipseParams(params)
 ##################################
 ##
 ##################################
