@@ -42,6 +42,9 @@ EVT_IMAGE_CLICKED = wx.PyEventBinder(ImageClickedEventType)
 
 EllipseFoundEventType = wx.NewEventType()
 EVT_ELLIPSE_FOUND = wx.PyEventBinder(EllipseFoundEventType)
+
+EllipseNewCenterEventType = wx.NewEventType()
+EVT_ELLIPSE_NEW_CENTER = wx.PyEventBinder(EllipseNewCenterEventType)
 ##################################
 ##
 ##################################
@@ -80,6 +83,13 @@ class EllipseFoundEvent(wx.PyCommandEvent):
 		wx.PyCommandEvent.__init__(self, EllipseFoundEventType, source.GetId())
 		self.SetEventObject(source)
 		self.params = params
+
+#--------------------
+class EllipseNewCenterEvent(wx.PyCommandEvent):
+	def __init__(self, source, centers):
+		wx.PyCommandEvent.__init__(self, EllipseNewCenterEventType, source.GetId())
+		self.SetEventObject(source)
+		self.centers = centers
 
 #--------------------
 def getColorMap():
@@ -346,6 +356,7 @@ class RecordMotionTool(ImageTool):
 		self.start_ellipse_params = None
 		self.lastx = 0
 		self.lasty = 0
+		self.imagepanel.Bind(gui.wx.ImagePanelTools.EVT_ELLIPSE_NEW_CENTER, self.onNewEllipseCenter, self.imagepanel)
 
 	def OnLeftDown(self, evt):
 		if self.button.GetToggle():
@@ -425,6 +436,23 @@ class RecordMotionTool(ImageTool):
 			newcenter = oldcenter[0] + dcenter[0], oldcenter[1] + dcenter[1]
 			self.ellipse_params['center'] = newcenter
 		self.drawEllipse()
+
+	def onNewEllipseCenter(self,evt):
+		if self.ellipse_params is None:
+			return
+		oldcenter = self.ellipse_params['center']
+		centers = []
+		distances = []
+		for center in evt.centers:
+			centers.append(center)
+			distances.append(self.distance(oldcenter,center))
+		closest_center = centers[distances.index(min(distances))]
+		if self.ellipse_params and list(oldcenter) != list(closest_center):
+			self.ellipse_params['center'][0] = closest_center[0]
+			self.ellipse_params['center'][1] = closest_center[1]
+			self.ellipse = self.drawEllipse()
+			self.xypath = []
+			self.imagepanel.UpdateDrawing()
 
 	#--------------------
 	def OnMotion(self, evt, dc):
