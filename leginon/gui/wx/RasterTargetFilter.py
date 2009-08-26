@@ -45,6 +45,8 @@ class Panel(gui.wx.TargetFilter.Panel):
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, numbers=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
+		self.imagepanel.addTargetTool('original', wx.RED, numbers=True)
+		self.imagepanel.selectiontool.setDisplayed('original', True)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.Bind(gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
@@ -80,6 +82,10 @@ class Panel(gui.wx.TargetFilter.Panel):
 
 	def onEllipseFound(self, evt):
 		threading.Thread(target=self.node.autoRasterEllipse, args=(evt.params,)).start()
+
+	def onOriginalTarget(self, centers):
+		idcevt = gui.wx.ImagePanelTools.EllipseNewCenterEvent(self.imagepanel, centers)
+		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
