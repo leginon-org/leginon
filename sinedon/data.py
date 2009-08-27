@@ -215,6 +215,12 @@ class DataManager(object):
 		datainstance.sync()
 		return datainstance
 
+	def getRemoteFile(self, filereference, dmid):
+		location = {'hostname': dmid[0][0], 'port': dmid[0][1]}
+		client = tcptransport.Client(location)
+		readobject = client.send(filereference)
+		return readobject
+
 	def getData(self, datareference, **kwargs):
 		dataclass = datareference.dataclass
 		referent = None
@@ -262,11 +268,16 @@ class DataManager(object):
 			datainstance = datainstance.getData()
 		return datainstance
 
+	def readFile(self, filereference):
+		filereference.read()
+
 	def handle(self, request):
 		if isinstance(request, Data):
 			return self.insert(request)
-		else:
+		elif isinstance(request, DataReference):
 			return self.query(request)
+		elif isinstance(request, FileReference):
+			return self.readFile(request)
 
 datamanager = DataManager()
 
