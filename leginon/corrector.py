@@ -10,7 +10,7 @@
 
 import leginondata
 import event
-import node
+import imagewatcher
 import numpy
 import scipy.ndimage
 import gui.wx.Corrector
@@ -20,7 +20,7 @@ from pyami import arraystats, imagefun
 import polygon
 import time
 
-class Corrector(node.Node):
+class Corrector(imagewatcher.ImageWatcher):
 	'''
 	Manages dark/bright images and does other corrections
 	Basic Instructions:
@@ -46,10 +46,10 @@ class Corrector(node.Node):
 		'camera settings': None,
 		'combine': 'average',
 	}
-	eventinputs = node.Node.eventinputs
-	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent]
+	eventinputs = imagewatcher.ImageWatcher.eventinputs + [event.AcquisitionImagePublishEvent]
+	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent]
 	def __init__(self, name, session, managerlocation, **kwargs):
-		node.Node.__init__(self, name, session, managerlocation, **kwargs)
+		imagewatcher.ImageWatcher.__init__(self, name, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session, self.panel)
 		self.start()
 
@@ -349,3 +349,8 @@ class Corrector(node.Node):
 		self.panel.setPlan(plan)
 		self.setTargets([], 'Bad_Region', block=False)
 		
+	def processImageData(self, imagedata):
+		print 'IMAGEDATA******************************'
+		print imagedata
+
+
