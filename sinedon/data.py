@@ -276,7 +276,7 @@ class DataManager(object):
 			return self.insert(request)
 		elif isinstance(request, DataReference):
 			return self.query(request)
-		elif isinstance(request, FileReference):
+		elif isinstance(request, newdict.FileReference):
 			return self.readFile(request)
 
 datamanager = DataManager()
