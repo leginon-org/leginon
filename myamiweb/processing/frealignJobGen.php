@@ -190,9 +190,8 @@ function jobForm($extra=false) {
 	$nump=$particle->getNumStackParticles($stackidval);
 	$apix=$stackinfo[1];
 	$box=$stackinfo[2];
-	$stackpath=$stackinfo[3];
-	$stackname1=$stackinfo[4];
-	$stackname2=$stackinfo[5];
+	$stackpath=$stackinfo[4];
+	$stackname1=$stackinfo[5];
   
 	$stack=$stackname1 ;
 	
@@ -492,7 +491,6 @@ function writeJobFile ($extra=False) {
 	$stackidval=$stackinfo[0];
 	$stackpath=$stackinfo[4];
 	$stackname1=$stackinfo[5];
-	$stackname2=$stackinfo[6];
  
 	// get the model id
 	$modelinfo=explode('|--|',$_POST['model']);
