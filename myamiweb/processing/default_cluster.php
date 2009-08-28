@@ -39,9 +39,21 @@ class Cluster {
 	function post_data() {
 		
 		$stackinfo = explode('|--|',$_POST['stackval']);
+	
+		# $stackinfo[0] = stackid
+		# $stackinfo[1] = pixel size in angstrums / pixels
+		# $stackinfo[2] = stack boxsize (length in either direction) in pixels
+		# $stackinfo[3] = number of particles in the stack
+		# $stackinfo[4] = appion stackfile path
+		# $stackinfo[5] = Imagic stack header file name, including extension but not path
+		# $stackinfo[6] = Imagic stack data file name, including extension but not path
+		# examples: 
+		# $stackinfo[4] = '/your_disk/appion/09aug267/stacks/stack1'
+		# $stackinfo[5] = 'start.hed'
+		# $stackinfo[6] = 'start.img'
+		
 		$stackpath=$stackinfo[4];
-		$stackname1=$stackinfo[5];
-		$stackname2=$stackinfo[6];
+		$stackname1= $stackinfo[5];
 
 		$modelinfo = explode('|--|',$_POST['model']);
 		$modelpath = $modelinfo[1];
@@ -53,8 +65,7 @@ class Cluster {
 		$jobfile = "$jobname.job";
 
 		$this->clusterpath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $clusterpath;
-		$this->stackname1 = $stackname2;
-		$this->stackname2 = $stackname2;
+		$this->stackname1 = $stackname1;
 		$this->jobname = $jobname;
 		$this->jobfile = $jobfile;
 		$this->clusterfullpath = $this->clusterpath.$jobname;
