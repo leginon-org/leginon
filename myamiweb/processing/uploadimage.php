@@ -171,7 +171,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
    echo "<br/><br/>\n";
 
 	// Setup batchfile
-	echo docpop('batchfile', 'Information File for the images:');
+	echo docpop('batchfile', 'Information file for the images (with full path):');
 	echo "<br/>\n<input type='text' name='batch' value='$batch' size='54'>\n";
 
    echo "<br/><br/>\n";
