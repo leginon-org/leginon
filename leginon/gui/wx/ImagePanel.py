@@ -91,7 +91,7 @@ class ImagePanel(wx.Panel):
 		self.alltoolsizer =wx.GridBagSizer(5,5)
 		
 		# use compact mode if imagesize is too small
-		if imagesize[0] < 520:
+		if imagesize[0] < 512:
 			toolmode = "compact"
 		else:
 			toolmode = "expand"
