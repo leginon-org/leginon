@@ -127,8 +127,8 @@ class ContrastTool(object):
 		self.slidermin = 0
 		self.slidermax = 255
 
-		self.minslider = wx.Slider(self.imagepanel, -1, self.slidermin, self.slidermin, self.slidermax, size=(200, -1))
-		self.maxslider = wx.Slider(self.imagepanel, -1, self.slidermax, self.slidermin, self.slidermax, size=(200, -1))
+		self.minslider = wx.Slider(self.imagepanel, -1, self.slidermin, self.slidermin, self.slidermax, size=(180, -1))
+		self.maxslider = wx.Slider(self.imagepanel, -1, self.slidermax, self.slidermin, self.slidermax, size=(180, -1))
 		self.minslider.Bind(wx.EVT_SCROLL_THUMBRELEASE, self.onMinSlider)
 		self.maxslider.Bind(wx.EVT_SCROLL_THUMBRELEASE, self.onMaxSlider)
 		self.minslider.Bind(wx.EVT_SCROLL_ENDSCROLL, self.onMinSlider)
