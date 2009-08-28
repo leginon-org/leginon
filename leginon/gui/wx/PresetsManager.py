@@ -595,7 +595,7 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 	def onInitialize(self):
 		gui.wx.Dialog.Dialog.onInitialize(self)
 
-		self.image = gui.wx.ImagePanel.ImagePanel(self, -1)
+		self.image = gui.wx.ImagePanel.ImagePanel(self, -1,imagesize=(360,360))
 
 		self.doselabel = wx.StaticText(self, -1, '')
 
