@@ -454,7 +454,6 @@ function jobform3d0($modelid, $extra=false) {
 	$box=$stackinfo[2];
 	$stackpath=$stackinfo[4];
 	$stackname1=$stackinfo[5];
-	$stackname2=$stackinfo[6];
 	$fullname=$stackpath."/".$stackname1;
 	
 	$stack=$stackname1;
