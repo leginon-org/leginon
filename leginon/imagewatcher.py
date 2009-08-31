@@ -22,7 +22,6 @@ class ImageWatcher(watcher.Watcher):
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor,
 															**kwargs)
 
-		self.numarray = None
 		self.currentimagedata = None
 
 	def processImageData(self, imagedata):
@@ -42,7 +41,6 @@ class ImageWatcher(watcher.Watcher):
 			imageid = idata.dbid
 			self.currentimagedata = idata
 
-			self.numarray = idata['image']
 			self.processImageData(idata)
 			self.publishImageProcessDone(imageid)
 			self.logger.debug('Imagewathcer.processData (ImageData) done')
