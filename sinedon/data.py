@@ -293,7 +293,6 @@ class DataReference(object):
 	if using dataclass, also specify either a dmid or a dbid
 	'''
 	def __init__(self, datareference=None, referent=None, dataclass=None, dmid=None, dbid=None):
-		self.datahandler = False
 		self.wr = None
 		if datareference is not None:
 			self.dataclass = datareference.dataclass
@@ -354,15 +353,13 @@ class DataReference(object):
 		### now we have a referent, or an excpetion was raised
 
 		### if this was a bad reference, return a new one
-		if goodref or self.datahandler:
+		if goodref:
 			return referent
 		else:
 			return referent.reference()
 
 	def __str__(self):
 		s = 'DataReference(%s), class: %s, dmid: %s, dbid: %s' % (id(self), self.dataclass, self.dmid, self.dbid)
-		if self.datahandler:
-			s = s + ' (datahandler)'
 		if self.wr is not None:
 			o = self.wr()
 			if o is not None:
