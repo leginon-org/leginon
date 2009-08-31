@@ -261,11 +261,6 @@ class DataManager(object):
 	def query(self, datareference):
 		# this is how socketstreamtransport server accesses this data manager
 		datainstance = self.getData(datareference)
-		### in case of getData returning new DataReference:
-		### or should we just return new DataReference and let
-		### remote caller try again?
-		if isinstance(datainstance, DataReference):
-			datainstance = datainstance.getData()
 		return datainstance
 
 	def readFile(self, filereference):
@@ -342,21 +337,11 @@ class DataReference(object):
 			referent = self.wr()
 
 		if referent is None:
-			#### Try DataManager but do not return referent
-			#### instead, return new reference to referent
-			#### to signify that this reference is defunct
-			goodref = False
+			#### Try DataManager, update me with ref to new data
 			referent = datamanager.getData(self, **kwargs)
-		else:
-			goodref = True
+			self.sync(referent)
 
-		### now we have a referent, or an excpetion was raised
-
-		### if this was a bad reference, return a new one
-		if goodref:
-			return referent
-		else:
-			return referent.reference()
+		return referent
 
 	def __str__(self):
 		s = 'DataReference(%s), class: %s, dmid: %s, dbid: %s' % (id(self), self.dataclass, self.dmid, self.dbid)
@@ -589,12 +574,6 @@ class Data(newdict.TypedDict):
 			return value
 		if isinstance(value, DataReference):
 			value = value.getData(**kwargs)
-			### if got new DataReference, replace existing one
-			if isinstance(value, DataReference):
-				# replace my reference with new one
-				self.__setitem__(key, value, force=True)
-				# use new reference
-				value = value.getData(**kwargs)
 		if isinstance(value, newdict.FileReference):
 			fileref = value
 			value = value.read()

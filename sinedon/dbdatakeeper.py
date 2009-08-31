@@ -130,8 +130,6 @@ class DBDataKeeper(object):
 				myid = myclassname+str(mydata.dbid)
 			else:
 				mydata = mydata.getData()
-				if isinstance(mydata, data.DataReference):
-					raise RuntimeError('I was not expecting this to happen, so we need to implement handling a replaced DataReference')
 				myid = id(mydata)
 		elif isinstance(mydata, data.Data):
 			myid = id(mydata)
@@ -215,8 +213,6 @@ class DBDataKeeper(object):
 				if isinstance(value, data.DataReference):
 					if value.dbid is None:
 						value = value.getData()
-						if isinstance(value, data.DataReference):
-							value = value.getData()
 					childresult = self.accumulateData(value, memo=memo, timelimit=timelimit, limit=limit)
 					if childresult is not None:
 						myresult += childresult
@@ -265,9 +261,6 @@ class DBDataKeeper(object):
 			if isinstance(value, data.DataReference):
 				if value.dbid is None:
 					dat = value.getData()
-					## check if DataReference replaced
-					if isinstance(dat, data.DataReference):
-						dat = dat.getData()
 					self.recursiveInsert(dat)
 
 		## insert this object
