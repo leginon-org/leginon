@@ -37,10 +37,7 @@ class Watcher(node.Node):
 		self.confirmEvent(pubevent)
 
 	def processEvent(self, pubevent):
-		# need to ignore datahandlers, so check reference first
-		ref = pubevent.special_getitem('data', dereference=False)
-		if ref.datahandler:
-			return
+		#ref = pubevent.special_getitem('data', dereference=False)
 		newdata = pubevent['data']
 		if newdata is not None:
 			self.processData(newdata)
