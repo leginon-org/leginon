@@ -272,6 +272,11 @@ var help = {
 		'coranmask' : 'Defines a radius (in pixels) from center of image to be used for correspondence analysis. Only image data within this radius will be used for reference-free classification. This mask is NOT used in calculation of CCs to the model projection.', 
 		'coranlp' : 'low-pass filter the particles for reference-free classification (in Angstroms). Unfiltered particles are used to create the class average.',
 		'coranhp' : 'high-pass filter the particles for reference-free classification (in Angstroms). Unfiltered particles are used to create the class average.',
+
+		'affprop' : 'Use affinity propagation particle clustering algorithm',
+		'affpropCC' : 'During affinity propagation clustering, all resulting class averages that have a correlation coefficient equal to or higher than this value will be used in the final class average. If none meet this criteria, then the single average that has the highest CC is used. Value must be 0-1',
+		'affpropMP' : 'Defines the minimum number of particles needed for affinity propagation to run. If the minimum is not met the algorithm is skipped',
+
 	},
 
 	'spider' : {
