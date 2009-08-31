@@ -11,10 +11,15 @@ import apChimera
 import apVolume
 import apDisplay
 import apFile
+from pyami import mrc, imagefun
 
 #=====================
 #=====================
 class MakeSnapshotScript(appionScript.AppionScript):
+	#=====================
+	def uploadScriptData(self):
+		return
+
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --file=<filename> --sym=<c1,icos,d7> \n\t "
@@ -27,6 +32,8 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			help="Sigma level at which snapshot of density will be contoured (2.0 by default)", metavar="FLOAT")
 		self.parser.add_option("-s", "--sym", "--symmetry", dest="sym", default='c1',
 			help="Symmetry name, e.g. d7, c1, c4, or icos", metavar="")
+		self.parser.add_option("-b", "--bin", dest="bin", type="int",
+			help="Bin the volume before imaging", metavar="")
 
 		### mass
 		self.parser.add_option("-m", "--mass", dest="mass", type="float",
@@ -46,6 +53,7 @@ class MakeSnapshotScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
+		self.params['commit'] = False
 		if self.params['sym'] is None:
 			apDisplay.printError("Enter a symmetry group, e.g. d7, c1, c4, or icos")
 		if self.params['file'] is None:
@@ -64,17 +72,32 @@ class MakeSnapshotScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		mrcfile = self.params['file']
-		box = apVolume.getModelDimensions(mrcfile)
-		apDisplay.printColor("Box: %d   Apix: %.2f   File: %s"%
-			(box, self.params['apix'], os.path.basename(mrcfile)), "green")
-	
+		### bin the volume
+		if self.params['bin'] is not None and self.params['bin'] > 1:
+			apDisplay.printMsg("Binning volume")
+			newmrcfile = os.path.join(self.params['rundir'], "binned.mrc")
+			voldata = mrc.read(mrcfile)
+			voldata = imagefun.bin3(voldata, self.params['bin'])
+			mrc.write(voldata, newmrcfile)
+			del voldata
+			self.params['apix'] *= self.params['bin']
+			if os.path.isfile(newmrcfile):
+				mrcfile = newmrcfile
+
 		### scale by mass
 		if self.params['mass'] is not None:
 			apDisplay.printMsg("Using scale by mass method")
-			mrcfile = os.path.join(self.params['rundir'], "temp.mrc")
-			shutil.copy(self.params['file'], mrcfile)
-			apChimera.setVolumeMass(mrcfile, apix=self.params['apix'], mass=self.params['mass'])
+			newmrcfile = os.path.join(self.params['rundir'], "setmass.mrc")
+			shutil.copy(self.params['file'], newmrcfile)
+			apChimera.setVolumeMass(newmrcfile, apix=self.params['apix'], mass=self.params['mass'])
 			self.params['contour'] = 1.0
+			if os.path.isfile(newmrcfile):
+				mrcfile = newmrcfile
+
+		### print stats
+		box = apVolume.getModelDimensions(mrcfile)
+		apDisplay.printColor("Box: %d   Apix: %.2f   File: %s"%
+			(box, self.params['apix'], os.path.basename(mrcfile)), "green")
 
 		### snapshot
 		if self.params['type'] != "snapshot":
@@ -91,12 +114,13 @@ class MakeSnapshotScript(appionScript.AppionScript):
 				 color=self.params['color'])
 
 		### clean up
-		if self.params['mass'] is not None:
+		if self.params['mass'] is not None or self.params['bin'] is not None:
 			images = glob.glob(mrcfile+"*")
 			for img in images:
 				newimg = re.sub(mrcfile, self.params['file'], img)
 				shutil.move(img, newimg)
-			apFile.removeFile("temp.mrc")
+			apFile.removeFile(mrcfile)
+
 
 #=====================
 #=====================
