@@ -240,12 +240,13 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 
 #=========================================
 #=========================================
-def runChimeraScript(chimscript):
+def runChimeraScript(chimscript, xvfb=True):
 	if not chimscript or not os.path.isfile(chimscript):
 		print chimscript
 		apDisplay.printError("Could not find file: apChimSnapshot.py")
 	#apDisplay.printColor("Trying to use chimera for model imaging","cyan")
-	port = apParam.resetVirtualFrameBuffer()
+	if xvfb is True:
+		port = apParam.resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
 		os.environ['CHIMERA'] = chimpath
@@ -264,7 +265,8 @@ def runChimeraScript(chimscript):
 	proc = subprocess.Popen(rendercmd, shell=True, stdout=logf, stderr=logf)
 	proc.wait()
 	logf.close()
-	apParam.killVirtualFrameBuffer(port)
+	if xvfb is True:
+		apParam.killVirtualFrameBuffer(port)
 	return
 
 #=========================================
