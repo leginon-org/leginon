@@ -16,9 +16,10 @@ import scipy.ndimage
 import gui.wx.Corrector
 import instrument
 import sys
-from pyami import arraystats, imagefun
+from pyami import arraystats, imagefun, mrc
 import polygon
 import time
+import os
 
 class Corrector(imagewatcher.ImageWatcher):
 	'''
@@ -348,9 +349,15 @@ class Corrector(imagewatcher.ImageWatcher):
 		self.storeCorrectorPlan(plan)
 		self.panel.setPlan(plan)
 		self.setTargets([], 'Bad_Region', block=False)
-		
+
 	def processImageData(self, imagedata):
 		print 'IMAGEDATA******************************'
-		print imagedata
-
-
+		print 'DMID', imagedata.dmid
+		import sinedon.data
+		print sinedon.data.datamanager.datadict[imagedata.dmid]
+		print 'IMAGE', imagedata['image']
+		imagecopy = imagedata.copy()
+		self.correctCameraImageData(imagecopy, 0)
+		print 'imagecopy corrected', imagecopy['image']
+		fullname = os.path.join(imagecopy.mkpath(), imagecopy.filename())
+		mrc.write(imagecopy['image'], fullname)
