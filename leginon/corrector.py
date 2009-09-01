@@ -359,6 +359,8 @@ class Corrector(imagewatcher.ImageWatcher):
 		imagecopy = imagedata.copy()
 		self.correctCameraImageData(imagecopy, 0)
 		print 'imagecopy corrected', imagecopy['image']
+		pixeltype = str(imagedata['image'].dtype)
+		imagecopy['pixeltype'] = pixeltype
 		if True:
 			## save new record to DB, including writing mrc
 			imagecopy.insert(force=True)
