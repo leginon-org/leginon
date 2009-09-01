@@ -226,6 +226,13 @@ class DataManager(object):
 		referent = None
 		dmid = datareference.dmid
 
+		### if dmid indicates, try remote location
+		if dmid is not None and dmid[0] != self.location:
+			## in remote memory
+			# TODO: kwargs
+			referent = self.getRemoteData(datareference)
+			return referent
+
 		#### attempt to find referent in local datadict
 		self.lock.acquire()
 		try:
@@ -235,28 +242,22 @@ class DataManager(object):
 				# access to datadict causes move to front
 				del self.datadict[dmid]
 				self.datadict[dmid] = referent
+				return referent
 		finally:
 			self.lock.release()
 
-		#### not found locally, try external locations
-		if referent is None:
-			### try DB
-			dbid = datareference.dbid
-			if dbid is not None:
-				## in database
+		#### try DB
+		dbid = datareference.dbid
+		if dbid is not None:
+			## in database
+			try:
 				referent = self.getDataFromDB(dataclass, dbid, **kwargs)
-			if referent is None:
-				### try remote location
-				if dmid is not None and dmid[0] != self.location:
-					## in remote memory
-					# TODO: kwargs
-					referent = self.getRemoteData(datareference)
+				return referent
+			except:
+				pass
 
-		## if sill None, then must not exist anymore
-		if referent is None:
-			raise DataAccessError('referenced data can not be found: %s' % (datareference,))
-
-		return referent
+		## must not exist anymore
+		raise DataAccessError('referenced data can not be found: %s' % (datareference,))
 
 	def query(self, datareference):
 		# this is how socketstreamtransport server accesses this data manager
@@ -264,7 +265,7 @@ class DataManager(object):
 		return datainstance
 
 	def readFile(self, filereference):
-		filereference.read()
+		return filereference.read()
 
 	def handle(self, request):
 		if isinstance(request, Data):
@@ -273,6 +274,8 @@ class DataManager(object):
 			return self.query(request)
 		elif isinstance(request, newdict.FileReference):
 			return self.readFile(request)
+		else:
+			print 'bad request:', request
 
 datamanager = DataManager()
 
@@ -575,7 +578,6 @@ class Data(newdict.TypedDict):
 		if isinstance(value, DataReference):
 			value = value.getData(**kwargs)
 		if isinstance(value, newdict.FileReference):
-			fileref = value
 			value = value.read()
 			# This gives the option of keeping the FileReference rather
 			# than the image data, for memory vs. speed tradeoff
