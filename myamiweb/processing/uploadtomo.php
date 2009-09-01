@@ -92,7 +92,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	<B>(Optional) Original Snapshot file name with path:</B><br>
       <INPUT TYPE='text' NAME='snapshot' VALUE='$snapshot' SIZE='50'><br />\n";
 
-	$choices = array('XYZ:right-handed','XZY:right-handed','XZY:left-handed');	
+	$choices = array('XYZ:right-handed','XYZ:left-handed','XZY:right-handed','XZY:left-handed');	
 	$selector = '<select name="orientation" '
 				.'size=5 '
 				.'onchange=submit()>';
