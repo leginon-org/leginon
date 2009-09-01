@@ -159,9 +159,16 @@ class TargetTransformer(targethandler.TargetHandler):
 		else:
 			return mymatrix
 
-
-
 	def calculateMatrix(self, image1, image2):
+		## Debugging...
+		fileref = image1.special_getitem('image', dereference=False)
+		print 'IMAGE DBID', image1.dbid
+		print 'IMAGE DMID', image1.dmid
+		print 'IMAGE PATH', image1.getpath()
+		print 'IMAGE FILENAME', image1.filename()
+		print 'FILEREF PATH', fileref.path
+		print 'FILEREF FILENAME', fileref.filename
+		## End debugging
 		array1 = image1['image']
 		array2 = image2['image']
 		shape = array1.shape
