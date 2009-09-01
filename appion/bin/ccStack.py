@@ -6,6 +6,7 @@ from optparse import OptionParser
 #appion
 import apParam
 import apDisplay
+import apImagicFile
 
 #=====================
 #=====================
