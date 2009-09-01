@@ -12,6 +12,7 @@ import apParam
 import apFile
 import apDisplay
 import apDatabase
+import apSymmetry
 import appiondata
 import apChimera
 import urllib
@@ -34,6 +35,8 @@ class modelFromEMDB(appionScript.AppionScript):
 			help="Pixel size of model (in Angstroms)")
 		self.parser.add_option("-b", "--box", dest="box", type='int',
 			help="Box size of model (in Pixels)")
+		self.parser.add_option("--sym", "--symm", "--symmetry", dest="symmetry",
+			help="Symmetry id in the database", metavar="INT")
 
 	#=====================
 	def checkConflicts(self):
@@ -47,6 +50,10 @@ class modelFromEMDB(appionScript.AppionScript):
 			apDisplay.printError("specify a pixel size")
 		if self.params['box'] is None:
 			apDisplay.printError("specify a box size")
+		if self.params['symmetry'] is None:
+			#apSymmetry.printSymmetries()
+			apDisplay.printWarning("Enter a symmetry ID, e.g. --symm=19")
+			self.params['symdata'] = apSymmetry.findSymmetry(self.params['symmetry'])
 
 	#=====================
 	def setRunDir(self):
@@ -107,7 +114,6 @@ class modelFromEMDB(appionScript.AppionScript):
 
 		return outfile
 
-
 	#=====================
 	def uploadDensity(self, volfile):
 		### insert 3d volume density
@@ -116,6 +122,8 @@ class modelFromEMDB(appionScript.AppionScript):
 		densq['name'] = os.path.basename(volfile)
 		densq['hidden'] = False
 		densq['norm'] = True
+		if 'symdata' in self.params:
+			densq['symmetry'] = self.params['symdata']
 		#densq['symmetry'] = appiondata.ApSymmetryData.direct_query(25)
 		densq['pixelsize'] = self.params['apix']
 		densq['boxsize'] = self.params['box']
@@ -159,7 +167,10 @@ class modelFromEMDB(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
 		### chimera imaging
-		apChimera.renderSnapshots(mrcname, contour=1.5, zoom=1.0, sym='c1')
+		if 'symdata' in self.params:
+			apChimera.renderSnapshots(mrcname, contour=1.5, zoom=1.0, sym=self.params['symdata']['eman_name'])
+		else:
+			apChimera.renderSnapshots(mrcname, contour=1.5, zoom=1.0, sym='c1')
 
 		### upload it
 		self.uploadDensity(mrcname)
