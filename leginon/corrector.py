@@ -361,8 +361,11 @@ class Corrector(imagewatcher.ImageWatcher):
 		print 'imagecopy corrected', imagecopy['image']
 		if True:
 			## save new record to DB, including writing mrc
-			imagecopy.insert()
+			imagecopy.insert(force=True)
 		else:
 			## only save mrc
 			fullname = os.path.join(imagecopy.mkpath(), imagecopy.filename())
 			mrc.write(imagecopy['image'], fullname)
+
+		## now we should tell the acquisition node we are done
+		## because it may need to delete the original
