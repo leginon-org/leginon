@@ -23,6 +23,7 @@ try:
 	from chimera import openModels
 	from chimera.replyobj import nogui_message
 	from MeasureVolume import enclosed_volume
+	import ScaleBar.session
 except:
 	pass
 
@@ -31,7 +32,7 @@ class ChimSnapShots(object):
 	def renderVolume(self):
 		chimera.viewer.windowSize = self.imgsize
 		self.openVolumeData()
-
+		self.drawScaleBar()
 		### select proper function
 		if self.type == 'animate':
 			if self.symmetry[:4] == 'icos':
@@ -175,6 +176,37 @@ class ChimSnapShots(object):
 			time.sleep(0.2)
 		# save an image
 		chimera.printer.saveImage(path, format=self.imgformat)
+
+	# -----------------------------------------------------------------------------
+	def drawScaleBar(self, size=50):
+		"""
+		Draw a scale bar size Angstroms long
+		"""
+		scale_bar_state = {
+			'bar_length': str(size),
+			'bar_rgba': ( 0.0, 0.0, 0.0, 1.0,),
+			'bar_thickness': '2',
+			'class': 'Scale_Bar_Dialog_State',
+			'frozen_models': [ ],
+			'geometry': '%dx%d+3+3'%(self.imgsize),
+			'is_visible': False,
+			'label_rgba': ( 0.0, 0.0, 0.0, 1.0,),
+			'label_text': '# A',
+			'label_x_offset': '-10',
+			'label_y_offset': '3',
+			'model': {},
+			'move_scalebar': 0,
+			'orientation': 'horizontal',
+			'preserve_position': False,
+			'screen_x_position': '-0.7',
+			'screen_y_position': '-0.9',
+			'show_scalebar': True,
+			'version': 1,
+		}
+		try:
+			ScaleBar.session.restore_scale_bar_state(scale_bar_state)
+		except:
+			self.writeMessageToLog("Error restoring scale bar")
 
 	# -----------------------------------------------------------------------------
 	def hideDust(self, size=100):
