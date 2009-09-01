@@ -47,7 +47,7 @@ class DBDataKeeper(object):
 	def close(self):
 		self.dbd.close()
 
-	def direct_query(self, dataclass, id, readimages=True):
+	def direct_query(self, dataclass, id, readimages=False):
 		dummy = dataclass()
 		dummy.isRoot = True
 		datainfo = self.datainfo(dummy, dbid=id)
@@ -71,7 +71,7 @@ class DBDataKeeper(object):
 		except _mysql_exceptions.OperationalError, e:
 			raise DatabaseError(e.args[-1])
 
-	def query(self, idata, results=None, readimages=True, timelimit=None):
+	def query(self, idata, results=None, readimages=False, timelimit=None):
 		if self.logger is not None:
 			self.logger.info('query %s' % idata)
 		self.lock.acquire()
