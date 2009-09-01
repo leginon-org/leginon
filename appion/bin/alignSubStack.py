@@ -11,7 +11,7 @@ import shutil
 import appionScript
 import apStack
 import apDisplay
-import appionData
+import appiondata
 import apEMAN
 import apStackMeanPlot
 
@@ -50,14 +50,14 @@ class subStackScript(appionScript.AppionScript):
 		if self.params['alignid'] is None and self.params['clusterid'] is None:
 			apDisplay.printError("Please provide either --cluster-id or --align-id")
 		if self.params['alignid'] is not None and self.params['clusterid'] is not None:
-			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")		
+			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")
 
 		### get the stack ID from the other IDs
 		if self.params['alignid'] is not None:
-			self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
+			self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignid'])
 			self.params['stackid'] = self.alignstackdata['stack'].dbid
 		elif self.params['clusterid'] is not None:
-			self.clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+			self.clusterstackdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
 			self.alignstackdata = self.clusterstackdata['clusterrun']['alignstack']
 			self.params['stackid'] = self.alignstackdata['stack'].dbid
 
@@ -99,18 +99,18 @@ class subStackScript(appionScript.AppionScript):
 		if self.params['keepclasslist'] is not None:
 			includestrlist = self.params['keepclasslist'].split(",")
 			for includeitem in includestrlist:
-				includelist.append(int(includeitem.strip()))		
+				includelist.append(int(includeitem.strip()))
 		apDisplay.printMsg("Include list: "+str(includelist))
 
 		### get particles from align or cluster stack
 		apDisplay.printMsg("Querying database for particles")
 		q0 = time.time()
 		if self.params['alignid'] is not None:
-			alignpartq =  appionData.ApAlignParticlesData()
+			alignpartq =  appiondata.ApAlignParticlesData()
 			alignpartq['alignstack'] = self.alignstackdata
 			particles = alignpartq.query()
 		elif self.params['clusterid'] is not None:
-			clusterpartq = appionData.ApClusteringParticlesData()
+			clusterpartq = appiondata.ApClusteringParticlesData()
 			clusterpartq['clusterstack'] = self.clusterstackdata
 			particles = clusterpartq.query()
 		apDisplay.printMsg("Complete in "+apDisplay.timeString(time.time()-q0))
@@ -144,9 +144,9 @@ class subStackScript(appionScript.AppionScript):
 					continue
 
 
-			if self.params['minscore'] is not None: 
+			if self.params['minscore'] is not None:
 				### check score
-				if ( alignpart['score'] is not None 
+				if ( alignpart['score'] is not None
 				 and alignpart['score'] < self.params['minscore'] ):
 					excludeParticle += 1
 					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
@@ -154,7 +154,7 @@ class subStackScript(appionScript.AppionScript):
 					continue
 
 				### check spread
-				if ( alignpart['spread'] is not None 
+				if ( alignpart['spread'] is not None
 				 and alignpart['spread'] < self.params['minscore'] ):
 					excludeParticle += 1
 					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
@@ -194,11 +194,11 @@ class subStackScript(appionScript.AppionScript):
 		### get number of particles
 		numparticles = len(includeParticle)
 		if excludelist:
-			self.params['description'] += ( " ... %d particle substack with %s classes excluded" 
+			self.params['description'] += ( " ... %d particle substack with %s classes excluded"
 				% (numparticles, self.params['dropclasslist']))
 		elif includelist:
-			self.params['description'] += ( " ... %d particle substack with %s classes included" 
-				% (numparticles, self.params['keepclasslist']))	
+			self.params['description'] += ( " ... %d particle substack with %s classes included"
+				% (numparticles, self.params['keepclasslist']))
 
 		### create the new sub stack
 		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
@@ -219,4 +219,5 @@ if __name__ == "__main__":
 	subStack = subStackScript()
 	subStack.start()
 	subStack.close()
+
 

@@ -19,7 +19,7 @@ from pyami import mrc
 import leginondata
 #appion
 import appionScript
-import appionData
+import appiondata
 import apTomo
 import apImod
 import apImage
@@ -57,7 +57,7 @@ class tomoMaker(appionScript.AppionScript):
 			help="binning relative to the full tomogram, e.g. --bin=2", metavar="int")
 		self.parser.add_option("--invert", dest="invert", default=False,
 			action="store_true", help="Invert density")
-		return 
+		return
 
 	#=====================
 	def checkConflicts(self):
@@ -148,4 +148,5 @@ if __name__ == '__main__':
 	app.start()
 	app.close()
 
-	
+
+

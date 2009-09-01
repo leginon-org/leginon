@@ -17,7 +17,7 @@ import apDatabase
 import apParam
 import apFile
 import apProject
-import appionData
+import appiondata
 import apWebScript
 #leginon
 import sinedon
@@ -67,7 +67,7 @@ class AppionScript(object):
 			apDisplay.printWarning("Using split database")
 			# use a project database
 			newdbname = apProject.getAppionDBFromProjectId(self.params['projectid'])
-			sinedon.setConfig('appionData', db=newdbname)
+			sinedon.setConfig('appiondata', db=newdbname)
 			apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
 
 		### check if user wants to print help message
@@ -98,7 +98,7 @@ class AppionScript(object):
 	#=====================
 	def argumentFromParamDest(self, dest):
 		"""
-		For a given optparse destination (dest, e.g., 'runname') 
+		For a given optparse destination (dest, e.g., 'runname')
 			this will determine the command line
 			argument (e.g., -n)
 		"""
@@ -117,7 +117,7 @@ class AppionScript(object):
 	#=====================
 	def usageFromParamDest(self, dest, value):
 		"""
-		For a given optparse destination (dest, e.g., 'commit') 
+		For a given optparse destination (dest, e.g., 'commit')
 			and value (e.g., 'False') this will generate the command line
 			usage (e.g., '--no-commit')
 		"""
@@ -165,8 +165,8 @@ class AppionScript(object):
 
 	#=====================
 	def getClusterJobData(self):
-		partq = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
-		clustq = appionData.ApClusterJobData()
+		partq = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		clustq = appiondata.ApClusterJobData()
 		clustq['path'] = partq
 		clustdatas = clustq.query()
 		if not clustdatas:
@@ -196,33 +196,33 @@ class AppionScript(object):
 		Using tables to track program run parameters in a generic fashion
 		inspired by Roberto Marabini and Carlos Oscar Sanchez Sorzano from the Xmipp team/Carazo lab
 		"""
-		prognameq = appionData.ScriptProgramName()
+		prognameq = appiondata.ScriptProgramName()
 		prognameq['name'] = self.functionname
 
-		userq = appionData.ScriptUserName()
+		userq = appiondata.ScriptUserName()
 		userq['name'] = apParam.getUsername()
 
-		hostq = appionData.ScriptHostName()
+		hostq = appiondata.ScriptHostName()
 		hostq['name'] = apParam.getHostname()
 		hostq['ip'] = apParam.getHostIP()
 		hostq['system'] = apParam.getSystemName()
 		hostq['distro'] = apParam.getLinuxDistro()
 		hostq['arch'] = apParam.getMachineArch()
 
-		progrunq = appionData.ScriptProgramRun()
+		progrunq = appiondata.ScriptProgramRun()
 		progrunq['runname'] = self.params['runname']
 		progrunq['progname'] = prognameq
 		progrunq['username'] = userq
 		progrunq['hostname'] = hostq
-		progrunq['rundir'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		progrunq['rundir'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		progrunq['job'] = self.getClusterJobData()
 
 		for paramname in self.params.keys():
-			paramnameq = appionData.ScriptParamName()
+			paramnameq = appiondata.ScriptParamName()
 			paramnameq['name'] = paramname
 			paramnameq['progname'] = prognameq
 
-			paramvalueq = appionData.ScriptParamValue()
+			paramvalueq = appiondata.ScriptParamValue()
 			paramvalueq['value'] = str(self.params[paramname])
 			usage = self.usageFromParamDest(paramname, self.params[paramname])
 			#print "usage: ", usage
@@ -287,7 +287,7 @@ class AppionScript(object):
 	#=====================
 	def close(self):
 		self.onClose()
-		#a = appionData.ApPathData()
+		#a = appiondata.ApPathData()
 		#a.close()
 		loadavg = os.getloadavg()[0]
 		if loadavg > 2.0:
@@ -453,6 +453,7 @@ if __name__ == '__main__':
 	testscript.start()
 	print "close"
 	testscript.close()
+
 
 
 

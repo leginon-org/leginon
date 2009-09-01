@@ -13,7 +13,7 @@ import sinedon.data as data
 import leginondata
 #appion
 import apDisplay
-import appionData
+import appiondata
 import apDefocalPairs
 
 splitdb = True
@@ -36,7 +36,7 @@ def getAllImages(stats, params):
 	else:
 		apDisplay.printError("no files specified")
 	if imgtree is None or len(imgtree) < 1:
-		apDisplay.printError("did not find any images") 
+		apDisplay.printError("did not find any images")
 	params['session'] = imgtree[0]['session']
 	params['apix'] = getPixelSize(imgtree[0])
 	stats['imagecount']=len(imgtree)
@@ -72,11 +72,11 @@ def getImagesFromDB(session, preset):
 	imgquery['session'] = sessionq
 	imgtree = imgquery.query(readimages=False)
 	"""
-	loop through images and make data.holdimages false 	 
-	this makes it so that data.py doesn't hold images in memory 	 
+	loop through images and make data.holdimages false
+	this makes it so that data.py doesn't hold images in memory
 	solves a bug where processing quits after a dozen or so images
 	"""
-	#for img in imgtree: 	 
+	#for img in imgtree:
 		#img.holdimages=False
 	return imgtree
 
@@ -110,7 +110,7 @@ def getSessionDataFromSessionName(sessionname):
 		apDisplay.printError("could not find session, "+sessionname)
 
 def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
-	apDisplay.printMsg("Looking up session, "+ str(sessiondata.dbid)); 
+	apDisplay.printMsg("Looking up session, "+ str(sessiondata.dbid));
 	tiltq = leginondata.TiltSeriesData()
 	tiltseriesq = leginondata.TiltSeriesData(session=sessiondata,number=tiltseries)
 	tiltseriesdata = tiltseriesq.query(readimages=False,results=1)
@@ -225,22 +225,22 @@ def getSiblingImgAssessmentStatus(imgdata):
 		status = getImgAssessmentStatus(siblingimgdata)
 
 	return status
-	
+
 def insertImgAssessmentStatus(imgdata, runname="run1", assessment=None, msg=True):
 	"""
-	Insert the assessment status 
+	Insert the assessment status
 		keep = True
-		reject = False 
+		reject = False
 		unassessed = None
 	"""
 	if assessment is True or assessment is False:
-		assessrun = appionData.ApAssessmentRunData()
+		assessrun = appiondata.ApAssessmentRunData()
 		assessrun['session'] = imgdata['session']
 		#override to ALWAYS be 'run1'
 		#assessrun['name'] = runname
 		assessrun['name'] = "run1"
 
-		assessquery = appionData.ApAssessmentData()
+		assessquery = appiondata.ApAssessmentData()
 		assessquery['image'] = imgdata
 		assessquery['assessmentrun'] = assessrun
 		assessquery['selectionkeep'] = assessment
@@ -282,13 +282,13 @@ def getImgAssessmentStatus(imgdata):
 	"""
 	gets the assessment status (keep/reject) from the last assessment run
 		keep = True
-		reject = False 
+		reject = False
 		unassessed = None
 	"""
 	### this function should be modified in the future to allow for a particular assessment run
 	if imgdata is None:
 		return None
-	assessquery = appionData.ApAssessmentData()
+	assessquery = appiondata.ApAssessmentData()
 	assessquery['image'] = imgdata
 	assessdata = assessquery.query()
 
@@ -318,11 +318,11 @@ def getDarkNorm(sessionname, cameraconfig):
 		except:
 			pass
 	#print 'CAMQUERY', camquery
-	key = camkey(camquery) 
+	key = camkey(camquery)
 	if key in cache:
 		print 'using cache'
 		return cache[key]
-	
+
 	print 'querying dark,norm'
 	sessionquery = leginondata.SessionData(name=sessionname)
 	darkquery = leginondata.DarkImageData(session=sessionquery, camstate=camquery)
@@ -439,32 +439,32 @@ def checkInspectDB(imgdata):
 		return keep
 
 def isModelInDB(md5sum):
-	modelq = appionData.ApInitialModelData()
+	modelq = appiondata.ApInitialModelData()
 	modelq['md5sum'] = md5sum
 	modeld = modelq.query(results=1)
 	if modeld:
 		return True
 	return False
-	
+
 def isTomoInDB(md5sum, full=False,recfile=''):
 	abspath = os.path.abspath(recfile)
 	rundir = os.path.dirname(abspath)
 	basename = os.path.basename(abspath)
 	rootname = os.path.splitext(basename)
 	if not full:
-		tomoq = appionData.ApTomogramData(name=rootname[0])
+		tomoq = appiondata.ApTomogramData(name=rootname[0])
 		tomoq['md5sum'] = md5sum
 	else:
-		tomoq = appionData.ApFullTomogramData(name=rootname[0])
+		tomoq = appiondata.ApFullTomogramData(name=rootname[0])
 	tomod = tomoq.query(results=1)
 	if tomod:
 		tomodata = tomod[0]
 		if tomodata['path']['path'] == rundir:
 			return True
 	return False
-	
+
 def isTemplateInDB(md5sum):
-	templq = appionData.ApTemplateImageData()
+	templq = appiondata.ApTemplateImageData()
 	templq['md5sum'] = md5sum
 	templd = templq.query(results=1)
 	if templd:
@@ -472,7 +472,7 @@ def isTemplateInDB(md5sum):
 	return False
 
 def queryDirectory(path):
-	pathq = appionData.ApPathData()
+	pathq = appiondata.ApPathData()
 	pathq['path'] = os.path.abspath(path)
 	pathdata = pathq.query()
 	return pathdata
@@ -480,7 +480,8 @@ def queryDirectory(path):
 
 if __name__ == '__main__':
 	stackid = 442
-	stackdata = appionData.ApStackData.direct_query(stackid)
+	stackdata = appiondata.ApStackData.direct_query(stackid)
 	print stackdata
+
 
 

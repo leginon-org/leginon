@@ -18,7 +18,7 @@ import apEMAN
 import apProject
 from apSpider import alignment
 import spyder
-import appionData
+import appiondata
 import cPickle
 
 #=====================
@@ -52,8 +52,8 @@ class EdIterAlignScript(appionScript.AppionScript):
 			help="Radius of particle for alignment (in Angstroms)", metavar="#")
 		self.parser.add_option("-i", "--iterations", dest="numiter", type="int", default=20,
 			help="Number of ref-based classification iterations", metavar="#")
-		self.parser.add_option("-f", "--freealigns", dest="freealigns", 
-			type="int", default=3, help="Number of ref-free alignment rounds per class", 
+		self.parser.add_option("-f", "--freealigns", dest="freealigns",
+			type="int", default=3, help="Number of ref-free alignment rounds per class",
 			metavar="#")
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="Number of processor to use", metavar="ID#")
@@ -68,7 +68,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 			apDisplay.printError("run name was not defined")
 		if self.params['partrad'] is None:
 			apDisplay.printError("particle radius was not defined")
-			
+
 		### deal with particles
 		maxparticles = 150000
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
@@ -108,9 +108,9 @@ class EdIterAlignScript(appionScript.AppionScript):
 	#=====================
 	def checkRunNamePath(self):
 		### setup alignment run
-		alignrunq = appionData.ApAlignRunData()
+		alignrunq = appiondata.ApAlignRunData()
 		alignrunq['runname'] = self.params['runname']
-		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
@@ -118,15 +118,15 @@ class EdIterAlignScript(appionScript.AppionScript):
 	#=====================
 	def insertEdIterRun(self, insert=False):
 		### setup alignment run
-		alignrunq = appionData.ApAlignRunData()
+		alignrunq = appiondata.ApAlignRunData()
 		alignrunq['runname'] = self.params['runname']
-		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
 
 		### setup ed-iter run
-		editrunq = appionData.ApEdIterRunData()
+		editrunq = appiondata.ApEdIterRunData()
 		editrunq['runname'] = self.params['runname']
 		editrunq['radius'] = self.params['partrad']
 		editrunq['num_iter'] = self.params['numiter']
@@ -137,7 +137,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		editrunq['run_seconds'] = self.runtime
 
 		### finish alignment run
-		alignrunq = appionData.ApAlignRunData()
+		alignrunq = appiondata.ApAlignRunData()
 		alignrunq['editerrun'] = editrunq
 		alignrunq['hidden'] = False
 		alignrunq['bin'] = self.params['bin']
@@ -148,9 +148,9 @@ class EdIterAlignScript(appionScript.AppionScript):
 		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		### setup aligned stack
-		alignstackq = appionData.ApAlignStackData()
+		alignstackq = appiondata.ApAlignStackData()
 		alignstackq['alignrun'] = alignrunq
-		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		# stack of aligned particles
 		alignstackq['imagicfile'] = "alignstack.hed"
 		# final class averages
@@ -184,12 +184,12 @@ class EdIterAlignScript(appionScript.AppionScript):
 			for i in range(len(self.templatelist)):
 				refnum = i+1
 				templateid = self.templatelist[i]
-				refq = appionData.ApAlignReferenceData()
+				refq = appiondata.ApAlignReferenceData()
 				refq['refnum'] = refnum
 				refq['iteration'] = iternum
 				refq['template'] = apTemplate.getTemplateFromId(templateid)
 				refpath = os.path.join(self.params['rundir'], "templates")
-				refq['path'] = appionData.ApPathData(path=os.path.abspath(refpath))
+				refq['path'] = appiondata.ApPathData(path=os.path.abspath(refpath))
 				refq['alignrun'] = alignrunq
 				#refq['frc_resolution'] = #(float)
 				avgname = os.path.join(self.params['rundir'], "r%02d/avg%03d"%(iternum,refnum) )
@@ -212,7 +212,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
 		partlist = self.readApshDocFile("apshdoc.spi","apshdoc.pickle")
 		for partdict in partlist:
-			alignpartq = appionData.ApAlignParticlesData()
+			alignpartq = appiondata.ApAlignParticlesData()
 			alignpartq['ref'] = reflist[partdict['template']-1]
 			alignpartq['partnum'] = partdict['num']
 			alignpartq['alignstack'] = alignstackq
@@ -277,7 +277,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		cPickle.dump(partlist, picklef)
 		picklef.close()
 		return partlist
-		
+
 	#=====================
 	def createSpiderFile(self):
 		"""
@@ -291,7 +291,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		spiderstack = os.path.join(self.params['rundir'], "start.spi")
 		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
-		
+
 		emancmd += "apix="+str(self.stack['apix'])+" "
 		if self.params['lowpass'] > 0:
 			emancmd += "lp="+str(self.params['lowpass'])+" "
@@ -380,7 +380,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 		mrcfile = filelist[0]
-		
+
 		localclip = self.clipsize/self.params['bin']
 		emancmd  = ("proc2d templates/"+mrcfile+" "+orientref
 			+" clip="+str(localclip)+","+str(localclip)
@@ -390,7 +390,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, showcmd=False)
 
 		return orientref
-		
+
 	#=====================
 	def setupBatchFile(self, spiderstack, templatestack, orientref):
 		"""
@@ -420,7 +420,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 			if modify is True:
 				if re.match("\<pcltmpl\>", line):
 					### spider stack of particles
-					lf.write("<pcltmpl>"+spyder.fileFilter(spiderstack)+"@****** \n")	
+					lf.write("<pcltmpl>"+spyder.fileFilter(spiderstack)+"@****** \n")
 				elif re.match("\<pcllist\>", line):
 					### sequential list of particle numbers
 					lf.write("<pcllist>"+spyder.fileFilter(partsel)+"\n")
@@ -444,7 +444,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 					### number of ref-based iterations
 					lf.write("[iter]%d\n"%(self.params['numiter']))
 				elif re.match("\[alnrnds\]", line):
-					### number of ref-free subroutine iterations 
+					### number of ref-free subroutine iterations
 					lf.write("[alnrnds]%d\n"%(self.params['freealigns']))
 				elif re.match("\[mp\]", line):
 					### number of processors
@@ -454,15 +454,15 @@ class EdIterAlignScript(appionScript.AppionScript):
 					lf.write(line)
 			else:
 				lf.write(line)
-				
+
 		return localbatch
-		
+
 
 	#=====================
 	def runSpiderBatch(self, localbatch, spiderstack):
 		### set SPPROC_DIR environment variable
 		spiprocdir = os.path.join(apParam.getAppionDirectory(), "spiderbatch/")
-		
+
 		### run Iterative Classification and Alignment
 		mySpider = spyder.SpiderSession(logo=True, spiderprocdir=spiprocdir, projext=".spi", term=True, verbose=True)
 		batchheadname = localbatch.split('.')[0]
@@ -500,20 +500,20 @@ class EdIterAlignScript(appionScript.AppionScript):
 
 		#create template stack
 		templatestack = self.createTemplateStack()
-		
+
 		#create orientation reference
 		orientref = self.createOrientationReference()
 
 		###################################################################
 		aligntime = time.time()
-		
+
 		### create batch file
 		batchfilepath = self.setupBatchFile(spiderstack, templatestack, orientref)
-		
+
 		### run the spider alignment
 		apDisplay.printColor("Running iterative ref-classification and free-alignment with spider","cyan")
 		self.runSpiderBatch( batchfilepath, spiderstack )
-		
+
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 		###################################################################
@@ -521,7 +521,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		### remove unaligned spider stack
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		apFile.removeFile(spiderstack, warn=False)
-		
+
 		### check to be sure files exist
 		avgfile = os.path.join(self.params['rundir'], "alignstack.spi") #class averages
 		if not os.path.isfile(avgfile):
@@ -530,7 +530,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		### convert stacks to imagic
 		self.convertStack2Imagic("alignstack.spi")
 		self.convertStack2Imagic("avg.spi")
-		
+
 		### make alignment average in mrc format
 		emancmd = "proc2d avg.spi average.mrc average"
 		apEMAN.executeEmanCmd(emancmd)
@@ -552,4 +552,5 @@ if __name__ == "__main__":
 	edIterAlign = EdIterAlignScript(True)
 	edIterAlign.start()
 	edIterAlign.close()
+
 

@@ -10,7 +10,7 @@ import time
 import appionScript
 import apStack
 import apDisplay
-import appionData
+import appiondata
 import apRecon
 import apStackMeanPlot
 
@@ -28,14 +28,14 @@ class subStackScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		### check for missing and duplicate entries
 		if self.params['iterid'] is None:
-			apDisplay.printError("Please provide --iterid")	
+			apDisplay.printError("Please provide --iterid")
 		if self.params['description'] is None:
 			apDisplay.printError("Please provide --description")
 		if self.params['runname'] is None:
 			apDisplay.printError("Please provide --runname")
 
 		### get the stack ID from the other IDs
-		self.iterdata = appionData.ApRefinementData.direct_query(self.params['iterid'])
+		self.iterdata = appiondata.ApRefinementData.direct_query(self.params['iterid'])
 		self.params['stackid'] = apStack.getStackIdFromRecon(self.iterdata['refinementRun'].dbid)
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 
@@ -59,7 +59,7 @@ class subStackScript(appionScript.AppionScript):
 		### get particles from stack
 		apDisplay.printMsg("Querying stack particles")
 		t0 = time.time()
-		stackpartq =  appionData.ApParticleClassificationData()
+		stackpartq =  appiondata.ApParticleClassificationData()
 		stackpartq['refinement'] = self.iterdata
 		particles = stackpartq.query()
 		apDisplay.printMsg("Finished in "+apDisplay.timeString(time.time()-t0))
@@ -123,4 +123,5 @@ if __name__ == "__main__":
 	subStack = subStackScript()
 	subStack.start()
 	subStack.close()
+
 

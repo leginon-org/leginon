@@ -12,7 +12,7 @@ import apDisplay
 import appionScript
 
 
-dbconf = sinedon.getConfig('appionData')
+dbconf = sinedon.getConfig('appiondata')
 db     = MySQLdb.connect(**dbconf)
 cursor = db.cursor()
 
@@ -42,8 +42,8 @@ def getParticles(stackid):
 			+"  ON imaged.`REF|ScopeEMData|scope` = scoped.`DEF_id` \n"
 
 			+"WHERE \n"
-			+"      stpart1.`REF|ApStackData|stack` = "+str(stackid)+" \n" 
-			+"  AND stpart2.`REF|ApStackData|stack` = "+str(stackid)+" \n" 
+			+"      stpart1.`REF|ApStackData|stack` = "+str(stackid)+" \n"
+			+"  AND stpart2.`REF|ApStackData|stack` = "+str(stackid)+" \n"
 			+"ORDER BY stpart1.`particleNumber` ASC \n"
 			#+"LIMIT 21 \n"
 		)
@@ -74,7 +74,7 @@ def convertSQLtoTree(results):
 			parttree.append(partpair2)
 		except:
 			print row
-			apDisplay.printError("bad row entry")			
+			apDisplay.printError("bad row entry")
 
 	apDisplay.printMsg("Converted "+str(len(parttree))+" particles in "+apDisplay.timeString(time.time()-t0))
 	return parttree
@@ -147,7 +147,7 @@ def generateProjections(parttree):
 						pair['euler'] = part['euler']
 		### save to file
 		dataf.write(str(part)+"\n")
-		#eulerf.write("%d\t%.6f\t%.6f\t%.6f\n" % 
+		#eulerf.write("%d\t%.6f\t%.6f\t%.6f\n" %
 		#	(part['part1'], part['euler'][0], part['euler'][1], part['euler'][2])
 		### generate projection
 		if count > mult*total:
@@ -213,6 +213,7 @@ if __name__ == '__main__':
 	fakestack = fakeStackScript()
 	fakestack.start()
 	fakestack.close()
+
 
 
 

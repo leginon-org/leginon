@@ -13,7 +13,7 @@ import apEMAN
 import apFile
 import apStack
 import apParam
-import appionData
+import appiondata
 import apXmipp
 import apRecon
 import apVolume
@@ -112,15 +112,15 @@ class xmippRefineScript(appionScript.AppionScript):
         self.parser.add_option("--DoComputeResolution", dest="docomputeresolution", action="store_true",
             help="Compute resolution or not", default=True)
         self.parser.add_option("--DoLowPassFilter", dest="dolowpassfilter", action="store_true",
-            help="This lowpass filter will be applied for the generation of the next reference", default=True) 
+            help="This lowpass filter will be applied for the generation of the next reference", default=True)
         self.parser.add_option("--DontUseFscForFilter", dest="usefscforfilter", action="store_false",
-            help="Use the FSC=0.5+Constant frequency for the filtration", default=True) 
+            help="Use the FSC=0.5+Constant frequency for the filtration", default=True)
         self.parser.add_option("--ConstantToAddToFiltration", dest="constanttoaddtofiltration", type="string",
-            help="Use the FSC=0.5+Constant frequency for the filtration", default="0.1") 
+            help="Use the FSC=0.5+Constant frequency for the filtration", default="0.1")
         self.parser.add_option("--NumberOfMPIProcesses", dest="numberofmpiprocesses", type="int",
-            help="Number of MPI Processes (needs mpirun installed)", default=1) 
+            help="Number of MPI Processes (needs mpirun installed)", default=1)
         self.parser.add_option("--NumberOfThreads", dest="numberofthreads", type="int",
-            help="Number of threads for each process", default=1) 
+            help="Number of threads for each process", default=1)
 
     #=====================
     def checkConflicts(self):
@@ -148,7 +148,7 @@ class xmippRefineScript(appionScript.AppionScript):
     def start(self):
         # Locate protocol_projmatch
         protocol_projmatch=locateXmippProtocol("protocol_projmatch")
-        
+
         # Convert input images to Spider
         if os.path.exists("start.hed"):
             fnStack="start.hed";
@@ -246,7 +246,7 @@ class xmippRefineScript(appionScript.AppionScript):
         particularizeProtocol(protocol_projmatch,protocolPrm,
             os.path.join(self.params['rundir'],"protocol_projmatch.py"))
         subprocess.call("python protocol_projmatch.py",shell=True);
-        
+
         # Write the run parameters for the posterior uploading
         protocolPrm["modelid"] = self.params['modelid']
         f = open("runParameters.txt","w")
@@ -267,13 +267,13 @@ class xmippRefineScript(appionScript.AppionScript):
             subprocess.call("xmipp_operate -i ProjMatch/Iter_1/ReferenceLibrary/ref000001.xmp -mult 0 -o blank.xmp",
                 shell=True)
         else:
-            apDisplay.printError("No iteration has been performed")            
+            apDisplay.printError("No iteration has been performed")
         if fnStack=="start.img":
             os.unlink("start.img")
             os.unlink("start.hed")
         if fnRefMrc=="threed.0a.mrc":
             os.unlink("threed.0a.mrc")
-        
+
         lastIteration=""
         resfile=open("resolution.txt","w")
         for iteration in glob.glob("ProjMatch/Iter_*"):
@@ -289,7 +289,7 @@ class xmippRefineScript(appionScript.AppionScript):
             fnAux=os.path.join(iteration,"find_closest_experimental_point.txt")
             if os.path.exists(fnAux):
                 os.unlink(fnAux)
-            
+
             # Keep the class averages
             shutil.copyfile(os.path.join(iteration,"ReferenceLibrary/ref_angles.doc"),
                 os.path.join(iteration,"ref_angles.doc"))
@@ -313,12 +313,12 @@ class xmippRefineScript(appionScript.AppionScript):
             # Keep the angles
             os.rename(os.path.join(iteration,rootname+"_current_angles.doc"),
                 os.path.join(iteration,"angles.doc"))
-            
+
             # Keep the volume
             SPItoMRC(os.path.join(iteration,rootname+"_reconstruction.vol"),
                 os.path.join(iteration,"reconstruction.mrc"))
             os.unlink(os.path.join(iteration,rootname+"_reconstruction.vol"))
-            
+
             # Keep the FSC
             FSCfromXmippToEMAN(os.path.join(iteration,rootname+"_resolution.fsc"),
                 os.path.join(iteration,"fsc.txt"))
@@ -326,10 +326,10 @@ class xmippRefineScript(appionScript.AppionScript):
             res=apRecon.calcRes(os.path.join(iteration,"fsc.txt"),
                 self.params['boxSize'],self.params['pixelSize'])
             resfile.write("%s:\t%.3f\n" % (rootname,res))
-            
+
         os.unlink("blank.xmp")
         resfile.close()
-        
+
         # Link the results of the last iteration
         proc = subprocess.Popen("ln -s "+os.path.join(lastIteration,"angles.doc")+" angles.doc", shell=True)
         proc.wait()
@@ -349,3 +349,4 @@ if __name__ == "__main__":
     refine3d = xmippRefineScript()
     refine3d.start()
     refine3d.close()
+

@@ -18,7 +18,7 @@ import apSymmetry
 import apFile
 import apParam
 import apVolume
-import appionData
+import appiondata
 
 #=====================
 #=====================
@@ -49,7 +49,7 @@ class createModelScript(appionScript.AppionScript):
 		### Choices
 		self.startmethods = ( "any", "csym", "oct", "icos" )
 		self.parser.add_option("--method", dest="method",
-			help="EMAN common lines method: startIcos, startCSym, startAny, startOct", metavar="TEXT", 
+			help="EMAN common lines method: startIcos, startCSym, startAny, startOct", metavar="TEXT",
 			type="choice", choices=self.startmethods, default="any")
 
 		### Program specific parameters
@@ -81,7 +81,7 @@ class createModelScript(appionScript.AppionScript):
 
 		### get the symmetry data
 		if self.params['symm'] is None:
-			apDisplay.printError("Symmetry was not defined")			
+			apDisplay.printError("Symmetry was not defined")
 		else:
 			self.symmdata = apSymmetry.findSymmetry(self.params['symm'])
 			self.params['symm_id'] = self.symmdata.dbid
@@ -99,9 +99,9 @@ class createModelScript(appionScript.AppionScript):
 
 		### check for missing and duplicate entries
 		if self.params['clusterid'] is None:
-			apDisplay.printError("Please provide --cluster-id")	
+			apDisplay.printError("Please provide --cluster-id")
 		### get the stack ID from the other IDs
-		self.clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+		self.clusterstackdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
 		self.alignstackdata = self.clusterstackdata['clusterrun']['alignstack']
 		self.params['stackid'] = self.alignstackdata['stack'].dbid
 
@@ -123,8 +123,8 @@ class createModelScript(appionScript.AppionScript):
 	#=====================
 	def uploadDensity(self, volfile):
 		### insert 3d volume density
-		densq = appionData.Ap3dDensityData()
-		densq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
+		densq = appiondata.Ap3dDensityData()
+		densq['path'] = appiondata.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
 		densq['name'] = os.path.basename(volfile)
 		densq['hidden'] = False
 		densq['norm'] = True
@@ -179,7 +179,7 @@ class createModelScript(appionScript.AppionScript):
 			kf = open(self.params['keepfile'], "w")
 			count = 0
 			for clusternum in range(numclusters):
-				if ( (len(includelist) > 0 and clusternum in includelist) 
+				if ( (len(includelist) > 0 and clusternum in includelist)
 				 or (len(excludelist) > 0 and not clusternum in excludelist) ):
 					count+=1
 					kf.write(str(clusternum)+"\n")
@@ -218,14 +218,14 @@ class createModelScript(appionScript.AppionScript):
 		if self.params['includelist'] is not None:
 			includestrlist = self.params['includelist'].split(",")
 			for includeitem in includestrlist:
-				includelist.append(int(includeitem.strip()))		
+				includelist.append(int(includeitem.strip()))
 		apDisplay.printMsg("Include list: "+str(includelist))
 
-		apDisplay.printMsg("Querying for clustered particles")	
-		clusterpartq = appionData.ApClusteringParticlesData()
+		apDisplay.printMsg("Querying for clustered particles")
+		clusterpartq = appiondata.ApClusteringParticlesData()
 		clusterpartq['clusterstack'] = self.clusterstackdata
 		particles = clusterpartq.query()
-		apDisplay.printMsg("Sorting "+str(len(particles))+" clustered particles")	
+		apDisplay.printMsg("Sorting "+str(len(particles))+" clustered particles")
 
 		### write included particles to text file
 		includeParticle = []
@@ -290,7 +290,7 @@ class createModelScript(appionScript.AppionScript):
 
 		if self.params['method'] != 'any':
 			if self.params['numkeep'] is not None and numimages/10 < int(self.params['numkeep']):
-				apDisplay.printWarning("particle number of "+ self.params['numkeep'] 
+				apDisplay.printWarning("particle number of "+ self.params['numkeep']
 					+ " is greater than 10% of the number of selected classes")
 			elif self.params['numkeep'] is None:
 				self.params['numkeep'] = int(math.floor(numimages/20.0))+1
@@ -367,3 +367,4 @@ if __name__ == '__main__':
 	createModel = createModelScript()
 	createModel.start()
 	createModel.close()
+

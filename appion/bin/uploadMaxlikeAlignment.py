@@ -20,7 +20,7 @@ import apImage
 import apEMAN
 import apImagicFile
 from apSpider import operations
-import appionData
+import appiondata
 import apProject
 from pyami import spider
 
@@ -48,7 +48,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def setRunDir(self):
 		if self.params["jobid"] is not None:
-			jobdata = appionData.ApMaxLikeJobData.direct_query(self.params["jobid"])
+			jobdata = appiondata.ApMaxLikeJobData.direct_query(self.params["jobid"])
 			self.params['rundir'] = jobdata['path']['path']
 		else:
 			self.params['rundir'] = os.path.abspath(".")
@@ -68,7 +68,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def getTimestamp(self):
 		if self.params["jobid"] is not None:
-			jobdata = appionData.ApMaxLikeJobData.direct_query(self.params["jobid"])
+			jobdata = appiondata.ApMaxLikeJobData.direct_query(self.params["jobid"])
 			timestamp = jobdata['timestamp']
 		elif timestamp is None:
 			wildcard = "part*_*.*"
@@ -241,9 +241,9 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 	#=====================
 	def getMaxLikeJob(self, runparams):
-		maxjobq = appionData.ApMaxLikeJobData()
+		maxjobq = appiondata.ApMaxLikeJobData()
 		maxjobq['runname'] = runparams['runname']
-		maxjobq['path'] = appionData.ApPathData(path=os.path.abspath(runparams['rundir']))
+		maxjobq['path'] = appiondata.ApPathData(path=os.path.abspath(runparams['rundir']))
 		maxjobq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
 		maxjobq['timestamp'] = self.params['timestamp']
 		maxjobdata = maxjobq.query(results=1)
@@ -256,15 +256,15 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		apDisplay.printMsg("Inserting MaxLike Run into DB")
 
 		### setup alignment run
-		alignrunq = appionData.ApAlignRunData()
+		alignrunq = appiondata.ApAlignRunData()
 		alignrunq['runname'] = runparams['runname']
-		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
 
 		### setup max like run
-		maxlikeq = appionData.ApMaxLikeRunData()
+		maxlikeq = appiondata.ApMaxLikeRunData()
 		maxlikeq['runname'] = runparams['runname']
 		maxlikeq['run_seconds'] = runparams['runtime']
 		#maxlikeq['mask_diam'] = 2.0*runparams['maskrad']
@@ -285,12 +285,12 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
 
 		### setup alignment stack
-		alignstackq = appionData.ApAlignStackData()
+		alignstackq = appiondata.ApAlignStackData()
 		alignstackq['imagicfile'] = "alignstack.hed"
 		alignstackq['avgmrcfile'] = "average.mrc"
 		alignstackq['refstackfile'] = "part"+self.params['timestamp']+"_average.hed"
 		alignstackq['iteration'] = self.lastiter
-		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		alignstackq['alignrun'] = alignrunq
 		### check to make sure files exist
 		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
@@ -329,13 +329,13 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 				sys.stderr.write(".")
 
 			### setup reference
-			refq = appionData.ApAlignReferenceData()
+			refq = appiondata.ApAlignReferenceData()
 			refq['refnum'] = partdict['refnum']
 			refq['iteration'] = self.lastiter
 			refsearch = "part"+self.params['timestamp']+"_ref*"+str(partdict['refnum'])+"*"
 			refbase = os.path.splitext(glob.glob(refsearch)[0])[0]
 			refq['mrcfile'] = refbase+".mrc"
-			refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+			refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 			refq['alignrun'] = self.alignstackdata['alignrun']
 			reffile = os.path.join(self.params['rundir'], refq['mrcfile'])
 			if not os.path.isfile(reffile):
@@ -345,7 +345,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 				apDisplay.printError("could not find reference file: "+reffile)
 
 			### setup particle
-			alignpartq = appionData.ApAlignParticlesData()
+			alignpartq = appiondata.ApAlignParticlesData()
 			alignpartq['partnum'] = partdict['partnum']
 			alignpartq['alignstack'] = self.alignstackdata
 			stackpartdata = apStack.getStackParticle(stackid, partdict['partnum'])
@@ -413,7 +413,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 					apImagicFile.writeImagic(alignstack, stackname, msg=False)
 					perpart = (time.time()-t0)/imgnum
 					apDisplay.printColor("particle %d of %d :: %s per part :: %s remain"%
-						(imgnum+1, numpart, apDisplay.timeString(perpart), 
+						(imgnum+1, numpart, apDisplay.timeString(perpart),
 						apDisplay.timeString(perpart*(numpart-imgnum))), "blue")
 				alignstack = []
 				imagesdict = apImagicFile.readImagic(origstackfile, first=imgnum+1, last=imgnum+partperiter, msg=False)
@@ -425,7 +425,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			if partdict['partnum'] != partnum:
 				apDisplay.printError("particle shifting "+str(partnum)+" != "+str(partdict))
 			xyshift = (partdict['xshift'], partdict['yshift'])
-			alignpartimg = apImage.xmippTransform(partimg, rot=partdict['inplane'], 
+			alignpartimg = apImage.xmippTransform(partimg, rot=partdict['inplane'],
 				shift=xyshift, mirror=partdict['mirror'])
 			alignstack.append(alignpartimg)
 			imgnum += 1
@@ -497,7 +497,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 				apDisplay.printError("sorting error in reflist, see neil")
 			refarray = spider.read(fname)
 			xyshift = (refdict['xshift'], refdict['yshift'])
-			alignrefarray = apImage.xmippTransform(refarray, rot=refdict['inplane'], 
+			alignrefarray = apImage.xmippTransform(refarray, rot=refdict['inplane'],
 				shift=xyshift, mirror=refdict['mirror'])
 			stack.append(alignrefarray)
 		stackarray = numpy.asarray(stack, dtype=numpy.float32)
@@ -538,7 +538,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 		### align references
 		self.alignReferences(runparams)
-		
+
 		### create an aligned stack
 		self.createAlignedReferenceStack()
 
@@ -567,5 +567,6 @@ if __name__ == "__main__":
 	maxLike = UploadMaxLikeScript(True)
 	maxLike.start()
 	maxLike.close()
+
 
 

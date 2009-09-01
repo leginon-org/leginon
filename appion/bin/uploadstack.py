@@ -14,7 +14,7 @@ import apStack
 import apProject
 import apDisplay
 import apDatabase
-import appionData
+import appiondata
 #leginon
 #import leginondata
 import project
@@ -188,20 +188,20 @@ class UploadStack(appionScript.AppionScript):
 	def createStackData(self):
 		apDisplay.printColor("Starting upload of stack", "blue")
 
-		pathq = appionData.ApPathData()
+		pathq = appiondata.ApPathData()
 		pathq['path'] = self.params['rundir']
 
-		manq = appionData.ApManualParamsData()
+		manq = appiondata.ApManualParamsData()
 		manq['diam'] = self.params['diameter']
 
-		selectq = appionData.ApSelectionRunData()
+		selectq = appiondata.ApSelectionRunData()
 		selectq['name'] = 'fakestack_'+self.params['runname']
 		selectq['hidden'] = True
 		selectq['path'] = pathq
 		selectq['session'] = self.sessiondata
 		selectq['manparams'] = manq
 
-		stackq = appionData.ApStackData()
+		stackq = appiondata.ApStackData()
 		stackq['name'] = "start.hed"
 		stackq['path'] = pathq
 		stackq['description'] = self.params['description']
@@ -210,7 +210,7 @@ class UploadStack(appionScript.AppionScript):
 		stackq['centered'] = False
 		stackq['project|projects|project'] = self.params['projectid']
 
-		stackparamq = appionData.ApStackParamsData()
+		stackparamq = appiondata.ApStackParamsData()
 		stackparamq['boxSize'] = self.boxsize
 		stackparamq['bin'] = 1
 		stackparamq['phaseFlipped'] = self.params['ctfcorrect']
@@ -221,13 +221,13 @@ class UploadStack(appionScript.AppionScript):
 		stackparamq['lowpass'] = 0
 		stackparamq['highpass'] = 0
 
-		stackrunq = appionData.ApStackRunData()
+		stackrunq = appiondata.ApStackRunData()
 		stackrunq['stackRunName'] = self.params['runname']
 		stackrunq['stackParams'] = stackparamq
 		stackrunq['selectionrun'] = selectq
 		stackrunq['session'] = self.sessiondata
 
-		runsinstackq = appionData.ApRunsInStackData()
+		runsinstackq = appiondata.ApRunsInStackData()
 		runsinstackq['stack'] = stackq
 		runsinstackq['stackRun'] = stackrunq
 		runsinstackq['project|projects|project'] = self.params['projectid']
@@ -240,14 +240,14 @@ class UploadStack(appionScript.AppionScript):
 		for i in range(self.numpart):
 			if i % 100 == 0:
 				sys.stderr.write(".")
-			partq = appionData.ApParticleData()
+			partq = appiondata.ApParticleData()
 			partq['image'] = None  #We have no image, see if this works???
 			partq['selectionrun'] = selectq
 			partq['xcoord'] = int(i%1000)
 			partq['ycoord'] = int(i/1000)
 			partq['diameter'] = self.params['diameter']
 
-			stackpartq = appionData.ApStackParticlesData()
+			stackpartq = appiondata.ApStackParticlesData()
 			stackpartq['particleNumber'] = i+1
 			stackpartq['stack'] = stackq
 			stackpartq['stackRun'] = stackrunq
@@ -268,6 +268,7 @@ if __name__ == '__main__':
 	uploadStack = UploadStack()
 	uploadStack.start()
 	uploadStack.close()
+
 
 
 

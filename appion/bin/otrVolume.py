@@ -13,7 +13,7 @@ from scipy import ndimage
 import appionScript
 import apStack
 import apDisplay
-import appionData
+import appiondata
 import apEMAN
 import apFile
 import apRecon
@@ -46,9 +46,9 @@ class otrVolumeScript(appionScript.AppionScript):
 			help="clustering stack id", metavar="ID")
 		self.parser.add_option("--align-id", dest="alignid", type="int",
 			help="alignment stack id", metavar="ID")
-		self.parser.add_option("--num-iters", dest="numiters", type="int", default=4, 
+		self.parser.add_option("--num-iters", dest="numiters", type="int", default=4,
 			help="Number of tilted image shift refinement iterations", metavar="#")
-		self.parser.add_option("--refine-iters", dest="refineiters", type="int", default=4, 
+		self.parser.add_option("--refine-iters", dest="refineiters", type="int", default=4,
 			help="Number of euler angle refinement iterations", metavar="#")
 		self.parser.add_option("--mask-rad", dest="radius", type="int",
 			help="Particle mask radius (in pixels)", metavar="ID")
@@ -82,7 +82,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		### choices
 		self.mirrormodes = ( "all", "yes", "no" )
 		self.parser.add_option("--mirror", dest="mirror",
-			help="Mirror mode", metavar="MODE", 
+			help="Mirror mode", metavar="MODE",
 			type="choice", choices=self.mirrormodes, default="all" )
 
 	#=====================
@@ -91,7 +91,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		if self.params['classnums'] is None:
 			apDisplay.printError("class number was not defined")
 		rawclasslist = self.params['classnums'].split(",")
-		self.classlist = []	
+		self.classlist = []
 		for cnum in rawclasslist:
 			try:
 				self.classlist.append(int(cnum))
@@ -102,14 +102,14 @@ class otrVolumeScript(appionScript.AppionScript):
 		if self.params['alignid'] is None and self.params['clusterid'] is None:
 			apDisplay.printError("Please provide either --cluster-id or --align-id")
 		if self.params['alignid'] is not None and self.params['clusterid'] is not None:
-			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")		
+			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")
 
 		### get the stack ID from the other IDs
 		if self.params['alignid'] is not None:
-			self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
+			self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignid'])
 			self.params['notstackid'] = self.alignstackdata['stack'].dbid
 		elif self.params['clusterid'] is not None:
-			self.clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+			self.clusterstackdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
 			self.alignstackdata = self.clusterstackdata['clusterrun']['alignstack']
 			self.params['notstackid'] = self.alignstackdata['stack'].dbid
 
@@ -123,10 +123,10 @@ class otrVolumeScript(appionScript.AppionScript):
 			apDisplay.printError("particle mask radius was not defined")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description")
-		
+
 		boxsize = self.getBoxSize()
 		if self.params['radius']*2 > boxsize-2:
-			apDisplay.printError("particle radius is too big for stack boxsize")	
+			apDisplay.printError("particle radius is too big for stack boxsize")
 
 		if self.params['notstackid'] == self.params['tiltstackid']:
 			apDisplay.printError("tilt stack and align stack are the same: %d vs. %d"%
@@ -148,8 +148,8 @@ class otrVolumeScript(appionScript.AppionScript):
 
 
 		### check if path exists in db already
-		otrrunq = appionData.ApOtrRunData()
-		otrrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		otrrunq = appiondata.ApOtrRunData()
+		otrrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		otrdata = otrrunq.query()
 		if otrdata:
 			apDisplay.printError("otr data already exists in database")
@@ -158,9 +158,9 @@ class otrVolumeScript(appionScript.AppionScript):
 	def getParticleNoRefInPlaneRotation(self, stackpartdata):
 		notstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['tiltstackid'],
 			stackpartdata['particleNumber'], self.params['notstackid'])
-		classpartq = appionData.ApNoRefClassParticlesData()
+		classpartq = appiondata.ApNoRefClassParticlesData()
 		classpartq['classRun'] = self.norefclassdata
-		norefpartq = appionData.ApNoRefAlignParticlesData()
+		norefpartq = appiondata.ApNoRefAlignParticlesData()
 		norefpartq['particle'] = notstackpartdata
 		classpartq['noref_particle'] = norefpartq
 		classpartdatas = classpartq.query(results=1)
@@ -227,8 +227,8 @@ class otrVolumeScript(appionScript.AppionScript):
 		t0 = time.time()
 		if self.params['clusterid'] is not None:
 			### method 1: get particles from clustering data
-			clusterpartq = appionData.ApClusteringParticlesData()
-			clusterpartq['clusterstack'] = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+			clusterpartq = appiondata.ApClusteringParticlesData()
+			clusterpartq['clusterstack'] = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
 			clusterpartdatas = clusterpartq.query()
 			apDisplay.printMsg("Sorting "+str(len(clusterpartdatas))+" clustered particles")
 
@@ -241,14 +241,14 @@ class otrVolumeScript(appionScript.AppionScript):
 						apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
 				#write to text file
 				clustnum = clustpart['refnum']-1
-				if ( self.params['minscore'] is not None 
-				 and clustpart['alignparticle']['score'] is not None 
+				if ( self.params['minscore'] is not None
+				 and clustpart['alignparticle']['score'] is not None
 				 and clustpart['alignparticle']['score'] < self.params['minscore'] ):
 					badscore += 1
 					continue
 				if clustnum == cnum:
 					notstackpartnum = clustpart['alignparticle']['stackpart']['particleNumber']
-					tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
+					tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'],
 						notstackpartnum, self.params['tiltstackid'])
 					if tiltstackpartdata is None:
 						nopairParticle += 1
@@ -268,7 +268,7 @@ class otrVolumeScript(appionScript.AppionScript):
 					excludeParticle += 1
 		else:
 			### method 2: get particles from alignment data
-			alignpartq = appionData.ApAlignParticlesData()
+			alignpartq = appiondata.ApAlignParticlesData()
 			alignpartq['alignstack'] = self.alignstackdata
 			alignpartdatas = alignpartq.query()
 			apDisplay.printMsg("Sorting "+str(len(alignpartdatas))+" aligned particles")
@@ -282,14 +282,14 @@ class otrVolumeScript(appionScript.AppionScript):
 						apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
 				#write to text file
 				alignnum = alignpart['ref']['refnum']-1
-				if ( self.params['minscore'] is not None 
-				 and alignpart['score'] is not None 
+				if ( self.params['minscore'] is not None
+				 and alignpart['score'] is not None
 				 and alignpart['score'] < self.params['minscore'] ):
 					badscore += 1
 					continue
 				if alignnum == cnum:
 					notstackpartnum = alignpart['stackpart']['particleNumber']
-					tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
+					tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'],
 						notstackpartnum, self.params['tiltstackid'])
 					if tiltstackpartdata is None:
 						nopairParticle += 1
@@ -328,13 +328,13 @@ class otrVolumeScript(appionScript.AppionScript):
 		partid = tiltstackpartdata.dbid
 		if partid in self.rotmirrorcache:
 			### use cached value
-			return self.rotmirrorcache[partid] 
+			return self.rotmirrorcache[partid]
 
 		partnum = tiltstackpartdata['particleNumber']
-		notstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['tiltstackid'], 
+		notstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['tiltstackid'],
 			partnum, self.params['notstackid'])
 
-		alignpartq = appionData.ApAlignParticlesData()
+		alignpartq = appiondata.ApAlignParticlesData()
 		alignpartq['stackpart'] = notstackpartdata
 		alignpartq['alignstack'] = self.alignstackdata
 		alignpartdatas = alignpartq.query()
@@ -344,21 +344,21 @@ class otrVolumeScript(appionScript.AppionScript):
 		mirror = alignpartdatas[0]['mirror']
 		self.rotmirrorcache[partid] = (inplane, mirror)
 		return inplane, mirror
-		
+
 	#=====================
 	def insertOtrRun(self, volfile):
 		### setup resolutions
-		fscresq = appionData.ApResolutionData()
+		fscresq = appiondata.ApResolutionData()
 		fscresq['type'] = "fsc"
 		fscresq['half'] = self.fscresolution
 		fscresq['fscfile'] = "fscdata"+self.timestamp+".fsc"
-		rmeasureq = appionData.ApResolutionData()
+		rmeasureq = appiondata.ApResolutionData()
 		rmeasureq['type'] = "rmeasure"
 		rmeasureq['half'] = self.rmeasureresolution
 		rmeasureq['fscfile'] = None
 
 		### insert rct run data
-		otrrunq = appionData.ApOtrRunData()
+		otrrunq = appiondata.ApOtrRunData()
 		otrrunq['runname']    = self.params['runname']
 		tempstr = ""
 		for cnum in self.classlist:
@@ -372,7 +372,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		otrrunq['highpasspart'] = self.params['highpasspart']
 		otrrunq['median'] = self.params['median']
 		otrrunq['description'] = self.params['description']
-		otrrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		otrrunq['path']  = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		otrrunq['alignstack'] = self.alignstackdata
 		otrrunq['tiltstack']  = apStack.getOnlyStackData(self.params['tiltstackid'])
 		otrrunq['numpart']  = self.numpart
@@ -382,13 +382,13 @@ class otrVolumeScript(appionScript.AppionScript):
 			otrrunq.insert()
 
 		### insert 3d volume density
-		densq = appionData.Ap3dDensityData()
+		densq = appiondata.Ap3dDensityData()
 		densq['otrrun'] = otrrunq
-		densq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
+		densq['path'] = appiondata.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
 		densq['name'] = os.path.basename(volfile)
 		densq['hidden'] = False
 		densq['norm'] = True
-		densq['symmetry'] = appionData.ApSymmetryData.direct_query(25)
+		densq['symmetry'] = appiondata.ApSymmetryData.direct_query(25)
 		densq['pixelsize'] = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
 		densq['boxsize'] = self.getBoxSize()
 		densq['lowpass'] = self.params['lowpassvol']
@@ -410,7 +410,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		### set values
 		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
 		boxsize = self.getBoxSize()
-		
+
 		volfilename = os.path.splitext(spivolfile)[0]
 		rawspifile = volfilename + "-raw.spi"
 		mrcvolfile = volfilename + ".mrc"
@@ -448,7 +448,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		### image with chimera
 		if self.params['skipchimera'] is False:
 			apChimera.renderSnapshots(mrcvolfile, self.params['contour'], self.params['zoom'], 'c1')
-			animationthread = threading.Thread(target=apChimera.renderAnimation, 
+			animationthread = threading.Thread(target=apChimera.renderAnimation,
 				args=(mrcvolfile, self.params['contour'], self.params['zoom'], 'c1'))
 			animationthread.setDaemon(1)
 			animationthread.start()
@@ -505,7 +505,7 @@ class otrVolumeScript(appionScript.AppionScript):
 			### Hack for OTR to work ( bad tilt axis angle from tilt picker )
 			tiltrot = -7.0
 			notrot = -7.0
-			
+
 			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
 			totrot = -1.0*(notrot + inplane)
 			if mirror is True:
@@ -614,11 +614,11 @@ class otrVolumeScript(appionScript.AppionScript):
 			rotshiftline = operations.spiderOutLine(key, [rot, 1.00, cumX, cumY])
 			rotshiftfile.write(rotshiftline)
 			count+=1
-			
+
 			if (count%20) == 0:
 				apDisplay.printColor(str(numpart-count)+" particles left", "cyan")
 				apDisplay.printColor("Estimated time left is "+apDisplay.timeString(((time.time()-starttime)/count)*(numpart-count)), "cyan")
-			
+
 		apDisplay.printColor("finished rotating and shifting particles "+apDisplay.timeString(time.time()-starttime), "cyan")
 
 		neweulerfile.close()
@@ -853,13 +853,13 @@ class otrVolumeScript(appionScript.AppionScript):
 	#=====================
 	def runEoTest(self, corrSelectOdd, corrSelectEven, cnum, apshstack, apsheuler, iternum):
 
-				
+
 		apshOddVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Odd-%03d.spi"%(iternum))
 		apshEvenVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Even-%03d.spi"%(iternum))
-		
+
 		self.APSHbackProject(apshstack, apsheuler, apshOddVolfile, cnum, corrSelectOdd)
 		self.APSHbackProject(apshstack, apsheuler, apshEvenVolfile, cnum, corrSelectEven)
-		
+
 		fscout = os.path.join(self.params['rundir'], str(cnum), "FSCout-%03d.spi"%(iternum))
 		backproject.calcFSC(apshOddVolfile, apshEvenVolfile, fscout)
 
@@ -878,7 +878,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		boxsize = self.getBoxSize()
 		self.fscresolution = apRecon.getResolutionFromFSCFile(fscfile, boxsize, apix, msg=True)
 		apDisplay.printColor( ("Final FSC resolution: %.5f" % (self.fscresolution)), "cyan")
-		
+
 		return fscout
 
 	#=====================
@@ -911,7 +911,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		### get stack data
 		notstackdata = apStack.getOnlyStackData(self.params['notstackid'])
 		tiltstackdata = apStack.getOnlyStackData(self.params['tiltstackid'])
-		
+
 		for cnum in self.classlist:
 
 			print "\n"
@@ -919,7 +919,7 @@ class otrVolumeScript(appionScript.AppionScript):
 			apDisplay.printMsg("Processing stack of class "+str(cnum)+"")
 			apDisplay.printMsg("###########################")
 			print "\n"
-			
+
 			### get good particle numbers
 			includeParticle, tiltParticlesData = self.getGoodAlignParticles(cnum)
 			self.numpart = len(includeParticle)
@@ -1000,7 +1000,7 @@ class otrVolumeScript(appionScript.AppionScript):
 
 			for j in range(self.params['refineiters']):
 				iternum = j+1
-				appionData.ApPathData.direct_query(1)
+				appiondata.ApPathData.direct_query(1)
 				apDisplay.printMsg("Starting projection-matching refinement/XMIPP iteration "+str(iternum))
 
 				boxsize = self.getBoxSize()
@@ -1029,15 +1029,15 @@ class otrVolumeScript(appionScript.AppionScript):
 				backproject.centerVolume(apshVolfile, apshVolFileCentered)
 
 				### calculate FSC
-				
+
 				### generate odd and even select files for FSC calculation
 				corrSelectOdd, corrSelectEven = self.splitOddEven(cnum, corrSelect, iternum)
 				fscout = self.runEoTest(corrSelectOdd, corrSelectEven, cnum, apshstack, apsheuler, iternum)
 				self.runRmeasure(apshVolFileCentered)
-				
+
 				### filter volume
 				backproject.butterworthFscLP(apshVolFileCentered, fscout)
-	
+
 				### reset file names for next round
 				volfile = apshVolFileCentered
 				eulerfile = apsheuler
@@ -1048,7 +1048,7 @@ class otrVolumeScript(appionScript.AppionScript):
 				apDisplay.printMsg("Done with iteration "+str(j+1)+"")
 				apDisplay.printMsg("###########################")
 				print "\n"
-		
+
 		#if len(self.classlist) > 1:
 			#get a list of all unique combinations of volumes
 		#	pairlist = self.computeClassVolPair()
@@ -1061,4 +1061,5 @@ if __name__ == "__main__":
 	otrVolume = otrVolumeScript()
 	otrVolume.start()
 	otrVolume.close()
+
 

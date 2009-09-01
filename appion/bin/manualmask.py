@@ -7,7 +7,7 @@ import time
 import apImage
 import manualpicker
 #import subprocess
-import appionData
+import appiondata
 import apParticle
 import apDatabase
 import apParam
@@ -56,7 +56,7 @@ class ManualMaskMakerPanel(manualpicker.ManualPickerPanel):
 
 class MaskApp(manualpicker.PickerApp):
 	#def __init__(self,  shape='+', size=16, mask=True):
-	def __init__(self): 
+	def __init__(self):
 		manualpicker.PickerApp.__init__(self, shape='+', size=16, mask=True)
 
 	def OnInit(self):
@@ -149,16 +149,16 @@ class MaskApp(manualpicker.PickerApp):
 			clist.reverse()
 			return tuple(clist)
 		vertices = map(reversexy,vertices)
-		
+
 		polygonimg = polygon.filledPolygon(self.panel.imagedata.shape,vertices)
 		type(polygonimg)
 		self.panel.maskimg = self.panel.maskimg + polygonimg
-	
+
 		overlay = apMask.overlayMask(self.panel.image,self.panel.maskimg)
 		self.panel.setImage(overlay.astype(numpy.float32))
-		
+
 		self.panel.setTargets('Region to Remove', [])
-		
+
 	def onNext(self, evt):
 		#targets = self.panel.getTargets('Select Particles')
 		#for target in targets:
@@ -203,13 +203,13 @@ class manualPicker(filterLoop.FilterLoop):
 			apFindEM.processAndSaveImage(imgdata, params=self.params)
 		self.runManualPicker(imgdata)
 
-	def commitToDatabase(self,imgdata):		
+	def commitToDatabase(self,imgdata):
 		sessiondata = imgdata['session']
 		rundir = self.params['rundir']
 		maskname = self.params['runname']
 		assessname = self.params['assessname']
 		bin = self.params['bin']
-		maskdir=os.path.join(rundir,"masks")	
+		maskdir=os.path.join(rundir,"masks")
 		maskrundata,maskparamsdata = apMask.getMaskParamsByRunName(maskname,sessiondata)
 		if not maskrundata:
 			apMask.insertManualMaskRun(sessiondata,rundir,maskname,bin)
@@ -228,12 +228,12 @@ class manualPicker(filterLoop.FilterLoop):
 		maskfilename = imgdata['filename']+'_mask.png'
 		offset=1
 		for l1 in range(0,len(infos)):
-		
+
 			l=l1+offset
 			info=infos[l]
 			info.append(l)
 			regiondata= apMask.insertMaskRegion(maskrundata,imgdata,info)
-		apImage.arrayMaskToPngAlpha(mask, os.path.join(maskdir,maskfilename))		
+		apImage.arrayMaskToPngAlpha(mask, os.path.join(maskdir,maskfilename))
 		allregiondata = apMask.getMaskRegions(maskrundata,imgdata)
 		for regiondata in allregiondata:
 			apMask.insertMaskAssessment(massessrundata,regiondata,1)
@@ -304,7 +304,7 @@ class manualPicker(filterLoop.FilterLoop):
 		self.assessold = apDatabase.checkInspectDB(imgdata)
 		self.assess = self.assessold
 		self.app.setAssessStatus()
-					
+
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
 		imgpath = os.path.join(self.params['rundir'],imgname)
@@ -328,6 +328,7 @@ class manualPicker(filterLoop.FilterLoop):
 if __name__ == '__main__':
 	imgLoop = manualPicker()
 	imgLoop.run()
+
 
 
 

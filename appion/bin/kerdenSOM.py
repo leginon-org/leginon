@@ -16,7 +16,7 @@ import subprocess
 import appionScript
 import apXmipp
 import apDisplay
-import appionData
+import appiondata
 import apEMAN
 import apFile
 import apProject
@@ -30,19 +30,19 @@ import apImage
 class kerdenSOMScript(appionScript.AppionScript):
 	#======================
 	def setupParserOptions(self):
-		self.parser.add_option("-a", "--alignid", dest="alignstackid", type="int", 
+		self.parser.add_option("-a", "--alignid", dest="alignstackid", type="int",
 			help="Alignment stack id", metavar="#")
-		self.parser.add_option("-m", "--maskrad", dest="maskrad", type="float", 
+		self.parser.add_option("-m", "--maskrad", dest="maskrad", type="float",
 			help="Mask radius in Angstroms", metavar="#")
-		self.parser.add_option("-x", "--xdim", dest="xdim", type="int", default=4, 
+		self.parser.add_option("-x", "--xdim", dest="xdim", type="int", default=4,
 			help="X dimension", metavar="#")
 		self.parser.add_option("-y", "--ydim", dest="ydim", type="int", default=3,
 			help="Y dimension", metavar="#")
-		self.parser.add_option("--numpart", dest="numpart", type="int", 
+		self.parser.add_option("--numpart", dest="numpart", type="int",
 			help="Number of particles, default all in stack", metavar="#")
 		self.convergemodes = ( "normal", "fast", "slow" )
 		self.parser.add_option("--converge", dest="converge",
-			help="Convergence criteria mode", metavar="MODE", 
+			help="Convergence criteria mode", metavar="MODE",
 			type="choice", choices=self.convergemodes, default="normal" )
 
 	#======================
@@ -50,14 +50,14 @@ class kerdenSOMScript(appionScript.AppionScript):
 		if self.params['alignstackid'] is None:
 			apDisplay.printError("Please enter an aligned stack id, e.g. --alignstackid=4")
 		if self.params['numpart'] is None:
-			alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+			alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 			self.params['numpart'] = alignstackdata['num_particles']
 		if self.params['xdim'] > 16 or self.params['xdim'] > 16:
 			apDisplay.printError("Dimensions must be less than 15")
 
 	#======================
 	def setRunDir(self):
-		self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		path = self.alignstackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, ".."))
 		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
@@ -66,12 +66,12 @@ class kerdenSOMScript(appionScript.AppionScript):
 	def insertKerDenSOM(self):
 		### Preliminary data
 		projectid = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
-		alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		numclass = self.params['xdim']*self.params['ydim']
-		pathdata = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		pathdata = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 
 		### KerDen SOM Params object
-		kerdenq = appionData.ApKerDenSOMParamsData()
+		kerdenq = appiondata.ApKerDenSOMParamsData()
 		kerdenq['mask_diam'] = 2.0*self.params['maskrad']
 		kerdenq['x_dimension'] = self.params['xdim']
 		kerdenq['y_dimension'] = self.params['ydim']
@@ -79,7 +79,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 		kerdenq['run_seconds'] = time.time()-self.t0
 
 		### Align Analysis Run object
-		analysisq = appionData.ApAlignAnalysisRunData()
+		analysisq = appiondata.ApAlignAnalysisRunData()
 		analysisq['runname'] = self.params['runname']
 		analysisq['path'] = pathdata
 		analysisq['description'] = self.params['description']
@@ -90,7 +90,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 		#analysisq['kerdenparams'] = kerdenq
 
 		### Clustering Run object
-		clusterrunq = appionData.ApClusteringRunData()
+		clusterrunq = appiondata.ApClusteringRunData()
 		clusterrunq['runname'] = self.params['runname']
 		clusterrunq['description'] = self.params['description']
 		clusterrunq['boxsize'] = alignstackdata['boxsize']
@@ -102,7 +102,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 		clusterrunq['kerdenparams'] = kerdenq
 
 		### Clustering Stack object
-		clusterstackq = appionData.ApClusteringStackData()
+		clusterstackq = appiondata.ApClusteringStackData()
 		clusterstackq['avg_imagicfile'] = "kerdenstack"+self.timestamp+".hed"
 		clusterstackq['num_classes'] = numclass
 		clusterstackq['clusterrun'] = clusterrunq
@@ -121,7 +121,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 			partlist = self.readClassDocFile(classdocfile)
 
 			### Clustering Particle object
-			clusterrefq = appionData.ApClusteringReferenceData()
+			clusterrefq = appiondata.ApClusteringReferenceData()
 			clusterrefq['refnum'] = classnum
 			clusterrefq['avg_mrcfile'] = classroot+".mrc"
 			clusterrefq['clusterrun'] = clusterrunq
@@ -135,7 +135,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 				alignpartdata = self.getAlignParticleData(partnum, alignstackdata)
 
 				### Clustering Particle objects
-				clusterpartq = appionData.ApClusteringParticlesData()
+				clusterpartq = appiondata.ApClusteringParticlesData()
 				clusterpartq['clusterstack'] = clusterstackq
 				clusterpartq['alignparticle'] = alignpartdata
 				clusterpartq['partnum'] = partnum
@@ -148,7 +148,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 
 	#=====================
 	def getAlignParticleData(self, partnum, alignstackdata):
-		alignpartq = appionData.ApAlignParticlesData()
+		alignpartq = appiondata.ApAlignParticlesData()
 		alignpartq['alignstack'] = alignstackdata
 		alignpartq['partnum'] = partnum
 		alignparts = alignpartq.query(results=1)
@@ -345,7 +345,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 
 	#======================
 	def start(self):
-		aligndata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		aligndata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		boxsize = aligndata['boxsize']
 		apix = aligndata['pixelsize']
 		maskpixrad = self.params['maskrad']/apix
@@ -355,7 +355,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 		self.instack = os.path.join(aligndata['path']['path'], aligndata['imagicfile'])
 		outdata = "stack.data"
 
-		apXmipp.convertStackToXmippData(self.instack, outdata, maskpixrad, 
+		apXmipp.convertStackToXmippData(self.instack, outdata, maskpixrad,
 			boxsize, numpart=self.params['numpart']-1)
 
 		self.runKerdenSOM(outdata)
@@ -375,4 +375,5 @@ if __name__ == '__main__':
 	kerdenSOM = kerdenSOMScript()
 	kerdenSOM.start()
 	kerdenSOM.close()
+
 

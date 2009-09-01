@@ -7,7 +7,7 @@ import datetime
 #leginon
 import leginondata
 #appion
-import appionData
+import appiondata
 import apImage
 import apDisplay
 import apStack
@@ -102,7 +102,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	bin = params['bin']
 
 	### first find the runid
-	runq = appionData.ApSelectionRunData()
+	runq = appiondata.ApSelectionRunData()
 	runq['name'] = params['runname']
 	runq['session'] = imgdata1['session']
 	rundatas = runq.query(results=1, readimages=False)
@@ -112,7 +112,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	### the order is specified by 1,2; so don't change it let makestack figure it out
 	for imgdata in (imgdata1, imgdata2):
 		for index in ("1","2"):
-			transq = appionData.ApImageTiltTransformData()
+			transq = appiondata.ApImageTiltTransformData()
 			transq["image"+index] = imgdata
 			transq['tiltrun'] = rundatas[0]
 			transdata = transq.query(readimages=False)
@@ -121,14 +121,14 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 				return transdata[0]
 
 	### prepare the insertion
-	transq = appionData.ApImageTiltTransformData()
+	transq = appiondata.ApImageTiltTransformData()
 	transq['image1'] = imgdata1
 	transq['image2'] = imgdata2
 	transq['tiltrun'] = rundatas[0]
 	dbdict = tiltPickerToDbNames(tiltparams)
 	if dbdict is None:
 		return None
-	#Can I do for key in appionData.ApImageTiltTransformData() ro transq???
+	#Can I do for key in appiondata.ApImageTiltTransformData() ro transq???
 	for key in ('image1_x','image1_y','image1_rotation','image2_x','image2_y','image2_rotation','scale_factor','tilt_angle', 'overlap'):
 		if key not in dbdict:
 			apDisplay.printError("Key: "+key+" was not found in transformation data")
@@ -174,11 +174,11 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 	partdata = stackpartdata1['particle']
 
 	### figure out if its particle 1 or 2
-	tiltpartq1 = appionData.ApTiltParticlePairData()
+	tiltpartq1 = appiondata.ApTiltParticlePairData()
 	tiltpartq1['particle1'] = partdata
 	tiltpartdatas1 = tiltpartq1.query(results=1, readimages=False)
 
-	tiltpartq2 = appionData.ApTiltParticlePairData()
+	tiltpartq2 = appiondata.ApTiltParticlePairData()
 	tiltpartq2['particle2'] = partdata
 	tiltpartdatas2 = tiltpartq2.query(results=1, readimages=False)
 
@@ -196,7 +196,7 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 
 	### get tilt stack particle
 	tiltstackdata = apStack.getOnlyStackData(tiltstackid, msg=False)
-	stackpartq = appionData.ApStackParticlesData()
+	stackpartq = appiondata.ApStackParticlesData()
 	stackpartq['stack'] = tiltstackdata
 	stackpartq['particle'] = otherpart
 	stackpartdatas2 = stackpartq.query(results=1, readimages=False)
@@ -216,11 +216,11 @@ def getTiltTransformFromParticle(partdata):
 	t0 = time.time()
 
 	### figure out if its particle 1 or 2
-	tiltpartq1 = appionData.ApTiltParticlePairData()
+	tiltpartq1 = appiondata.ApTiltParticlePairData()
 	tiltpartq1['particle1'] = partdata
 	tiltpartdatas1 = tiltpartq1.query(results=1, readimages=False)
 
-	tiltpartq2 = appionData.ApTiltParticlePairData()
+	tiltpartq2 = appiondata.ApTiltParticlePairData()
 	tiltpartq2['particle2'] = partdata
 	tiltpartdatas2 = tiltpartq2.query(results=1, readimages=False)
 
@@ -326,5 +326,6 @@ def getTransformImageIds(transformdata):
 	if time.time()-t0 > 0.3:
 		apDisplay.printMsg("long image query "+apDisplay.timeString(time.time()-t0))
 	return img1, img2
+
 
 

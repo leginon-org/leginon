@@ -17,7 +17,7 @@ import apFile
 import apParam
 import apDisplay
 import apDatabase
-import appionData
+import appiondata
 
 def getTemplates(params):
 	"""
@@ -37,7 +37,7 @@ def getTemplates(params):
 	if not params['templateIds']:
 		apDisplay.printError("No template ids were specified")
 
-	params['templatelist'] = [] #list of scaled files 
+	params['templatelist'] = [] #list of scaled files
 	for i,templateid in enumerate(params['templateIds']):
 		index = i+1
 		#print templateid
@@ -46,7 +46,7 @@ def getTemplates(params):
 			continue
 
 		#QUERY DB FOR TEMPLATE INFO
-		templatedata = appionData.ApTemplateImageData.direct_query(abs(templateid))
+		templatedata = appiondata.ApTemplateImageData.direct_query(abs(templateid))
 		if not (templatedata):
 			apDisplay.printError("Template Id "+str(templateid)+" was not found in database.")
 
@@ -77,7 +77,7 @@ def getTemplates(params):
 		### MASK THE TEMPLATE AND SAVE
 		#mask the template, visual purposes only
 		#maskrad = params['diam']/params['apix']/params['bin']/2.0
-		#maskarray = 
+		#maskarray =
 		#apImage.arrayToMrc(templatearray, masktemplatepath, msg=False)
 
 		#ADD TO TEMPLATE LIST
@@ -99,7 +99,7 @@ def getTemplates(params):
 
 
 def getTemplateFromId(templateid):
-	return appionData.ApTemplateImageData.direct_query(templateid)
+	return appiondata.ApTemplateImageData.direct_query(templateid)
 
 def scaleTemplate(templatearray, scalefactor=1.0, boxsize=None):
 
@@ -153,7 +153,7 @@ def copyTemplatesToOutdir(params, timestamp=None):
 	for tmpl in params['templatelist']:
 		base = os.path.basename(tmpl)
 		old = os.path.abspath(tmpl)
-		
+
 		### Rename file for new location
 		if timestamp is None:
 			timestamp = apParam.makeTimestamp()
@@ -187,15 +187,15 @@ def copyTemplatesToOutdir(params, timestamp=None):
 	apDisplay.printColor("New template List:","green")
 	pprint.pprint(params['templatelist'])
 	return
-		
+
 def insertTemplateImage(params):
 	for i,name in enumerate(params['templatelist']):
 		if os.path.basename(name) != name:
 			apDisplay.printError("please contact an appion developer, because the database insert is wrong")
 
 		#check if template exists
-		templateq=appionData.ApTemplateImageData()
-		templateq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
+		templateq=appiondata.ApTemplateImageData()
+		templateq['path'] = appiondata.ApPathData(path=os.path.abspath(params['rundir']))
 		templateq['templatename']=name
 		templateId = templateq.query(results=1)
 		if templateId:
@@ -205,7 +205,7 @@ def insertTemplateImage(params):
 		#check if duplicate template exists
 		temppath = os.path.join(params['rundir'], name)
 		md5sum = apFile.md5sumfile(temppath)
-		templateq2=appionData.ApTemplateImageData()
+		templateq2=appiondata.ApTemplateImageData()
 		templateq2['md5sum']=md5sum
 		templateId = templateq2.query(results=1)
 		if templateId:
@@ -216,13 +216,13 @@ def insertTemplateImage(params):
 		print "Inserting",name,"into the template database"
 		templateq['apix']=params['apix']
 		templateq['diam']=params['diam']
-		templateq['md5sum']=md5sum 
+		templateq['md5sum']=md5sum
 		if 'alignid' in params and params['alignid'] is not None:
-			templateq['alignstack'] = appionData.ApAlignStackData.direct_query(params['alignid'])
+			templateq['alignstack'] = appiondata.ApAlignStackData.direct_query(params['alignid'])
 		if 'clusterid' in params and params['clusterid'] is not None:
-			templateq['clusterstack'] = appionData.ApClusteringStackData.direct_query(params['clusterid'])
+			templateq['clusterstack'] = appiondata.ApClusteringStackData.direct_query(params['clusterid'])
 		if 'stackid' in params and params['stackid'] is not None:
-			templateq['stack'] = appionData.ApStackData.direct_query(params['stackid'])
+			templateq['stack'] = appiondata.ApStackData.direct_query(params['stackid'])
 		if 'imgnums' in params and params['imgnums'] is not None:
 			imgnums = params['imgnums'].split(",")
 			templateq['stack_image_number']=int(imgnums[i])
@@ -236,4 +236,5 @@ def insertTemplateImage(params):
 		else:
 			apDisplay.printWarning("Not commiting template to DB")
 	return
+
 

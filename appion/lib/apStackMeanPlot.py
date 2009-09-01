@@ -181,9 +181,10 @@ if __name__ == "__main__":
 		# use a project database
 		newdbname = apProject.getAppionDBFromProjectId(projectid)
 		import sinedon
-		sinedon.setConfig('appionData', db=newdbname)
+		sinedon.setConfig('appiondata', db=newdbname)
 		apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
 
 	makeStackMeanPlot(stackid, gridpoints)
+
 
 

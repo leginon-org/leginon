@@ -28,7 +28,7 @@ class satEulerScript(appionScript.AppionScript):
 		Need to connect to DB server before moving forward
 		"""
 		# connect
-		self.dbconf = sinedon.getConfig('appionData')
+		self.dbconf = sinedon.getConfig('appiondata')
 		self.db     = MySQLdb.connect(**self.dbconf)
 		# create a cursor
 		self.cursor = self.db.cursor()
@@ -45,7 +45,7 @@ class satEulerScript(appionScript.AppionScript):
 			+"  ON refrun.`REF|ApStackData|stack` = stackpart.`REF|ApStackData|stack` \n"
 			+"LEFT JOIN `ApParticleData` AS part \n"
 			+"  ON stackpart.`REF|ApParticleData|particle` = part.`DEF_id` \n"
-			+"WHERE refrun.`DEF_id` = "+str(reconid)+" \n" 
+			+"WHERE refrun.`DEF_id` = "+str(reconid)+" \n"
 			+"  LIMIT 1 \n"
 		)
 		self.cursor.execute(query)
@@ -64,7 +64,7 @@ class satEulerScript(appionScript.AppionScript):
 			"SELECT \n"
 			+"  refdata.`iteration` \n"
 			+"FROM `ApRefinementData` as refdata \n"
-			+"WHERE refdata.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+			+"WHERE refdata.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n"
 			+"ORDER BY refdata.`iteration` DESC \n"
 			+"LIMIT 1 \n"
 		)
@@ -110,9 +110,9 @@ class satEulerScript(appionScript.AppionScript):
 				+"LEFT JOIN `ApRefinementData` AS refd2 \n"
 				+"  ON partclass2.`REF|ApRefinementData|refinement` = refd2.`DEF_id` \n"
 				+"WHERE transform.`REF|ApSelectionRunData|tiltrun` = "+str(tiltrunid)+" \n"
-				+"  AND refd1.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+				+"  AND refd1.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n"
 				+"  AND refd1.`iteration` = "+str(iteration)+" \n"
-				+"  AND refd2.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+				+"  AND refd2.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n"
 				+"  AND refd2.`iteration` = "+str(iteration)+" \n"
 				+"ORDER BY stpart1.particleNumber ASC \n"
 				#+"LIMIT 10 \n"
@@ -174,7 +174,7 @@ class satEulerScript(appionScript.AppionScript):
 				eulertree.append(eulerpair)
 			except:
 				print row
-				apDisplay.printError("bad row entry")			
+				apDisplay.printError("bad row entry")
 
 		apDisplay.printMsg("Converted "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
 		return eulertree
@@ -210,9 +210,9 @@ class satEulerScript(appionScript.AppionScript):
 				+"WHERE \n"
 				#+"  transform.`REF|ApSelectionRunData|tiltrun` = "+str(tiltrunid)+" \n"
 				#+"AND \n"
-				+"  stpart1.`REF|ApStackData|stack` = "+str(stackid)+" \n" 
+				+"  stpart1.`REF|ApStackData|stack` = "+str(stackid)+" \n"
 				+"AND \n"
-				+"  stpart2.`REF|ApStackData|stack` = "+str(stackid)+" \n" 
+				+"  stpart2.`REF|ApStackData|stack` = "+str(stackid)+" \n"
 				#+"LIMIT 50 \n"
 			)
 		#print query
@@ -251,7 +251,7 @@ class satEulerScript(appionScript.AppionScript):
 					+"WHERE "
 					+"  stpart.`REF|ApParticleData|particle` = "+str(partid1)+" \n"
 					+"AND \n"
-					+"  refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+					+"  refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n"
 					+"AND \n"
 					+"  refd.`iteration` = "+str(iteration)+" \n"
 					+"LIMIT 1 \n"
@@ -283,7 +283,7 @@ class satEulerScript(appionScript.AppionScript):
 					+"WHERE "
 					+"  stpart.`REF|ApParticleData|particle` = "+str(partid2)+" \n"
 					+"AND \n"
-					+"  refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+					+"  refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n"
 					+"AND \n"
 					+"  refd.`iteration` = "+str(iteration)+" \n"
 					+"LIMIT 1 \n"
@@ -386,7 +386,7 @@ class satEulerScript(appionScript.AppionScript):
 		"""
 		write:
 			(1) rotation angle diff in radians
-			(2) tilt angle diff in degrees	
+			(2) tilt angle diff in degrees
 		for xmgrace display
 		"""
 		s = open("scatter"+self.datastr+".agr", "w")
@@ -425,7 +425,7 @@ class satEulerScript(appionScript.AppionScript):
 			+"p2-id\tp2-e1\tp2-e2\tp2-e3\tmirror\treject\t"
 			+"ang-dist\trot-dist\ttotal-dist\n")
 		for eulerpair in eulertree:
-			mystr = ( 
+			mystr = (
 				str(eulerpair['part1']['partid'])+"\t"+
 				str(round(eulerpair['part1']['euler1'],2))+"\t"+
 				str(round(eulerpair['part1']['euler2'],2))+"\t"+
@@ -550,7 +550,7 @@ class satEulerScript(appionScript.AppionScript):
 		mynumpy = numpy.asarray(mylist, dtype=numpy.float32)
 		print "range=",round(ndimage.minimum(mynumpy),2)," <> ",round(ndimage.maximum(mynumpy),2)
 		print " mean=",round(ndimage.mean(mynumpy),2)," +- ",round(ndimage.standard_deviation(mynumpy),2)
-		
+
 		#histogram
 		bins = []
 		mybin = mymin
@@ -667,6 +667,7 @@ if __name__ == "__main__":
 	satEuler = satEulerScript()
 	satEuler.start()
 	satEuler.close()
+
 
 
 

@@ -12,17 +12,17 @@ import apDatabase
 import apParticle
 import appionScript
 import leginondata
-import appionData
+import appiondata
 
 #===========================
 def insertManualParams(params, expid):
 	sessiondata = leginondata.SessionData.direct_query(expid)
-	runq=appionData.ApSelectionRunData()
+	runq=appiondata.ApSelectionRunData()
 	runq['name']=params['runname']
 	runq['session']=sessiondata
-	#runq['path'] = appionData.ApPathData(path=os.path.abspath(????????))
+	#runq['path'] = appiondata.ApPathData(path=os.path.abspath(????????))
 
-	manparams=appionData.ApSelectionParamsData()
+	manparams=appiondata.ApSelectionParamsData()
 	manparams['diam']=params['diam']
 
 	selectionruns=runq.query(results=1)
@@ -46,7 +46,7 @@ def printPrtlUploadHelp():
 	print "\n"
 	sys.exit(1)
 
-#===========================	
+#===========================
 def createDefaults():
 	params={}
 	self.params['apix']=None
@@ -71,7 +71,7 @@ def createDefaults():
 	self.params['newbox']=None
 	return params
 
-#===========================	
+#===========================
 class UploadParticles(appionScript.AppionScript):
 	def setupParserOptions(self):
 		""" NEED TO COPY PARAM SETTING FROM ABOVE """
@@ -84,12 +84,12 @@ class UploadParticles(appionScript.AppionScript):
 		self.parser.add_option("--diam", dest="diam",
 			help="particle diameter in angstroms", type="int")
 
-	#===========================	
+	#===========================
 	def checkConflicts(self):
 		# check to make sure that incompatible parameters are not set
 		if self.params['diam'] is None or self.params['diam']==0:
 			apDisplay.printError("please input the diameter of your particle (for display purposes only)")
-		
+
 		# get list of input images, since wildcards are supported
 		if self.params['files'] is None:
 			apDisplay.printError("please enter the image names with picked particle files")
@@ -112,7 +112,7 @@ class UploadParticles(appionScript.AppionScript):
 				apDisplay.printError("file '"+img+"' does not exist \n")
 		return imgs
 
-	#===========================	
+	#===========================
 	def start(self):
 		print "getting image data from database:"
 		self.params['imgs']=self.getPrtlImgs()
@@ -132,6 +132,7 @@ if __name__ == '__main__':
 	uploadpart = UploadParticles()
 	uploadpart.start()
 	uploadpart.close()
+
 
 
 

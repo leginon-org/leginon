@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import glob,os,sys,time
-import EMAN
 import shutil
 import math
 import string

@@ -25,7 +25,7 @@ class tiltStackAlign(appionScript.AppionScript):
 		"""
 		appionScript.AppionScript.__init__(self)
 		# connect
-		self.dbconf = sinedon.getConfig('appionData')
+		self.dbconf = sinedon.getConfig('appiondata')
 		self.db     = MySQLdb.connect(**self.dbconf)
 		# create a cursor
 		self.cursor = self.db.cursor()
@@ -78,7 +78,7 @@ class tiltStackAlign(appionScript.AppionScript):
 		for partdict in parttree:
 			count += 1
 			emannotnum = partdict['not']-1
-			emantiltnum = partdict['tilt']-1		
+			emantiltnum = partdict['tilt']-1
 			line = operations.spiderOutLine(count, (emannotnum,emantiltnum))
 			f.write(line)
 		f.close()
@@ -202,7 +202,7 @@ class tiltStackAlign(appionScript.AppionScript):
 				if count > sizelimit:
 					esttime = (len(parttree)/float(count)-1.0)*(time.time()-t0)
 					sys.stderr.write(str(count)+" particles of "+str(len(parttree))
-						+", "+apDisplay.timeString(esttime)+" remaining")	
+						+", "+apDisplay.timeString(esttime)+" remaining")
 				else:
 					sys.stderr.write(str(count)+" particles of "+str(len(parttree)))
 			### save stacks to file to save memory
@@ -214,7 +214,7 @@ class tiltStackAlign(appionScript.AppionScript):
 					apFile.removeStack(tiltname)
 					apImagicFile.writeImagic(tiltstacklist, tiltname, msg=False)
 					tiltstacks.append(tiltname)
-					apDisplay.printMsg("finished tilted stack in "+apDisplay.timeString(time.time()-t1))	
+					apDisplay.printMsg("finished tilted stack in "+apDisplay.timeString(time.time()-t1))
 					t1 = time.time()
 					notname = os.path.join(self.params['rundir'], "notstack%d.hed"%(count))
 					apFile.removeStack(notname)
@@ -243,13 +243,13 @@ class tiltStackAlign(appionScript.AppionScript):
 			apFile.removeStack(tiltname)
 			apImagicFile.writeImagic(tiltstacklist, tiltname, msg=False)
 			tiltstacks.append(tiltname)
-			apDisplay.printMsg("finished tilted stack in "+apDisplay.timeString(time.time()-t1))	
+			apDisplay.printMsg("finished tilted stack in "+apDisplay.timeString(time.time()-t1))
 			t1 = time.time()
 			notname = os.path.join(self.params['rundir'], "notstack%d.hed"%(count))
 			apFile.removeStack(notname)
 			apImagicFile.writeImagic(notstacklist, notname, msg=False)
 			notstacks.append(notname)
-			apDisplay.printMsg("finished untilted stack in "+apDisplay.timeString(time.time()-t1))	
+			apDisplay.printMsg("finished untilted stack in "+apDisplay.timeString(time.time()-t1))
 
 	#=====================
 	def start(self):
@@ -261,4 +261,5 @@ if __name__ == "__main__":
 	tiltstacks = tiltStackAlign()
 	tiltstacks.start()
 	tiltstacks.close()
+
 

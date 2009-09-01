@@ -10,7 +10,7 @@ import time
 import appionScript
 import apStack
 import apDisplay
-import appionData
+import appiondata
 import apRecon
 import apStackMeanPlot
 
@@ -32,16 +32,16 @@ class subStackScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		### check for missing and duplicate entries
 		if self.params['reconid'] is None:
-			apDisplay.printError("Please provide --refinerunid")	
+			apDisplay.printError("Please provide --refinerunid")
 		if self.params['maxjump'] is None:
-			apDisplay.printError("Please provide --max-jump value")	
+			apDisplay.printError("Please provide --max-jump value")
 		if self.params['description'] is None:
 			apDisplay.printError("Please provide --description")
 		if self.params['runname'] is None:
 			apDisplay.printError("Please provide --description")
 
 		### get the stack ID from the other IDs
-		self.recondata = appionData.ApRefinementRunData.direct_query(self.params['reconid'])
+		self.recondata = appiondata.ApRefinementRunData.direct_query(self.params['reconid'])
 		self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'])
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 
@@ -65,7 +65,7 @@ class subStackScript(appionScript.AppionScript):
 		### get particles from stack
 		apDisplay.printMsg("Querying stack particles")
 		t0 = time.time()
-		stackpartq =  appionData.ApStackParticlesData()
+		stackpartq =  appiondata.ApStackParticlesData()
 		stackpartq['stack'] = self.stackdata
 		particles = stackpartq.query()
 		apDisplay.printMsg("Finished in "+apDisplay.timeString(time.time()-t0))
@@ -84,7 +84,7 @@ class subStackScript(appionScript.AppionScript):
 			emanstackpartnum = part['particleNumber']-1
 
 			### get euler jump data
-			jumpq = appionData.ApEulerJumpData()
+			jumpq = appiondata.ApEulerJumpData()
 			jumpq['particle'] = part
 			jumpq['refRun'] = self.recondata
 			jumpdatas = jumpq.query(results=1)
@@ -142,4 +142,5 @@ if __name__ == "__main__":
 	subStack = subStackScript()
 	subStack.start()
 	subStack.close()
+
 

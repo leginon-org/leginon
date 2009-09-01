@@ -10,7 +10,7 @@ import numpy
 import particleLoop2
 import apFindEM
 import apParam
-import appionData
+import appiondata
 import apDatabase
 import apDisplay
 import apParticle
@@ -83,7 +83,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 	#---------------------------------------
 	#---------------------------------------
 	def getParticleParamsData(self):
-		tiltparamsq = appionData.ApTiltAlignParamsData()
+		tiltparamsq = appiondata.ApTiltAlignParamsData()
 		tiltparamsq['output_type'] = self.params['outtype']
 		if self.params['pickrunids'] is not None:
 			self.params['pickrunidlist'] = self.params['pickrunids'].split(",")
@@ -319,7 +319,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		if not os.path.isfile(outfile1):
 			apDisplay.printWarning("Image processing failed")
 			self.badprocess = True
-			return			
+			return
 		self.data = tiltfile.readData(outfile1)
 		self.currentpicks1 = numpy.asarray(self.data['picks1'])
 		self.currentpicks2 = numpy.asarray(self.data['picks2'])
@@ -341,6 +341,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 if __name__ == '__main__':
 	imgLoop = tiltAligner()
 	imgLoop.run()
+
 
 
 

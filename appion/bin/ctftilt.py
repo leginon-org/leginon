@@ -11,7 +11,7 @@ import subprocess
 import shutil
 #appion
 import appionLoop2
-import appionData
+import appiondata
 import apImage
 import apDisplay
 import apDatabase
@@ -260,18 +260,18 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def insertCtfTiltRun(self, imgdata):
-		if isinstance(self.ctfrun, appionData.ApAceRunData):
+		if isinstance(self.ctfrun, appiondata.ApAceRunData):
 			return False
 
 		# first create an aceparam object
-		paramq = appionData.ApCtfTiltParamsData()
+		paramq = appiondata.ApCtfTiltParamsData()
 		copyparamlist = ('medium','ampcarbon','ampice','fieldsize','cs','bin',)
 		for p in copyparamlist:
 			if p in self.params:
 				paramq[p] = self.params[p]
 
 		# create an acerun object
-		runq = appionData.ApAceRunData()
+		runq = appiondata.ApAceRunData()
 		runq['name'] = self.params['runname']
 		runq['session'] = imgdata['session'];
 
@@ -289,7 +289,7 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 			return False
 
 		#create path
-		runq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		runq['hidden'] = False
 		# if no run entry exists, insert new run entry into db
 		runq['ctftilt_params'] = paramq
@@ -304,7 +304,7 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 			return False
 
 		print "Committing ctf parameters for",apDisplay.short(imgdata['filename']), "to database."
-		ctfq = appionData.ApCtfData()
+		ctfq = appiondata.ApCtfData()
 		ctfq['acerun'] = self.ctfrun
 		ctfq['image']      = imgdata
 		ctfq['graph1']     = self.lastjpg
@@ -345,4 +345,5 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 if __name__ == '__main__':
 	imgLoop = ctfTiltLoop()
 	imgLoop.run()
+
 

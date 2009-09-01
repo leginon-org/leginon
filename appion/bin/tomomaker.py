@@ -19,7 +19,7 @@ from pyami import mrc
 import leginondata
 #appion
 import appionScript
-import appionData
+import appiondata
 import apTomo
 import apImod
 import apImage
@@ -59,9 +59,9 @@ class tomoMaker(appionScript.AppionScript):
 		### choices
 		self.xmethods = ( "imod", "leginon", "sift", "projalign" )
 		self.parser.add_option("--xmethod", dest="xmethod",
-			help="correlation method, e.g. --xmdethod=imod,leginon, or sift", metavar="Method", 
+			help="correlation method, e.g. --xmdethod=imod,leginon, or sift", metavar="Method",
 			type="choice", choices=self.xmethods, default="imod" )
-		return 
+		return
 
 	#=====================
 	def checkConflicts(self):
@@ -148,7 +148,7 @@ class tomoMaker(appionScript.AppionScript):
 			# fileprefix must start with a letter and only contain numbers, letters, and underscores with no extension
 			f.write("  IMAGE %d\tFILE %s\tORIGIN [ %.3f %.3f ]\tTILT ANGLE %.3f\tROTATION %.3f\n"
 			%(num, fileprefix, x, y, ang, rot))
-		f.write("END")	
+		f.write("END")
 		f.close()
 		return tltfile
 
@@ -182,7 +182,7 @@ class tomoMaker(appionScript.AppionScript):
 		tilts,ordered_imagelist,mrc_files = apTomo.orderImageList(imagelist)
 		reconname = seriesname+"_full"
 		# Write tilt series stack images and tilt angles
-		
+
 		stackpath = os.path.join(self.params['tiltseriesdir'], stackname)
 		stackdir = self.params['tiltseriesdir']
 		if os.path.exists(stackpath):
@@ -258,4 +258,5 @@ if __name__ == '__main__':
 	app.start()
 	app.close()
 
-	
+
+

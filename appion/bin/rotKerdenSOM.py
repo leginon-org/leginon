@@ -36,7 +36,7 @@ import subprocess
 import appionScript
 import apXmipp
 import apDisplay
-import appionData
+import appiondata
 import apEMAN
 import apFile
 import apProject
@@ -116,7 +116,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		if self.params['alignstackid'] is None:
 			apDisplay.printError("Please enter an aligned stack id, e.g. --alignstackid=4")
 		if self.params['numpart'] is None:
-			alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+			alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 			self.params['numpart'] = alignstackdata['num_particles']
 		#####NOTE
 		#if self.params['xdim'] > 16 or self.params['xdim'] > 16:
@@ -125,7 +125,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 
 	#======================
 	def setRunDir(self):
-		self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		path = self.alignstackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, ".."))
 		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
@@ -135,12 +135,12 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		inserttime = time.time()
 		### Preliminary data
 		projectid = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
-		alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		numclass = self.params['xdim']*self.params['ydim']
-		pathdata = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		pathdata = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 
 		### rotKerDen SOM Params object
-		rotkerdenson = appionData.ApRotKerDenSOMParamsData()
+		rotkerdenson = appiondata.ApRotKerDenSOMParamsData()
 		#rotkerdenson['mask_diam'] = 2.0*self.params['maskrad']
 		rotkerdenson['x_dimension'] = self.params['xdim']
 		rotkerdenson['y_dimension'] = self.params['ydim']
@@ -155,7 +155,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		rotkerdenson['spectrahighharmonic'] = self.params['spectrahighharmonic']
 
 		### Analysis Run object
-		analysisq = appionData.ApAlignAnalysisRunData()
+		analysisq = appiondata.ApAlignAnalysisRunData()
 		analysisq['runname'] = self.params['runname']
 		analysisq['path'] = pathdata
 		analysisq['description'] = self.params['description']
@@ -164,7 +164,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		analysisq['project|projects|project'] = projectid
 
 		### Clustering Run object
-		clusterrunq = appionData.ApClusteringRunData()
+		clusterrunq = appiondata.ApClusteringRunData()
 		clusterrunq['runname'] = self.params['runname']
 		clusterrunq['description'] = self.params['description']
 		clusterrunq['boxsize'] = alignstackdata['boxsize']
@@ -184,7 +184,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 			a=apImage.readPNG(listname)
 			imglist.append(a)
 		apImagicFile.writeImagic(imglist,"rotkerdenstack" +self.timestamp + ".hed")
-		clusterstackq = appionData.ApClusteringStackData()
+		clusterstackq = appiondata.ApClusteringStackData()
 		clusterstackq['avg_imagicfile'] = "rotkerdenstack"+self.timestamp+".hed"
 		clusterstackq['num_classes'] = numclass
 		clusterstackq['clusterrun'] = clusterrunq
@@ -204,7 +204,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 			partlist = self.readClassDocFile(classdocfile)
 			### Clustering Particle object
 			# MRC image for each code node but plot or image
-			clusterrefq = appionData.ApClusteringReferenceData()
+			clusterrefq = appiondata.ApClusteringReferenceData()
 			clusterrefq['refnum'] = classnum
 			clusterrefq['avg_mrcfile'] = classroot+".mrc"
 			clusterrefq['clusterrun'] = clusterrunq
@@ -218,7 +218,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 				alignpartdata = self.getAlignParticleData(partnum, alignstackdata)
 
 				### Clustering Particle objects
-				clusterpartq = appionData.ApClusteringParticlesData()
+				clusterpartq = appiondata.ApClusteringParticlesData()
 				clusterpartq['clusterstack'] = clusterstackq
 				clusterpartq['alignparticle'] = alignpartdata
 				clusterpartq['partnum'] = partnum
@@ -234,7 +234,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 	#=====================
 	def getAlignParticleData(self, partnum, alignstackdata):
 		#logging.debug('Inside getAlignParticleData')
-		alignpartq = appionData.ApAlignParticlesData()
+		alignpartq = appiondata.ApAlignParticlesData()
 		alignpartq['alignstack'] = alignstackdata
 		alignpartq['partnum'] = partnum
 		alignparts = alignpartq.query(results=1)
@@ -509,7 +509,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 	#======================
 	def start(self):
 		#get aligned stack id
-		aligndata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		aligndata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		xSizeVoxel = aligndata['boxsize']
 		#get averaged image
 		avgmrc = os.path.join(aligndata['path']['path'], aligndata["avgmrcfile"])
@@ -543,5 +543,6 @@ if __name__ == '__main__':
 	rotKerdenSOM = rotKerdenSOMScript()
 	rotKerdenSOM.start()
 	rotKerdenSOM.close()
+
 
 

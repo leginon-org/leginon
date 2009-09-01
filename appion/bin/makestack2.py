@@ -18,7 +18,7 @@ import apDatabase
 import apCtf
 import apStack
 import apDefocalPairs
-import appionData
+import appiondata
 import apParticle
 import apStackMeanPlot
 import apEMAN
@@ -195,7 +195,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				self.ctftimes.append(time.time()-t0)
 		if imgpath is None:
 			return None, None, None
-		
+
 		### run batchboxer command
 		imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
 		emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, emanboxfile, imgstackfile, self.params['boxsize'])
@@ -268,7 +268,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
 			ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))
 
-			if ( (xcoord > 0 and xcoord+fullbox <= imgdims['x']) 
+			if ( (xcoord > 0 and xcoord+fullbox <= imgdims['x'])
 			and  (ycoord > 0 and ycoord+fullbox <= imgdims['y']) ):
 				boxfile.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,fullbox,fullbox))
 				boxedpartdatas.append(partdata)
@@ -406,49 +406,49 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		apix = apDatabase.getPixelSize(imgdata)
 		bestctfvalue, bestconf = apCtf.getBestAceTwoValueForImage(imgdata, msg=True)
-		
+
 		if bestctfvalue is None:
 			apDisplay.printWarning("No ACE2 ctf estimation for current image")
 			self.badprocess = True
 			return None
-			
+
 		if bestctfvalue['acerun'] is None:
 			apDisplay.printWarning("No ACE2 runid for current image")
 			self.badprocess = True
 			return None
-		
+
 		if bestctfvalue['ctfvalues_file'] is None:
 			apDisplay.printWarning("No ACE2 ctf file for current image")
 			self.badprocess = True
 			return None
-		
+
 		defocus1 = bestctfvalue['defocus1']
 		defocus2 = bestctfvalue['defocus2']
 		ampconst = bestctfvalue['amplitude_contrast']
 		defocus = (defocus1+defocus2)/2.0*1.0e6
-		
+
 		ctfvaluesfile = os.path.join(bestctfvalue['acerun']['path']['path'], bestctfvalue['ctfvalues_file'])
-		
+
 		ctfvaluesfilesplit = os.path.splitext(ctfvaluesfile)
 		while ctfvaluesfilesplit[1] != '.mrc':
 			ctfvaluesfilesplit = os.path.splitext(ctfvaluesfilesplit[0])
-		
+
 		ctfvaluesfile = ctfvaluesfilesplit[0]+".mrc.ctf.txt"
-		
+
 		apDisplay.printMsg("using ctfvaluesfile: "+ctfvaluesfile)
-		
+
 		if not os.path.isfile(ctfvaluesfile):
 			apDisplay.printError("ctfvaluesfile does not exist")
 
 		ace2exe = self.getACE2Path()
 		outfile = os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
-		
+
 		ace2cmd = (ace2exe+" -ctf %s -apix %.3f -img %s -wiener 0.1 -out %s" % (ctfvaluesfile, apix, inimgpath,outfile))
 		apDisplay.printMsg("ace2 command: "+ace2cmd)
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
 
 #		Commented this out because ace2.exe and ace2correct.exe are now staticallt compiled and don't need
-#		to link to anything		
+#		to link to anything
 #
 #		### hate to do this but have to, MATLAB's bad fftw3 library gets linked otherwise
 #		hostname = socket.gethostname()
@@ -465,7 +465,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		else:
 			aceoutf = open("ace2.out", "a")
 			aceerrf = open("ace2.err", "a")
-			ace2proc = subprocess.Popen(ace2cmd, shell=True, stderr=aceerrf, stdout=aceoutf)	
+			ace2proc = subprocess.Popen(ace2cmd, shell=True, stderr=aceerrf, stdout=aceoutf)
 		ace2proc.wait()
 		if self.stats['count'] <= 1:
 			### ace2 always crashes on first image??? .fft_wisdom file??
@@ -475,10 +475,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			else:
 				aceoutf = open("ace2.out", "a")
 				aceerrf = open("ace2.err", "a")
-				ace2proc = subprocess.Popen(ace2cmd, shell=True, stderr=aceerrf, stdout=aceoutf)	
+				ace2proc = subprocess.Popen(ace2cmd, shell=True, stderr=aceerrf, stdout=aceoutf)
 			ace2proc.wait()
-		
-		if self.params['verbose'] is False:	
+
+		if self.params['verbose'] is False:
 			aceoutf.close()
 			aceerrf.close()
 
@@ -594,7 +594,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		projectnum = apProject.getProjectIdFromSessionName(self.params['sessionname'])
 
-		stparamq=appionData.ApStackParamsData()
+		stparamq=appiondata.ApStackParamsData()
 		paramlist = ('boxSize','bin','aceCutoff','correlationMin','correlationMax',
 			'checkMask','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair',
 			'lowpass','highpass','norejects', 'tiltangle')
@@ -615,16 +615,16 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apDisplay.printError("problem in database insert")
 
 		### create a stack object
-		stackq = appionData.ApStackData()
-		stackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		stackq = appiondata.ApStackData()
+		stackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
       	### see if stack already exists in the database (just checking path & name)
 		uniqstackdatas = stackq.query(results=1)
 
 		### create a stackRun object
-		runq = appionData.ApStackRunData()
+		runq = appiondata.ApStackRunData()
 		runq['stackRunName'] = self.params['runname']
 		runq['session'] = sessiondata
-		selectionq = appionData.ApSelectionRunData()
+		selectionq = appiondata.ApSelectionRunData()
 		selectionrundata = selectionq.direct_query(self.params['selectionid'])
 		runq['selectionrun'] = selectionrundata
       	### see if stack run already exists in the database (just checking runname & session)
@@ -643,7 +643,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		self.stackrundata = runq
 
       	### create runinstack object
-		rinstackq = appionData.ApRunsInStackData()
+		rinstackq = appiondata.ApRunsInStackData()
 		rinstackq['stackRun'] = runq
 #		rinstackq['stack'] = stackq
 		rinstackq['project|projects|project'] = projectnum
@@ -661,7 +661,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 			rinstack = rinstackq.query(results=1)
 
-			prevrinstackq = appionData.ApRunsInStackData()
+			prevrinstackq = appiondata.ApRunsInStackData()
 			prevrinstackq['stackRun'] = uniqrundatas[0]
 			prevrinstackq['stack'] = uniqstackdatas[0]
 			prevrinstackq['project|projects|project'] = projectnum
@@ -773,7 +773,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		#self.parser.add_option("--tiltedflip", dest="tiltedflip", default=False,
 		#	action="store_true", help="using tilted defocus estimation based on particle location")
 		self.parser.add_option("--flip-type", dest="fliptype",
-			help="CTF correction method", metavar="TYPE", 
+			help="CTF correction method", metavar="TYPE",
 			type="choice", choices=self.flipoptions, default="emanpart" )
 
 	#=======================
@@ -938,7 +938,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			partmeandict = self.partmeantree[i]
 
 			self.particleNumber += 1
-			stpartq = appionData.ApStackParticlesData()
+			stpartq = appiondata.ApStackParticlesData()
 
 			### check unique params
 			stpartq['stack'] = self.stackdata
@@ -968,6 +968,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 if __name__ == '__main__':
 	makeStack = Makestack2Loop()
 	makeStack.run()
+
 
 
 

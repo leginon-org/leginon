@@ -11,7 +11,7 @@ import numpy
 import socket
 #appion
 import appionLoop2
-import appionData
+import appiondata
 import apImage
 import apDisplay
 import apDatabase
@@ -31,7 +31,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 
 	#======================
-	def setProcessingDirName(self):	
+	def setProcessingDirName(self):
 		self.processdirname = "ctf"
 
 	#======================
@@ -68,9 +68,9 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		"""
 		if self.params['reprocess'] is None:
 			return True
-			
+
 		ctfvalue, conf = apCtf.getBestAceTwoValueForImage(imgdata, msg=False)
-		
+
 		if ctfvalue is None:
 			return True
 
@@ -109,7 +109,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			+ " -c " + str(inputparams['cs'])
 			+ " -k " + str(inputparams['kv'])
 			+ " -a " + str(inputparams['apix'])
-			+ " -e " + str(self.params['edge_b'])+","+str(self.params['edge_t']) 
+			+ " -e " + str(self.params['edge_b'])+","+str(self.params['edge_t'])
 			+ "\n" )
 
 		### hate to do this but have to, MATLAB's bad fftw3 library gets linked otherwise
@@ -130,7 +130,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		else:
 			aceoutf = open("ace2.out", "a")
 			aceerrf = open("ace2.err", "a")
-			ace2proc = subprocess.Popen(commandline, shell=True, stderr=aceerrf, stdout=aceoutf)	
+			ace2proc = subprocess.Popen(commandline, shell=True, stderr=aceerrf, stdout=aceoutf)
 
 		ace2proc.wait()
 
@@ -146,11 +146,11 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			else:
 				aceoutf = open("ace2.out", "a")
 				aceerrf = open("ace2.err", "a")
-				ace2proc = subprocess.Popen(commandline, shell=True, stderr=aceerrf, stdout=aceoutf)	
+				ace2proc = subprocess.Popen(commandline, shell=True, stderr=aceerrf, stdout=aceoutf)
 
 			ace2proc.wait()
 
-		if self.params['verbose'] is False:	
+		if self.params['verbose'] is False:
 			aceoutf.close()
 			aceerrf.close()
 		if not os.path.isfile(imagelog):
@@ -189,16 +189,16 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			(self.ctfvalues['defocus1']*1.0e6, self.ctfvalues['defocus2']*1.0e6, pererror ))
 		apDisplay.printMsg("Angle astigmatism: %.2f degrees"%(self.ctfvalues['angle_astigmatism']))
 		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(ampconst))
-		
+
 		if bestconf is None:
 			apDisplay.printColor("Final confidence: %.3f"%(self.ctfvalues['confidence']),'cyan')
-		elif self.ctfvalues['confidence'] > bestconf: 
+		elif self.ctfvalues['confidence'] > bestconf:
 			apDisplay.printColor("Final confidence: %.3f > %.3f"%(self.ctfvalues['confidence'], bestconf),'green')
 		else:
 			apDisplay.printColor("Final confidence: %.3f < %.3f"%(self.ctfvalues['confidence'], bestconf),'yellow')
 
-		### double check that the values are reasonable 
-		
+		### double check that the values are reasonable
+
 		if avgdf < self.params['maxdefocus'] or avgdf > self.params['mindefocus']:
 			apDisplay.printWarning("bad defocus estimate, not committing values to database")
 			self.badprocess = True
@@ -233,20 +233,20 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("Committing ctf parameters for "
 			+apDisplay.short(imgdata['filename'])+" to database")
 
-		paramq = appionData.ApAce2ParamsData()
+		paramq = appiondata.ApAce2ParamsData()
 		paramq['bin']     = self.params['bin']
 		paramq['reprocess'] = self.params['reprocess']
 		paramq['cs']      = self.params['cs']
 		paramq['stig']    = True
 
-		runq=appionData.ApAceRunData()
+		runq=appiondata.ApAceRunData()
 		runq['name']    = self.params['runname']
 		runq['session'] = imgdata['session']
 		runq['hidden']  = False
-		runq['path']    = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		runq['path']    = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		runq['ace2_params'] = paramq
 
-		ctfq = appionData.ApCtfData()
+		ctfq = appiondata.ApCtfData()
 		ctfq['acerun'] = runq
 		ctfq['image']      = imgdata
 		ctfq['mat_file'] = imgdata['filename']+".mrc.ctf.txt"
@@ -306,4 +306,5 @@ class Ace2Loop(appionLoop2.AppionLoop):
 if __name__ == '__main__':
 	imgLoop = Ace2Loop()
 	imgLoop.run()
+
 

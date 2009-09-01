@@ -11,7 +11,7 @@ import numpy
 import socket
 #appion
 import appionLoop2
-import appionData
+import appiondata
 import apImage
 import apDisplay
 import apDatabase
@@ -28,7 +28,7 @@ class AceTiltLoop(appionLoop2.AppionLoop):
 	"""
 
 	#======================
-	def setProcessingDirName(self):	
+	def setProcessingDirName(self):
 		self.processdirname = "ctf"
 
 	#======================
@@ -65,12 +65,12 @@ class AceTiltLoop(appionLoop2.AppionLoop):
 		"""
 		if self.params['reprocess'] is None:
 			return True
-			
+
 		ctfvalue, conf = apCtf.getBestAceTwoValueForImage(imgdata,msg=False)
-		
+
 		if ctfvalue is None:
 			return True
-			
+
 		if conf > self.params['reprocess'] and ctfvalue['defocus1'] != ctfvalue['defocus2']:
 			return False
 		else:
@@ -81,7 +81,7 @@ class AceTiltLoop(appionLoop2.AppionLoop):
 	def processImage(self, imgdata):
 
 		bestdef, bestconf = apCtf.getBestAceTwoValueForImage(imgdata, msg=True)
-				
+
 		inputparams = {
 			'input': os.path.join(imgdata['session']['image path'],imgdata['filename']+".mrc"),
 			'cs': self.params['cs'],
@@ -98,7 +98,7 @@ class AceTiltLoop(appionLoop2.AppionLoop):
 			+ " -a " + str(inputparams['apix'])
 			+ " -s " + str(self.params['splitsize'])
 			+ " -n " + str(self.params['numsplits'])
-			#+ " -e " + str(self.params['edge_b'])+","+str(self.params['edge_t']) 
+			#+ " -e " + str(self.params['edge_b'])+","+str(self.params['edge_t'])
 			+ "\n" )
 
 		### run acetilt
@@ -112,7 +112,7 @@ class AceTiltLoop(appionLoop2.AppionLoop):
 		else:
 			aceoutf = open("acetilt.out", "a")
 			aceerrf = open("acetilt.err", "a")
-			acetiltproc = subprocess.Popen(commandline, shell=True, stderr=aceerrf, stdout=aceoutf)	
+			acetiltproc = subprocess.Popen(commandline, shell=True, stderr=aceerrf, stdout=aceoutf)
 
 		acetiltproc.wait()
 		apDisplay.printMsg("acetilt completed in " + apDisplay.timeString(time.time()-t0))
@@ -120,7 +120,7 @@ class AceTiltLoop(appionLoop2.AppionLoop):
 		### check if acetilt worked
 		imagelog = imgdata['filename']+".mrc"+".ctf.txt"
 
-		if self.params['verbose'] is False:	
+		if self.params['verbose'] is False:
 			aceoutf.close()
 			aceerrf.close()
 		if not os.path.isfile(imagelog):
@@ -156,10 +156,10 @@ class AceTiltLoop(appionLoop2.AppionLoop):
 			(self.ctfvalues['defocus1']*1.0e6, self.ctfvalues['defocus2']*1.0e6, pererror ))
 		apDisplay.printMsg("Angle astigmatism: %.2f degrees"%(self.ctfvalues['angle_astigmatism']))
 		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(ampconst))
-		
+
 		if bestconf is None:
 			apDisplay.printMsg("Final confidence: %.3f"%(self.ctfvalues['confidence']))
-		elif self.ctfvalues['confidence'] > bestconf: 
+		elif self.ctfvalues['confidence'] > bestconf:
 			apDisplay.printMsg("Final (reprocessed) confidence: %.3f > %.3f"%(self.ctfvalues['confidence'],bestconf),'green')
 		else:
 			apDisplay.printMsg("Final (reprocessed) confidence: %.3f < %.3f"%(self.ctfvalues['confidence'],bestconf),'red')
@@ -175,21 +175,21 @@ class AceTiltLoop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("Committing ctf parameters for "
 			+apDisplay.short(imgdata['filename'])+" to database")
 
-		paramq = appionData.ApAceTiltParamsData()
+		paramq = appiondata.ApAceTiltParamsData()
 		paramq['splitsize'] = self.params['splitsize']
 		paramq['numsplits'] = self.params['numsplits']
 		paramq['reprocess'] = self.params['reprocess']
 		paramq['cs']      = self.params['cs']
 		paramq['stig']    = True
 
-		runq=appionData.ApAceRunData()
+		runq=appiondata.ApAceRunData()
 		runq['name']    = self.params['runname']
 		runq['session'] = imgdata['session']
 		runq['hidden']  = False
-		runq['path']    = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		runq['path']    = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		runq['acetilt_params'] = paramq
 
-		ctfq = appionData.ApCtfData()
+		ctfq = appiondata.ApCtfData()
 		ctfq['acerun'] = runq
 		ctfq['image']      = imgdata
 		ctfq['mat_file'] = imgdata['filename']+".mrc.ctf.txt"
@@ -236,4 +236,5 @@ class AceTiltLoop(appionLoop2.AppionLoop):
 if __name__ == '__main__':
 	imgLoop = AceTiltLoop()
 	imgLoop.run()
+
 

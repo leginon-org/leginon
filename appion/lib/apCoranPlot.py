@@ -18,7 +18,7 @@ import apProject
 
 #==================
 def getTotalNumParticles(reconid, numiter):
-	dbconf = sinedon.getConfig('appionData')
+	dbconf = sinedon.getConfig('appiondata')
 	db     = MySQLdb.connect(**dbconf)
 	# create a cursor
 	cursor = db.cursor()
@@ -37,7 +37,7 @@ def getTotalNumParticles(reconid, numiter):
 
 #==================
 def getParticlesForIter(reconid, iternum):
-	dbconf = sinedon.getConfig('appionData')
+	dbconf = sinedon.getConfig('appiondata')
 	db     = MySQLdb.connect(**dbconf)
 	# create a cursor
 	cursor = db.cursor()
@@ -58,7 +58,7 @@ def getParticlesForIter(reconid, iternum):
 
 #==================
 def getAllCoranRecons():
-	dbconf = sinedon.getConfig('appionData')
+	dbconf = sinedon.getConfig('appiondata')
 	db     = MySQLdb.connect(**dbconf)
 	# create a cursor
 	cursor = db.cursor()
@@ -511,7 +511,7 @@ def makeCoranKeepPlot(reconid):
 	if os.path.isfile(pngfile):
 		apDisplay.printColor("Successfully created the Coran Keep Plot: "+pngfile, "green")
 
-	
+
 #==================
 #==================
 #==================
@@ -527,7 +527,7 @@ if __name__ == '__main__':
 		apDisplay.printWarning("Using split database")
 		# use a project database
 		newdbname = apProject.getAppionDBFromProjectId(projectid)
-		sinedon.setConfig('appionData', db=newdbname)
+		sinedon.setConfig('appiondata', db=newdbname)
 		apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
 
 	### run the program
@@ -545,7 +545,8 @@ if __name__ == '__main__':
 				makeCoranKeepPlot(reconid)
 			except:
 				pass
-			
+
+
 
 
 

@@ -14,7 +14,7 @@ import EMAN
 import numpy
 #appion
 import appionScript
-import appionData
+import appiondata
 import apDisplay
 import apStack
 import apRecon
@@ -65,7 +65,7 @@ class satAverageScript(appionScript.AppionScript):
 		Get all particle data for given recon and iteration
 		"""
 		t0 = time.time()
-		cachefile = os.path.join(self.params['rundir'], 
+		cachefile = os.path.join(self.params['rundir'],
 			"refineparticledata-r"+str(reconid)+"-i"+str(iteration)+".cache")
 		if os.path.isfile(cachefile):
 			apDisplay.printColor("loading refineparticledata from cache file", "cyan")
@@ -73,20 +73,20 @@ class satAverageScript(appionScript.AppionScript):
 			refineparticledata = cPickle.load(f)
 			f.close()
 		else:
-			refinerundata = appionData.ApRefinementRunData.direct_query(reconid)
+			refinerundata = appiondata.ApRefinementRunData.direct_query(reconid)
 			if not refinerundata:
 				apDisplay.printError("Could not find refinerundata for reconrun id="+str(reconid))
 
-			refineq = appionData.ApRefinementData()
+			refineq = appiondata.ApRefinementData()
 			refineq['refinementRun'] = refinerundata
 			refineq['iteration'] = iteration
 			refinedata = refineq.query(results=1)
-			
+
 			if not refinedata:
 				apDisplay.printError("Could not find refinedata for reconrun id="
 					+str(reconid)+" iter="+str(iteration))
 
-			refinepartq=appionData.ApParticleClassificationData()
+			refinepartq=appiondata.ApParticleClassificationData()
 			refinepartq['refinement']=refinedata[0]
 
 			apDisplay.printMsg("querying particles on "+time.asctime())
@@ -105,7 +105,7 @@ class satAverageScript(appionScript.AppionScript):
 		Removes particles by reading a list of particle numbers generated externally.
 
 		Requirements:
-			the input file has one particle per line 
+			the input file has one particle per line
 			the first piece of data is the particle number from the db
 		"""
 		keeplist = []
@@ -130,7 +130,7 @@ class satAverageScript(appionScript.AppionScript):
 		#make class average
 		avg = EMAN.EMData()
 		avg.makeMedian(images)
-		
+
 		#write class average
 		e = EMAN.Euler()
 		alt = classdata['euler']['euler1']*math.pi/180
@@ -175,7 +175,7 @@ class satAverageScript(appionScript.AppionScript):
 	#=====================
 	def getClassData(self, reconid, iternum):
 		t0 = time.time()
-		cachefile = os.path.join(self.params['rundir'], 
+		cachefile = os.path.join(self.params['rundir'],
 			"partclassdata-r"+str(reconid)+"-i"+str(iternum)+".cache")
 		if os.path.isfile(cachefile):
 			apDisplay.printColor("loading particle class data from cache file", "cyan")
@@ -239,7 +239,7 @@ class satAverageScript(appionScript.AppionScript):
 	#=====================
 	def setRunDir(self):
 		reconid = self.params['reconid']
-		refinerundata = appionData.ApRefinementRunData.direct_query(reconid)
+		refinerundata = appiondata.ApRefinementRunData.direct_query(reconid)
 		if not refinerundata:
 			apDisplay.printError("reconid "+str(reconid)+" does not exist in the database")
 		self.params['rundir'] = os.path.join(refinerundata['path']['path'], 'satavg')
@@ -248,7 +248,7 @@ class satAverageScript(appionScript.AppionScript):
 	def start(self):
 		self.rootname = self.params['stackname'].split(".")[0]
 		self.params['outputstack'] = os.path.join(self.params['rundir'], self.params['stackname'])
-		
+
 		if os.path.isfile(self.params['outputstack']):
 			apFile.removeStack(self.params['outputstack'])
 		if self.params['eotest'] is True:
@@ -293,8 +293,8 @@ class satAverageScript(appionScript.AppionScript):
 						mirror=0
 					rot = ptcl['euler3']*math.pi/180.0
 					classf.write(
-						"%d\t%s\t%f,\t%f,%f,%f,%d\n" % 
-						(partnum, stackpath, ptcl['quality_factor'], 
+						"%d\t%s\t%f,\t%f,%f,%f,%d\n" %
+						(partnum, stackpath, ptcl['quality_factor'],
 						rot, ptcl['shiftx'], ptcl['shifty'], mirror))
 					nptcls+=1
 					finallist.append(partnum)
@@ -329,7 +329,7 @@ class satAverageScript(appionScript.AppionScript):
 			+" apix=1.63 norm=0,1 lp=6 origin=0,0,0 mask="+str(self.params['mask'])+"; echo '' " )
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
 		if self.params['eotest'] is True:
-			# even 
+			# even
 			evenname = os.path.join(self.params['rundir'], self.rootname+"-even."+str(self.params['iter'])+"a.mrc")
 			if os.path.isfile(self.params['evenstack']):
 				evenemancmd = ( "make3d "+self.params['evenstack']+" out="
@@ -371,4 +371,5 @@ if __name__ == '__main__':
 	satavg = satAverageScript()
 	satavg.start()
 	satavg.close()
+
 

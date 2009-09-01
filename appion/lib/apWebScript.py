@@ -3,7 +3,7 @@
 #python
 import MySQLdb
 #appion
-import appionData
+import appiondata
 #leginon
 import sinedon
 
@@ -25,20 +25,20 @@ def setJobStatus(jobid, status):
 	newstat = str(status[0]).upper()
 
 	### cluster job data
-	clustdata = appionData.ApClusterJobData.direct_query(jobid)
+	clustdata = appiondata.ApClusterJobData.direct_query(jobid)
 	if not clustdata:
 		print "Did not find jobid=%d"%(jobid)
 		return False
 
 	### do the query
-	dbconf = sinedon.getConfig('appionData')
+	dbconf = sinedon.getConfig('appiondata')
 	db     = MySQLdb.connect(**dbconf)
 	cursor = db.cursor()
 	query = (
 		"UPDATE \n"
 		+"  `ApClusterJobData` as job \n"
 		+"SET \n"
-		+"  job.`status` = '"+str(newstat)+"' \n" 
+		+"  job.`status` = '"+str(newstat)+"' \n"
 		+"WHERE \n"
 		+"  job.`DEF_id` = "+str(clustdata.dbid)+" \n"
 	)
@@ -53,7 +53,8 @@ def setJobStatus(jobid, status):
 
 #=====================
 def getJobStatus(jobid):
-	clustdata = appionData.ApClusterJobData.direct_query(jobid)
+	clustdata = appiondata.ApClusterJobData.direct_query(jobid)
 	if not clustdata:
 		return None
 	return clustdata['status']
+

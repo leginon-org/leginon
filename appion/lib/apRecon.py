@@ -8,7 +8,7 @@ import string
 import shutil
 import subprocess
 #appion
-import appionData
+import appiondata
 import apDatabase
 import apParam
 import apDisplay
@@ -57,7 +57,7 @@ def defineIteration():
 #==================
 #==================
 def getModelData(modelid):
-	modeldata = appionData.ApInitialModelData.direct_query(modelid)
+	modeldata = appiondata.ApInitialModelData.direct_query(modelid)
 	if not modeldata:
 		apDisplay.printError("Initial model ID: "+str(modelid)+" does not exist in the database")
 	apDisplay.printMsg("Selected initial model: "+os.path.join(modeldata['path']['path'], modeldata['name']))
@@ -309,7 +309,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0,
 #==================
 #==================
 def insertRefinementRun(params):
-	runq=appionData.ApRefinementRunData()
+	runq=appiondata.ApRefinementRunData()
 	#first two must be unique
 	runq['name']=params['runname']
 	runq['stack']=params['stack']
@@ -326,7 +326,7 @@ def insertRefinementRun(params):
 	runq['jobfile']=params['jobinfo']
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
-	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
+	runq['path'] = appiondata.ApPathData(path=os.path.abspath(params['rundir']))
 	runq['description']=paramdescription
 	runq['initialModel']=params['model']
 
@@ -349,13 +349,13 @@ def insertRefinementRun(params):
 
 	#if we insert runq then this returns no results !!!
 	# this is a workaround (annoying & bad)
-	runq=appionData.ApRefinementRunData()
+	runq=appiondata.ApRefinementRunData()
 	runq['name']=params['runname']
 	runq['stack']=params['stack']
 	runq['jobfile']=params['jobinfo']
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
-	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
+	runq['path'] = appiondata.ApPathData(path=os.path.abspath(params['rundir']))
 	runq['description']=paramdescription
 	runq['package']=params['package']
 	runq['initialModel']=params['model']
@@ -384,7 +384,7 @@ def insertResolutionData(params,iteration):
 
 	iteration['fscfile'] = fscfile
 	if fsc in params['fscs']:
-		resq=appionData.ApResolutionData()
+		resq=appiondata.ApResolutionData()
 
 		# calculate the resolution:
 		halfres = calcRes(fscfile, params['boxsize'], params['apix'])
@@ -416,7 +416,7 @@ def insertRMeasureData(params, iteration):
 	if resolution is None:
 		return None
 
-	resq=appionData.ApRMeasureData()
+	resq=appiondata.ApRMeasureData()
 	resq['volume']=volumeDensity
 	resq['rMeasure']=resolution
 
@@ -431,7 +431,7 @@ def insertRMeasureData(params, iteration):
 #==================
 #==================
 def insertIteration(iteration, params):
-	refineparamsq=appionData.ApRefinementParamsData()
+	refineparamsq=appiondata.ApRefinementParamsData()
 	refineparamsq['ang']=iteration['ang']
 	refineparamsq['mask']=iteration['mask']
 	refineparamsq['imask']=iteration['imask']
@@ -496,7 +496,7 @@ def insertIteration(iteration, params):
 		apDisplay.printError("Refinement Package Not Valid")
 
 	# insert refinement results
-	refineq = appionData.ApRefinementData()
+	refineq = appiondata.ApRefinementData()
 	refineq['refinementRun'] = params['refinementRun']
 	refineq['refinementParams'] = refineparamsq
 	refineq['iteration'] = iteration['num']
@@ -609,7 +609,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 	for line in f:
 		# skip line if not a particle
 		if re.search("start",line):
-			prtlaliq=appionData.ApParticleClassificationData()
+			prtlaliq=appiondata.ApParticleClassificationData()
 
 			# gather alignment data from line
 			ali=line.split()
@@ -641,7 +641,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 				msgk=None
 			# find particle in stack database
 			defid = params['stackmapping'][prtlnum]
-			stackp = appionData.ApStackParticlesData.direct_query(defid)
+			stackp = appiondata.ApStackParticlesData.direct_query(defid)
 
 			if not stackp:
 				apDisplay.printError("particle "+str(prtlnum)+" not in stack id="+str(params['stack'].dbid))
@@ -706,7 +706,7 @@ def insertFSC(fscfile, refineData, commit=True):
 	apDisplay.printMsg("inserting FSC Data into database")
 	numinserts = 0
 	for line in f:
-		fscq = appionData.ApFSCData()
+		fscq = appiondata.ApFSCData()
 		fscq['refinementData'] = refineData
 		line = string.rstrip(line)
 		bits = line.split('\t')
@@ -789,13 +789,13 @@ def runRMeasure(apix, volpath, imask=0):
 #==================
 #==================
 def getRefineRunDataFromID(refinerunid):
-	return appionData.ApRefinementRunData.direct_query(refinerunid)
+	return appiondata.ApRefinementRunData.direct_query(refinerunid)
 
 #==================
 #==================
 def getNumIterationsFromRefineRunID(refinerunid):
-	refrundata = appionData.ApRefinementRunData.direct_query(refinerunid)
-	refq = appionData.ApRefinementData()
+	refrundata = appiondata.ApRefinementRunData.direct_query(refinerunid)
+	refq = appiondata.ApRefinementData()
 	refq['refinementRun'] = refrundata
 	refdatas = refq.query()
 	if not refdatas:
@@ -810,12 +810,12 @@ def getNumIterationsFromRefineRunID(refinerunid):
 #==================
 #==================
 def getClusterJobDataFromID(jobid):
-	return appionData.ApClusterJobData.direct_query(jobid)
+	return appiondata.ApClusterJobData.direct_query(jobid)
 
 #==================
 #==================
 def getRefinementsFromRun(refinerundata):
-	refineitq=appionData.ApRefinementData()
+	refineitq=appiondata.ApRefinementData()
 	refineitq['refinementRun'] = refinerundata
 	return refineitq.query()
 
@@ -863,7 +863,7 @@ import sinedon
 import MySQLdb
 import MySQLdb.cursors
 def partnum2defid(stackid):
-	config = sinedon.getConfig('appionData')
+	config = sinedon.getConfig('appiondata')
 	c = MySQLdb.connect(**config)
 	cur = c.cursor(MySQLdb.cursors.DictCursor)
 	cur.execute('SELECT * from ApStackParticlesData where `REF|ApStackData|stack` = %s' % (stackid,))
@@ -885,19 +885,19 @@ def getGoodBadParticlesFromReconId(reconid):
 	"""
 	import sinedon
 	import MySQLdb
-	dbconf = sinedon.getConfig('appionData')
+	dbconf = sinedon.getConfig('appiondata')
 	db     = MySQLdb.connect(**dbconf)
 	cursor = db.cursor()
 
-	refinerundata = appionData.ApRefinementRunData.direct_query(reconid)
-	refineq = appionData.ApRefinementData()
+	refinerundata = appiondata.ApRefinementRunData.direct_query(reconid)
+	refineq = appiondata.ApRefinementData()
 	refineq['refinementRun'] = refinerundata
 	refinedatas = refineq.query()
 	r0 = time.time()
 	for refinedata in refinedatas:
 		t0 = time.time()
 		print "Iteration %d"%(refinedata['iteration'])
-		goodbadq = appionData.ApRefineGoodBadParticleData()
+		goodbadq = appiondata.ApRefineGoodBadParticleData()
 		goodbadq['refine'] = refinedata
 		goodbaddata = goodbadq.query()
 		if goodbaddata:
@@ -905,13 +905,13 @@ def getGoodBadParticlesFromReconId(reconid):
 		fields = {
 			'good_normal': getParticleCount(refinedata.dbid, cursor, 'thrown_out', False),
 			'bad_normal':  getParticleCount(refinedata.dbid, cursor, 'thrown_out', True),
-			'good_coran':  getParticleCount(refinedata.dbid, cursor, 'coran_keep', True), 
-			'bad_coran':   getParticleCount(refinedata.dbid, cursor, 'coran_keep', False),  
-			'good_msgp':   getParticleCount(refinedata.dbid, cursor, 'msgp_keep', True),  
-			'bad_msgp':    getParticleCount(refinedata.dbid, cursor, 'msgp_keep', False),  
+			'good_coran':  getParticleCount(refinedata.dbid, cursor, 'coran_keep', True),
+			'bad_coran':   getParticleCount(refinedata.dbid, cursor, 'coran_keep', False),
+			'good_msgp':   getParticleCount(refinedata.dbid, cursor, 'msgp_keep', True),
+			'bad_msgp':    getParticleCount(refinedata.dbid, cursor, 'msgp_keep', False),
 		}
 		print fields
-		goodbadq = appionData.ApRefineGoodBadParticleData()
+		goodbadq = appiondata.ApRefineGoodBadParticleData()
 		goodbadq['refine'] = refinedata
 		goodbadq['good_normal'] = fields['good_normal']
 		goodbadq['bad_normal'] = fields['bad_normal']
@@ -931,7 +931,7 @@ def getParticleCount(refineid, cursor, name="thrown_out", isone=True):
 		+"  count(part.`DEF_id`) AS count \n"
 		+"FROM `ApParticleClassificationData` as part \n"
 		+"WHERE \n"
-		+"  part.`REF|ApRefinementData|refinement` = "+str(refineid)+" \n" 
+		+"  part.`REF|ApRefinementData|refinement` = "+str(refineid)+" \n"
 		+"AND \n"
 	)
 	if isone is True:
@@ -956,4 +956,5 @@ def getParticleCount(refineid, cursor, name="thrown_out", isone=True):
 if __name__ == '__main__':
 	r = runRMeasure(1.63,"/ami/data15/appion/08may09b/recon/recon1/threed.20a.mrc",'0,0')
 	print r
+
 

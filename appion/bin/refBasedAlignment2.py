@@ -14,7 +14,7 @@ import apStack
 import apEMAN
 import apTemplate
 import apParam
-import appionData
+import appiondata
 import apProject
 import apImage
 from apSpider import alignment
@@ -50,7 +50,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			action="store_true", help="Invert the density of all the templates")
 		self.parser.add_option("-i", "--num-iter", dest="numiter", type="int", default=1,
 			help="Number of iterations", metavar="#")
-	
+
 
 	#=====================
 	def checkConflicts(self):
@@ -97,9 +97,9 @@ class RefBasedAlignScript(appionScript.AppionScript):
 	#=====================
 	def checkDuplicateRefBasedRun(self):
 		### setup ref based run
-		refrunq = appionData.ApRefBasedRunData()
+		refrunq = appiondata.ApRefBasedRunData()
 		refrunq['name'] = self.params['runname']
-		refrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		refrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = refrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+self.params['runname']+"' and path already exist in database")
@@ -110,15 +110,15 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		apDisplay.printMsg("committing results to DB")
 
 		### setup alignment run
-		alignrunq = appionData.ApAlignRunData()
+		alignrunq = appiondata.ApAlignRunData()
 		alignrunq['runname'] = self.params['runname']
-		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
 
 		### setup ref based run
-		refrunq = appionData.ApRefBasedRunData()
+		refrunq = appiondata.ApRefBasedRunData()
 		refrunq['runname'] = self.params['runname']
 		refrunq['xysearch'] = self.params['xysearch']
 		refrunq['xystep'] = self.params['xystep']
@@ -131,7 +131,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		refrunq['run_seconds'] = self.params['runtime']
 
 		### finish alignment run
-		alignrunq = appionData.ApAlignRunData()
+		alignrunq = appiondata.ApAlignRunData()
 		alignrunq['refbasedrun'] = refrunq
 		alignrunq['hidden'] = False
 		alignrunq['bin'] = self.params['bin']
@@ -142,7 +142,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		### setup alignment stack
-		alignstackq = appionData.ApAlignStackData()
+		alignstackq = appiondata.ApAlignStackData()
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['imagicfile'] = imagicstack
 		alignstackq['avgmrcfile'] = "average.mrc"
@@ -151,7 +151,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		alignstackq['refstackfile'] = ("templatestack%02d.hed"%(self.params['numiter']))
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['iteration'] = self.params['numiter']
-		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		### check to make sure files exist
 		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
 		if not os.path.isfile(imagicfile):
@@ -181,13 +181,13 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			for i in range(len(self.templatelist)):
 				refnum = i+1
 				templateid = self.templatelist[i]
-				refq = appionData.ApAlignReferenceData()
+				refq = appiondata.ApAlignReferenceData()
 				refq['refnum'] = refnum
 				refq['iteration'] = iternum
 				refq['template'] = apTemplate.getTemplateFromId(templateid)
 				refq['mrcfile'] = ("templateavg%02d-%02d.mrc"%(iternum,refnum))
 				refpath = os.path.join(self.params['rundir'], "templates")
-				refq['path'] = appionData.ApPathData(path=os.path.abspath(refpath))
+				refq['path'] = appiondata.ApPathData(path=os.path.abspath(refpath))
 				refq['alignrun'] = alignrunq
 				if insert is True:
 					refq.insert()
@@ -211,7 +211,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			'yshift': float(data[6]),
 			"""
 
-			alignpartq = appionData.ApAlignParticlesData()
+			alignpartq = appiondata.ApAlignParticlesData()
 			alignpartq['ref'] = reflist[partdict['template']-1]
 			alignpartq['partnum'] = partdict['num']
 			alignpartq['alignstack'] = alignstackq
@@ -338,7 +338,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			randpart = random.random()*(len(partlist)-1)
 			junk.write(str(randpart)+"\n")
 			junk.close()
-		junklist = "templates/rejectlist%02d.list" % (iternum)	
+		junklist = "templates/rejectlist%02d.list" % (iternum)
 		junkmrcfile = "templates/junkavg%02d.mrc" % (iternum)
 		emancmd  = ("proc2d "+alignedstack+" "+junkmrcfile
 			+" list="+junklist
@@ -348,7 +348,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		### create averaged templates
 		filelist = []
 		for templatenum in range(1, self.params['numtemplate']+1):
-			keeplist = "templates/keeplist%02d-%02d.list" % (iternum, templatenum)	
+			keeplist = "templates/keeplist%02d-%02d.list" % (iternum, templatenum)
 			mrcfile = "templates/templateavg%02d-%02d.mrc" % (iternum, templatenum)
 			if os.path.isfile(keeplist) and os.stat(keeplist)[6] > 1:
 				emancmd  = ("proc2d "+alignedstack+" "+mrcfile
@@ -415,7 +415,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 				usestack, templatestack, spiderstack,
 				self.params['xysearch'], self.params['xystep'],
 				self.params['numpart'], self.params['numtemplate'],
-				self.params['firstring'], self.params['lastring'], 
+				self.params['firstring'], self.params['lastring'],
 				iternum=iternum, oldpartlist=oldpartlist)
 			oldpartlist = partlist
 			usestack = alignedstack
@@ -454,4 +454,5 @@ if __name__ == "__main__":
 	refBasedAlign = RefBasedAlignScript()
 	refBasedAlign.start()
 	refBasedAlign.close()
+
 

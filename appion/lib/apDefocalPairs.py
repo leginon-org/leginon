@@ -7,7 +7,7 @@ import pyami.correlator as correlator
 #leginon
 import leginondata
 #appion
-import appionData
+import appiondata
 import apImage
 import apDisplay
 
@@ -31,7 +31,7 @@ def getDefocusPair(imgdata):
 	qtarget['number'] = target['number']
 	qsibling=leginondata.AcquisitionImageData(target=qtarget)
 	origid=imgdata.dbid
-	allsiblings = qsibling.query(readimages=False)	
+	allsiblings = qsibling.query(readimages=False)
 	defocpair=None
 	if len(allsiblings) > 1:
 		#could be multiple siblings but we are taking only the most recent
@@ -68,7 +68,7 @@ def getShift(imgdata1 ,imgdata2):
 		binned2 = apImage.binImg(imgdata2['image'], shrinkfactor2)
 		pc=correlator.phase_correlate(binned1,binned2,zero=True)
 		#apImage.arrayToMrc(pc,imgdata1['filename']+'.corr.mrc')
-		peak = peakfinder.findSubpixelPeak(pc, lpf=1.5) # this is a temp fix. 
+		peak = peakfinder.findSubpixelPeak(pc, lpf=1.5) # this is a temp fix.
 		subpixpeak = peak['subpixel peak']
 		shift=correlator.wrap_coord(subpixpeak,pc.shape)
 		peak['scalefactor']=dimension2/float(dimension1)
@@ -86,7 +86,7 @@ def insertShift(imgdata,siblingdata,peak):
 	if not siblingdata or not peak:
 		apDisplay.printWarning("No sibling or peak found. No database insert")
 		return False
-	shiftq=appionData.ApImageTransformationData()
+	shiftq=appiondata.ApImageTransformationData()
 	shiftq['image1']=imgdata
 	shiftdata=shiftq.query()
 	if shiftdata:
@@ -103,7 +103,7 @@ def insertShift(imgdata,siblingdata,peak):
 	return True
 
 def getTransformedDefocPair(imgdata, direction):
-	simgq=appionData.ApImageTransformationData()
+	simgq=appiondata.ApImageTransformationData()
 	base = 'image'
 	direction = str(direction)
 	if direction =='2':
@@ -120,4 +120,5 @@ def getTransformedDefocPair(imgdata, direction):
 	else:
 		return None
 	return sbimgdata
+
 

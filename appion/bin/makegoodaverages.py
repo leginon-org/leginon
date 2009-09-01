@@ -15,7 +15,7 @@ import sinedon
 import MySQLdb
 #appion
 import appionScript
-import appionData
+import appiondata
 import apDisplay
 import apStack
 import apEulerCalc
@@ -31,20 +31,20 @@ def getParticleInfo(reconid, iteration):
 	"""
 	Get all particle data for given recon and iteration
 	"""
-	refinerundata = appionData.ApRefinementRunData.direct_query(reconid)
+	refinerundata = appiondata.ApRefinementRunData.direct_query(reconid)
 	if not refinerundata:
 		apDisplay.printError("Could not find refinerundata for reconrun id="+str(reconid))
 
-	refineq = appionData.ApRefinementData()
+	refineq = appiondata.ApRefinementData()
 	refineq['refinementRun']=refinerundata
 	refineq['iteration']=iteration
 	refinedata = refineq.query(results=1)
-	
+
 	if not refinedata:
 		apDisplay.printError("Could not find refinedata for reconrun id="
 			+str(reconid)+" iter="+str(iteration))
 
-	refinepartq=appionData.ApParticleClassificationData()
+	refinepartq=appiondata.ApParticleClassificationData()
 	refinepartq['refinement']=refinedata[0]
 	t0 = time.time()
 	apDisplay.printMsg("querying particles on "+time.asctime())
@@ -94,7 +94,7 @@ def makeClassAverages(lst, outputstack, classdata, params):
 	#make class average
 	avg=EMAN.EMData()
 	avg.makeMedian(images)
-	
+
 	#write class average
 	e = EMAN.Euler()
 	alt = classdata['euler1']*math.pi/180
@@ -105,14 +105,14 @@ def makeClassAverages(lst, outputstack, classdata, params):
 	avg.setNImg(len(images))
 	avg.applyMask(params['mask'],0)
 	avg.writeImage(outputstack,-1)
-	
+
 
 def removePtclsByLst(rejectlst, params):
 	"""
 	Removes particles by reading a list of particle numbers generated externally.
 
 	Requirements:
-		the input file has one particle per line 
+		the input file has one particle per line
 		the first piece of data is the particle number from the db
 	"""
 	f=open(params['rejectlst'],'r')
@@ -151,7 +151,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		odd.close()
 		self.params['evenstack']=os.path.splitext(self.params['outputstack'])[0]+'.even.hed'
 		self.params['oddstack']=os.path.splitext(self.params['outputstack'])[0]+'.odd.hed'
-		
+
 		if neven>0:
 			makeClassAverages('even.lst',self.params['evenstack'],classdata,self.params)
 		if nodd>0:
@@ -269,7 +269,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			help="mass of the density in kDa, for chimera snapshot generation")
 		self.parser.add_option("--zoom", dest="zoom", type="float",
 			help="zoom option for chimera snapshot generation")
-	
+
 	#=====================
 	def checkConflicts(self):
 		if self.params['reconid'] is None:
@@ -284,7 +284,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 	#=====================
 	def setRunDir(self):
 		reconid = self.params['reconid']
-		refinerundata=appionData.ApRefinementRunData.direct_query(reconid)
+		refinerundata=appiondata.ApRefinementRunData.direct_query(reconid)
 		if not refinerundata:
 			apDisplay.printError("reconid "+str(reconid)+" does not exist in the database")
 		self.params['rundir'] = os.path.join(refinerundata['path']['path'], 'eulers',self.params['runname'])
@@ -296,7 +296,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		stackdata = particles[0]['particle']['stack']
 		stack = os.path.join(stackdata['path']['path'], stackdata['name'])
 		classes,cstats = determineClasses(particles)
-		
+
 		rejectlst=[]
 		if self.params['sigma'] is not None:
 			cutoff=cstats['meanquality']+self.params['sigma']*cstats['stdquality']
@@ -351,14 +351,14 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 				#if ptcl['quality_factor']>cstats['meanquality']+3*cstats['stdquality']:
 				#	high.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,
 				#		stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
-					
-			clsfile.close()	
+
+			clsfile.close()
 
 			if nptcls<1:
 				continue
 			if self.params['skipavg'] is False:
 				makeClassAverages('clstmp.lst', self.params['outputstack'], classes[key], self.params)
-			
+
 			if self.params['eotest'] is True:
 				self.makeEvenOddClasses('clstmp.lst',classes[key])
 
@@ -386,10 +386,10 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			symdata=apSymmetry.findSymmetry(self.params['sym'])
 			if not symdata:
 				apDisplay.printError('no symmetry associated with this model')
-			modq=appionData.Ap3dDensityData()
+			modq=appiondata.Ap3dDensityData()
 			modq['session']=self.params['session']
 			modq['name']=self.params['make3d']
-			modq['path']=appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+			modq['path']=appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 			modq['boxsize']=box
 			modq['mask']=self.params['mask']
 			modq['pixelsize']=apix
@@ -425,3 +425,4 @@ if __name__ == '__main__':
 	makegood = makeGoodAveragesScript()
 	makegood.start()
 	makegood.close()
+

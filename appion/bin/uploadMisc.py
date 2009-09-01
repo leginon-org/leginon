@@ -9,7 +9,7 @@ import apDatabase
 import apRecon
 import apParam
 import apDisplay
-import appionData
+import appiondata
 import apFile
 import apProject
 
@@ -20,7 +20,7 @@ class UploadMiscScript(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --file=<filename> --session=<name> --recon=<#> \n\t "
 			+" --description='text' ")
-		self.parser.add_option("-f", "--file", dest="file", 
+		self.parser.add_option("-f", "--file", dest="file",
 			help="File to upload", metavar="FILE")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with file (e.g. 06mar12a)", metavar="SESSION")
@@ -47,7 +47,7 @@ class UploadMiscScript(appionScript.AppionScript):
 	#=====================
 	def insertMisc(self):
 		print "inserting into database"
-		miscq = appionData.ApMiscData()
+		miscq = appiondata.ApMiscData()
 		if self.params['reconid'] is not None:
 			miscq['refinementRun'] = self.recondata
 			sessiondata = apRecon.getSessionDataFromReconId(self.params['reconid'])
@@ -58,7 +58,7 @@ class UploadMiscScript(appionScript.AppionScript):
 			miscq['session'] = self.sessiondata
 			projectid = apProject.getProjectIdFromSessionName(self.params['session'])
 			miscq['project|projects|project'] = projectid
-		miscq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		miscq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		miscq['name'] = self.filename
 		miscq['description'] = self.params['description']
 		miscq['md5sum'] = apFile.md5sumfile(self.newfile)
@@ -68,7 +68,7 @@ class UploadMiscScript(appionScript.AppionScript):
 			miscq.insert()
 		else:
 			apDisplay.printWarning("not committing to DB")
-	
+
 
 	#=====================
 	def start(self):
@@ -87,7 +87,7 @@ class UploadMiscScript(appionScript.AppionScript):
 		shutil.copy(self.oldfile, self.newfile)
 
 		# insert the info
-		self.insertMisc()	
+		self.insertMisc()
 
 
 #=====================
@@ -96,6 +96,7 @@ if __name__ == '__main__':
 	uploadMisc = UploadMiscScript()
 	uploadMisc.start()
 	uploadMisc.close()
+
 
 
 

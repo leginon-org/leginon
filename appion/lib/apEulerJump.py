@@ -14,7 +14,7 @@ import MySQLdb
 import apDisplay
 import apStack
 import apEulerCalc
-import appionData
+import appiondata
 
 class ApEulerJump(object):
 	#=====================
@@ -23,8 +23,8 @@ class ApEulerJump(object):
 		Need to connect to DB server before moving forward
 		"""
 		### get db config info
-		self.dbconf = sinedon.getConfig('appionData')
-		### connect 
+		self.dbconf = sinedon.getConfig('appiondata')
+		### connect
 		self.db     = MySQLdb.connect(**self.dbconf)
 		### create a cursor
 		self.cursor = self.db.cursor()
@@ -99,10 +99,10 @@ class ApEulerJump(object):
 
 	#=====================
 	def insertJumpIntoDB(self, stackpartid, reconrunid, jumpdata):
-		#refinerundata=appionData.ApRefinementRunData.direct_query(reconid)
-		ejumpq = appionData.ApEulerJumpData()
-		ejumpq['particle'] = appionData.ApStackParticlesData.direct_query(stackpartid)
-		ejumpq['refRun'] = appionData.ApRefinementRunData.direct_query(reconrunid)
+		#refinerundata=appiondata.ApRefinementRunData.direct_query(reconid)
+		ejumpq = appiondata.ApEulerJumpData()
+		ejumpq['particle'] = appiondata.ApStackParticlesData.direct_query(stackpartid)
+		ejumpq['refRun'] = appiondata.ApRefinementRunData.direct_query(reconrunid)
 		for key in ('median', 'mean', 'stdev', 'min', 'max'):
 			ejumpq[key] = jumpdata[key]
 		ejumpq.insert()
@@ -110,28 +110,28 @@ class ApEulerJump(object):
 
 	#=====================
 	def getJumpDataFromDB(self, stackpartid, reconrunid):
-		jumpq = appionData.ApEulerJumpData()
-		jumpq['particle'] = appionData.ApStackParticlesData.direct_query(stackpartid)
-		jumpq['refRun'] = appionData.ApRefinementRunData.direct_query(reconrunid)
+		jumpq = appiondata.ApEulerJumpData()
+		jumpq['particle'] = appiondata.ApStackParticlesData.direct_query(stackpartid)
+		jumpq['refRun'] = appiondata.ApRefinementRunData.direct_query(reconrunid)
 		jumpdatas = jumpq.query(results=1)
 		if not jumpdatas:
 			return None
 		return jumpdatas[0]
-			
+
 
 	#=====================
 	def getStackPartID(self, stackpartnum, reconrunid, stackid=None):
 		if stackid is None:
 			stackid = apStack.getStackIdFromRecon(reconrunid, msg=False)
 
-		stackpartq = appionData.ApStackParticlesData()
-		stackpartq['stack'] = appionData.ApStackData.direct_query(stackid)
+		stackpartq = appiondata.ApStackParticlesData()
+		stackpartq['stack'] = appiondata.ApStackData.direct_query(stackid)
 		stackpartq['particleNumber'] = stackpartnum
 		stackpartdata = stackpartq.query(results=1)
-		
+
 		if not stackpartdata:
 			apDisplay.printError("Failed to get Stack Particle ID for Number "+str(partnum))
-		return stackpartdata[0].dbid		
+		return stackpartdata[0].dbid
 
 	#=====================
 	def calculateJumpData(self, stackpartid, reconrunid, sym='d7'):
@@ -167,8 +167,8 @@ class ApEulerJump(object):
 		"""
 		get the symmetry from the last iteration of a refinement
 		"""
-		refrundata = appionData.ApRefinementRunData.direct_query(reconrunid)
-		refdataq = appionData.ApRefinementData()
+		refrundata = appiondata.ApRefinementRunData.direct_query(reconrunid)
+		refdataq = appiondata.ApRefinementData()
 		refdataq['refinementRun'] = refrundata
 		refdata = refdataq.query()
 		uniqsym = refdata[0]['refinementParams']['symmetry']
@@ -196,14 +196,14 @@ class ApEulerJump(object):
 		"""
 		returns all classdata for a particular particle and refinement
 		"""
-		refrundata = appionData.ApRefinementRunData.direct_query(reconrunid)
-		stackpartdata = appionData.ApStackParticlesData.direct_query(stackpartid)
-		
-		refmentq = appionData.ApRefinementData()
+		refrundata = appiondata.ApRefinementRunData.direct_query(reconrunid)
+		stackpartdata = appiondata.ApStackParticlesData.direct_query(stackpartid)
+
+		refmentq = appiondata.ApRefinementData()
 		refmentq['refinementRun'] = refrundata
 
 		particledata = stackpartdata
-		partclassq = appionData.ApParticleClassificationData()
+		partclassq = appiondata.ApParticleClassificationData()
 		partclassq['particle'] = particledata
 		partclassq['refinement']  = refmentq
 		partclassdata = partclassq.query()
@@ -224,7 +224,7 @@ class ApEulerJump(object):
 				print euler
 				import pprint
 				pprint.pprint(data)
-				apDisplay.printError("bad data entry")			
+				apDisplay.printError("bad data entry")
 		return eulertree
 
 	#=====================
@@ -247,9 +247,9 @@ class ApEulerJump(object):
 			+"LEFT JOIN `ApRefinementData` AS ref \n"
 			+"  ON partclass.`REF|ApRefinementData|refinement` = ref.`DEF_id` \n"
 			+"WHERE \n"
-			+"  stackpart.`DEF_id` = "+str(stackpartid)+" \n" 
+			+"  stackpart.`DEF_id` = "+str(stackpartid)+" \n"
 			+"AND \n"
-			+"  ref.`REF|ApRefinementRunData|refinementRun` = "+str(reconrunid)+" \n" 
+			+"  ref.`REF|ApRefinementRunData|refinementRun` = "+str(reconrunid)+" \n"
 		)
 		self.cursor.execute(query)
 		results = self.cursor.fetchall()
@@ -276,7 +276,7 @@ class ApEulerJump(object):
 				eulertree.append(euler)
 			except:
 				print row
-				apDisplay.printError("bad row entry")			
+				apDisplay.printError("bad row entry")
 		return eulertree
 
 	#=====================
@@ -299,5 +299,6 @@ if __name__ == "__main__":
 		sym=None
 	a = ApEulerJump()
 	a.calculateEulerJumpsForEntireRecon(reconrunid, sym=sym)
+
 
 

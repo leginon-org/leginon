@@ -15,7 +15,7 @@ import apStack
 import apEMAN
 import apProject
 from apSpider import alignment
-import appionData
+import appiondata
 
 #=====================
 #=====================
@@ -80,9 +80,9 @@ class NoRefAlignScript(appionScript.AppionScript):
 	#=====================
 	def checkNoRefRun(self):
 		### setup alignment run
-		alignrunq = appionData.ApAlignRunData()
+		alignrunq = appiondata.ApAlignRunData()
 		alignrunq['runname'] = self.params['runname']
-		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+self.params['runname']+"' and path already exist in database")
@@ -90,15 +90,15 @@ class NoRefAlignScript(appionScript.AppionScript):
 	#=====================
 	def insertNoRefRun(self, imagicstack, insert=False):
 		### setup alignment run
-		alignrunq = appionData.ApAlignRunData()
+		alignrunq = appiondata.ApAlignRunData()
 		alignrunq['runname'] = self.params['runname']
-		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+self.params['runname']+"' and path already exist in database")
 
 		# create a norefParam object
-		norefq = appionData.ApSpiderNoRefRunData()
+		norefq = appiondata.ApSpiderNoRefRunData()
 		norefq['runname'] = self.params['runname']
 		norefq['particle_diam'] = 2.0*self.params['partrad']
 		norefq['first_ring'] = self.params['firstring']
@@ -118,13 +118,13 @@ class NoRefAlignScript(appionScript.AppionScript):
 		# STOP HERE
 
 		### setup alignment stack
-		alignstackq = appionData.ApAlignStackData()
+		alignstackq = appiondata.ApAlignStackData()
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['imagicfile'] = os.path.basename(imagicstack)
 		alignstackq['avgmrcfile'] = "average.mrc"
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['iteration'] = 0
-		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		### check to make sure files exist
 		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
 		if not os.path.isfile(imagicfile):
@@ -144,12 +144,12 @@ class NoRefAlignScript(appionScript.AppionScript):
 			alignstackq.insert()
 
 		### create reference
-		refq = appionData.ApAlignReferenceData()
+		refq = appiondata.ApAlignReferenceData()
 		refq['refnum'] = 1
 		refq['iteration'] = 0
 		refq['mrcfile'] = "template.mrc"
 		#refpath = os.path.abspath(os.path.join(self.params['rundir'], "alignment"))
-		refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		refq['alignrun'] = alignrunq
 
 		### insert particle data
@@ -167,7 +167,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			'yshift': float(data[6]),
 			"""
 
-			alignpartq = appionData.ApAlignParticlesData()
+			alignpartq = appiondata.ApAlignParticlesData()
 			alignpartq['ref'] = refq
 			alignpartq['partnum'] = partdict['num']
 			alignpartq['alignstack'] = alignstackq
@@ -196,7 +196,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		spiderstack = os.path.join(self.params['rundir'], "start.spi")
 		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
-		
+
 		emancmd += "apix="+str(self.stack['apix'])+" "
 		if self.params['lowpass'] > 0:
 			emancmd += "lp="+str(self.params['lowpass'])+" "
@@ -340,7 +340,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		emancmd = "proc2d template.mrc "+templatefile+" spiderswap "
 		apEMAN.executeEmanCmd(emancmd)
 
-		return templatefile	
+		return templatefile
 
 	#=====================
 	def start(self):
@@ -377,7 +377,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		aligntime = time.time()
 		pixrad = int(round(self.params['partrad']/self.stack['apix']/self.params['bin']))
 		alignedstack, self.partlist = alignment.refFreeAlignParticles(
-			spiderstack, templatefile, 
+			spiderstack, templatefile,
 			self.params['numpart'], pixrad,
 			self.params['firstring'], self.params['lastring'],
 			rundir = ".")
@@ -409,4 +409,5 @@ if __name__ == "__main__":
 	noRefAlign = NoRefAlignScript(True)
 	noRefAlign.start()
 	noRefAlign.close()
+
 

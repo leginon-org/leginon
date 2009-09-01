@@ -8,7 +8,7 @@ import particleLoop2
 import apImage
 #import subprocess
 import apFindEM
-import appionData
+import appiondata
 import apParticle
 import apDatabase
 import apDisplay
@@ -61,7 +61,7 @@ class PickerApp(wx.App):
 		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
 
-		self.panel.addTargetTool('Select Particles', color=wx.Color(220,20,20), 
+		self.panel.addTargetTool('Select Particles', color=wx.Color(220,20,20),
 			target=True, shape=self.shape, size=self.size)
 		self.panel.setTargets('Select Particles', [])
 		self.panel.selectiontool.setTargeting('Select Particles', True)
@@ -146,7 +146,7 @@ class PickerApp(wx.App):
 			clist.reverse()
 			return tuple(clist)
 		vertices = map(reversexy,vertices)
-		
+
 		maskimg = polygon.filledPolygon(self.panel.imagedata.shape,vertices)
 		type(maskimg)
 		targets = self.panel.getTargets('Select Particles')
@@ -161,7 +161,7 @@ class PickerApp(wx.App):
 		print eliminated,"particle(s) eliminated due to masking"
 		self.panel.setTargets('Select Particles',newparticles)
 		self.panel.setTargets('Region to Remove', [])
-		
+
 	def onNext(self, evt):
 		#targets = self.panel.getTargets('Select Particles')
 		#for target in targets:
@@ -238,7 +238,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 			self.processAndSaveAllImages()
 
 		self.app = PickerApp(
-			shape = self.canonicalShape(self.params['shape']), 
+			shape = self.canonicalShape(self.params['shape']),
 			size =  self.params['shapesize'], )
 		self.app.appionloop = self
 		self.threadJpeg = True
@@ -261,7 +261,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 
 	##=======================
 	def getParticleParamsData(self):
-		manparamsq=appionData.ApManualParamsData()
+		manparamsq=appiondata.ApManualParamsData()
 		if self.params['pickrunid'] is not None:
 			manparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
 		return manparamsq
@@ -284,7 +284,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 		self.parser.add_option("--pickrunname", dest="pickrunname", type="str",
 			help="previous selection run name, e.g. --pickrunname=dogrun1", metavar="NAME")
 		self.parser.add_option("--shape", dest="shape", default='+',
-			help="pick shape")	
+			help="pick shape")
 		self.parser.add_option("--shapesize", dest="shapesize", type="int", default=16,
 			help="shape size")
 		self.parser.add_option("--mask", dest="checkMask", default=False,
@@ -301,7 +301,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 		if self.params['outtypeindex'] is None:
 			apDisplay.printError("outtype must be one of: "+str(self.outtypes)+"; NOT "+str(self.params['outtype']))
 		return
-	
+
 
 	###################################################
 	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
@@ -370,7 +370,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 		overlay = apMask.overlayMask(image,mask)
 		self.app.panel.setImage(overlay.astype(numpy.float32))
 
-	
+
 	def runManualPicker(self, imgdata):
 		#reset targets
 		self.app.panel.setTargets('Select Particles', [])
@@ -380,7 +380,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 		self.assessold = apDatabase.checkInspectDB(imgdata)
 		self.assess = self.assessold
 		self.app.setAssessStatus()
-					
+
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
 		imgpath = os.path.join(self.params['rundir'],imgname)
@@ -458,6 +458,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 if __name__ == '__main__':
 	imgLoop = manualPicker()
 	imgLoop.run()
+
 
 
 

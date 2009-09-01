@@ -10,7 +10,7 @@ import apFile
 import apStack
 import apEMAN
 import apParam
-import appionData
+import appiondata
 from apSpider import alignment
 import spyder
 import apRecon
@@ -66,7 +66,7 @@ class apmqRefineScript(appionScript.AppionScript):
 		self.parser.add_option("--proc", dest="proc", type="int", default=1,
 			help="number of processors to use")
 		self.parser.add_option("--sym", dest="sym", type="string", default="c1",
-			help="particle symmetry")	
+			help="particle symmetry")
 
 	#=====================
 	def checkConflicts(self):
@@ -205,11 +205,11 @@ class apmqRefineScript(appionScript.AppionScript):
 				nproc=self.params['proc'],
 			)
 			# use cross-correlation to find the sub-pixel alignment
-			# of the particles, 
+			# of the particles,
 			# results will be saved in "peakfile.spi"
-			
+
 			alignment.checkFile(shiftedStack)
-		
+
 			# don't use MPI here - for some reason slower?
 			mySpi=spyder.SpiderSession(dataext=".spi", logo=False, log=False)
 
@@ -235,7 +235,7 @@ class apmqRefineScript(appionScript.AppionScript):
 					img="_3"
 				else:
 					img=spyder.fileFilter(projs)+"@"+str(ref)
-				
+
 				alignment.rotAndShiftImg(img,"_2",inplane,inMySpi=mySpi)
 				alignment.maskImg("_2","_3",self.params['rad'],"D","E",
 						center=int((self.stack['boxsize']/2)+1),
@@ -248,7 +248,7 @@ class apmqRefineScript(appionScript.AppionScript):
 				# calculate cross-correlation
 				alignment.getCC("_1","_2","_1",inMySpi=mySpi)
 
-				# crop the correllation image to allowable shift amount 
+				# crop the correllation image to allowable shift amount
 				shift=int(self.params['allowedShift']*self.stack['boxsize'])
 				dim=2*shift+1
 				topleftx=self.stack['boxsize']-shift+1
@@ -256,9 +256,9 @@ class apmqRefineScript(appionScript.AppionScript):
 
 				# find the sub-pixel location of cc peak
 				mySpi.toSpiderQuiet("PK x11,x12,x13,x14,x15,x16,x17","_2","0")
-				
+
 				# create new stack of shifted particles
-				shpos=spyder.fileFilter(shiftedStack)+"@"+str(p+1) 
+				shpos=spyder.fileFilter(shiftedStack)+"@"+str(p+1)
 				mySpi.toSpiderQuiet("IF(x17.EQ.0.0) THEN")
 				mySpi.toSpiderQuiet("GP x17","_2",str(shift+1)+","+str(shift+1))
 				alignment.copyImg(stackimg,shpos,inMySpi=mySpi)
@@ -266,12 +266,12 @@ class apmqRefineScript(appionScript.AppionScript):
 				#mySpi.toSpiderQuiet("RT SQ",stackimg,shpos,inplane*-1,"-x15,-x16")
 				mySpi.toSpiderQuiet("SH F",stackimg,shpos,"-x15,-x16")
 				mySpi.toSpiderQuiet("ENDIF")
-				
-				# save shifts to file 
+
+				# save shifts to file
 				mySpi.toSpiderQuiet("SD "+str(p+1)+",x15,x16,x17",spyder.fileFilter(shf))
 			mySpi.toSpiderQuiet("SD E",spyder.fileFilter(shf))
-			mySpi.close()	
-			
+			mySpi.close()
+
 			# create class average images
 			alignment.createClassAverages(
 				shiftedStack,
@@ -316,7 +316,7 @@ class apmqRefineScript(appionScript.AppionScript):
 			# and the corrected angles from the angular doc file
 			apDisplay.printMsg("creating 3d volume")
 			out_rawvol="vol_raw%03d.spi" % iter
-			if self.params['voliter'] is not None: 
+			if self.params['voliter'] is not None:
 				alignment.iterativeBackProjection(
 					shiftedStack,
 					selectfile,
@@ -430,7 +430,7 @@ class apmqRefineScript(appionScript.AppionScript):
 
 			# set this model as start for next iteration, remove previous
 			os.remove(self.params['itervol'])
-			os.remove(out_rawvol)			
+			os.remove(out_rawvol)
 			self.params['itervol']=outvol
 
 			# clean up directory
@@ -460,4 +460,5 @@ if __name__ == "__main__":
 	refine3d = apmqRefineScript()
 	refine3d.start()
 	refine3d.close()
+
 

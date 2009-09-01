@@ -22,7 +22,7 @@ import apXmipp
 import apImage
 from apSpider import alignment, operations
 from pyami import spider
-import appionData
+import appiondata
 import apImagicFile
 import apProject
 import sinedon
@@ -83,11 +83,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### choices
 		self.fastmodes = ( "normal", "narrow", "wide" )
 		self.parser.add_option("--fast-mode", dest="fastmode",
-			help="Search space reduction cutoff criteria", metavar="MODE", 
+			help="Search space reduction cutoff criteria", metavar="MODE",
 			type="choice", choices=self.fastmodes, default="normal" )
 		self.convergemodes = ( "normal", "fast", "slow" )
 		self.parser.add_option("--converge", dest="converge",
-			help="Convergence criteria mode", metavar="MODE", 
+			help="Convergence criteria mode", metavar="MODE",
 			type="choice", choices=self.convergemodes, default="normal" )
 
 	#=====================
@@ -106,7 +106,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			apDisplay.printError("converge mode must be on of: "+str(self.convergemodes))
 		maxparticles = 150000
 		if self.params['numpart'] > maxparticles:
-			apDisplay.printError("too many particles requested, max: " 
+			apDisplay.printError("too many particles requested, max: "
 				+ str(maxparticles) + " requested: " + str(self.params['numpart']))
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
@@ -142,14 +142,14 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def insertMaxLikeJob(self):
-		maxjobq = appionData.ApMaxLikeJobData()
+		maxjobq = appiondata.ApMaxLikeJobData()
 		maxjobq['runname'] = self.params['runname']
-		maxjobq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		maxjobq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		maxjobdatas = maxjobq.query(results=1)
 		if maxjobdatas:
-			alignrunq = appionData.ApAlignRunData()
+			alignrunq = appiondata.ApAlignRunData()
 			alignrunq['runname'] = self.params['runname']
-			alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+			alignrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 			alignrundata = alignrunq.query(results=1)
 			if maxjobdatas[0]['finished'] is True or alignrundata:
 				apDisplay.printError("This run name already exists as finished in the database, please change the runname")
@@ -167,7 +167,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	def readyUploadFlag(self):
 		if self.params['commit'] is False:
 			return
-		config = sinedon.getConfig('appionData')
+		config = sinedon.getConfig('appiondata')
 		dbc = MySQLdb.Connect(**config)
 		cursor = dbc.cursor()
 		query = (
@@ -377,7 +377,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		### setup Xmipp command
 		aligntime = time.time()
-		
+
 		xmippopts = ( " "
 			+" -i "+os.path.join(self.params['rundir'], self.partlistdocfile)
 			+" -nref "+str(self.params['numrefs'])
@@ -442,5 +442,6 @@ if __name__ == "__main__":
 	maxLike = MaximumLikelihoodScript(True)
 	maxLike.start()
 	maxLike.close()
+
 
 

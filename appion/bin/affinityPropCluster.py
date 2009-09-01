@@ -17,7 +17,7 @@ import apParam
 import apImagicFile
 import apFile
 import apEMAN
-import appionData
+import appiondata
 import apProject
 from pyami import mrc
 
@@ -119,7 +119,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 		### Preference value stats
 		prefarray = numpy.asarray(simlist, dtype=numpy.float32)
 		apDisplay.printMsg("CC stats:\n %.5f +/- %.5f\n %.5f <> %.5f"
-			%(prefarray.mean(), prefarray.std(), prefarray.min(), prefarray.max()))	
+			%(prefarray.mean(), prefarray.std(), prefarray.min(), prefarray.max()))
 
 		### Determine median preference value
 		print self.params['preftype']
@@ -230,7 +230,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 		### choices
 		self.prefvalues = ( "median", "minimum", "minlessrange" )
 		self.parser.add_option("--preftype", "--preference-type", dest="preftype",
-			help="Set preference value type", metavar="TYPE", 
+			help="Set preference value type", metavar="TYPE",
 			type="choice", choices=self.prefvalues, default="median" )
 
 	#=====================
@@ -246,7 +246,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		path = self.alignstackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath, "coran", self.params['runname'])
@@ -254,11 +254,11 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 	#=====================
 	def checkAffPropRun(self):
 		# create a norefParam object
-		clusterrunq = appionData.ApClusteringRunData()
+		clusterrunq = appiondata.ApClusteringRunData()
 		clusterrunq['runname'] = self.params['runname']
 
-		clusterstackq = appionData.ApClusteringStackData()
-		clusterstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		clusterstackq = appiondata.ApClusteringStackData()
+		clusterstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clusterstackq['clusterrun'] = clusterrunq
 		# ... path makes the run unique:
 		uniquerun = clusterstackq.query(results=1)
@@ -267,12 +267,12 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 
 	#=====================
 	def getAlignedStack(self):
-		return appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		return appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 
 	#=====================
 	def getNumAlignedParticles(self):
 		t0 = time.time()
-		self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		oldalignedstack = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['imagicfile'])
 		numpart = apFile.numImagesInStack(oldalignedstack)
 		apDisplay.printMsg("numpart="+str(numpart)+" in "+apDisplay.timeString(time.time()-t0))
@@ -309,17 +309,17 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 		### Preliminary data
 		numclass = len(classes.keys())
 		projectid = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
-		alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
-		pathdata = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
+		pathdata = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 
 		### Affinity Propagation Params object
-		affpropq = appionData.ApAffinityPropagationClusterParamsData()
+		affpropq = appiondata.ApAffinityPropagationClusterParamsData()
 		affpropq['mask_diam'] = 2.0*self.params['maskrad']
 		affpropq['run_seconds'] = time.time()-self.t0
 		affpropq['preference_type'] = self.params['preftype']
 
 		### Align Analysis Run object
-		analysisq = appionData.ApAlignAnalysisRunData()
+		analysisq = appiondata.ApAlignAnalysisRunData()
 		analysisq['runname'] = self.params['runname']
 		analysisq['path'] = pathdata
 		analysisq['description'] = self.params['description']
@@ -329,7 +329,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 		### linked through cluster not analysis
 
 		### Clustering Run object
-		clusterrunq = appionData.ApClusteringRunData()
+		clusterrunq = appiondata.ApClusteringRunData()
 		clusterrunq['runname'] = self.params['runname']
 		clusterrunq['description'] = self.params['description']
 		clusterrunq['boxsize'] = alignstackdata['boxsize']
@@ -341,7 +341,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 		clusterrunq['affpropparams'] = affpropq
 
 		### Clustering Stack object
-		clusterstackq = appionData.ApClusteringStackData()
+		clusterstackq = appiondata.ApClusteringStackData()
 		clusterstackq['avg_imagicfile'] = "classaverage-"+self.timestamp+".hed"
 		clusterstackq['num_classes'] = numclass
 		clusterstackq['clusterrun'] = clusterrunq
@@ -361,7 +361,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 			classdocfile = os.path.join(self.params['rundir'], classroot)
 
 			### Clustering Particle object
-			clusterrefq = appionData.ApClusteringReferenceData()
+			clusterrefq = appiondata.ApClusteringReferenceData()
 			clusterrefq['refnum'] = classnum
 			clusterrefq['clusterrun'] = clusterrunq
 			clusterrefq['path'] = pathdata
@@ -374,7 +374,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 				alignpartdata = self.getAlignParticleData(partnum, alignstackdata)
 
 				### Clustering Particle objects
-				clusterpartq = appionData.ApClusteringParticlesData()
+				clusterpartq = appiondata.ApClusteringParticlesData()
 				clusterpartq['clusterstack'] = clusterstackq
 				clusterpartq['alignparticle'] = alignpartdata
 				clusterpartq['partnum'] = partnum
@@ -388,7 +388,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 
 	#=====================
 	def getAlignParticleData(self, partnum, alignstackdata):
-		alignpartq = appionData.ApAlignParticlesData()
+		alignpartq = appiondata.ApAlignParticlesData()
 		alignpartq['alignstack'] = alignstackdata
 		alignpartq['partnum'] = partnum
 		alignparts = alignpartq.query(results=1)
@@ -419,6 +419,7 @@ if __name__ == '__main__':
 	ap = AffinityPropagationClusterScript()
 	ap.start()
 	ap.close()
+
 
 
 

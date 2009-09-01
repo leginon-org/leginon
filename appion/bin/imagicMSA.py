@@ -16,7 +16,7 @@ import sys
 import re
 import subprocess
 import appionScript
-import appionData
+import appiondata
 import apParam
 import apRecon
 import apDisplay
@@ -40,19 +40,19 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			help="number of processors to use", metavar="int")
 		self.parser.add_option("--alignid", dest="alignid",
 			help="ID of particle stack", metavar="int")
-			
-		### filtering & binning params	
+
+		### filtering & binning params
 		self.parser.add_option("--lpfilt", dest="lpfilt", type="int",
 			help="low-pass filter value (in angstroms)", metavar="INT")
-		self.parser.add_option("--hpfilt", dest="hpfilt", type="int", 
+		self.parser.add_option("--hpfilt", dest="hpfilt", type="int",
 			help="high-pass filter value (in angstroms)", metavar="INT")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="binning of the image (power of 2)", metavar="INT")
-			
-		### masking & MSA params	
+
+		### masking & MSA params
 		self.parser.add_option("--mask_radius", dest="mask_radius", type="float", default=1.0,
 			help="radius of mask for MSA (in pixels or fraction of radius)", metavar="FLOAT")
-		self.parser.add_option("--mask_dropoff", dest="mask_dropoff", type="float", 
+		self.parser.add_option("--mask_dropoff", dest="mask_dropoff", type="float",
 			help="dropoff (softness) of mask for MSA (in pixels or fraction of radius)", metavar="FLOAT")
 		self.parser.add_option("--numiters", dest="numiters", type="int", default=50,
 			help="number of iterations for MSA run", metavar="INT")
@@ -61,7 +61,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		self.parser.add_option("--MSAmethod", dest="MSAmethod", type="str",
 			help="distance criteria that will be used in MSA", metavar="STR")
 
-		return 
+		return
 
 	#=====================
 	def checkConflicts(self):
@@ -71,14 +71,14 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			apDisplay.printError("enter a run ID")
 		if self.params['MSAmethod'] is None:
 			apDisplay.printError("enter distance criteria for MSA program (i.e. eulidean, chisquare, modulation)")
-		
+
 		return
 
 	#=====================
 	def setRunDir(self):
 		# get reference-free classification and reclassification parameters
 		if self.params['alignid'] is not None:
-                	self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
+                	self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignid'])
                 	path = self.alignstackdata['path']['path']
                 	uppath = os.path.abspath(os.path.join(path, "../.."))
                 	self.params['rundir'] = os.path.join(uppath, "imagicmsa", self.params['runname'])
@@ -86,9 +86,9 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
         #=====================
         def checkAnalysisRun(self):
                 # create a norefParam object
-                analysisrunq = appionData.ApAlignAnalysisRunData()
+                analysisrunq = appiondata.ApAlignAnalysisRunData()
                 analysisrunq['runname'] = self.params['runname']
-                analysisrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+                analysisrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
                 # ... path makes the run unique:
                 uniquerun = analysisrunq.query(results=1)
                 if uniquerun:
@@ -97,13 +97,13 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 
 	#=====================
 	def createImagicBatchFile(self):
-		# IMAGIC batch file creation    
+		# IMAGIC batch file creation
 		append_log = False
 		filename = os.path.join(self.params['rundir'], "imagicMultivariateStatisticalAnalysis.batch")
 		f = open(filename, 'w')
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
-		
+
 		### optional binning
 		if self.params['bin'] > 1:
 			f.write("/usr/local/IMAGIC/stand/coarse.e <<EOF > imagicMultivariateStatisticalAnalysis.log\n")
@@ -116,8 +116,8 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			f.write("start\n")
 			f.write("EOF\n")
 			append_log = True
-			
-		### optional filtering	
+
+		### optional filtering
 		if self.params['hpfilt_imagic'] and self.params['lpfilt_imagic'] is not None:
 			f.write("/usr/local/IMAGIC/incore/incband.e OPT BAND-PASS <<EOF")
 			if append_log is True:
@@ -136,8 +136,8 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			f.write("start\n")
 			f.write("EOF\n")
 			append_log = True
-			
-		### make a mask for MSA	
+
+		### make a mask for MSA
 		if self.params['mask_radius'] and self.params['mask_dropoff'] is not None:
 			f.write("/usr/local/IMAGIC/stand/arithm.e <<EOF")
 			if append_log is True:
@@ -166,7 +166,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		f.write("DISC\n")
 		f.write(str(self.params['mask_radius'])+"\n")
 		f.write("EOF\n")
-		
+
 		### run MSA
 		if self.params['nproc'] > 1:
 			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
@@ -191,13 +191,13 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		f.write("my_msa\n")
 		f.write("EOF\n")
 		f.close()
-		
-		return filename	
+
+		return filename
 
 	#=========================
 	def insertAnalysis(self, imagicstack, runtime, insert=False):
 		### create MSAParam object
-		msaq = appionData.ApImagicAlignAnalysisData()
+		msaq = appiondata.ApImagicAlignAnalysisData()
 		msaq['runname'] = self.params['runname']
 		msaq['run_seconds'] = runtime
 		msaq['bin'] = self.params['bin']
@@ -211,9 +211,9 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		msaq['eigenimages'] = "eigenimages"
 
 		### finish analysis run
-		analysisrunq = appionData.ApAlignAnalysisRunData()
+		analysisrunq = appiondata.ApAlignAnalysisRunData()
 		analysisrunq['runname'] = self.params['runname']
-		analysisrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		analysisrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		analysisrunq['imagicMSArun'] = msaq
 		analysisrunq['alignstack'] = self.alignstackdata
 		analysisrunq['hidden'] = False
@@ -224,17 +224,17 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		if insert is True:
 			analysisrunq.insert()
 
-		return 
+		return
 
 	#=====================
 	def start(self):
 		t0 = time.time()
-		
+
 		self.checkAnalysisRun()
-		
+
 		# get stack parameters
 		if self.params['alignid'] is not None:
-			self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
+			self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignid'])
 			stackpixelsize = self.alignstackdata['pixelsize']
 			stack_box_size = self.alignstackdata['boxsize']
 			self.params['boxsize'] = stack_box_size / int(self.params['bin'])
@@ -245,8 +245,8 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			linkingfile = linkingfile.replace(".hed", "")
 		else:
 			apDisplay.printError("stack not in the database")
-		
-		# link stack file to working directory	
+
+		# link stack file to working directory
 		if not os.path.isfile(linkingfile+".hed"):
 			apDisplay.printError("stackfile does not exist: "+linkingfile+".img")
 		else:
@@ -260,7 +260,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 				proc.wait()
 				proc = subprocess.Popen(lnkcmd2, shell=True)
 				proc.wait()
-			else:	
+			else:
 				apDisplay.printColor("aligned stack already exists in working directory", "green")
 
 		### NEED TO CONVERT FILTERING PARAMETERS TO IMAGIC FORMAT BETWEEN 0-1
@@ -277,7 +277,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 
 		print self.params
 		print "... aligned stack pixel size: "+str(self.params['apix'])
-		print "... aligned stack box size: "+str(self.params['boxsize'])	
+		print "... aligned stack box size: "+str(self.params['boxsize'])
 		apDisplay.printColor("Running IMAGIC .batch file: See imagicMultivariateStatisticalAnalysis.log for details", "cyan")
 
 		### create imagic batch file
@@ -298,7 +298,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		### remove copied stack
 #		while os.path.isfile(os.path.join(self.params['rundir'], "start.img")):
 #		apFile.removeStack(os.path.join(self.params['rundir'], "start.img"))
-	
+
 		### upload alignment
 		imagicstack = os.path.join(self.params['rundir'], "start.hed")
 		inserttime = time.time()
@@ -311,9 +311,9 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 		apDisplay.printMsg("Database Insertion time: "+apDisplay.timeString(inserttime))
 
-	
-	
-	
+
+
+
 #=====================
 #=====================
 if __name__ == '__main__':
@@ -321,4 +321,5 @@ if __name__ == '__main__':
 	imagicMSA.start()
 	imagicMSA.close()
 
-	
+
+

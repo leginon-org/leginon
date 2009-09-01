@@ -6,7 +6,7 @@ import apDefocalPairs
 from pyami import mrc
 import apVolume
 import apDisplay
-import appionData
+import appiondata
 import shutil
 import math
 import numpy
@@ -72,7 +72,7 @@ def imagicToMrc(params, msg=True):
 	proc = subprocess.Popen(catcmd, shell=True)
 	proc.wait()
 	os.remove(tmpheadername)
-	
+
 #===============
 def generateParticleParams(params):
 	params['inpar']=os.path.join(params['rundir'],'params.0.par')
@@ -108,8 +108,8 @@ def generateParticleParams(params):
 			ctfdata, confidence=apCtf.getBestAceTwoValueForImage(imagedata, msg=False)
 			if ctfdata is None:
 				ctfdata, confidence=apCtf.getBestCtfValueForImage(imagedata, msg=False)
-			if ctfdata is not None:	
-				# use defocus & astigmatism values 
+			if ctfdata is not None:
+				# use defocus & astigmatism values
 				particleparams['df1']=abs(ctfdata['defocus1']*1e10)
 				particleparams['df2']=abs(ctfdata['defocus2']*1e10)
 				particleparams['angast']=-ctfdata['angle_astigmatism']
@@ -134,10 +134,10 @@ def generateParticleParams(params):
 			particleparams['shx']=params['eman_orient']['shiftx']
 			particleparams['shy']=params['eman_orient']['shifty']
 			if params['eman_orient']['mirror'] is True:
-				particleparams['shx']*=-1	
+				particleparams['shx']*=-1
 		writeParticleParamLine(particleparams,f)
 	f.close()
-	
+
 #===============
 def writeParticleParamLine(particleparams, fileobject):
 	p=particleparams
@@ -216,15 +216,15 @@ def convertEmanEulersToFrealign(eman_eulers):
 	e3 = eman_eulers['phi']
 	m = eman_eulers['mirror']
 
-	# first get Frealign theta 
+	# first get Frealign theta
 	if m is not True:
 		e2+=180
 	if e2 < 0:
 		e2+=360
 	if e2 > 360:
 		e2-=360
-		
-	# get Frealign phi 
+
+	# get Frealign phi
 	e1-=90
 	if e1 < 0:
 		e1+=360-(360*int(e1/360.0))
@@ -262,7 +262,7 @@ def sumEulers(eul1,eul2):
 	# convert each set of eulers to a rotation matrix
 	r1 = eulersToRotationMatrix(e11,e12,e13)
 	r2 = eulersToRotationMatrix(e21,e22,e23)
-	
+
 	m = [[0,0,0],[0,0,0],[0,0,0]]
 	for i in range(0,3):
 		for j in range (0,3):
@@ -278,7 +278,7 @@ def sumEulers(eul1,eul2):
 			if m[i][j] - 1.0 > -1e-6:
 				m[i][j] = 1
 			if m[i][j] + 1 < 1e-6:
-				m[i][j] = -1	
+				m[i][j] = -1
 
 	if m[2][2] == 1:
 		theta = 0.0
@@ -298,7 +298,7 @@ def sumEulers(eul1,eul2):
 		else:
 			if -m[0][0] < 0:
 				phi = math.degrees(math.pi+math.atan(-m[0][1]/-m[0][0]))
-			else:	
+			else:
 				phi = math.degrees(math.atan(-m[0][1]/-m[0][0]))
 	else:
 		theta = math.degrees(math.acos(m[2][2]))
@@ -311,7 +311,7 @@ def sumEulers(eul1,eul2):
 		else:
 			if m[2][0] < 0:
 				phi = math.degrees(math.pi+math.atan(m[2][1]/m[2][0]))
-			else:		
+			else:
 				phi = math.degrees(math.atan(m[2][1]/m[2][0]))
 		if m[0][2] == 0:
 			if sign != cmp(m[1][2],0):
@@ -321,7 +321,7 @@ def sumEulers(eul1,eul2):
 		else:
 			if -m[0][2] < 0:
 				psi = math.degrees(math.pi+math.atan(m[1][2]/-m[0][2]))
-			else:	
+			else:
 				psi = math.degrees(math.atan(m[1][2]/-m[0][2]))
 
 	if phi < 0:
@@ -387,9 +387,9 @@ def getStackParticleEulersForIteration(params,pnum):
 		pclass['shiftx']=0.0
 		pclass['shifty']=0.0
 	else:
-		pclassq = appionData.ApParticleClassificationData()
+		pclassq = appiondata.ApParticleClassificationData()
 		pclassq['particle'] = refstackp
-		pclassq['refinement'] = appionData.ApRefinementData.direct_query(params['reconiterid'])
+		pclassq['refinement'] = appiondata.ApRefinementData.direct_query(params['reconiterid'])
 		pclass = pclassq.query()
 		pclass=pclass[0]
 
@@ -401,7 +401,7 @@ def getStackParticleEulersForIteration(params,pnum):
 	params['eman_orient']['mirror']=pclass['mirror']
 	params['eman_orient']['shiftx']=pclass['shiftx']
 	params['eman_orient']['shifty']=pclass['shifty']
-	
+
 	return params
 
 #===============
@@ -437,8 +437,8 @@ def createMultipleJobs(params):
 		createFrealignJob(params,jobname,invol=params['itervol'], inpar=params['iterparam'],nodenum=n, first=firstp, last=lastp,norecon=True)
 	fr.close()
 	os.chmod(cscript,0755)
-	
-	
+
+
 #===============
 def submitMultipleJobs(params):
 	"""
@@ -475,4 +475,5 @@ def combineMultipleJobs(params):
 	proc = subprocess.Popen('csh '+combinejobname, shell=True)
 	proc.wait()
 
-		
+
+

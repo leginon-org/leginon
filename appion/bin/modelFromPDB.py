@@ -17,7 +17,7 @@ import apDatabase
 import apEMAN
 import apChimera
 import apFile
-import appionData
+import appiondata
 import apSymmetry
 
 from apSpider import volFun
@@ -47,7 +47,7 @@ class modelFromPDB(appionScript.AppionScript):
 
 		self.methods = ( "eman", "spider" )
 		self.parser.add_option("--method", dest="method",
-			help="Method for PDB to MRC conversion: eman or spider", metavar="METHOD", 
+			help="Method for PDB to MRC conversion: eman or spider", metavar="METHOD",
 			type="choice", choices=self.methods, default="spider" )
 
 	#=====================
@@ -99,17 +99,17 @@ class modelFromPDB(appionScript.AppionScript):
 		outfile = tmpname+".pdb"
 		data = urllib.urlretrieve(url)[0]
 		g = gzip.open(data,'r').read()
-		
+
 		f=open(outfile,'w')
 		f.write(g)
 		f.close()
 		return outfile
-	
+
 	#=====================
 	def uploadDensity(self, volfile):
 		### insert 3d volume density
-		densq = appionData.Ap3dDensityData()
-		densq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
+		densq = appiondata.Ap3dDensityData()
+		densq['path'] = appiondata.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
 		densq['name'] = os.path.basename(volfile)
 		densq['hidden'] = False
 		densq['norm'] = True
@@ -126,7 +126,7 @@ class modelFromPDB(appionScript.AppionScript):
 		densq['pdbid'] = self.params['pdbid']
 		if self.params['commit'] is True:
 			densq.insert()
-		return 
+		return
 
 	#=====================
 	def start(self):
@@ -135,7 +135,7 @@ class modelFromPDB(appionScript.AppionScript):
 		apDisplay.printColor("Naming pdb model: "+self.params['name'], "cyan")
 
 		newmodelpath = os.path.join(self.params['rundir'], self.params['name'])
-		mrcname = newmodelpath	
+		mrcname = newmodelpath
 
 		self.params['basename']=os.path.splitext(newmodelpath)[0]
 		### remove '.' from basename for spider
@@ -185,4 +185,5 @@ if __name__ == "__main__":
 	pdbmodel = modelFromPDB()
 	pdbmodel.start()
 	pdbmodel.close()
+
 

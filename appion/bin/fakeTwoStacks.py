@@ -22,7 +22,7 @@ class fakeStackScript(appionScript.AppionScript):
 	#######################################################
 	#=====================
 	def onInit(self):
-		self.dbconf = sinedon.getConfig('appionData')
+		self.dbconf = sinedon.getConfig('appiondata')
 		self.db     = MySQLdb.connect(**self.dbconf)
 		self.cursor = self.db.cursor()
 
@@ -33,7 +33,7 @@ class fakeStackScript(appionScript.AppionScript):
 			help="ID for untilted particle stack", metavar="INT")
 		self.parser.add_option("--stack2", dest="stack2", type="int",
 			help="ID for tilted particle stack", metavar="INT")
-		self.parser.add_option("--density", dest="density", 
+		self.parser.add_option("--density", dest="density",
 			default="/ami/data13/appion/06jul12a/refine/logsplit2/run55351/threed.20a.mrc",
 			help="density file, e.g. --density=groel.mrc", metavar="NAME")
 		self.parser.add_option("--slop", dest="slop", type="float", default=0.0,
@@ -153,15 +153,15 @@ class fakeStackScript(appionScript.AppionScript):
 		if abs(tilt - self.tiltangle) < 5.0:
 			bigtilt = self.tiltangle - self.notangle
 			euler = ("%.3f,%.3f,%.3f"%(
-				bigtilt + random.gauss(0, self.params['slopcam']), 
-				90+random.gauss(0, self.params['slopcam']), 
+				bigtilt + random.gauss(0, self.params['slopcam']),
+				90+random.gauss(0, self.params['slopcam']),
 				-90+random.gauss(0, self.params['slopcam'])))
 			cmd = "project3d rotated.mrc out="+self.params['tiltstack']+" euler="+euler
 		elif abs(tilt - self.notangle) < 5.0:
 			#euler = "%.3f,90,-90"%(0.0)
 			euler = ( "%.3f,%.3f,%.3f"%(
-				random.gauss(0, self.params['slopcam']), 
-				90+random.gauss(0, self.params['slopcam']), 
+				random.gauss(0, self.params['slopcam']),
+				90+random.gauss(0, self.params['slopcam']),
 				-90+random.gauss(0, self.params['slopcam'])))
 			cmd = "project3d rotated.mrc out="+self.params['notstack']+" euler="+euler
 		else:
@@ -194,34 +194,34 @@ class fakeStackScript(appionScript.AppionScript):
 					minpartnum2 = partnum2
 				if partnum1 is not None and partnum2 is not None:
 					if stackid1 == notstackid:
-						partpair1 = { 'part1': partnum1, 'part2': -partnum2, 
+						partpair1 = { 'part1': partnum1, 'part2': -partnum2,
 							'stackid1': stackid1, 'stackid2': stackid2, 'tilt': angle1 }
 						notangles.append(angle1)
-						partpair2 = { 'part1': -partnum2, 'part2': partnum1, 
+						partpair2 = { 'part1': -partnum2, 'part2': partnum1,
 							'stackid1': stackid2, 'stackid2': stackid1, 'tilt': angle2 }
 						tiltangles.append(angle2)
 					else:
-						partpair1 = { 'part1': -partnum1, 'part2': partnum2, 
+						partpair1 = { 'part1': -partnum1, 'part2': partnum2,
 							'stackid1': stackid1, 'stackid2': stackid2, 'tilt': angle1 }
 						tiltangles.append(angle1)
-						partpair2 = { 'part1': partnum2, 'part2': -partnum1, 
+						partpair2 = { 'part1': partnum2, 'part2': -partnum1,
 							'stackid1': stackid2, 'stackid2': stackid1, 'tilt': angle2 }
 						notangles.append(angle2)
 				elif partnum1 is not None:
 					if stackid1 == notstackid:
-						partpair1 = { 'part1': partnum1, 'part2': None, 
+						partpair1 = { 'part1': partnum1, 'part2': None,
 							'stackid1': stackid1, 'stackid2': None, 'tilt': angle1 }
 					else:
-						partpair1 = { 'part1': -partnum1, 'part2': None, 
+						partpair1 = { 'part1': -partnum1, 'part2': None,
 							'stackid1': stackid1, 'stackid2': None, 'tilt': angle1 }
 				elif partnum2 is not None:
 					if stackid2 == notstackid:
-						partpair2 = { 'part1': partnum2, 'part2': None, 
+						partpair2 = { 'part1': partnum2, 'part2': None,
 							'stackid1': stackid2, 'stackid2': None, 'tilt': angle2 }
 					else:
-						partpair2 = { 'part1': -partnum2, 'part2': None, 
+						partpair2 = { 'part1': -partnum2, 'part2': None,
 							'stackid1': stackid2, 'stackid2': None, 'tilt': angle2 }
-				if partnum1 is not None:	
+				if partnum1 is not None:
 					parttree.append(partpair1)
 					count += 1
 				if partnum2 is not None:
@@ -229,7 +229,7 @@ class fakeStackScript(appionScript.AppionScript):
 					count += 1
 			except:
 				print count, row
-				apDisplay.printError("bad row entry")			
+				apDisplay.printError("bad row entry")
 		print count, minpartnum1, minpartnum2
 		apDisplay.printMsg("Converted "+str(len(parttree))
 			+" particles in "+apDisplay.timeString(time.time()-t0))
@@ -283,14 +283,14 @@ class fakeStackScript(appionScript.AppionScript):
 				+"  ON imaged2.`REF|ScopeEMData|scope` = scoped2.`DEF_id` \n"
 
 				+"WHERE \n"
-				+"     ( ( stpart1.`REF|ApStackData|stack` = "+str(notstackid)+" \n" 
-				+"      OR stpart1.`REF|ApStackData|stack` IS NULL ) \n" 
+				+"     ( ( stpart1.`REF|ApStackData|stack` = "+str(notstackid)+" \n"
+				+"      OR stpart1.`REF|ApStackData|stack` IS NULL ) \n"
 				+"   AND ( stpart2.`REF|ApStackData|stack` = "+str(tiltstackid)+" \n"
-				+"      OR stpart2.`REF|ApStackData|stack` IS NULL ) )\n" 
-				+"  OR ( ( stpart1.`REF|ApStackData|stack` = "+str(tiltstackid)+" \n" 
-				+"      OR stpart1.`REF|ApStackData|stack` IS NULL ) \n" 
-				+"   AND ( stpart2.`REF|ApStackData|stack` = "+str(notstackid)+" \n" 
-				+"      OR stpart2.`REF|ApStackData|stack` IS NULL ) )\n" 
+				+"      OR stpart2.`REF|ApStackData|stack` IS NULL ) )\n"
+				+"  OR ( ( stpart1.`REF|ApStackData|stack` = "+str(tiltstackid)+" \n"
+				+"      OR stpart1.`REF|ApStackData|stack` IS NULL ) \n"
+				+"   AND ( stpart2.`REF|ApStackData|stack` = "+str(notstackid)+" \n"
+				+"      OR stpart2.`REF|ApStackData|stack` IS NULL ) )\n"
 				+"ORDER BY stpart1.`particleNumber` ASC \n"
 				#+"LIMIT 21 \n"
 			)
@@ -321,13 +321,13 @@ class fakeStackScript(appionScript.AppionScript):
 	def intOrNone(self, item):
 		if item:
 			return int(item)
-		return None	
+		return None
 
 	#=====================
 	def floatOrNone(self, item):
 		if item:
 			return float(item)
-		return 0.0	
+		return 0.0
 
 	#=====================
 	def compPart(self, a, b):
@@ -393,6 +393,7 @@ if __name__ == '__main__':
 	fakestack = fakeStackScript()
 	fakestack.start()
 	fakestack.close()
+
 
 
 

@@ -7,7 +7,7 @@ import sys
 import math
 import shutil
 #appion
-import appionData
+import appiondata
 import apParam
 import apDisplay
 import apCtf
@@ -21,7 +21,7 @@ except:
 
 def runAce(matlab, imgdata, params, showprev=True):
 	imgname = imgdata['filename']
-	
+
 	if showprev is True:
 		bestctfvalue, bestconf = apCtf.getBestCtfValueForImage(imgdata)
 		if bestctfvalue:
@@ -35,7 +35,7 @@ def runAce(matlab, imgdata, params, showprev=True):
 		imgpath = os.path.join(params['rundir'],tmpname)
 		apImage.arrayToMrc(imgarray, imgpath)
 		print "processing", imgpath
-	else:	
+	else:
 		imgpath = os.path.join(imgdata['session']['image path'], imgname+'.mrc')
 
 	nominal = None
@@ -69,10 +69,10 @@ def runAce(matlab, imgdata, params, showprev=True):
 			params['matdir'], params['display'], params['stig'],\
 			params['medium'], -nominal, params['tempdir']+"/", params['resamplefr'])
 		acecmd = makeMatlabCmd("ctfparams = measureAstigmatism(",");",plist)
-	
+
 	#print acecmd
 	pymat.eval(matlab,acecmd)
-	
+
 	matfile = os.path.join(params['matdir'], imgname+".mrc.mat")
 	if params['stig']==0:
 		savematcmd = "save('"+matfile+"','ctfparams','scopeparams', 'dforig');"
@@ -89,37 +89,37 @@ def runAce(matlab, imgdata, params, showprev=True):
 def runAceDrift(matlab,imgdict,params):
 	imgname = imgdict['filename']
 	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
-	
+
 	if params['nominal']:
 		nominal=params['nominal']
 	else:
 		nominal=imgdict['scope']['defocus']
-	
+
 	#pdb.set_trace()
 	acecommand=("measureAnisotropy('%s','%s',%d,'%s',%e,'%s','%s','%s', '%s');" % \
 		( imgpath, params['outtextfile'], params['display'],\
 		params['medium'], -nominal, params['tempdir']+"/", params['opimagedir'], params['matdir'], imgname))
-		
+
 	#~ acecommand=("mnUpCut = measureDrift('%s','%s',%d,%d,'%s',%e,'%s');" % \
 		#~ ( imgpath, params['outtextfile'], params['display'], params['stig'],\
 		#~ params['medium'], -nominal, params['tempdir']))
-		
+
 	pymat.eval(matlab,acecommand)
 
 def runAceCorrect(imgdict,params):
 	imgname = imgdict['filename']
 	imgpath = os.path.join(imgdict['session']['image path'], imgname+'.mrc')
-	
+
 	voltage = (imgdict['scope']['high tension'])
 	apix    = apDatabase.getPixelSize(imgdict)
-	
+
 	ctfvalues, conf = apCtf.getBestCtfValueForImage(imgdict)
 
 	ctdimname = imgname
 	ctdimpath = os.path.join(params['rundir'],ctdimname)
 	print "Corrected Image written to " + ctdimpath
 
-	#pdb.set_trace()	
+	#pdb.set_trace()
 	acecorrectcommand=("ctfcorrect1('%s', '%s', '%.32f', '%.32f', '%f', '%f', '%f');" % \
 		(imgpath, ctdimpath, ctfvalues['defocus1'], ctfvalues['defocus2'], ctfvalues['angle_astigmatism'], voltage, apix))
 	print acecorrectcommand
@@ -140,11 +140,11 @@ def setScopeParams(matlab,params):
 		plist = (params['kv'],params['cs'],params['apix'],tempdir)
 		acecmd1 = makeMatlabCmd("setscopeparams(",");",plist)
 		pymat.eval(matlab,acecmd1)
-				
+
 		plist = (params['kv'],params['cs'],params['apix'])
 		acecmd2 = makeMatlabCmd("scopeparams = [","];",plist)
 		pymat.eval(matlab,acecmd2)
-		
+
 	else:
 		apDisplay.printError("Temp directory, '"+params['tempdir']+"' not present.")
 	return
@@ -216,3 +216,4 @@ def makeMatlabCmd(header,footer,plist):
 	cmd = cmd[:(n-1)]
 	cmd += footer
 	return cmd
+

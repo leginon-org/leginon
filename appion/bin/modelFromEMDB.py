@@ -12,7 +12,7 @@ import apParam
 import apFile
 import apDisplay
 import apDatabase
-import appionData
+import appiondata
 import apChimera
 import urllib
 import apEMAN
@@ -106,17 +106,17 @@ class modelFromEMDB(appionScript.AppionScript):
 		apDisplay.printMsg("downloaded file of size "+str(round(size/1024.0,1))+"k")
 
 		return outfile
-	
+
 
 	#=====================
 	def uploadDensity(self, volfile):
 		### insert 3d volume density
-		densq = appionData.Ap3dDensityData()
-		densq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
+		densq = appiondata.Ap3dDensityData()
+		densq['path'] = appiondata.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
 		densq['name'] = os.path.basename(volfile)
 		densq['hidden'] = False
 		densq['norm'] = True
-		#densq['symmetry'] = appionData.ApSymmetryData.direct_query(25)
+		#densq['symmetry'] = appiondata.ApSymmetryData.direct_query(25)
 		densq['pixelsize'] = self.params['apix']
 		densq['boxsize'] = self.params['box']
 		densq['lowpass'] = self.params['res']
@@ -129,7 +129,7 @@ class modelFromEMDB(appionScript.AppionScript):
 		densq['emdbid'] = self.params['emdbid']
 		if self.params['commit'] is True:
 			densq.insert()
-		return 
+		return
 
 	#=====================
 	def start(self):
@@ -138,7 +138,7 @@ class modelFromEMDB(appionScript.AppionScript):
 		apDisplay.printColor("Naming emdb model: "+self.params['name'], "cyan")
 
 		newmodelpath = os.path.join(self.params['rundir'], self.params['name'])
-		
+
 		mrcname = newmodelpath
 		ccp4name = newmodelpath+".ccp4"
 
@@ -170,4 +170,5 @@ if __name__ == "__main__":
 	emdbmodel = modelFromEMDB()
 	emdbmodel.start()
 	emdbmodel.close()
+
 

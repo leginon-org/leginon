@@ -14,7 +14,7 @@ import apEMAN
 import apParam
 from apSpider import alignment
 from apSpider import operations
-import appionData
+import appiondata
 
 
 #=====================
@@ -39,7 +39,7 @@ class ClusterCoranScript(appionScript.AppionScript):
 			apDisplay.printError("analysis id was not defined")
 		if self.params['method'] not in ['hierarch','kmeans']:
 			apDisplay.printError("--method must be either 'hierarch' or 'kmeans', e.g. --method=hierarch")
-		self.analysisdata = appionData.ApAlignAnalysisRunData.direct_query(self.params['analysisid'])
+		self.analysisdata = appiondata.ApAlignAnalysisRunData.direct_query(self.params['analysisid'])
 
 	#=====================
 	def setRunDir(self):
@@ -65,7 +65,7 @@ class ClusterCoranScript(appionScript.AppionScript):
 
 	#=====================
 	def getAlignParticleData(self, partnum):
-		alignpartq = appionData.ApAlignParticlesData()
+		alignpartq = appiondata.ApAlignParticlesData()
 		alignpartq['alignstack'] = self.analysisdata['alignstack']
 		alignpartq['partnum'] = partnum
 		alignparts = alignpartq.query(results=1)
@@ -74,12 +74,12 @@ class ClusterCoranScript(appionScript.AppionScript):
 	#=====================
 	def insertClusterRun(self, insert=False):
 		# Spider Clustering Params
-		spiclusterq = appionData.ApSpiderClusteringParamsData()
+		spiclusterq = appiondata.ApSpiderClusteringParamsData()
 		spiclusterq['factor_list'] = self.params['factorstr']
 		spiclusterq['method'] = self.params['method']
 
 		# create a Clustering Run object
-		clusterrunq = appionData.ApClusteringRunData()
+		clusterrunq = appiondata.ApClusteringRunData()
 		clusterrunq['runname'] = self.params['runname']
 		clusterrunq['description'] = self.params['description']
 		clusterrunq['spiderparams'] = spiclusterq
@@ -98,12 +98,12 @@ class ClusterCoranScript(appionScript.AppionScript):
 
 	#=====================
 	def insertClusterStack(self, classavg=None, classvar=None, numclass=None, insert=False):
-		clusterstackq = appionData.ApClusteringStackData()
+		clusterstackq = appiondata.ApClusteringStackData()
 		clusterstackq['avg_imagicfile'] = classavg+".hed"
 		clusterstackq['var_imagicfile'] = classvar+".hed"
 		clusterstackq['num_classes'] = numclass
 		clusterstackq['clusterrun'] = self.clusterrun
-		clusterstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		clusterstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clusterstackq['hidden'] = False
 
 		imagicfile = os.path.join(self.params['rundir'], clusterstackq['avg_imagicfile'])
@@ -121,13 +121,13 @@ class ClusterCoranScript(appionScript.AppionScript):
 		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
 		for i in range(numclass):
 			classnum = i+1
-			classdocfile = os.path.join(self.params['rundir'], 
+			classdocfile = os.path.join(self.params['rundir'],
 				"cluster/classdoc_%s_%04d.spi" % (self.timestamp, classnum))
 			partlist = self.readClassDocFile(classdocfile)
 			sys.stderr.write(".")
 			for partnum in partlist:
 				alignpartdata = self.getAlignParticleData(partnum)
-				cpartq = appionData.ApClusteringParticlesData()
+				cpartq = appiondata.ApClusteringParticlesData()
 				cpartq['clusterstack'] = clusterstackq
 				cpartq['alignparticle'] = alignpartdata
 				cpartq['partnum'] = partnum
@@ -141,7 +141,7 @@ class ClusterCoranScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		### get original align stack
-		imagicalignedstack = os.path.join(self.analysisdata['alignstack']['path']['path'], 
+		imagicalignedstack = os.path.join(self.analysisdata['alignstack']['path']['path'],
 			self.analysisdata['alignstack']['imagicfile'])
 		alignedstack = re.sub("\.", "_", imagicalignedstack)+".spi"
 		emancmd = "proc2d %s %s spiderswap"%(imagicalignedstack, alignedstack)
@@ -183,13 +183,13 @@ class ClusterCoranScript(appionScript.AppionScript):
 			#run the classification
 			if self.params['method'] == "kmeans":
 				apDisplay.printMsg("Using the k-means clustering method")
-				classavg,classvar = alignment.kmeansCluster(alignedstack, numpart, numclasses=numclass, 
+				classavg,classvar = alignment.kmeansCluster(alignedstack, numpart, numclasses=numclass,
 					timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
 			else:
 				apDisplay.printMsg("Using the hierarch clustering method")
-				classavg,classvar = alignment.hierarchClusterClassify(alignedstack, dendrogramfile, numclass, 
+				classavg,classvar = alignment.hierarchClusterClassify(alignedstack, dendrogramfile, numclass,
 					self.timestamp, rundir, dataext=".spi")
-				#classavg,classvar = alignment.hierarchCluster(alignedstack, numpart, numclasses=numclass, 
+				#classavg,classvar = alignment.hierarchCluster(alignedstack, numpart, numclasses=numclass,
 				#	timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
 			if self.params['commit'] is True:
 				self.insertClusterStack(classavg, classvar, numclass, insert=True)
@@ -203,4 +203,5 @@ if __name__ == "__main__":
 	clusterCoran = ClusterCoranScript(useglobalparams=True)
 	clusterCoran.start()
 	clusterCoran.close()
+
 

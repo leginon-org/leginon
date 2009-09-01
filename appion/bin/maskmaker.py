@@ -11,7 +11,7 @@ import appionLoop2
 import apImage
 import apCrud
 import apMask
-import appionData
+import appiondata
 import apDatabase
 import apDisplay
 import apParam
@@ -23,7 +23,7 @@ class MaskMaker(appionLoop2.AppionLoop):
 	def setFunctionResultKeys(self):
 		self.resultkeys = {'region':['image', 'maskrun', 'x', 'y',
 			 'area', 'perimeter', 'mean', 'stdev', 'label' ],}
-		
+
 	#======================
 	def checkConflicts(self):
 		if self.params['bin'] < 1:
@@ -51,8 +51,8 @@ class MaskMaker(appionLoop2.AppionLoop):
 			self.params['no_length_prune']=False
 
 	def insertFunctionParams(self,params):
-		maskPdata=appionData.ApMaskMakerParamsData()
-	
+		maskPdata=appiondata.ApMaskMakerParamsData()
+
 		maskPdata['bin']=params['bin']
 		maskPdata['mask type']=params['masktype']
 		maskPdata['pdiam']=params['diam']
@@ -66,7 +66,7 @@ class MaskMaker(appionLoop2.AppionLoop):
 		maskPdata['libcv']=params['cv']
 
 		maskPdata.insert()
-		
+
 		return maskPdata
 
 	def setupParserOptions(self):
@@ -107,7 +107,7 @@ class MaskMaker(appionLoop2.AppionLoop):
 		if self.params['commit']==True:
 			sessionname = self.params['sessionname']
 			sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
-			
+
 			paramdata =self.insertFunctionParams(self.params)
 			maskRdata=apMask.createMaskMakerRun(sessiondata,self.params['rundir'],self.params['runname'],paramdata)
 			maskRdata.insert()
@@ -115,7 +115,7 @@ class MaskMaker(appionLoop2.AppionLoop):
 			maskRdata = apMask.createMaskMakerRun(None,None,None,None)
 
 		return maskRdata
-		
+
 	def getResults(self,rundata,imgdata,infos):
 		# infos is a list of information or a dictionary using non-zero index as keys
 		# area,avg,stdev,length,(centerRow,centerColumn)
@@ -130,7 +130,7 @@ class MaskMaker(appionLoop2.AppionLoop):
 			offset=1
 		qs = []
 		for l1 in range(0,len(infos)):
-		
+
 			l=l1+offset
 			info=infos[l]
 			info.append(l1+1)
@@ -141,7 +141,7 @@ class MaskMaker(appionLoop2.AppionLoop):
 	def loopCommitToDatabase(self, imgdata):
 		# Use CommitResultsToDatabase instead
 		pass
-	
+
 	def preLoopFunctions(self):
 		apParam.createDirectory(os.path.join(self.params['rundir'],"masks"),warning=False)
 		regionpath = os.path.join(self.params['rundir'],"regions")
@@ -167,7 +167,7 @@ class MaskMaker(appionLoop2.AppionLoop):
 		imgarray.shape = shape
 		imgarray=cleanimgarray.filled(cavg)
 		return imgarray
-		
+
 	def getImage(self,imgdata,binning):
 		imgarray = imgdata['image']
 		imgarray = apImage.binImg(imgarray, binning)
@@ -175,8 +175,8 @@ class MaskMaker(appionLoop2.AppionLoop):
 		cutoff=8.0
 		# remove spikes in the image first
 		imgarray=self.prepImage(imgarray,cutoff)
-		return imgarray	
-	
+		return imgarray
+
 	def function(self,rundata, imgdata, binnedimgarray):
 		self.params['apix'] =  apDatabase.getPixelSize(imgdata)
 		regions,maskarray = apCrud.makeMask(self.params, binnedimgarray)
@@ -187,3 +187,4 @@ class MaskMaker(appionLoop2.AppionLoop):
 if __name__ == '__main__':
 	function = MaskMaker()
 	function.run()
+

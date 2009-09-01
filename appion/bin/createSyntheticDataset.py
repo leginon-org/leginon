@@ -21,7 +21,7 @@ import apImagicFile
 import apIMAGIC
 import apParam
 import appionScript
-import appionData
+import appiondata
 import apStack
 import apStackMeanPlot
 from pyami import mrc, imagefun
@@ -43,7 +43,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			help="boxsize that will be applied to the stack", metavar="INT")
 		self.parser.add_option("--apix", dest="apix", type="float",
 			help="pixelsize of the 3d model", metavar="FLOAT")
-			
+
 		### optional global parameters
 		self.parser.add_option("--session", dest="sessionname", type="str",
 			help="session name (e.g. 06jul12a), do not give experiment id", metavar="str")
@@ -54,7 +54,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		self.parser.add_option("--projinc", dest="projinc", type="int", default=8,
 			help="angular increment of projections as in EMAN project3d, prop=[projinc]", metavar="INT")
 		self.parser.add_option("--preforient", dest="preforient", default=False,
-			action="store_true", help="create projections with a preferred orientation at the 3 axes")			
+			action="store_true", help="create projections with a preferred orientation at the 3 axes")
 		self.parser.add_option("--projstdev", dest="projstdev", type="float", default=5.0,
 			help="standard deviation of projection angle for each preferred orientation", metavar="FLOAT")
 		self.parser.add_option("--shiftrad", dest="shiftrad", type="int", default=5,
@@ -95,11 +95,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			help="used in conjunction with ace2correct-rand, specify the standard deviation in microns. The correction \
 				defoci will be 'wiggled' about the actual applied defocus value with a gaussian distribution determined by the std. \
 				This value should not be too high, otherwise severe artifacts will be introduced into the images", metavar="float")
-				
+
 		### optional ACE2 estimation parameters, used in conjunction with ace2correct
 		self.parser.add_option("--ace2estimate", dest="ace2estimate", default=False,
 			action="store_true", help="use ace2 when estimating the defocus that was applied to each image (simulates robustness of ACE2 algorithm)")
-			
+
 		self.parser.add_option("--lpfilt", dest="lpfilt", type="int",
 			help="low-pass filter images after creation of the dataset", metavar="INT")
 		self.parser.add_option("--hpfilt", dest="hpfilt", type="int",
@@ -107,9 +107,9 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		self.parser.add_option("--norm", dest="norm", default=False,
 			action="store_true", help="normalize images after creation of the dataset")
 
-		return		
-	
-	
+		return
+
+
 	#=====================
 	def checkConflicts(self):
 
@@ -132,7 +132,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			apDisplay.printError('boxsize of the output stack not specified')
 		if self.params['apix'] is None and self.params['modelid'] is None:
 			apDisplay.printError('angstroms per pixel of the input model not specified')
-			
+
 		### get session info
 		if self.params['sessionname'] is None:
 			split = self.params['rundir'].split("/")
@@ -157,8 +157,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			apDisplay.printError("Ace2correct standard deviation specified too high, please use value between 0 < std < 0.5")
 		if self.params['ace2estimate'] is True and self.params['ace2correct'] is False:
 			apDisplay.printError("ACE2 estimation should only be used if you're doing correction as well, please use both ace2correct and ace2estimate")
-						
-		### make sure amplitude correction file exists			
+
+		### make sure amplitude correction file exists
 		if self.params['envelope'] is None:
 			self.params['envelope'] = os.path.join(apParam.getAppionDirectory(), "lib/envelopeImage.mrc")
 
@@ -184,16 +184,16 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 	#=====================
 	def inverse_real_fft2d(self, fft, *args, **kwargs):
 		return fftpack.ifft2(fft, *args, **kwargs).real
-	
-	
-	#=====================		
+
+
+	#=====================
 	def applyEnvelope(self, inimage, outimage, envelope, scaleFactor=1):
 		"""
 		input path to image and envelope, output amplitude-adjusted image
 		"""
-		
+
 		apDisplay.printColor("now applying envelope function to: "+inimage, "cyan")
-		
+
 		### read images
 		im = mrc.read(inimage)
 		env = mrc.read(envelope)
@@ -201,7 +201,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		### scale envelope
 		if scaleFactor != 1:
 			env = ndimage.zoom(env, zoom=scaleFactor, mode='nearest')
-		
+
 		### fourier transform
 		imfft = self.real_fft2d(im)
 
@@ -223,9 +223,9 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		### workaround for now
 		time.sleep(1)
-		
+
 		return
-		
+
 
 	#=====================
 	def setEulers(self):
@@ -233,7 +233,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		eulerlist.append((0,0))
 		eulerlist.append((90,0))
 		eulerlist.append((90,90))
-		
+
 		return eulerlist
 
 
@@ -271,7 +271,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 					### ignore half of the equator
 					continue
 				numproj+=1
-				
+
 		return numproj
 
 
@@ -300,17 +300,17 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		apDisplay.printMsg("Finished random in %s, %.3f ns per iteration"
 			%(apDisplay.timeString(time.time()-t0), 1.0e6 * (time.time()-t0)/float(self.params['projcount'])))
 		f.close()
-	
+
 		print "projection count", projcount
 		for i in range(len(eulerlist)):
 			angavg = angsum[i,:]/projcount[i]
 			print "angle average %d: %03.3f, %03.3f, %03.3f"%(i, angavg[0], angavg[1], angavg[2])
-	
+
 		### first get rid of projection artifacts from insufficient padding
 		if self.params['threedfile'] is not None:
 			origfile = self.params['threedfile']
 		elif self.params['modelid'] is not None:
-			self.modelparams = appionData.ApInitialModelData.direct_query(self.params['modelid'])
+			self.modelparams = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 			origfile = os.path.join(self.modelparams['path']['path'], self.modelparams['name'])
 			if self.params['apix'] is None:
 				self.params['apix'] = self.modelparams['pixelsize']
@@ -330,18 +330,18 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
 		apDisplay.printMsg("Finished project3d in %s, %.3f ms per iteration"
 			%(apDisplay.timeString(time.time()-t0), 1.0e3 * (time.time()-t0)/float(self.params['projcount'])))
-		
+
 		return filename
-	
-	
+
+
 	#=====================
 	def createProjectionsEmanProp(self):
-			
+
 		### first get rid of projection artifacts from insufficient padding
 		if self.params['threedfile'] is not None:
 			origfile = self.params['threedfile']
 		elif self.params['modelid'] is not None:
-			self.modelparams = appionData.ApInitialModelData.direct_query(self.params['modelid'])
+			self.modelparams = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 			origfile = os.path.join(self.modelparams['path']['path'], self.modelparams['name'])
 			if self.params['apix'] is None:
 				self.params['apix'] = self.modelparams['pixelsize']
@@ -351,13 +351,13 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		newsize = self.params['box'] * 1.5
 		emancmd = "proc3d "+origfile+" "+clipped+" clip="+str(int(newsize))+","+str(int(newsize))+","+str(int(newsize))+" edgenorm"
 		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
-		
+
 		### project resized file
 		eulerfile = os.path.join(self.params['rundir'], "eulers.lst")
 		tempeulerfile = os.path.join(self.params['rundir'], "tmpeulers.lst")
 		filename = os.path.join(self.params['rundir'], "proj.img")
 		temp = os.path.join(self.params['rundir'], "temp.img")
-		
+
 		emancmd = "project3d "+clipped+" out="+temp+" sym=c1 prop="+str(self.params['projinc'])+" > "+tempeulerfile
 		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
 
@@ -385,7 +385,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				f.write(str(split[3])+"\t\n")
 				n += 1
 		f.close()
-		
+
 		### create actual projections
 		while os.path.isfile(filename):
 			apFile.removeStack(filename)
@@ -395,15 +395,15 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		apDisplay.printMsg("Finished project3d in %s, %.3f ms per iteration"
 			%(apDisplay.timeString(time.time()-t0), 1.0e3 * (time.time()-t0)/float(self.params['projcount'])))
 
-#		self.params['projcount'] = int(split[-1][0]) ### last row, first value is last projection			
+#		self.params['projcount'] = int(split[-1][0]) ### last row, first value is last projection
 #		self.params['projcount'] = self.numProj(ang=self.params['projinc'], sym='c1')  ### for some reasons did not work for prop=20
 #		numpart = apFile.numImagesInStack(stackfile)
-		
+
 		return filename
-	
-	
-	#=====================	
-	def shiftAndRotate(self, filename):	
+
+
+	#=====================
+	def shiftAndRotate(self, filename):
 		### random shifts and rotations to a stack
 		shiftstackname = filename[:-4]+"_rand.hed"
 		while os.path.isfile(shiftstackname):
@@ -439,11 +439,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 	def readMRCStats(self, filename):
 		### read mean and stdev parameters from original image
 		data = EMAN.EMData()
-		data.readImage(filename) 
+		data.readImage(filename)
 		mean = data.Mean()
 		stdev = data.Sigma()
 
-		return mean, stdev	
+		return mean, stdev
 
 
 	#=====================
@@ -467,13 +467,13 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		"""
 		os.chdir(self.params['rundir'])
 		apDisplay.printColor("Breaking up IMAGIC into single files, this can take a while", "cyan")
-		
+
 		starttime = time.time()
 		filesperdir = self.params['filesperdir']
 		if numpart is None:
 			numpart = apFile.numImagesInStack(stackfile)
 		apParam.createDirectory(partdir)
-		
+
 		self.params['numdir'] = self.createSubFolders(partdir, numpart, filesperdir)
 		apDisplay.printMsg("Splitting "+str(numpart)+" particles into "+str(self.params['numdir'])+" folders with "
 			+str(filesperdir)+" particles per folder")
@@ -520,7 +520,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			mrc.write(partimg, partfile)
 			f.write(os.path.abspath(partfile)+" 1\n")
 			i += 1
-				
+
 		f.close()
 
 		subdir = os.path.dirname(substack)
@@ -540,10 +540,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		basenum = int(self.params['projcount']) / self.params['projpergraph'] ### can probably give as option later as well
 		remainder = int(self.params['projcount']) % self.params['projpergraph']
-	
+
 		imgcount = 0
 		mcount = 1
-		
+
 		### these are for application
 		defocuslist1 = []
 		defocuslist2 = []
@@ -553,7 +553,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		defocuslist1c = []
 		defocuslist2c = []
 		astigmatismlistc = []
-		
+
 		for item in range(basenum):
 			partstack = os.path.join(self.params['rundir'], "micrographs", "stack.img")
 			while os.path.isfile(partstack):
@@ -569,7 +569,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			for line in loglines:
 				if re.search("ERROR in program", line):
 					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: createMicrograph.log")
-		
+
 			### add noise to micrographs
 #			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph"+str(mcount)+".hed")
 			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph.hed")
@@ -579,10 +579,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				apFile.removeFile(noisygraph)
 			emancmd = "proc2d "+micrograph+" "+noisygraph+" addnoise="+str(noiselevel)
 			apEMAN.executeEmanCmd(emancmd)
-		
+
 			imgcount += self.params['projpergraph']
 #			micrographlist.append(noisygraph)
-			
+
 			### run ace2 correction, set defocus parameters early, i.e. once for every micrograph
 			if self.params['randomdef'] is True:
 				randomfloat = random.gauss(0,self.params['randomdef_std'])
@@ -591,7 +591,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			else:
 				df1 = self.params['df1']
 				df2 = self.params['df2']
-				
+
 #			ace2cmd = "ace2correct.exe -img "+image+" -kv "+str(self.params['kv'])+" -cs "+\
 				str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
 				str(df2)+","+str(self.params['astigmatism'])+" -apply -out="+self.params['rundir']
@@ -605,22 +605,22 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				defocuslist1.append(df1)
 				defocuslist2.append(df2)
 				astigmatismlist.append(self.params['astigmatism'])
-		
+
 			### apply envelope
 			outimage = ctfappliedgraph+".ampcorrected.mrc"
 			self.applyEnvelope(ctfappliedgraph, outimage, self.params['envelope'])
-			
+
 			### read MRC stats to figure out the second noise level addition
 			graphmean, graphstdev = self.readMRCStats(outimage)
 
 			### cascading of noise processes according to Frank and Al-Ali (1975)
 			graphsnr2 = 1 / ((1+1/float(self.params['snrtot'])) / (1/float(self.params['snr1']) + 1) - 1)
 			graphnoiselevel2 = float(graphstdev) / float(graphsnr2)
-			
+
 			noisygraph2 = outimage+".noise.mrc"
 			emancmd = "proc2d "+outimage+" "+noisygraph2+" addnoise="+str(graphnoiselevel2)
 			apEMAN.executeEmanCmd(emancmd)
-			
+
 			### optional ace2correction here
 			if self.params['ace2correct'] is True and self.params['ace2estimate'] is True:
 				### use ACE2 to estimate the defoci that were applied to the raw micrographs
@@ -675,18 +675,18 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 #				micrographlist.append(correctedgraph)
 #			else:
 #				micrographlist.append(noisygraph2)
-			
+
 			mcount += 1
-		
+
 		### NOW DO THE SAME WITH THE REMAINDER
-		
+
 		if remainder != 0:
 			remstack = os.path.join(self.params['rundir'], "micrographs", "stack.img")
 			emancmd = "proc2d "+stack+" "+remstack+" first="+str(imgcount)+" last="+str(imgcount+remainder-1)+" norm"
 			while os.path.isfile(remstack):
 				apFile.removeStack(remstack)
 			apEMAN.executeEmanCmd(emancmd)
-			
+
 			batchfile = self.createImagicBatchFile(mcount)
 			apIMAGIC.copyFile(os.path.join(self.params['rundir'], "micrographs"), "stack"+str(mcount)+".hed", headers=True)
 			apIMAGIC.executeImagicBatchFile(batchfile)
@@ -695,7 +695,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			for line in loglines:
 				if re.search("ERROR in program", line):
 					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: createMicrograph.log")
-		
+
 			### add noise to micrograph
 #			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph"+str(mcount)+".hed")
 			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph.hed")
@@ -706,7 +706,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			emancmd = "proc2d "+micrograph+" "+noisygraph+" addnoise="+str(noiselevel)
 			apEMAN.executeEmanCmd(emancmd)
 #			micrographlist.append(noisygraph)
-			
+
 			### run ace2 correction, set defocus parameters early, i.e. once for every micrograph
 			if self.params['randomdef'] is True:
 				randomfloat = random.gauss(0,self.params['randomdef_std'])
@@ -715,7 +715,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			else:
 				df1 = self.params['df1']
 				df2 = self.params['df2']
-				
+
 #			ace2cmd = "ace2correct.exe -img "+image+" -kv "+str(self.params['kv'])+" -cs "+\
 				str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
 				str(df2)+","+str(self.params['astigmatism'])+" -apply -out="+self.params['rundir']
@@ -729,22 +729,22 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				defocuslist1.append(df1)
 				defocuslist2.append(df2)
 				astigmatismlist.append(self.params['astigmatism'])
-		
+
 			### apply envelope
 			outimage = ctfappliedgraph+".ampcorrected.mrc"
 			self.applyEnvelope(ctfappliedgraph, outimage, self.params['envelope'])
-			
+
 			### read MRC stats to figure out the second noise level addition
 			graphmean, graphstdev = self.readMRCStats(outimage)
 
 			### cascading of noise processes according to Frank and Al-Ali (1975)
 			graphsnr2 = 1 / ((1+1/float(self.params['snrtot'])) / (1/float(self.params['snr1']) + 1) - 1)
 			graphnoiselevel2 = float(graphstdev) / float(graphsnr2)
-			
+
 			noisygraph2 = outimage+".noise.mrc"
 			emancmd = "proc2d "+outimage+" "+noisygraph2+" addnoise="+str(graphnoiselevel2)
 			apEMAN.executeEmanCmd(emancmd)
-			
+
 			### optional ace2correction here
 			if self.params['ace2correct'] is True and self.params['ace2estimate'] is True:
 				### use ACE2 to estimate the defoci that were applied to the raw micrographs
@@ -799,12 +799,12 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 #				micrographlist.append(correctedgraph)
 #			else:
 #				micrographlist.append(noisygraph2)
-		
+
 		self.params['numgraphs'] = mcount
-		
+
 		return defocuslist1, defocuslist2, astigmatismlist, defocuslist1c, defocuslist2c, astigmatismlistc
-		
-								
+
+
 	#=====================
 	def createImagicBatchFile(self, mcount):
 		# IMAGIC batch file creation
@@ -831,7 +831,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		f.write("stack_thresh\n")
 		f.write("stack\n")
 		f.write("EOF\n")
-		
+
 		f.write("/usr/local/IMAGIC/stand/model_micrograph.e <<EOF >> createMicrograph.log\n")
 #		f.write("stack"+str(mcount)+"\n")
 		f.write("stack\n")
@@ -847,12 +847,12 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		f.write("0.01\n")
 		f.write("SEQUENTIAL\n")
 		f.write("EOF\n")
-		
+
 		f.close()
 
 		return batchfile
-	
-	
+
+
 	#=====================
 	def createSubFolders(self, partdir, numpart, filesperdir):
 		i = 0
@@ -872,15 +872,15 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		filesperdir = self.params['filesperdir']
 		i = 0			### for number of particles
 		j = 0			### for number of subdirectories
-		basedir = self.params['rundir']	
+		basedir = self.params['rundir']
 		t0 = time.time()
-		
+
 		correctedpartlist = []
 		while i < numpart:
-		
+
 			### do this only when a new directory is encountered
 			if (i) % filesperdir == 0:
-		
+
 				### rundir gets changed several times in order to accomodate amplitude correction script
 				self.params['rundir'] = basedir
 				if not os.path.exists(os.path.join(self.params['rundir'], 'partfiles', str(j+1))):
@@ -891,24 +891,24 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				apDisplay.printMsg("new directory: '"+self.params['rundir']+"' at particle "+str(i)+" of "+str(numpart)
 					+", "+apDisplay.timeString(esttime)+" remain")
 				os.chdir(self.params['rundir'])	### ace2 workaround
-				j += 1							
-						
+				j += 1
+
 			### apply CTF using ACE2
-			noisyimage = os.path.join(self.params['rundir'], "part%06d.mrc"%(i))			
+			noisyimage = os.path.join(self.params['rundir'], "part%06d.mrc"%(i))
 
 			ace2cmd = "ace2correct.exe -img "+noisyimage+" -kv "+str(self.params['kv'])+" -cs "+\
 				str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(defocuslist1[i])+","+\
 				str(defocuslist2[i])+","+str(astigmatismlist[i])+" -apply"
 			self.executeAce2Cmd(ace2cmd)
 			ctfapplied = noisyimage+".corrected.mrc"
-				
-			### apply envelope function	
+
+			### apply envelope function
 			ampcorrected = ctfapplied+".ampcorrected.mrc"
 			scaleFactor =  self.params['box'] / float(4096)
-			self.applyEnvelope(ctfapplied, ampcorrected, self.params['envelope'], scaleFactor=scaleFactor)			
-			
-			if self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True:		
-				### now correct CTF using estimated parameters from micrograph		
+			self.applyEnvelope(ctfapplied, ampcorrected, self.params['envelope'], scaleFactor=scaleFactor)
+
+			if self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True:
+				### now correct CTF using estimated parameters from micrograph
 				ace2cmd = "ace2correct.exe -img "+ampcorrected+" -kv "+str(self.params['kv'])+" -cs "+\
 						str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(defocuslist1c[i])+","+\
 						str(defocuslist2c[i])+","+str(astigmatismlistc[i])+" -wiener 0.1"
@@ -917,13 +917,13 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				correctedpartlist.append(ctfcorrected)
 			else:
 				correctedpartlist.append(ampcorrected)
-				
+
 			i += 1
 
 		### exit while loops, change to basedir
 		self.params['rundir'] = basedir
-		
-		### write defocus lists to file for ctf application 
+
+		### write defocus lists to file for ctf application
 		n = 0
 		defocusfile = os.path.join(self.params['rundir'], "defocuslist_application.lst")
 		f = open(defocusfile, "w")
@@ -955,7 +955,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				f.write(str(astigmatismlistc[n])+"\t\n")
 				n += 1
 			f.close()
-		
+
 		### write corrected particle list to doc file
 		n = 0
 		correctedpartlistfile = os.path.join(self.params['rundir'], "correctedpartlist.lst")
@@ -964,7 +964,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			f.write(correctedpartlist[n]+"\n")
 			n += 1
 		f.close()
-			
+
 		return correctedpartlist
 
 
@@ -1008,7 +1008,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 	#=====================
 	def uploadData(self, correctedpartlist):
-			
+
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		if self.params['projectid'] is not None:
 			projectnum = self.params['projectid']
@@ -1016,10 +1016,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			projectnum = apProject.getProjectIdFromSessionName(self.params['sessionname'])
 
 		### create synthetic stack object ... not saving global params like runname, session, project, description, etc. here; that's in ApStackData
-		syntheticq = appionData.ApSyntheticStackParamsData()
+		syntheticq = appiondata.ApSyntheticStackParamsData()
 		### get number of fakestack runs
 		numentries = len(syntheticq)
-		syntheticq['modelid'] = appionData.ApInitialModelData.direct_query(self.params['modelid'])
+		syntheticq['modelid'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 		syntheticq['boxsize'] = self.params['box']
 		syntheticq['apix'] = self.params['apix']
 		syntheticq['projcount'] = self.params['projcount']
@@ -1064,7 +1064,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			syntheticq['norm'] = 0
 
 		### fill stack parameters
-		stparamq = appionData.ApStackParamsData()
+		stparamq = appiondata.ApStackParamsData()
 		stparamq['boxSize'] = self.params['box']
 		stparamq['bin'] = 1
 		stparamq['fileType'] = "imagic"
@@ -1082,22 +1082,22 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			stparamq['normalized'] = 1
 		else:
 			stparamq['normalized'] = 0
-		
+
 		paramslist = stparamq.query()
 
 		### create a stack object
-		stackq = appionData.ApStackData()
-		stackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		stackq = appiondata.ApStackData()
+		stackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		### see if stack already exists in the database (just checking path & name)
 		uniqstackdatas = stackq.query(results=1)
 
 		### create a stackRun object
-		runq = appionData.ApStackRunData()
+		runq = appiondata.ApStackRunData()
 		runq['stackRunName'] = self.params['runname']
 		runq['session'] = sessiondata
 		### see if stack run already exists in the database (just checking runname & session)
 		uniqrundatas = runq.query(results=1)
-	
+
 		### finish stack object
 		stackq['name'] = self.params['finalstack']
 		stackq['description'] = self.params['description']
@@ -1112,10 +1112,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		self.stackrundata = runq
 
 		### create runinstack object
-		rinstackq = appionData.ApRunsInStackData()
+		rinstackq = appiondata.ApRunsInStackData()
 		rinstackq['stackRun'] = runq
 		rinstackq['project|projects|project'] = projectnum
-		
+
         	### if not in the database, make sure run doesn't already exist
 		if not uniqstackdatas and not uniqrundatas:
 			if self.params['commit'] is True:
@@ -1124,14 +1124,14 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				rinstackq.insert()
 			else:
 				apDisplay.printColor("NOT INSERTING stack parameters into database", "cyan")
-				
+
 		elif uniqrundatas and not uniqstackdatas:
 			apDisplay.printError("Weird, run data without stack already in the database")
 		else:
 
 			rinstack = rinstackq.query(results=1)
 
-			prevrinstackq = appionData.ApRunsInStackData()
+			prevrinstackq = appiondata.ApRunsInStackData()
 			prevrinstackq['stackRun'] = uniqrundatas[0]
 			prevrinstackq['stack'] = uniqstackdatas[0]
 			prevrinstackq['project|projects|project'] = projectnum
@@ -1169,12 +1169,12 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			apDisplay.printWarning("Stack already exists in database! Will try and appending new particles to stack")
 
 		### create a fake selection run
-#		selectq = appionData.ApSelectionRunData()
+#		selectq = appiondata.ApSelectionRunData()
 #		selectq['session'] = sessiondata
 #		selectq['name'] = "fakerun"
 #		self.selectq = selectq
 		if self.params['commit'] is True:
-			apDisplay.printColor("Inserting fake selection parameters into the database", "cyan") 
+			apDisplay.printColor("Inserting fake selection parameters into the database", "cyan")
 #			selectq.insert()
 		else:
 			apDisplay.printColor("NOT INSERTING fake selection parameters into the database", "cyan")
@@ -1191,12 +1191,12 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			partNumber += 1
 			partfile = correctedpartlist[i]
 			partmeandict = self.partmeantree[i]
-			
-			partq = appionData.ApParticleData()
+
+			partq = appiondata.ApParticleData()
 #			partq['selectionrun'] = selectq
 			partq['xcoord'] = partNumber
 
-			stpartq = appionData.ApStackParticlesData()
+			stpartq = appiondata.ApStackParticlesData()
 
 			### check unique params
 			stpartq['stack'] = self.stackdata
@@ -1226,9 +1226,9 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		if partbytes*self.params['projcount'] > bytelimit:
 			writeiters = int(math.ceil(float(partbytes)*self.params['projcount'] / bytelimit))
 		partsperiter = int(float(self.params['projcount']) / writeiters) ### number of particles read each time
-		
+
 		### some defaults, and workarounds for now
-		self.params['projpergraph'] = 100 
+		self.params['projpergraph'] = 100
 		self.params['filesperdir'] = partsperiter
 		if self.params['filesperdir'] > 2048:
 			self.params['filesperdir'] = 2048
@@ -1248,11 +1248,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		### calculate noiselevel additions and add noise to an initial ratio of 1.8, simulating beam and structural damage
 		noiselevel1 = float(stdev1) / float(self.params['snr1'])
 		noisystack = self.addNoise(shiftstackname, noiselevel1, SNR=self.params['snr1'])
-		
+
 		### create raw micrographs from input stack (shiftstackname)
 		defocuslist1 = []; defocuslist2 = []; astigmatismlist = []; defocuslist1c = []; defocuslist2c = []; astigmatismlistc = [];
 		defocuslist1, defocuslist2, astigmatismlist, defocuslist1c, defocuslist2c, astigmatismlistc = self.createRawMicrographs(shiftstackname, noiselevel1)
-				
+
 		### breakup stack for applying envelope and ctf parameters
 		partlistdocfile = self.breakupStackIntoSingleFiles(noisystack)
 
@@ -1265,7 +1265,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			lines = f.readlines()
 			correctedpartlist = [line.strip() for line in lines]
 			f.close()
-			
+
 		### OPTIONAL!!! -- if the program crashed at some point, make sure to reobtain the lists from the corresponding files
 		if defocuslist1 is not True or defocuslist2 is not True or astigmatismlist is not True:
 			recoveryfile = os.path.join(self.params['rundir'], "defocuslist_application.lst")
@@ -1291,7 +1291,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			f.close()
 			split = [line.split() for line in lines]
 			if defocuslist1c is None:
-				for params in split:	
+				for params in split:
 					defocuslist1c.append(params[1])
 			if defocuslist2c is None:
 				for params in split:
@@ -1299,8 +1299,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			if astigmatismlistc is None:
 				for params in split:
 					astigmatismlistc.append(params[3])
-		
-		### convert to single stack of corrected files			
+
+		### convert to single stack of corrected files
 		imgnum = 0
 		substacknum = 0
 		substacklist = []
@@ -1362,7 +1362,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		else:
 			self.params['finalstack'] = os.path.basename(noisystack2)
 			finalstack = noisystack2
-			
+
 		### read mean and stdev
 		self.partmeantree = []
 		imgnum = 0
@@ -1393,7 +1393,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 					apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,shortname))
 				self.partmeantree.append(partmeandict)
 				imgnum += 1
-		
+
 		### upload if commit is checked
 		self.uploadData(correctedpartlist)
 
@@ -1412,6 +1412,7 @@ if __name__ == "__main__":
 	syntheticdataset = createSyntheticDatasetScript(True)
 	syntheticdataset.start()
 	syntheticdataset.close()
-	
+
+
 
 

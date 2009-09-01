@@ -15,7 +15,7 @@ import apEMAN
 import apFile
 import apStack
 import apParam
-import appionData
+import appiondata
 import apXmipp
 import apRecon
 import apVolume
@@ -64,12 +64,12 @@ class uploadXmippRefineScript(appionScript.AppionScript):
         self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
         self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
         total=apFile.numImagesInStack(self.stack['file'])
-                
+
         # Read the run parameters
         protocolPrm = eval(open("runParameters.txt").read())
 
 	    # Insert the fixed parameters
-        fixedq = appionData.ApXmippRefineFixedParamsData()
+        fixedq = appiondata.ApXmippRefineFixedParamsData()
         fixedq['Niter']	          = protocolPrm["NumberofIterations"]
         fixedq['maskFilename']    = protocolPrm["MaskFileName"]
         fixedq['maskRadius']      = protocolPrm["MaskRadius"]
@@ -83,7 +83,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
         fixedq.insert()
 
         # Insert this run in the table of runs
-        runq=appionData.ApRefinementRunData()
+        runq=appiondata.ApRefinementRunData()
         runq['name']=self.params['runname']
         runq['stack']=apStack.getOnlyStackData(self.params['stackid'])
         earlyresult=runq.query(results=1)
@@ -91,36 +91,36 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 	        apDisplay.printWarning("Run already exists in the database.\nIdentical data will not be reinserted")
         runq['initialModel']=apVolume.getModelFromId(protocolPrm['modelid'])
         runq['package']="Xmipp"
-        runq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+        runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
         runq['description']=self.params['description']
         result=runq.query(results=1)
         if earlyresult and not result:
 	        apDisplay.printError("Refinement Run parameters have changed")
         apDisplay.printMsg("inserting Refinement Run into database")
         runq.insert()
-        
+
         # Insert now the information for each iteration
         for i in range(1,protocolPrm["NumberofIterations"]+1):
             apDisplay.printMsg("Processing iteration "+str(i))
             iterDir="ProjMatch/Iter_"+str(i)
-            
+
             # Insert the resolution
-            resolq=appionData.ApResolutionData()
+            resolq=appiondata.ApResolutionData()
             resolq['fscfile']=os.path.join(iterDir,"fsc.txt")
             resolq['half']=apRecon.calcRes(resolq['fscfile'],
                 self.stack['boxsize'], self.stack['apix'])
             apDisplay.printMsg("inserting FSC resolution data into database")
             resolq.insert()
-            
+
             # Insert the R measure
-            rmeasure=appionData.ApRMeasureData()
+            rmeasure=appiondata.ApRMeasureData()
             rmeasure['volume']=os.path.join(iterDir,"reconstruction.mrc")
             rmeasure['rMeasure']=apRecon.runRMeasure(self.stack['apix'],
                 os.path.join(self.params['rundir'],rmeasure['volume']))
             rmeasure.insert()
-            
+
             # Fill the iteration dependent parameters
-            iterparamq=appionData.ApXmippRefineIterationParamsData()
+            iterparamq=appiondata.ApXmippRefineIterationParamsData()
             iterparamq['angularStep']=float(arg.getComponentFromVector(protocolPrm['AngSamplingRateDeg'],i-1))
             iterparamq['maxChangeInAngles']=float(arg.getComponentFromVector(protocolPrm['MaxChangeInAngles'],i-1))
             iterparamq['maxChangeOffset']=float(arg.getComponentFromVector(protocolPrm['MaxChangeOffset'],i-1))
@@ -134,7 +134,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
             iterparamq.insert()
 
             # Insert the main information for this iteration
-            mainq=appionData.ApRefinementData()
+            mainq=appiondata.ApRefinementData()
             mainq['volumeDensity']=rmeasure['volume']
             mainq['refinementRun']=runq
             mainq['xmippRefineParams']=iterparamq
@@ -145,17 +145,17 @@ class uploadXmippRefineScript(appionScript.AppionScript):
             mainq['emanClassAvg']=mainq['classAverage']
             apDisplay.printMsg("inserting main iteration data into database")
             mainq.insert()
-            
+
             # Insert the FSC
             fhFSC = open(resolq['fscfile'])
             for line in fhFSC:
                 tokens=line.split()
-                point=appionData.ApFSCData()
+                point=appiondata.ApFSCData()
                 point['refinementData']=mainq
                 point['pix']=int(tokens[0])
                 point['value']=float(tokens[1])
                 point.insert()
-            
+
             # Insert the Euler angles of each particle
             fhAngles = open(os.path.join(iterDir,"angles.doc"))
             lineNo=0
@@ -169,7 +169,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
                     projectionName=(line.split())[1]
                 else:
                     docline=line.split()
-                    particleq=appionData.ApParticleClassificationData()
+                    particleq=appiondata.ApParticleClassificationData()
                     particleq['refinement']=mainq
                     particleq['particle']=apStack.getStackParticle(
                         self.params['stackid'], particleNo+1)
@@ -186,21 +186,21 @@ class uploadXmippRefineScript(appionScript.AppionScript):
                     if particleNo % 100 == 0:
                         sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
                         sys.stderr.write(str(particleNo)+" of "+(str(total))+" complete")
-                    
+
                 lineNo+=1
             fhAngles.close()
             sys.stderr.write("\n"+(str(total))+" particles have been introduced\n")
-            
+
             # Generate the Euler plots
             apEulerDraw.createEulerImages(int(runq.dbid), i, path=self.params['rundir'])
-            
+
             # Generate the reconstruction plots
             #proc = subprocess.Popen("ln -s "+mainq['volumeDensity']+" tmp.mrc", shell=True)
             #proc.wait()
             #print os.getcwd()
             densityfile = os.path.join(self.params['rundir'], mainq['volumeDensity'])
             apChimera.filterAndChimera(density=densityfile,
-                res=resolq['half'], apix=self.stack['apix'], 
+                res=resolq['half'], apix=self.stack['apix'],
                 chimtype='snapshot', sym=protocolPrm["SymmetryGroup"],
                 mass=self.params['mass'])
             #os.unlink("tmp.mrc")
@@ -210,3 +210,4 @@ if __name__ == "__main__":
     upload3D = uploadXmippRefineScript()
     upload3D.start()
     upload3D.close()
+

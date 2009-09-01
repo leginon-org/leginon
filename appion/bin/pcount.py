@@ -5,7 +5,7 @@ reject images versus other images.
 usage:    pcount.py <session name> <particle selection run name>
 '''
 
-import appionData
+import appiondata
 import leginondata
 import sys
 
@@ -19,8 +19,8 @@ if __name__ == "__main__":
 
 	# query objects
 	qsession = leginondata.SessionData(name=ses_name)
-	qrun = appionData.ApSelectionRunData(session=qsession, name=run_name)
-	qpart = appionData.ApParticleData(selectionrun=qrun)
+	qrun = appiondata.ApSelectionRunData(session=qsession, name=run_name)
+	qpart = appiondata.ApParticleData(selectionrun=qrun)
 
 	# all particles
 	particles = qpart.query()
@@ -36,7 +36,7 @@ if __name__ == "__main__":
 		imgid = imgref.dbid
 		if imgid not in assessments:
 			img = leginondata.AcquisitionImageData.direct_query(imgref.dbid, readimages=False)
-			qassess = appionData.ApAssessmentData(image=img)
+			qassess = appiondata.ApAssessmentData(image=img)
 			assessment = qassess.query(results=1)
 			if assessment:
 				assessments[imgid] = assessment[0]['selectionkeep']
@@ -53,3 +53,4 @@ if __name__ == "__main__":
 	print ' Total Particles:', len(particles)
 	print '         Rejected', len(areject)
 	print '  Keep or Unknown', len(akeep) + len(anone)
+

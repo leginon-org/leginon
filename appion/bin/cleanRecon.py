@@ -7,11 +7,11 @@ Note:  does not use project selection yet.
 '''
 
 import sys
-import appionData
+import appiondata
 import subprocess
 import os
 
-rjobs = appionData.ApClusterJobData(status='R', jobtype='recon')
+rjobs = appiondata.ApClusterJobData(status='R', jobtype='recon')
 rjobs = rjobs.query()
 
 print 'Recon jobs listed as "Running" in the database:'
@@ -58,3 +58,4 @@ print '* changing status to "Done" in database'
 cmd = 'updateAppionDB.py %s D' % (myjob.dbid,)
 subprocess.Popen(cmd, shell=True)
 print 'Recon should now be ready for upload.'
+

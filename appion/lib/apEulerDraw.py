@@ -26,7 +26,7 @@ def getEulersForIteration(reconid, iteration=1):
 	to taking several hours with sinedon
 	"""
 	# connect
-	dbconf = sinedon.getConfig('appionData')
+	dbconf = sinedon.getConfig('appiondata')
 	db = MySQLdb.connect(**dbconf)
 	# create a cursor
 	cursor = db.cursor()
@@ -376,7 +376,7 @@ def makePolarImage(eulerdict, imgname="temp.png",
 		fcolor = grayToColor(fgray)
 
 		#direct polar
-		rad = radlist[i]			
+		rad = radlist[i]
 		ang = anglelist[i]
 
 		#ax = float(imgdim-2*frame)*(ang-d['mina'])/d['rangea']+frame
@@ -532,7 +532,7 @@ def drawPolarAxes(draw, imgdim, frame, img, d, overmult=1.02):
 	yf = float(imgdim-3*frame)*yn+2*frame
 	coord = (xf+5, yf-shifty)
 	draw.text(coord, txt, fill="black")
-	
+
 	if(d['rangea'] < 2*math.pi):
 		txt = str(round(d['maxa']*180.0/math.pi,1))
 		shiftx = draw.textsize(txt)[0]
@@ -728,7 +728,7 @@ def createEulerImages(recon=239, iternum=1, path=".", coran=False):
 	for key,val in eulerdict.items():
 		rejectdict[key] -= val
 	makePolarImage(rejectdict, imgname=rejectfile)
-	
+
 	if coran is True and corandict:
 		### create image of coran keep particle
 		coranfile = os.path.join(path, "eulerPolarCoran-"+str(recon)+"_"+str(iternum)+".png")
@@ -769,6 +769,7 @@ if __name__ == "__main__":
 	#createEulerImages(296, 2, ".", True)
 	#createEulerImages(305, 12, ".", True)
 	apDisplay.printColor("Finished in "+apDisplay.timeString(time.time()-t0), "cyan")
+
 
 
 

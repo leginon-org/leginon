@@ -12,7 +12,7 @@ except:
 	no_wx = True
 import leginondata
 from pyami import arraystats, mrc, imagefun, numpil,correlator, peakfinder
-import appionData
+import appiondata
 import libCVwrapper
 try:
 	import node
@@ -96,7 +96,7 @@ def getOrderedImageListCorrelation(imagelist, bin):
 	tiltseries = imagelist[0]['tilt series']
 	tiltangledict = {}
 	correlationpeak = {}
-	second_group = False 
+	second_group = False
 	for i,imagedata in enumerate(imagelist):
 		tilt = imagedata['scope']['stage position']['a']*180/3.14159
 		if tilt < tiltseries['tilt start']+0.02 and tilt > tiltseries['tilt start']-0.02:
@@ -168,7 +168,7 @@ def simpleCorrelation(array1,array2):
 		else:
 			shift[i] = peak['pixel peak'][i]
 	return shift
-		
+
 def getCorrelationPeak(correlator, bin, tiltseries, tilt, imagedata,allpeaks,second_group):
 	q = leginondata.TomographyPredictionData(image=imagedata)
 	results = q.query()
@@ -199,7 +199,7 @@ def getTomographySettings(sessiondata,tiltdata):
 	'''
 	search for the last tomography node settings in the order of
 	from the same session, from the same user, from default
-	''' 
+	'''
 	timestamp = tiltdata.timestamp
 	qtomo = leginondata.TomographySettingsData(session=sessiondata)
 	tomosettingslist = qtomo.query()
@@ -246,7 +246,7 @@ def getTomoImageShape(imagedata):
 	return (imagedata['camera']['dimension']['y'],imagedata['camera']['dimension']['x'])
 
 def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
-	paramsq = appionData.ApImodXcorrParamsData()		
+	paramsq = appiondata.ApImodXcorrParamsData()
 	paramsq['RotationAngle'] = rotation
 	paramsq['FilterSigma1'] = filtersigma1
 	paramsq['FilterRadius2'] = filterradius
@@ -258,7 +258,7 @@ def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
 	return results[0]
 
 def insertTomoAlignmentRun(sessiondata,tiltdata,leginoncorrdata,imodxcorrdata,bin,name):
-	qalign = appionData.ApTomoAlignmentRunData(session=sessiondata,tiltseries=tiltdata,
+	qalign = appiondata.ApTomoAlignmentRunData(session=sessiondata,tiltseries=tiltdata,
 			bin=bin,name=name)
 	if leginoncorrdata:
 		qalign['coarseLeginonParams'] = leginoncorrdata
@@ -272,16 +272,16 @@ def insertTomoAlignmentRun(sessiondata,tiltdata,leginoncorrdata,imodxcorrdata,bi
 
 def insertSubTomoRun(sessiondata,selectionrunid,stackid,name,invert=False,subbin=1):
 	if selectionrunid:
-		qpick = appionData.ApSelectionRunData()
+		qpick = appiondata.ApSelectionRunData()
 		pickdata = qpick.direct_query(selectionrunid)
 	else:
 		pickdata = None
 	if stackid:
-		qstack = appionData.ApStackData()
+		qstack = appiondata.ApStackData()
 		stackdata = qstack.direct_query(stackid)
 	else:
 		stackdata = None
-	qrun = appionData.ApSubTomogramRunData(session=sessiondata,
+	qrun = appiondata.ApSubTomogramRunData(session=sessiondata,
 			pick=pickdata,stack=stackdata,runname=name,invert=invert,subbin=subbin)
 	results = qrun.query()
 	if not results:
@@ -290,8 +290,8 @@ def insertSubTomoRun(sessiondata,selectionrunid,stackid,name,invert=False,subbin
 	return results[0]
 
 def checkExistingFullTomoData(path,name):
-	pathq = appionData.ApPath(path=path)
-	tomoq = appionData.ApFullTomogramData(name=name,path=pathq)
+	pathq = appiondata.ApPath(path=path)
+	tomoq = appiondata.ApFullTomogramData(name=name,path=pathq)
 	results = tomoq.query()
 	if not results:
 		return None
@@ -300,13 +300,13 @@ def checkExistingFullTomoData(path,name):
 		return None
 	else:
 		return results[0]
-	
+
 def getFullTomoData(fulltomoId):
-	return appionData.ApFullTomogramData.direct_query(fulltomoId)
-	
+	return appiondata.ApFullTomogramData.direct_query(fulltomoId)
+
 def getTomogramData(tomoId):
-	return appionData.ApTomogramData.direct_query(tomoId)
-	
+	return appiondata.ApTomogramData.direct_query(tomoId)
+
 def insertTomo(params):
 	if not params['commit']:
 		apDisplay.printWarning("not commiting tomogram to database")
@@ -338,7 +338,7 @@ def insertTomo(params):
 		dummydescription = 'fake full tomogram for subtomogram upload'
 		fulltomogram = insertFullTomogram(sessiondata,tiltdatalist,alignlist,fulltpath,dummyname,dummydescription,projectimagedata)
 		apix = apDatabase.getPixelSize(firstimagedata)
-		tomoq = appionData.ApTomogramData()
+		tomoq = appiondata.ApTomogramData()
 		tomoq['session'] = sessiondata
 		tomoq['tiltseries'] = tiltdata
 		results = tomoq.query()
@@ -352,11 +352,11 @@ def insertTomo(params):
 		return insertSubTomogram(fulltomogram,subtomorundata,None,0,dimension,path,name,index,pixelsize,description)
 
 def insertFullTomogram(sessiondata,tiltdatalist,alignlist,path,name,description,projectimagedata):
-	tomoq = appionData.ApFullTomogramData()
+	tomoq = appiondata.ApFullTomogramData()
 	tomoq['session'] = sessiondata
 	tomoq['tiltseries'] = tiltdatalist[0]
 	tomoq['alignment'] = alignlist[0]
-	tomoq['path'] = appionData.ApPathData(path=os.path.abspath(path))
+	tomoq['path'] = appiondata.ApPathData(path=os.path.abspath(path))
 	tomoq['name'] = name
 	tomoq['description'] = description
 	tomoq['zprojection'] = projectimagedata
@@ -373,7 +373,7 @@ def insertFullTomogram(sessiondata,tiltdatalist,alignlist,path,name,description,
 	return results[0]
 
 def getLastVolumeIndex(fulltomodata):
-	tomoq = appionData.ApTomogramData(fulltomogram=fulltomodata)
+	tomoq = appiondata.ApTomogramData(fulltomogram=fulltomodata)
 	results = tomoq.query()
 	if results:
 		return results[0]['number']
@@ -381,7 +381,7 @@ def getLastVolumeIndex(fulltomodata):
 		return 0
 
 def transformParticleCenter(particle,bin,gtransform):
-	#See imod manual for definition 
+	#See imod manual for definition
 	# at http://bio3d.colorado.edu/imod/doc/serialalign.txt
 	X = particle['xcoord']
 	Y = particle['ycoord']
@@ -396,11 +396,11 @@ def transformParticleCenter(particle,bin,gtransform):
 	return (newx/bin,newy/bin)
 
 def insertSubTomogram(fulltomodata,rundata,center,offsetz,dimension,path,name,index,pixelsize,description):
-	tomoq = appionData.ApTomogramData(fulltomogram=fulltomodata)
+	tomoq = appiondata.ApTomogramData(fulltomogram=fulltomodata)
 	tomoq['session'] = fulltomodata['session']
 	tomoq['tiltseries'] = fulltomodata['tiltseries']
 	tomoq['subtomorun'] = rundata
-	tomoq['path'] = appionData.ApPathData(path=os.path.abspath(path))
+	tomoq['path'] = appiondata.ApPathData(path=os.path.abspath(path))
 	tomoq['name'] = name
 	tomoq['number'] = index
 	tomoq['center'] = center
@@ -413,7 +413,7 @@ def insertSubTomogram(fulltomodata,rundata,center,offsetz,dimension,path,name,in
 	tomoq['description'] = description
 	filepath = os.path.join(path,name+".rec")
 	tomoq['md5sum'] = apFile.md5sumfile(filepath)
-	results = tomoq.query()	
+	results = tomoq.query()
 	if not results:
 		tomoq.insert()
 		return tomoq
@@ -423,7 +423,7 @@ def array2jpg(pictpath,im,imin=None,imax=None,size=512):
 	jpgpath = pictpath+'.jpg'
 	imshape = im.shape
 	scale = float(size)/imshape[1]
-	im = apImage.scaleImage(im,scale)	
+	im = apImage.scaleImage(im,scale)
 	stats = arraystats.all(im)
 	if imin is not None and imax is not None:
 		range = (imin,imax)
@@ -456,9 +456,9 @@ def makeMovie(filename,xsize=512):
 	for key in keys:
 		axis = renders[key]['axis']
 		dimz = shape[axis]
-		#generate a sequence of jpg images, each is an average of 5 slices	
+		#generate a sequence of jpg images, each is an average of 5 slices
 		apDisplay.printMsg('Making smoothed slices...')
-		for i in range(0, dimz):   
+		for i in range(0, dimz):
 			pictpath = rootpath+'_avg%05d' % i
 			ll = max(0,i - 2)
 			hh = min(dimz,i + 3)
@@ -522,7 +522,7 @@ def uploadZProjection(runname,initialimagedata,uploadfile):
 	return imagedata[0]
 
 def getSubvolumeInfo(subtomorundata):
-	tomoq = appionData.ApTomogramData(subtomorun=subtomorundata)
+	tomoq = appiondata.ApTomogramData(subtomorun=subtomorundata)
 	results = tomoq.query(results=1)
 	if results:
 		tomo = results[0]
@@ -537,7 +537,7 @@ def getSubvolumeInfo(subtomorundata):
 
 def getSubTomogramData(subtomorundata,stackpdata):
 	pdata = stackpdata['particle']
-	tomoq = appionData.ApTomogramData(subtomorun=subtomorundata,center=pdata)
+	tomoq = appiondata.ApTomogramData(subtomorun=subtomorundata,center=pdata)
 	results = tomoq.query()
 	if results:
 		tomo = results[0]
@@ -546,7 +546,7 @@ def getSubTomogramData(subtomorundata,stackpdata):
 def getTomoVolume(tomodata):
 		path = tomodata['path']['path']
 		name = tomodata['name']+'.rec'
-		apDisplay.printMsg("Loading subtomogram %s" %name) 
+		apDisplay.printMsg("Loading subtomogram %s" %name)
 		volume = mrc.read(os.path.join(path,name))
 		return volume
 
@@ -589,7 +589,7 @@ def xmippTransformTomo(a,rot=0,shift=(0,0,0), mirror=False, order=2):
 	b = ndimage.rotate(b, angle=-1*rot, axes=(2,1), reshape=False, order=order)
 	b = ndimage.shift(b, shift=(0, 0.5, 0.5), mode='wrap',order=order)
 	return b
-	
+
 def spiderTransformTomo(a, rot=0, shift=(0,0,0), mirror=False, order=2):
 	"""
 		similar to apImage.spiderTransform but on 3D volume and rotate on the
@@ -608,7 +608,7 @@ def spiderTransformTomo(a, rot=0, shift=(0,0,0), mirror=False, order=2):
 	rowcol = (shift[2],shift[1],shift[0])
 	b = ndimage.shift(b, shift=rowcol, mode='reflect', order=order)
 
-	# mirror the image about the y-axis in projection means rotation on xz plane 
+	# mirror the image about the y-axis in projection means rotation on xz plane
 	if mirror is True:
 		b = ndimage.rotate(b, axes=(0,2), angle =math.pi, reshape=False, mode='reflect', order=order)
 
@@ -636,8 +636,8 @@ def modifyVolume(volpath,bin=1,invert=False):
 		shutil.move(volpathtemp,volpath)
 
 def insertTomoAverageRun(runname,rundir,subtomorundata,stackdata,halfwidth,description):
-	tomoaq = appionData.ApTomoAverageRunData()
-	tomoaq['path'] = appionData.ApPathData(path=os.path.abspath(rundir))
+	tomoaq = appiondata.ApTomoAverageRunData()
+	tomoaq['path'] = appiondata.ApPathData(path=os.path.abspath(rundir))
 	tomoaq['runname'] = runname
 	tomoaq['subtomorun'] = subtomorundata
 	tomoaq['stack'] = stackdata
@@ -651,7 +651,7 @@ def insertTomoAverageRun(runname,rundir,subtomorundata,stackdata,halfwidth,descr
 	return results[0]
 
 def insertTomoAvgParticle(avgrundata,subvolumedata,alignp,shiftz):
-	tomoaq = appionData.ApTomoAvgParticleData()
+	tomoaq = appiondata.ApTomoAvgParticleData()
 	tomoaq['avgrun'] = avgrundata
 	tomoaq['subtomo'] = subvolumedata
 	tomoaq['aligned particle'] = alignp
@@ -662,4 +662,5 @@ def insertTomoAvgParticle(avgrundata,subvolumedata,alignp,shiftz):
 		tomoaq.insert()
 		return tomoaq
 	return results[0]
+
 

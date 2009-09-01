@@ -4,7 +4,7 @@ import os
 import sys
 import random
 import math
-import appionData
+import appiondata
 import shutil
 import apStack
 import apParam
@@ -63,14 +63,14 @@ class SplitStack(appionScript.AppionScript):
 		print "Usage:"
 
 		sys.exit()
-		
+
 	def makeRandomLst(self, nptcls,stackdata):
 		lstfile='temporarylist.lst'
-		
+
 		#first remove old lst file
 		if os.path.exists(lstfile):
 			os.remove(lstfile)
-		
+
 		#make random stack
 		f=open('temporarylist.lst','w')
 		f.write('#LST\n')
@@ -128,11 +128,11 @@ class SplitStack(appionScript.AppionScript):
 			self.params['rundir'] = path
 		apDisplay.printMsg("Out directory: "+self.params['rundir'])
 
-		origdescription=self.params['description']	
+		origdescription=self.params['description']
 		for stack in stacklist:
 			self.params['description'] = (
 				origdescription+
-				(" ... split %d particles from original stackid=%d" 
+				(" ... split %d particles from original stackid=%d"
 				% (stack, self.params['stackid']))
 			)
 			workingdir = os.path.join(self.params['rundir'], str(stack))
@@ -140,20 +140,20 @@ class SplitStack(appionScript.AppionScript):
 			#check for previously commited stacks
 			newstack = os.path.join(workingdir ,self.params['stackname'])
 			apStack.checkForPreviousStack(newstack)
-			
+
 			#create rundir and change to that directory
 			apDisplay.printMsg("Run directory: "+workingdir)
 			apParam.createDirectory(workingdir)
 			os.chdir(workingdir)
 
-			#create random list 
+			#create random list
 			lstfile = makeRandomLst(stack, stackparticles, self.params)
 			#shutil.copy(lstfile, workingdir)
 
 			#make new stack
 			apStack.makeNewStack(oldstack, newstack, lstfile)
 			#apStack.makeNewStack(lstfile, self.params['stackname'])
-			
+
 			#commit new stack
 			self.params['keepfile'] = os.path.abspath(lstfile)
 			self.params['rundir'] = os.path.abspath(workingdir)
@@ -164,4 +164,5 @@ if __name__ == '__main__':
 	splitstack = SplitStack()
 	splitstack.start()
 	splitstack.close()
+
 

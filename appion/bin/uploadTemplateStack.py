@@ -16,7 +16,7 @@ import apStack
 import apDisplay
 import apDatabase
 import leginondata
-import appionData
+import appiondata
 import apEMAN
 import apFile
 import apProject
@@ -57,7 +57,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 			help="EMAN style class averages to EXCLUDE in the new stack (0,5,8)", metavar="0,1,...")
 		self.parser.add_option("--include", dest="include",
 			help="EMAN style class averages to INCLUDE in the new stack (0,2,7)", metavar="0,1,...")
-		
+
 
 	#=====================
 	def checkConflicts(self):
@@ -69,7 +69,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		if self.params['templatetype'] is None and self.params['templatetype'] is not "clsavg" and self.params['templatetype'] is not "forward_proj":
 			apDisplay.printError("enter the template type (i.e. class averages / forward projections)")
 		if self.params['runname'] is None:
-			templatestacksq = appionData.ApTemplateStackData()
+			templatestacksq = appiondata.ApTemplateStackData()
 			templatestacks = templatestacksq.query()
 			num_templatestacks = len(templatestacks)
 			new_num = num_templatestacks + 1
@@ -79,16 +79,16 @@ class uploadTemplateScript(appionScript.AppionScript):
 		if (self.params['apix'] is None and self.params['clusterId'] is None):
 			apDisplay.printError("Enter value for angstroms per pixel")
 		elif (self.params['apix'] is None and self.params['clusterId'] is not None):
-			clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+			clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 			self.params['apix'] = clusterdata['clusterrun']['pixelsize']
 		print self.params['apix']
-		
+
 		### get boxsize if not specified
 		if self.params['boxsize'] is None and self.params['templatestack'] is not None:
-			emancmd = "iminfo "+self.params['templatestack']	
+			emancmd = "iminfo "+self.params['templatestack']
 			proc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			results = proc.stdout
-			proc.wait() 
+			proc.wait()
 			for line in results:
 				res = re.search("([0-9]+)x([0-9]+)x([0-9])", line)
 				if res:
@@ -97,19 +97,19 @@ class uploadTemplateScript(appionScript.AppionScript):
 					if num1 == num2:
 						self.params['boxsize'] = num1
 		elif self.params['boxsize'] is None and self.params['clusterId'] is not None:
-			clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+			clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 			self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
 
 		### check for session
 		if self.params['session'] is None:
 			if self.params['clusterId'] is not None:
-				clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
-				stackid = clusterdata['clusterrun']['alignstack']['stack'].dbid 
+				clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
+				stackid = clusterdata['clusterrun']['alignstack']['stack'].dbid
 				sessiondata = apStack.getSessionDataFromStackId(stackid)
 				self.params['session'] = sessiondata['name']
 		if self.params['session'] is None:
 			apDisplay.printError("Could not find session")
-		
+
 		if self.params['templatestack'] is not None:
 			self.params['templatestack'] = os.path.abspath(self.params['templatestack'])
 
@@ -161,7 +161,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 
 		# if either exclude or include lists is defined
 		elif self.params['exclude'] or self.params['include']:
-			
+
 			### list of particles to be excluded
 			excludelist = []
 			if self.params['exclude'] is not None:
@@ -175,16 +175,16 @@ class uploadTemplateScript(appionScript.AppionScript):
 			if self.params['include'] is not None:
 				includestrlist = self.params['include'].split(",")
 				for incld in includestrlist:
-					includelist.append(int(incld.strip()))		
+					includelist.append(int(incld.strip()))
 			apDisplay.printMsg("Include list: "+str(includelist))
 
 
 		newclusterstack = os.path.join(self.params['rundir'], str(self.params['runname'])+".img")
 		oldclusterstack = os.path.join(self.clusterdata['path']['path'], self.clusterdata['avg_imagicfile'])
 
-		#if include or exclude list is given...			
+		#if include or exclude list is given...
 		if self.params['include'] is not None or self.params['exclude'] is not None:
-		
+
 			#old stack size
 			stacksize = apFile.numImagesInStack(oldclusterstack)
 
@@ -199,24 +199,24 @@ class uploadTemplateScript(appionScript.AppionScript):
 				else:
 					excludeParticle += 1
 			includeParticle.sort()
-		
+
 			### write kept particles to file
 			self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile-"+self.timestamp+".list")
 			apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
 			kf = open(self.params['keepfile'], "w")
 			for partnum in includeParticle:
 				kf.write(str(partnum)+"\n")
-			kf.close()		
+			kf.close()
 
 			#get number of particles
 			numparticles = len(includeParticle)
 			if excludelist:
-				self.params['description'] += ( " ... %d particle subcluster of clusterid %d" 
+				self.params['description'] += ( " ... %d particle subcluster of clusterid %d"
 				% (numparticles, self.params['clusterId']))
 			elif includelist:
-				self.params['description'] += ( " ... %d particle subcluster of clusterid %d" 
-				% (numparticles, self.params['clusterId']))	
-		
+				self.params['description'] += ( " ... %d particle subcluster of clusterid %d"
+				% (numparticles, self.params['clusterId']))
+
 		ogdescr = self.params['description']
 #		for i in range(self.params['split']):
 #		sb = os.path.splitext(stackdata['name'])
@@ -234,7 +234,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		f.close()
 #		self.params['description'] = ogdescr
 #		self.params['description'] += (
-#			(" ... %d particle substack of stackid %d" 
+#			(" ... %d particle substack of stackid %d"
 #			 % (numparticles, self.params['stackid']))
 #		)
 #		#if splitting, add to description
@@ -257,11 +257,11 @@ class uploadTemplateScript(appionScript.AppionScript):
 	#=====================
 	def uploadTemplateStack(self, insert=False):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
-	
-		uploadq = appionData.ApTemplateStackData()
+
+		uploadq = appiondata.ApTemplateStackData()
 		uploadq['project|projects|project'] = self.params['projectid']
 		if self.params['clusterId'] is not None:
-			uploadq['clusterstack'] = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+			uploadq['clusterstack'] = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 		elif self.params['templatestack'] is not None:
 			uploadq['origfile'] = self.params['templatestack']+".hed"
 		uploadq['templatename'] = self.params['runname']+".hed"
@@ -274,7 +274,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		uploadq['apix'] = self.params['apix']
 		uploadq['boxsize'] = self.params['boxsize']
 		uploadq['numimages'] = self.numimages
-		uploadq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		uploadq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		if insert is True:
 			uploadq.insert()
 
@@ -282,7 +282,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 	def start(self):
 		print self.params
 		if self.params['clusterId'] is not None:
-			self.clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+			self.clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 			self.useClusterForTemplateStack()
 		else:
 			apDisplay.printMsg("Using local file: '"+str(self.params['templatestack'])+"' to upload template")
@@ -294,7 +294,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 				self.params['runname'] = self.params['runname'][:-4]
 			shutil.copyfile(str(self.params['templatestack'])+".img", os.path.join(self.params['rundir'], str(self.params['runname'])+".img"))
 			shutil.copyfile(str(self.params['templatestack'])+".hed", os.path.join(self.params['rundir'], str(self.params['runname'])+".hed"))
-			self.numimages = apFile.numImagesInStack(os.path.join(self.params['rundir'], str(self.params['runname'])+".hed"))			
+			self.numimages = apFile.numImagesInStack(os.path.join(self.params['rundir'], str(self.params['runname'])+".hed"))
 
 		# insert templates to database
 		if self.params['commit'] is True:
@@ -308,4 +308,5 @@ if __name__ == "__main__":
 	uploadTemplate.start()
 	uploadTemplate.close()
 
-	
+
+

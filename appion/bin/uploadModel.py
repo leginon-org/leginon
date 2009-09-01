@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 # Upload pik or box files to the database
 
 import os
@@ -15,7 +15,7 @@ import apDatabase
 import apChimera
 import apVolume
 import apProject
-import appionData
+import appiondata
 
 
 
@@ -27,7 +27,7 @@ class UploadModelScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --file=<filename> --session=<name> --symm=<#> --apix=<#> \n\t "
 			+" --res=<#> --description='text' [--contour=<#>] [--zoom=<#>] \n\t "
 			+" [--rescale=<model ID,scale factor> --boxsize=<#>] ")
-		self.parser.add_option("-f", "--file", dest="file", 
+		self.parser.add_option("-f", "--file", dest="file",
 			help="MRC file to upload", metavar="FILE")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
@@ -133,7 +133,7 @@ class UploadModelScript(appionScript.AppionScript):
 
 	#=====================
 	def getDensityParams(self):
-		densitydata = appionData.Ap3dDensityData.direct_query(self.params['densityid'])
+		densitydata = appiondata.Ap3dDensityData.direct_query(self.params['densityid'])
 		self.params['oldapix'] = float(densitydata['pixelsize'])
 		if self.params['symmetry'] is None:
 			self.params['symdata'] = densitydata['symmetry']
@@ -193,14 +193,14 @@ class UploadModelScript(appionScript.AppionScript):
 			if self.params['commit'] is True:
 				apDisplay.printMsg("inserting model into database")
 		if self.params['rescale'] is True:
-			apDisplay.printError("cannot rescale an existing model")	
+			apDisplay.printError("cannot rescale an existing model")
 
 	#===========================
 	def insertModel(self):
-		apDisplay.printMsg("commiting model to database")	
-		modq=appionData.ApInitialModelData()
+		apDisplay.printMsg("commiting model to database")
+		modq=appiondata.ApInitialModelData()
 		modq['project|projects|project'] = self.params['projectId']
-		modq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		modq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		modq['name'] = self.params['name']
 		modq['symmetry'] = self.params['symdata']
 		modq['pixelsize'] = self.params['newapix']
@@ -211,9 +211,9 @@ class UploadModelScript(appionScript.AppionScript):
 		modq['md5sum'] = apFile.md5sumfile(filepath)
 		modq['description'] = self.params['description']
 		if self.params['densityid'] is not None:
-			modq['original density'] = appionData.Ap3dDensityData.direct_query(self.params['densityid'])
+			modq['original density'] = appiondata.Ap3dDensityData.direct_query(self.params['densityid'])
 		if self.params['oldmodelid'] is not None:
-			modq['original model'] = appionData.ApInitialModelData.direct_query(self.params['oldmodelid'])
+			modq['original model'] = appiondata.ApInitialModelData.direct_query(self.params['oldmodelid'])
 		if self.params['commit'] is True:
 			modq.insert()
 		else:
@@ -237,12 +237,12 @@ class UploadModelScript(appionScript.AppionScript):
 			### rescale old model to a new size
 			if self.checkExistingFile():
 				return
-		elif (abs(self.params['oldapix'] - self.params['newapix']) > 1.0e-2 or 
+		elif (abs(self.params['oldapix'] - self.params['newapix']) > 1.0e-2 or
 			abs(self.params['oldbox'] - self.params['newbox']) > 1.0e-1):
 			### rescale old model to a new size
 			apDisplay.printWarning("rescaling original model to a new size")
 			apDisplay.printMsg("rescaling model "+origmodelpath+" by "+str(round(self.params['scale']*100.0,2))+"%")
-			apVolume.rescaleModel(origmodelpath, newmodelpath, 
+			apVolume.rescaleModel(origmodelpath, newmodelpath,
 				self.params['oldapix'], self.params['newapix'], self.params['newbox'])
 		else:
 			### simple upload, just copy file to models folder
@@ -255,7 +255,7 @@ class UploadModelScript(appionScript.AppionScript):
 		if self.params['mass'] is not None:
 			apChimera.setVolumeMass(newmodelpath, self.params['newapix'], self.params['mass'])
 			contour = 1.0
-		apChimera.renderSnapshots(newmodelpath, contour=self.params['contour'], 
+		apChimera.renderSnapshots(newmodelpath, contour=self.params['contour'],
 			zoom=self.params['zoom'], sym=self.params['symdata']['eman_name'])
 
 
@@ -268,5 +268,6 @@ if __name__ == '__main__':
 	uploadModel = UploadModelScript()
 	uploadModel.start()
 	uploadModel.close()
+
 
 

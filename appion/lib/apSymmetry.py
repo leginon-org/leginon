@@ -5,7 +5,7 @@ import re
 import sys
 #appion
 import apDisplay
-import appionData
+import appiondata
 
 #===========================
 def findSymmetry(symtext, msg=True):
@@ -27,7 +27,7 @@ def getSymmetryDataFromName(symtext='c1', msg=True):
 	# based on the text version from EMAN
 	# first convert to lower case
 	symtext = symtext.lower()
-	symdataq = appionData.ApSymmetryData(eman_name=symtext)
+	symdataq = appiondata.ApSymmetryData(eman_name=symtext)
 	symdatas = symdataq.query()
 	if not symdatas:
 		apDisplay.printError("No symmetry named %s was found"%(symtext))
@@ -40,7 +40,7 @@ def getSymmetryDataFromName(symtext='c1', msg=True):
 
 #===========================
 def getSymmetryDataFromID(symid, msg=True):
-	symdata = appionData.ApSymmetryData.direct_query(int(symid))
+	symdata = appiondata.ApSymmetryData.direct_query(int(symid))
 	if not symdata:
 		printSymmetries()
 		apDisplay.printError("no symmetry associated with this id: "+str(symid))
@@ -58,7 +58,7 @@ def compSymm(a, b):
 
 #===========================
 def printSymmetries():
-	symq = appionData.ApSymmetryData()
+	symq = appiondata.ApSymmetryData()
 	syms = symq.query()
 	sys.stderr.write("ID  NAME  DESCRIPTION\n")
 	sys.stderr.write("--  ----  -----------\n")
@@ -66,7 +66,7 @@ def printSymmetries():
 	for s in syms:
 		name = s['eman_name']
 		name = re.sub('Icosahedral', 'Icos', name)
-		sys.stderr.write( 
+		sys.stderr.write(
 			apDisplay.colorString(apDisplay.rightPadString(s.dbid,3),"green")+" "
 			+apDisplay.rightPadString(name,5)+" "
 			+apDisplay.rightPadString(s['description'],60)+"\n"
@@ -77,6 +77,7 @@ def printSymmetries():
 #===========================
 if __name__ == "__main__":
 	printSymmetries()
+
 
 
 

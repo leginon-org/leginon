@@ -9,7 +9,7 @@ import time
 import shutil
 import subprocess
 import appionScript
-import appionData
+import appiondata
 
 import apParam
 import apChimera
@@ -52,17 +52,17 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="symmetry of the object", metavar="INT")
 		self.parser.add_option("--radius", dest="radius", type="int", default=0.7,
 			help="particle radius (in pixels): this is used for MRA and MSA", metavar="INT")
-			
+
 		### MRA
 		self.parser.add_option("--mrarefs_ang_inc", dest="mrarefs_ang_inc", type="int",	default=25,
 			help="angular increment of reprojections for MRA", metavar="INT")
 		self.parser.add_option("--max_shift_orig", dest="max_shift_orig", type="float", default=0.2,
-			help="maximum radial shift during MRA", metavar="float")	
+			help="maximum radial shift during MRA", metavar="float")
 		self.parser.add_option("--max_shift_this", dest="max_shift_this", type="float", default=0.05,
 			help="maximum radial shift during MRA for this iteration", metavar="float")
 		self.parser.add_option("--samp_param", dest="samp_param", type="int", default=8,
 			help="used to define precision of rotational alignment during MRA", metavar="int")
-		
+
 		### MSA
 		self.parser.add_option("--ignore_images", dest="ignore_images", type="int", default=10,
 			help="percentage of images to ignore when constructing classes", metavar="INT")
@@ -70,13 +70,13 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="percentage of worst class members to ignore", metavar="INT")
 		self.parser.add_option("--num_classes", dest="numclasses", type="int",
 			help="total number of classes created with MSA classify", metavar="INT")
-			
+
 		### angular reconstitution
 		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int", default=25,
 			help="angular increment of reprojections for euler angle refinement", metavar="INT")
 		self.parser.add_option("--euler_ang_inc", dest="euler_ang_inc", type="int", default=10,
-			help="angular increment for euler angle search", metavar="INT")		
-			
+			help="angular increment for euler angle search", metavar="INT")
+
 		### threed & automasking params
 		self.parser.add_option("--ham_win", dest="ham_win", type="float", default=0.8,
 			help="similar to lp-filtering parameter that determines detail in 3d map", metavar="float")
@@ -100,7 +100,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		### mass specified for eman volume function
 		self.parser.add_option("--mass", dest="mass", type="int",
 			help="OPTIONAL: used for thresholding volume of a 3d map to 1 based on given mass", metavar="INT")
-                        
+
 		### chimera only, if the run is already completed
 		self.parser.add_option("--chimera-only", dest="chimera-only", default=False,
 			action="store_true", help="use only if you want to regenerate chimera slices from an already existing model: input rundir and runname")
@@ -111,11 +111,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		self.parser.add_option("--iterations", dest="iterations", type="str",
 			help="list of iterations for which you would like chimera slices generated, separated by comma", metavar="1,2,5...")
 
-		return 
+		return
 
 	#=====================
 	def checkConflicts(self):
-	
+
 		### chimera only
 		if self.params['chimera-only'] is True:
 			if self.params['rundir'] is None:
@@ -125,12 +125,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			else:
 				stringlist = self.params['iterations'].split(",")
 				self.itlist = [int(v) for v in stringlist]
-		
+
 			return
-		
+
 		### otherwise go on with the reconstruction
 		else:
-	
+
 			if self.params['itn'] is None:
 				apDisplay.printError("enter iteration number")
 			if self.params['symmetry'] is None:
@@ -142,14 +142,14 @@ class imagic3dRefineScript(appionScript.AppionScript):
 				apDisplay.printError("enter a stack ID for the stack that will be used in the refinement")
 			if self.params['imagic3d0id'] is None and self.params['modelid'] is None:
 				apDisplay.printError("enter an imagic 3d0 id or model id for the refinement")
-		
+
 			return
 
 	#=====================
 	def setRunDir(self):
-	
+
 		if self.params['imagic3d0id'] is not None:
-			modeldata = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
+			modeldata = appiondata.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
 			path = os.path.join(modeldata['path']['path'], modeldata['runname'])
 		elif self.params['modelid'] is not None:
 			print "NEED TO SET RECON PATH ... NOT WORKING YET"
@@ -162,13 +162,13 @@ class imagic3dRefineScript(appionScript.AppionScript):
 	def createImagicBatchFileHeaders(self):
 		# this is for deleting header information that may interfere with the batch file
 		filename = os.path.join(self.params['rundir'], "headers.batch")
-		
-		f = open(filename, 'w')	
-		f.write("#!/bin/csh -f\n")	
+
+		f = open(filename, 'w')
+		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
 		f.write("cd "+str(self.params['rundir'])+"\n")
-		f.write("rm -f ordered0.*\n") 		
-		f.write("rm -f sino_ordered0.*\n")	
+		f.write("rm -f ordered0.*\n")
+		f.write("rm -f sino_ordered0.*\n")
 		f.write("/usr/local/IMAGIC/stand/headers.e <<EOF > imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("start\n")
 		f.write("write\n")
@@ -186,7 +186,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("shift\n")
 		f.write("EOF\n")
 		f.close()
-		
+
 		return filename
 
 	def startFiles(self, modelfile):
@@ -196,10 +196,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		syminfo = apSymmetry.findSymmetry(self.params['symmetry'])
 		symmetry = syminfo['eman_name']
 		f = open(batchfile, "w")
-		f.write("#!/bin/csh -f\n")	
+		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
 		f.write("cd "+str(self.params['rundir'])+"\n")
-		
+
 		### convert to IMAGIC format
 		f.write("/usr/local/IMAGIC/stand/em2em.e <<EOF >> startFiles.log\n")
 		f.write("MRC\n")
@@ -221,12 +221,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("YES\n")
 		f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
 		f.write("ASYM_TRIANGLE\n")
-		f.write(symmetry+"\n")		
+		f.write(symmetry+"\n")
 		f.write("EQUIDIST\n")
 		f.write("ZERO\n")
-		f.write(str(self.params['mrarefs_ang_inc'])+"\n")		
+		f.write(str(self.params['mrarefs_ang_inc'])+"\n")
 		f.write("EOF\n")
-		
+
 		### forward project to create euler angle anchor set
 		f.write("/usr/local/IMAGIC/threed/forward.e SURF FORWARD <<EOF >> startFiles.log\n")
 		f.write(basename[:-4]+"\n")
@@ -235,13 +235,13 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("YES\n")
 		f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
 		f.write("ASYM_TRIANGLE\n")
-		f.write(symmetry+"\n")		
+		f.write(symmetry+"\n")
 		f.write("EQUIDIST\n")
 		f.write("ZERO\n")
-		f.write(str(self.params['forw_ang_inc'])+"\n")		
+		f.write(str(self.params['forw_ang_inc'])+"\n")
 		f.write("EOF\n\n")
-	
-		### make a mask for use in MSA	
+
+		### make a mask for use in MSA
 		radius = float(self.params['radius']) / (self.params['boxsize'] / 2)
 		if radius > 1:
 			radius = 1
@@ -252,9 +252,9 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("DISC\n")
 		f.write(str(radius)+"\n")
 		f.write("EOF\n")
-		
+
 		f.close()
-		
+
 		return batchfile
 
 	#=======================
@@ -263,12 +263,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		syminfo = apSymmetry.findSymmetry(self.params['symmetry'])
 		symmetry = syminfo['eman_name']
 		filename = os.path.join(self.params['rundir'], "imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
-							
-		f = open(filename, 'w')	
-		f.write("#!/bin/csh -f\n")	
+
+		f = open(filename, 'w')
+		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
 		f.write("cd "+str(self.params['rundir'])+"\n")
-		
+
 		### if not first iteration, create forward projections from previous model
 		f.write("echo 'start' > imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		if self.params['itn'] > 1:
@@ -280,12 +280,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 #			f.write("WIDENING\n")
 			f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
 			f.write("ASYM_TRIANGLE\n")
-			f.write(symmetry+"\n")		
+			f.write(symmetry+"\n")
 			f.write("EQUIDIST\n")
 			f.write("ZERO\n")
-			f.write(str(self.params['mrarefs_ang_inc'])+"\n")		
+			f.write(str(self.params['mrarefs_ang_inc'])+"\n")
 			f.write("EOF\n")
-			
+
 			f.write("/usr/local/IMAGIC/threed/forward.e SURF FORWARD <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned\n")
 			f.write("-99999\n")
@@ -294,12 +294,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 #			f.write("WIDENING\n")
 			f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
 			f.write("ASYM_TRIANGLE\n")
-			f.write(symmetry+"\n")		
+			f.write(symmetry+"\n")
 			f.write("EQUIDIST\n")
 			f.write("ZERO\n")
-			f.write(str(self.params['forw_ang_inc'])+"\n")		
+			f.write(str(self.params['forw_ang_inc'])+"\n")
 			f.write("EOF\n\n")
-	
+
 		### if the first iteration, do a centering operation, i.e. reference-free translational alignment
 		if self.params['itn'] == 1:
 			if self.params['nproc'] > 1:
@@ -321,7 +321,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("start_cent\n")
 			f.write("start\n")
 			f.write("EOF\n")
-			
+
 		### first do a multi reference alignment of entire stack, using forward projections as references
 		radius = float(self.params['radius']) / (self.params['boxsize'] / 2)
 		if radius > 1:
@@ -358,9 +358,9 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		if self.params['itn'] > 1:
 			f.write("-180,180\n")
 		f.write("INTERACTIVE\n")
-		f.write(str(self.params['samp_param'])+"\n") 		
-		f.write("0.0,"+str(mraradius)+"\n")			
-		f.write("5\n")			
+		f.write(str(self.params['samp_param'])+"\n")
+		f.write("0.0,"+str(mraradius)+"\n")
+		f.write("5\n")
 		f.write("NO\n")
 		f.write("EOF\n")
 
@@ -406,7 +406,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("NONE\n")
 		f.write(str(self.params['ignore_members'])+"\n")
 		f.write("EOF\n")
-		
+
 		### sort the classums, keeping only the best ones
 		keep_classums = self.params['keep_classes'] * self.params['numclasses']
 		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
@@ -421,7 +421,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("classums_"+str(self.params['itn'])+"_sorted\n")
 		f.write("classums_"+str(self.params['itn'])+"\n")
 		f.write("EOF\n")
-		
+
 		### calculate euler angles, using anchor set for references
 		if self.params['nproc'] > 1:
 			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
@@ -430,7 +430,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write(symmetry+"\n")
 		lowercase = symmetry.lower()
-		if lowercase != "c1": 
+		if lowercase != "c1":
 			f.write("0\n")
 		f.write("ANCHOR\n")
 		f.write("FRESH\n")
@@ -444,7 +444,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("arsino_masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
 		f.write("my_sine\n")
 		f.write("YES\n")
-		f.write(str(self.params['euler_ang_inc'])+"\n")	
+		f.write(str(self.params['euler_ang_inc'])+"\n")
 		f.write("YES\n")
 		if self.params['nproc'] > 1:
 			f.write("YES\n")
@@ -453,7 +453,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("NO\n")
 		f.write("YES\n")
 		f.write("EOF\n")
-		
+
 		### sort based on error in angular reconstitution
 		keep_ordered = self.params['keep_ordered'] * keep_classums
 		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
@@ -462,9 +462,9 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("ordered"+str(self.params['itn'])+"\n")
 		f.write("ANGULAR_ERROR\n")
 		f.write("UP\n")
-		f.write(str(keep_ordered)+"\n")		
+		f.write(str(keep_ordered)+"\n")
 		f.write("EOF\n")
-		
+
 		### build a 3d model from the ordered, sorted class averages
 		if self.params['nproc'] > 1:
 			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
@@ -474,7 +474,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		else:
 			f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("NO\n")
-		f.write(symmetry+"\n") 		
+		f.write(symmetry+"\n")
 		f.write("YES\n")
 		f.write("ordered"+str(self.params['itn'])+"\n")
 		f.write("ANGREC_HEADER_VALUES\n")
@@ -482,10 +482,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("rep"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"\n")
 		f.write("err"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"\n")
 		f.write("NO\n")
-		f.write(str(self.params['ham_win'])+"\n")		
-		f.write(str(self.params['object_size'])+"\n")		
+		f.write(str(self.params['ham_win'])+"\n")
+		f.write(str(self.params['object_size'])+"\n")
 		f.write("EOF\n")
-		
+
 		### align the ordered class averages to reprojections from the model
 		f.write("/usr/local/IMAGIC/align/alipara.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("ALL\n")
@@ -493,11 +493,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("ordered"+str(self.params['itn'])+"\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned\n")
 		f.write("rep"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"\n")
-		f.write("0.2\n")			
+		f.write("0.2\n")
 		f.write("-180,180\n")
 		f.write("5\n")
 		f.write("EOF\n")
-		
+
 		### build another 3d, this time from the orderes, sorted, and aligned class averages
 		if self.params['nproc'] > 1:
 			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
@@ -507,7 +507,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		else:
 			f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("NO\n")
-		f.write(symmetry+"\n") 		
+		f.write(symmetry+"\n")
 		f.write("YES\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned\n")
 		f.write("ANGREC_HEADER_VALUES\n")
@@ -515,8 +515,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("rep"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
 		f.write("err"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
 		f.write("NO\n")
-		f.write(str(self.params['ham_win'])+"\n")		
-		f.write(str(self.params['object_size'])+"\n")		
+		f.write(str(self.params['ham_win'])+"\n")
+		f.write(str(self.params['object_size'])+"\n")
 		f.write("EOF\n\n")
 
 		### automask the 3d, automasking is based on modulation analysis
@@ -525,14 +525,14 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
 		f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned_modvar\n")
 		f.write("YES\n")
-		f.write(str(self.params['amask_dim'])+","+str(self.params['amask_lp'])+"\n")		
-		f.write(str(self.params['amask_sharp'])+"\n")			
+		f.write(str(self.params['amask_dim'])+","+str(self.params['amask_lp'])+"\n")
+		f.write(str(self.params['amask_sharp'])+"\n")
 		f.write("AUTOMATIC\n")
-		f.write(str(self.params['amask_thresh'])+"\n")			
+		f.write(str(self.params['amask_thresh'])+"\n")
 		f.write("mask_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
 		f.write("masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
 		f.write("EOF\n")
-		
+
 		### use EM2EM to convert 3d from IMAGIC to MRC format
 		f.write("/usr/local/IMAGIC/stand/em2em.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("IMAGIC\n")
@@ -542,27 +542,27 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc\n")
 		f.write("YES\n")
 		f.write("EOF\n")
-		
+
 		### extract odd images for FSC analysis
 		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("EXTRACT\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned_odd\n")
 		f.write("INTERACTIVE\n")
-		f.write("1-"+str(keep_ordered)+"\n")		
+		f.write("1-"+str(keep_ordered)+"\n")
 		f.write("ODD\n")
 		f.write("EOF\n")
-		
+
 		### extract even images for FSC analysis
 		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("EXTRACT\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned_even\n")
 		f.write("INTERACTIVE\n")
-		f.write("1-"+str(keep_ordered)+"\n") 		
+		f.write("1-"+str(keep_ordered)+"\n")
 		f.write("EVEN\n")
 		f.write("EOF\n")
-		
+
 		### build 3d from odd images
 		if self.params['nproc'] > 1:
 			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
@@ -572,7 +572,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		else:
 			f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("NO\n")
-		f.write(symmetry+"\n") 		
+		f.write(symmetry+"\n")
 		f.write("YES\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned_odd\n")
 		f.write("ANGREC_HEAD\n")
@@ -580,10 +580,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("fsc_rep\n")
 		f.write("fsc_err\n")
 		f.write("NO\n")
-		f.write(str(self.params['ham_win'])+"\n")		
-		f.write(str(self.params['object_size'])+"\n")	
+		f.write(str(self.params['ham_win'])+"\n")
+		f.write(str(self.params['object_size'])+"\n")
 		f.write("EOF\n")
-		
+
 		### build 3d from even images
 		if self.params['nproc'] > 1:
 			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
@@ -593,7 +593,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		else:
 			f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("NO\n")
-		f.write(symmetry+"\n")		
+		f.write(symmetry+"\n")
 		f.write("YES\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned_even\n")
 		f.write("ANGREC_HEAD\n")
@@ -601,49 +601,49 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("fsc_rep\n")
 		f.write("fsc_err\n")
 		f.write("NO\n")
-		f.write(str(self.params['ham_win'])+"\n")		
-		f.write(str(self.params['object_size'])+"\n")		
+		f.write(str(self.params['ham_win'])+"\n")
+		f.write(str(self.params['object_size'])+"\n")
 		f.write("EOF\n")
-		
+
 		### perform fourier shell correlation (FSC) between odd and even 3d
 		f.write("/usr/local/IMAGIC/threed/foushell.e MODE FSC <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned_odd\n")
 		f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned_even\n")
 		f.write("3d"+str(self.params['itn'])+"_fsc\n")
 		f.write("3.\n")
-		f.write(symmetry+"\n")		
-		f.write(".66\n")			
-		f.write(str(self.params['apix'])+"\n")			
+		f.write(symmetry+"\n")
+		f.write(".66\n")
+		f.write(str(self.params['apix'])+"\n")
 		f.write("EOF\n")
-		
+
 		f.close()
-		
+
 		return filename
 
 	#======================
 	def upload3dRunData(self):
-		refineq = appionData.ApImagic3dRefineRunData()
+		refineq = appiondata.ApImagic3dRefineRunData()
 		if self.params['stackid'] is not None:
 			refineq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		refineq['runname'] = self.params['runname']
 		if self.params['imagic3d0id'] is not None:
-			refineq['imagic3d0run'] = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
+			refineq['imagic3d0run'] = appiondata.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
 		else:
-			refineq['initialModel'] = appionData.ApInitialModelData.direct_query(self.params['modelid'])
+			refineq['initialModel'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 		refineq['description'] = self.params['description']
 		refineq['pixelsize'] = self.params['apix']
 		refineq['boxsize'] = self.params['boxsize']
-		refineq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['rundir'])))
+		refineq['path'] = appiondata.ApPathData(path=os.path.dirname(os.path.abspath(self.params['rundir'])))
 		refineq['hidden'] = False
 		if self.params['commit'] is True and self.params['itn'] == 1:
 			refineq.insert()
 		self.refinedata = refineq
-		return 
-		
-		
-	#======================	
+		return
+
+
+	#======================
 	def upload3dIterationData(self):
-		itnq = appionData.ApImagic3dRefineIterationData()
+		itnq = appiondata.ApImagic3dRefineIterationData()
 		itnq['refinement_run'] = self.refinedata
 		itnq['iteration'] = self.params['itn']
 		itnq['name'] = "masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
@@ -671,20 +671,20 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-	
+
 		### chimera only
 		if self.params['chimera-only'] is True:
 			for item in self.itlist:
 				mrcname = self.params['rundir']+"/masked_3d"+str(item)+"_ordered"+str(item)+"_repaligned.mrc"
 				mrcnamerot = self.params['rundir']+"/masked_3d"+str(item)+"_ordered"+str(item)+"_repaligned.mrc.rot.mrc"
-	
+
 				### create chimera slices of densities
 				apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 				apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 				apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 
 			return
-		
+
 		### otherwise go on with the reconstruction
 		else:
 			### get stack data
@@ -697,7 +697,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			stackimgfile = self.stack['file'][:-4]+".img"
 			self.params['apix'] = self.stack['apix']
 			self.params['boxsize'] = self.stack['boxsize']
-								
+
 			### ONLY FOR THE FIRST ITERATION
 			if self.params['itn'] == 1:
 				# copy stack from initial model directory to working directory
@@ -707,13 +707,13 @@ class imagic3dRefineScript(appionScript.AppionScript):
 				cmd2 = "ln -s "+stackhedfile+" "+os.path.join(self.params['rundir'], "start.hed")
 				proc = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 				proc.wait()
-				
+
 				### figure out which model is being used (i.e. from 3d0 run or uploaded initial model)
 				if self.params['imagic3d0id'] is not None:
 					self.model = {}
-					modeldata = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
+					modeldata = appiondata.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
 					self.model['boxsize'] = modeldata['boxsize']
-					self.model['apix'] = modeldata['pixelsize']			
+					self.model['apix'] = modeldata['pixelsize']
 					orig_path = os.path.join(modeldata['path']['path'], modeldata['runname'])
 					modelfile = os.path.join(self.params['rundir'], "threed0.mrc")
 					shutil.copyfile(os.path.join(orig_path, "masked_3d0_ordered0_repaligned.mrc"), modelfile)
@@ -721,19 +721,19 @@ class imagic3dRefineScript(appionScript.AppionScript):
 					########## GET MODEL DATA #############
 					if self.params['modelid'] is not None:
 						self.model = {}
-						modeldata = appionData.ApInitialModelData.direct_query(self.params['modelid'])
+						modeldata = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 						self.model['apix'] = modeldata['pixelsize']
 						self.model['box'] = modeldata['boxsize']
 						origmodel = os.path.join(modeldata['path']['path'], modeldata['name'])
 						modelfile = os.path.join(self.params['rundir'], "threed0.mrc")
 					else:
 						apDisplay.printError("Initial model not in the database")
-					shutil.copyfile(origmodel, modelfile) 
-					
+					shutil.copyfile(origmodel, modelfile)
+
 				### scale model
 				if self.params['apix'] != self.model['apix'] or self.params['boxsize'] != self.model['boxsize']:
 					apVolume.rescaleModel(modelfile, modelfile, self.model['apix'], self.params['apix'], self.params['boxsize'])
-				
+
 				### create MRA and forward projections (anchor set)
 				batchfile = self.startFiles(modelfile)
 				proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
@@ -744,20 +744,20 @@ class imagic3dRefineScript(appionScript.AppionScript):
 				for line in loglines:
 					if re.search("ERROR in program", line):
 						apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: startFiles.log")
-				
+
 				### delete headers
 				apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
 
 
 			### CONTINUE WITH CONSECUTIVE ITERATIONS ###
-		
+
 			print "... stack pixel size: "+str(self.params['apix'])
-			print "... stack box size: "+str(self.params['boxsize'])	
+			print "... stack box size: "+str(self.params['boxsize'])
 			apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
-		
+
 			### create batch file for execution with IMAGIC
 			batchfile = self.createImagicBatchFile()
-			
+
 			### execute batch file that was created
 			time3dRefine = time.time()
 			proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
@@ -804,16 +804,17 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			self.upload3dIterationData()
 
 			apDisplay.printMsg("IMAGIC .batch run for iteration "+str(self.params['itn'])+" is complete")
-			
+
 			return
 
-	
-	
-	
+
+
+
 #=====================
 #=====================
 if __name__ == '__main__':
 	imagic3dRefine = imagic3dRefineScript()
 	imagic3dRefine.start()
 	imagic3dRefine.close()
-		
+
+

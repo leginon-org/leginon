@@ -10,7 +10,7 @@ import particleLoop2
 import apImage
 import apDisplay
 import apDatabase
-import appionData
+import appiondata
 import apPeaks
 import apParticle
 import apDog
@@ -67,7 +67,7 @@ class dogPicker(particleLoop2.ParticleLoop):
 
 	#================
 	def getParticleParamsData(self):
-		dogparamq = appionData.ApDogParamsData()
+		dogparamq = appiondata.ApDogParamsData()
 		dogparamq['kfactor'] = self.params['kfactor']
 		dogparamq['size_range'] = self.params['sizerange']
 		dogparamq['num_slices'] = self.params['numslices']
@@ -80,4 +80,5 @@ class dogPicker(particleLoop2.ParticleLoop):
 if __name__ == '__main__':
 	imgLoop = dogPicker()
 	imgLoop.run()
+
 

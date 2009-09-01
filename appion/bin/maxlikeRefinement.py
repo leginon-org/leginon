@@ -22,7 +22,7 @@ import apStack
 import apParam
 import apEMAN
 import apXmipp
-import appionData
+import appiondata
 import apVolume
 import spyder
 import apImagicFile
@@ -32,7 +32,7 @@ from pyami import spider
 import sinedon
 
 """
-USE 
+USE
 http://www.wadsworth.org/spider_doc/spider/docs/man/sy.html
 to create SYMMETRY DOC files
 """
@@ -96,11 +96,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### choices
 		self.fastmodes = ( "normal", "narrow", "wide" )
 		self.parser.add_option("--fast-mode", dest="fastmode",
-			help="Search space reduction cutoff criteria", metavar="MODE", 
+			help="Search space reduction cutoff criteria", metavar="MODE",
 			type="choice", choices=self.fastmodes, default="normal" )
 		self.convergemodes = ( "normal", "fast", "slow" )
 		self.parser.add_option("--converge", dest="converge",
-			help="Convergence criteria mode", metavar="MODE", 
+			help="Convergence criteria mode", metavar="MODE",
 			type="choice", choices=self.convergemodes, default="normal" )
 
 	#=====================
@@ -110,7 +110,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		#if self.params['alignid'] is None and self.params['clusterid'] is None:
 		#	apDisplay.printError("Please provide either --cluster-id or --align-id")
 		if self.params['alignid'] is not None and self.params['clusterid'] is not None:
-			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")		
+			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")
 
 		if self.params['modelstr'] is None and self.params['nvol'] is None:
 			apDisplay.printError("Please provide model numbers or number of volumes")
@@ -122,10 +122,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		### get the stack ID from the other IDs
 		if self.params['alignid'] is not None:
-			self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
+			self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignid'])
 			self.params['stackid'] = self.alignstackdata['stack'].dbid
 		elif self.params['clusterid'] is not None:
-			self.clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+			self.clusterstackdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
 			self.alignstackdata = self.clusterstackdata['clusterrun']['alignstack']
 			self.params['stackid'] = self.alignstackdata['stack'].dbid
 		if self.params['stackid'] is None:
@@ -141,10 +141,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		maxparticles = 150000
 		minparticles = 50
 		if self.params['numpart'] > maxparticles:
-			apDisplay.printError("too many particles requested, max: " 
+			apDisplay.printError("too many particles requested, max: "
 				+ str(maxparticles) + " requested: " + str(self.params['numpart']))
 		if self.params['numpart'] < minparticles:
-			apDisplay.printError("not enough particles requested, min: " 
+			apDisplay.printError("not enough particles requested, min: "
 				+ str(minparticles) + " requested: " + str(self.params['numpart']))
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
@@ -182,14 +182,14 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def insertMaxLikeJob(self):
-		maxjobq = appionData.ApMaxLikeJobData()
+		maxjobq = appiondata.ApMaxLikeJobData()
 		maxjobq['runname'] = self.params['runname']
-		maxjobq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		maxjobq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		maxjobdatas = maxjobq.query(results=1)
 		if maxjobdatas:
-			alignrunq = appionData.ApAlignRunData()
+			alignrunq = appiondata.ApAlignRunData()
 			alignrunq['runname'] = self.params['runname']
-			alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+			alignrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 			alignrundata = alignrunq.query(results=1)
 			if maxjobdatas[0]['finished'] is True or alignrundata:
 				apDisplay.printError("This run name already exists as finished in the database, please change the runname")
@@ -206,7 +206,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	def readyUploadFlag(self):
 		if self.params['commit'] is False:
 			return
-		config = sinedon.getConfig('appionData')
+		config = sinedon.getConfig('appiondata')
 		dbc = MySQLdb.Connect(**config)
 		cursor = dbc.cursor()
 		query = (
@@ -388,7 +388,7 @@ xmipp_mpi_reconstruct_wbp  -i CorrectGreyscale/corrected_reference_classes.sel -
 
 				### Normalize volume
 				normalvolfile = self.normalizeVolume(spivolfile)
-		
+
 				### Write to selection file
 				f.write(normalvolfile+" 1\n")
 		else:
@@ -513,5 +513,6 @@ if __name__ == "__main__":
 	maxLike = MaximumLikelihoodScript(True)
 	maxLike.start()
 	maxLike.close()
+
 
 

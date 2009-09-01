@@ -15,7 +15,7 @@ from numpy import linalg
 from numpy import ma
 #appion
 import apDisplay
-import appionData
+import appiondata
 import apDatabase
 import apAlignment
 import apParam
@@ -34,12 +34,12 @@ def insert3dDensity(params):
 	apDisplay.printMsg("committing density to database")
 	symdata=apSymmetry.findSymmetry(params['sym'])
 	if not symdata:
-		apDisplay.printError("no symmetry associated with this id\n")		
+		apDisplay.printError("no symmetry associated with this id\n")
 	params['syminfo'] = symdata
-	modq=appionData.Ap3dDensityData()
+	modq=appiondata.Ap3dDensityData()
 	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
 	modq['session'] = sessiondata
-	modq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
+	modq['path'] = appiondata.ApPathData(path=os.path.abspath(params['rundir']))
 	modq['name'] = params['name']
 	modq['resolution'] = params['res']
 	modq['symmetry'] = symdata
@@ -51,14 +51,14 @@ def insert3dDensity(params):
 	modq['mask'] = params['mask']
 	modq['imask'] = params['imask']
 	if params['reconid'] is not None:
-		iterdata = appionData.ApRefinementData.direct_query(params['reconid'])
+		iterdata = appiondata.ApRefinementData.direct_query(params['reconid'])
 		if not iterdata:
 			apDisplay.printError("this iteration was not found in the database\n")
 		modq['iterid'] = iterdata
 	### if ampfile specified
 	if params['ampfile'] is not None:
 		(ampdir, ampname) = os.path.split(params['ampfile'])
-		modq['ampPath'] = appionData.ApPathData(path=os.path.abspath(ampdir))
+		modq['ampPath'] = appiondata.ApPathData(path=os.path.abspath(ampdir))
 		modq['ampName'] = ampname
 		modq['maxfilt'] = params['maxfilt']
 	modq['handflip'] = params['yflip']
@@ -111,7 +111,7 @@ def getModelDimensions(mrcfile):
 
 #================
 def getModelFromId(modelid):
-	return appionData.ApInitialModelData.direct_query(modelid)
+	return appiondata.ApInitialModelData.direct_query(modelid)
 
 #================
 def rescaleModel(infile, outfile, inapix, outapix, newbox=None):
@@ -171,7 +171,7 @@ def createAmpcorBatchFile(infile,params):
 	tmpfile = "out_"+os.path.basename(infile)
 	tmpfile = os.path.join(params['rundir'], tmpfile)
 	localtmpfile = spyder.fileFilter(tmpfile)
-	
+
 	outfile = "enhance_edit.bat"
 	if os.path.isfile(outfile):
 		apDisplay.printWarning(outfile+" already exists; removing it")
@@ -221,7 +221,7 @@ def runAmpcor():
 	apDisplay.printColor("finished spider in "+apDisplay.timeString(time.time()-starttime),"cyan")
 	return
 
-#================	
+#================
 def randomfilename(num):
 	# return a string of random letters and numbers of 'num' length
 	f=''
@@ -231,7 +231,7 @@ def randomfilename(num):
 	return f
 
 
-#================	
+#================
 def isValidVolume(volfile):
 	"""
 	Checks to see if a MRC volume is valid
@@ -243,6 +243,7 @@ def isValidVolume(volfile):
 		apDisplay.printWarning("Volume has zero standard deviation")
 		return False
 	return True
+
 
 
 

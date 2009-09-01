@@ -4,7 +4,7 @@ import math
 import os
 import numpy
 from scipy import ndimage
-import appionData
+import appiondata
 import appionScript
 import apStack
 import apTomo
@@ -30,9 +30,9 @@ class Test(appionScript.AppionScript):
 		"""
 		this function only runs if no rundir is defined at the command line
 		"""
-		subtomorunq = appionData.ApSubTomogramRunData()
+		subtomorunq = appiondata.ApSubTomogramRunData()
 		subtomorundata = subtomorunq.direct_query(self.params['subtomoId'])
-		subtomoq = appionData.ApTomogramData(subtomorun=subtomorundata)
+		subtomoq = appiondata.ApTomogramData(subtomorun=subtomorundata)
 		results = subtomoq.query(results=1)
 		if results:
 			subtomodir = results[0]['path']['path']
@@ -40,13 +40,13 @@ class Test(appionScript.AppionScript):
 			self.params['rundir'] = os.path.join(tiltdirs[0],"average",self.params['runname'])
 
 	def start(self):
-		subtomorunq = appionData.ApSubTomogramRunData()
+		subtomorunq = appiondata.ApSubTomogramRunData()
 		subtomorundata = subtomorunq.direct_query(self.params['subtomoId'])
 		volshape,totalbin,pixelsize = apTomo.getSubvolumeInfo(subtomorundata)
 		if volshape is None:
 			apDisplay.printError('No subvolume exists for the subtomoId')
 		sessionname = subtomorundata['session']['name']
-		stackq = appionData.ApStackData()
+		stackq = appiondata.ApStackData()
 		stackdata = stackq.direct_query(self.params['stackId'])
 		diameter = apStack.getStackParticleDiameter(stackdata)
 		diameterpixel = diameter * 1e-10 / pixelsize
@@ -104,7 +104,7 @@ class Test(appionScript.AppionScript):
 					apDisplay.printError("tomogram not exist")
 			apTomo.makeMovie(avgvolpath,self.params['maxsize'])
 			apTomo.makeProjection(avgvolpath,self.params['maxsize'])
-		
+
 		proshape = profile.shape
 		for id in profiles.keys():
 			out = open('profile_%05d.txt'%id,'w')
@@ -114,9 +114,10 @@ class Test(appionScript.AppionScript):
 				str += "\n"
 				out.write(str)
 			out.close()
-	
+
 if __name__ == '__main__':
 	test = Test()
 	test.start()
 	test.close()
+
 

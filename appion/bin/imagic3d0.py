@@ -15,7 +15,7 @@ import sys
 import re
 import subprocess
 import appionScript
-import appionData
+import appiondata
 
 import apParam
 import apChimera
@@ -56,11 +56,11 @@ class imagic3d0Script(appionScript.AppionScript):
 		self.parser.add_option("--euler_ang_inc", dest="euler_ang_inc", type="int", default=10,
 			help="angular increment for euler angle search", metavar="INT")
 		self.parser.add_option("--num_classums", dest="num_classums", type="int",
-			help="number of sorted classums (based on angular reconstitution error) used for 3d0 construction", metavar="INT")	
+			help="number of sorted classums (based on angular reconstitution error) used for 3d0 construction", metavar="INT")
 		self.parser.add_option("--ham_win", dest="ham_win", type="float", default=0.8,
 			help="similar to lp-filtering parameter that determines detail in 3d map", metavar="float")
 		self.parser.add_option("--object_size", dest="object_size", type="float", default=0.8,
-			help="object size as fraction of image size", metavar="float")	
+			help="object size as fraction of image size", metavar="float")
 		self.parser.add_option("--repalignments", dest="repalignments", type="int", default=1,
 			help="number of alignments to reprojections", metavar="INT")
 		self.parser.add_option("--amask_dim", dest="amask_dim", type="float", default=0.04,
@@ -75,11 +75,11 @@ class imagic3d0Script(appionScript.AppionScript):
 			help="angular increment of reprojections for MRA", metavar="INT")
 		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int", default=25,
 			help="angular increment of reprojections for euler angle refinement", metavar="INT")
-		
+
 		### mass specified for eman volume function
 		self.parser.add_option("--mass", dest="mass", type="int",
 			help="OPTIONAL: used for thresholding volume of a 3d map to 1 based on given mass", metavar="INT")
-			
+
 		### chimera only, if the run is already completed
 		self.parser.add_option("--chimera-only", dest="chimera-only", default=False,
 			action="store_true", help="use only if you want to regenerate chimera slices from an already existing model: input rundir and runname")
@@ -88,35 +88,35 @@ class imagic3d0Script(appionScript.AppionScript):
 		self.parser.add_option("--zoom", dest="zoom", type="float", default=1.0,
 			help="threshold value for chimera volume", metavar="#")
 
-		return 
+		return
 
 	#=====================
 	def checkConflicts(self):
-	
+
 		### chimera only
 		if self.params['chimera-only'] is True:
 			if self.params['rundir'] is None:
 				apDisplay.printError("Please specify the directory in which your files are located")
-		
+
 			return
 		else:
-	
+
 		### otherwise go on with the reconstruction
-		
+
 			if (self.params['reclassId'] is None and self.params['norefClassId'] is None and \
 				self.params['clusterId'] is None and self.params['templateStackId'] is None):
 				apDisplay.printError("There is no class average ID specified")
 			if self.params['templateStackId'] is not None and (self.params['clusterId'] is not None or self.params['norefClassId'] is not None):
 				apDisplay.printError("Please use only one class average stack")
 			if self.params['clusterId'] is not None and (self.params['templateStackId'] is not None or self.params['norefClassId'] is not None):
-				apDisplay.printError("Please use only one class average stack")		
+				apDisplay.printError("Please use only one class average stack")
 			if self.params['norefClassId'] is not None and (self.params['clusterId'] is not None or self.params['templateStackId'] is not None):
 				apDisplay.printError("Please use only one class average stack")
 			if self.params['projections'] is None:
 				apDisplay.printError("enter 3 projections from which to begin angular reconstitution")
 			if self.params['symmetry'] is None:
 				apDisplay.printError("enter object symmetry")
-		
+
 			return
 
 	#=====================
@@ -124,19 +124,19 @@ class imagic3d0Script(appionScript.AppionScript):
 
 		# get reference-free classification and reclassification parameters
 		if self.params['norefClassId'] is not None:
-			norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
+			norefclassdata = appiondata.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
 			path = norefclassdata['norefRun']['path']['path']
 		elif self.params['reclassId'] is not None:
-			reclassdata = appionData.ApImagicReclassifyData.direct_query(self.params['reclassId'])
+			reclassdata = appiondata.ApImagicReclassifyData.direct_query(self.params['reclassId'])
 			path = reclassdata['path']['path']
 		elif self.params['clusterId'] is not None:
-			clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+			clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 			path = clusterdata['path']['path']
 		elif self.params['templateStackId'] is not None:
-			tsdata = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
+			tsdata = appiondata.ApTemplateStackData.direct_query(self.params['templateStackId'])
 			path = tsdata['path']['path']
 #		elif self.params['imagicClusterId'] is not None:
-#			clusterdata = appionData.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
+#			clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
 #			path = clusterdata['path']['path']
 		else:
 			apDisplay.printError("class averages not in the database")
@@ -154,10 +154,10 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
 		f.write("cd "+str(self.params['rundir'])+"/\n")
-		f.write("cp "+linkingfile+".img start_stack.img\n") 
+		f.write("cp "+linkingfile+".img start_stack.img\n")
 		f.write("cp "+linkingfile+".hed start_stack.hed\n")
 		if self.params['norefClassId'] is not None or self.params['clusterId'] is not None or self.params['templateStackId'] is not None:
-			# THERE IS A REALLY STUPID IMAGIC ERROR WHERE IT DOESN'T READ IMAGIC FORMAT CREATED BY OTHER 
+			# THERE IS A REALLY STUPID IMAGIC ERROR WHERE IT DOESN'T READ IMAGIC FORMAT CREATED BY OTHER
 			# PROGRAMS, AND SO FAR THE ONLY WAY I CAN DEAL WITH IT IS BY WIPING OUT THE HEADERS!
 			f.write("/usr/local/IMAGIC/stand/copyim.e <<EOF > imagicCreate3d0.log\n")
 			f.write("start_stack\n")
@@ -170,7 +170,7 @@ class imagic3d0Script(appionScript.AppionScript):
 			f.write("all\n")
 			f.write("EOF\n")
 			f.write("rm start_stack.*\n")
-			f.write("mv start_stack_copy.img start_stack.img\n") 
+			f.write("mv start_stack_copy.img start_stack.img\n")
 			f.write("mv start_stack_copy.hed start_stack.hed\n")
 		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF > imagicCreate3d0.log\n")
 		f.write(symmetry+"\n")
@@ -181,7 +181,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("fresh\n")
 		f.write("start_stack\n")
 		f.write(str(self.params['projections'])+"\n")
-		f.write("ordered0\n") 
+		f.write("ordered0\n")
 		f.write("sino_ordered0\n")
 		f.write("yes\n")
 		f.write(".9\n")
@@ -192,7 +192,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("EOF\n")
 
 		### figure out which projections have already been used before proceeding
-		repalignments = self.params['repalignments'] + 1		
+		repalignments = self.params['repalignments'] + 1
 		numbers = self.params['projections'].split(";")
 		integers = [int(x) for x in numbers]
 		integers.sort()
@@ -203,7 +203,7 @@ class imagic3d0Script(appionScript.AppionScript):
 			j += 1
 		for item in integers:
 			list.remove(item)
-		j = 1   
+		j = 1
 		proj = str(list[0])
 		length = len(list)
 		while j < length:
@@ -212,7 +212,7 @@ class imagic3d0Script(appionScript.AppionScript):
 			j += 1
 			if j == length:
 				proj = proj+"-"+str(list[j-1])
-		
+
 		### continue with the script creation
 		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF >> imagicCreate3d0.log\n")
 		f.write(symmetry+"\n")
@@ -230,7 +230,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write(str(self.params['euler_ang_inc'])+"\n")
 		f.write("yes\n")
 		f.write("EOF\n")
-		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagicCreate3d0.log\n") 
+		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagicCreate3d0.log\n")
 		f.write("SORT\n")
 		f.write("ordered0\n")
 		f.write("ordered0_sort\n")
@@ -358,31 +358,31 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("zero\n")
 		f.write(str(self.params['forw_ang_inc'])+"\n")
 		f.write("EOF\n\n")
-		f.write("rm to_be_aligned.*\n") 
+		f.write("rm to_be_aligned.*\n")
 		f.close()
-		
+
 		return filename
 
 	#=====================
 	def upload3d0(self):
-		modelq = appionData.ApImagic3d0Data()
+		modelq = appiondata.ApImagic3d0Data()
 		if self.params['stackid'] is not None:
 			modelq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		elif self.params['templateStackId'] is not None:
-			tsdata = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
+			tsdata = appiondata.ApTemplateStackData.direct_query(self.params['templateStackId'])
 			modelq['project|projects|project'] = apProject.getProjectIdFromSessionId(tsdata['session'].dbid)
 		modelq['name'] = "masked_3d0_ordered0_repaligned.mrc"
 		modelq['runname'] = self.params['runname']
 		if self.params['norefClassId'] is not None:
-			modelq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
+			modelq['norefclass'] = appiondata.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
 		elif self.params['reclassId'] is not None:
-			modelq['reclass'] = appionData.ApImagicReclassifyData.direct_query(self.params['reclassId'])
+			modelq['reclass'] = appiondata.ApImagicReclassifyData.direct_query(self.params['reclassId'])
 		elif self.params['clusterId'] is not None:
-			modelq['clusterclass'] = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+			modelq['clusterclass'] = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 #		elif self.params['imagicClusterId'] is not None:
-#			modelq['imagicclusterclass'] = appionData.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
+#			modelq['imagicclusterclass'] = appiondata.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
 		elif self.params['templateStackId'] is not None:
-			modelq['templatestack'] = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
+			modelq['templatestack'] = appiondata.ApTemplateStackData.direct_query(self.params['templateStackId'])
 
 		modelq['projections'] = self.params['projections']
 		modelq['euler_ang_inc'] = self.params['euler_ang_inc']
@@ -401,38 +401,38 @@ class imagic3d0Script(appionScript.AppionScript):
 		modelq['pixelsize'] = self.params['apix']
 		modelq['boxsize'] = self.params['boxsize']
 		modelq['symmetry'] = apSymmetry.findSymmetry(self.params['symmetry'])
-		modelq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['rundir'])))
-	
+		modelq['path'] = appiondata.ApPathData(path=os.path.dirname(os.path.abspath(self.params['rundir'])))
+
 		modelq['hidden'] = False
 		if self.params['commit'] is True:
 			modelq.insert()
 		else:
 			apDisplay.printWarning("not committing results to DB")
-		return 
+		return
 
 
 	#=====================
 	def start(self):
-	
+
 		### chimera only
 		if self.params['chimera-only'] is True:
 			mrcname = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc"
 			mrcnamerot = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc.rot.mrc"
-	
+
 			### create chimera slices of densities
 			apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 			apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 			apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
-	
+
 			return
-		
+
 		### otherwise go on with the reconstruction
-		else:	
+		else:
 			self.params['projections'] = self.params['projections'].replace(",", ";")
-			
+
 			# get reference-free classification and reclassification parameters
 			if self.params['norefClassId'] is not None:
-				norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
+				norefclassdata = appiondata.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
 				self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
 				stackpixelsize = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 				stack_box_size = apStack.getStackBoxsize(self.params['stackid'])
@@ -443,7 +443,7 @@ class imagic3d0Script(appionScript.AppionScript):
 				orig_file = norefclassdata['classFile']
 				linkingfile = orig_path+"/"+orig_file
 			elif self.params['reclassId'] is not None:
-				reclassdata = appionData.ApImagicReclassifyData.direct_query(self.params['reclassId'])
+				reclassdata = appiondata.ApImagicReclassifyData.direct_query(self.params['reclassId'])
 				self.params['stackid'] = reclassdata['norefclass']['norefRun']['stack'].dbid
 				stackpixelsize = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 				stack_box_size = apStack.getStackBoxsize(self.params['stackid'])
@@ -456,9 +456,9 @@ class imagic3d0Script(appionScript.AppionScript):
 				linkingfile = orig_path+"/"+orig_runname+"/"+orig_file
 			elif self.params['clusterId'] is not None or self.params['imagicClusterId'] is not None:
 				if self.params['clusterId'] is not None:
-					clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+					clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 		    		elif self.params['imagicClusterId'] is not None:
-					clusterdata = appionData.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
+					clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
 				self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
 				self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
 	 			self.params['apix'] = clusterdata['clusterrun']['pixelsize']
@@ -468,11 +468,11 @@ class imagic3d0Script(appionScript.AppionScript):
 					orig_file = orig_file[:-4]
 				linkingfile = os.path.join(orig_path, orig_file)
 			elif self.params['templateStackId'] is not None:
-				tsdata = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
+				tsdata = appiondata.ApTemplateStackData.direct_query(self.params['templateStackId'])
 				if tsdata['clusterstack'] is not None:
 					clusterdata = tsdata['clusterstack']
 					self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
-				else: 
+				else:
 					self.params['stackid'] = None
 				self.params['stackid'] = 0
 				self.params['boxsize'] = tsdata['boxsize']
@@ -495,12 +495,12 @@ class imagic3d0Script(appionScript.AppionScript):
 			print self.params
 			print "**********************"
 			print "... class average stack pixel size: "+str(self.params['apix'])
-			print "... class average stack box size: "+str(self.params['boxsize'])	
+			print "... class average stack box size: "+str(self.params['boxsize'])
 			apDisplay.printMsg("Running IMAGIC .batch file: See imagicCreate3d0.log for details")
-		
+
 			### create batch file for execution with IMAGIC
 			filename = self.createImagicBatchFile(linkingfile)
-			
+
 			### these files interfere with IMAGIC program
 			if os.path.isfile(str(self.params['rundir'])+"/ordered0.img") is True:
 				os.remove(str(self.params['rundir'])+"/ordered0.img")
@@ -537,7 +537,7 @@ class imagic3d0Script(appionScript.AppionScript):
 				volumecmd2 = "volume "+mrcnamerot+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
 				apEMAN.executeEmanCmd(volumecmd1)
 				apEMAN.executeEmanCmd(volumecmd2)
-			
+
 			### create chimera slices of densities
 			apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 			apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
@@ -545,11 +545,11 @@ class imagic3d0Script(appionScript.AppionScript):
 
 			### upload density
 			self.upload3d0()
-			
+
 			return
 
-	
-	
+
+
 #=====================
 #=====================
 if __name__ == '__main__':
@@ -557,4 +557,5 @@ if __name__ == '__main__':
 	imagic3d0.start()
 	imagic3d0.close()
 
-	
+
+

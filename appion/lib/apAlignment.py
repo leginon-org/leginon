@@ -15,7 +15,7 @@ import apDisplay
 import apDatabase
 import apStack
 import apImage
-import appionData
+import appiondata
 import apTemplate
 import apEMAN
 
@@ -114,10 +114,10 @@ def cmdline(args, params):
 
 def overridecmd(params):
 	### create a norefRun object
-	runq = appionData.ApNoRefRunData()
+	runq = appiondata.ApNoRefRunData()
 	runq['name'] = params['runname']
-	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
-	runq['stack'] = appionData.ApStackData.direct_query(params['stackid'])
+	runq['path'] = appiondata.ApPathData(path=os.path.abspath(params['rundir']))
+	runq['stack'] = appiondata.ApStackData.direct_query(params['stackid'])
 	# ... stackId, runname and norefPath make the norefRun unique:
 	uniquerun = runq.query(results=1)[0]
 	# ... continue filling non-unique variables:
@@ -162,7 +162,7 @@ def getStackId(params):
 		apDisplay.printError("stack name undefined, please provide stack name.\nexample: stackname=stack1")
 
 	#checks done; find stackid
-	stackq = appionData.ApStackParamsData()
+	stackq = appiondata.ApStackParamsData()
 	stackq['name'] = params['stackname']
 	sessionid = apDatabase.getExpIdFromSessionName(params['session'])
 
@@ -651,7 +651,7 @@ def convertSpiDocToEMANlist(infile,outfile,stackfile):
 
 def insertNoRefRun(params, insert=False):
 	# create a norefParam object
-	paramq = appionData.ApNoRefParamsData()
+	paramq = appiondata.ApNoRefParamsData()
 	paramq['num_particles'] = params['numparticles']
 	paramq['particle_diam'] = params['diam']
 	paramq['mask_diam'] = params['mask']
@@ -659,10 +659,10 @@ def insertNoRefRun(params, insert=False):
 	paramsdata = paramq.query(results=1)
 
 	### create a norefRun object
-	runq = appionData.ApNoRefRunData()
+	runq = appiondata.ApNoRefRunData()
 	runq['name'] = params['runname']
-	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
-	runq['stack'] = appionData.ApStackData.direct_query(params['stackid'])
+	runq['path'] = appiondata.ApPathData(path=os.path.abspath(params['rundir']))
+	runq['stack'] = appiondata.ApStackData.direct_query(params['stackid'])
 	# ... stackId, runname and norefPath make the norefRun unique:
 	uniquerun = runq.query(results=1)
 	# ... continue filling non-unique variables:
@@ -683,7 +683,7 @@ def insertNoRefRun(params, insert=False):
 	runq['run_seconds'] = params['runtime']
 
 	### create a classRun object
-	classq = appionData.ApNoRefClassRunData()
+	classq = appiondata.ApNoRefClassRunData()
 	classq['num_classes'] = params['numclasses']
 	norefrun = runq.query(results=1)
 	if params['classonly']:
@@ -721,7 +721,7 @@ def insertNoRefRun(params, insert=False):
 
 def insertRefRun(params, insert=False):
 	# create a refParam object
-	paramq = appionData.ApRefParamsData()
+	paramq = appiondata.ApRefParamsData()
 	paramq['mask_diam'] = params['mask']
 	paramq['imask_diam'] = params['imask']
 	paramq['lp'] = params['lp']
@@ -730,10 +730,10 @@ def insertRefRun(params, insert=False):
 	paramq['num_particles'] = params['numparticles']
 
 	### create a refRun object
-	runq = appionData.ApRefRunData()
+	runq = appiondata.ApRefRunData()
 	runq['name'] = params['runname']
-	runq['stack'] = appionData.ApStackData.direct_query(params['stackid'])
-	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
+	runq['stack'] = appiondata.ApStackData.direct_query(params['stackid'])
+	runq['path'] = appiondata.ApPathData(path=os.path.abspath(params['rundir']))
 	# ... stackId, runname and refPath make the refRun unique:
 	uniquerun = runq.query(results=1)
 	# ... continue filling non-unique variables:
@@ -756,15 +756,15 @@ def insertRefRun(params, insert=False):
 		runq.insert()
 
 	for refid in params['refids']:
-		reftempq = appionData.ApRefTemplateRunData()
-		reftempq['refTemplate'] = appionData.ApTemplateImageData.direct_query(refid)
+		reftempq = appiondata.ApRefTemplateRunData()
+		reftempq['refTemplate'] = appiondata.ApTemplateImageData.direct_query(refid)
 		reftempq['refRun'] = runq
 		if insert is True:
 			reftempq.insert()
 
 def insertIterRun(params, iternum, itername, insert=False):
 	### create the RefIteration objects
-	iterq = appionData.ApRefIterationData()
+	iterq = appiondata.ApRefIterationData()
 	iterq['refRun'] = params['runq']
 	iterq['iteration'] = iternum
 	iterq['name'] = itername
@@ -782,8 +782,8 @@ def insertIterRun(params, iternum, itername, insert=False):
 def getAlignParticle(stackpdata,alignstackdata):
 	oldstack = stackpdata['stack']['oldstack']
 	particledata = stackpdata['particle']
-	oldstackpdata = appionData.ApStackParticlesData(stack=oldstack,particle=particledata)
-	q = appionData.ApAlignParticlesData(alignstack=alignstackdata,stackpart=oldstackpdata)
+	oldstackpdata = appiondata.ApStackParticlesData(stack=oldstack,particle=particledata)
+	q = appiondata.ApAlignParticlesData(alignstack=alignstackdata,stackpart=oldstackpdata)
 	results = q.query(readimages=False)
 	if results:
 		return results[0]
@@ -810,3 +810,4 @@ def getAlignPackage(alignrundata):
 			alignpackage = aligntypedict[type]
 			break
 	return alignpackage
+

@@ -17,7 +17,7 @@ import apStack
 import apProject
 import apEMAN
 from apSpider import alignment
-import appionData
+import appiondata
 
 #=====================
 #=====================
@@ -54,7 +54,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		path = self.alignstackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath, "coran", self.params['runname'])
@@ -62,9 +62,9 @@ class CoranClassifyScript(appionScript.AppionScript):
 	#=====================
 	def checkCoranRun(self):
 		# create a norefParam object
-		analysisq = appionData.ApAlignAnalysisRunData()
+		analysisq = appiondata.ApAlignAnalysisRunData()
 		analysisq['runname'] = self.params['runname']
-		analysisq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		analysisq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		# ... path makes the run unique:
 		uniquerun = analysisq.query(results=1)
 		if uniquerun:
@@ -74,21 +74,21 @@ class CoranClassifyScript(appionScript.AppionScript):
 	#=====================
 	def insertCoranRun(self, insert=False):
 		# create a AlignAnalysisRun object
-		analysisq = appionData.ApAlignAnalysisRunData()
+		analysisq = appiondata.ApAlignAnalysisRunData()
 		analysisq['runname'] = self.params['runname']
-		analysisq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		analysisq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		# ... path makes the run unique:
 		uniquerun = analysisq.query(results=1)
 		if uniquerun and insert is True:
 			apDisplay.printError("Run name '"+self.params['runname']+"' for align stack id="+\
 				str(self.params['alignstackid'])+"\nis already in the database")
 
-		coranq = appionData.ApCoranRunData()
+		coranq = appiondata.ApCoranRunData()
 		coranq['num_factors'] = self.params['numfactors']
 		coranq['mask_diam'] = 2.0*self.params['maskrad']
 		coranq['run_seconds'] = self.runtime
 
-		# finish AlignAnalysisRun object	
+		# finish AlignAnalysisRun object
 		analysisq['description'] = self.params['description']
 		analysisq['alignstack'] = self.alignstackdata
 		analysisq['hidden'] = False
@@ -102,11 +102,11 @@ class CoranClassifyScript(appionScript.AppionScript):
 		### eigen data
 		for i in range(self.params['numfactors']):
 			factnum = i+1
-			eigenq = appionData.ApCoranEigenImageData()
+			eigenq = appiondata.ApCoranEigenImageData()
 			eigenq['coranRun'] = coranq
 			eigenq['factor_num'] = factnum
 			path = os.path.join(self.params['rundir'], "coran")
-			eigenq['path'] = appionData.ApPathData(path=os.path.abspath(path))
+			eigenq['path'] = appiondata.ApPathData(path=os.path.abspath(path))
 			imgname = ("eigenimg%02d.png" % (factnum))
 			eigenq['image_name'] = imgname
 			if not os.path.isfile(os.path.join(path, imgname)):
@@ -120,13 +120,13 @@ class CoranClassifyScript(appionScript.AppionScript):
 
 	#=====================
 	def getAlignedStack(self):
-		return appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		return appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 
 	#=====================
 	def getNumAlignedParticles(self):
 		t0 = time.time()
-		partq = appionData.ApAlignParticlesData()
-		self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		partq = appiondata.ApAlignParticlesData()
+		self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		partq['alignstack'] = self.alignstackdata
 		partdata = partq.query()
 		numpart = len(partdata)
@@ -147,7 +147,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 		if boxpixdiam*self.params['bin'] > self.alignstackdata['boxsize']:
 			boxpixdiam = math.floor(self.alignstackdata['boxsize']/self.params['bin'])
 		clippixdiam = boxpixdiam*self.params['bin']
-		apDisplay.printMsg("Pixel mask radius="+str(maskpixrad)) 
+		apDisplay.printMsg("Pixel mask radius="+str(maskpixrad))
 
 		oldalignedstack = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['imagicfile'])
 		alignedstackname = re.sub("\.", "_", self.alignstackdata['imagicfile'])+".spi"
@@ -168,8 +168,8 @@ class CoranClassifyScript(appionScript.AppionScript):
 
 		### do correspondence analysis
 		corantime = time.time()
-		self.contriblist = alignment.correspondenceAnalysis( alignedstack, 
-			boxsize=boxpixdiam, maskpixrad=maskpixrad, 
+		self.contriblist = alignment.correspondenceAnalysis( alignedstack,
+			boxsize=boxpixdiam, maskpixrad=maskpixrad,
 			numpart=numpart, numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
 
@@ -197,4 +197,5 @@ if __name__ == "__main__":
 	coranClass = CoranClassifyScript(True)
 	coranClass.start()
 	coranClass.close()
+
 

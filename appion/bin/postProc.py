@@ -12,7 +12,7 @@ import apVolume
 import apFile
 import apSymmetry
 import apDatabase
-import appionData
+import appiondata
 import apChimera
 
 #=====================
@@ -56,8 +56,8 @@ class PostProcScript(appionScript.AppionScript):
 			help="Zoom factor for snapshot rendering (1.5 by default)", metavar="FLOAT")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
 			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
-		
-		return 
+
+		return
 
 	#=====================
 	def checkConflicts(self):
@@ -119,7 +119,7 @@ class PostProcScript(appionScript.AppionScript):
 			fileroot += ".amp"
 			if not os.path.isfile(tmpfile) :
 				apDisplay.printError("amplitude correction failed")
-				
+
 			### convert amplitude corrected file back to mrc
 			fileroot += ".amp"
 			emancmd = "proc3d "+tmpfile+" "
@@ -143,7 +143,7 @@ class PostProcScript(appionScript.AppionScript):
 		if self.params['viper'] is True:
 			fileroot += ".vip"
 			emancmd +="icos5fTo2f "
-			
+
 		if self.params['mask'] is not None:
 			# convert ang to pixels
 			maskpix=int(self.params['mask']/self.params['apix'])
@@ -157,15 +157,15 @@ class PostProcScript(appionScript.AppionScript):
 			fileroot += (".im%d" % ( int(self.params['imask']), ))
 			emancmd += "imask=%d " %maskpix
 			self.params['imask'] = maskpix
-			
+
 		if self.params['norm'] is True:
 			fileroot += ".norm"
 			emancmd += "norm=0,1 "
-			
+
 		### add output filename to emancmd string
 		fileroot += ".mrc"
 		self.params['name'] = fileroot
-		
+
 		outfile = os.path.join(self.params['rundir'], fileroot)
 		emancmd = re.sub(" apix=",(" %s apix=" % outfile), emancmd)
 
@@ -173,7 +173,7 @@ class PostProcScript(appionScript.AppionScript):
 
 		if self.params['description'] is None:
 			self.params['description'] = "Volume from recon with amplitude adjustment"
-			
+
 		### clean up files created during amp correction
 		if self.params['ampfile'] is not None:
 			apFile.removeFile(spifile)
@@ -192,7 +192,7 @@ class PostProcScript(appionScript.AppionScript):
 			### render chimera images of model
 
 
-			apChimera.filterAndChimera(outfile, res=self.params['res'], apix=self.params['apix'], box=self.params['box'], 
+			apChimera.filterAndChimera(outfile, res=self.params['res'], apix=self.params['apix'], box=self.params['box'],
 				chimtype='snapshot', contour=self.params['contour'], zoom=self.params['zoom'], sym=symmetry)
 
 #=====================
@@ -202,4 +202,5 @@ if __name__ == '__main__':
 	postProc.start()
 	postProc.close()
 
-	
+
+

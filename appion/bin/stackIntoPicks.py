@@ -11,7 +11,7 @@ import numpy
 import appionScript
 import apStack
 import apDisplay
-import appionData
+import appiondata
 import apEMAN
 import apStackMeanPlot
 from pyami import mem
@@ -56,9 +56,9 @@ class StackIntoPicksScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		### check for existing run
-		selectrunq = appionData.ApSelectionRunData()
+		selectrunq = appiondata.ApSelectionRunData()
 		selectrunq['name'] = self.params['runname']
-		selectrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		selectrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		selectrundata = selectrunq.query(readimages=False)
 		if selectrundata:
 			apDisplay.printError("Runname already exists")
@@ -72,18 +72,18 @@ class StackIntoPicksScript(appionScript.AppionScript):
 		oldselectrun = stackparts[0]['particle']['selectionrun']
 
 		### set selection run
-		manualparamsq = appionData.ApManualParamsData()
+		manualparamsq = appiondata.ApManualParamsData()
 		manualparamsq['diam'] = self.getDiamFromSelectionRun(oldselectrun)
 		manualparamsq['oldselectionrun'] = oldselectrun
-		selectrunq = appionData.ApSelectionRunData()
+		selectrunq = appiondata.ApSelectionRunData()
 		selectrunq['name'] = self.params['runname']
 		selectrunq['hidden'] = False
-		selectrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		selectrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		selectrunq['session'] = apStack.getSessionDataFromStackId(self.params['stackid'])
 		selectrunq['manparams'] = manualparamsq
 
 		### insert particles
-		dupfields = ('image', 'xcoord', 'ycoord', 'diameter', 
+		dupfields = ('image', 'xcoord', 'ycoord', 'diameter',
 			'correlation', 'template', 'peakmoment', 'peakstddev', 'peakarea',)
 		apDisplay.printMsg("Inserting particles into database")
 		count = 0
@@ -95,10 +95,10 @@ class StackIntoPicksScript(appionScript.AppionScript):
 			if count > 10 and count%100 == 0:
 				perpart = (time.time()-t0)/float(count+1)
 				apDisplay.printColor("part %d of %d :: %.1fM mem :: %s/part :: %s remain"%
-					(count, numpart, (mem.active()-startmem)/1024. , apDisplay.timeString(perpart), 
+					(count, numpart, (mem.active()-startmem)/1024. , apDisplay.timeString(perpart),
 					apDisplay.timeString(perpart*(numpart-count))), "blue")
 			oldpartdata = stackpart['particle']
-			newpartq = appionData.ApParticleData()
+			newpartq = appiondata.ApParticleData()
 			newpartq['selectionrun'] = selectrunq
 			### copy old values
 			for field in dupfields:
@@ -114,4 +114,5 @@ if __name__ == "__main__":
 	stackIntoPicks = StackIntoPicksScript()
 	stackIntoPicks.start()
 	stackIntoPicks.close()
+
 

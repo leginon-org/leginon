@@ -7,7 +7,7 @@ import sys
 import appionScript
 import apStack
 import apDisplay
-import appionData
+import appiondata
 import apEMAN
 import apProject
 import apFile
@@ -56,12 +56,12 @@ class combineStackScript(appionScript.AppionScript):
 		cmd = "proc2d "+addfile+" "+self.combinefile
 		apDisplay.printMsg("adding "+str(addnumpart)+" particles to "+str(orignumpart)+" particles")
 		apEMAN.executeEmanCmd(cmd, verbose=True, showcmd=True)
-		
+
 		newnumpart = apFile.numImagesInStack(self.combinefile)
-				
+
 		apDisplay.printMsg("added "+str(addnumpart)+" particles from stackid="+str(stackdata.dbid)+" to "
 			+str(orignumpart)+" particles giving a new combined stack of "+str(newnumpart)+" particles")
-	
+
 		return
 
 
@@ -70,9 +70,9 @@ class combineStackScript(appionScript.AppionScript):
 
 		startpart = self.partnum
 
-		stackq = appionData.ApStackData()
+		stackq = appiondata.ApStackData()
 		stackq['name'] = self.params['stackfilename']
-		stackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		stackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		stackq['description'] = self.params['description']+" ... combined stack ids "+str(self.params['stacks'])
 		stackq['substackname'] = self.params['runname']
 		stackq['project|projects|project'] = apProject.getProjectIdFromStackId(stackid)
@@ -80,16 +80,16 @@ class combineStackScript(appionScript.AppionScript):
 
 		rinstackdata = apStack.getRunsInStack(stackid)
 		for run in rinstackdata:
-			rinstackq = appionData.ApRunsInStackData()
+			rinstackq = appiondata.ApRunsInStackData()
 			rinstackq['stack']    = stackq
 			rinstackq['stackRun'] = run['stackRun']
 			rinstackq['project|projects|project'] = run['project|projects|project']
 			rinstackq.insert()
-				
+
 		stpartsdata = apStack.getStackParticlesFromId(stackid)
 		print "inserting "+str(len(stpartsdata))+" particles into DB"
 		for particle in stpartsdata:
-			stpartq = appionData.ApStackParticlesData()
+			stpartq = appiondata.ApStackParticlesData()
 			stpartq['particleNumber'] = self.partnum
 			stpartq['stack']    = stackq
 			stpartq['stackRun'] = particle['stackRun']
@@ -99,11 +99,11 @@ class combineStackScript(appionScript.AppionScript):
 			if self.partnum % 1000 == 0:
 				sys.stderr.write(".")
 		sys.stderr.write("\n")
-		
+
 		apDisplay.printMsg("commited particles "+str(startpart)+"-"+str(self.partnum))
 
 		return
-		
+
 	#=====================
 	def start(self):
 		### universal particle counter
@@ -121,10 +121,10 @@ class combineStackScript(appionScript.AppionScript):
 
 			### get stack data
 			stackdata = apStack.getOnlyStackData(stackid)
-			
+
 			### append particle to stack file
 			self.appendToStack(stackdata)
-			
+
 			if self.params['commit'] is True:
 				### insert stack data
 				apDisplay.printColor("inserting new stack particles from stackid="+str(stackid), "cyan")
@@ -142,4 +142,5 @@ if __name__ == "__main__":
 	combineStack.close()
 
 
-	
+
+

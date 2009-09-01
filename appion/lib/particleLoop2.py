@@ -10,7 +10,7 @@ import appionLoop2
 import apDisplay
 import apDatabase
 import apPeaks
-import appionData
+import appiondata
 import apParticle
 import apDefocalPairs
 import threading
@@ -178,20 +178,20 @@ class ParticleLoop(filterLoop.FilterLoop):
 			 and self.params[pkey] is not None):
 				paramQuery[dbkey] = self.params[pkey]
 
-		runq=appionData.ApSelectionRunData()
+		runq=appiondata.ApSelectionRunData()
 		runq['name'] = self.params['runname']
 		runq['session'] = sessiondata
 		rundatas = runq.query(results=1)
 
 		if rundatas:
 			#get previous params
-			if isinstance(paramQuery, appionData.ApSelectionParamsData):
+			if isinstance(paramQuery, appiondata.ApSelectionParamsData):
 				paramData = rundatas[0]['params']
-			elif isinstance(paramQuery, appionData.ApDogParamsData):
+			elif isinstance(paramQuery, appiondata.ApDogParamsData):
 				paramData = rundatas[0]['dogparams']
-			elif isinstance(paramQuery, appionData.ApManualParamsData):
+			elif isinstance(paramQuery, appiondata.ApManualParamsData):
 				paramData = rundatas[0]['manparams']
-			elif isinstance(paramQuery, appionData.ApTiltAlignParamsData):
+			elif isinstance(paramQuery, appiondata.ApTiltAlignParamsData):
 				paramData = rundatas[0]['tiltparams']
 			else:
 				apDisplay.printError("selection run does not have valid parameter data\n")
@@ -216,19 +216,19 @@ class ParticleLoop(filterLoop.FilterLoop):
 			return rundatas[0]
 
 		#set params for run
-		if isinstance(paramQuery, appionData.ApSelectionParamsData):
+		if isinstance(paramQuery, appiondata.ApSelectionParamsData):
 			runq['params']=paramQuery
-		elif isinstance(paramQuery, appionData.ApDogParamsData):
+		elif isinstance(paramQuery, appiondata.ApDogParamsData):
 			runq['dogparams']=paramQuery
-		elif isinstance(paramQuery, appionData.ApManualParamsData):
+		elif isinstance(paramQuery, appiondata.ApManualParamsData):
 			runq['manparams']=paramQuery
-		elif isinstance(paramQuery, appionData.ApTiltAlignParamsData):
+		elif isinstance(paramQuery, appiondata.ApTiltAlignParamsData):
 			runq['tiltparams']=paramQuery
 		else:
 			apDisplay.printError("self.getParticleParamsData() did not return valid parameter data\n")
 
 		#create path
-		runq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 
 		if insert is True:
 			runq.insert()
@@ -270,7 +270,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 		### Choices
 		peaktypechoices = ("maximum", "centerofmass")
 		self.parser.add_option("--peaktype", dest="peaktype",
-			help="Peak extraction type", metavar="TYPE", 
+			help="Peak extraction type", metavar="TYPE",
 			type="choice", choices=peaktypechoices, default="centerofmass" )
 
 	#=====================
@@ -303,4 +303,5 @@ class MiniParticleLoop(ParticleLoop):
 if __name__ == '__main__':
 	miniLoop = MiniParticleLoop()
 	miniLoop.run()
+
 

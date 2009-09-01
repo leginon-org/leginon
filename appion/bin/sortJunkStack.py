@@ -9,7 +9,7 @@ import sys
 import time
 #appion
 import appionScript
-import appionData
+import appiondata
 import apDisplay
 import apEMAN
 import apStack
@@ -32,7 +32,7 @@ class sortJunkStackScript(appionScript.AppionScript):
             apDisplay.printError("substack description was not defined")
         if self.params['runname'] is None:
             apDisplay.printError("new stack name was not defined")
-        
+
 
     #=====================
     def setRunDir(self):
@@ -40,7 +40,7 @@ class sortJunkStackScript(appionScript.AppionScript):
         path = stackdata['path']['path']
         uppath = os.path.dirname(os.path.abspath(path))
         self.params['rundir'] = os.path.join(uppath, self.params['runname'])
-        
+
 
     #=====================
     def start(self):
@@ -56,7 +56,7 @@ class sortJunkStackScript(appionScript.AppionScript):
         apDisplay.printColor(cmd, "cyan")
         proc = subprocess.Popen(cmd, shell=True)
         proc.wait()
-                
+
         # Create sorted stack
         apXmipp.gatherSingleFilesIntoStack("sort_junk.sel","sorted.hed")
 
@@ -96,9 +96,9 @@ class sortJunkStackScript(appionScript.AppionScript):
 
         # Produce a new stack
         oldstack = apStack.getOnlyStackData(self.params['stackid'],msg=False)
-        newstack = appionData.ApStackData()
-        newstack['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
-        newstack['name'] = "sorted.hed"                
+        newstack = appiondata.ApStackData()
+        newstack['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+        newstack['name'] = "sorted.hed"
         if newstack.query(results=1):
             apDisplay.printError("A stack with these parameters already exists")
 
@@ -128,7 +128,7 @@ class sortJunkStackScript(appionScript.AppionScript):
             oldparticle = apStack.getStackParticle(self.params['stackid'], fileorder[i]+1)
 
             # Insert particle
-            newparticle = appionData.ApStackParticlesData()
+            newparticle = appiondata.ApStackParticlesData()
             newparticle['particleNumber'] = i+1
             newparticle['stack'] = newstack
             newparticle['stackRun'] = oldparticle['stackRun']
@@ -142,7 +142,7 @@ class sortJunkStackScript(appionScript.AppionScript):
         apDisplay.printMsg("Inserting Runs in Stack")
         runsinstack = apStack.getRunsInStack(self.params['stackid'])
         for run in runsinstack:
-            newrunsq = appionData.ApRunsInStackData()
+            newrunsq = appiondata.ApRunsInStackData()
             newrunsq['stack'] = newstack
             newrunsq['stackRun'] = run['stackRun']
             newrunsq['project|projects|project'] = run['project|projects|project']
@@ -156,4 +156,5 @@ if __name__ == "__main__":
     sortJunk = sortJunkStackScript()
     sortJunk.start()
     sortJunk.close()
+
 

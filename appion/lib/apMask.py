@@ -12,12 +12,12 @@ import pyami.imagefun as imagefun
 import leginondata
 #appion
 import apImage
-import appionData
+import appiondata
 import apCrud
 import apDatabase
 
 def getMaskParamsByRunName(name,sessiondata):
-	maskRq=appionData.ApMaskMakerRunData()
+	maskRq=appiondata.ApMaskMakerRunData()
 	maskRq['name']=name
 	maskRq['session']=sessiondata
 	# get corresponding makeMaskParams entry
@@ -26,19 +26,19 @@ def getMaskParamsByRunName(name,sessiondata):
 		return result[0],result[0]['params']
 	else:
 		return None,None
-	
+
 def getSessionDataByName(name):
 	sessiondata = apDatabase.getSessionDataFromSessionName(name)
 	return sessiondata
-			
+
 def insertManualMaskParams(bin):
-	maskPdata=appionData.ApMaskMakerParamsData()
-	
+	maskPdata=appiondata.ApMaskMakerParamsData()
+
 	maskPdata['bin']=bin
 	maskPdata['mask type']='manual'
 
 	maskPdata.insert()
-		
+
 	return maskPdata
 
 def insertManualMaskRun(sessiondata,path,name,bin):
@@ -48,32 +48,32 @@ def insertManualMaskRun(sessiondata,path,name,bin):
 	maskRdata.insert()
 
 	return maskRdata
-		
+
 def createMaskMakerRun(sessiondata,path,name,paramdata):
 	if path is None:
 		savepath = None
 	else:
 		savepath = os.path.normpath(path)
-	maskRdata=appionData.ApMaskMakerRunData()
+	maskRdata=appiondata.ApMaskMakerRunData()
 	maskRdata['session'] = sessiondata
 	if savepath is not None:
-		maskRdata['path']= appionData.ApPathData(path=os.path.abspath(savepath))
+		maskRdata['path']= appiondata.ApPathData(path=os.path.abspath(savepath))
 	maskRdata['name']=name
 	maskRdata['params']=paramdata
 
 	return maskRdata
-	
+
 def insertMaskRegion(rundata,imgdata,regionInfo):
 
 	maskRq = createMaskRegionData(rundata,imgdata,regionInfo)
 	result=maskRq.query()
 	if not (result):
 		maskRq.insert()
-	
+
 	return
 
 def createMaskRegionData(rundata,imgdata,regionInfo):
-	maskRq=appionData.ApMaskRegionData()
+	maskRq=appiondata.ApMaskRegionData()
 
 	maskRq['maskrun']=rundata
 	maskRq['image']=imgdata
@@ -88,22 +88,22 @@ def createMaskRegionData(rundata,imgdata,regionInfo):
 	return maskRq
 
 def getMaskRegions(maskrun,imgdata):
-	maskRq=appionData.ApMaskRegionData()
+	maskRq=appiondata.ApMaskRegionData()
 
 	maskRq['maskrun']=maskrun
 	maskRq['image']=imgdata
-	
+
 	results=maskRq.query(readimages=False)
-	
+
 	return results
 
 def getRegionsByAssessment(assessrun):
-	maskRq=appionData.ApMaskAssessmentData()
+	maskRq=appiondata.ApMaskAssessmentData()
 
 	maskRq['run']=assessrun
 	results=maskRq.query(readimages=False)
 	return results
-	
+
 def getAssessedMasks(assessrun,maskrun):
 	regionassesstree = getRegionsByAssessment(assessrun)
 	imagefiles = []
@@ -121,7 +121,7 @@ def getAssessedMasks(assessrun,maskrun):
 	return map((lambda x: x + '_mask.png'),imagefiles)
 
 def insertMaskAssessmentRun(sessiondata,maskrundata,name):
-	assessRdata=appionData.ApMaskAssessmentRunData()
+	assessRdata=appiondata.ApMaskAssessmentRunData()
 	assessRdata['session'] = sessiondata
 	assessRdata['name'] = name
 	assessRdata['maskrun'] = maskrundata
@@ -134,29 +134,29 @@ def insertMaskAssessmentRun(sessiondata,maskrundata,name):
 		exist = True
 
 	return assessRdata,exist
-	
+
 def insertMaskAssessment(rundata,regiondata,keep):
 
 	assessMq = createMaskAssessmentData(rundata,regiondata,keep)
 	assessMq.insert(force=True)
-	
+
 	return
 
 def createMaskAssessmentData(rundata,regiondata,keep):
-	assessMq=appionData.ApMaskAssessmentData()
-	
+	assessMq=appiondata.ApMaskAssessmentData()
+
 	assessMq['run']=rundata
 	assessMq['region']=regiondata
 	assessMq['keep']=keep
 
 	return assessMq
-	
+
 def getMaskAssessRunData(sessiondata,maskassessname):
-	mquery = appionData.ApMaskAssessmentRunData()
+	mquery = appiondata.ApMaskAssessmentRunData()
 	mquery['session'] = sessiondata
 	mquery['name'] = maskassessname
 	results = mquery.query()
-	
+
 	return results
 
 
@@ -184,14 +184,14 @@ def getMaskRunInfo(maskpath,maskfilename):
 	return maskrundata,maskparamsdata
 
 def getMaskMakerRunNamesFromSession(sessiondata):
-	mquery = appionData.ApMaskMakerRunData(session=sessiondata)
+	mquery = appiondata.ApMaskMakerRunData(session=sessiondata)
 	results = mquery.query()
-	
+
 	if not results:
 		return []
 	masknames = map((lambda x:x['name']),results)
 	return masknames
-	
+
 def getRegionsAsTargets(maskrun,maskshape,imgdata):
 	regiondata = getMaskRegions(maskrun,imgdata)
 	halfrow=maskshape[0]/2
@@ -219,7 +219,7 @@ def saveAssessmentFromTargets(maskrun,assessrun,imgdata,keeplist):
 
 def getRegionKeepList(assessrundata,maskregiondata):
 	keeplist = []
-	assessquery = appionData.ApMaskAssessmentData()
+	assessquery = appiondata.ApMaskAssessmentData()
 	assessquery['run'] = assessrundata
 	for regiondata in maskregiondata:
 		assessquery['region'] = regiondata
@@ -234,7 +234,7 @@ def getRegionKeepList(assessrundata,maskregiondata):
 
 def getMaskbins(sessiondata,maskassessname):
 	assessruntree = getMaskAssessRunData(sessiondata,maskassessname)
-	
+
 	allmaskarray = None
 	maskbins = []
 	for i,assessrundata in enumerate(assessruntree):
@@ -245,39 +245,39 @@ def getMaskbins(sessiondata,maskassessname):
 def makeInspectedMask(sessiondata,maskassessname,imgdata):
 
 	assessruntree = getMaskAssessRunData(sessiondata,maskassessname)
-	
+
 	maskbins,maxbin = getMaskbins(sessiondata,maskassessname)
 	allmaskarray = None
 	for i,assessrundata in enumerate(assessruntree):
-	
+
 		maskrundata = assessrundata['maskrun']
 		maskregiondata = getMaskRegions(maskrundata,imgdata)
 		if len(maskregiondata) == 0:
 			continue
-	
+
 		keeplist = getRegionKeepList(assessrundata,maskregiondata)
-	
+
 		if len(keeplist) == 0:
 			continue
-		
+
 		maskarray = getMaskArray(maskrundata,imgdata)
 		maskarray = apCrud.makeKeepMask(maskarray,keeplist)
 		extrabin = maxbin/maskbins[i]
 		if extrabin > 1:
 			maskarray = apImage.binImg(maskarray, extrabin)
-			
+
 		try:
 			allmaskarray = allmaskarray+maskarray
 		except:
 			allmaskarray = maskarray
-	
+
 	allmaskarray = numpy.where(allmaskarray==0,0,1)
-	
+
 	if allmaskarray.shape == ():
 		allmaskarray = None
-	
+
 	return allmaskarray,maxbin
-	
+
 def overlayMask(image,mask):
 	if mask is None:
 		return image
@@ -297,14 +297,15 @@ def overlayMask(image,mask):
 		overlay=image+maskbinned*alpha*(image.max()-image.min())/mask.max()
 	else:
 		overlay=image
-					
+
 	return overlay
 
 if __name__ == '__main__':
-	assessrun = appionData.ApMaskAssessmentRunData.direct_query(11)
+	assessrun = appiondata.ApMaskAssessmentRunData.direct_query(11)
 	sessiondata = assessrun['session']
 	imgdata = leginondata.AcquisitionImageData.direct_query(500598)
 	maskarray,maskbin = makeInspectedMask(sessiondata,'run1',imgdata)
-#	maskrun = appionData.ApMaskMakerRunData.direct_query(44)
+#	maskrun = appiondata.ApMaskMakerRunData.direct_query(44)
+
 
 

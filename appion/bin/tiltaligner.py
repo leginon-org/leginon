@@ -8,7 +8,7 @@ import numpy
 import threading
 import particleLoop2
 import apFindEM
-import appionData
+import appiondata
 import apDatabase
 import apDisplay
 import apParticle
@@ -75,7 +75,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 	#=======================================
 	def getParticleParamsData(self):
-		tiltparamsq = appionData.ApTiltAlignParamsData()
+		tiltparamsq = appiondata.ApTiltAlignParamsData()
 		tiltparamsq['output_type'] = self.params['outtype']
 		if self.params['pickrunids'] is not None:
 			self.params['pickrunidlist'] = self.params['pickrunids'].split(",")
@@ -260,14 +260,14 @@ class tiltAligner(particleLoop2.ParticleLoop):
 				### run tilt automation
 				if len(picks1) > 0 and len(picks2) > 0 and self.params['autopick'] is True:
 					autotilter = autotilt.autoTilt()
-					result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, 
+					result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2,
 						tiltdiff, outfile1, pixdiam, tiltaxis, msg=False)
 					if os.path.isfile(outfile1):
 						if os.path.exists(outfile2):
 							os.remove(outfile2)
 						os.symlink(os.path.basename(outfile1), outfile2)
 				sys.stderr.write("%")
-		apDisplay.printMsg("done") 
+		apDisplay.printMsg("done")
 		return
 
 	#=======================================
@@ -354,6 +354,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 if __name__ == '__main__':
 	imgLoop = tiltAligner()
 	imgLoop.run()
+
 
 
 

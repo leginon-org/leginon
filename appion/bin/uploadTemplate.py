@@ -14,7 +14,7 @@ import apTemplate
 import apStack
 import apDisplay
 import apDatabase
-import appionData
+import appiondata
 import apEMAN
 import apFile
 import apProject
@@ -59,7 +59,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 			apDisplay.printError("enter the particle diameter in Angstroms")
 
 		### make sure we have something
-		if (self.params['template'] is None 
+		if (self.params['template'] is None
 		  and self.params['stackid'] is None
 		  and self.params['clusterid'] is None
 		  and self.params['alignid'] is None
@@ -77,7 +77,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		### check for session
 		if self.params['session'] is None:
 			if self.params['alignid'] is not None:
-				alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
+				alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignid'])
 				stackid = alignstackdata['stack'].dbid
 				sessiondata = apStack.getSessionDataFromStackId(stackid)
 				self.params['session'] = sessiondata['name']
@@ -86,7 +86,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 				sessiondata = apStack.getSessionDataFromStackId(stackid)
 				self.params['session'] = sessiondata['name']
 			elif self.params['alignid'] is not None:
-				clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+				clusterstackdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
 				stackid = clusterstackdata['clusterrun']['alignstack']['stack'].dbid
 				sessiondata = apStack.getSessionDataFromStackId(stackid)
 				self.params['session'] = sessiondata['name']
@@ -151,7 +151,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 	#=====================
 	def useAlignForTemplate(self):
 		apDisplay.printMsg("Using alignment stack to make templates")
-		alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
+		alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignid'])
 		self.params['apix'] = alignstackdata['pixelsize']
 		stackfile = os.path.join(alignstackdata['path']['path'], alignstackdata['refstackfile'])
 		self.params['templatelist'] = []
@@ -179,7 +179,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 	#=====================
 	def useClusterForTemplate(self):
 		apDisplay.printMsg("Using clustering stack to make templates")
-		clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+		clusterstackdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
 		self.params['apix'] = clusterstackdata['clusterrun']['alignstack']['pixelsize']
 		stackfile = os.path.join(clusterstackdata['path']['path'], clusterstackdata['avg_imagicfile'])
 		self.params['templatelist'] = []
@@ -239,4 +239,5 @@ if __name__ == "__main__":
 	uploadTemplate.start()
 	uploadTemplate.close()
 
-	
+
+

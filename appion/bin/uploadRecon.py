@@ -8,7 +8,7 @@ import time
 import glob
 #appion
 import appionScript
-import appionData
+import appiondata
 import apParam
 import apDisplay
 import apStack
@@ -25,7 +25,7 @@ class UploadReconScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --runname=<name> --stackid=<int> --modelid=<int>\n\t "
 			+"--description='<quoted text>'\n\t [ --package=EMAN --jobid=<int> --oneiter=<iter> --startiter=<iter> --zoom=<float> "
 			+"--contour=<contour> --rundir=/path/ --commit ]")
-	
+
 		### integers
 		self.parser.add_option("-i", "--oneiter", dest="oneiter", type="int",
 			help="Only upload one iteration", metavar="INT")
@@ -57,7 +57,7 @@ class UploadReconScript(appionScript.AppionScript):
 		### choices
 		self.packages = ( "EMAN", "EMAN/MsgP", "EMAN/SpiCoran")
 		self.parser.add_option("-k", "--package", dest="package", default="EMAN",
-			help="Reconstruction package used (EMAN by default)", metavar="TEXT", 
+			help="Reconstruction package used (EMAN by default)", metavar="TEXT",
 			type="choice", choices=self.packages, )
 
 	#=====================
@@ -65,12 +65,12 @@ class UploadReconScript(appionScript.AppionScript):
 		if self.params['package'] not in self.packages:
 			apDisplay.printError("No valid reconstruction package method specified")
 		# msgPassing requires a jobId in order to get the jobfile & the paramters
-		if ((self.params['package'] == 'EMAN/MsgP' or self.params['package'] == 'EMAN/SpiCoran') 
+		if ((self.params['package'] == 'EMAN/MsgP' or self.params['package'] == 'EMAN/SpiCoran')
 		 and self.params['jobid'] is None):
 			err = self.tryToGetJobID()
 			if err:
 				apDisplay.printError(self.params['package']
-					+" refinement requires a jobid. Please enter a jobId," 
+					+" refinement requires a jobid. Please enter a jobId,"
 					+" e.g. --jobid=734" + '\n' + err)
 		if self.params['package'] != "EMAN/SpiCoran":
 			### check if we have coran files
@@ -101,8 +101,8 @@ class UploadReconScript(appionScript.AppionScript):
 		jobname = self.params['runname'] + '.job'
 		jobtype = 'recon'
 		jobpath = self.params['rundir']
-		qpath = appionData.ApPathData(path=os.path.abspath(jobpath))
-		q = appionData.ApClusterJobData(name=jobname, jobtype=jobtype, path=qpath)
+		qpath = appiondata.ApPathData(path=os.path.abspath(jobpath))
+		q = appiondata.ApClusterJobData(name=jobname, jobtype=jobtype, path=qpath)
 		results = q.query()
 		if len(results) == 1:
 			## success, only one job id found
@@ -129,7 +129,7 @@ class UploadReconScript(appionScript.AppionScript):
 		if self.params['rundir'] is None or not os.path.isdir(self.params['rundir']):
 			apDisplay.printError("upload directory does not exist: "+str(self.params['rundir']))
 
-	
+
 		### create temp directory for extracting data
 		self.params['tmpdir'] = os.path.join(self.params['rundir'], "temp")
 		apParam.createDirectory(self.params['tmpdir'], warning=True)
@@ -153,11 +153,11 @@ class UploadReconScript(appionScript.AppionScript):
 
 		### get a list of the files in the directory
 		apRecon.listFiles(self.params)
-		
+
 		### create a refinementRun entry in the database
 		apRecon.insertRefinementRun(self.params)
 
-		if self.params['euleronly'] is False:	
+		if self.params['euleronly'] is False:
 			### insert the Iteration info
 			for iteration in self.params['iterations']:
 				### if only uploading one iteration, skip to that one
@@ -168,14 +168,14 @@ class UploadReconScript(appionScript.AppionScript):
 					continue
 				apDisplay.printColor("\nUploading iteration "+str(iteration['num'])+" of "
 					+str(len(self.params['iterations']))+"\n", "green")
-				for i in range(75): 
+				for i in range(75):
 					sys.stderr.write("#")
 				sys.stderr.write("\n")
 				apRecon.insertIteration(iteration, self.params)
 
 		### calculate euler jumps
 		if self.params['commit'] is True:
-			reconrunid = self.params['refinementRun'].dbid	
+			reconrunid = self.params['refinementRun'].dbid
 			stackid = self.params['stack'].dbid
 			apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
 			eulerjump = apEulerJump.ApEulerJump()
@@ -191,4 +191,5 @@ if __name__ == '__main__':
 	uploadRecon = UploadReconScript()
 	uploadRecon.start()
 	uploadRecon.close()
+
 

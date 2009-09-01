@@ -7,7 +7,7 @@ import sys
 import math
 import shutil
 #appion
-import appionData
+import appiondata
 import apParam
 import apDisplay
 import apDatabase
@@ -68,21 +68,21 @@ def printResults(params, nominal, ctfvalue):
 
 def insertAceParams(imgdata, params):
 	# first create an aceparam object
-	aceparamq = appionData.ApAceParamsData()
+	aceparamq = appiondata.ApAceParamsData()
 	copyparamlist = ('display','stig','medium','edgethcarbon','edgethice',\
 			 'pfcarbon','pfice','overlap','fieldsize','resamplefr','drange',\
 			 'reprocess')
 	for p in copyparamlist:
 		if p in params:
 			aceparamq[p] = params[p]
-	
+
 	# if nominal df is set, save override df to database, else don't set
 	if params['nominal']:
 		dfnom=-params['nominal']
 		aceparamq['df_override']=dfnom
-	
+
 	# create an acerun object
-	runq=appionData.ApAceRunData()
+	runq=appiondata.ApAceRunData()
 	runq['name']=params['runname']
 	runq['session']=imgdata['session']
 
@@ -99,7 +99,7 @@ def insertAceParams(imgdata, params):
 		return False
 
 	#create path
-	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
+	runq['path'] = appiondata.ApPathData(path=os.path.abspath(params['rundir']))
 	runq['hidden']=False
 	# if no run entry exists, insert new run entry into db
 	runq['aceparams']=aceparamq
@@ -108,7 +108,7 @@ def insertAceParams(imgdata, params):
 	return True
 
 def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
-	runq=appionData.ApAceRunData()
+	runq=appiondata.ApAceRunData()
 	runq['name']=params['runname']
 	runq['session']=imgdata['session']
 
@@ -117,7 +117,7 @@ def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
 
 	print "Committing ctf parameters for",apDisplay.short(imgdata['filename']), "to database."
 
-	ctfq = appionData.ApCtfData()
+	ctfq = appiondata.ApCtfData()
 	ctfq['acerun']=acerun[0]
 	ctfq['image']=imgdata
 	ctfq['graph1']=opimfile1
@@ -126,7 +126,7 @@ def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
 	ctfvaluelist = ('defocus1','defocus2','defocusinit','amplitude_contrast','angle_astigmatism',\
 		'noise1','noise2','noise3','noise4','envelope1','envelope2','envelope3','envelope4',\
 		'lowercutoff','uppercutoff','snr','confidence','confidence_d')
-	
+
 	# test for failed ACE estimation
 	# only set params if ACE was successfull
 	if ctfvalue[0] != -1 :
@@ -134,7 +134,7 @@ def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
 			ctfq[ ctfvaluelist[i] ] = ctfvalue[i]
 
 	ctfq.insert()
-	
+
 	return
 
 def mkTempDir(temppath):
@@ -203,7 +203,7 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True):
 	takes an image and get the best ctfvalues for that image
 	"""
 	### get all ctf values
-	ctfq = appionData.ApCtfData()
+	ctfq = appiondata.ApCtfData()
 	ctfq['image'] = imgdata
 	ctfvalues = ctfq.query()
 
@@ -231,7 +231,7 @@ def getBestAceTwoValueForImage(imgdata, ctfavg=True, msg=True):
 	takes an image and get the best ctfvalues for that image
 	"""
 	### get all ctf values
-	ctfq = appionData.ApCtfData()
+	ctfq = appiondata.ApCtfData()
 	ctfq['image'] = imgdata
 	ctfvalues = ctfq.query()
 
@@ -254,14 +254,14 @@ def getBestAceTwoValueForImage(imgdata, ctfavg=True, msg=True):
 			if conf > bestconf:
 				bestconf = conf
 				bestctfvalue = ctfvalue
-				
+
 	if bestctfvalue == None:
 		return None, None
-	
+
 	if msg is True:
 		apDisplay.printMsg( "Best CTF run info: runname='%s', confidence=%.3f, defocus=%.3f um"
-			%(bestctfvalue['acerun']['name'], bestconf, bestctfvalue['defocus1']*1.0e6) )			
-	
+			%(bestctfvalue['acerun']['name'], bestconf, bestctfvalue['defocus1']*1.0e6) )
+
 	return bestctfvalue, bestconf
 
 def getBestTiltCtfValueForImage(imgdata):
@@ -269,10 +269,10 @@ def getBestTiltCtfValueForImage(imgdata):
 	takes an image and get the tilted ctf parameters for that image
 	"""
 	### get all ctf values
-	ctfq = appionData.ApCtfData()
+	ctfq = appiondata.ApCtfData()
 	ctfq['image'] = imgdata
 	ctfvalues = ctfq.query()
-	
+
 	bestctftiltvalue = None
 	cross_correlation = 0.0
 	for ctfvalue in ctfvalues:
@@ -285,7 +285,7 @@ def getBestTiltCtfValueForImage(imgdata):
 					cross_correlation = ctfvalue['cross_correlation']
 					bestctftiltvalue = ctfvalue
 
-	return bestctftiltvalue	
+	return bestctftiltvalue
 
 
 def ctfValuesToParams(ctfvalue, params, msg=True):
@@ -326,7 +326,7 @@ def printCtfSummary(params):
 		if params['norejects'] is True and apDatabase.getSiblingImgAssessmentStatus(imgdata) is False:
 			continue
 
-		ctfq = appionData.ApCtfData()
+		ctfq = appiondata.ApCtfData()
 		ctfq['image'] = imgdata
 		ctfvalues = ctfq.query()
 
@@ -391,3 +391,4 @@ def printCtfSummary(params):
 			for k in range(int(confhist[j]*scale)):
 				sys.stderr.write(apDisplay.color("*",colorstr[j]))
 		sys.stderr.write("\n")
+
