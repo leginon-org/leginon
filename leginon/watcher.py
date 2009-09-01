@@ -37,7 +37,6 @@ class Watcher(node.Node):
 		self.confirmEvent(pubevent)
 
 	def processEvent(self, pubevent):
-		#ref = pubevent.special_getitem('data', dereference=False)
 		newdata = pubevent['data']
 		if newdata is not None:
 			self.processData(newdata)
