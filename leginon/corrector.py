@@ -359,5 +359,10 @@ class Corrector(imagewatcher.ImageWatcher):
 		imagecopy = imagedata.copy()
 		self.correctCameraImageData(imagecopy, 0)
 		print 'imagecopy corrected', imagecopy['image']
-		fullname = os.path.join(imagecopy.mkpath(), imagecopy.filename())
-		mrc.write(imagecopy['image'], fullname)
+		if True:
+			## save new record to DB, including writing mrc
+			imagecopy.insert()
+		else:
+			## only save mrc
+			fullname = os.path.join(imagecopy.mkpath(), imagecopy.filename())
+			mrc.write(imagecopy['image'], fullname)
