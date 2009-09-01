@@ -510,6 +510,35 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		apImage.arrayToMrc(avgdata, "average.mrc")
 		return
 
+	def findMovingParticles(self):
+		"""
+		Script to find particles that change template often
+		"""
+
+		"""
+		#!/usr/bin/env csh
+
+		if ($#argv != 2) then
+		    echo "you must give two parameters:" 
+		    echo $0" <MLrootname> <maxiter>"
+		else
+		  set rootname=$1
+		  set max_iter=$2
+
+		  rm -f moving_particles.dat
+		  set i = 1
+		  while ($i < ${max_iter})
+		    set ii=`printf '%05d' $i`
+		    @ i++
+		    set jj=`printf '%05d' $i`
+		    echo -n $i" " >>moving_\particles.dat
+		    grep " 8 " ${rootname}_it${ii}.doc|awk '{print $1,$5,$6,$7,$8,$9}' >t1
+		    grep " 8 " ${rootname}_it${jj}.doc|awk '{print $1,$5,$6,$7,$8,$9}' >t2
+		    diff t1 t2|grep ">" |wc -l >>moving_particles.dat
+		  end
+		endif
+		"""
+
 	#=====================
 	def readRefDocFile(self):
 		reflist = []
