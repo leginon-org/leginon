@@ -225,13 +225,8 @@ class DataManager(object):
 		dataclass = datareference.dataclass
 		referent = None
 		dmid = datareference.dmid
-
-		### if dmid indicates, try remote location
-		if dmid is not None and dmid[0] != self.location:
-			## in remote memory
-			# TODO: kwargs
-			referent = self.getRemoteData(datareference)
-			return referent
+		print 'DATACLASS', dataclass
+		print 'DMID', dmid
 
 		#### attempt to find referent in local datadict
 		self.lock.acquire()
@@ -242,6 +237,7 @@ class DataManager(object):
 				# access to datadict causes move to front
 				del self.datadict[dmid]
 				self.datadict[dmid] = referent
+				print '***LOCAL'
 				return referent
 		finally:
 			self.lock.release()
@@ -252,9 +248,18 @@ class DataManager(object):
 			## in database
 			try:
 				referent = self.getDataFromDB(dataclass, dbid, **kwargs)
+				print '***DB'
 				return referent
 			except:
 				pass
+
+		### if dmid indicates, try remote location
+		if dmid is not None and dmid[0] != self.location:
+			## in remote memory
+			# TODO: kwargs
+			referent = self.getRemoteData(datareference)
+			print '***REMOTE'
+			return referent
 
 		## must not exist anymore
 		raise DataAccessError('referenced data can not be found: %s' % (datareference,))
