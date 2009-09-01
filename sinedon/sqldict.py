@@ -700,9 +700,6 @@ class _multipleQueries:
 			if self.readimages:
 				# replace reference with actual data
 				root[key] = fileref.read()
-			else:
-				# just assert that file exists
-				assert  fileref.exists()
 
 		## now the object is final, so we can safely set dbid
 		root.setPersistent(root.pending_dbid)
