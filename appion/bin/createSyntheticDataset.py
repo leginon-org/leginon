@@ -10,8 +10,8 @@ import math
 import time
 
 ### appion imports
+import appionScript
 import apVolume
-import EMAN
 import apEMAN
 import apDisplay
 import apDatabase
@@ -20,7 +20,6 @@ import apImage
 import apImagicFile
 import apIMAGIC
 import apParam
-import appionScript
 import appiondata
 import apStack
 import apStackMeanPlot
@@ -187,12 +186,17 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 
 	#=====================
-	def applyEnvelope(self, inimage, outimage, envelope, scaleFactor=1):
+	def applyEnvelope(self, inimage, outimage, scaleFactor=1):
 		"""
 		input path to image and envelope, output amplitude-adjusted image
 		"""
 
 		apDisplay.printColor("now applying envelope function to: "+inimage, "cyan")
+
+		envelope = self.params['envelope']
+		if envelope is None:
+			return
+			
 
 		### read images
 		im = mrc.read(inimage)
@@ -436,12 +440,25 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		return shiftstackname
 
 	#=====================
-	def readMRCStats(self, filename):
+	def readFileStats(self, filename):
+		if filename[-4:] == ".mrc"
+			### mrc
+			data = mrc.read(filename)
+			mean = data.mean()
+			stdev = data.std()
+		elif filename[-4:] == ".hed" or filename[-4:] == ".img":
+			### imagic
+			data = apImagicFile.readImagic(filename)
+			mean = data.mean()
+			stdev = data.std()
+
+		"""
 		### read mean and stdev parameters from original image
 		data = EMAN.EMData()
 		data.readImage(filename)
 		mean = data.Mean()
 		stdev = data.Sigma()
+		"""
 
 		return mean, stdev
 
@@ -608,10 +625,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 			### apply envelope
 			outimage = ctfappliedgraph+".ampcorrected.mrc"
-			self.applyEnvelope(ctfappliedgraph, outimage, self.params['envelope'])
+			self.applyEnvelope(ctfappliedgraph, outimage)
 
 			### read MRC stats to figure out the second noise level addition
-			graphmean, graphstdev = self.readMRCStats(outimage)
+			graphmean, graphstdev = self.readFileStats(outimage)
 
 			### cascading of noise processes according to Frank and Al-Ali (1975)
 			graphsnr2 = 1 / ((1+1/float(self.params['snrtot'])) / (1/float(self.params['snr1']) + 1) - 1)
@@ -732,10 +749,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 			### apply envelope
 			outimage = ctfappliedgraph+".ampcorrected.mrc"
-			self.applyEnvelope(ctfappliedgraph, outimage, self.params['envelope'])
+			self.applyEnvelope(ctfappliedgraph, outimage)
 
 			### read MRC stats to figure out the second noise level addition
-			graphmean, graphstdev = self.readMRCStats(outimage)
+			graphmean, graphstdev = self.readFileStats(outimage)
 
 			### cascading of noise processes according to Frank and Al-Ali (1975)
 			graphsnr2 = 1 / ((1+1/float(self.params['snrtot'])) / (1/float(self.params['snr1']) + 1) - 1)
@@ -905,8 +922,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			### apply envelope function
 			ampcorrected = ctfapplied+".ampcorrected.mrc"
 			scaleFactor =  self.params['box'] / float(4096)
-			self.applyEnvelope(ctfapplied, ampcorrected, self.params['envelope'], scaleFactor=scaleFactor)
-
+			self.applyEnvelope(ctfapplied, ampcorrected, scaleFactor=scaleFactor)			
 			if self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True:
 				### now correct CTF using estimated parameters from micrograph
 				ace2cmd = "ace2correct.exe -img "+ampcorrected+" -kv "+str(self.params['kv'])+" -cs "+\
@@ -1243,7 +1259,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		shiftstackname = self.shiftAndRotate(filename)
 
 		### read MRC stats to figure out noise level addition
-		mean1, stdev1 = self.readMRCStats(shiftstackname)
+		mean1, stdev1 = self.readFileStats(shiftstackname)
 
 		### calculate noiselevel additions and add noise to an initial ratio of 1.8, simulating beam and structural damage
 		noiselevel1 = float(stdev1) / float(self.params['snr1'])
@@ -1334,7 +1350,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				apFile.removeStack(stack)
 
 		### read MRC stats to figure out noise level addition
-		mean2, stdev2 = self.readMRCStats(ctfappliedstack)
+		mean2, stdev2 = self.readFileStats(ctfappliedstack)
 
 		### cascading of noise processes according to Frank and Al-Ali (1975)
 		snr2 = 1 / ((1+1/float(self.params['snrtot'])) / (1/float(self.params['snr1']) + 1) - 1)
