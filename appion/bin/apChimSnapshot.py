@@ -30,9 +30,10 @@ except:
 class ChimSnapShots(object):
 	# -----------------------------------------------------------------------------
 	def renderVolume(self):
+		self.writeMessageToLog("rendering volume")
 		chimera.viewer.windowSize = self.imgsize
 		self.openVolumeData()
-		self.drawScaleBar()
+
 		### select proper function
 		if self.type == 'animate':
 			if self.symmetry[:4] == 'icos':
@@ -55,6 +56,12 @@ class ChimSnapShots(object):
 			else:
 				self.snapshot_csym()
 
+		self.writeMessageToLog("\n")
+		self.writeMessageToLog("====================================")
+		self.writeMessageToLog("apChimSnapshot finished successfully")
+		self.writeMessageToLog("====================================")
+		self.writeMessageToLog("\n\n\n")
+
 	# -----------------------------------------------------------------------------
 	def openVolumeData(self):
 		"""
@@ -62,19 +69,28 @@ class ChimSnapShots(object):
 		set step size to 1, set contour, show surface
 		create self.voldata
 		"""
+		self.writeMessageToLog("Opening volume type: %s file: %s"%(self.fileformat, self.tmpfilepath))
 		default_settings.set('limit_voxel_count', False)
 		default_settings.set('surface_smoothing', True)
 		default_settings.set('smoothing_iterations', 10)
 		self.voldata = open_volume_file(self.tmpfilepath, self.fileformat)[0]
-		self.voldata.set_parameters(show_outline_box=False, surface_smoothing = True, two_sided_lighting = False)
+		self.writeMessageToLog(str(dir(self.voldata)))
+		self.voldata.set_parameters(
+			show_outline_box=False,
+			surface_smoothing=True,
+			two_sided_lighting=False,
+		)
 		if self.contour is not None:
 			self.voldata.set_parameters(surface_levels = [self.contour])
 		self.voldata.show('surface')
 		self.surfaces = openModels.list(modelTypes=[SurfaceModel])
 		self.setZoom()
+		### This does not work on CentOS
+		#self.drawScaleBar()
 
 	# -----------------------------------------------------------------------------
 	def setZoom(self):
+		self.writeMessageToLog("Setting zoom")
 		surf = self.surfaces[0]
 		vertices, triangles = surf.surfacePieces[0].geometry
 		rc = Radial_Color()
@@ -168,51 +184,56 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def save_image(self, path):
+		self.writeMessageToLog("Saving image: "+path)
 		# propagate changes from C++ layer back to Python
 		# can also be done via Midas module: Midas.wait(1)
 		try:
 			chimera.update.checkForChanges()
 		except:
 			time.sleep(0.2)
+
 		# save an image
-		chimera.printer.saveImage(path, format=self.imgformat)
+		try:
+			chimera.printer.saveImage(path, format=self.imgformat)
+		except:
+			pass
+		if os.path.isfile(path):
+			self.writeMessageToLog("Success, saved image: "+path)
+		else:
+			self.writeMessageToLog("FAILED to save image: "+path)
 
 	# -----------------------------------------------------------------------------
 	def drawScaleBar(self, size=50):
-		"""
-		Draw a scale bar size Angstroms long
-		"""
-		scale_bar_state = {
-			'bar_length': str(size),
-			'bar_rgba': ( 0.0, 0.0, 0.0, 1.0,),
-			'bar_thickness': '2',
-			'class': 'Scale_Bar_Dialog_State',
-			'frozen_models': [ ],
-			'geometry': '%dx%d+3+3'%(self.imgsize),
-			'is_visible': False,
-			'label_rgba': ( 0.0, 0.0, 0.0, 1.0,),
-			'label_text': '# A',
-			'label_x_offset': '-10',
-			'label_y_offset': '3',
-			'model': {},
-			'move_scalebar': 0,
-			'orientation': 'horizontal',
-			'preserve_position': False,
-			'screen_x_position': '-0.7',
-			'screen_y_position': '-0.9',
-			'show_scalebar': True,
-			'version': 1,
-		}
+		self.writeMessageToLog("Draw a scale bar %d Angstroms long"%(size))
 		try:
+			scale_bar_state = {
+				'bar_length': str(size),
+				'bar_rgba': ( 0.0, 0.0, 0.0, 1.0,),
+				'bar_thickness': '1',
+				'class': 'Scale_Bar_Dialog_State',
+				'frozen_models': [ ],
+				'geometry': '%dx%d+3+3'%(self.imgsize[0]/2, self.imgsize[1]/2),
+				'is_visible': False,
+				'label_rgba': ( 0.0, 0.0, 0.0, 1.0,),
+				'label_text': '# A',
+				'label_x_offset': '-3',
+				'label_y_offset': '3',
+				'model': {},
+				'move_scalebar': 0,
+				'orientation': 'horizontal',
+				'preserve_position': False,
+				'screen_x_position': '-0.6',
+				'screen_y_position': '-0.9',
+				'show_scalebar': True,
+				'version': 1,
+			}
 			ScaleBar.session.restore_scale_bar_state(scale_bar_state)
 		except:
 			self.writeMessageToLog("Error restoring scale bar")
 
 	# -----------------------------------------------------------------------------
 	def hideDust(self, size=100):
-		"""
-		Hide all dust particles less than 10 voxels in size
-		"""
+		self.writeMessageToLog("Hide all dust particles less than %d voxels in size"%(size))
 		native = False
 		#try:
 		if True:
@@ -225,14 +246,14 @@ class ChimSnapShots(object):
 				#runChimCommand('hide dust # %d'%(size))
 			else:
 				for surf in self.selected_surface_pieces():
-					self.hide_small_blobs(surf)
+					self.hide_small_blobs(surf, size)
 		if False:
 		#except:
 			self.writeMessageToLog("skipping hide dust")
 			pass
 
 	# -----------------------------------------------------------------------------
-	def hide_small_blobs(self, surf):
+	def hide_small_blobs(self, surf, size=100):
 		varray, tarray = surf.geometry
 		mask = numpy.ones((len(varray),), numpy.intc)
 		cplist = connected_pieces(tarray)
@@ -240,12 +261,12 @@ class ChimSnapShots(object):
 		for vi, ti in cplist:
 			ta = tarray.take(ti, axis = 0)
 			vol, holes = enclosed_volume(varray, ta)
-			if not vol is None and vol < self.minvolume:
+			if not vol is None and vol < size:
 				mask.put(vi, 0)
 				hid += 1
 		surf.setTriangleMaskFromVertexMask(mask)
 		self.writeMessageToLog("Hid %d of %d connected surface components having volume < %.1f"
-			% (hid, len(cplist), self.minvolume))
+			% (hid, len(cplist), size))
 
 	# -----------------------------------------------------------------------------
 	def selected_surface_pieces(self):
@@ -259,6 +280,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def animate_icosahedral(self):
+		self.writeMessageToLog("animate_icosahedral")
 		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_radially(s)
@@ -344,6 +366,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def animate_asymmetric(self):
+		self.writeMessageToLog("animate_asymmetric")
 		self.hideDust(250)
 		for s in self.surfaces:
 			self.color_surface_height(s)
@@ -368,6 +391,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def animate_dsym(self):
+		self.writeMessageToLog("animate_dsym")
 		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_cylinder(s)
@@ -387,6 +411,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def animate_csym(self):
+		self.writeMessageToLog("animate_csym")
 		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_height(s)
@@ -423,6 +448,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def snapshot_icosahedral(self):
+		self.writeMessageToLog("snapshot_icosahedral")
 		image1 = self.volumepath+'.1.png'
 		image2 = self.volumepath+'.2.png'
 		image3 = self.volumepath+'.3.png'
@@ -449,6 +475,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def snapshot_ribosome(self):
+		self.writeMessageToLog("snapshot_ribosome")
 		self.hideDust(150)
 		for s in self.surfaces:
 			self.color_surface_height(s)
@@ -464,6 +491,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def snapshot_asymmetric(self):
+		self.writeMessageToLog("snapshot_asymmetric")
 		self.hideDust(150)
 		for s in self.surfaces:
 			self.color_surface_height(s)
@@ -488,6 +516,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def snapshot_dsym(self):
+		self.writeMessageToLog("snapshot_dsym")
 		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_cylinder(s)
@@ -508,6 +537,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def snapshot_csym(self):
+		self.writeMessageToLog("snapshot_csym")
 		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_height(s)
@@ -572,7 +602,14 @@ class ChimSnapShots(object):
 		if self.volumepath is None:
 			sys.exit(1)
 		self.rundir = os.path.dirname(self.volumepath)
-		self.chimlog = os.path.join(self.rundir, "chimera.log")
+		self.chimlog = os.path.join(self.rundir, "apChimSnapshot.log")
+
+		self.writeMessageToLog("\n\n")
+		self.writeMessageToLog("======================")
+		self.writeMessageToLog("Running apChimSnapshot")
+		self.writeMessageToLog("======================")
+		self.writeMessageToLog("\n")
+
 		### Temporary volume, low pass filtered
 		self.tmpfilepath = os.environ.get('CHIMTEMPVOL')
 		if self.tmpfilepath is None:
@@ -635,15 +672,11 @@ class ChimSnapShots(object):
 		self.fileformat = os.environ.get('CHIMFILEFORMAT')
 		if self.fileformat is None:
 			self.fileformat = "mrc"
-		### minimum volume
-		self.minvolume = os.environ.get('CHIMMINVOLUME')
-		if self.minvolume is None:
-			self.minvolume = 2500.0
 		### write to log
 		variables = (
 			'CHIMVOL', 'CHIMTEMPVOL', 'CHIMSYM', 'CHIMCONTOUR', 'CHIMCOLORS',
 			'CHIMTYPE', 'CHIMSILHOUETTE', 'CHIMBACK', 'CHIMZOOM', 'CHIMIMGSIZE',
-			'CHIMIMGFORMAT', 'CHIMFILEFORMAT', 'CHIMMINVOLUME',
+			'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
 		)
 		self.writeMessageToLog("Environmental data: ")
 		for var in variables:
@@ -656,7 +689,6 @@ class ChimSnapShots(object):
 if True:
 	chim = ChimSnapShots()
 	chim.renderVolume()
-
 	chimera.ChimeraExit()
 	chimera.ChimeraSystemExit()
 	sys.exit(1)
