@@ -25,6 +25,12 @@ class FileReference(object):
 		d = self.loader(fullname)
 		return d
 
+	def exists(self):
+		if self.path is None:
+			raise RuntimeError('no path set for %s' % (self.filename,))
+		fullname = os.path.join(self.path, self.filename)
+		return os.path.exists(fullname)
+
 	def setPath(self, path):
 		self.path = path
 
