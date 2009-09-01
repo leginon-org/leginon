@@ -310,7 +310,7 @@ def resetVirtualFrameBuffer(killall=False):
 	apDisplay.printMsg("Opening Xvfb port "+portstr)
 	xvfbcmd = (
 		"Xvfb :"+portstr
-		+" -once -ac -pn -screen 0 1200x1200x24 "
+		+" -kb -once -ac -pn -screen 0 1200x1200x24 "
 		+fontpath+securfile+rgbfile
 		+" &"
 	)
@@ -342,7 +342,7 @@ def killVirtualFrameBuffer(port=None):
 				xvfbcmd = "kill -9 "+bits[1]
 				proc = subprocess.Popen(xvfbcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 				proc.wait()
-				apDisplay.printMsg("Killed Xvfb on prt %d"%(port))
+				apDisplay.printMsg("Killed Xvfb on port %d"%(port))
 				return
 	return
 
