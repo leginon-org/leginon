@@ -184,6 +184,9 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 		apDisplay.printWarning("Chimera failed to generate images")
 		runChimeraScript(chimsnappath)
 
+	if not os.path.isfile(image1):
+		apDisplay.printWarning("Chimera failed to generate images, twice")
+
 	return
 
 #=========================================
