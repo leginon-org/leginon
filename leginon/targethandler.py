@@ -378,10 +378,10 @@ class TargetWaitHandler(TargetHandler):
 			eventdict = {tlistid:self.targetlistevents[tlistid]}
 		status = None
 		for tid, teventinfo in eventdict.items():
-			self.logger.info('Waiting for target list ID %s...' % (tid[1],))
+			self.logger.info('Waiting for target list ID %s...' % (tid,))
 			teventinfo['received'].wait()
 			status = teventinfo['status']
-			self.logger.info('Target ID %s has been processed.  Status: %s' % (tid[1],status))
+			self.logger.info('Target ID %s has been processed.  Status: %s' % (tid,status))
 			del self.targetlistevents[tid]
 		self.logger.info('%s done waiting' % (self.name,))
 		## if waiting for more than one, only returns status of final one
