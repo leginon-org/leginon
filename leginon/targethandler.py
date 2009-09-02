@@ -47,7 +47,7 @@ class TargetHandler(object):
 		return cmp(first['number'], second['number'])
 
 	def reportTargetListDone(self, targetlistdata, status):
-		listid = targetlistdata.dmid
+		listid = targetlistdata.dbid
 		self.logger.info('%s done with target list ID: %s, status: %s' % (self.name, listid, status))
 		e = event.TargetListDoneEvent(targetlistid=listid, status=status, targetlist=targetlistdata)
 		self.outputEvent(e)
@@ -357,7 +357,7 @@ class TargetWaitHandler(TargetHandler):
 		'''
 		Creates a threading event to be waited on for target list leginondata.
 		'''
-		tlistid = targetlistdata.dmid
+		tlistid = targetlistdata.dbid
 		self.targetlistevents[tlistid] = {}
 		self.targetlistevents[tlistid]['received'] = threading.Event()
 		self.targetlistevents[tlistid]['status'] = 'waiting'
