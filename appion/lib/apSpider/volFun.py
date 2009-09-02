@@ -55,4 +55,37 @@ def pdb2vol(pdbfile, apix, box, outfile, dataext=".spi"):
 
 	return
 
-
+#===============================
+def rotAndShiftVol(invol,outvol,rot=(0,0,0),center=(0,0,0),shift=(0.0,0.0,0.0),dataext=".spi",inMySpi=False):
+	if inMySpi is False:
+		mySpi = spyder.SpiderSession(dataext=dataext, logo=False, log=True)
+	else:
+		mySpi=inMySpi
+	vol1=spyder.fileFilter(invol)
+	tmpvol=spyder.fileFilter('temp')
+	vol3=spyder.fileFilter(outvol)
+	cleanlist = []
+	invol = vol1
+	if rot != (0,0,0):
+		outvol = tmpvol
+		rot = tuple(map((lambda x: float(x)), rot))
+		rotstr = '%.2f,%.2f,%.2f' % rot
+		center = tuple(map((lambda x: float(x)), center))
+		centerstr = '%.1f,%.1f,%.1f' % center
+		mySpi.toSpider("RT 3A",invol,outvol,rotstr,centerstr)
+		cleanlist.append(invol)
+		invol = tmpvol
+	if shift != (0,0,0):
+		outvol = vol3
+		shift = tuple(map((lambda x: float(x)), shift))
+		shiftstr = '%f.1,%f.1,%f.1' % shift
+		mySpi.toSpider("SH",invol,outvol,shiftstr)
+		cleanlist.append(invol)
+		invol = outvol
+	if outvol != vol3:
+		mySpi.toSpider("CP",invol,vol3)
+		
+	if inMySpi is False:
+		mySpi.close()
+	for cleanfile in cleanlist:
+		os.remove(cleanfile+'.spi')
