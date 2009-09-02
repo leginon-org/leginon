@@ -83,39 +83,40 @@ program main
 	!write (6,*) ' - local real space correlation'
 
 	! 1. read in filenames and parameters
-	!write (6,*) '>>> enter filename of the image file :'
+	write (6,*) '>>> enter filename of the image file :'
 	read (5,*) imagefile
 	!write (6,*) imagefile
 	PRINT*,"X ... image:    ",imagefile
 
-	!write (6,*) '>>> enter filename of the search template :'
+	write (6,*) '>>> enter filename of the search template :'
 	read (5,*) templatefile
 	PRINT*,"X ... template: ",templatefile
 	!write (6,*) templatefile
 
+	write (6,*) '>>> (for backward compat) enter any random float 0,1 :'
 	read (5,*) thresh
 
-	!write (6,*) '>>> enter sampling of the images in angstroms/pixel : '
+	write (6,*) '>>> enter pixelsize of the images in angstroms/pixel : '
 	read (5,*)   sampling
 	!write (6,*) sampling
 	PRINT*,"X ... A/pix:    ",sampling
 
-	!write (6,*) '>>> enter a diameter of particles (a) '
+	write (6,*) '>>> enter a diameter of particles (a) '
 	read (5,*)   diameter
 	!write (6,*) diameter
 	PRINT*,"X ... part diam:",diameter
 
-	!write (6,*) '>>> enter a runcode '
+	write (6,*) '>>> enter a runcode '
 	read (5,*)  runcode
 	!write (6,*) runcode
 	PRINT*,"X ... runcode:  ",runcode
 
-	!write (6,*) '>>> enter angle start, limit, stepsize '
+	write (6,*) '>>> enter angle start, limit, stepsize '
 	read (5,*) angstart,anglimit,angstepsize
 	!write(6,*) angstart,anglimit,angstepsize
 	PRINT*,"X ... angles:   ",angstart,anglimit,angstepsize
 
-	!write (6,*) '>>> enter border size '
+	write (6,*) '>>> enter border size '
 	read (5,*), bord
 	PRINT*,"X ... border:   ",bord
 
