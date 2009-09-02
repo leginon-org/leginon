@@ -45,8 +45,8 @@ class Launcher(node.Node):
 	def publishNodeClasses(self):
 		#reload(nodeclassreg)
 		nodeclassnames = nodeclassreg.getNodeClassNames()
-		d = leginondata.NodeClassesData(nodeclasses=nodeclassnames)
-		self.publish(d, pubevent=True)
+		self.nodeclasses = leginondata.NodeClassesData(nodeclasses=nodeclassnames)
+		self.publish(self.nodeclasses, pubevent=True)
 
 	def onNodeOrder(self, evt):
 		self.panel.setOrder(evt['order'])
