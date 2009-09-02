@@ -98,7 +98,7 @@ class TargetListDoneEvent(NotificationEvent):
 	'Event indicating target list is done'
 	def typemap(cls):
 		return NotificationEvent.typemap() + (
-			('targetlistid', tuple),
+			('targetlistid', int),
 			('status', str),
 			('targetlist', leginondata.ImageTargetListData),
 		)
