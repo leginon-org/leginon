@@ -872,9 +872,9 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"leginondata\")'";
 	$dbcheck = exec_over_ssh($host,$user,$pass,$cmd,True);
 	if (trim($dbcheck)=='') return "sinedon is not configure for leginondata";
-	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"appionData\")'";
+	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"appiondata\")'";
 	$dbcheck = exec_over_ssh($host,$user,$pass,$cmd,True);
-	if (trim($dbcheck)=='') return "sinedon is not configure for appionData";
+	if (trim($dbcheck)=='') return "sinedon is not configure for appiondata";
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
