@@ -73,6 +73,7 @@ class Test(appionScript.AppionScript):
 				alignp = apAlignment.getAlignParticle(stackp,alignstack)
 				shift = apAlignment.getAlignShift(alignp,alignpackage)
 				subtomodata = apTomo.getSubTomogramData(subtomorundata,stackp)
+				subtomofile = os.path.join(subtomodata['path']['path'],subtomodata['name']+'.rec')
 				subvolume = apTomo.getTomoVolume(subtomodata)
 				if subvolume is not None:
 					zcenter = volshape[0] / 2
@@ -83,7 +84,7 @@ class Test(appionScript.AppionScript):
 					if center > zcenter - ztolerance and center < zcenter + ztolerance:
 						i += 1
 						shiftz = zcenter - center
-						transformedvolume = apTomo.transformTomo(subvolume,alignpackage,alignp,shiftz,totalbin)
+						transformedvolume = apTomo.transformTomo(subvolume,subtomofile,alignpackage,alignp,shiftz,totalbin)
 						## write transformed mrc file to check the result
 						filename = os.path.join(self.params['rundir'],'./transformed%05d.mrc' %subtomoid)
 						mrc.write(transformedvolume,filename)
