@@ -86,18 +86,20 @@ def rescaleVolume(modelId, outfile, outbox, outpix, spider=False):
 	scale = modeldata['pixelsize']/outpix
 	if round(scale,2) != 1.:
 		resize=True
+	_rescaleVolume(initmodel, outfile, scale, (outbox,outbox,outbox), resize, spider)
 
+def _rescaleVolume(infile, outfile, scale, outboxtuple, resize=False, spider=False):
 	if resize is True:
-		emancmd = "proc3d %s %s scale=%f clip=%d,%d,%d" % (initmodel, outfile, scale, outbox, outbox, outbox)
+		emancmd = "proc3d %s %s scale=%f clip=%d,%d,%d" % (infile, outfile, scale, outboxtuple[0], outboxtuple[1], outboxtuple[2])
 		if spider is True:
 			emancmd+=" spidersingle"
 		apEMAN.executeEmanCmd(emancmd,verbose=True)
 	else:
 		if spider is True:
-			emancmd = "proc3d %s %s spidersingle" % (initmodel,outfile)
+			emancmd = "proc3d %s %s spidersingle" % (infile,outfile)
 			apEMAN.executeEmanCmd(emancmd,verbose=True)
 		else:
-			shutil.copy(initmodel,outfile)
+			shutil.copy(infile,outfile)
 
 #================
 def getModelDimensions(mrcfile):
