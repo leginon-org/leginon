@@ -536,14 +536,6 @@ class Data(newdict.TypedDict):
 		for key,value in original:
 			if isinstance(value, DataReference):
 				val = value.getData()
-				### if got new DataReference, first was bad
-				if isinstance(val, DataReference):
-					# replace my reference with new one
-					#self[key] = val
-					# !!! is this ok?
-					self.__setitem__(key, value, force=True)
-					# use new reference
-					val = val.getData()
 			else:
 				val = value
 			deref.append((key,val))
@@ -558,14 +550,6 @@ class Data(newdict.TypedDict):
 		for key, value in originalitems:
 			if isinstance(value, DataReference):
 				val = value.getData()
-				### if got new DataReference, first was bad
-				if isinstance(val, DataReference):
-					# replace my reference with new one
-					#self[key] = val
-					# !!! is this ok?
-					self.__setitem__(key, value, force=True)
-					# use new reference
-					val = val.getData()
 			else:
 				val = value
 			deref.append(val)
