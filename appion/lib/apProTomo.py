@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import math
+import numpy
 
 
 def parseTilt(tiltfile):
@@ -141,8 +142,8 @@ def writeRefineParamFile(refinedict,paramfile):
 		f.write('%s=%s\n' % (key, val))
 	f.close()
 
-def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix):
-	center = (1024,1024)
+def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix, cneter=(1024,1024)):
+	# need to get the center from the file when this is called
 	protomotltfile = protomoprefix+"-fitted.tlt"
 	imodtltfile = imodprefix+".prexg"
 	f=open(protomotltfile,'r')
@@ -150,6 +151,8 @@ def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix):
 	lines = f.readlines()
 	rotations = []
 	origins = []
+	tiltaz = 90.0
+	allaffines = []
 	for line in lines:
 		if (line.find('ORIGIN') >= 0):
 			items = line.split()
@@ -157,11 +160,31 @@ def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix):
 		elif (line.find('ROTATION') >= 0):
 			items = line.split()
 			rotations.append(float(items[-1]))
+		elif (line.find('TILT AZIMUTH') >= 0):
+			items = line.split()
+			tiltaz = float(items[-1])
+	#protomo tilt azimuth vertical is 90 deg, imod is 0 deg
+	tiltazrad = (tiltaz - 90.0) * 3.14159 / 180.0
+	tiltazaffine = numpy.matrix([[math.cos(tiltazrad),-math.sin(tiltazrad),0],[math.sin(tiltazrad),math.cos(tiltazrad),0],[0,0,1]])
+	shiftsum0 = 0
+	shiftsum1 = 0
 	for i in range(0,len(rotations)):
-		theta = rotations[i] * 3.14159 / 180.0
-		#theta = 0.0
-		shift = (origins[i][0]-center[0],origins[i][1]-center[1])
+		theta = - (rotations[i]) * 3.14159 / 180.0
+		rotationaffine = numpy.matrix([[math.cos(theta),-math.sin(theta),0],[math.sin(theta),math.cos(theta),0],[0,0,1]])
+		shiftaffine = numpy.matrix([[1,0,origins[i][0]],[0,1,origins[i][1]],[0,0,1]])
+		centeraffine = numpy.matrix([[1,0,center[0]],[0,1,center[1]],[0,0,1]])
+		totalaffine = shiftaffine.I * rotationaffine * tiltazaffine.I * centeraffine
+		imodaffine = totalaffine
+		allaffines.append(imodaffine)
+		shiftsum0 += imodaffine[0,2]
+		shiftsum1 += imodaffine[1,2]
+	# imod global shift need to be referenced to the average shift or the series
+	shiftavg0 = shiftsum0 / len(rotations)
+	shiftavg1 = shiftsum1 / len(rotations)
+	for i in range(0,len(rotations)):
+		imodaffine = allaffines[i]
+		shift = (imodaffine[0,2] - shiftavg0, imodaffine[1,2] - shiftavg1)
 		outline = '%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (
-			math.cos(theta),-math.sin(theta),math.sin(theta),math.cos(theta),-shift[0],-shift[1])
+			imodaffine[0,0],imodaffine[0,1],imodaffine[1,0],imodaffine[1,1],shift[0],shift[1])
 		fout.write(outline)
 	fout.close()
