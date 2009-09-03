@@ -71,8 +71,12 @@ class ScaleBar {
 	function display($h="") {
 		// --- display label / scale bar
 		$h = ($h) ? $h : $this->size;
-		$offsetbarlabelX=$this->offsetbarX+$this->nbpixels/2;
-		$offsetbarlabelY=$h-$this->offsetbarY-$this->labelfontsize*4;
+		$offsetbarlabelX = $this->offsetbarX + $this->nbpixels/2;
+		
+		$offsetbarlabelY = $h - $this->offsetbarY - $this->labelfontsize * 4;
+		if ($this->labelfontsize<3) {
+			$offsetbarlabelY -= 4;
+		}
 		$barX1 = $this->offsetbarX;
 		$barX2 = $this->nbpixels+$this->offsetbarX;
 		$barY1 = $h-$this->offsetbarY;

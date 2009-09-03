@@ -35,6 +35,10 @@ $path = $leginondata->getImagePath($sessionId);
 $filename = $leginondata->getFilenameFromId($imgId);
 $filesize = getFileSize($path.$filename, 2 );
 $fileinfo = mrcinfo($path.$filename);
+$mrc = mrcread($path.$filename);
+mrcupdateheader($mrc);
+$fileinfo = mrcgetinfo($mrc);
+mrcdestroy($mrc);
 $sessioninfo = $leginondata->getSessionInfo($sessionId);
 $presets = $leginondata->getPresets($imgId);
 

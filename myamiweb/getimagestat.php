@@ -12,12 +12,16 @@ if ($info) {
 	$stdev = $info['stdev'];
 } else {
 	$filename=$leginondata->getFilenameFromId($id, true);
-	$info = mrcinfo($filename);
+	$mrc = mrcread($path.$filename);
+	mrcupdateheader($mrc);
+	$info = mrcgetinfo($mrc);
+	mrcdestroy($mrc);
 	$min = $info['amin'];
 	$max = $info['amax'];
 	$mean = $info['amean'];
 	$stdev = $info['rms'];
 }
+
 function formatnumber($number) {
 	$number=number_format($number,1,'.','');
 	return $number;

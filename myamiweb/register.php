@@ -22,6 +22,7 @@ if ($_POST) {
 	$lastname=$_POST['lastname'];
 	$firstname=$_POST['firstname'];
 	$register = $dbemauth->register ($username, $password, $password2, $email, $lastname, $firstname);
+	echo "regis: $register ";
 
 	if ($register == 2) {
 		$displayform=false;

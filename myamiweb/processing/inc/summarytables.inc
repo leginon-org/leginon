@@ -152,7 +152,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	} else {
 		$display_keys['path']=$stackdata['path'];
 		$display_keys['stack file']= "<a target='stackview' HREF='viewstack.php?file="
-			."$stackfile&expId=$expId&stackId=$stackid'>".$stackdata['name']."</A>";
+			."$stackfile&expId=$expId&stackId=$stackid&ps=$mpix'>".$stackdata['name']."</A>";
 		# if stack was created by cenalignint, also view avg & bad stacks
 		if ($centered) {
 			$display_keys['iterative avgs']="<a target='stackview' HREF='viewstack.php?file=".$stackdata['path']

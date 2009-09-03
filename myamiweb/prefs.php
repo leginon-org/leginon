@@ -30,6 +30,7 @@ if ($_POST) {
 }
 $userinfo = $dbemauth->getInfo($username);
 $haspass = $dbemauth->hasPassword($username);
+print_r($userinfo);
 list($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $url) = array_values($userinfo); 
 $action="update";
 $checkpass=true;

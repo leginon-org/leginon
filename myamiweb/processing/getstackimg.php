@@ -1,4 +1,6 @@
 <?php
+require '../inc/scalebar.inc';
+
 $file_hed=$_GET['hed'];
 $file_img=$_GET['img'];
 $img_num=$_GET['n'];
@@ -60,6 +62,16 @@ $x2=strlen($text)*$xfont+1;
 $y2=$imgh;
 imagefilledrectangle ($img, $x1, $y1, $x2, $y2, $color );
 imagestring($img, $fontsize, 1, $y1, $text, $w);
+
+if (is_numeric(trim($_GET['ps'])) && $_GET['sb']==1) {
+	$ps = $_GET['ps'];
+	$size = imagesx($img);
+	$scalebar = new ScaleBar($img, $size, $ps);
+	$v = imagesy($img)-12;
+	$scalebar->setFontSize(2);
+	$scalebar->setoffsetbarY($v);
+	$scalebar->display();
+}
 
 $filename="image$img_num.$ext";
 header( "Content-type: $type ");

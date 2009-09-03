@@ -91,6 +91,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			$densitymax = MAX_PIXEL_VAL;
 			if ($type=="c") {
 				$mrcimg = mrcread($pic);
+				mrcupdateheader($mrcimg);
 				list($p['minpix'], $p['maxpix'])=mrccdfscale($mrcimg, $arg1, $arg2);
 				mrcdestroy($mrcimg);
 				
@@ -452,6 +453,10 @@ function getImageXML($xmlfile, $imageId, $preset, $params = array()) {
 			} else {
 
 				$info = mrcinfo($pic);
+				$mrc = mrcread($pic);
+				mrcupdateheader($mrc);
+				$fileinfo = mrcgetinfo($mrc);
+				mrcdestroy($mrc);
 				$minval = $info['amin'];
 				$maxval = $info['amax'];
 				$meanval = $info['amean'];

@@ -36,6 +36,7 @@ if ($subStackClassesString != "") {
 }
 
 $updateheader=($_GET['uh']==1) ? 1 : 0;
+$pixelsize=(is_numeric($_GET['ps'])) ? trim($_GET['ps']) : 0;
 
 $particle = new particledata();
 $maxangle = $particle->getMaxTiltAngle($expId);
@@ -124,6 +125,7 @@ $n_images = ($substack || $substacktype || $subStackClassesString != "") ? $numb
 	$stackoptions['updateheader']=$updateheader;
 	$stackoptions['plist']=$subprtls;
 	$stackoptions['stackinfoindex']=1;
+	$stackoptions['pixelsize']=$_GET['ps'];
 echo stackViewer($file_hed, $file_img, $n_images, $stackoptions);
 ?>
 
@@ -307,6 +309,7 @@ quality: <select id="quality">
 		<option value="90">jpeg 90</option>
 		<option value="png">png</option>
 	</select>
+scale bar:<input type="checkbox" id="scalebar" >
 <input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();">
 <?
 

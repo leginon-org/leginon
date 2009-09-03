@@ -591,9 +591,10 @@ function streamToArray($stream) {
 }
 
 function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
-	$optionkeys = array ('updateheader', 'plist', 'stackinfoindex');
+	$optionkeys = array ('updateheader', 'plist', 'stackinfoindex', 'pixelsize');
 	$plist=false;
 	$updateheader=false;
+	$pixelsize=0;
 	$stackinfoindex=0;
 	foreach ((array)$stackoptions as $k=>$v) {
 		if (in_array($k, $optionkeys)) {
@@ -624,6 +625,7 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 	var file_img=\"$file_img\"
 	var n_images=\"$n_images\"
 	var updateheader=\"$updateheader\"
+	var pixelsize=\"$pixelsize\"
 	var stackinfoindex=\"$stackinfoindex\"
 	var excludeimages=Array()
 	var selectimages=Array()
@@ -660,6 +662,7 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 	$javascript.= "
 	function addTile(wholemap, i, force) {
 		binning = $('binning').value
+		scalebar = ($('scalebar').checked) ? 1 : 0
 		t = $('quality').value
 		var tileId = \"img\"+i
 		var filename = 'getstackimg.php?'
@@ -669,6 +672,8 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 				+'&t='+t
 				+'&b='+binning
 				+'&uh='+updateheader
+				+'&ps='+pixelsize
+				+'&sb='+scalebar
 
 		if (typeof stackinfo == 'object' && stackinfo[i]) {
 			filename +='&i='+stackinfo[i]
