@@ -414,10 +414,7 @@ def bin2f(a, factor):
 	ystart = int( fft.shape[1]/2 * (1 - 1.0/factor))
 	yend   = int( fft.shape[1]/2 * (1 + 1.0/factor))
 	#print ("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
-	cutfft = fft[
-		xstart:xend,
-		ystart:yend,
-	]
+	cutfft = fft[xstart:xend, ystart:yend]
 	cutfft = numpy.fft.fftshift(cutfft)
 	#print cutfft.shape, fft.shape
 	binned = ffteng.itransform(cutfft)/float(factor**2)
