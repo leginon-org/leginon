@@ -3,11 +3,12 @@
 ### python imports
 import os
 import re
-import subprocess
-import numpy
-import random
+import sys
 import math
 import time
+import numpy
+import random
+import subprocess
 
 ### appion imports
 import appionScript
@@ -18,15 +19,22 @@ import apDatabase
 import apFile
 import apImage
 import apImagicFile
-import apIMAGIC
 import apParam
 import appiondata
 import apStack
+import apXmipp
 import apStackMeanPlot
+import apThread
 from pyami import mrc, imagefun
 from scipy import fftpack, ndimage, arange
 
 class createSyntheticDatasetScript(appionScript.AppionScript):
+
+	#=====================
+	def onInit(self):
+		### initialize variables that are expected to exist
+		self.envamp = None
+		self.deflist1 = []
 
 	#=====================
 	def setupParserOptions(self):
@@ -66,8 +74,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			action="store_false", help="DO NOT randomly flip the projections along with shifts and rotations")
 		self.parser.add_option("--kv", dest="kv", type="float", default=120,
 			help="KV of the microscope, needed for envelope function", metavar="INT")
-		self.parser.add_option("--cs", dest="cs", type="float", default=0.002,
-			help="spherical aberration of the microscope", metavar="FLOAT")
+		self.parser.add_option("--cs", dest="cs", type="float", default=2.0,
+			help="spherical aberration of the microscope (in mm)", metavar="FLOAT")
 		self.parser.add_option("--df1", dest="df1", type="float", default=-1.5,
 			help="defocus value 1 (represented as the mean if --randomdef & --randomdef-std specified)", metavar="FLOAT")
 		self.parser.add_option("--df2", dest="df2", type="float", default=-1.5,
@@ -82,7 +90,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			help="first level of noise, simulating beam damage & structural noise", metavar="FLOAT")
 		self.parser.add_option("--snrtot", dest="snrtot", type="float", default=0.06,
 			help="total signal-to-noise ratio, simulating beam damage, structural noise, & digitization", metavar="FLOAT")
-		self.parser.add_option("--envelope", dest="envelope", type="string",
+		self.parser.add_option("--envelope", dest="envelopefile", type="string",
 			help="you may apply any envelope function to the dataset, but it has to be a 2d .mrc file that represents envelope decay", metavar="STR")
 
 		### optional parameters (ACE2 correct & filtering)
@@ -107,7 +115,6 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			action="store_true", help="normalize images after creation of the dataset")
 
 		return
-
 
 	#=====================
 	def checkConflicts(self):
@@ -158,19 +165,15 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			apDisplay.printError("ACE2 estimation should only be used if you're doing correction as well, please use both ace2correct and ace2estimate")
 
 		### make sure amplitude correction file exists
-		if self.params['envelope'] is None:
-			self.params['envelope'] = os.path.join(apParam.getAppionDirectory(), "lib/envelopeImage.mrc")
-
-
+		if self.params['envelopefile'] is None:
+			self.params['envelopefile'] = os.path.join(apParam.getAppionDirectory(), "lib/envelopeImage.mrc")
 		return
-
 
 	#=====================
 	def center(self, image):
 		half = numpy.asarray(image.shape)/2
 		imagecent = ndimage.shift(image, half, mode='wrap', order=0)
 		return imagecent
-
 
 	#=====================
 	def real_fft2d(self, image, *args, **kwargs):
@@ -179,42 +182,46 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		fft = fftpack.fft2(padimage, *args, **kwargs)
 		return fft
 
-
 	#=====================
 	def inverse_real_fft2d(self, fft, *args, **kwargs):
 		return fftpack.ifft2(fft, *args, **kwargs).real
 
+	#=====================
+	def prepareEnvelope(self, scaleFactor=1.0):
+		envelope = self.params['envelopefile']
+		if envelope is None:
+			return
+		### read images
+		env = mrc.read(envelope)
+		### scale envelope
+		if abs(scaleFactor - 1.0) > 0.01:
+			print "scaling envelope by", scaleFactor
+			env = ndimage.zoom(env, zoom=scaleFactor, mode='nearest')
+		### shift center of envelope to the edges
+		envamp = self.center(env)
+		### mutliply real envelope function by image fft
+		self.envamp = (envamp - envamp.min()) / (envamp.max() - envamp.min())
 
 	#=====================
-	def applyEnvelope(self, inimage, outimage, scaleFactor=1):
+	def applyEnvelope(self, inimage, outimage, scaleFactor=1, msg=False):
 		"""
 		input path to image and envelope, output amplitude-adjusted image
 		"""
 
-		apDisplay.printColor("now applying envelope function to: "+inimage, "cyan")
+		if msg is True:
+			apDisplay.printColor("now applying envelope function to: "+inimage, "cyan")
 
-		envelope = self.params['envelope']
-		if envelope is None:
-			return
-			
+		if self.envamp is None:
+			self.prepareEnvelope(scaleFactor)
 
-		### read images
+		### read image
 		im = mrc.read(inimage)
-		env = mrc.read(envelope)
-
-		### scale envelope
-		if scaleFactor != 1:
-			env = ndimage.zoom(env, zoom=scaleFactor, mode='nearest')
 
 		### fourier transform
 		imfft = self.real_fft2d(im)
 
-		### shift center of envelope to the edges
-		envamp = self.center(env)
-
 		### mutliply real envelope function by image fft
-		envamp = (envamp - envamp.min()) / (envamp.max() - envamp.min())
-		newfft = envamp * imfft
+		newfft = self.envamp * imfft
 
 		### inverse transform
 		newimg = self.inverse_real_fft2d(newfft)
@@ -226,10 +233,9 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		mrc.write(newimg, outimage)
 
 		### workaround for now
-		time.sleep(1)
+		time.sleep(0.1)
 
 		return
-
 
 	#=====================
 	def setEulers(self):
@@ -239,7 +245,6 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		eulerlist.append((90,90))
 
 		return eulerlist
-
 
 	#=====================
 	def numProj(self, ang=5, sym='d7', with_mirror=False):
@@ -278,7 +283,6 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		return numproj
 
-
 	#=====================
 	def createProjections(self):
 		timestamp = apParam.makeTimestamp()
@@ -292,8 +296,9 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			projnum = int(random.random()*len(eulerlist))
 			alt = random.gauss(eulerlist[projnum][0], self.params['projstdev'])
 			az = random.gauss(eulerlist[projnum][1], self.params['projstdev'])
-			phi = random.random()*360.0-180.0
-#			phi = random.random()*360.0
+			#phi = random.random()*360.0-180.0
+			#phi = random.random()*360.0
+			phi = 0.0
 			f.write("%.8f\t%.8f\t%.8f\n"%(alt,az,phi))
 
 			### stats
@@ -327,8 +332,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		### project resized file
 		filename = os.path.join(self.params['rundir'], 'proj.img')
-		while os.path.isfile(filename):
-			apFile.removeStack(filename)
+		apFile.removeStack(filename)
 		emancmd = "project3d "+clipped+" out="+filename+" list="+eulerfile
 		t0 = time.time()
 		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
@@ -336,7 +340,6 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			%(apDisplay.timeString(time.time()-t0), 1.0e3 * (time.time()-t0)/float(self.params['projcount'])))
 
 		return filename
-
 
 	#=====================
 	def createProjectionsEmanProp(self):
@@ -369,10 +372,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		f = open(tempeulerfile, "r")
 		lines = f.readlines()
 		f.close()
-		while os.path.isfile(temp):
-			apFile.removeStack(temp)
-		while os.path.isfile(tempeulerfile):
-			apFile.removeFile(tempeulerfile)
+		apFile.removeStack(temp)
+		apFile.removeFile(tempeulerfile)
 		strip = [line.strip() for line in lines[2:]]   ### first two lines are EMAN commands
 		iters = int(math.ceil(float(self.params['projcount']) / len(strip)))
 		self.params['projcount'] = iters * len(strip)
@@ -391,8 +392,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		f.close()
 
 		### create actual projections
-		while os.path.isfile(filename):
-			apFile.removeStack(filename)
+		apFile.removeStack(filename)
 		t0 = time.time()
 		emancmd = "project3d "+clipped+" out="+filename+" list="+eulerfile
 		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
@@ -405,13 +405,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		return filename
 
-
 	#=====================
 	def shiftAndRotate(self, filename):
 		### random shifts and rotations to a stack
 		shiftstackname = filename[:-4]+"_rand.hed"
-		while os.path.isfile(shiftstackname):
-			apFile.removeStack(shiftstackname)
+		apFile.removeStack(shiftstackname)
 		shiftfile = os.path.join(self.params['rundir'], "shift_rotate.lst")
 		if os.path.isfile(shiftfile):
 			apFile.removeFile(shiftfile)
@@ -441,14 +439,14 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 	#=====================
 	def readFileStats(self, filename):
-		if filename[-4:] == ".mrc"
+		if filename[-4:] == ".mrc":
 			### mrc
 			data = mrc.read(filename)
 			mean = data.mean()
 			stdev = data.std()
 		elif filename[-4:] == ".hed" or filename[-4:] == ".img":
 			### imagic
-			data = apImagicFile.readImagic(filename)
+			data = apImagicFile.readImagic(filename, last=self.params['filesperdir'])['images']
 			mean = data.mean()
 			stdev = data.std()
 
@@ -462,120 +460,104 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		return mean, stdev
 
-
 	#=====================
-	def addNoise(self, filename, noiselevel, SNR):
+	def addNoise(self, oldstack, noiselevel, SNR):
 		### create new image with modified SNR
-		basename, extension = os.path.splitext(filename)
+		basename, extension = os.path.splitext(oldstack)
 		formattedsnr = "%.2f" % (SNR)
-		newname = basename+"_snr"+formattedsnr+".hed"
-		while os.path.isfile(newname):
-			apFile.removeStack(newname)
-		emancmd = "proc2d "+filename+" "+newname+" addnoise="+str(noiselevel)
+		newstack = basename+"_snr"+formattedsnr+".hed"
+		apFile.removeStack(newstack)
+		emancmd = "proc2d "+oldstack+" "+newstack+" addnoise="+str(noiselevel)
 		apEMAN.executeEmanCmd(emancmd)
 
-		return newname
-
+		return newstack
 
 	#=====================
-	def breakupStackIntoSingleFiles(self, stackfile, partdir="partfiles", numpart=None):
+	def getListOfDefocuses(self, numpart):
 		"""
-		takes the stack file and creates single mrc files ready for processing
+		same as createRawMicrographs with creating micrographs
 		"""
-		os.chdir(self.params['rundir'])
-		apDisplay.printColor("Breaking up IMAGIC into single files, this can take a while", "cyan")
+		### these are for application
+		self.deflist1 = []
+		self.deflist2 = []
 
-		starttime = time.time()
-		filesperdir = self.params['filesperdir']
-		if numpart is None:
-			numpart = apFile.numImagesInStack(stackfile)
-		apParam.createDirectory(partdir)
+		### these are for correction
+		self.deflist1c = []
+		self.deflist2c = []
 
-		self.params['numdir'] = self.createSubFolders(partdir, numpart, filesperdir)
-		apDisplay.printMsg("Splitting "+str(numpart)+" particles into "+str(self.params['numdir'])+" folders with "
-			+str(filesperdir)+" particles per folder")
-		subdir = 0
+		### loop over particles
+		for partnum in range(numpart):
+			### run ace2 correction, set defocus parameters early, i.e. once for every micrograph
+			if self.params['randomdef'] is True:
+				randomfloat = random.gauss(0,self.params['randomdef_std'])
+				df1 = self.params['df1'] + randomfloat * 1e-06
+				df2 = self.params['df2'] + randomfloat * 1e-06
+			else:
+				df1 = self.params['df1']
+				df2 = self.params['df2']
+			self.deflist1.append(df1)
+			self.deflist2.append(df2)
 
-		if not os.path.isfile(stackfile):
-			apDisplay.printError("stackfile does not exist: "+stackfile)
+			if self.params['ace2correct_rand'] is True and self.params['ace2correct_std'] is not None:
+				randomwiggle = random.gauss(0, self.params['ace2correct_std'])
+				df1w = df1 + randomwiggle * 1e-06
+				df2w = df2 + randomwiggle * 1e-06
+				self.deflist1c.append(df1)
+				self.deflist2c.append(df2)
+			elif self.params['ace2correct'] is True :
+				self.deflist1c.append(df1)
+				self.deflist2c.append(df2)
 
-		### make particle files
-		partlistdocfile = os.path.join(self.params['rundir'], "partlist.lst")
-		f = open(partlistdocfile, "w")
-		i = 0
-		j = 0
+		### write defocus lists to file for ctf application
+		applydefocusfile = os.path.join(self.params['rundir'], "defocuslist_application.lst")
+		correctdefocusfile = os.path.join(self.params['rundir'], "defocuslist_correction.lst")
+		af = open(applydefocusfile, "w")
+		cf = open(correctdefocusfile, "w")
+		af.write("projection\tdefocus1\tdefocus2\tastigmatism\n")
+		cf.write("projection\tdefocus1\tdefocus2\tastigmatism\n")
+		n = 0
+		while n < numpart:
+			af.write("%d\t%.9f\t%.9f\t%.3f\n"
+				%(n, self.deflist1[n], self.deflist2[n], self.params['astigmatism']))
+			if self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True:
+				cf.write("%d\t%.9f\t%.9f\t%.3f\n"
+					%(n, self.deflist1c[n], self.deflist2c[n], self.params['astigmatism']))
+			n += 1
+		af.close()
+		cf.close()
 
-		curdir = os.path.join(partdir,str(subdir))
-		numsubstacks = math.ceil(float(numpart) / float(filesperdir))
+		return
 
-		t0 = time.time()
-		stackimages = {}
-		filesperdir = int(filesperdir)
-
-		while i < numpart:
-			if (i) % filesperdir == 0:
-				subdir += 1
-				curdir = os.path.join(partdir,str(subdir))
-				esttime = (time.time()-t0)/float(i+1)*float(numpart-i)
-				apDisplay.printMsg("new directory: '"+curdir+"' at particle "+str(i)+" of "+str(numpart)
-					+", "+apDisplay.timeString(esttime)+" remain")
-
-				### use EMAN to breakup large stack into substack
-				path = os.path.dirname(stackfile)
-				substack = os.path.join(path, "substack"+str(j))+".hed"
-				emancmd = "proc2d "+stackfile+" "+substack+" first="+str(filesperdir * j)+" last="+str(filesperdir * (j+1) - 1)
-				apEMAN.executeEmanCmd(emancmd)
-				stackimages = apImagicFile.readImagic(substack)
-				j += 1
-			elif numpart < filesperdir:
-				stackimages = apImagicFile.readImagic(stackfile)
-
-			### Scott's imagic reader and Neil's mrc writer, 38 sec for 9000 particles
-			partfile = os.path.join(partdir,str(subdir),"part%06d.mrc"%(i))
-			k = i - (filesperdir * (j-1))
-			partimg = stackimages['images'][k]
-			mrc.write(partimg, partfile)
-			f.write(os.path.abspath(partfile)+" 1\n")
-			i += 1
-
-		f.close()
-
-		subdir = os.path.dirname(substack)
-		syscmd = "rm -f "+subdir+"/substack*"
-		proc = subprocess.Popen(syscmd, shell=True)
-		proc.wait()
-		apDisplay.printColor("finished breaking stack in "+apDisplay.timeString(time.time()-starttime), "cyan")
-
-		return partlistdocfile
-
-
+	"""
 	#=====================
 	def createRawMicrographs(self, stack, noiselevel):
+		import apIMAGIC
+
 		### create micrograph directory
-		apParam.makedirs(os.path.join(self.params['rundir'], "micrographs"))
-		os.chdir(os.path.join(self.params['rundir'], "micrographs"))
+		microdir = os.path.join(self.params['rundir'], "micrographs")
+		apParam.createDirectory(microdir)
+		os.chdir(microdir)
 
 		basenum = int(self.params['projcount']) / self.params['projpergraph'] ### can probably give as option later as well
 		remainder = int(self.params['projcount']) % self.params['projpergraph']
 
-		imgcount = 0
-		mcount = 1
-
 		### these are for application
-		defocuslist1 = []
-		defocuslist2 = []
-		astigmatismlist = []
+		self.deflist1 = []
+		self.deflist2 = []
+		self.astigist = []
 
 		### these are for correction
-		defocuslist1c = []
-		defocuslist2c = []
-		astigmatismlistc = []
+		self.deflist1c = []
+		self.deflist2c = []
+		self.astigistc = []
 
+		imgcount = 0
+		mcount = 1
 		for item in range(basenum):
-			partstack = os.path.join(self.params['rundir'], "micrographs", "stack.img")
-			while os.path.isfile(partstack):
-				apFile.removeStack(partstack)
-			time.sleep(1) ### workaround for now, encountering problems between removing and creating stack
+			partstack = os.path.join(microdir, "stack.img")
+			apFile.removeStack(partstack)
+
+			time.sleep(0.1) ### workaround for now, encountering problems between removing and creating stack
 			emancmd = "proc2d "+stack+" "+partstack+" first="+str(imgcount)+" last="+str(imgcount+self.params['projpergraph']-1)+" norm"
 			apEMAN.executeEmanCmd(emancmd)
 			batchfile = self.createImagicBatchFile(mcount)
@@ -588,17 +570,18 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: createMicrograph.log")
 
 			### add noise to micrographs
-#			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph"+str(mcount)+".hed")
+			#micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph"+str(mcount)+".hed")
 			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph.hed")
 			noisygraph = micrograph+".noise.mrc"
 			while os.path.isfile(noisygraph):
-#				apDisplay.printWarning("removing file "+noisygraph)
+				#apDisplay.printWarning("removing file "+noisygraph)
 				apFile.removeFile(noisygraph)
 			emancmd = "proc2d "+micrograph+" "+noisygraph+" addnoise="+str(noiselevel)
 			apEMAN.executeEmanCmd(emancmd)
 
+			#micrographlist.append(noisygraph)
+
 			imgcount += self.params['projpergraph']
-#			micrographlist.append(noisygraph)
 
 			### run ace2 correction, set defocus parameters early, i.e. once for every micrograph
 			if self.params['randomdef'] is True:
@@ -609,19 +592,19 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				df1 = self.params['df1']
 				df2 = self.params['df2']
 
-#			ace2cmd = "ace2correct.exe -img "+image+" -kv "+str(self.params['kv'])+" -cs "+\
 				str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
 				str(df2)+","+str(self.params['astigmatism'])+" -apply -out="+self.params['rundir']
-			ace2cmd = "ace2correct.exe -img "+noisygraph+" -kv "+str(self.params['kv'])+" -cs "+\
+			ace2cmd = self.ace2correct+" -img "+noisygraph+" -kv "+str(self.params['kv'])+" -cs "+\
 				str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
 				str(df2)+","+str(self.params['astigmatism'])+" -apply -out="+self.params['rundir']
 			self.executeAce2Cmd(ace2cmd)
-#			ctfappliedgraph = image+".corrected.mrc"
+			#ctfappliedgraph = image+".corrected.mrc"
 			ctfappliedgraph = noisygraph+".corrected.mrc"
+
 			for num in range(self.params['projpergraph']): ### write defocus for each projection
-				defocuslist1.append(df1)
-				defocuslist2.append(df2)
-				astigmatismlist.append(self.params['astigmatism'])
+				self.deflist1.append(df1)
+				self.deflist2.append(df2)
+				self.astigist.append(self.params['astigmatism'])
 
 			### apply envelope
 			outimage = ctfappliedgraph+".ampcorrected.mrc"
@@ -643,7 +626,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				### use ACE2 to estimate the defoci that were applied to the raw micrographs
 				ace2cmd = "ace2.exe -i "+noisygraph2+" -a "+str(self.params['apix'])+" -c "+\
 					str(self.params['cs'] * 1000 )+" -k "+str(self.params['kv'])+" -b 2"
-				self.executeAce2Cmd(ace2cmd)
+				self.executeAce2Cmd(ace2cmd) /home/vossman/appion/bin/ace2correct.exe -img /ami/data00/appion/09aug06a/syntheticData/dataset1/partfiles/1/part000005.mrc.corrected.mrc.ampcorrected.mrc -kv 120 -cs 2.0 -apix 0.975 -df -0.000001000,-0.000002000,0.000 -wiener 0.1
+/ami/data00/appion/09aug06a/syntheticData/dataset1/partfiles/1/part000006.mrc
+ACE2: /home/vossman/appion/bin/ace2correct.exe -img /ami/data00/appion/09aug06a/syntheticData/dataset1/partfiles/1/part000006.mrc -kv 120 -cs 2.0 -apix 0.975 -df -0.000001000,-0.000002000,0.000 -apply
+now applying envelope function to: /ami/data00/appion/09aug06a/syntheticData/dataset1/partfiles/1/part000006.mrc.corrected.mrc
+ACE2: /home/vossman/appion/bin/ace2correct.exe -img /ami/data00/appion/09aug06a/syntheticData/dataset1/partfiles/1/part000006.mrc.corrected.mrc.ampcorrected.mrc -k
 				ctfparamspath = noisygraph2+".ctf.txt"
 				ctffile = open(ctfparamspath, 'r')
 				lines = ctffile.readlines()
@@ -655,43 +642,43 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				df2c = deflist[3]
 				astigmatismc = deflist[4]
 				for num in range(self.params['projpergraph']):
-					defocuslist1c.append(df1c)
-					defocuslist2c.append(df2c)
-					astigmatismlistc.append(astigmatismc)
+					self.deflist1c.append(df1c)
+					self.deflist2c.append(df2c)
+					self.astigistc.append(astigmatismc)
 				### and now correct
-				ace2cmd = "ace2correct.exe -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
+				ace2cmd = self.ace2correct+" -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
 					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1c)+","+\
 					str(df2c)+","+str(astigmatismc)+" -wiener 0.1"
 				self.executeAce2Cmd(ace2cmd)
 				correctedgraph = noisygraph2+".corrected.mrc"
-#				micrographlist.append(correctedgraph)
+				#micrographlist.append(correctedgraph)
 			elif self.params['ace2correct'] is True and self.params['ace2estimate'] is False:
 				for num in range(self.params['projpergraph']):
-					defocuslist1c.append(df1)
-					defocuslist2c.append(df2)
-					astigmatismlistc.append(self.params['astigmatism'])
-				ace2cmd = "ace2correct.exe -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
+					self.deflist1c.append(df1)
+					self.deflist2c.append(df2)
+					self.astigistc.append(self.params['astigmatism'])
+				ace2cmd = self.ace2correct+" -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
 					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
 					str(df2)+","+str(self.params['astigmatism'])+" -wiener 0.1"
 				self.executeAce2Cmd(ace2cmd)
 				correctedgraph = noisygraph2+".corrected.mrc"
-#				micrographlist.append(correctedgraph)
+				#micrographlist.append(correctedgraph)
 			elif self.params['ace2correct_rand'] is True and self.params['ace2correct_std'] is not None:
 				randomwiggle = random.gauss(0, self.params['ace2correct_std'])
 				df1w = df1 + randomwiggle * 1e-06
 				df2w = df2 + randomwiggle * 1e-06
 				for num in range(self.params['projpergraph']):
-					defocuslist1c.append(df1w)
-					defocuslist2c.append(df2w)
-					astigmatismlistc.append(self.params['astigmatism'])
-				ace2cmd = "ace2correct.exe -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
+					self.deflist1c.append(df1w)
+					self.deflist2c.append(df2w)
+					self.astigistc.append(self.params['astigmatism'])
+				ace2cmd = self.ace2correct+" -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
 					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1w)+","+\
 					str(df2w)+","+str(self.params['astigmatism'])+" -wiener 0.1"
 				self.executeAce2Cmd(ace2cmd)
 				correctedgraph = noisygraph2+".corrected.mrc"
-#				micrographlist.append(correctedgraph)
-#			else:
-#				micrographlist.append(noisygraph2)
+			#	micrographlist.append(correctedgraph)
+			#else:
+			#	micrographlist.append(noisygraph2)
 
 			mcount += 1
 
@@ -700,8 +687,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		if remainder != 0:
 			remstack = os.path.join(self.params['rundir'], "micrographs", "stack.img")
 			emancmd = "proc2d "+stack+" "+remstack+" first="+str(imgcount)+" last="+str(imgcount+remainder-1)+" norm"
-			while os.path.isfile(remstack):
-				apFile.removeStack(remstack)
+			apFile.removeStack(remstack)
 			apEMAN.executeEmanCmd(emancmd)
 
 			batchfile = self.createImagicBatchFile(mcount)
@@ -714,7 +700,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: createMicrograph.log")
 
 			### add noise to micrograph
-#			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph"+str(mcount)+".hed")
+			#micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph"+str(mcount)+".hed")
 			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph.hed")
 			noisygraph = micrograph+".noise.mrc"
 			while os.path.isfile(noisygraph):
@@ -722,7 +708,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				apFile.removeFile(noisygraph)
 			emancmd = "proc2d "+micrograph+" "+noisygraph+" addnoise="+str(noiselevel)
 			apEMAN.executeEmanCmd(emancmd)
-#			micrographlist.append(noisygraph)
+			#micrographlist.append(noisygraph)
 
 			### run ace2 correction, set defocus parameters early, i.e. once for every micrograph
 			if self.params['randomdef'] is True:
@@ -733,19 +719,19 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				df1 = self.params['df1']
 				df2 = self.params['df2']
 
-#			ace2cmd = "ace2correct.exe -img "+image+" -kv "+str(self.params['kv'])+" -cs "+\
+			#ace2cmd = self.ace2correct+" -img "+image+" -kv "+str(self.params['kv'])+" -cs "+\
 				str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
 				str(df2)+","+str(self.params['astigmatism'])+" -apply -out="+self.params['rundir']
-			ace2cmd = "ace2correct.exe -img "+noisygraph+" -kv "+str(self.params['kv'])+" -cs "+\
+			ace2cmd = self.ace2correct+" -img "+noisygraph+" -kv "+str(self.params['kv'])+" -cs "+\
 				str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
 				str(df2)+","+str(self.params['astigmatism'])+" -apply -out="+self.params['rundir']
 			self.executeAce2Cmd(ace2cmd)
-#			ctfappliedgraph = image+".corrected.mrc"
+			#ctfappliedgraph = image+".corrected.mrc"
 			ctfappliedgraph = noisygraph+".corrected.mrc"
 			for num in range(self.params['projpergraph']): ### write defocus for each projection
-				defocuslist1.append(df1)
-				defocuslist2.append(df2)
-				astigmatismlist.append(self.params['astigmatism'])
+				self.deflist1.append(df1)
+				self.deflist2.append(df2)
+				self.astigist.append(self.params['astigmatism'])
 
 			### apply envelope
 			outimage = ctfappliedgraph+".ampcorrected.mrc"
@@ -779,48 +765,47 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				df2c = deflist[3]
 				astigmatismc = deflist[4]
 				for num in range(self.params['projpergraph']):
-					defocuslist1c.append(df1c)
-					defocuslist2c.append(df2c)
-					astigmatismlistc.append(astigmatismc)
+					self.deflist1c.append(df1c)
+					self.deflist2c.append(df2c)
+					self.astigistc.append(astigmatismc)
 				### and now correct
-				ace2cmd = "ace2correct.exe -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
+				ace2cmd = self.ace2correct+" -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
 					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1c)+","+\
 					str(df2c)+","+str(astigmatismc)+" -wiener 0.1"
 				self.executeAce2Cmd(ace2cmd)
 				correctedgraph = noisygraph2+".corrected.mrc"
-#				micrographlist.append(correctedgraph)
+				#micrographlist.append(correctedgraph)
 			elif self.params['ace2correct'] is True and self.params['ace2estimate'] is False:
 				for num in range(self.params['projpergraph']):
-					defocuslist1c.append(df1)
-					defocuslist2c.append(df2)
-					astigmatismlistc.append(self.params['astigmatism'])
-				ace2cmd = "ace2correct.exe -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
+					self.deflist1c.append(df1)
+					self.deflist2c.append(df2)
+					self.astigistc.append(self.params['astigmatism'])
+				ace2cmd = self.ace2correct+" -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
 					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
 					str(df2)+","+str(self.params['astigmatism'])+" -wiener 0.1"
 				self.executeAce2Cmd(ace2cmd)
 				correctedgraph = noisygraph2+".corrected.mrc"
-#				micrographlist.append(correctedgraph)
+				#micrographlist.append(correctedgraph)
 			elif self.params['ace2correct_rand'] is True and self.params['ace2correct_std'] is not None:
 				randomwiggle = random.gauss(0, self.params['ace2correct_std'])
 				df1w = df1 + randomwiggle * 1e-06
 				df2w = df2 + randomwiggle * 1e-06
 				for num in range(self.params['projpergraph']):
-					defocuslist1c.append(df1w)
-					defocuslist2c.append(df2w)
-					astigmatismlistc.append(self.params['astigmatism'])
-				ace2cmd = "ace2correct.exe -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
+					self.deflist1c.append(df1w)
+					self.deflist2c.append(df2w)
+					self.astigistc.append(self.params['astigmatism'])
+				ace2cmd = self.ace2correct+" -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
 					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1w)+","+\
 					str(df2w)+","+str(self.params['astigmatism'])+" -wiener 0.1"
 				self.executeAce2Cmd(ace2cmd)
 				correctedgraph = noisygraph2+".corrected.mrc"
-#				micrographlist.append(correctedgraph)
-#			else:
-#				micrographlist.append(noisygraph2)
+			#	micrographlist.append(correctedgraph)
+			#else:
+			#	micrographlist.append(noisygraph2)
 
 		self.params['numgraphs'] = mcount
 
-		return defocuslist1, defocuslist2, astigmatismlist, defocuslist1c, defocuslist2c, astigmatismlistc
-
+		return
 
 	#=====================
 	def createImagicBatchFile(self, mcount):
@@ -869,7 +854,6 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		return batchfile
 
-
 	#=====================
 	def createSubFolders(self, partdir, numpart, filesperdir):
 		i = 0
@@ -880,109 +864,192 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			i += filesperdir
 
 		return dirnum
+	"""
 
+	#======================
+	def getACE2Path(self):
+		exename = 'ace2correct.exe'
+		ace2exe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+		if not os.path.isfile(ace2exe):
+			ace2exe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
+		if not os.path.isfile(ace2exe):
+			apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
+		return ace2exe
 
 	#=====================
-	def applyEnvelopeAndCTF(self, noisystack, defocuslist1, defocuslist2, astigmatismlist, defocuslist1c, defocuslist2c, astigmatismlistc):
-		### apply envelope function to each mrc file
-		numpart = apFile.numImagesInStack(noisystack)
-		filesperdir = self.params['filesperdir']
-		i = 0			### for number of particles
-		j = 0			### for number of subdirectories
-		basedir = self.params['rundir']
-		t0 = time.time()
+	def applyCTFToDocFile(self, indocfile):
+		apDisplay.printMsg("Applying CTF to particles")
 
-		correctedpartlist = []
-		while i < numpart:
-
-			### do this only when a new directory is encountered
-			if (i) % filesperdir == 0:
-
-				### rundir gets changed several times in order to accomodate amplitude correction script
-				self.params['rundir'] = basedir
-				if not os.path.exists(os.path.join(self.params['rundir'], 'partfiles', str(j+1))):
-					apDisplay.printError("inconsistency with number of subdirectories in /partfiles")
-				else:
-					self.params['rundir'] = os.path.join(self.params['rundir'], 'partfiles', str(j+1))
-				esttime = (time.time()-t0)/float(i+1)*float(numpart-i)
-				apDisplay.printMsg("new directory: '"+self.params['rundir']+"' at particle "+str(i)+" of "+str(numpart)
-					+", "+apDisplay.timeString(esttime)+" remain")
-				os.chdir(self.params['rundir'])	### ace2 workaround
-				j += 1
+		inf = open(indocfile, 'r')
+		cmdlist = []
+		partnum = 0
+		for line in inf:
+			### get filename
+			partnum += 1
+			filename = line.strip().split()[0]
 
 			### apply CTF using ACE2
-			noisyimage = os.path.join(self.params['rundir'], "part%06d.mrc"%(i))
+			ace2cmd = (self.ace2correct+" -img %s -kv %d -cs %.1f -apix %.3f -df %.9f,%.9f,%.3f -apply"
+				%(filename, self.params['kv'], self.params['cs'], self.params['apix'], 
+				self.deflist1[partnum-1], self.deflist2[partnum-1], self.params['astigmatism']))
+			cmdlist.append(ace2cmd)
+		numpart = partnum
+		inf.close()
 
-			ace2cmd = "ace2correct.exe -img "+noisyimage+" -kv "+str(self.params['kv'])+" -cs "+\
-				str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(defocuslist1[i])+","+\
-				str(defocuslist2[i])+","+str(astigmatismlist[i])+" -apply"
-			self.executeAce2Cmd(ace2cmd)
-			ctfapplied = noisyimage+".corrected.mrc"
+		### thread the commands
+		t0 = time.time()
+		apThread.threadCommands(cmdlist)
+		timeper = (time.time()-t0)/float(numpart)
+		apDisplay.printColor("Total time %s"%(apDisplay.timeString(time.time()-t0)), "green")
+		apDisplay.printColor("Time per particle %s"%(apDisplay.timeString(timeper)), "green")
 
-			### apply envelope function
-			ampcorrected = ctfapplied+".ampcorrected.mrc"
-			scaleFactor =  self.params['box'] / float(4096)
-			self.applyEnvelope(ctfapplied, ampcorrected, scaleFactor=scaleFactor)			
-			if self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True:
-				### now correct CTF using estimated parameters from micrograph
-				ace2cmd = "ace2correct.exe -img "+ampcorrected+" -kv "+str(self.params['kv'])+" -cs "+\
-						str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(defocuslist1c[i])+","+\
-						str(defocuslist2c[i])+","+str(astigmatismlistc[i])+" -wiener 0.1"
-				self.executeAce2Cmd(ace2cmd)
-				ctfcorrected = ampcorrected+".corrected.mrc"
-				correctedpartlist.append(ctfcorrected)
-			else:
-				correctedpartlist.append(ampcorrected)
+		### check for the files, write to doc file
+		inf = open(indocfile, 'r')
+		outdocfile = os.path.splitext(indocfile)[0]+".apply.lst"
+		outf = open(outdocfile, 'w')
+		for line in inf:
+			### get filename
+			filename = line.strip().split()[0]
+			newfile = filename+".corrected.mrc"
+			if not os.path.isfile(newfile):
+				apDisplay.printError("Ace 2 failed")
+			outf.write(newfile+"\t1\n")
+		inf.close()
+		outf.close()
 
-			i += 1
+		return outdocfile
 
-		### exit while loops, change to basedir
-		self.params['rundir'] = basedir
+	#=====================
+	def applyEnvelopToDocFile(self, indocfile):
+		apDisplay.printMsg("Applying CTF to particles")
 
-		### write defocus lists to file for ctf application
-		n = 0
-		defocusfile = os.path.join(self.params['rundir'], "defocuslist_application.lst")
-		f = open(defocusfile, "w")
-		f.write("projection \t")
-		f.write("defocus1 \t")
-		f.write("defocus2 \t")
-		f.write("astigmatism \t\n")
-		while n < self.params['projcount']:
-			f.write(str(n)+"\t")
-			f.write(str(defocuslist1[n])+"\t")
-			f.write(str(defocuslist2[n])+"\t")
-			f.write(str(astigmatismlist[n])+"\t\n")
-			n += 1
-		f.close()
+		inf = open(indocfile, 'r')
+		outdocfile = os.path.splitext(indocfile)[0]+".envelop.lst"
+		outf = open(outdocfile, 'w')
+		cmdlist = []
+		partnum = 0
+		scaleFactor =  float(self.params['box']) / 4096.0
+		t0 = time.time()
+		for line in inf:
+			### get filename
+			partnum += 1
+			filename = line.strip().split()[0]
+			newfile = os.path.splitext(filename)[0]+".envelop.mrc"
 
-		### write defocus lists to file for ctf correction
+			self.applyEnvelope(filename, newfile, scaleFactor=scaleFactor, msg=False)
+
+			if not os.path.isfile(newfile):
+				apDisplay.printError("Ace 2 failed")
+			outf.write(newfile+"\t1\n")
+		numpart = partnum
+		inf.close()
+		outf.close()
+		timeper = (time.time()-t0)/float(numpart)
+		apDisplay.printColor("Total time %s"%(apDisplay.timeString(time.time()-t0)), "green")
+		apDisplay.printColor("Time per particle %s"%(apDisplay.timeString(timeper)), "green")
+
+
+		return outdocfile
+
+	#=====================
+	def correctCTFToDocFile(self, indocfile):
+		apDisplay.printMsg("Applying CTF to particles")
+
+		inf = open(indocfile, 'r')
+		cmdlist = []
+		partnum = 0
+		for line in inf:
+			### get filename
+			partnum += 1
+			sline = line.strip()
+			if not sline:
+				continue
+			filename = sline.split()[0]
+
+			### correct CTF using ACE2
+			ace2cmd = (self.ace2correct+" -img %s -kv %d -cs %.1f -apix %.3f -df %.9f,%.9f,%.3f -wiener 0.1"
+				%(filename, self.params['kv'], self.params['cs'], self.params['apix'], 
+				self.deflist1c[partnum-1], self.deflist2c[partnum-1], self.params['astigmatism']))
+			cmdlist.append(ace2cmd)
+
+		numpart = partnum
+		inf.close()
+
+		### thread the commands
+		t0 = time.time()
+		apThread.threadCommands(cmdlist)
+		timeper = (time.time()-t0)/float(numpart)
+		apDisplay.printColor("Total time %s"%(apDisplay.timeString(time.time()-t0)), "green")
+		apDisplay.printColor("Time per particle %s"%(apDisplay.timeString(timeper)), "green")
+
+		### check for the files, write to doc file
+		inf = open(indocfile, 'r')
+		outdocfile = os.path.splitext(indocfile)[0]+".correct.lst"
+		outf = open(outdocfile, 'w')
+		for line in inf:
+			### get filename
+			filename = line.strip().split()[0]
+			newfile = filename+".corrected.mrc"
+			if not os.path.isfile(newfile):
+				apDisplay.printError("Ace 2 failed")
+			outf.write(newfile+"\t1\n")
+		inf.close()
+		outf.close()
+
+		return outdocfile
+
+	#=====================
+	def applyEnvelopeAndCTF(self, stack):
+		### get defocus lists
+		numpart = self.params['projcount']
+		cut = int(numpart/80.0)+1
+		apDisplay.printMsg("%d particles per dot"%(cut))
+
+		if len(self.deflist1) == 0:
+			self.getListOfDefocuses(numpart)
+
+		### break up particles
+		partlistdocfile = apXmipp.breakupStackIntoSingleFiles(stack, filetype="mrc")
+
+		t0 = time.time()
+		apDisplay.printMsg("Applying CTF and Envelop to particles")
+
+		### apply CTF using ACE2
+		ctfapplydocfile = self.applyCTFToDocFile(partlistdocfile)
+
+		### apply Envelop using ACE2
+		envelopdocfile = self.applyEnvelopToDocFile(ctfapplydocfile)
+
+		### correct CTF using ACE2
 		if self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True:
-			n = 0
-			defocusfile = os.path.join(self.params['rundir'], "defocuslist_correction.lst")
-			f = open(defocusfile, "w")
-			f.write("projection \t")
-			f.write("defocus1 \t")
-			f.write("defocus2 \t")
-			f.write("astigmatism \t\n")
-			while n < self.params['projcount']:
-				f.write(str(n)+"\t")
-				f.write(str(defocuslist1c[n])+"\t")
-				f.write(str(defocuslist2c[n])+"\t")
-				f.write(str(astigmatismlistc[n])+"\t\n")
-				n += 1
-			f.close()
+			ctfcorrectdocfile = self.correctCTFToDocFile(envelopdocfile)
+		else:
+			ctfcorrectdocfile = envelopdocfile
+
+		timeper = (time.time()-t0)/float(numpart)
+		apDisplay.printColor("Total time %s"%(apDisplay.timeString(time.time()-t0)), "green")
+		apDisplay.printColor("Time per particle %s"%(apDisplay.timeString(timeper)), "green")
 
 		### write corrected particle list to doc file
-		n = 0
-		correctedpartlistfile = os.path.join(self.params['rundir'], "correctedpartlist.lst")
-		f = open(correctedpartlistfile, "w")
-		while n < len(correctedpartlist):
-			f.write(correctedpartlist[n]+"\n")
-			n += 1
-		f.close()
+		ctfpartlist = []
+		ctfpartlistfile = os.path.join(self.params['rundir'], "ctfpartlist.lst")
+		inf = open(ctfcorrectdocfile, 'r')
+		outf = open(ctfpartlistfile, "w")
+		for line in inf:
+			### get filename
+			filename = line.strip().split()[0]
+			if not os.path.isfile(filename):
+				apDisplay.printError("CTF and envelop apply failed")
+			ctfpartlist.append(filename)
+			outf.write(filename+"\t1\n")
+		inf.close()
+		outf.close()
 
-		return correctedpartlist
+		### merge individual files into a common stack
+		ctfstack = os.path.join(self.params['rundir'], "ctfstack.hed")
+		apXmipp.gatherSingleFilesIntoStack(ctfpartlistfile, ctfstack, filetype="mrc")
 
+		return ctfstack, ctfpartlist
 
 	#=====================
 	def executeAce2Cmd(self, ace2cmd, verbose=False, showcmd=True, logfile=None):
@@ -1021,9 +1088,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		elif waited is True:
 			print ""
 
-
 	#=====================
-	def uploadData(self, correctedpartlist):
+	def uploadData(self, ctfpartlist):
+
+		### read mean /stdev for uploading
+		self.getPartMeanTree(os.path.join(self.params['rundir'], self.params['finalstack']), ctfpartlist)
 
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		if self.params['projectid'] is not None:
@@ -1042,42 +1111,26 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		syntheticq['projstdev'] = self.params['projstdev']
 		syntheticq['shiftrad'] = self.params['shiftrad']
 		syntheticq['rotang'] = self.params['rotang']
-		if self.params['flip'] is True:
-			syntheticq['flip'] = 1
-		else:
-			syntheticq['flip'] = 0
+		syntheticq['flip'] = self.params['flip']
 		syntheticq['kilovolts'] = self.params['kv']
 		syntheticq['spher_aber'] = self.params['cs']
 		syntheticq['defocus_x'] = self.params['df1']
 		syntheticq['defocus_y'] = self.params['df2']
+		syntheticq['randomdef'] = self.params['randomdef']
 		if self.params['randomdef'] is True:
-			syntheticq['randomdef'] = 1
 			syntheticq['randomdef_std'] = self.params['randomdef_std']
-		else:
-			syntheticq['randomdef'] = 0
 		syntheticq['astigmatism'] = self.params['astigmatism']
 		syntheticq['snr1'] = self.params['snr1']
 		syntheticq['snrtot'] = self.params['snrtot']
-		syntheticq['envelope'] = self.params['envelope']
-		if self.params['ace2correct'] is True:
-			syntheticq['ace2correct'] = 1
-		else:
-			syntheticq['ace2correct'] = 0
+		syntheticq['envelope'] = os.path.basename(self.params['envelopefile'])
+		syntheticq['ace2correct'] = self.params['ace2correct']
+		syntheticq['ace2correct_rand'] = self.params['ace2correct_rand']
 		if self.params['ace2correct_rand'] is True:
-			syntheticq['ace2correct_rand'] = 1
 			syntheticq['ace2correct_std'] = self.params['ace2correct_std']
-		else:
-			syntheticq['ace2correct_rand'] = 0
-		if self.params['ace2estimate'] is True:
-			syntheticq['ace2estimate'] = 1
-		else:
-			syntheticq['ace2estimate'] = 0
+		syntheticq['ace2estimate'] = self.params['ace2estimate']
 		syntheticq['lowpass'] = self.params['lpfilt']
 		syntheticq['highpass'] = self.params['hpfilt']
-		if self.params['norm'] is True:
-			syntheticq['norm'] = 1
-		else:
-			syntheticq['norm'] = 0
+		syntheticq['norm'] = self.params['norm']
 
 		### fill stack parameters
 		stparamq = appiondata.ApStackParamsData()
@@ -1094,10 +1147,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			stparamq['fliptype'] = "ace2part"
 		else:
 			stparamq['phaseFlipped'] = 0
-		if self.params['norm'] is True:
-			stparamq['normalized'] = 1
-		else:
-			stparamq['normalized'] = 0
+		stparamq['normalized'] = self.params['norm']
 
 		paramslist = stparamq.query()
 
@@ -1139,7 +1189,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				rinstackq['stack'] = stackq
 				rinstackq.insert()
 			else:
-				apDisplay.printColor("NOT INSERTING stack parameters into database", "cyan")
+				apDisplay.printWarning("NOT INSERTING stack parameters into database")
 
 		elif uniqrundatas and not uniqstackdatas:
 			apDisplay.printError("Weird, run data without stack already in the database")
@@ -1193,19 +1243,17 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			apDisplay.printColor("Inserting fake selection parameters into the database", "cyan")
 #			selectq.insert()
 		else:
-			apDisplay.printColor("NOT INSERTING fake selection parameters into the database", "cyan")
-
-
+			apDisplay.printWarning("NOT INSERTING fake selection parameters into the database")
 
 		partNumber = 0
 		### loop over the particles and insert
 		if self.params['commit'] is True:
 			apDisplay.printColor("inserting particle parameters into database", "cyan")
 		else:
-			apDisplay.printColor("NOT INSERTING particle parameters into database", "cyan")
-		for i in range(len(correctedpartlist)):
+			apDisplay.printWarning("NOT INSERTING particle parameters into database")
+		for i in range(len(ctfpartlist)):
 			partNumber += 1
-			partfile = correctedpartlist[i]
+			partfile = ctfpartlist[i]
 			partmeandict = self.partmeantree[i]
 
 			partq = appiondata.ApParticleData()
@@ -1230,9 +1278,77 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		return
 
+	#=====================
+	def recoverLists(self):
+		if len(self.deflist1) > 0:
+			recoveryfile = os.path.join(self.params['rundir'], "defocuslist_application.lst")
+			f = open(recoveryfile, "r")
+			lines = f.readlines()
+			lines = lines[1:]   ### first line has names
+			f.close()
+			split = [line.split() for line in lines]
+			if self.deflist1 is None:
+				for params in split:
+					self.deflist1.append(params[1])
+			if self.deflist2 is None:
+				for params in split:
+					self.deflist2.append(params[2])
+			if self.astigist is None:
+				for params in split:
+					self.astigist.append(params[3])
+		if len(self.deflist1c) > 0 and self.params['ace2correct'] is True:
+			recoveryfile = os.path.join(self.params['rundir'], "defocuslist_correction.lst")
+			f = open(recoveryfile, "r")
+			lines = f.readlines()
+			lines = lines[1:]   ### first line has names
+			f.close()
+			split = [line.split() for line in lines]
+			if self.deflist1c is None:
+				for params in split:
+					self.deflist1c.append(params[1])
+			if self.deflist2c is None:
+				for params in split:
+					self.deflist2c.append(params[2])
+			if self.astigistc is None:
+				for params in split:
+					self.astigistc.append(params[3])
+
+	#=====================
+	def getPartMeanTree(self, stackfile, ctfpartlist):
+		### read mean and stdev
+		self.partmeantree = []
+		imgnum = 0
+		while imgnum < self.params['projcount']:
+			apDisplay.printColor("Reading mean and standard deviation values for each particle", "cyan")
+			### loop over the particles and read data
+			first = imgnum
+			last = first + self.params['filesperdir']
+			if last >= self.params['projcount']:
+				last = self.params['projcount']
+			imagicdata = apImagicFile.readImagic(stackfile, first=first+1, last=last)
+			for i in range(last - first):
+				partdata = ctfpartlist[imgnum]
+				partarray = imagicdata['images'][i]
+				# take abs of mean, because ctf whole image may become negative
+				partmeandict = {
+					'partdata': partdata,
+					'mean': abs(partarray.mean()),
+					'stdev': partarray.std(),
+					'min': partarray.min(),
+					'max': partarray.max(),
+				}
+				if partmeandict['mean'] > 1.0e7:
+					partmeandict['mean'] /= 1.0e7
+				if partmeandict['stdev'] > 1.0e7:
+					partmeandict['stdev'] /= 1.0e7
+				if abs(partmeandict['stdev']) < 1.0e-6:
+					apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,shortname))
+				self.partmeantree.append(partmeandict)
+				imgnum += 1
 
 	#=====================
 	def start(self):
+		self.ace2correct = self.getACE2Path()
 
 		### determine amount of memory needed for entire stack
 		memorylimit = 0.3
@@ -1265,104 +1381,29 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		noiselevel1 = float(stdev1) / float(self.params['snr1'])
 		noisystack = self.addNoise(shiftstackname, noiselevel1, SNR=self.params['snr1'])
 
-		### create raw micrographs from input stack (shiftstackname)
-		defocuslist1 = []; defocuslist2 = []; astigmatismlist = []; defocuslist1c = []; defocuslist2c = []; astigmatismlistc = [];
-		defocuslist1, defocuslist2, astigmatismlist, defocuslist1c, defocuslist2c, astigmatismlistc = self.createRawMicrographs(shiftstackname, noiselevel1)
-
-		### breakup stack for applying envelope and ctf parameters
-		partlistdocfile = self.breakupStackIntoSingleFiles(noisystack)
+		### get list of defocus values
+		self.getListOfDefocuses(self.params['projcount'])
 
 		### apply envelope and ctf to each .mrc file, then correct based on how well ace2 works on raw micrographs
-		correctedpartlist = []
-		correctedpartlist = self.applyEnvelopeAndCTF(noisystack, defocuslist1, defocuslist2, astigmatismlist, defocuslist1c, defocuslist2c, astigmatismlistc)
-		if correctedpartlist is not True:
-			recoveryfile = os.path.join(self.params['rundir'], "correctedpartlist.lst")
-			f = open(recoveryfile, "r")
-			lines = f.readlines()
-			correctedpartlist = [line.strip() for line in lines]
-			f.close()
+		ctfstack, ctfpartlist = self.applyEnvelopeAndCTF(noisystack)
 
-		### OPTIONAL!!! -- if the program crashed at some point, make sure to reobtain the lists from the corresponding files
-		if defocuslist1 is not True or defocuslist2 is not True or astigmatismlist is not True:
-			recoveryfile = os.path.join(self.params['rundir'], "defocuslist_application.lst")
-			f = open(recoveryfile, "r")
-			lines = f.readlines()
-			lines = lines[1:]   ### first line has names
-			f.close()
-			split = [line.split() for line in lines]
-			if defocuslist1 is None:
-				for params in split:
-					defocuslist1.append(params[1])
-			if defocuslist2 is None:
-				for params in split:
-					defocuslist2.append(params[2])
-			if astigmatismlist is None:
-				for params in split:
-					astigmatismlist.append(params[3])
-		if (defocuslist1c is not True or defocuslist2c is not True or astigmatismlistc is not True) and self.params['ace2correct'] is True:
-			recoveryfile = os.path.join(self.params['rundir'], "defocuslist_correction.lst")
-			f = open(recoveryfile, "r")
-			lines = f.readlines()
-			lines = lines[1:]   ### first line has names
-			f.close()
-			split = [line.split() for line in lines]
-			if defocuslist1c is None:
-				for params in split:
-					defocuslist1c.append(params[1])
-			if defocuslist2c is None:
-				for params in split:
-					defocuslist2c.append(params[2])
-			if astigmatismlistc is None:
-				for params in split:
-					astigmatismlistc.append(params[3])
+		#recoverlists = self.recoverLists()
 
-		### convert to single stack of corrected files
-		imgnum = 0
-		substacknum = 0
-		substacklist = []
-		while imgnum < self.params['projcount']:
-			if imgnum % partsperiter == 0:
-				### deal with stacks by breaking them up
-				numpartlist = []
-				first = imgnum
-				last = first + partsperiter
-				if last >= self.params['projcount']:
-					last = self.params['projcount']
-				for particle in range(last - first):
-					a = mrc.read(correctedpartlist[imgnum])
-					numpartlist.append(a)
-					imgnum += 1
-				substackname = os.path.join(self.params['rundir'], "substack%d.img") % (substacknum)
-				substacklist.append(substackname)
-				apFile.removeStack(substackname, warn=False)
-#				apImagicFile.writeImagic(numpartlist, substackname, msg=False)
-				apImagicFile.writeImagic(numpartlist, substackname)
-				substacknum += 1
-
-		### merge stacks
-		ctfappliedstack = os.path.join(self.params['rundir'], "ctfstack.img")
-		while os.path.isfile(ctfappliedstack):
-			apFile.removeStack(ctfappliedstack)
-		for stack in substacklist:
-			emancmd = "proc2d "+stack+" "+ctfappliedstack
-			apEMAN.executeEmanCmd(emancmd)
-			while os.path.isfile(stack):
-				apFile.removeStack(stack)
-
-		### read MRC stats to figure out noise level addition
-		mean2, stdev2 = self.readFileStats(ctfappliedstack)
+		### read IMAGIC stats to figure out noise level addition
+		mean2, stdev2 = self.readFileStats(ctfstack)
 
 		### cascading of noise processes according to Frank and Al-Ali (1975)
 		snr2 = 1 / ((1+1/float(self.params['snrtot'])) / (1/float(self.params['snr1']) + 1) - 1)
 		noiselevel2 = float(stdev2) / float(snr2)
 
 		### add a last layer of noise
-		noisystack2 = self.addNoise(ctfappliedstack,noiselevel2, SNR=self.params['snrtot'])
+		noisystack2 = self.addNoise(ctfstack, noiselevel2, SNR=self.params['snrtot'])
 
 		### low-pass / high-pass filter resulting stack, if specified
-		if self.params['hpfilt'] is not None or self.params['lpfilt'] is not None:
+		if self.params['hpfilt'] is not None or self.params['lpfilt'] is not None or self.params['norm'] is True:
 			filtstack = noisystack2[:-4]
 			filtstack = filtstack+"_filt.hed"
+			apFile.removeStack(filtstack)
 			emancmd = "proc2d "+noisystack2+" "+filtstack+" apix="+str(self.params['apix'])+" "
 			if self.params['hpfilt'] is not None:
 				emancmd = emancmd+"hp="+str(self.params['hpfilt'])+" "
@@ -1370,8 +1411,6 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				emancmd = emancmd+"lp="+str(self.params['lpfilt'])+" "
 			if self.params['norm'] is True:
 				emancmd = emancmd+"norm="+str(self.params['norm'])+" "
-			while os.path.isfile(filtstack):
-				apFile.removeStack(filtstack)
 			apEMAN.executeEmanCmd(emancmd)
 			self.params['finalstack'] = os.path.basename(filtstack)
 			finalstack = filtstack
@@ -1379,56 +1418,22 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			self.params['finalstack'] = os.path.basename(noisystack2)
 			finalstack = noisystack2
 
-		### read mean and stdev
-		self.partmeantree = []
-		imgnum = 0
-		while imgnum < self.params['projcount']:
-			apDisplay.printColor("Reading mean and standard deviation values for each particle", "cyan")
-			### loop over the particles and read data
-			first = imgnum
-			last = first + partsperiter
-			if last >= self.params['projcount']:
-				last = self.params['projcount']
-			imagicdata = apImagicFile.readImagic(os.path.join(self.params['rundir'], self.params['finalstack']), first=first+1, last=last)
-			for i in range(last - first):
-				partdata = correctedpartlist[imgnum]
-				partarray = imagicdata['images'][i]
-				# take abs of mean, because ctf whole image may become negative
-				partmeandict = {
-					'partdata': partdata,
-					'mean': abs(partarray.mean()),
-					'stdev': partarray.std(),
-					'min': partarray.min(),
-					'max': partarray.max(),
-				}
-				if partmeandict['mean'] > 1.0e7:
-					partmeandict['mean'] /= 1.0e7
-				if partmeandict['stdev'] > 1.0e7:
-					partmeandict['stdev'] /= 1.0e7
-				if abs(partmeandict['stdev']) < 1.0e-6:
-					apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,shortname))
-				self.partmeantree.append(partmeandict)
-				imgnum += 1
+		### post-processing: create average file for viewing on webpages
+		apStack.averageStack(finalstack)
 
 		### upload if commit is checked
-		self.uploadData(correctedpartlist)
+		self.uploadData(ctfpartlist)
 
-		### post-processing: create average file for viewing on webpages
-		emancmd = "proc2d "+finalstack+" "+os.path.join(self.params['rundir'], "average.mrc")+" average"
-		apEMAN.executeEmanCmd(emancmd)
 		### post-processing: Create Stack Mean Plot
 		if self.params['commit'] is True:
 			stackid = apStack.getStackIdFromPath(finalstack)
 			if stackid is not None:
-				apStackMeanPlot.makeStackMeanPlot(stackid)
-
+				apStackMeanPlot.makeStackMeanPlot(stackid, gridpoints=8)
 
 #=====================
 if __name__ == "__main__":
 	syntheticdataset = createSyntheticDatasetScript(True)
 	syntheticdataset.start()
 	syntheticdataset.close()
-
-
 
 
