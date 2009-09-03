@@ -95,7 +95,7 @@ def procStatus(pid=None):
 
 def mySize():
 	status = procStatus()
-	return status['VmSize']
+	return status['VmRSS']
 
 def test():
 	mypid = os.getpid()
