@@ -413,13 +413,13 @@ def bin2f(a, factor):
 	xend   = int( sfft.shape[0]/2 * (1 + 1.0/factor))
 	ystart = int( sfft.shape[1]/2 * (1 - 1.0/factor))
 	yend   = int( sfft.shape[1]/2 * (1 + 1.0/factor))
-	print ("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
+	#print ("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
 	scutfft = sfft[
 		xstart:xend,
 		ystart:yend,
 	]
 	cutfft = numpy.fft.fftshift(scutfft)
-	print cutfft.shape, fft.shape
+	#print cutfft.shape, fft.shape
 	binned = ffteng.itransform(cutfft)/float(factor**2)
 	return binned
 
@@ -443,10 +443,16 @@ def bin3f(a, factor):
 	'''
 	fft = ffteng.transform(a)
 	sfft = numpy.fft.fftshift(fft)
+	xstart = int( sfft.shape[0]/2 * (1 - 1.0/factor))
+	xend   = int( sfft.shape[0]/2 * (1 + 1.0/factor))
+	ystart = int( sfft.shape[1]/2 * (1 - 1.0/factor))
+	yend   = int( sfft.shape[1]/2 * (1 + 1.0/factor))
+	zstart = int( sfft.shape[2]/2 * (1 - 1.0/factor))
+	zend   = int( sfft.shape[2]/2 * (1 + 1.0/factor))
 	scutfft = sfft[
-		fft.shape[0]/factor:3*fft.shape[0]/factor,
-		fft.shape[1]/factor:3*fft.shape[1]/factor,
-		fft.shape[2]/factor:3*fft.shape[2]/factor,
+		xstart:xend,
+		ystart:yend,
+		zstart:zend,
 	]
 	cutfft = numpy.fft.fftshift(scutfft)
 	binned = ffteng.itransform(cutfft)/float(factor**3)
