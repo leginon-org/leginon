@@ -162,7 +162,6 @@ class TargetTransformer(targethandler.TargetHandler):
 	def calculateMatrix(self, image1, image2):
 		## Debugging...
 		print 'IMAGE DBID', image1.dbid
-		print 'IMAGE DMID', image1.dmid
 		print 'IMAGE PATH', image1.getpath()
 		print 'IMAGE FILENAME', image1.filename()
 		fileref = image1.special_getitem('image', dereference=False)

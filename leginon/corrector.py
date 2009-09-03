@@ -352,9 +352,7 @@ class Corrector(imagewatcher.ImageWatcher):
 
 	def processImageData(self, imagedata):
 		print 'IMAGEDATA******************************'
-		print 'DMID', imagedata.dmid
 		import sinedon.data
-		print sinedon.data.datamanager.datadict[imagedata.dmid]
 		print 'IMAGE', imagedata['image']
 		imagecopy = imagedata.copy()
 		self.correctCameraImageData(imagecopy, 0)
