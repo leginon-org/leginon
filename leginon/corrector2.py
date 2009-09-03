@@ -8,13 +8,10 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import copy
 import leginondata
 import event
 import node
 import numpy
-ma = numpy.ma
-import threading
 import gui.wx.Corrector
 import remotecall
 import instrument
@@ -22,27 +19,35 @@ import sys
 from pyami import arraystats, imagefun, ccd
 import polygon
 
-class ImageCorrection(remotecall.Object):
-	def __init__(self, node):
-		self.node = node
-		remotecall.Object.__init__(self)
+# cache to hold corrector images in memory
+cache = {}
 
-	def getImageData(self, ccdcameraname=None):
-		return self.node.acquireCorrectedImageData(ccdcameraname=ccdcameraname)
+def formatKey(key):
+	s = '%s, %dV, size %dx%d, bin %dx%d, offset (%d,%d), channel %d'
+	return s % (key[6], key[8], key[0], key[1], key[2], key[3], key[4], key[5], key[9])
 
-	def setChannel(self, channel):
-		self.node.setChannel(channel)
+def getkey(scope, camera, type, channel):
+	mylist = []
+	for param in ('dimension', 'binning', 'offset'):
+		values = camera[param]
+		if values is None:
+			valuetuple = (None,None)
+		else:
+			valuetuple = (values['x'],values['y'])
+		mylist.extend( valuetuple )
+	mylist.append(type)
+	mylist.append(camera['ccdcamera'])
+	mylist.append(scope['high tension'])
+	mylist.append(channel)
+	return tuple(mylist)
 
 class CorrectorClient(object):
 	def __init__(self, node):
 		self.node = node
 		self.channel = 0
-		self.cache = {}
 		self.ccdcorrector = ccd.Corrector()
 
 	def queryCorrectionImage(self, scopedata, camdata, type, channel):
-
-
 		# only query based on instrument and high tension
 		scope = leginondata.ScopeEMData()
 		scope['tem'] = scopedata['tem']
@@ -87,25 +92,6 @@ class CorrectorClient(object):
 		else:
 			image = None
 		return image
-
-	def formatKey(self, key):
-		s = '%s, %dV, size %dx%d, bin %dx%d, offset (%d,%d), channel %d'
-		return s % (key[6], key[8], key[0], key[1], key[2], key[3], key[4], key[5], key[9])
-
-	def getkey(self, scope, camera, type, channel):
-		mylist = []
-		for param in ('dimension', 'binning', 'offset'):
-			values = camera[param]
-			if values is None:
-				valuetuple = (None,None)
-			else:
-				valuetuple = (values['x'],values['y'])
-			mylist.extend( valuetuple )
-		mylist.append(type)
-		mylist.append(camera['ccdcamera'])
-		mylist.append(scope['high tension'])
-		mylist.append(channel)
-		return tuple(mylist)
 
 	def normalize(self, imagedata):
 		channel = self.channel
@@ -405,22 +391,6 @@ class Corrector(node.Node):
 		self.panel.acquisitionDone()
 		self.stopTimer('acquireCorrected')
 
-	def modifyNorm(self):
-		self.startTimer('modifyNorm')
-		try:
-			camdata = self.settings['camera settings']
-			scopedata = self.instrument.getData(leginondata.ScopeEMData)
-			newcamdata = leginondata.CameraEMData()
-			newcamdata['ccdcamera'] = self.instrument.getCCDCamera()
-			for key in ('dimension','offset','binning'):
-				newcamdata[key] = camdata[key]
-			self.modifyByMask(self.maskimg, newcamdata, scopedata)
-		except Exception, e:
-			self.logger.exception('Modify normalization image failed: %s' % e)
-		self.stopTimer('modifyNorm')
-		self.maskimg = numpy.zeros(self.maskimg.shape)
-		self.displayImage(self.currentimage)
-
 	def displayImage(self, image):
 		self.startTimer('Corrector.displayImage')
 		if image is None:
@@ -589,50 +559,6 @@ class Corrector(node.Node):
 		
 		self.maskimg = numpy.zeros(numimage.shape)
 		return newdata
-
-	def modifyByMask(self,mask, ccdcameraname, camstate, scopedata):
-		for channel in range(0,self.settings['channels']):
-			## use reference image from database
-			flat = self.corclient.queryCorrectionImage(scopedata, camdata, 'flat', channel)
-			if flat:
-				## make it float to do float math later
-				flat = numpy.asarray(flat['image'], numpy.float32)
-			else:
-				self.logger.warning('No flat image for modifications')
-				return
-
-			if mask is not None:
-				if flat.shape != mask.shape:
-					self.logger.warning('Wrong mask dimension for channel %d' %channel)
-					return
-				else:
-					maskedflat=ma.masked_array(flat,mask=mask)
-					nmean = maskedflat.mean()
-					nstd = maskedflat.std()
-					nmax = maskedflat.max()
-					nmin = maskedflat.min()
-					sigma = 100
-					ntop = nmean+sigma * nstd
-					if nmax < ntop:
-						ntop = nmax
-			else:
-				nmax = flat.max()
-				nmin = flat.min()
-				ntop = nmax
-				nbottom = nmin
-			self.logger.info('Unmasked region normalization is between %e and %e'% (nmax,nmin))	
-			## make it 20 if the unmask region has large norm factor
-			if ntop > 20:
-				ntop = 20
-			nbottom = 1 / ntop
-			newflat = numpy.clip(flat, nbottom, ntop) 
-			self.logger.info('Clipped normalization to between %e and %e'% (ntop,nbottom))	
-			try:
-				self.corclient.storeRef('flat', newflat, camstate, scopedata, channel)
-				self.logger.info('Saved modified flat image for channel %d' %channel)
-			except:
-				pass
-		return
 
 	def uiAutoAcquireReferences(self):
 		binning = self.autobinning.get()
