@@ -389,7 +389,28 @@ def bin2(a, factor):
 	tmpshape = (newshape[0], factor, newshape[1], factor)
 	f = factor * factor
 	binned = numpy.sum(numpy.sum(numpy.reshape(a, tmpshape), 1), 2) / f
-	#binned = stats.median(stats.median(numpy.reshape(a, tmpshape), 1), 2)
+	return binned
+
+def bin2m(a, factor):
+	'''
+	Median instead of mean for bin2
+	'''
+	oldshape = a.shape
+	newshape = numpy.asarray(oldshape)/factor
+	tmpshape = (newshape[0], factor, newshape[1], factor)
+	f = factor * factor
+	binned = stats.median(stats.median(numpy.reshape(a, tmpshape), 1), 2)
+	return binned
+
+def bin2f(a, factor):
+	'''
+	Binning in Fourier space
+	'''
+	fft = ffteng.transform(a)
+	sfft = numpy.fft.fftshift(fft)
+	scutfft = sfft[fft.shape[0]/factor:3*fft.shape[0]/factor,fft.shape[1]/factor:3*fft.shape[1]/factor]
+	cutfft = numpy.fft.fftshift(scutfft)
+	binned = ffteng.itransform(cutfft)/float(factor**2)
 	return binned
 
 def bin3(a, factor):
@@ -404,6 +425,21 @@ def bin3(a, factor):
 	f = factor * factor * factor
 	binned = numpy.sum(numpy.sum(numpy.sum(numpy.reshape(a, tmpshape), 1), 2), 3) / f
 	#binned = stats.median(stats.median(numpy.reshape(a, tmpshape), 1), 2)
+	return binned
+
+def bin3f(a, factor):
+	'''
+	Binning in Fourier space
+	'''
+	fft = ffteng.transform(a)
+	sfft = numpy.fft.fftshift(fft)
+	scutfft = sfft[
+		fft.shape[0]/factor:3*fft.shape[0]/factor,
+		fft.shape[1]/factor:3*fft.shape[1]/factor,
+		fft.shape[2]/factor:3*fft.shape[2]/factor,
+	]
+	cutfft = numpy.fft.fftshift(scutfft)
+	binned = ffteng.itransform(cutfft)/float(factor**3)
 	return binned
 
 def crop_at(im, center, shape, mode='wrap', cval=None):
