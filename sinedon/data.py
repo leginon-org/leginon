@@ -225,8 +225,6 @@ class DataManager(object):
 		dataclass = datareference.dataclass
 		referent = None
 		dmid = datareference.dmid
-		print 'DATACLASS', dataclass
-		print 'DMID', dmid
 
 		#### attempt to find referent in local datadict
 		self.lock.acquire()
@@ -237,7 +235,6 @@ class DataManager(object):
 				# access to datadict causes move to front
 				del self.datadict[dmid]
 				self.datadict[dmid] = referent
-				print '***LOCAL'
 				return referent
 		finally:
 			self.lock.release()
@@ -248,7 +245,6 @@ class DataManager(object):
 			## in database
 			try:
 				referent = self.getDataFromDB(dataclass, dbid, **kwargs)
-				print '***DB'
 				return referent
 			except:
 				pass
@@ -258,7 +254,6 @@ class DataManager(object):
 			## in remote memory
 			# TODO: kwargs
 			referent = self.getRemoteData(datareference)
-			print '***REMOTE'
 			return referent
 
 		## must not exist anymore
@@ -296,7 +291,7 @@ class DataReference(object):
 	if using dataclass, also specify either a dmid or a dbid
 	'''
 	def __init__(self, datareference=None, referent=None, dataclass=None, dmid=None, dbid=None):
-		self.wr = None
+		self.referent = None
 		if datareference is not None:
 			self.dataclass = datareference.dataclass
 			self.dmid = datareference.dmid
@@ -320,7 +315,7 @@ class DataReference(object):
 	def __getstate__(self):
 		## for pickling, do not include weak ref attribute
 		state = dict(self.__dict__)
-		state['wr'] = None
+		state['referent'] = None
 		return state
 
 	def sync(self, o=None):
@@ -330,33 +325,40 @@ class DataReference(object):
 		or through a weak reference to the referent
 		'''
 		if o is None:
-			if self.wr is None:
+			if self.referent is None:
 				return
-			o = self.wr()
+			o = self.referent()
 		if o is not None:
-			self.wr = weakref.ref(o)
+			if o.dbid is None:
+				self.referent = o
+			else:
+				self.referent = weakref.ref(o)
 			self.dmid = o.dmid
 			self.dbid = o.dbid
 
 	def getData(self, **kwargs):
 		referent = None
-		#### Try weak reference, return referent if found
-		if self.wr is not None:
-			referent = self.wr()
+		#### Try strong and weak reference
+		if isinstance(self.referent, weakref.ref):
+			referent = self.referent()
+		elif isinstance(self.referent, Data):
+			referent = self.referent
 
+		#### Try DataManager, update me with ref to new data
 		if referent is None:
-			#### Try DataManager, update me with ref to new data
 			referent = datamanager.getData(self, **kwargs)
 			self.sync(referent)
 
 		return referent
 
 	def __str__(self):
-		s = 'DataReference(%s), class: %s, dmid: %s, dbid: %s' % (id(self), self.dataclass, self.dmid, self.dbid)
-		if self.wr is not None:
-			o = self.wr()
-			if o is not None:
-				s = s + ' (weak ref to %s)' % (id(o),)
+		if isinstance(self.referent, weakref.ref):
+			ref = 'weak'
+		elif isinstance(self.referent, Data):
+			ref = 'strong'
+		else:
+			ref = 'None'
+		s = 'DataReference(class: %s, dmid: %s, dbid: %s, referent: %s' % (self.dataclass.__name__, self.dmid, self.dbid, ref)
 		return s
 
 class UnknownData(object):
@@ -380,9 +382,9 @@ def data2dict(idata, noNone=False, dereference=False):
 
 def dict2data(d, datatype):
 	instance = datatype()
+	if d is None:
+		return instance
 	for key, subtype in datatype.typemap():
-		if d is None:
-			continue
 		try:
 			if issubclass(subtype, Data):
 				instance[key] = dict2data(d[key], subtype)
