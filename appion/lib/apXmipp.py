@@ -11,7 +11,7 @@ import apEMAN
 import apFile
 import apParam
 import apImagicFile
-from pyami import spider, mem
+from pyami import spider, mrc, mem
 from apSpider import operations
 
 #======================
@@ -60,7 +60,7 @@ def convertXmippDataToStack(indata, outstack, maskpixrad):
 
 #======================
 #======================
-def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
+def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None, filetype="spider"):
 	"""
 	takes the stack file and creates single spider files ready for processing
 	"""
@@ -115,8 +115,12 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 
 		### write images
 		for partimg in stackimages['images']:
-			partfile = os.path.join(partdir, str(subdir), "part%06d.spi"%(index))
-			spider.write(partimg, partfile)
+			if filetype == "mrc":
+				partfile = os.path.join(partdir, str(subdir), "part%06d.mrc"%(index))
+				mrc.write(partimg, partfile)
+			else:
+				partfile = os.path.join(partdir, str(subdir), "part%06d.spi"%(index))
+				spider.write(partimg, partfile)
 			f.write(os.path.abspath(partfile)+" 1\n")
 			index += 1
 
@@ -135,7 +139,7 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 
 #======================
 #======================
-def gatherSingleFilesIntoStack(selfile, stackfile):
+def gatherSingleFilesIntoStack(selfile, stackfile, filetype="spider"):
 	"""
 	takes a selfile and creates an EMAN stack
 	"""
@@ -204,7 +208,10 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 					apDisplay.timeString(perpart*(numpart-imgnum))), "blue")
 			stackarray = []
 		### merge particles
-		partimg = spider.read(filename)
+		if filetype == "mrc":
+			partimg = mrc.read(filename)
+		else:
+			partimg = spider.read(filename)
 		stackarray.append(partimg)
 		imgnum += 1
 
