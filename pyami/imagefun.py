@@ -407,18 +407,18 @@ def bin2f(a, factor):
 	Binning in Fourier space
 	'''
 	fft = ffteng.transform(a)
-	sfft = numpy.fft.fftshift(fft)
-	half = sfft.shape[0]/2
-	xstart = int( sfft.shape[0]/2 * (1 - 1.0/factor))
-	xend   = int( sfft.shape[0]/2 * (1 + 1.0/factor))
-	ystart = int( sfft.shape[1]/2 * (1 - 1.0/factor))
-	yend   = int( sfft.shape[1]/2 * (1 + 1.0/factor))
+	fft = numpy.fft.fftshift(fft)
+	half = fft.shape[0]/2
+	xstart = int( fft.shape[0]/2 * (1 - 1.0/factor))
+	xend   = int( fft.shape[0]/2 * (1 + 1.0/factor))
+	ystart = int( fft.shape[1]/2 * (1 - 1.0/factor))
+	yend   = int( fft.shape[1]/2 * (1 + 1.0/factor))
 	#print ("%d:%d  ,  %d:%d\n"%(xstart,xend,ystart,yend,))
-	scutfft = sfft[
+	cutfft = fft[
 		xstart:xend,
 		ystart:yend,
 	]
-	cutfft = numpy.fft.fftshift(scutfft)
+	cutfft = numpy.fft.fftshift(cutfft)
 	#print cutfft.shape, fft.shape
 	binned = ffteng.itransform(cutfft)/float(factor**2)
 	return binned
@@ -442,19 +442,19 @@ def bin3f(a, factor):
 	Binning in Fourier space
 	'''
 	fft = ffteng.transform(a)
-	sfft = numpy.fft.fftshift(fft)
-	xstart = int( sfft.shape[0]/2 * (1 - 1.0/factor))
-	xend   = int( sfft.shape[0]/2 * (1 + 1.0/factor))
-	ystart = int( sfft.shape[1]/2 * (1 - 1.0/factor))
-	yend   = int( sfft.shape[1]/2 * (1 + 1.0/factor))
-	zstart = int( sfft.shape[2]/2 * (1 - 1.0/factor))
-	zend   = int( sfft.shape[2]/2 * (1 + 1.0/factor))
-	scutfft = sfft[
+	fft = numpy.fft.fftshift(fft)
+	xstart = int( fft.shape[0]/2 * (1 - 1.0/factor))
+	xend   = int( fft.shape[0]/2 * (1 + 1.0/factor))
+	ystart = int( fft.shape[1]/2 * (1 - 1.0/factor))
+	yend   = int( fft.shape[1]/2 * (1 + 1.0/factor))
+	zstart = int( fft.shape[2]/2 * (1 - 1.0/factor))
+	zend   = int( fft.shape[2]/2 * (1 + 1.0/factor))
+	cutfft = fft[
 		xstart:xend,
 		ystart:yend,
 		zstart:zend,
 	]
-	cutfft = numpy.fft.fftshift(scutfft)
+	cutfft = numpy.fft.fftshift(cutfft)
 	binned = ffteng.itransform(cutfft)/float(factor**3)
 	return binned
 
