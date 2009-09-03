@@ -294,7 +294,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			reject = leginondata.AcquisitionImageTargetData(initializer=target)
 			reject['list'] = rejectlist
 			self.publish(reject, database=True)
-		tlistid = rejectlist.dmid
+		tlistid = rejectlist.dbid
 		self.targetlistevents[tlistid] = {}
 		self.targetlistevents[tlistid]['received'] = threading.Event()
 		self.targetlistevents[tlistid]['status'] = 'waiting'

@@ -406,7 +406,7 @@ if __name__ == '__main__':
 	print 's', s
 
 	im = db.direct_query(leginondata.AcquisitionImageData, 49780)
-	print 'DONE DIRECT', im.dmid
+	print 'DONE DIRECT', im.dbid
 	tar = t.researchTargets(session=s, image=im)
 	print 'LEN', len(tar)
 	print 'DBID', tar[0].dbid

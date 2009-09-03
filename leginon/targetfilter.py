@@ -50,7 +50,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		self.publish(newtargetlistdata, pubevent=pubevent)
 		self.setStatus('idle')
 		status = self.waitForTargetListDone(tid)
-		e = event.TargetListDoneEvent(targetlistid=targetlistdata.dmid, status=status)
+		e = event.TargetListDoneEvent(targetlistid=targetlistdata.dbid, status=status)
 		self.outputEvent(e)
 
 	def handleQueuePublish(self, pubevent):

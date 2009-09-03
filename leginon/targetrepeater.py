@@ -58,7 +58,7 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 
 		self.markAllTargetsDone(targetlistdata)
 
-		e = event.TargetListDoneEvent(targetlistid=targetlistdata.dmid, status=status)
+		e = event.TargetListDoneEvent(targetlistid=targetlistdata.dbid, status=status)
 		self.outputEvent(e)
 		self.logger.info('All targets and states done')
 
