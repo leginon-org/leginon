@@ -893,7 +893,7 @@ function writeJobFile ($extra=False) {
 			if ($coranhp) $line .= " hp=$coranhp";
 			if ($eotest=='on') $line .= " eotest";
 			$line .= " > coran".$i.".txt\n";
-			$line.= C_APPION_BIN."getRes.pl >> resolution.txt $i $box $apix\n";
+			$line.= C_APPION_BIN."getRes.pl $i $box $apix >> resolution.txt\n";
 			if ($amask1) {
 				$line .= "volume threed.".$i."a.mrc $apix set=$xfiles\n";
 				$line .= "mv threed.".$i."a.mrc threed.".$i."a.coran.mrc\n";
