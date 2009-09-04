@@ -378,7 +378,8 @@ class Data(newdict.TypedDict):
 
 		newdict.TypedDict.__init__(self)
 
-		self._reference = DataReference(referent=self)
+		self.reflock = threading.Lock()
+		self._reference = None
 		
 		### insert into datamanager and sync my reference
 		### this also needs to be done in cases where this
@@ -531,14 +532,25 @@ class Data(newdict.TypedDict):
 	fromDict = classmethod(fromDict)
 
 	def reference(self):
-		return self._reference
+		## since only weak ref to my DataReference, it could go away.
+		## Only want one DataReference at a time, so lock its creation.
+		self.reflock.acquire()
+		if self._reference is not None:
+			dr = self._reference()
+		else:
+			dr = None
+		if dr is None:
+			dr = DataReference(referent=self)
+			self._reference = weakref.ref(dr)
+		self.reflock.release()
+		return dr
 
 	def sync(self):
 		'''
 		synchronize my reference with me
 		becuase either dmid or dbid changed
 		'''
-		self._reference.sync(self)
+		self.reference().sync(self)
 
 	def nstr(self, value):
 		if type(value) is numpy.ndarray:
