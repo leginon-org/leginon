@@ -53,10 +53,9 @@ If iii and sss are in the database, and iii is queried, only iii is returned.
 sss will be queried automatically when accessing iii['session']
 '''
 
-## manages weak references between data instances
-## DataManager holds strong references to every Data instance that
-## is created.  The memory size is restricted such that the first instances
-## to be created are the first to be deleted from DataManager.
+## manages references between data instances
+## References between Data objects are strong until an object is inserted
+## to the DB.  Then the strong reference is converted to weak ref.
 class DataManager(object):
 	def __init__(self):
 		## will connect to database before first query
@@ -67,18 +66,14 @@ class DataManager(object):
 		self.location = None
 		self.server = None
 
+		self.weakcache = weakref.WeakValueDictionary()
+
 		## this lock should be used on access to everything below
 		self.lock = threading.RLock()
-		self.datadict = newdict.OrderedDict()
-		self.sizedict = {}
 		self.dbcache = weakref.WeakValueDictionary()
 		self.dmid = 0
-		self.size = 0
 		### end of things that need to be locked
 
-		self.limitreached = False
-		megs = 300
-		self.maxsize = megs * 1024 * 1024
 		self.holdimages = True
 
 	def holdImages(self, value):
@@ -117,60 +112,8 @@ class DataManager(object):
 				dmid = self.newid()
 				datainstance.dmid = dmid
 
-			### if already managing this, then return
-			if dmid in self.datadict:
-				return
-
-			## insert into datadict and sizedict
-			self.datadict[dmid] = datainstance
-			self.sizedict[dmid] = 0
-
-			self.resize(datainstance)
-		finally:
-			self.lock.release()
-
-	def remove(self, dmid):
-		self.lock.acquire()
-		try:
-			if dmid not in self.datadict:
-				return
-			del self.datadict[dmid]
-			self.size -= self.sizedict[dmid]
-			del self.sizedict[dmid]
-		finally:
-			self.lock.release()
-
-	def resize(self, datainstance):
-		self.lock.acquire()
-		try:
-			dmid = datainstance.dmid
-			dsize = datainstance.size()
-			if dsize > self.maxsize:
-				raise DataManagerOverflowError('new size is too big for DataManager')
-			## check previous size
-			if dmid in self.sizedict:
-				oldsize = self.sizedict[dmid]
-			else:
-				oldsize = 0
-			self.size = self.size - oldsize + dsize
-			self.sizedict[dmid] = dsize
-			if self.size > self.maxsize:
-				self.clean()
-		finally:
-			self.lock.release()
-
-	def clean(self):
-		self.lock.acquire()
-		try:
-			for key in self.datadict.keys():
-				if self.size <= self.maxsize/2:
-					break
-				if not self.limitreached:
-					self.limitreached = True
-					#print '************************************************************************'
-					#print '***** DataManager size reached, removing data as needed ******'
-					#print '************************************************************************'
-				self.remove(key)
+			## keep in the weak cache
+			self.weakcache[dmid] = datainstance
 		finally:
 			self.lock.release()
 
@@ -225,22 +168,16 @@ class DataManager(object):
 		dataclass = datareference.dataclass
 		referent = None
 		dmid = datareference.dmid
+		dbid = datareference.dbid
 
-		#### attempt to find referent in local datadict
-		self.lock.acquire()
+		#### try local weakrefs
 		try:
-			if dmid in self.datadict:
-				## in local memory
-				referent = self.datadict[dmid]
-				# access to datadict causes move to front
-				del self.datadict[dmid]
-				self.datadict[dmid] = referent
-				return referent
-		finally:
-			self.lock.release()
+			referent = self.weakcache[dmid]
+			return referent
+		except:
+			pass
 
 		#### try DB
-		dbid = datareference.dbid
 		if dbid is not None:
 			## in database
 			try:
@@ -443,10 +380,6 @@ class Data(newdict.TypedDict):
 
 		self._reference = DataReference(referent=self)
 		
-		self.__size = 2500
-		k = self.keys()
-		self.__sizedict = dict(zip(k, [0 for key in k]))
-
 		### insert into datamanager and sync my reference
 		### this also needs to be done in cases where this
 		### method is not called, like unpickling
@@ -588,8 +521,6 @@ class Data(newdict.TypedDict):
 		if isinstance(value,Data):
 			value = value.reference()
 		super(Data, self).__setitem__(key, value)
-		if self.resize(key, value):
-			datamanager.resize(self)
 
 	def toDict(self, noNone=False, dereference=False):
 		return data2dict(self, noNone, dereference)
@@ -598,36 +529,6 @@ class Data(newdict.TypedDict):
 		return dict2data(d, cls)
 
 	fromDict = classmethod(fromDict)
-
-	def size(self):
-		return self.__size
-
-	def resize(self, key, newvalue):
-		oldsize = self.__sizedict[key]
-		newsize = self.sizeof(newvalue)
-		self.__sizedict[key] = newsize
-		self.__size = self.__size - oldsize + newsize
-		if oldsize == newsize:
-			return False
-		return True
-
-	def sizeof(self, value):
-		if value is None:
-			## there is only one None object
-			return 0
-		elif type(value) is numpy.ndarray:
-			return value.size * value.itemsize
-		else:
-			## this is my stupid estimate of size for other objects
-			## We could also check for int, str, float, etc.
-			## but this is easier
-			## This should be something other than 0, but
-			## for now it is 0 because otherwise we call 
-			## datamanager.resize more often, especially 
-			## if update() is called.  Maybe we need a better 
-			## update() and friendly_update() that only
-			## call datamanager.resize() once.
-			return 0
 
 	def reference(self):
 		return self._reference
