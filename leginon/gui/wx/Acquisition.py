@@ -36,6 +36,8 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsim = wx.StaticBox(self, -1, 'Simulated Target Loop')
 		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
+		sbeval = wx.StaticBox(self, -1, 'Evaluate Image Stats')
+		sbsz_evaluate = wx.StaticBoxSizer(sbeval, wx.VERTICAL)
 
 		# move type
 		movetypes = self.node.getMoveTypes()
@@ -155,24 +157,25 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz_tilt.Add(self.widgets['reset tilt'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		self.widgets['evaluate stats'] = wx.CheckBox(self, -1, 'Prompt user if image stats fail:')
 		self.widgets['low mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['high mean'] = FloatEntry(self, -1, chars=6)
-		sz_evaluate = wx.BoxSizer(wx.VERTICAL)
-		sz_evaluate.Add(self.widgets['evaluate stats'])
-
-		sz_evaluate2 = wx.BoxSizer(wx.HORIZONTAL)
-		sz_evaluate2.Add(wx.StaticText(self, -1, 'Mean between'))
-		sz_evaluate2.Add(self.widgets['low mean'])
-		sz_evaluate2.Add(wx.StaticText(self, -1, 'and'))
-		sz_evaluate2.Add(self.widgets['high mean'])
-		sz_evaluate.Add(sz_evaluate2)
-		sz_evaluate3 = wx.BoxSizer(wx.HORIZONTAL)
-
-		passwordbut = wx.Button(self, -1, 'Enter Password')
+		self.widgets['bad stats response'] = Choice(self, -1, choices=['Continue', 'Pause', 'Abort one','Abort all'])
+		passwordbut = wx.Button(self, -1, 'Enter Email Password')
 		self.Bind(wx.EVT_BUTTON, self.onEnterPassword, passwordbut)
-		sz_evaluate3.Add(passwordbut)
-		sz_evaluate.Add(sz_evaluate3)
+
+		sz_response = wx.BoxSizer(wx.HORIZONTAL)
+		sz_response.Add(self.widgets['bad stats response'])
+		sz_response.Add(wx.StaticText(self, -1, ' target list(s)'))
+		sz_evaluate = wx.BoxSizer(wx.HORIZONTAL)
+		sz_evaluate.Add(wx.StaticText(self, -1, 'between'))
+		sz_evaluate.Add(self.widgets['low mean'])
+		sz_evaluate.Add(wx.StaticText(self, -1, 'and'))
+		sz_evaluate.Add(self.widgets['high mean'])
+	
+		sbsz_evaluate.Add(sz_response, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		sbsz_evaluate.Add(wx.StaticText(self, -1, 'when image mean is NOT'), 0, wx.ALIGN_LEFT)
+		sbsz_evaluate.Add(sz_evaluate, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		sbsz_evaluate.Add(passwordbut, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		sz_transform = wx.GridBagSizer(0, 0)
 		label = wx.StaticText(self, -1, 'Adjust target using')
@@ -198,7 +201,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['display image'], (7, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(sz_evaluate, (8, 0), (1, 1),
+		sz_misc.Add(sbsz_evaluate, (8, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
 		szright = wx.GridBagSizer(3, 3)

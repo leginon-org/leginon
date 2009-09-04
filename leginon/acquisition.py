@@ -37,7 +37,10 @@ class NoMoveCalibration(targetwatcher.PauseRepeatException):
 class InvalidPresetsSequence(targetwatcher.PauseRepeatException):
 	pass
 
-class BadImageStats(targetwatcher.PauseRepeatException):
+class BadImageStatsPause(targetwatcher.PauseRepeatException):
+	pass
+
+class BadImageStatsAbort(Exception):
 	pass
 
 class InvalidStagePosition(Exception):
@@ -133,9 +136,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'use parent tilt': False,
 		'adjust time by tilt': False,
 		'reset tilt': False,
-		'evaluate stats': False,
 		'high mean': 2**16,
 		'low mean': 50,
+		'bad stats response': 'Continue',
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
@@ -578,7 +581,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagedata is None:
 			return 'fail'
 
-		if self.settings['evaluate stats']:
+		if self.settings['bad stats response'] != 'Continue':
 			self.evaluateStats(imagedata['image'])
 
 		## convert float to uint16
@@ -736,10 +739,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 		s.login(leginonconfig.emailuser, self.emailpassword)
 
 		subject = 'LEGINON: bad image stats'
-		text = str(stats)
-
+		responsetext = self.settings['bad stats response'].replace('Abort','aborted')
+		responsetext = responsetext.replace('Pause','paused at current')
+		text = 'Your Leginon session has '+ responsetext + ' target list(s) at \n\n'+time.ctime() + '\n\n due to bad image mean value of %.2f' %stats
 		mes = emailnotification.makeMessage(leginonconfig.emailfrom, leginonconfig.emailto, subject, text)
 		s.sendmail(leginonconfig.emailfrom, leginonconfig.emailto, mes.as_string())
+
+	def respondBadImageStats(self, badstate=''):
+			if self.settings['bad stats response'] == 'Abort all':
+				self.player.stopqueue()
+				self.logger.info('Stopping all targets in queue')
+				raise BadImageStatsAbort('image mean too '+badstate)
+			elif self.settings['bad stats response'] == 'Abort one':
+				self.player.stop()
+				self.logger.info('Skiping targets in this target list')
+				raise BadImageStatsAbort('image mean too '+badstate)
+			elif self.settings['bad stats response'] == 'Pause':
+				raise BadImageStatsPause('image mean too '+badstate)
 
 	def evaluateStats(self, imagearray):
 		mean = arraystats.mean(imagearray)
@@ -747,16 +763,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 			try:
 				self.emailBadImageStats(mean)
 			except:
-				raise
 				self.logger.info('could not email')
-			raise BadImageStats('image mean too high')
+			self.respondBadImageStats('high')
 		if mean < self.settings['low mean']:
 			try:
 				self.emailBadImageStats(mean)
 			except:
-				raise
 				self.logger.info('could not email')
-			raise BadImageStats('image mean too low')
+			self.respondBadImageStats('low')
 
 	def publishImage(self, imdata):
 		self.publish(imdata, pubevent=True)
@@ -819,7 +833,15 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(targetdata, database=True)
 		## change to 'processing' just like targetwatcher does
 		proctargetdata = leginondata.AcquisitionImageTargetData(initializer=targetdata, status='processing')
-		ret = self.processTargetData(targetdata=proctargetdata, attempt=1)
+		try:
+			ret = self.processTargetData(targetdata=proctargetdata, attempt=1)
+		except BadImageStatsPause, e:
+			''' FIX ME!!! need to pause and allow repeat? '''
+			self.logger.error('processing target failed: %s' %e)
+			ret = 'aborted'
+		except BadImageStatsAbort, e:
+			self.logger.error('processing target failed: %s' %e)
+			ret = 'aborted'
 		self.logger.info('Done with simulated target, status: %s (repeat will not be honored)' % (ret,))
 		self.setStatus('idle')
 
