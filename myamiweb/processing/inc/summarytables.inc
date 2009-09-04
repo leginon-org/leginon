@@ -494,6 +494,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 			// KerDen only has one cluster data
 			$clusterdata = $clusterdatas[0];
 			$clusterid = $clusterdata['clusterid'];
+			$clusterpixelsize = $clusterdata['pixelsize'] * 1e-10; // Angstrom ????
 			$clustertable .= "<b>Type:</b> <i>Xmipp KerDen SOM</i><br/><br/>\n";
 
 			$montagefile = $clusterdata['path']."/"."montage.png";
@@ -503,7 +504,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 			$clustertable .= "<ul>\n";
 			$clustertable .= "<li><a target='snapshot' href='loadimg.php?filename=$montagefile'>View montage of self-organizing map</a>\n";
 			$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
-			$clustertable .= "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
+			$clustertable .= "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile&ps=$clusterpixelsize' target='stackview'>"
 				."View montage as a stack for further processing</a><br/>\n";
 			$clustertable .= "</ul>\n";
 		} elseif ($clusterrun['REF|ApRotKerDenSOMParamsData|rotkerdenparams']) {
