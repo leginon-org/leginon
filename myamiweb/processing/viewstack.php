@@ -103,7 +103,18 @@ function getimagicfilenames($file) {
 	return array($file_hed, $file_img);
 }
 
-list($file_hed, $file_img)=getimagicfilenames($filename);
+if (ereg(".spi$", $filename)) {
+	$file_hed=$file_img=$filename;
+	$info=spiderinfo($file_hed);
+	$n_images=$info['nimg'];
+} else if (ereg(".hdf5$", $filename)) {
+	$file_hed=$file_img=$filename;
+	$n_images=100;
+} else {
+	list($file_hed, $file_img)=getimagicfilenames($filename);
+	$info=imagicinfo($file_hed);
+	$n_images=$info['count']+1;
+}
 
 //get session name
 if ($expId){
@@ -309,6 +320,7 @@ quality: <select id="quality">
 		<option value="90">jpeg 90</option>
 		<option value="png">png</option>
 	</select>
+info:<input type="checkbox" checked id="info" >
 scale bar:<input type="checkbox" id="scalebar" >
 <input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();">
 <?

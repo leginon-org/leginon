@@ -54,17 +54,20 @@ if ($imgh<128) {
   $xfont=5;
 }
 
-$color=imagecolorallocate($img,128,0,128);
-$w=imagecolorallocate($img,255,255,255);
-$x1=0;
-$y1=$imgh-$yfont;
-$x2=strlen($text)*$xfont+1;
-$y2=$imgh;
-imagefilledrectangle ($img, $x1, $y1, $x2, $y2, $color );
-imagestring($img, $fontsize, 1, $y1, $text, $w);
+// --- display info --- //
+if (trim($_GET['di'])==1) {
+	$color=imagecolorallocate($img,128,0,128);
+	$w=imagecolorallocate($img,255,255,255);
+	$x1=0;
+	$y1=$imgh-$yfont;
+	$x2=strlen($text)*$xfont+1;
+	$y2=$imgh;
+	imagefilledrectangle ($img, $x1, $y1, $x2, $y2, $color );
+	imagestring($img, $fontsize, 1, $y1, $text, $w);
+}
 
 if (is_numeric(trim($_GET['ps'])) && $_GET['sb']==1) {
-	$ps = $_GET['ps'];
+	$ps = $_GET['ps'] * $binning;
 	$size = imagesx($img);
 	$scalebar = new ScaleBar($img, $size, $ps);
 	$v = imagesy($img)-12;

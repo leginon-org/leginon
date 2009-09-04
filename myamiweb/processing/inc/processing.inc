@@ -663,6 +663,7 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 	function addTile(wholemap, i, force) {
 		binning = $('binning').value
 		scalebar = ($('scalebar').checked) ? 1 : 0
+		info = ($('info').checked) ? 1 : 0
 		t = $('quality').value
 		var tileId = \"img\"+i
 		var filename = 'getstackimg.php?'
@@ -673,6 +674,7 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 				+'&b='+binning
 				+'&uh='+updateheader
 				+'&ps='+pixelsize
+				+'&di='+info
 				+'&sb='+scalebar
 
 		if (typeof stackinfo == 'object' && stackinfo[i]) {
