@@ -105,6 +105,7 @@ function apdivtitle($title) {
 function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false) {
 	global $PROJECT_URL;
 	$expId = $_GET['expId'];
+	$projectId = $_GET['pId'];
 
 	// check if logged in
 	if ($_POST['login']) {
@@ -114,9 +115,11 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$leginondata = new leginondata();
 	$particle = new particledata();
 	$projectdata = new project();
-	$projectId=getProjectFromExpId($expId);
-	if ($_POST['projectId'] && empty($expId)) {
-		$projectId = $_POST['projectId'];
+	if (!$projectId) {
+		$projectId=getProjectFromExpId($expId);
+		if ($_POST['projectId'] && empty($expId)) {
+			$projectId = $_POST['projectId'];
+		}
 	}
 	$_SESSION['projectId'] = $projectId;
 
@@ -127,12 +130,14 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$currentproject = $projectdata->getProjectInfo($projectId);
 
 	// Show project & session pulldowns
-	$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
+	if (is_array($sessioninfo)) {
+		$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
+		$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
+	}
 	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
-	$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
 	$proj_link.=($misc) ? "<a href='viewmisc.php?projId=$projectId'>[Related Images, Movies, etc]</a>" : ""; 
-	$expinfo = $leginondata->getSessionInfo($expId);
+	if ($expId) $expinfo = $leginondata->getSessionInfo($expId);
 
 	$html="<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN'  'http://www.w3.org/TR/html4/strict.dtd'>
 <html>
@@ -180,8 +185,8 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$html.= "<a href='procsummary.php?expId=$expId'>[Appion Stats]</a>\n";
 	$html.= "</div>\n";
 	$html.= "<li><b>Project:</font></b> ".$proj_link."</li>\n";
-	$html.= "<li><b>Session:</b> ".$session_link."</li>\n";
-	$html.= "<li><b>Image Path:</b> ".$expinfo['Image path']."</li>\n";
+	if ($session_link) $html.= "<li><b>Session:</b> ".$session_link."</li>\n";
+	if ($expinfo) $html.= "<li><b>Image Path:</b> ".$expinfo['Image path']."</li>\n";
 
 	$html.= "</ul>\n";
 	$html.= "</div>\n"; // close bottomcontent div
@@ -198,19 +203,21 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$helpdiv = "<div id='dhelp' class='aphelpdoc' onmouseover='overdiv=1;' onmouseout='overdiv=0;'></div>\n";
 	$html.=$helpdiv;
 
-	require "menuprocessing.php";
-	$html.= $menujs;
-	$html.= $menulink;
-	$html.='
-<div id="content" style="padding-left: 5px">
-
-<div style="position: relative; float:left; margin-right:10px" id="leftcontent">
-    <div class="lvmenu">'
-		.$menuprocesing
-		.'</div>
-</div>
-<table border="0" cellpadding="0" cellspacing="0"><tr><td>
-<div id="maincontent" style="z-index:0; width:auto; text-align:left; ">';
+	if ($expId) {
+		require "menuprocessing.php";
+		$html.= $menujs;
+		$html.= $menulink;
+	}
+	$html.= "<div id='content' style='padding-left: 5px'>\n";
+	if ($expId) {
+		$html.= "<div style='position: relative; float:left; margin-right:10px' id='leftcontent'>\n";
+		$html.= "<div class='lvmenu'>";
+		$html.= $menuprocesing;
+		$html.= "</div>\n";
+		$html.= "</div>\n";
+	}
+	$html.= "<table border='0' cellpadding='0' cellspacing='0'><tr><td>\n";
+	$html.= "<div id='maincontent' style='z-index:0; width:auto; text-align:left; '>\n";
 
 	// div for the 'please wait' box to show when processing
 	if ($pleaseWait) {
