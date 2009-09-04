@@ -8,6 +8,11 @@
  */
 
 ?>
+<?php
+require "inc/leginon.inc";
+require "inc/viewer.inc";
+require "inc/project.inc";
+?>
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
@@ -17,11 +22,7 @@
 <table cellpadding="0" cellspacing="0">
 <tr valign="top">
 <td>
-<?php
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
-
+<?
 $p[]='gridId';
 $p[]='mag';
 $p[]='defocus';
