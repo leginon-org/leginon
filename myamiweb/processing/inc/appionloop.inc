@@ -16,7 +16,7 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	$reverse = ($_POST['reverse']=="on") ? "CHECKED" : "";
 	$limit = $_POST[limit];
 	$tiltangle = $_POST['tiltangle'];
-	$commit = ($_POST['commit']=="off") ? "" : "CHECKED";
+	$commit = ($_POST['commit']=="on" || empty($_POST)) ? "CHECKED" : "";
 	$apcontinue = $_POST['apcontinue'];
 	// continue is checkmarked by default
 	$apcontinuecheck = ($apcontinue || !$_POST['process']) ? "CHECKED" : "";
