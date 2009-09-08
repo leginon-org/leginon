@@ -535,14 +535,16 @@ class Data(newdict.TypedDict):
 		## since only weak ref to my DataReference, it could go away.
 		## Only want one DataReference at a time, so lock its creation.
 		self.reflock.acquire()
-		if self._reference is not None:
-			dr = self._reference()
-		else:
-			dr = None
-		if dr is None:
-			dr = DataReference(referent=self)
-			self._reference = weakref.ref(dr)
-		self.reflock.release()
+		try:
+			if self._reference is not None:
+				dr = self._reference()
+			else:
+				dr = None
+			if dr is None:
+				dr = DataReference(referent=self)
+				self._reference = weakref.ref(dr)
+		finally:
+			self.reflock.release()
 		return dr
 
 	def sync(self):
