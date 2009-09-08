@@ -13,6 +13,7 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
+ *
  */
 
 require ("inc/leginon.inc");
