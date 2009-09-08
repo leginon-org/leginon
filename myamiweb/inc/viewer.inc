@@ -72,7 +72,7 @@ class viewer {
 		foreach ($projects as $project) {
 			if ($project[id]==$this->projectId) $s='selected'; else $s='';
 			$projectselector .= '<option value='.$project[id].' '.$s.' >'
-						.$project[name].'</option>'.$this->crlf; 
+						.substr($project[name],0,32).'</option>'.$this->crlf; 
 		}
 		$projectselector .= '</select>'.$this->crlf;
 		if ($currentproject) {
@@ -267,6 +267,8 @@ class viewer {
 		foreach ((array)$filenames as $filename) {
 			$filestr = ereg_replace('[[:alnum:]]+_(.*)', '\1', $filename[name]);
 			$filestr = ereg_replace('_0*', '_', $filestr);
+			$filestr = ereg_replace('^0*', '', $filestr);
+			$filestr = ereg_replace('_v0[0-9]_', '_', $filestr);
 			if ($filename[id]==$default) $s='selected'; else $s='';
 				$selector .= '<option value='.$filename[id].' '.$s.' >'.$filestr.$this->crlf; 
 		}
