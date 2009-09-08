@@ -6,6 +6,7 @@
  *      see  http://ami.scripps.edu/software/leginon-license
  *
  *      Simple viewer to view a image using mrcmodule
+ *
  */
 
 require "inc/particledata.inc";
