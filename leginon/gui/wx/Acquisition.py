@@ -80,7 +80,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['save integer'] = wx.CheckBox(self, -1, 'Float->Integer')
 		self.widgets['display image'] = wx.CheckBox(self, -1, 'Display image')
 		self.widgets['save image'] = wx.CheckBox(self, -1, 'Save image to database')
-		self.widgets['filament off'] = wx.CheckBox(self, -1, 'Turn filament off upon timeout')
+		self.widgets['emission off'] = wx.CheckBox(self, -1, 'Turn emission off upon timeout')
 		self.widgets['wait for process'] = wx.CheckBox(self, -1,
 																				'Wait for a node to process the image')
 		self.widgets['wait for rejects'] = wx.CheckBox(self, -1,
@@ -152,8 +152,8 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_save.Add(self.widgets['correct image'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_filament = wx.GridBagSizer(0, 0)
-		sz_filament.Add(self.widgets['filament off'], (0, 0), (1, 1),
+		sz_emission = wx.GridBagSizer(0, 0)
+		sz_emission.Add(self.widgets['emission off'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_tilt = wx.GridBagSizer(0, 0)
 		sz_tilt.Add(self.widgets['adjust time by tilt'], (0, 0), (1, 1),
@@ -216,7 +216,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_save, (2,0), (2,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_filament, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_emission, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_tilt, (5,0), (2,1), wx.ALIGN_TOP)
 		sz.Add(sbszsim, (7,0), (2,1), wx.ALIGN_BOTTOM)
 		sz.Add(sz_misc, (2,1), (7,1), wx.ALIGN_TOP)

@@ -125,9 +125,11 @@ class TargetHandler(object):
 		if not self.queueidleactive:
 			return
 		self.instrument.tem.ColumnValvePosition = 'closed'
-		self.instrument.tem.Emission = False
 		print 'column valves closed and exiting leginon'
 		self.logger.warning('column valves closed')
+		if self.settings['emission off']:
+			self.instrument.tem.Emission = False
+			self.logger.warning('emission switched off')
 		self.queueidleactive = False
 
 	def toggleQueueTimeout(self):

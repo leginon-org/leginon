@@ -139,6 +139,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'high mean': 2**16,
 		'low mean': 50,
 		'bad stats response': 'Continue',
+		'emission off': False,
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
