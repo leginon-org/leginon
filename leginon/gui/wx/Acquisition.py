@@ -80,6 +80,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['save integer'] = wx.CheckBox(self, -1, 'Float->Integer')
 		self.widgets['display image'] = wx.CheckBox(self, -1, 'Display image')
 		self.widgets['save image'] = wx.CheckBox(self, -1, 'Save image to database')
+		self.widgets['filament off'] = wx.CheckBox(self, -1, 'Turn filament off upon timeout')
 		self.widgets['wait for process'] = wx.CheckBox(self, -1,
 																				'Wait for a node to process the image')
 		self.widgets['wait for rejects'] = wx.CheckBox(self, -1,
@@ -115,7 +116,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		szsim.Add(szwaittime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szsim.Add(sziterations, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		sbszsim.Add(szsim, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		sbszsim.Add(szsim, 0, wx.ALIGN_CENTER)
 
 		szmover = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Mover:')
@@ -149,6 +150,11 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz_save.Add(self.widgets['save image'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_save.Add(self.widgets['save integer'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz_save.Add(self.widgets['correct image'], (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz_filament = wx.GridBagSizer(0, 0)
+		sz_filament.Add(self.widgets['filament off'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 		sz_tilt = wx.GridBagSizer(0, 0)
 		sz_tilt.Add(self.widgets['adjust time by tilt'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
@@ -157,9 +163,9 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz_tilt.Add(self.widgets['reset tilt'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		self.widgets['low mean'] = FloatEntry(self, -1, chars=6)
-		self.widgets['high mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['bad stats response'] = Choice(self, -1, choices=['Continue', 'Pause', 'Abort one','Abort all'])
+		self.widgets['low mean'] = FloatEntry(self, -1, chars=4)
+		self.widgets['high mean'] = FloatEntry(self, -1, chars=4)
 		passwordbut = wx.Button(self, -1, 'Enter Email Password')
 		self.Bind(wx.EVT_BUTTON, self.onEnterPassword, passwordbut)
 
@@ -172,10 +178,10 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz_evaluate.Add(wx.StaticText(self, -1, 'and'))
 		sz_evaluate.Add(self.widgets['high mean'])
 	
-		sbsz_evaluate.Add(sz_response, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		sbsz_evaluate.Add(sz_response, 0, wx.ALIGN_CENTER|wx.ALL, 0)
 		sbsz_evaluate.Add(wx.StaticText(self, -1, 'when image mean is NOT'), 0, wx.ALIGN_LEFT)
-		sbsz_evaluate.Add(sz_evaluate, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-		sbsz_evaluate.Add(passwordbut, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		sbsz_evaluate.Add(sz_evaluate, 0, wx.ALIGN_CENTER|wx.ALL,0)
+		sbsz_evaluate.Add(passwordbut, 0, wx.ALIGN_CENTER|wx.ALL, 3)
 
 		sz_transform = wx.GridBagSizer(0, 0)
 		label = wx.StaticText(self, -1, 'Adjust target using')
@@ -185,23 +191,21 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'ancestor(s)')
 		sz_transform.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_misc = wx.GridBagSizer(0, 0)
-		sz_misc.Add(self.widgets['correct image'], (0, 0), (1, 1),
+		sz_misc.Add(self.widgets['wait for process'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['wait for process'], (1, 0), (1, 1),
+		sz_misc.Add(self.widgets['wait for rejects'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['wait for rejects'], (2, 0), (1, 1),
+		sz_misc.Add(self.widgets['wait for reference'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['wait for reference'], (3, 0), (1, 1),
+		sz_misc.Add(sz_transform, (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(sz_transform, (4, 0), (1, 1),
+		sz_misc.Add(self.widgets['drift between'], (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['drift between'], (5, 0), (1, 1),
+		sz_misc.Add(self.widgets['background'], (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['background'], (6, 0), (1, 1),
+		sz_misc.Add(self.widgets['display image'], (6, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['display image'], (7, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(sbsz_evaluate, (8, 0), (1, 1),
+		sz_misc.Add(sbsz_evaluate, (8, 0), (4, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
 		szright = wx.GridBagSizer(3, 3)
@@ -211,11 +215,12 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		szright.Add(sz_target_type, (6,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_save, (2,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_tilt, (3,0), (2,1), wx.ALIGN_BOTTOM)
-		sz.Add(sbszsim, (5,0), (4,1), wx.ALIGN_BOTTOM)
-		sz.Add(sz_misc, (2,1), (8,1), wx.ALIGN_TOP)
-		sz.Add(szright, (0,2),(11,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_save, (2,0), (2,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_filament, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_tilt, (5,0), (2,1), wx.ALIGN_TOP)
+		sz.Add(sbszsim, (7,0), (2,1), wx.ALIGN_BOTTOM)
+		sz.Add(sz_misc, (2,1), (7,1), wx.ALIGN_TOP)
+		sz.Add(szright, (0,2),(9,1), wx.ALIGN_TOP)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]
