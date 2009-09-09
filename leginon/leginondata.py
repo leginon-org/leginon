@@ -1513,6 +1513,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('bad stats response', str),
 			('high mean', float),
 			('low mean', float),
+			('emission off', bool),
 		)
 	typemap = classmethod(typemap)
 
