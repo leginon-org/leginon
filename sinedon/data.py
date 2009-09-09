@@ -250,7 +250,7 @@ class DataReference(object):
 			raise DataError('DataReference needs either DataReference, Data class, or Data instance for initialization')
 
 	def __getstate__(self):
-		## for pickling, do not include weak ref attribute
+		## for pickling, do not include referent
 		state = dict(self.__dict__)
 		state['referent'] = None
 		return state
@@ -272,6 +272,7 @@ class DataReference(object):
 				self.referent = weakref.ref(o)
 			self.dmid = o.dmid
 			self.dbid = o.dbid
+			o.references[id(self)] = self
 
 	def getData(self, **kwargs):
 		referent = None
@@ -378,9 +379,9 @@ class Data(newdict.TypedDict):
 
 		newdict.TypedDict.__init__(self)
 
-		self.reflock = threading.Lock()
-		self._reference = None
-		
+		#self.reflock = threading.Lock()
+		self.references = weakref.WeakValueDictionary()
+
 		### insert into datamanager and sync my reference
 		### this also needs to be done in cases where this
 		### method is not called, like unpickling
@@ -398,9 +399,10 @@ class Data(newdict.TypedDict):
 	## definining __reduce__ allows unpickler to call __init__ 	 
 	## which is necessary to register data with datamanager 	 
 	## This overrides OrderedDict.__reduce__ with the only difference
-	## being that we don't wan to dereference the items
+	## being that we don't want to dereference the items
 	def __reduce__(self): 	 
 		state = dict(self.__dict__) 	 
+		del state['references']
 		## giving the new object an initializer has a lot of 	 
 		## duplicate information to what is given in the 	 
 		## state dict, but it is necessary to get the dict 	 
@@ -532,27 +534,17 @@ class Data(newdict.TypedDict):
 	fromDict = classmethod(fromDict)
 
 	def reference(self):
-		## since only weak ref to my DataReference, it could go away.
-		## Only want one DataReference at a time, so lock its creation.
-		self.reflock.acquire()
-		try:
-			if self._reference is not None:
-				dr = self._reference()
-			else:
-				dr = None
-			if dr is None:
-				dr = DataReference(referent=self)
-				self._reference = weakref.ref(dr)
-		finally:
-			self.reflock.release()
+		dr = DataReference(referent=self)
+		self.references[id(dr)] = dr
 		return dr
 
 	def sync(self):
 		'''
-		synchronize my reference with me
+		synchronize my references with me
 		becuase either dmid or dbid changed
 		'''
-		self.reference().sync(self)
+		for dr in self.references.values():
+			dr.sync(self)
 
 	def nstr(self, value):
 		if type(value) is numpy.ndarray:
