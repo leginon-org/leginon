@@ -54,14 +54,14 @@ class UploadTomoScript(appionScript.AppionScript):
 			self.params['full'] = True
 			if not self.params['order']:
 				self.params['order'] = 'XZY'
-			if self.params['order'] != 'XYZ':
+			if self.params['order'] != 'XYZ' and self.params['order'] != 'XZY':
 				if self.params['transform']:
-					apDisplay.printError("Only transformations from XYZ are implemented")
+					apDisplay.printError("Only transformations from XYZ or XZY are implemented")
 		else:
 			self.params['full'] = False
 			if not self.params['order']:
 				self.params['order'] = 'XYZ'
-			if self.params['order'] != 'XZY':
+			if self.params['order'] != 'XZY' and self.params['order'] != 'XYZ':
 				if self.params['transform']:
 					apDisplay.printError("Only transformations from XZY are implemented")
 		if self.params['session'] is None:
@@ -177,7 +177,7 @@ class UploadTomoScript(appionScript.AppionScript):
 			currenttomopath = origtomopath
 			if self.params['full']:
 				### full tomogram upload, may need to pad to the image size
-				if self.params['order'] == 'XZY':
+				if self.params['order'] == 'XZY' and not voltransform:
 					apDisplay.printMsg("Default full tomogram orientation with original handness")
 				else:
 					if voltransform:
@@ -189,12 +189,13 @@ class UploadTomoScript(appionScript.AppionScript):
 				currentshape = currentheader['shape']
 				currentxyshape = currentshape[0], currentshape[2]
 				imageshape = self.imageshape
+				print imageshape, currentxyshape
 				if currentxyshape[0] < imageshape[0]/bin or currentxyshape[1] < imageshape[1]/bin:
 					currenttomopath = apImod.pad(currenttomopath,currentxyshape,imageshape,bin,'XZY')
 					cleanlist.append(currenttomopath)
 			else:
 				### subtomogram simple upload, just copy file to Tomo folder
-				if self.params['order'] == 'XYZ':
+				if self.params['order'] == 'XYZ' and not voltransform:
 					apDisplay.printMsg("Default sub tomogram orientation")
 				else:
 					if voltransform:
@@ -219,6 +220,7 @@ class UploadTomoScript(appionScript.AppionScript):
 			apTomo.makeMovie(newtomopath)
 			apTomo.makeProjection(newtomopath)
 		apTomo.insertTomo(self.params)
+		### clean up
 		for tmpfilepath in cleanlist:
 			apFile.removeFile(tmpfilepath)
 
