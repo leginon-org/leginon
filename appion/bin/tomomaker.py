@@ -246,6 +246,10 @@ class tomoMaker(appionScript.AppionScript):
 		# Reconstruction
 		thickness = int(self.params['thickness'])
 		apImod.recon3D(stackdir, processdir, seriesname, imgshape, thickness)
+		# Full tomogram created with imod is left-handed XZY
+		origtomopath = os.path.join(processdir, seriesname+"_full.rec"),
+		currenttomopath = apImod.transformVolume(origtomopath,voltransform)
+		shutil.move(currenttomopath, origtomopath)
 		zprojectfile = apImod.projectFullZ(processdir, self.params['runname'], seriesname,bin,True,False)
 		if commit:
 			zimagedata = apTomo.uploadZProjection(self.params['runname'],imagelist[0],zprojectfile)
