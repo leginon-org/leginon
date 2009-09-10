@@ -248,20 +248,27 @@ class particledata {
 		return $this->mysql->getSQLResult($q);
 	}
 	function getSubTomoRunFromStack($stackId){
-		$q =  "SELECT `DEF_id` as subtomorunid "
-			."FROM `ApSubTomogramRunData` "
-			."WHERE `REF|ApStackdata|stack` = " .$stackId." "
-			."LIMIT 1";
-		list($r) = $this->mysql->getSQLResult($q);
-		if (!$r['subtomorunid']) {
-			$selectionruns = $this->getParticleRunsFromStack($stackId);
-			if (count($selectionruns) > 1) return;
-			$selectionrunid = $selectionruns[0][0]['DEF_id'];
+		$currentstackId = $stackId;
+		while (!$r['subtomorunid'] && $currentstackId) {
 			$q =  "SELECT `DEF_id` as subtomorunid "
 				."FROM `ApSubTomogramRunData` "
-				."WHERE `REF|ApSelectionRundata|pick` = " .$selectionrunid." "
+				."WHERE `REF|ApStackdata|stack` = " .$currentstackId." "
 				."LIMIT 1";
 			list($r) = $this->mysql->getSQLResult($q);
+			if (!$r['subtomorunid']) {
+				$selectionruns = $this->getParticleRunsFromStack($currentstackId);
+				if (count($selectionruns) > 1) return;
+				$selectionrunid = $selectionruns[0][0]['DEF_id'];
+				$q =  "SELECT `DEF_id` as subtomorunid "
+					."FROM `ApSubTomogramRunData` "
+					."WHERE `REF|ApSelectionRundata|pick` = " .$selectionrunid." "
+					."LIMIT 1";
+				list($r) = $this->mysql->getSQLResult($q);
+			}
+			if (!$r['subtomorunid']) {
+				$parentstack = $this->getParentStackId($currentstackId);
+				$currentstackId = $parentstack['parentid'];
+			}
 		}
 		return $r['subtomorunid'];
 	}
@@ -1521,6 +1528,15 @@ class particledata {
 		  ."ORDER BY stackid DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
+	}
+
+	function getParentStackId ($substackId) {
+		$q = "SELECT "
+			." `REF|ApStackData|oldstack` as parentid "
+			." FROM ApStackData "
+			." WHERE `DEF_id` = ".$substackId." ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
 	}
 
 	function getSubStackIds ($sessionId, $primarystackid, $showHidden=False) {
