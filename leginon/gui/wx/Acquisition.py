@@ -152,6 +152,8 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_save.Add(self.widgets['correct image'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz_save.Add(self.widgets['display image'], (3, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 		sz_emission = wx.GridBagSizer(0, 0)
 		sz_emission.Add(self.widgets['emission off'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
@@ -203,9 +205,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['background'], (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['display image'], (6, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(sbsz_evaluate, (8, 0), (4, 1),
+		sz_misc.Add(sbsz_evaluate, (7, 0), (4, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
 		szright = wx.GridBagSizer(3, 3)
