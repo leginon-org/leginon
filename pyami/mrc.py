@@ -220,13 +220,13 @@ Create n bytes of data initialized to zeros, returned as a python string.
 	a = numpy.zeros(n, dtype=int8dtype)
 	return a.tostring()
 
-def newHeader(fields=header_fields):
+def newHeader(header_fields=header_fields):
 	'''
 Return a new initialized header dictionary.
 All fields are initialized to zeros.
 	'''
 	header = {}
-	for field in fields:
+	for field in header_fields:
 		name = field[0]
 		type = field[1]
 		if type == 'string':
@@ -427,26 +427,30 @@ return the string representation of an int value
 	a = numpy.array(value, dtype=uint16dtype)
 	return a.tostring()
 
-def makeHeaderData(h, fields=header_fields):
+def makeHeaderData(h, header_fields=header_fields):
 	'''
 Create a 1024 byte header string from a header dictionary.
 	'''
 	fields = []
-	for field in fields:
+	for field in header_fields:
 		name = field[0]
 		type = field[1]
+		if name in h:
+			value = h[name]
+		else:
+			value = 0
 		if type == 'string':
 			length = field[2]
-			s = h[name]
+			s = str(value)
 			nzeros = length - len(s)
 			fullfield = s + zeros(nzeros)
 			fields.append(fullfield)
 		elif type == 'int32':
-			fields.append(valueToInt(h[name]))
+			fields.append(valueToInt(value))
 		elif type == 'float32':
-			fields.append(valueToFloat(h[name]))
+			fields.append(valueToFloat(value))
 		elif type == 'uint16':
-			fields.append(valueToUInt16(h[name]))
+			fields.append(valueToUInt16(value))
 
 	headerbytes = ''.join(fields)
 	return headerbytes
@@ -498,29 +502,15 @@ Always saves in the native byte order.
 		h.update(header)
 
 	headerbytes = makeHeaderData(h)
-
-	# make sure array is right type for MRC
-	a = asMRCtype(a)
-
-	# make sure array is in native byte order
-	if not a.dtype.isnative:
-		a = a.byteswap()
 	f = open(filename, 'wb')
 	f.write(headerbytes)
 
-	## write data in smaller chunks.  Otherwise, writing from
-	## windows to a samba share will fail if image is too large.
-	smallersize = 16 * 1024 * 1024
-	b = a.ravel()
-	items_per_write = int(smallersize / a.itemsize)
-	for start in range(0, b.size, items_per_write):
-		end = start + items_per_write
-		b[start:end].tofile(f)
+	appendArray(a, f)
 
 	f.close()
 
 def mainStackHeader(oneheader, z):
-	newheader = newHeader(fields=header_fields_stack)
+	newheader = newHeader(header_fields=header_fields_stack)
 	newheader.update(oneheader)
 	newheader['nz'] = z
 	newheader['mz'] = z
@@ -531,21 +521,60 @@ def mainStackHeader(oneheader, z):
 	newheader['nfloats'] = 22
 	return newheader
 
+def extendedHeader(tilt):
+	newheader = {}
+	newheader['stagealpha'] = tilt
+	## other fields...
+
+	return newheader
+
 def stack(inputfiles, tilts, outputfile):
 	# read first image to use as main header
 	firstheader = readHeaderFromFile(inputfiles[0])
 	newheader = mainStackHeader(firstheader, len(tilts))
 
 	# write main header
-	headerbytes = makeHeaderData(newheader, fields=header_fields_stack)
+	headerbytes = makeHeaderData(newheader, header_fields=header_fields_stack)
 	f = open(outputfile, 'wb')
 	f.write(headerbytes)
-	
-	# write extended headers
 
+	# write zeros for all extended headers
+	extended_length = len(tilts) * 88
+	f.write(zeros(extended_length))
 
+	# write extended headers and data
+	extheaderpos = 1024
+	for inputfile, tilt in zip(inputfiles, tilts):
+		data = read(inputfile)
 
-	# read each data, write each data
+		f.seek(extheaderpos)
+		extheaderpos += 88
+		newheader = extendedHeader(tilt)
+		headerbytes = makeHeaderData(newheader, header_fields=header_fields_extended)
+		f.write(headerbytes)
+		appendArray(data, f)
+	f.close()
+
+def appendArray(a, f):
+	'''a = numpy array, f = open file object'''
+	# make sure array is right type for MRC
+	a = asMRCtype(a)
+
+	# make sure array is in native byte order
+	if not a.dtype.isnative:
+		a = a.byteswap()
+
+	# seek to end of file
+	f.seek(0, 2)
+
+	## write data in smaller chunks.  Otherwise, writing from
+	## windows to a samba share will fail if image is too large.
+	smallersize = 16 * 1024 * 1024
+	b = a.ravel()
+	items_per_write = int(smallersize / a.itemsize)
+	for start in range(0, b.size, items_per_write):
+		end = start + items_per_write
+		b[start:end].tofile(f)
 
 def append(a, filename):
 	# read existing header
@@ -571,27 +600,10 @@ def append(a, filename):
 	## (could also update some other fields of header...)
 
 	headerbytes = makeHeaderData(oldheader)
-
-	# make sure array is right type for MRC
-	a = asMRCtype(a)
-	# make sure array is in native byte order
-	if not a.dtype.isnative:
-		a = a.byteswap()
-
-	## write new header to file
 	f.seek(0)
 	f.write(headerbytes)
 
-	f.seek(0, 2)
-
-	## write data in smaller chunks.  Otherwise, writing from
-	## windows to a samba share will fail if image is too large.
-	smallersize = 16 * 1024 * 1024
-	b = a.ravel()
-	items_per_write = int(smallersize / a.itemsize)
-	for start in range(0, b.size, items_per_write):
-		end = start + items_per_write
-		b[start:end].tofile(f)
+	appendArray(a, f)
 
 	f.close()
 
@@ -645,10 +657,34 @@ def readHeaderFromFile(filename):
 	h = parseHeader(h)
 	return h
 
-if __name__ == '__main__':
+def testHeader():
 	infilename = sys.argv[1]
 	f = open(infilename)
 	h = f.read(1024)
 	f.close()
 	h = parseHeader(h)
 	printHeader(h)
+
+def testWrite():
+	a = numpy.zeros((16,16), numpy.float32)
+	write(a, 'a.mrc')
+
+def testStack():
+	## write individual files
+	files = []
+	tilts = []
+	for tilt in (1,2,3,4,5):
+		a = tilt * numpy.ones((8,8), numpy.float32)
+		filename = 'tilt%03d.mrc' % (tilt,)
+		write(a, filename)
+		files.append(filename)
+		tilts.append(tilt)
+
+	## make stack
+	outputname = 'stack.mrc'
+	stack(files, tilts, outputname)
+
+if __name__ == '__main__':
+	#testHeader()
+	#testWrite()
+	testStack()
