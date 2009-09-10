@@ -135,6 +135,78 @@ header_fields = (
 	('label9', 'string', 80),
 )
 
+## Boulder format of stack mrc header
+for i,x in enumerate(header_fields):
+	if x[0] == 'extra':
+		break
+header_fields_stack = list(header_fields[:i])
+header_fields_stack.extend([
+	("dvid", "uint16"),
+	("nblank", "uint16"),
+	("itst", "int32"),
+	("blank", "string", 24),
+	("nintegers", "uint16"),
+	("nfloats", "uint16"),
+	("sub", "uint16"),
+	("zfac", "uint16"),
+	("min2", "float32"),
+	("max2", "float32"),
+	("min3", "float32"),
+	("max3", "float32"),
+	("min4", "float32"),
+	("max4", "float32"),
+	("type", "uint16"),
+	("lensum", "uint16"),
+	("nd1", "uint16"),
+	("nd2", "uint16"),
+	("vd1", "uint16"),
+	("vd2", "uint16"),
+	("min5", "float32"),
+	("max5", "float32"),
+	("numtimes", "uint16"),
+	("imgseq", "uint16"),
+	("xtilt", "float32"),
+	("ytilt", "float32"),
+	("ztilt", "float32"),
+	("numwaves", "uint16"),
+	("wave1", "uint16"),
+	("wave2", "uint16"),
+	("wave3", "uint16"),
+	("wave4", "uint16"),
+	("wave5", "uint16"),
+	("xorigin", "float32"),
+	("yorigin", "float32"),
+	("zorigin", "float32"),
+	("nlabels", "int32"),
+	('label0', 'string', 80),
+	('label1', 'string', 80),
+	('label2', 'string', 80),
+	('label3', 'string', 80),
+	('label4', 'string', 80),
+	('label5', 'string', 80),
+	('label6', 'string', 80),
+	('label7', 'string', 80),
+	('label8', 'string', 80),
+	('label9', 'string', 80),
+])
+
+header_fields_extended = [
+	("stagealpha", "float32"),
+	("stagebeta", "float32"),
+	("stagex", "float32"),
+	("stagey", "float32"),
+	("stagez", "float32"),
+	("shiftx", "float32"),
+	("shifty", "float32"),
+	("defocus", "float32"),
+	("exposuretime", "float32"),
+	("meanintensity", "float32"),
+	("tiltaxis", "float32"),
+	("pixelsize", "float32"),
+	("magnification", "float32"),
+	("reserved", "string", 36),
+]
+
 def printHeader(headerdict):
 	for field in header_fields:
 		name = field[0]
@@ -148,13 +220,13 @@ Create n bytes of data initialized to zeros, returned as a python string.
 	a = numpy.zeros(n, dtype=int8dtype)
 	return a.tostring()
 
-def newHeader():
+def newHeader(fields=header_fields):
 	'''
 Return a new initialized header dictionary.
 All fields are initialized to zeros.
 	'''
 	header = {}
-	for field in header_fields:
+	for field in fields:
 		name = field[0]
 		type = field[1]
 		if type == 'string':
@@ -333,6 +405,7 @@ def updateHeaderUsingArray(header, a):
 	header['nzstart'] = nz/-2
 
 int32dtype = numpy.dtype('Int32')
+uint16dtype = numpy.dtype('UInt16')
 float32dtype = numpy.dtype('Float32')
 int8dtype = numpy.dtype('Int8')
 def valueToFloat(value):
@@ -347,13 +420,19 @@ return the string representation of an int value
 	'''
 	a = numpy.array(value, dtype=int32dtype)
 	return a.tostring()
+def valueToUInt16(value):
+	'''
+return the string representation of an int value
+	'''
+	a = numpy.array(value, dtype=uint16dtype)
+	return a.tostring()
 
-def makeHeaderData(h):
+def makeHeaderData(h, fields=header_fields):
 	'''
 Create a 1024 byte header string from a header dictionary.
 	'''
 	fields = []
-	for field in header_fields:
+	for field in fields:
 		name = field[0]
 		type = field[1]
 		if type == 'string':
@@ -366,6 +445,8 @@ Create a 1024 byte header string from a header dictionary.
 			fields.append(valueToInt(h[name]))
 		elif type == 'float32':
 			fields.append(valueToFloat(h[name]))
+		elif type == 'uint16':
+			fields.append(valueToUInt16(h[name]))
 
 	headerbytes = ''.join(fields)
 	return headerbytes
@@ -437,6 +518,34 @@ Always saves in the native byte order.
 		b[start:end].tofile(f)
 
 	f.close()
+
+def mainStackHeader(oneheader, z):
+	newheader = newHeader(fields=header_fields_stack)
+	newheader.update(oneheader)
+	newheader['nz'] = z
+	newheader['mz'] = z
+	newheader['zlen'] = z
+	newheader['zorigin'] = z/2.0
+	newheader['nsymbt'] = z * 88
+	newheader['nintegers'] = 0
+	newheader['nfloats'] = 22
+	return newheader
+
+def stack(inputfiles, tilts, outputfile):
+	# read first image to use as main header
+	firstheader = readHeaderFromFile(inputfiles[0])
+	newheader = mainStackHeader(firstheader, len(tilts))
+
+	# write main header
+	headerbytes = makeHeaderData(newheader, fields=header_fields_stack)
+	f = open(outputfile, 'wb')
+	f.write(headerbytes)
+	
+	# write extended headers
+
+
+
+	# read each data, write each data
 
 def append(a, filename):
 	# read existing header
