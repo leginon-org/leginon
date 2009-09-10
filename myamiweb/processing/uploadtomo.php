@@ -202,11 +202,22 @@ function runUploadTomogram() {
 		$splitorientation = explode(':',$orientation);
 		$order = $splitorientation[0];
 		$handness = $splitorientation[1];
-		if ($handness == 'left-handed') $transform .=" flipyz";
 		if ($volume) {
-			if ($order !='XYZ') $transform .=" rotx";
+			if ($order =='XYZ') {
+				$transform = ($handness == 'right-handed') ? '' : 'flipz';
+			} else {
+				if ($order == 'XZY') {
+					$transform = ($handness == 'right-handed') ? 'rotx' : 'flipyz';
+				}
+			}
 		} else {
-			if ($order !='XZY') $transform .=" rotx";
+			if ($order =='XZY') {
+				$transform = ($handness == 'right-handed') ? '' : 'flipx';
+			} else {
+				if ($order == 'XYZ') {
+					$transform = ($handness == 'right-handed') ? 'rotx' : 'flipyz';
+				}
+			}
 		}
 	} 
 	$particle = new particledata();
