@@ -228,7 +228,10 @@ class DataReference(object):
 	if using dataclass, also specify either a dmid or a dbid
 	'''
 	def __init__(self, datareference=None, referent=None, dataclass=None, dmid=None, dbid=None):
+		self.dataclass = None
 		self.referent = None
+		self.dmid = None
+		self.dbid = None
 		if datareference is not None:
 			self.dataclass = datareference.dataclass
 			self.dmid = datareference.dmid
@@ -246,8 +249,10 @@ class DataReference(object):
 			self.dataclass = dataclass
 			self.dmid = dmid
 			self.dbid = dbid
+		elif dmid is not None:
+			self.dmid = dmid
 		else:
-			raise DataError('DataReference needs either DataReference, Data class, or Data instance for initialization')
+			raise DataError('DataReference needs more info for initialization')
 
 	def __getstate__(self):
 		## for pickling, do not include referent
@@ -296,7 +301,11 @@ class DataReference(object):
 			ref = 'strong'
 		else:
 			ref = 'None'
-		s = 'DataReference(class: %s, dmid: %s, dbid: %s, referent: %s' % (self.dataclass.__name__, self.dmid, self.dbid, ref)
+		if self.dataclass is None:
+			cls = 'unknown'
+		else:
+			cls = self.dataclass.__name__
+		s = 'DataReference(class: %s, dmid: %s, dbid: %s, referent: %s' % (cls, self.dmid, self.dbid, ref)
 		return s
 
 class UnknownData(object):
