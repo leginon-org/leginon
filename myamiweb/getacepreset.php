@@ -7,6 +7,10 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+require "inc/viewer.inc";
+require "inc/leginon.inc";
+require "inc/project.inc";
+require "inc/particledata.inc";
 ?>
 <html>
 <head>
@@ -18,8 +22,6 @@
 <tr valign="top">
 <td>
 <?php
-require "inc/viewer.inc";
-require "inc/leginon.inc";
 
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];
@@ -30,9 +32,6 @@ $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo['sessionId'];
 
 $newexpId = $sessionId; // --- variable use by setdatabase() in inc/project.inc
-require "inc/project.inc";
-
-require "inc/particledata.inc";
 
 $ctf = new particledata();
 $runId = $ctf->getLastCtfRun($sessionId);
