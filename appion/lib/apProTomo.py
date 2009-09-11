@@ -142,7 +142,7 @@ def writeRefineParamFile(refinedict,paramfile):
 		f.write('%s=%s\n' % (key, val))
 	f.close()
 
-def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix, cneter=(1024,1024)):
+def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix, center=(1024,1024)):
 	# need to get the center from the file when this is called
 	protomotltfile = protomoprefix+"-fitted.tlt"
 	imodtltfile = imodprefix+".prexg"
