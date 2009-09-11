@@ -16,6 +16,7 @@ import weakref
 import os
 import connections
 from pyami import weakattr
+import itertools
 
 class DataError(Exception):
 	pass
@@ -58,21 +59,12 @@ sss will be queried automatically when accessing iii['session']
 ## to the DB.  Then the strong reference is converted to weak ref.
 class DataManager(object):
 	def __init__(self):
-		## will connect to database before first query
-		self.db = {}
-		### maybe dblock will fix some suspicious errors comming
-		### from database access
-		self.dbcachelock = threading.RLock()
-		self.location = None
-		self.server = None
+		self.startServer()
 
 		self.weakcache = weakref.WeakValueDictionary()
-
-		## this lock should be used on access to everything below
-		self.lock = threading.RLock()
 		self.dbcache = weakref.WeakValueDictionary()
-		self.dmid = 0
-		### end of things that need to be locked
+
+		self.nextdmid = itertools.izip(itertools.repeat(self.location), itertools.count()).next
 
 		self.holdimages = True
 
@@ -91,39 +83,13 @@ class DataManager(object):
 		hostname = self.server.hostname
 		self.location = (hostname, port)
 
-	def newid(self):
-		self.lock.acquire()
-		try:
-			self.dmid += 1
-			new_dmid = (self.location, self.dmid)
-			return new_dmid
-		finally:
-			self.lock.release()
+	def cacheInsert(self, datainstance):
+		## if datainstance has no dmid, give it one
+		if not hasattr(datainstance, 'dmid') or datainstance.dmid is None:
+			datainstance.dmid = self.nextdmid()
 
-	def insert(self, datainstance):
-		self.lock.acquire()
-		try:
-			if self.server is None:
-				self.startServer()
-
-			## if datainstance has no dmid, give it one
-			dmid = datainstance.dmid
-			if dmid is None:
-				dmid = self.newid()
-				datainstance.dmid = dmid
-
-			## keep in the weak cache
-			self.weakcache[dmid] = datainstance
-		finally:
-			self.lock.release()
-
-	def getDataFromDBCache(self, dataclass, dbid):
-		self.dbcachelock.acquire()
-		try:
-			dat = self.dbcache[dataclass, dbid]
-		finally:
-			self.dbcachelock.release()
-		return dat
+		## keep in the weak cache
+		self.weakcache[datainstance.dmid] = datainstance
 
 	def getDataFromDB(self, dataclass, dbid, **kwargs):
 		dbmodulename = dataclass.__module__
@@ -131,7 +97,7 @@ class DataManager(object):
 
 		### try to get data from dbcache before doing query
 		try:
-			dat = self.getDataFromDBCache(dataclass, dbid)
+			dat = self.dbcache[dataclass, dbid]
 		except KeyError:
 			dat = db.direct_query(dataclass, dbid, **kwargs)
 		return dat
@@ -141,11 +107,7 @@ class DataManager(object):
 			return
 		dbid = datainstance.dbid
 		dataclass = datainstance.__class__
-		self.dbcachelock.acquire()
-		try:
-			self.dbcache[dataclass, dbid] = datainstance
-		finally:
-			self.dbcachelock.release()
+		self.dbcache[dataclass, dbid] = datainstance
 
 	def getRemoteData(self, datareference):
 		dmid = datareference.dmid
@@ -154,7 +116,7 @@ class DataManager(object):
 		datainstance = client.send(datareference)
 		### this is a new instance from a pickle
 		### now register it locally
-		self.insert(datainstance)
+		self.cacheInsert(datainstance)
 		datainstance.sync()
 		return datainstance
 
@@ -206,7 +168,7 @@ class DataManager(object):
 
 	def handle(self, request):
 		if isinstance(request, Data):
-			return self.insert(request)
+			return self.cacheInsert(request)
 		elif isinstance(request, DataReference):
 			return self.query(request)
 		elif isinstance(request, newdict.FileReference):
@@ -388,13 +350,13 @@ class Data(newdict.TypedDict):
 
 		newdict.TypedDict.__init__(self)
 
-		#self.reflock = threading.Lock()
 		self.references = weakref.WeakValueDictionary()
 
 		### insert into datamanager and sync my reference
 		### this also needs to be done in cases where this
 		### method is not called, like unpickling
-		datamanager.insert(self)
+		datamanager.cacheInsert(self)
+
 		self.sync()
 
 		# if initializer was given, update my values
