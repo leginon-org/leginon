@@ -26,6 +26,14 @@ import apFile
 import apEMAN
 from apSpider import volFun
 
+def getTiltdataList(tiltseriesdata,othertiltdata=None):
+		if othertiltdata is None:
+			tiltdatalist = [tiltseriesdata]
+		else:
+			tiltdatalist = [tiltseriesdata,othertiltdata]
+			apDisplay.printMsg('Combining images from two tilt series')
+		return tiltdatalist
+
 def getFilename(tiltserieslist):
 	seriesname = tiltserieslist[0]['session']['name']+'_'
 	names = []
@@ -572,32 +580,12 @@ def transformTomo(a,name,package,alignpdata,zshift=0.0,bin=1):
 	angle = alignpdata['rotation']
 	mirror = alignpdata['mirror']
 	print shift,angle,mirror
-	if package == 'Xmipp':
-		return xmippTransformTomo(a,name,angle,shift,mirror,3)
-	elif package == 'Spider':
-		#return spiderTransformTomo(a,name,angle,shift,mirror,3)
-		return spiderTransformTomoByNumpy(a,name,angle,shift,mirror,3)
-
-def xmippTransformTomo(a, name, rot=0, shift=(0,0,0), mirror=False, order=3):
-	"""
-		similar to apImage.xmippTransform but on 3D volume and rotate on the
-		xy plane
-	"""
-	b = a
-	shiftxyz = (shift[2],shift[1],shift[0])
-	b = ndimage.shift(b, shift=shiftxyz, mode='reflect', order=order)
-	if mirror is True:
-		b = ndimage.rotate(b, axes=(0,2), angle =math.pi, reshape=False, mode='reflect', order=order)
-	b = ndimage.shift(b, shift=(0,-0.5,-0.5), mode='wrap',order=order)
-	b = ndimage.rotate(b, angle=-1*rot, axes=(2,1), reshape=False, order=order)
-	b = ndimage.shift(b, shift=(0, 0.5, 0.5), mode='wrap',order=order)
-	return b
-
-def spiderTransformTomoByNumpy(a,infile, rot=0, shift=(0,0,0), mirror=False, order=3):
 	"""
 		zoom the array by 2 to get better interpretation or noisy volume and then
 		use numpy affine transform to rotate and shift. prefilter should be False to 
-		faithfully regenerate features in the sections
+		faithfully regenerate features in the sections.  In addition, zoom order need
+		to be one to prevent filtering effect while affine transform order should be
+		more than 2 for better interpretation of the rotation.
 	"""
 	scale = 2.0
 	### order=1 copies values
@@ -611,52 +599,27 @@ def spiderTransformTomoByNumpy(a,infile, rot=0, shift=(0,0,0), mirror=False, ord
 		mvalue = -1
 	else:
 		mvalue = 1
-	rot = rot * math.pi / 180.0
+	rot = angle * math.pi / 180.0
 	rotationaffine = numpy.matrix([[1,0,0,0],[0,math.cos(rot),-math.sin(rot),0],[0,math.sin(rot),math.cos(rot),0],[0,0,0,1]])
 	shiftaffine = numpy.matrix([[1,0,0,shift2[2]],[0,1,0,shift2[1]],[0,0,1,shift2[0]],[0,0,0,1]])
 	centeraffine = numpy.matrix([[1,0,0,0],[0,1,0,center[1]],[0,0,1,center[2]],[0,0,0,1]])
 	mirroraffine = numpy.matrix([[mvalue,0,0,0],[0,1,0,0],[0,0,mvalue,0],[0,0,0,1]])
-	totalaffine = centeraffine * rotationaffine.I * centeraffine.I * shiftaffine.I * centeraffine * mirroraffine * centeraffine.I
+	if package == 'Xmipp':
+		totalaffine = xmippAffineTransform(rotationaffine, shiftaffine, mirroraffine, centeraffine)
+	elif package == 'Spider':
+		totalaffine = spiderAffineTransform(rotationaffine, shiftaffine, mirroraffine, centeraffine)
 	print totalaffine
 	totalshift = (totalaffine[0,3],totalaffine[1,3],totalaffine[2,3])
-	b = ndimage.affine_transform(b, totalaffine[:-1,:-1], offset=totalshift, mode='wrap', order=order, prefilter=False)
+	b = ndimage.affine_transform(b, totalaffine[:-1,:-1], offset=totalshift, mode='wrap', order=3, prefilter=False)
 	c = ndimage.zoom(b,1.0/scale,mode='nearest',prefilter=False,order=1)
 	return c
 
-def spiderTransformTomo(a,infile, rot=0, shift=(0,0,0), mirror=False, order=2):
-	"""
-		zoom the array by 2 to get better interpretation or noisy volume and then
-		use spider function to rotate and shift.  numpy rotation of volume does not
-		faithfully regenerate features in the sections
-	"""
-	zoomname = 'zoom'
-	scale = 2.0
-	inboxlist = list(a.shape)
-	inboxlist.reverse()
-	inboxtuple = tuple(inboxlist)
-	outboxlist = map((lambda x: x * 2), inboxlist)
-	outboxtuple = tuple(outboxlist)
-	print infile, outboxtuple
-	apVolume._rescaleVolume(infile, zoomname+'.spi', scale, outboxtuple, True, True)
-	zrotatename = 'zrotate'
-	zmirrorname = 'zmirror'
-	### rotate is positive, but shifted by a half pixel
-	rotcenter = list(a.shape)
-	rotcenter.reverse()
-	shift2 = tuple(map((lambda x: x * 2), list(shift)))
-	volFun.rotAndShiftVol(zoomname,zrotatename, (rot,0.0,0.0),rotcenter,shift2)
-	outname = zrotatename
-	# mirror the image about the y-axis in projection means rotation on xz plane
-	if mirror is True:
-		volFun.rotAndShiftVol(zrotatename,zmirrorname, (0.0,0.0,180.0))
-		outname = zmirrorname
-	apVolume._rescaleVolume(outname+'.spi',outname+'.mrc', 1/scale, inboxtuple, True, False)
-	b = mrc.read(outname+'.mrc')
-	return b
-
+def xmippAffineTransform(rotationaffine, shiftaffine, mirroraffine, centeraffine):
+	return shiftaffine.I * mirroraffine * centeraffine * rotationaffine.I * centeraffine.I
+def spiderAffineTransform(rotationaffine, shiftaffine, mirroraffine, centeraffine):
+	return centeraffine * rotationaffine.I * centeraffine.I * shiftaffine.I * centeraffine * mirroraffine * centeraffine.I
 
 #=========================
-
 def gaussianCenter(array):
 	X = numpy.arange(array.size)
 	#ignore negative shadow
