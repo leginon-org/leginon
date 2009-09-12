@@ -230,20 +230,20 @@ if ($expId) {
 
 	// get ctf estimation stats:
 	$ctfresults=array();
-	$ctfdone = count($subclusterjobs['ace']['done']);
-	$ctfrun = count($subclusterjobs['ace']['running']);
-	$ctfq = count($subclusterjobs['ace']['queued']);
+	$ctfdone = count($subclusterjobs['pyace']['done']);
+	$ctfrun = count($subclusterjobs['pyace']['running']);
+	$ctfq = count($subclusterjobs['pyace']['queued']);
 
 	$ctfresults[] = ($ctfdone==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$ctfdone complete</a>";
 	$ctfresults[] = ($ctfrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=ace'>$ctfrun running</a>";
 	$ctfresults[] = ($ctfq==0) ? "" : "$ctfq queued";
 
-	$ace2done = count($subclusterjobs['ace2']['done']);
-	$ace2run = count($subclusterjobs['ace2']['running']);
-	$ace2q = count($subclusterjobs['ace2']['queued']);
+	$ace2done = count($subclusterjobs['pyace2']['done']);
+	$ace2run = count($subclusterjobs['pyace2']['running']);
+	$ace2q = count($subclusterjobs['pyace2']['queued']);
 
 	$ace2results[] = ($ace2done==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$ace2done complete</a>";
-	$ace2results[] = ($ace2run==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=ace2'>$ace2run running</a>";
+	$ace2results[] = ($ace2run==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=pyace2'>$ace2run running</a>";
 	$ace2results[] = ($ace2q==0) ? "" : "$ace2q queued";
 
 
@@ -285,12 +285,12 @@ if ($expId) {
 
 		// get ctf estimation stats:
 		$sresults=array();
-		$sdone = count($subclusterjobs['makestack']['done']);
-		$srun = count($subclusterjobs['makestack']['running']);
-		$sq = count($subclusterjobs['makestack']['queued']);
+		$sdone = count($subclusterjobs['makestack2']['done']);
+		$srun = count($subclusterjobs['makestack2']['running']);
+		$sq = count($subclusterjobs['makestack2']['queued']);
 
 		$sresults[] = ($sdone==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId'>$sdone complete</a>";
-		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$srun running</a>";
+		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack2'>$srun running</a>";
 		$sresults[] = ($sq==0) ? "" : "$sq queued";
 
 		// stacks being created and stacks completed
