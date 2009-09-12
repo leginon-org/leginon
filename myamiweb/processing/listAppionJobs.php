@@ -65,14 +65,14 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 			}
 
 			// if makestack, show num particles so far
-			elseif ($jobtype=='makestack') {
+			elseif (preg_match("/makestack/",$jobtype)) {
 				$stackinfo = $particle->getStackRunIdFromPath($job['appath']);
 				$numptl = $particle->getNumStackParticles($stackinfo[0]['DEF_id']);
 				$extraKeys['particles so far']=commafy($numptl);
 			}
 
 			// if ace, show stats:
-			elseif ($jobtype=='ace') {
+			elseif (preg_match("/ace/",$jobtype)) {
 				$aceinfo = $particle->getAceRunIdFromPath($job['appath']);
 				$fields = array('defocus1', 'confidence', 'confidence_d');
 				$astats = $particle->getCTFStats($fields,$expId,$aceinfo[0]['DEF_id']);
