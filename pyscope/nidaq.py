@@ -21,7 +21,7 @@ nidaq = ctypes.windll.nicaiu
 
 ### NI device: default is Dev1 ###
 ### update if you have more than 1 NI device attachec
-nidevice = "Dev1"
+nidevice = "Dev2"
 
 ###################################
 # Setup some typedefs and constants
@@ -111,10 +111,15 @@ def _rotate_counterclock_wise(v):
 	'''rotates counterclock wise until analog input reads v'''
 	cur_v = _get_analog_input()
 	try:
+		count = 0
 		while cur_v > v:
 			_set_digital_output(ROTATE_COUNTERCLOCK_WISE)
 			cur_v = _get_analog_input()
 			if cur_v <= MIN_V_MEASURE:
+				break
+			count += 1
+			if count > 1000:
+				print 'no response from %s, try a different nidevice' % (nidevice,)
 				break
 	finally:
 		_set_digital_output(0)
@@ -125,10 +130,15 @@ def _rotate_clock_wise(v):
 	'''rotates clock wise until analog input reads v'''
 	cur_v = _get_analog_input()
 	try:
+		count = 0
 		while cur_v < v:
 			_set_digital_output(ROTATE_CLOCK_WISE)
 			cur_v = _get_analog_input()
 			if cur_v >= MAX_V_MEASURE:
+				break
+			count += 1
+			if count > 1000:
+				print 'no response from %s, try a different nidevice' % (nidevice,)
 				break
 	finally:
 		_set_digital_output(0)
