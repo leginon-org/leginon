@@ -87,7 +87,7 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 		echo "  <img src='img/xmipp_logo.png' width='128'>\n";
 		echo "</td><td>\n";
 		echo "  <h3>Xmipp Sort by Statistics</h3>";
-		echo "  This function sort the particles in stack by how close they are to the average. "
+		echo "  This function sorts the particles in a stack by how closely they resemble the average. "
 			."In general, this will sort the particles by how likely that they are junk. "
 			."After sorting the particles a new stack will be created, you will then have to "
 			."select at which point the junk starts and <b>Apply junk cutoff</b>. "

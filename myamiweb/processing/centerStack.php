@@ -82,8 +82,9 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 		echo "  <img src='img/eman_logo.png' width='128'>\n";
 		echo "</td><td>\n";
 		echo "  <h3>EMAN CenAlignInt</h3>";
-		echo "  This function sort the particles in stack by how close they are to the average. "
-			."This iteratively centers a set of particles, using only integer shifts to avoid interpolation artifacts. "
+		echo "  This function centers the particles in a stack based on a radial average of all the particles in the stack. "
+			."This program functions iteratively, using only integer shifts to avoid interpolation artifacts. "
+			."Particles that do not consistently center are removed from the stack."
 			."<a href='http://ncmi.bcm.tmc.edu/homes/stevel/EMAN/doc/progs/cenalignint.html'>EMAN webpage"
 			."&nbsp;<img border='0' src='img/external.png'></a>. "
 			."<br/><br/>";
