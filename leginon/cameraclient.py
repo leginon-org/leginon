@@ -35,8 +35,9 @@ class CameraClient(object):
 		t.start()
 
 	def resetRepeatConfig(self):
-		self.repeat_scopedata = None
-		self.repeat_cameradata = None
+		self.repeatparams = {}
+		self.repeatparams['scope'] = None
+		self.repeatparams['camera'] = None
 
 	def acquireCameraImageData(self, repeatconfig=False, scopeclass=leginondata.ScopeEMData, allow_retracted=False):
 		'''Acquire a raw image from the currently configured CCD camera'''
@@ -51,21 +52,20 @@ class CameraClient(object):
 
 		imagedata = leginondata.CameraImageData()
 		imagedata['session'] = self.session
-		if repeatconfig and None not in (self.repeat_scopedata, self.repeat_cameradata):
+		if repeatconfig and None not in self.repeatparams.values():
 			## acquire image, use previous scope/camera params, except system time
-			imagedata['scope'] = self.repeat_scopedata
-			imagedata['camera'] = self.repeat_cameradata
 			for key in ('scope','camera'):
-				if 'system time' in imagedata[key]:
-					imagedata[key]['system time'] = self.instrument.tem.SystemTime
+				newparams = self.repeatparams[key].copy()
+				newparams['system time'] = self.instrument.tem.SystemTime
+				imagedata[key] = newparams
 		else:
 			## acquire image, get new scope/camera params
 			scopedata = self.instrument.getData(scopeclass)
 			cameradata = self.instrument.getData(leginondata.CameraEMData)
 			imagedata['scope'] = scopedata
 			imagedata['camera'] = cameradata
-			self.repeat_scopedata = imagedata['scope']
-			self.repeat_cameradata = imagedata['camera']
+			self.repeatparams['scope'] = imagedata['scope']
+			self.repeatparams['camera'] = imagedata['camera']
 		self.startExposureTimer()
 		imagedata['image'] = self.instrument.ccdcamera.Image
 		self.readout_done_event.set()
