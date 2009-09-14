@@ -7,6 +7,11 @@
 import tem
 import time
 import sys
+try:
+	import nidaq
+except:
+	nidaq = None
+use_nidaq = False
 
 try:
 	import pythoncom
@@ -42,6 +47,7 @@ minimum_stage = {
 	'y': 5e-8,
 	'z': 5e-8,
 	'a': 6e-5,
+	'b': 6e-5,
 }
 
 class MagnificationsUninitialized(Exception):
@@ -96,7 +102,7 @@ class Tecnai(tem.TEM):
 	def checkStagePosition(self, position):
 		current = self.getStagePosition()
 		bigenough = {}
-		for axis in ('x', 'y', 'z', 'a'):
+		for axis in ('x', 'y', 'z', 'a', 'b'):
 			if axis in position:
 				delta = abs(position[axis] - current[axis])
 				if delta > minimum_stage[axis]:
@@ -585,10 +591,13 @@ class Tecnai(tem.TEM):
 		value['y'] = float(self.tecnai.Stage.Position.Y)
 		value['z'] = float(self.tecnai.Stage.Position.Z)
 		value['a'] = float(self.tecnai.Stage.Position.A)
-		try:
-			value['b'] = float(self.tecnai.Stage.Position.B)
-		except:
-			pass
+		if use_nidaq:
+			value['b'] = nidaq.getBeta() * 3.14159 / 180.0
+		else:
+			try:
+				value['b'] = float(self.tecnai.Stage.Position.B)
+			except:
+				pass
 		return value
 
 	def _setStagePosition(self, position, relative = 'absolute'):
@@ -605,9 +614,15 @@ class Tecnai(tem.TEM):
 
 		axes = 0
 		for key, value in position.items():
+			if use_nidaq and key == 'b':
+				deg = value / 3.14159 * 180.0
+				nidaq.setBeta(deg)
+				continue
 			setattr(pos, key.upper(), value)
 			axes |= getattr(win32com.client.constants, 'axis' + key.upper())
 
+		if axes == 0:
+			return
 		try:
 			self.tecnai.Stage.Goto(pos, axes)
 		except pythoncom.com_error, (hr, msg, exc, arg):
