@@ -446,7 +446,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			stdev = data.std()
 		elif filename[-4:] == ".hed" or filename[-4:] == ".img":
 			### imagic
-			data = apImagicFile.readImagic(filename, last=self.params['filesperdir'])['images']
+			last = min(256,self.params['filesperdir'])
+			data = apImagicFile.readImagic(filename, last=last)['images']
 			mean = data.mean()
 			stdev = data.std()
 
