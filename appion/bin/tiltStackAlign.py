@@ -251,6 +251,18 @@ class tiltStackAlign(appionScript.AppionScript):
 			notstacks.append(notname)
 			apDisplay.printMsg("finished untilted stack in "+apDisplay.timeString(time.time()-t1))
 
+		### merge NOT stack
+		notname = os.path.join(self.params['rundir'], "notstack.hed")
+		apImagicFile.mergeStacks(notstacks, notname)
+		for stackname in notstacks:
+			apFile.removeStack(stackname, warn=False)
+
+		### merge TILT stack
+		tiltname = os.path.join(self.params['rundir'], "tiltstack.hed")
+		apImagicFile.mergeStacks(tiltstacks, tiltname)
+		for stackname in tiltstacks:
+			apFile.removeStack(stackname, warn=False)
+
 	#=====================
 	def start(self):
 		parttree = self.getPartcileLists()
