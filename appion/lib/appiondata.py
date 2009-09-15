@@ -1157,6 +1157,7 @@ class ApMiscData(Data):
 			('project|projects|project', int),
 			('refinementRun', ApRefinementRunData),
 			('session', leginondata.SessionData),
+			('fulltomogram', ApFullTomogramData),
 			('path', ApPathData),
 			('name', str),
 			('description', str),
