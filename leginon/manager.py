@@ -112,7 +112,6 @@ class Manager(node.Node):
 		self.launcherdict = {}
 
 	def waitForLaunchersReady(self, hostnames):
-		print 'Waiting for', hostnames
 		for i in range(10):
 			ready = True
 			for hostname in hostnames:
@@ -121,23 +120,19 @@ class Manager(node.Node):
 			if ready:
 				return
 			time.sleep(1)
-		print 'Launchers not started'
 		sys.exit()
 
 	def launchPreviousApp(self):
 		names,launchers = self.getApplicationHistory()
 		prevname = names[0]
 		prevlaunchers = launchers[prevname]
-		print 'aaaaa'
 
 		hostnames = [p[1] for p in prevlaunchers]
 		self.waitForLaunchersReady(hostnames)
 
 		app = application.Application(self, prevname)
 		app.load()
-		print 'bbb'
 		for alias,hostname in prevlaunchers:
-			print alias,hostname
 			app.setLauncherAlias(alias, hostname)
 		self.runApplication(app)
 

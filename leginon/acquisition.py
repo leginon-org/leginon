@@ -31,6 +31,8 @@ import emailnotification
 import leginonconfig
 import gridlabeler
 
+debug = False
+
 class NoMoveCalibration(targetwatcher.PauseRepeatException):
 	pass
 
@@ -190,7 +192,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
 
-		self.timedebug = {}
+		if debug:
+			self.timedebug = {}
 
 		self.start()
 
@@ -602,29 +605,38 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return imagedata
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
-		try:
-			tnum = emtarget['target']['number']
-			tkey = emtarget.dbid
-		except:
-			tnum = None
-			tkey = None
-		print tnum, 'MOVEANDPRESETPAUSE START'
-		t0 = time.time()
-		self.timedebug[tkey] = t0
-		if 'consecutive' in self.timedebug:
-			print tnum, '************************************* CONSECUTIVE', t0 - self.timedebug['consecutive']
-		self.timedebug['consecutive'] = t0
+
+
+		if debug:
+			try:
+				tnum = emtarget['target']['number']
+				tkey = emtarget.dbid
+			except:
+				tnum = None
+				tkey = None
+			print tnum, 'MOVEANDPRESETPAUSE START'
+			t0 = time.time()
+			self.timedebug[tkey] = t0
+			if 'consecutive' in self.timedebug:
+				print tnum, '************************************* CONSECUTIVE', t0 - self.timedebug['consecutive']
+			self.timedebug['consecutive'] = t0
+
 		status = self.moveAndPreset(presetdata, emtarget)
 		if status == 'error':
 			self.logger.warning('Move failed. skipping acquisition at this target')
 			return status
 
 		pausetime = self.settings['pause time']
-		print tnum, 'PAUSING FOR', pausetime
+
+		if debug:
+			print tnum, 'PAUSING FOR', pausetime
+
 		self.startTimer('pause')
 		time.sleep(pausetime)
 		self.stopTimer('pause')
-		print tnum, 'MOVEANDPRESETPAUSE DONE', time.time() - t0
+
+		if debug:
+			print tnum, 'MOVEANDPRESETPAUSE DONE', time.time() - t0
 
 		## pre-exposure
 		pretime = presetdata['pre exposure']
@@ -641,14 +653,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return status
 
 	def acquirePublishDisplayWait(self, presetdata, emtarget, channel):
-		try:
-			tnum = emtarget['target']['number']
-			tkey = emtarget.dbid
-		except:
-			tnum = None
-			tkey = None
-		print tnum, 'APDW START'
-		t0 = time.time()
+		if debug:
+			try:
+				tnum = emtarget['target']['number']
+				tkey = emtarget.dbid
+			except:
+				tnum = None
+				tkey = None
+			print tnum, 'APDW START'
+			t0 = time.time()
+
 		if presetdata['film']:
 			imagedata = self.acquireFilm(presetdata, emtarget)
 		else:
@@ -662,10 +676,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if self.grid:
 				imagedata['grid'] = self.grid
 		self.publishDisplayWait(imagedata)
-		print tnum, 'APDW DONE', time.time() - t0
-		ttt = time.time() - self.timedebug[tkey]
-		del self.timedebug[tkey]
-		print tnum, '************* TOTAL ***', ttt
+
+		if debug:
+			print tnum, 'APDW DONE', time.time() - t0
+			ttt = time.time() - self.timedebug[tkey]
+			del self.timedebug[tkey]
+			print tnum, '************* TOTAL ***', ttt
 
 	def publishDisplayWait(self, imagedata):
 		'''
