@@ -41,7 +41,7 @@ def isValidVolume(volfile):
 	if volarray.shape[0]*volarray.shape[1]*volarray.shape[2] > 400**3:
 		apDisplay.printWarning("Volume is very large")
 		return True
-	if volarray.std() < 1e-6:
+	if abs(volarray.min() - volarray.max()) < 1e-6:
 		apDisplay.printWarning("Volume has zero standard deviation")
 		return False
 	return True
