@@ -18,7 +18,7 @@ class particledata {
 
 	var $crlf="\n";
 	var $baseurl=PROCESSING_BASE_URL;
-
+	
 	function particledata () {
 		$this->mysql = new mysql(
 					PARTICLE_DB_HOST,
@@ -402,8 +402,9 @@ class particledata {
 			."UNIX_TIMESTAMP(DEF_timestamp) as timestamp, "
 			."`number` "
 			."FROM ".DB.".`TiltSeriesData` "
-			."WHERE `REF|SessionData|session`='$sessionId' "
-			."ORDER BY DEF_timestamp ";
+			."WHERE `REF|SessionData|session`=".$sessionId." "
+			."ORDER BY DEF_timestamp "
+			." ";
 		return $this->mysql->getSQLResult($query);
 	}
 
@@ -446,15 +447,19 @@ class particledata {
 		$q =  "SELECT t.`DEF_id`, t.name as `tomofilename` , p.`path`, a.`name` as `runname`, a.`bin`,t.`description`,count(*) as `subtomo` "
 			."FROM `ApFullTomogramData` t "
 			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
-			."LEFT JOIN `ApTomoAlignmentRunData` a ON t.`REF|ApTomoAlignmentRunData|alignment` = a.`DEF_id` "
-			."LEFT JOIN `ApTomogramData` sub ON sub.`REF|ApFullTomogramData|fulltomogram` = t.`DEF_id` "
-			."WHERE t.`REF|leginondata|TiltSeriesData|tiltseries` = " .$tiltseriesId." "
+			."LEFT JOIN `ApTomoAlignmentRunData` a ON t.`REF|ApTomoAlignmentRunData|alignment` = a.`DEF_id` ";
+
+		if ($this->mysql->SQLTableExists("ApTomogramData")) {
+			$q .=
+				"LEFT JOIN `ApTomogramData` sub ON sub.`REF|ApFullTomogramData|fulltomogram` = t.`DEF_id` ";
+		}
+		$q .=	"WHERE t.`REF|leginondata|TiltSeriesData|tiltseries` = " .$tiltseriesId." "
 			."GROUP BY t.`DEF_id`";
 		$r = $this->mysql->getSQLResult($q);
 		$result = array();
 		if ($r && count($r)) {
 			foreach ($r as $full) {
-				$full['subtomo'] = $this->countSubtomograms($full['DEF_id']);
+				$full['subtomo'] = $this->countSubTomograms($full['DEF_id']);
 				$result[] = $full;
 			}
 		}
@@ -486,6 +491,7 @@ class particledata {
 	}
 
 	function countSubTomograms($fulltomogramId){
+		if (!$this->mysql->SQLTableExists("ApTomogramData")) return 0;
 		$q="SELECT * "
 			."FROM ApTomogramData "
 			."WHERE `REF|ApFullTomogramData|fulltomogram`=".$fulltomogramId;
