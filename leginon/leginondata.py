@@ -19,7 +19,7 @@ class GroupData(Data):
 			('description', str)
 		)
 	typemap = classmethod(typemap)
-	
+
 class UserData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1128,7 +1128,7 @@ class PresetsManagerSettingsData(SettingsData):
 			('optimize cycle', bool),
 			('mag only', bool),
 			('apply offset', bool),
-			('valves', bool),
+			('blank', bool),
 			('smallsize', int),
 		)
 	typemap = classmethod(typemap)

@@ -213,7 +213,7 @@ class PresetsManager(node.Node):
 		'optimize cycle': True,
 		'mag only': True,
 		'apply offset': False,
-		'valves': False,
+		'blank': False,
 		'smallsize': 512,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.MeasureDoseEvent]
@@ -285,12 +285,12 @@ class PresetsManager(node.Node):
 			self.locknode = None
 			self._lock.release()
 
-	def closeValves(self):
-		if self.settings['valves']:
+	def blankOn(self):
+		if self.settings['blank']:
 			self.instrument.tem.BeamBlank = 'on'
 
-	def openValves(self):
-		if self.settings['valves']:
+	def blankOff(self):
+		if self.settings['blank']:
 			self.instrument.tem.BeamBlank = 'off'
 
 	def changePreset(self, ievent):
@@ -500,7 +500,7 @@ class PresetsManager(node.Node):
 			self.logger.error(message)
 			raise PresetChangeError(message)
 
-		self.closeValves()
+		self.blankOn()
 
 		mymin = presetdata['defocus range min']
 		mymax = presetdata['defocus range max']
@@ -596,7 +596,7 @@ class PresetsManager(node.Node):
 			self.currentpreset = presetdata
 		self.logger.info(endmessage)
 		if final:
-			self.openValves()
+			self.blankOff()
 			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
 
 	def _fromScope(self, name, temname=None, camname=None, parameters=None):
@@ -1269,7 +1269,7 @@ class PresetsManager(node.Node):
 
 		## first cycle through presets before sending the final one
 		if self.currentpreset is None or self.currentpreset['name'] != newpresetname:
-			self.closeValves()
+			self.blankOn()
 			self._cycleToScope(newpresetname, dofinal=False)
 
 		self.logger.info('Going to target and to preset %s' % (newpresetname,))
@@ -1385,7 +1385,7 @@ class PresetsManager(node.Node):
 		self.currentpreset = newpreset
 		message = 'Preset (with target) changed to %s' % (name,)
 		self.logger.info(message)
-		self.openValves()
+		self.blankOff()
 		self.outputEvent(event.PresetChangedEvent(name=name, preset=newpreset))
 
 	def getValue(self, instrument_type, instrument_name, parameter, event):
