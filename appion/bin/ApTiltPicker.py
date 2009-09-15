@@ -174,12 +174,12 @@ class PickerApp(wx.App):
 		self.buttonrow = wx.FlexGridSizer(1,20)
 
 		self.theta_dialog = tiltDialog.FitThetaDialog(self)
-		self.fittheta = wx.Button(self.frame, -1, 'Find &Theta...')
+		self.fittheta = wx.Button(self.frame, -1, '&Theta...')
 		self.frame.Bind(wx.EVT_BUTTON, self.onFitTheta, self.fittheta)
 		self.buttonrow.Add(self.fittheta, 0, wx.ALL, 1)
 
 		self.fitall_dialog = tiltDialog.FitAllDialog(self)
-		self.fitall = wx.Button(self.frame, -1, '&Optimize Angles...')
+		self.fitall = wx.Button(self.frame, -1, '&Optimize...')
 		self.frame.Bind(wx.EVT_BUTTON, self.onFitAll, self.fitall)
 		self.buttonrow.Add(self.fitall, 0, wx.ALL, 1)
 
@@ -191,15 +191,18 @@ class PickerApp(wx.App):
 		self.frame.Bind(wx.EVT_BUTTON, self.onUpdate, self.update)
 		self.buttonrow.Add(self.update, 0, wx.ALL, 1)
 
-		self.maskregion = wx.Button(self.frame, -1, '&Mask Region')
+		#spacer
+		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
+
+		self.maskregion = wx.Button(self.frame, -1, '&Mask')
 		self.frame.Bind(wx.EVT_BUTTON, self.onMaskRegion, self.maskregion)
 		self.buttonrow.Add(self.maskregion, 0, wx.ALL, 1)
 
-		self.clearPolygon = wx.Button(self.frame, wx.ID_REMOVE, 'Clear &Polygon')
+		self.clearPolygon = wx.Button(self.frame, wx.ID_REMOVE, 'Rm &Polygon')
 		self.Bind(wx.EVT_BUTTON, self.onClearPolygon, self.clearPolygon)
 		self.buttonrow.Add(self.clearPolygon, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.repairlist = wx.Button(self.frame, -1, 'Repair Picks')
+		self.repairlist = wx.Button(self.frame, -1, 'Repair')
 		self.frame.Bind(wx.EVT_BUTTON, self.onRepairList, self.repairlist)
 		self.buttonrow.Add(self.repairlist, 0, wx.ALL, 1)
 
@@ -235,14 +238,15 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def createMenuButtons(self):
-		self.buttonrow.Add((40,10), 0, wx.ALL, 1)
+		#spacer
+		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
 		self.shift_dialog = tiltDialog.GuessShiftDialog(self)
-		self.shift = wx.Button(self.frame,-1, '&Guess Shift')
+		self.shift = wx.Button(self.frame,-1, '&Get Shift')
 		self.frame.Bind(wx.EVT_BUTTON, self.onCheckGuessShift, self.shift)
 		self.buttonrow.Add(self.shift, 0, wx.ALL, 1)
 
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, 'Clear &Worst Picks')
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, 'Rm &Worst Picks')
 		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
 		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
 
@@ -250,10 +254,11 @@ class PickerApp(wx.App):
 		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
 		self.buttonrow.Add(self.reset, 0, wx.ALL, 1)
 
-		self.buttonrow.Add((40,10), 0, wx.ALL, 1)
+		#spacer
+		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
 		self.dogpick_dialog = tiltDialog.DogPickerDialog(self)
-		self.dogpick = wx.Button(self.frame, wx.ID_OPEN, 'Auto &DoG Pick...')
+		self.dogpick = wx.Button(self.frame, wx.ID_OPEN, '&DoG Pick...')
 		self.frame.Bind(wx.EVT_BUTTON, self.onAutoDogPick, self.dogpick)
 		self.buttonrow.Add(self.dogpick, 0, wx.ALL, 1)
 
@@ -280,15 +285,15 @@ class PickerApp(wx.App):
 	def createLoopButtons(self):
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
-		self.shift = wx.Button(self.frame,-1, '&Guess Shift')
+		self.shift = wx.Button(self.frame,-1, '&Get Shift')
 		self.frame.Bind(wx.EVT_BUTTON, self.onGuessShift, self.shift)
 		self.buttonrow.Add(self.shift, 0, wx.ALL, 1)
 
-		self.importpicks = wx.Button(self.frame, -1, '&Import Picks')
+		self.importpicks = wx.Button(self.frame, -1, '&Import')
 		self.frame.Bind(wx.EVT_BUTTON, self.onImportPicks, self.importpicks)
 		self.buttonrow.Add(self.importpicks, 0, wx.ALL, 1)
 
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, 'Clear &Worst Picks')
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, 'Rm &Worst Picks')
 		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
 		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
 
