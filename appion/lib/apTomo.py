@@ -78,6 +78,7 @@ def orderImageList(imagelist):
 	imagepath = imagelist[0]['session']['image path']
 	tiltseries = imagelist[0]['tilt series']
 	tiltangledict = {}
+	reftilts = []
 	for i,imagedata in enumerate(imagelist):
 		tilt = imagedata['scope']['stage position']['a']*180/3.14159
 		if tilt < tiltseries['tilt start']+0.02 and tilt > tiltseries['tilt start']-0.02:
@@ -87,6 +88,7 @@ def orderImageList(imagelist):
 			direction = (nexttilt - tilt)
 			# switch group in getCorrelationPeak not here
 			tilt = tilt+0.02*direction
+			reftilts.append(tilt)
 		tiltangledict[tilt] = imagedata
 	tiltkeys = tiltangledict.keys()
 	tiltkeys.sort()
@@ -97,7 +99,8 @@ def orderImageList(imagelist):
 		fullname = os.path.join(imagepath, mrc_name)
 		mrc_files.append(fullname)
 		ordered_imagelist.append(imagedata)
-	return tiltkeys,ordered_imagelist,mrc_files
+	refimg = tiltkeys.index(max(reftilts))
+	return tiltkeys,ordered_imagelist,mrc_files,refimg
 
 def getOrderedImageListCorrelation(imagelist, bin):
 	fakenode = node.Node('fake',imagelist[0]['session'])
@@ -123,8 +126,40 @@ def getOrderedImageListCorrelation(imagelist, bin):
 			raise
 			break
 	fakenode.die()
-	return correlationpeak
+	tilts = correlationpeak.keys()
+	tilts.sort()
+	ordered_peaks = []
+	for tilt in tilts:
+		ordered_peaks.append(correlationpeak[tilt])
+	return ordered_peaks
 
+def alignZeroShiftImages(imagedata1,imagedata2):
+	"""Align start-angle images for tilt series where data is collect in two halves"""
+	fakenode = node.Node('fake',imagedata1['session'])
+	correlator = tiltcorrelator.Correlator(fakenode, 0, 4,lpf=1.5)
+	for imagedata in (imagedata1,imagedata2):
+		correlator.correlate(imagedata, tiltcorrection=True, channel=None)
+	peak = correlator.getShift(False)
+	fakenode.die()
+	return {'shiftx':peak['x'], 'shifty':peak['y']}
+
+def shiftHalfSeries(zeroshift,globalshifts, refimg):
+	apDisplay.printMsg("shifting images between the two tilt groups")
+	for i,shift in enumerate(globalshifts[:refimg]):
+		globalshifts[i]['x']=shift['x']-zeroshift['shiftx']
+		globalshifts[i]['y']=shift['y']+zeroshift['shifty']
+	return globalshifts
+
+def getGlobalShift(ordered_imagelist, bin, refimg):
+	apDisplay.printMsg("getting global shift values")
+	globalshifts = []
+	for i, imagedata in enumerate(ordered_imagelist):
+		globalshifts.append(getPredictionPeakForImage(imagedata))
+	print "correlating images",refimg-1, "and", refimg
+	zeroshift = alignZeroShiftImages(ordered_imagelist[refimg-1],ordered_imagelist[refimg])
+	globalshifts = shiftHalfSeries(zeroshift, globalshifts, refimg)
+	return globalshifts
+		
 def getFeatureMatchTransform(ordered_imagelist, bin):
 	xfname = os.path.join('/ami/data15/appion/08jun11b/tomo/tiltseries3/full3/08jun11b_003'+'.prexf')
 	transformlist = []
@@ -179,13 +214,19 @@ def simpleCorrelation(array1,array2):
 			shift[i] = peak['pixel peak'][i]
 	return shift
 
-def getCorrelationPeak(correlator, bin, tiltseries, tilt, imagedata,allpeaks,second_group):
-	q = leginondata.TomographyPredictionData(image=imagedata)
+def getPredictionPeakForImage(imagedata):
+	q = leginondata.TomographyPredictionData()
+	q['image'] = imagedata
 	results = q.query()
 	if len(results) > 0:
 		peak = results[0]['correlation']
 	else:
 		raise ValueError
+	peak['y'] = - peak['y']
+	return peak
+
+def getCorrelationPeak(correlator, bin, tiltseries, tilt, imagedata,allpeaks,second_group):
+	peak = getPredictionPeakForImage(imagedata)
 	start = tiltseries['tilt start']
 	if tilt < start:
 		peak['x']=-peak['x']
@@ -203,7 +244,7 @@ def getCorrelationPeak(correlator, bin, tiltseries, tilt, imagedata,allpeaks,sec
 			second_group = True
 			return None,allpeaks,second_group
 	allpeaks.append(peak)
-	return ((peak['x']-allpeaks[-2]['x'])/bin,-(peak['y']-allpeaks[-2]['y'])/bin),allpeaks,second_group
+	return {'x':(peak['x']-allpeaks[-2]['x'])/bin, 'y':-(peak['y']-allpeaks[-2]['y'])/bin},allpeaks,second_group
 
 def getTomographySettings(sessiondata,tiltdata):
 	'''
