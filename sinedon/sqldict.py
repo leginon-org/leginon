@@ -152,6 +152,7 @@ import sqlexpr
 import copy
 import sqldb
 import string
+import datetime
 import re
 import numpy
 import MySQLdb.cursors
@@ -1380,6 +1381,8 @@ def _sqltype(t):
 		return "TINYINT(1)"
 	elif issubclass(t, (int,long)):
 		return "INT(20)"
+	elif t is datetime.datetime:
+		return "TIMESTAMP"
 	else:
 		return None
 

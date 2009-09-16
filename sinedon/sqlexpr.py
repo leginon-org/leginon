@@ -49,6 +49,7 @@ except ImportError:
 	origISOStr = None
 	DateTimeType = None
 
+import datetime
 import re
 import string
 import sqldict
@@ -86,6 +87,8 @@ def sqlRepr(obj):
 		return repr(obj)
 	elif DateTimeType is not None and isinstance(obj, DateTimeType):
 		return "'%s'" % isoStr(obj)
+	elif isinstance(obj, datetime.datetime):
+		return "'%s'" % obj.isoformat()
 	elif obj is None:
 		return "NULL"
 	elif isinstance(obj, (tuple, list)):
