@@ -2,6 +2,9 @@
 
 import math
 import numpy
+import os
+import apParam
+import apDisplay
 
 
 def parseTilt(tiltfile):
@@ -45,6 +48,36 @@ def parseTilt(tiltfile):
 			imagedict[imagenum]['rotation']=rotation			
 	return imagedict, parameterdict, seriesname
 
+def linkImageFiles(imgtree,rawdir):
+	filenamelist = []
+	for imagedata in imgtree:
+		#set up names
+		imgpath=imagedata['session']['image path']
+		presetname=imagedata['preset']['name']
+		imgprefix=presetname+imagedata['filename'].split(presetname)[-1]
+		imgname=imgprefix+'.img'
+		filenamelist.append(imgprefix)
+		
+		#create symlinks to files
+		if not os.path.exists(os.path.join(rawdir,imgname)):
+			os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),os.path.join(rawdir,imgname))
+	return filenamelist
+
+def writeInitialProtomoTltFile(processdir, seriesname,tilts, imagenames, shifts,center,refimg):
+	imagedict = {}
+	tiltfilename = seriesname+'-00-itr.tlt'
+	apDisplay.printMsg("Writing "+tiltfilename)
+	for n in range(0,len(tilts)):
+		imageinfo = {}
+		imageinfo['filename'] = imagenames[n]
+		imageinfo['tilt'] = tilts[n]
+		imageinfo['rotation'] = 0.0
+		imageinfo['x'] = -shifts[n]['x'] + center['x']
+		imageinfo['y'] = -shifts[n]['y'] + center['y']
+		imagedict[n+1] = imageinfo
+	tiltfilepath = os.path.join(processdir,tiltfilename)
+	writeTiltFile(tiltfilepath,seriesname, imagedict)
+	
 def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 	f=open(outfilename,'w')
 	f.write('\n')
@@ -134,6 +167,18 @@ def createRefineDefaults(imgref, indir, outdir, tmp=''):
 	refinedict['cor']='.xcf'
 	return refinedict
 	
+def setProtomoDir(rootdir):
+	print "Setting up directories"
+	rawdir=os.path.join(rootdir, 'raw')
+	aligndir=os.path.join(rootdir,'align')
+	outdir=os.path.join(rootdir,'out')
+	cleandir=os.path.join(rootdir,'clean')
+	apParam.createDirectory(aligndir,warning=False)
+	apParam.createDirectory(outdir,warning=False)
+	apParam.createDirectory(cleandir,warning=False)
+	apParam.createDirectory(rawdir,warning=False)
+	return aligndir, rawdir
+
 def writeRefineParamFile(refinedict,paramfile):
 	f=open(paramfile,'w')
 	keys=refinedict.keys()
@@ -141,6 +186,18 @@ def writeRefineParamFile(refinedict,paramfile):
 		val=str(refinedict[key])
 		f.write('%s=%s\n' % (key, val))
 	f.close()
+
+def parseRefineParamFile(paramfile):
+	refineparamdict = createRefineDefaults(0, '', '', tmp='')
+	f=open(paramfile,'r')
+	lines = f.readlines()
+	for line in lines:
+		if line.find('=') >=1 :
+			realline = line.strip('\n')
+			parts = realline.split('=')
+			key = parts[0]
+			refinedict[key] = '='.join(parts[1:])
+	return refineparamdict
 
 def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix, center=(1024,1024)):
 	# need to get the center from the file when this is called
