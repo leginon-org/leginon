@@ -98,7 +98,7 @@ if __name__=='__main__':
 	apParam.createDirectory(rawdir,warning=False)
 	
 	imgtree= getTiltSeriesFromId(inputparams['tiltid'])
-	tiltkeys,imgtree,mrcfiles = apTomo.orderImageList(imgtree)
+	tiltkeys,imgtree,mrcfiles,refindex = apTomo.orderImageList(imgtree)
 	ptdict={}
 	zerotilts=[]
 	
