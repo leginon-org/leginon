@@ -32,8 +32,11 @@ def makeFile(desc, filename):
 		print 'Error, cannot create file "%s"' % filename
 		return
 
-	makepy.GenerateFromTypeLibSpec(typelibInfo, file,
-																	progressInstance=makepy.SimpleProgress(0))
+	try:
+		makepy.GenerateFromTypeLibSpec(typelibInfo, file, progressInstance=makepy.SimpleProgress(0))
+	except:
+		print 'failed GenerateFromTypeLibSpec'
+		return
 	print '%s -> %s' % (desc, filename)
 
 def run(path=None):
@@ -44,6 +47,7 @@ def run(path=None):
 		print message + ':',
 		makeFile(desc, filename)
 	print 'Done.'
+	raw_input('enter to quit.')
 
 if __name__ == '__main__':
 	run()
