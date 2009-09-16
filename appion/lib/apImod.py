@@ -18,12 +18,10 @@ def writeRawtltFile(path,seriesname,tilts):
 def writeShiftPrexfFile(path, seriesname,xpeaks):
 	rawtltname = os.path.join(path,seriesname+'.prexf')
 	f = open(rawtltname, 'w')
-	tilts = xpeaks.keys()
-	tilts.sort()
 	f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (1.0,0.0,0.0,1.0,0.0,0.0))
-	for tilt in tilts:
-		if xpeaks[tilt] is not None:
-			f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (1.0,0.0,0.0,1.0,xpeaks[tilt][0],xpeaks[tilt][1]))
+	for xpeak in xpeaks:
+		if xpeak is not None:
+			f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (1.0,0.0,0.0,1.0,xpeak['x'],xpeak['y']))
 	f.close()
 
 def writeTransformPrexfFile(path, seriesname,transforms):
