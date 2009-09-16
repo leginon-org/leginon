@@ -161,14 +161,8 @@ class tomoMaker(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		commit = self.params['commit']
-		tiltseriesdata = self.params['tiltseries']
-		othertiltdata = self.params['othertiltseries']
-		if othertiltdata is None:
-			tiltdatalist = [tiltseriesdata]
-		else:
-			tiltdatalist = [tiltseriesdata,othertiltdata]
-			apDisplay.printMsg('Combining images from two tilt series')
-		sessiondata = tiltseriesdata['session']
+		tiltdatalist = apTomo.getTiltdataList(self.params['tiltseries'],self.params['othertiltseries'])
+		sessiondata = tiltdatalist[0]['session']
 		description = self.params['description']
 		bin = int(self.params['bin'])
 		apDisplay.printMsg("getting imagelist")
@@ -179,7 +173,7 @@ class tomoMaker(appionScript.AppionScript):
 		processdir = self.params['fulltomodir']
 		seriesname = apTomo.getFilename(tiltdatalist)
 		stackname = seriesname+".st"
-		tilts,ordered_imagelist,mrc_files = apTomo.orderImageList(imagelist)
+		tilts,ordered_imagelist,mrc_files,refindex = apTomo.orderImageList(imagelist)
 		reconname = seriesname+"_full"
 		# Write tilt series stack images and tilt angles
 
@@ -206,7 +200,7 @@ class tomoMaker(appionScript.AppionScript):
 			for tiltseriesdata in tiltdatalist:
 				leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltseriesdata)
 				imodxcorrdata = None
-				leginonxcorrlist.append(leginoncorrdata)
+				leginonxcorrlist.append(leginonxcorrdata)
 				imodxcorrlist.append(imodxcorrdata)
 		elif self.params['xmethod']=='sift':
 			# Correlation with rotation by Feature Matching
@@ -228,7 +222,6 @@ class tomoMaker(appionScript.AppionScript):
 				leginonxcorrdata = None
 				leginonxcorrlist.append(leginonxcorrdata)
 				imodxcorrlist.append(imodxcorrdata)
-
 		# Global Transformation
 		gtransforms = apImod.convertToGlobalAlignment(processdir, seriesname)
 		# Add fine alignments here ----------------
@@ -247,7 +240,8 @@ class tomoMaker(appionScript.AppionScript):
 		thickness = int(self.params['thickness'])
 		apImod.recon3D(stackdir, processdir, seriesname, imgshape, thickness)
 		# Full tomogram created with imod is left-handed XZY
-		origtomopath = os.path.join(processdir, seriesname+"_full.rec"),
+		voltransform = 'flipx'
+		origtomopath = os.path.join(processdir, seriesname+"_full.rec")
 		currenttomopath = apImod.transformVolume(origtomopath,voltransform)
 		shutil.move(currenttomopath, origtomopath)
 		zprojectfile = apImod.projectFullZ(processdir, self.params['runname'], seriesname,bin,True,False)
