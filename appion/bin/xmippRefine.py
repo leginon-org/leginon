@@ -156,13 +156,13 @@ class xmippRefineScript(appionScript.AppionScript):
             stackData = apStack.getOnlyStackData(self.params['stackid'])
             fnStack=os.path.join(stackData['path']['path'], stackData['name'])
         apXmipp.breakupStackIntoSingleFiles(fnStack)
-
+        
         # Convert input volume to Spider
+	modelData = apVolume.getModelFromId(self.params['modelid'])
         if os.path.exists("start.img"):
-            fnRefMrc="threed.0a.mrc";
-        else:
-            modelData=apVolume.getModelFromId(self.params['modelid'])
-            fnRefMrc=os.path.join(modelData['path']['path'],modelData['name'])
+	    fnRefMrc="threed.0a.mrc"
+	if modelData['pixelsize'] != self.params['pixelSize']:
+	    apVolume.rescaleModel(fnRefMrc, fnRefMrc, modelData['pixelsize'], self.params['pixelSize'], self.params['boxSize'])
         fnRef=apVolume.MRCtoSPI(fnRefMrc,self.params['rundir'])
 
         # Convert mask if it exists
