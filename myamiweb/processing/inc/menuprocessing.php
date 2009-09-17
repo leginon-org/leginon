@@ -283,11 +283,19 @@ if ($expId) {
 	if ($totalprtlruns > 0) {
 		$action = "Stacks";
 
-		// get ctf estimation stats:
+		// get stack stats:
 		$sresults=array();
-		$sdone = count($subclusterjobs['makestack2']['done']);
-		$srun = count($subclusterjobs['makestack2']['running']);
-		$sq = count($subclusterjobs['makestack2']['queued']);
+		$sdone = count($subclusterjobs['makestack']['done']);
+		$srun = count($subclusterjobs['makestack']['running']);
+		$sq = count($subclusterjobs['makestack']['queued']);
+
+		$sdone += count($subclusterjobs['makestack2']['done']);
+		$srun += count($subclusterjobs['makestack2']['running']);
+		$sq += count($subclusterjobs['makestack2']['queued']);
+
+		$sdone += count($subclusterjobs['stackfilter']['done']);
+		$srun += count($subclusterjobs['stackfilter']['running']);
+		$sq += count($subclusterjobs['stackfilter']['queued']);
 
 		$sresults[] = ($sdone==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId'>$sdone complete</a>";
 		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack2'>$srun running</a>";
