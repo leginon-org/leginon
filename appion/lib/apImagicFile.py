@@ -611,13 +611,26 @@ def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
 	f = open(datafilename, 'rb')
 	partdatalist = []
 	prevpartnum = 0
+	unames=os.uname()
 	for partnum in partlist:
 		if msg is True:
 			apDisplay.printMsg("reading particle %d from stack %s into memory"
 				%(partnum, os.path.basename(datafilename)))
 
-		### skip ahead to desired particle
-		f.seek(partbytes*(partnum-prevpartnum-1))
+		seekpos = partbytes*(partnum-prevpartnum-1)
+
+		### for 64 bit machines, skip to desired particles 
+		if unames[-1].find('64') >= 0:
+                        f.seek(seekpos)
+		### for 32-bit machines, seek incrementally
+		else:
+			seekpos = int(seekpos)%2**32
+			f.seek(0)
+			if seekpos > sys.maxint:
+				while seekpos > sys.maxint:
+					f.seek(sys.maxint,1)
+					seekpos-=sys.maxint
+			f.seek(seekpos,1)
 
 		### read particle image
 		data = f.read(partbytes)
