@@ -39,7 +39,11 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		calculate and publish fft of the imagedata
 		'''
 		if self.settings['process']:
+			pixelsize = self.getReciprocalPixelSize(imagedata)
 			pow = self.calculatePowerImage(imagedata)
+			shape = pow.shape
+			center = {'x':shape[1]/2,'y':shape[0]/2}
+			self.panel.onNewPixelSize(pixelsize,center)
 			if imagedata['filename'] and self.settings['save']:
 				self.publishPowerImage(imagedata,pow)
 
@@ -55,6 +59,20 @@ class FFTMaker(imagewatcher.ImageWatcher):
 			self.setImage(numpy.asarray(pow, numpy.float32), 'Power')
 			self.imageshape = imageshape
 			return pow
+
+	def getReciprocalPixelSize(self,imagedata):
+		scope = imagedata['scope']['tem']
+		ccd = imagedata['camera']['ccdcamera']
+		mag = imagedata['scope']['magnification']
+		q = leginondata.PixelSizeCalibrationData(tem=scope,ccdcamera=ccd,magnification=mag)
+		results = q.query(results=1)
+		if not results:
+			return
+		campixelsize = results[0]['pixelsize']
+		binning = imagedata['camera']['binning']
+		dimension = imagedata['camera']['dimension']
+		pixelsize = {'x':1.0/(campixelsize*binning['x']*dimension['x']),'y':1.0/(campixelsize*binning['y']*dimension['y'])}
+		return pixelsize
 
 	def publishPowerImage(self, imagedata, powimage):
 		powdata = leginondata.AcquisitionFFTData(session=self.session, source=imagedata, image=powimage)

@@ -45,6 +45,9 @@ EVT_ELLIPSE_FOUND = wx.PyEventBinder(EllipseFoundEventType)
 
 EllipseNewCenterEventType = wx.NewEventType()
 EVT_ELLIPSE_NEW_CENTER = wx.PyEventBinder(EllipseNewCenterEventType)
+
+ImageNewPixelSizeEventType = wx.NewEventType()
+EVT_IMAGE_NEW_PIXELSIZE = wx.PyEventBinder(ImageNewPixelSizeEventType)
 ##################################
 ##
 ##################################
@@ -90,6 +93,13 @@ class EllipseNewCenterEvent(wx.PyCommandEvent):
 		wx.PyCommandEvent.__init__(self, EllipseNewCenterEventType, source.GetId())
 		self.SetEventObject(source)
 		self.centers = centers
+
+class ImageNewPixelSizeEvent(wx.PyCommandEvent):
+	def __init__(self, source, pixelsize,center):
+		wx.PyCommandEvent.__init__(self, ImageNewPixelSizeEventType, source.GetId())
+		self.SetEventObject(source)
+		self.pixelsize = pixelsize
+		self.center = center
 
 #--------------------
 def getColorMap():
@@ -525,14 +535,12 @@ class ValueTool(ImageTool):
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip)
 		self.button.SetToggle(False)
 
-
 	#--------------------
 	def valueString(self, x, y, value):
 		if value is None:
 			valuestr = 'N/A'
 		else:
 			valuestr = '%g' % value
-		print x,y
 		return '(%d, %d) %s' % (x, y, valuestr)
 
 	#--------------------
@@ -542,6 +550,28 @@ class ValueTool(ImageTool):
 			return [self.valueString(x, y, value)]
 		else:
 			return []
+
+class ResolutionTool(ValueTool):
+	def __init__(self, imagepanel, sizer):
+		ValueTool.__init__(self,imagepanel, sizer)
+		self.pixelsize = 1.0
+		self.imagepanel.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_NEW_PIXELSIZE, self.onNewPixelSize, self.imagepanel)
+
+	def valueString(self, x, y, value):
+		if self.pixelsize and self.center:
+			distance = math.sqrt((x-self.center['x'])**2+(y-self.center['y'])**2)
+			resolution = 1/math.sqrt(((x-self.center['x'])*self.pixelsize['x'])**2+((y-self.center['y'])*self.pixelsize['y'])**2)
+			if resolution < 1e-6:
+				resolutionstr = "%.2f nm" % (resolution*1e9,)
+			else:
+				resolutionstr = "%.1f um" % (resolution*1e6,)
+		else:
+			resolutionstr = "N/A"
+		return '(%d, %d)\nr= %s,d=%.1f' % (x, y,resolutionstr,distance)
+
+	def onNewPixelSize(self,evt):
+		self.pixelsize = evt.pixelsize
+		self.center = evt.center
 
 ##################################
 ##

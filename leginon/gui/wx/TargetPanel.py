@@ -322,6 +322,14 @@ class EllipseTargetImagePanel(TargetImagePanel):
 		self.Fit()
 
 ##################################
+class FFTTargetImagePanel(TargetImagePanel):
+	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
+		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
+		self.addTool(gui.wx.ImagePanelTools.ResolutionTool(self, self.toolsizer))
+		self.sizer.Layout()
+		self.Fit()
+
+##################################
 ##
 ##################################
 

@@ -46,7 +46,7 @@ class Panel(gui.wx.Node.Panel):
 
 	def addImagePanel(self):
 		# image
-		self.imagepanel = gui.wx.TargetPanel.EllipseTargetImagePanel(self, -1,imagesize=(512,512))
+		self.imagepanel = gui.wx.TargetPanel.FFTTargetImagePanel(self, -1,imagesize=(512,512))
 		self.imagepanel.addTypeTool('Power', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Power', True)
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
@@ -73,6 +73,10 @@ class Panel(gui.wx.Node.Panel):
 		self.node.onStopPostProcess()
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+
+	def onNewPixelSize(self, pixelsize,center):
+		idcevt = gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center)
+		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
