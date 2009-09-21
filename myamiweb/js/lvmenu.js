@@ -3,13 +3,14 @@ var remember=true;
 var contractall_default=false;
 var viewmenu=1;
 
-var menu, titles, submenus, arrows, bypixels;
+var menu, titles, submenus, arrows;
+var bypixels=3;
 var heights = new Array();
 
 var n = navigator.userAgent;
-if(/Opera/.test(n)) bypixels = 2;
-else if(/Firefox/.test(n)) bypixels = 3;
-else if(/MSIE/.test(n)) bypixels = 2;
+if(/Opera/.test(n) || /MSIE/.test(n)) {
+	bypixels = 2;
+}
 
 
 function m_expandall(){
