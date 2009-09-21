@@ -29,6 +29,7 @@ function getNumClassesFromFile ($imagicfile) {
 	return $numclass;
 }
 
+global $PROJECT_URL;
 $leginondata = new leginondata();
 
 // check if coming directly from a session
@@ -48,8 +49,15 @@ $sessioninfo = $leginondata->getSessionInfo($expId);
 $javascript = "<script src='../js/viewer.js'></script>\n";
 $javascript.=eulerImgJava();
 
-$data = processing_header("Appion Data Processing","Appion Data Processing", $javascript);
+$hasProcDB = ($_SESSION['processingdb']) ? true : false;
+$data = processing_header("Appion Data Processing","Appion Data Processing", $javascript, $pleaseWait=false,$showmenu=$hasProcDB);
 // --- main window starts here --- //
+if (!$hasProcDB) {
+	echo "No processing database can be found for this project<br>";
+	echo "<a class='header' target='project' href='".$PROJECT_URL."getproject.p
+hp?pId=$projectId'><b>click here</b></a> to create one";
+	echo "$proj_link";
+}
 
 $particle=new particleData();
 // show exemplar reconstrucion, if set

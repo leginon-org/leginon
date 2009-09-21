@@ -102,7 +102,7 @@ function apdivtitle($title) {
 	return $htmlstr;
 }
 
-function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false) {
+function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false,$showmenu=true) {
 	global $PROJECT_URL;
 	$expId = $_GET['expId'];
 	$projectId = $_GET['pId'];
@@ -202,14 +202,13 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	// --- for help popup documentation --- //
 	$helpdiv = "<div id='dhelp' class='aphelpdoc' onmouseover='overdiv=1;' onmouseout='overdiv=0;'></div>\n";
 	$html.=$helpdiv;
-
-	if ($expId) {
+	if ($expId && $showmenu) {
 		require "menuprocessing.php";
 		$html.= $menujs;
 		$html.= $menulink;
 	}
 	$html.= "<div id='content' style='padding-left: 5px'>\n";
-	if ($expId) {
+	if ($expId && $showmenu) {
 		$html.= "<div style='position: relative; float:left; margin-right:10px' id='leftcontent'>\n";
 		$html.= "<div class='lvmenu'>";
 		$html.= $menuprocesing;
