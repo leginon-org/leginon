@@ -1,30 +1,30 @@
 #!/usr/bin/env python
 
 #
-Env_Override = False
+Env_Override = True
 
 #Set the path to the appion root directory.
-Appion_Dir = '/ami/sw/packages/pyappion'
+Appion_Dir = ''
 
 #If you have EMAN installed an would like to use it with appion set this
 #configuration parameter to the directory where you installed it.
-Eman_Dir = '/ami/sw/packages/EMAN64'
+Eman_Dir = ''
 
 #Set Xmipp's root installation directory. 
-Xmipp_Dir = '/ami/sw/packages/Xmipp'
+Xmipp_Dir = ''
 
 #To use ACE you must indeicate the MatLab installation directory.  This is
 #only need for ACE 1, it does not need to be set if your only using ACE2.
-Matlab_Dir = '/ami/sw/packages/matlab'
+Matlab_Dir = ''
 
 
 #Set Spider's root installation directory.
-Spider_Dir = '/ami/sw/packages/spider'
+Spider_Dir = ''
 
 #If you wish to have python search additional direcotries for module files,
 #specify the full path to the directory here.  Seperate multiple directories
 #by a colon ":".
-Python_Path = '/ami/sw/leginon/pyleginon-cvs:/ami/sw/lib64/python2.4/site-packages'
+Python_Path = ''
 
 #You can change the path to the standard python libraries.  Only change this
 #in you know what you are doing
@@ -32,7 +32,7 @@ Python_Home = ''
 
 #If you'd like to prepend any directories to the PATH environment varialbe
 #add them here sperated by a colon ':'.
-Path = '/ami/sw/bin64:/ami/sw/bin'
+Path = ''
 
 
 ##################### End of Configuration section. ########################
@@ -165,23 +165,21 @@ else:
 #Varialbe to hold the name of appion program to run
 AppionProg = ''
 
-#find the appion program that corresponds to the command entered.  Ignore case  
+
 for func in functionList:
     f = os.path.basename(func)
     if (command == f.lower()):
         AppionProg = func
         break
-
-#If no corresponding program was found exit with an error message.    
+    
 if (AppionProg == ''):
     sys.stderr.write("Error: Unknown Command %s.\n" % sys.argv[1])
     sys.exit(1)
 
-
 try:
     commandLine = [AppionProg] + sys.argv[2:]
     rcode = subprocess.call(commandLine)
-    sys.exit(rcode)        #exit with the return code of the appion program 
+    sys.exit(rcode)
 
 except OSError:
     sys.stderr.write("Could not run command %s\n" % sys.argv[1])
