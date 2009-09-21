@@ -112,6 +112,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def processTargetList(self, newdata):
 		self.setStatus('processing')
+		mytargettype = self.settings['process target type']
 
 		### get targets that belong to this target list
 		targetlist = self.researchTargets(list=newdata)
@@ -127,7 +128,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		for target in targetlist:
 			if target['status'] in ('done', 'aborted'):
 				completed_targets.append(target)
-			elif target['type'] == self.settings['process target type']:
+			elif target['type'] == mytargettype:
 				goodtargets.append(target)
 			#elif not rejects:
 				## this only allows one reject
@@ -138,9 +139,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 		self.logger.info('%d target(s) in the list' % len(targetlist))
 		if completed_targets:
-			self.logger.info('%d target(s) have been processed' % len(completed_targets))
+			self.logger.info('%d target(s) have already been processed' % len(completed_targets))
 		if rejects:
-			self.logger.info('%d target(s) will be passed to another node' % len(rejects))
+			self.logger.info('%d target(s) will be rejected based on type' % len(rejects))
 		#if ignored:
 		#	self.logger.info('%d target(s) will be ignored' % len(ignored))
 		if goodtargets:
@@ -156,12 +157,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.setStatus('waiting')
 				self.processReferenceTarget(preset_name)
 				self.setStatus('processing')
-			self.logger.info('Processing %d targets...' % len(goodtargets))
+			self.logger.info('Processing %d %s targets...' % (len(goodtargets), mytargettype))
 
 		# republish the rejects and wait for them to complete
 		waitrejects = rejects and self.settings['wait for rejects']
 		if waitrejects:
-			rejectstatus = self.rejectTargets(rejects)
+			rejectstatus = self.rejectTargets(newdata)
 			if rejectstatus != 'success':
 				## report my status as reject status
 				## may not be a good idea all the time
@@ -282,24 +283,15 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		
 		return status
 
-	def rejectTargets(self, targets):
-		self.logger.info('Publishing reject targets')
-		if targets:
-			parentimage = targets[0]['image']
-		else:
-			parentimage = None
-		rejectlist = self.newTargetList(image=parentimage, sublist=True)
-		self.publish(rejectlist, database=True)
-		for target in targets:
-			reject = leginondata.AcquisitionImageTargetData(initializer=target)
-			reject['list'] = rejectlist
-			self.publish(reject, database=True)
+	def rejectTargets(self, targetlist):
+		self.logger.info('Publishing rejected targets')
+		rejectlist = targetlist
 		tlistid = rejectlist.dbid
 		self.targetlistevents[tlistid] = {}
 		self.targetlistevents[tlistid]['received'] = threading.Event()
 		self.targetlistevents[tlistid]['status'] = 'waiting'
 		self.publish(rejectlist, pubevent=True)
-		self.logger.info('Waiting for reject targets to be processed...')
+		self.logger.info('Waiting for rejected targets to be processed...')
 		self.setStatus('waiting')
 		rejectstatus = self.waitForRejects()
 		self.setStatus('processing')
