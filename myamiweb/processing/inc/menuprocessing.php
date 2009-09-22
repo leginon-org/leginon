@@ -298,7 +298,7 @@ if ($expId) {
 		$sq += count($subclusterjobs['stackfilter']['queued']);
 
 		$sresults[] = ($sdone==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId'>$sdone complete</a>";
-		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack2'>$srun running</a>";
+		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$srun running</a>";
 		$sresults[] = ($sq==0) ? "" : "$sq queued";
 
 		// stacks being created and stacks completed

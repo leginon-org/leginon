@@ -22,8 +22,17 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	
 	// get info for specified job types
 	$jobinfo = $particle->getJobIdsFromSession($expId,$jobtype,'R');
+	// for makestack-related jobs, check all flavors:
+	if ($jobtype=='makestack') {
+		$st = $particle->getJobIdsFromSession($expId,"makestack2",'R');
+		if (!empty($st)) foreach ($st as $j) $jobinfo[]=$j;
+		$st = $particle->getJobIdsFromSession($expId,"stackfilter",'R');
+		if (!empty($st)) foreach ($st as $j) $jobinfo[]=$j;
+		$st = $particle->getJobIdsFromSession($expId,"tiltalignstack",'R');
+		if (!empty($st)) foreach ($st as $j) $jobinfo[]=$j;
+	}
 
-	if ($jobinfo[0]) {
+	if (!empty($jobinfo)) {
 		foreach ($jobinfo as $job) {
 			$jobid = $job['DEF_id'];
 			$name = $job['name'];
@@ -65,7 +74,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 			}
 
 			// if makestack, show num particles so far
-			elseif (preg_match("/makestack/",$jobtype)) {
+			elseif (preg_match("/makestack/",$jobtype) || $jobtype=='stackfilter') {
 				$stackinfo = $particle->getStackRunIdFromPath($job['appath']);
 				$numptl = $particle->getNumStackParticles($stackinfo[0]['DEF_id']);
 				$extraKeys['particles so far']=commafy($numptl);
