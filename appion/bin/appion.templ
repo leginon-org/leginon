@@ -6,32 +6,32 @@ Env_Override = True
 #Set the path to the appion root directory.
 Appion_Dir = ''
 
-#If you have EMAN installed an would like to use it with appion set this
+#If you have EMAN installed and would like to use it with appion set this
 #configuration parameter to the directory where you installed it.
 Eman_Dir = ''
 
 #Set Xmipp's root installation directory. 
 Xmipp_Dir = ''
 
-#To use ACE you must indeicate the MatLab installation directory.  This is
-#only need for ACE 1, it does not need to be set if your only using ACE2.
+#To use ACE you must indicate the MatLab installation directory.  This is
+#only needed for ACE 1, it does not need to be set if you're only using ACE2.
 Matlab_Dir = ''
 
 
 #Set Spider's root installation directory.
 Spider_Dir = ''
 
-#If you wish to have python search additional direcotries for module files,
-#specify the full path to the directory here.  Seperate multiple directories
+#If you wish to have python search additional directories for module files,
+#specify the full path to the directory here.  Separate multiple directories
 #by a colon ":".
 Python_Path = ''
 
 #You can change the path to the standard python libraries.  Only change this
-#in you know what you are doing
+#if you know what you are doing
 Python_Home = ''
 
-#If you'd like to prepend any directories to the PATH environment varialbe
-#add them here sperated by a colon ':'.
+#If you'd like to prepend any directories to the PATH environment variable
+#add them here separated by a colon ':'.
 Path = ''
 
 
@@ -42,7 +42,7 @@ import sys
 import subprocess
 import glob
 
-##Two usefull functions for appending and prepending to environment
+##Two useful functions for appending and prepending to environment
 ##variables
 
 ##prependToEnv ();
@@ -162,7 +162,7 @@ if ('py' == sys.argv[1].split('.').pop()):
 else:
     command = sys.argv[1].lower() + '.py'
 
-#Varialbe to hold the name of appion program to run
+#Variable to hold the name of appion program to run
 AppionProg = ''
 
 
