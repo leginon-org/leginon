@@ -14,6 +14,23 @@ class Lattice(object):
 		self.t00 = None
 		self.add_first_point(firstpoint)
 
+	def raster(self, shape):
+		# generate raster using lattice params
+		maxdist = numpy.hypot(*shape)
+		maxn = int(numpy.ceil(maxdist / self.spacing))
+		points = []
+		for i in range(-maxn, maxn+1):
+			iv0 = i * self.matrix[0,0]
+			iv1 = i * self.matrix[0,1]
+			for j in range(-maxn, maxn+1):
+				jv0 = j * self.matrix[1,0]
+				jv1 = j * self.matrix[1,1]
+				v0 = self.center[0] + iv0 + jv0
+				v1 = self.center[1] + iv1 + jv1
+				if v0 >=0 and v0 <= shape[0]-1 and v1 >= 0 and v1 <= shape[1]-1:
+					points.append((v0,v1))
+		return points
+
 	def add_point(self, newpoint):
 		num = len(self.points)
 		if num == 0:
@@ -53,11 +70,14 @@ class Lattice(object):
 			if err < self.tolerance:
 				point = (n,0)
 				m = numpy.array(((v0/n, v1/n),(v1/n, -v0/n)), numpy.float32)
+				self.matrix = m
 				tmatrix = numpy.linalg.inv(m)
 				self.t00 = tmatrix[0,0]
 				self.t01 = tmatrix[0,1]
 				self.t10 = tmatrix[1,0]
 				self.t11 = tmatrix[1,1]
+				self.angle = numpy.arctan2(v1,v0)
+				self.spacing = dist
 				self.lattice_points[point] = secondpoint
 				## I am trusting that my new calculated
 				## vector is more reliable than the first
