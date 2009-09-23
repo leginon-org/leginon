@@ -294,33 +294,6 @@ class HoleFinder(object):
 		if minspace is not None:
 			self.lattice_config['minspace'] = minspace
 
-	def find_lattice_vector(self, minspace=None):
-		if self.__results['threshold'] is None:
-			raise RuntimeError('need threshold image to find vector')
-		self.configure_lattice(minspace=minspace)
-
-		## autocorrelation
-		mask = self.__results['threshold']
-		ac = correlator.auto_correlate(mask)
-		minspace = self.lattice_config['minspace']
-
-		## zero out circle around the minimum 
-		tmp = self.circle.get(ac.shape, (0,0), minspace, max(ac.shape))
-		ac[:minspace,:minspace] *= tmp[:minspace,:minspace]
-		ac[:minspace,-minspace:] *= tmp[:minspace,-minspace:]
-
-		## only need top half
-		newrows,newcols = mask.shape[0]/2, mask.shape[1]
-		ac = ac[:newrows, :newcols]
-		
-		self.peakfinder.setImage(ac)
-		p = self.peakfinder.subpixelPeak()
-		v = list(p)
-		# wrap columns
-		if p[1] > mask.shape[1]/2:
-			v[1] = p[1] - mask.shape[1]
-		self.__update_result('vector', v)
-
 	def blobs_to_lattice(self, tolerance=None, spacing=None, minspace=None):
 		if self.__results['blobs'] is None:
 			raise RuntimeError('need blobs to create lattice')
