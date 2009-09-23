@@ -83,7 +83,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		minz = self.calculateDefocus(maxr)
 		z0 = (maxz + minz) / 2
 		zast = maxz - z0
-		self.logger.info('z0 %.2f um, zast %.2f um (%.0f )' % (z0,zast,zast*100/z0))
+		self.logger.info('z0 %.2f um, zast %.2f um (%.0f )' % (z0*1e6,zast*1e6,zast*100/z0))
 
 	def calculateDefocus(self,s):
 		# unit is meters
