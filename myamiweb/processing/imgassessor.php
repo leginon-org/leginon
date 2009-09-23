@@ -174,6 +174,7 @@ if ($imgdir) {
 			$allfiles = glob($imgdir."*.".$ext);
 		} else {
 			$allfiles = glob($imgdir."*".$typematch."[\._]*.".$ext);
+			if (empty($allfiles)) $allfiles = glob($imgdir."*".$typematch."*.".$ext);
 			//echo "TYPEMATCH: '".$typematch."'<br/>";
 		}
 		foreach ($allfiles as $filepath) {
