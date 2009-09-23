@@ -256,7 +256,9 @@ class JAHCFinder(targetfinder.TargetFinder):
 			focus_points.extend(newtargets['focus'])
 		else:
 			acq_points = centers
-
+		# need just one focus point
+		focpoint = self.focus_on_hole(focus_points,focus_points)
+		focus_points = [focpoint]
 		self.setTargets(acq_points, 'acquisition', block=True)
 		self.setTargets(focus_points, 'focus', block=True)
 		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
