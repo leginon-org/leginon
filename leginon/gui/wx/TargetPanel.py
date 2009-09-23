@@ -326,6 +326,8 @@ class FFTTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
 		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
 		self.addTool(gui.wx.ImagePanelTools.ResolutionTool(self, self.toolsizer))
+		self.addTool(gui.wx.ImagePanelTools.RecordMotionTool(self, self.toolsizer))
+		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
 		self.sizer.Layout()
 		self.Fit()
 

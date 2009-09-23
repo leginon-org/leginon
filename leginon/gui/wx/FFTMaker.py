@@ -17,6 +17,7 @@ import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
 import gui.wx.TargetPanel
+import threading
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'fftmaker'
@@ -58,6 +59,7 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
 											id=gui.wx.ToolBar.ID_STOP)
+		self.Bind(gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -77,6 +79,13 @@ class Panel(gui.wx.Node.Panel):
 	def onNewPixelSize(self, pixelsize,center):
 		idcevt = gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
+		self.center = center
+
+	def onEllipseFound(self, evt):
+		centers = [(self.center['y'],self.center['x']),]
+		idcevt = gui.wx.ImagePanelTools.EllipseNewCenterEvent(self.imagepanel, centers)
+		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
+		threading.Thread(target=self.node.estimateAstigmation, args=(evt.params,)).start()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

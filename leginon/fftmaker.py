@@ -44,6 +44,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 			shape = pow.shape
 			center = {'x':shape[1]/2,'y':shape[0]/2}
 			self.panel.onNewPixelSize(pixelsize,center)
+			self.ht = imagedata['scope']['high tension']
 			if imagedata['filename'] and self.settings['save']:
 				self.publishPowerImage(imagedata,pow)
 
@@ -72,7 +73,23 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		binning = imagedata['camera']['binning']
 		dimension = imagedata['camera']['dimension']
 		pixelsize = {'x':1.0/(campixelsize*binning['x']*dimension['x']),'y':1.0/(campixelsize*binning['y']*dimension['y'])}
+		self.rpixelsize = pixelsize['x']
 		return pixelsize
+
+	def estimateAstigmation(self,params):
+		minr = self.rpixelsize * min(params['a'],params['b'])
+		maxz = self.calculateDefocus(minr)
+		maxr = self.rpixelsize * max(params['a'],params['b'])
+		minz = self.calculateDefocus(maxr)
+		z0 = (maxz + minz) / 2
+		zast = maxz - z0
+		self.logger.info('z0 %.2f um, zast %.2f um (%.0f )' % (z0,zast,zast*100/z0))
+
+	def calculateDefocus(self,s):
+		# unit is meters
+		Cs = 2.0e-3
+		wavelength = 3.7e-12 * 1e5 / self.ht
+		return (Cs*wavelength**3*s**4/2+1)/(wavelength * s**2)
 
 	def publishPowerImage(self, imagedata, powimage):
 		powdata = leginondata.AcquisitionFFTData(session=self.session, source=imagedata, image=powimage)
