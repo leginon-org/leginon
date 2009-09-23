@@ -1325,6 +1325,7 @@ class JAHCFinderSettingsData(HoleFinderSettingsData):
 			('template diameter', int),
 			('file diameter', int),
 			('template filename', str),
+			('lattice extend', bool),
 		)
 	typemap = classmethod(typemap)
 

@@ -127,7 +127,7 @@ class HoleFinder(object):
 		self.threshold = 3.0
 		self.threshold_method = "Threshold = mean + A * stdev"
 		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100}
-		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20}
+		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20, 'extend': False}
 		self.holestats_config = {'radius': 20}
 		self.ice_config = {'i0': None, 'min': 0.0, 'max': 0.1, 'std': 0.05}
 
@@ -263,64 +263,54 @@ class HoleFinder(object):
 		if maxblobs is not None:
 			self.blobs_config['maxblobs'] = maxblobs
 
-	def find_blobs(self):
+	def find_blobs(self, picks=None):
 		'''
 		find blobs on a thresholded image
 		'''
-		if None in (self.__results['threshold'],self.__results['correlation']):
-			raise RuntimeError('need correlation image and threshold image to find blobs')
-		im = self.__results['correlation']
-		mask = self.__results['threshold']
-		border = self.blobs_config['border']
-		maxsize = self.blobs_config['maxblobsize']
-		minsize = self.blobs_config['minblobsize']
-		maxblobs = self.blobs_config['maxblobs']
-		blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize, minsize)
+		if picks is None:
+			if None in (self.__results['threshold'],self.__results['correlation']):
+				raise RuntimeError('need correlation image and threshold image to find blobs')
+			im = self.__results['correlation']
+			mask = self.__results['threshold']
+			border = self.blobs_config['border']
+			maxsize = self.blobs_config['maxblobsize']
+			minsize = self.blobs_config['minblobsize']
+			maxblobs = self.blobs_config['maxblobs']
+			blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize, minsize)
+		else:
+			picks = self.swapxy(picks)
+			blobs = self.points_to_blobs(picks)
 		self.__update_result('blobs', blobs)
 
-	def configure_lattice(self, tolerance=None, spacing=None, minspace=None):
+	def configure_lattice(self, tolerance=None, spacing=None, minspace=None, extend=None):
 		if tolerance is not None:
 			self.lattice_config['tolerance'] = tolerance
 		if spacing is not None:
 			self.lattice_config['spacing'] = spacing
 		if minspace is not None:
 			self.lattice_config['minspace'] = minspace
+		if extend is not None:
+			self.lattice_config['extend'] = extend
 
-	def find_lattice_vector(self, minspace=None):
-		if self.__results['threshold'] is None:
-			raise RuntimeError('need threshold image to find vector')
-		self.configure_lattice(minspace=minspace)
+	def swapxy(self, points):
+		return [(point[1],point[0]) for point in points]
 
-		## autocorrelation
-		mask = self.__results['threshold']
-		ac = correlator.auto_correlate(mask)
-		minspace = self.lattice_config['minspace']
+	def points_to_blobs(self, points):
+			blobs = []
+			for point in points:
+				blob = imagefun.Blob(None, None, 1, point, 1.0, 1.0, 1.0, 1.0)
+				blobs.append(blob)
+			return blobs
 
-		## zero out circle around the minimum 
-		tmp = self.circle.get(ac.shape, (0,0), minspace, max(ac.shape))
-		ac[:minspace,:minspace] *= tmp[:minspace,:minspace]
-		ac[:minspace,-minspace:] *= tmp[:minspace,-minspace:]
-
-		## only need top half
-		newrows,newcols = mask.shape[0]/2, mask.shape[1]
-		ac = ac[:newrows, :newcols]
-		
-		self.peakfinder.setImage(ac)
-		p = self.peakfinder.subpixelPeak()
-		v = list(p)
-		# wrap columns
-		if p[1] > mask.shape[1]/2:
-			v[1] = p[1] - mask.shape[1]
-		self.__update_result('vector', v)
-
-	def blobs_to_lattice(self, tolerance=None, spacing=None, minspace=None):
+	def blobs_to_lattice(self, tolerance=None, spacing=None, minspace=None, extend=None):
 		if self.__results['blobs'] is None:
 			raise RuntimeError('need blobs to create lattice')
-		self.configure_lattice(tolerance=tolerance,spacing=spacing,minspace=minspace)
+		self.configure_lattice(tolerance=tolerance,spacing=spacing,minspace=minspace, extend=extend)
 
 		blobs = self.__results['blobs']
 		tolerance = self.lattice_config['tolerance']
 		spacing = self.lattice_config['spacing']
+		extend = self.lattice_config['extend']
 		# make make list of blob coords:
 		points = []
 		pointdict = {}
@@ -328,13 +318,17 @@ class HoleFinder(object):
 			point = tuple(blob.stats['center'])
 			points.append(point)
 			pointdict[point] = blob
-		
+
 		best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
 		if best_lattice is None:
 			best_lattice = []
+		elif extend:
+			shape = self.__results['original'].shape
+			best_lattice = best_lattice.raster(shape)
+			holes = self.points_to_blobs(best_lattice)
 		else:
 			best_lattice = best_lattice.points
-		holes = [pointdict[tuple(point)] for point in best_lattice]
+			holes = [pointdict[tuple(point)] for point in best_lattice]
 
 		self.__update_result('lattice', best_lattice)
 		if best_lattice is None:

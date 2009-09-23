@@ -56,6 +56,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'lattice tolerance': 0.1,
 		'lattice hole radius': 15.0,
 		'lattice zero thickness': 1000.0,
+		'lattice extend': False,
 		'ice min mean': 0.05,
 		'ice max mean': 0.2,
 		'ice max std': 0.2,
@@ -173,6 +174,15 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.logger.info('Number of blobs: %s' % (len(targets),))
 		self.setTargets(targets, 'Blobs')
 
+	def usePickedBlobs(self):
+		self.logger.info('find blobs')
+		picks = self.panel.getTargetPositions('Blobs')
+		self.hf.find_blobs(picks)
+		blobs = self.hf['blobs']
+		targets = self.blobStatsTargets(blobs)
+		self.logger.info('Number of blobs: %s' % (len(targets),))
+		self.setTargets(targets, 'Blobs')
+
 	def holeStatsTargets(self, holes):
 		targets = []
 		for hole in holes:
@@ -199,9 +209,10 @@ class JAHCFinder(targetfinder.TargetFinder):
 		lattol = self.settings['lattice tolerance']
 		r = self.settings['lattice hole radius']
 		i0 = self.settings['lattice zero thickness']
+		extend = self.settings['lattice extend']
 		self.icecalc.set_i0(i0)
 
-		self.hf.configure_lattice(spacing=latspace, tolerance=lattol)
+		self.hf.configure_lattice(spacing=latspace, tolerance=lattol, extend=extend)
 		self.hf.blobs_to_lattice()
 
 		self.hf.configure_holestats(radius=r)
@@ -336,6 +347,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		return closest_point
 
 	def bypass(self):
+		self.setTargets([], 'Blobs', block=True)
 		self.setTargets([], 'acquisition', block=True)
 		self.setTargets([], 'focus', block=True)
 		self.setTargets([], 'preview', block=True)
@@ -454,6 +466,17 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.publish(hfprefs, database=True)
 		return hfprefs
 
+	def blobsChanged(self):
+			# if blobs have changed, return true
+			newblobs = self.panel.getTargetPositions('Blobs')
+			for point in self.oldblobs:
+				if point not in newblobs:
+					return True
+			if len(newblobs) == len(self.oldblobs):
+				return False
+			else:
+				return True
+
 	def findTargets(self, imdata, targetlist):
 		self.setStatus('processing')
 		autofailed = None
@@ -472,9 +495,17 @@ class JAHCFinder(targetfinder.TargetFinder):
 
 		## user part
 		if self.settings['user check'] or autofailed:
-			self.handlePreviewTargets(imdata,targetlist)
-			self.panel.targetsSubmitted()
-			self.setStatus('processing')
+			while True:
+				self.oldblobs = self.panel.getTargetPositions('Blobs')
+				self.waitForUserCheck()
+				self.processPreviewTargets(imdata, targetlist)
+				if self.blobsChanged():
+					self.usePickedBlobs()
+					self.fitLattice()
+					self.ice()
+				else:
+					break
+				self.panel.targetsSubmitted()
 
 		self.logger.info('Publishing targets...')
 		### publish targets from goodholesimage

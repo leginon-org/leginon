@@ -34,12 +34,13 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
-		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255), settings=True, shape='o')
+		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255), target=True, settings=True, shape='o')
 		self.imagepanel.addTargetTool('Lattice', wx.Color(255, 0, 255), settings=True)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, numbers=True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
 		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255), target=True)
 		self.imagepanel.addTargetTool('done', wx.RED)
+		self.imagepanel.selectiontool.setDisplayed('Blobs', True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
 		self.imagepanel.selectiontool.setDisplayed('done', True)
@@ -279,16 +280,22 @@ class LatticeScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['lattice tolerance'] = FloatEntry(self, -1, chars=6)
 		self.widgets['lattice hole radius'] = FloatEntry(self, -1, chars=6)
 		self.widgets['lattice zero thickness'] = FloatEntry(self, -1, chars=6)
+		self.widgets['lattice extend'] = wx.CheckBox(self, -1, 'Extend Lattice')
 
 		szlattice = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Spacing:')
 		szlattice.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szlattice.Add(self.widgets['lattice spacing'], (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+
 		label = wx.StaticText(self, -1, 'Tolerance:')
 		szlattice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szlattice.Add(self.widgets['lattice tolerance'], (1, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+
+		szlattice.Add(self.widgets['lattice extend'], (2, 0), (1, 2),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
 		szlattice.AddGrowableCol(1)
 
 		sbszlattice.Add(szlattice, 1, wx.EXPAND|wx.ALL, 5)
@@ -426,6 +433,7 @@ class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 	def onClearButton(self, evt):
 		self.dialog.setNodeSettings()
+		self.node.clearTargets('blobs')
 		self.node.clearTargets('acquisition')
 		self.node.clearTargets('focus')
 

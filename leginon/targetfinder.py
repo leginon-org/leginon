@@ -66,7 +66,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			'modeled stage position':
 												calibrationclient.ModeledStageCalibrationClient(self)
 		}
-		self.targetnames = ['acquisition','focus','preview','reference','done']
+		self.targetnames = ['Blobs', 'acquisition','focus','preview','reference','done']
 
 	def readImage(self, filename):
 		imagedata = None
@@ -76,6 +76,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			if filename == '':
 				if self.name in ['Hole Targeting','Subsquare Targeting']:
 					filename = os.path.join(version.getInstalledLocation(),'sq_example.jpg')
+				elif self.name in ['Square Targeting']:
+					filename = os.path.join(version.getInstalledLocation(),'gr_example.jpg')
 				else:
 					filename = os.path.join(version.getInstalledLocation(),'hl_example.jpg')
 			try:
@@ -111,25 +113,22 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'''
 		raise NotImplementedError()
 
-	def handlePreviewTargets(self,imdata,targetlist):
-		wait = True
-		while wait:
+	def waitForUserCheck(self):
 			self.setStatus('user input')
 			self.logger.info('Waiting for user to check targets...')
 			self.panel.submitTargets()
 			self.userpause.clear()
 			self.userpause.wait()
 			self.setStatus('processing')
+
+	def processPreviewTargets(self, imdata, targetlist):
 			preview_targets = self.panel.getTargetPositions('preview')
 			if preview_targets:
 				self.publishTargets(imdata, 'preview', targetlist)
 				self.setTargets([], 'preview', block=True)
 				self.makeTargetListEvent(targetlist)
 				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
-				self.setStatus('waiting')
 				self.waitForTargetListDone()
-			else:
-				wait = False
 
 	def processImageListData(self, imagelistdata):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
@@ -318,7 +317,7 @@ class ClickTargetFinder(TargetFinder):
 	def findTargets(self, imdata, targetlist):
 		# display image
 		self.setImage(imdata['image'], 'Image')
-		self.handlePreviewTargets(imdata,targetlist)
+		self.handlePickedTargets(imdata,targetlist)
 		self.panel.targetsSubmitted()
 		self.setStatus('processing')
 		self.logger.info('Publishing targets...')
