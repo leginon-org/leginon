@@ -122,6 +122,10 @@ function createAce2Form($extra=false) {
 	echo docpop('edge2','Canny, edge Treshold(0.0-1.0)');
 	echo "<br/><br/>\n";
 
+	echo "<input type='text' name='rotblur' value='0.0' size='4'>\n";
+	echo docpop('rotblur','Rotational blur <font size='-2'>(in degrees)</font>');
+	echo "<br/><br/>\n";
+
 	echo "<input type='checkbox' name='refine2d'>\n";
 	echo docpop('refine2d','Extra 2d Refine');
 	echo "<br/><br/>\n";
@@ -170,6 +174,7 @@ function runAce2() {
 	$cs=$_POST['cs'];
 	$edge1=trim($_POST['edge1']);
 	$edge2=trim($_POST['edge2']);
+	$rotblur=trim($_POST['rotblur']);
 	$reprocess=$_POST['reprocess'];
 
 	// check the tilt situation
@@ -191,6 +196,9 @@ function runAce2() {
 
 	if (is_numeric($edge2))
 		$command.="--edge2=$edge2 ";
+
+	if (is_numeric($rotblur))
+		$command.="--rotblur=$rotblur ";
 
 	if($refine2d) $command.="--refine2d ";
 	$command.="--cs=$cs ";
@@ -221,7 +229,8 @@ function runAce2() {
 		echo"
 		<TR><td>refine 2d</TD><td>$refine2d</TD></tr>
 		<TR><td>bin</TD><td>$binval</TD></tr>
-		<TR><td>cs</TD><td>$cs</TD></tr>\n";
+		<TR><td>cs</TD><td>$cs</TD></tr>
+		<TR><td>rotblur</TD><td>$rotblur</TD></tr>\n";
 		echo "</table>\n";
 		processing_footer(True, True);
 	}
