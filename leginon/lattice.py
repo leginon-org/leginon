@@ -12,12 +12,20 @@ class Lattice(object):
 		self.tolerance = tolerance
 		self.spacing = spacing
 		self.t00 = None
+		self.matrix = None
 		self.add_first_point(firstpoint)
 
-	def raster(self, shape):
+	def raster(self, shape=None, layers=None):
 		# generate raster using lattice params
-		maxdist = numpy.hypot(*shape)
-		maxn = int(numpy.ceil(maxdist / self.spacing))
+		if shape is None and layers is None:
+			raise RuntimeError('lattice raster requires shape and/or layers')
+		if shape is None:
+			maxn = layers
+		else:
+			maxdist = numpy.hypot(*shape)
+			maxn = int(numpy.ceil(maxdist / self.spacing))
+		if layers is not None:
+			maxn = min(maxn,layers)
 		points = []
 		for i in range(-maxn, maxn+1):
 			iv0 = i * self.matrix[0,0]
@@ -56,7 +64,7 @@ class Lattice(object):
 		like any other.
 		'''
 		## check if matrix is known
-		if self.t00 is None:
+		if self.matrix is None:
 			## check if spacing is within tolerance
 			v0 = secondpoint[0] - self.center[0]
 			v1 = secondpoint[1] - self.center[1]
@@ -122,18 +130,22 @@ class Lattice(object):
 				self.lattice_points_err[closest] = err
 				self.points.append(point)
 
-def pointsToLattice(points, spacing, tolerance):
-	# create a lattice for every point
-	lattices = []
-	for point in points:
-		lattices.append(Lattice(point, spacing, tolerance))
+def pointsToLattice(points, spacing, tolerance, first_is_center=False):
+	# create a lattice for every point, or if centerfirst, then only
+	# create a lattice with first point as center
+	if first_is_center:
+		lattices = [Lattice(points[0], spacing, tolerance)]
+	else:
+		lattices = []
+		for point in points:
+			lattices.append(Lattice(point, spacing, tolerance))
 	# see which points fit in which lattices
 	for point in points:
 		#found_lattice = False
 		for lat in lattices:
 			lat.add_point(point)
 	# find the best lattice
-	maxpoints = 0
+	maxpoints = 1
 	best_lattice = None
 	for lat in lattices:
 		if len(lat.points) > maxpoints:
