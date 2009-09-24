@@ -104,36 +104,23 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	f64 radians;
 	s32 width, height;
 	f64 center_x, center_y;
-	f64 theta, radius, xrot, yrot, xrad, yrad;
+	f64 theta, radius, xrad, yrad;
 	f64 phi, phi_start, sinval, cosval;
 	f64 dx, dy;
-	s32 index1, index2, index3, index4;
-	f64 pixel1, pixel2, pixel3, pixel4;
+	s32 index;
+	f64 xrot, yrot, phiprime;
 
 	//initialize
 	width = dim_size[1];
 	height = dim_size[0];
 	center_x = width/2.0;
 	center_y = height/2.0;
-	radians = angle*180.0/PI;
+	radians = angle*PI/180.0;
 
 	//create new array
 	f64 * newimagedata = NEWV(f64, size);
 	f64 * oldimagedata = [self data];
 	f64 * countdata = NEWV(f64, size);
-
-	f64 minval = oldimagedata[0];
-	f64 maxval = oldimagedata[0];
-	f64 sum = 0;
-	for(i=0;i<size;i++) {
-		sum += oldimagedata[i];
-		if (oldimagedata[i] < minval)
-			minval = oldimagedata[i];
-		if (oldimagedata[i] > maxval)
-			maxval = oldimagedata[i];
-	}
-	fprintf(stderr,"Mean %.1e ...\n", sum/(f64) size);
-	fprintf(stderr,"MinMax %.1e <> %.1e ...\n", minval, maxval);
 
 	// zero arrays
 	for(i=0;i<size;i++) {
@@ -141,29 +128,23 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 		countdata[i] = 0.0;
 	}
 
-	fprintf(stderr,"Size %d, %d...\n", height, width);
-
 	// run through angles
 	for(y=0;y<height;y++) {
-		//if (y % 100 == 0)
-		//	fprintf(stderr,"Column %d...\n", y);
 		for(x=0;x<width;x++) {
 			//determine number of steps
 			xrad = (f64) x - center_x;
 			yrad = (f64) y - center_y;
 			radius = sqrt(xrad*xrad + yrad*yrad);
-			niter = radius * angle;
+			if (radius < 1.0)
+				continue;
+
+			niter = radius * radians;
 			//ensure quality with small angles; always use at least 3 (interpolation) steps
 			if (niter < 3)
 				niter = 3;
 			//limit loop count due to performanc reasons
 			if (niter > 100)
 				niter = 100 + sqrt (niter-100);
-
-			//s32 index = y * width + x;
-			//if (index % (width*100) == 0)
-			//	fprintf(stderr,"Index %d, %d steps...\n", index, niter);
-
 			if (xrad != 0.0) {
 				phi = atan(yrad/xrad);
 				if (xrad < 0.0)
@@ -176,89 +157,40 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 			}
 
 			// determine start angle
-			phi_start = phi + angle/2.0;
-			theta = angle / (f64) niter;
+			phi_start = phi + radians/2.0;
+			theta = radians / (f64) niter;
 
-			//index = y * width + x;
-			//pixelvalue = imagedata[index];
-
+			index = y * width + x;
 			// start pixel averaging
-			for (i = 0; i < niter; i++) {
-				sinval = sin (phi_start - (f64) i * theta);
-				cosval = cos (phi_start - (f64) i * theta);
+			for (i=0; i<=niter; i++) {
+				phiprime = phi_start - (f64) i * theta;
+				sinval = sin (phiprime);
+				cosval = cos (phiprime);
 
 				// determine x,y coordinates of rotated pixel
 				xrot = center_x + radius * cosval;
 				yrot = center_y + radius * sinval;
 
 				// check if pixel is off edge of image
-				if ((yrot < 0) || (yrot >= height) ||
-						(xrot < 0) || (xrot >= width))
+				if ((yrot < 0) || (yrot > height-1) ||
+						(xrot < 0) || (xrot > width-1))
 					continue;
 
-				if ((xrot + 1 < width) && (yrot + 1 < height)) {
-					dx = xrot - floor(xrot);
-					dy = yrot - floor(yrot);
+				newimagedata[index] += interpolate2d(oldimagedata, yrot, xrot, height, width);;
+				// add count to pixel value
+				countdata[index]++;
 
-					// get indexes
-					index1 = (yrot+0.0) * width + (xrot+0.0);
-					index2 = (yrot+0.0) * width + (xrot+1.0);
-					index3 = (yrot+1.0) * width + (xrot+0.0);
-					index4 = (yrot+1.0) * width + (xrot+1.0);
-
-					// get pixels
-					pixel1 = oldimagedata[index1];
-					pixel2 = oldimagedata[index2];
-					pixel3 = oldimagedata[index3];
-					pixel4 = oldimagedata[index4];
-
-					// bilinear filter
-					//f(x,y) = f(0,0)*(1-x)(1-y) + f(1,0)*x(1-y) + f(0,1)*(1-x)y + f(1,1) xy
-
-					// set new pixel value
-					newimagedata[index1] += 
-						pixel1 * (1.0-dx) * (1.0-dy) +
-						pixel2 * dx * (1.0-dy) +
-						pixel3 * (1.0-dx) * dy +
-						pixel4 * dx * dy;
-					// add count to pixel value
-					f64 mean1 = (pixel1 + pixel2 + pixel3 + pixel4)/4.0;
-					if ((mean1 - newimagedata[index1])/mean1 > 1.81)
-						fprintf(stderr,"Max %.1f <> %.1f ...\n", mean1, newimagedata[index1]);
-					countdata[index1]++;
-				} else {
-					index1 = yrot * width + xrot;
-					newimagedata[index1] = oldimagedata[index1];
-					countdata[index1]++;
-				}	
-			} // end pixel averaging
+			} //pixel averaging
 		} // end loop over x
 	} // end loop over y
 
 	// normalize array
-	//fprintf(stderr,"normalize...\n");
-	minval = 10000;
-	maxval = -10000;
-	sum = 0;
 	for(i=0;i<size;i++) {
-		if (countdata[i] > 0) {
-			if (i % 50000 == 0)
-				fprintf(stderr,"Index %d, %.1f, %.0f = %.1f ...\n", i, newimagedata[i], countdata[i], newimagedata[i]/countdata[i]);
+		if (countdata[i] > 0)
 			newimagedata[i] = newimagedata[i]/countdata[i];
-			sum += newimagedata[i];
-			if (newimagedata[i] < minval)
-				minval = newimagedata[i];
-			if (newimagedata[i] > maxval)
-				maxval = newimagedata[i];
-		} else
-			fprintf(stderr,"Index %d, %.1f, %.0f ...\n", i, newimagedata[i], countdata[i]);
 	}
-	fprintf(stderr,"Mean %.1e ...\n", sum/(f64) size);
-	fprintf(stderr,"MinMax %.1e <> %.1e ...\n", minval, maxval);
 
-	//fprintf(stderr,"copy...\n");
-	//[self setDataTo: newimagedata];
-	//fprintf(stderr,"free...\n");
+	[self setDataTo: newimagedata];
 	free(countdata);
 
 	return self;

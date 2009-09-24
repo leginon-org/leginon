@@ -13,6 +13,8 @@
 
 -(id) gaussianBlurWithSigma:(f64)sigma ;
 
+-(id) motionBlur:(f64)angle ;
+
 -(id) gaussianBlurFFTWithSigma:(f64)sigma;
 
 -(void) binBy: (u32)bin ;
