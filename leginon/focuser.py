@@ -12,7 +12,7 @@ import threading
 import event
 import time
 import math
-from pyami import imagefun
+from pyami import imagefun, fftfun
 import numpy
 import copy
 import gui.wx.Focuser
@@ -581,6 +581,9 @@ class Focuser(acquisition.Acquisition):
 		## go to preset and target
 		if presetname is not None:
 			self.presetsclient.toScope(presetname, emtarget)
+		pixelsize,center = self.getReciprocalPixelSizeFromPreset(presetname)
+		self.ht = self.instrument.tem.HighTension
+		self.panel.onNewPixelSize(pixelsize,center,self.ht)
 		self.logger.info('Starting manual focus loop, please confirm defocus...')
 		self.beep()
 		self.manualplayer.play()
@@ -610,6 +613,30 @@ class Focuser(acquisition.Acquisition):
 
 		self.onManualCheckDone()
 		self.logger.info('Manual focus check completed')
+
+	def getReciprocalPixelSizeFromPreset(self,presetname):
+		q = leginondata.PresetData(session=self.session,name=presetname)
+		results = q.query(results=1)
+		if not results:
+			return
+		presetdata = results[0]
+		scope = presetdata['tem']
+		ccd = presetdata['ccdcamera']
+		mag = presetdata['magnification']
+		q = leginondata.PixelSizeCalibrationData(tem=scope,ccdcamera=ccd,magnification=mag)
+		results = q.query(results=1)
+		if not results:
+			return
+		campixelsize = results[0]['pixelsize']
+		binning = presetdata['binning']
+		dimension = presetdata['dimension']
+		pixelsize = {'x':1.0/(campixelsize*binning['x']*dimension['x']),'y':1.0/(campixelsize*binning['y']*dimension['y'])}
+		self.rpixelsize = pixelsize['x']
+		center = {'x':dimension['x'] / 2, 'y':dimension['y'] / 2}
+
+	def estimateAstigmation(self,params):
+		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize,self.ht)
+		self.logger.info('z0 %.2f um, zast %.2f um (%.0f ), angle= %.0f deg' % (z0*1e6,zast*1e6,ast_ratio*100, angle*180.0/math.pi))
 
 	def onFocusUp(self, parameter):
 		self.changeFocus(parameter, 'up')
@@ -752,3 +779,4 @@ class Focuser(acquisition.Acquisition):
 
 	def onManualPlayer(self, state):
 		self.panel.playerEvent(state, self.panel.manualdialog)
+	
