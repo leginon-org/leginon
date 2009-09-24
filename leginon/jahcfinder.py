@@ -56,7 +56,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'lattice tolerance': 0.1,
 		'lattice hole radius': 15.0,
 		'lattice zero thickness': 1000.0,
-		'lattice extend': False,
+		'lattice extend': 'off',
 		'ice min mean': 0.05,
 		'ice max mean': 0.2,
 		'ice max std': 0.2,
@@ -70,6 +70,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'focus max mean thickness': 0.5,
 		'focus max stdev thickness': 0.5,
 	})
+	extendtypes = ['off', 'full', '3x3']
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.hf = jahcfinderback.HoleFinder()
@@ -268,8 +269,9 @@ class JAHCFinder(targetfinder.TargetFinder):
 		else:
 			acq_points = centers
 		# need just one focus point
-		focpoint = self.focus_on_hole(focus_points,focus_points)
-		focus_points = [focpoint]
+		if len(focus_points) > 1:
+			focpoint = self.focus_on_hole(focus_points,focus_points)
+			focus_points = [focpoint]
 		self.setTargets(acq_points, 'acquisition', block=True)
 		self.setTargets(focus_points, 'focus', block=True)
 		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
@@ -500,9 +502,14 @@ class JAHCFinder(targetfinder.TargetFinder):
 				self.waitForUserCheck()
 				self.processPreviewTargets(imdata, targetlist)
 				if self.blobsChanged():
-					self.usePickedBlobs()
-					self.fitLattice()
-					self.ice()
+					try:
+						self.usePickedBlobs()
+						self.fitLattice()
+						self.ice()
+					except Exception, e:
+						raise
+						self.logger.error('Failed: %s' % (e,))
+						continue
 				else:
 					break
 				self.panel.targetsSubmitted()

@@ -127,7 +127,7 @@ class HoleFinder(object):
 		self.threshold = 3.0
 		self.threshold_method = "Threshold = mean + A * stdev"
 		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100}
-		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20, 'extend': False}
+		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20, 'extend': 'off'}
 		self.holestats_config = {'radius': 20}
 		self.ice_config = {'i0': None, 'min': 0.0, 'max': 0.1, 'std': 0.05}
 
@@ -319,12 +319,21 @@ class HoleFinder(object):
 			points.append(point)
 			pointdict[point] = blob
 
-		best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
+		if extend == '3x3':
+			best_lattice = lattice.pointsToLattice(points, spacing, tolerance, first_is_center=True)
+		else:
+			best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
+
 		if best_lattice is None:
 			best_lattice = []
-		elif extend:
+			holes = []
+		elif extend == 'full':
 			shape = self.__results['original'].shape
 			best_lattice = best_lattice.raster(shape)
+			holes = self.points_to_blobs(best_lattice)
+		elif extend == '3x3':
+			shape = self.__results['original'].shape
+			best_lattice = best_lattice.raster(shape, layers=1)
 			holes = self.points_to_blobs(best_lattice)
 		else:
 			best_lattice = best_lattice.points
