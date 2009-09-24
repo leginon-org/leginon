@@ -27,6 +27,7 @@ import icons
 import gui.wx.TargetPanelBitmaps
 import pyami.ellipse
 import time
+from pyami import fftfun
 
 DisplayEventType = wx.NewEventType()
 EVT_DISPLAY = wx.PyEventBinder(DisplayEventType)
@@ -95,11 +96,12 @@ class EllipseNewCenterEvent(wx.PyCommandEvent):
 		self.centers = centers
 
 class ImageNewPixelSizeEvent(wx.PyCommandEvent):
-	def __init__(self, source, pixelsize,center):
+	def __init__(self, source, pixelsize,center,hightension):
 		wx.PyCommandEvent.__init__(self, ImageNewPixelSizeEventType, source.GetId())
 		self.SetEventObject(source)
 		self.pixelsize = pixelsize
 		self.center = center
+		self.hightension = hightension
 
 #--------------------
 def getColorMap():
@@ -555,23 +557,26 @@ class ResolutionTool(ValueTool):
 	def __init__(self, imagepanel, sizer):
 		ValueTool.__init__(self,imagepanel, sizer)
 		self.pixelsize = 1.0
+		self.hightension = 120000
 		self.imagepanel.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_NEW_PIXELSIZE, self.onNewPixelSize, self.imagepanel)
 
 	def valueString(self, x, y, value):
 		if self.pixelsize and self.center:
 			distance = math.sqrt((x-self.center['x'])**2+(y-self.center['y'])**2)
 			resolution = 1/math.sqrt(((x-self.center['x'])*self.pixelsize['x'])**2+((y-self.center['y'])*self.pixelsize['y'])**2)
+			defocus = fftfun.calculateDefocus(self.hightension,1/resolution)
 			if resolution < 1e-6:
 				resolutionstr = "%.2f nm" % (resolution*1e9,)
 			else:
 				resolutionstr = "%.1f um" % (resolution*1e6,)
 		else:
 			resolutionstr = "N/A"
-		return '(%d, %d)\nr= %s,d=%.1f' % (x, y,resolutionstr,distance)
+		return 'r= %s,defocus=%.0f nm' % (resolutionstr,defocus*1e9)
 
 	def onNewPixelSize(self,evt):
 		self.pixelsize = evt.pixelsize
 		self.center = evt.center
+		self.hightension = evt.hightension
 
 ##################################
 ##
