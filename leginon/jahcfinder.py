@@ -259,7 +259,6 @@ class JAHCFinder(targetfinder.TargetFinder):
 					fochole = self.focus_on_hole(centers, centers)
 					focus_points.append(fochole)
 
-
 		self.logger.info('Holes with good ice: %s' % (len(centers),))
 		# takes x,y instead of row,col
 		if self.settings['target template']:
@@ -360,9 +359,18 @@ class JAHCFinder(targetfinder.TargetFinder):
 		acq_vect = self.settings['acquisition template']
 		foc_vect = self.settings['focus template']
 		newtargets = {'acquisition':[], 'focus':[]}
-		for center in centers:
-			self.logger.info('applying template to hole at %s' % (center,))
-			for vect in acq_vect:
+
+		## if 3x3 used, make focus template relative to center hole of 3x3
+		extend = self.settings['lattice extend']
+		if extend == '3x3':
+			allcenters = self.blobCenters(self.hf['holes'])
+			center = allcenters[0]
+			focuscenters = [center]
+		else:
+			focuscenters = centers
+
+		for vect in acq_vect:
+			for center in centers:
 				target = center[0]+vect[0], center[1]+vect[1]
 				tarx = target[0]
 				tary = target[1]
@@ -370,7 +378,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
 					continue
 				newtargets['acquisition'].append(target)
-			for vect in foc_vect:
+		for vect in foc_vect:
+			for center in focuscenters:
 				target = center[0]+vect[0], center[1]+vect[1]
 				tarx = target[0]
 				tary = target[1]
