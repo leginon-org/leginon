@@ -76,8 +76,8 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
 
-	def onNewPixelSize(self, pixelsize,center):
-		idcevt = gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center)
+	def onNewPixelSize(self, pixelsize,center,hightension):
+		idcevt = gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		self.center = center
 
