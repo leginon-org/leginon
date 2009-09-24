@@ -123,7 +123,7 @@ function createAce2Form($extra=false) {
 	echo "<br/><br/>\n";
 
 	echo "<input type='text' name='rotblur' value='0.0' size='4'>\n";
-	echo docpop('rotblur','Rotational blur <font size='-2'>(in degrees)</font>');
+	echo docpop('rotblur','Rotational blur <font size="-2">(in degrees)</font>');
 	echo "<br/><br/>\n";
 
 	echo "<input type='checkbox' name='refine2d'>\n";
