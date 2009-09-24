@@ -79,7 +79,7 @@ int compare_f64( const void * a, const void * b );
 	if ( new == nil ) return new;
 	
 	new->dim_size = COPYV(dim_size,sizeof(u32)*(ndim+1));
-	new->dim_step = COPYV(dim_size,sizeof(u32)*(ndim+1));
+	new->dim_step = COPYV(dim_step,sizeof(u32)*(ndim+1));
 	
 	sprintf(new->name,"%s",name);
 	
@@ -310,7 +310,9 @@ int compare_f64( const void * a, const void * b );
 	fprintf(fp,"Number of Elements: %d\n",(u32)size);
 	fprintf(fp,"Memory: %2.2f MB\n",(f32)memory/MB);
 	fprintf(fp,"Dimensions: %u\n",ndim);
-	
+	fprintf(fp,"Mean: %.1e +- %.1e\n",[self meanValue],[self standardDeviation]);	
+	fprintf(fp,"Extremes: %.1e <> %.1e\n",[self minValue],[self maxValue]);	
+
 	fprintf(fp,"Bounds:  ");
 	for(k=0;k<ndim;k++) fprintf(fp,"%u ",dim_size[k]);
 	fprintf(fp,"\n");
@@ -483,7 +485,7 @@ int compare_f64( const void * a, const void * b );
 }
 
 -(id) setDataTo: (void *)todata {
-	if ( data == todata ) return;
+	if ( data == todata ) return self;
 	free(data);
 	data = todata;
 	return self;
