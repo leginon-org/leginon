@@ -80,7 +80,7 @@ int main (int argc, char **argv) {
 		{ 5, "binby",	"Ammount to bin input image",						"b", 1 },
 		{ 6, "amp",		"Initial Amplitude Contrast",						"m", 1 },
 		{ 7, "edge",	"Edge Parameters",									"e", 1 },
-		{ 8, "rotangle",	"Rotational blur",								"r", 1 },
+		{ 8, "rotang",	"Rotational blur for difficult images",		"r", 1 },
 		{ 9, "out",		"Out Path for data",									"o", 1 },
 		{ 0, NULL,		NULL,										   NULL, 0 }
 	};
