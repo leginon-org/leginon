@@ -9,7 +9,7 @@ def getAstigmaticDefocii(params,rpixelsize, ht):
 	maxr = rpixelsize * max(params['a'],params['b'])
 	minz = calculateDefocus(ht,maxr)
 	z0 = (maxz + minz) / 2
-	zast = maxz - za
+	zast = maxz - z0
 	ast_ratio = zast / z0
 	if maxr == params['b']:
 		params['alpha'] + math.pi / 2
