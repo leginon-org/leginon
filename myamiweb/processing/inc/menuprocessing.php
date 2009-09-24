@@ -542,7 +542,8 @@ if ($expId) {
 		// check for how many IMAGIC reconstructions have finished / running / queued
 		$imq = count($subclusterjobs['imagic3dRefine']['queued']);
 		$imrun = count($subclusterjobs['imagic3dRefine']['running']);
-		$imdone = count($particle->getImagic3dRefinementRunsFromSessionId($sessionId));
+		$imrefruns = $particle->getImagic3dRefinementRunsFromSessionId($sessionId);
+		$imdone = (!empty($imrefruns)) ? count($imrefruns) : 0;
 		$imreconresults = array();
 		$imreconresults[] = ($imq>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imq queued</a>" : "";
 		$imreconresults[] = ($imrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imrun running</a>" : "";
