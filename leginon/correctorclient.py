@@ -195,11 +195,8 @@ class CorrectorClient(cameraclient.CameraClient):
 		if plan is not None:
 			self.fixBadPixels(imagedata['image'], plan)
 
+		imagedata['image'] = numpy.clip(imagedata['image'], 0, 2**16)
 		'''
-		if clip and (clip[0] or clip[1]):
-			clipped = numpy.clip(normalized, clip[0], clip[1])
-		else:
-			clipped = normalized
 
 		if despike:
 			self.logger.debug('Despiking...')
