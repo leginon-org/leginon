@@ -110,6 +110,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			+ " -k " + str(inputparams['kv'])
 			+ " -a " + str(inputparams['apix'])
 			+ " -e " + str(self.params['edge_b'])+","+str(self.params['edge_t'])
+			+ " -r " + str(self.params['rotblur'])
 			+ "\n" )
 
 		### hate to do this but have to, MATLAB's bad fftw3 library gets linked otherwise
@@ -277,6 +278,8 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			help="Canny edge parameters Blur Sigma", metavar="#")
 		self.parser.add_option("--edge2", dest="edge_t", type="float", default=0.001,
 			help="Canny edge parameters Edge Treshold(0.0-1.0)", metavar="#")
+		self.parser.add_option("--rotblur", dest="rotblur", type="float", default=0.0,
+			help="Rotational blur for low contrast CTF (in degrees), default 0", metavar="#")
 		### true/false
 		self.parser.add_option("--refine2d", dest="refine2d", default=False,
 			action="store_true", help="Refine the defocus after initial ACE with 2d cross-correlation")
