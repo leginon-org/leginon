@@ -26,11 +26,13 @@ class Lattice(object):
 			maxn = int(numpy.ceil(maxdist / self.spacing))
 		if layers is not None:
 			maxn = min(maxn,layers)
-		points = []
+		points = [self.center]
 		for i in range(-maxn, maxn+1):
 			iv0 = i * self.matrix[0,0]
 			iv1 = i * self.matrix[0,1]
 			for j in range(-maxn, maxn+1):
+				if i == 0 and j == 0:
+					continue
 				jv0 = j * self.matrix[1,0]
 				jv1 = j * self.matrix[1,1]
 				v0 = self.center[0] + iv0 + jv0
