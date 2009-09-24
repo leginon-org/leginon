@@ -80,7 +80,8 @@ int main (int argc, char **argv) {
 		{ 5, "binby",	"Ammount to bin input image",						"b", 1 },
 		{ 6, "amp",		"Initial Amplitude Contrast",						"m", 1 },
 		{ 7, "edge",	"Edge Parameters",									"e", 1 },
-		{ 8, "out",		"Out Path for data",									"o", 1 },
+		{ 8, "rotangle",	"Rotational blur",								"r", 1 },
+		{ 9, "out",		"Out Path for data",									"o", 1 },
 		{ 0, NULL,		NULL,										   NULL, 0 }
 	};
 	
@@ -93,6 +94,7 @@ int main (int argc, char **argv) {
 	f64 apix = 1.55;
 	f64 cs = 2.0;
 	f64 kv = 120.0;
+	f64 angle = 0.0;
 	u32 binby = 2;
 	
 	f64 edge_blur = 6.0;
@@ -136,7 +138,10 @@ int main (int argc, char **argv) {
 			case  7:
 				sscanf(arg,"%lf,%lf",&edge_blur,&edge_maxt);
 				edge_mint = 0.1*edge_maxt;
-				break;	
+				break;
+			case  8:
+				sscanf(arg,"%lf",&angle);
+				break;
 			default:
 				break;
 		}
@@ -147,7 +152,7 @@ int main (int argc, char **argv) {
 	
 	t1 = CPUTIME;
 	fprintf(stderr,"Binning image by %d pixels...",binby);
-	if ( binby != 1 && binby < 8 ) [image binBy:binby];
+	if ( binby != 1 && binby <= 8 ) [image binBy:binby];
 	fprintf(stderr,"\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
 	
 	t1 = CPUTIME;
@@ -161,19 +166,27 @@ int main (int argc, char **argv) {
 	t1 = CPUTIME;
 	fprintf(stderr,"Generating power spectrum...");	
 	[image generatePowerSpectrum];
+	fprintf(stderr,"\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
+
+	t1 = CPUTIME;
+	fprintf(stderr,"Motion blur %.1f degrees...",angle);
+	[image motionBlur:angle];
+	fprintf(stderr,"\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
+
 	u32 postbin = MIN([image sizeOfDimension:0],[image sizeOfDimension:1])/1024;
 	if ( postbin > 1 ) {
-		fprintf(stderr,"binning by %d...",postbin);
+		fprintf(stderr,"post-binning by %d...",postbin);
 		[image binBy:postbin];
 	}
-	fprintf(stderr,"\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
-	
+
 //----------------------------------------------------------------------------
 	
 	t1 = CPUTIME;
-	fprintf(stderr,"Finding edges for ellipse fitting...");	
 	ArrayP edges = [image deepCopy];
+	[edges printInfoTo: stderr];
+	fprintf(stderr,"Blurring edges...\n");	
 	[edges gaussianBlurWithSigma:edge_blur];
+	fprintf(stderr,"Finding edges for ellipse fitting...");	
 	u32 edge_count = cannyedges2d([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],edge_mint,edge_maxt,5.0);
 
 	fprintf(stderr,"\t\tDONE in %2.2f seconds (%d edges)\n",CPUTIME-t1,edge_count);
