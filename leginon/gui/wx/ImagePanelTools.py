@@ -336,6 +336,14 @@ class ImageTool(object):
 		pass
 
 	#--------------------
+	def OnShiftRightClick(self, evt):
+		pass
+
+	#--------------------
+	def OnShiftCtrlRightClick(self, evt):
+		pass
+
+	#--------------------
 	def OnMotion(self, evt, dc):
 		return False
 

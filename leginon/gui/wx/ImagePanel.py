@@ -592,10 +592,28 @@ class ImagePanel(wx.Panel):
 		pass
 
 	#--------------------
+	def _onShiftRightClick(self, evt):
+		pass
+
+	#--------------------
+	def _onShiftCtrlRightClick(self, evt):
+		pass
+
+	#--------------------
 	def OnRightClick(self, evt):
-		for tool in self.tools:
-			tool.OnRightClick(evt)
-		self._onRightClick(evt)
+		if not evt.ShiftDown():
+			for tool in self.tools:
+				tool.OnRightClick(evt)
+			self._onRightClick(evt)
+		else:
+			if not evt.ControlDown():
+				for tool in self.tools:
+					tool.OnShiftRightClick(evt)
+				self._onShiftRightClick(evt)
+			else:
+				for tool in self.tools:
+					tool.OnShiftCtrlRightClick(evt)
+				self._onShiftCtrlRightClick(evt)
 
 	#--------------------
 	def _onRightDown(self, evt):

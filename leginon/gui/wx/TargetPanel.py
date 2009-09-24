@@ -73,6 +73,14 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 		return self._getSelectionTool().deleteTarget(target)
 
 	#--------------------
+	def clearTargetType(self, targettype):
+		return self._getSelectionTool().clearTargetType(targettype)
+
+	#--------------------
+	def clearAllTargetTypes(self):
+		return self._getSelectionTool().clearAllTargetTypes()
+
+	#--------------------
 	def setTargets(self, name, targets):
 		return self._getSelectionTool().setTargets(name, targets)
 
@@ -235,6 +243,16 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 		if self.selectedtarget is not None :
 			if self.selectedtype == self.selectedtarget.type:
 				self.deleteTarget(self.selectedtarget)
+
+	#--------------------
+	def _onShiftRightClick(self, evt):
+		if self.selectedtarget is not None :
+			if self.selectedtype == self.selectedtarget.type:
+				self.clearTargetType(self.selectedtype)
+
+	#--------------------
+	def _onShiftCtrlRightClick(self, evt):
+		self.clearAllTargetTypes()
 
 	#--------------------
 	def closestTarget(self, type, x, y):

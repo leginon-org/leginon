@@ -181,6 +181,18 @@ class SelectionTool(wx.Panel):
 			self.parent.setDisplayedTargets(tool.targettype, targets)
 
 	#--------------------
+	def clearAllTargetTypes(self):
+		for name in self.tools:
+			tool = self._getTypeTool(name)
+			if hasattr(tool,'targettype'):
+				self.setTargets(name,[])
+
+	#--------------------
+	def clearTargetType(self, targettype):
+		name = targettype.name
+		self.setTargets(name,[])
+
+	#--------------------
 	def deleteTarget(self, target):
 		name = target.type.name
 		tool = self._getTypeTool(name)
