@@ -99,6 +99,8 @@ def getLinuxDistro():
 			f = open(flavfile, "r")
 			flavor = f.readline().strip()
 			f.close()
+		else:
+			flavor = None
 	except:
 		flavor = None
 	return flavor
