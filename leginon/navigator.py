@@ -362,7 +362,6 @@ class Navigator(node.Node):
 		pc = correlator.phase_correlate(im2, im1, zero=False)
 		subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=limit)
 		res = self.peakfinder.getResults()
-		pixelpeak = res['pixel peak']
 		unsignedpixelpeak = res['unsigned pixel peak']
 		peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
 		r_error = subpixelpeak[0]
