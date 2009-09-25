@@ -480,6 +480,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 	def blobsChanged(self):
 			# if blobs have changed, return true
 			newblobs = self.panel.getTargetPositions('Blobs')
+			if not newblobs:
+				return False
 			for point in self.oldblobs:
 				if point not in newblobs:
 					return True
