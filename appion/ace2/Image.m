@@ -108,6 +108,7 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	f64 phi, phi_start, sinval, cosval;
 	f64 dx, dy;
 	s32 index;
+	f64 count;
 	f64 xrot, yrot, phiprime;
 
 	//initialize
@@ -120,12 +121,10 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	//create new array
 	f64 * newimagedata = NEWV(f64, size);
 	f64 * oldimagedata = [self data];
-	f64 * countdata = NEWV(f64, size);
 
 	// zero arrays
 	for(i=0;i<size;i++) {
 		newimagedata[i] = 0.0;
-		countdata[i] = 0.0;
 	}
 
 	// run through angles
@@ -161,6 +160,7 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 			theta = radians / (f64) niter;
 
 			index = y * width + x;
+			count = 0.0;
 			// start pixel averaging
 			for (i=0; i<=niter; i++) {
 				phiprime = phi_start - (f64) i * theta;
@@ -178,20 +178,17 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 
 				newimagedata[index] += interpolate2d(oldimagedata, yrot, xrot, height, width);;
 				// add count to pixel value
-				countdata[index]++;
+				count++;
 
 			} //pixel averaging
+
+			// normalize pixel
+			newimagedata[index] = newimagedata[index]/count;
+
 		} // end loop over x
 	} // end loop over y
 
-	// normalize array
-	for(i=0;i<size;i++) {
-		if (countdata[i] > 0)
-			newimagedata[i] = newimagedata[i]/countdata[i];
-	}
-
 	[self setDataTo: newimagedata];
-	free(countdata);
 
 	return self;
 }
