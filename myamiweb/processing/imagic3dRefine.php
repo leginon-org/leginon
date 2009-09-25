@@ -20,30 +20,30 @@ $numiters = ($_POST['numiters']) ? $_POST['numiters'] : 1;
 	
 // if processing, write job file & process	
 if ($_POST['process'])  {
-	if (!$_POST['output_directory']) jobform($modelid, "error: no output directory specified");	
-	if (!$_POST['runid']) jobform($modelid, "error: no run ID specified");
+	if (!$_POST['output_directory']) jobform("error: no output directory specified");	
+	if (!$_POST['runid']) jobform("error: no run ID specified");
 
 	for ($i=1; $i<=$numiters; $i++) {	
 		// check for errors in user input values
-		if (!$_POST['symmetry'.$i]) jobform($modelid, "error: no symmetry specified");
-		if (!$_POST['radius'.$i]) jobform($modelid, "error: no particle radius specified");
-		if (!$_POST['mrarefs_ang_inc'.$i]) jobform($modelid, "error: angular increment of forward projections for mra references not specified");
-		if (!$_POST['max_shift_orig'.$i]) jobform($modelid, "error: no max shift specified as compared to originals (MRA)");
-		if (!$_POST['max_shift_this'.$i]) jobform($modelid, "error: no max shift specified for this iteration (MRA)");
-		if (!$_POST['samp_param'.$i]) jobform($modelid, "error: no sampling parameter specified (MRA)");
-//		if (!$_POST['ignore_images'.$i]) jobform($modelid, "error: Please specify a value for percentage of images to ignore in MSA");	
-//		if (!$_POST['ignore_members'.$i]) jobform($modelid, "error: Please specify a value for percentage of members within each class to ignore in MSA");
-		if (!$_POST['num_classums'.$i]) jobform($modelid, "error: you need to specify how many classums you're using for each iteration");
-//		if (!$_POST['keep_classes'.$i]) jobform($modelid, "error: Please specify the percentage of classes to keep after MSA");
-		if (!$_POST['forw_ang_inc'.$i]) jobform($modelid, "error: angular increment of formward projections for anchor set not specified");
-		if (!$_POST['euler_ang_inc'.$i]) jobform($modelid, "error: no increment specified for euler angle search (Angular Reconstitution)");
-//		if (!$_POST['keep_ordered'.$i]) jobform($modelid, "error: Please specify the percentage of ordered classes to keep after Angular Reconstitution");
-		if (!$_POST['hamming_window'.$i]) jobform($modelid, "error: no hamming window specified");
-		if (!$_POST['obj_size'.$i]) jobform($modelid, "error: object size as fraction of image size not specified");
-		if (!$_POST['amask_dim'.$i]) jobform($modelid, "error: automask parameters not specified");
-		if (!$_POST['amask_lp'.$i]) jobform($modelid, "error: automask parameters not specified");
-		if (!$_POST['amask_sharp'.$i]) jobform($modelid, "error: automask parameters not specified");
-		if (!$_POST['amask_thresh'.$i]) jobform($modelid, "error: automask parameters not specified");
+		if (!$_POST['symmetry'.$i]) jobform("error: no symmetry specified");
+		if (!$_POST['radius'.$i]) jobform("error: no particle radius specified");
+		if (!$_POST['mrarefs_ang_inc'.$i]) jobform("error: angular increment of forward projections for mra references not specified");
+		if (!$_POST['max_shift_orig'.$i]) jobform("error: no max shift specified as compared to originals (MRA)");
+		if (!$_POST['max_shift_this'.$i]) jobform("error: no max shift specified for this iteration (MRA)");
+		if (!$_POST['samp_param'.$i]) jobform("error: no sampling parameter specified (MRA)");
+//		if (!$_POST['ignore_images'.$i]) jobform("error: Please specify a value for percentage of images to ignore in MSA");	
+//		if (!$_POST['ignore_members'.$i]) jobform("error: Please specify a value for percentage of members within each class to ignore in MSA");
+		if (!$_POST['num_classums'.$i]) jobform("error: you need to specify how many classums you're using for each iteration");
+//		if (!$_POST['keep_classes'.$i]) jobform("error: Please specify the percentage of classes to keep after MSA");
+		if (!$_POST['forw_ang_inc'.$i]) jobform("error: angular increment of formward projections for anchor set not specified");
+		if (!$_POST['euler_ang_inc'.$i]) jobform("error: no increment specified for euler angle search (Angular Reconstitution)");
+//		if (!$_POST['keep_ordered'.$i]) jobform("error: Please specify the percentage of ordered classes to keep after Angular Reconstitution");
+		if (!$_POST['hamming_window'.$i]) jobform("error: no hamming window specified");
+		if (!$_POST['obj_size'.$i]) jobform("error: object size as fraction of image size not specified");
+		if (!$_POST['amask_dim'.$i]) jobform("error: automask parameters not specified");
+		if (!$_POST['amask_lp'.$i]) jobform("error: automask parameters not specified");
+		if (!$_POST['amask_sharp'.$i]) jobform("error: automask parameters not specified");
+		if (!$_POST['amask_thresh'.$i]) jobform("error: automask parameters not specified");
 		imagic3dRefine();
 	}
 }
@@ -53,24 +53,25 @@ elseif ($_POST['refinemodel'])  {
 	if ($_GET['3d0']) {
 		if (!$_POST['model']) create3d0SummaryForm("Error: No model selected");
 		if (!$_POST['stackval']) create3d0SummaryForm("Error: No stack selected");
-		$modelid = $_POST['model'];
-		jobform3d0($modelid);
+		jobform3d0();
 	}
 	else {
 		if (!$_POST['model']) initModelForm("Error: No model selected");
 		if (!$_POST['stackval']) initModelForm("Error: No stack selected");
-		$modeldata = $_POST['model'];	
-		$modelinfo = explode('|--|',$_POST['model']);
-		$modelid = $modelinfo[0];
-		jobform($modelid);
+		jobform();
 	} 
 }	
 	
 elseif ($_POST['duplicate'])  {
 	$postdata = explode('|~~|', $_POST['duplicate']);
-	$modelid = $postdata[1];
-	if ($_GET['3d0']) jobform3d0($modelid);
-	else jobform($modelid);
+	if ($_GET['3d0']) jobform3d0();
+	else jobform();
+}
+
+elseif ($_POST['import']) {
+	$postdata = explode('|~~|', $_POST['import']);
+	if ($_GET['3d0']) jobform3d0();
+	else jobform();
 }
 
 elseif ($_GET['3d0']) create3d0SummaryForm();
@@ -435,7 +436,7 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 ##
 ############################################################
 	
-function jobform3d0($modelid, $extra=false) {
+function jobform3d0($extra=false) {
 	
 	$particle = new particledata();	
 	
@@ -443,6 +444,8 @@ function jobform3d0($modelid, $extra=false) {
 	$expId=$_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
 	$sessiondata=getSessionList($projectId,$expId);
+	$modelinfo = explode('|--|',$_POST['model']);
+	$modelid = $modelinfo[0];
 	$modeldata = $particle->getImagic3d0Data($modelid);
 	$clusterId = $modeldata['REF|ApClusteringStackData|clusterclass'];
 	
@@ -690,7 +693,8 @@ function jobform3d0($modelid, $extra=false) {
 	echo "<input type='hidden' NAME='imagic3d0id' VALUE='$modelid'><P>";
 	echo "<input type='hidden' NAME='norefClassId' VALUE='$norefClassId'><P>";
 	echo "<input type='hidden' NAME='clusterId' VALUE='$clusterId'><P>";
-	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
+	echo "<input type='hidden' NAME='stackval' value='".$_POST['stackval']."'>\n";
+	echo "<input type='hidden' NAME='modelid' value='".$_POST['model']."'>\n";
 	echo getSubmitForm("run imagic");
 	echo "</form>\n";
 	processing_footer();
@@ -706,7 +710,7 @@ function jobform3d0($modelid, $extra=false) {
 ##
 ############################################################
 
-function jobform($modelid, $extra=false) {
+function jobform($extra=false) {
 
 	$particle = new particledata();	
 	
@@ -721,6 +725,8 @@ function jobform($modelid, $extra=false) {
 		$sessionpath=ereg_replace("rawdata","recon/",$sessionpath);
 	}
 	
+	$modelinfo = explode('|--|',$_POST['model']);
+	$modelid = $modelinfo[0];
 	$modeldata = $particle->getInitModelInfo($modelid);
 	
 	## get stack data
@@ -841,6 +847,17 @@ function jobform($modelid, $extra=false) {
 	echo"  </tr><br>\n";
 	$rcol = ($i % 2) ? '#FFFFFF' : '#FFFDCC';
 
+
+	// set imports
+	echo "<select name='import' onChange='imagic3dRefine.submit()'>\n";
+	echo "<option>Import parameters</option>\n";
+	echo "<option value='default1'>5 Iterations with 10,000+ particles</option>\n";
+	echo "<br></select>\n";
+	$syms = $particle->getSymmetries();
+
+	// set number of iterations if importing
+	if ($_POST['import'] == "default1") $numiters = 5;
+
 	for ($i=1; $i<=$numiters; $i++)	{
 		// define names for user-inputted values for each iteration
 		$symmetryn = "symmetry".$i;
@@ -863,53 +880,81 @@ function jobform($modelid, $extra=false) {
 		$amask_sharpn = "amask_sharp".$i;
 		$amask_threshn = "amask_thresh".$i;
 
-		// define default parameters for 1st iteration
-		if ($i==1)	{
+		// if importing values, set them here
+		if ($_POST['import']=='default1') {
 			$nproc = ($_POST[$nproc]) ? $_POST[$nproc] : "8";
 			$mass = ($_POST[$mass]) ? $_POST[$mass] : "";
-			$symmetry = ($_POST[$symmetryn]) ? $_POST[$symmetryn] : $symmetry;
-			$radius = ($_POST[$radiusn]) ? $_POST[$radiusn] : "";
-			$mrarefs_ang_inc = ($_POST[$mrarefs_ang_incn]) ? $_POST[$mrarefs_ang_incn] : "25";
-			$max_shift_orig = ($_POST[$max_shift_orign]) ? $_POST[$max_shift_orign] : "0.4";
-			$max_shift_this = ($_POST[$max_shift_thisn]) ? $_POST[$max_shift_thisn] : "0.1";
-			$samp_param = ($_POST[$samp_paramn]) ? $_POST[$samp_paramn] : "4";
-			$ignore_images = ($_POST[$ignore_imagesn]) ? $_POST[$ignore_imagesn] : "10";
-			$ignore_members = ($_POST[$ignore_membersn]) ? $_POST[$ignore_membersn] : "10";
-			$num_classums = ($_POST[$num_classumsn]) ? $_POST[$num_classumsn] : "";
-			$keep_classes = ($_POST[$keep_classesn]) ? $_POST[$keep_classesn] : "0.9";
-			$forw_ang_inc = ($_POST[$forw_ang_incn]) ? $_POST[$forw_ang_incn] : "25";
-			$euler_ang_inc = ($_POST[$euler_ang_incn]) ? $_POST[$euler_ang_incn] : "10";
-			$keep_ordered = ($_POST[$keep_orderedn]) ? $_POST[$keep_orderedn] : "0.9";
-			$hamming_window = ($_POST[$hamming_windown]) ? $_POST[$hamming_windown] : "0.8";
-			$obj_size = ($_POST[$obj_sizen]) ? $_POST[$obj_sizen] : "0.8";
-			$amask_dim = ($_POST[$amask_dimn]) ? $_POST[$amask_dimn] : "0.04";
-			$amask_lp = ($_POST[$amask_lpn]) ? $_POST[$amask_lpn] : "0.3";
-			$amask_sharp = ($_POST[$amask_sharpn]) ? $_POST[$amask_sharpn] : "0.3";
-			$amask_thresh = ($_POST[$amask_threshn]) ? $_POST[$amask_threshn] : "15";
+			$symmetry = $modeldata['REF|ApSymmetryData|symmetry'];
+			$radius = ($_POST[$radiusn]) ? $_POST[$radiusn] : ($box/2)-2;
+			$mrarefs_ang_inc = "25";
+			$max_shift_orig = "0.4";
+			$max_shift_this = "0.1";
+			$samp_param = ($i * 2 + 2);
+			$ignore_images = (35 - $i*5);
+			$ignore_members = "10";
+			$num_classums = $i*50 + 150;
+			$keep_classes = "0.9";
+			$forw_ang_inc = (30 - $i*5);
+			$euler_ang_inc = (12 - $i*2);
+			$keep_ordered = "0.9";
+			$hamming_window = (0.3 + $i*0.1);
+			$obj_size = "0.8";
+			$amask_dim = "0.04";
+			$amask_lp = "0.3";
+			$amask_sharp = "0.3";
+			$amask_thresh = "15";
 		}
-		// copy parameters from previous post
-		else 	{
-			$symmetry = ($i>$j) ? $_POST['symmetry'.($i-1)] : $_POST[$symmetryn];
-			$radius = ($i>$j) ? $_POST['radius'.($i-1)] : $_POST[$radiusn];
-			$mrarefs_ang_inc = ($i>$j) ? $_POST['mrarefs_ang_inc'.($i-1)] : $_POST[$mrarefs_ang_incn];
-			$max_shift_orig = ($i>$j) ? $_POST['max_shift_orig'.($i-1)] : $_POST[$max_shift_orign];
-			$max_shift_this = ($i>$j) ? $_POST['max_shift_this'.($i-1)] : $_POST[$max_shift_thisn];
-			$samp_param = ($i>$j) ? $_POST['samp_param'.($i-1)] : $_POST[$samp_paramn];
-			$ignore_images = ($i>$j) ? $_POST['ignore_images'.($i-1)] : $_POST[$ignore_imagesn];
-			$ignore_members = ($i>$j) ? $_POST['ignore_members'.($i-1)] : $_POST[$ignore_membersn];
-			$num_classums = ($i>$j) ? $_POST['num_classums'.($i-1)] : $_POST[$num_classumsn];
-			$keep_classes = ($i>$j) ? $_POST['keep_classes'.($i-1)] : $_POST[$keep_classesn];
-			$forw_ang_inc = ($i>$j) ? $_POST['forw_ang_inc'.($i-1)] : $_POST[$forw_ang_incn];
-			$euler_ang_inc = ($i>$j) ? $_POST['euler_ang_inc'.($i-1)] : $_POST[$euler_ang_incn];
-			$keep_ordered = ($i>$j) ? $_POST['keep_ordered'.($i-1)] : $_POST[$keep_orderedn];
-			$hamming_window = ($i>$j) ? $_POST['hamming_window'.($i-1)] : $_POST[$hamming_windown];
-			$obj_size = ($i>$j) ? $_POST['obj_size'.($i-1)] : $_POST[$obj_sizen];
-			$amask_dim = ($i>$j) ? $_POST['amask_dim'.($i-1)] : $_POST[$amask_dimn];
-			$amask_lp = ($i>$j) ? $_POST['amask_lp'.($i-1)] : $_POST[$amask_lpn];
-			$amask_sharp = ($i>$j) ? $_POST['amask_sharp'.($i-1)] : $_POST[$amask_sharpn];
-			$amask_thresh = ($i>$j) ? $_POST['amask_thresh'.($i-1)] : $_POST[$amask_threshn];
+		
+		else {
+
+			// define default parameters for 1st iteration
+			if ($i==1)	{
+				$nproc = ($_POST[$nproc]) ? $_POST[$nproc] : "8";
+				$mass = ($_POST[$mass]) ? $_POST[$mass] : "";
+				$symmetry = ($_POST[$symmetryn]) ? $_POST[$symmetryn] : $symmetry;
+				$radius = ($_POST[$radiusn]) ? $_POST[$radiusn] : "";
+				$mrarefs_ang_inc = ($_POST[$mrarefs_ang_incn]) ? $_POST[$mrarefs_ang_incn] : "25";
+				$max_shift_orig = ($_POST[$max_shift_orign]) ? $_POST[$max_shift_orign] : "0.4";
+				$max_shift_this = ($_POST[$max_shift_thisn]) ? $_POST[$max_shift_thisn] : "0.1";
+				$samp_param = ($_POST[$samp_paramn]) ? $_POST[$samp_paramn] : "4";
+				$ignore_images = ($_POST[$ignore_imagesn]) ? $_POST[$ignore_imagesn] : "10";
+				$ignore_members = ($_POST[$ignore_membersn]) ? $_POST[$ignore_membersn] : "10";
+				$num_classums = ($_POST[$num_classumsn]) ? $_POST[$num_classumsn] : "";
+				$keep_classes = ($_POST[$keep_classesn]) ? $_POST[$keep_classesn] : "0.9";
+				$forw_ang_inc = ($_POST[$forw_ang_incn]) ? $_POST[$forw_ang_incn] : "25";
+				$euler_ang_inc = ($_POST[$euler_ang_incn]) ? $_POST[$euler_ang_incn] : "10";
+				$keep_ordered = ($_POST[$keep_orderedn]) ? $_POST[$keep_orderedn] : "0.9";
+				$hamming_window = ($_POST[$hamming_windown]) ? $_POST[$hamming_windown] : "0.8";
+				$obj_size = ($_POST[$obj_sizen]) ? $_POST[$obj_sizen] : "0.8";
+				$amask_dim = ($_POST[$amask_dimn]) ? $_POST[$amask_dimn] : "0.04";
+				$amask_lp = ($_POST[$amask_lpn]) ? $_POST[$amask_lpn] : "0.3";
+				$amask_sharp = ($_POST[$amask_sharpn]) ? $_POST[$amask_sharpn] : "0.3";
+				$amask_thresh = ($_POST[$amask_threshn]) ? $_POST[$amask_threshn] : "15";
+			}
+			// copy parameters from previous post
+			else 	{
+				$symmetry = ($i>$j) ? $_POST['symmetry'.($i-1)] : $symmetry;
+				$radius = ($i>$j) ? $_POST['radius'.($i-1)] : $_POST[$radiusn];
+				$mrarefs_ang_inc = ($i>$j) ? $_POST['mrarefs_ang_inc'.($i-1)] : $_POST[$mrarefs_ang_incn];
+				$max_shift_orig = ($i>$j) ? $_POST['max_shift_orig'.($i-1)] : $_POST[$max_shift_orign];
+				$max_shift_this = ($i>$j) ? $_POST['max_shift_this'.($i-1)] : $_POST[$max_shift_thisn];
+				$samp_param = ($i>$j) ? $_POST['samp_param'.($i-1)] : $_POST[$samp_paramn];
+				$ignore_images = ($i>$j) ? $_POST['ignore_images'.($i-1)] : $_POST[$ignore_imagesn];
+				$ignore_members = ($i>$j) ? $_POST['ignore_members'.($i-1)] : $_POST[$ignore_membersn];
+				$num_classums = ($i>$j) ? $_POST['num_classums'.($i-1)] : $_POST[$num_classumsn];
+				$keep_classes = ($i>$j) ? $_POST['keep_classes'.($i-1)] : $_POST[$keep_classesn];
+				$forw_ang_inc = ($i>$j) ? $_POST['forw_ang_inc'.($i-1)] : $_POST[$forw_ang_incn];
+				$euler_ang_inc = ($i>$j) ? $_POST['euler_ang_inc'.($i-1)] : $_POST[$euler_ang_incn];
+				$keep_ordered = ($i>$j) ? $_POST['keep_ordered'.($i-1)] : $_POST[$keep_orderedn];
+				$hamming_window = ($i>$j) ? $_POST['hamming_window'.($i-1)] : $_POST[$hamming_windown];
+				$obj_size = ($i>$j) ? $_POST['obj_size'.($i-1)] : $_POST[$obj_sizen];
+				$amask_dim = ($i>$j) ? $_POST['amask_dim'.($i-1)] : $_POST[$amask_dimn];
+				$amask_lp = ($i>$j) ? $_POST['amask_lp'.($i-1)] : $_POST[$amask_lpn];
+				$amask_sharp = ($i>$j) ? $_POST['amask_sharp'.($i-1)] : $_POST[$amask_sharpn];
+				$amask_thresh = ($i>$j) ? $_POST['amask_thresh'.($i-1)] : $_POST[$amask_threshn];
+			}
 		}
-		$syms = $particle->getSymmetries();
+
 		// print form with user input for all values
 		echo "<tr>
        			<td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i|~~|$modelid' onclick='imagic3dRefine.submit()'></td>
@@ -917,9 +962,10 @@ function jobform($modelid, $extra=false) {
 				<td bgcolor='$rcol'><SELECT NAME='$symmetryn'><OPTION VALUE='$symmetry'>Select One</OPTION>\n";
                 	foreach ($syms as $sym) {
                         	echo "<OPTION VALUE='$sym[DEF_id]'";
+									if ($_POST['import'] && $sym['DEF_id']==$modeldata['REF|ApSymmetryData|symmetry']) echo " SELECTED";
                         	if ($sym['DEF_id']==$_POST[$symmetryn]) echo " SELECTED";
-				if ($sym['DEF_id']==$_POST["symmetry".($i-1)] && $symmetry == $_POST["symmetry".($i-1)]) echo " SELECTED";
-				echo ">$sym[symmetry]";
+									if ($sym['DEF_id']==$_POST["symmetry".($i-1)] && $symmetry == $_POST["symmetry".($i-1)]) echo " SELECTED";
+									echo ">$sym[symmetry]";
                         	if ($sym['symmetry']=='C1') echo " (no symmetry)";
                         	echo "</OPTION>\n";
                 	}
@@ -957,7 +1003,8 @@ function jobform($modelid, $extra=false) {
 	echo "<input type='hidden' NAME='modelid' VALUE='$modelid'><P>";
 	echo "<input type='hidden' NAME='norefClassId' VALUE='$norefClassId'><P>";
 	echo "<input type='hidden' NAME='clusterId' VALUE='$clusterId'><P>";
-	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
+	echo "<input type='hidden' NAME='stackval' value='".$_POST['stackval']."'>\n";
+	echo "<input type='hidden' NAME='model' value='".$_POST['model']."'>\n";
 	echo getSubmitForm("run imagic");
 	echo "</form>\n";
 	processing_footer();
@@ -1056,11 +1103,11 @@ function imagic3dRefine() {
 	}
 
 	if ($_POST['process']=="run imagic") {
-		if (!($user && $pass)) jobform($modelid, "<B>ERROR:</B> Enter a user name and password");
+		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
 		$sub = submitAppionJob($command_array,$outdir,$runid,$expId,'imagic3dRefine',False,False,False,$nproc,8,1,$walltime="1200:00:00",$cputime="1200:00:00");
 		// if errors:
-		if ($sub) jobform($modelid, "<b>ERROR:</b> $sub");
+		if ($sub) jobform("<b>ERROR:</b> $sub");
 	}
 
 	processing_header("IMAGIC 3d Refinement Job Generator","IMAGIC 3d Refinement Job Generator",$javafunc);
