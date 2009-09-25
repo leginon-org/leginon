@@ -86,6 +86,15 @@ function createAce2Form($extra=false) {
 	while (file_exists($sessionpath.'acetwo'.($lastrunnumber+1)))
 		$lastrunnumber += 1;
   $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'acetwo'.($lastrunnumber+1);
+  $binval = ($_POST['binval']) ? $_POST['binval'] : 2;
+  $cs = ($_POST['cs']) ? $_POST['cs'] : $defaultcs;
+  $confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
+  $reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 0.8;
+  $hpzero = ($_POST['hpzero']) ? $_POST['hpzero'] : '';
+  $hpone = ($_POST['hpone']) ? $_POST['hpone'] : '';
+  $edge1 = ($_POST['edge1']) ? $_POST['edge1'] : 10;
+  $edge2 = ($_POST['edge2']) ? $_POST['edge2'] : 0.001;
+  $refine2d = ($_POST['refine2d']== 'on') ? 'CHECKED' : '';
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
@@ -100,18 +109,32 @@ function createAce2Form($extra=false) {
 	echo"<center><img alt='ace2' src='img/ace2.jpg' WIDTH='300'></center><br />\n";
 
 
-	echo "<input type='text' name='binval' value='2' size='4'>\n";
+	echo "<input type='text' name='binval' value=$binval size='4'>\n";
 	echo docpop('binval','Binning');
 	echo "<br/><br/>\n";
 
-	echo "<input type='text' name='cs' value='".$defaultcs."' size='4'>\n";
+	echo "<input type='text' name='cs' value='".$cs."' size='4'>\n";
 	echo docpop('cs','Spherical Aberration');
 	echo "<br/><br/>\n";
 
-	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>\n";
+	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)' $confcheck >\n";
 	echo "Reprocess Below Confidence Value<br />\n";
-	echo "Set Value:<input type='text' name='reprocess' disabled value='0.8' size='4'>\n";
+	if ($confcheck == 'CHECKED') {
+		echo "Set Value:<input type='text' name='reprocess' value=$reprocess size='4'>\n";
+	} else {
+		echo "Set Value:<input type='text' name='reprocess' disabled value=$reprocess size='4'>\n";
+	}
 	echo "<font size='-2'><i>(between 0.0 - 1.0)</i></font>\n";
+	echo "<br/><br/>\n";
+
+	echo docpop('hpmask','High Pass Filter');
+	echo "<br/>\n";
+	echo "<input type='text' name='hpzero' value='$hpzero' size='4'>\n";
+	echo docpop('hpzero','0% pass resolution limit (Angstrum)');
+	echo "<br/>\n";
+
+	echo "<input type='text' name='hpone' value='$hpone' size='4'>\n";
+	echo docpop('hpone','100% pass resolution limit (Angstrum)');
 	echo "<br/><br/>\n";
 
 	echo "<input type='text' name='edge1' value='10' size='4'>\n";
@@ -126,7 +149,7 @@ function createAce2Form($extra=false) {
 	echo docpop('rotblur','Rotational blur <font size="-2">(in degrees)</font>');
 	echo "<br/><br/>\n";
 
-	echo "<input type='checkbox' name='refine2d'>\n";
+	echo "<input type='checkbox' name='refine2d' $refine2d>\n";
 	echo docpop('refine2d','Extra 2d Refine');
 	echo "<br/><br/>\n";
 
@@ -172,6 +195,8 @@ function runAce2() {
 	$refine2d=$_POST['refine2d'];
 	$binval=$_POST['binval'];
 	$cs=$_POST['cs'];
+	$hpzero=trim($_POST['hpzero']);
+	$hpone=trim($_POST['hpone']);
 	$edge1=trim($_POST['edge1']);
 	$edge2=trim($_POST['edge2']);
 	$rotblur=trim($_POST['rotblur']);
@@ -190,6 +215,9 @@ function runAce2() {
 
 	if (is_numeric($reprocess))
 		$command.="--reprocess=$reprocess ";
+
+	if (is_numeric($hpone) and is_numeric($hpzero) and ($hpzero >=$hpone))
+		$command.="--zeropass=$hpzero --onepass=$hpone ";
 
 	if (is_numeric($edge1))
 		$command.="--edge1=$edge1 ";
