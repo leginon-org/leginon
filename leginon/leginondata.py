@@ -768,8 +768,8 @@ class EMGridData(Data):
 class ImageTargetData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
-			('delta row', int),
-			('delta column', int),
+			('delta row', float),
+			('delta column', float),
 			('scope', ScopeEMData),
 			('camera', CameraEMData),
 			('preset', PresetData),
