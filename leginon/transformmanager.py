@@ -229,8 +229,8 @@ class TargetTransformer(targethandler.TargetHandler):
 		newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 		# Fix here about version
 		newtarget['image'] = newimage
-		newtarget['delta row'] = rowcolmatrix[0,0]
-		newtarget['delta column'] = rowcolmatrix[0,1]
+		newtarget['delta row'] = round(rowcolmatrix[0,0])
+		newtarget['delta column'] = round(rowcolmatrix[0,1])
 		newtarget['fromtarget'] = target
 		# newimagedata can be none if it is from a virtual grid for atlas
 		if newimage is not None:
