@@ -615,10 +615,12 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info('Manual focus check completed')
 
 	def getReciprocalPixelSizeFromPreset(self,presetname):
+		if presetname is None:
+			return None, None
 		q = leginondata.PresetData(session=self.session,name=presetname)
 		results = q.query(results=1)
 		if not results:
-			return
+			return None, None
 		presetdata = results[0]
 		scope = presetdata['tem']
 		ccd = presetdata['ccdcamera']
@@ -626,13 +628,14 @@ class Focuser(acquisition.Acquisition):
 		q = leginondata.PixelSizeCalibrationData(tem=scope,ccdcamera=ccd,magnification=mag)
 		results = q.query(results=1)
 		if not results:
-			return
+			return None, None
 		campixelsize = results[0]['pixelsize']
 		binning = presetdata['binning']
 		dimension = presetdata['dimension']
 		pixelsize = {'x':1.0/(campixelsize*binning['x']*dimension['x']),'y':1.0/(campixelsize*binning['y']*dimension['y'])}
 		self.rpixelsize = pixelsize['x']
 		center = {'x':dimension['x'] / 2, 'y':dimension['y'] / 2}
+		return self.rpixelsize, center
 
 	def estimateAstigmation(self,params):
 		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize,self.ht)
