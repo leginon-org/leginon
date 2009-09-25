@@ -267,7 +267,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		newtarget['delta column'] = target['delta column'] + offset['x']
 		newtarget['fromtarget'] = target
 		newtarget.insert(force=True)
-		self.logger.info('target adjusted by (%d,%d) (column, row)' % (offset['x'],offset['y']))
+		self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (offset['x'],offset['y']))
 		return newtarget
 	
 	def transformTarget(self, target, level):
@@ -351,7 +351,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 					self.declareDrift('between targets')
 				targetonimage = targetdata['delta column'],targetdata['delta row']
 				targetdata = self.adjustTargetForTransform(targetdata)
-				self.logger.info('target adjusted by (%d,%d) (column, row)' % (targetdata['delta column']-targetonimage[0],targetdata['delta row']-targetonimage[1]))
+				self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (targetdata['delta column']-targetonimage[0],targetdata['delta row']-targetonimage[1]))
 			offset = {'x':self.settings['target offset col'],'y':self.settings['target offset row']}
 			if offset['x'] or offset['y']:
 				targetdata = self.makeTransformTarget(targetdata,offset)
