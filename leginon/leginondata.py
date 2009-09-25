@@ -1515,6 +1515,8 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('high mean', float),
 			('low mean', float),
 			('emission off', bool),
+			('target offset row', int),
+			('target offset col', int),
 		)
 	typemap = classmethod(typemap)
 

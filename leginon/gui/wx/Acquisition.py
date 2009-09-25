@@ -93,6 +93,8 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
 		self.widgets['adjust time by tilt'] = wx.CheckBox(self, -1, 'Adjust exposure time by tilt')
 		self.widgets['reset tilt'] = wx.CheckBox(self, -1, 'Untilt stage when queue is done')
+		self.widgets['target offset row'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['target offset col'] = IntEntry(self, -1, min=0, chars=6)
 
 		# simulate loop settings
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
@@ -192,6 +194,11 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'ancestor(s)')
 		sz_transform.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_offset = wx.BoxSizer(wx.HORIZONTAL)
+		sz_offset.Add(wx.StaticText(self, -1, 'offset target x:'))
+		sz_offset.Add(self.widgets['target offset col'])
+		sz_offset.Add(wx.StaticText(self, -1, 'y:'))
+		sz_offset.Add(self.widgets['target offset row'])
 		sz_misc = wx.GridBagSizer(0, 0)
 		sz_misc.Add(self.widgets['wait for process'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
@@ -201,9 +208,11 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(sz_transform, (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['drift between'], (4, 0), (1, 1),
+		sz_misc.Add(sz_offset, (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['background'], (5, 0), (1, 1),
+		sz_misc.Add(self.widgets['drift between'], (5, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz_misc.Add(self.widgets['background'], (6, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(sbsz_evaluate, (7, 0), (4, 1),
 						wx.ALIGN_CENTER_VERTICAL)

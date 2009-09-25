@@ -142,6 +142,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'low mean': 50,
 		'bad stats response': 'Continue',
 		'emission off': False,
+		'target offset row': 0,
+		'target offset col': 0,
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
@@ -258,6 +260,39 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if presetname not in availablepresets:
 				raise InvalidPresetsSequence('bad preset %s in presets order' % (presetname,))
 
+	def makeTransformTarget(self, target, offset):
+		newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
+		# Fix here about version
+		newtarget['delta row'] = target['delta row'] + offset['y']
+		newtarget['delta column'] = target['delta column'] + offset['x']
+		newtarget['fromtarget'] = target
+		newtarget.insert(force=True)
+		self.logger.info('target adjusted by (%d,%d) (column, row)' % (offset['x'],offset['y']))
+		return newtarget
+	
+	def transformTarget(self, target, level):
+		parentimage = target['image']
+		matrix = self.lookupMatrix(parentimage)
+		if parentimage is None:
+			return target
+		## check all transforms declared to decide on minimum mag
+		## for now there is only one
+		minimum_mag = self.settings['min mag']
+		if parentimage['preset']['magnification'] < minimum_mag:
+			self.logger.info('not transforming target because parent image has low mag')
+			return target
+		if matrix is None:
+			parenttarget = parentimage['target']
+			if level == 'all':
+				newparenttarget = self.transformTarget(parenttarget, level)
+			elif level == 'one':
+				newparenttarget = parenttarget
+			newparentimage = self.reacquire(newparenttarget)
+			if newparentimage is None:
+				return None
+			matrix = self.calculateMatrix(parentimage, newparentimage)
+		newtarget = self.matrixTransform(target, matrix,newparentimage)
+		return newtarget
 	def adjustTargetForTransform(self, targetdata):
 		## look up most recent version of this target
 		targetlist = targetdata['list']
@@ -282,6 +317,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		## if transform declared after most recent target, need new transformed	target
 		newtargetdata = self.requestTransformTarget(newtargetdata)
+			
 		## make sure we move to new target
 		self.onTarget = False
 		return newtargetdata
@@ -316,7 +352,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 				targetonimage = targetdata['delta column'],targetdata['delta row']
 				targetdata = self.adjustTargetForTransform(targetdata)
 				self.logger.info('target adjusted by (%d,%d) (column, row)' % (targetdata['delta column']-targetonimage[0],targetdata['delta row']-targetonimage[1]))
-
+			offset = {'x':self.settings['target offset col'],'y':self.settings['target offset row']}
+			if offset['x'] or offset['y']:
+				targetdata = self.makeTransformTarget(targetdata,offset)
 			### determine how to move to target
 			try:
 				emtarget = self.targetToEMTargetData(targetdata)
