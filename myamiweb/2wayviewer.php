@@ -19,11 +19,17 @@ $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 
-if($projectdb)
-	$projects = $projectdata->getProjects('all');
-
-if(!$sessions)
+if(!$sessions) {
 	$sessions = $leginondata->getSessions('description', $projectId);
+}
+
+if($projectdb) {
+	$projects = $projectdata->getProjects('all');
+	$sessionexists = $projectdata->sessionExists($projectId, $sessionId);
+	if (!$sessionexists) {
+		$sessionId = $sessions[0]['id'];
+	}
+}
 
 if ($ptcl) {
 	$particle = new particledata();

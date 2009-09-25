@@ -23,12 +23,16 @@ startcache($session);
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 
-if(!$sessions)
+if(!$sessions) {
 	$sessions = $leginondata->getSessions('description', $projectId);
+}
 
 if($projectdb) {
 	$projects = $projectdata->getProjects('all');
-	$sessions=$projectdata->getSessions($sessions);
+	$sessionexists = $projectdata->sessionExists($projectId, $sessionId);
+	if (!$sessionexists) {
+		$sessionId = $sessions[0]['id'];
+	}
 }
 
 if ($ptcl) {

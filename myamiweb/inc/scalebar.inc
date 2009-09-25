@@ -30,6 +30,7 @@ class ScaleBar {
 	var $offsetbarY=20;
 
 	function ScaleBar($img, $size, $value) {
+		// --- value should be in meter --- //
 		$this->img = $img;
 		$this->size = $size;
 		$this->value = $value;

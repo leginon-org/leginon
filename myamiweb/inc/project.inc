@@ -104,12 +104,21 @@ class project {
 		return $info;
 	}
 
-	function getProjectfromSessionId($sessionid) {
+	function sessionExists($projectId, $sessionId) {
+		if (!is_numeric($projectId)) {
+			return true;
+		}
+		$projectinfo = $this->getProjectfromSessionId($sessionId);
+		$nprojectId = $projectinfo['projectId'];
+		return ($nprojectId==$projectId) ? true : false;
+	}
+
+	function getProjectfromSessionId($sessionId) {
 		$dbemdata = &new leginondata;
 		$db  = &$dbemdata->mysql;
 		$q='select `name` as sessionname '
 			.'from `SessionData` '
-			.'where `DEF_id`='.$sessionid;
+			.'where `DEF_id`='.$sessionId;
 		list($r)=$db->getSQLResult($q);
 		$sname=$r['sessionname'];
  		$q='select p.projectId, p.name  '
