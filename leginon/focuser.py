@@ -541,7 +541,7 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info(istr)
 		### Warning:  no target is being used, you are exposing
 		### whatever happens to be under the beam
-		t = threading.Thread(target=self.manualCheckLoop, args=())
+		t = threading.Thread(target=self.manualCheckLoop, args=(presetname,None))
 		t.setDaemon(1)
 		t.start()
 
@@ -633,13 +633,14 @@ class Focuser(acquisition.Acquisition):
 		binning = presetdata['binning']
 		dimension = presetdata['dimension']
 		pixelsize = {'x':1.0/(campixelsize*binning['x']*dimension['x']),'y':1.0/(campixelsize*binning['y']*dimension['y'])}
+		# This will not work for non-square image
 		self.rpixelsize = pixelsize['x']
 		center = {'x':dimension['x'] / 2, 'y':dimension['y'] / 2}
-		return self.rpixelsize, center
+		return pixelsize, center
 
 	def estimateAstigmation(self,params):
 		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize,self.ht)
-		self.logger.info('z0 %.2f um, zast %.2f um (%.0f ), angle= %.0f deg' % (z0*1e6,zast*1e6,ast_ratio*100, angle*180.0/math.pi))
+		self.logger.info('z0 %.2f um, zast %.2f um (%.0f %%), angle= %.0f deg' % (z0*1e6,zast*1e6,ast_ratio*100, angle*180.0/math.pi))
 
 	def onFocusUp(self, parameter):
 		self.changeFocus(parameter, 'up')
