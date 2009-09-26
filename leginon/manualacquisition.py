@@ -19,7 +19,8 @@ import os
 import re
 import calibrationclient
 import copy
-from pyami import arraystats, imagefun
+from pyami import arraystats, imagefun, fftfun
+import math
 import numpy
 import gridlabeler
 
@@ -443,6 +444,9 @@ class ManualAcquisition(node.Node):
 		camsize = self.instrument.ccdcamera.getCameraSize()
 		camdata1['offset'] = {'x': (camsize['x']-cutsize)/2, 'y':(camsize['y']-cutsize)/2}
 		self.instrument.ccdcamera.Settings = camdata1
+		pixelsize,center = self.getReciprocalPixelSizeFromInstrument()
+		self.ht = self.instrument.tem.HighTension
+		self.panel.onNewPixelSize(pixelsize,center,self.ht)
 		self.manualplayer.play()
 		self.onManualCheck()
 		while True:
@@ -488,6 +492,29 @@ class ManualAcquisition(node.Node):
 				
 		self.onManualCheckDone()
 		self.logger.info('Manual focus check completed')
+
+	def getReciprocalPixelSizeFromInstrument(self):
+		camdata = self.instrument.getData(leginondata.CameraEMData)
+		scopedata = self.instrument.getData(leginondata.ScopeEMData)
+		scope = scopedata['tem']
+		ccd = camdata['ccdcamera']
+		mag = scopedata['magnification']
+		q = leginondata.PixelSizeCalibrationData(tem=scope,ccdcamera=ccd,magnification=mag)
+		results = q.query(results=1)
+		if not results:
+			return None, None
+		campixelsize = results[0]['pixelsize']
+		binning = camdata['binning']
+		dimension = camdata['dimension']
+		pixelsize = {'x':1.0/(campixelsize*binning['x']*dimension['x']),'y':1.0/(campixelsize*binning['y']*dimension['y'])}
+		# This will not work for non-square image
+		self.rpixelsize = pixelsize['x']
+		center = {'x':dimension['x'] / 2, 'y':dimension['y'] / 2}
+		return pixelsize, center
+
+	def estimateAstigmation(self,params):
+		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize,self.ht)
+		self.logger.info('z0 %.2f um, zast %.2f um (%.0f %%), angle= %.0f deg' % (z0*1e6,zast*1e6,ast_ratio*100, angle*180.0/math.pi))
 
 	def saveComment(self):
 		images = self.published_images

@@ -16,6 +16,7 @@ import gui.wx.Camera
 from gui.wx.Entry import Entry, FloatEntry
 import gui.wx.Events
 import gui.wx.ImagePanel
+import gui.wx.TargetPanel
 import gui.wx.Instrument
 import gui.wx.Node
 import gui.wx.Settings
@@ -226,6 +227,10 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
 		self._acquisitionEnable(False)
 		self.node.acquisitionLoopStop()
+
+	def onNewPixelSize(self, pixelsize,center,hightension):
+		self.manualdialog.center = center
+		self.manualdialog.onNewPixelSize(pixelsize,center,hightension)
 
 class GridDialog(wx.Dialog):
 	def __init__(self, parent):
@@ -463,6 +468,7 @@ class ManualFocusDialog(wx.MiniFrame):
 		wx.MiniFrame.__init__(self, parent, -1, title, size=(650,650),
 			style=wx.DEFAULT_FRAME_STYLE|wx.RESIZE_BORDER)
 		self.node = node
+		self.center = (256,256)
 
 		self.toolbar = wx.ToolBar(self, -1)
 
@@ -485,7 +491,7 @@ class ManualFocusDialog(wx.MiniFrame):
 		self.toolbar.Realize()
 		self.SetToolBar(self.toolbar)
 
-		self.imagepanel = gui.wx.ImagePanel.ImagePanel(self, -1,imagesize=(512, 512))
+		self.imagepanel = gui.wx.TargetPanel.FFTTargetImagePanel(self, -1,imagesize=(512,512))
 
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.addTypeTool('Power', display=True)
@@ -508,6 +514,7 @@ class ManualFocusDialog(wx.MiniFrame):
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 		self.Bind(gui.wx.Events.EVT_MANUAL_UPDATED, self.onManualUpdated)
+		self.Bind(gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
 
 	def onSettingsTool(self, evt):
 		self.settingsdialog.maskradius.SetValue(self.node.maskradius)
@@ -567,6 +574,17 @@ class ManualFocusDialog(wx.MiniFrame):
 
 	def onSetImage(self, evt):
 		self.imagepanel.setImageType(evt.typename, evt.image)
+
+	def onNewPixelSize(self, pixelsize,center,hightension):
+		idcevt = gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension)
+		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
+		self.center = center
+
+	def onEllipseFound(self, evt):
+		centers = [(self.center['y'],self.center['x']),]
+		idcevt = gui.wx.ImagePanelTools.EllipseNewCenterEvent(self.imagepanel, centers)
+		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
+		threading.Thread(target=self.node.estimateAstigmation, args=(evt.params,)).start()
 
 class CommentDialog(gui.wx.Dialog.Dialog):
 	def onInitialize(self):
