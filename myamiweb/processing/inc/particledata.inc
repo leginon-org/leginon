@@ -284,6 +284,7 @@ class particledata {
 	function getSubTomogramStackIds($sessionId){
 		// subtomograms picked by stack
 		$q =  "SELECT s.`DEF_id` as stackid, "
+			."t.`DEF_id` as subtomorunid, "
 			."s.* "
 			."FROM `ApSubTomogramRunData` t "
 			."LEFT JOIN `ApStackData` s "
