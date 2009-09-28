@@ -414,7 +414,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("classums_"+str(self.params['itn'])+"\n")
 		f.write("classums_"+str(self.params['itn'])+"_sorted\n")
 		f.write("OVERALL\n")
-		f.write("DOWN\n")
+		f.write("UP\n")
 		f.write(str(keep_classums)+"\n")
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
@@ -786,12 +786,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 				apEMAN.executeEmanCmd(volumecmd2)
 
 			### create chimera slices of densities ******* .log file has caused problems if not removed
-#			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
-#			apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
-#			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
-#			apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
-#			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
-#			apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
+			apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
+			apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
+			apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 
 			### remove unwanted files
 			prevmra = os.path.join(self.params['rundir'], "mra"+str(self.params['itn']-1)+".img")
