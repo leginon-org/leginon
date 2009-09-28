@@ -852,11 +852,13 @@ function jobform($extra=false) {
 	echo "<select name='import' onChange='imagic3dRefine.submit()'>\n";
 	echo "<option>Import parameters</option>\n";
 	echo "<option value='default1'>5 Iterations with 10,000+ particles</option>\n";
+	echo "<option value='default2'>10 Iterations with 10,000+ particles</option>\n";
 	echo "<br></select>\n";
 	$syms = $particle->getSymmetries();
 
 	// set number of iterations if importing
 	if ($_POST['import'] == "default1") $numiters = 5;
+	if ($_POST['import'] == "default2") $numiters = 10;
 
 	for ($i=1; $i<=$numiters; $i++)	{
 		// define names for user-inputted values for each iteration
@@ -904,7 +906,29 @@ function jobform($extra=false) {
 			$amask_sharp = "0.3";
 			$amask_thresh = "15";
 		}
-		
+		elseif ($_POST['import']=='default2') {
+			$nproc = ($_POST[$nproc]) ? $_POST[$nproc] : "8";
+			$mass = ($_POST[$mass]) ? $_POST[$mass] : "";
+			$symmetry = $modeldata['REF|ApSymmetryData|symmetry'];
+			$radius = ($_POST[$radiusn]) ? $_POST[$radiusn] : ($box/2)-2;
+			$mrarefs_ang_inc = "25";
+			$max_shift_orig = "0.4";
+			$max_shift_this = "0.1";
+			$samp_param = ($i + 2);
+			$ignore_images = (($i % 2) == 0) ? (35 - ceil(($i-1)/2)*5) : (35 - ceil($i/2)*5);
+			$ignore_members = "10";
+			$num_classums = (($i % 2) == 0) ? (150 + ceil(($i-1)/2)*50) : (150 + ceil($i/2)*50);
+			$keep_classes = "0.9";
+			$forw_ang_inc = (($i % 2) == 0) ? (30 - ceil(($i-1)/2)*5) : (30 - ceil($i/2)*5);
+			$euler_ang_inc = (($i % 2) == 0) ? (12 - ceil(($i-1)/2)*2) : (12 - ceil($i/2)*2);
+			$keep_ordered = "0.9";
+			$hamming_window = (($i % 2) == 0) ? (0.3 + ceil(($i-1)/2)*0.1) : (0.3 + ceil($i/2)*0.1);
+			$obj_size = "0.8";
+			$amask_dim = "0.04";
+			$amask_lp = "0.3";
+			$amask_sharp = "0.3";
+			$amask_thresh = "15";
+		}
 		else {
 
 			// define default parameters for 1st iteration
