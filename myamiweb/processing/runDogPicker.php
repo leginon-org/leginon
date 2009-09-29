@@ -44,12 +44,16 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	<script LANGUAGE='JavaScript'>
 	   function enabledtest(){
          if (document.viewerform.testimage.checked){
-            document.viewerform.testfilename.disabled=false;
-            document.viewerform.testfilename.value='';
+		document.viewerform.testfilename.disabled=false;
+		document.viewerform.testfilename.value='';
+		document.viewerform.commit.disabled=true;
+		document.viewerform.commit.checked=false;
          }	
          else {
-	         document.viewerform.testfilename.disabled=true;
-	         document.viewerform.testfilename.value='mrc file name';
+		document.viewerform.testfilename.disabled=true;
+		document.viewerform.testfilename.value='mrc file name';
+		document.viewerform.commit.disabled=false;
+		document.viewerform.commit.checked=true;
          }
 	   }
 	</SCRIPT>\n";

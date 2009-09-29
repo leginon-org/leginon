@@ -16,11 +16,12 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	$reverse = ($_POST['reverse']=="on") ? "CHECKED" : "";
 	$limit = $_POST[limit];
 	$tiltangle = $_POST['tiltangle'];
-	$commit = ($_POST['commit']=="on" || empty($_POST)) ? "CHECKED" : "";
+	// commit is checkmarked by default
+	$commit = ($_POST['commit']=="on" || !$_POST['process']) ? "CHECKED" : "";
 	$apcontinue = $_POST['apcontinue'];
 	// continue is checkmarked by default
 	$apcontinuecheck = ($apcontinue || !$_POST['process']) ? "CHECKED" : "";
-    $apreproccheck = (!$apcontinue && $_POST['process']) ? "CHECKED" : "";
+	$apreproccheck = (!$apcontinue && $_POST['process']) ? "CHECKED" : "";
 	$normordercheck = ($_POST['imgorder'] == 'normal' || !$_POST['imgorder']) ? "CHECKED" : "";
 	$reversecheck = ($_POST['imgorder'] == 'reverse') ? "CHECKED" : "";
 	$shufflecheck = ($_POST['imgorder'] == 'shuffle') ? "CHECKED" : "";
