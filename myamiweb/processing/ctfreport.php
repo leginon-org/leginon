@@ -119,12 +119,14 @@ if ($ctfrundatas) {
 				$imageId = $stats[$field][$k]['id'];
 				$p = $leginondata->getPresetFromImageId($imageId);
 				$stats[$field][$k]['preset'] = $p['name'];
-				$cdf = '<a href="ctfgraph.php?hg=1&expId='.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
-					.'<img border="0" src="ctfgraph.php?w=100&hg=1&expId='.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
+				$cdf = '<a href="ctfgraph.php?hg=1&expId='
+						.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
+					.'<img border="0" src="ctfgraph.php?w=100&hg=1&expId='
+						.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
 				$stats[$field][$k]['img'] = $cdf;
 			}
 		}
-		$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
+		$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev');
 		if ($display_ctf) {
 			$popupstr = "<a href=\"javascript:infopopup(";
 			foreach ($aceparamsfields as $param) {

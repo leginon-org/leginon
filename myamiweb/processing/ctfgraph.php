@@ -24,7 +24,7 @@ $histogram = ($_GET['hg']==1) ? true : false;
 $f = $_GET['f'];
 $preset= ($_GET['preset']) ? $_GET['preset'] : '';
 $summary = ($_GET['s']==1 ) ? true : false;
-$minimum = ($_GET['mconf']) ? $_GET['mconf'] : 0.0;
+$minimum = ($_GET['mconf']) ? $_GET['mconf'] : 0.2;
 
 $ctf = new particledata();
 
@@ -89,8 +89,10 @@ if (!$data) {
 		$rdatax = $rdata['x'];
 		$rdatay = $rdata['y'];
 		
-		$graph->SetScale("linlin");
-                
+		$maxy = max($rdatay);
+		$maxx = max($rdatax);
+		$graph->SetScale("linlin",0.0,$maxy*1.1,$minimum,$maxx);
+
 		$bplot = new BarPlot($rdatay, $rdatax);
 		$graph->Add($bplot);
 
