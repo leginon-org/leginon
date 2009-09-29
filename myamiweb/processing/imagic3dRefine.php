@@ -894,7 +894,7 @@ function jobform($extra=false) {
 			$samp_param = ($i * 2 + 2);
 			$ignore_images = (35 - $i*5);
 			$ignore_members = "10";
-			$num_classums = $i*50 + 150;
+			$num_classums = $i*25 + 75;
 			$keep_classes = "0.9";
 			$forw_ang_inc = (30 - $i*5);
 			$euler_ang_inc = (12 - $i*2);
@@ -917,7 +917,7 @@ function jobform($extra=false) {
 			$samp_param = ($i + 2);
 			$ignore_images = (($i % 2) == 0) ? (35 - ceil(($i-1)/2)*5) : (35 - ceil($i/2)*5);
 			$ignore_members = "10";
-			$num_classums = (($i % 2) == 0) ? (150 + ceil(($i-1)/2)*50) : (150 + ceil($i/2)*50);
+			$num_classums = (($i % 2) == 0) ? (75 + ceil(($i-1)/2)*25) : (75 + ceil($i/2)*25);
 			$keep_classes = "0.9";
 			$forw_ang_inc = (($i % 2) == 0) ? (30 - ceil(($i-1)/2)*5) : (30 - ceil($i/2)*5);
 			$euler_ang_inc = (($i % 2) == 0) ? (12 - ceil(($i-1)/2)*2) : (12 - ceil($i/2)*2);
