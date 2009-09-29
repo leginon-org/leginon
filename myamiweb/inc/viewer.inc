@@ -269,6 +269,10 @@ class viewer {
 			$filestr = ereg_replace('_0*', '_', $filestr);
 			$filestr = ereg_replace('^0*', '', $filestr);
 			$filestr = ereg_replace('_v[0-2][0-9]_', '_', $filestr);
+			$filestr = ereg_replace('grid', 'gr', $filestr);
+			$filestr = ereg_replace('square', 'sq', $filestr);
+			$filestr = ereg_replace('hole', 'hl', $filestr);
+			$filestr = ereg_replace('focus', 'fc', $filestr);
 			if ($filename[id]==$default) $s='selected'; else $s='';
 				$selector .= '<option value='.$filename[id].' '.$s.' >'.$filestr.$this->crlf; 
 		}
