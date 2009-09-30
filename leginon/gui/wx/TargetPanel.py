@@ -43,6 +43,7 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 		self.targets = {}
 		self.selectedtype = None
 		self.selectedtarget = None
+		self.box = 0
 
 	#--------------------
 	def _getSelectionTool(self):
@@ -302,7 +303,11 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 		if selectedtarget is not None:
 			name = selectedtarget.type.name
 			position = selectedtarget.position
-			strings.append('%s (%g, %g)' % (name, position[0], position[1]))
+			if not self.box:
+				strings.append('%s (%g, %g)' % (name, position[0], position[1]))
+			else:
+				boxsum = self._getIntegratedIntensity(position[0],position[1])
+				strings.append('%s (%g, %g) %e' % (name, position[0], position[1],boxsum))
 			if isinstance(selectedtarget, gui.wx.TargetPanelTools.StatsTarget):
 				for key, value in selectedtarget.stats.items():
 					if type(value) is float:
@@ -311,6 +316,11 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 						strings.append('%s: %s' % (key, value))
 		return strings
 
+	def _getIntegratedIntensity(self,x,y):
+			box = self.box
+			boxarray = self.imagedata[y-box:y+box,x-box:x+box]
+			sum = boxarray.sum()
+			return sum
 ##################################
 ##
 ##################################
@@ -371,11 +381,18 @@ class TargetOutputPanel(TargetImagePanel):
 
 if __name__ == '__main__':
 	import sys
+	import numpy
+	from pyami import mrc
 
 	try:
 		filename = sys.argv[1]
 	except IndexError:
 		filename = None
+	try:
+		box = sys.argv[2]
+		box = int(box)
+	except IndexError:
+		box = 0
 
 	class MyApp(wx.App):
 		def OnInit(self):
@@ -390,6 +407,8 @@ if __name__ == '__main__':
 			self.panel = TargetOutputPanel(frame, -1)
 			self.panel.addTargetTool('Target Practice', color=wx.RED, target=True)
 			self.panel.setTargets('Target Practice', [])
+			# integration half box size
+			self.panel.box = box
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 			frame.SetSizerAndFit(self.sizer)
@@ -397,7 +416,7 @@ if __name__ == '__main__':
 			frame.Show(True)
 			return True
 
-	app = MyApp(0)
+	app = MyApp(0,box)
 	if filename is None:
 		app.panel.setImage(None)
 	elif filename[-4:] == '.mrc':
