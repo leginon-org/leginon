@@ -157,8 +157,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("cp "+linkingfile+".img start_stack.img\n")
 		f.write("cp "+linkingfile+".hed start_stack.hed\n")
 		if self.params['norefClassId'] is not None or self.params['clusterId'] is not None or self.params['templateStackId'] is not None:
-			# THERE IS A REALLY STUPID IMAGIC ERROR WHERE IT DOESN'T READ IMAGIC FORMAT CREATED BY OTHER
-			# PROGRAMS, AND SO FAR THE ONLY WAY I CAN DEAL WITH IT IS BY WIPING OUT THE HEADERS!
+			# create compatible headers following EMAN processing
 			f.write("/usr/local/IMAGIC/stand/copyim.e <<EOF > imagicCreate3d0.log\n")
 			f.write("start_stack\n")
 			f.write("start_stack_copy\n")
