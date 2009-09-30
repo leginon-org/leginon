@@ -51,11 +51,7 @@ def executeImagicBatchFile(filename, verbose=False, logfile=None):
 
 
 def copyFile(path, file, headers=False):
-	# THERE IS A REALLY STUPID IMAGIC ERROR WHERE IT DOESN'T READ IMAGIC FORMAT CREATED BY OTHER 
-	# PROGRAMS, AND SO FAR THE ONLY WAY I CAN DEAL WITH IT IS BY WIPING OUT THE HEADERS!
-	#
-	# 			WORKS WITH BOTH .IMG AND .HED FILES
-	#	
+	# used if conversion from EMAN does not write appropriate headers
 
 	batchfile = os.path.join(path, 'copyImage.batch')
 
