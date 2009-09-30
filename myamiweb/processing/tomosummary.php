@@ -23,6 +23,10 @@ else {
         $sessionId=$_POST['sessionId'];
         $formAction=$_SERVER['PHP_SELF'];
 }
+if ($_GET['showHidden']) {
+	$formAction.="&showHidden=1";
+	$showhidden = True;
+}
 $projectId=$_POST['projectId'];
 
 $javascript = "<script src='../js/viewer.js'></script>\n";
@@ -35,45 +39,35 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 
 // --- Get Stack Data
 $particle = new particledata();
+if ($_POST) {
+$allfulltomos = $particle->getFullTomogramsFromSession($sessionId,True);
+	foreach ($allfulltomos as $t)
+		$particle->updateTableDescriptionAndHiding($_POST,'ApFullTomogramData',$t['DEF_id']);
+}
 // --- Get Fulltomograms
-$allfulltomos = $particle->getFullTomogramsFromSession($sessionId);
-	if ($allfulltomos) {
+$allfulltomos = $particle->getFullTomogramsFromSession($sessionId,True);
+$shownfulltomos = $particle->getFullTomogramsFromSession($sessionId,False);
+echo $particle->displayHidingOption($expId,$allfulltomos,$shownfulltomos,$showhidden);
+if ($shownfulltomos) {
 	$tiltseries = $particle->getTiltSeries($sessionId);
 	$html = "<h4>Full Tomograms</h4>";
 	$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'tiltseries','id','runname','description','subtomograms');
+	$selected_keys = array ( 'tiltseries','fulltomoid','runname','description','subtomo');
+	$display_keys = $selected_keys;
+	$display_keys[1] = 'id';
+	$display_keys[4] = 'subtomograms';
 	foreach($display_keys as $key) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
 	foreach ($tiltseries as $t) {
-		$fulltomos = $particle->checkforFulltomogram($t['id']);
+		$fulltomos = $particle->checkforFulltomogram($t['id'], $showhidden);
 		foreach ($fulltomos as $fulltomo) {
 			$fulltomoid = $fulltomo['DEF_id'];
-				// update description
-			if ($_POST['updateDesc'.$fulltomoid]) {
-				updateDescription('ApFullTomogramData', $fulltomoid, $_POST['newdescription'.$fulltomoid]);
-
-				$fulltomo['description']=$_POST['newdescription'.$fulltomoid];
-
-			}
-			$tiltseriesnumber = $t['number'];
-			// PRINT INFO
-			$html .= "<TR>\n";
-			$html .= "<td>$tiltseriesnumber</TD>\n";
-			$html .= "<td><A HREF='fulltomoreport.php?expId=$expId&tomoId=$fulltomoid'>$fulltomoid</A></TD>\n";
-			$html .= "<td>".$fulltomo['runname']."</TD>\n";
-
-			# add edit button to description if logged in
-			$descDiv = ($_SESSION['username']) ? editButton($fulltomoid,$fulltomo['description']) : $fulltomo['description'];
-
-			$html .= "<td>$descDiv</td>\n";
-	#		$downloadDiv = "<a href=downloadtomo.php?tomogramId=$fulltomoid&full=1>[Download Tomogram]</a><br>";
-	#		$html .= "<td>$downloadDiv</td>\n";
-			$html .= "<td>";
-			$html .= ( $fulltomo['subtomo'] > 0) ? "<A HREF='subtomosummary.php?expId=$expId&fullId=".$fulltomoid."'>".$fulltomo['subtomo']."</A>" : $fulltomo['subtomo'];
-			$html .= "</TD>\n";
-			$html .= "</tr>\n";
+			$a = array('tiltseries'=>$t['number'],'fulltomoid'=>$fulltomoid);
+			$a = array_merge($a,$fulltomo);
+			$a['subtomo'] = ($a['subtomo'] > 0) ? array('display'=>$a['subtomo'],'link'=>$fulltomoid) : 0;
+			$html .= $particle->displayParametersInSummary($a,$selected_keys,$expId,'fulltomoid');
 		}
 	}
 	$html .= "</table>\n";
@@ -83,6 +77,7 @@ $allfulltomos = $particle->getFullTomogramsFromSession($sessionId);
 	$html = "<p>no full tomograms available</p>";
 	echo $html;
 }
+echo $particle->displayHidingOption($expId,$allfulltomos,$shownfulltomos,$_GET['showHidden']);
 
 // --- Get Subvolume Tomograms
 $tomograms = $particle->getOrphanSubTomogramsFromSession($sessionId);
@@ -162,29 +157,30 @@ if ($tomograms) {
 } else {
 	echo "no other subvolume tomograms available";
 }
-// --- Get Averagedtomograms
-$allavgtomos = $particle->getAveragedTomogramsFromSession($sessionId);
-if ($allavgtomos) {
+// --- Get Averaged tomograms
+if (!$showhidden) {
+	$shownavgtomos = $particle->getAveragedTomogramsFromSession($sessionId, False);
+	$allavgtomos = $particle->getAveragedTomogramsFromSession($sessionId, True);
+} else {
+	$shownavgtomos = $particle->getAveragedTomogramsFromSession($sessionId, True);
+	$allavgtomos = $allavgtomos;
+}
+echo $particle->displayHidingOption($expId,$allavgtomos,$shownavgtomos,$showhidden);
+if ($shownavgtomos) {
 	$html = "<h4>Averaged SubTomograms</h4>";
 	$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'id','runname','stack','description');
+	$display_keys = array ( 'avgid','runname','stack','description');
 	foreach($display_keys as $key) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
 	$html .= "</TR>\n";
-	foreach ($allavgtomos as $t) {
-		$avgid = $t['avgid'];
+	foreach ($shownavgtomos as $t) {
 		$stackid = $t['stackid'];
 		$stackparams = $particle->getStackParams($stackid);
 		$stackname = $stackparams['shownstackname'];
-		$html .= "<TR>\n";
-		$html .= "<td><A HREF='tomoavgreport.php?expId=$expId&avgId=$avgid'>$avgid</A></TD>\n";
-		$html .= "<td>".$t['runname']."</TD>\n";
-		$html .= "<td><A HREF='stackreport.php?expId=$expId&sId=$stackid']'>$stackname</A></TD>\n";
-
-		$html .= "<td>".$t['description']."</td>\n";
-		$html .= "</tr>\n";
+		$t['stack'] = array('link'=>$stackid,'display'=>$stackname);
+		$html .= $particle->displayParametersInSummary($t,$display_keys,$expId,'');
 	}
 	$html .= "</table>\n";
 	$html .= "<br>\n";
