@@ -155,33 +155,118 @@ class particledata {
 	//------ -------------------- ---------//
 	//------ Tomo functions ---------//
 	//------ -------------------- ---------//
+	function getTomoAlignmentRunsFromSession($sessionId,$showHidden=False){
+		$q =  "SELECT a.`DEF_id` as `alignrunid`, "
+			."a.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries "
+			."FROM `ApTomoAlignmentRunData` a "
+			."WHERE a.`REF|leginondata|SessionData|session` = " .$sessionId." ";
+		if (!$showHidden )
+			$q .= " AND ( a.`hidden` = 0 OR a.`hidden` IS NULL ) ";
+		$q .= "ORDER BY `tiltseries` ASC ";
+		$results = $this->mysql->getSQLResult($q);
+		if (array($results)) {
+			$finalresults = array();
+			foreach ($results as $result) {
+				$info = $this->getTomoAlignmentInfo($result['alignrunid']);
+				$result = array_merge($result,$info);
+				if ($result['protomoid']) {
+					$result['method'] = 'protomo';
+				} else {
+					if ($result['imodid']) {
+						$result['method'] = 'imod';
+					} elseif ($result['xleginonid']) {
+						$result['method'] = 'leginon';
+					} else {
+						$result['method'] = 'unknown';
+					}
+				}
+				$finalresults[] = $result;
+			}
+		} else {
+			$finalresults = $results;
+		}
+		return $finalresults;
+	}
 
 	function getTomoAlignmentInfo($alignrunId){
-		$q =  "SELECT a.`DEF_id` as DEF_id, "
-			."a.name as name, "
+		$q =  "SELECT a.`DEF_id` as `alignrun id`, "
+			."a.name as `alignrun name`, "
 			."a.bin as bin, "
+			."path.`path`, "
+			."tilt.`number` as `tilt number`, "
+			."a.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
 			."a.`REF|ApImodXcorrParamsData|coarseImodParams` as imodid, "
 			."a.`REF|leginondata|TomographySettingsData|coarseLeginonParams` as xleginonid, "
+			."a.`REF|ApProtomoParamsData|fineProtomoParams` as protomoid, "
 			."imod.`FilterSigma1` as sigma1, "
 			."imod.`FilterSigma2` as sigma2, "
-			."imod.`FilterRadius2` as radius2 "
+			."imod.`FilterRadius2` as radius2, "
+			."a.`description`, "
+			."a.`hidden` "
 			."FROM `ApTomoAlignmentRunData` a "
+			."LEFT JOIN `ApPathData` path "
+			."ON a.`REF|ApPathData|path` = path.`DEF_id` "
 			."LEFT JOIN `ApImodXcorrParamsData` imod "
 			."ON a.`REF|ApImodXcorrParamsData|coarseImodParams` = imod.`DEF_id` "
+			."LEFT JOIN ".DB.".`TiltSeriesData` tilt ON a.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
 			."WHERE a.`DEF_id` = " .$alignrunId;
 		list($r) = $this->mysql->getSQLResult($q);
+		if ($r['protomoid']) {
+			$r['method'] = 'protomo';
+		} else {
+			if ($r['imodid']) {
+				$r['method'] = 'imod';
+				$r['filter sigmas'] = '('.$r['sigma1'].','.$r['sigma2'].')';
+				$r['filter radius2'] = $r['radius2'];
+				unset($r['sigma1']); 
+				unset($r['sigma2']); 
+				unset($r['radius2']); 
+			} elseif ($r['xleginonid']) {
+				$r['method'] = 'leginon';
+			} else {
+				$r['method'] = 'unknown';
+			}
+		}
+		return $r;
+	}
+
+	function getProtomoAlignerInfoFromAlignmentRun($alignid,$hide_old=True) {
+		$q = " SELECT a.`DEF_id` as alignerid, "
+			." a.`REF|ApProtomoRefinementParamsData|refine cycle` as `refine cycle`, "
+			." a.`REF|ApProtomoRefinementParamsData|good cycle` as `good cycle`, "
+			." p.`series name`, "
+			." f.`alismp` as `align sampling`, "
+			." f.`SUBD|alibox|x` as `align box x`, "
+			." f.`SUBD|alibox|y` as `align box y`, "
+			." f.`cormod`, "
+			." a.* "
+			."FROM `ApProtomoAlignerParamsData` a "
+			."LEFT JOIN `ApProtomoRefinementParamsData` f "
+			."ON a.`REF|ApProtomoRefinementParamsData|refine cycle` = f.`DEF_id` "
+			."LEFT JOIN `ApProtomoParamsData` p "
+			."ON a.`REF|ApProtomoParamsData|protomo` = p.`DEF_id` "
+			."LEFT JOIN `ApTomoAlignmentRunData` r "
+			."ON r.`REF|ApProtomoParamsData|fineProtomoParams` = p.`DEF_id` "
+			."WHERE r.`DEF_id`=".$alignid." ";
+		if ($hide_old) {
+			$q .= "GROUP BY a.`REF|ApProtomoRefinementParamsData|refine cycle` ";
+		}
+			$q .= "ORDER BY a.`DEF_timestamp` ";
+		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
 
 	function getFullTomogramInfo($tomogramId){
 		$q =  "SELECT t.`DEF_id` as DEF_id, "
 			."t.`REF|ApTomoAlignmentRunData|alignment` as alignment, "
-			."t.name as name, "
+			."t.name as tomorunname, "
 			."t.description as description, "
 			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
+			."tilt.number as 'tiltseries number', "
 			." p.`path` "
 			."FROM `ApFullTomogramData` t "
 			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
+			."LEFT JOIN ".DB.".`TiltSeriesData` tilt ON t.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
 			."WHERE t.`DEF_id` = " .$tomogramId;
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
@@ -233,11 +318,13 @@ class particledata {
 		return $r;
 	}
 
-	function getFullTomogramsFromSession($sessionId){
+	function getFullTomogramsFromSession($sessionId,$showHidden=False){
 		$q =  "SELECT t.`DEF_id` as DEF_id "
 			."FROM `ApFullTomogramData` t "
 			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId." "
 			."AND t.name NOT LIKE 'dummy'";
+		if (!$showHidden )
+			$q .= " AND ( t.`hidden` = 0 OR t.`hidden` IS NULL ) ";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -366,7 +453,11 @@ class particledata {
 			."ON  stackp.`REF|ApParticleData|particle` = p.DEF_id "
 			."LEFT JOIN `ApTomogramData` subt "
 			."ON  subt.`REF|ApParticleData|center` = p.DEF_id "
-			."WHERE avgt.`DEF_id` = " .$avgId;
+			."LEFT JOIN `ApTomoAvgParticleData` tap "
+			."ON  tap.`REF|ApTomoAverageRunData|avgrun` = avgt.DEF_id "
+			."WHERE avgt.`DEF_id` = " .$avgId." "
+			."AND  tap.`REF|ApTomogramData|subtomo` = subt.DEF_id "
+			." ";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -444,18 +535,20 @@ class particledata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function checkforFullTomogram($tiltseriesId){
-		$q =  "SELECT t.`DEF_id`, t.name as `tomofilename` , p.`path`, a.`name` as `runname`, a.`bin`,t.`description`,count(*) as `subtomo` "
+	function checkforFullTomogram($tiltseriesId,$showHidden=False){
+		$q =  "SELECT t.`DEF_id`, t.name as `tomofilename` , p.`path`, a.`name` as `runname`, a.`bin`,t.`description`,count(*) as `subtomo`, t.`hidden` "
 			."FROM `ApFullTomogramData` t "
 			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
 			."LEFT JOIN `ApTomoAlignmentRunData` a ON t.`REF|ApTomoAlignmentRunData|alignment` = a.`DEF_id` ";
-
 		if ($this->mysql->SQLTableExists("ApTomogramData")) {
 			$q .=
 				"LEFT JOIN `ApTomogramData` sub ON sub.`REF|ApFullTomogramData|fulltomogram` = t.`DEF_id` ";
 		}
 		$q .=	"WHERE t.`REF|leginondata|TiltSeriesData|tiltseries` = " .$tiltseriesId." "
-			."GROUP BY t.`DEF_id`";
+			." ";
+		if (!$showHidden )
+			$q .= " AND ( t.`hidden` = 0 OR t.`hidden` IS NULL ) ";
+		$q .= "GROUP BY t.`DEF_id`";
 		$r = $this->mysql->getSQLResult($q);
 		$result = array();
 		if ($r && count($r)) {
@@ -856,8 +949,7 @@ class particledata {
 	//------ -------------------- ---------//
 	//-------particle functions --------//
 	//------ -------------------- ---------//
-
-	function displayParameters ($title,$params,$exclude_fields,$expId) {
+	function displayParameters ($title,$params,$exclude_fields,$expId,$hide_button_field='') {
 		//standard parameter table display
 
 		//Array of $params keys that are shown as a link to another report
@@ -891,6 +983,7 @@ class particledata {
 				}
 				// Display only non-null params
 				if (gettype($params[$key])!='NULL') {
+					if (!$hide_button_field) $hide_button_field = $key;
 					echo "<tr>\n";
 					echo "</td>";
 					echo "<td><span class='datafield0'>$displaykey</span></td>";
@@ -925,12 +1018,96 @@ class particledata {
 						$link = $link.$datalink;
 						echo "<a href='".$link."'>".$datadisplay."</a>";
 					}
+					if ($hide_button_field == $key) {
+						if ($t['hidden'] == 1) {
+							echo "<font color='#cc0000'>HIDDEN</font>\n";
+							echo " <input class='edit' type='submit' name='unhideStack".$alignrunid."' value='unhide'>\n";
+						} else echo "<input class='edit' type='submit' name='hideStack".$alignrunid."' value='hide'>\n";
+					}
 					echo "</td></tr>\n";
 				}
 			}
-
 		}
 		echo "</table>\n";
+	}
+
+	
+	function displayParametersInSummary ($params,$display_fields,$expId,$primary_field='DEF_id') {
+		//standard parameter row display
+		/* Use $params[key] = 
+				array('link'=>linkid,'display'=>display_string) to create
+				a link of a key in $params found in the array $links
+			set $primary_field='' to avoid editing/hiding buttons
+		*/
+		//Array of $params keys that are shown as a link to another report
+		$links=array(
+			'stackId'=>"stackreport.php?expId=$expId&sId="
+			,'stack'=>"stackreport.php?expId=$expId&sId="
+			,'particleSelection'=>"particlerunreport.php?expId=$expId&rId="
+			,'fulltomoid'=>"fulltomoreport.php?expId=$expId&tomoId="
+			,'avgid'=>"tomoavgreport.php?expId=$expId&avgId="
+			,'subtomo'=>"subtomosummary.php?expId=$expId&fullId="
+			,'alignrun id'=>"tomoalignreport.php?expId=$expId&alignId="
+		);
+		$html  = '<tr>';
+		foreach($display_fields as $key) {
+			// Clean up referenced key for display
+			$displaykeyarray = explode('Data|',$key);
+			if (count($displaykeyarray)>1) {
+				$displaykey = array_pop($displaykeyarray);
+				$refkey = array_pop($displaykeyarray);
+			} else {
+				$displaykeyarray = explode('DEF_',$key);
+				$displaykey = array_pop($displaykeyarray);
+				$refkey = $displaykey;
+			}
+			if (!$hide_button_field) $hide_button_field = $key;
+			$html .= "<td>\n";
+			$type='text';
+			foreach(array_keys($links) as $linkkey) {
+				if ($linkkey ==$refkey && $params[$key]) {
+					$type='link';
+					$link = $links[$linkkey];
+				}
+			}
+			if ($type!='link') {
+				if (!is_array($params[$key])) {
+				//plain display
+					$html .= $params[$key];
+				} else {
+					//array item display
+					$text = '';
+					foreach (array_keys($params[$key]) as $akey) 
+						$text .= ($params[$key][$akey]).',';
+					$html .= trim($text,',');
+				}
+			} else {
+				//Specify different values for the displayed data and link if available
+				if (!is_array($params[$key])) {
+					$datadisplay = $params[$key];
+					$datalink = $datadisplay;
+				} else {
+					$datadisplay = $params[$key]['display'];
+					$datalink = $params[$key]['link'];
+				}
+				$link = $link.$datalink;
+				$html .= "<a href='".$link."'>".$datadisplay."</a>";
+			}
+			if ($primary_field == $key && $_SESSION['username']) {
+				$primary_id = $params[$key];
+				if ($params['hidden'] == 1) {
+					$html .= "<font color='#cc0000'>HIDDEN</font>\n";
+					$html .= " <input class='edit' type='submit' name='unhideRun".$primary_id."' value='unhide'>\n";
+				} else $html .= "<input class='edit' type='submit' name='hideRun".$primary_id."' value='hide'>\n";
+			}
+			if ('description' == $key && $primary_field) {
+				$descDiv = ($_SESSION['username']) ? editButton($primary_id,$t['description']) : $t['description'];
+				$html .= "$descDiv\n";
+			}
+			$html .= "</td>\n";
+		}
+		$html .= "</tr>";
+		return $html;
 	}
 
 	function getTemplatesFromProject ($projectId, $getHidden=False) {
@@ -3010,6 +3187,15 @@ class particledata {
 		}
 		return $jid;
 	}
+	function displayHidingOption($expId,$allruns,$shownruns,$show = False) {
+		if (!$_GET['showHidden'] && count($allruns) != count($shownruns)) {
+			$numhidden = count($allruns) - count($shownruns);
+			$html = "<a href='".$_SERVER['PHP_SELF']."?expId=$expId&showHidden=1'>[Show ".$numhidden." hidden runs]</a><br/><br/>\n";
+		} elseif ($_GET['showHidden']) {
+			$html .= "<a href='".$_SERVER['PHP_SELF']."?expId=$expId&showHidden=0'>[Hide hidden runs]</a><br/><br/>\n";
+		}
+		return $html;
+	}
 
 	function updateDescription($table, $id, $newtext) {
 		$q = "SELECT description "
@@ -3034,6 +3220,19 @@ class particledata {
 			$data['hidden']=$value;
 			$where = array('DEF_id'=>$id);
 			$this->mysql->SQLUpdate($table,$data,$where);
+		}
+	}
+
+	function updateTableDescriptionAndHiding($post,$updatetable,$updateid) {
+		//update description if posted
+		if ($post['updateDesc'.$updateid]) {
+			$this->updateDescription($updatetable, $updateid, $post['newdescription'.$updateid]);
+		}
+		//update hidden if posted
+		if ($post['hideRun'.$updateid] == 'hide') {
+			$this->updateHide($updatetable, $updateid, '1');
+		} elseif ($_POST['unhideRun'.$updateid] == 'unhide') {
+			$this->updateHide($updatetable, $updateid, '0');
 		}
 	}
 
