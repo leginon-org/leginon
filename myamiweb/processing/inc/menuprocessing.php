@@ -616,11 +616,20 @@ if ($expId) {
 		$sdone = count($subclusterjobs['uploadtomo']['done']);
 		$srun = count($subclusterjobs['uploadtomo']['running']);
 		$sq = count($subclusterjobs['uploadtomo']['queued']);
-
 		$sresults[] = ($sdone==0) ? "" : "<a href='tomosummary.php?expId=$sessionId'>$sdone complete</a>";
 		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadtomo'>$srun running</a>";
 		$sresults[] = ($sq==0) ? "" : "$sq queued";
 
+		// get tilt series alignement stats:
+		$aresults=array();
+		$adone = count($subclusterjobs['tomoalign']['done']);
+		$adone = count($particle->getTomoAlignmentRunsFromSession($sessionId, False));
+		$arun = count($subclusterjobs['tomoalign']['running']);
+		$aq = count($subclusterjobs['tomoalign']['queued']);
+		$aresults[] = ($adone==0) ? "" : "<a href='tomoalignsummary.php?expId=$sessionId'>$adone complete</a>";
+		$aresults[] = ($arun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoalign'>$srun running</a>";
+		$aresults[] = ($aq==0) ? "" : "$aq queued";
+		
 		// tomograms being created and completed
 		$tottomo = $sdone+$srun+$sq;
 
@@ -629,6 +638,10 @@ if ($expId) {
 			"<a href='tomosummary.php?expId=$sessionId'>$fulltomoruns/$tomoruns</a>";
 
 		$nruns=array();
+		$nruns[]=array (
+			'name'=>"<a href='runProtomoAligner.php?expId=$sessionId'>Align tilt series</a>",
+			'result'=>$aresults,
+			);
 		$nruns[]=array (
 			'name'=>"<a href='runTomoMaker.php?expId=$sessionId'>Create full tomogram</a>",
 			'result'=>$sresults,
