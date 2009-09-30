@@ -70,37 +70,10 @@ $alignment = $particle->getTomoAlignmentInfo($tomogram['alignment']);
 // get pixel size
 $html .= "<br>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $title = "tomogram processing info";
-$tomograminfo = array(
-	'id'=>$tomogram['DEF_id'],
-	'name'=>$tomogram['name'],
-	'description'=>$tomogram['description'],
-	'path'=>$tomogram['path'],
-);
-if ($alignment['imodid']) {
-	$tomograminfo = array_merge_recursive($tomograminfo,
-		array(
-			'alignment package'=>'imod',
-			'filter sigmas'=>'('.$alignment['sigma1'].','.$alignement['sigma2'].')',
-			'filter radius2'=>$alignment['radius2'],
-		)
-	);
-} else {
-	if ($tomogram['xleginonid']) {
-		$tomograminfo = array_merge_recursive($tomograminfo,
-			array(
-				'alignment package'=>'leginon',
-			)
-		);
-	} else {
-		$tomograminfo = array_merge_recursive($tomograminfo,
-			array(
-				'alignment package'=>'unknown',
-			)
-		);
-	}	
-}
+$tomograminfo = array_merge($tomogram,$alignment);
+$excluded_keys = array('alignment');
 echo "<table><tr><td colspan=2>\n";
-$particle->displayParameters($title,$tomograminfo,array(),$expId);
+$particle->displayParameters($title,$tomograminfo,$excluded_keys,$expId);
 echo "</td></tr>";
 echo "<tr>";
 // --- SnapShot --- //
