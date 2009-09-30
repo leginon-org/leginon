@@ -790,13 +790,20 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
 			apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
-			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
-			apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+#			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
+#			apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 
 			### remove unwanted files
 			prevmra = os.path.join(self.params['rundir'], "mra"+str(self.params['itn']-1)+".img")
 			while os.path.isfile(prevmra):
 				apFile.removeStack(prevmra)
+			if self.params['itn'] == self.params['numiters']:
+				startstack = os.path.join(self.params['rundir'], "start.img")
+				mrastack = os.path.join(self.params['rundir'], "mra"+str(self.params['itn'])+".img")
+				while os.path.isfile(startstack):
+					apFile.removeStack(startstack)
+#				while os.path.isfile(mrastack):
+#					apFile.removeStack(mrastack)
 
 			### upload density
 			self.upload3dRunData()
