@@ -93,14 +93,11 @@ def getSystemName():
 
 #=====================
 def getLinuxDistro():
+	flavfile = "/etc/redhat-release"
 	try:
-		flavfile = "/etc/redhat-release"
-		if os.path.isfile(flavfile):
-			f = open(flavfile, "r")
-			flavor = f.readline().strip()
-			f.close()
-		else:
-			flavor = None
+		f = open(flavfile, "r")
+		flavor = f.readline().strip()
+		f.close()
 	except:
 		flavor = None
 	return flavor
