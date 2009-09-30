@@ -48,7 +48,8 @@ $avgruninfo = array(
 	'path'=>$avginfo[0]['path'],
 	'stackId'=>$avginfo[0]['stackid'],
 	'stackname'=>$stackparams['shownstackname'],
-	'stack alignment run id: name (package)'=>$stackparams['alignrunid'].": ".$alignruninfo['runname']." (".$alignruninfo['package'].")",
+	'stack alignment run id: name (package)'=> 
+		$stackparams['alignrunid'].": ".$alignruninfo['runname']." (".$alignruninfo['package'].")",
 	'included cluster classes'=>implode(',',$clusternums_array),
 	'subtomo run id'=>$avginfo[0]['subtomorunid'],
 	'number of subvolumes averaged'=>count($avginfo),
@@ -173,18 +174,22 @@ if ($tomograms) {
 		if (!$alignpackage)
 			$alignstackinfo = $particle->getAlignStackParams($alignpinfo['alignstack']);
 			$alignpackage = $alignstackinfo['package'];
-		$alignpshiftprint = "(".$alignpinfo['xshift'].",".$alignpinfo['yshift'].") ".sprintf('%5.1f',$alignpinfo['zshift']);
-		$alignprmprint = $alignpinfo['rotation']." mirror=".$alignpinfo['mirror'];
+		if (!$alignpinfo) continue;
+		$alignpshiftprint = "(".sprintf('%.1f',$alignpinfo['xshift']).",".sprintf('%.1f',$alignpinfo['yshift']).") ".sprintf('%5.1f',$alignpinfo['zshift']);
+		$alignprmprint = sprintf('%.1f',$alignpinfo['rotation'])." mirror=".$alignpinfo['mirror'];
 		// PRINT INFO
 		$html .= "<TR>\n";
-		$html .= "<td>$alignpackage.$tiltseriesnumber</TD>\n";
+		$html .= "<td>$tiltseriesnumber</TD>\n";
 		$html .= "<td>".$tomogram['full']."</TD>\n";
 		$html .= "<td>".$alignpshiftprint."<br/>".$alignprmprint."</TD>\n";
 		$html .= "<td><A HREF='tomoreport.php?expId=$expId&tomoId=$tomogramid'>$number<br/>$centerprint,$offsetprint<br/>$dimprint</A></TD>\n";
 		$html .= "<td>";
     $snapfile = $tomogram['path'].'/snapshot.png';
-		if (!file_exists($snapfile)) 
+		$has_snapfile = True;
+		if (!file_exists($snapfile)) {
+			$has_snapfile = False;
 			$snapfile = $tomogram['path'].'/projectiona.jpg';
+		}
 		$maxheight = 80;
 		$maxwidth = 400;
 		$imgsize = array(10,10);
@@ -195,7 +200,11 @@ if ($tomograms) {
 		} else {
 			$imglimit = "HEIGHT='".$maxheight."'";
 		}
-    $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?filename=$snapfile' ".$imglimit." >\n";
+		if (!$has_snapfile) {
+			$html .= "<img src='loadimg.php?filename=$snapfile' ".$imglimit." >\n";
+		} else {
+			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?filename=$snapfile' ".$imglimit." >\n";
+		}
 		$html .= "</td>\n";
 		$html .= "<td>";
 		$zfile = sprintf('%s/profile_%05d.txt',$avgruninfo['path'],$tomogramid);
