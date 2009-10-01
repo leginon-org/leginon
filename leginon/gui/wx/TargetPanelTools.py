@@ -158,7 +158,7 @@ class TargetType(object):
 		self.size = size
 		if shape != 'polygon' and shape != 'numbers':
 			self.bitmaps = {}
-			self.bitmaps['default'], self.bitmaps['selected'] = gui.wx.TargetPanelBitmaps.getTargetBitmaps(color, shape,size)
+			self.bitmaps['default'], self.bitmaps['selected'] = gui.wx.TargetPanelBitmaps.getTargetBitmaps(color, shape, size)
 		self.targets = None
 
 	#--------------------
@@ -213,5 +213,11 @@ class TargetType(object):
 		if self.targets is None:
 			return []
 		return map(lambda t: t.position, self.targets)
+
+	#--------------------
+	def changeCursorSize(self, size):
+		self.size = size
+		if self.shape != 'polygon' and self.shape != 'numbers':
+			self.bitmaps['default'], self.bitmaps['selected'] = gui.wx.TargetPanelBitmaps.getTargetBitmaps(self.color, self.shape, size)
 
 
