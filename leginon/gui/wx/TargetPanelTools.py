@@ -215,9 +215,9 @@ class TargetType(object):
 		return map(lambda t: t.position, self.targets)
 
 	#--------------------
-	def changeCursorSize(self, size):
-		self.size = size
+	def changeCursorSize(self, newsize):
+		self.size = newsize
 		if self.shape != 'polygon' and self.shape != 'numbers':
-			self.bitmaps['default'], self.bitmaps['selected'] = gui.wx.TargetPanelBitmaps.getTargetBitmaps(self.color, self.shape, size)
+			self.bitmaps['default'], self.bitmaps['selected'] = gui.wx.TargetPanelBitmaps.getTargetBitmaps(self.color, self.shape, newsize)
 
 

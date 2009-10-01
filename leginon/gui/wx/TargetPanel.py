@@ -66,6 +66,10 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 		return self._getSelectionTool().addTarget(name, x, y)
 
 	#--------------------
+	def changeCursorSize(self, name, size):
+		return self._getSelectionTool().changeCursorSize(name, size)
+
+	#--------------------
 	def insertTarget(self, name, pos, x, y):
 		return self._getSelectionTool().insertTarget(name, pos, x, y)
 

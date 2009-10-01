@@ -88,7 +88,7 @@ targetbitmaps = {}
 #--------------------
 def getTargetBitmap(color, shape='+', size=global_width):
 	try:
-		return targetbitmaps[color,shape]
+		return targetbitmaps[color,shape,size]
 	except KeyError:
 		if shape == '+':
 			bitmap = targetBitmap_plus(color, width=size)
@@ -106,7 +106,7 @@ def getTargetBitmap(color, shape='+', size=global_width):
 			bitmap = targetBitmap_circle(color, width=size)
 		else:
 			raise RuntimeError('invalid target shape: '+shape)
-		targetbitmaps[color,shape] = bitmap
+		targetbitmaps[color,shape,size] = bitmap
 	return bitmap
 
 #--------------------

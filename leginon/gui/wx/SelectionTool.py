@@ -225,6 +225,16 @@ class SelectionTool(wx.Panel):
 			tool.togglebuttons['target'].Refresh()
 
 	#--------------------
+	def changeCursorSize(self, name, size):
+		try:
+			tool = self._getTypeTool(name)
+		except ValueError:
+			return
+		tool.targettype.changeCursorSize(size)
+		if 'target' in tool.togglebuttons:
+			tool.togglebuttons['target'].Refresh()
+
+	#--------------------
 	def getTargetPositions(self, name):
 		return self._getTypeTool(name).targettype.getTargetPositions()
 
