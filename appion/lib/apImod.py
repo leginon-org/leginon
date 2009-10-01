@@ -15,13 +15,24 @@ def writeRawtltFile(path,seriesname,tilts):
 		f.write('%6.2f\n' % (tilt,))
 	f.close()
 
+def readShiftPrexgFile(path, seriesname):
+	prexgname = os.path.join(path,seriesname+'.prexg')
+	f = open(prexgname, 'r')
+	lines = f.readlines()
+	shifts = []
+	for line in lines:
+		cleanline = line.strip('\n')
+		items = cleanline.split()
+		shifts.append({'x':-float(items[-2]),'y':-float(items[-1])})
+	f.close()
+	return shifts
+
 def writeShiftPrexfFile(path, seriesname,xpeaks):
 	rawtltname = os.path.join(path,seriesname+'.prexf')
 	f = open(rawtltname, 'w')
-	f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (1.0,0.0,0.0,1.0,0.0,0.0))
 	for xpeak in xpeaks:
 		if xpeak is not None:
-			f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (1.0,0.0,0.0,1.0,xpeak['x'],xpeak['y']))
+			f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (1.0,0.0,0.0,1.0,-xpeak['x'],-xpeak['y']))
 	f.close()
 
 def writeTransformPrexfFile(path, seriesname,transforms):
@@ -124,10 +135,12 @@ $mrctaper 08aug14f_008.ali
 		"""
 		inputparams = {
 			'alignedstack': os.path.join(processdir, seriesname+".ali"),
-			'alignment': os.path.join(processdir, seriesname+".prexg"),
+			'alignment': os.path.join(processdir, seriesname+".xf"),
 			'imagestack': os.path.join(stackdir, seriesname+".st"),
 			'bin': bin,
 		}
+		if not os.path.exists(inputparams['alignment']):
+			inputparams['alignment'] = os.path.join(processdir, seriesname+".prexg")
 		commands = [
 			"$newstack -input "+inputparams['imagestack']+" -output "+inputparams['alignedstack']+" -offset 0,0 -xform "+inputparams['alignment']+" -bin %d" % inputparams['bin'],
 			"$mrctaper "+inputparams['alignedstack'],
