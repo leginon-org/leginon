@@ -173,30 +173,19 @@ class tomoMaker(appionScript.AppionScript):
 		processdir = self.params['fulltomodir']
 		seriesname = apTomo.getFilename(tiltdatalist)
 		stackname = seriesname+".st"
-		tilts,ordered_imagelist,mrc_files,refindex = apTomo.orderImageList(imagelist)
+		tilts,ordered_imagelist,ordered_mrc_files,refindex = apTomo.orderImageList(imagelist)
 		reconname = seriesname+"_full"
 		# Write tilt series stack images and tilt angles
-
-		stackpath = os.path.join(self.params['tiltseriesdir'], stackname)
 		stackdir = self.params['tiltseriesdir']
-		if os.path.exists(stackpath):
-			stheader = mrc.readHeaderFromFile(stackpath)
-			stshape = stheader['shape']
-			imageheader = mrc.readHeaderFromFile(mrc_files[0])
-			imageshape = imageheader['shape']
-			if stshape[1:] == imageshape and stshape[0] == len(imagelist):
-				apDisplay.printMsg("No need to get new stack of the tilt series")
-			else:
-				apImage.writeMrcStack(self.params['tiltseriesdir'],stackname,mrc_files, 1)
-		else:
-			apImage.writeMrcStack(self.params['tiltseriesdir'],stackname,mrc_files, 1)
+		apTomo.writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files)
 		apImod.writeRawtltFile(stackdir,seriesname,tilts)
+		# Alignment
 		leginonxcorrlist = []
 		imodxcorrlist = []
 		if self.params['xmethod']=='leginon':
 			# Correlation by tiltcorrelator
-			corrpeaks = apTomo.getOrderedImageListCorrelation(imagelist, 1)
-			apImod.writeShiftPrexfFile(processdir,seriesname,corrpeaks)
+			relativeshifts = apTomo.getLeginonRelativeShift(ordered_imagelist, 1, refindex)
+			apImod.writeShiftPrexfFile(processdir,seriesname,relativeshifts)
 			for tiltseriesdata in tiltdatalist:
 				leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltseriesdata)
 				imodxcorrdata = None
@@ -234,7 +223,7 @@ class tomoMaker(appionScript.AppionScript):
 		if commit:
 			alignlist = []
 			for i in range(0,len(tiltdatalist)):
-				alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltdatalist[i],leginonxcorrlist[i],imodxcorrlist[i],bin,self.params['runname'])
+				alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltdatalist[i],leginonxcorrlist[i],imodxcorrlist[i],None,bin,self.params['runname'],self.params['rundir'])
 				alignlist.append(alignrun)
 		# Reconstruction
 		thickness = int(self.params['thickness'])
