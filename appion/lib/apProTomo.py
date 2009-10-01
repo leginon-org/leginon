@@ -5,7 +5,7 @@ import numpy
 import os
 import apParam
 import apDisplay
-
+import appiondata
 
 def parseTilt(tiltfile):
 	f=open(tiltfile)
@@ -59,22 +59,27 @@ def linkImageFiles(imgtree,rawdir):
 		filenamelist.append(imgprefix)
 		
 		#create symlinks to files
-		if not os.path.exists(os.path.join(rawdir,imgname)):
-			os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),os.path.join(rawdir,imgname))
+		linkedpath = os.path.join(rawdir,imgname)
+		if os.path.islink(linkedpath):
+			os.remove(linkedpath)
+		if not os.path.isfile(linkedpath):
+			os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),linkedpath)
 	return filenamelist
 
 def writeInitialProtomoTltFile(processdir, seriesname,tilts, imagenames, shifts,center,refimg):
 	imagedict = {}
-	tiltfilename = seriesname+'-00-itr.tlt'
+	tiltfilename = seriesname+'-01-itr.tlt'
 	apDisplay.printMsg("Writing "+tiltfilename)
+	#center['x'] = 0
+	#center['y'] = 0
 	for n in range(0,len(tilts)):
 		imageinfo = {}
 		imageinfo['filename'] = imagenames[n]
 		imageinfo['tilt'] = tilts[n]
 		imageinfo['rotation'] = 0.0
-		imageinfo['x'] = -shifts[n]['x'] + center['x']
-		imageinfo['y'] = -shifts[n]['y'] + center['y']
-		imagedict[n+1] = imageinfo
+		imageinfo['x'] = shifts[n]['x'] + center['x']
+		imageinfo['y'] = shifts[n]['y'] + center['y']
+		imagedict[n] = imageinfo
 	tiltfilepath = os.path.join(processdir,tiltfilename)
 	writeTiltFile(tiltfilepath,seriesname, imagedict)
 	
@@ -91,7 +96,7 @@ def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 		f.write('     TILT AZIMUTH %8.3f\n' % parameterdict['azimuth'])
 	else:
 		f.write('\n\n   PARAMETER\n\n')
-		f.write('     TILT AZIMUTH %8.3f\n' % 0.0)
+		f.write('     TILT AZIMUTH %8.3f\n' % 90.0)
 	f.write('\n\n')
 	keys=imagedict.keys()
 	keys.sort()
@@ -106,17 +111,30 @@ def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 	f.write('\n\n\n END\n\n')
 	f.close()
 
+def resetTiltParams(tiltparams, oldtiltparams, goodstart, goodend):
+	imagedict = tiltparams[0]
+	oldimagedict = oldtiltparams[0]
+	for n in range(0,len(imagedict)):
+		if n < goodstart or n > goodend:
+			imagedict[n]['x'] = oldimagedict[n]['x']
+			imagedict[n]['y'] = oldimagedict[n]['y']
+			if n < goodstart:
+				imagedict[n]['rotation'] = imagedict[goodstart]['rotation']
+			else:
+				imagedict[n]['rotation'] = imagedict[goodend]['rotation']
+	return imagedict, tiltparams[1],tiltparams[2]
+
 def createRefineDefaults(imgref, indir, outdir, tmp=''):
 	refinedict={}
-	refinedict['imgref']=imgref
-	refinedict['bckbody']=100
+	refinedict['imgref']= imgref
+	refinedict['bckbody']=200
 	refinedict['alismp']=1
 
 	refinedict['alibox_x']=512
 	refinedict['alibox_y']=512
 
-	refinedict['corbox_x']=64
-	refinedict['corbox_y']=64
+	refinedict['corbox_x']=128
+	refinedict['corbox_y']=128
 
 	refinedict['imgmsktype']=''
 
@@ -142,7 +160,7 @@ def createRefineDefaults(imgref, indir, outdir, tmp=''):
 	refinedict['lopassapo_x']=0.05
 	refinedict['lopassapo_y']=0.05
 	
-	refinedict['cormod']='xcf'
+	refinedict['cormod']='pcf'
 	
 	refinedict['guess']='false'
 	
@@ -167,6 +185,12 @@ def createRefineDefaults(imgref, indir, outdir, tmp=''):
 	refinedict['cor']='.xcf'
 	return refinedict
 	
+def updateRefineParams(refinedict,imgshape,sample,region):
+	refinedict['alismp']=sample
+	refinedict['alibox_x']=int(imgshape[1] * region * 0.01/sample)
+	refinedict['alibox_y']=int(imgshape[0] * region * 0.01/sample)
+	return refinedict
+
 def setProtomoDir(rootdir):
 	print "Setting up directories"
 	rawdir=os.path.join(rootdir, 'raw')
@@ -182,13 +206,14 @@ def setProtomoDir(rootdir):
 def writeRefineParamFile(refinedict,paramfile):
 	f=open(paramfile,'w')
 	keys=refinedict.keys()
+	keys.sort()
 	for key in keys:
 		val=str(refinedict[key])
 		f.write('%s=%s\n' % (key, val))
 	f.close()
 
 def parseRefineParamFile(paramfile):
-	refineparamdict = createRefineDefaults(0, '', '', tmp='')
+	refinedict = createRefineDefaults(0, '', '', tmp='')
 	f=open(paramfile,'r')
 	lines = f.readlines()
 	for line in lines:
@@ -196,20 +221,29 @@ def parseRefineParamFile(paramfile):
 			realline = line.strip('\n')
 			parts = realline.split('=')
 			key = parts[0]
-			refinedict[key] = '='.join(parts[1:])
-	return refineparamdict
+			if len(parts) == 2:
+				value = parts[1]
+				try:
+					refinedict[key] = int(value)
+				except ValueError:
+					try:
+						refinedict[key] = float(value)
+					except ValueError:
+						refinedict[key] = value
+			elif len(parts) < 2:
+				refinedict[key] = ''
+			elif len(parts) > 2:
+				refinedict[key] = '='.join(parts[1:])
+	return refinedict
 
-def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix, center=(1024,1024)):
-	# need to get the center from the file when this is called
-	protomotltfile = protomoprefix+"-fitted.tlt"
-	imodtltfile = imodprefix+".prexg"
+def readProtomoTltFile(protomotltfile):
 	f=open(protomotltfile,'r')
-	fout = open(imodtltfile,'w')
 	lines = f.readlines()
 	rotations = []
 	origins = []
 	tiltaz = 90.0
-	allaffines = []
+	tilts = []
+	specimen_euler = {'psi':0.0,'theta':0.0,'phi':0.0}
 	for line in lines:
 		if (line.find('ORIGIN') >= 0):
 			items = line.split()
@@ -217,19 +251,55 @@ def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix, center=(1024,1
 		elif (line.find('ROTATION') >= 0):
 			items = line.split()
 			rotations.append(float(items[-1]))
+			tilts.append(float(items[1]))
 		elif (line.find('TILT AZIMUTH') >= 0):
 			items = line.split()
 			tiltaz = float(items[-1])
+		elif (line.find('PSI') >= 0):
+			items = line.split()
+			specimen_euler['psi'] = float(items[-1])
+		elif (line.find('THETA') >= 0):
+			items = line.split()
+			specimen_euler['theta'] = float(items[-1])
+		elif (line.find('PHI') >= 0):
+			items = line.split()
+			specimen_euler['phi'] = float(items[-1])
+	f.close()
+	return specimen_euler, tiltaz, tilts, origins, rotations
+
+def eulerToAffinematrix(euler, center):
+	# axes are in order of x,y,z
+	psi = euler['psi'] * 3.14159 / 180.0
+	theta = euler['theta'] * 3.14159 / 180.0
+	phi = euler['phi'] * 3.14159 / 180.0
+	psiaffine = numpy.matrix([[math.cos(psi),-math.sin(psi),0,0],[math.sin(psi),math.cos(psi),0,0],[0,0,1,0],[0,0,0,1]])
+	thetaaffine = numpy.matrix([[1,0,0,0],[0,math.cos(theta),-math.sin(theta),0],[0,math.sin(theta),math.cos(theta),0],[0,0,0,1]])
+	phiaffine = numpy.matrix([[math.cos(phi),-math.sin(phi),0,0],[math.sin(phi),math.cos(phi),0,0],[0,0,1,0],[0,0,0,1]])
+	centeraffine = numpy.matrix([[1,0,0,center[0]],[0,1,0,center[1]],[0,0,1,0],[0,0,0,1]])
+	totalaffine = psiaffine * thetaaffine.I * phiaffine * centeraffine
+	total2daffine = numpy.matrix(numpy.identity(3))
+	total2daffine[:2,:2] = totalaffine[:2,:2]
+	total2daffine[:2,2] = totalaffine[:2,3]
+	return total2daffine
+	
+def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix, center=(1024,1024)):
+	# axes are in order of x,y,z
+	protomotltfile = protomoprefix+"-fitted.tlt"
+	imodtltfile = imodprefix+".xf"
+	fout = open(imodtltfile,'w')
+	specimen_euler, tiltaz, tilts, origins, rotations = readProtomoTltFile(protomotltfile)
 	#protomo tilt azimuth vertical is 90 deg, imod is 0 deg
 	tiltazrad = (tiltaz - 90.0) * 3.14159 / 180.0
 	tiltazaffine = numpy.matrix([[math.cos(tiltazrad),-math.sin(tiltazrad),0],[math.sin(tiltazrad),math.cos(tiltazrad),0],[0,0,1]])
+	specimenaffine = eulerToAffinematrix(specimen_euler,center)
+	centeraffine = numpy.matrix([[1,0,center[0]],[0,1,center[1]],[0,0,1]])
 	shiftsum0 = 0
 	shiftsum1 = 0
+	allaffines = []
 	for i in range(0,len(rotations)):
 		theta = - (rotations[i]) * 3.14159 / 180.0
 		rotationaffine = numpy.matrix([[math.cos(theta),-math.sin(theta),0],[math.sin(theta),math.cos(theta),0],[0,0,1]])
 		shiftaffine = numpy.matrix([[1,0,origins[i][0]],[0,1,origins[i][1]],[0,0,1]])
-		centeraffine = numpy.matrix([[1,0,center[0]],[0,1,center[1]],[0,0,1]])
 		totalaffine = shiftaffine.I * rotationaffine * tiltazaffine.I * centeraffine
 		imodaffine = totalaffine
 		allaffines.append(imodaffine)
@@ -245,3 +315,47 @@ def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix, center=(1024,1
 			imodaffine[0,0],imodaffine[0,1],imodaffine[1,0],imodaffine[1,1],shift[0],shift[1])
 		fout.write(outline)
 	fout.close()
+
+def publish(q):
+	results = q.query()
+	if not results:
+		q.insert()
+		return q
+	return results[0]
+
+def insertProtomoParams(seriesname):
+	# general protmo parameters
+	protomoq = appiondata.ApProtomoParamsData()
+	protomoq['series name'] = seriesname
+	protomodata = publish(protomoq)
+	return protomodata
+
+def insertProtomoAlignIteration(protomodata, params, refinedict):
+	# protmoalign refinement cycle parameters
+	refineparamsq = appiondata.ApProtomoRefinementParamsData()
+	refineparamsq['protomo'] = protomodata
+	refineparamsq['cycle'] = params['cycle']
+	refineparamsq['alismp'] = refinedict['alismp']
+	refineparamsq['alibox'] = {'x':refinedict['alibox_x'],'y':refinedict['alibox_y']}
+	refineparamsq['cormod'] = refinedict['cormod']
+	refineparamsdata = publish(refineparamsq)
+	# good cycle used for reset tlt params
+	if params['goodcycle'] is None:
+		goodrefineparamsdata = None
+	else:
+		goodq = appiondata.ApProtomoRefinementParamsData(protomo=protomodata,cycle=params['goodcycle'])
+		results = goodq.query(results=1)
+		if results:
+			goodrefineparamsdata = results[0]
+		else:
+			goodrefineparamsdata = None
+	# protomoaligner parameters
+	alignerq = appiondata.ApProtomoAlignerParamsData()
+	alignerq['protomo'] = protomodata
+	alignerq['refine cycle'] = refineparamsdata
+	alignerq['good cycle'] = goodrefineparamsdata
+	alignerq['good start'] = params['goodstart']
+	alignerq['good end'] = params['goodend']
+	alignerq['description'] = params['description']
+	aligerdata = publish(alignerq)
+	return refineparamsdata
