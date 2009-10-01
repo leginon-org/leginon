@@ -856,6 +856,36 @@ class ApImodXcorrParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApProtomoParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('series name', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApProtomoRefinementParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('protomo', ApProtomoParamsData),
+			('cycle', int),
+			('alismp', float),
+			('alibox', dict),
+			('cormod', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApProtomoAlignerParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('protomo', ApProtomoParamsData),
+			('refine cycle', ApProtomoRefinementParamsData),
+			('good cycle', ApProtomoRefinementParamsData),
+			('good start', int),
+			('good end', int),
+			('description', str),
+		)
+	typemap = classmethod(typemap)
+	
 class ApTomoAlignmentRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -863,8 +893,12 @@ class ApTomoAlignmentRunData(Data):
 			('tiltseries', leginondata.TiltSeriesData),
 			('coarseLeginonParams', leginondata.TomographySettingsData),
 			('coarseImodParams', ApImodXcorrParamsData),
+			('fineProtomoParams', ApProtomoParamsData),
 			('bin', int),
 			('name', str),
+			('path', ApPathData),
+			('description', str),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 
