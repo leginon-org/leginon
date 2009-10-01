@@ -1038,10 +1038,9 @@ def xmippTransform(a, rot=0, shift=(0,0), mirror=False, order=2):
 
 	return b
 
-
-
-
-
-
-
-
+def shiftMRCStartToZero(filename):
+	h = mrc.readHeaderFromFile(filename)
+	if h['nxstart'] != 0 or h['nystart'] !=0:
+		apDisplay.printMsg("Shifting image header start to zero on %s" %(os.path.basename(filename)))
+		a = mrc.read(filename)
+		mrc.write(a, filename)
