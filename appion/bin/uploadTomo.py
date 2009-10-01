@@ -219,7 +219,7 @@ class UploadTomoScript(appionScript.AppionScript):
 		else:
 			apTomo.makeMovie(newtomopath)
 			apTomo.makeProjection(newtomopath)
-		apTomo.insertTomo(self.params)
+		apTomo.uploadTomo(self.params)
 		### clean up
 		for tmpfilepath in cleanlist:
 			apFile.removeFile(tmpfilepath)
