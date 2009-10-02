@@ -20,60 +20,36 @@ if (!$tomoId = $_GET['tomoId'])
 	$tomoId=false;
 $expId = $_GET['expId'];
 
-$align_params_fields = array('alignrun','bin','name');
+$formAction=$_SERVER['PHP_SELF']."?expId=$expId&tomoId=$tomoId";
 $javascript="<script src='../js/viewer.js'></script>\n";
+$javascript.= editTextJava();
 
-// javascript to display the refinement parameters
-$javascript="<script LANGUAGE='JavaScript'>
-        function infopopup(";
-foreach ($align_params_fields as $param) {
-        if (ereg("\|", $param)) {
-	        $namesplit=explode("|", $param);
-		$param=end($namesplit);
-	}
-	$alignstring.="$param,";
-}
-$alignstring=rtrim($refinestring,',');
-$javascript.=$alignstring;
-$javascript.=") {
-                var newwindow=window.open('','name','height=400, width=200, resizable=1, scrollbar=1');
-                newwindow.document.write(\"<HTML><HEAD><link rel='stylesheet' type='text/css' href='css/viewer.css'>\");
-                newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
-                newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");\n";
-foreach($align_params_fields as $param) {
-	if (ereg("\|", $param)) {
-		$namesplit=explode("|", $param);
-		$param=end($namesplit);
-	}
-	$javascript.="                if ($param) {\n";
-	$javascript.="                        newwindow.document.write('<TR><td>$param</TD>');\n";
-	$javascript.="                        newwindow.document.write('<td>'+$param+'</TD></tr>');\n";
-	$javascript.="                }\n";
-}
-$javascript.="                newwindow.document.write('</table></BODY></HTML>');\n";
-$javascript.="                newwindow.document.close()\n";
-$javascript.="        }\n";
-$javascript.="</script>\n";
-
-$javascript.=eulerImgJava(); 
 
 processing_header("Full Tomogram Report","Full Tomogram Report Page", $javascript);
 if (!$tomoId) {
 	processing_footer();
 	exit;
 }
-
+// edit description form
+echo "<form name='templateform' method='post' action='$formAction'>\n";
 // --- Get Reconstruction Data
 $particle = new particledata();
+if ($_POST) {
+	$particle->updateTableDescriptionAndHiding($_POST,'ApFullTomogramData',$tomoId);
+}
 $tomogram = $particle->getFullTomogramInfo($tomoId);
 $alignment = $particle->getTomoAlignmentInfo($tomogram['alignment']);
 // get pixel size
-$html .= "<br>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+#$html .= "<br>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $title = "tomogram processing info";
+$tomogram['tomogram path'] = $tomogram['path'];
+$alignment['align path'] = $alignment['path'];
 $tomograminfo = array_merge($tomogram,$alignment);
-$excluded_keys = array('alignment');
+$tomograminfo['hidden'] = $tomogram['hidden'];
+$excluded_keys = array('alignment','path','tilt number');
 echo "<table><tr><td colspan=2>\n";
-$particle->displayParameters($title,$tomograminfo,$excluded_keys,$expId);
+$particle->displayParameters($title,$tomograminfo,$excluded_keys,$expId,'',True);
+echo "</form>";
 echo "</td></tr>";
 echo "<tr>";
 // --- SnapShot --- //
