@@ -64,7 +64,7 @@ if ($showncycles) {
 	$html .= "<TR>\n";
 	$selected_keys = array ( 'refine cycle','alignerid','reset cycle','align sampling','align box size','description');
 	$display_keys = $selected_keys;
-	$display_keys[2] = "reset cycle<br>[image range]";
+	$display_keys[2] = "reset cycle<br>[accept range]";
 	foreach($display_keys as $key) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
