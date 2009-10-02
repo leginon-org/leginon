@@ -237,6 +237,10 @@ def makedirs(name, mode=0777):
 	just the rightmost) will be created if it does not exist.  This is
 	recursive.
 	"""
+	"""
+	This is broken since curdir is not defined.  Not sure how to fix
+	it.  Use createDirectory instead.  AC
+	"""
 	head, tail = os.path.split(name)
 	if not tail:
 		head, tail = os.path.split(head)
