@@ -21,6 +21,7 @@ except:
 import apDatabase
 import apDisplay
 import apImage
+import apImod
 import apVolume
 import apFile
 import apEMAN
@@ -99,39 +100,52 @@ def orderImageList(imagelist):
 		fullname = os.path.join(imagepath, mrc_name)
 		mrc_files.append(fullname)
 		ordered_imagelist.append(imagedata)
+	if len(reftilts) > 2:
+		apDisplay.printError('Got too many images at the start tilt')
 	refimg = tiltkeys.index(max(reftilts))
-	return tiltkeys,ordered_imagelist,mrc_files,refimg
+	#cut down for testing
+	testing = False
+	if not testing:
+		return tiltkeys,ordered_imagelist,mrc_files,refimg
+	else:
+		print len(tiltkeys),refimg
+		cut = refimg-1
+		cut2 = len(tiltkeys) -refimg -1
+		cutlist = ordered_imagelist[cut:-cut2]
+		cuttilts = tiltkeys[cut:-cut2]
+		cutfiles = mrc_files[cut:-cut2]
+		refimg = refimg - cut 
+		print len(cutlist),refimg
+		return cuttilts,cutlist,cutfiles,refimg
 
-def getOrderedImageListCorrelation(imagelist, bin):
-	fakenode = node.Node('fake',imagelist[0]['session'])
-	correlator = tiltcorrelator.Correlator(fakenode, 0, 4,lpf=1.5)
-	allpeaks = [{'x':0.0,'y':0.0}]
-	tiltseries = imagelist[0]['tilt series']
-	tiltangledict = {}
-	correlationpeak = {}
-	second_group = False
-	for i,imagedata in enumerate(imagelist):
-		tilt = imagedata['scope']['stage position']['a']*180/3.14159
-		if tilt < tiltseries['tilt start']+0.02 and tilt > tiltseries['tilt start']-0.02:
-			nextimagedata = imagelist[i+1]
-			nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
-			direction = (nexttilt - tilt)
-				# switch group in getCorrelationPeak not here
-			if i == 0:
-				second_group = False
-			tilt = tilt+0.02*direction
-		try:
-			correlationpeak[tilt],allpeaks,second_group = getCorrelationPeak(correlator,bin, tiltseries, tilt, imagedata,allpeaks,second_group)
-		except:
-			raise
-			break
-	fakenode.die()
-	tilts = correlationpeak.keys()
-	tilts.sort()
-	ordered_peaks = []
-	for tilt in tilts:
-		ordered_peaks.append(correlationpeak[tilt])
-	return ordered_peaks
+def writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files):
+		stackpath = os.path.join(stackdir, stackname)
+		print stackpath
+		if os.path.exists(stackpath):
+			stheader = mrc.readHeaderFromFile(stackpath)
+			stshape = stheader['shape']
+			imageheader = mrc.readHeaderFromFile(ordered_mrc_files[0])
+			imageshape = imageheader['shape']
+			if stshape[1:] == imageshape and stshape[0] == len(ordered_mrc_files):
+				apDisplay.printMsg("No need to get new stack of the tilt series")
+			else:
+				apImage.writeMrcStack(stackdir,stackname,order3dmrc_files, 1)
+		else:
+			apImage.writeMrcStack(stackdir,stackname,ordered_mrc_files, 1)
+
+def calcRelativeShifts(globalshift):
+	relativeshifts = []
+	for i, shift in enumerate(globalshift):
+		relativeshifts.append({'x':0.0, 'y':0.0})
+		if i > 0:
+			relativeshifts[i]['x'] = globalshift[i]['x'] - globalshift[i-1]['x'] 
+			relativeshifts[i]['y'] = globalshift[i]['y'] - globalshift[i-1]['y']
+	return relativeshifts 
+
+def getLeginonRelativeShift(ordered_imagelist, bin, refimg):
+	globalshift = getGlobalShift(ordered_imagelist, bin, refimg)
+	relativeshifts = calcRelativeShifts(globalshift)
+	return relativeshifts
 
 def alignZeroShiftImages(imagedata1,imagedata2):
 	"""Align start-angle images for tilt series where data is collect in two halves"""
@@ -141,12 +155,13 @@ def alignZeroShiftImages(imagedata1,imagedata2):
 		correlator.correlate(imagedata, tiltcorrection=True, channel=None)
 	peak = correlator.getShift(False)
 	fakenode.die()
-	return {'shiftx':peak['x'], 'shifty':peak['y']}
+	# x (row) shift on image coordinate is of opposite sign
+	return {'shiftx':-peak['x'], 'shifty':peak['y']}
 
 def shiftHalfSeries(zeroshift,globalshifts, refimg):
 	apDisplay.printMsg("shifting images between the two tilt groups")
 	for i,shift in enumerate(globalshifts[:refimg]):
-		globalshifts[i]['x']=shift['x']-zeroshift['shiftx']
+		globalshifts[i]['x']=shift['x']+zeroshift['shiftx']
 		globalshifts[i]['y']=shift['y']+zeroshift['shifty']
 	return globalshifts
 
@@ -155,8 +170,7 @@ def getGlobalShift(ordered_imagelist, bin, refimg):
 	globalshifts = []
 	for i, imagedata in enumerate(ordered_imagelist):
 		globalshifts.append(getPredictionPeakForImage(imagedata))
-	print "correlating images",refimg-1, "and", refimg
-	zeroshift = alignZeroShiftImages(ordered_imagelist[refimg-1],ordered_imagelist[refimg])
+	zeroshift = alignZeroShiftImages(ordered_imagelist[refimg],ordered_imagelist[refimg-1])
 	globalshifts = shiftHalfSeries(zeroshift, globalshifts, refimg)
 	return globalshifts
 		
@@ -222,7 +236,8 @@ def getPredictionPeakForImage(imagedata):
 		peak = results[0]['correlation']
 	else:
 		raise ValueError
-	peak['y'] = - peak['y']
+	# x (row) shift on image coordinate is of opposite sign
+	peak['x'] = - peak['x']
 	return peak
 
 def getCorrelationPeak(correlator, bin, tiltseries, tilt, imagedata,allpeaks,second_group):
@@ -308,15 +323,19 @@ def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
 		return paramsq
 	return results[0]
 
-def insertTomoAlignmentRun(sessiondata,tiltdata,leginoncorrdata,imodxcorrdata,bin,name):
+def insertTomoAlignmentRun(sessiondata,tiltdata,leginoncorrdata,imodxcorrdata,protomorundata,bin,name,path,description=None):
+	pathq = appiondata.ApPathData(path=os.path.abspath(path))
 	qalign = appiondata.ApTomoAlignmentRunData(session=sessiondata,tiltseries=tiltdata,
-			bin=bin,name=name)
+			bin=bin,name=name, path=pathq)
 	if leginoncorrdata:
 		qalign['coarseLeginonParams'] = leginoncorrdata
-	elif imodxcorrdata:
+	if imodxcorrdata:
 		qalign['coarseImodParams'] = imodxcorrdata
+	if protomorundata:
+		qalign['fineProtomoParams'] = protomorundata
 	results = qalign.query()
 	if not results:
+		qalign['description'] = description
 		qalign.insert()
 		return qalign
 	return results[0]
@@ -358,7 +377,7 @@ def getFullTomoData(fulltomoId):
 def getTomogramData(tomoId):
 	return appiondata.ApTomogramData.direct_query(tomoId)
 
-def insertTomo(params):
+def uploadTomo(params):
 	if not params['commit']:
 		apDisplay.printWarning("not commiting tomogram to database")
 		return
@@ -372,7 +391,7 @@ def insertTomo(params):
 	else:
 		fullbin = 1
 		subbin = params['bin']
-	aligndata = insertTomoAlignmentRun(sessiondata,tiltdata,None,None,fullbin,runname)
+	aligndata = insertTomoAlignmentRun(sessiondata,tiltdata,None,None,None,fullbin,runname,params['aligndir'],'manual alignment from upload')
 	firstimagedata = getFirstImage(tiltdata)
 	path = os.path.abspath(params['rundir'])
 	description = params['description']
@@ -398,7 +417,7 @@ def insertTomo(params):
 		runname = params['volume']
 		shape = map((lambda x: x * params['bin']), params['shape'])
 		dimension = {'x':shape[2],'y':shape[1], 'z':shape[0]}
-		subtomorundata = apTomo.insertSubTomoRun(sessiondata,
+		subtomorundata = insertSubTomoRun(sessiondata,
 				None,None,runname,params['invert'],subbin)
 		return insertSubTomogram(fulltomogram,subtomorundata,None,0,dimension,path,name,index,pixelsize,description)
 
