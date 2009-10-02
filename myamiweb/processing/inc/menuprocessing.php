@@ -639,7 +639,7 @@ if ($expId) {
 
 		$nruns=array();
 		$nruns[]=array (
-			'name'=>"<a href='runProtomoAligner.php?expId=$sessionId'>Align tilt series</a>",
+			'name'=>"<a href='runTomoAligner.php?expId=$sessionId'>Align tilt series</a>",
 			'result'=>$aresults,
 			);
 		$nruns[]=array (
