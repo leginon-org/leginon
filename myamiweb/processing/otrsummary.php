@@ -75,10 +75,10 @@ if ($otrRuns) {
 			$otrrun['description']=$_POST['newdescription'.$otrrun];
 		}
 
-		if ($_POST['hideStack'.$otrid] == 'hide') {
+		if ($_POST['hideItem'.$otrid] == 'hide') {
 			$particle->updateHide('ApOtrRunData', $otrid, '1');
 			$otrrun['hidden']=1;
-		} elseif ($_POST['unhideStack'.$otrid] == 'unhide') {
+		} elseif ($_POST['unhideItem'.$otrid] == 'unhide') {
 			$particle->updateHide('ApOtrRunData', $otrid, '0');
 			$otrrun['hidden']=0;
 		}
@@ -94,8 +94,8 @@ if ($otrRuns) {
 		$html .= "<TD valign='center' align='center'>$otrrun[DEF_id]\n";
 		if ($otrrun['hidden'] == 1) {
 			$html.= "<br/><font color='#cc0000'>HIDDEN</font>\n";
-			$html.= " <input class='edit' type='submit' name='unhideStack".$otrid."' value='unhide'>\n";
-		} else $html .= "<br/><input class='edit' type='submit' name='hideStack".$otrid."' value='hide'>\n";
+			$html.= " <input class='edit' type='submit' name='unhideItem".$otrid."' value='unhide'>\n";
+		} else $html .= "<br/><input class='edit' type='submit' name='hideItem".$otrid."' value='hide'>\n";
 		$html .= "</td>\n";
 
 		// runname and link

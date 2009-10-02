@@ -75,10 +75,10 @@ if ($rctRuns) {
 			$rctrun['description']=$_POST['newdescription'.$rctrun];
 		}
 
-		if ($_POST['hideStack'.$rctid] == 'hide') {
+		if ($_POST['hideItem'.$rctid] == 'hide') {
 			$particle->updateHide('ApRctRunData', $rctid, '1');
 			$rctrun['hidden']=1;
-		} elseif ($_POST['unhideStack'.$rctid] == 'unhide') {
+		} elseif ($_POST['unhideItem'.$rctid] == 'unhide') {
 			$particle->updateHide('ApRctRunData', $rctid, '0');
 			$rctrun['hidden']=0;
 		}
@@ -94,8 +94,8 @@ if ($rctRuns) {
 		$html .= "<TD valign='center' align='center'>$rctrun[DEF_id]\n";
 		if ($rctrun['hidden'] == 1) {
 			$html.= "<br/><font color='#cc0000'>HIDDEN</font>\n";
-			$html.= " <input class='edit' type='submit' name='unhideStack".$rctid."' value='unhide'>\n";
-		} else $html .= "<br/><input class='edit' type='submit' name='hideStack".$rctid."' value='hide'>\n";
+			$html.= " <input class='edit' type='submit' name='unhideItem".$rctid."' value='unhide'>\n";
+		} else $html .= "<br/><input class='edit' type='submit' name='hideItem".$rctid."' value='hide'>\n";
 		$html .= "</td>\n";
 
 		// runname and link

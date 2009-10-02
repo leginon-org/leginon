@@ -24,10 +24,10 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	if ($_POST['updateDesc'.$stackid])
 		updateDescription('ApStackData', $stackid, $_POST['newdescription'.$stackid]);
 
-	if ($_POST['hideStack'.$stackid] == 'hide') {
+	if ($_POST['hideItem'.$stackid] == 'hide') {
 		$particle->updateHide('ApStackData', $stackid, '1');
 		$stackdata['hidden']=1;
-	} elseif ($_POST['unhideStack'.$stackid] == 'unhide') {
+	} elseif ($_POST['unhideItem'.$stackid] == 'unhide') {
 		$particle->updateHide('ApStackData', $stackid, '0');
 		$stackdata['hidden']='0';
 	}
@@ -42,9 +42,9 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		.$stackname."</a> (ID: $stackid)\n";
 	if ($stackdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
-		$j.= " <input class='edit' type='submit' name='unhideStack".$stackid."' value='unhide'>\n";
+		$j.= " <input class='edit' type='submit' name='unhideItem".$stackid."' value='unhide'>\n";
 		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>";
-	} else $j.= " <input class='edit' type='submit' name='hideStack".$stackid."' value='hide'>\n";
+	} else $j.= " <input class='edit' type='submit' name='hideItem".$stackid."' value='hide'>\n";
 
 	$stacktable.= apdivtitle($j);
 	if ($tiny)
@@ -229,10 +229,10 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	if ($_POST['updateDesc'.$alignstackid])
 		updateDescription('ApAlignStackData', $alignstackid, $_POST['newdescription'.$alignstackid]);
 
-	if ($_POST['hideStack'.$alignstackid] == 'hide') {
+	if ($_POST['hideItem'.$alignstackid] == 'hide') {
 		$particle->updateHide('ApAlignStackData', $alignstackid, '1');
 		$stackdata['hidden']='1';
-	} elseif ($_POST['unhideStack'.$alignstackid] == 'unhide') {
+	} elseif ($_POST['unhideItem'.$alignstackid] == 'unhide') {
 		$particle->updateHide('ApAlignStackData', $alignstackid, '0');
 		$stackdata['hidden']='0';
 	}
@@ -244,9 +244,9 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		.$stackdata['runname']."</span> (ID: $alignstackid)\n";
 	if ($stackdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
-		$j.= " <input class='edit' type='submit' name='unhideStack".$alignstackid."' value='unhide'>\n";
+		$j.= " <input class='edit' type='submit' name='unhideItem".$alignstackid."' value='unhide'>\n";
 		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>";
-	} else $j.= " <input class='edit' type='submit' name='hideStack".$alignstackid."' value='hide'>\n";
+	} else $j.= " <input class='edit' type='submit' name='hideItem".$alignstackid."' value='hide'>\n";
 
 	$stacktable.= apdivtitle($j);
 	//echo $j."<br/>\n";
