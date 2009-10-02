@@ -156,15 +156,17 @@ class particledata {
 	//------ Tomo functions ---------//
 	//------ -------------------- ---------//
 	function getTomoAlignmentRunsFromSession($sessionId,$showHidden=False){
+		if (!$this->mysql->SQLTableExists("ApTomoAlignmentRunData")) return;
 		$q =  "SELECT a.`DEF_id` as `alignrunid`, "
 			."a.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries "
 			."FROM `ApTomoAlignmentRunData` a "
 			."WHERE a.`REF|leginondata|SessionData|session` = " .$sessionId." ";
-		if (!$showHidden )
+		$fields = $this->mysql->getFields('ApTomoAlignmentRunData');
+		if (!$showHidden && in_array('hidden',$fields))
 			$q .= " AND ( a.`hidden` = 0 OR a.`hidden` IS NULL ) ";
 		$q .= "ORDER BY `tiltseries` ASC ";
 		$results = $this->mysql->getSQLResult($q);
-		if (array($results)) {
+		if (count(array($results))) {
 			$finalresults = array();
 			foreach ($results as $result) {
 				$info = $this->getTomoAlignmentInfo($result['alignrunid']);
@@ -263,7 +265,8 @@ class particledata {
 			."t.description as description, "
 			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
 			."tilt.number as 'tiltseries number', "
-			." p.`path` "
+			." p.`path`, "
+			." t.`hidden` "
 			."FROM `ApFullTomogramData` t "
 			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
 			."LEFT JOIN ".DB.".`TiltSeriesData` tilt ON t.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
@@ -318,12 +321,14 @@ class particledata {
 		return $r;
 	}
 
-	function getFullTomogramsFromSession($sessionId,$showHidden=False){
+	function getFullTomogramsFromSession($sessionId,$showHidden=False,$showDummy=False){
 		$q =  "SELECT t.`DEF_id` as DEF_id "
 			."FROM `ApFullTomogramData` t "
-			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId." "
-			."AND t.name NOT LIKE 'dummy'";
-		if (!$showHidden )
+			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId." ";
+		if (!$showDummy)
+			$q .= "AND t.name NOT LIKE 'dummy'";
+		$fields = $this->mysql->getFields('ApFullTomogramData');
+		if (!$showHidden && in_array('hidden',$fields))
 			$q .= " AND ( t.`hidden` = 0 OR t.`hidden` IS NULL ) ";
 		return $this->mysql->getSQLResult($q);
 	}
@@ -426,7 +431,8 @@ class particledata {
 			."LEFT JOIN `ApStackData` stack "
 			."ON  t.`REF|ApStackData|stack` = stack.DEF_id "
 			."WHERE sub.`REF|leginondata|SessionData|session` = " .$sessionId." ";
-		if (!$showHidden )
+		$fields = $this->mysql->getFields('ApTomoAverageRunData');
+		if (!$showHidden && in_array('hidden',$fields))
 			$q .= " AND ( t.`hidden` = 0 OR t.`hidden` IS NULL ) ";
 		$q .= "ORDER BY `avgid` ASC ";
 		return $this->mysql->getSQLResult($q);
@@ -536,8 +542,11 @@ class particledata {
 	}
 
 	function checkforFullTomogram($tiltseriesId,$showHidden=False){
-		$q =  "SELECT t.`DEF_id`, t.name as `tomofilename` , p.`path`, a.`name` as `runname`, a.`bin`,t.`description`,count(*) as `subtomo`, t.`hidden` "
-			."FROM `ApFullTomogramData` t "
+		$q =  "SELECT t.`DEF_id`, t.name as `tomofilename` , p.`path`, a.`name` as `runname`, a.`bin`,t.`description`,count(*) as `subtomo` ";
+		$fields = $this->mysql->getFields('ApFullTomogramData');
+		if (in_array('hidden',$fields)) $q .= ",t.`hidden` ";
+		$q .=
+			"FROM `ApFullTomogramData` t "
 			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
 			."LEFT JOIN `ApTomoAlignmentRunData` a ON t.`REF|ApTomoAlignmentRunData|alignment` = a.`DEF_id` ";
 		if ($this->mysql->SQLTableExists("ApTomogramData")) {
@@ -546,7 +555,8 @@ class particledata {
 		}
 		$q .=	"WHERE t.`REF|leginondata|TiltSeriesData|tiltseries` = " .$tiltseriesId." "
 			." ";
-		if (!$showHidden )
+		$fields = $this->mysql->getFields('ApTomogramData');
+		if (!$showHidden && in_array('hidden',$fields))
 			$q .= " AND ( t.`hidden` = 0 OR t.`hidden` IS NULL ) ";
 		$q .= "GROUP BY t.`DEF_id`";
 		$r = $this->mysql->getSQLResult($q);
@@ -949,7 +959,7 @@ class particledata {
 	//------ -------------------- ---------//
 	//-------particle functions --------//
 	//------ -------------------- ---------//
-	function displayParameters ($title,$params,$exclude_fields,$expId,$hide_button_field='') {
+	function displayParameters ($title,$params,$exclude_fields,$expId,$hide_button_field='',$inform=false) {
 		//standard parameter table display
 
 		//Array of $params keys that are shown as a link to another report
@@ -957,7 +967,6 @@ class particledata {
 			'stackId'=>"stackreport.php?expId=$expId&sId="
 			,'particleSelection'=>"particlerunreport.php?expId=$expId&rId="
 		);
-
 		echo "<h4>".$title."</h4>";
 		echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
 		$selection_fields = array_keys($params);
@@ -1019,10 +1028,15 @@ class particledata {
 						echo "<a href='".$link."'>".$datadisplay."</a>";
 					}
 					if ($hide_button_field == $key) {
-						if ($t['hidden'] == 1) {
+						$hideid = $params[$hide_button_field];
+						if ($params['hidden'] == 1) {
 							echo "<font color='#cc0000'>HIDDEN</font>\n";
-							echo " <input class='edit' type='submit' name='unhideStack".$alignrunid."' value='unhide'>\n";
-						} else echo "<input class='edit' type='submit' name='hideStack".$alignrunid."' value='hide'>\n";
+							if ($inform)
+								echo " <input class='edit' type='submit' name='unhideItem".$hideid."' value='unhide'>\n";
+						} else {
+							if ($inform)
+								echo "<input class='edit' type='submit' name='hideItem".$hideid."' value='hide'>\n";
+						}
 					}
 					echo "</td></tr>\n";
 				}
@@ -1097,8 +1111,8 @@ class particledata {
 				$primary_id = $params[$key];
 				if ($params['hidden'] == 1) {
 					$html .= "<font color='#cc0000'>HIDDEN</font>\n";
-					$html .= " <input class='edit' type='submit' name='unhideRun".$primary_id."' value='unhide'>\n";
-				} else $html .= "<input class='edit' type='submit' name='hideRun".$primary_id."' value='hide'>\n";
+					$html .= " <input class='edit' type='submit' name='unhideItem".$primary_id."' value='unhide'>\n";
+				} else $html .= "<input class='edit' type='submit' name='hideItem".$primary_id."' value='hide'>\n";
 			}
 			if ('description' == $key && $primary_field) {
 				$descDiv = ($_SESSION['username']) ? editButton($primary_id,$t['description']) : $t['description'];
@@ -3229,9 +3243,9 @@ class particledata {
 			$this->updateDescription($updatetable, $updateid, $post['newdescription'.$updateid]);
 		}
 		//update hidden if posted
-		if ($post['hideRun'.$updateid] == 'hide') {
+		if ($post['hideItem'.$updateid] == 'hide') {
 			$this->updateHide($updatetable, $updateid, '1');
-		} elseif ($_POST['unhideRun'.$updateid] == 'unhide') {
+		} elseif ($_POST['unhideItem'.$updateid] == 'unhide') {
 			$this->updateHide($updatetable, $updateid, '0');
 		}
 	}
