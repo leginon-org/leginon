@@ -174,9 +174,7 @@ class TargetHandler(object):
 					self.revertTargetListZ(targetlist)
 					self.processTargetList(targetlist)
 					state = self.player.wait()
-					if state == 'stopqueue':
-						continue
-					else:
+					if state != 'stopqueue':
 						self.player.play()
 				donetargetlist = leginondata.DequeuedImageTargetListData(session=self.session, list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
