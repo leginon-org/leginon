@@ -40,13 +40,13 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 // --- Get Stack Data
 $particle = new particledata();
 if ($_POST) {
-$allfulltomos = $particle->getFullTomogramsFromSession($sessionId,True);
+$allfulltomos = $particle->getFullTomogramsFromSession($sessionId,True,True);
 	foreach ($allfulltomos as $t)
 		$particle->updateTableDescriptionAndHiding($_POST,'ApFullTomogramData',$t['DEF_id']);
 }
 // --- Get Fulltomograms
-$allfulltomos = $particle->getFullTomogramsFromSession($sessionId,True);
-$shownfulltomos = $particle->getFullTomogramsFromSession($sessionId,False);
+$allfulltomos = $particle->getFullTomogramsFromSession($sessionId,True,True);
+$shownfulltomos = $particle->getFullTomogramsFromSession($sessionId,False,True);
 echo $particle->displayHidingOption($expId,$allfulltomos,$shownfulltomos,$showhidden);
 if ($shownfulltomos) {
 	$tiltseries = $particle->getTiltSeries($sessionId);
