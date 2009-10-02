@@ -42,9 +42,14 @@ class UploadTomoScript(appionScript.AppionScript):
 			help="Subvolume from original voxel volume", default='', metavar="VOLUME")
 		self.parser.add_option("-b", "--bin", dest="bin", type="int",
 			help="Extra Binning from tiltseries image", default=1, metavar="#")
+		self.parser.add_option("--invert", dest="invert", default=False,
+			action="store_true", help="Invert tomogram density")
 
 	#=====================
 	def checkConflicts(self):
+		if self.params['rundir']:
+			# use the same directory for alignment file if rundir is specified
+			self.params['aligndir'] = self.params['rundir']
 		if self.params['tiltseriesnumber'] is None:
 			apDisplay.printError("Enter a Tilt Series")
 		if self.params['transform']:
@@ -89,6 +94,7 @@ class UploadTomoScript(appionScript.AppionScript):
 			tomovolumepath = self.params['volume']
 		intermediatepath = os.path.join(tiltseriespath,self.params['runname'],tomovolumepath)
 		self.params['rundir'] = os.path.join(path,intermediatepath)
+		self.params['aligndir'] = os.path.abspath(os.path.join(path,tiltseriespath,'align',self.params['runname']))
 
 	#=====================
 	def setNewFileName(self, unique=False):
@@ -163,7 +169,8 @@ class UploadTomoScript(appionScript.AppionScript):
 		newtomopath = os.path.join(self.params['rundir'], self.params['name']+".rec")
 		origtomopath = self.params['file']
 		origxfpath = self.params['oldxffile']
-		newxfpath = os.path.join(self.params['rundir'], self.params['newxffile'])
+		apParam.createDirectory(self.params['aligndir'])
+		newxfpath = os.path.join(self.params['aligndir'], self.params['newxffile'])
 		order = self.params['order']
 		voltransform = self.params['transform']
 		bin = self.params['bin']
