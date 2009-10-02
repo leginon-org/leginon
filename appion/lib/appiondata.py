@@ -925,6 +925,7 @@ class ApFullTomogramData(Data):
 			('name', str),
 			('description', str),
 			('zprojection', leginondata.AcquisitionImageData),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 
