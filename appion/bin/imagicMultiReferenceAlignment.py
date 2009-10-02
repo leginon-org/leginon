@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # Python script to align images based on a reference template stack
 
-
-
-
 import os
 import shutil
 import time
@@ -11,7 +8,7 @@ import sys
 import re
 import subprocess
 import appionScript
-import appiondata
+import appionData
 import apImagicFile
 import apTemplate
 import apDisplay
@@ -64,8 +61,6 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			action="store_true", help="use mirrors in alignment to capture different particle orientations")
 		self.parser.add_option("--no-mirror", dest="mirror", default=True,
 			action="store_false", help="DO NOT use mirrors in alignment to capture different particle orientations")
-		self.parser.add_option("--center", dest="center", default=False,
-			action="store_true", help="center particles against total sum prior to MRA")
 		self.parser.add_option("--max_shift_orig", dest="max_shift_orig", type="float", default="0.2",
 			help="maximum radial shift during MRA", metavar="float")
 #		self.parser.add_option("--max_shift_this", dest="max_shift_this", type="float",
@@ -82,7 +77,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		self.parser.add_option("--nproc", dest="nproc", type="int", default="8",
 			help="number of processors to use", metavar="int")
 
-		return
+		return 
 
 
 	#=====================
@@ -97,7 +92,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		if self.params['refs'] is True:
 			if self.params['thresh_refs'] is None or self.params['maskrad_refs'] is None:
 				apDisplay.printError("enter ALL parameters for preparing references")
-
+		
 		### Multi Reference Alignment params
 		if self.params['mirror'] is None:
 			apDisplay.printError("enter option of using mirrors")
@@ -110,7 +105,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 		# get reference-free classification and reclassification parameters
 		if self.params['stackId'] is not None:
-			stackdata = appiondata.ApStackData.direct_query(self.params['stackId'])
+			stackdata = appionData.ApStackData.direct_query(self.params['stackId']) 
 			Atackpath = stackdata['path']['path']
 			uppath = os.path.abspath(os.path.join(stackpath, "../.."))
 			self.params['rundir'] = os.path.join(uppath, "align", self.params['runname'])
@@ -123,9 +118,9 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		# IMAGIC batch file creation
 
 		##### DELETE HEADERS!!!!!!!!!!
-
+		
 		apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
-		apIMAGIC.copyFile(self.params['rundir'], "references.hed", headers=True)
+		apIMAGIC.copyFile(self.params['rundir'], "references.hed", headers=True)		
 
 		filename = os.path.join(self.params['rundir'], "imagicMRA.batch")
 		f = open(filename, 'w')
@@ -166,36 +161,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("EOF\n")
 			append_log = True
 
-		### alignment
+		### multi-reference alignment		
 
-		### do centering operation at the beginning, if specified
-		if self.params['center'] is True:
-			if self.params['nproc'] > 1:
-				f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
-					" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/alimass.e_mpi <<EOF")
-				if append_log is True:
-					f.write(" >> multiReferenceAlignment.log\n")
-				else:
-					f.write(" > multiReferenceAlignment.log\n")
-				f.write("YES\n")
-				f.write(str(self.params['nproc'])+"\n")
-			else:
-				f.write("/usr/local/IMAGIC/align/alimass.e <<EOF")
-				if append_log is True:
-					f.write(" >> multiReferenceAlignment.log\n")
-				else:
-					f.write(" > multiReferenceAlignment.log\n")
-				f.write("NO\n")
-			f.write("start\n")
-			f.write("start_cent\n")
-			f.write("TOTSUM\n")
-			f.write("CCF\n")
-			f.write(str(self.params['max_shift_orig'])+"\n")
-			f.write("5\n")
-			f.write("EOF\n")
-			append_log = True
-
-		### now proceed with MRA
 		if self.params['nproc'] > 1:
 			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 				" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/mralign.e_mpi <<EOF")
@@ -212,15 +179,13 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			else:
 				f.write(" > multiReferenceAlignment.log\n")
 			f.write("NO\n")
+			
 		f.write("FRESH\n")
 		f.write("ALIGNMENT\n")
 		f.write("ALL\n")
 		f.write("ROTATION_FIRST\n")
 		f.write("CCF\n")
-		if self.params['center'] is True:
-			f.write("start_cent\n")
-		else:
-			f.write("start\n")
+		f.write("start\n")
 		f.write("alignstack\n")
 		f.write("start\n")
 		f.write("references\n")
@@ -232,18 +197,14 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("NO\n")
 		f.write("NO\n")
 		f.write(str(self.params['max_shift_orig'])+"\n")
-		if self.params['center'] is True:
-			f.write(str(self.params['max_shift_orig'])+"\n")
 		f.write("-180,180\n")
-		if self.params['center'] is True:
-			f.write("-180,180\n")
 		f.write("INTERACTIVE\n")
 		f.write(str(self.params['samp_param'])+"\n")
 		f.write(str(self.params['minrad'])+","+str(self.params['maxrad'])+"\n")
-		f.write(str(self.params['numiter'])+"\n")
+		f.write(str(self.params['numiter'])+"\n")	
 		f.write("NO\n")
 		f.write("EOF\n")
-
+		
 		### write out alignment parameters to file
 		f.write("/usr/local/IMAGIC/stand/headers.e <<EOF >> multiReferenceAlignment.log\n")
 		f.write("alignstack\n")
@@ -258,13 +219,13 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		return filename
 
 
-	### ==========================
-
+	### ==========================	
+	
 	def createImagicBatchFileScaling(self):
 		# IMAGIC batch file creation
 
 		##### DELETE HEADERS!!!!!!!!!!
-
+		
 #		apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
 
 		filename = os.path.join(self.params['rundir'], "prepareStack.batch")
@@ -287,7 +248,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("start\n")
 			f.write("EOF\n")
 			append_log = True
-		if self.params['highpass'] is not None and self.params['lowpass'] is not None:
+		if self.params['highpass'] is not None and self.params['lowpass'] is not None:	
 			### convert to IMAGIC-specific filtering parameters
 			highpass, lowpass = apIMAGIC.convertFilteringParameters(self.params['highpass'], self.params['lowpass'], self.params['apix'])
 			f.write("/usr/local/IMAGIC/incore/incband.e OPT BAND-PASS <<EOF")
@@ -326,10 +287,10 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			apImagicFile.writeImagic(scaledtemplates, reffile)
 
 		### get boxsizes (new or old) for templatestack
-#		emancmd = "iminfo "+reffile
+#		emancmd = "iminfo "+reffile	
 #		proc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 #		results = proc.stdout
-#		proc.wait()
+#		proc.wait() 
 #		for line in results:
 #			res = re.search("([0-9]+)x([0-9]+)x([0-9])", line)
 #			if res:
@@ -338,9 +299,9 @@ class imagicAlignmentScript(appionScript.AppionScript):
 #				if num1 == num2:
 #					refbox = num1
 
-		refbox = apFile.getBoxSize(reffile)[0]
-		stbox = self.params['boxsize']
-
+		refbox = apFile.getBoxSize(reffile)[0]		
+		stbox = self.params['boxsize']		
+	
 		### now clip the references to get identical boxsizes
 		if stbox != refbox:
 			while os.path.isfile(reffile+".new.img"):
@@ -349,14 +310,14 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			apEMAN.executeEmanCmd(emancmd)
 			os.rename(reffile+".new.hed", reffile)
 			os.rename(reffile+".new.img", reffile[:-4]+".img")
-
+			
 		return
 
 
-	### ==========================
+	### ==========================	
 	def getParticleParams(self):
 		apDisplay.printColor("now getting particle shift / rotation / correlation parameters", "cyan")
-
+		
 		f = open(os.path.join(self.params['rundir'], "outparams.plt"), "r")
 		lines = f.readlines()
 		strip = [line.strip() for line in lines]
@@ -373,29 +334,29 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			else:
 				mirror = 0
 			numberlist.append(mirror)
-			params.append(numberlist)
-
+			params.append(numberlist)	
+			
 		return params
-
-
+		
+		
 	### ==========================
-	def insertAlignmentRun(self, insert=False):
+	def insertAlignmentRun(self, insert=False):               		
 
 		### setup alignment run
-		alignrunq = appiondata.ApAlignRunData()
+		alignrunq = appionData.ApAlignRunData()
 		alignrunq['runname'] = self.params['runname']
-		alignrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+self.params['runname']+"' and path already exist in database")
-
+		
 		### setup Reference preparation parameters, if given
-		MRAq = appiondata.ApMultiRefAlignRunData()
+		MRAq = appionData.ApMultiRefAlignRunData()
 		if self.params['refs'] is True:
 			MRAq['lowpass_refs'] = self.params['lowpass_refs']
 			MRAq['thresh_refs'] = self.params['thresh_refs']
-			MRAq['maskrad_refs'] = self.params['maskrad_refs']
-
+			MRAq['maskrad_refs'] = self.params['maskrad_refs']	
+	
 		### setup Multi Reference Alignment Run
 		MRAq['mirror'] = self.params['mirror']
 		MRAq['max_shift_orig'] = self.params['max_shift_orig']
@@ -413,15 +374,15 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		alignrunq['hp_filt'] = self.params['highpass']
 		alignrunq['bin'] = self.params['bin']
 		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackId'])
-
+	
 		### setup alignment stack
-		alignstackq = appiondata.ApAlignStackData()
+		alignstackq = appionData.ApAlignStackData()
 		alignstackq['imagicfile'] = "alignstack.hed"
 		alignstackq['avgmrcfile'] = "average.mrc"
-		alignstackq['refstackfile'] = os.path.join(self.params['rundir'], "references.hed")
+		alignstackq['refstackfile'] = os.path.join(self.params['rundir'], "references.hed") 
 		alignstackq['iteration'] = self.params['numiter']
-		alignstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
-		alignstackq['alignrun'] = alignrunq
+		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignstackq['alignrun'] = alignrunq	
 
 		### check to make sure files exist
 		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
@@ -432,7 +393,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			apDisplay.printError("could not find reference stack file: "+refstackfile)
 		alignstackq['stack'] = apStack.getOnlyStackData(self.params['stackId'])
 		alignstackq['boxsize'] = self.params['boxsize']
-		alignstackq['pixelsize'] = self.params['apix']
+		alignstackq['pixelsize'] = self.params['apix'] 
 		alignstackq['description'] = self.params['description']
 		alignstackq['hidden'] =  False
 		alignstackq['num_particles'] = self.params['numpart']
@@ -443,7 +404,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			alignstackq.insert()
 		self.alignstackdata = alignstackq
 
-		return
+		return 
 
 	def insertParticlesIntoDatabase(self, partlist, insert=False):
 		count = 0
@@ -452,33 +413,33 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
 		for particle in partlist:
 			count += 1
-
+			
 			### get all particle parameters
 			partnum = count
-			rotation = particle[0] * -1 ### this is a stupid spider thing, where negative rotation is clockwise
+			rotation = particle[0] * -1 ### in spider negative rotation is clockwise
 			shiftx = particle[1]
 			shifty = particle[2]
 			ccc = particle[3]
 			refnum = int(particle[4])
 			mirror = particle[5]
-
+			
 			if count % 100 == 0:
 				sys.stderr.write(".")
 
 			### setup reference
-			refq = appiondata.ApAlignReferenceData()
+			refq = appionData.ApAlignReferenceData()
 			refq['refnum'] = refnum
 			refq['iteration'] = self.params['numiter']
 			refq['imagicfile'] = "references.hed"
-			refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+			refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 			refq['alignrun'] = self.alignstackdata['alignrun']
-			refq['templatestack'] = appiondata.ApTemplateStackData.direct_query(self.params['templateStackId'])
+			refq['templatestack'] = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
 			reffile = os.path.join(self.params['rundir'], refq['imagicfile'])
 			if not os.path.isfile(reffile):
 				apDisplay.printError("could not find reference file: "+reffile)
 
 			### setup particle
-			alignpartq = appiondata.ApAlignParticlesData()
+			alignpartq = appionData.ApAlignParticlesData()
 			alignpartq['partnum'] = partnum
 			alignpartq['alignstack'] = self.alignstackdata
 			stackpartdata = apStack.getStackParticle(self.params['stackId'], partnum)
@@ -509,7 +470,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackId'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 
-		### copy stack into working directory
+		### copy stack into working directory	
 		if os.path.isfile(self.stack['file']):
 			apDisplay.printColor("copying stack into running directoroy", "cyan")
 			if self.stack['file'][-4:] == ".img" or self.stack['file'][-4:] == ".hed":
@@ -520,20 +481,20 @@ class imagicAlignmentScript(appionScript.AppionScript):
 				apFile.removeStack(os.path.join(self.params['rundir'], "start.img"))
 			emancmd = "proc2d "+strippedfile+".hed "+os.path.join(self.params['rundir'], "start.hed ")+\
 				"first=0 last="+str(self.params['numpart']-1)
-			apEMAN.executeEmanCmd(emancmd)
-
+			apEMAN.executeEmanCmd(emancmd)	
+	
 		### get template stack parameters
 		self.templatestack = {}
-		self.templatestack['data'] = appiondata.ApTemplateStackData.direct_query(self.params['templateStackId'])
+		self.templatestack['data'] = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
 		self.templatestack['apix'] = self.templatestack['data']['apix']
-		self.templatestack['boxsize'] = self.templatestack['data']['boxsize']
+		self.templatestack['boxsize'] = self.templatestack['data']['boxsize']	
 		self.templatestack['file'] = os.path.join(self.templatestack['data']['path']['path'], self.templatestack['data']['templatename'])
 		self.templatestack['numimages'] = self.templatestack['data']['numimages']
 
 		### copy templates into working directoryi
 		if os.path.isfile(self.templatestack['file']):
 			apDisplay.printColor("copying templates into running directoroy", "cyan")
-			ts = os.path.join(self.params['rundir'], "references.img")
+			ts = os.path.join(self.params['rundir'], "references.img")		
 			while os.path.isfile(ts):
 				apFile.removeStack(ts)
 			if self.templatestack['file'][-4:] == ".img" or self.templatestack['file'][-4:] == ".hed":
@@ -555,14 +516,12 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		subprocess.Popen("chmod 775 "+str(scalingbatchfile), shell=True)
 		os.chdir(self.params['rundir'])
 		apIMAGIC.executeImagicBatchFile(scalingbatchfile)
-		lf = os.path.join(self.params['rundir'], "prepareStack.log")
-		if os.path.isfile(lf):
-			logfile = open(lf)
-			loglines = logfile.readlines()
-			for line in loglines:
-				if re.search("ERROR in program", line):
-					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: prepareStack.log")
-		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-preptime), "cyan")
+		logfile = open(os.path.join(self.params['rundir'], "prepareStack.log"))
+		loglines = logfile.readlines()
+		for line in loglines:
+			if re.search("ERROR in program", line):
+				apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: prepareStack.log")
+               	apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-preptime), "cyan")
 
 		### set new boxsize, done only after scaling is complete
 		if self.params['bin'] is not None:
@@ -577,9 +536,9 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		starttime=time.time()
 		print self.params
 		print "... stack pixel size: "+str(self.params['apix'])
-		print "... stack box size: "+str(self.params['boxsize'])
+		print "... stack box size: "+str(self.params['boxsize'])	
 		apDisplay.printColor("Running IMAGIC .batch file: See multiReferenceAlignment.log file for details", "cyan")
-
+	
 		### create IMAGIC batch file
 		batchfile = self.createImagicBatchFileMRA()
 
@@ -601,7 +560,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 		### average stack
 		alignstack = os.path.join(self.params['rundir'], "alignstack.hed")
-		apStack.averageStack(alignstack)
+		apStack.averageStack(alignstack)	
 
 		### normalize particles (otherwise found problems in viewing with stackviewer)
 		emancmd = "proc2d "+alignstack+" "+alignstack+".norm.hed norm"
@@ -612,9 +571,6 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		os.rename(alignstack+".norm.img", alignstack[:-4]+".img")
 
 		### remove copied stack
-		if self.params['center'] is True:
-			while os.path.isfile(os.path.join(self.params['rundir'], "start_cent.img")):
-				apFile.removeStack(os.path.join(self.params['rundir'], "start_cent.img"))
 		while os.path.isfile(os.path.join(self.params['rundir'], "start.img")):
 			apFile.removeStack(os.path.join(self.params['rundir'], "start.img"))
 
@@ -622,8 +578,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		self.insertAlignmentRun(insert=True)
 		self.insertParticlesIntoDatabase(partparams, insert=True)
 
-
-
+	
+	
 #=====================
 #=====================
 if __name__ == '__main__':
@@ -631,5 +587,4 @@ if __name__ == '__main__':
 	imagicalignment.start()
 	imagicalignment.close()
 
-
-
+	
