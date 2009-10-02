@@ -24,7 +24,7 @@ else {
 	createTomoAlignerForm();
 }
 
-function createTomoAlignerForm($extra=false, $title='protomoaligner.py Launcher', $heading='Run Tilt Series Aligner') {
+function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $heading='Run Tilt Series Aligner') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 
@@ -64,7 +64,9 @@ function createTomoAlignerForm($extra=false, $title='protomoaligner.py Launcher'
 	$autorunname = ($alignruns) ? 'align'.($alignruns+1):'align1';
 	$runname = ($_POST['lasttiltseries']==$tiltseriesId) ? $_POST['runname']:$autorunname;
 	$description = $_POST['description'];
-
+	$protomocheck = ($_POST['alignmethod'] == 'protomo' || !($_POST['alignmethod'])) ? "CHECKED" : "";
+	$imodcheck = ($_POST['alignmethod'] == 'imod-shift') ? "CHECKED" : "";
+	// Select tilt series
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
 	$seriesselector_array2 = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId2,'tiltseriesId2'); 
@@ -122,13 +124,20 @@ function createTomoAlignerForm($extra=false, $title='protomoaligner.py Launcher'
 	echo"<P>
       <B>Alignment Description:</B><br>
       <TEXTAREA NAME='description' ROWS='2' COLS='40'>$description</TEXTAREA>
-      </TD>
+			<p>\n";
+	echo docpop('tomoalignmethod', 'Method');
+  echo "<FONT>(alignment method)</FONT>";     
+	echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='protomo' $protomocheck>\n";
+	echo "Protomo refinement<font size=-2><i>(default)</i></font>\n";
+	echo "&nbsp;<input type='radio' onClick=submit() name='alignmethod' value='imod-shift' $imodcheck>\n";
+	echo "Imod shift-only alignment\n";
+  echo "</TD>
     </tr>
     <TR>
       <TD VALIGN='TOP' CLASS='tablebg'>";       
-
-	echo "
-		<B> <CENTER>Tilt Series Alignment Params: </CENTER></B>
+	if ($protomocheck) {
+		echo "
+			<B> <CENTER>Tilt Series Alignment Params: </CENTER></B>
       <P>
       <INPUT TYPE='text' NAME='cycle' SIZE='5' VALUE='$cycle'>\n";
 		echo docpop('protomocycle','Alignment iteration');
@@ -141,7 +150,7 @@ function createTomoAlignerForm($extra=false, $title='protomoaligner.py Launcher'
 		echo docpop('protomoregion','Protomo Alignment Region');
 		echo "<FONT>(% of image length (<100))</FONT>
 		<p><br />";
-   
+	}
 	if (!$sessionname) {
 		echo "
 		<br>
@@ -179,13 +188,14 @@ function runTomoAligner() {
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 
-	$command = "protomoaligner.py ";
+	$command = "tomoaligner.py ";
 
 	$tiltseriesId=$_POST['tiltseriesId'];
 	$tiltseriesId2=$_POST['tiltseriesId2'];
 	$runname=$_POST['runname'];
 	$volume=$_POST['volume'];
 	$sessionname=$_POST['sessionname'];
+	$alignmethod = $_POST['alignmethod'];
 	$cycle=$_POST['cycle'];
 	$sample=$_POST['sample'];
 	$region=$_POST['region'];
@@ -201,12 +211,15 @@ function runTomoAligner() {
 	$tiltseriesnumber = $tiltseriesinfos[0]['number'];
 
 	$command.="--session=$sessionname ";
-	$command.="--cycle=$cycle ";
-	$command.="--sample=$sample ";
 	$command.="--tiltseriesnumber=$tiltseriesnumber ";
 	$command.="--projectid=$projectId ";
 	$command.="--runname=$runname ";
-	$command.="--region=$region ";
+	$command.="--alignmethod=$alignmethod ";
+	if ($alignmethod == 'protomo') {
+		$command.="--cycle=$cycle ";
+		$command.="--sample=$sample ";
+		$command.="--region=$region ";
+	}
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
 	if ($tiltseriesId2) {
@@ -220,7 +233,7 @@ function runTomoAligner() {
 		$password = $_SESSION['password'];
 
 		if (!($user && $password)) createTomoAlignerForm("<B>ERROR:</B> You must be logged in to submit");
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'protomoaligner',True,True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomoaligner',True,True);
 		// if errors:
 		if ($sub) createTomoAlignerForm("<b>ERROR:</b> $sub");
 
