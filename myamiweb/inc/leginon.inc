@@ -2603,6 +2603,7 @@ class leginondata {
 			." t.`REF|ImageTargetListData|list` = ".$targetlistId." "
 			."AND t.`type` LIKE CONVERT(_utf8 'acquisition' USING latin1) COLLATE "."latin1_swedish_ci "
 			."AND t.`status` LIKE CONVERT(_utf8 '".$status."' USING latin1) COLLATE " ."latin1_swedish_ci "
+			."AND t.`version` = 0 "
 			."";
 		$result = $this->mysql->getSQLResult($q);
 		if ($result) {
