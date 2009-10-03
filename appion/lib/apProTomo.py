@@ -323,14 +323,15 @@ def publish(q):
 		return q
 	return results[0]
 
-def insertProtomoParams(seriesname):
+def insertProtomoParams(seriesname,imagedata):
 	# general protmo parameters
 	protomoq = appiondata.ApProtomoParamsData()
 	protomoq['series name'] = seriesname
+	protomoq['reference'] = imagedata
 	protomodata = publish(protomoq)
 	return protomodata
 
-def insertProtomoAlignIteration(protomodata, params, refinedict):
+def insertAlignIteration(alignrundata, protomodata, params, refinedict):
 	# protmoalign refinement cycle parameters
 	refineparamsq = appiondata.ApProtomoRefinementParamsData()
 	refineparamsq['protomo'] = protomodata
@@ -351,11 +352,36 @@ def insertProtomoAlignIteration(protomodata, params, refinedict):
 			goodrefineparamsdata = None
 	# protomoaligner parameters
 	alignerq = appiondata.ApProtomoAlignerParamsData()
+	alignerq['alignrun'] = alignrundata
 	alignerq['protomo'] = protomodata
 	alignerq['refine cycle'] = refineparamsdata
 	alignerq['good cycle'] = goodrefineparamsdata
 	alignerq['good start'] = params['goodstart']
 	alignerq['good end'] = params['goodend']
 	alignerq['description'] = params['description']
-	aligerdata = publish(alignerq)
-	return refineparamsdata
+	alignerdata = publish(alignerq)
+	return alignerdata
+
+def insertModel(alignerdata, results):
+	# general protmo parameters
+	q = appiondata.ApProtomoModelData()
+	q['aligner'] = alignerdata
+	q['psi'] = results[-2]['psi']
+	q['theta'] = results[-2]['theta']
+	q['phi'] = results[-2]['phi']
+	q['azimuth'] = results[-2]['azimuth']
+	modeldata = publish(q)
+	return modeldata
+
+def insertTiltAlignment(alignerdata,imagedata,number,result,center=None):
+	if not center:
+		imgshape = imagedata['image'].shape
+		center = {'x':imgshape[1]/2,'y':imgshape[0]/2}
+	q = appiondata.ApProtomoAlignmentData()
+	q['aligner'] = alignerdata
+	q['image'] = imagedata
+	q['number'] = number
+	q['rotation'] = result['rotation']
+	q['shift'] = {'x':result['x'] - center['x'], 'y':result['y'] - center['y']}
+	aligndata = publish(q)
+	return aligndata
