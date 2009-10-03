@@ -55,7 +55,7 @@ class protomoAligner(appionScript.AppionScript):
 		self.parser.add_option("--othertilt", dest="othertilt", type="int",
 			help="2nd tilt group series number if needed", metavar="int")
 		self.alignmethods = ( "imod-shift", "protomo" )
-		self.parser.add_option("--alignmethod", dest="xmethod",
+		self.parser.add_option("--alignmethod", dest="alignmethod",
 			help="aligning method, e.g. --alignmethod=protomo or imod-shift", metavar="Method",
 			type="choice", choices=self.alignmethods, default="protomo" )
 		self.parser.add_option("--cycle", dest="cycle", default=1, type="int",
@@ -154,15 +154,15 @@ class protomoAligner(appionScript.AppionScript):
 		description = self.params['description']
 		alignsample = self.params['sample']
 		cycle = self.params['cycle']
-		alignmethod = self.params['xmethod']
+		alignmethod = self.params['alignmethod']
 		apDisplay.printMsg("getting imagelist")
 		imagelist = apTomo.getImageList(tiltdatalist)
 		tilts,ordered_imagelist,ordered_mrc_files,refimg = apTomo.orderImageList(imagelist)
 		for file in ordered_mrc_files:
 			apImage.shiftMRCStartToZero(file)
 		apDisplay.printMsg("getting pixelsize")
-		pixelsize = apTomo.getTomoPixelSize(imagelist[refimg])
-		imgshape = apTomo.getTomoImageShape(imagelist[refimg])
+		pixelsize = apTomo.getTomoPixelSize(ordered_imagelist[refimg])
+		imgshape = apTomo.getTomoImageShape(ordered_imagelist[refimg])
 		center = {'x':imgshape[1]/2,'y':imgshape[0]/2}
 		processdir = os.path.abspath(self.params['rundir'])
 		imodseriesname = apTomo.getFilename(tiltdatalist)
@@ -172,27 +172,27 @@ class protomoAligner(appionScript.AppionScript):
 		stackname = imodseriesname+".st"
 		apTomo.writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files)
 		apImod.writeRawtltFile(stackdir,imodseriesname,tilts)
+		leginonxcorrlist = []
+		for tiltdata in tiltdatalist:
+			settingsdata = apTomo.getTomographySettings(sessiondata,tiltdata)
+			leginonxcorrlist.append(settingsdata)
 		if alignmethod == 'protomo':
 			self.params['aligndir'],self.params['imagedir'] =	apProTomo.setProtomoDir(self.params['rundir'])
 			aligndir = self.params['aligndir']
 			# Link images into rundir/raw
 			rawimagenames = apProTomo.linkImageFiles(ordered_imagelist,self.params['imagedir'])
 			tltfile = os.path.join(aligndir,seriesname+'-%02d-itr.tlt' % (cycle,))
-			leginonxcorrlist = []
 			if cycle <= 1:
 				# If first run, get initial shift alignment from leginon tiltcorrelator
-				for tiltseriesdata in tiltdatalist:
-					leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltseriesdata)
-					leginonxcorrlist.append(leginonxcorrdata)
+				# Assume all tiltdata have the same tomography settings
 				shifts = apTomo.getGlobalShift(ordered_imagelist, 1, refimg)
 				apProTomo.writeInitialProtomoTltFile(aligndir, seriesname,tilts, rawimagenames,shifts,center,refimg)
 				refineparamdict=apProTomo.createRefineDefaults(refimg,
 						os.path.join(processdir,'raw'),os.path.join(processdir,'out'))
 			else:
 				lasttltfile = os.path.join(aligndir,seriesname+'-%02d-fitted.tlt' % (cycle-1,))
-				for tiltseriesdata in tiltdatalist:
-					leginonxcorrlist.append(None)
 				if not self.params['goodcycle']:
+					#default uses last cycle
 					shutil.copy(lasttltfile,tltfile)
 				else:
 					if not (self.params['goodstart'] or self.params['goodend']):
@@ -226,10 +226,7 @@ class protomoAligner(appionScript.AppionScript):
 		elif alignmethod == 'imod-shift':
 			# Correlation by Coarse correlation in IMOD
 			aligndir = processdir
-			imodxcorrlist = []
-			for tiltseriesdata in tiltdatalist:
-				imodxcorrdata = apImod.coarseAlignment(stackdir, processdir, imodseriesname, commit)
-				imodxcorrlist.append(imodxcorrdata)
+			imodxcorrdata = apImod.coarseAlignment(stackdir, processdir, imodseriesname, commit)
 			# Global Transformation
 			gtransforms = apImod.convertToGlobalAlignment(processdir, imodseriesname)
 		# Create Aligned Stack for record
@@ -237,18 +234,26 @@ class protomoAligner(appionScript.AppionScript):
 		apImod.createAlignedStack(stackdir, aligndir, imodseriesname,bin)
 		if alignmethod == 'protomo':
 			os.rename(imodseriesname+'.ali',imodseriesname+'-%02d.ali' % cycle)
+		# commit to database
 		if commit:
 			if alignmethod == 'protomo':
-				protomodata = apProTomo.insertProtomoParams(seriesname)
-				apProTomo.insertProtomoAlignIteration(protomodata, self.params, refineparamdict)
-			alignlist = []
+				# parameters
+				protomodata = apProTomo.insertProtomoParams(seriesname,ordered_imagelist[refimg])
+				alignrun = apTomo.insertTomoAlignmentRun(sessiondata,leginonxcorrlist[0],None,protomodata,1,self.params['runname'],self.params['rundir'],self.params['description'])
+				alignerdata = apProTomo.insertAlignIteration(alignrun, protomodata, self.params, refineparamdict)
+				#results
+				resulttltfile = os.path.join(aligndir,seriesname+'-%02d-fitted.tlt' % (cycle,))
+				resulttltparams = apProTomo.parseTilt(resulttltfile)
+				if resulttltparams:
+					modeldata = apProTomo.insertModel(alignerdata, resulttltparams)
+					for i,imagedata in enumerate(ordered_imagelist):
+						apProTomo.insertTiltAlignment(alignerdata,imagedata,i,resulttltparams[0][i],center)
+			else:
+				alignrun = apTomo.insertTomoAlignmentRun(sessiondata,None,imodxcorrdata,None,1,self.params['runname'],self.params['rundir'],self.params['description'])
+			# multiple tilt series in one alignrun
 			for i in range(0,len(tiltdatalist)):
-				if alignmethod == 'protomo':
-					alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltdatalist[i],leginonxcorrlist[i],None,protomodata,1,self.params['runname'],self.params['rundir'],self.params['description'])
-				else:
-					alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltdatalist[i],None,imodxcorrlist[i],None,1,self.params['runname'],self.params['rundir'],self.params['description'])
-				alignlist.append(alignrun)
-#=====================
+				apTomo.insertTiltsInAlignRun(alignrun, tiltdatalist[i],leginonxcorrlist[i])
+
 #=====================
 if __name__ == '__main__':
 	app = protomoAligner()
