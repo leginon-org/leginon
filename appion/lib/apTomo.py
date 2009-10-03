@@ -323,9 +323,20 @@ def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
 		return paramsq
 	return results[0]
 
-def insertTomoAlignmentRun(sessiondata,tiltdata,leginoncorrdata,imodxcorrdata,protomorundata,bin,name,path,description=None):
+def	insertTiltsInAlignRun(alignrundata,tiltdata,settingsdata):
+	q = appiondata.ApTiltsInAlignRunData()
+	q['alignrun'] = alignrundata
+	q['tiltseries'] = tiltdata
+	q['settings'] = settingsdata
+	results = q.query()
+	if not results:
+		q.insert()
+		return q
+	return results[0]
+
+def insertTomoAlignmentRun(sessiondata,leginoncorrdata,imodxcorrdata,protomorundata,bin,name,path,description=None):
 	pathq = appiondata.ApPathData(path=os.path.abspath(path))
-	qalign = appiondata.ApTomoAlignmentRunData(session=sessiondata,tiltseries=tiltdata,
+	qalign = appiondata.ApTomoAlignmentRunData(session=sessiondata,
 			bin=bin,name=name, path=pathq)
 	if leginoncorrdata:
 		qalign['coarseLeginonParams'] = leginoncorrdata
