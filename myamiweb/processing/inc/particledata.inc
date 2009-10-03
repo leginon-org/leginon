@@ -158,8 +158,10 @@ class particledata {
 	function getTomoAlignmentRunsFromSession($sessionId,$showHidden=False){
 		if (!$this->mysql->SQLTableExists("ApTomoAlignmentRunData")) return;
 		$q =  "SELECT a.`DEF_id` as `alignrunid`, "
-			."a.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries "
+			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries "
 			."FROM `ApTomoAlignmentRunData` a "
+			."LEFT JOIN `ApTiltsInAlignRunData` t "
+			."ON t.`REF|ApTomoAlignmentRunData|alignrun` = a.`DEF_id` "
 			."WHERE a.`REF|leginondata|SessionData|session` = " .$sessionId." ";
 		$fields = $this->mysql->getFields('ApTomoAlignmentRunData');
 		if (!$showHidden && in_array('hidden',$fields))
@@ -196,7 +198,7 @@ class particledata {
 			."a.bin as bin, "
 			."path.`path`, "
 			."tilt.`number` as `tilt number`, "
-			."a.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
+			."tia.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
 			."a.`REF|ApImodXcorrParamsData|coarseImodParams` as imodid, "
 			."a.`REF|leginondata|TomographySettingsData|coarseLeginonParams` as xleginonid, "
 			."a.`REF|ApProtomoParamsData|fineProtomoParams` as protomoid, "
@@ -210,7 +212,9 @@ class particledata {
 			."ON a.`REF|ApPathData|path` = path.`DEF_id` "
 			."LEFT JOIN `ApImodXcorrParamsData` imod "
 			."ON a.`REF|ApImodXcorrParamsData|coarseImodParams` = imod.`DEF_id` "
-			."LEFT JOIN ".DB.".`TiltSeriesData` tilt ON a.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
+			."LEFT JOIN `ApTiltsInAlignRunData` tia "
+			."ON tia.`REF|ApTomoAlignmentRunData|alignrun` = a.`DEF_id` "
+			."LEFT JOIN ".DB.".`TiltSeriesData` tilt ON tia.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
 			."WHERE a.`DEF_id` = " .$alignrunId;
 		list($r) = $this->mysql->getSQLResult($q);
 		if ($r['protomoid']) {
