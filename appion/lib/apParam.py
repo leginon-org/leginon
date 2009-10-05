@@ -435,6 +435,53 @@ def getExecPath(exefile, die=False):
 		apDisplay.printError("Cound not find "+exefile+" in your PATH")
 	return path
 
+#=====================
+def runCmd(cmd, package, verbose=False, showcmd=True, logfile=None, fail=False):
+	"""
+	executes a command from any processing package in a controlled fashion
+	"""
+	waited = False
+	if showcmd is True:
+		sys.stderr.write(apDisplay.colorString(str(package)+": ","magenta")+cmd+"\n")
+	t0 = time.time()
+	try:
+		if logfile is not None:
+			logf = open(logfile, 'a')
+			proc = subprocess.Popen(cmd, shell=True, 
+				stdout=logf, stderr=logf)
+		elif verbose is False:
+			devnull = open('/dev/null', 'w')
+			proc = subprocess.Popen(cmd, shell=True, 
+				stdout=devnull, stderr=devnull)
+		else:
+			proc = subprocess.Popen(cmd, shell=True)
+		if verbose is True:
+			out, err = proc.communicate()
+			if out is not None and err is not None:
+				print "error", out, err
+		else:
+			out, err = proc.communicate()
+			### continuous check
+			waittime = 2.0
+			while proc.poll() is None:
+				if waittime > 10:
+					waited = True
+					sys.stderr.write(".")
+				waittime *= 1.1
+				time.sleep(waittime)
+	except:
+		apDisplay.printWarning("could not run command: "+cmd)
+		raise
+	tdiff = time.time() - t0
+	if tdiff > 20:
+		apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
+	elif waited is True:
+		print ""
+
+		
+
+
+
 
 
 
