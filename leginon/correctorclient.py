@@ -28,7 +28,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		self.correctCameraImageData(imagedata, channel)
 		return imagedata
 
-	def researchCorrectorImageData(self, type, scopedata, cameradata, channel, readimages=True):
+	def researchCorrectorImageData(self, type, scopedata, cameradata, channel):
 		if type == 'dark':
 			imagetemp = leginondata.DarkImageData()
 		elif type == 'bright':
@@ -48,7 +48,7 @@ class CorrectorClient(cameraclient.CameraClient):
 			imagetemp['scope'][key] = scopedata[key]
 		imagetemp['channel'] = channel
 		try:
-			ref = imagetemp.query(results=1, readimages=readimages)
+			ref = imagetemp.query(results=1)
 		except Exception, e:
 			self.logger.warning('Loading reference image failed: %s' % e)
 			ref = None
@@ -99,7 +99,7 @@ class CorrectorClient(cameraclient.CameraClient):
 
 		### do not need this since all nodes share same cache, but
 		### need this again if node on another launcher need correction images
-		#newref = self.researchCorrectorImageData(type, scopedata, cameradata, channel, readimages=False)
+		#newref = self.researchCorrectorImageData(type, scopedata, cameradata, channel)
 		#if newref.dbid != ref_cache_id[key]:
 		#	ref_cache[key] = newref
 		#	ref_cache_id[key] = newref.dbid
@@ -134,8 +134,6 @@ class CorrectorClient(cameraclient.CameraClient):
 		scopedata = imagedata['scope']
 		dark = self.retrieveCorrectorImageData('dark', scopedata, cameradata, channel)
 		norm = self.retrieveCorrectorImageData('norm', scopedata, cameradata, channel)
-		print 'DARK', id(dark)
-		print 'NORM', id(norm)
 		if dark is None or norm is None:
 			self.logger.warning('Cannot find references, image will not be normalized')
 			return
