@@ -202,6 +202,14 @@ class PresetsClient(object):
 		presetlist = self.getPresetsFromDB()
 		return presetlist.keys()
 
+	def correctorImageExists(self, pname, type, channel):
+		preset = self.getPresetFromDB(pname)
+		scope = leginondata.ScopeEMData()
+		scope.friendly_update(preset)
+		cam = leginondata.CameraEMData()
+		cam.friendly_update(preset)
+		return self.node.correctorImageExists(type, scope, cam, channel)
+
 class PresetsManager(node.Node):
 	panelclass = gui.wx.PresetsManager.Panel
 	settingsclass = leginondata.PresetsManagerSettingsData

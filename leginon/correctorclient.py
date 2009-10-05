@@ -50,12 +50,11 @@ class CorrectorClient(cameraclient.CameraClient):
 		try:
 			ref = imagetemp.query(results=1)
 		except Exception, e:
-			self.logger.warning('Loading reference image failed: %s' % e)
+			self.logger.warning('Reference image query failed: %s' % e)
 			ref = None
 
 		if ref:
 			ref = ref[0]
-			self.logger.info('Reference image loaded: %s' % (ref['filename'],))
 
 		return ref
 
@@ -106,6 +105,13 @@ class CorrectorClient(cameraclient.CameraClient):
 		#	return newref
 		#else:
 		#	return cachedim
+
+	def correctorImageExists(self, type, scopedata, cameradata, channel):
+		ref = self.researchCorrectorImageData(type, scopedata, cameradata, channel)
+		fileref = ref.special_getitem('image', dereference=False)
+		if isinstance(fileref, numpy.ndarray):
+			return True
+		return fileref.exists()
 
 	def retrieveCorrectorImageData(self, type, scopedata, cameradata, channel):
 		key = self.makeCorrectorKey(type, scopedata, cameradata, channel)

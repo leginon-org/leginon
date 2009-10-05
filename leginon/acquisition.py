@@ -199,6 +199,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.start()
 
+	def checkSettings(self, settings):
+		problems = []
+		presetnames = settings['preset order']
+		for presetname in presetnames:
+			try:
+				self.presetsclient.getPresetFromDB(presetname)
+			except:
+				problems.append(('error','Preset "%s" does not exist.  Create it, or import from a previous session' % (presetname,)))
+				continue
+			for type in ('dark', 'norm'):
+				for channel in (0,1):
+					exists = self.presetsclient.correctorImageExists(presetname, type, channel)
+					if not exists:
+						problems.append(('error','Preset "%s" Missing %s CCD image, channel %s' % (presetname, type, channel)))
+
+		return problems
+
 	def onPresetPublished(self, evt):
 		evt = gui.wx.Presets.NewPresetEvent()
 		self.panel.GetEventHandler().AddPendingEvent(evt)

@@ -148,6 +148,18 @@ class Node(correctorclient.CorrectorClient):
 		else:
 			sd['isdefault'] = isdefault
 		self.publish(sd, database=True, dbforce=True)
+		self._checkSettings(sd)
+
+	def _checkSettings(self, settings):
+		if hasattr(self, 'checkSettings'):
+			messages = self.checkSettings(settings)
+		else:
+			messages = []
+		for message in messages:
+			level = message[0]
+			text = message[1]
+			func = getattr(self.logger, level)
+			func(text)
 
 	def getSettings(self):
 		return self.settings
