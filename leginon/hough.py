@@ -5,9 +5,9 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import Numeric
-import LinearAlgebra
-import FFT
+import numpy
+import scipy.linalg
+import scipy.fftpack
 
 def gradient(image):
 	'''
@@ -15,7 +15,7 @@ def gradient(image):
 	'''
 	m, n = image.shape
 
-	J = Numeric.zeros((m+2, n+2), 'd')
+	J = numpy.zeros((m+2, n+2), numpy.float)
 	J[0, 0] = image[0, 0]
 	J[0, 1:n + 1] = image[0]
 	J[0, n + 1] = image[0, n - 1]
@@ -26,19 +26,19 @@ def gradient(image):
 	J[m + 1, 1:n + 1] = image[m - 1]
 	J[m + 1, n + 1] = image[m - 1, n - 1]
 
-	Ix = Numeric.zeros(J.shape, 'd')
+	Ix = numpy.zeros(J.shape, numpy.float)
 	Ix[0:m+2,1:n+1] = (J[0:m+2,2:n+2] - J[0:m+2,0:n]) * 0.5
 	Ix[0:m+2, 0] = Ix[0:m+2, 1]
 	Ix[0:m+2, n+1] = Ix[0:m+2, n]
 
-	Iy = Numeric.zeros(J.shape, 'd')
+	Iy = numpy.zeros(J.shape, numpy.float)
 	Iy[1:m+1,0:n+2] = (J[2:m+2,0:n+2] - J[0:m,0:n+2]) * 0.5
 	Iy[0, 0:n+2] = Iy[1, 0:n+2]
 	Iy[m+1, 0:n+2] = Iy[m, 0:n+2]
 
-	return Numeric.sqrt(Ix*Ix + Iy*Iy)
+	return numpy.sqrt(Ix*Ix + Iy*Iy)
 
-sqrtof2 = Numeric.sqrt(2)
+sqrtof2 = numpy.sqrt(2)
 
 def bresenhamCirclePoints(radius):
 	'''
@@ -48,7 +48,7 @@ def bresenhamCirclePoints(radius):
 	pointlist = []
 	i = radius
 	d = 0.25 - radius
-	for j in range(int(Numeric.ceil(radius/sqrtof2))):
+	for j in range(int(numpy.ceil(radius/sqrtof2))):
 		for nj in (radius - j, j + radius - 1):
 			for ni in (radius - i, i + radius - 1):
 				pointlist.append((nj, ni))
@@ -60,57 +60,57 @@ def bresenhamCirclePoints(radius):
 	return pointlist 
 
 def period(image):
-	fftimage = Numeric.zeros(image.shape, 'd')
+	fftimage = numpy.zeros(image.shape, numpy.float)
 	m = image.shape[0]
 	for j in range(image.shape[1]):
-		fft = FFT.fft(image[:, j]).real
+		fft = scipy.fftpack.fft(image[:, j]).real
 		fftimage[:m/2, j] = fft[m/2 + 1:]
 		fftimage[m/2 + 1:, j] = fft[:m/2]
 	return fftimage
 
 def findPeak(image):
 	for n in range(image.shape[1]):
-		a = Numeric.zeros((image.shape[0], 3))
+		a = numpy.zeros((image.shape[0], 3))
 		b = image[:, n]
-		a[:, 0] = Numeric.arrayrange(image.shape[0])
+		a[:, 0] = numpy.arange(image.shape[0])
 		a[:, 0] **= 2
-		a[:, 1] = Numeric.arrayrange(image.shape[0])
-		a[:, 2] = Numeric.ones(image.shape[0])
-		fit = LinearAlgebra.linear_least_squares(a, b)
+		a[:, 1] = numpy.arrayrange(image.shape[0])
+		a[:, 2] = numpy.ones(image.shape[0])
+		fit = scipy.linalg.lstsq(a, b)
 		c = fit[0]
 		row = -c[1] / (2.0 * c[0])
 
 def houghLine(image, threshold):
 	m, n = image.shape
 
-	r = int(Numeric.ceil(Numeric.sqrt(((m/2.0)**2 + (n/2.0)**2))))
-	houghimage = Numeric.zeros((r, 360, 5))
+	r = int(numpy.ceil(numpy.sqrt(((m/2.0)**2 + (n/2.0)**2))))
+	houghimage = numpy.zeros((r, 360, 5))
 
 	houghimage[:,:,1] = houghimage[:,:,1] + m
 	houghimage[:,:,2] = houghimage[:,:,2] + n
 
 	offset = r/2
 
-	hm = int(Numeric.ceil(m/2.0))
-	i = Numeric.arrayrange(-hm, hm)
+	hm = int(numpy.ceil(m/2.0))
+	i = numpy.arange(-hm, hm)
 	i.shape = (m, 1)
-	hn = int(Numeric.ceil(n/2.0))
-	j = Numeric.arrayrange(-hn, hn)
+	hn = int(numpy.ceil(n/2.0))
+	j = numpy.arange(-hn, hn)
 	j.shape = (n, 1)
-	conversion = Numeric.pi*2/houghimage.shape[1]
-	cos = Numeric.cos(Numeric.arrayrange(houghimage.shape[1])*conversion)
+	conversion = numpy.pi*2/houghimage.shape[1]
+	cos = numpy.cos(numpy.arange(houghimage.shape[1])*conversion)
 	cos.shape = (1, houghimage.shape[1])
-	sin = Numeric.sin(Numeric.arrayrange(houghimage.shape[1])*conversion)
+	sin = numpy.sin(numpy.arange(houghimage.shape[1])*conversion)
 	sin.shape = (1, houghimage.shape[1])
 
-	icos = Numeric.matrixmultiply(i, cos)
-	jsin = Numeric.matrixmultiply(j, sin)
+	icos = numpy.matrixmultiply(i, cos)
+	jsin = numpy.matrixmultiply(j, sin)
 
-#	i = Numeric.transpose(Numeric.array([Numeric.arrayrange(n)]*m)).astype('d')
-#	j = Numeric.array([Numeric.arrayrange(m)]*n).astype('d')
+#	i = numpy.transpose(numpy.array([numpy.arange(n)]*m)).astype(numpy.float)
+#	j = numpy.array([numpy.arange(m)]*n).astype(numpy.float)
 #
-#	i *= Numeric.cos(theta)
-#	j *= Numeric.sin(theta)
+#	i *= numpy.cos(theta)
+#	j *= numpy.sin(theta)
 #
 #	r = i + j + offset
 
@@ -135,7 +135,7 @@ def houghLine(image, threshold):
 	lengththreshold = 768
 	for r in range(houghimage.shape[0]):
 		for theta in range(houghimage.shape[1]):
-			m = Numeric.sqrt((houghimage[r, theta, 3] - houghimage[r, theta, 1])**2 +
+			m = numpy.sqrt((houghimage[r, theta, 3] - houghimage[r, theta, 1])**2 +
 										(houghimage[r, theta, 4] - houghimage[r, theta, 2])**2)
 			if m < lengththreshold:
 				houghimage[r, theta, 0] = 0
@@ -158,12 +158,12 @@ def houghCircle(image, threshold, radiusrange=None):
 	# give the transform accumulator a buffer since a shifted copy will be added
 	# inplace. this is probably not the best way if the radius is large
 	border = max(radiusrange)
-	houghimage = Numeric.zeros((m + border*2, n + border*2), Numeric.Int16)
+	houghimage = numpy.zeros((m + border*2, n + border*2), numpy.int16)
 
 	# threshold the image, making it a bitmask of above/below threshold
 	thresholdimage = image >= threshold
 	# convert to type to be added to the accumulator
-	thresholdimage = thresholdimage.astype(Numeric.Int16)
+	thresholdimage = thresholdimage.astype(numpy.int16)
 
 	# make a list of all points (offsets) for circles with radii in range
 	shifts = []
@@ -208,13 +208,13 @@ if __name__=='__main__':
 	t.reset()
 
 	houghcircleimage = houghCircle(edgeimage, 300, [28,28])
-	houghcircleimage = Numeric.clip(houghcircleimage, 100, 30000)
+	houghcircleimage = numpy.clip(houghcircleimage, 100, 30000)
 	houghcircleimage = houghcircleimage - 100
 	t.reset()
 
-	mask = houghcircleimage #Numeric.ones(houghcircleimage.shape)
+	mask = houghcircleimage #numpy.ones(houghcircleimage.shape)
 	blobs = imagefun.find_blobs(houghcircleimage, mask, maxblobsize=256)
-	blobimage = Numeric.zeros(houghcircleimage.shape)
+	blobimage = numpy.zeros(houghcircleimage.shape)
 	for blob in blobs:
 		if blob.stats['n'] > 16:
 			i, j = blob.stats['center']
@@ -239,7 +239,7 @@ if __name__=='__main__':
 			
 	t.reset()
 #	fftimage = period(houghlineimage)
-#	fftimage = Numeric.clip(fftimage, 1000, 100000)
+#	fftimage = numpy.clip(fftimage, 1000, 100000)
 
 	t.stop()
 
