@@ -104,6 +104,7 @@ class Proxy(object):
 			instrumentdata['hostname'] = self.tems[name].Hostname
 		except:
 			raise RuntimeError('unable to get TEM hostname')
+		instrumentdata = instrumentdata.query(results=1)[0]
 		return instrumentdata
 
 	def getMagnifications(self, name=None):
@@ -152,6 +153,7 @@ class Proxy(object):
 			instrumentdata['hostname'] = self.ccdcameras[name].Hostname
 		except:
 			raise RuntimeError('unable to get TEM hostname')
+		instrumentdata = instrumentdata.query(results=1)[0]
 		return instrumentdata
 
 	def setTEM(self, name):
