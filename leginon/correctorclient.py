@@ -199,9 +199,12 @@ class CorrectorClient(cameraclient.CameraClient):
 		if plan is not None:
 			self.fixBadPixels(imagedata['image'], plan)
 
-		imagedata['image'] = numpy.clip(imagedata['image'], 0, 2**16)
+		pixelmax = imagedata['camera']['ccdcamera']['pixelmax']
+		print 'PIXELMAX', pixelmax
+		if pixelmax is None:
+			pixelmax = 2**16
+		imagedata['image'] = numpy.clip(imagedata['image'], 0, pixelmax)
 		'''
-
 		if despike:
 			self.logger.debug('Despiking...')
 			nsize = despikesize
