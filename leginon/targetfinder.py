@@ -54,6 +54,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 									+ targethandler.TargetWaitHandler.eventinputs
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs \
 									+ targethandler.TargetWaitHandler.eventoutputs
+	targetnames = ['acquisition','focus','preview','reference','done']
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation,
 																				**kwargs)
@@ -66,7 +67,6 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			'modeled stage position':
 												calibrationclient.ModeledStageCalibrationClient(self)
 		}
-		self.targetnames = ['Blobs', 'acquisition','focus','preview','reference','done']
 
 	def readImage(self, filename):
 		imagedata = None

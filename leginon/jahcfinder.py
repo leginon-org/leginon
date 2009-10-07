@@ -71,6 +71,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'focus max stdev thickness': 0.5,
 	})
 	extendtypes = ['off', 'full', '3x3']
+	targetnames = targetfinder.TargetFinder.targetnames + ['Blobs']
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.hf = jahcfinderback.HoleFinder()
