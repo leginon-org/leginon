@@ -200,7 +200,6 @@ class CorrectorClient(cameraclient.CameraClient):
 			self.fixBadPixels(imagedata['image'], plan)
 
 		pixelmax = imagedata['camera']['ccdcamera']['pixelmax']
-		print 'PIXELMAX', pixelmax
 		if pixelmax is None:
 			pixelmax = 2**16
 		imagedata['image'] = numpy.clip(imagedata['image'], 0, pixelmax)
