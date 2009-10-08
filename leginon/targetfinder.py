@@ -317,7 +317,8 @@ class ClickTargetFinder(TargetFinder):
 	def findTargets(self, imdata, targetlist):
 		# display image
 		self.setImage(imdata['image'], 'Image')
-		self.handlePickedTargets(imdata,targetlist)
+		self.waitForUserCheck()
+		self.processPreviewTargets(imdata, targetlist)
 		self.panel.targetsSubmitted()
 		self.setStatus('processing')
 		self.logger.info('Publishing targets...')
@@ -327,9 +328,6 @@ class ClickTargetFinder(TargetFinder):
 			else:
 				self.publishTargets(imdata, i, targetlist)
 		self.setStatus('idle')
-
-	def handlePickedTargets(self,imdata,targetlist):
-		pass
 
 	def publishReferenceTarget(self, image_data):
 		try:
