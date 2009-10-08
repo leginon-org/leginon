@@ -6,9 +6,9 @@ import sys
 import re
 import math
 import time
-import subprocess
+import glob
 import numpy
-import socket
+import subprocess
 #appion
 import appionLoop2
 import appiondata
@@ -113,13 +113,6 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			+ " -r " + str(self.params['rotblur'])
 			+ "\n" )
 
-		### hate to do this but have to, MATLAB's bad fftw3 library gets linked otherwise
-		hostname = socket.gethostname()
-		try:
-			user = os.getlogin()
-		except:
-			user = None
-
 		### run ace2
 		apDisplay.printMsg("running ace2 at "+time.asctime())
 		apDisplay.printColor(commandline, "purple")
@@ -208,21 +201,45 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			apDisplay.printWarning("bad amplitude contrast, not committing values to database")
 			self.badprocess = True
 
+		if self.ctfvalues['confidence'] < 0.2:
+			apDisplay.printWarning("bad confidence value, not committing values to database")
+			self.badprocess = True
+
 		## create power spectra jpeg
 		mrcfile = imgdata['filename']+".mrc.edge.mrc"
 		if os.path.isfile(mrcfile):
 			jpegfile = os.path.join(self.powerspecdir, imgdata['filename']+".jpg")
 			ps = apImage.mrcToArray(mrcfile,msg=False)
+			c = numpy.array(ps.shape)/2.0
+			ps[c[0]-0,c[1]-0] = ps.mean()
+			ps[c[0]-1,c[1]-0] = ps.mean()
+			ps[c[0]-0,c[1]-1] = ps.mean()
+			ps[c[0]-1,c[1]-1] = ps.mean()
+			#print "%.3f -- %.3f -- %.3f"%(ps.min(), ps.mean(), ps.max())
+			ps = numpy.log(ps+1.0)
 			ps = (ps-ps.mean())/ps.std()
 			cutoff = -2.0*ps.min()
-			ps = numpy.where(ps < cutoff, ps, cutoff)
+			ps = numpy.where(ps > cutoff, cutoff, ps)
+			cutoff = ps.mean()
+			ps = numpy.where(ps < cutoff, cutoff, ps)
+			#print "%.3f -- %.3f -- %.3f"%(ps.min(), ps.mean(), ps.max())
 			apImage.arrayToJpeg(ps, jpegfile,msg=False)
 			apFile.removeFile(mrcfile)
+		otherfiles = glob.glob(imgdata['filename']+".*.txt")
+
+		### remove extra debugging files
+		for filename in otherfiles:
+			if filename[-9:] == ".norm.txt":
+				continue
+			elif filename[-8:] == ".ctf.txt":
+				continue
+			else:
+				apFile.removeFile(filename)
+
 		if maskhighpass and os.path.isfile(ace2inputpath):
 			apFile.removeFile(ace2inputpath)
 
 		#print self.ctfvalues
-
 		return
 
 	#======================
