@@ -328,6 +328,8 @@ class ClickTargetFinder(TargetFinder):
 				self.publishTargets(imdata, i, targetlist)
 		self.setStatus('idle')
 
+	def handlePickedTargets(self,imdata,targetlist):
+		pass
 
 	def publishReferenceTarget(self, image_data):
 		try:
