@@ -478,9 +478,9 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("YES\n")
 		f.write("ordered"+str(self.params['itn'])+"\n")
 		f.write("ANGREC_HEADER_VALUES\n")
-		f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"\n")
-		f.write("rep"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"\n")
-		f.write("err"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"\n")
+		f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
+		f.write("rep"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
+		f.write("err"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
 		f.write("NO\n")
 		f.write(str(self.params['ham_win'])+"\n")
 		f.write(str(self.params['object_size'])+"\n")
@@ -498,7 +498,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("5\n")
 		f.write("EOF\n")
 
-		### build another 3d, this time from the orderes, sorted, and aligned class averages
+		### build another 3d, this time from the ordered, sorted, and aligned class averages
 		if self.params['nproc'] > 1:
 			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 				" -x IMAGIC_BATCH  /usr/local/IMAGIC/threed/true3d.e_mpi <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
