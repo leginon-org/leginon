@@ -91,7 +91,7 @@ if ($showncycles) {
 	$html .= "<a href='runTomoAligner.php?expId=".$expId."&lastaId=".$t['alignerid']."'><b>[Set up Next Aligner Cycle]</b></a>";
 	echo $html;
 } else {
-	$html = "<p>no tilt series alignment available</p>";
+	$html = "<p>no alignment information available</p>";
 	echo $html;
 }
 echo $particle->displayHidingOption($expId,$allcycles,$showncycles,$showhidden);
