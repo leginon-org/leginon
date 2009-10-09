@@ -236,11 +236,13 @@ class particledata {
 		return $r;
 	}
 
-	function getProtomoAlignerInfoFromAlignmentRun($alignid,$hide_old=True) {
+	function getProtomoAlignerInfoFromAlignmentRun($alignid,$showiHidden=false) {
 		$q = " SELECT a.`DEF_id` as alignerid, "
-			." a.`REF|ApProtomoRefinementParamsData|refine cycle` as `refine cycle`, "
-			." a.`REF|ApProtomoRefinementParamsData|good cycle` as `good cycle`, "
+			." a.`REF|ApProtomoRefinementParamsData|refine cycle` as `cycleid`, "
+			." a.`REF|ApProtomoRefinementParamsData|good cycle` as `goodid`, "
 			." p.`series name`, "
+			." f.`cycle` as `refine cycle`, "
+			." g.`cycle` as `good cycle`, "
 			." f.`alismp` as `align sampling`, "
 			." f.`SUBD|alibox|x` as `align box x`, "
 			." f.`SUBD|alibox|y` as `align box y`, "
@@ -249,19 +251,53 @@ class particledata {
 			."FROM `ApProtomoAlignerParamsData` a "
 			."LEFT JOIN `ApProtomoRefinementParamsData` f "
 			."ON a.`REF|ApProtomoRefinementParamsData|refine cycle` = f.`DEF_id` "
+			."LEFT JOIN `ApProtomoRefinementParamsData` g "
+			."ON a.`REF|ApProtomoRefinementParamsData|good cycle` = g.`DEF_id` "
 			."LEFT JOIN `ApProtomoParamsData` p "
 			."ON a.`REF|ApProtomoParamsData|protomo` = p.`DEF_id` "
 			."LEFT JOIN `ApTomoAlignmentRunData` r "
 			."ON r.`REF|ApProtomoParamsData|fineProtomoParams` = p.`DEF_id` "
 			."WHERE r.`DEF_id`=".$alignid." ";
-		if ($hide_old) {
-			$q .= "GROUP BY a.`REF|ApProtomoRefinementParamsData|refine cycle` ";
+		if (!$showHidden) {
+			$q .= " AND ( a.`hidden` = 0 OR a.`hidden` IS NULL ) ";
 		}
-			$q .= "ORDER BY a.`DEF_timestamp` ";
+			$q .= "ORDER BY f.`cycle` ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
 
+	function getProtomoAlignmentInfo($alignerid) {
+		$q = " SELECT m.`DEF_id` as modelid, "
+			." a.`REF|ApProtomoAlignerParamsData|aligner` as `alignerid`, "
+			." a.`REF|leginondata|AcquisitionImageData|image` as `image`, "
+			." a.`number`, "
+			." a.`rotation`, "
+			." a.`SUBD|shift|x` as `shift x`, "
+			." a.`SUBD|shift|y` as `shift y`, "
+			." m.`psi`, "
+			." m.`theta`, "
+			." m.`phi`, "
+			." m.`azimuth`, "
+			." arun.`DEF_id` as alignrunid, "
+			." arun.`name` as runname, "
+			." arun.`bin` as bin, "
+			." path.`path`, "
+			." r.* "
+			."FROM `ApProtomoAlignmentData` a "
+			."LEFT JOIN `ApProtomoModelData` m "
+			."ON a.`REF|ApProtomoAlignerParamsData|aligner` = m.`REF|ApProtomoAlignerParamsData|aligner` "
+			."LEFT JOIN `ApProtomoAlignerParamsData` ar "
+			."ON a.`REF|ApProtomoAlignerParamsData|aligner` = ar.`DEF_id` "
+			."LEFT JOIN `ApProtomoRefinementParamsData` r "
+			."ON ar.`REF|ApProtomoRefinementParamsData|refine cycle` = r.`DEF_id` "
+			."LEFT JOIN `ApTomoAlignmentRunData` arun "
+			."ON ar.`REF|ApTomoAlignmentRunData|alignrun` = arun.`DEF_id` "
+			."LEFT JOIN `ApPathData` path "
+			."ON arun.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE ar.`DEF_id`=".$alignerid." ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
 	function getFullTomogramInfo($tomogramId){
 		$q =  "SELECT t.`DEF_id` as DEF_id, "
 			."t.`REF|ApTomoAlignmentRunData|alignment` as alignment, "
@@ -537,6 +573,27 @@ class particledata {
 		return array($selector,$selected_number);
 	}
 
+	function getTomoAlignerSelector($aligners, $alignerId=NULL,$selectname='goodalignerId') {
+		$selector = '<select name="'.$selectname.'" '
+				.'size=1 '
+				.'onchange=submit()>';
+		$length = strlen(count($aligners));
+		for ($i = 0; $i < count($aligners); $i++) {
+			$data = $aligners[$i];
+			$aligner = $series['alignerid'];
+			$selector .= '<option class="fixed" value='.$i;
+			if ($i == $alignerId) {
+				$selector .= ' selected ';
+				$selected_number = $aligner;
+			}
+			$shownumber = str_pad($data['refine cycle'], $length, ' ', STR_PAD_LEFT).'. ';
+			$shownumber = str_replace(" ", "&nbsp;", $shownumber);
+			$selector .= '>'.$shownumber.'sampling@'.$data['align sampling'].'</option>';
+		}
+		$selector .= '</select>';
+		return array($selector,$selected_number);
+	}
+
 	function checkforTomogram($tiltseriesId){
 		$q =  "SELECT t.name , p.`path` "
 			."FROM `ApTomogramData` t "
@@ -580,6 +637,7 @@ class particledata {
 			."pc.`pixelsize` as ccdpixelsize, "
 			."a.`REF|SessionData|session` as session, "
 			."a.`filename` as filename, "
+			."a.`DEF_id` as imageid, "
 			."t.`number` as number "
 			."FROM ".DB.".`AcquisitionImageData` a "
 			."left join ".DB.".`TiltSeriesData` t "
@@ -609,7 +667,7 @@ class particledata {
 	
 	function countTomoAlignmentRuns($tiltseriesId){
 		$q="SELECT * "
-			."FROM ApTomoAlignmentRunData "
+			."FROM ApTiltsInAlignRunData "
 			."WHERE `REF|leginondata|TiltSeriesData|tiltseries`=".$tiltseriesId;
 		$r = $this->mysql->getSQLResult($q);
 		return ($r)? count($r) : 0;
@@ -1066,6 +1124,8 @@ class particledata {
 			,'avgid'=>"tomoavgreport.php?expId=$expId&avgId="
 			,'subtomo'=>"subtomosummary.php?expId=$expId&fullId="
 			,'alignrun id'=>"tomoalignreport.php?expId=$expId&alignId="
+			,'alignerid'=>"protomoreport.php?expId=$expId&aId="
+			,'refine cycle'=>"protomoreport.php?expId=$expId&aId="
 		);
 		$html  = '<tr>';
 		foreach($display_fields as $key) {
@@ -1116,7 +1176,7 @@ class particledata {
 				if ($params['hidden'] == 1) {
 					$html .= "<font color='#cc0000'>HIDDEN</font>\n";
 					$html .= " <input class='edit' type='submit' name='unhideItem".$primary_id."' value='unhide'>\n";
-				} else $html .= "<input class='edit' type='submit' name='hideItem".$primary_id."' value='hide'>\n";
+				} else $html .= " <input class='edit' type='submit' name='hideItem".$primary_id."' value='hide'>\n";
 			}
 			if ('description' == $key && $primary_field) {
 				$descDiv = ($_SESSION['username']) ? editButton($primary_id,$t['description']) : $t['description'];
