@@ -77,6 +77,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		$refinedata = $particle->getProtomoAlignmentInfo($lastalignerId);
 		//get image size
 		$imageinfo = $leginondata->getImageInfo($refinedata[0]['image']);
+		$imagesize = ($_POST['imagesize']) ? $_POST['imagesize'] : $imageinfo['dimx'];
 		$showncycles = $particle->getProtomoAlignerInfoFromAlignmentRun($refinedata[0]['alignrunid'],False);
 		//good  cycle selector
 		$validcycles = $showncycles;
@@ -162,8 +163,8 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 				echo "<br/><b>Bad Tilt Series! Do not use.</b><br/>";
 		}
 		$imageinfo = $leginondata->getImageInfo($tiltseriesinfos[0]['imageid']);
+		$imagesize = ($_POST['imagesize']) ? $_POST['imagesize'] : $imageinfo['dimx'];
 	}
-	$imagesize = ($_POST['imagesize']) ? $_POST['imagesize'] : $imageinfo['dimx'];
 	echo "<input type='hidden' name='imagesize' value='$imagesize'>\n";
 	echo "</td></table>";
 	echo "<p>";
