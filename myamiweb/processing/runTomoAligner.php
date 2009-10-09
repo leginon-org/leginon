@@ -195,6 +195,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	if ($protomocheck) {
 		if ($lastalignerId) {
 			$lastalignparams = $refinedata[0];
+			$defsample = 1;
 			$sampleset = array(8,4,2,1.5,1);
 			foreach ($sampleset as $s) {
 				if ($lastalignparams['alismp'] > $s) {
