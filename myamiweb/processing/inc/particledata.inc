@@ -266,6 +266,19 @@ class particledata {
 		return $r;
 	}
 
+	function getTomoAlignersFromAlignmentRun($alignid,$showiHidden=false) {
+		$q = " SELECT a.`DEF_id` as alignerid "
+			."FROM `ApProtomoAlignerParamsData` a "
+			."LEFT JOIN `ApTomoAlignmentRunData` r "
+			."ON a.`REF|ApTomoAlignmentRunData|alignrun` = r.`DEF_id` "
+			."WHERE r.`DEF_id`=".$alignid." ";
+		if (!$showHidden) {
+			$q .= " AND ( a.`hidden` = 0 OR a.`hidden` IS NULL ) ";
+		}
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getProtomoAlignmentInfo($alignerid) {
 		$q = " SELECT m.`DEF_id` as modelid, "
 			." a.`REF|ApProtomoAlignerParamsData|aligner` as `alignerid`, "
