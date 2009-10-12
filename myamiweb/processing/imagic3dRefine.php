@@ -1129,7 +1129,7 @@ function imagic3dRefine() {
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command_array,$outdir,$runid,$expId,'imagic3dRefine',False,False,False,$nproc,8,1,$walltime="1200:00:00",$cputime="1200:00:00");
+		$sub = submitAppionJob($command_array,$outdir,$runid,$expId,'imagic3dRefine',False,False,False,$nproc,8,1,$walltime="720:00:00",$cputime="1200:00:00");
 		// if errors:
 		if ($sub) jobform("<b>ERROR:</b> $sub");
 	}
