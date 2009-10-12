@@ -571,6 +571,7 @@ class ApMultiRefAlignRunData(Data):
 			('thresh_refs', int),
 			('maskrad_refs', float),
 			('mirror', bool),
+			('center', bool),
 			('max_shift_orig', float),
 			('max_shift_this', float),
 			('samp_param', float),
