@@ -103,14 +103,18 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		echo "<input type='hidden' name='maxregion' value='$maxregion'>\n";
 		//determine accepted alignment numbers
 		$runname = $refinedata[0]['runname'];
+		$refnum = ($_POST['refnum'] && $_POST['refnum'] >= 0) ? $_POST['refnum'] : $refinedata[0]['imgref'];	
 		$minx = ($_POST['minx'] && $_POST['minx'] >= 0) ? $_POST['minx'] : 0;	
 		$maxx = ($_POST['maxx'] && $_POST['maxx'] < count($refinedata)) ? $_POST['maxx'] : count($refinedata)-1;
 		if ($minx or $maxx != count($refinedata)) {
-			echo "<img border='0' src='tomoaligngraph.php?w=512&h=256&aId=$lastalignerId&box=1"
+			echo "<img border='0' src='tomoaligngraph.php?w=512&h=256&aId=$lastalignerId&box=1&ref=$refnum"
 				."&minx=$minx&maxx=$maxx&expId=$expId'><br/>\n";
 		} else {
-			echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$lastalignerId&expId=$expId&box=1'><br/>\n";
+			echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$lastalignerId&expId=$expId&box=1&ref=$refnum'><br/>\n";
 		}
+		echo docpop('protomoref','reference image expressed as sorted tilt number');
+		echo " <input type='text' name='refnum' onchange=submit() value='$refnum' size='4'>";
+		echo " <p>\n";
 		echo docpop('protomoreset','Reset alignment');
 		echo " outside the ";
 		echo docpop('protomoresetrange','range of the image number');
@@ -289,6 +293,7 @@ function runTomoAligner() {
 	$sample=$_POST['sample'];
 	$region=$_POST['region'];
 	$maxregion=$_POST['maxregion'];
+	$refnum=$_POST['refnum'];
 
 	$command.="--session=$sessionname ";
 	//make sure the protomo sampling is valid
@@ -322,6 +327,8 @@ function runTomoAligner() {
 		$command.="--cycle=$cycle ";
 		$command.="--sample=$sample ";
 		$command.="--region=$region ";
+		if (!empty($refnum))
+			$command.="--refimg=$refnum ";
 	}
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
