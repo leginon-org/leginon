@@ -35,6 +35,20 @@ def getTiltdataList(tiltseriesdata,othertiltdata=None):
 			apDisplay.printMsg('Combining images from two tilt series')
 		return tiltdatalist
 
+def getTiltdataListFromAligner(alignerid):
+	q = appiondata.ApProtomoAlignerParamsData()
+	alignerdata = q.direct_query(alignerid)
+	q = appiondata.ApTiltsInAlignRunData(alignrun=alignerdata['alignrun'])
+	results = q.query()
+	for i,result in enumerate(results):
+		if result['primary']:
+			primkey = i
+			break
+	tiltdatalist = [results[primkey]]
+	del results[primkey]
+	tiltdatalist.extend(results)
+	return tiltdatalist
+
 def getFilename(tiltserieslist):
 	seriesname = tiltserieslist[0]['session']['name']+'_'
 	names = []
@@ -118,6 +132,15 @@ def orderImageList(imagelist):
 		print len(cutlist),refimg
 		return cuttilts,cutlist,cutfiles,refimg
 
+def getCorrelatorBinning(imageshape):
+	collection = collection.Collection()
+	maxsize = max((imageshape[1],imageshape[0]))
+	if maxsize > 512:
+		correlation_bin = collection.calcBinning(maxsize, 256, 512)
+	else:
+		correlation_bin = 1
+	return correlation_bin
+	
 def writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files):
 		stackpath = os.path.join(stackdir, stackname)
 		print stackpath
@@ -147,16 +170,43 @@ def getLeginonRelativeShift(ordered_imagelist, bin, refimg):
 	relativeshifts = calcRelativeShifts(globalshift)
 	return relativeshifts
 
-def alignZeroShiftImages(imagedata1,imagedata2):
+def alignZeroShiftImages(imagedata1,imagedata2,bin):
 	"""Align start-angle images for tilt series where data is collect in two halves"""
-	fakenode = node.Node('fake',imagedata1['session'])
-	correlator = tiltcorrelator.Correlator(fakenode, 0, 4,lpf=1.5)
-	for imagedata in (imagedata1,imagedata2):
-		correlator.correlate(imagedata, tiltcorrection=True, channel=None)
-	peak = correlator.getShift(False)
-	fakenode.die()
+	no_wx=True
+	bin = int(bin)
+	if not no_wx:
+		# Tilt correlator needs wx which is not available on the cluster
+		# This method is consistent with the rest of leginonxcorr and will
+		# revert correction channels is needed even though it is likely
+		# unnecessary
+		fakenode = node.Node('fake',imagedata1['session'])
+		correlator = tiltcorrelator.Correlator(fakenode, 0, bin,lpf=1.5)
+		for imagedata in (imagedata1,imagedata2):
+			correlator.correlate(imagedata, tiltcorrection=True, channel=None)
+		peak = correlator.getShift(False)
+		fakenode.die()
+	else:
+		# phase correlation
+		array1 = imagedata1['image']
+		array2 = imagedata2['image']
+		if bin != 1:
+			array1 = imagefun.bin(array1, bin)
+			array2 = imagefun.bin(array2, bin)
+		shift = simpleCorrelation(array1,array2)
+		peak = {'x':-shift[1]*bin,'y':shift[0]*bin}
+		
 	# x (row) shift on image coordinate is of opposite sign
 	return {'shiftx':-peak['x'], 'shifty':peak['y']}
+
+def peak2shift(peak, shape):
+	#copied from tomography tiltcorrelator
+	shift = list(peak)
+	half = shape[0] / 2.0, shape[1] / 2.0
+	if peak[0] > half[0]:
+		shift[0] = peak[0] - shape[0]
+	if peak[1] > half[1]:
+		shift[1] = peak[1] - shape[1]
+	return tuple(shift)
 
 def shiftHalfSeries(zeroshift,globalshifts, refimg):
 	apDisplay.printMsg("shifting images between the two tilt groups")
@@ -165,12 +215,12 @@ def shiftHalfSeries(zeroshift,globalshifts, refimg):
 		globalshifts[i]['y']=shift['y']+zeroshift['shifty']
 	return globalshifts
 
-def getGlobalShift(ordered_imagelist, bin, refimg):
+def getGlobalShift(ordered_imagelist, corr_bin, refimg):
 	apDisplay.printMsg("getting global shift values")
 	globalshifts = []
 	for i, imagedata in enumerate(ordered_imagelist):
 		globalshifts.append(getPredictionPeakForImage(imagedata))
-	zeroshift = alignZeroShiftImages(ordered_imagelist[refimg],ordered_imagelist[refimg-1])
+	zeroshift = alignZeroShiftImages(ordered_imagelist[refimg],ordered_imagelist[refimg-1],corr_bin)
 	globalshifts = shiftHalfSeries(zeroshift, globalshifts, refimg)
 	return globalshifts
 		
@@ -219,13 +269,13 @@ def simpleCorrelation(array1,array2):
 	shape = array1.shape
 	corrimage = c.phaseCorrelate()
 	p.setImage(corrimage)
-	peak = peakfinder.findPixelPeak(corrimage)
-	shift = [0,0]
+	peak = peakfinder.findSubpixelPeak(corrimage,lpf=1.5)
+	shift = [0.0,0.0]
 	for i in (0,1):
-		if peak['pixel peak'][i] > shape[i]/2:
-			shift[i] = peak['pixel peak'][i] - shape[i]
+		if peak['subpixel peak'][i] > shape[i]/2:
+			shift[i] = peak['subpixel peak'][i] - shape[i]
 		else:
-			shift[i] = peak['pixel peak'][i]
+			shift[i] = peak['subpixel peak'][i]
 	return shift
 
 def getPredictionPeakForImage(imagedata):
@@ -323,11 +373,12 @@ def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
 		return paramsq
 	return results[0]
 
-def	insertTiltsInAlignRun(alignrundata,tiltdata,settingsdata):
+def	insertTiltsInAlignRun(alignrundata,tiltdata,settingsdata,primary=True):
 	q = appiondata.ApTiltsInAlignRunData()
 	q['alignrun'] = alignrundata
 	q['tiltseries'] = tiltdata
 	q['settings'] = settingsdata
+	q['primary'] = primary
 	results = q.query()
 	if not results:
 		q.insert()
@@ -512,6 +563,50 @@ def array2jpg(pictpath,im,imin=None,imax=None,size=512):
 		range = stats['mean']-3*stats['std'],stats['mean']+3*stats['std']
 	numpil.write(im,jpgpath, format = 'JPEG', limits=range)
 
+def makeAlignStackMovie(filename,xsize=512):
+	apDisplay.printMsg('Making movie','blue')
+	mrcpath = filename
+	dirpath = os.path.dirname(mrcpath)
+	splitnames =  os.path.splitext(mrcpath)
+	rootpath = splitnames[0]
+	alignsplit = rootpath.split('-')
+	if len(alignsplit) > 1:
+		key = alignsplit[-1]
+	else:
+		key = ''
+	print 'dirpath',dirpath
+	print 'key',key
+	apDisplay.printMsg('Reading align stack %s' % mrcpath)
+	array = mrc.read(mrcpath)
+	shape = array.shape
+	xsize = min(xsize,shape[2])
+	stats = {}
+	# speed up stats calculation by projecting to axis 0 to reduce array dimension
+	apDisplay.printMsg('Calculating stats...')
+	slice = numpy.sum(array[:,:,:],axis=0)/shape[0]
+	stats['std'] = slice.std()
+	stats['mean'] = slice.mean()
+	axis = 0
+	dimz = shape[0]
+	#generate a sequence of jpg images
+	apDisplay.printMsg('Making slices...')
+	for i in range(0, dimz):
+		pictpath1 = rootpath+'_slice%05d' % i
+		pictpath2 = rootpath+'_slice%05d' % (2*dimz-i)
+		slice = array[i,:,:]
+		stats['mean'] = slice.mean()
+		# adjust and shrink each image
+		array2jpg(pictpath1,slice,stats['mean']-6*stats['std'],stats['mean']+6*stats['std'],xsize)
+		array2jpg(pictpath2,slice,stats['mean']-6*stats['std'],stats['mean']+6*stats['std'],xsize)
+	apDisplay.printMsg('Putting the jpg files together to flash video...')
+	moviename = dirpath+'/minialign'+key+'.flv'
+	print 'moviename',moviename
+	cmd = 'mencoder -nosound -mf type=jpg:fps=24 -ovc lavc -lavcopts vcodec=flv -of lavf -lavfopts format=flv -o '+moviename+' "mf://'+rootpath+'_slice*.jpg"'
+	proc = subprocess.Popen(cmd, shell=True)
+	proc.wait()
+	proc = subprocess.Popen('rm '+rootpath+'_slice*.jpg', shell=True)
+	proc.wait()
+
 def makeMovie(filename,xsize=512):
 	apDisplay.printMsg('Making movie','blue')
 	mrcpath = filename
@@ -662,7 +757,7 @@ def transformTomo(a,name,package,alignpdata,zshift=0.0,bin=1):
 	### order=1 copies values
 	b = ndimage.zoom(a,scale,mode='nearest',prefilter=False,order=1)
 	shape = b.shape
-	center = map((lambda x: x / scale), list(b.shape))
+	center = map((lambda x: x * scale / 2), list(b.shape))
 	shift2 = map((lambda x: x * scale), list(shift))
 	inboxtuple = list(a.shape)
 	inboxtuple.reverse()
