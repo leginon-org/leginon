@@ -4,6 +4,7 @@ import math
 import numpy
 import os
 import apParam
+import apImod
 import apDisplay
 import appiondata
 
@@ -293,6 +294,11 @@ def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix, center=(1024,1
 	imodtltfile = imodprefix+".xf"
 	fout = open(imodtltfile,'w')
 	specimen_euler, tiltaz, tilts, origins, rotations = readProtomoTltFile(protomotltfile)
+	imodaffines = convertProtomoToImod(specimen_euler, tiltaz, origins, rotations,center)
+	apImod.writeTransformFile('', imodprefix,imodaffines,'xf')
+
+
+def convertProtomoToImod(specimen_euler, tiltaz, origins, rotations,center):
 	#protomo tilt azimuth vertical is 90 deg, imod is 0 deg
 	tiltazrad = (tiltaz - 90.0) * 3.14159 / 180.0
 	tiltazaffine = numpy.matrix([[math.cos(tiltazrad),-math.sin(tiltazrad),0],[math.sin(tiltazrad),math.cos(tiltazrad),0],[0,0,1]])
@@ -306,20 +312,20 @@ def convertGlobalTransformProtomoToImod(protomoprefix,imodprefix, center=(1024,1
 		rotationaffine = numpy.matrix([[math.cos(theta),-math.sin(theta),0],[math.sin(theta),math.cos(theta),0],[0,0,1]])
 		shiftaffine = numpy.matrix([[1,0,origins[i][0]],[0,1,origins[i][1]],[0,0,1]])
 		totalaffine = shiftaffine.I * rotationaffine * tiltazaffine.I * centeraffine
-		imodaffine = totalaffine
-		allaffines.append(imodaffine)
-		shiftsum0 += imodaffine[0,2]
-		shiftsum1 += imodaffine[1,2]
+		allaffines.append(totalaffine)
+		shiftsum0 += totalaffine[0,2]
+		shiftsum1 += totalaffine[1,2]
 	# imod global shift need to be referenced to the average shift or the series
 	shiftavg0 = shiftsum0 / len(rotations)
 	shiftavg1 = shiftsum1 / len(rotations)
+	imodaffines = []
+	shifts = []
 	for i in range(0,len(rotations)):
 		imodaffine = allaffines[i]
-		shift = (imodaffine[0,2] - shiftavg0, imodaffine[1,2] - shiftavg1)
-		outline = '%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (
-			imodaffine[0,0],imodaffine[0,1],imodaffine[1,0],imodaffine[1,1],shift[0],shift[1])
-		fout.write(outline)
-	fout.close()
+		imodaffine[0,2] = imodaffine[0,2] - shiftavg0
+		imodaffine[1,2] = imodaffine[1,2] - shiftavg1
+		imodaffines.append(imodaffine)
+	return imodaffines
 
 def publish(q):
 	results = q.query()
