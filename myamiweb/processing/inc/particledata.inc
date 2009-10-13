@@ -247,6 +247,9 @@ class particledata {
 			." f.`SUBD|alibox|x` as `align box x`, "
 			." f.`SUBD|alibox|y` as `align box y`, "
 			." f.`cormod`, "
+			." f.`imgref`as `refnum`, "
+			." f.`REF|leginondata|AcquisitionImageData|reference` as `refimg`, "
+			#." f.`imgref` as `imgref number`, "
 			." a.* "
 			."FROM `ApProtomoAlignerParamsData` a "
 			."LEFT JOIN `ApProtomoRefinementParamsData` f "
@@ -256,7 +259,7 @@ class particledata {
 			."LEFT JOIN `ApProtomoParamsData` p "
 			."ON a.`REF|ApProtomoParamsData|protomo` = p.`DEF_id` "
 			."LEFT JOIN `ApTomoAlignmentRunData` r "
-			."ON r.`REF|ApProtomoParamsData|fineProtomoParams` = p.`DEF_id` "
+			."ON a.`REF|ApTomoAlignmentRunData|alignrun` = r.`DEF_id` "
 			."WHERE r.`DEF_id`=".$alignid." ";
 		if (!$showHidden) {
 			$q .= " AND ( a.`hidden` = 0 OR a.`hidden` IS NULL ) ";
