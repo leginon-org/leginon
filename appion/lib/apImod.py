@@ -35,15 +35,22 @@ def writeShiftPrexfFile(path, seriesname,xpeaks):
 			f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (1.0,0.0,0.0,1.0,-xpeak['x'],-xpeak['y']))
 	f.close()
 
-def writeTransformPrexfFile(path, seriesname,transforms):
-	xfname = os.path.join(path,seriesname+'.prexf')
+def writeTransformFile(path, seriesname,transforms,ext='prexf'):
+	xfname = os.path.join(path,seriesname+'.'+ext)
 	f = open(xfname, 'w')
 	for transform in transforms:
 		if transform is not None:
+			# work on either form of the transform matrix
+			if transform[0,2] or transform[1,2]:
+				shiftx = transform[0,2]
+				shifty = transform[1,2]
+			else:
+				shiftx = transform[2,0]
+				shifty = transform[2,1]
 			f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (
 					transform[0,0],transform[0,1],
 					transform[1,0],transform[1,1],
-					transform[2,0],transform[2,1]))
+					shiftx,shifty))
 	f.close()
 
 def coarseAlignment(stackdir, processdir, seriesname, commit=False):
