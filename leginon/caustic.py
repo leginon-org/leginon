@@ -59,11 +59,6 @@ def findBestCircle2(image, radii, limit):
 	row = row+limit[0]
 	col = col+limit[2]
 
-	print 'LIMIT', limit
-	print 'MAXRAD', maxradius
-	print 'ROW', row
-	print 'COL', col
-
 	return {'center': (row, col), 'radius': rad}
 
 
@@ -91,35 +86,32 @@ def findCaustic(input, smallrange, bigrange, mask, binning=None):
 	Initial search for caustic figure in binned image, then in original.
 	'''
 	if binning is not None:
+		print '**First binned by %s:' % (binning,)
 		## first run it with initial binning
 		bin_input = imagefun.bin(input, binning)
 
 		smallmin = int(numpy.floor(smallrange[0] / float(binning)))
 		smallmax = int(numpy.ceil(smallrange[1] / float(binning)))+1
 		bin_radii_small = numpy.arange(smallmin, smallmax)
-		print 'BINRADIISMALL', len(bin_radii_small), bin_radii_small
 
 		bigmin = int(numpy.floor(bigrange[0] / float(binning)))
 		bigmax = int(numpy.ceil(bigrange[1] / float(binning)))+1
 		bin_radii_big = numpy.arange(bigmin, bigmax)
-		print 'BINRADIIBIG', len(bin_radii_big), bin_radii_big
 
 		small_circle, big_circle = __findCaustic(bin_input, bin_radii_small, bin_radii_big, mask)
-		print 'BINCIRCLES', small_circle, big_circle
 
 		# set up ranges for full size image
 		halfbin = binning / 2.0
 
 		### XXX need to make sure new radii do not include more than original
 		rsmall = small_circle['radius']
-		smallmin = int(numpy.floor(rsmall * binning - binning/2.0))
-		smallmax = int(numpy.ceil(rsmall * binning + binning/2.0))
+		smallmin = int(numpy.floor(rsmall * binning - binning/1.0))
+		smallmax = int(numpy.ceil(rsmall * binning + binning/1.0))
 		smallrange = smallmin, smallmax
 		rbig = big_circle['radius']
-		bigmin = int(numpy.floor(rbig * binning - binning/2.0))
-		bigmax = int(numpy.ceil(rbig * binning + binning/2.0))
+		bigmin = int(numpy.floor(rbig * binning - binning/1.0))
+		bigmax = int(numpy.ceil(rbig * binning + binning/1.0))
 		bigrange = bigmin, bigmax
-		print 'NEWRANGES', smallrange, bigrange
 
 		small_row0 = binning * (small_circle['center'][0] - 1)
 		small_row1 = binning * (small_circle['center'][0] + 1)
@@ -132,13 +124,11 @@ def findCaustic(input, smallrange, bigrange, mask, binning=None):
 		big_col1 = binning * (big_circle['center'][1] + 1)
 		big_limit = big_row0, big_row1, big_col0, big_col1
 
+	print '**Full size:'
 	radii_small = numpy.arange(smallrange[0], smallrange[1]+1, dtype=numpy.int)
-	print 'RADIISMALL', len(radii_small), radii_small
 	radii_big = numpy.arange(bigrange[0], bigrange[1]+1, dtype=numpy.int)
-	print 'RADIIBIG', len(radii_big), radii_big
 
 	small_circle, big_circle = __findCaustic(input, radii_small, radii_big, mask, small_limit, big_limit)
-	print small_circle, big_circle
 	return small_circle, big_circle
 
 def __findCaustic(input, radii_small, radii_big, mask, small_limit=None, big_limit=None):
@@ -159,7 +149,6 @@ def __findCaustic(input, radii_small, radii_big, mask, small_limit=None, big_lim
 	circle_small = findBestCircle2(grad, radii_small, small_limit)
 
 	# mask out area somewhat larger than small circle
-	print 'removing bright-field spot'
 	circle_mask = dict(circle_small)
 	circle_mask['radius'] *= mask
 	newgrad = removeCircle(grad, circle_mask)
@@ -175,21 +164,42 @@ def __findCaustic(input, radii_small, radii_big, mask, small_limit=None, big_lim
 
 if __name__ == '__main__':
 	from pyami import mrc
-	import time
+	import sys
 
 	#input = mrc.read('input16.mrc')
-	radii_small = (6,40)
-	radii_big = (80,100)
+	#radii_small = (6,40)
+	#radii_big = (80,100)
 
 	#input = mrc.read('input8.mrc')
-	radii_small = (23, 35)
-	radii_big = (179, 192)
+	#radii_small = (23, 35)
+	#radii_big = (179, 192)
 
-	input = mrc.read('09jul22caustic_00007ma_0.mrc')
-	radii_small = numpy.multiply((6,40), 16)
-	radii_big = numpy.multiply((80,100), 16)
+	#input = mrc.read('09jul22caustic_00007ma_0.mrc')
+	#radii_small = numpy.multiply((6,40), 16)
+	#radii_big = numpy.multiply((80,100), 16)
 
-	t0 = time.time()
-	findCaustic(input, radii_small, radii_big, 2.0, 16)
-	t1 = time.time()
-	print 'TIME', t1-t0
+	#input = mrc.read('/ami/data00/leginon/09oct07b/rawdata/09oct07b_00444cu.mrc')
+	#radii_small = (65,85)
+	#radii_big = (215,255)
+
+	filename = sys.argv[1]
+	rsmallmin = int(sys.argv[2])
+	rsmallmax = int(sys.argv[3])
+	rbigmin = int(sys.argv[4])
+	rbigmax = int(sys.argv[5])
+	input = mrc.read(filename)
+	radii_small = (rsmallmin, rsmallmax)
+	radii_big = (rbigmin, rbigmax)
+
+	## binning necessary to get a 256x256 image
+	bin = input.shape[0] / 256
+	mask = 2.0
+
+	small,big = findCaustic(input, radii_small, radii_big, mask, bin)
+	print 'Bright-field spot:', small
+	print 'Caustic curve:', big
+
+	v0 = big['center'][0] - small['center'][0]
+	v1 = big['center'][1] - small['center'][1]
+	print 'Vector:', v0, v1
+	print 'Distance:', numpy.hypot(v0,v1)
