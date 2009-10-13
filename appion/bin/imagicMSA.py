@@ -299,6 +299,13 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 #		while os.path.isfile(os.path.join(self.params['rundir'], "start.img")):
 #		apFile.removeStack(os.path.join(self.params['rundir'], "start.img"))
 
+		### normalize eigenimages
+		eigenimages = os.path.join(self.params['rundir'], "eigenimages.img")
+		while os.path.isfile(eigenimages):
+			apFile.removeStack(eigenimages)
+		emancmd = "proc2d "+str(eigenimages)+" "+str(eigenimages)+" inplace"
+		apParam.runCmd(emancmd, package="EMAN")
+
 		### upload alignment
 		imagicstack = os.path.join(self.params['rundir'], "start.hed")
 		inserttime = time.time()
