@@ -956,7 +956,7 @@ class ApFullTomogramData(Data):
 		return Data.typemap() + (
 			('session', leginondata.SessionData),
 			('tiltseries', leginondata.TiltSeriesData),
-			('alignment', ApTomoAlignmentRunData),
+			('aligner', ApProtomoAlignerParamsData),
 			('combined', list),
 			('path', ApPathData),
 			('name', str),
