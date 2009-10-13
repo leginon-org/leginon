@@ -431,22 +431,31 @@ function analysissummarytable($analysisid, $mini=false) {
 	$display_keys['date time'] = $analysisdata['DEF_timestamp'];
 	$display_keys['description']=$descDiv;
 	$display_keys['path']=$analysisdata['path'];
-	if (!$mini)
+	if ($imagicrun) {
+		$eigenimages = $analysisdata['path']."/eigenimages.hed";
+		$display_keys['Eigenimages'] = "<a target='Eigenimages' href='viewstack.php?expId=$expId&file=$eigenimages'> eigenimages.hed </a>";
+	}	
+	if (!$mini) {
 		if ($analysisdata['REF|ApCoranRunData|coranrun']) {
 			$display_keys['number of factors']=$analysisdata['num_factors'];
 		}
 		elseif ($imagicrun) {
 			$display_keys['number of factors']="69 IMAGIC eigenimages";
 		}
-	if (!$mini)
-		$display_keys['run time']=round($analysisdata['run_seconds']/60.0,2)." minutes";
-	if (!$mini)
+	}
+	if (!$mini) $display_keys['run time']=round($analysisdata['run_seconds']/60.0,2)." minutes";
+	if (!$mini && $imagicrun) {
+		$eigenimages = $analysisdata['path']."/eigenimages.hed";
+		$display_keys['Eigenimages'] = "<a target='Eigenimages' href='viewstack.php?expId=$expId&file=$eigenimages'> eigenimages.hed </a>";
+	}
+	if (!$mini) {
 		if ($analysisdata['REF|ApCoranRunData|coranrun']) {
 			$display_keys['mask diam']=$analysisdata['mask_diam']." &Aring;ngstroms";
 		}
 		elseif ($imagicrun) {
 			$display_keys['mask radius']=$imagicrun['mask_radius']." (fraction of inner radius)";
 		}
+	}
 	// imagic-specific parameters
 	if (!$mini && $imagicrun) {
 		$display_keys['mask dropoff'] = $imagicrun['mask_dropoff'];
