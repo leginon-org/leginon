@@ -50,7 +50,7 @@ def threadCommands(commandlist, nproc=None, pausetime=1.0):
 
 	### continue until no commands are left
 	sys.stderr.write("threading commands")
-	while len(localcmdlist) > 0 and len(joblist) > 0:
+	while len(localcmdlist) > 0 or len(joblist) > 0:
 		for job in joblist:
 			if job.poll() is not None:
 				joblist.remove(job)
@@ -58,7 +58,7 @@ def threadCommands(commandlist, nproc=None, pausetime=1.0):
 					cmd = localcmdlist.pop(0)
 					job = AppionJob(cmd)
 					joblist.append(job)
-					job.run()	
+					job.run()
 		sys.stderr.write(".")
 		time.sleep(pausetime)
 		#print joblist
