@@ -6,6 +6,8 @@ import sys
 import time
 import glob
 import string
+import shutil
+
 import apParam
 import apDisplay
 import apDatabase
@@ -37,16 +39,6 @@ def insertManualParams(params, expid):
 		apDisplay.printError("upload parameters not the same as last run - check diameter")
 
 #===========================
-def printPrtlUploadHelp():
-	print "\nUsage:\nuploadParticles.py <boxfiles> scale=<n>\n"
-	print "selexon *.box scale=2\n"
-	print "<boxfiles>            : EMAN box file(s) containing picked particle coordinates"
-	print "runname=<runname>         : name associated with these picked particles (default is 'manual1')"
-	print "scale=<n>             : If particles were picked on binned images, enter the binning factor"
-	print "\n"
-	sys.exit(1)
-
-#===========================
 def createDefaults():
 	params={}
 	self.params['apix']=None
@@ -57,9 +49,7 @@ def createDefaults():
 	self.params['session']=None
 	self.params['runname']=None
 	self.params['imgs']=None
-	self.params['rundir']=os.path.abspath('.')
 	self.params['abspath']=os.path.abspath('.')
-	self.params['rundir']=None
 	self.params['scale']=None
 	self.params['commit']=True
 	self.params['sym']=None
@@ -77,6 +67,8 @@ class UploadParticles(appionScript.AppionScript):
 		""" NEED TO COPY PARAM SETTING FROM ABOVE """
 
 		self.parser.set_usage("Usage:\nuploadParticles.py <boxfiles> scale=<n>\n")
+		self.parser.add_option("-s", "--session", dest="sessionname",
+			help="Session name associated with processing run, e.g. --session=06mar12a", metavar="SESSION")
 		self.parser.add_option("--files", dest="files",
 			help="EMAN box file(s) containing picked particle coordinates", metavar="FILE")
 		self.parser.add_option("--scale", dest="scale",
@@ -103,6 +95,9 @@ class UploadParticles(appionScript.AppionScript):
 		imgs=[]
 		for img in imglist:
 			if (os.path.isfile(img)):
+				# copy box file to output directory
+				apDisplay.printMsg("copying file '"+img+"' to "+self.params['rundir'])
+				shutil.copy(img, self.params['rundir'])
 				# in case of multiple extenstions, such as pik files
 				splitfname=(os.path.basename(img).split('.'))
 				imgs.append(splitfname[0])
@@ -116,10 +111,8 @@ class UploadParticles(appionScript.AppionScript):
 	def start(self):
 		print "getting image data from database:"
 		self.params['imgs']=self.getPrtlImgs()
-		print self.params['extension']
 		imgtree = []
 		imgtree=apDatabase.getSpecificImagesFromDB(self.params['imgs'])
-		self.params['session'] = imgtree[0]['session']['name']
 
 		# upload Particles
 		for imgdata in imgtree:
