@@ -679,6 +679,10 @@ if ($expId) {
 		'name'=>"<a href='emdb2density.php?expId=$sessionId'>EMDB to Model</a>"
 	);
 
+	$nruns[]=array(
+		'name'=>"<a href='uploadParticles.php?expId=$sessionId'>Upload particles</a>",
+	);
+
 	$result = ($templates==0) ? "" :
 	  "<a href='viewtemplates.php?expId=$sessionId'>$templates available</a>";
 
