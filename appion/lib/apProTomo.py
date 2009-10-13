@@ -48,6 +48,23 @@ def parseTilt(tiltfile):
 			imagedict[imagenum]['rotation']=rotation			
 	return imagedict, parameterdict, seriesname
 
+def convertShiftsToParams(tilts,shifts,center,imagenames=None):
+	imagedict={}
+	parameterdict={}
+	for i, shift in enumerate(shifts):
+		imagedict[i]={}
+		imagedict[i]['x']=shift['x']+center['x']
+		imagedict[i]['y']=shift['y']+center['y']
+		imagedict[i]['tilt']=tilts[i]
+		imagedict[i]['rotation']=0.0
+		if imagenames:
+			imagedict[i]['filename']=imagenames[i]
+		parameterdict['psi']=0.0
+		parameterdict['theta']=0.0
+		parameterdict['phi']=0.0
+		parameterdict['azimuth']=90.0
+	return imagedict,parameterdict,None
+
 def linkImageFiles(imgtree,rawdir):
 	filenamelist = []
 	for imagedata in imgtree:
@@ -66,23 +83,6 @@ def linkImageFiles(imgtree,rawdir):
 			os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),linkedpath)
 	return filenamelist
 
-def writeInitialProtomoTltFile(processdir, seriesname,tilts, imagenames, shifts,center,refimg):
-	imagedict = {}
-	tiltfilename = seriesname+'-01-itr.tlt'
-	apDisplay.printMsg("Writing "+tiltfilename)
-	#center['x'] = 0
-	#center['y'] = 0
-	for n in range(0,len(tilts)):
-		imageinfo = {}
-		imageinfo['filename'] = imagenames[n]
-		imageinfo['tilt'] = tilts[n]
-		imageinfo['rotation'] = 0.0
-		imageinfo['x'] = shifts[n]['x'] + center['x']
-		imageinfo['y'] = shifts[n]['y'] + center['y']
-		imagedict[n] = imageinfo
-	tiltfilepath = os.path.join(processdir,tiltfilename)
-	writeTiltFile(tiltfilepath,seriesname, imagedict)
-	
 def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 	f=open(outfilename,'w')
 	f.write('\n')
@@ -95,6 +95,10 @@ def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 		f.write('\n\n   PARAMETER\n\n')
 		f.write('     TILT AZIMUTH %8.3f\n' % parameterdict['azimuth'])
 	else:
+		f.write('\n\n   PARAMETER\n')
+		f.write('     PSI   %8.3f\n' % 0.0)
+		f.write('     THETA %8.3f\n' % 0.0)
+		f.write('     PHI   %8.3f\n' % 0.0)
 		f.write('\n\n   PARAMETER\n\n')
 		f.write('     TILT AZIMUTH %8.3f\n' % 90.0)
 	f.write('\n\n')
@@ -124,9 +128,9 @@ def resetTiltParams(tiltparams, oldtiltparams, goodstart, goodend):
 				imagedict[n]['rotation'] = imagedict[goodend]['rotation']
 	return imagedict, tiltparams[1],tiltparams[2]
 
-def createRefineDefaults(imgref, indir, outdir, tmp=''):
+def createRefineDefaults(numimgs, indir, outdir, tmp=''):
 	refinedict={}
-	refinedict['imgref']= imgref
+	refinedict['imgref']= numimgs/2
 	refinedict['bckbody']=200
 	refinedict['alismp']=1
 
@@ -185,10 +189,11 @@ def createRefineDefaults(imgref, indir, outdir, tmp=''):
 	refinedict['cor']='.xcf'
 	return refinedict
 	
-def updateRefineParams(refinedict,imgshape,sample,region):
+def updateRefineParams(refinedict,imgshape,sample,region,refimg):
 	refinedict['alismp']=sample
 	refinedict['alibox_x']=int(imgshape[1] * region * 0.01/sample)
 	refinedict['alibox_y']=int(imgshape[0] * region * 0.01/sample)
+	refinedict['imgref']= refimg
 	return refinedict
 
 def setProtomoDir(rootdir):
@@ -323,15 +328,14 @@ def publish(q):
 		return q
 	return results[0]
 
-def insertProtomoParams(seriesname,imagedata):
+def insertProtomoParams(seriesname):
 	# general protmo parameters
 	protomoq = appiondata.ApProtomoParamsData()
 	protomoq['series name'] = seriesname
-	protomoq['reference'] = imagedata
 	protomodata = publish(protomoq)
 	return protomodata
 
-def insertAlignIteration(alignrundata, protomodata, params, refinedict):
+def insertAlignIteration(alignrundata, protomodata, params, refinedict,refimagedata):
 	# protmoalign refinement cycle parameters
 	refineparamsq = appiondata.ApProtomoRefinementParamsData()
 	refineparamsq['protomo'] = protomodata
@@ -339,6 +343,8 @@ def insertAlignIteration(alignrundata, protomodata, params, refinedict):
 	refineparamsq['alismp'] = refinedict['alismp']
 	refineparamsq['alibox'] = {'x':refinedict['alibox_x'],'y':refinedict['alibox_y']}
 	refineparamsq['cormod'] = refinedict['cormod']
+	refineparamsq['imgref'] = refinedict['imgref']
+	refineparamsq['reference'] = refimagedata
 	refineparamsdata = publish(refineparamsq)
 	# good cycle used for reset tlt params
 	if params['goodcycle'] is None:
@@ -351,14 +357,20 @@ def insertAlignIteration(alignrundata, protomodata, params, refinedict):
 		else:
 			goodrefineparamsdata = None
 	# protomoaligner parameters
+	alignerdata = insertAlignerParams(alignrundata,params,protomodata,refineparamsdata,goodrefineparamsdata,refimagedata)
+	return alignerdata
+
+def insertAlignerParams(alignrundata,params,protomodata=None,refineparamsdata=None,goodrefineparamsdata=None,imagedata=None):
+	# protomoaligner parameters
 	alignerq = appiondata.ApProtomoAlignerParamsData()
 	alignerq['alignrun'] = alignrundata
-	alignerq['protomo'] = protomodata
-	alignerq['refine cycle'] = refineparamsdata
-	alignerq['good cycle'] = goodrefineparamsdata
-	alignerq['good start'] = params['goodstart']
-	alignerq['good end'] = params['goodend']
 	alignerq['description'] = params['description']
+	if alignrundata['fineProtomoParams']:
+		alignerq['protomo'] = protomodata
+		alignerq['refine cycle'] = refineparamsdata
+		alignerq['good cycle'] = goodrefineparamsdata
+		alignerq['good start'] = params['goodstart']
+		alignerq['good end'] = params['goodend']
 	alignerdata = publish(alignerq)
 	return alignerdata
 
