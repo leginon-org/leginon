@@ -22,6 +22,7 @@ import appionScript
 import appiondata
 import apTomo
 import apImod
+import apProTomo
 import apImage
 import apParam
 import apDisplay
@@ -47,51 +48,57 @@ class tomoMaker(appionScript.AppionScript):
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
 
 		### integers
-		self.parser.add_option("--tiltseriesnumber", dest="tiltseriesnumber", type="int",
-			help="tilt series number in the session", metavar="int")
-		self.parser.add_option("--othertilt", dest="othertilt", type="int",
-			help="2nd tilt group series number if needed", metavar="int")
+		self.parser.add_option("--alignerid", dest="alignerid", type="int",
+			help="aligner Id used for reconstruction", metavar="int")
 		self.parser.add_option("--thickness", dest="thickness", default=100, type="int",
 			help="Full tomo reconstruction thickness before binning, e.g. --thickness=200", metavar="int")
 		self.parser.add_option("--bin", "-b", dest="bin", default=1, type="int",
 			help="Extra binning from original images, e.g. --bin=2", metavar="int")
 
 		### choices
-		self.xmethods = ( "imod", "leginon", "sift", "projalign" )
-		self.parser.add_option("--xmethod", dest="xmethod",
-			help="correlation method, e.g. --xmdethod=imod,leginon, or sift", metavar="Method",
-			type="choice", choices=self.xmethods, default="imod" )
+		self.methods = ( "imod-wbp", "xmipp-art" )
+		self.parser.add_option("--method", dest="method",
+			help="reconstruction method, e.g. --method=imod-wbp", metavar="Method",
+			type="choice", choices=self.methods, default="imod-wbp" )
 		return
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['tiltseriesnumber'] is None :
-			apDisplay.printError("There is no tilt series specified, use one of: "+str(self.xmethods))
-		if self.params['xmethod'] not in self.xmethods:
+		if self.params['alignerid'] is None :
+			apDisplay.printError("There is no aligner specified")
+		if self.params['method'] not in self.methods:
 			apDisplay.printError("No valid correlation method specified")
-		if self.params['xmethod'] == 'leginon' and no_wx:
-			apDisplay.printError("Leginon tiltcorrelater can not be used without wx. Try another one")
-		if self.params['rundir'] is not None:
-			apDisplay.printError("Directory requirement too complex for simple specification, better skip it")
 		if self.params['runname'] is None:
 			apDisplay.printError("enter a run name")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description, e.g. --description='awesome data'")
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		self.sessiondata = sessiondata
-		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
-		self.params['tiltseries'] = tiltdata
-		if self.params['othertilt'] is not None:
-			othertiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['othertilt'],sessiondata)
-			self.params['othertiltseries'] = othertiltdata
-		else:
-			self.params['othertiltseries'] = None
+		if self.params['rundir']:
+			self.setTiltSeriesDir()
+
+	def setTiltSeries(self):
+		self.tiltdatalist = apTomo.getTiltListFromAligner(self.params['alignerid'])
+		print self.tiltdatalist[0]
+		self.params['tiltseriesnumber'] = self.tiltdatalist[0]['number']
+		self.params['tiltseries'] = self.tiltdatalist[0]
+
+	def setTiltSeriesDir(self):
+		self.setTiltSeries()
+		path = os.path.abspath(self.sessiondata['image path'])
+		if len(self.tiltdatalist) > 1:
+			self.params['other tiltseries'] = self.tiltdatalist[1]
+		path = re.sub("leginon","appion",path)
+		path = re.sub("/rawdata","/tomo",path)
+		tiltseriespath = "tiltseries%d" %  self.params['tiltseriesnumber']
+		self.params['tiltseriesdir'] = os.path.join(path,tiltseriespath)
 
 	#=====================
 	def setRunDir(self):
 		"""
 		this function only runs if no rundir is defined at the command line
 		"""
+		self.setTiltSeries()
 		path = os.path.abspath(self.sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","/tomo",path)
@@ -103,65 +110,9 @@ class tomoMaker(appionScript.AppionScript):
 		self.params['fulltomodir'] = self.params['rundir']
 
 	#=====================
-	def runProjalign(self):
-		"""
-		Uses Hans Peters' projalign
-		takes individual MRC files not an MRC stack
-		"""
-		tltfile = self.writeProjalignParamFile(imglist)
-		env = self.setProjalignParams()
-
-		while "transmation matrices are inconsistent":
-			#run tomo-refine.sh which iteratively run projalign
-			### changes origin and rotation for each image
-			tomorefineexe = apParam.getExecPath("tomo-refine.sh", die=True)
-			cmd = ( tomorefineexe
-				+" "+paramfile
-			)
-			proc = subprocess.Popen(cmd, shell=True, environ=env)
-			proc.wait()
-			### results got to runname-iter-numimgs.tlt
-			### convert postscript files to png images
-			#apSpider.alignment.convertPostscriptToPng()
-
-			#run tomofit.sh
-			tomofitexe = apParam.getExecPath("tomofit.sh", die=True)
-			cmd = ( tomofitexe
-				+" "+paramfile
-			)
-			proc = subprocess.Popen(cmd, shell=True, environ=env)
-			proc.wait()
-			## refines geometric parameters: inplane rotation and tilt axis angle
-
-			### repeat tomo-refine.sh
-			### stop when the transmation matrices are consistent, less than 1% difference
-
-	#=====================
-	def writeProjalignTltFile(self, imglist):
-		### see c2-00.tlt file
-		tltfile = self.params['runname']+"-00.tlt"
-		f = open(tltfile, "w")
-		f.write("TILT SERIES "+self.params['runname']+"\n")
-		f.write("PARAMETER\n")
-		f.write("TILT AZIMUTH %.6f\n"%(tiltaxis))
-		for img in imglist:
-			# fileprefix must start with a letter and only contain numbers, letters, and underscores with no extension
-			f.write("  IMAGE %d\tFILE %s\tORIGIN [ %.3f %.3f ]\tTILT ANGLE %.3f\tROTATION %.3f\n"
-			%(num, fileprefix, x, y, ang, rot))
-		f.write("END")
-		f.close()
-		return tltfile
-
-	#=====================
-	def setProjalignParams(self):
-		### see c2-00.params file
-		env['imgref'] = 59
-		return env
-
-	#=====================
 	def start(self):
 		commit = self.params['commit']
-		tiltdatalist = apTomo.getTiltdataList(self.params['tiltseries'],self.params['othertiltseries'])
+		tiltdatalist = self.tiltdatalist
 		sessiondata = tiltdatalist[0]['session']
 		description = self.params['description']
 		bin = int(self.params['bin'])
@@ -170,7 +121,10 @@ class tomoMaker(appionScript.AppionScript):
 		apDisplay.printMsg("getting pixelsize")
 		pixelsize = apTomo.getTomoPixelSize(imagelist[0])
 		imgshape = apTomo.getTomoImageShape(imagelist[0])
+		center = {'x':imgshape[1]/2,'y':imgshape[0]/2}
+		centertuple = (center['x'],center['y'])
 		processdir = self.params['fulltomodir']
+		alignerdata = apTomo.getAlignerdata(self.params['alignerid'])
 		seriesname = apTomo.getFilename(tiltdatalist)
 		stackname = seriesname+".st"
 		tilts,ordered_imagelist,ordered_mrc_files,refindex = apTomo.orderImageList(imagelist)
@@ -179,52 +133,12 @@ class tomoMaker(appionScript.AppionScript):
 		stackdir = self.params['tiltseriesdir']
 		apTomo.writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files)
 		apImod.writeRawtltFile(stackdir,seriesname,tilts)
-		# Alignment
-		leginonxcorrlist = []
-		imodxcorrlist = []
-		if self.params['xmethod']=='leginon':
-			# Correlation by tiltcorrelator
-			relativeshifts = apTomo.getLeginonRelativeShift(ordered_imagelist, 1, refindex)
-			apImod.writeShiftPrexfFile(processdir,seriesname,relativeshifts)
-			for tiltseriesdata in tiltdatalist:
-				leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltseriesdata)
-				imodxcorrdata = None
-				leginonxcorrlist.append(leginonxcorrdata)
-				imodxcorrlist.append(imodxcorrdata)
-		elif self.params['xmethod']=='sift':
-			# Correlation with rotation by Feature Matching
-			transforms = apTomo.getFeatureMatchTransform(ordered_imagelist, 1)
-			apImod.writeTransformPrexfFile(processdir,seriesname,transforms)
-			# pretend to be gotten from tomogram until fixed
-			for tiltseriesdata in tiltdatalist:
-				leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltseriesdata)
-				imodxcorrdata = None
-				leginonxcorrlist.append(leginonixcorrdata)
-				imodxcorrlist.append(imodxcorrdata)
-		elif self.params['xmethod']=="projalign":
-			# Uses Hans Peters' projalign
-			self.runProjalign()
-		else:
-			# Correlation by Coarse correlation in IMOD
-			for tiltseriesdata in tiltdatalist:
-				imodxcorrdata = apImod.coarseAlignment(stackdir, processdir, seriesname, commit)
-				leginonxcorrdata = None
-				leginonxcorrlist.append(leginonxcorrdata)
-				imodxcorrlist.append(imodxcorrdata)
-		# Global Transformation
-		gtransforms = apImod.convertToGlobalAlignment(processdir, seriesname)
-		# Add fine alignments here ----------------
-		# use the croase global alignment as final alignment
-		origxfpath = os.path.join(processdir, seriesname+".prexg")
-		newxfpath = os.path.join(processdir, seriesname+".xf")
-		shutil.copyfile(origxfpath, newxfpath)
+		# Get alignment from database
+		specimen_euler, tiltaz, origins, rotations = apTomo.getAlignmentFromDB(alignerdata,center)
+		imodaffines = apProTomo.convertProtomoToImod(specimen_euler, tiltaz, origins, rotations,centertuple)
+		apImod.writeTransformFile(processdir, seriesname,imodaffines,ext='xf')
 		# Create Aligned Stack
 		apImod.createAlignedStack(stackdir, processdir, seriesname,bin)
-		if commit:
-			alignlist = []
-			for i in range(0,len(tiltdatalist)):
-				alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltdatalist[i],leginonxcorrlist[i],imodxcorrlist[i],None,bin,self.params['runname'],self.params['rundir'])
-				alignlist.append(alignrun)
 		# Reconstruction
 		thickness = int(self.params['thickness'])
 		apImod.recon3D(stackdir, processdir, seriesname, imgshape, thickness)
@@ -236,7 +150,7 @@ class tomoMaker(appionScript.AppionScript):
 		zprojectfile = apImod.projectFullZ(processdir, self.params['runname'], seriesname,bin,True,False)
 		if commit:
 			zimagedata = apTomo.uploadZProjection(self.params['runname'],imagelist[0],zprojectfile)
-			fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltdatalist,alignlist,
+			fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltdatalist[0],alignerdata,
 						processdir,reconname,description,zimagedata)
 #=====================
 #=====================
