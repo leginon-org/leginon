@@ -13,6 +13,11 @@ $alignerid = ($_GET['aId']);
 
 $particle = new particledata();
 $refinedata = $particle->getProtomoAlignmentInfo($alignerid);
+if ($_GET['ref']) {
+	$refnum = $_GET['ref'];
+} else {
+	$refnum = NULL;
+}
 $plotbox = $_GET['box'];
 if ($_GET['type']) {
 	$type = $_GET['type'];
@@ -29,8 +34,16 @@ if ($_GET['maxx']) {
 } else {
 	$maxx = count($refinedata) - 1;
 }
+$width = $_GET['w'] ? (int) $_GET['w'] : 512 ;
+$height = $_GET['h'] ? (int) $_GET['h'] : (int) $width*0.75 ;
+//echo "$width,$height<br/>\n";
+
 $keys = array('rot'=>'rotation','shiftx'=>'shift x','shifty'=>'shift y');
-$titles = array('rot'=>'Rotation (degrees)','shiftx'=>'X shift from center (pixels)','shifty'=>'Y shift from center (pixels)');
+if ($height > 160) {
+	$titles = array('rot'=>'Rotation (degrees)','shiftx'=>'X shift from center (pixels)','shifty'=>'Y shift from center (pixels)');
+} else {
+	$titles = array('rot'=>'Rotation (o)','shiftx'=>'X shift (pixels)','shifty'=>'Y shift (pixels)');
+}
 $key = $keys[$type];
 $title = $titles[$type];
 $miny = 100000;
@@ -57,9 +70,6 @@ if (!is_null($minx) && $plotbox) {
 	$liney[] = $miny;
 }
 
-$width = $_GET['w'] ? (int) $_GET['w'] : 512 ;
-$height = $_GET['h'] ? (int) $_GET['h'] : (int) $width*0.75 ;
-//echo "$width,$height<br/>\n";
 
 if (is_null($datax[0])) {
 #if (true) {
@@ -69,13 +79,19 @@ if (is_null($datax[0])) {
 	#$height = 12;
 	#$source = blankimage($width,$height);
 } else {
-	//echo "HERE<br/>\n";
+	if ($height > 160) {
+		$xmargin = 20;
+		$gxmargin = 60;
+	} else {
+		$xmargin = 10;
+		$gxmargin = 40;
+	}
 	$graph = new Graph($width, $height, "auto");    
-	$graph->SetMargin(60,10,10,60);
+	$graph->SetMargin(60,10,10,$gxmargin);
 	$graph->SetAlphaBlending();
 	$graph->SetScale("intlin",'auto','auto'); 
 
-	$graph->xaxis->SetTitlemargin(30);
+	$graph->xaxis->SetTitlemargin($xmargin);
 	$graph->xaxis->title->Set("sorted tilt number");
 	$graph->yaxis->SetTitlemargin(40);
 	$graph->xaxis->SetPos("min");
@@ -87,7 +103,13 @@ if (is_null($datax[0])) {
 	$sp1->mark->SetColor('blue');
 	$sp1->mark->SetWidth(2);
 	$graph->Add($sp1);
-
+	if (!is_null($refnum)) {
+		$sp2 = new ScatterPlot(array($datay[$refnum]),array($datax[$refnum]));
+		$sp2->mark->SetType(MARK_FILLEDCIRCLE);
+		$sp2->mark->SetColor('red');
+		$sp2->mark->SetWidth(4);
+		$graph->Add($sp2);
+	}
 	if (!is_null($liney[0]) && $plotbox) {
 		$p3 = new LinePlot($liney,$linex);
 		$p3->SetColor("green");
