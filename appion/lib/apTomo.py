@@ -35,18 +35,39 @@ def getTiltdataList(tiltseriesdata,othertiltdata=None):
 			apDisplay.printMsg('Combining images from two tilt series')
 		return tiltdatalist
 
-def getTiltdataListFromAligner(alignerid):
+def getAlignerdata(alignerid):
 	q = appiondata.ApProtomoAlignerParamsData()
 	alignerdata = q.direct_query(alignerid)
+	return alignerdata
+
+def getAlignmentFromDB(alignerdata,center):
+	q = appiondata.ApProtomoModelData(aligner=alignerdata)
+	results = q.query(results=1)
+	model = results[0]
+	specimen_euler = {'psi':model['psi'],'theta':model['theta'],'phi':model['phi']}
+	tiltaz = model['azimuth']
+	q = appiondata.ApProtomoAlignmentData(aligner=alignerdata)
+	results = q.query()
+	results.reverse()
+	origins = []
+	rotations = []
+	for r in results:
+		origins.append((r['shift']['x']+center['x'],r['shift']['y']+center['y']))
+		rotations.append(r['rotation'])
+	return specimen_euler, tiltaz, origins, rotations
+
+def getTiltListFromAligner(alignerid):
+	alignerdata = getAlignerdata(alignerid)
 	q = appiondata.ApTiltsInAlignRunData(alignrun=alignerdata['alignrun'])
 	results = q.query()
 	for i,result in enumerate(results):
 		if result['primary']:
 			primkey = i
 			break
-	tiltdatalist = [results[primkey]]
+	tiltdatalist = [results[primkey]['tiltseries'],]
 	del results[primkey]
-	tiltdatalist.extend(results)
+	for r in results:
+		tiltdatalist.append(r['tiltseries'])
 	return tiltdatalist
 
 def getFilename(tiltserieslist):
@@ -453,22 +474,21 @@ def uploadTomo(params):
 	else:
 		fullbin = 1
 		subbin = params['bin']
-	aligndata = insertTomoAlignmentRun(sessiondata,tiltdata,None,None,None,fullbin,runname,params['aligndir'],'manual alignment from upload')
+	alignrun = insertTomoAlignmentRun(sessiondata,tiltdata,None,None,None,fullbin,runname,params['aligndir'],'manual alignment from upload')
+	alignerdata = apProTomo.insertAlignerParams(alignrun,params)
 	firstimagedata = getFirstImage(tiltdata)
 	path = os.path.abspath(params['rundir'])
 	description = params['description']
-	tiltdatalist = [tiltdata,]
-	alignlist = [aligndata,]
 	if params['full']:
 		uploadfile = params['zprojfile']
 		projectimagedata = uploadZProjection(runname,firstimagedata,uploadfile)
-		return insertFullTomogram(sessiondata,tiltdatalist,alignlist,path,name,description,projectimagedata)
+		return insertFullTomogram(sessiondata,tiltdata,alignerdata,path,name,description,projectimagedata)
 	else:
 		projectimagedata = None
 		fulltpath = params['rundir'].replace('/'+params['volume'],'')
 		dummyname = 'dummy'
 		dummydescription = 'fake full tomogram for subtomogram upload'
-		fulltomogram = insertFullTomogram(sessiondata,tiltdatalist,alignlist,fulltpath,dummyname,dummydescription,projectimagedata)
+		fulltomogram = insertFullTomogram(sessiondata,tiltdata,alignerdata,fulltpath,dummyname,dummydescription,projectimagedata)
 		apix = apDatabase.getPixelSize(firstimagedata)
 		tomoq = appiondata.ApTomogramData()
 		tomoq['session'] = sessiondata
@@ -483,20 +503,15 @@ def uploadTomo(params):
 				None,None,runname,params['invert'],subbin)
 		return insertSubTomogram(fulltomogram,subtomorundata,None,0,dimension,path,name,index,pixelsize,description)
 
-def insertFullTomogram(sessiondata,tiltdatalist,alignlist,path,name,description,projectimagedata):
+def insertFullTomogram(sessiondata,tiltdata,aligner,path,name,description,projectimagedata):
 	tomoq = appiondata.ApFullTomogramData()
 	tomoq['session'] = sessiondata
-	tomoq['tiltseries'] = tiltdatalist[0]
-	tomoq['alignment'] = alignlist[0]
+	tomoq['tiltseries'] = tiltdata
+	tomoq['aligner'] = aligner
 	tomoq['path'] = appiondata.ApPathData(path=os.path.abspath(path))
 	tomoq['name'] = name
 	tomoq['description'] = description
 	tomoq['zprojection'] = projectimagedata
-	if len(tiltdatalist) > 1:
-		idlist = []
-		for align in alignlist:
-			idlist.append(align.dbid)
-		tomoq['combined'] = idlist
 	tomoq.query()
 	results = tomoq.query()
 	if not results:
