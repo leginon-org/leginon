@@ -157,7 +157,10 @@ if ($alignId || $clusterId) {
 	$i = 0;
 	while ($classindex < $numclass && $i < $n_images) {
 		if ($classnumber[$classindex]['classNumber'] == $i+1) {
-			$c[]=$classnumber[$classindex]['number'];
+			if (array_key_exists('resolution', $classnumber[$classindex]))
+				$c[]= sprintf("'%d, %.1fA'", $classnumber[$classindex]['number'], $classnumber[$classindex]['resolution']);
+			else
+				$c[]= sprintf("'%d'", $classnumber[$classindex]['number']);
 			$classindex++;
 		} else {
 			$c[]='0';

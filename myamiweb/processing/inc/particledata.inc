@@ -3964,8 +3964,12 @@ class particledata {
 	}
 
 	function getClusteringParticleNumber($clusterId) {
-		$q="SELECT part.`refnum` AS classNumber, count(part.`DEF_id`) as number "
+		$q="SELECT part.`refnum` AS classNumber, "
+			."  COUNT(part.`DEF_id`) AS number, "
+			."  ROUND(ref.`ssnr_resolution`,3) AS resolution "
 			."FROM ApClusteringParticlesData AS part "
+			."LEFT JOIN ApClusteringReferenceData AS ref "
+			."  ON (part.`REF|ApClusteringReferenceData|clusterreference` = ref.`DEF_id`) "
 			."WHERE part.`REF|ApClusteringStackData|clusterstack` = '$clusterId' "
 			."GROUP BY part.`refnum` "
 			."ORDER BY part.`refnum` ";
