@@ -94,7 +94,6 @@ def power(a, mask_radius=1.0, thresh=3):
 		pow = numpy.log(pow)
 	except OverflowError:
 		pow = numpy.log(pow+1e-20)
-
 	pow = swap_quadrants(pow)
 
 	mask_radius = int(mask_radius / 100.0 * pow.shape[0])
@@ -260,6 +259,7 @@ def scipyblobs(im,mask):
 		sizes = []
 		stds = []
 		means = []
+		maxpos = []
 	else:
 		centers = scipy.ndimage.center_of_mass(im,labels,range(1,n+1))
 		sizes = scipy.ndimage.histogram(labels,1,n+1,n)
@@ -271,6 +271,7 @@ def scipyblobs(im,mask):
 			centers = [centers]
 			stds = [stds]
 			means = [means]
+			maxpos = [maxpos]
 		else:
 			centers = map(numpy.array, centers)
 
