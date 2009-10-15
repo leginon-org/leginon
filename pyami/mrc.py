@@ -400,9 +400,14 @@ def updateHeaderUsingArray(header, a):
 	header['xorigin'] = 0
 	header['yorigin'] = 0
 	header['zorigin'] = 0
-	header['nxstart'] = nx/-2
-	header['nystart'] = ny/-2
-	header['nzstart'] = nz/-2
+	if ndims < 3:
+		header['nxstart'] = 0
+		header['nystart'] = 0
+		header['nzstart'] = 0
+	else:	
+		header['nxstart'] = nx / -2
+		header['nystart'] = ny / -2
+		header['nzstart'] = nz / -2
 
 int32dtype = numpy.dtype('Int32')
 uint16dtype = numpy.dtype('UInt16')
