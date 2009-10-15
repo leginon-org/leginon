@@ -1542,6 +1542,7 @@ class ApImagic3dRefineIterationData(Data):
 			('keep_ordered', int),
 			('ham_win', float),
 			('obj_size', float),
+			('3d_lpfilt', int),
 			('amask_dim', float),
 			('amask_lp', float),
 			('amask_sharp', float),
