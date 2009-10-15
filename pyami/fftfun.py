@@ -11,9 +11,15 @@ def getAstigmaticDefocii(params,rpixelsize, ht):
 	z0 = (maxz + minz) / 2
 	zast = maxz - z0
 	ast_ratio = zast / z0
-	if maxr == params['b']:
-		params['alpha'] + math.pi / 2
-	return z0, zast, ast_ratio, params['alpha']
+	alpha = params['alpha']
+	if maxr == rpixelsize * params['b']:
+		alpha = alpha + math.pi / 2
+	while alpha >= math.pi / 2:
+		alpha = alpha - math.pi
+	while alpha < -math.pi / 2:
+		alpha = alpha + math.pi
+
+	return z0, zast, ast_ratio, alpha
 
 def calculateDefocus(ht, s, Cs=2.0e-3):
 		# unit is meters
