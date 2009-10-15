@@ -77,11 +77,13 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		self.parser.add_option("--euler_ang_inc", dest="euler_ang_inc", type="int", default=10,
 			help="angular increment for euler angle search", metavar="INT")
 
-		### threed & automasking params
+		### threed reconstruction, filtering, & automasking params
 		self.parser.add_option("--ham_win", dest="ham_win", type="float", default=0.8,
 			help="similar to lp-filtering parameter that determines detail in 3d map", metavar="float")
 		self.parser.add_option("--object_size", dest="object_size", type="float", default=0.8,
 			help="object size as fraction of image size", metavar="float")
+		self.parser.add_option("--3d_lpfilt", dest="threedfilt", type="int",
+			help="low-pass filter the reconstructed 3-D model to specified resolution (Angstroms) prior to masking", metavar="INT")		
 		self.parser.add_option("--amask_dim", dest="amask_dim", type="float", default=0.04,
 			help="automasking parameter determined by smallest object size", metavar="float")
 		self.parser.add_option("--amask_lp", dest="amask_lp", type="float", default=0.15,
@@ -518,6 +520,23 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write(str(self.params['ham_win'])+"\n")
 		f.write(str(self.params['object_size'])+"\n")
 		f.write("EOF\n\n")
+		
+		### optional filtering of the 3d prior to masking
+		if self.params['threedfilt'] is not None:
+			filtval = 2 * apix / self.params['threedfilt']
+			if filtval > 1:
+				filtval = 1
+			f.write("/usr/local/IMAGIC/threed/fft3d.e FORW FILTER <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
+			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned_filt\n")
+			f.write("GAUSSIAN\n")
+			f.write(str(filtval)+"\n")
+			f.write("EOF\n")
+			### rename
+			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned_filt\n")
+			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
+			f.write("EOF\n")
 
 		### automask the 3d, automasking is based on modulation analysis
 		f.write("/usr/local/IMAGIC/threed/automask3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
@@ -658,6 +677,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		itnq['keep_ordered'] = self.params['keep_ordered']
 		itnq['ham_win'] = self.params['ham_win']
 		itnq['obj_size'] = self.params['object_size']
+		itnq['3d_lpfilt'] = self.params['threedfilt']
 		itnq['amask_dim'] = self.params['amask_dim']
 		itnq['amask_lp'] = self.params['amask_lp']
 		itnq['amask_sharp'] = self.params['amask_sharp']
