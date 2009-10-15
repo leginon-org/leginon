@@ -523,7 +523,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		
 		### optional filtering of the 3d prior to masking
 		if self.params['threedfilt'] is not None:
-			filtval = 2 * apix / self.params['threedfilt']
+			filtval = 2 * self.params['apix'] / self.params['threedfilt']
 			if filtval > 1:
 				filtval = 1
 			f.write("/usr/local/IMAGIC/threed/fft3d.e FORW FILTER <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
