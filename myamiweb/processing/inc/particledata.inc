@@ -3398,7 +3398,9 @@ class particledata {
 		  ."AND stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden) $q.= " AND (refrun.`hidden` IS NULL OR refrun.`hidden` = 0) ";
 		$q.= " ORDER BY refrun.`DEF_id` DESC";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
 
