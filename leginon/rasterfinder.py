@@ -221,10 +221,10 @@ class RasterFinder(targetfinder.TargetFinder):
 	def get_box_stats(self, image, coord, boxsize):
 		## select the region of interest
 		b2 = boxsize / 2
-		rmin = int(coord[0]-b2)
-		rmax = int(coord[0]+b2)
-		cmin = int(coord[1]-b2)
-		cmax = int(coord[1]+b2)
+		rmin = int(coord[1]-b2)
+		rmax = int(coord[1]+b2)
+		cmin = int(coord[0]-b2)
+		cmax = int(coord[0]+b2)
 		## beware of boundaries
 		if rmin < 0:  rmin = 0
 		if rmax >= image.shape[0]:  rmax = image.shape[0]-1
