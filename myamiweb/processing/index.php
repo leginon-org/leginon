@@ -271,10 +271,10 @@ foreach ($reconRuns as $recon) {
 	if (eregi("tecnai", $camera[0]['hostname'])) $scope = "Tecnai F20 Twin";
 	else $scope = "Tecnai G2 Spirit Twin";
 	$cam = ($camera[0]['name'] == 'Tietz SCX') ? 'Tietz F415' : $camera[0]['name'];
-	$camsize = ($camera['0']['name'] == 'Tietz PXL') ? "2K x2K" : "4K x 4K";
+	$camsize = ($camera['0']['name'] == 'Tietz PXL') ? "2k x 2k" : "4k x 4k";
 
 	$mag = commafy($presetinfo['magnification']);
-	$pix = $presetinfo['ccdpixelsize']*1e9;
+	$pix = round($presetinfo['ccdpixelsize']*1e9,4);
 	$campix = "15";
 	$dose = round($presetinfo['dose']/1e20);
 	$kvolt = $presetinfo['hightension']/1e3;
@@ -284,17 +284,17 @@ foreach ($reconRuns as $recon) {
 	$m .= "Data were acquired using a $scope transmission electron microscope operating at $kvolt kV, \n";
 	$m .= "using a dose of ~".$dose." e-/&Aring;&sup2; and a nominal underfocus ranging from $maxNomDF to $minNomDF &micro;m.\n";
 	//	$m .= "A Gatan side-entry cryostage/room temp stage was used for data collection.\n";
-	$m .= "$totimgs images were automatically collected at a nominal magnification of $mag x at a pixel size of $pix nm at the specimen level.\n";
+	$m .= "$totimgs images were automatically collected at a nominal magnification of ".$mag."X at a pixel size of $pix nm at the specimen level.\n";
 	$m .= "All images were recorded with a $cam $camsize pixel CCD camera ($campix &micro;m pixel)\n";
-	$m .= "utilizing the Leginon data collection software (Suloway 2005).\n";
-	$m .= "Experimental data were processed by the Appion software package, which interfaces with the Leginon database infrastructure.\n";
+	$m .= "utilizing the Leginon data collection software (Suloway <i>et al.</i>, 2005).\n";
+	$m .= "Experimental data were processed by the Appion software package (Lander <i>et al.</i>, 2009), which interfaces with the Leginon database infrastructure.\n";
 	// CTF
 	if ($hasCTF)
-	  $m .= "The contrast transfer function (CTF) for each micrograph was estimated using the Automated CTF Estimation (ACE) package. \n";
+	  $m .= "The contrast transfer function (CTF) for each micrograph was estimated using the ACE package (Mallick<i>et al.</i>, 2005). \n";
 	// Particle picking
 	$m .= commafy($particlestats['totparticles'])." particles were ";
 	if ($pickertype=='DOG Picker')
-		$m .= "automatically selected from the micrographs using an algorithm based on a difference of gaussians (Yoshioka 2008) \n";
+		$m .= "automatically selected from the micrographs using an algorithm based on a difference of Gaussians (Voss<i>et al.</i>, 2009) \n";
 	elseif ($pickertype=='Template Correlator')
 		$m .= "automatically selected from the micrographs using a template-based particle picker (Roseman, 2003) \n";
 	else $m .= "manually selected from the micrographs \n";
@@ -302,26 +302,73 @@ foreach ($reconRuns as $recon) {
 	if ($hasCTF) {
 		$acecutoff=($stackparams['aceCutoff']) ? $stackparams['aceCutoff']*100 : '' ;
 		if ($acecutoff)
-			$m .= "Only particles whose CTF estimation had an ACE confidence of ".$acecutoff."% or better were extracted. \n";
+			$m .= "Only particles whose CTF estimation had an confidence value of ".$acecutoff."% or better were extracted. \n";
 		if ($stackparams['phaseFlipped']==1)
 			$m .= "Phase correction of the single particles was carried out by ".$stackparams['fliptype']." during creation of the particle stack. \n";
 	}
 	if ($stackparams['bin']) $m .= "Stacked particles were binned by a factor of ".$stackparams['bin']." for the final reconstruction. \n";
 	$m .= "The final stack contained ".commafy($stackparticles)." particles. \n";
 	if ($clsavgs['SpiCoran']) {
-	  $m .= "The 3D reconstruction was carried out using a combination of both the SPIDER and EMAN reconstruction packages (Frank 1996, Ludtke 1999). \n";
+	  $m .= "The 3D reconstruction was carried out using a combination of both the SPIDER and EMAN reconstruction packages ";
+	  $m .= "(Frank <i>et al.</i>, 1996; Ludtke <i>et al.</i>, 1999). \n";
 	  $m .= "Creation of projections of the 3D model and subsequent classification of the particles was performed by EMAN, \n";
 	  $m .= "after which a SPIDER script was employed to perform a reference-free hierarchical clustering analysis of the particles in each class\n";
 	  $m .= "The resulting SPIDER class that exhibited the highest cross-correlation value to the original model projection of the given class was\n";
 	  $m .= "used in the creation of the 3D density for the following iteration by using EMAN.\n";
 	  // calculate % of particles used
 	  $tossed = round((($stackparticles - $badprtls['SpiCoran'])/$stackparticles)*100);
-	  $m .= "With this methodology, $tossed % of the initial stacked particles were used in the final reconstruction. \n";
+	  $m .= "With this methodology, $tossed% of the initial stacked particles were used in the final reconstruction. \n";
 	}
-	else $m .= "The 3D reconstruction was carried out using the EMAN reconstruction package (Ludtke 1999). \n";
+	else $m .= "The 3D reconstruction was carried out using the EMAN reconstruction package (Ludtke <i>et al.</i>, 1999). \n";
 	$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
 	$m .= "which provided a value of $halfres &Aring; resolution.\n";
-	$m .= "Calculation of the resolution by rmeasure (Sousa and Gridgorieff 2007) at a 0.5 cutoff yielded a resolution of $rmeasureres &Aring;. \n";
+	$m .= "Calculation of the resolution by Rmeasure (Sousa & Gridgorieff, 2007) at a 0.5 cutoff yielded a resolution of $rmeasureres &Aring;. \n";
+
+
+	$m .= "</td></tr><tr><td>\n";
+	$m .= "<ul>\n";
+
+	$m .= "<li>
+	Frank, Radermacher, Penczek, Zhu, Li, Ladjadj, and Leith. (1996).
+	<i>“SPIDER and WEB: processing and visualization of images in 3D electron microscopy and related fields.”</i>
+	J Struct Biol v116(1): pp. 190-9.";
+
+	$m .= "<li>
+	Lander, Stagg, Voss, Cheng, <i>et al.</i>, Potter, and Carragher (2009).
+	<i>“Appion: an integrated, database-driven pipeline to facilitate EM image processing.”</i>
+	J Struct Biol v166(1): pp. 95-102.";
+
+	$m .= "<li>
+	Ludtke, Baldwin, and Chiu (1999).
+	<i>“EMAN: semiautomated software for high-resolution single-particle reconstructions.”</i>
+	J Struct Biol v128(1): pp. 82-97.";
+
+	$m .= "<li>
+	Mallick, Carragher, Potter, and Kriegman (2005).
+	<i>“ACE: automated CTF estimation.”</i>
+	Ultramicroscopy v104(1): pp. 8-29.";
+
+	$m .= "<li>
+	Roseman (2003).
+	<i>“Particle finding in electron micrographs using a fast local correlation algorithm.”</i>
+	Ultramicroscopy v94(3-4): pp. 225-36.";
+
+	$m .= "<li>
+	Sousa and Grigorieff (2007).
+	<i>“Ab initio resolution measurement for single particle structures.”</i>
+	J Struct Biol v157(1): pp. 201-10.";
+
+	$m .= "<li>
+	Suloway, Pulokas, Fellmann, Cheng, Guerra, Quispe, Stagg, Potter, and Carragher (2005).
+	<i>“Automated molecular microscopy: the new Leginon system.”</i>
+	J Struct Biol v151(1): pp. 41-60.";
+
+	$m .= "<li>
+	Voss, Yoshioka, Radermacher, Potter, and Carragher (2009).
+	<i>“DoG Picker and TiltPicker: tools to facilitate particle selection in single particle electron microscopy.”</i>
+	J Struct Biol v166(2): pp. 205-13.";
+
+	$m .= "</ul>\n";
 	$m .= "</td></tr></table>\n";
 	echo $m;
 }
