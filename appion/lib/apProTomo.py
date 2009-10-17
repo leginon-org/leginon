@@ -4,6 +4,7 @@ import math
 import numpy
 import os
 import apParam
+import apTomo
 import apImod
 import apDisplay
 import appiondata
@@ -327,18 +328,11 @@ def convertProtomoToImod(specimen_euler, tiltaz, origins, rotations,center):
 		imodaffines.append(imodaffine)
 	return imodaffines
 
-def publish(q):
-	results = q.query()
-	if not results:
-		q.insert()
-		return q
-	return results[0]
-
 def insertProtomoParams(seriesname):
 	# general protmo parameters
 	protomoq = appiondata.ApProtomoParamsData()
 	protomoq['series name'] = seriesname
-	protomodata = publish(protomoq)
+	protomodata = apTomo.publish(protomoq)
 	return protomodata
 
 def insertAlignIteration(alignrundata, protomodata, params, refinedict,refimagedata):
@@ -351,7 +345,7 @@ def insertAlignIteration(alignrundata, protomodata, params, refinedict,refimaged
 	refineparamsq['cormod'] = refinedict['cormod']
 	refineparamsq['imgref'] = refinedict['imgref']
 	refineparamsq['reference'] = refimagedata
-	refineparamsdata = publish(refineparamsq)
+	refineparamsdata = apTomo.publish(refineparamsq)
 	# good cycle used for reset tlt params
 	if params['goodcycle'] is None:
 		goodrefineparamsdata = None
@@ -363,22 +357,9 @@ def insertAlignIteration(alignrundata, protomodata, params, refinedict,refimaged
 		else:
 			goodrefineparamsdata = None
 	# protomoaligner parameters
-	alignerdata = insertAlignerParams(alignrundata,params,protomodata,refineparamsdata,goodrefineparamsdata,refimagedata)
+	alignerdata = apTomo.insertAlignerParams(alignrundata,params,protomodata,refineparamsdata,goodrefineparamsdata,refimagedata)
 	return alignerdata
 
-def insertAlignerParams(alignrundata,params,protomodata=None,refineparamsdata=None,goodrefineparamsdata=None,imagedata=None):
-	# protomoaligner parameters
-	alignerq = appiondata.ApProtomoAlignerParamsData()
-	alignerq['alignrun'] = alignrundata
-	alignerq['description'] = params['description']
-	if alignrundata['fineProtomoParams']:
-		alignerq['protomo'] = protomodata
-		alignerq['refine cycle'] = refineparamsdata
-		alignerq['good cycle'] = goodrefineparamsdata
-		alignerq['good start'] = params['goodstart']
-		alignerq['good end'] = params['goodend']
-	alignerdata = publish(alignerq)
-	return alignerdata
 
 def insertModel(alignerdata, results):
 	# general protmo parameters
@@ -388,7 +369,7 @@ def insertModel(alignerdata, results):
 	q['theta'] = results[-2]['theta']
 	q['phi'] = results[-2]['phi']
 	q['azimuth'] = results[-2]['azimuth']
-	modeldata = publish(q)
+	modeldata = apTomo.publish(q)
 	return modeldata
 
 def insertTiltAlignment(alignerdata,imagedata,number,result,center=None):
@@ -401,5 +382,5 @@ def insertTiltAlignment(alignerdata,imagedata,number,result,center=None):
 	q['number'] = number
 	q['rotation'] = result['rotation']
 	q['shift'] = {'x':result['x'] - center['x'], 'y':result['y'] - center['y']}
-	aligndata = publish(q)
+	aligndata = apTomo.publish(q)
 	return aligndata
