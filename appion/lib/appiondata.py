@@ -957,6 +957,7 @@ class ApFullTomogramData(Data):
 			('session', leginondata.SessionData),
 			('tiltseries', leginondata.TiltSeriesData),
 			('aligner', ApProtomoAlignerParamsData),
+			('alignrun', ApTomoAlignmentRunData),
 			('combined', list),
 			('path', ApPathData),
 			('name', str),
