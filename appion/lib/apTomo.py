@@ -388,11 +388,7 @@ def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
 	paramsq['FilterSigma1'] = filtersigma1
 	paramsq['FilterRadius2'] = filterradius
 	paramsq['FilterSigma2'] = filtersigma2
-	results = paramsq.query()
-	if not results:
-		paramsq.insert()
-		return paramsq
-	return results[0]
+	return publish(paramsq)
 
 def	insertTiltsInAlignRun(alignrundata,tiltdata,settingsdata,primary=True):
 	q = appiondata.ApTiltsInAlignRunData()
@@ -400,11 +396,7 @@ def	insertTiltsInAlignRun(alignrundata,tiltdata,settingsdata,primary=True):
 	q['tiltseries'] = tiltdata
 	q['settings'] = settingsdata
 	q['primary'] = primary
-	results = q.query()
-	if not results:
-		q.insert()
-		return q
-	return results[0]
+	return publish(q)
 
 def insertTomoAlignmentRun(sessiondata,leginoncorrdata,imodxcorrdata,protomorundata,bin,name,path,description=None):
 	pathq = appiondata.ApPathData(path=os.path.abspath(path))
@@ -423,6 +415,27 @@ def insertTomoAlignmentRun(sessiondata,leginoncorrdata,imodxcorrdata,protomorund
 		return qalign
 	return results[0]
 
+def insertAlignerParams(alignrundata,params,protomodata=None,refineparamsdata=None,goodrefineparamsdata=None,imagedata=None):
+	# protomoaligner parameters
+	alignerq = appiondata.ApProtomoAlignerParamsData()
+	alignerq['alignrun'] = alignrundata
+	alignerq['description'] = params['description']
+	if alignrundata['fineProtomoParams']:
+		alignerq['protomo'] = protomodata
+		alignerq['refine cycle'] = refineparamsdata
+		alignerq['good cycle'] = goodrefineparamsdata
+		alignerq['good start'] = params['goodstart']
+		alignerq['good end'] = params['goodend']
+	alignerdata = publish(alignerq)
+	return alignerdata
+
+def publish(q):
+	results = q.query()
+	if not results:
+		q.insert()
+		return q
+	return results[0]
+
 def insertSubTomoRun(sessiondata,selectionrunid,stackid,name,invert=False,subbin=1):
 	if selectionrunid:
 		qpick = appiondata.ApSelectionRunData()
@@ -436,11 +449,7 @@ def insertSubTomoRun(sessiondata,selectionrunid,stackid,name,invert=False,subbin
 		stackdata = None
 	qrun = appiondata.ApSubTomogramRunData(session=sessiondata,
 			pick=pickdata,stack=stackdata,runname=name,invert=invert,subbin=subbin)
-	results = qrun.query()
-	if not results:
-		qrun.insert()
-		return qrun
-	return results[0]
+	return publish(qrun)
 
 def checkExistingFullTomoData(path,name):
 	pathq = appiondata.ApPath(path=path)
@@ -512,12 +521,7 @@ def insertFullTomogram(sessiondata,tiltdata,aligner,path,name,description,projec
 	tomoq['name'] = name
 	tomoq['description'] = description
 	tomoq['zprojection'] = projectimagedata
-	tomoq.query()
-	results = tomoq.query()
-	if not results:
-		tomoq.insert()
-		return tomoq
-	return results[0]
+	return publish(tomoq)
 
 def getLastVolumeIndex(fulltomodata):
 	tomoq = appiondata.ApTomogramData(fulltomogram=fulltomodata)
@@ -560,11 +564,7 @@ def insertSubTomogram(fulltomodata,rundata,center,offsetz,dimension,path,name,in
 	tomoq['description'] = description
 	filepath = os.path.join(path,name+".rec")
 	tomoq['md5sum'] = apFile.md5sumfile(filepath)
-	results = tomoq.query()
-	if not results:
-		tomoq.insert()
-		return tomoq
-	return results[0]
+	return publish(tomoq)
 
 def array2jpg(pictpath,im,imin=None,imax=None,size=512):
 	jpgpath = pictpath+'.jpg'
@@ -706,11 +706,7 @@ def uploadZProjection(runname,initialimagedata,uploadfile):
 	shutil.copyfile(uploadfile, newimgfilepath)
 	image = mrc.read(newimgfilepath)
 	imagedata['image'] = image
-	results = imagedata.query()
-	if not results:
-		imagedata.insert()
-		return imagedata
-	return imagedata[0]
+	return publish(imagedata)
 
 def getSubvolumeInfo(subtomorundata):
 	tomoq = appiondata.ApTomogramData(subtomorun=subtomorundata)
@@ -718,7 +714,14 @@ def getSubvolumeInfo(subtomorundata):
 	if results:
 		tomo = results[0]
 		subbin = subtomorundata['subbin']
-		fullbin = tomo['fulltomogram']['alignment']['bin']
+		fullq = appiondata.ApFullTomogramData()
+		fulltomogram = fullq.direct_query(17)
+		if fulltomogram['alignrun'] is  None:
+			# new data has no alignrun
+			fullbin = tomo['fulltomogram']['aligner']['alignrun']['bin']
+		else:
+			# old data has no aligner
+			fullbin = tomo['fulltomogram']['alignrun']['bin']
 		totalbin = subbin * fullbin
 		shape = (tomo['dimension']['z']/totalbin,tomo['dimension']['y']/totalbin,tomo['dimension']['x']/totalbin)
 		pixelsize = tomo['pixelsize']
@@ -760,9 +763,9 @@ def transformTomo(a,name,package,alignpdata,zshift=0.0,bin=1):
 	shift = (alignpdata['xshift']/bin,alignpdata['yshift']/bin,zshift)
 	angle = alignpdata['rotation']
 	mirror = alignpdata['mirror']
-	print shift,angle,mirror
+	print 'shift= (%.2f, %.2f)' % shift, 'rotate=%.1 deg' % (angle,), 'upside-down=',mirror
 	"""
-		zoom the array by 2 to get better interpretation or noisy volume and then
+		zoom the array by 2 to get better interpretation of noisy volume and then
 		use numpy affine transform to rotate and shift. prefilter should be False to 
 		faithfully regenerate features in the sections.  In addition, zoom order need
 		to be one to prevent filtering effect while affine transform order should be
@@ -772,7 +775,7 @@ def transformTomo(a,name,package,alignpdata,zshift=0.0,bin=1):
 	### order=1 copies values
 	b = ndimage.zoom(a,scale,mode='nearest',prefilter=False,order=1)
 	shape = b.shape
-	center = map((lambda x: x * scale / 2), list(b.shape))
+	center = map((lambda x: x / 2), list(b.shape))
 	shift2 = map((lambda x: x * scale), list(shift))
 	inboxtuple = list(a.shape)
 	inboxtuple.reverse()
@@ -789,7 +792,6 @@ def transformTomo(a,name,package,alignpdata,zshift=0.0,bin=1):
 		totalaffine = xmippAffineTransform(rotationaffine, shiftaffine, mirroraffine, centeraffine)
 	elif package == 'Spider':
 		totalaffine = spiderAffineTransform(rotationaffine, shiftaffine, mirroraffine, centeraffine)
-	print totalaffine
 	totalshift = (totalaffine[0,3],totalaffine[1,3],totalaffine[2,3])
 	b = ndimage.affine_transform(b, totalaffine[:-1,:-1], offset=totalshift, mode='wrap', order=3, prefilter=False)
 	c = ndimage.zoom(b,1.0/scale,mode='nearest',prefilter=False,order=1)
@@ -840,11 +842,5 @@ def insertTomoAvgParticle(avgrundata,subvolumedata,alignp,shiftz):
 	tomoaq['subtomo'] = subvolumedata
 	tomoaq['aligned particle'] = alignp
 	tomoaq['z shift'] = shiftz
-	tomoaq.query()
-	results = tomoaq.query()
-	if not results:
-		tomoaq.insert()
-		return tomoaq
-	return results[0]
-
+	return publish(tomoaq)
 
