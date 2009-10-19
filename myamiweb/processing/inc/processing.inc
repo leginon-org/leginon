@@ -353,7 +353,8 @@ function writeTop_org($title,$heading=false,$headerstuff=false) {
 
 	// Show project & session pulldowns
 	$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
-	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
+	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'
+		.$currentproject['name'].' ('.$projectId.')</a>';
 	$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
 
