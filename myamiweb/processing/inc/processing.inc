@@ -134,7 +134,8 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 		$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
 		$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	}
-	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
+	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'
+		.$currentproject['name'].' ('.$projectId.')</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
 	$proj_link.=($misc) ? "<a href='viewmisc.php?projId=$projectId'>[Related Images, Movies, etc]</a>" : ""; 
 	if ($expId) $expinfo = $leginondata->getSessionInfo($expId);
@@ -261,7 +262,8 @@ function writeTop($title,$heading=false,$headerstuff=false) {
 
 	// Show project & session pulldowns
 	$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
-	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
+	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'
+		.$currentproject['name'].' ('.$projectId.')</a>';
 	$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
 	$proj_link.=($misc) ? "<a href='viewmisc.php?projId=$projectId'>[Related Images, Movies, etc]</a>" : ""; 
