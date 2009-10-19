@@ -301,8 +301,6 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 
 		### normalize eigenimages
 		eigenimages = os.path.join(self.params['rundir'], "eigenimages.img")
-		while os.path.isfile(eigenimages):
-			apFile.removeStack(eigenimages)
 		emancmd = "proc2d "+str(eigenimages)+" "+str(eigenimages)+" inplace"
 		apParam.runCmd(emancmd, package="EMAN")
 
