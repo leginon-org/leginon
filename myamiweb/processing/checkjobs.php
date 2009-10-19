@@ -128,7 +128,9 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 		}
 		if ($status) $display_keys['status'] = $status;
 
-		echo apdivtitle("Job: <font class='aptitle'>$jobinfo[name]</font> (ID: <font class='aptitle'>$job[DEF_id]</font>)");
+		echo apdivtitle("Job: <font class='aptitle'>$jobinfo[name]</font> "
+			."(ID: <font class='aptitle'>$job[DEF_id]</font> -- "
+			."Date: <font size='-2'>". substr($jobinfo['DEF_timestamp'], 0, 10) ."</font>)");
 		echo "<table BORDER='0' >\n";
 		if ($dlbuttons) echo "<tr><td colspan='2'>$dlbuttons</td></tr>\n";
 		foreach($display_keys as $k=>$v) {
