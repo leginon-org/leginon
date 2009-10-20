@@ -317,7 +317,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("TOTSUM\n")
 			f.write("CCF\n")
 			f.write(str(self.params['max_shift_orig'])+"\n")
-			f.write("5\n")
+			f.write("3\n")
 			f.write("EOF\n")
 			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("start_cent\n")
@@ -362,7 +362,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("INTERACTIVE\n")
 		f.write(str(self.params['samp_param'])+"\n")
 		f.write("0.0,"+str(mraradius)+"\n")
-		f.write("5\n")
+		f.write("3\n")
 		f.write("NO\n")
 		f.write("EOF\n")
 
