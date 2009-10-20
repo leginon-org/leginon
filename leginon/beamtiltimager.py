@@ -34,7 +34,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		'sites': 0,
 		'startangle': 0,
 		'correlation type': 'phase',
-		'tableau type': 'split image',
+		'tableau type': 'split image-power',
 		'tableau binning': 2,
 		'tableau split': 8,
 	})
@@ -46,7 +46,7 @@ class BeamTiltImager(acquisition.Acquisition):
 
 		self.correlator = correlator.Correlator()
 		self.correlation_types = ['cross', 'phase']
-		self.tableau_types = ['beam tilt series', 'split image']
+		self.tableau_types = ['beam tilt series-power', 'beam tilt series-image','split image-power']
 		self.maskradius = 1.0
 		self.increment = 5e-7
 		self.tabscale = None
@@ -79,7 +79,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		anglelist.append(None)
 		radlist.append(0)
 
-		if self.settings['sites'] == 0 or self.settings['tableau type'] == 'split image':
+		if self.settings['sites'] == 0 or self.settings['tableau type'] == 'split image-power':
 			return tiltlist, anglelist, radlist
 		angleinc = 2*3.14159/self.settings['sites']
 		startangle = self.settings['startangle'] * numpy.pi / 180.0
@@ -110,17 +110,20 @@ class BeamTiltImager(acquisition.Acquisition):
 
 	def insertTableau(self, imagedata, angle, rad):
 		image = imagedata['image']
-		pow = imagefun.power(image)
 		binning = self.settings['tableau binning']
-		binned = imagefun.bin(pow, binning)
-		if self.ace2exe:
-			ctfdata = self.estimateCTF(imagedata)
-			s = '%.1f' % (ctfdata['astig'],)
-			t = numpil.textArray(s)
-			min = arraystats.min(binned)
-			max = arraystats.max(binned)
-			t = min + t * (max-min)
-			imagefun.pasteInto(t, binned, (20,20))
+		if self.settings['tableau type'] != 'beam tilt series-image':
+			pow = imagefun.power(image)
+			binned = imagefun.bin(pow, binning)
+			if self.ace2exe:
+				ctfdata = self.estimateCTF(imagedata)
+				s = '%.1f' % (ctfdata['astig'],)
+				t = numpil.textArray(s)
+				min = arraystats.min(binned)
+				max = arraystats.max(binned)
+				t = min + t * (max-min)
+				imagefun.pasteInto(t, binned, (20,20))
+		else:
+			binned = imagefun.bin(image, binning)
 		self.tableauimages.append(binned)
 		self.tableauangles.append(angle)
 		self.tableaurads.append(rad)
@@ -136,6 +139,11 @@ class BeamTiltImager(acquisition.Acquisition):
 			rad = radinc * self.tableaurads[i]
 			tab.insertImage(im, angle=ang, radius=rad)
 		self.tabimage,self.tabscale = tab.render()
+		if self.settings['tableau type'] == 'beam tilt series-image':
+			mean = self.tabimage.mean()
+			std = self.tabimage.std()
+			a = numpy.where(self.tabimage >= mean + 5*std, 0, self.tabimage)
+			self.tabimage = numpy.clip(a, 0, mean*1.5)
 		self.displayTableau()
 		self.saveTableau()
 
@@ -192,9 +200,9 @@ class BeamTiltImager(acquisition.Acquisition):
 			angle = anglelist[i]
 			rad = radlist[i]
 
-			if self.settings['tableau type'] == 'split image':
+			if self.settings['tableau type'] == 'split image-power':
 				self.splitTableau(imagedata['image'])
-			elif self.settings['tableau type'] == 'beam tilt series':
+			elif 'beam tilt series' in self.settings['tableau type']:
 				self.insertTableau(imagedata, angle, rad)
 			try:
 				shiftinfo = self.correlateOriginal(i,imagedata)
@@ -203,7 +211,7 @@ class BeamTiltImager(acquisition.Acquisition):
 				return 'error'
 			pixelshift = shiftinfo['pixel shift']
 			displace.append((pixelshift['row'],pixelshift['col']))
-		if self.settings['tableau type'] == 'beam tilt series':
+		if 'beam tilt series' in self.settings['tableau type']:
 			self.renderTableau()
 		print displace
 		return status

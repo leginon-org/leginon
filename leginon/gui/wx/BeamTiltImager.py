@@ -107,7 +107,7 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 		sizer.Add(self.widgets['correlation type'], (3, 1), (1, 1), wx.ALIGN_CENTER)
 
 		self.widgets['tableau type'] = Choice(self, -1, choices=self.node.tableau_types)
-		label = wx.StaticText(self, -1, 'Tableau Type:')
+		label = wx.StaticText(self, -1, 'Tableau Type (method-display):')
 		sizer.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.widgets['tableau type'], (4, 1), (1, 1), wx.ALIGN_CENTER)
 
