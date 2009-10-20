@@ -187,7 +187,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("TOTSUM\n")
 			f.write("CCF\n")
 			f.write(str(self.params['max_shift_orig'])+"\n")
-			f.write("5\n")
+			f.write("3\n")
 			f.write("EOF\n")
 			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> multiReferenceAlignment.log\n")
 			f.write("start_cent\n")
@@ -315,19 +315,6 @@ class imagicAlignmentScript(appionScript.AppionScript):
 				scaledtemplates.append(newarray)
 			apImagicFile.writeImagic(scaledtemplates, reffile)
 
-		### get boxsizes (new or old) for templatestack
-#		emancmd = "iminfo "+reffile	
-#		proc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#		results = proc.stdout
-#		proc.wait() 
-#		for line in results:
-#			res = re.search("([0-9]+)x([0-9]+)x([0-9])", line)
-#			if res:
-#				num1 = int(res.groups()[0])
-#				num2 = int(res.groups()[1])
-#				if num1 == num2:
-#					refbox = num1
-
 		refbox = apFile.getBoxSize(reffile)[0]		
 		stbox = self.params['boxsize']		
 	
@@ -356,7 +343,6 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			numberlist = [eval(p) for p in list]
 			### figure out if the particle is mirrored, based on which reference it belongs to
 			numrefs = apFile.numImagesInStack(os.path.join(self.params['rundir'], "references.hed"))
-#			numrefs = self.templatestack['numimages']
 			half = numrefs / 2
 			if numberlist[4] > half and self.params['mirror'] is True:
 				mirror = 1
@@ -512,6 +498,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			emancmd = "proc2d "+strippedfile+".hed "+os.path.join(self.params['rundir'], "start.hed ")+\
 				"first=0 last="+str(self.params['numpart']-1)
 			apEMAN.executeEmanCmd(emancmd)	
+		else:
+			apDisplay.printError("stack not found in database")
 	
 		### get template stack parameters
 		self.templatestack = {}
@@ -521,7 +509,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		self.templatestack['file'] = os.path.join(self.templatestack['data']['path']['path'], self.templatestack['data']['templatename'])
 		self.templatestack['numimages'] = self.templatestack['data']['numimages']
 
-		### copy templates into working directoryi
+		### copy templates into working directory
 		if os.path.isfile(self.templatestack['file']):
 			apDisplay.printColor("copying templates into running directoroy", "cyan")
 			ts = os.path.join(self.params['rundir'], "references.img")		
@@ -533,6 +521,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 				strippedfile = self.templatestack['file']
 			emancmd = "proc2d "+strippedfile+".img "+ts
 			apEMAN.executeEmanCmd(emancmd)
+		else:
+			apDisplay.printError("template stack not found in database")
 
 		### set new pixelsize
 		if self.params['bin'] is not None and self.params['bin'] != 0:
