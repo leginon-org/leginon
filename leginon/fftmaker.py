@@ -80,7 +80,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 
 	def estimateAstigmation(self,params):
 		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize,self.ht)
-		self.logger.info('z0 %.2f um, zast %.2f um (%.0f ), angle= %.0f deg' % (z0*1e6,zast*1e6,ast_ratio*100, angle*180.0/math.pi))
+		self.logger.info('z0 %.3f um, zast %.3f um (%.0f ), angle= %.1f deg' % (z0*1e6,zast*1e6,ast_ratio*100, angle*180.0/math.pi))
 
 	def publishPowerImage(self, imagedata, powimage):
 		powdata = leginondata.AcquisitionFFTData(session=self.session, source=imagedata, image=powimage)
