@@ -63,7 +63,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
 
 	#======================
-	def insertKerDenSOM(self):
+	def insertKerDenSOM(self, binned=None):
 		### Preliminary data
 		projectid = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
 		alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
@@ -93,8 +93,15 @@ class kerdenSOMScript(appionScript.AppionScript):
 		clusterrunq = appiondata.ApClusteringRunData()
 		clusterrunq['runname'] = self.params['runname']
 		clusterrunq['description'] = self.params['description']
-		clusterrunq['boxsize'] = alignstackdata['boxsize']
-		clusterrunq['pixelsize'] = alignstackdata['pixelsize']
+		# what if we binned the aligned stack to get the new one
+		if binned is None:
+			boxsize = alignstackdata['boxsize']
+			pixelsize = alignstackdata['pixelsize']
+		else:
+			boxsize = alignstackdata['boxsize'] / binned
+			pixelsize = alignstackdata['pixelsize'] * binned
+		clusterrunq['boxsize'] = boxsize
+		clusterrunq['pixelsize'] = pixelsize
 		clusterrunq['num_particles'] = self.params['numpart']
 		clusterrunq['alignstack'] = alignstackdata
 		clusterrunq['project|projects|project'] = projectid
@@ -342,6 +349,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(montagecmd, showcmd=True, verbose=False)
 		time.sleep(1)
 		apFile.removeFilePattern(self.timestamp+".*.png")
+		return bin
 
 	#======================
 	def start(self):
@@ -362,9 +370,10 @@ class kerdenSOMScript(appionScript.AppionScript):
 		if apFile.stackSize(self.instack) > 3.0*(1024**3):
 			# Big stacks use eman
 			self.createMontageByEMAN()
+			binned = None
 		else:
-			self.createMontageInMemory(apix)
-		self.insertKerDenSOM()
+			binned = self.createMontageInMemory(apix)
+		self.insertKerDenSOM(binned=binned)
 
 		apFile.removeFile(outdata)
 		apFile.removeFilePattern("*.cod")
