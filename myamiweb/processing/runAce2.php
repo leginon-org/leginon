@@ -207,7 +207,7 @@ function runAce2() {
 	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
 	if ($maxang > 5) {
 		$tiltangle = $_POST['tiltangle'];
-		if ($tiltangle!='notilt' || $tiltangle!='lowtilt') {
+		if ($tiltangle!='notilt' && $tiltangle!='lowtilt') {
 			createAce2Form("ACE 2 does not work on tilted images");
 			exit;
 		}

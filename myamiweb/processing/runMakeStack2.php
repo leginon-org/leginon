@@ -506,8 +506,8 @@ function runMakestack() {
 	$maxang = $particle->getMaxTiltAngle($expId);
 	if ($maxang > 5) {
 		$tiltangle = $_POST['tiltangle'];
-		if ($_POST['ctfcorrect']=='on' && $_POST['ctfcorrecttype']!='emantilt' && ($tiltangle!='notilt' || $tiltangle!='lowtilt')) {
-			createMakestackForm("CtfCorrect does not work on tilted images");
+		if ($_POST['ctfcorrect']=='on' && $_POST['ctfcorrecttype']!='emantilt' && !($tiltangle=='notilt' || $tiltangle=='lowtilt')) {
+			createMakestackForm("CTF correct does not work on tilted images: $tiltangle ");
 			exit;
 		}
 	}
