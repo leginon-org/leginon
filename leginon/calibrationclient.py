@@ -427,6 +427,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			return None
 
 	def setBeamTilt(self, bt):
+		'SET BT', bt
 		self.instrument.tem.BeamTilt = bt
 
 	def storeRotationCenter(self, tem, ht, mag, beamtilt):
@@ -741,6 +742,29 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		return tuple(pixel_shifts)
 
+	def measureDisplacementDifference(tiltvector):
+		'''
+		Measure displacement difference between tilting plus tiltvector
+		compared to minus tiltvector
+		'''
+		btorig = self.getBeamTilt()
+		bt0 = btorig['x'], btorig['y']
+		im0 = self.acquireImage()
+		try:
+			d = []
+			for tsign in (1,-1):
+				delta = numpy.multiply(tsign, tiltvector)
+				bt = numpy.add(bt0, delta)
+				state1 = leginondata.ScopeEMData()
+				state1['beam tilt'] = {'x': bt[0], 'y': bt[1]}
+				shiftinfo = self.measureScopeChange(im0, state1)
+				pixelshift = shiftinfo['pixel shift']
+				d.append(pixelshift)
+			d_diff = d[1]['row']-d[0]['row'], d[1]['col']-d[0]['col']
+		finally:
+			self.setBeamTilt(btorig)
+		return d_diff
+
 	def measureMatrixC(self, m, t):
 		'''
 		determine matrix C, the coma-free matrix
@@ -748,38 +772,28 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		'''
 		# original beam tilt
 		btorig = self.getBeamTilt()
-		### try/finally to be sure we return to original beam tilt
+		bt0 = btorig['x'], btorig['y']
+		diffs = {}
+		tvect = (t, 0)
 		try:
-			bt0 = btorig['x'], btorig['y']
-			## tilt x makes first column, tilt y makes second column
-			matrix = numpy.zeros((2,2), numpy.float32)
 			for axisn, axisname in ((0,'x'),(1,'y')):
-				## misalign + then -
-				dc = {}
+				diffs[axisname] = {}
 				for msign in (1,-1):
-					misbt = list(bt0)
-					misbt[axisn] += msign*m
-					btdict = {'beam tilt': {'x':misbt[0], 'y':misbt[1]}}
-					state0 = leginondata.ScopeEMData(initializer=btdict)
-					## tilt + then -
-					displace = {}
-					for tsign in (1,-1):
-						tiltbt = list(misbt)
-						tiltbt[axisn] += tsign*t
-						btdict = {'beam tilt': {'x':tiltbt[0], 'y':tiltbt[1]}}
-						state1 = leginondata.ScopeEMData(initializer=btdict)
-						im0 = self.acquireImage(state0)
-						shiftinfo = self.measureScopeChange(im0, state1)
-						pixelshift = shiftinfo['pixel shift']
-						displace[tsign] = pixelshift['row'],pixelshift['col']
-					## calculate displacemnt diff
-					dc[msign] = numpy.subtract(displace[-1],displace[1])
-				## calculate matrix column
-				matrix[:,axisn] = (dc[-1]-dc[1]) / 2.0 / m
+					## misalign beam tilt
+					mis_delta = [0,0]
+					mis_delta[axisn] = msign * m
+					mis_bt = numpy.add(bt0, mis_delta)
+					mis_bt['beam tilt'] = {'x': mis_bt[0], 'y': mis_bt[1]}
+					self.setBeamTilt(mis_bt)
+					diff = self.measureDisplacementDifference(tvect)
+					diffs[axisname][msign] = diff
 		finally:
 			## return to original beam tilt
 			self.setBeamTilt(btorig)
 
+		matrix = numpy.zeros((2,2), numpy.float32)
+		matrix[:,0] = numpy.divide(numpy.subtract(diffs['x'][-1], diffs['x'][1]), 2 * m)
+		matrix[:,1] = numpy.divide(numpy.subtract(diffs['y'][-1], diffs['y'][1]), 2 * m)
 		return matrix
 
 	def measureComaFree(self, tilt_value):
@@ -793,27 +807,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		except NoMatrixCalibrationError:
 			raise RuntimeError('missing calibration matrix')
 
-		btorig = self.getBeamTilt()
-		btdict = {'beam tilt': btorig}
-		state0 = leginondata.ScopeEMData(initializer=btdict)
-		im0 = self.acquireImage(state0)
-		### try/finally to be sure we return to original beam tilt
-		try:
-			displace = {}
-			for tsign in (1,-1):
-				tiltbt = dict(btorig)
-				tiltbt['x'] += tsign*tilt_value
-				tiltbt['y'] += tsign*tilt_value
-				btdict = {'beam tilt': tiltbt}
-				state1 = leginondata.ScopeEMData(initializer=btdict)
-				shiftinfo = self.measureScopeChange(im0, state1)
-				pixelshift = shiftinfo['pixel shift']
-				displace[tsign] = pixelshift['row'],pixelshift['col']
-		finally:
-			self.setBeamTilt(btorig)
-
-		## calculate displacemnt diff
-		dc = numpy.subtract(displace[-1],displace[1])
+		tvect = (t, 0)
+		dc = self.measureDisplacementDifference(tvect)
 		cftilt = numpy.linalg.solve(cmatrix, dc)
 		return cftilt
 
