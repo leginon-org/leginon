@@ -783,7 +783,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 					mis_delta = [0,0]
 					mis_delta[axisn] = msign * m
 					mis_bt = numpy.add(bt0, mis_delta)
-					mis_bt['beam tilt'] = {'x': mis_bt[0], 'y': mis_bt[1]}
+					mis_bt = {'x': mis_bt[0], 'y': mis_bt[1]}
 					self.setBeamTilt(mis_bt)
 					diff = self.measureDisplacementDifference(tvect)
 					diffs[axisname][msign] = diff
