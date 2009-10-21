@@ -99,14 +99,14 @@ class MakeSnapshotScript(appionScript.AppionScript):
 		apDisplay.printColor("Box: %d   Apix: %.2f   File: %s"%
 			(box, self.params['apix'], os.path.basename(mrcfile)), "green")
 
-		### snapshot
+		### animation
 		if self.params['type'] != "snapshot":
 			apDisplay.printMsg("Creating animation")
 			apChimera.renderAnimation(mrcfile, contour=self.params['contour'],
 				 zoom=self.params['zoom'], sym=self.params['sym'],
 				 color=self.params['color'])
 
-		### animation
+		### snapshot
 		if self.params['type'] != "animate":
 			apDisplay.printMsg("Creating snapshots")
 			apChimera.renderSnapshots(mrcfile, contour=self.params['contour'],
