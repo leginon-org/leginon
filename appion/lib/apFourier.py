@@ -259,6 +259,8 @@ def mini_ssnr1fft(fftlist, indextuple):
 	fmean = fsum/K
 	numer = abs(fsum)**2
 	denom = 0.0
+	### this next part cannot be done as a running average
+	### because F - fmean is a complex subtraction
 	for fftim in fftlist:
 		F = fftim[i,j]
 		denom += abs(F - fmean)**2
