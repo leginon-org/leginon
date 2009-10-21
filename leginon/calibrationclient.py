@@ -807,7 +807,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		except NoMatrixCalibrationError:
 			raise RuntimeError('missing calibration matrix')
 
-		tvect = (t, 0)
+		tvect = (titl_value, 0)
 		dc = self.measureDisplacementDifference(tvect)
 		cftilt = numpy.linalg.solve(cmatrix, dc)
 		return cftilt
