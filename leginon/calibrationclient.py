@@ -809,6 +809,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		tvect = (titl_value, 0)
 		dc = self.measureDisplacementDifference(tvect)
+		dc = numpy.array(dc)
 		cftilt = numpy.linalg.solve(cmatrix, dc)
 		return cftilt
 
