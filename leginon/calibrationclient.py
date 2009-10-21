@@ -749,7 +749,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		'''
 		btorig = self.getBeamTilt()
 		bt0 = btorig['x'], btorig['y']
-		im0 = self.acquireImage()
+		im0 = self.acquireImage(None)
 		try:
 			d = []
 			for tsign in (1,-1):
