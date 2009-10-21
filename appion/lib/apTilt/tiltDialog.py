@@ -411,10 +411,10 @@ class DogPickerDialog(wx.Dialog):
 		invert = self.partContrast(None)
 		maxpeaks = self.maxpeaks.GetValue()
 
-		if invert is True:	
-			apDisplay.printMsg("Picking light particles on dark backgound, i.e. stain")
-		else:
+		if invert is True:
 			apDisplay.printMsg("Picking dark particles on light backgound, i.e. ice")
+		else:
+			apDisplay.printMsg("Picking light particles on dark backgound, i.e. stain")
 
 		"""
 		self.parent.statbar.PushStatusText("ERROR: Dog Picker has not been implemented yet", 0)
