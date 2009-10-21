@@ -108,7 +108,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		tilt_value = self.settings['comafree beam tilt']
 		m_value = self.settings['comafree misalign']
 
-		matrix = calibration_client.measureMatrixC(m_value, tilt_value)
+		matrix = calibration_client.measureMatrixC(m_value, tilt_value, settle=self.settings['settling time'])
 
 		# store calibration
 		self.logger.info('Storing calibration...')
@@ -121,7 +121,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def measureComaFree(self, tilt_value):
 		calibration_client = self.calibration_clients['beam tilt']
-		cftilt = calibration_client.measureComaFree(tilt_value)
+		cftilt = calibration_client.measureComaFree(tilt_value, settle=self.settings['settling time'])
 		print 'COMA-FREE', cftilt
 
 	def __calibrateDefocus(self, beam_tilt, defocii):

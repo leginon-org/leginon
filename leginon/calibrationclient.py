@@ -742,14 +742,14 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		return tuple(pixel_shifts)
 
-	def measureDisplacementDifference(self, tiltvector):
+	def measureDisplacementDifference(self, tiltvector, settle):
 		'''
 		Measure displacement difference between tilting plus tiltvector
 		compared to minus tiltvector
 		'''
 		btorig = self.getBeamTilt()
 		bt0 = btorig['x'], btorig['y']
-		im0 = self.acquireImage(None)
+		im0 = self.acquireImage(None, settle=settle)
 		try:
 			d = []
 			for tsign in (1,-1):
@@ -757,7 +757,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				bt = numpy.add(bt0, delta)
 				state1 = leginondata.ScopeEMData()
 				state1['beam tilt'] = {'x': bt[0], 'y': bt[1]}
-				shiftinfo = self.measureScopeChange(im0, state1)
+				shiftinfo = self.measureScopeChange(im0, state1, settle=settle)
 				pixelshift = shiftinfo['pixel shift']
 				d.append(pixelshift)
 			d_diff = d[1]['row']-d[0]['row'], d[1]['col']-d[0]['col']
@@ -765,7 +765,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			self.setBeamTilt(btorig)
 		return d_diff
 
-	def measureMatrixC(self, m, t):
+	def measureMatrixC(self, m, t, settle):
 		'''
 		determine matrix C, the coma-free matrix
 		m = misalignment value, t = tilt value
@@ -785,7 +785,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 					mis_bt = numpy.add(bt0, mis_delta)
 					mis_bt = {'x': mis_bt[0], 'y': mis_bt[1]}
 					self.setBeamTilt(mis_bt)
-					diff = self.measureDisplacementDifference(tvect)
+					diff = self.measureDisplacementDifference(tvect, settle)
 					diffs[axisname][msign] = diff
 		finally:
 			## return to original beam tilt
@@ -796,7 +796,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		matrix[:,1] = numpy.divide(numpy.subtract(diffs['y'][-1], diffs['y'][1]), 2 * m)
 		return matrix
 
-	def measureComaFree(self, tilt_value):
+	def measureComaFree(self, tilt_value, settle):
 
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
@@ -808,7 +808,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			raise RuntimeError('missing calibration matrix')
 
 		tvect = (tilt_value, 0)
-		dc = self.measureDisplacementDifference(tvect)
+		dc = self.measureDisplacementDifference(tvect, settle)
 		dc = numpy.array(dc)
 		cftilt = numpy.linalg.solve(cmatrix, dc)
 		return cftilt
