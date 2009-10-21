@@ -893,7 +893,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			logpeaks = math.log(self.stats['peaksum']+self.stats['lastpeaks'])
 			if logpeaks > self.logpeaks:
 				self.logpeaks = math.ceil(logpeaks)
-				apDisplay.printMsg("averaging stack, next average at %d particles"%(self.logpeaks))
+				numpeaks = math.ceil(math.exp(self.logpeaks))
+				apDisplay.printMsg("averaging stack, next average at %d particles"%(numpeaks))
 				stackpath = os.path.join(self.params['rundir'], "start.hed")
 				apStack.averageStack(stack=stackpath)
 
