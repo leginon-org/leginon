@@ -658,7 +658,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		elif uniqrundatas and not uniqstackdatas:
 			apDisplay.printError("Weird, run data without stack already in the database")
 		else:
-
+			rinstackq['stack'] = stackq
 			rinstack = rinstackq.query(results=1)
 
 			prevrinstackq = appiondata.ApRunsInStackData()
@@ -694,8 +694,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
 						print i,prevrinstack[0][i],rinstackq[i]
-				apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
-							     "please check your parameter settings.")
+				#apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
+				#			     "please check your parameter settings.")
 			apDisplay.printWarning("Stack already exists in database! Will try and appending new particles to stack")
 		return
 
@@ -893,6 +893,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			logpeaks = math.log(self.stats['peaksum']+self.stats['lastpeaks'])
 			if logpeaks > self.logpeaks:
 				self.logpeaks = math.ceil(logpeaks)
+				apDisplay.printMsg("averaging stack, next average at %d particles"%(self.logpeaks))
 				stackpath = os.path.join(self.params['rundir'], "start.hed")
 				apStack.averageStack(stack=stackpath)
 
