@@ -69,7 +69,7 @@ def fit_map_in_map(map1, map2,
 
 # -----------------------------------------------------------------------------
 ### set files
-maindir = '/ami/data16/appion/09mar04b/models/emanmodel28'
+#maindir = '/ami/data16/appion/09mar04b/models/emanmodel28'
 maindir = '/home/vossman/Documents/papers/initmodel/initmodels-figure'
 map1_path = os.path.join(maindir, 'reconemdb.mrc')
 
@@ -79,22 +79,21 @@ mrcfiles = glob.glob(os.path.join(maindir, '*.mrc'))
 aligndir = os.path.join(maindir, 'align/')
 if not os.path.isdir(aligndir):
 	os.mkdir(aligndir)
-prefix = os.path.join(aligndir, 'align')
 N = len(mrcfiles)
 random.shuffle(mrcfiles)
 for i,mrcfile in enumerate(mrcfiles):
 	if os.path.basename(mrcfile)[:5] == "align":
 		continue
-	new_path = (prefix+os.path.basename(mrcfile))
+	new_path = os.path.join(aligndir, 'align'+os.path.basename(mrcfile))
 	if os.path.isfile(new_path):
-		print "----------"
+		print "----------", os.path.basename(mrcfile)
 		continue
 	print ("\n==============================\n", 
 		os.path.basename(mrcfile), 
 		"\n==============================\n")
 	map2 = open_volume_file(mrcfile)[0]
 	map2.set_parameters(surface_levels = [1.0])
-	new_path = (prefix+os.path.basename(mrcfile))
+	new_path = os.path.join(aligndir, 'align'+os.path.basename(mrcfile))
 	fit_map_in_map(map1, map2, map1_threshold=1.0)
 	runCommand('vop #1 resample onGrid #0 modelId %d'%(i+N))
 	runCommand('volume #%d save %s'%(i+N, new_path))
