@@ -742,7 +742,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		return tuple(pixel_shifts)
 
-	def measureDisplacementDifference(tiltvector):
+	def measureDisplacementDifference(self, tiltvector):
 		'''
 		Measure displacement difference between tilting plus tiltvector
 		compared to minus tiltvector
