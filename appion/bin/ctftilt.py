@@ -243,7 +243,7 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 		outputjpg = os.path.join(self.params['rundir'], self.lastjpg)
 		powspec = apImage.mrcToArray(inputparams['output'])
 		apImage.arrayToJpeg(powspec, outputjpg)
-		shutil.move(inputparams['output'], os.join(self.powerspecdir,inputparams['output']))
+		shutil.move(inputparams['output'], os.path.join(self.powerspecdir,inputparams['output']))
 		#apFile.removeFile(inputparams['input'])
 
 		#sys.exit(1)
