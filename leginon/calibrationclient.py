@@ -859,6 +859,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 					tvect = [0, 0]
 					tvect[axisn] = t
 					diff = self.measureDefocusDifference(tvect, settle)
+					if diff is None:
+						raise
 					print axisname, msign, diff
 					diffs[axisname][msign] = diff
 		finally:
