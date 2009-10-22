@@ -16,7 +16,7 @@ import numpy
 import pyami.quietscipy
 import scipy.ndimage
 import math
-from pyami import correlator, peakfinder, arraystats
+from pyami import correlator, peakfinder, arraystats, imagefun, fftfun
 import time
 import sys
 import threading
@@ -80,6 +80,16 @@ class CalibrationClient(object):
 			return caldatalist[0]['pixelsize']
 		else:
 			return None
+
+	def getReciprocalPixelSize(self,imagedata):
+		scope = imagedata['scope']['tem']
+		ccd = imagedata['camera']['ccdcamera']
+		mag = imagedata['scope']['magnification']
+		campixelsize = self.getPixelSize(mag,tem=scope, ccdcamera=ccd)
+		binning = imagedata['camera']['binning']
+		dimension = imagedata['camera']['dimension']
+		pixelsize = {'x':1.0/(campixelsize*binning['x']*dimension['x']),'y':1.0/(campixelsize*binning['y']*dimension['y'])}
+		return pixelsize
 
 	def correctTilt(self, imagedata):
 		self.tiltcorrector.correct_tilt(imagedata)
@@ -171,6 +181,36 @@ class CalibrationClient(object):
 
 		shiftinfo = {'previous': previousimage, 'next': nextimage, 'pixel shift': unbinned}
 		return shiftinfo
+	
+	def measureDefocusChange(self, previousimage, nextscope, settle=0.0, correct_tilt=False):
+		'''
+		Acquire an image at nextscope and estimate the ctf parameters
+		'''
+		self.checkAbort()
+		## use opposite correction channel
+		corchannel = previousimage['correction channel']
+		if corchannel:
+			corchannel = 0
+		else:
+			corchannel = 1
+		self.checkAbort()
+		## acquire neximage
+		nextimage = self.acquireImage(nextscope, settle, correct_tilt=correct_tilt, corchannel=corchannel)
+		## get ctf parameters
+		self.ht = nextimage['scope']['high tension']
+		if not self.rpixelsize:
+		self.rpixelsize = self.getReciprocalPixelSize(nextimage)
+		pow = imagefun.power(nextimage['image'])
+		ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'],self.ht)
+
+		self.checkAbort()
+		if ctfdata is not None:
+			self.node.logger.info('defocus: %.3f um, zast: %.3f um' % (ctfdata[0]*1e6,ctfdata[1]*1e6))
+			defocusinfo = {'previous': previousimage, 'next': nextimage, 'defocus': ctfdata[0]}
+		else:
+			self.node.logger.warning('ctf estimation failed')
+			defocusinfo = {'previous': previousimage, 'next': nextimage, 'defocus': None}
+		return defocusinfo
 
 	def displayImage(self, im):
 		try:
@@ -769,11 +809,39 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			self.setBeamTilt(btorig)
 		return d_diff
 
+	def measureDefocusDifference(self, tiltvector, settle):
+		'''
+		Measure defocus difference between tilting plus tiltvector
+		compared to minus tiltvector
+		'''
+		btorig = self.getBeamTilt()
+		bt0 = btorig['x'], btorig['y']
+		im0 = self.acquireImage(None, settle=settle)
+		try:
+			d = []
+			for tsign in (1,-1):
+				delta = numpy.multiply(tsign, tiltvector)
+				bt = numpy.add(bt0, delta)
+				state1 = leginondata.ScopeEMData()
+				state1['beam tilt'] = {'x': bt[0], 'y': bt[1]}
+				defocusinfo = self.measureDefocusChange(im0, state1, settle=settle)
+				defocusshift = defocusinfo['defocus']
+				d.append(defocusshift)
+			tlength = math.hypot(tiltvector[0],tiltvector[1])
+			d_diff = numpy.multiply((d[1]-d[0])/tlength, tiltvector)
+		except:
+			d_diff = None
+		finally:
+			self.setBeamTilt(btorig)
+		return d_diff
+
 	def measureMatrixC(self, m, t, settle):
 		'''
 		determine matrix C, the coma-free matrix
 		m = misalignment value, t = tilt value
 		'''
+		self.rpixelsize = None
+		self.ht = None
 		# original beam tilt
 		btorig = self.getBeamTilt()
 		bt0 = btorig['x'], btorig['y']
@@ -788,9 +856,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 					mis_bt = numpy.add(bt0, mis_delta)
 					mis_bt = {'x': mis_bt[0], 'y': mis_bt[1]}
 					self.setBeamTilt(mis_bt)
-					tvect = [0,0]
+					tvect = [0, 0]
 					tvect[axisn] = t
-					diff = self.measureDisplacementDifference(tvect, settle)
+					diff = self.measureDefocusDifference(tvect, settle)
 					print axisname, msign, diff
 					diffs[axisname][msign] = diff
 		finally:
@@ -809,13 +877,17 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
+		self.rpixelsize = None
+		self.ht = ht
 		try:
 			cmatrix = self.retrieveMatrix(tem, cam, 'coma-free', ht, mag)
 		except NoMatrixCalibrationError:
 			raise RuntimeError('missing calibration matrix')
-
-		tvect = (tilt_value, 0)
-		dc = self.measureDisplacementDifference(tvect, settle, lp=5)
+		dc = [0,0]
+		for axisn, axisname in ((0,'x'),(1,'y')):
+			tvect = [0, 0]
+			tvect[axisn] = tilt_value
+			dc[axisn] = self.measureDefocusDifference(tvect, settle)
 		dc = numpy.array(dc)
 		cftilt = numpy.linalg.solve(cmatrix, dc)
 		return cftilt
