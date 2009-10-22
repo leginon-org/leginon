@@ -101,22 +101,25 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def calibrateComaFree(self):
 		'''determine the calibration matrix for coma-free alignment'''
-		if self.initInstruments():
-			raise RuntimeError('cannot initialize instrument')
-
 		calibration_client = self.calibration_clients['beam tilt']
-		tilt_value = self.settings['comafree beam tilt']
-		m_value = self.settings['comafree misalign']
-
-		matrix = calibration_client.measureMatrixC(m_value, tilt_value, settle=self.settings['settling time'])
-
+		try:
+			if self.initInstruments():
+				raise RuntimeError('cannot initialize instrument')
+			tilt_value = self.settings['comafree beam tilt']
+			m_value = self.settings['comafree misalign']
+			matrix = calibration_client.measureMatrixC(m_value, tilt_value, settle=self.settings['settling time'])
+		except Exception, e:
+			self.logger.error('Calibration failed: %s' % e)
+			matrix = None
+		else:
+			self.logger.info('Calibration completed')
 		# store calibration
-		self.logger.info('Storing calibration...')
-		mag = self.instrument.tem.Magnification
-		ht = self.instrument.tem.HighTension
-		calibration_client.storeMatrix(ht, mag, 'coma-free', matrix)
-		self.logger.info('Calibration stored')
-
+		if matrix is not None:
+			self.logger.info('Storing calibration...')
+			mag = self.instrument.tem.Magnification
+			ht = self.instrument.tem.HighTension
+			calibration_client.storeMatrix(ht, mag, 'coma-free', matrix)
+			self.logger.info('Calibration stored')
 		self.panel.calibrationDone()
 
 	def measureComaFree(self, tilt_value):
