@@ -319,7 +319,7 @@ class protomoAligner(appionScript.AppionScript):
 					self.params['description'] = self.cycle_description
 				else:
 					alignrun = apTomo.insertTomoAlignmentRun(sessiondata,None,imodxcorrdata,None,1,self.params['runname'],self.params['rundir'],self.params['description'])
-					alignerdata = apProTomo.insertAlignerParams(alignrun,self.params)
+					alignerdata = apTomo.insertAlignerParams(alignrun,self.params)
 					#results
 					prexgfile = os.path.join(aligndir,imodseriesname+'.prexg')
 					shifts = apImod.readShiftPrexgFile(aligndir, imodseriesname)

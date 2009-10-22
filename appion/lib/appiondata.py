@@ -891,10 +891,24 @@ class ApProtomoAlignerParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApTomoAlignerParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('alignrun', ApTomoAlignmentRunData),
+			('protomo', ApProtomoParamsData),
+			('refine cycle', ApProtomoRefinementParamsData),
+			('good cycle', ApProtomoRefinementParamsData),
+			('good start', int),
+			('good end', int),
+			('description', str),
+			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+
 class ApProtomoModelData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('aligner', ApProtomoAlignerParamsData),
+			('aligner', ApTomoAlignerParamsData),
 			('psi', float),
 			('theta', float),
 			('phi', float),
@@ -905,7 +919,7 @@ class ApProtomoModelData(Data):
 class ApProtomoAlignmentData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('aligner', ApProtomoAlignerParamsData),
+			('aligner', ApTomoAlignerParamsData),
 			('image', leginondata.AcquisitionImageData),
 			('number', int),
 			('rotation', float),
@@ -956,7 +970,7 @@ class ApFullTomogramData(Data):
 		return Data.typemap() + (
 			('session', leginondata.SessionData),
 			('tiltseries', leginondata.TiltSeriesData),
-			('aligner', ApProtomoAlignerParamsData),
+			('aligner', ApTomoAlignerParamsData),
 			('alignrun', ApTomoAlignmentRunData),
 			('combined', list),
 			('path', ApPathData),

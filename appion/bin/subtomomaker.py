@@ -101,7 +101,7 @@ class tomoMaker(appionScript.AppionScript):
 		if (self.params['selexonId'] is not None or self.params['stackId']) and fulltomodata is not None:
 			sessiondata = fulltomodata['session']
 			seriesname = fulltomodata['name'].rstrip('_full')
-			fullbin = fulltomodata['alignment']['bin']
+			fullbin = fulltomodata['alignrun']['bin']
 			fulltomopath = os.path.join(fulltomodata['path']['path'], seriesname+"_full.rec")
 			fulltomoheader = mrc.readHeaderFromFile(fulltomopath)
 			fulltomoshape = fulltomoheader['shape']
