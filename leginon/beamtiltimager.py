@@ -56,7 +56,6 @@ class BeamTiltImager(acquisition.Acquisition):
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
 		self.ace2exe = self.getACE2Path()
-		self.rpixelsize = None
 
 	def alignRotationCenter(self, defocus1, defocus2):
 		try:
@@ -121,11 +120,12 @@ class BeamTiltImager(acquisition.Acquisition):
 			self.ht = imagedata['scope']['high tension']
 			if not self.rpixelsize:
 				self.rpixelsize = self.btcalclient.getReciprocalPixelSize(imagedata)
-			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'],self.ht)
+			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], self.defocus, self.ht)
 			self.ctfdata.append(ctfdata)
 			if ctfdata:
 				s = '%d' % int(ctfdata[0]*1e9)
-			if self.ace2exe:
+			#elif self.ace2exe:
+			elif False:
 				ctfdata = self.estimateCTF(imagedata)
 				z0 = (ctfdata['defocus1'] + ctfdata['defocus2']) / 2
 				s = '%d' % (int(z0*1e9),)
@@ -167,6 +167,8 @@ class BeamTiltImager(acquisition.Acquisition):
 		'''
 		## sometimes have to apply or un-apply deltaz if image shifted on
 		## tilted specimen
+		self.rpixelsize = None
+		self.defocus = presetdata['defocus']
 		if emtarget is None:
 			self.deltaz = 0
 		else:
