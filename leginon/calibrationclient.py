@@ -199,7 +199,7 @@ class CalibrationClient(object):
 		## get ctf parameters
 		self.ht = nextimage['scope']['high tension']
 		if not self.rpixelsize:
-		self.rpixelsize = self.getReciprocalPixelSize(nextimage)
+			self.rpixelsize = self.getReciprocalPixelSize(nextimage)
 		pow = imagefun.power(nextimage['image'])
 		ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'],self.ht)
 
