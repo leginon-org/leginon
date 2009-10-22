@@ -34,7 +34,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'measure beam tilt': 0.01,
 		'correct tilt': True,
 		'settling time': 0.5,
-		'comafree beam tilt': 0.01,
+		'comafree beam tilt': 0.005,
 		'comafree misalign': 0.002,
 	})
 
