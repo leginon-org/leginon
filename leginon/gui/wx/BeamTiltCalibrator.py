@@ -329,7 +329,7 @@ class MeasureComafreeDialog(wx.Dialog):
 		sbsz = wx.GridBagSizer(5, 5)
 
 		tiltlabel = wx.StaticText(self, -1, 'Tilt (radian):')
-		self.tiltvalue = FloatEntry(self, -1, allownone=False, chars=5, value='0.01')
+		self.tiltvalue = FloatEntry(self, -1, allownone=False, chars=5, value='0.005')
 		sbsz.Add(tiltlabel, (0,0), (1,1))
 		sbsz.Add(self.tiltvalue, (0,1), (1,1))
 
