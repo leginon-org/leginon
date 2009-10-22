@@ -102,7 +102,7 @@ class CalibrationClient(object):
 
 		return imagedata
 
-	def measureScopeChange(self, previousimage, nextscope, settle=0.0, correct_tilt=False, correlation_type='phase'):
+	def measureScopeChange(self, previousimage, nextscope, settle=0.0, correct_tilt=False, correlation_type='phase', lp=None):
 		'''
 		Acquire an image at nextscope and correlate to previousimage
 		'''
@@ -142,6 +142,10 @@ class CalibrationClient(object):
 		else:
 			raise RuntimeError('invalid correlation type')
 		self.node.stopTimer('scope change correlation')
+
+		if lp is not None:
+			cor = scipy.ndimage.gaussian_filter(cor, lp)
+
 		self.displayCorrelation(cor)
 
 		## find peak
@@ -757,10 +761,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				bt = numpy.add(bt0, delta)
 				state1 = leginondata.ScopeEMData()
 				state1['beam tilt'] = {'x': bt[0], 'y': bt[1]}
-				shiftinfo = self.measureScopeChange(im0, state1, settle=settle)
+				shiftinfo = self.measureScopeChange(im0, state1, settle=settle, lp=5.0)
 				pixelshift = shiftinfo['pixel shift']
 				d.append(pixelshift)
-			d_diff = d[1]['row']-d[0]['row'], d[1]['col']-d[0]['col']
+			d_diff = d[1]['row']+d[0]['row'], d[1]['col']+d[0]['col']
 		finally:
 			self.setBeamTilt(btorig)
 		return d_diff
@@ -774,7 +778,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		btorig = self.getBeamTilt()
 		bt0 = btorig['x'], btorig['y']
 		diffs = {}
-		tvect = (t, 0)
 		try:
 			for axisn, axisname in ((0,'x'),(1,'y')):
 				diffs[axisname] = {}
@@ -785,15 +788,19 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 					mis_bt = numpy.add(bt0, mis_delta)
 					mis_bt = {'x': mis_bt[0], 'y': mis_bt[1]}
 					self.setBeamTilt(mis_bt)
+					tvect = [0,0]
+					tvect[axisn] = t
 					diff = self.measureDisplacementDifference(tvect, settle)
+					print axisname, msign, diff
 					diffs[axisname][msign] = diff
 		finally:
 			## return to original beam tilt
 			self.setBeamTilt(btorig)
 
 		matrix = numpy.zeros((2,2), numpy.float32)
-		matrix[:,0] = numpy.divide(numpy.subtract(diffs['x'][-1], diffs['x'][1]), 2 * m)
-		matrix[:,1] = numpy.divide(numpy.subtract(diffs['y'][-1], diffs['y'][1]), 2 * m)
+		if m!=0:
+			matrix[:,0] = numpy.divide(numpy.subtract(diffs['x'][-1], diffs['x'][1]), 2 * m)
+			matrix[:,1] = numpy.divide(numpy.subtract(diffs['y'][-1], diffs['y'][1]), 2 * m)
 		return matrix
 
 	def measureComaFree(self, tilt_value, settle):
@@ -808,7 +815,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			raise RuntimeError('missing calibration matrix')
 
 		tvect = (tilt_value, 0)
-		dc = self.measureDisplacementDifference(tvect, settle)
+		dc = self.measureDisplacementDifference(tvect, settle, lp=5)
 		dc = numpy.array(dc)
 		cftilt = numpy.linalg.solve(cmatrix, dc)
 		return cftilt
