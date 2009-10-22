@@ -10,7 +10,7 @@ def getAstigmaticDefocii(params,rpixelsize, ht):
 	maxz = calculateDefocus(ht,minr)
 	maxr = rpixelsize * max(params['a'],params['b'])
 	minz = calculateDefocus(ht,maxr)
-	z0 = (maxz + minz) / 2
+	z0 = (maxz + minz) / 2.0
 	zast = maxz - z0
 	ast_ratio = zast / z0
 	alpha = params['alpha']
@@ -25,29 +25,41 @@ def getAstigmaticDefocii(params,rpixelsize, ht):
 
 def calculateDefocus(ht, s, Cs=2.0e-3):
 		# unit is meters
-	Cs = 2.0e-3
 	wavelength = 3.7e-12 * 1e5 / ht
-	return (Cs*wavelength**3*s**4/2+1)/(wavelength * s**2)
+	return (Cs*wavelength**3*s**4/2+1.0)/(wavelength * s**2)
+
+def calculateFirstNode(ht,z,Cs=2.0e-3):
+	# length unit is meters, and ht in Volts
+	'''This works for defocus larger than about 110 nm underfocus at 120kV'''
+	wavelength = 3.7e-12 * 1e5 / ht
+	a = Cs*(wavelength**3)/4.0
+	b = z*wavelength/2
+	c = 0.5
+	if b**2 >= 4*a*c:
+		s2m = b/(2*a) - 1*math.sqrt(b**2-4*a*c)/(2*a)
+		s = math.sqrt(s2m)
+		return s
 
 def find_ast_ellipse(grad,thr,dmean,drange):
-	mrc.write(grad,'grad.mrc')
-	mrc.write(thr,'thr.mrc')
+	#mrc.write(grad,'grad.mrc')
+	#mrc.write(thr,'thr.mrc')
 	maxsize=4*(drange)*(drange)
 	blobs = imagefun.find_blobs(grad,thr,maxblobsize=maxsize,minblobsize=0)
 	points = []
+	goods = []
+	# find isolated blobs in the range
 	for blob in blobs:
 		if blob.stats['size']==0:
 			points.append(blob.stats['center'])
 		else:
 			points.append(blob.stats['maximum_position'])
-	goods = []
 	shape = grad.shape
 	center = map((lambda x: x / 2), shape)
 	for point in points:
 		d = math.hypot(point[0]-center[0],point[1]-center[1])
 		if d > dmean-drange and d < dmean+drange:
 			goods.append(point)
-	#print len(goods),dmean,drange
+	# divide the continuous blob into wedges and find centers of each
 	offsets = []
 	angles = []
 	division = 32
@@ -76,12 +88,10 @@ def find_ast_ellipse(grad,thr,dmean,drange):
 			for blob in blobs:
 				position = blob.stats['maximum_position']
 				newposition = (position[0]+offset[0],position[1]+offset[1])
-				#print 'blob position',position,newposition
 				d = math.hypot(newposition[0]-center[0],newposition[1]-center[1])
 				distances.append(d)
 				if d > dmean-drange:
 					gooddistances.append(d)
-			#print distances
 			if len(gooddistances) > 0:
 				for i,blob in enumerate(blobs):
 					position = blob.stats['maximum_position']
