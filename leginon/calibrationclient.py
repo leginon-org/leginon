@@ -201,7 +201,7 @@ class CalibrationClient(object):
 		if not self.rpixelsize:
 			self.rpixelsize = self.getReciprocalPixelSize(nextimage)
 		pow = imagefun.power(nextimage['image'])
-		ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'],self.ht)
+		ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht)
 
 		self.checkAbort()
 		if ctfdata is not None:
@@ -817,6 +817,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		btorig = self.getBeamTilt()
 		bt0 = btorig['x'], btorig['y']
 		im0 = self.acquireImage(None, settle=settle)
+		d_diff = None
 		try:
 			d = []
 			for tsign in (1,-1):
@@ -829,8 +830,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				d.append(defocusshift)
 			tlength = math.hypot(tiltvector[0],tiltvector[1])
 			d_diff = numpy.multiply((d[1]-d[0])/tlength, tiltvector)
-		except:
-			d_diff = None
 		finally:
 			self.setBeamTilt(btorig)
 		return d_diff
