@@ -13,8 +13,9 @@ import threading
 import event
 import time
 import math
-from pyami import correlator, peakfinder, imagefun, numpil,arraystats
+from pyami import correlator, peakfinder, imagefun, numpil,arraystats,fftfun
 import numpy
+from scipy import ndimage
 import copy
 import gui.wx.BeamTiltImager
 import player
@@ -55,6 +56,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
 		self.ace2exe = self.getACE2Path()
+		self.rpixelsize = None
 
 	def alignRotationCenter(self, defocus1, defocus2):
 		try:
@@ -100,6 +102,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		self.tableauangles = []
 		self.tableaurads = []
 		self.tabimage = None
+		self.ctfdata = []
 
 	def splitTableau(self, image):
 		split = self.settings['tableau split']
@@ -114,9 +117,19 @@ class BeamTiltImager(acquisition.Acquisition):
 		if self.settings['tableau type'] != 'beam tilt series-image':
 			pow = imagefun.power(image)
 			binned = imagefun.bin(pow, binning)
+			s = None
+			self.ht = imagedata['scope']['high tension']
+			if not self.rpixelsize:
+				self.rpixelsize = self.btcalclient.getReciprocalPixelSize(imagedata)
+			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'],self.ht)
+			self.ctfdata.append(ctfdata)
+			if ctfdata:
+				s = '%d' % int(ctfdata[0]*1e9)
 			if self.ace2exe:
 				ctfdata = self.estimateCTF(imagedata)
-				s = '%.1f' % (ctfdata['astig'],)
+				z0 = (ctfdata['defocus1'] + ctfdata['defocus2']) / 2
+				s = '%d' % (int(z0*1e9),)
+			if s:
 				t = numpil.textArray(s)
 				min = arraystats.min(binned)
 				max = arraystats.max(binned)
@@ -203,6 +216,7 @@ class BeamTiltImager(acquisition.Acquisition):
 			if self.settings['tableau type'] == 'split image-power':
 				self.splitTableau(imagedata['image'])
 			elif 'beam tilt series' in self.settings['tableau type']:
+				print 'beam tilt', bt['x'] - tiltlist[0]['x'], bt['y'] - tiltlist[0]['y']
 				self.insertTableau(imagedata, angle, rad)
 			try:
 				shiftinfo = self.correlateOriginal(i,imagedata)
@@ -213,7 +227,7 @@ class BeamTiltImager(acquisition.Acquisition):
 			displace.append((pixelshift['row'],pixelshift['col']))
 		if 'beam tilt series' in self.settings['tableau type']:
 			self.renderTableau()
-		print displace
+		self.calculateAxialComa(self.ctfdata)
 		return status
 
 	def alreadyAcquired(self, targetdata, presetname):
@@ -419,3 +433,21 @@ class BeamTiltImager(acquisition.Acquisition):
 		self.logger.info('Saved tableau.')
 
 
+	def	calculateAxialComa(self,ctfdata):
+		sites = self.settings['sites']
+		b2 = [0,0]
+		if 4 * (sites / 4) !=  sites or self.settings['startangle']:
+			return
+		skipangle = sites / 4
+		for n in range(1, 1 + self.settings['beam tilt count']):
+			tiltangle = self.settings['beam tilt'] * n
+			for i in (0,1):
+				index1 = n + i * skipangle
+				index2 = n + (i+2) * skipangle
+				if ctfdata[index1] is None or ctfdata[index2] is None:
+					continue
+				b2[i] = (3 / (8*tiltangle)) * (ctfdata[index1][0] - ctfdata[index2][0])
+			self.logger.info('Axial Coma(um)= (%.2f,%.2f) at %.2f mrad tilt' % (b2[0]*1e6,b2[1]*1e6,tiltangle*1e3))
+			mcal = (6.4,-7.0)
+			tshape = self.tabimage.shape
+			self.logger.info('Axial Coma(pixels)= (%.2f,%.2f)' % (mcal[0]*b2[0]*1e6+tshape[0]/2,mcal[1]*b2[1]*1e6+tshape[1]/2))
