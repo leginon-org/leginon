@@ -109,7 +109,15 @@ def find_ast_ellipse(grad,thr,dmean,drange):
 	else:
 		return None
 
-def fitFirstCTFNode(pow, rpixelsize, ht, dmean=40, drange=10):
+def fitFirstCTFNode(pow, rpixelsize, defocus, ht):
+	if defocus:
+		z = abs(defocus)
+		s = calculateFirstNode(ht,z)
+		dmean = max(s / rpixelsize / 3 , 30)
+	else:
+		dmean = 40
+	drange = max(dmean / 4, 10)
+	print 'dmean', dmean
 	filter = ndimage.gaussian_filter(pow,3)
 	grad = ndimage.gaussian_gradient_magnitude(filter,3)
 	thr = imagefun.threshold(grad,grad.mean()+3*grad.std())
