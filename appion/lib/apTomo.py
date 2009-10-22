@@ -36,7 +36,7 @@ def getTiltdataList(tiltseriesdata,othertiltdata=None):
 		return tiltdatalist
 
 def getAlignerdata(alignerid):
-	q = appiondata.ApProtomoAlignerParamsData()
+	q = appiondata.ApTomoAlignerParamsData()
 	alignerdata = q.direct_query(alignerid)
 	return alignerdata
 
@@ -154,10 +154,16 @@ def orderImageList(imagelist):
 		return cuttilts,cutlist,cutfiles,refimg
 
 def getCorrelatorBinning(imageshape):
-	collection = collection.Collection()
 	maxsize = max((imageshape[1],imageshape[0]))
 	if maxsize > 512:
-		correlation_bin = collection.calcBinning(maxsize, 256, 512)
+		## new size can be bigger than origsize, no binning needed
+		bin = origsize / max_newsize
+		remain = origsize % max_newsize
+		while remain:
+			bin += 1
+			remain = origsize % bin
+			newsize = float(origsize) / bin
+		correlation_bin = bin
 	else:
 		correlation_bin = 1
 	return correlation_bin
@@ -417,7 +423,7 @@ def insertTomoAlignmentRun(sessiondata,leginoncorrdata,imodxcorrdata,protomorund
 
 def insertAlignerParams(alignrundata,params,protomodata=None,refineparamsdata=None,goodrefineparamsdata=None,imagedata=None):
 	# protomoaligner parameters
-	alignerq = appiondata.ApProtomoAlignerParamsData()
+	alignerq = appiondata.ApTomoAlignerParamsData()
 	alignerq['alignrun'] = alignrundata
 	alignerq['description'] = params['description']
 	if alignrundata['fineProtomoParams']:
