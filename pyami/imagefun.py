@@ -111,9 +111,10 @@ def clip_power(pow,thresh=3):
 
 	return pow
 
-def filled_circle(shape, radius):
+def filled_circle(shape, radius, center=None):
 	r2 = radius*radius
-	center = shape[0]/2,shape[1]/2
+	if center is None:
+		center = shape[0]/2,shape[1]/2
 	def func(i0, i1):
 		ii0 = i0 - center[0]
 		ii1 = i1 - center[1]
