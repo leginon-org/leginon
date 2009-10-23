@@ -566,9 +566,6 @@ function runMakestack() {
 
 	processing_header("Makestack Run","Makestack Params");
 
-	if ($massessname) {
-		echo"<font color='red'><b>Use a 32-bit machine to use the masks</b></font>\n";
-	}
 	echo"
 	<table width='600' border='1'>
 	<tr><td colspan='2'>
