@@ -59,7 +59,7 @@ echo "<a href='tomoalignmovie.php?aId=$alignId&expId=$expId'>Alignment Movie</a>
 echo "</table>\n";
 if ($_POST) {
 	foreach ($refinedata as $t)
-		$particle->updateTableDescriptionAndHiding($_POST,'ApProtomoAlignerParamsData',$t['alignerid']);
+		$particle->updateTableDescriptionAndHiding($_POST,'ApTomoAlignerParamsData',$t['alignerid']);
 }
 
 echo $particle->displayHidingOption($expId,$refinedata,$refinedata,$showhidden);

@@ -48,18 +48,18 @@ if (!$runinfo['protomoid']) {
 	$aligners = $particle->getTomoAlignersFromAlignmentRun($alignId,False);
 	echo "<a href='protomoreport.php?expId=".$expId."&aId=".$aligners[0]['alignerid']."'><b>[Redirect to Aligner Report]</b></a>";
 } else {
-	$allcycles = $particle->getProtomoAlignerInfoFromAlignmentRun($alignId,False);
+	$allcycles = $particle->getTomoAlignerInfoFromAlignmentRun($alignId,False);
 	if ($_POST && $allcycles) {
 		foreach ($allcycles as $t)
-			$particle->updateTableDescriptionAndHiding($_POST,'ApProtomoAlignerParamsData',$t['alignerid']);
+			$particle->updateTableDescriptionAndHiding($_POST,'ApTomoAlignerParamsData',$t['alignerid']);
 	}
 
 	// --- Get Aligner cycles
 	if (!$showhidden) {
-		$showncycles = $particle->getProtomoAlignerInfoFromAlignmentRun($alignId,False);
-		$allcycles = $particle->getProtomoAlignerInfoFromAlignmentRun($alignId,True);
+		$showncycles = $particle->getTomoAlignerInfoFromAlignmentRun($alignId,False);
+		$allcycles = $particle->getTomoAlignerInfoFromAlignmentRun($alignId,True);
 	} else {
-		$showncycles = $particle->getProtomoAlignerInfoFromAlignmentRun($alignId,True);
+		$showncycles = $particle->getTomoAlignerInfoFromAlignmentRun($alignId,True);
 		$allcycles = $allcycles;
 	}
 	echo $particle->displayHidingOption($expId,$allcycles,$showncycles,$showhidden);

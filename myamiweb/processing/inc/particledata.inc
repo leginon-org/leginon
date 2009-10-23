@@ -236,7 +236,7 @@ class particledata {
 		return $r;
 	}
 
-	function getProtomoAlignerInfoFromAlignmentRun($alignid,$showiHidden=false) {
+	function getTomoAlignerInfoFromAlignmentRun($alignid,$showiHidden=false) {
 		$q = " SELECT a.`DEF_id` as alignerid, "
 			." a.`REF|ApProtomoRefinementParamsData|refine cycle` as `cycleid`, "
 			." a.`REF|ApProtomoRefinementParamsData|good cycle` as `goodid`, "
@@ -251,7 +251,7 @@ class particledata {
 			." f.`REF|leginondata|AcquisitionImageData|reference` as `refimg`, "
 			#." f.`imgref` as `imgref number`, "
 			." a.* "
-			."FROM `ApProtomoAlignerParamsData` a "
+			."FROM `ApTomoAlignerParamsData` a "
 			."LEFT JOIN `ApProtomoRefinementParamsData` f "
 			."ON a.`REF|ApProtomoRefinementParamsData|refine cycle` = f.`DEF_id` "
 			."LEFT JOIN `ApProtomoRefinementParamsData` g "
@@ -271,7 +271,7 @@ class particledata {
 
 	function getTomoAlignersFromAlignmentRun($alignid,$showiHidden=false) {
 		$q = " SELECT a.`DEF_id` as alignerid "
-			."FROM `ApProtomoAlignerParamsData` a "
+			."FROM `ApTomoAlignerParamsData` a "
 			."LEFT JOIN `ApTomoAlignmentRunData` r "
 			."ON a.`REF|ApTomoAlignmentRunData|alignrun` = r.`DEF_id` "
 			."WHERE r.`DEF_id`=".$alignid." ";
@@ -284,7 +284,7 @@ class particledata {
 
 	function getProtomoAlignmentInfo($alignerid) {
 		$q = " SELECT m.`DEF_id` as modelid, "
-			." a.`REF|ApProtomoAlignerParamsData|aligner` as `alignerid`, "
+			." a.`REF|ApTomoAlignerParamsData|aligner` as `alignerid`, "
 			." a.`REF|leginondata|AcquisitionImageData|image` as `image`, "
 			." a.`number`, "
 			." a.`rotation`, "
@@ -301,9 +301,9 @@ class particledata {
 			." r.* "
 			."FROM `ApProtomoAlignmentData` a "
 			."LEFT JOIN `ApProtomoModelData` m "
-			."ON a.`REF|ApProtomoAlignerParamsData|aligner` = m.`REF|ApProtomoAlignerParamsData|aligner` "
-			."LEFT JOIN `ApProtomoAlignerParamsData` ar "
-			."ON a.`REF|ApProtomoAlignerParamsData|aligner` = ar.`DEF_id` "
+			."ON a.`REF|ApTomoAlignerParamsData|aligner` = m.`REF|ApTomoAlignerParamsData|aligner` "
+			."LEFT JOIN `ApTomoAlignerParamsData` ar "
+			."ON a.`REF|ApTomoAlignerParamsData|aligner` = ar.`DEF_id` "
 			."LEFT JOIN `ApProtomoRefinementParamsData` r "
 			."ON ar.`REF|ApProtomoRefinementParamsData|refine cycle` = r.`DEF_id` "
 			."LEFT JOIN `ApTomoAlignmentRunData` arun "
@@ -316,7 +316,7 @@ class particledata {
 	}
 	function getFullTomogramInfo($tomogramId){
 		$q =  "SELECT t.`DEF_id` as DEF_id, "
-			."t.`REF|ApTomoAlignmentRunData|alignment` as alignment, "
+			."t.`REF|ApTomoAlignmentRunData|alignrun` as alignrun, "
 			."t.name as tomorunname, "
 			."t.description as description, "
 			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
@@ -625,7 +625,7 @@ class particledata {
 		$q .=
 			"FROM `ApFullTomogramData` t "
 			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
-			."LEFT JOIN `ApTomoAlignmentRunData` a ON t.`REF|ApTomoAlignmentRunData|alignment` = a.`DEF_id` ";
+			."LEFT JOIN `ApTomoAlignmentRunData` a ON t.`REF|ApTomoAlignmentRunData|alignrun` = a.`DEF_id` ";
 		if ($this->mysql->SQLTableExists("ApTomogramData")) {
 			$q .=
 				"LEFT JOIN `ApTomogramData` sub ON sub.`REF|ApFullTomogramData|fulltomogram` = t.`DEF_id` ";
@@ -693,7 +693,7 @@ class particledata {
 		$q="SELECT t.* "
 			."FROM ApTomoAlignmentRunData a "
 			."LEFT JOIN ApFullTomogramData f "
-			."on f.`REF|ApTomoAlignmentRunData|alignment` = a.`DEF_id` "
+			."on f.`REF|ApTomoAlignmentRunData|alignrun` = a.`DEF_id` "
 			."LEFT JOIN ApTomogramData t "
 			."on t.`REF|ApFullTomogramData|fulltomogram` = f.`DEF_id` "
 			."WHERE a.`REF|leginondata|TiltSeriesData|tiltseries`=".$tiltseriesId." "
