@@ -41,11 +41,18 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if len(self.imgtree) == 0:
 			apDisplay.printError("No images were found to process")
 			return
-		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
+		self.params['apix'] = None
 		for imgdata in self.imgtree:
 			# get pixel size
+			imgname = imgdata['filename']
+			if imgname in self.donedict:
+				continue
+			if self.params['apix'] is None:
+				self.params['apix'] = apDatabase.getPixelSize(imgdata)
+				apDisplay.printMsg("Stack pixelsize = %.3f A"%(self.params['apix']))
 			if apDatabase.getPixelSize(imgdata) != self.params['apix']:
-				apDisplay.printWarning("This particle selection run contains images of varying pixelsizes, a stack cannot be created")
+				apDisplay.printMsg("Image pixelsize %.3f A != Stack pixelsize %.3f A"%(apDatabase.getPixelSize(imgdata), self.params['apix']))
+				apDisplay.printError("This particle selection run contains images of varying pixelsizes, a stack cannot be created")
 
 	############################################################
 	## Retrive existing stack info
@@ -150,6 +157,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		else:
 			partdatas = apParticle.getParticles(imgdata, self.params['selectionid'])
 			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}
+
+		apDisplay.printMsg("Found %d particles"%(len(partdatas)))
 
 		### apply correlation limits
 		if self.params['correlationmin'] or self.params['correlationmax']:
@@ -802,6 +811,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if self.params['maskassess'] is None and self.params['checkmask']:
 			apDisplay.printError("particle mask assessment run need to be defined to check mask")
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
+			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
 
 
