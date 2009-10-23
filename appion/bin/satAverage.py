@@ -133,9 +133,9 @@ class satAverageScript(appionScript.AppionScript):
 
 		#write class average
 		e = EMAN.Euler()
-		alt = classdata['euler']['euler1']*math.pi/180
-		az  = classdata['euler']['euler2']*math.pi/180
-		phi = classdata['euler']['euler3']*math.pi/180
+		alt = classdata['euler1']*math.pi/180
+		az  = classdata['euler2']*math.pi/180
+		phi = classdata['euler3']*math.pi/180
 		e.setAngle(alt, az, phi)
 		avg.setRAlign(e)
 		avg.setNImg(len(images))
@@ -145,24 +145,29 @@ class satAverageScript(appionScript.AppionScript):
 
 	#=====================
 	def determineClasses(self, particles):
-		"""Takes refineparticledata and returns a dictionary of classes"""
+		"""
+		Takes refineparticledata and returns a dictionary of classes
+		"""
 		apDisplay.printMsg("sorting refineparticledata into classes")
 		t0 = time.time()
 		classes={}
 		class_stats={}
 		quality=numpy.zeros(len(particles))
-		for ptcl in range(0,len(particles)):
-			quality[ptcl]=particles[ptcl]['quality_factor']
-			key=particles[ptcl]['eulers'].dbid
+		for partnum in range(len(particles)):
+			quality[partnum] = particles[partnum]['quality_factor']
+			key = ("%.3f_%.3f"%(particles[partnum]['euler1'], particles[partnum]['euler2']))
 			if key not in classes.keys():
 				classes[key]={}
 				classes[key]['particles']=[]
-			classes[key]['euler']=particles[ptcl]['eulers']
-			classes[key]['particles'].append(particles[ptcl])
+			classes[key]['euler1'] = particles[partnum]['euler1']
+			classes[key]['euler2'] = particles[partnum]['euler2']
+			classes[key]['euler3'] = particles[partnum]['euler3']
+			classes[key]['particles'].append(particles[partnum])
 		class_stats['meanquality']=quality.mean()
 		class_stats['stdquality']=quality.std()
 		class_stats['max']=quality.max()
 		class_stats['min']=quality.min()
+		apDisplay.printMsg("sorted %d particles into %d classes"%(len(particles), len(classes)))
 		### print stats
 		print "-- quality factor stats --"
 		print ("mean/std :: "+str(round(class_stats['meanquality'],2))+" +/- "
@@ -321,7 +326,7 @@ class satAverageScript(appionScript.AppionScript):
 		### recon 3d volumes
 		threedname = os.path.join(self.params['rundir'], self.rootname+"."+str(self.params['iter'])+"a.mrc")
 		emancmd = ( "make3d "+self.params['outputstack']+" out="
-			+threedname+" hard=25 sym=d7 pad=240 mask="+str(self.params['mask'])+"; echo ''" )
+			+threedname+" hard=25 sym=c1 pad=240 mask="+str(self.params['mask'])+"; echo ''" )
 		#print emancmd
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
 		threednameb = os.path.join(self.params['rundir'], self.rootname+"."+str(self.params['iter'])+"b.mrc")
@@ -333,7 +338,7 @@ class satAverageScript(appionScript.AppionScript):
 			evenname = os.path.join(self.params['rundir'], self.rootname+"-even."+str(self.params['iter'])+"a.mrc")
 			if os.path.isfile(self.params['evenstack']):
 				evenemancmd = ( "make3d "+self.params['evenstack']+" out="
-					+evenname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
+					+evenname+" hard=25 sym=c1 pad=240 mask=70; echo ''" )
 				#print evenemancmd
 				apEMAN.executeEmanCmd(evenemancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eveneman.log")
 			else:
@@ -343,7 +348,7 @@ class satAverageScript(appionScript.AppionScript):
 			oddname = os.path.join(self.params['rundir'], self.rootname+"-odd."+str(self.params['iter'])+"a.mrc")
 			if os.path.isfile(self.params['oddstack']):
 				oddemancmd = ( "make3d "+self.params['oddstack']+" out="
-					+oddname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
+					+oddname+" hard=25 sym=c1 pad=240 mask=70; echo ''" )
 				#print oddemancmd
 				apEMAN.executeEmanCmd(oddemancmd, verbose=False, showcmd=True, logfile=self.rootname+"-oddeman.log")
 			else:
