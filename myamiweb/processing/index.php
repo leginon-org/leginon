@@ -237,9 +237,11 @@ foreach ($reconRuns as $recon) {
 	
 	$modhtml = "<table class='tableborder' border='1'>\n";
 	$modhtml .= "<tr><td>volume: ".$recon['volumeDensity']."</td></tr><tr><td>\n";
-	foreach ($pngimages['pngfiles'] as $snapshot) {
+	$pngfiles = glob($recon['path'].'/'.$recon['volumeDensity']."*png");
+	//foreach ($pngimages['pngfiles'] as $snapshot) {
+	foreach ($pngfiles as $snapshot) {
 		if (eregi($recon['volumeDensity'],$snapshot)) {
-			$snapfile = $recon['path'].'/'.$snapshot;
+			$snapfile = $snapshot;
 			$modhtml .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
 		}
 	}
