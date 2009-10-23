@@ -154,8 +154,9 @@ def orderImageList(imagelist):
 		return cuttilts,cutlist,cutfiles,refimg
 
 def getCorrelatorBinning(imageshape):
-	maxsize = max((imageshape[1],imageshape[0]))
-	if maxsize > 512:
+	origsize = max((imageshape[1],imageshape[0]))
+	max_newsize = 512
+	if origsize > max_newsize:
 		## new size can be bigger than origsize, no binning needed
 		bin = origsize / max_newsize
 		remain = origsize % max_newsize
