@@ -207,9 +207,11 @@ foreach ($reconRuns as $recon) {
 	$classhtml .= "$numclasses classes\n";
 	//Euler plots
 	$eulerhtml = "<table border='0'><tr>\n";
-	foreach ($pngimages['eulerfiles'] as $eulername) {
+	$eulerfiles = glob($recon['path'].'/*'.$reconrunid."_".$recon['iteration']."*png");
+	//foreach ($pngimages['eulerfiles'] as $eulername) {
+	foreach ($eulerfiles as $eulername) {
 		if (eregi($reconrunid."_".$recon['iteration']."\.png$", $eulername)) {
-			$eulerfile = $recon['path'].'/'.$eulername;
+			$eulerfile = $eulername;
 			$opname = ereg_replace("euler","",$eulername);
 			$opname = ereg_replace("-".$reconrunid."_".$recon['iteration']."\.png$","",$opname);
 			if (file_exists($eulerfile)) {
