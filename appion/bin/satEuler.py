@@ -27,12 +27,15 @@ class satEulerScript(appionScript.AppionScript):
 		"""
 		Need to connect to DB server before moving forward
 		"""
-		# connect
-		self.dbconf = sinedon.getConfig('appiondata')
-		self.db     = MySQLdb.connect(**self.dbconf)
-		# create a cursor
-		self.cursor = self.db.cursor()
+		self.cursor = None
 		appionScript.AppionScript.__init__(self)
+		if self.cursor is None:
+			# connect
+			self.dbconf = sinedon.getConfig('appiondata')
+			self.db     = MySQLdb.connect(**self.dbconf)
+			# create a cursor
+			self.cursor = self.db.cursor()
+
 
 	#=====================
 	def getTiltRunIDFromReconID(self, reconid):
@@ -48,6 +51,7 @@ class satEulerScript(appionScript.AppionScript):
 			+"WHERE refrun.`DEF_id` = "+str(reconid)+" \n"
 			+"  LIMIT 1 \n"
 		)
+		#print query
 		self.cursor.execute(query)
 		result = self.cursor.fetchall()
 		#apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
@@ -326,7 +330,7 @@ class satEulerScript(appionScript.AppionScript):
 		e2 = { "euler1": eulerpair['part1']['euler1'],
 			"euler2": eulerpair['part1']['euler2'],
 			"euler3": eulerpair['part2']['euler3'] }
-		rotdist = apEulerCalc.eulerCalculateDistanceSym(e1, e2, sym='d7', inplane=True)
+		rotdist = apEulerCalc.eulerCalculateDistanceSym(e1, e2, sym='c1', inplane=True)
 		return rotdist
 
 	#=====================
@@ -351,9 +355,9 @@ class satEulerScript(appionScript.AppionScript):
 			if count % 500 == 0:
 				sys.stderr.write(".")
 			eulerpair['angdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
-				eulerpair['part2'], sym='d7', inplane=False)
+				eulerpair['part2'], sym='c1', inplane=False)
 			eulerpair['totdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
-				eulerpair['part2'], sym='d7', inplane=True)
+				eulerpair['part2'], sym='c1', inplane=True)
 			eulerpair['rotdist'] = self.calc2dRotationalDifference(eulerpair)
 			### ignore rejected particles
 			#if eulerpair['part1']['reject'] == 0 or eulerpair['part2']['reject'] == 0:
@@ -575,6 +579,7 @@ class satEulerScript(appionScript.AppionScript):
 		stackdata = apStack.getRunsInStack(self.params['stackid'])
 
 		cmd = ( "subStack.py "
+			+" --projectid="+str(self.params['projectid'])
 			+" --old-stack-id="+str(self.params['stackid'])
 			+" --commit"
 			+" \\\n --keep-file="+keepfile
@@ -592,6 +597,7 @@ class satEulerScript(appionScript.AppionScript):
 		keepfile = os.path.join(self.params['rundir'], "keeplist-tot"+self.datastr+".lst")
 		newname = "recon%d_cut%d_iter%d.hed" % (self.params['reconid'], self.params['cutrange']*10, self.params['iternum'])
 		cmd = ( "satAverage.py "
+			+" --projectid="+str(self.params['projectid'])
 			+" --reconid="+str(self.params['reconid'])
 			+" \\\n --mask=62 --iter="+str(self.params['iternum'])
 			+" \\\n --stackname="+newname
@@ -635,6 +641,12 @@ class satEulerScript(appionScript.AppionScript):
 		"""
 		make sure the necessary parameters are set correctly
 		"""
+		if self.cursor is None:
+			# connect
+			self.dbconf = sinedon.getConfig('appiondata')
+			self.db     = MySQLdb.connect(**self.dbconf)
+			# create a cursor
+			self.cursor = self.db.cursor()
 		if not self.params['reconid']:
 			apDisplay.printError("Enter a Reconstruction Run ID, e.g. --reconid=243")
 		if not self.params['tiltrunid']:
