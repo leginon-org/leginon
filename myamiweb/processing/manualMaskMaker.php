@@ -292,23 +292,7 @@ function runMaskMaker() {
 	$command .= $apcommand;
 	$command .= parseManualMaskMakerParams($_POST);
 
-	if ($testimage && $_POST['process']=="Run ManualMaskMaker") {
-		$host = $_POST['processinghost'];
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-		if (!($user && $password)) {
-			createMMMForm("<B>ERROR:</B> Enter a user name and password");
-			exit;
-		}
-		$prefix = "source /ami/sw/ami.csh;";
-		$prefix.= "source /ami/sw/share/python/usepython.csh cvs32;";
-		$cmd = "$prefix webcaller.py '$command' maskMakerLog.txt";
-		$result=exec_over_ssh($host, $user, $password, $cmd, True);
-	}
-
 	processing_header("Bad Region Detection Results","Bad Region Detection Results",$javascript);
-
-
 	echo"
   <TABLE WIDTH='600'>
   <TR><TD COLSPAN='2'>
