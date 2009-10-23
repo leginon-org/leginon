@@ -72,6 +72,33 @@ def printSymmetries():
 			+apDisplay.rightPadString(s['description'],60)+"\n"
 		)
 
+#=====================
+def getSymmetryReconRunId(reconrunid, msg=True):
+	"""
+	get the symmetry from the last iteration of a refinement
+	"""
+	refrundata = appiondata.ApRefinementRunData.direct_query(reconrunid)
+	refdataq = appiondata.ApRefinementData()
+	refdataq['refinementRun'] = refrundata
+	refdata = refdataq.query()
+	uniqsym = refdata[0]['refinementParams']['symmetry']
+	if uniqsym is None:
+		apDisplay.printWarning("symmetry is not saved during reconstruction!")
+		apDisplay.printWarning("Using the symmetry of the initial model")
+		modeldata = refrundata['initialModel']
+		uniqsym = modeldata['symmetry']
+	else:
+		for data in refdata:
+			if uniqsym != data['refinementParams']['symmetry']:
+				apDisplay.printWarning("symmetry is not consistent throughout reconstruction!")
+				apDisplay.printWarning("Using symmetry of last iteration")
+			uniqsym = data['refinementParams']['symmetry']
+	if msg is True:
+		apDisplay.printMsg("selected symmetry group: "
+			+apDisplay.colorString("'"+uniqsym['eman_name']+"'", "cyan")
+			+" for recon run: "+str(reconrunid))
+	return uniqsym
+
 
 #===========================
 #===========================
