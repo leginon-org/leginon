@@ -174,11 +174,40 @@ class ChimSnapShots(object):
 			cmax = 1.0
 		crange = cmax - cmin
 		cc.origin = [0,0,0]
-		data_values = (cmin, .625*crange+cmin, .75*crange+cmin, .875*crange+cmin, cmax)
 		self.writeMessageToLog("%.3f,%.3f"%(cmin,cmax))
-		#key: red,green,blue,opacity
-		#order: orange, yellow, green, cyan, blue
-		colors = [(0.8,0.4,0.1,1), (0.8,0.8,0.1,1), (0.4,0.8,0.1,1), (0.1,0.8,0.1,1), (0.1,0.8,0.8,1)]
+		if self.colors is None:
+			### green, yellow, orange
+			data_values = (cmin, .625*crange+cmin, .75*crange+cmin, .875*crange+cmin, cmax)
+			#key: red,green,blue,opacity
+			#order: orange, yellow, green, cyan, blue
+			colors = [(0.8,0.4,0.1,1), (0.8,0.8,0.1,1), (0.4,0.8,0.1,1), (0.1,0.8,0.1,1), (0.1,0.8,0.8,1)]
+		else:
+			### set colors
+			if len(self.colors) >= 1 and ":" in self.colors[0]:
+				colorvalues = self.colors[0].split(":")
+				rgbcolor0 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
+			else:
+				rgbcolor0 = (0.8,0.2,0.2,1)
+			if len(self.colors) >= 2 and ":" in self.colors[1]:
+				colorvalues = self.colors[1].split(":")
+				rgbcolor1 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
+			else:
+				rgbcolor1 = (min(float(colorvalues[0])*2.0,1.0), 
+					min(float(colorvalues[1])*2.0,1.0), min(float(colorvalues[2])*2.0,1.0), 1)
+				#rgbcolor1 = (0.8,0.8,0.8,1)
+				
+			if len(self.colors) >= 3 and ":" in self.colors[2]:
+				colorvalues = self.colors[2].split(":")
+				rgbcolor2 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
+			else:
+				rgbcolor2 = (0.2,0.2,0.8,1)
+			self.writeMessageToLog("rgbcolor0 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor0))
+			self.writeMessageToLog("rgbcolor1 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor1))
+			self.writeMessageToLog("rgbcolor2 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor2))
+			colors = [rgbcolor0, rgbcolor1, rgbcolor2]
+			data_values = (.125*crange+cmin, .5*crange+cmin, .875*crange+cmin)
+
+
 		cc.colormap = Color_Map(data_values, colors)
 		color_surface(surf, cc, caps_only = False, auto_update = False)
 
