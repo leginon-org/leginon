@@ -664,15 +664,10 @@ def arrayToPng(numer, filename, normalize=True, msg=True):
 #=========================
 def arrayMaskToPng(numer, filename, msg=True):
 	"""
-	takes a numpy and writes a PNG
-	best for masks and line art
+	Until PIL can read alpha channel again, the mask is on the main channel
+	as 255
 	"""
-	image = _arrayToImage(numer)
-	#next line requires data be zero or one
-	image = image.convert('1')
-	if msg is True:
-		apDisplay.printMsg("writing PNG mask: "+apDisplay.short(filename))
-	image.save(filename, "PNG")
+	arrayToPng(numer, filename, True, True)
 	return
 
 #=========================
@@ -698,7 +693,16 @@ def arrayMaskToPngAlpha(numer,filename, msg=True):
 #=========================
 def PngAlphaToBinarryArray(filename):
 	RGBAarray = readPNG(filename)
+	print RGBAarray.shape
 	alphaarray = RGBAarray[:,:,3]
+	masked_alphaarray = ma.masked_greater_equal(alphaarray,50)
+	bmask = masked_alphaarray.filled(1)
+	return alphaarray
+
+def PngToBinarryArray(filename):
+	RGBAarray = readPNG(filename)
+	print RGBAarray.shape
+	alphaarray = RGBAarray[:,:]
 	masked_alphaarray = ma.masked_greater_equal(alphaarray,50)
 	bmask = masked_alphaarray.filled(1)
 	return alphaarray

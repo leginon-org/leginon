@@ -233,7 +233,9 @@ class manualPicker(filterLoop.FilterLoop):
 			info=infos[l]
 			info.append(l)
 			regiondata= apMask.insertMaskRegion(maskrundata,imgdata,info)
-		apImage.arrayMaskToPngAlpha(mask, os.path.join(maskdir,maskfilename))
+		# PIL alpha channel read does not work
+		#apImage.arrayMaskToPngAlpha(mask, os.path.join(maskdir,maskfilename))
+		apImage.arrayMaskToPng(mask, os.path.join(maskdir,maskfilename))
 		allregiondata = apMask.getMaskRegions(maskrundata,imgdata)
 		for regiondata in allregiondata:
 			apMask.insertMaskAssessment(massessrundata,regiondata,1)

@@ -156,7 +156,9 @@ class MaskMaker(appionLoop2.AppionLoop):
 		apParam.createDirectory(pngpath,warning=False)
 		filepathname = os.path.join(self.params['rundir'],"masks",imgdata['filename']+"_mask.png")
 		if mask is not None:
-			apImage.arrayMaskToPngAlpha(mask, filepathname)
+			# PIL alpha channel read does not work
+			#apImage.arrayMaskToPngAlpha(mask, filepathname)
+			apImage.arrayMaskToPng(mask, filepathname)
 		return results
 
 	def prepImage(self,imgarray,cutoff=5.0):

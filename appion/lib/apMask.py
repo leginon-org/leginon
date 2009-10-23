@@ -172,7 +172,8 @@ def getMaskFilename(maskrundata,imagedata):
 def getMaskArray(maskrundata,imgdata):
 	maskpath = getMaskPath(maskrundata)
 	maskfile = getMaskFilename(maskrundata,imgdata)
-	mask = apImage.PngAlphaToBinarryArray(os.path.join(maskpath,maskfile))
+	#mask = apImage.PngAlphaToBinarryArray(os.path.join(maskpath,maskfile))
+	mask = apImage.PngToBinarryArray(os.path.join(maskpath,maskfile))
 	return mask
 
 def getMaskRunInfo(maskpath,maskfilename):
