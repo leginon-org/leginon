@@ -6,6 +6,7 @@ from pyami import imagefun, ellipse, mrc
 from scipy import ndimage
 
 def getAstigmaticDefocii(params,rpixelsize, ht):
+	print 'rpixel',rpixelsize
 	minr = rpixelsize * min(params['a'],params['b'])
 	maxz = calculateDefocus(ht,minr)
 	maxr = rpixelsize * max(params['a'],params['b'])
@@ -41,8 +42,8 @@ def calculateFirstNode(ht,z,Cs=2.0e-3):
 		return s
 
 def find_ast_ellipse(grad,thr,dmean,drange):
-	#mrc.write(grad,'grad.mrc')
-	#mrc.write(thr,'thr.mrc')
+	mrc.write(grad,'grad.mrc')
+	mrc.write(thr,'thr.mrc')
 	maxsize=4*(drange)*(drange)
 	blobs = imagefun.find_blobs(grad,thr,maxblobsize=maxsize,minblobsize=0)
 	points = []
@@ -110,17 +111,22 @@ def find_ast_ellipse(grad,thr,dmean,drange):
 		return None
 
 def fitFirstCTFNode(pow, rpixelsize, defocus, ht):
-	if defocus:
-		z = abs(defocus)
-		s = calculateFirstNode(ht,z)
-		dmean = max(s / rpixelsize / 3 , 30)
-	else:
-		dmean = 40
-	drange = max(dmean / 4, 10)
-	print 'dmean', dmean
 	filter = ndimage.gaussian_filter(pow,3)
 	grad = ndimage.gaussian_gradient_magnitude(filter,3)
 	thr = imagefun.threshold(grad,grad.mean()+3*grad.std())
+	if defocus:
+		z = abs(defocus)
+		s = calculateFirstNode(ht,z)
+		dmean = max(0.8*s/rpixelsize, 30)
+	else:
+		shape = pow.shape
+		r = 20
+		center = ( shape[0] / 2, shape[1] / 2 ) 
+		grad[center[0]-r: center[0]+r, center[1]-r: center[1]+r] = 0
+		peak = ndimage.maximum_position(grad)
+		dmean = math.hypot(peak[0] - center[0], peak[1] - center[1])
+	drange = max(dmean / 4, 10)
+	print 'dmean', dmean
 	eparams = find_ast_ellipse(grad,thr,dmean,drange)
 	if eparams:
 		z0, zast, ast_ratio, alpha = getAstigmaticDefocii(eparams,rpixelsize, ht)
