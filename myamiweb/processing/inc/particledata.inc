@@ -238,6 +238,7 @@ class particledata {
 
 	function getTomoAlignerInfoFromAlignmentRun($alignid,$showiHidden=false) {
 		$q = " SELECT a.`DEF_id` as alignerid, "
+			." a.`REF|ApTomoAlignmentRunData|alignrun` as `alignrunid`, "
 			." a.`REF|ApProtomoRefinementParamsData|refine cycle` as `cycleid`, "
 			." a.`REF|ApProtomoRefinementParamsData|good cycle` as `goodid`, "
 			." p.`series name`, "
@@ -596,7 +597,7 @@ class particledata {
 		$length = strlen(count($aligners));
 		for ($i = 0; $i < count($aligners); $i++) {
 			$data = $aligners[$i];
-			$aligner = $series['alignerid'];
+			$aligner = $data['alignerid'];
 			$selector .= '<option class="fixed" value='.$i;
 			if ($i == $alignerId) {
 				$selector .= ' selected ';
@@ -608,6 +609,40 @@ class particledata {
 		}
 		$selector .= '</select>';
 		return array($selector,$selected_number);
+	}
+
+	function getTomoAlignRunAlignerSelector($aligners, $selectedId=NULL,$selectname='goodalignerId') {
+		$selector = '<select name="'.$selectname.'" '
+				.'size=1 '
+				.'onchange=submit()>';
+		$length = strlen(count($aligners));
+		for ($i = 0; $i < count($aligners); $i++) {
+			$data = $aligners[$i];
+			$runinfo = $this -> getTomoAlignmentInfo($data['alignrunid']);
+			$alignerid = $data['alignerid'];
+			$selector .= '<option class="fixed" value='.$alignerid;
+			if ($alignerid == $selectedId) {
+				$selector .= ' selected ';
+				$selected_aligner = $alignerid;
+			}
+			if ($runinfo['method'] == 'protomo') {
+				if ($data['refine cycle'] != 0) {
+					$showmethod = $runinfo['method']; 
+					$showstr = str_pad(': itr '.$data['refine cycle'], $length, ' ', STR_PAD_LEFT).'. ';
+					$showstr = str_replace(" ", "&nbsp;", $showstr);
+					$showstr .= ' sampling@'.$data['align sampling'];
+				} else {
+					$showmethod = 'leginon';
+					$showstr = '';
+				}
+			} else {
+				$showmethod = $runinfo['method'];
+				$showstr = '';
+			}
+			$selector .= '>'.$runinfo['alignrun name'].'-'.$showmethod.$showstr.'</option>';
+		}
+		$selector .= '</select>';
+		return array($selector,$selected_aligner);
 	}
 
 	function checkforTomogram($tiltseriesId){
@@ -664,12 +699,15 @@ class particledata {
 			."WHERE a.`REF|TiltSeriesData|tilt series`='$tiltseriesId' "
 			."AND pc.`REF|InstrumentData|tem`= pd.`REF|InstrumentData|tem` "
 			."AND pc.`magnification`= pd.`magnification` "
+			."AND pd.`name` NOT LIKE 'Zproj' "
 			."AND "
 			."pc.`REF|InstrumentData|ccdcamera`= pd.`REF|InstrumentData|ccdcamera` "
 			."AND "
 			."pc.`DEF_timestamp`<	a.`DEF_timestamp` "
 			."ORDER BY pc.`DEF_timestamp` DESC ";
-		return $this->mysql->getSQLResult($q);
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+
 	}
 
 	function countSubTomograms($fulltomogramId){
@@ -681,11 +719,16 @@ class particledata {
 		return count($r);
 	}
 	
-	function countTomoAlignmentRuns($tiltseriesId){
-		$q="SELECT * "
+	function getTomoAlignmentRuns($tiltseriesId){
+		$q="SELECT *, "
+			."`DEF_id` as alignrunId "
 			."FROM ApTiltsInAlignRunData "
 			."WHERE `REF|leginondata|TiltSeriesData|tiltseries`=".$tiltseriesId;
 		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+	function countTomoAlignmentRuns($tiltseriesId){
+		$r = $this->getTomoAlignmentRuns($tiltseriesId);
 		return ($r)? count($r) : 0;
 	}
 	
