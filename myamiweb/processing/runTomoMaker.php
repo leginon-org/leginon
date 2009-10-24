@@ -14,7 +14,7 @@ require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
 
-// IF VALUES SUBMITTED, EVALUATE DATA
+// IF valueS SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
 	runTomoMaker();
 }
@@ -38,10 +38,10 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+		echo "<font color='RED'>$extra</font>\n<hr>\n";
 	}
   
-	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+	echo"<form name='viewerform' method='POST' action='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	
@@ -60,106 +60,111 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
 	$tiltseriesId2 = ($_POST['tiltseriesId2']) ? $_POST['tiltseriesId2'] : NULL;
 	$alignruns = $particle->countTomoAlignmentRuns($tiltseriesId);
+	$alignerId = ($_POST['alignerId']) ? $_POST['alignerId'] : NULL;
 	$autorunname = ($alignruns) ? 'full'.($alignruns+1):'full1';
 	$runname = ($_POST['lasttiltseries']==$tiltseriesId) ? $_POST['runname']:$autorunname;
 	$description = $_POST['description'];
 
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
-	$seriesselector_array2 = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId2,'tiltseriesId2'); 
 	$tiltSeriesSelector = $seriesselector_array[0];
 	echo "<input type='hidden' name='lasttiltseries' value='$tiltseriesId'>\n";
+	$aligners = array();
+	$alignIds = array();
 	if ($tiltseriesId) {
 		$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
+		$alignruns = $particle ->getTomoAlignmentRuns($tiltseriesId);
+		if ($alignruns) {
+			foreach ($alignruns as $run) {
+				$alignId = $run['alignrunId'];
+				$caligners =  $particle -> getTomoAlignerInfoFromAlignmentRun($alignId,false);
+				if (!$caligners) $caligners = array();
+				$aligners = array_merge($aligners, $caligners);
+			}
+		} else {
+			$tiltseriesinfos = array();
+		}
   } else {
 		$tiltseriesinfos = array();
 	}
-	$tiltSeriesSelector2 = $seriesselector_array2[0];
-	if ($tiltseriesId2) {
-		$tiltseriesinfos2 = $particle ->getTiltSeriesInfo($tiltseriesId2);
-  } else {
-		$tiltseriesinfos2 = array();
-	}
+	$alignerselector_array = $particle->getTomoAlignRunAlignerSelector($aligners, $alignerId,'alignerId');
 	echo"
-  <TABLE BORDER=3 CLASS=tableborder>
-  <TR>
-    <TD VALIGN='TOP'>\n";
-	echo"	<TABLE BORDER=3 CLASS=tableborder>
-				<TR>
-					<TD VALIGN='TOP'>\n";
+  <table border=3 class=tableborder>
+  <tr>
+    <td valign='TOP'>\n";
+	echo"	<table border=3 class=tableborder>
+				<tr>
+					<td valign='TOP'>\n";
 	echo $seriesselector_array[0];
-	echo docpop('tiltseries', 'Tilt Series');
+	echo docpop('tiltseries', 'Choose a tilt series involved in the align run');
 	if (count($tiltseriesinfos) && $tiltseriesId) {
 		echo "
 		<br/><b>First Image in the Tilt Series:</b><br/>"
 			.$tiltseriesinfos[0]['filename'];
+		echo "</td></tr><tr><td>";
+		if (count($aligners)) {
+			echo docpop('tomoaligner', 'Choose an alignment for tomogram creation');
+			echo "<br/>";
+			echo $alignerselector_array[0];
+			$selection = $alignerselector_array[1];
+			$currentaligner = (is_null($selection)) ? $aligners[0]['alignerid']:$selection;
+		} else {
+			echo "<b>No alignment available for reconstruction</b>";
+		}
 	} else {
 		if ($tiltseriesId)
 			echo "<br/><b>Bad Tilt Series! Do not use.</b><br/>";
 	}
-	echo "</TD><TD VALIGN='TOP'>\n";
-	echo $seriesselector_array2[0];
-	echo docpop('tiltseriestwo', '2ndary Tilt Series');
-	if (count($tiltseriesinfos2) && $tiltseriesId2) {
-		if ($tiltseriesId2==$tiltseriesId){
-			echo "<br/><b>2nd tilt series must be different.</b><br/>";
-		} else {
-			echo "
-				<br/><b>First Image in the Tilt Series:</b><br/>"
-				.$tiltseriesinfos2[0]['filename'];
-		}
-	} else {
-		if ($tiltseriesId2)
-			echo "<br/><b>Bad Tilt Series! Do not use.</b><br/>";
-	}
-	echo "</td></table>";
-	echo "<p>
-    <INPUT TYPE='text' NAME='runname' VALUE='$runname' SIZE='10'>\n";
-	echo docpop('tomorunname', 'Runname');
-  echo "<FONT>(full tomogram reconstruction run name)</FONT>";     
+	echo "</td></tr></table>";
+	if ($currentaligner) {
+		echo "<p>
+			<input type='text' name='runname' value='$runname' size='10'>\n";
+		echo docpop('tomorunname', 'Runname');
+		echo "<font>(full tomogram reconstruction run name)</font>";     
 	
-	echo"<P>
-      <B>Tomogram Description:</B><br>
-      <TEXTAREA NAME='description' ROWS='2' COLS='40'>$description</TEXTAREA>
-      </TD>
-    </tr>
-    <TR>
-      <TD VALIGN='TOP' CLASS='tablebg'>";       
+		echo"<P>
+			  <b>Tomogram Description:</b><br>
+				<textarea name='description' ROWS='2' COLS='40'>$description</textarea>
+				</td>
+			</tr>
+			<tr>
+				<td valign='TOP' class='tablebg'>";       
 
-	echo "
-		<B> <CENTER>Tomogram Creation Params: </CENTER></B>
-      <P>
-      <INPUT TYPE='text' NAME='extrabin' SIZE='5' VALUE='$extrabin'>\n";
-		echo docpop('extrabin','Binning');
-		echo "<FONT>(additional binning in tomogram)</FONT>
-		<p>
-      <INPUT TYPE='text' NAME='thickness' SIZE='8' VALUE='$thickness'>\n";
-		echo docpop('tomothickness','Tomogram Thickness');
-		echo "<FONT>(pixels in tilt images)</FONT>
-		<p><br />";
-   
+		echo "
+			<b> <center>Tomogram Creation Params: </center></b>
+				<P>
+				<input type='text' name='extrabin' size='5' value='$extrabin'>\n";
+			echo docpop('extrabin','Binning');
+			echo "<font>(additional binning in tomogram)</font>
+			<p>
+				<input type='text' name='thickness' size='8' value='$thickness'>\n";
+			echo docpop('tomothickness','Tomogram Thickness');
+			echo "<font>(pixels in tilt images)</font>
+			<p><br />";
+	}
 	if (!$sessionname) {
 		echo "
 		<br>
-      <INPUT TYPE='text' NAME='sessionname' VALUE='$sessionname' SIZE='5'>\n";
+      <input type='text' name='sessionname' value='$sessionname' size='5'>\n";
 		echo docpop('session', 'Session Name');
-		echo "<FONT> (leginon session name)</FONT>";
+		echo "<font> (leginon session name)</font>";
+		echo "<P>";
 	}
 		echo "	  		
-		<P>
-      </TD>
+      </td>
    </tr>
     </table>
-  </TD>
+  </td>
   </tr>
   <td
-
-  <TR>
-    <TD ALIGN='CENTER'>
+  <tr>
+    <td align='center'>
       <hr>
 	";
-	echo getSubmitForm("Make Tomogram");
-	echo "
+	if ($currentaligner) {
+		echo getSubmitForm("Make Tomogram");
+	}
+		echo "
         </td>
 	</tr>
   </table>
@@ -177,8 +182,7 @@ function runTomoMaker() {
 
 	$command = "tomomaker.py ";
 
-	$tiltseriesId=$_POST['tiltseriesId'];
-	$tiltseriesId2=$_POST['tiltseriesId2'];
+	$alignerId=$_POST['alignerId'];
 	$runname=$_POST['runname'];
 	$volume=$_POST['volume'];
 	$sessionname=$_POST['sessionname'];
@@ -186,35 +190,26 @@ function runTomoMaker() {
 	$thickness=$_POST['thickness'];
 
 	//make sure a tilt series was provided
-	if (!$tiltseriesId) createTomoMakerForm("<B>ERROR:</B> Select the tilt series");
+	if (!$alignerId) createTomoMakerForm("<b>ERROR:</b> Select the alignment");
 	//make sure a description was provided
 	$description=$_POST['description'];
-	if (!$description) createTomoMakerForm("<B>ERROR:</B> Enter a brief description of the tomogram");
-
-	$particle = new particledata();
-	$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
-	$apix = $tiltseriesinfos[0]['ccdpixelsize'] * $tiltseriesinfos[0]['imgbin'] * $extrabin * 1e10;
-	$tiltseriesnumber = $tiltseriesinfos[0]['number'];
+	if (!$description) createTomoMakerForm("<b>ERROR:</b> Enter a brief description of the tomogram");
 
 	$command.="--session=$sessionname ";
 	$command.="--bin=$extrabin ";
-	$command.="--tiltseriesnumber=$tiltseriesnumber ";
+	$command.="--alignerid=$alignerId ";
 	$command.="--projectid=$projectId ";
 	$command.="--runname=$runname ";
 	$command.="--thickness=$thickness ";
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
-	if ($tiltseriesId2) {
-		$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId2);
-		$tiltseriesnumber = $tiltseriesinfos[0]['number'];
-		$command.="--othertilt=$tiltseriesnumber ";
-	}	
+
 	// submit job to cluster
 	if ($_POST['process']=="Make Tomogram") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createTomoMakerForm("<B>ERROR:</B> You must be logged in to submit");
+		if (!($user && $password)) createTomoMakerForm("<b>ERROR:</b> You must be logged in to submit");
 		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomomaker',True,True);
 		// if errors:
 		if ($sub) createTomoMakerForm("<b>ERROR:</b> $sub");
@@ -242,17 +237,16 @@ function runTomoMaker() {
 	
 	// rest of the page
 	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
-	<B>Full Tomogram Making Command:</B><br>
+	<table width='600' border='1'>
+	<tr><td colspan='2'>
+	<b>Full Tomogram Making Command:</b><br>
 	$command
-	</TD></tr>
-	<TR><td>apix</TD><td>$apix</TD></tr>
-	<TR><td>tiltseries number</TD><td>$tiltseriesnumber</TD></tr>
-	<TR><td>runname</TD><td>$runname</TD></tr>
-	<TR><td>thickness</TD><td>$thickness</TD></tr>
-	<TR><td>session</TD><td>$sessionname</TD></tr>
-	<TR><td>description</TD><td>$description</TD></tr>
+	</td></tr>
+	<tr><td>aligner</td><td>$alignerId</td></tr>
+	<tr><td>runname</td><td>$runname</td></tr>
+	<tr><td>thickness</td><td>$thickness</td></tr>
+	<tr><td>session</td><td>$sessionname</td></tr>
+	<tr><td>description</td><td>$description</td></tr>
 	</table>\n";
 	processing_footer();
 }
