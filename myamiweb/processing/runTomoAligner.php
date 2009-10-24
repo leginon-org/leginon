@@ -78,7 +78,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		//get image size
 		$imageinfo = $leginondata->getImageInfo($refinedata[0]['image']);
 		$imagesize = ($_POST['imagesize']) ? $_POST['imagesize'] : $imageinfo['dimx'];
-		$showncycles = $particle->getProtomoAlignerInfoFromAlignmentRun($refinedata[0]['alignrunid'],False);
+		$showncycles = $particle->getTomoAlignerInfoFromAlignmentRun($refinedata[0]['alignrunid'],False);
 		//good  cycle selector
 		$validcycles = $showncycles;
 		$i = 0;
