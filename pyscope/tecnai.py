@@ -896,6 +896,7 @@ class Tecnai(tem.TEM):
 			self.tecnai.Camera.MainScreen = win32com.client.constants.spDown
 		else:
 			raise ValueError
+		time.sleep(2)
 
 	def getHolderStatus(self):
 		if adacom is None:
