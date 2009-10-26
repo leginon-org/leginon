@@ -338,7 +338,7 @@ function runTomoAligner() {
 		$password = $_SESSION['password'];
 
 		if (!($user && $password)) createTomoAlignerForm("<b>ERROR:</b> You must be logged in to submit");
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomoaligner',True,True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomoaligner',False,False,False);
 		// if errors:
 		if ($sub) createTomoAlignerForm("<b>ERROR:</b> $sub");
 
