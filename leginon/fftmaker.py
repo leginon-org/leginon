@@ -11,6 +11,7 @@ import event
 import imagewatcher
 import threading
 import node
+import calibrationclient
 import numpy
 import math
 import pyami.quietscipy
@@ -33,6 +34,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
 
+		self.calclient = calibrationclient.CalibrationClient(self)
 		self.postprocess = threading.Event()
 		self.start()
 
@@ -41,12 +43,13 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		calculate and publish fft of the imagedata
 		'''
 		if self.settings['process']:
-			pixelsize = self.getReciprocalPixelSize(imagedata)
+			rpixelsize = self.calclient.getImageReciprocalPixelSize(imagedata)
 			pow = self.calculatePowerImage(imagedata)
 			shape = pow.shape
 			center = {'x':shape[1]/2,'y':shape[0]/2}
 			self.ht = imagedata['scope']['high tension']
-			self.panel.onNewPixelSize(pixelsize,center,self.ht)
+			self.rpixelsize = rpixelsize
+			self.panel.onNewPixelSize(rpixelsize,center,self.ht)
 			if imagedata['filename'] and self.settings['save']:
 				self.publishPowerImage(imagedata,pow)
 
@@ -63,23 +66,10 @@ class FFTMaker(imagewatcher.ImageWatcher):
 			self.imageshape = imageshape
 			return pow
 
-	def getReciprocalPixelSize(self,imagedata):
-		scope = imagedata['scope']['tem']
-		ccd = imagedata['camera']['ccdcamera']
-		mag = imagedata['scope']['magnification']
-		q = leginondata.PixelSizeCalibrationData(tem=scope,ccdcamera=ccd,magnification=mag)
-		results = q.query(results=1)
-		if not results:
-			return
-		campixelsize = results[0]['pixelsize']
-		binning = imagedata['camera']['binning']
-		dimension = imagedata['camera']['dimension']
-		pixelsize = {'x':1.0/(campixelsize*binning['x']*dimension['x']),'y':1.0/(campixelsize*binning['y']*dimension['y'])}
-		self.rpixelsize = pixelsize['x']
-		return pixelsize
-
 	def estimateAstigmation(self,params):
-		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize,self.ht)
+		if self.rpixelsize['x'] != self.rpixelsize['y']:
+			self.logger.error('Astigmatic defocus calculation not implemented for unequal x, y pixelsizes')
+		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize['x'],self.ht)
 		self.logger.info('z0 %.3f um, zast %.3f um (%.0f ), angle= %.1f deg' % (z0*1e6,zast*1e6,ast_ratio*100, angle*180.0/math.pi))
 
 	def publishPowerImage(self, imagedata, powimage):
