@@ -104,7 +104,8 @@ class ChimSnapShots(object):
 			surf = self.surfaces[0]
 			vertices, triangles = surf.surfacePieces[0].geometry
 			rmin, rmax = rc.value_range(vertices, vertex_xform=None)
-		chimera.viewer.viewSize = rmax/self.zoom
+		## ten percent bigger to ensure that entire particle is in frame
+		chimera.viewer.viewSize = 1.1*rmax/self.zoom
 		#self.runChimCommand('scale %.3f' % self.zoom)
 
 	# -----------------------------------------------------------------------------
@@ -552,6 +553,18 @@ class ChimSnapShots(object):
 		self.writeMessageToLog("turn: get top view")
 		self.runChimCommand('turn x 180')
 		self.save_image(self.volumepath+'.1.png')
+
+		### hack
+		self.runChimCommand('turn x -30')	
+		self.save_image(self.volumepath+'.30deg1.png')
+		self.runChimCommand('turn y 20')
+		self.save_image(self.volumepath+'.30deg2.png')
+
+		### unhack
+		self.runChimCommand('turn y -20')
+		self.runChimCommand('turn x 30')
+
+		### resume
 		self.writeMessageToLog("turn: get tilt view")
 		self.runChimCommand('turn x -45')
 		self.save_image(self.volumepath+'.2.png')
