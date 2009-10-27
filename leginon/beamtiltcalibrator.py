@@ -44,6 +44,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.abort = threading.Event()
 
 		self.measurement = {}
+		self.comameasurement = {}
 
 		self.calibration_clients = {
 			'beam tilt': calibrationclient.BeamTiltCalibrationClient(self),
@@ -124,8 +125,38 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def measureComaFree(self, tilt_value):
 		calibration_client = self.calibration_clients['beam tilt']
-		cftilt = calibration_client.measureComaFree(tilt_value, settle=self.settings['settling time'])
-		print 'COMA-FREE', cftilt
+		try:
+			if self.initInstruments():
+				raise RuntimeError('cannot initialize instrument')
+			cftilt = calibration_client.measureComaFree(tilt_value, settle=self.settings['settling time'])
+		except Exception, e:
+			self.logger.error('Measurement failed: %s' % e)
+			cftilt = None
+		if cftilt is None:
+			comatilt = {'x':None, 'y':None}
+		else:
+			comatilt = {'x':cftilt[(0,0)],'y':cftilt[(1,1)]}
+		self.comameasurement = comatilt
+		self.panel.comaMeasurementDone(comatilt)
+
+	def _correctComaTilt(self):
+		bt = self.comameasurement
+		oldbt = self.instrument.tem.BeamTilt
+		self.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
+		newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
+		self.instrument.tem.BeamTilt = newbt
+		self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+
+	def correctComaTilt(self):
+		self.logger.info('Correcting beam tilt...')
+		try:
+			self._correctComaTilt()
+		except Exception, e:
+			self.logger.exception('Correction failed: %s' % e)
+		else:
+			self.logger.info('Correction completed')
+
+		self.panel.setInstrumentDone()
 
 	def __calibrateDefocus(self, beam_tilt, defocii):
 		if self.initInstruments():

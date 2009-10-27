@@ -59,8 +59,20 @@ class Panel(gui.wx.Calibrator.Panel):
 	icon = 'beamtilt'
 	settingsclass = SettingsDialog
 	def initialize(self):
-		gui.wx.Calibrator.Panel.initialize(self)
+		# image
+		self.imagepanel = self.imageclass(self, -1)
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Image', True)
+		self.imagepanel.addTypeTool('Correlation', display=True)
+		self.imagepanel.addTypeTool('Tableau', display=True)
+		if isinstance(self.imagepanel, gui.wx.TargetPanel.TargetImagePanel):
+			color = wx.Color(255, 128, 0)
+			self.imagepanel.addTargetTool('Peak', color)
 
+		self.szmain.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
+		self.szmain.AddGrowableRow(0)
+		self.szmain.AddGrowableCol(0)
+		# tools
 		choices = ['Defocus', 'Stigmator', 'Coma-free']
 		self.parameter = wx.Choice(self.toolbar, -1, choices=choices)
 		self.parameter.SetSelection(0)
@@ -84,6 +96,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.Bind(gui.wx.Events.EVT_GET_INSTRUMENT_DONE, self.onGetInstrumentDone)
 		self.Bind(gui.wx.Events.EVT_SET_INSTRUMENT_DONE, self.onSetInstrumentDone)
 		self.Bind(gui.wx.Events.EVT_MEASUREMENT_DONE, self.onMeasurementDone)
+		self.Bind(gui.wx.Events.EVT_COMA_MEASUREMENT_DONE, self.onComaMeasurementDone)
 
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
@@ -123,6 +136,10 @@ class Panel(gui.wx.Calibrator.Panel):
 			self.measure_dialog.scrsettings.correctstig.Enable(enable)
 		self.measure_dialog.scrsettings.resetdefocus.Enable(enable)
 
+		self.comafree_dialog.measure.Enable(enable)
+		if self.node.comameasurement:
+			self.comafree_dialog.correct.Enable(enable)
+
 	def _acquisitionEnable(self, enable):
 		self.instrumentEnable(enable)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, enable)
@@ -141,27 +158,40 @@ class Panel(gui.wx.Calibrator.Panel):
 
 	def onMeasurementDone(self, evt):
 		self._calibrationEnable(True)
-
 		if evt.defocus is None:
 			label = '(Not measured)'
 		else:
 			label = '%g' % evt.defocus
 		self.measure_dialog.scrsettings.labels['defocus'].SetLabel(label)
-
 		for axis, value in evt.stig.items():
 			if value is None:
 				label = '(Not measured)'
 			else:
 				label = '%g' % value
 			self.measure_dialog.scrsettings.labels['stigmator'][axis].SetLabel(label)
-
 		self.measure_dialog.scrsettings.Layout()
 		self.measure_dialog.scrsettings.Fit()
+
+	def onComaMeasurementDone(self, evt):
+		self._calibrationEnable(True)
+		for axis, value in evt.comatilt.items():
+			if value is None:
+				label = '(Not measured)'
+			else:
+				label = '%g' % value
+			self.comafree_dialog.labels['comatilt'][axis].SetLabel(label)
+		self.comafree_dialog.Layout()
+		self.comafree_dialog.Fit()
 
 	def measurementDone(self, defocus, stig):
 		evt = gui.wx.Events.MeasurementDoneEvent()
 		evt.defocus = defocus
 		evt.stig = stig
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def comaMeasurementDone(self, beamtilt):
+		evt = gui.wx.Events.ComaMeasurementDoneEvent()
+		evt.comatilt = beamtilt
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onEucentricFocusToScope(self, evt):
@@ -317,14 +347,19 @@ class ComafreeScrolledSettings(gui.wx.Settings.ScrolledDialog):
 class MeasureComafreeDialog(wx.Dialog):
 	def __init__(self, parent):
 		self.node = parent.node
+		self.panel = parent
 
 		wx.Dialog.__init__(self, parent, -1, 'Measure Coma-free Alignment')
 
 		self.measure = wx.Button(self, -1, 'Measure')
+		self.correct = wx.Button(self, -1, 'Correct Beam Tilt')
+		self.correct.Enable(False)
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.measure)
+		self.Bind(wx.EVT_BUTTON, self.onCorrectButton, self.correct)
 
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.measure, (0, 0), (1, 1), wx.EXPAND)
+		szbutton.Add(self.measure, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		szbutton.Add(self.correct, (1, 0), (1, 1), wx.EXPAND)
 
 		sbsz = wx.GridBagSizer(5, 5)
 
@@ -333,15 +368,40 @@ class MeasureComafreeDialog(wx.Dialog):
 		sbsz.Add(tiltlabel, (0,0), (1,1))
 		sbsz.Add(self.tiltvalue, (0,1), (1,1))
 
+		self.labels = {}
+		self.labels['comatilt'] = {}
+		for axis in ('x', 'y'):
+			self.labels['comatilt'][axis] = wx.StaticText(self, -1, '(Not measured)')
+
+		szresult = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Beam Tilt Adjustment')
+		szresult.Add(label, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'x')
+		szresult.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szresult.Add(self.labels['comatilt']['x'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'y')
+		szresult.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szresult.Add(self.labels['comatilt']['y'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szresult.AddGrowableRow(0)
+		szresult.AddGrowableRow(1)
+		szresult.AddGrowableRow(2)
+		szresult.AddGrowableCol(1)
+
 		self.sizer = wx.GridBagSizer(5, 5)
-		self.sizer.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		self.sizer.Add(self.measure, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+		self.sizer.Add(sbsz, (0, 0), (1, 2), wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(szresult, (1, 0), (2, 2), wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(szbutton, (3, 0), (2, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 10)
 
 		self.SetSizerAndFit(self.sizer)
 
 	def onMeasureButton(self, evt):
 		btilt = self.tiltvalue.GetValue()
+		self.panel._calibrationEnable(False)
 		threading.Thread(target=self.node.measureComaFree, args=(btilt,)).start()
+
+	def onCorrectButton(self, evt):
+		self.panel.instrumentEnable(False)
+		threading.Thread(target=self.node.correctComaTilt).start()
 
 class AlignRotationCenterDialog(wx.Dialog):
 	def __init__(self, parent):
@@ -377,6 +437,7 @@ class AlignRotationCenterDialog(wx.Dialog):
 		d1 = self.d1value.GetValue()
 		d2 = self.d2value.GetValue()
 		threading.Thread(target=self.node.alignRotationCenter, args=(d1,d2,)).start()
+
 
 
 class MeasureDialog(gui.wx.Settings.Dialog):
