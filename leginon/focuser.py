@@ -625,18 +625,16 @@ class Focuser(acquisition.Acquisition):
 		scope = presetdata['tem']
 		ccd = presetdata['ccdcamera']
 		mag = presetdata['magnification']
-		q = leginondata.PixelSizeCalibrationData(tem=scope,ccdcamera=ccd,magnification=mag)
-		results = q.query(results=1)
-		if not results:
+		unbinned_rpixelsize = self.btcalclient.getPixelSize(mag,tem=scope, ccdcamera=ccd)
+		if unbinned_rpixelsize is None:
 			return None, None
-		campixelsize = results[0]['pixelsize']
 		binning = presetdata['binning']
 		dimension = presetdata['dimension']
-		pixelsize = {'x':1.0/(campixelsize*binning['x']*dimension['x']),'y':1.0/(campixelsize*binning['y']*dimension['y'])}
+		rpixelsize = {'x':1.0/(unbinned_rpixelsize*binning['x']*dimension['x']),'y':1.0/(unbinned_rpixelsize*binning['y']*dimension['y'])}
 		# This will not work for non-square image
-		self.rpixelsize = pixelsize['x']
+		self.rpixelsize = rpixelsize['x']
 		center = {'x':dimension['x'] / 2, 'y':dimension['y'] / 2}
-		return pixelsize, center
+		return rpixelsize, center
 
 	def estimateAstigmation(self,params):
 		z0, zast, ast_ratio, angle = fftfun.getAstigmaticDefocii(params,self.rpixelsize,self.ht)
