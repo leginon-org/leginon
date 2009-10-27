@@ -135,7 +135,7 @@ class satAverageScript(appionScript.AppionScript):
 		e = EMAN.Euler()
 		alt = classdata['euler1']*math.pi/180
 		az  = classdata['euler2']*math.pi/180
-		phi = classdata['euler3']*math.pi/180
+		phi = 0.0 #classdata['euler3']*math.pi/180
 		e.setAngle(alt, az, phi)
 		avg.setRAlign(e)
 		avg.setNImg(len(images))
@@ -159,9 +159,10 @@ class satAverageScript(appionScript.AppionScript):
 			if key not in classes.keys():
 				classes[key]={}
 				classes[key]['particles']=[]
-			classes[key]['euler1'] = particles[partnum]['euler1']
-			classes[key]['euler2'] = particles[partnum]['euler2']
-			classes[key]['euler3'] = particles[partnum]['euler3']
+				classes[key]['euler1'] = particles[partnum]['euler1']
+				classes[key]['euler2'] = particles[partnum]['euler2']
+				#classes have no inplane rotation
+				classes[key]['euler3'] = 0.0 #particles[partnum]['euler3']
 			classes[key]['particles'].append(particles[partnum])
 		class_stats['meanquality']=quality.mean()
 		class_stats['stdquality']=quality.std()
@@ -331,7 +332,7 @@ class satAverageScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
 		threednameb = os.path.join(self.params['rundir'], self.rootname+"."+str(self.params['iter'])+"b.mrc")
 		emancmd = ( "proc3d "+threedname+" "+threednameb
-			+" apix=1.63 norm=0,1 lp=6 origin=0,0,0 mask="+str(self.params['mask'])+"; echo '' " )
+			+" apix=1.63 norm=0,1 lp=20 origin=0,0,0 mask="+str(self.params['mask'])+"; echo '' " )
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
 		if self.params['eotest'] is True:
 			# even
