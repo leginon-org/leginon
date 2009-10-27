@@ -17,8 +17,10 @@ require_once "inc/processing.inc";
 /****************************************
 ****************************************/
 function stacksummarytable($stackid, $mini=false, $tiny=false) {
-	$expId = $_GET['expId'];
 	$particle = new particledata();
+	$selectdata = $particle->getStackSelectionRun($stackid);
+	$expId = $selectdata[0]['sessionId'];
+
 	$stackdata = $particle->getStackParams($stackid);
 
 	if ($_POST['updateDesc'.$stackid])
@@ -35,7 +37,6 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	$numpart = $particle->getNumStackParticles($stackid);
 	if ($numpart == 0) return;
 
-	
 	$stackname = $stackdata['shownstackname'];
 	$stackfile = $stackdata['path']."/".$stackdata['name'];
 	$j = "Stack Info: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>"
@@ -114,9 +115,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	$display_keys['date time'] = $stackdata['DEF_timestamp'];
 
 	// this no longer works
-	$selectdata = $particle->getStackSelectionRun($stackid);
-	$sessionid = $selectdata[0]['sessionId'];
-	$sessiondata = $particle->getSessionData($sessionid);
+	$sessiondata = $particle->getSessionData($expId);
 	if ($sessiondata)
 		$display_keys['session id'].="<a href='index.php?expId=".$sessiondata['DEF_id']."'>"
 			.$sessiondata['name']."</a>&nbsp;\n";
