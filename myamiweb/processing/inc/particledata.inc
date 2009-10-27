@@ -33,7 +33,9 @@ class particledata {
 		  ."FROM ".DB.".SessionData as s "
 		  ."WHERE "
 		  ."  s.`DEF_id` = ".$sessionId." ";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return $r[0];
 	}
 
