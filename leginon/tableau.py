@@ -38,7 +38,6 @@ class Tableau(object):
 		rowmax = center_row+halfshape[0]
 		colmin = center_col-halfshape[1]
 		colmax = center_col+halfshape[1]
-		print {'row': (rowmin,rowmax), 'column': (colmin,colmax)}
 		return {'row': (rowmin,rowmax), 'column': (colmin,colmax)}
 
 	def render(self):
@@ -61,11 +60,9 @@ class Tableau(object):
 		finalimage = numpy.ones(totalshape, self.images[0]['image'].dtype)
 		finalimage = background * finalimage
 		center = finalimage.shape[0]/2, finalimage.shape[1]/2
-		print 'CENTER', center
 		for image in self.images:
 			extents = self.imageExtents(image)
 			pos = center[0]+extents['row'][0], center[1]+extents['column'][0]
-			print 'POS', image['image'][0,0], pos
 			imagefun.pasteInto(image['image'], finalimage, pos)
 
 		if len(self.images) > 1:
