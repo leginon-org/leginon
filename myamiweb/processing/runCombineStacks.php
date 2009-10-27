@@ -38,10 +38,22 @@ function createCombineStackForm($extra=false, $title='combinestack.py Launcher',
 	// --- Get Stack Data --- //
 	$particle = new particledata();
 	$stackids = $particle->getStackIdsForProject($projectId, False);
-	$runname = ($_POST['runname']) ? $_POST['runname'] : 'combine1';
 	$description = $_POST['description'];
-	$stackparam = $particle->getStackParams($stackids[0]['stackid']);
-	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : dirname($stackparam['path']);
+	$sessiondata=getSessionList($projectId,$expId);
+	$sessioninfo=$sessiondata['info'];
+	if (!empty($sessioninfo)) {
+		$sessionpath=$sessioninfo['Image path'];
+		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=ereg_replace("rawdata","stacks/",$sessionpath);
+		$sessionname=$sessioninfo['Name'];
+	}
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+
+	$stackruninfos = $particle->getStackIds($expId, True);
+	$stackruns = ($stackruninfos) ? count($stackruninfos) : 0;
+	while (file_exists($sessionpathval.'stack'.($stackruns+1)))
+		$stackruns += 1;
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'combine'.($stackruns+1);
 
 	if ($stackids) {
 		echo "<form name='stackform' method='post' action='$formAction'>\n";
@@ -62,8 +74,32 @@ function createCombineStackForm($extra=false, $title='combinestack.py Launcher',
 		echo getSubmitForm("Run Combine Stack");
 		echo "</td></tr>\n";
 		echo "<tr><td colspan='4'><h2>Select stacks to combine:</h2>\n";
+		echo "</td></tr>\n";
+
+		// sort stacks by session
+		$sessionids = array();
+		$stacknums = array();
 		foreach ($stackids as $stackdata) {
-			$stackid = $stackdata['stackid'];
+			$stackid = (int) $stackdata['stackid'];
+			$stacknums[] = $stackid;
+			$selectdata = $particle->getStackSelectionRun($stackid);
+			$sessionid = (int) $selectdata[0]['sessionId'];
+			$sessionids[] = $sessionid;
+		}
+		array_multisort($sessionids, SORT_DESC, $stacknums, SORT_DESC);
+		$currsessionid = 0;
+		foreach ($stacknums as $stackid) {
+			$selectdata = $particle->getStackSelectionRun($stackid);
+			$sessionid = (int) $selectdata[0]['sessionId'];
+			if ($currsessionid != $sessionid) {
+				$currsessionid = $sessionid;
+				$sessiondata = $particle->getSessionData($sessionid);
+				echo "<tr><td colspan='4'><font size='+1'><br/>Session: ";
+				echo "<a href='index.php?expId=".$sessiondata['DEF_id']."'>".$sessiondata['name']."</a></font>&nbsp;\n";
+				echo " --  ".$sessiondata['comment'];
+				echo "<br/><br/></td></tr>";
+			}
+			//echo "<br/><br/><br/><br/>";
 			echo "<tr><td>\n<input type='checkbox' name='stack$stackid'";
 			if ($_POST['stack'.$stackid]) echo " checked";
 			echo ">combine<br/>stack id $stackid\n</td><td>\n";
