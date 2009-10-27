@@ -554,6 +554,7 @@ class ChimSnapShots(object):
 		self.runChimCommand('turn x 180')
 		self.save_image(self.volumepath+'.1.png')
 
+		"""
 		### hack
 		self.runChimCommand('turn x -30')	
 		self.save_image(self.volumepath+'.30deg1.png')
@@ -563,6 +564,7 @@ class ChimSnapShots(object):
 		### unhack
 		self.runChimCommand('turn y -20')
 		self.runChimCommand('turn x 30')
+		"""
 
 		### resume
 		self.writeMessageToLog("turn: get tilt view")
