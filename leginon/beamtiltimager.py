@@ -119,7 +119,7 @@ class BeamTiltImager(acquisition.Acquisition):
 			s = None
 			self.ht = imagedata['scope']['high tension']
 			if not self.rpixelsize:
-				self.rpixelsize = self.btcalclient.getReciprocalPixelSize(imagedata)
+				self.rpixelsize = self.btcalclient.getImageReciprocalPixelSize(imagedata)
 			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], self.defocus, self.ht)
 			self.ctfdata.append(ctfdata)
 			if ctfdata:
