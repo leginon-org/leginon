@@ -499,11 +499,9 @@ class ManualAcquisition(node.Node):
 		scope = scopedata['tem']
 		ccd = camdata['ccdcamera']
 		mag = scopedata['magnification']
-		q = leginondata.PixelSizeCalibrationData(tem=scope,ccdcamera=ccd,magnification=mag)
-		results = q.query(results=1)
-		if not results:
+		campixelsize = self.dosecal.getPixelSize(mag,tem=scope, ccdcamera=ccd)
+		if campixelsize is None:
 			return None, None
-		campixelsize = results[0]['pixelsize']
 		binning = camdata['binning']
 		dimension = camdata['dimension']
 		pixelsize = {'x':1.0/(campixelsize*binning['x']*dimension['x']),'y':1.0/(campixelsize*binning['y']*dimension['y'])}
