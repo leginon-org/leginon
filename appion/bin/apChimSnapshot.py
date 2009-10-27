@@ -193,9 +193,9 @@ class ChimSnapShots(object):
 				colorvalues = self.colors[1].split(":")
 				rgbcolor1 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
 			else:
-				rgbcolor1 = (min(float(colorvalues[0])*2.0,1.0), 
-					min(float(colorvalues[1])*2.0,1.0), min(float(colorvalues[2])*2.0,1.0), 1)
-				#rgbcolor1 = (0.8,0.8,0.8,1)
+				#rgbcolor1 = (min(float(colorvalues[0])*2.0,1.0), 
+				#	min(float(colorvalues[1])*2.0,1.0), min(float(colorvalues[2])*2.0,1.0), 1)
+				rgbcolor1 = (0.8,0.8,0.8,1)
 				
 			if len(self.colors) >= 3 and ":" in self.colors[2]:
 				colorvalues = self.colors[2].split(":")
