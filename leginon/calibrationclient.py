@@ -16,12 +16,13 @@ import numpy
 import pyami.quietscipy
 import scipy.ndimage
 import math
-from pyami import correlator, peakfinder, arraystats, imagefun, fftfun
+from pyami import correlator, peakfinder, arraystats, imagefun, fftfun, numpil
 import time
 import sys
 import threading
 import gonmodel
 import tiltcorrector
+import tableau
 
 class Drifting(Exception):
 	pass
@@ -63,7 +64,7 @@ class CalibrationClient(object):
 	def checkAbort(self):
 		if self.abortevent.isSet():
 			raise Abort()
-
+	
 	def getPixelSize(self, mag, tem=None, ccdcamera=None):
 		queryinstance = leginondata.PixelSizeCalibrationData()
 		queryinstance['magnification'] = mag
@@ -80,16 +81,22 @@ class CalibrationClient(object):
 			return caldatalist[0]['pixelsize']
 		else:
 			return None
-
-	def getReciprocalPixelSize(self,imagedata):
+	
+	def getImagePixelSize(self,imagedata):
 		scope = imagedata['scope']['tem']
 		ccd = imagedata['camera']['ccdcamera']
 		mag = imagedata['scope']['magnification']
 		campixelsize = self.getPixelSize(mag,tem=scope, ccdcamera=ccd)
 		binning = imagedata['camera']['binning']
 		dimension = imagedata['camera']['dimension']
-		pixelsize = {'x':1.0/(campixelsize*binning['x']*dimension['x']),'y':1.0/(campixelsize*binning['y']*dimension['y'])}
+		pixelsize = {'x':campixelsize*binning['x'],'y':campixelsize*binning['y']}
 		return pixelsize
+
+	def getImageReciprocalPixelSize(self,imagedata):
+		imagepixelsize = self.getImagePixelSize(imagedata)
+		dimension = imagedata['camera']['dimension']
+		rpixelsize = {'x':1.0/(imagepixelsize['x']*dimension['x']),'y':1.0/(imagepixelsize['y']*dimension['y'])}
+		return rpixelsize
 
 	def correctTilt(self, imagedata):
 		self.tiltcorrector.correct_tilt(imagedata)
@@ -135,6 +142,9 @@ class CalibrationClient(object):
 		## acquire neximage
 		nextimage = self.acquireImage(nextscope, settle, correct_tilt=correct_tilt, corchannel=corchannel)
 		self.correlator.insertImage(nextimage['image'])
+		imagearray = nextimage['image']
+		if imagearray.max() == 0:
+			raise RuntimeError('Bad image intensity range')
 
 		self.checkAbort()
 
@@ -182,35 +192,86 @@ class CalibrationClient(object):
 		shiftinfo = {'previous': previousimage, 'next': nextimage, 'pixel shift': unbinned}
 		return shiftinfo
 	
-	def measureDefocusChange(self, previousimage, nextscope, settle=0.0, correct_tilt=False):
+	def measureStateDefocus(self, nextscope, settle=0.0):
 		'''
 		Acquire an image at nextscope and estimate the ctf parameters
 		'''
 		self.checkAbort()
-		## use opposite correction channel
-		corchannel = previousimage['correction channel']
-		if corchannel:
-			corchannel = 0
-		else:
-			corchannel = 1
-		self.checkAbort()
 		## acquire neximage
-		nextimage = self.acquireImage(nextscope, settle, correct_tilt=correct_tilt, corchannel=corchannel)
+		nextimage = self.acquireImage(nextscope, settle, correct_tilt=False)
 		## get ctf parameters
 		self.ht = nextimage['scope']['high tension']
 		if not self.rpixelsize:
-			self.rpixelsize = self.getReciprocalPixelSize(nextimage)
-		pow = imagefun.power(nextimage['image'])
+			self.rpixelsize = self.getImageReciprocalPixelSize(nextimage)
+		imagearray = nextimage['image']
+		if imagearray.max() == 0:
+			raise RuntimeError('Bad image intensity range')
+		pow = imagefun.power(imagearray)
 		ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht)
 
 		self.checkAbort()
 		if ctfdata is not None:
 			self.node.logger.info('defocus: %.3f um, zast: %.3f um' % (ctfdata[0]*1e6,ctfdata[1]*1e6))
-			defocusinfo = {'previous': previousimage, 'next': nextimage, 'defocus': ctfdata[0]}
+			defocusinfo = {'next': nextimage, 'defocus': ctfdata[0]}
 		else:
 			self.node.logger.warning('ctf estimation failed')
-			defocusinfo = {'previous': previousimage, 'next': nextimage, 'defocus': None}
-		return defocusinfo
+			defocusinfo = {'next': nextimage, 'defocus': None}
+		return nextimage, defocusinfo
+
+	def initTableau(self):
+		self.tableauimages = []
+		self.tableauangles = []
+		self.tableaurads = []
+		self.tabimage = None
+		self.ctfdata = []
+
+	def insertTableau(self, imagedata, angle, rad):
+		image = imagedata['image']
+		binning = 2
+		if True:
+			pow = imagefun.power(image)
+			binned = imagefun.bin(pow, binning)
+			s = None
+			self.ht = imagedata['scope']['high tension']
+			if not self.rpixelsize:
+				self.rpixelsize = self.getImageReciprocalPixelSize(imagedata)
+			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht)
+			self.ctfdata.append(ctfdata)
+			if ctfdata:
+				s = '%d' % int(ctfdata[0]*1e9)
+			#elif self.ace2exe:
+			elif False:
+				ctfdata = self.estimateCTF(imagedata)
+				z0 = (ctfdata['defocus1'] + ctfdata['defocus2']) / 2
+				s = '%d' % (int(z0*1e9),)
+			if s:
+				t = numpil.textArray(s)
+				min = arraystats.min(binned)
+				max = arraystats.max(binned)
+				t = min + t * (max-min)
+				imagefun.pasteInto(t, binned, (20,20))
+		else:
+			binned = imagefun.bin(image, binning)
+		self.tableauimages.append(binned)
+		self.tableauangles.append(angle)
+		self.tableaurads.append(rad)
+
+	def renderTableau(self):
+		if not self.tableauimages:
+			return
+		size = self.tableauimages[0].shape[0]
+		radinc = numpy.sqrt(2 * size * size)
+		tab = tableau.Tableau()
+		for i,im in enumerate(self.tableauimages):
+			ang = self.tableauangles[i]
+			rad = radinc * self.tableaurads[i]
+			tab.insertImage(im, angle=ang, radius=rad)
+		self.tabimage,self.tabscale = tab.render()
+		mean = self.tabimage.mean()
+		std = self.tabimage.std()
+		a = numpy.where(self.tabimage >= mean + 5*std, 0, self.tabimage)
+		self.tabimage = numpy.clip(a, 0, mean*1.5)
+		self.displayTableau(self.tabimage)
 
 	def displayImage(self, im):
 		try:
@@ -221,6 +282,12 @@ class CalibrationClient(object):
 	def displayCorrelation(self, im):
 		try:
 			self.node.setImage(im, 'Correlation')
+		except:
+			pass
+
+	def displayTableau(self, im):
+		try:
+			self.node.setImage(im, 'Tableau')
 		except:
 			pass
 
@@ -786,29 +853,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		return tuple(pixel_shifts)
 
-	def measureDisplacementDifference(self, tiltvector, settle):
-		'''
-		Measure displacement difference between tilting plus tiltvector
-		compared to minus tiltvector
-		'''
-		btorig = self.getBeamTilt()
-		bt0 = btorig['x'], btorig['y']
-		im0 = self.acquireImage(None, settle=settle)
-		try:
-			d = []
-			for tsign in (1,-1):
-				delta = numpy.multiply(tsign, tiltvector)
-				bt = numpy.add(bt0, delta)
-				state1 = leginondata.ScopeEMData()
-				state1['beam tilt'] = {'x': bt[0], 'y': bt[1]}
-				shiftinfo = self.measureScopeChange(im0, state1, settle=settle, lp=5.0)
-				pixelshift = shiftinfo['pixel shift']
-				d.append(pixelshift)
-			d_diff = d[1]['row']+d[0]['row'], d[1]['col']+d[0]['col']
-		finally:
-			self.setBeamTilt(btorig)
-		return d_diff
-
 	def measureDefocusDifference(self, tiltvector, settle):
 		'''
 		Measure defocus difference between tilting plus tiltvector
@@ -816,7 +860,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		'''
 		btorig = self.getBeamTilt()
 		bt0 = btorig['x'], btorig['y']
-		im0 = self.acquireImage(None, settle=settle)
+		#im0 = self.acquireImage(None, settle=settle)
 		d_diff = None
 		try:
 			d = []
@@ -825,11 +869,16 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				bt = numpy.add(bt0, delta)
 				state1 = leginondata.ScopeEMData()
 				state1['beam tilt'] = {'x': bt[0], 'y': bt[1]}
-				defocusinfo = self.measureDefocusChange(im0, state1, settle=settle)
+				im1, defocusinfo = self.measureStateDefocus(state1, settle=settle)
 				defocusshift = defocusinfo['defocus']
 				d.append(defocusshift)
+				angle = math.atan2(tiltvector[1],tiltvector[0]) * tsign
+				if angle == 0.0 and tsign == -1:
+					angle = math.pi
+				self.insertTableau(im1, angle, 1/math.sqrt(2))
 			tlength = math.hypot(tiltvector[0],tiltvector[1])
 			d_diff = numpy.multiply((d[1]-d[0])/tlength, tiltvector)
+			self.renderTableau()
 		finally:
 			self.setBeamTilt(btorig)
 		return d_diff
@@ -841,6 +890,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		'''
 		self.rpixelsize = None
 		self.ht = None
+		self.initTableau()
 		# original beam tilt
 		btorig = self.getBeamTilt()
 		bt0 = btorig['x'], btorig['y']
@@ -860,7 +910,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 					diff = self.measureDefocusDifference(tvect, settle)
 					if diff is None:
 						raise
-					print axisname, msign, diff
 					diffs[axisname][msign] = diff
 		finally:
 			## return to original beam tilt
@@ -880,6 +929,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		mag = self.instrument.tem.Magnification
 		self.rpixelsize = None
 		self.ht = ht
+		self.initTableau()
 		try:
 			cmatrix = self.retrieveMatrix(tem, cam, 'coma-free', ht, mag)
 		except NoMatrixCalibrationError:
