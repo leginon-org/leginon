@@ -60,6 +60,10 @@ class UploadModelScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['session'] is None:
 			apDisplay.printError("Enter a session ID")
+		if self.params['projectid'] is not None:
+			projid = apProject.getProjectIdFromSessionName(self.params['session'])
+			if projid != self.params['projectid']:
+				apDisplay.printError("Project ID and Session name do not match")
 		if self.params['description'] is None:
 			apDisplay.printError("Enter a description of the initial model")
 		if self.params['chimeraonly'] is True:
