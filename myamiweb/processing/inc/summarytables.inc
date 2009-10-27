@@ -112,14 +112,14 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	$boxsz.=" pixels";
 
 	$display_keys['date time'] = $stackdata['DEF_timestamp'];
-	for($i=0; $i<=10; $i++) {
-		if ($stackdata[$i]['sessionid']) {
-			$sessionid = $stackdata[$i]['sessionid'];
-			$sessiondata = $particle->getSessionData($sessionid);
-			$display_keys['session id'].="<a href='index.php?expId=".$sessiondata['DEF_id']."'>"
-				.$sessiondata['name']."</a>&nbsp;\n";
-		}
-	}
+
+	// this no longer works
+	$selectdata = $particle->getStackSelectionRun($stackid);
+	$sessionid = $selectdata[0]['sessionId'];
+	$sessiondata = $particle->getSessionData($sessionid);
+	if ($sessiondata)
+		$display_keys['session id'].="<a href='index.php?expId=".$sessiondata['DEF_id']."'>"
+			.$sessiondata['name']."</a>&nbsp;\n";
 
 	// add edit button to description if logged in
 	$descDiv = ($_SESSION['username']) ? editButton($stackid,$stackdata['description']) : $stackdata['description'];
