@@ -53,7 +53,7 @@ class CalibrationClient(object):
 		try:
 			self.instrument = self.node.instrument
 		except AttributeError:
-			raise RuntimeError('CalibrationClient node needs instrument')
+			self.instrument = None
 
 		self.correlator = correlator.Correlator()
 		self.abortevent = threading.Event()
