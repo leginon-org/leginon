@@ -315,7 +315,13 @@ def colorToString(color):
 	if color == "red-violet" or color == "maroon" or color == "magenta":
 		apDisplay.printColor("using color MAROON", "magenta")
 		return "0.49:0.07:0.22,None,0.49:0.07:0.22"
-	#else:
+	### boring colors
+	if color == "black":
+		apDisplay.printColor("using color BLACK", "white")
+		return "0.2:0.2:0.2,None,0.2:0.2:0.2"
+	if color == "gray":
+		apDisplay.printColor("using color GRAY", "white")
+		return "0.6:0.6:0.6,None,0.6:0.6:0.6"
 	return "None,None,None"
 
 #=========================================
