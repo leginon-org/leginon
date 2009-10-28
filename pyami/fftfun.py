@@ -6,7 +6,6 @@ from pyami import imagefun, ellipse, mrc
 from scipy import ndimage
 
 def getAstigmaticDefocii(params,rpixelsize, ht):
-	print 'rpixel',rpixelsize
 	minr = rpixelsize * min(params['a'],params['b'])
 	maxz = calculateDefocus(ht,minr)
 	maxr = rpixelsize * max(params['a'],params['b'])
@@ -126,7 +125,6 @@ def fitFirstCTFNode(pow, rpixelsize, defocus, ht):
 		peak = ndimage.maximum_position(grad)
 		dmean = math.hypot(peak[0] - center[0], peak[1] - center[1])
 	drange = max(dmean / 4, 10)
-	print 'dmean', dmean
 	eparams = find_ast_ellipse(grad,thr,dmean,drange)
 	if eparams:
 		z0, zast, ast_ratio, alpha = getAstigmaticDefocii(eparams,rpixelsize, ht)
