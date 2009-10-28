@@ -1546,6 +1546,7 @@ class ApImagic3dRefineIterationData(Data):
 			('iteration', int),
 			('name', str),
 			('symmetry', ApSymmetryData),
+			('mirror_refs', bool),
 			('max_shift_orig', float),
 			('max_shift_this', float),
 			('sampling_parameter', int),
