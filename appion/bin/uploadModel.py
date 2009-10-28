@@ -39,7 +39,7 @@ class UploadModelScript(appionScript.AppionScript):
 			help="Pixel size in Angstroms", metavar="FLOAT")
 		self.parser.add_option("--res", "--resolution", dest="res", type="float",
 			help="Map resolution in Angstroms", metavar="FLOAT")
-		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.75,
+		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.0,
 			help="Zoom factor for snapshot rendering (1.75 by default)", metavar="FLOAT")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
 			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
