@@ -502,6 +502,7 @@ def insertIteration(iteration, params):
 	refineq['iteration'] = iteration['num']
 	refineq['resolution'] = resData
 	refineq['rMeasure'] = RmeasureData
+	refineq['exemplar'] = False
 	classvar = 'classes.'+iteration['num']+'.var.img'
 	if classavg in params['classavgs']:
 		refineq['classAverage'] = classavg
