@@ -56,6 +56,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		### MRA
 		self.parser.add_option("--mrarefs_ang_inc", dest="mrarefs_ang_inc", type="int",	default=25,
 			help="angular increment of reprojections for MRA", metavar="INT")
+		self.parser.add_option("--mirror_refs", dest="mirror_refs", default=False, 
+			action="store_true", help="also mirror projections for multi-reference alignment")
 		self.parser.add_option("--max_shift_orig", dest="max_shift_orig", type="float", default=0.2,
 			help="maximum radial shift during MRA", metavar="float")
 		self.parser.add_option("--max_shift_this", dest="max_shift_this", type="float", default=0.05,
@@ -228,6 +230,20 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("ZERO\n")
 		f.write(str(self.params['mrarefs_ang_inc'])+"\n")
 		f.write("EOF\n")
+		
+		if self.params['mirror_refs'] is True:
+			### mirror projections for MRA
+			f.write("/usr/local/IMAGIC/stand/arithm.e MODE MIRROR <<EOF >> startFiles.log\n")
+			f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
+			f.write("mirror\n")
+			f.write("EOF\n")
+			f.write("/usr/local/IMAGIC/stand/append.e <<EOF >> startFiles.log\n")
+			f.write("mirror\n")
+			f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
+			f.write("EOF\n")
+			f.write("/usr/local/IMAGIC/stand/imdel.e <<EOF >> startFiles.log\n")
+			f.write("mirror\n")
+			f.write("EOF\n")
 
 		### forward project to create euler angle anchor set
 		f.write("/usr/local/IMAGIC/threed/forward.e SURF FORWARD <<EOF >> startFiles.log\n")
@@ -287,6 +303,20 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("ZERO\n")
 			f.write(str(self.params['mrarefs_ang_inc'])+"\n")
 			f.write("EOF\n")
+
+			if self.params['mirror_refs'] is True:
+				### mirror projections for MRA
+				f.write("/usr/local/IMAGIC/stand/arithm.e MODE MIRROR <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
+				f.write("mirror\n")
+				f.write("EOF\n")
+				f.write("/usr/local/IMAGIC/stand/append.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write("mirror\n")
+				f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
+				f.write("EOF\n")
+				f.write("/usr/local/IMAGIC/stand/imdel.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write("mirror\n")
+				f.write("EOF\n")
 
 			f.write("/usr/local/IMAGIC/threed/forward.e SURF FORWARD <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned\n")
@@ -666,6 +696,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		itnq['refinement_run'] = self.refinedata
 		itnq['iteration'] = self.params['itn']
 		itnq['name'] = "masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
+		itnq['mirror_refs'] = self.params['mirror_refs']
 		itnq['max_shift_orig'] = self.params['max_shift_orig']
 		itnq['max_shift_this'] = self.params['max_shift_this']
 		itnq['sampling_parameter'] = self.params['samp_param']
