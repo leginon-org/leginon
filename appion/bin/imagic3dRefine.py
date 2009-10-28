@@ -80,8 +80,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="angular increment for euler angle search", metavar="INT")
 
 		### threed reconstruction, filtering, & automasking params
-		self.parser.add_option("--ham_win", dest="ham_win", type="float", default=0.8,
-			help="similar to lp-filtering parameter that determines detail in 3d map", metavar="float")
+		self.parser.add_option("--ham_win", dest="ham_win", type="float", default=0.99,
+			help="similar to lp-filtering parameter, smooths out the filter used in 3d reconstruction", metavar="float")
 		self.parser.add_option("--object_size", dest="object_size", type="float", default=0.8,
 			help="object size as fraction of image size", metavar="float")
 		self.parser.add_option("--3d_lpfilt", dest="threedfilt", type="int",
