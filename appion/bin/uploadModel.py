@@ -233,6 +233,9 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['scale'] =  float(self.params['oldapix'])/self.params['newapix']
 		if self.params['name'] is None:
 			self.setNewFileName()
+		else:
+			if self.params['name'][-4:] != ".mrc":
+				self.params['name'] += ".mrc"
 		apDisplay.printColor("Naming initial model as: "+self.params['name'], "cyan")
 
 		newmodelpath = os.path.join(self.params['rundir'], self.params['name'])
