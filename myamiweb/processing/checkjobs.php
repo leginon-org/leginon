@@ -55,33 +55,37 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 		// first find out which clusters have jobs on them
 		$clusters=array();
 		foreach ($jobs as $job) {
-		  	if (!in_array($job['cluster'],$clusters)) $clusters[]=$job['cluster'];
+		  	if (!in_array($job['cluster'], $clusters)) $clusters[]=$job['cluster'];
 		}
-		if ($clusters[0]) foreach ($clusters as $c) {
-			$queue = checkClusterJobs($c,$user, $pass);
-			if ($queue) {
-				echo "<p>Jobs currently running on the <b>$c</b> cluster:<p>\n";
-				$list = streamToArray($queue);
-				$dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
-				echo "<table class='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
-				echo "<tr>\n";
-				foreach ($dispkeys as $key) {
-				  echo "<td><span class='datafield0'>$key</span></td>";
-				}
-				echo "</tr>\n";
-				foreach ($list as $line) {
+		if ($clusters[0]) {
+			foreach ($clusters as $c) {
+				$queue = checkClusterJobs($c, $user, $pass);
+				if ($queue) {
+					echo "<p>Jobs currently running on the <b>$c</b> cluster:<p>\n";
+					$list = streamToArray($queue);
+					$dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
+					echo "<table class='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
 					echo "<tr>\n";
-					foreach ($line as $i) {echo "<td>$i</td>\n";}
+					foreach ($dispkeys as $key) {
+					  echo "<td><span class='datafield0'>$key</span></td>";
+					}
 					echo "</tr>\n";
-				}
-				echo "</table>\n";
+					foreach ($list as $line) {
+						echo "<tr>\n";
+						foreach ($line as $i) {echo "<td>$i</td>\n";}
+						echo "</tr>\n";
+					}
+					echo "</table>\n";
+				} else echo "no queue on $c cluster<br/>\n";
 			}
 		}
-		else echo "no jobs on cluster\n";
+		else echo "no jobs found\n";
 		echo "<p>\n";	
 	}
 
+
 	foreach ($jobs as $job) {
+		//echo "<br/><br/>\n";
 		// get cluster job information
 		$jobinfo = $particle->getJobInfoFromId($job['DEF_id']);
 		$display_keys['name'] = $jobinfo['name'];
@@ -98,6 +102,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 		// get stack id for job from job file
 		$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
 		if (!file_exists($jobfile)) {
+			echo $jobinfo['name'].": <i>missing job file: $jobfile</i><br/>\n";
 			continue;
 		}
 		$f = file($jobfile);
