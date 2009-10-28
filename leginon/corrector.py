@@ -242,9 +242,17 @@ class Corrector(imagewatcher.ImageWatcher):
 			if dark is None:
 				self.logger.warning('No dark reference image for normalization calculations')
 				return
-
-		darkarray = dark['image']
-		brightarray = bright['image']
+		try:
+			darkarray = dark['image']
+		except:
+			self.logger.warning('Unable to load dark image from %s' % dark['session']['image path'])
+			return
+		try:
+			darkarray = dark['image']
+			brightarray = bright['image']
+		except:
+			self.logger.warning('Unable to load bright image from %s' % bright['session']['image path'])
+			return
 		normarray = brightarray - darkarray
 		normarray = numpy.asarray(normarray, numpy.float32)
 
