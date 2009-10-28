@@ -362,7 +362,7 @@ class ImageTool(object):
 class RecordMotionTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
 		bitmap = getBitmap('ellipse.png')
-		tooltip = 'Toggle Show Value'
+		tooltip = 'Toggle Fit Ellipse'
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip)
 		self.button.SetToggle(False)
 		self.start = None
@@ -563,7 +563,10 @@ class ValueTool(ImageTool):
 
 class ResolutionTool(ValueTool):
 	def __init__(self, imagepanel, sizer):
-		ValueTool.__init__(self,imagepanel, sizer)
+		bitmap = getBitmap('valueinverse.png')
+		tooltip = 'Toggle Show Resolution/Defocus'
+		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip)
+		self.button.SetToggle(False)
 		self.pixelsize = 1.0
 		self.hightension = 120000
 		self.imagepanel.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_NEW_PIXELSIZE, self.onNewPixelSize, self.imagepanel)
