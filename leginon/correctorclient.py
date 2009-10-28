@@ -55,6 +55,8 @@ class CorrectorClient(cameraclient.CameraClient):
 
 		if ref:
 			ref = ref[0]
+		else:
+			ref = None
 
 		return ref
 
