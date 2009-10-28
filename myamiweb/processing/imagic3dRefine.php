@@ -38,7 +38,7 @@ if ($_POST['process'])  {
 		if (!$_POST['forw_ang_inc'.$i]) jobform("error: angular increment of formward projections for anchor set not specified");
 		if (!$_POST['euler_ang_inc'.$i]) jobform("error: no increment specified for euler angle search (Angular Reconstitution)");
 //		if (!$_POST['keep_ordered'.$i]) jobform("error: Please specify the percentage of ordered classes to keep after Angular Reconstitution");
-		if (!$_POST['hamming_window'.$i]) jobform("error: no hamming window specified");
+//		if (!$_POST['hamming_window'.$i]) jobform("error: no hamming window specified");
 		if (!$_POST['obj_size'.$i]) jobform("error: object size as fraction of image size not specified");
 		if (!$_POST['amask_dim'.$i]) jobform("error: automask parameters not specified");
 		if (!$_POST['amask_lp'.$i]) jobform("error: automask parameters not specified");
@@ -293,7 +293,7 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 
 	// check to see if initial model was created from reference-free classification or reclassification
 	if ($model['REF|ApImagicReclassifyData|reclass'])  {
-		$modelparams = $particle->getImagicReclassParamsFrom3d0($imagic3d0Id);
+		$modelparams = $particle->getImagicReclassParamsFrom3d0($imaamask_dimgic3d0Id);
 		$reclassnum = $modelparams['DEF_id'];
 		$norefClassId = $modelparams['REF|ApNoRefClassRunData|norefclass'];
 		$clsavgpath = $modelparams['path']."/".$modelparams['runname'];
@@ -379,7 +379,7 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 	//$modelkeys="DEF_id|~~|path|~~|name|~~|boxsize|~~|symmetry";
 	//$modelvals="$model[DEF_id]|~~|$model[path]/$model[runname]|~~|$model[name]|~~|$model[boxsize]|~~|$model[symmetry]";
 	if ($sum_specific_params) {			
-		$modeltable.= "<input type='RADIO' NAME='model' VALUE='$model[DEF_id]' ";
+		$modeltable.= "<input type='RADIO' NAME='model' VALUE='$modeamask_diml[DEF_id]' ";
 	
 		// check if model was selected
 		if ($model['DEF_id']==$minf[0]) echo " CHECKED";
@@ -558,7 +558,7 @@ function jobform3d0($extra=false) {
 						  'MSA', 
 						  'Angular_Reconstitution', 
 						  'Threed_Reconstruction', 
-						  'Automasking', 
+						  'Masking', 
 						  'copy');
 	
 	
@@ -758,8 +758,9 @@ function jobform($extra=false) {
 
 	echo "<form name='imagic3dRefine' method='post' action='$formaction'><br />\n";
 
-	// set commit on by default when first loading page, else set
+	// set commit & mirror on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
+	$mirrorcheck = ($_POST['mirror']=='on' || !$_POST['process']) ? 'checked' : '';
 	
 	// define default variables for directory and runid
 	$reconruns = (count($particle->getReconIdsFromSession($expId))) ? count($particle->getReconIdsFromSession($expId)) : 0;
@@ -829,7 +830,7 @@ function jobform($extra=false) {
 						  'MSA', 
 						  'Angular_Reconstitution', 
 						  'Threed_Reconstruction', 
-						  'Automasking', 
+						  'Masking', 
 						  'copy');
 	
 	
@@ -841,8 +842,7 @@ function jobform($extra=false) {
 		echo "	<td align='center' bgcolor='$bgcolor'> 
 			<font class='sf'> 
 			<a href='#' id=\"$id\" onMouseOver='popLayer(\"$key\", \"$id\")' onMouseOut='hideLayer()'>
-			$key 
-			</a></font></td>\n";
+			$key </a></font></td>\n";
 	}
 	echo"  </tr><br>\n";
 	$rcol = ($i % 2) ? '#FFFFFF' : '#FFFDCC';
@@ -875,8 +875,9 @@ function jobform($extra=false) {
 		$forw_ang_incn = "forw_ang_inc".$i;
 		$euler_ang_incn = "euler_ang_inc".$i;
 		$keep_orderedn = "keep_ordered".$i;
-		$hamming_windown = "hamming_window".$i;
+#		$hamming_windown = "hamming_window".$i;
 		$obj_sizen = "obj_size".$i;
+		$threedfiltn = "threedfilt".$i;
 		$amask_dimn = "amask_dim".$i;
 		$amask_lpn = "amask_lp".$i;
 		$amask_sharpn = "amask_sharp".$i;
@@ -899,8 +900,9 @@ function jobform($extra=false) {
 			$forw_ang_inc = (30 - $i*5);
 			$euler_ang_inc = (12 - $i*2);
 			$keep_ordered = "0.9";
-			$hamming_window = (0.3 + $i*0.1);
+#			$hamming_window = (0.3 + $i*0.1);
 			$obj_size = "0.8";
+			$threedfilt = "20";
 			$amask_dim = "0.04";
 			$amask_lp = "0.3";
 			$amask_sharp = "0.3";
@@ -922,8 +924,9 @@ function jobform($extra=false) {
 			$forw_ang_inc = (($i % 2) == 0) ? (30 - ceil(($i-1)/2)*5) : (30 - ceil($i/2)*5);
 			$euler_ang_inc = (($i % 2) == 0) ? (12 - ceil(($i-1)/2)*2) : (12 - ceil($i/2)*2);
 			$keep_ordered = "0.9";
-			$hamming_window = (($i % 2) == 0) ? (0.3 + ceil(($i-1)/2)*0.1) : (0.3 + ceil($i/2)*0.1);
+#			$hamming_window = (($i % 2) == 0) ? (0.3 + ceil(($i-1)/2)*0.1) : (0.3 + ceil($i/2)*0.1);
 			$obj_size = "0.8";
+			$threedfilt = "20";
 			$amask_dim = "0.04";
 			$amask_lp = "0.3";
 			$amask_sharp = "0.3";
@@ -948,8 +951,9 @@ function jobform($extra=false) {
 				$forw_ang_inc = ($_POST[$forw_ang_incn]) ? $_POST[$forw_ang_incn] : "25";
 				$euler_ang_inc = ($_POST[$euler_ang_incn]) ? $_POST[$euler_ang_incn] : "10";
 				$keep_ordered = ($_POST[$keep_orderedn]) ? $_POST[$keep_orderedn] : "0.9";
-				$hamming_window = ($_POST[$hamming_windown]) ? $_POST[$hamming_windown] : "0.8";
+#				$hamming_window = ($_POST[$hamming_windown]) ? $_POST[$hamming_windown] : "0.8";
 				$obj_size = ($_POST[$obj_sizen]) ? $_POST[$obj_sizen] : "0.8";
+				$threedfilt = ($_POST[$threedfiltn]) ? $_POST[$threedfiltn] : "20";
 				$amask_dim = ($_POST[$amask_dimn]) ? $_POST[$amask_dimn] : "0.04";
 				$amask_lp = ($_POST[$amask_lpn]) ? $_POST[$amask_lpn] : "0.3";
 				$amask_sharp = ($_POST[$amask_sharpn]) ? $_POST[$amask_sharpn] : "0.3";
@@ -970,8 +974,9 @@ function jobform($extra=false) {
 				$forw_ang_inc = ($i>$j) ? $_POST['forw_ang_inc'.($i-1)] : $_POST[$forw_ang_incn];
 				$euler_ang_inc = ($i>$j) ? $_POST['euler_ang_inc'.($i-1)] : $_POST[$euler_ang_incn];
 				$keep_ordered = ($i>$j) ? $_POST['keep_ordered'.($i-1)] : $_POST[$keep_orderedn];
-				$hamming_window = ($i>$j) ? $_POST['hamming_window'.($i-1)] : $_POST[$hamming_windown];
+#				$hamming_window = ($i>$j) ? $_POST['hamming_window'.($i-1)] : $_POST[$hamming_windown];
 				$obj_size = ($i>$j) ? $_POST['obj_size'.($i-1)] : $_POST[$obj_sizen];
+				$threedfilt = ($i>$j) ? $_POST['threedfilt'.($i-1)] : $_POST[$threedfiltn];
 				$amask_dim = ($i>$j) ? $_POST['amask_dim'.($i-1)] : $_POST[$amask_dimn];
 				$amask_lp = ($i>$j) ? $_POST['amask_lp'.($i-1)] : $_POST[$amask_lpn];
 				$amask_sharp = ($i>$j) ? $_POST['amask_sharp'.($i-1)] : $_POST[$amask_sharpn];
@@ -1006,8 +1011,8 @@ function jobform($extra=false) {
 				<td bgcolor='$rcol'><input type='text' NAME='$forw_ang_incn' SIZE='3' VALUE='$forw_ang_inc'>
 									<input type='text' NAME='$euler_ang_incn' SIZE='3' VALUE='$euler_ang_inc'>
 									<input type='text' NAME='$keep_orderedn' SIZE='3' VALUE='$keep_ordered'></td>
-        		<td bgcolor='$rcol'><input type='text' NAME='$hamming_windown' SIZE='4' VALUE='$hamming_window'>
-									<input type='text' NAME='$obj_sizen' SIZE='4' VALUE='$obj_size'></td>
+        		<td bgcolor='$rcol'><input type='text' NAME='$obj_sizen' SIZE='4' VALUE='$obj_size'>
+									<input type='text' NAME='$threedfiltn' SIZE='4' value='$threedfilt'></td>
         		<td bgcolor='$rcol'><input type='text' NAME='$amask_dimn' SIZE='4' value='$amask_dim'>
 									<input type='text' NAME='$amask_lpn' SIZE='4' VALUE='$amask_lp'>
 									<input type='text' NAME='$amask_sharpn' SIZE='4' value='$amask_sharp'>
@@ -1020,6 +1025,8 @@ function jobform($extra=false) {
 	echo "<br></b><input type='text' name='mass' value='$mass' size='4'> $doc_mass <br>";
 //	echo "<br></b><input type='text' name='nproc' value='$nproc' size='4'> $doc_nproc <br>";
 
+	echo "<br><INPUT TYPE='checkbox' NAME='mirror' $mirrorcheck>\n";
+	echo docpop('mirror','<B>Mirror references for alignment</B>');
 	echo "<br><INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "<input type='hidden' NAME='nproc' VALUE='$nproc'><P>";
@@ -1056,6 +1063,7 @@ function imagic3dRefine() {
 	$description = $_POST['description'];
 	$mass = $_POST['mass'];
 	$nproc = $_POST['nproc'];
+	$mirror = ($_POST['mirror']=="on") ? '--mirror_refs' : '';
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	
 	// get the stack info (pixel size, box size)
@@ -1082,8 +1090,9 @@ function imagic3dRefine() {
 		$forw_ang_inc = $_POST['forw_ang_inc'.$i];
 		$euler_ang_inc = $_POST['euler_ang_inc'.$i];
 		$keep_ordered = $_POST['keep_ordered'.$i];
-		$hamming_window = $_POST['hamming_window'.$i];
+#		$hamming_window = $_POST['hamming_window'.$i];
 		$obj_size = $_POST['obj_size'.$i];
+		$threedfilt = $_POST['threedfilt'.$i];
 		$amask_dim = $_POST['amask_dim'.$i];
 		$amask_lp = $_POST['amask_lp'.$i];
 		$amask_sharp = $_POST['amask_sharp'.$i];
@@ -1112,8 +1121,9 @@ function imagic3dRefine() {
 		$command.= " --forw_ang_inc=$forw_ang_inc";
 		$command.= " --euler_ang_inc=$euler_ang_inc";
 		$command.= " --keep_ordered=$keep_ordered";
-		$command.= " --ham_win=$hamming_window";
+#		$command.= " --ham_win=$hamming_window";
 		$command.= " --object_size=$obj_size";
+		if ($threedfilt) $command.= " --3d_lpfilt=$threedfilt";
 		$command.= " --amask_dim=$amask_dim";
 		$command.= " --amask_lp=$amask_lp";
 		$command.= " --amask_sharp=$amask_sharp";
@@ -1121,6 +1131,7 @@ function imagic3dRefine() {
 		$command.= " --description=\"$description\"";
 		if ($mass) $command.= " --mass=$mass";
 		$command.= " --nproc=$nproc";
+		if ($mirror) $command.= " --mirror_refs";
 		if ($commit) $command.= " --commit";
 		else $command.=" --no-commit";
 		$command_array[] = $command;
