@@ -14,6 +14,7 @@ import apDisplay
 import apStack
 import apEulerCalc
 import apParam
+import appiondata
 #sinedon
 import sinedon
 #site-packages
@@ -617,6 +618,19 @@ class satEulerScript(appionScript.AppionScript):
 	#=====================
 	def setProcessingDirName(self):
 		self.processdirname = os.path.join(self.functionname, "sat-recon"+str(self.params['reconid']))
+
+	#=====================
+	def setRunDir(self):
+		"""
+		this function only runs if no rundir is defined at the command line
+		"""
+		refdata = appiondata.ApRefinementRunData.direct_query(self.params['reconid'])
+		if not refdata:
+			apDisplay.printError("reconid "+str(self.params['reconid'])+" does not exist in the database")
+		refpath = refdata['path']['path']
+		rundir = os.path.join(refpath, "../../satEuler/sat-recon%d"%(self.params['reconid']))
+		self.params['rundir'] = os.path.abspath(rundir)
+
 
 	#=====================
 	def setupParserOptions(self):

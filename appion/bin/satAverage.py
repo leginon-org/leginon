@@ -244,11 +244,12 @@ class satAverageScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		reconid = self.params['reconid']
-		refinerundata = appiondata.ApRefinementRunData.direct_query(reconid)
-		if not refinerundata:
-			apDisplay.printError("reconid "+str(reconid)+" does not exist in the database")
-		self.params['rundir'] = os.path.join(refinerundata['path']['path'], 'satavg')
+		refdata = appiondata.ApRefinementRunData.direct_query(self.params['reconid'])
+		if not refdata:
+			apDisplay.printError("reconid "+str(self.params['reconid'])+" does not exist in the database")
+		refpath = refdata['path']['path']
+		rundir = os.path.join(refpath, "../../satEuler/sat-recon%d/volumes"%(self.params['reconid']))
+		self.params['rundir'] = os.path.abspath(rundir)
 
 	#=====================
 	def start(self):
