@@ -79,6 +79,11 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		sizer = wx.GridBagSizer(5, 5)
+		self.widgets['tableau type'] = Choice(self, -1, choices=self.node.tableau_types)
+		label = wx.StaticText(self, -1, 'Tableau Type (method-display):')
+		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['tableau type'], (0, 1), (1, 1), wx.ALIGN_CENTER)
+
 		self.widgets['beam tilt'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.01')
 		bt_sizer = wx.GridBagSizer(5, 5)
 		bt_sizer.Add(self.widgets['beam tilt'], (0, 0), (1, 1),
@@ -86,45 +91,40 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 		bt_sizer.Add(wx.StaticText(self, -1, 'radian'), (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Beam Tilt:')
-		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(bt_sizer, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(bt_sizer, (1, 1), (1, 1), wx.ALIGN_CENTER)
 
 		self.widgets['sites'] = IntEntry(self, -1, min=0, allownone=False, chars=4, value='0')
 		label = wx.StaticText(self, -1, 'Number of tilt directions:')
-		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['sites'], (1, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['sites'], (2, 1), (1, 1), wx.ALIGN_CENTER)
 
 		self.widgets['startangle'] = FloatEntry(self, -1, min=0, allownone=False, chars=4, value='0')
 		label = wx.StaticText(self, -1, 'Start Angle:')
-		sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['startangle'], (2, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['startangle'], (3, 1), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'degrees')
-		sizer.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		self.widgets['correlation type'] = Choice(self, -1, choices=self.node.correlation_types)
 		label = wx.StaticText(self, -1, 'Correlation Type:')
-		sizer.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['correlation type'], (3, 1), (1, 1), wx.ALIGN_CENTER)
-
-		self.widgets['tableau type'] = Choice(self, -1, choices=self.node.tableau_types)
-		label = wx.StaticText(self, -1, 'Tableau Type (method-display):')
 		sizer.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['tableau type'], (4, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.widgets['correlation type'], (4, 1), (1, 1), wx.ALIGN_CENTER)
 
 		self.widgets['tableau binning'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='2')
 		label = wx.StaticText(self, -1, 'Tableau Binning:')
 		sizer.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.widgets['tableau binning'], (5, 1), (1, 1), wx.ALIGN_CENTER)
 
-		self.widgets['tableau split'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='8')
-		label = wx.StaticText(self, -1, 'Tableau Split:')
-		sizer.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['tableau split'], (6, 1), (1, 1), wx.ALIGN_CENTER)
-
 		self.widgets['beam tilt count'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='1')
 		label = wx.StaticText(self, -1, 'Beam Tilt Count:')
+		sizer.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['beam tilt count'], (6, 1), (1, 1), wx.ALIGN_CENTER)
+
+		self.widgets['tableau split'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='8')
+		label = wx.StaticText(self, -1, 'Tableau Split:')
 		sizer.Add(label, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['beam tilt count'], (7, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.widgets['tableau split'], (7, 1), (1, 1), wx.ALIGN_CENTER)
 
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 		self.widgets['tableau type'].Bind(wx.EVT_CHOICE, self.onTableauTypeChoice)
@@ -133,13 +133,14 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 
 	def onTableauTypeChoice(self, evt=None):
 		tabtype = self.widgets['tableau type'].GetStringSelection()
-		if tabtype == 'split image':
+		if tabtype == 'split image-power':
 			self.enableTableauSplit(True)
 		else:
 			self.enableTableauSplit(False)
 
 	def enableTableauSplit(self,isenable):
 		self.widgets['tableau split'].Enable(isenable)
+		self.widgets['tableau binning'].Enable(not isenable)
 		self.widgets['beam tilt'].Enable(not isenable)
 		self.widgets['sites'].Enable(not isenable)
 		self.widgets['startangle'].Enable(not isenable)
