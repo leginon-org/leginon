@@ -6,12 +6,15 @@ import math
 
 def splitTableau(image, split):
 	tabimage = numpy.zeros(image.shape, image.dtype)
-	splitsize = image.shape[0]/int(split), image.shape[1]/int(split)
+	splitsize = int(math.floor(image.shape[0]*0.5/int(split)))*2, int(math.floor(image.shape[1]*0.5/int(split)))*2
 	for row in range(0,image.shape[0],splitsize[0]):
 		rowslice = slice(row,row+splitsize[0])
 		for col in range(0,image.shape[1],splitsize[1]):
 			colslice = slice(col,col+splitsize[1])
-			tabimage[rowslice,colslice] = imagefun.power(image[rowslice,colslice])
+			if col+splitsize[1] <= image.shape[1] and row+splitsize[0] <= image.shape[0]:
+				tabimage[rowslice,colslice] = imagefun.power(image[rowslice,colslice])
+			else:
+				tabimage[rowslice,colslice] = tabimage[max(0,row-1),max(0,col-1)]
 	return tabimage
 
 class Tableau(object):
