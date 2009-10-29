@@ -110,6 +110,8 @@ class CorrectorClient(cameraclient.CameraClient):
 
 	def correctorImageExists(self, type, scopedata, cameradata, channel):
 		ref = self.researchCorrectorImageData(type, scopedata, cameradata, channel)
+		if not ref:
+			return False
 		fileref = ref.special_getitem('image', dereference=False)
 		if isinstance(fileref, numpy.ndarray):
 			return True
