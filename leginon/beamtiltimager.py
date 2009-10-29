@@ -103,38 +103,40 @@ class BeamTiltImager(acquisition.Acquisition):
 		self.tabimage = None
 		self.ctfdata = []
 
-	def splitTableau(self, image):
+	def splitTableau(self, imagedata):
+		image = imagedata['image']
 		split = self.settings['tableau split']
 		self.tabimage = tableau.splitTableau(image, split)
+		self.addCornerCTFlabels(imagedata, split)
 		self.tabscale = None
 		self.displayTableau()
 		self.saveTableau()
+
+	def addCornerCTFlabels(self, imagedata, split):
+		self.ht = imagedata['scope']['high tension']
+		image = imagedata['image']
+		if not self.rpixelsize:
+			self.rpixelsize = self.btcalclient.getImageReciprocalPixelSize(imagedata)
+			self.rpixelsize['x'] *= split
+			self.rpixelsize['y'] *= split
+		splitsize = int(math.floor(image.shape[0]*0.5/int(split)))*2, int(math.floor(image.shape[1]*0.5/int(split)))*2
+		for row in (0,(split/2)*splitsize[0],(split-1)*splitsize[0]):
+			rowslice = slice(row,row+splitsize[0])
+			for col in (0,(split/2)*splitsize[1],(split-1)*splitsize[1]):
+				colslice = slice(col,col+splitsize[1])
+				splitimage = image[rowslice,colslice]
+				labeled, ctfdata = self.addCTFlabel(splitimage, self.ht, self.rpixelsize, 1, self.defocus)
+				self.tabimage[rowslice,colslice] = labeled
 
 	def insertTableau(self, imagedata, angle, rad):
 		image = imagedata['image']
 		binning = self.settings['tableau binning']
 		if self.settings['tableau type'] != 'beam tilt series-image':
-			pow = imagefun.power(image)
-			binned = imagefun.bin(pow, binning)
-			s = None
 			self.ht = imagedata['scope']['high tension']
 			if not self.rpixelsize:
 				self.rpixelsize = self.btcalclient.getImageReciprocalPixelSize(imagedata)
-			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], self.defocus, self.ht)
+			binned, ctfdata = self.addCTFlabel(image, self.ht, self.rpixelsize, binning, self.defocus)
 			self.ctfdata.append(ctfdata)
-			if ctfdata:
-				s = '%d' % int(ctfdata[0]*1e9)
-			#elif self.ace2exe:
-			elif False:
-				ctfdata = self.estimateCTF(imagedata)
-				z0 = (ctfdata['defocus1'] + ctfdata['defocus2']) / 2
-				s = '%d' % (int(z0*1e9),)
-			if s:
-				t = numpil.textArray(s)
-				min = arraystats.min(binned)
-				max = arraystats.max(binned)
-				t = min + t * (max-min)
-				imagefun.pasteInto(t, binned, (20,20))
 		else:
 			binned = imagefun.bin(image, binning)
 		self.tableauimages.append(binned)
@@ -163,10 +165,13 @@ class BeamTiltImager(acquisition.Acquisition):
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
 		this replaces Acquisition.acquire()
-		Instead of acquiring an image, we do autofocus
+		Instead of acquiring an image, we acquire a series of beam tilt images
 		'''
 		## sometimes have to apply or un-apply deltaz if image shifted on
 		## tilted specimen
+		if 'beam tilt' in self.settings['tableau type'] and (presetdata['dimension']['x'] > 1024 or presetdata['dimension']['y'] > 1024):
+			self.logger.error('Analysis will be too slow: Reduce preset image dimension')
+			return 'error'
 		self.rpixelsize = None
 		self.defocus = presetdata['defocus']
 		if emtarget is None:
@@ -216,9 +221,8 @@ class BeamTiltImager(acquisition.Acquisition):
 			rad = radlist[i]
 
 			if self.settings['tableau type'] == 'split image-power':
-				self.splitTableau(imagedata['image'])
+				self.splitTableau(imagedata)
 			elif 'beam tilt series' in self.settings['tableau type']:
-				print 'beam tilt', bt['x'] - tiltlist[0]['x'], bt['y'] - tiltlist[0]['y']
 				self.insertTableau(imagedata, angle, rad)
 			try:
 				shiftinfo = self.correlateOriginal(i,imagedata)
@@ -229,7 +233,8 @@ class BeamTiltImager(acquisition.Acquisition):
 			displace.append((pixelshift['row'],pixelshift['col']))
 		if 'beam tilt series' in self.settings['tableau type']:
 			self.renderTableau()
-		self.calculateAxialComa(self.ctfdata)
+			if 'power' in self.settings['tableau type']:
+				self.calculateAxialComa(self.ctfdata)
 		return status
 
 	def alreadyAcquired(self, targetdata, presetname):
@@ -344,6 +349,28 @@ class BeamTiltImager(acquisition.Acquisition):
 			self.logger.warning(exename+" was not found in path. No ctf estimation")
 			return None
 		return ace2exe
+
+	def addCTFlabel(self, image, ht, rpixelsize, binning=1, defocus=None):
+		pow = imagefun.power(image)
+		binned = imagefun.bin(pow, binning)
+		s = None
+		ctfdata = fftfun.fitFirstCTFNode(pow,rpixelsize['x'], defocus, ht)
+		if ctfdata:
+			self.logger.info('z0 %.3f um, zast %.3f um (%.0f ), angle= %.1f deg' % (ctfdata[0]*1e6,ctfdata[1]*1e6,ctfdata[2]*100, ctfdata[3]*180.0/math.pi))
+			s = '%d' % int(ctfdata[0]*1e9)
+		#elif self.ace2exe:
+		elif False:
+			ctfdata = self.estimateCTF(imagedata)
+			z0 = (ctfdata['defocus1'] + ctfdata['defocus2']) / 2
+			s = '%d' % (int(z0*1e9),)
+		if s:
+			t = numpil.textArray(s)
+			t = ndimage.zoom(t, (min(binned.shape)-40.0)*0.08/(t.shape)[0])
+			minvalue = arraystats.min(binned)
+			maxvalue = arraystats.max(binned)
+			t = minvalue + t * (maxvalue-minvalue)
+			imagefun.pasteInto(t, binned, (20,20))
+		return binned, ctfdata
 
 	def estimateCTF(self, imagedata):
 		mag = imagedata['scope']['magnification']
