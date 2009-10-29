@@ -26,8 +26,11 @@ $link->addlink('dualview.php','Dual Viewer','', 'dual_view');
 $link->addlink('template.php', 'Hole Template viewer','', 'template');
 $link->addlink('/phpMyAdmin/','phpMyAdmin','', 'phpMyAdmin');
 
+if($PROJECT_URL) {
+	$link->addlink($PROJECT_URL,'Project DB','', 'project');
+}
 
-$title = "Leginon II database Tools";
+$title = "Leginon database Tools";
 viewer_header($title);
 ?>
 <style>
