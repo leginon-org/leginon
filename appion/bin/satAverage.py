@@ -19,6 +19,7 @@ import apDisplay
 import apStack
 import apRecon
 import apEMAN
+import apSymmetry
 import apFile
 
 
@@ -241,6 +242,8 @@ class satAverageScript(appionScript.AppionScript):
 			s += ".hed"
 			self.params['stackname'] = s
 		apDisplay.printMsg("Stack name: "+self.params['stackname'])
+		self.params['symmetry'] = apSymmetry.getSymmetryFromReconRunId(self.params['reconid'])
+		self.params['symmname'] = self.params['symmetry']['eman_name']
 
 	#=====================
 	def setRunDir(self):
@@ -328,19 +331,19 @@ class satAverageScript(appionScript.AppionScript):
 		### recon 3d volumes
 		threedname = os.path.join(self.params['rundir'], self.rootname+"."+str(self.params['iter'])+"a.mrc")
 		emancmd = ( "make3d "+self.params['outputstack']+" out="
-			+threedname+" hard=25 sym=c1 pad=240 mask="+str(self.params['mask'])+"; echo ''" )
+			+threedname+" hard=25 sym="+self.params['symmname']+" pad=240 mask="+str(self.params['mask'])+"; echo ''" )
 		#print emancmd
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
 		threednameb = os.path.join(self.params['rundir'], self.rootname+"."+str(self.params['iter'])+"b.mrc")
 		emancmd = ( "proc3d "+threedname+" "+threednameb
-			+" apix=1.63 norm=0,1 lp=20 origin=0,0,0 mask="+str(self.params['mask'])+"; echo '' " )
+			+" apix=1.63 norm=0,1 lp=8 origin=0,0,0 mask="+str(self.params['mask'])+"; echo '' " )
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
 		if self.params['eotest'] is True:
 			# even
 			evenname = os.path.join(self.params['rundir'], self.rootname+"-even."+str(self.params['iter'])+"a.mrc")
 			if os.path.isfile(self.params['evenstack']):
 				evenemancmd = ( "make3d "+self.params['evenstack']+" out="
-					+evenname+" hard=25 sym=c1 pad=240 mask=70; echo ''" )
+					+evenname+" hard=25 sym="+self.params['symmname']+" pad=240 mask="+str(self.params['mask'])+"; echo ''" )
 				#print evenemancmd
 				apEMAN.executeEmanCmd(evenemancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eveneman.log")
 			else:
@@ -350,7 +353,7 @@ class satAverageScript(appionScript.AppionScript):
 			oddname = os.path.join(self.params['rundir'], self.rootname+"-odd."+str(self.params['iter'])+"a.mrc")
 			if os.path.isfile(self.params['oddstack']):
 				oddemancmd = ( "make3d "+self.params['oddstack']+" out="
-					+oddname+" hard=25 sym=c1 pad=240 mask=70; echo ''" )
+					+oddname+" hard=25 sym="+self.params['symmname']+" pad=240 mask="+str(self.params['mask'])+"; echo ''" )
 				#print oddemancmd
 				apEMAN.executeEmanCmd(oddemancmd, verbose=False, showcmd=True, logfile=self.rootname+"-oddeman.log")
 			else:

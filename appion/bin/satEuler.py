@@ -1,25 +1,28 @@
 #!/usr/bin/env python
 
 #python
-import sys
 import os
-import random
+import sys
 import math
 import time
+import glob
 import pprint
+import random
 import cPickle
+import subprocess
 #appion
 import appionScript
 import apDisplay
 import apStack
 import apEulerCalc
 import apParam
+import apSymmetry
 import appiondata
 #sinedon
 import sinedon
 #site-packages
 import numpy
-import pyami.quietscipy
+from pyami import mrc, quietscipy
 from scipy import ndimage, stats
 import MySQLdb
 
@@ -331,7 +334,7 @@ class satEulerScript(appionScript.AppionScript):
 		e2 = { "euler1": eulerpair['part1']['euler1'],
 			"euler2": eulerpair['part1']['euler2'],
 			"euler3": eulerpair['part2']['euler3'] }
-		rotdist = apEulerCalc.eulerCalculateDistanceSym(e1, e2, sym='c1', inplane=True)
+		rotdist = apEulerCalc.eulerCalculateDistanceSym(e1, e2, sym=self.params['symmname'], inplane=True)
 		return rotdist
 
 	#=====================
@@ -356,9 +359,9 @@ class satEulerScript(appionScript.AppionScript):
 			if count % 500 == 0:
 				sys.stderr.write(".")
 			eulerpair['angdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
-				eulerpair['part2'], sym='c1', inplane=False)
+				eulerpair['part2'], sym=self.params['symmname'], inplane=False)
 			eulerpair['totdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
-				eulerpair['part2'], sym='c1', inplane=True)
+				eulerpair['part2'], sym=self.params['symmname'], inplane=True)
 			eulerpair['rotdist'] = self.calc2dRotationalDifference(eulerpair)
 			### ignore rejected particles
 			#if eulerpair['part1']['reject'] == 0 or eulerpair['part2']['reject'] == 0:
@@ -586,7 +589,7 @@ class satEulerScript(appionScript.AppionScript):
 			+" \\\n --keep-file="+keepfile
 			+" \\\n --new-stack-name=sub-"+stackdata[0]['stackRun']['stackRunName']
 			+" \\\n --description='sat from recon "+str(self.params['reconid'])
-			+" iter "+str(self.params['iternum'])
+			+" iter "+str(self.iternum)
 			+" with angle "+str(self.params['angle'])
 			+" +/- "+str(self.params['cutrange'])
 			+"' \n" )
@@ -596,24 +599,69 @@ class satEulerScript(appionScript.AppionScript):
 	#=====================
 	def satAverageCmd(self):
 		keepfile = os.path.join(self.params['rundir'], "keeplist-tot"+self.datastr+".lst")
-		newname = "recon%d_cut%d_iter%d.hed" % (self.params['reconid'], self.params['cutrange']*10, self.params['iternum'])
+		newname = "recon%d_cut%d_iter%d.hed" % (self.params['reconid'], self.params['cutrange']*10, self.iternum)
 		cmd = ( "satAverage.py "
 			+" --projectid="+str(self.params['projectid'])
 			+" --reconid="+str(self.params['reconid'])
-			+" \\\n --mask=62 --iter="+str(self.params['iternum'])
+			+" \\\n --mask=62 --iter="+str(self.iternum)
 			+" \\\n --stackname="+newname
 			+" \\\n --keep-list="+keepfile
 			+" \n" )
 		print "New satAverage.py Command:"
 		apDisplay.printColor(cmd, "purple")
 
+	#=====================
+	def runSatAverage(self):
+		keepfile = os.path.join(self.params['rundir'], "keeplist-tot"+self.datastr+".lst")
+		newname = "recon%d_cut%d_iter%d.hed" % (self.params['reconid'], self.params['cutrange']*10, self.iternum)
+		volname = "recon%d_cut%d_iter%d.%da.mrc"% (self.params['reconid'], self.params['cutrange']*10, self.iternum, self.iternum)
+		volfile = os.path.join(self.params['rundir'], "volumes", volname)
+		if os.path.isfile(volfile):
+			apDisplay.printMsg("Skipping sat average, volume exists")
+			return
+		cmd = ( "satAverage.py "
+			+" --projectid="+str(self.params['projectid'])
+			+" --reconid="+str(self.params['reconid'])
+			+" \\\n --mask=40 --iter="+str(self.iternum)
+			+" \\\n --stackname="+newname
+			+" \\\n --keep-list="+keepfile
+			+" \n" )
+		print "New satAverage.py Command:"
+		apDisplay.printColor(cmd, "purple")
+		proc = subprocess.Popen(cmd, shell=True)
+		proc.wait()
+		return
+
+	#=====================
+	def medianVolume(self):
+		volpath = os.path.join(self.params['rundir'], "volumes/*a.mrc")
+		mrcfiles = glob.glob(volpath)
+		volumes = []
+		for filename in mrcfiles:
+			if os.path.isfile(filename):
+				print filename
+				vol = mrc.read(filename)
+				print vol.shape
+				volumes.append(vol)
+		volarray = numpy.asarray(volumes, dtype=numpy.float32)
+		medarray = numpy.median(volarray, axis=0)
+		medfile = os.path.join(self.params['rundir'], "volumes/medianVolume.mrc")
+		print medfile
+		print medarray.shape
+		mrc.write(medarray, medfile)
+
+		apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+		sessiondata = apStack.getSessionDataFromStackId(self.params['stackid'])
+
+		uploadcmd = ( ("uploadModel.py --projectid=%d --session=%s --file=%s "
+				+"--apix=%.3f --sym=%s --name=satmedian-recon%d.mrc")
+			%(self.params['projectid'], sessiondata['name'], medfile, 
+				apix, self.params['symmname'], self.params['reconid']) )
+		apDisplay.printColor(uploadcmd, "purple")
+
 	######################################################
 	####  ITEMS BELOW WERE SPECIFIED BY AppionScript  ####
 	######################################################
-
-	#=====================
-	def onInit(self):
-		self.datastr = "_r"+str(self.params['reconid'])+"_i"+str(self.params['iternum'])
 
 	#=====================
 	def setProcessingDirName(self):
@@ -631,14 +679,11 @@ class satEulerScript(appionScript.AppionScript):
 		rundir = os.path.join(refpath, "../../satEuler/sat-recon%d"%(self.params['reconid']))
 		self.params['rundir'] = os.path.abspath(rundir)
 
-
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --reconid=<##> --commit [options]")
 		self.parser.add_option("-r", "--reconid", dest="reconid", type='int',
 			help="Reconstruction Run ID", metavar="INT")
-		self.parser.add_option("-i", "--iternum", dest="iternum", type='int',
-			help="Reconstruction Iteration Number, defaults to last iteration", metavar="INT")
 		self.parser.add_option("--tiltrunid", dest="tiltrunid", type='int',
 			help="Automatically set", metavar="INT")
 		self.parser.add_option("--stackid", dest="stackid", type='int',
@@ -665,8 +710,8 @@ class satEulerScript(appionScript.AppionScript):
 			apDisplay.printError("Enter a Reconstruction Run ID, e.g. --reconid=243")
 		if not self.params['tiltrunid']:
 			self.params['tiltrunid'] = self.getTiltRunIDFromReconID(self.params['reconid'])
-		if not self.params['iternum']:
-			self.params['iternum'] = self.getLastIterationFromReconID(self.params['reconid'])
+		self.params['symmetry'] = apSymmetry.getSymmetryFromReconRunId(self.params['reconid'])
+		self.params['symmname'] = self.params['symmetry']['eman_name']
 		if not self.params['stackid']:
 			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'])
 
@@ -675,18 +720,27 @@ class satEulerScript(appionScript.AppionScript):
 		#reconid = 186, 194, 239, 243
 		#tiltrunid = 557, 655
 		### Big slow process
+		lastiter = self.getLastIterationFromReconID(self.params['reconid'])
 		if self.params['commit'] is True:
-			t0 = time.time()
-			eulertree = self.getEulersForIteration2(self.params['reconid'], self.params['tiltrunid'],
-				self.params['stackid'], self.params['iternum'])
-			#eulertree = self.getEulersForIteration(self.params['reconid'], self.params['tiltrunid'],
-			#	self.params['iternum'])
-			self.processEulers(eulertree)
-			apDisplay.printMsg("Total time for "+str(len(eulertree))+" eulers: "+apDisplay.timeString(time.time()-t0))
+			self.iternum = lastiter
+			while self.iternum > 0:
+				self.datastr = "_r"+str(self.params['reconid'])+"_i"+str(self.iternum)
+				apDisplay.printColor("\n====================", "green")
+				apDisplay.printColor("Iteration %d"%(self.iternum), "green")
+				t0 = time.time()
+				eulertree = self.getEulersForIteration2(self.params['reconid'], self.params['tiltrunid'],
+					self.params['stackid'], self.iternum)
+				#eulertree = self.getEulersForIteration(self.params['reconid'], self.params['tiltrunid'],
+				#	self.iternum)
+				self.processEulers(eulertree)
+				self.runSatAverage()
+				apDisplay.printMsg("Total time for "+str(len(eulertree))+" eulers: "+apDisplay.timeString(time.time()-t0))
+				self.iternum-=1
 		else:
 			apDisplay.printWarning("Not committing results")
 		self.subStackCmd()
-		self.satAverageCmd()
+		self.medianVolume()
+		#self.satAverageCmd()
 
 #=====================
 if __name__ == "__main__":
