@@ -348,7 +348,7 @@ class satEulerScript(appionScript.AppionScript):
 	#=====================
 	def processEulers(self, eulertree):
 		t0 = time.time()
-		angdistlist = []
+		#angdistlist = []
 		totdistlist = []
 		rotdistlist = []
 		t0 = time.time()
@@ -358,15 +358,15 @@ class satEulerScript(appionScript.AppionScript):
 			count += 1
 			if count % 500 == 0:
 				sys.stderr.write(".")
-			eulerpair['angdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
-				eulerpair['part2'], sym=self.params['symmname'], inplane=False)
+			#eulerpair['angdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
+			#	eulerpair['part2'], sym=self.params['symmname'], inplane=False)
 			eulerpair['totdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
 				eulerpair['part2'], sym=self.params['symmname'], inplane=True)
 			eulerpair['rotdist'] = self.calc2dRotationalDifference(eulerpair)
 			### ignore rejected particles
 			#if eulerpair['part1']['reject'] == 0 or eulerpair['part2']['reject'] == 0:
 			#print eulerpair['part1']['mirror'],eulerpair['part2']['mirror'],eulerpair['totdist']
-			angdistlist.append(eulerpair['angdist'])
+			#angdistlist.append(eulerpair['angdist'])
 			totdistlist.append(eulerpair['totdist'])
 			rotdistlist.append(eulerpair['rotdist'])
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "
@@ -374,11 +374,11 @@ class satEulerScript(appionScript.AppionScript):
 
 		self.writeRawDataFile(eulertree)
 		self.writeKeepFiles(eulertree)
-		self.writeScatterFile(eulertree)
+		#self.writeScatterFile(eulertree)
 
 		print "ANGLE EULER DATA:"
 		#D-symmetry goes to 90, all other 180
-		self.analyzeList(angdistlist, tuple((0,None,self.params['stepsize'])), "angdata"+self.datastr+".dat")
+		#self.analyzeList(angdistlist, tuple((0,None,self.params['stepsize'])), "angdata"+self.datastr+".dat")
 
 		print "PLANE ROTATION DATA:"
 		self.analyzeList(rotdistlist, tuple((None,None,self.params['stepsize'])), "rotdata"+self.datastr+".dat")
@@ -446,7 +446,7 @@ class satEulerScript(appionScript.AppionScript):
 				str(round(eulerpair['part2']['euler3'],2))+"\t"+
 				str(eulerpair['part2']['mirror'])+"\t"+
 				str(eulerpair['part2']['reject'])+"\t"+
-				str(round(eulerpair['angdist'],2))+"\t"+
+				#str(round(eulerpair['angdist'],2))+"\t"+
 				str(round(eulerpair['rotdist'],2))+"\t"+
 				str(round(eulerpair['totdist'],2))+"\n"
 			)
@@ -460,7 +460,7 @@ class satEulerScript(appionScript.AppionScript):
 		totkeeplist = []
 		totbadlist = []
 		notiltkeeplist = []
-		angkeeplist = []
+		#angkeeplist = []
 		skippair = 0
 		for eulerpair in eulertree:
 			if eulerpair['part1']['reject'] == 1 and eulerpair['part2']['reject'] == 1:
@@ -468,7 +468,7 @@ class satEulerScript(appionScript.AppionScript):
 				continue
 			goodtot = (abs(eulerpair['totdist'] - self.params['angle']) < self.params['cutrange'])
 			badtot = (abs(eulerpair['totdist'] - self.params['angle']) > 3*self.params['cutrange'])
-			goodang = (abs(eulerpair['angdist'] - self.params['angle']) < self.params['cutrange'])
+			#goodang = (abs(eulerpair['angdist'] - self.params['angle']) < self.params['cutrange'])
 			if goodtot:
 				if eulerpair['part1']['tilt'] < eulerpair['part2']['tilt']:
 					notiltkeeplist.append(eulerpair['part1']['partid']-1)
@@ -479,14 +479,14 @@ class satEulerScript(appionScript.AppionScript):
 			if badtot:
 				totbadlist.append(eulerpair['part1']['partid']-1)
 				totbadlist.append(eulerpair['part2']['partid']-1)
-			if goodang:
-				angkeeplist.append(eulerpair['part1']['partid']-1)
-				angkeeplist.append(eulerpair['part2']['partid']-1)
+			#if goodang:
+			#	angkeeplist.append(eulerpair['part1']['partid']-1)
+			#	angkeeplist.append(eulerpair['part2']['partid']-1)
 		apDisplay.printMsg("skipped "+str(skippair)+" double bad pairs")
  		#sort
 		totkeeplist.sort()
 		notiltkeeplist.sort()
-		angkeeplist.sort()
+		#angkeeplist.sort()
 		totbadlist.sort()
 
 		### write to file
@@ -515,8 +515,8 @@ class satEulerScript(appionScript.AppionScript):
 
 		percent = "%3.1f" % (50.0*len(totkeeplist) / float(len(eulertree)))
 		apDisplay.printMsg("Total Keeping "+str(len(totkeeplist))+" of "+str(2*len(eulertree))+" ("+percent+"%) eulers")
-		percent = "%3.1f" % (50.0*len(angkeeplist) / float(len(eulertree)))
-		apDisplay.printMsg("Angle Keeping "+str(len(angkeeplist))+" of "+str(2*len(eulertree))+" ("+percent+"%) eulers")
+		#percent = "%3.1f" % (50.0*len(angkeeplist) / float(len(eulertree)))
+		#apDisplay.printMsg("Angle Keeping "+str(len(angkeeplist))+" of "+str(2*len(eulertree))+" ("+percent+"%) eulers")
 		return
 
 	#=====================
@@ -639,24 +639,26 @@ class satEulerScript(appionScript.AppionScript):
 		volumes = []
 		for filename in mrcfiles:
 			if os.path.isfile(filename):
-				print filename
 				vol = mrc.read(filename)
-				print vol.shape
+				print filename, vol.shape
 				volumes.append(vol)
 		volarray = numpy.asarray(volumes, dtype=numpy.float32)
-		medarray = numpy.median(volarray, axis=0)
+		try:
+			medarray = numpy.median(volarray, axis=0)
+		except:
+			medarray = numpy.median(volarray)
 		medfile = os.path.join(self.params['rundir'], "volumes/medianVolume.mrc")
-		print medfile
-		print medarray.shape
+		print medfile, medarray.shape
 		mrc.write(medarray, medfile)
 
 		apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		sessiondata = apStack.getSessionDataFromStackId(self.params['stackid'])
 
 		uploadcmd = ( ("uploadModel.py --projectid=%d --session=%s --file=%s "
-				+"--apix=%.3f --sym=%s --name=satmedian-recon%d.mrc")
+				+"--apix=%.3f --sym=%s --name=satmedian-recon%d.mrc --res=30 --description='%s %d'")
 			%(self.params['projectid'], sessiondata['name'], medfile, 
-				apix, self.params['symmname'], self.params['reconid']) )
+				apix, self.params['symmname'], self.params['reconid'],
+				"SAT selected median volume for recon", self.params['reconid'], ) )
 		apDisplay.printColor(uploadcmd, "purple")
 
 	######################################################
