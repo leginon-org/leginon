@@ -168,7 +168,7 @@ class ApEulerJump(object):
 		"""
 		get the symmetry from the last iteration of a refinement
 		"""
-		symmdata = apSymmetry.getSymmetryReconRunId(reconrunid, msg)
+		symmdata = apSymmetry.getSymmetryFromReconRunId(reconrunid, msg)
 		symmname = symmdata['eman_name']
 		return symmname
 

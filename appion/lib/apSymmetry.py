@@ -73,7 +73,7 @@ def printSymmetries():
 		)
 
 #=====================
-def getSymmetryReconRunId(reconrunid, msg=True):
+def getSymmetryFromReconRunId(reconrunid, msg=True):
 	"""
 	get the symmetry from the last iteration of a refinement
 	"""
