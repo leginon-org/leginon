@@ -15,7 +15,9 @@
 
 import threading
 import sys
+import math
 import wx
+from pyami import fftfun
 from gui.wx.Choice import Choice
 from gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 from gui.wx.Presets import EditPresetOrder
@@ -442,6 +444,8 @@ class ManualFocusDialog(wx.Frame):
 		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 		self.Bind(gui.wx.Events.EVT_MANUAL_UPDATED, self.onManualUpdated)
 		self.Bind(gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
+		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
+							self.imagepanel)
 
 	def onSettingsTool(self, evt):
 		self.settingsdialog.maskradius.SetValue(self.node.maskradius)
@@ -531,12 +535,22 @@ class ManualFocusDialog(wx.Frame):
 		idcevt = gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		self.center = center
+		self.pixelsize = pixelsize
+		self.hightension = hightension
 
 	def onEllipseFound(self, evt):
 		centers = [(self.center['y'],self.center['x']),]
 		idcevt = gui.wx.ImagePanelTools.EllipseNewCenterEvent(self.imagepanel, centers)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		threading.Thread(target=self.node.estimateAstigmation, args=(evt.params,)).start()
+
+	def onImageClicked(self, evt):
+		if not self.imagepanel.selectiontool.isDisplayed('Power'):
+			return
+		resolution = 1/math.sqrt(((evt.xy[0]-self.center['x'])*self.pixelsize['x'])**2+((evt.xy[1]-self.center['y'])*self.pixelsize['y'])**2)
+		defocus = fftfun.calculateDefocus(self.hightension,1/resolution)
+		self.node.increment = defocus
+		self.settingsdialog.increment.SetValue(self.node.increment)
 
 if __name__ == '__main__':
 	class App(wx.App):

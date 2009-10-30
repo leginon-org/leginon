@@ -589,6 +589,11 @@ class ResolutionTool(ValueTool):
 		self.center = evt.center
 		self.hightension = evt.hightension
 
+	def OnLeftClick(self, evt):
+		xy = self.imagepanel.view2image((evt.m_x, evt.m_y))
+		idcevt = ImageClickedEvent(self.imagepanel, xy)
+		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
+
 ##################################
 ##
 ##################################
