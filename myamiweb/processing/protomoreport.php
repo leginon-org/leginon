@@ -46,16 +46,16 @@ $runinfo = $particle->getTomoAlignmentInfo($alignId);
 $refinedata = $particle->getProtomoAlignmentInfo($alignId);
 $rundir = $runinfo['path'];
 $refnum = $refinedata[0]['imgref'];
-echo"	<table border=3 class=tableborder>
-				<tr>
-					<td valign='TOP'>\n";
-			echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$alignId&expId=$expId&ref=$refnum&type=rot'><br/>\n";
+echo"	<table border=3 class=tableborder>";
+echo"<tr><td valign='TOP'>\n";
+echo "<a href='tomoalignmovie.php?aId=$alignId&expId=$expId'>Alignment Movie</a>";
+echo"</td></tr><tr><td valign='TOP'>\n";
+echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$alignId&expId=$expId&ref=$refnum&type=rot'><br/>\n";
 echo"</td></tr><tr><td valign='TOP'>\n";
 echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$alignId&expId=$expId&ref=$refnum&type=shiftx'><br/>\n";
 echo"</td></tr><tr><td valign='TOP'>\n";
 echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$alignId&expId=$expId&ref=$refnum&type=shifty'><br/>\n";
-echo"</td></tr><tr><td valign='TOP'>\n";
-echo "<a href='tomoalignmovie.php?aId=$alignId&expId=$expId'>Alignment Movie</a>";
+echo"</td></tr>\n";
 echo "</table>\n";
 if ($_POST) {
 	foreach ($refinedata as $t)
