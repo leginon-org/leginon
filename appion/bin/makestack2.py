@@ -267,7 +267,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		imgdims = imgdata['camera']['dimension']
 		fullbox = self.params['boxsize']
 		halfbox = self.params['boxsize']/2
-		emanboxfile = os.path.join(self.params['rundir'], apDisplay.short(imgdata['filename'])+"-eman.box")
+		emanboxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
 
 		boxedpartdatas = []
 		eliminated = 0
