@@ -146,6 +146,61 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 
 	return ("alignedstack.spi", partlist)
 
+def runSymRelax(params,cls):
+	print "processing class",cls
+
+	#set up cls dir
+	clsdir=cls.split('.')[0]+'.dir'
+	os.mkdir(clsdir)
+
+	# only align particles that passed coran
+	clscmd='clstoaligned.py ' + cls + ' eman clean\n\n'
+
+	# create projections of related symmetries
+	projcmd = "python <<eof\n"
+	projcmd+= "import EMAN\n"
+	projcmd+= "map3d = EMAN.EMData()\n"
+	projcmd+= "map3d.readImage('../threed.%da.asym.mrc')\n" % (params['iter']-1)
+	projcmd+= "proj = EMAN.EMData()\n"
+	projcmd+= "proj.readImage('proj.hed',%d)\n" % int(cls.split('.')[0][-4:])
+	projcmd+= "e=proj.getEuler()\n"
+	projcmd+= "e.setSym('"+params['sym']+"')\n"
+	projcmd+= "for s in range(e.getMaxSymEl()):\n"
+	projcmd+= "  ef = e.SymN(s)\n"
+	projcmd+= "  p = map3d.project3d(ef.alt(),ef.az(),ef.phi(),-1)\n"
+	projcmd+= "  p.setRAlign(ef)\n"
+	projcmd+= "  p.writeImage('%s',s)\n" % os.path.join(clsdir,'proj.hed')
+	projcmd+= "eof\n\n"
+	clscmd+=projcmd
+
+	## if multiprocessor, don't run clstoaligned yet
+	if params['proc'] == 1:
+		#make aligned stack
+		proc = subprocess.Popen(clscmd, shell=True)
+		proc.wait()
+
+	relaxcmd=clscmd
+
+	# if no particles, continue
+	params['nptcls']=apEMAN.getNPtcls(cls,onlycoran=True)
+	if params['nptcls'] == 0:
+		print "WARNING!! no particles in class"
+		return
+
+	emancmd = ("cd %s\n" % clsdir)	
+	emancmd+= "classesbymra aligned.hed proj.hed split mask=%d precen norot logit=1 ma
+xshift=0 phase > classesbymra.log\n" % params['mask']
+	
+	for s in range(params['symnum']):
+		emancmd+="proc2d aligned.hed classes.hed list=cls%04d.lst average\n" % s
+
+	## if multiprocessor, don't run yet
+	if params['proc'] == 1:
+		proc = subprocess.Popen(emancmd, shell=True)
+		proc.wait()
+	relaxcmd+=emancmd
+	return relaxcmd
+
 def runCoranClass(params,cls):
 	print "processing class",cls
 
