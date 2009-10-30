@@ -723,7 +723,7 @@ class particledata {
 	
 	function getTomoAlignmentRuns($tiltseriesId){
 		$q="SELECT *, "
-			."`DEF_id` as alignrunId "
+			."`REF|ApTomoAlignmentRunData|alignrun` as alignrunId "
 			."FROM ApTiltsInAlignRunData "
 			."WHERE `REF|leginondata|TiltSeriesData|tiltseries`=".$tiltseriesId;
 		$r = $this->mysql->getSQLResult($q);
