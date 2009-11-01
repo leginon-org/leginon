@@ -259,10 +259,11 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
 
 		### render chimera images of model
+		contour = self.params['contour']
 		if self.params['mass'] is not None:
 			apChimera.setVolumeMass(newmodelpath, self.params['newapix'], self.params['mass'])
 			contour = 1.0
-		apChimera.renderSnapshots(newmodelpath, contour=self.params['contour'],
+		apChimera.renderSnapshots(newmodelpath, contour=contour,
 			zoom=self.params['zoom'], sym=self.params['symdata']['eman_name'])
 
 
