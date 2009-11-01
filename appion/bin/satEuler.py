@@ -660,6 +660,9 @@ class satEulerScript(appionScript.AppionScript):
 				apix, self.params['symmname'], self.params['reconid'],
 				"SAT selected median volume for recon", self.params['reconid'], ) )
 		apDisplay.printColor(uploadcmd, "purple")
+		f = open("upload.sh", "w")
+		f.write(uploadcmd+"\n")
+		f.close()
 
 	######################################################
 	####  ITEMS BELOW WERE SPECIFIED BY AppionScript  ####
