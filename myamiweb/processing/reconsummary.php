@@ -16,12 +16,12 @@ require "inc/processing.inc";
 // check if coming directly from a session
 $expId = $_GET['expId'];
 if ($expId) {
-        $sessionId=$expId;
-        $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	$sessionId=$expId;
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 }
 else {
-        $sessionId=$_POST['sessionId'];
-        $formAction=$_SERVER['PHP_SELF'];
+	$sessionId=$_POST['sessionId'];
+	$formAction=$_SERVER['PHP_SELF'];
 }
 $projectId=$_POST['projectId'];
 
@@ -60,6 +60,13 @@ if ($reconRuns) {
 
 		}
 
+		// hide recon
+		if ($_POST['hideItem'.$reconid]) {
+			echo "Hiding Recon $reconid\n<br/>\n";
+			$particle->updateHide('ApRefinementRunData', $reconid, '1');
+			continue;
+		}
+
 		// GET INFO
 		$reconname = $reconrun['name'];
 		$path = $reconrun['path'];
@@ -94,8 +101,10 @@ if ($reconRuns) {
 		$descDiv = ($_SESSION['username']) ? editButton($reconid,$reconrun['description']) : $reconrun['description'];
 
 		// recon info		
-		$html .= "<td><font size='+1'><a href='reconreport.php?expId=$expId&reconId=$reconid'>$reconname</a></font>"
-			." <br/><i>(ID: $reconid)</i></td>\n";
+		$html .= "<td><font size='+1'><a href='reconreport.php?expId=$expId&reconId=$reconid'>$reconname</a></font>\n"
+			." <br/><i>(ID: $reconid)</i>\n"
+			." <br/><input class='edit' type='submit' name='hideItem".$reconid."' value='hide'>\n"
+			."</td>\n";
 		$html .= "<td><font size=-2>$descDiv</font></td>\n";
 		$html .= "<td><font size=-2>$path</font></td>\n";
 		$html .= "<td bgcolor='#dddddd'></td>\n";
