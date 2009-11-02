@@ -46,7 +46,8 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 		$sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
-	$stackids = $particle->getStackIdsForProject($projectId, False);
+	//$stackids = $particle->getStackIdsForProject($projectId, False);
+	$stackids = $particle->getStackIds($expId, False);
 	$lastprtlruns = count($particle->getParticleRunIds($sessionId, True));
 	while (file_exists($sessionpath.'stackrun'.($lastprtlruns+1)))
 		$lastprtlruns += 1;
