@@ -195,7 +195,7 @@ if __name__== '__main__':
 			if params['eotest'] is True:
 				apEMAN.writeBlankImage('goodavgs.even.hed',params['boxsize'],-1)
 				apEMAN.writeBlankImage('goodavgs.odd.hed',params['boxsize'],-1)
-				continue
+			continue
 			
 		avgname=os.path.join(clsdir,'classes_avg.spi')
 		averages=EMAN.readImages(avgname,-1,-1,0)
