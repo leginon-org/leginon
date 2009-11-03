@@ -188,8 +188,7 @@ def runSymRelax(params,cls):
 		return
 
 	emancmd = ("cd %s\n" % clsdir)	
-	emancmd+= "classesbymra aligned.hed proj.hed split mask=%d precen norot logit=1 ma
-xshift=0 phase > classesbymra.log\n" % params['mask']
+	emancmd+= "classesbymra aligned.hed proj.hed split mask=%d precen norot logit=1 maxshift=0 phase > classesbymra.log\n" % params['mask']
 	
 	for s in range(params['symnum']):
 		emancmd+="proc2d aligned.hed classes.hed list=cls%04d.lst average\n" % s
