@@ -253,9 +253,13 @@ class Corrector(imagewatcher.ImageWatcher):
 		except:
 			self.logger.warning('Unable to load bright image from %s' % bright['session']['image path'])
 			return
-		normarray = brightarray - darkarray
-		normarray = numpy.asarray(normarray, numpy.float32)
 
+		try:
+			normarray = brightarray - darkarray
+		except:
+			self.logger.error('dark subtraction failed.')
+			return
+		normarray = numpy.asarray(normarray, numpy.float32)
 		normavg = arraystats.mean(normarray)
 
 		# division may result infinity or zero division
