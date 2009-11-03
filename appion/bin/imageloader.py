@@ -324,6 +324,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 			uploadedInfo = {}
 			uploadedInfo['original filepath'] = os.path.abspath(info[0])
 			uploadedInfo['unbinned pixelsize'] = float(info[1])
+			if uploadedInfo['unbinned pixelsize'] > 1e-6:
+				apDisplay.printError("pixel size is bigger than a micron, that is ridiculous")
 			uploadedInfo['binning'] = {'x':int(info[2]),'y':int(info[3])}
 			uploadedInfo['magnification'] = int(info[4])
 			uploadedInfo['defocus'] = float(info[5])
