@@ -128,7 +128,7 @@ def scaleTemplate(templatearray, scalefactor=1.0, boxsize=None):
 			templatearray = apImage.frame_constant(templatearray, padshape, cval=edgeavg)
 
 	if templatearray.shape[0] < 20 or templatearray.shape[1] < 20:
-		apDisplay.printWarning("template is only "+str(imgdata.shape[0])+" pixels wide\n"+\
+		apDisplay.printWarning("template is only "+str(templatearray.shape[0])+" pixels wide\n"+\
 		  " and may only correlation noise in the image")
 
 	return templatearray
