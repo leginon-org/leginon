@@ -102,7 +102,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 		// get stack id for job from job file
 		$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
 		if (!file_exists($jobfile)) {
-			echo $jobinfo['name'].": <i>missing job file: $jobfile</i><br/>\n";
+			echo $job['DEF_id'].": ".$jobinfo['name'].": <i>missing job file: $jobfile</i><br/>\n";
 			continue;
 		}
 		$f = file($jobfile);
@@ -114,12 +114,12 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 		$dlbuttons = '';
 		if ($jobinfo['status']=='Q') {
 			if ($user == $job['user'] || is_null($job['user']))
-				$dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='abort job'>\n";
+				//$dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='abort job'>\n";
 			$status='Queued';
 		}
 		elseif ($jobinfo['status']=='R') {
 			if ($user == $job['user'] || is_null($job['user']))
-				$dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='abort job'>\n";
+				//$dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='abort job'>\n";
 			$status='Running';
 		}
 		elseif ($jobinfo['status']=='A') $status='Aborted';
@@ -128,7 +128,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 			$dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('$jobinfo[dmfpath]','$jobinfo[appath]')\" value='get from DMF'> \n";
 			$dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('uploadrecon.php?expId=$expId&jobId=$job[DEF_id]')\" value='upload results'>\n";
 			if ($user == $job['user'] || is_null($job['user']))
-				$dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='ignore job'>\n";
+				//$dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='ignore job'>\n";
 			$status='Awaiting Upload';
 		}
 		if ($status) $display_keys['status'] = $status;
