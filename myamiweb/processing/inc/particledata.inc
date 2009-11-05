@@ -1322,6 +1322,7 @@ class particledata {
 	}
 
 	function getStackSelector($stackIds,$stackidval,$onchange) {
+		/* THIS FUNCTION WAS MOVED TO summarytables.inc */
 		echo "<SELECT NAME='stackval'";
 		if ($onchange) echo "onchange='".$onchange."'";
 		echo ">\n";
@@ -1347,6 +1348,7 @@ class particledata {
 		}
 		echo "</SELECT>\n";
 		return $apix;
+		/* THIS FUNCTION WAS MOVED TO summarytables.inc */
 	}
 
 	function getParticlesFromImageId ($runId, $imageId){
@@ -3192,6 +3194,7 @@ class particledata {
 		        ."WHERE i.`project|projects|project`='$projectId' ";
 		if (!$getHidden) $q.= "AND (i.`hidden` IS NULL OR i.`hidden` = 0) ";
 		$q.= "ORDER BY i.`DEF_id` DESC";
+		//echo $q."\n<BR/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
