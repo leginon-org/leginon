@@ -580,9 +580,23 @@ function modelsummarytable($modelid, $mini=false) {
 	$modelname = $modeldata['name'];
 	$symdata = $particle->getSymInfo($modeldata['REF|ApSymmetryData|symmetry']);
 
+	if ($_POST['hideItem'.$modelid] == 'hide') {
+		$particle->updateHide('ApInitialModelData', $modelid, '1');
+		$modeldata['hidden']=1;
+	} elseif ($_POST['unhideItem'.$modelid] == 'unhide') {
+		$particle->updateHide('ApInitialModelData', $modelid, '0');
+		$modeldata['hidden']='0';
+	}
+
+	if ($modeldata['hidden'] == 1) {
+		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
+		$j.= " <input class='edit' type='submit' name='unhideItem".$modelid."' value='unhide'>\n";
+		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>";
+	} else $j.= " <input class='edit' type='submit' name='hideItem".$modelid."' value='hide'>\n";
+
 	// start table
-	$modeltable .= apdivtitle("Initial model: <span class='aptitle'>$modelname</span> (ID: $modelid)\n");
-	$display_keys['id'] = "<b>".$modeldata['DEF_id']."</b> [<a href='viewmodels.php?expId=$expId'>show all</a>]";
+	$modeltable .= apdivtitle("Initial model: <span class='aptitle'>$modelname</span> (ID: $modelid) $j\n");
+	//$display_keys['id'] = "<b>".$modeldata['DEF_id']."</b> [<a href='viewmodels.php?expId=$expId'>show all</a>]";
 	$display_keys['description'] = $modeldata['description'];
 	$display_keys['path'] = $modeldata['path']."/".$modelname;
 	$display_keys['symmetry'] = "".$symdata['symmetry'].": <i>".$symdata['description']."</i>";
@@ -591,10 +605,42 @@ function modelsummarytable($modelid, $mini=false) {
 
 	$modeltable .= "<table border='0'>\n";
 	// get first image
+
+	$allpngs = glob($modeldata['path']."/$modelname*.png");
 	$modeltable .= "<tr><td rowspan='15'>";
-	$allpngs = glob($modeldata['path']."/*.png");
-	$firstimage = $allpngs[0];
-	$modeltable .= "<img src='loadimg.php?filename=$firstimage&s=120' height='120'>\n";
+	if (count($allpngs) > 4) {
+		$modeltable .= "<table>\n";
+		$modeltable .= "<tr><td>\n";
+		$modeltable .= "<a href='loadimg.php?filename=$allpngs[0]'>\n";
+		$modeltable .= "<img src='loadimg.php?filename=$allpngs[0]&s=40' height='40' border='0'></a>\n";
+		$modeltable .= "</td><td rowspan='2'>\n";
+		$modeltable .= "<a href='loadimg.php?filename=$allpngs[1]'>\n";
+		$modeltable .= "<img src='loadimg.php?filename=$allpngs[1]&s=100' height='100' border='0'></a>\n";
+		$modeltable .= "</td><td>";
+		$modeltable .= "<a href='loadimg.php?filename=$allpngs[2]'>\n";
+		$modeltable .= "<img src='loadimg.php?filename=$allpngs[2]&s=40' height='40' border='0'></a>\n";
+		$modeltable .= "</td></tr><tr><td>";
+		$modeltable .= "<a href='loadimg.php?filename=$allpngs[3]'>\n";
+		$modeltable .= "<img src='loadimg.php?filename=$allpngs[3]&s=40' height='40' border='0'></a>\n";
+		$modeltable .= "</td><td>";
+		$modeltable .= "<a href='loadimg.php?filename=$allpngs[4]'>\n";
+		$modeltable .= "<img src='loadimg.php?filename=$allpngs[4]&s=40' height='40' border='0'></a>\n";
+		$modeltable .= "</td></tr></table>";
+	} elseif (count($allpngs) > 2) {
+		$modeltable .= "<table>\n";
+		$modeltable .= "<tr><td rowspan='2'>\n";
+		$modeltable .= "<a href='loadimg.php?filename=$allpngs[0]'>\n";
+		$modeltable .= "<img src='loadimg.php?filename=$allpngs[0]&s=100' height='100' border='0'></a>\n";
+		$modeltable .= "</td><td>";
+		$modeltable .= "<a href='loadimg.php?filename=$allpngs[1]'>\n";
+		$modeltable .= "<img src='loadimg.php?filename=$allpngs[1]&s=40' height='40' border='0'></a>\n";
+		$modeltable .= "</td></tr><tr><td>";
+		$modeltable .= "<a href='loadimg.php?filename=$allpngs[2]'>\n";
+		$modeltable .= "<img src='loadimg.php?filename=$allpngs[2]&s=40' height='40' border='0'></a>\n";
+		$modeltable .= "</td></tr></table>";
+	} else {
+		$modeltable .= "<img src='loadimg.php?filename=$allpngs[0]&s=120' height='120' border='0'></a>\n";
+	}
 	$modeltable .= "</td></tr>";
 	// show data
 	foreach($display_keys as $k=>$v) {
