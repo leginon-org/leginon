@@ -146,13 +146,16 @@ def pointsToLattice(points, spacing, tolerance, first_is_center=False):
 		#found_lattice = False
 		for lat in lattices:
 			lat.add_point(point)
-	# find the best lattice
-	maxpoints = 1
-	best_lattice = None
-	for lat in lattices:
-		if len(lat.points) > maxpoints:
-			maxpoints = len(lat.points)
-			best_lattice = lat
+	if len(points) == 1:
+		best_lattice = lattices[0]
+	else:
+		# find the best lattice
+		maxpoints = 1
+		best_lattice = None
+		for lat in lattices:
+			if len(lat.points) > maxpoints:
+				maxpoints = len(lat.points)
+				best_lattice = lat
 	return best_lattice
 
 
@@ -170,7 +173,7 @@ if __name__ == '__main__':
 
 	f.close()
 
-	points = [(0,0), (2,2.1), (0,2), (1,1), (-2,-4), (2,2.001)]
+	points = [(0,0)]
 	#lat = profile.run('pointsToLattice(points, 2.0, 0.1)')
 	lat = pointsToLattice(points, 2.0, 0.1)
 	keys = lat.lattice_points.keys()
