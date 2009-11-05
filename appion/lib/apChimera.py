@@ -330,7 +330,7 @@ def getColorString():
 	#return secondColor()+",None,"+minuteColor()
 	first = hourColor()
 	#print "first", first
-	third = dayColor()
+	third = minuteColor()
 	#third = secondColor()
 	#print "third", third
 	colortuple = first+",None,"+third
