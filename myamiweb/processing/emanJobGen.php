@@ -13,6 +13,7 @@ require "inc/processing.inc";
 require "inc/leginon.inc";
 require "inc/viewer.inc";
 require "inc/project.inc";
+require "inc/summarytables.inc";
 
 $selectedcluster=$CLUSTER_CONFIGS[0];
 if ($_POST['cluster']) {
@@ -166,6 +167,12 @@ elseif ($_POST['submitjob']) {
 
 else stackModelForm();
 
+/*
+******************************************
+******************************************
+******************************************
+*/
+
 function stackModelForm($extra=False) {
 	// check if session provided
 	$expId = $_GET['expId'];
@@ -282,6 +289,11 @@ function stackModelForm($extra=False) {
 	exit;
 }
 
+/*
+******************************************
+******************************************
+******************************************
+*/
 
 function jobForm($extra=false) {
 	global $clusterdata, $CLUSTER_CONFIGS, $selectedcluster;
@@ -307,12 +319,14 @@ function jobForm($extra=false) {
 	// get stack data
 	$stackinfo = explode('|--|',$_POST['stackval']);
 	$box = $stackinfo[2];
+	$stackid = $stackinfo[0];
 
 	// get model data
 	$modelinfo = explode('|--|',$_POST['model']);
 	$syminfo = explode(' ',$modelinfo[4]);
 	$modsym=$syminfo[0];
 	if ($modsym == 'Icosahedral') $modsym='icos';
+	$modelid = $modelinfo[0];
 
 	$clusterdefaults = ($selectedcluster==$_POST['clustermemo']) ? true : false;
 	
@@ -422,11 +436,11 @@ function jobForm($extra=false) {
 	echo"</td></tr></table>"; //overall table
 
 	$bgcolor="#E8E8E8";
-	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','maxshift','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','refine','tree','coran','coranCC','coranmask','coranlp','coranhp','eotest','copy');  
+	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','maxshift','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','refine','tree','coran','affprop','eotest','copy');  
 	echo"
-  <br />
-  <H4 style='align=\'center\' >EMAN Reconstruction Parameters</H4>
-  <hr />
+	<br />
+	<h4> EMAN Reconstruction Parameters</h4>
+	<input type='SUBMIT' NAME='write' VALUE='Create Job File'><br/><hr/>\n
 	";
 
 	// import values from previous uploaded reconstruction
@@ -511,9 +525,9 @@ function jobForm($extra=false) {
 		$coranmaskn="coranmask".$i;
 		$coranlpn="coranlp".$i;
 		$coranhpn="coranhp".$i;
-		$msgpn="msgp".$i;
-		$msgp_corcutoffn="msgp_corcutoff".$i;
-		$msgp_minptclsn="msgp_minptcls".$i;
+		$affpropn="affprop".$i;
+		$affpropCCn="affpropCC".$i;
+		$affpropMPn="affpropMP".$i;
 
 		// if importing values, set them here
 		if ($_POST['import']=='groel1') {
@@ -635,8 +649,8 @@ function jobForm($extra=false) {
 			$coranmask=($i>$j) ? $_POST["coranmask".($i-1)] : $_POST[$coranmaskn];
 			$coranlp=($i>$j) ? $_POST["coranlp".($i-1)] : $_POST[$coranlpn];
 			$coranhp=($i>$j) ? $_POST["coranhp".($i-1)] : $_POST[$coranhpn];
-			$msgp_corcutoff=($i>$j) ? $_POST["msgp_corcutoff".($i-1)] : $_POST[$msgp_corcutoffn];
-			$msgp_minptcls=($i>$j) ? $_POST["msgp_minptcls".($i-1)] : $_POST[$msgp_minptclsn];
+			$affpropCC=($i>$j) ? $_POST["affpropCC".($i-1)] : $_POST[$affpropCCn];
+			$affpropMP=($i>$j) ? $_POST["affpropMP".($i-1)] : $_POST[$affpropMPn];
 			// use symmetry of model by default, but you can change it
 			if ($i==1 && !$_POST['duplicate']) $sym=$modsym;
 			
@@ -649,7 +663,7 @@ function jobForm($extra=false) {
 				$eotest=($_POST["eotest".($i-1)]=='on') ? 'CHECKED' : '';
 				$coran=($_POST["coran".($i-1)]=='on') ? 'CHECKED' : '';
 				#$perturb=($_POST["perturb".($i-1)]=='on') ? 'CHECKED' : '';
-				$msgp=($_POST["msgp".($i-1)]=='on') ? 'CHECKED' : '';
+				$affprop=($_POST["affprop".($i-1)]=='on') ? 'CHECKED' : '';
 				$treetwo=($_POST["tree".($i-1)]=='2') ? 'selected' : '';
 				$treethree=($_POST["tree".($i-1)]=='3') ? 'selected' : '';
 			}
@@ -662,7 +676,7 @@ function jobForm($extra=false) {
 				$eotest=($_POST[$eotestn]=='on') ? 'CHECKED' : '';
 				$coran=($_POST[$corann]=='on') ? 'CHECKED' : '';
 				#$perturb=($_POST[$perturbn]=='on') ? 'CHECKED' : '';
-				$msgp=($_POST[$msgpn]=='on') ? 'CHECKED' : '';
+				$affprop=($_POST[$affpropn]=='on') ? 'CHECKED' : '';
 				$treetwo=($_POST[$treen]=='2') ? 'selected' : '';
 				$treethree=($_POST[$treen]=='3') ? 'selected' : '';
 			}
@@ -693,20 +707,53 @@ function jobForm($extra=false) {
 	echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$refinen' $refine></td>\n";
 	#echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$perturbn' $perturb></td>\n";
       	#echo"<td bgcolor='$rcol'><input type='checkbox' NAME='$goodbadn' $goodbad></td>\n";
-	echo "<td bgcolor='$rcol'><select name='$treen'><option>-</option><option $treetwo>2</option><option $treethree>3</option></select></td>
-        <td bgcolor='$rcol'><input type='checkbox' NAME='$corann' $coran></td>\n";
-        echo "<td bgcolor='$rcol'><input type='text' size='3' name='$coranCCn' value='$coranCC'></td>\n";
-        echo "<td bgcolor='$rcol'><input type='text' size='4' name='$coranmaskn' value='$coranmask'></td>\n";
-        echo "<td bgcolor='$rcol'><input type='text' size='3' name='$coranlpn' value='$coranlp'></td>\n";
-        echo "<td bgcolor='$rcol'><input type='text' size='3' name='$coranhpn' value='$coranhp'></td>\n";
-        echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$eotestn' $eotest></td>\n";
+	echo "<td bgcolor='$rcol'><select name='$treen'><option>-</option><option $treetwo>2</option><option $treethree>3</option></select></td>\n";
+	echo "<td bgcolor='$rcol'>\n";
+
+ // Coran box
+	echo "  <table class='tableborder' border='1' cellpadding='4' cellspacing='4'>";
+	echo "  <tr>\n";
+	echo "    <td bgcolor='$rcol'><font size='-2'>".docpop('coran', 'Use Coran')."</font></td>\n";
+	echo "    <td bgcolor='$rcol'><font size='-2'>".docpop('coranCC', 'CC cut')."</font></td>\n";
+	echo "    <td bgcolor='$rcol'><font size='-2'>".docpop('coranmask', 'Mask')."</font></td>\n";
+	echo "    <td bgcolor='$rcol'><font size='-2'>".docpop('coranlp', 'LP')."</font></td>\n";
+	echo "    <td bgcolor='$rcol'><font size='-2'>".docpop('coranhp', 'HP')."</font></td>\n";
+	echo "  </tr>\n";
+	echo "  <tr>\n";
+	echo "    <td bgcolor='$rcol'><input type='checkbox' NAME='$corann' $coran></td>\n";
+	echo "    <td bgcolor='$rcol'><input type='text' size='2' name='$coranCCn' value='$coranCC'></td>\n";
+	echo "    <td bgcolor='$rcol'><input type='text' size='3' name='$coranmaskn' value='$coranmask'></td>\n";
+	echo "    <td bgcolor='$rcol'><input type='text' size='2' name='$coranlpn' value='$coranlp'></td>\n";
+	echo "    <td bgcolor='$rcol'><input type='text' size='2' name='$coranhpn' value='$coranhp'></td>\n";
+	echo "  </tr></table>\n";
+	echo "</td>\n";
+
+ // Affinity propagation box
+	/*
+	echo "<td bgcolor='$rcol'>\n";
+	echo "  <table class='tableborder' border='1' cellpadding='4' cellspacing='4'>";
+	echo "  <tr>\n";
+	echo "    <td bgcolor='$rcol'><font size='-2'>".docpop('affprop', 'Use AP')."</font></td>\n";
+	echo "    <td bgcolor='$rcol'><font size='-2'>".docpop('affpropMP', 'Min part')."</font></td>\n";
+	echo "    <td bgcolor='$rcol'><font size='-2'>".docpop('affpropCC', 'CC cut')."</font></td>\n";
+	echo "  </tr>\n";
+	echo "  <tr>\n";
+	echo "    <td bgcolor='$rcol'><input type='checkbox' name='$affpropn' $affprop></td>\n";
+	echo "    <td bgcolor='$rcol'><input type='text' size='2' name='$affpropMPn' value='$coranCC'></td>\n";
+	echo "    <td bgcolor='$rcol'><input type='text' size='3' name='$affpropCCn' value='$coranmask'></td>\n";
+	echo "  </tr></table>\n";
+	echo "</td>\n";
+	*/
+	echo "<input type='hidden' name='$affpropn' value='off'>\n";
+
+	echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$eotestn' $eotest></td>\n";
 	echo "<td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i' onclick='emanjob.submit()'></td>\n";
 	echo "</tr>\n";
 
 
 ### commented out for now, since  not working properly
 #	<TD colspan=6 bgcolor='$bgcolor' CELLPADDING=0 CELLSPACING=0>
-#	  <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4 WIDTH=100%>
+#	  <table class='tableborder' border='1' cellpadding=4 cellspacing=4 width=100%>
 #            <tr>
 #        <td bgcolor='$bgcolor'><input type='checkbox' NAME='$msgpn' $msgp><A HREF=\"javascript:refinfopopup('msgp')\">Subclassification by message passing:</A></td>
 #        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_corcutoff')\">CorCutoff:</A>
@@ -719,18 +766,38 @@ function jobForm($extra=false) {
 #      </tr>
 	}
 	echo"
-  </table>
-  <input type='hidden' NAME='numiters' VALUE='$numiters'><P>
-  <input type='SUBMIT' NAME='write' VALUE='Create Job File'>
-  </form>\n";
+	  </table>
+	  <input type='hidden' NAME='numiters' VALUE='$numiters'><P>
+	  <input type='SUBMIT' NAME='write' VALUE='Create Job File'>
+	  </form><br/>\n";
+
+	//echo "StackID: $stackid -- ModelID: $modelid<br/>\n";
+	echo "<table class='tablebubble'><tr><td>\n";
+	echo stacksummarytable($stackid, true);
+	echo "</td></tr><tr><td>\n";
+	echo modelsummarytable($modelid, true);
+	echo "</td></tr></table>\n";
+
 	processing_footer();
 	exit;
 }
+
+/*
+******************************************
+******************************************
+******************************************
+*/
 
 function formatEndPath($path) {
 	$path = ereg(DIRECTORY_SEPARATOR."$", $path) ? $path : $path.DIRECTORY_SEPARATOR;
 	return $path;
 }
+
+/*
+******************************************
+******************************************
+******************************************
+*/
 
 function getPBSMemoryNeeded() {
 	$particle = new particledata();
@@ -762,6 +829,12 @@ function getPBSMemoryNeeded() {
 	$sizestr = sprintf("%dgb", $numgig);
 	return $sizestr;
 }
+
+/*
+******************************************
+******************************************
+******************************************
+*/
 
 function writeJobFile ($extra=False) {
 	global $clusterdata;
@@ -820,7 +893,7 @@ function writeJobFile ($extra=False) {
 	// rescale initial model if necessary:
 	if ($rebox || $rescale) {
 		$ejob.= "mv -v threed.0a.mrc init.mrc\n";
-		$ejob.= "proc3d init.mrc threed.0a.mrc $rescale clip=$box,$box,$box\n";
+		$ejob.= "proc3d init.mrc threed.0a.mrc $rescale clip=$box,$box,$box norm=0,1\n";
 		$ejob.= "rm -fv init.mrc\n";
 	}
 
@@ -853,9 +926,9 @@ function writeJobFile ($extra=False) {
 		$coranmask=$_POST["coranmask".$i];
 		$coranlp=$_POST["coranlp".$i];
 		$coranhp=$_POST["coranhp".$i];
-		$msgp=$_POST["msgp".$i];
-		$msgp_corcutoff=$_POST["msgp_corcutoff".$i];
-		$msgp_minptcls=$_POST["msgp_minptcls".$i];
+		$affprop=$_POST["affprop".$i];
+		$affpropCC=$_POST["affpropCC".$i];
+		$affpropMP=$_POST["affpropMP".$i];
 		$line="\nrefine $i proc=$procs ang=$ang pad=$pad";
 		if ($mask) $line.=" mask=$mask";
 		if ($imask) $line.=" imask=$imask";
@@ -915,12 +988,12 @@ function writeJobFile ($extra=False) {
 			$line.="mv -v fsc.eotest fsc.eotest.".$i."\n";
 			$line.= C_APPION_BIN."getRes.pl >> resolution.txt $i $box $apix\n";
 		}
-		if ($msgp=='on') {
-			$line .="msgPassing_subClassification.py mask=$mask iter=$i";
-			if ($sym) $line .= " sym=$sym";
-			if ($hard) $line .= " hard=$hard";
-			if ($msgp_corcutoff) $line .= " corCutOff=$msgp_corcutoff";
-			if ($msgp_minptcls) $line .= " minNumOfPtcls=$msgp_minptcls";
+		if ($affprop=='on') {
+			$line .="affPropSubClassify.py --mask=$mask --iter=$i";
+			if ($sym) $line .= " --sym=$sym";
+			if ($hard) $line .= " --hard=$hard";
+			if ($affpropCC) $line .= " --cc-cut=$affpropCC";
+			if ($affpropMP) $line .= " --minpart=$affpropMP";
 			$line .= "\n";
 		}
 		$line.="rm cls*.lst\n";
@@ -966,6 +1039,12 @@ function writeJobFile ($extra=False) {
 	exit;
 }
 
+/*
+******************************************
+******************************************
+******************************************
+*/
+
 function defaultReconValues ($box) {
 	$rad = ($box/2)-2;
 	$javafunc = "
@@ -990,9 +1069,9 @@ function defaultReconValues ($box) {
       //obj.perturb1.checked = false;
       obj.eotest1.checked = true;
       obj.coran1.checked = false;
-      obj.msgp1.checked = false;
-      obj.msgp_corcutoff1.value = '0.8';
-      obj.msgp_minptcls1.value = '500';
+      obj.affprop1.checked = false;
+      obj.affpropCC1.value = '0.8';
+      obj.affpropMP1.value = '500';
       return;
     }
   </SCRIPT>\n";
