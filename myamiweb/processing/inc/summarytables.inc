@@ -265,7 +265,7 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		}
 		$stacktable.= "</td>\n";
 
-		if ($type != "none") {
+		if ($type != "none" && $numpart < 2000) {
 			$stacktable.= "<td rowspan='30' align='center' valign='top'>";
 			$stacktable.= "<a href='aligngraph.php?expId=$expId&alignid=$alignstackid&type=$type'>\n";
 			if ($mini)
@@ -597,6 +597,7 @@ function modelsummarytable($modelid, $mini=false) {
 	// start table
 	$modeltable .= apdivtitle("Initial model: <span class='aptitle'>$modelname</span> (ID: $modelid) $j\n");
 	//$display_keys['id'] = "<b>".$modeldata['DEF_id']."</b> [<a href='viewmodels.php?expId=$expId'>show all</a>]";
+	$display_keys['date time'] = $modeldata['DEF_timestamp'];
 	$display_keys['description'] = $modeldata['description'];
 	$display_keys['path'] = $modeldata['path']."/".$modelname;
 	$display_keys['symmetry'] = "".$symdata['symmetry'].": <i>".$symdata['description']."</i>";
