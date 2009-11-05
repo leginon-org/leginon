@@ -3,56 +3,40 @@ require"inc/particledata.inc";
 require"inc/leginon.inc";
 require"inc/project.inc";
 require"inc/processing.inc";
+require "inc/summarytables.inc";
 
 $expId= $_GET['expId'];
-$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-if ($_GET['showHidden']) $formAction.="&showHidden=True";
+$projectId=getProjectFromExpId($expId);
 $particle = new particledata();
 
-$projectId=getProjectFromExpId($expId);
-
-$models = $particle->getModelsFromProject($projectId,True);
-$javascript = editTextJava();
-
-processing_header("Initial Models","Initial Models",$javascript);
-
-if ($models) {
-	// separate hidden from shown;
-	$shown = array();
-	$hidden = array();
-	foreach($models as $model) {
-		if (is_array($model)) {
-			$modelId=$model['DEF_id'];
-			// first update hide value
-			if ($_POST['hideModel'.$modelId]) {
-				$particle->updateHide('ApInitialModelData',$modelId,1);
-				$model['hidden']=1;
-			}
-			elseif ($_POST['unhideModel'.$modelId]) {
-				$particle->updateHide('ApInitialModelData',$modelId,0);
-				$model['hidden']='';
-			}
-			if ($model['hidden']==1) $hidden[]=$model;
-			else $shown[]=$model;
-		}
-	}
-	$modeltable = "<form name='modelform' method='post' action='$formAction'>\n";
-	foreach ($shown as $m) $modeltable.= modelEntry($m,$particle);
-	// show hidden templates
-	if ($_GET['showHidden'] && $hidden) {
-		if ($shown) $modeltable.="<hr />\n";
-		$modeltable.="<b>Hidden Models</b> ";
-		$modeltable.="<a href='".$_SERVER['PHP_SELF']."?expId=$expId'>[hide]</a><br />\n";
-		foreach ($hidden as $m) $modeltable.= modelEntry($m,$particle,True);
-	}
-
-	$modeltable.= "</form>\n";
+$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+if ($_GET['showHidden']) {
+	$formAction.="&showHidden=1";
+	$models = $particle->getModelsFromProject($projectId, True);
+} else {
+	$models = $particle->getModelsFromProject($projectId, False);
 }
 
-if ($hidden && !$_GET['showHidden']) echo "<a href='".$formAction."&showHidden=True'>Show Hidden Models</a><br />\n";
+$javascript = editTextJava();
 
-if ($shown || $hidden) echo $modeltable;
-else echo "<B>Project does not contain any models.</B>\n";
+processing_header("Initial Models", "Initial Models", $javascript);
+
+if (!$_GET['showHidden']) echo "<a href='".$formAction."&showHidden=1'>Show Hidden Models</a><br />\n";
+
+if ($models) {
+	$modeltable = "<form name='modelform' method='post' action='$formAction'>\n";
+	foreach($models as $model) {
+		if (is_array($model)) {
+			$modelid=$model['DEF_id'];
+			$modeltable .= modelsummarytable($modelid);
+		}
+	}
+	$modeltable .= "</form>\n";
+	echo $modeltable;
+} else echo "<B>Project does not contain any models.</B>\n";
+
+if (!$_GET['showHidden']) echo "<a href='".$formAction."&showHidden=1'>Show Hidden Models</a><br />\n";
+
 processing_footer();
 exit;
 
