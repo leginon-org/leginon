@@ -354,7 +354,7 @@ class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['acquisition template'] = gui.wx.TargetTemplate.Panel(self,
 			'Acquisition Target Template', autofill=True)
 		self.widgets['focus template thickness'] = wx.CheckBox(self, -1,
-			'Use focus template thickness')
+			'Use focus template thickness and limit to one focus target')
 		self.widgets['focus stats radius'] = IntEntry(self, -1, chars=6)
 		self.widgets['focus min mean thickness'] = FloatEntry(self, -1, chars=6)
 		self.widgets['focus max mean thickness'] = FloatEntry(self, -1, chars=6)
