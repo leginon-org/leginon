@@ -22,6 +22,12 @@ if ($_POST['cluster']) {
 $selectedcluster=strtolower($selectedcluster);
 @include_once $selectedcluster.".php";
 
+/*
+******************************************
+******************************************
+******************************************
+*/
+
 if ($_POST['write']) {
 	// write job file
 	$particle = new particledata();
@@ -60,6 +66,12 @@ if ($_POST['write']) {
 	writeJobFile();
 }
 
+/*
+******************************************
+******************************************
+******************************************
+*/
+
 elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
 	// create job form
 	## make sure a stack and model were selected
@@ -76,6 +88,12 @@ elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
 	//if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
 	jobForm();
 }
+
+/*
+******************************************
+******************************************
+******************************************
+*/
 
 elseif ($_POST['submitjob']) {
 	// submit job
@@ -176,113 +194,63 @@ else stackModelForm();
 function stackModelForm($extra=False) {
 	// check if session provided
 	$expId = $_GET['expId'];
-	$modelonly = $_GET['modelonly'];
-	if ($expId) {
-		$sessionId=$expId;
-		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-	}
-	else {
-		$sessionId=$_POST['sessionId'];
-		$formAction=$_SERVER['PHP_SELF'];
-	}
+	$projectId = getProjectFromExpId($expId);
 
-
-	// if user wants to use models from another project
-
-	if($_POST['projectId'])
-		$projectId = $_POST[projectId];
-	else
-		$projectId=getProjectFromExpId($expId);
-
-	$projects=getProjectList();
-
-	if (is_numeric($projectId)) {
-		$particle = new particledata();
-		// get initial models associated with project
-		$models=$particle->getModelsFromProject($projectId);
-	}
-	if (!$modelonly) {
-	 	 // find each stack entry in database
-	  	// THIS IS REALLY, REALLY SLOW
-		$stackIds = $particle->getStackIds($sessionId);
-		$stackinfo=explode('|--|',$_POST['stackval']);
-		$stackidval=$stackinfo[0];
-		$apix=$stackinfo[1];
-		$box=$stackinfo[2];
-	}
 	$javafunc="<script src='../js/viewer.js'></script>\n";
-	if (!$modelonly) {
-	  	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
+	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
+
+	if ($expId) {
+		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	} else {
+		exit;
 	}
 
-	else {
-		processing_header("Rescale/Resize Model","Rescale/Resize Model",$javafunc);
-	}
+	$particle = new particledata();
+
+	// get initial models associated with project
+	$models = $particle->getModelsFromProject($projectId);
+
+	// find each stack entry in database
+	$stackIds = $particle->getStackIds($expId);
+	$stackinfo = explode('|--|', $_POST['stackval']);
+	$stackidval = $stackinfo[0];
+	$apix = $stackinfo[1];
+	$box = $stackinfo[2];
+
 	// write out errors, if any came up:
 	if ($extra) echo "<font color='red' size='+2'>$extra</font>\n<hr>\n";
-	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
-	echo "
-  <b>Select Project:</b><br>
-  <SELECT NAME='projectId' onchange='newexp()'>\n";
 
-	foreach ($projects as $k=>$project) {
-		$sel = ($project['id']==$projectId) ? "selected" : '';
-		echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
-	}
-	echo"
-  </select>
-  <P>\n";
-	if (!$modelonly) {
-		echo"
-			<B>Stack:</B><br>";
-		$particle->getStackSelector($stackIds,$stackidval,'');
-	}
+	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
+
+	echo"<b>Stack:</b><br>";
+	$particle->getStackSelector($stackIds, $stackidval, '');
+
 	// show initial models
 	echo "<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
-	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><br>\n";
-	echo "<P>\n";
+	echo "<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><br>\n";
+
 	$minf = explode('|--|',$_POST['model']);
 	if (is_array($models) && count($models)>0) {
+		echo "<table class='tableborder' border='1'>\n";
 		foreach ($models as $model) {
-			echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
-			// get list of png files in directory
-			$pngfiles=array();
-			$modeldir= opendir($model['path']);
-			while ($f = readdir($modeldir)) {
-				if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
-			}
-			sort($pngfiles);
+			echo "<tr><td>\n";
+			$modelid = $model['DEF_id'];
+			$symdata = $particle->getSymInfo($modeldata['REF|ApSymmetryData|symmetry']);
+			$modelvals = "$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$symdata[symmetry]";
+			echo "<input type='radio' NAME='model' value='$modelvals' ";
+			// check if model was selected
+			if ($modelid == $minf[0]) echo " CHECKED";
+			echo ">\n";
+			echo"Use<br/>Model\n";
 
-			// display starting models
-			$sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
-			$sym['symmetry'] = strtolower($sym['symmetry']);
-			echo "<tr><TD COLSPAN=2>\n";
-			$modelvals="$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
-			if (!$modelonly) {
-				echo "<input type='RADIO' NAME='model' VALUE='$modelvals' ";
-				// check if model was selected
-				if ($model['DEF_id']==$minf[0]) echo " CHECKED";
-				echo ">\n";
-			}
-			echo"Use ";
-			echo"Model ID: $model[DEF_id]\n";
-			echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><br>\n";
-			foreach ($pngfiles as $snapshot) {
-				$snapfile = $model['path'].'/'.$snapshot;
-				echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'>\n";
-			}
-			echo "</td>\n";
-			echo "</tr>\n";
-			echo"<tr><TD COLSPAN=2>$model[description]</td></tr>\n";
-			echo"<tr><TD COLSPAN=2>$model[path]/$model[name]</td></tr>\n";
-			echo"<tr><td>pixel size:</td><td>$model[pixelsize]</td></tr>\n";
-			echo"<tr><td>box size:</td><td>$model[boxsize]</td></tr>\n";
-			echo"<tr><td>symmetry:</td><td>$sym[symmetry]</td></tr>\n";
-			echo"<tr><td>resolution:</td><td>$model[resolution]</td></tr>\n";
-			echo "</table>\n";
-			echo "<P>\n";
+			echo "</td><td>\n";
+
+			echo modelsummarytable($modelid, true);
+
+			echo "</td></tr>\n";
 		}
-		if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
+		echo "</table>\n\n";
+		echo "<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
 	}
 	else echo "No initial models in database";
 	processing_footer();
