@@ -59,6 +59,7 @@ class GonModeler(calibrator.Calibrator):
 				return
 		except Exception, e:
 			self.logger.error('Modeled stage measurement failed: %s' % e)
+			self.threadlock.release()
 			self.panel.measurementDone()
 			return
 
@@ -68,6 +69,7 @@ class GonModeler(calibrator.Calibrator):
 			e = 'unable to access instrument'
 			self.logger.error('Modeled stage measurement failed: %s' % e)
 			self.panel.measurementDone()
+			self.threadlock.release()
 			return
 		try:
 			known_pixelsize = self.pcal.retrievePixelSize(None, None, mag)
@@ -76,7 +78,13 @@ class GonModeler(calibrator.Calibrator):
 			self.panel.measurementDone()
 			return
 		self.oldimagedata = None
-		self.acquireNextPosition(axis)
+		try:
+			self.acquireNextPosition(axis)
+		except Exception, e:
+			self.logger.error('Acquire next position failed  %s' % e)
+			self.threadlock.release()
+			self.panel.measurementDone()
+			return
 		currentpos = self.instrument.tem.StagePosition
 
 		for i in range(points):
@@ -87,7 +95,13 @@ class GonModeler(calibrator.Calibrator):
 				t.stop()
 				break
 			currentpos[axis] += interval
-			datalist = self.acquireNextPosition(axis, currentpos)
+			try:
+				datalist = self.acquireNextPosition(axis, currentpos)
+			except Exception, e:
+				self.logger.error('Acquire next position failed  %s' % e)
+				self.threadlock.release()
+				self.panel.measurementDone()
+				return
 			gonx = datalist[0]
 			gony = datalist[1]
 			delta = datalist[2]
@@ -139,7 +153,6 @@ class GonModeler(calibrator.Calibrator):
 			## cross correlation
 			crosscorr = self.correlator.phaseCorrelate()
 			self.setImage(crosscorr, 'Correlation')
-			
 			## subtract auto correlation
 			#crosscorr -= self.autocorr
 
