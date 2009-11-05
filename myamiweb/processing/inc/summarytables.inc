@@ -695,4 +695,6 @@ function templateStackEntry($stackInfo, $hidden=False, $mini=False){
 }
 
 
+
+
 ?>
