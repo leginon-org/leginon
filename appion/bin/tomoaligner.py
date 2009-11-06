@@ -114,7 +114,7 @@ class protomoAligner(appionScript.AppionScript):
 		self.params['rundir'] = os.path.join(self.params['tiltseriesdir'],alignrunpath)
 
 	def createParamsFromGoodAligner(self,alignerid):
-		q = appiondata.ApProtomoAlignerParamsData()
+		q = appiondata.ApTomoAlignerParamsData()
 		alignerdata = q.direct_query(alignerid)
 		self.params['goodcycle'] = alignerdata['refine cycle']['cycle']
 		alignrundata = alignerdata['alignrun']
