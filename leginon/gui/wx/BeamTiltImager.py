@@ -84,7 +84,7 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.widgets['tableau type'], (0, 1), (1, 1), wx.ALIGN_CENTER)
 
-		self.widgets['beam tilt'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.01')
+		self.widgets['beam tilt'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.005')
 		bt_sizer = wx.GridBagSizer(5, 5)
 		bt_sizer.Add(self.widgets['beam tilt'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
