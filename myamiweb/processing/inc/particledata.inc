@@ -172,21 +172,23 @@ class particledata {
 		$results = $this->mysql->getSQLResult($q);
 		if (count(array($results))) {
 			$finalresults = array();
-			foreach ($results as $result) {
-				$info = $this->getTomoAlignmentInfo($result['alignrunid']);
-				$result = array_merge($result,$info);
-				if ($result['protomoid']) {
-					$result['method'] = 'protomo';
-				} else {
-					if ($result['imodid']) {
-						$result['method'] = 'imod';
-					} elseif ($result['xleginonid']) {
-						$result['method'] = 'leginon';
+			if ($results) {
+				foreach ($results as $result) {
+					$info = $this->getTomoAlignmentInfo($result['alignrunid']);
+					$result = array_merge($result,$info);
+					if ($result['protomoid']) {
+						$result['method'] = 'protomo';
 					} else {
-						$result['method'] = 'unknown';
+						if ($result['imodid']) {
+							$result['method'] = 'imod';
+						} elseif ($result['xleginonid']) {
+							$result['method'] = 'leginon';
+						} else {
+							$result['method'] = 'unknown';
+						}
 					}
+					$finalresults[] = $result;
 				}
-				$finalresults[] = $result;
 			}
 		} else {
 			$finalresults = $results;
