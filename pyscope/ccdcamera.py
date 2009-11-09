@@ -29,9 +29,10 @@ class CCDCamera(object):
 
 	def calculateCenteredGeometry(self, dimension, binning):
 		camerasize = self.getCameraSize()
-		offset = (camerasize['x']/binning - dimension)/2
+		offsetx = (camerasize['x']/binning - dimension)/2
+		offsety = (camerasize['y']/binning - dimension)/2
 		geometry = {'dimension': {'x': dimension, 'y': dimension},
-								'offset': {'x': offset, 'y': offset},
+								'offset': {'x': offsetx, 'y': offsety},
 								'binning': {'x': binning, 'y': binning}}
 		return geometry
 
