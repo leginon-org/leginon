@@ -15,6 +15,7 @@
 import copy
 import wx
 from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
+import numpy
 
 ConfigurationChangedEventType = wx.NewEventType()
 SetConfigurationEventType = wx.NewEventType()
@@ -42,7 +43,7 @@ class CameraPanel(wx.Panel):
 		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.size = None
 		self.geometry = None
-		self.binnings = {'x': [1,2,4,8,16], 'y': [1,2,4,8,16]}
+		self.binnings = {'x': [1,2,3,4,8,16], 'y': [1,2,3,4,8,16]}
 		self.defaultexptime = 1000.0
 		self.common = {}
 
@@ -234,10 +235,22 @@ class CameraPanel(wx.Panel):
 		if self.binnings['x'] != self.binnings['y']:
 			return geometries
 		self.minsize = min(self.size['x'],self.size['y'])
-		dimensions = map(lambda b: self.minsize/b, self.binnings['x'])
+		dimensions = [self.minsize/float(b) for b in self.binnings['x']]
+		def good(dim):
+			return not bool(numpy.modf(dim)[1]-dim)
+		def filtergood(input, mask):
+			result = []
+			for i,inval in enumerate(input):
+				if mask[i]:
+					result.append(inval)
+			return result
+		mask = [good(dim) for dim in dimensions]
+		dimensions = filtergood(dimensions, mask)
+		binnings = filtergood(self.binnings['x'], mask)
+
 		dimensions.reverse()
 		for d in dimensions:
-			for b in self.binnings['x']:
+			for b in binnings:
 				if d*b <= self.minsize:
 					#key = '%d² × %d' % (d, b)
 					key = '%d x %d' % (d, b)
