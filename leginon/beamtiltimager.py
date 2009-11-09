@@ -216,6 +216,7 @@ class BeamTiltImager(acquisition.Acquisition):
 			self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
 			status = acquisition.Acquisition.acquire(self, presetdata, emtarget, channel= channel)
 			imagedata = self.imagedata
+			self.setImage(imagedata, 'Image')
 			self.instrument.tem.BeamTilt = oldbt
 			angle = anglelist[i]
 			rad = radlist[i]
