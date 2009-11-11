@@ -238,8 +238,9 @@ function stackModelForm($extra=False) {
 		foreach ($models as $model) {
 			echo "<tr><td>\n";
 			$modelid = $model['DEF_id'];
-			$symdata = $particle->getSymInfo($modeldata['REF|ApSymmetryData|symmetry']);
+			$symdata = $particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
 			$modelvals = "$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$symdata[symmetry]";
+
 			echo "<input type='radio' NAME='model' value='$modelvals' ";
 			// check if model was selected
 			if ($modelid == $minf[0]) echo " CHECKED";
@@ -294,8 +295,11 @@ function jobForm($extra=false) {
 
 	// get model data
 	$modelinfo = explode('|--|',$_POST['model']);
+	//echo print_r($modelinfo)."<br/>";
 	$syminfo = explode(' ',$modelinfo[4]);
-	$modsym=$syminfo[0];
+	//echo print_r($syminfo)."<br/>";
+	$modsym = $syminfo[0];
+	//echo print_r($modsym)."<br/>";
 	if ($modsym == 'Icosahedral') $modsym='icos';
 	$modelid = $modelinfo[0];
 
