@@ -13,6 +13,7 @@ require "inc/processing.inc";
 require "inc/leginon.inc";
 require "inc/viewer.inc";
 require "inc/project.inc";
+require "inc/summarytables.inc";
 
 if ($_POST['write']) {
 	//if (TRUE) {
