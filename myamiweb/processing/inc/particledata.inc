@@ -3184,8 +3184,10 @@ class particledata {
 			."FROM `ApSymmetryData` "
 			."WHERE eman_name = '$emansym' "
 			."LIMIT 1 ";
-		list($r)=$this->mysql->getSQLResult($q);
-		return $r;
+		#echo $q."<br/>";
+		$r = $this->mysql->getSQLResult($q);
+		#echo print_r($r[0])."<br/>";
+		return $r[0];
 	}
 
 	function getModelsFromProject ($projectId, $getHidden=False) {
