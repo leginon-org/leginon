@@ -149,6 +149,7 @@ elseif ($_POST['submitjob']) {
 
 	echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
 	echo "<tr><td>Cluster Job File</td><td>$path.job</td></tr>\n";
+	echo "<tr><td>Appion Job Id</td><td>$jobid</td></tr>\n";
 	echo "<tr><td>Job File Name</td><td>$jobname.job</td></tr>\n";
   
 	// submit job on host
@@ -162,6 +163,7 @@ elseif ($_POST['submitjob']) {
 	if (!is_numeric($jobnum)) {
 		echo "</table><p>\n";
 		echo "<hr>\n<font color='#CC3333' size='+1'>ERROR: job submission failed</font>\n";
+		echo "message: '$jobnum'<br/>";
 		processing_footer();
 		exit;
 	}
@@ -219,7 +221,7 @@ function stackModelForm($extra=False) {
 	$box = $stackinfo[2];
 
 	// write out errors, if any came up:
-	if ($extra) echo "<font color='#990000' size='+2'>$extra</font>\n<hr>\n";
+	if ($extra) echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
 
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
@@ -324,9 +326,9 @@ function jobForm($extra=false) {
 	$javafunc .= writeJavaPopupFunctions('eman');
 	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
 	// write out errors, if any came up:
-	if (!($user && $pass)) echo "<font color='#990000' size='+2'><B>WARNING!!!</B> You are not logged in!!!</font><br />";
+	if (!($user && $pass)) echo "<font color='#CC3333' size='+2'><B>WARNING!!!</B> You are not logged in!!!</font><br />";
 
-	if ($extra) echo "<font color='#990000' size='+2'>$extra</font>\n<hr>\n";
+	if ($extra) echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
 
 	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
 	echo "<input type='hidden' name='clustermemo' value='".$selectedcluster."'>\n";
@@ -773,6 +775,7 @@ function getPBSMemoryNeeded() {
 	$stackinfo=explode('|--|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
 	$boxsize = (int) $stackinfo[2];
+	$ppn = (int) $_POST['ppn'];
 	$numpart = $particle->getNumStackParticles($stackidval);
 	$numiters=$_POST['numiters'];
 	$startang=$_POST["ang1"];
@@ -784,15 +787,11 @@ function getPBSMemoryNeeded() {
 	$foldsym = (int) $symdata['fold_symmetry'];
 	#print "FOLD SYMMETRY: $foldsym<br/>\n";
 	$endnumproj = 18000.0/($foldsym*$endang*$endang);
-	$startnumproj = 18000.0/($foldsym*$startang*$startang);
-	$memneed = $endnumproj*$boxsize*$boxsize*16.0;
+	// need to open all projections and 1024 particles in memory
+	$numpartinmem = $endnumproj + 1024;
+	$memneed = $numpartinmem*$boxsize*$boxsize*16.0*$ppn;
 	//echo "endnumproj = $endnumproj * boxsize = $boxsize*$boxsize*16.0";
-	$numgig1 = ceil($memneed/1073741824.0);
-	$memneed = $numpart/$startnumproj*$boxsize*$boxsize*16.0;
-	$numgig2 = ceil($memneed/1073741824.0);
-	$memneed = $numpart*$boxsize*$boxsize*4.0;
-	$numgig3 = ceil($memneed/1073741824.0);
-	$numgig = max($numgig1,$numgig2,$numgig3);
+	$numgig = ceil($memneed/1073741824.0);
 	//echo "numpart = $numpart /startnumproj = $startnumproj *boxsize = $boxsize\n";
 	//echo sprintf("numgig1 = %dgb\n", $numgig1);
 	//echo sprintf("numgig2 = %dgb\n", $numgig2);
@@ -849,7 +848,8 @@ function writeJobFile ($extra=False) {
 	$header.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
 	$header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
 	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
-	$header.= "#PBS -l mem=".getPBSMemoryNeeded()."\n";
+	$memneed = getPBSMemoryNeeded();
+	$header.= "#PBS -l mem=$memneed\n";
 	$header.= "#PBS -m e\n";
 	$header.= "#PBS -r n\n";
 	$header.= "#PBS -j oe\n\n";
@@ -978,7 +978,7 @@ function writeJobFile ($extra=False) {
 		echo $clusterdata->cluster_check_msg();
 		echo "<p>";
 	} else {
-		echo "<font color='#990000' size='+2'>$extra</font>\n<hr>\n";
+		echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
 	}
 	echo "<form name='emanjob' method='POST' action='$formAction'>\n";
 	echo "<input type='hidden' name='clustername' value='".C_NAME."'>\n";
@@ -987,6 +987,7 @@ function writeJobFile ($extra=False) {
 	echo "<input type='hidden' NAME='dmfpath' value='$dmfpath'>\n";
 	echo "<input type='hidden' NAME='jobname' value='$jobname'>\n";
 	echo "<input type='hidden' NAME='outdir' value='$outdir'>\n";
+	echo "<input type='hidden' NAME='mem' value='$memneed'>\n";
 
 	// convert \n to /\n's for script
 	$header_conv=preg_replace('/\n/','|--|',$header);
