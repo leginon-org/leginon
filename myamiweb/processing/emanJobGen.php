@@ -47,6 +47,7 @@ if ($_POST['write']) {
 
   for ($i=1; $i<=$_POST['numiters']; $i++) {
 		if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
+		if (!$_POST['sym'.$i]) jobForm("ERROR: no symmetry set for iteration $i");
 		if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
 		// if amask is used, then xfiles must also be used
 		if ($_POST['amask1'.$i] || $_POST['amask2'.$i] || $_POST['amask3'.$i]) {
@@ -218,7 +219,7 @@ function stackModelForm($extra=False) {
 	$box = $stackinfo[2];
 
 	// write out errors, if any came up:
-	if ($extra) echo "<font color='red' size='+2'>$extra</font>\n<hr>\n";
+	if ($extra) echo "<font color='#990000' size='+2'>$extra</font>\n<hr>\n";
 
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
@@ -323,10 +324,10 @@ function jobForm($extra=false) {
 	$javafunc .= writeJavaPopupFunctions('eman');
 	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
 	// write out errors, if any came up:
-	if (!($user && $pass)) echo "<font color='red'><B>WARNING!!!</B> You are not logged in!!!</font><br />";
-	if ($extra) {
-		echo "<font color='red'>$extra</font>\n<hr />\n";
-	}
+	if (!($user && $pass)) echo "<font color='#990000' size='+2'><B>WARNING!!!</B> You are not logged in!!!</font><br />";
+
+	if ($extra) echo "<font color='#990000' size='+2'>$extra</font>\n<hr>\n";
+
 	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
 	echo "<input type='hidden' name='clustermemo' value='".$selectedcluster."'>\n";
 	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
@@ -777,8 +778,11 @@ function getPBSMemoryNeeded() {
 	$startang=$_POST["ang1"];
 	$endang=$_POST["ang".$numiters];
 	$emansym=$_POST["sym".$numiters];
+	#print "SYMMETRY: '$emansym'<br/>\n";
 	$symdata = $particle->getSymmetryDataFromEmanName($emansym);
+	#echo print_r($symdata);
 	$foldsym = (int) $symdata['fold_symmetry'];
+	#print "FOLD SYMMETRY: $foldsym<br/>\n";
 	$endnumproj = 18000.0/($foldsym*$endang*$endang);
 	$startnumproj = 18000.0/($foldsym*$startang*$startang);
 	$memneed = $endnumproj*$boxsize*$boxsize*16.0;
@@ -974,7 +978,7 @@ function writeJobFile ($extra=False) {
 		echo $clusterdata->cluster_check_msg();
 		echo "<p>";
 	} else {
-		echo "<font color='red' size='+2'>$extra</font>\n<hr>\n";
+		echo "<font color='#990000' size='+2'>$extra</font>\n<hr>\n";
 	}
 	echo "<form name='emanjob' method='POST' action='$formAction'>\n";
 	echo "<input type='hidden' name='clustername' value='".C_NAME."'>\n";
