@@ -53,7 +53,7 @@ def applyBfactor(infile, fscfile, apix, mass=None, outfile=None):
 	if not os.path.isfile(outfile):
 		apDisplay.printWarning("B-factor correction failed %s"%(embfactorfile))
 		return infile
-	if not isValidVolume(outfile)
+	if not isValidVolume(outfile):
 		apDisplay.printWarning("B-factor correction failed %s"%(embfactorfile))
 		return infile
 
