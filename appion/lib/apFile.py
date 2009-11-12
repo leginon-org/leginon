@@ -7,6 +7,11 @@ import glob
 import subprocess
 import apDisplay
 
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
+
 #===============
 def md5sumfile(fname):
 	"""
@@ -153,5 +158,9 @@ def numImagesInStack(imgfile, boxsize=None):
 		apDisplay.printError("numImagesInStack() requires an IMAGIC or SPIDER stacks")
 	return numimg
 
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
 
 

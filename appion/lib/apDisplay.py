@@ -5,6 +5,11 @@ import re
 import sys
 import types
 
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
+
 writeOut = False
 try:
 	outFile = os.path.basename(sys.argv[0]).split(".")[0]+".out"
@@ -380,3 +385,11 @@ def environmentError():
 		else:
 			value = '*** NOT SET ***'
 		print colorString("%-20s -> %s" % (name, value), "red")
+
+
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
+
+

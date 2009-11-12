@@ -14,6 +14,18 @@ from pyami import mrc, imagefun
 #appion
 import apDisplay
 import apImage
+import apFile
+
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
+
+#===========
+def applyBfactor(infile, fscfile, apix, mass=None, outfile=None):
+	
+
+	"~/Desktop/embfactor/bin/embfactor -sampling 2.49  -FSC fsc.eotest.14 threed.14a.mrc threed.14b.mrc"
 
 #===========
 def savePower(fft, fname="power.mrc"):
@@ -309,6 +321,10 @@ if __name__ == "__main__":
 		imlist.append(c)
 	spectralSNR(imlist)
 
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
 
 
 
