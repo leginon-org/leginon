@@ -11,6 +11,12 @@ from string import lowercase
 ## appion
 import apDisplay
 
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
+
+
 #=====================
 def getAppionDirectory():
 	"""
@@ -478,7 +484,11 @@ def runCmd(cmd, package, verbose=False, showcmd=True, logfile=None, fail=False):
 	elif waited is True:
 		print ""
 
-		
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
+
 
 
 
