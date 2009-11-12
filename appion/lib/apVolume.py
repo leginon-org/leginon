@@ -42,14 +42,18 @@ def applyBfactor(infile, fscfile, apix, mass=None, outfile=None):
 	cmd = embfactorexe
 	cmd += " -FSC %s"%(fscfile)
 	cmd += " -sampling %.3f"%(apix)
-	if mass is not None:
-		cmd += " -molweight %d"%(mass*1000)
+	#if mass is not None:
+	#	cmd += " -molweight %d"%(mass*1000)
 	cmd += " %s"%(infile)
 	cmd += " %s"%(outfile)
+	apDisplay.printColor(cmd, 'blue') 
 	proc = subprocess.Popen(cmd, shell=True)
 	proc.wait()
 
 	if not os.path.isfile(outfile):
+		apDisplay.printWarning("B-factor correction failed %s"%(embfactorfile))
+		return infile
+	if not isValidVolume(outfile)
 		apDisplay.printWarning("B-factor correction failed %s"%(embfactorfile))
 		return infile
 
