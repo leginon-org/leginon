@@ -7,6 +7,7 @@ import shutil
 import os
 import re
 import string
+import subprocess
 #numpy
 import pyami.quietscipy
 import numpy
@@ -29,6 +30,29 @@ from pyami import imagefun
 from pyami import convolver
 from random import choice
 
+#===========
+def applyBfactor(infile, fscfile, apix, mass=None, outfile=None):
+	embfactorfile = "embfactor64.exe"
+	embfactorexe = apParam.getExecPath("embfactor64.exe")
+	if embfactorexe is None:
+		apDisplay.printWarning("Could not find %s"%(embfactorfile))
+		return infile
+	if outfile is None:
+		outfile = os.path.splitext(infile)[0]+"-bfactor.mrc"
+	cmd = embfactorexe
+	cmd += " -FSC %s"%(fscfile)
+	cmd += " -sampling %.3f"%(apix)
+	cmd += " %s"%(infile)
+	cmd += " %s"%(outfile)
+	proc = subprocess.Popen(cmd, shell=True)
+	proc.wait()
+
+	if not os.path.isfile(outfile):
+		apDisplay.printWarning("B-factor correction failed %s"%(embfactorfile))
+		return infile
+
+	return outfile
+
 #===========================
 def insert3dDensity(params):
 	apDisplay.printMsg("committing density to database")
@@ -50,6 +74,11 @@ def insert3dDensity(params):
 	modq['highpass'] = params['hp']
 	modq['mask'] = params['mask']
 	modq['imask'] = params['imask']
+	if params['reconiterid'] is not None:
+		iterdata = appiondata.ApRefinementData.direct_query(params['reconiterid'])
+		if not iterdata:
+			apDisplay.printError("this iteration was not found in the database\n")
+		modq['iterid'] = iterdata
 	if params['reconid'] is not None:
 		iterdata = appiondata.ApRefinementData.direct_query(params['reconid'])
 		if not iterdata:

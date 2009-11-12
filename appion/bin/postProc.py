@@ -14,32 +14,57 @@ import apSymmetry
 import apDatabase
 import appiondata
 import apChimera
+from pyami import mrc
+from scipy import ndimage
 
 #=====================
 #=====================
 class PostProcScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
+		#strings
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with density (e.g. 06mar12a)", metavar="SESSION")
+		self.parser.add_option("--sym", "--symm", "--symmetry", dest="sym",
+			help="Symmetry id in the database", metavar="#")
+
+		#files
 		self.parser.add_option("-f", "--file", dest="file",
 			help="Filename of the density", metavar="FILE")
 		self.parser.add_option("--amp", dest="ampfile",
 			help="Filename of the amplitude file", metavar="FILE")
+		self.parser.add_option("--fscfile", dest="fscfile",
+			help="Filename of the FSC resolution file", metavar="FILE")
+
+		#floats
 		self.parser.add_option("--apix", dest="apix", type="float",
-			help="Density pixel size in Angstroms per pixel", metavar="FLOAT")
+			help="Density pixel size in Angstroms per pixel", metavar="#")
 		self.parser.add_option("--lp", dest="lp", type="float",
-			help="Low pass filter value (in Angstroms)", metavar="FLOAT")
+			help="Low pass filter value (in Angstroms)", metavar="#")
 		self.parser.add_option("--hp", dest="hp", type="float",
-			help="High pass filter value (in Angstroms)", metavar="FLOAT")
+			help="High pass filter value (in Angstroms)", metavar="#")
 		self.parser.add_option("--mask", dest="mask", type="float",
-			help="Radius of outer mask (in Angstroms)", metavar="FLOAT")
+			help="Radius of outer mask (in Angstroms)", metavar="#")
 		self.parser.add_option("--imask", dest="imask", type="float",
-			help="Radius of inner mask (in Angstroms)", metavar="FLOAT")
+			help="Radius of inner mask (in Angstroms)", metavar="#")
 		self.parser.add_option("--maxfilt", dest="maxfilt", type="float",
-			help="filter limit to which data will adjusted (in Angstroms)", metavar="FLOAT")
+			help="filter limit to which data will adjusted (in Angstroms)", metavar="#")
 		self.parser.add_option("--res", dest="res", type="float",
-			help="resolution of the reconstruction (in Angstroms)", metavar="FLOAT")
+			help="resolution of the reconstruction (in Angstroms)", metavar="#")
+		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.5,
+			help="Zoom factor for snapshot rendering (1.5 by default)", metavar="#")
+		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
+			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="#")
+
+		#ints
+		self.parser.add_option("--mass", dest="mass", type="int",
+			help="Mass (in kDa)", metavar="#")
+		self.parser.add_option("--reconiterid", dest="reconiterid", type="int",
+			help="RefinementData Id for this iteration (not the recon id)", metavar="#")
+		self.parser.add_option("--median", dest="median", type="int",
+			help="Median", metavar="#")
+
+		#true/false
 		self.parser.add_option("-y", "--yflip", dest="yflip", default=False,
 			action="store_true", help="Flip the handedness of the density")
 		self.parser.add_option("-i", "--invert", dest="invert", default=False,
@@ -48,14 +73,8 @@ class PostProcScript(appionScript.AppionScript):
 			action="store_true", help="Rotate icosahedral densities from Eman orientation to Viper orientation")
 		self.parser.add_option("--norm", dest="norm", default=False,
 			action="store_true", help="Normalize the final density such that mean=0, sigma=1")
-		self.parser.add_option("--sym", "--symm", "--symmetry", dest="sym",
-			help="Symmetry id in the database", metavar="INT")
-		self.parser.add_option("--reconid", dest="reconid",
-			help="RefinementData Id for this iteration (not the recon id)", metavar="INT")
-		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.5,
-			help="Zoom factor for snapshot rendering (1.5 by default)", metavar="FLOAT")
-		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
-			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
+		self.parser.add_option("--bfactor", dest="bfactor", default=False,
+			action="store_true", help="Apply B-factor correction using FSC curve")
 
 		return
 
@@ -71,12 +90,16 @@ class PostProcScript(appionScript.AppionScript):
 			apDisplay.printError("enter a resolution")
 		if self.params['file'] is None or not os.path.isfile(self.params['file']):
 			apDisplay.printError("enter a valid file name for processing")
-		if self.params['maxfilt'] < self.params['apix']*2.0:
+		if self.params['maxfilt'] is not None and self.params['maxfilt'] < self.params['apix']*2.0:
 			apDisplay.printError("maxfilt must be greater than the (pixel size)*2")
+		if self.params['bfactor'] is True and self.params['fscfile'] is None:
+			self.params['fscfile'] = self.getFscFile()
 
 		self.params['filepath'] = os.path.dirname(os.path.abspath(self.params['file']))
 		self.params['filename'] = os.path.basename(self.params['file'])
 		if self.params['ampfile'] is not None:
+			if self.params['bfactor'] is True:
+				apDisplay.printError("Cannot performing amplitude correction and bfactor correction")
 			### ampfile was requested
 			if self.params['maxfilt'] is None:
 				apDisplay.printError("if performing amplitude correction, enter a filter limit")
@@ -87,6 +110,16 @@ class PostProcScript(appionScript.AppionScript):
 	def setRunDir(self):
 		self.params['rundir'] = os.path.join(self.params['filepath'], "postproc",self.params['runname'])
 		return
+
+	#=====================
+	def getFscFile(self):
+		reconiterdata = appiondata.ApRefinementData.direct_query(self.params['reconiterid'])
+		fscfilename = "fsc.eotest.%d"%(reconiterdata['iteration'])
+		fscfile = os.path.join(reconiterdata['refinementRun']['path']['path'], fscfilename)
+		if not os.path.isfile(fscfile):
+			apDisplay.printError("failed to find fscfile: "+fscfile)
+
+		return fscfile
 
 	#=====================
 	def locateAmpFile(self):
@@ -108,9 +141,10 @@ class PostProcScript(appionScript.AppionScript):
 		fileroot = os.path.splitext(self.params['filename'])[0]
 		fileroot += "-"+self.timestamp
 
+		self.params['box'] = apVolume.getModelDimensions(self.params['file'])
+
 		if self.params['ampfile'] is not None:
 			### run amplitude correction
-			self.params['box'] = apVolume.getModelDimensions(self.params['file'])
 			spifile = apVolume.MRCtoSPI(self.params['file'], self.params['rundir'])
 			tmpfile = apVolume.createAmpcorBatchFile(spifile, self.params)
 			apVolume.runAmpcor()
@@ -122,10 +156,23 @@ class PostProcScript(appionScript.AppionScript):
 
 			### convert amplitude corrected file back to mrc
 			fileroot += ".amp"
-			emancmd = "proc3d "+tmpfile+" "
+			curfile = tmpfile
+		elif self.params['bfactor'] is True:
+			outfile = os.path.join( self.params['rundir'], "bfactor-fix.mrc" )
+			outfile = apVolume.applyBfactor(self.params['file'], fscfile=self.params['fscfile'], 
+				apix=self.params['apix'], mass=self.params['mass'], outfile=outfile)
+			curfile = outfile
 		else :
 			### just run proc3d
+			curfile = self.params['file']
 			emancmd = "proc3d "+self.params['file']+" "
+		
+		emancmd = "proc3d "+curfile+" "
+
+		if self.params['median'] is not None:
+			data = mrc.read(curfile)
+			data = ndimage.median_filter(data, size=self.params['median'])
+			mrc.write(data, curfile)
 
 		emancmd+="apix=%s " %self.params['apix']
 		if self.params['lp'] is not None:
@@ -188,6 +235,7 @@ class PostProcScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			symdata  = apSymmetry.findSymmetry(self.params['sym'])
 			symmetry = symdata['eman_name']
+			self.params['reconid'] = self.params['reconiterid']
 			apVolume.insert3dDensity(self.params)
 			### render chimera images of model
 

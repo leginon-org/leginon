@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 #python
+import os
 import sys
 import glob
 import time
 import math
 import numpy
+import subprocess
 #scipy
 from pyami import quietscipy
 from scipy import fftpack, ndimage
@@ -15,17 +17,12 @@ from pyami import mrc, imagefun
 import apDisplay
 import apImage
 import apFile
+import apParam
 
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way
 ####
-
-#===========
-def applyBfactor(infile, fscfile, apix, mass=None, outfile=None):
-	
-
-	"~/Desktop/embfactor/bin/embfactor -sampling 2.49  -FSC fsc.eotest.14 threed.14a.mrc threed.14b.mrc"
 
 #===========
 def savePower(fft, fname="power.mrc"):
