@@ -42,6 +42,8 @@ def applyBfactor(infile, fscfile, apix, mass=None, outfile=None):
 	cmd = embfactorexe
 	cmd += " -FSC %s"%(fscfile)
 	cmd += " -sampling %.3f"%(apix)
+	if mass is not None:
+		cmd += " -molweight %d"%(mass*1000)
 	cmd += " %s"%(infile)
 	cmd += " %s"%(outfile)
 	proc = subprocess.Popen(cmd, shell=True)
