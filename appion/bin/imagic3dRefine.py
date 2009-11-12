@@ -848,11 +848,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			prevmra = os.path.join(self.params['rundir'], "mra"+str(self.params['itn']-1)+".img")
 			while os.path.isfile(prevmra):
 				apFile.removeStack(prevmra)
-			if self.params['itn'] == self.params['numiters']:
-				startstack = os.path.join(self.params['rundir'], "start.img")
-				mrastack = os.path.join(self.params['rundir'], "mra"+str(self.params['itn'])+".img")
-				while os.path.isfile(startstack):
-					apFile.removeStack(startstack)
+#			if self.params['itn'] == self.params['numiters']:
+#				startstack = os.path.join(self.params['rundir'], "start.img")
+#				mrastack = os.path.join(self.params['rundir'], "mra"+str(self.params['itn'])+".img")
+#				while os.path.isfile(startstack):
+#					apFile.removeStack(startstack)
 #				while os.path.isfile(mrastack):
 #					apFile.removeStack(mrastack)
 
