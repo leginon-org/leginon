@@ -411,7 +411,7 @@ function jobForm($extra=false) {
 	echo"</td></tr></table>"; //overall table
 
 	$bgcolor="#E8E8E8";
-	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','maxshift','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','refine','tree','coran','affprop','eotest','copy');  
+	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','maxshift','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','refine','tree','coran','eotest','copy');  
 	echo"
 	<br />
 	<h4> EMAN Reconstruction Parameters</h4>
