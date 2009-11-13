@@ -14,7 +14,7 @@ import apSymmetry
 import apDatabase
 import appiondata
 import apChimera
-from pyami import mrc
+from pyami import mrc, spider
 from scipy import ndimage
 
 #=====================
@@ -94,6 +94,8 @@ class PostProcScript(appionScript.AppionScript):
 			apDisplay.printError("maxfilt must be greater than the (pixel size)*2")
 		if self.params['bfactor'] is True and self.params['fscfile'] is None:
 			self.params['fscfile'] = self.getFscFile()
+		if self.params['mass'] is not None:
+			self.params['contour'] = 1.0
 
 		self.params['filepath'] = os.path.dirname(os.path.abspath(self.params['file']))
 		self.params['filename'] = os.path.basename(self.params['file'])
@@ -156,7 +158,10 @@ class PostProcScript(appionScript.AppionScript):
 
 			### convert amplitude corrected file back to mrc
 			fileroot += ".amp"
-			curfile = tmpfile
+			a = spider.read(tmpfile)
+			outfile = os.path.join( self.params['rundir'], "ampl-fix.mrc" )
+			mrc.write(a, outfile)
+			curfile = outfile
 		elif self.params['bfactor'] is True:
 			outfile = os.path.join( self.params['rundir'], "bfactor-fix.mrc" )
 			outfile = apVolume.applyBfactor(self.params['file'], fscfile=self.params['fscfile'], 
@@ -241,7 +246,8 @@ class PostProcScript(appionScript.AppionScript):
 
 
 			apChimera.filterAndChimera(outfile, res=self.params['res'], apix=self.params['apix'], box=self.params['box'],
-				chimtype='snapshot', contour=self.params['contour'], zoom=self.params['zoom'], sym=symmetry)
+				chimtype='snapshot', mass=self.params['mass'], contour=self.params['contour'], 
+				zoom=self.params['zoom'], sym=symmetry)
 
 #=====================
 #=====================
