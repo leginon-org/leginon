@@ -27,14 +27,8 @@ class frealignJob(appionScript.AppionScript):
 		#	action="store_true", help="Commit processing run to database")
 
 		####card 1
-		self.parser.add_option('--mode', dest="mode", default=1, type='int',
-			help="mode of operation [-4,4]: refine and reconstruct")
-		self.parser.add_option('--magrefine', dest="magrefine", default=False,
-			help="no magnification refinement")
-
-		####card 1
 		self.parser.add_option('--iflag', dest="iflag", default=1, type='int',
-			help="mode of operation [-4,4]: refine and reconstruct")
+			help="mode of operation [-4,4]: refine (1) and reconstruct (3)")
 		self.parser.add_option("--fmag", dest="fmag", default=False,
 			action="store_true", help="Refine the magnification")
 
@@ -71,7 +65,7 @@ class frealignJob(appionScript.AppionScript):
 			help="conversion constant for phase residual weighting of particles. 100 gives equal weighting")
 		self.parser.add_option('--avgresidual', dest="avgresidual", default=75, type='int',
 			help="average phase residual of all particles. used for weighting")
-		self.parser.add_option('--ang', dest="ang", type='int',
+		self.parser.add_option('--ang', dest="ang", type='int', default=5, 
 			help="step size if using modes 3 and 4")
 		self.parser.add_option('--itmax', dest="itmax", default=10, type='int',
 			help="number of iterations of randomization. used for modes 2 and 4")
@@ -91,8 +85,6 @@ class frealignJob(appionScript.AppionScript):
 			help="refine delta Y")
 		
 		####card 4
-		self.parser.add_option('--first', dest="first", default=1, type='int',
-			help="first particle")
 		self.parser.add_option('--last', dest="last", type='int',
 			help="last particle")
 	
@@ -143,10 +135,6 @@ class frealignJob(appionScript.AppionScript):
 		####card 12
 		self.parser.add_option('--outshiftpar', dest="outshiftpar", default='shift.par',
 			help="output particle shift parameter file")
-	
-		####card 13
-		self.parser.add_option('--invol', dest="invol", default='threed.0.mrc',
-			help="input reference volume")
 		
 		####card 14
 		self.parser.add_option('--weight3d', dest="weight3d", default='weights.mrc',
@@ -210,7 +198,7 @@ class frealignJob(appionScript.AppionScript):
 
 	#===============
 	def runParallel(self):
-		createMultipleJobs(params)
+		createMultipleJobs(self.params)
 		joblist=[]
 		for n in params['jobs']:		
 			command=("frealign < %s " % (n))
@@ -224,9 +212,9 @@ class frealignJob(appionScript.AppionScript):
 
 		#combine results of multiple runs and create volume
 		combinedparams = params['outpar']+'.all'
-		combinefile=open(os.path.join(params['rundir'],combinedparams),'w')
+		combinefile=open(os.path.join(self.params['rundir'],combinedparams),'w')
 		for outpar in params['outparlst']:
-			f=open(os.path.join(params['rundir'],outpar), 'r')
+			f=open(os.path.join(self.params['rundir'],outpar), 'r')
 			lines=f.readlines()
 			f.close()
 
@@ -237,7 +225,7 @@ class frealignJob(appionScript.AppionScript):
 					print "comment"
 		combinefile.close()
 		combinejobname="frealign.job" 
-		createFrealignJob(params, combinejobname, 0, combinedparams, params['outpar'], params['first'], params['last'], norecon=False)
+		createFrealignJob(self.params, combinejobname, 0, combinedparams, params['outpar'], params['first'], params['last'], norecon=False)
 		command='frealign < ' + combinejobname
 		print 'command is',command
 		proc = subprocess.Popen(command, shell=True)
@@ -246,7 +234,7 @@ class frealignJob(appionScript.AppionScript):
 	#===============
 	def runSingle(self):
 		jobname='frealign.job'
-		createFrealignJob(params, jobname)
+		createFrealignJob(self.params, jobname)
 		command='frealign < ' + jobname
 		print 'command is',command
 		proc = subprocess.Popen(command, shell=True)
@@ -368,15 +356,15 @@ class frealignJob(appionScript.AppionScript):
 	def setupParticleParams(self):
 		if self.params['reconiterid'] is not None:
 			### use parameters from previous reconstruction
-			self.params['mode'] = 1
+			self.params['iflag'] = 1
 			self.params['reconstackid'] = apStack.getStackIdFromIterationId(self.params['reconiterid'])
 		elif self.params['ang'] is not None:
 			### use slow projection matching search to determine initial Eulers
-			self.params['mode'] = 3
+			self.params['iflag'] = 3
 
 		if self.params['inpar'] is None:
 			### if no parameter file specified then generate input parameter file
-			self.params['mode'] = 3
+			self.params['iflag'] = 3
 			self.params['noClassification'] = 0
 			paramfile = self.generateParticleParams()
 			self.params['inpar'] = paramfile
@@ -393,13 +381,13 @@ class frealignJob(appionScript.AppionScript):
 		# if icosahedral recon, rotate volume to 3DEM standard orientation
 		if modelsym == 'Icos (5 3 2)':
 			tempfile = "temp.mrc"
-			emancmd = 'proc3d %s %s icos5fTo2f' % (tmpinvol, outvol)
+			emancmd = 'proc3d %s %s icos5fTo2f' % (modelfile, tempfile)
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 			modelfile = tempfile
 
 		if modelsym == 'Icos (5 3 2)' or modelsym == 'Icos (2 5 3)':
 			tempfile = "temp.mrc"
-			emancmd = 'proc3d %s %s rotspin=0,0,1,90' % (tmpinvol, outvol)
+			emancmd = 'proc3d %s %s rotspin=0,0,1,90' % (modelfile, tempfile)
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 			modelfile = tempfile
 
@@ -417,6 +405,108 @@ class frealignJob(appionScript.AppionScript):
 
 		return outmodelfile
 
+	#===============
+	def startFrealignJobFile(self, jobfile, stackfile, volfile, paramfile, nodenum=None):
+		f = open(jobname, 'w')
+		f.write("#!/bin/csh\n")
+
+		# copy files to working directory
+		f.write('cd %s\n' % self.params['workingdir'])
+		if nodenum is not None:
+			workdir = "sub%04d"%(nodenum)
+			f.write('rm -rf %s\n' %workdir)
+			f.write('mkdir %s\n' %workdir)
+			f.write('cd %s\n' %workdir)
+		volroot = os.path.splitext(volfile)[0]
+		f.write('rsync -vaP %s model.hed\n' % volroot+".hed")
+		f.write('rsync -vaP %s model.img\n' % volroot+".img")
+		f.write('rsync -vaP %s inparams.par\n' % paramfile)
+		f.write('\n')
+
+	#===============
+	def appendFrealignJobFile(self, jobfile, paramfile, first=1, last=None, norecon=False):
+		### hard coded parameters
+		self.defaults = {
+			'fstat': False, # memory saving function, usually false
+			'iblow': False, # expand volume in memory, larger is faster, but needs more mem
+			'fcref': False, # apply FOM weighting
+			'dfstd': 100,   # defocus standard deviation (in Angstroms), usually +/- 100 A
+		}
+
+		if last is None:
+			last = self.params['last']
+
+		f = open(jobfile, 'a')
+		f.write('frealign << EOF > frealign.out\n')
+
+		### CARD 1
+		f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s,%d,%s,%d\n' % (
+			'I', #(I) use imagic, (M) use mrc, (S) use spider
+			self.params['iflag'], 
+			self.params['fmag'], self.params['defocusrefine'], #T/F refinements
+			self.params['astigrefine'], self.params['defocusperpart'], #T/F refinements
+			self.params['ewald'], 
+			self.params['matches'], self.defaults['fcref'], self.params['finalsym'], 
+			self.params['fomfilter'], self.params['fsc'], 
+			self.defaults['fstat'], self.defaults['iblow']))
+
+		### CARD 2
+		f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (
+			self.params['radius'], self.params['iradius'], 
+			self.params['apix'], self.params['ampcontrast'], 
+			self.params['maskthresh'], self.params['phaseconstant'], 
+			self.params['avgresidual'], self.params['ang'], self.params['itmax'], self.params['maxmatch']))
+
+		### CARD 3
+		f.write('%d %d %d %d %d\n' % (
+			self.params['psi'], self.params['theta'], self.params['phi'], 
+			self.params['deltax'], self.params['deltay']))
+
+		### CARD 4 -- particle limits
+		f.write('%d, %d\n' % (first, last))
+
+		### CARD 5
+		if self.params['sym']=='Icos':
+			f.write('I\n')
+		else:
+			f.write('%s\n' % (self.params['sym']))
+
+		### CARD 6
+		f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
+			self.params['relmag'], self.params['apix'], 
+			self.params['targetresidual'], self.params['residualthresh'], 
+			self.params['cs'], self.params['kv'], 
+			self.params['beamtiltx'], self.params['beamtilty']))
+
+		### CARD 7
+		### lp should be ~25 A for iflag 3 and ~12 A for iflag 1
+	 	f.write('%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
+			self.params['reslimit'], self.params['hp'], 
+			self.params['lp'], self.defaults['dfstd'], self.params['bfactor']))
+
+		### CARD 8
+		f.write('%s\n' % (self.stackfile))
+		f.write('match\n')
+		f.write('inparams.par\n')
+		f.write('outparams.par\n')
+		f.write('shift.par\n')
+
+		# set relmag to -100 if no 3d reconstruction
+		if norecon is True:
+			reconrelmag=-100.0
+		else:
+			reconrelmag=0.0
+		f.write('%.1f,0.0,0.0,0.0,0.0,0.0,0.0,0.0\n' %reconrelmag)
+		f.write('workingvol\n')
+		f.write('weights\n')
+		f.write('odd\n')
+		f.write('even\n')
+		f.write('phasediffs\n')
+		f.write('pointspread\n')
+		f.write('EOF\n')
+		f.write('\n')
+		f.close()
+		os.chmod(jobname,0755)
 
 	#===============	
 	def start(self):
@@ -425,49 +515,39 @@ class frealignJob(appionScript.AppionScript):
 		apParam.createDirectory(self.params['workingdir'], msg=False)
 
 		### create parameter file
-		paramfile = self.setupParticleParams()
-
-		# 3d density will be saved as 'workingvol' in the working directory
-		workingvol = os.path.join(self.params['workingdir'], "workingvol.mrc")
-		# output param file will be saved as 'params.all.par' in the working directory
-		workingparam = os.path.join(self.params['workingdir'], "params.all.par")
-		# even & odd volumes will be saved in the working directory
-		evenvol = os.path.join(self.params['workingdir'], "even.mrc")
-		oddvol = os.path.join(self.params['workingdir'], "odd.mrc")
+		currentparam = self.setupParticleParams()
 		
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
-		stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
+		self.stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
 
 		# set input parameter file if continuing a run
-		if self.params['iter'] == 0:
-			outmodelfile = self.setupInitialModel()
-			self.params['itervol'] = outmodelfile
-		else:
-			self.params['iter']-=1
-
-		self.params['itervol']   = os.path.join(self.params['rundir'], "threed."+str(self.params['iter']-1)+".hed")
-		self.params['iterparam'] = os.path.join(self.params['rundir'], "params."+str(self.params['iter']-1)+".par")
+		self.currentvol = self.setupInitialModel()
+		self.currentparam = os.path.join(self.params['rundir'], "params.0.par")
 
 		## run frealign for number for refinement cycles
 		for i in range(self.params['refcycles']):
-			self.params['iter']+=1
+			iternum = i+1
 			if self.params['cluster'] is True:
 				# create jobs
 				apFrealign.createMultipleJobs(self.params)
+				self.appendFrealignJob(jobfile)
 				# run split jobs
 				apFrealign.submitMultipleJobs(self.params)
 				# combine results & create density
 				apFrealign.combineMultipleJobs(self.params)
 			else:
 				### single node run
-				jobname = os.path.join(self.params['rundir'], self.params['runname']+'.job')
-				apFrealign.createFrealignJob(self.params, jobname, norecon=False)
+				jobfile = os.path.join(self.params['rundir'], self.params['runname']+'.job')
+				self.createFrealignJob(jobfile)
+				self.appendFrealignJob(jobfile)
 
 			# copy density & parameter file to rundir
 			self.params['itervol'] = os.path.join(self.params['rundir'],"threed."+str(self.params['iter'])+".mrc")
 			self.params['iterparam'] = os.path.join(self.params['rundir'],"params."+str(self.params['iter'])+".par")
 			shutil.copy(self.params['workingvol'], self.params['itervol'])
 			shutil.copy(self.params['workingparam'], self.params['iterparam'])
+
+			### calculate FSC
 			emancmd = 'proc3d %s %s fsc=fsc.eotest.%d' % (evenvol, oddvol, self.params['iter'])
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 
