@@ -572,6 +572,60 @@ def mergeStacks(stacklist, mergestack):
 	apDisplay.printMsg("size match %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
 	apDisplay.printMsg("finished stack merge in "+apDisplay.timeString(time.time()-t0))	
 
+
+#===============	
+def checkMachineStampInImagicHeader(oldhedfile):
+	### set four byte 69 (REALTYPE)
+	# REALTYPE  	 floating point type, machine stamp
+	# 16777216 for VAX/VMS
+	# 33686018 for OSF, ULTRIX, LINUX, MS Windows
+	# 67372036 for SiliconGraphics, SUN, HP, IBM
+	if oldhedfile[-4:] != ".hed":
+		oldhedfile = os.path.splitext(oldhedfile)[0]+".hed"
+
+	of = open(oldhedfile, "rb")
+	data = of.read(1024)
+	code = fourByteToInt(data[68*4:69*4])
+	of.close()
+	apDisplay.printMsg("machine code: "+str(code))
+	if code != 33686018:
+		return False
+	return True
+
+#===============	
+def setMachineStampInImagicHeader(oldhedfile):
+	### set four byte 69 (REALTYPE)
+	# REALTYPE  	 floating point type, machine stamp
+	# 16777216 for VAX/VMS
+	# 33686018 for OSF, ULTRIX, LINUX, MS Windows
+	# 67372036 for SiliconGraphics, SUN, HP, IBM
+	if oldhedfile[-4:] != ".hed":
+		oldhedfile = os.path.splitext(oldhedfile)[0]+".hed"
+
+	if checkMachineStampInImagicHeader(oldhedfile) is True:
+		return
+
+	newhedfile = oldhedfile+".temp"
+
+	numimg = apFile.numImagesInStack(oldhedfile)
+	of = open(oldhedfile, "rb")
+	nf = open(newhedfile, "wb")
+	for i in range(numimg):
+		data = of.read(1024)
+		headerstr = data[0:68*4]
+		headerstr += intToFourByte(33686018)
+		headerstr += data[69*4:]
+		nf.write(headerstr)
+	of.close()
+	nf.close()
+	if not os.path.isfile(newhedfile):
+		apDisplay.printError("failed to correct machine code in stack file")
+	oldsize = apFile.fileSize(oldhedfile)
+	newsize = apFile.fileSize(newhedfile)
+	if oldsize != newsize:
+		apDisplay.printError("failed to correct machine code in stack file")
+	shutil.move(newhedfile, oldhedfile)
+
 #===============
 def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
 	"""
