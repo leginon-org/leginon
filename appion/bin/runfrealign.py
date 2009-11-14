@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import sys, os, glob
+import math
 import subprocess
 import shutil
+#appion
 import apParam
 import apStack
 import apVolume
@@ -407,7 +409,7 @@ class frealignJob(appionScript.AppionScript):
 
 	#===============
 	def startFrealignJobFile(self, jobfile, stackfile, volfile, paramfile, nodenum=None):
-		f = open(jobname, 'w')
+		f = open(jobfile, 'w')
 		f.write("#!/bin/csh\n")
 
 		# copy files to working directory
@@ -418,17 +420,24 @@ class frealignJob(appionScript.AppionScript):
 			f.write('mkdir %s\n' %workdir)
 			f.write('cd %s\n' %workdir)
 		volroot = os.path.splitext(volfile)[0]
-		f.write('rsync -vaP %s model.hed\n' % volroot+".hed")
-		f.write('rsync -vaP %s model.img\n' % volroot+".img")
+		f.write('rsync -vaP %s model.hed\n' % (volroot+".hed"))
+		f.write('rsync -vaP %s model.img\n' % (volroot+".img"))
 		f.write('rsync -vaP %s inparams.par\n' % paramfile)
 		f.write('\n')
 
 	#===============
-	def appendFrealignJobFile(self, jobfile, paramfile, first=1, last=None, norecon=False):
+	def bc(self, val):
+		""" Convert bool to single letter T or F """
+		if val is True:
+			return "T"
+		return "F"
+
+	#===============
+	def appendFrealignJobFile(self, jobfile, first=1, last=None, recon=True):
 		### hard coded parameters
 		self.defaults = {
 			'fstat': False, # memory saving function, usually false
-			'iblow': False, # expand volume in memory, larger is faster, but needs more mem
+			'iblow': False, # expand volume in memory, larger is faster, but needs more mem; can be 1, 2 or 4
 			'fcref': False, # apply FOM weighting
 			'dfstd': 100,   # defocus standard deviation (in Angstroms), usually +/- 100 A
 		}
@@ -443,12 +452,12 @@ class frealignJob(appionScript.AppionScript):
 		f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s,%d,%s,%d\n' % (
 			'I', #(I) use imagic, (M) use mrc, (S) use spider
 			self.params['iflag'], 
-			self.params['fmag'], self.params['defocusrefine'], #T/F refinements
-			self.params['astigrefine'], self.params['defocusperpart'], #T/F refinements
+			self.bc(self.params['fmag']), self.bc(self.params['defocusrefine']), #T/F refinements
+			self.bc(self.params['astigrefine']), self.bc(self.params['defocusperpart']), #T/F refinements
 			self.params['ewald'], 
-			self.params['matches'], self.defaults['fcref'], self.params['finalsym'], 
-			self.params['fomfilter'], self.params['fsc'], 
-			self.defaults['fstat'], self.defaults['iblow']))
+			self.bc(self.params['matches']), self.bc(self.defaults['fcref']), self.bc(self.params['finalsym']), 
+			self.bc(self.params['fomfilter']), self.params['fsc'], 
+			self.bc(self.defaults['fstat']), self.defaults['iblow']))
 
 		### CARD 2
 		f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (
@@ -485,19 +494,19 @@ class frealignJob(appionScript.AppionScript):
 			self.params['lp'], self.defaults['dfstd'], self.params['bfactor']))
 
 		### CARD 8
-		f.write('%s\n' % (self.stackfile))
+		f.write('%s\n'%(os.path.splitext(self.stackfile)[0]))
 		f.write('match\n')
 		f.write('inparams.par\n')
 		f.write('outparams.par\n')
 		f.write('shift.par\n')
 
-		# set relmag to -100 if no 3d reconstruction
-		if norecon is True:
-			reconrelmag=-100.0
+		if recon is False:
+			# set relmag to -100, if no 3d reconstruction is desired for parallel mode
+			reconrelmag = -100.0
 		else:
-			reconrelmag=0.0
+			reconrelmag = 0.0
 		f.write('%.1f,0.0,0.0,0.0,0.0,0.0,0.0,0.0\n' %reconrelmag)
-		f.write('workingvol\n')
+		f.write('%s\n'%(os.path.splitext(self.currentvol)[0]))
 		f.write('weights\n')
 		f.write('odd\n')
 		f.write('even\n')
@@ -506,13 +515,50 @@ class frealignJob(appionScript.AppionScript):
 		f.write('EOF\n')
 		f.write('\n')
 		f.close()
-		os.chmod(jobname,0755)
+		os.chmod(jobfile, 0755)
+
+	#===============
+	def createMultipleJobs(self, iternum):
+		"""
+		Create multiple job files for frealign reconstruction
+		using the mpiexec command
+		"""
+		# create script that will launch all mpi scripts
+		workdir = os.path.join(self.params['rundir'], "iter%04d"%(iternum))
+		apParam.createDirectory(workdir, warning=False)
+		#shutil.rmtree(workdir)
+		os.mkdir(workdir)
+		mainscript = os.path.join(workdir,'frealign_MP.csh')
+		mp_script = cscript
+		mainf = open(mainscript, 'w')
+		#frscript = os.path.join(workdir,'frealign.$PBS_VNODENUM.csh')
+		#fr.write("csh "+frscript+"\n")
+
+		# create individual mpi scripts
+		partperjob = math.floor(self.params['last']/self.params['proc'])
+		r = self.params['last']%self.params['proc']
+		lastp = 0
+		for n in range(self.params['proc']):
+			firstp = lastp+1
+			lastp = firstp + partperjob - 1
+
+			if r > 0:
+				lastp+=1
+				r-=1
+
+			jobfile=os.path.join(workdir,"frealign.proc%02d.csh" %n)
+			mainf.write("-np 1 %s\n" % jobfile)
+			self.appendFrealignJobFile(jobfile, first=1, last=None, recon=False)
+			#(jobname,invol=params['itervol'], inpar=params['iterparam'], nodenum=n, first=firstp, last=lastp, recon=True)
+		fr.close()
+		os.chmod(cscript,0755)
+		return mp_script
 
 	#===============	
 	def start(self):
 		#set up directories
 		self.params['workingdir'] = os.path.join(self.params['rundir'], "working")	
-		apParam.createDirectory(self.params['workingdir'], msg=False)
+		apParam.createDirectory(self.params['workingdir'], warning=False)
 
 		### create parameter file
 		currentparam = self.setupParticleParams()
@@ -529,8 +575,7 @@ class frealignJob(appionScript.AppionScript):
 			iternum = i+1
 			if self.params['cluster'] is True:
 				# create jobs
-				apFrealign.createMultipleJobs(self.params)
-				self.appendFrealignJob(jobfile)
+				self.createMultipleJobs(iternum)
 				# run split jobs
 				apFrealign.submitMultipleJobs(self.params)
 				# combine results & create density
@@ -538,18 +583,12 @@ class frealignJob(appionScript.AppionScript):
 			else:
 				### single node run
 				jobfile = os.path.join(self.params['rundir'], self.params['runname']+'.job')
-				self.createFrealignJob(jobfile)
-				self.appendFrealignJob(jobfile)
-
-			# copy density & parameter file to rundir
-			self.params['itervol'] = os.path.join(self.params['rundir'],"threed."+str(self.params['iter'])+".mrc")
-			self.params['iterparam'] = os.path.join(self.params['rundir'],"params."+str(self.params['iter'])+".par")
-			shutil.copy(self.params['workingvol'], self.params['itervol'])
-			shutil.copy(self.params['workingparam'], self.params['iterparam'])
+				self.startFrealignJobFile(jobfile, self.stackfile, self.currentvol, self.currentparam)
+				self.appendFrealignJobFile(jobfile, self.currentparam)
 
 			### calculate FSC
-			emancmd = 'proc3d %s %s fsc=fsc.eotest.%d' % (evenvol, oddvol, self.params['iter'])
-			apEMAN.executeEmanCmd(emancmd, verbose=True)
+			#emancmd = 'proc3d %s %s fsc=fsc.eotest.%d' % (evenvol, oddvol, self.params['iter'])
+			#apEMAN.executeEmanCmd(emancmd, verbose=True)
 
 		print "Done!"
 
