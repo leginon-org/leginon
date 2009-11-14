@@ -8,14 +8,15 @@ import apParam
 import apStack
 import apVolume
 import apCtf
-from pyami import mrc
-import threading
 import apImagicFile
 import appionScript
 import apProject
 import apDisplay
 import apFrealign
 import apEMAN
+import apFile
+import apImagicFile
+from pyami import mrc
 
 #================
 #================
@@ -33,32 +34,26 @@ class frealignJob(appionScript.AppionScript):
 			help="mode of operation [-4,4]: refine (1) and reconstruct (3)")
 		self.parser.add_option("--fmag", dest="fmag", default=False,
 			action="store_true", help="Refine the magnification")
-
-		self.parser.add_option('--defocusrefine', dest="defocusrefine", default=False,
-			help="no defocus refinement")
-		self.parser.add_option('--astigrefine', dest="astigrefine", default=False,
-			help="no astigmatism refinemet")
-		self.parser.add_option('--defocusperpart', dest="defocusperpart", default=False,
-			help="no rotation of theta by 180 degrees")
-		self.parser.add_option('--ewald', dest="ewald", default=0, type='int',
-			help="no ewald curvature correction")
-		self.parser.add_option('--matches', dest="matches", default=True,
-			help="write out particles with matching projections")
-		self.parser.add_option('--history', dest="history", default=False,
-			help="write out history of itmax randomization trials")
-		self.parser.add_option('--finalsym', dest="finalsym", default=True,
-			help="apply final real space symmetrization to beautify reconstruction")
-		self.parser.add_option('--fomfilter', dest="fomfilter", default=True,
-			help="apply FOM filter to final reconstruction")
-		self.parser.add_option('--fsc', dest="fsc", default=0, type='int',
-			help="internall calculate FSC between even and odd particles")
+		self.parser.add_option("--fdef", dest="fdef", default=False,
+			action="store_true", help="Refine the defocus")
+		self.parser.add_option("--fastig", dest="fastig", default=False,
+			action="store_true", help="Refine the defocus astigmatism")
+		self.parser.add_option("--fpart", dest="fpart", default=False,
+			action="store_true", help="Refine the defocus per particle")
+		self.parser.add_option('--iewald', dest="iewald", default=0, type='int',
+			help="ewald curvature correction, [-2,2]")
+		self.parser.add_option("--fmatch", dest="fmatch", default=False,
+			action="store_true", help="write out particles with matching projections")
+		self.parser.add_option('--fbeaut', dest="fbeaut", default=True,
+			action="store_true", help="apply final real space symmetrization to beautify reconstruction")
+		self.parser.add_option('--fcref', dest="fcref", default=False,
+			action="store_true", help="apply FOM filter to final reconstruction")
 	
 		####card 2
-		self.parser.add_option('--radius', dest="radius", type='int',
-			help="radius from center of particle to outer edge")
-		self.parser.add_option('--iradius', dest="iradius", default=0, type='int',
+		self.parser.add_option('--mask', dest="mask", type='float',
+			help="mask from center of particle to outer edge")
+		self.parser.add_option('--imask', dest="imask", default=0, type='float',
 			help="inner mask radius")
-		self.parser.add_option('--apix', dest="apix", type='float', help="pixel size in angstroms")
 		self.parser.add_option('--ampcontrast', dest="ampcontrast", default=0.07, type='float',
 			help="amplitude contrast")
 		self.parser.add_option('--maskthresh', dest="maskthresh", default=0.0, type='float',
@@ -67,7 +62,7 @@ class frealignJob(appionScript.AppionScript):
 			help="conversion constant for phase residual weighting of particles. 100 gives equal weighting")
 		self.parser.add_option('--avgresidual', dest="avgresidual", default=75, type='int',
 			help="average phase residual of all particles. used for weighting")
-		self.parser.add_option('--ang', dest="ang", type='int', default=5, 
+		self.parser.add_option('--dang', dest="dang", type='int', default=5, 
 			help="step size if using modes 3 and 4")
 		self.parser.add_option('--itmax', dest="itmax", default=10, type='int',
 			help="number of iterations of randomization. used for modes 2 and 4")
@@ -190,6 +185,17 @@ class frealignJob(appionScript.AppionScript):
 			apDisplay.printError("model id was not defined")
 		if self.params['runname'] is None:
 			apDisplay.printError("missing a reconstruction name")
+		if self.params['last'] is None:
+			self.params['last'] = apStack.getNumberStackParticlesFromId(self.params['stackid'])
+		self.boxsize = apStack.getStackBoxsize(self.params['stackid'], msg=False)
+		self.apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+		maxmask = math.floor(self.apix*(self.boxsize-10)/2.0)
+		if self.params['mask'] is None:
+			apDisplay.printWarning("mask was not defined, setting to boxsize: %d"%(maxmask))
+			self.params['mask'] = maxmask
+		if self.params['mask'] > maxmask:
+			apDisplay.printWarning("mask was too big, setting to boxsize: %d"%(maxmask))
+			self.params['mask'] = maxmask
 
 	#=====================
 	def setRunDir(self):
@@ -215,7 +221,7 @@ class frealignJob(appionScript.AppionScript):
 		#combine results of multiple runs and create volume
 		combinedparams = params['outpar']+'.all'
 		combinefile=open(os.path.join(self.params['rundir'],combinedparams),'w')
-		for outpar in params['outparlst']:
+		for outpar in self.params['outparlst']:
 			f=open(os.path.join(self.params['rundir'],outpar), 'r')
 			lines=f.readlines()
 			f.close()
@@ -290,7 +296,7 @@ class frealignJob(appionScript.AppionScript):
 
 	#===============
 	def generateParticleParams(self):
-		paramfile = os.path.join(self.params['rundir'], 'params.0.par')
+		paramfile = os.path.join(self.params['rundir'], 'params.iter000.par')
 		apDisplay.printMsg("Creating parameter file: "+paramfile)
 
 		if os.path.isfile(paramfile):
@@ -299,12 +305,11 @@ class frealignJob(appionScript.AppionScript):
 			numparam = len(f.readlines())
 			if numparam == numpart:
 				apDisplay.printMsg("Param file exists")
-				return
+				return paramfile
 			else:
 				apDisplay.printWarning("Param file exists but has wrong number of parts: %d vs %d"%(numparam,numpart))
 
 		stackdata = apStack.getStackParticlesFromId(self.params['stackid'])
-		apix=self.params['apix']
 		particleparams={}
 
 		f = open(paramfile, 'w')
@@ -360,19 +365,21 @@ class frealignJob(appionScript.AppionScript):
 			### use parameters from previous reconstruction
 			self.params['iflag'] = 1
 			self.params['reconstackid'] = apStack.getStackIdFromIterationId(self.params['reconiterid'])
-		elif self.params['ang'] is not None:
+		elif self.params['dang'] is not None:
 			### use slow projection matching search to determine initial Eulers
 			self.params['iflag'] = 3
 
-		if self.params['inpar'] is None:
-			### if no parameter file specified then generate input parameter file
-			self.params['iflag'] = 3
-			self.params['noClassification'] = 0
-			paramfile = self.generateParticleParams()
-			self.params['inpar'] = paramfile
-		else:
+		if self.params['inpar'] is not None and os.path.isfile(self.params['inpar']):
 			### use specified parameter file
-			apDisplay.printMsg("Using parameter file: "+self.params['inpar'])		
+			paramfile = self.params['inpar']
+			apDisplay.printMsg("Using parameter file: "+paramfile)		
+			return paramfile
+
+		### if no parameter file specified then generate input parameter file
+		self.params['iflag'] = 3
+		self.params['noClassification'] = 0
+		paramfile = self.generateParticleParams()
+		return paramfile
 
 	#===============
 	def setupInitialModel(self):
@@ -396,34 +403,19 @@ class frealignJob(appionScript.AppionScript):
 		boxsize = apStack.getStackBoxsize(self.params['stackid'])
 
 		outmodelfile = os.path.join(self.params['rundir'], "initmodel.hed")
-		emancmd = "proc3d %s %s clip=%d,%d,%d" % (modelfile, outmodelfile, boxsize, boxsize, boxsize)
+		apFile.removeStack(outmodelfile, warn=False)
+		emancmd = "proc3d %s %s clip=%d,%d,%d " % (modelfile, outmodelfile, boxsize, boxsize, boxsize)
 
 		# rescale initial model if necessary
-		scale = modeldata['pixelsize']/self.params['apix']
+		scale = modeldata['pixelsize']/self.apix
 		if abs(scale - 1.0) > 1e-3:
  			emancmd += "scale=%.4f "%(scale)
 
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 
+		apImagicFile.setMachineStampInImagicHeader(outmodelfile)
+
 		return outmodelfile
-
-	#===============
-	def startFrealignJobFile(self, jobfile, stackfile, volfile, paramfile, nodenum=None):
-		f = open(jobfile, 'w')
-		f.write("#!/bin/csh\n")
-
-		# copy files to working directory
-		f.write('cd %s\n' % self.params['workingdir'])
-		if nodenum is not None:
-			workdir = "sub%04d"%(nodenum)
-			f.write('rm -rf %s\n' %workdir)
-			f.write('mkdir %s\n' %workdir)
-			f.write('cd %s\n' %workdir)
-		volroot = os.path.splitext(volfile)[0]
-		f.write('rsync -vaP %s model.hed\n' % (volroot+".hed"))
-		f.write('rsync -vaP %s model.img\n' % (volroot+".img"))
-		f.write('rsync -vaP %s inparams.par\n' % paramfile)
-		f.write('\n')
 
 	#===============
 	def bc(self, val):
@@ -433,38 +425,51 @@ class frealignJob(appionScript.AppionScript):
 		return "F"
 
 	#===============
-	def appendFrealignJobFile(self, jobfile, first=1, last=None, recon=True):
+	def appendFrealignJobFile(self, jobfile, first=1, last=None, 
+			recon=True, iflag=None, logfile=None):
+	
 		### hard coded parameters
 		self.defaults = {
+			'cform':'I', #(I) use imagic, (M) use mrc, (S) use spider
 			'fstat': False, # memory saving function, usually false
-			'iblow': False, # expand volume in memory, larger is faster, but needs more mem; can be 1, 2 or 4
-			'fcref': False, # apply FOM weighting
+			'ifsc': 0, # memory saving function, usually false
+			'iblow': 1, # expand volume in memory, larger is faster, but needs more mem; can be 1, 2 or 4
 			'dfstd': 100,   # defocus standard deviation (in Angstroms), usually +/- 100 A
 		}
 
 		if last is None:
 			last = self.params['last']
+		if logfile is None:
+			logfile = "frealign.out"
+		if iflag is None:
+			iflag = self.params['iflag']
 
 		f = open(jobfile, 'a')
-		f.write('frealign << EOF > frealign.out\n')
+		f.write('\n')
+		f.write('# IFLAG %d\n'%(iflag))
+		f.write('# PARTICLES %d THRU %d\n'%(first, last))
+		f.write('# RECON %s\n'%(recon))
+		f.write('\n')
+		f.write('### START FREALIGN ###\n')
+		f.write('frealign.exe << EOF > '+logfile+'\n')
 
 		### CARD 1
-		f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s,%d,%s,%d\n' % (
-			'I', #(I) use imagic, (M) use mrc, (S) use spider
-			self.params['iflag'], 
-			self.bc(self.params['fmag']), self.bc(self.params['defocusrefine']), #T/F refinements
-			self.bc(self.params['astigrefine']), self.bc(self.params['defocusperpart']), #T/F refinements
-			self.params['ewald'], 
-			self.bc(self.params['matches']), self.bc(self.defaults['fcref']), self.bc(self.params['finalsym']), 
-			self.bc(self.params['fomfilter']), self.params['fsc'], 
+		f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%d,%s,%d\n' % (
+			self.defaults['cform'],
+			iflag, 
+			self.bc(self.params['fmag']), self.bc(self.params['fdef']), #T/F refinements
+			self.bc(self.params['fastig']), self.bc(self.params['fpart']), #T/F refinements
+			self.params['iewald'], 
+			self.bc(self.params['fbeaut']), self.bc(self.params['fcref']), self.bc(self.params['fmatch']), 
+			self.defaults['ifsc'],
 			self.bc(self.defaults['fstat']), self.defaults['iblow']))
 
 		### CARD 2
 		f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (
-			self.params['radius'], self.params['iradius'], 
-			self.params['apix'], self.params['ampcontrast'], 
+			self.params['mask'], self.params['imask'], 
+			self.apix, self.params['ampcontrast'], 
 			self.params['maskthresh'], self.params['phaseconstant'], 
-			self.params['avgresidual'], self.params['ang'], self.params['itmax'], self.params['maxmatch']))
+			self.params['avgresidual'], self.params['dang'], self.params['itmax'], self.params['maxmatch']))
 
 		### CARD 3
 		f.write('%d %d %d %d %d\n' % (
@@ -482,7 +487,7 @@ class frealignJob(appionScript.AppionScript):
 
 		### CARD 6
 		f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
-			self.params['relmag'], self.params['apix'], 
+			self.params['relmag'], self.apix, 
 			self.params['targetresidual'], self.params['residualthresh'], 
 			self.params['cs'], self.params['kv'], 
 			self.params['beamtiltx'], self.params['beamtilty']))
@@ -496,7 +501,7 @@ class frealignJob(appionScript.AppionScript):
 		### CARD 8
 		f.write('%s\n'%(os.path.splitext(self.stackfile)[0]))
 		f.write('match\n')
-		f.write('inparams.par\n')
+		f.write('%s\n'%(self.currentparam))
 		f.write('outparams.par\n')
 		f.write('shift.par\n')
 
@@ -513,6 +518,7 @@ class frealignJob(appionScript.AppionScript):
 		f.write('phasediffs\n')
 		f.write('pointspread\n')
 		f.write('EOF\n')
+		f.write('### END FREALIGN ###\n')
 		f.write('\n')
 		f.close()
 		os.chmod(jobfile, 0755)
@@ -523,68 +529,114 @@ class frealignJob(appionScript.AppionScript):
 		Create multiple job files for frealign reconstruction
 		using the mpiexec command
 		"""
-		# create script that will launch all mpi scripts
-		workdir = os.path.join(self.params['rundir'], "iter%04d"%(iternum))
-		apParam.createDirectory(workdir, warning=False)
-		#shutil.rmtree(workdir)
-		os.mkdir(workdir)
-		mainscript = os.path.join(workdir,'frealign_MP.csh')
-		mp_script = cscript
-		mainf = open(mainscript, 'w')
-		#frscript = os.path.join(workdir,'frealign.$PBS_VNODENUM.csh')
-		#fr.write("csh "+frscript+"\n")
+		### create script that will launch all mpi scripts
+		iterdir = "iter%03d"%(iternum)
+		iterjobfile = 'frealign.iter%03d.run.sh'%(iternum)
+		mainf = open(iterjobfile, 'w')
+		mainf.write("#!/bin/sh\n")
+		mainf.write("\n")
+		mainf.write('mkdir %s\n' %iterdir)
+		mainf.write('cd %s\n' %iterdir)
+		mainf.write("\n")
+		#frscript = os.path.join(workdir,'frealign.$PBS_VNODENUM.sh')
+		#fr.write("sh "+frscript+"\n")
 
-		# create individual mpi scripts
+		### create individual mpi scripts
 		partperjob = math.floor(self.params['last']/self.params['proc'])
 		r = self.params['last']%self.params['proc']
 		lastp = 0
 		for n in range(self.params['proc']):
-			firstp = lastp+1
+			firstp = lastp + 1
 			lastp = firstp + partperjob - 1
-
 			if r > 0:
 				lastp+=1
 				r-=1
 
-			jobfile=os.path.join(workdir,"frealign.proc%02d.csh" %n)
-			mainf.write("-np 1 %s\n" % jobfile)
-			self.appendFrealignJobFile(jobfile, first=1, last=None, recon=False)
-			#(jobname,invol=params['itervol'], inpar=params['iterparam'], nodenum=n, first=firstp, last=lastp, recon=True)
-		fr.close()
-		os.chmod(cscript,0755)
-		return mp_script
+			procdir = "proc%03d"%n
+			jobfile = "frealign.iter%03d.proc%03d.sh"%(iternum, n+1)
+			### garibaldi
+			#mainf.write("pbsdsh -v -np 1 %s\n" % jobfile)
+			### guppy
+			mainf.write("### Job #%03d, Particles %6d - %6d\n" %(n+1, firstp, lastp))
+			mainf.write("mpiexec --app -np 1 %s\n" % jobfile)
+
+			### start jobfile
+			f = open(jobfile, "w")
+			f.write("#!/bin/sh\n")
+			f.write("\n")
+			f.write('mkdir %s\n' %procdir)
+			f.write('cd %s\n' %procdir)
+			f.close()
+			### add frealign code
+			self.appendFrealignJobFile(jobfile, first=firstp, last=lastp, recon=False)
+			os.chmod(jobfile, 0755)
+
+		mainf.close()
+		os.chmod(iterjobfile, 0755)
+		return iterjobfile
+
+	#===============
+	def combineMultipleJobs(self, iternum):
+		"""
+		combine all the parameter files & combine into 1
+		then reconstruct the density
+		"""
+		combineparamfile = 'params.iter%03d.par'%(iternum)
+		combinef = open(combineparamfile, 'w')
+		for n in range(self.params['proc']):
+			procdir = "iter%03d/proc%03d"%(iternum,n+1)
+			outparamfile = os.path.join(procdir, 'outparams.par')
+			f = open(outparamfile, 'r')
+			lines = f.readlines()
+			f.close()
+			for line in f:
+				if line[0] != 'C':
+					combinef.write(n)
+		combinef.close()
+		combinejobname = 'frealign.iter%03d.combine.sh'%(iternum)
+		self.appendFrealignJobFile(combinejobname, iflag=0)
+		proc = subprocess.Popen('sh '+combinejobname, shell=True)
+		proc.wait()
 
 	#===============	
 	def start(self):
-		#set up directories
-		self.params['workingdir'] = os.path.join(self.params['rundir'], "working")	
-		apParam.createDirectory(self.params['workingdir'], warning=False)
-
-		### create parameter file
-		currentparam = self.setupParticleParams()
-		
+		### get stack info
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		self.stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
+		apImagicFile.setMachineStampInImagicHeader(self.stackfile)
 
-		# set input parameter file if continuing a run
+		### create initial model file
 		self.currentvol = self.setupInitialModel()
-		self.currentparam = os.path.join(self.params['rundir'], "params.0.par")
+
+		### create parameter file
+		self.currentparam = self.setupParticleParams()
+		apDisplay.printColor("Initial files:\n Stack: %s\n Volume: %s\n Params: %s\n"
+			%(self.stackfile, self.currentvol, self.currentparam), "violet")
 
 		## run frealign for number for refinement cycles
 		for i in range(self.params['refcycles']):
 			iternum = i+1
 			if self.params['cluster'] is True:
-				# create jobs
-				self.createMultipleJobs(iternum)
-				# run split jobs
-				apFrealign.submitMultipleJobs(self.params)
+				### create individual processor jobs
+				iterjobfile = self.createMultipleJobs(iternum)
+				### run split jobs
+				#self.submitMultipleJobs(iterjobfile)
 				# combine results & create density
-				apFrealign.combineMultipleJobs(self.params)
+				self.combineMultipleJobs(iternum)
 			else:
 				### single node run
-				jobfile = os.path.join(self.params['rundir'], self.params['runname']+'.job')
-				self.startFrealignJobFile(jobfile, self.stackfile, self.currentvol, self.currentparam)
-				self.appendFrealignJobFile(jobfile, self.currentparam)
+				jobfile = os.path.join(self.params['rundir'], 'frealign.iter%03d.run.sh'%(iternum))
+				f = open(jobfile, 'w')
+				f.write("#!/bin/sh\n\n")
+				iterdir = os.path.join(self.params['rundir'], "iter%03d"%(iternum))
+				f.write('mkdir -p %s\n' % iterdir)
+				f.write('cd %s\n\n' % iterdir)
+				f.close()
+				self.appendFrealignJobFile(jobfile)
+				apDisplay.printColor("Running frealign "+jobfile, "blue")
+				proc = subprocess.Popen("sh "+jobfile, shell=True)
+				proc.wait()
+				break
 
 			### calculate FSC
 			#emancmd = 'proc3d %s %s fsc=fsc.eotest.%d' % (evenvol, oddvol, self.params['iter'])
