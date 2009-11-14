@@ -237,30 +237,6 @@ def createDirectory(path, mode=0777, warning=True):
 	return True
 
 #=====================
-def makedirs(name, mode=0777):
-	"""
-	Works like mkdir, except that any intermediate path segment (not
-	just the rightmost) will be created if it does not exist.  This is
-	recursive.
-	"""
-	"""
-	This is broken since curdir is not defined.  Not sure how to fix
-	it.  Use createDirectory instead.  AC
-	"""
-	head, tail = os.path.split(name)
-	if not tail:
-		head, tail = os.path.split(head)
-	if head and tail and not os.path.exists(head):
-		makedirs(head, mode)
-		if tail == curdir:
-			return
-	if not os.path.isdir(name):
-		os.mkdir(name, mode)
-		#os.lchmod(name, mode)
-		os.chmod(name, mode)
-	return
-
-#=====================
 def convertParserToParams(parser):
 	parser.disable_interspersed_args()
 	(options, args) = parser.parse_args()
