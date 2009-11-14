@@ -143,6 +143,7 @@ def mkTempDir(temppath):
 def getBestDefocusForImage(imgdata, msg=False):
 	"""
 	takes an image and get the best defocus (in negative meters) for that image
+	indepedent of method (ACE1 or ACE2)
 	"""
 
 	ctfvalue, conf = getBestCtfValueForImage(imgdata)
@@ -201,6 +202,7 @@ def getBestDefocusAndAmpConstForImage(imgdata, msg=False):
 def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True):
 	"""
 	takes an image and get the best ctfvalues for that image
+	indepedent of method (ACE1 or ACE2)
 	"""
 	### get all ctf values
 	ctfq = appiondata.ApCtfData()
@@ -229,6 +231,7 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True):
 def getBestAceTwoValueForImage(imgdata, ctfavg=True, msg=True):
 	"""
 	takes an image and get the best ctfvalues for that image
+	ACE2 only
 	"""
 	### get all ctf values
 	ctfq = appiondata.ApCtfData()
