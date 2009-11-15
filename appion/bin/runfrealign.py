@@ -30,8 +30,6 @@ class frealignJob(appionScript.AppionScript):
 		#	action="store_true", help="Commit processing run to database")
 
 		####card 1
-		self.parser.add_option('--iflag', dest="iflag", default=1, type='int',
-			help="mode of operation [-4,4]: refine (1) and reconstruct (3)")
 		self.parser.add_option("--fmag", dest="fmag", default=False,
 			action="store_true", help="Refine the magnification")
 		self.parser.add_option("--fdef", dest="fdef", default=False,
@@ -40,12 +38,6 @@ class frealignJob(appionScript.AppionScript):
 			action="store_true", help="Refine the defocus astigmatism")
 		self.parser.add_option("--fpart", dest="fpart", default=False,
 			action="store_true", help="Refine the defocus per particle")
-		self.parser.add_option('--iewald', dest="iewald", default=0, type='int',
-			help="ewald curvature correction, [-2,2]")
-		self.parser.add_option("--fmatch", dest="fmatch", default=False,
-			action="store_true", help="write out particles with matching projections")
-		self.parser.add_option('--fbeaut', dest="fbeaut", default=True,
-			action="store_true", help="apply final real space symmetrization to beautify reconstruction")
 		self.parser.add_option('--fcref', dest="fcref", default=False,
 			action="store_true", help="apply FOM filter to final reconstruction")
 	
@@ -54,105 +46,47 @@ class frealignJob(appionScript.AppionScript):
 			help="mask from center of particle to outer edge")
 		self.parser.add_option('--imask', dest="imask", default=0, type='float',
 			help="inner mask radius")
-		self.parser.add_option('--ampcontrast', dest="ampcontrast", default=0.07, type='float',
+		self.parser.add_option('--wgh', dest="wgh", default=0.07, type='float',
 			help="amplitude contrast")
-		self.parser.add_option('--maskthresh', dest="maskthresh", default=0.0, type='float',
+		self.parser.add_option('--xstd', dest="xstd", default=0.0, type='float',
 			help="standard deviations above mean for masking of input model")
-		self.parser.add_option('--phaseconstant', dest="phaseconstant", default=100.0, type='float',
+		self.parser.add_option('--pbc', dest="pbc", default=100.0, type='float',
 			help="conversion constant for phase residual weighting of particles. 100 gives equal weighting")
-		self.parser.add_option('--avgresidual', dest="avgresidual", default=75, type='int',
+		self.parser.add_option('--boff', dest="boff", default=75, type='int',
 			help="average phase residual of all particles. used for weighting")
 		self.parser.add_option('--dang', dest="dang", type='int', default=5, 
 			help="step size if using modes 3 and 4")
 		self.parser.add_option('--itmax', dest="itmax", default=10, type='int',
 			help="number of iterations of randomization. used for modes 2 and 4")
-		self.parser.add_option('--maxmatch', dest="maxmatch", default=0, type='int',
+		self.parser.add_option('--ipmax', dest="ipmax", default=0, type='int',
 			help="number of potential matches in a search that should be tested further in local refinement")
-		
-		####card 3
-		self.parser.add_option('--psi', dest="psi", default=1, type='int',
-			help="refine psi")
-		self.parser.add_option('--theta', dest="theta", default=1, type='int',
-			help="refine theta")
-		self.parser.add_option('--phi', dest="phi", default=1, type='int',
-			help="refine phi")
-		self.parser.add_option('--deltax', dest="deltax", default=1, type='int',
-			help="refine delta X")
-		self.parser.add_option('--deltay', dest="deltay", default=1, type='int',
-			help="refine delta Y")
 		
 		####card 4
 		self.parser.add_option('--last', dest="last", type='int',
-			help="last particle")
+			help="last particle to process")
 	
 		####card 5
 		self.parser.add_option('--sym', dest="sym", help="symmetry ")
 	
 		####card 6
-		self.parser.add_option('--relmag', dest="relmag", default=1, type='float',
-			help="relative magnification of dataset")
-		self.parser.add_option('--targetresidual', dest="targetresidual", default=10.0, type='float',
+		self.parser.add_option('--target', dest="target", default=10.0, type='float',
 			help="target phase residual during refinement")
-		self.parser.add_option('--residualthresh', dest="residualthresh", default=90.0, type='float',
+		self.parser.add_option('--thresh', dest="thresh", default=90.0, type='float',
 			help="phase residual threshold cut-off")
 		self.parser.add_option('--cs', dest="cs", default=2.0, type='float',
 			help="spherical aberation")
 		self.parser.add_option('--kv', dest="kv", default=120.0, type='float',
 			help="accelerlating voltage")
-		self.parser.add_option('--beamtiltx', dest="beamtiltx", default=0.0, type='float',
-			help="beam tilt x (mrad)")
-		self.parser.add_option('--beamtilty', dest="beamtilty", default=0.0, type='float',
-			help="beam tilt y (mrad)")
 	
 		####card 7
-		self.parser.add_option('--reslimit', dest="reslimit", default=10.0, type='float',  help="resolution to which to limit the reconstruction")
+		self.parser.add_option('--rrec', dest="rrec", default=10.0, type='float',  
+			help="resolution to which to limit the reconstruction")
 		self.parser.add_option('--hp', dest="hp", default=100.0, type='float',
 			help="upper limit for low resolution signal")
 		self.parser.add_option('--lp', dest="lp", default=10.0, type='float',
 			help="lower limit for high resolution signal")
-		self.parser.add_option('--bfactor', dest="bfactor", default=0.0, type='float',
-			help="bfactor to apply to particles before classification. 0.0 applies no bfactor.")
-	
-		####card 8
-		self.parser.add_option('--stack', dest="stack", default='start.mrc',
-			help="input particles to be classified")
-	
-		####card 9
-		self.parser.add_option('--matchstack', dest="matchstack", default='match.mrc',
-			help="output projection matches")
-	
-		####card 10
-		self.parser.add_option('--inpar', dest="inpar",
-			help="input particle parameter file")
-	
-		####card 11
-		self.parser.add_option('--outpar', dest="outpar", default='params.1.par',
-			help="output particle parameter file")
-		
-		####card 12
-		self.parser.add_option('--outshiftpar', dest="outshiftpar", default='shift.par',
-			help="output particle shift parameter file")
-		
-		####card 14
-		self.parser.add_option('--weight3d', dest="weight3d", default='weights.mrc',
-			help="???")
-		
-		####card 15
-		self.parser.add_option('--oddvol', dest="oddvol", default='odd.mrc',
-			help="output odd volume")
-		
-		####card 16
-		self.parser.add_option('--evenvol', dest="evenvol", default='even.mrc',
-			help="output even volume")
-		
-		####card 17
-		self.parser.add_option('--outresidual', dest="outresidual", default='phasediffs.mrc',
-			help="3d phase residuals")
-		
-		####card 18
-		self.parser.add_option('--pointspreadvol', dest="pointspreadvol", default='pointspread.mrc',
-			help="output 3d point spread function")
-
+		self.parser.add_option('--rbfact', dest="rbfact", default=0, type='float',
+			help="rbfact to apply to particles before classification. 0.0 applies no rbfact.")
 
 		#### Appion params
 		self.parser.add_option('--stackid', dest='stackid', type='int',
@@ -161,21 +95,15 @@ class frealignJob(appionScript.AppionScript):
 			help="initial model id from database")
 		self.parser.add_option('--reconiterid', dest='reconiterid', type='int',
 			help="id for specific iteration from a refinement, used for retrieving particle orientations")
-		self.parser.add_option('--mrchack', dest='mrchack', default=False, action='store_true',
-			help="hack to fix machine stamp in mrc header")
-		self.parser.add_option('--outvol', dest='outvol',
-			help="name of output volume", default='threed.1.mrc')
 		self.parser.add_option('--proc', dest='proc', default=1, type='int',
 			help="number of processors")
 		self.parser.add_option("--cluster", dest="cluster", default=False,
 			action="store_true", help="Make script for running on a cluster")
 
-		self.parser.add_option('--refcycles', dest='refcycles', type='int', default=1,
+		self.parser.add_option('--numiter', dest='numiter', type='int', default=1,
 			help="number of refinement iterations to perform")
 		self.parser.add_option('--noctf', dest='noctf', default=False, action='store_true',
 			help="choose if frealign should not perform ctf correction")
-		self.parser.add_option('--iter', dest='iter', default=0, type='int',
-					help="continue previous run from this iteration number")
 
 	#=====================
 	def checkConflicts(self):
@@ -203,50 +131,6 @@ class frealignJob(appionScript.AppionScript):
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath,'recon',self.params['runname'])
-
-	#===============
-	def runParallel(self):
-		createMultipleJobs(self.params)
-		joblist=[]
-		for n in params['jobs']:		
-			command=("frealign < %s " % (n))
-			print "command is", command
-			job=FrealignJob(command)
-			job.start()
-			joblist.append(job)
-
-		for job in joblist:
-			job.join()
-
-		#combine results of multiple runs and create volume
-		combinedparams = params['outpar']+'.all'
-		combinefile=open(os.path.join(self.params['rundir'],combinedparams),'w')
-		for outpar in self.params['outparlst']:
-			f=open(os.path.join(self.params['rundir'],outpar), 'r')
-			lines=f.readlines()
-			f.close()
-
-			for n in lines:
-				if n[0] != 'C':
-					combinefile.write(n)
-				else:
-					print "comment"
-		combinefile.close()
-		combinejobname="frealign.job" 
-		createFrealignJob(self.params, combinejobname, 0, combinedparams, params['outpar'], params['first'], params['last'], norecon=False)
-		command='frealign < ' + combinejobname
-		print 'command is',command
-		proc = subprocess.Popen(command, shell=True)
-		proc.wait()	
-
-	#===============
-	def runSingle(self):
-		jobname='frealign.job'
-		createFrealignJob(self.params, jobname)
-		command='frealign < ' + jobname
-		print 'command is',command
-		proc = subprocess.Popen(command, shell=True)
-		proc.wait()
 
 	#===============
 	def getStackParticleEulersForIteration(self, pnum):
@@ -343,7 +227,12 @@ class frealignJob(appionScript.AppionScript):
 					particleparams['df1'] = abs(ctfdata['defocus1']*1e10)
 					particleparams['df2'] = abs(ctfdata['defocus2']*1e10)
 					particleparams['angast'] = -ctfdata['angle_astigmatism']
-
+			else:
+				## Niko says that if the defocus is negative it will not perform CTF correction
+				## But it will also not correct the amplitudes
+				particleparams['df1'] = -1.0
+				particleparams['df2'] = -1.0
+				particleparams['angast'] = 0.0
 			# if using parameters from previous reconstruction
 			if self.params['reconiterid'] is not None:
 				emaneuler = self.getStackParticleEulersForIteration(particle['particleNumber'])
@@ -363,11 +252,11 @@ class frealignJob(appionScript.AppionScript):
 	def setupParticleParams(self):
 		if self.params['reconiterid'] is not None:
 			### use parameters from previous reconstruction
-			self.params['iflag'] = 1
+			self.iflag = 1
 			self.params['reconstackid'] = apStack.getStackIdFromIterationId(self.params['reconiterid'])
 		elif self.params['dang'] is not None:
 			### use slow projection matching search to determine initial Eulers
-			self.params['iflag'] = 3
+			self.iflag = 3
 
 		if self.params['inpar'] is not None and os.path.isfile(self.params['inpar']):
 			### use specified parameter file
@@ -376,7 +265,7 @@ class frealignJob(appionScript.AppionScript):
 			return paramfile
 
 		### if no parameter file specified then generate input parameter file
-		self.params['iflag'] = 3
+		self.iflag = 3
 		self.params['noClassification'] = 0
 		paramfile = self.generateParticleParams()
 		return paramfile
@@ -434,7 +323,10 @@ class frealignJob(appionScript.AppionScript):
 			'fstat': False, # memory saving function, usually false
 			'ifsc': 0, # memory saving function, usually false
 			'iblow': 1, # expand volume in memory, larger is faster, but needs more mem; can be 1, 2 or 4
-			'dfstd': 100,   # defocus standard deviation (in Angstroms), usually +/- 100 A
+			'fmatch': False, # make 
+			'dfstd': 100,   # defocus standard deviation (in Angstroms), usually +/- 100 A, only for defocus refinement
+			'beamtiltx': 0.0, #assume zero beam tilt
+			'beamtilty': 0.0, #assume zero beam tilt
 		}
 
 		if last is None:
@@ -442,7 +334,7 @@ class frealignJob(appionScript.AppionScript):
 		if logfile is None:
 			logfile = "frealign.out"
 		if iflag is None:
-			iflag = self.params['iflag']
+			iflag = self.iflag
 
 		f = open(jobfile, 'a')
 		f.write('\n')
@@ -460,21 +352,20 @@ class frealignJob(appionScript.AppionScript):
 			self.bc(self.params['fmag']), self.bc(self.params['fdef']), #T/F refinements
 			self.bc(self.params['fastig']), self.bc(self.params['fpart']), #T/F refinements
 			self.params['iewald'], 
-			self.bc(self.params['fbeaut']), self.bc(self.params['fcref']), self.bc(self.params['fmatch']), 
+			self.bc(self.params['fbeaut']), self.bc(self.params['fcref']), self.bc(self.defaults['fmatch']), 
 			self.defaults['ifsc'],
 			self.bc(self.defaults['fstat']), self.defaults['iblow']))
 
 		### CARD 2
 		f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (
 			self.params['mask'], self.params['imask'], 
-			self.apix, self.params['ampcontrast'], 
-			self.params['maskthresh'], self.params['phaseconstant'], 
-			self.params['avgresidual'], self.params['dang'], self.params['itmax'], self.params['maxmatch']))
+			self.apix, self.params['wgh'], 
+			self.params['xstd'], self.params['pbc'], 
+			self.params['boff'], self.params['dang'], self.params['itmax'], self.params['ipmax']))
 
-		### CARD 3
-		f.write('%d %d %d %d %d\n' % (
-			self.params['psi'], self.params['theta'], self.params['phi'], 
-			self.params['deltax'], self.params['deltay']))
+		### CARD 3 fixing of an Euler angle of shift parameter, 1 = refine all
+		f.write('%d %d %d %d %d\n' % (1,1,1,1,1))
+
 
 		### CARD 4 -- particle limits
 		f.write('%d, %d\n' % (first, last))
@@ -487,16 +378,16 @@ class frealignJob(appionScript.AppionScript):
 
 		### CARD 6
 		f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
-			self.params['relmag'], self.apix, 
-			self.params['targetresidual'], self.params['residualthresh'], 
+			1.0, self.apix, 
+			self.params['target'], self.params['thresh'], 
 			self.params['cs'], self.params['kv'], 
-			self.params['beamtiltx'], self.params['beamtilty']))
+			self.defaults['beamtiltx'], self.defaults['beamtilty']))
 
 		### CARD 7
 		### lp should be ~25 A for iflag 3 and ~12 A for iflag 1
 	 	f.write('%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
-			self.params['reslimit'], self.params['hp'], 
-			self.params['lp'], self.defaults['dfstd'], self.params['bfactor']))
+			self.params['rrec'], self.params['hp'], 
+			self.params['lp'], self.defaults['dfstd'], self.params['rbfact']))
 
 		### CARD 8
 		f.write('%s\n'%(os.path.splitext(self.stackfile)[0]))
@@ -600,6 +491,8 @@ class frealignJob(appionScript.AppionScript):
 
 	#===============	
 	def start(self):
+		self.iflag = 1
+
 		### get stack info
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		self.stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
