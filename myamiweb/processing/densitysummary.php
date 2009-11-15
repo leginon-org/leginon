@@ -45,6 +45,8 @@ if ($allDensityRuns) {
 		if (!$drun['REF|ApRefinementData|iterid']) $densityRuns[]=$drun;
 	}
 }
+$densityRuns = $allDensityRuns;
+
 if ($densityRuns) {
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
