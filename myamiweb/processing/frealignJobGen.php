@@ -29,9 +29,9 @@ if ($_POST['write']) {
 	$jobname .= '.job';
 	$exists = $particle->getJobFileFromPath($outdir,$jobname);
 	//  if ($exists[0]) jobForm("ERROR: This job name already exists");
-	if (!$_POST['radius']) jobForm("ERROR: Enter an outer radius");
+	if (!$_POST['mask']) jobForm("ERROR: Enter an outer mask radius");
 	if ($_POST['initorientmethod']=='projmatch' && !$_POST['ang']) jobForm("ERROR: Enter an angular increment");
-	writeJobFile();
+	prepareFrealign();
 }
 
 elseif ($_POST['submitstackmodel'] || $_POST['importrecon']) {
@@ -59,7 +59,7 @@ function stackModelForm($extra=False) {
 	$projectId = getProjectFromExpId($expId);
 
 	$javafunc="<script src='../js/viewer.js'></script>\n";
-	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
+	processing_header("FREALIGN Job Generator","FREALIGN Job Generator",$javafunc);
 
 	if ($expId) {
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
@@ -75,7 +75,7 @@ function stackModelForm($extra=False) {
 	// find each stack entry in database
 	$stackIds = $particle->getStackIds($expId);
 	$stackinfo = explode('|--|', $_POST['stackval']);
-	$stackidval = $stackinfo[0];
+	$stackid = $stackinfo[0];
 	$apix = $stackinfo[1];
 	$box = $stackinfo[2];
 
@@ -85,7 +85,7 @@ function stackModelForm($extra=False) {
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
 	echo"<b>Stack:</b><br>";
-	$particle->getStackSelector($stackIds, $stackidval, '');
+	$particle->getStackSelector($stackIds, $stackid, '');
 
 	// show initial models
 	echo "<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
@@ -136,8 +136,8 @@ function jobForm($extra=false) {
 
 	## get stack data
 	$stackinfo = explode('|--|',$_POST['stackval']);
-	$stackidval=$stackinfo[0];
-	$nump=$particle->getNumStackParticles($stackidval);
+	$stackid=$stackinfo[0];
+	$nump=$particle->getNumStackParticles($stackid);
 	$apix=$stackinfo[1];
 	$box=$stackinfo[2];
 	$stackpath=$stackinfo[4];
@@ -156,97 +156,32 @@ function jobForm($extra=false) {
 	
 	## get model data
 	$modelinfo = explode('|--|',$_POST['model']);
+	$modelid = $modelinfo[0];
 	$modelpath = $modelinfo[1];
 	$modelname = $modelinfo[2];
 	$dmfmod = $modelinfo[2];
-	$syminfo = explode(' ',$modelinfo[4]);
-	$modsym=$syminfo[0];
-	if ($modsym == 'Icosahedral') $modsym='icos';
 
-	$jobname = ($_POST['jobname']) ? $_POST['jobname'] : $defrunid;
-	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	$refcycles = ($_POST['refcycles']) ? $_POST['refcycles'] : '';
+	$syminfo = explode(' ',$modelinfo[4]);
+	$modsym = $syminfo[0];
+	if ($modsym == 'Icosahedral') $modsym='icos';
 
 	$nodes = ($_POST['nodes']) ? $_POST['nodes'] : 1;
 	$ppn = ($_POST['ppn']) ? $_POST['ppn'] : 8;
 
 	// preset information from stackid
-	$presetinfo = $particle->getPresetFromStackId($stackidval);
+	$presetinfo = $particle->getPresetFromStackId($stackid);
 	$kv = $presetinfo['hightension']/1e3;
 	$cs = 2.0;
 
-	$javafunc .= defaultReconValues($box,$apix);
 	$javafunc .= writeJavaPopupFunctions('frealign');
 	processing_header("Frealign Job Generator","Frealign Job Generator",$javafunc);
 	// write out errors, if any came up:
-	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+	if ($extra) echo "<FONT COLOR='#CC3333' size='+2'>$extra</FONT>\n<HR>\n";
 
-	echo "<form name='frealignjob' method='post' action='$formaction'><br />\n";
-	echo "<p>\n";
+	echo "<form name='frealignjob' method='post' action='$formaction'><br/>\n";
 	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
 	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
-	echo openRoundBorder();
-	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
-	echo "<tr>\n";
-	echo "<td><b>Job Run Name:</b></td>\n";
-	echo "<td><input type='text' name='jobname' value='$jobname' size=20></td>\n";
-	echo "</tr>\n";
-	echo "<tr>\n";
-	echo "<td><B>Output Directory:</B></td>\n";
-	echo "<td><input type='text' NAME='outdir' VALUE='$outdir' SIZE=50></td>\n";
-	echo "</tr>\n";
-	echo "<tr>\n";
-	echo "<td>Starting Model (mrc):</td>\n";
-	echo "<td>$modelpath/$modelname</td>\n";
-	echo "</tr>\n";
-	echo "<tr>\n";
-	echo "<td>Stack:</td>\n";
-	echo "<td>$stackpath/$stackname1</td>\n";
-	echo "</tr>\n";
-	echo "<tr>\n";
-	echo "<td>Nodes:</td>\n";
-	echo "<td><input type='text' NAME='nodes' VALUE='$nodes' SIZE='4' MAXCHAR='4'></td>\n";
-	echo "</tr>\n";
-	echo "<tr>\n";
-	echo "<td>Proc/Node:</td>\n";
-	echo "<td><input type='text' NAME='ppn' VALUE='$ppn' SIZE='3'></td>\n";
-	echo "</tr>\n";
-	echo "</table>\n";
-	echo closeRoundBorder();
 
-
-	###set default values that iterate
-	//$magrefine= $_POST["magrefine"];
-	//$defocusrefine=$_POST[$defocusrefinen];
-	//$astigrefine=() ? $_POST["astigrefine"] : $_POST[$astigrefinen];
-	//$fliptilt=() ? $_POST["fliptilt"] : $_POST[$fliptiltn];
-	//$ewald=() ? $_POST["ewald"] : $_POST[$ewaldn];
-	//$matches=() ? $_POST["matches"] : $_POST[$matchesn];
-	//$history=() ? $_POST["history"] : $_POST[$historyn];
-	//$finalsym=() ? $_POST["finalsym"] : $_POST[$finalsymn];
-	//$fomfilter=() ? $_POST["fomfilter"] : $_POST[$fomfiltern];
-	//$fsc=() ? $_POST["fsc"] : $_POST[$fscn];
-	$radius=$_POST["radius"];
-	$iradius=$_POST["iradius"];
-	$ampcontrast=$_POST["ampcontrast"];
-	$maskthresh=$_POST['maskthresh'];
-	$phaseconstant=$_POST['phaseconstant'];
-	$avgresidual=$_POST['avgresidual'];
-	$ang=$_POST['ang'];
-	$itmax=$_POST['itmax'];
-	$maxmatch=$_POST['maxmatch'];
-	//$psi=$_POST[$psin];
-	//$theta=$_POST[$thetan];
-	//$phi=$_POST[$phin];
-	//$deltax=$_POST[$deltaxn];
-	//$deltay=$_POST[$deltayn];
-	$targetresidual=$_POST['targetresidual'];
-	$residualthresh=$_POST['residualthresh'];
-	//$beamtiltx=$_POST[$beamtiltxn];
-	//$beamtilty=$_POST[$beamtiltyn];
-	$hp=$_POST['hp'];
-	$lp=$_POST['lp'];
-	$bfactor=$_POST['bfactor'];
 	$sym = ($_POST['sym']) ? $_POST['sym'] : $modsym;
 
 	// if importing reconstruction eulers
@@ -258,39 +193,77 @@ function jobForm($extra=false) {
 	$angcheck = ($_POST['initorientmethod']=='projmatch' || !$_POST['write']) ? 'checked' : '';
 	$inparfilecheck = ($_POST['initorientmethod']=='inparfile') ? 'checked' : '';
 
-	$bgcolor="#E8E8E8";
-	echo "<br />\n";
-	echo "<h4 style='align=\'center\' >Frealign Reconstruction Parameters</h4>\n";
-	echo "<hr />\n";
+	/* ******************************************
+	SCRIPT PARAMETERS
+	****************************************** */
+	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunid;
+	$outdir  = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '10';
+
+	echo "<table class='tableborder' border='1' cellpadding='4' cellspacing='4'>\n";
+	echo "<tr><td colspan='2' align='center'>\n";
+		echo "<h4>Script parameters</h4>\n";
+	echo "</td></tr><tr><td>\n";
+
+		echo docpop('runname','Run Name')." <br/>\n";
+		echo " <input type='type' name='runname' value='$runname' size='20'>\n";
+		echo "<br/>\n";
+		echo docpop('outdir','Output directory')." <br/>\n";
+		echo " <input type='type' name='outdir' value='$outdir' size='50'>\n";
+		echo "<br/><br/>\n";
+
+		echo " <input type='type' name='nodes' value='$nodes' size='4'>\n";
+		echo docpop('nodes','Number of nodes')." <font size='-2'><i></i></font>\n";
+		echo "<br/>\n";
+		echo " <input type='type' name='ppn' value='$ppn' size='4'>\n";
+		echo docpop('ppn','Number of processors per node')." <font size='-2'><i></i></font>\n";
+		echo "<br/><br/>\n";
+
+		echo " <input type='type' name='numiter' value='$numiter' size='4'>\n";
+		echo docpop('numiter','Number of refinement iterations')." <font size='-2'><i></i></font>\n";
+		echo "<br/>\n";
+
+	echo "</td></tr>\n";
+	echo "</table>\n";
+
+	/* ******************************************
+	INITIAL ORIENTATIONS BOX
+	****************************************** */
+
+	### Frealign initial search only
+	$dang   = $_POST['dang'] ? $_POST['dang'] : '5';
+	$initlp = $_POST['initlp'] ? $_POST['initlp'] : '25';
+
+	echo "<br/>\n";
 	echo openRoundBorder();
 	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
 	echo "<tr><td>\n";
-	echo "<b>Initial Orientations</b><br />\n";
-	echo "<input type='radio' name='initorientmethod' value='importrecon' $importcheck>\n";
-	echo docpop('import','Import from reconstruction iteration:');
-	echo " <select name='importrecon' onchange='this.form.submit()'>\n";
-	$ropt = "<option value='None'>Select Reconstruction</option>\n";
+	echo "<h4>Initial Orientations</h4>\n";
 
-	// import values from previous reconstruction
-	$sessions = $leginondata->getSessions('',$projectId);
-	if (is_array($sessions)) {
-		foreach ($sessions as $s) {
-			$recons=$particle->getReconIdsFromSession($s['id']);
-			if (is_array($recons)) {
-			  	foreach ($recons as $r) {
-					$ropt.= "<option value='".$r['DEF_id']."' ";
-					$ropt.= ($_POST['importrecon']==$r['DEF_id']) ? 'selected':'';
-					$ropt.= ">";
-					$ropt.= $s['name']." : ";
-					$ropt.= $r['name']." - ".$r['description'];
-					$ropt.= "</option>\n";
-				}
-			}
+	echo "</td></tr><tr><td>\n";
+
+	echo "<input type='radio' name='initorientmethod' value='importrecon' $importcheck>\n";
+	// Neil:: Switching code ; why do want recons from other sessions, we don't have a mathcing stack
+	//$recons = $particle->getReconIdsFromSession($expId);
+	$recons = $particle->getReconIterIdRelatedToStackid($stackid);
+	if (is_array($recons)) {
+		echo "<b>Import from EMAN reconstruction:</b>";
+		echo "<br/>&nbsp;&nbsp;&nbsp; Reconstr.:\n";
+		echo "<select name='importrecon' onchange='this.form.submit()'>\n";
+		echo "   <option value='None'>Select Reconstruction</option>\n";
+	  	foreach ($recons as $r) {
+			$ropt = "<option value='".$r['DEF_id']."' ";
+			$ropt.= ($_POST['importrecon']==$r['DEF_id']) ? 'selected':'';
+			$ropt.= ">";
+			$ropt.= $r['name']." (id: ".$r['DEF_id'].") -- ".substr($r['description'],0,60);
+			$ropt.= "</option>\n";
+			echo $ropt;
 		}
+	} else {
+		echo "<i>no EMAN recons to import Euler angles</i>\n";
 	}
-	echo "$ropt";
 	echo "</select>\n";
-	echo "<br />\n";
+	echo "<br/>\n";
 
 	// if a reconstruction has been selected, show iterations & resolutions
 	if ($_POST['importrecon'] && $_POST['importrecon']!='None') {
@@ -313,120 +286,160 @@ function jobForm($extra=false) {
 		}
 		echo $iopt;
 		echo "</select>\n";
-		echo "<br />\n";
+		echo "<br/>\n";
 	}
+	echo "</td></tr><tr><td>\n";
+
 	echo "<input type='radio' name='initorientmethod' value='projmatch' $angcheck>\n";
-	echo docpop('ang',"Determine with Frealign - Ang incr:");
-	echo " <input type='type' name='ang' value='$ang' size='4'>\n";
-	echo "<br />\n";
-	echo "<input type='radio' name='initorientmethod' value='inparfile' $inparfilecheck>\n";
-	echo docpop('inpar',"Use input Frealign parameter file:");
-	echo " <input type='type' name='inparfile' value='$inparfile' size='50'>\n";
+	echo "<b>Determine with Frealign</b>";
+	echo "<br/>\n";
+	echo docpop('dang',"&nbsp;&nbsp;&nbsp; Angular increment: ");
+	echo " <input type='type' name='dang' value='$dang' size='4'>\n";
+	echo "&nbsp;&nbsp;&nbsp; Initial LP filter: ";
+	echo " <input type='type' name='initlp' value='$initlp' size='4'>\n";
+
+	//echo "</td></tr><tr><td>\n";
+
+	//echo "<input type='radio' name='initorientmethod' value='inparfile' $inparfilecheck>\n";
+	//echo docpop('inpar',"Use input Frealign parameter file:");
+	//echo " <input type='type' name='inparfile' value='$inparfile' size='50'>\n";
+
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo closeRoundBorder();
-	echo "<br />\n";
-	echo "<input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults'>\n";
-	echo "<br />\n";
-	$reslimit=($_POST['reslimit']) ? $_POST['reslimit'] : (ceil($apix*20))/10;
+
+	echo "<br/>\n";
+	echo "<br/>\n";
+
+
+	/* ******************************************
+	FREALIGN PARAMETERS
+	****************************************** */
 
 	//$magrefine=($_POST[$magrefinen]=='on') ? 'CHECKED' : '';
 	//$defocusrefine=($_POST[$defocusrefinen]=='on') ? 'CHECKED' : '';
 	//$astigrefine=($_POST[$astigrefinen]=='on') ? 'CHECKED' : '';
-	//$fliptilt=($_POST[$fliptiltn]=='on') ? 'CHECKED' : '';
-	//$matches=($_POST[$matchesn]=='on') ? 'CHECKED' : '';
-	//$history=($_POST[$historyn]=='on') ? 'CHECKED' : '';
-	//$finalsym=($_POST[$finalsymn]=='on') ? 'CHECKED' : '';
-	//$fomfilter=($_POST[$fomfiltern]=='on') ? 'CHECKED' : '';
-	//$psi=($_POST[$psin]=='on') ? 'CHECKED' : '';
-	//$theta=($_POST[$thetan]=='on') ? 'CHECKED' : '';
-	//$phi=($_POST[$phin]=='on') ? 'CHECKED' : '';
-	//$deltax=($_POST[$deltaxn]=='on') ? 'CHECKED' : '';
-	//$deltay=($_POST[$deltayn]=='on') ? 'CHECKED' : '';
 
-	// commenting out lots of the advanced options for now
-	//echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l2\" onMouseOver='popLayer(\"magrefine\", \"l2\")' onMouseOut='hideLayer()'>magrefine</a></font></td>\n";
-	//echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$magrefinen' $magrefine></td>\n";
-	//echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l3\" onMouseOver='popLayer(\"defocusrefine\", \"l3\")' onMouseOut='hideLayer()'>defocusrefine</a></font></td>\n";
-	//echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$defocusrefinen' $defocusrefine></td>\n";
-	//echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l5\" onMouseOver='popLayer(\"fliptilt\", \"l5\")' onMouseOut='hideLayer()'>fliptilt</a></font></td>\n";
-	//echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$fliptiltn' $fliptilt></td>\n";
-	//echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l4\" onMouseOver='popLayer(\"astigrefine\", \"l4\")' onMouseOut='hideLayer()'>astigrefine</a></font></td>\n";
-	//echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$astigrefinen' $astigrefine></td>\n";
-	//echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l6\" onMouseOver='popLayer(\"ewald\", \"l6\")' onMouseOut='hideLayer()'>ewald</a></font></td>\n";
-	//echo "<td bgcolor='$rcol'><input type='text' NAME='$ewaldn' SIZE='3' VALUE='$ewald'></td>\n";
-	//echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l7\" onMouseOver='popLayer(\"matches\", \"l7\")' onMouseOut='hideLayer()'>matches</a></font></td>\n";
-	//echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$matchesn' $matches></td>\n";
-	//echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l8\" onMouseOver='popLayer(\"history\", \"l8\")' onMouseOut='hideLayer()'>history</a></font></td>\n";
-	//echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$historyn' $history></td>\n";
-	//echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l9\" onMouseOver='popLayer(\"finalsym\", \"l8\")' onMouseOut='hideLayer()'>finalsym</a></font></td>\n";
-	//echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$finalsymn' $finalsym></td>\n";
-	//echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l10\" onMouseOver='popLayer(\"fomfilter\", \"l10\")' onMouseOut='hideLayer()'>fomfilter</a></font></td>\n";
-	//echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$fomfiltern' $fomfilter></td>\n";
-	//echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l11\" onMouseOver='popLayer(\"fsc\", \"l11\")' onMouseOut='hideLayer()'>fsc</a></font></td>\n";
-	//echo "<td bgcolor='$rcol'><input type='text' NAME='$fscn' SIZE='3' VALUE='$fsc'></td>\n";
+	###set default values that iterate
+	$mask  = $_POST["mask"] ? $_POST["mask"] : round($apix*$box/3.0);
+	$imask = $_POST["imask"] ? $_POST["imask"] : 0;
+	$wgh   = $_POST["wgh"] ? $_POST["wgh"] : 0.07;
+	$xstd  = $_POST["xstd"] ? $_POST["xstd"] : 0;
+	$pbc   = $_POST["pbc"] ? $_POST["pbc"] : 100;
+	$boff  = $_POST["boff"] ? $_POST["boff"] : 70;
+	$itmax = $_POST["itmax"] ? $_POST["itmax"] : 10;
+	$ipmax = $_POST["ipmax"] ? $_POST["ipmax"] : 0;
+
+	$target = $_POST["target"] ? $_POST["target"] : 15;
+	$thresh = $_POST["thresh"] ? $_POST["thresh"] : 90;
+
+	$rrec = $_POST["rrec"] ? $_POST["rrec"] : (ceil($apix*20))/10;
+	$hp = $_POST["hp"] ? $_POST["hp"] : 15;
+	$lp = $_POST["lp"] ? $_POST["lp"] : (ceil($apix*40))/10;
+	$rbfact = $_POST["rbfact"] ? $_POST["rbfact"] : 0;
+
 	echo "<table class='tableborder' border='1' cellpadding='4' cellspacing='4'>\n";
-	echo "<tr>\n";
-	echo "<td>\n";
+	echo "<tr><td colspan='2' align='center'>\n";
+		echo "<h4>Frealign parameters</h4>\n";
+	echo "</td></tr>";
 
-	$paramlist = array('radius','iradius','ampcontrast','maskthresh','phaseconstant','avgresidual','itmax','maxmatch','sym','targetresidual','residualthresh','reslimit','hp','lp','bfactor');
+	echo "<tr><td>\n";
+		echo "<h4>Card #2</h4>\n";
+	echo "</td><td>\n";
+		echo "<h4>Card #5</h4>\n";
+	echo "</td></tr>";
 
-	echo "<table>\n";
-	echo "<tr>\n";
+	echo "<tr><td rowspan='5'>\n";
+		echo " <input type='type' name='mask' value='$mask' size='4'>\n";
+		echo docpop('mask','Particle outer mask radius (RO)')." <font size='-2'><i>(in &Aring;ngstroms)</i></font>\n";
+		echo "<br/>\n";
+		echo " <input type='type' name='imask' value='$imask' size='4'>\n";
+		echo docpop('imask','Particle inner mask radius (RI)')." <font size='-2'><i>(in &Aring;ngstroms)</i></font>\n";
 
-	foreach ($paramlist as $p) {
-		echo "<td align='center' bgcolor='$bgcolor'><font class='sf'>\n";
-		echo docpop($p,$p);
-		echo "</font></td>\n";
-	}
-	echo "</tr>\n";
-	echo "<tr>\n";
-	foreach ($paramlist as $p) {
-		echo "<td bgcolor='$rcol'><input type='text' NAME='$p' SIZE='4' VALUE='${$p}'></td>\n";
-	}
-	echo "</tr>\n";
+		echo "<br/><br/>\n";
 
-      //echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l22\" onMouseOver='popLayer(\"psi\", \"l22\")' onMouseOut='hideLayer()'>psi</a></font></td>\n";
-      //echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$psin' $psi></td>\n";
-      //echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l23\" onMouseOver='popLayer(\"theta\", \"l23\")' onMouseOut='hideLayer()'>theta</a></font></td>\n";
-      //echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$thetan' $theta></td>\n";
-      //echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l24\" onMouseOver='popLayer(\"phi\", \"l24\")' onMouseOut='hideLayer()'>phi</a></font></td>\n";
-      //echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$phin' $phi></td>\n";
-      //echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l25\" onMouseOver='popLayer(\"deltax\", \"l25\")' onMouseOut='hideLayer()'>deltax</a></font></td>\n";
-      //echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$deltaxn' $deltax></td>\n";
-      //echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l26\" onMouseOver='popLayer(\"deltay\", \"l26\")' onMouseOut='hideLayer()'>deltay</a></font></td>\n";
-      //echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$deltayn' $deltay></td>\n";
-      //echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l36\" onMouseOver='popLayer(\"beamtiltx\", \"l36\")' onMouseOut='hideLayer()'>beamtiltx</a></font></td>\n";
-      //echo "<td bgcolor='$rcol'><input type='text' NAME='$beamtiltxn' SIZE='3' VALUE='$beamtiltx'></td>\n";
-      //echo "<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l37\" onMouseOver='popLayer(\"beamtilty\", \"l37\")' onMouseOut='hideLayer()'>beamtilty</a></font></td>\n";
-      //echo "<td bgcolor='$rcol'><input type='text' NAME='$beamtiltyn' SIZE='3' VALUE='$beamtilty'></td>\n";
+		echo " <input type='type' name='wgh' value='$wgh' size='4'>\n";
+		echo docpop('wgh','Amplitude contrast (WGH)')." \n";
+		echo "<br/>\n";
+		echo " <input type='type' name='xstd' value='$xstd' size='4'>\n";
+		echo docpop('xstd','Standard deviation filtering (XSTD)')." <font size='-2'><i>(0 = no filtering)</i></font>\n";
+		echo "<br/>\n";
+		echo " <input type='type' name='pbc' value='$pbc' size='4'>\n";
+		echo docpop('pbc','Phase B-factor weighting constant (PBC)')." <font size='-2'></font>\n";
+		echo "<br/>\n";
+		echo " <input type='type' name='boff' value='$boff' size='4'>\n";
+		echo docpop('boff','B-factor offset (BOFF)')." <font size='-2'></font>\n";
+
+		echo "<br/><br/>\n";
+
+		echo " <input type='type' name='itmax' value='$itmax' size='4'>\n";
+		echo docpop('itmax','Number of randomized search trials (ITMAX)')." <font size='-2'></font>\n";
+		echo "<br/>\n";
+		echo " <input type='type' name='ipmax' value='$ipmax' size='4'>\n";
+		echo docpop('ipmax','Number of potential matches to refine (IPMAX)')." <font size='-2'></font>\n";
+
+	echo "</td><td>\n";
+
+		echo " <input type='type' name='sym' value='$sym' size='4'>\n";
+		echo docpop('sym','Symmetry (ASYM)')." <font size='-2'></font>\n";
+
+	echo "</td></tr><tr><td>\n";
+		echo "<h4>Card #6</h4>\n";
+	echo "</td></tr><tr><td>\n";
+
+		echo " <input type='type' name='target' value='$target' size='4'>\n";
+		echo docpop('target','Target phase residual (TARGET)')." <font size='-2'></font>\n";
+		echo "<br/>\n";
+		echo " <input type='type' name='thresh' value='$thresh' size='4'>\n";
+		echo docpop('thresh','Worst phase residual for inclusion (THRESH)')." <font size='-2'></font>\n";
+		echo "<br/>\n";
+		echo " <input type='type' name='cs' value='$cs' size='4'>\n";
+		echo docpop('cs','Spherical abberation (CS)')." <font size='-2'></font>\n";
+
+	echo "</td></tr><tr><td>\n";
+		echo "<h4>Card #7</h4>\n";
+	echo "</td></tr><tr><td>\n";
+
+		echo " <input type='type' name='rrec' value='$rrec' size='4'>\n";
+		echo docpop('rrec','Resolution limit of reconstruction (RREC)')." <font size='-2'><i>(in &Aring;ngstroms; default Nyquist)</i></font>\n";
+		echo "<br/>\n";
+		echo " <input type='type' name='hp' value='$hp' size='4'>\n";
+		echo docpop('hp','Lower resolution limit or high-pass filter (RMAX1)')." <font size='-2'><i>(in &Aring;ngstroms)</i></font>\n";
+		echo "<br/>\n";
+		echo " <input type='type' name='lp' value='$lp' size='4'>\n";
+		echo docpop('lp','Higher resolution limit or low-pass filter (RMAX2)')." <font size='-2'><i>(in &Aring;ngstroms; default 2*Nyquist)</i></font>\n";
+		echo "<br/>\n";
+		echo " <input type='type' name='rbfact' value='$rbfact' size='4'>\n";
+		echo docpop('rbfact','B-factor correction (RBFACT)')." <font size='-2'><i>(0 = off)</i></font>\n";
+	echo "</td></tr>\n";
 	echo "</table>\n";
-	echo "</td>\n";
-	echo "</tr>\n";
-	echo "</table>\n";
-	echo "<br />\n";
-	echo "Refinement Cycles: ";
-	echo "<input type='text' name='refcycles' value='$refcycles' size='3'>\n";
+
 	echo "
-  <input type='hidden' NAME='cs' value='$cs'>
-  <input type='hidden' NAME='kv' value='$kv'>
-  <input type='hidden' NAME='last' value='$nump'>
-  <input type='hidden' NAME='apix' value='$apix'>
-  <input type='hidden' name='projectId' value='$projectId'><P>
-  <input type='submit' name='write' value='Create Job File'>
-  </form>\n";
-	if ($guppycheck) echo "<script language='javascript'>enableGaribaldi('false')</script>\n";
+		  <input type='hidden' NAME='cs' value='$cs'>
+		  <input type='hidden' NAME='kv' value='$kv'>
+		  <input type='hidden' NAME='last' value='$nump'>
+		  <input type='hidden' NAME='apix' value='$apix'>
+		  <input type='hidden' name='projectId' value='$projectId'><P>
+		  <input type='submit' name='write' value='Prepare Data for Frealign'>
+	  </form>\n";
+	echo "<br/><br/><hr/>\n";
+	//echo "StackID: $stackid -- ModelID: $modelid<br/>\n";
+	echo "<table class='tablebubble'><tr><td>\n";
+	echo stacksummarytable($stackid, true);
+	echo "</td></tr><tr><td>\n";
+	echo modelsummarytable($modelid, true);
+	echo "</td></tr></table>\n";
+
 	processing_footer();
 	exit;
 }
 
-function writeJobFile ($extra=False) {
+function prepareFrealign ($extra=False) {
 	$expId = $_GET['expId'];
 	$projectId = $_POST['projectId'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
-	$jobname = $_POST['jobname'];
-	$jobfile ="$jobname.job";
+	$jobname = $_POST['runname'];
 
 	$nodes = $_POST['nodes'];
 	$ppn = $_POST['ppn'];
@@ -435,10 +448,9 @@ function writeJobFile ($extra=False) {
 	$outdir = $_POST['outdir'];
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 
-
 	// get the stack info (pixel size, box size)
 	$stackinfo=explode('|--|',$_POST['stackval']);
-	$stackidval=$stackinfo[0];
+	$stackid=$stackinfo[0];
 	$stackpath=$stackinfo[4];
 	$stackname1=$stackinfo[5];
  
@@ -450,45 +462,26 @@ function writeJobFile ($extra=False) {
 
 	processing_header("Frealign Job Generator","Frealign Job Generator", $javafunc);
 
-	$apix=$_POST["apix"];
 	$last=$_POST['last'];
 	$cs=$_POST['cs'];
 	$kv=$_POST['kv'];
-	
-	//$magrefine=$_POST["magrefine"];
-	//$defocusrefine=$_POST["defocusrefine"];
-	//$astigrefine=$_POST["astigrefine"];
-	//$fliptilt=$_POST["fliptilt"];
-	//$ewald=$_POST["ewald"];
-	//$matches=$_POST["matches"];
-	//$history=$_POST["history"];
-	//$finalsym=$_POST["finalsym"];
-	//$fomfilter=$_POST["fomfilter"];
-	//$fsc=$_POST["fsc"];
-	$radius=$_POST["radius"];
-	$iradius=$_POST["iradius"];
-	$ampcontrast=$_POST["ampcontrast"];
-	$maskthresh=$_POST["maskthresh"];
-	$phaseconstant=$_POST["phaseconstant"];
-	$avgresidual=$_POST["avgresidual"];
-	$ang = ($_POST['initorientmethod']=='projmatch') ? $_POST["ang"] : '';
+	$mask=$_POST["mask"];
+	$imask=$_POST["imask"];
+	$wgh=$_POST["wgh"];
+	$xstd=$_POST["xstd"];
+	$pbc=$_POST["pbc"];
+	$boff=$_POST["boff"];
+	$dang = ($_POST['initorientmethod']=='projmatch') ? $_POST["ang"] : '';
 	$itmax=$_POST["itmax"];
-	$maxmatch=$_POST["maxmatch"];
-	//$psi=$_POST["psi"];
-	//$theta=$_POST["theta"];
-	//$phi=$_POST["phi"];
-	//$deltay=$_POST["deltay"];
-	//$deltax=$_POST["deltax"];
+	$ipmax=$_POST["ipmax"];
 	$sym=$_POST["sym"];
-	$targetresidual=$_POST["targetresidual"];
-	$residualthresh=$_POST["residualthresh"];
-	//$beamtiltx=$_POST["beamtiltx"];
-	//$beamtilty=$_POST["beamtilty"];
-	$reslimit=$_POST['reslimit'];
+	$target=$_POST["target"];
+	$thresh=$_POST["thresh"];
+	$rrec=$_POST['rrec'];
 	$hp=$_POST["hp"];
 	$lp=$_POST["lp"];
-	$bfactor=$_POST["bfactor"];
-	$refcycles=$_POST['refcycles'];
+	$rbfact=$_POST["rbfact"];
+	$numiter=$_POST['numiter'];
 	$inpar=$_POST['inparfile'];
 	$importiter=$_POST['importiter'];
 	
@@ -496,40 +489,27 @@ function writeJobFile ($extra=False) {
 	$line.= "#PBS -l walltime=240:00:00\n";
 	$line.= "#PBS -l cput=240:00:00\n";
 	$line.= "\nrunfrealign.py -n $jobname \\\n  ";
-	$line.= "--radius=$radius ";
-	if ($iradius > 0) $line.="--iradius=$iradius ";
-	$line.= "--apix=$apix ";
-	$line.= "--ampcontrast=$ampcontrast \\\n  ";
-	if ($maskthresh > 0) $line.= "--maskthresh=$maskthresh ";
-	if ($phaseconstant < 100) $line.= "--phaseconstant=$phaseconstant ";
-	$line.= "--avgresidual=$avgresidual ";
+	$line.= "--mask=$mask ";
+	$line.= "--imask=$imask ";
+	$line.= "--wgh=$wgh \\\n  ";
+	$line.= "--xstd=$xstd ";
+	$line.= "--pbc=$pbc ";
+	$line.= "--boff=$boff ";
 	$line.= "--itmax=$itmax ";
-	if ($maxmatch > 0) $line.= "--maxmatch=$maxmatch ";
-	$line.= "--last=$last ";
+	$line.= "--ipmax=$ipmax ";
+	//$line.= "--last=$last ";
 	$line.= "--sym=$sym \\\n  ";
-	$line.= "--targetresidual=$targetresidual ";
-	$line.= "--residualthresh=$residualthresh \\\n  ";
-	$line.= "--cs=$cs --kv=$kv --reslimit=$reslimit --hp=$hp --lp=$lp --bfactor=$bfactor \\\n  ";
-	if ($inpar) $line.= "--inpar=$inpar ";
-	if ($ang) $line.= "--ang=$ang ";
-	//if ($magrefine=='on') $line.="--magrefine='T' ";
-	//if ($defocusrefine=='on') $line.="--defocusrefine='T' ";
-	//if ($astigrefine=='on') $line.="--astigrefine='T' ";
-	//if ($fliptilt=='on') $line.="--fliptilt='T' ";
-	//if ($matches=='on') $line.="--matches='T' ";
-	//if ($history=='on') $line.="--history='T' ";
-	//if ($finalsym=='on') $line.="--finalsym='T' ";
-	//if ($fomfilter=='on') $line.="--fomfilter='T' ";
-	//if ($psi=='on') $line.="--psi=1 ";
-	//if ($phi=='on') $line.="--phi=1 ";
-	//if ($theta=='on') $line.="--theta=1 ";
-	//if ($deltax=='on') $line.="--deltax=1 ";
-	//if ($deltay=='on') $line.="--deltay=1 ";
-	if ($refcycles) $line.= "--refcycles=$refcycles ";
+	$line.= "--target=$target ";
+	$line.= "--thresh=$thresh \\\n  ";
+	$line.= "--cs=$cs --kv=$kv \\\\n"
+	$line.= "--rrec=$rrec --hp=$hp --lp=$lp --rbfact=$rbfact \\\n  ";
+	//if ($inpar) $line.= "--inpar=$inpar ";
+	if ($dang) $line.= "--dang=$dang ";
+	if ($numiter) $line.= "--numiter=$numiter ";
 
 	//appion specific options
 	if ($importiter) $line.= "--reconiterid=$importiter ";
-	$line.= "--stackid=$stackidval \\\n  ";
+	$line.= "--stackid=$stackid \\\n  ";
 	$line.= "--modelid=$modelid ";
 	$line.= "--project=$projectId ";
 	if ($procs > 1) $line.= "--proc=$procs ";
@@ -557,46 +537,5 @@ function writeJobFile ($extra=False) {
 	}	
 	processing_footer();
 	exit;
-};
-
-function defaultReconValues ($box, $apix) {
-  $rad = ($box/2)-2;
-  $lp1val = (ceil($apix*40))/10;
-  $javafunc = "
-  <script type='text/javascript'>
-    function setDefaults(obj) {\n";
-  //obj.magrefine1.checked = false;
-  //obj.defocusrefine1.checked = false;
-  //obj.astigrefine1.checked = false;
-  //obj.fliptilt1.checked = false;
-  //obj.ewald1.value = '0';
-  //obj.matches1.checked = true;
-  //obj.history1.checked = false;
-  //obj.finalsym1.checked = true;
-  //obj.fomfilter1.checked = true;
-  //obj.fsc1.value = '0';
-  //obj.psi1.checked = true;
-  //obj.theta1.checked = true;
-  //obj.phi1.checked = true;
-  //obj.deltax1.checked = true;
-  //obj.deltay1.checked = true;
-  //obj.beamtiltx1.value = '0.0';
-  //obj.beamtilty1.value = '0.0';
-  $javafunc.="obj.iradius.value = '0';
-      obj.ampcontrast.value = '0.07';
-      obj.maskthresh.value = '0.0';
-      obj.phaseconstant.value = '100.0';
-      obj.avgresidual.value = '75';
-      obj.itmax.value = '10';
-      obj.maxmatch.value = '0';
-      obj.targetresidual.value = '10.0';
-      obj.residualthresh.value = '90.0';
-      obj.hp.value = '100.0';
-      obj.lp.value = '".$lp1val."';
-      obj.bfactor.value = '0.0';
-      return;
-    }
-  </SCRIPT>\n";
-  return $javafunc;
 };
 

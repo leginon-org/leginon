@@ -313,11 +313,43 @@ var help = {
 	},
 	
 	'frealign' : {
+
+		// script parameters
+		'nodes' : 'Nodes refers to the number of computer to process on simultaneously.  The more nodes you get the faster things will get process, but more nodes requires that you wait longer before being allowed to begin processing.',
+		'ppn' : 'Processors per node.  Each computer (node) or Garibaldi has 4 processors (procs), so proc/node=4.  For some cases, you may want to use less processors on each node, leaving more memory and system resources for each process.',
+		'dang' : 'angular increment used in creating projections for determining initial aligments',
+		'numiter' : 'number of refinement iterations to perform',
+		'outdir' : 'The base output directory to which files will be stored. A subdirectory of the run name will be appended for actual output',
+		'runname' : 'Specifies the name associated with the processing results unique to the specified session and parameters. The default is automatically incremented',
+
+		/* paste results from runFrealign.convertParserToJSHelp here */
+
+		// card 2
+		'mask' : 'RO -- Radius from center of particle to outer edge (in Angstroms)',
+		'imask' : 'RI -- Inner mask radius (in Angstroms)',
+		'apix' : 'Pixel size in angstroms',
+		'wgh' : 'WGH -- Amplitude contrast (0.07 for ice; 0.15 for stain)',
+		'xstd' : 'XSTD -- Standard deviations above mean for masking of input model.  0.0 gives no masking.',
+		'pbc' : 'PBC -- Phase b-factor constant -- Conversion constant for phase residual weighting of particles. 100 gives equal weighting; 5 gives a strong weighting.',
+		'boff' : 'BOFF -- Average phase residual of all particles.  Used for weighting',
+		'itmax' : 'ITMAX -- Number of iterations of randomization.  Used for modes 2 and 4',
+		'ipmax' : 'IPMAX -- Number of potential matches in a search that should be tested further in local refinement',
+		// card 5
+		'sym' : 'ASYM -- Symmetry.  Cn, Dn, T, O, I, I1, I2',
+		// card 6
+		'target' : 'TARGET -- Target phase residual during refinement',
+		'thresh' : 'THRESH -- Phase residual threshold cut-off.  Particles with residuals above threshold are not included in the reconstruction',
+		'cs' : 'Also referred to as Cs, it corresponds to the imperfection produced by the lenses in the electron microscope.  This is specific to the microscope',
+		// card 7
+		'rrec' : 'RREC -- <b>Resolution of reconstruction in Angstroms</b><br /> Resolution to which the reconstruction is calculated. If several datasets have different values, the data is individually limited in the summation to the resolution limit but symmetry is applied, statistics output and the final map calculated to the maximum resolution requested for any dataset.',
+		'hp' : 'RMAX1 -- Lower resolution limit of the data to be included in the search/refinement.',
+		'lp' : 'RMAX2 -- High resolution limit of the data to be included in the search/refinement.',
+		'rbfact' : 'RBFACT -- Bfactor to apply to particles before classification.  0.0 applies no bfactor.',
+
+		// unused
 		'copy' : 'Duplicate the parameters for this iteration',	
 		'itn' : 'Iteration Number',
-		
-		/* paste results from runFrealign.convertParserToJSHelp here */	 
-		'ang' : 'angular increment used in creating projections for determining initial aligments',
+		// card 1 
 		'format' : 'MRC',
 		'mode' : 'Run mode.  0: use input parameters and reconstruct with no refinement.  1: refine and reconstruct.  2: randomise particle params and reconstruct.  3: systematic param search and refinement 4: fancy systematic param search and refinement.',
 		'magrefine' : 'Magnification refinement',
@@ -330,15 +362,7 @@ var help = {
 		'finalsym' : 'Apply final real space symmetrization to beautify reconstruction',
 		'fomfilter' : 'Apply FOM filter to final reconstruction',
 		'fsc' : 'Internally calculate FSC between even and odd particles',
-		'radius' : 'Radius from center of particle to outer edge (in Angstroms)',
-		'iradius' : 'Inner mask radius (in Angstroms)',
-		'apix' : 'Pixel size in angstroms',
-		'ampcontrast' : 'Amplitude contrast',
-		'maskthresh' : 'Standard deviations above mean for masking of input model.  0.0 gives no masking.',
-		'phaseconstant' : 'Conversion constant for phase residual weighting of particles.  100 gives equal weighting',
-		'avgresidual' : 'Average phase residual of all particles.  Used for weighting',
-		'itmax' : 'Number of iterations of randomization.  Used for modes 2 and 4',
-		'maxmatch' : 'Number of potential matches in a search that should be tested further in local refinement',
+
 		'psi' : 'Refine psi',
 		'theta' : 'Refine theta',
 		'phi' : 'Refine phi',
@@ -346,18 +370,13 @@ var help = {
 		'deltay' : 'Refine delta Y',
 		'first' : 'First particle',
 		'last' : 'Last particle',
-		'sym' : 'Symmetry.  Cn, Dn, T, O, I, I1, I2',
-		'relmag' : 'Relative magnification of dataset?',
-		'targetresidual' : 'Target phase residual during refinement',
-		'residualthresh' : 'Phase residual threshold cut-off.  Particles with residuals above threshold are not included in the reconstruction',
-		'cs' : 'Spherical aberation',
+
+		'relmag' : 'RELMAG -- lative magnification of dataset?',
+
 		'kv' : 'Accelerlating voltage',
 		'beamtiltx' : 'Beam tilt x (mrad)',
 		'beamtilty' : 'Beam tilt y (mrad)',
-		'reslimit' : '<b>Resolution of reconstruction in Angstroms</b><br /> Resolution to which the reconstruction is calculated. If several datasets have different values, the data is individually limited in the summation to the resolution limit but symmetry is applied, statistics output and the final map calculated to the maximum resolution requested for any dataset.',
-		'hp' : 'Lower resolution limit of the data to be included in the search/refinement.',
-		'lp' : 'High resolution limit of the data to be included in the search/refinement.',
-		'bfactor' : 'Bfactor to apply to particles before classification.  0.0 applies no bfactor.',
+
 		'stack' : 'Input particles to be classified',
 		'matchstack' : 'Output projection matches',
 		'inpar' : 'Input particle parameter file',
@@ -372,7 +391,7 @@ var help = {
 		'stackid' : 'Stack id from database',
 		'mrchack' : 'Hack to fix machine stamp in mrc header',
 		'outvol' : 'Name of output volume',
-		'proc' : 'Number of processors',
+
 		'setuponly' : 'If setuponly is specified, everything will be set up but frealign will not be run',
 	}	
 }

@@ -3431,6 +3431,43 @@ class particledata {
 		return $r;
 	}
 
+
+	function getReconIterIdRelatedToStackid ($stackId, $showHidden=False) {
+		// First get a three random particle ids from the stack id		
+		$q = "SELECT `REF|ApParticleData|particle` AS partid "
+			." FROM ApStackParticlesData AS stpart "
+			."WHERE `REF|ApStackData|stack` = '$stackId' "
+			." ORDER BY RAND() LIMIT 3 ";
+		//echo $q."<br/><br/>\n";
+		$r1 = $this->mysql->getSQLResult($q);
+		//echo print_r($r1)."<br/><br/>\n";
+		$partId1 = $r1[0]['partid'];
+		$partId2 = $r1[1]['partid'];
+		$partId3 = $r1[2]['partid'];
+
+		// Second get all recons using those particles	
+		$q = "SELECT refrun.* "
+			." FROM ApParticleClassificationData AS refpart "
+			."LEFT JOIN ApStackParticlesData AS stpart "
+			." ON refpart.`REF|ApStackParticlesData|particle` = stpart.`DEF_id` "
+			."LEFT JOIN ApRefinementData AS refiter "
+			." ON refpart.`REF|ApRefinementData|refinement` = refiter.`DEF_id` "
+			."LEFT JOIN ApRefinementRunData AS refrun "
+			." ON refiter.`REF|ApRefinementRunData|refinementRun` = refrun.`DEF_id` "
+			."WHERE "
+			." stpart.`REF|ApParticleData|particle` = '$partId1' "
+			."OR "
+			." stpart.`REF|ApParticleData|particle` = '$partId2' "
+			."OR "
+			." stpart.`REF|ApParticleData|particle` = '$partId3' "
+			." GROUP BY refrun.`DEF_id` "
+			." ORDER BY refrun.`DEF_id` DESC ";
+		//echo $q."<br/><br/>\n";
+		$r2 = $this->mysql->getSQLResult($q);
+		//echo print_r($r2)."<br/><br/>\n";
+		return $r2;
+	}
+
 	function getExemplarReconsFromSession ($sessionId, $showHidden=False) {
 		$q = "SELECT refdata.`DEF_id` as refdataid, "
 		  ."refrun.`DEF_id` as refrunid, "
@@ -4199,7 +4236,9 @@ class particledata {
 		if (!$showHidden )
 			$q .= " AND ( dens.`hidden` = 0 OR dens.`hidden` IS NULL ) ";
 		$q .= "ORDER BY dens.`DEF_id` DESC ";
+		//echo $q."<br/><br/>\n";
 		$r=$this->mysql->getSQLResult($q);
+		//echo print_r($r[0])."<br/><br/>\n";
 		return $r;
 	}
 
