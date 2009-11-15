@@ -72,9 +72,9 @@ if ($_POST['process']) {
 	$command.= "--res=$res ";
 	$command.= "--sym=$symname ";
 	$command.= "--reconiterid=$refIterId ";
-	$command.= "--median=$median ";
-	$command.= "--zoom=$zoom ";
-	$command.= "--contour=$contour ";
+	if ($median) $command.= "--median=$median ";
+	if ($zoom) $command.= "--zoom=$zoom ";
+	if ($contour) $command.= "--contour=$contour ";
 	if ($mass) $command.="--mass=$mass ";
 	if ($mask) $command.="--mask=$mask ";
 	if ($imask) $command.="--imask=$imask ";
@@ -236,12 +236,13 @@ function createform($extra=False) {
 	echo "<br/>\n";
 
 	echo "<table class='tableborder' border='1' width='600'>\n";
-	// B-factor correction
+	// B-factor sharpening
 	echo "<tr><td colspan='2'>\n";
-	echo "<h3>B-factor correction:</h3>\n";
+	echo "<h3>B-factor sharpening:</h3>\n";
 	echo "</td></tr>\n";
 	echo "<tr><td>&nbsp;</td><td>\n";
-	echo "<input type='checkbox' name='bfactor' $bfactorcheck>Apply b-factor correction\n";
+	echo "<input type='checkbox' name='bfactor' $bfactorcheck>Apply sharpening "
+		."using automated b-factor determination from FSC curve\n";
 	echo "(<a href='http://www.ual.es/~jjfdez/SW/embfactor.html'>"
 		."description&nbsp;<img src='img/external.png' border='0'></a>)\n";
 	echo "</td></tr>\n";
