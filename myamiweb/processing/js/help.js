@@ -338,7 +338,7 @@ var help = {
 		'sym' : 'ASYM -- Symmetry.  Cn, Dn, T, O, I, I1, I2',
 		// card 6
 		'target' : 'TARGET -- Target phase residual during refinement',
-		'thresh' : 'THRESH -- Phase residual threshold cut-off.  Particles with residuals above threshold are not included in the reconstruction',
+		'thresh' : 'THRESH -- Phase residual threshold cut-off.  Particles with residuals above threshold are not included in the reconstruction, if the value is less than 1 it keeps a percentage of the particles',
 		'cs' : 'Also referred to as Cs, it corresponds to the imperfection produced by the lenses in the electron microscope.  This is specific to the microscope',
 		// card 7
 		'rrec' : 'RREC -- <b>Resolution of reconstruction in Angstroms</b><br /> Resolution to which the reconstruction is calculated. If several datasets have different values, the data is individually limited in the summation to the resolution limit but symmetry is applied, statistics output and the final map calculated to the maximum resolution requested for any dataset.',

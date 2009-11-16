@@ -30,7 +30,7 @@ if ($_POST['write']) {
 	$exists = $particle->getJobFileFromPath($outdir,$jobname);
 	//  if ($exists[0]) jobForm("ERROR: This job name already exists");
 	if (!$_POST['mask']) jobForm("ERROR: Enter an outer mask radius");
-	if ($_POST['initorientmethod']=='projmatch' && !$_POST['ang']) jobForm("ERROR: Enter an angular increment");
+	if ($_POST['initorientmethod']=='projmatch' && !$_POST['dang']) jobForm("ERROR: Enter an angular increment");
 	prepareFrealign();
 }
 
@@ -334,7 +334,7 @@ function jobForm($extra=false) {
 	$thresh = $_POST["thresh"] ? $_POST["thresh"] : 90;
 
 	$rrec = $_POST["rrec"] ? $_POST["rrec"] : (ceil($apix*20))/10;
-	$hp = $_POST["hp"] ? $_POST["hp"] : 15;
+	$hp = $_POST["hp"] ? $_POST["hp"] : 50;
 	$lp = $_POST["lp"] ? $_POST["lp"] : (ceil($apix*40))/10;
 	$rbfact = $_POST["rbfact"] ? $_POST["rbfact"] : 0;
 
@@ -436,7 +436,7 @@ function jobForm($extra=false) {
 
 function prepareFrealign ($extra=False) {
 	$expId = $_GET['expId'];
-	$projectId = $_POST['projectId'];
+	$projectId = getProjectFromExpId($expId);
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	$jobname = $_POST['runname'];
@@ -496,12 +496,12 @@ function prepareFrealign ($extra=False) {
 	$line.= "--pbc=$pbc ";
 	$line.= "--boff=$boff ";
 	$line.= "--itmax=$itmax ";
-	$line.= "--ipmax=$ipmax ";
+	$line.= "--ipmax=$ipmax \\\n  ";
 	//$line.= "--last=$last ";
-	$line.= "--sym=$sym \\\n  ";
+	$line.= "--sym=$sym ";
 	$line.= "--target=$target ";
 	$line.= "--thresh=$thresh \\\n  ";
-	$line.= "--cs=$cs --kv=$kv \\\\n"
+	$line.= "--cs=$cs --kv=$kv \\\n  ";
 	$line.= "--rrec=$rrec --hp=$hp --lp=$lp --rbfact=$rbfact \\\n  ";
 	//if ($inpar) $line.= "--inpar=$inpar ";
 	if ($dang) $line.= "--dang=$dang ";
@@ -512,9 +512,9 @@ function prepareFrealign ($extra=False) {
 	$line.= "--stackid=$stackid \\\n  ";
 	$line.= "--modelid=$modelid ";
 	$line.= "--project=$projectId ";
-	if ($procs > 1) $line.= "--proc=$procs ";
+	$line.= "--proc=$procs ";
 	
-	$line.=" > runfrealign".$i.".txt\n";
+	//$line.=" > runfrealign".$i.".txt\n";
 	$clusterjob.= $line;
  
 	echo "<FORM NAME='frealignjob' METHOD='POST' ACTION='$formAction'><br>\n";
@@ -523,18 +523,21 @@ function prepareFrealign ($extra=False) {
 	echo "<input type='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";
 	echo "<input type='HIDDEN' NAME='jobname' VALUE='$jobname'>\n";
 	echo "<input type='HIDDEN' NAME='outdir' VALUE='$outdir'>\n";
+
 	// convert \n to /\n's for script
 	if (!$extra) {
 		echo "<HR>\n";
 		echo "<PRE>\n";
 		echo $clusterjob;
 		echo "</PRE>\n";
-		$tmpfile = "/tmp/$jobfile";
+		//$tmpfile = "/tmp/$jobfile";
 		// write file to tmp directory
-		$f = fopen($tmpfile,'w');
-		fwrite($f,$clusterjob);
-		fclose($f);
+		//$f = fopen($tmpfile,'w');
+		//fwrite($f,$clusterjob);
+		//fclose($f);
 	}	
+
+
 	processing_footer();
 	exit;
 };
