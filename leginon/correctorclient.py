@@ -195,8 +195,11 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
-		self.normalizeCameraImageData(imagedata, channel)
-		imagedata['correction channel'] = channel
+		try:
+			self.normalizeCameraImageData(imagedata, channel)
+			imagedata['correction channel'] = channel
+		except:
+			self.logger.error('Normalize failed')
 
 		cameradata = imagedata['camera']
 		plan = self.retrieveCorrectorPlan(cameradata)
