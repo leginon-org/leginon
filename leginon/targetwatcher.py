@@ -200,14 +200,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.logger.info('Target has been done, processing next target')
 				continue
 
-			### generate a focus target
-			#if self.settings['duplicate targets']:
-			#	focustarget = leginondata.AcquisitionImageTargetData(initializer=target)
-			#	focustarget['type'] = self.settings['duplicate target type']
-			#	self.publish(focustarget, database=True)
-			#	tlist = [focustarget]
-			#	self.rejectTargets(tlist)
-
 			self.logger.debug('Creating processing target...')
 			adjustedtarget = leginondata.AcquisitionImageTargetData(initializer=target,
 																												status='processing')
@@ -268,7 +260,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.setStatus('idle')
 
 	def waitForRejects(self):
-		# wait for focus target list to complete
+		# wait for other targets to complete
 		for tid, teventinfo in self.targetlistevents.items():
 			teventinfo['received'].wait()
 
