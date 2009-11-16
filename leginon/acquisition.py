@@ -201,6 +201,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def checkSettings(self, settings):
 		problems = []
+		return problems
 		presetnames = settings['preset order']
 		for presetname in presetnames:
 			try:
