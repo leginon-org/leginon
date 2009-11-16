@@ -91,11 +91,14 @@ def convertFilteringParameters(hpfilt, lpfilt, apix):
 		lpfilt_imagic = 2 * float(apix) / int(lpfilt)
 	else:
 		lpfilt_imagic = False
-	if float(lpfilt_imagic) > 1:
+	if float(lpfilt_imagic) > 1 or float(lpfilt_imagic) < 0:
 		lpfilt_imagic = 1	# imagic cannot perform job when lowpass > 1
+
 	if hpfilt is not "" and apix is not "":
 		hpfilt_imagic = 2 * float(apix) / int(hpfilt)
 	else:
 		hpfilt_imagic = False
+	if float(hpfilt_imagic) > 1 or float(hpfilt_imagic) < 0:
+		hpfilt_imagic = 0.01
 
 	return hpfilt_imagic, lpfilt_imagic
