@@ -168,9 +168,6 @@ class Navigator(node.Node):
 		check = self.settings['check calibration']
 		status = self.move(deltarow, deltacol, movetype, precision, accept_precision, check, final_imageshift=final_imageshift)
 
-		# wait for a while
-		time.sleep(self.settings['pause time'])
-
 		## acquire image if check not done
 		if not check:
 			self.reacquireImage()
@@ -431,6 +428,7 @@ class Navigator(node.Node):
 		self._acquireImage()
 
 	def _acquireImage(self, channel=0):
+		time.sleep(self.settings['pause time'])
 		try:
 			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
 		except:
