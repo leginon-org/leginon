@@ -129,6 +129,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 				self.makeTargetListEvent(targetlist)
 				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 				self.waitForTargetListDone()
+			return preview_targets
 
 	def processImageListData(self, imagelistdata):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
@@ -138,6 +139,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		## research, but don't read images until later
 		images = self.research(querydata, readimages=False)
 		targetlist = self.newTargetList(queue=self.settings['queue'])
+
 		if self.settings['allow append']:
 			print "will find targets"
 			for imagedata in images:
@@ -317,8 +319,10 @@ class ClickTargetFinder(TargetFinder):
 	def findTargets(self, imdata, targetlist):
 		# display image
 		self.setImage(imdata['image'], 'Image')
-		self.waitForUserCheck()
-		self.processPreviewTargets(imdata, targetlist)
+		while True:
+			self.waitForUserCheck()
+			if not self.processPreviewTargets(imdata, targetlist):
+				break
 		self.panel.targetsSubmitted()
 		self.setStatus('processing')
 		self.logger.info('Publishing targets...')

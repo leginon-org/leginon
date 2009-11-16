@@ -512,8 +512,9 @@ class JAHCFinder(targetfinder.TargetFinder):
 			while True:
 				self.oldblobs = self.panel.getTargetPositions('Blobs')
 				self.waitForUserCheck()
-				self.processPreviewTargets(imdata, targetlist)
-				if self.blobsChanged():
+				ptargets = self.processPreviewTargets(imdata, targetlist)
+				newblobs = self.blobsChanged()
+				if newblobs:
 					try:
 						self.usePickedBlobs()
 						self.fitLattice()
@@ -522,7 +523,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 						raise
 						self.logger.error('Failed: %s' % (e,))
 						continue
-				else:
+				if not ptargets and not newblobs:
 					break
 				self.panel.targetsSubmitted()
 
