@@ -16,7 +16,7 @@ import numpy
 import pyami.quietscipy
 import scipy.ndimage
 import math
-from pyami import correlator, peakfinder, arraystats, imagefun, fftfun, numpil
+from pyami import correlator, peakfinder, arraystats, imagefun, fftfun, numpil, ellipse
 import time
 import sys
 import threading
@@ -237,6 +237,19 @@ class CalibrationClient(object):
 				self.rpixelsize = self.getImageReciprocalPixelSize(imagedata)
 			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht)
 			self.ctfdata.append(ctfdata)
+
+			eparams = ctfdata[4]
+			center = numpy.divide(eparams['center'], binning)
+			a = eparams['a'] / binning
+			b = eparams['b'] / binning
+			alpha = eparams['alpha']
+			ellipse1 = pyami.ellipse.drawEllipse(binned.shape, 2*numpy.pi/180, center, a, b, alpha)
+			ellipse2 = pyami.ellipse.drawEllipse(binned.shape, 5*numpy.pi/180, center, a, b, alpha)
+			min = arraystats.min(binned)
+			max = arraystats.max(binned)
+			numpy.putmask(binned, ellipse1, min)
+			numpy.putmask(binned, ellipse2, max)
+
 			if ctfdata:
 				s = '%d' % int(ctfdata[0]*1e9)
 			#elif self.ace2exe:
@@ -246,8 +259,6 @@ class CalibrationClient(object):
 				s = '%d' % (int(z0*1e9),)
 			if s:
 				t = numpil.textArray(s)
-				min = arraystats.min(binned)
-				max = arraystats.max(binned)
 				t = min + t * (max-min)
 				imagefun.pasteInto(t, binned, (20,20))
 		else:
@@ -269,7 +280,8 @@ class CalibrationClient(object):
 		self.tabimage,self.tabscale = tab.render()
 		mean = self.tabimage.mean()
 		std = self.tabimage.std()
-		a = numpy.where(self.tabimage >= mean + 5*std, 0, self.tabimage)
+		newmax = mean + 5 * std
+		a = numpy.where(self.tabimage >= newmax, newmax, self.tabimage)
 		self.tabimage = numpy.clip(a, 0, mean*1.5)
 		self.displayTableau(self.tabimage)
 
