@@ -587,7 +587,7 @@ def checkMachineStampInImagicHeader(oldhedfile):
 	data = of.read(1024)
 	code = fourByteToInt(data[68*4:69*4])
 	of.close()
-	apDisplay.printMsg("machine code: "+str(code))
+	apDisplay.printMsg("machine code: "+str(code)+" for "+os.path.basename(oldhedfile))
 	if code != 33686018:
 		return False
 	return True
@@ -625,6 +625,10 @@ def setMachineStampInImagicHeader(oldhedfile):
 	if oldsize != newsize:
 		apDisplay.printError("failed to correct machine code in stack file")
 	shutil.move(newhedfile, oldhedfile)
+
+	if checkMachineStampInImagicHeader(oldhedfile) is True:
+		return
+
 
 #===============
 def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
