@@ -17,6 +17,7 @@ import apDisplay
 import apFrealign
 import apEMAN
 import apFile
+import apThread
 import apImagicFile
 import appiondata
 from pyami import mrc
@@ -127,6 +128,8 @@ class frealignJob(appionScript.AppionScript):
 		if self.params['mask'] > maxmask:
 			apDisplay.printWarning("mask was too big, setting to boxsize: %d"%(maxmask))
 			self.params['mask'] = maxmask
+		if self.params['noctf'] is True:
+			 self.params['wgh'] = -1.0
 
 	#=====================
 	def setRunDir(self):
@@ -363,8 +366,8 @@ class frealignJob(appionScript.AppionScript):
 		f.write('# RECON %s\n'%(recon))
 		f.write('\n')
 		f.write('### START FREALIGN ###\n')
-		#f.write('frealign.exe << EOF\n')
-		f.write('frealign.exe << EOF > '+logfile+'\n')
+		f.write('frealign.exe << EOF\n')
+		#f.write('frealign.exe << EOF > '+logfile+'\n')
 
 		### CARD 1
 		f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%d,%s,%d\n' % (
@@ -429,8 +432,9 @@ class frealignJob(appionScript.AppionScript):
 		f.write('even\n')
 		f.write('phasediffs\n')
 		f.write('pointspread\n')
-		f.write('EOF\n')
+		f.write('EOF\n\n\n')
 		f.write('### END FREALIGN ###\n')
+		f.write('echo "END FREALIGN"\n')
 		f.write('\n')
 		f.close()
 		os.chmod(jobfile, 0755)
@@ -444,12 +448,7 @@ class frealignJob(appionScript.AppionScript):
 		### create script that will launch all mpi scripts
 		iterdir = "iter%03d"%(iternum)
 		iterjobfile = 'frealign.iter%03d.run.sh'%(iternum)
-		mainf = open(iterjobfile, 'w')
-		mainf.write("#!/bin/sh\n")
-		mainf.write("\n")
-		mainf.write('mkdir %s\n' %iterdir)
-		mainf.write('cd %s\n' %iterdir)
-		mainf.write("\n")
+
 		#frscript = os.path.join(workdir,'frealign.$PBS_VNODENUM.sh')
 		#fr.write("sh "+frscript+"\n")
 
@@ -457,6 +456,7 @@ class frealignJob(appionScript.AppionScript):
 		partperjob = math.floor(self.params['last']/self.params['proc'])
 		r = self.params['last']%self.params['proc']
 		lastp = 0
+		procjobfiles = []
 		for n in range(self.params['proc']):
 			firstp = lastp + 1
 			lastp = firstp + partperjob - 1
@@ -467,15 +467,14 @@ class frealignJob(appionScript.AppionScript):
 			procdir = "proc%03d"%n
 			jobfile = "frealign.iter%03d.proc%03d.sh"%(iternum, n+1)
 			### garibaldi
-			#mainf.write("pbsdsh -v -np 1 %s\n" % jobfile)
+
 			### guppy
-			mainf.write("### Job #%03d, Particles %6d - %6d\n" %(n+1, firstp, lastp))
-			mainf.write("mpiexec --app -np 1 %s\n" % jobfile)
 
 			### start jobfile
 			f = open(jobfile, "w")
 			f.write("#!/bin/sh\n")
 			f.write("\n")
+			f.write("### Job #%03d, Particles %6d - %6d\n" %(n+1, firstp, lastp))
 			f.write('mkdir %s\n' %procdir)
 			f.write('cd %s\n' %procdir)
 			f.close()
@@ -485,7 +484,7 @@ class frealignJob(appionScript.AppionScript):
 
 		mainf.close()
 		os.chmod(iterjobfile, 0755)
-		return iterjobfile
+		return procjobfiles
 
 	#===============
 	def combineMultipleJobs(self, iternum):
@@ -494,25 +493,19 @@ class frealignJob(appionScript.AppionScript):
 		then reconstruct the density
 		"""
 		combineparamfile = 'params.iter%03d.par'%(iternum)
-		combinef = open(combineparamfile, 'w')
-		for n in range(self.params['proc']):
-			procdir = "iter%03d/proc%03d"%(iternum,n+1)
-			outparamfile = os.path.join(procdir, 'outparams.par')
-			f = open(outparamfile, 'r')
-			lines = f.readlines()
-			f.close()
-			for line in f:
-				if line[0] != 'C':
-					combinef.write(n)
-		combinef.close()
-		combinejobname = 'frealign.iter%03d.combine.sh'%(iternum)
-		self.appendFrealignJobFile(combinejobname, iflag=0)
-		proc = subprocess.Popen('sh '+combinejobname, shell=True)
-		proc.wait()
+		combinejobfile = 'frealign.iter%03d.combine.sh'%(iternum)
+		cmd = "cat proc*/outparams.par | egrep -v '^C' | sort -n > "+combineparamfile
 
+		f = open(combinejobfile, 'w')
+		f.write("#!/bin/sh\n\n")
+		iterdir = "iter%03d"%(iternum)
+		f.write('cd %s\n\n' % iterdir)
+		f.write(cmd+"\n\n")
+		f.close()
+		self.appendFrealignJobFile(combinejobfile, iflag=0)
 
 	#===============
-	def singleRun(self, iternum):
+	def singleNodeRun(self, iternum):
 		"""
 		single node run
 		"""
@@ -527,23 +520,60 @@ class frealignJob(appionScript.AppionScript):
 		f.write('mkdir -p %s\n' % iterdir)
 		f.write('cd %s\n\n' % iterdir)
 		volroot = os.path.splitext(os.path.basename(self.currentvol))[0]
-		f.write('cp ../%s iter%03d.hed\n' % (volroot+".hed", iternum))
-		f.write('cp ../%s iter%03d.img\n' % (volroot+".img", iternum))
+		f.write('cp -v ../%s iter%03d.hed\n' % (volroot+".hed", iternum))
+		f.write('cp -v ../%s iter%03d.img\n' % (volroot+".img", iternum))
 		f.close()
 
 		self.currentvol = "iter%03d.hed"%(iternum)
 		self.appendFrealignJobFile(jobfile)
 
 		f = open(jobfile, 'a')
-		f.write('cp iter%03d.hed ..\n'%(iternum))
-		f.write('cp iter%03d.img ..\n'%(iternum))
+		f.write('cp -v iter%03d.hed ..\n'%(iternum))
+		f.write('cp -v iter%03d.img ..\n'%(iternum))
 		self.currentparam = 'params.iter%03d.par'%(iternum)
-		f.write('cp outparams.par ../%s\n'%(self.currentparam))
+		f.write('egrep -v "^C" outparams.par > ../%s\n'%(self.currentparam))
+		f.close()
 
 		### Run the script
 		apDisplay.printColor("Running frealign script: "+jobfile+" at "+time.asctime(), "blue")
 		proc = subprocess.Popen("sh "+jobfile, shell=True)
 		proc.wait()
+
+	#===============
+	def multiNodeRun(self, iternum):
+		"""
+		multi node run
+		"""
+		### mutli node run
+		apDisplay.printMsg("Multi node run")
+
+		### create individual processor jobs
+		procjobfiles = self.createMultipleJobs(iternum)
+		combinejobfile = self.combineMultipleJobs(iternum)
+
+		### write to jobfile
+		iterjobfile = 'frealign.iter%03d.run.sh'%(iternum)
+		iterf = open(iterjobfile, 'w')
+		iterf.write("#!/bin/sh\n")
+		iterf.write("\n")
+		iterf.write('mkdir %s\n' %iterdir)
+		iterf.write('cd %s\n' %iterdir)
+		iterf.write("\n")
+		for procjobfile in procjobfiles:
+			iterf.write("mpiexec --app -np 1 %s\n" % procjobfile)
+			#iterf.write("pbsdsh -v -np 1 %s\n" % jobfile)
+		iterf.close()
+
+		mainjobfile = 'frealign.run.sh'%(iternum)
+		mainf = open(iterjobfile, 'a')
+		mainf.write("./%s"%(iterjobfile))
+		mainf.close()
+
+		### run split jobs
+		#self.submitMultipleJobs(iterjobfile)
+		self.combineMultipleJobs(iternum)
+
+		return jobfile
 
 	#===============
 	def start(self):
@@ -566,14 +596,9 @@ class frealignJob(appionScript.AppionScript):
 		for i in range(self.params['numiter']):
 			iternum = i+1
 			if self.params['cluster'] is True:
-				### create individual processor jobs
-				iterjobfile = self.createMultipleJobs(iternum)
-				### run split jobs
-				#self.submitMultipleJobs(iterjobfile)
-				# combine results & create density
-				self.combineMultipleJobs(iternum)
+				self.multiRun(iternum)
 			else:
-				self.singleRun(iternum)
+				self.singleNodeRun(iternum)
 				time.sleep(10)
 
 			### calculate FSC
