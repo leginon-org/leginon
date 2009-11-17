@@ -564,27 +564,18 @@ class frealignJob(appionScript.AppionScript):
 
 		### write to jobfile
 		iterjobfile = 'frealign.iter%03d.run.sh'%(iternum)
-		iterf = open(iterjobfile, 'w')
-		iterf.write("#!/bin/sh\n")
-		iterf.write("\n")
-		iterf.write('mkdir %s\n' %iterdir)
-		iterf.write('cd %s\n' %iterdir)
-		iterf.write("\n")
 		for procjobfile in procjobfiles:
-			iterf.write("mpiexec --app -np 1 %s\n" % procjobfile)
-			#iterf.write("pbsdsh -v -np 1 %s\n" % jobfile)
+			iterf.write("-np 1 %s\n" % procjobfile)
 		iterf.close()
 
-		mainjobfile = 'frealign.run.sh'%(iternum)
-		mainf = open(iterjobfile, 'a')
-		mainf.write("./%s"%(iterjobfile))
+		mainjobfile = 'frealign.run.sh'
+		mainf = open(mainjobfile, 'a')
+		mainf.write("mpiexec --hostfile $PBS_NODEFILE --app %s"%(iterjobfile))
+		mainf.write("mpiexec --hostfile $PBS_NODEFILE --app %s"%(combinejobfile))
+		#mainf.write("pbsdsh -v %s\n" % iterjobfile)
 		mainf.close()
 
-		### run split jobs
-		#self.submitMultipleJobs(iterjobfile)
-		self.combineMultipleJobs(iternum)
-
-		return jobfile
+		return mainjobfile
 
 	#===============
 	def start(self):
