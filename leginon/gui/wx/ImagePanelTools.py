@@ -305,7 +305,7 @@ class ImageTool(object):
 		else:
 			self.button = button
 		self.untoggle = untoggle
-		self.button.SetBezelWidth(1)
+		self.button.SetBezelWidth(3)
 		if tooltip:
 			self.button.SetToolTip(wx.ToolTip(tooltip))
 		self.sizer.Add(self.button, 0, wx.ALIGN_CENTER|wx.ALL, 3)
@@ -868,7 +868,7 @@ class TypeTool(object):
 	def enableToggleButton(self, toolname, enable=True):
 		togglebutton = self.togglebuttons[toolname]
 		if enable:
-			togglebutton.SetBezelWidth(1)
+			togglebutton.SetBezelWidth(3)
 			#togglebutton.SetBackgroundColour(wx.Color(160, 160, 160))
 		else:
 			togglebutton.SetBezelWidth(0)
@@ -880,7 +880,7 @@ class TypeTool(object):
 		bitmap = self.bitmaps[toolname]
 		size = (24, 24)
 		togglebutton = GenBitmapToggleButton(self.parent, -1, bitmap, size=size)
-		togglebutton.SetBezelWidth(1)
+		togglebutton.SetBezelWidth(3)
 		if tooltip is not None:
 			togglebutton.SetToolTip(wx.ToolTip(tooltip))
 		self.togglebuttons[toolname] = togglebutton
