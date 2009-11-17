@@ -264,9 +264,20 @@ class frealignJob(appionScript.AppionScript):
 				particleparams['shy'] = emaneuler['shifty']
 				if emaneuler['mirror'] is True:
 					particleparams['shx'] *= -1
-			apFrealign.writeParticleParamLine(particleparams,f)
+			self.writeParticleParamLine(particleparams,f)
 		f.close()
 		return paramfile
+
+	#===============
+	def writeParticleParamLine(self, p, f):
+		f.write( ("%7d"+"%8.2f%8.2f%8.2f"+"%8.2f%8.2f"+"%7d.%4d"+"%9.1f%9.1f%8.2f"+"%7.2f%8.2f\n") %
+		(p['ptclnum'], #part num
+			p['psi'],p['theta'],p['phi'], #Eulers
+			p['shx'],p['shy'], #shifts
+			p['mag'],p['film'], #scope
+			p['df1'],p['df2'],p['angast'], #defocus
+			p['presa'],p['dpres'], #phase residual, change in phase residual from previous run
+		))
 
 	#===============
 	def setupParticleParams(self):
