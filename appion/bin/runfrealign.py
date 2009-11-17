@@ -216,6 +216,7 @@ class frealignJob(appionScript.AppionScript):
 		particleparams={}
 
 		f = open(paramfile, 'w')
+		f.write("C           PSI   THETA     PHI     SHX     SHY    MAG   FILM      DF1      DF2  ANGAST  PRESA\n")
 		apDisplay.printMsg("Writing out particle parameters")
 		count = 0
 		t0 = time.time()
@@ -270,7 +271,7 @@ class frealignJob(appionScript.AppionScript):
 
 	#===============
 	def writeParticleParamLine(self, p, f):
-		f.write( ("%7d"+"%8.2f%8.2f%8.2f"+"%8.2f%8.2f"+"%7d.%4d"+"%9.1f%9.1f%8.2f"+"%7.2f%8.2f\n") %
+		f.write( ("%7d"+"%8.2f%8.2f%8.2f"+"%8.2f%8.2f"+"%7d.%6d"+"%9.1f%9.1f%8.2f"+"%7.2f%8.2f\n") %
 		(p['ptclnum'], #part num
 			p['psi'],p['theta'],p['phi'], #Eulers
 			p['shx'],p['shy'], #shifts
