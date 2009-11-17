@@ -38,7 +38,6 @@ class Watcher(node.Node):
 
 	def processEvent(self, pubevent):
 		#newdata = pubevent['data']
-		print 'SPECIAL_GETITEM data'
 		newdata = pubevent.special_getitem('data', dereference=True, readimages=True)
 		if newdata is not None:
 			self.processData(newdata)
