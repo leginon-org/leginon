@@ -510,6 +510,41 @@ class frealignJob(appionScript.AppionScript):
 		proc = subprocess.Popen('sh '+combinejobname, shell=True)
 		proc.wait()
 
+
+	#===============
+	def singleRun(self, iternum):
+		"""
+		single node run
+		"""
+		### single node run
+		apDisplay.printMsg("Single node run")
+		jobfile = 'frealign.iter%03d.run.sh'%(iternum)
+
+		### write the header
+		f = open(jobfile, 'w')
+		f.write("#!/bin/sh\n\n")
+		iterdir = "iter%03d"%(iternum)
+		f.write('mkdir -p %s\n' % iterdir)
+		f.write('cd %s\n\n' % iterdir)
+		volroot = os.path.splitext(os.path.basename(self.currentvol))[0]
+		f.write('cp ../%s iter%03d.hed\n' % (volroot+".hed", iternum))
+		f.write('cp ../%s iter%03d.img\n' % (volroot+".img", iternum))
+		f.close()
+
+		self.currentvol = "iter%03d.hed"%(iternum)
+		self.appendFrealignJobFile(jobfile)
+
+		f = open(jobfile, 'a')
+		f.write('cp iter%03d.hed ..'%(iternum))
+		f.write('cp iter%03d.img ..'%(iternum))
+		self.currentparam = 'params.iter%03d.par'%(iternum)
+		f.write('cp outparams.par ../%s'%(self.currentparam))
+
+		### Run the script
+		apDisplay.printColor("Running frealign script: "+jobfile+" at "+time.asctime(), "blue")
+		proc = subprocess.Popen("sh "+jobfile, shell=True)
+		proc.wait()
+
 	#===============	
 	def start(self):
 		self.iflag = 1
@@ -538,26 +573,7 @@ class frealignJob(appionScript.AppionScript):
 				# combine results & create density
 				self.combineMultipleJobs(iternum)
 			else:
-				### single node run
-				apDisplay.printMsg("Single node run")
-				jobfile = 'frealign.iter%03d.run.sh'%(iternum)
-				f = open(jobfile, 'w')
-				f.write("#!/bin/sh\n\n")
-				iterdir = "iter%03d"%(iternum)
-				f.write('mkdir -p %s\n' % iterdir)
-				f.write('cd %s\n\n' % iterdir)
-				f.write('cp %s iter%03d.hed\n' % (os.path.splitext(self.currentvol)[0]+".hed", iternum))
-				f.write('cp %s iter%03d.img\n' % (os.path.splitext(self.currentvol)[0]+".img", iternum))
-				self.currentvol = "iter%03d.hed"%(iternum)
-				f.close()
-				self.appendFrealignJobFile(jobfile)
-				apDisplay.printColor("Running frealign script: "+jobfile+" at "+time.asctime(), "blue")
-				proc = subprocess.Popen("sh "+jobfile, shell=True)
-				proc.wait()
-				shutil.copy('iter%03d/iter%03d.hed'%(iternum,iternum), 'iter%03d.hed'%(iternum))
-				shutil.copy('iter%03d/iter%03d.img'%(iternum,iternum), 'iter%03d.img'%(iternum))
-				self.currentparam = 'params.iter%03d.par'%(iternum)
-				shutil.copy('iter%03d/outparams.par'%(iternum), self.currentparam)
+				self.singleRun(iternum)
 
 			### calculate FSC
 			#emancmd = 'proc3d %s %s fsc=fsc.eotest.%d' % (evenvol, oddvol, self.params['iter'])

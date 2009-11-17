@@ -305,44 +305,53 @@ def makeHeaderStr(partnum, shape, avg, stdev, maxval, minval):
 		http://www.imagescience.de/formats/formats.htm
 	"""
 	headerstr = ""
-	### first image number
+	### image number (1)
 	headerstr += intToFourByte(partnum)
-	### number of images, less one
+	### number of images, less one (2)
 	headerstr += intToFourByte(shape[0]-1)
-	### always 0,1 ???
+	### always 0,1 ??? (3,4)
 	headerstr += intToFourByte(0)
 	headerstr += intToFourByte(1)
-	### creation date: day, month, year, hour, min, sec
-	headerstr += intToFourByte(time.localtime()[2])
-	headerstr += intToFourByte(time.localtime()[1]) #eman always uses month-1?
-	headerstr += intToFourByte(time.localtime()[0])
-	headerstr += intToFourByte(time.localtime()[3])
-	headerstr += intToFourByte(time.localtime()[4])
-	headerstr += intToFourByte(time.localtime()[5])
-	### total number of pixels
+	### creation date: month, day, year, hour, min, sec (5-10)
+	headerstr += intToFourByte(time.localtime()[1]) #month
+	headerstr += intToFourByte(time.localtime()[2]) #day
+	headerstr += intToFourByte(time.localtime()[0]) #year
+	headerstr += intToFourByte(time.localtime()[3]) #hour
+	headerstr += intToFourByte(time.localtime()[4]) #min
+	headerstr += intToFourByte(time.localtime()[5]) #sec
+	### total number of pixels (11,12)
 	headerstr += intToFourByte(shape[1]*shape[2])
 	headerstr += intToFourByte(shape[1]*shape[2])
-	### number of columns
+	### number of columns (13)
 	headerstr += intToFourByte(shape[2])
-	### number of rows
+	### number of rows (14)
 	headerstr += intToFourByte(shape[1])
-	### data type
+	### data type (15)
 	headerstr += "REAL"
-	### zero coordinates
+	### zero coordinates (16,17)
 	headerstr += intToFourByte(0)
 	headerstr += intToFourByte(0)
-	### average density as float
+	### average density as float (18)
 	headerstr += floatToFourByte(avg)
-	### standard deviation of densities
+	### standard deviation of densities (19)
 	headerstr += floatToFourByte(stdev)
-	### variance of densities in image 
+	### variance of densities in image (20)
 	headerstr += floatToFourByte(stdev*stdev)
-	### old average density of this image 
+	### old average density of this image (21)
 	headerstr += floatToFourByte(0)
-	### highest density in image 
+	### highest density in image (22)
 	headerstr += floatToFourByte(maxval)
-	### minimal density in image 
+	### minimal density in image (23)
 	headerstr += floatToFourByte(minval)
+	for i in range(37):
+		headerstr += intToFourByte(0)
+	### number of z slices
+	headerstr += intToFourByte(1)
+	### image number, EMAN does this, IMAGIC says num 3d in 4d
+	headerstr += intToFourByte(1)
+	for i in range(6):
+		headerstr += intToFourByte(0)	
+	headerstr += intToFourByte(33686018)
 	while len(headerstr) < 1024:
 		### fill in the rest with garbage
 		headerstr += floatToFourByte(0)
@@ -556,11 +565,15 @@ def mergeStacks(stacklist, mergestack):
 			headerstr += intToFourByte(time.localtime()[4])
 			headerstr += intToFourByte(time.localtime()[5])
 			### append other header info, 4 character per item
-			headerstr += data[10*4:61*4]
+			headerstr += data[10*4:60*4]
+			### number of z slices
+			headerstr += intToFourByte(1)
 			### first image number, EMAN does this
 			headerstr += intToFourByte(partnum)
 			### append other header info, 4 character per item
-			headerstr += data[62*4:]
+			headerstr += data[62*4:68*4]
+			headerstr += intToFourByte(33686018)
+			headerstr += data[69*4:]
 			mergehead.write(headerstr)
 			partnum += 1
 			i += 1
@@ -612,7 +625,9 @@ def setMachineStampInImagicHeader(oldhedfile):
 	nf = open(newhedfile, "wb")
 	for i in range(numimg):
 		data = of.read(1024)
-		headerstr = data[0:68*4]
+		headerstr = data[0:60*4]
+		headerstr += intToFourByte(1)
+		headerstr += data[61*4:68*4]
 		headerstr += intToFourByte(33686018)
 		headerstr += data[69*4:]
 		nf.write(headerstr)
