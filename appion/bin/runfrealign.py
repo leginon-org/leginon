@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-import sys, os, glob
+import os
+import sys
 import math
-import subprocess
+import time
 import shutil
+import subprocess
 #appion
 import apParam
 import apStack
@@ -16,6 +18,7 @@ import apFrealign
 import apEMAN
 import apFile
 import apImagicFile
+import appiondata
 from pyami import mrc
 
 #================
@@ -143,19 +146,21 @@ class frealignJob(appionScript.AppionScript):
 		"""
 
 		# get stack particle id
-		stackp = apStack.getStackParticle(self.params['stackid'],pnum)
+		stackp = apStack.getStackParticle(self.params['stackid'], pnum)
 		particleid = stackp['particle'].dbid
 
 		# find particle in reference stack
 		refstackp = apStack.getStackParticleFromParticleId(particleid, self.params['reconstackid'], nodie=True)
 		if not refstackp:
-			apDisplay.printWarning('No classification for stack particle %d in reconstruction iteration id: %d' % (pnum, params['reconiterid']))
-			self.params['noClassification'] += 1
-			if self.params['noClassification'] > (float(self.params['last'])*0.10):
-				apDisplay.printError('More than 10% of the particles have no classification, use a different reference reconstruction')
+			percentnoeuler = 100*self.noeulers/float(self.params['last'])
+			apDisplay.printWarning('No eulers for particle %d (%.1f%%)' % (pnum, percentnoeuler))
+			self.noeulers += 1
+			if percentnoeuler > 10:
+				apDisplay.printError('More than 10% of the particles have no euler, use a different reference reconstruction')
 			pclass={
-				'eulers': { 'euler1': 0.0, 'euler2': 0.0 },
-				'inplane_rotation': 0.0,
+				'euler1': 0.0,
+				'euler2': 0.0,
+				'euler3': 0.0,
 				'mirror': False,
 				'shiftx': 0.0,
 				'shifty': 0.0,
@@ -167,14 +172,25 @@ class frealignJob(appionScript.AppionScript):
 			pclasses = pclassq.query(results=1)
 			pclass = pclasses[0]
 
-		emaneuler={
-			'alt':    pclass['euler1'],
-			'az':     pclass['euler2'],
-			'phi':    pclass['euler3'],
-			'mirror': pclass['mirror'],
-			'shiftx': pclass['shiftx'],
-			'shifty': pclass['shifty'],
-		}
+		try:
+			emaneuler={
+				'alt':    pclass['euler1'],
+				'az':     pclass['euler2'],
+				'phi':    pclass['euler3'],
+				'mirror': pclass['mirror'],
+				'shiftx': pclass['shiftx'],
+				'shifty': pclass['shifty'],
+			}
+		except:
+			print pclass
+			emaneuler={
+				'alt':    pclass['euler1'],
+				'az':     pclass['euler2'],
+				'phi':    pclass['euler3'],
+				'mirror': pclass['mirror'],
+				'shiftx': pclass['shiftx'],
+				'shifty': pclass['shifty'],
+			}
 
 		return emaneuler
 
@@ -183,15 +199,15 @@ class frealignJob(appionScript.AppionScript):
 		paramfile = os.path.join(self.params['rundir'], 'params.iter000.par')
 		apDisplay.printMsg("Creating parameter file: "+paramfile)
 
+		numpart = apStack.getNumberStackParticlesFromId(self.params['stackid'])
 		if os.path.isfile(paramfile):
-			numpart = apStack.getNumberStackParticlesFromId(self.params['stackid'])
 			f = open(paramfile, 'r')
 			numparam = len(f.readlines())
-			if numparam == numpart:
+			if numparam == numpart or numparam > self.params['last']:
 				apDisplay.printMsg("Param file exists")
 				return paramfile
 			else:
-				apDisplay.printWarning("Param file exists but has wrong number of parts: %d vs %d"%(numparam,numpart))
+				apDisplay.printWarning("Param file exists with wrong number of particles: %d vs %d"%(numparam,numpart))
 
 		stackdata = apStack.getStackParticlesFromId(self.params['stackid'])
 		particleparams={}
@@ -199,18 +215,25 @@ class frealignJob(appionScript.AppionScript):
 		f = open(paramfile, 'w')
 		apDisplay.printMsg("Writing out particle parameters")
 		count = 0
+		t0 = time.time()
+		self.noeulers = 0
 		for particle in stackdata:
 			count += 1
-			if (count % 200 == 0):
-				sys.stderr.write(".")
+			if (count % 1000 == 0):
+				estime = (time.time() - t0) * (numpart-count) / float(count)
+				apDisplay.printMsg("particle %d -- %s remain"%(count, apDisplay.timeString(estime)))
+			if count > self.params['last']:
+				break
 			# defaults
+			## Niko says that if the defocus is negative it will not perform CTF correction
+			## But it will also not correct the amplitudes
 			particleparams = {
 				'ptclnum': particle['particleNumber'],
 				'psi': 0.0,
 				'theta': 0.0,
 				'phi': 0.0,
-				'df1': 0.1, # workaround if no ctf correction
-				'df2': 0.1, # set defocus to 0.1 Angstroms
+				'df1': -1.0, # workaround if no ctf correction
+				'df2': -1.0, # set defocus to -1.0 Angstroms
 				'angast': 0.0,
 				'mag': 10000, # workaround to get around dstep
 				'shx': 0.0,
@@ -227,12 +250,6 @@ class frealignJob(appionScript.AppionScript):
 					particleparams['df1'] = abs(ctfdata['defocus1']*1e10)
 					particleparams['df2'] = abs(ctfdata['defocus2']*1e10)
 					particleparams['angast'] = -ctfdata['angle_astigmatism']
-			else:
-				## Niko says that if the defocus is negative it will not perform CTF correction
-				## But it will also not correct the amplitudes
-				particleparams['df1'] = -1.0
-				particleparams['df2'] = -1.0
-				particleparams['angast'] = 0.0
 			# if using parameters from previous reconstruction
 			if self.params['reconiterid'] is not None:
 				emaneuler = self.getStackParticleEulersForIteration(particle['particleNumber'])
@@ -258,15 +275,14 @@ class frealignJob(appionScript.AppionScript):
 			### use slow projection matching search to determine initial Eulers
 			self.iflag = 3
 
+		"""
 		if self.params['inpar'] is not None and os.path.isfile(self.params['inpar']):
 			### use specified parameter file
 			paramfile = self.params['inpar']
 			apDisplay.printMsg("Using parameter file: "+paramfile)		
 			return paramfile
+		"""
 
-		### if no parameter file specified then generate input parameter file
-		self.iflag = 3
-		self.params['noClassification'] = 0
 		paramfile = self.generateParticleParams()
 		return paramfile
 
@@ -301,7 +317,6 @@ class frealignJob(appionScript.AppionScript):
  			emancmd += "scale=%.4f "%(scale)
 
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
-
 		apImagicFile.setMachineStampInImagicHeader(outmodelfile)
 
 		return outmodelfile
@@ -323,7 +338,9 @@ class frealignJob(appionScript.AppionScript):
 			'fstat': False, # memory saving function, usually false
 			'ifsc': 0, # memory saving function, usually false
 			'iblow': 1, # expand volume in memory, larger is faster, but needs more mem; can be 1, 2 or 4
-			'fmatch': False, # make 
+			'fmatch': False, # make matching projection for each particle
+			'iewald': 0.0, #  
+			'fbeaut': True, # 
 			'dfstd': 100,   # defocus standard deviation (in Angstroms), usually +/- 100 A, only for defocus refinement
 			'beamtiltx': 0.0, #assume zero beam tilt
 			'beamtilty': 0.0, #assume zero beam tilt
@@ -337,13 +354,17 @@ class frealignJob(appionScript.AppionScript):
 			iflag = self.iflag
 
 		f = open(jobfile, 'a')
+		if recon is True:
+			### environmental variable decide how many cpus for volume
+			f.write('export NCPUS=8\n')
 		f.write('\n')
 		f.write('# IFLAG %d\n'%(iflag))
 		f.write('# PARTICLES %d THRU %d\n'%(first, last))
 		f.write('# RECON %s\n'%(recon))
 		f.write('\n')
 		f.write('### START FREALIGN ###\n')
-		f.write('frealign.exe << EOF > '+logfile+'\n')
+		f.write('frealign.exe << EOF\n')
+		#f.write('frealign.exe << EOF > '+logfile+'\n')
 
 		### CARD 1
 		f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%d,%s,%d\n' % (
@@ -351,8 +372,8 @@ class frealignJob(appionScript.AppionScript):
 			iflag, 
 			self.bc(self.params['fmag']), self.bc(self.params['fdef']), #T/F refinements
 			self.bc(self.params['fastig']), self.bc(self.params['fpart']), #T/F refinements
-			self.params['iewald'], 
-			self.bc(self.params['fbeaut']), self.bc(self.params['fcref']), self.bc(self.defaults['fmatch']), 
+			self.defaults['iewald'], 
+			self.bc(self.defaults['fbeaut']), self.bc(self.params['fcref']), self.bc(self.defaults['fmatch']), 
 			self.defaults['ifsc'],
 			self.bc(self.defaults['fstat']), self.defaults['iblow']))
 
@@ -371,7 +392,7 @@ class frealignJob(appionScript.AppionScript):
 		f.write('%d, %d\n' % (first, last))
 
 		### CARD 5
-		if self.params['sym']=='Icos':
+		if self.params['sym'].lower() == 'icos':
 			f.write('I\n')
 		else:
 			f.write('%s\n' % (self.params['sym']))
@@ -507,7 +528,7 @@ class frealignJob(appionScript.AppionScript):
 			%(self.stackfile, self.currentvol, self.currentparam), "violet")
 
 		## run frealign for number for refinement cycles
-		for i in range(self.params['refcycles']):
+		for i in range(self.params['numiter']):
 			iternum = i+1
 			if self.params['cluster'] is True:
 				### create individual processor jobs
@@ -518,18 +539,25 @@ class frealignJob(appionScript.AppionScript):
 				self.combineMultipleJobs(iternum)
 			else:
 				### single node run
-				jobfile = os.path.join(self.params['rundir'], 'frealign.iter%03d.run.sh'%(iternum))
+				apDisplay.printMsg("Single node run")
+				jobfile = 'frealign.iter%03d.run.sh'%(iternum)
 				f = open(jobfile, 'w')
 				f.write("#!/bin/sh\n\n")
-				iterdir = os.path.join(self.params['rundir'], "iter%03d"%(iternum))
+				iterdir = "iter%03d"%(iternum)
 				f.write('mkdir -p %s\n' % iterdir)
 				f.write('cd %s\n\n' % iterdir)
+				f.write('cp %s iter%03d.hed\n' % (os.path.splitext(self.currentvol)[0]+".hed", iternum))
+				f.write('cp %s iter%03d.img\n' % (os.path.splitext(self.currentvol)[0]+".img", iternum))
+				self.currentvol = "iter%03d.hed"%(iternum)
 				f.close()
 				self.appendFrealignJobFile(jobfile)
-				apDisplay.printColor("Running frealign "+jobfile, "blue")
+				apDisplay.printColor("Running frealign script: "+jobfile+" at "+time.asctime(), "blue")
 				proc = subprocess.Popen("sh "+jobfile, shell=True)
 				proc.wait()
-				break
+				shutil.copy('iter%03d/iter%03d.hed'%(iternum,iternum), 'iter%03d.hed'%(iternum))
+				shutil.copy('iter%03d/iter%03d.img'%(iternum,iternum), 'iter%03d.img'%(iternum))
+				self.currentparam = 'params.iter%03d.par'%(iternum)
+				shutil.copy('iter%03d/outparams.par'%(iternum), self.currentparam)
 
 			### calculate FSC
 			#emancmd = 'proc3d %s %s fsc=fsc.eotest.%d' % (evenvol, oddvol, self.params['iter'])

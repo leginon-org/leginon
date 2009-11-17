@@ -210,7 +210,7 @@ def createFrealignJob (params, jobname, nodenum=None, mode=None, inpar=None, inv
 	os.chmod(jobname,0755)
 
 #===============
-def convertEmanEulersToFrealign(eman_eulers):
+def convertEmanEulersToFrealign(eman_eulers, sym='c1'):
 	e1 = eman_eulers['az']
 	e2 = eman_eulers['alt']
 	e3 = eman_eulers['phi']
@@ -242,6 +242,9 @@ def convertEmanEulersToFrealign(eman_eulers):
 		e3+=360-(360*int(e3/360.0))
 	if e3 > 360:
 		e3-=360*int(e3/360.0)
+
+	if sym.lower() == 'icos':
+		(e1,e2,e3) = sumEulers([90,-31.7174744,0],[e1,e2,e3])
 
 	eulers={"phi":e1,"theta":e2,"psi":e3}
 	return eulers
