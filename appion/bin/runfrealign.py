@@ -535,10 +535,10 @@ class frealignJob(appionScript.AppionScript):
 		self.appendFrealignJobFile(jobfile)
 
 		f = open(jobfile, 'a')
-		f.write('cp iter%03d.hed ..'%(iternum))
-		f.write('cp iter%03d.img ..'%(iternum))
+		f.write('cp iter%03d.hed ..\n'%(iternum))
+		f.write('cp iter%03d.img ..\n'%(iternum))
 		self.currentparam = 'params.iter%03d.par'%(iternum)
-		f.write('cp outparams.par ../%s'%(self.currentparam))
+		f.write('cp outparams.par ../%s\n'%(self.currentparam))
 
 		### Run the script
 		apDisplay.printColor("Running frealign script: "+jobfile+" at "+time.asctime(), "blue")
@@ -574,6 +574,7 @@ class frealignJob(appionScript.AppionScript):
 				self.combineMultipleJobs(iternum)
 			else:
 				self.singleRun(iternum)
+				time.sleep(10)
 
 			### calculate FSC
 			#emancmd = 'proc3d %s %s fsc=fsc.eotest.%d' % (evenvol, oddvol, self.params['iter'])
