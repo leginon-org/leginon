@@ -363,8 +363,8 @@ class frealignJob(appionScript.AppionScript):
 		f.write('# RECON %s\n'%(recon))
 		f.write('\n')
 		f.write('### START FREALIGN ###\n')
-		f.write('frealign.exe << EOF\n')
-		#f.write('frealign.exe << EOF > '+logfile+'\n')
+		#f.write('frealign.exe << EOF\n')
+		f.write('frealign.exe << EOF > '+logfile+'\n')
 
 		### CARD 1
 		f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%d,%s,%d\n' % (
@@ -545,7 +545,7 @@ class frealignJob(appionScript.AppionScript):
 		proc = subprocess.Popen("sh "+jobfile, shell=True)
 		proc.wait()
 
-	#===============	
+	#===============
 	def start(self):
 		self.iflag = 1
 
