@@ -128,5 +128,5 @@ def fitFirstCTFNode(pow, rpixelsize, defocus, ht):
 	eparams = find_ast_ellipse(grad,thr,dmean,drange)
 	if eparams:
 		z0, zast, ast_ratio, alpha = getAstigmaticDefocii(eparams,rpixelsize, ht)
-		return z0,zast,ast_ratio, alpha
+		return z0,zast,ast_ratio, alpha, eparams
 
