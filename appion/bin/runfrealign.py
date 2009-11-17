@@ -359,15 +359,15 @@ class frealignJob(appionScript.AppionScript):
 		f = open(jobfile, 'a')
 		if recon is True:
 			### environmental variable decide how many cpus for volume
-			f.write('export NCPUS=8\n')
+			f.write('export NCPUS=%d\n'%(self.params['proc']))
 		f.write('\n')
 		f.write('# IFLAG %d\n'%(iflag))
 		f.write('# PARTICLES %d THRU %d\n'%(first, last))
 		f.write('# RECON %s\n'%(recon))
 		f.write('\n')
 		f.write('### START FREALIGN ###\n')
-		f.write('frealign.exe << EOF\n')
-		#f.write('frealign.exe << EOF > '+logfile+'\n')
+		#f.write('frealign.exe << EOF\n')
+		f.write('frealign << EOF > '+logfile+'\n')
 
 		### CARD 1
 		f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%d,%s,%d\n' % (
@@ -464,26 +464,27 @@ class frealignJob(appionScript.AppionScript):
 				lastp+=1
 				r-=1
 
-			procdir = "proc%03d"%n
-			jobfile = "frealign.iter%03d.proc%03d.sh"%(iternum, n+1)
-			### garibaldi
-
-			### guppy
+			procdir = "iter%03d/proc%03d"%(iternum, n+1)
+			apParam.createDirectory("iter%03d"%(iternum), warning=False)
+			procjobfile = "iter%03d/frealign.iter%03d.proc%03d.sh"%(iternum, iternum, n+1)
 
 			### start jobfile
-			f = open(jobfile, "w")
+			f = open(procjobfile, "w")
 			f.write("#!/bin/sh\n")
 			f.write("\n")
 			f.write("### Job #%03d, Particles %6d - %6d\n" %(n+1, firstp, lastp))
-			f.write('mkdir %s\n' %procdir)
+			f.write('mkdir -p %s\n' %procdir)
 			f.write('cd %s\n' %procdir)
 			f.close()
-			### add frealign code
-			self.appendFrealignJobFile(jobfile, first=firstp, last=lastp, recon=False)
-			os.chmod(jobfile, 0755)
 
-		mainf.close()
-		os.chmod(iterjobfile, 0755)
+			### add frealign code
+			self.currentvol = "../../"+os.path.basename(self.currentvol)
+			self.currentparam = "../../"+os.path.basename(self.currentparam)
+			self.appendFrealignJobFile(procjobfile, first=firstp, last=lastp, recon=False)
+
+			### append to list
+			procjobfiles.append(procjobfile)
+
 		return procjobfiles
 
 	#===============
@@ -493,16 +494,29 @@ class frealignJob(appionScript.AppionScript):
 		then reconstruct the density
 		"""
 		combineparamfile = 'params.iter%03d.par'%(iternum)
-		combinejobfile = 'frealign.iter%03d.combine.sh'%(iternum)
+		combinevolfile = 'iter%03d.hed'%(iternum)
+		combinejobfile = 'iter%03d/frealign.iter%03d.combine.sh'%(iternum, iternum)
 		cmd = "cat proc*/outparams.par | egrep -v '^C' | sort -n > "+combineparamfile
 
 		f = open(combinejobfile, 'w')
 		f.write("#!/bin/sh\n\n")
 		iterdir = "iter%03d"%(iternum)
-		f.write('cd %s\n\n' % iterdir)
+		f.write('cd %s\n' % iterdir)
 		f.write(cmd+"\n\n")
+		f.write("wc -l %s \n"%(combineparamfile))
+		f.write("rm -fv iter%03d.???\n"%(iternum))
 		f.close()
+		self.currentparam = combineparamfile
+		self.currentvol = combinevolfile
 		self.appendFrealignJobFile(combinejobfile, iflag=0)
+
+		f = open(combinejobfile, 'a')
+		f.write('cp -v iter%03d.hed ..\n'%(iternum))
+		f.write('cp -v iter%03d.img ..\n'%(iternum))
+		f.write('cp -v %s ..\n'%(combineparamfile))
+		f.close()
+
+		return combinejobfile
 
 	#===============
 	def singleNodeRun(self, iternum):
@@ -511,33 +525,30 @@ class frealignJob(appionScript.AppionScript):
 		"""
 		### single node run
 		apDisplay.printMsg("Single node run")
-		jobfile = 'frealign.iter%03d.run.sh'%(iternum)
 
-		### write the header
-		f = open(jobfile, 'w')
-		f.write("#!/bin/sh\n\n")
-		iterdir = "iter%03d"%(iternum)
-		f.write('mkdir -p %s\n' % iterdir)
-		f.write('cd %s\n\n' % iterdir)
-		volroot = os.path.splitext(os.path.basename(self.currentvol))[0]
-		f.write('cp -v ../%s iter%03d.hed\n' % (volroot+".hed", iternum))
-		f.write('cp -v ../%s iter%03d.img\n' % (volroot+".img", iternum))
-		f.close()
+		### create individual processor jobs
+		procjobfiles = self.createMultipleJobs(iternum)
 
-		self.currentvol = "iter%03d.hed"%(iternum)
-		self.appendFrealignJobFile(jobfile)
+		### convert job files to commands
+		procjobcmds = []
+		for procjobfile in procjobfiles:
+			procjobcmd = "sh "+procjobfile
+			procjobcmds.append(procjobcmd)
 
-		f = open(jobfile, 'a')
-		f.write('cp -v iter%03d.hed ..\n'%(iternum))
-		f.write('cp -v iter%03d.img ..\n'%(iternum))
-		self.currentparam = 'params.iter%03d.par'%(iternum)
-		f.write('egrep -v "^C" outparams.par > ../%s\n'%(self.currentparam))
-		f.close()
+		### run individual processor jobs
+		apThread.threadCommands(procjobcmds, nproc=self.params['proc'])
 
-		### Run the script
-		apDisplay.printColor("Running frealign script: "+jobfile+" at "+time.asctime(), "blue")
-		proc = subprocess.Popen("sh "+jobfile, shell=True)
+		### create combine processor jobs
+		combinejobfile = self.combineMultipleJobs(iternum)
+
+		### run combine processor jobs
+		proc = subprocess.Popen("sh "+combinejobfile, shell=True)
 		proc.wait()
+
+		if apFile.fileSize('iter%03d.img'%(iternum)) < 100:
+			apDisplay.printError("Failed to generate volume for iter %d"%(iternum))
+
+		return
 
 	#===============
 	def multiNodeRun(self, iternum):
@@ -585,10 +596,10 @@ class frealignJob(appionScript.AppionScript):
 		apImagicFile.setMachineStampInImagicHeader(self.stackfile)
 
 		### create initial model file
-		self.currentvol = self.setupInitialModel()
+		self.currentvol = os.path.basename(self.setupInitialModel())
 
 		### create parameter file
-		self.currentparam = self.setupParticleParams()
+		self.currentparam = os.path.basename(self.setupParticleParams())
 		apDisplay.printColor("Initial files:\n Stack: %s\n Volume: %s\n Params: %s\n"
 			%(self.stackfile, self.currentvol, self.currentparam), "violet")
 
