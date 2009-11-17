@@ -39,10 +39,12 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTargetTool('Lattice', wx.Color(255, 0, 255), settings=True)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
-		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
+		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255), target=True)
 		self.imagepanel.addTargetTool('done', wx.RED)
+		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.selectiontool.setDisplayed('done', True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
+		self.imagepanel.selectiontool.setDisplayed('preview', True)
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(1)
