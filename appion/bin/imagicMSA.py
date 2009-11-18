@@ -58,7 +58,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			help="number of iterations for MSA run", metavar="INT")
 		self.parser.add_option("--overcorrection", dest="overcorrection", type="float", default=0.8,
 			help="overcorrection factor for MSA program (determines its convergence speed)", metavar="FLOAT")
-		self.parser.add_option("--MSAmethod", dest="MSAmethod", type="str",
+		self.parser.add_option("--MSAdistance", dest="MSAdistance", type="str",
 			help="distance criteria that will be used in MSA", metavar="STR")
 
 		return
@@ -69,7 +69,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			apDisplay.printError("There is no stack ID specified")
 		if self.params['runname'] is None:
 			apDisplay.printError("enter a run ID")
-		if self.params['MSAmethod'] is None:
+		if self.params['MSAdistance'] is None:
 			apDisplay.printError("enter distance criteria for MSA program (i.e. eulidean, chisquare, modulation)")
 
 		return
@@ -177,7 +177,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			f.write("/usr/local/IMAGIC/msa/msa.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
 			f.write("NO\n")
 		f.write("FRESH_MSA\n")
-		f.write(str(self.params['MSAmethod'])+"\n")
+		f.write(str(self.params['MSAdistance'])+"\n")
 		f.write("start\n")
 		f.write("NO\n")
 		f.write("NO\n")
@@ -207,7 +207,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		msaq['mask_dropoff'] = self.params['mask_dropoff']
 		msaq['numiters'] = self.params['numiters']
 		msaq['overcorrection'] = self.params['overcorrection']
-		msaq['MSAmethod'] = self.params['MSAmethod']
+		msaq['MSAdistance'] = self.params['MSAdistance']
 		msaq['eigenimages'] = "eigenimages"
 
 		### finish analysis run
