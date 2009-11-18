@@ -15,50 +15,24 @@ require "inc/viewer.inc";
 require "inc/project.inc";
 require "inc/summarytables.inc";
 
-if ($_POST['write']) {
-	//if (TRUE) {
-	$particle = new particledata();
-	//jobForm();
-	// check that job file doesn't already exist
-	$outdir = $_POST['outdir'];
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$outdir .= $_POST['jobname'];
+if ($_POST['process'])
+	prepareFrealign(); // generate command
+elseif ($_POST['stackval'] && $_POST['model'])
+	jobForm(); // set parameters
+else
+	stackModelForm(); // select stack and model
 
-	// jobname ends with .job
-	$jobname = $_POST['jobname'];
-	$jobname .= '.job';
-	$exists = $particle->getJobFileFromPath($outdir,$jobname);
-	//  if ($exists[0]) jobForm("ERROR: This job name already exists");
-	if (!$_POST['mask']) jobForm("ERROR: Enter an outer mask radius");
-	if ($_POST['initorientmethod']=='projmatch' && !$_POST['dang']) jobForm("ERROR: Enter an angular increment");
-	prepareFrealign();
-}
-
-elseif ($_POST['submitstackmodel'] || $_POST['importrecon']) {
-	## make sure a stack and model were selected
-	if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
-	if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
-
-	## make sure that box sizes are the same
-	## get stack data
-	$stackinfo = explode('|--|',$_POST['stackval']);
-	$stackbox = $stackinfo[2];
-	## get model data
-	$modelinfo = explode('|--|',$_POST['model']);
-	$modbox = $modelinfo[3];
-	#if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
-	jobForm();
-}
-
-
-else stackModelForm();
+/* ******************************************
+*********************************************
+SELECT STACK AND INITIAL MODEL
+*********************************************
+****************************************** */
 
 function stackModelForm($extra=False) {
 	// check if session provided
 	$expId = $_GET['expId'];
 	$projectId = getProjectFromExpId($expId);
 
-	$javafunc="<script src='../js/viewer.js'></script>\n";
 	processing_header("FREALIGN Job Generator","FREALIGN Job Generator",$javafunc);
 
 	if ($expId) {
@@ -73,22 +47,24 @@ function stackModelForm($extra=False) {
 	$models = $particle->getModelsFromProject($projectId);
 
 	// find each stack entry in database
-	$stackIds = $particle->getStackIds($expId);
+	$stackIds = $particle->getStackIds($expId, false, false, true);
 	$stackinfo = explode('|--|', $_POST['stackval']);
 	$stackid = $stackinfo[0];
 	$apix = $stackinfo[1];
 	$box = $stackinfo[2];
 
 	// write out errors, if any came up:
-	if ($extra) echo "<font color='red' size='+2'>$extra</font>\n<hr>\n";
+	if ($extra)
+		echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
 
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
-	echo"<b>Stack:</b><br>";
+	echo"<b>Not ctf-corrected Stacks:</b><br>";
 	$particle->getStackSelector($stackIds, $stackid, '');
 
 	// show initial models
-	echo "<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
+	echo "<P><B>Initial models:</B><br>"
+		."<A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
 	echo "<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><br>\n";
 
 	$minf = explode('|--|',$_POST['model']);
@@ -119,10 +95,21 @@ function stackModelForm($extra=False) {
 	exit;
 }
 
+/* ******************************************
+*********************************************
+MAIN FORM TO SET PARAMETERS
+*********************************************
+****************************************** */
+
 function jobForm($extra=false) {
 	$expId = $_GET['expId'];
 	$projectId = $_POST['projectId'];
   
+	if (!$_POST['model'])
+		stackModelForm("ERROR: no initial model selected");
+	if (!$_POST['stackval'])
+		stackModelForm("ERROR: no stack selected");
+
 	## get path data for this session for output
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
@@ -176,7 +163,7 @@ function jobForm($extra=false) {
 	$javafunc .= writeJavaPopupFunctions('frealign');
 	processing_header("Frealign Job Generator","Frealign Job Generator",$javafunc);
 	// write out errors, if any came up:
-	if ($extra) echo "<FONT COLOR='#CC3333' size='+2'>$extra</FONT>\n<HR>\n";
+	if ($extra) echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
 
 	echo "<form name='frealignjob' method='post' action='$formaction'><br/>\n";
 	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
@@ -186,12 +173,12 @@ function jobForm($extra=false) {
 
 	// if importing reconstruction eulers
 	if ($_POST['importrecon'] && $_POST['importrecon']!='None'){
-		$_POST['initorientmethod']='importrecon';
+		$_POST['initmethod']='importrecon';
 		$_POST['write']='True';
 		$importcheck='checked';
 	}
-	$angcheck = ($_POST['initorientmethod']=='projmatch' || !$_POST['write']) ? 'checked' : '';
-	$inparfilecheck = ($_POST['initorientmethod']=='inparfile') ? 'checked' : '';
+	$angcheck = ($_POST['initmethod']=='projmatch' || !$_POST['write']) ? 'checked' : '';
+	$inparfilecheck = ($_POST['initmethod']=='inparfile') ? 'checked' : '';
 
 	/* ******************************************
 	SCRIPT PARAMETERS
@@ -242,7 +229,7 @@ function jobForm($extra=false) {
 
 	echo "</td></tr><tr><td>\n";
 
-	echo "<input type='radio' name='initorientmethod' value='importrecon' $importcheck>\n";
+	echo "<input type='radio' name='initmethod' value='importrecon' $importcheck>\n";
 	// Neil:: Switching code ; why do want recons from other sessions, we don't have a mathcing stack
 	//$recons = $particle->getReconIdsFromSession($expId);
 	$recons = $particle->getReconIterIdRelatedToStackid($stackid);
@@ -290,7 +277,7 @@ function jobForm($extra=false) {
 	}
 	echo "</td></tr><tr><td>\n";
 
-	echo "<input type='radio' name='initorientmethod' value='projmatch' $angcheck>\n";
+	echo "<input type='radio' name='initmethod' value='projmatch' $angcheck>\n";
 	echo "<b>Determine with Frealign</b>";
 	echo "<br/>\n";
 	echo docpop('dang',"&nbsp;&nbsp;&nbsp; Angular increment: ");
@@ -300,7 +287,7 @@ function jobForm($extra=false) {
 
 	//echo "</td></tr><tr><td>\n";
 
-	//echo "<input type='radio' name='initorientmethod' value='inparfile' $inparfilecheck>\n";
+	//echo "<input type='radio' name='initmethod' value='inparfile' $inparfilecheck>\n";
 	//echo docpop('inpar',"Use input Frealign parameter file:");
 	//echo " <input type='type' name='inparfile' value='$inparfile' size='50'>\n";
 
@@ -351,10 +338,12 @@ function jobForm($extra=false) {
 
 	echo "<tr><td rowspan='5'>\n";
 		echo " <input type='type' name='mask' value='$mask' size='4'>\n";
-		echo docpop('mask','Particle outer mask radius (RO)')." <font size='-2'><i>(in &Aring;ngstroms)</i></font>\n";
+		echo docpop('mask','Particle outer mask radius (RO)')
+			." <font size='-2'><i>(in &Aring;ngstroms)</i></font>\n";
 		echo "<br/>\n";
 		echo " <input type='type' name='imask' value='$imask' size='4'>\n";
-		echo docpop('imask','Particle inner mask radius (RI)')." <font size='-2'><i>(in &Aring;ngstroms)</i></font>\n";
+		echo docpop('imask','Particle inner mask radius (RI)')
+			." <font size='-2'><i>(in &Aring;ngstroms)</i></font>\n";
 
 		echo "<br/><br/>\n";
 
@@ -362,7 +351,8 @@ function jobForm($extra=false) {
 		echo docpop('wgh','Amplitude contrast (WGH)')." \n";
 		echo "<br/>\n";
 		echo " <input type='type' name='xstd' value='$xstd' size='4'>\n";
-		echo docpop('xstd','Standard deviation filtering (XSTD)')." <font size='-2'><i>(0 = no filtering)</i></font>\n";
+		echo docpop('xstd','Standard deviation filtering (XSTD)')
+			." <font size='-2'><i>(0 = no filtering)</i></font>\n";
 		echo "<br/>\n";
 		echo " <input type='type' name='pbc' value='$pbc' size='4'>\n";
 		echo docpop('pbc','Phase B-factor weighting constant (PBC)')." <font size='-2'></font>\n";
@@ -401,27 +391,31 @@ function jobForm($extra=false) {
 	echo "</td></tr><tr><td>\n";
 
 		echo " <input type='type' name='rrec' value='$rrec' size='4'>\n";
-		echo docpop('rrec','Resolution limit of reconstruction (RREC)')." <font size='-2'><i>(in &Aring;ngstroms; default Nyquist)</i></font>\n";
+		echo docpop('rrec','Resolution limit of reconstruction (RREC)')
+			." <font size='-2'><i>(in &Aring;ngstroms; default Nyquist)</i></font>\n";
 		echo "<br/>\n";
 		echo " <input type='type' name='hp' value='$hp' size='4'>\n";
-		echo docpop('hp','Lower resolution limit or high-pass filter (RMAX1)')." <font size='-2'><i>(in &Aring;ngstroms)</i></font>\n";
+		echo docpop('hp','Lower resolution limit or high-pass filter (RMAX1)')
+			." <font size='-2'><i>(in &Aring;ngstroms)</i></font>\n";
 		echo "<br/>\n";
 		echo " <input type='type' name='lp' value='$lp' size='4'>\n";
-		echo docpop('lp','Higher resolution limit or low-pass filter (RMAX2)')." <font size='-2'><i>(in &Aring;ngstroms; default 2*Nyquist)</i></font>\n";
+		echo docpop('lp','Higher resolution limit or low-pass filter (RMAX2)')
+			." <font size='-2'><i>(in &Aring;ngstroms; default 2*Nyquist)</i></font>\n";
 		echo "<br/>\n";
 		echo " <input type='type' name='rbfact' value='$rbfact' size='4'>\n";
 		echo docpop('rbfact','B-factor correction (RBFACT)')." <font size='-2'><i>(0 = off)</i></font>\n";
+	echo "</td></tr><tr><td colspan='3' align='center'>\n";
+		echo "<br/>\n";
+		echo getSubmitForm("Run Frealign");
 	echo "</td></tr>\n";
 	echo "</table>\n";
 
-	echo "
-		  <input type='hidden' NAME='cs' value='$cs'>
-		  <input type='hidden' NAME='kv' value='$kv'>
-		  <input type='hidden' NAME='last' value='$nump'>
-		  <input type='hidden' NAME='apix' value='$apix'>
-		  <input type='hidden' name='projectId' value='$projectId'><P>
-		  <input type='submit' name='write' value='Prepare Data for Frealign'>
-	  </form>\n";
+	echo "<input type='hidden' NAME='cs' value='$cs'>";
+	echo "<input type='hidden' NAME='kv' value='$kv'>";
+	echo "<input type='hidden' NAME='last' value='$nump'>";
+	echo "<input type='hidden' NAME='apix' value='$apix'>";
+
+	echo "</form>\n";
 	echo "<br/><br/><hr/>\n";
 	//echo "StackID: $stackid -- ModelID: $modelid<br/>\n";
 	echo "<table class='tablebubble'><tr><td>\n";
@@ -434,19 +428,32 @@ function jobForm($extra=false) {
 	exit;
 }
 
+/* ******************************************
+*********************************************
+GENERATE COMMAND
+*********************************************
+****************************************** */
+
 function prepareFrealign ($extra=False) {
 	$expId = $_GET['expId'];
 	$projectId = getProjectFromExpId($expId);
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
-	$jobname = $_POST['runname'];
+	$runname = $_POST['runname'];
 
 	$nodes = $_POST['nodes'];
 	$ppn = $_POST['ppn'];
-	$procs = $nodes*$ppn;
 	$clustername = $_POST['clustername'];
 	$outdir = $_POST['outdir'];
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$rundir = $outdir.$runname;
+
+	if ($nodes > 1)
+		jobForm('<b>ERROR:</b> Only single node mode works right now');
+	if ($_POST['initmethod']=='projmatch' && !$_POST['dang'])
+		jobForm("<b>ERROR:</b> Enter an angular increment");
+	if (!$_POST['mask'])
+		jobForm("<b>ERROR:</b> Enter an outer mask radius");
 
 	// get the stack info (pixel size, box size)
 	$stackinfo=explode('|--|',$_POST['stackval']);
@@ -460,8 +467,6 @@ function prepareFrealign ($extra=False) {
 	$modelpath = $modelinfo[1];
 	$modelname = $modelinfo[2];
 
-	processing_header("Frealign Job Generator","Frealign Job Generator", $javafunc);
-
 	$last=$_POST['last'];
 	$cs=$_POST['cs'];
 	$kv=$_POST['kv'];
@@ -471,7 +476,7 @@ function prepareFrealign ($extra=False) {
 	$xstd=$_POST["xstd"];
 	$pbc=$_POST["pbc"];
 	$boff=$_POST["boff"];
-	$dang = ($_POST['initorientmethod']=='projmatch') ? $_POST["ang"] : '';
+	$dang = ($_POST['initmethod']=='projmatch') ? $_POST["ang"] : '';
 	$itmax=$_POST["itmax"];
 	$ipmax=$_POST["ipmax"];
 	$sym=$_POST["sym"];
@@ -485,60 +490,58 @@ function prepareFrealign ($extra=False) {
 	$inpar=$_POST['inparfile'];
 	$importiter=$_POST['importiter'];
 	
-	$line.= "#PBS -l nodes=$nodes:ppn=$ppn\n";
-	$line.= "#PBS -l walltime=240:00:00\n";
-	$line.= "#PBS -l cput=240:00:00\n";
-	$line.= "\nrunfrealign.py -n $jobname \\\n  ";
-	$line.= "--mask=$mask ";
-	$line.= "--imask=$imask ";
-	$line.= "--wgh=$wgh \\\n  ";
-	$line.= "--xstd=$xstd ";
-	$line.= "--pbc=$pbc ";
-	$line.= "--boff=$boff ";
-	$line.= "--itmax=$itmax ";
-	$line.= "--ipmax=$ipmax \\\n  ";
-	//$line.= "--last=$last ";
-	$line.= "--sym=$sym ";
-	$line.= "--target=$target ";
-	$line.= "--thresh=$thresh \\\n  ";
-	$line.= "--cs=$cs --kv=$kv \\\n  ";
-	$line.= "--rrec=$rrec --hp=$hp --lp=$lp --rbfact=$rbfact \\\n  ";
-	//if ($inpar) $line.= "--inpar=$inpar ";
-	if ($dang) $line.= "--dang=$dang ";
-	if ($numiter) $line.= "--numiter=$numiter ";
+	$cmd = "runfrealign.py ";
+	$cmd.= "--runname=$runname ";
+	$cmd.= "--rundir=$rundir ";
+	$cmd.= "--project=$projectId ";
+	$cmd.= "--stackid=$stackid ";
+	$cmd.= "--modelid=$modelid ";
+	if ($importiter) $cmd.= "--reconiterid=$importiter ";
+	if ($dang) $cmd.= "--dang=$dang ";
 
-	//appion specific options
-	if ($importiter) $line.= "--reconiterid=$importiter ";
-	$line.= "--stackid=$stackid \\\n  ";
-	$line.= "--modelid=$modelid ";
-	$line.= "--project=$projectId ";
-	$line.= "--proc=$procs ";
-	
-	//$line.=" > runfrealign".$i.".txt\n";
-	$clusterjob.= $line;
- 
-	echo "<FORM NAME='frealignjob' METHOD='POST' ACTION='$formAction'><br>\n";
-	echo "<input type='hidden' name='clustername' value='$clustername'>\n";
-	echo "<input type='HIDDEN' NAME='clusterpath' VALUE='$clusterpath'>\n";
-	echo "<input type='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";
-	echo "<input type='HIDDEN' NAME='jobname' VALUE='$jobname'>\n";
-	echo "<input type='HIDDEN' NAME='outdir' VALUE='$outdir'>\n";
+	$cmd.= "--mask=$mask ";
+	$cmd.= "--imask=$imask ";
+	$cmd.= "--wgh=$wgh ";
+	$cmd.= "--xstd=$xstd ";
+	$cmd.= "--pbc=$pbc ";
+	$cmd.= "--boff=$boff ";
+	$cmd.= "--itmax=$itmax ";
+	$cmd.= "--ipmax=$ipmax ";
+	//$cmd.= "--last=$last ";
+	$cmd.= "--sym=$sym ";
+	$cmd.= "--target=$target ";
+	$cmd.= "--thresh=$thresh ";
+	$cmd.= "--cs=$cs --kv=$kv ";
+	$cmd.= "--rrec=$rrec --hp=$hp --lp=$lp --rbfact=$rbfact ";
+	$cmd.= "--numiter=$numiter ";
 
-	// convert \n to /\n's for script
-	if (!$extra) {
-		echo "<HR>\n";
-		echo "<PRE>\n";
-		echo $clusterjob;
-		echo "</PRE>\n";
-		//$tmpfile = "/tmp/$jobfile";
-		// write file to tmp directory
-		//$f = fopen($tmpfile,'w');
-		//fwrite($f,$clusterjob);
-		//fclose($f);
-	}	
+	$cmd.= "--ppn=$ppn ";
+	$cmd.= "--nodes=$nodes ";
 
+	// submit job to cluster
+	if ($_POST['process'] == "Run Frealign") {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
 
-	processing_footer();
+		if (!($user && $password)) jobForm("<b>ERROR:</b> Enter a user name and password");
+
+		$sub = submitAppionJob($cmd,$outdir,$runname,$expId,'frealign',False,False);
+		// if errors:
+		if ($sub) jobForm("<b>ERROR:</b> $sub");
+		exit;
+	} else {
+		processing_header("Frealign Job Generator","Frealign Job Generator", $javafunc);
+
+		echo"
+		<TABLE WIDTH='600'>
+		<TR><TD COLSPAN='2'>
+		<B>Frealign Command:</B><br/>
+		$cmd<HR>
+		</TD></tr>";
+
+		echo "</table>\n";
+		processing_footer(True, True);
+	}
 	exit;
 };
 

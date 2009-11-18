@@ -1818,7 +1818,7 @@ class particledata {
 		return $r;
   	}
 
-	function getStackIds ($sessionId, $showHidden=False, $syntheticOnly=False) {
+	function getStackIds ($sessionId, $showHidden=False, $syntheticOnly=False, $noctf=False) {
 		$q = "SELECT "
 		  ."  r.`REF|ApStackData|stack` as stackid , "
 		  ."  st.*, "
@@ -1827,15 +1827,23 @@ class particledata {
 		  ."LEFT JOIN ApStackRunData as s ON "
 		  ."  (r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
 		  ."LEFT JOIN ApStackData as st ON "
-		  ."  (r.`REF|ApStackData|stack` = st.`DEF_id`) "
-		  ."WHERE "
-		  ."  s.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		  ."  (r.`REF|ApStackData|stack` = st.`DEF_id`) ";
+		if ($noctf) {
+			$q.= "LEFT JOIN ApStackParamsData as param ON "
+				."  (s.`REF|ApStackParamsData|stackParams` = param.`DEF_id`) ";
+		}
+		$q.="WHERE "
+			."  s.`REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden)
 			$q.= " AND st.`hidden` != 1 ";
 		if ($syntheticOnly)
 			$q.= " AND s.`REF|ApSyntheticStackParamsData|syntheticStackParams` is NOT NULL ";
+		if ($noctf)
+			$q.= " AND param.`fliptype` IS NULL ";
 		$q.= "ORDER BY stackid DESC";
+		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
 
