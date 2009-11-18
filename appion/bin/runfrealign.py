@@ -548,7 +548,7 @@ class frealignJob(appionScript.AppionScript):
 			procjobcmds.append(procjobcmd)
 
 		### run individual processor jobs
-		apThread.threadCommands(procjobcmds, nproc=self.params['proc'])
+		apThread.threadCommands(procjobcmds, nproc=self.params['proc'], pausetime=10.0)
 
 		### create combine processor jobs
 		combinejobfile = self.combineMultipleJobs(iternum)
