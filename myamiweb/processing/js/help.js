@@ -222,6 +222,7 @@ var help = {
 		'ignore_images' : 'percentage of images (raw particles) to ignore when calculating eigenimages (this does not affect the number of classes produced)',
 		'ignore_members' : 'percentage of worst class members to ignore after classification',
 		'norefbin' : 'Binning of the image. This takes a power of 2 (1,2,4,8,16) and shrinks the image to help make the processing faster. Binning would be useful if, for example, the reference-free averages are to be used for initial model creation. Otherwise IMAGIC MSA runs are quite fast. For example, on a stack of 10,000 particles with a boxsize of 192, the algorithm takes ~15-30 minutes to run, so bining is not necessary.',
+		'MSAdistance' : 'distance metric used to analyze the difference between two images. Modulation analysis is defaulted to IMAGIC. Chi-square analysis is used in SPIDER Correspondence Analysis.',
 
 		/*** MRA ***/
 		'templatestack' : 'Template stack, the images of which will be used as references for the alignment',
