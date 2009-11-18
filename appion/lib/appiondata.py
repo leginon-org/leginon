@@ -1562,6 +1562,7 @@ class ApImagic3dRefineIterationData(Data):
 			('mramax', int),
 			('ignore_images', int),
 			('num_classums', int),
+			('num_factors', int),
 			('ignore_members', int),
 			('keep_classes', int),
 			('euler_ang_inc', int),
