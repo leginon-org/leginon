@@ -52,7 +52,7 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 		$outdir=$outdir."/emdb";
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
-		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
+
 	}
   
 	// Set any existing parameters in form
@@ -60,12 +60,17 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 	$res = ($_POST['res']) ? $_POST['res'] : '';
 	$emdbid = ($_POST['emdbid']) ? $_POST['emdbid'] : '';
 	$box = ($_POST['box']) ? $_POST['box'] : '';
+	$symm = ($_POST['symm']) ? $_POST['symm'] : 'c1';
 	$runtime = ($_POST['runtime']) ? $_POST['runtime'] : getTimestring();
 
 	echo "<table BORDER=3 CLASS=tableborder><tr><td valign='top'>\n";
 	echo docpop('emdbid', '<b>EMDB ID:</b>');
 	echo "<input type='text' name='emdbid' value='$emdbid' size='5'><br />\n";
 	echo "<input type='hidden' name='runtime' value='$runtime'>\n";
+
+	echo docpop('outdir', 'Output directory')."<br/>\n";
+	echo "<input type='text' name='outdir' value='$outdir' size='40'>\n";
+
 	echo "</td></tr>\n";
 	echo "<tr><td valign='top' class='tablebg'>\n";
 	echo "<p>\n";
@@ -73,7 +78,10 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 	echo "<input type='text' name='apix' size='5' value='$apix'>\n";
 	echo "Pixel Size <font size='-2'>(in &Aring;ngstroms per pixel)</font><br />\n";
 	echo "<input type='text' name='box' size='5' value='$box'>\n";
-	echo "Box Size <font size='-2'>(in pixels)</font>\n";
+	echo "Box Size <font size='-2'>(in pixels)</font><br />\n";
+	echo "<input type='text' name='symm' size='5' value='$symm'>\n";
+	echo "Symmetry\n";
+
 	echo "</td></tr>\n";
 	echo "<tr><td align='center'>\n";
 	echo "<hr>";
@@ -111,6 +119,9 @@ function runUploadModel() {
 	$box=$_POST['box'];
 	if (!$box) createForm("<B>ERROR:</B> Enter a box size");
 
+	//make sure a boxsize was provided
+	$symm=$_POST['symm'];
+	if (!$symm) createForm("<B>ERROR:</B> Enter a symmetry group");
 
 	if (!is_float($apix)) $apix = sprintf("%.2f", $apix);
 	if (!is_float($res)) $res = sprintf("%.1f", $res);
@@ -121,12 +132,13 @@ function runUploadModel() {
 	$rundir = $outdir."/".$runname;
 
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="--runname=".$runname." ";
-	$command.="-e $emdbid ";
-	$command.="-s $session ";
-	$command.="-a $apix ";
-	$command.="-r $res ";
-	$command.="-b $box ";
+	$command.="--runname=$runname ";
+	$command.="--emdbid=$emdbid ";
+	$command.="--session=$session ";
+	$command.="--apix=$apix ";
+	$command.="--resolution=$res ";
+	$command.="--box=$box ";
+	$command.="--symm=$symm ";
 	
 	// submit job to cluster
 	if ($_POST['process']=="Create Model") {
