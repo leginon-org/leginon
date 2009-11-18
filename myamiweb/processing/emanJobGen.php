@@ -287,7 +287,6 @@ function jobForm($extra=false) {
 
 	$particle = new particledata();
 
-
 	// get stack data
 	$stackinfo = explode('|--|',$_POST['stackval']);
 	$box = $stackinfo[2];
@@ -330,7 +329,7 @@ function jobForm($extra=false) {
 	$javafunc .= writeJavaPopupFunctions('eman');
 	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
 	// write out errors, if any came up:
-	if (!($user && $pass)) echo "<font color='#CC3333' size='+2'><B>WARNING!!!</B> You are not logged in!!!</font><br />";
+	if (!($user && $pass)) echo "<font color='#CC3333' size='+2'><B>WARNING!!!</B> You are not logged in!!!</font><br/>";
 
 	if ($extra) echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
 
@@ -379,35 +378,31 @@ function jobForm($extra=false) {
 	echo "<h4>PBS Cluster Parameters</h4>\n";
 	echo "</td>\n";
 	echo "</tr>\n";
-	echo "<tr>
-      <td><a href='#' id='lcp1' onMouseOver='popLayer(\"nodes\", \"lcp1\")' onMouseOut='hideLayer()'>Nodes:</A></td>
-      <td><input type='text' NAME='nodes' VALUE='$nodes' SIZE='4' MAXCHAR='4'></td>
-      <td><a href='#' id='lcp2' onMouseOver='popLayer(\"procpernode\", \"lcp2\")' onMouseOut='hideLayer()'>Proc/Node:</A></td>
-      <td><input type='text' NAME='ppn' VALUE='$ppn' SIZE='3'></td>
-    </tr>
-    <tr>
-      <td><a href='#' id='lcp3' onMouseOver='popLayer(\"walltime\", \"lcp3\")' onMouseOut='hideLayer()'>Wall Time:</A></td>
-      <td><input type='text' NAME='walltime' VALUE='$walltime' SIZE='4'></td>
-      <td><a href='#' id='lcp4' onMouseOver='popLayer(\"cputime\", \"lcp4\")' onMouseOut='hideLayer()'>CPU Time</A></td>
-      <td><input type='text' NAME='cput' VALUE='$cput' SIZE='4'></td>
-    </tr>
-    <tr>
-      <td colspan='4'>
-      Reconstruction procs per node:<input type='text' NAME='rprocs' VALUE='$rprocs' SIZE='3'>
-      </td>
-    </tr>
-    </table>\n";
-/*
-	echo closeRoundBorder();
-
-	echo"</td><td valign='top'>"; //overall table
-
-	//DMF Parameters TABLE
-	echo openRoundBorder();
-*/
+	echo "<tr><td>\n";
+		echo docpop('nodes',"Nodes: ");
+	echo "</td><td>\n";
+		echo "<input type='text' NAME='nodes' VALUE='$nodes' SIZE='4' MAXCHAR='4'>";
+	echo "</td><td>\n";
+		echo docpop('procpernode',"Proc/Node: ");
+	echo "</td><td>\n";
+		echo "<input type='text' NAME='ppn' VALUE='$ppn' SIZE='3'>";
+	echo "</td></tr><tr><td>\n";
+		echo docpop('walltime',"Wall Time: ");
+	echo "</td><td>\n";
+		echo "<input type='text' NAME='walltime' VALUE='$walltime' SIZE='4'>";
+	echo "</td><td>\n";
+		echo docpop('cputime',"CPU Time: ");
+	echo "</td><td>\n";
+		echo "<input type='text' NAME='cput' VALUE='$cput' SIZE='4'>";
+	echo "</td></tr><tr><td colspan='4'>";
+		echo "Recon procs per node:<input type='text' NAME='rprocs' VALUE='$rprocs' SIZE='3'>";
+	echo "</td></tr>\n";
+	echo "</table>\n";
 	echo $clusterdata->cluster_parameters();
-
 	echo closeRoundBorder();
+	echo "<br/>\n";
+	echo "<br/>\n";
+
 	echo"</td></tr></table>"; //overall table
 
 	$bgcolor="#E8E8E8";

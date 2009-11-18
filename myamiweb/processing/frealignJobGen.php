@@ -15,6 +15,14 @@ require "inc/viewer.inc";
 require "inc/project.inc";
 require "inc/summarytables.inc";
 
+$selectedcluster=$CLUSTER_CONFIGS[0];
+if ($_POST['cluster']) {
+	$selectedcluster=$_POST['cluster'];
+}
+$selectedcluster=strtolower($selectedcluster);
+@include_once $selectedcluster.".php";
+
+
 if ($_POST['process'])
 	prepareFrealign(); // generate command
 elseif ($_POST['stackval'] && $_POST['model'])
@@ -104,7 +112,11 @@ MAIN FORM TO SET PARAMETERS
 function jobForm($extra=false) {
 	$expId = $_GET['expId'];
 	$projectId = $_POST['projectId'];
-  
+  	global $clusterdata, $CLUSTER_CONFIGS, $selectedcluster;
+	$clusterdata->set_rootpath($rootpath);
+	$clusterdata->post_data();
+	$clusterdefaults = ($selectedcluster==$_POST['clustermemo']) ? true : false;
+
 	if (!$_POST['model'])
 		stackModelForm("ERROR: no initial model selected");
 	if (!$_POST['stackval'])
@@ -166,6 +178,7 @@ function jobForm($extra=false) {
 	if ($extra) echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
 
 	echo "<form name='frealignjob' method='post' action='$formaction'><br/>\n";
+	echo "<input type='hidden' name='clustermemo' value='".$selectedcluster."'>\n";
 	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
 	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
 
@@ -192,23 +205,22 @@ function jobForm($extra=false) {
 		echo "<h4>Script parameters</h4>\n";
 	echo "</td></tr><tr><td>\n";
 
+	echo "<b>Cluster:</b>";
+	echo "<select name='cluster' onchange='frealignjob.submit()'>";
+		foreach ($CLUSTER_CONFIGS as $cluster) {
+			$s = ($cluster == $_POST['cluster']) ? 'selected' : '';
+			echo '<option value="'.$cluster.'" '.$s.' >'.$cluster.'</option>'."\n";
+		}
+	echo "</select>\n";
+
+	echo "</td></tr><tr><td>\n";
+
 		echo docpop('runname','Run Name')." <br/>\n";
 		echo " <input type='type' name='runname' value='$runname' size='20'>\n";
 		echo "<br/>\n";
 		echo docpop('outdir','Output directory')." <br/>\n";
 		echo " <input type='type' name='outdir' value='$outdir' size='50'>\n";
 		echo "<br/><br/>\n";
-
-		echo " <input type='type' name='nodes' value='$nodes' size='4'>\n";
-		echo docpop('nodes','Number of nodes')." <font size='-2'><i></i></font>\n";
-		echo "<br/>\n";
-		echo " <input type='type' name='ppn' value='$ppn' size='4'>\n";
-		echo docpop('ppn','Number of processors per node')." <font size='-2'><i></i></font>\n";
-		echo "<br/><br/>\n";
-
-		echo " <input type='type' name='numiter' value='$numiter' size='4'>\n";
-		echo docpop('numiter','Number of refinement iterations')." <font size='-2'><i></i></font>\n";
-		echo "<br/>\n";
 
 	echo "</td></tr>\n";
 	echo "</table>\n";
@@ -236,7 +248,7 @@ function jobForm($extra=false) {
 	if (is_array($recons)) {
 		echo "<b>Import from EMAN reconstruction:</b>";
 		echo "<br/>&nbsp;&nbsp;&nbsp; Reconstr.:\n";
-		echo "<select name='importrecon' onchange='this.form.submit()'>\n";
+		echo "<select name='importrecon' onchange='frealignjob.submit()'>\n";
 		echo "   <option value='None'>Select Reconstruction</option>\n";
 	  	foreach ($recons as $r) {
 			$ropt = "<option value='".$r['DEF_id']."' ";
@@ -291,6 +303,12 @@ function jobForm($extra=false) {
 	//echo docpop('inpar',"Use input Frealign parameter file:");
 	//echo " <input type='type' name='inparfile' value='$inparfile' size='50'>\n";
 
+	echo "</td></tr><tr><td>\n";
+
+	echo " <input type='type' name='numiter' value='$numiter' size='4'>\n";
+	echo docpop('numiter','Number of refinement iterations')." <font size='-2'><i></i></font>\n";
+	echo "<br/>\n";
+
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo closeRoundBorder();
@@ -298,6 +316,46 @@ function jobForm($extra=false) {
 	echo "<br/>\n";
 	echo "<br/>\n";
 
+	/* ******************************************
+	CLUSTER PARAMETERS
+	****************************************** */
+	$nodes = ($_POST['nodes'] && $clusterdefaults) ? $_POST['nodes'] : C_NODES_DEF;
+	$ppn = ($_POST['ppn'] && $clusterdefaults) ? $_POST['ppn'] : C_PPN_DEF;
+	$rprocs = ($_POST['rprocs'] && $clusterdefaults) ? $_POST['rprocs'] : C_RPROCS_DEF;
+	$walltime = ($_POST['walltime'] && $clusterdefaults) ? $_POST['walltime'] : C_WALLTIME_DEF;
+	$cput = ($_POST['cput'] && $clusterdefaults) ? $_POST['cput'] : C_CPUTIME_DEF;
+
+	echo openRoundBorder();
+	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
+	echo "<tr>\n";
+	echo "<td colspan='4' align='center'>\n";
+	echo "<h4>PBS Cluster Parameters</h4>\n";
+	echo "</td>\n";
+	echo "</tr>\n";
+	echo "<tr><td>\n";
+		echo docpop('nodes',"Nodes: ");
+	echo "</td><td>\n";
+		echo "<input type='text' NAME='nodes' VALUE='$nodes' SIZE='4' MAXCHAR='4'>";
+	echo "</td><td>\n";
+		echo docpop('procpernode',"Proc/Node: ");
+	echo "</td><td>\n";
+		echo "<input type='text' NAME='ppn' VALUE='$ppn' SIZE='3'>";
+	echo "</td></tr><tr><td>\n";
+		echo docpop('walltime',"Wall Time: ");
+	echo "</td><td>\n";
+		echo "<input type='text' NAME='walltime' VALUE='$walltime' SIZE='4'>";
+	echo "</td><td>\n";
+		echo docpop('cputime',"CPU Time: ");
+	echo "</td><td>\n";
+		echo "<input type='text' NAME='cput' VALUE='$cput' SIZE='4'>";
+	echo "</td></tr><tr><td colspan='4'>";
+		echo "Recon procs per node:<input type='text' NAME='rprocs' VALUE='$rprocs' SIZE='3'>";
+	echo "</td></tr>\n";
+	echo "</table>\n";
+	//echo $clusterdata->cluster_parameters();
+	echo closeRoundBorder();
+	echo "<br/>\n";
+	echo "<br/>\n";
 
 	/* ******************************************
 	FREALIGN PARAMETERS
@@ -447,6 +505,17 @@ function prepareFrealign ($extra=False) {
 	$outdir = $_POST['outdir'];
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
+
+	if ($_POST['ppn'] > C_PPN_MAX )
+		jobForm("ERROR: Max processors per node is ".C_PPN_MAX);
+	if ($_POST['nodes'] > C_NODES_MAX )
+		jobForm("ERROR: Max nodes on ".C_NAME." is ".C_NODES_MAX);
+	if ($_POST['walltime'] > C_WALLTIME_MAX )
+		jobForm("ERROR: Max walltime is ".C_WALLTIME_MAX);
+	if ($_POST['cput'] > C_CPUTIME_MAX)
+		jobForm("ERROR: Max CPU time is ".C_CPUTIME_MAX);
+	if ($_POST['rprocs'] > $_POST['ppn'])
+	  jobForm("ERROR: Asking to reconstruct on more processors than available");
 
 	if ($nodes > 1)
 		jobForm('<b>ERROR:</b> Only single node mode works right now');
