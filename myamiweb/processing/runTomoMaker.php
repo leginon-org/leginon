@@ -46,12 +46,8 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo)) {
-		$outdir=$sessioninfo['Image path'];
-		$outdir=ereg_replace("leginon","appion",$outdir);
-		$outdir=ereg_replace("rawdata","tomo",$outdir);
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
-		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
 
 	// Set any existing parameters in form
@@ -73,6 +69,12 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	$alignIds = array();
 	if ($tiltseriesId) {
 		$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
+		if (!empty($sessioninfo)) {
+			$outdir=$sessioninfo['Image path'];
+			$outdir=ereg_replace("leginon","appion",$outdir);
+			$outdir=ereg_replace("rawdata","tomo/tiltseries".$tiltseriesinfos[0]['number'],$outdir);
+			echo "<input type='hidden' name='outdir' value='$outdir'>\n";
+		}
 		$alignruns = $particle ->getTomoAlignmentRuns($tiltseriesId);
 		if ($alignruns) {
 			foreach ($alignruns as $run) {
@@ -203,14 +205,13 @@ function runTomoMaker() {
 	$command.="--thickness=$thickness ";
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
-
 	// submit job to cluster
 	if ($_POST['process']=="Make Tomogram") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
 		if (!($user && $password)) createTomoMakerForm("<b>ERROR:</b> You must be logged in to submit");
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomomaker',True,True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomomaker',False,False,False);
 		// if errors:
 		if ($sub) createTomoMakerForm("<b>ERROR:</b> $sub");
 

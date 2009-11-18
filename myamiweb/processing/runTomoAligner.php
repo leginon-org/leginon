@@ -50,10 +50,8 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	if (!empty($sessioninfo)) {
 		$outdir=$sessioninfo['Image path'];
 		$outdir=ereg_replace("leginon","appion",$outdir);
-		$outdir=ereg_replace("rawdata","tomo",$outdir);
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
-		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
 
 	// Set any existing parameters in form that does not depend on other values
@@ -168,6 +166,8 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		}
 		$imageinfo = $leginondata->getImageInfo($tiltseriesinfos[0]['imageid']);
 		$imagesize = ($_POST['imagesize']) ? $_POST['imagesize'] : $imageinfo['dimx'];
+		$outdir=ereg_replace("rawdata","tomo/tiltseries".$tiltseriesinfos[0]['number'],$outdir);
+		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
 	echo "<input type='hidden' name='imagesize' value='$imagesize'>\n";
 	echo "</td></table>";
@@ -276,7 +276,6 @@ function runTomoAligner() {
 	$outdir = $_POST['outdir'];
 
 	$command = "tomoaligner.py ";
-
 	if ($_GET['lastaId']) {
 		$lastalignerId = $_GET['lastaId'];
 		$goodstart=$_POST['minx'];

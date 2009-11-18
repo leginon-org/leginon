@@ -179,7 +179,7 @@ function runAverageTomogram() {
 		if (!($user && $password)) createAverageTomogramForm("<B>ERROR:</B> You must be logged in to submit");
 		$rundir = $outdir.'/'.$runname;
 		echo $rundir;
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomoaverage',True,True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomoaverage',False,False,False);
 		// if errors:
 		if ($sub) createAverageTomogramForm("<b>ERROR:</b> $sub");
 
