@@ -43,6 +43,8 @@ class imagicClusterScript(appionScript.AppionScript):
 			help="number of classes to create", metavar="STR")
 		self.parser.add_option("--ignore_members", dest="ignore_members", type="int", default=0,
 			help="percentage of worst class members to ignore", metavar="INT")
+		self.parser.add_option("--num_eigenimages", dest="num_eigenimages", type="int", default=69,
+			help="number of eigenimages to use when computing class averages (from most representative to least representative)", metavar="INT")
 
 		return
 
@@ -78,7 +80,7 @@ class imagicClusterScript(appionScript.AppionScript):
 		f.write("IMAGES/VOLUMES\n")
 		f.write("start\n")
 		f.write(str(self.params['ignore_images'])+"\n")
-		f.write("69\n")
+		f.write(str(self.params['num_eigenimages'])+"\n")
 		f.write("YES\n")
 		f.write(str(clusternumber)+"\n")
 		f.write("classes_"+str(clusternumber)+"_imagesignored_"+str(self.params['ignore_images'])+"\n")
@@ -160,6 +162,7 @@ class imagicClusterScript(appionScript.AppionScript):
 		clusterstackq['clusterrun'] = self.clusterrun
 		clusterstackq['ignore_images'] = self.params['ignore_images']
 		clusterstackq['ignore_members'] = self.params['ignore_members']
+		clusterstackq['num_factors'] = self.params['num_eigenimages']
 		clusterstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clusterstackq['hidden'] = False
 
