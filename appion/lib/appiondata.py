@@ -786,6 +786,7 @@ class ApClusteringStackData(Data):
 			('clusterrun', ApClusteringRunData),
 			('ignore_images', int),
 			('ignore_members', int),
+			('num_factors', int),
 		)
 	typemap = classmethod(typemap)
 
