@@ -98,6 +98,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="percentage of worst class members to ignore", metavar="INT")
 		self.parser.add_option("--num_classes", dest="numclasses", type="int",
 			help="total number of classes created with MSA classify", metavar="INT")
+		self.parser.add_option("--num_eigenimages", dest="num_eigenimages", type="int", default=69,
+			help="number of factors (Eigenimages) to use for the classification and summing", metavar="INT")
 
 		### angular reconstitution
 		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int", default=25,
@@ -131,54 +133,29 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		self.parser.add_option("--mass", dest="mass", type="int",
 			help="OPTIONAL: used for thresholding volume of a 3d map to 1 based on given mass", metavar="INT")
 
-		### chimera only, if the run is already completed
-		self.parser.add_option("--chimera-only", dest="chimera-only", default=False,
-			action="store_true", help="use only if you want to regenerate chimera slices from an already existing model: input rundir and runname")
-		self.parser.add_option("--contour", dest="contour", type="float", default=1.0,
-			help="threshold value for chimera volume", metavar="#")
-		self.parser.add_option("--zoom", dest="zoom", type="float", default=1.0,
-			help="threshold value for chimera volume", metavar="#")
-		self.parser.add_option("--iterations", dest="iterations", type="str",
-			help="list of iterations for which you would like chimera slices generated, separated by comma", metavar="1,2,5...")
-
 		return
 
 	#=====================
 	def checkConflicts(self):
 
-		### chimera only
-		if self.params['chimera-only'] is True:
-			if self.params['rundir'] is None:
-				apDisplay.printError("Please specify the directory in which your files are located")
-			if self.params['iterations'] is None:
-				apDisplay.printError("Please specify the iterations for which you need chimera slices generated (e.g. \"1,2,5\")")
-			else:
-				stringlist = self.params['iterations'].split(",")
-				self.itlist = [int(v) for v in stringlist]
+		if self.params['itn'] is None:
+			apDisplay.printError("enter iteration number")
+		if self.params['symmetry'] is None:
+			apDisplay.printError("enter object symmetry")
+		if self.params['numclasses'] is None:
+			apDisplay.printError("enter number of classes used for creating 3d0")
 
-			return
+		if self.params['stackid'] is None:
+			apDisplay.printError("enter a stack ID for the stack that will be used in the refinement")
+		if self.params['imagic3d0id'] is None and self.params['modelid'] is None:
+			apDisplay.printError("enter an imagic 3d0 id or model id for the refinement")
+			
+		if self.params['maxrad'] > self.params['mask_val'] or self.params['maxrad'] < 0:
+			self.params['maxrad'] = self.params['mask_val']
+		if self.params['minrad'] > self.params['mask_val'] or self.params['minrad'] < 0:
+			self.params['minrad'] = 0
 
-		### otherwise go on with the reconstruction
-		else:
-
-			if self.params['itn'] is None:
-				apDisplay.printError("enter iteration number")
-			if self.params['symmetry'] is None:
-				apDisplay.printError("enter object symmetry")
-			if self.params['numclasses'] is None:
-				apDisplay.printError("enter number of classes used for creating 3d0")
-
-			if self.params['stackid'] is None:
-				apDisplay.printError("enter a stack ID for the stack that will be used in the refinement")
-			if self.params['imagic3d0id'] is None and self.params['modelid'] is None:
-				apDisplay.printError("enter an imagic 3d0 id or model id for the refinement")
-				
-			if self.params['maxrad'] > self.params['mask_val'] or self.params['maxrad'] < 0:
-				self.params['maxrad'] = self.params['mask_val']
-			if self.params['minrad'] > self.params['mask_val'] or self.params['minrad'] < 0:
-				self.params['minrad'] = 0
-
-			return
+		return
 
 	#=====================
 	def setRunDir(self):
@@ -486,7 +463,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("pixcoos"+str(self.params['itn'])+"\n")
 		f.write("eigenpixels"+str(self.params['itn'])+"\n")
 		f.write("50\n")
-		f.write("5\n") ######## 69 EIGENIMAGES
+		f.write("69\n") 
 		f.write("0.8\n")
 		f.write("my_msa\n")
 		f.write("EOF\n")
@@ -496,7 +473,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("IMAGES/VOLUMES\n")
 		f.write("mra"+str(self.params['itn'])+"\n")
 		f.write(str(self.params['ignore_images'])+"\n")
-		f.write("5\n") ######## 69 EIGENIMAGES
+		f.write(str(self.params['num_eigenimages'])+"\n") 
 		f.write("YES\n")
 		f.write(str(self.params['numclasses'])+"\n")
 		f.write("classes_"+str(self.params['itn'])+"\n")
@@ -789,6 +766,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		itnq['ignore_members'] = self.params['ignore_members']
 		itnq['keep_classes'] = self.params['keep_classes']
 		itnq['num_classums'] = self.params['numclasses']
+		itnq['num_factors'] = self.params['num_eigenimages']
 		itnq['euler_ang_inc'] = self.params['euler_ang_inc']
 		itnq['keep_ordered'] = self.params['keep_ordered']
 		itnq['ham_win'] = self.params['ham_win']
@@ -808,136 +786,119 @@ class imagic3dRefineScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 
-		### chimera only
-		if self.params['chimera-only'] is True:
-			for item in self.itlist:
-#				mrcname = self.params['rundir']+"/masked_3d"+str(item)+"_ordered"+str(item)+"_repaligned.mrc"
-#				mrcnamerot = self.params['rundir']+"/masked_3d"+str(item)+"_ordered"+str(item)+"_repaligned.mrc.rot.mrc"
-				mrcname = self.params['rundir']+"/3d"+str(item)+"_ordered"+str(item)+"_repaligned.mrc"
-				mrcnamerot = self.params['rundir']+"/3d"+str(item)+"_ordered"+str(item)+"_repaligned.mrc.rot.mrc"
+		### get stack data
+		self.stack = {}
+		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
+		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
+		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+		stackhedfile = self.stack['file']
+		stackimgfile = self.stack['file'][:-4]+".img"
+		self.params['apix'] = self.stack['apix']
+		self.params['boxsize'] = self.stack['boxsize']
 
-				### create chimera slices of densities
-				apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
-				apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
-				apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+		### ONLY FOR THE FIRST ITERATION
+		if self.params['itn'] == 1:
+			# copy stack from initial model directory to working directory
+			cmd1 = "ln -s "+stackimgfile+" "+os.path.join(self.params['rundir'], "start.img")
+			proc = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			proc.wait()
+			cmd2 = "ln -s "+stackhedfile+" "+os.path.join(self.params['rundir'], "start.hed")
+			proc = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			proc.wait()
 
-			return
-
-		### otherwise go on with the reconstruction
-		else:
-			### get stack data
-			self.stack = {}
-			self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
-			self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
-			self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
-			self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
-			stackhedfile = self.stack['file']
-			stackimgfile = self.stack['file'][:-4]+".img"
-			self.params['apix'] = self.stack['apix']
-			self.params['boxsize'] = self.stack['boxsize']
-
-			### ONLY FOR THE FIRST ITERATION
-			if self.params['itn'] == 1:
-				# copy stack from initial model directory to working directory
-				cmd1 = "ln -s "+stackimgfile+" "+os.path.join(self.params['rundir'], "start.img")
-				proc = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-				proc.wait()
-				cmd2 = "ln -s "+stackhedfile+" "+os.path.join(self.params['rundir'], "start.hed")
-				proc = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-				proc.wait()
-
-				### figure out which model is being used (i.e. from 3d0 run or uploaded initial model)
-				if self.params['imagic3d0id'] is not None:
+			### figure out which model is being used (i.e. from 3d0 run or uploaded initial model)
+			if self.params['imagic3d0id'] is not None:
+				self.model = {}
+				modeldata = appiondata.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
+				self.model['boxsize'] = modeldata['boxsize']
+				self.model['apix'] = modeldata['pixelsize']
+				orig_file = os.path.join(modeldata['path']['path'], modeldata['runname'])
+				modelfile = os.path.join(self.params['rundir'], "threed0.mrc")
+#				shutil.copyfile(os.path.join(orig_file, "masked_3d0_ordered0_repaligned.mrc"), modelfile)
+				shutil.copyfile(os.path.join(orig_file, "3d0_ordered0_repaligned.mrc"), modelfile)
+			else:
+				########## GET MODEL DATA #############
+				if self.params['modelid'] is not None:
 					self.model = {}
-					modeldata = appiondata.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
-					self.model['boxsize'] = modeldata['boxsize']
+					modeldata = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 					self.model['apix'] = modeldata['pixelsize']
-					orig_file = os.path.join(modeldata['path']['path'], modeldata['runname'])
+					self.model['box'] = modeldata['boxsize']
+					origmodel = os.path.join(modeldata['path']['path'], modeldata['name'])
 					modelfile = os.path.join(self.params['rundir'], "threed0.mrc")
-#					shutil.copyfile(os.path.join(orig_file, "masked_3d0_ordered0_repaligned.mrc"), modelfile)
-					shutil.copyfile(os.path.join(orig_file, "3d0_ordered0_repaligned.mrc"), modelfile)
 				else:
-					########## GET MODEL DATA #############
-					if self.params['modelid'] is not None:
-						self.model = {}
-						modeldata = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
-						self.model['apix'] = modeldata['pixelsize']
-						self.model['box'] = modeldata['boxsize']
-						origmodel = os.path.join(modeldata['path']['path'], modeldata['name'])
-						modelfile = os.path.join(self.params['rundir'], "threed0.mrc")
-					else:
-						apDisplay.printError("Initial model not in the database")
-					shutil.copyfile(origmodel, modelfile)
+					apDisplay.printError("Initial model not in the database")
+				shutil.copyfile(origmodel, modelfile)
 
-				### scale model
-				if self.params['apix'] != self.model['apix'] or self.params['boxsize'] != self.model['boxsize']:
-					apVolume.rescaleModel(modelfile, modelfile, self.model['apix'], self.params['apix'], self.params['boxsize'])
+			### scale model
+			if self.params['apix'] != self.model['apix'] or self.params['boxsize'] != self.model['boxsize']:
+				apVolume.rescaleModel(modelfile, modelfile, self.model['apix'], self.params['apix'], self.params['boxsize'])
 
-				### create MRA and forward projections (anchor set)
-				batchfile = self.startFiles(modelfile)
-				proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
-				proc.wait()
-				apIMAGIC.executeImagicBatchFile(batchfile)
-				logfile = open(os.path.join(self.params['rundir'], "startFiles.log"))
-				loglines = logfile.readlines()
-				for line in loglines:
-					if re.search("ERROR in program", line):
-						apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: startFiles.log")
-
-				### delete headers
-				apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
-
-
-			### CONTINUE WITH CONSECUTIVE ITERATIONS ###
-
-			print "... stack pixel size: "+str(self.params['apix'])
-			print "... stack box size: "+str(self.params['boxsize'])
-			apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
-
-			### create batch file for execution with IMAGIC
-			batchfile = self.createImagicBatchFile()
-
-			### execute batch file that was created
-			time3dRefine = time.time()
+			### create MRA and forward projections (anchor set)
+			batchfile = self.startFiles(modelfile)
 			proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
 			proc.wait()
 			apIMAGIC.executeImagicBatchFile(batchfile)
-			logfile = open(os.path.join(self.params['rundir'], "imagic3dRefine_"+str(self.params['itn'])+".log"))
+			logfile = open(os.path.join(self.params['rundir'], "startFiles.log"))
 			loglines = logfile.readlines()
 			for line in loglines:
 				if re.search("ERROR in program", line):
-					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: imagic3dRefine_"+str(self.params['itn'])+".log")
-			apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3dRefine), "cyan")
-			time3dRefine = time.time() - time3dRefine
+					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: startFiles.log")
 
-#			mrcname = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
-#			mrcnamerot = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
-			mrcname = self.params['rundir']+"/3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
-			mrcnamerot = self.params['rundir']+"/3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
+			### delete headers
+			apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
 
-			### use EMAN to normalize density & rotate model azimuthaly by 90 degrees
-			apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
-			apEMAN.executeEmanCmd('proc3d %s %s apix=%f rot=0,90,0 norm' % (mrcname, mrcnamerot, self.params['apix']))
 
-			### optional thresholding based on specified size
-			if self.params['mass'] is not None:
-				volumecmd1 = "volume "+mrcname+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
-				volumecmd2 = "volume "+mrcnamerot+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
-				apEMAN.executeEmanCmd(volumecmd1)
-				apEMAN.executeEmanCmd(volumecmd2)
+		### CONTINUE WITH CONSECUTIVE ITERATIONS ###
 
-			### create chimera slices of densities ******* .log file has caused problems if not removed
-			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
-			apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
-			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
-			apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+		print "... stack pixel size: "+str(self.params['apix'])
+		print "... stack box size: "+str(self.params['boxsize'])
+		apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
+
+		### create batch file for execution with IMAGIC
+		batchfile = self.createImagicBatchFile()
+
+		### execute batch file that was created
+		time3dRefine = time.time()
+		proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
+		proc.wait()
+		apIMAGIC.executeImagicBatchFile(batchfile)
+		logfile = open(os.path.join(self.params['rundir'], "imagic3dRefine_"+str(self.params['itn'])+".log"))
+		loglines = logfile.readlines()
+		for line in loglines:
+			if re.search("ERROR in program", line):
+				apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: imagic3dRefine_"+str(self.params['itn'])+".log")
+		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3dRefine), "cyan")
+		time3dRefine = time.time() - time3dRefine
+
+#		mrcname = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
+#		mrcnamerot = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
+		mrcname = self.params['rundir']+"/3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
+		mrcnamerot = self.params['rundir']+"/3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
+
+		### use EMAN to normalize density & rotate model azimuthaly by 90 degrees
+		apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
+		apEMAN.executeEmanCmd('proc3d %s %s apix=%f rot=0,90,0 norm' % (mrcname, mrcnamerot, self.params['apix']))
+
+		### optional thresholding based on specified size
+		if self.params['mass'] is not None:
+			volumecmd1 = "volume "+mrcname+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
+			volumecmd2 = "volume "+mrcnamerot+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
+			apEMAN.executeEmanCmd(volumecmd1)
+			apEMAN.executeEmanCmd(volumecmd2)
+
+		### create chimera slices of densities ******* .log file has caused problems if not removed
+		apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
+		apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+		apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
+		apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 #			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
 #			apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 
-			### remove unwanted files
-			prevmra = os.path.join(self.params['rundir'], "mra"+str(self.params['itn']-1)+".img")
-			while os.path.isfile(prevmra):
-				apFile.removeStack(prevmra)
+		### remove unwanted files
+		prevmra = os.path.join(self.params['rundir'], "mra"+str(self.params['itn']-1)+".img")
+		while os.path.isfile(prevmra):
+			apFile.removeStack(prevmra)
 #			if self.params['itn'] == self.params['numiters']:
 #				startstack = os.path.join(self.params['rundir'], "start.img")
 #				mrastack = os.path.join(self.params['rundir'], "mra"+str(self.params['itn'])+".img")
@@ -946,14 +907,14 @@ class imagic3dRefineScript(appionScript.AppionScript):
 #				while os.path.isfile(mrastack):
 #					apFile.removeStack(mrastack)
 
-			### upload density
-			self.upload3dRunData()
+		### upload density
+		self.upload3dRunData()
 
-			self.upload3dIterationData()
+		self.upload3dIterationData()
 
-			apDisplay.printMsg("IMAGIC .batch run for iteration "+str(self.params['itn'])+" is complete")
+		apDisplay.printMsg("IMAGIC .batch run for iteration "+str(self.params['itn'])+" is complete")
 
-			return
+		return
 
 
 
