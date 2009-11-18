@@ -83,7 +83,8 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	$res = ($_POST['res']) ? $_POST['res'] : $res;
 	$boxsize = ($_POST['boxsize']) ? $_POST['boxsize'] : $boxsize;
 	$contour = ($_POST['contour']) ? $_POST['contour'] : '1.5';
-	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.5';
+	$mass = ($_POST['mass']) ? $_POST['mass'] : '';
+	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.0';
 	$model = ($_POST['model']) ? $_POST['model'] : '';
 	$modelname = ($_POST['modelname']) ? $_POST['modelname'] : '';
 	$description = ($_POST['description']) ? $_POST['description']: $description;
@@ -163,6 +164,8 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
       <br>
       <INPUT TYPE='text' NAME='contour' VALUE='$contour' SIZE='5'> Contour Level
       <br>
+      <INPUT TYPE='text' NAME='mass' VALUE='$mass' SIZE='5'> Mass (in kDa)
+      <br>
       <INPUT TYPE='text' NAME='zoom' VALUE='$zoom' SIZE='5'> Zoom
       <P>
       </TD>
@@ -197,6 +200,7 @@ function runUploadModel() {
 
 	$boxsize=$_POST['boxsize'];
 	$contour=$_POST['contour'];
+	$mass=$_POST['mass'];
 	$zoom=$_POST['zoom'];
 	$session=$_POST['sessionname'];
 
@@ -256,6 +260,7 @@ function runUploadModel() {
 	$command.="--symmetry=$sym ";
 	if ($boxsize) $command.="--boxsize=$boxsize ";
 	if ($contour) $command.="--contour=$contour ";
+	if ($mass) $command.="--mass=$mass ";
 	if ($zoom) $command.="--zoom=$zoom ";
 	$command.="--description=\"$description\" ";
 	
