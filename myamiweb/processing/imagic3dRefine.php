@@ -861,6 +861,7 @@ function jobform($extra=false) {
 		$maxradn = "maxrad".$i;
 		$ignore_imagesn = "ignore_images".$i;
 		$num_classumsn = "num_classums".$i;
+		$num_eigenimagesn = "num_eigenimages".$i;
 		$ignore_membersn = "ignore_members".$i;
 		$keep_classesn = "keep_classes".$i;
 		$forw_ang_incn = "forw_ang_inc".$i;
@@ -890,6 +891,7 @@ function jobform($extra=false) {
 			$ignore_images = (35 - $i*5);
 			$ignore_members = "10";
 			$num_classums = $i*25 + 75;
+			$num_eigenimages = $i*4 + 1;
 			$keep_classes = "0.9";
 			$forw_ang_inc = (30 - $i*5);
 			$euler_ang_inc = (12 - $i*2);
@@ -917,6 +919,7 @@ function jobform($extra=false) {
 			$ignore_images = (($i % 2) == 0) ? (35 - ceil(($i-1)/2)*5) : (35 - ceil($i/2)*5);
 			$ignore_members = "10";
 			$num_classums = (($i % 2) == 0) ? (75 + ceil(($i-1)/2)*25) : (75 + ceil($i/2)*25);
+			$num_eigenimages = $i*2 + 3;
 			$keep_classes = "0.9";
 			$forw_ang_inc = (($i % 2) == 0) ? (30 - ceil(($i-1)/2)*5) : (30 - ceil($i/2)*5);
 			$euler_ang_inc = (($i % 2) == 0) ? (12 - ceil(($i-1)/2)*2) : (12 - ceil($i/2)*2);
@@ -946,6 +949,7 @@ function jobform($extra=false) {
 				$ignore_images = ($_POST[$ignore_imagesn]) ? $_POST[$ignore_imagesn] : "10";
 				$ignore_members = ($_POST[$ignore_membersn]) ? $_POST[$ignore_membersn] : "10";
 				$num_classums = ($_POST[$num_classumsn]) ? $_POST[$num_classumsn] : "";
+				$num_eigenimages = ($_POST[$num_eigenimagesn]) ? $_POST[$num_eigenimagesn] : "5";
 				$keep_classes = ($_POST[$keep_classesn]) ? $_POST[$keep_classesn] : "0.9";
 				$forw_ang_inc = ($_POST[$forw_ang_incn]) ? $_POST[$forw_ang_incn] : "25";
 				$euler_ang_inc = ($_POST[$euler_ang_incn]) ? $_POST[$euler_ang_incn] : "10";
@@ -971,6 +975,7 @@ function jobform($extra=false) {
 				$ignore_images = ($i>$j) ? $_POST['ignore_images'.($i-1)] : $_POST[$ignore_imagesn];
 				$ignore_members = ($i>$j) ? $_POST['ignore_members'.($i-1)] : $_POST[$ignore_membersn];
 				$num_classums = ($i>$j) ? $_POST['num_classums'.($i-1)] : $_POST[$num_classumsn];
+				$num_eigenimages = ($i>$j) ? $_POST['num_eigenimages'.($i-1)] : $_POST[$num_eigenimagesn];
 				$keep_classes = ($i>$j) ? $_POST['keep_classes'.($i-1)] : $_POST[$keep_classesn];
 				$forw_ang_inc = ($i>$j) ? $_POST['forw_ang_inc'.($i-1)] : $_POST[$forw_ang_incn];
 				$euler_ang_inc = ($i>$j) ? $_POST['euler_ang_inc'.($i-1)] : $_POST[$euler_ang_incn];
@@ -1014,6 +1019,7 @@ function jobform($extra=false) {
 										<input type='text' NAME='$maxradn' SIZE='3' VALUE='$maxrad'></td>
 					<td bgcolor='$rcol'><input type='text' NAME='$ignore_imagesn' SIZE='3' VALUE='$ignore_images'>
 										<input type='text' NAME='$num_classumsn' SIZE='3' VALUE='$num_classums'>
+										<input type='text' NAME='$num_eigenimagesn' SIZE='3' VALUE='$num_eigenimages'>
 										<input type='text' NAME='$ignore_membersn' SIZE='3' VALUE='$ignore_members'>
 										<input type='text' NAME='$keep_classesn' SIZE='3' VALUE='$keep_classes'></td>
 					<td bgcolor='$rcol'><input type='text' NAME='$forw_ang_incn' SIZE='3' VALUE='$forw_ang_inc'>
@@ -1104,6 +1110,7 @@ function imagic3dRefine() {
 		$ignore_images = $_POST['ignore_images'.$i];
 		$ignore_members = $_POST['ignore_members'.$i];
 		$num_classums = $_POST['num_classums'.$i];
+		$num_eigenimages = $_POST['num_eigenimages'.$i];
 		$keep_classes = $_POST['keep_classes'.$i];
 		$forw_ang_inc = $_POST['forw_ang_inc'.$i];
 		$euler_ang_inc = $_POST['euler_ang_inc'.$i];
@@ -1143,6 +1150,7 @@ function imagic3dRefine() {
 		$command.= " --ignore_images=$ignore_images";
 		$command.= " --ignore_members=$ignore_members";
 		$command.= " --num_classes=$num_classums";
+		$command.= " --num_eigenimages=$num_eigenimages";
 		$command.= " --keep_classes=$keep_classes";
 		$command.= " --forw_ang_inc=$forw_ang_inc";
 		$command.= " --euler_ang_inc=$euler_ang_inc";
