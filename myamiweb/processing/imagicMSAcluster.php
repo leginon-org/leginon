@@ -60,6 +60,7 @@ function jobform($extra=false)	{
 	$ignore_images = ($_POST['ignore_images']) ? $_POST['ignore_images'] : '0';
 	$ignore_members = ($_POST['ignore_members']) ? $_POST['ignore_members'] : '0';
 	$num_classes = ($_POST['num_classes']) ? $_POST['num_classes'] : '4,16,64';
+	$num_factors = ($_POST['num_factors']) ? $_POST['num_factors'] : '8';
 	
 	echo"
 	<table border='0' class='tableborder'>
@@ -97,14 +98,19 @@ function jobform($extra=false)	{
 	echo "  <TR><TD VALIGN='TOP'>\n";
 	echo "<b>Clustering Parameters</b>\n";
 	echo "<br>\n";
+
 	echo "<INPUT TYPE='text' NAME='num_classes' SIZE='8' VALUE='$num_classes'>\n";
 	echo docpop('numclass','Number of Classes');
+	echo "<br>\n";
+
+	echo "<INPUT TYPE='text' NAME='num_factors' SIZE='4' VALUE='$num_factors'>\n";
+	echo docpop('num_eigenimages','Number of Eigenimages to use');
 	echo "<br>\n";
 
 	echo "<INPUT TYPE='text' NAME='ignore_images' SIZE='4' VALUE='$ignore_images'>\n";
 	echo docpop('ignore_images','Percentage of images to ignore');
 	echo "<br>\n";
-        echo "<br>\n";
+	echo "<br>\n";
 	
 	echo "<b>Summing Parameters</b>\n";
 	echo "<br>\n";
@@ -145,9 +151,10 @@ function runImagicMSAcluster($extra=false)	{
 	$classvalues=$_POST['imagicAnalysisId'];
 	$ignore_images=$_POST['ignore_images'];
 	$num_classes=$_POST['num_classes'];
+	$num_factors=$_POST['num_factors'];
 	$ignore_members=$_POST['ignore_members'];
 	$description=$_POST['description'];
-        $commit = ($_POST['commit']=="on") ? '--commit' : '';
+	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 	
@@ -156,8 +163,14 @@ function runImagicMSAcluster($extra=false)	{
 
 	// create python command for executing imagic job file	
 	$cmd = "imagicMSAcluster.py";
-	$cmd.= " --projectid=$projectId --imagicAnalysisId=$analysisId --runname=$runname --rundir=$outdir";
-	$cmd.= " --ignore_images=$ignore_images --num_classes=$num_classes --ignore_members=$ignore_members";
+	$cmd.= " --projectid=$projectId";
+	$cmd.= " --imagicAnalysisId=$analysisId";
+	$cmd.= " --runname=$runname";
+	$cmd.= " --rundir=$outdir";
+	$cmd.= " --ignore_images=$ignore_images";
+	$cmd.= " --num_classes=$num_classes";
+	$cmd.= " --num_eigenimages=$num_factors";
+	$cmd.= " --ignore_members=$ignore_members";
 	$cmd.= " --description=\"$description\"";
 	if ($commit) $cmd.= " --commit";
 	else $cmd.=" --no-commit";
