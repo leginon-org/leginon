@@ -20,7 +20,7 @@ if ($_POST['process']) {
 	if (!$_POST['alignid']) jobform("error: no aligned stack specified");
 	if (!is_numeric($_POST['numiters'])) jobform("error: number of MSA iterations not specified");
 	if (!is_numeric($_POST['overcorrection'])) jobform("error: MSA overcorrection factor not specified");
-	if (!$_POST['MSAmethod']) jobform("error: method of calculating MSA distance not specified");
+	if (!$_POST['MSAdistance']) jobform("error: method of calculating MSA distance not specified");
 	runImagicMSA();
 }
 else jobform();
@@ -75,7 +75,7 @@ function jobform($extra=false)	{
 	$hpfilt = ($_POST['highpass']) ? $_POST['highpass'] : '600';
 	$mask_radius = ($_POST['mask_radius']) ? $_POST['mask_radius'] : '0.9';	
 	$mask_dropoff = ($_POST['mask_dropoff']) ? $_POST['mask_dropoff'] : '0.1';
-	$MSAmethod = ($_POST['MSAmethod']) ? $_POST['MSAmethod'] : 'modulation';
+	$MSAdistance = ($_POST['MSAdistance']) ? $_POST['MSAdistance'] : 'modulation';
 	$numiters = ($_POST['numiters']) ? $_POST['numiters'] : '50';
 	$overcorrection = ($_POST['overcorrection']) ? $_POST['overcorrection'] : '0.8';
 	
@@ -224,9 +224,9 @@ function jobform($extra=false)	{
 	echo "<br>\n";
 	
 	// specify selection (modulation, euclidean, chisquare)
-	echo docpop('MSAmethod', 'MSA distance criteria');
+	echo docpop('MSAdistance', 'MSA distance criteria');
 	echo "<br>\n";
-	echo "<SELECT name='MSAmethod'>";
+	echo "<SELECT name='MSAdistance'>";
 	echo "<OPTION VALUE='modulation'>Modulation</OPTION>";
 	echo "<OPTION VALUE='euclidian'>Euclidian Distance</OPTION>";
 	echo "<OPTION VALUE='chisquare'>Chi-Square</OPTION>";
@@ -277,7 +277,7 @@ function runImagicMSA($extra=false)	{
 	$mask_radius=$_POST['mask_radius'];
 	$mask_dropoff=$_POST['mask_dropoff'];
 	$numiters=$_POST['numiters'];
-	$MSAmethod=$_POST['MSAmethod'];
+	$MSAdistance=$_POST['MSAdistance'];
 	$overcorrection=$_POST['overcorrection'];
 	$description=$_POST['description'];
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
@@ -297,7 +297,7 @@ function runImagicMSA($extra=false)	{
 	if ($mask_radius) $command.= " --mask_radius=$mask_radius";
 	if ($mask_dropoff) $command.= " --mask_dropoff=$mask_dropoff";
 	if ($bin) $command.= " --bin=$bin";
-	$command.= " --numiters=$numiters --MSAmethod=$MSAmethod --overcorrection=$overcorrection";
+	$command.= " --numiters=$numiters --MSAdistance=$MSAdistance --overcorrection=$overcorrection";
 	$command.= " --description=\"$description\"";
 	$command.=" --nproc=$nproc";
 	if ($commit) $command.= " --commit";
