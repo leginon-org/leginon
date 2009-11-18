@@ -3,8 +3,7 @@
 /* 
 
 
-NEED TO GET BOX SIZE FOR FSC
-
+script for setting up a batch refinement in IMAGIC using an initial model and a stack as input
 
 
 */
@@ -14,11 +13,13 @@ require "inc/processing.inc";
 require "inc/leginon.inc";
 require "inc/viewer.inc";
 require "inc/project.inc";
+require "inc/summarytables.inc";
+
 
 
 $numiters = ($_POST['numiters']) ? $_POST['numiters'] : 1;
 	
-// if processing, write job file & process	
+// if processing, write job file & process, checking for any errors in user input
 if ($_POST['process'])  {
 	if (!$_POST['output_directory']) jobform("error: no output directory specified");	
 	if (!$_POST['runid']) jobform("error: no run ID specified");
@@ -50,33 +51,23 @@ if ($_POST['process'])  {
 	}
 }
 
-// if a model chosen for refinement, choose either to go to 3d0 or regular refinement
-elseif ($_POST['refinemodel'])  {
-	if ($_GET['3d0']) {
-		if (!$_POST['model']) create3d0SummaryForm("Error: No model selected");
-		if (!$_POST['stackval']) create3d0SummaryForm("Error: No stack selected");
-		jobform3d0();
-	}
-	else {
-		if (!$_POST['model']) initModelForm("Error: No model selected");
-		if (!$_POST['stackval']) initModelForm("Error: No stack selected");
-		jobform();
-	} 
+// if a model chosen for refinement, go to regular refinement
+elseif ($_POST['submitstackmodel'])  {
+	if (!$_POST['model']) initModelForm("Error: No model selected");
+	if (!$_POST['stackval']) initModelForm("Error: No stack selected");
+	jobform();
 }	
 	
 elseif ($_POST['duplicate'])  {
 	$postdata = explode('|~~|', $_POST['duplicate']);
-	if ($_GET['3d0']) jobform3d0();
-	else jobform();
+	jobform();
 }
 
 elseif ($_POST['import']) {
 	$postdata = explode('|~~|', $_POST['import']);
-	if ($_GET['3d0']) jobform3d0();
-	else jobform();
+	jobform();
 }
 
-elseif ($_GET['3d0']) create3d0SummaryForm();
 else initModelForm();
 
 ############################################################
@@ -88,604 +79,67 @@ else initModelForm();
 function initModelForm($extra=False) {
 	// check if session provided
 	$expId = $_GET['expId'];
-	if ($expId) {
-		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-	}
-	else {
-		$formAction=$_SERVER['PHP_SELF'];
-	}
-	
-	
-	// if user wants to use models from another project
-	
-	if($_POST['projectId'])
-		$projectId = $_POST[projectId];
-	else
-		$projectId=getProjectFromExpId($expId);
-	
-	$projects=getProjectList();
-	
-	if (is_numeric($projectId)) {
-		$particle = new particledata();
-		// get initial models associated with project
-		$models=$particle->getModelsFromProject($projectId);
-	}
-	
-	// find each stack entry in database
-	// THIS IS REALLY, REALLY SLOW
-	$stackIds = $particle->getStackIds($expId);
-	$stackinfo=explode('|--|',$_POST['stackval']);
-	$stackidval=$stackinfo[0];
-	$apix=$stackinfo[1];
-	$box=$stackinfo[2];
+	$projectId = getProjectFromExpId($expId);
 	
 	$javafunc="<script src='../js/viewer.js'></script>\n";
-	processing_header("Imagic Job Generator","Angular Reconstitution Job Generator",$javafunc);
+	processing_header("IMAGIC 3d Refinement Job Form","IMAGIC 3d Refinement Job Form",$javafunc);
+	
+	if ($expId) $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	else exit;
+	
+	$particle = new particledata();
+	
+	// get initial models associated with project
+	$models = $particle->getModelsFromProject($projectId);
+	
+	// find each stack entry in database
+	$stackIds = $particle->getStackIds($expId);
+	$stackinfo = explode('|--|', $_POST['stackval']);
+	$stackid = $stackinfo[0];
+	$apix = $stackinfo[1];
+	$box = $stackinfo[2];
 	
 	// write out errors, if any came up:
-	if ($extra) echo "<font color='red' size='+2'>$extra</font>\n<hr>\n";
-	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
-	echo "
-	<b>Select Project:</b><br>
-	<SELECT NAME='projectId' onchange='newexp()'>\n";
+	if ($extra) echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
 	
-	foreach ($projects as $k=>$project) {
-		$sel = ($project['id']==$projectId) ? "selected" : '';
-		echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
-	}
-	echo"
-	</select>
-	<P>\n<B>Stack:</B><br>";
-		$particle->getStackSelector($stackIds,$stackidval,'');
+	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
+	
+	echo"<b>Stack:</b><br>";
+	$particle->getStackSelector($stackIds, $stackid, '');
+	
 	// show initial models
 	echo "<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
-	echo "<P><input type='SUBMIT' NAME='refinemodel' VALUE='Use this stack and model'><br>\n";
-	echo "<P>\n";
+	echo "<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><br>\n";
+	
 	$minf = explode('|--|',$_POST['model']);
 	if (is_array($models) && count($models)>0) {
+		echo "<table class='tableborder' border='1'>\n";
 		foreach ($models as $model) {
-			echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
-			// get list of png files in directory
-			$pngfiles=array();
-			$modeldir= opendir($model['path']);
-			while ($f = readdir($modeldir)) {
-				if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
-			}
-			sort($pngfiles);
+			echo "<tr><td>\n";
+			$modelid = $model['DEF_id'];
+			$symdata = $particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
+			$modelvals = "$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$symdata[symmetry]";
 			
-			// display starting models
-			$sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
-			$sym['symmetry'] = strtolower($sym['symmetry']);
-			echo "<tr><TD COLSPAN=2>\n";
-			$modelvals="$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
-			if (!$modelonly) {
-				echo "<input type='RADIO' NAME='model' VALUE='$modelvals' ";
-				// check if model was selected
-				if ($model['DEF_id']==$minf[0]) echo " CHECKED";
-				echo ">\n";
-			}
-			echo"Use ";
-			echo"Model ID: $model[DEF_id]\n";
-			echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><br>\n";
-			foreach ($pngfiles as $snapshot) {
-				$snapfile = $model['path'].'/'.$snapshot;
-				echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'>\n";
-			}
-			echo "</td>\n";
-			echo "</tr>\n";
-			echo"<tr><TD COLSPAN=2>$model[description]</td></tr>\n";
-			echo"<tr><TD COLSPAN=2>$model[path]/$model[name]</td></tr>\n";
-			echo"<tr><td>pixel size:</td><td>$model[pixelsize]</td></tr>\n";
-			echo"<tr><td>box size:</td><td>$model[boxsize]</td></tr>\n";
-			echo"<tr><td>symmetry:</td><td>$sym[symmetry]</td></tr>\n";
-			echo"<tr><td>resolution:</td><td>$model[resolution]</td></tr>\n";
-			echo "</table>\n";
-			echo "<P>\n";
+			echo "<input type='radio' NAME='model' value='$modelvals' ";
+			// check if model was selected
+			if ($modelid == $minf[0]) echo " CHECKED";
+			echo ">\n";
+			echo"Use<br/>Model\n";
+			
+			echo "</td><td>\n";
+			
+			echo modelsummarytable($modelid, true);
+			
+			echo "</td></tr>\n";
 		}
-		if (!$modelonly) echo"<P><input type='SUBMIT' NAME='refinemodel' VALUE='Use this stack and model'></FORM>\n";
+		echo "</table>\n\n";
+		echo "<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
 	}
 	else echo "No initial models in database";
 	processing_footer();
 	exit;
-}
-	
-	
-	
-############################################################
-##
-##		3d0 Summary Form
-##
-############################################################
-
-function create3d0SummaryForm($extra=False) {
-	// get session and experiment info
-	$expId = $_GET['expId'];
-	$formAction=$_SERVER['PHP_SELF']."?expId=$expId&3d0=true";
-	
-	// create instance of class particledata
-	$particle = new particledata();
-	
-	$reclassifieddata = $particle->getImagic3d0ReclassifiedModelsFromSessionId($expId);
-	$norefdata= $particle->getImagic3d0NoRefModelsFromSessionId($expId);
-	$clusterdata = $particle->get3d0ClusterModelsFromSessionId($expId);
-	$tsdata = $particle->get3d0TemplateStackModelsFromSessionId($expId);
-	$models = array();
-	foreach (array($reclassifieddata, $norefdata, $clusterdata, $tsdata) as $a) {
-		if ($a) $models = array_merge($models,$a);
-	}
-	$nummodels = count($models);
-
-	$javafunc="<script src='../js/viewer.js'></script>\n";
-  	processing_header("Imagic 3d0 Summary","Imagic 3d0 Summary",$javafunc);
-  	
-	// write out errors, if any came up:
-	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-	
-	
-	// find each stack entry in database
-	// THIS IS REALLY, REALLY SLOW
-	$stackIds = $particle->getStackIds($expId);
-	$stackinfo=explode('|--|',$_POST['stackval']);
-	$stackidval=$stackinfo[0];
-	$apix=$stackinfo[1];
-	$box=$stackinfo[2];
-	
-	
-	if (is_array($models) && $nummodels > 0)	{
-		// separate shown from hidden
-		$shown = array();
-		$hidden = array();
-		foreach ($models as $model)	{
-			$imagic3d0Id = $model['DEF_id'];
-
-			// first update hide value
-			if ($_POST['hidemodel'.$imagic3d0Id]) {
-				$particle->updateHide('ApImagic3d0Data',$imagic3d0Id,1);
-				$model['hidden']=1;
-			}
-			elseif ($_POST['unhidemodel'.$imagic3d0Id]) {
-				$particle->updateHide('ApImagic3d0Data',$imagic3d0Id,0);
-				$model['hidden']='';
-			}
-			if ($model['hidden']==1) $hidden[]=$model;
-			else $shown[]=$model;
-
-		}
-
-		echo "<form name='3d0summaryform' method='post' action='$formAction'>\n";
+}	
 		
-		// get stack selector
-		echo"<B>Stack:</B><br>";
-		$particle->getStackSelector($stackIds,$stackidval,"");
-				
-		$modeltable.="<P><input type='SUBMIT' name='refinemodel' value='Use this stack and model' onclick=\"parent.
-			     location='imagic3dRefine.php?expId=$expId'\"><br>\n";
-		foreach ($shown as $m) $modeltable.=modelEntry($m,$particle,True);
-
-		// show hidden reclassifications
-		if ($_GET['showHidden'] && $hidden) {
-			if ($shown) $modeltable.="<hr />\n";
-			$modeltable.="<b>Hidden models</b> ";
-			$modeltable.="<a href='".$_SERVER['PHP_SELF']."?expId=$expId'>[hide]</a><br />\n";
-			foreach ($hidden as $m) $modeltable.= modelEntry($m,$particle,True,True);
-		}
-		$modeltable.="<P><input type='SUBMIT' name='refinemodel' value='Use this stack and model' onclick=\"parent.
-			     location='imagic3dRefine.php?expId=$expId'\"><br>\n";
-		$modeltable.="</form>\n";
-	}
-	if ($hidden && !$_GET['showHidden']) echo "<a href='".$formAction."&showHidden=True'>[Show Hidden Models]</a><br />\n";
-
-	if ($shown || $hidden) {	
-		echo $modeltable;	
-	}
-	else echo "<B>Project does not contain any Models.</B>\n";
-	processing_footer();
-	exit;
-}
-
-############################################################
-##
-##		Model Entry Form for 3d0 summary
-##
-############################################################
-
-function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)	{
-
-	$imagic3d0Id = $model['DEF_id'];
-
-	// check to see if initial model was created from reference-free classification or reclassification
-	if ($model['REF|ApImagicReclassifyData|reclass'])  {
-		$modelparams = $particle->getImagicReclassParamsFrom3d0($imagic3d0Id);
-		$reclassnum = $modelparams['DEF_id'];
-		$norefClassId = $modelparams['REF|ApNoRefClassRunData|norefclass'];
-		$clsavgpath = $modelparams['path']."/".$modelparams['runname'];
-		$classimgfile = $clsavgpath."/reclassified_classums_sorted.img";
-		$classhedfile = $clsavgpath."/reclassified_classums_sorted.hed";
-	}
-
-	if ($model['REF|ApNoRefClassRunData|norefclass']) {
-		$modelparams = $particle->getNoRefClassRunParamsFrom3d0($imagic3d0Id);
-		$norefClassId = $modelparams['DEF_id'];
-		$norefId = $modelparams['REF|ApNoRefRunData|norefRun'];
-		$norefparams = $particle->getNoRefParams($norefId);
-		$clsavgpath = $norefparams['path']."/".$modelparams['classFile'];
-		$classimgfile = $clsavgpath.".img";
-		$classhedfile = $clsavgpath.".hed";
-	}
-
-	if ($model['REF|ApClusteringStackData|clusterclass']) {
-		$clusterparams = $particle->getClusteringStackParamsFrom3d0($imagic3d0Id);
-		$clusterId = $clusterparams['DEF_id'];
-		$clsavgpath = $clusterparams['path'];
-		$classhedfile = $clsavgpath."/".$clusterparams['avg_imagicfile'];
-		$classimgfile = str_replace(".hed", ".img", $classhedfile);
-	}
-	
-	if ($model['REF|ApTemplateStackData|templatestack']) {
-		$tsparams = $particle->getTemplateStackParamsFrom3d0($imagic3d0Id);
-		$tsId = $tsparams['DEF_id'];
-		$clsavgpath = $tsparams['path'];
-		$classhedfile = $clsavgpath."/".$tsparams['templatename'];
-		$classimgfile = str_replace(".hed", ".img", $classhedfile);
-	}
-
-	// get 3 initial projections for angular reconstitution associated with model		
-	$projections = $model['projections'];
-	$projections = explode(";", $projections);
-	$modeltable.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'><tr>\n";
-	$modeltable.= "<td colspan='3'><b> 3 Initial Projections Used in Angular Reconstitution </b></td></tr><tr>";
-	foreach ($projections as $key => $projection) {
-		$num = $key + 1;
-		$image = $projection - 1; // Imagic numbering system starts with 1 instead of 0
-		$modeltable.= "<td colspan='1' align='center' valign='top'>";
-		$modeltable.= "<img src='getstackimg.php?hed=$classhedfile
-			&img=$classimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
-		$modeltable.= "<i>projection $num</i></td>\n";
-	}
-	$modeltable.= "</tr><tr><td colspan='3' bgcolor='#bbffbb'>";
-	if ($sum_specific_params) {
-		// view class averages used for 3d0 in summary page (both norefs and reclassifications)
-		$modeltable.= "<a href='viewstack.php?file=$classimgfile&expId=$expId&reclassId=$reclassnum'>";
-		$modeltable.= "View all class averages used to create model</a>";
-	}
-	else {
-		if ($norefClassId) {
-			// note that ALL class averages will be used for refinement, NOT the reclassifications
-			$norefclassdata = $particle->getNoRefClassRunData($norefClassId);
-			$norefId = $norefclassdata['REF|ApNoRefRunData|norefRun'];
-			$norefparams = $particle->getNoRefParams($norefId);
-			$norefclassimgfile = $norefparams['path']."/".$norefclassdata['classFile'].".img";
-			$modeltable.= "<a href='viewstack.php?file=$norefclassimgfile&expId=$expId'>";
-			$modeltable.= "View all class averages used for THIS refinement</a>";
-		}
-		elseif ($clusterId) {
-			$modeltable.= "<a href='viewstack.php?file=$classhedfile&expId=$expId'>";
-			$modeltable.= "View all class averages used for this refinement</a>";
-		}
-	}
-	$modeltable.= "</td></tr></table>\n<br>";
-	$modeltable.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
-
-	// get list of png files in directory
-	$pngfiles = array();
-	$modeldir = opendir($model['path']."/".$model['runname']);
-	while ($f = readdir($modeldir)) {
-		if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
-
-	}
-	sort($pngfiles);
-
-			
-	// display starting models
-	$modeltable.= "<tr><TD COLSPAN=8>\n";
-	//$modelkeys="DEF_id|~~|path|~~|name|~~|boxsize|~~|symmetry";
-	//$modelvals="$model[DEF_id]|~~|$model[path]/$model[runname]|~~|$model[name]|~~|$model[boxsize]|~~|$model[symmetry]";
-	if ($sum_specific_params) {			
-		$modeltable.= "<input type='RADIO' NAME='model' VALUE='$model[DEF_id]' ";
-	
-		// check if model was selected
-		if ($model['DEF_id']==$minf[0]) echo " CHECKED";
-		$modeltable.= ">\n";
-		$modeltable.="Use Model ID: <b>$model[DEF_id]</b>\n";
-		if ($hidden) $modeltable.= " <input class='edit' type='submit' name='unhidemodel".$imagic3d0Id."' value='unhide'>";
-		else $modeltable.= " <input class='edit' type='submit' name='hidemodel".$imagic3d0Id."' value='hide'>";
-	}
-
-	// display all .png files in model directory
-	$modeltable.= "<tr>";
-	foreach ($pngfiles as $snapshot) {
-		$snapfile = $model['path'].'/'.$model['runname'].'/'.$snapshot;
-		$modeltable.= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>
-			<img src='loadimg.php?h=80&filename=$snapfile' HEIGHT='80'>\n";
-	}
-
-	// display info about each model run
-	if ($sum_specific_params) {
-		$modeltable.= "</tr>\n";
-		$modeltable.="<tr><TD COLSPAN=8>description: $model[description]</td>\n";
-		$modeltable.="<tr><TD COLSPAN=8>path: $model[path]/$model[runname]/$model[name]</td></tr>\n";
-		
-		$modeltable.="<tr><td>pixel size:</td><td><b>$model[pixelsize]</b></td>
-				  <td>box size:</td><td><b>$model[boxsize]</b></td>
-				  <td>symmetry:</td><td><b>$model[symmetry]</b></td>
-				  <td># class averages used:</td><td><b>$model[num_classums]</b></td></tr>\n";
-		
-		$modeltable.="<tr><td>Increment euler angle search:</td><td><b>$model[euler_ang_inc]</b></td>
-				  <td>Increment forward projections:</td><td><b>$model[forw_ang_inc]</b></td>
-				  <td>Hamming window:</td><td><b>$model[ham_win]</b></td>
-				  <td>Object size as fraction of image size:</td><td><b>$model[obj_size]</b></td></tr>\n";
-		$modeltable.= "</table><br><br>\n";
-		$modeltable.= "<P>\n";
-
-		return $modeltable;
-	}
-	else {
-		$returnvalues = array();
-		$returnvalues[] = $modeltable;
-		$returnvalues[] = $norefClassId;
-		return $returnvalues;
-	}
-	
-}
-
-############################################################
-##
-##		Job Form for 3d0 Refinement
-##
-############################################################
-	
-function jobform3d0($extra=false) {
-	
-	$particle = new particledata();	
-	
-	// get experiment & model info
-	$expId=$_GET['expId'];
-	$projectId=getProjectFromExpId($expId);
-	$sessiondata=getSessionList($projectId,$expId);
-	$modelinfo = explode('|--|',$_POST['model']);
-	$modelid = $modelinfo[0];
-	$modeldata = $particle->getImagic3d0Data($modelid);
-	$clusterId = $modeldata['REF|ApClusteringStackData|clusterclass'];
-	
-	## get stack data
-	$stackinfo = explode('|--|',$_POST['stackval']);
-	$stackidval=$stackinfo[0];
-	$nump=$particle->getNumStackParticles($stackidval);
-	$apix=$stackinfo[1];
-	$box=$stackinfo[2];
-	$stackpath=$stackinfo[4];
-	$stackname1=$stackinfo[5];
-	$fullname=$stackpath."/".$stackname1;
-	
-	$stack=$stackname1;
-	
-	$numiters = ($_POST['numiters']) ? $_POST['numiters'] : 1;
-	if ($_POST['duplicate']) {
-		$numiters+=1;
-		$j=$_POST['duplicate'];
-	}
-	else $j=$numiters;
-	
-	$javafunc .= writeJavaPopupFunctions('appion');
-	processing_header("IMAGIC 3d Refinement Job Form","IMAGIC 3d Refinement Job Form",$javafunc);
-	
-	// write out errors if any came up
-	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-	
-	echo "<form name='imagic3dRefine' method='post' action='$formaction'><br />\n";
-	
-	// set commit on by default when first loading page, else set
-	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
-	// define default variables for directory and runid
-	//	$numRefinements = count($particle->getImagic3dRefinementRunsFrom3d0($modelid));
-	$outdir = ($_POST[output_directory]) ? $_POST[output_directory] : $modeldata['path']."/".$modeldata['runname'];
-	$numRefinements = 0;
-	while (file_exists($outdir.'/refine'.($numRefinements+1))) $numRefinements += 1;
-	$newrefinerun = $numRefinements + 1;
-	$runid = ($_POST[runid]) ? $_POST[runid] : "refine".$newrefinerun;
-	
-	$doc_runname = docpop('runid', '<t><b>Run Name:</b>');
-	$doc_outdir = docpop('outdir', '<b>Output Directory:</b>');
-	$doc_description = docpop('descr', '<b>Description of 3d Refinement:</b>');
-	$doc_mass = docpop('mass', '<b>Approximate mass in Kd</b>');
-	//	$doc_nproc = docpop('proc', '<b> Number of Processors to use </b>');
-	
-	$modelvalues = modelEntry($modeldata,$particle,False,True);
-	echo $modelvalues[0];
-	
-	// SHOW MODEL INFO & STACK INFO
-	
-	$modeltable.= "</td></tr>\n";
-	$modeltable.= "
-	<TABLE WIDTH='600' BORDER='.1'>
-	<TR><TD COLSPAN='2'>
-	<B>Stack & Model Params:</B><br>
-	</TD></tr>
-	<TR><td>3d0 Model ID</TD><td>$modeldata[DEF_id]</TD></tr>
-	<TR><td>3d0 Model description</TD><td>$modeldata[description]</TD></tr>
-	<TR><td>Stack ID</TD><td>$stackidval</TD></tr>
-	<TR><td>Stack name</TD><td>$fullname</TD></tr>
-	<TR><td>Stack pixelsize</TD><td>$apix</TD></tr>
-	<TR><td>Stack boxsize</TD><td>$box</TD></tr>
-	<TR><td>Number of Particles</TD><td>$nump</TD></tr>
-	</TABLE><br><br>\n";
-	
-	echo $modeltable;
-	
-//	$norefClassId = $modelvalues[1];
-	
-	// form for output directory & runid
-	echo "<TABLE cellspacing='10' cellpadding='10'><tr><td>";
-	echo openRoundBorder();
-	echo "	<b> $doc_outdir</b> <input type='text' name='output_directory' value='$outdir' size='50'><br /><br />\n
-	<b> $doc_runname</b> <input type='text' name='runid' value='$runid' size='20'><br /><br />\n
-	<b> $doc_description</b><br><textarea name='description' rows='3' cols='50'>$rundescrval</textarea><br><br>\n";
-	echo closeRoundBorder();
-	echo "</td></tr></table><br />";	
-	
-	
-	// keys and documentation for user input values
-	/*	$display_keys = array('copy', 
-	 'itn', 
-	 'symmetry', 
-	 'mask_rad',
-	 'mra_inc', 
-	 'shift_orig', 
-	 'shift_this', 
-	 'samp_par', 
-	 'ign_images',
-	 'numclass', 
-	 'ign_members',
-	 'keep_classes',
-	 'forw_inc', 
-	 'euler_inc', 
-	 'keep_ordered',
-	 'ham_win', 
-	 'obj_size', 
-	 'amask_dim', 
-	 'amask_lp', 
-	 'amask_sharp',
-	 'amask_thresh', 
-	 'copy');
-	 */
-	$display_keys = array('copy', 
-						  'itn', 
-						  'symmetry', 
-						  'mask',
-						  'MRA', 
-						  'MSA', 
-						  'Angular_Reconstitution', 
-						  'Threed_Reconstruction', 
-						  'Masking', 
-						  'copy');
-	
-	
-	$bgcolor="#E8E8E8";
-	echo "<br> <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
-	<tr>\n";
-	foreach ($display_keys as $k => $key) {
-		$id = "$key";
-		echo "	<td align='center' bgcolor='$bgcolor'> 
-		<font class='sf'> 
-		<a href='#' id=\"$id\" onMouseOver='popLayer(\"$key\", \"$id\")' onMouseOut='hideLayer()'>
-		$key 
-		</a></font></td>\n";
-	}
-	echo"  </tr><br>\n";
-	$rcol = ($i % 2) ? '#FFFFFF' : '#FFFDCC';
-	
-	for ($i=1; $i<=$numiters; $i++)	{
-		// define names for user-inputted values for each iteration
-		$symmetryn = "symmetry".$i;
-		$mask_valn = "mask_val".$i;
-		$mrarefs_ang_incn = "mrarefs_ang_inc".$i;
-		$max_shift_orign = "max_shift_orig".$i;
-		$max_shift_thisn = "max_shift_this".$i;
-		$samp_paramn = "samp_param".$i;
-		$ignore_imagesn = "ignore_images".$i;
-		$num_classumsn = "num_classums".$i;
-		$ignore_membersn = "ignore_members".$i;
-		$keep_classesn = "keep_classes".$i;
-		$forw_ang_incn = "forw_ang_inc".$i;
-		$euler_ang_incn = "euler_ang_inc".$i;
-		$keep_orderedn = "keep_ordered".$i;
-		$hamming_windown = "hamming_window".$i;
-		$obj_sizen = "obj_size".$i;
-		
-		// define default parameters for 1st iteration
-		if ($i==1)	{
-			$nproc = ($_POST[$nproc]) ? $_POST[$nproc] : "8";
-			$mass = ($_POST[$mass]) ? $_POST[$mass] : "";
-			$symmetry = ($_POST[$symmetryn]) ? $_POST[$symmetryn] : $symmetry;
-			$mask_val = ($_POST[$mask_valn]) ? $_POST[$mask_valn] : "";
-			$mrarefs_ang_inc = ($_POST[$mrarefs_ang_incn]) ? $_POST[$mrarefs_ang_incn] : "25";
-			$max_shift_orig = ($_POST[$max_shift_orign]) ? $_POST[$max_shift_orign] : "0.4";
-			$max_shift_this = ($_POST[$max_shift_thisn]) ? $_POST[$max_shift_thisn] : "0.1";
-			$samp_param = ($_POST[$samp_paramn]) ? $_POST[$samp_paramn] : "4";
-			$ignore_images = ($_POST[$ignore_imagesn]) ? $_POST[$ignore_imagesn] : "10";
-			$ignore_members = ($_POST[$ignore_membersn]) ? $_POST[$ignore_membersn] : "10";
-			$num_classums = ($_POST[$num_classumsn]) ? $_POST[$num_classumsn] : "";
-			$keep_classes = ($_POST[$keep_classesn]) ? $_POST[$keep_classesn] : "0.9";
-			$forw_ang_inc = ($_POST[$forw_ang_incn]) ? $_POST[$forw_ang_incn] : "25";
-			$euler_ang_inc = ($_POST[$euler_ang_incn]) ? $_POST[$euler_ang_incn] : "10";
-			$keep_ordered = ($_POST[$keep_orderedn]) ? $_POST[$keep_orderedn] : "0.9";
-			$hamming_window = ($_POST[$hamming_windown]) ? $_POST[$hamming_windown] : "0.8";
-			$obj_size = ($_POST[$obj_sizen]) ? $_POST[$obj_sizen] : "0.8";
-		}
-		// copy parameters from previous post
-		else 	{
-			$symmetry = ($i>$j) ? $_POST['symmetry'.($i-1)] : $_POST[$symmetryn];
-			$mask_val = ($i>$j) ? $_POST['mask_val'.($i-1)] : $_POST[$mask_valn];
-			$mrarefs_ang_inc = ($i>$j) ? $_POST['mrarefs_ang_inc'.($i-1)] : $_POST[$mrarefs_ang_incn];
-			$max_shift_orig = ($i>$j) ? $_POST['max_shift_orig'.($i-1)] : $_POST[$max_shift_orign];
-			$max_shift_this = ($i>$j) ? $_POST['max_shift_this'.($i-1)] : $_POST[$max_shift_thisn];
-			$samp_param = ($i>$j) ? $_POST['samp_param'.($i-1)] : $_POST[$samp_paramn];
-			$ignore_images = ($i>$j) ? $_POST['ignore_images'.($i-1)] : $_POST[$ignore_imagesn];
-			$ignore_members = ($i>$j) ? $_POST['ignore_members'.($i-1)] : $_POST[$ignore_membersn];
-			$num_classums = ($i>$j) ? $_POST['num_classums'.($i-1)] : $_POST[$num_classumsn];
-			$keep_classes = ($i>$j) ? $_POST['keep_classes'.($i-1)] : $_POST[$keep_classesn];
-			$forw_ang_inc = ($i>$j) ? $_POST['forw_ang_inc'.($i-1)] : $_POST[$forw_ang_incn];
-			$euler_ang_inc = ($i>$j) ? $_POST['euler_ang_inc'.($i-1)] : $_POST[$euler_ang_incn];
-			$keep_ordered = ($i>$j) ? $_POST['keep_ordered'.($i-1)] : $_POST[$keep_orderedn];
-			$hamming_window = ($i>$j) ? $_POST['hamming_window'.($i-1)] : $_POST[$hamming_windown];
-			$obj_size = ($i>$j) ? $_POST['obj_size'.($i-1)] : $_POST[$obj_sizen];
-		}
-		$syms = $particle->getSymmetries();
-		// print form with user input for all values
-		echo "<tr>
-		<td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i|~~|$modelid' onclick='imagic3dRefine.submit()'></td>
-		<td bgcolor='$rcol'><b>$i</b></td>
-		<td bgcolor='$rcol'><SELECT NAME='$symmetryn'><OPTION VALUE='$symmetry'>Select One</OPTION>\n";
-		foreach ($syms as $sym) {
-			echo "<OPTION VALUE='$sym[DEF_id]'";
-			if ($sym['DEF_id']==$_POST[$symmetryn]) echo " SELECTED";
-			if ($sym['DEF_id']==$_POST["symmetry".($i-1)] && $symmetry == $_POST["symmetry".($i-1)]) echo " SELECTED";
-			echo ">$sym[symmetry]";
-			if ($sym['symmetry']=='C1') echo " (no symmetry)";
-			echo "</OPTION>\n";
-		}
-		echo "</td>
-		<td bgcolor='$rcol'><input type='text' NAME='$mask_valn' SIZE='4' VALUE='$mask_val'></td>
-		<td bgcolor='$rcol'><input type='text' NAME='$mrarefs_ang_incn' SIZE='3' VALUE='$mrarefs_ang_inc'>
-		<input type='text' NAME='$max_shift_orign' SIZE='3' VALUE='$max_shift_orig'>
-		<input type='text' NAME='$max_shift_thisn' SIZE='3' VALUE='$max_shift_this'>
-		<input type='text' NAME='$samp_paramn' SIZE='3' VALUE='$samp_param'></td>
-		<td bgcolor='$rcol'><input type='text' NAME='$ignore_imagesn' SIZE='3' VALUE='$ignore_images'>
-		<input type='text' NAME='$num_classumsn' SIZE='4' VALUE='$num_classums'>
-		<input type='text' NAME='$ignore_membersn' SIZE='3' VALUE='$ignore_members'>
-		<input type='text' NAME='$keep_classesn' SIZE='3' VALUE='$keep_classes'></td>
-		<td bgcolor='$rcol'><input type='text' NAME='$forw_ang_incn' SIZE='3' VALUE='$forw_ang_inc'>
-		<input type='text' NAME='$euler_ang_incn' SIZE='3' VALUE='$euler_ang_inc'>
-		<input type='text' NAME='$keep_orderedn' SIZE='3' VALUE='$keep_ordered'></td>
-		<td bgcolor='$rcol'><input type='text' NAME='$hamming_windown' SIZE='4' VALUE='$hamming_window'>
-		<input type='text' NAME='$obj_sizen' SIZE='4' VALUE='$obj_size'></td>
-		<td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i|~~|$modelid' onclick='imagic3dRefine.submit()'></td>
-		</tr>\n";
-	}
-	echo "</table>";
-	
-	echo "<br></b><input type='text' name='mass' value='$mass' size='4'> $doc_mass <br>";
-	//	echo "<br></b><input type='text' name='nproc' value='$nproc' size='4'> $doc_nproc <br>";
-	
-	echo "<br><INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
-	echo docpop('commit','<B>Commit to Database</B>');
-	
-	echo "<input type='hidden' NAME='nproc' VALUE='$nproc'><P>";
-	echo "<input type='hidden' NAME='numiters' VALUE='$numiters'><P>";
-	echo "<input type='hidden' NAME='imagic3d0id' VALUE='$modelid'><P>";
-	echo "<input type='hidden' NAME='norefClassId' VALUE='$norefClassId'><P>";
-	echo "<input type='hidden' NAME='clusterId' VALUE='$clusterId'><P>";
-	echo "<input type='hidden' NAME='stackval' value='".$_POST['stackval']."'>\n";
-	echo "<input type='hidden' NAME='modelid' value='".$_POST['model']."'>\n";
-	echo getSubmitForm("run imagic");
-	echo "</form>\n";
-	processing_footer();
-	exit;
-}
-
-
-	
-	
 ############################################################
 ##
 ##		Normal Job Form using stack & initial model
@@ -705,16 +159,18 @@ function jobform($extra=false) {
 		$sessionpath=$sessioninfo['Image path'];
 		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
 		$sessionpath=ereg_replace("rawdata","recon/",$sessionpath);
+		$sessionpath=ereg_replace("data..","data00",$sessionpath);
 	}
 	
+	// get selected initial model data
 	$modelinfo = explode('|--|',$_POST['model']);
 	$modelid = $modelinfo[0];
 	$modeldata = $particle->getInitModelInfo($modelid);
 	
 	## get stack data
 	$stackinfo = explode('|--|',$_POST['stackval']);
-	$stackidval=$stackinfo[0];
-	$nump=$particle->getNumStackParticles($stackidval);
+	$stackid=$stackinfo[0];
+	$nump=$particle->getNumStackParticles($stackid);
 	$apix=$stackinfo[1];
 	$box=$stackinfo[2];
 	$stackpath=$stackinfo[4];
@@ -723,14 +179,10 @@ function jobform($extra=false) {
 	$fullname=$stackpath."/".$stackname1;
 	$stack=$stackname1;
 
-	$numiters = ($_POST['numiters']) ? $_POST['numiters'] : 1;
-	if ($_POST['duplicate']) {
-		$numiters+=1;
-		$j=$_POST['duplicate'];
-	}
-	else $j=$numiters;
-
+	// javascript help popups
 	$javafunc .= writeJavaPopupFunctions('appion');
+	
+	// header
 	processing_header("IMAGIC 3d Refinement Job Form","IMAGIC 3d Refinement Job Form",$javafunc);
 
 	// write out errors if any came up
@@ -738,10 +190,10 @@ function jobform($extra=false) {
 
 	echo "<form name='imagic3dRefine' method='post' action='$formaction'><br />\n";
 
-	// set commit & mirror on by default when first loading page, else set
-	$autofiltcheck = ($_POST['auto_filt_stack']=='on' || !$_POST['process']) ? 'checked' : '';
-	$auto_lp_filt_base = ($_POST['auto_lp_filt_base']) ? $_POST['auto_lp_filt_base'] : '25';
-	$auto_lp_filt_fraction = ($_POST['auto_lp_filt_fraction']) ? $_POST['auto_lp_filt_fraction'] : '0.8';
+	// set checkboxes on by default when first loading page
+//	$autofiltcheck = ($_POST['auto_filt_stack']=='on' || !$_POST['process']) ? 'checked' : '';
+//	$auto_lp_filt_base = ($_POST['auto_lp_filt_base']) ? $_POST['auto_lp_filt_base'] : '25';
+//	$auto_lp_filt_fraction = ($_POST['auto_lp_filt_fraction']) ? $_POST['auto_lp_filt_fraction'] : '0.8';
 	$centcheck = ($_POST['cent_stack']=='on' || !$_POST['process']) ? 'checked' : '';
 	$mirrorcheck = ($_POST['mirror']=='on' || !$_POST['process']) ? 'checked' : '';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
@@ -757,51 +209,13 @@ function jobform($extra=false) {
 	$doc_description = docpop('descr', '<b>Description of 3d Refinement:</b>');
 	$doc_mass = docpop('mass', '<b>Approximate mass in Kd</b>');
 //	$doc_nproc = docpop('proc', '<b> Number of Processors to use </b>');
-	
-// SHOW MODEL INFO & STACK INFO
-	
-	$modelname = $modeldata['path']."/".$modeldata['name'];
-	
-	// get list of png files in directory
-	$pngfiles = array();
-	$modeldir = opendir($modeldata['path']);
-	while ($f = readdir($modeldir)) {
-		if (eregi($modeldata['name'].'.*\.png$',$f)) $pngfiles[] = $f;
-	}
-	sort($pngfiles);
-	
-	// display all .png files in model 
-	$modeltable.= "<tr><TD COLSPAN=8>
-		<B>Initial Model:</B><br>\n";
-	foreach ($pngfiles as $snapshot) {
-		$snapfile = $modeldata['path'].'/'.$snapshot;
-		$modeltable.= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>
-		<img src='loadimg.php?h=80&filename=$snapfile' HEIGHT='80'>\n";
-	}
-
-	$modeltable.= "</td></tr>\n";
-	$modeltable.= "
-		<TABLE WIDTH='600' BORDER='.1'>
-		<TR><TD COLSPAN='2'>
-		<B>Stack & Model Params:</B><br>
-		</TD></tr>
-		<TR><td>Model ID</TD><td>$modeldata[DEF_id]</TD></tr>
-		<TR><td>Model description</TD><td>$modeldata[description]</TD></tr>
-		<TR><td>Stack ID</TD><td>$stackidval</TD></tr>
-		<TR><td>Stack name</TD><td>$fullname</TD></tr>
-		<TR><td>Stack pixelsize</TD><td>$apix</TD></tr>
-		<TR><td>Stack boxsize</TD><td>$box</TD></tr>
-		<TR><td>Number of Particles</TD><td>$nump</TD></tr>
-		</TABLE><br><br>\n";
-	
-	echo $modeltable;
 
 	// form for output directory & runid
 	echo "<TABLE cellspacing='10' cellpadding='10'><tr><td>";
 	echo openRoundBorder();
 	echo "	<b> $doc_outdir</b> <input type='text' name='output_directory' value='$outdir' size='50'><br /><br />\n
-		<b> $doc_runname</b> <input type='text' name='runid' value='$runid' size='20'><br /><br />\n
-		<b> $doc_description</b><br><textarea name='description' rows='3' cols='50'>$rundescrval</textarea><br><br>\n";
+			<b> $doc_runname</b> <input type='text' name='runid' value='$runid' size='20'><br /><br />\n
+			<b> $doc_description</b><br><textarea name='description' rows='3' cols='50'>$rundescrval</textarea><br><br>\n";
 	echo closeRoundBorder();
 	echo "</td></tr></table><br />";	
 
@@ -817,28 +231,34 @@ function jobform($extra=false) {
 						  'Threed_Reconstruction', 
 						  'copy');
 	
-	
+	// javascript documentation popups as display_keys
 	$bgcolor="#E8E8E8";
-	echo "<br> <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
-	<tr>\n";
+	echo "<br> <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4><tr>\n";
 	foreach ($display_keys as $k => $key) {
 		$id = "$key";
 		echo "	<td align='center' bgcolor='$bgcolor'> 
-			<font class='sf'> 
-			<a href='#' id=\"$id\" onMouseOver='popLayer(\"$key\", \"$id\")' onMouseOut='hideLayer()'>
-			$key </a></font></td>\n";
+				<font class='sf'> 
+				<a href='#' id=\"$id\" onMouseOver='popLayer(\"$key\", \"$id\")' onMouseOut='hideLayer()'>
+				$key </a></font></td>\n";
 	}
 	echo"  </tr><br>\n";
 	$rcol = ($i % 2) ? '#FFFFFF' : '#FFFDCC';
 
-
-	// set imports
+	// define imports and give the option of selecting them
 	echo "<select name='import' onChange='imagic3dRefine.submit()'>\n";
 	echo "<option>Import parameters</option>\n";
 	echo "<option value='default1'>5 Iterations with 10,000+ particles</option>\n";
 	echo "<option value='default2'>10 Iterations with 10,000+ particles</option>\n";
 	echo "<br></select>\n";
 	$syms = $particle->getSymmetries();
+	
+	// set j to the number of iterations that were posted with the copy / duplicate function
+	$numiters = ($_POST['numiters']) ? $_POST['numiters'] : 1;
+	if ($_POST['duplicate']) {
+		$numiters+=1;
+		$j=$_POST['duplicate'];
+	}
+	else $j=$numiters;
 
 	// set number of iterations if importing
 	if ($_POST['import'] == "default1") $numiters = 5;
@@ -856,7 +276,6 @@ function jobform($extra=false) {
 		$mrarefs_ang_incn = "mrarefs_ang_inc".$i;
 		$max_shift_orign = "max_shift_orig".$i;
 		$max_shift_thisn = "max_shift_this".$i;
-//		$samp_paramn = "samp_param".$i;
 		$minradn = "minrad".$i;
 		$maxradn = "maxrad".$i;
 		$ignore_imagesn = "ignore_images".$i;
@@ -873,6 +292,7 @@ function jobform($extra=false) {
 
 		// if importing values, set them here
 		if ($_POST['import']=='default1') {
+			// default 1 parameters with 5 iterations
 			$nproc = ($_POST[$nproc]) ? $_POST[$nproc] : "8";
 			$mass = ($_POST[$mass]) ? $_POST[$mass] : "";
 			$symmetry = $modeldata['REF|ApSymmetryData|symmetry'];
@@ -885,7 +305,6 @@ function jobform($extra=false) {
 			$mrarefs_ang_inc = "25";
 			$max_shift_orig = (int)($box/2*0.4);
 			$max_shift_this = (int)($box/2*0.1);
-//			$samp_param = ($i * 2 + 2);
 			$minrad = "0";
 			$maxrad = (int)($mask_val*0.8);
 			$ignore_images = (35 - $i*5);
@@ -896,11 +315,11 @@ function jobform($extra=false) {
 			$forw_ang_inc = (30 - $i*5);
 			$euler_ang_inc = (12 - $i*2);
 			$keep_ordered = "0.9";
-#			$hamming_window = (0.3 + $i*0.1);
 			$obj_size = "0.8";
 			$threedfilt = "20";
 		}
 		elseif ($_POST['import']=='default2') {
+			// default 2 parameters with 10 iterations
 			$nproc = ($_POST[$nproc]) ? $_POST[$nproc] : "8";
 			$mass = ($_POST[$mass]) ? $_POST[$mass] : "";
 			$symmetry = $modeldata['REF|ApSymmetryData|symmetry'];
@@ -913,7 +332,6 @@ function jobform($extra=false) {
 			$mrarefs_ang_inc = "25";
 			$max_shift_orig = (int)($box/2*0.4);
 			$max_shift_this = (int)($box/2*0.1);
-//			$samp_param = ($i + 2);
 			$minrad = "0";
 			$maxrad = (int)($mask_val*0.8);
 			$ignore_images = (($i % 2) == 0) ? (35 - ceil(($i-1)/2)*5) : (35 - ceil($i/2)*5);
@@ -924,12 +342,10 @@ function jobform($extra=false) {
 			$forw_ang_inc = (($i % 2) == 0) ? (30 - ceil(($i-1)/2)*5) : (30 - ceil($i/2)*5);
 			$euler_ang_inc = (($i % 2) == 0) ? (12 - ceil(($i-1)/2)*2) : (12 - ceil($i/2)*2);
 			$keep_ordered = "0.9";
-#			$hamming_window = (($i % 2) == 0) ? (0.3 + ceil(($i-1)/2)*0.1) : (0.3 + ceil($i/2)*0.1);
 			$obj_size = "0.8";
 			$threedfilt = "20";
 		}
 		else {
-
 			// define default parameters for 1st iteration
 			if ($i==1)	{
 				$nproc = ($_POST[$nproc]) ? $_POST[$nproc] : "8";
@@ -943,7 +359,6 @@ function jobform($extra=false) {
 				$mrarefs_ang_inc = ($_POST[$mrarefs_ang_incn]) ? $_POST[$mrarefs_ang_incn] : "25";
 				$max_shift_orig = ($_POST[$max_shift_orign]) ? $_POST[$max_shift_orign] : (int)($box/2*0.4);
 				$max_shift_this = ($_POST[$max_shift_thisn]) ? $_POST[$max_shift_thisn] : (int)($box/2*0.1);
-//				$samp_param = ($_POST[$samp_paramn]) ? $_POST[$samp_paramn] : "4";
 				$minrad = ($_POST[$minradn]) ? $_POST[$minradn] : "0";
 				$maxrad = ($_POST[$maxradn]) ? $_POST[$maxradn] : (int)($mask_val*0.8);
 				$ignore_images = ($_POST[$ignore_imagesn]) ? $_POST[$ignore_imagesn] : "10";
@@ -954,7 +369,6 @@ function jobform($extra=false) {
 				$forw_ang_inc = ($_POST[$forw_ang_incn]) ? $_POST[$forw_ang_incn] : "25";
 				$euler_ang_inc = ($_POST[$euler_ang_incn]) ? $_POST[$euler_ang_incn] : "10";
 				$keep_ordered = ($_POST[$keep_orderedn]) ? $_POST[$keep_orderedn] : "0.9";
-#				$hamming_window = ($_POST[$hamming_windown]) ? $_POST[$hamming_windown] : "0.8";
 				$obj_size = ($_POST[$obj_sizen]) ? $_POST[$obj_sizen] : "0.8";
 				$threedfilt = ($_POST[$threedfiltn]) ? $_POST[$threedfiltn] : "20";
 			}
@@ -980,7 +394,6 @@ function jobform($extra=false) {
 				$forw_ang_inc = ($i>$j) ? $_POST['forw_ang_inc'.($i-1)] : $_POST[$forw_ang_incn];
 				$euler_ang_inc = ($i>$j) ? $_POST['euler_ang_inc'.($i-1)] : $_POST[$euler_ang_incn];
 				$keep_ordered = ($i>$j) ? $_POST['keep_ordered'.($i-1)] : $_POST[$keep_orderedn];
-#				$hamming_window = ($i>$j) ? $_POST['hamming_window'.($i-1)] : $_POST[$hamming_windown];
 				$obj_size = ($i>$j) ? $_POST['obj_size'.($i-1)] : $_POST[$obj_sizen];
 				$threedfilt = ($i>$j) ? $_POST['threedfilt'.($i-1)] : $_POST[$threedfiltn];
 			}
@@ -1039,12 +452,16 @@ function jobform($extra=false) {
 //	echo "<input type='text' NAME='auto_lp_filt_base' SIZE='2' VALUE='$auto_lp_filt_base'>\t";
 //	echo "<input type='text' NAME='auto_lp_filt_fraction' SIZE='2' VALUE='$auto_lp_filt_fraction'>\t";
 //	echo docpop('auto_filter','<B>Auto-filter stack for each iteration</B>');
+
+	// parameters that do not change from iteration to iteration
 	echo "<br><INPUT TYPE='checkbox' NAME='cent_stack' $centcheck>\n";
 	echo docpop('center','<B>Center stack prior to alignment</B>');
 	echo "<br><INPUT TYPE='checkbox' NAME='mirror' $mirrorcheck>\n";
 	echo docpop('mirror','<B>Mirror references for alignment</B>');
 	echo "<br><INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
+	
+	// hidden variables
 	echo "<input type='hidden' NAME='nproc' VALUE='$nproc'><P>";
   	echo "<input type='hidden' NAME='numiters' VALUE='$numiters'><P>";
 	echo "<input type='hidden' NAME='modelid' VALUE='$modelid'><P>";
@@ -1053,7 +470,15 @@ function jobform($extra=false) {
 	echo "<input type='hidden' NAME='stackval' value='".$_POST['stackval']."'>\n";
 	echo "<input type='hidden' NAME='model' value='".$_POST['model']."'>\n";
 	echo getSubmitForm("run imagic");
-	echo "</form>\n";
+	echo "</form><br><br>\n";
+	
+	// display stack and initial model at the end
+	echo "<table class='tablebubble'><tr><td>\n";
+	echo stacksummarytable($stackid, true);
+	echo "</td></tr><tr><td>\n";
+	echo modelsummarytable($modelid, true);
+	echo "</td></tr></table>\n";
+	
 	processing_footer();
 	exit;
 }
@@ -1065,6 +490,7 @@ function jobform($extra=false) {
 ############################################################
 
 function imagic3dRefine() {
+	// get variables from $_POST[] array
 	$expId = $_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
 	$user = $_SESSION['username'];
@@ -1088,7 +514,7 @@ function imagic3dRefine() {
 	
 	// get the stack info (pixel size, box size)
 	$stackinfo=explode('|--|',$_POST['stackval']);
-	$stackidval=$stackinfo[0];
+	$stackid=$stackinfo[0];
 	$stackpath=$stackinfo[4];
 	$stackname1=$stackinfo[5];
 	$stackname2=$stackinfo[6];
@@ -1115,7 +541,6 @@ function imagic3dRefine() {
 		$forw_ang_inc = $_POST['forw_ang_inc'.$i];
 		$euler_ang_inc = $_POST['euler_ang_inc'.$i];
 		$keep_ordered = $_POST['keep_ordered'.$i];
-#		$hamming_window = $_POST['hamming_window'.$i];
 		$obj_size = $_POST['obj_size'.$i];
 		$threedfilt = $_POST['threedfilt'.$i];
 
@@ -1123,7 +548,7 @@ function imagic3dRefine() {
 
 		$command = "imagic3dRefine.py";
 		$command.= " --projectid=".$_SESSION['projectId'];
-		$command.= " --stackid=$stackidval";
+		$command.= " --stackid=$stackid";
 		if ($imagic3d0id) $command.= " --imagic3d0id=$imagic3d0id";
 		else $command.= " --modelid=$modelid";
 		$command.= " --runname=$runid";
@@ -1144,7 +569,6 @@ function imagic3dRefine() {
 		$command.= " --mrarefs_ang_inc=$mrarefs_ang_inc";
 		$command.= " --max_shift_orig=$max_shift_orig";
 		$command.= " --max_shift_this=$max_shift_this";
-//		$command.= " --samp_param=$samp_param";
 		$command.= " --minrad=$minrad";
 		$command.= " --maxrad=$maxrad";
 		$command.= " --ignore_images=$ignore_images";
@@ -1155,7 +579,6 @@ function imagic3dRefine() {
 		$command.= " --forw_ang_inc=$forw_ang_inc";
 		$command.= " --euler_ang_inc=$euler_ang_inc";
 		$command.= " --keep_ordered=$keep_ordered";
-#		$command.= " --ham_win=$hamming_window";
 		$command.= " --object_size=$obj_size";
 		if ($threedfilt) $command.= " --3d_lpfilt=$threedfilt";
 		$command.= " --description=\"$description\"";
@@ -1168,6 +591,7 @@ function imagic3dRefine() {
 		$command_array[] = $command;
 	}
 
+	// check for errors in submission
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
@@ -1178,6 +602,7 @@ function imagic3dRefine() {
 
 	processing_header("IMAGIC 3d Refinement Job Generator","IMAGIC 3d Refinement Job Generator",$javafunc);
 
+	// display commands for each iteration of refinement
 	echo"
         <TABLE WIDTH='600' BORDER='1'>
         <TR><TD COLSPAN='2'>
