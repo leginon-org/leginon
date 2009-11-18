@@ -704,7 +704,7 @@ class ApImagicAlignAnalysisData(Data):
 			('mask_dropoff', float),
 			('numiters', int),
 			('overcorrection', float),
-			('MSAmethod', str),
+			('MSAdistance', str),
 			('eigenimages', str),
 		)
 	typemap = classmethod(typemap)
@@ -1578,15 +1578,4 @@ class ApImagic3dRefineIterationData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class ApImagicNoRefRunData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('runname', str),
-			('mask_radius', float),
-			('mask_dropoff', float),
-			('numiters', int),
-			('overcorrection', float),
-			('MSAmethod', str),
-		)
-	typemap = classmethod(typemap)
 
