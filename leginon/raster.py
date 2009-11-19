@@ -84,7 +84,6 @@ def createIndices2(a,b,angle,offset=False,odd=False,tiltoffset=(0,0)):
 		ind[1] = ind[1] + tiltoffset[1]
 	center0 = shape[0] / 2.0
 	center1 = shape[1] / 2.0
-	print "offset", ind[0][0][0], ind[1][0][0]
 	ind[0] = ind[0] - center0
 	ind[1] = ind[1] - center1
 	indices = zip(ind[0].flat, ind[1].flat)
