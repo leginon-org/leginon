@@ -55,7 +55,7 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	$thickness = ($_POST['thickness']) ? $_POST['thickness'] : '200';
 	$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
 	$tiltseriesId2 = ($_POST['tiltseriesId2']) ? $_POST['tiltseriesId2'] : NULL;
-	$alignruns = $particle->countTomoAlignmentRuns($tiltseriesId);
+	$alignruns = $particle->countFullTomograms($tiltseriesId);
 	$alignerId = ($_POST['alignerId']) ? $_POST['alignerId'] : NULL;
 	$autorunname = ($alignruns) ? 'full'.($alignruns+1):'full1';
 	$runname = ($_POST['lasttiltseries']==$tiltseriesId) ? $_POST['runname']:$autorunname;
