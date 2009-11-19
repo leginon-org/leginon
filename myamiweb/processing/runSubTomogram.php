@@ -322,7 +322,7 @@ function runSubTomogram() {
 
 		if (!($user && $password)) createSubTomogramForm("<B>ERROR:</B> You must be logged in to submit");
 		$rundir = $outdir.'/'.$runname;
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'subtomomaker',True,True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'subtomomaker',False,False,False);
 		// if errors:
 		if ($sub) createSubTomogramForm("<b>ERROR:</b> $sub");
 
