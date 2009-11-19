@@ -458,9 +458,18 @@ def insertSubTomoRun(sessiondata,selectionrunid,stackid,name,invert=False,subbin
 			pick=pickdata,stack=stackdata,runname=name,invert=invert,subbin=subbin)
 	return publish(qrun)
 
+def insertFullTomoRun(sessiondata,path,runname,method):
+	runq = appiondata.ApFullTomogramRunData()
+	runq['session'] = sessiondata
+	runq['path'] = appiondata.ApPathData(path=os.path.abspath(path))
+	runq['runname'] = runname
+	runq['method'] = method
+	return publish(runq)
+
 def checkExistingFullTomoData(path,name):
 	pathq = appiondata.ApPath(path=path)
-	tomoq = appiondata.ApFullTomogramData(name=name,path=pathq)
+	runq = appiondata.ApFullTomogramRunData(pathq) 
+	tomoq = appiondata.ApFullTomogramData(name=name, reconrun=runq)
 	results = tomoq.query()
 	if not results:
 		return None
@@ -496,38 +505,44 @@ def uploadTomo(params):
 	path = os.path.abspath(params['rundir'])
 	description = params['description']
 	if params['full']:
+		thickness = params['shape'][0] * fullbin
 		uploadfile = params['zprojfile']
 		projectimagedata = uploadZProjection(runname,firstimagedata,uploadfile)
-		return insertFullTomogram(sessiondata,tiltdata,alignerdata,path,name,description,projectimagedata)
+		fullrundata = insertFullTomoRun(sessiondata,path,runname,'upload')
+		return insertFullTomogram(sessiondata,tiltdata,alignerdata,fullrundata,name,description,projectimagedata,thickness,fullbin)
 	else:
 		projectimagedata = None
 		fulltpath = params['rundir'].replace('/'+params['volume'],'')
 		dummyname = 'dummy'
 		dummydescription = 'fake full tomogram for subtomogram upload'
-		fulltomogram = insertFullTomogram(sessiondata,tiltdata,alignerdata,fulltpath,dummyname,dummydescription,projectimagedata)
+		thickness = params['shape'][0] * subbin
+		fullrundata = insertFullTomoRun(sessiondata,fullpath,runname,'upload')
+		fulltomogram = insertFullTomogram(sessiondata,tiltdata,alignerdata,fullrundata,dummyname,dummydescription,projectimagedata,thickness,fullbin)
 		apix = apDatabase.getPixelSize(firstimagedata)
 		tomoq = appiondata.ApTomogramData()
 		tomoq['session'] = sessiondata
 		tomoq['tiltseries'] = tiltdata
 		results = tomoq.query()
 		index = len(results)+1
-		pixelsize = 1e-10 * apix * params['bin']
+		pixelsize = 1e-10 * apix * subbin
 		runname = params['volume']
-		shape = map((lambda x: x * params['bin']), params['shape'])
+		shape = map((lambda x: x * subbin), params['shape'])
 		dimension = {'x':shape[2],'y':shape[1], 'z':shape[0]}
 		subtomorundata = insertSubTomoRun(sessiondata,
 				None,None,runname,params['invert'],subbin)
 		return insertSubTomogram(fulltomogram,subtomorundata,None,0,dimension,path,name,index,pixelsize,description)
 
-def insertFullTomogram(sessiondata,tiltdata,aligner,path,name,description,projectimagedata):
+def insertFullTomogram(sessiondata,tiltdata,aligner,fullrundata,name,description,projectimagedata,thickness,bin=1):
 	tomoq = appiondata.ApFullTomogramData()
 	tomoq['session'] = sessiondata
 	tomoq['tiltseries'] = tiltdata
 	tomoq['aligner'] = aligner
-	tomoq['path'] = appiondata.ApPathData(path=os.path.abspath(path))
+	tomoq['reconrun'] = fullrundata
 	tomoq['name'] = name
 	tomoq['description'] = description
 	tomoq['zprojection'] = projectimagedata
+	tomoq['thickness'] = thickness
+	tomoq['bin'] = bin
 	return publish(tomoq)
 
 def getLastVolumeIndex(fulltomodata):
@@ -722,7 +737,7 @@ def getSubvolumeInfo(subtomorundata):
 		tomo = results[0]
 		subbin = subtomorundata['subbin']
 		fullq = appiondata.ApFullTomogramData()
-		fulltomogram = fullq.direct_query(17)
+		fulltomogram = tomo['fulltomogram']
 		if fulltomogram['alignrun'] is  None:
 			# new data has no alignrun
 			fullbin = tomo['fulltomogram']['aligner']['alignrun']['bin']

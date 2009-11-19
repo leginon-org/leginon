@@ -954,6 +954,16 @@ class ApTomoAlignmentRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApFullTomogramRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', leginondata.SessionData),
+			('runname', str),
+			('path', ApPathData),
+			('method', str),
+		)
+	typemap = classmethod(typemap)
+
 class ApSubTomogramRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -967,13 +977,18 @@ class ApSubTomogramRunData(Data):
 	typemap = classmethod(typemap)
 
 class ApFullTomogramData(Data):
+	# path, combined, alignrun, tiltseries should be removed from here once all
+	# old data not having aligner or reconrun are converted
 	def typemap(cls):
 		return Data.typemap() + (
 			('session', leginondata.SessionData),
 			('tiltseries', leginondata.TiltSeriesData),
 			('aligner', ApTomoAlignerParamsData),
+			('reconrun', ApFullTomogramRunData),
 			('alignrun', ApTomoAlignmentRunData),
 			('combined', list),
+			('thickness', int),
+			('bin', int),
 			('path', ApPathData),
 			('name', str),
 			('description', str),

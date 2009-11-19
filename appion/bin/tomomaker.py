@@ -56,7 +56,7 @@ class tomoMaker(appionScript.AppionScript):
 			help="Extra binning from original images, e.g. --bin=2", metavar="int")
 
 		### choices
-		self.methods = ( "imod-wbp", "xmipp-art" )
+		self.methods = ( "imod-wbp", "xmipp-art", "upload" )
 		self.parser.add_option("--method", dest="method",
 			help="reconstruction method, e.g. --method=imod-wbp", metavar="Method",
 			type="choice", choices=self.methods, default="imod-wbp" )
@@ -114,6 +114,7 @@ class tomoMaker(appionScript.AppionScript):
 		commit = self.params['commit']
 		tiltdatalist = self.tiltdatalist
 		sessiondata = tiltdatalist[0]['session']
+		runname = self.params['runname']
 		description = self.params['description']
 		bin = int(self.params['bin'])
 		apDisplay.printMsg("getting imagelist")
@@ -147,11 +148,13 @@ class tomoMaker(appionScript.AppionScript):
 		origtomopath = os.path.join(processdir, seriesname+"_full.rec")
 		currenttomopath = apImod.transformVolume(origtomopath,voltransform)
 		shutil.move(currenttomopath, origtomopath)
-		zprojectfile = apImod.projectFullZ(processdir, self.params['runname'], seriesname,bin,True,False)
+		zprojectfile = apImod.projectFullZ(processdir, runname, seriesname,bin,True,False)
 		if commit:
-			zimagedata = apTomo.uploadZProjection(self.params['runname'],imagelist[0],zprojectfile)
+			q=leginondata.AcquisitionImageData()
+			zimagedata = apTomo.uploadZProjection(runname,imagelist[0],zprojectfile)
+			fullrundata = apTomo.insertFullTomoRun(sessiondata,processdir,runname,self.params['method'])
 			fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltdatalist[0],alignerdata,
-						processdir,reconname,description,zimagedata)
+						fullrundata,reconname,description,zimagedata,thickness,bin)
 #=====================
 #=====================
 if __name__ == '__main__':
