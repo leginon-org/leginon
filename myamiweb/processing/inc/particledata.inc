@@ -736,6 +736,11 @@ class particledata {
 		return ($r)? count($r) : 0;
 	}
 	
+	function countFullTomograms($tiltseriesId){
+		$r = $this->checkforFullTomogram($tiltseriesId,True);
+		return ($r)? count($r) : 0;
+	}
+	
 	function countTomogramsByAlignment($tiltseriesId,$alignrunname){
 		$q="SELECT t.* "
 			."FROM ApTomoAlignmentRunData a "
