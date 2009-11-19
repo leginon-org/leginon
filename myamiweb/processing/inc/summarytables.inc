@@ -513,7 +513,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 			$clustertable .= "<li><a target='snapshot' href='loadimg.php?filename=$montagefile'>View montage of self-organizing map</a>\n";
 			$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 			$clustertable .= "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile&ps=$clusterpixelsize' target='stackview'>"
-				."View montage as a stack for further processing</a><br/>\n";
+				."View montage as a stack for further processing</a> (ID $clusterid)<br/>\n";
 			$clustertable .= "</ul>\n";
 		} elseif ($clusterrun['REF|ApRotKerDenSOMParamsData|rotkerdenparams']) {
 			// Rot KerDen only has one cluster data
@@ -529,7 +529,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 			$clustertable .= "<li><a target='snapshot' href='loadimg.php?filename=$montagefile'>View montage of self-organizing map</a>\n";
 			$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 			$clustertable .= "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
-				."View montage as a stack for further processing</a><br/>\n";
+				."View montage as a stack for further processing</a> (ID $clusterid)<br/>\n";
 			$clustertable .= "</ul>\n";
 		} elseif ($clusterrun['REF|ApAffinityPropagationClusterParamsData|affpropparams']) {
 			// Affinity Propagation only has one cluster data
@@ -540,7 +540,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 			$clustertable .= "<ul>\n";
 			$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 			$clustertable .= "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
-				."View class averages</a><br/>\n";
+				."View class averages</a> (ID $clusterid)<br/>\n";
 			$clustertable .= "</ul>\n";
 		} else {
 			$clustertable .= "<b>Type:</b> <i>Unknown type of clustering</i><br/>\n";
@@ -553,7 +553,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 			if ($clusterdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
 				$clustertable .= "<li><span>"
 					."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
-					.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
+					.$clusterdata['num_classes']." Class Averages</a> (ID $clusterid)&nbsp;"
 					."</span></li>\n";
 			} elseif ($clusterdata['REF|ApSpiderClusteringParamsData|spiderparams']) {
 				$clustertable .= "<li><span>"
