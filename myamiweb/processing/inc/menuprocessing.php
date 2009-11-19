@@ -622,16 +622,33 @@ if ($expId) {
 
 		// get tilt series alignement stats:
 		$aresults=array();
-		$adone = count($subclusterjobs['tomoalign']['done']);
+		$adone = count($subclusterjobs['tomoaligner']['done']);
 		$adone = count($particle->getTomoAlignmentRunsFromSession($sessionId, False));
-		$arun = count($subclusterjobs['tomoalign']['running']);
-		$aq = count($subclusterjobs['tomoalign']['queued']);
+		$arun = count($subclusterjobs['tomoaligner']['running']);
+		$aq = count($subclusterjobs['tomoaligner']['queued']);
 		$aresults[] = ($adone==0) ? "" : "<a href='tomoalignsummary.php?expId=$sessionId'>$adone complete</a>";
 		$aresults[] = ($arun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoalign'>$srun running</a>";
 		$aresults[] = ($aq==0) ? "" : "$aq queued";
 		
+		// get full tomogram making stats:
+		$tresults=array();
+		$tdone = $fulltomoruns;
+		$trun = count($subclusterjobs['tomomaker']['running']);
+		$tq = count($subclusterjobs['tomomaker']['queued']);
+		$tresults[] = ($tdone==0) ? "" : "<a href='tomosummary.php?expId=$sessionId'>$tdone complete</a>";
+		$tresults[] = ($trun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomomaker'>$trun running</a>";
+		$tresults[] = ($tq==0) ? "" : "$tq queued";
+		// get subtomogram making stats:
+		$stresults=array();
+		$stdone = $tomoruns;
+		$strun = count($subclusterjobs['subtomomaker']['running']);
+		$stq = count($subclusterjobs['subtomomaker']['queued']);
+		$stresults[] = ($stdone==0) ? "" : "<a href='tomosummary.php?expId=$sessionId'>$stdone complete</a>";
+		$stresults[] = ($strun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadtomo'>$strun running</a>";
+		$stresults[] = ($stq==0) ? "" : "$stq queued";
+
 		// tomograms being created and completed
-		$tottomo = $sdone+$srun+$sq;
+		$tottomo = $tdone+$trun+$tq;
 
 		$tottomo = ($tottomo > $tomoruns+$fulltomoruns) ? $tottomo : $tomoruns+$fulltomoruns;
 		$totresult = ($tottomo==0) ? "" :
@@ -644,7 +661,7 @@ if ($expId) {
 			);
 		$nruns[]=array (
 			'name'=>"<a href='runTomoMaker.php?expId=$sessionId'>Create full tomogram</a>",
-			'result'=>$sresults,
+			'result'=>$tresults,
 			);
 		$nruns[]=array (
 			'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload tomogram</a>",
@@ -652,7 +669,7 @@ if ($expId) {
 			);
 		$nruns[]=array (
 			'name'=>"<a href='runSubTomogram.php?expId=$sessionId'>Create tomogram subvolume</a>",
-			'result'=>$sresults,
+			'result'=>$stresults,
 			);
 		$nruns[]=array (
 			'name'=>"<a href='runTomoAverage.php?expId=$sessionId'>Average subvolumes</a>",
