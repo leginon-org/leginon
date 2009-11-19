@@ -1365,6 +1365,7 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 			('ice min mean', float),
 			('ice max mean', float),
 			('ice max std', float),
+			('ice min std', float),
 			('focus convolve', bool),
 			('focus convolve template', list),
 			('focus constant template', list),

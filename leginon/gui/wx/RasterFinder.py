@@ -304,7 +304,8 @@ class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['ice thickness'] = FloatEntry(self, -1, chars=8)
 		self.widgets['ice min mean'] = FloatEntry(self, -1, chars=8)
 		self.widgets['ice max mean'] = FloatEntry(self, -1, chars=8)
-		self.widgets['ice max std'] = FloatEntry(self, -1, chars=8)
+		self.widgets['ice max std'] = FloatEntry(self, -1, chars=8, min=0.0)
+		self.widgets['ice min std'] = FloatEntry(self, -1, chars=8, min=0.0)
 		self.widgets['focus convolve'] = wx.CheckBox(self, -1, 'Convolve')
 		self.widgets['focus convolve template'] = \
 			gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
@@ -336,6 +337,10 @@ class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'Max. stdev.:')
 		szice.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['ice max std'], (4, 1), (1, 1),
+			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Min. stdev.:')
+		szice.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szice.Add(self.widgets['ice min std'], (5, 1), (1, 1),
 			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szice.AddGrowableCol(1)
 

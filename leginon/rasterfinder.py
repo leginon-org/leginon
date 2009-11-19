@@ -46,6 +46,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		'ice min mean': 0.05,
 		'ice max mean': 0.2,
 		'ice max std': 0.2,
+		'ice min std': 0.0,
 		'focus convolve': False,
 		'focus convolve template': [],
 		'focus constant template': [],
@@ -148,7 +149,6 @@ class RasterFinder(targetfinder.TargetFinder):
 		for xt in xlist:
 			xshft = xt * xspacing
 			for yt in ylist:
-				print 'old',xt,yt
 				yshft = yt * yspacing
 				xrot = xshft * numpy.cos(radians) - yshft * numpy.sin(radians) 
 				yrot = yshft * numpy.cos(radians) + xshft * numpy.sin(radians)
@@ -156,7 +156,6 @@ class RasterFinder(targetfinder.TargetFinder):
 				y = int(yrot + y0)
 				if x < 0 or x >= imageshape[0]: continue
 				if y < 0 or y >= imageshape[1]: continue
-				print 'rotated',x,y
 				points.append( (x,y) )
 
 		#old stuff
@@ -243,7 +242,8 @@ class RasterFinder(targetfinder.TargetFinder):
 		i0 = self.settings['ice thickness']
 		tmin = self.settings['ice min mean']
 		tmax = self.settings['ice max mean']
-		tstd = self.settings['ice max std']
+		tstdmax = self.settings['ice max std']
+		tstdmin = self.settings['ice min std']
 		boxsize = self.settings['ice box size']
 
 		self.icecalc.set_i0(i0)
@@ -257,7 +257,7 @@ class RasterFinder(targetfinder.TargetFinder):
 			box_stats = self.get_box_stats(self.currentimagedata['image'], rasterpoint, boxsize)
 			t = self.icecalc.get_thickness(box_stats['mean'])
 			ts = self.icecalc.get_stdev_thickness(box_stats['std'], box_stats['mean'])
-			if (tmin <= t <= tmax) and (ts < tstd):
+			if (tmin <= t <= tmax) and (tstdmin <= ts <= tstdmax):
 				goodpoints.append(rasterpoint)
 				mylist.append( (rasterpoint, t, ts))
 
