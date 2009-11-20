@@ -35,6 +35,12 @@ def getTiltdataList(tiltseriesdata,othertiltdata=None):
 			apDisplay.printMsg('Combining images from two tilt series')
 		return tiltdatalist
 
+def getExcludedImageIds(ordered_imagelist,excludelist):
+	excludeids = []
+	for i in excludelist:
+		excludeids.append(ordered_imagelist[i].dbid)
+	return excludeids
+
 def getAlignerdata(alignerid):
 	q = appiondata.ApTomoAlignerParamsData()
 	alignerdata = q.direct_query(alignerid)
@@ -458,12 +464,13 @@ def insertSubTomoRun(sessiondata,selectionrunid,stackid,name,invert=False,subbin
 			pick=pickdata,stack=stackdata,runname=name,invert=invert,subbin=subbin)
 	return publish(qrun)
 
-def insertFullTomoRun(sessiondata,path,runname,method):
+def insertFullTomoRun(sessiondata,path,runname,method,imageidlist):
 	runq = appiondata.ApFullTomogramRunData()
 	runq['session'] = sessiondata
 	runq['path'] = appiondata.ApPathData(path=os.path.abspath(path))
 	runq['runname'] = runname
 	runq['method'] = method
+	runq['excluded'] = imageidlist
 	return publish(runq)
 
 def checkExistingFullTomoData(path,name):

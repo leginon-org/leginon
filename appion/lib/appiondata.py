@@ -961,6 +961,7 @@ class ApFullTomogramRunData(Data):
 			('runname', str),
 			('path', ApPathData),
 			('method', str),
+			('excluded', list),
 		)
 	typemap = classmethod(typemap)
 

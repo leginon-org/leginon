@@ -155,7 +155,7 @@ $mrctaper 08aug14f_008.ali
 		writeCommandAndRun(processdir,'newst',commands,[inputparams['alignedstack'],'newst.log'])
 
 
-def recon3D(stackdir, processdir, seriesname, shape=(2048,2048), thickness=100, invert=False):
+def recon3D(stackdir, processdir, seriesname, shape=(2048,2048), thickness=100, invert=False, excludelist=[]):
 		"""
 # Command file to run Tilt
 #
@@ -169,6 +169,7 @@ def recon3D(stackdir, processdir, seriesname, shape=(2048,2048), thickness=100, 
 $tilt
 08aug14f_008.ali
 08aug14f_008_full.rec
+EXCLUDELIST 11,12
 FULLIMAGE 512 512
 LOG 0.0
 MODE 2
@@ -207,6 +208,8 @@ DONE
 			"TILTFILE "+inputparams['tilts'],
 			"XAXISTILT 0.0",
 		]
+		if len(excludelist):
+			commands.append("EXCLUDELIST "+ ','.join(map((lambda x: str(x+1)),excludelist))) 
 		writeCommandAndRun(processdir,'tilt',commands,[inputparams['recon'],'tilt.log'])
 
 def trimVolume(processdir, runname, seriesname, volumename, center, offsetz, size,rotx=True):
