@@ -53,8 +53,9 @@ if ($shownfulltomos) {
 	$html = "<h4>Full Tomograms</h4>";
 	$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$selected_keys = array ( 'tiltseries','fulltomoid','runname','description','subtomo');
+	$selected_keys = array ( 'tiltseries number','fulltomoid','runname','description','subtomo');
 	$display_keys = $selected_keys;
+	$display_keys[0] = 'tiltseries';
 	$display_keys[1] = 'id';
 	$display_keys[4] = 'subtomograms';
 	foreach($display_keys as $key) {
