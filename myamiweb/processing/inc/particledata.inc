@@ -320,19 +320,38 @@ class particledata {
 		return $r;
 	}
 	function getFullTomogramInfo($tomogramId){
+		# check to see if ApFullTomogramRunData is linked.  Old data does not have it.
+		$q = "SELECT t.* "
+			."FROM `ApFullTomogramData` t "
+			."WHERE t.`DEF_id` = " .$tomogramId;
+		list($r) = $this->mysql->getSQLResult($q);
+		if ($r['REF|ApFullTomogramRunData|reconrun']) $has_run=True;
+
 		$q =  "SELECT t.`DEF_id` as DEF_id, "
-			."t.`REF|ApTomoAlignmentRunData|alignrun` as alignrun, "
-			."t.name as tomorunname, "
+			."t.`REF|ApTomoAlignerParamsData|aligner` as aligner, ";
+		if ($has_run) {
+			$q .= "r.`runname` as runname, ";
+			$q .= "r.`method` as `recon method`, ";
+		}
+		$q .= "t.name as tomofilename, "
 			."t.description as description, "
 			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
 			."tilt.number as 'tiltseries number', "
-			." p.`path`, "
+			." p.`path` as path, "
 			." t.`hidden` "
-			."FROM `ApFullTomogramData` t "
-			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
-			."LEFT JOIN ".DB.".`TiltSeriesData` tilt ON t.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
+			."FROM `ApFullTomogramData` t ";
+		if ($has_run) {
+			$q .= "LEFT JOIN `ApFullTomogramRunData` r ON t.`REF|ApFullTomogramRunData|reconrun` = r.`DEF_id` "
+				."LEFT JOIN `ApPathData` p ON r.`REF|ApPathData|path` = p.`DEF_id` ";
+		} else {
+			$q .= "LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` ";
+		}
+		$q .= "LEFT JOIN ".DB.".`TiltSeriesData` tilt ON t.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
 			."WHERE t.`DEF_id` = " .$tomogramId;
 		list($r) = $this->mysql->getSQLResult($q);
+		if (!$r['runname']) {
+			$r['runname'] = array_pop(explode('/',$r['path']));
+		}
 		return $r;
 	}
 
@@ -658,29 +677,16 @@ class particledata {
 	}
 
 	function checkforFullTomogram($tiltseriesId,$showHidden=False){
-		$q =  "SELECT t.`DEF_id`, t.name as `tomofilename` , p.`path`, a.`name` as `runname`, a.`bin`,t.`description`,count(*) as `subtomo` ";
-		$fields = $this->mysql->getFields('ApFullTomogramData');
-		if (in_array('hidden',$fields)) $q .= ",t.`hidden` ";
-		$q .=
-			"FROM `ApFullTomogramData` t "
-			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
-			."LEFT JOIN `ApTomoAlignmentRunData` a ON t.`REF|ApTomoAlignmentRunData|alignrun` = a.`DEF_id` ";
-		if ($this->mysql->SQLTableExists("ApTomogramData")) {
-			$q .=
-				"LEFT JOIN `ApTomogramData` sub ON sub.`REF|ApFullTomogramData|fulltomogram` = t.`DEF_id` ";
-		}
-		$q .=	"WHERE t.`REF|leginondata|TiltSeriesData|tiltseries` = " .$tiltseriesId." "
-			." ";
-		$fields = $this->mysql->getFields('ApTomogramData');
-		if (!$showHidden && in_array('hidden',$fields))
-			$q .= " AND ( t.`hidden` = 0 OR t.`hidden` IS NULL ) ";
-		$q .= "GROUP BY t.`DEF_id`";
+		$q =  "SELECT t.`DEF_id`, t.name as `tomofilename` "
+			."FROM `ApFullTomogramData` t "
+			."WHERE t.`REF|leginondata|TiltSeriesData|tiltseries` = " .$tiltseriesId;
 		$r = $this->mysql->getSQLResult($q);
 		$result = array();
 		if ($r && count($r)) {
 			foreach ($r as $full) {
-				$full['subtomo'] = $this->countSubTomograms($full['DEF_id']);
-				$result[] = $full;
+				$fullinfo = $this->getFullTomogramInfo($full['DEF_id']);
+				$fullinfo['subtomo'] = $this->countSubTomograms($full['DEF_id']);
+				if ($showHidden || !$fullinfo['hidden']) $result[] = $fullinfo;
 			}
 		}
 		return $result;
