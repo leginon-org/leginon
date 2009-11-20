@@ -59,6 +59,7 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	$alignerId = ($_POST['alignerId']) ? $_POST['alignerId'] : NULL;
 	$autorunname = ($alignruns) ? 'full'.($alignruns+1):'full1';
 	$runname = ($_POST['lasttiltseries']==$tiltseriesId) ? $_POST['runname']:$autorunname;
+	$excludenumber = ($_POST['exclude']) ? $_POST['exclude']:'';
 	$description = $_POST['description'];
 
 	$alltiltseries = $particle->getTiltSeries($expId);
@@ -119,6 +120,10 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	}
 	echo "</td></tr></table>";
 	if ($currentaligner) {
+		echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$currentaligner&expId=$expId&type=shifty'><br/>\n";
+		echo "<p>
+			<input type='text' name='exclude' value='$excludednumber' size='10'>\n";
+		echo docpop('tomoexclude', 'Exclude Images');
 		echo "<p>
 			<input type='text' name='runname' value='$runname' size='10'>\n";
 		echo docpop('tomorunname', 'Runname');
@@ -190,6 +195,7 @@ function runTomoMaker() {
 	$sessionname=$_POST['sessionname'];
 	$extrabin=$_POST['extrabin'];
 	$thickness=$_POST['thickness'];
+	$excludenumber=$_POST['exclude'];
 
 	//make sure a tilt series was provided
 	if (!$alignerId) createTomoMakerForm("<b>ERROR:</b> Select the alignment");
@@ -203,6 +209,7 @@ function runTomoMaker() {
 	$command.="--projectid=$projectId ";
 	$command.="--runname=$runname ";
 	$command.="--thickness=$thickness ";
+	$command.="--exclude=$excludenumber ";
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
 	// submit job to cluster
