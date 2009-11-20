@@ -46,6 +46,8 @@ class tomoMaker(appionScript.AppionScript):
 		### strings
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
+		self.parser.add_option("--exclude", dest="exclude",
+			help="Tilt images to be excluded (0,5,8)", metavar="0,1,...")
 
 		### integers
 		self.parser.add_option("--alignerid", dest="alignerid", type="int",
@@ -115,8 +117,17 @@ class tomoMaker(appionScript.AppionScript):
 		tiltdatalist = self.tiltdatalist
 		sessiondata = tiltdatalist[0]['session']
 		runname = self.params['runname']
+		processdir = self.params['fulltomodir']
 		description = self.params['description']
 		bin = int(self.params['bin'])
+		### list of particles to be excluded
+		excludelist = []
+		if self.params['exclude'] is not None:
+			excludestrlist = self.params['exclude'].split(",")
+			for excld in excludestrlist:
+				excludelist.append(int(excld.strip()))
+		apDisplay.printMsg("Exclude list: "+str(excludelist))
+		# Get image list and information
 		apDisplay.printMsg("getting imagelist")
 		imagelist = apTomo.getImageList(tiltdatalist)
 		apDisplay.printMsg("getting pixelsize")
@@ -124,7 +135,6 @@ class tomoMaker(appionScript.AppionScript):
 		imgshape = apTomo.getTomoImageShape(imagelist[0])
 		center = {'x':imgshape[1]/2,'y':imgshape[0]/2}
 		centertuple = (center['x'],center['y'])
-		processdir = self.params['fulltomodir']
 		alignerdata = apTomo.getAlignerdata(self.params['alignerid'])
 		seriesname = apTomo.getFilename(tiltdatalist)
 		stackname = seriesname+".st"
@@ -142,7 +152,7 @@ class tomoMaker(appionScript.AppionScript):
 		apImod.createAlignedStack(stackdir, processdir, seriesname,bin)
 		# Reconstruction
 		thickness = int(self.params['thickness'])
-		apImod.recon3D(stackdir, processdir, seriesname, imgshape, thickness)
+		apImod.recon3D(stackdir, processdir, seriesname, imgshape, thickness/bin, False, excludelist)
 		# Full tomogram created with imod is left-handed XZY
 		voltransform = 'flipx'
 		origtomopath = os.path.join(processdir, seriesname+"_full.rec")
@@ -152,7 +162,8 @@ class tomoMaker(appionScript.AppionScript):
 		if commit:
 			q=leginondata.AcquisitionImageData()
 			zimagedata = apTomo.uploadZProjection(runname,imagelist[0],zprojectfile)
-			fullrundata = apTomo.insertFullTomoRun(sessiondata,processdir,runname,self.params['method'])
+			excludeimages = apTomo.getExcludedImageIds(ordered_imagelist,excludelist)
+			fullrundata = apTomo.insertFullTomoRun(sessiondata,processdir,runname,self.params['method'],excludeimages)
 			fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltdatalist[0],alignerdata,
 						fullrundata,reconname,description,zimagedata,thickness,bin)
 #=====================
