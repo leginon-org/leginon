@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import stat
 import time
@@ -102,3 +103,14 @@ def convertFilteringParameters(hpfilt, lpfilt, apix):
 		hpfilt_imagic = 0.01
 
 	return hpfilt_imagic, lpfilt_imagic
+
+def checkLogFileForErrors(logfile):
+	"""
+	checks for any errors arising in IMAGIC log file, provided as a full path & filename
+	"""
+	logf = open(logfile)
+	loglines = logf.readlines()
+	for line in loglines:
+		if re.search("ERROR in program", line):
+			apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: "+logfile)
+	logf.close()
