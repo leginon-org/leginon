@@ -17,12 +17,14 @@ import apDisplay
 import apEMAN
 import apIMAGIC
 import apFile
+import apImagicFile
 import apSymmetry
 import apDatabase
 import apStack
 import apProject
 import apFile
 import apVolume
+import spyder
 
 
 #=====================
@@ -85,11 +87,23 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="used to define precision of rotational alignment during MRA", metavar="int")
 		self.parser.add_option("--minrad", dest="minrad", type="int", default=0,
 			help="minimum radius (in pixels) used for MRA search", metavar="int")
-		self.parser.add_option("--maxrad", dest="maxrad", type="int", default=0.8,
+		self.parser.add_option("--maxrad", dest="maxrad", type="int",
 			help="maximum radius (in pixels) used for MRA search (defaulted to 0.8 * masksize)", metavar="int")
-		
 
 		### MRA (SPIDER)
+		self.parser.add_option("--spider_align", dest="spider_align", default=False, 
+			action="store_true", help="use SPIDER AP SH for multi-reference iterative 2-D alignment")
+		self.parser.add_option("--xy_search", dest="xy_search", type="int",	default=5,
+			help="translational search range in pixels", metavar="#")
+		self.parser.add_option("--xy_step", dest="xy_step", type="int",	default=1,
+			help="translational search step size in pixels", metavar="#")
+		self.parser.add_option("--minrad_spi", dest="minrad_spi", type="int", default=1,
+			help="minimum radius (in pixels) used for SPIDER MRA search", metavar="int")
+		self.parser.add_option("--maxrad_spi", dest="maxrad_spi", type="int",
+			help="maximum radius (in pixels) used for SPIDER MRA search (defaulted to 0.8 * masksize)", metavar="int")
+		self.parser.add_option("--angle_change", dest="angle_change", type="int", default=0,
+			help="maximum range of change for the Euler angles corresponding to each particle \
+				speeds up later alignment iterations", metavar="int")
 
 		### MSA
 		self.parser.add_option("--ignore_images", dest="ignore_images", type="int", default=10,
@@ -132,8 +146,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		### mass specified for eman volume function
 		self.parser.add_option("--mass", dest="mass", type="int",
 			help="OPTIONAL: used for thresholding volume of a 3d map to 1 based on given mass", metavar="INT")
-
-		return
+		self.parser.add_option("--contour", dest="contour", type="int", default=1,
+			help="OPTIONAL: Chimera thresholding value, set to 1 when density is thresholded with EMAN's 'volume' command", metavar="INT")
+		self.parser.add_option("--zoom", dest="zoom", type="int", default=1,
+			help="OPTIONAL: Chimera zoom value for creating snapshots", metavar="INT")
 
 	#=====================
 	def checkConflicts(self):
@@ -147,31 +163,34 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		if self.params['stackid'] is None:
 			apDisplay.printError("enter a stack ID for the stack that will be used in the refinement")
-		if self.params['imagic3d0id'] is None and self.params['modelid'] is None:
-			apDisplay.printError("enter an imagic 3d0 id or model id for the refinement")
+		if self.params['modelid'] is None:
+			apDisplay.printError("enter a model id for the refinement")
 			
-		if self.params['maxrad'] > self.params['mask_val'] or self.params['maxrad'] < 0:
-			self.params['maxrad'] = self.params['mask_val']
+		if self.params['maxrad'] > self.params['mask_val'] or self.params['maxrad'] <= 0 or self.params['maxrad'] is None:
+			self.params['maxrad'] = self.params['mask_val'] * 0.8
 		if self.params['minrad'] > self.params['mask_val'] or self.params['minrad'] < 0:
 			self.params['minrad'] = 0
-
-		return
+		
+		if self.params['spider_align'] is True:
+			if self.params['maxrad_spi'] > self.params['mask_val'] or self.params['maxrad_spi'] <= 0 or self.params['maxrad_spi'] is None:
+				self.params['maxrad_spi'] = self.params['mask_val_spi'] * 0.8
+			if self.params['minrad_spi'] > self.params['mask_val'] or self.params['minrad_spi'] < 1:
+				self.params['minrad_spi'] = 1
 
 	#=====================
 	def setRunDir(self):
 
-		if self.params['imagic3d0id'] is not None:
-			modeldata = appiondata.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
-			path = os.path.join(modeldata['path']['path'], modeldata['runname'])
-		elif self.params['modelid'] is not None:
-			print "NEED TO SET RECON PATH ... NOT WORKING YET"
-		else:
-			apDisplay.printError("3d0 initial model not in database")
-
-		self.params['rundir'] = os.path.join(path, self.params['runname'])
+		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		path = self.stackdata['path']['path']
+		uppath = os.path.abspath(os.path.join(path, "../.."))
+		self.params['rundir'] = os.path.join(uppath,'recon',self.params['runname'])
 
 	#=======================
 	def startFiles(self, modelfile):
+		"""
+		initialization: conversions, projections, masking, etc.
+		"""
+		
 		### first create IMAGIC batch file
 		basename = os.path.basename(modelfile)
 		batchfile = os.path.join(self.params['rundir'], "startFiles.batch")
@@ -190,7 +209,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("3D_VOLUME\n")
 		f.write(basename+"\n")
 		f.write(basename[:-4]+"\n")
-		f.write("%.3f,%.3f,%.3f\n"% (self.params['apix'], self.params['apix'], self.params['apix']))
+		f.write("%.3f,%.3f,%.3f\n" % (self.params['apix'], self.params['apix'], self.params['apix']))
 		f.write("YES\n")
 		f.write("0\n")
 		f.write("EOF\n")
@@ -252,18 +271,20 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("DISC\n")
 		f.write(str(radius)+"\n")
 		f.write("EOF\n")
-
 		f.close()
 
 		return batchfile
 
 	#=======================
-	def createImagicBatchFile(self):
-		# IMAGIC batch file creation
+	def createImagicBatchFile_1(self):
+		"""
+		batch file for everything prior to multi-reference alignment
+		"""
+		
 		syminfo = apSymmetry.findSymmetry(self.params['symmetry'])
 		symmetry = syminfo['eman_name']
+		
 		filename = os.path.join(self.params['rundir'], "imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
-
 		f = open(filename, 'w')
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
@@ -400,49 +421,102 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("start_cent\n")
 			f.write("start\n")
 			f.write("EOF\n")
+			f.close()
 		
-		### set minimum & maximum radii for MRA
-		radmin = int(round(float(self.params['minrad']) / (self.params['boxsize'] / 2)))
-		radmax = int(round(float(self.params['maxrad']) / (self.params['boxsize'] / 2)))
+		return filename
+			
+	#=======================			
+	def runAlignment(self):
+		"""
+		batch file & execution of multi-reference alignment, using either SPIDER or IMAGIC
+		"""
+		
+		if self.params['spider_align'] is True:
+			### define input and output stack
+			if self.params['itn'] == 1:
+				instack = os.path.join(self.params['rundir'], "start.spi")
+			else:
+				instack = os.path.join(self.params['rundir'], "mra"+str(self.params['itn']-1)+".spi")
+			outstack = os.path.join(self.params['rundir'], "mra"+str(self.params['itn'])+".spi")
+			templatestack = os.path.join(self.params['rundir'], "mrarefs_3d"+str(self.params['itn']-1)+".spi")
 
-		### perform a multi reference alignment of entire stack, using forward projections as references
-		if self.params['nproc'] > 1:
-			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
-				" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/mralign.e_mpi <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-			f.write("YES\n")
-			f.write(str(self.params['nproc'])+"\n")
+			### setup and write SPIDER batch file
+			localbatch = self.setupSpiderBatch(instack, outstack, templatestack)
+			
+			### run the alignment, removing any unecessary files
+			self.runSpiderAlignment(instack, outstack, templatestack, localbatch)
+			
 		else:
-			f.write("/usr/local/IMAGIC/align/mralign.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-			f.write("NO\n")
-		f.write("FRESH\n")
-		f.write("ALIGNMENT\n")
-		f.write("ALL\n")
-		f.write("ROTATION_FIRST\n")
-		f.write("CCF\n")
-		if self.params['itn'] == 1:
-			f.write("start\n")
-			f.write("mra"+str(self.params['itn'])+"\n")
-			f.write("start\n")
-		else:
-			f.write("mra"+str(self.params['itn']-1)+"\n")
-			f.write("mra"+str(self.params['itn'])+"\n")
-			f.write("start\n")
-#		f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
-		f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
-		f.write("no\n")
-		f.write("yes\n")
-		f.write(str(self.params['max_shift_orig'])+"\n")
-		if self.params['itn'] > 1:
-			f.write(str(self.params['max_shift_this'])+"\n")
-		f.write("-180,180\n")
-		if self.params['itn'] > 1:
+			### set minimum & maximum radii for MRA, corresponding to IMAGIC values
+			radmin = int(round(float(self.params['minrad']) / (self.params['boxsize'] / 2)))
+			radmax = int(round(float(self.params['maxrad']) / (self.params['boxsize'] / 2)))
+			
+			### setup IMAGIC multi reference alignment batch file
+			
+			filename = os.path.join(self.params['rundir'], "imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
+			f = open(filename, 'w')
+			f.write("#!/bin/csh -f\n")
+			f.write("setenv IMAGIC_BATCH 1\n")
+			f.write("cd "+str(self.params['rundir'])+"\n")
+		
+			if self.params['nproc'] > 1:
+				f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+					" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/mralign.e_mpi <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write("YES\n")
+				f.write(str(self.params['nproc'])+"\n")
+			else:
+				f.write("/usr/local/IMAGIC/align/mralign.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write("NO\n")
+			f.write("FRESH\n")
+			f.write("ALIGNMENT\n")
+			f.write("ALL\n")
+			f.write("ROTATION_FIRST\n")
+			f.write("CCF\n")
+			if self.params['itn'] == 1:
+				f.write("start\n")
+				f.write("mra"+str(self.params['itn'])+"\n")
+				f.write("start\n")
+			else:
+				f.write("mra"+str(self.params['itn']-1)+"\n")
+				f.write("mra"+str(self.params['itn'])+"\n")
+				f.write("start\n")
+	#		f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
+			f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
+			f.write("no\n")
+			f.write("yes\n")
+			f.write(str(self.params['max_shift_orig'])+"\n")
+			if self.params['itn'] > 1:
+				f.write(str(self.params['max_shift_this'])+"\n")
 			f.write("-180,180\n")
-		f.write("INTERACTIVE\n")
-		f.write(str(self.params['samp_param'])+"\n")
-		f.write(str(radmin)+","+str(radmax)+"\n")
-		f.write("3\n")
-		f.write("NO\n")
-		f.write("EOF\n")
+			if self.params['itn'] > 1:
+				f.write("-180,180\n")
+			f.write("INTERACTIVE\n")
+			f.write(str(self.params['samp_param'])+"\n")
+			f.write(str(radmin)+","+str(radmax)+"\n")
+			f.write("3\n")
+			f.write("NO\n")
+			f.write("EOF\n")
+			f.close
+			
+			### run alignment
+			proc = subprocess.Popen('chmod 755 '+filename, shell=True)
+			proc.wait()
+			apParam.runCmd(filename, "IMAGIC")
+					
+	#=======================			
+	def createImagicBatchFile_2(self):
+		"""
+		batch file for everythin after multi-reference alignment
+		"""
+
+		syminfo = apSymmetry.findSymmetry(self.params['symmetry'])
+		symmetry = syminfo['eman_name']
+
+		filename = os.path.join(self.params['rundir'], "imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
+		f = open(filename, 'w')
+		f.write("#!/bin/csh -f\n")
+		f.write("setenv IMAGIC_BATCH 1\n")
+		f.write("cd "+str(self.params['rundir'])+"\n")
 
 		### Perform multivariate statistical analysis on aligned stack
 		if self.params['nproc'] > 1:
@@ -716,21 +790,158 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write(".66\n")
 		f.write(str(self.params['apix'])+"\n")
 		f.write("EOF\n")
-
 		f.close()
 
 		return filename
 
 	#======================
+	def convertSpiderFormat(self, infile, outfile, spider_to_imagic=False):
+		"""
+		use EM2EM to convert to or from SPIDER format
+		"""
+		
+		### setup EM2EM batch file to convert from IMAGIC to SPIDER format
+		batchfile = os.path.join(self.params['rundir'], "EM2EM.batch")
+		f = open(batchfile, 'w')
+		f.write("#!/bin/csh -f\n")
+		f.write("setenv IMAGIC_BATCH 1\n")
+		f.write("cd "+str(self.params['rundir'])+"\n")
+		f.write("/usr/local/IMAGIC/stand/em2em.e <<EOF > EM2EM.log\n")
+		if spider_to_imagic is True:
+			f.write("SPIDER\n")
+			f.write("SINGLE_FILE\n")
+			f.write("IMAGIC\n")
+			f.write("2D\n")
+			f.write(infile+"\n")
+			f.write("spi\n")
+			f.write(outfile+"\n")
+			f.write("%.3f,%.3f,%.3f\n" % (self.params['apix'], self.params['apix'], self.params['apix']))
+			f.write("0\n")
+			f.write("EOF\n")
+		else:
+			f.write("IMAGIC\n")
+			f.write("SPIDER\n")
+			f.write("SINGLE_FILE\n")
+			f.write("2D\n")
+			f.write(infile+"\n")
+			f.write(outfile+"\n")
+			f.write("spi\n")
+			f.write("LINUX\n")
+			f.write("EOF\n")
+		f.close()
+		
+		### execute batch file
+		proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
+		proc.wait()
+		apParam.runCmd(batchfile, "IMAGIC")
+		apIMAGIC.checkLogFileForErrors(os.path.join(self.params['rundir'], "EM2EM.log"))
+		
+	#======================
+	def setupSpiderBatch(self, instack, outstack, templatestack):
+		"""
+		sets up iterative alignment batch script for each iteration
+		"""
+		
+		### parameters and filenames for this iteration
+		cur_apshdoc = os.path.join(self.params['rundir'], "apshdoc"+str(self.params['itn']))
+		if self.params['itn'] == 1:
+			prev_apshdoc = "*"
+		else:
+			prev_apshdoc = os.path.join(self.params['rundir'], "apshdoc"+str(self.params['itn']-1))
+		numref = apFile.numImagesInStack(templatestack[:-4]+".hed", self.params['boxsize'])
+		numimg = apFile.numImagesInStack(instack[:-4]+".hed", self.params['boxsize'])
+	
+		### read / write batch file
+		globalbatch = os.path.join(apParam.getAppionDirectory(), "spiderbatch/apsh.spi")
+		localbatch =  os.path.join(self.params['rundir'], "apsh%.2d.spi") % (self.params['itn'])
+		gf = open(globalbatch, "r")
+		lf = open(localbatch, "w")
+		modify = True
+		for line in gf:
+			if modify is True:
+				if re.match("\<priordoc\>", line): 
+					### prior apsh documentation file with Euler angles
+					lf.write("<priordoc>"+prev_apshdoc+"\n")
+				elif re.match("\<currentdoc\>", line): 
+					### current apsh documentation file with Euler angles
+					lf.write("<currentdoc>"+cur_apshdoc+"\n")
+				elif re.match("\<pjstack\>", line):
+					### stack of templates / projections for alignment
+					lf.write("<pjstack>"+templatestack[:-4]+"\n")
+				elif re.match("x33", line):
+					### number of templates
+					lf.write("x33="+str(numref)+" ; number of templates\n")
+				elif re.match("\<imgstack\>", line):
+					### input stack for MRA
+					lf.write("<imgstack>"+instack[:-4]+"\n")
+				elif re.match("x32", line):
+					### number of raw images
+					lf.write("x32="+str(numimg)+" ; number of images\n")
+				elif re.match("\<outstack\>", line):
+					### output multi-reference aligned stack
+					lf.write("<outstack>"+outstack[:-4]+"\n")
+				elif re.match("x34", line):
+					### translational search range
+					lf.write("x34="+str(self.params['xy_search'])+" ;search range\n")
+				elif re.match("x35", line):
+					### translational search step size
+					lf.write("x35="+str(self.params['xy_step'])+" ;search step size\n")
+				elif re.match("x36", line):
+					### rotational search inner radius
+					lf.write("x36="+str(self.params['minrad_spi'])+" ;inner radius\n")
+				elif re.match("x37", line):
+					### rotational search outer radius
+					lf.write("x37="+str(self.params['maxrad_spi'])+" ;outer radius\n")
+				elif re.match("x38", line):
+					### limit angular search to this range within the Euler angles for the particle (in degrees)
+					lf.write("x38="+str(self.params['angle_change'])+" ;angle change (delta)\n")
+				elif re.match("x99", line):
+					### number of processors
+					lf.write("x99=%d ;number of processors\n"%(self.params['nproc']))
+					modify = False
+				else:
+					lf.write(line)
+			else:
+				lf.write(line)
+	
+		gf.close()
+		lf.close()
+			
+		return localbatch
+
+	#======================
+	def runSpiderAlignment(self, instack, outstack, templatestack, localbatch):
+		"""
+		if specified, runs a SPIDER instead of IMAGIC alignment for each iteration
+		"""
+		
+		### convert to SPIDER format
+		self.convertSpiderFormat(instack[:-4], instack[:-4])
+		self.convertSpiderFormat(templatestack[:-4], templatestack[:-4])
+		
+		### set SPPROC_DIR environment variable
+		spiprocdir = self.params['rundir']
+
+		### run Alignment for this iteration
+		mySpider = spyder.SpiderSession(logo=True, spiderprocdir=spiprocdir, projext=".spi", term=True, verbose=True)
+		batchheadname = localbatch.split('.')[0]
+		mySpider.toSpider("@%s" % batchheadname)
+		mySpider.close()
+		
+		### convert back to IMAGIC format
+		self.convertSpiderFormat(outstack[:-4], outstack[:-4], spider_to_imagic=True)
+				
+	#======================
 	def upload3dRunData(self):
+		"""
+		uploads the general data for this refinement
+		"""
+		
 		refineq = appiondata.ApImagic3dRefineRunData()
 		if self.params['stackid'] is not None:
 			refineq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		refineq['runname'] = self.params['runname']
-		if self.params['imagic3d0id'] is not None:
-			refineq['imagic3d0run'] = appiondata.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
-		else:
-			refineq['initialModel'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
+		refineq['initialModel'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 		refineq['description'] = self.params['description']
 		refineq['pixelsize'] = self.params['apix']
 		refineq['boxsize'] = self.params['boxsize']
@@ -744,6 +955,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 	#======================
 	def upload3dIterationData(self):
+		"""
+		uploads the data for each iteration
+		"""
+		
 		itnq = appiondata.ApImagic3dRefineIterationData()
 		itnq['refinement_run'] = self.refinedata
 		itnq['iteration'] = self.params['itn']
@@ -762,6 +977,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		itnq['sampling_parameter'] = self.params['samp_param']
 		itnq['minrad'] = self.params['minrad']
 		itnq['maxrad'] = self.params['maxrad']
+		itnq['spider_align'] = self.params['spider_align']
+		itnq['xy_search'] = self.params['xy_search']
+		itnq['xy_step'] = self.params['xy_step']
+		itnq['minrad_spi'] = self.params['minrad_spi']
+		itnq['maxrad_spi'] = self.params['maxrad_spi']
+		itnq['angle_change'] = self.params['angle_change']
 		itnq['ignore_images'] = self.params['ignore_images']
 		itnq['ignore_members'] = self.params['ignore_members']
 		itnq['keep_classes'] = self.params['keep_classes']
@@ -785,6 +1006,9 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
+		"""
+		main portion of the program called by appionScript
+		"""
 
 		### get stack data
 		self.stack = {}
@@ -806,71 +1030,63 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			cmd2 = "ln -s "+stackhedfile+" "+os.path.join(self.params['rundir'], "start.hed")
 			proc = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			proc.wait()
+			
+			### set machine stamp in headers to avoid IMAGIC errors
+			apImagicFile.setMachineStampInImagicHeader(os.path.join(self.params['rundir'], "start.hed"))
 
-			### figure out which model is being used (i.e. from 3d0 run or uploaded initial model)
-			if self.params['imagic3d0id'] is not None:
-				self.model = {}
-				modeldata = appiondata.ApImagic3d0Data.direct_query(self.params['imagic3d0id'])
-				self.model['boxsize'] = modeldata['boxsize']
-				self.model['apix'] = modeldata['pixelsize']
-				orig_file = os.path.join(modeldata['path']['path'], modeldata['runname'])
-				modelfile = os.path.join(self.params['rundir'], "threed0.mrc")
-#				shutil.copyfile(os.path.join(orig_file, "masked_3d0_ordered0_repaligned.mrc"), modelfile)
-				shutil.copyfile(os.path.join(orig_file, "3d0_ordered0_repaligned.mrc"), modelfile)
-			else:
-				########## GET MODEL DATA #############
-				if self.params['modelid'] is not None:
-					self.model = {}
-					modeldata = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
-					self.model['apix'] = modeldata['pixelsize']
-					self.model['box'] = modeldata['boxsize']
-					origmodel = os.path.join(modeldata['path']['path'], modeldata['name'])
-					modelfile = os.path.join(self.params['rundir'], "threed0.mrc")
-				else:
-					apDisplay.printError("Initial model not in the database")
-				shutil.copyfile(origmodel, modelfile)
+			### get initial model data & copy to working directory
+			self.model = {}
+			modeldata = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
+			self.model['apix'] = modeldata['pixelsize']
+			self.model['box'] = modeldata['boxsize']
+			origmodel = os.path.join(modeldata['path']['path'], modeldata['name'])
+			modelfile = os.path.join(self.params['rundir'], "threed0.mrc")
+			shutil.copyfile(origmodel, modelfile)
 
 			### scale model
 			if self.params['apix'] != self.model['apix'] or self.params['boxsize'] != self.model['boxsize']:
 				apVolume.rescaleModel(modelfile, modelfile, self.model['apix'], self.params['apix'], self.params['boxsize'])
 
-			### create MRA and forward projections (anchor set)
+			### create forward projections for MRA and Angular Reconstitution (anchor set)
 			batchfile = self.startFiles(modelfile)
 			proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
 			proc.wait()
-			apIMAGIC.executeImagicBatchFile(batchfile)
-			logfile = open(os.path.join(self.params['rundir'], "startFiles.log"))
-			loglines = logfile.readlines()
-			for line in loglines:
-				if re.search("ERROR in program", line):
-					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: startFiles.log")
-
-			### delete headers
-			apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
-
+			apParam.runCmd(batchfile, "IMAGIC")
+			apIMAGIC.checkLogFileForErrors(os.path.join(self.params['rundir'], "startFiles.log"))
 
 		### CONTINUE WITH CONSECUTIVE ITERATIONS ###
 
 		print "... stack pixel size: "+str(self.params['apix'])
 		print "... stack box size: "+str(self.params['boxsize'])
-		apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
 
-		### create batch file for execution with IMAGIC
-		batchfile = self.createImagicBatchFile()
-
-		### execute batch file that was created
 		time3dRefine = time.time()
+
+		### create & execute batch file for IMAGIC prior to MRA
+		batchfile = self.createImagicBatchFile_1()
 		proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
 		proc.wait()
-		apIMAGIC.executeImagicBatchFile(batchfile)
-		logfile = open(os.path.join(self.params['rundir'], "imagic3dRefine_"+str(self.params['itn'])+".log"))
-		loglines = logfile.readlines()
-		for line in loglines:
-			if re.search("ERROR in program", line):
-				apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: imagic3dRefine_"+str(self.params['itn'])+".log")
-		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3dRefine), "cyan")
-		time3dRefine = time.time() - time3dRefine
+		apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
+		apParam.runCmd(batchfile, "IMAGIC")
+		
+		### run MRA, using either SPIDER or IMAGIC
+		apDisplay.printMsg("running alignment")
+		self.runAlignment()
+		
+		### create & execute batch file for IMAGIC after MRA
+		batchfile = self.createImagicBatchFile_2()
+		proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
+		proc.wait()
+		apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
+		apParam.runCmd(batchfile, "IMAGIC")
+		
+		### check for any errors in any of the subroutines
+		logfile = os.path.join(self.params['rundir'], "imagic3dRefine_"+str(self.params['itn'])+".log")
+		apIMAGIC.checkLogFileForErrors(logfile)
 
+		time3dRefine = time.time() - time3dRefine
+		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3dRefine), "cyan")
+
+		### define resulting 3-D densities
 #		mrcname = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
 #		mrcnamerot = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
 		mrcname = self.params['rundir']+"/3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
@@ -897,8 +1113,15 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		### remove unwanted files
 		prevmra = os.path.join(self.params['rundir'], "mra"+str(self.params['itn']-1)+".img")
+		prevmra_spider = os.path.join(self.params['rundir'], "mra"+str(self.params['itn']-1)+".spi")
+		prevtemp_spider = os.path.join(self.params['rundir'], "mrarefs_3d"+str(self.params['itn']-1)+".spi") 
 		while os.path.isfile(prevmra):
 			apFile.removeStack(prevmra)
+			if self.params['spider_align'] is True:
+				while os.path.isfile(prevmra_spider):
+					apFile.removeFile(prevmra_spider)
+				while os.path.isfile(prevtemp_spider):
+					apFile.removeFile(prevtemp_spider)
 #			if self.params['itn'] == self.params['numiters']:
 #				startstack = os.path.join(self.params['rundir'], "start.img")
 #				mrastack = os.path.join(self.params['rundir'], "mra"+str(self.params['itn'])+".img")
