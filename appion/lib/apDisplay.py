@@ -107,6 +107,20 @@ def bytes(numbytes):
 	else:
 		return "%.1f PB"%(numbytes/mult**5)
 
+def clusterBytes(numbytes):
+	numbytes = int(numbytes)
+	mult = 1024.0
+	if numbytes < mult:
+		return "%db"%(math.ceil(numbytes))
+	elif numbytes < mult**2:
+		return "%dkb"%(math.ceil(numbytes/mult))
+	elif numbytes < mult**3:
+		return "%dmb"%(math.ceil(numbytes/mult**2))
+	elif numbytes < mult**4:
+		return "%dgb"%(math.ceil(numbytes/mult**3))
+	else:
+		return "%dtb"%(math.ceil(numbytes/mult**4))
+
 def orderOfMag(num):
 	if num > 1:
 		num = int(num)
