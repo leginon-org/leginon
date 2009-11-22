@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # Python script to run automated refinement of an input stack and model using IMAGIC angular reconstitution
-# This can be done with or without a previous imagic 3d0 run
 
 import os
 import sys
@@ -40,8 +39,6 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="ID of stack used for refinement", metavar="int")
 		self.parser.add_option("--modelid", dest="modelid",
 			help="ID of 3d model used for refinement", metavar="int")
-		self.parser.add_option("--imagic3d0id", dest="imagic3d0id",
-			help="ID of 3d0 used to initiate refinement", metavar="int")
 
 		### basic params
 		self.parser.add_option("--nproc", dest="nproc", type="int",
@@ -445,16 +442,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			
 			### run the alignment, removing any unecessary files
 			self.runSpiderAlignment(instack, outstack, templatestack, localbatch)
-			
-		else:
-			### set minimum & maximum radii for MRA, corresponding to IMAGIC values
-			radmin = int(round(float(self.params['minrad']) / (self.params['boxsize'] / 2)))
-			radmax = int(round(float(self.params['maxrad']) / (self.params['boxsize'] / 2)))
-			
+						
+		else:		
 			### setup IMAGIC multi reference alignment batch file
-			
-			filename = os.path.join(self.params['rundir'], "imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
-			f = open(filename, 'w')
+			batchfile = os.path.join(self.params['rundir'], "imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
+			f = open(batchfile, 'w')
 			f.write("#!/bin/csh -f\n")
 			f.write("setenv IMAGIC_BATCH 1\n")
 			f.write("cd "+str(self.params['rundir'])+"\n")
@@ -492,16 +484,15 @@ class imagic3dRefineScript(appionScript.AppionScript):
 				f.write("-180,180\n")
 			f.write("INTERACTIVE\n")
 			f.write(str(self.params['samp_param'])+"\n")
-			f.write(str(radmin)+","+str(radmax)+"\n")
+			f.write(str(self.params['minrad'])+","+str(self.params['maxrad'])+"\n")
 			f.write("3\n")
 			f.write("NO\n")
 			f.write("EOF\n")
-			f.close
-			
-			### run alignment
-			proc = subprocess.Popen('chmod 755 '+filename, shell=True)
+			f.close()
+
+			proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
 			proc.wait()
-			apParam.runCmd(filename, "IMAGIC")
+			apParam.runCmd(batchfile, "IMAGIC")
 					
 	#=======================			
 	def createImagicBatchFile_2(self):
@@ -1069,8 +1060,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		apParam.runCmd(batchfile, "IMAGIC")
 		
 		### run MRA, using either SPIDER or IMAGIC
-		apDisplay.printMsg("running alignment")
-		self.runAlignment()
+		apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
+		self.runAlignment()		
 		
 		### create & execute batch file for IMAGIC after MRA
 		batchfile = self.createImagicBatchFile_2()
