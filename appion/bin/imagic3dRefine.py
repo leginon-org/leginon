@@ -414,10 +414,6 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write(str(self.params['max_shift_orig'])+"\n")
 			f.write("3\n")
 			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-			f.write("start_cent\n")
-			f.write("start\n")
-			f.write("EOF\n")
 			f.close()
 		
 		return filename
@@ -431,7 +427,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		if self.params['spider_align'] is True:
 			### define input and output stack
 			if self.params['itn'] == 1:
-				instack = os.path.join(self.params['rundir'], "start.spi")
+				if self.params['cent_stack'] is True:
+					instack = os.path.join(self.params['rundir'], "start_cent.spi")
+				else:
+					instack = os.path.join(self.params['rundir'], "start.spi")
 			else:
 				instack = os.path.join(self.params['rundir'], "mra"+str(self.params['itn']-1)+".spi")
 			outstack = os.path.join(self.params['rundir'], "mra"+str(self.params['itn'])+".spi")
@@ -465,7 +464,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("ROTATION_FIRST\n")
 			f.write("CCF\n")
 			if self.params['itn'] == 1:
-				f.write("start\n")
+				if self.params['cent_stack'] is True:
+					f.write("start_cent\n")
+				else:
+					f.write("start\n")
 				f.write("mra"+str(self.params['itn'])+"\n")
 				f.write("start\n")
 			else:
@@ -1106,6 +1108,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		prevmra = os.path.join(self.params['rundir'], "mra"+str(self.params['itn']-1)+".img")
 		prevmra_spider = os.path.join(self.params['rundir'], "mra"+str(self.params['itn']-1)+".spi")
 		prevtemp_spider = os.path.join(self.params['rundir'], "mrarefs_3d"+str(self.params['itn']-1)+".spi") 
+		cent_stack = os.path.join(self.params['rundir'], "start_cent.img")
 		while os.path.isfile(prevmra):
 			apFile.removeStack(prevmra)
 			if self.params['spider_align'] is True:
@@ -1113,6 +1116,9 @@ class imagic3dRefineScript(appionScript.AppionScript):
 					apFile.removeFile(prevmra_spider)
 				while os.path.isfile(prevtemp_spider):
 					apFile.removeFile(prevtemp_spider)
+			if self.params['cent_stack'] is True:
+				while os.path.isfile(cent_stack):
+					apFile.removeStack(cent_stack)
 #			if self.params['itn'] == self.params['numiters']:
 #				startstack = os.path.join(self.params['rundir'], "start.img")
 #				mrastack = os.path.join(self.params['rundir'], "mra"+str(self.params['itn'])+".img")
