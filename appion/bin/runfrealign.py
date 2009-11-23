@@ -103,8 +103,10 @@ class frealignJob(appionScript.AppionScript):
 			help="number of processors per node")
 		self.parser.add_option('--nodes', dest='nodes', default=1, type='int',
 			help="number of nodes")
-		self.parser.add_option("--cluster", dest="cluster", default=False,
+		self.parser.add_option("--cluster", dest="cluster", default=True,
 			action="store_true", help="Make script for running on a cluster")
+		self.parser.add_option("--no-cluster", dest="cluster", default=True,
+			action="store_false", help="Run script interactively on current machine")
 
 		self.parser.add_option('--numiter', dest='numiter', type='int', default=1,
 			help="number of refinement iterations to perform")
@@ -654,7 +656,7 @@ class frealignJob(appionScript.AppionScript):
 			%(self.params['nproc'], iterjobfile))
 		mainf.write("mpirun --hostfile $PBS_NODEFILE -np 1 %s\n"
 			%(combinejobfile))
-		mainf.write("if [ -e 'iter%03d' ]\nthen\n  exit\nfi\n\n"%(iternum))	
+		#mainf.write("if [ -e 'iter%03d' ]\nthen\n  exit\nfi\n\n"%(iternum))	
 
 		### PBS pro
 		#mainf.write("pbsdsh -v %s\n" % iterjobfile)
