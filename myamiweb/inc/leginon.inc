@@ -1735,23 +1735,27 @@ class leginondata {
 
 		//--- Generate the tables
 		$this->mysql->SQLQueries($sqldef);
-
 		//--- Check if application exits
 		$applicationinfo = $fieldvalues['ApplicationData'];
 		foreach($applicationinfo as $k=>$v) {
-			if (ereg('DEF_',$k)) continue;
+			if (ereg('DEF_',$k) || ereg('version',$k)) continue;
 			$sqlwhere[] = "`$k`=$v";
 		}
 		$where = implode(" AND ", $sqlwhere);
-		$query = "Select `DEF_id`, name, version from ApplicationData where $where";
+		$query = "Select `DEF_id`, name, version from ApplicationData where $where ";
+		$query .= "order by `version` desc ";
 		$Rresult = $this->mysql->SQLQuery($query);
 		$result = mysql_fetch_array($Rresult);
+		$appinsert = $sqldata['ApplicationData'][0];
 		if ($result) {
-			$msg = 	 "Application $result[name]-$result[version] exists "
-				."on sql server ".$this->mysql->getSQLHost();
-			return $msg;
+			//--- This makes the new import always the highest local version
+			$newversion = $result['version']+1;
+		} else {
+			$newversion = 0;
 		}
-
+		$applicationinfo['version'] = $newversion;
+		$appinsert = $this->modifyApplicationDataInsert($appinsert,'version',$newversion);
+		$sqldata['ApplicationData'][0] = $appinsert;
 		//--- insert new ApplicationData data;
 		foreach ($sqldata as $table=>$queries) {
 			foreach($queries as $query) {
@@ -1771,9 +1775,34 @@ class leginondata {
 			." imported successfully"
 			." on ".$this->mysql->getSQLHost();
 		return $msg;
-
 	}
 
+	function modifyApplicationDataInsert($sqldata,$key,$value) {
+		$key_value = explode('VALUES',$sqldata);
+		$keys = explode(',',$key_value[0]);
+		$count = count($keys);
+		$i = 0;
+		foreach ($keys as $k) {
+			$pos = strpos($k,$key);
+			if ($pos) break;
+			$i += 1;
+		}
+		$values = explode(',',$key_value[1]);
+		if ($i == 0) {
+			$oldvalue = substr($values[$i],1);
+			$newvalue = '('.$value;
+		} elseif ($i == $count - 1) {
+			$oldvalue = substr($values[$i],0,-2);
+			$newvalue = $value.') ;';
+		} else {
+			$oldvalue = $values[$i];
+			$newvalue = $value;
+		}
+		$values[$i] = $newvalue;
+		$key_value = array($key_value[0],implode(',',$values));
+		$newsqldata = implode('VALUES',$key_value);
+		return $newsqldata;
+	}
 	function importInfo() {
 		return array(	"Definition"=>$this->sqldefinitions,
 				"FieldTypes"=>$this->sqlfieldtypes,
