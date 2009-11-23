@@ -391,7 +391,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			if self.params['fastmode'] == "narrow":
 				xmippopts += " -C 1e-10 "
 			elif self.params['fastmode'] == "wide":
-				xmippopts += " -C 1e-18 "
+				xmippopts += " -C 1e-17 "
 		### convergence criteria
 		if self.params['converge'] == "fast":
 			xmippopts += " -eps 5e-3 "
