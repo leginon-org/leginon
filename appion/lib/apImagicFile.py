@@ -13,7 +13,7 @@ import shutil
 import apDisplay
 import apFile
 import numpy
-from pyami import mrc
+from pyami import mrc, mem
 import pyami.quietscipy
 from scipy import ndimage
 
@@ -720,4 +720,132 @@ def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
 		partdatalist.append(partimg)
 	f.close()
 	return partdatalist
+
+
+########################################
+########################################
+########################################
+class processStack(object):
+	"""
+	This is class to help process particles in a stack
+	that are bigger than the amount of memory on the machine
+	"""
+	#===============
+	def __init__(self, msg=True):
+		self.msg = msg
+
+	#===============
+	def message(self, msg):
+		if self.msg is True:
+			apDisplay.printMsg("processStack: "+msg)
+
+	#===============
+	def initValues(self, stackfile):
+		### check for stack
+		if not os.path.isfile(stackfile):
+			apDisplay.printError("stackfile does not exist: "+stackfile)
+		### amount of free memory on machine (converted to bytes)
+		self.freememory = mem.free()*1024
+		self.message("Free memory: %s"%(apDisplay.bytes(self.freememory)))
+		### box size of particle
+		self.boxsize = apFile.getBoxSize(stackfile)[0]
+		self.message("Box size: %d"%(self.boxsize))
+		### amount of memory used per particles (4 bytes per pixel)
+		self.memperpart = self.boxsize**2 * 4.0
+		self.message("Memory used per part: %s"%(apDisplay.bytes(self.memperpart)))
+		### maximum number particles that fit into memory
+		self.maxpartinmem = self.freememory/self.memperpart
+		self.message("Max particles in memory: %d"%(self.maxpartinmem))
+		### number particles to fit into memory
+		self.partallowed = int(self.maxpartinmem/10.0)
+		self.message("Particles allowed in memory: %d"%(self.partallowed))
+		### number particles in stack
+		self.numpart = apFile.numImagesInStack(stackfile)
+		self.message("Number of particles in stack: %d"%(self.numpart))
+		if self.numpart > self.partallowed:
+			numchucks = math.ceil(self.numpart/float(self.partallowed))
+			self.stepsize = int(self.numpart/numchucks)
+		else:
+			numchucks = 1
+			self.stepsize = self.numpart
+		self.message("Particle loop num chunks: %d"%(numchucks))
+		self.message("Particle loop step size: %d"%(self.stepsize))
+
+	#===============
+	def start(self, stackfile):
+		self.starttime = time.time()
+		self.initValues(stackfile)
+
+		### custom pre-loop command
+		self.preLoop()
+
+		first = 1
+		last = self.stepsize
+		self.index = 0
+		t0 = time.time()
+
+		while self.index < self.numpart and first < self.numpart:
+			### print message
+			if self.index > 10:
+				esttime = (time.time()-t0)/float(self.index+1)*float(self.numpart-self.index)
+				self.message("partnum %d to %d of %d, %s remain"
+					%(first, last, self.numpart, apDisplay.timeString(esttime)))
+			else:
+				self.message("partnum %d to %d of %d"
+					%(first, last, self.numpart))
+
+			### read images
+			stackdata = readImagic(stackfile, first=first, last=last, msg=False)
+			stackarray = stackdata['images']
+
+			### process images
+			self.processStack(stackarray)
+
+			### check for proper implementation
+			if self.index == 0:
+				apDisplay.printError("No particles were processed in stack loop")
+
+			### setup for next iteration
+			first = last+1
+			last += self.stepsize
+			if last > self.numpart:
+				last = self.numpart
+			### END LOOP
+
+		### check for off-one reading errors
+		if self.index < self.numpart:
+			apDisplay.printError("Did not write all particles out, "
+				+"the stack header does not match the stack data")
+
+		### custom post-loop command
+		self.postLoop()
+
+		self.message("finished processing stack in "
+			+apDisplay.timeString(time.time()-self.starttime))
+		return
+
+	########################################
+	# CUSTOMIZED FUNCTIONS
+	########################################
+
+	#===============
+	def preLoop(self):
+		return
+
+	#===============
+	def processStack(self, stackarray):
+		for partarray in stackarray:
+			self.processParticle(partarray)
+			self.index += 1 #you must have this line in your loop
+		return
+
+	#===============
+	def processParticle(self, partarray):
+		raise NotImplementedError
+
+	#===============
+	def postLoop(self):
+		return
+
+
 
