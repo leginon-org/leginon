@@ -60,82 +60,63 @@ def convertXmippDataToStack(indata, outstack, maskpixrad):
 
 #======================
 #======================
+#======================
+#======================
+class breakUpStack(apImagicFile.processStack):
+	#===============
+	def preLoop(self):
+		self.dirnum = 0
+		if self.stepsize > 4096:
+			numchucks = math.ceil(self.numpart/4096.0)
+			self.stepsize = int(self.numpart/numchucks)
+		self.numdir = math.ceil(self.numpart/float(self.stepsize))
+		self.message("Splitting %d particles into %d folders with %d particles per folder"
+			%(self.numpart, self.numdir, self.stepsize))
+		self.partdocf = open(self.partdocfile, "w")
+
+	#===============
+	def processStack(self, stackarray):
+		self.dirnum += 1
+		self.partdir = os.path.join(self.rootdir, "%03d"%(self.dirnum))
+		apParam.createDirectory(self.partdir, warning=False)
+		for partarray in stackarray:
+			self.processParticle(partarray)
+			self.index += 1 #you must have this line in your loop
+
+	#===============
+	def processParticle(self, partarray):
+		if self.filetype == "mrc":
+			partfile = os.path.join(self.partdir, "part%06d.mrc"%(self.index))
+			mrc.write(partarray, partfile)
+		else:
+			partfile = os.path.join(self.partdir, "part%06d.spi"%(self.index))
+			spider.write(partarray, partfile)
+		self.partdocf.write(os.path.abspath(partfile)+" 1\n")
+
+	#===============
+	def postLoop(self):
+		self.partdocf.close()
+
+#======================
+#======================
 def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None, filetype="spider"):
 	"""
 	takes the stack file and creates single spider files ready for processing
 	"""
 	apDisplay.printColor("Breaking up spider stack into single files, this can take a while", "cyan")
-	apDisplay.printMsg("stack: "+stackfile)
-
-	starttime = time.time()
-	boxsize = apFile.getBoxSize(stackfile)
-	filesperdir = int(1e9/(boxsize[0]**2)/8.)
-	if filesperdir > 4096:
-		filesperdir = 4096
-	if numpart is None:
-		numpart = apFile.numImagesInStack(stackfile)
-		apDisplay.printMsg("Found "+str(numpart)+" particles in stack")
 	apParam.createDirectory(partdir)
-	if numpart > filesperdir:
-		numdir = createSubFolders(partdir, numpart, filesperdir)
-		filesperdir = int(math.ceil(numpart/float(numdir)))
-		apDisplay.printMsg("Splitting "+str(numpart)+" particles into "+str(numdir)+" folders with "
-			+str(filesperdir)+" particles per folder")
-		last = filesperdir
-		subdir = 1
-	else:
-		filesperdir = numpart+1
-		apDisplay.printMsg("Splitting "+str(numpart)+" particles into 1 folder with "
-			+str(filesperdir)+" particles per folder")
-		apParam.createDirectory(os.path.join(partdir, "1"))
-		last = numpart
-		subdir = 1
+	partdocfile = "partlist.doc"
 
-	if not os.path.isfile(stackfile):
-		apDisplay.printError("stackfile does not exist: "+stackfile)
+	### setup
+	breaker = breakUpStack()
+	breaker.rootdir = partdir
+	breaker.filetype = filetype
+	breaker.partdocfile = partdocfile
 
 	### make particle files
-	partlistdocfile = "partlist.doc"
-	f = open(partlistdocfile, "w")
-	first = 1
-	index = 0
-	t0 = time.time()
-	while index < numpart and first < numpart:
-		### read images
-		if index > 10:
-			esttime = (time.time()-t0)/float(index+1)*float(numpart-index)
-			apDisplay.printMsg("dirnum %d at partnum %d to %d of %d, %s remain"
-				%(subdir, first, last, numpart, apDisplay.timeString(esttime)))
-		else:
-			apDisplay.printMsg("dirnum %d at partnum %d to %d of %d"
-				%(subdir, first, last, numpart))
-		#print first, last, numpart, index
-		stackimages = apImagicFile.readImagic(stackfile, first=first, last=last, msg=False)
-		#print stackimages['images'].shape
+	breaker.start(stackfile)
 
-		### write images
-		for partimg in stackimages['images']:
-			if filetype == "mrc":
-				partfile = os.path.join(partdir, str(subdir), "part%06d.mrc"%(index))
-				mrc.write(partimg, partfile)
-			else:
-				partfile = os.path.join(partdir, str(subdir), "part%06d.spi"%(index))
-				spider.write(partimg, partfile)
-			f.write(os.path.abspath(partfile)+" 1\n")
-			index += 1
-
-		### setup for next subdir
-		first = last+1
-		last += filesperdir
-		if last > numpart:
-			last = numpart
-		subdir += 1
-	f.close()
-	if index < numpart:
-		apDisplay.printError("Did not write all particles out, the stack header does not match the stack data")
-
-	apDisplay.printColor("finished breaking stack in "+apDisplay.timeString(time.time()-starttime), "cyan")
-	return partlistdocfile
+	return partdocfile
 
 #======================
 #======================
