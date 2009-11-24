@@ -335,6 +335,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 	echo "<input type='hidden' name='templateList' value='$templateList'>\n";
 	echo "<input type='hidden' name='templates' value='continue'>\n";
 	echo "<input type='hidden' name='numtemplates' value='$numtemplates'>\n";
+	echo "<input type='hidden' name='numtemplatesused' value='$numtemplatesused'>\n";
 	echo "$templateForm\n";
 	echo "$templateTable\n";
 	echo "
@@ -361,6 +362,8 @@ function runTemplateCorrelator() {
 	$thread = ($_POST['threadfindem']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$keepall = ($_POST['keepall']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$mirrors = ($_POST['mirrors']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+
+	$numtemplatesused = $_POST['numtemplatesused'];
 
 	// START MAKE COMMAND
 
@@ -431,7 +434,12 @@ function runTemplateCorrelator() {
 
 		if (!($user && $password)) createTCForm("<b>ERROR:</b> Enter a user name and password");
 
-		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'templatepicker', $testimage);
+		if ($numtemplatesused >= 2 && $numtemplatesused <= 8)
+			$nproc = $numtemplatesused;
+		elseif ($numtemplatesused > 8)
+			$nproc = 8;
+		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'templatepicker', $testimage, False, False, $nproc);
+
 		// if errors:
 		if ($sub) createTCForm("<b>ERROR:</b> $sub");
 		if (!$testimage) exit;
