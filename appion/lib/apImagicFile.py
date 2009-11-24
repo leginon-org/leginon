@@ -757,7 +757,7 @@ class processStack(object):
 		self.maxpartinmem = self.freememory/self.memperpart
 		self.message("Max particles in memory: %d"%(self.maxpartinmem))
 		### number particles to fit into memory
-		self.partallowed = int(self.maxpartinmem/10.0)
+		self.partallowed = int(self.maxpartinmem/20.0)
 		self.message("Particles allowed in memory: %d"%(self.partallowed))
 		### number particles in stack
 		self.numpart = apFile.numImagesInStack(stackfile)
