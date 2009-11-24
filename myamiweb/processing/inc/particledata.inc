@@ -3762,6 +3762,20 @@ class particledata {
 		return $r;
 	}
 	
+	function getPreparedFrealignJobs ($jobid=False, $showhidden=False) {
+		$q = "SELECT fre.*, path.path  "
+			. " FROM `ApFrealignPrepareData` AS fre "
+			. " LEFT JOIN ApPathData AS path ON ( fre.`REF|ApPathData|path` = path.`DEF_id` ) "
+			//. " LEFT JOIN ApStackData AS stack ON ( fre.`REF|ApStackData|stack` = stack.`DEF_id` ) "
+			//. " LEFT JOIN ApInitialModelData AS model ON ( fre.`REF|ApInitialModelData|model` = model.`DEF_id` ) "
+			. " LEFT JOIN ApClusterJobData AS job ON ( fre.`REF|ApClusterJobData|job` = job.`DEF_id` ) ";
+		if ($jobid) {
+			$q .= " WHERE fre.`DEF_id` = '$jobid' ";
+		}
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getRawStackFromCluster ($clusterStackId) {
 		$q = "SELECT asd.*, path.path "
 			. " FROM `ApClusteringParticlesData` acpd "

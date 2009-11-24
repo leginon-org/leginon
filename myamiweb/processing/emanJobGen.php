@@ -5,7 +5,7 @@
  *      For terms of the license agreement
  *      see  http://ami.scripps.edu/software/leginon-license
  *
- *      Create an Eman Job for submission to a cluster
+ *      Create an EMAN Job for submission to a cluster
  */
 
 require "inc/particledata.inc";
@@ -29,42 +29,13 @@ $selectedcluster=strtolower($selectedcluster);
 */
 
 if ($_POST['write']) {
-	// write job file
-	$particle = new particledata();
-
-	if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=".C_NODES_DEF);
-	if (!$_POST['ppn']) jobForm("ERROR: No processors per node specified, setting default=".C_PPN_DEF);
-	if ($_POST['ppn'] > C_PPN_MAX ) jobForm("ERROR: Max processors per node is ".C_PPN_MAX);
-	if ($_POST['nodes'] > C_NODES_MAX ) jobForm("ERROR: Max nodes on ".C_NAME." is ".C_NODES_MAX);
-	if (!$_POST['walltime']) jobForm("ERROR: No walltime specified, setting default=".C_WALLTIME_DEF);
-	if ($_POST['walltime'] > C_WALLTIME_MAX ) jobForm("ERROR: Max walltime is ".C_WALLTIME_MAX);
-	if (!$_POST['cput']) jobForm("ERROR: No CPU time specified, setting default=".C_CPUTIME_DEF);
-	if ($_POST['cput'] > C_CPUTIME_MAX) jobForm("ERROR: Max CPU time is ".C_CPUTIME_MAX);
-	if (!$_POST['rprocs']) jobForm("ERROR: No reconstruction ppn specified, setting default=".C_RPROCS_DEF);
-	if ($_POST['rprocs'] > $_POST['ppn'])
-	  jobForm("ERROR: Asking to reconstruct on more processors than available");
-
-
-  for ($i=1; $i<=$_POST['numiters']; $i++) {
-		if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
-		if (!$_POST['sym'.$i]) jobForm("ERROR: no symmetry set for iteration $i");
-		if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
-		// if amask is used, then xfiles must also be used
-		if ($_POST['amask1'.$i] || $_POST['amask2'.$i] || $_POST['amask3'.$i]) {
-			if (!($_POST['amask1'.$i] && $_POST['amask2'.$i] && $_POST['amask3'.$i])) jobForm("ERROR: All 3 amask values of amask must be entered for iteration $i");
-			if (!$_POST['xfiles'.$i]) jobForm ("ERROR: amask requires the use of xfiles for iteration $i");
-		} 
-	}
-
-	// check that job file doesn't already exist
-	$outdir = formatEndPath($_POST['outdir']);
-	$outdir .= $_POST['jobname'];
-
-	// jobname ends with .job
-	$jobname = $_POST['jobname'];
-	$jobname .= '.job';
-	$exists = $particle->getJobFileFromPath($outdir,$jobname);
-	writeJobFile();
+	writeJobFile(); // write job file and prepare to submit
+} elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
+	jobForm(); // create form to fill job parameters
+} elseif ($_POST['submitjob']) {
+	submitJob(); // submit job to cluster
+} else {
+	stackModelForm(); // select model and stack
 }
 
 /*
@@ -73,31 +44,9 @@ if ($_POST['write']) {
 ******************************************
 */
 
-elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
-	// create job form
-	## make sure a stack and model were selected
-	if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
-	if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
-
-	// make sure that box sizes are the same
-	// get stack data
-	//	$stackinfo = explode('|--|',$_POST['stackval']);
-	//$stackbox = $stackinfo[2];
-	// get model data
-	//$modelinfo = explode('|--|',$_POST['model']);
-	//$modbox = $modelinfo[3];
-	//if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
-	jobForm();
-}
-
-/*
-******************************************
-******************************************
-******************************************
-*/
-
-elseif ($_POST['submitjob']) {
+function submitJob($extra=False) {
 	// submit job
+	global $clusterdata;
 	$particle = new particledata();
 	$clusterdata->post_data();
 
@@ -135,7 +84,7 @@ elseif ($_POST['submitjob']) {
 	$f = file_get_contents($tmpjobfile);
 	file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
 
-	processing_header("Eman Job Submitted","EMAN Job Submitted",$javafunc);
+	processing_header("EMAN Job Submitted","EMAN Job Submitted",$javafunc);
 	echo "<table width='600'>\n";
 
 	// create appion directory & copy job file
@@ -186,8 +135,6 @@ elseif ($_POST['submitjob']) {
 	exit;
 }
 
-else stackModelForm();
-
 /*
 ******************************************
 ******************************************
@@ -200,7 +147,7 @@ function stackModelForm($extra=False) {
 	$projectId = getProjectFromExpId($expId);
 
 	$javafunc="<script src='../js/viewer.js'></script>\n";
-	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
+	processing_header("EMAN Job Generator","EMAN Job Generator",$javafunc);
 
 	if ($expId) {
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
@@ -271,6 +218,9 @@ function jobForm($extra=false) {
 	global $clusterdata, $CLUSTER_CONFIGS, $selectedcluster;
 	$expId = $_GET['expId'];
 
+	if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
+	if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
+
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
@@ -327,7 +277,7 @@ function jobForm($extra=false) {
 
 	$javafunc .= defaultReconValues($box);
 	$javafunc .= writeJavaPopupFunctions('eman');
-	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
+	processing_header("EMAN Job Generator","EMAN Job Generator",$javafunc);
 	// write out errors, if any came up:
 	if (!($user && $pass)) echo "<font color='#CC3333' size='+2'><B>WARNING!!!</B> You are not logged in!!!</font><br/>";
 
@@ -720,6 +670,20 @@ function jobForm($extra=false) {
 	echo "<td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i' onclick='emanjob.submit()'></td>\n";
 	echo "</tr>\n";
 
+	// SETUP FILELIST TO COPY OVER FILES
+	$stackdata = $particle->getStackParams($stackid);
+	$modeldata = $particle->getInitModelInfo($modelid);
+	$sendfilelist = "";
+	$ext=strrchr($stackdata['name'],'.');
+	$stackname=substr($stackdata['name'],0,-strlen($ext));
+	$sendfilelist .= formatEndPath($stackdata['path']).$stackname.".hed";
+	$sendfilelist .= "|--|";
+	$sendfilelist .= formatEndPath($stackdata['path']).$stackname.".img";
+	$sendfilelist .= "|--|";
+	$sendfilelist .= formatEndPath($modeldata['path']).$modeldata['name'];
+	echo "<input type='hidden' NAME='sendfilelist' value='$sendfilelist'>\n";
+	$receivefilelist = "model.tar.gz|--|results.tar.gz";
+	echo "<input type='hidden' NAME='receivefilelist' value='$receivefilelist'>\n";
 
 ### commented out for now, since  not working properly
 #	<TD colspan=6 bgcolor='$bgcolor' CELLPADDING=0 CELLSPACING=0>
@@ -809,6 +773,39 @@ function getPBSMemoryNeeded() {
 function writeJobFile ($extra=False) {
 	global $clusterdata;
 	$particle = new particledata();
+
+	if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=".C_NODES_DEF);
+	if (!$_POST['ppn']) jobForm("ERROR: No processors per node specified, setting default=".C_PPN_DEF);
+	if ($_POST['ppn'] > C_PPN_MAX ) jobForm("ERROR: Max processors per node is ".C_PPN_MAX);
+	if ($_POST['nodes'] > C_NODES_MAX ) jobForm("ERROR: Max nodes on ".C_NAME." is ".C_NODES_MAX);
+	if (!$_POST['walltime']) jobForm("ERROR: No walltime specified, setting default=".C_WALLTIME_DEF);
+	if ($_POST['walltime'] > C_WALLTIME_MAX ) jobForm("ERROR: Max walltime is ".C_WALLTIME_MAX);
+	if (!$_POST['cput']) jobForm("ERROR: No CPU time specified, setting default=".C_CPUTIME_DEF);
+	if ($_POST['cput'] > C_CPUTIME_MAX) jobForm("ERROR: Max CPU time is ".C_CPUTIME_MAX);
+	if (!$_POST['rprocs']) jobForm("ERROR: No reconstruction ppn specified, setting default=".C_RPROCS_DEF);
+	if ($_POST['rprocs'] > $_POST['ppn'])
+	  jobForm("ERROR: Asking to reconstruct on more processors than available");
+
+  for ($i=1; $i<=$_POST['numiters']; $i++) {
+		if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
+		if (!$_POST['sym'.$i]) jobForm("ERROR: no symmetry set for iteration $i");
+		if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
+		// if amask is used, then xfiles must also be used
+		if ($_POST['amask1'.$i] || $_POST['amask2'.$i] || $_POST['amask3'.$i]) {
+			if (!($_POST['amask1'.$i] && $_POST['amask2'.$i] && $_POST['amask3'.$i])) jobForm("ERROR: All 3 amask values of amask must be entered for iteration $i");
+			if (!$_POST['xfiles'.$i]) jobForm ("ERROR: amask requires the use of xfiles for iteration $i");
+		} 
+	}
+
+	// check that job file doesn't already exist
+	$outdir = formatEndPath($_POST['outdir']);
+	$outdir .= $_POST['jobname'];
+
+	// jobname ends with .job
+	$jobname = $_POST['jobname'];
+	$jobname .= '.job';
+	$exists = $particle->getJobFileFromPath($outdir,$jobname);
+
 	$expId = $_GET['expId'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
@@ -843,7 +840,7 @@ function writeJobFile ($extra=False) {
 	if (!$extra) {
 		$javafunc.=$clusterdata->get_javascript();
 	}
-	processing_header("Eman Job Generator","EMAN Job Generator", $javafunc);
+	processing_header("EMAN Job Generator","EMAN Job Generator", $javafunc);
 	$header.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
 	$header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
 	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
@@ -860,6 +857,8 @@ function writeJobFile ($extra=False) {
 	$pad=intval($box*1.25);
 	// make sure $pad value is even int
 	$pad = ($pad%2==1) ? $pad+=1 : $pad;
+
+	$ejob.= "mv -v ".$initmodel['name']." threed.0a.mrc\n";
 
 	// rescale initial model if necessary:
 	if ($rebox || $rescale) {
@@ -971,6 +970,13 @@ function writeJobFile ($extra=False) {
 		$ejob.= $line;
 	}
 	
+	### tar up files
+	$ejob.= "\n";
+	$ejob.= "tar -cvzf model.tar.gz threed.*a.mrc\n";
+	$ejob.= "tar -cvzf results.tar.gz fsc* cls* refine.* particle.* "
+		."classes.* classes_*.* proj.* sym.* .emanlog *txt *.job\n";
+
+	### cluster specific info
 	$clusterjob .= $clusterdata->cluster_job_file($ejob);
 	
 	if (!$extra) {

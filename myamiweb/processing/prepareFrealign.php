@@ -423,7 +423,7 @@ function jobForm($extra=false) {
 		echo " <input type='text' name='last' value='$last' size='4'>\n";
 		echo docpop('last','Last particle to use')." \n";
 
-	// DEBUGGING FIELDS
+	// SUBMIT BUTTON
 	echo "</td></tr><tr><td colspan='3' align='center'>\n";
 		echo "<br/>\n";
 		echo getSubmitForm("Prepare Frealign");
@@ -432,7 +432,6 @@ function jobForm($extra=false) {
 
 	echo "<input type='hidden' NAME='cs' value='$cs'>";
 	echo "<input type='hidden' NAME='kv' value='$kv'>";
-	echo "<input type='hidden' NAME='last' value='$nump'>";
 	echo "<input type='hidden' NAME='apix' value='$apix'>";
 
 	echo "</form>\n";
@@ -515,7 +514,7 @@ function prepareFrealign ($extra=False) {
 	$importiter=$_POST['importiter'];
 	$last=$_POST['last'];	
 
-	$cmd = "runfrealign.py ";
+	$cmd = "prepFrealign.py ";
 	$cmd.= "--runname=$runname ";
 	$cmd.= "--rundir=$rundir ";
 	$cmd.= "--project=$projectId ";

@@ -526,7 +526,7 @@ if ($expId) {
 
 		$action = "Refine Reconstruction";
 
-		$reconresults = array();
+		$emanreconresults = array();
 
 		// check for euler jumper filter jobs
 		$ejdone = count($subclusterjobs['removeJumpers']['done']);
@@ -534,13 +534,25 @@ if ($expId) {
 		$ejrun = count($subclusterjobs['removeJumpers']['running']);
 
 		// check for how many EMAN reconstructions have finished / running / queued
-		$reconresults[] = ($jobqueue>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobqueue queued</a>" : "";
-		$reconresults[] = ($jobrun>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobrun running</a>" : "";
-		$reconresults[] = ($jobincomp>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
-		$reconresults[] = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns complete</a>" : "";
-		$reconresults[] = ($ejrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=removeJumpers'>$ejrun reclassifying</a>";
+		$emanreconresults[] = ($jobqueue>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobqueue queued</a>" : "";
+		$emanreconresults[] = ($jobrun>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobrun running</a>" : "";
+		$emanreconresults[] = ($jobincomp>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
+		$emanreconresults[] = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns complete</a>" : "";
+		$emanreconresults[] = ($ejrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=removeJumpers'>$ejrun reclassifying</a>";
 
 		$totresult = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns</a>" : "";
+
+		// check for how many FREALIGN reconstructions are upload / ready to upload / ready to run / running / queued
+		$frealignqueue = count($subclusterjobs['prepfrealign']['queued']);
+		$frealignrun = count($subclusterjobs['prepfrealign']['running']);
+		$frealigndone = count($subclusterjobs['prepfrealign']['done']);
+		$numfrealign = 0;
+		$frealignupload = $frealigndone - $numfrealign;
+		$frealignresults[] = ($frealignqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=prepfrealign'>$frealignqueue queued</a>" : "";
+		$frealignresults[] = ($frealignrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=prepfrealign'>$frealignrun running</a>" : "";
+		$frealignresults[] = ($frealigndone>0) ? "<a href='runFrealign.php?expId=$sessionId'>$frealigndone prepared</a>" : "";
+		//$frealignresults[] = ($frealignupload>0) ? "<a href='uploadfrealign.php?expId=$sessionId'>$frealignupload ready for upload</a>" : "";
+		//$frealignresults[] = ($numfrealign>0) ? "<a href='reconsummary.php?expId=$sessionId'>$numfrealign complete</a>" : "";
 
 		// check for how many IMAGIC reconstructions have finished / running / queued
 		$imq = count($subclusterjobs['imagic3dRefine']['queued']);
@@ -552,13 +564,14 @@ if ($expId) {
 		$imreconresults[] = ($imrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imrun running</a>" : "";
 		$imreconresults[] = ($imdone>0) ? "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$imdone complete</a>" : "";
 
+		// check for how many Xmipp reconstructions have finished / running / queued
 		$xmippreconqueue = count($subclusterjobs['xmipprecon']['queued']);
 		$xmippreconrun = count($subclusterjobs['xmipprecon']['running']);
 		$xmipprecondone = count($subclusterjobs['xmipprecon']['done']);
 		$numxmipprecon = 0;
 		$xmippreconupload = $xmipprecondone - $numxmipprecon;
-		$xmippreconresults[] = ($xmippreconqueue>0) ? "<a href='checkjobs.php?expId=$sessionId'>$xmippreconqueue queued</a>" : "";
-		$xmippreconresults[] = ($xmippreconrun>0) ? "<a href='checkjobs.php?expId=$sessionId'>$xmippreconrun running</a>" : "";
+		$xmippreconresults[] = ($xmippreconqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$xmippreconqueue queued</a>" : "";
+		$xmippreconresults[] = ($xmippreconrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$xmippreconrun running</a>" : "";
 		$xmippreconresults[] = ($xmippreconupload>0) ? "<a href='uploadXmippRecon.php?expId=$sessionId'>$xmippreconupload ready for upload</a>" : "";
 		$xmippreconresults[] = ($numxmipprecon>0) ? "<a href='reconsummary.php?expId=$sessionId'>$numxmipprecon complete</a>" : "";
 
@@ -568,9 +581,12 @@ if ($expId) {
 		if (TRUE) {
 			$nruns[] = array(
 					 'name'=>"<a href='emanJobGen.php?expId=$sessionId'>EMAN Refinement</a>",
-					 'result'=>$reconresults,
+					 'result'=>$emanreconresults,
 					 );
-			$nruns[] = "<a href='frealignJobGen.php?expId=$sessionId'>Frealign Refinement</a>" ;
+			$nruns[] = array(
+					 'name'=>"<a href='prepareFrealign.php?expId=$sessionId'>Frealign Refinement</a>",
+					 'result'=>$frealignresults,
+					 );
 			$nruns[] = "<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>";
 			$nruns[] = array(
 					 'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
