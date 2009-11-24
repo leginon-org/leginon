@@ -625,7 +625,10 @@ class frealignJob(appionScript.AppionScript):
 		mainf.write("#PBS -r n\n")
 		mainf.write("#PBS -j oe\n")
 		mainf.write("\n")
+		### if guppy
 		mainf.write("cd %s\n"%(self.params['rundir']))
+		### elseif garibaldi
+		mainf.write("tar xvf %s\n"%(os.path.join(self.params['rundir']))
 		mainf.write("\n")
 		mainf.write("\n")
 
@@ -665,6 +668,39 @@ class frealignJob(appionScript.AppionScript):
 		return self.mainjobfile
 
 	#===============
+	def prepareForCluster(self):
+		#package data for transfer to cluster
+		apFile.removeFile(self.params['runname']+".tar")
+		cmd = "tar --exclude=*.tar -cf %s.tar *"%(self.params['runname'])
+		proc = subprocess.Popen(cmd, shell=True)
+		proc.wait()
+
+		needf = open("files-needed.txt", "w")
+		needf.write("%s.tar\n"%(os.path.join(self.params['rundir'], self.params['runname'])))
+		needf.write("%s\n"%(os.path.splitext(self.origstackfile)[0]+".hed"))
+		needf.write("%s\n"%(os.path.splitext(self.origstackfile)[0]+".img"))
+		needf.close()
+
+		### find cluster job based on path
+		partq = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		jobq = appiondata.ApClusterJobData()
+		jobq['path'] = partq
+		jobq['jobtype'] = 'prepfrealign'
+		jobdatas = clustq.query()
+		jobdata = jobdatas[0]
+
+		frealignq = appiondata.ApPrepareFrealignData()
+		frealignq['name'] = self.params['runname']
+		frealignq['ppn'] = self.params['ppn']
+		frealignq['nodes'] = self.params['nodes']
+		frealignq['hidden'] = False
+		frealignq['tarfile'] = "%s.tar"%(self.params['runname'])
+		frealignq['path'] = partq
+		frealignq['stack'] = appiondata.ApStackData.direct_query(self.params['stackid'])
+		frealignq['model'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
+		frealignq['job'] = jobdata
+
+	#===============
 	def start(self):
 		self.iflag = 1
 		self.setIBLOW()
@@ -683,6 +719,7 @@ class frealignJob(appionScript.AppionScript):
 			os.symlink(os.path.splitext(self.stackfile)[0]+".img", "start.img")
 		if self.params['cluster'] is True:
 			self.setupMultiNode()
+		self.origstackfile = self.stackfile
 		self.stackfile = "start"
 
 		### create initial model file
@@ -707,11 +744,7 @@ class frealignJob(appionScript.AppionScript):
 			#apEMAN.executeEmanCmd(emancmd, verbose=True)
 
 		if self.params['cluster'] is True:
-			#package data for transfer to cluster
-			apFile.removeFile(self.params['runname']+".tar")
-			cmd = "tar --exclude=*.tar -cf %s.tar *"%(self.params['runname'])
-			proc = subprocess.Popen(cmd, shell=True)
-			proc.wait()
+			self.prepareForCluster()
 
 		print "Done!"
 
