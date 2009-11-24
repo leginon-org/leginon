@@ -185,10 +185,10 @@ function jobForm($extra=false) {
 	echo "</td></tr><tr><td>\n";
 
 		echo docpop('runname','Run Name')." <br/>\n";
-		echo " <input type='type' name='runname' value='$runname' size='20'>\n";
+		echo " <input type='text' name='runname' value='$runname' size='20'>\n";
 		echo "<br/>\n";
 		echo docpop('outdir','Output directory')." <br/>\n";
-		echo " <input type='type' name='outdir' value='$outdir' size='50'>\n";
+		echo " <input type='text' name='outdir' value='$outdir' size='50'>\n";
 		echo "<br/><br/>\n";
 
 	echo "</td></tr>\n";
@@ -262,19 +262,19 @@ function jobForm($extra=false) {
 	echo "<b>Determine with Frealign</b>";
 	echo "<br/>\n";
 	echo docpop('dang',"&nbsp;&nbsp;&nbsp; Angular increment: ");
-	echo " <input type='type' name='dang' value='$dang' size='4'>\n";
+	echo " <input type='text' name='dang' value='$dang' size='4'>\n";
 	echo "&nbsp;&nbsp;&nbsp; Initial LP filter: ";
-	echo " <input type='type' name='initlp' value='$initlp' size='4'>\n";
+	echo " <input type='text' name='initlp' value='$initlp' size='4'>\n";
 
 	//echo "</td></tr><tr><td>\n";
 
 	//echo "<input type='radio' name='initmethod' value='inparfile' $inparfilecheck>\n";
 	//echo docpop('inpar',"Use input Frealign parameter file:");
-	//echo " <input type='type' name='inparfile' value='$inparfile' size='50'>\n";
+	//echo " <input type='text' name='inparfile' value='$inparfile' size='50'>\n";
 
 	echo "</td></tr><tr><td>\n";
 
-	echo " <input type='type' name='numiter' value='$numiter' size='4'>\n";
+	echo " <input type='text' name='numiter' value='$numiter' size='4'>\n";
 	echo docpop('numiter','Number of refinement iterations')." <font size='-2'><i></i></font>\n";
 	echo "<br/>\n";
 
@@ -350,73 +350,80 @@ function jobForm($extra=false) {
 	echo "</td></tr>";
 
 	echo "<tr><td rowspan='5'>\n";
-		echo " <input type='type' name='mask' value='$mask' size='4'>\n";
+		echo " <input type='text' name='mask' value='$mask' size='4'>\n";
 		echo docpop('mask','Particle outer mask radius (RO)')
 			." <font size='-2'><i>(in &Aring;ngstroms)</i></font>\n";
 		echo "<br/>\n";
-		echo " <input type='type' name='imask' value='$imask' size='4'>\n";
+		echo " <input type='text' name='imask' value='$imask' size='4'>\n";
 		echo docpop('imask','Particle inner mask radius (RI)')
 			." <font size='-2'><i>(in &Aring;ngstroms)</i></font>\n";
 
 		echo "<br/><br/>\n";
 
-		echo " <input type='type' name='wgh' value='$wgh' size='4'>\n";
+		echo " <input type='text' name='wgh' value='$wgh' size='4'>\n";
 		echo docpop('wgh','Amplitude contrast (WGH)')." \n";
 		echo "<br/>\n";
-		echo " <input type='type' name='xstd' value='$xstd' size='4'>\n";
+		echo " <input type='text' name='xstd' value='$xstd' size='4'>\n";
 		echo docpop('xstd','Standard deviation filtering (XSTD)')
 			." <font size='-2'><i>(0 = no filtering)</i></font>\n";
 		echo "<br/>\n";
-		echo " <input type='type' name='pbc' value='$pbc' size='4'>\n";
+		echo " <input type='text' name='pbc' value='$pbc' size='4'>\n";
 		echo docpop('pbc','Phase B-factor weighting constant (PBC)')." <font size='-2'></font>\n";
 		echo "<br/>\n";
-		echo " <input type='type' name='boff' value='$boff' size='4'>\n";
+		echo " <input type='text' name='boff' value='$boff' size='4'>\n";
 		echo docpop('boff','B-factor offset (BOFF)')." <font size='-2'></font>\n";
 
 		echo "<br/><br/>\n";
 
-		echo " <input type='type' name='itmax' value='$itmax' size='4'>\n";
+		echo " <input type='text' name='itmax' value='$itmax' size='4'>\n";
 		echo docpop('itmax','Number of randomized search trials (ITMAX)')." <font size='-2'></font>\n";
 		echo "<br/>\n";
-		echo " <input type='type' name='ipmax' value='$ipmax' size='4'>\n";
+		echo " <input type='text' name='ipmax' value='$ipmax' size='4'>\n";
 		echo docpop('ipmax','Number of potential matches to refine (IPMAX)')." <font size='-2'></font>\n";
 
 	echo "</td><td>\n";
 
-		echo " <input type='type' name='sym' value='$sym' size='4'>\n";
+		echo " <input type='text' name='sym' value='$sym' size='4'>\n";
 		echo docpop('sym','Symmetry (ASYM)')." <font size='-2'></font>\n";
 
 	echo "</td></tr><tr><td>\n";
 		echo "<h4>Card #6</h4>\n";
 	echo "</td></tr><tr><td>\n";
 
-		echo " <input type='type' name='target' value='$target' size='4'>\n";
+		echo " <input type='text' name='target' value='$target' size='4'>\n";
 		echo docpop('target','Target phase residual (TARGET)')." <font size='-2'></font>\n";
 		echo "<br/>\n";
-		echo " <input type='type' name='thresh' value='$thresh' size='4'>\n";
+		echo " <input type='text' name='thresh' value='$thresh' size='4'>\n";
 		echo docpop('thresh','Worst phase residual for inclusion (THRESH)')." <font size='-2'></font>\n";
 		echo "<br/>\n";
-		echo " <input type='type' name='cs' value='$cs' size='4'>\n";
+		echo " <input type='text' name='cs' value='$cs' size='4'>\n";
 		echo docpop('cs','Spherical abberation (CS)')." <font size='-2'></font>\n";
 
 	echo "</td></tr><tr><td>\n";
 		echo "<h4>Card #7</h4>\n";
 	echo "</td></tr><tr><td>\n";
 
-		echo " <input type='type' name='rrec' value='$rrec' size='4'>\n";
+		echo " <input type='text' name='rrec' value='$rrec' size='4'>\n";
 		echo docpop('rrec','Resolution limit of reconstruction (RREC)')
 			." <font size='-2'><i>(in &Aring;ngstroms; default Nyquist)</i></font>\n";
 		echo "<br/>\n";
-		echo " <input type='type' name='hp' value='$hp' size='4'>\n";
+		echo " <input type='text' name='hp' value='$hp' size='4'>\n";
 		echo docpop('hp','Lower resolution limit or high-pass filter (RMAX1)')
 			." <font size='-2'><i>(in &Aring;ngstroms)</i></font>\n";
 		echo "<br/>\n";
-		echo " <input type='type' name='lp' value='$lp' size='4'>\n";
+		echo " <input type='text' name='lp' value='$lp' size='4'>\n";
 		echo docpop('lp','Higher resolution limit or low-pass filter (RMAX2)')
 			." <font size='-2'><i>(in &Aring;ngstroms; default 2*Nyquist)</i></font>\n";
 		echo "<br/>\n";
-		echo " <input type='type' name='rbfact' value='$rbfact' size='4'>\n";
+		echo " <input type='text' name='rbfact' value='$rbfact' size='4'>\n";
 		echo docpop('rbfact','B-factor correction (RBFACT)')." <font size='-2'><i>(0 = off)</i></font>\n";
+
+	// DEBUGGING FIELDS
+	echo "</td></tr><tr><td colspan='3' align='center'>\n";
+		echo " <input type='text' name='last' value='$last' size='4'>\n";
+		echo docpop('last','Last particle to use')." \n";
+
+	// DEBUGGING FIELDS
 	echo "</td></tr><tr><td colspan='3' align='center'>\n";
 		echo "<br/>\n";
 		echo getSubmitForm("Prepare Frealign");
@@ -506,7 +513,8 @@ function prepareFrealign ($extra=False) {
 	$numiter=$_POST['numiter'];
 	$inpar=$_POST['inparfile'];
 	$importiter=$_POST['importiter'];
-	
+	$last=$_POST['last'];	
+
 	$cmd = "runfrealign.py ";
 	$cmd.= "--runname=$runname ";
 	$cmd.= "--rundir=$rundir ";
@@ -535,6 +543,7 @@ function prepareFrealign ($extra=False) {
 	$cmd.= "--cluster ";
 	$cmd.= "--ppn=$ppn ";
 	$cmd.= "--nodes=$nodes ";
+	$cmd.= "--last=$last ";
 
 	// submit job to cluster
 	if ($_POST['process'] == "Prepare Frealign") {
