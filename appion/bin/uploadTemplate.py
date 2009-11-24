@@ -139,7 +139,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 					apDisplay.printError("'imgnums' is NOT within the boundary of the stack: %d > %d"%(partnum,numpart))
 				apDisplay.printMsg("Extracting image %d from stack" % partnum)
 				templatename = "stack%d-particle%d.mrc"%(self.params['stackid'],partnum)
-				abstemplatepath= os.path.join(stackdata['path']['path'], templatename)
+				abstemplatepath= os.path.join(self.params['rundir'], templatename)
 				### run proc2d with params['stackimgnum']
 				emancmd = "proc2d %s %s first=%d last=%d" % (stackfile, abstemplatepath, partnum, partnum)
 				###  create template
@@ -167,7 +167,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 				apDisplay.printError("'imgnums' is NOT within the boundary of the stack: %d > %d"%(partnum,numpart))
 			apDisplay.printMsg("Extracting image %d from align stack" % partnum)
 			templatename = "align%d-average%d.mrc"%(self.params['alignid'],partnum)
-			abstemplatepath= os.path.join(alignstackdata['path']['path'], templatename)
+			abstemplatepath= os.path.join(self.params['rundir'], templatename)
 			### run proc2d with params['stackimgnum']
 			emancmd = "proc2d %s %s first=%d last=%d" % (stackfile, abstemplatepath, partnum, partnum)
 			###  create template
