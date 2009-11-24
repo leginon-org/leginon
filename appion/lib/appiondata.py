@@ -848,6 +848,24 @@ class ApRefinementRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApFrealignPrepareData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('ppn', int),
+			('nodes', int),
+			('memory', int),
+			('hidden', bool),
+			('tarfile', str),
+			('path', ApPathData),
+			('stack', ApStackData),
+			('model', ApInitialModelData),
+			('job', ApClusterJobData),
+		)
+	typemap = classmethod(typemap)
+
+### Tomography tables ###
+
 class ApImodXcorrParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (

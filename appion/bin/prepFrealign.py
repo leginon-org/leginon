@@ -611,25 +611,27 @@ class frealignJob(appionScript.AppionScript):
 		### multiply by number of procs per node
 		memneed *= self.params['ppn']
 
+		## double it just in case
+		memneed *= 2.0
+
 		return memneed
 
 	#===============
 	def setupMultiNode(self):
 		self.mainjobfile = 'frealign.run.job'
 		mainf = open(self.mainjobfile, 'w')
-		mainf.write("#PBS -l nodes=%d:ppn=%d\n"%(self.params['nodes'], self.params['ppn']))
-		memrequest = self.calcMemNeeded() * 4.0
+		#mainf.write("#PBS -l nodes=%d:ppn=%d\n"%(self.params['nodes'], self.params['ppn']))
+		memrequest = self.calcMemNeeded()
 		apDisplay.printMsg("requesting %s of memory"%(apDisplay.bytes(memrequest)))
-		mainf.write("#PBS -l mem=%s\n"%(apDisplay.clusterBytes(memrequest)))
-		mainf.write("#PBS -m e\n")
-		mainf.write("#PBS -r n\n")
-		mainf.write("#PBS -j oe\n")
-		mainf.write("\n")
+		#mainf.write("#PBS -l mem=%s\n"%(apDisplay.clusterBytes(memrequest)))
+		#mainf.write("#PBS -m e\n")
+		#mainf.write("#PBS -r n\n")
+		#mainf.write("#PBS -j oe\n")
+		#mainf.write("\n")
 		### if guppy
-		mainf.write("cd %s\n"%(self.params['rundir']))
+		#mainf.write("cd %s\n"%(self.params['rundir']))
 		### elseif garibaldi
-		mainf.write("tar xvf %s\n"%(os.path.join(self.params['rundir']))
-		mainf.write("\n")
+		mainf.write("tar -xvf %s.tar\n"%(self.params['runname']))
 		mainf.write("\n")
 
 	#===============
@@ -686,19 +688,24 @@ class frealignJob(appionScript.AppionScript):
 		jobq = appiondata.ApClusterJobData()
 		jobq['path'] = partq
 		jobq['jobtype'] = 'prepfrealign'
-		jobdatas = clustq.query()
+		jobdatas = jobq.query(results=1)
+		if not jobdatas:
+			apDisplay.printError("Could not find job data for prepFrealign")
 		jobdata = jobdatas[0]
 
-		frealignq = appiondata.ApPrepareFrealignData()
+		### create a frealign table
+		frealignq = appiondata.ApFrealignPrepareData()
 		frealignq['name'] = self.params['runname']
 		frealignq['ppn'] = self.params['ppn']
 		frealignq['nodes'] = self.params['nodes']
+		frealignq['memory'] = self.calcMemNeeded()/1e9 #memory in gigabytes
 		frealignq['hidden'] = False
 		frealignq['tarfile'] = "%s.tar"%(self.params['runname'])
 		frealignq['path'] = partq
 		frealignq['stack'] = appiondata.ApStackData.direct_query(self.params['stackid'])
 		frealignq['model'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 		frealignq['job'] = jobdata
+		frealignq.insert()
 
 	#===============
 	def start(self):
