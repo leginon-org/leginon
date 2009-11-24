@@ -241,6 +241,9 @@ if ($expId) {
 	$ace2done = count($subclusterjobs['ace2']['done']);
 	$ace2run = count($subclusterjobs['ace2']['running']);
 	$ace2q = count($subclusterjobs['ace2']['queued']);
+	$ace2done+= count($subclusterjobs['pyace2']['done']);
+	$ace2run = count($subclusterjobs['pyace2']['running']);
+	$ace2q = count($subclusterjobs['pyace2']['queued']);
 
 	$ace2results[] = ($ace2done==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$ace2done complete</a>";
 	$ace2results[] = ($ace2run==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=ace2'>$ace2run running</a>";
