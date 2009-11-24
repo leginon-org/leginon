@@ -552,7 +552,7 @@ function prepareFrealign ($extra=False) {
 
 		if (!($user && $password)) jobForm("<b>ERROR:</b> Enter a user name and password");
 
-		$sub = submitAppionJob($cmd,$outdir,$runname,$expId,'frealign',False,False);
+		$sub = submitAppionJob($cmd,$outdir,$runname,$expId,'prepfrealign',False,False);
 		// if errors:
 		if ($sub) jobForm("<b>ERROR:</b> $sub");
 		exit;

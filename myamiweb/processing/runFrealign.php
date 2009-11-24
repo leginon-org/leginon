@@ -29,43 +29,14 @@ $selectedcluster=strtolower($selectedcluster);
 */
 
 if ($_POST['write']) {
-	// write job file
-	$particle = new particledata();
+	writeJobFile(); // write job file
+elseif ($_POST['stackval'] && $_POST['model'])
+	jobForm(); // fill out job form
+elseif ($_POST['submitjob'])
+	submitJob(); // submit job
+else
+	selectFrealignJob(); // select a prepared frealign job
 
-	if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=".C_NODES_DEF);
-	if (!$_POST['ppn']) jobForm("ERROR: No processors per node specified, setting default=".C_PPN_DEF);
-	if ($_POST['ppn'] > C_PPN_MAX ) jobForm("ERROR: Max processors per node is ".C_PPN_MAX);
-	if ($_POST['nodes'] > C_NODES_MAX ) jobForm("ERROR: Max nodes on ".C_NAME." is ".C_NODES_MAX);
-	if (!$_POST['walltime']) jobForm("ERROR: No walltime specified, setting default=".C_WALLTIME_DEF);
-	if ($_POST['walltime'] > C_WALLTIME_MAX ) jobForm("ERROR: Max walltime is ".C_WALLTIME_MAX);
-	if (!$_POST['cput']) jobForm("ERROR: No CPU time specified, setting default=".C_CPUTIME_DEF);
-	if ($_POST['cput'] > C_CPUTIME_MAX) jobForm("ERROR: Max CPU time is ".C_CPUTIME_MAX);
-	if (!$_POST['rprocs']) jobForm("ERROR: No reconstruction ppn specified, setting default=".C_RPROCS_DEF);
-	if ($_POST['rprocs'] > $_POST['ppn'])
-	  jobForm("ERROR: Asking to reconstruct on more processors than available");
-
-
-  for ($i=1; $i<=$_POST['numiters']; $i++) {
-		if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
-		if (!$_POST['sym'.$i]) jobForm("ERROR: no symmetry set for iteration $i");
-		if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
-		// if amask is used, then xfiles must also be used
-		if ($_POST['amask1'.$i] || $_POST['amask2'.$i] || $_POST['amask3'.$i]) {
-			if (!($_POST['amask1'.$i] && $_POST['amask2'.$i] && $_POST['amask3'.$i])) jobForm("ERROR: All 3 amask values of amask must be entered for iteration $i");
-			if (!$_POST['xfiles'.$i]) jobForm ("ERROR: amask requires the use of xfiles for iteration $i");
-		} 
-	}
-
-	// check that job file doesn't already exist
-	$outdir = formatEndPath($_POST['outdir']);
-	$outdir .= $_POST['jobname'];
-
-	// jobname ends with .job
-	$jobname = $_POST['jobname'];
-	$jobname .= '.job';
-	$exists = $particle->getJobFileFromPath($outdir,$jobname);
-	writeJobFile();
-}
 
 /*
 ******************************************
@@ -73,31 +44,7 @@ if ($_POST['write']) {
 ******************************************
 */
 
-elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
-	// create job form
-	## make sure a stack and model were selected
-	if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
-	if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
-
-	// make sure that box sizes are the same
-	// get stack data
-	//	$stackinfo = explode('|--|',$_POST['stackval']);
-	//$stackbox = $stackinfo[2];
-	// get model data
-	//$modelinfo = explode('|--|',$_POST['model']);
-	//$modbox = $modelinfo[3];
-	//if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
-	jobForm();
-}
-
-/*
-******************************************
-******************************************
-******************************************
-*/
-
-elseif ($_POST['submitjob']) {
-	// submit job
+function submitJob($extra=False) {
 	$particle = new particledata();
 	$clusterdata->post_data();
 
@@ -186,77 +133,32 @@ elseif ($_POST['submitjob']) {
 	exit;
 }
 
-else stackModelForm();
-
 /*
 ******************************************
 ******************************************
 ******************************************
 */
 
-function stackModelForm($extra=False) {
+function selectFrealignJob($extra=False) {
 	// check if session provided
 	$expId = $_GET['expId'];
 	$projectId = getProjectFromExpId($expId);
-
-	$javafunc="<script src='../js/viewer.js'></script>\n";
-	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
-
+	processing_header("FREALIGN Job Generator","FREALIGN Job Generator",$javafunc);
 	if ($expId) {
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	} else {
 		exit;
 	}
-
 	$particle = new particledata();
 
-	// get initial models associated with project
-	$models = $particle->getModelsFromProject($projectId);
+	// get prepared frealign jobs
+	$frealignjobs = getJobIdsFromSession($expId, $jobtype='prepfrealign', $status='D')
 
-	// find each stack entry in database
-	$stackIds = $particle->getStackIds($expId);
-	$stackinfo = explode('|--|', $_POST['stackval']);
-	$stackidval = $stackinfo[0];
-	$apix = $stackinfo[1];
-	$box = $stackinfo[2];
-
-	// write out errors, if any came up:
-	if ($extra) echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
-
-	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
-
-	echo"<b>Stack:</b><br>";
-	$particle->getStackSelector($stackIds, $stackidval, '');
-
-	// show initial models
-	echo "<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
-	echo "<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><br>\n";
-
-	$minf = explode('|--|',$_POST['model']);
-	if (is_array($models) && count($models)>0) {
-		echo "<table class='tableborder' border='1'>\n";
-		foreach ($models as $model) {
-			echo "<tr><td>\n";
-			$modelid = $model['DEF_id'];
-			$symdata = $particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
-			$modelvals = "$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$symdata[symmetry]";
-
-			echo "<input type='radio' NAME='model' value='$modelvals' ";
-			// check if model was selected
-			if ($modelid == $minf[0]) echo " CHECKED";
-			echo ">\n";
-			echo"Use<br/>Model\n";
-
-			echo "</td><td>\n";
-
-			echo modelsummarytable($modelid, true);
-
-			echo "</td></tr>\n";
-		}
-		echo "</table>\n\n";
-		echo "<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
+	foreach ($frealignjobs as $frealignjob) {
+		echo print_r($frealignjobs);
 	}
-	else echo "No initial models in database";
+
+
 	processing_footer();
 	exit;
 }
@@ -807,6 +709,42 @@ function getPBSMemoryNeeded() {
 */
 
 function writeJobFile ($extra=False) {
+	$particle = new particledata();
+
+	if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=".C_NODES_DEF);
+	if (!$_POST['ppn']) jobForm("ERROR: No processors per node specified, setting default=".C_PPN_DEF);
+	if ($_POST['ppn'] > C_PPN_MAX ) jobForm("ERROR: Max processors per node is ".C_PPN_MAX);
+	if ($_POST['nodes'] > C_NODES_MAX ) jobForm("ERROR: Max nodes on ".C_NAME." is ".C_NODES_MAX);
+	if (!$_POST['walltime']) jobForm("ERROR: No walltime specified, setting default=".C_WALLTIME_DEF);
+	if ($_POST['walltime'] > C_WALLTIME_MAX ) jobForm("ERROR: Max walltime is ".C_WALLTIME_MAX);
+	if (!$_POST['cput']) jobForm("ERROR: No CPU time specified, setting default=".C_CPUTIME_DEF);
+	if ($_POST['cput'] > C_CPUTIME_MAX) jobForm("ERROR: Max CPU time is ".C_CPUTIME_MAX);
+	if (!$_POST['rprocs']) jobForm("ERROR: No reconstruction ppn specified, setting default=".C_RPROCS_DEF);
+	if ($_POST['rprocs'] > $_POST['ppn'])
+	  jobForm("ERROR: Asking to reconstruct on more processors than available");
+
+
+  for ($i=1; $i<=$_POST['numiters']; $i++) {
+		if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
+		if (!$_POST['sym'.$i]) jobForm("ERROR: no symmetry set for iteration $i");
+		if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
+		// if amask is used, then xfiles must also be used
+		if ($_POST['amask1'.$i] || $_POST['amask2'.$i] || $_POST['amask3'.$i]) {
+			if (!($_POST['amask1'.$i] && $_POST['amask2'.$i] && $_POST['amask3'.$i])) jobForm("ERROR: All 3 amask values of amask must be entered for iteration $i");
+			if (!$_POST['xfiles'.$i]) jobForm ("ERROR: amask requires the use of xfiles for iteration $i");
+		} 
+	}
+
+	// check that job file doesn't already exist
+	$outdir = formatEndPath($_POST['outdir']);
+	$outdir .= $_POST['jobname'];
+
+	// jobname ends with .job
+	$jobname = $_POST['jobname'];
+	$jobname .= '.job';
+	$exists = $particle->getJobFileFromPath($outdir,$jobname);
+
+
 	global $clusterdata;
 	$particle = new particledata();
 	$expId = $_GET['expId'];
