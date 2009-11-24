@@ -27,6 +27,23 @@ class particledata {
 					PARTICLE_DB);
 	}
 
+
+	function getPathFromId ($pathId) {
+		$q = "SELECT "
+		  ."p.path AS path "
+		  ."FROM ApPathData as p "
+		  ."WHERE "
+		  ."  p.`DEF_id` = '$pathId' "
+		  ."LIMIT 1 ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		$path = $r[0]['path'];
+		//echo "$path<br/><br/>\n";
+		return $path;
+	}
+
+
 	function getSessionData ($sessionId) {
 		$q = "SELECT "
 		  ."s.* "
