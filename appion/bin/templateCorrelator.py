@@ -78,8 +78,10 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			help="Start, end, and increment angles: e.g. 0,360,10x0,180,5", metavar="#,#,#x#,#,#")
 
 		### True / False options
-		self.parser.add_option("--thread-findem", dest="threadfindem", default=False,
+		self.parser.add_option("--thread-findem", dest="threadfindem", default=True,
 			action="store_true", help="Run findem crosscorrelation in threads")
+		self.parser.add_option("--no-thread-findem", dest="threadfindem", default=True,
+			action="store_false", help="Run findem crosscorrelation in threads")
 		self.parser.add_option("--spectral", dest="spectral", default=False,
 			action="store_true", help="Use spectral correlation instead of normal correlation")
 		self.parser.add_option("--use-mirrors", dest="templatemirrors", default=False,
