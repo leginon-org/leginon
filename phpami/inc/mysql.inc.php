@@ -44,6 +44,17 @@ class mysql {
 			user: ".$this->db_user;
 	}
 
+	function dbError() {
+		$err='<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">';
+		$err.='<html><body><div style="border: 1px solid #FF0000; padding: 10px 10px">';
+		$err.="<p>Check <b>".realpath('config.php')."</b></p><p>cannot connect to database:\n";
+		$err.='<pre>'.$this->getDBinfo().'</pre>';
+		$err.='<pre>'.mysql_error().'</pre></p>';
+		$err.='</div></body></html>';
+		echo $err;
+		exit;
+	}
+
 	function connect_db($host="") {
 		$host = (empty($host)) ? $this->db_host : $host;
 		$link = @mysql_connect($host, $this->db_user, $this->db_pass);

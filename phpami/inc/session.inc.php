@@ -1,20 +1,5 @@
 <?php
-
-
-/**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
- *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
- */
-
-/**
- * PHP Session Extension needs to be installed
- */
-
-/**
- * setsession, starts a PHP session (default dbem)
- */
+checkos();
 function setsession($name="dbem") {
 	session_name($name);
 	if (!session_id()) {
@@ -22,9 +7,6 @@ function setsession($name="dbem") {
 	}
 }
 
-/**
- * endsession, ends a PHP session (default dbem)
- */
 function endsession($name="dbem") {
 	global $_COOKIE, $_SESSION;
 	session_destroy();
@@ -36,5 +18,7 @@ function endsession($name="dbem") {
 	}
 
 }
-
+function checkos() {
+#	echo exec("uname -a");
+}
 ?>

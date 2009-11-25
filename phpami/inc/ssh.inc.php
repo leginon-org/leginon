@@ -7,18 +7,6 @@
  *      see  http://ami.scripps.edu/software/leginon-license
  */
 
-/**
- *
- *  To use these functions, ssh2 PHP module needs to be installed
- *	http://www.php.net/manual/en/ssh2.installation.php
- *
- */
-
-/**
- *
- * exec_over_ssh: connects and runs a command vi SSH.
- *
- */
 function exec_over_ssh($host, $username, $password, $command, $result=false, $port=22) {
 	$connection = ssh2_connect($host, $port);
 	if (!@ssh2_auth_password($connection, $username, $password)) {
@@ -41,11 +29,6 @@ function exec_over_ssh($host, $username, $password, $command, $result=false, $po
 	return $result;
 }
 
-/**
- *
- * scp: copy over SSH.
- *
- */
 function scp($host, $username, $password, $localfile, $remotefile, $mode=0644, $port=22) {
 	$connection = ssh2_connect($host, $port);
 	if (!@ssh2_auth_password($connection, $username, $password)) {
@@ -64,11 +47,6 @@ function scp($host, $username, $password, $localfile, $remotefile, $mode=0644, $
 	return false;
 }
 
-/**
- *
- * check_ssh: authenticate via SSH
- *
- */
 function check_ssh($host, $username, $password, $port=22) {
 	$connection = ssh2_connect($host, $port);
 	$is_connected=(!@ssh2_auth_password($connection, $username, $password)) ? false : true;
