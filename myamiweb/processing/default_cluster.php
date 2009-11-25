@@ -80,6 +80,28 @@ class Cluster {
 	function cluster_cmd($host, $user, $pass) {
 	}
 
+	function cluster_send_data() {
+		$movestr = "";
+		$filelist = explode('|--|',$_POST['sendfilelist']);
+		foreach ($filelist as $filepath) {
+			$path = dirname($filepath);
+			$name = basename($filepath);
+			$movestr.= "ln -s ".formatEndPath($path)."$name $name\n";
+		}
+		return $movestr;
+	}
+
+	function cluster_receive_data() {
+		$movestr = "";
+		$outfullpath = $this->outfullpath;
+		$filelist = explode('|--|',$_POST['receivefilelist']);
+		foreach ($filelist as $filepath) {
+			$movestr.= "mv $filepath ".formatEndPath($outfullpath)."\n";
+		}
+		return $movestr;
+	}
+
+
 	function cluster_job_file($job) {
 		$clusterfullpath=$this->clusterfullpath;
 		$stackpath = $this->stackpath;
@@ -90,17 +112,12 @@ class Cluster {
 		$clusterjob= "rm -rf $clusterfullpath/recon\n";
 		$clusterjob.= "mkdir -p $clusterfullpath/recon\n";
 		$clusterjob.= "cd $clusterfullpath/recon\n\n";
-		$ext=strrchr($stackname1,'.');
-		$stackname=substr($stackname1,0,-strlen($ext));
-		$clusterjob.= "ln -s $stackpath/$stackname.hed start.hed\n";
-		$clusterjob.= "ln -s $stackpath/$stackname.img start.img\n";
-		$clusterjob.= "ln -s $modelpath/$modelname threed.0a.mrc\n";
+		$clusterjob.= cluster_send_data();
 		$clusterjob.= "setenv RUNPAR_RSH 'ssh'\n\n";
 
 		$clusterjob .= $job;
 
-		$clusterjob.= "\nmv $clusterfullpath/recon/* $clusterfullpath/.\n";
-		$clusterjob.= "\nmv $clusterfullpath/recon/.* $clusterfullpath/.\n";
+		$clusterjob.= cluster_receive_data();
 		$clusterjob.= "\ncd $clusterfullpath\n";
 		$clusterjob.= "\nrm -rf $clusterfullpath/recon\n";
 		return $clusterjob;
@@ -115,6 +132,11 @@ class Cluster {
 		$js="<script type='text/javascript'>"
 			."</script>\n";
 		return $js;
+	}
+
+	function formatEndPath($path) {
+		$path = ereg(DIRECTORY_SEPARATOR."$", $path) ? $path : $path.DIRECTORY_SEPARATOR;
+		return $path;
 	}
 
 }
