@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.27 2007-08-07 23:17:55 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.27 2007/08/07 23:17:55 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -20,7 +20,7 @@
 #include "gd_mrc.h"
 #include "filter.h"
 #ifdef HAVE_FFTW
-#include "fft.h"
+#include "fft3.h"
 #endif
 #include "php_mrc.h"
 
@@ -39,8 +39,8 @@ function_entry mrc_functions[] = {
 	ZEND_FE(gdimageinfo, NULL)
 	ZEND_FE(imagegaussianfilter, NULL)
 	ZEND_FE(imagehistogram, NULL)
+	ZEND_FE(imagegradient, NULL)
 #ifdef HAVE_FFTW
-	ZEND_FE(imagefftw, NULL)
 	ZEND_FE(mrcfftw, NULL)
 #endif
 	ZEND_FE(mrcinfo, NULL)
@@ -50,6 +50,7 @@ function_entry mrc_functions[] = {
 	ZEND_FE(mrcread, NULL)
 	ZEND_FE(mrcreadfromstring, NULL)
 	ZEND_FE(mrccreate, NULL)
+	ZEND_FE(mrcnormalize, NULL)
 	ZEND_FE(mrcwrite, NULL)
 	ZEND_FE(mrctoimage, NULL)
 	ZEND_FE(mrccopy, NULL)
@@ -64,6 +65,7 @@ function_entry mrc_functions[] = {
 	ZEND_FE(mrcupdateheader, NULL)
 	ZEND_FE(mrcset, NULL)
 	ZEND_FE(mrchistogram, NULL)
+	ZEND_FE(mrccdfscale, NULL)
 	ZEND_FE(mrcdestroy, NULL)
 	ZEND_FE(imagicinfo, NULL)
 	ZEND_FE(imagicread, NULL)
@@ -85,7 +87,7 @@ zend_module_entry mrc_module_entry = {
 	PHP_RSHUTDOWN(mrc),	/* Replace with NULL if there's nothing to do at request end */
 	PHP_MINFO(mrc),
 #if ZEND_MODULE_API_NO >= 20010901
-	"1.3", /* Replace with version number for your extension */
+	"1.5.1", /* Replace with version number for your extension */
 #endif
 	STANDARD_MODULE_PROPERTIES
 };
@@ -179,17 +181,14 @@ PHP_MINFO_FUNCTION(mrc)
 {
 	php_info_print_table_start();
 	php_info_print_table_header(2, "mrc support", "enabled");
-	php_info_print_table_row(2, "Version", "1.4");
+	php_info_print_table_row(2, "Version", "1.5.1");
 #if HAVE_FFTW
-	php_info_print_table_row(2, "FFTW support", "enabled");
+	php_info_print_table_row(2, "FFTW3 support", "enabled");
 #else
-	php_info_print_table_row(2, "FFTW support", "no");
+	php_info_print_table_row(2, "FFTW3 support", "no");
 #endif
 	php_info_print_table_end();
 
-	/* Remove comments if you have entries in php.ini
-	DISPLAY_INI_ENTRIES();
-	*/
 }
 
 
@@ -346,40 +345,79 @@ ZEND_FUNCTION(imagehistogram)
         }
 }
 
-
-#ifdef HAVE_FFTW
-
-/**
- * generate FFT from a existing image resource.
+/** 
+ * image gradient: map an image with a given gradient array 
+ *                 of 256 values
  *
  * Description:
- * bool imagefftw ( resource image )
- */
-ZEND_FUNCTION(imagefftw)
+ * imagegradient(resource image, array gradient)
+ */ 
+ZEND_FUNCTION(imagegradient)
 {
-	zval **imgind, **MASK;
-	gdImagePtr im_src;
+	zval	**IM, **gradient_input, **entry;
+	gdImagePtr im;
+	HashPosition pointer;
+	HashTable *arr_hash;
+	unsigned char data;
+	int val;
+	int i, j, M, N, pixel;
 	int argc = ZEND_NUM_ARGS();
-	int mask=0;
+	int	nb_val=256;
+	int	*gradient_array;
+	int array_count;
 
-	if (argc > 2 ) 
+	if (argc > 2 )
 	{
 		WRONG_PARAM_COUNT;
-	} 
-	zend_get_parameters_ex(argc, &imgind, &MASK);
-
-	if (argc == 2)
-	{
-		convert_to_long_ex(MASK);
-		mask = Z_LVAL_PP(MASK);
 	}
 
-	ZEND_FETCH_RESOURCE(im_src, gdImagePtr, imgind, -1, "Image", le_gd);
+	zend_get_parameters_ex(argc, &IM, &gradient_input);
 
-	gd_fftw(im_src, mask);
+
+	if (Z_TYPE_PP(gradient_input) != IS_ARRAY) {
+				zend_error(E_ERROR, "%s(): gradient is not an Array",
+								 get_active_function_name(TSRMLS_C));
+	}
+
+	arr_hash = Z_ARRVAL_PP(gradient_input);
+	array_count = zend_hash_num_elements(arr_hash);
+
+	if (array_count > nb_val) {
+				zend_error(E_ERROR, "%s(): gradient array size > %i",
+								 get_active_function_name(TSRMLS_C), nb_val);
+	}
+
+	gradient_array = malloc(sizeof(int)*nb_val);
+
+	for(i=0,zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); zend_hash_get_current_data_ex(arr_hash, (void**) &entry, &pointer) == SUCCESS, i<nb_val; zend_hash_move_forward_ex(arr_hash, &pointer), i++) {
+
+		convert_to_long_ex(entry);
+		val = Z_LVAL_PP(entry);
+		gradient_array[i] =  val;
+
+	}
+
+	ZEND_FETCH_RESOURCE(im, gdImagePtr, IM, -1, "Image", le_gd);
+
+	if (im) {
+		M = im->sx;
+		N = im->sy;
+		for (i = 0; i < M; i++) {
+			for (j = 0; j < N; j++) {
+				pixel = gdImageGetPixel(im,i,j);
+				// --- Y = 0.3RED + 0.59GREEN +0.11Blue --- //
+				val = (unsigned char)(.3*(pixel & 0xff) + .59*((pixel >> 8) & 0xff) + .11*((pixel >> 16) & 0xff));
+				// val = (unsigned char)(pixel & 0xff);
+				gdImageSetPixel(im,i,j, gradient_array[val]);
+			}
+		}
+	}
+	
+	free(gradient_array);
 	RETURN_TRUE;
 }
 
+#ifdef HAVE_FFTW
 
 /**
  * compute discrete Fourier transform
@@ -527,6 +565,7 @@ ZEND_FUNCTION(mrcread)
 
 	pmrc = (MRC *) malloc (sizeof (MRC));
 	_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
+
 	ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
 
 }
@@ -582,16 +621,44 @@ ZEND_FUNCTION(mrccreate)
 	ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
 }
 
+/**
+ * normalize a raw image
+ *
+ * Description:
+ * mrcnormalize(resource raw_mrc, resource norm_mrc, resource dark_mrc)
+ *
+ */
+ZEND_FUNCTION(mrcnormalize)
+{
+
+	zval **MRCR, **MRCN, **MRCD;
+	MRCPtr pmrc_raw, pmrc_norm, pmrc_dark;
+	int	argc = ZEND_NUM_ARGS();
+
+	if (argc != 3 ) 
+	{
+		WRONG_PARAM_COUNT;
+	} 
+
+	zend_get_parameters_ex(argc, &MRCR, &MRCN, &MRCD);
+
+	ZEND_FETCH_RESOURCE(pmrc_raw, MRCPtr, MRCR, -1, "MRCdata", le_mrc);
+	ZEND_FETCH_RESOURCE(pmrc_norm, MRCPtr, MRCN, -1, "MRCdata", le_mrc);
+	ZEND_FETCH_RESOURCE(pmrc_dark, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+
+	mrc_normalize(pmrc_raw, pmrc_norm, pmrc_dark);
+
+}
 
 /** 
- * write MRC resource to file
- *
- * Description: bool mrcwrite(resource src_mrc, string filename) 
- *  \htmlinclude mrcwrite.html
- */
+* write MRC resource to file
+*
+* Description: bool mrcwrite(resource src_mrc, string filename) 
+*  \htmlinclude mrcwrite.html
+*/
 ZEND_FUNCTION(mrcwrite)
 {
-	zval	**MRCD, **file;
+zval	**MRCD, **file;
 	MRCPtr	pmrc;
 	char *fn = NULL;
 	FILE *fp;
@@ -627,30 +694,29 @@ ZEND_FUNCTION(mrcwrite)
 /** convert a mrc resource to an image resource
  *
  * Description:
- * resource mrctoimage(resource src_mrc [, int pix_min [, int pix_max [, int color_map ]]])
+ * resource mrctoimage(resource src_mrc [, int pix_min [, int pix_max ]])
  */ 
 ZEND_FUNCTION(mrctoimage)
 {
 	char	*key;
-	zval	**MRCD, **PMIN, **PMAX, **COLOR_MAP;
+	zval	**MRCD, **PMIN, **PMAX;
 	MRCPtr	pmrc;
 	gdImagePtr im;
 	float	*data_array;
-	int	minPix = densityMIN,
+	int	minPix = DENSITY_MIN,
 		maxPix = -1,
 		argc = ZEND_NUM_ARGS();
 
 
 	int nWidth = 0;
 	int nHeight = 0;
-	int colormap = 0;
 
-	if (argc < 1 || argc > 4) 
+	if (argc < 1 || argc > 3) 
 	{
 		WRONG_PARAM_COUNT;
 	} 
 
-	zend_get_parameters_ex(argc, &MRCD, &PMIN, &PMAX, &COLOR_MAP);
+	zend_get_parameters_ex(argc, &MRCD, &PMIN, &PMAX);
 
 	if (argc>1) {
 		convert_to_long_ex(PMIN);
@@ -660,23 +726,20 @@ ZEND_FUNCTION(mrctoimage)
 		convert_to_long_ex(PMAX);
 		maxPix = Z_LVAL_PP(PMAX);
 	}
-	if (argc>3) {
-		convert_to_long_ex(COLOR_MAP);
-		colormap = Z_LVAL_PP(COLOR_MAP);
-	}
 
 	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
 	if (minPix<0)
-		minPix = densityMIN;
+		minPix = DENSITY_MIN;
 
-	maxPix = (maxPix<0) ?  ((colormap) ? densityColorMAX : densityMAX) : maxPix;
+	maxPix = (maxPix<0) ?  DENSITY_MAX : maxPix;
+
 	nWidth = pmrc->header.nx;
 	nHeight = pmrc->header.ny;
 		
 	im = gdImageCreateTrueColor(nWidth, nHeight);
 	gdImageColorAllocate(im, 0, 0, 0);
 
-	mrc_to_gd(pmrc, im, minPix, maxPix, colormap);
+	mrc_to_gd(pmrc, im, minPix, maxPix);
 	ZEND_REGISTER_RESOURCE(return_value, im, le_gd);
 
 }
@@ -923,33 +986,29 @@ ZEND_FUNCTION(mrcgetdata)
  * get min and max value scaled within +/- n_stdev stddev
  *
  * Description:
- * array mrcstdevscale(resource src_mrc, int density_max, int n_stdev)
+ * array mrcstdevscale(resource src_mrc, [int n_stdev])
  */ 
 ZEND_FUNCTION(mrcstdevscale)
 {
 		char	*key;
-		zval	**MRCD, **DENSITY_MAX, **N_STDEV;
+		zval	**MRCD, **N_STDEV;
 		MRCPtr	pmrc;
 		MRCHeader	mrch;
 
 		int argc = ZEND_NUM_ARGS();
-		int densitymax;
 
 		int n_stdev=3;
 		
 		float pmin, pmax, pmean, rms, scale;
 		float smin, smax;
 
-		if (argc < 2 || argc > 3) {
+		if (argc < 2 || argc > 2) {
 			ZEND_WRONG_PARAM_COUNT();
 		}
 
-		zend_get_parameters_ex(argc, &MRCD, &DENSITY_MAX, &N_STDEV);
+		zend_get_parameters_ex(argc, &MRCD, &N_STDEV);
 
-		convert_to_long_ex(DENSITY_MAX);
-		densitymax = Z_LVAL_PP(DENSITY_MAX);
-
-		if (argc>2) {
+		if (argc>1) {
 			convert_to_long_ex(N_STDEV);
 			n_stdev=Z_LVAL_PP(N_STDEV);
 		}
@@ -971,8 +1030,8 @@ ZEND_FUNCTION(mrcstdevscale)
 		scale = pmax - pmin;
 
 		if (scale!=0) {
-			smin = (pmean-n_stdev*rms-pmin)*densitymax/scale;
-			smax = (pmean+n_stdev*rms-pmin)*densitymax/scale;
+			smin = (pmean-n_stdev*rms-pmin)*DENSITY_MAX/scale;
+			smax = (pmean+n_stdev*rms-pmin)*DENSITY_MAX/scale;
 		}
 		
 
@@ -1211,6 +1270,86 @@ ZEND_FUNCTION(mrchistogram)
 	mrc_destroy(pmrc);
 }
 
+/**
+ * get min and max value scaled within given percent min /max 
+ * of CDF (Cumulative distribution function)
+ *
+ * Description:
+ * array mrccdfscale(resource src_mrc, float percent_min, float percent_max)
+ */
+ZEND_FUNCTION(mrccdfscale)
+{
+	zval	**MRCD, **PER_MIN, **PER_MAX;
+	MRCPtr	pmrc;
+	MRCHeader	mrch;
+
+	int argc = ZEND_NUM_ARGS();
+	int j, interval, n;
+	int pmin, pmax;
+	int *frequency;
+	float fmin, fmax;
+	float val, somme, permin, permax, minval, maxval;
+
+	pmin=0;
+	pmax=0;
+	permin=0.01;
+	permax=0.99;
+	val=0;
+	somme=0;
+	minval=0;
+	maxval=0;
+
+	if (argc < 2 || argc > 3) {
+		ZEND_WRONG_PARAM_COUNT();
+	}
+
+	zend_get_parameters_ex(argc, &MRCD, &PER_MIN, &PER_MAX);
+
+	if (argc>2) {
+		convert_to_double_ex(PER_MIN);
+		permin=Z_DVAL_PP(PER_MIN);
+	}
+
+	if (argc>3) {
+		convert_to_double_ex(PER_MAX);
+		permax=Z_DVAL_PP(PER_MAX);
+	}
+
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+
+	fmin=pmrc->header.amin;
+	fmax=pmrc->header.amax;
+	n=pmrc->header.nx*pmrc->header.ny;
+	interval=(int)(fmax-fmin+1);
+	if (interval<=1) {
+		zend_error(E_ERROR, "%s(): Wrong (min, max) pixel", get_active_function_name(TSRMLS_C));
+	}
+
+	frequency = calloc(interval, sizeof(int));
+	mrc_to_frequence(pmrc, frequency);
+
+	for (j = 0; j < interval; j++) {
+		somme+=frequency[j];
+		val=somme/n;
+		if (val>=permin && pmin==0) {
+			pmin=1;
+			minval=j*DENSITY_MAX/(fmax-fmin);
+		}
+		if (val>=permax && pmax==0) {
+			pmax=1;
+			maxval=j*DENSITY_MAX/(fmax-fmin);
+			break;
+		}
+	}
+
+	array_init(return_value);
+	add_next_index_double(return_value, minval);
+	add_next_index_double(return_value, maxval);
+
+
+	free(frequency);
+}
+
 
 /**
  * destroy a mrc resource
@@ -1279,7 +1418,9 @@ ZEND_FUNCTION(imagicread)
 {
 
 	zval **heddata, **imgdata, **IMGNUM;
-	Imagic5 *pImagic5;
+	Imagic5one im5;
+	Imagic5onePtr pImagic5 = &im5;
+
 	MRC *pmrc;
 	MRCPtr pmrc_dst;
 	int argc = ZEND_NUM_ARGS();
@@ -1299,16 +1440,17 @@ ZEND_FUNCTION(imagicread)
 		img_num = Z_LVAL_PP(IMGNUM);
 	}
 
-
 	_imagic_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, heddata, imgdata, img_num, pImagic5);
-	dstW = pImagic5->pHeaders[0].nx;
-	dstH = pImagic5->pHeaders[0].ny;
+
+	dstW = pImagic5->header.nx;
+	dstH = pImagic5->header.ny;
 
 	pmrc_dst = (MRCPtr)mrc_create(dstW, dstH);
-	pmrc_dst->header.amin=pImagic5->pHeaders[0].min;
-	pmrc_dst->header.amax=pImagic5->pHeaders[0].max;
-	pmrc_dst->header.amean=pImagic5->pHeaders[0].avdens;
-	pmrc_dst->header.rms=pImagic5->pHeaders[0].sigma;
+	pmrc_dst->header.amin=pImagic5->header.min;
+	pmrc_dst->header.amax=pImagic5->header.max;
+	pmrc_dst->header.amean=pImagic5->header.avdens;
+	pmrc_dst->header.rms=pImagic5->header.sigma;
+
 	pmrc_dst->pbyData=pImagic5->pbyData;
 
 
@@ -1317,9 +1459,9 @@ ZEND_FUNCTION(imagicread)
 }
 
 /**
- * static void _imagic_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **heddata, zval **imgdata, Imagic5 *pimagic)
+ * static void _imagic_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **heddata, zval **imgdata, Imagic5one *pimagic)
  */
-static void _imagic_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **heddata, zval **imgdata, int img_num, Imagic5 *pImagic5) {
+static void _imagic_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **heddata, zval **imgdata, int img_num, Imagic5one *pImagic5) {
 
 	char *pthedname, *ptimgname;
 	convert_to_string_ex(heddata);

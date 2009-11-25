@@ -282,9 +282,9 @@ void mrc_log(MRC *mrc) {
 
 
 /**
- * void mrc_to_gd(MRC *mrc, int ** tpixels, int pmin, int pmax, int colormap) {
+ * void mrc_to_gd(MRC *mrc, int ** tpixels, int pmin, int pmax) {
  */
-void mrc_to_gd(MRC *mrc, gdImagePtr im, int pmin, int pmax, int colormap) {
+void mrc_to_gd(MRC *mrc, gdImagePtr im, int pmin, int pmax) {
 
 	float	*data_array;
 	float   fmin=mrc->header.amin,
@@ -296,8 +296,7 @@ void mrc_to_gd(MRC *mrc, gdImagePtr im, int pmin, int pmax, int colormap) {
 
 	int	w=mrc->header.nx, h=mrc->header.ny,
 		i,j;
-	int densitymax = (colormap) ? densityColorMAX : densityMAX;
-	int gray = (colormap) ? 0 : 1;
+	int densitymax = DENSITY_MAX;
 
 	long n=w*h, ij;
 
@@ -314,7 +313,7 @@ void mrc_to_gd(MRC *mrc, gdImagePtr im, int pmin, int pmax, int colormap) {
 				ij = i + j*w;
 				f_val = data_array[ij];
 				f_val = (f_val-nmin)*densitymax/nscale;
-				gdImageSetPixel (im, i, j, setColorDensity(f_val, gray));
+				gdImageSetPixel (im, i, j, setDensity(f_val));
 			}
 		}
 
@@ -551,6 +550,34 @@ int mrc_copy_from_file(MRCPtr pmrc_dst, char *pszFilename, int dstX, int dstY, i
 
 
 /**
+ * void mrc_normalize(MRCPtr pmrc_raw, MRCPtr pmrc_norm, MRCPtr pmrc_dark)
+ */
+void mrc_normalize(MRCPtr pmrc_raw, MRCPtr pmrc_norm, MRCPtr pmrc_dark)
+{
+	int w_raw, h_raw, n_raw,
+			w_norm, h_norm, n_norm,
+			i;
+	float diff;
+
+	float	*data_array_raw, *data_array_norm, *data_array_dark;
+
+	w_raw = pmrc_raw->header.nx;
+	h_raw = pmrc_raw->header.ny;
+	n_raw = w_raw * h_raw;
+
+	data_array_raw = (float *)pmrc_raw->pbyData;
+	data_array_norm = (float *)pmrc_norm->pbyData;
+	data_array_dark = (float *)pmrc_dark->pbyData;
+
+	for (i=0; i<n_raw; i++) {
+			diff = data_array_raw[i] - data_array_dark[i];
+			data_array_raw[i] = diff * data_array_norm[i];
+	}
+	
+}
+
+
+/**
  * void mrc_destroy(MRCPtr pmrc)
  */
 void mrc_destroy(MRCPtr pmrc) {
@@ -597,6 +624,35 @@ void mrc_to_histogram(MRC *mrc, int *frequency, float *classes, int nb_bars) {
                 classes[i] = fmin + i*interval;
                 frequency[i] = nb;
         }
+}
+
+void mrc_to_frequence(MRC *mrc, int *frequency) {
+	float fmin=mrc->header.amin,
+			  fmax=mrc->header.amax;
+	float	*data_array;
+	int h=mrc->header.nx, w=mrc->header.ny;
+	int i, i1, i2, j, d;
+	int mode=mrc->header.mode;
+	int nb=0;
+	int i_val, interval;
+	long	n=w*h;
+
+
+	data_array = (float *)mrc->pbyData;
+
+	interval=(int)(fmax-fmin);
+	if(interval <= 0) {
+		fmax = fmin = (float)data_array[0];
+		for (i = 0; i<n ; i++) {
+			fmax = MAX(fmax, data_array[i]);
+			fmin = MIN(fmin, data_array[i]);
+		}
+		interval=(int)(fmax-fmin);
+	}
+	for (i = 0; i < n; i++) {
+		i_val = (int)(data_array[i]-fmin);
+		frequency[i_val] += 1;
+	}
 }
 
 

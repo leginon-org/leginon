@@ -13,58 +13,13 @@
 /* {{{ int setDensity(float value) { */
 int setDensity(float value) {
 	int density;
-	if (value > densityMAX) {
-		value = densityMAX;
-	} else if (value < densityMIN) {
-		value = densityMIN;
+	if (value > DENSITY_MAX) {
+		value = DENSITY_MAX;
+	} else if (value < DENSITY_MIN) {
+		value = DENSITY_MIN;
 	}
 	unsigned char pixval = (unsigned char)value;
 	density = ((pixval << 16) + (pixval << 8) + pixval);
-	return density;
-}
-/* }}} */
-
-/* {{{ int setRGBDensity(float R, float G, float B) { */
-int setRGBDensity(float R, float G, float B) {
-	int color;
-	R = (R > densityMAX) ? densityMAX : ((R < densityMIN) ? densityMIN : R );
-	G = (G > densityMAX) ? densityMAX : ((G < densityMIN) ? densityMIN : G );
-	B = (B > densityMAX) ? densityMAX : ((B < densityMIN) ? densityMIN : B );
-
-	unsigned char pixR= (unsigned char)R;
-	unsigned char pixG= (unsigned char)G;
-	unsigned char pixB= (unsigned char)B;
-
-	color = ((pixR << 16) + (pixG << 8) + pixB);
-	return color;
-}
-/* }}} */
-
-/* {{{ int setColorDensity(float value, int bw) { */
-int setColorDensity(float value, int bw) {
-	int density;
-	if (bw) {
-		return setDensity(value);
-	}
-	if (value > 1274 ) {
-		value = 1274;
-	} else if (value < 0 ) {
-		value = 0;
-	}
-	
-	unsigned char pixval = value;
-	pixval = (unsigned char)((int)value % 255);
-        if (value<255) {
-                density = ((255 << 16) + (pixval << 8) + 0);
-        } else if (value<255*2) {
-                density = (((255-pixval) << 16) + (255 << 8) + 0);
-        } else if (value<255*3) {
-                density = ((0 << 16) + (255 << 8) + pixval);
-        } else if (value<255*4) {
-                density = ((0 << 16) + ((255-pixval) << 8) + 255);
-        } else if (value<=255*5) {
-                density = ((pixval << 16) + (0 << 8) + 255);
-        }
 	return density;
 }
 /* }}} */
@@ -82,7 +37,7 @@ int getLog(int pixelvalue) {
 	density = getDensity(pixelvalue);
 	if (density == 0)
 		density = 1;
-	logvalue = log(density) * densityMAX / log(densityMAX);
+	logvalue = log(density) * DENSITY_MAX / log(DENSITY_MAX);
 	return setDensity(logvalue);
 }
 /* }}} */
@@ -143,7 +98,7 @@ void filtergaussian(gdImagePtr im, int kernel, float factor) {
 					ndensityB += densityB * maskData[index];
 				}
 			}
-			gdImageSetPixel (im, w, h, setRGBDensity(ndensityR, ndensityG, ndensityB));
+			gdImageSetPixel (im, w, h, setDensity(ndensityR));
 		}
 	}
 

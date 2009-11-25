@@ -5,7 +5,7 @@
   | Author: D. Fellmann                                                  |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.h,v 1.16 2007-08-07 21:54:52 dfellman Exp $ 
+  $Id: php_mrc.h,v 1.16 2007/08/07 21:54:52 dfellman Exp $ 
 */
 
 /**
@@ -16,7 +16,7 @@
 	Introduction
 
 	The php_mrc extension offers the functionalities to create, manipulate, filter and display MRC files.  
-	If compiled with fftw, the discrete Fourier transform can be computed and displayed "on the fly".
+	If compiled with fftw3, the discrete Fourier transform can be computed and displayed "on the fly".
 
 	Requirements
 
@@ -65,8 +65,8 @@ PHP_MINFO_FUNCTION(mrc);
 ZEND_FUNCTION(gdimageinfo);
 ZEND_FUNCTION(imagegaussianfilter);
 ZEND_FUNCTION(imagehistogram);
+ZEND_FUNCTION(imagegradient);
 #ifdef HAVE_FFTW
-ZEND_FUNCTION(imagefftw);
 ZEND_FUNCTION(mrcfftw);
 #endif
 ZEND_FUNCTION(mrcinfo);
@@ -76,7 +76,9 @@ ZEND_FUNCTION(mrcsy);
 ZEND_FUNCTION(mrcread);
 ZEND_FUNCTION(mrcreadfromstring);
 ZEND_FUNCTION(mrccreate);
+ZEND_FUNCTION(imcreate);
 ZEND_FUNCTION(mrcwrite);
+ZEND_FUNCTION(mrcnormalize);
 ZEND_FUNCTION(mrctoimage);
 ZEND_FUNCTION(mrccopy);
 ZEND_FUNCTION(mrccopyfromfile);
@@ -90,6 +92,7 @@ ZEND_FUNCTION(mrcrotate);
 ZEND_FUNCTION(mrcupdateheader);
 ZEND_FUNCTION(mrcset);
 ZEND_FUNCTION(mrchistogram);
+ZEND_FUNCTION(mrccdfscale);
 ZEND_FUNCTION(mrcdestroy);
 ZEND_FUNCTION(imagicinfo);
 ZEND_FUNCTION(imagicread);
@@ -101,8 +104,7 @@ static void _mrc_header_data(INTERNAL_FUNCTION_PARAMETERS,  MRC *pmrc);
 static void _imagic_(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRCHeader *pmrch);
 static void _imagic_header_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, Imagic5Header *pimagich, int img_num);
 static void _imagic_header_data(INTERNAL_FUNCTION_PARAMETERS,  Imagic5Header imagich);
-static void _imagic_header_data_old(INTERNAL_FUNCTION_PARAMETERS,  Imagic5HeaderOld imagich);
-static void _imagic_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **heddata, zval **imgdata, int img_num, Imagic5 *pImagic5);
+static void _imagic_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **heddata, zval **imgdata, int img_num, Imagic5one *pImagic5);
 
 /* 
   	Declare any global variables you may need between the BEGIN

@@ -365,28 +365,26 @@ int readImagic5(FILE *hedstream, FILE *imgstream, Imagic5 *pImagic5) {
 }
 /* }}} */
 
-/* {{{ int readImagic5At(FILE *hedstream, FILE *imgstream, int img_num, Imagic5 *pImagic5) */
-int readImagic5At(FILE *hedstream, FILE *imgstream, int img_num, Imagic5 *pImagic5) {
+/* {{{ int readImagic5At(FILE *hedstream, FILE *imgstream, int img_num, Imagic5one *pImagic5) */
+int readImagic5At(FILE *hedstream, FILE *imgstream, int img_num, Imagic5one *pImagic5) {
 
 	int nResult = -1;
 	void *pResult = NULL;
 	unsigned int cui = 0;
 	Imagic5Header header;
 
+		
 	nResult = readImagic5Header(hedstream, &header, 0);
+	memcpy(&(pImagic5->header), &header, SIZEOF_I5_HEADER);
+
 	if(!nResult)
 		return -1;
 
-	pImagic5->pHeaders = (Imagic5Header *)malloc(SIZEOF_I5_HEADER);
-	if(pImagic5->pHeaders == NULL)
-		return -1;
-
-	memcpy(&(pImagic5->pHeaders[0]), &header, SIZEOF_I5_HEADER);
-	nResult = readImagic5Header(hedstream, &(pImagic5->pHeaders[0]), img_num);
+	nResult = readImagic5Header(hedstream, &(pImagic5->header), img_num);
 
 	pResult = readImagic5ImagesAt(imgstream, img_num, pImagic5);
 	if(pResult == NULL) {
-		freeImagic5(pImagic5);
+		freeImagic5one(pImagic5);
 		return -1;
 	}
 	
@@ -425,13 +423,11 @@ int loadImagic5(char *pszName, Imagic5 *pImagic5) {
 
 	sprintf(pszFilename, "%s.hed", pszName);
     if((pFHED = fopen(pszFilename, "rb")) == NULL) {
-		free(pszFilename);
 		return -1;
 	}
 
 	sprintf(pszFilename, "%s.img", pszName);
     if((pFIMG = fopen(pszFilename, "rb")) == NULL) {
-		free(pszFilename);
 		fclose(pFHED);
 		return -1;
 	}
@@ -451,18 +447,16 @@ int loadImagic5(char *pszName, Imagic5 *pImagic5) {
 }
 /* }}} */
 
-/* {{{ int loadImagic5At(char *pszHedName, char *pszImgName, int img_num, Imagic5 *pImagic5) */
-int loadImagic5At(char *pszHedName, char *pszImgName, int img_num, Imagic5 *pImagic5) {
-	FILE *pFHED = NULL;
-	FILE *pFIMG = NULL;
+/* {{{ int loadImagic5At(char *pszHedName, char *pszImgName, int img_num, Imagic5one *pImagic5) */
+int loadImagic5At(char *pszHedName, char *pszImgName, int img_num, Imagic5one *pImagic5) {
+	FILE *pFHED;
+	FILE *pFIMG;
 
 	if((pFHED = fopen(pszHedName, "rb")) == NULL) {
-		free(pszHedName);
 		return -1;
 	}
 
 	if((pFIMG = fopen(pszImgName, "rb")) == NULL) {
-		free(pszHedName);
 		fclose(pFHED);
 		return -1;
 	}
@@ -516,13 +510,13 @@ void *readImagic5Images(FILE *pFImage, Imagic5 *pImagic5) {
 }
 /* }}} */
 
-/* {{{ void *readImagic5ImagesAt(FILE *pFImage, int img_num, Imagic5 *pImagic5) */
-void *readImagic5ImagesAt(FILE *pFImage, int img_num, Imagic5 *pImagic5) {
+/* {{{ void *readImagic5ImagesAt(FILE *pFImage, int img_num, Imagic5one *pImagic5) */
+void *readImagic5ImagesAt(FILE *pFImage, int img_num, Imagic5one *pImagic5) {
 	void *pData = NULL;
 	size_t size = 0;
 	unsigned int uResult = 0;
-	char *psType = pImagic5->pHeaders[0].type;
-	unsigned int uElements = pImagic5->pHeaders[0].pixels;
+	char *psType = pImagic5->header.type;
+	unsigned int uElements = pImagic5->header.pixels;
 	
 	if(strcmp(psType, "REAL") == 0)
 		size = sizeof(float);
@@ -546,12 +540,10 @@ void *readImagic5ImagesAt(FILE *pFImage, int img_num, Imagic5 *pImagic5) {
 		free(pData);
 		return NULL;
 	}
-/*
-	if(!byteswapread(pFImage, pData, size, uElements*pImagic5->uCount, BIG_ENDIAN_DATA)) {
+	if(!byteswapread(pFImage, pData, size, 1, BIG_ENDIAN_DATA)) {
 		free(pData);
 		return NULL;
 	}
-*/
 	return pData;
 }
 /* }}} */
@@ -572,6 +564,17 @@ void freeImagic5(Imagic5 *pImagic5) {
 	}
 
 	pImagic5->uCount = -1;
+}
+/* }}} */
+
+/* {{{ void freeImagic5one(Imagic5one *pImagic5) */
+void freeImagic5one(Imagic5one *pImagic5) {
+
+	if(pImagic5->pbyData != NULL) {
+		free(pImagic5->pbyData);
+		pImagic5->pbyData = NULL;
+	}
+
 }
 /* }}} */
 

@@ -9,7 +9,7 @@ PHP-MRC
 > tar zxvf php_mrc.tgz
 > cd mrc/
 
-# Make sure that GD and FFTW devel libraries are installed
+# Make sure that GD and FFTW 3 devel libraries are installed
 > phpize
 > ./configure 
 > make
@@ -24,7 +24,17 @@ PHP-MRC
 [extension section]
 extension=mrc.so
 
+OR if your linux distro has a /etc/php.d directory:
+
+> cd /etc/php.d
+> vi mrc.ini
+ # add the following lines:
+ ; Enable mrc extension module
+ extension=mrc.so
 
 # restart your webserver
 > /etc/init.d/apache2 restart
 
+OR
+
+> /etc/init.d/httpd restart

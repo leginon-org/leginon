@@ -6,12 +6,8 @@
   +----------------------------------------------------------------------+
 */
 
-#define DENSITY_MIN 0
-#define DENSITY_MAX 255
+#include <fftw3.h>
 
-int setDensity(float value);
-unsigned char getDensity(int density);
-int getLog(int pixelvalue);
-void filtergaussian(gdImagePtr im, int masksize, float factor);
-void gaussianfiltermask(double *maskData, int kernel, float sigma);
-void gdLogScale(gdImagePtr im_src);
+double square(fftw_complex A);
+int mrc_fftw(MRC *pMRC, int mask_radius);
+

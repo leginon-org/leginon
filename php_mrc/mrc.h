@@ -84,104 +84,6 @@ int readMRCHeader(FILE *pFMRC, MRCHeader *pMRCHeader);
 #define NUM_I5_HEADER_ENTRIES 256
 #define SIZEOF_I5_HEADER SIZEOF_I5_HEADER_ENTRY * NUM_I5_HEADER_ENTRIES
 
-typedef struct Imagic5HeadStructOld {
-	int imn; // image location number (1,2,3,...)  
-	int ifol; // number of images following (0,1,,...) important in first location  
-	int ierror; //error code for this image during IMAGIC-5 run  
-	int nhfr; //number of header records per image (=1 currently)  
-	int nmonth; //creation month  
-	int nday; //creation day  
-	int nyear; //creation year  
-	int nhour; //creation hour  
-	int nminut; //creation minute  
-	int nsec; //creation second 
-	int npix2; //image size in BYTES as seen from the program (int(13)*int(89)) 
-	int npixel; //total number of image elements  
-	int ixlp; //number of lines per image (for 1D data IYLP1=1)  
-	int iylp; //number of pixels per line 
-	char type[4]; //4 characters determining the image type 
-				//REAL: REAL/float 
-				//INTG: INTEGER*2/short 
-				//PACK: PACK/byte 
-				//COMP: 2 REAL / 2 float 
-				//RECO: complex format with 0 in imaginary part) 
-	int ixold; //top left X co-ordinate before CUT-IMAGE (boxing)  
-	int iyold; //top left Y co-ordinate before CUT-IMAGE (boxing) 
-	float avdens; //average density in image  
-	float sigma; //standard deviation of densities  
-	float varian; //variance of densities in image  
-	float oldavd; //old average density of this image  
-	float densmax; //highest density in image  
-	float densmin; //minimal density in image 
-	int complex; //label indicating that data is always complex 
-	float cxlength; //cell dimension in Angstr. (x-direction) (MRC(12))  
-	float cylength; //cell dimension in Angstr. (y-direction) (MRC(11))  
-	float czlength; //cell dimension in Angstr. (z-direction) (MRC(13))  
-	float calpha; //cell angle alpha (MRC(14))  
-	float cbeta; //cell angle beta (MRC(15))  
-	char name[80]; //coded NAME/TITLE of the image (80 characters) 
-	float CGAMMA; //cell angle gamma (MRC(16)) 
-	int mapc; //axis corresponding to columns (MRC(17))  (1,2,3 for X,Y,Z)  
-	int mapr; //axis corresponding to rows (MRC(18)) (1,2,3 for X,Y,Z)  
-	int maps; //axis corresponding to sections (MRC(19)) (1,2,3 for X,Y,Z)  
-	int ispg; //space group (MRC(23))
-	int nxstart; //number of 1st column in map (def:0) (MRC(6)) (where map starts in columns)  
-	int nystart; //number of 1st row in map (def:0) (MRC(5)) (where map starts in rows)  
-	int nzstart; //number of 1st section in map (def:0) (MRC(7)) (where map starts in sections)  
-	int nxintv; //number of intervals along X (MRC(9))  
-	int nyintv; //number of intervals along Y (MRC(8))  
-	int nzintv; //number of intervals along Z (MRC(10)) 
-	int izlp; //number of 2D planes in 3D data (for 2D: IZLP1=1)  
-	int i4lp; //number of 3D planes in 4D data (for 2D: I4LP1=1)  
-	int i5lp;
-	int i6lp;
-	float alpha; //Euler angle alpha (3D and Angular Reconst.)  
-	float beta; //Euler angle beta (3D and Angular Reconst.)  
-	float gamma; //Euler angle gamma (3D and Angular Reconst.)  
-	int imavers; //IMAGIC-5 version used (yyyymmdd) 
-	int realtype; //floating point type, machine step 
-				//16777216 for VAX/VMS 
-				//33686018 for DEC/OSF, DEC/ULTRIX, LINUX, MS Windows 
-				//67372036 for SiliconGraphics, SUN, HP, IBM 
-	int buffering[28]; //Variables that control the buffering, don't change....
-	int ronly; //flag in calling program to open file readonly (1: readonly) 
-	float angle; //last rotation angle  
-	float rcp; //rotational correlation peak  
-	int ixpeak; //shift correlation peak in X direction  
-	int iypeak; //shift correlation peak in Y direction  
-	float ccc; //cross correlation peak hight  
-	float errar; //error in angular reconstitution if -1.0: the file is a special file (FABOSA)  
-	float err3d; //error in 3D reconstruction (TRUE-THREED)  
-	int ref; //(multi-) reference number  
-	float classno; //class number in classification  
-	float locold; //location number before CUT-IMAGE (boxing) or copy in ANGULAR and EX-COPY  
-	float oldavd2; //old average density (before NORM-VARIANCE, for example)  
-	float oldsigma; //old sigma  
-	float xshift; //last shift in X direction  
-	float yshift; //last shift in Y direction  
-	float numcls; //number of class members 
-	float ovqual; //overall class quality if the image is a class average 
-	float eangle; //equivalent angle  
-	float exshift; //equivalent shift in X direction  
-	float eyshift; //equivalent shift in Y direction  
-	float cmtotvar; //used in MSA/IMAGECOOS  
-	float informat; //Gauss norm / real*FT Space information of the data set  
-	int numeigen; //number of eigen values in MSA  
-	int niactive; //number of active images in MSA  
-	float resolx; //Angstrom per pixel/voxel in X direction if float(105) = -1.0 (FABOSA): mm per pixel  
-	float resoly; //Angstrom per pixel/voxel in Y direction  
-	float resolz; //Angstrom per pixel/voxel in Z direction  
-	float alpha2; //Euler angle alpha (from projection mapping)  
-	float beta2; //Euler angle beta (from projection mapping)  
-	float gamma2; //Euler angle gamma (from projection mapping)  
-	float fabosa[3]; //Special FABOSA variables if float(105) = -1.0  
-	float nmetric; //Metric used in MSA calculations  
-	float actmsa; //a flag indicating whether the "image" is active or not. Used during MSA calculations  
-	float coosmsa[69]; //COOSMSA  co-ordinates of "image" along factorial axis number 1 through 69 (maximum possible). 
-	float eigval;  //eigenvalues if the "images" represent eigenimages (eigenvalue #1 into loc#1 etc.)  
-	char history[228]; //coded history of image (228 characters)  
-} Imagic5HeaderOld;
-
 typedef struct Imagic5HeaderStruct {
 
 		int imgnum;             // image number, [1,n]
@@ -254,12 +156,88 @@ typedef struct Imagic5Struct {
 } Imagic5;
 
 typedef Imagic5 * Imagic5Ptr;
+
+typedef struct Imagic5oneStruct {
+	Imagic5Header header;
+	char *pbyData;
+} Imagic5one;
+
+typedef Imagic5one * Imagic5onePtr;
+
 int loadImagic5(char *pszName, Imagic5 *pImagic5);
 int loadImagic5Header(char *pszFilename, Imagic5Header *pHeader, int img_num);
-int loadImagic5At(char *pszHedName, char *pszImgName, int img_num, Imagic5 *pImagic5);
+int loadImagic5At(char *pszHedName, char *pszImgName, int img_num, Imagic5one *pImagic5);
+int readImagic5Header(FILE *pFHeader, Imagic5Header *pHeader, int img_num);
 void *readImagic5Images(FILE *pFImage, Imagic5 *pImagic5);
-void *readImagic5ImagesAt(FILE *pFImage, int img_num, Imagic5 *pImagic5);
+void *readImagic5ImagesAt(FILE *pFImage, int img_num, Imagic5one *pImagic5);
 void freeImagic5(Imagic5 *pImagic5);
+void freeImagic5one(Imagic5one *pImagic5);
+
+#define NUM_SPIDER_HEADER_ENTRIES 256
+
+typedef struct SpiderHeaderStruct {
+	float nslice;           // number of slices in volume; 1 for a 2D image.
+	float nrow;         // nrow, number of rows per slice 
+	float irec;                     // total number of records in the file (unused)
+	float nhistrec;     // obsolete, unused
+
+	float type;             //iform, file type
+
+	float mmvalid;          // imami, max/min flag.
+	float max;          // fmax, max value
+	float min;          // fmin, min value
+	float mean;         // av, average value
+	float sigma;            // sig, std dev, -1=unknown
+	float ihist;        // obsolete, no longer used
+	float nsam;         // nsam, number of pixels per row
+	float headrec;          // labrec, number of records in header
+	float angvalid;         // iangle, flag, 1 if tilt angles have been computed
+	float phi;          // tilt angle
+	float theta;        // tilt angle
+	float gamma;        // tilt angle  (also called psi).
+	float dx;           // xoff, x translation
+	float dy;           // yoff, y translation
+	float dz;                       // zoff, z translation
+	float scale;        // scale factor
+	float headlen;          // labbyt, header length in bytes
+	float reclen;       // lenbyt, record length in bytes
+
+	float istack;
+	float inuse;        // not used
+	float maxim;
+	float imgnum;
+
+	float lastindx;    
+
+	float u6;          // unused
+	float u7;          // unused
+
+	float Kangle;   
+	float phi1;
+	float theta1;
+	float psi1;
+	float phi2;
+	float theta2;
+	float psi2;
+	char  u8[48];       //unused
+	float xf[27];       // reserved for Jose Maria's transforms
+	float u9[135];      // unused
+	char date[11];      // creation date e.g. 27-MAY-1999 
+	char time[8];       // creation time e.g. 09:43:19 
+	char title[160];    
+} SpiderHeader;
+
+typedef struct SpiderStruct {
+	SpiderHeader header;
+	char *pbyData;
+} Spider;
+
+typedef Spider * SpiderPtr;
+
+int readSpiderHeader(FILE *pFSpider, SpiderHeader *pSpiderh);
+int loadSpiderHeader(char *pszFilename, SpiderHeader *pSpiderh, int img_num);
+int readSpiderAt(FILE *imgstream, int img_num, Spider *pSpider);
+int loadSpiderAt(char *pszImgName, int img_num, Spider *pSpider);
 
 #ifdef __cplusplus
 }

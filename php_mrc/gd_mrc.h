@@ -10,6 +10,7 @@
 static int le_gd; 
 
 void mrc_to_histogram(MRC *mrc, int *frequency, float *classes, int nb_bars);
+void mrc_to_frequence(MRC *mrc, int *frequency);
 void mrc_to_float(MRC *mrc, float *pdata_array);
 
 /* return pixel indexes to average for binning */
@@ -25,7 +26,7 @@ int mrc_copy_from_file(MRCPtr pmrc_dst, char *pszFilename, int dstX, int dstY, i
 MRCPtr mrc_create(int x_size, int y_size);
 MRCPtr mrc_rotate(MRC *mrc_src, double angle, int resize);
 void mrc_destroy(MRCPtr pmrc);
-void mrc_to_gd(MRC *mrc, gdImagePtr im, int pmin, int pmax, int colormap);
+void mrc_to_gd(MRC *mrc, gdImagePtr im, int pmin, int pmax);
 void mrc_log(MRC *mrc);
 void mrc_binning(MRC *mrc, int binning, int skip_avg);
 void mrc_filter(MRC *mrc, int binning, int kernel, float sigma);
