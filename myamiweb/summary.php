@@ -237,6 +237,55 @@ $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
 ?>
 </tr>
 <?
+$imageshiftpresets = $leginondata->getImageShiftPresets($expId);
+echo "<tr>";
+echo "<td colspan='2'>";
+echo divtitle("Image Shift");
+if (!empty($imageshiftpresets)) {
+	echo "<table border='0'>\n";
+	echo "<tr>";
+		echo "<td>";
+		echo "<a href='imageshiftreport.php?Id=$expId'>report &raquo;</a>";
+		echo "</td>";
+	echo "</tr>";
+	foreach($imageshiftpresets as $preset) {
+		$stats = $leginondata->getImageShift($expId,$preset['name'],True);
+		if (!$stats['x']['stddev']) continue;
+		echo "<tr><td colspan='2'>";
+		foreach (array_keys($stats) as $key) 
+			printf('%s mean= %.2f stddev= %.2f </br>',$key, $stats[$key]['avg']*1e6,$stats[$key]['stddev']*1e6);
+		echo "</td></tr>";
+		echo "<tr>";
+		echo "<td>";
+		echo "<a href='imageshiftgraph.php?Id=$expId&vdata=1&preset=".$preset['name']."'>[data]</a>";
+		echo "<a href='imageshiftgraph.php?Id=$expId&vs=1&preset=".$preset['name']."'>[sql]</a><br>";
+		echo "<a href='imageshiftgraph.php?Id=$expId&preset=".$preset['name']."'>";
+		echo "<img border='0' src='imageshiftgraph.php?Id=$expId&w=256&preset=".$preset['name']."'>";
+		echo "</a>\n";
+		echo "</td>\n";
+		echo "<td>";
+		echo "<a href='imageshiftgraph.php?Id=$expId&hg=1&haxis=x&vdata=1&preset=".$preset['name']."'>[data]</a>";
+		echo "<a href='imageshiftgraph.php?Id=$expId&hg=1&haxis=x&vs=1&preset=".$preset['name']."'>[sql]</a><br>";
+		echo "<a href='imageshiftgraph.php?Id=$expId&hg=1&haxis=x&preset=".$preset['name']."'>";
+		echo "<img border='0' src='imageshiftgraph.php?Id=$expId&hg=1&haxis=x&w=256&preset=".$preset['name']."'>";
+		echo "</a>\n";
+		echo "</td>\n";
+		echo "<td>";
+		echo "<a href='imageshiftgraph.php?Id=$expId&hg=1&vdata=1&preset=".$preset['name']."'>[data]</a>";
+		echo "<a href='imageshiftgraph.php?Id=$expId&hg=1&vs=1&preset=".$preset['name']."'>[sql]</a><br>";
+		echo "<a href='imageshiftgraph.php?Id=$expId&hg=1&preset=".$preset['name']."'>";
+		echo "<img border='0' src='imageshiftgraph.php?Id=$expId&hg=1&w=256&preset=".$preset['name']."'>";
+		echo "</a>\n";
+		echo "</td>\n";
+		echo "</tr>\n";
+	}
+	echo "</table>\n";
+} else echo "no Image Shift information available";
+	echo "</td>";
+	
+?>
+</tr>
+<?
 $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 	echo "<tr>";
 	echo "<td colspan='2'>";

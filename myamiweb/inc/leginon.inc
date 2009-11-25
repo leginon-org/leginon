@@ -2189,7 +2189,87 @@ class leginondata {
 		}
 		return $this->mysql->getSQLResult($q);
 	}
-	
+
+	function getImageShiftPresets($sessionId) {
+		$q="SELECT count(*) as count, "
+			."`p`.`name`, "
+			."`p`.`magnification` "
+			."FROM `AcquisitionImageData` AS `a` "
+			."LEFT JOIN `PresetData` AS `p` "
+			."ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+			."LEFT JOIN `ScopeEMData` AS `s` "
+			."ON (`s`.`DEF_id`=`a`.`REF|ScopeEMData|scope`) "
+			."WHERE "
+			."`a`.`REF|SessionData|session`=$sessionId "
+			."GROUP BY `p`.`name` ";
+		$results = $this->mysql->getSQLResult($q);
+		$defaultname = 'en';
+		foreach ($results as $r) {
+			if ($maxcount < $r['count']) {
+				$maxcount = $r['count'];
+				$defaultname = $r['name'];
+			}
+		}
+		$q="SELECT DISTINCT"
+			."`a`.`SEQ|preset order` as presets "
+			."FROM "
+			."`AcquisitionSettingsData` AS `a` "
+			."LEFT JOIN `SessionData` AS s "
+			."ON a.`REF|SessionData|session` = s.`DEF_id` "
+			."WHERE "
+			."a.`REF|SessionData|session` = '$sessionId' "
+			."AND a.`move type` = 'image shift' ";
+		$results = $this->mysql->getSQLResult($q);
+		$presetnames = array();
+		if (empty($results)) {
+			$presults[] = array('name'=>$defaultname,'REF|SessionData|session'=>$sessionId);
+		} else {
+			foreach ($results as $r) {
+				$presetseq = $r['presets'];
+				$presets = substr($presetseq,1,-1);
+				$presetarray = explode(',',$presets);
+				foreach ($presetarray as $preset) {
+					$clean_preset = trim($preset);
+					$u_position = stripos($clean_preset,"u'");
+					if ($u_position !== false && $u_position == 0) {
+						$name = substr($clean_preset,2,-1);
+					} else {
+						$name = substr($clean_preset,1,-1);
+					}
+					$presetnames[] = $name;
+				}
+			}
+			$presetnames = array_unique($presetnames);
+			foreach ($presetnames as $name) {
+				$presults[] = array('name'=>$name,'REF|SessionData|session'=>$sessionId);
+			}
+		}
+		return $presults;
+	}
+
+	function getImageShift($sessionId, $preset="", $stats=false) {
+		$wherepreset=($preset) ? "AND `p`.name='$preset'" : "";
+		$q="SELECT "
+		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp`, "
+		."`a`.`DEF_timestamp` AS `timestamp`, "
+		."`p`.`name`, "
+		."`s`.`SUBD|image shift|x` AS `image_shift_x`, "
+		."`s`.`SUBD|image shift|y` AS `image_shift_y` "
+		."FROM "
+		."`AcquisitionImageData` AS `a` "
+		."LEFT JOIN `PresetData` AS `p` "
+		."ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+		."LEFT JOIN `ScopeEMData` AS `s` "
+		."ON (`s`.`DEF_id`=`a`.`REF|ScopeEMData|scope`) "
+		."WHERE "
+		."`a`.`REF|SessionData|session`=$sessionId "
+		.$wherepreset;
+		if ($stats) {
+			return array('x'=>$this->getStats("image_shift_x", $q),'y'=>$this->getStats("image_shift_y", $q));
+		}
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getStats($field, $sub_q) {
 			$q="select "
 				."count(c.`$field`) as `nb`, "
