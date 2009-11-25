@@ -1111,21 +1111,21 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		cent_stack = os.path.join(self.params['rundir'], "start_cent.img")
 		while os.path.isfile(prevmra):
 			apFile.removeStack(prevmra)
-			if self.params['spider_align'] is True:
-				while os.path.isfile(prevmra_spider):
-					apFile.removeFile(prevmra_spider)
-				while os.path.isfile(prevtemp_spider):
-					apFile.removeFile(prevtemp_spider)
-			if self.params['cent_stack'] is True:
-				while os.path.isfile(cent_stack):
-					apFile.removeStack(cent_stack)
-#			if self.params['itn'] == self.params['numiters']:
-#				startstack = os.path.join(self.params['rundir'], "start.img")
-#				mrastack = os.path.join(self.params['rundir'], "mra"+str(self.params['itn'])+".img")
-#				while os.path.isfile(startstack):
-#					apFile.removeStack(startstack)
-#				while os.path.isfile(mrastack):
-#					apFile.removeStack(mrastack)
+		if self.params['spider_align'] is True:
+			while os.path.isfile(prevmra_spider):
+				apFile.removeFile(prevmra_spider)
+			while os.path.isfile(prevtemp_spider):
+				apFile.removeFile(prevtemp_spider)
+		if self.params['cent_stack'] is True:
+			while os.path.isfile(cent_stack):
+				apFile.removeStack(cent_stack)
+#		if self.params['itn'] == self.params['numiters']:
+#			startstack = os.path.join(self.params['rundir'], "start.img")
+#			mrastack = os.path.join(self.params['rundir'], "mra"+str(self.params['itn'])+".img")
+#			while os.path.isfile(startstack):
+#				apFile.removeStack(startstack)
+#			while os.path.isfile(mrastack):
+#				apFile.removeStack(mrastack)
 
 		### upload density
 		self.upload3dRunData()
