@@ -74,7 +74,7 @@ DO LB2 x12=1,x32 ;for image in imgstack
   <currentdoc>
 
   RT SQ ;rotate/shift image
-  <imgstack>@{******x12}
+  start@{******x12}
   <outstack>@{******x12}
   x46
   x47,x48
