@@ -4074,7 +4074,10 @@ class particledata {
 	}
 
 	function getAlignParticleNumber($alignId) {
-		$q="SELECT ref.`refnum` AS classNumber, count(part.`DEF_id`) as number "
+		$q="SELECT "
+			."  ref.`refnum` AS classNumber, "
+			."  count(part.`DEF_id`) as number,  "
+			."  ROUND(ref.`ssnr_resolution`,3) AS resolution "
 			."FROM ApAlignParticlesData AS part "
 			."LEFT JOIN ApAlignReferenceData AS ref "
 			."  ON (part.`REF|ApAlignReferenceData|ref` = ref.`DEF_id`) "
