@@ -531,7 +531,7 @@ def mergeStacks(stacklist, mergestack):
 	### merge header files
 	#apDisplay.printError("not finished")
 	mergehead = open(mergeheader, 'wb')
-	partnum = 0
+	partnum = 1
 	totalsize = 0
 	for stackfile in stacklist:
 		headerfilename = os.path.splitext(stackfile)[0]+ ".hed"
@@ -823,10 +823,9 @@ class processStack(object):
 			### END LOOP
 
 		### check for off-one reading errors
-		if self.index < self.numpart:
+		if self.index < self.numpart-1:
 			print "INDEX %d -- NUMPART %d"%(self.index, self.numpart)
-			apDisplay.printError("Did not write all particles out, "
-				+"the stack header does not match the stack data")
+			apDisplay.printError("Did not properly process all particles")
 
 		### custom post-loop command
 		self.postLoop()
