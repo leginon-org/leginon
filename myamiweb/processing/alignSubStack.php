@@ -248,20 +248,19 @@ function runSubStack() {
 	if (!$runname) createNorefSubStackForm("<b>ERROR:</b> Specify a runname");
 	if (!$description) createNorefSubStackForm("<B>ERROR:</B> Enter a brief description");
 	if ($include && $exclude) createNorefSubStackForm("<B>ERROR:</B> You cannot have both included and excluded classes");
-	if (!$include && !$exclude) createNorefSubStackForm("<B>ERROR:</B> You must one of either included and excluded classes");
+	if (!$include && !$exclude && !is_numeric($include) && !is_numeric($exclude)) createNorefSubStackForm("<B>ERROR:</B> You must specify one of either included and excluded classes");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
-
 	//putting together command
 	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--rundir=$rundir ";
 	$command.="--runname=$runname ";
 	$command.="--description=\"$description\" ";
-	if ($exclude)
+	if ($exclude || is_numeric($exclude))
 		$command.="--class-list-drop=$exclude ";
-	elseif ($include)
+	elseif ($include || is_numeric($include))
 		$command.="--class-list-keep=$include ";
 	if ($clusterId) {
 		$command.="--cluster-id=$clusterId ";
