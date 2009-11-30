@@ -177,7 +177,7 @@ def readImagicHeader(headerfilename):
 	imgfollow=i[1]
 	numimg1 = imgnum+imgfollow
 	numimg2 = int('%d' % (os.stat(headerfilename)[6]/1024))
-	if numimg1 != numimg2:
+	if numimg1 != numimg2 and imgnum!=0:
 		apDisplay.printWarning("Number of particles from header (%d) does not match the data (%d)"
 			%(numimg1, numimg2))
 		#apDisplay.printWarning("Sadly, this is fairly common, so I will use the number from the data")

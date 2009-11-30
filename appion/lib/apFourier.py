@@ -251,6 +251,9 @@ def getResolution(linear, apix=1.0, boxsize=None):
 		boxsize = linear.shape[0]*2
 	lastx=0
 	lasty=0
+	if linear.min() > 0.5:
+		apDisplay.printWarning("Resolution is at Nyquist")
+		return apix*2.0
 	for i in range(linear.shape[0]):
 		x = float(i)
 		y = linear[i]
@@ -270,6 +273,11 @@ def getResolution(linear, apix=1.0, boxsize=None):
 			# convert to Angstroms
 			res = boxsize * apix / intfsc
 			return res
+	end = linear.shape[0]
+	for value in linear:
+		sys.stderr.write("%.3f > "%(value))
+	sys.stderr.write("\n")
+	apDisplay.printWarning("Failed to determine resolution")
 	return 0.0
 
 #===========
