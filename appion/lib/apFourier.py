@@ -18,6 +18,7 @@ import apDisplay
 import apImage
 import apFile
 import apParam
+import apImagicFile
 
 ####
 # This is a low-level file with NO database connections
@@ -70,16 +71,16 @@ def fourierRingCorrelation(imgarray1, imgarray2, apix=1.0):
 	linear[0] = 1.0
 
 	### figure out which pixels go with which ring
-	lineardict = getLinearIndices(fftshape)
+	ringdict = getLinearIndices(fftshape)
 
 	### for each ring calculate the FRC
-	keys = lineardict.keys()
+	keys = ringdict.keys()
 	keys.sort()
 	lastfrc = 1.0
 	K = float(2)
 	for key in keys:
 		sys.stderr.write(".")
-		indexlist = lineardict[key]
+		indexlist = ringdict[key]
 		numer = 0.0
 		f1sum = 0.0
 		f2sum = 0.0
@@ -100,8 +101,32 @@ def fourierRingCorrelation(imgarray1, imgarray2, apix=1.0):
 
 	### output
 	writeFrcPlot("frc.dat", linear, apix)
-	res = getResolution(linear, apix)
+	res = getResolution(linear, apix, boxsize=linear.shape[0]*2)
 	apDisplay.printMsg("Finished FRC of res %.3f Angstroms in %s"%(res, apDisplay.timeString(time.time()-t0)))
+	return res
+
+#===========
+def spectralSNRStack(stackfile, apix=1.0, partlist=None, msg=False):
+	### calculate the Fmean for each Fourier location
+	fs = fourierSum(msg=msg)
+	fs.start(stackfile, partlist)
+
+	### calculate the denominator
+	fsd = fourierSqDiff(msg=msg)
+	fsd.fmean = fs.fsumimg / fs.numpart #need to set mean value
+	fsd.start(stackfile, partlist)
+
+	### calculate the SSNR
+	denomring = fsd.denomring
+	numerring = fs.fsumring
+	ssnr = numerring / fsd.denomring - 1.0
+	ssnr[0] = 1e10 #division by zero fix
+
+	### calculate the FRC
+	frc = ssnr / (ssnr + 1.0)
+
+	### calculate the FRC 0.5 resolution	
+	res = getResolution(frc, apix=apix, boxsize=fs.boxsize)
 	return res
 
 #===========
@@ -140,15 +165,14 @@ def spectralSNR(partarray, apix=1.0):
 	linear[0] = 1.0
 
 	### figure out which pixels go with which ring
-	lineardict = getLinearIndices(fftshape)
+	ringdict = getLinearIndices(fftshape)
 
 	### for each ring calculate the FRC
-	keys = lineardict.keys()
+	keys = ringdict.keys()
 	keys.sort()
-	K = float(len(partarray))
 	for key in keys:
 		sys.stderr.write(".")
-		indexlist = lineardict[key]
+		indexlist = ringdict[key]
 		numer = 0.0
 		denom = 0.0
 		for indextuple in indexlist:
@@ -160,8 +184,14 @@ def spectralSNR(partarray, apix=1.0):
 			#return
 			numer += n1
 			denom += d1
+		K = len(indexlist)
 		ssnr = numer / ( K/(K-1.0) * denom ) - 1.0
 		frc = ssnr / (ssnr + 1)
+		if key >= 3  and key <= 5:
+			print "======================"
+			print "numerring=", key, numer
+			print "denomring=", key, denom
+			print "ssnr=", key, ssnr
 		#print "%02d %.3f %.3f (%.3f / %.3f)"%(key, ssnr, frc, numer/K, denom/K)
 		#print key, frc
 		linear[key] = frc
@@ -169,9 +199,36 @@ def spectralSNR(partarray, apix=1.0):
 
 	### output
 	writeFrcPlot("ssnr.dat", linear, apix)
-	res = getResolution(linear, apix)
+	res = getResolution(linear, apix, boxsize=linear.shape[0]*2)
 	apDisplay.printMsg("Finished SSNR of res %.3f Angstroms in %s"%(res, apDisplay.timeString(time.time()-t0)))
 	return res
+
+#===========
+def mini_ssnr1fft(fftlist, indextuple):
+	"""
+	this function works and is fast
+	"""
+	i,j = indextuple
+	fsum = 0.0
+	K = float(len(fftlist))
+	for fftim in fftlist:
+		F = fftim[i,j]
+		fsum += F
+	fmean = fsum/K
+	#if i ==10 and j==10:
+	#	print "Fmean10,10=", fmean
+	#print "Fmean=", fmean
+	numer = abs(fsum)**2
+	denom = 0.0
+	### this next part cannot be done as a running average
+	### because F - fmean is a complex subtraction
+	for fftim in fftlist:
+		F = fftim[i,j]
+		denom += abs(F - fmean)**2
+		#if i ==10 and j==10:
+		#	print "denom10,10=", abs(F - fmean)**2
+		#	print "denomSUM10,10=", denom
+	return numer, denom
 
 #===========
 def writeFrcPlot(fname, linear, apix=1.0):
@@ -189,8 +246,9 @@ def writeFrcPlot(fname, linear, apix=1.0):
 	apDisplay.printMsg("wrote data to: "+fname)
 
 #===========
-def getResolution(linear, apix=1.0):
-	boxsize = linear.shape[0]*2
+def getResolution(linear, apix=1.0, boxsize=None):
+	if boxsize is None:
+		boxsize = linear.shape[0]*2
 	lastx=0
 	lasty=0
 	for i in range(linear.shape[0]):
@@ -216,9 +274,12 @@ def getResolution(linear, apix=1.0):
 
 #===========
 def getLinearIndices(fftshape):
-	### figure out which pixels go with which ring
+	"""
+	for a given size categorize pixels into ring shells
+	i.e. figure out which pixels go with which ring
+	"""
 	length = int(max(fftshape)/2.0)
-	lineardict = {}
+	ringdict = {}
 	for i in range(length):
 		for j in range(length):
 			k, m = wrap_coord((i,j), fftshape)
@@ -226,11 +287,11 @@ def getLinearIndices(fftshape):
 			index = int(r*1.0)
 			if index < 1 or index >= length:
 				continue
-			if not index in lineardict:
-				lineardict[index] = []
-			lineardict[index].append((i,j))
-	#apDisplay.printMsg("Number of rings: "+str(len(lineardict)))
-	return lineardict
+			if not index in ringdict:
+				ringdict[index] = []
+			ringdict[index].append((i,j))
+	#apDisplay.printMsg("Number of rings: "+str(len(ringdict)))
+	return ringdict
 
 #===========
 def wrap_coord(coord, shape):
@@ -254,26 +315,7 @@ def cartToPolar(x, y):
 	th = math.atan2(y1,x1)
 	return r, th*180.0/math.pi
 
-#===========
-def mini_ssnr1fft(fftlist, indextuple):
-	"""
-	this function works and is fast
-	"""
-	i,j = indextuple
-	fsum = 0.0
-	K = float(len(fftlist))
-	for fftim in fftlist:
-		F = fftim[i,j]
-		fsum += F
-	fmean = fsum/K
-	numer = abs(fsum)**2
-	denom = 0.0
-	### this next part cannot be done as a running average
-	### because F - fmean is a complex subtraction
-	for fftim in fftlist:
-		F = fftim[i,j]
-		denom += abs(F - fmean)**2
-	return numer, denom
+
 
 #===========
 def printImageInfo(image):
@@ -317,6 +359,84 @@ if __name__ == "__main__":
 		c = imagefun.bin2(c, bin)
 		imlist.append(c)
 	spectralSNR(imlist)
+
+#=============================
+##############################
+#=============================
+class fourierSum(apImagicFile.processStack):
+	#===============
+	def preLoop(self):
+		shape = (self.boxsize, self.boxsize)
+		self.ringdict = getLinearIndices(shape)
+		self.numrings = len(self.ringdict.keys())+1
+		self.fsumimg = numpy.zeros(shape, dtype=numpy.complex128)
+		self.keys = self.ringdict.keys()
+		self.keys.sort()
+		return
+
+	#===============
+	def processParticle(self, partarray):
+		fftim = real_fft2d(partarray)
+		for key in self.keys:
+			indexlist = self.ringdict[key]
+			for indextuple in indexlist:
+				i,j = indextuple
+				F = fftim[i,j]
+				self.fsumimg[i,j] += F
+		return
+
+	#===============
+	def postLoop(self):
+		self.fsumring = numpy.zeros((self.numrings), dtype=numpy.float64)
+		for key in self.keys:
+			indexlist = self.ringdict[key]
+			numer = 0.0
+			for indextuple in indexlist:
+				i,j = indextuple
+				numer += abs(self.fsumimg[i,j])**2
+			self.fsumring[key] = numer
+		return
+
+#=============================
+##############################
+#=============================
+class fourierSqDiff(apImagicFile.processStack):
+	#===============
+	def preLoop(self):
+		shape = (self.boxsize, self.boxsize)
+		self.ringdict = getLinearIndices(shape)
+		self.numrings = len(self.ringdict.keys())+1
+		self.denomimg = numpy.zeros(shape, dtype=numpy.float64)
+		#self.denomring = numpy.zeros((self.numrings), dtype=numpy.float64)
+		self.keys = self.ringdict.keys()
+		self.keys.sort()
+		return
+
+	#===============
+	def processParticle(self, partarray):
+		fftim = real_fft2d(partarray)
+		for key in self.keys:
+			indexlist = self.ringdict[key]
+			for indextuple in indexlist:
+				i,j = indextuple
+				fmean = self.fmean[i,j]
+				F = fftim[i,j]
+				self.denomimg[i,j] += abs(F - fmean)**2
+		return
+
+	#===============
+	def postLoop(self):
+		self.denomring = numpy.zeros((self.numrings), dtype=numpy.float64)
+		for key in self.keys:
+			indexlist = self.ringdict[key]
+			K = float(len(indexlist))
+			if K <= 1:
+				self.denomring[key] = 1.0
+				continue
+			for indextuple in indexlist:
+				i,j = indextuple
+				self.denomring[key] += ( K/(K-1.0) * self.denomimg[i,j] )
+		return
 
 ####
 # This is a low-level file with NO database connections

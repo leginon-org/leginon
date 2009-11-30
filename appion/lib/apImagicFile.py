@@ -740,7 +740,7 @@ class processStack(object):
 			apDisplay.printMsg("processStack: "+msg)
 
 	#===============
-	def initValues(self, stackfile):
+	def initValues(self, stackfile, numrequest=None):
 		### check for stack
 		if not os.path.isfile(stackfile):
 			apDisplay.printError("stackfile does not exist: "+stackfile)
@@ -761,6 +761,8 @@ class processStack(object):
 		self.message("Particles allowed in memory: %d"%(self.partallowed))
 		### number particles in stack
 		self.numpart = apFile.numImagesInStack(stackfile)
+		if numrequest is not None and self.numpart > numrequest:
+			self.numpart = numrequest
 		self.message("Number of particles in stack: %d"%(self.numpart))
 		if self.numpart > self.partallowed:
 			numchucks = math.ceil(self.numpart/float(self.partallowed))
@@ -772,9 +774,11 @@ class processStack(object):
 		self.message("Particle loop step size: %d"%(self.stepsize))
 
 	#===============
-	def start(self, stackfile):
+	def start(self, stackfile, partlist=None):
 		self.starttime = time.time()
-		self.initValues(stackfile)
+		partlist.sort()
+		numrequest = len(partlist)
+		self.initValues(stackfile, numrequest)
 
 		### custom pre-loop command
 		self.preLoop()
@@ -795,8 +799,14 @@ class processStack(object):
 					%(first, last, self.numpart))
 
 			### read images
-			stackdata = readImagic(stackfile, first=first, last=last, msg=False)
-			stackarray = stackdata['images']
+			if partlist is None:
+				stackdata = readImagic(stackfile, first=first, last=last, msg=False)
+				stackarray = stackdata['images']
+			else:
+				sublist = partlist[first-1:last]
+				self.message("actual partnum %d to %d"
+					%(sublist[0], sublist[len(sublist)-1]))
+				stackarray = readParticleListFromStack(stackfile, sublist, msg=False)
 
 			### process images
 			self.processStack(stackarray)
@@ -814,6 +824,7 @@ class processStack(object):
 
 		### check for off-one reading errors
 		if self.index < self.numpart:
+			print "INDEX %d -- NUMPART %d"%(self.index, self.numpart)
 			apDisplay.printError("Did not write all particles out, "
 				+"the stack header does not match the stack data")
 
