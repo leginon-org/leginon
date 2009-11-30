@@ -22,6 +22,7 @@ import apImagicFile
 from apSpider import operations
 import appiondata
 import apProject
+import apFourier
 from pyami import spider
 
 #=====================
@@ -337,6 +338,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			refq['mrcfile'] = refbase+".mrc"
 			refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 			refq['alignrun'] = self.alignstackdata['alignrun']
+			if partdict['refnum']  in self.resdict:
+				refq['ssnr_resolution'] = self.resdict[partdict['refnum']]
 			reffile = os.path.join(self.params['rundir'], refq['mrcfile'])
 			if not os.path.isfile(reffile):
 				emancmd = "proc2d "+refbase+".xmp "+refbase+".mrc"
@@ -454,7 +457,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		### summarize
 		apDisplay.printMsg("rotated and shifted %d particles in %s"%(imgnum, apDisplay.timeString(time.time()-t0)))
 
-		apStack.averageStack(self.alignimagicfile)
+		return self.alignimagicfile
 
 	#=====================
 	def writeXmippLog(self, text):
@@ -561,6 +564,31 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return reflist
 
 	#=====================
+	def calcResolution(self, partlist, stackfile, apix):
+		### group particles by refnum
+		reflistsdict = {}
+		for partdict in partlist:
+			refnum = partdict['refnum']
+			partnum = partdict['partnum']
+			if not refnum in reflistsdict:
+					reflistsdict[refnum] = []
+			reflistsdict[refnum].append(partnum)
+
+		### get resolution
+		self.resdict = {}
+		boxsizetuple = apFile.getBoxSize(stackfile)
+		boxsize = boxsizetuple[0]
+		for refnum in reflistsdict.keys():
+			partlist = reflistsdict[refnum]
+			esttime = 3e-6 * len(partlist) * boxsize**2
+			apDisplay.printMsg("Ref num %d; %d parts; est time %s"
+				%(refnum, len(partlist), apDisplay.timeString(esttime)))
+			res = apFourier.spectralSNRStack(stackfile, apix, partlist, msg=False)
+			self.resdict[refnum] = res
+
+		return
+
+	#=====================
 	def start(self):
 		### load parameters
 		runparams = self.readRunParameters()
@@ -581,6 +609,11 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 		### create aligned stacks
 		stackfile = self.createAlignedStacks(partlist, runparams['localstack'])
+		apStack.averageStack(stackfile)
+
+		### calculate resolution for each reference
+		apix = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
+		self.calcResolution(partlist, stackfile, apix)
 
 		### insert into databse
 		self.insertRunIntoDatabase(runparams)
