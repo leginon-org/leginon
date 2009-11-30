@@ -553,7 +553,7 @@ def mergeStacks(stacklist, mergestack):
 			### first image number
 			headerstr += intToFourByte(partnum)
 			### number of images, less one
-			headerstr += intToFourByte(numpart-1)
+			headerstr += intToFourByte(numpart-partnum)
 			### always 0,1 ???
 			headerstr += intToFourByte(0)
 			headerstr += intToFourByte(1)
