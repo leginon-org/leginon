@@ -776,8 +776,11 @@ class processStack(object):
 	#===============
 	def start(self, stackfile, partlist=None):
 		self.starttime = time.time()
-		partlist.sort()
-		numrequest = len(partlist)
+		if partlist is not None:
+			partlist.sort()
+			numrequest = len(partlist)
+		else:
+			numrequest = None
 		self.initValues(stackfile, numrequest)
 
 		### custom pre-loop command
