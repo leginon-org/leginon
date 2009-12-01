@@ -166,8 +166,8 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 
 	echo "<br/><br/>\n";
 
-	echo "Output directory:&nbsp;<i>$outdir</i>\n";
-	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
+	echo "Output directory:&nbsp;\n";
+	echo "<input type='text' name='outdir' value='$outdir' width='60'>\n";
 
 	echo "<br/><br/>\n";
 
