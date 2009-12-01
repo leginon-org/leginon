@@ -892,6 +892,17 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	$dbcheck = exec_over_ssh($host,$user,$pass,$cmd,True);
 	if (trim($dbcheck)=='') return "sinedon is not configure for appiondata";
 
+	//Check if filesystem is full
+	$cmd = "df $outdir";
+	$fscheck = exec_over_ssh($host,$user,$pass,$cmd,True);
+	$fsbits = split(" ", trim($fscheck));
+	foreach ($fsbits as $fsbit) {
+		if (preg_match("/^[0-9]+%$/", $fsbit))
+			$percent = (float) preg_replace("/%/", "", $fsbit);
+	}
+	if ($percent && $percent >= 98)
+		return "Filesystem is $percent% full, please change output directory";
+
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$procdir = $outdir.$runname;
