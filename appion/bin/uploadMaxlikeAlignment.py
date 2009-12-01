@@ -583,7 +583,12 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			esttime = 3e-6 * len(partlist) * boxsize**2
 			apDisplay.printMsg("Ref num %d; %d parts; est time %s"
 				%(refnum, len(partlist), apDisplay.timeString(esttime)))
-			res = apFourier.spectralSNRStack(stackfile, apix, partlist, msg=False)
+
+			frcdata = apFourier.spectralSNRStack(stackfile, apix, partlist, msg=False)
+			frcfile = "frcplot-%03d.dat"%(refnum)
+			writeFrcPlot(frcfile, frcdata, self.apix, boxsize)
+			res = apFourier.getResolution(frcdata, self.apix, boxsize)
+
 			self.resdict[refnum] = res
 
 		return

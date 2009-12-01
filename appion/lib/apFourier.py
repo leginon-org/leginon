@@ -123,11 +123,11 @@ def spectralSNRStack(stackfile, apix=1.0, partlist=None, msg=False):
 	ssnr[0] = 1e10 #division by zero fix
 
 	### calculate the FRC
-	frc = ssnr / (ssnr + 1.0)
+	frcdata = ssnr / (ssnr + 1.0)
 
 	### calculate the FRC 0.5 resolution	
-	res = getResolution(frc, apix=apix, boxsize=fs.boxsize)
-	return res
+	#res = getResolution(frc, apix=apix, boxsize=fs.boxsize)
+	return frcdata
 
 #===========
 def spectralSNR(partarray, apix=1.0):
@@ -231,19 +231,18 @@ def mini_ssnr1fft(fftlist, indextuple):
 	return numer, denom
 
 #===========
-def writeFrcPlot(fname, linear, apix=1.0):
-	length = linear.shape[0]
-	f = open(fname, "w")
-	#f.write("0\t1.0\n")
-	for i in range(1, length):
-		if i < (length-3) and linear[i] > 0.9 and linear[i+1] > 0.9 and linear[i+2] > 0.9:
-			continue
-		f.write("%.1f\t%.5f\n"%(2.0*length/float(i), linear[i]))
-		if linear[i] < 0 and linear[i-1] < 0:
-			break
-	#f.write("%d\t0.0\n&\n"%(length+1))
+def writeFrcPlot(filename, frcdata, apix=1.0, boxsize=None, msg=False):
+	if boxsize is None:
+		boxsize = 2*frcdata.shape[0]
+	f = open(filename, "w")
+	f.write("#resolution\tfrc_value\n")
+	for i in range(1, frcdata.shape[0]):
+		res = boxsize*apix/float(i)
+		value = frcdata[i]
+		f.write("%.1f\t%.5f\n"%(res, value))
 	f.close()
-	apDisplay.printMsg("wrote data to: "+fname)
+	if msg is True:
+		apDisplay.printMsg("wrote data to: "+filename)
 
 #===========
 def getResolution(linear, apix=1.0, boxsize=None):
