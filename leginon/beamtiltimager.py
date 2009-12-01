@@ -216,7 +216,7 @@ class BeamTiltImager(acquisition.Acquisition):
 			self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
 			status = acquisition.Acquisition.acquire(self, presetdata, emtarget, channel= channel)
 			imagedata = self.imagedata
-			self.setImage(imagedata, 'Image')
+			self.setImage(imagedata['image'], 'Image')
 			self.instrument.tem.BeamTilt = oldbt
 			angle = anglelist[i]
 			rad = radlist[i]
@@ -355,7 +355,11 @@ class BeamTiltImager(acquisition.Acquisition):
 		pow = imagefun.power(image)
 		binned = imagefun.bin(pow, binning)
 		s = None
-		ctfdata = fftfun.fitFirstCTFNode(pow,rpixelsize['x'], defocus, ht)
+		try:
+			ctfdata = fftfun.fitFirstCTFNode(pow,rpixelsize['x'], defocus, ht)
+		except Exception, e:
+			self.logger.error("ctf fitting failed: %s" % e)
+			ctfdata = None
 		if ctfdata:
 			self.logger.info('z0 %.3f um, zast %.3f um (%.0f ), angle= %.1f deg' % (ctfdata[0]*1e6,ctfdata[1]*1e6,ctfdata[2]*100, ctfdata[3]*180.0/math.pi))
 			s = '%d' % int(ctfdata[0]*1e9)

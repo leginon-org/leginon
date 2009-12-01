@@ -238,20 +238,19 @@ class CalibrationClient(object):
 			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht)
 			self.ctfdata.append(ctfdata)
 
-			eparams = ctfdata[4]
-			center = numpy.divide(eparams['center'], binning)
-			a = eparams['a'] / binning
-			b = eparams['b'] / binning
-			alpha = eparams['alpha']
-			ellipse1 = pyami.ellipse.drawEllipse(binned.shape, 2*numpy.pi/180, center, a, b, alpha)
-			ellipse2 = pyami.ellipse.drawEllipse(binned.shape, 5*numpy.pi/180, center, a, b, alpha)
-			min = arraystats.min(binned)
-			max = arraystats.max(binned)
-			numpy.putmask(binned, ellipse1, min)
-			numpy.putmask(binned, ellipse2, max)
-
 			if ctfdata:
 				s = '%d' % int(ctfdata[0]*1e9)
+				eparams = ctfdata[4]
+				center = numpy.divide(eparams['center'], binning)
+				a = eparams['a'] / binning
+				b = eparams['b'] / binning
+				alpha = eparams['alpha']
+				ellipse1 = pyami.ellipse.drawEllipse(binned.shape, 2*numpy.pi/180, center, a, b, alpha)
+				ellipse2 = pyami.ellipse.drawEllipse(binned.shape, 5*numpy.pi/180, center, a, b, alpha)
+				min = arraystats.min(binned)
+				max = arraystats.max(binned)
+				numpy.putmask(binned, ellipse1, min)
+				numpy.putmask(binned, ellipse2, max)
 			#elif self.ace2exe:
 			elif False:
 				ctfdata = self.estimateCTF(imagedata)
