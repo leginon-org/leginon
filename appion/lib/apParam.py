@@ -396,6 +396,9 @@ def getNumProcessors(msg=True):
 
 #=====================
 def setUmask(msg=False):
+	os.umask(0)
+	os.umask(0)
+	return
 	if os.getgid() == 773:
 		prev = os.umask(002)
 		curr = os.umask(002)
