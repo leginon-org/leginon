@@ -239,7 +239,7 @@ def writeFrcPlot(filename, frcdata, apix=1.0, boxsize=None, msg=False):
 	for i in range(1, frcdata.shape[0]):
 		res = boxsize*apix/float(i)
 		value = frcdata[i]
-		f.write("%.1f\t%.5f\n"%(res, value))
+		f.write("%.5f\t%.8f\n"%(res, value))
 	f.close()
 	if msg is True:
 		apDisplay.printMsg("wrote data to: "+filename)
