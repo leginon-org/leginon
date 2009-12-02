@@ -265,14 +265,18 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		}
 		$stacktable.= "</td>\n";
 
-		if ($type != "none" && $numpart < 2000) {
+		if ($type != "none") {
 			$stacktable.= "<td rowspan='30' align='center' valign='top'>";
 			$stacktable.= "<a href='aligngraph.php?expId=$expId&alignid=$alignstackid&type=$type'>\n";
-			if ($mini)
-				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId&alignid=$alignstackid&h=60&type=$type' height='60'><br/>\n";
+			if ($mini && $numpart < 1000)
+				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId"
+					."&alignid=$alignstackid&h=60&type=$type' height='60'>\n";
+			elseif ($numpart < 500)
+				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId"
+					."&alignid=$alignstackid&h=120&type=$type' height='120'>\n";
 			else
-				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId&alignid=$alignstackid&h=120&type=$type' height='120'><br/>\n";
-			$stacktable.= "</a><i>$type distribution</i>\n";
+				$stacktable.= "<i>display<br/>plot</i>\n";
+			$stacktable.= "<br/></a><i>$type distribution</i>\n";
 			$stacktable.= "</td>\n";
 		}
 
