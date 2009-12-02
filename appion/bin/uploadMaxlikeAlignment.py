@@ -586,8 +586,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 			frcdata = apFourier.spectralSNRStack(stackfile, apix, partlist, msg=False)
 			frcfile = "frcplot-%03d.dat"%(refnum)
-			apFourier.writeFrcPlot(frcfile, frcdata, self.apix, boxsize)
-			res = apFourier.getResolution(frcdata, self.apix, boxsize)
+			apFourier.writeFrcPlot(frcfile, frcdata, apix, boxsize)
+			res = apFourier.getResolution(frcdata, apix, boxsize)
 
 			self.resdict[refnum] = res
 
