@@ -847,7 +847,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		if self.params['partlimit'] is not None and self.particleNumber > self.params['partlimit']:
 			apDisplay.printError("Number of particles in existing stack already exceeds limit!")
-		self.logpeaks = 4
+		self.logpeaks = 2
 
 	#=====================
 	def reprocessImage(self, imgdata):
