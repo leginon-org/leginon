@@ -310,7 +310,7 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	// get pixel size
 	$apix = $stackdata['pixelsize']; // --- in Angstroms
 	$mpix = $apix * 1e-10; // --- in meters
-
+	$origstackid = $stackdata['REF|ApStackData|stack'];
 	$display_keys['original stack'] = "<a href='stackreport.php?expId=$expId&sId=$origstackid'>$origstackid</a>";
 	$refstack = $stackdata['path']."/".$stackdata['refstackfile'];
 	if ($stackdata['refstackfile'] && file_exists($refstack))
