@@ -43,7 +43,14 @@ if ($templateparams) {
 	}
 	echo "</table>";
 }
+echo "<table cellspacing='1' cellpadding='2'><tr><td>";
 
+		echo "<a href='particlePositionGraph.php?expId=$expId&rId=$runId&haxis=xcoord&hg=1'>";
+		echo "<img border='0' src='particlePositionGraph.php?expId=$expId&w=256&rId=$runId&haxis=xcoord&hg=1'>";
+		echo "</td><td>";
+		echo "<a href='particlePositionGraph.php?expId=$expId&rId=$runId&haxis=ycoord&hg=1'>";
+		echo "<img border='0' src='particlePositionGraph.php?expId=$expId&w=256&rId=$runId&haxis=ycoord&hg=1'>";
+echo "</td></tr></table>\n";
 //Report selection run parameters
 $title = "Selection parameters";
 $exclude_fields = array('DEF_timestamp');
