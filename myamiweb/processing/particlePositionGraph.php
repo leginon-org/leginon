@@ -42,7 +42,7 @@ if ($histogram == true && $histaxis == 'xcoord')
 $dbemgraph=&new dbemgraph($positiondata, $axes[0], $axes[1]);
 $dbemgraph->lineplot=False;
 $dbemgraph->title="particle positions for ".$rundata[0]['name'];
-$dbemgraph->yaxistitle="y (pixel)";
+$dbemgraph->yaxistitle=$axes[1]." (pixel)";
 $dbemgraph->xaxistitle="x (pixel)";
 
 if ($viewdata) {
