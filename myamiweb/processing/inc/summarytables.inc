@@ -307,35 +307,31 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		$display_keys['file size'] = $filesize;
 	}
 
-	$origstackid = $stackdata['REF|ApStackData|stack'];
-	$origstackdata = $particle->getStackParams($origstackid);
-	$origpixelsize = $origstackdata['pixelsize'];  // --- Angstrom ?
-	$origps = $origpixelsize; 
+	// get pixel size
+	$apix = $stackdata['pixelsize']; // --- in Angstroms
+	$mpix = $apix * 1e-10; // --- in meters
+
 	$display_keys['original stack'] = "<a href='stackreport.php?expId=$expId&sId=$origstackid'>$origstackid</a>";
 	$refstack = $stackdata['path']."/".$stackdata['refstackfile'];
 	if ($stackdata['refstackfile'] && file_exists($refstack))
 		$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
-			."file=$refstack&expId=$expId&ps=$origps&alignId=$alignstackid'>".$stackdata['refstackfile']."</a>";
+			."file=$refstack&expId=$expId&ps=$mpix&alignId=$alignstackid'>".$stackdata['refstackfile']."</a>";
 
 	$stackfile = $stackdata['path']."/".$stackdata['imagicfile'];
 
-	$pixelsize = $stackdata['pixelsize']; // --- Angstrom ?
-
-	// --- pixel size in meter --- //
-	$ps = $pixelsize * 1e-10;
 	if ($mini) {
-		$display_keys['pixel / box size']=round($pixelsize,2)." &Aring;/pixel and ".$stackdata['boxsize']." pixels";
-		$display_keys['stack file']=$stackdata['path']."/<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&ps=$ps'>"
+		$display_keys['pixel / box size']=round($apix,2)." &Aring;/pixel and ".$stackdata['boxsize']." pixels";
+		$display_keys['stack file']=$stackdata['path']."/<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&ps=$mpix'>"
 			.$stackdata['imagicfile']."</a>";
 	} else {
 		// get box size
 		$display_keys['box size']=$stackdata['boxsize']." pixels";
 		// get pixel size of stack
-		$display_keys['pixel size']=round($pixelsize,2)." &Aring;/pixel";
+		$display_keys['pixel size']=round($apix,2)." &Aring;/pixel";
 		$display_keys['filter']=$stackdata['lp_filt']." and ".$stackdata['hp_filt']." &Aring;";
 		//$display_keys['run time']=round($stackdata['run_seconds']/60.0,2)." minutes";
 		$display_keys['path']=$stackdata['path'];
-		$display_keys['stack file']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&ps=$ps'>"
+		$display_keys['stack file']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&ps=$mpix'>"
 			.$stackdata['imagicfile']."</A>";
 	}
 
