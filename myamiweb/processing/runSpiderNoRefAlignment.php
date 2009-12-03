@@ -66,7 +66,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
   
 	echo"

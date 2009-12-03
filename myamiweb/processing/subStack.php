@@ -97,7 +97,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr/>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
   
 	echo"<form name='viewerform' method='post' action='$formAction'>\n";

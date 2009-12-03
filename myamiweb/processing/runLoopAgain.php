@@ -66,7 +66,7 @@ function selectLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 	processing_header($title, $heading, $javascript, False);
 	// write out errors, if any came up:
 	if ($extra)
-		echo "<font color='#dd0000'>$extra</FONT><br />\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	echo "<FORM NAME='selectLoopAgainForm' method='POST' ACTION='$formAction'>\n";
 
 	// --- Get Session Name --- //
@@ -117,7 +117,7 @@ function createLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 	processing_header($title, $heading, $javascript, False);
 	// write out errors, if any came up:
 	if ($extra)
-		echo "<font color='#dd0000'>$extra</FONT><br />\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	echo "<FORM NAME='createLoopAgainForm' method='POST' ACTION='$formAction'>\n";
 
 	// --- Get Session Name --- //

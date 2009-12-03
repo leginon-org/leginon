@@ -45,7 +45,7 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 	processing_header("Tilt Aligner Launcher","Tilt Aligner Particle Selection and Editing",$javafunctions);
 
 	if ($extra) {
-		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	echo"
 	<form name='viewerform' method='POST' ACTION='$formAction'>

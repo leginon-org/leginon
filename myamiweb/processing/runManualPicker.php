@@ -59,7 +59,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   processing_header("Manual Picker Launcher","Manual Particle Selection and Editing",$javafunctions);
 
   if ($extra) {
-    echo "<font COLOR='#DD0000' SIZE=+2>$extra</font>\n<HR>\n";
+    echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
   }
   if ($results) echo "$results<hr />\n";
   echo"

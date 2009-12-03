@@ -62,7 +62,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	processing_header("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions,True);
 
 	if ($extra) {
-		echo "<font COLOR='#DD0000' size=+2>$extra</font>\n<hr>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	if ($results) echo "$results<hr>\n";
 	

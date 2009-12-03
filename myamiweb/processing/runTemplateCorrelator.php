@@ -135,7 +135,7 @@ function createTemplateForm($extra=False) {
 	$javafunctions.="<script src='../js/viewer.js'></script>\n";
 
 	processing_header("Template Correlator Launcher","Automated Particle Selection with Template Correlator",$javafunctions);
-	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	echo"<FORM name='viewerform' method='POST' ACTION='$formAction'><P>\n";
 	if ($templatetable) {
 		echo"
@@ -257,7 +257,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 	processing_header($title,$heading,$javafunctions,True);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	if ($results) echo "$results<hr />\n";
 	echo"

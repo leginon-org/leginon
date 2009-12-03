@@ -72,7 +72,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='#990000' size='+2'>$extra</font>\n<hr/><br/>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";

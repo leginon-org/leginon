@@ -67,7 +67,7 @@ function createAce2Form($extra=false) {
 	processing_header("Ace 2 Launcher", "CTF Estimation by Ace 2", $javafunctions);
 
 	if ($extra) {
-		echo "<font color='#dd0000'>$extra</FONT><br />\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 
 	echo"

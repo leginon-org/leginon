@@ -167,7 +167,7 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	processing_header($title,$heading,$javafunctions,True);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	if ($results) echo "$results<hr>\n";
 	echo"

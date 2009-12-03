@@ -15,7 +15,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	processing_header("Appion Job","Appion Job Status",$javafunc);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='RED'>$extra</font>\n<HR>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId&jobId=$jobId";

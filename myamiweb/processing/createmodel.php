@@ -57,7 +57,7 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='red' size='+2'>$extra</font>\n<hr />\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 
 	echo"<form name='viewerform' method='post' action='$formAction'>\n";
@@ -216,7 +216,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='red' size='+2'>$extra</font>\n<hr />\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	echo"<form name='viewerform' method='post' action='$formAction'>\n";
 

@@ -101,7 +101,7 @@ function createform($extra=False) {
 	processing_header("Remove Eulers Jumpers", "Remove Euler Jumpers",$javascript);
 
 	// write out errors, if any came up:
-	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 		
 	$particle = new particledata();
 	$refinfo = $particle->getRefinementRunInfo($reconId);

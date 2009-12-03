@@ -78,7 +78,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='#DD0000' size=+2>$extra</font>\n<hr>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	if ($results) echo "$results<hr />\n";
 

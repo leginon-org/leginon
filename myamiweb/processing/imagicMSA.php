@@ -57,7 +57,7 @@ function jobform($extra=false)	{
 	processing_header("IMAGIC Classification (MSA)","IMAGIC Classification (MSA)",$javafunc);
 
 	// write out errors, if any came up:
-	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';

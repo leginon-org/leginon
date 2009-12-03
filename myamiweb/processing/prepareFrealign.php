@@ -55,7 +55,7 @@ function stackModelForm($extra=False) {
 
 	// write out errors, if any came up:
 	if ($extra)
-		echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
@@ -153,7 +153,7 @@ function jobForm($extra=false) {
 	$javafunc .= writeJavaPopupFunctions('frealign');
 	processing_header("Frealign Job Generator","Frealign Job Generator",$javafunc);
 	// write out errors, if any came up:
-	if ($extra) echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
 	echo "<form name='frealignjob' method='post' action='$formaction'><br/>\n";
 	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";

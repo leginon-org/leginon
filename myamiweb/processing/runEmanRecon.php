@@ -184,7 +184,7 @@ function stackModelForm($extra=False) {
 	$box = $stackinfo[2];
 
 	// write out errors, if any came up:
-	if ($extra) echo "<font color='red' size='+2'>$extra</font>\n<hr>\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
@@ -247,7 +247,7 @@ function emanForm($extra=false) {
 	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='red'>$extra</font>\n<hr />\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 
 	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
@@ -538,7 +538,7 @@ function jobForm($extra=false) {
 	// write out errors, if any came up:
 	if (!($user && $pass)) echo "<font color='red'><B>WARNING!!!</B> You are not logged in!!!</font><br />";
 	if ($extra) {
-		echo "<font color='red'>$extra</font>\n<hr />\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
 	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
@@ -1110,7 +1110,7 @@ function writeJobFile ($extra=False) {
 		else echo "Review your job, and submit.<br />\n";
 	}
 	else {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><br>\n";
 	echo "<input type='hidden' name='clustername' value='$clustername'>\n";

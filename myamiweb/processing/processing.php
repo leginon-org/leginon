@@ -43,7 +43,7 @@ processing_header("Appion Data Processing","Appion Data Processing", "<script sr
 
 // write out errors, if any came up:
 if ($extra) {
-  echo "<font color='red'>$extra</font>\n<hr />\n";
+  echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 }
 // create login form
 $display_login = ($_SESSION['username'] && $_SESSION['password']) ? false:true;

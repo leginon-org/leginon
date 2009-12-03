@@ -38,7 +38,7 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='RED'>$extra</font>\n<hr>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
   
 	echo"<form name='viewerform' method='POST' action='$formAction'>\n";

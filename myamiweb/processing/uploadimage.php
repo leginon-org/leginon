@@ -51,7 +51,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	#processing_header($title,$heading,False,True);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='#990000' size='+2'>$extra</font>\n<hr/><br/>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
   
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";

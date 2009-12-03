@@ -65,7 +65,7 @@ function jobform($extra=false) {
 	processing_header("IMAGIC 3d0 Model Generator","IMAGIC 3d0 Model Generator",$javafunc);
 
 	// write out errors if any came up
-	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
 	echo "<form name='imagic3d0' method='post' action='$formaction'><br />\n";
 

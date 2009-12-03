@@ -40,7 +40,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font COLOR='RED'>$extra</font>\n<HR>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
   
 	echo"<FORM name='viewerform' method='POST' ACTION='$formAction'>\n";

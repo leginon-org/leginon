@@ -58,7 +58,7 @@ function selectFrealignJob($extra=False) {
 
 	// write out errors, if any came up:
 	if ($extra)
-		echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
@@ -152,7 +152,7 @@ function jobForm($extra=false) {
 	if (!($user && $pass))
 		selectFrealignJob("ERROR: You are not logged in");
 	if ($extra)
-		echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
 	$particle = new particledata();
 	$jobdatas = $particle->getPreparedFrealignJobs($jobid);
@@ -362,7 +362,7 @@ function writeJobFile ($extra=False) {
 		echo $clusterdata->cluster_check_msg();
 		echo "<p>";
 	} else {
-		echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 
 

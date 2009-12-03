@@ -52,7 +52,7 @@ function chooseModel($extra=False) {
 	processing_header("Choose Model","Choose Model for Projecting Synthetic Dataset",$javafunc);
 
 	// write out errors, if any came up:
-	if ($extra) echo "<font color='red'>$extra</font>\n<hr>\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 	
 	// show initial models
@@ -188,7 +188,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	processing_header("Synthetic Dataset Creation","Synthetic Dataset Creation from Input Model",$javafunctions,True, 'enablecorrect()');
 
 	if ($extra) {
-		echo "<font COLOR='#DD0000' size=+1>$extra</font>\n<hr>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	
 	echo"

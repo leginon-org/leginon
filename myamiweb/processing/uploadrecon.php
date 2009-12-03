@@ -70,7 +70,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   // write out errors, if any came up:
 
   if ($extra) {
-    echo "<font color='red'>$extra</font>\n<hr>\n";
+    echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
   }
   
   echo"<form name='viewerform' method='post' action='$formAction'>\n";

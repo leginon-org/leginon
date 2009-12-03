@@ -24,7 +24,7 @@ function loginform($extra=false) {
     if (!$expId && $prev) $formAction.="?prev=$prev";
     if ($expId && $prev) $formAction.="&prev=$prev";
 
-    if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+    if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
     displayLogin($formAction);
 

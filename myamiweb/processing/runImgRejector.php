@@ -61,7 +61,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font COLOR='RED'>$extra</font>\n<HR>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 
 	echo"

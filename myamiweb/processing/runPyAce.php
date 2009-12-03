@@ -241,7 +241,7 @@ function createPyAceForm($extra=false) {
 	processing_header("PyACE Launcher","Automated CTF Estimation With PyACE",$javafunctions);
 
 	if ($extra) {
-		echo "<font color='#DD0000'>$extra</FONT><br />\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	echo"
 	<FORM NAME='viewerform' method='POST' action='$phpself'>\n";

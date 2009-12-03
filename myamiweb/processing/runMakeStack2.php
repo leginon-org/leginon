@@ -105,7 +105,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='#bb2222' size='+2'>$extra</font>\n<HR>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 
 	echo"<FORM name='viewerform' method='POST' ACTION='$formAction'>\n";

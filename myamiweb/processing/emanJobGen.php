@@ -171,7 +171,7 @@ function stackModelForm($extra=False) {
 	$box = $stackinfo[2];
 
 	// write out errors, if any came up:
-	if ($extra) echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
@@ -284,7 +284,7 @@ function jobForm($extra=false) {
 	// write out errors, if any came up:
 	if (!($user && $pass)) echo "<font color='#CC3333' size='+2'><B>WARNING!!!</B> You are not logged in!!!</font><br/>";
 
-	if ($extra) echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
 	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
 	echo "<input type='hidden' name='clustermemo' value='".$selectedcluster."'>\n";
@@ -986,7 +986,7 @@ function writeJobFile ($extra=False) {
 		echo $clusterdata->cluster_check_msg();
 		echo "<p>";
 	} else {
-		echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	echo "<form name='emanjob' method='POST' action='$formAction'>\n";
 	echo "<input type='hidden' name='clustername' value='".C_NAME."'>\n";

@@ -40,7 +40,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	processing_header($title,$heading,$javafunc);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
   
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";

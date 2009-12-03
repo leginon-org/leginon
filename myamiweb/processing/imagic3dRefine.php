@@ -100,7 +100,7 @@ function initModelForm($extra=False) {
 	$box = $stackinfo[2];
 	
 	// write out errors, if any came up:
-	if ($extra) echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr>\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 	
@@ -186,7 +186,7 @@ function jobform($extra=false) {
 	processing_header("IMAGIC 3d Refinement Job Form","IMAGIC 3d Refinement Job Form",$javafunc);
 
 	// write out errors if any came up
-	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
 	echo "<form name='imagic3dRefine' method='post' action='$formaction'><br />\n";
 

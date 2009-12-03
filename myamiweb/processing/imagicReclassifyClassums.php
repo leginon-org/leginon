@@ -45,7 +45,7 @@ function jobForm($extra=false) {
 	processing_header("IMAGIC New-Classum Generator","IMAGIC New-Classum Generator",$javafunc);
 
 	// write out errors, if any came up:
-	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
 	// get session info
 	echo "<form name='imagicReclassifyClassums' method='post' action='$formaction'><br />\n";

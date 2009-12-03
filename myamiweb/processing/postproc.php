@@ -151,7 +151,7 @@ function createform($extra=False) {
 	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density");
 
 	// write out errors, if any came up:
-	if ($extra) echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr />\n";
+	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 		
 	$info = $particle->getReconInfoFromRefinementId($refIterId);
 
