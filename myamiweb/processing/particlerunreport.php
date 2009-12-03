@@ -43,6 +43,7 @@ if ($templateparams) {
 	}
 	echo "</table>";
 }
+echo "<h4>Particle Position Histograms</h4>\n";
 echo "<table cellspacing='1' cellpadding='2'><tr><td>";
 
 		echo "<a href='particlePositionGraph.php?expId=$expId&rId=$runId&haxis=xcoord&hg=1'>";
