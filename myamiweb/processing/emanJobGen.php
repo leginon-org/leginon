@@ -55,7 +55,8 @@ function submitJob($extra=False) {
 	$host = $_POST['clustername'];
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
-	if (!($user && $pass)) writeJobFile("<B>ERROR:</B> Enter a user name and password");
+	if (!($user && $pass))
+		writeJobFile("<B>ERROR:</B> Enter a user name and password");
 
 	$jobname = $_POST['jobname'];
 	$outdir = $_POST['outdir'].$jobname;
@@ -68,7 +69,9 @@ function submitJob($extra=False) {
 	$clusterpath=$_POST['clusterpath'].$jobname;
 	$jobfile="$jobname.job";
 	$tmpjobfile = "/tmp/$jobfile";
-	
+	if (!file_exists($tmpjobfile))
+		writeJobFile("<B>ERROR:</B> Could not find temp jobfile: $tmpjobfile");	
+
 	$jobid=$particle->insertClusterJobData($host,$outdir,$dmfpath,$clusterpath,$jobfile,$expId,'recon',$user);
 
 	// add header & job id to the beginning of the script
@@ -80,7 +83,7 @@ function submitJob($extra=False) {
 	$clusterjob.= C_APPION_BIN."updateAppionDB.py $jobid R $projectId\n\n";
 	$clusterjob.= "# jobId: $jobid\n";
 	$clusterjob.= "# projectId: $projectId\n";
-	$clusterlastline.= C_APPION_BIN."updateAppionDB.py $jobid D $projectId\nexit\n\n";
+	$clusterlastline.= "\n".C_APPION_BIN."updateAppionDB.py $jobid D $projectId\nexit\n\n";
 	$f = file_get_contents($tmpjobfile);
 	file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
 
