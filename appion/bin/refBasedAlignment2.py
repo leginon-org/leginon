@@ -17,6 +17,7 @@ import apParam
 import appiondata
 import apProject
 import apImage
+import apFourier
 from apSpider import alignment
 
 #=====================
@@ -144,6 +145,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		### setup alignment stack
 		alignstackq = appiondata.ApAlignStackData()
 		alignstackq['alignrun'] = alignrunq
+
 		alignstackq['imagicfile'] = imagicstack
 		alignstackq['avgmrcfile'] = "average.mrc"
 		emancmd = "proc2d templatestack%02d.spi templatestack%02d.hed"%(self.params['numiter'],self.params['numiter'])
@@ -189,6 +191,8 @@ class RefBasedAlignScript(appionScript.AppionScript):
 				refpath = os.path.join(self.params['rundir'], "templates")
 				refq['path'] = appiondata.ApPathData(path=os.path.abspath(refpath))
 				refq['alignrun'] = alignrunq
+				if refnum  in self.resdict:
+					refq['ssnr_resolution'] = self.resdict[refnum]
 				if insert is True:
 					refq.insert()
 				if iternum == self.params['numiter']:
@@ -383,6 +387,36 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		return templatestack
 
 	#=====================
+	def calcResolution(self, partlist, stackfile, apix):
+		### group particles by refnum
+		reflistsdict = {}
+		for partdict in partlist:
+			refnum = partdict['template']
+			partnum = partdict['num']
+			if not refnum in reflistsdict:
+					reflistsdict[refnum] = []
+			reflistsdict[refnum].append(partnum)
+
+		### get resolution
+		self.resdict = {}
+		boxsizetuple = apFile.getBoxSize(stackfile)
+		boxsize = boxsizetuple[0]
+		for refnum in reflistsdict.keys():
+			partlist = reflistsdict[refnum]
+			esttime = 3e-6 * len(partlist) * boxsize**2
+			apDisplay.printMsg("Ref num %d; %d parts; est time %s"
+				%(refnum, len(partlist), apDisplay.timeString(esttime)))
+
+			frcdata = apFourier.spectralSNRStack(stackfile, apix, partlist, msg=False)
+			frcfile = "frcplot-%03d.dat"%(refnum)
+			apFourier.writeFrcPlot(frcfile, frcdata, apix, boxsize)
+			res = apFourier.getResolution(frcdata, apix, boxsize)
+
+			self.resdict[refnum] = res
+
+		return
+
+	#=====================
 	def start(self):
 		self.stack = {}
 		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
@@ -423,20 +457,25 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
-		#remove large, worthless stack
+		### remove large, worthless stack
 		spiderstack = os.path.join(self.params['rundir'], "start.spi")
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		apFile.removeFile(spiderstack, warn=True)
 
-		#convert aligned stack to imagic
+		### convert aligned stack to imagic
 		finalspistack = "aligned.spi"
-		shutil.copy(alignedstack, finalspistack)
+		shutil.move(alignedstack, finalspistack)
 		imagicstack = "aligned.hed"
 		apFile.removeStack(imagicstack)
 		emancmd = "proc2d "+finalspistack+" "+imagicstack
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
-		emancmd = "proc2d "+imagicstack+" average.mrc average"
-		apEMAN.executeEmanCmd(emancmd, verbose=True)
+
+		### average stack
+		apStack.averageStack(imagicstack)
+
+		### calculate resolution for each reference
+		apix = self.stack['apix']*self.params['bin']
+		self.calcResolution(partlist, imagicstack, apix)
 
 		if self.params['commit'] is True:
 			apDisplay.printMsg("committing results to DB")
@@ -445,6 +484,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		else:
 			apDisplay.printWarning("not committing results to DB")
 
+		### remove temporary files
 		apFile.removeFilePattern("alignments/alignedstack*.spi")
 		apFile.removeFile(finalspistack)
 
