@@ -140,8 +140,9 @@ class project {
 		global $dbemauth;
 		$q = 'select projectId as id, name  from projects ';
 		$projectdef = $this->mysql->getFieldTypes('projects');
-		if (in_array('hidden', $projectdef))
-			$q .= 'where hidden != 1';
+		if (array_key_exists('hidden', $projectdef)) {
+			$q .= 'where hidden != 1 OR hidden IS NULL ';
+		}
 		$q .= 'order by name';
 		$rprojects = $this->mysql->getSQLResult($q);
 		$projects = array();
