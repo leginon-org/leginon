@@ -138,7 +138,11 @@ class project {
 
 	function getProjects($type=""){
 		global $dbemauth;
-		$q='select projectId as id, name  from projects order by name';
+		$q = 'select projectId as id, name  from projects ';
+		$projectdef = $this->mysql->getFieldTypes('projects');
+		if (in_array('hidden', $projectdef))
+			$q .= 'where hidden != 1';
+		$q .= 'order by name';
 		$rprojects = $this->mysql->getSQLResult($q);
 		$projects = array();
 		if ($type=="all") {
