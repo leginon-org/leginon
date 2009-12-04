@@ -72,7 +72,7 @@ class viewer {
 		foreach ($projects as $project) {
 			if ($project[id]==$this->projectId) $s='selected'; else $s='';
 			$projectselector .= '<option value='.$project[id].' '.$s.' >'
-						.substr($project[name],0,32).'</option>'.$this->crlf; 
+						.substr($project[name],0,32).' ('.$project[id].')</option>'.$this->crlf; 
 		}
 		$projectselector .= '</select>'.$this->crlf;
 		if ($currentproject) {
