@@ -195,7 +195,7 @@ class subStackScript(appionScript.AppionScript):
 			apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
 			if not os.path.isfile(newstack):
 				apDisplay.printError("No stack was created")
-			apStack.commitSubStack(self.params, newname, sorted=True)
+			apStack.commitSubStack(self.params, newname, sorted=False)
 			apStack.averageStack(stack=newstack)
 			newstackid = apStack.getStackIdFromPath(newstack)
 			if self.params['meanplot'] is True:
