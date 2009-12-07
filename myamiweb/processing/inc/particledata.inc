@@ -1877,7 +1877,7 @@ class particledata {
 
 	function getPrimaryStackIds ($sessionId) {
 		$q = "SELECT "
-		  ."  r.`REF|ApStackData|stack` as stackid , "
+		  ."  DISTINCT(r.`REF|ApStackData|stack`) as stackid , "
 		  ."  st.*, "
 		  ."  s.`REF|leginondata|SessionData|session` AS sessionid "
 		  ."FROM ApRunsInStackData as r "
@@ -1888,8 +1888,10 @@ class particledata {
 		  ."WHERE "
 		  ."  s.`REF|leginondata|SessionData|session` = '$sessionId' "
 		  ." AND st.`REF|ApStackData|oldstack` IS NULL "
-		  ."ORDER BY stackid DESC";
+		  ."ORDER BY stackid DESC ";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
 
@@ -1904,7 +1906,7 @@ class particledata {
 
 	function getSubStackIds ($sessionId, $primarystackid, $showHidden=False) {
 		$q = "SELECT "
-		  ."  r.`REF|ApStackData|stack` as stackid , "
+		  ."  DISTINCT(r.`REF|ApStackData|stack`) as stackid , "
 		  ."  st.*, "
 		  ."  s.`REF|leginondata|SessionData|session` AS sessionid "
 		  ."FROM ApRunsInStackData as r "
@@ -1918,7 +1920,9 @@ class particledata {
 		if (!$showHidden)
 			$q.= " AND st.`hidden` != 1 ";
 		$q.= "ORDER BY stackid DESC";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
 

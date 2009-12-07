@@ -18,19 +18,35 @@ $particle = new particledata();
 $expId = $_GET['expId'];
 $projectId = (int) getProjectFromExpId($expId);
 
+/*********************************
+Show stack function is an recursive function to
+show stack info for the input stack and all of its child stacks
+*********************************/
 function showStack($stackdata) {
 	global $particle;
 	global $expId;
 	$stackid = $stackdata['stackid'];
+	// get all substackd including hidden ones
 	$allsubstackdatas = $particle->getSubStackIds($expId, $stackid, true);
+	// get only unhidden substackd
 	$substackdatas = $particle->getSubStackIds($expId, $stackid);
-	if ($stackdata['hidden'] != 1 || $_POST['unhideItem'.$stackid] == 'unhide')
-		if($substackdatas)
-			echo stacksummarytable($stackid, true);
-		else
-			echo stacksummarytable($stackid);
-	else
+
+	// show main stack info
+	if ($stackdata['hidden'] != 1 || $_POST['unhideItem'.$stackid] == 'unhide') {
+		// if stack is not hidden
+		if($substackdatas) {
+			//if has children, show mini version of stack info
+			echo stacksummarytable($stackid, true); 
+		} else {
+			//if has no children, show full version of stack info
+			echo stacksummarytable($stackid); 
+		}
+	} else {
+		// if stack is hidden, show tiny version of stack info
 		echo stacksummarytable($stackid, true, true);
+	}
+
+	// for each child stack recursively run this function within table
 	if ($allsubstackdatas) {
 		echo "</td></tr><tr><td valign='center'>substack<br/>&ndash;&ndash;&gt;</td><td>";
 		echo "<table class='tablebubble'><tr><td colspan='2'>\n";
