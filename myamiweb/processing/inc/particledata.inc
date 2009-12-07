@@ -1848,7 +1848,7 @@ class particledata {
 
 	function getStackIds ($sessionId, $showHidden=False, $syntheticOnly=False, $noctf=False) {
 		$q = "SELECT "
-		  ."  r.`REF|ApStackData|stack` as stackid , "
+		  ."  DISTINCT(r.`REF|ApStackData|stack`) as stackid , "
 		  ."  st.*, "
 		  ."  s.`REF|leginondata|SessionData|session` AS sessionid "
 		  ."FROM ApRunsInStackData as r "
@@ -1990,7 +1990,7 @@ class particledata {
 
 	function getTiltedStackIds ($sessionId, $showHidden=False) {
 		$q = "SELECT "
-			."  stack.`DEF_id` as stackid "
+			."  DISTINCT(stack.`DEF_id`) as stackid "
 			."FROM ApRunsInStackData as runs "
 			."LEFT JOIN ApStackRunData as stackrun ON "
 			."  (runs.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id`) "
@@ -2009,7 +2009,7 @@ class particledata {
 
 	function getNamedSubStackIds ($sessionId, $primarystackid, $name, $showHidden=False) {
 		$q = "SELECT "
-		  ."  s.`DEF_id` as stackid, "
+		  ."  DISTINCT(s.`DEF_id`) as stackid, "
 		  ."  s.* "
 		  ."FROM ApStackData as s "
 		  ."WHERE "
@@ -2025,7 +2025,7 @@ class particledata {
 
 	function getStackIdsForProject ($projectId, $showHidden=False) {
 		$q = "SELECT "
-		  ."  st.`DEF_id` as stackid "
+		  ."  DISTINCT(st.`DEF_id`) as stackid "
 		  ."FROM ApStackData as st "
 		  ."WHERE "
 		  ."  st.`project|projects|project` = '$projectId' ";
@@ -2051,7 +2051,7 @@ class particledata {
 	}
 
 	function getStackParams ($stackId) {
-		$q = "SELECT sd.`DEF_id` as `stackId`, sd.*, pd.`path`"
+		$q = "SELECT DISTINCT(sd.`DEF_id`) as `stackId`, sd.*, pd.`path`"
 			."FROM ApStackData as sd "
 			."LEFT JOIN ApPathData AS pd ON "
 			."(sd.`REF|ApPathData|path` = pd.`DEF_id`) "
@@ -2072,7 +2072,7 @@ class particledata {
 			$rstack = $this->getOriginalStackFromStackRun($stackrunId);
 			$childstackId = $rstack['stackId'];
 			//Get Parameters
-			$q = "SELECT sd.`DEF_id` as `stackId`, s.`DEF_id` as runid, s.*, p.*,sd.*,"
+			$q = "SELECT DISTINCT(sd.`DEF_id`) as `stackId`, s.`DEF_id` as runid, s.*, p.*,sd.*,"
 				."s.`REF|leginondata|SessionData|session` AS sessionid "
 				."FROM ApRunsInStackData as r "
 				."LEFT JOIN ApStackRunData as s "
@@ -2131,7 +2131,7 @@ class particledata {
 
 	function getOriginalStackFromStackRun($stackrunId) {
 	//get the original stack when a stackrun is also used in combined stacks
-		$q = "SELECT rs.`REF|ApStackData|stack` as stackId from `ApRunsInStackData` rs"
+		$q = "SELECT DISTINCT(rs.`REF|ApStackData|stack`) as stackId from `ApRunsInStackData` rs"
 			. " WHERE"
 			. " rs.`REF|ApStackRunData|stackRun`=".$stackrunId." "
 			. " AND"
@@ -2163,7 +2163,7 @@ class particledata {
 	}
 
 	function getStacksFromSelectionRun ($pickrunid) {
-		$q = "SELECT sp1.`REF|ApStackData|stack` as stackid, "
+		$q = "SELECT DISTINCT(sp1.`REF|ApStackData|stack`) as stackid, "
 		."sp1.`REF|ApStackRunData|stackRun` as stackrunid, "
 		."pr . `DEF_id` as selectionid  "
 		."FROM ( "
