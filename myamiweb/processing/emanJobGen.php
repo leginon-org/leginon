@@ -189,7 +189,7 @@ function stackModelForm($extra=False) {
 			echo "<tr><td>\n";
 			$modelid = $model['DEF_id'];
 			$symdata = $particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
-			$modelvals = "$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$symdata[symmetry]";
+			$modelvals = "$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$symdata[eman_name]";
 
 			echo "<input type='radio' NAME='model' value='$modelvals' ";
 			// check if model was selected
