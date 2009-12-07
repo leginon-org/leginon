@@ -47,6 +47,8 @@ class ChimSnapShots(object):
 		else:
 			if self.symmetry[:4] == 'icos':
 				self.snapshot_icosahedral()
+			elif self.symmetry == 'oct':
+				self.snapshot_octahedral()
 			elif self.symmetry[0] == 'd':
 				self.snapshot_dsym()
 			elif self.symmetry[:4] == 'ribo':
@@ -109,17 +111,48 @@ class ChimSnapShots(object):
 		#self.runChimCommand('scale %.3f' % self.zoom)
 
 	# -----------------------------------------------------------------------------
+	def getColors(self):
+			### set colors
+		if len(self.colors) >= 1 and ":" in self.colors[0]:
+			colorvalues = self.colors[0].split(":")
+			rgbcolor0 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
+		else:
+			rgbcolor0 = (0.8,0.2,0.2,1)
+		if len(self.colors) >= 2 and ":" in self.colors[1]:
+			colorvalues = self.colors[1].split(":")
+			rgbcolor1 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
+
+		else:
+			rgbcolor1 = (0.8,0.8,0.8,1)
+		if len(self.colors) >= 3 and ":" in self.colors[2]:
+			colorvalues = self.colors[2].split(":")
+			rgbcolor2 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
+		else:
+			rgbcolor2 = (0.2,0.2,0.8,1)
+		self.writeMessageToLog("rgbcolor0 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor0))
+		self.writeMessageToLog("rgbcolor1 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor1))
+		self.writeMessageToLog("rgbcolor2 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor2))
+		colors = [rgbcolor0, rgbcolor1, rgbcolor2]
+		return colors
+
+	# -----------------------------------------------------------------------------
 	def color_surface_radially(self, surf):
 		self.writeMessageToLog("Color radially")
 		rc = Radial_Color()
 		rc.origin = [0,0,0]
 		vertices, triangles = surf.surfacePieces[0].geometry
 		rmin, rmax = rc.value_range(vertices, vertex_xform = None)
-		data_values = (.5*rmax, .625*rmax, .75*rmax, .875*rmax, rmax)
+		rrange = rmax-rmin
 		self.writeMessageToLog("%.3f,%.3f"%(rmin,rmax))
 		#key: red,green,blue,opacity
 		#order: red, yellow, green, cyan, blue
-		colors = [(0.9,0.1,0.1,1), (0.9,0.9,0.1,1), (0.1,0.9,0.1,1), (0.1,0.9,0.9,1), (0.1,0.1,0.9,1)]
+		if self.colors is None:
+			data_values = (.5*rmax, .625*rmax, .75*rmax, .875*rmax, rmax)
+			colors = [(0.9,0.1,0.1,1), (0.9,0.9,0.1,1), (0.1,0.9,0.1,1), (0.1,0.9,0.9,1), (0.1,0.1,0.9,1)]
+		else:
+			### set colors
+			colors = self.getColors()
+			data_values = (.125*rrange+rmin, .5*rrange+rmin, .875*rrange+rmin)
 		rc.colormap = Color_Map(data_values, colors)
 		color_surface(surf, rc, caps_only = False, auto_update = False)
 
@@ -139,26 +172,7 @@ class ChimSnapShots(object):
 			colors = [(0.8,0.2,0.2,1), (0.8,0.5,0.5,1), (0.8,0.8,0.8,1), (0.5,0.5,0.8,1), (0.2,0.2,0.8,1)]
 		else:
 			### set colors
-			if len(self.colors) >= 1 and ":" in self.colors[0]:
-				colorvalues = self.colors[0].split(":")
-				rgbcolor0 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
-			else:
-				rgbcolor0 = (0.8,0.2,0.2,1)
-			if len(self.colors) >= 2 and ":" in self.colors[1]:
-				colorvalues = self.colors[1].split(":")
-				rgbcolor1 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
-
-			else:
-				rgbcolor1 = (0.8,0.8,0.8,1)
-			if len(self.colors) >= 3 and ":" in self.colors[2]:
-				colorvalues = self.colors[2].split(":")
-				rgbcolor2 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
-			else:
-				rgbcolor2 = (0.2,0.2,0.8,1)
-			self.writeMessageToLog("rgbcolor0 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor0))
-			self.writeMessageToLog("rgbcolor1 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor1))
-			self.writeMessageToLog("rgbcolor2 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor2))
-			colors = [rgbcolor0, rgbcolor1, rgbcolor2]
+			colors = self.getColors()
 			data_values = (.125*hrange+hmin, .5*hrange+hmin, .875*hrange+hmin)
 		hc.colormap = Color_Map(data_values, colors)
 		color_surface(surf, hc, caps_only = False, auto_update = False)
@@ -184,31 +198,8 @@ class ChimSnapShots(object):
 			colors = [(0.8,0.4,0.1,1), (0.8,0.8,0.1,1), (0.4,0.8,0.1,1), (0.1,0.8,0.1,1), (0.1,0.8,0.8,1)]
 		else:
 			### set colors
-			if len(self.colors) >= 1 and ":" in self.colors[0]:
-				colorvalues = self.colors[0].split(":")
-				rgbcolor0 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
-			else:
-				rgbcolor0 = (0.8,0.2,0.2,1)
-			if len(self.colors) >= 2 and ":" in self.colors[1]:
-				colorvalues = self.colors[1].split(":")
-				rgbcolor1 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
-			else:
-				#rgbcolor1 = (min(float(colorvalues[0])*2.0,1.0), 
-				#	min(float(colorvalues[1])*2.0,1.0), min(float(colorvalues[2])*2.0,1.0), 1)
-				rgbcolor1 = (0.8,0.8,0.8,1)
-				
-			if len(self.colors) >= 3 and ":" in self.colors[2]:
-				colorvalues = self.colors[2].split(":")
-				rgbcolor2 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
-			else:
-				rgbcolor2 = (0.2,0.2,0.8,1)
-			self.writeMessageToLog("rgbcolor0 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor0))
-			self.writeMessageToLog("rgbcolor1 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor1))
-			self.writeMessageToLog("rgbcolor2 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor2))
-			colors = [rgbcolor0, rgbcolor1, rgbcolor2]
+			colors = self.getColors()
 			data_values = (.125*crange+cmin, .5*crange+cmin, .875*crange+cmin)
-
-
 		cc.colormap = Color_Map(data_values, colors)
 		color_surface(surf, cc, caps_only = False, auto_update = False)
 
@@ -502,6 +493,30 @@ class ChimSnapShots(object):
 		#self.capper.unshow_caps()
 
 		self.save_image(self.volumepath+'.6.png')
+
+	# -----------------------------------------------------------------------------
+	def snapshot_octahedral(self):
+		self.writeMessageToLog("snapshot_octahedral")
+		self.hideDust(10)
+		for s in self.surfaces:
+			self.color_surface_radially(s)
+		self.save_image(self.volumepath+'.1.png')
+		self.writeMessageToLog("turn: down 2-fold axis")
+		self.runChimCommand('turn y 45.0')
+		self.save_image(self.volumepath+'.2.png')
+		self.writeMessageToLog("turn: down 3-fold axis")
+		self.runChimCommand('turn x 30.0')
+		self.save_image(self.volumepath+'.3.png')
+		self.writeMessageToLog("turn: get clipped view")
+
+		### add clipping plane
+		self.runChimCommand('mclip #0 coords screen axis z')
+		self.runChimCommand('ac cc')
+		#self.capper = surfcaps.Surface_Capper()
+		#self.capper.show_caps()
+		#self.capper.unshow_caps()
+
+		self.save_image(self.volumepath+'.4.png')
 
 	# -----------------------------------------------------------------------------
 	def snapshot_ribosome(self):
