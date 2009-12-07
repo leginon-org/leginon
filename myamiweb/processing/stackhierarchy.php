@@ -46,8 +46,8 @@ function showStack($stackdata) {
 		echo stacksummarytable($stackid, true, true);
 	}
 
-	// for each child stack recursively run this function within table
 	if ($allsubstackdatas) {
+		// for each child stack, recursively run this function within table
 		echo "</td></tr><tr><td valign='center'>substack<br/>&ndash;&ndash;&gt;</td><td>";
 		echo "<table class='tablebubble'><tr><td colspan='2'>\n";
 		foreach ($allsubstackdatas as $substackdata) {
@@ -57,18 +57,22 @@ function showStack($stackdata) {
 	}
 };
 
-//echo "Project ID: ".$projectId." <br/>\n";
+
+/*********************************
+MAIN PAGE
+*********************************/
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
+// add java code to hide/unhide stacks
 $javascript.= editTextJava();
 
+// write page header
 processing_header("Hierarchical Stack Summary","Hierarchical Stack Summary Page", $javascript, False);
+echo "<a href='stacksummary.php?expId=$expId'>[Show original stack summary page]</a><br/><br/>\n";
 
-// --- Get Stack Data --- //
-
+// get stack data
 $allstackdatas = $particle->getPrimaryStackIds($expId);
 
-echo "<a href='stacksummary.php?expId=$expId'>[Show original stack summary page]</a><br/><br/>\n";
 if ($allstackdatas) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";
 	foreach ($allstackdatas as $stackdata) {
@@ -78,11 +82,11 @@ if ($allstackdatas) {
 	}
 	echo "</form>";
 } else {
-	echo "<B><font size='+1'>Session does not contain any stacks.<br/>Create one here: <a href='runMakeStack2.php?expId=$expId'>make stack</a></font></B>\n";
+	echo "<B><font size='+1'>Session does not contain any stacks.<br/>"
+		."Create one here: <a href='runMakeStack2.php?expId=$expId'>make stack</a></font></B>\n";
 }
 
 echo "<a href='stacksummary.php?expId=$expId'>[Show original stack summary page]</a><br/><br/>\n";
-
 processing_footer();
 exit;
 
