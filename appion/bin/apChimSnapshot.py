@@ -502,9 +502,11 @@ class ChimSnapShots(object):
 			self.color_surface_radially(s)
 		self.save_image(self.volumepath+'.1.png')
 		self.writeMessageToLog("turn: down 2-fold axis")
+		# 45 degrees is 1/8 turn to get side of cube
 		self.runChimCommand('turn y 45.0')
 		self.save_image(self.volumepath+'.2.png')
 		self.writeMessageToLog("turn: down 3-fold axis")
+		# 45 degrees is 1/12 turn to get corner of cube
 		self.runChimCommand('turn x 30.0')
 		self.save_image(self.volumepath+'.3.png')
 		self.writeMessageToLog("turn: get clipped view")
