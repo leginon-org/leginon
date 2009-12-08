@@ -24,6 +24,14 @@ else {
 	createTomoAlignerForm();
 }
 
+function buildOutdir($leginonpath,$tiltseriesnumber) {
+	$outdir=$leginonpath;
+	$outdir=ereg_replace("leginon","appion",$outdir);
+	$outdir=ereg_replace("rawdata","tomo/tiltseries".$tiltseriesnumber,$outdir);
+	$outdir=$outdir.'/align';
+	return $outdir;	
+}
+
 function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $heading='Run Tilt Series Aligner') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
@@ -48,12 +56,9 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo)) {
-		$outdir=$sessioninfo['Image path'];
-		$outdir=ereg_replace("leginon","appion",$outdir);
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 	}
-
 	// Set any existing parameters in form that does not depend on other values
 	$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
 	$tiltseriesId2 = ($_POST['tiltseriesId2']) ? $_POST['tiltseriesId2'] : NULL;
@@ -73,6 +78,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	$leginondata = new leginondata();
 	if ($lastalignerId) {
 		$refinedata = $particle->getProtomoAlignmentInfo($lastalignerId);
+		$tiltseriesinfos = $particle ->getTiltSeriesInfo($refinedata[0]['tiltseries']);
 		//get image size
 		$imageinfo = $leginondata->getImageInfo($refinedata[0]['image']);
 		$imagesize = ($_POST['imagesize']) ? $_POST['imagesize'] : $imageinfo['dimx'];
@@ -166,9 +172,9 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		}
 		$imageinfo = $leginondata->getImageInfo($tiltseriesinfos[0]['imageid']);
 		$imagesize = ($_POST['imagesize']) ? $_POST['imagesize'] : $imageinfo['dimx'];
-		$outdir=ereg_replace("rawdata","tomo/tiltseries".$tiltseriesinfos[0]['number'],$outdir);
-		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
+	$outdir=buildOutdir($sessioninfo['Image path'],$tiltseriesinfos[0]['number']);
+	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	echo "<input type='hidden' name='imagesize' value='$imagesize'>\n";
 	echo "</td></table>";
 	echo "<p>";

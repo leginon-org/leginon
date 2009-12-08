@@ -320,6 +320,7 @@ class particledata {
 			." arun.`name` as runname, "
 			." arun.`bin` as bin, "
 			." path.`path`, "
+			." tilts.`REF|leginondata|TiltSeriesData|tiltseries` as `tiltseries`, "
 			." r.* "
 			."FROM `ApProtomoAlignmentData` a "
 			."LEFT JOIN `ApProtomoModelData` m "
@@ -330,9 +331,12 @@ class particledata {
 			."ON ar.`REF|ApProtomoRefinementParamsData|refine cycle` = r.`DEF_id` "
 			."LEFT JOIN `ApTomoAlignmentRunData` arun "
 			."ON ar.`REF|ApTomoAlignmentRunData|alignrun` = arun.`DEF_id` "
+			."LEFT JOIN `ApTiltsInAlignRunData` tilts "
+			."ON tilts.`REF|ApTomoAlignmentRunData|alignrun` = arun.`DEF_id` "
 			."LEFT JOIN `ApPathData` path "
 			."ON arun.`REF|ApPathData|path` = path.`DEF_id` "
-			."WHERE ar.`DEF_id`=".$alignerid." ";
+			."WHERE ar.`DEF_id`=".$alignerid." "
+			."AND tilts.`primary` = 1 ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
