@@ -3454,7 +3454,7 @@ class particledata {
 	}
 
 	function getReconIdsFromSession ($sessionId, $showHidden=False) {
-		$q = "SELECT refrun.*, path.path AS path  "
+		$q = "SELECT DISTINCT(refrun.`DEF_id`) AS refid, refrun.*, path.path AS path  "
 		  ." FROM `ApRefinementRunData` AS refrun "
 		  ."LEFT JOIN ApRunsInStackData AS runs "
 		  ." ON refrun.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
