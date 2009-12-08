@@ -1,9 +1,10 @@
 <?
 
-function countRows($database){
-	$link = mysql_connect("localhost","usr_object");
-	mysql_select_db($database,$link);
+#require_once "inc/mysql.inc";
+require_once "config.php";
 
+function countRows($database,$link){
+	mysql_select_db($database,$link);
 	$tables = Array();
 	$r = mysql_query("show tables");
 	while($row = @mysql_fetch_assoc($r)) {
@@ -11,16 +12,15 @@ function countRows($database){
 	}
 	$totrows=0;
 	foreach ($tables as $table) {
-		$result = mysql_query("SELECT * FROM $table", $link);
-		$num_rows = mysql_num_rows($result);
-		#echo "$num_rows Rows in $table<br >\n";
+		$r = mysql_query("SELECT * FROM $table", $link);
+		$num_rows = mysql_num_rows($r);
 		$totrows=$totrows+$num_rows;
 	}
 	return $totrows;
 }
 
-$link = mysql_connect("localhost","usr_object");
 $apdbs = Array();
+$link = @mysql_connect($DB_HOST,$DB_USER,$DB_PASS);
 $r = mysql_query("show databases");
 while ($row = @mysql_fetch_assoc($r)) {
 	$db = $row['Database'];
@@ -28,14 +28,13 @@ while ($row = @mysql_fetch_assoc($r)) {
 		$apdbs[]=$db;
 	}
 }
-
-$rows = countRows('dbemdata');
+$rows = countRows('dbemdata',$link);
 echo "$rows rows in dbemdata<br>";
 echo "<b>Total in leginon:</b> $rows<br>\n";
 echo "<br>\n";
 $aprows = 0;
 foreach ($apdbs as $ap) {
-	$rows = countRows($ap);
+	$rows = countRows($ap,$link);
 	echo "$rows rows in $ap<br>";
 	$aprows=$aprows+$rows;
 }
