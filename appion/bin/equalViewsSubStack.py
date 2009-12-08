@@ -24,7 +24,12 @@ class EqualViews(appionScript.AppionScript):
 	#===================
 	def checkConflicts(self):
 		if self.params['reconid'] is None:
-			apDisplay.printError("Please provide recon id, e.g. --reconid=12")
+			apDisplay.printError("Please provide a recon id, e.g. --reconid=12")
+		if self.params['runname'] == self.timestamp:
+			apDisplay.printError("Please provide runname, e.g. --runname=equalstack1")
+		if self.params['description'] is None:
+			apDisplay.printError("Please provide a description, e.g. --description='awesome'")
+
 		self.reconrundata = appiondata.ApRefinementRunData.direct_query(self.params['reconid'])
 		if self.params['iternums'] is None:
 			apDisplay.printError("Please provide a list of iterations to use, e.g. --iternums=2,3,4")
