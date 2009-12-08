@@ -30,6 +30,7 @@ while ($row = @mysql_fetch_assoc($r)) {
 }
 $rows = countRows('dbemdata',$link);
 echo "$rows rows in dbemdata<br>";
+$rows = number_format($rows);
 echo "<b>Total in leginon:</b> $rows<br>\n";
 echo "<br>\n";
 $aprows = 0;
@@ -38,5 +39,6 @@ foreach ($apdbs as $ap) {
 	echo "$rows rows in $ap<br>";
 	$aprows=$aprows+$rows;
 }
+$aprows = number_format($aprows);
 echo "<b>Total in appion:</b> $aprows<br>\n";
 ?>
