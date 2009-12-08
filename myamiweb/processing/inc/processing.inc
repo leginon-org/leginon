@@ -901,7 +901,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 			$percent = (float) preg_replace("/%/", "", $fsbit);
 	}
 	if ($percent && $percent >= 98)
-		return "Filesystem is $percent% full, please change output directory";
+		return "Filesystem is $percent% full, please change output directory ".substr($outdir,0,15);
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -944,6 +944,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	$cmd = "mkdir -p $procdir;";
 	//$temp = exec_over_ssh($host, $user, $pass, $cmd, True);
 	$temp = exec_over_ssh($_SERVER['SERVER_ADDR'], $user, $pass, $cmd, True);
+	$temp = exec_over_ssh($host, $user, $pass, $cmd, True);
 	//mkdir($procdir, 0777, true); //gives permissions to apache :(
 	$checkcount = 0;
 	while (!file_exists($procdir) && $checkcount < 5) {
