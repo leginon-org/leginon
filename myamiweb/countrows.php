@@ -12,9 +12,9 @@ function countRows($database,$link){
 	}
 	$totrows=0;
 	foreach ($tables as $table) {
-		$r = mysql_query("SELECT * FROM $table", $link);
-		$num_rows = mysql_num_rows($r);
-		$totrows=$totrows+$num_rows;
+		$r = mysql_query("SELECT count(*) as num FROM $table", $link);
+		$num_rows = @mysql_fetch_assoc($r);
+		$totrows=$totrows+$num_rows['num'];
 	}
 	return $totrows;
 }
