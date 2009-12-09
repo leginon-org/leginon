@@ -81,7 +81,7 @@ class tomoMaker(appionScript.AppionScript):
 
 	def setRunDir(self):
 		tomodata = apTomo.getFullTomoData(self.params['fulltomoId'])
-		path=tomodata['path']['path']
+		path=tomodata['reconrun']['path']['path']
 		self.params['fulltomodir'] = path
 		self.params['rundir'] = os.path.join(path,self.params['runname'])
 		self.params['subrunname'] = self.params['runname']
@@ -101,8 +101,8 @@ class tomoMaker(appionScript.AppionScript):
 		if (self.params['selexonId'] is not None or self.params['stackId']) and fulltomodata is not None:
 			sessiondata = fulltomodata['session']
 			seriesname = fulltomodata['name'].rstrip('_full')
-			fullbin = fulltomodata['alignrun']['bin']
-			fulltomopath = os.path.join(fulltomodata['path']['path'], seriesname+"_full.rec")
+			fullbin = fulltomodata['aligner']['alignrun']['bin']
+			fulltomopath = os.path.join(fulltomodata['reconrun']['path']['path'], seriesname+"_full.rec")
 			fulltomoheader = mrc.readHeaderFromFile(fulltomopath)
 			fulltomoshape = fulltomoheader['shape']
 			if self.params['sizez'] > fulltomoshape[1]*fullbin :
