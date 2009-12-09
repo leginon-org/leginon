@@ -3807,6 +3807,27 @@ class particledata {
 		return $r[0];
 	}
 	
+	function getAlignedStackFromCluster ($clusterStackId) {
+		$q = "SELECT aasd.*, path.path "
+			. " FROM `ApClusteringParticlesData` acpd "
+			. " LEFT JOIN ApAlignParticlesData aapd ON ( acpd.`REF|ApAlignParticlesData|alignparticle` = aapd.`DEF_id` ) "
+			. " LEFT JOIN ApAlignStackData aasd ON ( aapd.`REF|ApAlignStackData|alignstack` = aasd.`DEF_id`) "
+			. " LEFT JOIN `ApPathData` path ON ( aasd.`REF|ApPathData|path` = path.`DEF_id`) "
+			. " WHERE acpd.`REF|ApClusteringStackData|clusterstack` = '$clusterStackId' ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getAlignedStackFromAlign ($alignStackId) {
+		$q = "SELECT aasd.*, path.path "
+			. " FROM ApAlignParticlesData aapd "
+			. " LEFT JOIN ApAlignStackData aasd ON ( aapd.`REF|ApAlignStackData|alignstack` = aasd.`DEF_id`) "
+			. " LEFT JOIN `ApPathData` path ON ( aasd.`REF|ApPathData|path` = path.`DEF_id`) "
+			. " WHERE aapd.`REF|ApAlignStackData|alignstack` = '$alignStackId' ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+	
 	function getSubsetParticlesFromCluster ($clusterStackId, $refnums, $count=False) {
 		$q = "SELECT particleNumber as p ";
 		if ($count) $q = "SELECT count(particleNumber) as p ";	
