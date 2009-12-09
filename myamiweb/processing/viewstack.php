@@ -23,6 +23,7 @@ $substack=$_GET['substack'];
 $refinement=$_GET['refinement'];
 $refinetype=$_GET['refinetype'];
 $junksort=$_GET['junksort'];
+$aligned=$_GET['aligned'];
 $subprtls=False;
 $substacktype = (array_key_exists('comm_param',$_POST)) ? $_POST['comm_param'] : $_GET['subtype'];
 $iter1= (array_key_exists('iter1',$_POST)) ? $_POST['iter1'] : $_GET['itr1'];
@@ -77,22 +78,45 @@ if ($refinement) {
   	}
 }
 
+
 if ($subStackClassesString != "") {
-	if ($clusterIdForSubstack) {
-		$stack=$particle->getRawStackFromCluster($clusterIdForSubstack);
-	} elseif ($alignIdForSubstack) {
-		$stack=$particle->getRawStackFromAlign($alignIdForSubstack);
+	if ($aligned == "1") {
+		if ($clusterIdForSubstack) {
+			$stack=$particle->getAlignedStackFromCluster($clusterIdForSubstack);
+			$subprtls=$particle->getSubsetParticlesFromCluster($clusterIdForSubstack, $subStackClasses);
+			for ($i=0;$i<count($subprtls);$i++) {
+				$subprtls[$i]['p'] = intval($subprtls[$i]['p'])-1;
+			}
+		} elseif ($alignIdForSubstack) {
+			$stack=$particle->getAlignedStackFromAlign($alignIdForSubstack);
+			$subprtls=$particle->getSubsetParticlesFromAlign($alignIdForSubstack, $subStackClasses);
+			for ($i=0;$i<count($subprtls);$i++) {
+				$subprtls[$i]['p'] = intval($subprtls[$i]['p'])-1;
+			}
+		}
+		
+		$filename=$stack['path'].'/'.$stack['imagicfile'];
+	} else {
+		
+		echo "yahoo";
+	
+		if ($clusterIdForSubstack) {
+			$stack=$particle->getRawStackFromCluster($clusterIdForSubstack);
+			$subprtls=$particle->getSubsetParticlesFromCluster($clusterIdForSubstack, $subStackClasses);
+			for ($i=0;$i<count($subprtls);$i++) {
+				$subprtls[$i]['p'] = intval($subprtls[$i]['p'])-1;
+			}
+		} elseif ($alignIdForSubstack) {
+			$stack=$particle->getRawStackFromAlign($alignIdForSubstack);
+			$subprtls=$particle->getSubsetParticlesFromAlign($alignIdForSubstack, $subStackClasses);
+			for ($i=0;$i<count($subprtls);$i++) {
+				$subprtls[$i]['p'] = intval($subprtls[$i]['p'])-1;
+			}			
+		}
+	
+		$filename=$stack['path'].'/'.$stack['name'];
 	}
 	
-	$filename=$stack['path'].'/'.$stack['name'];
-	if ($clusterIdForSubstack) {
-		$subprtls=$particle->getSubsetParticlesFromCluster($clusterIdForSubstack, $subStackClasses);
-	} elseif ($alignIdForSubstack) {
-		$subprtls=$particle->getSubsetParticlesFromAlign($alignIdForSubstack, $subStackClasses);
-		for ($i=0;$i<count($subprtls);$i++) {
-			$subprtls[$i]['p'] = intval($subprtls[$i]['p'])-1;
-		}
-	}
 	$numbad = count($subprtls);
 }
 
@@ -297,6 +321,15 @@ function viewSubstack() {
 	}
 }
 
+function viewAlignedSubstack() {
+	var index = $('selectedIndex').value
+	if (clusterId!="") {
+		window.open("viewstack.php?expId="+expId+"&clusterIdForSubstack="+clusterId+"&include="+index+"&aligned=1"+"",'height=250,width=400');
+	} else if (alignId!="") {
+		window.open("viewstack.php?expId="+expId+"&alignIdForSubstack="+alignId+"&include="+index+"&aligned=1"+"",'height=250,width=400');
+	}
+}
+
 </script>
 </head>
 <body onload='load()'>
@@ -333,6 +366,7 @@ scale bar:<input type="checkbox" id="scalebar" >
 $includebuttons = "";
 if ($clusterId || $alignId) {
 	$includebuttons .= "<input type='button' value='View Raw Particles' onClick='viewSubstack()'>\n";
+	$includebuttons .= "<input type='button' value='View Aligned Particles' onClick='viewAlignedSubstack()'>\n";
 	$includebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
 }
 if (($clusterId || $alignId) && $maxangle > 5) {
