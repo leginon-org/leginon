@@ -45,6 +45,17 @@ def inverse_real_fft2d(image, *args, **kwargs):
 	return fftpack.ifft2(image, *args, **kwargs).real
 
 #===========
+def real_fft3d(volume, *args, **kwargs):
+	padshape = numpy.asarray(volume.shape)*1
+	padvolume = apImage.frame_constant(volume, padshape, volume.mean())
+	fft = fftpack.fftn(padvolume, *args, **kwargs)
+	return fft
+
+#===========
+def inverse_real_fft3d(volume, *args, **kwargs):
+	return fftpack.ifftn(volume, *args, **kwargs).real
+
+#===========
 def normImage(image):
 	return (image - image.mean())/image.std()
 
