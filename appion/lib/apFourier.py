@@ -454,7 +454,7 @@ class fourierSqDiff(apImagicFile.processStack):
 	#===============
 	def preLoop(self):
 		shape = (self.boxsize, self.boxsize)
-		self.ringdict = getLinearIndices(shape)
+		self.ringdict = getLinearIndices2d(shape)
 		self.numrings = len(self.ringdict.keys())+1
 		self.denomimg = numpy.zeros(shape, dtype=numpy.float64)
 		#self.denomring = numpy.zeros((self.numrings), dtype=numpy.float64)
