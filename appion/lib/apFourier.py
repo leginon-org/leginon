@@ -82,7 +82,7 @@ def fourierRingCorrelation(imgarray1, imgarray2, apix=1.0):
 	linear[0] = 1.0
 
 	### figure out which pixels go with which ring
-	ringdict = getLinearIndices(fftshape)
+	ringdict = getLinearIndices2d(fftshape)
 
 	### for each ring calculate the FRC
 	keys = ringdict.keys()
@@ -176,7 +176,7 @@ def spectralSNR(partarray, apix=1.0):
 	linear[0] = 1.0
 
 	### figure out which pixels go with which ring
-	ringdict = getLinearIndices(fftshape)
+	ringdict = getLinearIndices2d(fftshape)
 
 	### for each ring calculate the FRC
 	keys = ringdict.keys()
@@ -217,13 +217,14 @@ def spectralSNR(partarray, apix=1.0):
 #===========
 def mini_ssnr1fft(fftlist, indextuple):
 	"""
-	this function works and is fast
+	this function works and is fast, calculates spectral signal to noise ratio for each
+	fourier pixel in the fftlist. index tuple refers to the dimensions of the image, e.g. (i, j) 
+	for 2D, (i, j, k) for 3D
 	"""
-	i,j = indextuple
 	fsum = 0.0
 	K = float(len(fftlist))
 	for fftim in fftlist:
-		F = fftim[i,j]
+		F = fftim[indextuple]
 		fsum += F
 	fmean = fsum/K
 	#if i ==10 and j==10:
@@ -234,7 +235,7 @@ def mini_ssnr1fft(fftlist, indextuple):
 	### this next part cannot be done as a running average
 	### because F - fmean is a complex subtraction
 	for fftim in fftlist:
-		F = fftim[i,j]
+		F = fftim[indextuple]
 		denom += abs(F - fmean)**2
 		#if i ==10 and j==10:
 		#	print "denom10,10=", abs(F - fmean)**2
@@ -293,7 +294,7 @@ def getResolution(fscdata, apix=1.0, boxsize=None, filtradius=3):
 	return 0.0
 
 #===========
-def getLinearIndices(fftshape):
+def getLinearIndices2d(fftshape):
 	"""
 	for a given size categorize pixels into ring shells
 	i.e. figure out which pixels go with which ring
@@ -314,8 +315,34 @@ def getLinearIndices(fftshape):
 	return ringdict
 
 #===========
+def getLinearIndices3d(fftshape):
+	"""
+	for a given size categorize voxels into shells
+	i.e. figure out which voxels go with which shell
+	"""
+	length = int(max(fftshape)/2.0)
+	shelldict = {}
+	for i in range(length):
+		for j in range(length):
+			for k in range(length):
+				l, m = wrap_coord((i,j,k), fftshape)
+				r, a = cartToPolar(l, m)
+				index = int(r*1.0)
+				if index < 1 or index >= length:
+					continue
+				if not index in shelldict:
+					shelldict[index] = []
+				shelldict[index].append((i,j,k))
+	apDisplay.printMsg("Number of shells: "+str(len(shelldict)))
+	return shelldict
+
+#===========
 def wrap_coord(coord, shape):
-	wraplimit = (shape[0]/2, shape[1]/2)
+	if len(coord) == 2:
+		wraplimit = (shape[0]/2, shape[1]/2)
+	elif len(coord) == 3:
+		wraplimit = (shape[0]/2, shape[1]/2, shape[2]/2)
+		
 	# if coord is past halfway, shift is negative, wrap
 	if coord[0] < wraplimit[0]:
 		wrapped0 = coord[0]
@@ -325,6 +352,11 @@ def wrap_coord(coord, shape):
 		wrapped1 = coord[1]
 	else:
 		wrapped1 = coord[1] - shape[1]
+	if len(coord) == 3 and coord[2] < wraplimit[2]:
+		wrapped2 = coord[2]
+	else:
+		wrapped2 = coord[2] - shape[2]
+
 	return (wrapped0, wrapped1)
 
 #===========
@@ -387,7 +419,7 @@ class fourierSum(apImagicFile.processStack):
 	#===============
 	def preLoop(self):
 		shape = (self.boxsize, self.boxsize)
-		self.ringdict = getLinearIndices(shape)
+		self.ringdict = getLinearIndices2d(shape)
 		self.numrings = len(self.ringdict.keys())+1
 		self.fsumimg = numpy.zeros(shape, dtype=numpy.complex128)
 		self.keys = self.ringdict.keys()
