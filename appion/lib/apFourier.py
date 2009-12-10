@@ -303,9 +303,9 @@ def getLinearIndices2d(fftshape):
 	ringdict = {}
 	for i in range(length):
 		for j in range(length):
-			k, m = wrap_coord((i,j), fftshape)
-			r, a = cartToPolar(k, m)
-			index = int(r*1.0)
+			coord = wrap_coord((i,j), fftshape)
+			rad = radialDistance(coord)
+			index = int(rad*1.0)
 			if index < 1 or index >= length:
 				continue
 			if not index in ringdict:
@@ -325,8 +325,8 @@ def getLinearIndices3d(fftshape):
 	for i in range(length):
 		for j in range(length):
 			for k in range(length):
-				l, m = wrap_coord((i,j,k), fftshape)
-				r, a = cartToPolar(l, m)
+				coord = wrap_coord((i,j,k), fftshape)
+				rad = radialDistance(coord)
 				index = int(r*1.0)
 				if index < 1 or index >= length:
 					continue
@@ -338,26 +338,20 @@ def getLinearIndices3d(fftshape):
 
 #===========
 def wrap_coord(coord, shape):
-	if len(coord) == 2:
-		wraplimit = (shape[0]/2, shape[1]/2)
-	elif len(coord) == 3:
-		wraplimit = (shape[0]/2, shape[1]/2, shape[2]/2)
-		
-	# if coord is past halfway, shift is negative, wrap
-	if coord[0] < wraplimit[0]:
-		wrapped0 = coord[0]
-	else:
-		wrapped0 = coord[0] - shape[0]
-	if coord[1] < wraplimit[1]:
-		wrapped1 = coord[1]
-	else:
-		wrapped1 = coord[1] - shape[1]
-	if len(coord) == 3 and coord[2] < wraplimit[2]:
-		wrapped2 = coord[2]
-	else:
-		wrapped2 = coord[2] - shape[2]
-
-	return (wrapped0, wrapped1)
+	"""
+	Function to wrap coordinates, i.e.,
+	if coord is past halfway, shift is negative, wrap
+	modified to handle N-dimensional arrays
+	"""
+	if len(coord) != len(shape):
+		apDisplay.printError("Dimensions are not equalivalent in wrap_coord")
+	wraplist = []
+	for i in range(len(coord)):
+		if coord[i] < shape[i]/2:
+			wraplist.append(coord[i])
+		else:
+			wraplist.append(coord[i] - shape[i])
+	return tuple(wraplist)
 
 #===========
 def cartToPolar(x, y):
@@ -367,7 +361,11 @@ def cartToPolar(x, y):
 	th = math.atan2(y1,x1)
 	return r, th*180.0/math.pi
 
-
+#===========
+def radialDistance(coord):
+	array = numpy.asarray(coord, dtype=numpy.float32)
+	rad = math.sqrt((array**2).sum())
+	return rad
 
 #===========
 def printImageInfo(image):
