@@ -472,7 +472,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		xmippopts = ( " "
 			+" -i "+os.path.join(self.params['rundir'], "part"+self.params['timestamp']+".sel")
 			+" -nref 1 "
-			+" -iter 20 "
+			+" -iter 10 "
 			+" -o "+os.path.join(self.params['rundir'], "ref"+self.params['timestamp'])
 			+" -psi_step 1 "
 			#+" -fast -C 1e-18 "
