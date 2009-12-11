@@ -187,6 +187,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$bestbin = floor($boxsz/100)+1;
 	$lastring = ($_POST['lastring']) ? $_POST['lastring'] : floor($boxsz/3.0/$bestbin);
 	$firstring = ($_POST['firstring']) ? $_POST['firstring'] : '4';
+	$csym = ($_POST['csym']) ? $_POST['csym'] : '';
 	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
 
 	$templateList=($_POST['templateList']) ? $_POST['templateList']: '';
@@ -304,6 +305,10 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		<INPUT TYPE='text' NAME='bin' SIZE='5' VALUE='$bin'>
 		Particle Binning<br>";
 	echo"
+		<INPUT TYPE='text' NAME='csym' SIZE='5' VALUE='$csym'>
+		C Symmetry<br>";
+
+	echo"
 		</TD>
 	</tr>
 	<TR>
@@ -366,6 +371,7 @@ function runAlignment() {
 	$lastring=$_POST['lastring'];
 	$firstring=$_POST['firstring'];
 	$bin=$_POST['bin'];
+	$csym=$_POST['csym'];
 	$lowpass=$_POST['lowpass'];
 	$highpass=$_POST['highpass'];
 	$xysearch=$_POST['xysearch'];
@@ -420,6 +426,7 @@ function runAlignment() {
 	$command.="--num-iter=$iters ";
 	$command.="--num-part=$numpart ";
 	$command.="--bin=$bin ";
+	$command.="--csym=$csym ";
 	if ($inverttempl) $command.="--invert-templates ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
