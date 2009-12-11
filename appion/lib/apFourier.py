@@ -396,7 +396,7 @@ def getLinearIndices3d(fftshape):
 			for k in range(length):
 				coord = wrap_coord((i,j,k), fftshape)
 				rad = radialDistance(coord)
-				index = int(r*1.0)
+				index = int(rad*1.0)
 				if index < 1 or index >= length:
 					continue
 				if not index in shelldict:
