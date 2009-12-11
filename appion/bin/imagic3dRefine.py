@@ -124,7 +124,9 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		self.parser.add_option("--object_size", dest="object_size", type="float", default=0.8,
 			help="object size as fraction of image size", metavar="float")
 		self.parser.add_option("--3d_lpfilt", dest="threedfilt", type="int",
-			help="low-pass filter the reconstructed 3-D model to specified resolution (Angstroms) prior to masking", metavar="INT")		
+			help="low-pass filter the reconstructed 3-D model to specified resolution (Angstroms) prior to masking", metavar="INT")
+		self.parser.add_option("--automask", dest="automask", default=False, 
+			action="store_true", help="use default parameters for 3d automasking of the volume after filtering")				
 		self.parser.add_option("--amask_dim", dest="amask_dim", type="float", default=0.04,
 			help="automasking parameter determined by smallest object size", metavar="float")
 		self.parser.add_option("--amask_lp", dest="amask_lp", type="float", default=0.15,
@@ -217,8 +219,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("-99999\n")
 		f.write("PROJECTIONS\n")
 		f.write("YES\n")
-#		f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
-		f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
+		if self.params['automask'] is True:
+			f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
+		else:
+			f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
 		f.write("ASYM_TRIANGLE\n")
 		f.write(symmetry+"\n")
 		f.write("EQUIDIST\n")
@@ -229,14 +233,18 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		if self.params['mirror_refs'] is True:
 			### mirror projections for MRA
 			f.write("/usr/local/IMAGIC/stand/arithm.e MODE MIRROR <<EOF >> startFiles.log\n")
-#			f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
-			f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
+			if self.params['automask'] is True:
+				f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
+			else:
+				f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
 			f.write("mirror\n")
 			f.write("EOF\n")
 			f.write("/usr/local/IMAGIC/stand/append.e <<EOF >> startFiles.log\n")
 			f.write("mirror\n")
-#			f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
-			f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
+			if self.params['automask'] is True:
+				f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
+			else:
+				f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
 			f.write("EOF\n")
 			f.write("/usr/local/IMAGIC/stand/imdel.e <<EOF >> startFiles.log\n")
 			f.write("mirror\n")
@@ -248,8 +256,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("-99999\n")
 		f.write("PROJECTIONS\n")
 		f.write("YES\n")
-#		f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
-		f.write("3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
+		if self.params['automask'] is True:	
+			f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
+		else:
+			f.write("3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
 		f.write("ASYM_TRIANGLE\n")
 		f.write(symmetry+"\n")
 		f.write("EQUIDIST\n")
@@ -291,14 +301,18 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("echo 'start' > imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		if self.params['itn'] > 1:
 			f.write("/usr/local/IMAGIC/threed/forward.e SURF FORWARD <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-#			f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned\n")
-			f.write("3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned\n")
+			if self.params['automask'] is True:
+				f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned\n")
+			else:
+				f.write("3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned\n")
 			f.write("-99999\n")
 			f.write("PROJECTIONS\n")
 			f.write("YES\n")
 #			f.write("WIDENING\n")
-#			f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
-			f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
+			if self.params['automask'] is True:
+				f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
+			else:
+				f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
 			f.write("ASYM_TRIANGLE\n")
 			f.write(symmetry+"\n")
 			f.write("EQUIDIST\n")
@@ -309,28 +323,36 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			if self.params['mirror_refs'] is True:
 				### mirror projections for MRA
 				f.write("/usr/local/IMAGIC/stand/arithm.e MODE MIRROR <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-#				f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
-				f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
+				if self.params['automask'] is True:
+					f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
+				else:
+					f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
 				f.write("mirror\n")
 				f.write("EOF\n")
 				f.write("/usr/local/IMAGIC/stand/append.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				f.write("mirror\n")
-#				f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
-				f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
+				if self.params['automask'] is True:
+					f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
+				else:
+					f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
 				f.write("EOF\n")
 				f.write("/usr/local/IMAGIC/stand/imdel.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				f.write("mirror\n")
 				f.write("EOF\n")
 
 			f.write("/usr/local/IMAGIC/threed/forward.e SURF FORWARD <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-#			f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned\n")
-			f.write("3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned\n")
+			if self.params['automask'] is True:
+				f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned\n")
+			else:
+				f.write("3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned\n")
 			f.write("-99999\n")
 			f.write("PROJECTIONS\n")
 			f.write("YES\n")
 #			f.write("WIDENING\n")
-#			f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
-			f.write("3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
+			if self.params['automask'] is True:
+				f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
+			else:
+				f.write("3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
 			f.write("ASYM_TRIANGLE\n")
 			f.write(symmetry+"\n")
 			f.write("EQUIDIST\n")
@@ -474,8 +496,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 				f.write("mra"+str(self.params['itn']-1)+"\n")
 				f.write("mra"+str(self.params['itn'])+"\n")
 				f.write("start\n")
-	#		f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
-			f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
+			if self.params['automask'] is True:
+				f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
+			else:
+				f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
 			f.write("no\n")
 			f.write("yes\n")
 			f.write(str(self.params['max_shift_orig'])+"\n")
@@ -587,10 +611,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("YES\n")
 		f.write("0.9\n")
 		f.write("IMAGES\n")
-#		f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
-#		f.write("arsino_masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
-		f.write("3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
-		f.write("arsino_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
+		if self.params['automask'] is True:	
+			f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
+			f.write("arsino_masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
+		else:
+			f.write("3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
+			f.write("arsino_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned_forward\n")
 		f.write("my_sine\n")
 		f.write("YES\n")
 		f.write(str(self.params['euler_ang_inc'])+"\n")
@@ -685,29 +711,32 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
 			f.write("EOF\n")
 
-#		### automask the 3d, automasking is based on modulation analysis
-#		f.write("/usr/local/IMAGIC/threed/automask3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-#		f.write("DO_IT_ALL\n")
-#		f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
-#		f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned_modvar\n")
-#		f.write("YES\n")
-#		f.write(str(self.params['amask_dim'])+","+str(self.params['amask_lp'])+"\n")
-#		f.write(str(self.params['amask_sharp'])+"\n")
-#		f.write("AUTOMATIC\n")
-#		f.write(str(self.params['amask_thresh'])+"\n")
-#		f.write("mask_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
-#		f.write("masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
-#		f.write("EOF\n")
+		if self.params['automask'] is True:
+			### automask the 3d, automasking is based on modulation analysis
+			f.write("/usr/local/IMAGIC/threed/automask3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write("DO_IT_ALL\n")
+			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
+			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned_modvar\n")
+			f.write("YES\n")
+			f.write(str(self.params['amask_dim'])+","+str(self.params['amask_lp'])+"\n")
+			f.write(str(self.params['amask_sharp'])+"\n")
+			f.write("AUTOMATIC\n")
+			f.write(str(self.params['amask_thresh'])+"\n")
+			f.write("mask_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
+			f.write("masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
+			f.write("EOF\n")
 
 		### use EM2EM to convert 3d from IMAGIC to MRC format
 		f.write("/usr/local/IMAGIC/stand/em2em.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("IMAGIC\n")
 		f.write("MRC\n")
 		f.write("3D\n")
-#		f.write("masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
-#		f.write("masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc\n")
-		f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
-		f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc\n")
+		if self.params['automask'] is True:
+			f.write("masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
+			f.write("masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc\n")
+		else:
+			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
+			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc\n")
 		f.write("YES\n")
 		f.write("EOF\n")
 
@@ -955,8 +984,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		itnq = appiondata.ApImagic3dRefineIterationData()
 		itnq['refinement_run'] = self.refinedata
 		itnq['iteration'] = self.params['itn']
-#		itnq['name'] = "masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
-		itnq['name'] = "3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
+		if self.params['automask'] is True:
+			itnq['name'] = "masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
+		else:
+			itnq['name'] = "3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
 		itnq['filt_stack'] = self.params['filt_stack']
 		itnq['hp_filt'] = self.params['hp_filt']
 		itnq['lp_filt'] = self.params['lp_filt']
@@ -1080,10 +1111,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3dRefine), "cyan")
 
 		### define resulting 3-D densities
-#		mrcname = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
-#		mrcnamerot = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
-		mrcname = self.params['rundir']+"/3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
-		mrcnamerot = self.params['rundir']+"/3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
+		if self.params['automask'] is True:
+			mrcname = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
+			mrcnamerot = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
+		else:
+			mrcname = self.params['rundir']+"/3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
+			mrcnamerot = self.params['rundir']+"/3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
 
 		### use EMAN to normalize density & rotate model azimuthaly by 90 degrees
 		apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
