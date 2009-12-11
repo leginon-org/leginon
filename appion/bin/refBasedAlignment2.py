@@ -51,7 +51,8 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			action="store_true", help="Invert the density of all the templates")
 		self.parser.add_option("-i", "--num-iter", dest="numiter", type="int", default=1,
 			help="Number of iterations", metavar="#")
-
+		self.parser.add_option("--csym", dest="csym", type="int",
+			help="Apply C symmetry to references", metavar="#")
 
 	#=====================
 	def checkConflicts(self):
@@ -358,6 +359,8 @@ class RefBasedAlignScript(appionScript.AppionScript):
 				emancmd  = ("proc2d "+alignedstack+" "+mrcfile
 					+" list="+keeplist
 					+" edgenorm average norm=0,1 ")
+				if self.params['csym'] is not None:
+					emancmd += "sym=c%d"%(self.params['csym'])
 				apEMAN.executeEmanCmd(emancmd, showcmd=False)
 			else:
 				apDisplay.printWarning("No particles aligned to template "+str(templatenum))
