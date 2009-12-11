@@ -143,7 +143,8 @@ def spectralSNRStack(stackfile, apix=1.0, partlist=None, msg=False):
 #===========
 def spectralSNR(partarray, apix=1.0):
 	"""
-	Compute the Spectral Signal-to-Noise Ratio (SSNR) of a given series of images. 
+	Compute the Spectral Signal-to-Noise Ratio (SSNR) of a given series of images, 
+	taken up as a 3-D array (numimages x box x box). 
 	"""
 	t0 = time.time()
 	### initialization
@@ -206,6 +207,74 @@ def spectralSNR(partarray, apix=1.0):
 		#print "%02d %.3f %.3f (%.3f / %.3f)"%(key, ssnr, frc, numer/K, denom/K)
 		#print key, frc
 		linear[key] = frc
+	sys.stderr.write("\n")
+
+	### output
+	writeFrcPlot("ssnr.dat", linear, apix)
+	res = getResolution(linear, apix, boxsize=linear.shape[0]*2)
+	apDisplay.printMsg("Finished SSNR of res %.3f Angstroms in %s"%(res, apDisplay.timeString(time.time()-t0)))
+	return res
+	
+#===========
+def spectralSNR3d(volarray, apix=1.0):
+	"""
+	Compute the Spectral Signal-to-Noise Ratio (SSNR) of a given series of volumes, 
+	taken up as a 4-D array (numvolumes x box x box x box). 
+	"""
+	t0 = time.time()
+	### initialization
+	vol0 = volarray[0]
+	if isinstance(volarray, list):
+		numvol = len(volarray)
+	else:
+		numvol = volarray.shape[0]
+	if numvol < 2:
+		apDisplay.printWarning("Cannot calculate the SSNR for less than 2 images")
+		return 0.0
+	for volimg in volarray:
+		if vol0.shape != volimg.shape:
+			apDisplay.printError("Cannot calculate the SSNR for volumes of different sizes")
+		if len(volimg.shape) != 3:
+			apDisplay.printError("Cannot calculate the SSNR non-3D images")
+
+	### get fft
+	fftlist = []
+	for volimg in volarray:
+		fftvol = real_fft3d(volimg)
+		fftlist.append(fftvol)
+
+	### dimension init
+	fftvol0 = real_fft3d(volarray[0])
+	fftshape = numpy.asarray(fftvol0.shape, dtype=numpy.float32)
+	fftcenter = fftshape/2.0
+	length = int(max(fftshape)/2.0)
+	linear = numpy.zeros((length), dtype=numpy.float32)
+	linear[0] = 1.0
+
+	### figure out which pixels go with which ring
+	shelldict = getLinearIndices3d(fftshape)
+
+	### for each shell calculate the FSC
+	keys = shelldict.keys()
+	keys.sort()
+	for key in keys:
+		sys.stderr.write(".")
+		indexlist = shelldict[key]
+		numer = 0.0
+		denom = 0.0
+		for indextuple in indexlist:
+			n1, d1 = mini_ssnr1fft(fftlist, indextuple)
+			numer += n1
+			denom += d1
+		K = len(indexlist)
+		ssnr = numer / ( K/(K-1.0) * denom ) - 1.0
+		fsc = ssnr / (ssnr + 1)
+		if key >= 3  and key <= 5:
+			print "======================"
+			print "numerring=", key, numer
+			print "denomring=", key, denom
+			print "ssnr=", key, ssnr
+		linear[key] = fsc
 	sys.stderr.write("\n")
 
 	### output
