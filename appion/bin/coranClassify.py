@@ -36,7 +36,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 			help="Mask radius for particle coran (in Angstoms)", metavar="#")
 		self.parser.add_option("--num-part", dest="numpart", type="int",
 			help="Number of particles to use in classification", metavar="#")
-		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=2,
+		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=1,
 			help="Particle binning", metavar="#")
 
 	#=====================
