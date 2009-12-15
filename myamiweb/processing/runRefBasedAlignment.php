@@ -420,13 +420,13 @@ function runAlignment() {
 	$command.="--rundir=".$rundir." ";
 	$command.="--description=\"$description\" ";
 	$command.="--lowpass=$lowpass ";
-	$command.="--highpass=$highpass ";
+	if ($highpass) $command.="--highpass=$highpass ";
 	$command.="--xy-search=$xysearch ";
 	$command.="--xy-step=$xystep ";
 	$command.="--num-iter=$iters ";
 	$command.="--num-part=$numpart ";
-	$command.="--bin=$bin ";
-	$command.="--csym=$csym ";
+	if ($bin) $command.="--bin=$bin ";
+	if ($csym) $command.="--csym=$csym ";
 	if ($inverttempl) $command.="--invert-templates ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
