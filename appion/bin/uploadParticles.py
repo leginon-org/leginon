@@ -121,8 +121,8 @@ class UploadParticles(appionScript.AppionScript):
 		for line in f:
 			sline = line.strip()
 			cols = sline.split()
-			xcoord = float(cols[0]) * self.params['bin']
-			ycoord = float(cols[1]) * self.params['bin']
+			xcoord = (float(cols[0]) + float(cols[2])/2.)* self.params['bin']
+			ycoord = (float(cols[1]) + float(cols[3])/2.)* self.params['bin']
 			peakdict = {
 				'diameter': self.params['diam'],
 				'xcoord': xcoord,
