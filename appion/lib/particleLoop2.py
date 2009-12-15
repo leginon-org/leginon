@@ -143,7 +143,8 @@ class ParticleLoop(filterLoop.FilterLoop):
 		value = self.commitToDatabase(imgdata, rundata)
 
 		### commit the particles
-		apParticle.insertParticlePeaks(self.peaktree, imgdata, self.params)
+		apParticle.insertParticlePeaks(self.peaktree, imgdata, 
+			runname=self.params['runname'], msg=(not self.params['background']))
 
 		### commit defocal pairs
 		if self.params['defocpair'] is True:

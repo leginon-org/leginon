@@ -163,7 +163,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 	#=======================================
 	def insertParticlePeakPairs(self, imgdata, tiltdata, transdata):
 		if transdata is not None:
-			apParticle.insertParticlePeakPairs(self.peaktree1, self.peaktree2, self.peakerrors, imgdata, tiltdata, transdata, self.params)
+			apParticle.insertParticlePeakPairs(self.peaktree1, self.peaktree2, self.peakerrors, 
+				imgdata, tiltdata, transdata, self.params['runname'])
 
 	#=======================================
 	def getParticlePicks(self, imgdata, msg=True):

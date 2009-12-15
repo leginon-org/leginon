@@ -5,21 +5,15 @@
 import os
 import sys
 import time
-#sinedon
-import sinedon
-try:
-	import sinedon.directq as directq
-except:
-	pass
 #leginon
 import leginondata
 #appion
 import appiondata
-import apImage
 import apDatabase
 import apDisplay
 import apDefocalPairs
 
+#===========================
 def guessParticlesForSession(expid=None, sessionname=None):
 	if expid is None and sessionname is not None:
 		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
@@ -44,6 +38,7 @@ def guessParticlesForSession(expid=None, sessionname=None):
 			apDisplay.printColor(selectionrun['name']+":\t prtlrunId="+str(selectionrun.dbid),"cyan")
 		apDisplay.printError("Please select one of the above runids")
 
+#===========================
 def getParticles(imgdata, selectionRunId):
 	"""
 	returns paticles (as a list of dicts) for a given image
@@ -57,6 +52,7 @@ def getParticles(imgdata, selectionRunId):
 
 	return particles
 
+#===========================
 def getOneParticle(imgdata):
 	"""
 	returns paticles (as a list of dicts) for a given image
@@ -67,6 +63,7 @@ def getOneParticle(imgdata):
 	partd = partq.query(results=1)
 	return partd
 
+#===========================
 def getParticlesForImageFromRunName(imgdata,runname):
 	"""
 	returns particles for a given image and selection run name
@@ -82,9 +79,11 @@ def getParticlesForImageFromRunName(imgdata,runname):
 	particles = ptclq.query()
 	return particles
 
+#===========================
 def getSelectionRunDataFromID(selectionRunId):
 	return appiondata.ApSelectionRunData.direct_query(selectionRunId)
 
+#===========================
 def getSelectionRunDataFromName(imgdata, runname):
 	srunq=appiondata.ApSelectionRunData()
 	srunq['name'] = runname
@@ -92,6 +91,7 @@ def getSelectionRunDataFromName(imgdata, runname):
 	selectionrundata = srunq.query()
 	return selectionrundata[0]
 
+#===========================
 def getDefocPairParticles(imgdata, selectionid):
 	### get defocal pair
 	defimgdata = apDefocalPairs.getDefocusPair(imgdata)
@@ -125,8 +125,8 @@ def getDefocPairParticles(imgdata, selectionid):
 		apDisplay.printError("Could not find defocal shift data, please run alignDefocalPairs.py")
 	return (partdatas, shiftdata)
 
-
-def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2, transdata, params):
+#===========================
+def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2, transdata, runname):
 	"""
 	takes both image data (imgdata) and inserts particle pairs into DB from peaktrees
 	"""
@@ -147,7 +147,7 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 
 	#GET RUN DATA
 	runq=appiondata.ApSelectionRunData()
-	runq['name'] = params['runname']
+	runq['name'] = runname
 	runq['session'] = sessiondata
 	selectionruns=runq.query(results=1)
 	if not selectionruns:
@@ -206,7 +206,8 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 		+" in "+apDisplay.timeString(time.time()-t0))
 	return
 
-def insertParticlePeaks(peaktree, imgdata, params):
+#===========================
+def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
 	"""
 	takes an image data object (imgdata) and inserts particles into DB from peaktree
 	"""
@@ -216,7 +217,7 @@ def insertParticlePeaks(peaktree, imgdata, params):
 
 	#GET RUN DATA
 	runq=appiondata.ApSelectionRunData()
-	runq['name'] = params['runname']
+	runq['name'] = runname
 	runq['session'] = sessiondata
 	selectionruns=runq.query(results=1)
 
@@ -255,174 +256,12 @@ def insertParticlePeaks(peaktree, imgdata, params):
 			if not presult:
 				count+=1
 				particlesq.insert()
-	if params['background'] is False:
+	if msg is True:
 		apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database"
 			+" in "+apDisplay.timeString(time.time()-t0))
 	return
 
-def insertParticlePicks(params,imgdata,manual=False):
-	#INFO
-	imgname=imgdata['filename']
-
-	#GET RUN DATA
-	runq=appiondata.ApSelectionRunData()
-	runq['name'] = params['runname']
-	runq['session'] = imgdata['session']
-	selectionruns=runq.query(results=1)
-
-	# WRITE PARTICLES TO DATABASE
-	apDisplay.printMsg("Inserting particles from pik file into database for "+apDisplay.shortenImageName(imgname))
-
-	# first open pik file, or create a temporary one if uploading a box file
-	if manual is True and params['prtltype']=='box':
-		pikfilename = convertBoxToPikFile(imgname, params)
-	elif manual is True and params['prtltype']=='pik':
-		pikfilename = imgname+"."+params['extension']
-	else:
-		pikfilename = "pikfiles/"+imgname+".a.pik"
-
-	# read through the pik file
-	pfile=open(pikfilename, "r")
-	piklist=[]
-	for line in pfile:
-		if(line[0] != "#"):
-			elements=line.split(' ')
-			xcenter=int(elements[1])
-			ycenter=int(elements[2])
-			corr=float(elements[3])
-
-			particlesq=appiondata.ApParticleData()
-			particlesq['selectionrun']=selectionruns[0]
-			particlesq['image']=imgdata
-			particlesq['xcoord']=xcenter
-			particlesq['ycoord']=ycenter
-			particlesq['correlation']=corr
-
-			presult=particlesq.query()
-			if not (presult):
-				particlesq.insert()
-	pfile.close()
-
-	return
-
-def convertBoxToPikFile(imgname,params):
-	pikfilename=os.path.join(params['rundir'],"tempPikFileForUpload.pik")
-	boxfilename=os.path.join(params['rundir'],imgname+".box")
-
-	if not os.path.isfile(boxfilename):
-		apDisplay.printError("manual box file, "+boxfilename+" does not exist")
-
-	# read through the pik file
-	if not params['scale']:
-		params['scale']=1
-	boxfile = open(boxfilename, "r")
-	piklist=[]
-	for line in boxfile:
-		elements=line.split('\t')
-		xcoord=int(elements[0])
-		ycoord=int(elements[1])
-		xbox=int(elements[2])
-		ybox=int(elements[3])
-		xcenter=(xcoord + (xbox/2))*params['scale']
-		ycenter=(ycoord + (ybox/2))*params['scale']
-		if (xcenter < 4096 and ycenter < 4096):
-			piklist.append(imgname+" "+str(xcenter)+" "+str(ycenter)+" 1.0\n")
-	boxfile.close()
-
-	# write to the pik file
-	pfile=open(pikfilename,"w")
-	pfile.writelines(piklist)
-	pfile.close()
-	return pikfilename
-
-def pik2Box(params,file):
-	box=params["box"]
-
-	fname="pikfiles/"+file+".a.pik"
-
-	# read through the pik file
-	pfile=open(fname,"r")
-	piklist=[]
-	for line in pfile:
-		elements=line.split(' ')
-		xcenter=int(elements[1])
-		ycenter=int(elements[2])
-		xcoord=xcenter - (box/2)
-		ycoord=ycenter - (box/2)
-		if (xcoord>0 and ycoord>0):
-			piklist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
-	pfile.close()
-
-	# write to the box file
-	bfile=open(file+".box","w")
-	bfile.writelines(piklist)
-	bfile.close()
-
-	print "results written to \'"+file+".box\'"
-	return
-
-def getImageMsgPKeepCount(imgdata,refinerundata):
-	runid = str(refinerundata.dbid)
-	imgid = str(imgdata.dbid)
-
-	q = """
-	SELECT stackp2.`REF|ApParticleData|particle` particle, result.* FROM
-	(SELECT pcls.`REF|ApStackParticlesData|particle` as stackp,count(*) as count FROM
-	`ApParticleClassificationData` pcls
-	LEFT JOIN
-	`ApRefinementData` rf
-	ON pcls.`REF|ApRefinementData|refinement` = rf.`DEF_id`
-	LEFT JOIN
-	`ApRefinementRunData` rfr
-	ON rf.`REF|ApRefinementRunData|refinementRun`=rfr.`DEF_id`
-	"""
-	q = q+"WHERE rfr.`DEF_id`="+runid
-	q = q+"""
-	AND pcls.`msgp_keep`=1
-	AND pcls.`REF|ApStackParticlesData|particle`
-	in
-	(SELECT stackp.`DEF_id` as stackp FROM
-	`ApStackParticlesData` stackp
-	LEFT JOIN `ApStackData` stack
-	ON stackp.`REF|ApStackData|stack` = stack.`DEF_id`
-	LEFT JOIN `ApRefinementRunData` rfr
-	ON rfr.`REF|ApStackData|stack` = stack.`DEF_id`
-	"""
-	q = q+ "where rfr.`DEF_id`="+runid
-	q = q + """
-	AND
-	stackp.`REF|ApParticleData|particle`
-	in
-	(SELECT p.`DEF_id` FROM
-	`ApParticleData` p
-	"""
-	q = q + "WHERE p.`REF|leginondata|AcquisitionImageData|image` = " + imgid + ")"
-	q = q + """
-	)
-	group by pcls.`REF|ApStackParticlesData|particle`) result
-	LEFT JOIN
-	`ApStackParticlesData` stackp2
-	ON result.`stackp`=stackp2.`DEF_id`
-	"""
-	results = directq.complexMysqlQuery('appiondata',q)
-
-	return results
-
-def getImagesFromParticleRun(runid):
-	q = """SELECT `REF|leginondata|AcquisitionImageData|image` as imageid
-		from `ApParticleData`
-		WHERE `REF|ApSelectionRunData|selectionrun`= %d
-		GROUP BY `REF|leginondata|AcquisitionImageData|image`""" % (runid)
-	results = directq.complexMysqlQuery('appiondata',q)
-	imgtree = []
-
-	qa =  leginondata.AcquisitionImageData()
-	for result in results:
-		imgdata = qa.direct_query(result['imageid'],readimages=False)
-		if imgdata:
-			imgtree.append(imgdata)
-	return imgtree
-
+#===========================
 def getParticleDiameter(particledata):
 	selectionrun = particledata['selectionrun']
 	selection_params = ['params','dogparams','manparams','tiltparams']
@@ -430,6 +269,9 @@ def getParticleDiameter(particledata):
 		if selectionrun[p]:
 			return selectionrun[p]['diam']
 
+#===========================
+#===========================
+#===========================
 if __name__ == '__main__':
 	name = 'test2'
 	sessionname = '07jan05b'

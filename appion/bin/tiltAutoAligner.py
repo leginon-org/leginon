@@ -176,7 +176,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		if transdata is not None:
 			apDisplay.printMsg("insertParticlePeakPairs")
 			apParticle.insertParticlePeakPairs(self.peaktree1, self.peaktree2, self.peakerrors,
-				imgdata, tiltdata, transdata, self.params)
+				imgdata, tiltdata, transdata, self.params['runname'])
 			apDisplay.printMsg("done")
 
 	#---------------------------------------
