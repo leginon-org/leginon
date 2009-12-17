@@ -3,6 +3,7 @@
 #python
 import os
 import shutil
+import random
 #appion
 import appionScript
 import apStack
@@ -26,6 +27,9 @@ class subStackScript(appionScript.AppionScript):
 
 		self.parser.add_option("--split", dest="split", type="int", default=1,
 			help="Number of files into which the stack will be split")
+		
+		self.parser.add_option("--random", dest="random", type="int",
+            help="Number of random particles into the stack")
 
 		self.parser.add_option("--exclude", dest="exclude",
 			help="EMAN style classes to EXCLUDE in the new stack (0,5,8)", metavar="0,1,...")
@@ -49,12 +53,22 @@ class subStackScript(appionScript.AppionScript):
 
 		### have first but not last
 		if self.params['first'] is not None and self.params['last'] is None:
+			if self.params['random'] is not None:
+				apDisplay.printError("Random function can't combine with range of the stack")
 			self.params['last'] = numpart
 		elif self.params['first'] is None and self.params['last'] is not None:
+			if self.params['random'] is not None:
+				apDisplay.printError("Random function can't combine with range of the stack")
 			self.params['first'] = 0
 
+		if self.params['last'] is None:
+			self.params['last'] = numpart
+
+		if self.params['random'] > numpart or self.params['last'] > numpart:
+			apDisplay.printError("Requesting too many particles from stack, max %d"%(numpart))
+
 		if self.params['first'] is None and self.params['split'] == 1:
-			if self.params['keepfile'] is None and self.params['exclude'] is None and self.params['include'] is None:
+			if self.params['keepfile'] is None and self.params['exclude'] is None and self.params['include'] is None and self.params['random'] is None:
 				apDisplay.printError("Please define either keepfile, exclude or include")
 			elif self.params['keepfile']:
 				self.params['keepfile'] = os.path.abspath(self.params['keepfile'])
@@ -87,8 +101,24 @@ class subStackScript(appionScript.AppionScript):
 				apDisplay.printMsg("Creating keep list: "+self.params['keepfile'])
 				f=open(self.params['keepfile'],'w')
 				for i in range(self.params['first'],self.params['last']+1):
-					f.write('%i\n' % i)
+					f.write('%d\n' % i-1)
 				f.close()
+				# generate the random list by giving number and create the file
+			elif self.params['random'] is not None:
+				#numOfRandomParticles = str(self.params['random'])
+				#fname = 'random'+str(self.params['stackid'])+'_'+numOfRandomParticles+'.lst'
+				fname = "random%d_%d.lst"%(self.params['stackid'], self.params['random'])
+				self.params['keepfile'] = os.path.join(self.params['rundir'],fname)
+				apDisplay.printMsg("Creating keep list: "+self.params['keepfile'])
+				# create a file
+				f=open(self.params['keepfile'],'w')
+				# generate a random sequence by giving size
+				randomList = random.sample(xrange(self.params['last']), self.params['random'])
+				randomList.sort()
+				for partnum in randomList:
+					f.write('%d\n' % partnum)
+				f.close()				
+				
 			# if splitting, create files containing the split values
 			elif self.params['split'] > 1:
 				num = apStack.getNumberStackParticlesFromId(self.params['stackid'])
@@ -168,9 +198,12 @@ class subStackScript(appionScript.AppionScript):
 		
 		ogdescr = self.params['description']
 		for i in range(self.params['split']):
+			### always do this, if not splitting split=1
 			sb = os.path.splitext(stackdata['name'])
 			if self.params['first'] is not None and self.params['last'] is not None:
 				newname = sb[0]+'.'+str(self.params['first'])+'-'+str(self.params['last'])+sb[-1]
+			elif self.params['random'] is not None:
+				newname = "%s-random%d%s"%(sb[0], self.params['random'], sb[-1])
 			elif self.params['split'] > 1:
 				fname = 'sub'+str(self.params['stackid'])+'.'+str(i+1)+'.lst'
 				self.params['keepfile'] = os.path.join(self.params['rundir'],fname)
