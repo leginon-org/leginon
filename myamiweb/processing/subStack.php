@@ -260,7 +260,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 // *************************************
 // *************************************
 function runSubStack() {
-	var_dump($_POST);
+
 	$expId = $_GET['expId'];
 
 	$runname=$_POST['runname'];
