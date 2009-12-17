@@ -366,7 +366,9 @@ clip avg -2d -iz 0-199 temp.mrc projection.mrc
 def writeCommandAndRun(path,comname, commands, outputlist):		
 		### make standard input for ctftilt
 		commandlines = map((lambda x: x+"\n"), commands)
-		comname = os.path.join(path,comname)
+		# change directory because submfg can not handle long path name in front of the command to run
+		currentdir = os.getcwd()
+		os.chdir(path)
 		comfile = open(comname+".com", "w")
 		comfile.writelines(commandlines)
 		comfile.close()
@@ -385,4 +387,5 @@ def writeCommandAndRun(path,comname, commands, outputlist):
 		comfile.close()
 
 		apDisplay.printMsg(comname+" completed in "+apDisplay.timeString(time.time()-t0))
+		os.chdir(currentdir)
 
