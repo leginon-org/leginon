@@ -169,6 +169,70 @@ def test():
 	s1.setDependency('ext', 11)
 	s2.run()
 
+class WorkflowCLI(object):
+	'''Simple way to test workflows using command line interface.'''
+	def __init__(self, steps):
+		'''steps must be OrderedDict object'''
+		self.steps = steps
+
+	def configureStep(self, stepname):
+		step = self.steps[stepname]
+		print 'Configure %s...' % (stepname,)
+		for pdef in step.param_def:
+			pname = pdef['name']
+			ptype = pdef['type']
+			if 'choices' in pdef:
+				choices = str(pdef['choices'])
+			else:
+				choices = ''
+			entered = raw_input('    %s%s: ' % (pname, choices))
+			if not entered:
+				continue
+			if ptype is bool:
+				entered = int(entered)
+			pvalue = ptype(entered)
+			step.setParam(pname, ptype(entered))
+
+	def mainPrompt(self):
+		while True:
+			try:
+				entered = raw_input('Command (run or config): ')
+			except EOFError:
+				return None
+			if entered not in ('run', 'config'):
+				continue
+			else:
+				return entered
+
+	def stepPrompt(self):
+		choices = '[' + ','.join(self.steps.keys()) + ']'
+		while True:
+			entered = raw_input('  Step %s: ' % (choices,))
+			if entered in self.steps.keys() or entered == '':
+				return entered
+
+	def loop(self):
+		while True:
+			entered = self.mainPrompt()
+			if entered is None:
+				print ''
+				break
+			if entered == 'run':
+				stepname = self.stepPrompt()
+				if stepname:
+					self.runStep(stepname)
+				else:
+					continue
+			elif entered == 'config':
+				stepname = self.stepPrompt()
+				if stepname:
+					self.configureStep(stepname)
+				else:
+					continue
+
+	def runStep(self, stepname):
+		self.steps[stepname].run()
+
 if __name__ == '__main__':
 	test()
 

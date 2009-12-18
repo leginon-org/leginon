@@ -274,27 +274,6 @@ templatefinder = [
 # then an ordered dict
 templatefinder = OrderedDict([(step.name, step) for step in templatefinder])
 
-def run_cli(steps):
-	for stepname,step in steps.items():
-		stepname = step.name
-		print 'Configure %s:' % (stepname,)
-		for pdef in step.param_def:
-			pname = pdef['name']
-			ptype = pdef['type']
-			if 'choices' in pdef:
-				choices = str(pdef['choices'])
-			else:
-				choices = ''
-			entered = raw_input('  %s%s: ' % (pname, choices))
-			if not entered:
-				continue
-			if ptype is bool:
-				entered = int(entered)
-			pvalue = ptype(entered)
-			step.setParam(pname, ptype(entered))
-	# run last step
-	laststepname = steps.keys()[-1]
-	steps[laststepname].run()
-
 if __name__ == '__main__':
-	run_cli(templatefinder)
+	tf = workflow.WorkflowCLI(templatefinder)
+	tf.loop()
