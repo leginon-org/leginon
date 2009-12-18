@@ -244,8 +244,8 @@ class Panel(gui.wx.Node.Panel):
 	icon = 'acquisition'
 	imagepanelclass = gui.wx.ImagePanel.ImagePanel
 	settingsdialogclass = SettingsDialog
-	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
@@ -386,7 +386,7 @@ if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Acquisition Test')
-			panel = Panel(frame, 'Test')
+			panel = Panel(frame)
 			frame.Fit()
 			self.SetTopWindow(frame)
 			frame.Show()

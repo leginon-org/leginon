@@ -21,8 +21,8 @@ import threading
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'fftmaker'
-	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
 													'settings',

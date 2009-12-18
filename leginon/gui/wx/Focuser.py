@@ -60,8 +60,8 @@ class ManualCheckDoneEvent(wx.PyCommandEvent):
 class Panel(gui.wx.Acquisition.Panel):
 	icon = 'focuser'
 	imagepanelclass = gui.wx.TargetPanel.TargetImagePanel
-	def __init__(self, parent, name):
-		gui.wx.Acquisition.Panel.__init__(self, parent, name)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.InsertTool(2, gui.wx.ToolBar.ID_FOCUS_SEQUENCE, 'focus_sequence',
 								shortHelpString='Focus Sequence')

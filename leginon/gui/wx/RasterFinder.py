@@ -419,7 +419,7 @@ if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Raster Finder Test')
-			panel = Panel(frame, 'Test')
+			panel = Panel(frame)
 			frame.Fit()
 			self.SetTopWindow(frame)
 			frame.Show()

@@ -939,8 +939,8 @@ class CCDCameraPanel(wx.Panel, ParameterMixin):
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'instrument'
-	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
 													'refresh',

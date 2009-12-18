@@ -28,8 +28,8 @@ import gui.wx.FocusSequence
 class Panel(gui.wx.Acquisition.Panel):
 	icon = 'focuser'
 	imagepanelclass = gui.wx.TargetPanel.TargetImagePanel
-	def __init__(self, parent, name):
-		gui.wx.Acquisition.Panel.__init__(self, parent, name)
+	def __init__(self, parent):
+		gui.wx.Acquisition.Panel.__init__(self, parent)
 
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE, 'acquire', shortHelpString='Acquire')

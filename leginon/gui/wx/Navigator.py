@@ -38,8 +38,8 @@ class LocationsEvent(wx.PyCommandEvent):
 
 class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'navigator'
-	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 		gui.wx.Instrument.SelectionMixin.__init__(self)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
@@ -511,7 +511,7 @@ if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Navigator Test')
-			#panel = Panel(frame, 'Test')
+			#panel = Panel(frame)
 			node = Node()
 			dialog = StageLocationsDialog(frame, node)
 			frame.Fit()

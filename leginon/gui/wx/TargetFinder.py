@@ -18,8 +18,8 @@ import gui.wx.ToolBar
 import gui.wx.ImagePanelTools
 
 class Panel(gui.wx.Node.Panel):
-	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
@@ -144,7 +144,7 @@ if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Target Finder Test')
-			panel = Panel(frame, 'Test')
+			panel = Panel(frame)
 			frame.Fit()
 			self.SetTopWindow(frame)
 			frame.Show()

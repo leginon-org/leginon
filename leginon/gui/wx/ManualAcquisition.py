@@ -56,8 +56,8 @@ class ManualCheckDoneEvent(wx.PyCommandEvent):
 class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'manualacquisition'
 	imageclass = gui.wx.ImagePanel.ImagePanel
-	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 		gui.wx.Instrument.SelectionMixin.__init__(self)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,

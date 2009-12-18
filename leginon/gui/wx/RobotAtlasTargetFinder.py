@@ -19,8 +19,8 @@ import gui.wx.ToolBar
 import gui.wx.TargetPanel
 
 class Panel(gui.wx.Node.Panel):
-	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
 													'refresh',

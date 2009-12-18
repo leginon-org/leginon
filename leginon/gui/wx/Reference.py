@@ -53,8 +53,8 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		return [sbsz]
 
 class ReferencePanel(gui.wx.Node.Panel):
-	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Test')

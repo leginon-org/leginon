@@ -113,8 +113,8 @@ def pixels2str(pixels):
 
 class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'corrector'
-	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 		gui.wx.Instrument.SelectionMixin.__init__(self)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
