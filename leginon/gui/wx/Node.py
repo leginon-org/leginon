@@ -31,9 +31,10 @@ class NodeInitializedEvent(wx.PyEvent):
 		self.event = threading.Event()
 
 class Panel(wx.lib.scrolledpanel.ScrolledPanel):
-	def __init__(self, parent, id, tools=None, **kwargs):
+	def __init__(self, parent, id=-1, nodeclass=None, **kwargs):
 
 		self.node = None
+		self.nodeclass = nodeclass
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id, **kwargs)
 
 		self.toolbar = parent.getToolBar()
