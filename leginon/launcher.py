@@ -119,5 +119,5 @@ if __name__ == '__main__':
 	l = gui.wx.Launcher.App(*args, **kwargs)
 	print kwargs
 	l.MainLoop()
-	leginondata.datamanager.exit()
+	leginondata.sinedon.data.datamanager.exit()
 
