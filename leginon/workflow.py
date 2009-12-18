@@ -183,9 +183,11 @@ class WorkflowCLI(object):
 			ptype = pdef['type']
 			if 'choices' in pdef:
 				choices = str(pdef['choices'])
+			elif ptype is bool:
+				choices = '[0,1]'
 			else:
 				choices = ''
-			entered = raw_input('    %s%s: ' % (pname, choices))
+			entered = raw_input('    %s %s: ' % (pname, choices))
 			if not entered:
 				continue
 			if ptype is bool:
