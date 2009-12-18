@@ -68,7 +68,7 @@ class Launcher(node.Node):
 		kwargs['otherdatabinder'] = self.databinder
 
 		if nodeclass.panelclass is not None:
-			evt = gui.wx.Launcher.CreateNodePanelEvent(nodeclass.panelclass, nodename)
+			evt = gui.wx.Launcher.CreateNodePanelEvent(nodeclass, nodename)
 			self.panel.GetEventHandler().AddPendingEvent(evt)
 			evt.event.wait()
 			kwargs['panel'] = evt.panel
