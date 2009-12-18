@@ -23,41 +23,54 @@ import scipy.ndimage
 import itertools
 import lattice
 import workflow
+from pyami.ordereddict import OrderedDict
 
 class ImageProducer(workflow.Step):
 	'''_run method must return image (numpy array)'''
-	pass
+	param_def = []
 
 class PointProducer(workflow.Step):
 	'''_run method must return list of dicts [{'row': ###, 'column': ###}, ...]'''
-	pass
+	param_def = []
 
 class ImageInput(ImageProducer):
-	'''reads a file using either mrc or numpil modules'''
-	def __init__(*args, **kwargs):
-		self.setDependency('assigned', 'assigned')
+	'''result is an image, either from a file or from external dependency'''
+	param_def = ImageProducer.param_def + [
+		{'name': 'use file', 'type': bool, 'default': False},
+		{'name': 'file name', 'type': str, 'default': 'sq_example.jpg'},
+	]
+
+	def __init__(self, *args, **kwargs):
+		ImageProducer.__init__(self, *args, **kwargs)
+		self.setDependency('external', None)
 
 	def _run(self):
-		if self.params['read file']:
-			fname = self.params['filename']
+		if self.params['use file']:
+			fname = self.params['file name']
 			if fname[-3:].lower() == 'mrc':
 				image = pyami.mrc.read(fname)
 			else:
 				image = pyami.numpil.read(fname)
-			return image
 		else:
-			return self.external
+			image = self.depresults['external']
+		return image
 
 class TemplateCorrelator(ImageProducer):
 	'''depends on 'image' and 'template' and correlates them.'''
+
+	param_def = ImageProducer.param_def + [
+		{'name': 'correlation type', 'type': str, 'choices': ['cross','phase'], 'default': 'cross'},
+		{'name': 'filter sigma', 'type': float, 'default': 1.0},
+	]
+
 	def _run(self):
 		# get deps
 		image = self.depresults['image']
 		template = self.depresults['template']
 
 		# get params
-		cortype = self.params['cortype']
-		corfilt = self.params['corfilt']
+		cortype = self.params['correlation type']
+		corfilt = self.params['filter sigma']
 
 		# pad template to image shape and shift center to 0,0
 		#newtemplate = numpy.zeros(image.shape, template.dtype)
@@ -72,30 +85,43 @@ class TemplateCorrelator(ImageProducer):
 			cor = pyami.correlator.cross_correlate(image, newtemplate)
 		elif cortype == 'phase':
 			cor = pyami.correlator.phase_correlate(image, newtemplate, zero=False)
-		if corfilt is not None:
+		if corfilt:
 			cor = scipy.ndimage.gaussian_filter(cor, corfilt)
 		return cor
 
 class Threshold(ImageProducer):
+
+	param_def = ImageProducer.param_def + [
+		{'name': 'method', 'type': str, 'choices': ['mean + A * stdev', 'A'], 'default': 'mean + A * stdev'},
+		{'name': 'value', 'type': float, 'default': 3.0},
+	]
+
 	def _run(self):
 		# get dependencies
 		image = self.depresults['image']
 
 		# get params
 		method = self.params['method']
-		threshold = self.params['threshold']
+		threshold = self.params['value']
 
-		if method == "Threshold = mean + A * stdev":
+		if method == 'mean + A * stdev':
 			mean = pyami.arraystats.mean(image)
 			std = pyami.arraystats.std(image)
 			thresh = mean + threshold * std
-		elif method == "Threshold = A":
+		elif method == 'A':
 			thresh = threshold
 		result = pyami.imagefun.threshold(image, thresh)
 
 		return result
 
 class BlobFinder(PointProducer):
+	param_def = PointProducer.param_def + [
+		{'name': 'border', 'type': int, 'default': 20},
+		{'name': 'max blob size', 'type': int, 'default': 5000},
+		{'name': 'min blob size', 'type': int, 'default': 10},
+		{'name': 'max blobs', 'type': int, 'default': 500},
+	]
+
 	def blobStatsTargets(self, blobs):
 		targets = []
 		for blob in blobs:
@@ -116,9 +142,9 @@ class BlobFinder(PointProducer):
 
 		# get parameters
 		border = self.params['border']
-		maxsize = self.params['maxblobsize']
-		minsize = self.params['minblobsize']
-		maxblobs = self.params['maxblobs']
+		maxsize = self.params['max blob size']
+		minsize = self.params['min blob size']
+		maxblobs = self.params['max blobs']
 
 		blobs = pyami.imagefun.find_blobs(image, mask, border, maxblobs, maxsize, minsize)
 		results = []
@@ -131,6 +157,12 @@ class BlobFinder(PointProducer):
 		return results
 
 class LatticeFilter(PointProducer):
+
+	param_def = PointProducer.param_def + [
+		{'name': 'tolerance', 'type': float, 'default': 0.1},
+		{'name': 'spacing', 'type': float, 'default': 74},
+	]
+
 	def _run(self):
 		# get deps
 		points = self.depresults['input']
@@ -158,6 +190,11 @@ class LatticeFilter(PointProducer):
 		return latpoints
 
 class ImageMarker(ImageProducer):
+
+	param_def = PointProducer.param_def + [
+		{'name': 'size', 'type': float, 'default': 5},
+	]
+
 	def _run(self):
 		# get deps
 		image = self.depresults['image']
@@ -189,68 +226,75 @@ def debugPoints(step, points):
 		print 'Result of', step.name
 		print [(point['row'],point['column']) for point in points]
 
-class TemplateFinderWorkflow(object):
-	# (step_name, param_name):  setting_name
-	param_setting = {
-		('input','filename'): 'image filename',
-		('template','filename'): 'template filename',
-		('template','template size'): 'template diameter',
-		('template','image size'): 'file diameter',
-		('template','cortype'): 'template type',
-		('template','lpf'): ('template lpf','sigma'),
-		('threshold','threshold'): 'threshold',
-		('threshold','method'): 'threshold method',
-		('blobs','border'): 'blobs border',
-		('blobs','max'): 'blobs max',
-		('blobs','maxsize'): 'blobs max size',
-		('blobs','minsize'): 'blobs min size',
-		('lattice','spacing'): 'lattice spacing',
-		('lattice','tolerance'): 'lattice tolerance',
-	}
-	setting_param = [(value,key) for key,value in param_setting.items()]
-	setting_param = dict(setting_param)
+def paramToDBName(step, paramname):
+	return ' '.join(step.name, paramname)
 
-'''
-		'ice min mean': 0.05,
-		'ice max mean': 0.2,
-		'ice max std': 0.2,
-		'focus hole': 'Off',
-		'target template': False,
-		'focus template': [(0, 0)],
-		'acquisition template': [(0, 0)],
-		'focus template thickness': False,
-		'focus stats radius': 10,
-		'focus min mean thickness': 0.05,
-		'focus max mean thickness': 0.5,
-		'focus max stdev thickness': 0.5,
-'''
+input = ImageInput('input')
+input.setParam('use file', True)
+input.setParam('file name', 'sq_example.jpg')
 
-	def __init__(self):
-		self.steps = {}
+template = ImageInput('template')
+template.setParam('use file', True)
+template.setParam('file name', 'holetempexample.jpg')
 
-		self.steps['input'] = targetingprocess.ImageReader('input')
-		self.steps['template'] = targetingprocess.ImageReader('template')
+tempcor = TemplateCorrelator('correlation', result_callback=debugImage)
+tempcor.setDependency('image', input)
+tempcor.setDependency('template', template)
 
-		self.steps['correlation'] = targetingprocess.TemplateCorrelator('template')
-		self.steps['correlation'].setDependency('image', self.steps['input'])
-		self.steps['correlation'].setDependency('template', self.steps['template'])
+threshold = Threshold('threshold', result_callback=debugImage)
+threshold.setDependency('image', tempcor)
 
-		self.steps['threshold'] = targetingprocess.Threshold('threshold')
-		self.steps['threshold'].setDependency('image', self.steps['correlation'])
+blobs = BlobFinder('blobs', result_callback=debugPoints)
+blobs.setDependency('image', tempcor)
+blobs.setDependency('mask', threshold)
 
-		self.steps['blobs'] = targetingprocess.BlobFinder('blobs')
-		self.steps['blobs'].setDependency('image', self.steps['correlation'])
-		self.steps['blobs'].setDependency('mask', self.steps['threshold'])
+blobsm = ImageMarker('blobsm', result_callback=debugImage)
+blobsm.setDependency('image', input)
+blobsm.setDependency('points', blobs)
 
-		self.steps['lattice'] = targetingprocess.LatticeFilter('lattice')
-		self.steps['lattice'].setDependency('input', self.steps['blobs'])
+latfilt = LatticeFilter('lattice', result_callback=debugPoints)
+latfilt.setDependency('input', blobs)
 
-	def configure(leg_settings):
-		for setting_name, value in settings.items():
-			if isinstance(value, dict):
-				for dsetting_name, dvalue in value.items():
-					stepname, paramname = setting_param[(setting_name,dsetting_name)]
-					self.steps[stepname].setParam(paramname, dvalue)
+latm = ImageMarker('latm', result_callback=debugImage)
+latm.setDependency('image', input)
+latm.setDependency('points', latfilt)
+
+# first a list of steps
+templatefinder = [
+	input,
+	template,
+	tempcor,
+	threshold,
+	blobs,
+	blobsm,
+	latfilt,
+	latm,
+]
+
+# then an ordered dict
+templatefinder = OrderedDict([(step.name, step) for step in templatefinder])
+
+def run_cli(steps):
+	for stepname,step in steps.items():
+		stepname = step.name
+		print 'Configure %s:' % (stepname,)
+		for pdef in step.param_def:
+			pname = pdef['name']
+			ptype = pdef['type']
+			if 'choices' in pdef:
+				choices = str(pdef['choices'])
 			else:
-				stepname, paramname = setting_param[setting_name]
-				self.steps[stepname].setParam(paramname, value)
+				choices = ''
+			entered = raw_input('  %s%s: ' % (pname, choices))
+			if not entered:
+				continue
+			if ptype is bool:
+				entered = int(entered)
+			pvalue = ptype(entered)
+			step.setParam(pname, ptype(entered))
+	# run last step
+	laststepname = steps.keys()[-1]
+	steps[laststepname].run()
+
+if __name__ == '__main__':
+	run_cli(templatefinder)
