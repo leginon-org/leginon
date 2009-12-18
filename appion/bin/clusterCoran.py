@@ -144,6 +144,8 @@ class ClusterCoranScript(appionScript.AppionScript):
 		imagicalignedstack = os.path.join(self.analysisdata['alignstack']['path']['path'],
 			self.analysisdata['alignstack']['imagicfile'])
 		alignedstack = re.sub("\.", "_", imagicalignedstack)+".spi"
+		while os.path.isfile(alignedstack):
+			apFile.removeFile(alignedstack)
 		emancmd = "proc2d %s %s spiderswap"%(imagicalignedstack, alignedstack)
 		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
 
