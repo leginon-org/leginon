@@ -8,7 +8,7 @@ $axis = $_GET['axis'];
 $width = $_GET['width'];
 $height = $_GET['height'];
 
-function graphXY($prediction, $position, $correlation, $tilts, $pixel_size, $title, $width, $height) {
+function graphXY($prediction, $position, $correlation, $tilts, $pixel_size, $dimension, $title, $width, $height) {
 		// --- to avoid jpgraph plot warning image --- merci beaucoup --- //
 		if (count($correlation)==1)
 			$correlation[]=$correlation[0];
@@ -16,6 +16,7 @@ function graphXY($prediction, $position, $correlation, $tilts, $pixel_size, $tit
     for($i = 0; $i < count($prediction); $i++) {
         $prediction[$i] *= $pixel_size[$i]/1e-6;
         $position[$i] *= $pixel_size[$i]/1e-6;
+        $correlation[$i] *= 100/$dimension;
 		}
 		if ($prediction[0]==0) $prediction[0]=$prediction;
 		if ($position[0]==0) $position[0]=$position[1];
@@ -53,7 +54,7 @@ function graphXY($prediction, $position, $correlation, $tilts, $pixel_size, $tit
 
     $graph->xaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
     $graph->xaxis->title->SetFont(FF_FONT2);
-    $graph->xaxis->title->Set("Tilt (degrees)");
+    $graph->xaxis->title->Set("Tilt (degrees)".$dimension);
 
     $graph->xaxis->SetTickLabels($tilts);
     $graph->xaxis->SetTextTickInterval(10);
@@ -68,7 +69,7 @@ function graphXY($prediction, $position, $correlation, $tilts, $pixel_size, $tit
     $graph->y2axis->SetFont(FF_FONT1, FS_NORMAL, 8);
     $graph->y2axis->title->SetColor("darkgreen");
     $graph->y2axis->title->SetFont(FF_FONT2);
-    $graph->y2axis->title->Set("pixels");
+    $graph->y2axis->title->Set("% of image length");
     $graph->y2axis->SetTitleMargin(40);
 
     $graph->legend->SetFillColor('#FFFFFF@0.25');
@@ -312,6 +313,9 @@ $tilts = array_map("formatTilt", $tilts);
 $title = $axis.'-axis';
 
 $pixel_size = $predictionData['pixel size'];
+$dimension = array();
+$dimension['x'] = $predictionData['camera_dim_x'][0];
+$dimension['y'] = $predictionData['camera_dim_y'][0];
 
 if ($axis == 'z' || $axis == 'z0' ) {
     $prediction = $predictionData['SUBD|predicted position|'.$axis];
@@ -322,7 +326,7 @@ if ($axis == 'z' || $axis == 'z0' ) {
 #    $position = $predictionData['SUBD|correlated position|'.$axis];
     $position = $predictionData['SUBD|position|'.$axis];
     $correlation = $predictionData['SUBD|correlation|'.$axis];
-    graphXY($prediction, $position, $correlation, $tilts, $pixel_size, $title, $width, $height);
+    graphXY($prediction, $position, $correlation, $tilts, $pixel_size, $dimension[$axis], $title, $width, $height);
 } else if ($axis == 'optical axis') {
     $prediction = $predictionData['SUBD|predicted position|'.$axis];
     graphDistance($prediction, $tilts, $pixel_size, $axis, $width, $height);
@@ -330,5 +334,4 @@ if ($axis == 'z' || $axis == 'z0' ) {
     $prediction = $predictionData['SUBD|predicted position|'.$axis];
     graphTheta($prediction, $tilts, "phi", $width, $height);
 }
-
 ?>
