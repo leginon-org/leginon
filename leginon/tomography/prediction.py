@@ -107,9 +107,7 @@ class Prediction(object):
 		return tuple(self.parameters[:2] + [self.parameters[-1]])
 
 	def predict(self, tilt):
-		n_start_fit = 3
-		if len(self.tilt_series_list) != len(self.valid_tilt_series_list):
-			print "%s out of %s tilt series are used in prediction" %(len(self.valid_tilt_series_list),len(self.tilt_series_list))
+		n_start_fit = 3 
 		tilt_series = self.getCurrentTiltSeries()
 		tilt_group = self.getCurrentTiltGroup()
 		current_tilt_direction = tilt_group.is_plus_tilt
@@ -134,9 +132,9 @@ class Prediction(object):
 		if n_tilts < 1:
 			raise RuntimeError
 		elif n_tilts < 2:
+			if len(self.tilt_series_list) != len(self.valid_tilt_series_list):
+				print "%s out of %s tilt series are used in prediction" %(len(self.valid_tilt_series_list),len(self.tilt_series_list))
 			x, y = tilt_group.xs[-1], tilt_group.ys[-1]
-			self.parameters = [parameters[0],parameters[1],0]
-			parameters = self.getCurrentParameters()
 			z = 0.0
 		# calculate real z correction with current parameters 
 		elif n_tilts < n_start_fit:
@@ -150,7 +148,7 @@ class Prediction(object):
 			parameters = self.getCurrentParameters()
 			args_list = [(cos_tilts, sin_tilts, x0, y0, None, None)]
 			result = self.model(parameters, args_list)
-			z0 = result[-1][0][2]
+			z0 = parameters[2]
 			z = result[-1][-1][2] - z0
 			x = result[-1][-1][0]
 			y = result[-1][-1][1]
@@ -207,7 +205,6 @@ class Prediction(object):
 			'optical axis': float(offset),
 			'z0': float(self.parameters[-1]),
 		}
-
 		return result
 
 	def convertparams(self, phi, offset):
@@ -225,7 +222,6 @@ class Prediction(object):
 		else:
 			tilt_series_list = self.valid_tilt_series_list
 		fitparameters = self.leastSquaresModel(tilt_series_list)
-		print 'fit',fitparameters
 		# Use the old, good parameter if the fitting result suggest a very large tilt axis z offset
 		# max_delta_z0 should be larger than the z eucentric error ucenter_error in meters
 		max_delta_z0 =  self.ucenter_limit / self.image_pixel_size
@@ -275,7 +271,6 @@ class Prediction(object):
 		args_list = []
 		current_tilt_group = self.getCurrentTiltGroup()
 		current_tilt_direction = current_tilt_group.is_plus_tilt
-		print "tilt_direction",current_tilt_direction
 		current_tilt = current_tilt_group.tilts[-1]
 		datalimit = self.fitdata
 		if len(current_tilt_group) >= datalimit:
@@ -320,7 +315,6 @@ class Prediction(object):
 
 				args_list.append((cos_tilts, sin_tilts, x0, y0, x, y))
 
-		print 'starting parameters',parameters
 		args = (args_list,)
 		kwargs = {
 			'args': args,
@@ -328,7 +322,6 @@ class Prediction(object):
 			#'ftol': 1e-12,
 			#'xtol': 1e-12,
 		}
-		#print 'starting residuals',self.residuals(parameters,args_list)
 		result = scipy.optimize.leastsq(self.residuals, parameters, **kwargs)
 		try:
 			x = list(result[0])

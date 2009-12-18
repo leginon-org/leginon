@@ -223,6 +223,7 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 		self.widgets['z0 error'] = FloatEntry(self, -1, min=0.0,
 			allownone=False, chars=6, value='2e-6')
 		self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the tilt axis parameters fixed')
+		self.widgets['use z0'] = wx.CheckBox(self, -1, 'Initialize z0 with current model')
 		self.widgets['fit data points'] = IntEntry(self, -1, min=4, allownone=False, chars=5, value='4')
 
 		magsz = wx.GridBagSizer(5, 5)
@@ -285,7 +286,8 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 		modelsz.Add(optbsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		modelsz.Add(zsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		modelsz.Add(self.widgets['fixed model'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		modelsz.Add(fsz, (4, 0), (1, 1), wx.ALIGN_RIGHT)
+		modelsz.Add(self.widgets['use z0'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		modelsz.Add(fsz, (5, 0), (1, 1), wx.ALIGN_RIGHT)
 
 		modelbsz.Add(modelsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 		modelsz.AddGrowableCol(0)

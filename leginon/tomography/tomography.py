@@ -59,6 +59,7 @@ class Tomography(acquisition.Acquisition):
 		'use tilt': True,
 #		'wiener max tilt': 45,
 		'fit data points': 4,
+		'use z0': False,
 	})
 
 	def __init__(self, *args, **kwargs):
@@ -467,6 +468,8 @@ class Tomography(acquisition.Acquisition):
 			scale = prediction_pixel_size / presetimage_pixel_size
 			paramsdict = goodprediction['predicted position']
 			params = [paramsdict['phi'], paramsdict['optical axis']*scale, paramsdict['z0']*scale]
+		if not self.settings['use z0']:
+			params[2] = 0
 
 		self.prediction.parameters = params
 		self.prediction.image_pixel_size = presetimage_pixel_size
