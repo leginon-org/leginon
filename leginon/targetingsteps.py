@@ -274,6 +274,35 @@ templatefinder = [
 # then an ordered dict
 templatefinder = OrderedDict([(step.name, step) for step in templatefinder])
 
+def combinedParamName(step, param):
+	return step.name + ' ' + param['name']
+
+import leginondata
+def makeSettingsClass(clsname, steps):
+	newtypemap = []
+	for step in steps.values():
+		for param in step.param_def:
+			fieldname = combinedParamName(step, param)
+			newtypemap.append((fieldname, param['type']))
+	newtypemap = tuple(newtypemap)
+	class NewSettings(leginondata.SettingsData):
+		@classmethod
+		def typemap(cls):
+			return leginondata.SettingsData.typemap() + newtypemap
+	NewSettings.__name__ = clsname
+	NewSettings.__module__ = 'leginondata'
+	setattr(leginondata, clsname, NewSettings)
+	return NewSettings
+
+def makeDefaultSettings(steps):
+	defaults = {}
+	for step in steps.values():
+		for param in step.param_def:
+			fieldname = combinedParamName(step, param)
+			defaultvalue = param['default']
+			defaults[fieldname] = defaultvalue
+	return defaults
+
 if __name__ == '__main__':
 	tf = workflow.WorkflowCLI(templatefinder)
 	tf.loop()
