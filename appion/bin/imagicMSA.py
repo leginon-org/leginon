@@ -146,7 +146,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 				f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
 			f.write("start\n")
 			f.write("start_masked\n")
-			f.write("SOFT\n")
+			f.write("CIRC\n")
 			f.write(str(self.params['mask_radius'])+"\n")
 			f.write(str(self.params['mask_dropoff'])+"\n")
 			f.write("EOF\n")
