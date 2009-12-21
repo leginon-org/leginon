@@ -137,24 +137,24 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			f.write("EOF\n")
 			append_log = True
 
-		### make a mask for MSA
-		if self.params['mask_radius'] and self.params['mask_dropoff'] is not None:
-			f.write("/usr/local/IMAGIC/stand/arithm.e <<EOF")
-			if append_log is True:
-				f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
-			else:
-				f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
-			f.write("start\n")
-			f.write("start_masked\n")
-			f.write("CIRC\n")
-			f.write(str(self.params['mask_radius'])+"\n")
-			f.write(str(self.params['mask_dropoff'])+"\n")
-			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
-			f.write("start_masked\n")
-			f.write("start\n")
-			f.write("EOF\n")
-			append_log = True
+#		### make a mask for MSA
+#		if self.params['mask_radius'] and self.params['mask_dropoff'] is not None:
+#			f.write("/usr/local/IMAGIC/stand/arithm.e <<EOF")
+#			if append_log is True:
+#				f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
+#			else:
+#				f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
+#			f.write("start\n")
+#			f.write("start_masked\n")
+#			f.write("CIRC\n")
+#			f.write(str(self.params['mask_radius'])+"\n")
+#			f.write(str(self.params['mask_dropoff'])+"\n")
+#			f.write("EOF\n")
+#			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
+#			f.write("start_masked\n")
+#			f.write("start\n")
+#			f.write("EOF\n")
+#			append_log = True
 		f.write("/usr/local/IMAGIC/stand/testim.e <<EOF")
 		if append_log is True:
 			f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
