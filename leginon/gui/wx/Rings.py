@@ -26,7 +26,6 @@ class Dialog(wx.Dialog):
 	def __init__(self, parent, title, ring=None):
 		wx.Dialog.__init__(self, parent, -1, title)
 		sbszring = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Ring'), wx.VERTICAL)
-		sbszring.Add(szring, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.ieinside = IntEntry(self, -1, min=0, chars=4)
 		self.ieoutside = IntEntry(self, -1, min=0, chars=4)
@@ -49,7 +48,7 @@ class Dialog(wx.Dialog):
 		szring.Add(self.ieoutside, (1, 2), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'pixels')
 		szring.Add(label, (1, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
+		sbszring.Add(szring, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bok = wx.Button(self, wx.ID_OK, 'OK')
 		self.bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
