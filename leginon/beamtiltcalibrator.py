@@ -17,6 +17,7 @@ import calibrator
 import calibrationclient
 import leginondata
 import gui.wx.BeamTiltCalibrator
+import time
 
 class Abort(Exception):
 	pass
@@ -36,6 +37,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		'settling time': 0.5,
 		'comafree beam tilt': 0.005,
 		'comafree misalign': 0.002,
+		'imageshift coma tilt': 0.005,
+		'imageshift coma step': -1e-6,
+		'imageshift coma number': 1,
+		'imageshift coma repeat': 1,
 	})
 
 	def __init__(self, *args, **kwargs):
@@ -119,25 +124,101 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.logger.info('Storing calibration...')
 			mag = self.instrument.tem.Magnification
 			ht = self.instrument.tem.HighTension
-			calibration_client.storeMatrix(ht, mag, 'coma-free', matrix)
+			calibration_client.storeMatrix(ht, mag, 'beam-tilt coma', matrix)
 			self.logger.info('Calibration stored')
 		self.panel.calibrationDone()
 
-	def measureComaFree(self, tilt_value):
+	def calibrateImageShiftComa(self):
+		'''determine the calibration matrix for image shift induced coma'''
 		calibration_client = self.calibration_clients['beam tilt']
 		try:
 			if self.initInstruments():
 				raise RuntimeError('cannot initialize instrument')
+			tilt_value = self.settings['imageshift coma tilt']
+			shift_step = self.settings['imageshift coma step']
+			shift_n = self.settings['imageshift coma number']
+			repeat = self.settings['imageshift coma repeat']
+			matrix,coma0 = self.measureImageShiftComaMatrix(shift_n,shift_step,repeat, tilt_value, settle=self.settings['settling time'])
+		except Exception, e:
+			self.logger.error('Calibration failed: %s' % e)
+			matrix = None
+		else:
+			self.logger.info('Calibration completed')
+		# store calibration
+		if matrix is not None:
+			self.logger.info('Storing calibration...')
+			mag = self.instrument.tem.Magnification
+			ht = self.instrument.tem.HighTension
+			calibration_client.storeMatrix(ht, mag, 'image-shift coma', matrix)
+			self.logger.info('Calibration stored')
+		self.panel.calibrationDone()
+
+	def measureImageShiftComaMatrix(self, shift_n, shift_step, repeat, tilt_value, settle):
+		''' Measure coma for a range of image shift and fit the results 
+				to a straight line on individual axis.  Strickly speaking should
+				use orthogonal distance regression.''' 
+		calibration_client = self.calibration_clients['beam tilt']
+		f = open(self.session['name']+'tilt.dat','w')
+		tem = self.instrument.getTEMData()
+		shift0 = self.instrument.tem.ImageShift
+		state = leginondata.ScopeEMData()
+		tilt0 = self.instrument.tem.BeamTilt
+		state['image shift'] = shift0
+		state['beam tilt'] = tilt0
+		coma0 = tilt0
+		tdict = {}
+		xydict = {}
+		ordered_axes = ['x','y']
+		try:
+			for axis in ordered_axes:
+				tdata = []
+				data = {'x':[],'y':[]}
+				for i in range(0,2*shift_n+1):
+					shift = (i - shift_n) * shift_step
+					tdata.append(shift)
+					state['image shift'][axis] = shift0[axis] + shift
+					self.instrument.setData(state)
+					newshift = self.instrument.tem.ImageShift
+					print "==============================="
+					print 'Image Shift ( %5.2f, %5.2f)' % (newshift['x']*1e6,newshift['y']*1e6)
+					text = '%5.2f %5.2f ' % (newshift['x']*1e6,newshift['y']*1e6)
+					xarray,yarray = calibration_client.repeatMeasureComaFree(tilt_value,settle,repeat)
+					xmean = xarray.mean()
+					ymean = yarray.mean()
+					text = text + "%5.2f %5.2f %5.2f %5.2f" %(xmean*1000,xarray.std()*1000,ymean*1000,yarray.std()*1000) + '\n'
+					f.write(text)
+					state['image shift'] = shift0
+					state['beam tilt'] = tilt0
+					self.instrument.setData(state)
+					comatilt = {'x':xmean,'y':ymean}
+					data['x'].append(xmean)
+					data['y'].append(ymean)
+					self.checkAbort()
+				tdict[axis] = tdata
+				xydict[axis] = data
+			matrix, coma0 = calibration_client.calculateImageShiftComaMatrix(tdict,xydict)
+		except:
+			raise
+			matrix = None
+		f.close()
+		return matrix, coma0
+
+	def measureComaFree(self, tilt_value, correctshift=False):
+		calibration_client = self.calibration_clients['beam tilt']
+		if correctshift:
+			try:
+				calibration_client.correctImageShiftComa()
+			except Exception, e:
+				self.logger.error('Correction failed: %s' % e)
+				self.panel.comaMeasurementDone(self.comameasurement)
+				return
+		try:
 			cftilt = calibration_client.measureComaFree(tilt_value, settle=self.settings['settling time'])
+			comatilt = {'x':cftilt[(0,0)],'y':cftilt[(1,1)]}
+			self.comameasurement = comatilt
 		except Exception, e:
 			self.logger.error('Measurement failed: %s' % e)
-			cftilt = None
-		if cftilt is None:
-			comatilt = {'x':None, 'y':None}
-		else:
-			comatilt = {'x':cftilt[(0,0)],'y':cftilt[(1,1)]}
-		self.comameasurement = comatilt
-		self.panel.comaMeasurementDone(comatilt)
+		self.panel.comaMeasurementDone(self.comameasurement)
 
 	def _correctComaTilt(self):
 		bt = self.comameasurement

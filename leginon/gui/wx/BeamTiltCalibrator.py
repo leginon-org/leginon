@@ -17,7 +17,7 @@ import numpy
 import gui.wx.Calibrator
 import gui.wx.MatrixCalibrator
 import gui.wx.Dialog
-from gui.wx.Entry import FloatEntry
+from gui.wx.Entry import FloatEntry, IntEntry
 import gui.wx.Settings
 import gui.wx.ToolBar
 
@@ -73,7 +73,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.szmain.AddGrowableRow(0)
 		self.szmain.AddGrowableCol(0)
 		# tools
-		choices = ['Defocus', 'Stigmator', 'Coma-free']
+		choices = ['Defocus', 'Stigmator', 'Beam-Tilt Coma','Image-Shift Coma']
 		self.parameter = wx.Choice(self.toolbar, -1, choices=choices)
 		self.parameter.SetSelection(0)
 
@@ -89,7 +89,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ALIGN, 'rotcenter', shortHelpString='Align Rotation Center')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_EDIT, 'edit', shortHelpString='Edit current calibration')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_COMAFREE, 'ruler', shortHelpString='Measure Coma-free')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_COMAFREE, 'ruler', shortHelpString='Measure Coma-free beam tilt')
 
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
 
@@ -225,8 +225,10 @@ class Panel(gui.wx.Calibrator.Panel):
 			dialog = DefocusSettingsDialog(self)
 		elif parameter == 'Stigmator':
 			dialog = StigmatorSettingsDialog(self)
-		elif parameter == 'Coma-free':
+		elif parameter == 'Beam-Tilt Coma':
 			dialog = ComafreeSettingsDialog(self)
+		elif parameter == 'Image-Shift Coma':
+			dialog = ImageShiftComaSettingsDialog(self)
 		else:
 			raise RuntimeError
 		dialog.ShowModal()
@@ -239,8 +241,10 @@ class Panel(gui.wx.Calibrator.Panel):
 			threading.Thread(target=self.node.calibrateDefocus).start()
 		elif parameter == 'Stigmator':
 			threading.Thread(target=self.node.calibrateStigmator).start()
-		elif parameter == 'Coma-free':
+		elif parameter == 'Beam-Tilt Coma':
 			threading.Thread(target=self.node.calibrateComaFree).start()
+		elif parameter == 'Image-Shift Coma':
+			threading.Thread(target=self.node.calibrateImageShiftComa).start()
 		else:
 			raise RuntimeError
 
@@ -344,22 +348,69 @@ class ComafreeScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 		return [sbsz]
 
+class ImageShiftComaSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		return ImageShiftComaScrolledSettings(self,self.scrsize,False)
+
+class ImageShiftComaScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Image-Shift Coma Calibration')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+
+		self.widgets['imageshift coma tilt'] = FloatEntry(self, -1, chars=9)
+		self.widgets['imageshift coma step'] = FloatEntry(self, -1, chars=9)
+		self.widgets['imageshift coma number'] = IntEntry(self, -1, min=1, chars=2)
+		self.widgets['imageshift coma repeat'] = IntEntry(self, -1, min=1, chars=2)
+
+		sz = wx.GridBagSizer(5, 5)
+
+		label = wx.StaticText(self, -1, 'Coma measurement beam tilt (+/-)')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['imageshift coma tilt'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+
+		label = wx.StaticText(self, -1, 'Measure coma at')
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['imageshift coma number'], (1, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'positions per image shift direction')
+		sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'Add additional')
+		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['imageshift coma step'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'm image shift at each position')
+		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_LEFT)
+
+		label = wx.StaticText(self, -1, 'Repeat coma measurement')
+		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['imageshift coma repeat'], (3, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'times')
+		sz.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		return [sbsz]
+
+		
 class MeasureComafreeDialog(wx.Dialog):
 	def __init__(self, parent):
 		self.node = parent.node
 		self.panel = parent
 
-		wx.Dialog.__init__(self, parent, -1, 'Measure Coma-free Alignment')
+		wx.Dialog.__init__(self, parent, -1, 'Measure Coma-free Beam Tilt')
 
 		self.measure = wx.Button(self, -1, 'Measure')
+		self.correctshift = wx.CheckBox(self, -1, 'Correct image-shift-induced beam tilt')
 		self.correct = wx.Button(self, -1, 'Correct Beam Tilt')
 		self.correct.Enable(False)
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.measure)
 		self.Bind(wx.EVT_BUTTON, self.onCorrectButton, self.correct)
 
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.measure, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		szbutton.Add(self.correct, (1, 0), (1, 1), wx.EXPAND)
+		szbutton.Add(self.correctshift, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		szbutton.Add(self.measure, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		szbutton.Add(self.correct, (2, 0), (1, 1), wx.EXPAND)
 
 		sbsz = wx.GridBagSizer(5, 5)
 
@@ -396,8 +447,9 @@ class MeasureComafreeDialog(wx.Dialog):
 
 	def onMeasureButton(self, evt):
 		btilt = self.tiltvalue.GetValue()
+		correctshift = self.correctshift.GetValue()
 		self.panel._calibrationEnable(False)
-		threading.Thread(target=self.node.measureComaFree, args=(btilt,)).start()
+		threading.Thread(target=self.node.measureComaFree, args=(btilt,correctshift)).start()
 
 	def onCorrectButton(self, evt):
 		self.panel.instrumentEnable(False)

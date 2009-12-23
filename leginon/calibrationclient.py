@@ -13,6 +13,7 @@
 
 import node, leginondata, event
 import numpy
+import scipy
 import pyami.quietscipy
 import scipy.ndimage
 import math
@@ -549,7 +550,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			return None
 
 	def setBeamTilt(self, bt):
-		'SET BT', bt
 		self.instrument.tem.BeamTilt = bt
 
 	def storeRotationCenter(self, tem, ht, mag, beamtilt):
@@ -896,7 +896,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 	def measureMatrixC(self, m, t, settle):
 		'''
-		determine matrix C, the coma-free matrix
+		determine matrix C, the beam-tilt coma matrix
 		m = misalignment value, t = tilt value
 		'''
 		self.rpixelsize = None
@@ -932,8 +932,24 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			matrix[:,1] = numpy.divide(numpy.subtract(diffs['y'][-1], diffs['y'][1]), 2 * m)
 		return matrix
 
-	def measureComaFree(self, tilt_value, settle):
+	def calculateImageShiftComaMatrix(self,tdata,xydata):
+		''' Fit the beam tilt vector induced by image shift 
+				to a straight line on individual axis.  
+				Strickly speaking we should use orthogonal distance regression.''' 
+		ordered_axes = ['x','y']
+		matrix = numpy.zeros((2,2))
+		coma0 = {'x':0.0,'y':0.0}
+		for index1, axis1 in enumerate(ordered_axes):
+			data = xydata[axis1]
+			for axis2 in data.keys():
+				(slope,t_intercept) = scipy.polyfit(numpy.array(tdata[axis1]),numpy.array(xydata[axis1][axis2]),1)
+				index2 = ordered_axes.index(axis2)
+				matrix[index1,index2] = slope
+				coma0[axis2] += t_intercept
+			coma0[axis2] /= len(ordered_axes)
+		return matrix, coma0
 
+	def measureComaFree(self, tilt_value, settle):
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
@@ -942,9 +958,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		self.ht = ht
 		self.initTableau()
 		try:
-			cmatrix = self.retrieveMatrix(tem, cam, 'coma-free', ht, mag)
+			par = 'beam-tilt coma'
+			cmatrix = self.retrieveMatrix(tem, cam, 'beam-tilt coma', ht, mag)
 		except NoMatrixCalibrationError:
-			raise RuntimeError('missing calibration matrix')
+			raise RuntimeError('missing %s calibration matrix' % par)
 		dc = [0,0]
 		for axisn, axisname in ((0,'x'),(1,'y')):
 			tvect = [0, 0]
@@ -953,6 +970,55 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		dc = numpy.array(dc)
 		cftilt = numpy.linalg.solve(cmatrix, dc)
 		return cftilt
+
+	def repeatMeasureComaFree(self, tilt_value, settle, repeat=1):
+		'''repeat measuremnet to increase precision'''
+		tilts = {'x':[],'y':[]}
+		print "==================="
+		for i in range(0,repeat):
+			try:
+				cftilt = self.measureComaFree(tilt_value, settle)
+			except Exception, e:
+				cftilt = None
+				raise
+			if cftilt is None:
+				comatilt = {'x':None, 'y':None}
+			else:
+				tilts['x'].append(cftilt[(0,0)])
+				tilts['y'].append(cftilt[(1,1)])
+				comatilt = {'x':cftilt[(0,0)],'y':cftilt[(1,1)]}
+				print "    %5.2f,  %5.2f" % (cftilt[(0,0)]*1000,cftilt[(1,1)]*1000)
+		if len(tilts['x']):
+			xarray = numpy.array(tilts['x'])
+			yarray = numpy.array(tilts['y'])
+			print "--------------------"
+			print "m   %5.2f,  %5.2f" %(xarray.mean()*1000,yarray.mean()*1000)
+			print "std %5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000)
+			return xarray,yarray
+
+	def correctImageShiftComa(self):
+		tem = self.instrument.getTEMData()
+		cam = self.instrument.getCCDCameraData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		shift0 = self.instrument.tem.ImageShift
+		state = leginondata.ScopeEMData()
+		tilt0 = self.instrument.tem.BeamTilt
+		state['image shift'] = shift0
+		state['beam tilt'] = tilt0
+		shift = state['image shift']
+		beamtilt = state['beam tilt']
+		try:
+			par = 'image-shift coma'
+			matrix = self.retrieveMatrix(tem, cam, 'image-shift coma', ht, mag)
+		except NoMatrixCalibrationError:
+			raise RuntimeError('missing %s calibration matrix' % par)
+		shiftvect = numpy.array((shift['x'], shift['y']))
+		change = numpy.dot(matrix, shiftvect)
+		beamtilt['x'] = beamtilt['x'] + change[0]
+		beamtilt['y'] = beamtilt['y'] + change[1]
+		print "Beam Tilt Correction ( %5.2f, %5.2f)" % (change[0]*1e3,change[1]*1e3)
+		self.setBeamTilt(beamtilt)
 
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 	mover = True

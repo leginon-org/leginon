@@ -1666,6 +1666,10 @@ class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 			('settling time', float),
 			('comafree beam tilt', float),
 			('comafree misalign', float),
+			('imageshift coma tilt', float),
+			('imageshift coma step', float),
+			('imageshift coma number', int),
+			('imageshift coma repeat', int),
 		)
 	typemap = classmethod(typemap)
 
