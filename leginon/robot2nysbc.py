@@ -4,9 +4,7 @@
 #			 The Scripps Research Institute, La Jolla, CA
 #			 For terms of the license agreement
 #			 see	http://ami.scripps.edu/software/leginon-license
-#	Subclass of robot2 writen by Minghui Hu at New York Structural Biology Center
-# for their grid handling robot
-# from leginon import robot3 ; j = robot3.Robot3(); j.moveStagePositionZ()
+# from leginon import robot2nysbc ; j = robot2nysbc.Robot2nysbc(); j.moveStagePositionZ()
 
 import Image
 import sys
@@ -126,14 +124,16 @@ class ExitRequest(robot2.ExitRequest):
 
 class GridRequest(robot2.GridRequest):
 	pass
-	
-class Robot3(robot2.Robot2):
+
+class Robot2nysbc(robot2.Robot2):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		robot2.Robot2.__init__(self, id, session, managerlocation, **kwargs)
 		self.startTime = 0
 		self.endTime = 0
 		self.wait_time = 3
 		self.tried_times = 5
+		self.beamFile = "C:\\Python25\Lib\\site-packages\\pyScope\\beamStatus.cfg"
+		self.beamStatus = {'start_time': None, 'end_time': None}
 
 	#imgZposition = -119e-6								# for robot tip
 	#imgXposition = 416e-6
@@ -149,13 +149,13 @@ class Robot3(robot2.Robot2):
 
 
 	#imgZposition = -92.0e-6								# for Gatan tip
-	imgZposition = 0	
+	imgZposition = 0
 	imgXposition = 0
 	imgYposition = 0
 
 	defZposition = -45.3e-6		                			# changed by Minghui
-	defXposition = 0
-	defYposition = 0
+	defXposition = 14.6e-6
+	defYposition = -688.7e-6
 
 	panelclass = gui.wx.Robot.Panel
 	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent,
@@ -177,6 +177,32 @@ class Robot3(robot2.Robot2):
 		'grid clear wait': False,
 	}
 	defaultcolumnpressurethreshold = 3.5e-5
+
+
+	def readBeamStatus(self):
+		beamStatus = {'start_time': None,'end_time': None}
+		infile = open(self.beamFile,"r")
+		lines = infile.readlines()
+		line = lines[0]
+		beamStatus['start_time'] = line[:-1]
+		line = lines[1]
+		beamStatus['end_time'] = line[:-1]
+		infile.close()
+		return beamStatus
+
+
+	def saveBeamStatus(self, timeType, value):
+		beamStatus = {'start_time': None,'end_time': None}
+		beamStatus = self.readBeamStatus()
+		if timeType == 'start_time':
+			beamStatus['start_time'] = value
+		else:
+			beamStatus['end_time'] = value
+		outfile = open(self.beamFile,"w")
+		outfile.write(str(beamStatus['start_time']) + '\n')
+		outfile.write(str(beamStatus['end_time']) + '\n')
+		outfile.close()
+		return True
 
 
 	def _queueHandler(self):
@@ -207,7 +233,7 @@ class Robot3(robot2.Robot2):
 				evt['request node'] = request.node
 				evt['grid'] = leginondata.GridData(initializer={'grid ID': gridid})
 				evt['status'] = 'failed'
-				gridnumber = request.number				
+				gridnumber = request.number
 				self.selectGrid(gridnumber)
 				if gridnumber is None:
 					evt['status'] = 'invalid'
@@ -267,7 +293,7 @@ class Robot3(robot2.Robot2):
 			else:
 				self.outputEvent(evt)
 				self.logger.info('Data collection event outputted')
-			self.scopeReadyForImaging()	
+			self.scopeReadyForImaging()
 			return evt['grid']
 		self.logger.info('Grid inserted.')
 		self.scopeReadyForImaging()
@@ -285,7 +311,7 @@ class Robot3(robot2.Robot2):
 	def scopeReadyForInsertion(self):
 		self.startTime = time.time()						# added by Minghui
 		self.logger.info('Readying microscope for insertion ...')
-		self.checkHighTensionOn()		
+		self.checkHighTensionOn()
 		self.setBeamOff()
 		self.stageIsReadyforInsertionExtraction()
 		self.logger.info('Microscope ready for insertion.')
@@ -315,13 +341,14 @@ class Robot3(robot2.Robot2):
 		while not self.communication.Signal5:
 			time.sleep(self.wait_time)
 		self.logger.info('Robot has completed insertion')
-		
+
 
 	def scopeReadyForImaging(self):
 		self.logger.info('Readying microscope for imaging...')
 		self.stageIsReadyforImaging()
 		self.checkHighTensionOn()
 		self.setBeamOn()
+		self.saveBeamStatus("start_time", time.localtime())
 		self.logger.info('Microscope ready for imaging.')
 
 
@@ -329,6 +356,7 @@ class Robot3(robot2.Robot2):
 		self.logger.info('Readying microscope for extraction...')
 		self.checkHighTensionOn()
 		self.setBeamOff()
+		self.saveBeamStatus("end_time", time.localtime())
 		self.stageIsReadyforInsertionExtraction()
 		self.logger.info('Microscope ready for extraction.')
 
@@ -366,8 +394,8 @@ class Robot3(robot2.Robot2):
 		self.endTime = time.time()
 		gridTime = (float(self.endTime) - float(self.startTime))/60.0
 		print 'This sample takes %f minutes' % gridTime
-		
-		
+
+
 	def insert(self):
 		self.logger.info('Inserting holder into microscope')
 		self.lockScope()
@@ -376,10 +404,10 @@ class Robot3(robot2.Robot2):
 		except Exception, e:
 			self.unlockScope()
 			self.logger.error('Failed to get scope ready for insertion: %s' % e)
-			raise		
+			raise
 
 		self.logger.info('insert '+str(self.simulate)+' setting'+str(self.settings['simulate']))
-		
+
 		self.estimateTimeLeft()
 		if self.simulate or self.settings['simulate']:
 			self.logger.info('Simulated Insertion of holder successfully completed')
@@ -388,14 +416,14 @@ class Robot3(robot2.Robot2):
 			self.signalRobotToInsert()
 			self.waitForRobotToInsert()
 			self.logger.info('Insertion of holder successfully completed')
-		
+
 		try:
 			griddata = self.gridInserted(self.gridnumber)
 		except Exception, e:
 			self.logger.error('Failed to get griddata: %s' % e)
 			self.unlockScope()
 			return
-		
+
 		self.unlockScope()
 		return griddata
 
@@ -409,15 +437,15 @@ class Robot3(robot2.Robot2):
 			self.unlockScope()
 			self.logger.error('Failed to get scope ready for extraction: %s' % e)
 			raise
-		
-		if self.simulate or self.settings['simulate']:			
+
+		if self.simulate or self.settings['simulate']:
 			self.logger.info('Simulated extraction of holder successfully completed')
 		else:
 			self.robotReadyForExtraction()
 			self.signalRobotToExtract()
 			self.waitForRobotToExtract()
 			self.logger.info('Extraction of holder successfully completed')
-		self.unlockScope()		
+		self.unlockScope()
 		return
 
 
@@ -433,15 +461,16 @@ class Robot3(robot2.Robot2):
 		self.instrument.tem.TurboPump = 'on'
 		self.logger.info('Beam is turned on.')
 
-		
+
 	def setBeamOff(self):		# Added by Minghui
 		self.logger.info('Turning off the beam ...')
 		self.instrument.tem.TurboPump = 'off'
 		self.logger.info('Beam is turned off.')
-		time.sleep(self.wait_time)		
+		time.sleep(self.wait_time)
 
 
 	def stageIsReadyforInsertionExtraction(self):
+		print "Moving stage to make it ready for insertion and extraction"
 		while (not (self.moveStagePositionXYZ('z',self.defZposition) and self.moveStagePositionXYZ('x',self.defXposition) and self.moveStagePositionXYZ('y',self.defYposition))):
 			self.logger.info('Stage is not ready for insertion/extraction, Trying again...')
 		self.logger.info('stage is ready for insertion/extraction ...')
@@ -465,7 +494,7 @@ class Robot3(robot2.Robot2):
 				stage = self.instrument.tem.StagePosition
 				if abs(stage[axis] - val) < limit:
 					self.logger.info("%s stage position is reached" % axis)
-					return True			
+					return True
 				else:
 					triedTimes = triedTimes + 1
 					self.logger.info("Moving stage position %s to: %f" % (axis,val))
