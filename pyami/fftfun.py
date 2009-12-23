@@ -7,9 +7,8 @@ from scipy import ndimage
 
 def getAstigmaticDefocii(params,rpixelsize, ht):
 	minr = rpixelsize * min(params['a'],params['b'])
-	maxz = calculateDefocus(ht,minr)
+	maxz = calculateDefocusOld(ht,minr)
 	maxr = rpixelsize * max(params['a'],params['b'])
-	minz = calculateDefocus(ht,maxr)
 	z0 = (maxz + minz) / 2.0
 	zast = maxz - z0
 	ast_ratio = zast / z0
@@ -25,7 +24,10 @@ def getAstigmaticDefocii(params,rpixelsize, ht):
 
 def calculateDefocus(ht, s, Cs=2.0e-3):
 		# unit is meters
-	wavelength = 3.7e-12 * 1e5 / ht
+	h = 6.6e-34
+	m = 9.1e-31
+	charge = 1.6e-19
+	wavelength = h / math.sqrt( 2 * m * charge * ht)
 	return (Cs*wavelength**3*s**4/2+1.0)/(wavelength * s**2)
 
 def calculateFirstNode(ht,z,Cs=2.0e-3):
