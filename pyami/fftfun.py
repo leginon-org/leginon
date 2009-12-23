@@ -7,8 +7,9 @@ from scipy import ndimage
 
 def getAstigmaticDefocii(params,rpixelsize, ht):
 	minr = rpixelsize * min(params['a'],params['b'])
-	maxz = calculateDefocusOld(ht,minr)
+	maxz = calculateDefocus(ht,minr)
 	maxr = rpixelsize * max(params['a'],params['b'])
+	minz = calculateDefocus(ht,maxr)
 	z0 = (maxz + minz) / 2.0
 	zast = maxz - z0
 	ast_ratio = zast / z0
