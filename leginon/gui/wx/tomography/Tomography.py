@@ -322,8 +322,8 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 
 class Panel(gui.wx.Acquisition.Panel):
 	settingsdialogclass = SettingsDialog
-	def __init__(self, parent, name):
-		gui.wx.Acquisition.Panel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_BROWSE_IMAGES, False)
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_CHECK_DOSE,
 							 'dose',
