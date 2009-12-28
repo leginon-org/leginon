@@ -29,13 +29,17 @@ $selectedcluster=strtolower($selectedcluster);
 */
 
 if ($_POST['write']) {
-	writeJobFile(); // write job file and prepare to submit
+	// third step: write job file and prepare to submit
+	writeJobFile();
 } elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
-	jobForm(); // create form to fill job parameters
+	// second step: create form to fill job parameters
+	jobForm();
 } elseif ($_POST['submitjob']) {
-	submitJob(); // submit job to cluster
+	// final step: submit job to cluster
+	submitJob();
 } else {
-	stackModelForm(); // select model and stack
+	// first step: select model and stack
+	stackModelForm();
 }
 
 /*
@@ -70,7 +74,7 @@ function submitJob($extra=False) {
 	$jobfile="$jobname.job";
 	$tmpjobfile = "/tmp/$jobfile";
 	if (!file_exists($tmpjobfile))
-		writeJobFile("<B>ERROR:</B> Could not find temp jobfile: $tmpjobfile");	
+		writeJobFile("<B>ERROR:</B> Could not find temp jobfile: $tmpjobfile");
 
 	$jobid=$particle->insertClusterJobData($host,$outdir,$dmfpath,$clusterpath,$jobfile,$expId,'recon',$user);
 
@@ -103,12 +107,12 @@ function submitJob($extra=False) {
 	echo "<tr><td>Cluster Job File</td><td>$path.job</td></tr>\n";
 	echo "<tr><td>Appion Job Id</td><td>$jobid</td></tr>\n";
 	echo "<tr><td>Job File Name</td><td>$jobname.job</td></tr>\n";
-  
+
 	// submit job on host
 	$cmd = "cd $path; qsub $jobfile;\n";
-	
+
 	$jobnumstr = exec_over_ssh($host, $user, $pass, $cmd, True);
-  
+
 	$jobnum = trim($jobnumstr);
 	echo "<tr><td>Cluster Job Id</td><td>$jobnum</td></tr>\n";
 	$jobnum = ereg_replace('\..*','',$jobnum);
@@ -256,7 +260,7 @@ function jobForm($extra=false) {
 	$modelid = $modelinfo[0];
 
 	$clusterdefaults = ($selectedcluster==$_POST['clustermemo']) ? true : false;
-	
+
 
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$reconruns = count($particle->getJobIdsFromSession($expId, 'recon'));
@@ -296,7 +300,7 @@ function jobForm($extra=false) {
 	echo openRoundBorder();
 	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
 	echo "<tr>
-    <td><b>Cluster:</b></td>
+		<td><b>Cluster:</b></td>
 		<td><select name='cluster' onchange='emanjob.submit()'>
 		";
 		foreach ($CLUSTER_CONFIGS as $cluster) {
@@ -305,23 +309,23 @@ function jobForm($extra=false) {
 		}
 	echo "
 		</select></td>
-  </tr>
-  <tr>
-    <td><B>Job Run Name:</B></td>
-    <td><input type='text' name='jobname' value='$jobname' size='20'></td>
-  </tr>
-  <tr>
-    <td><B>Output Directory:</B></td>
-    <td><input type='text' NAME='outdir' value='$outdir' size='50'></td>
-  </tr>
-  </table>\n";
+			</tr>
+			<tr>
+				<td><B>Job Run Name:</B></td>
+				<td><input type='text' name='jobname' value='$jobname' size='20'></td>
+			</tr>
+			<tr>
+				<td><B>Output Directory:</B></td>
+				<td><input type='text' NAME='outdir' value='$outdir' size='50'></td>
+			</tr>
+		</table>\n";
 	echo closeRoundBorder();
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo "<p>\n";
 
 	//--- overall PBS tables
-	echo "<table border='0'><tr><td valign='top'>"; 
+	echo "<table border='0'><tr><td valign='top'>";
 
 	//--- Cluster Parameters
 	echo openRoundBorder();
@@ -359,7 +363,7 @@ function jobForm($extra=false) {
 	echo"</td></tr></table>"; //overall table
 
 	$bgcolor="#E8E8E8";
-	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','maxshift','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','refine','tree','coran','eotest','copy');  
+	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','maxshift','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','refine','tree','coran','eotest','copy');
 	echo"
 	<br />
 	<h4> EMAN Reconstruction Parameters</h4>
@@ -383,7 +387,7 @@ function jobForm($extra=false) {
 			}
 		}
 	}
-	
+
 	echo "<input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>\n";
 	echo "<select name='import' onChange='emanjob.submit()'>\n";
 	echo "<option>Import parameters</option>\n";
@@ -394,8 +398,8 @@ function jobForm($extra=false) {
 	echo $ropt;
 	echo "</select>\n";
 	echo "<br />
-  <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
-    <tr>\n";
+	<TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
+		<tr>\n";
 	foreach ($display_keys as $k=>$key) {
 		$id="l$k";
 		echo"<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"$id\" onMouseOver='popLayer(\"$key\", \"$id\")' onMouseOut='hideLayer()'>$key</a></font></td>\n";
@@ -492,7 +496,7 @@ function jobForm($extra=false) {
 				$ang=1;
 				$classiter=3;
 			}
-			else { 
+			else {
 				$classiter=3;
 				$ang=0.8;
 				$refine='CHECKED';
@@ -576,7 +580,7 @@ function jobForm($extra=false) {
 			$affpropMP=($i>$j) ? $_POST["affpropMP".($i-1)] : $_POST[$affpropMPn];
 			// use symmetry of model by default, but you can change it
 			if ($i==1 && !$_POST['duplicate']) $sym=$modsym;
-			
+
 			if ($i>$j) {
 				$median=($_POST["median".($i-1)]=='on') ? 'CHECKED' : '';
 				$phasecls=($_POST["phasecls".($i-1)]=='on') ? 'CHECKED' : '';
@@ -606,30 +610,30 @@ function jobForm($extra=false) {
 		}
 		$rcol = ($i % 2) ? '#FFFFFF' : '#FFFDCC';
 		echo"
-      <tr>
-        <td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i' onclick='emanjob.submit()'></td>
-        <td bgcolor='$rcol'><b>$i</b></td>
-        <td bgcolor='$rcol'><input type='text' NAME='$angn' SIZE='3' VALUE='$ang'></td>
-        <td bgcolor='$rcol'><input type='text' NAME='$maskn' SIZE='4' VALUE='$mask'></td>
-        <td bgcolor='$rcol'><input type='text' NAME='$imaskn' SIZE='4' VALUE='$imask'></td>
-        <td bgcolor='$rcol'><input type='text' NAME='$amask1n' SIZE='3' VALUE='$amask1'>
-                            <input type='text' NAME='$amask2n' SIZE='2' VALUE='$amask2'>
-                            <input type='text' NAME='$amask3n' SIZE='2' VALUE='$amask3'></td>
-        <td bgcolor='$rcol'><input type='text' NAME='$symn' SIZE='5' VALUE='$sym'></td>
-	<td bgcolor='$rcol'><input type='text' NAME='$maxshiftn' SIZE='3' VALUE='$maxshift'></td>
-        <td bgcolor='$rcol'><input type='text' NAME='$hardn' SIZE='3' VALUE='$hard'></td>
-        <td bgcolor='$rcol'><input type='text' NAME='$classkeepn' SIZE='4' VALUE='$classkeep'></td>
-        <td bgcolor='$rcol'><input type='text' NAME='$classitern' SIZE='2' VALUE='$classiter'></td>
-        <td bgcolor='$rcol'><input type='text' NAME='$filt3dn' SIZE='4' VALUE='$filt3d'></td>
-        <td bgcolor='$rcol'><input type='text' size='5' name='$xfilesn' value='$xfiles'>
-        <td bgcolor='$rcol'><input type='text' NAME='$shrinkn' SIZE='2' VALUE='$shrink'></td>
-        <td bgcolor='$rcol'><input type='text' size='2' name='$euler2n' value='$euler2'>
-        <td bgcolor='$rcol'><input type='checkbox' NAME='$mediann' $median></td>
-        <td bgcolor='$rcol'><input type='checkbox' NAME='$phaseclsn' $phasecls></td>\n";
+		<tr>
+			<td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i' onclick='emanjob.submit()'></td>
+			<td bgcolor='$rcol'><b>$i</b></td>
+			<td bgcolor='$rcol'><input type='text' NAME='$angn' SIZE='3' VALUE='$ang'></td>
+			<td bgcolor='$rcol'><input type='text' NAME='$maskn' SIZE='4' VALUE='$mask'></td>
+			<td bgcolor='$rcol'><input type='text' NAME='$imaskn' SIZE='4' VALUE='$imask'></td>
+			<td bgcolor='$rcol'><input type='text' NAME='$amask1n' SIZE='3' VALUE='$amask1'>
+				<input type='text' NAME='$amask2n' SIZE='2' VALUE='$amask2'>
+				<input type='text' NAME='$amask3n' SIZE='2' VALUE='$amask3'></td>
+			<td bgcolor='$rcol'><input type='text' NAME='$symn' SIZE='5' VALUE='$sym'></td>
+			<td bgcolor='$rcol'><input type='text' NAME='$maxshiftn' SIZE='3' VALUE='$maxshift'></td>
+			<td bgcolor='$rcol'><input type='text' NAME='$hardn' SIZE='3' VALUE='$hard'></td>
+			<td bgcolor='$rcol'><input type='text' NAME='$classkeepn' SIZE='4' VALUE='$classkeep'></td>
+			<td bgcolor='$rcol'><input type='text' NAME='$classitern' SIZE='2' VALUE='$classiter'></td>
+			<td bgcolor='$rcol'><input type='text' NAME='$filt3dn' SIZE='4' VALUE='$filt3d'></td>
+			<td bgcolor='$rcol'><input type='text' size='5' name='$xfilesn' value='$xfiles'>
+			<td bgcolor='$rcol'><input type='text' NAME='$shrinkn' SIZE='2' VALUE='$shrink'></td>
+			<td bgcolor='$rcol'><input type='text' size='2' name='$euler2n' value='$euler2'>
+			<td bgcolor='$rcol'><input type='checkbox' NAME='$mediann' $median></td>
+			<td bgcolor='$rcol'><input type='checkbox' NAME='$phaseclsn' $phasecls></td>\n";
 	#echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$fsclsn' $fscls></td>\n";
 	echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$refinen' $refine></td>\n";
 	#echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$perturbn' $perturb></td>\n";
-      	#echo"<td bgcolor='$rcol'><input type='checkbox' NAME='$goodbadn' $goodbad></td>\n";
+	#echo"<td bgcolor='$rcol'><input type='checkbox' NAME='$goodbadn' $goodbad></td>\n";
 	echo "<td bgcolor='$rcol'><select name='$treen'><option>-</option><option $treetwo>2</option><option $treethree>3</option></select></td>\n";
 	echo "<td bgcolor='$rcol'>\n";
 
@@ -777,27 +781,65 @@ function writeJobFile ($extra=False) {
 	global $clusterdata;
 	$particle = new particledata();
 
-	if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=".C_NODES_DEF);
-	if (!$_POST['ppn']) jobForm("ERROR: No processors per node specified, setting default=".C_PPN_DEF);
-	if ($_POST['ppn'] > C_PPN_MAX ) jobForm("ERROR: Max processors per node is ".C_PPN_MAX);
-	if ($_POST['nodes'] > C_NODES_MAX ) jobForm("ERROR: Max nodes on ".C_NAME." is ".C_NODES_MAX);
-	if (!$_POST['walltime']) jobForm("ERROR: No walltime specified, setting default=".C_WALLTIME_DEF);
-	if ($_POST['walltime'] > C_WALLTIME_MAX ) jobForm("ERROR: Max walltime is ".C_WALLTIME_MAX);
-	if (!$_POST['cput']) jobForm("ERROR: No CPU time specified, setting default=".C_CPUTIME_DEF);
-	if ($_POST['cput'] > C_CPUTIME_MAX) jobForm("ERROR: Max CPU time is ".C_CPUTIME_MAX);
-	if (!$_POST['rprocs']) jobForm("ERROR: No reconstruction ppn specified, setting default=".C_RPROCS_DEF);
+	// cluster settings
+	if (!$_POST['nodes'])
+		jobForm("ERROR: No nodes specified, setting default=".C_NODES_DEF);
+	if (!$_POST['ppn'])
+		jobForm("ERROR: No processors per node specified, setting default=".C_PPN_DEF);
+	if ($_POST['ppn'] > C_PPN_MAX )
+		jobForm("ERROR: Max processors per node is ".C_PPN_MAX);
+	if ($_POST['nodes'] > C_NODES_MAX )
+		jobForm("ERROR: Max nodes on ".C_NAME." is ".C_NODES_MAX);
+	if (!$_POST['walltime'])
+		jobForm("ERROR: No walltime specified, setting default=".C_WALLTIME_DEF);
+	if ($_POST['walltime'] > C_WALLTIME_MAX )
+		jobForm("ERROR: Max walltime is ".C_WALLTIME_MAX);
+	if (!$_POST['cput'])
+		jobForm("ERROR: No CPU time specified, setting default=".C_CPUTIME_DEF);
+	if ($_POST['cput'] > C_CPUTIME_MAX)
+		jobForm("ERROR: Max CPU time is ".C_CPUTIME_MAX);
+	if (!$_POST['rprocs'])
+		jobForm("ERROR: No reconstruction ppn specified, setting default=".C_RPROCS_DEF);
 	if ($_POST['rprocs'] > $_POST['ppn'])
 	  jobForm("ERROR: Asking to reconstruct on more processors than available");
 
-  for ($i=1; $i<=$_POST['numiters']; $i++) {
-		if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
-		if (!$_POST['sym'.$i]) jobForm("ERROR: no symmetry set for iteration $i");
-		if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
+	// iteration settings
+	$minang = 100;
+	for ($i=1; $i<=$_POST['numiters']; $i++) {
+		if (!$_POST['ang'.$i])
+			jobForm("ERROR: no angular increment set for iteration $i");
+		if ($minang > $_POST['ang'.$i])
+			$minang = $_POST['ang'.$i];
+		if (!$_POST['sym'.$i])
+			jobForm("ERROR: no symmetry set for iteration $i");
+		if (!$_POST['mask'.$i])
+			jobForm("ERROR: no mask set for iteration $i");
+		
 		// if amask is used, then xfiles must also be used
 		if ($_POST['amask1'.$i] || $_POST['amask2'.$i] || $_POST['amask3'.$i]) {
-			if (!($_POST['amask1'.$i] && $_POST['amask2'.$i] && $_POST['amask3'.$i])) jobForm("ERROR: All 3 amask values of amask must be entered for iteration $i");
-			if (!$_POST['xfiles'.$i]) jobForm ("ERROR: amask requires the use of xfiles for iteration $i");
-		} 
+			if (!($_POST['amask1'.$i] && $_POST['amask2'.$i] && $_POST['amask3'.$i]))
+				jobForm("ERROR: All 3 amask values of amask must be entered for iteration $i");
+			if (!$_POST['xfiles'.$i])
+				jobForm("ERROR: amask requires the use of xfiles for iteration $i");
+		}
+	}
+
+	// get the stack info (pixel size, box size)
+	$stackinfo=explode('|--|',$_POST['stackval']);
+	$stackidval=$stackinfo[0];
+	$apix=$stackinfo[1];
+	$box=$stackinfo[2];
+	$numpart=$stackinfo[3];
+
+	// get number of particle per class
+	$sym = $_POST['sym'.$_POST['numiters']];
+	$symdata = $particle->getSymmetryDataFromEmanName($sym);
+	if ($symdata) {
+		$foldsym = (float) $symdata['fold_symmetry'];
+		$numclass = ceil(18000./$foldsym/$minang/$minang);
+		$partperclass = floor($numpart/$numclass);
+		if ($partperclass < 3)
+			jobForm("ERROR: too few particles per class ($partperclass)<br/>$numpart particles for $numclass classes");
 	}
 
 	// check that job file doesn't already exist
@@ -825,18 +867,14 @@ function writeJobFile ($extra=False) {
 
 	$clusterdata->post_data();
 
-	// get the stack info (pixel size, box size)
-	$stackinfo=explode('|--|',$_POST['stackval']);
-	$stackidval=$stackinfo[0];
-	$apix=$stackinfo[1];
-	$box=$stackinfo[2];
+
 
 
 	// get the model id
 	$modelinfo=explode('|--|',$_POST['model']);
 	$modelid=$modelinfo[0];
 	$initmodel = $particle->getInitModelInfo($modelid);
-	if ($initmodel['boxsize'] != $box) $rebox = True; 
+	if ($initmodel['boxsize'] != $box) $rebox = True;
 	if (round($initmodel['pixelsize'],2) != round($apix,2)) $rescale = "scale=".$initmodel['pixelsize']/$apix;
 
 	// insert the job file into the database
@@ -854,7 +892,7 @@ function writeJobFile ($extra=False) {
 	$header.= "#PBS -j oe\n\n";
 	$clusterjob = "# stackId: $stackidval\n";
 	$clusterjob.= "# modelId: $modelid\n\n";
-	
+
 	$procs=$_POST['nodes']*$_POST['rprocs'];
 	$numiters=$_POST['numiters'];
 	$pad=intval($box*1.25);
@@ -972,7 +1010,7 @@ function writeJobFile ($extra=False) {
 		$line.="rm cls*.lst\n";
 		$ejob.= $line;
 	}
-	
+
 	### tar up files
 	$ejob.= "\n";
 	$ejob.= "tar -cvzf model.tar.gz threed.*a.mrc\n";
@@ -981,7 +1019,7 @@ function writeJobFile ($extra=False) {
 
 	### cluster specific info
 	$clusterjob .= $clusterdata->cluster_job_file($ejob);
-	
+
 	if (!$extra) {
 		echo $clusterdata->cluster_check_msg();
 		echo "<p>";
@@ -1002,7 +1040,7 @@ function writeJobFile ($extra=False) {
 
 	echo "<input type='hidden' NAME='header' VALUE='$header_conv'>\n";
 	echo "<input type='submit' NAME='submitjob' VALUE='Submit Job to Cluster'>\n";
-  echo "</form>\n";
+	echo "</form>\n";
 	echo "</p>";
 	if (!$extra) {
 		echo "<hr>\n";
@@ -1015,7 +1053,7 @@ function writeJobFile ($extra=False) {
 		$f = fopen($tmpfile,'w');
 		fwrite($f,$clusterjob);
 		fclose($f);
-	}	
+	}
 	processing_footer();
 	exit;
 }
