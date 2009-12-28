@@ -837,6 +837,8 @@ function writeJobFile ($extra=False) {
 	if ($symdata) {
 		$foldsym = (float) $symdata['fold_symmetry'];
 		$numclass = ceil(18000./$foldsym/$minang/$minang);
+		if ($numclass > 2500)
+			jobForm("ERROR: too many classes requested ($numclass)<br/>increase angular increment");
 		$partperclass = floor($numpart/$numclass);
 		if ($partperclass < 3)
 			jobForm("ERROR: too few particles per class ($partperclass)<br/>$numpart particles for $numclass classes");
