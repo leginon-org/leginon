@@ -2114,6 +2114,7 @@ class particledata {
 			$r['boxSize'] = $params[0]['boxSize'];
 			$r['tiltangle'] = $params[0]['tiltangle'];
 			$r['fliptype'] = $params[0]['fliptype'];
+			$r['inverted'] = $params[0]['inverted'];
 			return $r;
 		} 
 		$runarray = array();
@@ -2128,6 +2129,10 @@ class particledata {
 			$r = $runarray;
 			$r['bin'] = $params[0]['bin'];
 			$r['boxSize'] = $params[0]['boxSize'];
+			$r['tiltangle'] = $params[0]['tiltangle'];
+			$r['fliptype'] = $params[0]['fliptype'];
+			$r['inverted'] = $params[0]['inverted'];
+			$r['pixelsize'] = $params[0]['pixelsize'];
 		}
 		$r['selectionstacks'] = $selectionstacks;
 		return $r;

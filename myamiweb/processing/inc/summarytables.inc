@@ -105,7 +105,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	} #endif
 
 	// get pixel size of stack
-	$mpix=($particle->getStackPixelSizeFromStackId($stackid));
+	$mpix = ($stackdata['pixelsize']) ? $stackdata['pixelsize'] : $particle->getStackPixelSizeFromStackId($stackid);
 	$apix=format_angstrom_number($mpix)."/pixel";
 
 	// get box size
