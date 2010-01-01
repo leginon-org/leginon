@@ -85,10 +85,11 @@ function getStackSize($stackdata) {
 	else
 		$stackimgfile = $stackdata['path']."/".$stackdata['name'];
 	if (file_exists($stackimgfile)) {
-		if (filesize($stackimgfile) > 1073741824)
-		  	$size = sprintf("%.2f GB", filesize($stackimgfile)/1073741824);
+		$fsize = sprintf("%u", filesize($stackimgfile));
+		if ($fsize > 1073741824)
+		  	$size = sprintf("%.2f GB", $fsize/1073741824);
 		else
-			$size = sprintf("%.1f MB", filesize($stackimgfile)/1048576);
+			$size = sprintf("%.1f MB", $fsize/1048576);
 	}
 	return $size;
 }

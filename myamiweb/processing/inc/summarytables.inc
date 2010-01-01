@@ -293,13 +293,8 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 
 
 	// Get filesize
-	if (substr($stackdata['imagicfile'], -4) == ".hed")
-		$stackimgfile = $stackdata['path']."/".substr($stackdata['imagicfile'], 0, -4).".img";
-	if (filesize($stackimgfile) > 1073741824)
-		$filesize = sprintf("%.2f GB", filesize($stackimgfile)/1073741824);
-	else
-		$filesize = sprintf("%.1f MB", filesize($stackimgfile)/1048576);
-
+	$stackdata['name'] = $stackdata['imagicfile'];
+	$filesize = getStackSize($stackdata);
 	if ($mini)
 		$display_keys['size']=commafy($numpart)." particles (".$filesize.")";
 	else {
