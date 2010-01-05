@@ -147,14 +147,38 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		return True
 
 	#=======================
+	def getParticlesFromStack(self, imgdata):
+		partq = appiondata.ApParticleData()
+		partq['image'] = imgdata
+
+		stackpartq = appiondata.ApStackParticlesData()
+		stackpartq['stack'] = appiondata.ApStackData.direct_query(self.params['fromstackid'])
+		stackpartq['particle'] = partq
+		
+		stackpartdatas = stackpartq.query()
+
+		partdatas = []
+		for stackpartdata in stackpartdatas:
+			partdata = stackpartdata['particle']
+			partdatas.append(partdata)
+
+		return partdatas
+
+	#=======================
 	def boxParticlesFromImage(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
 		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
 
 		### get the particle before image filtering
-		if self.params['defocpair'] is True:
+		if self.params['defocpair'] is True and self.params['selectionid'] is not None:
+			# using defocal pairs and particle picks
 			partdatas, shiftdata = apParticle.getDefocPairParticles(imgdata, self.params['selectionid'])
+		elif self.params['fromstackid'] is not None:
+			# using previous stack to make a new stack
+			partdatas = self.getParticlesFromStack(imgdata)
+			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}
 		else:
+			# using particle picks
 			partdatas = apParticle.getParticles(imgdata, self.params['selectionid'])
 			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}
 
@@ -633,9 +657,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		runq = appiondata.ApStackRunData()
 		runq['stackRunName'] = self.params['runname']
 		runq['session'] = sessiondata
-		selectionq = appiondata.ApSelectionRunData()
-		selectionrundata = selectionq.direct_query(self.params['selectionid'])
-		runq['selectionrun'] = selectionrundata
+		if self.params['selectionid'] is not None:
+			runq['selectionrun'] = appiondata.ApSelectionRunData.direct_query(self.params['selectionid'])
       	### see if stack run already exists in the database (just checking runname & session)
 		uniqrundatas = runq.query(results=1)
 
@@ -645,6 +668,13 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		stackq['hidden'] = False
 		stackq['pixelsize'] = self.params['apix']*self.params['bin']*1e-10
 		stackq['project|projects|project'] = projectnum
+		
+		### add info for from stack ids
+		if self.params['fromstackid'] is not None:
+			stackq['oldstack'] = appiondata.ApStackData.direct_query(self.params['fromstackid'])
+			stackq['substackname'] = "restack%d"%(self.params['fromstackid'])
+			stackq['description'] += " ... restack from stack id %d"%(self.params['fromstackid'])
+
 		self.stackdata = stackq
 
       	### finish stackRun object
@@ -735,6 +765,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			help="maximum defocus")
 		self.parser.add_option("--selectionid", dest="selectionid", type="int",
 			help="particle picking runid")
+		self.parser.add_option("--fromstackid", dest="fromstackid", type="int",
+			help="redo a stack from a previous stack")
 		self.parser.add_option("--partlimit", dest="partlimit", type="int",
 			help="particle limit")
 		self.parser.add_option("--filetype", dest="filetype", default='imagic',
@@ -804,10 +836,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if (self.params['maxdefocus'] is not None and
 				(self.params['maxdefocus'] < -1e-3 or self.params['maxdefocus'] > -1e-9)):
 			apDisplay.printError("max defocus is not in an acceptable range, e.g. maxdefocus=-1.5e-6")
-		if self.params['selectionid'] is None and self.params['sessionname'] is not None:
-			self.params['selectionid'] = apParticle.guessParticlesForSession(sessionname=self.params['sessionname'])
-		if self.params['selectionid'] is None:
-			apDisplay.printError("no selection id was provided")
+		if self.params['fromstackid'] is not None and self.params['selectionid'] is not None:
+			apDisplay.printError("please only specify one of either --selectionid or --fromstackid")
+		if self.params['fromstackid'] is None and self.params['selectionid'] is None:
+			apDisplay.printError("please specify one of either --selectionid or --fromstackid")
 		if self.params['maskassess'] is None and self.params['checkmask']:
 			apDisplay.printError("particle mask assessment run need to be defined to check mask")
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
@@ -980,7 +1012,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 if __name__ == '__main__':
 	makeStack = Makestack2Loop()
 	makeStack.run()
-
 
 
 
