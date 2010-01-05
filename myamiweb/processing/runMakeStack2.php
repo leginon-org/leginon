@@ -243,6 +243,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			echo">$runname ($totprtls prtls)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
+		
+		// add stack selection page
 	}
 	echo "<br/>\n";
 	echo "<br/>\n";
