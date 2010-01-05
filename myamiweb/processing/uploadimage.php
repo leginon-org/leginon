@@ -86,6 +86,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$camval = ($_POST['cam']) ? $_POST['cam'] : $cam;
 	$sessionname = ($_POST['sessionname']) ? $_POST['sessionname'] : $sessionname;
 	$batch = ($_POST['batch']) ? $_POST['batch'] : $batch;
+	$batch_check = ($_POST['batchcheck']=='off') ? '' : 'checked';
 	$tiltgroup = ($_POST['tiltgroup']) ? $_POST['tiltgroup'] : 1;
 	$description = ($_POST['description']) ? $_POST['description']: $description;
 
@@ -173,6 +174,8 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	// Setup batchfile
 	echo docpop('batchfile', 'Information file for the images (with full path):');
 	echo "<br/>\n<input type='text' name='batch' value='$batch' size='54'>\n";
+	echo "<br/>\n<input type='checkbox' NAME='batchcheck' $batch_check>\n";
+	echo docpop('batchcheck','<B>Confirm existance and format of the information file</B>');
 
    echo "<br/><br/>\n";
 
@@ -200,6 +203,7 @@ function runUploadImage() {
 	// trim removes any white space from start and end of strings
 	$sessionname = trim($_POST['sessionname']);
 	$batch = trim($_POST['batch']);
+	$batch_check = trim($_POST['batchcheck']);
 	$tiltgroup = $_POST['tiltgroup']+0;
 	$tem = $_POST['tem'];
 	$cam = $_POST['cam'];
@@ -217,15 +221,19 @@ function runUploadImage() {
 	if ($has_session && !$session_in_project) createUploadImageForm("<B>ERROR:</B> You have entered an existing session not belonging to this project");
 	if ($session_in_project) $warning = ("<B>Warning:</B>  Will append to an existing session with the original description");
 	//make sure a information batch file was provided
-	if (!$batch or !file_exists($batch)) createUploadImageForm("<B>ERROR:</B> Enter a batch file with path");
-	//make sure  the batch file contains 7 or 8 fields separated by tab at each line
-	$bf = file($batch);
-	foreach ($bf as $line) {
-		$items = explode("\t",$line);
-		if (count($items)!=7  && (count($items)!=8 && $tiltgroup > 1)) {
-			$badbatch = true;
-			break;
+	if (!$batch or ($batch_check && !file_exists($batch))) createUploadImageForm("<B>ERROR:</B> Enter a batch file with path");
+	if ($batch_check) {
+		//make sure  the batch file contains 7 or 8 fields separated by tab at each line
+		$bf = file($batch);
+		foreach ($bf as $line) {
+			$items = explode("\t",$line);
+			if (count($items)!=7  && (count($items)!=8 && $tiltgroup > 1)) {
+				$badbatch = true;
+				break;
+			}
 		}
+	} else {
+	 $badbatch = false;
 	}
 	if ($badbatch) createUploadImageForm("<B>ERROR:</B> Invalid format in the batch file");
 	// make sure there are valid instrument
