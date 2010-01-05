@@ -145,6 +145,7 @@ if ($refinerun['package']=='EMAN/SpiCoran') {
 
 // use summarytables.inc
 echo ministacksummarytable($stackId);
+$mpix = $particle->getStackPixelSizeFromStackId($stackId);
 
 #$initmodelname = showModelInfo($initmodel, $expId, $particle);
 
@@ -181,6 +182,8 @@ foreach ($display_keys as $p) {
 	$html .= "</TD>";
 }
 $html .= "</tr>\n";
+
+
 
 # show info for each iteration
 //sort($iterations);
@@ -277,14 +280,17 @@ foreach ($iterations as $iteration){
 	$html .= "<TR><td bgcolor='$bg'>";
 
 	$goodclassavgfile = 0;
+
 	foreach ($refinetypes as $type) {
 		$infokey = ($type=='SpiCoran' || $type=='EMAN') ? '&k=1' : '';
+		$pixelsize = '&ps='.$mpix;
 		if (array_key_exists($type,$clsavgs)) {
 			$rtype = $type;
 			$clsavgfile = $refinerun['path'].'/'.$clsavgs[$rtype];
 			if (file_exists($clsavgfile))
 				$goodclassavgfile = $clsavgfile;
-			$html .= "<a target='stackview' href='viewstack.php?file=".$clsavgfile.$infokey."'>".$clsavgs[$rtype]."</a><br>";
+			$html .= "<a target='stackview' href='viewstack.php?file="
+				.$clsavgfile.$infokey.$pixelsize."'>".$clsavgs[$rtype]."</a><br>";
 		}
 	}
 	//echo "CLASS FILE: $goodclassavgfile<br/>";
