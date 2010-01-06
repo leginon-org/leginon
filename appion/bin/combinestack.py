@@ -74,8 +74,10 @@ class combineStackScript(appionScript.AppionScript):
 		apDisplay.printMsg("added "+str(addnumpart)+" particles from stackid="+str(stackdata.dbid)+" to "
 			+str(orignumpart)+" particles giving a new combined stack of "+str(newnumpart)+" particles")
 
-		return
+		if addnumpart + orignumpart < newnumpart:
+			apDisplay.printError("Error in stack merging, too few particles added")
 
+		return
 
 	#=====================
 	def commitStack(self, stackid):
@@ -99,7 +101,7 @@ class combineStackScript(appionScript.AppionScript):
 			rinstackq.insert()
 
 		stpartsdata = apStack.getStackParticlesFromId(stackid)
-		print "inserting "+str(len(stpartsdata))+" particles into DB"
+		apDisplay.printMsg("inserting "+str(len(stpartsdata))+" particles into DB")
 		for particle in stpartsdata:
 			stpartq = appiondata.ApStackParticlesData()
 			stpartq['particleNumber'] = self.partnum
