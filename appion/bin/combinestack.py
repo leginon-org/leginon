@@ -2,6 +2,7 @@
 
 
 import os
+import re
 import sys
 ### appion
 import appionScript
@@ -33,6 +34,17 @@ class combineStackScript(appionScript.AppionScript):
 			self.params['stackids'] = stackids
 		else:
 			apDisplay.printError("enter a list of stack ids to combine, e.g. --stackids=11,14,7")
+		newboxsize = None
+		for stackidstr in self.params['stackids']:
+			if not re.match("^[0-9]+$", stackidstr):
+				apDisplay.printError("Stack id '%s' is not an integer"%(stackidstr))
+			stackid = int(stackidstr)
+			boxsize = apStack.getStackBoxsize(stackid, msg=False)
+			apDisplay.printMsg("Stack id: %d\tBoxsize: %d"%(stackid, boxsize))
+			if newboxsize is None:
+				newboxsize = boxsize
+			if boxsize != newboxsize:
+				apDisplay.printError("Trying to combine stacks with different boxsizes")
 		if self.params['runname'] is None:
 			apDisplay.printError("enter a stack run name, e.g. combinestack1")
 		if self.params['description'] is None:
