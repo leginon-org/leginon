@@ -93,6 +93,19 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			filterimg = apImage.maskHighPassFilter(imgdata['image'],apix,1,self.params['zeropass'],self.params['onepass'])
 			ace2inputpath = os.path.join(self.params['rundir'],imgdata['filename']+".mrc")
 			mrc.write(filterimg,ace2inputpath)
+
+		# make sure that the image is a square
+		dimx = imgdata['camera']['dimension']['x']
+		dimy = imgdata['camera']['dimension']['y']
+		if dimx != dimy:
+			dims = [dimx,dimy]
+			dims.sort()
+			apDisplay.printMsg("resizing image: %ix%i to %ix%i" % (dimx,dimy,dims[0],dims[0]))
+			mrcarray = apImage.mrcToArray(ace2inputpath,msg=False)
+			clippedmrc = apImage.frame_cut(mrcarray,[dims[0],dims[0]])
+			ace2inputpath = os.path.join(self.params['rundir'],imgdata['filename']+".mrc")
+			apImage.arrayToMrc(clippedmrc,ace2inputpath,msg=False)
+
 		inputparams = {
 			'input': ace2inputpath,
 			'cs': self.params['cs'],
