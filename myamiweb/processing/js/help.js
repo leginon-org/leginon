@@ -36,7 +36,7 @@ var help = {
 		'pixlimit' : 'Limit the values of the pixels to within this number of standard deviations from the mean.  0.0 turns this feature off.',
 		'kfactor' : 'The k-factor for dogpicker defines the sloppiness in diameter of the picked particles.  A k-factor of 1.00001 gives only the exact diameter (1.0 is not allowed), but a k-factor of 5.0 will pick a wide range of sizes.  Cannot be used with multi-scale dogpicker: numslices or sizerange',
 		'numslices' : 'Defines the number of different sizes (or slices) to break up the size range into for separating particles of different size.',
-		'sizerange' : 'Defines the range of sizes for separating particles of different size.',
+		'sizerange' : 'Defines the range of sizes for separating particles of different size. Particles will be picked as <i>diameter +/- sizerange</i>, so the <i>sizerange</i> is like the standard deviation of the particle size, where the diameter is defined at the top',
 		'invert' : 'Mathematical pickers (e.g., DoG picker) always pick white particles. Also, if the density of your template is opposite the density of your micrographs, use this flag.',
 		'nojpegs' : 'Do NOT write out the summary jpegs for image assessor.',
 		'edgethresh' : 'The threshold set for edge detection.  ACE searches a range of values to determine a good threshold, but this value should be increased if there are more edges in the power spectrum than in the ring.  Decrease if no edges are detected.',
