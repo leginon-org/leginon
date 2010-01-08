@@ -60,6 +60,7 @@ class PickerApp(wx.App):
 
 		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
+		self.panel.originaltargets = None
 
 		self.panel.addTargetTool('Select Particles', color=wx.Color(220,20,20),
 			target=True, shape=self.shape, size=self.size)
@@ -141,6 +142,7 @@ class PickerApp(wx.App):
 	def onAdd(self, evt):
 		vertices = []
 		vertices = self.panel.getTargetPositions('Region to Remove')
+		apDisplay.printMsg("Removing region contained in %d polygon vertices"%(len(vertices)))
 		def reversexy(coord):
 			clist=list(coord)
 			clist.reverse()
@@ -158,7 +160,7 @@ class PickerApp(wx.App):
 				eliminated += 1
 			else:
 				newparticles.append(target)
-		print eliminated,"particle(s) eliminated due to masking"
+		apDisplay.printMsg("%d particle(s) eliminated due to masking"%(eliminated))
 		self.panel.setTargets('Select Particles',newparticles)
 		self.panel.setTargets('Region to Remove', [])
 
@@ -166,6 +168,10 @@ class PickerApp(wx.App):
 		#targets = self.panel.getTargets('Select Particles')
 		#for target in targets:
 		#	print '%s\t%s' % (target.x, target.y)
+		vertices = self.panel.getTargetPositions('Region to Remove')
+		if len(vertices) > 0:
+			apDisplay.printMsg("Clearing %d polygon vertices"%(len(vertices)))
+			self.panel.setTargets('Region to Remove', [])
 		self.appionloop.targets = self.panel.getTargets('Select Particles')
 		self.appionloop.assess = self.finalAssessment()
 		self.Exit()
@@ -217,9 +223,11 @@ class PickerApp(wx.App):
 
 	def onClear(self, evt):
 		self.panel.setTargets('Select Particles', [])
+		self.panel.setTargets('Region to Remove', [])
 
 	def onRevert(self, evt):
-		self.panel.setTargets('Select Particles', self.panel.originaltargets)
+		if self.panel.originaltargets is not None:
+			self.panel.setTargets('Select Particles', self.panel.originaltargets)
 
 
 ##################################
