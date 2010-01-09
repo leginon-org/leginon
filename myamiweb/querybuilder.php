@@ -110,7 +110,9 @@ if ($dbchanged) {
 	$sqltables = implode(', ',$formatedtables);
 	?>
 </select><br />
-Alias: <input class="field" type="text" name="<?php echo $table."alias"; ?>" value="<?php echo $tablealias; ?>"</input>
+
+Alias: <input class="field" type="text" name="<?php echo $table."alias"; ?>" value="<?php echo $tablealias; ?>"></input>
+
 <br>
 <input class="button" type="submit" name="cleartables" value="Clear">
 <input class="button" type="submit" name="addtables" value="Add">
