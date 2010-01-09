@@ -42,6 +42,6 @@ $javascript .= $viewer->getJavascriptInit();
 	<?php echo $javascript; ?>
 </head>
 <body onload='initviewer();'>
-	<?php$viewer->display(); ?>
+	<?php $viewer->display(); ?>
 </body>
 </html>
