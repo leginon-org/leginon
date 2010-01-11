@@ -22,6 +22,7 @@ from gui.wx.Entry import Entry, IntEntry, FloatEntry
 import gui.wx.TargetTemplate
 import gui.wx.ToolBar
 import threading
+import targetingsteps
 
 constant_colors = {
 	'acquisition':  'GREEN',
@@ -38,6 +39,7 @@ other_colors = [
 class Panel(gui.wx.TargetFinder.Panel):
 	icon = 'holefinder'
 	def initialize(self):
+		print 'AAAAAAAA'
 		gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = SettingsDialog
 
@@ -45,7 +47,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 		colors = iter(other_colors)
 		firstimage = None
-		for step in self.node.targetingsteps:
+		for step in self.nodeclass.workflow.values():
 			name = step.name
 			if isinstance(step, targetingsteps.ImageProducer):
 				self.imagepanel.addTypeTool(name, display=True, settings=True)
