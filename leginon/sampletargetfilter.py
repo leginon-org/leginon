@@ -24,11 +24,15 @@ class SampleTargetFilter(targetfilter.TargetFilter):
 		newlist = []
 		meanlist = []
 		targetmeans = {}
+		if not targetlist:
+			return []
+		if not targetlist[0]['image']:
+			return targetlist
+		imagearray = targetlist[0]['image']['image']
+		shape = imagearray.shape
 		half_length = self.settings['square length'] / 2
 		for target in targetlist:
 			oldtarget = leginondata.AcquisitionImageTargetData(initializer=target)
-			imagearray = oldtarget['image']['image']
-			shape = imagearray.shape
 			row,col = oldtarget['delta row']+shape[0]/2,oldtarget['delta column']+shape[1]/2
 			rowrange = (max(0,row-half_length),min(shape[0],row+half_length))
 			colrange = (max(0,col-half_length),min(shape[0],col+half_length))
