@@ -506,8 +506,9 @@ class ChimSnapShots(object):
 		self.runChimCommand('turn y 45.0')
 		self.save_image(self.volumepath+'.2.png')
 		self.writeMessageToLog("turn: down 3-fold axis")
-		# 45 degrees is 1/12 turn to get corner of cube
-		self.runChimCommand('turn x 30.0')
+		# arctan(sqrt(2)/2) = 35.26 degrees turn to get corner of cube
+		angle = math.degrees(math.atan2(math.sqrt(2.),2.))
+		self.runChimCommand('turn x %.5f'%(angle))
 		self.save_image(self.volumepath+'.3.png')
 		self.writeMessageToLog("turn: get clipped view")
 
