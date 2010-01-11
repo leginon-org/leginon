@@ -12,6 +12,7 @@ import sys
 import os
 import time
 import numpy
+import math
 try:
 	import chimera
 	from chimera.colorTable import getColorByName
