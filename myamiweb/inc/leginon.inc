@@ -232,8 +232,8 @@ class leginondata {
 	function addUser($data) {
 	}
 
-	function getGroups() {
-		return $this->getAll('GroupData');
+	function getGroups($order=null) {
+		return $this->getAll('GroupData', $order);
 	}
 
 	function getComments($sessionId, $type='rt') {

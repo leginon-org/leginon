@@ -61,7 +61,7 @@ if ($userinfo) {
 	$f_group="1";
 }
 
-$groups = $leginondata->getGroups();
+$groups = $leginondata->getGroups('name');
 $users = $leginondata->getUsers('name');
 
 admin_header('onload="init()"');

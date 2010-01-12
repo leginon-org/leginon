@@ -47,7 +47,7 @@ if ($info) {
 	$f_description="";
 }
 
-$groups = $leginondata->getGroups();
+$groups = $leginondata->getGroups('name');
 admin_header('onload="init()"');
 ?>
 <script>
