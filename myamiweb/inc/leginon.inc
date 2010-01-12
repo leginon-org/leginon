@@ -225,8 +225,8 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getUsers() {
-		return $this->getAll('UserData');
+	function getUsers($order=null) {
+		return $this->getAll('UserData', $order);
 	}
 
 	function addUser($data) {
@@ -528,8 +528,13 @@ class leginondata {
 		return $this->mysql->getId($parameters);
 	}
 
-	function getAll($table) {
+	function getAll($table, $order=null) {
+		
 		$q = "select * from `$table`";
+		
+		if(!empty($order)){
+			$q .= " order by $order";
+		}
 		return $this->mysql->getSQLResult($q);
 	}
 

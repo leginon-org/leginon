@@ -62,7 +62,8 @@ if ($userinfo) {
 }
 
 $groups = $leginondata->getGroups();
-$users = $leginondata->getUsers();
+$users = $leginondata->getUsers('name');
+
 admin_header('onload="init()"');
 ?>
 <script>
