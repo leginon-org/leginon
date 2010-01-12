@@ -1898,6 +1898,16 @@ class CenterTargetFilterSettingsData(TargetFilterSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class SampleTargetFilterSettingsData(TargetFilterSettingsData):
+	def typemap(cls):
+		return TargetFilterSettingsData.typemap() + (
+			('square length', int),
+			('bright number', int),
+			('dark number', int),
+			('median number', int),
+		)
+	typemap = classmethod(typemap)
+
 class RasterTargetFilterSettingsData(TargetFilterSettingsData):
 	def typemap(cls):
 		return TargetFilterSettingsData.typemap() + (

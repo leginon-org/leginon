@@ -198,9 +198,12 @@ class MosaicTargetMaker(TargetMaker):
 	def _makeAtlas(self, evt):
 		if evt['grid'] is None or self.settings['ignore request']:
 			return
-		args = self._calculateAtlas(evt)
-		kwargs = {'evt': evt}
-		self._publishAtlas(*args, **kwargs)
+		try:
+			args = self._calculateAtlas(evt)
+			kwargs = {'evt': evt}
+			self._publishAtlas(*args, **kwargs)
+		except Exception, e:
+			self.logger.exception('Atlas creation failed: %s' % e)
 
 	def _calculateAtlas(self,evt=None):
 		self.logger.info('Creating atlas targets...')

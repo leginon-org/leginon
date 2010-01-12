@@ -156,6 +156,10 @@ type: Pipeline
 module: centertargetfilter
 type: Pipeline
 
+[SampleTargetFilter]
+module: sampletargetfilter
+type: Pipeline
+
 [RasterTargetFilter]
 module: rastertargetfilter
 type: Pipeline
