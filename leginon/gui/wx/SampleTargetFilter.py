@@ -12,8 +12,8 @@ from gui.wx.Entry import IntEntry
 
 class Panel(gui.wx.TargetFilter.Panel):
 	icon = 'targetfilter'
-	def __init__(self, parent, name):
-		gui.wx.TargetFilter.Panel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.TargetFilter.Panel.__init__(self, *args, **kwargs)
 		self.SettingsDialog = SettingsDialog
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 
