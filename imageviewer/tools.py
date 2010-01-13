@@ -238,8 +238,8 @@ class ValueScaler(wx.Panel):
         self.minentry.Enable(False)
         self.maxentry.Enable(False)
 
-        self.minslider = wx.Slider(self, -1, 0, 0, 0)
-        self.maxslider = wx.Slider(self, -1, 0, 0, 0)
+        self.minslider = wx.Slider(self, -1, 0)
+        self.maxslider = wx.Slider(self, -1, 0)
         self.minslider.Enable(False)
         self.maxslider.Enable(False)
 
