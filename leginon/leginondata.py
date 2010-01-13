@@ -1519,6 +1519,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('emission off', bool),
 			('target offset row', int),
 			('target offset col', int),
+			('correct image shift coma', bool),
 		)
 	typemap = classmethod(typemap)
 

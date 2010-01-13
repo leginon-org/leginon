@@ -144,6 +144,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'emission off': False,
 		'target offset row': 0,
 		'target offset col': 0,
+		'correct image shift coma': False,
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
@@ -180,6 +181,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.calclients['modeled stage position'] = calibrationclient.ModeledStageCalibrationClient(self)
 		self.calclients['image beam shift'] = calibrationclient.ImageBeamShiftCalibrationClient(self)
 		self.calclients['beam shift'] = calibrationclient.BeamShiftCalibrationClient(self)
+		self.calclients['beam tilt'] = calibrationclient.BeamTiltCalibrationClient(self)
 
 		self.presetsclient = presets.PresetsClient(self)
 		self.navclient = navigator.NavigatorClient(self)
@@ -493,7 +495,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			### check if stage position is valid
 			if newscope['stage position']:
 				self.validateStagePosition(newscope['stage position'])
-	
+
 			emtargetdata['preset'] = oldpreset
 			emtargetdata['movetype'] = movetype
 			emtargetdata['image shift'] = dict(newscope['image shift'])
@@ -605,6 +607,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
 			stageposition = self.instrument.tem.getStagePosition()
 			stagea = stageposition['a']
+			if self.settings['correct image shift coma']:
+				## beam tilt correction induced by image shift
+				beamtiltclient = self.calclients['beam tilt']
+				tem = self.instrument.getTEMData()
+				cam = self.instrument.getCCDCameraData()
+				ht = self.instrument.tem.HighTension
+				mag = self.instrument.tem.Magnification
+				imageshift = self.instrument.tem.getImageShift()
+				self.beamtilt0 = self.instrument.tem.getBeamTilt()
+				try:
+					beamtilt = beamtiltclient.transformImageShiftToBeamTilt(imageshift, tem, cam, ht, self.beamtilt0, mag)
+					self.instrument.tem.BeamTilt = beamtilt
+				except Exception, e:
+					raise NoMoveCalibration(e)
 			if self.settings['adjust time by tilt'] and abs(stagea) > 10 * 3.14159 / 180:
 				camdata = leginondata.CameraEMData()
 				camdata.friendly_update(presetdata)
@@ -724,7 +740,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		else:
 			imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
-		self.imagedata = imagedata
+		if self.settings['correct image shift coma']:
+			print "beam tilt for image acquired",self.instrument.tem.BeamTilt
+			self.instrument.tem.BeamTilt = self.beamtilt0
+			print "resetted beam tilt",self.instrument.tem.BeamTilt
+			self.imagedata = imagedata
 		targetdata = emtarget['target']
 		if targetdata is not None and 'grid' in targetdata and targetdata['grid'] is not None:
 			imagedata['grid'] = targetdata['grid']

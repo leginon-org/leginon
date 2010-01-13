@@ -996,28 +996,37 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			print "std %5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000)
 			return xarray,yarray
 
+	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zerobeamtilt, mag):
+		newbeamtilt = {}
+		par = 'image-shift coma'
+		try:
+			# not to query specific mag for now
+			matrix = self.retrieveMatrix(tem, cam, 'image-shift coma', ht, None)
+		except NoMatrixCalibrationError:
+			raise RuntimeError('missing %s calibration matrix' % par)
+		print "Image Shift ( %5.2f, %5.2f)" % (imageshift['x']*1e6,imageshift['y']*1e6)
+		shiftvect = numpy.array((imageshift['x'], imageshift['y']))
+		change = numpy.dot(matrix, shiftvect)
+		newbeamtilt['x'] = zerobeamtilt['x'] + change[0]
+		newbeamtilt['y'] = zerobeamtilt['y'] + change[1]
+		print "Beam Tilt Correction ( %5.2f, %5.2f)" % (change[0]*1e3,change[1]*1e3)
+		print "Beam Tilt ( %5.2f, %5.2f)" % (newbeamtilt['x']*1e3,newbeamtilt['y']*1e3)
+		return newbeamtilt
+
 	def correctImageShiftComa(self):
 		tem = self.instrument.getTEMData()
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
-		shift0 = self.instrument.tem.ImageShift
-		state = leginondata.ScopeEMData()
+		shift = self.instrument.tem.ImageShift
+		scopestate = leginondata.ScopeEMData(tem=tem,magnification=mag)
+		camerastate = leginondata.ScopeEMData(ccdcamera=cam)
 		tilt0 = self.instrument.tem.BeamTilt
-		state['image shift'] = shift0
-		state['beam tilt'] = tilt0
-		shift = state['image shift']
-		beamtilt = state['beam tilt']
-		try:
-			par = 'image-shift coma'
-			matrix = self.retrieveMatrix(tem, cam, 'image-shift coma', ht, mag)
-		except NoMatrixCalibrationError:
-			raise RuntimeError('missing %s calibration matrix' % par)
-		shiftvect = numpy.array((shift['x'], shift['y']))
-		change = numpy.dot(matrix, shiftvect)
-		beamtilt['x'] = beamtilt['x'] + change[0]
-		beamtilt['y'] = beamtilt['y'] + change[1]
-		print "Beam Tilt Correction ( %5.2f, %5.2f)" % (change[0]*1e3,change[1]*1e3)
+		scopestate['high tension'] = ht
+		scopestate['image shift'] = shift0
+		scopestate['beam tilt'] = tilt0
+		beamtilt = scopestate['beam tilt']
+		beamtilt = transformImageShiftToBeamTilt(shift, tem, cam, ht, beamtilt, mag)
 		self.setBeamTilt(beamtilt)
 
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):

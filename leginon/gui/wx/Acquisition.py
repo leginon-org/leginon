@@ -93,6 +93,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
 		self.widgets['adjust time by tilt'] = wx.CheckBox(self, -1, 'Adjust exposure time by tilt')
 		self.widgets['reset tilt'] = wx.CheckBox(self, -1, 'Untilt stage when queue is done')
+		self.widgets['correct image shift coma'] = wx.CheckBox(self, -1, 'Correct image shift coma effect')
 		self.widgets['target offset row'] = IntEntry(self, -1, chars=6)
 		self.widgets['target offset col'] = IntEntry(self, -1, chars=6)
 
@@ -165,6 +166,8 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz_tilt.Add(self.widgets['use parent tilt'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_tilt.Add(self.widgets['reset tilt'], (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz_tilt.Add(self.widgets['correct image shift coma'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
 		self.widgets['bad stats response'] = Choice(self, -1, choices=['Continue', 'Pause', 'Abort one','Abort all'])
