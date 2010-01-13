@@ -21,8 +21,8 @@ import gui.wx.ImagePanel
 class Panel(gui.wx.FFTMaker.Panel):
 	imagepanelclass = gui.wx.ImagePanel.ImagePanel
 	icon = 'fftmaker'
-	def __init__(self, parent, name):
-		gui.wx.FFTMaker.Panel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)

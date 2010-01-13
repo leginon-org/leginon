@@ -37,8 +37,6 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
 		self.toolbar.Realize()
 
-		self.addImagePanel()
-
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableRow(1)
 		self.SetSizer(self.szmain)
@@ -59,6 +57,7 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
 											id=gui.wx.ToolBar.ID_STOP)
+		self.addImagePanel()
 		self.Bind(gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
 
 	def onSettingsTool(self, evt):

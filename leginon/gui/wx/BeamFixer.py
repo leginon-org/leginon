@@ -16,8 +16,8 @@ import gui.wx.ToolBar
 
 class BeamFixerPanel(gui.wx.Reference.ReferencePanel, gui.wx.Instrument.SelectionMixin):
 	imagepanelclass = gui.wx.ImagePanel.ImagePanel
-	def __init__(self, parent, name):
-		gui.wx.Reference.ReferencePanel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Reference.ReferencePanel.__init__(self, *args, **kwargs)
 		gui.wx.Instrument.SelectionMixin.__init__(self)
 		self.addImagePanel()
 		self.szmain.AddGrowableRow(1)

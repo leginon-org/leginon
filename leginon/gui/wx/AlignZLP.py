@@ -49,8 +49,8 @@ class ScrolledSettings(gui.wx.Reference.ScrolledSettings):
 
 class AlignZeroLossPeakPanel(gui.wx.Reference.ReferencePanel):
 	icon = 'alignzlp'
-	def __init__(self, parent, name):
-		gui.wx.Reference.ReferencePanel.__init__(self, parent, -1)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Reference.ReferencePanel.__init__(self, *args, **kwargs)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)

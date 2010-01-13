@@ -32,8 +32,8 @@ EVT_ALIGN = wx.PyEventBinder(AlignRotationCenterEventType)
 class Panel(gui.wx.Acquisition.Panel):
 	icon = 'focuser'
 	imagepanelclass = gui.wx.TargetPanel.ClickAndTargetImagePanel
-	def __init__(self, parent):
-		gui.wx.Acquisition.Panel.__init__(self, parent)
+	def __init__(self, *args, **kwargs):
+		gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ALIGN, 'rotcenter',
