@@ -740,11 +740,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		else:
 			imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
+		self.imagedata = imagedata
 		if self.settings['correct image shift coma']:
 			print "beam tilt for image acquired",self.instrument.tem.BeamTilt
 			self.instrument.tem.BeamTilt = self.beamtilt0
 			print "resetted beam tilt",self.instrument.tem.BeamTilt
-			self.imagedata = imagedata
 		targetdata = emtarget['target']
 		if targetdata is not None and 'grid' in targetdata and targetdata['grid'] is not None:
 			imagedata['grid'] = targetdata['grid']
