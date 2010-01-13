@@ -92,8 +92,8 @@ class Viewer(wx.Panel):
 						    contrastlimit = extrema
             else:
 						    contrastlimit = (imagemin,imagemax)
-        self.numarrayplugin.setNumpy(array)
         self.numarrayplugin.setValueRange(contrastlimit)
+        self.numarrayplugin.setNumpy(array)
         self.tools.infotool.setStatistics(array)
         self.tools.valuescalebitmap.updateParameters(extrema=extrema,
                                                       fromrange=contrastlimit)
