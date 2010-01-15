@@ -434,6 +434,7 @@ function runTemplateCorrelator() {
 
 		if (!($user && $password)) createTCForm("<b>ERROR:</b> Enter a user name and password");
 
+		$nproc = 1;
 		if ($numtemplatesused >= 2 && $numtemplatesused <= 8)
 			$nproc = $numtemplatesused;
 		elseif ($numtemplatesused > 8)

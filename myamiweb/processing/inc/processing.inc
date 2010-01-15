@@ -404,7 +404,7 @@ function writeTop_org($title,$heading=false,$headerstuff=false) {
 	echo "    </div>\n";
 	echo "  </div>\n";
 	echo "  <hr />\n";
-	echo "  <div class='apbottombar'>\n";
+	echo "  <div class='apbottombar'>\n";ppn
 	echo "    <div class='apbottomcontent'>\n";
 	// --- display Project / Session / Path table info --- //
 	$ptable[]=array(
@@ -967,6 +967,8 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 			$ppn = getNumberOfProcsPerNode();
 		if ($nodes < 1)
 			list($nodes, $ppn) = getNumberOfRequiredNodes($nproc, $ppn);
+		if ($ppn < 1)
+			$ppn = 1;
 
 		// create job file
 		$jobid=$particle->insertClusterJobData($host,$procdir,'',$procdir,$jobfile,$expId,$jobtype,$user);
