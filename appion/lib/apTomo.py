@@ -464,7 +464,7 @@ def insertSubTomoRun(sessiondata,selectionrunid,stackid,name,invert=False,subbin
 			pick=pickdata,stack=stackdata,runname=name,invert=invert,subbin=subbin)
 	return publish(qrun)
 
-def insertFullTomoRun(sessiondata,path,runname,method,imageidlist):
+def insertFullTomoRun(sessiondata,path,runname,method,imageidlist=''):
 	runq = appiondata.ApFullTomogramRunData()
 	runq['session'] = sessiondata
 	runq['path'] = appiondata.ApPathData(path=os.path.abspath(path))
