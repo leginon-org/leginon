@@ -404,7 +404,7 @@ function writeTop_org($title,$heading=false,$headerstuff=false) {
 	echo "    </div>\n";
 	echo "  </div>\n";
 	echo "  <hr />\n";
-	echo "  <div class='apbottombar'>\n";ppn
+	echo "  <div class='apbottombar'>\n";
 	echo "    <div class='apbottomcontent'>\n";
 	// --- display Project / Session / Path table info --- //
 	$ptable[]=array(
