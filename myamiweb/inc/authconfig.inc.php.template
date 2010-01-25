@@ -15,7 +15,8 @@ class config_class {
 
 
 	var $tbl_login = "login";
-	var $tbl_user = "users";
+	var $tbl_user = "UserData";
+	var $tbl_group = "GroupData";
 	var $tbl_confirm = "confirmauth";
 
 	var $authcook = "authcook";
