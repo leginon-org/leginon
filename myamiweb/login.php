@@ -1,13 +1,13 @@
 <?php
-require "inc/viewer.inc";
-
+require_once "config.php";
+require "inc/login.inc";
 $redirect = $_REQUEST['ln'];
 $usern=trim($_POST['username']);
 $passwd=trim($_POST['password']);
 
 $login = $dbemauth->login($usern, $passwd);
 if ($login!=2) {
-	viewer_header("Login");
+	login_header("Login");
 	$displayerror=($_POST) ? "Incorrect Login" : false;
 ?>
 <style>
@@ -15,7 +15,7 @@ li {
    list-style: none; padding:2px;
 }
 </style>
-<center><h1>Leginon II Database Tools</h1></center>
+<center><h1>Leginon and Appion Database Tools</h1></center>
 <hr/>
 <form method="post" action="<?=$_SERVER['REQUEST_URI']?>" name="">
 	<div>
@@ -38,12 +38,12 @@ li {
 <?
 if ($displayerror)
 	echo '<center><font size="3" color="red">[ '.$displayerror.' ]</font></center>';
-viewer_footer();
+login_footer();
 exit;
 } else {
 	if ($usern)
     insertlog($usern, $_SERVER['REMOTE_ADDR'], implode(", ",$_SERVER));
-
+	if (!$redirect) $redirect = BASE_URL;
 	redirect($redirect);
 }
 ?>
