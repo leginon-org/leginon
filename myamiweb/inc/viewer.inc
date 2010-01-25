@@ -1333,84 +1333,13 @@ function add_comment_box($name) {
 	return $comment_box;
 }
 
-function viewer_header($title="", $javascript="", $onload="") {
-	global $_SERVER;
-	if (ENABLE_LOGIN) {
-	global $dbemauth;
-	$redirect=$_SERVER['PHP_SELF'];
-	$authorized_files=array('login.php', 'index.php', 'lostpass.php', 'register.php', 'confirm.php');
-
-	if (!ereg(implode("|", $authorized_files), $_SERVER['PHP_SELF'])) {
-    if (!$login_check = $dbemauth->is_logged()) {
-      redirect('login.php?ln='.$redirect);
-      exit;     
-		}
-  }
-
-	$login_check = $dbemauth->is_logged();
-	$username = $login_check[0];
-	$privilege = $login_check[2];
-	}
-	$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
-	$path = getPathFromString($_SERVER['SCRIPT_NAME']);
-	$onload = (empty($onload)) ? '' : 'onload="'.$onload.'"';
-
-	echo '
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"  "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-	<head>
-		<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
-		<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
-		<style>
-		.bgimg1 {
-			background-image:url('.$path.'/img/banner2.gif);
-		}
-		</style>
-	';
-	if (!empty($title))
-			echo '<title>',$title,'</title>';
-	if (!empty($javascript))
-		echo $javascript;
-	echo '
-	</head>
-	<body '.$onload.' >
-';
-if (ENABLE_LOGIN) {
-	if ($username) {
-		echo '<a class="header" href="logout.php">[Logout '.$username.']</a>';
-		echo '<a class="header" href="prefs.php">['.$username.' Prefs]</a>';
-	} else {
-		if (!ereg('login.php', $_SERVER['PHP_SELF']))
-			echo '<a class="header" href="login.php?'.$url.'">[Login]</a>';
-		echo '<a class="header" href="register.php?'.$url.'">[register]</a>';
-	}
-}
-}
-
-function viewer_footer() {
-echo '
-	</body>
-</html>
-';
-}
-
 function viewer_menu($sessionId) {
 	$str = '<a class="header" target="summary" href="summary.php?expId='.$sessionId.'">[summary]</a> ';
 	if (defined('PROCESSING')) {
-		$str.='<a class="header" target="processing" href="processing/index.php?expId='.$sessionId.'">[processing]</a> ';
+		$str.='<a class="header" target="processing" href=$APPION_URL"/index.php?expId='.$sessionId.'">[processing]</a> ';
 	}
 	$str.='<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId='.$sessionId.'">[make jpgs]</a>';
 	echo $str;
-}
-
-function insertlog($username, $ip, $info) {
-  global $DB_HOST, $DB_USER, $DB_PASS, $DB;
-  $data['username']=$username;
-  $data['ip']=$ip;
-  $data['info']=$info;
-  $dbc=new mysql($DB_HOST, $DB_USER, $DB_PASS, $DB);
-  $dbc->SQLInsert('viewer_log', $data);
-  return true;
 }
 
 ?>
