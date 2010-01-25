@@ -11,9 +11,11 @@
 require 'inc/config.inc';
 
 // --- define dbem web tools base --- //
-define('BASE_URL', "/dbem/");
+$BASE_PATH = "myamiweb";
+define('BASE_URL', "/".$BASE_PATH."/");
 
 // --- Leginon Viewer Configuration --- //
+$DBEM_URL= BASE_URL;
 
 // --- Set your leginon MySQL database server parameters
 
@@ -70,4 +72,6 @@ define('CACHE_SCRIPT', $_SERVER['DOCUMENT_ROOT'].'/'.BASE_URL.'/makejpg.php');
 // --- define Flash player base url --- //
 define('FLASHPLAYER_URL', "/flashplayer/");
 
+// --- path to dbem main --- //
+set_include_path(get_include_path().PATH_SEPARATOR."..".PATH_SEPARATOR.$BASE_PATH.PATH_SEPARATOR."project");
 ?>
