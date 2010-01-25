@@ -1,0 +1,17 @@
+----------------------
+Project - ChangeLog
+----------------------
+
+2009-07-20
+Release project_1_2
+		- update to connect and create processing database
+
+2009-03-17 
+Release project_1_1
+		- patches
+
+2008-03-01 
+Release project_1_0
+		1st released
+		- allow to link dbem sessions to a project
+

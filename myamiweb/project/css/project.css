@@ -1,0 +1,169 @@
+
+A:link {
+     color:	rgb( 0, 150, 150 );
+     text-decoration: none;
+}
+A:visited {
+     color:	rgb( 150, 0, 0 );
+     text-decoration: none;
+}
+A:active {
+    color:     rgb( 0, 204, 204 );
+     text-decoration: none;
+}
+A:hover{
+    color:     rgb( 0, 204, 204 );
+     text-decoration: none;
+}
+
+li { list-style: none; margin: 2px; padding: 0; }
+
+DIV.bodytext { padding-left:3em; }
+DIV.title  { font-size:10pt; text-indent: .5em; text-align: left} 
+DIV.square { font-size:9pt; text-indent: 1em; text-align: left} 
+DIV.hole   { font-size:9pt; text-indent: 2.8em; text-align: left}
+DIV.expo   { font-size:9pt; text-indent: 4.6em; text-align: left}
+DIV.presett { font-size:8pt; font-style: italic; text-align: left}
+DIV.presetv { font-size:8pt; text-align: left}
+DIV.comment { font-size:8pt; text-align: left}
+
+SPAN.note_date {
+	font-family: Arial,Helvetica,sans-serif;
+	font-weight: normal;
+	font-size: 8pt;
+	color:#000000;
+}
+
+P.note_title {
+	margin-top: 15pt;
+	margin-bottom: 0pt;
+        font-family: Arial,Helvetica,sans-serif;
+	font-weight: bold;
+	color:#005A9C;
+}
+
+P.note_data {
+	margin-left:1em;
+        font-family: Arial,Helvetica,sans-serif;
+	font-weight: normal;
+}
+
+H1, H2, H3, H4, H5, H6 {
+        font-family: Arial,Helvetica,sans-serif;
+	font-weight: normal;
+	color:#005A9C;
+}
+
+H1 {
+	margin-left:1em;
+	font-size: 24pt;
+}
+
+H2 {
+	font-size: 18pt;
+}
+
+H3 {
+	font-size: 14pt;
+}
+
+BODY {
+	background-color: white;
+        font-family: Arial,Helvetica,sans-serif;
+}
+
+
+.hf {
+        font-family: Arial,Helvetica,sans-serif;
+	font-size: 18pt;
+}
+
+TD, TH {
+        font-family: Arial,Helvetica,sans-serif;
+	font-size: 10pt;
+}
+
+TD.ti1 {
+	background-color:	rgb( 255, 204, 204 );
+}
+
+TD.ti2 {
+	background-color:	rgb( 255, 221, 221 );
+}
+
+TD.dt1 {
+	background-color:	rgb( 255, 255, 194 );
+}
+
+TD.dt2 {
+	background-color:	rgb( 255, 255, 221 );
+}
+
+.tableborder
+{
+        border: 3px solid #D4D0C8;
+				margin-top: 5px;
+				margin-bottom: 5px;
+				margin-left: 5px;
+				border-collapse: collapse;
+}
+
+.tablebg
+{
+        background-color: #e0e0e0;
+}
+
+.boxframe
+{
+        background-color:       #999999;
+}
+
+.border
+{
+        background-color:       #999999;
+}
+
+.textarea { 
+	padding: 3px 4px;
+	border: 1px solid #3366aa;
+	font-family: Arial,Helvetica,sans-serif; font-size: 10pt
+}
+
+INPUT.field {
+	padding: 3px 4px;
+	border: 1px solid #3366aa;
+}
+
+INPUT.bt1{
+	border: 1px solid #3366aa;
+}
+
+INPUT.bt2{
+	border: 1px solid #AAAAAA;
+}
+
+
+/* link for the header */
+A.header {
+	text-decoration: none;
+}
+
+A.header:link {
+     color:	rgb( 0, 150, 150 );
+     text-decoration: none;
+	margin-left:0em;
+}
+A.header:visited {
+     color:	rgb( 0, 150, 150 );
+     text-decoration: none;
+}
+A.header:active {
+    color:     rgb( 0, 204, 204 );
+     text-decoration: none;
+}
+
+A.header:hover {
+    color:     rgb( 0, 204, 204 );
+     text-decoration: none;
+}
+

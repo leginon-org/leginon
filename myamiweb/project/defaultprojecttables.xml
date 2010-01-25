@@ -1,0 +1,313 @@
+<!--
+-
+- Default Table XML-Dump
+- http://ami.scripps.edu/ 
+-
+- Tables: 
+-	boxtypes
+-	grids
+-	gridboxes
+-	gridlocations
+-	processingdb
+-	projects
+-	projectexperiments
+-
+-->
+
+<defaulttables>
+ <definition>
+  <sqltable name="install" >
+    <field 
+      name="key" 
+      type="varchar(100)" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="value" 
+      type="varchar(100)" 
+      null="NOT NULL" 
+    />
+    <key>KEY (`key`)</key>
+	</sqltable>
+  <sqltable name="boxtypes" >
+    <field 
+      name="boxtypeId" 
+      type="int(11)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field 
+      name="label" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="image" 
+      type="varchar(100)" 
+      default="DEFAULT '0'" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="image_tiny" 
+      type="varchar(100)" 
+      null="NOT NULL" 
+    />
+    <key>PRIMARY KEY (`boxtypeId`)</key>
+  </sqltable>
+  <sqltable name="grids" >
+    <field 
+      name="gridId" 
+      type="int(11)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field 
+      name="label" 
+      type="varchar(255)" 
+      null="NULL" 
+    />
+    <field 
+      name="prepdate" 
+      type="timestamp" 
+      null="NULL" 
+    />
+    <field 
+      name="specimenId" 
+      type="int(11)" 
+      default="DEFAULT '0'" 
+      null="NULL" 
+    />
+    <field 
+      name="substrate" 
+      type="varchar(100)" 
+      null="NULL" 
+    />
+    <field 
+      name="preparation" 
+      type="varchar(100)" 
+      null="NULL" 
+    />
+    <field 
+      name="number" 
+      type="varchar(10)" 
+      null="NULL" 
+    />
+    <field 
+      name="concentration" 
+      type="double" 
+      null="NULL" 
+    />
+    <field 
+      name="fraction" 
+      type="text" 
+      null="NULL" 
+    />
+    <field 
+      name="note" 
+      type="text" 
+      null="NULL" 
+    />
+    <field 
+      name="sort" 
+      type="text" 
+      null="NULL" 
+    />
+    <field 
+      name="boxId" 
+      type="int(11)" 
+      null="NULL" 
+    />
+    <field 
+      name="projectId" 
+      type="int(20)" 
+      null="NULL" 
+    />
+    <field 
+      name="specimen" 
+      type="varchar(255)" 
+      null="NULL" 
+    />
+    <key>PRIMARY KEY (`gridId`)</key>
+    <key>KEY `label` (`label`)</key>
+  </sqltable>
+  <sqltable name="gridboxes" >
+    <field 
+      name="gridboxId" 
+      type="int(11)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field 
+      name="label" 
+      type="text" 
+      null="NULL" 
+    />
+    <field 
+      name="boxtypeId" 
+      type="int(11)" 
+      default="DEFAULT '0'" 
+      null="NULL" 
+    />
+    <field 
+      name="container" 
+      type="text" 
+      null="NULL" 
+    />
+    <key>PRIMARY KEY (`gridboxId`)</key>
+  </sqltable>
+  <sqltable name="gridlocations" >
+    <field 
+      name="gridlocationId" 
+      type="int(11)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="gridboxId" 
+      type="int(11)" 
+      null="NULL" 
+    />
+    <field 
+      name="gridId" 
+      type="int(11)" 
+      null="NULL" 
+    />
+    <field 
+      name="location" 
+      type="int(11)" 
+      null="NULL" 
+    />
+    <key>PRIMARY KEY (`gridlocationId`)</key>
+  </sqltable>
+  <sqltable name="processingdb" >
+    <field 
+      name="id" 
+      type="int(20)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="projectId" 
+      type="int(20)" 
+    />
+    <field 
+      name="db" 
+      type="varchar(50)" 
+    />
+    <key>PRIMARY KEY (`id`)</key>
+    <key>KEY `projectId` (`projectId`)</key>
+  </sqltable>
+  <sqltable name="projects" >
+    <field 
+      name="projectId" 
+      type="int(11)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field 
+      name="name" 
+      type="varchar(255)" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="short_description" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="long_description" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="category" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="funding" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="db" 
+      type="varchar(50)" 
+    />
+    <key>PRIMARY KEY (`projectId`)</key>
+  </sqltable>
+  <sqltable name="projectexperiments" >
+    <field 
+      name="projectexperimentId" 
+      type="int(11)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="projectId" 
+      type="int(11)" 
+      default="DEFAULT '0'" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="name" 
+      type="varchar(100)" 
+      default="DEFAULT '0'" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="experimentsourceId" 
+      type="int(11)" 
+      null="NULL" 
+    />
+    <key>PRIMARY KEY (`projectexperimentId`)</key>
+    <key>KEY `projectId` (`projectId`)</key>
+    <key>KEY `name` (`name`)</key>
+  </sqltable>
+
+ </definition>
+ <data>
+  <!-- boxtypes -->
+    <sqltable name="boxtypes" >
+        <field name="boxtypeId" >1</field>
+        <field name="timestamp" >2003-11-17 13:55:35</field>
+        <field name="label" >cryo grid box</field>
+        <field name="image" >grid_box_cryo.jpg</field>
+        <field name="image_tiny" >grid_box_cryo_tiny.jpg</field>
+    </sqltable>
+    <sqltable name="boxtypes" >
+        <field name="boxtypeId" >2</field>
+        <field name="timestamp" >2003-11-17 13:55:47</field>
+        <field name="label" >grid box</field>
+        <field name="image" >grid_box.jpg</field>
+        <field name="image_tiny" >grid_box_tiny.jpg</field>
+    </sqltable>
+    <sqltable name="boxtypes" >
+        <field name="boxtypeId" >3</field>
+        <field name="timestamp" >2003-11-17 13:55:56</field>
+        <field name="label" >tray</field>
+        <field name="image" >tray.png</field>
+        <field name="image_tiny" >tray_tiny.png</field>
+    </sqltable>
+
+ </data>
+</defaulttables>

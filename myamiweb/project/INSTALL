@@ -1,0 +1,66 @@
+
+/**
+ *	The Leginon software is Copyright 2003 
+ *	The Scripps Research Institute, La Jolla, CA
+ *	For terms of the license agreement
+ *	see  http://ami.scripps.edu/software/leginon-license
+ */
+
+-- Projects Database --
+
+
+-------------
+Requirements:
+-------------
+- Web server Apache
+- MySQL (4.0 or higher)
+- PHP (5.1.0 or higher) with MySQL, GD extensions 
+- JavaScript-enabled browser
+- CSS-enabled browser
+
+----------
+Unpacking:
+----------
+
+Unpack the archive into your web server directory:
+	$ cd /yourwwwdir
+	$ tar zxvf project[version].tgz
+
+--------------
+Configuration:
+--------------
+	$ cd project
+
+	- edit the file config.php
+	- set your MySQL parameters for dbem and for project
+
+	--- Leginon database config
+	$DBEM_PATH="/dbem";
+
+	$DB_HOST	= "[SQL HOST]";
+	$DB_USER	= "[SQL USER]";
+	$DB_PASS	= "[SQL PASS]";
+	$DB		= "[database]";
+
+	--- Project database config
+	$PROJECT_DB_HOST = "[SQL HOST]";
+	$PROJECT_DB_USER = "[SQL USER]";
+	$PROJECT_DB_PASS = "[SQL PASS]";
+	$PROJECT_DB = "[project database]";
+
+--------------
+MySQL grant
+If you want to create processing databases from the project
+user interface, grant create, alter, insert or all privileges
+to your project database user. If your processing databases have
+a common prefix "ap" for example, the SQL query is:
+
+grant all privileges on `ap%`.* to usr_project@localhost;
+
+--------------
+
+--------------
+run:
+--------------
+	Go to http://yourhost/project/
+
