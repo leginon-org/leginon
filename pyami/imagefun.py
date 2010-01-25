@@ -263,7 +263,7 @@ def scipyblobs(im,mask):
 		maxpos = []
 	else:
 		centers = scipy.ndimage.center_of_mass(im,labels,range(1,n+1))
-		sizes = scipy.ndimage.histogram(labels,1,n+1,n)
+		sizes = numpy.histogram(labels,n,(1,n+1))[0]
 		stds = scipy.ndimage.standard_deviation(im,labels,range(1,n+1))
 		means = scipy.ndimage.mean(im,labels,range(1,n+1))
 		moments = moment_of_inertia(im,labels,range(1,n+1))
