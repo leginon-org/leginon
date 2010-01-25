@@ -1,4 +1,4 @@
-﻿import ccdcamera
+import ccdcamera
 import comarray
 from win32com.client import Dispatch
 import pythoncom
