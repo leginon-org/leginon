@@ -1,11 +1,18 @@
 <?
+
+/**
+ *	The Leginon software is Copyright 2003 
+ *	The Scripps Research Institute, La Jolla, CA
+ *	For terms of the license agreement
+ *	see  http://ami.scripps.edu/software/leginon-license
+ */
+
 require "inc/authconfig.inc.php";
 
 class authlib extends config_class {
 
 
 	function register ($username, $password, $password2, $email, $lastname, $firstname="") {
-
 		if (!$username || !$password || !$password2 || !$email || !$lastname) {
 
 			return $this->error['fields_empty'];
@@ -32,14 +39,14 @@ class authlib extends config_class {
 
 			$this->filter_password($password);
 
-
+			echo $this->server;
 			$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
 
 			if (!get_magic_quotes_gpc()) {
 				$username=addslashes($username);
 			}
 
-			$q="select id from `".$this->tbl_login."` where username = '$username'";
+			$q="select DEF_id from `".$this->tbl_user."` where name = '$username'";
 			$query = $dbc->SQLQuery($q);
 			$result = @mysql_num_rows($query);
 
@@ -48,7 +55,7 @@ class authlib extends config_class {
 				return $this->error['username_exists'];
 
 			}
-
+			
 			$q="select email from `".$this->tbl_user."` where email = '$email'";
 			$query = $dbc->SQLQuery($q);
 			$result = @mysql_num_rows($query);
@@ -58,7 +65,7 @@ class authlib extends config_class {
 				return $this->error['username_email_exists'];
 
 			}
-
+			
 			$now=date('Y-m-d H:i:s', time());
 			$hash = md5($this->secret.$username.$now);
 			$data=array();
@@ -194,29 +201,28 @@ class authlib extends config_class {
   }
 
 	function login ($username, $password) {
-
 		if (!$username || !$password) {
 
 			return $this->error['fields_empty'];
 
 		} else {
-
 			$this->filter_username($username);
 
 			$this->filter_password($password);
 
 			$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
 
-
 			if (!get_magic_quotes_gpc()) {
 				$password=addslashes($password);
 				$username=addslashes($username);
 			}
 
-			$q="select id, privilege from `".$this->tbl_login."` where username = '$username' and password = '$password'";
+			$q="select u.DEF_id, g.privilege from ".$this->tbl_user." as u "
+				."left join ".$this->tbl_group." as g "
+				."on u.`REF|GroupData|group` = g.`DEF_id` "
+				."where u.name = '$username' and password = '$password'";
 			$query=$dbc->SQLQuery($q);
 			$result = @mysql_num_rows($query);
-
 			if ($result < 1) {
 
 				return false;
@@ -231,13 +237,11 @@ class authlib extends config_class {
 				$expire = ($this->cookie_expire) ? time()+$this->cookie_expire : 0;
 
 				setcookie($this->authcook, "$username:$hash", $expire);
-
 				return 2;
 
 			}
 
 		}
-
 	}
 
 	function is_logged () {
@@ -250,7 +254,10 @@ class authlib extends config_class {
 
 		$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
 
-		$q="select id, privilege from `".$this->tbl_login."` where username = '$username'";
+		$q="select u.DEF_id, g.privilege from ".$this->tbl_user." as u "
+			."left join ".$this->tbl_group." as g "
+			."on u.`REF|GroupData|group` = g.`DEF_id` "
+			."where u.name = '$username'";
 		$query=$dbc->SQLQuery($q);
 		$result = @mysql_num_rows($query);
 
