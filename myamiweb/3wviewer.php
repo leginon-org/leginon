@@ -94,8 +94,8 @@ $viewer->add($view3);
 
 
 $javascript .= $viewer->getJavascriptInit();
-viewer_header('image viewer', $javascript, 'initviewer()');
+login_header('image viewer', $javascript, 'initviewer()');
 viewer_menu($sessionId);
 $viewer->display();
-viewer_footer();
+login_footer();
 ?>

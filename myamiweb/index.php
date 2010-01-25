@@ -8,7 +8,6 @@
  */
 
 require "inc/leginon.inc";
-require "inc/viewer.inc";
 
 $baseurl = BASE_URL;
 
@@ -19,19 +18,21 @@ $link->addlink('imageviewer.php','Image Viewer','', 'viewer');
 $link->addlink('3wviewer.php','3 Way Viewer','', '3wviewer');
 $link->addlink('loi.php','LOI','', 'loi');
 $link->addlink('rctviewer.php','RCT','', 'rct');
-$link->addlink('admin.php','Administration','', 'admin');
 $link->addlink('2wayviewer.php','2 Way Viewer','', 'viewer');
 $link->addlink('tomo/','Tomography','', 'tomo_icon_3');
 $link->addlink('dualview.php','Dual Viewer','', 'dual_view');
 $link->addlink('template.php', 'Hole Template viewer','', 'template');
-$link->addlink('/phpMyAdmin/','phpMyAdmin','', 'phpMyAdmin');
 
-if($PROJECT_URL) {
-	$link->addlink($PROJECT_URL,'Project DB','', 'project');
+if (privilege() == 2 ) {
+	$link->addlink($common_url.'admin.php','Administration','', 'admin');
+	$link->addlink('/phpMyAdmin/','phpMyAdmin','', 'phpMyAdmin');
+	if($PROJECT_URL) {
+		$link->addlink($PROJECT_URL,'Project DB','', 'project');
+	}
 }
 
 $title = "Leginon database Tools";
-viewer_header($title);
+login_header($title);
 ?>
 <style>
 	body {background-image:url('img/background.jpg')}
@@ -69,5 +70,5 @@ viewer_header($title);
 <p>
 <div style="border: 1px solid #bdcebb; padding-left: 5px" id="result">&nbsp;</div>
 <?php
-viewer_footer();
+login_footer();
 ?>
