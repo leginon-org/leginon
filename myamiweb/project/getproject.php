@@ -2,6 +2,7 @@
 require "inc/project.inc.php";
 require "inc/leginon.inc";
 require "inc/utilpj.inc.php";
+$SHARE =  (@require "inc/share.inc.php") ? true : false;
 
 if ($_GET['pId']) {
 	$selectedprojectId=$_GET['pId'];
@@ -13,6 +14,14 @@ $view = ($_REQUEST['v']=='s') ? 'd' : 's';
 $link = ($view=='s') ? 'Detailed view' : 'Simple view';
 $privilege = privilege();
 $is_admin = ($privilege == 2);
+if (!$is_admin)
+	$SHARE=false;
+$url = $_SERVER['PHP_SELF']."?v=".$_REQUEST['v']."&pId=".$selectedprojectId;
+$ln=urlencode($url);
+$sharingstatus = "No";
+$sharinglink = "share.php?ln=$ln&id=";
+if ($SHARE)
+	$d = new share();
 $project = new project();
 $projects = $project->getProjects("order");
 $projectinfo = $project->getProjectInfo($selectedprojectId);
@@ -178,6 +187,12 @@ $projectId = $projectinfo['projectId'];
 		$experiments[$k]['purpose']=$info['Purpose'];
 		$experiments[$k]['totalimg']=$info['Total images'];
 		$experiments[$k]['totaltime']=$info['Total Duration'];
+		if ($SHARE) {
+			$sharingstatus = ($d->is_shared($info['SessionId'])) ? "Yes" : "No";
+			$sharelink="<a class='header' href='$sharinglink".
+						$info['SessionId']."'>$sharingstatus [->]</a>";
+			$experiments[$k]['share']=$sharelink;
+		}
 		$summarylink="<a class='header' target='viewer' href='".SUMMARY_URL.$info['SessionId']."'>summary&raquo;</a>";
 		$experiments[$k]['summary']=$summarylink;
 	}
@@ -188,12 +203,33 @@ $columns=array(
 	'totalimg'=>'Total images',
 	'totaltime'=>'Total Duration'
 	);
+if ($SHARE) {
+	$columns['share']="Sharing";
+}
 	$columns['summary']="";
 
 $display_header=true;
 echo data2table($experiments, $columns, $display_header);
 	
 if ($view=='d') {
+	echo divtitle('Share :: Users');
+		if ($SHARE) {
+			$sessionIds=array_keys($sessions);
+			$r=$d->get_share_info($sessionIds);
+			foreach($r as $row) {
+				$name=($row['name']) ? $row['name'] : $row['username'];
+				$session="<a class='header' target='viewer' href='".VIEWER_URL.$row['experimentId']."'>";
+				$session.=$sessions[$row['experimentId']];
+				$session.="</a>";
+				$sharedexperiments[$name][]=$session;
+			}
+			echo "<table border='1' class='tableborder' width='500'>";
+			echo "<tr><th>Name</th><th>Experiments</th></tr>";
+			foreach ((Array)$sharedexperiments as $name=>$experiments) {
+				echo '<tr><td>'.$name.'</td><td>'.implode(', ', $experiments).'</td></tr>';
+			}
+			echo '</table>';
+		}
 	echo "<br>";
 	echo divtitle('Description', $ld);
 	$cols = 80;

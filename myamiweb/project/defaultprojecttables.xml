@@ -201,7 +201,7 @@
       null="NOT NULL" 
       extra="auto_increment" 
     />
-    <field 
+    <field
       name="projectId" 
       type="int(20)" 
     />
@@ -211,6 +211,86 @@
     />
     <key>PRIMARY KEY (`id`)</key>
     <key>KEY `projectId` (`projectId`)</key>
+  </sqltable>
+  <sqltable name="userdetails" >
+    <field 
+      name="DEF_id" 
+      type="int(11)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="DEF_timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field
+      name="REF|leginondata|UserData|user" 
+      type="int(20)" 
+    />
+    <field 
+      name="first name" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="last name" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="title" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="institution" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="address" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="city" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="statecountry" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="zip" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="phone" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="fax" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="email" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="url" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|leginondata|UserData|user` (`REF|leginondata|UserData|user`)</key>
   </sqltable>
   <sqltable name="projects" >
     <field 
@@ -282,6 +362,34 @@
     <key>PRIMARY KEY (`projectexperimentId`)</key>
     <key>KEY `projectId` (`projectId`)</key>
     <key>KEY `name` (`name`)</key>
+  </sqltable>
+  <sqltable name="shareexperiments" >
+    <field 
+      name="DEF_id" 
+      type="int(11)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="DEF_timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field 
+      name="REF|projectexperiments|experiment" 
+      type="int(11)" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="REF|leginondata|UserData|user" 
+      type="int(11)" 
+      default="DEFAULT '0'" 
+      null="NULL" 
+    />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|projectexperiments|experiment` (`REF|projectexperiments|experiment`)</key>
+    <key>KEY `REF|leginondata|UserData|user` (`REF|leginondata|UserData|user`)</key>
   </sqltable>
 
  </definition>
