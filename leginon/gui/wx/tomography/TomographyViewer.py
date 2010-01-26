@@ -1,6 +1,6 @@
 import wx
-from ImageViewer import events
-from ImageViewer import viewer
+from imageviewer import events
+from imageviewer import viewer
 
 ImageEventType = wx.NewEventType()
 EVT_IMAGE = wx.PyEventBinder(ImageEventType)
