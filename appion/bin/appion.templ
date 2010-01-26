@@ -106,7 +106,7 @@ if (Appion_Dir == '' or (not os.path.exists(os.path.join (Appion_Dir, 'bin')))):
     Appion_Dir = os.path.dirname(appionBinDir)    
 
 Appion_Bin_Dir = os.path.join(Appion_Dir, 'bin')
-Appion_Lib_Dir = os.path.join(Appion_Dir, 'lib')
+Appion_Lib_Dir = os.path.join(Appion_Dir, 'appionlib')
 
 
 #If we still can't seem to find a valid Appion installation directory,
@@ -117,7 +117,7 @@ if (not os.path.exists(Appion_Bin_Dir) or not os.path.exists (Appion_Lib_Dir)):
 
 
 prependToEnv('PATH', Appion_Bin_Dir)
-prependToEnv('PYTHONPATH', Appion_Lib_Dir)
+prependToEnv('PYTHONPATH', Appion_Dir)
 appendToEnv('MATLABPATH', os.path.join(Appion_Dir, 'ace'))
 
 if (Matlab_Dir != ''):
