@@ -1,43 +1,20 @@
-#!/usr/bin/python -O
-# The Leginon software is Copyright 2004
-# The Scripps Research Institute, La Jolla, CA
-# For terms of the license agreement
-# see http://ami.scripps.edu/software/leginon-license
-#
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.67 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-09-29 02:40:14 $
-# $Author: acheng $
-# $State: Exp $
-# $Locker:  $
-
 #!/usr/bin/env python
 
-#
-# COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
-#
-
 import cStringIO
-from pyami import mrc, arraystats
 import math
 import numpy
 import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
-import NumericImage
 import Image
-from pyami import arraystats
-import icons
-import numextension
-from gui.wx.Entry import FloatEntry, EVT_ENTRY
-import gui.wx.Stats
 import time
-import gui.wx.ImageViewer2
 import threading
+
+from pyami import mrc, arraystats, arraystats
+from leginon import icons
+import numextension
+from Entry import FloatEntry, EVT_ENTRY
+import Stats
+import ImageViewer2
 
 wx.InitAllImageHandlers()
 
@@ -547,7 +524,7 @@ class ColormapTool(ImageTool):
 
 	def OnButton(self, evt):
 		if self.imagepanel.colormap is None:
-			self.imagepanel.colormap = gui.wx.ImageViewer2.colormap
+			self.imagepanel.colormap = ImageViewer2.colormap
 			self.button.SetBitmapLabel(self.grayscalebitmap)
 			self.button.SetToolTip(wx.ToolTip('Show Grayscale'))
 		else:
@@ -736,14 +713,14 @@ class ImagePanel(wx.Panel):
 		width, height = self.panel.GetSizeTuple()
 		self.sizer.SetItemMinSize(self.panel, width, height)
 
-		self.statspanel = gui.wx.Stats.Stats(self, -1, style=wx.SIMPLE_BORDER)
+		self.statspanel = Stats.Stats(self, -1, style=wx.SIMPLE_BORDER)
 		if self.mode == "vertical":
 			#NEILMODE
 			self.sizer.Add(self.statspanel, (4, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 		else:
 			self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 
-		#self.pospanel = gui.wx.Stats.Position(self, -1, style=wx.SIMPLE_BORDER)
+		#self.pospanel = Stats.Position(self, -1, style=wx.SIMPLE_BORDER)
 		#self.sizer.Add(self.pospanel, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 
 		# bind panel events
