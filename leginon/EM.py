@@ -12,7 +12,7 @@ import node
 import socket
 import threading
 import gui.wx.Instrument
-from pyScope import tem, ccdcamera, registry
+from pyscope import tem, ccdcamera, registry
 import sys
 if sys.platform == 'win32':
 	import pythoncom

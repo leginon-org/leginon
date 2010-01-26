@@ -132,7 +132,7 @@ class Robot2nysbc(robot2.Robot2):
 		self.endTime = 0
 		self.wait_time = 3
 		self.tried_times = 5
-		self.beamFile = "C:\\Python25\Lib\\site-packages\\pyScope\\beamStatus.cfg"
+		self.beamFile = "C:\\Python25\Lib\\site-packages\\pyscope\\beamStatus.cfg"
 		self.beamStatus = {'start_time': None, 'end_time': None}
 
 	#imgZposition = -119e-6								# for robot tip

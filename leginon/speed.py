@@ -8,11 +8,11 @@ from pyami import correlator
 
 '''
 try:
-	from pyScope import gatan
+	from pyscope import gatan
 except:
 	pass
 try:
-	from pyScope import tietz
+	from pyscope import tietz
 except:
 	pass
 '''

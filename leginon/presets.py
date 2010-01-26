@@ -1302,7 +1302,7 @@ class PresetsManager(node.Node):
 		mybeam = dict(emtargetdata['beam shift'])
 
 ## This should be unnecessary if we have a check for minimum stage movement
-## (currently in pyScope).  It was a way to prevent moving the stage between
+## (currently in pyscope).  It was a way to prevent moving the stage between
 ## targets which only require an image shift, but with queuing, we have to 
 ## assume that stage should always be moved.  If stage truly does not need to
 ## move, then the minimum stage movement threshold should take effect.
