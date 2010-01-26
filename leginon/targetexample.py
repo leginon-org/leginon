@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import numpy
-
 import workflow
-import targetingsteps
+import targetworkflow
+import commonsteps
 from pyami.ordereddict import OrderedDict
 
 ########################################################
@@ -11,7 +11,7 @@ from pyami.ordereddict import OrderedDict
 ########################################################
 
 ## This step takes input image and rotates it (n * 90) degrees
-class RotN90(targetingsteps.ImageProducer):
+class RotN90(targetworkflow.ImageProducer):
 	# user modified parameters
 	param_def = [
 		{'name': 'multiplier', 'type': int, 'default': 1},
@@ -31,7 +31,7 @@ class RotN90(targetingsteps.ImageProducer):
 		return result
 
 ## This step just finds the maximum pixel in an image.
-class MaximumPixel(targetingsteps.PointProducer):
+class MaximumPixel(targetworkflow.PointProducer):
 	# We could define parameters here in the future...
 
 	# The _run method defines what we actually want to do.
@@ -54,7 +54,7 @@ class MaximumPixel(targetingsteps.PointProducer):
 		return result
 
 ## This step takes an input list of points and generates another one shifted.
-class Shifter(targetingsteps.PointProducer):
+class Shifter(targetworkflow.PointProducer):
 	param_def = [
 		{'name': 'rows', 'type': int, 'default': 10},
 		{'name': 'columns', 'type': int, 'default': 10},
@@ -80,12 +80,12 @@ class Shifter(targetingsteps.PointProducer):
 
 ##############################################################
 ###  Create instances of those classes and build my workflow.
-###  Also using the class InputImage from targetingsteps.py
+###  Also using the class InputImage from commonsteps.py
 ##############################################################
 
 ## The complete workflow will contain 4 steps.  I create the instances and
 ## give them each a unique name.
-input = targetingsteps.ImageInput('input')
+input = commonsteps.ImageInput('input')
 rotate = RotN90('rotate')
 maximum = MaximumPixel('maximum')
 shift = Shifter('shift')
