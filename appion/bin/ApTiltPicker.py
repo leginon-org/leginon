@@ -18,7 +18,7 @@ from appionlib import apXml
 from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apParam
-from appionlib.apTilt import tiltDialog,
+from appionlib.apTilt import tiltDialog, apTiltTransform, apTiltShift, tiltfile, autotilt
 ## leginon
 import polygon
 import gui.wx.TargetPanel

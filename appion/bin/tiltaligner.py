@@ -6,7 +6,7 @@ import time
 import wx
 import numpy
 import threading
-import particleLoop2
+from appionlib import particleLoop2
 from appionlib import apFindEM
 from appionlib import appiondata
 from appionlib import apDatabase
@@ -16,7 +16,7 @@ from appionlib import apPeaks
 from appionlib import apImage
 from appionlib import apParam
 import ApTiltPicker
-from appionlib.apTilt import apTiltTransform,
+from appionlib.apTilt import apTiltTransform, apTiltPair, autotilt
 
 ##################################
 ##

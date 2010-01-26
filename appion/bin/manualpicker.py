@@ -4,7 +4,7 @@ import os
 import sys
 import wx
 import time
-import particleLoop2
+from appionlib import particleLoop2
 from appionlib import apImage
 #import subprocess
 from appionlib import apFindEM

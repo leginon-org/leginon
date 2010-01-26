@@ -14,7 +14,7 @@ from appionlib import apDisplay
 from appionlib import apPeaks
 from appionlib import apImage
 from appionlib import apParam
-from appionlib.apTilt import apTiltTransform,
+from appionlib.apTilt import apTiltTransform, apTiltShift, tiltfile
 try:
 	import radermacher
 except:

@@ -7,7 +7,7 @@ import time
 import threading
 import numpy
 ### appion
-import particleLoop2
+from appionlib import particleLoop2
 from appionlib import apFindEM
 from appionlib import apParam
 from appionlib import appiondata
@@ -16,7 +16,7 @@ from appionlib import apDisplay
 from appionlib import apParticle
 from appionlib import apPeaks
 from appionlib import apImage
-from appionlib.apTilt import apTiltTransform,
+from appionlib.apTilt import apTiltTransform, apTiltPair, autotilt, tiltfile
 
 ##################################
 ##

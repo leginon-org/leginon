@@ -20,7 +20,7 @@ from appionlib import apParam
 from appionlib import apEMAN
 from appionlib import apXmipp
 from appionlib import apImage
-from appionlib.apSpider import alignment,
+from appionlib.apSpider import alignment, operations
 from pyami import spider
 from appionlib import appiondata
 from appionlib import apImagicFile

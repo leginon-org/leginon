@@ -21,7 +21,7 @@ from appionlib import apChimera
 from appionlib import apProject
 from appionlib import spyder
 from appionlib.apTilt import apTiltPair
-from appionlib.apSpider import operations,
+from appionlib.apSpider import operations, backproject
 from pyami import mem, mrc
 
 class rctVolumeScript(appionScript.AppionScript):

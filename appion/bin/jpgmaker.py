@@ -4,7 +4,7 @@
 import os
 import math
 #appion
-import filterLoop
+from appionlib import filterLoop
 from appionlib import apImage
 #leginon
 import pyami.jpg as jpg

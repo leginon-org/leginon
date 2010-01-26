@@ -6,7 +6,7 @@ import sys
 import re
 import time
 #appion
-import particleLoop2
+from appionlib import particleLoop2
 from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apDatabase

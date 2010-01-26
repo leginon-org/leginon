@@ -15,7 +15,7 @@ from appionlib import apDisplay
 from appionlib import apMask
 from appionlib import apCrud
 from appionlib import apFindEM
-import filterLoop
+from appionlib import filterLoop
 
 #Leginon
 import leginondata
