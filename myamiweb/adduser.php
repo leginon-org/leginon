@@ -5,9 +5,11 @@ require "inc/admin.inc";
 $f_sel_name=$_POST['f_sel_name'];
 $f_name=$_POST['f_name'];
 $f_full_name=$_POST['f_full_name'];
+$f_password=$_POST['f_password'];
+$f_password_confirm=$_POST['f_password_confirm'];
 $r_groupdata=$_POST['r_groupdata'];
 $f_group=$_POST['f_group'];
-
+$f_groupdata_privilegeId=$_POST['f_group_privilegeId'];
 $maintable = "UserData";
 $id = $leginondata->getId( array('name' => $f_name), 'UserData');
 $id = (is_array($id)) ? $id[0] : $id;
@@ -24,6 +26,7 @@ switch ($_POST['bt_action']) {
 				} else {
 					$ginfo['name'] = $_POST['f_groupdata_name'];
 					$ginfo['description'] = $_POST['f_groupdata_description'];
+					$ginfo['privilege'] = $_POST['f_groupdata_privilegeId'];
 					$f_group = $leginondata->mysql->SQLInsert('GroupData', $ginfo);
 				}
 			}
@@ -31,9 +34,18 @@ switch ($_POST['bt_action']) {
 				$nameerror = "Enter a Name";
 				break;
 			}
+			if (!$f_password) {
+				$passworderror = "Enter password";
+				break;
+			}
+			if ($f_password != $f_password_confirm) {
+				$passworderror = "Reenter password";
+				break;
+			}
 			$data['name'] = $f_name;
 			$data['full name'] = $f_full_name;
 			$data['REF|GroupData|group'] = $f_group;
+			$data['password'] = $f_password;
 			
 			if ($id) {
 				$where['DEF_id'] = $id;
@@ -56,6 +68,7 @@ if ($userinfo) {
 	$f_name=$userinfo['name'];
 	$f_full_name=$userinfo['full name'];
 	$f_group=$userinfo['REF|GroupData|group'];
+	$f_password=$userinfo['password'];
 } else {
 	$f_full_name="";
 	$f_group="1";
@@ -134,7 +147,7 @@ foreach ($users as $user) {
 </tr>
 <tr>
 <td class="dt1" height="40">
-name:<font color="red">*</font>
+login name:<font color="red">*</font>
 </td>
 <td class="dt1"> 
 <input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?php echo $f_name; ?>" onBlur="check_name();" onchange="check_name();"  >
@@ -150,6 +163,26 @@ full name:
 </td>
 <td class="dt2" valign="top">
   <textarea class="textarea" name="f_full_name" cols="15" rows="2" nowrap><?php echo htmlentities(stripslashes($f_full_name)); ?></textarea>
+</td>
+</tr>
+<tr>
+<td class="dt2" height="40">
+password:<font color="red">*</font>
+</td>
+<td class="dt2" valign="top">
+		<input class="field" type="password" name="f_password" size="15" value="<?php echo $f_password ?>">
+</td>
+<?php if ($passworderror) { ?>
+<td valign="top">
+<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php echo $passworderror; ?></div></td>
+<?php } ?>
+</tr>
+<tr>
+<td class="dt2" height="40">
+confirm password:
+</td>
+<td class="dt2" valign="top">
+		<input class="field" type="password" name="f_password_confirm" size="15">
 </td>
 </tr>
 <tr>
@@ -198,7 +231,25 @@ group:
 	<textarea class="textarea" disabled name="f_groupdata_description" cols="15" rows="2" id="id_groupdata_description" style="background-color: #DCDAD5;"></textarea>
 	</td>
 	</tr>
-	</table>
+	<tr>
+	<td class="dt1" height="40">
+	privilege:<font color="red">*</font>
+	</td>
+	<td class="dt2" valign="top">
+	<?php
+	$privileges = array('Restricted View'=>0,'View all but not edit'=>1,'Administrator'=>2);
+	?>
+		<select name="f_groupdata_privilegeId" onChange="javascript:document.dataimport.submit();">
+			<?php
+			foreach($privileges as $privilege_name=>$pId) {
+				$selected = ($f_groupdata_privilegeId==$pId) ? "selected" : "";
+				echo "<option value='$pId' $selected >$privilege_name\n";
+			}
+			?>
+		</select>
+	</td>
+	</tr>
+</table>
      </td>
     </tr>
   </table>

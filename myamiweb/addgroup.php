@@ -5,6 +5,7 @@ require "inc/admin.inc";
 $f_sel_name=$_POST['f_sel_name'];
 $f_name=$_POST['f_name'];
 $f_description=$_POST['f_description'];
+$f_privilegeId=$_POST['f_privilegeId'];
 
 $maintable = "GroupData";
 $id = $leginondata->getId( array('name' => $f_name), $maintable);
@@ -22,6 +23,7 @@ switch ($_POST['bt_action']) {
 			}
 			$data['name'] = $f_name;
 			$data['description'] = $f_description;
+			$data['privilege'] = $f_privilegeId;
 			
 			if ($id) {
 				$where['DEF_id'] = $id;
@@ -43,6 +45,7 @@ $info = $info[0];
 if ($info) {
 	$f_name=$info['name'];
 	$f_description=$info['description'];
+	$f_privilegeId=$info['privilege'];
 } else {
 	$f_description="";
 }
@@ -108,10 +111,28 @@ name:<font color="red">*</font>
 </tr>
 <tr>
 <td class="dt2" height="40">
-full name:
+description:
 </td>
 <td class="dt2" valign="top">
   <textarea class="textarea" name="f_description" cols="15" rows="2" nowrap><?php echo htmlentities(stripslashes($f_description)); ?></textarea>
+</td>
+</tr>
+<tr>
+<td class="dt1" height="40">
+privilege:<font color="red">*</font>
+</td>
+<td class="dt2" valign="top">
+<?php
+$privileges = array('Restricted View'=>0,'View all but not edit'=>1,'Administrator'=>2);
+?>
+	<select name="f_privilegeId" onChange="javascript:document.dataimport.submit();">
+		<?php
+		foreach($privileges as $privilege_name=>$pId) {
+			$selected = ($f_privilegeId==$pId) ? "selected" : "";
+			echo "<option value='$pId' $selected >$privilege_name\n";
+		}
+		?>
+	</select>
 </td>
 </tr>
 <tr>
