@@ -45,8 +45,9 @@ class TiltTargetPanel(gui.wx.TargetPanel.TargetImagePanel):
 	def addTarget(self, name, x, y):
 		#sys.stderr.write("%s: (%4d,%4d),\n" % (self.outname,x,y))
 		numtargets = len(self.getTargets(name))
+		numotargets = len(self.other.getTargets(name))
 		#self.parent.statbar.PushStatusText("Added %d target at location (%d,%d)" % numtargets, x, y)
-		if numtargets > 3:
+		if numtargets > 3 and numotargets > 3:
 			self.app.onFileSave(None)
 		return self._getSelectionTool().addTarget(name, x, y)
 
@@ -205,6 +206,10 @@ class PickerApp(wx.App):
 		self.repairlist = wx.Button(self.frame, -1, 'Repair')
 		self.frame.Bind(wx.EVT_BUTTON, self.onRepairList, self.repairlist)
 		self.buttonrow.Add(self.repairlist, 0, wx.ALL, 1)
+
+		self.xferpick = wx.Button(self.frame, -1, '&Xfer pick')
+		self.frame.Bind(wx.EVT_BUTTON, self.onXferPick, self.xferpick)
+		self.buttonrow.Add(self.xferpick, 0, wx.ALL, 1)
 
 		if self.mode == 'default':
 			self.createMenuButtons()
@@ -649,6 +654,41 @@ class PickerApp(wx.App):
 			self.panel2.setTargets('Worst', a2c )
 		#for target in targets1:
 		#	target['stats']['RMSD'] = rmsd
+
+	#---------------------------------------
+	def onXferPick(self, evt):
+		#GET ARRAYS
+		a1 = self.getArray1()
+		a2 = self.getArray2()
+		#CHECK TO SEE IF IT OKAY TO PROCEED
+		if len(a1) == 0 or len(a2) == 0:
+			self.statbar.PushStatusText("ERROR: Cannot transfer picks. There are no picks.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot transfer picks.\nThere are no picks.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+		if len(a1) - len(a2) == 0:
+			self.statbar.PushStatusText("ERROR: Cannot transfer picks. Same number picks for each panel.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot transfer picks.\nSame number picks for each panel.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+		### Case 1: left panel has more than right panel
+		if len(a1) > len(a2):
+			a1b = self.getAlignedArray1()
+			lastpick = a1b[len(a2):]
+			a2list = self.panel2.getTargets('Picked')
+			a2list.extend(lastpick)
+			self.panel2.setTargets('Picked', a2list )
+		elif len(a2) > len(a1):
+			a2b = self.getAlignedArray2()
+			lastpick = a2b[len(a1):]
+			a1list = self.panel1.getTargets('Picked')
+			a1list.extend(lastpick)
+			self.panel1.setTargets('Picked', a1list )
+		self.onUpdate(evt)
 
 	#---------------------------------------
 	def sortParticles(self, evt):
