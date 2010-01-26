@@ -24,7 +24,7 @@ $link->addlink('dualview.php','Dual Viewer','', 'dual_view');
 $link->addlink('template.php', 'Hole Template viewer','', 'template');
 
 if (privilege() == 2 ) {
-	$link->addlink($common_url.'admin.php','Administration','', 'admin');
+	$link->addlink('admin.php','Administration','', 'admin');
 	$link->addlink('/phpMyAdmin/','phpMyAdmin','', 'phpMyAdmin');
 	if($PROJECT_URL) {
 		$link->addlink($PROJECT_URL,'Project DB','', 'project');
