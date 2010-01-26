@@ -3,7 +3,7 @@ import re
 import sys
 import stat
 import time
-import apDisplay
+from appionlib import apDisplay
 import subprocess
 
 def executeImagicBatchFile(filename, verbose=False, logfile=None):

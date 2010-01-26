@@ -9,7 +9,7 @@ import subprocess
 import math
 from string import lowercase
 ## appion
-import apDisplay
+from appionlib import apDisplay
 
 ####
 # This is a low-level file with NO database connections

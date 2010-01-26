@@ -3,12 +3,12 @@
 import os, sys, re
 import time
 import math
-import apDatabase
-import apParticle
-import apEMAN
-import apDisplay
-import appiondata
-import apFile
+from appionlib import apDatabase
+from appionlib import apParticle
+from appionlib import apEMAN
+from appionlib import apDisplay
+from appionlib import appiondata
+from appionlib import apFile
 import numpy
 
 

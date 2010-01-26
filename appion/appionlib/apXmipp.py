@@ -6,13 +6,13 @@ import time
 import math
 import subprocess
 #appion
-import apDisplay
-import apEMAN
-import apFile
-import apParam
-import apImagicFile
+from appionlib import apDisplay
+from appionlib import apEMAN
+from appionlib import apFile
+from appionlib import apParam
+from appionlib import apImagicFile
 from pyami import spider, mrc, mem
-from apSpider import operations
+from appionlib.apSpider import operations
 
 #======================
 #======================

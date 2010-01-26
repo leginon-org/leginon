@@ -3,7 +3,7 @@
 #python
 import MySQLdb
 #appion
-import appiondata
+from appionlib import appiondata
 #leginon
 import sinedon
 

@@ -5,16 +5,16 @@ import os
 import sys
 import re
 #appion
-import filterLoop
-import appionLoop2
-import apDisplay
-import apDatabase
-import apPeaks
-import appiondata
-import apParticle
-import apDefocalPairs
+from appionlib import filterLoop
+from appionlib import appionLoop2
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apPeaks
+from appionlib import appiondata
+from appionlib import apParticle
+from appionlib import apDefocalPairs
 import threading
-import apParam
+from appionlib import apParam
 
 class ParticleLoop(filterLoop.FilterLoop):
 	threadJpeg = True

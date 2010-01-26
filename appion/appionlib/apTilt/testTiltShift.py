@@ -3,8 +3,8 @@
 import os
 import sys
 from pyami import quietscipy
-import apImage
-from apTilt import apTiltShift
+from appionlib import apImage
+from appionlib.apTilt import apTiltShift
 
 
 def runTestShift(img1name, img2name, imgpath, tiltdiff, coord):

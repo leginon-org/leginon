@@ -2,10 +2,10 @@
 
 import sys
 #import apDatabase
-import apDisplay
+from appionlib import apDisplay
 import math
 import numpy
-import apImage
+from appionlib import apImage
 import pyami.quietscipy
 from scipy import ndimage
 

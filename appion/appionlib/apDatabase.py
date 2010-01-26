@@ -12,9 +12,9 @@ import sinedon.data as data
 #leginon
 import leginondata
 #appion
-import apDisplay
-import appiondata
-import apDefocalPairs
+from appionlib import apDisplay
+from appionlib import appiondata
+from appionlib import apDefocalPairs
 
 splitdb = True
 

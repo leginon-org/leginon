@@ -11,14 +11,14 @@ import random
 ## PIL
 #import Image
 ## spider
-import spyder
+from appionlib import spyder
 ## appion
-import apImage
-import apEMAN
-import apParam
-import apDisplay
-import apFile
-from apSpider import operations
+from appionlib import apImage
+from appionlib import apEMAN
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import apFile
+from appionlib.apSpider import operations
 
 """
 A large collection of SPIDER functions

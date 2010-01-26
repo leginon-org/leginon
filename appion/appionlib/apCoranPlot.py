@@ -6,13 +6,13 @@ import sys
 import time
 import shutil
 import math
-import apRecon
+from appionlib import apRecon
 import sinedon
 import numpy
 import subprocess
 import MySQLdb
-import apDisplay
-import apProject
+from appionlib import apDisplay
+from appionlib import apProject
 
 
 

@@ -11,13 +11,13 @@ import math
 import random
 import cPickle
 #appion
-import apDisplay
-import apDatabase
-import apImage
-import apParam
-import apProject
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apImage
+from appionlib import apParam
+from appionlib import apProject
 #leginon
-import appionScript
+from appionlib import appionScript
 from pyami import mem
 import leginondata
 

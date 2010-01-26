@@ -7,10 +7,10 @@ import sys
 import math
 import shutil
 #appion
-import appiondata
-import apParam
-import apDisplay
-import apDatabase
+from appionlib import appiondata
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import apDatabase
 
 def commitCtfValueToDatabase(imgdict, matlab, ctfvalue, params):
 	imgname = imgdict['filename']

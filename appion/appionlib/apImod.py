@@ -1,11 +1,11 @@
 import os
 import subprocess
 import shutil
-import apImage
-import apDisplay
-import apFile
+from appionlib import apImage
+from appionlib import apDisplay
+from appionlib import apFile
 import time
-import apTomo
+from appionlib import apTomo
 from pyami import mrc
 
 def writeRawtltFile(path,seriesname,tilts):

@@ -1,9 +1,9 @@
 #!/usr/bin/python -O
 #region finding functions called by makeMask.py
 
-import apConvexHull
-import apImage
-import apDisplay
+from appionlib import apConvexHull
+from appionlib import apImage
+from appionlib import apDisplay
 import os
 import sys
 import math

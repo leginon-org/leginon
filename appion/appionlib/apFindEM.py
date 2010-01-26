@@ -7,10 +7,10 @@ import sys
 import time
 import subprocess
 #appion
-import apDisplay
-import apImage
-import apParam
-import apFile
+from appionlib import apDisplay
+from appionlib import apImage
+from appionlib import apParam
+from appionlib import apFile
 
 #===========
 def runSpectralFindEM(imgdict, params, thread=False):

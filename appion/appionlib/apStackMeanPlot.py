@@ -6,13 +6,13 @@ import os
 import time
 import numpy
 # appion
-import apEMAN
-import apFile
-import apDisplay
-import apStack
-import apImage
-import apImagicFile
-import apProject
+from appionlib import apEMAN
+from appionlib import apFile
+from appionlib import apDisplay
+from appionlib import apStack
+from appionlib import apImage
+from appionlib import apImagicFile
+from appionlib import apProject
 
 #===============
 def makeStackMeanPlot(stackid, gridpoints=16):

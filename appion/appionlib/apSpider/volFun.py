@@ -6,12 +6,12 @@ import os
 import numpy
 #import Image
 ## spider
-import spyder
+from appionlib import spyder
 ## appion
 #from apSpider import operations ### fails
-import apImage
-import apParam
-import apDisplay
+from appionlib import apImage
+from appionlib import apParam
+from appionlib import apDisplay
 try:
 	from pyami import spider
 except:

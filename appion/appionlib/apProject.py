@@ -5,11 +5,11 @@ import os
 import sys
 import time
 #appion
-import apDisplay
+from appionlib import apDisplay
 import leginondata
-import apStack
+from appionlib import apStack
 import project
-import appiondata
+from appionlib import appiondata
 
 #========================
 def getProjectIdFromSessionName(sessionname):

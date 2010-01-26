@@ -6,8 +6,8 @@ import time
 import threading
 import subprocess
 ## appion
-import apDisplay
-import apParam
+from appionlib import apDisplay
+from appionlib import apParam
 
 #===========
 class AppionJob(threading.Thread):

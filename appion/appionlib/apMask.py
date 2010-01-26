@@ -11,10 +11,10 @@ import pyami.imagefun as imagefun
 #leginon
 import leginondata
 #appion
-import apImage
-import appiondata
-import apCrud
-import apDatabase
+from appionlib import apImage
+from appionlib import appiondata
+from appionlib import apCrud
+from appionlib import apDatabase
 
 def getMaskParamsByRunName(name,sessiondata):
 	maskRq=appiondata.ApMaskMakerRunData()

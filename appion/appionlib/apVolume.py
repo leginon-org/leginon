@@ -15,15 +15,15 @@ from scipy import ndimage
 from numpy import linalg
 from numpy import ma
 #appion
-import apDisplay
-import appiondata
-import apDatabase
-import apAlignment
-import apParam
-import apEMAN
-import spyder
-import apSymmetry
-import apFile
+from appionlib import apDisplay
+from appionlib import appiondata
+from appionlib import apDatabase
+from appionlib import apAlignment
+from appionlib import apParam
+from appionlib import apEMAN
+from appionlib import spyder
+from appionlib import apSymmetry
+from appionlib import apFile
 #pyami
 from pyami import mrc
 from pyami import imagefun

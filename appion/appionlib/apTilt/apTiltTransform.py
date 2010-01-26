@@ -6,9 +6,9 @@ import ImageDraw
 import numpy
 from scipy import optimize, ndimage
 #appion
-import apImage
-import apDisplay
-import apDog
+from appionlib import apImage
+from appionlib import apDisplay
+from appionlib import apDog
 #pyami
 from pyami import peakfinder
 from pyami import correlator

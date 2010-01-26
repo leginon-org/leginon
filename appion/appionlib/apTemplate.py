@@ -12,12 +12,12 @@ import glob
 import pprint
 #import numarray.convolve as convolve
 #appion
-import apImage
-import apFile
-import apParam
-import apDisplay
-import apDatabase
-import appiondata
+from appionlib import apImage
+from appionlib import apFile
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import appiondata
 
 def getTemplates(params):
 	"""

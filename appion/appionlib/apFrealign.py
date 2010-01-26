@@ -1,12 +1,12 @@
 import os
 import subprocess
-import apStack
-import apCtf
-import apDefocalPairs
+from appionlib import apStack
+from appionlib import apCtf
+from appionlib import apDefocalPairs
 from pyami import mrc
-import apVolume
-import apDisplay
-import appiondata
+from appionlib import apVolume
+from appionlib import apDisplay
+from appionlib import appiondata
 import shutil
 import math
 import numpy

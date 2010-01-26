@@ -3,11 +3,11 @@
 import math
 import numpy
 import os
-import apParam
-import apTomo
-import apImod
-import apDisplay
-import appiondata
+from appionlib import apParam
+from appionlib import apTomo
+from appionlib import apImod
+from appionlib import apDisplay
+from appionlib import appiondata
 
 def parseTilt(tiltfile):
 	f=open(tiltfile)

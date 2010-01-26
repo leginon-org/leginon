@@ -7,7 +7,7 @@ import tempfile
 from pyami import mrc
 from pyami import imagefun
 #appion
-import apDatabase
+from appionlib import apDatabase
 
 def createImageLinks(imagelist):
 	"""

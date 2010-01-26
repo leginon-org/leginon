@@ -16,8 +16,8 @@ import scipy.ndimage as ndimage
 #import numarray.fft as fft
 import numpy.random as random_array
 #import numpy.la as linear_algebra
-import apDatabase
-import apImage
+from appionlib import apDatabase
+from appionlib import apImage
 #import selexonFunctions as sf1
 #import numextension
 #import mem

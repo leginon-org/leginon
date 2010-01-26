@@ -8,10 +8,10 @@ import time
 #leginon
 import leginondata
 #appion
-import appiondata
-import apDatabase
-import apDisplay
-import apDefocalPairs
+from appionlib import appiondata
+from appionlib import apDatabase
+from appionlib import apDisplay
+from appionlib import apDefocalPairs
 
 #===========================
 def guessParticlesForSession(expid=None, sessionname=None):

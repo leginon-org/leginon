@@ -7,9 +7,9 @@ import re
 import pprint
 import cPickle
 #appion
-import apXml
-import apDisplay
-from apSpider import operations
+from appionlib import apXml
+from appionlib import apDisplay
+from appionlib.apSpider import operations
 
 filetypes = ['spider', 'text', 'xml', 'pickle', 'box', 'pik',]
 filetypesel = (

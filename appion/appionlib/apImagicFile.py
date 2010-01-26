@@ -10,8 +10,8 @@ import time
 import math
 import shutil
 #appion
-import apDisplay
-import apFile
+from appionlib import apDisplay
+from appionlib import apFile
 import numpy
 from pyami import mrc, mem
 import pyami.quietscipy

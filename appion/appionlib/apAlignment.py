@@ -9,15 +9,15 @@ import shutil
 import math
 import subprocess
 import leginondata
-import apXml
-import apParam
-import apDisplay
-import apDatabase
-import apStack
-import apImage
-import appiondata
-import apTemplate
-import apEMAN
+from appionlib import apXml
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apStack
+from appionlib import apImage
+from appionlib import appiondata
+from appionlib import apTemplate
+from appionlib import apEMAN
 
 def defaults():
 	params = {}

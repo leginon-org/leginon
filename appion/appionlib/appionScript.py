@@ -12,13 +12,13 @@ import random
 import cPickle
 from optparse import OptionParser
 #appion
-import apDisplay
-import apDatabase
-import apParam
-import apFile
-import apProject
-import appiondata
-import apWebScript
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apParam
+from appionlib import apFile
+from appionlib import apProject
+from appionlib import appiondata
+from appionlib import apWebScript
 #leginon
 import sinedon
 from pyami import mem
@@ -154,7 +154,7 @@ class AppionScript(object):
 		elif not sessiondata and 'session' in self.params and isinstance(self.params['session'],str):
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		elif not sessiondata and 'stackid' in self.params:
-			import apStack
+			from appionlib import apStack
 			sessiondata = apStack.getSessionDataFromStackId(self.params['stackid'])
 		else:
 			s = re.search('/([0-9][0-9][a-z][a-z][a-z][0-9][0-9][^/]*)/', self.params['rundir'])
@@ -394,7 +394,7 @@ class AppionScript(object):
 		"""
 		this function only runs if no rundir is defined at the command line
 		"""
-		import apStack
+		from appionlib import apStack
 		if ( self.params['rundir'] is None
 		and 'session' in self.params
 		and self.params['session'] is not None ):

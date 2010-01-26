@@ -4,9 +4,9 @@ import time
 import os
 import re
 ## appion
-import apDisplay
-import apFile
-import spyder
+from appionlib import apDisplay
+from appionlib import apFile
+from appionlib import spyder
 
 """
 A large collection of SPIDER functions

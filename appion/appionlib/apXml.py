@@ -1,5 +1,5 @@
 import sys
-import apDisplay
+from appionlib import apDisplay
 import re
 import os
 import xml.dom.minidom

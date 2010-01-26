@@ -5,10 +5,10 @@ import time
 import numpy
 import subprocess
 ## appion
-import spyder
-import apParam
-import apDisplay
-import apFile
+from appionlib import spyder
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import apFile
 from pyami import spider
 
 """

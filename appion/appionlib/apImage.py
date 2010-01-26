@@ -15,9 +15,9 @@ from scipy import ndimage
 from numpy import linalg
 from numpy import ma
 ## appion
-import apDisplay
-import apFile
-from apSpider import filters
+from appionlib import apDisplay
+from appionlib import apFile
+from appionlib.apSpider import filters
 ## pyami
 from pyami import mrc, imagefun, spider, fftengine
 
@@ -923,7 +923,7 @@ def correctImage(imgdata, sessionname):
 	- dark correction is not time dependent
 	"""
 	rawimgarray = imgdata['image']
-	import apDatabase
+	from appionlib import apDatabase
 	darkarray, normarray = apDatabase.getDarkNorm(sessionname, imgdata['camera'])
 	correctedimgarray = normarray * (rawimgarray - darkarray)
 	return correctedimgarray

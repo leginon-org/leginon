@@ -10,11 +10,11 @@ import Image
 from pyami import quietscipy
 from scipy import ndimage, optimize
 #appion
-import apDisplay
-import apPeaks
-import apImage
-import apParam
-from apTilt import apTiltTransform, apTiltShift, tiltfile
+from appionlib import apDisplay
+from appionlib import apPeaks
+from appionlib import apImage
+from appionlib import apParam
+from appionlib.apTilt import apTiltTransform,
 try:
 	import radermacher
 except:

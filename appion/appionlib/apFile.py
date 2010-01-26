@@ -5,7 +5,7 @@ import sys
 import time
 import glob
 import subprocess
-import apDisplay
+from appionlib import apDisplay
 
 ####
 # This is a low-level file with NO database connections

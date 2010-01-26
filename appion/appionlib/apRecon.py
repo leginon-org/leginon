@@ -8,16 +8,16 @@ import string
 import shutil
 import subprocess
 #appion
-import appiondata
-import apDatabase
-import apParam
-import apDisplay
-import apEMAN
-import apEulerDraw
-import apChimera
-import apStack
-import apFile
-import apSymmetry
+from appionlib import appiondata
+from appionlib import apDatabase
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import apEMAN
+from appionlib import apEulerDraw
+from appionlib import apChimera
+from appionlib import apStack
+from appionlib import apFile
+from appionlib import apSymmetry
 try:
 	import EMAN
 except:

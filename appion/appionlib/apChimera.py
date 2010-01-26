@@ -10,9 +10,9 @@ import random
 import colorsys
 import subprocess
 #appion
-import apFile
-import apParam
-import apDisplay
+from appionlib import apFile
+from appionlib import apParam
+from appionlib import apDisplay
 from pyami import mrc
 
 satvalue = 0.9

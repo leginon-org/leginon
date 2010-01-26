@@ -7,9 +7,9 @@ import pyami.correlator as correlator
 #leginon
 import leginondata
 #appion
-import appiondata
-import apImage
-import apDisplay
+from appionlib import appiondata
+from appionlib import apImage
+from appionlib import apDisplay
 
 
 def getShiftFromImage(imgdata, params):

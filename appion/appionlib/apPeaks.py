@@ -8,10 +8,10 @@ import Image
 import ImageDraw
 #import ImageOps
 #appion
-import apImage
-import apFile
-import apDisplay
-import apParam
+from appionlib import apImage
+from appionlib import apFile
+from appionlib import apDisplay
+from appionlib import apParam
 #leginon
 from pyami import imagefun
 

@@ -14,11 +14,11 @@ from scipy import fftpack, ndimage
 #leginon
 from pyami import mrc, imagefun
 #appion
-import apDisplay
-import apImage
-import apFile
-import apParam
-import apImagicFile
+from appionlib import apDisplay
+from appionlib import apImage
+from appionlib import apFile
+from appionlib import apParam
+from appionlib import apImagicFile
 
 ####
 # This is a low-level file with NO database connections

@@ -4,8 +4,8 @@
 import re
 import sys
 #appion
-import apDisplay
-import appiondata
+from appionlib import apDisplay
+from appionlib import appiondata
 
 #===========================
 def findSymmetry(symtext, msg=True):

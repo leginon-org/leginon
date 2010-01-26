@@ -11,19 +11,19 @@ import random
 import numpy
 ## PIL
 ## spider
-import spyder
+from appionlib import spyder
 ## EMAN
 try:
 	import EMAN
 except:
 	pass
 ## appion
-import apEMAN
-import apImage
-import apParam
-import apDisplay
-import apFile
-from apSpider import operations
+from appionlib import apEMAN
+from appionlib import apImage
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import apFile
+from appionlib.apSpider import operations
 
 """
 A large collection of SPIDER functions

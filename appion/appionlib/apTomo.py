@@ -12,20 +12,20 @@ except:
 	no_wx = True
 import leginondata
 from pyami import arraystats, mrc, imagefun, numpil,correlator, peakfinder
-import appiondata
+from appionlib import appiondata
 import libCVwrapper
 try:
 	import node
 except:
 	pass
-import apDatabase
-import apDisplay
-import apImage
-import apImod
-import apVolume
-import apFile
-import apEMAN
-from apSpider import volFun
+from appionlib import apDatabase
+from appionlib import apDisplay
+from appionlib import apImage
+from appionlib import apImod
+from appionlib import apVolume
+from appionlib import apFile
+from appionlib import apEMAN
+from appionlib.apSpider import volFun
 
 def getTiltdataList(tiltseriesdata,othertiltdata=None):
 		if othertiltdata is None:

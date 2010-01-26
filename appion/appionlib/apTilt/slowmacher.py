@@ -4,7 +4,7 @@ import numpy
 from numpy import random
 import time
 import math
-import apDisplay
+from appionlib import apDisplay
 
 
 def getArea(i, j, k):

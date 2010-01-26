@@ -4,9 +4,9 @@ import subprocess
 import sys
 import time
 import math
-import apDisplay
+from appionlib import apDisplay
 try:
-	import apImagicFile
+	from appionlib import apImagicFile
 except:
 	print "You must be running on Garibaldi"
 try:

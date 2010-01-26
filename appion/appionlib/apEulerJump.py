@@ -11,11 +11,11 @@ import numpy
 import sinedon
 import MySQLdb
 ### appion
-import apDisplay
-import apStack
-import apEulerCalc
-import appiondata
-import apSymmetry
+from appionlib import apDisplay
+from appionlib import apStack
+from appionlib import apEulerCalc
+from appionlib import appiondata
+from appionlib import apSymmetry
 
 class ApEulerJump(object):
 	#=====================

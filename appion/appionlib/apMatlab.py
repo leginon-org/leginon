@@ -7,12 +7,12 @@ import sys
 import math
 import shutil
 #appion
-import appiondata
-import apParam
-import apDisplay
-import apCtf
-import apImage
-import apDatabase
+from appionlib import appiondata
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import apCtf
+from appionlib import apImage
+from appionlib import apDatabase
 
 try:
 	import mlabraw as pymat

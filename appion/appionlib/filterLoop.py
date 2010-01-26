@@ -6,12 +6,12 @@ import sys
 import re
 import time
 #appion
-import appionLoop2
-import appionScript
-import apImage
-import apFile
-import apDisplay
-import apDatabase
+from appionlib import appionLoop2
+from appionlib import appionScript
+from appionlib import apImage
+from appionlib import apFile
+from appionlib import apDisplay
+from appionlib import apDatabase
 
 class FilterLoop(appionLoop2.AppionLoop):
 	#######################################################
