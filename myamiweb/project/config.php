@@ -19,10 +19,9 @@
 require "../config.php";
 
 // --- Leginon database config
-$DBEM_PATH = $BASE_PATH;
-$VIEWER_URL = $DBEM_PATH."/3wviewer.php?expId=";
-$SUMMARY_URL = $DBEM_PATH."/summary.php?expId=";
-$UPLOAD_URL = $DBEM_PATH."/processing/uploadimage.php";
+$VIEWER_URL = BASE_URL."/3wviewer.php?expId=";
+$SUMMARY_URL = BASE_URL."/summary.php?expId=";
+$UPLOAD_URL = BASE_URL."/processing/uploadimage.php";
 
 $DEF_PROJECT_TABLES_FILE = "defaultprojecttables.xml";
 
@@ -30,5 +29,5 @@ $DEF_PROJECT_TABLES_FILE = "defaultprojecttables.xml";
 $DEF_PROCESSING_TABLES_FILE = "defaultprocessingtables.xml";
 
 // --- do not remove --- //
-set_include_path(get_include_path() . PATH_SEPARATOR . $DBEM_PATH);
+set_include_path(get_include_path() . PATH_SEPARATOR . $BASE_PATH);
 ?>
