@@ -62,6 +62,10 @@
       name="description" 
       type="text" 
     />
+    <field 
+      name="privilege" 
+      type="int" 
+    />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
   </sqltable>
@@ -355,6 +359,10 @@
     />
     <field 
       name="full name" 
+      type="text" 
+    />
+    <field 
+      name="password" 
       type="text" 
     />
     <field 
