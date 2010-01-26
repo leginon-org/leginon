@@ -355,19 +355,28 @@
     />
     <field 
       name="name" 
-      type="text" 
+      type="text"
+      default="DEFAULT 'NULL'"
     />
     <field 
       name="full name" 
-      type="text" 
+      type="text"
+      default="DEFAULT 'NULL'"
     />
     <field 
       name="password" 
-      type="text" 
+      type="char(32)"
+      default="DEFAULT '00000'"
+    />
+    <field
+      name="email"
+      type="varchar(60)"
+      default="DEFAULT 'NULL'"
     />
     <field 
       name="REF|GroupData|group" 
-      type="int(20)" 
+      type="int(20)"
+      default="DEFAULT '0'"
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
