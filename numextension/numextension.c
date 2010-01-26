@@ -1169,8 +1169,8 @@ static struct PyMethodDef numeric_methods[] = {
 	
 };
 
-void initnumextension() {
-	Py_InitModule("numextension", numeric_methods);
+void init_numextension() {
+	Py_InitModule("_numextension", numeric_methods);
 	import_array();
 }
 
