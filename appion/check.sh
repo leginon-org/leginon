@@ -9,11 +9,11 @@ echo "----------------"
 rm -f importer.py
 echo "#!/usr/bin/env python" > importer.py
 echo "from pyami import quietscipy" >> importer.py
-for i in lib/*.py;
+for i in appionlib/*.py;
 do
    j=`basename $i | sed 's/\.py//'`
 	#echo $j
-   echo import $j >> importer.py
+   echo from appionlib import $j >> importer.py
 done
 echo "import sys" >> importer.py
 echo "sys.exit(1)" >> importer.py
