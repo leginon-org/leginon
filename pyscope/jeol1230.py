@@ -1,13 +1,13 @@
 # jeol1230.py is implemented for Jeol 1230 electron microscope
 # Author: Minghui Hu, mhu@nysbc.org, New York Structural Biology Center
 
-# from pyScope import jeol1230 ; j = jeol1230.jeol1230()
+# from pyscope import jeol1230 ; j = jeol1230.jeol1230()
 
 import time
 import math
-from pyScope import tem
-from pyScope import jeol1230lib
-from pyScope import jeol1230cal
+from pyscope import tem
+from pyscope import jeol1230lib
+from pyscope import jeol1230cal
 
 try:
 	import pythoncom

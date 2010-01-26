@@ -10,7 +10,7 @@ import win32com.server.register
 try:
 	import tietzcom
 except:
-	from pyScope import tietzcom
+	from pyscope import tietzcom
 
 class Ping(object):
 	_typelib_guid_ = tietzcom.CLSID
@@ -18,8 +18,8 @@ class Ping(object):
 	_com_interfaces_ = ['ICAMCCallBack'] #[tietzcom.ICAMCCallBack.CLSID]
 	_public_methods_ = ['LivePing', 'RequestLock']
 	_reg_clsid_ = '{939120E3-FE5B-4AED-A945-1B8D4382EB71}'
-	_reg_progid_ = 'pyScope.CAMCCallBack'
-	_reg_desc_ = 'pyScope CAMC Callback'
+	_reg_progid_ = 'pyscope.CAMCCallBack'
+	_reg_desc_ = 'pyscope CAMC Callback'
 
 	def LivePing(self):
 		return 0

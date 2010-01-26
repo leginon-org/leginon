@@ -8,15 +8,15 @@ if sys.platform != 'win32':
 if __name__ == '__main__':
 
 	try:
-		import pyScope.updatecom
-		pyScope.updatecom.run()
+		import pyscope.updatecom
+		pyscope.updatecom.run()
 	except:
 		print 'Failed to update COM'
 
 	try:
-		import pyScope.tietzping
-		pyScope.tietzping.register()
+		import pyscope.tietzping
+		pyscope.tietzping.register()
 	except:
-		print 'Failed to register pyScope.Ping'
+		print 'Failed to register pyscope.Ping'
 
 

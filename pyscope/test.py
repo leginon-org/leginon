@@ -37,9 +37,9 @@ def testTietz():
 		return
 
 	try:
-		ping = win32com.client.Dispatch('pyScope.CAMCCallBack')
+		ping = win32com.client.Dispatch('pyscope.CAMCCallBack')
 	except pythoncom.com_error, (hr, msg, exc, arg):
-		print 'Failed to initialize interface pyScope.Ping: %s' % msg
+		print 'Failed to initialize interface pyscope.Ping: %s' % msg
 		return
 
 	try:

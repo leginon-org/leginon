@@ -15,7 +15,7 @@ class TIA(ccdcamera.CCDCamera):
         	pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		self.im = None
 		self.imdisp = None
-		self.tianame = 'pyScope'
+		self.tianame = 'pyscope'
 		self.setupname = self.tianame + ' Setup'
 		self.imagedispname = self.tianame + ' Image Display'
 		self.imagename = self.tianame + ' Image'

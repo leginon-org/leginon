@@ -3,13 +3,6 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyScope/ccdcamera.py,v $
-# $Revision: 1.9 $
-# $Name: not supported by cvs2svn $
-# $Date: 2008-02-22 23:04:58 $
-# $Author: pulokas $
-# $State: Exp $
-# $Locker:  $
 
 import time
 import threading

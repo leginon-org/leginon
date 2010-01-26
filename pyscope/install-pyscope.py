@@ -15,22 +15,22 @@ except OSError:
 		sys.exit()
 
 pythonfolder = get_python_lib(plat_specific=True)
-pyscopefolder = os.path.join(programsfolder, 'pyScope')
+pyscopefolder = os.path.join(programsfolder, 'pyscope')
 
 if __name__ == '__main__':
 
 	if sys.argv[1] == '-install':
 		try:
-			import pyScope.updatecom
-			pyScope.updatecom.run(os.path.join(pythonfolder, 'pyScope'))
+			import pyscope.updatecom
+			pyscope.updatecom.run(os.path.join(pythonfolder, 'pyscope'))
 		except:
 			print 'Failed to update COM'
 
 		try:
-			import pyScope.tietzping
-			pyScope.tietzping.register()
+			import pyscope.tietzping
+			pyscope.tietzping.register()
 		except:
-			print 'Failed to register pyScope.Ping'
+			print 'Failed to register pyscope.Ping'
 
 		try:
 			os.mkdir(pyscopefolder)
@@ -38,16 +38,16 @@ if __name__ == '__main__':
 		except OSError:
 			pass
 
-		target = os.path.join(pythonfolder, 'pyScope', 'updatecom.py')
+		target = os.path.join(pythonfolder, 'pyscope', 'updatecom.py')
 		path = os.path.join(pyscopefolder, 'Update COM.lnk')
 		create_shortcut(target, 'Update COM', path, '',
-										os.path.join(pythonfolder, 'pyScope'))
+										os.path.join(pythonfolder, 'pyscope'))
 		file_created(path)
 
-		target = os.path.join(pythonfolder, 'pyScope', 'tietzping.py')
+		target = os.path.join(pythonfolder, 'pyscope', 'tietzping.py')
 		path = os.path.join(pyscopefolder, 'Update Ping.lnk')
 		create_shortcut(target, 'Update Ping', path, '',
-										os.path.join(pythonfolder, 'pyScope'))
+										os.path.join(pythonfolder, 'pyscope'))
 		file_created(path)
 
 	elif sys.argv[1] == '-remove':

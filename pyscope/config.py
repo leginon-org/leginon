@@ -30,7 +30,7 @@ cameraclasses = []
 for name in names:
 	cls_str = configparser.get(name, 'class')
 	modname,clsname = cls_str.split('.')
-	fullmodname = 'pyScope.' + modname
+	fullmodname = 'pyscope.' + modname
 	args = imp.find_module(modname, [modpath])
 	try:
 		mod = imp.load_module(fullmodname, *args)

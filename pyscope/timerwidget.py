@@ -91,7 +91,7 @@ def kill_windows(pid):
 	win32api.CloseHandle(handle)
 
 if __name__ == '__main__':
-	from pyScope import tecnai
+	from pyscope import tecnai
 
 	class MainWindow(wx.Frame):
 		def __init__(self, parent, id, title):

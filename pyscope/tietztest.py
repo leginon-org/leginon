@@ -1,4 +1,4 @@
-from pyScope import tietz
+from pyscope import tietz
 import time
 
 # one of these classes should work

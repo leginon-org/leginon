@@ -4,18 +4,18 @@ import sys
 
 if sys.platform == 'win32':
 	pl = get_python_lib(True)
-	ext_package = 'pyScope'
+	ext_package = 'pyscope'
 	scripts = ['install-pyscope.py']
 else:
 	ext_package = None
 	scripts = []
 
 setup(
-	name='pyScope',
+	name='pyscope',
 	version='1.0.8',
 	description='Interface to Electron Microscopes and CCD Cameras',
-	packages=['pyScope'],
-	package_dir={'pyScope': ''},
+	packages=['pyscope'],
+	package_dir={'pyscope': ''},
 	ext_package=ext_package,
 	scripts=scripts,
 )

@@ -23,7 +23,7 @@ try:
 	try:
 		import tietzcom
 	except ImportError:
-		import pyScope.tietzcom as tietzcom
+		import pyscope.tietzcom as tietzcom
 except ImportError:
 	pass
 
@@ -47,7 +47,7 @@ def killCamcProcs():
 
 class CameraControl(object):
 	def __init__(self):
-		self.pingname = 'pyScope'
+		self.pingname = 'pyscope'
 		self.cameralock = threading.RLock()
 		self.camera = None
 		self.cameras = []
@@ -108,9 +108,9 @@ class CameraControl(object):
 			raise RuntimeError('failed to initialize interface CAMC4.Camera')
 
 		try:
-			ping = win32com.client.Dispatch('pyScope.CAMCCallBack')
+			ping = win32com.client.Dispatch('pyscope.CAMCCallBack')
 		except pywintypes.com_error, e:
-			raise RuntimeError('failed to initialize interface pyScope.Ping')
+			raise RuntimeError('failed to initialize interface pyscope.Ping')
 
 		try:
 			hr = self.camera.RegisterCAMCCallBack(ping, self.pingname)

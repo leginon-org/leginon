@@ -21,21 +21,21 @@ try:
 		try:
 			import tecnaicom
 		except ImportError:
-			from pyScope import tecnaicom
+			from pyscope import tecnaicom
 	except ImportError:
 		pass
 	try:
 		try:
 			import ldcom
 		except ImportError:
-			from pyScope import ldcom
+			from pyscope import ldcom
 	except ImportError:
 		pass
 	try:
 		try:
 			import adacom
 		except ImportError:
-			from pyScope import adacom
+			from pyscope import adacom
 	except ImportError:
 		adacom = None
 except ImportError:

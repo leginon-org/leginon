@@ -14,15 +14,15 @@ else:
 	scripts = []
 
 setup(
-	name='pyScope',
+	name='pyscope',
 	version='1.0.8',
 	description='Interface to Electron Microscopes and CCD Cameras',
 	cmdclass={'install_data':InstallData},
-	packages=['pyScope'],
-	package_dir={'pyScope': ''},
+	packages=['pyscope'],
+	package_dir={'pyscope': ''},
 	scripts=scripts,
 	data_files=[
-		('pyScope', ['instruments.cfg']),
+		('pyscope', ['instruments.cfg']),
 	]
 )
 

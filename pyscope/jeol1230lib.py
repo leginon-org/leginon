@@ -3,12 +3,12 @@
 
 # import serial
 # ser = serial.Serial(port='COM1', baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=10, xonxoff=1, rtscts=0)
-# from pyScope import jeol1230lib ; j = jeol1230lib.jeol1230lib(); j.getDefocus()
+# from pyscope import jeol1230lib ; j = jeol1230lib.jeol1230lib(); j.getDefocus()
 
 import time
 import serial
 from ctypes import *
-from pyScope import jeol1230cal									#	define maginication
+from pyscope import jeol1230cal									#	define maginication
 
 Debug = False
 
@@ -18,7 +18,7 @@ class jeol1230lib(object):
 	def __init__(self):											# initialize the serial port communication
 		self.ser = serial.Serial(port='COM1', baudrate=9600, bytesize=8, parity='N', stopbits=1, xonxoff = 0, timeout=10, rtscts=0)
 		self.equipmentAvailable()
-		self.defocusFile = "C:\Python25\Lib\site-packages\pyScope\defocus.cfg"		
+		self.defocusFile = "C:\Python25\Lib\site-packages\pyscope\defocus.cfg"		
 		self.zeroDefocus = {'zero_time': None, 'zero_oml': None, 'zero_omh': None,'zero_oll': None, 'zero_olh': None}
 		self.zeroDefocus = self.readZeroDefocus()
 		if (time.time()- float(self.zeroDefocus['zero_time']))/(3600.0 * 24) >= 1:
@@ -91,7 +91,7 @@ class jeol1230lib(object):
 			return True
 		else:
 			if Debug == True:
-				print "    Serial port can not be initialized by pyScope"
+				print "    Serial port can not be initialized by pyscope"
 			return False
 
 
