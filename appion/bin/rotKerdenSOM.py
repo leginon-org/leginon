@@ -33,16 +33,16 @@ import math
 import pylab
 import subprocess
 # appion
-import appionScript
-import apXmipp
-import apDisplay
-import appiondata
-import apEMAN
-import apFile
-import apProject
-import apFourier
-import apImagicFile
-import apImage
+from appionlib import appionScript
+from appionlib import apXmipp
+from appionlib import apDisplay
+from appionlib import appiondata
+from appionlib import apEMAN
+from appionlib import apFile
+from appionlib import apProject
+from appionlib import apFourier
+from appionlib import apImagicFile
+from appionlib import apImage
 from pyami import mrc,spider
 #basic logging,
 import logging

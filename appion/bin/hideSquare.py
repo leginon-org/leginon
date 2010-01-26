@@ -5,8 +5,8 @@ import sys
 import time
 import sinedon
 import MySQLdb
-import apDisplay
-import apDatabase
+from appionlib import apDisplay
+from appionlib import apDatabase
 import leginondata
 
 def hideImage(imgid):

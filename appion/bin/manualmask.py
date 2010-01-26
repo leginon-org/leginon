@@ -4,17 +4,17 @@ import os
 import sys
 import wx
 import time
-import apImage
+from appionlib import apImage
 import manualpicker
 #import subprocess
-import appiondata
-import apParticle
-import apDatabase
-import apParam
-import apDisplay
-import apMask
-import apCrud
-import apFindEM
+from appionlib import appiondata
+from appionlib import apParticle
+from appionlib import apDatabase
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import apMask
+from appionlib import apCrud
+from appionlib import apFindEM
 import filterLoop
 
 #Leginon

@@ -4,10 +4,10 @@
 import os
 import shutil
 #appion
-import appionScript
-import apStack
-import apDisplay
-import apEMAN
+from appionlib import appionScript
+from appionlib import apStack
+from appionlib import apDisplay
+from appionlib import apEMAN
 
 class centerStackScript(appionScript.AppionScript):
 	#=====================

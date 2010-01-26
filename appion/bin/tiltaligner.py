@@ -7,16 +7,16 @@ import wx
 import numpy
 import threading
 import particleLoop2
-import apFindEM
-import appiondata
-import apDatabase
-import apDisplay
-import apParticle
-import apPeaks
-import apImage
-import apParam
+from appionlib import apFindEM
+from appionlib import appiondata
+from appionlib import apDatabase
+from appionlib import apDisplay
+from appionlib import apParticle
+from appionlib import apPeaks
+from appionlib import apImage
+from appionlib import apParam
 import ApTiltPicker
-from apTilt import apTiltTransform, apTiltPair, autotilt
+from appionlib.apTilt import apTiltTransform,
 
 ##################################
 ##

@@ -7,16 +7,16 @@ import time
 import re
 import shutil
 #appion
-import appionScript
-import apParam
-import apFile
-import apDisplay
-import apDatabase
-import apSymmetry
-import appiondata
-import apChimera
+from appionlib import appionScript
+from appionlib import apParam
+from appionlib import apFile
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apSymmetry
+from appionlib import appiondata
+from appionlib import apChimera
 import urllib
-import apEMAN
+from appionlib import apEMAN
 import gzip
 
 class modelFromEMDB(appionScript.AppionScript):

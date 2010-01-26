@@ -8,12 +8,12 @@ import subprocess
 import sys
 import time
 #appion
-import appionScript
-import appiondata
-import apDisplay
-import apEMAN
-import apStack
-import apXmipp
+from appionlib import appionScript
+from appionlib import appiondata
+from appionlib import apDisplay
+from appionlib import apEMAN
+from appionlib import apStack
+from appionlib import apXmipp
 
 class sortJunkStackScript(appionScript.AppionScript):
     #=====================

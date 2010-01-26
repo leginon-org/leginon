@@ -2,8 +2,8 @@
 
 import os, sys
 import subprocess
-import appiondata
-import apStack
+from appionlib import appiondata
+from appionlib import apStack
 
 def scaleStack(stackdata,params):
 	origpath=os.path.join(stackdata[0]['stack']['path']['path'],stackdata[0]['stack']['name'])

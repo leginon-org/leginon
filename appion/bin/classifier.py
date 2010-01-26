@@ -2,9 +2,9 @@
 
 import sys
 import os
-import apDisplay
-import apParam
-import apAlignment
+from appionlib import apDisplay
+from appionlib import apParam
+from appionlib import apAlignment
 
 if __name__ == "__main__":
 	#apDisplay.printError("this function is dead")

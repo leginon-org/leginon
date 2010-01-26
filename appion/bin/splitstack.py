@@ -4,12 +4,12 @@ import os
 import sys
 import random
 import math
-import appiondata
+from appionlib import appiondata
 import shutil
-import apStack
-import apParam
-import apDisplay
-import appionScript
+from appionlib import apStack
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import appionScript
 
 class SplitStack(appionScript.AppionScript):
 	def setupParserOptions(self):

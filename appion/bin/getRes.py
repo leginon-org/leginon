@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-import appionScript
-import apDisplay
+from appionlib import appionScript
+from appionlib import apDisplay
 import os
-import apRecon
+from appionlib import apRecon
 
 class getResScript(appionScript.AppionScript):
 

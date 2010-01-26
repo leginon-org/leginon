@@ -15,17 +15,17 @@ import time
 import sys
 import re
 import subprocess
-import appionScript
-import appiondata
-import apParam
-import apRecon
-import apDisplay
-import apEMAN
-import apFile
-import apDatabase
-import apStack
-import apProject
-import apIMAGIC
+from appionlib import appionScript
+from appionlib import appiondata
+from appionlib import apParam
+from appionlib import apRecon
+from appionlib import apDisplay
+from appionlib import apEMAN
+from appionlib import apFile
+from appionlib import apDatabase
+from appionlib import apStack
+from appionlib import apProject
+from appionlib import apIMAGIC
 
 #=====================
 #=====================

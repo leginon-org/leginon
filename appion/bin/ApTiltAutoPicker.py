@@ -5,10 +5,10 @@ import os
 from optparse import OptionParser
 import numpy
 #appion
-import apParam
-import apDisplay
-from apSpider import operations
-from apTilt import autotilt
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib.apSpider import operations
+from appionlib.apTilt import autotilt
 
 def readPickFile(pickfile):
 	f = open(pickfile, "r")

@@ -5,14 +5,14 @@ import os
 import sys
 import re
 #appion
-import appionLoop2
-import apFindEM
-import apImage
-import apDisplay
-import apDatabase
-import apPeaks
-import apParticle
-import apDefocalPairs
+from appionlib import appionLoop2
+from appionlib import apFindEM
+from appionlib import apImage
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apPeaks
+from appionlib import apParticle
+from appionlib import apDefocalPairs
 #legacy
 #import apViewIt
 #import selexonFunctions  as sf1

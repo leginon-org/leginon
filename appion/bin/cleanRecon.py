@@ -7,7 +7,7 @@ Note:  does not use project selection yet.
 '''
 
 import sys
-import appiondata
+from appionlib import appiondata
 import subprocess
 import os
 

@@ -14,20 +14,20 @@ import subprocess
 import numpy
 import MySQLdb
 #appion
-import appionScript
-import apDisplay
-import apFile
-import apTemplate
-import apStack
-import apParam
-import apEMAN
-import apXmipp
-import appiondata
-import apVolume
-import spyder
-import apImagicFile
-import apProject
-from apSpider import alignment
+from appionlib import appionScript
+from appionlib import apDisplay
+from appionlib import apFile
+from appionlib import apTemplate
+from appionlib import apStack
+from appionlib import apParam
+from appionlib import apEMAN
+from appionlib import apXmipp
+from appionlib import appiondata
+from appionlib import apVolume
+from appionlib import spyder
+from appionlib import apImagicFile
+from appionlib import apProject
+from appionlib.apSpider import alignment
 from pyami import spider
 import sinedon
 

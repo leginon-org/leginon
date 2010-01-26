@@ -4,16 +4,16 @@
 import os
 import sys
 import re
-import appionScript
-import apParam
-import apDisplay
-import apEMAN
-import apVolume
-import apFile
-import apSymmetry
-import apDatabase
-import appiondata
-import apChimera
+from appionlib import appionScript
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import apEMAN
+from appionlib import apVolume
+from appionlib import apFile
+from appionlib import apSymmetry
+from appionlib import apDatabase
+from appionlib import appiondata
+from appionlib import apChimera
 from pyami import mrc, spider
 from scipy import ndimage
 

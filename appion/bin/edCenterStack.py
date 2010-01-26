@@ -5,10 +5,10 @@ import os
 import numpy
 from scipy import ndimage
 #appion
-import appionScript
-import apStack
-import apDisplay
-import apImagicFile
+from appionlib import appionScript
+from appionlib import apStack
+from appionlib import apDisplay
+from appionlib import apImagicFile
 from pyami import correlator, peakfinder
 
 class centerStackScript(appionScript.AppionScript):

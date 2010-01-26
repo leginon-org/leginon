@@ -6,20 +6,20 @@ import time
 import shutil
 import subprocess
 #appion
-import apParam
-import apStack
-import apVolume
-import apCtf
-import apImagicFile
-import appionScript
-import apProject
-import apDisplay
-import apFrealign
-import apEMAN
-import apFile
-import apThread
-import apImagicFile
-import appiondata
+from appionlib import apParam
+from appionlib import apStack
+from appionlib import apVolume
+from appionlib import apCtf
+from appionlib import apImagicFile
+from appionlib import appionScript
+from appionlib import apProject
+from appionlib import apDisplay
+from appionlib import apFrealign
+from appionlib import apEMAN
+from appionlib import apFile
+from appionlib import apThread
+from appionlib import apImagicFile
+from appionlib import appiondata
 from pyami import mrc
 
 #================

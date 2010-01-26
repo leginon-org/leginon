@@ -5,10 +5,10 @@ import os
 import sys
 import time
 #appion
-import appionScript
-import apDisplay
-import appiondata
-import apStack
+from appionlib import appionScript
+from appionlib import apDisplay
+from appionlib import appiondata
+from appionlib import apStack
 
 #===================
 class EqualViews(appionScript.AppionScript):

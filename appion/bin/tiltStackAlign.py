@@ -8,14 +8,14 @@ import re
 import shutil
 import MySQLdb
 #appion
-import appionScript
-import apStack
-import apDisplay
-import apEMAN
-import apFile
-from apSpider import operations
-from apTilt import apTiltPair
-import apImagicFile
+from appionlib import appionScript
+from appionlib import apStack
+from appionlib import apDisplay
+from appionlib import apEMAN
+from appionlib import apFile
+from appionlib.apSpider import operations
+from appionlib.apTilt import apTiltPair
+from appionlib import apImagicFile
 import sinedon
 
 class tiltStackAlign(appionScript.AppionScript):

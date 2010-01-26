@@ -1,4 +1,4 @@
 try:
 	from sinedon import *
 except:
-	from apdbconfig import *
+	from appionlib.apdbconfig import *

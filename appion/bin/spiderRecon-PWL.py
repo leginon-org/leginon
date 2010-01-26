@@ -10,18 +10,18 @@ import threading
 import math
 from scipy import ndimage
 #appion
-import appionScript
-import apStack
-import apDisplay
-import appiondata
-import apEMAN
-import apFile
-import apRecon
-import apChimera
-import apProject
-import apParam
-from apTilt import apTiltPair
-from apSpider import operations, backprojectPWL, alignment
+from appionlib import appionScript
+from appionlib import apStack
+from appionlib import apDisplay
+from appionlib import appiondata
+from appionlib import apEMAN
+from appionlib import apFile
+from appionlib import apRecon
+from appionlib import apChimera
+from appionlib import apProject
+from appionlib import apParam
+from appionlib.apTilt import apTiltPair
+from appionlib.apSpider import operations,
 from pyami import mem, mrc
 
 class otrVolumeScript(appionScript.AppionScript):

@@ -14,18 +14,18 @@ import EMAN
 import sinedon
 import MySQLdb
 #appion
-import appionScript
-import appiondata
-import apDisplay
-import apStack
-import apEulerCalc
-import apEulerJump
-import apEMAN
-import apSymmetry
-import apVolume
-import apFile
-import apRecon
-import apChimera
+from appionlib import appionScript
+from appionlib import appiondata
+from appionlib import apDisplay
+from appionlib import apStack
+from appionlib import apEulerCalc
+from appionlib import apEulerJump
+from appionlib import apEMAN
+from appionlib import apSymmetry
+from appionlib import apVolume
+from appionlib import apFile
+from appionlib import apRecon
+from appionlib import apChimera
 
 def getParticleInfo(reconid, iteration):
 	"""

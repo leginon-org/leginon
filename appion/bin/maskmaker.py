@@ -7,14 +7,14 @@ import shutil
 import numpy
 ma = numpy.ma
 #appion
-import appionLoop2
-import apImage
-import apCrud
-import apMask
-import appiondata
-import apDatabase
-import apDisplay
-import apParam
+from appionlib import appionLoop2
+from appionlib import apImage
+from appionlib import apCrud
+from appionlib import apMask
+from appionlib import appiondata
+from appionlib import apDatabase
+from appionlib import apDisplay
+from appionlib import apParam
 
 class MaskMaker(appionLoop2.AppionLoop):
 	def setProcessingDirName(self):

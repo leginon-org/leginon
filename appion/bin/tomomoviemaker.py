@@ -16,18 +16,18 @@ import re
 #leginon
 import leginondata
 #appion
-import appionScript
+from appionlib import appionScript
 
-import apTomo
-import apImod
-import apImage
-import apParam
-import apRecon
-import apDisplay
-import apEMAN
-import apFile
-import apDatabase
-import apParticle
+from appionlib import apTomo
+from appionlib import apImod
+from appionlib import apImage
+from appionlib import apParam
+from appionlib import apRecon
+from appionlib import apDisplay
+from appionlib import apEMAN
+from appionlib import apFile
+from appionlib import apDatabase
+from appionlib import apParticle
 
 #=====================
 #=====================

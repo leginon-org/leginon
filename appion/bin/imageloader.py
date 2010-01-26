@@ -7,10 +7,10 @@ import time
 import numpy
 import math
 #appion
-import appionLoop2
-import apDatabase
-import apDisplay
-import apProject
+from appionlib import appionLoop2
+from appionlib import apDatabase
+from appionlib import apDisplay
+from appionlib import apProject
 #leginon
 import leginondata
 import project

@@ -6,16 +6,16 @@ import shutil
 import time
 import numpy
 #appion
-import appionScript
-import apStack
-import apFile
-import apParam
-import apXmipp
-import apImagicFile
-import apDisplay
-import apEMAN
-import apImage
-from apSpider import operations
+from appionlib import appionScript
+from appionlib import apStack
+from appionlib import apFile
+from appionlib import apParam
+from appionlib import apXmipp
+from appionlib import apImagicFile
+from appionlib import apDisplay
+from appionlib import apEMAN
+from appionlib import apImage
+from appionlib.apSpider import operations
 
 class centerStackScript(appionScript.AppionScript):
 	#=====================

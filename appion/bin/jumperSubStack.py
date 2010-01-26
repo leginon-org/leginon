@@ -7,12 +7,12 @@ import shutil
 import numpy
 import time
 #appion
-import appionScript
-import apStack
-import apDisplay
-import appiondata
-import apRecon
-import apStackMeanPlot
+from appionlib import appionScript
+from appionlib import apStack
+from appionlib import apDisplay
+from appionlib import appiondata
+from appionlib import apRecon
+from appionlib import apStackMeanPlot
 
 
 class subStackScript(appionScript.AppionScript):

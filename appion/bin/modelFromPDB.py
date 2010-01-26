@@ -9,18 +9,18 @@ import shutil
 import gzip
 import urllib
 #appion
-import appionScript
-import apParam
-import apFile
-import apDisplay
-import apDatabase
-import apEMAN
-import apChimera
-import apFile
-import appiondata
-import apSymmetry
+from appionlib import appionScript
+from appionlib import apParam
+from appionlib import apFile
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apEMAN
+from appionlib import apChimera
+from appionlib import apFile
+from appionlib import appiondata
+from appionlib import apSymmetry
 
-from apSpider import volFun
+from appionlib.apSpider import volFun
 
 class modelFromPDB(appionScript.AppionScript):
 	#=====================

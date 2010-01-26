@@ -11,18 +11,18 @@ import glob
 import numpy
 import cPickle
 #appion
-import appionScript
-import apDisplay
-import apFile
-import apParam
-import apStack
-import apImage
-import apEMAN
-import apImagicFile
-from apSpider import operations
-import appiondata
-import apProject
-import apFourier
+from appionlib import appionScript
+from appionlib import apDisplay
+from appionlib import apFile
+from appionlib import apParam
+from appionlib import apStack
+from appionlib import apImage
+from appionlib import apEMAN
+from appionlib import apImagicFile
+from appionlib.apSpider import operations
+from appionlib import appiondata
+from appionlib import apProject
+from appionlib import apFourier
 from pyami import spider
 
 #=====================

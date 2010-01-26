@@ -13,12 +13,12 @@ import wx
 ## PIL
 import Image
 ## appion
-from apSpider import operations
-import apXml
-import apImage
-import apDisplay
-import apParam
-from apTilt import tiltDialog, apTiltTransform, apTiltShift, tiltfile, autotilt
+from appionlib.apSpider import operations
+from appionlib import apXml
+from appionlib import apImage
+from appionlib import apDisplay
+from appionlib import apParam
+from appionlib.apTilt import tiltDialog,
 ## leginon
 import polygon
 import gui.wx.TargetPanel

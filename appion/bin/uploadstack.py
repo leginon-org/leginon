@@ -7,14 +7,14 @@ import sys
 import time
 import shutil
 #appion
-import appionScript
-import apFile
-import apEMAN
-import apStack
-import apProject
-import apDisplay
-import apDatabase
-import appiondata
+from appionlib import appionScript
+from appionlib import apFile
+from appionlib import apEMAN
+from appionlib import apStack
+from appionlib import apProject
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import appiondata
 #leginon
 #import leginondata
 import project

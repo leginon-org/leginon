@@ -7,11 +7,11 @@ import sys
 import glob
 import shutil
 #appion
-import apDisplay
-import apDatabase
-import apParticle
-import appionScript
-import appiondata
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apParticle
+from appionlib import appionScript
+from appionlib import appiondata
 
 
 

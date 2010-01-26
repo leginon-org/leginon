@@ -11,14 +11,14 @@ import string
 import subprocess
 from scipy import stats
 #appion libs
-import appionScript
-import apDisplay
-import apParam
-import apImagicFile
-import apFile
-import apEMAN
-import appiondata
-import apProject
+from appionlib import appionScript
+from appionlib import apDisplay
+from appionlib import apParam
+from appionlib import apImagicFile
+from appionlib import apFile
+from appionlib import apEMAN
+from appionlib import appiondata
+from appionlib import apProject
 from pyami import mrc
 
 

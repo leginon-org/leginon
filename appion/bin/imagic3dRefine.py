@@ -7,23 +7,23 @@ import re
 import time
 import shutil
 import subprocess
-import appionScript
-import appiondata
+from appionlib import appionScript
+from appionlib import appiondata
 
-import apParam
-import apChimera
-import apDisplay
-import apEMAN
-import apIMAGIC
-import apFile
-import apImagicFile
-import apSymmetry
-import apDatabase
-import apStack
-import apProject
-import apFile
-import apVolume
-import spyder
+from appionlib import apParam
+from appionlib import apChimera
+from appionlib import apDisplay
+from appionlib import apEMAN
+from appionlib import apIMAGIC
+from appionlib import apFile
+from appionlib import apImagicFile
+from appionlib import apSymmetry
+from appionlib import apDatabase
+from appionlib import apStack
+from appionlib import apProject
+from appionlib import apFile
+from appionlib import apVolume
+from appionlib import spyder
 
 
 #=====================

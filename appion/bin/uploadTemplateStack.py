@@ -10,16 +10,16 @@ import time
 import shutil
 import subprocess
 #appion
-import appionScript
-import apTemplate
-import apStack
-import apDisplay
-import apDatabase
+from appionlib import appionScript
+from appionlib import apTemplate
+from appionlib import apStack
+from appionlib import apDisplay
+from appionlib import apDatabase
 import leginondata
-import appiondata
-import apEMAN
-import apFile
-import apProject
+from appionlib import appiondata
+from appionlib import apEMAN
+from appionlib import apFile
+from appionlib import apProject
 
 #=====================
 class uploadTemplateScript(appionScript.AppionScript):

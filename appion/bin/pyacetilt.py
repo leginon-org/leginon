@@ -10,14 +10,14 @@ import subprocess
 import numpy
 import socket
 #appion
-import appionLoop2
-import appiondata
-import apImage
-import apDisplay
-import apDatabase
-import apCtf
-import apParam
-import apFile
+from appionlib import appionLoop2
+from appionlib import appiondata
+from appionlib import apImage
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apCtf
+from appionlib import apParam
+from appionlib import apFile
 
 class AceTiltLoop(appionLoop2.AppionLoop):
 

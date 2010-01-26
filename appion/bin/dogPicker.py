@@ -7,13 +7,13 @@ import re
 import time
 #appion
 import particleLoop2
-import apImage
-import apDisplay
-import apDatabase
-import appiondata
-import apPeaks
-import apParticle
-import apDog
+from appionlib import apImage
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import appiondata
+from appionlib import apPeaks
+from appionlib import apParticle
+from appionlib import apDog
 #legacy
 #import selexonFunctions  as sf1
 

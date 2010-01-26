@@ -7,13 +7,13 @@ import time
 import re
 import shutil
 from pyami import mrc
-import appionScript
-import apParam
-import apFile
-import apDisplay
-import apDatabase
-import apImod
-import apTomo
+from appionlib import appionScript
+from appionlib import apParam
+from appionlib import apFile
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apImod
+from appionlib import apTomo
 #=====================
 #=====================
 class UploadTomoScript(appionScript.AppionScript):

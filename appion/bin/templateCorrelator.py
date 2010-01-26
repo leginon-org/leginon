@@ -7,14 +7,14 @@ import re
 import time
 #appion
 import particleLoop2
-import apFindEM
-import apDisplay
-import apTemplate
-import apDatabase
-import appiondata
-import apPeaks
-import apParam
-import apImage
+from appionlib import apFindEM
+from appionlib import apDisplay
+from appionlib import apTemplate
+from appionlib import apDatabase
+from appionlib import appiondata
+from appionlib import apPeaks
+from appionlib import apParam
+from appionlib import apImage
 
 
 class TemplateCorrelationLoop(particleLoop2.ParticleLoop):

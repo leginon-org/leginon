@@ -11,23 +11,23 @@ import socket
 import numpy
 import subprocess
 #appion
-import appionLoop2
-import apImage
-import apDisplay
-import apDatabase
-import apCtf
-import apStack
-import apDefocalPairs
-import appiondata
-import apParticle
-import apStackMeanPlot
-import apEMAN
-import apProject
-import apPrimeFactor
-import apFile
-import apParam
-import apImagicFile
-import apMask
+from appionlib import appionLoop2
+from appionlib import apImage
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apCtf
+from appionlib import apStack
+from appionlib import apDefocalPairs
+from appionlib import appiondata
+from appionlib import apParticle
+from appionlib import apStackMeanPlot
+from appionlib import apEMAN
+from appionlib import apProject
+from appionlib import apPrimeFactor
+from appionlib import apFile
+from appionlib import apParam
+from appionlib import apImagicFile
+from appionlib import apMask
 
 
 class Makestack2Loop(appionLoop2.AppionLoop):

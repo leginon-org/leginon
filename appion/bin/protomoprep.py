@@ -2,15 +2,15 @@
 
 import leginondata
 import sys
-import apProTomo
-import apTomo
-import apImod
+from appionlib import apProTomo
+from appionlib import apTomo
+from appionlib import apImod
 import math
 import os
 from pyami import correlator, peakfinder
 import numpy
 from optparse import OptionParser
-import apParam
+from appionlib import apParam
 
 def getTiltSeriesFromId(tiltid):
 	seriesdata=leginondata.TiltSeriesData.direct_query(tiltid)

@@ -11,13 +11,13 @@ import random
 import cPickle
 import subprocess
 #appion
-import appionScript
-import apDisplay
-import apStack
-import apEulerCalc
-import apParam
-import apSymmetry
-import appiondata
+from appionlib import appionScript
+from appionlib import apDisplay
+from appionlib import apStack
+from appionlib import apEulerCalc
+from appionlib import apParam
+from appionlib import apSymmetry
+from appionlib import appiondata
 #sinedon
 import sinedon
 #site-packages

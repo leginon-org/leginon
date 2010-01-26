@@ -6,12 +6,12 @@ import sys
 import Image
 import ImageDraw
 #appion
-import appionScript
-import apImage
-import apDog
-import apPeaks
-import apDisplay
-import apParam
+from appionlib import appionScript
+from appionlib import apImage
+from appionlib import apDog
+from appionlib import apPeaks
+from appionlib import apDisplay
+from appionlib import apParam
 import math
 
 class DogPicker(appionScript.AppionScript):

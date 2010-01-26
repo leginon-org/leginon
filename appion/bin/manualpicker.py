@@ -5,16 +5,16 @@ import sys
 import wx
 import time
 import particleLoop2
-import apImage
+from appionlib import apImage
 #import subprocess
-import apFindEM
-import appiondata
-import apParticle
-import apDatabase
-import apDisplay
-import apMask
-import apImage
-import apParam
+from appionlib import apFindEM
+from appionlib import appiondata
+from appionlib import apParticle
+from appionlib import apDatabase
+from appionlib import apDisplay
+from appionlib import apMask
+from appionlib import apImage
+from appionlib import apParam
 
 #Leginon
 import polygon

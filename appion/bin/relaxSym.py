@@ -9,8 +9,8 @@ import subprocess
 import string
 import re
 import time
-import apEMAN
-from apSpider import alignment
+from appionlib import apEMAN
+from appionlib.apSpider import alignment
 
 def parseInput(args,params):
 	for arg in args:

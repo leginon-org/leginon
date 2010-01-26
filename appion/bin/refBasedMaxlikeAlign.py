@@ -10,21 +10,21 @@ import glob
 import cPickle
 import subprocess
 #appion
-import appionScript
-import apDisplay
-import apFile
+from appionlib import appionScript
+from appionlib import apDisplay
+from appionlib import apFile
 import numpy
-import apTemplate
-import apStack
-import apParam
-import apEMAN
-import apXmipp
-import apImage
-from apSpider import alignment, operations
+from appionlib import apTemplate
+from appionlib import apStack
+from appionlib import apParam
+from appionlib import apEMAN
+from appionlib import apXmipp
+from appionlib import apImage
+from appionlib.apSpider import alignment,
 from pyami import spider
-import appiondata
-import apImagicFile
-import apProject
+from appionlib import appiondata
+from appionlib import apImagicFile
+from appionlib import apProject
 import sinedon
 import MySQLdb
 

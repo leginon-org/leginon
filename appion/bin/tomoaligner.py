@@ -20,17 +20,17 @@ from pyami import mrc
 #leginon
 import leginondata
 #appion
-import appionScript
-import appiondata
-import apTomo
-import apProTomo
-import apImod
-import apImage
-import apParam
-import apDisplay
-import apDatabase
-import apParticle
-import apStack
+from appionlib import appionScript
+from appionlib import appiondata
+from appionlib import apTomo
+from appionlib import apProTomo
+from appionlib import apImod
+from appionlib import apImage
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apParticle
+from appionlib import apStack
 try:
 	no_wx = False
 	import wx

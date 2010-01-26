@@ -9,11 +9,11 @@ import random
 import cPickle
 import MySQLdb
 ## appion
-import appionScript
-import apStack
-import apEMAN
-import apFile
-import apDisplay
+from appionlib import appionScript
+from appionlib import apStack
+from appionlib import apEMAN
+from appionlib import apFile
+from appionlib import apDisplay
 import sinedon
 
 class fakeStackScript(appionScript.AppionScript):

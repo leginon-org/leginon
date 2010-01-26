@@ -7,9 +7,9 @@ import random
 import cPickle
 import MySQLdb
 import sinedon
-import apEMAN
-import apDisplay
-import appionScript
+from appionlib import apEMAN
+from appionlib import apDisplay
+from appionlib import appionScript
 
 
 dbconf = sinedon.getConfig('appiondata')

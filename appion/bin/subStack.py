@@ -5,10 +5,10 @@ import os
 import shutil
 import random
 #appion
-import appionScript
-import apStack
-import apDisplay
-import apStackMeanPlot
+from appionlib import appionScript
+from appionlib import apStack
+from appionlib import apDisplay
+from appionlib import apStackMeanPlot
 
 class subStackScript(appionScript.AppionScript):
 	#=====================

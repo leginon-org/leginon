@@ -14,11 +14,11 @@ import string
 import tarfile
 import subprocess
 ### appion
-import apImagicFile
-import apParam
-import apEMAN
-import apFile
-import apDisplay
+from appionlib import apImagicFile
+from appionlib import apParam
+from appionlib import apEMAN
+from appionlib import apFile
+from appionlib import apDisplay
 
 #=====================
 def getCCValue(imgarray1, imgarray2):

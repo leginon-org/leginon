@@ -3,10 +3,10 @@
 import os
 import sys
 import time
-import appionLoop2
-import apDatabase
-from apTilt import apTiltPair
-import apDisplay
+from appionlib import appionLoop2
+from appionlib import apDatabase
+from appionlib.apTilt import apTiltPair
+from appionlib import apDisplay
 
 ##################################
 ##

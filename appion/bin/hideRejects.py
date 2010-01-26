@@ -3,12 +3,12 @@
 import os
 import sys
 import time
-import appionLoop2
-import apDatabase
-import apParticle
-import apCtf
-from apTilt import apTiltPair
-import apDisplay
+from appionlib import appionLoop2
+from appionlib import apDatabase
+from appionlib import apParticle
+from appionlib import apCtf
+from appionlib.apTilt import apTiltPair
+from appionlib import apDisplay
 
 ##################################
 ##

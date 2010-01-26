@@ -8,15 +8,15 @@ import threading
 import numpy
 ### appion
 import particleLoop2
-import apFindEM
-import apParam
-import appiondata
-import apDatabase
-import apDisplay
-import apParticle
-import apPeaks
-import apImage
-from apTilt import apTiltTransform, apTiltPair, autotilt, tiltfile
+from appionlib import apFindEM
+from appionlib import apParam
+from appionlib import appiondata
+from appionlib import apDatabase
+from appionlib import apDisplay
+from appionlib import apParticle
+from appionlib import apPeaks
+from appionlib import apImage
+from appionlib.apTilt import apTiltTransform,
 
 ##################################
 ##

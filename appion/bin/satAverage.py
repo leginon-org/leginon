@@ -13,14 +13,14 @@ import EMAN
 #scipy
 import numpy
 #appion
-import appionScript
-import appiondata
-import apDisplay
-import apStack
-import apRecon
-import apEMAN
-import apSymmetry
-import apFile
+from appionlib import appionScript
+from appionlib import appiondata
+from appionlib import apDisplay
+from appionlib import apStack
+from appionlib import apRecon
+from appionlib import apEMAN
+from appionlib import apSymmetry
+from appionlib import apFile
 
 
 

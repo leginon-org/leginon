@@ -4,13 +4,13 @@ import math
 import os
 import numpy
 from scipy import ndimage
-import appiondata
-import appionScript
-import apStack
-import apTomo
-import apImod
-import apAlignment
-import apDisplay
+from appionlib import appiondata
+from appionlib import appionScript
+from appionlib import apStack
+from appionlib import apTomo
+from appionlib import apImod
+from appionlib import apAlignment
+from appionlib import apDisplay
 from pyami import mrc
 
 class Test(appionScript.AppionScript):

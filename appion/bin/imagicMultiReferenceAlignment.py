@@ -7,16 +7,16 @@ import time
 import sys
 import re
 import subprocess
-import appionScript
-import appiondata
-import apImagicFile
-import apTemplate
-import apDisplay
-import apEMAN
-import apIMAGIC
-import apFile
-import apStack
-import apProject
+from appionlib import appionScript
+from appionlib import appiondata
+from appionlib import apImagicFile
+from appionlib import apTemplate
+from appionlib import apDisplay
+from appionlib import apEMAN
+from appionlib import apIMAGIC
+from appionlib import apFile
+from appionlib import apStack
+from appionlib import apProject
 
 #=====================
 #=====================

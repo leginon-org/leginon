@@ -11,20 +11,20 @@ import random
 import subprocess
 
 ### appion imports
-import appionScript
-import apVolume
-import apEMAN
-import apDisplay
-import apDatabase
-import apFile
-import apImage
-import apImagicFile
-import apParam
-import appiondata
-import apStack
-import apXmipp
-import apStackMeanPlot
-import apThread
+from appionlib import appionScript
+from appionlib import apVolume
+from appionlib import apEMAN
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apFile
+from appionlib import apImage
+from appionlib import apImagicFile
+from appionlib import apParam
+from appionlib import appiondata
+from appionlib import apStack
+from appionlib import apXmipp
+from appionlib import apStackMeanPlot
+from appionlib import apThread
 from pyami import mrc, imagefun
 from scipy import fftpack, ndimage, arange
 
@@ -532,7 +532,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 	"""
 	#=====================
 	def createRawMicrographs(self, stack, noiselevel):
-		import apIMAGIC
+		from appionlib import apIMAGIC
 
 		### create micrograph directory
 		microdir = os.path.join(self.params['rundir'], "micrographs")

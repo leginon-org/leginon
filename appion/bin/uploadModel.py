@@ -6,16 +6,16 @@ import sys
 import time
 import re
 import shutil
-import appionScript
-import apSymmetry
-import apParam
-import apFile
-import apDisplay
-import apDatabase
-import apChimera
-import apVolume
-import apProject
-import appiondata
+from appionlib import appionScript
+from appionlib import apSymmetry
+from appionlib import apParam
+from appionlib import apFile
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apChimera
+from appionlib import apVolume
+from appionlib import apProject
+from appionlib import appiondata
 
 
 

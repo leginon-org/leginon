@@ -7,13 +7,13 @@ import re
 import cPickle
 import time
 #appion
-import appionLoop2
-import apImage
-import apDisplay
-import apDatabase
-import apMatlab
-import apCtf
-import apParam
+from appionlib import appionLoop2
+from appionlib import apImage
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apMatlab
+from appionlib import apCtf
+from appionlib import apParam
 try:
 	import mlabraw as pymat
 except:

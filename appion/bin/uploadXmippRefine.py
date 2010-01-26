@@ -8,19 +8,19 @@ import shutil
 import subprocess
 import sys
 #appion
-import appionScript
-import apChimera
-import apDisplay
-import apEMAN
-import apFile
-import apStack
-import apParam
-import appiondata
-import apXmipp
-import apRecon
-import apVolume
-import apSymmetry
-import apEulerDraw
+from appionlib import appionScript
+from appionlib import apChimera
+from appionlib import apDisplay
+from appionlib import apEMAN
+from appionlib import apFile
+from appionlib import apStack
+from appionlib import apParam
+from appionlib import appiondata
+from appionlib import apXmipp
+from appionlib import apRecon
+from appionlib import apVolume
+from appionlib import apSymmetry
+from appionlib import apEulerDraw
 
 #======================
 #======================

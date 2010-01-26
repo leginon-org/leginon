@@ -8,12 +8,12 @@ import math
 import numpy
 import shutil
 #appion
-import appionScript
-import apStack
-import apDisplay
-import appiondata
-import apEMAN
-import apStackMeanPlot
+from appionlib import appionScript
+from appionlib import apStack
+from appionlib import apDisplay
+from appionlib import appiondata
+from appionlib import apEMAN
+from appionlib import apStackMeanPlot
 
 
 class subStackScript(appionScript.AppionScript):

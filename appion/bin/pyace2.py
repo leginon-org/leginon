@@ -10,14 +10,14 @@ import glob
 import numpy
 import subprocess
 #appion
-import appionLoop2
-import appiondata
-import apImage
-import apDisplay
-import apDatabase
-import apCtf
-import apParam
-import apFile
+from appionlib import appionLoop2
+from appionlib import appiondata
+from appionlib import apImage
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apCtf
+from appionlib import apParam
+from appionlib import apFile
 from pyami import mrc
 
 class Ace2Loop(appionLoop2.AppionLoop):

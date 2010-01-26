@@ -9,16 +9,16 @@ import time
 import math
 import shutil
 ### appion
-import appionScript
-import apEMAN
-import apDisplay
-import apChimera
-import apStack
-import apSymmetry
-import apFile
-import apParam
-import apVolume
-import appiondata
+from appionlib import appionScript
+from appionlib import apEMAN
+from appionlib import apDisplay
+from appionlib import apChimera
+from appionlib import apStack
+from appionlib import apSymmetry
+from appionlib import apFile
+from appionlib import apParam
+from appionlib import apVolume
+from appionlib import appiondata
 
 #=====================
 #=====================

@@ -8,16 +8,16 @@ import random
 import math
 import shutil
 #appion
-import appionScript
-import apDisplay
-import apAlignment
-import apFile
-import apTemplate
-import apStack
-import apProject
-import apEMAN
-from apSpider import alignment
-import appiondata
+from appionlib import appionScript
+from appionlib import apDisplay
+from appionlib import apAlignment
+from appionlib import apFile
+from appionlib import apTemplate
+from appionlib import apStack
+from appionlib import apProject
+from appionlib import apEMAN
+from appionlib.apSpider import alignment
+from appionlib import appiondata
 
 #=====================
 #=====================

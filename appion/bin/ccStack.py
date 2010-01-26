@@ -4,9 +4,9 @@ import pyami.quietscipy
 from scipy import stats
 from optparse import OptionParser
 #appion
-import apParam
-import apDisplay
-import apImagicFile
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib import apImagicFile
 
 #=====================
 #=====================

@@ -5,7 +5,7 @@ reject images versus other images.
 usage:    pcount.py <session name> <particle selection run name>
 '''
 
-import appiondata
+from appionlib import appiondata
 import leginondata
 import sys
 

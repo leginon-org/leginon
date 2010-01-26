@@ -6,11 +6,11 @@ import re
 import glob
 import shutil
 #appion
-import appionScript
-import apChimera
-import apVolume
-import apDisplay
-import apFile
+from appionlib import appionScript
+from appionlib import apChimera
+from appionlib import apVolume
+from appionlib import apDisplay
+from appionlib import apFile
 from pyami import mrc, imagefun
 
 #=====================
