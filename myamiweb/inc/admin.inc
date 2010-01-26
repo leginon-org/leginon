@@ -6,14 +6,14 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
-
-require('inc/leginon.inc');
+require_once('inc/leginon.inc');
 
 if ($leginondata->mysql->checkDBConnection()) {
 	$leginondata->importTables($DEF_TABLES_FILE);
 }
 
 function admin_header($javascriptinit="") {
+login_header();
 global $leginondata;
 
 
