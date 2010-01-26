@@ -1,6 +1,8 @@
 <?php
 require_once 'tomography.php';
 require_once 'thumbnails.php';
+
+login_header('Tomography');
 ?>
 <html>
 
