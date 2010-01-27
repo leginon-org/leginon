@@ -31,7 +31,7 @@ if (privilege() == 2 ) {
 	}
 }
 
-$title = "Leginon database Tools";
+$title = "Leginon and Appion Database Tools";
 login_header($title);
 ?>
 <style>
@@ -56,7 +56,7 @@ login_header($title);
 </script>
 
 
-<center><h1>Leginon II Database Tools</h1></center>
+<center><h1><?php echo $title; ?></h1></center>
 <hr/>
 <noscript>
 <?php echo divtitle("<center>Please enable Javascript in you Browser</center>"); ?>

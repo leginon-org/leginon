@@ -1,5 +1,5 @@
 <?
-require "inc/viewer.inc";
+require "inc/login.inc";
 
 if ($login_check = $dbemauth->is_logged()) {
 	header('Location: '.BASE_URL);
@@ -8,7 +8,7 @@ if ($login_check = $dbemauth->is_logged()) {
 $register=$error=false;
 $displayform=true;
 
-viewer_header("DBEM Register");
+login_header("DBEM Register");
 ?>
 <center><h1>Leginon II Database Tools</h1></center>
 <hr/>
@@ -129,5 +129,5 @@ if ($displayform) {
 <?
 }
 echo $error;
-viewer_footer();
+login_footer();
 ?>

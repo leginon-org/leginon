@@ -100,4 +100,8 @@ function insertlog($username, $ip, $info) {
   return true;
 }
 
+function lostpwd(){
+	
+}
+
 ?>
