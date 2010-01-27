@@ -2,18 +2,10 @@
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
-#
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetTemplate.py,v $
-# $Revision: 1.10 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-09-17 21:35:57 $
-# $Author: vossman $
-# $State: Exp $
-# $Locker:  $
 
 import wx
 import math
-from gui.wx.Entry import IntEntry
+from leginon.gui.wx.Entry import IntEntry
 
 TemplateUpdatedEventType = wx.NewEventType()
 EVT_TEMPLATE_UPDATED = wx.PyEventBinder(TemplateUpdatedEventType)

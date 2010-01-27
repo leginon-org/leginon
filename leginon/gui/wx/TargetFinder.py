@@ -3,7 +3,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetFinder.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/TargetFinder.py,v $
 # $Revision: 1.19 $
 # $Name: not supported by cvs2svn $
 # $Date: 2008-02-11 23:48:05 $
@@ -12,29 +12,29 @@
 # $Locker:  $
 
 import wx
-import gui.wx.Node
-import gui.wx.Settings
-import gui.wx.ToolBar
-import gui.wx.ImagePanelTools
+import leginon.gui.wx.Node
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.ImagePanelTools
 
-class Panel(gui.wx.Node.Panel):
+class Panel(leginon.gui.wx.Node.Panel):
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SUBMIT,
 													'play',
 													shortHelpString='Submit Targets')
-		self.Bind(gui.wx.Events.EVT_SUBMIT_TARGETS, self.onSubmitTargets)
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE,
+		self.Bind(leginon.gui.wx.Events.EVT_SUBMIT_TARGETS, self.onSubmitTargets)
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE,
 													'send_queue_out',
 													shortHelpString='Submit Queued Targets')
-		self.Bind(gui.wx.Events.EVT_TARGETS_SUBMITTED, self.onTargetsSubmitted)
+		self.Bind(leginon.gui.wx.Events.EVT_TARGETS_SUBMITTED, self.onTargetsSubmitted)
 
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, False)
 
 		self.initialize()
 		self.toolbar.Realize()
@@ -44,23 +44,23 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		gui.wx.Node.Panel.onNodeInitialized(self)
+		leginon.gui.wx.Node.Panel.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
-											id=gui.wx.ToolBar.ID_SUBMIT)
+											id=leginon.gui.wx.ToolBar.ID_SUBMIT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitQueueTool,
-											id=gui.wx.ToolBar.ID_SUBMIT_QUEUE)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, True)
-		self.Bind(gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
+											id=leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, True)
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 		queue = self.node.settings['queue']
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE, queue)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, queue)
 
 	def onImageSettings(self, evt):
 		pass
 
 	def targetsSubmitted(self):
-		evt = gui.wx.Events.TargetsSubmittedEvent()
+		evt = leginon.gui.wx.Events.TargetsSubmittedEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def initialize(self):
@@ -78,30 +78,30 @@ class Panel(gui.wx.Node.Panel):
 		dialog.Destroy()
 
 	def onSubmitTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		self.node.submitTargets()
 
 	def onSubmitQueueTool(self, evt):
 		self.node.publishQueue()
 
 	def onSubmitTargets(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 	def onTargetsSubmitted(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 
 	def submitTargets(self):
-		evt = gui.wx.Events.SubmitTargetsEvent()
+		evt = leginon.gui.wx.Events.SubmitTargetsEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'General Target Finder Settings ')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -137,7 +137,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 	def onQueueCheckbox(self, evt):
 		state = evt.IsChecked()
 		parent = self.panel
-		parent.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE, state)
+		parent.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, state)
 		evt.Skip()
 
 if __name__ == '__main__':

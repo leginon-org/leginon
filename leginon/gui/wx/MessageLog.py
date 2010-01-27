@@ -11,11 +11,11 @@
 # $State: Exp $
 # $Locker:  $
 
-import icons
+from leginon import icons
 import time
 import wx
 from wx.lib.mixins.listctrl import ColumnSorterMixin
-import gui.wx.Events
+import leginon.gui.wx.Events
 
 AddMessageEventType = wx.NewEventType()
 EVT_ADD_MESSAGE = wx.PyEventBinder(AddMessageEventType)
@@ -116,7 +116,7 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 		self.updateStatus(level)
 
 	def statusUpdated(self, level):
-		evt = gui.wx.Events.StatusUpdatedEvent(self.evtsrc, level)
+		evt = leginon.gui.wx.Events.StatusUpdatedEvent(self.evtsrc, level)
 		self.evtsrc.GetEventHandler().AddPendingEvent(evt)
 
 	def updateStatus(self, level=None):

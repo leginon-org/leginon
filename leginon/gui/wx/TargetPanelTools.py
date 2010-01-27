@@ -4,7 +4,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelTools.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/TargetPanelTools.py,v $
 # $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
 # $Date: 2008-02-08 19:39:01 $
@@ -22,8 +22,8 @@
 import wx
 import sys
 import numpy
-import gui.wx.ImagePanelTools
-import gui.wx.TargetPanelBitmaps
+import leginon.gui.wx.ImagePanelTools
+import leginon.gui.wx.TargetPanelBitmaps
 #import shortpath
 
 TargetingEventType = wx.NewEventType()
@@ -54,12 +54,12 @@ class ShowNumbersEvent(wx.PyCommandEvent):
 ##
 ##################################
 
-class TargetTypeTool(gui.wx.ImagePanelTools.TypeTool):
+class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
 	def __init__(self, parent, name, display=None, settings=None, target=None, shape='+', unique=False, numbers=None, size=16):
 		self.color = display
 		self.shape = shape 
 		self.size = size 
-		gui.wx.ImagePanelTools.TypeTool.__init__(self, parent, name, display=display, settings=settings)
+		leginon.gui.wx.ImagePanelTools.TypeTool.__init__(self, parent, name, display=display, settings=settings)
 
 		self.targettype = TargetType(self.name, self.color, self.shape, self.size, unique)
 		self.numberstype = TargetType(self.name, self.color, 'numbers', self.size, unique)
@@ -79,10 +79,10 @@ class TargetTypeTool(gui.wx.ImagePanelTools.TypeTool):
 
 	#--------------------
 	def getBitmaps(self):
-		bitmaps = gui.wx.ImagePanelTools.TypeTool.getBitmaps(self)
-		bitmaps['display'] = gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, self.shape)
-		bitmaps['numbers'] = gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, 'numbers')
-		bitmaps['target'] = gui.wx.ImagePanelTools.getBitmap('arrow.png')
+		bitmaps = leginon.gui.wx.ImagePanelTools.TypeTool.getBitmaps(self)
+		bitmaps['display'] = leginon.gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, self.shape)
+		bitmaps['numbers'] = leginon.gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, 'numbers')
+		bitmaps['target'] = leginon.gui.wx.ImagePanelTools.getBitmap('arrow.png')
 		return bitmaps
 
 	#--------------------
@@ -158,7 +158,7 @@ class TargetType(object):
 		self.size = size
 		if shape != 'polygon' and shape != 'numbers':
 			self.bitmaps = {}
-			self.bitmaps['default'], self.bitmaps['selected'] = gui.wx.TargetPanelBitmaps.getTargetBitmaps(color, shape, size)
+			self.bitmaps['default'], self.bitmaps['selected'] = leginon.gui.wx.TargetPanelBitmaps.getTargetBitmaps(color, shape, size)
 		self.targets = None
 
 	#--------------------
@@ -218,6 +218,6 @@ class TargetType(object):
 	def changeCursorSize(self, newsize):
 		self.size = newsize
 		if self.shape != 'polygon' and self.shape != 'numbers':
-			self.bitmaps['default'], self.bitmaps['selected'] = gui.wx.TargetPanelBitmaps.getTargetBitmaps(self.color, self.shape, newsize)
+			self.bitmaps['default'], self.bitmaps['selected'] = leginon.gui.wx.TargetPanelBitmaps.getTargetBitmaps(self.color, self.shape, newsize)
 
 

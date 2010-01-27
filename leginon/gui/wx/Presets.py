@@ -3,7 +3,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Presets.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/Presets.py,v $
 # $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
 # $Date: 2008-02-16 02:41:17 $
@@ -11,7 +11,7 @@
 # $State: Exp $
 # $Locker:  $
 
-import gui.wx.Icons
+import leginon.gui.wx.Icons
 import wx
 import wx.lib.buttons
 
@@ -143,7 +143,7 @@ class PresetOrder(wx.Panel):
 		self.Bind(EVT_PRESETS_CHANGED, self.onPresetsChanged)
 
 	def _bitmapButton(self, name, tooltip=None):
-		bitmap = gui.wx.Icons.icon(name)
+		bitmap = leginon.gui.wx.Icons.icon(name)
 		button = wx.lib.buttons.GenBitmapButton(self, -1, bitmap, size=(20, 20))
 		button.SetBezelWidth(1)
 		button.Enable(False)

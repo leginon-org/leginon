@@ -4,7 +4,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanel.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/ImagePanel.py,v $
 # $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
 # $Date: 2008-01-18 04:58:49 $
@@ -28,10 +28,10 @@ import numpy
 import wx
 import sys
 import Image
-import gui.wx.Stats
+import leginon.gui.wx.Stats
 import ImagePanelTools
 import SelectionTool
-import icons
+import leginon.icons
 #import time
 
 wx.InitAllImageHandlers()
@@ -116,7 +116,7 @@ class ImagePanel(wx.Panel):
 		self.panel.SetBackgroundColour(wx.WHITE)
 		self.panel.SetScrollRate(1, 1)
 		try:
-			cursorfile = icons.getPath('picker.png')
+			cursorfile = leginon.icons.getPath('picker.png')
 			self.defaultcursor = wx.Cursor(cursorfile, wx.BITMAP_TYPE_PNG, 16, 16)
 		except:
 			self.defaultcursor = wx.CROSS_CURSOR
@@ -135,7 +135,7 @@ class ImagePanel(wx.Panel):
 		
 		self.statstypesizer =wx.GridBagSizer(2,2)
 		self.statstypesizer.SetEmptyCellSize((50, 50))
-		self.statspanel = gui.wx.Stats.Stats(self, -1, style=wx.SIMPLE_BORDER)
+		self.statspanel = leginon.gui.wx.Stats.Stats(self, -1, style=wx.SIMPLE_BORDER)
 		if self.mode == "vertical":
 			self.statstypesizer.Add(self.statspanel, (0, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 			self.sizer.Add(self.statstypesizer, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -143,7 +143,7 @@ class ImagePanel(wx.Panel):
 			self.statstypesizer.Add(self.statspanel, (0, 0), (1, 1), wx.ALIGN_TOP|wx.ALL, 3)
 			self.sizer.Add(self.statstypesizer, (1, 0), (1, 1), wx.ALIGN_TOP)
 
-		#self.pospanel = gui.wx.Stats.Position(self, -1, style=wx.SIMPLE_BORDER)
+		#self.pospanel = leginon.gui.wx.Stats.Position(self, -1, style=wx.SIMPLE_BORDER)
 		#self.sizer.Add(self.pospanel, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 
 		# bind panel events

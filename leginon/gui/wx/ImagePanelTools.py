@@ -4,7 +4,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImagePanelTools.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/ImagePanelTools.py,v $
 # $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
 # $Date: 2007-09-19 22:39:23 $
@@ -22,9 +22,9 @@
 import math
 import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
-from gui.wx.Entry import FloatEntry, EVT_ENTRY
-import icons
-import gui.wx.TargetPanelBitmaps
+from leginon.gui.wx.Entry import FloatEntry, EVT_ENTRY
+import leginon.icons
+import leginon.gui.wx.TargetPanelBitmaps
 import pyami.ellipse
 import time
 from pyami import fftfun
@@ -118,7 +118,7 @@ def getBitmap(filename):
 	try:
 		return bitmaps[filename]
 	except KeyError:
-		iconpath = icons.getPath(filename)
+		iconpath = leginon.icons.getPath(filename)
 		wximage = wx.Image(iconpath)
 		wximage.ConvertAlphaToMask()
 		bitmap = wx.BitmapFromImage(wximage)
@@ -376,7 +376,7 @@ class RecordMotionTool(ImageTool):
 		self.start_ellipse_params = None
 		self.lastx = 0
 		self.lasty = 0
-		self.imagepanel.Bind(gui.wx.ImagePanelTools.EVT_ELLIPSE_NEW_CENTER, self.onNewEllipseCenter, self.imagepanel)
+		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_ELLIPSE_NEW_CENTER, self.onNewEllipseCenter, self.imagepanel)
 
 	def OnLeftDown(self, evt):
 		if self.button.GetToggle():
@@ -569,7 +569,7 @@ class ResolutionTool(ValueTool):
 		self.button.SetToggle(False)
 		self.pixelsize = 1.0
 		self.hightension = 120000
-		self.imagepanel.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_NEW_PIXELSIZE, self.onNewPixelSize, self.imagepanel)
+		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_NEW_PIXELSIZE, self.onNewPixelSize, self.imagepanel)
 
 	def valueString(self, x, y, value):
 		if self.pixelsize and self.center:
@@ -601,7 +601,7 @@ class ResolutionTool(ValueTool):
 class CrosshairTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
 		self.color = wx.Color(0,150,150) #dark teal green
-		bitmap = gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, shape='+')
+		bitmap = leginon.gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, shape='+')
 		tooltip = 'Toggle Center Crosshair'
 		cursor = None
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, False)

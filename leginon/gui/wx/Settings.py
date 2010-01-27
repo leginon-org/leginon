@@ -3,7 +3,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Settings.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/Settings.py,v $
 # $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
 # $Date: 2007-09-18 22:46:47 $
@@ -13,14 +13,14 @@
 
 import wx
 import wx.lib.scrolledpanel as scrolledpanel
-from gui.wx.Choice import Choice
-import gui.wx.Camera
-import gui.wx.Entry
-import gui.wx.Presets
+from leginon.gui.wx.Choice import Choice
+import leginon.gui.wx.Camera
+import leginon.gui.wx.Entry
+import leginon.gui.wx.Presets
 import wx.lib.filebrowsebutton as filebrowse
-import gui.wx.Rings
-import gui.wx.TargetTemplate
-import gui.wx.Instrument
+import leginon.gui.wx.Rings
+import leginon.gui.wx.TargetTemplate
+import leginon.gui.wx.Instrument
 
 class SettingsError(Exception):
 	pass
@@ -30,25 +30,25 @@ attributes = {
 	wx.ToggleButton: ('GetValue', 'SetValue', wx.EVT_TOGGLEBUTTON),
 	wx.Choice: ('GetStringSelection', 'SetStringSelection', wx.EVT_CHOICE),
 	Choice: ('GetStringSelection', 'SetStringSelection', wx.EVT_CHOICE),
-	gui.wx.Entry.Entry: ('GetValue', 'SetValue', gui.wx.Entry.EVT_ENTRY),
-	gui.wx.Entry.IntEntry: ('GetValue', 'SetValue', gui.wx.Entry.EVT_ENTRY),
-	gui.wx.Entry.FloatEntry: ('GetValue', 'SetValue', gui.wx.Entry.EVT_ENTRY),
-	gui.wx.Entry.FloatSequenceEntry: ('GetValue', 'SetValue', gui.wx.Entry.EVT_ENTRY),
-	gui.wx.Presets.PresetChoice:
+	leginon.gui.wx.Entry.Entry: ('GetValue', 'SetValue', leginon.gui.wx.Entry.EVT_ENTRY),
+	leginon.gui.wx.Entry.IntEntry: ('GetValue', 'SetValue', leginon.gui.wx.Entry.EVT_ENTRY),
+	leginon.gui.wx.Entry.FloatEntry: ('GetValue', 'SetValue', leginon.gui.wx.Entry.EVT_ENTRY),
+	leginon.gui.wx.Entry.FloatSequenceEntry: ('GetValue', 'SetValue', leginon.gui.wx.Entry.EVT_ENTRY),
+	leginon.gui.wx.Presets.PresetChoice:
 		('GetStringSelection', 'SetStringSelection',
-			gui.wx.Presets.EVT_PRESET_CHOICE),
-	gui.wx.Presets.PresetOrder:
-		('getValues', 'setValues', gui.wx.Presets.EVT_PRESET_ORDER_CHANGED),
-	gui.wx.Presets.EditPresetOrder:
-		('getValues', 'setValues', gui.wx.Presets.EVT_PRESET_ORDER_CHANGED),
-	gui.wx.Camera.CameraPanel:
+			leginon.gui.wx.Presets.EVT_PRESET_CHOICE),
+	leginon.gui.wx.Presets.PresetOrder:
+		('getValues', 'setValues', leginon.gui.wx.Presets.EVT_PRESET_ORDER_CHANGED),
+	leginon.gui.wx.Presets.EditPresetOrder:
+		('getValues', 'setValues', leginon.gui.wx.Presets.EVT_PRESET_ORDER_CHANGED),
+	leginon.gui.wx.Camera.CameraPanel:
 		('getConfiguration', 'setConfiguration',
-			gui.wx.Camera.EVT_CONFIGURATION_CHANGED),
+			leginon.gui.wx.Camera.EVT_CONFIGURATION_CHANGED),
 	filebrowse.FileBrowseButton: ('GetValue', 'SetValue', None),
-	gui.wx.Rings.Panel: ('getRings', 'setRings', gui.wx.Rings.EVT_RINGS_UPDATED),
-	gui.wx.TargetTemplate.Panel: ('getTemplate', 'setTemplate',
-																gui.wx.TargetTemplate.EVT_TEMPLATE_UPDATED),
-	gui.wx.Instrument.SelectionPanel: ('GetValue', 'SetValue', None),
+	leginon.gui.wx.Rings.Panel: ('getRings', 'setRings', leginon.gui.wx.Rings.EVT_RINGS_UPDATED),
+	leginon.gui.wx.TargetTemplate.Panel: ('getTemplate', 'setTemplate',
+																leginon.gui.wx.TargetTemplate.EVT_TEMPLATE_UPDATED),
+	leginon.gui.wx.Instrument.SelectionPanel: ('GetValue', 'SetValue', None),
 }
 
 class ScrolledDialog(scrolledpanel.ScrolledPanel):
@@ -134,8 +134,8 @@ class Dialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bapply)
 
 		# work around event prop.
-		self.Bind(gui.wx.Events.EVT_TEM_CHANGE, self.onPropagateEvent)
-		self.Bind(gui.wx.Events.EVT_CCDCAMERA_CHANGE, self.onPropagateEvent)
+		self.Bind(leginon.gui.wx.Events.EVT_TEM_CHANGE, self.onPropagateEvent)
+		self.Bind(leginon.gui.wx.Events.EVT_CCDCAMERA_CHANGE, self.onPropagateEvent)
 
 		self.bindSettings(self.widgets)
 

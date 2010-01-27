@@ -3,7 +3,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Node.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/Node.py,v $
 # $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
 # $Date: 2005-04-21 00:39:19 $
@@ -11,13 +11,12 @@
 # $State: Exp $
 # $Locker:  $
 
-import icons
 import threading
 import wx
 import wx.lib.scrolledpanel
-import gui.wx.MessageLog
-import gui.wx.ToolBar
-import gui.wx.Events
+import leginon.gui.wx.MessageLog
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.Events
 
 NodeInitializedEventType = wx.NewEventType()
 
@@ -41,14 +40,14 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 
 		self.szmain = wx.GridBagSizer(5, 5)
 
-		self.messagelog = gui.wx.MessageLog.MessageLog(parent.swmessage, self)
+		self.messagelog = leginon.gui.wx.MessageLog.MessageLog(parent.swmessage, self)
 		self.messagelog.Show(False)
 
 		self.Bind(EVT_NODE_INITIALIZED, self._onNodeInitialized)
-		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
-		self.Bind(gui.wx.Events.EVT_SET_TARGETS, self.onSetTargets)
-		self.Bind(gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
-		self.Bind(gui.wx.MessageLog.EVT_ADD_MESSAGE, self.onAddMessage)
+		self.Bind(leginon.gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
+		self.Bind(leginon.gui.wx.Events.EVT_SET_TARGETS, self.onSetTargets)
+		self.Bind(leginon.gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
+		self.Bind(leginon.gui.wx.MessageLog.EVT_ADD_MESSAGE, self.onAddMessage)
 
 	def OnChildFocus(self, evt):
 		evt.Skip()
@@ -86,31 +85,31 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		pass
 
 	def acquisitionDone(self):
-		evt = gui.wx.Events.AcquisitionDoneEvent()
+		evt = leginon.gui.wx.Events.AcquisitionDoneEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onGetInstrumentDone(self, evt):
 		pass
 
 	def getInstrumentDone(self):
-		evt = gui.wx.Events.GetInstrumentDoneEvent()
+		evt = leginon.gui.wx.Events.GetInstrumentDoneEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSetInstrumentDone(self, evt):
 		pass
 
 	def setInstrumentDone(self):
-		evt = gui.wx.Events.SetInstrumentDoneEvent()
+		evt = leginon.gui.wx.Events.SetInstrumentDoneEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def playerEvent(self, state, window=None):
-		evt = gui.wx.Events.PlayerEvent(state)
+		evt = leginon.gui.wx.Events.PlayerEvent(state)
 		if window is None:
 			window = self
 		window.GetEventHandler().AddPendingEvent(evt)
 
 	def setStatus(self, status):
 		level = 'STATUS'
-		evt = gui.wx.Events.StatusUpdatedEvent(self, level, status)
+		evt = leginon.gui.wx.Events.StatusUpdatedEvent(self, level, status)
 		self.GetEventHandler().AddPendingEvent(evt)
 

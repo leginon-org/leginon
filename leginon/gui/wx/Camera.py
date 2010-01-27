@@ -3,18 +3,10 @@
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
-#
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Camera.py,v $
-# $Revision: 1.32 $
-# $Name: not supported by cvs2svn $
-# $Date: 2006-08-08 19:20:19 $
-# $Author: pulokas $
-# $State: Exp $
-# $Locker:  $
 
 import copy
 import wx
-from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
+from leginon.gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
 import numpy
 
 ConfigurationChangedEventType = wx.NewEventType()

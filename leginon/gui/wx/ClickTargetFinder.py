@@ -3,7 +3,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickTargetFinder.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/ClickTargetFinder.py,v $
 # $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
 # $Date: 2007-09-18 21:14:00 $
@@ -12,18 +12,18 @@
 # $Locker:  $
 
 import wx
-import gui.wx.TargetPanel
-import gui.wx.Settings
-import gui.wx.TargetFinder
-import gui.wx.ToolBar
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.Settings
+import leginon.gui.wx.TargetFinder
+import leginon.gui.wx.ToolBar
 
-class Panel(gui.wx.TargetFinder.Panel):
+class Panel(leginon.gui.wx.TargetFinder.Panel):
 	icon = 'clicktargetfinder'
 	def initialize(self):
-		gui.wx.TargetFinder.Panel.initialize(self)
-		self.SettingsDialog = gui.wx.TargetFinder.SettingsDialog
+		leginon.gui.wx.TargetFinder.Panel.initialize(self)
+		self.SettingsDialog = leginon.gui.wx.TargetFinder.SettingsDialog
 
-		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255), target=True)
 		self.imagepanel.selectiontool.setDisplayed('preview', True)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, numbers=True)

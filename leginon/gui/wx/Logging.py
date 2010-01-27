@@ -15,7 +15,7 @@ import sys
 import logging
 import wx
 from wx.lib.mixins.listctrl import ColumnSorterMixin
-import gui.wx.MessageLog
+from leginon.gui.wx import MessageLog
 
 logging.Logger.manager.emittedNoHandlerWarning = 1
 
@@ -423,7 +423,7 @@ class MessageLogHandler(logging.Handler):
 			pass
 		secs = record.created
 		try:
-			evt = gui.wx.MessageLog.AddMessageEvent(self.window, level, message, secs)
+			evt = MessageLog.AddMessageEvent(self.window, level, message, secs)
 			self.window.GetEventHandler().AddPendingEvent(evt)
 		except wx.PyDeadObjectError:
 			self.window = None

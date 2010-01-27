@@ -11,7 +11,7 @@
 # $State: Exp $
 # $Locker:  $
 
-import icons
+import leginon.icons
 import wx
 
 ID_SETTINGS = 10001
@@ -89,12 +89,12 @@ class ToolBar(wx.ToolBar):
 
 	def AddTool(self, id, bitmap, **kwargs):
 		bitmap = '%s.png' % bitmap
-		image = wx.Image(icons.getPath(bitmap))
+		image = wx.Image(leginon.icons.getPath(bitmap))
 		image.ConvertAlphaToMask(64)
 		bitmap = wx.BitmapFromImage(image)
 		wx.ToolBar.AddTool(self, id, bitmap, **kwargs)
 
 	def InsertTool(self, pos, id, bitmap, **kwargs):
 		bitmap = '%s.png' % bitmap
-		bitmap = wx.BitmapFromImage(wx.Image(icons.getPath(bitmap)))
+		bitmap = wx.BitmapFromImage(wx.Image(leginon.icons.getPath(bitmap)))
 		wx.ToolBar.InsertTool(self, pos, id, bitmap, **kwargs)

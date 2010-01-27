@@ -4,7 +4,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/Instrument.py,v $
 # $Revision: 1.48 $
 # $Name: not supported by cvs2svn $
 # $Date: 2006-01-18 21:03:19 $
@@ -13,12 +13,12 @@
 # $Locker:  $
 
 import wx
-from gui.wx.Camera import CameraPanel, EVT_CONFIGURATION_CHANGED
-from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY, TypeEntry
-from gui.wx.Choice import Choice
-import gui.wx.Events
-import gui.wx.Node
-import gui.wx.ToolBar
+from leginon.gui.wx.Camera import CameraPanel, EVT_CONFIGURATION_CHANGED
+from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY, TypeEntry
+from leginon.gui.wx.Choice import Choice
+import leginon.gui.wx.Events
+import leginon.gui.wx.Node
+import leginon.gui.wx.ToolBar
 import threading
 
 def setControl(control, value):
@@ -937,16 +937,16 @@ class CCDCameraPanel(wx.Panel, ParameterMixin):
 		args = (name, attributes)
 		threading.Thread(target=self.GetParent().node.refresh, args=args).start()
 
-class Panel(gui.wx.Node.Panel):
+class Panel(leginon.gui.wx.Node.Panel):
 	icon = 'instrument'
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
 													shortHelpString='Refresh')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALCULATE,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CALCULATE,
 													'calculate',
 													shortHelpString='Get Magnifications')
 		self.toolbar.Realize()
@@ -977,13 +977,13 @@ class Panel(gui.wx.Node.Panel):
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
-		self.Bind(gui.wx.Events.EVT_ADD_TEM, self.onAddTEM)
-		self.Bind(gui.wx.Events.EVT_REMOVE_TEM, self.onRemoveTEM)
-		self.Bind(gui.wx.Events.EVT_ADD_CCDCAMERA, self.onAddCCDCamera)
-		self.Bind(gui.wx.Events.EVT_REMOVE_CCDCAMERA, self.onRemoveCCDCamera)
+		self.Bind(leginon.gui.wx.Events.EVT_ADD_TEM, self.onAddTEM)
+		self.Bind(leginon.gui.wx.Events.EVT_REMOVE_TEM, self.onRemoveTEM)
+		self.Bind(leginon.gui.wx.Events.EVT_ADD_CCDCAMERA, self.onAddCCDCamera)
+		self.Bind(leginon.gui.wx.Events.EVT_REMOVE_CCDCAMERA, self.onRemoveCCDCamera)
 		self.Bind(wx.EVT_CHOICE, self.onChoice, self.choice)
 		self.Bind(EVT_SET_PARAMETERS, self.onSetParameters)
-		self.Bind(gui.wx.Events.EVT_GET_MAGNIFICATIONS_DONE,
+		self.Bind(leginon.gui.wx.Events.EVT_GET_MAGNIFICATIONS_DONE,
 							self.onGetMagnificationsDone)
 
 	def setParameters(self, name, parameters):
@@ -1015,9 +1015,9 @@ class Panel(gui.wx.Node.Panel):
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTool,
-											id=gui.wx.ToolBar.ID_REFRESH)
+											id=leginon.gui.wx.ToolBar.ID_REFRESH)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onCalculateTool,
-											id=gui.wx.ToolBar.ID_CALCULATE)
+											id=leginon.gui.wx.ToolBar.ID_CALCULATE)
 		self.Enable(True)
 		self.onChoice()
 
@@ -1027,15 +1027,15 @@ class Panel(gui.wx.Node.Panel):
 			return
 		args = (string,)
 		self.choice.Enable(False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALCULATE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_CALCULATE, False)
 		threading.Thread(target=self.node.getMagnifications, args=args).start()
 
 	def onGetMagnificationsDone(self):
 		self.choice.Enable(True)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALCULATE, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_CALCULATE, True)
 
 	def getMagnificationsDone(self):
-		evt = gui.wx.Events.GetMagnificationsDoneEvent()
+		evt = leginon.gui.wx.Events.GetMagnificationsDoneEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onChoice(self, evt=None):
@@ -1045,9 +1045,9 @@ class Panel(gui.wx.Node.Panel):
 			string = evt.GetString()
 		try:
 			if self.node is not None and self.node.hasMagnifications(string):
-				self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALCULATE, True)
+				self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_CALCULATE, True)
 			else:
-				self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALCULATE, False)
+				self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_CALCULATE, False)
 		except ValueError:
 			pass
 		if string in self.tems :
@@ -1118,19 +1118,19 @@ class Panel(gui.wx.Node.Panel):
 		self.choice.AppendItems(evt.names)
 
 	def addTEM(self, name):
-		evt = gui.wx.Events.AddTEMEvent(self, name=name)
+		evt = leginon.gui.wx.Events.AddTEMEvent(self, name=name)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def removeTEM(self, name):
-		evt = gui.wx.Events.RemoveTEMEvent(self, name=name)
+		evt = leginon.gui.wx.Events.RemoveTEMEvent(self, name=name)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def addCCDCamera(self, name):
-		evt = gui.wx.Events.AddCCDCameraEvent(self, name=name)
+		evt = leginon.gui.wx.Events.AddCCDCameraEvent(self, name=name)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def removeCCDCamera(self, name):
-		evt = gui.wx.Events.RemoveCCDCameraEvent(self, name=name)
+		evt = leginon.gui.wx.Events.RemoveCCDCameraEvent(self, name=name)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 class SelectionPanel(wx.Panel):
@@ -1167,13 +1167,13 @@ class SelectionPanel(wx.Panel):
 		self.SetSizer(self.sbsz)
 		self.SetAutoLayout(True)
 
-		self.Bind(gui.wx.Events.EVT_SET_TEMS, self.onSetTEMs)
-		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERAS, self.onSetCCDCameras)
+		self.Bind(leginon.gui.wx.Events.EVT_SET_TEMS, self.onSetTEMs)
+		self.Bind(leginon.gui.wx.Events.EVT_SET_CCDCAMERAS, self.onSetCCDCameras)
 		if not passive:
 			self.Bind(wx.EVT_CHOICE, self.onTEMChoice, self.ctem)
 			self.Bind(wx.EVT_CHOICE, self.onCCDCameraChoice, self.cccdcamera)
-			self.Bind(gui.wx.Events.EVT_SET_TEM, self.onSetTEM)
-			self.Bind(gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
+			self.Bind(leginon.gui.wx.Events.EVT_SET_TEM, self.onSetTEM)
+			self.Bind(leginon.gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
 
 	def setProxy(self, proxy):
 		self.proxy = proxy
@@ -1278,7 +1278,7 @@ class SelectionPanel(wx.Panel):
 			tem = None
 		else:
 			tem = string
-		evt = gui.wx.Events.TEMChangeEvent(self, name=tem)
+		evt = leginon.gui.wx.Events.TEMChangeEvent(self, name=tem)
 		if not self.passive:
 			self.GetEventHandler().AddPendingEvent(evt)
 
@@ -1289,19 +1289,19 @@ class SelectionPanel(wx.Panel):
 		else:
 			ccdcamera = string
 		if not self.passive:
-			evt = gui.wx.Events.CCDCameraChangeEvent(self, name=ccdcamera)
+			evt = leginon.gui.wx.Events.CCDCameraChangeEvent(self, name=ccdcamera)
 			self.GetEventHandler().AddPendingEvent(evt)
 
 class SelectionMixin(object):
 	def __init__(self):
 		self.instrumentselections = []
-		self.Bind(gui.wx.Events.EVT_SET_TEMS, self.onSetTEMs)
-		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERAS, self.onSetCCDCameras)
+		self.Bind(leginon.gui.wx.Events.EVT_SET_TEMS, self.onSetTEMs)
+		self.Bind(leginon.gui.wx.Events.EVT_SET_CCDCAMERAS, self.onSetCCDCameras)
 
 	def onNodeInitialized(self):
 		self.proxy = self.node.instrument
-		self.Bind(gui.wx.Events.EVT_TEM_CHANGE, self.onTEMChange)
-		self.Bind(gui.wx.Events.EVT_CCDCAMERA_CHANGE, self.onCCDCameraChange)
+		self.Bind(leginon.gui.wx.Events.EVT_TEM_CHANGE, self.onTEMChange)
+		self.Bind(leginon.gui.wx.Events.EVT_CCDCAMERA_CHANGE, self.onCCDCameraChange)
 
 	def initInstrumentSelection(self, instrumentselection):
 		self.instrumentselections.append(instrumentselection)
@@ -1320,8 +1320,8 @@ class SelectionMixin(object):
 		if instrumentselection.passive:
 			return
 
-		self.Bind(gui.wx.Events.EVT_SET_TEM, self.onSetTEM)
-		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
+		self.Bind(leginon.gui.wx.Events.EVT_SET_TEM, self.onSetTEM)
+		self.Bind(leginon.gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
 
 	def onTEMChange(self, evt):
 		threading.Thread(target=self.proxy.setTEM, args=(evt.name,)).start()

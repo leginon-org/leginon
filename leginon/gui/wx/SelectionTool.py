@@ -4,7 +4,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SelectionTool.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/SelectionTool.py,v $
 # $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
 # $Date: 2007-09-18 21:35:30 $
@@ -20,8 +20,8 @@
 #
 
 import wx
-import gui.wx.ImagePanelTools
-import gui.wx.TargetPanelTools
+import leginon.gui.wx.ImagePanelTools
+import leginon.gui.wx.TargetPanelTools
 
 ##################################
 ##
@@ -52,27 +52,27 @@ class SelectionTool(wx.Panel):
 		self.sz.Add(typetool.label, (n, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
 		if 'display' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['display'], (n, 2), (1, 1), wx.ALIGN_CENTER)
-			typetool.togglebuttons['display'].Bind(gui.wx.ImagePanelTools.EVT_DISPLAY, self.onDisplay)
+			typetool.togglebuttons['display'].Bind(leginon.gui.wx.ImagePanelTools.EVT_DISPLAY, self.onDisplay)
 		if 'numbers' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['numbers'], (n, 3), (1, 1), wx.ALIGN_CENTER)
-			typetool.togglebuttons['numbers'].Bind(gui.wx.TargetPanelTools.EVT_SHOWNUMBERS, self.onNumber)
+			typetool.togglebuttons['numbers'].Bind(leginon.gui.wx.TargetPanelTools.EVT_SHOWNUMBERS, self.onNumber)
 		else:
 			#add spacer
 			self.sz.Add((1,1), (n, 3), (1, 1), wx.ALIGN_CENTER)
 		if 'target' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['target'], (n, 4), (1, 1), wx.ALIGN_CENTER)
-			typetool.togglebuttons['target'].Bind(gui.wx.TargetPanelTools.EVT_TARGETING, self.onTargeting)
+			typetool.togglebuttons['target'].Bind(leginon.gui.wx.TargetPanelTools.EVT_TARGETING, self.onTargeting)
 		if 'settings' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['settings'], (n, 5), (1, 1), wx.ALIGN_CENTER)
 		self.sz.Add((1,1), (n, 6), (1, 1), wx.ALIGN_CENTER)
 
-		if isinstance(typetool, gui.wx.TargetPanelTools.TargetTypeTool):
+		if isinstance(typetool, leginon.gui.wx.TargetPanelTools.TargetTypeTool):
 			self.targets[typetool.name] = None
 		else:
 			self.images[typetool.name] = None
 
 	#--------------------
-	def addTypeTool(self, name, toolclass=gui.wx.ImagePanelTools.TypeTool, **kwargs):
+	def addTypeTool(self, name, toolclass=leginon.gui.wx.ImagePanelTools.TypeTool, **kwargs):
 		if name in self.tools:
 			raise ValueError('Type \'%s\' already exists' % name)
 		typetool = toolclass(self, name, **kwargs)
@@ -116,7 +116,7 @@ class SelectionTool(wx.Panel):
 	#--------------------
 	def _setDisplayed(self, name, value):
 		tool = self._getTypeTool(name)
-		if isinstance(tool, gui.wx.TargetPanelTools.TargetTypeTool):
+		if isinstance(tool, leginon.gui.wx.TargetPanelTools.TargetTypeTool):
 			if value:
 				targets = self.getTargets(name)
 			else:
@@ -310,7 +310,7 @@ class SelectionTool(wx.Panel):
 	#--------------------
 	def _setNumbered(self, name, value):
 		tool = self._getTypeTool(name)
-		if isinstance(tool, gui.wx.TargetPanelTools.TargetTypeTool):
+		if isinstance(tool, leginon.gui.wx.TargetPanelTools.TargetTypeTool):
 			if value:
 				targets = self.getTargets(name)
 			else:

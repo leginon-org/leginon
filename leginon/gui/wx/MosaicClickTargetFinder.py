@@ -3,7 +3,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/MosaicClickTargetFinder.py,v $
 # $Revision: 1.36 $
 # $Name: not supported by cvs2svn $
 # $Date: 2007-09-14 20:02:52 $
@@ -12,70 +12,70 @@
 # $Locker:  $
 
 import wx
-from gui.wx.Choice import Choice
-from gui.wx.Entry import IntEntry, FloatEntry
-import gui.wx.Settings
-import gui.wx.TargetFinder
-import gui.wx.ImagePanelTools
-import gui.wx.ClickTargetFinder
-import gui.wx.ToolBar
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import IntEntry, FloatEntry
+import leginon.gui.wx.Settings
+import leginon.gui.wx.TargetFinder
+import leginon.gui.wx.ImagePanelTools
+import leginon.gui.wx.ClickTargetFinder
+import leginon.gui.wx.ToolBar
 import threading
-from gui.wx.Presets import PresetChoice
+from leginon.gui.wx.Presets import PresetChoice
 
-class Panel(gui.wx.ClickTargetFinder.Panel):
+class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
-		gui.wx.ClickTargetFinder.Panel.initialize(self)
+		leginon.gui.wx.ClickTargetFinder.Panel.initialize(self)
 
 		self.toolbar.InsertSeparator(4)
 
-		self.toolbar.InsertTool(5, gui.wx.ToolBar.ID_TILES,
+		self.toolbar.InsertTool(5, leginon.gui.wx.ToolBar.ID_TILES,
 			'tiles',shortHelpString='Tiles')
-		self.toolbar.InsertTool(6, gui.wx.ToolBar.ID_MOSAIC,
+		self.toolbar.InsertTool(6, leginon.gui.wx.ToolBar.ID_MOSAIC,
 			'atlasmaker',shortHelpString='Mosaic')
 		self.toolbar.InsertSeparator(7)
-		self.toolbar.InsertTool(8, gui.wx.ToolBar.ID_REFRESH,
+		self.toolbar.InsertTool(8, leginon.gui.wx.ToolBar.ID_REFRESH,
 			'refresh', shortHelpString='Refresh')
-		self.toolbar.InsertTool(9, gui.wx.ToolBar.ID_CURRENT_POSITION,
+		self.toolbar.InsertTool(9, leginon.gui.wx.ToolBar.ID_CURRENT_POSITION,
 			'currentposition', shortHelpString='Show Position')
 		self.addOtherTools()
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 	def addOtherTools(self):
 		self.toolbar.InsertSeparator(10)
-		self.toolbar.InsertTool(11, gui.wx.ToolBar.ID_FIND_SQUARES,
+		self.toolbar.InsertTool(11, leginon.gui.wx.ToolBar.ID_FIND_SQUARES,
 			'squarefinder',shortHelpString='Find Squares')
 		self.imagepanel.addTypeTool('Filtered', display=True, settings=True)
 		self.imagepanel.addTypeTool('Thresholded', display=True, settings=True)
 
 	def onNodeInitialized(self):
-		gui.wx.ClickTargetFinder.Panel.onNodeInitialized(self)
+		leginon.gui.wx.ClickTargetFinder.Panel.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onTilesButton,
-											id=gui.wx.ToolBar.ID_TILES)
+											id=leginon.gui.wx.ToolBar.ID_TILES)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMosaicButton,
-											id=gui.wx.ToolBar.ID_MOSAIC)
+											id=leginon.gui.wx.ToolBar.ID_MOSAIC)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTargetsButton,
-											id=gui.wx.ToolBar.ID_REFRESH)
+											id=leginon.gui.wx.ToolBar.ID_REFRESH)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onShowPositionButton,
-											id=gui.wx.ToolBar.ID_CURRENT_POSITION)
+											id=leginon.gui.wx.ToolBar.ID_CURRENT_POSITION)
 
-		self.Bind(gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, False)
 
 	def addOtherBindings(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onFindSquaresButton,
-											id=gui.wx.ToolBar.ID_FIND_SQUARES)
+											id=leginon.gui.wx.ToolBar.ID_FIND_SQUARES)
 
 	def onSubmitTool(self, evt):
 		threading.Thread(target=self._onSubmitTool, args=(evt,)).start()
 
 	def _onSubmitTool(self, evt):
-		gui.wx.ClickTargetFinder.Panel.onSubmitTool(self, evt)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
+		leginon.gui.wx.ClickTargetFinder.Panel.onSubmitTool(self, evt)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 	def onTargetsSubmitted(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 	def onTilesButton(self, evt):
 		choices = self.node.getMosaicNames()
@@ -152,15 +152,15 @@ class TilesDialog(wx.Dialog):
 	def onResetButton(self, evt):
 		self.EndModal(wx.ID_RESET)
 
-class MosaicSettingsDialog(gui.wx.Settings.Dialog):
+class MosaicSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def __init__(self, parent):
-		gui.wx.Settings.Dialog.__init__(self, parent, 'Mosaic Settings')
+		leginon.gui.wx.Settings.Dialog.__init__(self, parent, 'Mosaic Settings')
 	def initialize(self):
 		return MosaicScrolledSettings(self,self.scrsize,False)
 
-class MosaicScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class MosaicScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Mosaics')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -223,13 +223,13 @@ class MosaicScrolledSettings(gui.wx.Settings.ScrolledDialog):
 	def onSaveButton(self, evt):
 		self.node.publishMosaicImage()
 
-class LPFSettingsDialog(gui.wx.Settings.Dialog):
+class LPFSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return LPFScrolledSettings(self,self.scrsize,False)
 
-class LPFScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class LPFScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Low Pass Filter')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets['lpf'] = {}
@@ -252,13 +252,13 @@ class LPFScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		return [sbsz]
 
 
-class BlobSettingsDialog(gui.wx.Settings.Dialog):
+class BlobSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return BlobsScrolledSettings(self,self.scrsize,False)
 
-class BlobsScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Blob Finding')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets['threshold'] = FloatEntry(self, -1, min=0, chars=6)

@@ -2,17 +2,9 @@
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
-#
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Rings.py,v $
-# $Revision: 1.5 $
-# $Name: not supported by cvs2svn $
-# $Date: 2005-12-03 01:36:47 $
-# $Author: pulokas $
-# $State: Exp $
-# $Locker:  $
 
 import wx
-from gui.wx.Entry import IntEntry
+from leginon.gui.wx.Entry import IntEntry
 
 RingsUpdatedEventType = wx.NewEventType()
 EVT_RINGS_UPDATED = wx.PyEventBinder(RingsUpdatedEventType)

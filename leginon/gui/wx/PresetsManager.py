@@ -3,7 +3,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/PresetsManager.py,v $
 # $Revision: 1.94 $
 # $Name: not supported by cvs2svn $
 # $Date: 2008-02-15 02:58:40 $
@@ -12,23 +12,24 @@
 # $Locker:  $
 
 import copy
-import leginondata
-import instrument
-from pyami.ordereddict import OrderedDict
 import threading
 import wx
-from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
-import gui.wx.Camera
-import gui.wx.Dialog
-import gui.wx.ImagePanel
-import gui.wx.ImagePanelTools
-import gui.wx.Node
-import gui.wx.Presets
-import gui.wx.Settings
-import gui.wx.ToolBar
-import gui.wx.Dialog
-import gui.wx.Instrument
 from wx.lib.mixins.listctrl import ColumnSorterMixin
+
+from pyami.ordereddict import OrderedDict
+import leginon.leginondata
+import leginon.instrument
+from leginon.gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
+import leginon.gui.wx.Camera
+import leginon.gui.wx.Dialog
+import leginon.gui.wx.ImagePanel
+import leginon.gui.wx.ImagePanelTools
+import leginon.gui.wx.Node
+import leginon.gui.wx.Presets
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.Dialog
+import leginon.gui.wx.Instrument
 
 PresetsEventType = wx.NewEventType()
 SetParametersEventType = wx.NewEventType()
@@ -119,7 +120,7 @@ class Calibrations(wx.StaticBoxSizer):
 				self.sts[name].SetLabel('None')
 		self.Layout()
 
-class EditPresetDialog(gui.wx.Dialog.Dialog):
+class EditPresetDialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent, parameters, tems, ccd_cameras, node):
 		self.parameters = parameters
 		self.tems = tems
@@ -130,7 +131,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 			title =  'Edit Preset %s' % parameters['name']
 		except KeyError:
 			raise ValueError
-		gui.wx.Dialog.Dialog.__init__(self, parent, title, 'Preset Parameters')
+		leginon.gui.wx.Dialog.Dialog.__init__(self, parent, title, 'Preset Parameters')
 
 	def getMagChoices(self):
 		try:
@@ -187,7 +188,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		}
 
 		self.dicts = {
-			'camera parameters': gui.wx.Camera.CameraPanel(self),
+			'camera parameters': leginon.gui.wx.Camera.CameraPanel(self),
 		}
 
 		buttons = {
@@ -477,9 +478,9 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 
 		return parameters
 
-class EditPresets(gui.wx.Presets.PresetOrder):
+class EditPresets(leginon.gui.wx.Presets.PresetOrder):
 	def _widgets(self):
-		gui.wx.Presets.PresetOrder._widgets(self, 'Presets (Cycle Order)')
+		leginon.gui.wx.Presets.PresetOrder._widgets(self, 'Presets (Cycle Order)')
 		self.btoscope = self._bitmapButton('instrumentset', 'To Scope')
 		self.bedit = self._bitmapButton('edit', 'Edit the selected preset parameters')
 		self.bacquire = self._bitmapButton('acquire', 'Acquire dose image for the selected preset')
@@ -521,7 +522,7 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 		self.SetSizerAndFit(sizer)
 
 	def _bind(self):
-		gui.wx.Presets.PresetOrder._bind(self)
+		leginon.gui.wx.Presets.PresetOrder._bind(self)
 		self.Bind(wx.EVT_BUTTON, self.onEdit, self.bedit)
 		self.Bind(wx.EVT_BUTTON, self.onRemove, self.bremove)
 
@@ -556,7 +557,7 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 		self.presetOrderChanged()
 
 	def setChoices(self, choices):
-		gui.wx.Presets.PresetOrder.setChoices(self, choices)
+		leginon.gui.wx.Presets.PresetOrder.setChoices(self, choices)
 
 	def onInsert(self, evt):
 		try:
@@ -572,7 +573,7 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 		self.presetOrderChanged()
 
 	def updateButtons(self, n):
-		gui.wx.Presets.PresetOrder.updateButtons(self, n)
+		leginon.gui.wx.Presets.PresetOrder.updateButtons(self, n)
 		if n >= 0:
 			self.btoscope.Enable(True)
 			self.bedit.Enable(True)
@@ -586,16 +587,16 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 			self.bfromscope.Enable(False)
 			self.bremove.Enable(False)
 
-class DoseDialog(gui.wx.Dialog.Dialog):
+class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent):
-		gui.wx.Dialog.Dialog.__init__(self, parent, 'Dose Image', 'Dose Image')
+		leginon.gui.wx.Dialog.Dialog.__init__(self, parent, 'Dose Image', 'Dose Image')
 		self.dose = None
 		self.parent = parent
 
 	def onInitialize(self):
-		gui.wx.Dialog.Dialog.onInitialize(self)
+		leginon.gui.wx.Dialog.Dialog.onInitialize(self)
 
-		self.image = gui.wx.ImagePanel.ImagePanel(self, -1,imagesize=(360,360))
+		self.image = leginon.gui.wx.ImagePanel.ImagePanel(self, -1,imagesize=(360,360))
 
 		self.doselabel = wx.StaticText(self, -1, '')
 
@@ -650,13 +651,13 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 		
 		
 
-class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
+class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin):
 	icon = 'presets'
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
-		gui.wx.Instrument.SelectionMixin.__init__(self)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Instrument.SelectionMixin.__init__(self)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
 		# presets
@@ -686,18 +687,18 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.Bind(EVT_ACQUIRE_ALIGN_DONE, self.onAcquireAlignDone)
 
 	def onNodeInitialized(self):
-		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
+		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 
 		#self.parameters.instrumentselection.setProxy(self.node.instrument)
 		#self.parameters.bind(self.onUpdateParameters)
 
-		self.Bind(gui.wx.Presets.EVT_PRESET_SELECTED,
+		self.Bind(leginon.gui.wx.Presets.EVT_PRESET_SELECTED,
 							self.onPresetSelected, self.presets)
-		self.Bind(gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
+		self.Bind(leginon.gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
 							self.onCycleOrderChanged, self.presets)
-		self.Bind(gui.wx.Presets.EVT_PRESET_REMOVED,
+		self.Bind(leginon.gui.wx.Presets.EVT_PRESET_REMOVED,
 							self.onRemove, self.presets)
 		self.Bind(wx.EVT_BUTTON, self.onToScope, self.presets.btoscope)
 		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.presets.bfromscope)
@@ -744,7 +745,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 	def setOrder(self, presets, setorder=True):
 		if setorder:
-			evt = gui.wx.Presets.PresetsChangedEvent(presets)
+			evt = leginon.gui.wx.Presets.PresetsChangedEvent(presets)
 			self.presets.GetEventHandler().AddPendingEvent(evt)
 
 	def setDoseValue(self, dose):
@@ -828,11 +829,11 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.aligndialog.EndModal(0)
 
 	def setAlignImage(self, image, typename, stats={}):
-		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
+		evt = leginon.gui.wx.Events.SetImageEvent(image, typename, stats)
 		self.aligndialog.GetEventHandler().AddPendingEvent(evt)
 
 	def setBeamImage(self, image, stats={}):
-		evt = gui.wx.Events.SetImageEvent(image, typename=None)
+		evt = leginon.gui.wx.Events.SetImageEvent(image, typename=None)
 		self.beamdialog.GetEventHandler().AddPendingEvent(evt)
 
 	def disableBeamAdjust(self, magnification):
@@ -875,7 +876,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.sz.Layout()
 
 	def setParameters(self, parameters):
-		if isinstance(parameters, leginondata.Data):
+		if isinstance(parameters, leginon.leginondata.Data):
 			parameters = parameters.toDict(dereference=True)
 		evt = SetParametersEvent(parameters, self)
 		self.GetEventHandler().AddPendingEvent(evt)
@@ -917,7 +918,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		preset = self.node.presetByName(evt.presetname)
 		if preset is None:
 			return
-		if isinstance(preset, leginondata.Data):
+		if isinstance(preset, leginon.leginondata.Data):
 			preset = preset.toDict(dereference=True)
 
 		tems = {}
@@ -925,7 +926,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			try:
 				tem = self.node.instrument.getTEM(tem_name)
 				tems[tem_name] = tem.Magnifications
-			except instrument.NotAvailableError:
+			except leginon.instrument.NotAvailableError:
 				continue
 		if not tems:
 			return
@@ -935,7 +936,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			try:
 				ccd_camera = self.node.instrument.getCCDCamera(ccd_camera_name)
 				ccd_cameras[ccd_camera_name] = ccd_camera.CameraSize
-			except instrument.NotAvailableError:
+			except leginon.instrument.NotAvailableError:
 				continue
 		if not ccd_cameras:
 			return
@@ -945,13 +946,13 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			self.node.updatePreset(evt.presetname, dialog.getParameters())
 		dialog.Destroy()
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Preset Management')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -1003,7 +1004,7 @@ class NewDialog(wx.Dialog):
 		wx.Dialog.__init__(self, parent, -1, 'Create New Preset')
 		self.node = node
 
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
+		self.instrumentselection = leginon.gui.wx.Instrument.SelectionPanel(self, passive=True)
 		self.GetParent().initInstrumentSelection(self.instrumentselection)
 		stname = wx.StaticText(self, -1, 'Preset name:')
 		self.tcname = wx.TextCtrl(self, -1, '')
@@ -1084,9 +1085,9 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 		self.SetColumnWidth(2, wx.LIST_AUTOSIZE)
 
 
-class AlignDialog(gui.wx.Dialog.Dialog):
+class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent, node):
-		gui.wx.Dialog.Dialog.__init__(self, parent, 'Align Presets')
+		leginon.gui.wx.Dialog.Dialog.__init__(self, parent, 'Align Presets')
 		imsize = 384
 		self.node = node
 		self.parent = parent
@@ -1110,11 +1111,11 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 
 		preset_names = self.node.presets.keys()
 		lableft = wx.StaticText(self, -1, 'Current Reference Preset ')
-		self.choiceleft = gui.wx.Presets.PresetChoice(self,-1)
+		self.choiceleft = leginon.gui.wx.Presets.PresetChoice(self,-1)
 		self.choiceleft.setChoices(preset_names)
 
-		self.imleft = gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='vertical',imagesize=(imsize,imsize))
-		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onLeftImageClicked, self.imleft)
+		self.imleft = leginon.gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='vertical',imagesize=(imsize,imsize))
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onLeftImageClicked, self.imleft)
 		szleft = wx.BoxSizer(wx.VERTICAL)
 		szpreset = wx.GridBagSizer(2, 2)
 		szpreset.Add(lableft, (0, 0), (1, 1), wx.ALIGN_CENTER)
@@ -1123,11 +1124,11 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 		szleft.Add(self.imleft, 1, wx.EXPAND)
 
 		labright = wx.StaticText(self, -1, 'Current Preset To Adjust ')
-		self.choiceright = gui.wx.Presets.PresetChoice(self,-1)
+		self.choiceright = leginon.gui.wx.Presets.PresetChoice(self,-1)
 		self.choiceright.setChoices(preset_names)
 
-		self.imright = gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='vertical',imagesize=(imsize,imsize))
-		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onRightImageClicked, self.imright)
+		self.imright = leginon.gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='vertical',imagesize=(imsize,imsize))
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onRightImageClicked, self.imright)
 		szright = wx.BoxSizer(wx.VERTICAL)
 		szpreset = wx.GridBagSizer(2, 2)
 		szpreset.Add(labright, (0, 0), (1, 1), wx.ALIGN_CENTER)
@@ -1162,7 +1163,7 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 		self.Bind(wx.EVT_CHOICE, self.onAcquireModeChoice, self.choiceacquiremode)
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.bcontinue)
 		self.Bind(wx.EVT_BUTTON, self.onStart, self.bstart)
-		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
+		self.Bind(leginon.gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		self.disableContinue()
 
@@ -1232,8 +1233,8 @@ class BeamDialog(wx.Dialog):
 		self.parent = parent
 
 		### create imageviewer
-		self.im = gui.wx.ImagePanel.ClickImagePanel(self, -1, imagesize=(imsize,imsize))
-		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked, self.im)
+		self.im = leginon.gui.wx.ImagePanel.ClickImagePanel(self, -1, imagesize=(imsize,imsize))
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked, self.im)
 		self.im.statstypesizer.SetEmptyCellSize((110, 100))
 	
 		### create buttons
@@ -1270,7 +1271,7 @@ class BeamDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
 		self.Bind(wx.EVT_BUTTON, self.onAutoCenter, self.bautocenter)
 		self.Bind(wx.EVT_BUTTON, self.onCommit, self.bcommit)
-		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
+		self.Bind(leginon.gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 
 	def onImageClicked(self, evt):
 		cycle = self.bcycle.GetValue()
@@ -1302,7 +1303,7 @@ class ImportDialog(wx.Dialog):
 		self.node = node
 		self.presets = None
 
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
+		self.instrumentselection = leginon.gui.wx.Instrument.SelectionPanel(self, passive=True)
 		self.GetParent().initInstrumentSelection(self.instrumentselection)
 
 		self.session = SessionListCtrl(self)
@@ -1386,7 +1387,7 @@ class ImportDialog(wx.Dialog):
 			return
 		days = self.ageentry.GetValue()
 		agestr = '-%d 0:0:0' % (days,)
-		pquery = leginondata.PresetData(tem=tem, ccdcamera=ccd)
+		pquery = leginon.leginondata.PresetData(tem=tem, ccdcamera=ccd)
 		presets = self.node.research(pquery, timelimit=agestr)
 		self.sessiondict = OrderedDict()
 		for p in presets:
@@ -1703,7 +1704,7 @@ if __name__ == '__main__':
 	app.MainLoop()
 
 def bitmapButton(parent, name, tooltip=None):
-	bitmap = gui.wx.Icons.icon(name)
+	bitmap = leginon.gui.wx.Icons.icon(name)
 	button = wx.lib.buttons.GenBitmapButton(parent, -1, bitmap, size=(20, 20))
 	button.SetBezelWidth(1)
 	button.Enable(False)

@@ -4,7 +4,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanel.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/TargetPanel.py,v $
 # $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
 # $Date: 2008-01-18 04:58:49 $
@@ -26,18 +26,18 @@ import time
 import math
 import wx
 import Image
-import gui.wx.ImagePanel
-import gui.wx.ImagePanelTools
-import gui.wx.TargetPanelTools
+import leginon.gui.wx.ImagePanel
+import leginon.gui.wx.ImagePanelTools
+import leginon.gui.wx.TargetPanelTools
 
 ##################################
 ##
 ##################################
 
-class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
+class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	def __init__(self, parent, id, callback=None, 
 			tool=True, imagesize=(512, 512), mode="horizontal"):
-		gui.wx.ImagePanel.ImagePanel.__init__(self, parent, id, imagesize, mode)
+		leginon.gui.wx.ImagePanel.ImagePanel.__init__(self, parent, id, imagesize, mode)
 		self.order = []
 		self.reverseorder = []
 		self.targets = {}
@@ -54,7 +54,7 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 	#--------------------
 	def addTargetTool(self, name, color, **kwargs):
 		kwargs['display'] = color
-		kwargs['toolclass'] = gui.wx.TargetPanelTools.TargetTypeTool
+		kwargs['toolclass'] = leginon.gui.wx.TargetPanelTools.TargetTypeTool
 		self.addTypeTool(name, **kwargs)
 
 	#--------------------
@@ -102,7 +102,7 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 		else:
 			targets = list(targets)
 			for t in targets:
-				if not isinstance(t, gui.wx.TargetPanelTools.Target):
+				if not isinstance(t, leginon.gui.wx.TargetPanelTools.Target):
 					raise TypeError
 			self.targets[type] = targets
 			if type not in self.order:
@@ -120,7 +120,7 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 		else:
 			targets = list(targets)
 			for t in targets:
-				if not isinstance(t, gui.wx.TargetPanelTools.Target):
+				if not isinstance(t, leginon.gui.wx.TargetPanelTools.Target):
 					raise TypeError
 			self.targets[type] = targets
 			if type not in self.order:
@@ -231,7 +231,7 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 	#--------------------
 	def Draw(self, dc):
 		#now = time.time()
-		gui.wx.ImagePanel.ImagePanel.Draw(self, dc)
+		leginon.gui.wx.ImagePanel.ImagePanel.Draw(self, dc)
 		dc.BeginDrawing()
 		self.drawTargets(dc)
 		dc.EndDrawing()
@@ -292,7 +292,7 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 
 	#--------------------
 	def _onMotion(self, evt, dc):
-		gui.wx.ImagePanel.ImagePanel._onMotion(self, evt, dc)
+		leginon.gui.wx.ImagePanel.ImagePanel._onMotion(self, evt, dc)
 #		if self.selectedtype is not None:
 		viewoffset = self.panel.GetViewStart()
 		x, y = self.view2image((evt.m_x, evt.m_y))
@@ -302,7 +302,7 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 
 	#--------------------
 	def _getToolTipStrings(self, x, y, value):
-		strings = gui.wx.ImagePanel.ImagePanel._getToolTipStrings(self, x, y, value)
+		strings = leginon.gui.wx.ImagePanel.ImagePanel._getToolTipStrings(self, x, y, value)
 		selectedtarget = self.selectedtarget
 		if selectedtarget is not None:
 			name = selectedtarget.type.name
@@ -312,7 +312,7 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 			else:
 				boxsum = self._getIntegratedIntensity(position[0],position[1])
 				strings.append('%s (%g, %g) %e' % (name, position[0], position[1],boxsum))
-			if isinstance(selectedtarget, gui.wx.TargetPanelTools.StatsTarget):
+			if isinstance(selectedtarget, leginon.gui.wx.TargetPanelTools.StatsTarget):
 				for key, value in selectedtarget.stats.items():
 					if type(value) is float:
 						strings.append('%s: %g' % (key, value))
@@ -334,10 +334,10 @@ class ClickAndTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False, imagesize=(512,512),mode="horizontal"):
 		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
 		if mode == "vertical":
-			self.clicktool = self.addTool(gui.wx.ImagePanelTools.ClickTool(self, self.toolsizer, disable))
+			self.clicktool = self.addTool(leginon.gui.wx.ImagePanelTools.ClickTool(self, self.toolsizer, disable))
 		else:
-			self.clicktool = self.addTool(gui.wx.ImagePanelTools.ClickTool(self, self.toolsizer2, disable))
-		self.Bind(gui.wx.ImagePanel.EVT_IMAGE_CLICK_DONE, self.onImageClickDone)
+			self.clicktool = self.addTool(leginon.gui.wx.ImagePanelTools.ClickTool(self, self.toolsizer2, disable))
+		self.Bind(leginon.gui.wx.ImagePanel.EVT_IMAGE_CLICK_DONE, self.onImageClickDone)
 		self.sizer.Layout()
 		self.Fit()
 
@@ -348,7 +348,7 @@ class ClickAndTargetImagePanel(TargetImagePanel):
 class EllipseTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
 		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
-		self.addTool(gui.wx.ImagePanelTools.RecordMotionTool(self, self.toolsizer))
+		self.addTool(leginon.gui.wx.ImagePanelTools.RecordMotionTool(self, self.toolsizer))
 		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
 		self.sizer.Layout()
 		self.Fit()
@@ -357,8 +357,8 @@ class EllipseTargetImagePanel(TargetImagePanel):
 class FFTTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
 		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
-		self.addTool(gui.wx.ImagePanelTools.ResolutionTool(self, self.toolsizer))
-		self.addTool(gui.wx.ImagePanelTools.RecordMotionTool(self, self.toolsizer))
+		self.addTool(leginon.gui.wx.ImagePanelTools.ResolutionTool(self, self.toolsizer))
+		self.addTool(leginon.gui.wx.ImagePanelTools.RecordMotionTool(self, self.toolsizer))
 		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
 		self.sizer.Layout()
 		self.Fit()
@@ -403,8 +403,8 @@ if __name__ == '__main__':
 			frame = wx.Frame(None, -1, 'Image Viewer')
 			self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-			#self.panel = gui.wx.ImagePanel.ImagePanel(frame, -1)
-			#self.panel = gui.wx.ImagePanel.ClickImagePanel(frame, -1)
+			#self.panel = leginon.gui.wx.ImagePanel.ImagePanel(frame, -1)
+			#self.panel = leginon.gui.wx.ImagePanel.ClickImagePanel(frame, -1)
 			#self.panel.Bind(EVT_IMAGE_CLICKED, lambda e: self.panel.setImage(self.panel.imagedata))
 			#self.panel = TargetImagePanel(frame, -1)
 

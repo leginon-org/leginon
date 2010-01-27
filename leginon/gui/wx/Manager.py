@@ -18,12 +18,12 @@ import wx
 import wx.lib.intctrl
 from leginon import event
 from leginon import manager
-from leginon import gui.wx.About
-from leginon import gui.wx.ApplicationEditor
-from leginon import gui.wx.Launcher
-from leginon import gui.wx.Logging
-from leginon import gui.wx.ToolBar
-from leginon import gui.wx.SetupWizard
+from leginon.gui.wx import About
+from leginon.gui.wx import ApplicationEditor
+from leginon.gui.wx import Launcher
+from leginon.gui.wx import Logging
+from leginon.gui.wx import ToolBar
+from leginon.gui.wx import SetupWizard
 
 AddNodeEventType = wx.NewEventType()
 RemoveNodeEventType = wx.NewEventType()
@@ -147,7 +147,7 @@ class App(wx.App):
 
 		### try to get session from setup wizard
 		if session is None:
-			setup = gui.wx.SetupWizard.SetupWizard(self.manager)
+			setup = SetupWizard.SetupWizard(self.manager)
 			if setup.run():
 				session = setup.session
 				clients = setup.clients
@@ -270,7 +270,7 @@ class Frame(wx.Frame):
 
 		self.SetMenuBar(self.menubar)
 
-		self.toolbar = gui.wx.ToolBar.ToolBar(self)
+		self.toolbar = ToolBar.ToolBar(self)
 		self.toolbar.Show(True)
 		self.SetToolBar(self.toolbar)
 
@@ -291,7 +291,7 @@ class Frame(wx.Frame):
 		self.Bind(EVT_APPLICATION_KILLED, self.onApplicationKilled)
 		self.Bind(EVT_ADD_LAUNCHER_PANEL, self.onAddLauncherPanel)
 
-		self.panel = gui.wx.Launcher.Panel(self)
+		self.panel = Launcher.Panel(self)
 
 		self.Bind(wx.EVT_SIZE, self.onSize)
 
@@ -347,7 +347,7 @@ class Frame(wx.Frame):
 		dialog.Destroy()
 
 	def onMenuEditApplication(self, evt):
-		dialog = gui.wx.ApplicationEditor.Frame(self, self.manager)
+		dialog = ApplicationEditor.Frame(self, self.manager)
 		dialog.Show()
 
 	def onMenuCreate(self, evt):
@@ -386,12 +386,12 @@ class Frame(wx.Frame):
 		dialog.Destroy()
 
 	def onMenuLogging(self, evt):
-		dialog = gui.wx.Logging.LoggingConfigurationDialog(self)
+		dialog = Logging.LoggingConfigurationDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
 	def onMenuAbout(self, evt):
-		dialog = gui.wx.About.Dialog(self)
+		dialog = About.Dialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
