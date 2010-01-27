@@ -60,7 +60,7 @@ class UserPage(WizardPage):
 	def setUserSelection(self):
 		self.skip = False
 		if hasattr(leginon.leginonconfig, 'USERNAME') and leginon.leginonconfig.USERNAME:
-			usernames = _indexBy('full name', self.users.values())
+			usernames = _indexBy('name', self.users.values())
 			if leginon.leginonconfig.USERNAME in usernames:
 				self.userchoice.SetStringSelection(leginon.leginonconfig.USERNAME)
 				self.skip = True
@@ -769,8 +769,8 @@ class Setup(object):
 		userdata = leginon.leginondata.UserData(initializer={})
 		userdatalist = self.research(datainstance=userdata)
 		if not userdatalist:
-			userdatalist = [leginon.leginondata.UserData(initializer={'full name': 'Fake User'})]
-		return _indexBy('full name', userdatalist)
+			raise RuntimeError('No users in the database.')
+		return _indexBy('name', userdatalist)
 
 	def getSettings(self, userdata):
 		settingsclass = leginon.leginondata.SetupWizardSettingsData
