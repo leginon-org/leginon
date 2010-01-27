@@ -11,19 +11,19 @@
 # $State: Exp $
 # $Locker:  $
 
-import event
 import logging
-import manager
 import os
 import threading
 import wx
 import wx.lib.intctrl
-import gui.wx.About
-import gui.wx.ApplicationEditor
-import gui.wx.Launcher
-import gui.wx.Logging
-import gui.wx.ToolBar
-import gui.wx.SetupWizard
+from leginon import event
+from leginon import manager
+from leginon import gui.wx.About
+from leginon import gui.wx.ApplicationEditor
+from leginon import gui.wx.Launcher
+from leginon import gui.wx.Logging
+from leginon import gui.wx.ToolBar
+from leginon import gui.wx.SetupWizard
 
 AddNodeEventType = wx.NewEventType()
 RemoveNodeEventType = wx.NewEventType()
