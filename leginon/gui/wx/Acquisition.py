@@ -3,35 +3,31 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.44 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:01 $
-# $Author: vossman $
-# $State: Exp $
-# $Locker:  $
 
-import gui.wx.Node
-import gui.wx.Settings
-from gui.wx.Choice import Choice
-from gui.wx.Entry import FloatEntry, EVT_ENTRY, IntEntry
-from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import wx
-import gui.wx.Events
-import gui.wx.ImagePanel
-import gui.wx.ToolBar
 import threading
-from gui.wx.ImageBrowser import ImageBrowserPanel
-import gui.wx.Icons 
-import targethandler
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+import leginon.gui.wx.Node
+import leginon.gui.wx.Settings
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import FloatEntry, EVT_ENTRY, IntEntry
+from leginon.gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
+import leginon.gui.wx.Events
+import leginon.gui.wx.ImagePanel
+import leginon.gui.wx.ToolBar
+from leginon.gui.wx.ImageBrowser import ImageBrowserPanel
+import leginon.gui.wx.Icons 
+
+import leginon.targethandler
+
+
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Image Acquisition')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsim = wx.StaticBox(self, -1, 'Simulated Target Loop')
@@ -142,7 +138,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz_target_type = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Process')
 		sz_target_type.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['process target type'] = Choice(self, -1, choices=targethandler.target_types)
+		self.widgets['process target type'] = Choice(self, -1, choices=leginon.targethandler.target_types)
 		sz_target_type.Add(self.widgets['process target type'], (0, 1), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'targets')
 		sz_target_type.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -243,31 +239,31 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.node.setEmailPassword(dialog.GetValue())
 		dialog.Destroy()
 
-class Panel(gui.wx.Node.Panel):
+class Panel(leginon.gui.wx.Node.Panel):
 	icon = 'acquisition'
-	imagepanelclass = gui.wx.ImagePanel.ImagePanel
+	imagepanelclass = leginon.gui.wx.ImagePanel.ImagePanel
 	settingsdialogclass = SettingsDialog
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Process')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSE, 'pause', shortHelpString='Pause')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT_QUEUE, 'stop_queue', shortHelpString='Abort Queue')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Toggle queue timeout')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET, 'simulatetarget', shortHelpString='Simulate Target')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP, 'simulatetargetloop', shortHelpString='Simulate Target Loop')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP, 'simulatetargetloopstop', shortHelpString='Stop Simulate Target Loop')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_BROWSE_IMAGES, 'imagebrowser', shortHelpString='Browse Images')
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Process')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE, 'pause', shortHelpString='Pause')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, 'stop_queue', shortHelpString='Abort Queue')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Toggle queue timeout')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, 'simulatetarget', shortHelpString='Simulate Target')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP, 'simulatetargetloop', shortHelpString='Simulate Target Loop')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP, 'simulatetargetloopstop', shortHelpString='Stop Simulate Target Loop')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES, 'imagebrowser', shortHelpString='Browse Images')
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		self.toolbar.Realize()
 
 		self.addImagePanel()
@@ -279,7 +275,7 @@ class Panel(gui.wx.Node.Panel):
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
-		self.Bind(gui.wx.Events.EVT_PLAYER, self.onPlayer)
+		self.Bind(leginon.gui.wx.Events.EVT_PLAYER, self.onPlayer)
 
 	def addImagePanel(self):
 		# image
@@ -290,23 +286,23 @@ class Panel(gui.wx.Node.Panel):
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
-											id=gui.wx.ToolBar.ID_PLAY)
+											id=leginon.gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPauseTool,
-											id=gui.wx.ToolBar.ID_PAUSE)
+											id=leginon.gui.wx.ToolBar.ID_PAUSE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
-											id=gui.wx.ToolBar.ID_ABORT)
+											id=leginon.gui.wx.ToolBar.ID_ABORT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopQueueTool,
-											id=gui.wx.ToolBar.ID_ABORT_QUEUE)
+											id=leginon.gui.wx.ToolBar.ID_ABORT_QUEUE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetTool,
-											id=gui.wx.ToolBar.ID_SIMULATE_TARGET)
+											id=leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetLoopTool,
-											id=gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP)
+											id=leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetLoopStopTool,
-											id=gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onBrowseImagesTool, id=gui.wx.ToolBar.ID_BROWSE_IMAGES)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleQueueTimeout, id=gui.wx.ToolBar.ID_EXTRACT)
+											id=leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onBrowseImagesTool, id=leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleQueueTimeout, id=leginon.gui.wx.ToolBar.ID_EXTRACT)
 
 	def onToggleQueueTimeout(self, evt):
 		self.node.toggleQueueTimeout()
@@ -326,58 +322,58 @@ class Panel(gui.wx.Node.Panel):
 		dialog.Destroy()
 
 	def onPlayTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		self.node.player.play()
 
 	def onPauseTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		self.node.player.pause()
 
 	def onStopTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		self.node.player.stop()
 
 	def onStopQueueTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 		self.node.player.stopqueue()
 
 	def onPlayer(self, evt):
 		if evt.state == 'play':
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
 		elif evt.state == 'pause':
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False) 
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False) 
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
 		elif evt.state == 'stop':
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True) 
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, True)
 		elif evt.state == 'stopqueue':
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True) 
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT_QUEUE, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True) 
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT_QUEUE, False)
 
 	def onBrowseImagesTool(self, evt):
 		icon = wx.EmptyIcon()
-		icon.CopyFromBitmap(gui.wx.Icons.icon("imagebrowser"))
+		icon.CopyFromBitmap(leginon.gui.wx.Icons.icon("imagebrowser"))
 		frame = wx.Frame(None, -1, 'Image Browser')
 		frame.node = self.node
 		frame.SetIcon(icon)
