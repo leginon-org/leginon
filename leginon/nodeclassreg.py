@@ -26,30 +26,24 @@ class NotFoundError(NodeRegistryError):
 class InvalidNodeError(NodeRegistryError):
 	pass
 
-def registerNodeClass(modulename, classname, sortclass=None, package=None):
-	# ...
-	if package is None:
-		path = None
+def registerNodeClass(modulename, classname, sortclass=None, subpackage=''):
+	import leginon
+	leginonpath = leginon.__path__[0]
+	if subpackage:
+		packagepath = os.path.join(leginonpath, subpackage)
 	else:
-		try:
-			file, path, desc = imp.find_module(package)
-		except ImportError, detail:
-			raise NotFoundError('package \'%s\' not found' % package)
-		try:
-			path = imp.load_module(package, file, path, desc).__path__
-		except Exception, detail:
-			raise
+		packagepath = leginonpath
 	### find the module
 	try:
-		modinfo = imp.find_module(modulename, path)
+		modinfo = imp.find_module(modulename, [packagepath])
 	except ImportError, detail:
 		raise NotFoundError('module \'%s\' not found' % modulename)
 
 	### import the module (if not already imported)
-	if package is None:
-		impname = modulename
+	if subpackage:
+		impname = 'leginon' + '.' + subpackage + '.' + modulename
 	else:
-		impname = package + '.' + modulename
+		impname = 'leginon' + '.' + modulename
 	if impname in sys.modules:
 		mod = sys.modules[impname]
 	else:
@@ -114,49 +108,10 @@ def registerNodeClasses():
 		except ConfigParser.NoOptionError:
 			sortclass = None
 		try:
-			package = configparser.get(classname, 'package')
+			subpackage = configparser.get(classname, 'package')
 		except ConfigParser.NoOptionError:
-			package = None
-		registerNodeClass(modulename, classname, sortclass, package)
+			subpackage = ''
+		registerNodeClass(modulename, classname, sortclass, subpackage)
 
 registerNodeClasses()
-
-'''
-### register Node classes in the order you want them listed publicly
-registerNodeClass('EM', 'EM', 'Utility')
-registerNodeClass('corrector', 'Corrector', 'Utility')
-registerNodeClass('presets', 'PresetsManager', 'Utility')
-registerNodeClass('driftmanager', 'DriftManager', 'Utility')
-registerNodeClass('navigator', 'Navigator', 'Utility')
-registerNodeClass('manualacquisition', 'ManualAcquisition', 'Utility')
-registerNodeClass('robotatlastargetfinder', 'RobotAtlasTargetFinder', 'Utility')
-registerNodeClass('intensitymonitor', 'IntensityMonitor', 'Utility')
-
-registerNodeClass('pixelsizecalibrator', 'PixelSizeCalibrator', 'Calibrations')
-registerNodeClass('dosecalibrator', 'DoseCalibrator', 'Calibrations')
-registerNodeClass('matrixcalibrator', 'MatrixCalibrator', 'Calibrations')
-registerNodeClass('beamtiltcalibrator', 'BeamTiltCalibrator', 'Calibrations')
-registerNodeClass('gonmodeler', 'GonModeler', 'Calibrations')
-
-registerNodeClass('robot', 'Robot', 'Pipeline')
-registerNodeClass('atlastargetmaker', 'AtlasTargetMaker', 'Pipeline')
-registerNodeClass('targetmaker', 'MosaicTargetMaker', 'Pipeline')
-registerNodeClass('acquisition', 'Acquisition', 'Pipeline')
-registerNodeClass('targetfinder', 'MosaicClickTargetFinder', 'Pipeline')
-registerNodeClass('focuser', 'Focuser', 'Pipeline')
-registerNodeClass('targetfinder', 'ClickTargetFinder', 'Pipeline')
-registerNodeClass('holefinder', 'HoleFinder', 'Pipeline')
-registerNodeClass('rasterfinder', 'RasterFinder', 'Pipeline')
-registerNodeClass('matlabtargetfinder', 'MatlabTargetFinder', 'Pipeline')
-registerNodeClass('fftmaker', 'FFTMaker', 'Pipeline')
-
-# need new interface
-#registerNodeClass('emailnotification', 'Email')
-#registerNodeClass('squarefinder', 'SquareFinder', 'Pipeline')
-#registerNodeClass('squarefinder2', 'SquareFinder2', 'Pipeline')
-
-# not fully implemented
-#registerNodeClass('intensitycalibrator', 'IntensityCalibrator', 'Calibrations')
-#registerNodeClass('webcam', 'Webcam', 'Utility')
-'''
 
