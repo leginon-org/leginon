@@ -1336,7 +1336,7 @@ function add_comment_box($name) {
 function viewer_menu($sessionId) {
 	$str = '<a class="header" target="summary" href="summary.php?expId='.$sessionId.'">[summary]</a> ';
 	if (defined('PROCESSING')) {
-		$str.='<a class="header" target="processing" href=$APPION_URL"/index.php?expId='.$sessionId.'">[processing]</a> ';
+		$str.='<a class="header" target="processing" href="processing/index.php?expId='.$sessionId.'">[processing]</a> ';
 	}
 	$str.='<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId='.$sessionId.'">[make jpgs]</a>';
 	echo $str;
