@@ -3,34 +3,28 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.29 $
-# $Name: not supported by cvs2svn $
-# $Date: 2008-02-27 23:12:21 $
-# $Author: acheng $
-# $State: Exp $
-# $Locker:  $
 
 import wx
-import gui.wx.TargetPanel
-import gui.wx.ImagePanelTools
-import gui.wx.Settings
-import gui.wx.TargetFinder
 import wx.lib.filebrowsebutton as filebrowse
-from gui.wx.Entry import Entry, IntEntry, FloatEntry
-from gui.wx.Presets import PresetChoice
-from gui.wx.Choice import Choice
-import gui.wx.TargetTemplate
-import gui.wx.ToolBar
 import threading
 
-class Panel(gui.wx.TargetFinder.Panel):
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.ImagePanelTools
+import leginon.gui.wx.Settings
+import leginon.gui.wx.TargetFinder
+from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry
+from leginon.gui.wx.Presets import PresetChoice
+from leginon.gui.wx.Choice import Choice
+import leginon.gui.wx.TargetTemplate
+import leginon.gui.wx.ToolBar
+
+class Panel(leginon.gui.wx.TargetFinder.Panel):
 	def initialize(self):
-		gui.wx.TargetFinder.Panel.initialize(self)
-#		self.SettingsDialog = gui.wx.TargetFinder.SettingsDialog
+		leginon.gui.wx.TargetFinder.Panel.initialize(self)
+#		self.SettingsDialog = leginon.gui.wx.TargetFinder.SettingsDialog
 		self.SettingsDialog = SettingsDialog
 
-		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTargetTool('Raster', wx.Color(0, 255, 255), settings=True)
@@ -52,7 +46,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableRow(1)
 
-		self.Bind(gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 
 	def onImageSettings(self, evt):
 		if evt.name == 'Original':
@@ -75,13 +69,13 @@ class Panel(gui.wx.TargetFinder.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-class OriginalSettingsDialog(gui.wx.Settings.Dialog):
+class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return OriginalScrolledSettings(self,self.scrsize,False)
 
-class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class OriginalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Original Image')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -97,13 +91,13 @@ class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 		return [sbsz]
 
-class RasterSettingsDialog(gui.wx.Settings.Dialog):
+class RasterSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return RasterScrolledSettings(self,self.scrsize,False)
 
-class RasterScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class RasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Raster')
 		sbszraster = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
@@ -239,13 +233,13 @@ class RasterScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.createRaster()
 
-class PolygonSettingsDialog(gui.wx.Settings.Dialog):
+class PolygonSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return PolygonScrolledSettings(self,self.scrsize,False)
 
-class PolygonScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class PolygonScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Polygon')
 		sbszpolygon = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets['select polygon'] = wx.CheckBox(self, -1, 'Wait for polygon selection')
@@ -271,13 +265,13 @@ class PolygonScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.setPolygon()
 
-class PolygonRasterSettingsDialog(gui.wx.Settings.Dialog):
+class PolygonRasterSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return PolygonRasterScrolledSettings(self,self.scrsize,False)
 
-class PolygonRasterScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class PolygonRasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Polygon Raster')
 		sbszpolygon = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		szpolyraster = wx.GridBagSizer(5, 5)
@@ -286,13 +280,13 @@ class PolygonRasterScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sbszpolygon.Add(szpolyraster, 1, wx.EXPAND|wx.ALL, 5)
 		return [sbszpolygon,]
 
-class FinalSettingsDialog(gui.wx.Settings.Dialog):
+class FinalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return FinalScrolledSettings(self,self.scrsize,False)
 
-class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Ice Analysis')
 		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Focus Targets')
@@ -308,14 +302,14 @@ class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['ice min std'] = FloatEntry(self, -1, chars=8, min=0.0)
 		self.widgets['focus convolve'] = wx.CheckBox(self, -1, 'Convolve')
 		self.widgets['focus convolve template'] = \
-			gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
+			leginon.gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
 		self.widgets['focus constant template'] = \
-			gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
+			leginon.gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
 		self.widgets['acquisition convolve'] = wx.CheckBox(self, -1, 'Convolve')
 		self.widgets['acquisition convolve template'] = \
-			gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
+			leginon.gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
 		self.widgets['acquisition constant template'] = \
-			gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
+			leginon.gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
 
 		szice = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Box size:')
@@ -395,13 +389,13 @@ class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.node.clearTargets('acquisition')
 		self.node.clearTargets('focus')
 
-class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.TargetFinder.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 	def initialize(self):
-		tfsd = gui.wx.TargetFinder.ScrolledSettings.initialize(self)
+		tfsd = leginon.gui.wx.TargetFinder.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Raster Finder Settings')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

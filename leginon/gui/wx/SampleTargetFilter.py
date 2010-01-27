@@ -4,31 +4,32 @@
 # see http://ami.scripps.edu/software/leginon-license
 
 import wx
-import gui.wx.Node
-import gui.wx.Settings
-import gui.wx.ToolBar
-import gui.wx.TargetFilter
-from gui.wx.Entry import IntEntry
 
-class Panel(gui.wx.TargetFilter.Panel):
+import leginon.gui.wx.Node
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.TargetFilter
+from leginon.gui.wx.Entry import IntEntry
+
+class Panel(leginon.gui.wx.TargetFilter.Panel):
 	icon = 'targetfilter'
 	def __init__(self, *args, **kwargs):
-		gui.wx.TargetFilter.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.TargetFilter.Panel.__init__(self, *args, **kwargs)
 		self.SettingsDialog = SettingsDialog
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Target Filter')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

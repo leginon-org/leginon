@@ -3,46 +3,40 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicSectionFinder.py,v $
-# $Revision: 1.2 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:07 $
-# $Author: vossman $
-# $State: Exp $
-# $Locker:  $
 
 import wx
-from gui.wx.Choice import Choice
-from gui.wx.Entry import IntEntry, FloatEntry
-import gui.wx.Settings
-import gui.wx.TargetFinder
-import gui.wx.TargetPanel
-import gui.wx.MosaicClickTargetFinder
-import gui.wx.ToolBar
 import threading
-from gui.wx.Presets import PresetChoice
 
-class Panel(gui.wx.MosaicClickTargetFinder.Panel):
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import IntEntry, FloatEntry
+import leginon.gui.wx.Settings
+import leginon.gui.wx.TargetFinder
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.MosaicClickTargetFinder
+import leginon.gui.wx.ToolBar
+from leginon.gui.wx.Presets import PresetChoice
+
+class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
-		gui.wx.MosaicClickTargetFinder.Panel.initialize(self)
+		leginon.gui.wx.MosaicClickTargetFinder.Panel.initialize(self)
 
 	def addOtherTools(self):
-#		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
+#		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('region', wx.Color(64,128,255), target=True, settings=True, shape='polygon')
 		self.imagepanel.selectiontool.setDisplayed('region', True)
 
 	def onNodeInitialized(self):
-		gui.wx.MosaicClickTargetFinder.Panel.onNodeInitialized(self)
+		leginon.gui.wx.MosaicClickTargetFinder.Panel.onNodeInitialized(self)
 
 		# need this enabled for new auto region target finding
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, True)
 
 	def addOtherBindings(self):
 		pass
 
 	def onImageSettings(self, evt):
-		gui.wx.MosaicClickTargetFinder.Panel.onImageSettings(self,evt)
+		leginon.gui.wx.MosaicClickTargetFinder.Panel.onImageSettings(self,evt)
 		if evt.name == 'region':
 			dialog = RegionSettingsDialog(self)
 			dialog.ShowModal()
@@ -65,17 +59,17 @@ class Panel(gui.wx.MosaicClickTargetFinder.Panel):
 				self.node.autoTargetFinder()
 				autofind = True
 		if not autofind:
-			gui.wx.MosaicClickTargetFinder.Panel.onSubmitTool(self, evt)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
+			leginon.gui.wx.MosaicClickTargetFinder.Panel.onSubmitTool(self, evt)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 
-class RegionSettingsDialog(gui.wx.Settings.Dialog):
+class RegionSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return RegionScrolledSettings(self,self.scrsize,False)
 
-class RegionScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class RegionScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 
 		szoptions = wx.GridBagSizer(5, 5)
 
@@ -160,13 +154,13 @@ class RegionScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.clearRegions()
 
-class RasterSettingsDialog(gui.wx.Settings.Dialog):
+class RasterSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return RasterScrolledSettings(self,self.scrsize,False)
 
-class RasterScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class RasterScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
 		sbszauto = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -241,13 +235,13 @@ class RasterScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.clearTargets('acquisition')
 
-class FocusSettingsDialog(gui.wx.Settings.Dialog):
+class FocusSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return FocusScrolledSettings(self,self.scrsize,False)
 
-class FocusScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class FocusScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(5, 5)

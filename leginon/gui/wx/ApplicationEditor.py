@@ -3,18 +3,11 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ApplicationEditor.py,v $
-# $Revision: 1.5 $
-# $Name: not supported by cvs2svn $
-# $Date: 2005-04-25 23:36:24 $
-# $Author: pulokas $
-# $State: Exp $
-# $Locker:  $
 
-import application
 import wx
-#import gui.wx.Master
-import gui.wx.ApplicationEditorLite
+
+import leginon.gui.wx.ApplicationEditorLite
+import leginon.application
 
 class Frame(wx.Frame):
 	def __init__(self, parent, manager):
@@ -51,8 +44,8 @@ class Frame(wx.Frame):
 
 		self.SetMenuBar(self.menubar)
 
-		#self.editor = gui.wx.Master.ApplicationEditorCanvas(self, -1)
-		self.editor = gui.wx.ApplicationEditorLite.ApplicationEditorLite(self)
+		#self.editor = leginon.gui.wx.Master.ApplicationEditorCanvas(self, -1)
+		self.editor = leginon.gui.wx.ApplicationEditorLite.ApplicationEditorLite(self)
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.editor, (0, 0), (1, 1), wx.EXPAND)
@@ -82,7 +75,7 @@ class Frame(wx.Frame):
 		dialog.Destroy()
 
 	def save(self, name, appdata):
-		app = application.Application(self.manager)
+		app = leginon.application.Application(self.manager)
 		app.setName(name)
 		for ns in appdata['nodes']:
 			app.addNodeSpec(*ns)

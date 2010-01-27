@@ -1,6 +1,7 @@
 import wx
 import wx.lib.buttons
-import gui.wx.Icons
+
+import leginon.gui.wx.Icons
 
 class OrderListBox(wx.Panel):
     def __init__(self, parent, id, label, **kwargs):
@@ -37,7 +38,7 @@ class OrderListBox(wx.Panel):
         self.Bind(wx.EVT_LISTBOX, self.onSelect, self.listbox)
 
     def _bitmapButton(self, name, tooltip=None):
-        bitmap = gui.wx.Icons.icon(name)
+        bitmap = leginon.gui.wx.Icons.icon(name)
         button = wx.lib.buttons.GenBitmapButton(self, -1, bitmap, size=(20, 20))
         button.SetBezelWidth(1)
         button.Enable(False)

@@ -3,7 +3,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/Corrector.py,v $
 # $Revision: 1.56 $
 # $Name: not supported by cvs2svn $
 # $Date: 2008-02-22 22:47:06 $
@@ -11,17 +11,18 @@
 # $State: Exp $
 # $Locker:  $
 
-import wx
-from gui.wx.Entry import IntEntry, FloatEntry
-import gui.wx.Node
-import gui.wx.TargetPanel
-import gui.wx.Settings
 import threading
-import gui.wx.Stats
-import gui.wx.Events
-import gui.wx.ToolBar
-import gui.wx.Instrument
-from gui.wx.Choice import Choice
+import wx
+
+from leginon.gui.wx.Entry import IntEntry, FloatEntry
+import leginon.gui.wx.Node
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.Settings
+import leginon.gui.wx.Stats
+import leginon.gui.wx.Events
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.Instrument
+from leginon.gui.wx.Choice import Choice
 
 def plan2str(plan):
 	if not plan:
@@ -111,13 +112,13 @@ def str2pixels(string):
 def pixels2str(pixels):
 	return 'There are %d bad pixels' % len(pixels)
 
-class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
+class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin):
 	icon = 'corrector'
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
-		gui.wx.Instrument.SelectionMixin.__init__(self)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Instrument.SelectionMixin.__init__(self)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
@@ -141,14 +142,14 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.cchannel.SetSelection(0)
 		self.toolbar.AddControl(self.cchannel)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
 													shortHelpString='Acquire')
 		self.toolbar.AddSeparator()
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLUS,'plus',shortHelpString='Add Region To Bad Pixel List')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_STAGE_LOCATIONS,'stagelocations',shortHelpString='Add Extreme Points To Bad Pixel List')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,'display',shortHelpString='Display Normalization Image')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLUS,'plus',shortHelpString='Add Region To Bad Pixel List')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STAGE_LOCATIONS,'stagelocations',shortHelpString='Add Extreme Points To Bad Pixel List')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,'display',shortHelpString='Display Normalization Image')
 		self.toolbar.Realize()
 
 		# settings
@@ -176,7 +177,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
 
 		# image
-		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('Bad_Pixels', wx.Color(255, 0, 0), target=True, shape='.')
 		self.imagepanel.selectiontool.setDisplayed('Bad_Pixels', True)
 		self.imagepanel.setTargets('Bad_Pixels', [])
@@ -194,20 +195,20 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
+		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
-											id=gui.wx.ToolBar.ID_ACQUIRE)
+											id=leginon.gui.wx.ToolBar.ID_ACQUIRE)
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAddTool,
-											id=gui.wx.ToolBar.ID_PLUS)
+											id=leginon.gui.wx.ToolBar.ID_PLUS)
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
-											id=gui.wx.ToolBar.ID_STAGE_LOCATIONS)
+											id=leginon.gui.wx.ToolBar.ID_STAGE_LOCATIONS)
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onDisplayTool,
-											id=gui.wx.ToolBar.ID_REFRESH)
+											id=leginon.gui.wx.ToolBar.ID_REFRESH)
 
 		self.settingsdialog = SettingsDialog(self)
 
@@ -219,7 +220,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.Bind(wx.EVT_BUTTON, self.onClearPixels, self.bclearpixels)
 
 	def onSetImage(self, evt):
-		gui.wx.Node.Panel.onSetImage(self, evt)
+		leginon.gui.wx.Node.Panel.onSetImage(self, evt)
 
 	def onSettingsTool(self, evt):
 		self.settingsdialog.ShowModal()
@@ -317,13 +318,13 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.setPlan({'pixels':[]})
 		threading.Thread(target=self.node.storeCorrectorPlan, args=(self.plan,)).start()
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Image Correction')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Clipping')
@@ -333,13 +334,13 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'Reference Creation')
 		sbszref = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self)
+		self.widgets['instruments'] = leginon.gui.wx.Instrument.SelectionPanel(self)
 		self.panel.setInstrumentSelection(self.widgets['instruments'])
 
 		self.widgets['n average'] = IntEntry(self, -1, min=1, max=99, chars=2)
 		self.widgets['combine'] = Choice(self, -1, choices=['median', 'average'])
 
-		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 		self.widgets['despike'] = wx.CheckBox(self, -1, 'Despike images')
 		self.widgets['despike size'] = IntEntry(self, -1, min=1, chars=4)

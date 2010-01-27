@@ -3,25 +3,12 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Master.py,v $
-# $Revision: 1.4 $
-# $Name: not supported by cvs2svn $
-# $Date: 2004-11-07 03:03:29 $
-# $Author: pulokas $
-# $State: Exp $
-# $Locker:  $
 
-#
-# COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
-#
 from wxPython.wx import *
-import gui.wx.ObjectCanvas as wxObjectCanvas
-import event
-import nodeclassreg
+
+import leginon.gui.wx.ObjectCanvas as wxObjectCanvas
+import leginon.event
+import leginon.nodeclassreg
 
 class LabelObject(wxObjectCanvas.wxTextObject):
 	def __init__(self, text, color=wxBLACK):
@@ -141,7 +128,7 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		self.nodeclass = nodeclass
 		self.dependencies = dependencies
 
-		nc = nodeclassreg.getNodeClass(self.nodeclass)
+		nc = leginon.nodeclassreg.getNodeClass(self.nodeclass)
 		if nc is None:
 			raise RuntimeError
 		input = BindingInput()
@@ -360,7 +347,7 @@ class AddNodeDialog(wxDialog):
 		box = wxBoxSizer(wxHORIZONTAL)
 		label = wxStaticText(self, -1, 'Class:')
 		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
-		classnames = nodeclassreg.getNodeClassNames()
+		classnames = leginon.nodeclassreg.getNodeClassNames()
 		classnames.sort()
 		self.classcombo = wxComboBox(self, -1, choices=classnames,
 																	style=wxCB_DROPDOWN|wxCB_READONLY)
@@ -708,7 +695,7 @@ class Application(wxObjectCanvas.wxRectangleObject):
 					if node.getAlias() == bindspec[2]:
 						tocp = node.inputconnectionpoints[0]
 				if fromcp is not None and tocp is not None:
-					binding = Binding(getattr(event, bindspec[0]), fromcp, tocp)
+					binding = Binding(getattr(leginon.event, bindspec[0]), fromcp, tocp)
 					self.addShapeObject(binding)
 				else:
 					print 'Warning, cannot add binding', bindspec

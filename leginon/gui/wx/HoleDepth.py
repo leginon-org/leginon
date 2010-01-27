@@ -3,30 +3,24 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleDepth.py,v $
-# $Revision: 1.7 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:04 $
-# $Author: vossman $
-# $State: Exp $
-# $Locker:  $
 
 import wx
-import gui.wx.Settings
-import gui.wx.TargetPanel
-import gui.wx.ImagePanelTools
-import gui.wx.TargetFinder
 import wx.lib.filebrowsebutton as filebrowse
-import gui.wx.Rings
-from gui.wx.Choice import Choice
-from gui.wx.Entry import Entry, IntEntry, FloatEntry
-import gui.wx.TargetTemplate
-import gui.wx.ToolBar
 
-class Panel(gui.wx.TargetFinder.Panel):
+import leginon.gui.wx.Settings
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.ImagePanelTools
+import leginon.gui.wx.TargetFinder
+import leginon.gui.wx.Rings
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry
+import leginon.gui.wx.TargetTemplate
+import leginon.gui.wx.ToolBar
+
+class Panel(leginon.gui.wx.TargetFinder.Panel):
 	icon = 'holefinder'
 	def initialize(self):
-		gui.wx.TargetFinder.Panel.initialize(self)
+		leginon.gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = SettingsDialog
 
 		self.cparameter = wx.Choice(self.toolbar, -1,
@@ -35,7 +29,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.toolbar.InsertControl(1, self.cparameter)
 
 
-		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 
 		parameter = self.cparameter.GetStringSelection()		
  		self.imagepanel.addTypeTool('Original', display=True, settings=True)
@@ -59,21 +53,21 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.szmain.AddGrowableCol(0)
 
 	def onNodeInitialized(self):
-		gui.wx.Node.Panel.onNodeInitialized(self)
+		leginon.gui.wx.Node.Panel.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
-											id=gui.wx.ToolBar.ID_SUBMIT)
+											id=leginon.gui.wx.ToolBar.ID_SUBMIT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitQueueTool,
-											id=gui.wx.ToolBar.ID_SUBMIT_QUEUE)
-#		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, True)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
-		self.Bind(gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
+											id=leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE)
+#		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 		queue = self.node.settings['queue']
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE, queue)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE, queue)
 
 	def onSubmitTool(self, evt):
-#		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
+#		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		self.node.storeK()
 
 	def onImageSettings(self, evt):
@@ -102,16 +96,16 @@ class Panel(gui.wx.TargetFinder.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-class OriginalSettingsDialog(gui.wx.Settings.Dialog):
+class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return OriginalScrolledSettings(self,self.scrsize,False)
 
-class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class OriginalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		parent = self.panel
 		parameter = parent.cparameter.GetStringSelection()
 		imagetype=str(parameter)+' filename'
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, imagetype)
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets[imagetype] = filebrowse.FileBrowseButton(self, -1)
@@ -126,13 +120,13 @@ class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 		return [sbsz]
 
-class TemplateSettingsDialog(gui.wx.Settings.Dialog):
+class TemplateSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return TemplateScrolledSettings(self,self.scrsize,False)
 
-class TemplateScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Low Pass Filter (Phase Correlation)')
 		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Tilt Axis')
@@ -163,7 +157,7 @@ class TemplateScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 		sbszta.Add(szta, 1, wx.EXPAND|wx.ALL, 5)
 
-		self.widgets['template rings'] = gui.wx.Rings.Panel(self)
+		self.widgets['template rings'] = leginon.gui.wx.Rings.Panel(self)
 		self.widgets['template type'] = Choice(self, -1, choices=self.node.cortypes)
 
 		szcor = wx.GridBagSizer(5, 5)
@@ -195,13 +189,13 @@ class TemplateScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.correlateTemplate()
 
-class EdgeSettingsDialog(gui.wx.Settings.Dialog):
+class EdgeSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return EdgeScrolledSettings(self,self.scrsize,False)
 
-class EdgeScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class EdgeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Low Pass Filter')
 		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Edge Finding')
@@ -265,13 +259,13 @@ class EdgeScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.findEdges()
 
-class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
+class ThresholdSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ThresholdScrolledSettings(self,self.scrsize,False)
 
-class ThresholdScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Threshold')
 		sbszthreshold = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -300,13 +294,13 @@ class ThresholdScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.threshold()
 
-class BlobsSettingsDialog(gui.wx.Settings.Dialog):
+class BlobsSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return BlobsScrolledSettings(self,self.scrsize,False)
 
-class BlobsScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Blob finding')
 		sbszblobs = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -362,13 +356,13 @@ class BlobsScrolledSettings(gui.wx.Settings.ScrolledDialog):
 			self.node.makeBlobs(pixels)
 			self.node.getHoleDepth()
 
-class PickHoleSettingsDialog(gui.wx.Settings.Dialog):
+class PickHoleSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return PickHoleScrolledSettings(self,self.scrsize,False)
 
-class PickHoleScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class PickHoleScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Hole Statistics')
 		sbszstats = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -419,13 +413,13 @@ class PickHoleScrolledSettings(gui.wx.Settings.ScrolledDialog):
                 pixels=parent.imagepanel.getTargetPositions('PickHoles')
 		self.node.getPickHoleStats(pixels)
 
-class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.TargetFinder.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 	def initialize(self):
-		tfsd = gui.wx.TargetFinder.ScrolledSettings.initialize(self)
+		tfsd = leginon.gui.wx.TargetFinder.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Hole Depth Finder Settings')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

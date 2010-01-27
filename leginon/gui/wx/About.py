@@ -3,25 +3,19 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/About.py,v $
-# $Revision: 1.5 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-05-21 23:50:17 $
-# $Author: pulokas $
-# $State: Exp $
-# $Locker:  $
 
-import gui.wx.Dialog
+import leginon.gui.wx.Dialog
+import leginon.version
+
 import sys
 import wx
 import numpy
 import _mysql
 import Image
-import version
 
-class Dialog(gui.wx.Dialog.Dialog):
+class Dialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent):
-		gui.wx.Dialog.Dialog.__init__(self, parent, 'About Leginon')
+		leginon.gui.wx.Dialog.Dialog.__init__(self, parent, 'About Leginon')
 
 	def onInitialize(self):
 		label = wx.StaticText(self, -1, 'Leginon')
@@ -33,7 +27,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'Automated Data Acquisition Software for Transmission Electron Microscopy')
 		self.sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
-		v = version.getVersion()
+		v = leginon.version.getVersion()
 		if not v:
 			v = '(None)'
 		label = wx.StaticText(self, -1, 'Version %s' % v)

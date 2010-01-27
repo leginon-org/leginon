@@ -3,28 +3,22 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/GonModeler.py,v $
-# $Revision: 1.14 $
-# $Name: not supported by cvs2svn $
-# $Date: 2006-01-30 23:20:11 $
-# $Author: pulokas $
-# $State: Exp $
-# $Locker:  $
 
 import threading
 import wx
-from gui.wx.Choice import Choice
-from gui.wx.Entry import Entry, IntEntry, FloatEntry
-import gui.wx.Calibrator
-import gui.wx.ToolBar
 
-class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry
+import leginon.gui.wx.Calibrator
+import leginon.gui.wx.ToolBar
+
+class SettingsDialog(leginon.gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Calibrator.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.Calibrator.ScrolledSettings):
 	def initialize(self):
-		szcal = gui.wx.Calibrator.ScrolledSettings.initialize(self)
+		szcal = leginon.gui.wx.Calibrator.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Measurement')
 		sbszmeasure = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Modeling')
@@ -94,46 +88,46 @@ class ScrolledSettings(gui.wx.Calibrator.ScrolledSettings):
 
 		return szcal + [sbszmeasure, sbszmodel]
 
-class Panel(gui.wx.Calibrator.Panel):
+class Panel(leginon.gui.wx.Calibrator.Panel):
 	icon = 'sine'
 	settingsclass = SettingsDialog
 	def initialize(self):
-		gui.wx.Calibrator.Panel.initialize(self)
+		leginon.gui.wx.Calibrator.Panel.initialize(self)
 		self.toolbar.Realize()
-		ctb = self.toolbar.RemoveTool(gui.wx.ToolBar.ID_CALIBRATE)
-		atb = self.toolbar.RemoveTool(gui.wx.ToolBar.ID_ABORT)
+		ctb = self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_CALIBRATE)
+		atb = self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_ABORT)
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE,
 													'cam_ruler',
 													shortHelpString='Measure')
 		self.toolbar.AddToolItem(atb)
 		self.toolbar.AddSeparator()
 		self.toolbar.AddToolItem(ctb)
 
-		self.Bind(gui.wx.Events.EVT_MEASUREMENT_DONE, self.onMeasurementDone)
+		self.Bind(leginon.gui.wx.Events.EVT_MEASUREMENT_DONE, self.onMeasurementDone)
 
 	def onNodeInitialized(self):
-		gui.wx.Calibrator.Panel.onNodeInitialized(self)
+		leginon.gui.wx.Calibrator.Panel.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool,
-											id=gui.wx.ToolBar.ID_MEASURE)
+											id=leginon.gui.wx.ToolBar.ID_MEASURE)
 		self.node.settings['measure label'] =  self.node.session['name']
 		self.node.setSettings(self.node.settings)
 
 	def onMeasurementDone(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_MEASURE, True)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_MEASURE, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 
 	def measurementDone(self):
-		evt = gui.wx.Events.MeasurementDoneEvent()
+		evt = leginon.gui.wx.Events.MeasurementDoneEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onMeasureTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_MEASURE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_MEASURE, False)
 		threading.Thread(target=self.node.uiStartLoop).start()
 
 	def onAbortTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		threading.Thread(target=self.node.uiStopLoop).start()
 
 	def onCalibrateTool(self, evt):

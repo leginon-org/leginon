@@ -4,28 +4,22 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/DoseCalibrator.py,v $
-# $Revision: 1.12 $
-# $Name: not supported by cvs2svn $
-# $Date: 2006-06-08 00:17:06 $
-# $Author: pulokas $
-# $State: Exp $
-# $Locker:  $
 
 import threading
 import wx
-from gui.wx.Entry import IntEntry, FloatEntry
-import gui.wx.Calibrator
-import gui.wx.Settings
-import gui.wx.ToolBar
 
-class Panel(gui.wx.Calibrator.Panel):
+from leginon.gui.wx.Entry import IntEntry, FloatEntry
+import leginon.gui.wx.Calibrator
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+
+class Panel(leginon.gui.wx.Calibrator.Panel):
     icon = 'dose'
     def initialize(self):
-        gui.wx.Calibrator.Panel.initialize(self)
+        leginon.gui.wx.Calibrator.Panel.initialize(self)
         self.dialog = None
         self.toolbar.Realize()
-        self.toolbar.DeleteTool(gui.wx.ToolBar.ID_ABORT)
+        self.toolbar.DeleteTool(leginon.gui.wx.ToolBar.ID_ABORT)
 
     def onCalibrateTool(self, evt):
         self.dialog = DoseCalibrationDialog(self)
@@ -33,13 +27,13 @@ class Panel(gui.wx.Calibrator.Panel):
         self.dialog.Destroy()
         self.dialog = None
 
-class DoseCalibrationDialog(gui.wx.Settings.Dialog):
+class DoseCalibrationDialog(leginon.gui.wx.Settings.Dialog):
     def initialize(self):
         return DoseScrolledSettings(self,self.scrsize,False)
 
-class DoseScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class DoseScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
     def initialize(self):
-        gui.wx.Settings.ScrolledDialog.initialize(self)
+        leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
         sb = wx.StaticBox(self, -1, 'Main Screen')
         sbszscreen = wx.StaticBoxSizer(sb, wx.VERTICAL)
         sb = wx.StaticBox(self, -1, 'Dose Measurement')

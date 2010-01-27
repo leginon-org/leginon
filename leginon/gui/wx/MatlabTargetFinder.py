@@ -3,39 +3,33 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatlabTargetFinder.py,v $
-# $Revision: 1.8 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:06 $
-# $Author: vossman $
-# $State: Exp $
-# $Locker:  $
 
 import threading
 import wx
-import gui.wx.Events
-import gui.wx.TargetPanel
-import gui.wx.ImagePanelTools
-import gui.wx.Settings
-import gui.wx.TargetFinder
-import gui.wx.ToolBar
 import wx.lib.filebrowsebutton as filebrowse
 
-class Panel(gui.wx.TargetFinder.Panel):
+import leginon.gui.wx.Events
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.ImagePanelTools
+import leginon.gui.wx.Settings
+import leginon.gui.wx.TargetFinder
+import leginon.gui.wx.ToolBar
+
+class Panel(leginon.gui.wx.TargetFinder.Panel):
 	def initialize(self, focus=True):
-		gui.wx.TargetFinder.Panel.initialize(self)
+		leginon.gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = SettingsDialog
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET,
 													'simulatetarget',
 													shortHelpString='Target Test Image')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
 													shortHelpString='Refresh Targets')
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SIMULATE_TARGET, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, False)
 
-		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Image', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 
@@ -50,8 +44,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
 
-		self.Bind(gui.wx.Events.EVT_FOUND_TARGETS, self.onFoundTargets)
-		self.Bind(gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
+		self.Bind(leginon.gui.wx.Events.EVT_FOUND_TARGETS, self.onFoundTargets)
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 
 	def onImageSettings(self, evt):
 		if evt.name == 'Image':
@@ -67,40 +61,40 @@ class Panel(gui.wx.TargetFinder.Panel):
 		dialog.Destroy()
 
 	def onNodeInitialized(self):
-		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
+		leginon.gui.wx.TargetFinder.Panel.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onTargetTestImage,
-											id=gui.wx.ToolBar.ID_SIMULATE_TARGET)
+											id=leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTool,
-											id=gui.wx.ToolBar.ID_REFRESH)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SIMULATE_TARGET, True)
+											id=leginon.gui.wx.ToolBar.ID_REFRESH)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET, True)
 
 	def onFoundTargets(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, True)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, True)
 
 	def foundTargets(self):
-		evt = gui.wx.Events.FoundTargetsEvent()
+		evt = leginon.gui.wx.Events.FoundTargetsEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onRefreshTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
 		threading.Thread(target=self.node.matlabFindTargets).start()
 
 	def onSubmitTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, False)
-		gui.wx.TargetFinder.Panel.onSubmitTool(self, evt)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, False)
+		leginon.gui.wx.TargetFinder.Panel.onSubmitTool(self, evt)
 
 	def onTargetTestImage(self, evt):
 		threading.Thread(target=self.node.targetTestImage).start()
 
-class OriginalSettingsDialog(gui.wx.Settings.Dialog):
+class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return OriginalScrolledSettings(self,self.scrsize,False)
 
-class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class OriginalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'test image')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -117,16 +111,16 @@ class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 		return [sbsz]
 
-class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.TargetFinder.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 	def initialize(self):
-		tfsbsz = gui.wx.TargetFinder.ScrolledSettings.initialize(self)
+		tfsbsz = leginon.gui.wx.TargetFinder.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Matlab Module')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		#gui.wx.Settings.Dialog.initialize(self)
+		#leginon.gui.wx.Settings.Dialog.initialize(self)
 
 #		self.widgets['test image'] = filebrowse.FileBrowseButton(self,
 #								labelText='Test Image:', fileMask='*.mrc')

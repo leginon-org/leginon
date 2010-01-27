@@ -3,26 +3,20 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Selector.py,v $
-# $Revision: 1.13 $
-# $Name: not supported by cvs2svn $
-# $Date: 2008-02-20 07:46:04 $
-# $Author: acheng $
-# $State: Exp $
-# $Locker:  $
 
 import wx
 import wx.lib.scrolledpanel
-import gui.wx.Icons
-import gui.wx.Processing
+
+import leginon.gui.wx.Icons
+import leginon.gui.wx.Processing
 
 bitmaps = {}
 
 def getBitmap(name):
 	if name is None:
-		return gui.wx.Icons.icon('null')
+		return leginon.gui.wx.Icons.icon('null')
 	if name not in bitmaps:
-		bitmaps[name] = gui.wx.Icons.icon(name)
+		bitmaps[name] = leginon.gui.wx.Icons.icon(name)
 	bitmap = bitmaps[name]
 	if bitmap is None:
 		return wx.NullBitmap
@@ -61,7 +55,7 @@ class SelectorItem(object):
 		self.items.append(label)
 
 		self.items.append(wx.StaticBitmap(self.panel, -1))
-		self.items.append(gui.wx.Processing.Throbber(self.panel))
+		self.items.append(leginon.gui.wx.Processing.Throbber(self.panel))
 		self.items[-1].SetBackgroundColour(wx.WHITE)
 
 		for i, additem in enumerate(self.items):

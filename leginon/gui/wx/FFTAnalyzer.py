@@ -3,30 +3,25 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FFTMaker.py,v $
-# $Revision: 1.11 $
-# $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
-# $Author: suloway $
-# $State: Exp $
-# $Locker:  $
 
 import wx
-from gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY
-import gui.wx.FFTMaker
-import gui.wx.Settings
-import gui.wx.ToolBar
-import gui.wx.ImagePanel
+
 from pyami import plot
 
-class Panel(gui.wx.FFTMaker.Panel):
-	imagepanelclass = gui.wx.ImagePanel.ImagePanel
+from leginon.gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY
+import leginon.gui.wx.FFTMaker
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.ImagePanel
+
+class Panel(leginon.gui.wx.FFTMaker.Panel):
+	imagepanelclass = leginon.gui.wx.ImagePanel.ImagePanel
 	plotpanelclass = plot.PlotPanel
 	icon = 'fftmaker'
 	def __init__(self, *args, **kwargs):
-		gui.wx.FFTMaker.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.FFTMaker.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 			'refresh', shortHelpString='Refresh')
 
 		#self.szmain.Layout()
@@ -52,13 +47,13 @@ class Panel(gui.wx.FFTMaker.Panel):
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
-											id=gui.wx.ToolBar.ID_PLAY)
+											id=leginon.gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
-											id=gui.wx.ToolBar.ID_STOP)
+											id=leginon.gui.wx.ToolBar.ID_STOP)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTool,
-											id=gui.wx.ToolBar.ID_REFRESH)
+											id=leginon.gui.wx.ToolBar.ID_REFRESH)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -71,21 +66,21 @@ class Panel(gui.wx.FFTMaker.Panel):
 
 	def onPlayTool(self, evt):
 		self.node.onStartPostProcess()
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, True)
 
 	def onStopTool(self, evt):
 		self.node.onStopPostProcess()
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'FFT')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Images in Database')

@@ -5,24 +5,25 @@
 #
 
 import wx
-import gui.wx.TargetPanel
-import gui.wx.Settings
-import gui.wx.TargetFinder
 import wx.lib.filebrowsebutton as filebrowse
-import gui.wx.Rings
-from gui.wx.Choice import Choice
-from gui.wx.Entry import Entry, IntEntry, FloatEntry
-import gui.wx.TargetTemplate
-import gui.wx.ToolBar
 import threading
 
-class Panel(gui.wx.TargetFinder.Panel):
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.Settings
+import leginon.gui.wx.TargetFinder
+import leginon.gui.wx.Rings
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry
+import leginon.gui.wx.TargetTemplate
+import leginon.gui.wx.ToolBar
+
+class Panel(leginon.gui.wx.TargetFinder.Panel):
 	icon = 'holefinder'
 	def initialize(self):
-		gui.wx.TargetFinder.Panel.initialize(self)
+		leginon.gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = SettingsDialog
 
-		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTypeTool('templateA', display=True, settings=True)
@@ -64,13 +65,13 @@ class Panel(gui.wx.TargetFinder.Panel):
 		dialog.Destroy()
 
 
-class OriginalSettingsDialog(gui.wx.Settings.Dialog):
+class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return OriginalScrolledSettings(self,self.scrsize,False)
 
-class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class OriginalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Original Image')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -85,13 +86,13 @@ class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 		return [sbsz]
 
-class TemplateASettingsDialog(gui.wx.Settings.Dialog):
+class TemplateASettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return TemplateAScrolledSettings(self,self.scrsize,False)
 
-class TemplateAScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class TemplateAScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 
 		sbsztemplate = wx.GridBagSizer(5,5)
 		lab = wx.StaticText(self, -1, 'Template Size (percent of image)')
@@ -113,13 +114,13 @@ class TemplateAScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.makeTemplateA()
 
-class TemplateBSettingsDialog(gui.wx.Settings.Dialog):
+class TemplateBSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return TemplateBScrolledSettings(self,self.scrsize,False)
 
-class TemplateBScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class TemplateBScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 
 		sbsztemplate = wx.GridBagSizer(5,5)
 		lab = wx.StaticText(self, -1, 'Test Angle (degrees)')
@@ -144,13 +145,13 @@ class TemplateBScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.node.makeTemplateB(angle)
 
 
-class CorrelationSettingsDialog(gui.wx.Settings.Dialog):
+class CorrelationSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return CorrelationScrolledSettings(self,self.scrsize,False)
 
-class CorrelationScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class CorrelationScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 
 		szcor = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Use')
@@ -189,13 +190,13 @@ class CorrelationScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.correlateRotatingTemplate).start()
 
-class FinalSettingsDialog(gui.wx.Settings.Dialog):
+class FinalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return FinalScrolledSettings(self,self.scrsize,False)
 
-class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 
 		self.btest = wx.Button(self, -1, 'Make Targets')
 		self.bclear = wx.Button(self, -1, 'Clear targets')
@@ -220,13 +221,13 @@ class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.makeFinalTargets).start()
 
-class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.TargetFinder.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 	def initialize(self):
-		tfsd = gui.wx.TargetFinder.ScrolledSettings.initialize(self)
+		tfsd = leginon.gui.wx.TargetFinder.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'DTFinder Settings')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

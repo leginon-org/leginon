@@ -4,26 +4,27 @@
 # see http://ami.scripps.edu/software/leginon-license
 
 import wx
-import gui.wx.Node
-import gui.wx.Settings
-import gui.wx.ToolBar
 
-class Panel(gui.wx.Node.Panel):
+import leginon.gui.wx.Node
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+
+class Panel(leginon.gui.wx.Node.Panel):
 	icon = 'targetfilter'
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'play',
 													shortHelpString='Process')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP,
 													'stop',
 													shortHelpString='Stop')
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
 		self.toolbar.Realize()
 
 		self.szmain.AddGrowableCol(0)
@@ -33,11 +34,11 @@ class Panel(gui.wx.Node.Panel):
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
-											id=gui.wx.ToolBar.ID_PLAY)
+											id=leginon.gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
-											id=gui.wx.ToolBar.ID_STOP)
+											id=leginon.gui.wx.ToolBar.ID_STOP)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -46,21 +47,21 @@ class Panel(gui.wx.Node.Panel):
 
 	def onPlayTool(self, evt):
 		self.node.test()
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, True)
 
 	def onStopTool(self, evt):
 		self.node.stop()
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Beeper')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

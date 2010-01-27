@@ -3,36 +3,29 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.16 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-06-15 02:30:31 $
-# $Author: acheng $
-# $State: Exp $
-# $Locker:  $
 
-from gui.wx.Entry import Entry, FloatEntry
-import gui.wx.Events
-import gui.wx.Icons
-import gui.wx.Node
-import gui.wx.ToolBar
-import gui.wx.Settings
+from leginon.gui.wx.Entry import Entry, FloatEntry
+import leginon.gui.wx.Events
+import leginon.gui.wx.Icons
+import leginon.gui.wx.Node
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.Settings
+
 import threading
 import wx
-import unique
 
-class Panel(gui.wx.Node.Panel):
+class Panel(leginon.gui.wx.Node.Panel):
 	#icon = 'robot'
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings', shortHelpString='Start')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'play', shortHelpString='Start')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
 													shortHelpString='Refresh Grid List')
 		self.toolbar.Realize()
@@ -61,10 +54,10 @@ class Panel(gui.wx.Node.Panel):
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool, id=gui.wx.ToolBar.ID_PLAY)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool, id=leginon.gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshGridsButton,
-											id=gui.wx.ToolBar.ID_REFRESH)
+											id=leginon.gui.wx.ToolBar.ID_REFRESH)
 
 		self.Bind(wx.EVT_CHOICE, self.onGridChoice, self.cgrid)
 		self.Bind(wx.EVT_BUTTON, self.onSaveNewGrid, self.savenewgrid)
@@ -132,7 +125,7 @@ class Panel(gui.wx.Node.Panel):
 			else:
 				self.node.publishNewEMGrid(newgrid)
 		self.refreshGrids()
-		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		#self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 		self.node.submitGrid()
 
 	def onRefreshGridsButton(self, evt):
@@ -144,15 +137,15 @@ class Panel(gui.wx.Node.Panel):
 		self.setGridSelection(choices)		
 
 	def onGridDone(self):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Grid Entry')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sz = wx.GridBagSizer(5, 5)

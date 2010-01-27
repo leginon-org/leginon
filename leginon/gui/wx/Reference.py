@@ -1,24 +1,17 @@
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Reference.py,v $
-# $Revision: 1.4 $
-# $Name: not supported by cvs2svn $
-# $Date: 2006-08-22 19:22:33 $
-# $Author: suloway $
-# $State: Exp $
-# $Locker:  $
-
 import wx
-from gui.wx.Choice import Choice
-from gui.wx.Entry import FloatEntry
-import gui.wx.Node
-import gui.wx.Settings
-import gui.wx.ToolBar
 import threading
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import FloatEntry
+import leginon.gui.wx.Node
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		sb = wx.StaticBox(self, -1, 'Reference Target')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
@@ -52,18 +45,18 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 		return [sbsz]
 
-class ReferencePanel(gui.wx.Node.Panel):
+class ReferencePanel(leginon.gui.wx.Node.Panel):
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Test')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Test')
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onTest,
-											id=gui.wx.ToolBar.ID_PLAY)
+											id=leginon.gui.wx.ToolBar.ID_PLAY)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)

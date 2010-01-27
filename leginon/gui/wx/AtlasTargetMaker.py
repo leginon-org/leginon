@@ -3,40 +3,34 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/AtlasTargetMaker.py,v $
-# $Revision: 1.2 $
-# $Name: not supported by cvs2svn $
-# $Date: 2005-04-11 23:20:10 $
-# $Author: suloway $
-# $State: Exp $
-# $Locker:  $
 
 import threading
 import wx
-from gui.wx.Entry import Entry, FloatEntry
-import gui.wx.Node
-from gui.wx.Presets import PresetChoice
-from gui.wx.Choice import Choice
-import gui.wx.Settings
-import gui.wx.ToolBar
-import gui.wx.Events
 
-class Panel(gui.wx.Node.Panel):
+from leginon.gui.wx.Entry import Entry, FloatEntry
+import leginon.gui.wx.Node
+from leginon.gui.wx.Presets import PresetChoice
+from leginon.gui.wx.Choice import Choice
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.Events
+
+class Panel(leginon.gui.wx.Node.Panel):
 	icon = 'atlasmaker'
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALCULATE,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CALCULATE,
 													'calculate',
 													shortHelpString='Calculate Atlas')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'play',
 													shortHelpString='Publish Atlas')
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 
 		self.szmain.AddGrowableCol(0)
 
@@ -44,16 +38,16 @@ class Panel(gui.wx.Node.Panel):
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
-		self.Bind(gui.wx.Events.EVT_ATLAS_CALCULATED, self.onAtlasCalculated)
-		self.Bind(gui.wx.Events.EVT_ATLAS_PUBLISHED, self.onAtlasPublished)
+		self.Bind(leginon.gui.wx.Events.EVT_ATLAS_CALCULATED, self.onAtlasCalculated)
+		self.Bind(leginon.gui.wx.Events.EVT_ATLAS_PUBLISHED, self.onAtlasPublished)
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onCalculateAtlasTool,
-											id=gui.wx.ToolBar.ID_CALCULATE)
+											id=leginon.gui.wx.ToolBar.ID_CALCULATE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPublishAtlasTool,
-											id=gui.wx.ToolBar.ID_PLAY)
+											id=leginon.gui.wx.ToolBar.ID_PLAY)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -63,9 +57,9 @@ class Panel(gui.wx.Node.Panel):
 	def onAtlasCalculated(self, evt):
 		self.toolbar.Enable(True)
 		if self.node.publishargs:
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 		else:
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 
 	def onAtlasPublished(self, evt):
 		self.toolbar.Enable(True)
@@ -79,20 +73,20 @@ class Panel(gui.wx.Node.Panel):
 		threading.Thread(target=self.node.publishAtlas).start()
 
 	def atlasCalculated(self):
-		evt = gui.wx.Events.AtlasCalculatedEvent()
+		evt = leginon.gui.wx.Events.AtlasCalculatedEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def atlasPublished(self):
-		evt = gui.wx.Events.AtlasPublishedEvent()
+		evt = leginon.gui.wx.Events.AtlasPublishedEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Atlas')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

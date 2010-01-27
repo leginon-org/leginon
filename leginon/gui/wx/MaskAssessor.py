@@ -3,59 +3,53 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MaskAssessor.py,v $
-# $Revision: 1.5 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-09-18 17:15:25 $
-# $Author: acheng $
-# $State: Exp $
-# $Locker:  $
 
 import wx
-from gui.wx.Entry import Entry
-import gui.wx.Node
-import gui.wx.ImageAssessor
-import gui.wx.Settings
-import gui.wx.TargetPanel
-import gui.wx.ToolBar
 import wx.lib.filebrowsebutton as filebrowse
-from gui.wx.Choice import Choice
 
-class Panel(gui.wx.ImageAssessor.Panel):
+from leginon.gui.wx.Entry import Entry
+import leginon.gui.wx.Node
+import leginon.gui.wx.ImageAssessor
+import leginon.gui.wx.Settings
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.ToolBar
+from leginon.gui.wx.Choice import Choice
+
+class Panel(leginon.gui.wx.ImageAssessor.Panel):
 	icon = 'check'
-	imagepanelclass = gui.wx.TargetPanel.TargetImagePanel
+	imagepanelclass = leginon.gui.wx.TargetPanel.TargetImagePanel
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_BEGIN,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_BEGIN,
 													'begin',
 													shortHelpString='To Beginning')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PREVIOUS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PREVIOUS,
 													'up',
 													shortHelpString='Previous')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_NEXT,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_NEXT,
 													'down',
 													shortHelpString='Next')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_END,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_END,
 													'end',
 													shortHelpString='To End')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET,
 													'simulatetarget',
 													shortHelpString='Jump')
 		self.toolbar.AddSeparator()
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'play',
 													shortHelpString='Save Current Assessment')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP,
 													'stop',
 													shortHelpString='Reject All Regions')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE,
 													'send_queue_out',
 													shortHelpString='Keep All')
 
@@ -72,23 +66,23 @@ class Panel(gui.wx.ImageAssessor.Panel):
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onBeginTool,
-											id=gui.wx.ToolBar.ID_BEGIN)
+											id=leginon.gui.wx.ToolBar.ID_BEGIN)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onNextTool,
-											id=gui.wx.ToolBar.ID_NEXT)
+											id=leginon.gui.wx.ToolBar.ID_NEXT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPreviousTool,
-											id=gui.wx.ToolBar.ID_PREVIOUS)
+											id=leginon.gui.wx.ToolBar.ID_PREVIOUS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEndTool,
-											id=gui.wx.ToolBar.ID_END)
+											id=leginon.gui.wx.ToolBar.ID_END)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onJumpTool,
-											id=gui.wx.ToolBar.ID_SIMULATE_TARGET)
+											id=leginon.gui.wx.ToolBar.ID_SIMULATE_TARGET)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onKeepTool,
-											id=gui.wx.ToolBar.ID_PLAY)
+											id=leginon.gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRejectTool,
-											id=gui.wx.ToolBar.ID_STOP)
+											id=leginon.gui.wx.ToolBar.ID_STOP)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onKeepAllTool,
-											id=gui.wx.ToolBar.ID_SUBMIT_QUEUE)
+											id=leginon.gui.wx.ToolBar.ID_SUBMIT_QUEUE)
 		
 	def addImagePanel(self):
 		# image
@@ -113,13 +107,13 @@ class Panel(gui.wx.ImageAssessor.Panel):
 	def onKeepAllTool(self, evt):
 		self.node.onKeepAll()
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Settings')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

@@ -4,22 +4,16 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MagCalibrator.py,v $
-# $Revision: 1.1 $
-# $Name: not supported by cvs2svn $
-# $Date: 2008-01-16 21:01:34 $
-# $Author: pulokas $
-# $State: Exp $
-# $Locker:  $
 
 import threading
 import wx
-from gui.wx.Entry import IntEntry, FloatEntry, Entry
-import gui.wx.Calibrator
-import gui.wx.Settings
-import gui.wx.ToolBar
 
-class Panel(gui.wx.Calibrator.Panel):
+from leginon.gui.wx.Entry import IntEntry, FloatEntry, Entry
+import leginon.gui.wx.Calibrator
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+
+class Panel(leginon.gui.wx.Calibrator.Panel):
 	icon = 'dose'
 
 	def onCalibrateTool(self, evt):
@@ -28,13 +22,13 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.dialog.Destroy()
 		self.dialog = None
 
-class MagCalibrationDialog(gui.wx.Settings.Dialog):
+class MagCalibrationDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Stuff')
 		sbsz= wx.StaticBoxSizer(sb, wx.VERTICAL)
 

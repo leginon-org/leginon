@@ -1,18 +1,19 @@
 import os
 import wx
 import wx.lib.throbber
-import gui.wx.Icons
+
+import leginon.gui.wx.Icons
 
 class Throbber(wx.lib.throbber.Throbber):
 	def __init__(self, parent):
-		emptybitmap = gui.wx.Icons.null()
+		emptybitmap = leginon.gui.wx.Icons.null()
 		images = [emptybitmap]
 		for i in range(1, 9):
 			path = os.path.join('processing', 'green%d' % i)
-			bitmap = gui.wx.Icons.icon(path)
+			bitmap = leginon.gui.wx.Icons.icon(path)
 			images.append(bitmap)
 
-		overlay = gui.wx.Icons.icon('userinput')
+		overlay = leginon.gui.wx.Icons.icon('userinput')
 
 		wx.lib.throbber.Throbber.__init__(self, parent, -1, images, size=(16, 16),
 																			frameDelay=0.1, overlay=overlay)

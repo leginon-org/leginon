@@ -3,24 +3,17 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Launcher.py,v $
-# $Revision: 1.34 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-12-07 00:40:50 $
-# $Author: acheng $
-# $State: Exp $
-# $Locker:  $
 
-import icons
 import logging
-import launcher
 import threading
 import wx
 import wx.lib.scrolledpanel
-import gui.wx.Logging
-import gui.wx.Events
-import gui.wx.ToolBar
-import gui.wx.Selector
+
+import leginon.launcher
+import leginon.gui.wx.Logging
+import leginon.gui.wx.Events
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.Selector
 
 CreateNodeEventType = wx.NewEventType()
 DestroyNodeEventType = wx.NewEventType()
@@ -66,7 +59,7 @@ class App(wx.App):
 		wx.App.__init__(self, 0)
 
 	def OnInit(self):
-		self.launcher = launcher.Launcher(self.name, **self.kwargs)
+		self.launcher = leginon.launcher.Launcher(self.name, **self.kwargs)
 		frame = Frame(self.launcher)
 		self.launcher.start()
 		self.SetTopWindow(frame)
@@ -104,7 +97,7 @@ class Frame(wx.Frame):
 
 		self.SetMenuBar(self.menubar)
 
-		self.toolbar = gui.wx.ToolBar.ToolBar(self)
+		self.toolbar = leginon.gui.wx.ToolBar.ToolBar(self)
 		self.toolbar.Show(True)
 		self.SetToolBar(self.toolbar)
 
@@ -119,7 +112,7 @@ class Frame(wx.Frame):
 		self.Close()
 
 	def onMenuLogging(self, evt):
-		dialog = gui.wx.Logging.LoggingConfigurationDialog(self)
+		dialog = leginon.gui.wx.Logging.LoggingConfigurationDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -145,13 +138,13 @@ class ListCtrlPanel(wx.Panel):
 		self.swmessage.SetSashVisible(wx.SASH_BOTTOM, True)
 		#self.swmessage.SetExtraBorderSize(5)
 
-		self.selector = gui.wx.Selector.Selector(self.swselect)	
+		self.selector = leginon.gui.wx.Selector.Selector(self.swselect)	
 
 		self.defaultpanel = wx.lib.scrolledpanel.ScrolledPanel(self, -1)
 		self.panel = self.defaultpanel
 		self.panelmap = {}
 
-		self.Bind(gui.wx.Selector.EVT_SELECT, self.onSelect, self.selector)
+		self.Bind(leginon.gui.wx.Selector.EVT_SELECT, self.onSelect, self.selector)
 		self.Bind(wx.EVT_SASH_DRAGGED, self.onSashDragged)
 		self.Bind(wx.EVT_SIZE, self.onSize)
 
@@ -162,7 +155,7 @@ class ListCtrlPanel(wx.Panel):
 		panel.Show(False)
 		self.panelmap[label] = panel
 
-		selector = gui.wx.Selector.SelectorItem(self.selector, label, icon, panel)
+		selector = leginon.gui.wx.Selector.SelectorItem(self.selector, label, icon, panel)
 		self.selector.append(selector)
 
 		size = self.selector.GetSize()
@@ -240,7 +233,7 @@ class Panel(ListCtrlPanel):
 			'ERROR': 'error',
 		}
 
-		self.Bind(gui.wx.Events.EVT_STATUS_UPDATED, self.onStatusUpdated)
+		self.Bind(leginon.gui.wx.Events.EVT_STATUS_UPDATED, self.onStatusUpdated)
 		self.Bind(EVT_SET_ORDER, self.onSetOrder)
 		self.swmessage.Bind(wx.EVT_SIZE, self.onMessageSize)
 
@@ -361,7 +354,7 @@ class Panel(ListCtrlPanel):
 	def getToolBar(self):
 		parent = self.GetParent()
 		parent.Freeze()
-		toolbar = gui.wx.ToolBar.ToolBar(parent)
+		toolbar = leginon.gui.wx.ToolBar.ToolBar(parent)
 		toolbar.Show(False)
 		try:
 			parent.Thaw()

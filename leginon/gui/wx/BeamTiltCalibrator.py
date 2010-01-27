@@ -3,31 +3,25 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/BeamTiltCalibrator.py,v $
-# $Revision: 1.24 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-05-21 23:50:44 $
-# $Author: pulokas $
-# $State: Exp $
-# $Locker:  $
 
 import threading
 import wx
 import numpy
-import gui.wx.Calibrator
-import gui.wx.MatrixCalibrator
-import gui.wx.Dialog
-from gui.wx.Entry import FloatEntry, IntEntry
-import gui.wx.Settings
-import gui.wx.ToolBar
 
-class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
+import leginon.gui.wx.Calibrator
+import leginon.gui.wx.MatrixCalibrator
+import leginon.gui.wx.Dialog
+from leginon.gui.wx.Entry import FloatEntry, IntEntry
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+
+class SettingsDialog(leginon.gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Calibrator.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.Calibrator.ScrolledSettings):
 	def initialize(self):
-		sizers = gui.wx.Calibrator.ScrolledSettings.initialize(self)
+		sizers = leginon.gui.wx.Calibrator.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Beam Tilt')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -55,7 +49,7 @@ class ScrolledSettings(gui.wx.Calibrator.ScrolledSettings):
 
 		return sizers + [sbsz]
 
-class Panel(gui.wx.Calibrator.Panel):
+class Panel(leginon.gui.wx.Calibrator.Panel):
 	icon = 'beamtilt'
 	settingsclass = SettingsDialog
 	def initialize(self):
@@ -65,7 +59,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTypeTool('Correlation', display=True)
 		self.imagepanel.addTypeTool('Tableau', display=True)
-		if isinstance(self.imagepanel, gui.wx.TargetPanel.TargetImagePanel):
+		if isinstance(self.imagepanel, leginon.gui.wx.TargetPanel.TargetImagePanel):
 			color = wx.Color(255, 128, 0)
 			self.imagepanel.addTargetTool('Peak', color)
 
@@ -78,54 +72,54 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.parameter.SetSelection(0)
 
 		self.toolbar.InsertControl(5, self.parameter)
-		self.toolbar.InsertTool(6, gui.wx.ToolBar.ID_PARAMETER_SETTINGS, 'settings', shortHelpString='Parameter Settings')
+		self.toolbar.InsertTool(6, leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS, 'settings', shortHelpString='Parameter Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE, 'ruler', shortHelpString='Measure')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE, 'ruler', shortHelpString='Measure')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_GET_INSTRUMENT, 'focusget', shortHelpString='Eucentric Focus From Scope')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_INSTRUMENT, 'focusset', shortHelpString='Eucentric Focus To Scope')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_GET_BEAMTILT, 'beamtiltget', shortHelpString='Rotation Center From Scope')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelpString='Rotation Center To Scope')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ALIGN, 'rotcenter', shortHelpString='Align Rotation Center')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GET_INSTRUMENT, 'focusget', shortHelpString='Eucentric Focus From Scope')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_INSTRUMENT, 'focusset', shortHelpString='Eucentric Focus To Scope')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GET_BEAMTILT, 'beamtiltget', shortHelpString='Rotation Center From Scope')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelpString='Rotation Center To Scope')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'rotcenter', shortHelpString='Align Rotation Center')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_EDIT, 'edit', shortHelpString='Edit current calibration')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_COMAFREE, 'ruler', shortHelpString='Measure Coma-free beam tilt')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EDIT, 'edit', shortHelpString='Edit current calibration')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE, 'ruler', shortHelpString='Measure Coma-free beam tilt')
 
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 
-		self.Bind(gui.wx.Events.EVT_GET_INSTRUMENT_DONE, self.onGetInstrumentDone)
-		self.Bind(gui.wx.Events.EVT_SET_INSTRUMENT_DONE, self.onSetInstrumentDone)
-		self.Bind(gui.wx.Events.EVT_MEASUREMENT_DONE, self.onMeasurementDone)
-		self.Bind(gui.wx.Events.EVT_COMA_MEASUREMENT_DONE, self.onComaMeasurementDone)
+		self.Bind(leginon.gui.wx.Events.EVT_GET_INSTRUMENT_DONE, self.onGetInstrumentDone)
+		self.Bind(leginon.gui.wx.Events.EVT_SET_INSTRUMENT_DONE, self.onSetInstrumentDone)
+		self.Bind(leginon.gui.wx.Events.EVT_MEASUREMENT_DONE, self.onMeasurementDone)
+		self.Bind(leginon.gui.wx.Events.EVT_COMA_MEASUREMENT_DONE, self.onComaMeasurementDone)
 
 	def onNodeInitialized(self):
-		gui.wx.Calibrator.Panel.onNodeInitialized(self)
+		leginon.gui.wx.Calibrator.Panel.onNodeInitialized(self)
 
 		self.measure_dialog = MeasureDialog(self)
 		self.comafree_dialog = MeasureComafreeDialog(self)
 		self.align_dialog = AlignRotationCenterDialog(self)
 
-		self.Bind(gui.wx.Events.EVT_EDIT_FOCUS_CALIBRATION, self.onEditFocusCalibration)
+		self.Bind(leginon.gui.wx.Events.EVT_EDIT_FOCUS_CALIBRATION, self.onEditFocusCalibration)
 
-		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool, id=gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=gui.wx.ToolBar.ID_MEASURE)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureComafreeTool, id=gui.wx.ToolBar.ID_MEASURE_COMAFREE)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusFromScope, id=gui.wx.ToolBar.ID_GET_INSTRUMENT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusToScope, id=gui.wx.ToolBar.ID_SET_INSTRUMENT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterFromScope, id=gui.wx.ToolBar.ID_GET_BEAMTILT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterToScope, id=gui.wx.ToolBar.ID_SET_BEAMTILT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onEditFocusCalibrationTool, id=gui.wx.ToolBar.ID_EDIT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onAlignRotationCenter, id=gui.wx.ToolBar.ID_ALIGN)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool, id=leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=leginon.gui.wx.ToolBar.ID_MEASURE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureComafreeTool, id=leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusFromScope, id=leginon.gui.wx.ToolBar.ID_GET_INSTRUMENT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onEucentricFocusToScope, id=leginon.gui.wx.ToolBar.ID_SET_INSTRUMENT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterFromScope, id=leginon.gui.wx.ToolBar.ID_GET_BEAMTILT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onRotationCenterToScope, id=leginon.gui.wx.ToolBar.ID_SET_BEAMTILT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onEditFocusCalibrationTool, id=leginon.gui.wx.ToolBar.ID_EDIT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAlignRotationCenter, id=leginon.gui.wx.ToolBar.ID_ALIGN)
 
 	def instrumentEnable(self, enable):
 		tools = [
-			gui.wx.ToolBar.ID_ACQUIRE,
-			gui.wx.ToolBar.ID_CALIBRATE,
-			#gui.wx.ToolBar.ID_MEASURE,
-			gui.wx.ToolBar.ID_GET_INSTRUMENT,
-			gui.wx.ToolBar.ID_SET_INSTRUMENT,
-			gui.wx.ToolBar.ID_GET_BEAMTILT,
-			gui.wx.ToolBar.ID_SET_BEAMTILT,
+			leginon.gui.wx.ToolBar.ID_ACQUIRE,
+			leginon.gui.wx.ToolBar.ID_CALIBRATE,
+			#leginon.gui.wx.ToolBar.ID_MEASURE,
+			leginon.gui.wx.ToolBar.ID_GET_INSTRUMENT,
+			leginon.gui.wx.ToolBar.ID_SET_INSTRUMENT,
+			leginon.gui.wx.ToolBar.ID_GET_BEAMTILT,
+			leginon.gui.wx.ToolBar.ID_SET_BEAMTILT,
 		]
 		for tool in tools:
 			self.toolbar.EnableTool(tool, enable)
@@ -142,13 +136,13 @@ class Panel(gui.wx.Calibrator.Panel):
 
 	def _acquisitionEnable(self, enable):
 		self.instrumentEnable(enable)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, enable)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, enable)
 
 	def _calibrationEnable(self, enable):
 		self._acquisitionEnable(enable)
 		self.parameter.Enable(enable)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PARAMETER_SETTINGS, enable)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, not enable)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS, enable)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, not enable)
 
 	def onGetInstrumentDone(self, evt):
 		self.instrumentEnable(True)
@@ -184,13 +178,13 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.comafree_dialog.Fit()
 
 	def measurementDone(self, defocus, stig):
-		evt = gui.wx.Events.MeasurementDoneEvent()
+		evt = leginon.gui.wx.Events.MeasurementDoneEvent()
 		evt.defocus = defocus
 		evt.stig = stig
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def comaMeasurementDone(self, beamtilt):
-		evt = gui.wx.Events.ComaMeasurementDoneEvent()
+		evt = leginon.gui.wx.Events.ComaMeasurementDoneEvent()
 		evt.comatilt = beamtilt
 		self.GetEventHandler().AddPendingEvent(evt)
 
@@ -262,16 +256,16 @@ class Panel(gui.wx.Calibrator.Panel):
 		dialog.Destroy()
 
 	def editCalibration(self, **kwargs):
-		evt = gui.wx.Events.EditFocusCalibrationEvent(**kwargs)
+		evt = leginon.gui.wx.Events.EditFocusCalibrationEvent(**kwargs)
 		self.GetEventHandler().AddPendingEvent(evt)
 
-class DefocusSettingsDialog(gui.wx.Settings.Dialog):
+class DefocusSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return DefocusScrolledSettings(self,self.scrsize,False)
 
-class DefocusScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class DefocusScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Defocus Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -294,13 +288,13 @@ class DefocusScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 		return [sbsz]
 
-class StigmatorSettingsDialog(gui.wx.Settings.Dialog):
+class StigmatorSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return StigmatorScrolledSettings(self,self.scrsize,False)
 
-class StigmatorScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class StigmatorScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Stigmator Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -321,13 +315,13 @@ class StigmatorScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 		return [sbsz]
 
-class ComafreeSettingsDialog(gui.wx.Settings.Dialog):
+class ComafreeSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ComafreeScrolledSettings(self,self.scrsize,False)
 
-class ComafreeScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ComafreeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Coma-free Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -348,13 +342,13 @@ class ComafreeScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 		return [sbsz]
 
-class ImageShiftComaSettingsDialog(gui.wx.Settings.Dialog):
+class ImageShiftComaSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ImageShiftComaScrolledSettings(self,self.scrsize,False)
 
-class ImageShiftComaScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ImageShiftComaScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Image-Shift Coma Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -492,14 +486,14 @@ class AlignRotationCenterDialog(wx.Dialog):
 
 
 
-class MeasureDialog(gui.wx.Settings.Dialog):
+class MeasureDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return MeasureScrolledSettings(self,self.scrsize,False)
 
-class MeasureScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class MeasureScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Parameters')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -574,14 +568,14 @@ class MeasureScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.panel.instrumentEnable(False)
 		threading.Thread(target=self.node.resetDefocus).start()
 
-class EditFocusCalibrationDialog(gui.wx.MatrixCalibrator.EditMatrixDialog):
+class EditFocusCalibrationDialog(leginon.gui.wx.MatrixCalibrator.EditMatrixDialog):
 	def __init__(self, parent, matrix, rotation_center, eucentric_focus, title, subtitle='Focus Calibration'):
 		self.rotation_center = rotation_center
 		self.eucentric_focus = eucentric_focus
-		gui.wx.MatrixCalibrator.EditMatrixDialog.__init__(self, parent, matrix, title, subtitle='Focus Calibration')
+		leginon.gui.wx.MatrixCalibrator.EditMatrixDialog.__init__(self, parent, matrix, title, subtitle='Focus Calibration')
 
 	def onInitialize(self):
-		matrix = gui.wx.MatrixCalibrator.EditMatrixDialog.onInitialize(self)
+		matrix = leginon.gui.wx.MatrixCalibrator.EditMatrixDialog.onInitialize(self)
 		row = 1
 
 		label = wx.StaticText(self, -1, 'Rotation Center:')
@@ -606,7 +600,7 @@ class EditFocusCalibrationDialog(gui.wx.MatrixCalibrator.EditMatrixDialog):
 		self.eucentric_focus_entry.SetValue(self.eucentric_focus)
 
 	def getFocusCalibration(self):
-		matrix = gui.wx.MatrixCalibrator.EditMatrixDialog.getMatrix(self)
+		matrix = leginon.gui.wx.MatrixCalibrator.EditMatrixDialog.getMatrix(self)
 		rotation_center = {}
 		for axis, entry in self.rotation_center_entries.items():
 			value = entry.GetValue()

@@ -3,41 +3,35 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Calibrator.py,v $
-# $Revision: 1.34 $
-# $Name: not supported by cvs2svn $
-# $Date: 2008-02-15 02:59:09 $
-# $Author: acheng $
-# $State: Exp $
-# $Locker:  $
 
 import threading
 import wx
-from gui.wx.Choice import Choice
-import gui.wx.Camera
-import gui.wx.Events
-import gui.wx.TargetPanel
-import gui.wx.Node
-import gui.wx.Settings
-import gui.wx.ToolBar
-import gui.wx.Instrument
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+from leginon.gui.wx.Choice import Choice
+import leginon.gui.wx.Camera
+import leginon.gui.wx.Events
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.Node
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.Instrument
+
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		scr = ScrolledSettings(self,self.scrsize,False)
 		return scr
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['correlation type'] = Choice(self, -1, choices=self.node.cortypes)
 		self.widgets['override preset'] = wx.CheckBox(self, -1, 'Override Preset')
-		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self)
+		self.widgets['instruments'] = leginon.gui.wx.Instrument.SelectionPanel(self)
 		self.panel.setInstrumentSelection(self.widgets['instruments'])
-		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 
 		szcor = wx.GridBagSizer(5, 5)
@@ -61,34 +55,34 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 		return [sbsz]
 
-class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
-	imageclass = gui.wx.TargetPanel.TargetImagePanel
+class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin):
+	imageclass = leginon.gui.wx.TargetPanel.TargetImagePanel
 	settingsclass = SettingsDialog
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
-		gui.wx.Instrument.SelectionMixin.__init__(self)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Instrument.SelectionMixin.__init__(self)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
 													shortHelpString='Acquire Image')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALIBRATE,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CALIBRATE,
 													'play',
 													shortHelpString='Calibrate')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT,
 													'stop',
 													shortHelpString='Abort')
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 
 		self.initialize()
 
 		self.toolbar.Realize()
 
-		self.Bind(gui.wx.Events.EVT_CALIBRATION_DONE, self.onCalibrationDone)
+		self.Bind(leginon.gui.wx.Events.EVT_CALIBRATION_DONE, self.onCalibrationDone)
 
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
@@ -100,7 +94,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTypeTool('Correlation', display=True)
-		if isinstance(self.imagepanel, gui.wx.TargetPanel.TargetImagePanel):
+		if isinstance(self.imagepanel, leginon.gui.wx.TargetPanel.TargetImagePanel):
 			color = wx.Color(255, 128, 0)
 			self.imagepanel.addTargetTool('Peak', color)
 
@@ -109,16 +103,16 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.szmain.AddGrowableCol(0)
 
 	def onNodeInitialized(self):
-		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
+		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.settingsdialog = self.settingsclass(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
-											id=gui.wx.ToolBar.ID_ACQUIRE)
+											id=leginon.gui.wx.ToolBar.ID_ACQUIRE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onCalibrateTool,
-											id=gui.wx.ToolBar.ID_CALIBRATE)
+											id=leginon.gui.wx.ToolBar.ID_CALIBRATE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAbortTool,
-											id=gui.wx.ToolBar.ID_ABORT)
+											id=leginon.gui.wx.ToolBar.ID_ABORT)
 
 	def _acquisitionEnable(self, enable):
 		self.toolbar.Enable(enable)
@@ -133,7 +127,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self._calibrationEnable(True)
 
 	def calibrationDone(self):
-		evt = gui.wx.Events.CalibrationDoneEvent()
+		evt = leginon.gui.wx.Events.CalibrationDoneEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onAcquireTool(self, evt):

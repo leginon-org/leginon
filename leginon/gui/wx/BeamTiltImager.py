@@ -3,40 +3,34 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.60 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-10-31 02:37:06 $
-# $Author: acheng $
-# $State: Exp $
-# $Locker:  $
 
 import threading
 import sys
 import wx
-from gui.wx.Choice import Choice
-from gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
-from gui.wx.Presets import EditPresetOrder
-import gui.wx.Acquisition
-import gui.wx.Dialog
-import gui.wx.Events
-import gui.wx.Icons
-import gui.wx.ImagePanel
-import gui.wx.TargetPanel
-import gui.wx.ToolBar
+
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
+from leginon.gui.wx.Presets import EditPresetOrder
+import leginon.gui.wx.Acquisition
+import leginon.gui.wx.Dialog
+import leginon.gui.wx.Events
+import leginon.gui.wx.Icons
+import leginon.gui.wx.ImagePanel
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.ToolBar
 
 AlignRotationCenterEventType = wx.NewEventType()
 
 EVT_ALIGN = wx.PyEventBinder(AlignRotationCenterEventType)
 
-class Panel(gui.wx.Acquisition.Panel):
+class Panel(leginon.gui.wx.Acquisition.Panel):
 	icon = 'focuser'
-	imagepanelclass = gui.wx.TargetPanel.ClickAndTargetImagePanel
+	imagepanelclass = leginon.gui.wx.TargetPanel.ClickAndTargetImagePanel
 	def __init__(self, *args, **kwargs):
-		gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ALIGN, 'rotcenter',
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'rotcenter',
 							 shortHelpString='Align rotation center')
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
@@ -49,11 +43,11 @@ class Panel(gui.wx.Acquisition.Panel):
 		self.align_dialog = AlignRotationCenterDialog(self)
 		self.Bind(EVT_ALIGN, self.onAlignRotationCenter, self)
 
-		gui.wx.Acquisition.Panel.onNodeInitialized(self)
+		leginon.gui.wx.Acquisition.Panel.onNodeInitialized(self)
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAlignRotationCenter,
-						  id=gui.wx.ToolBar.ID_ALIGN)
-		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
+						  id=leginon.gui.wx.ToolBar.ID_ALIGN)
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
 							self.imagepanel)
 
 	def onSettingsTool(self, evt):
@@ -68,13 +62,13 @@ class Panel(gui.wx.Acquisition.Panel):
 	def onImageClicked(self, evt):
 		threading.Thread(target=self.node.navigate, args=(evt.xy,)).start()
 
-class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,True)
 
-class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
-		sizers = gui.wx.Acquisition.ScrolledSettings.initialize(self)
+		sizers = leginon.gui.wx.Acquisition.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Tilt Imaging and Correlation')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

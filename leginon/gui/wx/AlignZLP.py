@@ -1,27 +1,20 @@
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Reference.py,v $
-# $Revision: 1.4 $
-# $Name: not supported by cvs2svn $
-# $Date: 2006-08-22 19:22:33 $
-# $Author: suloway $
-# $State: Exp $
-# $Locker:  $
-
 import wx
-from gui.wx.Choice import Choice
-from gui.wx.Entry import FloatEntry
-from gui.wx.Presets import PresetChoice
-import gui.wx.Node
-import gui.wx.Settings
-import gui.wx.ToolBar
-import gui.wx.Reference
 
-class SettingsDialog(gui.wx.Reference.SettingsDialog):
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import FloatEntry
+from leginon.gui.wx.Presets import PresetChoice
+import leginon.gui.wx.Node
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.Reference
+
+class SettingsDialog(leginon.gui.wx.Reference.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Reference.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.Reference.ScrolledSettings):
 	def initialize(self):
-		szr = gui.wx.Reference.ScrolledSettings.initialize(self)
+		szr = leginon.gui.wx.Reference.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Check Zero Loss Peak Shift')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -47,10 +40,10 @@ class ScrolledSettings(gui.wx.Reference.ScrolledSettings):
 
 		return [szr[0],sbsz]
 
-class AlignZeroLossPeakPanel(gui.wx.Reference.ReferencePanel):
+class AlignZeroLossPeakPanel(leginon.gui.wx.Reference.ReferencePanel):
 	icon = 'alignzlp'
 	def __init__(self, *args, **kwargs):
-		gui.wx.Reference.ReferencePanel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Reference.ReferencePanel.__init__(self, *args, **kwargs)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)

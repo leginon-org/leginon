@@ -3,29 +3,22 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.27 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-11-09 19:44:54 $
-# $Author: pulokas $
-# $State: Exp $
-# $Locker:  $
 
 import sys
-import leginondata
-import icons
-import leginonconfig
-import leginondata
 import os.path
-import project
 import time
 import wx
 import wx.wizard
 import wx.lib.intctrl
-import gui.wx.Dialog
-import gui.wx.ListBox
-import version
 import socket
+
+import leginon.leginondata
+import leginon.icons
+import leginon.leginonconfig
+import leginon.project
+import leginon.gui.wx.Dialog
+import leginon.gui.wx.ListBox
+import leginon.version
 
 class WizardPage(wx.wizard.PyWizardPage):
 	pass
@@ -66,14 +59,14 @@ class UserPage(WizardPage):
 
 	def setUserSelection(self):
 		self.skip = False
-		if hasattr(leginonconfig, 'USERNAME') and leginonconfig.USERNAME:
+		if hasattr(leginon.leginonconfig, 'USERNAME') and leginon.leginonconfig.USERNAME:
 			usernames = _indexBy('full name', self.users.values())
-			if leginonconfig.USERNAME in usernames:
-				self.userchoice.SetStringSelection(leginonconfig.USERNAME)
+			if leginon.leginonconfig.USERNAME in usernames:
+				self.userchoice.SetStringSelection(leginon.leginonconfig.USERNAME)
 				self.skip = True
 			else:
 				dlg = wx.MessageDialog(self,
-									'Cannot find user "%s" in database' % leginonconfig.USERNAME,
+									'Cannot find user "%s" in database' % leginon.leginonconfig.USERNAME,
 									'Warning', wx.OK|wx.ICON_WARNING)
 				dlg.ShowModal()
 				dlg.Destroy()
@@ -287,7 +280,7 @@ class SessionSelectPage(WizardPage):
 		else:
 			session = parent.userpage.sessions[selection]
 			self.descriptiontext.SetLabel(session['comment'])
-			directory = leginonconfig.mapPath(session['image path'])
+			directory = leginon.leginonconfig.mapPath(session['image path'])
 			self.imagedirectorytext.SetLabel(directory)
 		# autoresize on static text gets reset by sizer during layout
 		for i in [self.descriptiontext, self.imagedirectorytext]:
@@ -350,7 +343,7 @@ class SessionNamePage(WizardPage):
 		self.Bind(wx.EVT_TEXT_ENTER, self.onValidateName, self.nametextctrl)
 		sizer.Add(self.nametextctrl, (1, 1), (1, 1), wx.EXPAND|wx.ALL)
 
-		holders = leginondata.GridHolderData()
+		holders = leginon.leginondata.GridHolderData()
 		holders = holders.query()
 		holders = [holder['name'] for holder in holders]
 		self.holderctrl = wx.ComboBox(self, -1, choices=holders, style=wx.CB_DROPDOWN)
@@ -435,9 +428,9 @@ class SessionProjectPage(WizardPage):
 		self.projectchoice = wx.Choice(self, -1, choices=choices)
 		# select default project
 		default = 0
-		if leginonconfig.default_project is not None:
+		if leginon.leginonconfig.default_project is not None:
 			try:
-				default = choices.index(leginonconfig.default_project)
+				default = choices.index(leginon.leginonconfig.default_project)
 			except:
 				pass
 		self.projectchoice.SetSelection(default)
@@ -480,7 +473,7 @@ class SessionImageDirectoryPage(WizardPage):
 		sizer.Add(wx.StaticText(self, -1, 'Image Directory:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 		try:
-			defaultdirectory = leginonconfig.mapPath(leginonconfig.IMAGE_PATH)
+			defaultdirectory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
 		except AttributeError:
 			defaultdirectory = ''
 		self.directorytextctrl = wx.TextCtrl(self, -1, defaultdirectory)
@@ -609,7 +602,7 @@ class SetupWizard(wx.wizard.Wizard):
 		self.setup = Setup(manager.research, manager.publish)
 		self.publish = manager.publish
 		self.session = None
-		image = wx.Image(icons.getPath('setup.png'))
+		image = wx.Image(leginon.icons.getPath('setup.png'))
 		bitmap = wx.BitmapFromImage(image)
 		wx.wizard.Wizard.__init__(self, parent, -1, 'Leginon Setup', bitmap=bitmap)
 		self.SetName('wLeginonSetup')
@@ -686,7 +679,7 @@ class SetupWizard(wx.wizard.Wizard):
 			name = self.namepage.nametextctrl.GetValue()
 			description = self.namepage.descriptiontextctrl.GetValue()
 			holder = self.namepage.holderctrl.GetValue()
-			holderdata = leginondata.GridHolderData(name=holder)
+			holderdata = leginon.leginondata.GridHolderData(name=holder)
 			directory = self.imagedirectorypage.directorytextctrl.GetValue()
 			self.session = self.setup.createSession(user, name, description,
 																							directory)
@@ -768,19 +761,19 @@ class Setup(object):
 		self.research = research
 		self.publish = publish
 		try:
-			self.projectdata = project.ProjectData()
+			self.projectdata = leginon.project.ProjectData()
 		except:
 			self.projectdata = None
 
 	def getUsers(self):
-		userdata = leginondata.UserData(initializer={})
+		userdata = leginon.leginondata.UserData(initializer={})
 		userdatalist = self.research(datainstance=userdata)
 		if not userdatalist:
-			userdatalist = [leginondata.UserData(initializer={'full name': 'Fake User'})]
+			userdatalist = [leginon.leginondata.UserData(initializer={'full name': 'Fake User'})]
 		return _indexBy('full name', userdatalist)
 
 	def getSettings(self, userdata):
-		settingsclass = leginondata.SetupWizardSettingsData
+		settingsclass = leginon.leginondata.SetupWizardSettingsData
 		defaultsettings = {
 			'session type': 'Create a new session',
 			'selected session': None,
@@ -788,7 +781,7 @@ class Setup(object):
 			'n limit': 10,
 			'connect': True,
 		}
-		qsession = leginondata.SessionData(initializer={'user': userdata})
+		qsession = leginon.leginondata.SessionData(initializer={'user': userdata})
 		qdata = settingsclass(initializer={'session': qsession})
 		try:
 			settings = self.research(qdata, results=1)[0]
@@ -797,8 +790,8 @@ class Setup(object):
 		return settings
 
 	def getClients(self, name):
-		sessiondata = leginondata.SessionData(initializer={'name': name})
-		querydata = leginondata.ConnectToClientsData(session=sessiondata)
+		sessiondata = leginon.leginondata.SessionData(initializer={'name': name})
+		querydata = leginon.leginondata.ConnectToClientsData(session=sessiondata)
 		try:
 			return self.research(querydata, results=1)[0]['clients']
 		except IndexError:
@@ -806,7 +799,7 @@ class Setup(object):
 
 	def getRecentClients(self):
 		try:
-			results = self.research(leginondata.ConnectToClientsData(), results=500)
+			results = self.research(leginon.leginondata.ConnectToClientsData(), results=500)
 		except IndexError:
 			results = []
 		clients = {}
@@ -818,21 +811,21 @@ class Setup(object):
 		return clients
 
 	def saveClients(self, session, clients):
-		ver = version.getVersion()
-		loc = version.getInstalledLocation()
+		ver = leginon.version.getVersion()
+		loc = leginon.version.getInstalledLocation()
 		host = socket.gethostname()
 		initializer = {'session': session, 'clients': clients, 'localhost':host, 'version': ver, 'installation': loc}
-		clientsdata = leginondata.ConnectToClientsData(initializer=initializer)
+		clientsdata = leginon.leginondata.ConnectToClientsData(initializer=initializer)
 		self.publish(clientsdata, database=True, dbforce=True)
 
 	def saveSettings(self, sessiondata, initializer):
-		settingsclass = leginondata.SetupWizardSettingsData
+		settingsclass = leginon.leginondata.SetupWizardSettingsData
 		sd = settingsclass(initializer=initializer)
 		sd['session'] = sessiondata
 		self.publish(sd, database=True, dbforce=True)
 
 	def getSessions(self, userdata, n=None):
-		sessiondata = leginondata.SessionData(initializer={'user': userdata})
+		sessiondata = leginon.leginondata.SessionData(initializer={'user': userdata})
 		sessiondatalist = self.research(datainstance=sessiondata, results=n)
 		names = []
 		for sessiondata in sessiondatalist:
@@ -860,36 +853,36 @@ class Setup(object):
 		return session_name
 
 	def existsSessionName(self, name):
-		sessiondata = leginondata.SessionData(name=name)
+		sessiondata = leginon.leginondata.SessionData(name=name)
 		if self.research(datainstance=sessiondata):
 			return True
 		return False
 
 	def createSession(self, user, name, description, directory):
-		imagedirectory = os.path.join(leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
+		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
 		initializer = {
 			'name': name,
 			'comment': description,
 			'user': user,
 			'image path': imagedirectory,
 		}
-		return leginondata.SessionData(initializer=initializer)
+		return leginon.leginondata.SessionData(initializer=initializer)
 
 	def linkSessionProject(self, sessiondata, projectid):
 		if self.projectdata is None:
 			raise RuntimeError('Cannot link session, not connected to database.')
-		projectsession = project.ProjectExperiment(projectid, sessiondata['name'])
+		projectsession = leginon.project.ProjectExperiment(projectid, sessiondata['name'])
 		experiments = self.projectdata.getProjectExperiments()
 		experiments.insert([projectsession.dumpdict()])
 
-class EditClientsDialog(gui.wx.Dialog.Dialog):
+class EditClientsDialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent, clients, history):
 		self.clients = clients
 		self.history = history
-		gui.wx.Dialog.Dialog.__init__(self, parent, 'Edit Clients')
+		leginon.gui.wx.Dialog.Dialog.__init__(self, parent, 'Edit Clients')
 
 	def onInitialize(self):
-		self.listbox = gui.wx.ListBox.EditListBox(self, -1, 'Clients', choices=self.history)
+		self.listbox = leginon.gui.wx.ListBox.EditListBox(self, -1, 'Clients', choices=self.history)
 		self.listbox.setValues(self.clients)
 		self.sz.Add(self.listbox, (0, 0), (1, 1), wx.EXPAND)
 		self.sz.AddGrowableRow(0)

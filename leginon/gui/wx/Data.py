@@ -3,20 +3,14 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Data.py,v $
-# $Revision: 1.7 $
-# $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
-# $Author: suloway $
-# $State: Exp $
-# $Locker:  $
 
-import leginondata
 import wx
 import wx.lib.intctrl
 import wx.lib.masked
-import gui.wx.Presets
-import gui.wx.Camera
+
+import leginon.leginondata
+import leginon.gui.wx.Presets
+import leginon.gui.wx.Camera
 
 getmap = {
 	'string selection': 'GetStringSelection',
@@ -45,13 +39,13 @@ eventmap = {
 	wx.TextCtrl: wx.EVT_TEXT,
 	wx.lib.intctrl.IntCtrl: wx.EVT_TEXT,
 	wx.lib.masked.NumCtrl: wx.lib.masked.EVT_NUM,
-	gui.wx.Presets.PresetOrder: gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
-	gui.wx.Presets.EditPresetOrder: gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
-	gui.wx.Presets.PresetChoice: gui.wx.Presets.EVT_PRESET_CHOICE,
-	gui.wx.Camera.CameraPanel: gui.wx.Camera.EVT_CONFIGURATION_CHANGED,
-	gui.wx.Entry.Entry: gui.wx.Entry.EVT_ENTRY,
-	gui.wx.Entry.IntEntry: gui.wx.Entry.EVT_ENTRY,
-	gui.wx.Entry.FloatEntry: gui.wx.Entry.EVT_ENTRY,
+	leginon.gui.wx.Presets.PresetOrder: leginon.gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
+	leginon.gui.wx.Presets.EditPresetOrder: leginon.gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
+	leginon.gui.wx.Presets.PresetChoice: leginon.gui.wx.Presets.EVT_PRESET_CHOICE,
+	leginon.gui.wx.Camera.CameraPanel: leginon.gui.wx.Camera.EVT_CONFIGURATION_CHANGED,
+	leginon.gui.wx.Entry.Entry: leginon.gui.wx.Entry.EVT_ENTRY,
+	leginon.gui.wx.Entry.IntEntry: leginon.gui.wx.Entry.EVT_ENTRY,
+	leginon.gui.wx.Entry.FloatEntry: leginon.gui.wx.Entry.EVT_ENTRY,
 }
 
 def getWindowPath(window):
@@ -90,7 +84,7 @@ def setWindowFromDB(window):
 	if root.session is None:	
 		session = None
 	else:
-		session = leginondata.SessionData(user=root.session['user'])
+		session = leginon.leginondata.SessionData(user=root.session['user'])
 	initializer = {'path': path, 'session': session}
 	instance = dataclass(initializer=initializer)
 	try:

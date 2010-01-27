@@ -3,22 +3,16 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PixelSizeCalibrator.py,v $
-# $Revision: 1.17 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:08 $
-# $Author: vossman $
-# $State: Exp $
-# $Locker:  $
 
 import wx
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
-from gui.wx.Entry import IntEntry, FloatEntry
-import gui.wx.Calibrator
-import gui.wx.ImagePanelTools
-import gui.wx.ToolBar
 
-class Panel(gui.wx.Calibrator.Panel):
+from leginon.gui.wx.Entry import IntEntry, FloatEntry
+import leginon.gui.wx.Calibrator
+import leginon.gui.wx.ImagePanelTools
+import leginon.gui.wx.ToolBar
+
+class Panel(leginon.gui.wx.Calibrator.Panel):
 	icon = 'pixelsize'
 	def initialize(self):
 		# image
@@ -31,14 +25,14 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.szmain.AddGrowableCol(0)
 
 	def onNodeInitialized(self):
-		gui.wx.Calibrator.Panel.onNodeInitialized(self)
-		self.toolbar.InsertTool(4, gui.wx.ToolBar.ID_MEASURE, 'ruler', shortHelpString='Measure')
+		leginon.gui.wx.Calibrator.Panel.onNodeInitialized(self)
+		self.toolbar.InsertTool(4, leginon.gui.wx.ToolBar.ID_MEASURE, 'ruler', shortHelpString='Measure')
 		self.measurement = None
 		self.oldmag = None
 		self.measuredialog = MeasureSettingsDialog(self)
-		#self.Bind(gui.wx.ImagePanelTools.EVT_MEASUREMENT, self.onMeasurement)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=gui.wx.ToolBar.ID_MEASURE)
-		self.toolbar.DeleteTool(gui.wx.ToolBar.ID_ABORT)
+		#self.Bind(leginon.gui.wx.ImagePanelTools.EVT_MEASUREMENT, self.onMeasurement)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=leginon.gui.wx.ToolBar.ID_MEASURE)
+		self.toolbar.DeleteTool(leginon.gui.wx.ToolBar.ID_ABORT)
 		self.toolbar.Realize()
 
 	def onAcquisitionDone(self, evt):
@@ -65,13 +59,13 @@ class Panel(gui.wx.Calibrator.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-class MeasureSettingsDialog(gui.wx.Settings.Dialog):
+class MeasureSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return MeasureScrolledSettings(self,self.scrsize,False)
 
-class MeasureScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class MeasureScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Pixel Size Measurement')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbl = wx.StaticBox(self, -1, 'Lattice Parameters')
@@ -296,7 +290,7 @@ class EditDialog(wx.Dialog):
 		self.SetSizerAndFit(sz)
 
 		self.Bind(wx.EVT_BUTTON, self.validate, self.bsave)
-		self.Bind(gui.wx.Entry.EVT_ENTRY, self.onPixelSizeEntry, self.feps)
+		self.Bind(leginon.gui.wx.Entry.EVT_ENTRY, self.onPixelSizeEntry, self.feps)
 
 	def onPixelSizeEntry(self, evt):
 		if evt.GetValue() is None:

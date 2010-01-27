@@ -3,41 +3,35 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RCTAcquisition.py,v $
-# $Revision: 1.11 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-12-11 20:41:36 $
-# $Author: vossman $
-# $State: Exp $
-# $Locker:  $
 
 import threading
 import wx
-from gui.wx.Choice import Choice
-from gui.wx.Entry import Entry, FloatEntry, IntEntry, EVT_ENTRY
-from gui.wx.Presets import EditPresetOrder
-from gui.wx.Presets import PresetChoice
-import gui.wx.Acquisition
-import gui.wx.Dialog
-import gui.wx.Events
-import gui.wx.Icons
-import gui.wx.TargetPanel
-import gui.wx.ToolBar
-import gui.wx.FocusSequence
 
-class Panel(gui.wx.Acquisition.Panel):
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import Entry, FloatEntry, IntEntry, EVT_ENTRY
+from leginon.gui.wx.Presets import EditPresetOrder
+from leginon.gui.wx.Presets import PresetChoice
+import leginon.gui.wx.Acquisition
+import leginon.gui.wx.Dialog
+import leginon.gui.wx.Events
+import leginon.gui.wx.Icons
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.FocusSequence
+
+class Panel(leginon.gui.wx.Acquisition.Panel):
 	icon = 'focuser'
-	imagepanelclass = gui.wx.TargetPanel.TargetImagePanel
+	imagepanelclass = leginon.gui.wx.TargetPanel.TargetImagePanel
 	def __init__(self, *args, **kwargs):
-		gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE, 'acquire', shortHelpString='Acquire')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE, 'acquire', shortHelpString='Acquire')
 
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
 		self.imagepanel.addTargetTool('Peak', wx.Color(255, 128, 0))
-		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool, id=gui.wx.ToolBar.ID_ACQUIRE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool, id=leginon.gui.wx.ToolBar.ID_ACQUIRE)
 
 		self.szmain.Layout()
 
@@ -49,13 +43,13 @@ class Panel(gui.wx.Acquisition.Panel):
 	def onAcquireTool(self, evt):
 		threading.Thread(target=self.node.testAcquire).start()
 
-class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
-		sizers = gui.wx.Acquisition.ScrolledSettings.initialize(self)
+		sizers = leginon.gui.wx.Acquisition.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'RCT Options')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

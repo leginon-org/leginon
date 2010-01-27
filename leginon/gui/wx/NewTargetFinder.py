@@ -3,26 +3,20 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/JAHCFinder.py,v $
-# $Revision: 1.14 $
-# $Name: not supported by cvs2svn $
-# $Date: 2008-02-27 23:12:21 $
-# $Author: acheng $
-# $State: Exp $
-# $Locker:  $
 
 import wx
-import gui.wx.TargetPanel
-import gui.wx.Settings
-import gui.wx.TargetFinder
 import wx.lib.filebrowsebutton as filebrowse
-import gui.wx.Rings
-from gui.wx.Choice import Choice
-from gui.wx.Entry import Entry, IntEntry, FloatEntry
-import gui.wx.TargetTemplate
-import gui.wx.ToolBar
 import threading
-import targetingsteps
+
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.Settings
+import leginon.gui.wx.TargetFinder
+import leginon.gui.wx.Rings
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import Entry, IntEntry, FloatEntry
+import leginon.gui.wx.TargetTemplate
+import leginon.gui.wx.ToolBar
+import leginon.targetingsteps
 
 constant_colors = {
 	'acquisition':  'GREEN',
@@ -36,24 +30,24 @@ other_colors = [
 	'MAGENTA',
 ]
 
-class Panel(gui.wx.TargetFinder.Panel):
+class Panel(leginon.gui.wx.TargetFinder.Panel):
 	icon = 'holefinder'
 	def initialize(self):
 		print 'AAAAAAAA'
-		gui.wx.TargetFinder.Panel.initialize(self)
+		leginon.gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = SettingsDialog
 
-		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 
 		colors = iter(other_colors)
 		firstimage = None
 		for step in self.nodeclass.workflow.values():
 			name = step.name
-			if isinstance(step, targetingsteps.ImageProducer):
+			if isinstance(step, leginon.targetingsteps.ImageProducer):
 				self.imagepanel.addTypeTool(name, display=True, settings=True)
 				if firstimage is None:
 					firstimage = name
-			elif isinstance(step, targetingsteps.PointProducer):
+			elif isinstance(step, leginon.targetingsteps.PointProducer):
 				if name in constant_colors:
 					color = constant_colors[name]
 				else:
@@ -77,18 +71,18 @@ class Panel(gui.wx.TargetFinder.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-class StepSettingsDialog(gui.wx.Settings.Dialog):
+class StepSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def __init__(self, panel, targetingstep=None):
 		self.targetingstep = targetingstep
-		gui.wx.Settings.Dialog.__init__(self, panel)
+		leginon.gui.wx.Settings.Dialog.__init__(self, panel)
 
 	def initialize(self):
 		return StepScrolledSettings(self,self.scrsize,False)
 
-class StepScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class StepScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		step = self.targetingstep
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, step.name)
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -103,13 +97,13 @@ class StepScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 		return [sbsz]
 
-class TemplateSettingsDialog(gui.wx.Settings.Dialog):
+class TemplateSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return TemplateScrolledSettings(self,self.scrsize,False)
 
-class TemplateScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class TemplateScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Low Pass Filter (Phase Correlation)')
 		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Template Correlation')
@@ -176,13 +170,13 @@ class TemplateScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.correlateTemplate()
 
-class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
+class ThresholdSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ThresholdScrolledSettings(self,self.scrsize,False)
 
-class ThresholdScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ThresholdScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Threshold')
 		sbszthreshold = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -215,13 +209,13 @@ class ThresholdScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.threshold()
 
-class BlobsSettingsDialog(gui.wx.Settings.Dialog):
+class BlobsSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return BlobsScrolledSettings(self,self.scrsize,False)
 
-class BlobsScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class BlobsScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Blob finding')
 		sbszblobs = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -270,13 +264,13 @@ class BlobsScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.findBlobs()
 
-class LatticeSettingsDialog(gui.wx.Settings.Dialog):
+class LatticeSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return LatticeScrolledSettings(self,self.scrsize,False)
 
-class LatticeScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class LatticeScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Lattice Fitting')
 		sbszlattice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Hole Statistics')
@@ -335,13 +329,13 @@ class LatticeScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.dialog.setNodeSettings()
 		self.node.fitLattice()
 
-class FinalSettingsDialog(gui.wx.Settings.Dialog):
+class FinalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return FinalScrolledSettings(self,self.scrsize,False)
 
-class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Ice Thickness Threshold')
 		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Focus Template Thickness')
@@ -355,9 +349,9 @@ class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['focus hole'] = Choice(self, -1, choices=self.node.focustypes)
 		self.widgets['target template'] = wx.CheckBox(self, -1,
 			'Use target template')
-		self.widgets['focus template'] = gui.wx.TargetTemplate.Panel(self,
+		self.widgets['focus template'] = leginon.gui.wx.TargetTemplate.Panel(self,
 			'Focus Target Template', autofill=True)
-		self.widgets['acquisition template'] = gui.wx.TargetTemplate.Panel(self,
+		self.widgets['acquisition template'] = leginon.gui.wx.TargetTemplate.Panel(self,
 			'Acquisition Target Template', autofill=True)
 		self.widgets['focus template thickness'] = wx.CheckBox(self, -1,
 			'Use focus template thickness and limit to one focus target')
@@ -445,13 +439,13 @@ class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.node.clearTargets('acquisition')
 		self.node.clearTargets('focus')
 
-class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.TargetFinder.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 	def initialize(self):
-		tfsd = gui.wx.TargetFinder.ScrolledSettings.initialize(self)
+		tfsd = leginon.gui.wx.TargetFinder.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Hole Finder Settings')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

@@ -3,47 +3,40 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.16 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-06-15 02:30:31 $
-# $Author: acheng $
-# $State: Exp $
-# $Locker:  $
 
-from gui.wx.Entry import FloatEntry
-import gui.wx.Events
-import gui.wx.Icons
-import gui.wx.Node
-import gui.wx.ToolBar
-import gui.wx.Settings
 import Queue
 import threading
 import wx
-import unique
 
-class Panel(gui.wx.Node.Panel):
+from leginon.gui.wx.Entry import FloatEntry
+import leginon.gui.wx.Events
+import leginon.gui.wx.Icons
+import leginon.gui.wx.Node
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.Settings
+
+class Panel(leginon.gui.wx.Node.Panel):
 	#icon = 'robot'
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings', shortHelpString='Start')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'play', shortHelpString='Start')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_EXTRACT,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT,
 													'extractgrid', shortHelpString='Extract')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_GRID,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GRID,
 													'cleargrid', shortHelpString='Grid Cleared')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSE,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE,
 													'pause', shortHelpString='Continue')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
 													shortHelpString='Refresh Trays')
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_EXTRACT, False)
 		self.toolbar.Realize()
 
 		self.ctray = wx.Choice(self, -1)
@@ -86,18 +79,18 @@ class Panel(gui.wx.Node.Panel):
 		
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool, id=gui.wx.ToolBar.ID_PLAY)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool, id=gui.wx.ToolBar.ID_GRID)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool, id=leginon.gui.wx.ToolBar.ID_PLAY)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool, id=leginon.gui.wx.ToolBar.ID_GRID)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onExtractTool,
-											id=gui.wx.ToolBar.ID_EXTRACT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onPauseTool, id=gui.wx.ToolBar.ID_PAUSE)
+											id=leginon.gui.wx.ToolBar.ID_EXTRACT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPauseTool, id=leginon.gui.wx.ToolBar.ID_PAUSE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTraysButton,
-											id=gui.wx.ToolBar.ID_REFRESH)
-		self.Bind(gui.wx.Events.EVT_GRID_QUEUE_EMPTY, self.onGridQueueEmpty)
-		self.Bind(gui.wx.Events.EVT_CLEAR_GRID, self.onClearGrid)
-		self.Bind(gui.wx.Events.EVT_GRID_INSERTED, self.onGridInserted)
-		self.Bind(gui.wx.Events.EVT_EXTRACTING_GRID, self.onExtractingGrid)
+											id=leginon.gui.wx.ToolBar.ID_REFRESH)
+		self.Bind(leginon.gui.wx.Events.EVT_GRID_QUEUE_EMPTY, self.onGridQueueEmpty)
+		self.Bind(leginon.gui.wx.Events.EVT_CLEAR_GRID, self.onClearGrid)
+		self.Bind(leginon.gui.wx.Events.EVT_GRID_INSERTED, self.onGridInserted)
+		self.Bind(leginon.gui.wx.Events.EVT_EXTRACTING_GRID, self.onExtractingGrid)
 
 		self.Bind(wx.EVT_CHOICE, self.onTrayChoice, self.ctray)
 		choices = self.node.getTrayLabels()
@@ -128,49 +121,49 @@ class Panel(gui.wx.Node.Panel):
 		dialog.Destroy()
 
 	def onPlayTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
 		self.node.startevent.set()
 
 	def onWaitForTrayChanged(self):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 
 	def onPauseTool(self, evt):
 		self.node.userContinue()
 
 	def onGridTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, False)
 		self.node.gridcleared.set()
 
 	def onExtractTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_EXTRACT, False)
 		self.node.handleGridDataCollectionDone(None)
 
 	def onGridQueueEmpty(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 
 	def gridQueueEmpty(self):
-		evt = gui.wx.Events.GridQueueEmptyEvent()
+		evt = leginon.gui.wx.Events.GridQueueEmptyEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onClearGrid(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, True)
 
 	def clearGrid(self):
-		evt = gui.wx.Events.ClearGridEvent()
+		evt = leginon.gui.wx.Events.ClearGridEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onGridInserted(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_EXTRACT, True)
 
 	def extractingGrid(self):
-		evt = gui.wx.Events.ExtractingGridEvent()
+		evt = leginon.gui.wx.Events.ExtractingGridEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onExtractingGrid(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_EXTRACT, False)
 
 	def gridInserted(self):
-		evt = gui.wx.Events.GridInsertedEvent()
+		evt = leginon.gui.wx.Events.GridInsertedEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSelectAllButton(self, evt):
@@ -189,13 +182,13 @@ class Panel(gui.wx.Node.Panel):
 	def getGridQueueSize(self):
 		return self.tray.getGridQueueSize()
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Robot')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -256,8 +249,8 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 class Tray(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
-		self.traybitmap = gui.wx.Icons.icon('robotgridtray')
-		self.gridbitmap = gui.wx.Icons.icon('realgrid')
+		self.traybitmap = leginon.gui.wx.Icons.icon('robotgridtray')
+		self.gridbitmap = leginon.gui.wx.Icons.icon('realgrid')
 		self.SetSize((self.traybitmap.GetWidth(), self.traybitmap.GetHeight()))
 		self._buffer = wx.EmptyBitmap(*self.GetSize())
 		self.brush = wx.Brush(wx.Panel.GetBackgroundColour(self)) 
@@ -272,7 +265,7 @@ class Tray(wx.Panel):
 		self.Bind(wx.EVT_RIGHT_UP, self.onRightUp)
 		self.Bind(wx.EVT_MIDDLE_DOWN, self.onMiddleDown)
 		self.Bind(wx.EVT_PAINT, self.onPaint)
-		self.Bind(gui.wx.Events.EVT_UPDATE_DRAWING, self.onUpdateDrawing)
+		self.Bind(leginon.gui.wx.Events.EVT_UPDATE_DRAWING, self.onUpdateDrawing)
 
 	def selectAll(self):
 		grids = list(self.gridlist)
@@ -287,7 +280,7 @@ class Tray(wx.Panel):
 	def getNextGrid(self):
 		try:
 			grid = self.gridqueue.pop(0)
-			self.AddPendingEvent(gui.wx.Events.UpdateDrawingEvent())
+			self.AddPendingEvent(leginon.gui.wx.Events.UpdateDrawingEvent())
 		except IndexError:
 			return None
 		return grid

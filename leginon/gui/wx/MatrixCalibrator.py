@@ -3,60 +3,54 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatrixCalibrator.py,v $
-# $Revision: 1.15 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:07 $
-# $Author: vossman $
-# $State: Exp $
-# $Locker:  $
 
 import threading
 import wx
-from gui.wx.Choice import Choice
-from gui.wx.Entry import IntEntry, FloatEntry
-import gui.wx.Camera
-import gui.wx.Calibrator
-import gui.wx.Dialog
-import gui.wx.Settings
-import gui.wx.ToolBar
 import numpy
 import math
+
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import IntEntry, FloatEntry
+import leginon.gui.wx.Camera
+import leginon.gui.wx.Calibrator
+import leginon.gui.wx.Dialog
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
 
 def capitalize(string):
 	if string:
 		string = string[0].upper() + string[1:]
 	return string
 
-class Panel(gui.wx.Calibrator.Panel):
+class Panel(leginon.gui.wx.Calibrator.Panel):
 	icon = 'matrix'
 	def initialize(self):
-		gui.wx.Calibrator.Panel.initialize(self)
+		leginon.gui.wx.Calibrator.Panel.initialize(self)
 
 		#InsertSeparator(2)
 		self.cparameter = wx.Choice(self.toolbar, -1)
 		self.cparameter.SetSelection(0)
 		self.toolbar.InsertControl(5, self.cparameter)
-		self.toolbar.InsertTool(6, gui.wx.ToolBar.ID_PARAMETER_SETTINGS,
+		self.toolbar.InsertTool(6, leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS,
 													'settings',
 													shortHelpString='Parameter Settings')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_EDIT, 'edit',
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EDIT, 'edit',
 													shortHelpString='Edit current calibration')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALC_PIXEL, 'calculate',
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CALC_PIXEL, 'calculate',
 													shortHelpString='Transform pixel vectors between mags')
 
 	def onNodeInitialized(self):
-		gui.wx.Calibrator.Panel.onNodeInitialized(self)
-		self.Bind(gui.wx.Events.EVT_EDIT_MATRIX, self.onEditMatrix)
+		leginon.gui.wx.Calibrator.Panel.onNodeInitialized(self)
+		self.Bind(leginon.gui.wx.Events.EVT_EDIT_MATRIX, self.onEditMatrix)
 		self.cparameter.AppendItems(map(capitalize, self.node.parameters.keys()))
 		self.cparameter.SetStringSelection(capitalize(self.node.parameter))
 		self.cparameter.Bind(wx.EVT_CHOICE, self.onParameterChoice, self.cparameter)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool,
-											id=gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEditMatrixTool,
-											id=gui.wx.ToolBar.ID_EDIT)
+											id=leginon.gui.wx.ToolBar.ID_EDIT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onCalcPixel,
-											id=gui.wx.ToolBar.ID_CALC_PIXEL)
+											id=leginon.gui.wx.ToolBar.ID_CALC_PIXEL)
 		self.toolbar.Realize()
 
 	def onParameterSettingsTool(self, evt):
@@ -69,20 +63,20 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.node.parameter = evt.GetString().lower()
 
 	def _calibrationEnable(self, enable):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, enable)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SETTINGS, enable)
 		self.cparameter.Enable(enable)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PARAMETER_SETTINGS, enable)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ACQUIRE, enable)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALIBRATE, enable)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, not enable)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EDIT, enable)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS, enable)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ACQUIRE, enable)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_CALIBRATE, enable)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, not enable)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_EDIT, enable)
 
 	def onCalibrateTool(self, evt):
 		self._calibrationEnable(False)
 		threading.Thread(target=self.node.uiCalibrate).start()
 
 	def onAbortTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 		threading.Thread(target=self.node.uiAbort).start()
 
 	def onEditMatrixTool(self, evt):
@@ -102,7 +96,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		dialog.Destroy()
 
 	def editCalibration(self, calibrationdata):
-		evt = gui.wx.Events.EditMatrixEvent(calibrationdata=calibrationdata)
+		evt = leginon.gui.wx.Events.EditMatrixEvent(calibrationdata=calibrationdata)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onCalcPixel(self, evt):
@@ -110,22 +104,22 @@ class Panel(gui.wx.Calibrator.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-class MatrixSettingsDialog(gui.wx.Settings.Dialog):
+class MatrixSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def __init__(self, parent, parameter, parametername):
 		self.parameter = parameter
 		self.parametername = parametername
-		gui.wx.Settings.Dialog.__init__(self,parent)
+		leginon.gui.wx.Settings.Dialog.__init__(self,parent)
 	def initialize(self):
 		return MatrixScrolledSettings(self,self.scrsize,False,self.parameter,self.parametername)
 
-class MatrixScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class MatrixScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def __init__(self, parent, size=(200,200), scrolling=False, parameter=None, parametername=None):
 		self.parameter = parameter
 		self.parametername = parametername
-		gui.wx.Settings.ScrolledDialog.__init__(self,parent,size,scrolling)
+		leginon.gui.wx.Settings.ScrolledDialog.__init__(self,parent,size,scrolling)
 
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		self.sb = wx.StaticBox(self, -1, '%s calibration' % self.parametername)
 		sbsz = wx.StaticBoxSizer(self.sb, wx.VERTICAL)
 
@@ -182,12 +176,12 @@ class MatrixScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 		return [sbsz]
 
-class EditMatrixDialog(gui.wx.Dialog.Dialog):
+class EditMatrixDialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent, matrix, title, subtitle='Calibration Matrix'):
 		if matrix is not None and len(matrix.shape) != 2:
 			raise ValueError
 		self.matrix = matrix
-		gui.wx.Dialog.Dialog.__init__(self, parent, title, subtitle=subtitle,
+		leginon.gui.wx.Dialog.Dialog.__init__(self, parent, title, subtitle=subtitle,
 																	style=wx.DEFAULT_DIALOG_STYLE)
 
 	def onInitialize(self):
@@ -238,10 +232,10 @@ class EditMatrixDialog(gui.wx.Dialog.Dialog):
 				matrix[row, column] = value
 		return matrix
 
-class PixelToPixelDialog(gui.wx.Dialog.Dialog):
+class PixelToPixelDialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent, title):
 		self.node = parent.node
-		gui.wx.Dialog.Dialog.__init__(self, parent, title, style=wx.DEFAULT_DIALOG_STYLE)
+		leginon.gui.wx.Dialog.Dialog.__init__(self, parent, title, style=wx.DEFAULT_DIALOG_STYLE)
 
 	def onInitialize(self):
 		mag1lab = wx.StaticText(self, -1, 'Mag 1:')

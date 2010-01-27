@@ -3,21 +3,15 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.28 $
-# $Name: not supported by cvs2svn $
-# $Date: 2008-02-15 02:59:09 $
-# $Author: acheng $
-# $State: Exp $
-# $Locker:  $
 
 import math
 import wx
-import gui.wx.Choice
-import gui.wx.Dialog
-import gui.wx.Entry
-import gui.wx.ListBox
-import gui.wx.Presets
+
+import leginon.gui.wx.Choice
+import leginon.gui.wx.Dialog
+import leginon.gui.wx.Entry
+import leginon.gui.wx.ListBox
+import leginon.gui.wx.Presets
 
 class DialogSettings(object):
 	def __init__(self, preset_names,
@@ -34,9 +28,9 @@ class DialogSettings(object):
 		self.sequence = sequence
 		self.reset_types = ['Default', 'Always', 'Never']
 
-class EditListBox(gui.wx.ListBox.EditListBox):
+class EditListBox(leginon.gui.wx.ListBox.EditListBox):
 	def __init__(self, parent, id, label, choices, **kwargs):
-		gui.wx.ListBox.EditListBox.__init__(self, parent, id, label, choices,
+		leginon.gui.wx.ListBox.EditListBox.__init__(self, parent, id, label, choices,
 											**kwargs)
 		self.dialog = parent
 
@@ -50,7 +44,7 @@ class EditListBox(gui.wx.ListBox.EditListBox):
 		if n != wx.NOT_FOUND:
 			return
 
-		result = gui.wx.ListBox.EditListBox.onInsert(self, evt)
+		result = leginon.gui.wx.ListBox.EditListBox.onInsert(self, evt)
 
 		n = self.listbox.FindString(string)
 		self.dialog.insertDefaultSetting(n, string)
@@ -60,10 +54,10 @@ class EditListBox(gui.wx.ListBox.EditListBox):
 	def onSelect(self, evt):
 		name = evt.GetString()
 		self.dialog.select(name)
-		return gui.wx.ListBox.EditListBox.onSelect(self, evt)
+		return leginon.gui.wx.ListBox.EditListBox.onSelect(self, evt)
 
 	def onDelete(self, evt):
-		result = gui.wx.ListBox.EditListBox.onDelete(self, evt)
+		result = leginon.gui.wx.ListBox.EditListBox.onDelete(self, evt)
 		self.dialog.removeCurrent()
 		name = self.getSelected()
 		if name is None:
@@ -75,17 +69,17 @@ class EditListBox(gui.wx.ListBox.EditListBox):
 
 	def onUp(self, evt):
 		self.dialog.move(-1)
-		return gui.wx.ListBox.EditListBox.onUp(self, evt)
+		return leginon.gui.wx.ListBox.EditListBox.onUp(self, evt)
 
 	def onDown(self, evt):
 		self.dialog.move(1)
-		return gui.wx.ListBox.EditListBox.onDown(self, evt)
+		return leginon.gui.wx.ListBox.EditListBox.onDown(self, evt)
 
-class Dialog(gui.wx.Dialog.Dialog):
+class Dialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent, title, settings, **kwargs):
 		self.settings = settings
 		self.current_setting = None
-		gui.wx.Dialog.Dialog.__init__(self, parent, title, **kwargs)
+		leginon.gui.wx.Dialog.Dialog.__init__(self, parent, title, **kwargs)
 
 	def move(self, direction):
 		if self.current_setting is None:
@@ -237,13 +231,13 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'Preset:')
 		paramsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		preset_names = self.settings.preset_names
-		self.preset_choice = gui.wx.Presets.PresetChoice(self, -1)
+		self.preset_choice = leginon.gui.wx.Presets.PresetChoice(self, -1)
 		self.preset_choice.setChoices(preset_names)
 		paramsizer.Add(self.preset_choice, (0, 1), (1, 1), wx.EXPAND)
 
 		label = wx.StaticText(self, -1, 'Focus method:')
 		paramsizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.focus_method_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.focus_methods)
+		self.focus_method_choice = leginon.gui.wx.Choice.Choice(self, -1, choices=self.settings.focus_methods)
 		self.focus_method_choice.Bind(wx.EVT_CHOICE, self.onFocusMethodChoice)
 		paramsizer.Add(self.focus_method_choice, (1, 1), (1, 1), wx.EXPAND)
 
@@ -256,7 +250,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'Tilt:')
 		tiltsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.autowidgets.append(label)
-		self.tilt_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6) 
+		self.tilt_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6) 
 		tiltsizer.Add(self.tilt_entry, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.autowidgets.append(self.tilt_entry)
 		self.tiltlabel = wx.StaticText(self, -1, 'radians')
@@ -267,7 +261,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'Image registration:')
 		self.autowidgets.append(label)
 		autosizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.correlation_type_choice = gui.wx.Choice.Choice(self, -1,
+		self.correlation_type_choice = leginon.gui.wx.Choice.Choice(self, -1,
 										choices=self.settings.correlation_types)
 		autosizer.Add(self.correlation_type_choice, (1, 1), (1, 1), wx.EXPAND)
 		self.autowidgets.append(self.correlation_type_choice)
@@ -278,13 +272,13 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'Fit limit:')
 		self.autowidgets.append(label)
 		autosizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.fit_limit_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
+		self.fit_limit_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6)
 		autosizer.Add(self.fit_limit_entry, (2, 1), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		self.autowidgets.append(self.fit_limit_entry)
 
 		changelimitsizer = wx.GridBagSizer(3, 3)
-		self.delta_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
+		self.delta_min_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
 		label = wx.StaticText(self, -1, 'Correct for delta Defocus/Z between')
 		self.autowidgets.append(label)
 		changelimitsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -292,7 +286,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		changelimitsizer.Add(self.delta_min_entry, (0, 1), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
-		self.delta_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
+		self.delta_max_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
 		label = wx.StaticText(self, -1, 'and')
 		self.autowidgets.append(label)
 		changelimitsizer.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -307,14 +301,14 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'Correction type:')
 		autosizer.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.autowidgets.append(label)
-		self.correction_type_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.correction_types)
+		self.correction_type_choice = leginon.gui.wx.Choice.Choice(self, -1, choices=self.settings.correction_types)
 		autosizer.Add(self.correction_type_choice, (4, 1), (1, 1), wx.EXPAND)
 		self.autowidgets.append(self.correction_type_choice)
 
 #		label = wx.StaticText(self, -1, 'Reset defocus:')
 #		autosizer.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 #		self.autowidgets.append(label)
-#		self.reset_choice = gui.wx.Choice.Choice(self, -1, choices=self.settings.reset_types)
+#		self.reset_choice = leginon.gui.wx.Choice.Choice(self, -1, choices=self.settings.reset_types)
 #		autosizer.Add(self.reset_choice, (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 #		self.autowidgets.append(self.reset_choice)
 
@@ -322,7 +316,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		driftsizer = wx.GridBagSizer(3, 3)
 		self.check_drift_checkbox = wx.CheckBox(self, -1,
 										   'Wait for drift to be less than')
-		self.drift_threshold_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6)
+		self.drift_threshold_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6)
 		driftsizer.Add(self.check_drift_checkbox, (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		self.autowidgets.append(self.check_drift_checkbox)
@@ -338,8 +332,8 @@ class Dialog(gui.wx.Dialog.Dialog):
 		stigsizer = wx.GridBagSizer(3, 3)
 		self.correct_astig_checkbox = wx.CheckBox(self, -1,
 									  'Correct astigmatism for defocus between')
-		self.stig_defocus_min_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
-		self.stig_defocus_max_entry = gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
+		self.stig_defocus_min_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
+		self.stig_defocus_max_entry = leginon.gui.wx.Entry.FloatEntry(self, -1, chars=6, min=0.0)
 		stigsizer.Add(self.correct_astig_checkbox, (0, 0), (1, 1),
 					   wx.ALIGN_CENTER_VERTICAL)
 		self.autowidgets.append(self.correct_astig_checkbox)

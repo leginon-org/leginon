@@ -1,7 +1,9 @@
 import numpy
 import wx
-import numarrayimage
-import gui.wx.ImageViewerEvents as Events
+
+import imageviewer.numarrayimage
+
+import leginon.gui.wx.ImageViewerEvents as Events
 
 class Display(wx.Panel):
 	def __init__(self, *args, **kwargs):
@@ -243,7 +245,7 @@ class ValueScaleBitmap(wx.StaticBitmap):
 		array = numpy.asarray(array, arraytype)
 		array = array.repeat(height)
 
-		bitmap = numarrayimage.numarray2wxBitmap(array, fromrange=self.fromrange)
+		bitmap = imageviewer.numarrayimage.numarray2wxBitmap(array, fromrange=self.fromrange)
 		self.SetBitmap(bitmap)
 
 class ValueScaler(wx.Panel):

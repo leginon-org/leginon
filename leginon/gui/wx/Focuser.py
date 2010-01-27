@@ -5,7 +5,7 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
+# $Source: /ami/sw/cvsroot/pyleginon/leginon.gui.wx/Focuser.py,v $
 # $Revision: 1.60 $
 # $Name: not supported by cvs2svn $
 # $Date: 2007-10-31 02:37:06 $
@@ -17,18 +17,20 @@ import threading
 import sys
 import math
 import wx
+
 from pyami import fftfun
-from gui.wx.Choice import Choice
-from gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
-from gui.wx.Presets import EditPresetOrder
-import gui.wx.Acquisition
-import gui.wx.Dialog
-import gui.wx.Events
-import gui.wx.Icons
-import gui.wx.ImagePanel
-import gui.wx.TargetPanel
-import gui.wx.ToolBar
-import gui.wx.FocusSequence
+
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
+from leginon.gui.wx.Presets import EditPresetOrder
+import leginon.gui.wx.Acquisition
+import leginon.gui.wx.Dialog
+import leginon.gui.wx.Events
+import leginon.gui.wx.Icons
+import leginon.gui.wx.ImagePanel
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.FocusSequence
 
 UpdateImagesEventType = wx.NewEventType()
 ManualCheckEventType = wx.NewEventType()
@@ -57,20 +59,20 @@ class ManualCheckDoneEvent(wx.PyCommandEvent):
 		wx.PyCommandEvent.__init__(self, ManualCheckDoneEventType, source.GetId())
 		self.SetEventObject(source)
 
-class Panel(gui.wx.Acquisition.Panel):
+class Panel(leginon.gui.wx.Acquisition.Panel):
 	icon = 'focuser'
-	imagepanelclass = gui.wx.TargetPanel.TargetImagePanel
+	imagepanelclass = leginon.gui.wx.TargetPanel.TargetImagePanel
 	def __init__(self, *args, **kwargs):
-		gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.InsertTool(2, gui.wx.ToolBar.ID_FOCUS_SEQUENCE, 'focus_sequence',
+		self.toolbar.InsertTool(2, leginon.gui.wx.ToolBar.ID_FOCUS_SEQUENCE, 'focus_sequence',
 								shortHelpString='Focus Sequence')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_MANUAL_FOCUS, 'manualfocus',
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MANUAL_FOCUS, 'manualfocus',
 							 shortHelpString='Manual Focus')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ALIGN, 'rotcenter',
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'rotcenter',
 							 shortHelpString='Align rotation center')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_TILT_AXIS, 'tiltaxis',
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE_TILT_AXIS, 'tiltaxis',
 							 shortHelpString='Measure stage tilt axis')
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
@@ -87,16 +89,16 @@ class Panel(gui.wx.Acquisition.Panel):
 		self.Bind(EVT_MANUAL_CHECK, self.onManualCheck, self)
 		self.Bind(EVT_MANUAL_CHECK_DONE, self.onManualCheckDone, self)
 
-		gui.wx.Acquisition.Panel.onNodeInitialized(self)
+		leginon.gui.wx.Acquisition.Panel.onNodeInitialized(self)
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onFocusSequenceTool,
-						  id=gui.wx.ToolBar.ID_FOCUS_SEQUENCE)
+						  id=leginon.gui.wx.ToolBar.ID_FOCUS_SEQUENCE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onManualFocusTool,
-						  id=gui.wx.ToolBar.ID_MANUAL_FOCUS)
+						  id=leginon.gui.wx.ToolBar.ID_MANUAL_FOCUS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTiltAxis,
-						  id=gui.wx.ToolBar.ID_MEASURE_TILT_AXIS)
+						  id=leginon.gui.wx.ToolBar.ID_MEASURE_TILT_AXIS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAlignRotationCenter,
-						  id=gui.wx.ToolBar.ID_ALIGN)
+						  id=leginon.gui.wx.ToolBar.ID_ALIGN)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -114,7 +116,7 @@ class Panel(gui.wx.Acquisition.Panel):
 		correlation_types = self.node.correlation_types
 		default_setting = self.node.default_setting
 		sequence = self.node.getFocusSequence()
-		dialog_settings = gui.wx.FocusSequence.DialogSettings(
+		dialog_settings = leginon.gui.wx.FocusSequence.DialogSettings(
 			preset_names,
 			focus_methods,
 			correction_types,
@@ -122,7 +124,7 @@ class Panel(gui.wx.Acquisition.Panel):
 			default_setting,
 			sequence)
 		title = 'Focus Sequence (%s)' % self.node.name
-		dialog = gui.wx.FocusSequence.Dialog(self, title, dialog_settings)
+		dialog = leginon.gui.wx.FocusSequence.Dialog(self, title, dialog_settings)
 		if dialog.ShowModal() == wx.ID_OK:
 			dialog.saveCurrent()
 			self.node.setFocusSequence(dialog.settings.sequence)
@@ -141,7 +143,7 @@ class Panel(gui.wx.Acquisition.Panel):
 		#self.manualdialog.MakeModal(False)
 
 	def setManualImage(self, image, typename, stats={}):
-		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
+		evt = leginon.gui.wx.Events.SetImageEvent(image, typename, stats)
 		self.manualdialog.GetEventHandler().AddPendingEvent(evt)
 
 	def manualUpdated(self):
@@ -157,13 +159,13 @@ class Panel(gui.wx.Acquisition.Panel):
 		self.manualdialog.center = center
 		self.manualdialog.onNewPixelSize(pixelsize,center,hightension)
 
-class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
-		sizers = gui.wx.Acquisition.ScrolledSettings.initialize(self)
+		sizers = leginon.gui.wx.Acquisition.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Focusing')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -178,7 +180,7 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 				wx.CheckBox(self, -1, 'Acquire post-focus image')
 
 		presetnames = self.node.presetsclient.getPresetNames()
-		self.widgets['melt preset'] = gui.wx.Presets.PresetChoice(self, -1)
+		self.widgets['melt preset'] = leginon.gui.wx.Presets.PresetChoice(self, -1)
 		self.widgets['melt preset'].setChoices(presetnames)
 		label = wx.StaticText(self, -1, 'Melt preset:')
 		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -329,7 +331,7 @@ class AlignRotationCenterDialog(wx.Dialog):
 		d2 = self.d2value.GetValue()
 		threading.Thread(target=self.node.alignRotationCenter, args=(d1,d2,)).start()
 
-class ManualFocusSettingsDialog(gui.wx.Dialog.Dialog):
+class ManualFocusSettingsDialog(leginon.gui.wx.Dialog.Dialog):
 	def onInitialize(self):
 		self.maskradius = FloatEntry(self, -1, allownone=False,
 			chars=6,value='0.01')
@@ -362,28 +364,28 @@ class ManualFocusDialog(wx.Frame):
 		self.center = (256,256)
 		self.toolbar = wx.ToolBar(self, -1)
 
-		bitmap = gui.wx.Icons.icon('settings')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS, bitmap, shortHelpString='Settings')
+		bitmap = leginon.gui.wx.Icons.icon('settings')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, bitmap, shortHelpString='Settings')
 
 		self.toolbar.AddSeparator()
 
-		bitmap = gui.wx.Icons.icon('play')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY, bitmap, shortHelpString='Play')
-		bitmap = gui.wx.Icons.icon('pause')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSE, bitmap, shortHelpString='Pause')
-		bitmap = gui.wx.Icons.icon('stop')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP, bitmap, shortHelpString='Stop')
+		bitmap = leginon.gui.wx.Icons.icon('play')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, bitmap, shortHelpString='Play')
+		bitmap = leginon.gui.wx.Icons.icon('pause')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PAUSE, bitmap, shortHelpString='Pause')
+		bitmap = leginon.gui.wx.Icons.icon('stop')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP, bitmap, shortHelpString='Stop')
 
 		self.toolbar.AddSeparator()
 
 		self.parameter = Choice(self.toolbar, -1, choices=['Defocus', 'Stage Z'])
 		self.parameter.SetStringSelection('Defocus')
 		self.toolbar.AddControl(self.parameter)
-		bitmap = gui.wx.Icons.icon('plus')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLUS, bitmap,
+		bitmap = leginon.gui.wx.Icons.icon('plus')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLUS, bitmap,
 			shortHelpString='Increment up')
-		bitmap = gui.wx.Icons.icon('minus')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_MINUS, bitmap,
+		bitmap = leginon.gui.wx.Icons.icon('minus')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MINUS, bitmap,
 			shortHelpString='Increment down')
 
 		self.toolbar.AddSeparator()
@@ -392,30 +394,30 @@ class ManualFocusDialog(wx.Frame):
 		self.toolbar.AddControl(self.value)
 		# size is defined because some wxPython installation lack good wxDefaultSize
 		self.toolbar.AddControl(wx.StaticText(self.toolbar, -1, ' m',size=(20,20)))
-		bitmap = gui.wx.Icons.icon('instrumentset')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_VALUE, bitmap,
+		bitmap = leginon.gui.wx.Icons.icon('instrumentset')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_VALUE, bitmap,
 			shortHelpString='Set instrument')
 
 		self.toolbar.AddSeparator()
 
-		bitmap = gui.wx.Icons.icon('instrumentsetnew')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_RESET, bitmap,
+		bitmap = leginon.gui.wx.Icons.icon('instrumentsetnew')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET, bitmap,
 			shortHelpString='Reset Defocus')
 
 		self.toolbar.AddSeparator()
 
-		bitmap = gui.wx.Icons.icon('instrumentget')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_GET_INSTRUMENT, bitmap,
+		bitmap = leginon.gui.wx.Icons.icon('instrumentget')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GET_INSTRUMENT, bitmap,
 			shortHelpString='Eucentric from instrument')
 
-		bitmap = gui.wx.Icons.icon('instrumentset')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_INSTRUMENT, bitmap,
+		bitmap = leginon.gui.wx.Icons.icon('instrumentset')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_INSTRUMENT, bitmap,
 			shortHelpString='Eucentric to instrument')
 
 		self.toolbar.Realize()
 		self.SetToolBar(self.toolbar)
 
-		self.imagepanel = gui.wx.TargetPanel.FFTTargetImagePanel(self, -1,imagesize=(512,512))
+		self.imagepanel = leginon.gui.wx.TargetPanel.FFTTargetImagePanel(self, -1,imagesize=(512,512))
 
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.addTypeTool('Power', display=True)
@@ -429,22 +431,22 @@ class ManualFocusDialog(wx.Frame):
 
 		self.settingsdialog = ManualFocusSettingsDialog(self, 'Manual Focus Settings', 'Settings')
 
-		self.Bind(gui.wx.Events.EVT_PLAYER, self.onPlayer)
-		self.Bind(wx.EVT_TOOL, self.onSettingsTool, id=gui.wx.ToolBar.ID_SETTINGS)
-		self.Bind(wx.EVT_TOOL, self.onPlayTool, id=gui.wx.ToolBar.ID_PLAY)
-		self.Bind(wx.EVT_TOOL, self.onPauseTool, id=gui.wx.ToolBar.ID_PAUSE)
-		self.Bind(wx.EVT_TOOL, self.onStopTool, id=gui.wx.ToolBar.ID_STOP)
-		self.Bind(wx.EVT_TOOL, self.onPlusTool, id=gui.wx.ToolBar.ID_PLUS)
-		self.Bind(wx.EVT_TOOL, self.onMinusTool, id=gui.wx.ToolBar.ID_MINUS)
-		self.Bind(wx.EVT_TOOL, self.onValueTool, id=gui.wx.ToolBar.ID_VALUE)
-		self.Bind(wx.EVT_TOOL, self.onResetTool, id=gui.wx.ToolBar.ID_RESET)
-		self.Bind(wx.EVT_TOOL, self.onGetInstrumentTool, id=gui.wx.ToolBar.ID_GET_INSTRUMENT)
-		self.Bind(wx.EVT_TOOL, self.onSetInstrumentTool, id=gui.wx.ToolBar.ID_SET_INSTRUMENT)
+		self.Bind(leginon.gui.wx.Events.EVT_PLAYER, self.onPlayer)
+		self.Bind(wx.EVT_TOOL, self.onSettingsTool, id=leginon.gui.wx.ToolBar.ID_SETTINGS)
+		self.Bind(wx.EVT_TOOL, self.onPlayTool, id=leginon.gui.wx.ToolBar.ID_PLAY)
+		self.Bind(wx.EVT_TOOL, self.onPauseTool, id=leginon.gui.wx.ToolBar.ID_PAUSE)
+		self.Bind(wx.EVT_TOOL, self.onStopTool, id=leginon.gui.wx.ToolBar.ID_STOP)
+		self.Bind(wx.EVT_TOOL, self.onPlusTool, id=leginon.gui.wx.ToolBar.ID_PLUS)
+		self.Bind(wx.EVT_TOOL, self.onMinusTool, id=leginon.gui.wx.ToolBar.ID_MINUS)
+		self.Bind(wx.EVT_TOOL, self.onValueTool, id=leginon.gui.wx.ToolBar.ID_VALUE)
+		self.Bind(wx.EVT_TOOL, self.onResetTool, id=leginon.gui.wx.ToolBar.ID_RESET)
+		self.Bind(wx.EVT_TOOL, self.onGetInstrumentTool, id=leginon.gui.wx.ToolBar.ID_GET_INSTRUMENT)
+		self.Bind(wx.EVT_TOOL, self.onSetInstrumentTool, id=leginon.gui.wx.ToolBar.ID_SET_INSTRUMENT)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
-		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
-		self.Bind(gui.wx.Events.EVT_MANUAL_UPDATED, self.onManualUpdated)
-		self.Bind(gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
-		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
+		self.Bind(leginon.gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
+		self.Bind(leginon.gui.wx.Events.EVT_MANUAL_UPDATED, self.onManualUpdated)
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
 							self.imagepanel)
 
 	def onSettingsTool(self, evt):
@@ -457,36 +459,36 @@ class ManualFocusDialog(wx.Frame):
 		#self.MakeModal(True)
 
 	def onPlayTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
 		self.node.manualplayer.play()
 
 	def onPauseTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
 		self.node.manualplayer.pause()
 
 	def onStopTool(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
 		self.node.manualplayer.stop()
 
 	def onPlayer(self, evt):
 		if evt.state == 'play':
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, True)
 		elif evt.state == 'pause':
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, True)
 		elif evt.state == 'stop':
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PAUSE, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
 
 	def _manualEnable(self, enable):
 		self.toolbar.Enable(enable)
@@ -495,7 +497,7 @@ class ManualFocusDialog(wx.Frame):
 		self._manualEnable(True)
 
 	def manualUpdated(self):
-		evt = gui.wx.Events.ManualUpdatedEvent()
+		evt = leginon.gui.wx.Events.ManualUpdatedEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onPlusTool(self, evt):
@@ -532,7 +534,7 @@ class ManualFocusDialog(wx.Frame):
 		self.imagepanel.setImageType(evt.typename, evt.image)
 
 	def onNewPixelSize(self, pixelsize,center,hightension):
-		idcevt = gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension)
+		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		self.center = center
 		self.pixelsize = pixelsize
@@ -540,7 +542,7 @@ class ManualFocusDialog(wx.Frame):
 
 	def onEllipseFound(self, evt):
 		centers = [(self.center['y'],self.center['x']),]
-		idcevt = gui.wx.ImagePanelTools.EllipseNewCenterEvent(self.imagepanel, centers)
+		idcevt = leginon.gui.wx.ImagePanelTools.EllipseNewCenterEvent(self.imagepanel, centers)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		threading.Thread(target=self.node.estimateAstigmation, args=(evt.params,)).start()
 

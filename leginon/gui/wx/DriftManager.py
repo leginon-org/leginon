@@ -3,46 +3,40 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/DriftManager.py,v $
-# $Revision: 1.26 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:03 $
-# $Author: vossman $
-# $State: Exp $
-# $Locker:  $
 
 import wx
-from gui.wx.Entry import FloatEntry, IntEntry
-import gui.wx.Camera
-import gui.wx.TargetPanel
-import gui.wx.Node
-import gui.wx.Settings
-import gui.wx.Instrument
 
-class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
+from leginon.gui.wx.Entry import FloatEntry, IntEntry
+import leginon.gui.wx.Camera
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.Node
+import leginon.gui.wx.Settings
+import leginon.gui.wx.Instrument
+
+class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin):
 	icon = 'driftmanager'
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
-		gui.wx.Instrument.SelectionMixin.__init__(self)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Instrument.SelectionMixin.__init__(self)
 
 		# settings
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_DRIFT,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE_DRIFT,
 													'ruler',
 													shortHelpString='Measure Drift')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_CHECK_DRIFT,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CHECK_DRIFT,
 													'play',
 													shortHelpString='Check Drift')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT_DRIFT,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT_DRIFT,
 													'stop',
 													shortHelpString='Abort Drift Check')
 		self.toolbar.Realize()
 
 		# image
-		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTypeTool('Correlation', display=True)
@@ -58,15 +52,15 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
+		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onCheckDriftTool,
-											id=gui.wx.ToolBar.ID_CHECK_DRIFT)
+											id=leginon.gui.wx.ToolBar.ID_CHECK_DRIFT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAbortDriftTool,
-											id=gui.wx.ToolBar.ID_ABORT_DRIFT)
+											id=leginon.gui.wx.ToolBar.ID_ABORT_DRIFT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureDriftTool,
-											id=gui.wx.ToolBar.ID_MEASURE_DRIFT)
+											id=leginon.gui.wx.ToolBar.ID_MEASURE_DRIFT)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -82,21 +76,21 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	def onMeasureDriftTool(self, evt):
 		self.node.uiMeasureDrift()
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Drift Management')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['threshold'] = FloatEntry(self, -1, min=0.0, chars=9)
 		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
+		self.instrumentselection = leginon.gui.wx.Instrument.SelectionPanel(self, passive=True)
 		self.panel.setInstrumentSelection(self.instrumentselection)
-		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 
 		szthreshold = wx.GridBagSizer(5, 5)

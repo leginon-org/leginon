@@ -4,41 +4,42 @@
 # see http://ami.scripps.edu/software/leginon-license
 
 import wx
-import ImagePanelTools
-import gui.wx.Node
-import gui.wx.Settings
-import gui.wx.ToolBar
-import gui.wx.TargetFilter
-from gui.wx.Entry import IntEntry, FloatEntry
-from gui.wx.Presets import PresetChoice
-from gui.wx.Choice import Choice
 import threading
 
-class Panel(gui.wx.TargetFilter.Panel):
+import leginon.gui.wx.ImagePanelTools
+import leginon.gui.wx.Node
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.TargetFilter
+from leginon.gui.wx.Entry import IntEntry, FloatEntry
+from leginon.gui.wx.Presets import PresetChoice
+from leginon.gui.wx.Choice import Choice
+
+class Panel(leginon.gui.wx.TargetFilter.Panel):
 	icon = 'targetfilter'
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'play',
 													shortHelpString='Submit')
-		self.Bind(gui.wx.Events.EVT_ENABLE_PLAY_BUTTON, self.onEnablePlayButton)
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP,
+		self.Bind(leginon.gui.wx.Events.EVT_ENABLE_PLAY_BUTTON, self.onEnablePlayButton)
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP,
 													'stop',
 													shortHelpString='Stop')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_GRID, 'grid', shortHelpString='Default offset')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_EXTRACT, 'extractgrid', shortHelpString='Alternative offset')
-		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleDefaultOffset, id=gui.wx.ToolBar.ID_GRID)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleAlternateOffset, id=gui.wx.ToolBar.ID_EXTRACT)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GRID, 'grid', shortHelpString='Default offset')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EXTRACT, 'extractgrid', shortHelpString='Alternative offset')
+		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleDefaultOffset, id=leginon.gui.wx.ToolBar.ID_GRID)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleAlternateOffset, id=leginon.gui.wx.ToolBar.ID_EXTRACT)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, True)
 		self.toolbar.Realize()
 
-		self.imagepanel = gui.wx.TargetPanel.EllipseTargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.EllipseTargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255))
 		self.imagepanel.selectiontool.setDisplayed('preview', True)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, numbers=True)
@@ -49,7 +50,7 @@ class Panel(gui.wx.TargetFilter.Panel):
 		self.imagepanel.selectiontool.setDisplayed('original', True)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
-		self.Bind(gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
@@ -63,37 +64,37 @@ class Panel(gui.wx.TargetFilter.Panel):
 		dialog.Destroy()
 
 	def onToggleDefaultOffset(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_EXTRACT, True)
 		self.node.setToggleOffset(False)
 
 	def onToggleAlternateOffset(self, evt):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, True)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_EXTRACT, False)
 		self.node.setToggleOffset(True)
 
 	def setDefaultOffset(self):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_EXTRACT, True)
 		
 	def setAlternateOffset(self):
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, True)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_EXTRACT, False)
 
 	def onEllipseFound(self, evt):
 		threading.Thread(target=self.node.autoRasterEllipse, args=(evt.params,)).start()
 
 	def onOriginalTarget(self, centers):
-		idcevt = gui.wx.ImagePanelTools.EllipseNewCenterEvent(self.imagepanel, centers)
+		idcevt = leginon.gui.wx.ImagePanelTools.EllipseNewCenterEvent(self.imagepanel, centers)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sbr = wx.StaticBox(self, -1, 'Target Raster')
 		sbszr = wx.StaticBoxSizer(sbr, wx.VERTICAL)
 		sbcalc = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')

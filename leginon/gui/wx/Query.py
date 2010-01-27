@@ -11,9 +11,10 @@
 # $State: Exp $
 # $Locker:  $
 
-import leginondata
-import dbdatakeeper
-import unique
+import leginon.leginondata
+import leginon.dbdatakeeper
+import leginon.unique
+
 import wx
 
 
@@ -92,7 +93,7 @@ class FieldSelector(wx.Panel):
 																				#results=64,
 																				readimages=False)
 		values = [i.special_getitem(field, False) for i in datalist]
-		values = unique.unique(values)
+		values = leginon.unique.unique(values)
 		self.order = []
 		self.map = {}
 		for value in values:
@@ -103,14 +104,14 @@ class FieldSelector(wx.Panel):
 
 class QueryPanel(wx.Panel):
 	def __init__(self, *args, **kwargs):
-		self.dbdatakeeper = dbdatakeeper.DBDataKeeper()
+		self.dbdatakeeper = leginon.dbdatakeeper.DBDataKeeper()
 		wx.Panel.__init__(self, *args, **kwargs)
 		self.sizer = wx.GridBagSizer(5, 5)
 
 		choices = []
-		for i in dir(leginondata):
+		for i in dir(leginon.leginondata):
 			try:
-				if issubclass(getattr(leginondata, i), leginondata.Data):
+				if issubclass(getattr(leginon.leginondata, i), leginon.leginondata.Data):
 					choices.append(i)
 			except TypeError:
 				pass

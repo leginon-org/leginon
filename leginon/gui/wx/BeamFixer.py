@@ -1,24 +1,17 @@
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Reference.py,v $
-# $Revision: 1.4 $
-# $Name: not supported by cvs2svn $
-# $Date: 2006-08-22 19:22:33 $
-# $Author: suloway $
-# $State: Exp $
-# $Locker:  $
-
 import wx
-from gui.wx.Choice import Choice
-from gui.wx.Entry import FloatEntry
-from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
-import gui.wx.Reference
-import gui.wx.Settings
-import gui.wx.ToolBar
 
-class BeamFixerPanel(gui.wx.Reference.ReferencePanel, gui.wx.Instrument.SelectionMixin):
-	imagepanelclass = gui.wx.ImagePanel.ImagePanel
+from leginon.gui.wx.Choice import Choice
+from leginon.gui.wx.Entry import FloatEntry
+from leginon.gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
+import leginon.gui.wx.Reference
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+
+class BeamFixerPanel(leginon.gui.wx.Reference.ReferencePanel, leginon.gui.wx.Instrument.SelectionMixin):
+	imagepanelclass = leginon.gui.wx.ImagePanel.ImagePanel
 	def __init__(self, *args, **kwargs):
-		gui.wx.Reference.ReferencePanel.__init__(self, *args, **kwargs)
-		gui.wx.Instrument.SelectionMixin.__init__(self)
+		leginon.gui.wx.Reference.ReferencePanel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Instrument.SelectionMixin.__init__(self)
 		self.addImagePanel()
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
@@ -27,8 +20,8 @@ class BeamFixerPanel(gui.wx.Reference.ReferencePanel, gui.wx.Instrument.Selectio
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		gui.wx.Reference.ReferencePanel.onNodeInitialized(self)
-		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
+		leginon.gui.wx.Reference.ReferencePanel.onNodeInitialized(self)
+		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 
 	def addImagePanel(self):
 		# image
@@ -42,13 +35,13 @@ class BeamFixerPanel(gui.wx.Reference.ReferencePanel, gui.wx.Instrument.Selectio
 		dialog.ShowModal()
 		dialog.Destroy()
 
-class SettingsDialog(gui.wx.Reference.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.Reference.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Reference.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.Reference.ScrolledSettings):
 	def initialize(self):
-		refsizers = gui.wx.Reference.ScrolledSettings.initialize(self)
+		refsizers = leginon.gui.wx.Reference.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Beam Fixer')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -62,9 +55,9 @@ class ScrolledSettings(gui.wx.Reference.ScrolledSettings):
 		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
 		self.widgets['override preset'] = wx.CheckBox(self, -1,
 																								'Override Preset')
-		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self, passive=True)
+		self.widgets['instruments'] = leginon.gui.wx.Instrument.SelectionPanel(self, passive=True)
 		self.panel.setInstrumentSelection(self.widgets['instruments'])
-		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 
 		sz = wx.GridBagSizer(5, 10)

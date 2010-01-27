@@ -3,38 +3,32 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FFTMaker.py,v $
-# $Revision: 1.11 $
-# $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
-# $Author: suloway $
-# $State: Exp $
-# $Locker:  $
 
 import wx
-from gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY
-import gui.wx.Node
-import gui.wx.Settings
-import gui.wx.ToolBar
-import gui.wx.TargetPanel
 import threading
 
-class Panel(gui.wx.Node.Panel):
+from leginon.gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY
+import leginon.gui.wx.Node
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.TargetPanel
+
+class Panel(leginon.gui.wx.Node.Panel):
 	icon = 'fftmaker'
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY,
 													'play',
 													shortHelpString='Process')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STOP,
 													'stop',
 													shortHelpString='Stop')
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
 		self.toolbar.Realize()
 
 		self.szmain.AddGrowableCol(0)
@@ -45,20 +39,20 @@ class Panel(gui.wx.Node.Panel):
 
 	def addImagePanel(self):
 		# image
-		self.imagepanel = gui.wx.TargetPanel.FFTTargetImagePanel(self, -1,imagesize=(512,512))
+		self.imagepanel = leginon.gui.wx.TargetPanel.FFTTargetImagePanel(self, -1,imagesize=(512,512))
 		self.imagepanel.addTypeTool('Power', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Power', True)
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
-											id=gui.wx.ToolBar.ID_PLAY)
+											id=leginon.gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
-											id=gui.wx.ToolBar.ID_STOP)
+											id=leginon.gui.wx.ToolBar.ID_STOP)
 		self.addImagePanel()
-		self.Bind(gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -67,32 +61,32 @@ class Panel(gui.wx.Node.Panel):
 
 	def onPlayTool(self, evt):
 		self.node.onStartPostProcess()
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, True)
 
 	def onStopTool(self, evt):
 		self.node.onStopPostProcess()
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 
 	def onNewPixelSize(self, pixelsize,center,hightension):
-		idcevt = gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension)
+		idcevt = leginon.gui.wx.ImagePanelTools.ImageNewPixelSizeEvent(self.imagepanel, pixelsize,center,hightension)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		self.center = center
 
 	def onEllipseFound(self, evt):
 		centers = [(self.center['y'],self.center['x']),]
-		idcevt = gui.wx.ImagePanelTools.EllipseNewCenterEvent(self.imagepanel, centers)
+		idcevt = leginon.gui.wx.ImagePanelTools.EllipseNewCenterEvent(self.imagepanel, centers)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		threading.Thread(target=self.node.estimateAstigmation, args=(evt.params,)).start()
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'FFT')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Images in Database')
