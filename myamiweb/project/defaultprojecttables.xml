@@ -229,22 +229,17 @@
       type="int(20)" 
     />
     <field 
-      name="first name" 
-      type="text" 
-      null="NOT NULL" 
-    />
-    <field 
-      name="last name" 
-      type="text" 
-      null="NOT NULL" 
-    />
-    <field 
       name="title" 
       type="text" 
       null="NOT NULL" 
     />
     <field 
       name="institution" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="dept" 
       type="text" 
       null="NOT NULL" 
     />
