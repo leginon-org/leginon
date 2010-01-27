@@ -3,27 +3,21 @@
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
-# $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.41 $
-# $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:08 $
-# $Author: vossman $
-# $State: Exp $
-# $Locker:  $
 
 import threading
 import wx
-from gui.wx.Entry import IntEntry, FloatEntry, Entry, EVT_ENTRY
-import gui.wx.Camera
-from gui.wx.Choice import Choice
-import gui.wx.ImagePanelTools
-import gui.wx.TargetPanel
-import gui.wx.ImagePanel
-import gui.wx.Node
-import gui.wx.Settings
-import gui.wx.ToolBar
-import gui.wx.Instrument
 import time
+
+from leginon.gui.wx.Entry import IntEntry, FloatEntry, Entry, EVT_ENTRY
+import leginon.gui.wx.Camera
+from leginon.gui.wx.Choice import Choice
+import leginon.gui.wx.ImagePanelTools
+import leginon.gui.wx.TargetPanel
+import leginon.gui.wx.ImagePanel
+import leginon.gui.wx.Node
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+import leginon.gui.wx.Instrument
 
 LocationsEventType = wx.NewEventType()
 EVT_LOCATIONS = wx.PyEventBinder(LocationsEventType)
@@ -36,28 +30,28 @@ class LocationsEvent(wx.PyCommandEvent):
 		self.SetEventObject(source)
 		self.locations = locations
 
-class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
+class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin):
 	icon = 'navigator'
 	def __init__(self, *args, **kwargs):
-		gui.wx.Node.Panel.__init__(self, *args, **kwargs)
-		gui.wx.Instrument.SelectionMixin.__init__(self)
+		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
+		leginon.gui.wx.Instrument.SelectionMixin.__init__(self)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
 													shortHelpString='Acquire')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_STAGE_LOCATIONS,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_STAGE_LOCATIONS,
 													'stagelocations',
 													shortHelpString='Stage Locations')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE,
 													'ruler',
 													shortHelpString='Test stage reproducibility')
 		# image
-		self.imagepanel = gui.wx.TargetPanel.ClickAndTargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.ClickAndTargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTypeTool('Correlation', display=True)
@@ -75,7 +69,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.Bind(EVT_LOCATIONS, self.onLocations)
 
 	def onNodeInitialized(self):
-		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
+		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.locationsdialog = StageLocationsDialog(self, self.node)
 
 		movetypes = self.node.calclients.keys()
@@ -88,15 +82,15 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.toolbar.Realize()
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
-											id=gui.wx.ToolBar.ID_ACQUIRE)
+											id=leginon.gui.wx.ToolBar.ID_ACQUIRE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStageLocationsTool,
-											id=gui.wx.ToolBar.ID_STAGE_LOCATIONS)
+											id=leginon.gui.wx.ToolBar.ID_STAGE_LOCATIONS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onReproTest,
-											id=gui.wx.ToolBar.ID_MEASURE)
+											id=leginon.gui.wx.ToolBar.ID_MEASURE)
 		self.cmovetype.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice)
-		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
 							self.imagepanel)
 		self.test_dialog = ReproTestDialog(self)
 		self.Bind(EVT_TEST, self.onReproTest, self)
@@ -130,7 +124,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		threading.Thread(target=self.node.navigate, args=(evt.xy,)).start()
 
 	def navigateDone(self):
-		evt = gui.wx.ImagePanel.ImageClickDoneEvent(self.imagepanel)
+		evt = leginon.gui.wx.ImagePanel.ImageClickDoneEvent(self.imagepanel)
 		self.imagepanel.GetEventHandler().AddPendingEvent(evt)
 		self.acquisitionDone()
 
@@ -275,13 +269,13 @@ class StageLocationsDialog(wx.Dialog):
 			location = self._setLocation(self.node.getLocation(string))
 			self.lblocations.SetStringSelection(string)
 
-class SettingsDialog(gui.wx.Settings.Dialog):
+class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
-		gui.wx.Settings.ScrolledDialog.initialize(self)
+		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Navigation')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		overridebox = wx.StaticBox(self, -1, "Override Preset")
@@ -323,9 +317,9 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		# override preset
 		self.widgets['override preset'] = wx.CheckBox(self, -1,
 																								'Override Preset')
-		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self, passive=True)
+		self.widgets['instruments'] = leginon.gui.wx.Instrument.SelectionPanel(self, passive=True)
 		self.panel.setInstrumentSelection(self.widgets['instruments'])
-		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 
 		self.widgets['background readout'] = wx.CheckBox(self, -1, 'Background Readout')

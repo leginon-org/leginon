@@ -1,12 +1,13 @@
 import threading
 import wx
-import gui.wx.Acquisition
-import gui.wx.Camera
-import gui.wx.Settings
-import gui.wx.ToolBar
-from gui.wx.Entry import Entry, FloatEntry, IntEntry
-from gui.wx.Presets import EditPresetOrder
-import gui.wx.tomography.TomographyViewer as TomoViewer
+
+import leginon.gui.wx.Acquisition
+import leginon.gui.wx.Camera
+import leginon.gui.wx.Settings
+import leginon.gui.wx.ToolBar
+from leginon.gui.wx.Entry import Entry, FloatEntry, IntEntry
+from leginon.gui.wx.Presets import EditPresetOrder
+import leginon.gui.wx.tomography.TomographyViewer as TomoViewer
 
 class ImagePanel(object):
 	def __init__(self, viewer):
@@ -27,13 +28,13 @@ class ImagePanel(object):
 		#	self.viewer.setXC(image)
 		pass
 
-class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
+class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,True)
 
-class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
+class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
-		szs = gui.wx.Acquisition.ScrolledSettings.initialize(self)
+		szs = leginon.gui.wx.Acquisition.ScrolledSettings.initialize(self)
 		tiltsb = wx.StaticBox(self, -1, 'Tilt')
 		tiltsbsz = wx.StaticBoxSizer(tiltsb, wx.VERTICAL)
 		expsb = wx.StaticBox(self, -1, 'Exposure')
@@ -320,19 +321,19 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 			choices.extend( [str(int(m)) for m in mags])
 			return choices
 
-class Panel(gui.wx.Acquisition.Panel):
+class Panel(leginon.gui.wx.Acquisition.Panel):
 	settingsdialogclass = SettingsDialog
 	def __init__(self, *args, **kwargs):
-		gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_BROWSE_IMAGES, False)
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_CHECK_DOSE,
+		leginon.gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_BROWSE_IMAGES, False)
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CHECK_DOSE,
 							 'dose',
 							 shortHelpString='Check dose')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 							 'refresh', shortHelpString='Reset Learning')
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onResetTiltSeriesList,
-											id=gui.wx.ToolBar.ID_REFRESH)
+											id=leginon.gui.wx.ToolBar.ID_REFRESH)
 
 		self.imagepanel = ImagePanel(self.viewer)
 
@@ -341,10 +342,10 @@ class Panel(gui.wx.Acquisition.Panel):
 		self.szmain.Add(self.viewer, (1, 0), (1, 1), wx.EXPAND)
 
 	def onNodeInitialized(self):
-		gui.wx.Acquisition.Panel.onNodeInitialized(self)
+		leginon.gui.wx.Acquisition.Panel.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL,
 						  self.onCheckDose,
-						  id=gui.wx.ToolBar.ID_CHECK_DOSE)
+						  id=leginon.gui.wx.ToolBar.ID_CHECK_DOSE)
 
 	def onCheckDose(self, evt):
 		threading.Thread(target=self.node.checkDose).start()

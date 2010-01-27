@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import copy
-import leginondata
 import wx
-from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
+import leginon.leginondata
+from leginon.gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
 
 ConfigurationChangedEventType = wx.NewEventType()
 SetConfigurationEventType = wx.NewEventType()
@@ -66,14 +66,14 @@ class ImageBrowserPanel(wx.Panel):
 
 	def getSessions(self):
 		user = self.node.session['user']
-		qsession = leginondata.SessionData(user=user)
+		qsession = leginon.leginondata.SessionData(user=user)
 		sessionlist = self.node.research(qsession)
 		self.session_names = [s['name'] for s in sessionlist]
 		self.session_dict = dict(zip(self.session_names,sessionlist))
 		return self.session_names
 
 	def getImages(self, sessiondata):
-		qimage = leginondata.AcquisitionImageData(session=sessiondata)
+		qimage = leginon.leginondata.AcquisitionImageData(session=sessiondata)
 		imdatalist = self.node.research(qimage, readimages=False)
 		imagenames = [imdata['filename'] for imdata in imdatalist]
 		self.image_dict = dict(zip(imagenames,imdatalist))
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 	import Icons
 	class App(wx.App):
 		def OnInit(self):
-			mysession = leginondata.SessionData()
+			mysession = leginon.leginondata.SessionData()
 			mynode = node.Node('mnode', session=mysession)
 
 			icon = wx.EmptyIcon()
