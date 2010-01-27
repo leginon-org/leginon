@@ -161,11 +161,15 @@ class authlib extends config_class {
 		return 2;
 	}
 
-	function updatePassword($userId, $password) {
-		$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
-		$data['password']=$password;
-		$where['userId']=$userId;
-		return $dbc->SQLUpdate($this->tbl_login, $data, $where);
+	function updatePassword($userID, $password) {
+		
+		$dbc = new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
+
+		$q = "update $this->tbl_user set password = '$password' where DEF_id = $userID";
+		
+		if(!$dbc->SQLQuery($q))
+			return false;
+		return true;
 	}
 
 	function getInfo($username) {
@@ -394,56 +398,38 @@ class authlib extends config_class {
 
 	}
 
-	function lostpwd ($emailorlogin) {
+	function lostpwd ($email) {
 
-		if (!$emailorlogin) {
-
+		// check input variable has value
+		if (empty($email)) {
 			return $this->error['fields_empty'];
-
 		}
 
 		$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
 
-		$q="select l.userid, l.password, l.username, d.email from `".$this->tbl_login."` l,"
-			."`".$this->tbl_user."` d where (d.email='$emailorlogin' or l.username='$emailorlogin') and l.userId = d.userId ";
+		$q="select DEF_id, name, email from $this->tbl_user where email = '$email'";
+
 		$query = $dbc->SQLQuery($q);
 		$result = @mysql_num_rows($query);
 
-		$insertpasswordentry=false;
-		if ($result < 1) {
-				$q="select l.userid, l.password, l.username, l.email from "
-					."`".$this->tbl_user."` l "
-					."where (l.email='$emailorlogin' or l.username='$emailorlogin') ";
-				$query = $dbc->SQLQuery($q);
-				$result = @mysql_num_rows($query);
+		// setup query result value and assign to those variables
+		list($userID, $username, $email) = mysql_fetch_row($query);
 
-				if ($result < 1) {
-					return $this->error['username_email'];
-				}
-				$insertpasswordentry=true;
-		}
-
-		list($userId, $password, $username, $email) = mysql_fetch_row($query);
 		if (!$email) {
 			return $this->error['no_email'];
 		}
+		
+		// generate new password for user
+		$password=$this->generatePassword();
+		
+		// assign new password to this user
+		$result = $this->updatePassword($userID, $password);
 
-		if (!$password) {
-			$password=$this->generatePassword();
-			if($insertpasswordentry) {
-				$data=array();
-				$data['userId']=$userId;
-				$data['username']=$username;
-				$data['password']=$password;
-				$dbc->SQLInsertIfNotExists($this->tbl_login, $data, true);
-			} else {
-				$this->updatePassword($userId, $password);
-			}
-		}
-
+		// sent out email with necessary information.
 		@mail($email, "Account Info", "Dear User,\n\nAs per your request here is your account information:\n
- Username: $username
- Password: $password
+				Username: $username
+ 				Password: $password
+ 				\nYou can use this password to login and update your password later.
 				\nWe hope you remember your password next time ;-)", "From: $this->webmaster");
 
 		return 2;
