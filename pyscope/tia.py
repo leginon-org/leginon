@@ -12,7 +12,7 @@ class TIA(ccdcamera.CCDCamera):
 			'getPixelSize',
 			'getInserted', 'setInserted',]
 		ccdcamera.CCDCamera.__init__(self)
-        	pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		self.im = None
 		self.imdisp = None
 		self.tianame = 'pyscope'
