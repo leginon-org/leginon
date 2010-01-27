@@ -317,7 +317,7 @@ class mysql {
 		
 	}
 
-	function SQLUpdate($table, $data, $where="") {
+	function SQLUpdate($table, $data, $where="",$db="") {
 		if (!$data || !$table || !is_array($data))
 			return False;
 		if (is_array($where)) {
@@ -333,7 +333,8 @@ class mysql {
 				$v = "'".addslashes($v)."'";
 			$kv[] = "`".$k."`=".$v;
 		}
-		$q = "UPDATE `$table` SET ".implode(', ',$kv).$wherestr;
+		$dbselection = ($db) ? $db.'.':'';
+		$q = "UPDATE $dbselection`$table` SET ".implode(', ',$kv).$wherestr;
 		if (!$this->SQLQuery($q))
 			return False;
 		return true;
