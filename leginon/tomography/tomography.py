@@ -1,30 +1,32 @@
 import math
-import threading
-import calibrationclient
-import leginondata
-import event
-import acquisition
-import gui.wx.tomography.Tomography
+import time
+
+from pyami import correlator, peakfinder
+
+import leginon.calibrationclient
+import leginon.leginondata
+import leginon.event
+import leginon.acquisition
+import leginon.gui.wx.tomography.Tomography
+
 import collection
 import tilts
 import exposure
 import prediction
-import time
-from pyami import correlator, peakfinder
 
 class CalibrationError(Exception):
 	pass
 
-class Tomography(acquisition.Acquisition):
-	eventinputs = acquisition.Acquisition.eventinputs
-	eventoutputs = acquisition.Acquisition.eventoutputs + \
-					[event.AlignZeroLossPeakPublishEvent,
-						event.MeasureDosePublishEvent]
+class Tomography(leginon.acquisition.Acquisition):
+	eventinputs = leginon.acquisition.Acquisition.eventinputs
+	eventoutputs = leginon.acquisition.Acquisition.eventoutputs + \
+					[leginon.event.AlignZeroLossPeakPublishEvent,
+						leginon.event.MeasureDosePublishEvent]
 
-	panelclass = gui.wx.tomography.Tomography.Panel
-	settingsclass = leginondata.TomographySettingsData
+	panelclass = leginon.gui.wx.tomography.Tomography.Panel
+	settingsclass = leginon.leginondata.TomographySettingsData
 
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = leginon.acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
 		'tilt min': -60.0,
 		'tilt max': 60.0,
@@ -63,11 +65,11 @@ class Tomography(acquisition.Acquisition):
 	})
 
 	def __init__(self, *args, **kwargs):
-		acquisition.Acquisition.__init__(self, *args, **kwargs)
+		leginon.acquisition.Acquisition.__init__(self, *args, **kwargs)
 		self.calclients['pixel size'] = \
-				calibrationclient.PixelSizeCalibrationClient(self)
+				leginon.calibrationclient.PixelSizeCalibrationClient(self)
 		self.calclients['beam tilt'] = \
-				calibrationclient.BeamTiltCalibrationClient(self)
+				leginon.calibrationclient.BeamTiltCalibrationClient(self)
 		self.btcalclient = self.calclients['beam tilt'] 
 
 		self.tilts = tilts.Tilts()
@@ -80,7 +82,7 @@ class Tomography(acquisition.Acquisition):
 
 	'''
 	def onPresetPublished(self, evt):
-		acquisition.Acquisition.onPresetPublished(self, evt)
+		leginon.acquisition.Acquisition.onPresetPublished(self, evt)
 
 		preset = evt['data']
 
@@ -101,7 +103,7 @@ class Tomography(acquisition.Acquisition):
 			self.logger.warning(s)
 
 	def setSettings(self, *args, **kwargs):
-		acquisition.Acquisition.setSettings(self, *args, **kwargs)
+		leginon.acquisition.Acquisition.setSettings(self, *args, **kwargs)
 		self.update()
 	'''
 
@@ -219,8 +221,8 @@ class Tomography(acquisition.Acquisition):
 		return 'ok'
 
 	def getPixelPosition(self, move_type, position=None):
-		scope_data = self.instrument.getData(leginondata.ScopeEMData)
-		camera_data = self.instrument.getData(leginondata.CameraEMData)
+		scope_data = self.instrument.getData(leginon.leginondata.ScopeEMData)
+		camera_data = self.instrument.getData(leginon.leginondata.CameraEMData)
 		if position is None:
 			position = {'x': 0.0, 'y': 0.0}
 		else:
@@ -228,14 +230,14 @@ class Tomography(acquisition.Acquisition):
 		client = self.calclients[move_type]
 		try:
 			pixel_position = client.itransform(position, scope_data, camera_data)
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except leginon.calibrationclient.NoMatrixCalibrationError, e:
 			raise CalibrationError(e)
 		# invert y and position
 		return {'x': pixel_position['col'], 'y': -pixel_position['row']}
 
 	def getParameterPosition(self, move_type, position=None):
-		scope_data = self.instrument.getData(leginondata.ScopeEMData)
-		camera_data = self.instrument.getData(leginondata.CameraEMData)
+		scope_data = self.instrument.getData(leginon.leginondata.ScopeEMData)
+		camera_data = self.instrument.getData(leginon.leginondata.CameraEMData)
 		if position is None:
 			position = {'x': 0.0, 'y': 0.0}
 		else:
@@ -245,14 +247,14 @@ class Tomography(acquisition.Acquisition):
 		position = {'row': position['y'], 'col': -position['x']}
 		try:
 			scope_data = client.transform(position, scope_data, camera_data)
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except leginon.calibrationclient.NoMatrixCalibrationError, e:
 			raise CalibrationError(e)
 		return scope_data[move_type]
 
 	def setPosition(self, move_type, position):
 		position = self.getParameterPosition(move_type, position)
 		initializer = {move_type: position}
-		position = leginondata.ScopeEMData(initializer=initializer)
+		position = leginon.leginondata.ScopeEMData(initializer=initializer)
 		self.instrument.setData(position)
 		return position[move_type]
 
@@ -264,8 +266,8 @@ class Tomography(acquisition.Acquisition):
 
 	def getCalibrations(self, presetdata=None):
 		if presetdata is None:
-			scope_data = self.instrument.getData(leginondata.ScopeEMData)
-			camera_data = self.instrument.getData(leginondata.CameraEMData)
+			scope_data = self.instrument.getData(leginon.leginondata.ScopeEMData)
+			camera_data = self.instrument.getData(leginon.leginondata.CameraEMData)
 			tem = scope_data['tem']
 			ccd_camera = camera_data['ccdcamera']
 			high_tension = scope_data['high tension']
@@ -413,9 +415,9 @@ class Tomography(acquisition.Acquisition):
 		if preset_mag_index is not None:
 			for i,mag in enumerate(allmags):
 				self.logger.info('Looking for good model at mag of %d' %(mag))
-				qpreset = leginondata.PresetData(tem=tem, ccdcamera=ccd, magnification=mag)
-				qimage = leginondata.AcquisitionImageData(preset=qpreset)
-				query_data = leginondata.TomographyPredictionData(image=qimage)
+				qpreset = leginon.leginondata.PresetData(tem=tem, ccdcamera=ccd, magnification=mag)
+				qimage = leginon.leginondata.AcquisitionImageData(preset=qpreset)
+				query_data = leginon.leginondata.TomographyPredictionData(image=qimage)
 				maxshift = 2.0e-8
 				raw_correlation_binning = 6
 				for n in (10, 100, 500, 1000):
@@ -487,9 +489,9 @@ class Tomography(acquisition.Acquisition):
 		# reverse y as in getPixelPosition
 		pixelshift['row'] = -params[1]*math.sin(params[0])
 		if pixelshift is not None:
-			fakescope = leginondata.ScopeEMData()
+			fakescope = leginon.leginondata.ScopeEMData()
 			fakescope.friendly_update(presetdata)
-			fakecam = leginondata.CameraEMData()
+			fakecam = leginon.leginondata.CameraEMData()
 			fakecam.friendly_update(presetdata)
 
 			# get high tension from scope		
@@ -506,7 +508,7 @@ class Tomography(acquisition.Acquisition):
 		initializer = {
 			'session': self.session,
 		}
-		query_data = leginondata.TiltSeriesData(initializer=initializer)
+		query_data = leginon.leginondata.TiltSeriesData(initializer=initializer)
 		results = self.research(query_data)
 		results.reverse()
 
@@ -524,7 +526,7 @@ class Tomography(acquisition.Acquisition):
 		initializer = {
 			'session': self.session,
 		}
-		query_data = leginondata.TomographyPredictionData(initializer=initializer)
+		query_data = leginon.leginondata.TomographyPredictionData(initializer=initializer)
 		results = self.research(query_data)
 		results.reverse()
 
@@ -554,13 +556,13 @@ class Tomography(acquisition.Acquisition):
 		self.logger.info(m)
 
 	def alignZeroLossPeak(self, preset_name):
-		request_data = leginondata.AlignZeroLossPeakData()
+		request_data = leginon.leginondata.AlignZeroLossPeakData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
 
 	def measureDose(self, preset_name):
-		request_data = leginondata.MeasureDoseData()
+		request_data = leginon.leginondata.MeasureDoseData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
@@ -572,7 +574,7 @@ class Tomography(acquisition.Acquisition):
 		if self.settings['measure dose']:
 			self.measureDose(preset_name)
 		try:
-			acquisition.Acquisition.processTargetData(self, *args, **kwargs)
+			leginon.acquisition.Acquisition.processTargetData(self, *args, **kwargs)
 		except Exception, e:
 			self.logger.error('Failed to process the tomo target: %s' % e)
 
@@ -588,7 +590,7 @@ class Tomography(acquisition.Acquisition):
 		try:
 				#This does not seem to work right
 			result = self.calclients['beam tilt'].measureDefocusStig(*args)
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except leginon.calibrationclient.NoMatrixCalibrationError, e:
 			self.logger.error('Measurement failed without calibration: %s' % e)
 			return None
 		delta_defocus = result['defocus']
