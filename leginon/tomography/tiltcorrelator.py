@@ -1,10 +1,13 @@
 import math
-from pyami import correlator, peakfinder, imagefun
 import numpy
 import scipy.ndimage
-import leginondata
-import tiltcorrector
-import node
+
+from pyami import correlator, peakfinder, imagefun
+
+import leginon.leginondata
+
+import leginon.tiltcorrector
+
 
 def hanning(size):
 	border = size >> 5
@@ -21,7 +24,7 @@ class Correlator(object):
 		self.correlation = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder(lpf)
 		self.node = node
-		self.tiltcorrector = tiltcorrector.VirtualStageTilter(self.node)
+		self.tiltcorrector = leginon.tiltcorrector.VirtualStageTilter(self.node)
 		self.reset()
 		self.setCorrelationBinning(correlation_binning)
 		self.hanning = None
@@ -67,9 +70,9 @@ class Correlator(object):
 		if self.correlation_binning != 1:
 			image = imagefun.bin(image, int(self.correlation_binning))
 		# create new imagedata according to the additional bin
-		camdata = leginondata.CameraEMData(initializer =imagedata['camera'])
+		camdata = leginon.leginondata.CameraEMData(initializer =imagedata['camera'])
 		camdata['binning'] = {'x':camdata['binning']['x']*self.correlation_binning, 'y':camdata['binning']['y']*self.correlation_binning}
-		newimagedata = leginondata.AcquisitionImageData(initializer=imagedata)
+		newimagedata = leginon.leginondata.AcquisitionImageData(initializer=imagedata)
 		newimagedata['camera']=camdata
 		mean = image.mean()
 		image -= mean

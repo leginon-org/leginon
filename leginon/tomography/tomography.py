@@ -9,10 +9,10 @@ import leginon.event
 import leginon.acquisition
 import leginon.gui.wx.tomography.Tomography
 
-import collection
-import tilts
-import exposure
-import prediction
+import leginon.tomography.collection
+import leginon.tomography.tilts
+import leginon.tomography.exposure
+import leginon.tomography.prediction
 
 class CalibrationError(Exception):
 	pass
@@ -72,9 +72,9 @@ class Tomography(leginon.acquisition.Acquisition):
 				leginon.calibrationclient.BeamTiltCalibrationClient(self)
 		self.btcalclient = self.calclients['beam tilt'] 
 
-		self.tilts = tilts.Tilts()
-		self.exposure = exposure.Exposure()
-		self.prediction = prediction.Prediction()
+		self.tilts = leginon.tomography.tilts.Tilts()
+		self.exposure = leginon.tomography.exposure.Exposure()
+		self.prediction = leginon.tomography.prediction.Prediction()
 		self.loadPredictionInfo()
 		self.first_tilt_direction = 1
 
@@ -97,7 +97,7 @@ class Tomography(leginon.acquisition.Acquisition):
 
 		try:
 			self.exposure.update(dose=dose, exposure=exposure_time)
-		except exposure.LimitError, e:
+		except leginon.tomography.exposure.LimitError, e:
 			s = 'Exposure time limit exceeded for preset \'%s\': %s.'
 			s %= (preset['name'], e)
 			self.logger.warning(s)
@@ -146,9 +146,9 @@ class Tomography(leginon.acquisition.Acquisition):
 								 exposure=exposure_time,
 								 exposure_min=exposure_min,
 								 exposure_max=exposure_max)
-		except exposure.LimitError, e:
+		except leginon.tomography.exposure.LimitError, e:
 			self.logger.warning('Exposure time out of range: %s.' % e)
-		except exposure.Default, e:
+		except leginon.tomography.exposure.Default, e:
 			self.logger.warning('Using preset exposure time: %s.' % e)
 		else:
 			try:
@@ -192,7 +192,7 @@ class Tomography(leginon.acquisition.Acquisition):
 			self.first_tilt_direction = 1
 		self.initGoodPredictionInfo(presetdata)
 
-		collect = collection.Collection()
+		collect = leginon.tomography.collection.Collection()
 		collect.node = self
 		collect.session = self.session
 		collect.logger = self.logger
@@ -210,9 +210,9 @@ class Tomography(leginon.acquisition.Acquisition):
 
 		try:
 			collect.start()
-		except collection.Abort:
+		except leginon.tomography.collection.Abort:
 			return 'aborted'
-		except collection.Fail:
+		except leginon.tomography.collection.Fail:
 			return 'failed'
 
 		# ignoring wait for process

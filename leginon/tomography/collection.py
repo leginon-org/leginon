@@ -1,9 +1,10 @@
 import math
 import time
-import leginondata
-import tiltcorrelator
-import tiltseries
 import numpy
+
+import leginon.leginondata
+import leginon.tomography.tiltcorrelator
+import leginon.tomography.tiltseries
 
 class Abort(Exception):
 	pass
@@ -19,13 +20,13 @@ class Collection(object):
 		self.theta = 0.0
 
 	def saveInstrumentState(self):
-		self.instrument_state = self.instrument.getData(leginondata.ScopeEMData)
+		self.instrument_state = self.instrument.getData(leginon.leginondata.ScopeEMData)
 
 	def restoreInstrumentState(self):
 		keys = ['stage position', 'defocus', 'image shift', 'magnification']
 		if self.instrument_state is None:
 			return
-		instrument_state = leginondata.ScopeEMData()
+		instrument_state = leginon.leginondata.ScopeEMData()
 		for key in keys:
 			instrument_state[key] = self.instrument_state[key]
 		self.instrument.setData(instrument_state)
@@ -76,7 +77,7 @@ class Collection(object):
 		self.logger.info('Instrument state saved.')
 
 		self.prediction.fitdata = self.settings['fit data points']
-		self.tilt_series = tiltseries.TiltSeries(self.node, self.settings,
+		self.tilt_series = leginon.tomography.tiltseries.TiltSeries(self.node, self.settings,
 												 self.session, self.preset,
 												 self.target, self.emtarget)
 		self.tilt_series.save()
@@ -92,7 +93,7 @@ class Collection(object):
 			correlation_bin = self.calcBinning(maxsize, 256, 512)
 		else:
 			correlation_bin = 1
-		self.correlator = tiltcorrelator.Correlator(self.node, self.theta, correlation_bin, lpf)
+		self.correlator = leginon.tomography.tiltcorrelator.Correlator(self.node, self.theta, correlation_bin, lpf)
 		if self.settings['run buffer cycle']:
 			self.runBufferCycle()
 
@@ -380,7 +381,7 @@ class Collection(object):
 			'measured defocus': measured_defocus,
 			'measured fit': measured_fit,
 		}
-		tomo_prediction_data = leginondata.TomographyPredictionData(initializer=initializer)
+		tomo_prediction_data = leginon.leginondata.TomographyPredictionData(initializer=initializer)
 					
 		self.node.publish(tomo_prediction_data, database=True, dbforce=True)
 
