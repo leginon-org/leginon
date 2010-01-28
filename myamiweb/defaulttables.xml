@@ -363,6 +363,16 @@
       type="text"
       default="DEFAULT 'NULL'"
     />
+    <field
+      name="firstname"
+      type="text"
+      default="D"inc/jpgraph_canvas.php"EFAULT 'NULL'"
+    />
+    <field
+      name="lastname"
+      type="text"
+      default="DEFAULT 'NULL'"
+    />
     <field 
       name="password" 
       type="char(32)"
