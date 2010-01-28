@@ -1349,10 +1349,7 @@ def datatype(in_dict, join=None, parentclass=None):
 			else:
 				## not in result, but create reference
 				dclassname = tablename
-				print 'MODULENAME', modulename
-				print 'DCLASSNAME', dclassname
 				dclass = findDataClass(modulename, dclassname)
-				print 'DCLASS', dclass
 				if dclass is None:
 					continue
 				# host and name should come from parent object
