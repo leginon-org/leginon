@@ -359,7 +359,7 @@
       default="DEFAULT 'NULL'"
     />
     <field 
-      name="full name" 
+      name="fullname" 
       type="text"
       default="DEFAULT 'NULL'"
     />
