@@ -1,13 +1,14 @@
-import imageprocessor
 import os
-import gui.wx.RaptorProcessor
+import shutil
+
+import imageprocessor
+import leginon.gui.wx.RaptorProcessor
 import leginondata
 import runRaptor
 from pyami import mrc
-import shutil
 
 class RaptorProcessor(imageprocessor.ImageProcessor):
-	panelclass = gui.wx.RaptorProcessor.Panel
+	panelclass = leginon.gui.wx.RaptorProcessor.Panel
 	settingsclass = leginondata.RaptorProcessorSettingsData
 	defaultsettings = dict(imageprocessor.ImageProcessor.defaultsettings)
 	defaultsettings.update({

@@ -1,28 +1,31 @@
 import math
 import threading
-import calibrationclient
-import leginondata
-import event
-import acquisition
-import gui.wx.tomography.TomographySimu
+import time
+
+import leginon.calibrationclient
+import leginon.leginondata
+import leginon.event
+import leginon.acquisition
+import leginon.gui.wx.tomography.TomographySimu
+
 import collectionsimu as collection
 import tilts
 import exposure
 import prediction
-import time
+
 from pyami import correlator, peakfinder
 
 class CalibrationError(Exception):
 	pass
 
-class TomographySimu(acquisition.Acquisition):
-	eventinputs = acquisition.Acquisition.eventinputs
-	eventoutputs = acquisition.Acquisition.eventoutputs + \
-					[event.AlignZeroLossPeakPublishEvent,
-						event.MeasureDosePublishEvent]
+class TomographySimu(leginon.acquisition.Acquisition):
+	eventinputs = leginon.acquisition.Acquisition.eventinputs
+	eventoutputs = leginon.acquisition.Acquisition.eventoutputs + \
+					[leginon.event.AlignZeroLossPeakPublishEvent,
+						leginon.event.MeasureDosePublishEvent]
 
-	panelclass = gui.wx.tomography.TomographySimu.Panel
-	settingsclass = leginondata.TomographySimuSettingsData
+	panelclass = leginon.gui.wx.tomography.TomographySimu.Panel
+	settingsclass = leginon.leginondata.TomographySimuSettingsData
 
 	defaultsettings = {
 		'preset order': [],
@@ -41,11 +44,11 @@ class TomographySimu(acquisition.Acquisition):
 	}
 
 	def __init__(self, *args, **kwargs):
-		acquisition.Acquisition.__init__(self, *args, **kwargs)
+		leginon.acquisition.Acquisition.__init__(self, *args, **kwargs)
 		self.calclients['pixel size'] = \
-				calibrationclient.PixelSizeCalibrationClient(self)
+				leginon.calibrationclient.PixelSizeCalibrationClient(self)
 		self.calclients['beam tilt'] = \
-				calibrationclient.BeamTiltCalibrationClient(self)
+				leginon.calibrationclient.BeamTiltCalibrationClient(self)
 		self.btcalclient = self.calclients['beam tilt'] 
 
 		self.tilts = tilts.Tilts()
@@ -94,12 +97,12 @@ class TomographySimu(acquisition.Acquisition):
 			self.simuseries = allseries_num[0]
 			self.logger.warning('previously chosen series invalid, reset to %d' % self.simuseries)
 		series_num = self.simuseries
-		qseries = leginondata.TiltSeriesData(session=self.session,number=series_num)
+		qseries = leginon.leginondata.TiltSeriesData(session=self.session,number=series_num)
 		result = qseries.query()
 		if result:
 			seriesdata = result[0]
 		else:
-			qseries = leginondata.TiltSeriesData(session=self.session)
+			qseries = leginon.leginondata.TiltSeriesData(session=self.session)
 			results = qseries.query()
 			if len(results) >= series_num:
 				seriesdata = results[-series_num]
@@ -114,7 +117,7 @@ class TomographySimu(acquisition.Acquisition):
 		return seriesdata
 
 	def getTiltSeriesPreset(self):
-		q = leginondata.AcquisitionImageData(session=self.session)
+		q = leginon.leginondata.AcquisitionImageData(session=self.session)
 		q['tilt series'] = self.simuseriesdata
 		results = q.query(readimages = False)
 		if len(results) > 0:
@@ -127,7 +130,7 @@ class TomographySimu(acquisition.Acquisition):
 			seriesdata = self.simuseriesdata
 		print "-----------------"
 		print sessiondata.dbid,seriesdata.dbid,seriesdata['number']
-		q = leginondata.AcquisitionImageData(session=sessiondata)
+		q = leginon.leginondata.AcquisitionImageData(session=sessiondata)
 		q['tilt series'] = seriesdata
 		results = q.query(readimages=False)
 		if results:
@@ -159,10 +162,10 @@ class TomographySimu(acquisition.Acquisition):
 	def getTiltSeriesNumbers(self):
 		#To Do: NEED TO exclude aborted series
 		seriesnumbers = []
-		q = leginondata.TiltSeriesData(session=self.session)
+		q = leginon.leginondata.TiltSeriesData(session=self.session)
 		results = q.query()
 		for result in results:
-			q = leginondata.AcquisitionImageData()
+			q = leginon.leginondata.AcquisitionImageData()
 			q['tilt series'] = result
 			imageresults = q.query(readimages=False)
 			if len(imageresults) > 0:
@@ -295,8 +298,8 @@ class TomographySimu(acquisition.Acquisition):
 		return 'ok'
 
 	def getPixelPosition(self, move_type, position=None):
-		scope_data = self.instrument.getData(leginondata.ScopeEMData)
-		camera_data = self.instrument.getData(leginondata.CameraEMData)
+		scope_data = self.instrument.getData(leginon.leginondata.ScopeEMData)
+		camera_data = self.instrument.getData(leginon.leginondata.CameraEMData)
 		if position is None:
 			position = {'x': 0.0, 'y': 0.0}
 		else:
@@ -304,14 +307,14 @@ class TomographySimu(acquisition.Acquisition):
 		client = self.calclients[move_type]
 		try:
 			pixel_position = client.itransform(position, scope_data, camera_data)
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except leginon.calibrationclient.NoMatrixCalibrationError, e:
 			raise CalibrationError(e)
 		# invert y and position
 		return {'x': pixel_position['col'], 'y': -pixel_position['row']}
 
 	def getParameterPosition(self, move_type, position=None):
-		scope_data = self.instrument.getData(leginondata.ScopeEMData)
-		camera_data = self.instrument.getData(leginondata.CameraEMData)
+		scope_data = self.instrument.getData(leginon.leginondata.ScopeEMData)
+		camera_data = self.instrument.getData(leginon.leginondata.CameraEMData)
 		if position is None:
 			position = {'x': 0.0, 'y': 0.0}
 		else:
@@ -321,14 +324,14 @@ class TomographySimu(acquisition.Acquisition):
 		position = {'row': position['y'], 'col': -position['x']}
 		try:
 			scope_data = client.transform(position, scope_data, camera_data)
-		except calibrationclient.NoMatrixCalibrationError, e:
+		except leginon.calibrationclient.NoMatrixCalibrationError, e:
 			raise CalibrationError(e)
 		return scope_data[move_type]
 
 	def setPosition(self, move_type, position):
 		position = self.getParameterPosition(move_type, position)
 		initializer = {move_type: position}
-		position = leginondata.ScopeEMData(initializer=initializer)
+		position = leginon.leginondata.ScopeEMData(initializer=initializer)
 		self.instrument.setData(position)
 		return position[move_type]
 
@@ -341,8 +344,8 @@ class TomographySimu(acquisition.Acquisition):
 	def getCalibrations(self, presetdata=None):
 		presetdata = self.presetdata
 		if presetdata is None:
-			scope_data = self.instrument.getData(leginondata.ScopeEMData)
-			camera_data = self.instrument.getData(leginondata.CameraEMData)
+			scope_data = self.instrument.getData(leginon.leginondata.ScopeEMData)
+			camera_data = self.instrument.getData(leginon.leginondata.CameraEMData)
 			tem = scope_data['tem']
 			ccd_camera = camera_data['ccdcamera']
 			high_tension = scope_data['high tension']
@@ -407,7 +410,7 @@ class TomographySimu(acquisition.Acquisition):
 		presetmag = presetdata['magnification']
 		presetpixelsize = self.calclients['pixel size'].retrievePixelSize(tem=tem, ccdcamera=ccd, mag=presetmag)
 		presetimage_pixel_size = presetpixelsize * presetdata['binning']['x']
-		q = leginondata.MagnificationsData(instrument=tem)
+		q = leginon.leginondata.MagnificationsData(instrument=tem)
 		results = q.query(results=1)
 		if len(results) > 0:
 			allmags = results[0]['magnifications']
@@ -443,7 +446,7 @@ class TomographySimu(acquisition.Acquisition):
 		hightension = imagedata['scope']['high tension']
 		if self.settings['model mag'] == 'saved value for this series':
 			#overwrite with saved values for the simutiltseries		
-			q = leginondata.TomographyPredictionData(image=imagedata)
+			q = leginon.leginondata.TomographyPredictionData(image=imagedata)
 			results = q.query(results=1)
 			if len(results) > 0:
 				goodprediction = results[0]
@@ -453,9 +456,9 @@ class TomographySimu(acquisition.Acquisition):
 		if preset_mag_index is not None and goodprediction is not None:
 			for i,mag in enumerate(allmags):
 				self.logger.info('Looking for good model at mag of %d' %(mag))
-				qpreset = leginondata.PresetData(tem=tem, ccdcamera=ccd, magnification=mag)
-				qimage = leginondata.AcquisitionImageData(preset=qpreset)
-				query_data = leginondata.TomographyPredictionData(image=qimage)
+				qpreset = leginon.leginondata.PresetData(tem=tem, ccdcamera=ccd, magnification=mag)
+				qimage = leginon.leginondata.AcquisitionImageData(preset=qpreset)
+				query_data = leginon.leginondata.TomographyPredictionData(image=qimage)
 				maxshift = 2.0e-8
 				raw_correlation_binning = 6
 				for n in (10, 100, 500, 1000):
@@ -524,9 +527,9 @@ class TomographySimu(acquisition.Acquisition):
 		# reverse y as in getPixelPosition
 		pixelshift['row'] = -params[1]*math.sin(params[0])
 		if pixelshift is not None:
-			fakescope = leginondata.ScopeEMData()
+			fakescope = leginon.leginondata.ScopeEMData()
 			fakescope.friendly_update(presetdata)
-			fakecam = leginondata.CameraEMData()
+			fakecam = leginon.leginondata.CameraEMData()
 			fakecam.friendly_update(presetdata)
 
 			# get high tension from scope	
@@ -546,7 +549,7 @@ class TomographySimu(acquisition.Acquisition):
 		initializer = {
 			'session': self.session,
 		}
-		query_data = leginondata.TiltSeriesData(initializer=initializer)
+		query_data = leginon.leginondata.TiltSeriesData(initializer=initializer)
 		results = self.research(query_data)
 		results.reverse()
 		keys = []
@@ -563,7 +566,7 @@ class TomographySimu(acquisition.Acquisition):
 		initializer = {
 			'session': self.session,
 		}
-		query_data = leginondata.TomographyPredictionData(initializer=initializer)
+		query_data = leginon.leginondata.TomographyPredictionData(initializer=initializer)
 		results = self.research(query_data)
 		results.reverse()
 		first_tilt_series_number = 1
@@ -605,7 +608,7 @@ class TomographySimu(acquisition.Acquisition):
 
 	def processTargetData(self, *args, **kwargs):
 		try:
-			acquisition.Acquisition.processTargetData(self, *args, **kwargs)
+			leginon.acquisition.Acquisition.processTargetData(self, *args, **kwargs)
 		except Exception, e:
 			self.logger.error('Failed to process the tomo target: %s' % e)
 			raise

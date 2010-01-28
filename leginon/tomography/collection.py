@@ -3,8 +3,8 @@ import time
 import numpy
 
 import leginon.leginondata
-import leginon.tomography.tiltcorrelator
-import leginon.tomography.tiltseries
+import tiltcorrelator
+import tiltseries
 
 class Abort(Exception):
 	pass

@@ -1,9 +1,10 @@
 import math
 import time
-import leginondata
+import numpy
+
+import leginon.leginondata
 import tiltcorrelator
 import tiltseries
-import numpy
 
 class Abort(Exception):
 	pass
@@ -159,7 +160,7 @@ class Collection(object):
 		self.logger.info('Collection loop completed.')
 
 	def getPredictionInfo(self,imagedata):
-		q = leginondata.TomographyPredictionData(image=imagedata)
+		q = leginon.leginondata.TomographyPredictionData(image=imagedata)
 		results = q.query(results=1)
 		if len(results) > 0:
 			return results[0]

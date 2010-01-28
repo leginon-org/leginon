@@ -10,6 +10,7 @@ import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
 import leginon.gui.wx.ImagePanel
+import leginon.gui.wx.ImageProcessor
 
 class Panel(leginon.gui.wx.ImageProcessor.Panel):
 	icon = 'fftmaker'
