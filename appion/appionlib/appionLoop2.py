@@ -19,7 +19,6 @@ from appionlib import apProject
 #leginon
 from appionlib import appionScript
 from pyami import mem
-import leginondata
 
 class AppionLoop(appionScript.AppionScript):
 	#=====================

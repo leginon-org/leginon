@@ -8,7 +8,7 @@ import glob
 import shutil
 import math
 import subprocess
-import leginondata
+import leginon.leginondata
 from appionlib import apXml
 from appionlib import apParam
 from appionlib import apDisplay
@@ -189,7 +189,7 @@ def getStackInfo(params):
 
 	#get image params of the particle (dereference keep image from loading as would partdata['image'])
 	imageref = partdata.special_getitem('image', dereference = False)
-	imgdata = leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages=False)
+	imgdata = leginon.leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages=False)
 
 	#apXml.fancyPrintDict(stackrundata)
 	#apXml.fancyPrintDict(stackparamdata)

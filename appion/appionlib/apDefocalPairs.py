@@ -5,7 +5,7 @@ import numpy
 import pyami.peakfinder as peakfinder
 import pyami.correlator as correlator
 #leginon
-import leginondata
+import leginon.leginondata
 #appion
 from appionlib import appiondata
 from appionlib import apImage
@@ -26,10 +26,10 @@ def getDefocusPair(imgdata):
 	target=imgdata['target']
 	if target is None:
 		return None
-	qtarget=leginondata.AcquisitionImageTargetData()
+	qtarget=leginon.leginondata.AcquisitionImageTargetData()
 	qtarget['image'] = target['image']
 	qtarget['number'] = target['number']
-	qsibling=leginondata.AcquisitionImageData(target=qtarget)
+	qsibling=leginon.leginondata.AcquisitionImageData(target=qtarget)
 	origid=imgdata.dbid
 	allsiblings = qsibling.query(readimages=False)
 	defocpair=None
@@ -116,7 +116,7 @@ def getTransformedDefocPair(imgdata, direction):
 	simgresults=simgq.query(readimages=False)
 	if simgresults:
 		sbimgref = simgresults[0].special_getitem(sto,dereference = False)
-		sbimgdata = leginondata.AcquisitionImageData.direct_query(sbimgref.dbid, readimages = False)
+		sbimgdata = leginon.leginondata.AcquisitionImageData.direct_query(sbimgref.dbid, readimages = False)
 	else:
 		return None
 	return sbimgdata

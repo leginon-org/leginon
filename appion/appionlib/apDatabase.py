@@ -10,7 +10,7 @@ import shutil
 import sinedon
 import sinedon.data as data
 #leginon
-import leginondata
+import leginon.leginondata
 #appion
 from appionlib import apDisplay
 from appionlib import appiondata
@@ -51,7 +51,7 @@ def getSpecificImagesFromDB(imglist):
 			imgname = imgname[:-4]
 		if '/' in imgname:
 			imgname = os.path.basename(imgname)
-		imgquery = leginondata.AcquisitionImageData(filename=imgname)
+		imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname)
 		imgres   = imgquery.query(readimages=False, results=1)
 		if len(imgres) >= 1:
 			imgtree.append(imgres[0])
@@ -65,9 +65,9 @@ def getImagesFromDB(session, preset):
 	returns list of image names from DB
 	"""
 	apDisplay.printMsg("Querying database for preset '"+preset+"' images from session '"+session+"' ... ")
-	sessionq = leginondata.SessionData(name=session)
-	presetq=leginondata.PresetData(name=preset)
-	imgquery = leginondata.AcquisitionImageData()
+	sessionq = leginon.leginondata.SessionData(name=session)
+	presetq=leginon.leginondata.PresetData(name=preset)
+	imgquery = leginon.leginondata.AcquisitionImageData()
 	imgquery['preset']  = presetq
 	imgquery['session'] = sessionq
 	imgtree = imgquery.query(readimages=False)
@@ -85,15 +85,15 @@ def getAllImagesFromDB(session):
 	returns list of image data based on session name
 	"""
 	apDisplay.printMsg("Querying database for all images from session '"+session+"' ... ")
-	sessionq= leginondata.SessionData(name=session)
-	imgquery = leginondata.AcquisitionImageData()
+	sessionq= leginon.leginondata.SessionData(name=session)
+	imgquery = leginon.leginondata.AcquisitionImageData()
 	imgquery['session'] = sessionq
 	imgtree = imgquery.query(readimages=False)
 	return imgtree
 
 def getExpIdFromSessionName(sessionname):
 	apDisplay.printMsg("Looking up session, "+sessionname)
-	sessionq = leginondata.SessionData(name=sessionname)
+	sessionq = leginon.leginondata.SessionData(name=sessionname)
 	sessioninfo = sessionq.query(readimages=False, results=1)
 	if sessioninfo:
 		return sessioninfo[0].dbid
@@ -102,7 +102,7 @@ def getExpIdFromSessionName(sessionname):
 
 def getSessionDataFromSessionName(sessionname):
 	apDisplay.printMsg("Looking up session, "+sessionname)
-	sessionq = leginondata.SessionData(name=sessionname)
+	sessionq = leginon.leginondata.SessionData(name=sessionname)
 	sessioninfo = sessionq.query(readimages=False, results=1)
 	if sessioninfo:
 		return sessioninfo[0]
@@ -111,8 +111,8 @@ def getSessionDataFromSessionName(sessionname):
 
 def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
 	apDisplay.printMsg("Looking up session, "+ str(sessiondata.dbid));
-	tiltq = leginondata.TiltSeriesData()
-	tiltseriesq = leginondata.TiltSeriesData(session=sessiondata,number=tiltseries)
+	tiltq = leginon.leginondata.TiltSeriesData()
+	tiltseriesq = leginon.leginondata.TiltSeriesData(session=sessiondata,number=tiltseries)
 	tiltseriesdata = tiltseriesq.query(readimages=False,results=1)
 	if tiltseriesdata:
 		return tiltseriesdata[0]
@@ -123,7 +123,7 @@ def getImageData(imgname):
 	"""
 	get image data object from database
 	"""
-	imgquery = leginondata.AcquisitionImageData(filename=imgname)
+	imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname)
 	imgtree  = imgquery.query(results=1, readimages=False)
 	if imgtree:
 		#imgtree[0].holdimages=False
@@ -132,7 +132,7 @@ def getImageData(imgname):
 		apDisplay.printError("Image "+imgname+" not found in database\n")
 
 def getImgDir(sessionname):
-	sessionq = leginondata.SessionData(name=sessionname)
+	sessionq = leginon.leginondata.SessionData(name=sessionname)
 	sessiondata = sessionq.query()
 	imgdir = os.path.abspath(sessiondata[0]['image path'])
 	return imgdir
@@ -141,7 +141,7 @@ def getSessionName(imgname):
 	"""
 	get session name from database
 	"""
-	imgquery = leginondata.AcquisitionImageData(filename=imgname)
+	imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname)
 	imgtree  = imgquery.query(results=1, readimages=False)
 	if 'session' in imgtree[0]:
 		return imgtree[0]['session']['name']
@@ -153,16 +153,16 @@ def getTiltAngleDeg(imgdata):
 
 def getTiltAngleDegFromParticle(partdata):
 	imageref = partdata.special_getitem('image', dereference=False)
-	imgdata = leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages=False)
+	imgdata = leginon.leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages=False)
 	degrees = imgdata['scope']['stage position']['a']*180.0/math.pi
 	return degrees
 
 def getTiltAnglesDegFromTransform(transformdata):
 	imageref1 = transformdata.special_getitem('image1', dereference=False)
-	imgdata1 = leginondata.AcquisitionImageData.direct_query(imageref1.dbid, readimages=False)
+	imgdata1 = leginon.leginondata.AcquisitionImageData.direct_query(imageref1.dbid, readimages=False)
 	degrees1 = imgdata1['scope']['stage position']['a']*180.0/math.pi
 	imageref2 = transformdata.special_getitem('image2', dereference=False)
-	imgdata2 = leginondata.AcquisitionImageData.direct_query(imageref2.dbid, readimages=False)
+	imgdata2 = leginon.leginondata.AcquisitionImageData.direct_query(imageref2.dbid, readimages=False)
 	degrees2 = imgdata2['scope']['stage position']['a']*180.0/math.pi
 	return degrees1, degrees2
 
@@ -175,7 +175,7 @@ def getPixelSize(imgdata):
 	multiplies by binning and also by 1e10 to return image pixel size in angstroms
 	shouldn't have to lookup db already should exist in imgdict
 	"""
-	pixelsizeq=leginondata.PixelSizeCalibrationData()
+	pixelsizeq=leginon.leginondata.PixelSizeCalibrationData()
 	pixelsizeq['magnification'] = imgdata['scope']['magnification']
 	pixelsizeq['tem'] = imgdata['scope']['tem']
 	pixelsizeq['ccdcamera'] = imgdata['camera']['ccdcamera']
@@ -196,7 +196,7 @@ def getImgSize(imgdict):
 		return (imgdict['image'].shape)[1]
 	fname = imgdict['filename']
 	# get image size (in pixels) of the given mrc file
-	imageq=leginondata.AcquisitionImageData(filename=fname)
+	imageq=leginon.leginondata.AcquisitionImageData(filename=fname)
 	imagedata=imageq.query(results=1, readimages=False)
 	if imagedata:
 		size=int(imagedata[0]['camera']['dimension']['y'])
@@ -207,7 +207,7 @@ def getImgSize(imgdict):
 
 def getImgSizeFromName(imgname):
 	# get image size (in pixels) of the given mrc file
-	imageq=leginondata.AcquisitionImageData(filename=imgname)
+	imageq=leginon.leginondata.AcquisitionImageData(filename=imgname)
 	imagedata=imageq.query(results=1, readimages=False)
 	if imagedata:
 		size=int(imagedata[0]['camera']['dimension']['y'])
@@ -311,7 +311,7 @@ def getDarkNorm(sessionname, cameraconfig):
 	"""
 	return the most recent dark and norm image from the given session
 	"""
-	camquery = leginondata.CorrectorCamstateData()
+	camquery = leginon.leginondata.CorrectorCamstateData()
 	for i in ('dimension', 'binning', 'offset'):
 		try:
 			camquery[i] = cameraconfig[i]
@@ -324,10 +324,10 @@ def getDarkNorm(sessionname, cameraconfig):
 		return cache[key]
 
 	print 'querying dark,norm'
-	sessionquery = leginondata.SessionData(name=sessionname)
-	darkquery = leginondata.DarkImageData(session=sessionquery, camstate=camquery)
+	sessionquery = leginon.leginondata.SessionData(name=sessionname)
+	darkquery = leginon.leginondata.DarkImageData(session=sessionquery, camstate=camquery)
 	#print 'DARKQUERY', darkquery
-	normquery = leginondata.NormImageData(session=sessionquery, camstate=camquery)
+	normquery = leginon.leginondata.NormImageData(session=sessionquery, camstate=camquery)
 	darkdata = darkquery.query(results=1)
 	dark = darkdata[0]['image']
 	#print darkdata[0]
@@ -348,12 +348,12 @@ def getImgViewerStatus(imgdata):
 	see 'ImageStatusData' table in dbemdata
 	or 'viewer_pref_image' table in dbemdata
 	"""
-	#statusq = leginondata.ImageStatusData()
+	#statusq = leginon.leginondata.ImageStatusData()
 	#statusq['image'] = imgdata
 	#statusdata = statusq.query(results=1)
 
 	### quick fix to get status from viewer_pref_image
-	dbconf=sinedon.getConfig('leginondata')
+	dbconf=sinedon.getConfig('leginon.leginondata')
 	db=sinedon.sqldb.sqlDB(**dbconf)
 	imageId=imgdata.dbid
 	q="select `status` from "+dbconf['db']+".`viewer_pref_image` where imageId=%i" % (imageId,)
@@ -388,7 +388,7 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 		print "skipping set viewer status"
 		return
 
-	dbconf=sinedon.getConfig('leginondata')
+	dbconf=sinedon.getConfig('leginon.leginondata')
 	db=sinedon.sqldb.sqlDB(**dbconf)
 	imageId=imgdata.dbid
 	q="SELECT `status` FROM "+dbconf['db']+".`viewer_pref_image` WHERE imageId=%i" % (imageId,)

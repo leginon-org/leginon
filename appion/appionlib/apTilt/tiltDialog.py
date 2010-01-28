@@ -2,7 +2,7 @@ import wx
 import numpy
 import pprint
 from appionlib import apDisplay
-from gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
+from leginon.gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 try:
 	import radermacher
 except:

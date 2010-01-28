@@ -18,12 +18,12 @@ from appionlib import apFindEM
 from appionlib import filterLoop
 
 #Leginon
-import leginondata
-import polygon
+import leginon.leginondata
+import leginon.polygon
 try:
-	from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
+	from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
 except ImportError:
-	from  gui.wx import ImageViewer
+	from  leginon.gui.wx import ImageViewer
 	ImagePanel = ImageViewer
 	ImagePanelTools = ImageViewer
 	TargetPanel = ImageViewer
@@ -150,7 +150,7 @@ class MaskApp(manualpicker.PickerApp):
 			return tuple(clist)
 		vertices = map(reversexy,vertices)
 
-		polygonimg = polygon.filledPolygon(self.panel.imagedata.shape,vertices)
+		polygonimg = leginon.polygon.filledPolygon(self.panel.imagedata.shape,vertices)
 		type(polygonimg)
 		self.panel.maskimg = self.panel.maskimg + polygonimg
 
@@ -261,7 +261,7 @@ class manualPicker(filterLoop.FilterLoop):
 
 	def checkConflicts(self):
 		if self.params['commit'] and self.params['continue']==False:
-			q = leginondata.SessionData(name=self.params['sessionname'])
+			q = leginon.leginondata.SessionData(name=self.params['sessionname'])
 			results = q.query(results=1)
 			sessiondata = results[0]
 			maskname = self.params['runname']

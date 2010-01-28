@@ -13,8 +13,6 @@ import os
 import sys
 import shutil
 import re
-#leginon
-import leginondata
 #appion
 from appionlib import appionScript
 

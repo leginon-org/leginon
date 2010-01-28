@@ -15,8 +15,6 @@ import shutil
 import re
 #pyami
 from pyami import mrc
-#leginon
-import leginondata
 #appion
 from appionlib import appionScript
 from appionlib import appiondata

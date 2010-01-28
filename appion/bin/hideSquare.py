@@ -7,10 +7,10 @@ import sinedon
 import MySQLdb
 from appionlib import apDisplay
 from appionlib import apDatabase
-import leginondata
+import leginon.leginondata
 
 def hideImage(imgid):
-	imgdata=leginondata.AcquisitionImageData.direct_query(imgid)
+	imgdata=leginon.leginondata.AcquisitionImageData.direct_query(imgid)
 	apDatabase.setImgViewerStatus(imgdata, False)
 
 if __name__ == '__main__':
@@ -19,7 +19,7 @@ if __name__ == '__main__':
 		print "Usage: hideSquare.py <square id>"
 	squareid = int(sys.argv[1])
 
-	dbconf = sinedon.getConfig('leginondata')
+	dbconf = sinedon.getConfig('leginon.leginondata')
 	db     = MySQLdb.connect(**dbconf)
 	cursor = db.cursor()
 

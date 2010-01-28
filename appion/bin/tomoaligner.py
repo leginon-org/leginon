@@ -17,8 +17,6 @@ import subprocess
 import math
 #pyami
 from pyami import mrc
-#leginon
-import leginondata
 #appion
 from appionlib import appionScript
 from appionlib import appiondata

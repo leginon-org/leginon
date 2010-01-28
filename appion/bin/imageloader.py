@@ -12,9 +12,9 @@ from appionlib import apDatabase
 from appionlib import apDisplay
 from appionlib import apProject
 #leginon
-import leginondata
-import project
-import leginonconfig
+import leginon.leginondata
+import leginon.project
+import leginon.leginonconfig
 #pyami
 from pyami import mrc
 
@@ -25,7 +25,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		appionScript OVERRIDE
 		"""
 		try:
-			self.projectdata = project.ProjectData()
+			self.projectdata = leginon.project.ProjectData()
 		except:
 			self.projectdata = None
 		self.processcount = 0
@@ -71,7 +71,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		#There is no place in Appion script for this special case
 
 
-		sessionq = leginondata.SessionData(name=self.params['sessionname'])
+		sessionq = leginon.leginondata.SessionData(name=self.params['sessionname'])
 		sessiondatas = sessionq.query()
 		if len(sessiondatas) > 0:
 			### METHOD 1 : session already exists
@@ -86,12 +86,12 @@ class ImageLoader(appionLoop2.AppionLoop):
 			### METHOD 2 : create new session
 			apDisplay.printColor("Creating a new session", "cyan")
 			try:
-				directory = leginonconfig.mapPath(leginonconfig.IMAGE_PATH)
+				directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
 			except AttributeError:
 				apDisplay.printWarning("Could not set directory")
 				directory = ''
 			if self.params['userid'] is not None:
-				userdata = leginondata.UserData.direct_query(self.params['userid'])
+				userdata = leginon.leginondata.UserData.direct_query(self.params['userid'])
 			else:
 				userdata = None
 			sessiondata = self.createSession(userdata, self.params['sessionname'], self.params['description'], directory)
@@ -214,7 +214,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			return False
 		name = info['filename']
 		# check to see if image of the same name is already in leginon
-		imgq = leginondata.AcquisitionImageData(session=self.session,filename=name)
+		imgq = leginon.leginondata.AcquisitionImageData(session=self.session,filename=name)
 		results = imgq.query(readimages=False)
 		if results:
 			apDisplay.printWarning("File %s.mrc exists at the destination" % name)
@@ -269,21 +269,21 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 	#=====================
 	def createSession(self, user, name, description, directory):
-		imagedirectory = os.path.join(leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
+		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
 		initializer = {
 			'name': name,
 			'comment': description,
 			'user': user,
 			'image path': imagedirectory,
 		}
-		sessionq = leginondata.SessionData(initializer=initializer)
+		sessionq = leginon.leginondata.SessionData(initializer=initializer)
 		return self.publish(sessionq)
 
 	#=====================
 	def linkSessionProject(self, sessiondata, projectid):
 		if self.projectdata is None:
 			raise RuntimeError('Cannot link session, not connected to database.')
-		projectsession = project.ProjectExperiment(projectid, sessiondata['name'])
+		projectsession = leginon.project.ProjectExperiment(projectid, sessiondata['name'])
 		experiments = self.projectdata.getProjectExperiments()
 		experiments.insert([projectsession.dumpdict()])
 
@@ -361,7 +361,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			else:
 				name = fullname
 		else:	
-			imgq = leginondata.AcquisitionImageData(session=self.session)
+			imgq = leginon.leginondata.AcquisitionImageData(session=self.session)
 			results = imgq.query(readimages=False)
 			if results:
 				imgcount = len(results)
@@ -378,7 +378,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			divide = float(self.processcount)/self.params['tiltgroup']
 			self.processcount += 1
 			residual = divide - math.floor(divide)
-			tiltq = leginondata.TiltSeriesData(session=self.session)
+			tiltq = leginon.leginondata.TiltSeriesData(session=self.session)
 			results = tiltq.query(results=1,readimages=False)
 			if residual > 0:
 				return results[0]
@@ -387,32 +387,32 @@ class ImageLoader(appionLoop2.AppionLoop):
 					series = results[0]['number']+1
 				else:
 					series = 1
-				tiltq = leginondata.TiltSeriesData(session=self.session,number=series)
+				tiltq = leginon.leginondata.TiltSeriesData(session=self.session,number=series)
 				return self.publish(tiltq)
 
 	#=====================
 	def getInstruments(self):
-		self.temdata = leginondata.InstrumentData.direct_query(self.params['scopeid'])
-		self.camdata = leginondata.InstrumentData.direct_query(self.params['cameraid'])
+		self.temdata = leginon.leginondata.InstrumentData.direct_query(self.params['scopeid'])
+		self.camdata = leginon.leginondata.InstrumentData.direct_query(self.params['cameraid'])
 
 	#=====================
 	def makeImageData(self,info):
-		scopedata = leginondata.ScopeEMData(session=self.session,tem =self.temdata)
+		scopedata = leginon.leginondata.ScopeEMData(session=self.session,tem =self.temdata)
 		scopedata['defocus'] = info['defocus']
 		scopedata['magnification'] = info['magnification']
 		scopedata['high tension'] = info['high tension']
 		if 'stage a' in info.keys():
-			tiltseriesdata = leginondata.TiltSeriesData(session=self.session)
+			tiltseriesdata = leginon.leginondata.TiltSeriesData(session=self.session)
 			scopedata['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':info['stage a']}
 		else:
 			scopedata['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':0.0}
-		cameradata = leginondata.CameraEMData(session=self.session,ccdcamera=self.camdata)
+		cameradata = leginon.leginondata.CameraEMData(session=self.session,ccdcamera=self.camdata)
 		cameradata['dimension'] = info['dimension']
 		cameradata['binning'] = info['binning']
-		presetdata = leginondata.PresetData(session=self.session,tem=self.temdata,ccdcamera= self.camdata)
+		presetdata = leginon.leginondata.PresetData(session=self.session,tem=self.temdata,ccdcamera= self.camdata)
 		presetdata['name'] = 'upload'
 		presetdata['magnification'] = info['magnification']
-		imgdata = leginondata.AcquisitionImageData(session=self.session,scope=scopedata,camera=cameradata,preset=presetdata)
+		imgdata = leginon.leginondata.AcquisitionImageData(session=self.session,scope=scopedata,camera=cameradata,preset=presetdata)
 		imgdata['tilt series'] = self.getTiltSeries()
 		imgdata['filename'] = info['filename']
 		imgdata['label'] = 'upload'
@@ -426,7 +426,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		# This updates the pixel size for the magnification on the
 		# instruments before the image is published.  Later query will look up the
 		# pixelsize calibration closest and before the published image 
-		caldata = leginondata.PixelSizeCalibrationData()
+		caldata = leginon.leginondata.PixelSizeCalibrationData()
 		caldata['magnification'] = info['magnification']
 		caldata['pixelsize'] = info['unbinned pixelsize']
 		caldata['comment'] = 'based on uploaded pixel size'

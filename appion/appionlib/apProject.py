@@ -6,15 +6,15 @@ import sys
 import time
 #appion
 from appionlib import apDisplay
-import leginondata
+import leginon.leginondata
 from appionlib import apStack
-import project
+import leginon.project
 from appionlib import appiondata
 
 #========================
 def getProjectIdFromSessionName(sessionname):
 	t0 = time.time()
-	projectdata = project.ProjectData()
+	projectdata = leginon.project.ProjectData()
 	projects = projectdata.getProjectExperiments()
 	projectid = None
 	for i in projects.getall():
@@ -28,7 +28,7 @@ def getProjectIdFromSessionName(sessionname):
 
 #========================
 def getProjectIdFromSessionId(sessionid):
-	sessiondata = leginondata.SessionData.direct_query(sessionid)
+	sessiondata = leginon.leginondata.SessionData.direct_query(sessionid)
 	sessionname = sessiondata['name']
 	projectid = getProjectIdFromSessionName(sessionname)
 	return projectid
@@ -49,7 +49,7 @@ def getProjectIdFromAlignStackId(alignstackid):
 
 #========================
 def getAppionDBFromProjectId(projectid):
-	projectdata = project.ProjectData()
+	projectdata = leginon.project.ProjectData()
 	projectdb = projectdata.getProcessingDB(projectid)
 	return projectdb
 

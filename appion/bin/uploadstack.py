@@ -16,9 +16,9 @@ from appionlib import apDisplay
 from appionlib import apDatabase
 from appionlib import appiondata
 #leginon
-#import leginondata
-import project
-import leginonconfig
+#import leginon.leginondata
+import leginon.project
+import leginon.leginonconfig
 
 class UploadStack(appionScript.AppionScript):
 	#=====================
@@ -98,7 +98,7 @@ class UploadStack(appionScript.AppionScript):
 			### die for now
 			sys.exit(1)
 			try:
-				directory = leginonconfig.mapPath(leginonconfig.IMAGE_PATH)
+				directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
 			except AttributeError:
 				apDisplay.printWarning("Could not set directory")
 				directory = ''
@@ -166,21 +166,21 @@ class UploadStack(appionScript.AppionScript):
 	#=====================
 	def createSession(self, user, name, description, directory):
 		sys.exit(1)
-		imagedirectory = os.path.join(leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
+		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
 		initializer = {
 			'name': name,
 			'comment': description,
 			'user': user,
 			'image path': imagedirectory,
 		}
-		sessionq = leginondata.SessionData(initializer=initializer)
+		sessionq = leginon.leginondata.SessionData(initializer=initializer)
 		return self.publish(sessionq)
 
 	#=====================
 	def linkSessionProject(self, sessiondata, projectid):
 		if self.projectdata is None:
 			raise RuntimeError('Cannot link session, not connected to database.')
-		projectsession = project.ProjectExperiment(projectid, sessiondata['name'])
+		projectsession = leginon.project.ProjectExperiment(projectid, sessiondata['name'])
 		experiments = self.projectdata.getProjectExperiments()
 		experiments.insert([projectsession.dumpdict()])
 

@@ -17,8 +17,8 @@ from appionlib import apImage
 from appionlib import apParam
 
 #Leginon
-import polygon
-from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
+import leginon.polygon
+from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
 import pyami
 import numpy
 
@@ -149,7 +149,7 @@ class PickerApp(wx.App):
 			return tuple(clist)
 		vertices = map(reversexy,vertices)
 
-		maskimg = polygon.filledPolygon(self.panel.imagedata.shape,vertices)
+		maskimg = leginon.polygon.filledPolygon(self.panel.imagedata.shape,vertices)
 		type(maskimg)
 		targets = self.panel.getTargets('Select Particles')
 		eliminated = 0

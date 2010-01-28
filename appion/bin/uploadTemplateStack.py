@@ -15,7 +15,6 @@ from appionlib import apTemplate
 from appionlib import apStack
 from appionlib import apDisplay
 from appionlib import apDatabase
-import leginondata
 from appionlib import appiondata
 from appionlib import apEMAN
 from appionlib import apFile

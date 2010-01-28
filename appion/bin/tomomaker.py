@@ -16,7 +16,7 @@ import re
 #pyami
 from pyami import mrc
 #leginon
-import leginondata
+import leginon.leginondata
 #appion
 from appionlib import appionScript
 from appionlib import appiondata
@@ -160,7 +160,7 @@ class tomoMaker(appionScript.AppionScript):
 		shutil.move(currenttomopath, origtomopath)
 		zprojectfile = apImod.projectFullZ(processdir, runname, seriesname,bin,True,False)
 		if commit:
-			q=leginondata.AcquisitionImageData()
+			q=leginon.leginondata.AcquisitionImageData()
 			zimagedata = apTomo.uploadZProjection(runname,imagelist[0],zprojectfile)
 			excludeimages = apTomo.getExcludedImageIds(ordered_imagelist,excludelist)
 			fullrundata = apTomo.insertFullTomoRun(sessiondata,processdir,runname,self.params['method'],excludeimages)

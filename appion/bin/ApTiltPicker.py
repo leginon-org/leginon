@@ -20,17 +20,17 @@ from appionlib import apDisplay
 from appionlib import apParam
 from appionlib.apTilt import tiltDialog, apTiltTransform, apTiltShift, tiltfile, autotilt
 ## leginon
-import polygon
-import gui.wx.TargetPanel
+import leginon.polygon
+import leginon.gui.wx.TargetPanel
 ## numpy/scipy
 import numpy
 import pyami.quietscipy
 from scipy import ndimage, optimize
 
 
-class TiltTargetPanel(gui.wx.TargetPanel.TargetImagePanel):
+class TiltTargetPanel(leginon.gui.wx.TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
-		gui.wx.TargetPanel.TargetImagePanel.__init__(self, parent, id,
+		leginon.gui.wx.TargetPanel.TargetImagePanel.__init__(self, parent, id,
 			callback=callback, tool=tool, mode="vertical")
 		if name is not None:
 			self.outname = name
@@ -509,7 +509,7 @@ class PickerApp(wx.App):
 			self.panel2.setTargets('Polygon', v2)
 			vert1b = [ tuple((v[1],v[0])) for v in vert1 ]
 			#elim particles
-			maskimg1 = polygon.filledPolygon(self.panel1.imagedata.shape, vert1b)
+			maskimg1 = leginon.polygon.filledPolygon(self.panel1.imagedata.shape, vert1b)
 			#self.panel1.setImage(maskimg1)
 			#print maskimg1.shape
 			for i in range(targets1.shape[0]):
@@ -528,7 +528,7 @@ class PickerApp(wx.App):
 			self.panel1.setTargets('Polygon', v1)
 			vert2b = [ tuple((v[1],v[0])) for v in vert2 ]
 			#elim particles
-			maskimg2 = polygon.filledPolygon(self.panel2.imagedata.shape, vert2b)
+			maskimg2 = leginon.polygon.filledPolygon(self.panel2.imagedata.shape, vert2b)
 			#self.panel2.setImage(maskimg2)
 			#print maskimg2.shape
 			for i in range(targets2.shape[0]):

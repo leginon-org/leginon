@@ -10,7 +10,7 @@ try:
 	no_wx = False
 except:
 	no_wx = True
-import leginondata
+import leginon.leginondata
 from pyami import arraystats, mrc, imagefun, numpil,correlator, peakfinder
 from appionlib import appiondata
 import libCVwrapper
@@ -95,7 +95,7 @@ def getFirstImage(tiltseries):
 def getImageList(tiltserieslist):
 	imagelist = []
 	for tiltseriesdata in tiltserieslist:
-		imquery = leginondata.AcquisitionImageData()
+		imquery = leginon.leginondata.AcquisitionImageData()
 		imquery['tilt series'] = tiltseriesdata
 		## query, but don't read image files yet, or else run out of memory
 		subimagelist = imquery.query(readimages=False)
@@ -124,7 +124,7 @@ def orderImageList(imagelist):
 	for i,imagedata in enumerate(imagelist):
 		tilt = imagedata['scope']['stage position']['a']*180/3.14159
 		if tilt < tiltseries['tilt start']+0.02 and tilt > tiltseries['tilt start']-0.02:
-			qimage = leginondata.AcquisitionImageData()
+			qimage = leginon.leginondata.AcquisitionImageData()
 			nextimagedata = imagelist[i+1]
 			nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
 			direction = (nexttilt - tilt)
@@ -313,7 +313,7 @@ def simpleCorrelation(array1,array2):
 	return shift
 
 def getPredictionPeakForImage(imagedata):
-	q = leginondata.TomographyPredictionData()
+	q = leginon.leginondata.TomographyPredictionData()
 	q['image'] = imagedata
 	results = q.query()
 	if len(results) > 0:
@@ -351,7 +351,7 @@ def getTomographySettings(sessiondata,tiltdata):
 	from the same session, from the same user, from default
 	'''
 	timestamp = tiltdata.timestamp
-	qtomo = leginondata.TomographySettingsData(session=sessiondata)
+	qtomo = leginon.leginondata.TomographySettingsData(session=sessiondata)
 	tomosettingslist = qtomo.query()
 	settingsid = None
 	for settings in tomosettingslist:
@@ -359,15 +359,15 @@ def getTomographySettings(sessiondata,tiltdata):
 			settingid = settings.dbid
 			break
 	if settingsid is None:
-		sessionq = leginondata.SessionData(user=sessiondata['user'])
-		qtomo = leginondata.TomographySettingsData(session=sessiondata)
+		sessionq = leginon.leginondata.SessionData(user=sessiondata['user'])
+		qtomo = leginon.leginondata.TomographySettingsData(session=sessiondata)
 		tomosettingslist = qtomo.query()
 		for settings in tomosettingslist:
 			if settings.timestamp < timestamp:
 				settingsid = settings.dbid
 				break
 	if settingsid is None:
-		qtomo = leginondata.TomographySettingsData(isdefault=True)
+		qtomo = leginon.leginondata.TomographySettingsData(isdefault=True)
 		tomosettingslist = qtomo.query()
 		for settings in tomosettingslist:
 			if settings.timestamp < timestamp:
@@ -379,15 +379,15 @@ def getTomographySettings(sessiondata,tiltdata):
 		else:
 			settingsid = None
 	if settingsid:
-		qtomo = leginondata.TomographySettingsData()
+		qtomo = leginon.leginondata.TomographySettingsData()
 		return qtomo.direct_query(settingsid)
 
 def getTomoPixelSize(imagedata):
-	imageq = leginondata.AcquisitionImageData(emtarget=imagedata['emtarget'])
+	imageq = leginon.leginondata.AcquisitionImageData(emtarget=imagedata['emtarget'])
 	imageresults = imageq.query(readimages=False)
 	for tomoimagedata in imageresults:
 		if tomoimagedata['label'] != 'projection':
-			predq = leginondata.TomographyPredictionData(image=tomoimagedata)
+			predq = leginon.leginondata.TomographyPredictionData(image=tomoimagedata)
 			results = predq.query(readimages=False)
 			if results:
 				return results[0]['pixel size']
@@ -720,9 +720,9 @@ def makeProjection(filename,xsize=512):
 		array2jpg(pictpath,slice,size=xsize)
 
 def uploadZProjection(runname,initialimagedata,uploadfile):
-	presetdata = leginondata.PresetData(initializer=initialimagedata['preset'])
+	presetdata = leginon.leginondata.PresetData(initializer=initialimagedata['preset'])
 	presetdata['name']='Zproj'
-	imagedata = leginondata.AcquisitionImageData(initializer=initialimagedata)
+	imagedata = leginon.leginondata.AcquisitionImageData(initializer=initialimagedata)
 	basename = os.path.basename(uploadfile)
 	splitname = os.path.splitext(basename)
 	names = splitname[0].split('_zproject')

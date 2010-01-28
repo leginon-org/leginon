@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import leginondata
+import leginon.leginondata
 import sys
 from appionlib import apProTomo
 from appionlib import apTomo
@@ -13,12 +13,12 @@ from optparse import OptionParser
 from appionlib import apParam
 
 def getTiltSeriesFromId(tiltid):
-	seriesdata=leginondata.TiltSeriesData.direct_query(tiltid)
+	seriesdata=leginon.leginondata.TiltSeriesData.direct_query(tiltid)
 	imgtree=apTomo.getImageList([seriesdata])
 	return imgtree
 
 def getPredictionDataForImage(imagedata):
-	q=leginondata.TomographyPredictionData()
+	q=leginon.leginondata.TomographyPredictionData()
 	q['image']=imagedata
 	predictiondata=q.query()
 	return predictiondata

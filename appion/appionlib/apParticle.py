@@ -6,7 +6,7 @@ import os
 import sys
 import time
 #leginon
-import leginondata
+import leginon.leginondata
 #appion
 from appionlib import appiondata
 from appionlib import apDatabase
@@ -19,7 +19,7 @@ def guessParticlesForSession(expid=None, sessionname=None):
 		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 	else:
 		if expid:
-			seesiondata = leginondata.SessionData.direct_query(expid)
+			seesiondata = leginon.leginondata.SessionData.direct_query(expid)
 	if sessiondata is None:
 		apDisplay.printError("Unknown expId in guessParticlesForSession")
 	apDisplay.printMsg("getting most complete particle picking run from DB for session "+sessionname)

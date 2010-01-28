@@ -9,7 +9,7 @@ import sinedon.newdict as newdict
 #pyami
 import pyami.imagefun as imagefun
 #leginon
-import leginondata
+import leginon.leginondata
 #appion
 from appionlib import apImage
 from appionlib import appiondata
@@ -112,7 +112,7 @@ def getAssessedMasks(assessrun,maskrun):
 		maskofregion = regiondata['maskrun']
 		if maskofregion.dbid == maskrun.dbid:
 			imageref = regiondata.special_getitem('image',dereference = False)
-			imagedata = leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages = False)
+			imagedata = leginon.leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages = False)
 			imagefile = imagedata['filename']
 			try:
 				imagefiles.index(imagefile)
@@ -304,7 +304,7 @@ def overlayMask(image,mask):
 if __name__ == '__main__':
 	assessrun = appiondata.ApMaskAssessmentRunData.direct_query(11)
 	sessiondata = assessrun['session']
-	imgdata = leginondata.AcquisitionImageData.direct_query(500598)
+	imgdata = leginon.leginondata.AcquisitionImageData.direct_query(500598)
 	maskarray,maskbin = makeInspectedMask(sessiondata,'run1',imgdata)
 #	maskrun = appiondata.ApMaskMakerRunData.direct_query(44)
 

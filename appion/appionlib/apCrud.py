@@ -22,10 +22,8 @@ try:
 	import numextension
 except:
 	pass
-import polygon
-import libCVwrapper
-
-
+import leginon.polygon
+import leginon.libCVwrapper
 
 def outputTestImage(array,name,description,testlog):
 	width=25
@@ -191,7 +189,7 @@ def mergePolygonPoints(polygons):
 		polygon1=polygons[p1]
 		while p2 in range(len(result)):
 			polygon2=polygons[p2]
-			overlapped_points=polygon.pointsInPolygon(polygon1,polygon2)
+			overlapped_points=leginon.polygon.pointsInPolygon(polygon1,polygon2)
 			if len(overlapped_points) > 0:
 				polygons[p2].extend(polygon1)
 				has_overlap=True
@@ -222,7 +220,7 @@ def convexHullUnion(regions,clabels,testlog):
 		print "merged to %d convex hulls" % len(gpolygons)
 
 		#fill polygons and make a labeled image
-		polygon_image=polygon.plotPolygons(shape,gpolygons)
+		polygon_image=leginon.polygon.plotPolygons(shape,gpolygons)
 		regions,clabels=nd.label(polygon_image)
 		if clabels !=len(gpolygons):
 			print "some polygons just touched, REDO!!"
@@ -367,12 +365,12 @@ def getPolygonInfo(polygons,info,testlog):
 	print "get polygon area and center info"
 	if len(info) != len(polygons):
 		info=makeDefaultInfo(len(polygons))	
-	polygons_arrays = polygon.polygons_tuples2arrays(polygons)
+	polygons_arrays = leginon.polygon.polygons_tuples2arrays(polygons)
 	for l,p in enumerate(polygons_arrays):
 		length = 2*(p[:,0].max()-p[:,0].min())+2*(p[:,1].max()-p[:,1].min())
 		if len(p) >=3:
-			area = polygon.getPolygonArea(p)
-			center = polygon.getPolygonCenter(p)
+			area = leginon.polygon.getPolygonArea(p)
+			center = leginon.polygon.getPolygonCenter(p)
 		else:
 			## only a line
 			area = length
@@ -463,7 +461,7 @@ def makePrunedPolygons(gpolygons,imageshape,info,goodlabels):
 		l=l1+1
 		goodinfos.append(info[l])
 		goodpolygons.append(gpolygons[l1])
-	equalregions = polygon.plotPolygons(imageshape,goodpolygons)
+	equalregions = leginon.polygon.plotPolygons(imageshape,goodpolygons)
 	regions,clabels=nd.label(equalregions)
 	if clabels != len(goodpolygons):
 		print "ERROR: making %d labeled region from %d good polygons" % (clabels,len(goodpolygons))
@@ -489,7 +487,7 @@ def reduceRegions(regions,velimit):
 			regionellipse = region['regionEllipse']
 			regionarray = region['regionBorder']
 			## reduce to 20 points
-			regionarray = libCVwrapper.PolygonVE(regionarray, velimit)
+			regionarray = leginon.libCVwrapper.PolygonVE(regionarray, velimit)
 			regionarray = regionarray.transpose()
 			regionarrays.append(regionarray)
 			regionellipses.append(regionellipse)
@@ -630,11 +628,11 @@ def makeMask(params,image):
 			sys.exit()
 			testlog=outputTestImage(mask,'cvin','cvin',testlog)
 			mm = mask.astype(numpy.uint8)
-			polygonregions,dummyimage=libCVwrapper.FindRegions(mm,area_t,0.2,1,0,1,0)
+			polygonregions,dummyimage=leginon.libCVwrapper.FindRegions(mm,area_t,0.2,1,0,1,0)
 			gpolygons = reduceRegions(polygonregions,100)
 			# libCV.findregion sometimes produces regions of negative area and cause problems in later labeling
 			# Therefore, it is converted into equal intensity region image (mask).
-			mask = polygon.plotPolygons(image.shape,gpolygons)
+			mask = leginon.polygon.plotPolygons(image.shape,gpolygons)
 #			testlog=outputTestImage(mask,'cvout','cvout',testlog)
 			labeled_regions,clabels=nd.label(mask)
 			allinfos ={}
@@ -646,7 +644,7 @@ def makeMask(params,image):
 				if stdev_t < 0.001:
 					allinfos,testlog=getPolygonInfo(gpolygons,allinfos,testlog)
 				else:
-					mask = polygon.plotPolygons(image.shape,gpolygons)
+					mask = leginon.polygon.plotPolygons(image.shape,gpolygons)
 					labeled_regions,clabels=nd.label(mask)
 					allinfos,testlog=getLabeledInfo(image,mask,labeled_regions,range(1,clabels+1),False,{},testlog)
 			else:				

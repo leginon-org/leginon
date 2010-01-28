@@ -5,7 +5,7 @@ import time
 import math
 import datetime
 #leginon
-import leginondata
+import leginon.leginondata
 #appion
 from appionlib import appiondata
 from appionlib import apImage
@@ -29,9 +29,9 @@ $q="select "
 """
 
 """
-	sessionq = leginondata.SessionData(name=session)
-	presetq=leginondata.PresetData(name=preset)
-	imgquery = leginondata.AcquisitionImageData()
+	sessionq = leginon.leginondata.SessionData(name=session)
+	presetq=leginon.leginondata.PresetData(name=preset)
+	imgquery = leginon.leginondata.AcquisitionImageData()
 	imgquery['preset']  = presetq
 	imgquery['session'] = sessionq
 	imgtree = imgquery.query(readimages=False)
@@ -39,11 +39,11 @@ $q="select "
 
 #===============================
 def getTiltPair(imgdata):
-	imageq  = leginondata.AcquisitionImageData()
+	imageq  = leginon.leginondata.AcquisitionImageData()
 	imageq['tilt series'] = imgdata['tilt series']
 	if imgdata['preset'] is None:
 		return None
-	presetq = leginondata.PresetData()
+	presetq = leginon.leginondata.PresetData()
 	presetname = imgdata['preset']['name']
 	if presetname != "Zproj":
 		presetq['name'] = imgdata['preset']['name']
@@ -62,8 +62,8 @@ def getTiltPair(imgdata):
 
 #===============================
 def tiltPickerToDbNames(tiltparams):
-	#('image1', leginondata.AcquisitionImageData),
-	#('image2', leginondata.AcquisitionImageData),
+	#('image1', leginon.leginondata.AcquisitionImageData),
+	#('image2', leginon.leginondata.AcquisitionImageData),
 	#('shiftx', float),
 	#('shifty', float),
 	#('correlation', float),

@@ -6,7 +6,7 @@ usage:    pcount.py <session name> <particle selection run name>
 '''
 
 from appionlib import appiondata
-import leginondata
+import leginon.leginondata
 import sys
 
 if __name__ == "__main__":
@@ -18,7 +18,7 @@ if __name__ == "__main__":
 	run_name = sys.argv[2]
 
 	# query objects
-	qsession = leginondata.SessionData(name=ses_name)
+	qsession = leginon.leginondata.SessionData(name=ses_name)
 	qrun = appiondata.ApSelectionRunData(session=qsession, name=run_name)
 	qpart = appiondata.ApParticleData(selectionrun=qrun)
 
@@ -35,7 +35,7 @@ if __name__ == "__main__":
 		imgref = particle.special_getitem('image', dereference=False)
 		imgid = imgref.dbid
 		if imgid not in assessments:
-			img = leginondata.AcquisitionImageData.direct_query(imgref.dbid, readimages=False)
+			img = leginon.leginondata.AcquisitionImageData.direct_query(imgref.dbid, readimages=False)
 			qassess = appiondata.ApAssessmentData(image=img)
 			assessment = qassess.query(results=1)
 			if assessment:

@@ -5,7 +5,7 @@
 # see http://ami.scripps.edu/software/leginon-license
 
 import sinedon.data
-import leginondata
+import leginon.leginondata
 Data = sinedon.data.Data
 
 ### Master Path table ###
@@ -78,7 +78,7 @@ class ApParticleData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('selectionrun', ApSelectionRunData),
-			('image', leginondata.AcquisitionImageData),
+			('image', leginon.leginondata.AcquisitionImageData),
 			('xcoord', int),
 			('ycoord', int),
 			('correlation', float),
@@ -96,7 +96,7 @@ class ApSelectionRunData(Data):
 			('name', str),
 			('hidden', bool),
 			('path', ApPathData),
-			('session', leginondata.SessionData),
+			('session', leginon.leginondata.SessionData),
 			('params', ApSelectionParamsData),
 			('dogparams', ApDogParamsData),
 			('manparams', ApManualParamsData),
@@ -219,7 +219,7 @@ class ApTemplateStackData(Data):
 			('forward_proj', bool),
                         ('origfile', str),
 			('description', str),
-			('session', leginondata.SessionData),
+			('session', leginon.leginondata.SessionData),
 			('apix', float),
 			('boxsize', int),
 			('numimages', int),
@@ -234,8 +234,8 @@ class ApTemplateStackData(Data):
 class ApImageTransformationData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('image1',leginondata.AcquisitionImageData),
-			('image2',leginondata.AcquisitionImageData),
+			('image1',leginon.leginondata.AcquisitionImageData),
+			('image2',leginon.leginondata.AcquisitionImageData),
 			('shiftx', float),
 			('shifty', float),
 			('correlation', float),
@@ -246,11 +246,11 @@ class ApImageTransformationData(Data):
 class ApImageTiltTransformData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('image1',leginondata.AcquisitionImageData),
+			('image1',leginon.leginondata.AcquisitionImageData),
 			('image1_x', float),
 			('image1_y', float),
 			('image1_rotation', float),
-			('image2',leginondata.AcquisitionImageData),
+			('image2',leginon.leginondata.AcquisitionImageData),
 			('image2_x', float),
 			('image2_y', float),
 			('image2_rotation', float),
@@ -278,7 +278,7 @@ class ApMaskMakerRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('params', ApMaskMakerParamsData),
-			('session', leginondata.SessionData),
+			('session', leginon.leginondata.SessionData),
 			('name', str),
 			#('path', str),
 			('path', ApPathData),
@@ -289,7 +289,7 @@ class ApMaskRegionData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('maskrun', ApMaskMakerRunData),
-			('image', leginondata.AcquisitionImageData),
+			('image', leginon.leginondata.AcquisitionImageData),
 			('x', int),
 			('y', int),
 			('area', int),
@@ -355,7 +355,7 @@ class ApStackRunData(Data):
 			('stackParams', ApStackParamsData),
 			('syntheticStackParams', ApSyntheticStackParamsData),
 			('selectionrun', ApSelectionRunData),
-			('session', leginondata.SessionData),
+			('session', leginon.leginondata.SessionData),
 		)
 	typemap = classmethod(typemap)
 
@@ -580,7 +580,7 @@ class ApMultiRefAlignRunData(Data):
 			('numiter', int),
 		)
 	typemap = classmethod(typemap)
-#leginondata.ApMultiRefAlignRunData=ApMultiRefAlignRunData
+#leginon.leginondata.ApMultiRefAlignRunData=ApMultiRefAlignRunData
 
 ### Improved alignment data tables
 
@@ -827,7 +827,7 @@ class ApClusterJobData(Data):
 			('user', str),
 			('clusterjobid', int),
 			('path', ApPathData),
-			('session', leginondata.SessionData),
+			('session', leginon.leginondata.SessionData),
 			('dmfpath', ApPathData),
 			('clusterpath', ApPathData),
 
@@ -892,7 +892,7 @@ class ApProtomoRefinementParamsData(Data):
 			('alibox', dict),
 			('cormod', str),
 			('imgref', int),
-			('reference', leginondata.AcquisitionImageData),
+			('reference', leginon.leginondata.AcquisitionImageData),
 		)
 	typemap = classmethod(typemap)
 
@@ -939,7 +939,7 @@ class ApProtomoAlignmentData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('aligner', ApTomoAlignerParamsData),
-			('image', leginondata.AcquisitionImageData),
+			('image', leginon.leginondata.AcquisitionImageData),
 			('number', int),
 			('rotation', float),
 			('shift', dict),
@@ -950,8 +950,8 @@ class ApTiltsInAlignRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('alignrun', ApTomoAlignmentRunData),
-			('tiltseries', leginondata.TiltSeriesData),
-			('settings', leginondata.TomographySettingsData),
+			('tiltseries', leginon.leginondata.TiltSeriesData),
+			('settings', leginon.leginondata.TomographySettingsData),
 			('primary', bool),
 		)
 	typemap = classmethod(typemap)
@@ -959,9 +959,9 @@ class ApTiltsInAlignRunData(Data):
 class ApTomoAlignmentRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('session', leginondata.SessionData),
-			('tiltseries', leginondata.TiltSeriesData),
-			('coarseLeginonParams', leginondata.TomographySettingsData),
+			('session', leginon.leginondata.SessionData),
+			('tiltseries', leginon.leginondata.TiltSeriesData),
+			('coarseLeginonParams', leginon.leginondata.TomographySettingsData),
 			('coarseImodParams', ApImodXcorrParamsData),
 			('fineProtomoParams', ApProtomoParamsData),
 			('bin', int),
@@ -975,7 +975,7 @@ class ApTomoAlignmentRunData(Data):
 class ApFullTomogramRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('session', leginondata.SessionData),
+			('session', leginon.leginondata.SessionData),
 			('runname', str),
 			('path', ApPathData),
 			('method', str),
@@ -986,7 +986,7 @@ class ApFullTomogramRunData(Data):
 class ApSubTomogramRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('session', leginondata.SessionData),
+			('session', leginon.leginondata.SessionData),
 			('pick', ApSelectionRunData),
 			('stack', ApStackData),
 			('runname', str),
@@ -1000,8 +1000,8 @@ class ApFullTomogramData(Data):
 	# old data not having aligner or reconrun are converted
 	def typemap(cls):
 		return Data.typemap() + (
-			('session', leginondata.SessionData),
-			('tiltseries', leginondata.TiltSeriesData),
+			('session', leginon.leginondata.SessionData),
+			('tiltseries', leginon.leginondata.TiltSeriesData),
 			('aligner', ApTomoAlignerParamsData),
 			('reconrun', ApFullTomogramRunData),
 			('alignrun', ApTomoAlignmentRunData),
@@ -1011,7 +1011,7 @@ class ApFullTomogramData(Data):
 			('path', ApPathData),
 			('name', str),
 			('description', str),
-			('zprojection', leginondata.AcquisitionImageData),
+			('zprojection', leginon.leginondata.AcquisitionImageData),
 			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
@@ -1019,8 +1019,8 @@ class ApFullTomogramData(Data):
 class ApTomogramData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('session', leginondata.SessionData),
-			('tiltseries', leginondata.TiltSeriesData),
+			('session', leginon.leginondata.SessionData),
+			('tiltseries', leginon.leginondata.TiltSeriesData),
 			('fulltomogram', ApFullTomogramData),
 			('subtomorun', ApSubTomogramRunData),
 			('path', ApPathData),
@@ -1106,7 +1106,7 @@ class Ap3dDensityData(Data):
 			('iterid', ApRefinementData),
 			('rctrun', ApRctRunData),
 			('otrrun', ApOtrRunData),
-			('session', leginondata.SessionData),
+			('session', leginon.leginondata.SessionData),
 			('hard', int),
 			('sigma', float),
 			('maxjump', float),
@@ -1278,7 +1278,7 @@ class ApMiscData(Data):
 		return Data.typemap() + (
 			('project|projects|project', int),
 			('refinementRun', ApRefinementRunData),
-			('session', leginondata.SessionData),
+			('session', leginon.leginondata.SessionData),
 			('fulltomogram', ApFullTomogramData),
 			('path', ApPathData),
 			('name', str),
@@ -1296,7 +1296,7 @@ class ApAceRunData(Data):
 			('aceparams', ApAceParamsData),
 			('ctftilt_params', ApCtfTiltParamsData),
 			('ace2_params', ApAce2ParamsData),
-			('session', leginondata.SessionData),
+			('session', leginon.leginondata.SessionData),
 			('path', ApPathData),
 			('name', str),
 			('hidden', bool),
@@ -1348,7 +1348,7 @@ class ApCtfData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('acerun', ApAceRunData),
-			('image', leginondata.AcquisitionImageData),
+			('image', leginon.leginondata.AcquisitionImageData),
 			('defocus1', float),
 			('defocus2', float),
 			('defocusinit', float),
@@ -1390,7 +1390,7 @@ class ApTestRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('params', ApTestParamsData),
-			('session', leginondata.SessionData),
+			('session', leginon.leginondata.SessionData),
 			('name', str),
 			#('path', str),
 			('path', ApPathData),
@@ -1401,7 +1401,7 @@ class ApTestResultData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('testrun', ApTestRunData),
-			('image', leginondata.AcquisitionImageData),
+			('image', leginon.leginondata.AcquisitionImageData),
 			('x', float),
 			('y', float),
 		)
@@ -1412,7 +1412,7 @@ class ApTestResultData(Data):
 class ApAssessmentRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('session', leginondata.SessionData),
+			('session', leginon.leginondata.SessionData),
 			('name',str),
 		)
 	typemap = classmethod(typemap)
@@ -1421,7 +1421,7 @@ class ApAssessmentData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('assessmentrun', ApAssessmentRunData),
-			('image', leginondata.AcquisitionImageData),
+			('image', leginon.leginondata.AcquisitionImageData),
 			('selectionkeep', int),
 		)
 	typemap = classmethod(typemap)
@@ -1429,7 +1429,7 @@ class ApAssessmentData(Data):
 class ApMaskAssessmentRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('session',leginondata.SessionData),
+			('session',leginon.leginondata.SessionData),
 			('name',str),
 			('maskrun', ApMaskMakerRunData),
 		)
