@@ -11,7 +11,7 @@
 import leginondata
 import event
 import node
-import nodeclassreg
+import noderegistry
 from wx import PyDeadObjectError
 import gui.wx.Launcher
 
@@ -43,8 +43,7 @@ class Launcher(node.Node):
 		node.Node.exit(self)
 
 	def publishNodeClasses(self):
-		#reload(nodeclassreg)
-		nodeclassnames = nodeclassreg.getNodeClassNames()
+		nodeclassnames = noderegistry.getNodeClassNames()
 		self.nodeclasses = leginondata.NodeClassesData(nodeclasses=nodeclassnames)
 		self.publish(self.nodeclasses, pubevent=True)
 
@@ -54,8 +53,8 @@ class Launcher(node.Node):
 	def onCreateNode(self, ievent):
 		targetclass = ievent['targetclass']
 		try:
-			nodeclass = nodeclassreg.getNodeClass(targetclass)
-		except nodeclassreg.NotFoundError:
+			nodeclass = noderegistry.getNodeClass(targetclass)
+		except noderegistry.NotFoundError:
 			self.confirmEvent(ievent, status='failed')
 			return
 

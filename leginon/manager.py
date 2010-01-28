@@ -24,7 +24,7 @@ from pyami import ordereddict
 import socket
 from wx import PyDeadObjectError
 import gui.wx.Manager
-import nodeclassreg
+import noderegistry
 import remotecall
 import time
 import sys
@@ -445,7 +445,7 @@ class Manager(node.Node):
 		if self.isLauncher(classname):
 			return launcher.Launcher
 		else:
-			nodeclass = nodeclassreg.getNodeClass(classname)
+			nodeclass = noderegistry.getNodeClass(classname)
 		return nodeclass
 
 	def getNodeEventIO(self, name):
@@ -819,66 +819,13 @@ class Manager(node.Node):
 			self.logger.exception('Unable to import application from "%s"' % filename)
 
 	def sortNodes(self, nodeclasses=[]):
-		# this sucks
-		sortclasses = {}
-		nodeclasses += map(lambda l: (l[0], l[1]['class string']),
-												self.nodelocations.items())
-		for nodename, clsname in nodeclasses:
-			priority, sortcls = nodeclassreg.getSortClass(clsname)
-			if sortcls not in sortclasses:
-				sortclasses[sortcls] = []
-			sortclasses[sortcls].append((priority, nodename))
-
-		for nodes in sortclasses.values():
-			nodes.sort()
-
-		for sortcls, nodes in sortclasses.items():
-			sortclasses[sortcls] = map(lambda n: n[1], nodes)
-
-
-		if 'Pipeline' in sortclasses:
-			froms = {}
-			tos = {}
-			for node in sortclasses['Pipeline']:
-				froms[node] = []
-				tos[node] = []
-			for eventclass, fromnode in self.distmap.items():
-				for node in sortclasses['Pipeline']:
-					if issubclass(eventclass,
-								(event.ImageTargetListPublishEvent, event.ImagePublishEvent)):
-						if node in fromnode:
-							for tonode in sortclasses['Pipeline']:
-								if tonode in fromnode[node]:
-									froms[node].append(tonode)
-									tos[tonode].append(fromnode)
-			starters = []
-			for key, value in tos.items():
-				if not value:
-					starters.append(key)
-
-			sorted = []
-			for starter in starters:
-				sorted += depth(starter, froms)
-			for node in sortclasses['Pipeline']:
-				if node not in sorted:
-					sorted.append(node)
-			sortclasses['Pipeline'] = []
-			for s in sorted:
-				if s not in sortclasses['Pipeline']:
-					sortclasses['Pipeline'].append(s)
-
-		nodeorder = []
-		for sortcls in ['Priority', 'Pipeline', 'Calibrations', 'Utility']:
-			try:
-				nodeorder += sortclasses[sortcls]
-				del sortclasses[sortcls]
-			except KeyError:
-				pass
-
-		for nodes in sortclasses.values():
-			nodeorder += nodes
-
-		return nodeorder
+		allclassnames = noderegistry.getNodeClassNames()
+		neworder = []
+		for classname in allclassnames:
+			for appnodealias, appnodeclassname in nodeclasses:
+				if appnodeclassname == classname:
+					neworder.append(appnodealias)
+		return neworder
 
 def depth(parent, map):
 	l = [parent]

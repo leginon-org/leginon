@@ -8,7 +8,7 @@ from wxPython.wx import *
 
 import leginon.gui.wx.ObjectCanvas as wxObjectCanvas
 import leginon.event
-import leginon.nodeclassreg
+import leginon.noderegistry
 
 class LabelObject(wxObjectCanvas.wxTextObject):
 	def __init__(self, text, color=wxBLACK):
@@ -128,7 +128,7 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		self.nodeclass = nodeclass
 		self.dependencies = dependencies
 
-		nc = leginon.nodeclassreg.getNodeClass(self.nodeclass)
+		nc = leginon.noderegistry.getNodeClass(self.nodeclass)
 		if nc is None:
 			raise RuntimeError
 		input = BindingInput()
@@ -347,7 +347,7 @@ class AddNodeDialog(wxDialog):
 		box = wxBoxSizer(wxHORIZONTAL)
 		label = wxStaticText(self, -1, 'Class:')
 		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
-		classnames = leginon.nodeclassreg.getNodeClassNames()
+		classnames = leginon.noderegistry.getNodeClassNames()
 		classnames.sort()
 		self.classcombo = wxComboBox(self, -1, choices=classnames,
 																	style=wxCB_DROPDOWN|wxCB_READONLY)

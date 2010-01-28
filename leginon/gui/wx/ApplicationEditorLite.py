@@ -12,9 +12,7 @@
 # $Locker:  $
 
 import wx
-import application
-import event
-import nodeclassreg
+import leginon.noderegistry
 
 class ApplicationMenu(wx.Menu):
 	def __init__(self, editor):
@@ -125,7 +123,7 @@ class NodePropertiesDialog(wx.Dialog):
 
 		label = wx.StaticText(self, -1, 'Class:')
 		self.sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		choices = nodeclassreg.getNodeClassNames()
+		choices = leginon.noderegistry.getNodeClassNames()
 		choices.sort()
 		self.cclass = wx.Choice(self, -1, choices=choices)
 		if classname is None:
@@ -532,7 +530,7 @@ class ApplicationEditorLite(wx.TreeCtrl):
 
 	def getEventOutputs(self, nodename):
 		classname = self.nodes[nodename]['class name']
-		nodeclass = nodeclassreg.getNodeClass(classname)
+		nodeclass = leginon.noderegistry.getNodeClass(classname)
 		eventoutputs = nodeclass.eventoutputs
 		return [eventoutput.__name__ for eventoutput in eventoutputs]
 
