@@ -1261,24 +1261,32 @@ def sql2data(in_dict, qikey=None, qinfo=None):
 
 	return content
 
-modules = {}
-def findDataClass(modulename, classname):
-	'''
-	find the module and class as specified
-	'''
-	### quickest if we already know the module
-	try:
-		return getattr(modules[modulename], classname)
-	except:
-		pass
+## get rid of this function when field names are converted to have full
+## absolute module name
+wrong_names = {}
+def findWrongName(modulename):
+	## try cache of wrong names
+	if modulename in wrong_names:
+		return wrong_names[modulename]
+	## try sys.modules (last component of each name)
+	for sysmodname,sysmod in sys.modules.items():
+		if sysmodname.split('.')[-1] == modulename:
+			sys.stderr.write('***************************************************************\n')
+			sys.stderr.write('WARNING:  DB field names containing "REF" should use full absolute python module names.  "%s" should be "%s".  Warning will become Exception in the future.\n\n' % (modulename, sysmodname))
+			wrong_names[modulename] = sysmod
+			return sysmod
+	return None
 
-	### search for the module
-	for name,module in sys.modules.items():
-		if name.split('.')[-1] == modulename:
-			if hasattr(module, classname):
-				cls = getattr(module, classname)
-				modules[modulename] = module
-				return cls
+def findDataClass(modulename, classname):
+	if modulename in sys.modules:
+		mod = sys.modules[modulename]
+	else:
+		# remove findWrongName when DB is converted
+		mod = findWrongName(modulename)
+		if mod is None:
+			raise RuntimeError('Cannot find class %s. Module %s not loaded.' % (classname, modulename))
+	cls = getattr(mod, classname)
+	return cls
 
 def datatype(in_dict, join=None, parentclass=None):
 	"""
@@ -1341,7 +1349,10 @@ def datatype(in_dict, join=None, parentclass=None):
 			else:
 				## not in result, but create reference
 				dclassname = tablename
+				print 'MODULENAME', modulename
+				print 'DCLASSNAME', dclassname
 				dclass = findDataClass(modulename, dclassname)
+				print 'DCLASS', dclass
 				if dclass is None:
 					continue
 				# host and name should come from parent object
@@ -1388,6 +1399,11 @@ def _sqltype(t):
 
 def refFieldName(tableclass, refclass, key):
 	refmodule = refclass.__module__
+
+	#### XXX remove the following line when absolute modules names are
+	#### considered final:
+	refmodule = refmodule.split('.')[-1]
+
 	tablename = refclass.__name__
 	tablemodule = tableclass.__module__
 	parts = ['REF']
