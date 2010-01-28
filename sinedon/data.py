@@ -267,7 +267,7 @@ class DataReference(object):
 			cls = 'unknown'
 		else:
 			cls = self.dataclass.__name__
-		s = 'DataReference(class: %s, dmid: %s, dbid: %s, referent: %s' % (cls, self.dmid, self.dbid, ref)
+		s = 'DataReference[class: %s, dmid: %s, dbid: %s, referent: %s]' % (cls, self.dmid, self.dbid, ref)
 		return s
 
 class UnknownData(object):
