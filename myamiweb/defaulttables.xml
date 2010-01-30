@@ -359,6 +359,11 @@
       default="DEFAULT 'NULL'"
     />
     <field 
+      name="username" 
+      type="text"
+      default="DEFAULT 'NULL'"
+    />
+    <field 
       name="fullname" 
       type="text"
       default="DEFAULT 'NULL'"
@@ -366,7 +371,7 @@
     <field
       name="firstname"
       type="text"
-      default="D"inc/jpgraph_canvas.php"EFAULT 'NULL'"
+      default="DEFAULT 'NULL'"
     />
     <field
       name="lastname"
