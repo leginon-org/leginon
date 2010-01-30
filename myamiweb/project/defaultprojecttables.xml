@@ -252,7 +252,7 @@
       name="city" 
       type="text" 
       null="NOT NULL" 
-    />
+    ></field>
     <field 
       name="statecountry" 
       type="text" 
@@ -270,11 +270,6 @@
     />
     <field 
       name="fax" 
-      type="text" 
-      null="NOT NULL" 
-    />
-    <field 
-      name="email" 
       type="text" 
       null="NOT NULL" 
     />
