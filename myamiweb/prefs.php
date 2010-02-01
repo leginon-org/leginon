@@ -1,13 +1,13 @@
 <?php
 require "inc/leginon.inc";
-require "inc/viewer.inc";
+require_once "inc/login.inc";
 
 if (!$login_check = $dbemauth->is_logged()) {
 	header('Location: '.BASE_URL);
 }
 
 $username = $login_check[0];
-viewer_header("My Preferences");
+login_header("My Preferences");
 ?>
 <h3>My Profile</h3>
 <?
@@ -348,7 +348,7 @@ echo '</select>';
 </table>
 </form>
 <?
-viewer_footer();
+login_footer();
 
 function add_cat($name) {
 	$html = "Label $name <input class='field' type='text' size='10' name='$name'>";

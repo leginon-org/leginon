@@ -1,6 +1,7 @@
 <?
 require "inc/login.inc";
 
+// if user already login, redirect to homepage
 if ($login_check = $dbemauth->is_logged()) {
 	header('Location: '.BASE_URL);
 }
@@ -8,9 +9,9 @@ if ($login_check = $dbemauth->is_logged()) {
 $register=$error=false;
 $displayform=true;
 
-login_header("DBEM Register");
+login_header("Appion / Leginon Register");
 ?>
-<center><h1>Leginon II Database Tools</h1></center>
+<center><h1><?php echo APP_NAME; ?></h1></center>
 <hr/>
 <?
 
@@ -22,7 +23,7 @@ if ($_POST) {
 	$lastname=$_POST['lastname'];
 	$firstname=$_POST['firstname'];
 	$register = $dbemauth->register ($username, $password, $password2, $email, $lastname, $firstname);
-	echo "regis: $register ";
+	//echo "regis: $register ";
 
 	if ($register == 2) {
 		$displayform=false;
@@ -72,44 +73,47 @@ if ($displayform) {
 <form name='register' method='POST' action='register.php'>
 <table border="0" cellspacing="0" cellpadding="5">
 <tr>
+	<td colspan=2><b>Please fill in all the fields !</b></td>
+</tr>
+<tr>
 	<td>
-		<label for="firstname">Firstname: </label>
+		<label for="username"><font color="red">*</font>Username: </label>
+	</td>
+	<td>
+		<input class="field" type="text" value="<?=$username?>" name="username" id="username">
+	</td>
+</tr>
+<tr>
+	<td>
+		<label for="firstname"><font color="red">*</font>First Name: </label>
 	</td>
 	<td>
 		<input class="field" type="text" value="<?=$firstname?>" name="firstname" id="firstname" size="15" >
 	</td>
 	<td>
-		<label for="lastname">Lastname: </label>
+		<label for="lastname"><font color="red">*</font>Last Name: </label>
 	</td>
 	<td>
 		<input class="field" type="text" value="<?=$lastname?>" name="lastname" id="lastname" size="15" >
 	</td>
-	</tr>
-	<tr>
+</tr>
+<tr>
 	<td>
-		<label for="email">Email: </label>
+		<label for="email"><font color="red">*</font>Email: </label>
 	</td>
 	<td>
 		<input class="field" type="text" value="<?=$email?>" name="email" id="email">
 	</td>
-	</tr>
-	<tr>
+</tr>
+<tr>
 	<td>
-		<label for="username">Username: </label>
-	</td>
-	<td>
-		<input class="field" type="text" value="<?=$username?>" name="username" id="username">
-	</td>
-	</tr>
-	<tr>
-	<td>
-		<label for="password">Password: </label>
+		<label for="password"><font color="red">*</font>Password: </label>
 	</td>
 	<td>
 		<input class="field" type="password" value="" name="password" id="password" size="15" >
 	</td>
 	<td>
-		<label for="password2">Confirm: </label>
+		<label for="password2"><font color="red">*</font>Confirm: </label>
 	</td>
 	<td>
 		<input class="field" type="password" value="" name="password2" id="password2" size="15" >

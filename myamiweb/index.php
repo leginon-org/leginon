@@ -26,13 +26,11 @@ $link->addlink('template.php', 'Hole Template viewer','', 'template');
 if (privilege() == 2 ) {
 	$link->addlink('admin.php','Administration','', 'admin');
 	$link->addlink('/phpMyAdmin/','phpMyAdmin','', 'phpMyAdmin');
-	if($PROJECT_URL) {
-		$link->addlink($PROJECT_URL,'Project DB','', 'project');
-	}
+	$link->addlink('project','Project DB','', 'project');
 }
 
-$title = "Leginon and Appion Database Tools";
-login_header($title);
+login_header(PROJECT_TITLE);
+
 ?>
 <style>
 	body {background-image:url('img/background.jpg')}
@@ -56,7 +54,7 @@ login_header($title);
 </script>
 
 
-<center><h1><?php echo $title; ?></h1></center>
+<center><h1><?php echo PROJECT_TITLE; ?></h1></center>
 <hr/>
 <noscript>
 <?php echo divtitle("<center>Please enable Javascript in you Browser</center>"); ?>

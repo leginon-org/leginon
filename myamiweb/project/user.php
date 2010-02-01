@@ -13,6 +13,7 @@ $is_admin = privilege();
 login_header('User');
 $userdata = new user();
 $users = $userdata->getUsers(true);
+
 foreach ($users as $k=>$p) {
 	$email = $p['email'];
 	$pId = $p['userId'];
@@ -20,20 +21,23 @@ foreach ($users as $k=>$p) {
 		$users[$k]["edit"]="<a href='updateuser.php?id=$pId'><img border='0' src='img/edit.png'></a>";
 		$users[$k]["del"]="<a href='deleteuser.php?id=$pId'><img border='0' src='img/del.png'></a>";
 	}
-	$users[$k]["name"]=$p['full name'];
+	$users[$k]["name"]=$p['name'];
 	$users[$k]["email"]="<a href='mailto:$email'>".$p['email']."</a>";
-	$users[$k]["username"]=$p['username'];
 	$users[$k]["institution"]=$p['institution']." ".$p['dept']." ".$p['address'];
 	$users[$k]["phone"]=$p['phone'];
 }
 
 $columns=array(
 	'name'=>'Name', 'email'=>'Email',
-	'username'=>'Username',
+	'username'=>'username',
 	'institution'=>'Institution',
 	'phone'=>'Phone');
-
-$display_header=false;
+$columns=array(
+	'firstname'=>'First Name', 'lastname'=>'Last Name',
+	'name' =>'Login Name',
+	'email' => 'Email'
+	);
+$display_header=true;
 
 if ($is_admin) {
 	$columns=array_merge(array('edit'=>'', 'del'=>''), $columns);

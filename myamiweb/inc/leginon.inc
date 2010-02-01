@@ -19,11 +19,6 @@ require_once "inc/util.inc";
 require_once "inc/xmlapplicationimport.inc";
 require_once "inc/mysql.inc";
 
-define('DB_HOST', $DB_HOST);
-define('DB_USER', $DB_USER);
-define('DB_PASS', $DB_PASS);
-define('DB', $DB);
-
 class leginondata {
 
 	var $crlf = "\n";
@@ -46,7 +41,7 @@ class leginondata {
 	);
 
 	function leginondata() {
-		$this->mysql = &new mysql(DB_HOST, DB_USER, DB_PASS, DB);
+		$this->mysql = &new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
 		if (!$this->mysql->checkDBConnection()) {
 			$this->mysql->dbError();
 		}
@@ -95,16 +90,20 @@ class leginondata {
 	}
 
 	function getSessions($comment="", $projectId=false, $like="") {
+	
 		if ($like)
 			$wherelike = "and s.`Name` like '$like' ";
+		
 		$selectcomment = ($comment) ? 
 				"if (length(s.comment)>0, concat(s.name,' - ',s.comment), s.name)" : "s.name";
 		if (is_numeric($projectId)) {
 			// --- project database information
 			$project = &new project;
 			$db  = &$project->mysql;
-			$q = "select p.name from ".PROJECT_DB.".projectexperiments p where p.projectId='$projectId'";
+			$q = "select p.name from ".DB_PROJECT.".projectexperiments p where p.projectId='$projectId'";
+			var_dump($q);
 			$psessions = $db->getSQLResult($q);
+			var_dump($psessions);
 			$ps=array();
 			foreach ($psessions as $psession) {
 				$ps[$psession['name']] = $psession['name'];
@@ -2847,7 +2846,7 @@ function rsum($v, $w) {
 	return $v;
 }
 
-
+/*
 class MessageLog {
 
 	var $levels = array('ERROR', 'WARNING', 'INFO');
@@ -2879,7 +2878,7 @@ class MessageLog {
 	// level Time Message
 
 }
-
+*/
 $leginondata = new leginondata();
 
 ?>

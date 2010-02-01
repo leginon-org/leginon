@@ -10,9 +10,7 @@
 require_once "config.php";
 require_once "inc/util.inc";
 require_once "inc/mysql.inc";
-#require_once "inc/button.inc";
-#require_once "inc/pref.inc";
-#require_once "inc/ace.inc";
+
 if (ENABLE_LOGIN) {
 	require_once "inc/dbemauth.php";
 }
@@ -74,7 +72,7 @@ function login_header($title="", $javascript="", $onload="") {
 if (ENABLE_LOGIN) {
 	if ($username) {
 		echo '<a class="header" href="'.BASE_URL.'logout.php">[Logout '.$username.']</a>';
-		echo '<a class="header" href="prefs.php">['.$username.' Prefs]</a>';
+		echo '<a class="header" href="'.BASE_URL.'prefs.php">['.$username.' Prefs]</a>';
 	} else {
 		if (!ereg(BASE_URL.'login.php', $_SERVER['PHP_SELF']))
 			echo '<a class="header" href="'.BASE_URL.'login.php?'.$url.'">[Login]</a>';

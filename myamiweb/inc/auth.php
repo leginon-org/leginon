@@ -7,13 +7,38 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require "inc/authconfig.inc.php";
+require_once "config.php";
+require_once "inc/authconfig.inc.php";
 
 class authlib extends config_class {
 
+	var $error = array (
+				 "passwd_not_match"=>"Passwords do not match each other",
+				 "passwd_short"=>"Password is too short. Minimum is 3 valid characters.",
+				 "passwd_long"=>"Password is too long. Maximum is 20 valid characters.",
+				 "passwd_invalid"=>"Password contains invalid characters.",
+				 "username_exists"=>"Username already exists.",
+				 "username_email_exists"=>"A user with that email already exists.",
+				 "username_short"=>"Username is too short. Minimum is 3 valid characters.",
+				 "username_long"=>"Username is too long. Maximum is 11 valid characters.",
+				 "username_invalid"=>"Username contains invalid characters.",
+				 "email_invalid"=>"Email address format is invalid.",
+				 "name_invalid"=>"Name contains invalid characters.",
+				 "hash_invalid"=>"Hash is not valid.",
+				 "fields_empty"=>"Some fields were left empty.",
+				 "temp_username_incorrect"=>"Temporary ID and Username combination incorrect, or account purged.",
+				 "database_error"=>"Unknown database failure, please try later.",
+				 "flushing"=>"The flushing process was unsuccessful.",
+				 "username_email"=>"No username corresponding to that email.",
+				 "no_email"=>"no such email address in our system. ",
+				 "database_err1"=>"Your registration details could not be updated.",
+				 "database_err2"=>"Your password could not be updated due to a database fault.",
+				 "emails_not_match"=>"Your emails do not match.",
+				 "emails_match"=>"I think your current email and the email you entered for modification are same hence I can't change anything."
+				 );
 
-	function register ($username, $password, $password2, $email, $lastname, $firstname="") {
-		if (!$username || !$password || !$password2 || !$email || !$lastname) {
+	function register ($username, $password, $password2, $email, $lastname, $firstname) {
+		if (!$username || !$password || !$password2 || !$email || !$lastname || !$firstname) {
 
 			return $this->error['fields_empty'];
 
@@ -26,7 +51,13 @@ class authlib extends config_class {
 				return $this->error['name_invalid'];
 
 			}
+			
+			if(!eregi("^[a-z ]+$", $firstname)) {
 
+				return $this->error['name_invalid'];
+
+			}
+			
 			$this->filter_email($email);
 
 			$this->filter_username($username);
@@ -39,8 +70,8 @@ class authlib extends config_class {
 
 			$this->filter_password($password);
 
-			echo $this->server;
-			$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
+			
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
 
 			if (!get_magic_quotes_gpc()) {
 				$username=addslashes($username);
@@ -67,11 +98,11 @@ class authlib extends config_class {
 			}
 			
 			$now=date('Y-m-d H:i:s', time());
-			$hash = md5($this->secret.$username.$now);
+			$hash = md5($username.$now);
 			$data=array();
 			$data['mdhash']=$hash;
 			$data['username']=$username;
-			$data['password']=$password;
+			$data['password']=md5($password);
 			$data['firstname']=$firstname;
 			$data['lastname']=$lastname;
 			$data['email']=$email;
@@ -90,7 +121,7 @@ class authlib extends config_class {
 				."Username : $username\n"
 				."Password : $password \n\n"
 				."	You need to confirm the account by pointing your browser at \n"
-				.$this->server_url."/confirm.php?hash=$hash\n\n"
+				."/confirm.php?hash=$hash\n\n"
 				."If you did not apply for the account please ignore this message.", "From: ".$this->webmaster);
 
 			return 2;
@@ -152,7 +183,7 @@ class authlib extends config_class {
 			return "userId not valid";
 		}
 
-		$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
 		$dbc->SQLUpdate($this->tbl_user, $data, $where);
 
 		if ($chpass)
@@ -163,9 +194,9 @@ class authlib extends config_class {
 
 	function updatePassword($userID, $password) {
 		
-		$dbc = new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
+		$dbc = new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
 
-		$q = "update $this->tbl_user set password = '$password' where DEF_id = $userID";
+		$q = "update UserData set password = '$password' where DEF_id = $userID";
 		
 		if(!$dbc->SQLQuery($q))
 			return false;
@@ -180,7 +211,7 @@ class authlib extends config_class {
 					$username = addslashes($username);
 			}
 
-			$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
 			$q="select "
 				."u.userId, u.username, u.firstname, u.lastname,"
 				."u.title, u.institution, u.dept, u.address, u.city,"
@@ -194,7 +225,7 @@ class authlib extends config_class {
 
 	function hasPassword($userId) {
 
-		$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
     $sqlwhere = (is_numeric($userId)) ? "userId=$userId" : "username='$userId'";
     $q='select *  '
       .'from login '
@@ -205,7 +236,8 @@ class authlib extends config_class {
   }
 
 	function login ($username, $password) {
-		if (!$username || !$password) {
+
+		if (empty($username) || empty($password)) {
 
 			return $this->error['fields_empty'];
 
@@ -214,33 +246,27 @@ class authlib extends config_class {
 
 			$this->filter_password($password);
 
-			$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
 
 			if (!get_magic_quotes_gpc()) {
 				$password=addslashes($password);
 				$username=addslashes($username);
 			}
 
-			$q="select u.DEF_id, g.privilege from ".$this->tbl_user." as u "
-				."left join ".$this->tbl_group." as g "
-				."on u.`REF|GroupData|group` = g.`DEF_id` "
-				."where u.name = '$username' and password = '$password'";
+			$q="select DEF_id from UserData where username = '$username' and password = '$password'";
+			
 			$query=$dbc->SQLQuery($q);
 			$result = @mysql_num_rows($query);
-			if ($result < 1) {
-
+			
+			if ($result != 1) {
 				return false;
-
 			}
 
 			else {
+				$hash = md5($username);
+				$expire = (COOKIE_TIME) ? time()+COOKIE_TIME : 0;
 
-				list ($id, $privilege) = mysql_fetch_row($query);
-
-				$hash = md5($username.$id.$privilege.$this->secret);
-				$expire = ($this->cookie_expire) ? time()+$this->cookie_expire : 0;
-
-				setcookie($this->authcook, "$username:$hash", $expire);
+				setcookie(PROJECT_NAME, "$username:$hash", COOKIE_TIME);
 				return 2;
 
 			}
@@ -251,18 +277,19 @@ class authlib extends config_class {
 	function is_logged () {
 
 		global $_COOKIE;
-		$cookie = $_COOKIE[$this->authcook];
+		$cookie = $_COOKIE[PROJECT_NAME];
 
 		$session_vars = explode(":", $cookie);
 		$username = $session_vars[0];
 
-		$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
 
-		$q="select u.DEF_id, g.privilege from ".$this->tbl_user." as u "
-			."left join ".$this->tbl_group." as g "
+		$q="select u.DEF_id, g.privilege from UserData as u "
+			."left join GroupData as g "
 			."on u.`REF|GroupData|group` = g.`DEF_id` "
-			."where u.name = '$username'";
+			."where u.username = '$username'";
 		$query=$dbc->SQLQuery($q);
+		
 		$result = @mysql_num_rows($query);
 
 		if ($result < 1) {
@@ -271,10 +298,9 @@ class authlib extends config_class {
 
 		}
 
-
 		list ($id, $privilege) = mysql_fetch_row($query);
 
-		$hash = md5($session_vars[0].$id.$privilege.$this->secret);
+		$hash = md5($session_vars[0]);
 
 		if ($hash != $session_vars[1]) {
 
@@ -290,8 +316,8 @@ class authlib extends config_class {
 
 	function logout () {
 
-		setcookie($this->authcook, "", time()-3600);
-
+		setcookie(PROJECT_NAME, "", time()-3600);
+		
 		header("Location: $this->logout_url");
 
 	}
@@ -304,8 +330,8 @@ class authlib extends config_class {
 
 		} else {
 
-			$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
-			$q="select username from `".$this->tbl_login."` where md5(concat('".$this->secret."', username, date))='$hash' ";
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
+			$q="select username from `".$this->tbl_login."` where md5(concat(username, date))='$hash' ";
 			list($r) = $dbc->getSQLResult($q);
 			$username=$r['username'];
 
@@ -405,15 +431,15 @@ class authlib extends config_class {
 			return $this->error['fields_empty'];
 		}
 
-		$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
 
-		$q="select DEF_id, name, email from $this->tbl_user where email = '$email'";
+		$q="select DEF_id, username, email from UserData where email = '$email'";
 
 		$query = $dbc->SQLQuery($q);
 		$result = @mysql_num_rows($query);
 
 		// setup query result value and assign to those variables
-		list($userID, $username, $email) = mysql_fetch_row($query);
+		list($userID, $username, $email) = @mysql_fetch_row($query);
 
 		if (!$email) {
 			return $this->error['no_email'];
@@ -426,12 +452,16 @@ class authlib extends config_class {
 		$result = $this->updatePassword($userID, $password);
 
 		// sent out email with necessary information.
-		@mail($email, "Account Info", "Dear User,\n\nAs per your request here is your account information:\n
+
+		$subject = "Forget password: Account Infomation";
+		$headers = "From: ". WEBMASTER;
+		$message = "Dear User,\n\nAs per your request here is your account information:\n
 				Username: $username
  				Password: $password
  				\nYou can use this password to login and update your password later.
-				\nWe hope you remember your password next time ;-)", "From: $this->webmaster");
+				\nWe hope you remember your password next time ;-)"; 
 
+		@mail($email, $subject, $message, $headers);
 		return 2;
 
 	}
@@ -450,7 +480,7 @@ class authlib extends config_class {
 
 		}
 
-			$dbc=new mysql($this->server, $this->db_user, $this->db_pass, $this->database);
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
 
 			$q="select id from `".$this->tbl_user."` where email = '$email'";
 			$query = $dbc->SQLQuery($q);
@@ -470,7 +500,7 @@ class authlib extends config_class {
 
 			}
 
-			$mdhash = md5($id.$email.$this->secret);
+			$mdhash = md5($id.$email);
 
 			$q="insert into `".$this->tbl_confirm_email."` values ('$id', '$email', '$mdhash', now())";
 			$query = $dbc->SQLQuery($q);
@@ -502,8 +532,8 @@ class authlib extends config_class {
 
 		else {
 
-			mysql_connect($this->server, $this->db_user, $this->db_pass);
-			mysql_select_db($this->database);
+			mysql_connect(DB_HOST, DB_USER, DB_PASS);
+			mysql_select_db(DB_DBEMDATA);
 
 			$query = mysql_query("select * from `".$this->tbl_confirm_email."` where id = '$id' AND email = '$email' AND mdhash = '$mdhash'");
 			$result = @mysql_num_rows($query);
@@ -529,8 +559,8 @@ class authlib extends config_class {
 
 	function email_flush () {
 
-		mysql_connect($this->server, $this->db_user, $this->db_pass);
-		mysql_select_db($this->database);
+		mysql_connect(DB_HOST, DB_USER, DB_PASS);
+		mysql_select_db(DB_DBEMDATA);
 
 		$query = mysql_query("delete from `".$this->tbl_confirm_email."` where date_add(date, interval 2 day) < now()");
 
@@ -574,8 +604,8 @@ class authlib extends config_class {
 
 			}
 
-			mysql_connect($this->server, $this->db_user, $this->db_pass);
-			mysql_select_db($this->database);
+			mysql_connect(DB_HOST, $this->db_user, DB_PASS);
+			mysql_select_db(DB_DBEMDATA);
 
 			$query = mysql_query("update `".$this->tbl_login."` set password = '$password' where id = '$id'");
 
@@ -595,8 +625,8 @@ class authlib extends config_class {
 
 	function delete($id) {
 
-		mysql_connect($this->server, $this->db_user, $this->db_pass);
-		mysql_select_db($this->database);
+		mysql_connect(DB_HOST, $this->db_user, DB_PASS);
+		mysql_select_db(DB_DBEMDATA);
 
 		$query = mysql_query("delete from `".$this->tbl_login."` where id = '$id'");
 		$query = mysql_query("delete from `".$this->tbl_user."` where id = '$id'");

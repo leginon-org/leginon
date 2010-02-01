@@ -1,8 +1,9 @@
 <?php
 
 require "inc/admin.inc";
+
 $f_sel_name=$_POST['f_sel_name'];
-$f_name=$_POST['f_name'];
+$f_username=$_POST['f_username'];
 
 $f_first_name=$_POST['f_first_name'];
 $f_last_name=$_POST['f_last_name'];
@@ -13,7 +14,7 @@ $r_groupdata=$_POST['r_groupdata'];
 $f_group=$_POST['f_group'];
 $f_groupdata_privilegeId=$_POST['f_group_privilegeId'];
 $maintable = "UserData";
-$id = $leginondata->getId( array('name' => $f_name), 'UserData');
+$id = $leginondata->getId( array('username' => $f_username), 'UserData');
 $id = (is_array($id)) ? $id[0] : $id;
 
 switch ($_POST['bt_action']) {
@@ -33,8 +34,8 @@ switch ($_POST['bt_action']) {
 					$f_group = $leginondata->mysql->SQLInsert('GroupData', $ginfo);
 				}
 			}
-			if (!$f_name) {
-				$nameerror = "Enter a Name";
+			if (!$f_username) {
+				$nameerror = "Enter a user name";
 				break;
 			}
 			if (!$f_first_name){
@@ -55,17 +56,17 @@ switch ($_POST['bt_action']) {
 				break;
 			}
 			if ($f_password != $f_password_confirm) {
-				$passworderror = "Reenter password";
+				$passworderror = "Both password are not match";
 				break;
 			}
-			$data['name'] = $f_name;
+			$data['username'] = $f_username;
 			$data['firstname'] = $f_first_name;
 			$data['lastname'] = $f_last_name;
 			$data['email'] = $f_email;
 			//$data['full name'] = $f_full_name;
 			$data['REF|GroupData|group'] = $f_group;
 			$data['password'] = $f_password;
-			
+
 			if ($id) {
 				$where['DEF_id'] = $id;
 				$leginondata->mysql->SQLUpdate('UserData', $data, $where);
@@ -84,24 +85,16 @@ switch ($_POST['bt_action']) {
 $userinfo = $leginondata->getDataInfo('UserData', $id);
 $userinfo = $userinfo[0];
 if ($userinfo) {
-	$f_name=$userinfo['name'];
-	//$f_full_name=$userinfo['full name'];
+	$f_username=$userinfo['username'];
 	$f_first_name=$userinfo['firstname'];
 	$f_last_name=$userinfo['lastname'];
 	$f_email=$userinfo['email'];
 	$f_group=$userinfo['REF|GroupData|group'];
 	$f_password=$userinfo['password'];
-} else {
-	//$f_full_name="";
-	$f_first_name="";
-	$f_last_name="";
-	$f_email="";
-	$f_password="";
-	$f_group="1";
 }
 
 $groups = $leginondata->getGroups('name');
-$users = $leginondata->getUsers('name');
+$users = $leginondata->getUsers('username');
 
 admin_header('onload="init()"');
 ?>
@@ -148,17 +141,19 @@ function init() {
 
 </script>
 <h3>Table: <?php echo $maintable; ?></h3>
-Choose a Name in the list or type one, then &lt;Tab&gt;
+Choose a user name in the list or type one, then &lt;Tab&gt;
 <br>
 <form method="POST" name="data" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <table  border=0 cellspacing=1>
 <tr valign="top">
 <td>
+
+<!-- list out all the users -->
 <select name="f_sel_name"  SIZE=20 onClick="update_data();" onchange="update_data();">
 <?php
 foreach ($users as $user) {
 //	$s = ($f_sel_name==$user['DEF_id']) ? 'selected' : '';
-	echo "<option value='".$user['DEF_id']."' $s>".stripslashes($user['name'])."</option>\n"; 
+	echo "<option value='".$user['DEF_id']."' $s>".stripslashes($user['username'])."</option>\n"; 
 } 
 
 ?>
@@ -173,10 +168,10 @@ foreach ($users as $user) {
 </tr>
 <tr>
   <td class="dt1" height="40">
-    login name:<font color="red">*</font>
+    User name:<font color="red">*</font>
   </td>
   <td class="dt1"> 
-    <input class="field" type="text" name="f_name" maxlength="20" size="17" value ="<?php echo $f_name; ?>" onBlur="check_name();" onchange="check_name();"  >
+    <input class="field" type="text" name="f_username" maxlength="20" size="17" value ="<?php echo $f_username; ?>" onBlur="check_name();" onchange="check_name();"  >
   </td>
   <?php if ($nameerror) { ?>
   <td valign="top">
@@ -185,7 +180,7 @@ foreach ($users as $user) {
 </tr>
 <tr>
   <td class="dt1" height="40">
-    first name:<font color="red">*</font>
+    First name:<font color="red">*</font>
   </td>
   <td class="dt1">
 		<input class="field" type="text" name="f_first_name" maxlength="20" size="17" value="<?php echo $f_first_name ?>">
@@ -193,7 +188,7 @@ foreach ($users as $user) {
 </tr>
 <tr>
   <td class="dt1" height="40">
-    last name:<font color="red">*</font>
+    Last name:<font color="red">*</font>
   </td>
   <td class="dt1">
 		<input class="field" type="text" name="f_last_name" maxlength="20" size="17" value="<?php echo $f_last_name ?>">
@@ -201,7 +196,7 @@ foreach ($users as $user) {
 </tr>
 <tr>
   <td class="dt1" height="40">
-    email:<font color="red">*</font>
+    Email:<font color="red">*</font>
   </td>
   <td class="dt1">
 		<input class="field" type="text" name="f_email" maxlength="25" size="23" value="<?php echo $f_email ?>">
@@ -209,7 +204,7 @@ foreach ($users as $user) {
 </tr>
 <tr>
   <td class="dt2" height="40">
-    password:<font color="red">*</font>
+    Password:<font color="red">*</font>
   </td>
   <td class="dt2" valign="top">
 		<input class="field" type="password" name="f_password" size="15" value="<?php echo $f_password ?>">
@@ -221,7 +216,7 @@ foreach ($users as $user) {
 </tr>
 <tr>
 <td class="dt2" height="40">
-confirm password:
+Confirm password:<font color="red">*</font>
 </td>
 <td class="dt2" valign="top">
 		<input class="field" type="password" name="f_password_confirm" size="15">
@@ -229,7 +224,7 @@ confirm password:
 </tr>
 <tr>
 <td class="dt1" height="40">
-group:
+Group:
 </td>
 <td class="dt1">
   <table border="0">
@@ -304,11 +299,12 @@ group:
 	<input type="hidden" name="bt_action" value = "" >
 	<input type="button" name="save" value = "Save" onClick="confirm_update();" >
 </td>
+<?php if(!empty($id)) { ?>
 <td>
 	<input type="button" name="save" value = "Remove" onClick="confirm_delete();" >
 </td>
 </tr>
-
+<?php } ?>
 
 
 </table>
