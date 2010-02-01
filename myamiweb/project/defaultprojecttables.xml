@@ -382,6 +382,33 @@
     <key>KEY `REF|projectexperiments|experiment` (`REF|projectexperiments|experiment`)</key>
     <key>KEY `REF|leginondata|UserData|user` (`REF|leginondata|UserData|user`)</key>
   </sqltable>
+  <sqltable name="projectowners" >
+    <field 
+      name="DEF_id" 
+      type="int(16)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="DEF_timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field 
+      name="REF|projects|project" 
+      type="int(16)" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="REF|leginondata|UserData|user" 
+      type="int(16)" 
+      null="NOT NULL" 
+    />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|projects|project` (`REF|projects|project`)</key>
+    <key>KEY `REF|leginondata|UserData|user` (`REF|leginondata|UserData|user`)</key>
+	</sqltable>
 
  </definition>
  <data>
