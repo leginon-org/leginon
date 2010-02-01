@@ -91,6 +91,16 @@ if ($userinfo) {
 	$f_email=$userinfo['email'];
 	$f_group=$userinfo['REF|GroupData|group'];
 	$f_password=$userinfo['password'];
+}else{
+	if(empty($id)){
+		$f_username="";
+		$f_first_name="";
+		$f_last_name="";
+		$f_email="";
+		$f_group="";
+		$f_password="";	
+	}
+	
 }
 
 $groups = $leginondata->getGroups('name');
@@ -299,7 +309,7 @@ Group:
 	<input type="hidden" name="bt_action" value = "" >
 	<input type="button" name="save" value = "Save" onClick="confirm_update();" >
 </td>
-<?php if(!empty($id)) { ?>
+<?php if($id != NULL) { ?>
 <td>
 	<input type="button" name="save" value = "Remove" onClick="confirm_delete();" >
 </td>
