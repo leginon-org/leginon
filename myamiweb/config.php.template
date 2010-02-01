@@ -11,26 +11,41 @@
 require 'inc/config.inc';
 
 // --- define dbem web tools base --- //
-$BASE_PATH = "myamiweb";
-define('BASE_URL', "/".$BASE_PATH."/");
+define('PROJECT_NAME', "myamiweb");
+define('PROJECT_TITLE', "Appion and Leginon DB tools");
+define('BASE_URL', "myamiweb/");
+define('PROJECT_URL', BASE_URL."project");
+define('WEBMASTER', "example@scripps.edu");
 
-// --- Set your leginon MySQL database server parameters
+// Administrator email address
+define('ADMIN_EMAIL', "erichou@scripps.edu");
 
-$DB_HOST	= "";
-$DB_USER	= "";
-$DB_PASS	= "";
-$DB		= "";
+// --- Set your MySQL database server parameters
+define('DB_HOST', "");		// DB Host name
+define('DB_USER', "");		// DB User name
+define('DB_PASS', "");		// DB Password
+define('DB_DBEMDATA', "dbemdata");	// DB dbemdata table name
+define('DB_PROJECT', "project");	// DB project table name
+
+// --- default URL for project section
+define('VIEWER_URL', BASE_URL."3wviewer.php?expId=");
+define('SUMMARY_URL', BASE_URL."summary.php?expId=");
+define('UPLOAD_URL', BASE_URL."processing/uploadimage.php");
+define('DEF_PROJECT_TABLES_FILE', "defaultprojecttables.xml");
+define('DEF_PROCESSING_TABLES_FILE', "defaultprocessingtables.xml");
+// --- Set cookie session time
+define('COOKIE_TIME', 0);		//0 is never expire. 
 
 // --- XML test dataset
 $XML_DATA = "test/viewerdata.xml";
 
 // --- Project database URL
 
-$PROJECT_URL = "";
-$PROJECT_DB_HOST = "";
-$PROJECT_DB_USER = "";
-$PROJECT_DB_PASS = "";
-$PROJECT_DB = "";
+//$PROJECT_URL = $BASE_PATH."/project";
+//$PROJECT_DB_HOST = $DB_HOST;
+//$PROJECT_DB_USER = $DB_USER;
+//$PROJECT_DB_PASS = $DB_PASS;
+//$PROJECT_DB = $DB;
 
 
 // --- Set Default table definition
@@ -41,10 +56,10 @@ $DEF_TABLES_FILE = "defaulttables.xml";
 // --- You can add as many as you want, just copy and paste the block
 // --- to a new one and update the connection parameters
 
-$SQL_HOSTS[$DB_HOST]['db_host'] = $DB_HOST;
-$SQL_HOSTS[$DB_HOST]['db_user'] = $DB_USER;
-$SQL_HOSTS[$DB_HOST]['db_pass'] = $DB_PASS;
-$SQL_HOSTS[$DB_HOST]['db'] = $DB;
+//$SQL_HOSTS[$DB_HOST]['db_host'] = $DB_HOST;
+//$SQL_HOSTS[$DB_HOST]['db_user'] = $DB_USER;
+//$SQL_HOSTS[$DB_HOST]['db_pass'] = $DB_PASS;
+//$SQL_HOSTS[$DB_HOST]['db'] = $DB;
 
 /*
 $SQL_HOSTS['name1']['db_host'] = 'name1';
@@ -59,7 +74,7 @@ $SQL_HOSTS['name1']['db'] = 'dbemdata';
 # addplugin("processing");
 
 // --- Leginon Viewer login --- //
-define('ENABLE_LOGIN', false);
+define('ENABLE_LOGIN', true);
 
 // --- Enable Image Cache --- //
 define('ENABLE_CACHE', false);
