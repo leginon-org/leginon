@@ -408,6 +408,46 @@
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|projects|project` (`REF|projects|project`)</key>
     <key>KEY `REF|leginondata|UserData|user` (`REF|leginondata|UserData|user`)</key>
+  </sqltable>
+  <sqltable name="privileges" >
+    <field 
+      name="DEF_id" 
+      type="int(16)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="DEF_timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field 
+      name="groups" 
+      type="tinyint(4)" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="users" 
+      type="tinyint(4)" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="projects" 
+      type="tinyint(4)" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="projectowners" 
+      type="tinyint(4)" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="shareexperiments" 
+      type="tinyint(4)" 
+      null="NOT NULL" 
+    />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
 	</sqltable>
 
  </definition>
@@ -433,6 +473,42 @@
         <field name="label" >tray</field>
         <field name="image" >tray.png</field>
         <field name="image_tiny" >tray_tiny.png</field>
+    </sqltable>
+    <sqltable name="privileges" >
+        <field name="DEF_id" >1</field>
+        <field name="DEF_timestamp" >NOW()</field>
+        <field name="groups" >4</field>
+        <field name="users" >4</field>
+        <field name="projects" >4</field>
+        <field name="projectowners" >4</field>
+        <field name="shareexperiments" >4</field>
+    </sqltable>
+    <sqltable name="privileges" >
+        <field name="DEF_id" >2</field>
+        <field name="DEF_timestamp" >NOW()</field>
+        <field name="groups" >3</field>
+        <field name="users" >3</field>
+        <field name="projects" >3</field>
+        <field name="projectowners" >3</field>
+        <field name="shareexperiments" >3</field>
+    </sqltable>
+    <sqltable name="privileges" >
+        <field name="DEF_id" >3</field>
+        <field name="DEF_timestamp" >NOW()</field>
+        <field name="groups" >1</field>
+        <field name="users" >2</field>
+        <field name="projects" >2</field>
+        <field name="projectowners" >2</field>
+        <field name="shareexperiments" >2</field>
+    </sqltable>
+    <sqltable name="privileges" >
+        <field name="DEF_id" >4</field>
+        <field name="DEF_timestamp" >NOW()</field>
+        <field name="groups" >1</field>
+        <field name="users" >1</field>
+        <field name="projects" >1</field>
+        <field name="projectowners" >1</field>
+        <field name="shareexperiments" >1</field>
     </sqltable>
 
  </data>
