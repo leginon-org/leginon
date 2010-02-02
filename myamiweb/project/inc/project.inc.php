@@ -6,15 +6,6 @@ require_once "inc/menu.inc.php";
 require_once "inc/util.inc";
 require_once "inc/xmlapplicationimport.inc";
 
-define('DBEM_PATH', $DBEM_PATH);
-define('PRJ_DB_HOST', $PROJECT_DB_HOST);
-define('PRJ_DB_USER', $PROJECT_DB_USER);
-define('PRJ_DB_PASS', $PROJECT_DB_PASS);
-define('PRJ_DB', $PROJECT_DB);
-define('PRJ_DEF_TABLES', $DEF_PROJECT_TABLES_FILE);
-define('VIEWER_URL', $VIEWER_URL);
-define('SUMMARY_URL', $SUMMARY_URL);
-define('UPLOAD_URL', $UPLOAD_URL);
 
 
 function menu($privilege=1) {
@@ -24,7 +15,7 @@ function menu($privilege=1) {
 	$link->onimg = "_on.png";
 	$link->offimg = "_off.png";
 	$link->setImagePath('img/');
-	$link->addlink(DBEM_PATH, 'dbem tool','', '', '');
+	$link->addlink(BASE_URL, 'dbem tool','', '', '');
 	$link->addlink('project.php','View Projects','', 'folder', '');
 	$link->addlink('gridtray.php','Grid Tray','', 'preparation', '');
 	if ($privilege>1) {
@@ -129,7 +120,7 @@ return "getmenu.php?".$getids_str;
 class project {
 
 	function project($mysql="") {
-		$this->mysql = ($mysql) ? $mysql : new mysql(PRJ_DB_HOST, PRJ_DB_USER, PRJ_DB_PASS, PRJ_DB);
+		$this->mysql = ($mysql) ? $mysql : new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 		if ($this->mysql->checkDBConnection()) {
 			$this->install();
 		} else {
