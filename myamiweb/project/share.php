@@ -11,7 +11,7 @@ if ($_POST[currentproject])
 $project = new project();
 $projects = $project->getProjects("order");
 $login_check = privilege();
-$is_admin = ($login_check == 2);
+$is_admin = ($login_check == 3);
 project_header("Share Data");
 $sessionId = $_GET['id'];
 ?>
@@ -96,7 +96,7 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 		$sql_users[] = "`DEF_id`='".$v['REF|leginondata|UserData|user']."'";
 	}
 	if ($sql_users) {	
-	$q = "select u.DEF_id as userId, u.* from ".DB.".`UserData` as u where ".join(' OR ', $sql_users);
+	$q = "select u.DEF_id as userId, u.* from ".DB_LEGINON.".`UserData` as u where ".join(' OR ', $sql_users);
 	$r = $project->mysql->getSQLResult($q);
 	echo "<br>";
 	echo "Experiment shared to: <br>";

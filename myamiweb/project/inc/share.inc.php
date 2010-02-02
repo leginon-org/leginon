@@ -5,7 +5,7 @@
 class share {
 
 	function share($mysql=""){
-		$this->mysql = ($mysql) ? $mysql : new mysql(PRJ_DB_HOST, PRJ_DB_USER, PRJ_DB_PASS, PRJ_DB);
+		$this->mysql = ($mysql) ? $mysql : new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 	}
 
 	function is_shared($sessionId) {
@@ -17,11 +17,11 @@ class share {
 	}
 
 	function get_share_info($experiments) {
-		$q="select u.`full name` as name, u.name as username, s.`REF|projectexperiments|experiment` as experimentId "
+		$q="select concate(u.`firstname`,' ',`lastname`) as name, u.username as username, s.`REF|projectexperiments|experiment` as experimentId "
 			."from shareexperiments s "
-			."left join ".DB.".UserData u on (u.`DEF_id`=s.`REF|leginondata|UserData|user`) "
+			."left join ".DB_LEGINON.".UserData u on (u.`DEF_id`=s.`REF|leginondata|UserData|user`) "
 			."where s.`REF|projectexperiments|experiment` in (".implode(',',$experiments).") "
-			."order by u.name";
+			."order by u.username";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
