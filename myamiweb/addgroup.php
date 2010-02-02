@@ -123,7 +123,11 @@ privilege:<font color="red">*</font>
 </td>
 <td class="dt2" valign="top">
 <?php
-$privileges = array('Restricted View'=>0,'View all but not edit'=>1,'Administrator'=>2);
+	$privileges = array('View only owned or shared projects'=>0,
+			'View and adminstrate sharing of owned project'=>1,
+			'View all projects but adminstrate only sharing of owned project'=>2,
+			'Administrator'=>3
+		);
 ?>
 	<select name="f_privilegeId" onChange="javascript:document.dataimport.submit();">
 		<?php
