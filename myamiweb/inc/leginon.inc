@@ -41,7 +41,7 @@ class leginondata {
 	);
 
 	function leginondata() {
-		$this->mysql = &new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
+		$this->mysql = &new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 		if (!$this->mysql->checkDBConnection()) {
 			$this->mysql->dbError();
 		}
