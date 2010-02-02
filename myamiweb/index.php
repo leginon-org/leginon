@@ -23,7 +23,7 @@ $link->addlink('tomo/','Tomography','', 'tomo_icon_3');
 $link->addlink('dualview.php','Dual Viewer','', 'dual_view');
 $link->addlink('template.php', 'Hole Template viewer','', 'template');
 
-if (privilege() == 2 ) {
+if (privilege() == 3 ) {
 	$link->addlink('admin.php','Administration','', 'admin');
 	$link->addlink('/phpMyAdmin/','phpMyAdmin','', 'phpMyAdmin');
 	$link->addlink('project','Project DB','', 'project');
