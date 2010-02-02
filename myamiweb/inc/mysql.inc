@@ -500,6 +500,9 @@ class mysql {
 		return $this->getSQLResult($q);
 	}
 
+	function dbError() {
+		return "databse error";
+	}
 }
 
 
