@@ -71,7 +71,7 @@ class authlib extends config_class {
 			$this->filter_password($password);
 
 			
-			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
 			if (!get_magic_quotes_gpc()) {
 				$username=addslashes($username);
@@ -183,7 +183,7 @@ class authlib extends config_class {
 			return "userId not valid";
 		}
 
-		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 		$dbc->SQLUpdate($this->tbl_user, $data, $where);
 
 		if ($chpass)
@@ -194,7 +194,7 @@ class authlib extends config_class {
 
 	function updatePassword($userID, $password) {
 		
-		$dbc = new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
+		$dbc = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
 		$q = "update UserData set password = '$password' where DEF_id = $userID";
 		
@@ -211,7 +211,7 @@ class authlib extends config_class {
 					$username = addslashes($username);
 			}
 
-			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 			$q="select "
 				."u.userId, u.username, u.firstname, u.lastname,"
 				."u.title, u.institution, u.dept, u.address, u.city,"
@@ -225,7 +225,7 @@ class authlib extends config_class {
 
 	function hasPassword($userId) {
 
-		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
     $sqlwhere = (is_numeric($userId)) ? "userId=$userId" : "username='$userId'";
     $q='select *  '
       .'from login '
@@ -246,7 +246,7 @@ class authlib extends config_class {
 
 			$this->filter_password($password);
 
-			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
 			if (!get_magic_quotes_gpc()) {
 				$password=addslashes($password);
@@ -282,7 +282,7 @@ class authlib extends config_class {
 		$session_vars = explode(":", $cookie);
 		$username = $session_vars[0];
 
-		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
 		$q="select u.DEF_id, g.privilege from UserData as u "
 			."left join GroupData as g "
@@ -330,7 +330,7 @@ class authlib extends config_class {
 
 		} else {
 
-			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 			$q="select username from `".$this->tbl_login."` where md5(concat(username, date))='$hash' ";
 			list($r) = $dbc->getSQLResult($q);
 			$username=$r['username'];
@@ -431,7 +431,7 @@ class authlib extends config_class {
 			return $this->error['fields_empty'];
 		}
 
-		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
 		$q="select DEF_id, username, email from UserData where email = '$email'";
 
@@ -480,7 +480,7 @@ class authlib extends config_class {
 
 		}
 
-			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_DBEMDATA);
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
 			$q="select id from `".$this->tbl_user."` where email = '$email'";
 			$query = $dbc->SQLQuery($q);
@@ -533,7 +533,7 @@ class authlib extends config_class {
 		else {
 
 			mysql_connect(DB_HOST, DB_USER, DB_PASS);
-			mysql_select_db(DB_DBEMDATA);
+			mysql_select_db(DB_LEGINON);
 
 			$query = mysql_query("select * from `".$this->tbl_confirm_email."` where id = '$id' AND email = '$email' AND mdhash = '$mdhash'");
 			$result = @mysql_num_rows($query);
@@ -560,7 +560,7 @@ class authlib extends config_class {
 	function email_flush () {
 
 		mysql_connect(DB_HOST, DB_USER, DB_PASS);
-		mysql_select_db(DB_DBEMDATA);
+		mysql_select_db(DB_LEGINON);
 
 		$query = mysql_query("delete from `".$this->tbl_confirm_email."` where date_add(date, interval 2 day) < now()");
 
@@ -605,7 +605,7 @@ class authlib extends config_class {
 			}
 
 			mysql_connect(DB_HOST, $this->db_user, DB_PASS);
-			mysql_select_db(DB_DBEMDATA);
+			mysql_select_db(DB_LEGINON);
 
 			$query = mysql_query("update `".$this->tbl_login."` set password = '$password' where id = '$id'");
 
@@ -626,7 +626,7 @@ class authlib extends config_class {
 	function delete($id) {
 
 		mysql_connect(DB_HOST, $this->db_user, DB_PASS);
-		mysql_select_db(DB_DBEMDATA);
+		mysql_select_db(DB_LEGINON);
 
 		$query = mysql_query("delete from `".$this->tbl_login."` where id = '$id'");
 		$query = mysql_query("delete from `".$this->tbl_user."` where id = '$id'");
