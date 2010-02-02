@@ -13,12 +13,12 @@ require 'inc/config.inc';
 // --- define dbem web tools base --- //
 define('PROJECT_NAME', "myamiweb");
 define('PROJECT_TITLE', "Appion and Leginon DB tools");
-define('BASE_URL', "myamiweb/");
+define('BASE_URL', "/myamiweb/");
 define('PROJECT_URL', BASE_URL."project");
 define('WEBMASTER', "example@scripps.edu");
 
 // Administrator email address
-define('ADMIN_EMAIL', "erichou@scripps.edu");
+define('ADMIN_EMAIL', "example@scripps.edu");
 
 // --- Set your MySQL database server parameters
 define('DB_HOST', "");		// DB Host name
