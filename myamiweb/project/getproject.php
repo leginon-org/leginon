@@ -13,7 +13,7 @@ if ($_POST['currentproject']) {
 $view = ($_REQUEST['v']=='s') ? 'd' : 's';
 $link = ($view=='s') ? 'Detailed view' : 'Simple view';
 $privilege = privilege();
-$is_admin = ($privilege == 2);
+$is_admin = ($privilege == 3);
 if (!$is_admin)
 	$SHARE=false;
 $url = $_SERVER['PHP_SELF']."?v=".$_REQUEST['v']."&pId=".$selectedprojectId;
