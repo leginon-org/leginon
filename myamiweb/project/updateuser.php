@@ -18,7 +18,7 @@ if (empty($userId) || !($user->checkUserExistsbyId($userId))) {
 		$k = str_replace(' ','_', $k);
 		$$k = $f;
   }
-	$enable_admin_ckeck = ($curlogin['privilege']==2) ? "checked" : "";
+	$enable_admin_ckeck = ($curlogin['privilege']==3) ? "checked" : "";
 	$ptitle ='- update user: '.$first_name.' '.$last_name;
 	$action='update';
 	$checkpass=true;
@@ -49,7 +49,7 @@ project_header("Projects $ptitle");
 <font color=red>*</font>
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>
 <?
-$login_is_admin = (privilege() == 2);
+$login_is_admin = (privilege() == 3);
 include('inc/userform.inc.php');
 project_footer();
 ?>

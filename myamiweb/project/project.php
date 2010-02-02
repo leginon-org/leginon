@@ -2,14 +2,14 @@
 require "inc/project.inc.php";
 require "inc/leginon.inc";
 require "inc/utilpj.inc.php";
-
+print_r($_POST);
 $privilege = privilege();
-if ($privilege == 2 ) {
+if ($privilege >= 3 ) {
 	$title = "project administration";
 	login_header($title);
 } else {
-	if ($privilege == 1) {
-		$title = "project summary";
+	if ($privilege >= 1) {
+		$title = "project sharing administration";
 		login_header($title);
 	} else {
 		$redirect=$_SERVER['PHP_SELF'];
@@ -19,7 +19,7 @@ if ($privilege == 2 ) {
 
 $project = new project();
 
-$filename="defaultprojecttables20081002.xml";
+$filename=DEF_PROJECT_TABLES_FILE;
 $app = new XMLApplicationImport($filename);
 $sqldef = $app->getSQLDefinitionQueries();
 $fieldtypes = $app->getFieldTypes();
@@ -43,7 +43,7 @@ if ($_POST['currentproject']) {
 }
 
 $projects = $project->getProjects("order");
-$is_admin = ($privilege == 2);
+$is_admin = ($privilege == 3);
 
 if($projects) {
 foreach ((array)$projects as $k=>$proj) {
