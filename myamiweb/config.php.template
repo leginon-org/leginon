@@ -24,7 +24,7 @@ define('ADMIN_EMAIL', "example@scripps.edu");
 define('DB_HOST', "");		// DB Host name
 define('DB_USER', "");		// DB User name
 define('DB_PASS', "");		// DB Password
-define('DB_DBEMDATA', "dbemdata");	// DB dbemdata table name
+define('DB_LEGINON', "dbemdata");	// DB dbemdata table name
 define('DB_PROJECT', "project");	// DB project table name
 
 // --- default URL for project section
