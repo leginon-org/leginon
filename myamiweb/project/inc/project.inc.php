@@ -137,12 +137,11 @@ class project {
 			return;
 		}
 
-		$app = new XMLApplicationImport(PRJ_DEF_TABLES);
+		$app = new XMLApplicationImport(DEF_PROJECT_TABLES_FILE);
 		$sqldef = $app->getSQLDefinitionQueries();
 		$fieldtypes = $app->getFieldTypes();
 		if ($this->mysql->checkDBConnection())
 			$this->mysql->SQLAlterTables($sqldef, $fieldtypes);
-
 		$sqldata = $app->getSQLDataQueries();
 		//--- insert data;
 		foreach ((array)$sqldata as $table=>$queries) {

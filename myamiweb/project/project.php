@@ -2,7 +2,6 @@
 require "inc/project.inc.php";
 require "inc/leginon.inc";
 require "inc/utilpj.inc.php";
-print_r($_POST);
 $privilege = privilege();
 if ($privilege >= 3 ) {
 	$title = "project administration";
@@ -18,22 +17,6 @@ if ($privilege >= 3 ) {
 }
 
 $project = new project();
-
-$filename=DEF_PROJECT_TABLES_FILE;
-$app = new XMLApplicationImport($filename);
-$sqldef = $app->getSQLDefinitionQueries();
-$fieldtypes = $app->getFieldTypes();
-$sqldata = $app->getSQLDataQueries();
-$fieldvalues = $app->getFieldValues();
-$changes=$project->mysql->SQLAlterTables($sqldef, $fieldtypes);
-if (is_array($sqldata)) {
-	foreach ($sqldata as $table=>$queries) {
-		foreach($queries as $query) {
-				$project->mysql->SQLQuery($query,true);
-		}
-	}
-}
-
 
 if ($_GET['cp']) {
 	$selectedprojectId=$_GET['cp'];
