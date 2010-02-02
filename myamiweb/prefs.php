@@ -1,12 +1,20 @@
 <?php
-require "inc/leginon.inc";
+require_once "inc/leginon.inc";
 require_once "inc/login.inc";
+require_once "inc/pref.inc";
 
 if (!$login_check = $dbemauth->is_logged()) {
 	header('Location: '.BASE_URL);
 }
 
+/**
+ * [0] => username
+ * [1] => userid
+ * [2] => privilege
+ */
 $username = $login_check[0];
+$userId = $login_check[1];
+
 login_header("My Preferences");
 ?>
 <h3>My Profile</h3>
@@ -16,22 +24,26 @@ if ($_POST) {
 	if ($_POST['submit']=='update') {
 		$chpass=false;
 		foreach($_POST as $k=>$v)
-			if ($k!='submit')
-				$$k = trim($v);
+			if ($k!='submit'){
+				$v = trim($v);
+				$$k = addslashes($v);
+			}
 
-	if (!$haspass)
-		$chpass=true;
+		if (!$haspass)
+			$chpass=true;
 
-	$newprofil=$dbemauth->updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, $mypass1, $mypass2);
-		if ($newprofil!=2) {
-			echo '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">'.$newprofil.'</font></p>';
+		$newProfile=$dbemauth->updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, $mypass1, $mypass2);
+
+		if ($newProfile!=2) {
+			echo '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">'.$newProfile.'</font></p>';
+		}
+		else{
+			echo '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">Your update have been changed.</font></p>';
 		}
 	}
 }
-$userinfo = $dbemauth->getInfo($username);
-$haspass = $dbemauth->hasPassword($username);
-print_r($userinfo);
-list($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $url) = array_values($userinfo); 
+$userinfo = $dbemauth->getUserInfo($username);
+
 $action="update";
 $checkpass=true;
 ?>
@@ -40,14 +52,16 @@ $checkpass=true;
   <table border=0 cellspacing=0 cellpadding=2>
 	<tr>
 	<td>
-		<label for="username">username: </label>
+		<label for="username">User name: </label><br />
+		<label for="groupname">Group Name</label><br />
 	</td>
 	<td>
-		<b><?=$username?></b>
+		<b><?php echo $userinfo['username']; ?></b><br />
+		<b><?php echo $userinfo['name']; ?></b><br />
 	</td>
 	<td>
 		<?=($checkpass) ? "<br />" : "" ?>
-		<label for="mypass1">password:</label><br />
+		<label for="mypass1">Password:</label><br />
 		<label for="mypass2">confirm:</label><br />
 	</td>
 	<td>
@@ -62,16 +76,24 @@ $checkpass=true;
 	</tr>
 	<tr>
 	<td>
-		<label for="Firstname">firstname: </label>
+		<label for="Firstname">First name: <font color="red">*</font></label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$firstname?>" name="firstname" id="firstname" size="15" ><br>
+		<input class="field" type="text" value="<?php echo $userinfo['firstname']; ?>" name="firstname" id="firstname" size="15" ><br>
 	</td>
 	<td>
-		<label for="Lastname">lastname: </label>
+		<label for="Lastname">Last name: <font color="red">*</font></label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$lastname?>" name="lastname" id="lastname" size="15" ><br>
+		<input class="field" type="text" value="<?php echo $userinfo['lastname']; ?>" name="lastname" id="lastname" size="15" ><br>
+	</td>
+	</tr>
+	<tr>
+	<td>
+		<label for="title">Email: <font color="red">*</font></label>
+	</td>
+	<td>
+		<input class="field" type="text" value="<?php echo $userinfo['email']; ?>" name="email" id="email" size="20" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -79,7 +101,7 @@ $checkpass=true;
 		<label for="title">Title: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$title?>" name="title" id="title" size="20" ><br>
+		<input class="field" type="text" value="<?php echo $userinfo['title']; ?>" name="title" id="title" size="20" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -87,13 +109,13 @@ $checkpass=true;
 		<label for="institution">Institution: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$institution?>" name="institution" id="institution" size="25" ><br>
+		<input class="field" type="text" value="<?php echo $userinfo['institution']; ?>" name="institution" id="institution" size="25" ><br>
 	</td>
 	<td>
 		<label for="dept">Dept: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$dept?>" name="dept" id="dept" size="20" ><br>
+		<input class="field" type="text" value="<?php echo $userinfo['dept']; ?>" name="dept" id="dept" size="20" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -101,7 +123,7 @@ $checkpass=true;
 		<label for="address">Address: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$address?>" name="address" id="address" size="25" ><br>
+		<input class="field" type="text" value="<?php echo $userinfo['address']; ?>" name="address" id="address" size="25" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -109,13 +131,13 @@ $checkpass=true;
 		<label for="city">City: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$city?>" name="city" id="city" size="10" ><br>
+		<input class="field" type="text" value="<?php echo $userinfo['city']; ?>" name="city" id="city" size="10" ><br>
 	</td>
 	<td>
 		<label for="statecountry">State/Country: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$statecountry?>" name="statecountry" id="statecountry" size="10" ><br>
+		<input class="field" type="text" value="<?php echo $userinfo['statecountry']; ?>" name="statecountry" id="statecountry" size="10" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -123,7 +145,7 @@ $checkpass=true;
 		<label for="zip">Zip: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$zip?>" name="zip" id="zip" size="10" ><br>
+		<input class="field" type="text" value="<?php echo $userinfo['zip']; ?>" name="zip" id="zip" size="10" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -131,13 +153,13 @@ $checkpass=true;
 		<label for="phone">Phone: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$phone?>" name="phone" id="phone" size="15" ><br>
+		<input class="field" type="text" value="<?php echo $userinfo['phone']; ?>" name="phone" id="phone" size="15" ><br>
 	</td>
 	<td>
 		<label for="fax">Fax: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$fax?>" name="fax" id="fax" size="15" ><br>
+		<input class="field" type="text" value="<?php echo $userinfo['fax']; ?>" name="fax" id="fax" size="15" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -146,7 +168,7 @@ $checkpass=true;
 	</td>
 	<td>
 	
-		<input class="field" type="text" value="<?=$url?>" name="url" id="url"><br>
+		<input class="field" type="text" value="<?php echo $userinfo['url']; ?>" name="url" id="url"><br>
 	</td>
 	</tr>
 	<tr>
@@ -156,6 +178,12 @@ $checkpass=true;
 	</tr>
   </table>
 </form>
+<?php 
+// stop the script for now, and figure out what below code does later.
+// not super important for now.
+exit(); 
+
+?>
 <h3>My Preferences</h3>
 <? if (!$username)
 	exit;

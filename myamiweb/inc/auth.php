@@ -132,7 +132,7 @@ class authlib extends config_class {
 
 	function updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, $password, $password2) {
 
-		if (!$username || !$lastname) {
+		if (empty($firstname) || empty($lastname) || empty($email)) {
 
 			return $this->error['fields_empty'];
 
@@ -144,25 +144,20 @@ class authlib extends config_class {
 
 		}
 
-		$this->filter_username($username);
-
 		$this->filter_email($email);
 		
+		// check password
 		if ($chpass) {
 
-		if ($password != $password2) {
-
-			return $this->error['passwd_not_match'];
-
-		}
-
-		$this->filter_password($password);
-
+			if ($password != $password2) {
+				return $this->error['passwd_not_match'];
+			}
+			$this->filter_password($password);
 		}
 
 
 		$data=array();
-		$data['username']=$username;
+
 		$data['firstname']=$firstname;
 		$data['lastname']=$lastname;
 		$data['title']=$title;
@@ -183,12 +178,58 @@ class authlib extends config_class {
 			return "userId not valid";
 		}
 
+
+		$hasUserDetail = $this->hasUserDetail($userId);
+
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
-		$dbc->SQLUpdate($this->tbl_user, $data, $where);
 
-		if ($chpass)
+		
+		$q = "update UserData set firstname = '$firstname', 
+				lastname = '$lastname', email = '$email'
+			  where DEF_id = $userId";
+
+		if(!$dbc->SQLQuery($q)){
+			echo "update error! ";
+			return $this->error['database_error'];		
+		}
+		
+		$dbp=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+
+		if($hasUserDetail){
+			$userDetailsQuery = 
+					"update userdetails set 
+					  title = '$title',
+					  institution = '$institution',
+					  dept = '$dept',
+					  address = '$address',
+					  city = '$city',
+					  statecountry = '$statecountry',
+					  zip = '$zip',
+					  phone = '$phone',
+					  fax = '$fax',
+					  url = '$url'
+					  where `REF|leginondata|UserData|user` = $userId";
+		}else{
+			$userDetailsQuery = 
+					"insert into userdetails (
+					  `REF|leginondata|UserData|user`, title, institution,
+					  dept, address, city, statecountry, zip, phone, fax, url) 
+					  values ($userId, '$title', '$institution', '$dept', 
+					  '$address', '$city', '$statecountry', '$zip', '$phone',
+					  '$fax', '$url')";
+		}
+
+		if(!$dbp->SQLQuery($userDetailsQuery)){
+			var_dump($dbp);
+			return $this->error['database_error'];		
+		}	
+
+		if ($chpass){
+
 			$this->updatePassword($userId, $password);
-
+		}
+		
+		
 		return 2;
 	}
 
@@ -203,8 +244,9 @@ class authlib extends config_class {
 		return true;
 	}
 
-	function getInfo($username) {
-
+	function getUserInfo($username) {
+			
+			$projectDB = DB_PROJECT;
 			$this->filter_username($username);
 
 			if (!get_magic_quotes_gpc()) {
@@ -212,28 +254,50 @@ class authlib extends config_class {
 			}
 
 			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
-			$q="select "
-				."u.userId, u.username, u.firstname, u.lastname,"
-				."u.title, u.institution, u.dept, u.address, u.city,"
-				."u.statecountry, u.zip, u.phone, u.fax, u.url "
-				."from `".$this->tbl_user."` u "
-				."where username = '$username'";
+			
+			
+			$q="select du.DEF_id, du.username, du.firstname, du.lastname, du.email, du.password, 
+					up.title, up.institution, up.dept, up.address, up.city, up.statecountry, 
+					up.zip, up.phone, up.fax, up.url, dg.name
+				from $dbemDB.UserData du 
+				left join $projectDB.userdetails up 
+					on du.DEF_id = up.`REF|leginondata|UserData|user` 
+				join $dbemDB.GroupData dg 
+					on du.`REF|GroupData|group` = dg.DEF_id
+				where du.username = 'erichou'";
 
 			list($r)=$dbc->getSQLResult($q);
+
 			return $r;
 	}
 
 	function hasPassword($userId) {
 
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
-    $sqlwhere = (is_numeric($userId)) ? "userId=$userId" : "username='$userId'";
-    $q='select *  '
-      .'from login '
-      .'where '.$sqlwhere;
+    	$sqlwhere = (is_numeric($userId)) ? "userId=$userId" : "username='$userId'";
+    	$q='select *  '
+      		.'from UserData '
+      		.'where '.$sqlwhere;
 
 		list($r)=$dbc->getSQLResult($q);
 		return ($r['password']) ? true : false;
-  }
+	}
+  
+	function hasUserDetail($userId){
+  		
+		if(empty($userId) || !is_numeric($userId)) return false;
+		
+  		$dbc = new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+  		
+  		$q = "select * from userdetails where `REF|leginondata|UserData|user` = $userId";
+
+  		$result = $dbc->getSQLResult($q);
+ 
+  		if(empty($result)) return false;
+  		
+  		return true;
+  	
+  	}
 
 	function login ($username, $password) {
 
