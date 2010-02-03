@@ -16,8 +16,8 @@ class user {
 		$db = DB;
 		$table='UserData';
 		$data=array();
-		$data['first name']=$firstname;
-		$data['last name']=$lastname;
+		$data['firstname']=$firstname;
+		$data['lastname']=$lastname;
 		$data['email']=$email;
 		$where['DEF_id']=$userId;
 		$this->mysql->SQLUpdate($table, $data, $where, $db);
@@ -106,7 +106,7 @@ class user {
 	}
 
 	function checkUserExistsbyName($firstname, $lastname) {
-		$q='select `DEF_id` as userId from '.DB.'UserData where `first name`="'.$firstname.' and `last name` = "'.$lastname.'"';
+		$q='select `DEF_id` as userId from '.DB.'UserData where `firstname`="'.$firstname.' and `lastname` = "'.$lastname.'"';
 		$RuserInfo = $this->mysql->SQLQuery($q);
 		$userInfo = mysql_fetch_array($RuserInfo);
 		return $userInfo['userId'];
@@ -124,16 +124,17 @@ class user {
 	}
 
 	function getUserId($firstname, $lastname){
-		$q='select `DEF_id` as userId from '.DB.'UserData where `first name`="'.$firstname.' and `last name` = "'.$lastname.'"';
+		$q='select `DEF_id` as userId from '.DB.'UserData where `firstname`="'.$firstname.' and `lastname` = "'.$lastname.'"';
 		return $this->mysql->getSQLResult($q);
 	}
 
 	function getUsers($order=false){
 		$results = array();
-		$order = ($order) ? "order by u.`last name`" : "";
+		$order = ($order) ? "order by u.`lastname`" : "";
 		$q='select u.`DEF_id` as userId, u.* '
 			.'from '.DB.'.UserData u '
 			.$order;
+
 		$r = $this->mysql->getSQLResult($q);
 		foreach ($r as $u) {
 			$results[] = $this->appendUserDetails($u);
