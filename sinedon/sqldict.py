@@ -1402,7 +1402,9 @@ def refFieldName(tableclass, refclass, key):
 	refmodule = refmodule.split('.')[-1]
 
 	tablename = refclass.__name__
-	tablemodule = tableclass.__module__
+	#### XXX fix following when absolute modules names are
+	#### considered final:
+	tablemodule = tableclass.__module__.split('.')[-1]
 	parts = ['REF']
 	if tablemodule != refmodule:
 		parts.append(refmodule)
