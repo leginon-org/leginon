@@ -551,6 +551,9 @@ class leginondata {
 	function getDataInfo($table, $id, $fields=array()) {
 		if (!$table)
 			return false;
+		if($id == NULL){
+			return false;
+		}
 		$data = array();
 		$formated_fields = array();
 		$acq_fields = $this->mysql->getFields($table); 
