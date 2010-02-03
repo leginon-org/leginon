@@ -23,11 +23,12 @@ $link->addlink('tomo/','Tomography','', 'tomo_icon_3');
 $link->addlink('dualview.php','Dual Viewer','', 'dual_view');
 $link->addlink('template.php', 'Hole Template viewer','', 'template');
 
-if (privilege() == 3 ) {
+if (privilege('groups') >= 2 ) 
 	$link->addlink('admin.php','Administration','', 'admin');
+if (privilege('projects') > 3 ) 
 	$link->addlink('/phpMyAdmin/','phpMyAdmin','', 'phpMyAdmin');
+if (privilege('projects') >= 2 ) 
 	$link->addlink('project','Project DB','', 'project');
-}
 
 login_header(PROJECT_TITLE);
 

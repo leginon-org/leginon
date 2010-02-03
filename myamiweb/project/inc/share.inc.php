@@ -9,7 +9,7 @@ class share {
 	}
 
 	function is_shared($sessionId) {
-		$q = "select DEF_id as id from shareexperiments where `REF|projectexperiments|experiment`=$sessionId";
+		$q = "select DEF_id as id from shareexperiments where `REF|leginondata|SessionData|experiment`=$sessionId";
 		$r = $this->mysql->getSQLResult($q);
 		if (empty($r))
 			return false;
@@ -17,10 +17,10 @@ class share {
 	}
 
 	function get_share_info($experiments) {
-		$q="select concate(u.`firstname`,' ',`lastname`) as name, u.username as username, s.`REF|projectexperiments|experiment` as experimentId "
+		$q="select concate(u.`firstname`,' ',`lastname`) as name, u.username as username, s.`REF|leginondata|SessionData|experiment` as experimentId "
 			."from shareexperiments s "
 			."left join ".DB_LEGINON.".UserData u on (u.`DEF_id`=s.`REF|leginondata|UserData|user`) "
-			."where s.`REF|projectexperiments|experiment` in (".implode(',',$experiments).") "
+			."where s.`REF|leginondata|SessionData|experiment` in (".implode(',',$experiments).") "
 			."order by u.username";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -28,10 +28,10 @@ class share {
 	
 	function share_session_add($userId, $sessionId) {
 		$q = "select DEF_id from shareexperiments where "
-			."`REF|projectexperiments|experiment` ='".$sessionId."' and `REF|leginondata|UserData|user` ='".$userId."'";
+			."`REF|leginondata|SessionData|experiment` ='".$sessionId."' and `REF|leginondata|UserData|user` ='".$userId."'";
 		$r = $this->mysql->getSQLResult($q);
 		if (empty($r)) {
-			$q = 	"insert into shareexperiments (`REF|projectexperiments|experiment`, `REF|leginondata|UserData|user`) "
+			$q = 	"insert into shareexperiments (`REF|leginondata|SessionData|experiment`, `REF|leginondata|UserData|user`) "
 				."values ('$sessionId', '$userId')";
 			$lastId = $this->mysql->SQLQuery($q, true);
 		echo $this->mysql->getError();
@@ -44,7 +44,7 @@ class share {
 		}
 		if ($sql_del_users) {
 		$q = 	"delete from shareexperiments where "
-			."`REF|projectexperiments|experiment`='".$sessionId."' and ( ".join(' OR ', $sql_del_users)." )";
+			."`REF|leginondata|SessionData|experiment`='".$sessionId."' and ( ".join(' OR ', $sql_del_users)." )";
 		$this->mysql->SQLQuery($q);
 		}
 	}

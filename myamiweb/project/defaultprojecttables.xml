@@ -366,7 +366,7 @@
       default="DEFAULT 'CURRENT_TIMESTAMP'" 
     />
     <field 
-      name="REF|projectexperiments|experiment" 
+      name="REF|leginondata|SessionData|experiment" 
       type="int(11)" 
       default="DEFAULT '0'"
       null="NOT NULL" 
@@ -379,7 +379,7 @@
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
-    <key>KEY `REF|projectexperiments|experiment` (`REF|projectexperiments|experiment`)</key>
+    <key>KEY `REF|leginondata|SessionData|experiment` (`REF|leginondata|SessionData|experiment`)</key>
     <key>KEY `REF|leginondata|UserData|user` (`REF|leginondata|UserData|user`)</key>
   </sqltable>
   <sqltable name="projectowners" >
@@ -446,6 +446,11 @@
       type="tinyint(4)" 
       null="NOT NULL" 
     />
+    <field 
+      name="data" 
+      type="tinyint(4)" 
+      null="NOT NULL" 
+    />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
 	</sqltable>
@@ -482,6 +487,7 @@
         <field name="projects" >4</field>
         <field name="projectowners" >4</field>
         <field name="shareexperiments" >4</field>
+        <field name="data" >4</field>
     </sqltable>
     <sqltable name="privileges" >
         <field name="DEF_id" >2</field>
@@ -491,6 +497,7 @@
         <field name="projects" >3</field>
         <field name="projectowners" >3</field>
         <field name="shareexperiments" >3</field>
+        <field name="data" >3</field>
     </sqltable>
     <sqltable name="privileges" >
         <field name="DEF_id" >3</field>
@@ -500,6 +507,7 @@
         <field name="projects" >2</field>
         <field name="projectowners" >2</field>
         <field name="shareexperiments" >2</field>
+        <field name="data" >2</field>
     </sqltable>
     <sqltable name="privileges" >
         <field name="DEF_id" >4</field>
@@ -509,6 +517,7 @@
         <field name="projects" >1</field>
         <field name="projectowners" >1</field>
         <field name="shareexperiments" >1</field>
+        <field name="data" >1</field>
     </sqltable>
 
  </data>

@@ -2,12 +2,11 @@
 require "inc/project.inc.php";
 require "inc/leginon.inc";
 require "inc/utilpj.inc.php";
-$privilege = privilege();
-if ($privilege >= 3 ) {
+if (privilege('projects') >= 3 ) {
 	$title = "project administration";
 	login_header($title);
 } else {
-	if ($privilege >= 1) {
+	if (privilege('projectowners') > 1) {
 		$title = "project sharing administration";
 		login_header($title);
 	} else {
@@ -24,9 +23,8 @@ if ($_GET['cp']) {
 if ($_POST['currentproject']) {
 	$selectedprojectId=$_POST['currentproject'];
 }
-
-$projects = $project->getProjects("order");
-$is_admin = ($privilege == 3);
+$projects = $project->getProjects("order",privilege('projects'));
+$is_admin = (privilege('projects'));
 
 if($projects) {
 foreach ((array)$projects as $k=>$proj) {

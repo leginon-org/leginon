@@ -37,7 +37,6 @@
 -	DTFinderSettingsData
 -	CorrectorSettingsData
 -	BeamFixerSettingsData
--
 -->
 
 <defaulttables>
@@ -63,11 +62,12 @@
       type="text" 
     />
     <field 
-      name="privilege" 
+      name="REF|projectdata|privileges|privilege" 
       type="int" 
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|projectdata|privileges` (`REF|projectdata|privileges`)</key>
   </sqltable>
   <sqltable name="InstrumentData" >
     <field 

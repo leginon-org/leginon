@@ -348,7 +348,7 @@ class authlib extends config_class {
 
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
-		$q="select u.DEF_id, g.privilege from UserData as u "
+		$q="select u.DEF_id, g.`REF|projectdata|privileges|privilege` as privilege from UserData as u "
 			."left join GroupData as g "
 			."on u.`REF|GroupData|group` = g.`DEF_id` "
 			."where u.username = '$username'";

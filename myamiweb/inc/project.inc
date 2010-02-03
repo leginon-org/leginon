@@ -59,8 +59,8 @@ define('PARTICLE_DB', $PROCESSING_DB);
 class project {
 
 	function project(){
-		$this->mysql = new mysql(	PROJECT_DB_HOST, PROJECT_DB_USER,
-			PROJECT_DB_PASS, PROJECT_DB);
+		$this->mysql = new mysql(	DB_HOST, DB_USER,
+			DB_PASS, DB_PROJECT);
 	}
 
 	function checkDBConnection() {
@@ -137,8 +137,16 @@ class project {
 	}
 
 	function getProjects($type=""){
+		$userId = getLoginUserId();
+		$privilege_level = privilege('projects');
 		global $dbemauth;
-		$q = 'select projectId as id, name  from projects ';
+		$q = 'select p.projectId as id, p.name  from projects p ';
+		if ($privilege_level <= 2 && $userId)
+			$q .= " left join projectowners o "
+						."on o.`REF|projects|project` = p.`projectId` "
+						."left join ".DB_LEGINON.".UserData u "
+						."on u.`DEF_id` = o.`REF|leginondata|UserData|user` "
+						."where u.`DEF_id` = ".$userId." ";
 		$projectdef = $this->mysql->getFieldTypes('projects');
 		if (array_key_exists('hidden', $projectdef)) {
 			$q .= 'where hidden != 1 OR hidden IS NULL ';
@@ -156,7 +164,6 @@ class project {
 
 		$login_check = $dbemauth->is_logged();
 		$projects=$this->restrict($projects, $login_check);
-
 		return $projects;
 	}
 

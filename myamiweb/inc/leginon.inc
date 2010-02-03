@@ -121,14 +121,26 @@ class leginondata {
 
 		}
 
+		$userId = getLoginUserId();
+		$privilege_level = privilege('data');
 		$q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.Name as `name_org` "
 		."from AcquisitionImageData a "
-		."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) "
-		."where a.`REF|SessionData|Session` IS NOT NULL "
-		.$wherelike
-		."group by a.`REF|SessionData|Session` "
-		."order by s.DEF_timestamp DESC ";
-
+		."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) ";
+		$where = "where a.`REF|SessionData|Session` IS NOT NULL ";
+		if ($privilege_level <=2) {
+			$q .=	"left join ".DB_PROJECT.".`projectexperiments` p "
+				."on (p.`name` = s.`name`) "
+				."left join ".DB_PROJECT.".`shareexperiments` sh "
+				."on ( s.`DEF_id` = sh.`REF|leginondata|SessionData|experiment`) "
+				.",".DB_PROJECT.".`projectowners` o ";
+			$where .= "and (sh.`REF|leginondata|UserData|user` = ".$userId
+				." or (o.`REF|projects|project` = p.`projectId` and "
+				." o.`REF|leginondata|UserData|user` = ".$userId.") ) ";
+		}
+		$where .= $wherelike;
+		$q .= $where
+			."group by a.`REF|SessionData|session` "
+			."order by s.DEF_timestamp DESC ";
 		return $this->mysql->getSQLResult($q);
 	}
 

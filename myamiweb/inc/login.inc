@@ -15,18 +15,44 @@ if (ENABLE_LOGIN) {
 	require_once "inc/dbemauth.php";
 }
 
-function privilege() {
+function privilege($type='') {
 	global $dbemauth;
 	if (ENABLE_LOGIN) {
 		$login_check = $dbemauth->is_logged();
 		if (is_array($login_check)) {
-			return $login_check[2];
+			if ($type) {
+				$q = "select p.`".$type."` as level "
+						."from privileges as p "
+						."where p.`DEF_id`=".$login_check[2];
+				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+				$r = $dbc->getSQLResult($q);
+				return $r[0]['level'];
+			} else {
+				return 1;
+			}
 		} else {
 			return 0;
 		}
 	} else {
-		return 2;
+		return 4;
 	}
+}
+
+function getLoginUserId() {
+	global $dbemauth;
+	if (ENABLE_LOGIN) {
+		$login_check = $dbemauth->is_logged();
+		if (is_array($login_check)) {
+			$username = $login_check[0];
+			$q = "select u.`DEF_id` as userId "
+						."from UserData as u "
+						."where u.`username` LIKE '".$username."'";
+				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+				$r = $dbc->getSQLResult($q);
+			return $r[0]['userId'];
+		}
+	}
+	return null;
 }
 
 function login_header($title="", $javascript="", $onload="") {

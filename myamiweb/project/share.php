@@ -10,8 +10,8 @@ if ($_POST[currentproject])
 	$selectedprojectId=$_POST[currentproject];
 $project = new project();
 $projects = $project->getProjects("order");
-$login_check = privilege();
-$is_admin = ($login_check == 3);
+$login_check = privilege('shareexperiments');
+$is_admin = ($login_check >= 2);
 project_header("Share Data");
 $sessionId = $_GET['id'];
 ?>
@@ -89,7 +89,7 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 	echo '<font color="red">[Login to change sharing]</font>';
 	}
 	echo "<br />";
-	$q = "select * from shareexperiments where `REF|projectexperiments|experiment`=".$info['SessionId'];
+	$q = "select * from shareexperiments where `REF|leginondata|SessionData|experiment`=".$info['SessionId'];
 	//$r = $db->getSQLResult($q);
 	$r = $project->mysql->getSQLResult($q);
 	foreach ($r as $v) {
