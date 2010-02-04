@@ -54,7 +54,7 @@ $data = processing_header("Appion Data Processing","Appion Data Processing", $ja
 // --- main window starts here --- //
 if (!$hasProcDB) {
 	echo "No processing database can be found for this project<br>";
-	echo "<a class='header' target='project' href='".$PROJECT_URL."getproject.p
+	echo "<a class='header' target='project' href='".PROJECT_URL."getproject.p
 hp?pId=$projectId'><b>click here</b></a> to create one";
 	echo "$proj_link";
 }
