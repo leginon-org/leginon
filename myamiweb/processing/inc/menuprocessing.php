@@ -878,21 +878,33 @@ $menuprocessing="";
 	}
 
 	function addSubmenu($data) {
+		$allow_process = (privilege('data') == 2 || privilege('data') == 4);
 		$text="<ul>";
 		// print out the title of the subfunction
 		foreach((array)$data as $submenu) {
 			if (is_array($submenu)) {
-				$text.="<li>".$submenu['name']."</li>";
+				$submenuname = ($allow_process) ? $submenu['name']:removeLink($submenu['name']);
+				$text.="<li>".$submenuname."</li>";
 				// if there are results for the
 				// subfunction, print them out
 				foreach ((array)$submenu['result'] as $res) {
 					$text.=($res) ? "<li class='sub1'>$res</li>" : "";
 				}
 			}
-			else $text.="<li>$submenu</li>\n";
+			else {
+				$submenuname = ($allow_process) ? $submenu:removeLink($submenu);
+				$text.="<li>$submenuname</li>\n";
+			}
 		}
 		$text.="</ul>";
 		return '<div class="submenu">'.$text.'</div>';
 	}
 
+	function removeLink($name) {
+		$namearray = explode("<a",$name);
+		if (count($namearray) < 2) return $name;
+		$namearray = explode(">",$namearray[1]);
+		$newname = $namearray[1];
+		return $newname;
+	}
 ?>
