@@ -3,19 +3,20 @@ require "inc/project.inc.php";
 require "inc/leginon.inc";
 require "inc/utilpj.inc.php";
 $SHARE =  (@require "inc/share.inc.php") ? true : false;
+$SHARE =  (privilege('shareexperiments') >=1) ? $SHARE : false;
+$SHARE =  (ENABLE_LOGIN) ? $SHARE : false;
 
 if ($_GET['pId']) {
 	$selectedprojectId=$_GET['pId'];
 }
+checkProjectAccessPrivilege($selectedprojectId);
 if ($_POST['currentproject']) {
 	$selectedprojectId=$_POST['currentproject'];
 }
 $view = ($_REQUEST['v']=='s') ? 'd' : 's';
 $link = ($view=='s') ? 'Detailed view' : 'Simple view';
-$privilege = privilege();
-$is_admin = ($privilege == 3);
-if (!$is_admin)
-	$SHARE=false;
+$privilege = privilege('projects');
+$is_admin = ($privilege == 2 || $privilege == 4);
 $url = $_SERVER['PHP_SELF']."?v=".$_REQUEST['v']."&pId=".$selectedprojectId;
 $ln=urlencode($url);
 $sharingstatus = "No";
@@ -94,16 +95,6 @@ $cat  = ($_GET['cat']==0) ? $link_on : $link_off;
 <input type="hidden" name="v" value="<?=$_REQUEST['v']?>">
 <table border="0" >
 <tr>
-<td valign="top" >
-<select size="15" name="currentproject" tabindex="1" onchange="onChangeProject()">
-<?php
-foreach ($projects as $proj) {
-    $s = ($proj["projectId"]==$selectedprojectId) ? 'selected' : $s='';
-    echo "<option value='",$proj["projectId"],"' $s >",$proj["name"]."</option>\n";
-}
-?>
-</select>
-</td>
 <td valign="top">
 <?php
 
@@ -173,8 +164,8 @@ $projectId = $projectinfo['projectId'];
 // Experiments 
 	$experimentIds = $project->getExperiments($projectId);
 	echo divtitle(count($experimentIds).' Experiments');
-
-	echo '<a alt="upload" target="_blank" class="header" href="'.UPLOAD_URL.'?pId='.$selectedprojectId.'">upload images to new session</a>';
+	if ($is_admin)
+		echo '<a alt="upload" target="_blank" class="header" href="'.UPLOAD_URL.'?pId='.$selectedprojectId.'">upload images to new session</a>';
 
 	$sessions=array();
 	$experiments=array();
@@ -188,9 +179,14 @@ $projectId = $projectinfo['projectId'];
 		$experiments[$k]['totalimg']=$info['Total images'];
 		$experiments[$k]['totaltime']=$info['Total Duration'];
 		if ($SHARE) {
+			$share_admin = (privilege('shareexperiments') == 2 || privilege('shareexperiments') == 4);
 			$sharingstatus = ($d->is_shared($info['SessionId'])) ? "Yes" : "No";
-			$sharelink="<a class='header' href='$sharinglink".
+			if ($share_admin) {
+				$sharelink="<a class='header' href='$sharinglink".
 						$info['SessionId']."'>$sharingstatus [->]</a>";
+			} else {
+				$sharelink= $sharingstatus." [->]";
+			}
 			$experiments[$k]['share']=$sharelink;
 		}
 		$summarylink="<a class='header' target='viewer' href='".SUMMARY_URL.$info['SessionId']."'>summary&raquo;</a>";

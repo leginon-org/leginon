@@ -2,12 +2,13 @@
 require "inc/project.inc.php";
 require "inc/leginon.inc";
 require "inc/utilpj.inc.php";
-if (privilege('projects') >= 3 ) {
-	$title = "project administration";
+$is_proj_admin = (privilege('projects') == 2 || privilege('projects')== 4 );
+if ($is_proj_admin) {
+	$title = "Project Administration";
 	login_header($title);
 } else {
-	if (privilege('projectowners') > 1) {
-		$title = "project sharing administration";
+	if (privilege('projects')) {
+		$title = "Project Summary";
 		login_header($title);
 	} else {
 		$redirect=$_SERVER['PHP_SELF'];
@@ -24,12 +25,11 @@ if ($_POST['currentproject']) {
 	$selectedprojectId=$_POST['currentproject'];
 }
 $projects = $project->getProjects("order",privilege('projects'));
-$is_admin = (privilege('projects'));
 
 if($projects) {
 foreach ((array)$projects as $k=>$proj) {
 	$pId = $proj['projectId'];
-	if ($is_admin) {
+	if ($is_proj_admin) {
 		$projects[$k]['edit']="<a href='updateproject.php?id=$pId'><img alt='edit' border='0' src='img/edit.png'></a>";
 		$projects[$k]['del']="<a href='deleteproject.php?id=$pId'><img alt='delete' border='0' src='img/del.png'></a>";
 	}
@@ -50,12 +50,12 @@ foreach ((array)$projects as $k=>$proj) {
 	
 }
 }
-project_header("Projects");
+project_header($title);
 ?>
 <form method="POST" name="projectform" action="<?=$_SERVER['PHP_SELF'] ?>">
 <input type="hidden" name="projectId" value="">
 <?
-if ($is_admin) {
+if ($is_proj_admin) {
 	echo "<a class='header' href='updateproject.php'>Add a new project</a>";
 	$columns=array('edit'=>'','del'=>'');
 } else {

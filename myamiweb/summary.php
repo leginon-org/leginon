@@ -20,6 +20,7 @@ $expId = (empty($_GET['expId'])) ? $lastId : $_GET['expId'];
 $sessioninfo = $leginondata->getSessionInfo($expId);
 $title = $sessioninfo['Name'];
 
+checkExptAccessPrivilege($expId,'data');
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 if($projectdb) {
