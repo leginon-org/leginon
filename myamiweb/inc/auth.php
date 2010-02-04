@@ -255,17 +255,15 @@ class authlib extends config_class {
 
 			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 			
-			
 			$q="select du.DEF_id, du.username, du.firstname, du.lastname, du.email, du.password, 
 					up.title, up.institution, up.dept, up.address, up.city, up.statecountry, 
 					up.zip, up.phone, up.fax, up.url, dg.name
-				from $dbemDB.UserData du 
+				from ".DB_LEGINON.".UserData du 
 				left join $projectDB.userdetails up 
 					on du.DEF_id = up.`REF|leginondata|UserData|user` 
-				join $dbemDB.GroupData dg 
+				join ".DB_LEGINON.".GroupData dg 
 					on du.`REF|GroupData|group` = dg.DEF_id
-				where du.username = 'erichou'";
-
+				where du.username = '".$username."' ";
 			list($r)=$dbc->getSQLResult($q);
 
 			return $r;
