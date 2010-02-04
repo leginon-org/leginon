@@ -11,9 +11,10 @@ if ($_POST[currentproject])
 $project = new project();
 $projects = $project->getProjects("order");
 $login_check = privilege('shareexperiments');
-$is_admin = ($login_check >= 2);
+$is_admin = ($login_check == 2 || $login_check == 4);
 project_header("Share Data");
 $sessionId = $_GET['id'];
+checkExptAccessPrivilege($sessionId,'shareexperiments');
 ?>
 
 <form method="POST" name="projectform" action="<?=$_SERVER['REQUEST_URI'] ?>">
@@ -43,10 +44,14 @@ if ($is_admin) {
 </table>
 <h3>Share info </h3>
 <p>
+<?
+	if ($is_admin) {
+?>
 <img src="img/info.png"> Users with no password set won't be listed; go
 to <a class="header" href="user.php">[user]</a> to update user's profile.
 </p>
 <?
+	};
 	$s = new share();
 	$db = $s->mysql;
 	$userId = $_POST['userId'];
@@ -86,7 +91,7 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 		echo "<a class=\"header\" href=\"$ln\"> Back to project list</a>";
 	}
 	} else {
-	echo '<font color="red">[Login to change sharing]</font>';
+	echo '<font color="red">[Login as owner or admin to change sharing]</font>';
 	}
 	echo "<br />";
 	$q = "select * from shareexperiments where `REF|leginondata|SessionData|experiment`=".$info['SessionId'];

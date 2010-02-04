@@ -10,7 +10,7 @@
  *	Query definition to access all leginon data 
  *	
  */
-
+require_once "inc/login.inc";
 require_once "inc/ssh.inc";
 require_once "inc/session.inc";
 
@@ -116,6 +116,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$leginondata = new leginondata();
 	$particle = new particledata();
 	$projectdata = new project();
+	checkExptAccessPrivilege($expId,'data');
 	if (!$projectId) {
 		$projectId=getProjectFromExpId($expId);
 		if ($_POST['projectId'] && empty($expId)) {

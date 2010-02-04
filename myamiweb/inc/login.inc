@@ -50,9 +50,61 @@ function getLoginUserId() {
 				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 				$r = $dbc->getSQLResult($q);
 			return $r[0]['userId'];
+		} else {
+			return false;
 		}
+	} else {
+		return true;
 	}
-	return null;
+}
+
+function checkProjectAccessPrivilege($projectId) {
+	$userId = getLoginUserId();
+	if ($userId === true || privilege('projects')>=3) return true;
+	if ($userId) {
+		global $dbemauth;
+		$q = "select o.`DEF_id` as ownerId "
+			."from projectowners o "
+			."where o.`REF|projects|project` = ".$projectId." "
+			."and o.`REF|leginondata|UserData|user` = ".$userId." "
+			;
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+		$r = $dbc->getSQLResult($q);
+		if (count($r)) return true;
+	}
+	redirect(BASE_URL.'accessdeny.php');
+	return false;
+}
+
+function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
+	$userId = getLoginUserId();
+	if ($userId === true || privilege($privilege_type)>=3) return true;
+	if ($userId === true) return true;
+	$pvivilege_level = privilege($privilege_type);
+	if ($privilege_level>=3) return $privilege_level;
+	if ($userId) {
+		global $dbemauth;
+		$q = "select sh.`DEF_id` as shareId "
+			."from shareexperiments sh "
+			."where sh.`REF|leginondata|SessionData|experiment` = ".$sessionId." "
+			."and sh.`REF|leginondata|UserData|user` = ".$userId;
+				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+				$r = $dbc->getSQLResult($q);
+		if (count($r)) return true;
+		$q = "select o.`DEF_id` as ownerId "
+			."from ".DB_LEGINON.".`SessionData` s "
+			."left join projectexperiments pe "
+			."on s.`name` = pe.`name` "
+			."left join projectowners o "
+			."on o.`REF|projects|project` = pe.`projectId` "
+			."where s.`DEF_id` = ".$sessionId." "
+			."and o.`REF|leginondata|UserData|user` = ".$userId;
+				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+				$r = $dbc->getSQLResult($q);
+		if (count($r)) return true;
+	}
+	redirect(BASE_URL.'accessdeny.php');
+	return false;
 }
 
 function login_header($title="", $javascript="", $onload="") {
