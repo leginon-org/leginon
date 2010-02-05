@@ -18,7 +18,7 @@ function menu($privilege=1) {
 	$link->addlink(BASE_URL, 'dbem tool','', '', '');
 	$link->addlink('project.php','View Projects','', 'folder', '');
 	$link->addlink('gridtray.php','Grid Tray','', 'preparation', '');
-	if ($privilege>1) {
+	if ($privilege>=3) {
 		$link->addlink('user.php','View Users','', 'user', '');
 	}
 	$link->Display();
@@ -30,7 +30,7 @@ global $_SERVER, $projectauth;
 	if (!ereg('login.php', $_SERVER['PHP_SELF'])) {
 	}
 $username = $login_check[0];
-$privilege = $login_check[2];
+$privilege = privilege('users');
 $onload = (empty($javascript)) ? '' : 'onload="'.$javascript.'"';
 $url = "ln=".urlencode($_SERVER['REQUEST_URI']);
 
