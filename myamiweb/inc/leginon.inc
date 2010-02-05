@@ -70,11 +70,9 @@ class leginondata {
 	}
 
 	function getLastSessionId() {
-		$q = "select distinct(s.DEF_id) from AcquisitionImageData a "
-			."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) "
-			."order by s.DEF_timestamp DESC limit 1";
-		list($lastId) = $this->mysql->getSQLResult($q);
-		$expId=$lastId['DEF_id'];
+		$sessions = $this->getSessions();
+		if ((array)$sessions)
+			$expId=$sessions[0]['id'];
 		return $expId;
 	}
 
