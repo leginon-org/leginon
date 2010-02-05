@@ -67,7 +67,7 @@
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
-    <key>KEY `REF|projectdata|privileges` (`REF|projectdata|privileges`)</key>
+    <key>KEY `REF|projectdata|privileges|privilege` (`REF|projectdata|privileges|privilege`)</key>
   </sqltable>
   <sqltable name="InstrumentData" >
     <field 
