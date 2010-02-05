@@ -45,7 +45,7 @@ $info = $info[0];
 if ($info) {
 	$f_name=$info['name'];
 	$f_description=$info['description'];
-	$f_privilegeId=$info['privilege'];
+	$f_privilegeId=$info['REF|projectdata|privileges|privilege'];
 } else {
 	$f_description="";
 }
@@ -123,11 +123,12 @@ privilege:<font color="red">*</font>
 </td>
 <td class="dt2" valign="top">
 <?php
-	$privileges = array('View only owned or shared projects'=>0,
-			'View and adminstrate sharing of owned project'=>1,
-			'View all projects but adminstrate only sharing of owned project'=>2,
-			'Administrator'=>3
-		);
+	$privilegeinfo = $leginondata->getPrivilegeInfo();
+	if (!(array)$privilegeinfo) echo "Initialize Project Tables First";
+	$privileges = array();
+	foreach ($privilegeinfo as $p)
+			$privileges[$p['description']] = $p['DEF_id'];
+	if (privilege('groups')>3) {
 ?>
 	<select name="f_privilegeId" onChange="javascript:document.dataimport.submit();">
 		<?php
@@ -137,6 +138,11 @@ privilege:<font color="red">*</font>
 		}
 		?>
 	</select>
+<?
+	} else {
+	echo array_search($f_privilegeId,$privileges);
+	}
+?>
 </td>
 </tr>
 <tr>
