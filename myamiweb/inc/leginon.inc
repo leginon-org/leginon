@@ -2850,6 +2850,11 @@ class leginondata {
 		$q='select `template-filename` name  from HoleFinderPrefsData where `template-filename` <> "" group by `template-filename` order by DEF_timestamp desc;';
 		return $this->mysql->getSQLResult($q);
 	}
+
+	function getPrivilegeInfo() {
+		$q='select `DEF_id`, `description` from '.DB_PROJECT.'.privileges';
+		return $this->mysql->getSQLResult($q);
+	}
 }
 
 function rsum($v, $w) {
