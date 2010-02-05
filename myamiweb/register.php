@@ -35,13 +35,19 @@ You have been registered (still pending). We have sent an email to <b>
 
   <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#3333FF">
     <tr bgcolor="#FFFFFF">
-      <td><font face="Arial, Helvetica, sans-serif" size="2">Name : </font></td>
+      <td><font face="Arial, Helvetica, sans-serif" size="2">First Name : </font></td>
 
       <td><font face="Arial, Helvetica, sans-serif" size="2">
-        <?php echo $lastname." ".$firstname; ?>
+        <?php echo $firstname; ?>
         </font></td>
-      </tr>
+    </tr>
+    <tr bgcolor="#FFFFFF">
+      <td><font face="Arial, Helvetica, sans-serif" size="2">Last Name : </font></td>
 
+      <td><font face="Arial, Helvetica, sans-serif" size="2">
+        <?php echo $lastname; ?>
+        </font></td>
+    </tr>
     <tr bgcolor="#FFFFFF">
       <td><font face="Arial, Helvetica, sans-serif" size="2">Login: </font></td>
       <td><font face="Arial, Helvetica, sans-serif" size="2">

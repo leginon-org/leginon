@@ -15,7 +15,6 @@ define('PROJECT_NAME', "myamiweb");
 define('PROJECT_TITLE', "Appion and Leginon DB tools");
 define('BASE_URL', "/myamiweb/");
 define('PROJECT_URL', BASE_URL."project");
-define('WEBMASTER', "example@scripps.edu");
 
 // Administrator email address
 define('ADMIN_EMAIL', "example@scripps.edu");
@@ -35,6 +34,12 @@ define('DEF_PROJECT_TABLES_FILE', "defaultprojecttables.xml");
 define('DEF_PROCESSING_TABLES_FILE', "defaultprocessingtables.xml");
 // --- Set cookie session time
 define('COOKIE_TIME', 0);		//0 is never expire. 
+
+// --- Default Groups (GroupData table)
+define('GP_ADMIN', 1);
+define('GP_POWERUSER', 2);
+define('GP_USER', 3);
+define('GP_GUEST',4);
 
 // --- XML test dataset
 $XML_DATA = "test/viewerdata.xml";

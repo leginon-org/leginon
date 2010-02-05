@@ -99,30 +99,27 @@ class authlib extends config_class {
 			
 			$now=date('Y-m-d H:i:s', time());
 			$hash = md5($username.$now);
-			$data=array();
-			$data['mdhash']=$hash;
-			$data['username']=$username;
-			$data['password']=md5($password);
-			$data['firstname']=$firstname;
-			$data['lastname']=$lastname;
-			$data['email']=$email;
-			$data['date']=$now;
-			$is_success=$dbc->SQLInsertIfNotExists($this->tbl_confirm, $data);
+			
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+			
+			$q = "Insert into confirmauth (mdhash, username, password, firstname, lastname, email, date)
+					values ('$hash', '$username', '$password', '$firstname', '$lastname', '$email', now())";
 
-			if (!$is_success) {
+			if(!$dbc->SQLQuery($q)){
+				return $this->error['database_error'];		
+			}	
+			$subject = "Registration: Appion / Legnion Tools";
+			$emailContent = "Thank you, $firstname for registering. Here is the information we received: \n\n "
+						."First name:	$firstname \n "
+						."Last name:	$lastname \n "
+						."Email:		$email \n "
+						."Username		$username \n "
+						."You need to confirm the account by pointing your browser at \n "
+						.'http://'.$_SERVER['HTTP_HOST'].BASE_URL.'confirm.php?hash='.$hash. "\n\n "
+						."If you did not apply for the account, please ignore this message.";
+			$fromEmail = "From: ".ADMIN_EMAIL;			
 
-				return $this->error['database_error'];
-
-			}
-
-			@mail($email, $this->config_reg_subj, "Thank You, $name for registering. Here is the information we received :\n\n"
-				."Name     : $lastname $firstname \n"
-				."Email    : $email\n"
-				."Username : $username\n"
-				."Password : $password \n\n"
-				."	You need to confirm the account by pointing your browser at \n"
-				."/confirm.php?hash=$hash\n\n"
-				."If you did not apply for the account please ignore this message.", "From: ".$this->webmaster);
+			@mail($email, $subject, $emailContent, $fromEmail);
 
 			return 2;
 
@@ -189,7 +186,7 @@ class authlib extends config_class {
 			  where DEF_id = $userId";
 
 		if(!$dbc->SQLQuery($q)){
-			echo "update error! ";
+
 			return $this->error['database_error'];		
 		}
 		
@@ -220,7 +217,7 @@ class authlib extends config_class {
 		}
 
 		if(!$dbp->SQLQuery($userDetailsQuery)){
-			var_dump($dbp);
+
 			return $this->error['database_error'];		
 		}	
 
@@ -390,80 +387,50 @@ class authlib extends config_class {
 
 			return $this->error['hash_invalid'];
 
-		} else {
+		} 
+		
+		// if already login, redirect to homepage.
+		if (is_logged () !==false){
+			redirect(BASE_URL);
+			exit();
+		}
+		else {
 
-			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
-			$q="select username from `".$this->tbl_login."` where md5(concat(username, date))='$hash' ";
-			list($r) = $dbc->getSQLResult($q);
-			$username=$r['username'];
+			$dbP=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 
-			$q="select userId from `".$this->tbl_login."` where username = '$username'";
-			$query = $dbc->SQLQuery($q);
-			$result = @mysql_num_rows($query);
-
-			if ($result > 0) {
-				return $this->error['username_exists'];
-			}
-
-			$q="select username, password, firstname, lastname, email, date from "
-				."`".$this->tbl_confirm."` "
+			$q="select username, password, firstname, lastname, email "
+				."from confirmauth "
 				."where mdhash = '$hash'";
-			$query = $dbc->SQLQuery($q);
+			$query = $dbP->SQLQuery($q);
 			$result = @mysql_num_rows($query);
+
 
 			if ($result < 1) {
-
 				return $this->error['database_err1'];
-
 			}
 
-			list($username,$password,$firstname,$lastname,$email,$date) = mysql_fetch_row($query);
+			list($username,$password,$firstname,$lastname,$email) = mysql_fetch_row($query);
 
-			$data=array();
-			$data['username']=$username;
-			$data['firstname']=$firstname;
-			$data['lastname']=$lastname;
-			$data['email']=$email;
-			$userId=$dbc->SQLInsertIfNotExists($this->tbl_user, $data, true);
+			
+			$dbL = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
-			if ($userId) {
-
-				$data=array();
-				$data['userId']=$userId;
-				$data['username']=$username;
-				$data['password']=$password;
-				$data['date']=$date;
-				$is_success_second=$dbc->SQLInsertIfNotExists($this->tbl_login, $data, true);
-				if ($is_success_second) {
-					$is_success_third = $dbc->SQLDelete($this->tbl_confirm, array('username'=>$username));
-				}
-
-			}
-
-			if (!$userId) {
-
+			$q = "insert into dbemdata.UserData (username, firstname, lastname, 
+							`REF|GroupData|group`, password, email) 
+				  values ('$username', '$firstname', '$lastname'," . GP_GUEST .", '$password', '$email')";
+				
+				// insert user to UserData table
+			if(!$dbL->SQLQuery($q)){
 				return $this->error['database_err1'];
-
 			}
+			
+				// remove registration 
+			$dbP->SQLDelete("confirmauth", array('username'=>$username));
 
-			if (!$is_success_second) {
-
-				return $this->error['database_err1'];
-
-			}
-
-			if (!$is_success_third) {
-
-				return $this->error['database_err1'];
-
-			}
-
-			$name="$firstname $lastname";
-			@mail($email, "$this->wsname Confirmation", "Thank You, $name for registering. Here is the information we received :\n
-					\nName     : $name
-					\nEmail    : $email
-					\nUsername : $username
-					\nPassword : $password\n", "From: $this->webmaster");
+			@mail($email, "Account creatation Confirmation", "Thank You, $firstname for registering. Here is the information we received :\n
+					\nFirst Name	: $firstname
+					\nLast Name		: $lastname
+					\nEmail    		: $email
+					\nUsername 		: $username", "From: ".ADMIN_EMAIL);
 
 			return 2;
 
@@ -516,7 +483,7 @@ class authlib extends config_class {
 		// sent out email with necessary information.
 
 		$subject = "Forget password: Account Infomation";
-		$headers = "From: ". WEBMASTER;
+		$headers = "From: ". ADMIN_EMAIL;
 		$message = "Dear User,\n\nAs per your request here is your account information:\n
 				Username: $username
  				Password: $password
