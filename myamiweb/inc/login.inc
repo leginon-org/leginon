@@ -70,9 +70,27 @@ function checkProjectAccessPrivilege($projectId) {
 			;
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 		$r = $dbc->getSQLResult($q);
-		if (count($r)) return true;
+		if ((array)$r) return true;
 	}
 	redirect(BASE_URL.'accessdeny.php');
+	return false;
+}
+
+function checkProjectAdminPrivilege($projectId) {
+	if (privilege('projects') < 2) return false;
+	$userId = getLoginUserId();
+	if ($userId === true || privilege('projects')>=4) return true;
+	if ($userId) {
+		global $dbemauth;
+		$q = "select o.`DEF_id` as ownerId "
+			."from projectowners o "
+			."where o.`REF|projects|project` = ".$projectId." "
+			."and o.`REF|leginondata|UserData|user` = ".$userId." "
+			;
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+		$r = $dbc->getSQLResult($q);
+		if ((array)$r) return true;
+	}
 	return false;
 }
 
@@ -90,7 +108,8 @@ function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 			."and sh.`REF|leginondata|UserData|user` = ".$userId;
 				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 				$r = $dbc->getSQLResult($q);
-		if (count($r)) return true;
+		if ((array)$r) return true;
+		if ($r != false && (array)$r) return true;
 		$q = "select o.`DEF_id` as ownerId "
 			."from ".DB_LEGINON.".`SessionData` s "
 			."left join projectexperiments pe "
@@ -101,9 +120,32 @@ function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 			."and o.`REF|leginondata|UserData|user` = ".$userId;
 				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 				$r = $dbc->getSQLResult($q);
-		if (count($r)) return true;
+		if ((array)$r) return true;
 	}
 	redirect(BASE_URL.'accessdeny.php');
+	return false;
+}
+
+function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
+	if (privilege($privilege_type) < 2) return false;
+	$userId = getLoginUserId();
+	if ($userId === true || privilege($privilege_type)>=4) return true;
+	if ($userId === true) return true;
+	$pvivilege_level = privilege($privilege_type);
+	if ($userId) {
+		global $dbemauth;
+		$q = "select o.`DEF_id` as ownerId "
+			."from ".DB_LEGINON.".`SessionData` s "
+			."left join projectexperiments pe "
+			."on s.`name` = pe.`name` "
+			."left join projectowners o "
+			."on o.`REF|projects|project` = pe.`projectId` "
+			."where s.`DEF_id` = ".$sessionId." "
+			."and o.`REF|leginondata|UserData|user` = ".$userId;
+				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+				$r = $dbc->getSQLResult($q);
+		if ((array)$r) return true;
+	}
 	return false;
 }
 

@@ -878,7 +878,8 @@ $menuprocessing="";
 	}
 
 	function addSubmenu($data) {
-		$allow_process = (privilege('data') == 2 || privilege('data') == 4);
+		global $expId;
+		$allow_process = checkExptAdminPrivilege($expId,'data');
 		$text="<ul>";
 		// print out the title of the subfunction
 		foreach((array)$data as $submenu) {

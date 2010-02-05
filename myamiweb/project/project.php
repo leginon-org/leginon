@@ -2,18 +2,12 @@
 require "inc/project.inc.php";
 require "inc/leginon.inc";
 require "inc/utilpj.inc.php";
-$is_proj_admin = (privilege('projects') == 2 || privilege('projects')== 4 );
-if ($is_proj_admin) {
-	$title = "Project Administration";
+if (privilege('projects')) {
+	$title = "Projects";
 	login_header($title);
 } else {
-	if (privilege('projects')) {
-		$title = "Project Summary";
-		login_header($title);
-	} else {
-		$redirect=$_SERVER['PHP_SELF'];
-		redirect(BASE_URL.'login.php?ln='.$redirect);
-	}
+	$redirect=$_SERVER['PHP_SELF'];
+	redirect(BASE_URL.'login.php?ln='.$redirect);
 }
 
 $project = new project();
@@ -29,6 +23,7 @@ $projects = $project->getProjects("order",privilege('projects'));
 if($projects) {
 foreach ((array)$projects as $k=>$proj) {
 	$pId = $proj['projectId'];
+	$is_proj_admin = checkProjectAdminPrivilege($pId);
 	if ($is_proj_admin) {
 		$projects[$k]['edit']="<a href='updateproject.php?id=$pId'><img alt='edit' border='0' src='img/edit.png'></a>";
 		$projects[$k]['del']="<a href='deleteproject.php?id=$pId'><img alt='delete' border='0' src='img/del.png'></a>";

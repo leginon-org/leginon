@@ -10,11 +10,10 @@ if ($_POST[currentproject])
 	$selectedprojectId=$_POST[currentproject];
 $project = new project();
 $projects = $project->getProjects("order");
-$login_check = privilege('shareexperiments');
-$is_admin = ($login_check == 2 || $login_check == 4);
 project_header("Share Data");
 $sessionId = $_GET['id'];
 checkExptAccessPrivilege($sessionId,'shareexperiments');
+$is_admin = checkExptAdminPrivilege($sessionId,'shareexperiments');
 ?>
 
 <form method="POST" name="projectform" action="<?=$_SERVER['REQUEST_URI'] ?>">

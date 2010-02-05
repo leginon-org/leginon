@@ -16,7 +16,7 @@ if ($_POST['currentproject']) {
 $view = ($_REQUEST['v']=='s') ? 'd' : 's';
 $link = ($view=='s') ? 'Detailed view' : 'Simple view';
 $privilege = privilege('projects');
-$is_admin = ($privilege == 2 || $privilege == 4);
+$is_admin = checkProjectAdminPrivilege($selectedprojectId);
 $url = $_SERVER['PHP_SELF']."?v=".$_REQUEST['v']."&pId=".$selectedprojectId;
 $ln=urlencode($url);
 $sharingstatus = "No";
@@ -179,7 +179,7 @@ $projectId = $projectinfo['projectId'];
 		$experiments[$k]['totalimg']=$info['Total images'];
 		$experiments[$k]['totaltime']=$info['Total Duration'];
 		if ($SHARE) {
-			$share_admin = (privilege('shareexperiments') == 2 || privilege('shareexperiments') == 4);
+			$share_admin = checkExptAdminPrivilege($info['SessionId'],'shareexperiments');
 			$sharingstatus = ($d->is_shared($info['SessionId'])) ? "Yes" : "No";
 			if ($share_admin) {
 				$sharelink="<a class='header' href='$sharinglink".
