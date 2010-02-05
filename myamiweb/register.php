@@ -11,7 +11,7 @@ $displayform=true;
 
 login_header("Appion / Leginon Register");
 ?>
-<center><h1><?php echo APP_NAME; ?></h1></center>
+<center><h1><?php echo PROJECT_TITLE; ?></h1></center>
 <hr/>
 <?
 
