@@ -9,7 +9,7 @@ if ($_POST['currentproject'])
 	$selectedprojectId=$_POST['currentproject'];
 $login_check = $dbemauth->is_logged();
 
-$is_admin = privilege();
+$is_admin = (privilege('users')>3);
 login_header('User');
 $userdata = new user();
 $users = $userdata->getUsers(true);
@@ -21,7 +21,7 @@ foreach ($users as $k=>$p) {
 		$users[$k]["edit"]="<a href='updateuser.php?id=$pId'><img border='0' src='img/edit.png'></a>";
 		$users[$k]["del"]="<a href='deleteuser.php?id=$pId'><img border='0' src='img/del.png'></a>";
 	}
-	$users[$k]["name"]=$p['name'];
+	$users[$k]["username"]=$p['username'];
 	$users[$k]["email"]="<a href='mailto:$email'>".$p['email']."</a>";
 	$users[$k]["institution"]=$p['institution']." ".$p['dept']." ".$p['address'];
 	$users[$k]["phone"]=$p['phone'];
@@ -34,7 +34,7 @@ $columns=array(
 	'phone'=>'Phone');
 $columns=array(
 	'firstname'=>'First Name', 'lastname'=>'Last Name',
-	'name' =>'Login Name',
+	'username' =>'Login Name',
 	'email' => 'Email'
 	);
 $display_header=true;
