@@ -30,8 +30,7 @@ define('DB_PROJECT', "project");	// DB project table name
 define('VIEWER_URL', BASE_URL."3wviewer.php?expId=");
 define('SUMMARY_URL', BASE_URL."summary.php?expId=");
 define('UPLOAD_URL', BASE_URL."processing/uploadimage.php");
-define('DEF_PROJECT_TABLES_FILE', "defaultprojecttables.xml");
-define('DEF_PROCESSING_TABLES_FILE', "defaultprocessingtables.xml");
+
 // --- Set cookie session time
 define('COOKIE_TIME', 0);		//0 is never expire. 
 
@@ -54,8 +53,9 @@ $XML_DATA = "test/viewerdata.xml";
 
 
 // --- Set Default table definition
-
-$DEF_TABLES_FILE = "defaulttables.xml";
+define('DEF_TABLES_FILE', "defaulttables.xml");
+define('DEF_PROJECT_TABLES_FILE', "defaultprojecttables.xml");
+define('DEF_PROCESSING_TABLES_FILE', "defaultprocessingtables.xml");
 
 // --- Set External SQL server here (use for import/export application)
 // --- You can add as many as you want, just copy and paste the block
