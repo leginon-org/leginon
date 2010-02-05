@@ -391,7 +391,7 @@ class authlib extends config_class {
 		} 
 		
 		// if already login, redirect to homepage.
-		if (is_logged () !==false){
+		if ($this->is_logged() !==false){
 			redirect(BASE_URL);
 			exit();
 		}
@@ -421,9 +421,10 @@ class authlib extends config_class {
 				
 				// insert user to UserData table
 			if(!$dbL->SQLQuery($q)){
+			
 				return $this->error['database_err1'];
 			}
-			
+		
 				// remove registration 
 			$dbP->SQLDelete("confirmauth", array('username'=>$username));
 
