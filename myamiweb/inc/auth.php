@@ -415,13 +415,13 @@ class authlib extends config_class {
 			
 			$dbL = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
-			$q = "insert into dbemdata.UserData (username, firstname, lastname, 
+			$q = "insert into UserData (username, firstname, lastname, 
 							`REF|GroupData|group`, password, email) 
-				  values ('$username', '$firstname', '$lastname'," . GP_GUEST .", '$password', '$email')";
+				  values ('$username', '$firstname', '$lastname'," . GP_USER .", '$password', '$email')";
 				
 				// insert user to UserData table
 			if(!$dbL->SQLQuery($q)){
-			
+		
 				return $this->error['database_err1'];
 			}
 		
