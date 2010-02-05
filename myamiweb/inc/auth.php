@@ -31,6 +31,7 @@ class authlib extends config_class {
 				 "flushing"=>"The flushing process was unsuccessful.",
 				 "username_email"=>"No username corresponding to that email.",
 				 "no_email"=>"no such email address in our system. ",
+				 "no_username" => "no such username in our system.<br>Please go back and try again.",
 				 "database_err1"=>"Your registration details could not be updated.",
 				 "database_err2"=>"Your password could not be updated due to a database fault.",
 				 "emails_not_match"=>"Your emails do not match.",
@@ -453,16 +454,16 @@ class authlib extends config_class {
 
 	}
 
-	function lostpwd ($email) {
+	function lostpwd ($username) {
 
 		// check input variable has value
-		if (empty($email)) {
+		if (empty($username)) {
 			return $this->error['fields_empty'];
 		}
 
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
-		$q="select DEF_id, username, email from UserData where email = '$email'";
+		$q="select DEF_id, username, email from UserData where username = '$username'";
 
 		$query = $dbc->SQLQuery($q);
 		$result = @mysql_num_rows($query);
@@ -470,8 +471,8 @@ class authlib extends config_class {
 		// setup query result value and assign to those variables
 		list($userID, $username, $email) = @mysql_fetch_row($query);
 
-		if (!$email) {
-			return $this->error['no_email'];
+		if (!$username) {
+			return $this->error['no_username'];
 		}
 		
 		// generate new password for user

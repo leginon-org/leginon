@@ -14,7 +14,7 @@ if (!empty($_POST)) {
 	} 
 	else {
 		
-		$result .= $lostpass."  [<b>".$_POST['email']."</b>]";
+		$result .= $lostpass;
 		
 	}
 	$result .= "</p>";
@@ -32,7 +32,7 @@ if (!empty($_POST)) {
 	<?php } else { ?>
 	<tr>
 		<td>
-			<label for="email">Enter your <b>Email:</b> </label>
+			<label for="email">Enter your <b>Username:</b> </label>
 		</td>
 		<td>
 			<input class="field" type="text" value="" name="email" id="email" >
