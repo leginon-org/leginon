@@ -88,16 +88,6 @@ class authlib extends config_class {
 
 			}
 			
-			$q="select email from `".$this->tbl_user."` where email = '$email'";
-			$query = $dbc->SQLQuery($q);
-			$result = @mysql_num_rows($query);
-
-			if ($result > 0) {
-
-				return $this->error['username_email_exists'];
-
-			}
-			
 			$now=date('Y-m-d H:i:s', time());
 			$hash = md5($username.$now);
 			
