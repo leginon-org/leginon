@@ -3017,14 +3017,14 @@
    <sqltable name="GroupData" >
        <field name="DEF_id" >1</field>
        <field name="DEF_timestamp" >NOW()</field>
-       <field name="name" >administractors</field>
+       <field name="name" >administrators</field>
        <field name="description" >Administrators</field>
        <field name="REF|projectdata|privileges|privilege" >1</field>
    </sqltable>
    <sqltable name="GroupData" >
        <field name="DEF_id" >2</field>
        <field name="DEF_timestamp" >NOW()</field>
-       <field name="name" >power user</field>
+       <field name="name" >power users</field>
        <field name="description" >Power User</field>
        <field name="REF|projectdata|privileges|privilege" >2</field>
    </sqltable>
@@ -3038,8 +3038,8 @@
    <sqltable name="GroupData" >
        <field name="DEF_id" >2</field>
        <field name="DEF_timestamp" >NOW()</field>
-       <field name="name" >guest</field>
-       <field name="description" >Guest</field>
+       <field name="name" >guests</field>
+       <field name="description" >Guests</field>
        <field name="REF|projectdata|privileges|privilege" >4</field>
    </sqltable>
  </data>
