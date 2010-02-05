@@ -10,6 +10,7 @@
 -	gridlocations
 -	processingdb
 -	projects
+-	confirmauth
 -	projectexperiments
 -
 -->
@@ -325,6 +326,43 @@
     />
     <key>PRIMARY KEY (`projectId`)</key>
   </sqltable>
+  <sqltable name="confirmauth" >
+    <field 
+      name="mdhash" 
+      type="longtext" 
+      null="NOT NULL"
+    />
+    <field 
+      name="username" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="password" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="firstname" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="lastname" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="email" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
+      name="date" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+  </sqltable>  
   <sqltable name="projectexperiments" >
     <field 
       name="projectexperimentId" 
