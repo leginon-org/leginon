@@ -2,7 +2,7 @@
 class user {
 
 	function user($mysql=""){
-		$this->mysql = ($mysql) ? $mysql : new mysql(PRJ_DB_HOST, PRJ_DB_USER, PRJ_DB_PASS, PRJ_DB);
+		$this->mysql = ($mysql) ? $mysql : new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 	}
 
 	function updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, $mypass1, $mypass2, $priv="") {
@@ -13,7 +13,7 @@ class user {
 
 		if (!$this->checkUserExistsbyId($userId)) 
 			return false;
-		$db = DB;
+		$db = DB_LEGINON;
 		$table='UserData';
 		$data=array();
 		$data['firstname']=$firstname;
@@ -99,21 +99,21 @@ class user {
 	}
 
 	function checkUserExistsbyLogin($username) {
-		$q='select `DEF_id` as userId from '.DB.'.UserData where name="'.$username.'"';
+		$q='select `DEF_id` as userId from '.DB_LEGINON.'.UserData where username="'.$username.'"';
 		$RuserInfo = $this->mysql->SQLQuery($q);
 		$userInfo = mysql_fetch_array($RuserInfo);
 		return $userInfo['userId'];
 	}
 
 	function checkUserExistsbyName($firstname, $lastname) {
-		$q='select `DEF_id` as userId from '.DB.'UserData where `firstname`="'.$firstname.' and `lastname` = "'.$lastname.'"';
+		$q='select `DEF_id` as userId from '.DB_LEGINON.'UserData where `firstname`="'.$firstname.' and `lastname` = "'.$lastname.'"';
 		$RuserInfo = $this->mysql->SQLQuery($q);
 		$userInfo = mysql_fetch_array($RuserInfo);
 		return $userInfo['userId'];
 	}
 
 	function checkUserExistsbyId($id) {
-		$q='select `DEF_id` as userId from '.DB.'.UserData where `DEF_id`="'.$id.'"';
+		$q='select `DEF_id` as userId from '.DB_LEGINON.'.UserData where `DEF_id`="'.$id.'"';
 		$RuserInfo = $this->mysql->SQLQuery($q);
 		$userInfo = mysql_fetch_array($RuserInfo);
 		$id = $userInfo['userId'];
@@ -124,7 +124,7 @@ class user {
 	}
 
 	function getUserId($firstname, $lastname){
-		$q='select `DEF_id` as userId from '.DB.'UserData where `firstname`="'.$firstname.' and `lastname` = "'.$lastname.'"';
+		$q='select `DEF_id` as userId from '.DB_LEGINON.'UserData where `firstname`="'.$firstname.' and `lastname` = "'.$lastname.'"';
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -132,7 +132,7 @@ class user {
 		$results = array();
 		$order = ($order) ? "order by u.`lastname`" : "";
 		$q='select u.`DEF_id` as userId, u.* '
-			.'from '.DB.'.UserData u '
+			.'from '.DB_LEGINON.'.UserData u '
 			.$order;
 
 		$r = $this->mysql->getSQLResult($q);
@@ -157,8 +157,8 @@ class user {
 		$sqlwhere = (is_numeric($userId)) ? "u.`DEF_id`=$userId" : "u.name='$userId'";
 		$q='select u.`DEF_id` as userId, u.*, u.`name` as username, '
 			.'g.`DEF_id` as groupId ,g.`name` as groupname '
-			.'from ' .DB.'.UserData u '
-			.'left join '.DB.'.GroupData g on '
+			.'from ' .DB_LEGINON.'.UserData u '
+			.'left join '.DB_LEGINON.'.GroupData g on '
 			.'u.`REF|GroupData|group` = g.`DEF_id` '
 		  .'where '.$sqlwhere;
 		list($r) = $this->mysql->getSQLResult($q);
@@ -168,7 +168,7 @@ class user {
 	function getLoginInfo($userId) {
 		$sqlwhere = (is_numeric($userId)) ? "u.`DEF_id`=$userId" : "u.name='$userId'";
 		$q='select g.`DEF_id` as groupId, u.*, g.* from '
-			.DB.'.UserData u left join '.DB.'.GroupData g '
+			.DB_LEGINON.'.UserData u left join '.DB_LEGINON.'.GroupData g '
 			.'on u.`REF|GroupData|group` = g.`DEF_id` '
 		  .'where '.$sqlwhere;
 		return $this->mysql->getSQLResult($q);
@@ -177,18 +177,18 @@ class user {
 	function updateLogin($userId, $username) {
 		$data['name']=$username;
 		$where['DEF_id']=$userId;
-		return $this->mysql->SQLUpdate(DB.'UserData', $data, $where);
+		return $this->mysql->SQLUpdate(DB_LEGINON.'UserData', $data, $where);
 	}
 
 	function updatePassword($userId, $password) {
 		$data['password']=$password;
 		$where['DEF_id']=$userId;
-		return $this->mysql->SQLUpdate(DB.'UserData', $data, $where);
+		return $this->mysql->SQLUpdate(DB_LEGINON.'UserData', $data, $where);
 	}
 
 	function addLogin($userId, $username, $mypass, $priv=false) {
 			if ($priv) {
-				$q = 'select g.`DEF_id` groupId from '.DB.'.GroupData '
+				$q = 'select g.`DEF_id` groupId from '.DB_LEGINON.'.GroupData '
 					.'where g.privilege = '.$priv;
 				$r = $this->mysql->SQLQuery($q);
 			}
@@ -199,7 +199,7 @@ class user {
 			$data['password']=$mypass;
 			if ($priv)
 				$data['REF|GroupData|group']=$r[0]['groupId'];
-			$id=$this->mysql->SQLInsert(DB.'UserData', $data);
+			$id=$this->mysql->SQLInsert(DB_LEGINON.'UserData', $data);
 			return $id;
 	}
 
