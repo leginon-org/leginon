@@ -53,7 +53,7 @@ class authlib extends config_class {
 
 			}
 			
-			if(!eregi("^[a-z ]+$", $firstname)) {
+			if(!eregi("^[0-9a-z ]+$", $firstname)) {
 
 				return $this->error['name_invalid'];
 
