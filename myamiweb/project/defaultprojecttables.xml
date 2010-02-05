@@ -422,6 +422,11 @@
       default="DEFAULT 'CURRENT_TIMESTAMP'" 
     />
     <field 
+      name="description" 
+      type="text" 
+      null="NOT NULL" 
+    />
+    <field 
       name="groups" 
       type="tinyint(4)" 
       null="NOT NULL" 
@@ -482,6 +487,7 @@
     <sqltable name="privileges" >
         <field name="DEF_id" >1</field>
         <field name="DEF_timestamp" >NOW()</field>
+        <field name="description" >All at administration level</field>
         <field name="groups" >4</field>
         <field name="users" >4</field>
         <field name="projects" >4</field>
@@ -492,6 +498,7 @@
     <sqltable name="privileges" >
         <field name="DEF_id" >2</field>
         <field name="DEF_timestamp" >NOW()</field>
+        <field name="description" >View all but administrate owned</field>
         <field name="groups" >3</field>
         <field name="users" >3</field>
         <field name="projects" >3</field>
@@ -502,6 +509,7 @@
     <sqltable name="privileges" >
         <field name="DEF_id" >3</field>
         <field name="DEF_timestamp" >NOW()</field>
+        <field name="description" >Administrate/view only  owned projects and view shared experiments</field>
         <field name="groups" >1</field>
         <field name="users" >2</field>
         <field name="projects" >2</field>
@@ -512,6 +520,7 @@
     <sqltable name="privileges" >
         <field name="DEF_id" >4</field>
         <field name="DEF_timestamp" >NOW()</field>
+        <field name="description" >View owned projects and shared experiments</field>
         <field name="groups" >1</field>
         <field name="users" >1</field>
         <field name="projects" >1</field>
