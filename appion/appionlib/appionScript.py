@@ -240,7 +240,13 @@ class AppionScript(object):
 			elements=arg.split('=')
 			opt = elements[0].lower()
 			if opt[0] == "-":
-				if opt in argmdict:
+				## if action='append', then opt is allowed multiple times
+				option = self.parser.get_option(opt)
+				if option is not None and option.action == 'append':
+					multiple_ok = True
+				else:
+					multiple_ok = False
+				if opt in argmdict and not multiple_ok:
 					apDisplay.printError("Multiple arguments were supplied for argument: "+str(opt))
 				argmdict[opt] = True
 
