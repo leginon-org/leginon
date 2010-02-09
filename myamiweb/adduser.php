@@ -10,9 +10,7 @@ $f_last_name=$_POST['f_last_name'];
 $f_email=$_POST['f_email'];
 $f_password=$_POST['f_password'];
 $f_password_confirm=$_POST['f_password_confirm'];
-$r_groupdata=$_POST['r_groupdata'];
 $f_group=$_POST['f_group'];
-$f_groupdata_privilegeId=$_POST['f_group_privilegeId'];
 $maintable = "UserData";
 $id = $leginondata->getId( array('username' => $f_username), 'UserData');
 $id = (is_array($id)) ? $id[0] : $id;
@@ -24,16 +22,6 @@ switch ($_POST['bt_action']) {
 			$id = $leginondata->getId( array('DEF_id' => $f_sel_name), 'UserData');
 			break;
 	case "save":
-			if ($r_groupdata=="Y") {
-				if (!$_POST['f_groupdata_name']) {
-					$grouperror = "Enter a Group Name";
-				} else {
-					$ginfo['name'] = $_POST['f_groupdata_name'];
-					$ginfo['description'] = $_POST['f_groupdata_description'];
-					$ginfo['privilege'] = $_POST['f_groupdata_privilegeId'];
-					$f_group = $leginondata->mysql->SQLInsert('GroupData', $ginfo);
-				}
-			}
 			if (!$f_username) {
 				$nameerror = "Enter a user name";
 				break;
@@ -69,7 +57,7 @@ switch ($_POST['bt_action']) {
 
 			if ($id) {
 				$where['DEF_id'] = $id;
-				$leginondata->mysql->SQLUpdate('UserData', $data, $where);
+				$leginondata->mysql->SQLUpdate($maintable, $data, $where);
 			} else {
 				$id = $leginondata->mysql->SQLInsert('UserData', $data);
 			}
@@ -78,6 +66,7 @@ switch ($_POST['bt_action']) {
 			$where['DEF_id']=$id;
 			$f_name="";
 			$leginondata->mysql->SQLDelete('UserData', $where);
+			unset($f_username, $f_first_name, $f_last_name, $f_email, $f_group, $f_password);
 			break;
 }
 
@@ -180,7 +169,7 @@ foreach ($users as $user) {
     User name:<font color="red">*</font>
   </td>
   <td class="dt1"> 
-    <input class="field" type="text" name="f_username" maxlength="20" size="17" value ="<?php echo $f_username; ?>" onBlur="check_name();" onchange="check_name();"  >
+    <input class="field" type="text" name="f_username" maxlength="20" size="17" value ="<?php echo $f_username; ?>" >
   </td>
   <?php if ($nameerror) { ?>
   <td valign="top">
@@ -239,9 +228,6 @@ Group:
   <table border="0">
     <tr valign="top">
      <td>
-	<input class="field" type='radio' name='r_groupdata' value='N' checked onChange="enable_groupdata(true)">
-     </td>
-     <td>
 	<select size="1" name="f_group" > 
 	<?php foreach ($groups as $group) {
 		$s = ($f_group == $group['DEF_id'] ) ? 'selected' : '';
@@ -251,54 +237,7 @@ Group:
 	</select>
      </td>
     </tr>
-    <tr valign="top">
-     <td>
-	<input type='radio' name='r_groupdata' value='Y' onChange="enable_groupdata(false)">
-     </td>
-     <td>
-	<table  bgcolor="#FFFFFF" border=0 cellspacing=1>
-	<tr>
-	<td class="dt1" height="40">
-	name:<font color="red">*</font>
-	</td>
-	<td class="dt1" height="40">
-	<input class="field" disabled name="f_groupdata_name" size="17" value="add new" id="id_groupdata_name" style="background-color: #DCDAD5;">
-	</td>
-<?php if ($grouperror) { ?>
-<td valign="top">
-<div style='position: absolute; padding: 3px; border: 1px solid #000000;background-color: #ffffc8'><?php echo $grouperror; ?></div></td>
-<?php } ?>
-	</tr>
-	<tr>
-	<td class="dt2" height="40">
-	description:
-	</td>
-	<td class="dt2" height="40">
-	<textarea class="textarea" disabled name="f_groupdata_description" cols="15" rows="2" id="id_groupdata_description" style="background-color: #DCDAD5;"></textarea>
-	</td>
-	</tr>
-	<tr>
-	<td class="dt1" height="40">
-	privilege:<font color="red">*</font>
-	</td>
-	<td class="dt2" valign="top">
-	<?php
-	$privileges = array('View only owned or shared projects'=>0,
-			'View and adminstrate sharing of owned project'=>1,
-			'View all projects but adminstrate only sharing of owned project'=>2,
-			'Administrator'=>3
-		);
-	?>
-		<select name="f_groupdata_privilegeId" onChange="javascript:document.dataimport.submit();">
-			<?php
-			foreach($privileges as $privilege_name=>$pId) {
-				$selected = ($f_groupdata_privilegeId==$pId) ? "selected" : "";
-				echo "<option value='$pId' $selected >$privilege_name\n";
-			}
-			?>
-		</select>
-	</td>
-	</tr>
+
 </table>
      </td>
     </tr>
