@@ -10,6 +10,7 @@
 -	gridlocations
 -	processingdb
 -	projects
+-	pis
 -	confirmauth
 -	projectexperiments
 -
@@ -323,6 +324,27 @@
     <field 
       name="db" 
       type="varchar(50)" 
+    />
+    <key>PRIMARY KEY (`projectId`)</key>
+  </sqltable>
+    <sqltable name="pis" >
+    <field 
+      name="piId" 
+      type="int(11)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="projectId" 
+      type="int(11)"
+      null="NOT NULL" 
+      default="0" 
+    />
+    <field 
+      name="username" 
+      type="varchar(25)" 
+      null="NOT NULL" 
+      default="0"
     />
     <key>PRIMARY KEY (`projectId`)</key>
   </sqltable>
