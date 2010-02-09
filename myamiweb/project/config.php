@@ -19,15 +19,15 @@
 require "../config.php";
 
 // --- Leginon database config
-$VIEWER_URL = BASE_URL."/3wviewer.php?expId=";
-$SUMMARY_URL = BASE_URL."/summary.php?expId=";
-$UPLOAD_URL = BASE_URL."/processing/uploadimage.php";
+//$VIEWER_URL = BASE_URL."/3wviewer.php?expId=";
+//$SUMMARY_URL = BASE_URL."/summary.php?expId=";
+//$UPLOAD_URL = BASE_URL."/processing/uploadimage.php";
 
-$DEF_PROJECT_TABLES_FILE = "defaultprojecttables.xml";
+//$DEF_PROJECT_TABLES_FILE = "defaultprojecttables.xml";
 
 // --- default for processing db --- //
-$DEF_PROCESSING_TABLES_FILE = "defaultprocessingtables.xml";
+//$DEF_PROCESSING_TABLES_FILE = "defaultprocessingtables.xml";
 
 // --- do not remove --- //
-set_include_path(get_include_path() . PATH_SEPARATOR . $BASE_PATH);
+//set_include_path(get_include_path() . PATH_SEPARATOR . $BASE_PATH);
 ?>
