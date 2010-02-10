@@ -272,7 +272,12 @@ class manualPicker(particleLoop2.ParticleLoop):
 		if self.params['sessionname'] is not None:
 			self.processAndSaveAllImages()
 
-		self.labels = self.params['labels']
+		## use labels from params, or default to a single label "particle"
+		if self.params['labels']:
+			self.labels = self.params['labels']
+		else:
+			self.labels = ['particle']
+
 		self.app = PickerApp(
 			shape = self.canonicalShape(self.params['shape']),
 			size =  self.params['shapesize'],
@@ -412,7 +417,6 @@ class manualPicker(particleLoop2.ParticleLoop):
 		overlay = apMask.overlayMask(image,mask)
 		self.app.panel.setImage(overlay.astype(numpy.float32))
 
-
 	def runManualPicker(self, imgdata):
 		#reset targets
 		self.targets = {}
@@ -456,30 +460,12 @@ class manualPicker(particleLoop2.ParticleLoop):
 		#parse and return the targets in peaktree form
 		self.app.panel.openImageFile(None)
 		peaktree=[]
-		for target in self.targets:
-			peaktree.append(self.XY2particle(target.x, target.y))
+		for label,targets in self.targets.items():
+			for target in targets:
+				peaktree.append(self.XY2particle(target.x, target.y, label))
 		return peaktree
 
-	def runManualPickerOld(self, imgdata):
-		#use ImageViewer to pick particles
-		#this is a total hack but an idea that can be expanded on
-		imgname = imgdata['filename']+'.dwn.mrc'
-		imgpath = os.path.join(self.params['rundir'],imgname)
-		commandlst = ['ApImageViewer.py',imgpath]
-		manpicker = subprocess.Popen(commandlst,stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-		outstring = manpicker.stdout.read()
-		words = outstring.split()
-		peaktree=[]
-		#print outstring
-		#print words
-		for xy in range(0,len(words)/2):
-			binx = int(words[2*xy])
-			biny = int(words[2*xy+1])
-			peaktree.append(self.XY2particle(binx, biny))
-		#print peaktree
-		return peaktree
-
-	def XY2particle(self, binx, biny):
+	def XY2particle(self, binx, biny, label):
 		peak={}
 		peak['xcoord'] = binx*self.params['bin']
 		peak['ycoord'] = biny*self.params['bin']
@@ -489,6 +475,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 		peak['peakarea'] = 1
 		peak['tmplnum'] = None
 		peak['template'] = None
+		peak['label'] = label
 		return peak
 
 	def deleteOldPicks(self, imgdata):

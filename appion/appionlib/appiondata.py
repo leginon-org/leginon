@@ -87,6 +87,7 @@ class ApParticleData(Data):
 			('peakstddev', float),
 			('peakarea', int),
 			('diameter', float),
+			('label', str),
 		)
 	typemap = classmethod(typemap)
 
