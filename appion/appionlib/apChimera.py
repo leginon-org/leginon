@@ -150,7 +150,7 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 
 #=========================================
 #=========================================
-def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
+def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=True, xvfb=True):
 	if isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
@@ -177,12 +177,12 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 	#'CHIMBACK',  'CHIMIMGSIZE', 'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
 	chimsnappath = getSnapPath()
 	apDisplay.printColor("running Chimera Snapshot for sym "+str(sym), "cyan")
-	runChimeraScript(chimsnappath)
+	runChimeraScript(chimsnappath, xvfb=xvfb)
 
 	image1 = density+".1.png"
 	if not os.path.isfile(image1):
 		apDisplay.printWarning("Chimera failed to generate images")
-		runChimeraScript(chimsnappath)
+		runChimeraScript(chimsnappath, xvfb=xvfb)
 
 	if not os.path.isfile(image1):
 		apDisplay.printWarning("Chimera failed to generate images, twice")
@@ -191,7 +191,7 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 
 #=========================================
 #=========================================
-def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=False):
+def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=False, xvfb=True):
 	if isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
@@ -218,11 +218,11 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 	#'CHIMBACK',  'CHIMIMGSIZE', 'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
 	chimsnappath = getSnapPath()
 	apDisplay.printColor("running Chimera Animation for sym "+str(sym), "cyan")
-	runChimeraScript(chimsnappath)
+	runChimeraScript(chimsnappath, xvfb=xvfb)
 	image1 = density+".001.png"
 	if not os.path.isfile(image1):
 		apDisplay.printWarning("Chimera failed to generate images")
-		runChimeraScript(chimsnappath)
+		runChimeraScript(chimsnappath, xvfb=xvfb)
 
 	if os.path.isfile(image1):
 		### merge into animated GIF
@@ -250,6 +250,7 @@ def runChimeraScript(chimscript, xvfb=True):
 	#apDisplay.printColor("Trying to use chimera for model imaging","cyan")
 	if xvfb is True:
 		port = apParam.resetVirtualFrameBuffer()
+		time.sleep(1)
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
 		os.environ['CHIMERA'] = chimpath
@@ -262,9 +263,11 @@ def runChimeraScript(chimscript, xvfb=True):
 		chimpath = None
 		chimexe = "chimera"
 		#apDisplay.printWarning("'CHIMERA' environmental variable is unset")
-	rendercmd = (chimexe+" python:"+chimscript)
+	rendercmd = (chimexe+" --debug python:"+chimscript)
 	logf = open("chimeraRun.log", "a")
 	apDisplay.printColor("running Chimera:\n "+rendercmd, "cyan")
+	if xvfb is True:
+		print "import -verbose -display :%d -window root screencapture.png"%(port)
 	proc = subprocess.Popen(rendercmd, shell=True, stdout=logf, stderr=logf)
 	proc.wait()
 	logf.close()

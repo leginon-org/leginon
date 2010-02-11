@@ -51,6 +51,12 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			help="Snapshot mode: "+str(self.typemodes), metavar="TYPE", 
 			type="choice", choices=self.typemodes, default="snapshot" )
 
+		### true/false
+		self.parser.add_option("--xvfb", dest="xvfb", default=True,
+			action="store_true", help="Use Xvfb for imaging")
+		self.parser.add_option("--no-xvfb", dest="xvfb", default=True,
+			action="store_false", help="Do not use Xvfb for imaging")
+
 	#=====================
 	def checkConflicts(self):
 		self.params['commit'] = False
@@ -104,14 +110,14 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			apDisplay.printMsg("Creating animation")
 			apChimera.renderAnimation(mrcfile, contour=self.params['contour'],
 				 zoom=self.params['zoom'], sym=self.params['sym'],
-				 color=self.params['color'])
+				 color=self.params['color'], xvfb=self.params['xvfb'])
 
 		### snapshot
 		if self.params['type'] != "animate":
 			apDisplay.printMsg("Creating snapshots")
 			apChimera.renderSnapshots(mrcfile, contour=self.params['contour'],
 				 zoom=self.params['zoom'], sym=self.params['sym'],
-				 color=self.params['color'])
+				 color=self.params['color'], xvfb=self.params['xvfb'])
 
 		### clean up
 		if self.params['mass'] is not None or self.params['bin'] is not None:
