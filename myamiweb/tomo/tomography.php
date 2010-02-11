@@ -20,7 +20,18 @@ class Tomography {
 			.'WHERE t.`REF|SessionData|Session` <> "NULL" '
 			.'AND t.`tilt step` <> "NULL" '
 			.'ORDER BY s.DEF_timestamp DESC;';
-		return $this->mysql->getSQLResult($query);
+		$tiltsessions = $this->mysql->getSQLResult($query);
+		if (count($tiltsessions) && privilege('data') <= 2) {
+			$valid_sessions = $this->leginon->getSessions();
+			$validIds = array();
+			foreach ($valid_sessions as $v) $validIds[] = $v['id'];
+			$results = array();
+			foreach ($tiltsessions as $s) 
+				if (in_array($s['id'],$validIds)) $results[] = $s;
+		} else {
+			$results = $tiltsessions;
+		}
+		return $results;
 	}
 
 	function getTiltSeriesCount($start=NULL, $stop=NULL) {
@@ -330,6 +341,6 @@ class Tomography {
 	}
 }
 
-$mysql = &new mysql($DB_HOST, $DB_USER, $DB_PASS, $DB);
+$mysql = &new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 $tomography = new Tomography($mysql);
 ?>
