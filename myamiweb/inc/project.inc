@@ -145,12 +145,13 @@ class project {
 			$q .= " left join projectowners o "
 						."on o.`REF|projects|project` = p.`projectId` "
 						."left join ".DB_LEGINON.".UserData u "
-						."on u.`DEF_id` = o.`REF|leginondata|UserData|user` "
-						."where u.`DEF_id` = ".$userId." ";
+						."on u.`DEF_id` = o.`REF|leginondata|UserData|user` ";
+			$where = " and u.`DEF_id` = ".$userId." ";
 		$projectdef = $this->mysql->getFieldTypes('projects');
 		if (array_key_exists('hidden', $projectdef)) {
 			$q .= 'where hidden != 1 OR hidden IS NULL ';
 		}
+		$q .= $where;
 		$q .= 'order by name';
 		$rprojects = $this->mysql->getSQLResult($q);
 		$projects = array();
@@ -161,7 +162,6 @@ class project {
 		if (!ENABLE_LOGIN) {
 			return $projects;
 		}
-
 		$login_check = $dbemauth->is_logged();
 		$projects=$this->restrict($projects, $login_check);
 		return $projects;
