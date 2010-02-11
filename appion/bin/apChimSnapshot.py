@@ -9,12 +9,14 @@
 # -----------------------------------------------------------------------------
 #
 import sys
+import re
 import os
 import time
 import numpy
 import math
 try:
 	import chimera
+	import chimera.printer
 	from chimera.colorTable import getColorByName
 	from VolumeViewer.volume import default_settings, open_volume_file
 	import Surface
@@ -59,11 +61,26 @@ class ChimSnapShots(object):
 			else:
 				self.snapshot_csym()
 
+		self.saveChimeraState()
+
 		self.writeMessageToLog("\n")
 		self.writeMessageToLog("====================================")
 		self.writeMessageToLog("apChimSnapshot finished successfully")
 		self.writeMessageToLog("====================================")
 		self.writeMessageToLog("\n\n\n")
+
+	# -----------------------------------------------------------------------------
+	def saveChimeraState(self):
+		from SimpleSession.save import saveSession
+		self.sessionname = re.sub("\.", "_", self.volumepath)+".py"
+		self.writeMessageToLog("Saving chimera session: %s"%(self.sessionname))
+		saveSession(self.sessionname)
+		if os.path.isfile(self.sessionname):
+			self.writeMessageToLog("SUCCESS Saving chimera session")
+		else:
+			self.writeMessageToLog("FAIL Saving chimera session")
+		return
+
 
 	# -----------------------------------------------------------------------------
 	def openVolumeData(self):
@@ -77,7 +94,7 @@ class ChimSnapShots(object):
 		default_settings.set('surface_smoothing', True)
 		default_settings.set('smoothing_iterations', 10)
 		self.voldata = open_volume_file(self.tmpfilepath, self.fileformat)[0]
-		self.writeMessageToLog(str(dir(self.voldata)))
+		#self.writeMessageToLog(str(dir(self.voldata)))
 		self.voldata.set_parameters(
 			show_outline_box=False,
 			surface_smoothing=True,
@@ -89,15 +106,14 @@ class ChimSnapShots(object):
 		self.surfaces = openModels.list(modelTypes=[SurfaceModel])
 		self.setZoom()
 		### This does not work on CentOS
-		#self.drawScaleBar()
+		self.drawScaleBar()
 
 	# -----------------------------------------------------------------------------
 	def setZoom(self):
 		self.writeMessageToLog("Setting zoom")
 		surf = self.surfaces[0]
-		vertices, triangles = surf.surfacePieces[0].geometry
 		rc = Radial_Color()
-		rmin, rmax = rc.value_range(vertices, vertex_xform=None)
+		rmin, rmax = rc.value_range(surf.surfacePieces[0])
 		while rmax is None:
 			self.writeMessageToLog("Contour %.2f is too big, no surface is shown"%(self.contour))
 			self.contour *= 0.9
@@ -105,8 +121,7 @@ class ChimSnapShots(object):
 			self.voldata.show('surface')
 			self.surfaces = openModels.list(modelTypes=[SurfaceModel])
 			surf = self.surfaces[0]
-			vertices, triangles = surf.surfacePieces[0].geometry
-			rmin, rmax = rc.value_range(vertices, vertex_xform=None)
+			rmin, rmax = rc.value_range(surf.surfacePieces[0])
 		## ten percent bigger to ensure that entire particle is in frame
 		chimera.viewer.viewSize = 1.1*rmax/self.zoom
 		#self.runChimCommand('scale %.3f' % self.zoom)
@@ -141,8 +156,7 @@ class ChimSnapShots(object):
 		self.writeMessageToLog("Color radially")
 		rc = Radial_Color()
 		rc.origin = [0,0,0]
-		vertices, triangles = surf.surfacePieces[0].geometry
-		rmin, rmax = rc.value_range(vertices, vertex_xform = None)
+		rmin, rmax = rc.value_range(surf.surfacePieces[0])
 		rrange = rmax-rmin
 		self.writeMessageToLog("%.3f,%.3f"%(rmin,rmax))
 		#key: red,green,blue,opacity
@@ -162,8 +176,7 @@ class ChimSnapShots(object):
 		self.writeMessageToLog("Color by height")
 		hc = Height_Color()
 		hc.origin = [0,0,0]
-		vertices, triangles = surf.surfacePieces[0].geometry
-		hmin, hmax = hc.value_range(vertices, vertex_xform = None)
+		hmin, hmax = hc.value_range(surf.surfacePieces[0])
 		hrange = hmax-hmin
 		self.writeMessageToLog("%.3f,%.3f"%(hmin,hmax))
 		#key: red,green,blue,opacity
@@ -182,8 +195,7 @@ class ChimSnapShots(object):
 	def color_surface_cylinder(self, surf):
 		self.writeMessageToLog("Color cylindrically")
 		cc = Cylinder_Color()
-		vertices, triangles = surf.surfacePieces[0].geometry
-		cmin, cmax = cc.value_range(vertices, vertex_xform = None)
+		cmin, cmax = cc.value_range(surf.surfacePieces[0])
 		if cmin is None:
 			cmin = 0
 		if cmax is None:
@@ -209,16 +221,9 @@ class ChimSnapShots(object):
 		self.writeMessageToLog("Saving image: "+path)
 		# propagate changes from C++ layer back to Python
 		# can also be done via Midas module: Midas.wait(1)
-		try:
-			chimera.update.checkForChanges()
-		except:
-			time.sleep(0.2)
 
 		# save an image
-		try:
-			chimera.printer.saveImage(path, format=self.imgformat)
-		except:
-			pass
+		chimera.printer.saveImage(path, format=self.imgformat)
 		if os.path.isfile(path):
 			self.writeMessageToLog("Success, saved image: "+path)
 		else:
@@ -741,9 +746,14 @@ class ChimSnapShots(object):
 			'CHIMTYPE', 'CHIMSILHOUETTE', 'CHIMBACK', 'CHIMZOOM', 'CHIMIMGSIZE',
 			'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
 		)
+	
 		self.writeMessageToLog("Environmental data: ")
-		for var in variables:
-			self.writeMessageToLog("%s: %s"%(var, os.environ.get(var)))
+		#for var in variables:
+		#	self.writeMessageToLog("export %s=%s"%(var, os.environ.get(var)))
+		for var in os.environ.keys():
+			if var[:4] == "CHIM":
+				if os.environ.get(var) is not None:
+					self.writeMessageToLog("export %s=%s"%(var, os.environ.get(var)))		
 
 #==========================================
 #==========================================
