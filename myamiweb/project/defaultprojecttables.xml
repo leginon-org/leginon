@@ -346,7 +346,7 @@
       null="NOT NULL" 
       default="0"
     />
-    <key>PRIMARY KEY (`projectId`)</key>
+    <key>PRIMARY KEY (`piId`)</key>
   </sqltable>
   <sqltable name="confirmauth" >
     <field 
