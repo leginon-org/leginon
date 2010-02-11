@@ -9,9 +9,9 @@
  */
 
 // --- Processing database --- //
-$PROCESSING_DB_HOST = "";
-$PROCESSING_DB_USER = "";
-$PROCESSING_DB_PASS = "";
+$PROCESSING_DB_HOST = DB_HOST;
+$PROCESSING_DB_USER = DB_USER;
+$PROCESSING_DB_PASS = DB_PASS;
 $PROCESSING_DB = ""; //--- leave empty,  set by projectdb
 
 
@@ -32,6 +32,6 @@ $DATA_DIRS = array(
 // Better if Cs came out of DB, but for now...
 $DEFAULTCS = "";
 
-// --- path to dbem main --- //
-set_include_path(get_include_path().PATH_SEPARATOR."..");
+// --- path to main --- //
+set_include_path("..".PATH_SEPARATOR.get_include_path());
 ?>

@@ -6,9 +6,8 @@
  *	For terms of the license agreement
  *	see	http://ami.scripps.edu/software/leginon-license
  */
-
+if (DB_HOST == 'DB_HOST') require_once "../config.php";
 require_once "config_processing.php";
-require_once "inc/mysql.inc";
 
 define('PARTICLE_DB_HOST', $PROCESSING_DB_HOST);
 define('PARTICLE_DB_USER', $PROCESSING_DB_USER);
