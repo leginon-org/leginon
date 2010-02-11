@@ -1,5 +1,5 @@
 <?php
-require "config.php";
+require "../config.php";
 require "inc/login.inc";
 require_once "inc/dbemauth.php";
 require_once "inc/menu.inc.php";
