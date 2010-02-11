@@ -13,7 +13,7 @@ require 'inc/config.inc';
 // --- define dbem web tools base --- //
 define('PROJECT_NAME', "myamiweb");
 define('PROJECT_TITLE', "Appion and Leginon DB tools");
-define('BASE_PATH',"~acheng/dev/myamiweb");
+define('BASE_PATH',"myamiweb");
 define('BASE_URL', "/".BASE_PATH."/");
 define('PROJECT_URL', BASE_URL."project");
 
