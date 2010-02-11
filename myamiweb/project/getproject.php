@@ -26,6 +26,7 @@ if ($SHARE)
 $project = new project();
 $projects = $project->getProjects("order");
 $projectinfo = $project->getProjectInfo($selectedprojectId);
+$projectowners = $project->getProjectOwners($selectedprojectId);
 $projectname = ": ".$projectinfo['Name'];
 
 if ($_POST['updateprocessing']) {
@@ -114,6 +115,17 @@ $pId = $selectedprojectId;
 	echo "<tr>\n";
 	echo "<td>";
 	echo $projectinfo['Title'];
+	echo "</td>";
+	echo "</tr>\n";
+	echo "<tr>\n";
+	echo "<td>";
+	echo "<b>owners: </b> ";
+	$names = array();
+	if (count($projectowners))
+		foreach ($projectowners as $o) $names[] = $o['full name'];
+	echo implode(", ",$names);
+	if ($is_admin)
+		echo '<a alt="shareproject" target="_blank" class="header" href="shareproject.php?pId='.$selectedprojectId.'"> edit</a>';
 	echo "</td>";
 	echo "</tr>\n";
 	echo "<tr>\n";

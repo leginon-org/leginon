@@ -448,6 +448,54 @@ class project {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getProjectOwners($projectId) {
+		$q='select concat(u.firstname," ",u.lastname) `full name`, '
+			.'u.`DEF_id` userId '
+			.'from projectowners o '
+			.'left join '.DB_LEGINON.'.UserData u '
+			.'on o.`REF|leginondata|UserData|user` = u.`DEF_id` '
+			.'where o.`REF|projects|project` = '.$projectId." ";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function updateOwners($ids, $projectId) {
+		if (!is_array($ids)) return false;
+		$q = "delete "
+		    ."from projectowners "
+		    ."where `REF|projects|project`='".$projectId."' " ;
+		$this->mysql->SQLQuery($q);
+			
+		foreach($ids as $id) {
+			$q = "insert into projectowners "
+			    ."(`REF|projects|project`, `REF|leginondata|UserData|user`) "
+			    ."values "
+			    ."($projectId, '".$id."')";
+			$this->mysql->SQLQuery($q, true);
+		}
+		return true;
+	}
+
+	function addProjectOwner($userId,$projectId) {
+		$q = "insert into projectowners "
+	    ."(`REF|projects|project`, `REF|leginondata|UserData|user`) "
+	    ."values "
+	    ."(".$projectId.", ".$userId.")";
+		$this->mysql->SQLQuery($q, true);
+		return true;
+	}
+
+	function removeProjectOwner($users,$projectId) {
+		if (!is_array($users)) return false;
+		foreach ($users as $userId) {
+			$q = "delete from projectowners "
+				."where `REF|leginondata|UserData|user` = ".$userId." "
+				."and `REF|projects|project`= ".$projectId." ";
+	echo $q;
+		#$this->mysql->SQLQuery($q, true);
+		}
+		return true;
+	}
+
 	function updateExperiments($ids, $projectId) {
 		if (!is_array($ids)) return false;
 		$q = "delete "
