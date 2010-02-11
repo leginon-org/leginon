@@ -171,8 +171,10 @@ class authlib extends config_class {
 
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
+		$fullname = $firstname . ' '. $lastname;
 		
-		$q = "update UserData set firstname = '$firstname', 
+		$q = "update UserData set 
+				`full name` = '$fullname', firstname = '$firstname', 
 				lastname = '$lastname', email = '$email'
 			  where DEF_id = $userId";
 
@@ -404,10 +406,12 @@ class authlib extends config_class {
 
 			
 			$dbL = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
-
-			$q = "insert into UserData (username, firstname, lastname, 
+			
+			$fullname = $firstname. ' '. $lastname;
+			
+			$q = "insert into UserData (name, `full name`, username, firstname, lastname, 
 							`REF|GroupData|group`, password, email) 
-				  values ('$username', '$firstname', '$lastname'," . GP_USER .", '$password', '$email')";
+				  values ('$username', '$fullname', '$username, $firstname', '$lastname'," . GP_USER .", '$password', '$email')";
 				
 				// insert user to UserData table
 			if(!$dbL->SQLQuery($q)){
