@@ -295,16 +295,14 @@ def resetVirtualFrameBuffer(killall=False):
 	apDisplay.printMsg("Opening Xvfb port "+portstr)
 	xvfbcmd = (
 		"Xvfb :"+portstr
-		+" -kb -once -ac -pn -screen 0 1200x1200x24 "
+		+" -once -ac -pn -screen 0 640x480x24 "
 		+fontpath+securfile+rgbfile
 		+" &"
 	)
 	apDisplay.printMsg(xvfbcmd)
 	logf.write(xvfbcmd)
 	proc = subprocess.Popen(xvfbcmd, shell=True, stdout=logf, stderr=logf)
-	time.sleep(1)
 	os.environ["DISPLAY"] = ":"+portstr
-	time.sleep(2)
 	logf.close()
 	return port
 
