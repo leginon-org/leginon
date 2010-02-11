@@ -141,12 +141,13 @@ class project {
 		$privilege_level = privilege('projects');
 		global $dbemauth;
 		$q = 'select p.projectId as id, p.name  from projects p ';
-		if ($privilege_level <= 2 && $userId)
+		if ($privilege_level <= 2 && $userId) {
 			$q .= " left join projectowners o "
 						."on o.`REF|projects|project` = p.`projectId` "
 						."left join ".DB_LEGINON.".UserData u "
 						."on u.`DEF_id` = o.`REF|leginondata|UserData|user` ";
 			$where = " and u.`DEF_id` = ".$userId." ";
+		}
 		$projectdef = $this->mysql->getFieldTypes('projects');
 		if (array_key_exists('hidden', $projectdef)) {
 			$q .= 'where hidden != 1 OR hidden IS NULL ';
