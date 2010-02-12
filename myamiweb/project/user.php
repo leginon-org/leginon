@@ -21,6 +21,7 @@ foreach ($users as $k=>$p) {
 		$users[$k]["edit"]="<a href='updateuser.php?id=$pId'><img border='0' src='img/edit.png'></a>";
 		$users[$k]["del"]="<a href='deleteuser.php?id=$pId'><img border='0' src='img/del.png'></a>";
 	}
+	$users[$k]["name"]=$p['lastname'].(($p['firstname'])? ', '.$p['firstname']:'');
 	$users[$k]["username"]=$p['username'];
 	$users[$k]["email"]="<a href='mailto:$email'>".$p['email']."</a>";
 	$users[$k]["institution"]=$p['institution']." ".$p['dept']." ".$p['address'];
@@ -28,15 +29,11 @@ foreach ($users as $k=>$p) {
 }
 
 $columns=array(
-	'name'=>'Name', 'email'=>'Email',
+	'name'=>'Name',
+	'email'=>'Email',
 	'username'=>'username',
 	'institution'=>'Institution',
 	'phone'=>'Phone');
-$columns=array(
-	'firstname'=>'First Name', 'lastname'=>'Last Name',
-	'username' =>'Login Name',
-	'email' => 'Email'
-	);
 $display_header=true;
 
 if ($is_admin) {
