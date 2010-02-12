@@ -239,7 +239,7 @@ function runAce2() {
 
 		if (!($user && $password)) createAce2Form("<b>ERROR:</b> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'ace2',False,False);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'pyace2',False,False);
 		// if errors:
 		if ($sub) createAce2Form("<b>ERROR:</b> $sub");
 		exit;

@@ -156,7 +156,10 @@ function createLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 		} elseif ($param['name'] == 'runname') {
 			echo "<tr>\n";
 			echo "  <td>".$param['name']."</td>\n";
-			$runname = $param['value']."copy";
+			if ( substr($param['value'], -4) != "copy" )
+				$runname = $param['value']."copy";
+			else
+				$runname = $param['value'];
 			echo "  <td colspan='2'>\n";
 			echo "    <input type='text' name='runname' value='"
 				.$runname."' size=".(strlen($runname))." />\n";
@@ -251,7 +254,8 @@ function runLoopAgain() {
 		$password = $_SESSION['password'];
 		if (!($user && $password))
 			createLoopAgainForm("<B>ERROR:</B> Enter a user name and password");
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
+		$progname = strtolower($progrunparams['progname']);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,$progname);
 		// if errors:
 		if ($sub)
 			createLoopAgainForm("<b>ERROR:</b> $sub");
