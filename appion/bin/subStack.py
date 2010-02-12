@@ -101,7 +101,7 @@ class subStackScript(appionScript.AppionScript):
 				apDisplay.printMsg("Creating keep list: "+self.params['keepfile'])
 				f=open(self.params['keepfile'],'w')
 				for i in range(self.params['first'],self.params['last']+1):
-					f.write('%d\n' % i-1)
+					f.write('%d\n' % (int(i)-1))
 				f.close()
 				# generate the random list by giving number and create the file
 			elif self.params['random'] is not None:
