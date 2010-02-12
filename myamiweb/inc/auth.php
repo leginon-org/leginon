@@ -286,6 +286,20 @@ class authlib extends config_class {
   		return true;
   	
   	}
+  	
+  	function getGroupId($name){
+  		
+  		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+  		
+		$q="select DEF_id from GroupData where name = '$name'";
+			
+		$query=$dbc->SQLQuery($q);
+		$result = @mysql_fetch_array($query);
+
+		if(!empty($result))
+			return $result['DEF_id'];
+		return false;
+  	}
 
 	function login ($username, $password) {
 
@@ -408,14 +422,14 @@ class authlib extends config_class {
 			$dbL = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 			
 			$fullname = $firstname. ' '. $lastname;
-			
+			$grUserId = $this->getGroupId(GP_USER);
 			$q = "insert into UserData (name, `full name`, username, firstname, lastname, 
 							`REF|GroupData|group`, password, email) 
-				  values ('$username', '$fullname', '$username, $firstname', '$lastname'," . GP_USER .", '$password', '$email')";
+				  values ('$username', '$fullname', '$username', '$firstname', '$lastname'," . $grUserId .", '$password', '$email')";
 				
 				// insert user to UserData table
 			if(!$dbL->SQLQuery($q)){
-		
+
 				return $this->error['database_err1'];
 			}
 		
