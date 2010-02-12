@@ -93,7 +93,7 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 	$owners = $project->getProjectOwners($projectId);
 	echo "<br>";
 	echo "Project owned by: <br>";
-	$bt_del = "<input class='bt1' type='submit' name='bt' value='del'>";
+#	$bt_del = "<input class='bt1' type='submit' name='bt' value='del'>";
 	echo "<table>";
 	if ($owners) {
 		foreach ($owners as $v) {
@@ -106,7 +106,7 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 			echo "</td>";
 			if ($is_admin) {
 				echo "<td>";
-				echo $ck;
+#				echo $ck;
 				echo "</td>";
 			}
 			echo "</tr>";
@@ -114,7 +114,7 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 		echo "</table>";
 		echo "<br>";
 		if ($is_admin) {
-			echo "delete selected: ".$bt_del;
+#			echo "delete selected: ".$bt_del;
 		}
 	}
 	echo "<pre>";
