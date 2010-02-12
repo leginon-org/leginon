@@ -1715,6 +1715,44 @@ class leginondata {
 		}
 			return true;
 	}
+	
+	function addDefaultGroupData(){
+		
+		if($this->getGroupInfo('administrators') == false)
+			$this->addGroupInfo('administrator', 'Administrators', 1);
+		
+		if($this->getGroupInfo('power users') == false)
+			$this->addGroupInfo('power users', 'Power User', 2);
+		
+		if($this->getGroupInfo('users') == false)
+			$this->addGroupInfo('users', 'Users', 3);
+		
+		if($this->getGroupInfo('guests') == false)
+			$this->addGroupInfo('guests', 'Guests', 4);
+		
+	}
+	
+	function getGroupInfo($name){
+		$q = "select name, `REF|projectdata|privileges|privilege` 
+				from GroupData where name = $name";
+		
+		$groupInfo = $this->mysql->SQLQuery($q, true);
+		if (!$groupInfo){
+			return false;
+		}
+		return $groupInfo;
+	}
+	
+	function addGroupInfo($name, $description, $privilege){
+		$q = "insert into GroupData(name, description, `REF|projectdata|privileges|privilege`)
+				valuses('$name', '$description', $privilege)";
+		
+		$result = $this->mysql->SQLQuery($q, true);
+		
+		if(!$result)
+			return false;
+		return true;
+	}
 
 	function importCalibrations($xmldata, $scopeId, $cameraId) {
 		if (!$scopeId && !$cameraId) {

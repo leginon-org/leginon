@@ -9,12 +9,13 @@
 require_once('inc/leginon.inc');
 
 if ($leginondata->mysql->checkDBConnection()) {
-	$leginondata->importTables($DEF_TABLES_FILE);
+	$leginondata->importTables(DEF_TABLES_FILE);
+	$leginondata->addDefaultGroupData();
 }
 
 function admin_header($javascriptinit="") {
 login_header();
-global $leginondata;
+
 
 
 $link = new iconlink();
@@ -36,13 +37,13 @@ $link->addlink('goniometer.php','Goniometer','', 'goniometer', '');
 
 <html>
 <head>
-<title>Leginon II Admin Tools</title>
+<title>Manage Groups</title>
 <link rel="stylesheet" href="css/viewer.css" type="text/css" /> 
 <script src="js/dataform.js"></script>
 </head>
 <body Background='img/background.jpg' leftmargin="0" topmargin="5" marginwidth="0" marginheight="5" alink="#00CCCC" vlink="#006699" link="#006699" <?php echo $javascriptinit; ?>>
 
-<center><h1>Leginon II Admin Tools</h1></center>
+<center><h1><?php echo PROJECT_TITLE; ?></h1></center>
 <hr/>
 <table border=0>
 <tr valign="top">

@@ -8,7 +8,7 @@
  *
  */
 
-require 'inc/config.inc';
+require_once 'inc/config.inc';
 
 // --- define dbem web tools base --- //
 define('PROJECT_NAME', "myamiweb");
@@ -35,11 +35,7 @@ define('UPLOAD_URL', BASE_URL."processing/uploadimage.php");
 // --- Set cookie session time
 define('COOKIE_TIME', 0);		//0 is never expire. 
 
-// --- Default Groups (GroupData table)
-define('GP_ADMIN', 1);
-define('GP_POWERUSER', 2);
-define('GP_USER', 3);
-define('GP_GUEST',4);
+define('GP_USER', 'users');
 
 // --- XML test dataset
 $XML_DATA = "test/viewerdata.xml";
