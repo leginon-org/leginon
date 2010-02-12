@@ -15,17 +15,17 @@ import time
 import sys
 import re
 import subprocess
-from appionlib import appionScript
-from appionlib import appiondata
-from appionlib import apParam
-from appionlib import apRecon
-from appionlib import apDisplay
-from appionlib import apIMAGIC
-from appionlib import apEMAN
-from appionlib import apFile
-from appionlib import apDatabase
-from appionlib import apStack
-from appionlib import apProject
+import appionScript
+import appiondata
+import apParam
+import apRecon
+import apDisplay
+import apIMAGIC
+import apEMAN
+import apFile
+import apDatabase
+import apStack
+import apProject
 
 #=====================
 #=====================
@@ -70,8 +70,13 @@ class imagicClusterScript(appionScript.AppionScript):
 			apDisplay.printError("Analysis not in the database")
 
 	def createImagicBatchFile(self,clusternumber):
+		self.params['classfile'] = "classes_%d_eigens_%d_imagesignored_%d.cls" \
+			% (clusternumber, self.params['num_eigenimages'], self.params['ignore_images'])
+		self.params['classumfile'] = "classums_%d_eigens_%d_imagesignored_%d_membersignored_%d.hed" \
+			% (clusternumber, self.params['num_eigenimages'], self.params['ignore_images'], self.params['ignore_members'])
+		
 		# IMAGIC batch file creation
-		batchending = "_"+str(self.params['ignore_images'])+"_"+str(self.params['ignore_members'])
+		batchending = "_%d_%d_%d" % (self.params['num_eigenimages'], self.params['ignore_images'], self.params['ignore_members'])
 		filename = os.path.join(self.params['rundir'], "imagicMSAcluster_classes_"+str(clusternumber)+batchending+".batch")
 		f = open(filename, 'w')
 		f.write("#!/bin/csh -f\n")
@@ -83,12 +88,12 @@ class imagicClusterScript(appionScript.AppionScript):
 		f.write(str(self.params['num_eigenimages'])+"\n")
 		f.write("YES\n")
 		f.write(str(clusternumber)+"\n")
-		f.write("classes_"+str(clusternumber)+"_imagesignored_"+str(self.params['ignore_images'])+"\n")
+		f.write("%s\n" % (self.params['classfile'][:-4]))
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/msa/classum.e <<EOF >> imagicMSAcluster_classes_"+str(clusternumber)+".log\n")
 		f.write("start\n")
-		f.write("classes_"+str(clusternumber)+"_imagesignored_"+str(self.params['ignore_images'])+"\n")
-		f.write("classums_"+str(clusternumber)+"_imagesignored_"+str(self.params['ignore_images'])+"_membersignored_"+str(self.params['ignore_members'])+"\n")
+		f.write("%s\n" % (self.params['classfile'][:-4]))
+		f.write("%s\n" % (self.params['classumfile'][:-4]))
 		f.write("YES\n")
 		f.write("NONE\n")
 		f.write(str(self.params['ignore_members'])+"\n")
@@ -157,8 +162,7 @@ class imagicClusterScript(appionScript.AppionScript):
 	def insertClusterStack(self, clusternumber, insert=False):
 		clusterstackq = appiondata.ApClusteringStackData()
 		clusterstackq['num_classes'] = clusternumber
-		clusterstackq['avg_imagicfile'] = "classums_"+str(clusternumber)+"_imagesignored_"+\
-			str(self.params['ignore_images'])+"_membersignored_"+str(self.params['ignore_members'])+".hed"
+		clusterstackq['avg_imagicfile'] = self.params['classumfile']
 		clusterstackq['clusterrun'] = self.clusterrun
 		clusterstackq['ignore_images'] = self.params['ignore_images']
 		clusterstackq['ignore_members'] = self.params['ignore_members']
@@ -174,7 +178,7 @@ class imagicClusterScript(appionScript.AppionScript):
 		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
 
 		### read .cls file that contains information regarding particle classification
-		clsfile = os.path.join(self.params['rundir'], "classes_"+str(clusternumber)+"_imagesignored_"+str(self.params['ignore_images'])+".cls")
+		clsfile = os.path.join(self.params['rundir'], self.params['classfile'])
 		cls_particle_data, classqualities, particles_in_class = self.readClassesFile(clsfile, clusternumber)
 
 		for i in range(clusternumber):
@@ -244,8 +248,7 @@ class imagicClusterScript(appionScript.AppionScript):
 			apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-clustertime0), "cyan")
 
 			### normalize
-			classfile = os.path.join(self.params['rundir'], "classums_"+str(clusternumber)+"_imagesignored_"+\
-				str(self.params['ignore_images'])+"_membersignored_"+str(self.params['ignore_members'])+".hed")
+			classfile = os.path.join(self.params['rundir'], self.params['classumfile'])
 			emancmd = "proc2d "+classfile+" "+classfile+".norm.hed norm"
 			while os.path.isfile(classfile+".norm.img"):
 				apStack.removeStack(alignstack+".norm.img")
