@@ -121,24 +121,36 @@ class leginondata {
 
 		$userId = getLoginUserId();
 		$privilege_level = privilege('data');
-		$q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.Name as `name_org` "
-		."from AcquisitionImageData a "
-		."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) ";
-		$where = "where a.`REF|SessionData|Session` IS NOT NULL ";
-		if ($privilege_level <=2) {
-			$q .=	"left join ".DB_PROJECT.".`projectexperiments` p "
-				."on (p.`name` = s.`name`) "
-				."left join ".DB_PROJECT.".`shareexperiments` sh "
-				."on ( s.`DEF_id` = sh.`REF|leginondata|SessionData|experiment`) "
-				.",".DB_PROJECT.".`projectowners` o ";
-			$where .= "and (sh.`REF|leginondata|UserData|user` = ".$userId
-				." or (o.`REF|projects|project` = p.`projectId` and "
-				." o.`REF|leginondata|UserData|user` = ".$userId.") ) ";
+    $q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.Name as `name_org`, s.`DEF_timestamp` as `stimestamp` "
+			."from AcquisitionImageData a "
+			."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) ";
+    $where = "where a.`REF|SessionData|Session` IS NOT NULL ";
+		$grouporder = " "
+      ."group by a.`REF|SessionData|session` "
+      ."order by s.DEF_timestamp DESC ";
+	  if ($privilege_level <=2) {
+			//project owners
+      $q1 = "left join ".DB_PROJECT.".`projectexperiments` p "
+        ."on (p.`name` = s.`name`) "
+        ."left join ".DB_PROJECT.".`projectowners` o "
+				."on p.`projectId` = o.`REF|projects|project` ";
+      $where1 .= " "
+        ."and o.`REF|leginondata|UserData|user` = ".$userId." "
+			." ";
+			$where1 = $where.$where1.$wherelike;
+			$q1 = $q.$q1.$where1.$grouporder;
+			//share experiments
+      $q2 = "left join ".DB_PROJECT.".`shareexperiments` sh "
+        ."on ( s.`DEF_id` = sh.`REF|leginondata|SessionData|experiment`) ";
+      $where2 = "and sh.`REF|leginondata|UserData|user` = ".$userId." "
+				."  ";
+			$where2 = $where.$where2.$wherelike;
+			$q2 = $q.$q2.$where2.$grouporder;
+			//combine
+			$q = "(".$q1.") union (".$q2.") order by `stimestamp` DESC";
+		} else {
+			$q .= $where.$grouporder;
 		}
-		$where .= $wherelike;
-		$q .= $where
-			."group by a.`REF|SessionData|session` "
-			."order by s.DEF_timestamp DESC ";
 		return $this->mysql->getSQLResult($q);
 	}
 
