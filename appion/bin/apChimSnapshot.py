@@ -105,7 +105,7 @@ class ChimSnapShots(object):
 		self.voldata.show('surface')
 		self.surfaces = openModels.list(modelTypes=[SurfaceModel])
 		self.setZoom()
-		### This does not work on CentOS
+		### This does not work on CentOS and Chimera v1.2509, but does with Chimera v1.4
 		self.drawScaleBar()
 
 	# -----------------------------------------------------------------------------
