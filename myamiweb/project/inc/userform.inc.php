@@ -36,13 +36,13 @@
 		<label for="Firstname">firstname: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$first_name?>" name="firstname" id="firstname" size="15" ><br>
+		<input class="field" type="text" value="<?=$firstname?>" name="firstname" id="firstname" size="15" ><br>
 	</td>
 	<td>
 		<label for="Lastname">lastname: </label>
 	</td>
 	<td>
-		<input class="field" type="text" value="<?=$last_name?>" name="lastname" id="lastname" size="15" ><br>
+		<input class="field" type="text" value="<?=$lastname?>" name="lastname" id="lastname" size="15" ><br>
 	</td>
 	</tr>
 	<tr>
@@ -125,7 +125,7 @@
 	<fieldset>
 	<legend><b>Group:</b></legend>
 <?
-if ($login_is_admin) {
+if ($login_is_groupadmin) {
 ?>
 	<select size="1" name="group" > 
 	<?php foreach ($groups as $group) {

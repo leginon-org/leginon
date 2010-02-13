@@ -5,9 +5,7 @@ class user {
 		$this->mysql = ($mysql) ? $mysql : new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 	}
 
-	function updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, $mypass1, $mypass2, $priv="") {
-
-
+	function updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $groupId, $chpass, $mypass1, $mypass2) {
 		if ($chpass && $mypass1!=$mypass2)
 			return false;
 
@@ -16,18 +14,23 @@ class user {
 		$db = DB_LEGINON;
 		$table='UserData';
 		$data=array();
+		$where=array();
 		$data['firstname']=$firstname;
 		$data['lastname']=$lastname;
 		$data['email']=$email;
+		$data['REF|GroupData|group']=$groupId;
+		$data = $this->addTempUserData($data,$username,$firstname,$lastname);
 		$where['DEF_id']=$userId;
-		$this->mysql->SQLUpdate($table, $data, $where, $db);
-		
+		$this->mysql->SQLUpdate($table, $data, $where,$db);
+		//Details	
+		$db = DB_PROJECT;
 		$table="userdetails";
 		$wherekey = 'REF|leginondata|UserData|user';
 		$wherevalue = $userId;
-		$q = 'select `DEF_id` as detailsId from '.$table.' where `'.$wherekey.'`='.$wherevalue;
+		$q = 'select `DEF_id` as detailsId from '.$db.'.'.$table.' where `'.$wherekey.'`='.$wherevalue;
 		$re = $this->mysql->SQLQueries($q);
 		$data=array();
+		$where=array();
 		$data['title']=$title;
 		$data['institution']=$institution;
 		$data['dept']=$dept;
@@ -38,21 +41,13 @@ class user {
 		$data['phone']=$phone;
 		$data['fax']=$fax;
 		$data['url']=$url;
-
 		$where[$wherekey]=$wherevalue;
-		if (1 ||empty($re)) {
+		if (empty($re)) {
 			$data[$wherekey]=$wherevalue;
-			$userId =  $this->mysql->SQLInsert($table, $data);
+			$userdetailsId =  $this->mysql->SQLInsert($table, $data,$db);
 		} else {
-			$this->mysql->SQLUpdate($table, $data, $where);
+			$this->mysql->SQLUpdate($table, $data, $where,$db);
 		}	
-		$info = $this->getLoginInfo($userId);
-		if (!$info) {
-			#$this->addLogin($userId, $username, "", $priv);
-		} else {
-			$this->updatePrivilege($userId, $priv);
-			$this->updateLogin($userId, $username);
-		}
 
 		if ($chpass) {
 			$this->updatePassword($userId, $mypass2);
@@ -63,39 +58,58 @@ class user {
 	function deleteUser($userId) {
 		if (!$userId)
 			return false;
-		$q[]='delete from users where userId='.$userId;
-		$q[]='delete from login where userId='.$userId;
+		
+		$q[]='delete from '.DB_LEGINON.'.UserData where `DEF_Id`='.$userId;
+		$q[]='delete from '.DB_PROJECT.'.userdetails where `REF|leginondata|UserData|user`='.$userId;
+		$q[]='delete from '.DB_PROJECT.'.projectowners where `REF|leginondata|UserData|user`='.$userId;
 		$this->mysql->SQLQueries($q);
 	}
 
-	function addUser($username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $mypass1, $mypass2, $priv="") {
+	function addUser($username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $groupId, $mypass1, $mypass2) {
 
 		if ($mypass1!=$mypass2)
 			return false;
 
+		$db=DB_LEGINON;
+		$table='UserData';
 		$data=array();
 		$data['username']=$username;
 		$data['firstname']=$firstname;
 		$data['lastname']=$lastname;
-		$data['title']=$title;
-		$data['institution']=$institution;
-		$data['dept']=$dept;
-		$data['address']=$address;
-		$data['city']=$city;
-		$data['statecountry']=$statecountry;
-		$data['zip']=$zip;
-		$data['phone']=$phone;
-		$data['fax']=$fax;
 		$data['email']=$email;
-		$data['url']=$url;
-
-		$re=$this->checkUserExistsbyName($firstname, $lastname);
-
+		$data['REF|GroupData|group']=$groupId;
+		$data['password']=$mypass2;
+		$data = $this->addTempUserData($data,$username,$firstname,$lastname);
+		//Check existance
+		$re=($this->checkUserExistsbyName($firstname, $lastname) || $this->checkUserExistsbyLogin($username));
 		if (1 ||empty($re)) {
-			$userId =  $this->mysql->SQLInsert("users", $data);
-			$this->addLogin($userId, $username, $mypass2, $priv);
-			return $userId;
+			$userId =  $this->mysql->SQLInsert($table, $data,$db);
 		} 
+		//Details	
+		$db=DB_PROJECT;
+		$table="userdetails";
+		$wherekey = 'REF|leginondata|UserData|user';
+		$wherevalue = $userId;
+		$data1=array();
+		$data1['REF|leginondata|UserData|user']=$userId;
+		$data1['title']=$title;
+		$data1['institution']=$institution;
+		$data1['dept']=$dept;
+		$data1['address']=$address;
+		$data1['city']=$city;
+		$data1['statecountry']=$statecountry;
+		$data1['zip']=$zip;
+		$data1['phone']=$phone;
+		$data1['fax']=$fax;
+		$data1['url']=$url;
+		$userdetailsId =  $this->mysql->SQLInsert($table, $data1,$db);
+		if ($userdetailsId) return $userId;
+	}
+
+	function addTempUserData($data,$username,$firstname,$lastname) {
+		$data['name'] = $username;
+		$data['full name'] = $firstname.' '.$lastname;
+		return $data;
 	}
 
 	function checkUserExistsbyLogin($username) {
@@ -165,48 +179,10 @@ class user {
 		return $this -> appendUserDetails($r);
 	}
 
-	function getLoginInfo($userId) {
-		$sqlwhere = (is_numeric($userId)) ? "u.`DEF_id`=$userId" : "u.name='$userId'";
-		$q='select g.`DEF_id` as groupId, u.*, g.* from '
-			.DB_LEGINON.'.UserData u left join '.DB_LEGINON.'.GroupData g '
-			.'on u.`REF|GroupData|group` = g.`DEF_id` '
-		  .'where '.$sqlwhere;
-		return $this->mysql->getSQLResult($q);
-	}
-
-	function updateLogin($userId, $username) {
-		$data['name']=$username;
-		$where['DEF_id']=$userId;
-		return $this->mysql->SQLUpdate(DB_LEGINON.'UserData', $data, $where);
-	}
-
 	function updatePassword($userId, $password) {
 		$data['password']=$password;
 		$where['DEF_id']=$userId;
-		return $this->mysql->SQLUpdate(DB_LEGINON.'UserData', $data, $where);
-	}
-
-	function addLogin($userId, $username, $mypass, $priv=false) {
-			if ($priv) {
-				$q = 'select g.`DEF_id` groupId from '.DB_LEGINON.'.GroupData '
-					.'where g.privilege = '.$priv;
-				$r = $this->mysql->SQLQuery($q);
-			}
-			
-			$data=array();
-			$data['DEF_id']=$userId;
-			$data['name']=$username;
-			$data['password']=$mypass;
-			if ($priv)
-				$data['REF|GroupData|group']=$r[0]['groupId'];
-			$id=$this->mysql->SQLInsert(DB_LEGINON.'UserData', $data);
-			return $id;
-	}
-
-	function updatePrivilege($userId, $privilege) {
-		$data['privilege']=$privilege;
-		$where['userId']=$userId;
-		return $this->mysql->SQLUpdate('login', $data, $where);
+		return $this->mysql->SQLUpdate('UserData', $data, $where,DB_LEGINON);
 	}
 
 	function getName($info) {
