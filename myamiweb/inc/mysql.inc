@@ -249,7 +249,7 @@ class mysql {
 		return(true);
 	}
 
-	function SQLInsert($table, $data) {
+	function SQLInsert($table, $data, $db='') {
 		if (!$data || !$table || !is_array($data))
 			return False;
 		$fields = array_keys($data);
@@ -258,7 +258,8 @@ class mysql {
 		foreach($data as $k=>$v)
 			if (!is_numeric($v))
 				$data[$k] = "'".addslashes($v)."'";
-		$q = "INSERT INTO `$table` (".implode(', ',$fields).") VALUES (".implode(', ',$data).")";
+		$dbselection = ($db) ? $db.'.':'';
+		$q = "INSERT INTO $dbselection`$table` (".implode(', ',$fields).") VALUES (".implode(', ',$data).")";
 		return $this->SQLQuery($q,true);
 	}
 
