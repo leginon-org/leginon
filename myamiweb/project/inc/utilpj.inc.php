@@ -36,10 +36,10 @@ function data2table($data, $columns=array(), $display_header=false) {
 	$fields = ($columns) ? $columns : array_keys((array)$data[0]);
 	$html = '<table class="tableborder" border="1" >';
 	if ($display_header) {
-		$html .= "<tr>\n";
+		$html .= "<tr bgcolor='#cccccc'>\n";
 		foreach ($fields as $field=>$label) {
 			$l = (is_string($label)) ? $label : $field;
-			$html .= "<td><b>".$l."</b></td>";
+			$html .= "<td><a href='$PHP_SELF?sort=$field'><b>".$l."</b></a></td>";
 		}
 		$html .= "</tr>\n";
 	}

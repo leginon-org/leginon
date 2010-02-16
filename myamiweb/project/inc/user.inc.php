@@ -142,18 +142,18 @@ class user {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getUsers($order=false){
+	function getUsers($orderBy=false){
 		$results = array();
-		$order = ($order) ? "order by u.`lastname`" : "";
-		$q='select u.`DEF_id` as userId, u.* '
+		$order = ($orderBy != false) ? "order by `$orderBy`" : "";
+
+		$q='select u.`DEF_id` as userId, u.*, ud.* '
 			.'from '.DB_LEGINON.'.UserData u '
+			.'left join '.DB_PROJECT.'.userdetails ud on '
+			.'u.DEF_id = ud.`REF|leginondata|UserData|user` '
 			.$order;
 
 		$r = $this->mysql->getSQLResult($q);
-		foreach ($r as $u) {
-			$results[] = $this->appendUserDetails($u);
-		}
-		return $results;
+		return $r;
 	}
 
 	function appendUserDetails($userInfo) {
