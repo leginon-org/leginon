@@ -6,7 +6,6 @@ import wx
 import time
 from appionlib import particleLoop2
 from appionlib import apImage
-#import subprocess
 from appionlib import apFindEM
 from appionlib import appiondata
 from appionlib import apParticle
@@ -22,6 +21,7 @@ from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanel
 import pyami
 import numpy
 
+## need better way to generate a list of easy to distinguish colors
 pick_colors = [
 	(255,0,0),
 	(0,255,0),
@@ -52,15 +52,12 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 ##################################
 
 class PickerApp(wx.App):
-	def __init__(self, shape='+', size=16, mask=False, labels=None):
+	def __init__(self, shape='+', size=16, mask=False, labels=[]):
 		self.shape = shape
 		self.size = size
 		self.mask = mask
 		self.pick_colors = iter(pick_colors)
-		if labels:
-			self.labels = labels
-		else:
-			self.labels = ['particle']
+		self.labels = labels
 		wx.App.__init__(self)
 
 	def OnInit(self):
@@ -76,7 +73,7 @@ class PickerApp(wx.App):
 
 		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
-		self.panel.originaltargets = None
+		self.panel.originaltargets = {}
 
 		for label in self.labels:
 			self.addLabelPicker(label)
@@ -86,8 +83,9 @@ class PickerApp(wx.App):
 		self.panel.setTargets('Region to Remove', [])
 		self.panel.selectiontool.setDisplayed('Region to Remove', True)
 
-		#make first target type the initial targeting selection
-		self.panel.selectiontool.setTargeting(self.labels[0], True)
+		# make first target type the initial targeting selection
+		if self.labels:
+			self.panel.selectiontool.setTargeting(self.labels[0], True)
 
 		self.panel.SetMinSize((300,300))
 		self.sizer.Add(self.panel, 1, wx.EXPAND)
@@ -252,7 +250,7 @@ class PickerApp(wx.App):
 		self.panel.setTargets('Region to Remove', [])
 
 	def onRevert(self, evt):
-		if self.panel.originaltargets is not None:
+		if self.panel.originaltargets:
 			for label,targets in self.panel.originaltargets.items():
 				self.panel.setTargets(label, targets)
 
@@ -272,10 +270,15 @@ class manualPicker(particleLoop2.ParticleLoop):
 		if self.params['sessionname'] is not None:
 			self.processAndSaveAllImages()
 
-		## use labels from params, or default to a single label "particle"
+		## use labels from params if specified
 		if self.params['labels']:
 			self.labels = self.params['labels']
 		else:
+			self.labels = []
+
+		## If no labels specified or previous picks to get labels from,
+		##   then use default label 'particle'.
+		if not (self.params['pickrunid'] or self.labels):
 			self.labels = ['particle']
 
 		self.app = PickerApp(
@@ -442,11 +445,16 @@ class manualPicker(particleLoop2.ParticleLoop):
 			for label in targets.keys():
 				if label not in self.labels:
 					self.labels.append(label)
-					self.addLabelPicker(label)
+					self.app.addLabelPicker(label)
 			for label in self.labels:
+				if label not in targets:
+					targets[label] = []
 				print "inserting ",len(targets),"%s targets" % (label,)
 				self.app.panel.setTargets(label, targets[label])
 				self.app.panel.originaltargets[label] = targets[label]
+		# labels may have changed, default selection is the first one
+		if self.labels:
+			self.app.panel.selectiontool.setTargeting(self.labels[0], True)
 
 		#set vital stats
 		self.app.vitalstats.SetLabel("Vital Stats: Image "+str(self.stats['count'])
