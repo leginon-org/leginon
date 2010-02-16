@@ -75,13 +75,13 @@ class PickerApp(wx.App):
 		self.panel = ManualPickerPanel(self.frame, -1)
 		self.panel.originaltargets = {}
 
-		for label in self.labels:
-			self.addLabelPicker(label)
-
 		self.panel.addTargetTool('Region to Remove', color=wx.Color(20,220,20),
 			target=True, shape='polygon')
 		self.panel.setTargets('Region to Remove', [])
 		self.panel.selectiontool.setDisplayed('Region to Remove', True)
+
+		for label in self.labels:
+			self.addLabelPicker(label)
 
 		# make first target type the initial targeting selection
 		if self.labels:
@@ -449,7 +449,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 			for label in self.labels:
 				if label not in targets:
 					targets[label] = []
-				print "inserting ",len(targets),"%s targets" % (label,)
+				print "inserting ",len(targets[label]),"%s targets" % (label,)
 				self.app.panel.setTargets(label, targets[label])
 				self.app.panel.originaltargets[label] = targets[label]
 		# labels may have changed, default selection is the first one
