@@ -59,7 +59,7 @@ project_header($title);
 <?
 if (privilege('projects') > 3) {
 	echo "<a class='header' href='updateproject.php'>Add a new project</a>";
-	$columns=array('edit'=>'','del'=>'');
+	$columns=array('edit'=>'');
 } else {
 	$columns = array();
 }
