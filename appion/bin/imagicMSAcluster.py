@@ -15,17 +15,14 @@ import time
 import sys
 import re
 import subprocess
-import appionScript
-import appiondata
-import apParam
-import apRecon
-import apDisplay
-import apIMAGIC
-import apEMAN
-import apFile
-import apDatabase
-import apStack
-import apProject
+
+from appionlib import appionScript
+from appionlib import appiondata
+from appionlib import apDisplay
+from appionlib import apIMAGIC
+from appionlib import apFile
+from appionlib import apParam
+from appionlib import apStack
 
 #=====================
 #=====================
@@ -252,7 +249,7 @@ class imagicClusterScript(appionScript.AppionScript):
 			emancmd = "proc2d "+classfile+" "+classfile+".norm.hed norm"
 			while os.path.isfile(classfile+".norm.img"):
 				apStack.removeStack(alignstack+".norm.img")
-			apEMAN.executeEmanCmd(emancmd)
+			apParam.runCmd(emancmd, "EMAN")
 			os.rename(classfile+".norm.hed", classfile)
 			os.rename(classfile+".norm.img", classfile[:-4]+".img")
 
