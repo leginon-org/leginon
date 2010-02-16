@@ -18,11 +18,8 @@ import subprocess
 from appionlib import appionScript
 from appionlib import appiondata
 from appionlib import apParam
-from appionlib import apRecon
 from appionlib import apDisplay
-from appionlib import apEMAN
 from appionlib import apFile
-from appionlib import apDatabase
 from appionlib import apStack
 from appionlib import apProject
 from appionlib import apIMAGIC
