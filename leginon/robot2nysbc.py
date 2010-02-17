@@ -1,9 +1,5 @@
-#
-# COPYRIGHT:
-#			 The Leginon software is Copyright 2003
-#			 The Scripps Research Institute, La Jolla, CA
-#			 For terms of the license agreement
-#			 see	http://ami.scripps.edu/software/leginon-license
+# robot2nysbc.py is implemented for Jeol 1230 electron microscope
+# Copyright by New York Structural Biology Center
 # from leginon import robot2nysbc ; j = robot2nysbc.Robot2nysbc(); j.moveStagePositionZ()
 
 import Image
@@ -20,8 +16,10 @@ import gui.wx.Robot
 import Queue
 import sinedon
 
+# inherit from robot2 class
 import robot2
 
+# need to copy these from robot2 class
 def seconds2str(seconds):
 	seconds = int(seconds)
 	minute = 60
@@ -74,9 +72,10 @@ def seconds2str(seconds):
 		string += '%i second%s' % (seconds, value)
 	return string
 
-## these are the names of the robot attributes
+# these are the names of the robot attributes
 robotattrs = ['Signal' + str(i) for i in range(0,13)]
 robotattrs.append('gridNumber')
+
 
 class TestCommunication(robot2.TestCommunication):
 	pass
@@ -125,6 +124,8 @@ class ExitRequest(robot2.ExitRequest):
 class GridRequest(robot2.GridRequest):
 	pass
 
+
+# define a new class
 class Robot2nysbc(robot2.Robot2):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		robot2.Robot2.__init__(self, id, session, managerlocation, **kwargs)
@@ -132,40 +133,24 @@ class Robot2nysbc(robot2.Robot2):
 		self.endTime = 0
 		self.wait_time = 3
 		self.tried_times = 5
-		self.beamFile = "C:\\Python25\Lib\\site-packages\\pyscope\\beamStatus.cfg"
+		self.beamFile = "C:\\Python25\\Lib\\site-packages\\pyScope\\beamStatus.cfg"
 		self.beamStatus = {'start_time': None, 'end_time': None}
 
-	#imgZposition = -119e-6								# for robot tip
-	#imgXposition = 416e-6
-	#imgYposition = 97e-6
-
-	#imgZposition = -119e-6								# for robot tip
-	#imgXposition = 200e-6
-	#imgYposition = -100e-6
-
-	#defZposition = 0.00		                			# changed by Minghui
-	#defXposition = 11.6e-6
-	#defYposition = -787.5e-6
-
-
-	#imgZposition = -92.0e-6								# for Gatan tip
+	# position when image process starts and finishes in meter
 	imgZposition = 0
 	imgXposition = 0
 	imgYposition = 0
-
-	defZposition = -45.3e-6		                			# changed by Minghui
+	imgAposition = 0
+	
+	# position when holder insertion and extraction starts in meter
+	defZposition = -45.3e-6
 	defXposition = 14.6e-6
 	defYposition = -688.7e-6
-
+	defAposition = 0
+	
 	panelclass = gui.wx.Robot.Panel
-	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent,
-																					event.UnloadGridEvent,
-																					event.QueueGridEvent,
-																					event.QueueGridsEvent,
-																					event.MosaicDoneEvent]
-	eventoutputs = node.Node.eventoutputs + [event.MakeTargetListEvent,
-																						event.GridLoadedEvent,
-																						event.EmailEvent]
+	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent,event.UnloadGridEvent,event.QueueGridEvent,event.QueueGridsEvent,event.MosaicDoneEvent]
+	eventoutputs = node.Node.eventoutputs + [event.MakeTargetListEvent,event.GridLoadedEvent,event.EmailEvent]
 	settingsclass = leginondata.RobotSettingsData
 	defaultsettings = {
 		'column pressure threshold': 3.5e-5,
@@ -178,7 +163,7 @@ class Robot2nysbc(robot2.Robot2):
 	}
 	defaultcolumnpressurethreshold = 3.5e-5
 
-
+	# read the time when the beam was turned on last time
 	def readBeamStatus(self):
 		beamStatus = {'start_time': None,'end_time': None}
 		infile = open(self.beamFile,"r")
@@ -190,7 +175,7 @@ class Robot2nysbc(robot2.Robot2):
 		infile.close()
 		return beamStatus
 
-
+	# update the time when the beam is turned on or off
 	def saveBeamStatus(self, timeType, value):
 		beamStatus = {'start_time': None,'end_time': None}
 		beamStatus = self.readBeamStatus()
@@ -204,14 +189,13 @@ class Robot2nysbc(robot2.Robot2):
 		outfile.close()
 		return True
 
-
+	# copied from robot2
 	def _queueHandler(self):
 		self.logger.info('_queueHandler '+str(self.simulate)+' setting'+str(self.settings['simulate']))
 		self.communication = self.getCommunication()
 		request = None
 		self.communication.Signal11 = int(self.settings['grid clear wait'])
 		while True:
-			# need to wait if something goes wrong
 			if not self.startnowait:
 				self.usercontinue.clear()
 				self.usercontinue.wait()
@@ -283,7 +267,7 @@ class Robot2nysbc(robot2.Robot2):
 			self.panel.gridQueueEmpty()
 		del self.communication
 
-
+	#  copied from robot2
 	def gridInserted(self, gridnumber):
 		if self.simulate or self.settings['simulate']:
 			evt = event.MakeTargetListEvent()
@@ -307,16 +291,16 @@ class Robot2nysbc(robot2.Robot2):
 			self.logger.info('Data collection event outputted')
 		return evt['grid']
 
-
+	# before insertion, check the HT and turn off the beam
 	def scopeReadyForInsertion(self):
-		self.startTime = time.time()						# added by Minghui
+		self.startTime = time.time()
 		self.logger.info('Readying microscope for insertion ...')
 		self.checkHighTensionOn()
 		self.setBeamOff()
 		self.stageIsReadyforInsertionExtraction()
 		self.logger.info('Microscope ready for insertion.')
 
-
+	# check if robot is ready
 	def robotReadyForInsertion(self):
 		self.logger.info('Verifying robot is ready for insertion')
 		while not self.communication.Signal0:
@@ -327,7 +311,7 @@ class Robot2nysbc(robot2.Robot2):
 			time.sleep(self.wait_time)
 		self.logger.info('Robot is ready for insertion')
 
-
+	# command robot to insert
 	def signalRobotToInsert(self):
 		self.logger.info('Signaling robot to begin insertion')
 		while self.communication.Signal0 == 1 and self.communication.Signal1 == 0 and self.communication.Signal5 == 0:
@@ -335,14 +319,15 @@ class Robot2nysbc(robot2.Robot2):
 			time.sleep(self.wait_time)
 		self.logger.info('Signaled robot to begin insertion')
 
-
+	# wait robot to finish insertion
 	def waitForRobotToInsert(self):
 		self.logger.info('Waiting for robot to complete insertion ...')
 		while not self.communication.Signal5:
 			time.sleep(self.wait_time)
 		self.logger.info('Robot has completed insertion')
 
-
+	# before imaging, move the stage to 0, 0, check the HT,
+	# and turn on the beam; record the time
 	def scopeReadyForImaging(self):
 		self.logger.info('Readying microscope for imaging...')
 		self.stageIsReadyforImaging()
@@ -351,7 +336,8 @@ class Robot2nysbc(robot2.Robot2):
 		self.saveBeamStatus("start_time", time.localtime())
 		self.logger.info('Microscope ready for imaging.')
 
-
+	# before extraction, check the HT, trun off the beam, 
+	# record the time, and move the stage to 0,0
 	def scopeReadyForExtraction(self):
 		self.logger.info('Readying microscope for extraction...')
 		self.checkHighTensionOn()
@@ -360,14 +346,14 @@ class Robot2nysbc(robot2.Robot2):
 		self.stageIsReadyforInsertionExtraction()
 		self.logger.info('Microscope ready for extraction.')
 
-
+	# check if the robot it ready
 	def robotReadyForExtraction(self):
 		self.logger.info('Verifying robot is ready for extraction')
 		while not self.communication.Signal5:
 			time.sleep(self.wait_time)
 		self.logger.info('Robot is ready for extraction')
 
-
+	# command the robot to extract the holder
 	def signalRobotToExtract(self):
 		self.logger.info('Signaling robot to begin extraction')
 		while self.communication.Signal5 == 1 and self.communication.Signal6 == 0 and self.communication.Signal7 == 0:
@@ -375,7 +361,7 @@ class Robot2nysbc(robot2.Robot2):
 			time.sleep(self.wait_time)
 		self.logger.info('Signaled robot to begin extraction')
 
-
+	# wait for the robot to finish the extraction
 	def waitForRobotToExtract(self):
 		self.logger.info('Waiting for robot to complete extraction')
 		while not self.communication.Signal7:
@@ -395,7 +381,7 @@ class Robot2nysbc(robot2.Robot2):
 		gridTime = (float(self.endTime) - float(self.startTime))/60.0
 		print 'This sample takes %f minutes' % gridTime
 
-
+	# the final insertion process
 	def insert(self):
 		self.logger.info('Inserting holder into microscope')
 		self.lockScope()
@@ -405,9 +391,7 @@ class Robot2nysbc(robot2.Robot2):
 			self.unlockScope()
 			self.logger.error('Failed to get scope ready for insertion: %s' % e)
 			raise
-
 		self.logger.info('insert '+str(self.simulate)+' setting'+str(self.settings['simulate']))
-
 		self.estimateTimeLeft()
 		if self.simulate or self.settings['simulate']:
 			self.logger.info('Simulated Insertion of holder successfully completed')
@@ -416,18 +400,16 @@ class Robot2nysbc(robot2.Robot2):
 			self.signalRobotToInsert()
 			self.waitForRobotToInsert()
 			self.logger.info('Insertion of holder successfully completed')
-
 		try:
 			griddata = self.gridInserted(self.gridnumber)
 		except Exception, e:
 			self.logger.error('Failed to get griddata: %s' % e)
 			self.unlockScope()
 			return
-
 		self.unlockScope()
 		return griddata
 
-
+	# the final extraction process
 	def extract(self):
 		self.logger.info('Extracting holder from microscope')
 		self.lockScope()
@@ -437,7 +419,6 @@ class Robot2nysbc(robot2.Robot2):
 			self.unlockScope()
 			self.logger.error('Failed to get scope ready for extraction: %s' % e)
 			raise
-
 		if self.simulate or self.settings['simulate']:
 			self.logger.info('Simulated extraction of holder successfully completed')
 		else:
@@ -448,45 +429,71 @@ class Robot2nysbc(robot2.Robot2):
 		self.unlockScope()
 		return
 
-
+	# check if the high tension is on or off
 	def checkHighTensionOn(self):
 		self.logger.info('Checking high tension state...')
 		self.waitScope('HighTensionState', 'on', 0.25)
 		self.logger.info('High tension is on.')
 
-
-	def setBeamOn(self):						# Added by Minghui
+	# turn on the beam
+	def setBeamOn(self):
 		time.sleep(self.wait_time)
 		self.logger.info('Turning on the beam...')
 		self.instrument.tem.TurboPump = 'on'
 		self.logger.info('Beam is turned on.')
 
-
-	def setBeamOff(self):		# Added by Minghui
+	# turn off the beam
+	def setBeamOff(self):
 		self.logger.info('Turning off the beam ...')
 		self.instrument.tem.TurboPump = 'off'
 		self.logger.info('Beam is turned off.')
 		time.sleep(self.wait_time)
 
-
+	# initialize the stage to a pre-defined position before insertion/extraction
 	def stageIsReadyforInsertionExtraction(self):
 		print "Moving stage to make it ready for insertion and extraction"
-		while (not (self.moveStagePositionXYZ('z',self.defZposition) and self.moveStagePositionXYZ('x',self.defXposition) and self.moveStagePositionXYZ('y',self.defYposition))):
+		while (not (self.moveStagePositionXYZ('z',self.defZposition) and self.moveStagePositionXYZ('x',self.defXposition) and self.moveStagePositionXYZ('y',self.defYposition) and self.moveStagePositionA('a',self.defAposition))):
 			self.logger.info('Stage is not ready for insertion/extraction, Trying again...')
 		self.logger.info('stage is ready for insertion/extraction ...')
 		return True
 
-
+	# initialize the stage to a pre-defined position before imaging
 	def stageIsReadyforImaging(self):
-		while (not (self.moveStagePositionXYZ('z',self.imgZposition) and self.moveStagePositionXYZ('x',self.imgXposition) and self.moveStagePositionXYZ('y',self.imgYposition))):
+		while (not (self.moveStagePositionXYZ('z',self.imgZposition) and self.moveStagePositionXYZ('x',self.imgXposition) and self.moveStagePositionXYZ('y',self.imgYposition) and self.moveStagePositionA('a',self.imgAposition))):
 			self.logger.info('Stage is not ready for imaging, Trying again...')
 		self.logger.info('stage is ready for imaging ...')
 		return True
 
-
+	# move the stage to a position in an axis
 	def moveStagePositionXYZ(self,axis,val,limit=5e-6):
 		if axis != 'x' and axis != 'y' and axis !='z':
 			self.logger.info("You must input x, y, or z")
+			return False
+		else:
+			triedTimes = 0
+			while True:
+				stage = self.instrument.tem.StagePosition
+				if abs(stage[axis] - val) < limit:
+					self.logger.info("%s stage position is reached" % axis)
+					return True
+				else:
+					triedTimes = triedTimes + 1
+					self.logger.info("Moving stage position %s to: %f" % (axis,val))
+					self.instrument.tem.StagePosition = {axis: val}
+					if triedTimes > self.tried_times:
+						self.logger.info('%s stage position is not reached after 3 tries, aborting...' % axis)
+						break
+					else:
+						self.logger.info('%s Stage position is not reached, trying again...' % axis)
+			if triedTimes > self.tried_times:
+				return False
+			else:
+				return True
+
+	# rotate the stage to an angle
+	def moveStagePositionA(self,axis,val,limit=0.01):
+		if axis != 'a':
+			self.logger.info("You must input a")
 			return False
 		else:
 			triedTimes = 0
