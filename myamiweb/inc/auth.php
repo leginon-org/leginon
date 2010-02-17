@@ -8,9 +8,8 @@
  */
 
 require_once "config.php";
-require_once "inc/authconfig.inc.php";
 
-class authlib extends config_class {
+class authlib{
 
 	var $error = array (
 				 "passwd_not_match"=>"Passwords do not match each other",
@@ -428,8 +427,7 @@ class authlib extends config_class {
 				  values ('$username', '$fullname', '$username', '$firstname', '$lastname'," . $grUserId .", '$password', '$email')";
 				
 				// insert user to UserData table
-			if(!$dbL->SQLQuery($q)){
-
+			if(!$dbL->SQLQuery($q)){	
 				return $this->error['database_err1'];
 			}
 		
