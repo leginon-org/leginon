@@ -38,7 +38,7 @@ if ($_POST) {
 			echo '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">'.$newProfile.'</font></p>';
 		}
 		else{
-			echo '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">Your update have been changed.</font></p>';
+			echo '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">Your update has been submitted.</font></p>';
 		}
 	}
 }
@@ -68,7 +68,7 @@ $checkpass=true;
 		<? if (!$haspass) { ?>
 		<font color="red">no password set</font><br />
 		<? } else if ($checkpass) { ?>
-		<font color="red">check to change</font>:<input type="checkbox" name="chpass"><br />
+		<input type="checkbox" name="chpass"><font color="red">Change Password</font><br />
 		<? } ?>
 		<input class="field" type="password" value="" name="mypass1" size="15" ><br />
 		<input class="field" type="password" value="" name="mypass2" size="15" ><br />
