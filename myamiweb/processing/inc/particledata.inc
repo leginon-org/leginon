@@ -1061,13 +1061,13 @@ class particledata {
 				."			c.`confidence`,c.`confidence_d` , "
 				."			(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 				."		from `ApCtfData` c "
-				."		left join ".DB.".`AcquisitionImageData` i on (i.DEF_id=c.`REF|leginondata|AcquisitionImageData|image`) "
-				."		left join ".DB.".`PresetData` p on (p.DEF_id=i.`REF|PresetData|preset`) "
-				."		left join ".DB.".`ScopeEMData` s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+				."		left join ".DB_LEGINON.".`AcquisitionImageData` i on (i.DEF_id=c.`REF|leginondata|AcquisitionImageData|image`) "
+				."		left join ".DB_LEGINON.".`PresetData` p on (p.DEF_id=i.`REF|PresetData|preset`) "
+				."		left join ".DB_LEGINON.".`ScopeEMData` s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 				."		where "
 				."		c.`REF|leginondata|AcquisitionImageData|image` in  "
 				."			( "
-				."			select a.`DEF_id` from ".DB.".`AcquisitionImageData` a  "
+				."			select a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` a  "
 				."			where a.`REF|SessionData|session`='$sessionId'  "
 				."			)  "
 				."			order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
@@ -1098,9 +1098,9 @@ class particledata {
 		$stats = array();
 		foreach ($selects as $k=>$select) {
 			$q =	"select ".$select." "
-			."from ctf c left join ".DB.".AcquisitionImageData i"
+			."from ctf c left join ".DB_LEGINON.".AcquisitionImageData i"
 			."on (c.`REF|leginondata|AcquisitionImageData|image`=i.`DEF_id`) "
-			."left join ".DB.".ScopeEMData s on (s.`DEF_id` = i.`REF|ScopeEMData|scope`) "
+			."left join ".DB_LEGINON.".ScopeEMData s on (s.`DEF_id` = i.`REF|ScopeEMData|scope`) "
 			."where i.`REF|SessionData|session`='$sessionId' ";
 			if ($runId)
 				$q .= "and c.`REF|ApAceRunData|acerun`='$runId' ";
@@ -1447,7 +1447,7 @@ class particledata {
 	function getAssessmentDataForRun ($runId){
 		$q = "select i.filename, a.selectionkeep as keep "
 			."from ApAssessmentData a "
-			."left join ".DB.".AcquisitionImageData i "
+			."left join ".DB_LEGINON.".AcquisitionImageData i "
 			."on (a.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
 			."where a.`REF|ApAssessmentRunData|assessmentrun` = '$runId' ";
 		//echo "$q";
@@ -1500,8 +1500,8 @@ class particledata {
 
 	function getMaxTiltAngle ($sessionId) {
 		$q = "SELECT MAX(ABS(s.`SUBD|stage position|a`))*180.0/PI() AS angle "
-			."FROM ".DB.".`AcquisitionImageData` AS im "
-			."LEFT JOIN ".DB.".`ScopeEMData` AS s "
+			."FROM ".DB_LEGINON.".`AcquisitionImageData` AS im "
+			."LEFT JOIN ".DB_LEGINON.".`ScopeEMData` AS s "
 			."ON s.`DEF_id` = im.`REF|ScopeEMData|scope` "
 			."WHERE im.`REF|SessionData|session` = '$sessionId' ";
 		$r = $this->mysql->getSQLResult($q);
@@ -1612,7 +1612,7 @@ class particledata {
 		$rid = $this->getLastAssessmentRun($sessionId);
 		$q = "SELECT COUNT(assess.`DEF_id`) as num "
 			."FROM `ApAssessmentData` AS assess "
-			."LEFT JOIN ".DB.".`viewer_pref_image` AS viewer"
+			."LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
 			."  ON viewer.`imageId` = assess.`REF|leginondata|AcquisitionImageData|image` "
 			."WHERE "
 			." ( assess.`selectionkeep` IS NOT NULL "
@@ -1629,7 +1629,7 @@ class particledata {
 			. "FROM `ApParticleData` AS p "
 			. "LEFT JOIN `ApSelectionRunData` AS r "
 			. "  ON (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
-			. "LEFT JOIN ".DB.".`viewer_pref_image` AS viewer"
+			. "LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
 			. "  ON viewer.`imageId` = p.`REF|leginondata|AcquisitionImageData|image` "
 			. "WHERE "
 			. "  viewer.`status` IS NOT NULL "
@@ -1647,7 +1647,7 @@ class particledata {
 			. "FROM `ApParticleData` AS part "
 			. "LEFT JOIN `ApSelectionRunData` AS partrun "
 			. "  ON (part.`REF|ApSelectionRunData|selectionrun` = partrun.`DEF_id`) "
-			. "LEFT JOIN ".DB.".`viewer_pref_image` AS viewer"
+			. "LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
 			. "  ON viewer.`imageId` = part.`REF|leginondata|AcquisitionImageData|image` "
 			. "LEFT JOIN `ApAssessmentData` AS assess "
 			. "  ON assess.`REF|leginondata|AcquisitionImageData|image` = part.`REF|leginondata|AcquisitionImageData|image` "
@@ -1679,7 +1679,7 @@ class particledata {
 			. "FROM `ApParticleData` AS p "
 			. "LEFT JOIN `ApSelectionRunData` AS r "
 			. "  ON (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
-			. "LEFT JOIN ".DB.".`viewer_pref_image` AS viewer"
+			. "LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
 			. "  ON viewer.`imageId` = p.`REF|leginondata|AcquisitionImageData|image` "
 			. "WHERE "
 			. "  viewer.`status` = 'hidden' "
@@ -1696,7 +1696,7 @@ class particledata {
 			. "FROM `ApParticleData` AS part "
 			. "LEFT JOIN `ApSelectionRunData` AS partrun "
 			. "  ON (part.`REF|ApSelectionRunData|selectionrun` = partrun.`DEF_id`) "
-			. "LEFT JOIN ".DB.".`viewer_pref_image` AS viewer"
+			. "LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
 			. "  ON viewer.`imageId` = part.`REF|leginondata|AcquisitionImageData|image` "
 			. "LEFT JOIN `ApAssessmentData` AS assess "
 			. "  ON assess.`REF|leginondata|AcquisitionImageData|image` = part.`REF|leginondata|AcquisitionImageData|image` "
@@ -1715,7 +1715,7 @@ class particledata {
 		$rid = $this->getLastAssessmentRun($sessionId);
 		$q = "SELECT COUNT(assess.`DEF_id`) as num "
 			."FROM `ApAssessmentData` AS assess "
-			."LEFT JOIN ".DB.".`viewer_pref_image` AS viewer"
+			."LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
 			."  ON viewer.`imageId` = assess.`REF|leginondata|AcquisitionImageData|image` "
 			."WHERE "
 			." assess.`selectionkeep` = 1 "
@@ -1730,7 +1730,7 @@ class particledata {
 			. "FROM `ApParticleData` AS p "
 			. "LEFT JOIN `ApSelectionRunData` AS r "
 			. "  ON (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
-			. "LEFT JOIN ".DB.".`viewer_pref_image` AS viewer"
+			. "LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
 			. "  ON viewer.`imageId` = p.`REF|leginondata|AcquisitionImageData|image` "
 			. "WHERE "
 			. "  viewer.`status` = 'exemplar' "
@@ -1748,7 +1748,7 @@ class particledata {
 			. "FROM `ApParticleData` AS part "
 			. "LEFT JOIN `ApSelectionRunData` AS partrun "
 			. "  ON (part.`REF|ApSelectionRunData|selectionrun` = partrun.`DEF_id`) "
-			. "LEFT JOIN ".DB.".`viewer_pref_image` AS viewer"
+			. "LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
 			. "  ON viewer.`imageId` = part.`REF|leginondata|AcquisitionImageData|image` "
 			. "LEFT JOIN `ApAssessmentData` AS assess "
 			. "  ON assess.`REF|leginondata|AcquisitionImageData|image` = part.`REF|leginondata|AcquisitionImageData|image` "
@@ -2217,7 +2217,7 @@ class particledata {
 			."FROM ApStackParticlesData AS stpart "
 			."LEFT JOIN ApParticleData AS part "
 			."ON stpart.`REF|ApParticleData|particle` = part.`DEF_id` "
-			."LEFT JOIN ".DB.".`AcquisitionImageData` AS im "
+			."LEFT JOIN ".DB_LEGINON.".`AcquisitionImageData` AS im "
 			."ON part.`REF|leginondata|AcquisitionImageData|image` = im.`DEF_id` "
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
@@ -2284,12 +2284,12 @@ class particledata {
 		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
 		  ."  pc.`pixelsize` as ccdpixelsize, pd.*, "
 		  ."  pscope.`high tension` as hightension "
-		  ."FROM ".DB.".`AcquisitionImageData` a "
-		  ."left join ".DB.".`PresetData` pd "
+		  ."FROM ".DB_LEGINON.".`AcquisitionImageData` a "
+		  ."left join ".DB_LEGINON.".`PresetData` pd "
 		  ."  on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
-		  ."LEFT JOIN ".DB.".`ScopeEMData` pscope "
+		  ."LEFT JOIN ".DB_LEGINON.".`ScopeEMData` pscope "
 		  ."  ON (pscope.`DEF_id` = a.`REF|ScopeEMData|scope`) "
-			.", ".DB.".PixelSizeCalibrationData pc "
+			.", ".DB_LEGINON.".PixelSizeCalibrationData pc "
 			."WHERE a.`DEF_id`='$imgId' "
 			."AND pc.`REF|InstrumentData|tem`= pd.`REF|InstrumentData|tem` "
 			."AND pc.`magnification`= pd.`magnification` "
@@ -2312,10 +2312,10 @@ class particledata {
 	function getPixelSizeFromImgId ($imgid) {
 		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
 		  ."  pc.`pixelsize` as ccdpixelsize  "
-		  ."FROM ".DB.".`AcquisitionImageData` AS a "
-		  ."LEFT JOIN ".DB.".`PresetData` AS pd "
+		  ."FROM ".DB_LEGINON.".`AcquisitionImageData` AS a "
+		  ."LEFT JOIN ".DB_LEGINON.".`PresetData` AS pd "
 		  ."  ON (a.`REF|PresetData|preset` = pd.`DEF_id`) "
-			.", ".DB.".PixelSizeCalibrationData pc "
+			.", ".DB_LEGINON.".PixelSizeCalibrationData pc "
 			."WHERE "
 			."  a.`DEF_id`='$imgid' "
 			."AND "
@@ -3894,7 +3894,7 @@ class particledata {
 		  ."FROM  `ApStackParticlesData` sp "
 		  ."LEFT JOIN ApParticleData p ON "
 		  ."( sp.`REF|ApParticleData|particle` = p.`DEF_id` ) "
-		  ."LEFT JOIN ".DB.".AcquisitionImageData db ON "
+		  ."LEFT JOIN ".DB_LEGINON.".AcquisitionImageData db ON "
 		  ."( p.`REF|leginondata|AcquisitionImageData|image` = db.`DEF_id` ) "
 		  ."WHERE sp.`REF|ApStackData|stack`=$stackId";
 		$r = $this->mysql->getSQLResult($q);
@@ -4594,7 +4594,7 @@ class particledata {
 			."  ON progrun.`REF|ScriptUserName|username` = username.`DEF_id` "
 			."LEFT JOIN ApClusterJobData AS job "
 			."  ON progrun.`REF|ApClusterJobData|job` = job.`DEF_id` "
-			."LEFT JOIN ".DB.".SessionData AS session "
+			."LEFT JOIN ".DB_LEGINON.".SessionData AS session "
 			."  ON job.`REF|leginondata|SessionData|session` = session.`DEF_id` "
 			."WHERE "
 			."  progrun.`DEF_id` = $progrunid "
@@ -4617,7 +4617,7 @@ class particledata {
 			."  ON paramvalue.`REF|ScriptProgramRun|progrun` = progrun.`DEF_id` "
 			."LEFT JOIN ApClusterJobData AS job "
 			."  ON progrun.`REF|ApClusterJobData|job` = job.`DEF_id` "
-			."LEFT JOIN ".DB.".SessionData AS session "
+			."LEFT JOIN ".DB_LEGINON.".SessionData AS session "
 			."  ON job.`REF|leginondata|SessionData|session` = session.`DEF_id` "
 
 			."WHERE "
