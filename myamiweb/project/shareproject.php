@@ -9,7 +9,7 @@ if ($_GET[pId])
 if ($_POST[currentproject])
 	$projectId=$_POST[currentproject];
 $project = new project();
-project_header("Share Project");
+project_header("Project Owners");
 checkProjectAccessPrivilege($projectId);
 $is_admin = checkProjectAdminPrivilege($projectId);
 ?>
@@ -21,6 +21,8 @@ if ($is_admin) {
 // --- add something for admin only
 }
 ?>
+<h3>Selected Project</h3>
+
 <table class="tableborder" border="1" valign="top">
 <?
 	$info = $project->getProjectInfo($projectId);
@@ -39,11 +41,11 @@ if ($is_admin) {
 	}
 ?>
 </table>
-<h3>Share info </h3>
-<p>
+<h3>Select an owner to add to this project:</h3>
 <?
 	if ($is_admin) {
 ?>
+<p>
 <img src="img/info.png"> Users with no password set won't be listed; go
 to <a class="header" href="user.php">[user]</a> to update user's profile.
 </p>

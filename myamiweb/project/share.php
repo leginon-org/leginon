@@ -10,7 +10,7 @@ if ($_POST[currentproject])
 	$selectedprojectId=$_POST[currentproject];
 $project = new project();
 $projects = $project->getProjects("order");
-project_header("Share Data");
+project_header("Experiment Sharing");
 $sessionId = $_GET['id'];
 checkExptAccessPrivilege($sessionId,'shareexperiments');
 $is_admin = checkExptAdminPrivilege($sessionId,'shareexperiments');
@@ -23,6 +23,7 @@ if ($is_admin) {
 // --- add something for admin only
 }
 ?>
+<h3>Selected Experiment </h3>
 <table class="tableborder" border="1" valign="top">
 <?
 	$info = $leginondata->getSessionInfo($_GET['id']);
@@ -41,7 +42,7 @@ if ($is_admin) {
 	}
 ?>
 </table>
-<h3>Share info </h3>
+<h3>Select a user to share this experiment with:</h3>
 <p>
 <?
 	if ($is_admin) {
