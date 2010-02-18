@@ -8,7 +8,7 @@ if (!empty($_POST)) {
 	if ($lostpass == 2) {
 
 		$result .= "
-			The necessary information been sent to your email. 
+			The necessary information has been sent to your email. 
 			<br>Please check your email and login.";
 		
 	} 
