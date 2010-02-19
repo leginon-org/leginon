@@ -26,6 +26,16 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True):
 		TargetPanel.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
 
+	#---------------------------------------
+	def addTarget(self, name, x, y):
+		### check for out of bounds particles
+		if x < 2 or y < 2:
+			return
+		if x > self.imagedata.shape[0] or y > self.imagedata.shape[1]:
+			return
+		### continue as normal
+		return self._getSelectionTool().addTarget(name, x, y)
+
 	def openImageFile(self, filename):
 		self.filename = filename
 		if filename is None:
