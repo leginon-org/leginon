@@ -4,6 +4,7 @@ import subprocess
 import sys
 import time
 import math
+import random
 from appionlib import apDisplay
 try:
 	from appionlib import apImagicFile
@@ -14,6 +15,31 @@ try:
 except ImportError:
 	apDisplay.printWarning("EMAN module did not get imported")
 	pass
+
+#=====================
+def executeRunpar(cmd,np):
+	### distribute eman function to run on several processors
+	### and run through "runpar"
+	rfile="tmp.%08i"%random.randint(0,99999999)
+	f=open(rfile,'w')
+	for i in range(np):
+		f.write(cmd+" frac=%i/%i\n" % (i,np))
+	f.close()
+	emancmd = "runpar proc=%i,%i file=%s" % (np,np,rfile)
+	executeEmanCmd(emancmd, verbose=True)
+	os.remove(rfile)	
+
+#=====================
+def alignParticlesInLST(lstfile,outstack):
+	### create a stack of particles aligned according to an LST file
+	apDisplay.printMsg("aligning particles in '%s', saving to stack: %s"%(lstfile,outstack))	
+	images=EMAN.readImages(lstfile,-1,-1,0)
+	for i in images:
+		i.edgeNormalize()
+		i.rotateAndTranslate()
+		if i.isFlipped():
+			i.hFlip()
+		i.writeImage(outstack,-1)
 
 #=====================
 def writeEMANTime(filename, cmd):
