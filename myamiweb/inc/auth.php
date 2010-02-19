@@ -68,7 +68,7 @@ class authlib{
 
 			}
 
-			$this->filter_password($password);
+			return $this->filter_password($password);
 
 			
 			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
@@ -139,7 +139,7 @@ class authlib{
 			if ($password != $password2) {
 				return $this->error['passwd_not_match'];
 			}
-			$this->filter_password($password);
+			return $this->filter_password($password);
 		}
 
 
@@ -677,7 +677,6 @@ class authlib{
 	function filter_password($val) {
 
 			if (strlen($val) < 3) {
-
 				return $this->error['passwd_short'];
 
 			}
