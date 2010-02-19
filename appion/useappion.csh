@@ -1,6 +1,6 @@
 #!/bin/csh
 
-setenv APPIONDIR /home/glander/pyappion
+setenv APPIONDIR /home/`whoami`/pyappion
 setenv PYTHONPATH ${APPIONDIR}/lib:${PYTHONPATH}
 setenv PATH ${APPIONDIR}/bin:${PATH}
 setenv MATLABPATH ${MATLABPATH}:${APPIONDIR}/ace
