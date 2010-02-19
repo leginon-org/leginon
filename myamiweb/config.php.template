@@ -53,15 +53,16 @@ $XML_DATA = "test/viewerdata.xml";
 define('DEF_TABLES_FILE', "defaulttables.xml");
 define('DEF_PROJECT_TABLES_FILE', "defaultprojecttables.xml");
 define('DEF_PROCESSING_TABLES_FILE', "defaultprocessingtables.xml");
+define('DEF_PROCESSING_PREFIX', "ap");		//update mysql privileges
 
 // --- Set External SQL server here (use for import/export application)
 // --- You can add as many as you want, just copy and paste the block
 // --- to a new one and update the connection parameters
 
-//$SQL_HOSTS[$DB_HOST]['db_host'] = $DB_HOST;
-//$SQL_HOSTS[$DB_HOST]['db_user'] = $DB_USER;
-//$SQL_HOSTS[$DB_HOST]['db_pass'] = $DB_PASS;
-//$SQL_HOSTS[$DB_HOST]['db'] = $DB;
+$SQL_HOSTS[$DB_HOST]['db_host'] = $DB_HOST;
+$SQL_HOSTS[$DB_HOST]['db_user'] = $DB_USER;
+$SQL_HOSTS[$DB_HOST]['db_pass'] = $DB_PASS;
+$SQL_HOSTS[$DB_HOST]['db'] = $DB;
 
 /*
 $SQL_HOSTS['name1']['db_host'] = 'name1';

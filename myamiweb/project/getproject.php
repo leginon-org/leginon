@@ -61,13 +61,13 @@ if ($_POST['createprocessing'] || $linkprocessing) {
 	}
 }
 
-if (!$p_prefix = trim($DEF_PROCESSING_PREFIX)) {
+if (!$p_prefix = trim(DEF_PROCESSING_PREFIX)) {
 	$p_prefix = false;
 }
 
-
 $q="select db from processingdb where projectId='$selectedprojectId'";
 list($r)=$project->mysql->getSQLResult($q);
+
 $processingdb=$r['db'];
 $title = "Project".$projectname;
 login_header($title);
