@@ -120,7 +120,7 @@ class user {
 	}
 
 	function checkUserExistsbyName($firstname, $lastname) {
-		$q='select `DEF_id` as userId from '.DB_LEGINON.'UserData where `firstname`="'.$firstname.' and `lastname` = "'.$lastname.'"';
+		$q='select `DEF_id` as userId from '.DB_LEGINON.'.UserData where `firstname`="'.$firstname.'" and `lastname` = "'.$lastname.'"';
 		$RuserInfo = $this->mysql->SQLQuery($q);
 		$userInfo = mysql_fetch_array($RuserInfo);
 		return $userInfo['userId'];
