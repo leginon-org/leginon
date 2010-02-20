@@ -7,9 +7,9 @@ import re
 import time
 import shutil
 import subprocess
+
 from appionlib import appionScript
 from appionlib import appiondata
-
 from appionlib import apParam
 from appionlib import apChimera
 from appionlib import apDisplay
@@ -204,8 +204,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("/usr/local/IMAGIC/stand/em2em.e <<EOF >> startFiles.log\n")
 		f.write("MRC\n")
 		f.write("MRC\n")
-		f.write("IMAGIC\n")
+#		f.write("IMAGIC\n")
+#		f.write("3D_VOLUME\n")
 		f.write("3D_VOLUME\n")
+		f.write("IMAGIC\n")
 		f.write(basename+"\n")
 		f.write(basename[:-4]+"\n")
 		f.write("%.3f,%.3f,%.3f\n" % (self.params['apix'], self.params['apix'], self.params['apix']))
@@ -1048,12 +1050,14 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		### ONLY FOR THE FIRST ITERATION
 		if self.params['itn'] == 1:
 			# copy stack from initial model directory to working directory
-			cmd1 = "ln -s "+stackimgfile+" "+os.path.join(self.params['rundir'], "start.img")
-			proc = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-			proc.wait()
-			cmd2 = "ln -s "+stackhedfile+" "+os.path.join(self.params['rundir'], "start.hed")
-			proc = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-			proc.wait()
+			os.symlink(stackimgfile, os.path.join(self.params['rundir'], "start.img"))
+			os.symlink(stackhedfile, os.path.join(self.params['rundir'], "start.hed"))
+#			cmd1 = "ln -s "+stackimgfile+" "+os.path.join(self.params['rundir'], "start.img")
+#			proc = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#			proc.wait()
+#			cmd2 = "ln -s "+stackhedfile+" "+os.path.join(self.params['rundir'], "start.hed")
+#			proc = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#			proc.wait()
 			
 			### set machine stamp in headers to avoid IMAGIC errors
 			apImagicFile.setMachineStampInImagicHeader(os.path.join(self.params['rundir'], "start.hed"))
