@@ -56,8 +56,10 @@ class ImageLoader(appionLoop2.AppionLoop):
 			help="nominal magnification")
 		self.parser.add_option("--kev", dest="kev", type="int", metavar="INT",
 			help="high tension (in kilovolts)")
-		self.parser.add_option("--bin", dest="bin", type="int", metavar="INT",
-			default=1, help="binning (default=1)")
+		self.parser.add_option("--binx", dest="binx", type="int", metavar="INT",
+			default=1, help="binning in x (default=1)")
+		self.parser.add_option("--biny", dest="biny", type="int", metavar="INT",
+			default=1, help="binning in y (default=1)")
 		self.parser.add_option("--dir", dest="imgdir", type="string", metavar="DIR",
 			help="directory containing MRC files for upload")
 		self.filetypes = ("mrc","dm3","dm2","tif")
@@ -373,11 +375,12 @@ class ImageLoader(appionLoop2.AppionLoop):
 		for f in upfiles:
 			fname = os.path.abspath(f)
 			apix = str(self.params['apix'])+"e-10"
-			bin = str(self.params['bin'])
+			binx = str(self.params['binx'])
+			biny = str(self.params['biny'])
 			mag = str(self.params['mag'])
 			df = str(self.params['df'])+"e-6"
 			ht = str(self.params['kev']*1000)
-			cols = [fname,apix,bin,bin,mag,df,ht]
+			cols = [fname,apix,binx,biny,mag,df,ht]
 			batchinfo.append(cols)
 		return batchinfo
 

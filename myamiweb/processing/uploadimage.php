@@ -42,7 +42,8 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$expId=$_GET['expId'];
 
 	$projectId= $_SESSION['projectId'];
-	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	$formAction=$_SERVER['PHP_SELF'];
+	if ($expId) $formAction.="?expId=$expId";
 
 	$javafunctions .= writeJavaPopupFunctions('appion');  
 	$leginondata = new leginondata();
@@ -89,6 +90,13 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$batch_check = ($_POST['batchcheck']=='off') ? '' : 'checked';
 	$tiltgroup = ($_POST['tiltgroup']) ? $_POST['tiltgroup'] : 1;
 	$description = ($_POST['description']) ? $_POST['description']: $description;
+	$imgdir = ($_POST['imgdir']);
+	$apix = ($_POST['apix']);
+	$binx = ($_POST['binx']) ? $_POST['binx'] : "1";
+	$biny = ($_POST['biny']) ? $_POST['biny'] : "1";
+	$kev = ($_POST['kev']) ? $_POST['kev'] : "120";
+	$mag = ($_POST['mag']);
+	$df = ($_POST['df']);
 
 	// Start Tables
 	echo"<table class=tableborder>\n";
@@ -163,23 +171,65 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	}
 	echo"</select>";
 
-   echo "<br/><br/>\n";
+	echo "<br/><br/>\n";
 
 	// Setup Images in Group
 	echo docpop('images_in_group', 'Number of images in each tilt series if any:');
 	echo "<br/>\n<input type='text' name='tiltgroup' value='$tiltgroup' size='5'>\n";
 
-   echo "<br/><br/>\n";
+	echo "<br/><br/>\n";
+	echo "</td></tr>\n";
+	echo "<tr><td>\n";
+	echo "<b>Use one of two following options for upload:</b><hr/>\n";
 
 	// Setup batchfile
+	echo "Specify a parameter file:<br/>\n";
+	echo openRoundBorder();
 	echo docpop('batchfile', 'Information file for the images (with full path):');
 	echo "<br/>\n<input type='text' name='batch' value='$batch' size='54'>\n";
 	echo "<br/>\n<input type='checkbox' NAME='batchcheck' $batch_check>\n";
-	echo docpop('batchcheck','<B>Confirm existance and format of the information file</B>');
+	echo docpop('batchcheck','<B>Confirm existence and format of the information file</B>');
 
-   echo "<br/><br/>\n";
+	echo "<br/><br/>\n";
+	echo closeRoundBorder();
+	echo "<br/>\n";
 
-	echo"</td></tr>\n";
+	// Enter parameters manually
+	echo "Or enter parameters:<br/>\n";
+	echo openRoundBorder();
+	echo docpop('imgpath','Directory containing images');
+	echo "<br/>\n<input type='text' name='imgdir' value='$imgdir' size='54'>\n";
+	echo "<br/>\n";
+	echo docpop('fileformat', 'file format:');
+	echo " <select name='fileformat'>\n";
+	$filetypes = array("mrc","tif","dm3","dm2");
+	foreach ($filetypes as $ftype) {
+		$s = ($ftype==$_POST[fileformat]) ? ' selected' : '';
+		echo "<option".$s.">$ftype</option>";
+	}
+	echo "</select>\n";
+	echo "<br/>\n";
+	echo docpop('apix','pixel size (A):');
+	echo "<input type='text' name='apix' value='$apix' size='5'>\n";
+	echo "<br/>\n";
+	echo docpop('imgbin','binning in x:');
+	echo "<input type='text' name='binx' value='$binx' size='3'>\n";
+	echo "<br/>\n";
+	echo docpop('imgbin','binning in y:');
+	echo "<input type='text' name='biny' value='$biny' size='3'>\n";
+	echo "<br/>\n";
+	echo docpop('magnification', 'magnification:');
+	echo "<input type='text' name='mag' value='$mag' size='6'\n";
+	echo "<br/>\n";
+	echo docpop('defocus', 'defocus (microns):');
+	echo "<input type='text' name='df' value='$df' size='4'\n";
+	echo "<br/>\n";
+	echo docpop('kev','high tension (keV):');
+	echo "<input type='text' name='kev' value='$kev' size='4'\n";
+	echo "<br/>\n";
+	echo "<br/><br/>\n";
+	echo closeRoundBorder();
+
 	echo"<tr><td align='center'>\n";
 
 	// Launcher
@@ -210,6 +260,7 @@ function runUploadImage() {
 	
 	$outdir = $_POST['outdir'];
 
+	// start setting up the imageloader command
 	$command = "imageloader.py ";
 	$command.="--projectid=".$projectId." ";
 
@@ -220,9 +271,45 @@ function runUploadImage() {
 	$session_in_project = $leginon->getSessions('',$projectId,$sessionname);
 	if ($has_session && !$session_in_project) createUploadImageForm("<B>ERROR:</B> You have entered an existing session not belonging to this project");
 	if ($session_in_project) $warning = ("<B>Warning:</B>  Will append to an existing session with the original description");
-	//make sure a information batch file was provided
-	if (!$batch or ($batch_check && !file_exists($batch))) createUploadImageForm("<B>ERROR:</B> Enter a batch file with path");
-	if ($batch_check) {
+	// add session to the command
+	$command.="--session=$sessionname ";
+
+	//make sure a description was provided
+	$description=$_POST['description'];
+	if (!$description && !$session_in_project) createUploadImageForm("<B>ERROR:</B> Enter a brief description of the session");
+
+	//determine if a information batch file was provided
+	if (!$batch) {
+		$errormsg = "<b>ERROR:</b> If not specifying a parameter file, ";
+		$imgdir = $_POST['imgdir'];
+		if (!$imgdir) createUploadImageForm($errormsg."specify an image directory");
+		$fileformat = $_POST['fileformat'];
+		$apix = $_POST['apix'];
+		if (!$apix) createUploadImageForm($errormsg."specify a pixel size");
+		$binx = $_POST['binx'];
+		$biny = $_POST['biny'];
+		if (!($binx && $biny)) createUploadImageForm($errormsg."specify both x and y binning");
+		$mag = $_POST['mag'];
+		if (!$mag) createUploadImageForm($errormsg."specify a magnification");
+		$df = $_POST['df'];
+		if (!$df) createUploadImageForm($errormsg."specify a defocus");
+		if ($df > 0) $df = $df*-1;
+		if ($df > -0.1) createUploadImageForm("<b>Error:</b> defocus must be in microns (i.e. -1.5)");
+		$kev = $_POST['kev'];
+		if (!$kev) createUploadImageForm($errormsg."specify the high tension");
+		if ($kev > 1000) createUploadImageForm("<b>Error:</b> high tension must be in kilovolts (i.e. 120)");
+		// add options to command
+		$command.="--dir=$imgdir ";
+		$command.="--filetype=$fileformat ";
+		$command.="--apix=$apix ";
+		$command.="--binx=$binx ";
+		$command.="--biny=$biny ";
+		$command.="--mag=$mag ";
+		$command.="--df=$df ";
+		$command.="--kev=$kev ";
+	}
+	elseif ($batch_check) {
+		if (!file_exists($batch)) createUploadImageForm("<B>ERROR:</B> Batch file does not exist");
 		//make sure  the batch file contains 7 or 8 fields separated by tab at each line
 		$bf = file($batch);
 		foreach ($bf as $line) {
@@ -232,21 +319,18 @@ function runUploadImage() {
 				break;
 			}
 		}
-	} else {
-	 $badbatch = false;
+		// add batch file to command
+		$command.="--batchparams=$batch ";	
+	}
+	else {
+		$badbatch = false;
 	}
 	if ($badbatch) createUploadImageForm("<B>ERROR:</B> Invalid format in the batch file");
 	// make sure there are valid instrument
 	if (!$tem) createUploadImageForm("<B>ERROR:</B> Choose a tem where the images are acquired");
 	if (!$cam) createUploadImageForm("<B>ERROR:</B> Choose a camera where the images are acquired");
 
-	//make sure a description was provided
-	$description=$_POST['description'];
-	if (!$description && !$session_in_project) createUploadImageForm("<B>ERROR:</B> Enter a brief description of the session");
-
-
-	$command.="--session=$sessionname ";
-	$command.="--batchparams=$batch ";	
+	// add rest of options to command
 	$command.="--scopeid=$tem ";	
 	$command.="--cameraid=$cam ";	
 	$command.="--description=\"$description\" ";
