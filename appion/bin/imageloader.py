@@ -6,11 +6,13 @@ import shutil
 import time
 import numpy
 import math
+import glob
 #appion
 from appionlib import appionLoop2
 from appionlib import apDatabase
 from appionlib import apDisplay
 from appionlib import apProject
+from appionlib import apEMAN
 #leginon
 import leginon.leginondata
 import leginon.project
@@ -46,6 +48,22 @@ class ImageLoader(appionLoop2.AppionLoop):
 			help="Camera database ID", metavar="INT")
 		self.parser.add_option("--tiltgroup", dest="tiltgroup", type="int", default=1,
 			help="Number of image per tilt series, default=1", metavar="INT")
+		self.parser.add_option("--apix", dest="apix", type="float", metavar="FLOAT",
+			help="angstroms per pixel")
+		self.parser.add_option("--df", dest="df", type="float", metavar="DEFOCUS",
+			help="nominal defocus (negative, in microns)")
+		self.parser.add_option("--mag", dest="mag", type="int", metavar="MAG",
+			help="nominal magnification")
+		self.parser.add_option("--kev", dest="kev", type="int", metavar="INT",
+			help="high tension (in kilovolts)")
+		self.parser.add_option("--bin", dest="bin", type="int", metavar="INT",
+			default=1, help="binning (default=1)")
+		self.parser.add_option("--dir", dest="imgdir", type="string", metavar="DIR",
+			help="directory containing MRC files for upload")
+		self.filetypes = ("mrc","dm3","dm2","tif")
+		self.parser.add_option("--filetype", dest="filetype", metavar="TYPE",
+			help="input image filetype",
+			type="choice", choices=self.filetypes, default="mrc")
 
 	#=====================
 	def checkConflicts(self):
@@ -53,9 +71,28 @@ class ImageLoader(appionLoop2.AppionLoop):
 		standard appionScript
 		"""
 		if self.params['batchscript'] is None:
-			apDisplay.printError("Please provide a Batch parameter file, e.g., --batchparams=/home/myfile.txt")
-		if not os.path.isfile(self.params["batchscript"]):
-			apDisplay.printError("Could not find Batch parameter file: %s"%(self.params["batchscript"]))
+			if self.params['apix'] is None:
+				apDisplay.printError("If not specifying a parameter file, supply apix")
+			if self.params['df'] is None:
+				apDisplay.printError("If not specifying a parameter file, supply defocus of the images")
+			if self.params['df'] > 0:
+				apDisplay.printWarning("defocus is being switched to negative")
+				self.params['df']*=-1
+			if self.params['df'] > -0.1:
+				apDisplay.printError("defocus must be in microns")
+			if self.params['mag'] is None:
+				apDisplay.printError("If not specifying a parameter file, supply magnification")
+			if self.params['kev'] is None:
+				apDisplay.printError("If not specifying a parameter file, supply a high tension")
+			if self.params['kev'] > 1000:
+				apDisplay.printError("High tension must be in kilovolts (i.e. 120)")
+			if self.params['imgdir'] is None:
+				apDisplay.printError("If not specifying a parameter file, specify directory containing images")
+			if not os.path.exists(self.params['imgdir']):
+				apDisplay.printError("specified path '%s' does not exist\n"%self.params['imgdir'])
+		else:
+			if not os.path.isfile(self.params["batchscript"]):
+				apDisplay.printError("Could not find Batch parameter file: %s"%(self.params["batchscript"]))
 		if self.params['scopeid'] is None:
 			apDisplay.printError("Please provide a Scope database ID, e.g., --scopeid=12")
 		if self.params['cameraid'] is None:
@@ -198,7 +235,10 @@ class ImageLoader(appionLoop2.AppionLoop):
 		"""
 		appionLoop OVERRIDE
 		"""
-		self.batchinfo = self.readBatchUploadInfo()
+		if self.params['batchscript']:
+			self.batchinfo = self.readBatchUploadInfo()
+		else:
+			self.batchinfo = self.setBatchUploadInfo()
 		self.stats['imagecount'] = len(self.batchinfo)
 
 	#=====================
@@ -247,11 +287,17 @@ class ImageLoader(appionLoop2.AppionLoop):
 		standard appionLoop
 		"""	
 		self.updatePixelSizeCalibration(imginfo)
-		origimgfilepath = imginfo['original filepath']
 		imgdata = self.makeImageData(imginfo)
+		origimgfilepath = imginfo['original filepath']
 		newimgfilepath = os.path.join(self.params['rundir'],imgdata['filename']+".mrc")
 		apDisplay.printMsg("Copying original image to a new location: "+newimgfilepath)
-		shutil.copyfile(origimgfilepath, newimgfilepath)
+		### if input files are mrc, copy to new file location
+		if self.params['filetype'] == "mrc":
+			shutil.copyfile(origimgfilepath, newimgfilepath)
+		### non-mrc images will have already been converted and saved
+		### as a tmp file in the new location
+		else:
+			shutil.move(origimgfilepath, newimgfilepath)
 		pixeldata = None
 		return imgdata, pixeldata
 
@@ -315,6 +361,27 @@ class ImageLoader(appionLoop2.AppionLoop):
 		return batchinfo
 
 	#=====================
+	def setBatchUploadInfo(self):
+		# instead of specifying a batch script file, the same values
+		# are applied to all images for upload
+		batchinfo = []
+		imgdir = os.path.join(self.params['imgdir'],"*."+self.params['filetype'])
+		upfiles = glob.glob(imgdir)
+		if not upfiles:
+			apDisplay.printError("No images for upload in '%s'"%self.params['imgdir'])
+		upfiles.sort()
+		for f in upfiles:
+			fname = os.path.abspath(f)
+			apix = str(self.params['apix'])+"e-10"
+			bin = str(self.params['bin'])
+			mag = str(self.params['mag'])
+			df = str(self.params['df'])+"e-6"
+			ht = str(self.params['kev']*1000)
+			cols = [fname,apix,bin,bin,mag,df,ht]
+			batchinfo.append(cols)
+		return batchinfo
+
+	#=====================
 	def readUploadInfo(self,info=None):
 		if info is None:
 			# example
@@ -331,7 +398,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			uploadedInfo['defocus'] = float(info[5])
 			uploadedInfo['high tension'] = int(info[6])
 			if len(info) > 7:
-				uploadedInfo['stage a'] = float(info[7])*3.14159/180.0
+				uploadedInfo['stage a'] = float(info[7])*math.pi/180.0
 			# add other items in the dictionary and set to instrument in the function
 			# setInfoToInstrument if needed
 		except:
@@ -342,12 +409,21 @@ class ImageLoader(appionLoop2.AppionLoop):
 			apDisplay.printWarning("Skip Uploading")
 			return None
 		else:
+			uploadedInfo['filename'] = self.setNewFilename(uploadedInfo['original filepath'])
+			newimgfilepath = os.path.join(self.params['rundir'],uploadedInfo['filename']+".tmp.mrc")
+			### convert to mrc in new session directory if not mrc:
+			if self.params['filetype'] != "mrc":
+				if not os.path.isfile(newimgfilepath):
+					emancmd = "proc2d %s %s edgenorm flip mrc"%(uploadedInfo['original filepath'], newimgfilepath)
+					apEMAN.executeEmanCmd(emancmd)
+					if not os.path.exists(newimgfilepath):
+						apDisplay.printError("image conversion to mrc did not execute properly")
+				uploadedInfo['original filepath'] = newimgfilepath
 			tmpimage = mrc.read(uploadedInfo['original filepath'])
 			shape = tmpimage.shape
 			uploadedInfo['dimension'] = {'x':shape[1],'y':shape[0]}
 		uploadedInfo['session'] = self.session
 		uploadedInfo['pixel size'] = uploadedInfo['unbinned pixelsize']*uploadedInfo['binning']['x']
-		uploadedInfo['filename'] = self.setNewFilename(uploadedInfo['original filepath'])
 		return uploadedInfo
 
 	#=====================
@@ -355,7 +431,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		keep_old_name = True
 		if keep_old_name:
 			fullname = os.path.basename(original_filepath)
-			found = fullname.rfind('.mrc')
+			found = fullname.rfind('.'+self.params['filetype'])
 			if found > 0:
 				name = fullname[:found]
 			else:
