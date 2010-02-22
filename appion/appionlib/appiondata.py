@@ -530,6 +530,32 @@ class ApMaxLikeRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApTopolRepJobData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('timestamp', str),
+			('path', ApPathData),
+			('project|projects|project', int),
+			('finished', bool),
+			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApTopolRepRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('mask', int),
+			('itermult', float),
+			('learn', float),
+			('ilearn', float),
+			('age', int),
+			('mramethod', str),
+			('job', ApTopolRepJobData),
+		)
+	typemap = classmethod(typemap)
+
 class ApRefBasedRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -606,6 +632,7 @@ class ApAlignRunData(Data):
 			('maxlikerun', ApMaxLikeRunData),
 			('imagicMRA', ApMultiRefAlignRunData),
 			('editerrun', ApEdIterRunData),
+			('topreprun', ApTopolRepRunData),
 			('hidden', bool),
 			('project|projects|project', int),
 			('path', ApPathData),

@@ -42,6 +42,30 @@ def alignParticlesInLST(lstfile,outstack):
 		i.writeImage(outstack,-1)
 
 #=====================
+def emanLSTtoArray(lstfile, refnum=None):
+	### read contents of an lst file and return as an array of dicts
+	f = open(lstfile)
+	pinfo = []
+	for l in f:
+		d = l.strip().split()
+		if len(d)<4:
+			continue
+		pdata = {}
+		pdata['partnum'] = int(d[0])
+		pdata['cc'] = float(d[2].strip(','))
+		other = d[3].split(',')
+		pdata['inplane'] = float(other[0])*180./math.pi
+		pdata['xshift'] = float(other[1])
+		pdata['yshift'] = float(other[2])
+		pdata['mirror'] = bool(int(other[3]))
+		if refnum is not None:
+			pdata['refnum'] = refnum
+		pinfo.append(pdata)
+	f.close()
+
+	return pinfo
+
+#=====================
 def writeEMANTime(filename, cmd):
 	### write the cmd and time to the filename
 	lc=time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())
