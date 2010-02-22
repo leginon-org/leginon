@@ -392,7 +392,7 @@ class authlib{
 
 		setcookie(PROJECT_NAME, "", time()-3600);
 		
-		header("Location: $this->logout_url");
+		header("Location: /");
 
 	}
 
@@ -458,7 +458,7 @@ class authlib{
 	function conf_flush () {
 
 
-		$q="delete from `".$this->tbl_confirm."` where date_add(date, interval 2 day) < now()";
+		$q="delete from confirmauth where date_add(date, interval 2 day) < now()";
 
 		if (!$query) {
 
@@ -548,7 +548,7 @@ class authlib{
 
 			$mdhash = md5($id.$email);
 
-			$q="insert into `".$this->tbl_confirm_email."` values ('$id', '$email', '$mdhash', now())";
+			$q="insert into confirmauth values ('$id', '$email', '$mdhash', now())";
 			$query = $dbc->SQLQuery($q);
 
 			if (!$query) {
@@ -581,7 +581,7 @@ class authlib{
 			mysql_connect(DB_HOST, DB_USER, DB_PASS);
 			mysql_select_db(DB_LEGINON);
 
-			$query = mysql_query("select * from `".$this->tbl_confirm_email."` where id = '$id' AND email = '$email' AND mdhash = '$mdhash'");
+			$query = mysql_query("select * from confirmauth where id = '$id' AND email = '$email' AND mdhash = '$mdhash'");
 			$result = @mysql_num_rows($query);
 
 			if ($result < 1) {
@@ -593,7 +593,7 @@ class authlib{
 			}
 
 			$update = mysql_query("update UserData set email = '$email' where id = '$id'");
-			$delete = mysql_query("delete from `".$this->tbl_confirm_email."` where email = '$email'");
+			$delete = mysql_query("delete from confirmauth where email = '$email'");
 
 			mysql_close();
 
@@ -608,7 +608,7 @@ class authlib{
 		mysql_connect(DB_HOST, DB_USER, DB_PASS);
 		mysql_select_db(DB_LEGINON);
 
-		$query = mysql_query("delete from `".$this->tbl_confirm_email."` where date_add(date, interval 2 day) < now()");
+		$query = mysql_query("delete from confirmauth where date_add(date, interval 2 day) < now()");
 
 		mysql_close();
 
@@ -650,10 +650,10 @@ class authlib{
 
 			}
 
-			mysql_connect(DB_HOST, $this->db_user, DB_PASS);
+			mysql_connect(DB_HOST, DB_USER, DB_PASS);
 			mysql_select_db(DB_LEGINON);
 
-			$query = mysql_query("update `".$this->tbl_login."` set password = '$password' where id = '$id'");
+			$query = mysql_query("update UserData set password = '$password' where id = '$id'");
 
 			mysql_close();
 
@@ -671,10 +671,9 @@ class authlib{
 
 	function delete($id) {
 
-		mysql_connect(DB_HOST, $this->db_user, DB_PASS);
+		mysql_connect(DB_HOST, DB_USER, DB_PASS);
 		mysql_select_db(DB_LEGINON);
 
-		$query = mysql_query("delete from `".$this->tbl_login."` where id = '$id'");
 		$query = mysql_query("delete from UserData where id = '$id'");
 
 		mysql_close();
