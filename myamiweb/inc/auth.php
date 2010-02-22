@@ -141,14 +141,17 @@ class authlib{
 		}
 
 		$this->filter_email($email);
-		
+
 		// check password
-		if ($chpass) {
+		if ($chpass == "on") {
 
 			if ($password != $password2) {
 				return $this->error['passwd_not_match'];
 			}
-			return $this->filter_password($password);
+			$filterPassword = $this->filter_password($password);
+			
+			if(!empty($filterPassword))
+				return $filterPassword;
 		}
 
 
@@ -222,6 +225,7 @@ class authlib{
 			return $this->error['database_error'];		
 		}	
 
+
 		if ($chpass){
 
 			$this->updatePassword($userId, $password);
@@ -232,11 +236,11 @@ class authlib{
 	}
 
 	function updatePassword($userID, $password) {
-		
+
 		$dbc = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
 		$q = "update UserData set password = '$password' where DEF_id = $userID";
-		
+
 		if(!$dbc->SQLQuery($q))
 			return false;
 		return true;
@@ -392,7 +396,7 @@ class authlib{
 
 		setcookie(PROJECT_NAME, "", time()-3600);
 		
-		header("Location: /");
+		header("Location: ".BASE_URL);
 
 	}
 
