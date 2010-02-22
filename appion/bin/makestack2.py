@@ -10,7 +10,10 @@ import glob
 import socket
 import numpy
 import subprocess
+from scipy import stats
+from scipy import ndimage
 #appion
+from pyami import imagefun
 from appionlib import appionLoop2
 from appionlib import apImage
 from appionlib import apDisplay
@@ -31,7 +34,6 @@ from appionlib import apMask
 
 
 class Makestack2Loop(appionLoop2.AppionLoop):
-
 	############################################################
 	## Check pixel size
 	############################################################
@@ -52,6 +54,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				apDisplay.printMsg("Stack pixelsize = %.3f A"%(self.params['apix']))
 			if apDatabase.getPixelSize(imgdata) != self.params['apix']:
 				apDisplay.printMsg("Image pixelsize %.3f A != Stack pixelsize %.3f A"%(apDatabase.getPixelSize(imgdata), self.params['apix']))
+				apDisplay.printMsg("Problem image name: %s"%(apDisplay.short(imgdata['filename'])))
 				apDisplay.printError("This particle selection run contains images of varying pixelsizes, a stack cannot be created")
 
 	############################################################
@@ -245,20 +248,46 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		for i in range(len(boxedpartdatas)):
 			partdata = boxedpartdatas[i]
 			partarray = imagicdata['images'][i]
-			# take abs of mean, because ctf whole image may become negative
+			
+			### if particle stdev == 0, then it is all constant, i.e., a bad particle
+			stdev = float(partarray.std())
+			if stdev < 1.0e-6:
+				apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,shortname))
+
+			### skew and kurtosis
+			partravel = numpy.ravel(partarray)
+			skew = float(stats.skew(partravel))
+			kurtosis = float(stats.kurtosis(partravel))
+
+			### edge and center stats
+			edgemean = float(ndimage.mean(partarray, self.edgemap, 1.0))
+			edgestdev = float(ndimage.standard_deviation(partarray, self.edgemap, 1.0))
+			centermean = float(ndimage.mean(partarray, self.edgemap, 0.0))
+			centerstdev = float(ndimage.standard_deviation(partarray, self.edgemap, 0.0))
+
+			### take abs of all means, because ctf whole image may become negative
 			partmeandict = {
 				'partdata': partdata,
-				'mean': abs(partarray.mean()),
-				'stdev': partarray.std(),
-				'min': partarray.min(),
-				'max': partarray.max(),
+				'mean': abs(float(partarray.mean())),
+				'stdev': stdev,
+				'min': float(partarray.min()),
+				'max': float(partarray.max()),
+				'skew': skew,
+				'kurtosis': kurtosis,
+				'edgemean': abs(edgemean),
+				'edgestdev': edgestdev,
+				'centermean': abs(centermean),
+				'centerstdev': centerstdev,
 			}
-			if partmeandict['mean'] > 1.0e7:
-				partmeandict['mean'] /= 1.0e7
-			if partmeandict['stdev'] > 1.0e7:
-				partmeandict['stdev'] /= 1.0e7
-			if abs(partmeandict['stdev']) < 1.0e-6:
-				apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,shortname))
+			### show stats for first particle
+			if i == 0:
+				keys = partmeandict.keys()
+				keys.sort()
+				mystr = "PART STATS: "
+				for key in keys:
+					if isinstance(partmeandict[key], float):
+						mystr += "%s=%.3f :: "%(key, partmeandict[key])
+				print mystr
 			partmeantree.append(partmeandict)
 		self.meanreadtimes.append(time.time()-t0)
 
@@ -881,6 +910,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apDisplay.printError("Number of particles in existing stack already exceeds limit!")
 		self.logpeaks = 2
 
+		### create an edge map for edge statistics
+		box = int(self.params['boxsize'])
+		self.edgemap = imagefun.filled_circle((box,box), box/2.0-1.0)
+
 	#=====================
 	def reprocessImage(self, imgdata):
 		"""
@@ -993,8 +1026,16 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				apDisplay.printError("trying to insert a duplicate particle")
 
 			stpartq['particle'] = partdata
-			stpartq['mean'] = partmeandict['mean']
-			stpartq['stdev'] = partmeandict['stdev']
+			stpartq['mean'] = round(partmeandict['mean'],8)
+			stpartq['stdev'] = round(partmeandict['stdev'],8)
+			stpartq['min'] = round(partmeandict['min'],4)
+			stpartq['max'] = round(partmeandict['max'],4)
+			stpartq['skew'] = round(partmeandict['skew'],4)
+			stpartq['kurtosis'] = round(partmeandict['kurtosis'],4)
+			stpartq['edgemean'] = round(partmeandict['edgemean'],4)
+			stpartq['edgestdev'] = round(partmeandict['edgestdev'],4)
+			stpartq['centermean'] = round(partmeandict['centermean'],4)
+			stpartq['centerstdev'] = round(partmeandict['centerstdev'],4)
 			if self.params['commit'] is True:
 				stpartq.insert()
 		self.insertdbtimes.append(time.time()-t0)

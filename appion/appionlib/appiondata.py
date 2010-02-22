@@ -425,6 +425,14 @@ class ApStackParticlesData(Data):
 			('particle', ApParticleData),
 			('mean', float),
 			('stdev', float),
+			('min', float),
+			('max', float),
+			('skew', float),
+			('kurtosis', float),
+			('edgemean', float),
+			('edgestdev', float),
+			('centermean', float),
+			('centerstdev', float),
 		)
 	typemap = classmethod(typemap)
 
