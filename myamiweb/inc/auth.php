@@ -38,6 +38,7 @@ class authlib{
 				 );
 
 	function register ($username, $password, $password2, $email, $lastname, $firstname) {
+
 		if (!$username || !$password || !$password2 || !$email || !$lastname || !$firstname) {
 
 			return $this->error['fields_empty'];
@@ -58,18 +59,26 @@ class authlib{
 
 			}
 			
-			$this->filter_email($email);
-
-			$this->filter_username($username);
-
+			$filterError = $this->filter_email($email);
+			
+			if(!empty($filterError))
+				return $filterError;
+				
+			$filterError = $this->filter_username($username);
+			
+			if(!empty($filterError))
+				return $filterError;
+				
 			if ($password != $password2) {
 
 				return $this->error['passwd_not_match'];
 
 			}
 
-			return $this->filter_password($password);
-
+			$filterError = $this->filter_password($password);
+			if(!empty($filterError))
+				return $filterError;
+			
 			
 			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
@@ -77,7 +86,7 @@ class authlib{
 				$username=addslashes($username);
 			}
 
-			$q="select DEF_id from `".$this->tbl_user."` where name = '$username'";
+			$q="select DEF_id from UserData where username = '$username'";
 			$query = $dbc->SQLQuery($q);
 			$result = @mysql_num_rows($query);
 
@@ -519,7 +528,7 @@ class authlib{
 
 			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
-			$q="select id from `".$this->tbl_user."` where email = '$email'";
+			$q="select id from UserData where email = '$email'";
 			$query = $dbc->SQLQuery($q);
 			$result = @mysql_num_rows($query);
 
@@ -583,7 +592,7 @@ class authlib{
 
 			}
 
-			$update = mysql_query("update `".$this->tbl_user."` set email = '$email' where id = '$id'");
+			$update = mysql_query("update UserData set email = '$email' where id = '$id'");
 			$delete = mysql_query("delete from `".$this->tbl_confirm_email."` where email = '$email'");
 
 			mysql_close();
@@ -666,7 +675,7 @@ class authlib{
 		mysql_select_db(DB_LEGINON);
 
 		$query = mysql_query("delete from `".$this->tbl_login."` where id = '$id'");
-		$query = mysql_query("delete from `".$this->tbl_user."` where id = '$id'");
+		$query = mysql_query("delete from UserData where id = '$id'");
 
 		mysql_close();
 
@@ -692,22 +701,20 @@ class authlib{
 				return $this->error['passwd_invalid'];
 
 			}
+			
 	}
 
 	function filter_username($val) {
-
 			if (strlen($val) < 3) {
 
 				return $this->error['username_short'];
 
 			}
-
 			if (strlen($val) > 20) {
 
 				return $this->error['username_long'];
 
 			}
-
 			if (!ereg("^[[:alnum:]_]+$", $val)) {
 
 				return $this->error['username_invalid'];
@@ -715,7 +722,7 @@ class authlib{
 			}
 
 	}
-
+	
 	function filter_email($val) {
 
 			if (!eregi("^([a-z0-9]+)([._-]([a-z0-9]+))*[@]([a-z0-9]+)([._-]([a-z0-9]+))*[.]([a-z0-9]){2}([a-z0-9])?$", $val)) {
