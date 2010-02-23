@@ -9,6 +9,7 @@ $SHARE =  (ENABLE_LOGIN) ? $SHARE : false;
 if ($_GET['pId']) {
 	$selectedprojectId=$_GET['pId'];
 }
+
 checkProjectAccessPrivilege($selectedprojectId);
 if ($_POST['currentproject']) {
 	$selectedprojectId=$_POST['currentproject'];
@@ -86,7 +87,7 @@ project_header($title, 'init()');
 
 </script>
 <?php
-$url = $_SERVER['PHP_SELF']."?v=".$_REQUEST['v']."&amp;pId=".$selectedprojectId;
+$url = $_SERVER['PHP_SELF']."?v=".$_REQUEST['v']."&pId=".$selectedprojectId;
 $link_on = "<a class='header' href='$url&amp;ld=1'>[x]</a> ";
 $link_off = "<a class='header' href='$url&amp;ld=0'>[o]</a> ";
 $ld = ($_GET['ld']==0) ? $link_on : $link_off;
