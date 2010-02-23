@@ -154,13 +154,20 @@ function login_header($title="", $javascript="", $onload="") {
 	if (ENABLE_LOGIN) {
 	global $dbemauth;
 	$redirect=$_SERVER['PHP_SELF'];
+	
 	$authorized_files=array(BASE_URL.'login.php', 'lostpass.php', 'register.php', 'confirm.php');
+
 	if (!ereg(implode("|", $authorized_files), $_SERVER['PHP_SELF'])) {
-    if (!$login_check = $dbemauth->is_logged()) {
-      redirect(BASE_URL.'login.php?ln='.$redirect);
-      exit;     
+    	if (!$login_check = $dbemauth->is_logged()) {
+      		redirect(BASE_URL.'login.php?ln='.$redirect);
+      		exit;     
 		}
-  }
+  	}else{
+  		if($login_check = $dbemauth->is_logged()){
+  			redirect(BASE_URL);
+  			exit;	
+  		}  		
+  	}
 
 	$login_check = $dbemauth->is_logged();
 	$username = $login_check[0];
