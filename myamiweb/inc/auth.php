@@ -140,7 +140,10 @@ class authlib{
 
 		}
 
-		$this->filter_email($email);
+		$filterError = $this->filter_email($email);
+		
+		if(!empty($filterError))
+			return $filterError;
 
 		// check password
 		if ($chpass == "on") {
