@@ -118,7 +118,13 @@ return "getmenu.php?".$getids_str;
 
 
 class project {
-
+	
+	var $error = array (
+				 "projectname_exists"=>"Project Name already exists.",
+				 "projectname_empty"=>"Project Name can't be empty",
+				 "short_description_empty"=>"Short Description can't be empty."
+				);
+				 
 	function project($mysql="") {
 		$this->mysql = ($mysql) ? $mysql : new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 		if ($this->mysql->checkDBConnection()) {
@@ -236,9 +242,20 @@ class project {
 
 	function updateProject($projectId, $name, $short_description, $long_description, $category, $funding){
 
-		if (!$this->checkProjectExistsbyId($projectId)) 
-			return false;
+		if (!$name) 
+			return $this->error['projectname_empty'];
+			
+		if(!$short_description)
+			return $this->error['short_description_empty'];
+			
+		$id = $this->checkProjectExistsbyName($name);
+		
+		// if the project id is different than the id we searched.
+		// this means there is already ahve a project with same name.
 
+		if(($id != $projectId) && (!empty($id)))
+			return $this->error['projectname_exists'];		
+		
 		$table='projects';
 		$data['name']=$name;
 		$data['short_description']=$short_description;
@@ -247,7 +264,7 @@ class project {
 		$data['funding']=$funding;
 		$where['projectId']=$projectId;
 
-		$s = $this->mysql->SQLUpdate($table, $data, $where);
+		$this->mysql->SQLUpdate($table, $data, $where);
 	}
 
 	function deleteProject($projectId) {
@@ -257,10 +274,23 @@ class project {
 		$q[]='delete from projects where projectId='.$projectId;
 		$this->mysql->SQLQueries($q);
 	}
-
+	/*
+	 * function addProject
+	 * 
+	 * return error message if require fields not exist
+	 * 
+	 */
 	function addProject($name, $short_description, $long_description, $category, $funding){
 
-		if (!$name) return 0;
+		if (!$name) 
+			return $this->error['projectname_empty'];
+			
+		if(!$short_description)
+			return $this->error['short_description_empty'];
+			
+		$id = $this->checkProjectExistsbyName($name);
+		if(!empty($id))
+			return $this->error['projectname_exists'];
 
 		$table='projects';
 		$data['name']=$name;
@@ -269,11 +299,8 @@ class project {
 		$data['category']=$category;
 		$data['funding']=$funding;
 
-		$re=$this->checkProjectExistsbyName($name);
-		if (empty($re)) {
-			$id =  $this->mysql->SQLInsert($table, $data);
-			return $id;
-		}
+		$this->mysql->SQLInsert($table, $data);
+
 	}
 
 	function getLastId() {
@@ -289,7 +316,7 @@ class project {
 		$q=' select projectId from projects where name="'.$name.'"';
 		$RprojectInfo = $this->mysql->SQLQuery($q);
 		$projectInfo = mysql_fetch_array($RprojectInfo);
-		return $projectInfo[projectId];
+		return $projectInfo['projectId'];
 	}
 
 	function checkProjectExistsbyId($id) {
@@ -297,7 +324,7 @@ class project {
 		$RprojectInfo = $this->mysql->SQLQuery($q);
 		echo mysql_error();
 		$projectInfo = mysql_fetch_array($RprojectInfo);
-		$id = $projectInfo[projectId];
+		$id = $projectInfo['projectId'];
 		if(empty($id))
 			return false;
 		else

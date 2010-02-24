@@ -11,29 +11,52 @@ if (empty($projectId) || !($project->checkProjectExistsbyId($projectId))) {
 	$action='add';
 } else {
 	$curproject = $project->getProjectInfo($projectId);
-	$title='- update project: '.$curproject['Name'];
+
+	$name = $curproject['Name'];
+	$category = $curproject['Category'];
+	$funding = $curproject['Funding'];
+	$short_description = $curproject['ReducedDescription'];
+	$long_description = $curproject['Description'];
+	
+	$title='- update project: '.$name;
 	$action='update';
 }
 
 if ($_POST['submit']) {
-	list($name, $short_description, $long_description, $category, $funding) =
-		from_POST('name', 'short_description', 'long_description', 'category', 'funding');
+	foreach($_POST as $k=>$v){
+			$v = trim($v);
+			$$k = addslashes($v);
+	}		
+		
 	if ($_POST['submit']=='add')
-		$projectId = $project->addProject($name, $short_description, $long_description, $category, $funding);
+		$result = $project->addProject($name, $short_description, $long_description, $category, $funding);
 	else if ($_POST['submit']=='update')
-		$project->updateProject($projectId, $name, $short_description, $long_description, $category, $funding);
+		$result = $project->updateProject($projectId, $name, $short_description, $long_description, $category, $funding);
 		$location = ($_GET['ln']) ? $_GET['ln'] : "index.php";
-		header("location: $location");
+
 } 
 project_header("Projects $title");
 ?>
 
-
 <a href="<?=$_GET['ln'];?>">[ &laquo; back ]</a>
+
 <p>
+
+<?php 
+if ($_POST['submit']) {
+	if (!empty($result)) {
+		echo '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">'.$result.'</font></p>';
+	}
+	else{
+		echo '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">Your update has been submitted.</font></p>';
+	}
+}
+?>
+
 <font color=red>*</font>
 <font face="Arial, Helvetica, sans-serif" size="2">: required fields</font>
-<?php
+
+<?php 
 include 'inc/projectform.inc.php';
 project_footer();
 ?>

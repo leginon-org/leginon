@@ -7,7 +7,7 @@
           </font><font color=red>*</font>&nbsp;:&nbsp;</div>
       </td>
       <td><font face="Arial, Helvetica, sans-serif" size="2"> 
-        <input class="field" type="text" name="name" value="<?=$curproject['Name']?>" size="40" tabindex="1" >
+        <input class="field" type="text" name="name" value="<?=$name?>" size="40" tabindex="1" >
         </font></td>
     </tr>
     <tr> 
@@ -16,7 +16,7 @@
           </font>&nbsp;:&nbsp;</div>
       </td>
       <td>
-	<input class="field" type="text" name="category" value="<?=$curproject['Category']?>" size="40" maxlength="100" tabindex="2" >
+	<input class="field" type="text" name="category" value="<?=$category?>" size="40" maxlength="100" tabindex="2" >
       </td>
     </tr>
     <tr> 
@@ -25,16 +25,16 @@
           </font>&nbsp;:&nbsp;</div>
       </td>
       <td>
-	<textarea class="textarea" name="funding" cols="40" rows="2" tabindex="3"><?=$curproject['Funding']?></textarea> 
+	<textarea class="textarea" name="funding" cols="40" rows="2" tabindex="3"><?=$funding?></textarea> 
       </td>
     </tr>
     <tr> 
       <td> 
         <div align="right"><font face="Arial, Helvetica, sans-serif" size="2">Short description
-          </font>&nbsp;:&nbsp;</div>
+          </font><font color=red>*</font>&nbsp;:&nbsp;</div>
       </td>
       <td>
-	<textarea class="textarea" name="short_description" rows="3" cols="60" tabindex="4"><?=$curproject['Title']?></textarea>
+	<textarea class="textarea" name="short_description" rows="3" cols="60" tabindex="4"><?=$short_description?></textarea>
         </td>
     </tr>
     <tr> 
@@ -43,7 +43,7 @@
           </font>&nbsp;:&nbsp;</div>
       </td>
       <td>
-	<textarea class="textarea" name="long_description" rows="10" cols="60" tabindex="5"><?=$curproject['Description']?></textarea>
+	<textarea class="textarea" name="long_description" rows="10" cols="60" tabindex="5"><?=$long_description?></textarea>
       </td>
     </tr>
     <tr>
