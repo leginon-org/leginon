@@ -63,6 +63,12 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			action="store_false", help="DO NOT use mirrors in alignment to capture different particle orientations")
 		self.parser.add_option("--center", dest="center", default=False,
 			action="store_true", help="center particles with respect to the total sum prior to multi-reference alignment")
+		self.parser.add_option("--alignment_type", dest="alignment_type", type="str", default="ALL",
+			help="you can specify what kind of alignment to do. Currently the options are 'all', 'rotational', \
+				'translational', 'horizontal', or 'vertical'. If 'all' is specified, you also need to note which alignment \
+				(rotational or translational) to perform first", metavar="STR")
+		self.parser.add_option("--first_alignment", dest="first_alignment", type="str", default="rotation_first",
+			help="which alignment routine is performed first? specify 'rotation_first' or 'translation_first'", metavar="STR")
 		self.parser.add_option("--max_shift_orig", dest="max_shift_orig", type="float", default="0.2",
 			help="maximum radial shift during MRA", metavar="float")
 #		self.parser.add_option("--max_shift_this", dest="max_shift_this", type="float",
@@ -215,8 +221,9 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			
 		f.write("FRESH\n")
 		f.write("ALIGNMENT\n")
-		f.write("ALL\n")
-		f.write("ROTATION_FIRST\n")
+		f.write("%s\n" % (self.params['alignment_type']))
+		if self.params['alignment_type'].lower() == "all":
+			f.write("%s\n" % (self.params['first_alignment']))
 		f.write("CCF\n")
 		f.write("start\n")
 		f.write("alignstack\n")
@@ -375,6 +382,9 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		### setup Multi Reference Alignment Run
 		MRAq['mirror'] = self.params['mirror']
 		MRAq['center'] = self.params['center']
+		MRAq['alignment_type'] = self.params['alignment_type']
+		if self.params['alignment_type'].lower() == "all":
+			MRAq['first_alignment'] = self.params['first_alignment']
 		MRAq['max_shift_orig'] = self.params['max_shift_orig']
 #		MRAq['max_shift_this'] = self.params['max_shift_this']
 		MRAq['samp_param'] = self.params['samp_param']
