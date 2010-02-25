@@ -62,8 +62,23 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 //	$javascript .= "	document.viewerform.lastring.value = lastring;\n";
 	// set particle & mask radius and lp
 	$javascript .= "}\n";
-	$javascript .= "</script>\n";
-
+	$javascript .= "</script>\n";	
+	
+	$javascript .= "<script type='text/javascript'>
+	function checkalignment() {
+		if (o=document.viewerform.alignment_type) {
+			if (o_a=document.viewerform.first_alignment) {
+				aligntype=o.options[o.selectedIndex].value
+				if (aligntype=='all') {
+					o_a.disabled=false
+				} else {
+					o_a.disabled=true
+				}
+			}
+		}
+	}
+	</script>\n";
+	
 	$javascript .= writeJavaPopupFunctions('appion');
 
 	processing_header($title,$heading,$javascript);
@@ -108,6 +123,8 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
 	$mirror = ($_POST['mirror']=="on" || !$_POST['process']) ? 'checked' : '';
 	$center = ($_POST['center']=="on" || !$_POST['process']) ? 'checked' : '';
+	$alignment_type = ($_POST['alignment_type']) ? $_POST['alignment_type'] : 'all';
+	$first_alignment = ($_POST['first_alignment']) ? $_POST['first_alignment'] : 'rotation_first';
 
 	// number of processors defaulted to 8
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
@@ -225,6 +242,20 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	<TR>
 		<TD VALIGN='TOP'>
 		<B>Alignment Params:</B></A><br>";
+	
+	echo "<SELECT name='alignment_type' onchange='checkalignment()'>";
+	echo "<OPTION VALUE='all'>rotational & translational</OPTION>";
+	echo "<OPTION VALUE='rotational'>rotational</OPTION>";
+	echo "<OPTION VALUE='translational'>translational</OPTION>";
+	echo "<OPTION VALUE='horizontal'>horizontal</OPTION>";
+	echo "<OPTION VALUE='vertical'>vertical</OPTION>";
+	echo "</SELECT>\t";
+	
+	echo "<SELECT name='first_alignment'>";
+	echo "<OPTION VALUE='rotation_first'>rotation_first</OPTION>";
+	echo "<OPTION VALUE='translation_first'>translation_first</OPTION>";
+	echo "</SELECT><br>";
+	
 	echo"
 		<INPUT TYPE='text' NAME='iters' VALUE='$iters' SIZE='4'>";
 	echo 	docpop('numiter_mra', " Iterations<br>");
@@ -310,6 +341,8 @@ function runAlignment() {
 	$inverttempl = ($_POST['inverttempl']=="on") ? 'inverttempl' : '';
 	$mirror = ($_POST['mirror']=="on" || !$_POST['process']) ? 'checked' : '';
 	$center = ($_POST['center']=="on" || !$_POST['process']) ? 'checked' : '';
+	$alignment_type = $_POST['alignment_type'];
+	$first_alignment = $_POST['first_alignment'];
 
 	//make sure a session was selected
 	$description=$_POST['description'];
@@ -342,6 +375,8 @@ function runAlignment() {
 	$command.="--stackId=$stackid ";
 	$command.="--templateStackId=$templatestackid ";
 	$command.="--rundir=".$rundir." ";
+	$command.="--alignment_type=$alignment_type ";
+	if ($first_alignment) $command.="--first_alignment=$first_alignment ";
 	$command.="--description=\"$description\" ";
 
 	if ($lowpass) $command.="--lowpass=$lowpass ";
@@ -405,6 +440,9 @@ function runAlignment() {
 			<TR><td>Threshold Reference Densities</TD><td>$thresh_refs</TD></tr>
 			<TR><td>Reference mask radius</TD><td>$maskrad_refs</TD></tr>";
 		}
+		echo "
+		<TR><td>Alignment Type</TD><td>$alignment_type</TD></tr>";
+		if ($alignment_type == "all") echo "<TR><td>First Alignment</TD><td>$first_alignment</TD></tr>";
 		echo "
 		<TR><td>Max translational shift</TD><td>$max_shift_orig</TD></tr>
 		<TR><td>sampling parameter</TD><td>$samp_param</TD></tr>
