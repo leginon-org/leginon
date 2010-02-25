@@ -35,7 +35,7 @@ switch ($_POST['bt_action']) {
 				break;
 			}
 			if (!$f_email){
-				$nameerror = "Enter a email address";
+				$nameerror = "Enter an email address";
 				break;
 			}
 			
@@ -44,7 +44,7 @@ switch ($_POST['bt_action']) {
 				break;
 			}
 			if ($f_password != $f_password_confirm) {
-				$passworderror = "Both password are not match";
+				$passworderror = "The passwords entered do not match. Please enter your password.";
 				break;
 			}
 			$data['username'] = $f_username;
