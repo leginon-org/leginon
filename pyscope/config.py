@@ -4,16 +4,17 @@ import sys
 import ConfigParser
 import imp
 import os
-import tem
-import ccdcamera
+import pyscope
+import pyscope.tem
+import pyscope.ccdcamera
 
 configparser = ConfigParser.SafeConfigParser()
 
 # use the path of this module
-modpath = os.path.dirname(__file__)
+modpath = pyscope.__path__
 
 # read instruments.cfg
-filename = os.path.join(modpath, 'instruments.cfg')
+filename = os.path.join(modpath[0], 'instruments.cfg')
 if not os.path.exists(filename):
 	print 'please configure %s' % (filename,)
 	sys.exit()
@@ -27,21 +28,24 @@ except:
 names = configparser.sections()
 temclasses = []
 cameraclasses = []
+configured = {}
+
 for name in names:
 	cls_str = configparser.get(name, 'class')
 	modname,clsname = cls_str.split('.')
 	fullmodname = 'pyscope.' + modname
-	args = imp.find_module(modname, [modpath])
+	args = imp.find_module(modname, modpath)
 	try:
 		mod = imp.load_module(fullmodname, *args)
 	finally:
 		if args[0] is not None:
 			args[0].close()
 	cls = getattr(mod, clsname)
-	if issubclass(cls, tem.TEM):
+	if issubclass(cls, pyscope.tem.TEM):
 		temclasses.append(cls)
-	if issubclass(cls, ccdcamera.CCDCamera):
+	if issubclass(cls, pyscope.ccdcamera.CCDCamera):
 		cameraclasses.append(cls)
+	configured[name] = cls
 
 print temclasses
 print cameraclasses

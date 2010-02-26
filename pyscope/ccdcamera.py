@@ -6,12 +6,28 @@
 
 import time
 import threading
+import baseinstrument
 
 class GeometryError(Exception):
 	pass
 
-class CCDCamera(object):
+class CCDCamera(baseinstrument.BaseInstrument):
 	name = 'CCD Camera'
+
+	capabilities = baseinstrument.BaseInstrument.capabilities + (
+		{'name': 'PixelSize', 'type': 'property'},
+		{'name': 'Retractable', 'type': 'property'},
+		{'name': 'ExposureTypes', 'type': 'property'},
+		{'name': 'CameraSize', 'type': 'property'},
+		{'name': 'Binning', 'type': 'property'},
+		{'name': 'Dimension', 'type': 'property'},
+		{'name': 'ExposureTime', 'type': 'property'},
+		{'name': 'ExposureType', 'type': 'property'},
+		{'name': 'Offset', 'type': 'property'},
+		## optional:
+		{'name': 'EnergyFilter', 'type': 'property'},
+		{'name': 'EnergyFilterWidth', 'type': 'property'},
+	)
 
 	def __init__(self):
 		self.buffer = {}

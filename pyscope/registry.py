@@ -6,9 +6,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import inspect
-import tem
-import ccdcamera
 import config
 
 temorder = []
