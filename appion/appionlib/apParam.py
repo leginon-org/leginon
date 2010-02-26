@@ -288,14 +288,13 @@ def resetVirtualFrameBuffer(killall=False):
 	fontpath = getFontPath()
 	securfile = getSecureFile()
 	rgbfile = getRgbFile()
-	while (port%10 == 0 or port%10 == 1):
-		port = int(random.random()*90+2)
-	#port = str("5")
+	#random 4 digit port
+	port = int(random.random()*9000+1000)
 	portstr = str(port)
 	apDisplay.printMsg("Opening Xvfb port "+portstr)
 	xvfbcmd = (
 		"Xvfb :"+portstr
-		+" -once -ac -pn -screen 0 640x480x24 "
+		+" -once -ac -pn -screen 0 1200x1200x24 "
 		+fontpath+securfile+rgbfile
 		+" &"
 	)
@@ -308,11 +307,14 @@ def resetVirtualFrameBuffer(killall=False):
 
 #=====================
 def killVirtualFrameBuffer(port=None):
+	### port is unknown kill all virtual frame buffers
 	if port is None:
 		xvfbcmd = "killall Xvfb\n"
 		proc = subprocess.Popen(xvfbcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		proc.wait()
 		return
+
+	### find specific virtual frame buffer
 	xvfbcmd = "ps -ef | grep -i xvfb | grep %d"%(port)
 	proc = subprocess.Popen(xvfbcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	stdout = proc.stdout
@@ -322,8 +324,14 @@ def killVirtualFrameBuffer(port=None):
 		if 'Xvfb' in line:
 			bits = line.strip().split()
 			if len(bits) > 0:
-				xvfbcmd = "kill -9 "+bits[1]
+				### kill the frame buffer
+				pid = int(bits[1])
+				xvfbcmd = "kill %d"%(pid)
 				proc = subprocess.Popen(xvfbcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+				proc.wait()
+				### delete this file can cause problems with user permissions
+				rmxfile = "rm -fv /tmp/.X11-unix/X%d"%(port)
+				proc = subprocess.Popen(rmxfile, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 				proc.wait()
 				apDisplay.printMsg("Killed Xvfb on port %d"%(port))
 				return
