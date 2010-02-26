@@ -56,36 +56,43 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 	}
   
 	// Set any existing parameters in form
-	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
-	$res = ($_POST['res']) ? $_POST['res'] : '';
+	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '';
 	$emdbid = ($_POST['emdbid']) ? $_POST['emdbid'] : '';
-	$box = ($_POST['box']) ? $_POST['box'] : '';
-	$symm = ($_POST['symm']) ? $_POST['symm'] : 'c1';
+	$symm = ($_POST['symm']) ? $_POST['symm'] : '';
 	$runtime = ($_POST['runtime']) ? $_POST['runtime'] : getTimestring();
 
-	echo "<table BORDER=3 CLASS=tableborder><tr><td valign='top'>\n";
+	echo "<table class=tablebubble cellspacing='8'>";
+
+	echo "<tr><td valign='top'>\n";
+
 	echo docpop('emdbid', '<b>EMDB ID:</b>');
 	echo "<input type='text' name='emdbid' value='$emdbid' size='5'><br />\n";
 	echo "<input type='hidden' name='runtime' value='$runtime'>\n";
+
+	echo "</td></tr>\n";
+	echo "<tr><td valign='top'>\n";
 
 	echo docpop('outdir', 'Output directory')."<br/>\n";
 	echo "<input type='text' name='outdir' value='$outdir' size='40'>\n";
 
 	echo "</td></tr>\n";
 	echo "<tr><td valign='top' class='tablebg'>\n";
-	echo "<p>\n";
-	echo "<input type='text' name='res' value='$res' size='5'> Model Resolution<br />\n";
-	echo "<input type='text' name='apix' size='5' value='$apix'>\n";
-	echo "Pixel Size <font size='-2'>(in &Aring;ngstroms per pixel)</font><br />\n";
-	echo "<input type='text' name='box' size='5' value='$box'>\n";
-	echo "Box Size <font size='-2'>(in pixels)</font><br />\n";
+
+	echo "<input type='text' name='lowpass' value='$lowpass' size='5'>\n";
+	echo "&nbsp;Low pass filter\n";
+
+	echo "</td></tr>\n";
+	echo "<tr><td valign='top' class='tablebg'>\n";
+
 	echo "<input type='text' name='symm' size='5' value='$symm'>\n";
-	echo "Symmetry\n";
+	echo "&nbsp;Symmetry group <i>e.g.</i> c1\n";
 
 	echo "</td></tr>\n";
 	echo "<tr><td align='center'>\n";
+
 	echo "<hr>";
 	echo getSubmitForm("Create Model");
+
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo "</form>\n";
@@ -102,42 +109,31 @@ function runUploadModel() {
 	$command = "modelFromEMDB.py ";
 
 	$session=$_POST['sessionname'];
+	$lowpass=$_POST['lowpass'];
 
 	//make sure a emdb id was entered
 	$emdbid=$_POST['emdbid'];
   	if (!$emdbid) createForm("<B>ERROR:</B> Enter a EMDB ID");
 
-	//make sure a apix was provided
-	$apix=$_POST['apix'];
-	if (!$apix) createForm("<B>ERROR:</B> Enter the pixel size");
-
-	//make sure a resolution was provided
-	$res=$_POST['res'];
-	if (!$res) createForm("<B>ERROR:</B> Enter the model resolution");
-
-	//make sure a boxsize was provided
-	$box=$_POST['box'];
-	if (!$box) createForm("<B>ERROR:</B> Enter a box size");
-
-	//make sure a boxsize was provided
+	//make sure a symmetry group was provided
 	$symm=$_POST['symm'];
 	if (!$symm) createForm("<B>ERROR:</B> Enter a symmetry group");
 
 	if (!is_float($apix)) $apix = sprintf("%.2f", $apix);
-	if (!is_float($res)) $res = sprintf("%.1f", $res);
-	$filename = $emdbid.'-'.$apix.'-'.$res.'-'.$box;
+
 	// emdb id will be the runname
-	$runname = $_POST['runtime'];
-	$runname = $emdbid."_".$runname;
-	$rundir = $outdir."/".$runname;
+	$runtime = $_POST['runtime'];
+	$filename = "emdb".$emdbid."-".$runtime;
+	$runname = $filename;
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$rundir = $outdir.$runname;
 
 	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--runname=$runname ";
 	$command.="--emdbid=$emdbid ";
 	$command.="--session=$session ";
-	$command.="--apix=$apix ";
-	$command.="--resolution=$res ";
-	$command.="--box=$box ";
+	if ($lowpass)
+		$command.="--lowpass=$lowpass ";
 	$command.="--symm=$symm ";
 	
 	// submit job to cluster
@@ -147,7 +143,7 @@ function runUploadModel() {
 
 		if (!($user && $password)) createForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'downloadmodel',False);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'modelfromemdb',False);
 
 		// if errors:
 		if ($sub) createForm("<b>ERROR:</b> $sub");
@@ -162,23 +158,6 @@ function runUploadModel() {
 	echo "<b>DownloadModel Command:</b><br />\n";
 	echo "$command\n";
 	echo "<p>\n";
-	if (!file_exists($rundir.'/'.$filename.'.mrc')) {
-		echo "EM Density file to be created:<br />\n";
-		echo "$rundir/$filename.mrc</b><br />\n";
-		echo "<br/><h4>Refresh this page to go to the page that uploads this file once it is created</h4>";
-	}
-	else {
-		echo "EM Density file created:<br />\n";
-		$densityid = $particle -> getDensityIdFromFile($rundir,$filename.".mrc");
-		echo "<b><a href='densityreport.php?expId=$expId&densityId=$densityid'>$rundir/$filename.mrc</a></b><br />\n";
-		echo "<hr />\n";
-		$formAction="uploadmodel.php?expId=$expId";
-		$formAction.="&densityId=$densityid";
-		echo "<form name='uploadmodel' method='POST' ACTION='$formAction'>\n";
-		echo "<center><input type='submit' name='goUploadModel' value='Upload This Model'></center><br />\n";
-		echo "<font class='apcomment'>Remember that EMDB may not be oriented relative to any axis</font>\n";
-		echo "</form>\n";
-	}
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	processing_footer();

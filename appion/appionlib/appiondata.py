@@ -1110,6 +1110,7 @@ class ApInitialModelData(Data):
 			('description', str),
 			('hidden', bool),
 			('md5sum', str),
+			('mass', int),
 			('original density', Ap3dDensityData),
 			('original model', ApInitialModelData),
 		)
@@ -1148,6 +1149,7 @@ class Ap3dDensityData(Data):
 			('hard', int),
 			('sigma', float),
 			('maxjump', float),
+			('mass', int),
 		)
 	typemap = classmethod(typemap)
 
