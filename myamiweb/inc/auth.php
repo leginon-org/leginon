@@ -125,8 +125,102 @@ class authlib{
 		}
 
 	}
+	/*
+	 * This registation is for adminstrator manually create user
+	 * No email will be send out and no confirmation needed.
+	 */
+	function adminRegister($username, $firstname, $lastname, $title, $institution, $dept, 
+						$address, $city, $statecountry, $zip, $phone, $fax, $email, $url, 
+						$password, $password2, $groupId){
 
-	function updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, $password, $password2) {
+		if (empty($username) || empty($password) || empty($password2) || empty($email) || empty($lastname) || empty($firstname)) {
+			return $this->error['fields_empty'];
+
+		}
+
+		if (!eregi("^[a-z ]+$", $lastname)) {
+
+		return $this->error['name_invalid'];
+
+		}
+		
+		if(!eregi("^[0-9a-z ]+$", $firstname)) {
+
+			return $this->error['name_invalid'];
+
+		}
+		
+		$filterError = $this->filter_email($email);
+		
+		if(!empty($filterError))
+			return $filterError;
+			
+		$filterError = $this->filter_username($username);
+		
+		if(!empty($filterError))
+			return $filterError;
+			
+		if ($password != $password2) {
+
+			return $this->error['passwd_not_match'];
+
+		}
+
+		$filterError = $this->filter_password($password);
+		if(!empty($filterError))
+			return $filterError;
+
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+
+		if (!get_magic_quotes_gpc()) {
+			$username=addslashes($username);
+		}
+
+		$q="select DEF_id from UserData where username = '$username'";
+		$query = $dbc->SQLQuery($q);
+		$result = @mysql_num_rows($query);
+
+		if ($result > 0) {
+			return $this->error['username_exists'];
+		}
+
+		$fullname = $firstname . ' '. $lastname;
+		
+		$q = "insert into UserData (name, `full name`, username, firstname, lastname, 
+							`REF|GroupData|group`, password, email) 
+				  values ('$username', '$fullname', '$username', '$firstname', '$lastname'," . $groupId 
+							.", '$password', '$email')";
+			
+		if(!$dbc->SQLQuery($q)){
+
+			return $this->error['database_error'];		
+		}
+
+		$user = $this->getUserInfo($username);
+		
+		if(!empty($user)){
+			
+			$dbp=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+			
+			$userId = $user['DEF_id'];
+			$addUserDetails = "insert into userdetails (
+					  `REF|leginondata|UserData|user`, title, institution,
+					  dept, address, city, statecountry, zip, phone, fax, url) 
+					  values ($userId, '$title', '$institution', '$dept', 
+					  '$address', '$city', '$statecountry', '$zip', '$phone',
+					  '$fax', '$url')";	
+
+			if(!$dbp->SQLQuery($addUserDetails)){
+				return $this->error['database_error'];
+			}
+		}
+				
+		return 2;
+		
+	}
+	function updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, 
+						$address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, 
+						$password, $password2, $groupId=null) {
 
 		if (empty($firstname) || empty($lastname) || empty($email)) {
 
@@ -234,19 +328,33 @@ class authlib{
 			$this->updatePassword($userId, $password);
 		}
 		
+		if (!empty($groupId)){
+			$this->updateGroupId($userId, $groupId);
+		}
 		
 		return 2;
 	}
 
-	function updatePassword($userID, $password) {
+	function updatePassword($userId, $password) {
 
 		$dbc = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
-		$q = "update UserData set password = '$password' where DEF_id = $userID";
+		$q = "update UserData set password = '$password' where DEF_id = $userId";
 
 		if(!$dbc->SQLQuery($q))
 			return false;
 		return true;
+	}
+	
+	function updateGroupId($userId, $groupId){
+		$dbc = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+
+		$q = "update UserData set `REF|GroupData|group` = '$groupId' where DEF_id = $userId";
+
+		if(!$dbc->SQLQuery($q))
+			return false;
+		return true;
+		
 	}
 
 	function getUserInfo($username) {
@@ -269,6 +377,7 @@ class authlib{
 				join ".DB_LEGINON.".GroupData dg 
 					on du.`REF|GroupData|group` = dg.DEF_id
 				where du.username = '".$username."' ";
+			
 			list($r)=$dbc->getSQLResult($q);
 
 			return $r;
