@@ -208,7 +208,7 @@ def start():
 
 		### make aligned stack
 		if params['eotest'] is False:
-			command='clstoaligned.py ' + cls
+			command='clstoaligned.py -c' + cls
 		elif params['eotest']=='odd':
 			fw=open(cls,'r')
 			Ptcls = fw.readlines()
@@ -220,7 +220,7 @@ def start():
 				if i1%2==0:
 					fw.writelines(Ptcls[i1])
 			fw.close()
-			command='clstoaligned.py cls_odd.lst'
+			command='clstoaligned.py -c cls_odd.lst'
 		elif params['eotest']=='even':
 			fw=open(cls,'r')
 			Ptcls = fw.readlines()
@@ -232,7 +232,7 @@ def start():
 				if i1%2==1:
 					fw.writelines(Ptcls[i1])
 			fw.close()
-			command='clstoaligned.py cls_even.lst'
+			command='clstoaligned.py -c cls_even.lst'
 		apDisplay.printMsg(command)
 		proc = subprocess.Popen(command, shell=True)
 		proc.wait()
@@ -452,7 +452,7 @@ if __name__ == '__main__':
 	parser.add_option("--proc", dest="proc", type="int",
  		help="Number of processors", metavar="#")
 	### floats
-	parser.add_option("-c", "--cc-cut", dest="cccut", type="float", default=0.5
+	parser.add_option("-c", "--cc-cut", dest="cccut", type="float", default=0.5,
  		help="Cross-correlation cutoff", metavar="#")
 	### strings
 	parser.add_option("-s", "--sym", dest="sym",

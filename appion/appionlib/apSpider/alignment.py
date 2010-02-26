@@ -154,7 +154,7 @@ def runSymRelax(params,cls):
 	os.mkdir(clsdir)
 
 	# only align particles that passed coran
-	clscmd='clstoaligned.py ' + cls + ' eman clean\n\n'
+	clscmd='clstoaligned.py -c ' + cls + ' --format=eman --clean\n\n'
 
 	# create projections of related symmetries
 	projcmd = "python <<eof\n"
@@ -207,7 +207,7 @@ def runCoranClass(params,cls):
 	clsdir=cls.split('.')[0]+'.dir'
 	os.mkdir(clsdir)
 
-	clscmd='clstoaligned.py ' + cls
+	clscmd='clstoaligned.py -c ' + cls
 	## if multiprocessor, don't run clstoaligned yet
 	if params['proc'] == 1:
 		#make aligned stack
