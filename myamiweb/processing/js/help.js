@@ -181,6 +181,15 @@ var help = {
 		'defocus' : 'Nominal defocus of images in microns (i.e. -1.5)',
 		'kev' : 'High tension of the microscope in kilovolts (i.e. 120)',
 
+/******* Topology Alignment ********/
+		'startnumcls' : 'Number of classes to create in the first iteration. Each subsequent iteration will create fewer classes until the last iteration creates the ending number of classes',
+		'endnumcls' : 'Number of classes to create in the last iteration',
+		'topoliter' : 'Number of alignment iterations to perform',
+		'itermult' : 'Multiplier for determining number of times data will be presented to the network. Number of particles in your stack will by multiplied by this value to determine # of iterations (default=10.0)',
+		'learn' : 'Direct learning rate - fraction of the distance that a network node will move toward a presented data point. Higher values will make the learning more noisy but possibly explore more of "image space". Low values may prevent the network from accurately capturing your data. 0.01 suggested for cryo, higher for neg stain',
+		'ilearn' : 'Indirect learning rate - fraction of the distance that a network node connected to the highest scoring node will move toward that data point. This effect gives the network interesting "cohesive" properties and helps with classification. Should be lower than direct rate (default = 0.0005)',
+		'age' : 'Number of iterations an edge connecting two units can be unused before it is discarded. Higher values lead to a more connected network, but over-connecting can lead to inhibition of correct classification (i.e. 25)',
+
 /******* IMAGIC terms ********/
 
 		'lpfilt' : 'This should be about 1/10 to 1/50 of the particle diameter, <I>e.g.</I> for a particle with diameter 150 &Aring;, a low pass of 5-10 &Aring; works pretty well.<BR/><BR/> NOTE: Imagic uses filtering values between 0 and 1.  This parameter will be converted in the python script to between 0-1 for use in Imagic.',
