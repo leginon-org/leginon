@@ -105,15 +105,25 @@ class ChimSnapShots(object):
 		self.voldata.show('surface')
 		self.surfaces = openModels.list(modelTypes=[SurfaceModel])
 		self.setZoom()
+
 		### This does not work on CentOS and Chimera v1.2509, but does with Chimera v1.4
-		self.drawScaleBar()
+		if float(chimera.version.release) > 1.3:
+			### draw scale bar if version greater than 1.3
+			self.drawScaleBar()
+		else:
+			self.writeMessageToLog("Skipping scale bar")
 
 	# -----------------------------------------------------------------------------
 	def setZoom(self):
 		self.writeMessageToLog("Setting zoom")
 		surf = self.surfaces[0]
 		rc = Radial_Color()
-		rmin, rmax = rc.value_range(surf.surfacePieces[0])
+		try:
+			rmin, rmax = rc.value_range(surf.surfacePieces[0])
+		except:
+			#keep for older version of chimera, e.g. v1.2509
+			vertices, triangles = surf.surfacePieces[0].geometry
+			rmin, rmax = rc.value_range(vertices, vertex_xform=None)
 		while rmax is None:
 			self.writeMessageToLog("Contour %.2f is too big, no surface is shown"%(self.contour))
 			self.contour *= 0.9
@@ -121,7 +131,12 @@ class ChimSnapShots(object):
 			self.voldata.show('surface')
 			self.surfaces = openModels.list(modelTypes=[SurfaceModel])
 			surf = self.surfaces[0]
-			rmin, rmax = rc.value_range(surf.surfacePieces[0])
+			try:
+				rmin, rmax = rc.value_range(surf.surfacePieces[0])
+			except:
+				#keep for older version of chimera, e.g. v1.2509
+				vertices, triangles = surf.surfacePieces[0].geometry
+				rmin, rmax = rc.value_range(vertices, vertex_xform=None)
 		## ten percent bigger to ensure that entire particle is in frame
 		chimera.viewer.viewSize = 1.1*rmax/self.zoom
 		#self.runChimCommand('scale %.3f' % self.zoom)
@@ -156,7 +171,12 @@ class ChimSnapShots(object):
 		self.writeMessageToLog("Color radially")
 		rc = Radial_Color()
 		rc.origin = [0,0,0]
-		rmin, rmax = rc.value_range(surf.surfacePieces[0])
+		try:
+			rmin, rmax = rc.value_range(surf.surfacePieces[0])
+		except:
+			#keep for older version of chimera, e.g. v1.2509
+			vertices, triangles = surf.surfacePieces[0].geometry
+			rmin, rmax = rc.value_range(vertices, vertex_xform=None)
 		rrange = rmax-rmin
 		self.writeMessageToLog("%.3f,%.3f"%(rmin,rmax))
 		#key: red,green,blue,opacity
@@ -176,7 +196,12 @@ class ChimSnapShots(object):
 		self.writeMessageToLog("Color by height")
 		hc = Height_Color()
 		hc.origin = [0,0,0]
-		hmin, hmax = hc.value_range(surf.surfacePieces[0])
+		try:
+			hmin, hmax = hc.value_range(surf.surfacePieces[0])
+		except:
+			#keep for older version of chimera, e.g. v1.2509
+			vertices, triangles = surf.surfacePieces[0].geometry
+			hmin, hmax = hc.value_range(vertices, vertex_xform=None)
 		hrange = hmax-hmin
 		self.writeMessageToLog("%.3f,%.3f"%(hmin,hmax))
 		#key: red,green,blue,opacity
@@ -195,7 +220,12 @@ class ChimSnapShots(object):
 	def color_surface_cylinder(self, surf):
 		self.writeMessageToLog("Color cylindrically")
 		cc = Cylinder_Color()
-		cmin, cmax = cc.value_range(surf.surfacePieces[0])
+		try:
+			cmin, cmax = rc.value_range(surf.surfacePieces[0])
+		except:
+			#keep for older version of chimera, e.g. v1.2509
+			vertices, triangles = surf.surfacePieces[0].geometry
+			cmin, cmax = cc.value_range(vertices, vertex_xform=None)
 		if cmin is None:
 			cmin = 0
 		if cmax is None:
@@ -741,15 +771,8 @@ class ChimSnapShots(object):
 		if self.fileformat is None:
 			self.fileformat = "mrc"
 		### write to log
-		variables = (
-			'CHIMVOL', 'CHIMTEMPVOL', 'CHIMSYM', 'CHIMCONTOUR', 'CHIMCOLORS',
-			'CHIMTYPE', 'CHIMSILHOUETTE', 'CHIMBACK', 'CHIMZOOM', 'CHIMIMGSIZE',
-			'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
-		)
-	
+		self.writeMessageToLog("Chimera version: %s"%(chimera.version.version))
 		self.writeMessageToLog("Environmental data: ")
-		#for var in variables:
-		#	self.writeMessageToLog("export %s=%s"%(var, os.environ.get(var)))
 		for var in os.environ.keys():
 			if var[:4] == "CHIM":
 				if os.environ.get(var) is not None:
