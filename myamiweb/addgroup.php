@@ -23,7 +23,7 @@ switch ($_POST['bt_action']) {
 			}
 			$data['name'] = $f_name;
 			$data['description'] = $f_description;
-			$data['privilege'] = $f_privilegeId;
+			$data['REF|projectdata|privileges|privilege'] = $f_privilegeId;
 			
 			if ($id) {
 				$where['DEF_id'] = $id;
@@ -39,8 +39,8 @@ switch ($_POST['bt_action']) {
 			break;
 }
 
-
 $info = $leginondata->getDataInfo($maintable, $id);
+
 $info = $info[0];
 if ($info) {
 	$f_name=$info['name'];
