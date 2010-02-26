@@ -230,7 +230,11 @@ if __name__ == '__main__':
 	if sys.argv[1] == 'server':
 		startServer()
 	elif sys.argv[1] == 'client':
-		c = Client()
+		if len(sys.argv) == 3:
+			host = sys.argv[2]
+		else:
+			host = ''
+		c = Client(host)
 		print c.setOne('Sim TEM', 'StagePosition', {'x':0.0005})
 		print c.getOne('Sim TEM', 'StagePosition')
 
