@@ -17,6 +17,7 @@ import re
 import subprocess
 from appionlib import appionScript
 from appionlib import appiondata
+from appionlib import apImagicFile
 from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import apFile
@@ -176,7 +177,8 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		f.write("FRESH_MSA\n")
 		f.write(str(self.params['MSAdistance'])+"\n")
 		f.write("start\n")
-		f.write("NO\n")
+		if self.params['nproc'] > 1:
+			f.write("NO\n")
 		f.write("NO\n")
 		f.write("msamask\n")
 		f.write("eigenimages\n")
@@ -257,6 +259,8 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 				proc.wait()
 				proc = subprocess.Popen(lnkcmd2, shell=True)
 				proc.wait()
+				### header bug
+				apImagicFile.setMachineStampInImagicHeader(os.path.join(self.params['rundir'], "start.hed"))
 			else:
 				apDisplay.printColor("aligned stack already exists in working directory", "green")
 
