@@ -1,8 +1,15 @@
 #!/usr/bin/env python
 '''
 Defines the pyscope server and client protocol.
+Data are converted to pickles and passed over socket.
 
-Test
+Test procedure:
+This is a self contained executable python script.  It can start either
+a server or a client.  To start a server, run the following command line:
+	remote.py server
+To start client:
+	remote.py client id host
+In these test cases, port number is fixed: 55555
 '''
 
 import SocketServer
@@ -16,20 +23,43 @@ import traceback
 SERVER_PORT = 55555
 
 class PyscopeData(object):
-	'Base class for all data passed between client and server'
+	'''Base class for all data passed between client and server'''
+	def __init__(self):
+		self.client = None
+
+class LoginRequest(PyscopeData):
+	'''request login to a pyscope server'''
+	def __init__(self, status):
+		PyscopeData.__init__(self)
+		self.status = status
+
+class LoginResponse(PyscopeData):
+	'''server response to client login request'''
+	def __init__(self, status):
+		PyscopeData.__init__(self)
+		self.status = status
+
+class UnauthorizedRequest(PyscopeData):
+	'''Response to an unauthorized request'''
+	def __init__(self, reason):
+		PyscopeData.__init__(self)
+		self.reason = reason
+
+class CapabilityRequest(PyscopeData):
+	'''request the set of capabilities provided by server'''
 	pass
+
+class CapabilityResponse(PyscopeData, dict):
+	'''response with set of capabilities provided by server'''
+	def __init__(self, initializer={}):
+		PyscopeData.__init__(self)
+		dict.__init__(self, initializer)
 
 class InstrumentData(PyscopeData):
 	'Base class for instrument specific data'
 	def __init__(self, instrument):
+		PyscopeData.__init__(self)
 		self.instrument = instrument
-
-class CapabilityRequest(PyscopeData):
-	pass
-
-class CapabilityResponse(PyscopeData, dict):
-	def __init__(self, initializer={}):
-		dict.__init__(self, initializer)
 
 class GetRequest(list, InstrumentData):
 	def __init__(self, instrument, sequence=[]):
@@ -52,9 +82,9 @@ class SetResponse(dict, InstrumentData):
 		InstrumentData.__init__(self, instrument)
 
 class CallRequest(InstrumentData):
-	def __init__(self, instrument, name, *args, **kwargs):
+	def __init__(self, instrument, method, *args, **kwargs):
 		InstrumentData.__init__(self, instrument)
-		self.name = name
+		self.method = method
 		self.args = args
 		self.kwargs = kwargs
 
@@ -94,14 +124,82 @@ class InstrumentRequestHandler(PickleRequestHandler):
 		self.instruments = self.server.instruments
 
 	def handle_object(self, request):
+		if isinstance(request, LoginRequest):
+			return self.handle_login(request)
+
+		status = self.getClientStatus(request.client)
+		if status is None:
+			return self.handle_unauthorized(request, 'not logged in')
+
+		## any loged in client can make these requests
 		if isinstance(request, GetRequest):
 			return self.handle_get(request)
-		elif isinstance(request, SetRequest):
-			return self.handle_set(request)
-		elif isinstance(request, CallRequest):
-			return self.handle_call(request)
-		elif isinstance(request, CapabilityRequest):
+		if isinstance(request, CapabilityRequest):
 			return self.handle_capability(request)
+
+		if status != 'controller':
+			return self.handle_unauthorized(request, 'not controller')
+
+		## controllers only past this point
+		if isinstance(request, SetRequest):
+			return self.handle_set(request)
+		if isinstance(request, CallRequest):
+			return self.handle_call(request)
+
+	def getClientStatus(self, client):
+		if client in self.server.clients:
+			return self.server.clients[client]['status']
+		else:
+			return None
+
+	def handle_unauthorized(self, request, reason):
+		response = UnauthorizedResponse(reason=reason)
+		return response
+
+	def handle_login(self, request):
+		server_clients = self.server.clients
+		client = request.client
+		newstatus = request.status
+		if client in server_clients:
+			oldstatus = server_clients[client]['status']
+		else:
+			oldstatus = None
+
+		old_controller = self.server.controller
+		new_controller = None
+
+		## The following cases reject requested status
+		if newstatus not in ('controller', 'observer', 'logout'):
+			print 'REJECT', client, newstatus
+			## unknown status
+			newstatus = oldstatus
+		elif newstatus == 'controller' and old_controller is not None:
+			print 'REJECT', client, newstatus
+			## reject controller request if already have a controller
+			newstatus = oldstatus
+
+		## The following cases update server.controller if necessary
+		if newstatus == 'controller':
+			## New controller
+			self.server.controller = client
+			print 'NEW CONTROLLER', client
+		elif oldstatus == 'controller':
+			## Was controller, but not anymore
+			self.server.controller = None
+			print 'QUIT CONTROLLER', client
+
+		## update server.clients and generate response
+		if newstatus == 'logout':
+			if client in server_clients:
+				del server_clients[client]
+			print 'LOGOUT', client
+		else:
+			if client not in server_clients:
+				server_clients[client] = {}
+			server_clients[client]['status'] = newstatus
+			print 'STATUS', client, newstatus
+		response = LoginResponse(status=newstatus)
+		return response
 
 	def handle_capability(self, request):
 		caps = self.instruments.getCapabilities()
@@ -135,7 +233,7 @@ class InstrumentRequestHandler(PickleRequestHandler):
 
 	def handle_call(self, request):
 		instrument = self.instruments[request.instrument]
-		attr = request.name
+		attr = request.method
 		args = request.args
 		kwargs = request.kwargs
 		try:
@@ -150,6 +248,8 @@ class Server(SocketServer.TCPServer):
 	def __init__(self, *args, **kwargs):
 		SocketServer.TCPServer.__init__(self, *args, **kwargs)
 		self.instruments = Instruments()
+		self.clients = {}
+		self.controller = None
 
 class Instruments(dict):
 	'''This instantiates all configured instruments'''
@@ -171,9 +271,18 @@ class Instruments(dict):
 		return caps
 
 class Client(PickleHandler):
-	def __init__(self, host='', port=SERVER_PORT):
+	def __init__(self, id, status, host='', port=SERVER_PORT):
+		self.id = id
 		self.host = host
 		self.port = port
+		self.login(status)
+
+	def __del__(self):
+		try:
+			self.logout()
+			PickleHandler.__del__(self)
+		except:
+			pass
 
 	def connect(self):
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -186,39 +295,46 @@ class Client(PickleHandler):
 		self.rfile.close()
 
 	def doRequest(self, request):
+		request.client = self.id
 		self.connect()
 		self.writeObject(request)
 		response = self.readObject()
 		self.disconnect()
-
 		return response
+
+	def login(self, status):
+		req = LoginRequest(status)
+		response = self.doRequest(req)
+		if response.status != status:
+			raise Exception('unable to log in with status "%s"' % (status,))
+
+	def logout(self):
+		req = LoginRequest('logout')
+		response = self.doRequest(req)
+		if response.status != req.status:
+			print 'AAAAAAAAAAAAAAAAA'
+			raise Exception('unable to log out')
 
 	def getCapabilities(self):
 		req = CapabilityRequest()
 		caps = self.doRequest(req)
 		return caps
 
-	def setOne(self, instrument, property, value):
-		req = SetRequest(instrument, {property: value})
-		response = self.doRequest(req)
-		response = response[property]
-		return response
-
-	def getOne(self, instrument, property):
-		req = GetRequest(instrument, [property])
-		response = self.doRequest(req)
-		response = response[property]
-		return response
-
-	def setMany(self, instrument, property_dict):
+	def set(self, instrument, property_dict):
 		req = SetRequest(instrument, property_dict)
 		response = self.doRequest(req)
 		return response
 
-	def getMany(self, instrument, property_list):
+	def get(self, instrument, property_list):
 		req = GetRequest(instrument, property_list)
 		response = self.doRequest(req)
 		return response
+
+	def call(self, instrument, method, *args, **kwargs):
+		req = CallRequest(instrument, method, *args, **kwargs)
+		response = self.doRequest(req)
+		return response
+
 
 def startServer():
 	addr = ('', 55555)
@@ -230,13 +346,21 @@ if __name__ == '__main__':
 	if sys.argv[1] == 'server':
 		startServer()
 	elif sys.argv[1] == 'client':
-		if len(sys.argv) == 3:
-			host = sys.argv[2]
+		id = sys.argv[2]
+		status = sys.argv[3]
+		if len(sys.argv) == 5:
+			host = sys.argv[4]
 		else:
 			host = ''
-		c = Client(host)
-		print c.setOne('Sim TEM', 'StagePosition', {'x':0.0005})
-		print c.getOne('Sim TEM', 'StagePosition')
-
-		print c.getMany('Sim TEM', ['StagePosition','SpotSize','dummy'])
-
+		c = Client(id, status, host)
+		print ''
+		print c.set('Sim TEM', {'StagePosition': {'x':0.0005}})
+		print ''
+		print c.get('Sim TEM', ['StagePosition'])
+		print ''
+		print c.get('Sim TEM', ['StagePosition','SpotSize','dummy'])
+		print ''
+		print c.call('Sim TEM', 'resetDefocus')
+		print ''
+		import time
+		time.sleep(2)
