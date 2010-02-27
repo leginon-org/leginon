@@ -109,7 +109,7 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	os.environ['CHIMTEMPVOL'] = tmpf
 
 	if mass is not None:
-		setVolumeMass(tmpf, apix, mass)
+		setVolumeMass(tmpf, apix*shrinkby, mass)
 		contour = 1.0
 
 	### render images
