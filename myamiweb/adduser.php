@@ -2,7 +2,7 @@
 
 require_once "inc/admin.inc";
 require_once "inc/user.inc.php";
-require_once("inc/leginon.inc");
+
 
 admin_header('onload="init()"');
 
