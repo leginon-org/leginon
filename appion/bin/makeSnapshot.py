@@ -59,14 +59,15 @@ class MakeSnapshotScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
+		if self.params['file'] is None:
+			apDisplay.printError("Enter a file name, e.g. -f threed.20a.mrc")
+		if not os.path.isfile(self.params['file']):
+			apDisplay.printError("File not found: "+self.params['file'])
 		self.params['commit'] = False
 		if self.params['sym'] is None:
 			apDisplay.printError("Enter a symmetry group, e.g. d7, c1, c4, or icos")
-		if self.params['file'] is None:
-			apDisplay.printError("Enter a file name, e.g. -f threed.20a.mrc")
 		if self.params['mass'] is not None and self.params['apix'] is None:
 			apDisplay.printError("Please provide apix if using mass based threshold")
-
 		if not os.path.isfile(self.params['file']):
 			apDisplay.printError("Could not find file: "+self.params['file'])
 		self.params['file'] = os.path.abspath(self.params['file'])
