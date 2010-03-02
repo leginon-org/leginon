@@ -50,6 +50,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	// remove commas from number
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
+	$javascript .= "	document.viewerform.clipdiam.value = stackArray[2];\n";
 	// set max last ring radius
 	$javascript .= "	var bestbin = Math.floor(stackArray[2]/64);\n";
 	$javascript .= "	if (bestbin < 1) {\n";
@@ -69,10 +70,8 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		}
 		function estimatetime() {
 			var secperiter = 0.12037;
-			var stackval = document.viewerform.stackval.value;
-			var stackArray = stackval.split('|--|');
 			var numpart = document.viewerform.numpart.value;
-			var boxsize = stackArray[2];
+			var boxsize = document.viewerform.clipdiam.value;
 			var numpix = Math.pow(boxsize/document.viewerform.bin.value, 2);
 			var calctime = (numpart/1000.0) * document.viewerform.numref.value * numpix * secperiter / document.viewerform.angle.value / (document.viewerform.nproc.value - 1);
 			if (document.viewerform.mirror.checked) {
@@ -129,6 +128,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$numref = ($_POST['numref']) ? $_POST['numref'] : '2';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '4';
 	$angle = ($_POST['angle']) ? $_POST['angle'] : '5';
+	$clipdiam = ($_POST['clipdiam']) ? $_POST['clipdiam'] : '';
 	$maxiter = ($_POST['maxiter']) ? $_POST['maxiter'] : '30';
 	$mirror = ($_POST['mirror']=='on' || !$_POST['mirror']) ? 'checked' : '';
 	$fast = ($_POST['fast']=='on' || !$_POST['fast']) ? 'checked' : '';
@@ -182,14 +182,33 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<TD CLASS='tablebg'>\n";
 	echo "  <TABLE cellpading='5' BORDER='0'>\n";
 	echo "  <TR><TD VALIGN='TOP'>\n";
-	//echo "<B>Particle Params:</B></A><br>\n";
 
-	echo "<b>Particle-specific Radii (in &Aring;ngstroms)</b>\n";
-	echo "<br />\n";
 	if  (!$apix) {
         	echo "<font color='#DD3333' size='-2'>WARNING: These values will not be checked!<br />\n";
 		echo "Make sure you are within the limitations of the box size</font><br />\n";
 	}
+
+	echo "<br/>\n";
+	echo "<b>Limiting numbers</b>\n";
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='text' NAME='clipdiam' VALUE='$clipdiam' SIZE='4' onChange='estimatetime()'>\n";
+	echo docpop('clipdiam','Clip diameter');
+	echo "<font size='-2'>(pixels)</font>\n";
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4' onChange='estimatetime()'>\n";
+	echo docpop('partbin','Particle binning');
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4' onChange='estimatetime()'>\n";
+	echo docpop('numpart','Number of Particles');
+	echo "<br/>\n";
+
+	echo "<br/>\n";
+	echo "<b>Filters</b>\n";
+	echo "<br/>\n";
+
 	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lowpass' onChange='estimatetime()'>\n";
 	echo docpop('lpstackval','Low Pass Filter Radius');
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
@@ -200,12 +219,8 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4' onChange='estimatetime()'>\n";
-	echo docpop('partbin','Particle binning');
 	echo "<br/>\n";
-
-	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4' onChange='estimatetime()'>\n";
-	echo docpop('numpart','Number of Particles');
+	echo "<b>Job parameters</b>\n";
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='numref' VALUE='$numref' SIZE='4' onChange='estimatetime()'>\n";
@@ -220,14 +235,14 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo docpop('xmippmaxiter','Maximum number of iterations');
 	echo "<br/>\n";
 
-	echo "<br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='mirror' onChange='estimatetime()' $mirror>\n";
 	echo docpop('mirror','Use Mirrors in Alignment');
 	echo "<br/>\n";
+	echo "<br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='fast' onClick='estimatetime(this)' checked disabled>\n";
-	echo docpop('fastmode','Use Fast Mode');
+	echo docpop('fastmode','Fast Mode Setting');
 	echo "<br/>\n";
 
 	echo "Search space reduction criteria";
@@ -239,6 +254,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo " <option value='narrow'>Faster, narrower search</option>\n";
 	echo " <option value='wide'>Slower, wider search</option>\n";
 	echo "</select>\n";
+	echo "<br/>\n";
 	echo "<br/>\n";
 
 	echo "Convergence stopping criteria";
@@ -286,6 +302,7 @@ function runMaxLikeAlign() {
 	$numpart=$_POST['numpart'];
 	$numref=$_POST['numref'];
 	$angle=$_POST['angle'];
+	$clipdiam=$_POST['clipdiam'];
 	$maxiter=$_POST['maxiter'];
 	$bin=$_POST['bin'];
 	$description=$_POST['description'];
@@ -320,7 +337,11 @@ function runMaxLikeAlign() {
 	$totprtls=$particle->getNumStackParticles($stackid);
 	if ($numpart > $totprtls)
 		createMaxLikeAlignForm("<B>ERROR:</B> Number of particles to align ($numpart)"
-			." must be less than the number of particles in the stack ($totprtls)");
+			." must be less than or equal to the number of particles in the stack ($totprtls)");
+
+	if ($clipdiam > $boxsz)
+		createMaxLikeAlignForm("<B>ERROR:</B> Clipping diameter ($clipdiam pixels)"
+			." must be less than  or equal to the stack boxsize ($boxsz pixels)");
 
 	// determine calc time
 	$stackdata = $particle->getStackParams($stackid);
@@ -347,6 +368,7 @@ function runMaxLikeAlign() {
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";
+	if ($clipdiam != '') $command.="--clip=$clipdiam ";
 	if ($lowpass != '') $command.="--lowpass=$lowpass ";
 	if ($highpass != '') $command.="--highpass=$highpass ";
 	$command.="--num-part=$numpart ";
