@@ -335,7 +335,7 @@ class TopologyRepScript(appionScript.AppionScript):
 			self.params['mask']
 		)
 		if self.params['nproc'] > 1:
-			apEMAN.executeRunpar(emancmd,self.params['nproc'])
+			apEMAN.executeRunpar(emancmd, self.params['nproc'])
 		else:
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 
