@@ -912,6 +912,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### create an edge map for edge statistics
 		box = int(self.params['boxsize'])
+		### use a radius one pixel less than the boxsize
 		self.edgemap = imagefun.filled_circle((box,box), box/2.0-1.0)
 
 	#=====================
