@@ -54,8 +54,8 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$javascript .= "	var mask = Math.floor((stackArray[2]/2)-2);\n";
 	$javascript .= "	document.viewerform.mask.value = mask;\n";
 	// set starting & ending # of classes
-	$javascript .= "	var strcls = Math.ceil(stackArray[3]/10);\n";
-	$javascript .= "	var endcls = Math.ceil(stackArray[3]/30);\n";
+	$javascript .= "	var strcls = Math.ceil(Math.sqrt(stackArray[3]));\n";
+	$javascript .= "	var endcls = Math.ceil(Math.sqrt(stackArray[3])/4);\n";
 	$javascript .= "	document.viewerform.startnumcls.value = strcls;\n";
 	$javascript .= "	document.viewerform.endnumcls.value = endcls;\n";
 	$javascript .= "	estimatetime();\n";
