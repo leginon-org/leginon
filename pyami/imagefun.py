@@ -112,9 +112,15 @@ def clip_power(pow,thresh=3):
 	return pow
 
 def filled_circle(shape, radius, center=None):
+	"""
+	creates a circle mask of defined radius and center 
+	in an array of the provided shape
+	with value of 0 inside the circle and 1 outside the circle
+	"""
 	r2 = radius*radius
 	if center is None:
-		center = shape[0]/2.0-0.5,shape[1]/2.0-0.5
+		### set to center of array
+		center = (shape[0]-1)/2.0,(shape[1]-1)/2.0
 	def func(i0, i1):
 		ii0 = i0 - center[0]
 		ii1 = i1 - center[1]
