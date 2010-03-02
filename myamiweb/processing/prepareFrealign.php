@@ -512,7 +512,6 @@ function prepareFrealign ($extra=False) {
 	$numiter=$_POST['numiter'];
 	$inpar=$_POST['inparfile'];
 	$importiter=$_POST['importiter'];
-	$last=$_POST['last'];	
 
 	$cmd = "prepFrealign.py ";
 	$cmd.= "--runname=$runname ";
@@ -531,7 +530,6 @@ function prepareFrealign ($extra=False) {
 	$cmd.= "--boff=$boff ";
 	$cmd.= "--itmax=$itmax ";
 	$cmd.= "--ipmax=$ipmax ";
-	//$cmd.= "--last=$last ";
 	$cmd.= "--sym=$sym ";
 	$cmd.= "--target=$target ";
 	$cmd.= "--thresh=$thresh ";
@@ -542,7 +540,7 @@ function prepareFrealign ($extra=False) {
 	$cmd.= "--cluster ";
 	$cmd.= "--ppn=$ppn ";
 	$cmd.= "--nodes=$nodes ";
-	$cmd.= "--last=$last ";
+	if ($last) $cmd.= "--last=$last ";
 
 	// submit job to cluster
 	if ($_POST['process'] == "Prepare Frealign") {
