@@ -11,13 +11,12 @@ $is_admin = (privilege('users')>3);
 
 $userId = $_GET['id'];
 $groups = $leginondata->getGroups('name');
-
+$userdata = new user();
 
 	// if userId is not null, setup variables for edit user.
 	// otherwise setup variable for add new user
 	if($userId){
 		$action="update";
-		$userdata = new user();
 		$userinfo = $userdata->getUserInfo($userId);
 
 	}else
@@ -55,6 +54,7 @@ if($_POST){
 	}
 	else{
 		$submitResult = '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">Your update has been submitted.</font></p>';
+		$userId = $userdata->getUserIdByUsername($username);
 		$userinfo = $userdata->getUserInfo($userId);
 	}
 			

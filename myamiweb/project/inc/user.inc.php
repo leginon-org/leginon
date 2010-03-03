@@ -138,7 +138,7 @@ class user {
 	}
 
 	function getUserId($firstname, $lastname){
-		$q='select `DEF_id` as userId from '.DB_LEGINON.'UserData where `firstname`="'.$firstname.' and `lastname` = "'.$lastname.'"';
+		$q='select `DEF_id` as userId from '.DB_LEGINON.'.UserData where `firstname`="'.$firstname.' and `lastname` = "'.$lastname.'"';
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -195,6 +195,14 @@ class user {
 			$name=$lname." ".$fname;
 		}
 		return $name;
+	}
+	
+	function getUserIdByUsername($username){
+		$q='select `DEF_id` as userId from '.DB_LEGINON.'.UserData 
+				where `username`="'.$username. '"';
+		
+		$result = $this->mysql->getSQLResult($q);
+		return $result[0]['userId'];
 	}
 
 }
