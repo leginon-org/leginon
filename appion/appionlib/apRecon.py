@@ -630,10 +630,12 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 				prtlaliq['mirror']=True
 
 			# SPIDER coran kept particle
+			corank =	None
 			if params['package']== 'EMAN/SpiCoran':
-				corank=bool(int(other[4]))
-			else:
-				corank=None
+				if len(other) > 4:
+					corank=bool(int(other[4]))
+				else:
+					apDisplay.printWarning("Coran failed on this iteration")
 
 			# message passing kept particle
 			if params['package']== 'EMAN/MsgP' and len(ali) > 4:
