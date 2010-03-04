@@ -46,7 +46,7 @@ class particledata {
 	function getSessionData ($sessionId) {
 		$q = "SELECT "
 		  ."s.* "
-		  ."FROM ".DB.".SessionData as s "
+		  ."FROM ".DB_LEGINON.".SessionData as s "
 		  ."WHERE "
 		  ."  s.`DEF_id` = ".$sessionId." ";
 		//echo $q."<br/><br/>\n";
@@ -234,7 +234,7 @@ class particledata {
 			."ON a.`REF|ApImodXcorrParamsData|coarseImodParams` = imod.`DEF_id` "
 			."LEFT JOIN `ApTiltsInAlignRunData` tia "
 			."ON tia.`REF|ApTomoAlignmentRunData|alignrun` = a.`DEF_id` "
-			."LEFT JOIN ".DB.".`TiltSeriesData` tilt ON tia.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
+			."LEFT JOIN ".DB_LEGINON.".`TiltSeriesData` tilt ON tia.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
 			."WHERE a.`DEF_id` = " .$alignrunId;
 		list($r) = $this->mysql->getSQLResult($q);
 		if ($r['protomoid']) {
@@ -366,7 +366,7 @@ class particledata {
 		} else {
 			$q .= "LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` ";
 		}
-		$q .= "LEFT JOIN ".DB.".`TiltSeriesData` tilt ON t.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
+		$q .= "LEFT JOIN ".DB_LEGINON.".`TiltSeriesData` tilt ON t.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
 			."WHERE t.`DEF_id` = " .$tomogramId;
 		list($r) = $this->mysql->getSQLResult($q);
 		if (!$r['runname']) {
@@ -394,7 +394,7 @@ class particledata {
 			." p.`path` "
 			."FROM `ApTomogramData` t "
 			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
-			."LEFT JOIN ".DB.".`TiltSeriesData` tilt ON t.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
+			."LEFT JOIN ".DB_LEGINON.".`TiltSeriesData` tilt ON t.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
 			."LEFT JOIN `ApParticleData` prtl ON t.`REF|ApParticleData|center` = prtl.`DEF_id` "
 			."WHERE t.`DEF_id` = " .$tomogramId;
 		list($r) = $this->mysql->getSQLResult($q);
@@ -405,14 +405,14 @@ class particledata {
 		$q = "SELECT "
 			.$centerx." + p1.`SUBD|predicted shift|x` - p0.`SUBD|predicted shift|x` as x, "
 			.$centery." + p1.`SUBD|predicted shift|y` - p0.`SUBD|predicted shift|y` as y "
-			."FROM ".DB.".`TomographyPredictionData` p0 "
+			."FROM ".DB_LEGINON.".`TomographyPredictionData` p0 "
 			."LEFT JOIN "
 			. "(SELECT * "
-			."FROM ".DB.".`AcquisitionImageData` image0 "
+			."FROM ".DB_LEGINON.".`AcquisitionImageData` image0 "
 			."WHERE image0.`REF|TiltSeriesData|tilt series` = ".$tiltseriesid." "
 			."ORDER BY image0.`DEF_timestamp` ASC limit 1 ) image0 "
 			."ON p0.`REF|AcquisitionImageData|image` = image0.`DEF_id` "
-			.", ".DB.".`TomographyPredictionData` p1 "
+			.", ".DB_LEGINON.".`TomographyPredictionData` p1 "
 			."WHERE p1.`REF|AcquisitionImageData|image`=$image1id "
 			."";
 		list($r) = $this->mysql->getSQLResult($q);
@@ -599,7 +599,7 @@ class particledata {
 		$query = "SELECT `DEF_id` as id, "
 			."UNIX_TIMESTAMP(DEF_timestamp) as timestamp, "
 			."`number` "
-			."FROM ".DB.".`TiltSeriesData` "
+			."FROM ".DB_LEGINON.".`TiltSeriesData` "
 			."WHERE `REF|SessionData|session`=".$sessionId." "
 			."ORDER BY DEF_timestamp "
 			." ";
@@ -720,12 +720,12 @@ class particledata {
 			."a.`filename` as filename, "
 			."a.`DEF_id` as imageid, "
 			."t.`number` as number "
-			."FROM ".DB.".`AcquisitionImageData` a "
-			."left join ".DB.".`TiltSeriesData` t "
+			."FROM ".DB_LEGINON.".`AcquisitionImageData` a "
+			."left join ".DB_LEGINON.".`TiltSeriesData` t "
 			."on (a.`REF|TiltSeriesData|tilt series`= t.`DEF_id`) "
-			."left join ".DB.".`PresetData` pd "
+			."left join ".DB_LEGINON.".`PresetData` pd "
 			."on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
-			.", ".DB.".`PixelSizeCalibrationData` pc "
+			.", ".DB_LEGINON.".`PixelSizeCalibrationData` pc "
 			."WHERE a.`REF|TiltSeriesData|tilt series`='$tiltseriesId' "
 			."AND pc.`REF|InstrumentData|tem`= pd.`REF|InstrumentData|tem` "
 			."AND pc.`magnification`= pd.`magnification` "
@@ -876,8 +876,8 @@ class particledata {
 			."c.`graph2` , "
 			."(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 			."from ApCtfData c left join ApAceRunData r on (c.`REF|ApAceRunData|acerun` = r.`DEF_id`) "
-			."left join ".DB.".AcquisitionImageData i on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
-			."left join ".DB.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+			."left join ".DB_LEGINON.".AcquisitionImageData i on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
+			."left join ".DB_LEGINON.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."where i.`REF|SessionData|session`='$sessionId' ";
 			if ($runId)
 				$q .= "and r.`DEF_id`='$runId' ";
@@ -933,9 +933,9 @@ class particledata {
 			."from ApCtfData c "
 			."left join(ApAceRunData r, ApPathData p) "
 			."on ( r.DEF_id=c.`REF|ApAceRunData|acerun` and p.DEF_id=r.`REF|ApPathData|path`) "
-			."left join ".DB.".AcquisitionImageData i "
+			."left join ".DB_LEGINON.".AcquisitionImageData i "
 			."on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
-			."left join ".DB.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+			."left join ".DB_LEGINON.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
 		$q .= " AND c.`graph1` IS NOT NULL ";
 		$q .= "ORDER BY (c.`confidence`*c.`confidence_d`) DESC";
@@ -962,13 +962,13 @@ class particledata {
 			."		c.`confidence`,c.`confidence_d` , "
 			."		(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 			."	from `ApCtfData` c "
-			."	left join ".DB.".`AcquisitionImageData` i on (i.`DEF_id` = c.`REF|leginondata|AcquisitionImageData|image`) "
-			."	left join ".DB.".`PresetData` p on (p.DEF_id = i.`REF|PresetData|preset`) "
-			."	left join ".DB.".`ScopeEMData` s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+			."	left join ".DB_LEGINON.".`AcquisitionImageData` i on (i.`DEF_id` = c.`REF|leginondata|AcquisitionImageData|image`) "
+			."	left join ".DB_LEGINON.".`PresetData` p on (p.DEF_id = i.`REF|PresetData|preset`) "
+			."	left join ".DB_LEGINON.".`ScopeEMData` s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."	where "
 			."	c.`REF|leginondata|AcquisitionImageData|image` in  "
 			."	( "
-			."		select a.`DEF_id` from ".DB.".`AcquisitionImageData` a  "
+			."		select a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` a  "
 			."		where a.`REF|SessionData|session`='$sessionId'  "
 			."		  AND  "
 			."		 ABS(s.`SUBD|stage position|a`) < 0.9  "
@@ -1000,11 +1000,11 @@ class particledata {
 		$stats = array();
 		foreach ($selects as $k=>$select) {
 			$q =	"select ".$select." "
-			."from ApCtfData c left join ".DB.".AcquisitionImageData i "
+			."from ApCtfData c left join ".DB_LEGINON.".AcquisitionImageData i "
 			."on (c.`REF|leginondata|AcquisitionImageData|image`=i.`DEF_id`) "
-			."left join ".DB.".`ScopeEMData` s "
+			."left join ".DB_LEGINON.".`ScopeEMData` s "
 			."on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
-			."left join ".DB.".`PresetData` p "
+			."left join ".DB_LEGINON.".`PresetData` p "
 			."on (`p`.`DEF_id`=`i`.`REF|PresetData|preset`) "
 			."where i.`REF|SessionData|session`='$sessionId' ";
 			if ($runId)
