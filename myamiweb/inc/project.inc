@@ -137,34 +137,94 @@ class project {
 	}
 
 	function getProjects($type=""){
+		
 		$userId = getLoginUserId();
 		$privilege_level = privilege('projects');
 		global $dbemauth;
-		$q = 'select p.projectId as id, p.name  from projects p ';
-		if ($privilege_level <= 2 && $userId) {
-			$q .= " left join projectowners o "
-						."on o.`REF|projects|project` = p.`projectId` "
-						."left join ".DB_LEGINON.".UserData u "
-						."on u.`DEF_id` = o.`REF|leginondata|UserData|user` ";
-			$where = " and u.`DEF_id` = ".$userId." ";
+		
+		// If the users privilege level is admin(4) or power user(3),
+		// they may view all projects, otherwise they may only 
+		// view projects they own or projects that contain experiments
+		// that have been shared with the user.
+		$findOwnedProjects = ($privilege_level <= 2 && $userId); 
+
+		if ($findOwnedProjects) {
+			
+			// The sharedProjectsQuery below is a bit hairy. Found a Mysql bug while writing it.
+			// For more info see http://ami.scripps.edu/redmine/projects/amigroup/wiki/Mysql_Nested_Subqueries_Problem
+			// Here we find all the session ids that correspond to the SessionData table and are shared with the user.
+			// Then we find the session name that corresponds to the ID, then find the Project ID that corresponds 
+			// with the session name.
+
+			// NOTE: shareexperiments.experimentId and projectexperiments.projectexperimentId match but are not 
+			// the same as DB_LEGINON.SessionData.DEF_id. For finding the ProjectIds that correspond to a session,
+			// we need to use the SessionData id.
+						
+			$sharedProjectsQuery = " SELECT ".DB_PROJECT.".projectexperiments.projectId "
+				." FROM ".DB_PROJECT.".projectexperiments " 
+				." INNER JOIN ( "
+					." SELECT ".DB_LEGINON.".SessionData.name AS SessionName "
+					." FROM ".DB_LEGINON.".SessionData "
+					." INNER JOIN ( "					
+						." SELECT ".DB_PROJECT.".shareexperiments.`REF|leginondata|SessionData|experiment` AS SessionId "
+						." FROM ".DB_PROJECT.".shareexperiments "
+						." WHERE ".DB_PROJECT.".shareexperiments.`REF|leginondata|UserData|user` = ".$userId." "
+					." ) AS SessionIds ON ".DB_LEGINON.".SessionData.`DEF_id` = SessionIds.SessionId "
+				." ) AS SessionNames ON ".DB_PROJECT.".projectexperiments.name = SessionNames.SessionName ";
+
+			// Build a query to find the projects that are owned by the user, then add on the query to find
+			// the projects that are shared with the user.
+			$ownedProjectsQuery = "projects.projectId IN ( "
+				."SELECT projectowners.`REF|projects|project` "
+				."FROM projectowners WHERE projectowners.`REF|leginondata|UserData|user` = ".$userId." ) " 
+				."OR projects.projectId IN ( ".$sharedProjectsQuery." )";
+			
 		}
+		
+		// The hidden field of the projects table apparently may not exist. 
+		// Don't know the history of that.
+		// If it does exist, we do not want to show hidden projects
 		$projectdef = $this->mysql->getFieldTypes('projects');
-		if (array_key_exists('hidden', $projectdef)) {
-			$q .= 'where hidden != 1 OR hidden IS NULL ';
+		$checkForHidden = (array_key_exists('hidden', $projectdef));
+		
+		if ($checkForHidden) {
+			$checkForHiddenQuery = " projects.hidden !=1 OR projects.hidden IS NULL ";
+		} 
+		
+		// Begin SQL to select the projects that the user may view
+		$q = 'SELECT projects.projectId as id, projects.name FROM projects ';
+		
+		// Build the query based on the combination of checking for the hidden flag
+		// and showing only projects owned by the user
+		if ($checkForHidden && $findOwnedProjects == false) {
+			$q .= " WHERE ";
+			$q .= $checkForHiddenQuery;
+		} else if ($checkForHidden && $findOwnedProjects) {
+			$q .= " WHERE ";
+			$q .= $checkForHiddenQuery;
+			$q .= " AND ( ";
+			$q .= $ownedProjectsQuery;
+			$q .= " ) ";
+		} else if ($checkForHidden == false && $findOwnedProjects) {
+			$q .= " WHERE ";
+			$q .= $ownedProjectsQuery;
 		}
-		$q .= $where;
-		$q .= 'order by name';
+		
+		// Make sure the projects appear in alphabetical order
+		$q .= ' ORDER by name';
+		
 		$rprojects = $this->mysql->getSQLResult($q);
+			
 		$projects = array();
 		if ($type=="all") {
 			$projects[] = array(	'id' => DEFAULT_PROJECT, 'name' => DEFAULT_PROJECT);
 		}
 		$projects = array_merge($projects, $rprojects);
-		if (!ENABLE_LOGIN) {
-			return $projects;
+
+		if (ENABLE_LOGIN) {
+			$login_check = $dbemauth->is_logged();
+			$projects=$this->restrict($projects, $login_check);
 		}
-		$login_check = $dbemauth->is_logged();
-		$projects=$this->restrict($projects, $login_check);
 		return $projects;
 	}
 

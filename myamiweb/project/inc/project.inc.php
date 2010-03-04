@@ -544,10 +544,11 @@ class project {
 	function getExperiments($projectId="") {
 		$experimentIds = array();
 		$q = "select "
-		   ."name "
+		   ."projectexperimentId, name "
 		   ."from projectexperiments p ";
 		if ($projectId)
 		   $q .= "where p.`projectId`='".$projectId."' ";
+
 		$experimentIds = $this->mysql->getSQLResult($q);
 		return $experimentIds;
 	}
