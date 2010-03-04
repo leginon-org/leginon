@@ -443,7 +443,7 @@ function format_angle_degree($data) {
 }
 
 function format_micro_number($data) {
-	return number_format(($data/1e-6), 3,'.','').' &mu;m';
+	return number_format(($data/1e-6), 2,'.','').' &mu;m';
 }
 
 function format_nano_number($data) {
