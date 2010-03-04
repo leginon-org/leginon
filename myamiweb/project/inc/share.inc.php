@@ -9,7 +9,7 @@ class share {
 	}
 
 	function is_shared($sessionId) {
-		$q = "select DEF_id as id from shareexperiments where `REF|leginondata|SessionData|experiment`=$sessionId";
+		$q = "select `REF|leginondata|UserData|user` as id from shareexperiments where `REF|leginondata|SessionData|experiment`=$sessionId";
 		$r = $this->mysql->getSQLResult($q);
 		if (empty($r))
 			return false;
@@ -27,14 +27,16 @@ class share {
 	}
 	
 	function share_session_add($userId, $sessionId) {
-		$q = "select DEF_id from shareexperiments where "
+		
+		$q = "select `REF|leginondata|UserData|user` from shareexperiments where "
 			."`REF|leginondata|SessionData|experiment` ='".$sessionId."' and `REF|leginondata|UserData|user` ='".$userId."'";
+
 		$r = $this->mysql->getSQLResult($q);
 		if (empty($r)) {
 			$q = 	"insert into shareexperiments (`REF|leginondata|SessionData|experiment`, `REF|leginondata|UserData|user`) "
 				."values ('$sessionId', '$userId')";
 			$lastId = $this->mysql->SQLQuery($q, true);
-		echo $this->mysql->getError();
+			echo $this->mysql->getError();
 		}
 	}
 
