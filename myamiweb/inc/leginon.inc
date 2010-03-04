@@ -2557,7 +2557,7 @@ class leginondata {
 	}
 
 	function formatPixelsize(&$pixelsize) {
-		$pixelsize = format_nano_number($pixelsize);
+		$pixelsize = format_angstrom_number($pixelsize);
 		return $pixelsize;
 	}
 
