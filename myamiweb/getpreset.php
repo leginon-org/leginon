@@ -81,8 +81,8 @@ if ($id) {
 		echo $str_tilt;
 		echo "&nbsp;<img src='imgangle.php?a=".$angle."'>";
 	}
-	if ($viewfilename && !$str_tilt)
-		echo " <br />".$filename['filename']."</font>";
+	if ($viewfilename)
+		echo " <br/><font size='-2'>".$filename['filename']."</font>";
 }
 ?>
 </td>
