@@ -23,7 +23,6 @@ setup(
 	data_files=[
 		('leginon', ['holetemplate.mrc']),
 		('leginon/config', ['config/default.cfg']),
-		('leginon/noderegistry', ['noderegistry/default.ncr']),
 		('leginon/icons', glob.glob('icons/*.png')),
 		('leginon/icons/processing', glob.glob('icons/processing/*.png')),
 		('leginon/applications', glob.glob('applications/*.xml')),
