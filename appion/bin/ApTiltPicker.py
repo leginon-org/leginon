@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 ## pythonlib
-import sys
 import re
 import os
+import sys
 import time
 import math
 import cPickle
@@ -13,11 +13,11 @@ import wx
 ## PIL
 import Image
 ## appion
-from appionlib.apSpider import operations
 from appionlib import apXml
 from appionlib import apImage
-from appionlib import apDisplay
 from appionlib import apParam
+from appionlib import apDisplay
+from appionlib.apSpider import operations
 from appionlib.apTilt import tiltDialog, apTiltTransform, apTiltShift, tiltfile, autotilt
 ## leginon
 import leginon.polygon
@@ -368,13 +368,23 @@ class PickerApp(wx.App):
 					( "Clear &Polygon", "Clear particle with polygon", self.onClearPolygon, wx.ID_CLEAR ),
 				)),
 				("&Refine", (
+					( "Auto Op&timize", "Find theta and optimize angles", self.onAutoOptim ),
 					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
 					( "&Optimize Angles", "Optimize angles with least squares", self.onFitAll ),
-					( "Auto Op&timize", "Find theta and optimize angles", self.onAutoOptim ),
 					( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
 					( "&Mask Overlapping Region", "Mask overlapping region", self.onMaskRegion ),
-					( "Auto &DoG Pick Particles", "DoG Picker", self.onAutoDogPick ),
 					( "&Calculate Percent Overlap", "Calculate percent overlap", self.onGetOverlap ),
+				)),
+				("Picking", (
+					( "Auto &DoG pick particles", "Run DoG picker program", self.onAutoDogPick ),
+					( "Tran&Xfer Picks", "Transfer picks from one image to another using fit parameters", self.onXferPick ),
+					( "Remove &Worst particle picks", "Remove picks that with the largest error", self.onClearBadPicks ),
+					( "Remove picks within &Polygon", "Remove picks within Polygon", self.onClearPolygon ),
+					( "&Guess initial particle match", "Try to find an initial particle match using a cross-correlation search", self.onCheckGuessShift ),
+					( "Repair picks", "Attempt to repair your picks if you accidentally deleted a pick and forgot where", self.onRepairList ),
+					( 0, 0, 0),
+					( "&Clear picks", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
+					( "&Reset TiltPicker", "Remove all picks and start over", self.onResetParams, wx.ID_RESET ),
 				)),
 			]
 		else:
@@ -396,6 +406,17 @@ class PickerApp(wx.App):
 					( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
 					( "&Mask Overlapping Region", "Mask overlapping region", self.onMaskRegion ),
 					( "&Calculate Percent Overlap", "Calculate percent overlap", self.onGetOverlap ),
+				)),
+				("Picking", (
+					( "Auto &DoG pick particles", "Run DoG picker program", self.onAutoDogPick ),
+					( "Tran&Xfer Picks", "Transfer picks from one image to another using fit parameters", self.onXferPick ),
+					( "Remove &Worst particle picks", "Remove picks that with the largest error", self.onClearBadPicks ),
+					( "Remove picks within &Polygon", "Remove picks within Polygon", self.onClearPolygon ),
+					( "&Guess initial particle match", "Try to find an initial particle match using a cross-correlation search", self.onCheckGuessShift ),
+					( "Repair picks", "Attempt to repair your picks if you accidentally deleted a pick and forgot where", self.onRepairList ),
+					( 0, 0, 0),
+					( "&Clear picks", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
+					( "&Reset TiltPicker", "Remove all picks and start over", self.onResetParams, wx.ID_RESET ),
 				)),
 				("Assess", (
 					( "&None", "Don't assess image pair", self.onToggleNone, -1, wx.ITEM_RADIO),
@@ -1478,8 +1499,17 @@ class PickerApp(wx.App):
 			apDisplay.printError("Unknown pointer shape: "+shape)
 
 if __name__ == '__main__':
+	version = "2.0b"
+	citation = """
+####
+  # ###    Voss NR, Yoshioka CK, Radermacher M, Potter CS, and Carragher B.
+  # #  #   "DoG Picker and TiltPicker: software tools to facilitate particle selection 
+  #####        in single particle electron microscopy."
+    #      J Struct Biol. 2009 v166(2): pp. 205-13.
+    #"""
 	usage = "Usage: %prog --left-image=image1.mrc --right-image=image2.mrc [--pick-file=picksfile.txt] [options]"
 	shapes = ("circle","square","diamond","plus","cross")
+
 	parser = OptionParser(usage=usage)
 	parser.add_option("-1", "-l", "--left-image", dest="img1file",
 		help="First input image (left)", metavar="FILE")
@@ -1513,6 +1543,10 @@ if __name__ == '__main__':
 
 	params = apParam.convertParserToParams(parser)
 
+	print "=================================="
+	print "If you find this program useful please cite: "+citation
+	print "ApTiltPicker, version "+version
+	print "=================================="
 
 	app = PickerApp(
 		pickshape=params['pickshape'],   pshapesize=params['pshapesize'],
