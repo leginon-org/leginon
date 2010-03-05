@@ -107,7 +107,7 @@ class ChimSnapShots(object):
 		self.setZoom()
 
 		### This does not work on CentOS and Chimera v1.2509, but does with Chimera v1.4
-		if float(chimera.version.release) > 1.3:
+		if float((chimera.version.release).split('_')[0]) > 1.3:
 			### draw scale bar if version greater than 1.3
 			self.drawScaleBar()
 		else:
