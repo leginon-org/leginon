@@ -193,7 +193,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='clipdiam' VALUE='$clipdiam' SIZE='4' onChange='estimatetime()'>\n";
-	echo docpop('clipdiam','Clip diameter');
+	echo docpop('clipdiam','Unbinned Clip diameter');
 	echo "<font size='-2'>(pixels)</font>\n";
 	echo "<br/>\n";
 
@@ -339,9 +339,12 @@ function runMaxLikeAlign() {
 		createMaxLikeAlignForm("<B>ERROR:</B> Number of particles to align ($numpart)"
 			." must be less than or equal to the number of particles in the stack ($totprtls)");
 
-	if ($clipdiam > $boxsz)
-		createMaxLikeAlignForm("<B>ERROR:</B> Clipping diameter ($clipdiam pixels)"
-			." must be less than  or equal to the stack boxsize ($boxsz pixels)");
+	if ($clipdiam) {
+		if ($clipdiam > $boxsz)
+			createMaxLikeAlignForm("<B>ERROR:</B> Clipping diameter ($clipdiam pixels)"
+				." must be less than  or equal to the stack boxsize ($boxsz pixels)");
+		$binclipdiam = ((int) $clipdiam/($bin*2.0))*2;
+	}
 
 	// determine calc time
 	$stackdata = $particle->getStackParams($stackid);
@@ -368,7 +371,7 @@ function runMaxLikeAlign() {
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";
-	if ($clipdiam != '') $command.="--clip=$clipdiam ";
+	if ($clipdiam != '') $command.="--clip=$binclipdiam ";
 	if ($lowpass != '') $command.="--lowpass=$lowpass ";
 	if ($highpass != '') $command.="--highpass=$highpass ";
 	$command.="--num-part=$numpart ";
