@@ -104,7 +104,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			apDisplay.printError("fast mode must be on of: "+str(self.fastmodes))
 		if not self.params['converge'] in self.convergemodes:
 			apDisplay.printError("converge mode must be on of: "+str(self.convergemodes))
-		maxparticles = 150000
+		maxparticles = 500000
 		if self.params['numpart'] > maxparticles:
 			apDisplay.printError("too many particles requested, max: "
 				+ str(maxparticles) + " requested: " + str(self.params['numpart']))
@@ -117,7 +117,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		boxsize = apStack.getStackBoxsize(self.params['stackid'])
 		self.clipsize = int(math.floor(boxsize/float(self.params['bin']*2)))*2
 		if self.params['clipsize'] is not None:
-			if self.params['clipsize'] >= self.clipsize:
+			if self.params['clipsize'] > self.clipsize:
 				apDisplay.printError("requested clipsize is too big %d > %d"
 					%(self.params['clipsize'],self.clipsize))
 			self.clipsize = self.params['clipsize']
