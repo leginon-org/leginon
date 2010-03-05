@@ -607,6 +607,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 
 	# for each cls file get alignments for particles
 	f=open(clsfilename)
+	coranfail = False
 	for line in f:
 		# skip line if not a particle
 		if re.search("start",line):
@@ -635,7 +636,9 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 				if len(other) > 4:
 					corank=bool(int(other[4]))
 				else:
-					apDisplay.printWarning("Coran failed on this iteration")
+					if coranfail is False:
+						apDisplay.printWarning("Coran failed on this iteration")
+						coranfail = True
 
 			# message passing kept particle
 			if params['package']== 'EMAN/MsgP' and len(ali) > 4:
