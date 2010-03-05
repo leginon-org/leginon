@@ -1,12 +1,11 @@
 
 ## python
-import time
 import os
 import re
+import time
 ## appion
 from appionlib import apDisplay
 from appionlib import apFile
-from appionlib import spyder
 
 """
 A large collection of SPIDER functions
@@ -66,6 +65,7 @@ def spiderInLine(line):
 
 #===============================
 def addParticleToStack(partnum, partfile, stackfile, dataext=".spi"):
+	from appionlib import spyder
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpiderQuiet("CP", 
 		spyder.fileFilter(partfile), #particle file
@@ -76,6 +76,7 @@ def addParticleToStack(partnum, partfile, stackfile, dataext=".spi"):
 
 #===============================
 def averageStack(stackfile, numpart, avgfile, varfile, dataext=".spi"):
+	from appionlib import spyder
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
 	mySpider.toSpider("AS R", 
 		spyder.fileFilter(stackfile)+"@******", #stack file
@@ -89,6 +90,10 @@ def averageStack(stackfile, numpart, avgfile, varfile, dataext=".spi"):
 
 #===============================
 def createMask(maskfile, maskrad, boxsize, dataext=".spi"):
+	"""
+	We should use imagefun.filled_circle() instead
+	"""
+	from appionlib import spyder
 	apDisplay.printMsg("Creating mask with diameter %.1f and boxsize %d"%(maskrad*2.0,boxsize))
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpiderQuiet("MO", 
