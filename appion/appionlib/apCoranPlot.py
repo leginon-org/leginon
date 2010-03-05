@@ -502,6 +502,10 @@ def makeCoranKeepPlot(reconid):
 	proc.wait()
 	time.sleep(1)
 
+	if not os.path.isfile(epsfile):
+		apDisplay.printWarning("Grace failed to create EPS file, is grace installed?")
+		return
+
 	pngfile = "corankeepplot-"+str(reconid)+".png"
 	proc = subprocess.Popen("convert -resize 1024x1024 -trim "+epsfile+" "+pngfile, shell=True)
 	proc.wait()
