@@ -1,4 +1,3 @@
-import md5
 import os
 import re
 import sys
@@ -20,6 +19,8 @@ def md5sumfile(fname):
 	if not os.path.isfile(fname):
 		apDisplay.printError("MD5SUM, file not found: "+fname)
 	f = file(fname, 'rb')
+	#this next library is deprecated in python 2.6+, need to use hashlib
+	import md5
 	m = md5.new()
 	while True:
 		d = f.read(8096)
