@@ -110,6 +110,8 @@ class PickerApp(wx.App):
 		self.appionloop = None
 		self.filetypes = tiltfile.filetypes
 		self.filetypesel = tiltfile.filetypesel
+		self.imagetypes = tiltfile.imagetypes
+		self.imagetypesel = tiltfile.imagetypesel
 		self.data['filetypeindex'] = None
 		self.data['thetarun'] = False
 		self.picks1 = []
@@ -350,6 +352,9 @@ class PickerApp(wx.App):
 			return [
 				("&File", (
 					( "&Open", "Open picked particles from file", self.onFileOpen, wx.ID_OPEN ),
+					( "Open new left image", "Open new left image and restart TiltPicker", self.selectLeftImageToOpen ),
+					( "Open new right image", "Open new right image and restart TiltPicker", self.selectRightImageToOpen ),
+					( 0, 0, 0),
 					( "&Save", "Save picked particles to file", self.onFileSave, wx.ID_SAVE ),
 					( "Save &As...", "Save picked particles to new file", self.onFileSaveAs, wx.ID_SAVEAS ),
 					( "Save file type", (
@@ -1302,7 +1307,7 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def onFileSaveAs(self, evt):
 		dlg = wx.FileDialog(self.frame, "Choose a pick file to save as", self.data['dirname'], "", \
-			self.filetypesel, wx.SAVE|wx.OVERWRITE_PROMPT)
+			tiltfile.filetypesel, wx.SAVE|wx.OVERWRITE_PROMPT)
 		if 'filetypeindex' in self.data and self.data['filetypeindex'] is not None:
 			dlg.SetFilterIndex(self.data['filetypeindex'])
 		#alt1 = "*.[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]"
@@ -1354,7 +1359,7 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def onFileOpen(self, evt):
 		dlg = wx.FileDialog(self.frame, "Choose a pick file to open", self.data['dirname'], "", \
-			self.filetypesel, wx.OPEN)
+			tiltfile.filetypesel, wx.OPEN)
 		if 'filetypeindex' in self.data and self.data['filetypeindex'] is not None:
 			dlg.SetFilterIndex(self.data['filetypeindex'])
 		if dlg.ShowModal() == wx.ID_OK:
@@ -1478,6 +1483,40 @@ class PickerApp(wx.App):
 			self.data['image2file'] = os.path.basename(filename)
 			self.data['image2path'] = os.path.abspath(os.path.dirname(filename))
 			app.panel2.openImageFile(filename)
+
+	#---------------------------------------
+	def selectRightImageToOpen(self, env=None):
+		dlg = wx.FileDialog(self.frame, "Choose a right image file to open", self.data['dirname'], "", \
+			tiltfile.imagetypesel, wx.OPEN)
+		if 'imagetypeindex' in self.data and self.data['imagetypeindex'] is not None:
+			dlg.SetFilterIndex(self.data['imagetypeindex'])
+		if dlg.ShowModal() == wx.ID_OK:
+			filename = dlg.GetFilename()
+			pathname = os.path.abspath(dlg.GetDirectory())
+			filepath = os.path.join(pathname, filename)
+			if os.path.isfile(filepath):
+				self.data['image2file'] = filename
+				self.data['image2path'] = pathname
+				app.panel2.openImageFile(filepath)
+				self.onResetParams(None)
+		dlg.Destroy()
+
+	#---------------------------------------
+	def selectLeftImageToOpen(self, env=None):
+		dlg = wx.FileDialog(self.frame, "Choose a left image file to open", self.data['dirname'], "", \
+			tiltfile.imagetypesel, wx.OPEN)
+		if 'imagetypeindex' in self.data and self.data['imagetypeindex'] is not None:
+			dlg.SetFilterIndex(self.data['imagetypeindex'])
+		if dlg.ShowModal() == wx.ID_OK:
+			filename = dlg.GetFilename()
+			pathname = os.path.abspath(dlg.GetDirectory())
+			filepath = os.path.join(pathname, filename)
+			if os.path.isfile(filepath):
+				self.data['image1file'] = filename
+				self.data['image1path'] = pathname
+				app.panel1.openImageFile(filepath)
+				self.onResetParams(None)
+		dlg.Destroy()
 
 	#---------------------------------------
 	def canonicalShape(self, shape):

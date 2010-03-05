@@ -11,6 +11,16 @@ from appionlib import apXml
 from appionlib import apDisplay
 from appionlib.apSpider import operations
 
+
+imagetypes = ['spider', 'text', 'xml', 'pickle', 'box', 'pik',]
+imagetypesel = (
+	"All Files (*.*)|*.*"
+	+ "|MRC Files (*.mrc)|*.mrc" 
+	+ "|Spider Files (*.spi)|*.spi" 
+	+ "|PNG Files (*.png)|*.png" 
+	+ "|TIFF Files (*.tif)|*.tif"
+	+ "|JPEG Files (*.jpg)|*.jpg"
+	)
 filetypes = ['spider', 'text', 'xml', 'pickle', 'box', 'pik',]
 filetypesel = (
 	"Spider Files (*.spi)|*.spi" 
