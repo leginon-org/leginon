@@ -83,7 +83,8 @@ class PickerApp(wx.App):
 	 pickshape="circle", pshapesize=24,
 	 alignshape="square", ashapesize=6,
 	 worstshape="square", wshapesize=28,
-	 tiltangle=None, tiltaxis=None, doinit=True):
+	 tiltangle=None, tiltaxis=None, doinit=True, 
+	 version=None, citation=None, reldate=None, logoimage=None):
 		self.mode = mode
 		self.pshape = self.canonicalShape(pickshape)
 		self.pshapesize = int(pshapesize)
@@ -93,6 +94,10 @@ class PickerApp(wx.App):
 		self.wshapesize = int(wshapesize)
 		self.inittiltangle = tiltangle
 		self.inittiltaxis = tiltaxis
+		self.version = version
+		self.citation = citation
+		self.reldate = reldate
+		self.logoimage = logoimage
 		wx.App.__init__(self)
 
 	def OnInit(self):
@@ -391,6 +396,9 @@ class PickerApp(wx.App):
 					( "&Clear picks", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
 					( "&Reset TiltPicker", "Remove all picks and start over", self.onResetParams, wx.ID_RESET ),
 				)),
+				("Help", (
+					( "&About TiltPicker", "Show product information", self.onShowAboutTiltPicker, wx.ID_RESET ),
+				)),
 			]
 		else:
 			return [
@@ -428,11 +436,15 @@ class PickerApp(wx.App):
 					( "&Keep", "Keep this image pair", self.onToggleKeep, -1, wx.ITEM_RADIO),
 					( "&Reject", "Reject this image pair", self.onToggleReject, -1, wx.ITEM_RADIO),
 				)),
+				("Help", (
+					( "&About TiltPicker", "Show product information", self.onShowAboutTiltPicker, wx.ID_RESET ),
+				)),
 			]
 
 	#---------------------------------------
 	def createMenuBar(self):
 		self.menubar = wx.MenuBar()
+		self.about_dialog = tiltDialog.AboutTiltPickerDialog(self)
 		for eachMenuData in self.menuData():
 			menuLabel = eachMenuData[0]
 			menuItems = eachMenuData[1]
@@ -1211,6 +1223,10 @@ class PickerApp(wx.App):
 		self.statbar.PushStatusText("Removed "+str(len(a1)-len(g1))+" particles", 0)
 
 	#---------------------------------------
+	def onShowAboutTiltPicker(self, evt):
+		self.about_dialog.Show()
+
+	#---------------------------------------
 	def onAutoDogPick(self, evt):
 		"""
 		Automatically picks image pairs using dog picker
@@ -1539,13 +1555,21 @@ class PickerApp(wx.App):
 
 if __name__ == '__main__':
 	version = "2.0b"
-	citation = """
+	reldate = "April 1, 2010"
+	logoimage = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/tplogo.png")
+	citationlogo = """
 ####
   # ###    Voss NR, Yoshioka CK, Radermacher M, Potter CS, and Carragher B.
   # #  #   "DoG Picker and TiltPicker: software tools to facilitate particle selection 
   #####        in single particle electron microscopy."
     #      J Struct Biol. 2009 v166(2): pp. 205-13.
     #"""
+	citation = """
+Voss NR, Yoshioka CK, Radermacher M, Potter CS, and Carragher B.
+"DoG Picker and TiltPicker: software tools to facilitate particle selection 
+    in single particle electron microscopy."
+J Struct Biol. 2009 v166(2): pp. 205-13.
+"""
 	usage = "Usage: %prog --left-image=image1.mrc --right-image=image2.mrc [--pick-file=picksfile.txt] [options]"
 	shapes = ("circle","square","diamond","plus","cross")
 
@@ -1583,8 +1607,9 @@ if __name__ == '__main__':
 	params = apParam.convertParserToParams(parser)
 
 	print "=================================="
-	print "If you find this program useful please cite: "+citation
+	print "If you find this program useful please cite: "+citationlogo
 	print "ApTiltPicker, version "+version
+	print "Released on "+reldate
 	print "=================================="
 
 	app = PickerApp(
@@ -1592,12 +1617,12 @@ if __name__ == '__main__':
 		alignshape=params['alignshape'], ashapesize=params['ashapesize'],
 		worstshape=params['worstshape'], wshapesize=params['wshapesize'],
 		tiltangle=params['tiltangle'], tiltaxis=params['tiltaxis'],
+		version=version, citation=citation, reldate=reldate, logoimage=logoimage,
 	)
 	app.openLeftImage(params['img1file'])
 	app.openRightImage(params['img2file'])
 	if params['pickfile'] is not None:
 		app.readData(params['pickfile'])
-
 	app.MainLoop()
 
 

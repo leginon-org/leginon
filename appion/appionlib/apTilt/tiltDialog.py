@@ -1,4 +1,6 @@
 import wx
+import os
+import math
 import numpy
 import pprint
 from appionlib import apDisplay
@@ -20,6 +22,7 @@ from appionlib import apImage
 ##
 
 class FitThetaDialog(wx.Dialog):
+	#==================
 	def __init__(self, parent):
 		self.parent = parent
 		self.theta = self.parent.data['theta']
@@ -67,6 +70,7 @@ class FitThetaDialog(wx.Dialog):
 		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
 		self.SetSizerAndFit(self.sizer)
 
+	#==================
 	def onRunTiltAng(self, evt):
 		arealim  = self.arealimit.GetValue()
 		self.parent.data['arealim'] = arealim
@@ -91,6 +95,7 @@ class FitThetaDialog(wx.Dialog):
 			tristr = (" (%3.1f " % (100.0 * self.fittheta['numtri'] / float(self.fittheta['tottri'])))+"%) "
 			self.trilabel2.SetLabel(label=tristr)
 
+	#==================
 	def onApplyTiltAng(self, evt):
 		self.Close()
 		self.parent.data['theta'] = self.theta
@@ -107,6 +112,7 @@ class FitThetaDialog(wx.Dialog):
 ##
 
 class FitAllDialog(wx.Dialog):
+	#==================
 	def __init__(self, parent):
 		self.parent = parent
 		wx.Dialog.__init__(self, self.parent.frame, -1, "Least Squares Optimization")
@@ -206,6 +212,7 @@ class FitAllDialog(wx.Dialog):
 
 		self.onToggleScale(True)
 
+	#==================
 	def onToggleTheta(self, evt):
 		if self.thetatog.GetValue() is True:
 			self.thetavalue.Enable(False)
@@ -214,6 +221,7 @@ class FitAllDialog(wx.Dialog):
 			self.thetavalue.Enable(True)
 			self.thetatog.SetLabel("Refine")
 
+	#==================
 	def onToggleGamma(self, evt):
 		if self.gammatog.GetValue() is True:
 			self.gammavalue.Enable(False)
@@ -222,6 +230,7 @@ class FitAllDialog(wx.Dialog):
 			self.gammavalue.Enable(True)
 			self.gammatog.SetLabel("Refine")
 
+	#==================
 	def onTogglePhi(self, evt):
 		if self.phitog.GetValue() is True:
 			self.phivalue.Enable(False)
@@ -230,6 +239,7 @@ class FitAllDialog(wx.Dialog):
 			self.phivalue.Enable(True)
 			self.phitog.SetLabel("Refine")
 
+	#==================
 	def onTogglePhi(self, evt):
 		if self.phitog.GetValue() is True:
 			self.phivalue.Enable(False)
@@ -238,6 +248,7 @@ class FitAllDialog(wx.Dialog):
 			self.phivalue.Enable(True)
 			self.phitog.SetLabel("Refine")
 
+	#==================
 	def onToggleScale(self, evt):
 		if self.scaletog.GetValue() is True:
 			self.scalevalue.Enable(False)
@@ -246,6 +257,7 @@ class FitAllDialog(wx.Dialog):
 			self.scalevalue.Enable(True)
 			self.scaletog.SetLabel("Refine")
 
+	#==================
 	def onToggleShift(self, evt):
 		if self.shifttog.GetValue() is True:
 			self.shiftxvalue.Enable(False)
@@ -256,6 +268,7 @@ class FitAllDialog(wx.Dialog):
 			self.shiftyvalue.Enable(True)
 			self.shifttog.SetLabel("Refine")
 
+	#==================
 	def onRunLeastSquares(self, evt):
 		theta  = self.thetavalue.GetValue()
 		gamma  = self.gammavalue.GetValue()
@@ -294,6 +307,7 @@ class FitAllDialog(wx.Dialog):
 		self.rmsdlabel.SetLabel(str(round(self.lsfit['rmsd'],5)))
 		self.iterlabel.SetLabel(str(self.lsfit['iter']))
 
+	#==================
 	def onApplyLeastSquares(self, evt):
 		self.Close()
 		self.parent.data['leastsqfitdata'] = self.lsfit
@@ -317,6 +331,7 @@ class FitAllDialog(wx.Dialog):
 ##
 
 class DogPickerDialog(wx.Dialog):
+	#==================
 	def __init__(self, parent):
 		self.parent = parent
 		wx.Dialog.__init__(self, self.parent.frame, -1, "DoG Auto Particle Picker")
@@ -397,11 +412,13 @@ class DogPickerDialog(wx.Dialog):
 		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
 		self.SetSizerAndFit(self.sizer)
 
+	#==================
 	def partContrast(self, evt):
 		if self.whitePart.GetValue() is True:
 			return False
 		return True
 
+	#==================
 	def onRunDogPicker(self, evt):
 		apDisplay.printColor("===============\nRunning experimental DoGPicker","cyan")
 		#apix  = self.apix.GetValue()
@@ -459,14 +476,13 @@ class DogPickerDialog(wx.Dialog):
 		self.parent.onImportPicks(None, pixdiam)
 		apDisplay.printColor("Finished DoGPicker\n===================","cyan")
 
+	#==================
 	def peaktreeToPicks(self, peaktree):
 		picks = []
 		for p in peaktree:
 			picks.append( (p['xcoord'], p['ycoord']) )
 		npicks = numpy.asarray(picks, dtype=numpy.float32)
 		return npicks
-
-
 
 ##
 ##
@@ -475,6 +491,7 @@ class DogPickerDialog(wx.Dialog):
 ##
 
 class GuessShiftDialog(wx.Dialog):
+	#==================
 	def __init__(self, parent):
 		self.parent = parent
 		wx.Dialog.__init__(self, self.parent.frame, -1, "Guess Initial Shift")
@@ -515,6 +532,7 @@ class GuessShiftDialog(wx.Dialog):
 		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
 		self.SetSizerAndFit(self.sizer)
 
+	#==================
 	def onRunGuessShift(self, evt):
 		tiltaxis  = self.tiltaxis.GetValue()
 		tiltangle = self.tiltangle.GetValue()
@@ -524,4 +542,44 @@ class GuessShiftDialog(wx.Dialog):
 		self.Close()
 		self.parent.onGuessShift(evt)
 
+
+##
+##
+## About TiltPicker Dialog
+##
+##
+
+class AboutTiltPickerDialog(wx.Dialog):
+	#==================
+	def __init__(self, parent):
+		self.parent = parent
+		wx.Dialog.__init__(self, self.parent.frame, -1, "About TiltPicker")
+
+		sizer = wx.FlexGridSizer(6, 1, 10, 0)
+
+		logoimage = self.parent.logoimage
+		if os.path.isfile(logoimage):
+			#golden = (1+math.sqrt(5))/2.0
+			#width = 480
+			#height = int(width/golden)
+			#logo = wx.EmptyBitmap(width, height)
+			wxlogo = wx.Image(logoimage, wx.BITMAP_TYPE_PNG, -1)
+			wxlogobit = wx.BitmapFromImage(wxlogo)
+			#logosize = wx.Size(width, height) #golden ratio
+			logosizer = wx.StaticBitmap(self, -1, wxlogobit)
+			sizer.Add(logosizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, "TiltPicker, version "+self.parent.version)
+		sizer.Add(label, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+
+		release = wx.StaticText(self, -1, "Released on "+self.parent.reldate)
+		sizer.Add(release, 2, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+
+		release = wx.StaticText(self, -1, "Please contact Neil Voss (vossman77@yahoo.com) for help")
+		sizer.Add(release, 3, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+
+		self.okbutton = wx.Button(self, wx.ID_OK, '&OK')
+		sizer.Add(self.okbutton, 4, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+
+		self.SetSizerAndFit(sizer)
 
