@@ -25,6 +25,7 @@ from appionlib import apStack
 from appionlib import apXmipp
 from appionlib import apStackMeanPlot
 from appionlib import apThread
+from appionlib.apSpider import operations
 from pyami import mrc, imagefun
 from scipy import fftpack, ndimage, arange
 
@@ -73,7 +74,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		self.parser.add_option("--no-flip", dest="flip", default=True,
 			action="store_false", help="DO NOT randomly flip the projections along with shifts and rotations")
 		self.parser.add_option("--kv", dest="kv", type="float", default=120,
-			help="KV of the microscope, needed for envelope function", metavar="INT")
+			help="kV of the microscope, needed for envelope function", metavar="INT")
 		self.parser.add_option("--cs", dest="cs", type="float", default=2.0,
 			help="spherical aberration of the microscope (in mm)", metavar="FLOAT")
 		self.parser.add_option("--df1", dest="df1", type="float", default=-1.5,
@@ -91,7 +92,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		self.parser.add_option("--snrtot", dest="snrtot", type="float", default=0.06,
 			help="total signal-to-noise ratio, simulating beam damage, structural noise, & digitization", metavar="FLOAT")
 		self.parser.add_option("--envelope", dest="envelopefile", type="string",
-			help="you may apply any envelope function to the dataset, but it has to be a 2d .mrc file that represents envelope decay", metavar="STR")
+			help="apply any envelope decay function from a 1d spider file ", metavar="STR")
 
 		### optional parameters (ACE2 correct & filtering)
 		self.parser.add_option("--ace2correct", dest="ace2correct", default=False,
@@ -166,7 +167,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		### make sure amplitude correction file exists
 		if self.params['envelopefile'] is None:
-			self.params['envelopefile'] = os.path.join(apParam.getAppionDirectory(), "lib/envelopeImage.mrc")
+			self.params['envelopefile'] = os.path.join(apParam.getAppionDirectory(), "appionlib/data/radial-envelope.spi")
 		return
 
 	#=====================
@@ -188,19 +189,45 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 	#=====================
 	def prepareEnvelope(self, scaleFactor=1.0):
+		"""
+		Original envelop mrc pixel size was 0.98 Angstroms, but may be better to say 1.04 Angstroms
+
+		Now converts a 1D array into the 2D spectra
+		"""
+		apDisplay.printMsg("Creating 2D envelop from 1D array")
 		envelope = self.params['envelopefile']
 		if envelope is None:
 			return
-		### read images
-		env = mrc.read(envelope)
+		spi = open(envelope, 'r')
+		radialdata = []
+		for line in spi:
+			sline = line.strip()
+			if not sline or sline[0] == ";":
+				continue
+			spidict = operations.spiderInLine(line)
+			# second float column
+			radialvalue = spidict['floatlist'][1]
+			radialdata.append(radialvalue)
+		spi.close()
+
+		### create envelop in 2D
+		xdata = numpy.arange(0, len(radialdata), 1.0, dtype=numpy.float32)
+		rdata = numpy.array(radialdata, dtype=numpy.float32)
+		def funcrad(r, xdata=None, rdata=None):
+			return numpy.interp(r, xdata, rdata)
+		envshape = (4096, 4096)
+		envcalc = imagefun.fromRadialFunction(funcrad, envshape, xdata=xdata, rdata=rdata)
+
 		### scale envelope
 		if abs(scaleFactor - 1.0) > 0.01:
 			print "scaling envelope by", scaleFactor
-			env = ndimage.zoom(env, zoom=scaleFactor, mode='nearest')
+			envcalc = ndimage.zoom(envcalc, zoom=scaleFactor, mode='nearest')
 		### shift center of envelope to the edges
-		envamp = self.center(env)
+		envamp = self.center(envcalc)
 		### mutliply real envelope function by image fft
 		self.envamp = (envamp - envamp.min()) / (envamp.max() - envamp.min())
+		apDisplay.printMsg("Successfully created 2D envelop from 1D array")
+
 
 	#=====================
 	def applyEnvelope(self, inimage, outimage, scaleFactor=1, msg=False):
@@ -891,7 +918,7 @@ ACE2: /home/vossman/appion/bin/ace2correct.exe -img /ami/data00/appion/09aug06a/
 
 			### apply CTF using ACE2
 			ace2cmd = (self.ace2correct+" -img %s -kv %d -cs %.1f -apix %.3f -df %.9f,%.9f,%.3f -apply"
-				%(filename, self.params['kv'], self.params['cs'], self.params['apix'], 
+				%(filename, self.params['kv'], self.params['cs'], self.params['apix'],
 				self.deflist1[partnum-1], self.deflist2[partnum-1], self.params['astigmatism']))
 			cmdlist.append(ace2cmd)
 		numpart = partnum
@@ -969,7 +996,7 @@ ACE2: /home/vossman/appion/bin/ace2correct.exe -img /ami/data00/appion/09aug06a/
 
 			### correct CTF using ACE2
 			ace2cmd = (self.ace2correct+" -img %s -kv %d -cs %.1f -apix %.3f -df %.9f,%.9f,%.3f -wiener 0.1"
-				%(filename, self.params['kv'], self.params['cs'], self.params['apix'], 
+				%(filename, self.params['kv'], self.params['cs'], self.params['apix'],
 				self.deflist1c[partnum-1], self.deflist2c[partnum-1], self.params['astigmatism']))
 			cmdlist.append(ace2cmd)
 
