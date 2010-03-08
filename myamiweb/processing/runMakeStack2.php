@@ -60,10 +60,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// connect to particle and ctf databases
 	$particle = new particledata();
 	$ctfdata=$particle->hasCtfData($sessionId);
-	$prtlrunIds = $particle->getParticleRunIds($sessionId);
+	$partrunids = $particle->getParticleRunIds($sessionId);
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
 	$stackruninfos = $particle->getStackIds($sessionId, True);
 	$stackruns = ($stackruninfos) ? count($stackruninfos):0;
+
+
 
 	$javascript="<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
@@ -103,6 +105,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$javascript .= writeJavaPopupFunctions('appion');
 
 	processing_header($title,$heading,$javascript);
+
+	if (!$partrunids && !$stackruninfos) {
+		echo "<font color='#cc3333' size='+2'><b>No particles available for this session; pick some particles first</b></font>\n";
+		exit;
+	}
+
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
@@ -125,7 +133,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	while (file_exists($sessionpathval.'stack'.($stackruns+1)))
 		$stackruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'stack'.($stackruns+1);
-	$prtlrunval = ($_POST['prtlrunId']) ? $_POST['prtlrunId'] : $prtlrunIds[0]['DEF_id'];
+	$partrunval = ($_POST['partrunid']) ? $_POST['partrunid'] : $partrunids[0]['DEF_id'];
+	$fromstackval = ($_POST['fromstackid']) ? $_POST['fromstackid'] : '0';
+	if ($_POST['fromstackid'] && !$_POST['partrunid']) $partrunval = 0;
 	$massessval = $_POST['massessname'];
 	// set phaseflip on by default
 	$phasecheck = ($_POST['ctfcorrect']=='on' || !$_POST['process']) ? 'CHECKED' : '';
@@ -221,30 +231,51 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<br/>\n";
 	echo "<br/>\n";
 
-	$prtlruns=count($prtlrunIds);
+	$partruns=count($partrunids);
 
-	if (!$prtlrunIds) {
-		createMakestackForm("<b>ERROR:</b> No Particles for this Session");
-		exit;
-		echo"<font class='apcomment' size='+2'><b>No Particles for this Session</b></font>\n";
+	if (!$partrunids) {
+		echo "<font class='apcomment'><b>No Particles for this Session</b></font>\n";
 	} else {
 		echo docpop('stackparticles','Particles:');
-		echo "<select name='prtlrunId'>\n";
-		foreach ($prtlrunIds as $prtlrun){
-			$prtlrunId=$prtlrun['DEF_id'];
-			$runname=$prtlrun['name'];
-			$prtlstats=$particle->getStats($prtlrunId);
-			$totprtls=commafy($prtlstats['totparticles']);
-			echo "<OPTION value='$prtlrunId'";
-			// select previously set prtl on resubmit
-			if ($prtlrunval==$prtlrunId) {
+		echo "<select name='partrunid'>\n";
+		echo "<option value='0'>None</option>\n";
+		foreach ($partrunids as $partrun){
+			$partrunid=$partrun['DEF_id'];
+			$runname=$partrun['name'];
+			$partstats=$particle->getStats($partrunid);
+			$totparts=commafy($partstats['totparticles']);
+			echo "<OPTION value='$partrunid'";
+			// select previously set part on resubmit
+			if ($partrunval==$partrunid) {
 				echo " SELECTED";
 			}
-			echo">$runname ($totprtls prtls)</OPTION>\n";
+			echo">$runname ($totparts parts)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
 		
 		// add stack selection page
+	}
+	echo "<br/>\n";
+	if ($stackruninfos) {
+		echo docpop('stackparticles2','Stacks:');
+		echo "<select name='fromstackid'>\n";
+		echo "<option value='0'>None</option>\n";
+		foreach ($stackruninfos as $stackruninfo){
+			$stackid = $stackruninfo['stackid'];
+			$numpart = commafy($particle->getNumStackParticles($stackid));
+			$stackdata = $particle->getStackParams($stackid);
+			$stackname = $stackdata['shownstackname'];
+			echo "<OPTION value='$stackid'";
+			// select previously set part on resubmit
+			if ($fromstackval==$stackid) {
+				echo " SELECTED";
+			}
+			echo">$stackname ($numpart parts)</OPTION>\n";
+		}
+		echo "</SELECT>\n";
+		// add stack selection page
+	} else {
+		echo "<input type='hidden' name='fromstackid' value='0'>";
 	}
 	echo "<br/>\n";
 	echo "<br/>\n";
@@ -283,8 +314,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// Determine best box size...
 
 	if (!$_POST['boxsize']) {
-		$partrundata = $particle->getSelectionParams($prtlrunval);
-		$imgid = $particle->getImgIdFromSelectionRun($prtlrunval);
+		$partrundata = $particle->getSelectionParams($partrunval);
+		$imgid = $particle->getImgIdFromSelectionRun($partrunval);
 		$partdiam = $partrundata[0]['diam'];
 		$pixelsize = $particle->getPixelSizeFromImgId($imgid)*1e10;
 		//echo "Diameter: $partdiam &Aring;<br/>\n";
@@ -424,9 +455,13 @@ function runMakestack() {
 	if (!$outdir)
 		createMakestackForm("<b>ERROR:</b> Select an experiment session");
 
-	// get correlation runId
-	$prtlrunId=$_POST['prtlrunId'];
-	if (!$prtlrunId) createMakestackForm("<b>ERROR:</b> No particle coordinates in the database");
+	// get particle runId or from stack id
+	$partrunid=$_POST['partrunid'];
+	$fromstackid=$_POST['fromstackid'];
+	if (!$partrunid && !$fromstackid)
+		createMakestackForm("<b>ERROR:</b> No particle run was selected");
+	if ($partrunid && $fromstackid)
+		createMakestackForm("<b>ERROR:</b> Choose either a stack or particle run, but not both");
 
 	$invert = ($_POST['density']=='invert') ? 'yes' : 'no';
 	$normalize = ($_POST['normalize']=='on') ? 'yes' : 'no';
@@ -502,7 +537,6 @@ function runMakestack() {
 	// mask assessment
 	$massessname=$_POST['massessname'];
 
-
 	// check the tilt situation
 	$particle = new particledata();
 	$maxang = $particle->getMaxTiltAngle($expId);
@@ -514,7 +548,6 @@ function runMakestack() {
 		}
 	}
 
-
 	// limit the number of particles
 	$partlimit=$_POST['partlimit'];
 	if ($partlimit) {
@@ -523,7 +556,10 @@ function runMakestack() {
 
 	$command = "makestack2.py"." ";
 	$command.="--single=$single ";
-	$command.="--selectionid=$prtlrunId ";
+	if ($partrunid)
+		$command.="--selectionid=$partrunid ";
+	elseif ($fromstackid)
+		$command.="--fromstackid=$fromstackid ";
 	if ($lp) $command.="--lowpass=$lp ";
 	if ($hp) $command.="--highpass=$hp ";
 	if ($invert == "yes") $command.="--invert ";
@@ -577,7 +613,7 @@ function runMakestack() {
 	echo appionLoopSummaryTable();
 	echo"
 	<tr><td>stack name</td><td>$single</td></tr>
-	<tr><td>selection Id</td><td>$prtlrunId</td></tr>
+	<tr><td>selection Id</td><td>$partrunid</td></tr>
 	<tr><td>invert</td><td>$invert</td></tr>
 	<tr><td>normalize</td><td>$normalize</td></tr>
 	<tr><td>ctf correct</td><td>$ctfcorrect</td></tr>
