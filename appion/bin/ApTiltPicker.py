@@ -84,7 +84,7 @@ class PickerApp(wx.App):
 	 alignshape="square", ashapesize=6,
 	 worstshape="square", wshapesize=28,
 	 tiltangle=None, tiltaxis=None, doinit=True, 
-	 version=None, citation=None, reldate=None, logoimage=None):
+	 version=None, citation=None, releasedate=None, logoimage=None):
 		self.mode = mode
 		self.pshape = self.canonicalShape(pickshape)
 		self.pshapesize = int(pshapesize)
@@ -96,7 +96,7 @@ class PickerApp(wx.App):
 		self.inittiltaxis = tiltaxis
 		self.version = version
 		self.citation = citation
-		self.reldate = reldate
+		self.releasedate = releasedate
 		self.logoimage = logoimage
 		wx.App.__init__(self)
 
@@ -113,10 +113,6 @@ class PickerApp(wx.App):
 			self.data['gamma'] = self.inittiltaxis
 			self.data['phi'] = self.inittiltaxis
 		self.appionloop = None
-		self.filetypes = tiltfile.filetypes
-		self.filetypesel = tiltfile.filetypesel
-		self.imagetypes = tiltfile.imagetypes
-		self.imagetypesel = tiltfile.imagetypesel
 		self.data['filetypeindex'] = None
 		self.data['thetarun'] = False
 		self.picks1 = []
@@ -1323,7 +1319,7 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def onFileSaveAs(self, evt):
 		dlg = wx.FileDialog(self.frame, "Choose a pick file to save as", self.data['dirname'], "", \
-			tiltfile.filetypesel, wx.SAVE|wx.OVERWRITE_PROMPT)
+			tiltfile.filetypefilter, wx.SAVE|wx.OVERWRITE_PROMPT)
 		if 'filetypeindex' in self.data and self.data['filetypeindex'] is not None:
 			dlg.SetFilterIndex(self.data['filetypeindex'])
 		#alt1 = "*.[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]"
@@ -1375,7 +1371,7 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def onFileOpen(self, evt):
 		dlg = wx.FileDialog(self.frame, "Choose a pick file to open", self.data['dirname'], "", \
-			tiltfile.filetypesel, wx.OPEN)
+			tiltfile.filetypefilter, wx.OPEN)
 		if 'filetypeindex' in self.data and self.data['filetypeindex'] is not None:
 			dlg.SetFilterIndex(self.data['filetypeindex'])
 		if dlg.ShowModal() == wx.ID_OK:
@@ -1503,7 +1499,7 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def selectRightImageToOpen(self, env=None):
 		dlg = wx.FileDialog(self.frame, "Choose a right image file to open", self.data['dirname'], "", \
-			tiltfile.imagetypesel, wx.OPEN)
+			tiltfile.imagetypefilter, wx.OPEN)
 		if 'imagetypeindex' in self.data and self.data['imagetypeindex'] is not None:
 			dlg.SetFilterIndex(self.data['imagetypeindex'])
 		if dlg.ShowModal() == wx.ID_OK:
@@ -1520,7 +1516,7 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def selectLeftImageToOpen(self, env=None):
 		dlg = wx.FileDialog(self.frame, "Choose a left image file to open", self.data['dirname'], "", \
-			tiltfile.imagetypesel, wx.OPEN)
+			tiltfile.imagetypefilter, wx.OPEN)
 		if 'imagetypeindex' in self.data and self.data['imagetypeindex'] is not None:
 			dlg.SetFilterIndex(self.data['imagetypeindex'])
 		if dlg.ShowModal() == wx.ID_OK:
@@ -1554,8 +1550,8 @@ class PickerApp(wx.App):
 			apDisplay.printError("Unknown pointer shape: "+shape)
 
 if __name__ == '__main__':
-	version = "2.0b"
-	reldate = "April 1, 2010"
+	version = "2.0b1"
+	releasedate = "March 5, 2010"
 	logoimage = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/tplogo.png")
 	citationlogo = """
 ####
@@ -1609,7 +1605,7 @@ J Struct Biol. 2009 v166(2): pp. 205-13.
 	print "=================================="
 	print "If you find this program useful please cite: "+citationlogo
 	print "ApTiltPicker, version "+version
-	print "Released on "+reldate
+	print "Released on "+releasedate
 	print "=================================="
 
 	app = PickerApp(
@@ -1617,7 +1613,7 @@ J Struct Biol. 2009 v166(2): pp. 205-13.
 		alignshape=params['alignshape'], ashapesize=params['ashapesize'],
 		worstshape=params['worstshape'], wshapesize=params['wshapesize'],
 		tiltangle=params['tiltangle'], tiltaxis=params['tiltaxis'],
-		version=version, citation=citation, reldate=reldate, logoimage=logoimage,
+		version=version, citation=citation, releasedate=releasedate, logoimage=logoimage,
 	)
 	app.openLeftImage(params['img1file'])
 	app.openRightImage(params['img2file'])

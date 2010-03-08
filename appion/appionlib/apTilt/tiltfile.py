@@ -12,8 +12,8 @@ from appionlib import apDisplay
 from appionlib.apSpider import operations
 
 
-imagetypes = ['spider', 'text', 'xml', 'pickle', 'box', 'pik',]
-imagetypesel = (
+imagetypes = ['mrc', 'spi', 'jpg', 'tif', 'png',]
+imagetypefilter = (
 	"All Files (*.*)|*.*"
 	+ "|MRC Files (*.mrc)|*.mrc" 
 	+ "|Spider Files (*.spi)|*.spi" 
@@ -22,7 +22,7 @@ imagetypesel = (
 	+ "|JPEG Files (*.jpg)|*.jpg"
 	)
 filetypes = ['spider', 'text', 'xml', 'pickle', 'box', 'pik',]
-filetypesel = (
+filetypefilter = (
 	"Spider Files (*.spi)|*.spi" 
 	+ "|Text Files (*.txt)|*.txt" 
 	+ "|Python Pickle File (*.pickle)|*.pickle" 

@@ -572,7 +572,7 @@ class AboutTiltPickerDialog(wx.Dialog):
 		label = wx.StaticText(self, -1, "TiltPicker, version "+self.parent.version)
 		sizer.Add(label, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
 
-		release = wx.StaticText(self, -1, "Released on "+self.parent.reldate)
+		release = wx.StaticText(self, -1, "Released on "+self.parent.releasedate)
 		sizer.Add(release, 2, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
 
 		release = wx.StaticText(self, -1, "Please contact Neil Voss (vossman77@yahoo.com) for help")
