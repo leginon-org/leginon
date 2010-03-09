@@ -43,7 +43,7 @@ class centerStackScript(appionScript.AppionScript):
 		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
 		
 	#=====================
-	def centerParticles(self, oldstack, centerstack, badstack)
+	def centerParticles(self, oldstack, centerstack, badstack):
 		maxshift = self.params['maxshift']
 		centerparts = []
 		badparts = []
