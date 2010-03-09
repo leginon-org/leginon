@@ -105,6 +105,9 @@ def saveData(savedata, filename, filetype=None):
 
 #---------------------------------------
 def saveToTextFile(savedata, filename):
+	### force files to end in .txt
+	if filename[-4:] != ".txt":
+		filename += ".txt"
 	f = open(filename, "w")
 	f.write( "program: \tparticles picked with ApTiltPicker\n")
 	for i in savedata:
@@ -141,11 +144,17 @@ def saveToTextFile(savedata, filename):
 
 #---------------------------------------
 def saveToXMLFile(savedata, filename):
+	### force files to end in .xml
+	if filename[-4:] != ".xml":
+		filename += ".xml"
 	apXml.writeDictToXml(savedata, filename, title='aptiltpicker')
 	return True
 
 #---------------------------------------
 def saveToSpiderFile(savedata, filename):
+	### force files to end in .??? per spider format add .spi if no dot
+	if filename[-4] != ".":
+		filename += ".spi"
 	f = open(filename, "w")
 	f.write( " ; particles picked with ApTiltPicker\n")
 	f.write( " ; http://appion.org\n")
@@ -203,6 +212,9 @@ def saveToSpiderFile(savedata, filename):
 
 #---------------------------------------
 def saveToPickleFile(savedata, filename):
+	### force files to end in .pik
+	if filename[-4:] != ".pik":
+		filename += ".pik"
 	f = open(filename, 'w')
 	cPickle.dump(savedata, f)
 	f.close()
