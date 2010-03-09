@@ -1348,7 +1348,7 @@ class PickerApp(wx.App):
 			return False
 		filetype = None
 		if self.data['filetypeindex'] is not None:
-			filetype = self.filetypes[self.data['filetypeindex']]
+			filetype = tiltfile.filetypes[self.data['filetypeindex']]
 		filename = os.path.join(self.data['dirname'], self.data['outfile'])
 		savedata = {
 			'image1name': self.data['image1file'],
@@ -1378,7 +1378,7 @@ class PickerApp(wx.App):
 			self.data['outfile'] = dlg.GetFilename()
 			self.data['dirname']  = os.path.abspath(dlg.GetDirectory())
 			self.data['filetypeindex'] = dlg.GetFilterIndex()
-			self.data['filetype'] = self.filetypes[self.data['filetypeindex']]
+			self.data['filetype'] = tiltfile.filetypes[self.data['filetypeindex']]
 			self.readData()
 		dlg.Destroy()
 
@@ -1386,7 +1386,7 @@ class PickerApp(wx.App):
 	def readData(self, filename=None):
 		filetype = None
 		if self.data['filetypeindex'] is not None:
-			filetype = self.filetypes[self.data['filetypeindex']]
+			filetype = tiltfile.filetypes[self.data['filetypeindex']]
 
 		if filename is None:
 			filename = os.path.join(self.data['dirname'], self.data['outfile'])
