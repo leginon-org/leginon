@@ -101,6 +101,19 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			document.viewerform.correlationmax.value='1.0';
 		}
 	}
+
+	function partrunToNone() {
+		if (document.viewerform.fromstackid.value != 0) {
+			document.viewerform.partrunid.value = 0;
+		}
+	}
+
+	function fromstackToNone() {
+		if (document.viewerform.partrunid.value != 0) {
+			document.viewerform.fromstackid.value = 0;
+		}
+	}
+
 	</SCRIPT>\n";
 	$javascript .= writeJavaPopupFunctions('appion');
 
@@ -237,7 +250,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<font class='apcomment'><b>No Particles for this Session</b></font>\n";
 	} else {
 		echo docpop('stackparticles','Particles:');
-		echo "<select name='partrunid'>\n";
+		echo "<select name='partrunid' onchange='fromstackToNone(this)'>\n";
 		echo "<option value='0'>None</option>\n";
 		foreach ($partrunids as $partrun){
 			$partrunid=$partrun['DEF_id'];
@@ -258,7 +271,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<br/>\n";
 	if ($stackruninfos) {
 		echo docpop('stackparticles2','Stacks:');
-		echo "<select name='fromstackid'>\n";
+		echo "<select name='fromstackid' onchange='partrunToNone(this)'>\n";
 		echo "<option value='0'>None</option>\n";
 		foreach ($stackruninfos as $stackruninfo){
 			$stackid = $stackruninfo['stackid'];
