@@ -3,25 +3,25 @@
 from pyami import mrc
 
 #===============
-	def forceMrcHeader(array=None):
-		'''
-		Hack to force MRC header to something that frealign will accept.
-		This may only be necessary on 64-bit machine
-		'''
-		h=mrc.newHeader()
-		mrc.updateHeaderDefaults(h)
-		if array is not None:
-			mrc.updateHeaderUsingArray(h,array)
-		h['byteorder']=0x4144
-		return h
+def forceMrcHeader(array=None):
+	'''
+	Hack to force MRC header to something that frealign will accept.
+	This may only be necessary on 64-bit machine
+	'''
+	h=mrc.newHeader()
+	mrc.updateHeaderDefaults(h)
+	if array is not None:
+		mrc.updateHeaderUsingArray(h,array)
+	h['byteorder']=0x4144
+	return h
 
 #===============
-	def fixMrcHeaderHack(involname, outvolname):
-		a=mrc.read(involname)
-		#force machine stamp integer
-		print "forcing machine stamp"
-		h=forceMrcHeader(array=a)
-		mrc.write(a,outvolname,header=h)
+def fixMrcHeaderHack(involname, outvolname):
+	a=mrc.read(involname)
+	#force machine stamp integer
+	print "forcing machine stamp"
+	h=forceMrcHeader(array=a)
+	mrc.write(a,outvolname,header=h)
 
 #===============
 def imagicToMrc(params, msg=True):
