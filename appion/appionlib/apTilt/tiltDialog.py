@@ -470,7 +470,7 @@ class DogPickerDialog(wx.Dialog):
 
 		#5a: insert into self.parent.picks1
 		self.parent.picks1 = self.peaktreeToPicks(peaktree1)
-	
+
 		#===
 
 		#2b: get image 2
@@ -655,6 +655,97 @@ class GuessShiftDialog(wx.Dialog):
 		self.Close()
 		self.parent.onGuessShift(evt)
 
+##
+##
+## Particle Cutoff Dialog
+##
+##
+
+class PartCutoffDialog(wx.Dialog):
+	#==================
+	def __init__(self, parent):
+		self.parent = parent
+
+		### get stats
+		rmsd = self.parent.getRmsdArray()
+		worstvalstr = "%.3f"%(rmsd.max())
+		meanvalstr = "%.3f +/- %.3f"%(rmsd.mean(), rmsd.std())
+		minworsterrstr = "%.3f"%(self.parent.minworsterr)
+
+		### create dialog
+		wx.Dialog.__init__(self, self.parent.frame, -1, "Particle Cutoff Removal")
+
+		### create input area
+		inforow = wx.FlexGridSizer(3, 2, 15, 15)
+
+		meanlabel = wx.StaticText(self, -1, "Current mean RMSD:  ",
+			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		meanvalue = wx.StaticText(self, -1, meanvalstr, style=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(meanlabel, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(meanvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		worstlabel = wx.StaticText(self, -1, "Current worst RMSD:  ",
+			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		worstvalue = wx.StaticText(self, -1, worstvalstr, style=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(worstlabel, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(worstvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		cutofflabel = wx.StaticText(self, -1, "RMSD cutoff:  ",
+			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.cutoffvalue = FloatEntry(self, -1, allownone=False, chars=8, value=minworsterrstr)
+		inforow.Add(cutofflabel, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.cutoffvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		### create button area
+		cancelcutoff = wx.Button(self, wx.ID_CANCEL, '&Cancel')
+		self.applycutoff = wx.Button(self,  wx.ID_APPLY, '&Apply')
+		self.Bind(wx.EVT_BUTTON, self.onApplyCutoff, self.applycutoff)
+		buttonrow = wx.GridSizer(1,2)
+		buttonrow.Add(cancelcutoff, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+		buttonrow.Add(self.applycutoff, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+
+		### merge input and button areas
+		self.sizer = wx.FlexGridSizer(2,1)
+		self.sizer.Add(inforow, 0, wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
+		self.SetSizerAndFit(self.sizer)
+
+	#==================
+	def onApplyCutoff(self, evt):
+		### get values
+		cutoff  = self.cutoffvalue.GetValue()
+		a1 = self.parent.getArray1()
+		a2 = self.parent.getArray2()
+		rmsd = self.parent.getRmsdArray()
+
+		### must set a lower bound
+		if cutoff < rmsd.mean():
+			self.Destroy()
+			dialog = wx.MessageDialog(self.parent.frame,
+				"Particle Cutoff must be greater than the mean error", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+
+		### find good particles
+		g1 = []
+		g2 = []
+		for i,val in enumerate(rmsd):
+			if val < cutoff:
+				g1.append(a1[i])
+				g2.append(a2[i])
+
+		### replace existing particles with only good ones
+		apDisplay.printMsg( "Eliminated "+str(len(a1)-len(g1))+" particles")
+		self.parent.panel1.setTargets('Worst', [] )
+		self.parent.panel2.setTargets('Worst', [] )
+		self.parent.panel1.setTargets('Picked', g1 )
+		self.parent.panel2.setTargets('Picked', g2 )
+		self.parent.onUpdate(None)
+		self.parent.statbar.PushStatusText("Removed "+str(len(a1)-len(g1))+" particles", 0)
+
+		self.Destroy()
+		return
 
 ##
 ##
