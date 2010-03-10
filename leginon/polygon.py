@@ -9,6 +9,7 @@ try:
 	def insidePolygon(points, polygon):
 		return numextension.pointsInPolygon(points, polygon)
 except:
+	print "using slow polygon tool"
 	def insidePolygon(points, polygon):
 		truthlist = []
 		for point in points:
