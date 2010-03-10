@@ -98,6 +98,7 @@ class authlib{
 			
 			$now=date('Y-m-d H:i:s', time());
 			$hash = md5($username.$now);
+			$password = md5($password);
 			
 			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 			
@@ -185,6 +186,7 @@ class authlib{
 		}
 
 		$fullname = $firstname . ' '. $lastname;
+		$password = md5($password);
 		
 		$q = "insert into UserData (name, `full name`, username, firstname, lastname, 
 							`REF|GroupData|group`, password, email) 
@@ -338,7 +340,8 @@ class authlib{
 	function updatePassword($userId, $password) {
 
 		$dbc = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
-
+		$password = md5($password);
+		
 		$q = "update UserData set password = '$password' where DEF_id = $userId";
 
 		if(!$dbc->SQLQuery($q))
@@ -372,7 +375,7 @@ class authlib{
 					up.title, up.institution, up.dept, up.address, up.city, up.statecountry, 
 					up.zip, up.phone, up.fax, up.url, dg.name
 				from ".DB_LEGINON.".UserData du 
-				left join $projectDB.userdetails up 
+				left join ".DB_PROJECT.".userdetails up 
 					on du.DEF_id = up.`REF|leginondata|UserData|user` 
 				join ".DB_LEGINON.".GroupData dg 
 					on du.`REF|GroupData|group` = dg.DEF_id
@@ -442,7 +445,7 @@ class authlib{
 				$password=addslashes($password);
 				$username=addslashes($username);
 			}
-
+			$password = md5($password);
 			$q="select DEF_id from UserData where username = '$username' and password = '$password'";
 			
 			$query=$dbc->SQLQuery($q);
@@ -768,7 +771,8 @@ class authlib{
 
 			mysql_connect(DB_HOST, DB_USER, DB_PASS);
 			mysql_select_db(DB_LEGINON);
-
+			$password = md5($password);
+			
 			$query = mysql_query("update UserData set password = '$password' where id = '$id'");
 
 			mysql_close();
