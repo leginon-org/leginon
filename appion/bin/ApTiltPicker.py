@@ -1609,6 +1609,8 @@ if __name__ == '__main__':
 	version = "2.0b1"
 	releasedate = "March 5, 2010"
 	logoimage = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/tplogo.png")
+	if not os.path.isfile(logoimage):
+		logoimage = os.path.join(apParam.getAppionDirectory(), "data/tplogo.png")
 	citationlogo = """
 ####
   # ###    Voss NR, Yoshioka CK, Radermacher M, Potter CS, and Carragher B.
