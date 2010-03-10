@@ -180,47 +180,10 @@ class PickerApp(wx.App):
 		self.panel1.setOtherPanel(self.panel2)
 		self.panel2.setOtherPanel(self.panel1)
 
-		self.buttonrow = wx.FlexGridSizer(1,20)
-
-		self.theta_dialog = tiltDialog.FitThetaDialog(self)
-		self.fittheta = wx.Button(self.frame, -1, '&Theta...')
-		self.frame.Bind(wx.EVT_BUTTON, self.onFitTheta, self.fittheta)
-		self.buttonrow.Add(self.fittheta, 0, wx.ALL, 1)
-
-		self.fitall_dialog = tiltDialog.FitAllDialog(self)
-		self.fitall = wx.Button(self.frame, -1, '&Optimize...')
-		self.frame.Bind(wx.EVT_BUTTON, self.onFitAll, self.fitall)
-		self.buttonrow.Add(self.fitall, 0, wx.ALL, 1)
-
-		self.autooptim = wx.Button(self.frame, -1, 'Auto Op&timize')
-		self.frame.Bind(wx.EVT_BUTTON, self.onAutoOptim, self.autooptim)
-		self.buttonrow.Add(self.autooptim, 0, wx.ALL, 1)
-
-		self.update = wx.Button(self.frame, wx.ID_APPLY, '&Apply')
-		self.frame.Bind(wx.EVT_BUTTON, self.onUpdate, self.update)
-		self.buttonrow.Add(self.update, 0, wx.ALL, 1)
-
-		#spacer
-		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
-
-		self.maskregion = wx.Button(self.frame, -1, '&Mask')
-		self.frame.Bind(wx.EVT_BUTTON, self.onMaskRegion, self.maskregion)
-		self.buttonrow.Add(self.maskregion, 0, wx.ALL, 1)
-
-		self.clearPolygon = wx.Button(self.frame, wx.ID_REMOVE, 'Rm &Polygon')
-		self.Bind(wx.EVT_BUTTON, self.onClearPolygon, self.clearPolygon)
-		self.buttonrow.Add(self.clearPolygon, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		self.repairlist = wx.Button(self.frame, -1, 'Repair')
-		self.frame.Bind(wx.EVT_BUTTON, self.onRepairList, self.repairlist)
-		self.buttonrow.Add(self.repairlist, 0, wx.ALL, 1)
-
-		self.xferpick = wx.Button(self.frame, -1, '&Xfer pick')
-		self.frame.Bind(wx.EVT_BUTTON, self.onXferPick, self.xferpick)
-		self.buttonrow.Add(self.xferpick, 0, wx.ALL, 1)
-
+		### create menu buttons
+		self.createMenuButtons()
 		if self.mode == 'default':
-			self.createMenuButtons()
+			self.createStandAloneButtons()
 		else:
 			self.createLoopButtons()
 
@@ -251,21 +214,75 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def createMenuButtons(self):
+		"""
+		These are buttons related to both the standalone and pipeline versions of TiltPicker
+		"""
+		self.buttonrow = wx.FlexGridSizer(1,20)
+
+		self.update = wx.Button(self.frame, wx.ID_APPLY, '&Apply')
+		self.frame.Bind(wx.EVT_BUTTON, self.onUpdate, self.update)
+		self.buttonrow.Add(self.update, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
+
+		#spacer
+		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
+
+		self.theta_dialog = tiltDialog.FitThetaDialog(self)
+		self.fittheta = wx.Button(self.frame, -1, '&Theta...')
+		self.frame.Bind(wx.EVT_BUTTON, self.onFitTheta, self.fittheta)
+		self.buttonrow.Add(self.fittheta, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
+
+		self.fitall_dialog = tiltDialog.FitAllDialog(self)
+		self.fitall = wx.Button(self.frame, -1, '&Optimize...')
+		self.frame.Bind(wx.EVT_BUTTON, self.onFitAll, self.fitall)
+		self.buttonrow.Add(self.fitall, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
+
+		self.autooptim = wx.Button(self.frame, -1, 'Auto Optimi&ze')
+		self.frame.Bind(wx.EVT_BUTTON, self.onAutoOptim, self.autooptim)
+		self.buttonrow.Add(self.autooptim, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
+
+		#spacer
+		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
+
+		self.clear = wx.Button(self.frame, -1, 'Rm &Worst Picks')
+		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
+		self.buttonrow.Add(self.clear, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
+
+		self.particleCutoff = wx.Button(self.frame, -1, '&Cutoff')
+		self.Bind(wx.EVT_BUTTON, self.onParticleCutoff, self.particleCutoff)
+		self.buttonrow.Add(self.particleCutoff, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		self.maskregion = wx.Button(self.frame, -1, '&Mask')
+		self.frame.Bind(wx.EVT_BUTTON, self.onMaskRegion, self.maskregion)
+		self.buttonrow.Add(self.maskregion, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
+
+		self.xferpick = wx.Button(self.frame, -1, '&Xfer pick')
+		self.frame.Bind(wx.EVT_BUTTON, self.onXferPick, self.xferpick)
+		self.buttonrow.Add(self.xferpick, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
+
+		self.clearPolygon = wx.Button(self.frame, wx.ID_REMOVE, 'Rm &Polygon')
+		self.Bind(wx.EVT_BUTTON, self.onClearPolygon, self.clearPolygon)
+		self.buttonrow.Add(self.clearPolygon, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		self.repairlist = wx.Button(self.frame, -1, 'Repair')
+		self.frame.Bind(wx.EVT_BUTTON, self.onRepairList, self.repairlist)
+		self.buttonrow.Add(self.repairlist, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
+
+		self.reset = wx.Button(self.frame, wx.ID_RESET, 'Reset')
+		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
+		self.buttonrow.Add(self.reset, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
+
+	#---------------------------------------
+	def createStandAloneButtons(self):
+		"""
+		These are buttons related to the standalone version of TiltPicker
+		"""
 		#spacer
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
 		self.shift_dialog = tiltDialog.GuessShiftDialog(self)
 		self.shift = wx.Button(self.frame,-1, '&Get Shift')
 		self.frame.Bind(wx.EVT_BUTTON, self.onCheckGuessShift, self.shift)
-		self.buttonrow.Add(self.shift, 0, wx.ALL, 1)
-
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, 'Rm &Worst Picks')
-		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
-		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
-
-		self.reset = wx.Button(self.frame, wx.ID_RESET, '&Reset')
-		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
-		self.buttonrow.Add(self.reset, 0, wx.ALL, 1)
+		self.buttonrow.Add(self.shift, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
 		#spacer
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
@@ -273,77 +290,60 @@ class PickerApp(wx.App):
 		self.dogpick_dialog = tiltDialog.DogPickerDialog(self)
 		self.dogpick = wx.Button(self.frame, wx.ID_OPEN, '&DoG Pick...')
 		self.frame.Bind(wx.EVT_BUTTON, self.onAutoDogPick, self.dogpick)
-		self.buttonrow.Add(self.dogpick, 0, wx.ALL, 1)
-
-		"""
-		self.save = wx.Button(self.frame, wx.ID_SAVE, '&Save')
-		self.frame.Bind(wx.EVT_BUTTON, self.onFileSave, self.save)
-		self.buttonrow.Add(self.save, 0, wx.ALL, 1)
-
-		self.saveas = wx.Button(self.frame, wx.ID_SAVEAS, 'Sa&ve As...')
-		self.frame.Bind(wx.EVT_BUTTON, self.onFileSaveAs, self.saveas)
-		self.buttonrow.Add(self.saveas, 0, wx.ALL, 1)
-		"""
+		self.buttonrow.Add(self.dogpick, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
 		#spacer
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
 		self.quit = wx.Button(self.frame, wx.ID_EXIT, '&Quit')
 		self.frame.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
-		self.buttonrow.Add(self.quit, 0, wx.ALL, 1)
+		self.buttonrow.Add(self.quit, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
 		return
 
 	#---------------------------------------
 	def createLoopButtons(self):
+		"""
+		These are buttons related to the Appion pipeline version of TiltPicker
+		"""
+		#spacer
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
 		self.shift = wx.Button(self.frame,-1, '&Get Shift')
 		self.frame.Bind(wx.EVT_BUTTON, self.onGuessShift, self.shift)
-		self.buttonrow.Add(self.shift, 0, wx.ALL, 1)
+		self.buttonrow.Add(self.shift, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
 		self.importpicks = wx.Button(self.frame, -1, '&Import')
 		self.frame.Bind(wx.EVT_BUTTON, self.onImportPicks, self.importpicks)
-		self.buttonrow.Add(self.importpicks, 0, wx.ALL, 1)
-
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, 'Rm &Worst Picks')
-		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
-		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
-
-		self.reset = wx.Button(self.frame, wx.ID_RESET, '&Reset')
-		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
-		self.buttonrow.Add(self.reset, 0, wx.ALL, 1)
+		self.buttonrow.Add(self.importpicks, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
 		#spacer
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
 		self.quit = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
 		self.frame.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
-		self.buttonrow.Add(self.quit, 0, wx.ALL, 1)
-
-		#label = wx.StaticText(self.frame, -1, "Assessment:  ", style=wx.ALIGN_RIGHT)
-		#self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		self.buttonrow.Add(self.quit, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
 		#spacer
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
-		self.assessnone = wx.ToggleButton(self.frame, -1, "&None")
+		self.assessnone = wx.ToggleButton(self.frame, -1, "None")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleNone, self.assessnone)
 		self.assessnone.SetValue(0)
 		#self.assessnone.SetMinSize((70,self.buttonheight))
-		self.buttonrow.Add(self.assessnone, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.buttonrow.Add(self.assessnone, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		self.assesskeep = wx.ToggleButton(self.frame, -1, "&Keep")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleKeep, self.assesskeep)
 		self.assesskeep.SetValue(0)
 		#self.assesskeep.SetMinSize((70,self.buttonheight))
-		self.buttonrow.Add(self.assesskeep, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.buttonrow.Add(self.assesskeep, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
-		self.assessreject = wx.ToggleButton(self.frame, -1, "Re&ject")
+		self.assessreject = wx.ToggleButton(self.frame, -1, "&Reject")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleReject, self.assessreject)
 		self.assessreject.SetValue(0)
 		#self.assessreject.SetMinSize((70,self.buttonheight))
-		self.buttonrow.Add(self.assessreject, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.buttonrow.Add(self.assessreject, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		return
 
@@ -373,7 +373,7 @@ class PickerApp(wx.App):
 					( "Clear &Worst Picks", "Remove worst picked particles", self.onClearBadPicks, wx.ID_CLEAR ),
 					( "Clear &Polygon", "Clear particle with polygon", self.onClearPolygon, wx.ID_CLEAR ),
 				)),
-				("&Refine", (
+				("Refine", (
 					( "Auto Op&timize", "Find theta and optimize angles", self.onAutoOptim ),
 					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
 					( "&Optimize Angles", "Optimize angles with least squares", self.onFitAll ),
@@ -392,13 +392,13 @@ class PickerApp(wx.App):
 					( "&Clear picks", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
 					( "&Reset TiltPicker", "Remove all picks and start over", self.onResetParams, wx.ID_RESET ),
 				)),
-				("Help", (
+				("&Help", (
 					( "&About TiltPicker", "Show product information", self.onShowAboutTiltPicker, wx.ID_RESET ),
 				)),
 			]
 		else:
 			return [
-				("&Pipeline", (
+				("Pipeline", (
 					( "&Import picks", "Import picked particles from previous run", self.onImportPicks ),
 					( "&Forward", "Advance to next image", self.onQuit, wx.ID_FORWARD ),
 				)),
@@ -408,7 +408,7 @@ class PickerApp(wx.App):
 					( "Clear &Worst Picks", "Remove worst picked particles", self.onClearBadPicks, wx.ID_CLEAR ),
 					( "Clear &Polygon", "Clear particle with polygon", self.onClearPolygon, wx.ID_CLEAR ),
 				)),
-				("&Refine", (
+				("Refine", (
 					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
 					( "&Optimize Angles", "Optimize angles with least squares", self.onFitAll ),
 					( "Auto Op&timize", "Find theta and optimize angles", self.onAutoOptim ),
@@ -432,7 +432,7 @@ class PickerApp(wx.App):
 					( "&Keep", "Keep this image pair", self.onToggleKeep, -1, wx.ITEM_RADIO),
 					( "&Reject", "Reject this image pair", self.onToggleReject, -1, wx.ITEM_RADIO),
 				)),
-				("Help", (
+				("&Help", (
 					( "&About TiltPicker", "Show product information", self.onShowAboutTiltPicker, wx.ID_RESET ),
 				)),
 			]
@@ -636,6 +636,9 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onGetOverlap(self, evt):
+		"""
+		This function gets the overlap between the two images based on the alignment parameters
+		"""
 		#GET THE ARRAYS
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
@@ -666,6 +669,9 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onUpdate(self, evt):
+		"""
+		This function updates the aligned particles to the picked particles
+		"""
 		#GET ARRAYS
 		a1 = self.getArray1()
 		a2 = self.getArray2()
@@ -696,6 +702,10 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onXferPick(self, evt):
+		"""
+		This function transfers any picked particles without a corresponding pair
+		to the other image using the alignment parameters
+		"""
 		#GET ARRAYS
 		a1 = self.getArray1()
 		a2 = self.getArray2()
@@ -922,13 +932,13 @@ class PickerApp(wx.App):
 		err = self.getRmsdArray()
 		cut = self.getCutoffCriteria(err)
 
-		minworsterr = 1.0
+		self.minworsterr = 1.0
 		worstindex = []
 		worsterr = []
 		### always set 3% as bad if cutoff > max rmsd
 		numbad = int(len(a1)*0.03 + 1.0)
 		for i,e in enumerate(err):
-			if e > minworsterr:
+			if e > self.minworsterr:
 				### find the worst overall picks
 				if len(worstindex) >= numbad:
 					j = numpy.argmin(numpy.asarray(worsterr))
@@ -939,7 +949,7 @@ class PickerApp(wx.App):
 					worstindex[j] = i
 					worsterr[j] = e
 					### increase the min worst err
-					minworsterr = numpy.asarray(worsterr).min()
+					self.minworsterr = numpy.asarray(worsterr).min()
 				else:
 					### add the worst pick
 					good[i] = False
@@ -951,7 +961,7 @@ class PickerApp(wx.App):
 		if good.sum() == 0:
 			good[0] = True
 		sumstr = ("%d of %d good (%d bad) particles; min worst error=%.3f"
-			%(good.sum(),numpoints,numpoints-good.sum(),minworsterr))
+			%(good.sum(),numpoints,numpoints-good.sum(),self.minworsterr))
 		apDisplay.printMsg(sumstr)
 		self.statbar.PushStatusText(sumstr, 0)
 		return good
@@ -1087,6 +1097,34 @@ class PickerApp(wx.App):
 				dialog.Destroy()
 
 		return True
+
+	#---------------------------------------
+	def onParticleCutoff(self, env):
+		"""
+		This function removes all particles worse than a set cutoff value
+		"""
+		### check to see if this request is valid
+		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
+			dialog = wx.MessageDialog(self.frame,
+				"You should pick at least 5 particle pairs first", 'Error',
+				 wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+
+		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
+			dialog = wx.MessageDialog(self.frame,
+				"You should run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+
+		### show cutoff dialog
+		self.onUpdate(env)
+		self.partcutdialog = tiltDialog.PartCutoffDialog(self)
+		self.partcutdialog.Show()
+		if self.partcutdialog.ShowModal() == wx.ID_APPLY:
+			self.onUpdate(env)
 
 	#---------------------------------------
 	def onFitTheta(self, evt):
