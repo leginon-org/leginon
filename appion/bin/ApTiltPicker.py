@@ -270,6 +270,7 @@ class PickerApp(wx.App):
 		#spacer
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
+		self.viewdogmaps_frame = tiltDialog.viewDogMapsFrame(self)
 		self.dogpick_dialog = tiltDialog.DogPickerDialog(self)
 		self.dogpick = wx.Button(self.frame, wx.ID_OPEN, '&DoG Pick...')
 		self.frame.Bind(wx.EVT_BUTTON, self.onAutoDogPick, self.dogpick)
@@ -1014,7 +1015,7 @@ class PickerApp(wx.App):
 		return na
 
 	#---------------------------------------
-	def onImportPicks(self, evt, pixdiam=None, msg=True, tight=True):
+	def onImportPicks(self, evt, pixdiam=None, msg=True, tight=True, showmaps=False):
 		#a1 = numpy.array([[512,512]], dtype=numpy.float32)
 		#a2 = apTiltTransform.a1Toa2Data(a1, self.data)
 		#a1b = apTiltTransform.a2Toa1Data(a2, self.data)
@@ -1066,8 +1067,11 @@ class PickerApp(wx.App):
 		self.statbar.PushStatusText("Inserted "+str(newparts)+" new particles", 0)
 		if msg is True:
 			dialog = wx.MessageDialog(self.frame,
-				"Inserted "+str(newparts)+" new particles", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
-			if dialog.ShowModal() == wx.ID_OK:
+				"Inserted "+str(newparts)+" new particles", 'INFORMATION', wx.CANCEL|wx.OK|wx.ICON_INFORMATION)
+			if showmaps is True and dialog.ShowModal() == wx.ID_OK:
+				dialog.Destroy()
+				self.viewdogmaps_frame.Show()
+			if dialog.ShowModal() == wx.ID_CANCEL:
 				dialog.Destroy()
 
 		return True
