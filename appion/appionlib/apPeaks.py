@@ -15,7 +15,7 @@ from appionlib import apParam
 #leginon
 from pyami import imagefun
 
-def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
+def findPeaks(imgdict, maplist, params, maptype="ccmaxmap", pikfile=True):
 	peaktreelist = []
 	count = 0
 
@@ -58,12 +58,13 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 		createPeakMapImage(peaktree, imgmap, outfile, pixrad, bin, msg)
 
 		#write pikfile
-		peakTreeToPikFile(peaktree, imgname, count, params['rundir'])
+		if pikfile is True:
+			peakTreeToPikFile(peaktree, imgname, count, params['rundir'])
 
 		#append to complete list of peaks
 		peaktreelist.append(peaktree)
 
-	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg)
+	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg, pikfile=pikfile)
 
 	#max threshold
 	if maxthresh is not None:
@@ -218,7 +219,7 @@ def maxThreshPeaks(peaktree, maxthresh):
 			newpeaktree.append(peaktree[i])
 	return newpeaktree
 
-def mergePeakTrees(imgdict, peaktreelist, params, msg=True):
+def mergePeakTrees(imgdict, peaktreelist, params, msg=True, pikfile=True):
 	if msg is True:
 		apDisplay.printMsg("Merging individual picked peaks into one set")
 	bin =         int(params["bin"])
@@ -253,7 +254,8 @@ def mergePeakTrees(imgdict, peaktreelist, params, msg=True):
 			%(peaktree[0]['correlation'], peaktree[len(peaktree)-1]['correlation']))
 		bestpeaktree = bestpeaktree[0:maxpeaks]
 
-	peakTreeToPikFile(bestpeaktree, imgname, 'a', params['rundir'])
+	if pikfile is True:
+		peakTreeToPikFile(bestpeaktree, imgname, 'a', params['rundir'])
 
 	return bestpeaktree
 
