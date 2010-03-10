@@ -10,16 +10,16 @@ import Image
 from pyami import quietscipy
 from scipy import ndimage, optimize
 #appion
+try:
+	import radermacher
+except:
+	print "using slow tilt angle calculator"
+	import slowmacher as radermacher
 from appionlib import apDisplay
 from appionlib import apPeaks
 from appionlib import apImage
 from appionlib import apParam
 from appionlib.apTilt import apTiltTransform, apTiltShift, tiltfile
-try:
-	import radermacher
-except:
-	apDisplay.printWarning("using slow tilt angle calculator")
-	import slowmacher as radermacher
 
 class autoTilt(object):
 	#---------------------------------------
