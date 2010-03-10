@@ -3,17 +3,18 @@ import os
 import math
 import numpy
 import pprint
-from appionlib import apDisplay
 from leginon.gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 try:
 	import radermacher
 except:
 	print "using slow tilt angle calculator"
 	import slowmacher as radermacher
-from appionlib.apTilt import apTiltTransform
 from appionlib import apDog
 from appionlib import apPeaks
 from appionlib import apImage
+from appionlib import apParam
+from appionlib import apDisplay
+from appionlib.apTilt import apTiltTransform
 
 ##
 ##
@@ -350,17 +351,15 @@ class DogPickerDialog(wx.Dialog):
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.diam, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
-		label = wx.StaticText(self, -1, "Use ruler tool (above) to determine",
-			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add((1,1), 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-
-		"""
-		label = wx.StaticText(self, -1, "Diameter range (A):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Diameter range (pixels):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.srange = FloatEntry(self, -1, allownone=False, chars=5, value="20.0")
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.srange, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
-		"""
+
+		label = wx.StaticText(self, -1, "Number of sizes:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.numslices = IntEntry(self, -1, allownone=False, chars=3, value="2")
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.numslices, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		label = wx.StaticText(self, -1, "Threshold:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.thresh = FloatEntry(self, -1, allownone=False, chars=5, value="0.7")
@@ -379,16 +378,6 @@ class DogPickerDialog(wx.Dialog):
 		self.partContrast(True)
 		inforow.Add(self.whitePart, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.blackPart, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-
-		"""
-		self.whitePart = wx.RadioButton(self, -1, "light", style=wx.RB_GROUP)
-		self.whitePart.SetValue(True)
-		self.whitePart.Bind(wx.EVT_RADIOBUTTON, self.onWhitePart)
-		self.blackPart = wx.RadioButton(self, -1, "dark", style=wx.RB_GROUP)
-		self.blackPart.SetValue(False)
-		self.blackPart.Bind(wx.EVT_RADIOBUTTON, self.onBlackPart)
-
-		"""
 
 		label = wx.StaticText(self, -1, "Max Peaks:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.maxpeaks = IntEntry(self, -1, allownone=False, chars=5, value="500")
@@ -421,59 +410,74 @@ class DogPickerDialog(wx.Dialog):
 	#==================
 	def onRunDogPicker(self, evt):
 		apDisplay.printColor("===============\nRunning experimental DoGPicker","cyan")
-		#apix  = self.apix.GetValue()
-		pixdiam  = self.diam.GetValue()
-		#srange  = self.srange.GetValue()
-		thresh  = self.thresh.GetValue()
+		pixdiam = self.diam.GetValue()
+		sizerange = self.srange.GetValue()
+		thresh = self.thresh.GetValue()
 		invert = self.partContrast(None)
 		maxpeaks = self.maxpeaks.GetValue()
+		numslices  = self.numslices.GetValue()
 
 		if invert is True:
 			apDisplay.printMsg("Picking dark particles on light backgound, i.e. ice")
 		else:
 			apDisplay.printMsg("Picking light particles on dark backgound, i.e. stain")
 
-		"""
-		self.parent.statbar.PushStatusText("ERROR: Dog Picker has not been implemented yet", 0)
-		dialog = wx.MessageDialog(self.parent.frame, 
-			"Dog Picker has not been implemented yet", 'Error', wx.OK|wx.ICON_ERROR)
-		if dialog.ShowModal() == wx.ID_OK:
-			dialog.Destroy()	
-		"""
-
 		self.Close()
 
-		#1a: get image 1
+		apParam.createDirectory("maps")
+		#1. set DoG parameters / hack to use existing pipeline function
+		dogparams = {
+			'apix': 1.0, # set to 1 because we are using pixels
+			'bin': 1.0, # set to 1 because we are using pixels
+			'diam': pixdiam, # diameter of particles
+			'sizerange': sizerange, # diameter range of particles
+			'numslices': numslices, # number of slices to perform
+			'kfactor': 1.2, # does not matter
+
+			'overlapmult': 1.5,
+			'rundir': os.getcwd(),
+			'maxpeaks': maxpeaks,
+			'maxthresh': None,
+			'thresh': thresh,
+			'maxsize': 0.2,
+			'peaktype': 'maximum',
+			'background': False,
+			'doubles': False,
+		}
+
+		#2a. get image 1
 		img1 = numpy.asarray(self.parent.panel1.imagedata, dtype=numpy.float32)
 		if invert is True:
 			img1 = apImage.invertImage(img1)
 
-		#2a: DoG image 1
-		dogmap1 = apDog.diffOfGauss(img1, pixdiam/2.0, k=1.2)
-		dogmap1 = apImage.normStdev(dogmap1)/4.0
-		#3a: threshold & find peaks image 1
-		peaktree1 = apPeaks.findPeaksInMap(dogmap1, thresh, pixdiam, maxpeaks=maxpeaks)
-		peaktree1 = apPeaks.removeBorderPeaks(peaktree1, pixdiam, 
-			dogmap1.shape[1], dogmap1.shape[0])
-		#4a: insert into self.parent.picks1
-		self.parent.picks1 = self.peaktreeToPicks(peaktree1)
+		#3a. run DoG picker on image 1
+		dogarrays1 = apDog.diffOfGaussParam(img1, dogparams)
 
-		#1b: get image 2
+		#4a: threshold & find peaks image 1
+		imgdict1 = { 'filename': 'leftimage', 'image': img1, }
+		peaktree1 = apPeaks.findPeaks(imgdict1, dogarrays1, dogparams, maptype="dogmap", pikfile=False)
+
+		#5a: insert into self.parent.picks1
+		self.parent.picks1 = self.peaktreeToPicks(peaktree1)
+	
+		#===
+
+		#2b: get image 2
 		img2 = numpy.asarray(self.parent.panel2.imagedata, dtype=numpy.float32)
 		if invert is True:
 			img2 = apImage.invertImage(img2)
-		#2b: DoG image 2
-		dogmap2 = apDog.diffOfGauss(img2, pixdiam/2.0, k=1.2)
-		dogmap2 = apImage.normStdev(dogmap2)/4.0
-		#3b: threshold & find peaks image 2
-		peaktree2 = apPeaks.findPeaksInMap(dogmap2, thresh, pixdiam, olapmult=1.5, maxpeaks=maxpeaks)
-		peaktree2 = apPeaks.removeBorderPeaks(peaktree2, pixdiam, 
-			dogmap2.shape[1], dogmap2.shape[0])
 
-		#4b: insert into self.parent.picks2
+		#3b. run DoG picker on image 2
+		dogarrays2 = apDog.diffOfGaussParam(img2, dogparams)
+
+		#4b: threshold & find peaks image 2
+		imgdict2 = { 'filename': 'rightimage', 'image': img2, }
+		peaktree2 = apPeaks.findPeaks(imgdict2, dogarrays2, dogparams, maptype="dogmap", pikfile=False)
+
+		#5b: insert into self.parent.picks2
 		self.parent.picks2 = self.peaktreeToPicks(peaktree2)
 
-		self.parent.onImportPicks(None, pixdiam)
+		self.parent.onImportPicks(None, pixdiam, showmaps=True)
 		apDisplay.printColor("Finished DoGPicker\n===================","cyan")
 
 	#==================
@@ -483,6 +487,66 @@ class DogPickerDialog(wx.Dialog):
 			picks.append( (p['xcoord'], p['ycoord']) )
 		npicks = numpy.asarray(picks, dtype=numpy.float32)
 		return npicks
+
+##
+##
+## View DoG Maps Frame
+##
+##
+
+class viewDogMapsFrame(wx.Frame):
+	#==================
+	def __init__(self, parent):
+		self.parent = parent
+
+		### check if images exist
+		imgnum = 1
+		leftmap = os.path.join(os.getcwd(), "maps/leftimage.dogmap%d.jpg"%(imgnum))
+		rightmap = os.path.join(os.getcwd(), "maps/rightimage.dogmap%d.jpg"%(imgnum))
+		if not os.path.isfile(leftmap) or not os.path.isfile(rightmap):
+			return
+
+		### create frame
+		wx.Frame.__init__(self, self.parent.frame, -1, "DoG Maps")
+		sizer = wx.FlexGridSizer(2, 2, 15, 15)
+
+		### left image
+		leftimg = wx.Image(leftmap, wx.BITMAP_TYPE_JPEG, -1)
+		leftimg = leftimg.Scale(512, 512)
+		leftbitmap = wx.BitmapFromImage(leftimg)
+		leftsizer = wx.StaticBitmap(self, -1, leftbitmap)
+		sizer.Add(leftsizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+
+		### right image
+		rightimg = wx.Image(rightmap, wx.BITMAP_TYPE_JPEG, -1)
+		rightimg = rightimg.Scale(512, 512)
+		rightbitmap = wx.BitmapFromImage(rightimg)
+		rightsizer = wx.StaticBitmap(self, -1, rightbitmap)
+		sizer.Add(leftsizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+
+		### buttons 
+		self.prevmap = wx.Button(self, wx.ID_BACKWARD, '&Previous')
+		self.okmap = wx.Button(self, wx.ID_OK, '&OK')
+		self.nextmap = wx.Button(self, wx.ID_FORWARD, '&Next')
+
+		#self.Bind(wx.EVT_BUTTON, self.onPrevMap, self.prevmap)
+		self.Bind(wx.EVT_BUTTON, self.onClose, self.okmap)
+		#self.Bind(wx.EVT_BUTTON, self.onNextMap, self.nextmap)
+		buttonrow = wx.GridSizer(1, 3)
+		buttonrow.Add(self.prevmap, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+		buttonrow.Add(self.okmap, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+		buttonrow.Add(self.nextmap, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+
+		sizer.Add(buttonrow, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+
+		sizer.AddGrowableRow(0)
+		sizer.AddGrowableCol(0)
+		sizer.AddGrowableCol(1)
+		self.SetSizerAndFit(sizer)
+
+	#==================
+	def onClose(self, evt):
+		self.Close()
 
 ##
 ##
