@@ -1,6 +1,7 @@
 import wx
 import os
 import math
+import glob
 import numpy
 import pprint
 from leginon.gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
@@ -10,6 +11,7 @@ except:
 	print "using slow tilt angle calculator"
 	import slowmacher as radermacher
 from appionlib import apDog
+from appionlib import apFile
 from appionlib import apPeaks
 from appionlib import apImage
 from appionlib import apParam
@@ -410,6 +412,15 @@ class DogPickerDialog(wx.Dialog):
 	#==================
 	def onRunDogPicker(self, evt):
 		apDisplay.printColor("===============\nRunning experimental DoGPicker","cyan")
+
+		### remove existing maps
+		lefts = glob.glob("maps/leftimage.dogmap*.jpg")
+		for imgname in lefts:
+			apFile.removeFile(imgname, warn=False)
+		rights = glob.glob("maps/rightimage.dogmap*.jpg")
+		for imgname in rights:
+			apFile.removeFile(imgname, warn=False)
+
 		pixdiam = self.diam.GetValue()
 		sizerange = self.srange.GetValue()
 		thresh = self.thresh.GetValue()
@@ -494,59 +505,97 @@ class DogPickerDialog(wx.Dialog):
 ##
 ##
 
-class viewDogMapsFrame(wx.Frame):
+class viewDogMapsFrame(wx.Dialog):
 	#==================
 	def __init__(self, parent):
 		self.parent = parent
 
 		### check if images exist
-		imgnum = 1
-		leftmap = os.path.join(os.getcwd(), "maps/leftimage.dogmap%d.jpg"%(imgnum))
-		rightmap = os.path.join(os.getcwd(), "maps/rightimage.dogmap%d.jpg"%(imgnum))
-		if not os.path.isfile(leftmap) or not os.path.isfile(rightmap):
-			return
+		self.imgcount = len(glob.glob("maps/leftimage.dogmap*.jpg"))
 
 		### create frame
-		wx.Frame.__init__(self, self.parent.frame, -1, "DoG Maps")
-		sizer = wx.FlexGridSizer(2, 2, 15, 15)
+		wx.Dialog.__init__(self, self.parent.frame, -1, "DoG Maps")
+		self.sizer = wx.FlexGridSizer(2, 2, 15, 15)
+
+		### set images
+		result = self.onSetImages()
+		if result is False:
+			return
+
+		### add left image
+		self.leftsizer = wx.StaticBitmap(self, -1, self.leftbitmap)
+		self.sizer.Add(self.leftsizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+
+		### add right image
+		self.rightsizer = wx.StaticBitmap(self, -1, self.rightbitmap)
+		self.sizer.Add(self.rightsizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+
+		### buttons
+		if self.imgcount > 1:
+			self.prevmap = wx.Button(self, wx.ID_BACKWARD, '&Previous')
+			self.nextmap = wx.Button(self, wx.ID_FORWARD, '&Next')
+			self.Bind(wx.EVT_BUTTON, self.onPrevMap, self.prevmap)
+			self.Bind(wx.EVT_BUTTON, self.onNextMap, self.nextmap)
+		self.okmap = wx.Button(self, wx.ID_OK, '&OK')
+		self.Bind(wx.EVT_BUTTON, self.onClose, self.okmap)
+
+		buttonrow = wx.GridSizer(1, 3)
+		if self.imgcount > 1:
+			buttonrow.Add(self.prevmap, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+		buttonrow.Add(self.okmap, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+		if self.imgcount > 1:
+			buttonrow.Add(self.nextmap, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+
+		self.sizer.Add(buttonrow, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+
+		#sizer.AddGrowableRow(0)
+		#sizer.AddGrowableCol(0)
+		#sizer.AddGrowableCol(1)
+		self.SetSizerAndFit(self.sizer)
+
+	#==================
+	def onSetImages(self):
+		self.leftmap = os.path.join(os.getcwd(), "maps/leftimage.dogmap%d.jpg"%(self.parent.dogimgnum))
+		self.rightmap = os.path.join(os.getcwd(), "maps/rightimage.dogmap%d.jpg"%(self.parent.dogimgnum))
+
+		if not os.path.isfile(self.leftmap) or not os.path.isfile(self.rightmap):
+			print "failed to find DoG maps"
+			return False
 
 		### left image
-		leftimg = wx.Image(leftmap, wx.BITMAP_TYPE_JPEG, -1)
-		leftimg = leftimg.Scale(512, 512)
-		leftbitmap = wx.BitmapFromImage(leftimg)
-		leftsizer = wx.StaticBitmap(self, -1, leftbitmap)
-		sizer.Add(leftsizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+		self.leftimg = wx.Image(self.leftmap, wx.BITMAP_TYPE_JPEG, -1)
+		self.leftimg = self.leftimg.Scale(512, 512)
+		self.leftbitmap = wx.BitmapFromImage(self.leftimg)
 
 		### right image
-		rightimg = wx.Image(rightmap, wx.BITMAP_TYPE_JPEG, -1)
-		rightimg = rightimg.Scale(512, 512)
-		rightbitmap = wx.BitmapFromImage(rightimg)
-		rightsizer = wx.StaticBitmap(self, -1, rightbitmap)
-		sizer.Add(leftsizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
+		self.rightimg = wx.Image(self.rightmap, wx.BITMAP_TYPE_JPEG, -1)
+		self.rightimg = self.rightimg.Scale(512, 512)
+		self.rightbitmap = wx.BitmapFromImage(self.rightimg)
 
-		### buttons 
-		self.prevmap = wx.Button(self, wx.ID_BACKWARD, '&Previous')
-		self.okmap = wx.Button(self, wx.ID_OK, '&OK')
-		self.nextmap = wx.Button(self, wx.ID_FORWARD, '&Next')
+		return True
 
-		#self.Bind(wx.EVT_BUTTON, self.onPrevMap, self.prevmap)
-		self.Bind(wx.EVT_BUTTON, self.onClose, self.okmap)
-		#self.Bind(wx.EVT_BUTTON, self.onNextMap, self.nextmap)
-		buttonrow = wx.GridSizer(1, 3)
-		buttonrow.Add(self.prevmap, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
-		buttonrow.Add(self.okmap, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
-		buttonrow.Add(self.nextmap, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+	#==================
+	def onPrevMap(self, evt):
+		self.parent.dogimgnum -= 1
+		if self.parent.dogimgnum == 0:
+			self.parent.dogimgnum = self.imgcount
+		self.Destroy()
+		self.parent.viewdogmaps_frame = viewDogMapsFrame(self.parent)
+		self.parent.viewdogmaps_frame.Show()
 
-		sizer.Add(buttonrow, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
-
-		sizer.AddGrowableRow(0)
-		sizer.AddGrowableCol(0)
-		sizer.AddGrowableCol(1)
-		self.SetSizerAndFit(sizer)
+	#==================
+	def onNextMap(self, evt):
+		self.parent.dogimgnum += 1
+		if self.parent.dogimgnum > self.imgcount:
+			self.parent.dogimgnum = 1
+		self.Destroy()
+		self.parent.viewdogmaps_frame = viewDogMapsFrame(self.parent)
+		self.parent.viewdogmaps_frame.Show()
 
 	#==================
 	def onClose(self, evt):
-		self.Close()
+		self.parent.dogimgnum = 0
+		self.Destroy()
 
 ##
 ##

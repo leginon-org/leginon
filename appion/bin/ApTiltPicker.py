@@ -270,7 +270,6 @@ class PickerApp(wx.App):
 		#spacer
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
-		self.viewdogmaps_frame = tiltDialog.viewDogMapsFrame(self)
 		self.dogpick_dialog = tiltDialog.DogPickerDialog(self)
 		self.dogpick = wx.Button(self.frame, wx.ID_OPEN, '&DoG Pick...')
 		self.frame.Bind(wx.EVT_BUTTON, self.onAutoDogPick, self.dogpick)
@@ -1064,14 +1063,27 @@ class PickerApp(wx.App):
 		self.panel2.setTargets('Picked', newa2)
 		self.onUpdate(None)
 
+
 		self.statbar.PushStatusText("Inserted "+str(newparts)+" new particles", 0)
-		if msg is True:
+		if showmaps is True:
+			### this is the case where dog picker was run
 			dialog = wx.MessageDialog(self.frame,
-				"Inserted "+str(newparts)+" new particles", 'INFORMATION', wx.CANCEL|wx.OK|wx.ICON_INFORMATION)
-			if showmaps is True and dialog.ShowModal() == wx.ID_OK:
+				"Inserted "+str(newparts)+" new particles\n\nShow DoG maps?", 'INFORMATION', wx.NO|wx.YES|wx.ICON_INFORMATION)
+			if dialog.ShowModal() == wx.ID_YES:
+				### show the dog maps in a loop
+				self.dogimgnum = 1
 				dialog.Destroy()
+				self.viewdogmaps_frame = tiltDialog.viewDogMapsFrame(self)
 				self.viewdogmaps_frame.Show()
-			if dialog.ShowModal() == wx.ID_CANCEL:
+				if self.viewdogmaps_frame.ShowModal() == wx.ID_OK:
+					self.viewdogmaps_frame.Destroy()
+			else:
+				dialog.Destroy()
+		elif msg is True:
+			### standard pop up window
+			dialog = wx.MessageDialog(self.frame,
+				"Inserted "+str(newparts)+" new particles", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
+			if dialog.ShowModal() == wx.ID_OK:
 				dialog.Destroy()
 
 		return True
@@ -1563,12 +1575,14 @@ if __name__ == '__main__':
   # #  #   "DoG Picker and TiltPicker: software tools to facilitate particle selection 
   #####        in single particle electron microscopy."
     #      J Struct Biol. 2009 v166(2): pp. 205-13.
-    #"""
+    #      http://dx.doi.org/10.1016/j.jsb.2009.01.004
+"""
 	citation = """
 Voss NR, Yoshioka CK, Radermacher M, Potter CS, and Carragher B.
 "DoG Picker and TiltPicker: software tools to facilitate particle selection 
     in single particle electron microscopy."
 J Struct Biol. 2009 v166(2): pp. 205-13.
+http://dx.doi.org/10.1016/j.jsb.2009.01.004
 """
 	usage = "Usage: %prog --left-image=image1.mrc --right-image=image2.mrc [--pick-file=picksfile.txt] [options]"
 	shapes = ("circle","square","diamond","plus","cross")
