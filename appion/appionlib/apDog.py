@@ -109,28 +109,28 @@ def diffOfGaussLevels(imgarray, r0, N, dr, writeImg=False, apix=1):
 		apDisplay.printError("size range has be less than twice the diameter")
 
 	# initial params
-	print "r0=", r0*apix
-	print "dr=", dr*apix
-	print "N=", N
+	#print "r0=", r0*apix
+	#print "dr=", dr*apix
+	#print "N=", N
 
 	# find k based on info
 	k = estimateKfactorIncrement(r0, dr, N)
-	print "k=", k
+	#print "k=", k
 	# find xi (E) function of k
 	Ek = math.sqrt( (k**2 - 1.0) / (2.0 * k**2 * math.log(k)) )
 	##Ek = 1.0 / Ek
-	print "E(k)=", Ek
+	#print "E(k)=", Ek
 	# convert r0 to sigma1
 	sigma1 = Ek * r0
-	print "sigma1=", sigma1*apix
+	#print "sigma1=", sigma1*apix
 	# find sigmaprime
 	sigmaprime = sigma1 * math.sqrt(k**2 - 1.0)
-	print "sigma'=", sigmaprime*apix
+	#print "sigma'=", sigmaprime*apix
 	#sigma0 = sigma1 * k ^ (1-N)/2
 	power = (float(1-N) / 2.0)
-	print "power=", power
+	#print "power=", power
 	sigma0 = sigma1 * k**(float(1-N) / 2.0)
-	print "sigma0=", sigma0*apix
+	#print "sigma0=", sigma0*apix
 
 	# calculate first image blur
 	sigma = sigma0
@@ -149,13 +149,13 @@ def diffOfGaussLevels(imgarray, r0, N, dr, writeImg=False, apix=1):
 		gaussmap = ndimage.gaussian_filter(lastmap, sigma=sigmaprime)
 		gaussmaps.append(gaussmap)
 
-	print "sigma' values=    ", numpy.array(sigprimes)*apix
+	#print "sigma' values=    ", numpy.array(sigprimes)*apix
 	sizevals = numpy.array(sigmavals)/Ek/math.sqrt(k)*apix
-	print "map sigma sizes=  ", numpy.array(sigmavals)*apix
+	#print "map sigma sizes=  ", numpy.array(sigmavals)*apix
 	sizevals = numpy.array(sigmavals)/Ek/math.sqrt(k)*apix
-	print "map central sizes=", sizevals
+	#print "map central sizes=", sizevals
 	sizevals = numpy.array(sigmavals)/Ek*apix
-	print "map pixel sizes=  ", sizevals[:-1]
+	#print "map pixel sizes=  ", sizevals[:-1]
 	if writeImg is True:
 		for i,gaussmap in enumerate(gaussmaps):
 			apImage.arrayToJpeg(gaussmap, "gaussmap"+str(i)+".jpg")
