@@ -1,5 +1,5 @@
 <?php
-
+require_once "inc/dbemauth.php";
 require_once "inc/admin.inc";
 require_once "inc/user.inc.php";
 
