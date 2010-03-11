@@ -1,0 +1,105 @@
+v2.0 -- March XX, 2010
+ *	Shortened button row, for smaller screens
+ *	Fixed polygon tool for rectagular images
+ *	Fixed reversal of tilt axis angles
+ *	Added TiltPick2Spi.py program to split single TiltPicker file into 3 spider files
+ *	Added transfer picks option (Alt-X)
+ *	Added about TiltPicker screen
+ *	Added particle cutoff tool to remove all particles with error above cutoff
+ *	Particle picking outside image area is now not allowed
+ *	Made sure all functions are available from the top menu
+ *	When saving a file, it checks the extension and adds one if it does not exist
+ *	Allow setting DoG picker size range and num slices in GUI
+ *	Users can now open new images from the menu
+ *	Print version and citation info upon launch on command line
+ *	Both DoG maps are saved and viewable in the GUI interface
+
+v1.0	-- Jan 22, 2009
+ *	Better output file writing; completely rewritten
+ *	Can now both read and write SPIDER, Text and Pickle files
+ *	Add all button the menus at the top
+ *	Set minimum window size to work well on 1024x768 laptop
+ *	Fixed problem with DoG picker on rectangular images
+ *	Removed numextension requirement from polygon tool
+ *	Enable guess shift functionality
+ *	Better bad picks processing
+ *	Ability to read SPIDER images, did not realize this was missing
+ *	Added ApTiltAutoPicker.py, type --help to see options
+ *	Set SPIDER file format as the default output
+ *	Published paper:
+  N.R. Voss, C.K. Yoshioka, M. Radermacher, C.S. Potter and B. Carragher
+  "DoG Picker and TiltPicker: software tools to facilitate particle
+    selection in single particle electron microscopy."
+  DOI: http://dx.doi.org/10.1016/j.jsb.2009.01.004
+
+v0.9.1	-- May 22, 2008
+ *	Fixed bug when saving files of uneven number of particles
+
+v0.9	-- May 21, 2008
+ *	Added aligned x,y to txt format
+ *	Removed radermacher module requirement, but still recommended
+ *	Removed numextension module requirement
+ *	Change mask to not alter levels so much
+ *	Fixed crashed when only one worst pick is chosen
+ *	Fixed guess xy-shift for large tilts
+ *	Set max peaks in DoG picker
+ *	Range to search for particle pair is limited by particle size in DoG picker
+ *	~~Sort particles based on distance from upper-left corner; helps for finding unmatched particles~~
+ *	Added "Auto Optimize" button, to auto run "Find Theta", "Optimize Angles", and "Mask Region"
+ *	Set upper limit of bad particles to 10
+ *	Fixed overlap import to database
+
+v0.8	-- Feb 1, 2008
+ *	Removed 'from gui.wx', should fix some importing bugs
+ *	Reset mask with reset button
+ *	Add DoG auto picking (experimental)
+ *	Add clear bad picks & remove clear all picks buttons
+ *	Show particles with largest error 4*stdev and min filter
+ *	Added number of triangles used to find theta dialog
+ *	Changed bad picks behavior to always highlight worst particle
+ *	Added 'Guess Shift' for pipeline tilt picker
+ *	Calculates percent overlap when mask is selected
+ *	Added selection polygon removal tool
+ *	Better particle pick importing no more orphans
+ *	Better polygon removal no more orphans
+ *	Tried to organize buttons better, still needs work
+ *	Does allow you to quit with uneven # of particles
+ *	Bad picks shows unmatched particles
+
+v0.7	-- Dec 5, 2007
+ *	Added FAQ based on emails I have received
+ *	Add error values to text file output
+ *	Auto-save feature to prevent against crashing
+ *	Show particles with largest error: if error > mean+3*stdev then yellow cross
+ *	Fix for xy-shifting
+ *	Fix for import Leginon tilt data
+ *	Fix for error values in text file
+
+v0.6.4	-- Nov 27, 2007
+ *	Removed requirement for apVersion from apParam
+
+v0.6.3	-- Nov 27, 2007
+ *	Removed requirement for sinedon and sinedon.cfg from apParam
+ *	Changed gamma and phi angles to agree with WEB
+ *	Fixed mask regions for non-square images
+ *	Remove save buttons from bottom button row to make room for future buttons
+
+v0.6.2	-- Nov 20, 2007
+ *	Fixed reading of JPEG, PNG, TIFF images
+ *	Clean up help function
+ *	Created ChangeLog file
+
+v0.6.1	-- Nov 19, 2007
+ *	Fix for module installations
+ *	Created INSTALL file
+ *	Added Apache 2.0 LICENSE file
+ *	Ctrl-A does 'apply' NOT 'save as'
+
+v0.6	-- Nov 7, 2007
+ *	Major feature changes
+ *	Use optparse for command line parsing
+ *	Fix SPIDER commenting
+ *	Allow adjusting of icon shapes & sizes
+
+v0.5	-- Oct 2, 2007
+ *	First full-featured release

@@ -1,0 +1,145 @@
+Installation steps:
+
+ * Install python packages
+ * Compile python modules
+ * Run it
+
+--------------------------------
+--------------------------------
+--------------------------------
+
+== Install required python packages ==
+
+=== The following python pacakges must be installed and working ===
+
+ * numpy, http://numpy.scipy.org
+ * scipy, http://scipy.org
+ * wxPython, http://www.wxpython.org
+ * python imaging library (PIL), http://www.pythonware.com/products/pil
+
+=== Installing on popular distros ===
+
+==== Fedora ====
+all 4 modules are available through yum
+
+Optional: you will also need to install 'python-setuptools-devel' to compile the radermacher and numextension modules (detailed below)
+
+==== Ubuntu ====
+all 4 modules are available through apt-get or synaptic
+
+==== SUSE ====
+modules can be downloaded from, http://download.opensuse.org/repositories/science
+
+==== MacOS X 10.4 (Tiger) ====
+For a full unix experience, install either fink (http://fink.sf.net) or macports (http://www.macports.org). 
+Alternatively, you could install MacPython.
+
+==== MacOS X 10.5 (Leopard) ====
+wxPython and numpy are installed by default you just need to install PIL and scipy, see PIL & scipy websites (above) or fink/macports (above)
+
+==== RHEL5 / CentOS 5 ====
+Compatible packages are available in Extra Packages for Enterprise Linux (EPEL)
+ * http://fedoraproject.org/wiki/EPEL
+ * contains a wealth of packages required for appion
+
+Download repository rpm and install
+{{{
+$ sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/`uname -i`/epel-release-5-3.noarch.rpm
+$ sudo yum install -y wxPython numpy scipy python-imaging python-tools python-devel
+}}}
+
+==== Microsoft Windows ====
+
+ # Install the FULL edition of python(x,y): http://www.pythonxy.com/download.php
+ # Expand tiltpicker.tgz (e.g. with 7zip) http://www.7-zip.org/download.html
+ # Start "IPython(wxPython)" interactive console by clicking on the GREEN "C:>" icon
+ # Change directory to the tiltpicker source
+ # {{{ cd modules\radermacher }}}
+ # {{{ python setup.py build -c mingw32 }}}
+ # {{{ copy build\lib.win32-2.5 ..\.. }}}
+ # {{{ cd ..\.. }}}
+ # {{{ ApTiltPicker.py -l rawu049b.jpg -r rawu048b.jpg -t 50.0 }}}
+
+Thanks to Matthias Wolf.
+
+=== Test to see if these modules work open a python shell ===
+
+{{{
+# python
+}}}
+
+and import the modules:
+
+{{{
+>>> import wx     #wxPython
+>>> import Image  #python imaging
+>>> import scipy
+>>> import numpy
+}}}
+
+--------------------------------
+--------------------------------
+--------------------------------
+
+
+== Compile or copy python module ==
+
+A custom modules is optional for using tiltpicker and there are two ways you can use them 
+depending on whether or not you have root access. A slower python implementation of the algorithm 
+is provided for those who cannot get past this step
+
+=== Compile and install globally with root access ===
+
+{{{
+cd tiltpicker/modules/radermacher
+python setup.py build
+sudo python setup.py install
+}}}
+
+=== Compile and install locally without root access ===
+
+{{{
+cd tiltpicker/modules/radermacher
+python setup.py build
+cp build/*/radermacher.so ../..
+}}}
+
+after all is done, go to the tiltpicker directory and type:
+
+{{{
+# python
+
+>>> import radermacher
+}}}
+
+and if nothing happens, it works
+
+--------------------------------
+--------------------------------
+--------------------------------
+
+
+
+== Run it ==
+
+To get the help message for the function run:
+
+{{{
+./ApTiltPicker.py --help
+}}}
+
+An example session it setup in the following shell files:
+
+{{{
+./runPicker.sh
+./runPicked.sh
+}}}
+
+--------------------------------
+--------------------------------
+--------------------------------
+
+
+Still having problems or just want to chat, email me at: vossman77 (at) yahoo.com
+
+neil

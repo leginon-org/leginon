@@ -1,0 +1,30 @@
+To run the program, type:
+
+# ./ApTiltPicker.py -1 image1.mrc -2 image2.mrc -p tiltpicks.spi
+
+'tiltpicks.spi' is optional.
+
+I left an example in the tiltpicker folder. You must run the program in the tiltpicker folder.
+
+To run the example type:
+
+./runPicker.sh
+
+If all works the picker will open up and you'll have two images of ribosomes.
+
+neil
+
+
+I just made a screen capture video on how to use it. It is available is low resolution on youtube:
+
+ http://www.youtube.com/watch?v=cw1osPBY_JM
+
+or you can download the full screen version from the appion.org website:
+
+ http://code.google.com/p/appion/downloads/list
+
+I recommend using VLC to watch it:
+
+ http://www.videolan.org/vlc/
+
+neil

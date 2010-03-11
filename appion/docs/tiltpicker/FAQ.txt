@@ -1,0 +1,64 @@
+
+I just made a screen capture video on how to use it. It is available is low resolution on youtube:
+
+* http://www.youtube.com/watch?v=cw1osPBY_JM
+
+or you can download the full screen version from the appion.org website:
+
+* http://code.google.com/p/appion/downloads/list
+
+I recommend using VLC to watch it:
+
+* http://www.videolan.org/vlc/
+
+
+== Finding corresponding particle pair ==
+ * I am just trying it out and have few questions and maybe useful ideas. What I am missing is that the program helps me to find the particle in the other image. It seems that I can pick a hole bunch in only one image without the program complaining. Also, even if you cannot move the cursor to the appropriate position, is it possible to show something in the other image e.g. a large circle, that helps to find the corresponding particle? Or am I missing this and have to set up things? 
+  * _Yes, but it is still crude. Click on one particle in one image and then either hit the "Apply" button of Crtl-A on the keyboard and it draws a circle. I am still trying to come up with a good way to deal with this. The mouse thing does not appear to be possible for now._
+
+ * Two things that I could not test in the other version. Does the cursor move to the image coordinate in the tilt image after picking the 0 deg coordinate? When I looked at the manual of WX I could not see a command that would do this, but then I also do not have an overview about what WX can do.
+  * _Unfortunately, this is something that is intentionally not allowed by WX. One thing you can do now is hit the "Apply" button (or Alt-a on the keyboard) and it draws a circle where the tilt pair is. Again, something better can be explored._
+
+ * And if it's not implemented yet, you can pick particles in your left micrographs. If you click on the button apply, you'll see in the right micrographs the predicted particles. If you save the file of your coordinates, you won't have the coordinates of your predicted particles, so how do you validate them ? Do you have to click on them (which is a big pain...) ?
+  * _You are correct about pick in image 1, hit apply, a circle appears in image 2. Now, you need to pick the particle in the circle. It is done this way because the the alignment assumes the grid square to be perfectly flat, which it is not, so you have center the particle yourself._
+  * _No, I do not output the aligned coordinates. For the TXT format, I now provide the RMSD in the last column. _
+  * _Also, I now provide a error checking method, shown as yellow plusses. When the difference between the particle location and aligned location (RSD) is greater than 3 standard deviations from the mean difference (RMSD), then a yellow plus is drawn over the pick._
+
+== Mask region ==
+
+ * It may be good to be able to undo the mask region. I like it, but are you sure that it will always work correctly?
+  * _So far it has always worked in all cases, but only if the parameters are correct. Hit the reset button then the mask button and it is back to normal._
+
+== Deleting and finding bad particles ==
+
+ * If you want to delete particles, I would suggest to give them a counter (something like a key) in the generic marker location file. May be create two separate files or arrays for the tilted and the untilted. If you use the particle number as the array index, then re-picking a particle overwrites the old one.
+  * _I am not sure if I follow. The have a counter in the program. Hit the '#' button next to the picker and it shows the numbers._
+  * _Multiple files gets difficult to work with, unless you have a good command line interface like SPIDER. I have a program not included yet that splits the single SPIDER file into your 3 standard SPIDER files._
+
+ * What is there to go back if you pick the wrong particle? Either, that it turns out the 0 deg is simply not present in the tilt, or you make a mistake in the tilt, or you are in the tilt ans see that you should not pick the particles because, for example, they overlap.?
+  * _You can right-click to remove particles. There is a danger though it removes the particle from only one image and if you don't remove the corresponding pair the entire particle list is off by one._
+
+== Saving particles to a file ==
+
+ * I would add a counter to the coordinates (just count the lines) this helps, going through the list to easily identify the 0 and tilt coordinates that belong to each other.
+  * _You can save as four types of files now: TEXT, XML, python Pickle and a SPIDER file. SPIDER has all the typical line counts, etc. I plan on expanding the TEXT and XML to include pairs on one line, a count and root square difference of predicted and selected position of the particles._
+  * _It might be confusing how to select which file you want to save. When you click "Save As" and the menu pops up asking you to select  the file to save it as there is a small box in the lower right corner where you can select the file type. The spider file it writes is the three files you normally write merged into one file (without a reduction factor)._
+
+== Auto-saving backup file ==
+
+ * On thing, which I don't know if the program does this, write the coordinate each moment that it is picked (may be use two different text files for tilt. Especially if you pick particles by hand, and sometimes I can find up to 200 particles (typical would be about 130) in one image, if one gets distracted and the picking gets interrupted, that nothing gets lost.
+  * _I haven't come up with a good way to do this, because of the way Leginon is setup. I could dump everything to a python readable file every so many minutes maybe. Like I said I haven't come up with a good system for this, but I plan to do something in the future._
+
+== Image size / binning ==
+
+ * Otherwise, the angle calculations work fine. The panning of the windows is nice. The zoom feels like a luxury. How does it zoom down? Would it still make sense to interpolate a 8000x10000 down by binning before putting it in (nothing prevents this) or does the zoom do some kind of binning/interpolation to avoid an increase in noise?
+  * _If the machine has plenty of memory there is no speed reduction for hug images. I have worked with 4k images no problem. Despite this, I tend prefer the 2k images for speed in filtering them._
+
+== Automated picking ==
+
+ * If I understood correctly, you have to select few particles to be able to find the theta angle then you can optimize the angles. Once you obtain your initial values, is there a way to do an automatic picking on both your micrographs?
+  * _I am working on a crude automated method for the next version (sometime this month), but in the future I'd like to be able import pick from whatever your favorite picker is._
+
+I appreciate your inquiries; it helps me make the program better. email vossman77 (at) yahoo.com 
+with any questions.
+

@@ -1,0 +1,37 @@
+== To Do ==
+ *	allow for particles to be removed from both images simultaneously
+ *	fix the list when a particle is removed from one image but not the other
+ *	show more vital stats: num part, etc.
+ *	image filtering: hp,lp,median,range
+ *	image autoscaling, fill screen upon opening image not 1x
+ *	add live zoom-in window for more accurrate centering
+ *	have a settings panel, add reduction factor
+ *	implement a Chi-square calculation, model vs. data
+
+== Completed ==
+ *	~~have a repair picks button~~
+ *	~~read from spider and XML formats~~
+ *	~~more detail text format, deviation of each pick, tilt angles, etc.~~
+ *	~~polygon removal tool (simul. with pair)~~
+ *	~~show number of triangles assess in tilt gui~~
+ *	~~calculate overlap and insert in DB~~
+ *	~~for final images mask out or draw lines for overlapping area~~
+ *	~~eliminate particles with large error~~
+ *	~~button to remove outliers~~
+ *	~~add dogpicker auto-picking~~
+ *	~~auto-save feature to prevent against crashing~~
+ *	~~show particles with largest error: if error > mean+3*stdev then yellow cross~~
+ *	~~correct gamma and phi angles to match WEB~~
+ *	~~write to spider format~~
+ *	~~import picks from database~~
+ *	~~read/write gamma, theta, phi to file~~
+ *	~~export picks/data to database~~
+ *	~~updates numbers next to particles~~
+ *	~~move file save, etc. to a MENU~~
+ *	~~show total error in least square fit~~
+ *	~~display numbers next to particles~~
+ *	~~popup errors~~
+ *	~~reset should reset toggle buttons in willsq()~~
+ *	~~insert rmsd into DB~~
+ *	~~insert particle matches into DB~~
+
