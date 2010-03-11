@@ -1027,14 +1027,15 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onImportPicks(self, evt, pixdiam=None, msg=True, tight=True, showmaps=False):
-		#a1 = numpy.array([[512,512]], dtype=numpy.float32)
-		#a2 = apTiltTransform.a1Toa2Data(a1, self.data)
-		#a1b = apTiltTransform.a2Toa1Data(a2, self.data)
-		#print a1,a2,a1b
-
-		#Picks are imported from tiltaligner
+		"""
+		take unmatched particles picks (self.picks1, self.picks2)
+		match them using alignment parameters and merge them with current picks
+		"""
+		### Picks are imported from tiltaligner or DoG picker
 		len1 = len(self.picks1)
 		len2 = len(self.picks2)
+
+		### make sure we have some picks
 		if len1 < 1 or len2 < 1:
 			dialog = wx.MessageDialog(self.frame,
 				"There are no picks to import: "+str(len1)+", "+str(len2),
@@ -1042,10 +1043,11 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
-		targets1 = self.panel1.getTargets('Picked')
-		targets2 = self.panel2.getTargets('Picked')
-		a1 = self.targetsToArray(targets1)
-		a2 = self.targetsToArray(targets2)
+
+		### get existing picks
+		a1 = self.getArray1()
+		a2 = self.getArray2()
+		### make sure we have some picks
 		if len(a1) < 1 or len(a2) < 1:
 			dialog = wx.MessageDialog(self.frame,
 				"You must pick a particle pair first",
@@ -1053,12 +1055,23 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
+		### save existing picks to revert
+		olda1 = a1
+		olda2 = a2
+
+		### update alignment parameters
 		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
+
+		### set additional parameters
 		if pixdiam is None:
 			pixdiam = self.data['pixdiam']
 		if tight is True:
 			pixdiam /= 2.0
+
+		### match picks to one another
 		list1, list2 = apTiltTransform.alignPicks2(self.picks1, self.picks2, self.data, limit=pixdiam)
+
+		### confirm we have new picks
 		if list1.shape[0] == 0 or list2.shape[0] == 0:
 			dialog = wx.MessageDialog(self.frame,
 				"No new picks were found",
@@ -1067,20 +1080,31 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 
-		#new merge picks
-		#newa1 = apTiltTransform.mergePicks(a1, list1)
+		### merge picks with existing picks
 		newa1, newa2 = apTiltTransform.betterMergePicks(a1, list1, a2, list2)
 		newparts = newa1.shape[0] - a1.shape[0]
 		self.panel1.setTargets('Picked', newa1)
 		self.panel2.setTargets('Picked', newa2)
 		self.onUpdate(None)
 
-
+		### show results
 		self.statbar.PushStatusText("Inserted "+str(newparts)+" new particles", 0)
-		if showmaps is True:
-			### this is the case where dog picker was run
+
+		### pop up to confirm that picks are good.
+		if msg is True:
 			dialog = wx.MessageDialog(self.frame,
-				"Inserted "+str(newparts)+" new particles\n\nShow DoG maps?", 'INFORMATION', wx.NO|wx.YES|wx.ICON_INFORMATION)
+				"Do you want to keep the "+str(newparts)+" inserted particles", 
+				'Keep particles?', wx.NO|wx.YES|wx.ICON_QUESTION)
+			if dialog.ShowModal() == wx.ID_NO:
+				self.panel1.setTargets('Picked', olda1)
+				self.panel2.setTargets('Picked', olda2)
+			dialog.Destroy()
+
+		### this is the case where dog picker was run
+		if showmaps is True:
+			dialog = wx.MessageDialog(self.frame,
+				"Inserted "+str(newparts)+" new particles\n\nShow DoG maps?", 
+				'DoG picker results', wx.NO|wx.YES|wx.ICON_QUESTION)
 			if dialog.ShowModal() == wx.ID_YES:
 				### show the dog maps in a loop
 				self.dogimgnum = 1
@@ -1091,12 +1115,7 @@ class PickerApp(wx.App):
 					self.viewdogmaps_frame.Destroy()
 			else:
 				dialog.Destroy()
-		elif msg is True:
-			### standard pop up window
-			dialog = wx.MessageDialog(self.frame,
-				"Inserted "+str(newparts)+" new particles", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
-			if dialog.ShowModal() == wx.ID_OK:
-				dialog.Destroy()
+
 
 		return True
 
@@ -1606,8 +1625,8 @@ class PickerApp(wx.App):
 			apDisplay.printError("Unknown pointer shape: "+shape)
 
 if __name__ == '__main__':
-	version = "2.0b1"
-	releasedate = "March 5, 2010"
+	version = "2.0b2"
+	releasedate = "March 10, 2010"
 	logoimage = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/tplogo.png")
 	if not os.path.isfile(logoimage):
 		logoimage = os.path.join(apParam.getAppionDirectory(), "appionlib/data/tplogo.png")
