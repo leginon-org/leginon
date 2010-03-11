@@ -284,8 +284,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 	#=======================================
 	def runTiltAligner(self, imgdata, tiltdata):
 		#reset targets
-		self.app.onClearPicks(None)
-		self.app.onResetParams(None)
+		self.app.onResetParams(None, False)
 		self.tiltparams = {}
 
 		#set tilt

@@ -1258,8 +1258,16 @@ class PickerApp(wx.App):
 		self.onMaskRegion(None)
 
 	#---------------------------------------
-	def onClearPicks(self, evt):
-		#print "clear is not working?"
+	def onClearPicks(self, evt, msg=True):
+		### pop up to confirm that picks are good.
+		if msg is True:
+			dialog = wx.MessageDialog(self.frame,
+				"Are you sure you want to delete all picked particles?", 
+				'Clear picks?', wx.NO|wx.YES|wx.ICON_QUESTION)
+			if dialog.ShowModal() == wx.ID_NO:
+				dialog.Destroy()
+				return
+			dialog.Destroy()
 		self.panel1.setTargets('Picked', [])
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.setTargets('Worst', [] )
@@ -1341,7 +1349,17 @@ class PickerApp(wx.App):
 		self.data['scale'] = 1.0
 
 	#---------------------------------------
-	def onResetParams(self, evt):
+	def onResetParams(self, evt, msg=True):
+		### pop up to confirm that picks are good.
+		if msg is True:
+			dialog = wx.MessageDialog(self.frame,
+				"Are you sure you want to delete all picks and parameters?", 
+				'Reset?', wx.NO|wx.YES|wx.ICON_QUESTION)
+			if dialog.ShowModal() == wx.ID_NO:
+				dialog.Destroy()
+				return
+			dialog.Destroy()
+
 		self.onInitParams(evt)
 		#reset fit values
 		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
@@ -1381,7 +1399,7 @@ class PickerApp(wx.App):
 			self.panel2.UpdateDrawing()
 		except:
 			pass
-		self.onClearPicks(None)
+		self.onClearPicks(None, False)
 		self.statbar.PushStatusText("Reset all parameters", 0)
 
 	#---------------------------------------
@@ -1585,7 +1603,7 @@ class PickerApp(wx.App):
 				self.data['image2file'] = filename
 				self.data['image2path'] = pathname
 				app.panel2.openImageFile(filepath)
-				self.onResetParams(None)
+				self.onResetParams(None, False)
 		dlg.Destroy()
 
 	#---------------------------------------
@@ -1602,7 +1620,7 @@ class PickerApp(wx.App):
 				self.data['image1file'] = filename
 				self.data['image1path'] = pathname
 				app.panel1.openImageFile(filepath)
-				self.onResetParams(None)
+				self.onResetParams(None, False)
 		dlg.Destroy()
 
 	#---------------------------------------
