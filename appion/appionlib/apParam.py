@@ -427,7 +427,7 @@ def getExecPath(exefile, die=False):
 	return path
 
 #=====================
-def runCmd(cmd, package, verbose=False, showcmd=True, logfile=None, fail=False):
+def runCmd(cmd, package="", verbose=False, showcmd=True, logfile=None, fail=False):
 	"""
 	executes a command from any processing package in a controlled fashion
 	"""
