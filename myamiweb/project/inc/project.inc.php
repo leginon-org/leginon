@@ -15,12 +15,8 @@ function menu($privilege=1) {
 	$link->onimg = "_on.png";
 	$link->offimg = "_off.png";
 	$link->setImagePath('img/');
-	$link->addlink(BASE_URL, 'dbem tool','', '', '');
 	$link->addlink('project.php','View Projects','', 'folder', '');
 	$link->addlink('gridtray.php','Grid Tray','', 'preparation', '');
-	//if ($privilege>=3) {
-	//	$link->addlink('user.php','View Users','', 'user', '');
-	//}
 	$link->Display();
 }
 
