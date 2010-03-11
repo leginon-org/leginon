@@ -370,11 +370,12 @@ class PickerApp(wx.App):
 				("&Edit", (
 					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
 					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),
-					( "Clear &Worst Picks", "Remove worst picked particles", self.onClearBadPicks, wx.ID_CLEAR ),
-					( "Clear &Polygon", "Clear particle with polygon", self.onClearPolygon, wx.ID_CLEAR ),
+					( "Clear &Worst Picks", "Remove worst picked particles", self.onClearBadPicks ),
+					( "Clear &Polygon", "Clear particle with polygon", self.onClearPolygon ),
 				)),
 				("Refine", (
 					( "Auto Op&timize", "Find theta and optimize angles", self.onAutoOptim ),
+					( 0, 0, 0),
 					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
 					( "&Optimize Angles", "Optimize angles with least squares", self.onFitAll ),
 					( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
@@ -394,7 +395,7 @@ class PickerApp(wx.App):
 					( "&Reset TiltPicker", "Remove all picks and start over", self.onResetParams, wx.ID_RESET ),
 				)),
 				("&Help", (
-					( "&About TiltPicker", "Show product information", self.onShowAboutTiltPicker, wx.ID_RESET ),
+					( "&About TiltPicker", "Show product information", self.onShowAboutTiltPicker, wx.ID_HELP),
 				)),
 			]
 		else:
@@ -406,8 +407,8 @@ class PickerApp(wx.App):
 				("&Edit", (
 					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
 					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),
-					( "Clear &Worst Picks", "Remove worst picked particles", self.onClearBadPicks, wx.ID_CLEAR ),
-					( "Clear &Polygon", "Clear particle with polygon", self.onClearPolygon, wx.ID_CLEAR ),
+					( "Clear &Worst Picks", "Remove worst picked particles", self.onClearBadPicks ),
+					( "Clear &Polygon", "Clear particle with polygon", self.onClearPolygon ),
 				)),
 				("Refine", (
 					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
@@ -435,7 +436,7 @@ class PickerApp(wx.App):
 					( "&Reject", "Reject this image pair", self.onToggleReject, -1, wx.ITEM_RADIO),
 				)),
 				("&Help", (
-					( "&About TiltPicker", "Show product information", self.onShowAboutTiltPicker, wx.ID_RESET ),
+					( "&About TiltPicker", "Show product information", self.onShowAboutTiltPicker, wx.ID_HELP ),
 				)),
 			]
 
