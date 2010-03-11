@@ -21,7 +21,6 @@ except:
 from appionlib import apDatabase
 from appionlib import apDisplay
 from appionlib import apImage
-from appionlib import apImod
 from appionlib import apVolume
 from appionlib import apFile
 from appionlib import apEMAN
