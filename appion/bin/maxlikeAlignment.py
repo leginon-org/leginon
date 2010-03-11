@@ -17,7 +17,6 @@ import numpy
 from appionlib import apTemplate
 from appionlib import apStack
 from appionlib import apParam
-from appionlib import apEMAN
 from appionlib import apXmipp
 from appionlib import apImage
 from appionlib.apSpider import alignment, operations
@@ -365,7 +364,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			proccmd += " hp="+str(self.params['highpass'])
 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
 			proccmd += " lp="+str(self.params['lowpass'])
-		apEMAN.executeEmanCmd(proccmd, verbose=True)
+		apParam.runCmd(proccmd, "EMAN", verbose=True)
 		if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
 			apDisplay.printError("Missing particles in stack")
 
@@ -422,14 +421,12 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d", die=True)
 			mpiruncmd = mpirun+" -np "+str(nproc-1)+" "+xmippexe+" "+xmippopts
 			self.writeXmippLog(mpiruncmd)
-#			apEMAN.executeEmanCmd(mpiruncmd, verbose=True, showcmd=True)
 			apParam.runCmd(mpiruncmd, package="Xmipp", verbose=True, showcmd=True)
 		else:
 			### use single processor
 			xmippexe = apParam.getExecPath("xmipp_ml_align2d", die=True)
 			xmippcmd = xmippexe+" "+xmippopts
 			self.writeXmippLog(xmippcmd)
-#			apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
 			apParam.runCmd(xmippcmd, package="Xmipp", verbose=True, showcmd=True)
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
