@@ -9,17 +9,7 @@
 
 require "inc/viewer.inc";
 require "inc/leginon.inc";
-?>
-<html>
-<head>
-<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
-</head>
-<body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="5" marginheight="0" >
-<font face="Arial, Helvetica, sans-serif" size="2">
-<table cellpadding="0" cellspacing="0">
-<tr valign="top">
-<td>
-<?php
+require "inc/particledata.inc";
 
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];
@@ -33,7 +23,18 @@ $newexpId = $sessionId; // --- variable use by setdatabase() in inc/project.inc
 // These require statements need to be here after $newexpId is defined
 // in order to set processing database properly
 require "inc/project.inc";
-require "inc/particledata.inc";
+
+?>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
+</head>
+<body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="5" marginheight="0" >
+<font face="Arial, Helvetica, sans-serif" size="2">
+<table cellpadding="0" cellspacing="0">
+<tr valign="top">
+<td>
+<?php
 
 $ctf = new particledata();
 $runId = $ctf->getLastCtfRun($sessionId);
