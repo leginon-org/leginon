@@ -303,37 +303,46 @@ def planeRegression(imgarray, msg=True):
 	performs a two-dimensional linear regression and subtracts it from an image
 	essentially a fast high pass filter
 	"""
-	#print " ... calculate 2d linear regression"
-	if ( (imgarray.shape)[0] != (imgarray.shape)[1] ):
-		apDisplay.printWarning("Image is NOT square, skipping plane regression")
-		return imgarray
-	size = (imgarray.shape)[0]
-	count = float((imgarray.shape)[0]*(imgarray.shape)[1])
+
+
+	### create index arrays, e.g., [1, 2, 3, 4, 5, ..., N]
 	def retx(y,x):
 		return x
 	def rety(y,x):
 		return y
-	xarray = numpy.fromfunction(retx, imgarray.shape)
-	yarray = numpy.fromfunction(rety, imgarray.shape)
-	xsum = float(xarray.sum())
-	xsumsq = float((xarray*xarray).sum())
-	ysum = xsum
-	ysumsq = xsumsq
-	xysum = float((xarray*yarray).sum())
-	xzsum = float((xarray*imgarray).sum())
-	yzsum = float((yarray*imgarray).sum())
-	zsum = imgarray.sum()
+	xarray = numpy.fromfunction(retx, imgarray.shape, dtype=numpy.float32)
+	yarray = numpy.fromfunction(rety, imgarray.shape, dtype=numpy.float32)
+	xsize = imgarray.shape[0]
+	ysize = imgarray.shape[1]
+	xarray = xarray/(ysize-1.0) - 0.5
+	yarray = yarray/(xsize-1.0) - 0.5
+
+	### get running sums
+	count =  float(xsize*ysize)
+	xsum =   xarray.sum()
+	xsumsq = (xarray*xarray).sum()
+	ysum =   yarray.sum()
+	ysumsq = (yarray*yarray).sum()
+	xysum =  (xarray*yarray).sum()
+	xzsum =  (xarray*imgarray).sum()
+	yzsum =  (yarray*imgarray).sum()
+	zsum =   imgarray.sum()
 	zsumsq = (imgarray*imgarray).sum()
-	xarray = xarray.astype(numpy.float32)
-	yarray = yarray.astype(numpy.float32)
-	leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
-	rightmat = numpy.array( [xzsum, yzsum, zsum] )
+
+	### create linear algebra matrices
+	leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]], dtype=numpy.float64)
+	rightmat = numpy.array( [xzsum, yzsum, zsum], dtype=numpy.float64)
+
+	### solve eigen vectors
 	resvec = linalg.solve(leftmat,rightmat)
+
+	### show solution
 	if msg is True:
 		apDisplay.printMsg("plane_regress: x-slope: %.3f, y-slope: %.3f, xy-intercept: %.3f"
-			%(resvec[0]*size, resvec[1]*size, resvec[2]*size))
+			%(resvec[0], resvec[1], resvec[2]))
+
+	### subtract plane from array
 	newarray = imgarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
-	del imgarray,xarray,yarray,resvec
 	return newarray
 
 #=========================
