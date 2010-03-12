@@ -787,7 +787,7 @@ class ChimSnapShots(object):
 #==========================================
 #==========================================
 
-if True:
+if __name__ == "chimeraOpenSandbox":
 	chim = ChimSnapShots()
 	chim.renderVolume()
 	chimera.ChimeraExit()

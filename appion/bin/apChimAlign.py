@@ -111,7 +111,8 @@ def runAlign():
 		runCommand('close #1')
 		runCommand('close #%d'%(i+N))
 
-runAlign()
+if __name__ == "chimeraOpenSandbox":
+	runAlign()
 
 
 
