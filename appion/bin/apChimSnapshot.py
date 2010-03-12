@@ -14,6 +14,11 @@ import os
 import time
 import numpy
 import math
+
+### fail if not run from within chimera
+if __name__ == "__main__":
+	sys.stderr.write("\nusage: chimera python:apChimSnapshot.py\n\n")
+	sys.exit(1)
 try:
 	import chimera
 	import chimera.printer

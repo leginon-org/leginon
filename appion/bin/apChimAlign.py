@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # -----------------------------------------------------------------------------
 # Example script for fitting one map in another without the graphical user
 # interface.
@@ -11,12 +13,22 @@ import os
 import sys
 import glob
 import random
+
+### fail if not run from within chimera
+if __name__ == "__main__":
+	sys.stderr.write("\nusage: chimera --nogui apChimAlign.py\n\n")
+	sys.exit(1)
+
 # chimera
-from chimera import runCommand
-from VolumeViewer import open_volume_file
-from VolumeViewer.volume import default_settings
-from FitMap import map_points_and_weights, motion_to_maximum
-import Matrix
+try:
+	from chimera import runCommand
+	from VolumeViewer import open_volume_file
+	from VolumeViewer.volume import default_settings
+	from FitMap import map_points_and_weights, motion_to_maximum
+	import Matrix
+except:
+	pass
+
 
 default_settings.set('limit_voxel_count', False)
 
@@ -102,8 +114,6 @@ for i,mrcfile in enumerate(mrcfiles):
 	runCommand('close #%d'%(i+N))
 
 
-if __name__ == "__main__":
-	sys.stderr.write("usage: chimera --nogui apChimAlign.py")
-	sys.exit(1)
+
 
 
