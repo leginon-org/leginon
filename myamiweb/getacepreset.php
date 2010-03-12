@@ -9,8 +9,6 @@
 
 require "inc/viewer.inc";
 require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/particledata.inc";
 ?>
 <html>
 <head>
@@ -32,6 +30,10 @@ $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo['sessionId'];
 
 $newexpId = $sessionId; // --- variable use by setdatabase() in inc/project.inc
+// These require statements need to be here after $newexpId is defined
+// in order to set processing database properly
+require "inc/project.inc";
+require "inc/particledata.inc";
 
 $ctf = new particledata();
 $runId = $ctf->getLastCtfRun($sessionId);
