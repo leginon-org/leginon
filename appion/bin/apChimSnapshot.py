@@ -32,7 +32,7 @@ try:
 	from chimera.replyobj import nogui_message
 	from MeasureVolume import enclosed_volume
 	import ScaleBar.session
-except:
+except ImportError:
 	pass
 
 class ChimSnapShots(object):

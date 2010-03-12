@@ -26,7 +26,7 @@ try:
 	from VolumeViewer.volume import default_settings
 	from FitMap import map_points_and_weights, motion_to_maximum
 	import Matrix
-except:
+except ImportError:
 	pass
 
 
