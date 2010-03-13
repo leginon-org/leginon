@@ -214,16 +214,13 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 		os.environ['CHIMCOLORS'] = colorstr
 	if zoom is not None:
 		os.environ['CHIMZOOM'] = str(zoom)
-	os.environ['CHIMIMGSIZE'] = "200"
+	os.environ['CHIMIMGSIZE'] = "512"
 	### unused
 	#'CHIMBACK',  'CHIMIMGSIZE', 'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
 	chimsnappath = getSnapPath()
 	apDisplay.printColor("running Chimera Animation for sym "+str(sym), "cyan")
 	runChimeraScript(chimsnappath, xvfb=xvfb)
 	image1 = density+".001.png"
-	if not os.path.isfile(image1):
-		apDisplay.printWarning("Chimera failed to generate images")
-		runChimeraScript(chimsnappath, xvfb=xvfb)
 
 	if os.path.isfile(image1):
 		### merge into animated GIF

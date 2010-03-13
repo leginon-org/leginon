@@ -226,7 +226,7 @@ class ChimSnapShots(object):
 		self.writeMessageToLog("Color cylindrically")
 		cc = Cylinder_Color()
 		try:
-			cmin, cmax = rc.value_range(surf.surfacePieces[0])
+			cmin, cmax = cc.value_range(surf.surfacePieces[0])
 		except:
 			#keep for older version of chimera, e.g. v1.2509
 			vertices, triangles = surf.surfacePieces[0].geometry
@@ -457,19 +457,60 @@ class ChimSnapShots(object):
 		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_cylinder(s)
-		self.writeMessageToLog("turn: get intermediate side view")
-		self.runChimCommand('turn x 90')
-		tilt = 30
-		self.runChimCommand("turn x %d"%(tilt))
-		increment = 10
-		nsteps = int(360/increment)
-		for i in range(nsteps):
-			filename = "%s.%03d.%s"%(self.volumepath, i, self.imgformat.lower())
-			self.save_image(filename)
-			self.writeMessageToLog("turn: rotate by %d to %d"%(increment,increment*(i+1)))
-			self.runChimCommand("turn x %d"%(-tilt))
-			self.runChimCommand("turn y %d"%(increment))
-			self.runChimCommand("turn x %d"%(tilt))
+
+		nsym = float(self.symmetry[1:])
+		tilt = 30.0
+		rotation = 360.0/nsym
+		pause = 4
+		moviefile = "%s.%s"%(self.volumepath, "mp4")
+
+		### save states to create movie
+		self.writeMessageToLog("save states to create movie")
+		self.runChimCommand("turn x 90")
+		self.runChimCommand("savepos p1")
+
+		self.writeMessageToLog("tilt forward")
+		self.runChimCommand("turn x %.1f"%(tilt))
+		self.runChimCommand("savepos p2")
+
+		self.writeMessageToLog("tilt back, rotate, and tilt forward")
+		self.writeMessageToLog("appears to be rotating about tilted axis")
+		self.runChimCommand("turn x %.1f"%(-1*tilt))
+		self.runChimCommand("turn y %.5f"%(rotation))
+		self.runChimCommand("turn x %.1f"%(tilt))
+		self.runChimCommand("savepos p3")
+
+		self.writeMessageToLog("flip upside down, in two steps")
+		self.runChimCommand("turn x %.1f"%(-1*tilt))
+		self.runChimCommand("turn x -90")
+		self.runChimCommand("savepos p4")
+		self.runChimCommand("turn x -90")
+		self.runChimCommand("savepos p5")
+
+		### create movie from states
+		self.runChimCommand("reset p1")
+		self.runChimCommand("movie record")
+		self.runChimCommand("freeze")
+		self.runChimCommand("wait %d"%(pause))
+
+		self.writeMessageToLog("tilt forward")
+		self.runChimCommand("fly %d p1 p2"%(tilt*2))
+		self.runChimCommand("wait %d"%(tilt*2 + pause))
+
+		self.writeMessageToLog("tilt back, rotate, and tilt forward")
+		self.runChimCommand("fly %d p2 p3"%(rotation*2))
+		self.runChimCommand("wait %d"%(rotation*2 + pause))
+
+		self.writeMessageToLog("flip upside down, in two steps")
+		self.runChimCommand("fly %d p3 p4"%(tilt + 90))
+		self.runChimCommand("wait %d"%(tilt + 90 + pause))
+		self.runChimCommand("fly %d p4 p5"%(90))
+		self.runChimCommand("wait %d"%(90 + pause))
+
+		self.writeMessageToLog("encode movie")
+		self.runChimCommand("freeze")
+		self.runChimCommand("movie stop")
+		self.runChimCommand("movie encode mformat mp4 qscale 3 output %s"%(moviefile))
 
 	# -----------------------------------------------------------------------------
 	def animate_csym(self):
@@ -748,8 +789,10 @@ class ChimSnapShots(object):
 		if silhouette is not None and bool(silhouette) is True:
 			chimera.viewer.showSilhouette = True
 			chimera.viewer.silhouetteWidth = 3.0
+			self.writeMessageToLog("using chimera silhouette")
 		elif silhouette is None or bool(silhouette) is False:
 			chimera.viewer.showSilhouette = False
+			self.writeMessageToLog("skipping chimera silhouette")
 		### Background
 		if os.environ.get('CHIMBACK') is None:
 			white = getColorByName('white')
@@ -768,7 +811,7 @@ class ChimSnapShots(object):
 			imgsize = int(imgsize)
 			self.imgsize = (imgsize, imgsize)
 		elif self.type == 'animate':
-			self.imgsize = (256,256)
+			self.imgsize = (512,512)
 		else:
 			self.imgsize = (1024,1024)
 		### file format
