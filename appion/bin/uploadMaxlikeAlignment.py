@@ -304,7 +304,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		if not os.path.isfile(refstackfile):
 			apDisplay.printError("could not find reference stack file: "+refstackfile)
 		alignstackq['stack'] = apStack.getOnlyStackData(runparams['stackid'])
-		alignstackq['boxsize'] = math.floor(apStack.getStackBoxsize(runparams['stackid'])/runparams['bin'])
+		alignstackq['boxsize'] = apFile.getBoxSize(imagicfile)[0]
 		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
 		alignstackq['description'] = runparams['description']
 		alignstackq['hidden'] =  False
