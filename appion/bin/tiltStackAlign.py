@@ -169,6 +169,86 @@ class tiltStackAlign(appionScript.AppionScript):
 		eulerf.close()
 
 	#=====================
+	def uploadResults(self):
+		if self.params['commit'] is False:
+			return
+
+		# Produce new stacks
+		oldstack = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		notstack = appiondata.ApStackData()
+		notstack['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		notstack['name'] = self.notstackdata['name']
+		if notstack.query(results=1):
+			apDisplay.printError("A stack with these parameters already exists")
+		tiltstack = appiondata.ApStackData()
+		tiltstack['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		tiltstack['name'] = self.tiltstackdata['name']
+		if tiltstack.query(results=1):
+			apDisplay.printError("A stack with these parameters already exists")
+
+		# Fill in data and submit
+		notstack['oldstack'] = oldstack
+		notstack['hidden'] = False
+		notstack['substackname'] = self.params['runname']
+		notstack['description'] = self.params['description']+" ... tilt stack sorted"
+		notstack['pixelsize'] = oldstack['pixelsize']
+		notstack['project|projects|project'] = oldstack['project|projects|project']
+		notstack.insert()
+		tiltstack['oldstack'] = oldstack
+		tiltstack['hidden'] = False
+		tiltstack['substackname'] = self.params['runname']
+		tiltstack['description'] = self.params['description']+" ... tilt stack sorted"
+		tiltstack['pixelsize'] = oldstack['pixelsize']
+		tiltstack['project|projects|project'] = oldstack['project|projects|project']
+		tiltstack.insert()
+
+		# Insert stack images
+		apDisplay.printMsg("Inserting stack particles")
+		count=0
+		for partdict in parttree:
+			count += 1
+			if count % 100 == 0:
+				sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
+				sys.stderr.write(str(count)+" of "+(str(total))+" complete")
+
+			# Get particles from the old stacks
+			oldnotparticle = apStack.getStackParticle(self.params['notstackid'], partdict['not'])
+			oldtiltparticle = apStack.getStackParticle(self.params['tiltstackid'], partdict['tilt'])
+
+			# Insert particle
+			notparticle = appiondata.ApStackParticlesData()
+			notparticle.update(oldnotparticle)
+			notparticle['particleNumber'] = count
+			notparticle['stack'] = notstack
+			notparticle.insert()
+			tiltparticle = appiondata.ApStackParticlesData()
+			tiltparticle.update(oldtiltparticle)
+			tiltparticle['particleNumber'] = count
+			tiltparticle['stack'] = tiltstack
+			tiltparticle.insert()
+		apDisplay.printMsg("\n%d particles have been inserted into the tilt aligned stacks"%(count))
+
+		# Insert runs in stack
+		apDisplay.printMsg("Inserting Runs in Stack")
+		runsinstack = apStack.getRunsInStack(self.params['notstackid'])
+		for run in runsinstack:
+			newrunsq = appiondata.ApRunsInStackData()
+			newrunsq['stack'] = notstack
+			newrunsq['stackRun'] = run['stackRun']
+			newrunsq['project|projects|project'] = run['project|projects|project']
+			newrunsq.insert()
+		runsinstack = apStack.getRunsInStack(self.params['tiltstackid'])
+		for run in runsinstack:
+			newrunsq = appiondata.ApRunsInStackData()
+			newrunsq['stack'] = tiltstack
+			newrunsq['stackRun'] = run['stackRun']
+			newrunsq['project|projects|project'] = run['project|projects|project']
+			newrunsq.insert()
+
+		apDisplay.printMsg("finished")
+		return
+
+	#=====================
 	def makeNewStacks(self, parttree):
 		### untilted stack
 		self.notstackdata = apStack.getOnlyStackData(self.params['notstackid'])
@@ -262,6 +342,10 @@ class tiltStackAlign(appionScript.AppionScript):
 		apImagicFile.mergeStacks(tiltstacks, tiltname)
 		for stackname in tiltstacks:
 			apFile.removeStack(stackname, warn=False)
+
+		### upload results
+		if False:
+			self.uploadResults()
 
 	#=====================
 	def start(self):
