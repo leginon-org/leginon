@@ -9,7 +9,7 @@ import math
 #appion
 from appionlib import appionScript
 
-class UploadFrealign(AppionScript):
+class UploadFrealign(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --commit --description='<text>' [options]")

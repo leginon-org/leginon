@@ -21,7 +21,11 @@ from appionlib import apChimera
 from appionlib import apProject
 from appionlib import apParam
 from appionlib.apTilt import apTiltPair
-from appionlib.apSpider import operations, backprojectPWL, alignment
+from appionlib.apSpider import operations, alignment
+try:
+	from appionlib.apSpider import backprojectPWL
+except ImportError:
+	print "Pick-wei fix this"
 from pyami import mem, mrc
 
 class otrVolumeScript(appionScript.AppionScript):

@@ -13,7 +13,7 @@ except:
 import leginon.leginondata
 from pyami import arraystats, mrc, imagefun, numpil,correlator, peakfinder
 from appionlib import appiondata
-import libCVwrapper
+from leginon import libCVwrapper
 try:
 	import node
 except:

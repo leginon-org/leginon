@@ -12,7 +12,7 @@ from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apStack
 from appionlib import apDatabase
-from appionlib import apTiltTransform
+from appionlib.apTilt import apTiltTransform
 import sinedon
 import MySQLdb
 

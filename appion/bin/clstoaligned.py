@@ -4,6 +4,7 @@
 # output file using the Eulers take from the reference projection
 
 from EMAN import *
+import EMAN
 from sys import argv
 import os
 import optparse
@@ -128,11 +129,11 @@ if __name__ == "__main__":
 	classnamepath = fsp.split('.')[0]+'.dir'
 	if not os.path.exists(classnamepath):
 		os.mkdir(classnamepath)
-	b=EMData()
+	b=EMAN.EMData()
 	b.readImage(fsp,0)
 	e=b.getEuler()
 
-	a=EMData()
+	a=EMAN.EMData()
 	if format == "eman" or format=="imagic":
 		outname="aligned.hed"
 	else:
