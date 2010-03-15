@@ -5,7 +5,7 @@
 # NOTE!!! CONFORMS TO EMAN CONVENTION, STARTS AT 0!!!!
 
 import sys
-from EMAN import *
+import EMAN
 
 if __name__ == "__main__":
 
@@ -15,8 +15,8 @@ if __name__ == "__main__":
 
 	filename=sys.argv[1]
 
-	n=fileCount(filename)[0]
-	im=EMData()
+	n=EMAN.fileCount(filename)[0]
+	im=EMAN.EMData()
 	for i in range(n):
 		im.readImage(filename,i)
 		im.setNImg(i)
