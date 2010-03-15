@@ -3,10 +3,8 @@
 # particle, apply the predetermined 2D alignment to it and write it to a common
 # output file using the Eulers take from the reference projection
 
-from EMAN import *
 import EMAN
-from sys import argv
-import os
+import os,sys
 import optparse
 import tarfile
 import shutil
@@ -124,7 +122,7 @@ if __name__ == "__main__":
 			if d[3][-1]=='1':
 				f.write(l)
 		f.close()
-	n=fileCount(fsp)[0]
+	n=EMAN.fileCount(fsp)[0]
 	
 	classnamepath = fsp.split('.')[0]+'.dir'
 	if not os.path.exists(classnamepath):
