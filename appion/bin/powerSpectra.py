@@ -6,6 +6,7 @@ import numpy
 #appion
 from appionlib import appionLoop2
 from appionlib import apImage
+from appionlib import apDisplay
 from pyami import imagefun
 
 class powerSpectraLoop(appionLoop2.AppionLoop):
@@ -16,7 +17,7 @@ class powerSpectraLoop(appionLoop2.AppionLoop):
 	#======================
 	def processImage(self, imgdata):
 		### make the power spectra
-		powerspectra = imagefun.power(a, mask_radius=3.0, thresh=3)
+		powerspectra = imagefun.power(imgdata['image'], mask_radius=3.0, thresh=3)
 		powerspectra = imagefun.bin2(powerspectra, self.params['bin'])
 		imagedata = imagefun.bin2(imgdata['image'], self.params['bin'])
 		stacked = numpy.hstack(imagedata, powerspectra)
@@ -31,8 +32,6 @@ class powerSpectraLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def checkConflicts(self):
-		if self.params['runname'] is not None:
-			apDisplay.printError("Enter a runname")
 		return
 
 
