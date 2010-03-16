@@ -19,10 +19,11 @@ define('C_PPN_DEF', "8");
 define('C_PPN_MAX', "8");
 define('C_RPROCS_DEF', "8");
 
-define('C_WALLTIME_DEF', "240");
-define('C_WALLTIME_MAX', "240");
-define('C_CPUTIME_DEF', "240");
-define('C_CPUTIME_MAX', "240");
+define('C_WALLTIME_DEF', "240"); //in hours
+define('C_WALLTIME_MAX', "240"); //in hours
+define('C_CPUTIME_DEF', "240"); //in hours
+define('C_CPUTIME_MAX', "240"); //in hours
+define('C_MEMORY_MAX', "30"); //in GB
 
 define('C_APPION_BIN', "");
 
@@ -112,12 +113,12 @@ class Cluster {
 		$clusterjob= "rm -rf $clusterfullpath/recon\n";
 		$clusterjob.= "mkdir -p $clusterfullpath/recon\n";
 		$clusterjob.= "cd $clusterfullpath/recon\n\n";
-		$clusterjob.= cluster_send_data();
+		$clusterjob.= $this->cluster_send_data();
 		$clusterjob.= "setenv RUNPAR_RSH 'ssh'\n\n";
 
 		$clusterjob .= $job;
 
-		$clusterjob.= cluster_receive_data();
+		$clusterjob.= $this->cluster_receive_data();
 		$clusterjob.= "\ncd $clusterfullpath\n";
 		$clusterjob.= "\nrm -rf $clusterfullpath/recon\n";
 		return $clusterjob;
