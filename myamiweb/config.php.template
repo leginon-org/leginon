@@ -24,8 +24,8 @@ define('ADMIN_EMAIL', "example@scripps.edu");
 define('DB_HOST', "");		// DB Host name
 define('DB_USER', "");		// DB User name
 define('DB_PASS', "");		// DB Password
-define('DB_LEGINON', "dbemdata");	// DB dbemdata table name
-define('DB_PROJECT', "project");	// DB project table name
+define('DB_LEGINON', "leginondb");	// Leginon database name
+define('DB_PROJECT', "projectdb");	// Project database name
 
 // --- default URL for project section
 define('VIEWER_URL', BASE_URL."3wviewer.php?expId=");
@@ -39,15 +39,6 @@ define('GP_USER', 'users');
 
 // --- XML test dataset
 $XML_DATA = "test/viewerdata.xml";
-
-// --- Project database URL
-
-//$PROJECT_URL = $BASE_PATH."/project";
-//$PROJECT_DB_HOST = $DB_HOST;
-//$PROJECT_DB_USER = $DB_USER;
-//$PROJECT_DB_PASS = $DB_PASS;
-//$PROJECT_DB = $DB;
-
 
 // --- Set Default table definition
 define('DEF_TABLES_FILE', "defaulttables.xml");
@@ -68,7 +59,7 @@ $SQL_HOSTS[$DB_HOST]['db'] = $DB;
 $SQL_HOSTS['name1']['db_host'] = 'name1';
 $SQL_HOSTS['name1']['db_user'] = 'usr_object';
 $SQL_HOSTS['name1']['db_pass'] = '';
-$SQL_HOSTS['name1']['db'] = 'dbemdata';
+$SQL_HOSTS['name1']['db'] = 'legniondb';
 */
 
 // --- add plugins --- //
@@ -77,7 +68,9 @@ $SQL_HOSTS['name1']['db'] = 'dbemdata';
 # addplugin("processing");
 
 // --- Leginon Viewer login --- //
-define('ENABLE_LOGIN', true);
+// Browse to the administration tools in myamiweb prior to 
+// changing this to true to populate DB tables correctly.
+define('ENABLE_LOGIN', false);	
 
 // --- Enable Image Cache --- //
 define('ENABLE_CACHE', false);
