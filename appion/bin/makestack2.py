@@ -280,6 +280,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				'centerstdev': centerstdev,
 			}
 			### show stats for first particle
+			"""
 			if i == 0:
 				keys = partmeandict.keys()
 				keys.sort()
@@ -288,6 +289,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 					if isinstance(partmeandict[key], float):
 						mystr += "%s=%.3f :: "%(key, partmeandict[key])
 				print mystr
+			"""
 			partmeantree.append(partmeandict)
 		self.meanreadtimes.append(time.time()-t0)
 
