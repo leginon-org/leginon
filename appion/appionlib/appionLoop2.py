@@ -83,6 +83,7 @@ class AppionLoop(appionScript.AppionScript):
 				else:
 					apDisplay.printWarning("IMAGE FAILED; nothing inserted into database")
 					self.badprocess = False
+					self.stats['lastpeaks'] = 0
 
 				### FINISH with custom functions
 
