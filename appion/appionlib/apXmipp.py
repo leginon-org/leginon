@@ -90,7 +90,13 @@ class breakUpStack(apImagicFile.processStack):
 			mrc.write(partarray, partfile)
 		else:
 			partfile = os.path.join(self.partdir, "part%06d.spi"%(self.index))
-			spider.write(partarray, partfile)
+			try:
+				spider.write(partarray, partfile)
+			except:
+				print partarray
+				apDisplay.printWarning("failed to write spider file for part index %d"%(self.index))
+				print partarray.shape
+				spider.write(partarray, partfile)
 		self.partdocf.write(os.path.abspath(partfile)+" 1\n")
 
 	#===============
