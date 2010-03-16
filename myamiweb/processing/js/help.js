@@ -62,6 +62,7 @@ var help = {
 		'stackname' : 'name of the output stack, usually start.*',
 		'stackdescr' : 'brief description attributed to this stack',
 		'stackparticles' : 'Particle selection run providing the coordinates that will be used for extracting the particles',
+		'stackparticles2' : 'Existing stack providing the coordinates that will be used for extracting the particles',
 		'stackinv' : 'Density of your extracted particles will be inverted.  Three dimensional reconstruction packages usually require light density on a dark background.  2-D alignment algorithms usually do not.',
 		'stacknorm' : 'normalize each of the particle images',
 		'checkimage' : 'This option specifies which images to use for particle extraction.<br /><br /><b><i>Non-rejected: </b></i>images that are specified as "Hidden" in the Leginon Image Viewers or selected to "Reject" using the image assessor will NOT be used for stack creation.  This means that any uninspected images will be processed.<br /><br /><b><i>Best:</i></b> only images that are specified as "Exemplar" in the Leginon Image Viewers or were selected to "Keep" using the image assessor will be used for stack creation.<br /><br /><b><i>All: </i></b>all images will be used, regardless of their status.',
