@@ -339,11 +339,19 @@ function runMaxLikeAlign() {
 		createMaxLikeAlignForm("<B>ERROR:</B> Number of particles to align ($numpart)"
 			." must be less than or equal to the number of particles in the stack ($totprtls)");
 
+
 	if ($clipdiam) {
-		if ($clipdiam > $boxsz)
+		if ($clipdiam > $boxsz) {
+			// Clip size too big
 			createMaxLikeAlignForm("<B>ERROR:</B> Clipping diameter ($clipdiam pixels)"
 				." must be less than  or equal to the stack boxsize ($boxsz pixels)");
-		$binclipdiam = ((int) $clipdiam/($bin*2.0))*2;
+		} else if ($clipdiam == $boxsz) {
+			// No clipping needed
+			$binclipdiam = '';
+		} else {
+			// Clipping requested
+			$binclipdiam = floor($clipdiam/($bin*2.0))*2;
+		}
 	}
 
 	// determine calc time
@@ -371,7 +379,7 @@ function runMaxLikeAlign() {
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";
-	if ($clipdiam != '') $command.="--clip=$binclipdiam ";
+	if ($binclipdiam != '') $command.="--clip=$binclipdiam ";
 	if ($lowpass != '') $command.="--lowpass=$lowpass ";
 	if ($highpass != '') $command.="--highpass=$highpass ";
 	$command.="--num-part=$numpart ";
