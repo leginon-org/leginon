@@ -82,7 +82,7 @@ class subStackScript(appionScript.AppionScript):
 			)
 
 		#create the new sub stack
-		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
+		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=True)
 		if not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
 		apStack.commitSubStack(self.params, newname, oldstackparts=stackparts)
