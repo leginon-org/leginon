@@ -393,7 +393,7 @@ function writeJobFile ($extra=False) {
 	$runlines = file_get_contents($runfile);
 
 	$runlines .= "\n";
-	$runlines .= "tar -czvf results.tar.gz iter*\n";
+	$runlines .= "tar -czf results.tar.gz iter*\n";
 
 	$clusterjob .= $clusterdata->cluster_job_file($runlines);
 

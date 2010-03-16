@@ -631,7 +631,7 @@ class frealignJob(appionScript.AppionScript):
 		### if guppy
 		#mainf.write("cd %s\n"%(self.params['rundir']))
 		### elseif garibaldi
-		mainf.write("tar -xvf %s.tar\n"%(self.params['runname']))
+		mainf.write("tar -xf %s.tar\n"%(self.params['runname']))
 		mainf.write("\n")
 
 	#===============
