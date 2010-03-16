@@ -390,7 +390,7 @@ class frealignJob(appionScript.AppionScript):
 		f.write('\n')
 		f.write('### START FREALIGN ###\n')
 		#f.write('frealign.exe << EOF\n')
-		f.write('frealign << EOF > '+logfile+'\n')
+		f.write('frealign.exe << EOF > '+logfile+'\n')
 
 		### CARD 1
 		f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%d,%s,%d\n' % (
