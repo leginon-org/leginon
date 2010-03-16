@@ -30,9 +30,14 @@ def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 		emancmd += " list="+listfile
 	apEMAN.executeEmanCmd(emancmd, verbose=True)
 	if bad is True and listfile is not None:
-		badstack = os.path.join(os.path.dirname(newstack), "bad.hed")
-		emancmd = "proc2d %s %s exclude=%s"%(oldstack, badstack, listfile)
-		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		### run only if num bad particles < num good particles
+		newstacknumpart = apFile.numImagesInStack(newstack)
+		oldstacknumpart = apFile.numImagesInStack(oldstack)
+		if newstacknumpart > oldstacknumpart/2:
+			### create bad.hed stack with all bad particles
+			badstack = os.path.join(os.path.dirname(newstack), "bad.hed")
+			emancmd = "proc2d %s %s exclude=%s"%(oldstack, badstack, listfile)
+			apEMAN.executeEmanCmd(emancmd, verbose=True)
 	return
 
 #===============
@@ -428,6 +433,7 @@ def getImageParticles(imagedata,stackid,nodie=True):
 		particles.append(stackp['particle'])
 	return particles,stackps
 
+#===============
 def findSubStackConditionData(stackdata):
 	substackname = stackdata['substackname']
 	if not substackname:
@@ -447,12 +453,14 @@ def findSubStackConditionData(stackdata):
 	q = typedict[substacktype]
 	return substacktype,q.direct_query(conditionids[-1])
 
+#===============
 def getAlignStack(substacktype,conditionstackdata):
 	if substacktype == 'clustersub':
 		clusterrundata = conditionstackdata['clusterrun']
 		conditionstackdata = clusterrundata['alignstack']
 	return conditionstackdata
 
+#===============
 def getStackParticleDiameter(stackdata):
 	stackpdata = appiondata.ApStackParticlesData()
 	stackpdata['stack'] = stackdata
