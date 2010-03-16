@@ -260,7 +260,7 @@ def getEulersFromProj(params,iter):
 	eulers=[]
 	projfile="proj."+iter+".txt"
 	projfile=os.path.join(params['rundir'], projfile)
-	print "reading file, "+projfile
+	#print "reading file, "+projfile
 	if not os.path.exists:
 		apDisplay.printError("no projection file found for iteration "+iter)
 	f = open(projfile,'r')
@@ -536,11 +536,11 @@ def insertIteration(iteration, params):
 
 	# expand cls.*.tar into temp file
 	clsf=os.path.join(params['rundir'], "cls."+iteration['num']+".tar")
-	print "reading",clsf
+	#print "reading",clsf
 	clstar=tarfile.open(clsf)
 	clslist=clstar.getmembers()
 	clsnames=clstar.getnames()
-	print "extracting",clsf,"into temp directory"
+	#print "extracting",clsf,"into temp directory"
 	for clsfile in clslist:
 		clstar.extract(clsfile,params['tmpdir'])
 	clstar.close()
@@ -902,7 +902,7 @@ def getGoodBadParticlesFromReconId(reconid):
 	r0 = time.time()
 	for refinedata in refinedatas:
 		t0 = time.time()
-		print "Iteration %d"%(refinedata['iteration'])
+		#print "Iteration %d"%(refinedata['iteration'])
 		goodbadq = appiondata.ApRefineGoodBadParticleData()
 		goodbadq['refine'] = refinedata
 		goodbaddata = goodbadq.query()
@@ -916,7 +916,7 @@ def getGoodBadParticlesFromReconId(reconid):
 			'good_msgp':   getParticleCount(refinedata.dbid, cursor, 'msgp_keep', True),
 			'bad_msgp':    getParticleCount(refinedata.dbid, cursor, 'msgp_keep', False),
 		}
-		print fields
+		#print fields
 		goodbadq = appiondata.ApRefineGoodBadParticleData()
 		goodbadq['refine'] = refinedata
 		goodbadq['good_normal'] = fields['good_normal']
