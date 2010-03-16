@@ -875,7 +875,7 @@ function getNumberOfRequiredNodes($nproc, $ppn) {
 }
 
 function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg=False,
-		 $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240:00:00", $cputime="240:00:00") {
+		 $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime="240") {
 	global $DATA_DIRS;
 	$particle=new particleData();
 
@@ -970,12 +970,13 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 			list($nodes, $ppn) = getNumberOfRequiredNodes($nproc, $ppn);
 		if ($ppn < 1)
 			$ppn = 1;
-
+		
+		$cput = $walltime*$nproc;
 		// create job file
 		$jobid=$particle->insertClusterJobData($host,$procdir,'',$procdir,$jobfile,$expId,$jobtype,$user);
 		$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
-		$jobtext .= "#PBS -l walltime=$walltime\n";
-		$jobtext .= "#PBS -l cput=$cputime\n";
+		$jobtext .= "#PBS -l walltime=$walltime:00:00\n";
+		$jobtext .= "#PBS -l cput=$cputime:00:00\n";
 		$jobtext .= "#PBS -j oe\n";
 		$jobtext .= "#PBS -r n\n\n";
 		$dbprojectid = getProjectFromExpId($expId);
