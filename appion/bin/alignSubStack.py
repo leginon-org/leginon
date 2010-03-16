@@ -201,7 +201,7 @@ class subStackScript(appionScript.AppionScript):
 				% (numparticles, self.params['keepclasslist']))
 
 		### create the new sub stack
-		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
+		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=True)
 
 		if not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")

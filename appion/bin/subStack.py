@@ -225,7 +225,7 @@ class subStackScript(appionScript.AppionScript):
 				self.params['description'] += (" (%i of %i)" % (i+1, self.params['split']))
 
 			#create the new sub stack
-			apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
+			apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=True)
 			if not os.path.isfile(newstack):
 				apDisplay.printError("No stack was created")
 			apStack.commitSubStack(self.params, newname, sorted=False)

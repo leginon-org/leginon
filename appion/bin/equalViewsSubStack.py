@@ -146,7 +146,7 @@ class EqualViews(appionScript.AppionScript):
 
 		oldstack = os.path.join(oldstackdata['path']['path'], oldstackdata['name'])
 		newstack = os.path.join(self.params['rundir'], "start.hed")
-		apStack.makeNewStack(oldstack, newstack, listfile=self.params['keepfile'], remove=True)
+		apStack.makeNewStack(oldstack, newstack, listfile=self.params['keepfile'], remove=True, bad=True)
 		if not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
 		self.params['stackid'] = oldstackdata.dbid #need to set stackid for commitSubStack

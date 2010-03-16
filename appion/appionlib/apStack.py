@@ -13,7 +13,7 @@ import numpy
 
 
 #===============
-def makeNewStack(oldstack, newstack, listfile=None, remove=False):
+def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 	if not os.path.isfile(oldstack):
 		apDisplay.printWarning("could not find old stack: "+oldstack)
 	if os.path.isfile(newstack):
@@ -29,6 +29,10 @@ def makeNewStack(oldstack, newstack, listfile=None, remove=False):
 	if listfile is not None:
 		emancmd += " list="+listfile
 	apEMAN.executeEmanCmd(emancmd, verbose=True)
+	if bad is True and listfile is not None:
+		badstack = os.path.join(os.path.dirname(newstack), "bad.hed")
+		emancmd = "proc2d %s %s exclude=%s"%(oldstack, badstack, listfile)
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
 	return
 
 #===============
