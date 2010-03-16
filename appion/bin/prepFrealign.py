@@ -410,7 +410,7 @@ class frealignJob(appionScript.AppionScript):
 			self.params['xstd'], self.params['pbc'], 
 			self.params['boff'], self.params['dang'], self.params['itmax'], self.params['ipmax']))
 
-		### CARD 3 fixing of an Euler angle of shift parameter, 1 = refine all
+		### CARD 3 fixing of an Euler angle or shift parameters, 1 = refine all
 		f.write('%d %d %d %d %d\n' % (1,1,1,1,1))
 
 
@@ -506,7 +506,8 @@ class frealignJob(appionScript.AppionScript):
 			### add frealign code
 			self.currentvol = "../../"+os.path.basename(self.currentvol)
 			self.currentparam = "../../"+os.path.basename(self.currentparam)
-			self.appendFrealignJobFile(procjobfile, first=firstp, last=lastp, recon=False)
+			logfile = "frealign.%03d.out"%(n+1)
+			self.appendFrealignJobFile(procjobfile, first=firstp, last=lastp, recon=False, logfile=logfile)
 
 			### append to list
 			procjobfiles.append(procjobfile)
@@ -536,7 +537,7 @@ class frealignJob(appionScript.AppionScript):
 
 		self.currentparam = combineparamfile
 		self.currentvol = combinevolfile
-		self.appendFrealignJobFile(combinejobfile, iflag=0)
+		self.appendFrealignJobFile(combinejobfile, iflag=0, logfile="frealign.combine.out")
 
 		f = open(combinejobfile, 'a')
 		f.write('cp -v iter%03d.hed ..\n'%(iternum))
@@ -720,10 +721,6 @@ class frealignJob(appionScript.AppionScript):
 		if self.params['cluster'] is False:
 			#create alias to stack data
 			pass
-		if not os.path.exists("start.hed"):
-			os.symlink(os.path.splitext(self.stackfile)[0]+".hed", "start.hed")
-		if not os.path.exists("start.img"):
-			os.symlink(os.path.splitext(self.stackfile)[0]+".img", "start.img")
 		if self.params['cluster'] is True:
 			self.setupMultiNode()
 		self.origstackfile = self.stackfile
