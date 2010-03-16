@@ -506,7 +506,7 @@ class frealignJob(appionScript.AppionScript):
 			### add frealign code
 			self.currentvol = "../../"+os.path.basename(self.currentvol)
 			self.currentparam = "../../"+os.path.basename(self.currentparam)
-			logfile = "frealign.%03d.out"%(n+1)
+			logfile = "frealign.proc%03d.out"%(n+1)
 			self.appendFrealignJobFile(procjobfile, first=firstp, last=lastp, recon=False, logfile=logfile)
 
 			### append to list
