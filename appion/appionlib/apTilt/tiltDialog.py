@@ -761,7 +761,10 @@ class AboutTiltPickerDialog(wx.Dialog):
 
 		sizer = wx.FlexGridSizer(6, 1, 10, 0)
 
-		logoimage = self.parent.logoimage
+		logoimage = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/tplogo.png")
+		if not os.path.isfile(logoimage):
+			logoimage = os.path.join(apParam.getAppionDirectory(), "appionlib/data/tplogo.png")
+
 		if os.path.isfile(logoimage):
 			#golden = (1+math.sqrt(5))/2.0
 			#width = 480
