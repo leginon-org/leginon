@@ -83,8 +83,7 @@ class PickerApp(wx.App):
 	 pickshape="circle", pshapesize=24,
 	 alignshape="square", ashapesize=6,
 	 worstshape="square", wshapesize=28,
-	 tiltangle=None, tiltaxis=None, doinit=True, 
-	 version=None, citation=None, releasedate=None, logoimage=None):
+	 tiltangle=None, tiltaxis=None, doinit=True):
 		self.mode = mode
 		self.pshape = self.canonicalShape(pickshape)
 		self.pshapesize = int(pshapesize)
@@ -94,10 +93,6 @@ class PickerApp(wx.App):
 		self.wshapesize = int(wshapesize)
 		self.inittiltangle = tiltangle
 		self.inittiltaxis = tiltaxis
-		self.version = version
-		self.citation = citation
-		self.releasedate = releasedate
-		self.logoimage = logoimage
 		wx.App.__init__(self)
 
 	def OnInit(self):
@@ -1644,27 +1639,7 @@ class PickerApp(wx.App):
 			apDisplay.printError("Unknown pointer shape: "+shape)
 
 if __name__ == '__main__':
-	version = "2.0b2"
-	releasedate = "March 10, 2010"
-	logoimage = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/tplogo.png")
-	if not os.path.isfile(logoimage):
-		logoimage = os.path.join(apParam.getAppionDirectory(), "appionlib/data/tplogo.png")
-	print logoimage
-	citationlogo = """
-####
-  # ###    Voss NR, Yoshioka CK, Radermacher M, Potter CS, and Carragher B.
-  # #  #   "DoG Picker and TiltPicker: software tools to facilitate particle selection 
-  #####        in single particle electron microscopy."
-    #      J Struct Biol. 2009 v166(2): pp. 205-13.
-    #      http://dx.doi.org/10.1016/j.jsb.2009.01.004
-"""
-	citation = """
-Voss NR, Yoshioka CK, Radermacher M, Potter CS, and Carragher B.
-"DoG Picker and TiltPicker: software tools to facilitate particle selection 
-    in single particle electron microscopy."
-J Struct Biol. 2009 v166(2): pp. 205-13.
-http://dx.doi.org/10.1016/j.jsb.2009.01.004
-"""
+
 	usage = "Usage: %prog --left-image=image1.mrc --right-image=image2.mrc [--pick-file=picksfile.txt] [options]"
 	shapes = ("circle","square","diamond","plus","cross")
 
@@ -1702,9 +1677,9 @@ http://dx.doi.org/10.1016/j.jsb.2009.01.004
 	params = apParam.convertParserToParams(parser)
 
 	print "=================================="
-	print "If you find this program useful please cite: "+citationlogo
-	print "ApTiltPicker, version "+version
-	print "Released on "+releasedate
+	print "If you find this program useful please cite: "+tiltDialog.citationlogo
+	print "ApTiltPicker, version "+tiltDialog.version
+	print "Released on "+tiltDialog.releasedate
 	print "=================================="
 
 	app = PickerApp(
@@ -1712,7 +1687,6 @@ http://dx.doi.org/10.1016/j.jsb.2009.01.004
 		alignshape=params['alignshape'], ashapesize=params['ashapesize'],
 		worstshape=params['worstshape'], wshapesize=params['wshapesize'],
 		tiltangle=params['tiltangle'], tiltaxis=params['tiltaxis'],
-		version=version, citation=citation, releasedate=releasedate, logoimage=logoimage,
 	)
 	app.openLeftImage(params['img1file'])
 	app.openRightImage(params['img2file'])

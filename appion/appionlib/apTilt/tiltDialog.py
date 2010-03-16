@@ -18,6 +18,29 @@ from appionlib import apParam
 from appionlib import apDisplay
 from appionlib.apTilt import apTiltTransform
 
+version = "2.0b3"
+releasedate = "March 16, 2010"
+logoimage = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/tplogo.png"))
+if not os.path.isfile(logoimage):
+	logoimage = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/tplogo.png"))
+if not os.path.isfile(logoimage):
+	logoimage = os.path.join(apParam.getAppionDirectory(), "appionlib/data/tplogo.png")
+citation = """
+Voss NR, Yoshioka CK, Radermacher M, Potter CS, and Carragher B.
+"DoG Picker and TiltPicker: software tools to facilitate particle selection 
+    in single particle electron microscopy."
+J Struct Biol. 2009 v166(2): pp. 205-13.
+http://dx.doi.org/10.1016/j.jsb.2009.01.004
+"""
+citationlogo = """
+####
+  # ###    Voss NR, Yoshioka CK, Radermacher M, Potter CS, and Carragher B.
+  # #  #   "DoG Picker and TiltPicker: software tools to facilitate particle selection 
+  #####        in single particle electron microscopy."
+    #      J Struct Biol. 2009 v166(2): pp. 205-13.
+    #      http://dx.doi.org/10.1016/j.jsb.2009.01.004
+"""
+
 ##
 ##
 ## Fit Theta Dialog
@@ -761,10 +784,6 @@ class AboutTiltPickerDialog(wx.Dialog):
 
 		sizer = wx.FlexGridSizer(6, 1, 10, 0)
 
-		logoimage = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/tplogo.png")
-		if not os.path.isfile(logoimage):
-			logoimage = os.path.join(apParam.getAppionDirectory(), "appionlib/data/tplogo.png")
-
 		if os.path.isfile(logoimage):
 			#golden = (1+math.sqrt(5))/2.0
 			#width = 480
@@ -776,10 +795,10 @@ class AboutTiltPickerDialog(wx.Dialog):
 			logosizer = wx.StaticBitmap(self, -1, wxlogobit)
 			sizer.Add(logosizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, "TiltPicker, version "+self.parent.version)
+		label = wx.StaticText(self, -1, "TiltPicker, version "+version)
 		sizer.Add(label, 1, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
 
-		release = wx.StaticText(self, -1, "Released on "+self.parent.releasedate)
+		release = wx.StaticText(self, -1, "Released on "+releasedate)
 		sizer.Add(release, 2, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL)
 
 		release = wx.StaticText(self, -1, "Please contact Neil Voss (vossman77@yahoo.com) for help")
