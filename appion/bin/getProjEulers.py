@@ -3,7 +3,10 @@
 
 import sys, os
 from math import pi
-import EMAN
+try:
+	import EMAN
+except ImportError:
+	print "EMAN module did not get imported"
 
 if __name__ == "__main__":
 	if len(sys.argv) !=3:

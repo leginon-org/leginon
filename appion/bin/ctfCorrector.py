@@ -16,9 +16,8 @@ from appionlib import apCtf
 from appionlib import apParam
 try:
 	import mlabraw as pymat
-except:
-	apDisplay.environmentError()
-	raise
+except ImportError:
+	print "Matlab module did not get imported"
 
 class aceLoop(appionLoop2.AppionLoop):
 

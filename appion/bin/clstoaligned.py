@@ -3,7 +3,10 @@
 # particle, apply the predetermined 2D alignment to it and write it to a common
 # output file using the Eulers take from the reference projection
 
-import EMAN
+try:
+	import EMAN
+except ImportError:
+	print "EMAN module did not get imported"
 import os,sys
 import optparse
 import tarfile

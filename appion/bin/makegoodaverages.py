@@ -9,7 +9,10 @@ import cPickle
 #scipy
 import numpy
 #eman
-import EMAN
+try:
+	import EMAN
+except ImportError:
+	print "EMAN module did not get imported"
 #db
 import sinedon
 import MySQLdb

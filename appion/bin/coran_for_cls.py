@@ -2,7 +2,10 @@
 
 import glob,os,sys
 import operator
-import EMAN
+try:
+	import EMAN
+except ImportError:
+	print "EMAN module did not get imported"
 import shutil
 import math
 import subprocess
