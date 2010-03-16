@@ -294,12 +294,9 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 
 		# Insert particle
 		newstackq = appiondata.ApStackParticlesData()
+		newstackq.update(oldstackpartdata)
 		newstackq['particleNumber'] = newpartnum
 		newstackq['stack'] = stackq
-		newstackq['stackRun'] = oldstackpartdata['stackRun']
-		newstackq['particle'] = oldstackpartdata['particle']
-		newstackq['mean'] = oldstackpartdata['mean']
-		newstackq['stdev'] = oldstackpartdata['stdev']
 		if params['commit'] is True:
 			newstackq.insert()
 		newpartnum += 1
