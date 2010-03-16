@@ -10,9 +10,9 @@
 
 require_once 'inc/config.inc';
 
-// --- define dbem web tools base --- //
+// --- define myamiweb tools base --- //
 define('PROJECT_NAME', "myamiweb");
-define('PROJECT_TITLE', "Appion and Leginon DB tools");
+define('PROJECT_TITLE', "Appion and Leginon Tools");
 define('BASE_PATH',"myamiweb");
 define('BASE_URL', "/".BASE_PATH."/");
 define('PROJECT_URL', BASE_URL."project");
@@ -56,18 +56,18 @@ $SQL_HOSTS[$DB_HOST]['db_pass'] = $DB_PASS;
 $SQL_HOSTS[$DB_HOST]['db'] = $DB;
 
 /*
-$SQL_HOSTS['name1']['db_host'] = 'name1';
-$SQL_HOSTS['name1']['db_user'] = 'usr_object';
-$SQL_HOSTS['name1']['db_pass'] = '';
-$SQL_HOSTS['name1']['db'] = 'legniondb';
+$SQL_HOSTS['example_host_name']['db_host'] = 'example_host_name';
+$SQL_HOSTS['example_host_name']['db_user'] = 'usr_object';
+$SQL_HOSTS['example_host_name']['db_pass'] = '';
+$SQL_HOSTS['example_host_name']['db'] = 'legniondb';
 */
 
 // --- add plugins --- //
 
-### uncomment to enable processing web pages
-# addplugin("processing");
+// uncomment to enable processing web pages
+// addplugin("processing");
 
-// --- Leginon Viewer login --- //
+// --- myamiweb login --- //
 // Browse to the administration tools in myamiweb prior to 
 // changing this to true to populate DB tables correctly.
 define('ENABLE_LOGIN', false);	
