@@ -17,10 +17,19 @@ class powerSpectraLoop(appionLoop2.AppionLoop):
 	#======================
 	def processImage(self, imgdata):
 		### make the power spectra
-		powerspectra = imagefun.power(imgdata['image'], mask_radius=3.0, thresh=3)
+		powerspectra = imagefun.power(imgdata['image'], mask_radius=1.0, thresh=4)
 		powerspectra = imagefun.bin2(powerspectra, self.params['bin'])
+		powerspectra = apImage.fermiHighPassFilter(powerspectra, apix=4.0, radius=1000.0)
+		powerspectra = apImage.normStdevMed(powerspectra) 
+		powerspectra = apImage.pixelLimitFilter(powerspectra, pixlimit=1.5)
+
+		### filter the image
 		imagedata = imagefun.bin2(imgdata['image'], self.params['bin'])
-		stacked = numpy.hstack(imagedata, powerspectra)
+		imagedata = apImage.normStdevMed(imagedata) 
+		imagedata = apImage.pixelLimitFilter(imagedata, pixlimit=3)
+
+		### write to file
+		stacked = numpy.hstack([imagedata, powerspectra])
 		stackedname = os.path.join(self.params['rundir'], imgdata['filename']+"power.jpg")
 		apImage.arrayToJpeg(stacked, stackedname)
 
@@ -34,6 +43,9 @@ class powerSpectraLoop(appionLoop2.AppionLoop):
 	def checkConflicts(self):
 		return
 
+	#======================
+	def commitToDatabase(self, imgdata):
+		return
 
 if __name__ == '__main__':
 	powerLoop = powerSpectraLoop()
