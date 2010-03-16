@@ -156,6 +156,9 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		if ($centered) {
 			$display_keys['iterative avgs']="<a target='stackview' HREF='viewstack.php?file=".$stackdata['path']
 				."/avg.hed&expId=$expId'>avg.hed</A>";
+		}
+		// if bad.hed exists provide a link
+		if (file_exists($stackdata['path']."/bad.hed")) {
 			$display_keys['stack file'].=" &nbsp;(<a target='stackview' HREF='viewstack.php?file=".$stackdata['path']
 				."/bad.hed&expId=$expId'>bad.hed</A>)";
 		}

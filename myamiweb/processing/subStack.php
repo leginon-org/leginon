@@ -318,9 +318,9 @@ function runSubStack() {
 
 	//putting together command
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="-s $stackId ";
+	$command.="--stackid=$stackId ";
 	$command.="--runname=$runname ";
-	$command.="-d \"$description\" ";
+	$command.="--description=\"$description\" ";
 	if (!$exclude and !$minx) {
 		if ($firstp!='' && $lastp) $command.="--first=".($firstp-1)." --last=".($lastp-1)." ";
 		elseif ($split) $command.="--split=$split ";
@@ -332,7 +332,7 @@ function runSubStack() {
 	}
 	
 	
-	$command.= ($commit=='on') ? "-C " : "--no-commit ";
+	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
 
 	// submit job to cluster
