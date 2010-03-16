@@ -415,6 +415,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		else:
 			nproc = self.params['nproc']
 		mpirun = self.checkMPI()
+		self.estimateIterTime()
 		if nproc > 2 and mpirun is not None:
 			### use multi-processor
 			apDisplay.printColor("Using "+str(nproc-1)+" processors!", "green")
