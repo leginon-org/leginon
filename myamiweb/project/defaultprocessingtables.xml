@@ -341,7 +341,7 @@
         <field name="eman_name" >c7</field>
         <field name="fold_symmetry" >7</field>
         <field name="symmetry" >C7 (z)</field>
-        <field name="description" >3-fold symmetry along the z axis</field>
+        <field name="description" >7-fold symmetry along the z axis</field>
     </sqltable>
     <sqltable name="ApSymmetryData" >
         <field name="DEF_id" >9</field>
@@ -477,7 +477,7 @@
         <field name="eman_name" >c1</field>
         <field name="fold_symmetry" >1</field>
         <field name="symmetry" >C1</field>
-        <field name="description" >asymmetric</field>
+        <field name="description" >Asymmetric</field>
     </sqltable>
     <sqltable name="ApSymmetryData" >
         <field name="DEF_id" >26</field>
