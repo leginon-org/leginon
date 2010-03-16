@@ -19,14 +19,14 @@ class powerSpectraLoop(appionLoop2.AppionLoop):
 		### make the power spectra
 		powerspectra = imagefun.power(imgdata['image'], mask_radius=1.0, thresh=4)
 		powerspectra = imagefun.bin2(powerspectra, self.params['bin'])
-		#powerspectra = apImage.fermiHighPassFilter(powerspectra, apix=4.0, radius=1000.0)
-		powerspectra = apImage.normStdevMed(powerspectra) 
-		powerspectra = apImage.pixelLimitFilter(powerspectra, pixlimit=1.5)
+		powerspectra = apImage.fermiHighPassFilter(powerspectra, apix=4.0, radius=2000.0)
+		powerspectra = apImage.normStdevMed(powerspectra, size=5) 
+		powerspectra = apImage.pixelLimitFilter(powerspectra, pixlimit=4)
 		powerspectra = apImage.normRange(powerspectra)
 
 		### filter the image
 		imagedata = imagefun.bin2(imgdata['image'], self.params['bin'])
-		imagedata = apImage.normStdevMed(imagedata) 
+		imagedata = apImage.normStdevMed(imagedata, size=5) 
 		imagedata = apImage.pixelLimitFilter(imagedata, pixlimit=2)
 		imagedata = apImage.normRange(imagedata)
 
