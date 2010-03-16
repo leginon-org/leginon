@@ -63,6 +63,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$partrunids = $particle->getParticleRunIds($sessionId);
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
 	$stackruninfos = $particle->getStackIds($sessionId, True);
+	$nohidestackruninfos = $particle->getStackIds($sessionId, False);
 	$stackruns = ($stackruninfos) ? count($stackruninfos):0;
 
 
@@ -119,7 +120,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 	processing_header($title,$heading,$javascript);
 
-	if (!$partrunids && !$stackruninfos) {
+	if (!$partrunids && !$nohidestackruninfos) {
 		echo "<font color='#cc3333' size='+2'><b>No particles available for this session; pick some particles first</b></font>\n";
 		exit;
 	}
@@ -269,11 +270,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		// add stack selection page
 	}
 	echo "<br/>\n";
-	if ($stackruninfos) {
+	if ($nohidestackruninfos) {
 		echo docpop('stackparticles2','Stacks:');
 		echo "<select name='fromstackid' onchange='partrunToNone(this)'>\n";
 		echo "<option value='0'>None</option>\n";
-		foreach ($stackruninfos as $stackruninfo){
+		foreach ($nohidestackruninfos as $stackruninfo){
 			$stackid = $stackruninfo['stackid'];
 			$numpart = commafy($particle->getNumStackParticles($stackid));
 			$stackdata = $particle->getStackParams($stackid);
