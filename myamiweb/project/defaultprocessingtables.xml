@@ -179,7 +179,7 @@
     />
     <field 
       name="eman_name" 
-      type="text" 
+      type="varchar(8)" 
     />
     <field 
       name="fold_symmetry" 
@@ -195,6 +195,7 @@
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>UNIQUE `symmetry` (`symmetry`(12))</key>
+    <key>KEY `eman_name`</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
   </sqltable>
   <sqltable name="ApTemplateImageData" >
@@ -281,198 +282,6 @@
   <!-- ApSymmetryData -->
     <sqltable name="ApSymmetryData" >
         <field name="DEF_id" >1</field>
-        <field name="DEF_timestamp" >2008-11-10 08:50:23</field>
-        <field name="eman_name" >icos</field>
-        <field name="fold_symmetry" >60</field>
-        <field name="symmetry" >Icos (2 3 5)</field>
-        <field name="description" >2-fold icosahedral symmetry along the x, y, and z axis. Symmetries along the xz-plane are 5, 3, 2, 3, 5</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >2</field>
-        <field name="DEF_timestamp" >2008-02-19 10:28:20</field>
-        <field name="eman_name" >icos</field>
-        <field name="fold_symmetry" >60</field>
-        <field name="symmetry" >Icos (5 3 2)</field>
-        <field name="description" >5-fold along the z axis, 2-fold along the x and y axes. Symmetries along the xz-plane are 2, 3, 5, 2, 5</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >3</field>
-        <field name="DEF_timestamp" >2006-12-08 14:27:13</field>
-        <field name="eman_name" >c2</field>
-        <field name="fold_symmetry" >2</field>
-        <field name="symmetry" >C2 (z)</field>
-        <field name="description" >2-fold symmetry along the z axis</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >4</field>
-        <field name="DEF_timestamp" >2006-12-08 14:27:57</field>
-        <field name="eman_name" >c3</field>
-        <field name="fold_symmetry" >3</field>
-        <field name="symmetry" >C3 (z)</field>
-        <field name="description" >3-fold symmetry along the z axis</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >5</field>
-        <field name="DEF_timestamp" >2006-12-08 14:28:42</field>
-        <field name="eman_name" >c4</field>
-        <field name="fold_symmetry" >4</field>
-        <field name="symmetry" >C4 (z)</field>
-        <field name="description" >4-fold symmetry along the z axis</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >6</field>
-        <field name="DEF_timestamp" >2006-12-08 14:28:42</field>
-        <field name="eman_name" >c5</field>
-        <field name="fold_symmetry" >5</field>
-        <field name="symmetry" >C5 (z)</field>
-        <field name="description" >5-fold symmetry along the z axis</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >7</field>
-        <field name="DEF_timestamp" >2006-12-08 14:29:35</field>
-        <field name="eman_name" >c6</field>
-        <field name="fold_symmetry" >6</field>
-        <field name="symmetry" >C6 (z)</field>
-        <field name="description" >6-fold symmetry along the z axis</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >8</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:08</field>
-        <field name="eman_name" >c7</field>
-        <field name="fold_symmetry" >7</field>
-        <field name="symmetry" >C7 (z)</field>
-        <field name="description" >7-fold symmetry along the z axis</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >9</field>
-        <field name="DEF_timestamp" >2006-12-08 14:29:35</field>
-        <field name="eman_name" >c8</field>
-        <field name="fold_symmetry" >8</field>
-        <field name="symmetry" >C8 (z)</field>
-        <field name="description" >8-fold symmetry along the z axis</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >10</field>
-        <field name="DEF_timestamp" >2006-12-08 14:29:35</field>
-        <field name="eman_name" >c9</field>
-        <field name="fold_symmetry" >9</field>
-        <field name="symmetry" >C9 (z)</field>
-        <field name="description" >9-fold symmetry along the z axis</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >11</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
-        <field name="eman_name" >c10</field>
-        <field name="fold_symmetry" >10</field>
-        <field name="symmetry" >C10 (z)</field>
-        <field name="description" >10-fold symmetry along the z axis</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >12</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
-        <field name="eman_name" >c11</field>
-        <field name="fold_symmetry" >11</field>
-        <field name="symmetry" >C11 (z)</field>
-        <field name="description" >11-fold symmetry along the z axis</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >13</field>
-        <field name="DEF_timestamp" >2008-08-01 15:34:37</field>
-        <field name="eman_name" >c12</field>
-        <field name="fold_symmetry" >12</field>
-        <field name="symmetry" >C12 (z)</field>
-        <field name="description" >12-fold symmetry along the z axis</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >14</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
-        <field name="eman_name" >d2</field>
-        <field name="fold_symmetry" >4</field>
-        <field name="symmetry" >D2 (z)</field>
-        <field name="description" >2-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >15</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
-        <field name="eman_name" >d3</field>
-        <field name="fold_symmetry" >6</field>
-        <field name="symmetry" >D3 (z)</field>
-        <field name="description" >3-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >16</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
-        <field name="eman_name" >d4</field>
-        <field name="fold_symmetry" >8</field>
-        <field name="symmetry" >D4 (z)</field>
-        <field name="description" >4-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >17</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
-        <field name="eman_name" >d5</field>
-        <field name="fold_symmetry" >10</field>
-        <field name="symmetry" >D5 (z)</field>
-        <field name="description" >5-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >18</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
-        <field name="eman_name" >d6</field>
-        <field name="fold_symmetry" >12</field>
-        <field name="symmetry" >D6 (z)</field>
-        <field name="description" >6-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >19</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
-        <field name="eman_name" >d7</field>
-        <field name="fold_symmetry" >14</field>
-        <field name="symmetry" >D7 (z)</field>
-        <field name="description" >7-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >20</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
-        <field name="eman_name" >d8</field>
-        <field name="fold_symmetry" >16</field>
-        <field name="symmetry" >D8 (z)</field>
-        <field name="description" >8-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >21</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
-        <field name="eman_name" >d9</field>
-        <field name="fold_symmetry" >18</field>
-        <field name="symmetry" >D9 (z)</field>
-        <field name="description" >9-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >22</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
-        <field name="eman_name" >d10</field>
-        <field name="fold_symmetry" >20</field>
-        <field name="symmetry" >D10 (z)</field>
-        <field name="description" >10-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >23</field>
-        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
-        <field name="eman_name" >d11</field>
-        <field name="fold_symmetry" >22</field>
-        <field name="symmetry" >D11 (z)</field>
-        <field name="description" >11-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >24</field>
-        <field name="DEF_timestamp" >2008-08-01 15:36:23</field>
-        <field name="eman_name" >d15</field>
-        <field name="fold_symmetry" >30</field>
-        <field name="symmetry" >D15 (z)</field>
-        <field name="description" >15-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
-    </sqltable>
-    <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >25</field>
         <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
         <field name="eman_name" >c1</field>
         <field name="fold_symmetry" >1</field>
@@ -480,15 +289,128 @@
         <field name="description" >Asymmetric</field>
     </sqltable>
     <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >26</field>
+        <field name="DEF_id" >2</field>
+        <field name="DEF_timestamp" >2008-02-19 10:28:20</field>
+        <field name="eman_name" >icos</field>
+        <field name="fold_symmetry" >60</field>
+        <field name="symmetry" >Icos (5 3 2)</field>
+        <field name="description" >EMAN icosahedral convention: 5-fold along the z axis, 2-fold along the x and y axes.</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >3</field>
+        <field name="DEF_timestamp" >2008-11-10 08:50:23</field>
+        <field name="eman_name" >icos</field>
+        <field name="fold_symmetry" >60</field>
+        <field name="symmetry" >Icos (2 3 5)</field>
+        <field name="description" >Viper icosahedral convention: 2-fold icosahedral symmetry along the x, y, and z axes.</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >4</field>
+        <field name="DEF_timestamp" >2009-03-02 15:01:07</field>
+        <field name="eman_name" >icos</field>
+        <field name="fold_symmetry" >60</field>
+        <field name="symmetry" >Icos (2 5 3)</field>
+        <field name="description" >Crowther icosahedral convention. 2-fold icosahedral symmetry along the x, y, and z axes.</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >5</field>
         <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
         <field name="eman_name" >oct</field>
         <field name="fold_symmetry" >8</field>
         <field name="symmetry" >Oct</field>
-        <field name="description" >Octahedral symmetry</field>
+        <field name="description" >Octahedral symmetry. 4-fold octahedral symmetry along the x, y, and z axes.</field>
+    </sqltable>
+
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >6</field>
+        <field name="DEF_timestamp" >2006-12-08 14:27:13</field>
+        <field name="eman_name" >c2</field>
+        <field name="fold_symmetry" >2</field>
+        <field name="symmetry" >C2 (z)</field>
+        <field name="description" >2-fold symmetry along the z axis</field>
     </sqltable>
     <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >27</field>
+        <field name="DEF_id" >7</field>
+        <field name="DEF_timestamp" >2006-12-08 14:27:57</field>
+        <field name="eman_name" >c3</field>
+        <field name="fold_symmetry" >3</field>
+        <field name="symmetry" >C3 (z)</field>
+        <field name="description" >3-fold symmetry along the z axis</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >8</field>
+        <field name="DEF_timestamp" >2006-12-08 14:28:42</field>
+        <field name="eman_name" >c4</field>
+        <field name="fold_symmetry" >4</field>
+        <field name="symmetry" >C4 (z)</field>
+        <field name="description" >4-fold symmetry along the z axis</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >9</field>
+        <field name="DEF_timestamp" >2006-12-08 14:28:42</field>
+        <field name="eman_name" >c5</field>
+        <field name="fold_symmetry" >5</field>
+        <field name="symmetry" >C5 (z)</field>
+        <field name="description" >5-fold symmetry along the z axis</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >10</field>
+        <field name="DEF_timestamp" >2006-12-08 14:29:35</field>
+        <field name="eman_name" >c6</field>
+        <field name="fold_symmetry" >6</field>
+        <field name="symmetry" >C6 (z)</field>
+        <field name="description" >6-fold symmetry along the z axis</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >11</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:08</field>
+        <field name="eman_name" >c7</field>
+        <field name="fold_symmetry" >7</field>
+        <field name="symmetry" >C7 (z)</field>
+        <field name="description" >7-fold symmetry along the z axis</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >12</field>
+        <field name="DEF_timestamp" >2006-12-08 14:29:35</field>
+        <field name="eman_name" >c8</field>
+        <field name="fold_symmetry" >8</field>
+        <field name="symmetry" >C8 (z)</field>
+        <field name="description" >8-fold symmetry along the z axis</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >13</field>
+        <field name="DEF_timestamp" >2006-12-08 14:29:35</field>
+        <field name="eman_name" >c9</field>
+        <field name="fold_symmetry" >9</field>
+        <field name="symmetry" >C9 (z)</field>
+        <field name="description" >9-fold symmetry along the z axis</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >14</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
+        <field name="eman_name" >c10</field>
+        <field name="fold_symmetry" >10</field>
+        <field name="symmetry" >C10 (z)</field>
+        <field name="description" >10-fold symmetry along the z axis</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >15</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
+        <field name="eman_name" >c11</field>
+        <field name="fold_symmetry" >11</field>
+        <field name="symmetry" >C11 (z)</field>
+        <field name="description" >11-fold symmetry along the z axis</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >16</field>
+        <field name="DEF_timestamp" >2008-08-01 15:34:37</field>
+        <field name="eman_name" >c12</field>
+        <field name="fold_symmetry" >12</field>
+        <field name="symmetry" >C12 (z)</field>
+        <field name="description" >12-fold symmetry along the z axis</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >17</field>
         <field name="DEF_timestamp" >2008-08-01 15:33:47</field>
         <field name="eman_name" >c13</field>
         <field name="fold_symmetry" >13</field>
@@ -496,7 +418,7 @@
         <field name="description" >13-fold symmetry along the z axis</field>
     </sqltable>
     <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >28</field>
+        <field name="DEF_id" >18</field>
         <field name="DEF_timestamp" >2008-08-01 15:35:05</field>
         <field name="eman_name" >c14</field>
         <field name="fold_symmetry" >14</field>
@@ -504,15 +426,104 @@
         <field name="description" >14-fold symmetry along the z axis</field>
     </sqltable>
     <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >29</field>
+        <field name="DEF_id" >19</field>
         <field name="DEF_timestamp" >2008-08-01 15:35:18</field>
         <field name="eman_name" >c15</field>
         <field name="fold_symmetry" >15</field>
         <field name="symmetry" >C15 (z)</field>
         <field name="description" >15-fold symmetry along the z axis</field>
     </sqltable>
+
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >20</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
+        <field name="eman_name" >d2</field>
+        <field name="fold_symmetry" >4</field>
+        <field name="symmetry" >D2 (z)</field>
+        <field name="description" >2-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >21</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
+        <field name="eman_name" >d3</field>
+        <field name="fold_symmetry" >6</field>
+        <field name="symmetry" >D3 (z)</field>
+        <field name="description" >3-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >22</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
+        <field name="eman_name" >d4</field>
+        <field name="fold_symmetry" >8</field>
+        <field name="symmetry" >D4 (z)</field>
+        <field name="description" >4-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >23</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
+        <field name="eman_name" >d5</field>
+        <field name="fold_symmetry" >10</field>
+        <field name="symmetry" >D5 (z)</field>
+        <field name="description" >5-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >24</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
+        <field name="eman_name" >d6</field>
+        <field name="fold_symmetry" >12</field>
+        <field name="symmetry" >D6 (z)</field>
+        <field name="description" >6-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >25</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
+        <field name="eman_name" >d7</field>
+        <field name="fold_symmetry" >14</field>
+        <field name="symmetry" >D7 (z)</field>
+        <field name="description" >7-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >26</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
+        <field name="eman_name" >d8</field>
+        <field name="fold_symmetry" >16</field>
+        <field name="symmetry" >D8 (z)</field>
+        <field name="description" >8-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >27</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
+        <field name="eman_name" >d9</field>
+        <field name="fold_symmetry" >18</field>
+        <field name="symmetry" >D9 (z)</field>
+        <field name="description" >9-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >28</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
+        <field name="eman_name" >d10</field>
+        <field name="fold_symmetry" >20</field>
+        <field name="symmetry" >D10 (z)</field>
+        <field name="description" >10-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >29</field>
+        <field name="DEF_timestamp" >2008-03-03 14:26:00</field>
+        <field name="eman_name" >d11</field>
+        <field name="fold_symmetry" >22</field>
+        <field name="symmetry" >D11 (z)</field>
+        <field name="description" >11-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
+    </sqltable>
     <sqltable name="ApSymmetryData" >
         <field name="DEF_id" >30</field>
+        <field name="DEF_timestamp" >2008-08-01 15:35:50</field>
+        <field name="eman_name" >d12</field>
+        <field name="fold_symmetry" >26</field>
+        <field name="symmetry" >D12 (z)</field>
+        <field name="description" >12-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
+    </sqltable>
+    <sqltable name="ApSymmetryData" >
+        <field name="DEF_id" >31</field>
         <field name="DEF_timestamp" >2008-08-01 15:35:50</field>
         <field name="eman_name" >d13</field>
         <field name="fold_symmetry" >26</field>
@@ -520,7 +531,7 @@
         <field name="description" >13-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
     </sqltable>
     <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >31</field>
+        <field name="DEF_id" >32</field>
         <field name="DEF_timestamp" >2008-08-01 15:36:07</field>
         <field name="eman_name" >d14</field>
         <field name="fold_symmetry" >28</field>
@@ -528,13 +539,12 @@
         <field name="description" >14-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
     </sqltable>
     <sqltable name="ApSymmetryData" >
-        <field name="DEF_id" >32</field>
-        <field name="DEF_timestamp" >2009-03-02 15:01:07</field>
-        <field name="eman_name" >icos</field>
-        <field name="fold_symmetry" >60</field>
-        <field name="symmetry" >Icos (2 5 3)</field>
-        <field name="description" >Crowther convention. 2-fold icosahedral symmetry along the x, y, and z axis. Symmetries along the xz-plane are 2, 5, 3, 2, 3</field>
+        <field name="DEF_id" >33</field>
+        <field name="DEF_timestamp" >2008-08-01 15:36:23</field>
+        <field name="eman_name" >d15</field>
+        <field name="fold_symmetry" >30</field>
+        <field name="symmetry" >D15 (z)</field>
+        <field name="description" >15-fold symmetry along the z axis, 2-fold rotational axis 90 degrees from z</field>
     </sqltable>
-
  </data>
 </defaulttables>
