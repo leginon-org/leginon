@@ -13,7 +13,7 @@ import event
 import node
 import noderegistry
 from wx import PyDeadObjectError
-import gui.wx.Launcher
+import leginon.gui.wx.Launcher
 
 class Launcher(node.Node):
 	eventinputs = node.Node.eventinputs + [event.CreateNodeEvent,
@@ -67,7 +67,7 @@ class Launcher(node.Node):
 		kwargs['otherdatabinder'] = self.databinder
 
 		if nodeclass.panelclass is not None:
-			evt = gui.wx.Launcher.CreateNodePanelEvent(nodeclass, nodename)
+			evt = leginon.gui.wx.Launcher.CreateNodePanelEvent(nodeclass, nodename)
 			self.panel.GetEventHandler().AddPendingEvent(evt)
 			evt.event.wait()
 			kwargs['panel'] = evt.panel
@@ -75,13 +75,13 @@ class Launcher(node.Node):
 		n = nodeclass(nodename, session, managerlocation, **kwargs)
 		self.nodes.append(n)
 
-		evt = gui.wx.Launcher.CreateNodeEvent(n)
+		evt = leginon.gui.wx.Launcher.CreateNodeEvent(n)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 		self.confirmEvent(ievent)
 
 	def onDestroyNode(self, n):
-		evt = gui.wx.Launcher.DestroyNodeEvent(n)
+		evt = leginon.gui.wx.Launcher.DestroyNodeEvent(n)
 		try:
 			self.panel.GetEventHandler().AddPendingEvent(evt)
 		except PyDeadObjectError:
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 			args, kwargs = (launchername,), {'tcpport': 55555}
 		except:
 			args, kwargs = (launchername,), {}
-	l = gui.wx.Launcher.App(*args, **kwargs)
+	l = leginon.gui.wx.Launcher.App(*args, **kwargs)
 	print kwargs
 	l.MainLoop()
 	leginondata.sinedon.data.datamanager.exit()
