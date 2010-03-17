@@ -9,12 +9,12 @@
 #
 
 import sinedon.data as data
-import gui.wx.Manager
-import version
-print 'Leginon version:  ', version.getVersion()
+import leginon.gui.wx.Manager
+import leginon.version
+print 'Leginon version:  ', leginon.version.getVersion()
 
 def start(options=None):
-	m = gui.wx.Manager.App(None, options=options)
+	m = leginon.gui.wx.Manager.App(None, options=options)
 	if not m.abort:
 		m.MainLoop()
 	data.datamanager.exit()
