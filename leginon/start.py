@@ -20,6 +20,5 @@ def start(options=None):
 	data.datamanager.exit()
 
 if __name__ == '__main__':
-	import legoptparse
-	start(legoptparse.options)
-
+	import leginon.legoptparse
+	start(leginon.legoptparse.options)
