@@ -1,4 +1,4 @@
-import node
+import leginon.node
 import pyami.ordereddict
 
 reg_dict = pyami.ordereddict.OrderedDict()
@@ -14,8 +14,8 @@ class InvalidNodeError(NodeRegistryError):
 
 def registerNodeClass(cls):
 	### make sure class is Node
-	if not issubclass(cls, node.Node):
-		raise InvalidNodeError('%s is not subclass of node.Node' % cls)
+	if not issubclass(cls, leginon.node.Node):
+		raise InvalidNodeError('%s is not subclass of leginon.node.Node' % cls)
 
 	### record this in the registry
 	classname = cls.__name__
@@ -29,4 +29,4 @@ def getNodeClass(classname):
 def getNodeClassNames():
 	return reg_dict.keys()
 
-import allnodes
+import leginon.allnodes
