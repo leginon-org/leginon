@@ -64,11 +64,25 @@ function selectFrealignJob($extra=False) {
 
 	// get prepared frealign jobs
 	//$frealignjobs = $particle->getJobIdsFromSession($expId, $jobtype='prepfrealign', $status='D');
-	$frealignjobs = $particle->getPreparedFrealignJobs();
+	$rawfrealignjobs = $particle->getPreparedFrealignJobs();
+
+	// print jobs with radio button
+	if (!$rawfrealignjobs) {
+		echo "<font color='#CC3333' size='+2'>No prepared frealign jobs found</font>\n";
+		exit;
+	} 
+
+	// check if jobs have associated cluster jobs
+	$frealignjobs = array();
+	foreach ($rawfrealignjobs as $frealignjob) {
+		$frealignrun = $particle->getClusterJobByTypeAndPath('runfrealign', $frealignjob['path']);
+		if (!$frealignrun)
+			$frealignjobs[] = $frealignjob;
+	}
 
 	// print jobs with radio button
 	if (!$frealignjobs) {
-		echo "<font color='#CC3333' size='+2'>No prepared frealign jobs found</font>\n";
+		echo "<font color='#CC3333' size='+2'>No prepared frealign jobs available</font>\n";
 		exit;
 	} 
 

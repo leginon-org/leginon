@@ -3774,17 +3774,32 @@ class particledata {
 		return $r;
 	}
 	
-	function getPreparedFrealignJobs ($jobid=False, $showhidden=False) {
+	function getPreparedFrealignJobs ($jobid=False) {
 		$q = "SELECT fre.*, path.path  "
 			. " FROM `ApFrealignPrepareData` AS fre "
 			. " LEFT JOIN ApPathData AS path ON ( fre.`REF|ApPathData|path` = path.`DEF_id` ) "
-			//. " LEFT JOIN ApStackData AS stack ON ( fre.`REF|ApStackData|stack` = stack.`DEF_id` ) "
-			//. " LEFT JOIN ApInitialModelData AS model ON ( fre.`REF|ApInitialModelData|model` = model.`DEF_id` ) "
 			. " LEFT JOIN ApClusterJobData AS job ON ( fre.`REF|ApClusterJobData|job` = job.`DEF_id` ) ";
 		if ($jobid) {
 			$q .= " WHERE fre.`DEF_id` = '$jobid' ";
 		}
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+
+	function getClusterJobByTypeAndPath ($type, $path) {
+		$q = "SELECT job.*  "
+			. " FROM `ApClusterJobData` AS job "
+			. " LEFT JOIN ApPathData AS path "
+			."    ON ( job.`REF|ApPathData|path` = path.`DEF_id` ) "
+			. " WHERE "
+			. "   path.`path` = '$path' "
+			. " AND "
+			. "   job.`jobtype` = '$type' ";
+		echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
 
