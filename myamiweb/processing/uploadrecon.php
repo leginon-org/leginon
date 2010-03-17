@@ -104,7 +104,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	// main table
 	echo "<table border='3' class='tableborder'>\n";
 	echo "<tr><td>\n";
-	echo "<table border='3' cellspacing='10'>\n";
+	echo "<table border='0' cellspacing='10'>\n";
 	echo "<tr><td>\n";
 
 	// stats table
