@@ -13,6 +13,7 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+require "inc/summarytables.inc";
 
 // IF valueS SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -130,46 +131,24 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 		<tr>
 			<td valign='top' class='tablebg'>
 			<p>";
-	echo "Stack: ";
-	if ($jobId) {
-		echo "$stackid <input type='hidden' name='stack' value='$stackid'><br>\n";
-		$stackparams = $particle->getStackParams($stackid);
-		//print_r($stackparams);
-		echo "&nbsp;Name: ".$stackparams['shownstackname']."<br>\n";
-		echo "&nbsp;Desc: '".$stackparams['description']."'<br>\n";
-	} else {
-		echo "<select name='stack'>\n";
 
+	// Stack Info
+	if ($jobId) {
+		echo "<input type='hidden' name='stack' value='$stackid'>\n";
+		stacksummarytable($stackid, $mini=true);
+	} else {
+		echo "<P>Stack:\n";
 		// find each stack entry in database
 		$stackIds = $particle->getStackIds($sessionId);
-
-		foreach ($stackIds as $stackid){
-			// get stack parameters from database
-			$s=$particle->getStackParams($stackid['stackid']);
-			// get number of particles in each stack
-			$nump=commafy($particle->getNumStackParticles($stackid['stackid']));
-			// get pixel size of stack
-			$apix=($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
-			// get box size
-			$box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
-			// get stack path with name
-			$opvals = "$stackid[stackid]";
-			echo "<option value='$stackid[stackid]'";
-			// select previously set stack on resubmit
-			if ($stackid['stackid']==$_POST['stack']) echo " selected";
-			echo">$stackid[stackid] ($s[shownstackname]: $nump particles, $apix &Aring;/pix, ".$box."x".$box.")</option>\n";
-		}
-		echo "</select>\n";
+		$particle->getStackSelector($stackIds, '', '');
 	}
-	echo "<P>Initial Model:\n";
+
+	// Initial Model Info
 	if ($jobId) {
-		echo "$modelid <input type='hidden' name='model' value='$modelid'><br>\n";
-		$modelparams = $particle->getInitModelInfo($modelid);
-		//print_r($modelparams);
-		//echo "\n<br>";
-		echo "&nbsp;Name: ".$modelparams['name']."<br>\n";
-		echo "&nbsp;Desc: '".$modelparams['description']."'<br>\n";
+		echo "<input type='hidden' name='model' value='$modelid'>\n";
+		modelsummarytable($modelid, $mini=true);
 	} else {
+		echo "<P>Initial Model:\n";
 		echo "
 			<SELECT name='model'>
 			<OPTION value=''>Select One</OPTION>\n";
@@ -187,6 +166,8 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	
 		echo"<P>";
 	}
+
+
 	echo "<P>Refinement Strategy:\n";
 	$eman      = array(
 		'description'=>'<b><font color="#00cc00">Normal EMAN refine</font></b>',
@@ -278,10 +259,10 @@ function runUploadRecon() {
 	if (!$runid) createUploadReconForm("<B>ERROR:</B> Enter a name of the recon run");
 	
 	//make sure a stack was chosen
-	$model=$_POST['stack'];
-	if ($_POST['stack']) $stack=$_POST['stack'];
-	if (!$stack) createUploadReconForm("<B>ERROR:</B> Select the image stack used");
-	
+	if (!$_POST['stackval'])
+		createUploadReconForm("<B>ERROR:</B> Select the image stack used");
+	list($stackid,$apix,$boxsz) = split('\|--\|',$_POST['stackval']);
+
 	//make sure a model was chosen
 	$model=$_POST['model'];
 	if ($_POST['model']) $model=$_POST['model'];
@@ -333,7 +314,7 @@ function runUploadRecon() {
 
 	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--runname=$runid ";
-	$command.="--stackid=$stack ";
+	$command.="--stackid=$stackid ";
 	$command.="--modelid=$model ";
 	$command.="--package=$package ";
 	if (!$jobId) $command.="--rundir=$runpath ";
@@ -366,7 +347,7 @@ function runUploadRecon() {
 	$command
 	</td></tr>
 	<tr><td>run name</td><td>$runid</td></tr>
-	<tr><td>stack ID</td><td>$stack</td></tr>
+	<tr><td>stack ID</td><td>$stackid</td></tr>
 	<tr><td>model</td><td>$model</td></tr>
 	<tr><td>path</td><td>$reconpath</td></tr>
 	<tr><td>jobid</td><td>$jobId</td></tr>
