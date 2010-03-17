@@ -74,7 +74,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 	
-	echo"<form name='viewerform' method='post' action='$formAction'>\n";
+	echo "<form name='viewerform' method='post' action='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	
@@ -100,75 +100,82 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	$iteration = $_POST['iteration'];
 	$contiteration = ($_POST['contiteration']=="on") ? "CHECKED" : "";
 	$startiteration = $_POST['startiteration'];
-	echo"
-	<table border='3' class='tableborder'>
-	<tr>
-		<td valign='top'>
-		<table>
-		<tr>
-			<td valign='top'>
-			<br>
-			<b>Recon Name:</b> \n";
-	if ($jobId) echo "$jobrunid<input type='hidden' name='reconname' value='$jobrunid'>";
-	else echo "<br><input type='text' name='reconname' value='$reconname' size='50'>";
-	echo "
-			<br>
-			<B>Recon Base Directory:</B>\n";
-	if ($jobId) echo "$sessionpath\n";
-	else echo "<br><input type='text' name='reconpath' value='$sessionpath' size='50'/>";
-	echo "
-			<br/>
-			<p>
-			<b>Recon Description:</b><br/>
-			<textarea name='description' rows='3' cols='50'>$description</textarea>
-<br>
-			<input type='checkbox' name='oneiteration' $oneiteration><B>Upload only iteration </b>
-<input type='text' name='iteration' value='$iteration' size='4'/><br />
-			<input type='checkbox' name='contiteration' $contiteration><b>Begin with iteration </b>
-<input type='text' name='startiteration' value='$startiteration' size='4'/><br/>
-			</td>
 
-		<tr>
-			<td valign='top' class='tablebg'>
-			<p>";
+	// main table
+	echo "<table border='3' class='tableborder'>\n";
+	echo "<tr><td>\n";
+	echo "<table border='3' cellspacing='10'>\n";
+	echo "<tr><td>\n";
+
+	// stats table
+	echo "<table>\n";
+	echo "<tr><td>\n";
+		echo "<b>Recon Name:</b>\n";
+	echo "</td><td>\n";
+	if ($jobId)
+		echo "$jobrunid<input type='hidden' name='reconname' value='$jobrunid'>";
+	else
+		echo "<input type='text' name='reconname' value='$reconname' size='50'>";
+	echo "</td></tr>\n";
+
+	echo "<tr><td>\n";
+		echo "<b>Recon Directory:</b>\n";
+	echo "</td><td>\n";
+	if ($jobId)
+		echo "$sessionpath\n";
+	else
+		echo "<input type='text' name='reconpath' value='$sessionpath' size='50'/>";
 
 	// Stack Info
+	echo "<tr><td colspan='2'>\n";
 	if ($jobId) {
 		echo "<input type='hidden' name='stack' value='$stackid'>\n";
 		stacksummarytable($stackid, $mini=true);
 	} else {
-		echo "<P>Stack:\n";
-		// find each stack entry in database
+		echo "Stack:\n";
 		$stackIds = $particle->getStackIds($sessionId);
 		$particle->getStackSelector($stackIds, '', '');
 	}
+	echo "</td></tr>\n";
 
 	// Initial Model Info
+	echo "<tr><td colspan='2'>\n";
 	if ($jobId) {
 		echo "<input type='hidden' name='model' value='$modelid'>\n";
 		modelsummarytable($modelid, $mini=true);
 	} else {
-		echo "<P>Initial Model:\n";
+		echo "Initial Model:\n";
 		echo "
 			<SELECT name='model'>
 			<OPTION value=''>Select One</OPTION>\n";
-
-		// get initial models associated with project
 		$models=$particle->getModelsFromProject($projectId);
-
 		foreach ($models as $model) {
 			echo "<OPTION value='$model[DEF_id]'";
 			if ($model['DEF_id']==$_POST['model']) echo " SELECTED";
 			echo "> ".$model['DEF_id']." ($model[description])";
 			echo "</OPTION>\n";
 		}
-		echo"</SELECT>\n";
-	
-		echo"<P>";
+		echo "</SELECT>\n";
 	}
+	echo "</td></tr>\n";
 
+	echo "</td></tr>\n";
+	echo "</table>\n";
 
-	echo "<P>Refinement Strategy:\n";
+	// description field
+	echo "</td></tr>\n";
+	echo "<tr><td>\n";
+	echo "<br/>";
+	echo "<b>Recon Description:</b><br/>";
+	echo "<textarea name='description' rows='3' cols='80'>$description</textarea><br/>";
+	echo "<input type='checkbox' name='oneiteration' $oneiteration><B>Upload only iteration </b>";
+	echo "<input type='text' name='iteration' value='$iteration' size='4'/><br />";
+	echo "<input type='checkbox' name='contiteration' $contiteration><b>Begin with iteration </b>";
+	echo "<input type='text' name='startiteration' value='$startiteration' size='4'/><br/>";
+	echo "<br/>";
+
+	// Refinement Strategy
+	echo "Refinement Strategy:\n";
 	$eman      = array(
 		'description'=>'<b><font color="#00cc00">Normal EMAN refine</font></b>',
 		'setting'=>'EMAN');
@@ -188,47 +195,43 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 				<select name='package'> ";
 		foreach ($packages as $p) {
 			echo "<option value='$p[setting]'";
-			// select previously set stack on resubmit
+			// select previously set package on resubmit
 			if ($p['setting']==$package) echo " SELECTED";
 			echo ">  $p[description]";
 			echo "</option>\n";
 		}
-		echo "
-			</select>";
+		echo "</select>";
 	}
-	echo "
-			<p>
-			<b>Snapshot Options:</b>
-			<br>
-			<input type='text' name='contour' value='$contour' size='4'> Contour Level
-			<br>
-			<input type='text' name='mass' value='$mass' size='4'> Mass (in kDa)
-			<br>
-			<input type='text' name='zoom' value='$zoom' size='4'>
-		";	
-	echo docpop('snapzoom','Zoom');
-	echo "
-			<br>
-			<input type='text' name='filter' value='$filter' size='4'>
-		";	
-	echo docpop('snapfilter','Fixed Low Pass Filter <i>(in &Aring;ngstr&ouml;ms)</i>');
-	echo "
-			<P>
-			</td>
-		</tr>
-		</table>
-	</td>
-	</tr>
-	<tr>
-		<td align='center'>
-			<hr />\n";
+	echo "</td></tr>\n";
+
+	echo "<tr><td class='tablebg'>";
+	echo "<br/>";
+	echo "<b>Snapshot Options:</b>\n";
+	echo "<br/>";
+	echo "<input type='text' name='contour' value='$contour' size='4'> Contour Level\n";
+	echo "<br/>";
+	echo "<input type='text' name='mass' value='$mass' size='4'> Mass (in kDa)\n";
+	echo "<br/>";
+	echo "<input type='text' name='zoom' value='$zoom' size='4'>\n";	
+	echo docpop('snapzoom', 'Zoom');
+	echo "<br/>";
+	echo "<input type='text' name='filter' value='$filter' size='4'>\n";	
+	echo docpop('snapfilter', 'Fixed Low Pass Filter <i>(in &Aring;ngstr&ouml;ms)</i>');
+	echo "<br/><br/>";
+	echo "</td></tr>\n"
+;
+	echo "<tr><td align='center'>\n";
+	echo "<hr/>\n";
 	echo getSubmitForm("Upload Recon");
-	echo "
-		</td>
-	</tr>
-	</table>
-	</form>
-	</center>\n";
+
+	// main table
+	echo "</td></tr>\n";
+	echo "</table>\n";
+	echo "</td></tr>\n";
+	echo "</table>\n";
+
+	echo "</form>\n";
+	echo "</center>\n";
 	processing_footer();
 	exit;
 }
@@ -340,7 +343,7 @@ function runUploadRecon() {
 	}
 	processing_header("UploadRecon Run","UploadRecon Params");
 	
-	echo"
+	echo "
 	<table class='tableborder' width='600' border='1'>
 	<tr><td colspan='2'>
 	<b>UploadRecon Command:</b><br>
