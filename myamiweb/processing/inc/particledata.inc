@@ -3797,9 +3797,9 @@ class particledata {
 			. "   path.`path` = '$path' "
 			. " AND "
 			. "   job.`jobtype` = '$type' ";
-		echo $q."<br/><br/>\n";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		echo print_r($r)."<br/><br/>\n";
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
 
