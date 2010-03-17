@@ -3774,13 +3774,15 @@ class particledata {
 		return $r;
 	}
 	
-	function getPreparedFrealignJobs ($jobid=False) {
+	function getPreparedFrealignJobs ($jobid=False, $path=False) {
 		$q = "SELECT fre.*, path.path  "
 			. " FROM `ApFrealignPrepareData` AS fre "
 			. " LEFT JOIN ApPathData AS path ON ( fre.`REF|ApPathData|path` = path.`DEF_id` ) "
 			. " LEFT JOIN ApClusterJobData AS job ON ( fre.`REF|ApClusterJobData|job` = job.`DEF_id` ) ";
 		if ($jobid) {
 			$q .= " WHERE fre.`DEF_id` = '$jobid' ";
+		} elseif ($path) {
+			$q .= " WHERE path.`path` = '$path' ";
 		}
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
