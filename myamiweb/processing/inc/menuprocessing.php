@@ -543,16 +543,39 @@ if ($expId) {
 		$totresult = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns</a>" : "";
 
 		// check for how many FREALIGN reconstructions are upload / ready to upload / ready to run / running / queued
-		$frealignqueue = count($subclusterjobs['prepfrealign']['queued']);
-		$frealignrun = count($subclusterjobs['prepfrealign']['running']);
-		$frealigndone = count($subclusterjobs['prepfrealign']['done']);
-		$numfrealign = 0;
-		$frealignupload = $frealigndone - $numfrealign;
-		$frealignresults[] = ($frealignqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=prepfrealign'>$frealignqueue queued</a>" : "";
-		$frealignresults[] = ($frealignrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=prepfrealign'>$frealignrun running</a>" : "";
-		$frealignresults[] = ($frealigndone>0) ? "<a href='runFrealign.php?expId=$sessionId'>$frealigndone prepared</a>" : "";
-		//$frealignresults[] = ($frealignupload>0) ? "<a href='uploadfrealign.php?expId=$sessionId'>$frealignupload ready for upload</a>" : "";
-		//$frealignresults[] = ($numfrealign>0) ? "<a href='reconsummary.php?expId=$sessionId'>$numfrealign complete</a>" : "";
+		$prepfrealignqueue = count($subclusterjobs['prepfrealign']['queued']);
+		$prepfrealignrun = count($subclusterjobs['prepfrealign']['running']);
+		$prepfrealigndone = count($subclusterjobs['prepfrealign']['done']);
+		$runfrealignqueue = count($subclusterjobs['runfrealign']['queued']);
+		$runfrealignrun = count($subclusterjobs['runfrealign']['running']);
+		$runfrealigndone = count($subclusterjobs['runfrealign']['done']);
+		$uploadfrealignqueue = count($subclusterjobs['uploadfrealign']['queued']);
+		$uploadfrealignrun = count($subclusterjobs['uploadfrealign']['running']);
+		$uploadfrealigndone = count($subclusterjobs['uploadfrealign']['done']);
+
+		$runfrealign = $runfrealignqueue + $runfrealignrun + $runfrealigndone;
+		$uploadfrealign = $uploadfrealignqueue + $uploadfrealignrun + $uploadfrealigndone;
+		$frealignprepared = $prepfrealigndone - $runfrealign;
+		$frealignran = $runfrealigndone - $uploadfrealign;
+
+		// QUEUED
+		$frealignresults[] = ($prepfrealignqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=prepfrealign'>$prepfrealignqueue preps queued</a>" : "";
+		$frealignresults[] = ($runfrealignqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=runfrealign'>$runfrealignqueue jobs queued</a>" : "";
+		$frealignresults[] = ($uploadfrealignqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadfrealign'>$uploadfrealignqueue uploads queued</a>" : "";
+
+		// RUNNING
+		$frealignresults[] = ($prepfrealignrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=prepfrealign'>$prepfrealignrun preps running</a>" : "";
+		$frealignresults[] = ($runfrealignrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=runfrealign'>$runfrealignrun jobs running</a>" : "";
+		$frealignresults[] = ($uploadfrealignrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadfrealign'>$uploadfrealignrun uploads running</a>" : "";
+
+		// PREPARED
+		$frealignresults[] = ($frealignprepared>0) ? "<a href='runFrealign.php?expId=$sessionId'>$frealignprepared prepared</a>" : "";
+
+		// READY TO UPLOAD
+		$frealignresults[] = ($frealignran>0) ? "<a href='uploadFrealign.php?expId=$sessionId'>$frealignran ready to upload</a>" : "";
+
+		// COMPLETE
+		$frealignresults[] = ($uploadfrealigndone>0) ? "<a href='frealignSummary.php?expId=$sessionId'>$uploadfrealigndone complete</a>" : "";
 
 		// check for how many IMAGIC reconstructions have finished / running / queued
 		$imq = count($subclusterjobs['imagic3dRefine']['queued']);
