@@ -660,16 +660,16 @@ class frealignJob(appionScript.AppionScript):
 
 		mainf = open(self.mainjobfile, 'a')
 		### use MPI to launch multiple jobs
-		mainf.write("echo 'starting particle refinement for iter %d' >> refine.log"%(iternum))
+		mainf.write("echo 'starting particle refinement for iter %d' >> refine.log\n"%(iternum))
 		mainf.write("mpirun --hostfile $PBS_NODEFILE -np %d --app %s\n"
 			%(self.params['nproc'], iterjobfile))
-		mainf.write("echo 'particle refinement complete for iter %d' >> refine.log"%(iternum))
-		mainf.write("echo 'starting volume reconstruction for iter %d' >> refine.log"%(iternum))
+		mainf.write("echo 'particle refinement complete for iter %d' >> refine.log\n"%(iternum))
+		mainf.write("echo 'starting volume reconstruction for iter %d' >> refine.log\n"%(iternum))
 		mainf.write("mpirun --hostfile $PBS_NODEFILE -np 1 %s\n"
 			%(combinejobfile))
-		mainf.write("echo 'volume reconstruction complete for iter %d' >> refine.log"%(iternum))
-		mainf.write("echo 'iteration %d is complete' >> refine.log"%(iternum))
-		mainf.write("echo '' >> refine.log")
+		mainf.write("echo 'volume reconstruction complete for iter %d' >> refine.log\n"%(iternum))
+		mainf.write("echo 'iteration %d is complete' >> refine.log\n"%(iternum))
+		mainf.write("echo '' >> refine.log\n")
 		#mainf.write("if [ -e 'iter%03d' ]\nthen\n  exit\nfi\n\n"%(iternum))	
 
 		### PBS pro
