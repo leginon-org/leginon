@@ -382,9 +382,9 @@ if ($sessionId) {
 	$result = "none";
   if ($jobdone>0 || $jobrun>0 || $jobqueue>0 || $reconruns >0) {
     $jlist=array();
-    if ($jobqueue>0)  $jlist[]="<a href='checkEMANRefineJobs.php?expId=$sessionId'>$jobqueue queued</a>\n";
-    if ($jobrun>0)    $jlist[]="<a href='checkEMANRefineJobs.php?expId=$sessionId'>$jobrun running</a>\n";
-    if ($jobincomp>0) $jlist[]="<a href='checkEMANRefineJobs.php?expId=$sessionId'>$jobincomp ready for upload</a>\n";
+    if ($jobqueue>0)  $jlist[]="<a href='checkRefineJobs.php?expId=$sessionId'>$jobqueue queued</a>\n";
+    if ($jobrun>0)    $jlist[]="<a href='checkRefineJobs.php?expId=$sessionId'>$jobrun running</a>\n";
+    if ($jobincomp>0) $jlist[]="<a href='checkRefineJobs.php?expId=$sessionId'>$jobincomp ready for upload</a>\n";
     if ($reconruns>0) $jlist[]="<a href='reconsummary.php?expId=$sessionId'>$reconruns uploaded</a>\n";
     $result = implode('<br />',$jlist);
   }

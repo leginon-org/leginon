@@ -537,9 +537,9 @@ if ($expId) {
 		$ejrun = count($subclusterjobs['removeJumpers']['running']);
 
 		// check for how many EMAN reconstructions have finished / running / queued
-		$emanreconresults[] = ($jobqueue>0) ? "<a href='checkEMANRefineJobs.php?expId=$sessionId'>$jobqueue queued</a>" : "";
-		$emanreconresults[] = ($jobrun>0) ? "<a href='checkEMANRefineJobs.php?expId=$sessionId'>$jobrun running</a>" : "";
-		$emanreconresults[] = ($jobincomp>0) ? "<a href='checkEMANRefineJobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
+		$emanreconresults[] = ($jobqueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$jobqueue queued</a>" : "";
+		$emanreconresults[] = ($jobrun>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$jobrun running</a>" : "";
+		$emanreconresults[] = ($jobincomp>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
 		$emanreconresults[] = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns complete</a>" : "";
 		$emanreconresults[] = ($ejrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=removeJumpers'>$ejrun reclassifying</a>";
 
@@ -563,12 +563,12 @@ if ($expId) {
 
 		// QUEUED
 		$frealignresults[] = ($prepfrealignqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=prepfrealign'>$prepfrealignqueue preps queued</a>" : "";
-		$frealignresults[] = ($runfrealignqueue>0) ? "<a href='checkFrealignJobs.php?expId=$sessionId'>$runfrealignqueue jobs queued</a>" : "";
+		$frealignresults[] = ($runfrealignqueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$runfrealignqueue jobs queued</a>" : "";
 		$frealignresults[] = ($uploadfrealignqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadfrealign'>$uploadfrealignqueue uploads queued</a>" : "";
 
 		// RUNNING
 		$frealignresults[] = ($prepfrealignrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=prepfrealign'>$prepfrealignrun preps running</a>" : "";
-		$frealignresults[] = ($runfrealignrun>0) ? "<a href='checkFrealignJobs.php?expId=$sessionId'>$runfrealignrun jobs running</a>" : "";
+		$frealignresults[] = ($runfrealignrun>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$runfrealignrun jobs running</a>" : "";
 		$frealignresults[] = ($uploadfrealignrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadfrealign'>$uploadfrealignrun uploads running</a>" : "";
 
 		// PREPARED

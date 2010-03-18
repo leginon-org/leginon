@@ -540,7 +540,7 @@ function submitJob($extra=False) {
 	$subjobs = checkClusterJobs($host,$user,$pass);
 	if ($subjobs) {echo "<PRE>$subjobs</PRE>\n";}
 	else {echo "<FONT COLOR='#CC3333'>No Jobs on the cluster, check your settings</FONT>\n";}
-	echo "<p><a href='checkFrealignJobs.php?expId=$expId'>"
+	echo "<p><a href='checkRefineJobs.php?expId=$expId'>"
 		."[Check Status of Jobs Associated with this Experiment]</a><p>\n";
 	echo "<P><hr>\n<font color='#CC3333' size='+1'>Do not hit 'reload' - it will re-submit job</FONT><P>\n";
 	processing_footer(True, True);
