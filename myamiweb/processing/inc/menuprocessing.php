@@ -534,9 +534,9 @@ if ($expId) {
 		$ejrun = count($subclusterjobs['removeJumpers']['running']);
 
 		// check for how many EMAN reconstructions have finished / running / queued
-		$emanreconresults[] = ($jobqueue>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobqueue queued</a>" : "";
-		$emanreconresults[] = ($jobrun>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobrun running</a>" : "";
-		$emanreconresults[] = ($jobincomp>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
+		$emanreconresults[] = ($jobqueue>0) ? "<a href='checkEMANRefineJobs.php?expId=$sessionId'>$jobqueue queued</a>" : "";
+		$emanreconresults[] = ($jobrun>0) ? "<a href='checkEMANRefineJobs.php?expId=$sessionId'>$jobrun running</a>" : "";
+		$emanreconresults[] = ($jobincomp>0) ? "<a href='checkEMANRefineJobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
 		$emanreconresults[] = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns complete</a>" : "";
 		$emanreconresults[] = ($ejrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=removeJumpers'>$ejrun reclassifying</a>";
 
