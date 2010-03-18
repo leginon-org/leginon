@@ -362,7 +362,7 @@ class frealignJob(appionScript.AppionScript):
 		### hard coded parameters
 		self.defaults = {
 			'cform':'I', #(I) use imagic, (M) use mrc, (S) use spider
-			'fstat': False, # memory saving function, usually false
+			'fstat': False, # memory saving function, calculates many stats, such as SSNR
 			'ifsc': 0, # memory saving function, usually false
 			'fmatch': False, # make matching projection for each particle
 			'iewald': 0.0, #  
@@ -371,6 +371,8 @@ class frealignJob(appionScript.AppionScript):
 			'beamtiltx': 0.0, #assume zero beam tilt
 			'beamtilty': 0.0, #assume zero beam tilt
 		}
+		if recon is True:
+			self.defaults['fstat'] = True
 
 		if last is None:
 			last = self.params['last']
@@ -632,7 +634,7 @@ class frealignJob(appionScript.AppionScript):
 		### if guppy
 		#mainf.write("cd %s\n"%(self.params['rundir']))
 		### elseif garibaldi
-		mainf.write("tar -xf %s.tar\n"%(self.params['runname']))
+		mainf.write("tar -xkf %s.tar\n"%(self.params['runname']))
 		mainf.write("\n")
 
 	#===============
@@ -657,11 +659,17 @@ class frealignJob(appionScript.AppionScript):
 		iterf.close()
 
 		mainf = open(self.mainjobfile, 'a')
-		### torque / openPBS
+		### use MPI to launch multiple jobs
+		mainf.write("echo 'starting particle refinement for iter %d' >> refine.log"%(iternum))
 		mainf.write("mpirun --hostfile $PBS_NODEFILE -np %d --app %s\n"
 			%(self.params['nproc'], iterjobfile))
+		mainf.write("echo 'particle refinement complete for iter %d' >> refine.log"%(iternum))
+		mainf.write("echo 'starting volume reconstruction for iter %d' >> refine.log"%(iternum))
 		mainf.write("mpirun --hostfile $PBS_NODEFILE -np 1 %s\n"
 			%(combinejobfile))
+		mainf.write("echo 'volume reconstruction complete for iter %d' >> refine.log"%(iternum))
+		mainf.write("echo 'iteration %d is complete' >> refine.log"%(iternum))
+		mainf.write("echo '' >> refine.log")
 		#mainf.write("if [ -e 'iter%03d' ]\nthen\n  exit\nfi\n\n"%(iternum))	
 
 		### PBS pro
@@ -674,7 +682,7 @@ class frealignJob(appionScript.AppionScript):
 	def prepareForCluster(self):
 		#package data for transfer to cluster
 		apFile.removeFile(self.params['runname']+".tar")
-		cmd = "tar --exclude=*.tar -cf %s.tar *"%(self.params['runname'])
+		cmd = "tar --exclude=*.tar -clf %s.tar *"%(self.params['runname'])
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
 
