@@ -51,8 +51,9 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 	}
 
 	// change next line for different types of jobs
-	$jobs = $particle->getJobIdsFromSession($expId, 'runfrealign');
-	//$jobs = $particle->getJobIdsFromSession($expId, 'recon');
+	$frealignjobs = $particle->getJobIdsFromSession($expId, 'runfrealign');
+	$emanjobs = $particle->getJobIdsFromSession($expId, 'recon');
+	$jobs = array_merge($frealignjobs, $emanjobs);
 
 	// if clicked button, list jobs in queue
 	if ($showjobs && $_SESSION['loggedin'] == true) {
@@ -214,7 +215,7 @@ function showFrealignJobInfo($jobinfo) {
 	$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
 
 	$refinelogfile = $jobinfo['clusterpath']."/recon/refine.log";
-	$cmd = "cat $refinelogfile";
+	$cmd = "cat $refinelogfile | egrep '^iteration'";
 	$refinelog = exec_over_ssh($jobinfo['cluster'], $user, $pass, $cmd, True);
 	$refinelog = trim($refinelog);
 	if ($refinelog) {
