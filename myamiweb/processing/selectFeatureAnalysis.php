@@ -76,17 +76,19 @@ echo "  Kerden SOM stands for 'Kernel Probability Density Estimator Self-Organiz
 	."<br/><br/>";
 echo "</td></tr>";
 
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/imagic_logo.png' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='imagicMSA.php?expId=$expId&alignId=$alignId'>IMAGIC Multivariate Statistical Analysis (MSA)</a></h3>";
-echo "  IMAGIC multivariate statistical analysis "
-	."gives you the option of using one of 3 distance criteria for determining "
-	."a set of eigenimages, and can remove  poor particles and class averages. For more information, visit "
-	."<a href='http://www.imagescience.de/imagic/index.htm'>IMAGIC webpage"
-	."&nbsp;<img border='0' src='img/external.png'></a></a>. "
-        ."<br/><br/>";
-echo "</td></tr>";
+if ($USE_IMAGIC) {
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/imagic_logo.png' width='64'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='imagicMSA.php?expId=$expId&alignId=$alignId'>IMAGIC Multivariate Statistical Analysis (MSA)</a></h3>";
+	echo "  IMAGIC multivariate statistical analysis "
+		."gives you the option of using one of 3 distance criteria for determining "
+		."a set of eigenimages, and can remove  poor particles and class averages. For more information, visit "
+		."<a href='http://www.imagescience.de/imagic/index.htm'>IMAGIC webpage"
+		."&nbsp;<img border='0' src='img/external.png'></a></a>. "
+	        ."<br/><br/>";
+	echo "</td></tr>";
+}
 
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/xmipp_logo.png' width='64'>\n";

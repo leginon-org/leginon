@@ -75,20 +75,22 @@ echo " <p> first you select template and then this method uses the "
 //echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
 echo "</td></tr>\n";
 
-/*
-** IMAGIC Reference Based Alignment
-*/
+if ($USE_IMAGIC) {
+	/*
+	** IMAGIC Reference Based Alignment
+	*/
 
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/imagic_logo.png' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='multiReferenceAlignment.php?expId=$expId'>IMAGIC Multi Reference Alignment (MRA)</a></h3>\n";
-echo " <p> this method uses the "
-	."<a href='http://www.imagescience.de/smi/index.htm'>IMAGIC m-r-a</a>"
-	."&nbsp;<img src='img/external.png'>"
-	." command to align your particles to the templates within a specified template stack"
-	."</p>\n";
-echo "</td></tr>\n";
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/imagic_logo.png' width='64'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='multiReferenceAlignment.php?expId=$expId'>IMAGIC Multi Reference Alignment (MRA)</a></h3>\n";
+	echo " <p> this method uses the "
+		."<a href='http://www.imagescience.de/smi/index.htm'>IMAGIC m-r-a</a>"
+		."&nbsp;<img src='img/external.png'>"
+		." command to align your particles to the templates within a specified template stack"
+		."</p>\n";
+	echo "</td></tr>\n";
+}
 
 /*
 ** SPIDER Ed Iter Alignment

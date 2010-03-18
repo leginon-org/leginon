@@ -388,28 +388,29 @@ if ($expId) {
 			}
 		}
 
-		// ===================================================================
-		// template stacks (class averages & forward projections)
-		// ===================================================================
+		if ($USE_IMAGIC) {
+			// ===================================================================
+			// template stacks (class averages & forward projections)
+			// ===================================================================
 
-		$tsresults=array();
-		if ($tstacks=$particle->getTemplateStacksFromProject($projectId)) {
-			$tsdone = count($tstacks);
+			$tsresults=array();
+			if ($tstacks=$particle->getTemplateStacksFromProject($projectId)) {
+				$tsdone = count($tstacks);
+			}
+			if ($tstacks_session=$particle->getTemplateStacksFromSession($sessionId)) {
+				$tsdone_session = count($tstacks_session);
+			}
+			$tsruns = count($subclusterjobs['templatestack']['running']);
+			$tsqueue = count($subclusterjobs['templatestack']['queued']);
+			$tsresults[] = ($tsdone==0) ? "" : "<a href='selectTemplateStack.php?expId=$sessionId'>$tsdone complete</a>";
+			$tsresults[] = ($tsrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatestack'>$tsruns running</a>";
+			$tsresults[] = ($tsqueue==0) ? "" : "$analysisqueue queued";
+			$nruns[] = array(
+				'name'=>"<a href='selectTemplateStack.php?expId=$sessionId'>Template Stacks</a>",
+				'result'=>$tsresults,
+			);
 		}
-		if ($tstacks_session=$particle->getTemplateStacksFromSession($sessionId)) {
-			$tsdone_session = count($tstacks_session);
-		}
-		$tsruns = count($subclusterjobs['templatestack']['running']);
-		$tsqueue = count($subclusterjobs['templatestack']['queued']);
-		$tsresults[] = ($tsdone==0) ? "" : "<a href='selectTemplateStack.php?expId=$sessionId'>$tsdone complete</a>";
-		$tsresults[] = ($tsrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatestack'>$tsruns running</a>";
-		$tsresults[] = ($tsqueue==0) ? "" : "$analysisqueue queued";
-		$nruns[] = array(
-			'name'=>"<a href='selectTemplateStack.php?expId=$sessionId'>Template Stacks</a>",
-			'result'=>$tsresults,
-		);
-
-
+	
 		// =======================
 		// old spider alignment
 		// =======================
@@ -490,24 +491,26 @@ if ($expId) {
 
 	}
 
-	/* IMAGIC Common Lines */
-	$imagiccluster3d0=$particle->get3d0ClusterModelsFromSessionId($sessionId);
-	$imagicts3d0=$particle->get3d0TemplateStackModelsFromSessionId($sessionId);
-	if ($clusterdone > 0 || $tsdone_session > 0) {
-		if (is_array($imagiccluster3d0) && is_array($imagicts3d0)) $imagic3d0data = array_merge($imagiccluster3d0,$imagicts3d0);
-		elseif (is_array($imagiccluster3d0) && !is_array($imagicts3d0)) $imagic3d0data = $imagiccluster3d0;
-		else $imagic3d0data = $imagicts3d0;
-		$numimagic3d0 = count($imagic3d0data);
-		$threed0done = count($subclusterjobs['create3d0']['done']);
-		$threed0run = count($subclusterjobs['create3d0']['running']);
-		$threed0queue = count($subclusterjobs['create3d0']['queued']);
-		$threedresults[] = ($numimagic3d0 == 0) ? "" : "<a href='imagic3dRefine.php?expId=$sessionId&3d0=true'>$numimagic3d0 complete</a>";
-		$threedresults[] = ($threed0run == 0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=create3d0'>$threed0run running</a>";
-		
-		$nruns[] = array(
-			'name'=>"<a href='selectClassAveragesFor3d0.php?expId=$sessionId'>IMAGIC Common Lines</a>",
-			'result'=>$threedresults
-		);
+	if ($USE_IMAGIC) {
+		/* IMAGIC Common Lines */
+		$imagiccluster3d0=$particle->get3d0ClusterModelsFromSessionId($sessionId);
+		$imagicts3d0=$particle->get3d0TemplateStackModelsFromSessionId($sessionId);
+		if ($clusterdone > 0 || $tsdone_session > 0) {
+			if (is_array($imagiccluster3d0) && is_array($imagicts3d0)) $imagic3d0data = array_merge($imagiccluster3d0,$imagicts3d0);
+			elseif (is_array($imagiccluster3d0) && !is_array($imagicts3d0)) $imagic3d0data = $imagiccluster3d0;
+			else $imagic3d0data = $imagicts3d0;
+			$numimagic3d0 = count($imagic3d0data);
+			$threed0done = count($subclusterjobs['create3d0']['done']);
+			$threed0run = count($subclusterjobs['create3d0']['running']);
+			$threed0queue = count($subclusterjobs['create3d0']['queued']);
+			$threedresults[] = ($numimagic3d0 == 0) ? "" : "<a href='imagic3dRefine.php?expId=$sessionId&3d0=true'>$numimagic3d0 complete</a>";
+			$threedresults[] = ($threed0run == 0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=create3d0'>$threed0run running</a>";
+			
+			$nruns[] = array(
+				'name'=>"<a href='selectClassAveragesFor3d0.php?expId=$sessionId'>IMAGIC Common Lines</a>",
+				'result'=>$threedresults
+			);
+		}
 	}
 
 	if ( (array)$nruns ) {
@@ -578,15 +581,17 @@ if ($expId) {
 		$frealignresults[] = ($uploadfrealigndone>0) ? "<a href='frealignSummary.php?expId=$sessionId'>$uploadfrealigndone complete</a>" : "";
 
 
-		// check for how many IMAGIC reconstructions have finished / running / queued
-		$imq = count($subclusterjobs['imagic3dRefine']['queued']);
-		$imrun = count($subclusterjobs['imagic3dRefine']['running']);
-		$imrefruns = $particle->getImagic3dRefinementRunsFromSessionId($sessionId);
-		$imdone = (!empty($imrefruns)) ? count($imrefruns) : 0;
-		$imreconresults = array();
-		$imreconresults[] = ($imq>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imq queued</a>" : "";
-		$imreconresults[] = ($imrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imrun running</a>" : "";
-		$imreconresults[] = ($imdone>0) ? "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$imdone complete</a>" : "";
+		if ($USE_IMAGIC) {
+			// check for how many IMAGIC reconstructions have finished / running / queued
+			$imq = count($subclusterjobs['imagic3dRefine']['queued']);
+			$imrun = count($subclusterjobs['imagic3dRefine']['running']);
+			$imrefruns = $particle->getImagic3dRefinementRunsFromSessionId($sessionId);
+			$imdone = (!empty($imrefruns)) ? count($imrefruns) : 0;
+			$imreconresults = array();
+			$imreconresults[] = ($imq>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imq queued</a>" : "";
+			$imreconresults[] = ($imrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imrun running</a>" : "";
+			$imreconresults[] = ($imdone>0) ? "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$imdone complete</a>" : "";
+		}
 
 		// check for how many Xmipp reconstructions have finished / running / queued
 		$xmippreconqueue = count($subclusterjobs['xmipprecon']['queued']);
@@ -616,10 +621,12 @@ if ($expId) {
 				'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
 				'result'=>$xmippreconresults,
 			);
-			$nruns[] = array(
-				'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
-				'result'=>$imreconresults,
-			);
+			if ($USE_IMAGIC) {
+				$nruns[] = array(
+					'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
+					'result'=>$imreconresults,
+				);
+			}
 		} else {
 			$nruns[] = "<font color='888888'><i>please login first</i></font>";
 		}

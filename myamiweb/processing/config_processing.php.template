@@ -32,6 +32,9 @@ $DATA_DIRS = array(
 // Better if Cs came out of DB, but for now...
 $DEFAULTCS = "";
 
+// Check if IMAGIC is installed and running, otherwise hide all functions
+$USE_IMAGIC = false;
+
 // --- path to main --- //
 set_include_path("..".PATH_SEPARATOR.get_include_path());
 ?>
