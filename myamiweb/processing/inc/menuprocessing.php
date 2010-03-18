@@ -1,12 +1,12 @@
 <?php
 /**
- *  The Leginon software is Copyright 2003
- *  The Scripps Research Institute, La Jolla, CA
- *  For terms of the license agreement
- *  see  http://ami.scripps.edu/software/leginon-license
- *
- *	main menu for processing tools
- */
+* The Leginon software is Copyright 2003
+* The Scripps Research Institute, La Jolla, CA
+* For terms of the license agreement
+* see http://ami.scripps.edu/software/leginon-license
+*
+*	main menu for processing tools
+*/
 
 require_once "inc/particledata.inc";
 require_once "inc/leginon.inc";
@@ -46,7 +46,7 @@ if ($expId) {
 			elseif ($job['status']=='Q') $subclusterjobs[$jobtype]['queued'][]=$job['DEF_id'];
 		}
 	}
-	// ---  Get CTF Data
+	// --- Get CTF Data
 	if ($ctfrunIds = $particle->getCtfRunIds($expId, False)) {
 		$ctfruns=count($ctfrunIds);
 	}
@@ -183,7 +183,7 @@ if ($expId) {
 
 	// in case weren't submitted by web:
 	$totruns = $tdone+$trun+$tq+$ddone+$drun+$dq+$mdone+$mrun+$mq;
-	if  ($prtlruns > $totruns) $totruns = $prtlruns;
+	if ($prtlruns > $totruns) $totruns = $prtlruns;
 	if ($looprundatas = $particle->getLoopProgramRuns()) {
 		$loopruns=count($looprundatas);
 	}
@@ -194,21 +194,21 @@ if ($expId) {
 
 	$nrun=array();
 	$nrun[] = array(
-			'name'=>"<a href='runTemplateCorrelator.php?expId=$sessionId'>Template Picking</a>",
-			'result'=>$tresults,
-			);
+		'name'=>"<a href='runTemplateCorrelator.php?expId=$sessionId'>Template Picking</a>",
+		'result'=>$tresults,
+	);
 	$nrun[] = array(
-			'name'=>"<a href='runDogPicker.php?expId=$sessionId'>DoG Picking</a>",
-			'result'=>$dresults,
-			);
+		'name'=>"<a href='runDogPicker.php?expId=$sessionId'>DoG Picking</a>",
+		'result'=>$dresults,
+	);
 	$nrun[] = array(
-			'name'=>"<a href='runManualPicker.php?expId=$sessionId'>Manual Picking</a>",
-			'result'=>$mresults,
-			);
+		'name'=>"<a href='runManualPicker.php?expId=$sessionId'>Manual Picking</a>",
+		'result'=>$mresults,
+	);
 	if ($loopruns > 0) {
 		$nrun[] = array(
-				'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
-				);
+			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
+		);
 	}
 	$maxangle = $particle->getMaxTiltAngle($sessionId);
 	if ($maxangle > 5) {
@@ -219,10 +219,10 @@ if ($expId) {
 		);
 	}
 
-	$data[]=array(
-		'action'=>array($action, $celloption),
-		'result'=>array($result),
-		'newrun'=>array($nrun, $celloption),
+	$data[] = array(
+		'action' => array($action, $celloption),
+		'result' => array($result),
+		'newrun' => array($nrun, $celloption),
 	);
 
 
@@ -254,32 +254,32 @@ if ($expId) {
 	$totruns=$ctfdone+$ctfrun+$ctfq;
 
 	// in case weren't submitted by web:
-	if  ($ctfruns > $totruns) $totruns = $ctfruns;
+	if ($ctfruns > $totruns) $totruns = $ctfruns;
 	$totresult = ($totruns==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$totruns</a>";
 
 	$nruns = array();
 	$nruns[] = array(
-			 'name'=>"<a href='runPyAce.php?expId=$sessionId'>ACE Estimation</a>",
-			 'result'=>$ctfresults,
-			 );
+		'name'=>"<a href='runPyAce.php?expId=$sessionId'>ACE Estimation</a>",
+		'result'=>$ctfresults,
+	);
 	$nruns[] = array(
-			'name'=>"<a href='runAce2.php?expId=$sessionId'>ACE 2 Estimation</a>",
-			'result'=>$ace2results,
-			);
+		'name'=>"<a href='runAce2.php?expId=$sessionId'>ACE 2 Estimation</a>",
+		'result'=>$ace2results,
+	);
 	$nruns[] = array(
-			'name'=>"<a href='runCtfTilt.php?expId=$sessionId'>CtfTilt Estimation</a>",
-			'result'=>$ctftiltresults,
-			);
+		'name'=>"<a href='runCtfTilt.php?expId=$sessionId'>CtfTilt Estimation</a>",
+		'result'=>$ctftiltresults,
+	);
 	if ($loopruns > 0) {
 		$nruns[] = array(
-				'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
-				);
+			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
+		);
 	}
 
-	$data[]=array(
-		'action'=>array($action, $celloption),
-		'result'=>array($totresult),
-		'newrun'=>array($nruns, $celloption),
+	$data[] = array(
+		'action' => array($action, $celloption),
+		'result' => array($totresult),
+		'newrun' => array($nruns, $celloption),
 	);
 
 	// display the stack menu only if have particles picked
@@ -312,19 +312,19 @@ if ($expId) {
 			"<a href='stackhierarchy.php?expId=$sessionId'>$totstack</a>";
 
 		$nruns=array();
-		$nruns[]=array (
-				'name'=>"<a href='runMakeStack2.php?expId=$sessionId'>Stack creation</a>",
-				'result'=>$sresults,
-				);
-		$nruns[]=array (
-				'name'=>"<a href='moreStackTools.php?expId=$sessionId'>more stack tools</a>",
-				);
+		$nruns[] = array(
+			'name'=>"<a href='runMakeStack2.php?expId=$sessionId'>Stack creation</a>",
+			'result'=>$sresults,
+		);
+		$nruns[] = array(
+			'name'=>"<a href='moreStackTools.php?expId=$sessionId'>more stack tools</a>",
+		);
 
-		$data[]=array(
-			      'action'=>array($action, $celloption),
-			      'result'=>array($totresult),
-			      'newrun'=>array($nruns, $celloption),
-			      );
+		$data[] = array(
+			'action' => array($action, $celloption),
+			'result' => array($totresult),
+			'newrun' => array($nruns, $celloption),
+		);
 	}
 
 	// display particle alignment only if there is a stack
@@ -341,7 +341,7 @@ if ($expId) {
 			$nmaxlikejobs = count($maxlikejobs);
 		}
 		
-		$alignqueue  = count($subclusterjobs['partalign']['queued']);
+		$alignqueue = count($subclusterjobs['partalign']['queued']);
 
 		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignlist.php?expId=$sessionId'>$alignruns complete</a>";
 		$alignresults[] = ($alignrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignrun running</a>";
@@ -358,14 +358,14 @@ if ($expId) {
 			// alignment analysis
 			$analysisresults=array();
 			if ($analysisruns=$particle->getAnalysisRuns($expId, $projectId)) {
-				$analysisdone  = count($analysisruns);
+				$analysisdone = count($analysisruns);
 			}
-			$analysisrun  = count($subclusterjobs['alignanalysis']['running']);
-			$analysisqueue  = count($subclusterjobs['alignanalysis']['queued']);
+			$analysisrun = count($subclusterjobs['alignanalysis']['running']);
+			$analysisqueue = count($subclusterjobs['alignanalysis']['queued']);
 			$analysisresults[] = ($analysisdone==0) ? "" : "<a href='analysislist.php?expId=$sessionId'>$analysisdone complete</a>";
 			$analysisresults[] = ($analysisrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=alignanalysis'>$analysisrun running</a>";
 			$analysisresults[] = ($analysisqueue==0) ? "" : "$analysisqueue queued";
-			$nruns[] = array (
+			$nruns[] = array(
 				'name'=>"<a href='selectFeatureAnalysis.php?expId=$sessionId'>Run Feature Analysis</a>",
 				'result'=>$analysisresults,
 			);
@@ -374,14 +374,14 @@ if ($expId) {
 				// particle clustering
 				$clusterresults=array();
 				if ($clusterstack=$particle->getClusteringStacks($expId, $projectId)) {
-					$clusterdone  = count($clusterstack);
+					$clusterdone = count($clusterstack);
 				}
-				$clusterrun  = count($subclusterjobs['partcluster']['running']);
-				$clusterqueue  = count($subclusterjobs['partcluster']['queued']);
+				$clusterrun = count($subclusterjobs['partcluster']['running']);
+				$clusterqueue = count($subclusterjobs['partcluster']['queued']);
 				$clusterresults[] = ($clusterdone==0) ? "" : "<a href='clusterlist.php?expId=$sessionId'>$clusterdone complete</a>";
 				$clusterresults[] = ($clusterrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partcluster'>$clusterrun running</a>";
 				$clusterresults[] = ($clusterqueue==0) ? "" : "$clusterqueue queued";
-				$nruns[] = array (
+				$nruns[] = array(
 					'name'=>"<a href='analysislist.php?expId=$sessionId'>Run Particle Clustering</a>",
 					'result'=>$clusterresults,
 				);
@@ -394,17 +394,17 @@ if ($expId) {
 
 		$tsresults=array();
 		if ($tstacks=$particle->getTemplateStacksFromProject($projectId)) {
-			$tsdone  = count($tstacks);
+			$tsdone = count($tstacks);
 		}
 		if ($tstacks_session=$particle->getTemplateStacksFromSession($sessionId)) {
 			$tsdone_session = count($tstacks_session);
 		}
-		$tsruns  = count($subclusterjobs['templatestack']['running']);
-		$tsqueue  = count($subclusterjobs['templatestack']['queued']);
+		$tsruns = count($subclusterjobs['templatestack']['running']);
+		$tsqueue = count($subclusterjobs['templatestack']['queued']);
 		$tsresults[] = ($tsdone==0) ? "" : "<a href='selectTemplateStack.php?expId=$sessionId'>$tsdone complete</a>";
 		$tsresults[] = ($tsrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatestack'>$tsruns running</a>";
 		$tsresults[] = ($tsqueue==0) ? "" : "$analysisqueue queued";
-		$nruns[] = array (
+		$nruns[] = array(
 			'name'=>"<a href='selectTemplateStack.php?expId=$sessionId'>Template Stacks</a>",
 			'result'=>$tsresults,
 		);
@@ -437,11 +437,11 @@ if ($expId) {
 		$norefresults[] = ($norefq==0) ? "" : "$norefq align queued";
 		$norefresults[] = ($norefclq==0) ? "" : "$norefq avg queued";
 
-		$data[]=array(
-			      'action'=>array($action, $celloption),
-			      'result'=>array(""),
-			      'newrun'=>array($nruns, $celloption),
-			      );
+		$data[] = array(
+			'action' => array($action, $celloption),
+			'result' => array(""),
+			'newrun' => array($nruns, $celloption),
+		);
 
 	}
 
@@ -457,7 +457,7 @@ if ($expId) {
 		$rctresults[] = ($rctdone > 0) ? "<a href='rctsummary.php?expId=$sessionId'>$rctdone complete</a>" : '';
 		$rctresults[] = ($rctrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=rctvolume'>$rctrun running</a>";
 		$rctresults[] = ($rctqueue==0) ? "" : "$rctqueue queued";
-		$nruns[]=array(
+		$nruns[] = array(
 			'name'=>"<a href='runRctVolume.php?expId=$sessionId'>RCT Volume</a>",
 			'result'=>$rctresults,
 		);
@@ -471,7 +471,7 @@ if ($expId) {
 		$otrresults[] = ($otrdone > 0) ? "<a href='otrsummary.php?expId=$sessionId'>$otrdone complete</a>" : '';
 		$otrresults[] = ($otrrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=otrvolume'>$otrrun running</a>";
 		$otrresults[] = ($otrqueue==0) ? "" : "$otrqueue queued";
-		$nruns[]=array(
+		$nruns[] = array(
 			'name'=>"<a href='runOtrVolume.php?expId=$sessionId'>OTR Volume</a>",
 			'result'=>$otrresults,
 		);
@@ -483,7 +483,7 @@ if ($expId) {
 		$clinesrun = count($subclusterjobs['createModel']['running']);
 		$clinesresults[] = ($clinesrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$clinesrun running</a>";
 		$clinesresults[] = ($clinesqueue==0) ? "" : "$clinesqueue queued";
-		$nruns[]=array(
+		$nruns[] = array(
 			'name'=>"<a href='createmodel.php?expId=$sessionId'>EMAN Common Lines</a>",
 			'result'=>$clinesresults,
 		);
@@ -504,18 +504,18 @@ if ($expId) {
 		$threedresults[] = ($numimagic3d0 == 0) ? "" : "<a href='imagic3dRefine.php?expId=$sessionId&3d0=true'>$numimagic3d0 complete</a>";
 		$threedresults[] = ($threed0run == 0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=create3d0'>$threed0run running</a>";
 		
-		$nruns[]=array(
+		$nruns[] = array(
 			'name'=>"<a href='selectClassAveragesFor3d0.php?expId=$sessionId'>IMAGIC Common Lines</a>",
 			'result'=>$threedresults
 		);
 	}
 
 	if ( (array)$nruns ) {
-		$data[]=array(
-		      'action'=>array($action, $celloption),
-		      'result'=>array(),
-		      'newrun'=>array($nruns, $celloption),
-		      );
+		$data[] = array(
+			'action' => array($action, $celloption),
+			'result' => array(),
+			'newrun' => array($nruns, $celloption),
+		);
 	}
 
 	// display reconstructions only if there is a stack
@@ -577,6 +577,7 @@ if ($expId) {
 		// COMPLETE
 		$frealignresults[] = ($uploadfrealigndone>0) ? "<a href='frealignSummary.php?expId=$sessionId'>$uploadfrealigndone complete</a>" : "";
 
+
 		// check for how many IMAGIC reconstructions have finished / running / queued
 		$imq = count($subclusterjobs['imagic3dRefine']['queued']);
 		$imrun = count($subclusterjobs['imagic3dRefine']['running']);
@@ -603,30 +604,30 @@ if ($expId) {
 //		if ($_SESSION['loggedin']) {
 		if (TRUE) {
 			$nruns[] = array(
-					 'name'=>"<a href='emanJobGen.php?expId=$sessionId'>EMAN Refinement</a>",
-					 'result'=>$emanreconresults,
-					 );
+				'name'=>"<a href='emanJobGen.php?expId=$sessionId'>EMAN Refinement</a>",
+				'result'=>$emanreconresults,
+			);
 			$nruns[] = array(
-					 'name'=>"<a href='prepareFrealign.php?expId=$sessionId'>Frealign Refinement</a>",
-					 'result'=>$frealignresults,
-					 );
+				'name'=>"<a href='prepareFrealign.php?expId=$sessionId'>Frealign Refinement</a>",
+				'result'=>$frealignresults,
+			);
 			$nruns[] = "<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>";
 			$nruns[] = array(
-					 'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
-					 'result'=>$xmippreconresults,
-					 );
+				'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
+				'result'=>$xmippreconresults,
+			);
 			$nruns[] = array(
-					 'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
-					 'result'=>$imreconresults,
-					 );
-			} else {
+				'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
+				'result'=>$imreconresults,
+			);
+		} else {
 			$nruns[] = "<font color='888888'><i>please login first</i></font>";
 		}
-		$data[]=array(
-	      'action'=>array($action, $celloption),
-	      'result'=>array($totresult),
-	      'newrun'=>array($nruns, $celloption),
-	      );
+		$data[] = array(
+			'action' => array($action, $celloption),
+			'result' => array($totresult),
+			'newrun' => array($nruns, $celloption),
+		);
 	}
 
 	/* 3d Density Volumes */
@@ -636,17 +637,17 @@ if ($expId) {
 		$num3dvols = count($threedvols);
 	}
 	if ($num3dvols >= 1) {
-		$nruns[]=array(
+		$nruns[] = array(
 			'result'=>"<a href='densitysummary.php?expId=$sessionId'>$num3dvols complete</a>",
 		);
 	}
 	$totresult = ($num3dvols>0) ? "<a href='densitysummary.php?expId=$sessionId'>$num3dvols</a>" : "";
 	if ( (array)$nruns ) {
-		$data[]=array(
-	      'action'=>array($action, $celloption),
-	      'result'=>array($totresult),
-	      'newrun'=>array($nruns, $celloption),
-	   );
+		$data[] = array(
+			'action' => array($action, $celloption),
+			'result' => array($totresult),
+			'newrun' => array($nruns, $celloption),
+		);
 	}
 
 	// display the tomography menu only if there are tilt serieses
@@ -697,80 +698,80 @@ if ($expId) {
 			"<a href='tomosummary.php?expId=$sessionId'>$fulltomoruns/$tomoruns</a>";
 
 		$nruns=array();
-		$nruns[]=array (
+		$nruns[] = array(
 			'name'=>"<a href='runTomoAligner.php?expId=$sessionId'>Align tilt series</a>",
 			'result'=>$aresults,
-			);
-		$nruns[]=array (
+		);
+		$nruns[] = array(
 			'name'=>"<a href='runTomoMaker.php?expId=$sessionId'>Create full tomogram</a>",
 			'result'=>$tresults,
-			);
-		$nruns[]=array (
+		);
+		$nruns[] = array(
 			'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload tomogram</a>",
 			'result'=>$sresults,
-			);
-		$nruns[]=array (
+		);
+		$nruns[] = array(
 			'name'=>"<a href='runSubTomogram.php?expId=$sessionId'>Create tomogram subvolume</a>",
 			'result'=>$stresults,
-			);
-		$nruns[]=array (
+		);
+		$nruns[] = array(
 			'name'=>"<a href='runTomoAverage.php?expId=$sessionId'>Average subvolumes</a>",
 			'result'=> ($avgtomoruns>0) ? "<a href='tomoavgsummary.php?expId=$sessionId'>$avgtomoruns complete</a>" : "",
-			);
+		);
 
 
-		$data[]=array(
-	      'action'=>array($action, $celloption),
-	      'result'=>array($totresult),
-	      'newrun'=>array($nruns, $celloption),
-	      );
+		$data[] = array(
+			'action' => array($action, $celloption),
+			'result' => array($totresult),
+			'newrun' => array($nruns, $celloption),
+		);
 	}
 
 	// upload model & template tools
 	$action = "Import tools";
 
 	$nruns=array();
-	$nruns[]=array(
+	$nruns[] = array(
 		'name'=>"<a href='pdb2density.php?expId=$sessionId'>PDB to Model</a>"
 	);
 
-	$nruns[]=array(
+	$nruns[] = array(
 		'name'=>"<a href='emdb2density.php?expId=$sessionId'>EMDB to Model</a>"
 	);
 
-	$nruns[]=array(
+	$nruns[] = array(
 		'name'=>"<a href='uploadParticles.php?expId=$sessionId'>Upload particles</a>",
 	);
 
 	$result = ($templates==0) ? "" :
-	  "<a href='viewtemplates.php?expId=$sessionId'>$templates available</a>";
+		"<a href='viewtemplates.php?expId=$sessionId'>$templates available</a>";
 
-	$nruns[]=array(
+	$nruns[] = array(
 		'name'=>"<a href='uploadtemplate.php?expId=$sessionId'>Upload template</a>",
 		'result'=>$result,
 	);
 
 	$result = ($models==0) ? "" :
-	  "<a href='viewmodels.php?expId=$sessionId'>$models available</a>";
+		"<a href='viewmodels.php?expId=$sessionId'>$models available</a>";
 
-	$nruns[]=array(
+	$nruns[] = array(
 		'name'=>"<a href='uploadmodel.php?expId=$sessionId'>Upload model</a>",
 		'result'=>$result,
 	);
 
-	$nruns[]=array(
+	$nruns[] = array(
 		'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
 	);
 
-	$nruns[]=array(
+	$nruns[] = array(
 		'name'=>"<a href='uploadstack.php?expId=$sessionId'>Upload stack</a>",
 	);
 
-	$data[]=array(
-		'action'=>array($action, $celloption),
-		'result'=>array(),
-		'newrun'=>array($nruns, $celloption),
-		);
+	$data[] = array(
+		'action' => array($action, $celloption),
+		'result' => array(),
+		'newrun' => array($nruns, $celloption),
+	);
 
 	// image assessment and contamination finding
 	$action = "Img Assessment";
@@ -787,10 +788,10 @@ if ($expId) {
 	$nruns[] = "<a href='multiimgassessor.php?expId=$sessionId'>Multi Img Assessment</a>";
 	$nruns[] = "<a href='runImgRejector.php?expId=$sessionId'>Run Image Rejector</a>";
 
-	$data[]=array(
-		'action'=>array($action, $celloption),
-		'result'=>array($result),
-		'newrun'=>array($nruns, $celloption),
+	$data[] = array(
+		'action' => array($action, $celloption),
+		'result' => array($result),
+		'newrun' => array($nruns, $celloption),
 	);
 
 	$action = "Region Mask Creation";
@@ -804,10 +805,10 @@ if ($expId) {
 	$nrun .= "</a>";
 	$nruns[]=$nrun;
 
-	$data[]=array(
-		'action'=>array($action, $celloption),
-		'result'=>array($result),
-		'newrun'=>array($nruns, $celloption),
+	$data[] = array(
+		'action' => array($action, $celloption),
+		'result' => array($result),
+		'newrun' => array($nruns, $celloption),
 	);
 
 	// Synthetic Data
@@ -829,15 +830,15 @@ if ($expId) {
 			"<a href='stacksummary.php?expId=$sessionId&syntheticOnly=True'>$totsynstack</a>";
 
 		$nruns=array();
-		$nruns[]=array (
-				'name'=>"<a href='createSyntheticDataset.php?expId=$sessionId'>Synthetic Dataset Creation</a>",
-				'result'=>$synresults,
-				);
-		$data[]=array(
-			      'action'=>array($action, $celloption),
-			      'result'=>array($totsynresult),
-			      'newrun'=>array($nruns, $celloption),
-			      );		
+		$nruns[] = array(
+			'name'=>"<a href='createSyntheticDataset.php?expId=$sessionId'>Synthetic Dataset Creation</a>",
+			'result'=>$synresults,
+		);
+		$data[] = array(
+			'action' => array($action, $celloption),
+			'result' => array($totsynresult),
+			'newrun' => array($nruns, $celloption),
+		);		
 	}
 	
 
