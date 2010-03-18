@@ -743,17 +743,19 @@ class SetupWizard(wx.wizard.Wizard):
 		}
 		return initializer
 
-def _indexBy(by, datalist):
+def _indexBy(bys, datalist):
 	index = {}
 	bydone = []
+	if isinstance(bys, str):
+		bys = (bys,)
 	for indexdata in datalist:
-		try:
+		keylist = []
+		for by in bys:
 			key = indexdata[by]
-			if key not in bydone:
-				index[key] = indexdata
-				bydone.append(key)
-		except (TypeError, IndexError):
-			pass
+			keylist.append(key)
+		finalkey = ' '.join(keylist)
+		index[finalkey] = indexdata
+			
 	return index
 
 class Setup(object):
@@ -770,7 +772,7 @@ class Setup(object):
 		userdatalist = self.research(datainstance=userdata)
 		if not userdatalist:
 			raise RuntimeError('No users in the database.')
-		return _indexBy('name', userdatalist)
+		return _indexBy(('firstname','lastname'), userdatalist)
 
 	def getSettings(self, userdata):
 		settingsclass = leginon.leginondata.SetupWizardSettingsData

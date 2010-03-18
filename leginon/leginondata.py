@@ -23,8 +23,9 @@ class GroupData(Data):
 class UserData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('name', str),
-			('full name', str),
+			('username', str),
+			('firstname', str),
+			('lastname', str),
 			('group', GroupData)
 		)
 	typemap = classmethod(typemap)

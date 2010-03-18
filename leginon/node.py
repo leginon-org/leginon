@@ -143,7 +143,7 @@ class Node(correctorclient.CorrectorClient):
 		sd = self.settingsclass.fromDict(d)
 		sd['session'] = self.session
 		sd['name'] = self.name
-		if self.session['user']['name'] == 'administrator':
+		if self.session['user']['username'] == 'administrator':
 			sd['isdefault'] = True
 		else:
 			sd['isdefault'] = isdefault
