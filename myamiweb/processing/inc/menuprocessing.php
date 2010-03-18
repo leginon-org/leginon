@@ -563,12 +563,12 @@ if ($expId) {
 
 		// QUEUED
 		$frealignresults[] = ($prepfrealignqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=prepfrealign'>$prepfrealignqueue preps queued</a>" : "";
-		$frealignresults[] = ($runfrealignqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=runfrealign'>$runfrealignqueue jobs queued</a>" : "";
+		$frealignresults[] = ($runfrealignqueue>0) ? "<a href='checkFrealignJobs.php?expId=$sessionId'>$runfrealignqueue jobs queued</a>" : "";
 		$frealignresults[] = ($uploadfrealignqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadfrealign'>$uploadfrealignqueue uploads queued</a>" : "";
 
 		// RUNNING
 		$frealignresults[] = ($prepfrealignrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=prepfrealign'>$prepfrealignrun preps running</a>" : "";
-		$frealignresults[] = ($runfrealignrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=runfrealign'>$runfrealignrun jobs running</a>" : "";
+		$frealignresults[] = ($runfrealignrun>0) ? "<a href='checkFrealignJobs.php?expId=$sessionId'>$runfrealignrun jobs running</a>" : "";
 		$frealignresults[] = ($uploadfrealignrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadfrealign'>$uploadfrealignrun uploads running</a>" : "";
 
 		// PREPARED
