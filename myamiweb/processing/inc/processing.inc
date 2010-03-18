@@ -889,7 +889,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	// check if database is configured on processing host
 	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"leginondata\")'";
 	$dbcheck = exec_over_ssh($host,$user,$pass,$cmd,True);
-	if (trim($dbcheck)=='') return "sinedon is not configure for leginondata";
+	if (trim($dbcheck)=='') return "sinedon is not configured for leginondata";
 	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"appiondata\")'";
 	$dbcheck = exec_over_ssh($host,$user,$pass,$cmd,True);
 	if (trim($dbcheck)=='') return "sinedon is not configure for appiondata";
