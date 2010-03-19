@@ -371,6 +371,11 @@ def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None,
 		peakdict['tmplnum']     = tmplnum
 		peakdict['template']    = tmpldbid
 		peakdict['diameter']    = diam
+		### add appropriate label
+		if tmpldbid is not None:
+			peakdict['label']    = "templ%d"%(tmpldbid)
+		elif diam is not None:
+			peakdict['label']    = "diam%.1f"%(diam)
 		peaktree.append(peakdict)
 	return peaktree
 
