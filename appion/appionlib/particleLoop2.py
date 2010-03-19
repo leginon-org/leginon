@@ -154,6 +154,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 
 	#=====================
 	def commitRunToDatabase(self, sessiondata, insert=True):
+		### this dict maps the contents of self.params to the sinedon object
 		dbmap = {
 			'diam': 'diam',
 			'bin': 'bin',
