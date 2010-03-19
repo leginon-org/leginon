@@ -62,6 +62,7 @@ var help = {
 		'stackname' : 'name of the output stack, usually start.*',
 		'stackdescr' : 'brief description attributed to this stack',
 		'stackparticles' : 'Particle selection run providing the coordinates that will be used for extracting the particles',
+		'stackparticlelabels' : 'Select a label to make a stack with labeled particles',
 		'stackparticles2' : 'Existing stack providing the coordinates that will be used for extracting the particles',
 		'stackinv' : 'Density of your extracted particles will be inverted.  Three dimensional reconstruction packages usually require light density on a dark background.  2-D alignment algorithms usually do not.',
 		'stacknorm' : 'normalize each of the particle images',

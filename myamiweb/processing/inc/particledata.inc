@@ -1498,6 +1498,12 @@ class particledata {
 		return $r;
 	}
 
+	function getParticleLabels($runId) {
+		$q = "select label, count(DEF_id) as `number particle` from ApParticleData where `REF|ApSelectionRunData|selectionrun`=".$runId." and label is not NULL group by `label`";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getMaxTiltAngle ($sessionId) {
 		$q = "SELECT MAX(ABS(s.`SUBD|stage position|a`))*180.0/PI() AS angle "
 			."FROM ".DB_LEGINON.".`AcquisitionImageData` AS im "

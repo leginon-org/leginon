@@ -69,7 +69,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 
 	$javascript="<script src='../js/viewer.js'></script>
-	<script LANGUAGE='JavaScript'>
+	<script type='text/javascript'>
 
 	function enableace(){
 		if (document.viewerform.acecheck.checked){
@@ -105,17 +105,27 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 	function partrunToNone() {
 		if (document.viewerform.fromstackid.value != 0) {
-			document.viewerform.partrunid.value = 0;
+			document.viewerform.partrunid.value = 0
 		}
+		document.viewerform.submit()
 	}
 
 	function fromstackToNone() {
 		if (document.viewerform.partrunid.value != 0) {
-			document.viewerform.fromstackid.value = 0;
+			document.viewerform.fromstackid.value = 0
+		}
+		document.viewerform.submit()
+	}
+
+	function enablelabel() {
+		if (document.viewerform.labelcheck.checked) {
+			document.viewerform.partlabel.disabled=false;
+		} else {
+			document.viewerform.partlabel.disabled=true;
 		}
 	}
 
-	</SCRIPT>\n";
+	</script>\n";
 	$javascript .= writeJavaPopupFunctions('appion');
 
 	processing_header($title,$heading,$javascript);
@@ -148,6 +158,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		$stackruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'stack'.($stackruns+1);
 	$partrunval = ($_POST['partrunid']) ? $_POST['partrunid'] : $partrunids[0]['DEF_id'];
+	$labelcheck = ($_POST['labelcheck']=='on') ? 'checked' : '';
+	$labeldisable = ($_POST['labelcheck']=='on') ? '' : 'disabled';
 	$fromstackval = ($_POST['fromstackid']) ? $_POST['fromstackid'] : '0';
 	if ($_POST['fromstackid'] && !$_POST['partrunid']) $partrunval = 0;
 	$massessval = $_POST['massessname'];
@@ -251,7 +263,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<font class='apcomment'><b>No Particles for this Session</b></font>\n";
 	} else {
 		echo docpop('stackparticles','Particles:');
-		echo "<select name='partrunid' onchange='fromstackToNone(this)'>\n";
+		echo "<select name='partrunid' onchange='fromstackToNone()'>\n";
 		echo "<option value='0'>None</option>\n";
 		foreach ($partrunids as $partrun){
 			$partrunid=$partrun['DEF_id'];
@@ -261,18 +273,34 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			echo "<OPTION value='$partrunid'";
 			// select previously set part on resubmit
 			if ($partrunval==$partrunid) {
-				echo " SELECTED";
+				echo " selected";
 			}
 			echo">$runname ($totparts parts)</OPTION>\n";
 		}
-		echo "</SELECT>\n";
+		echo "</select>\n";
 		
+		$particlelabels = $particle->getParticleLabels($partrunval);
+		echo "<p>\n";
+		echo"<input type='checkbox' name='labelcheck' onclick='enablelabel()' $labelcheck >\n";
+		echo docpop('stackparticlelabels','Particle labels:');
+		if (empty($particlelabels)) {
+			echo "None";
+		} else {
+			echo "<select name='partlabel' $labeldisable >\n";
+			foreach ($particlelabels as $row) {
+				$label=$row['label'];
+				$sel = (trim($_POST['partlabel'])==$label) ? 'selected' : '';
+				echo '<option value="'.$label.'" '.$sel.' >'.$label."</option>\n";
+			}
+		}
+		echo "</select>\n";
+		echo "</p>\n";
+
 		// add stack selection page
 	}
-	echo "<br/>\n";
 	if ($nohidestackruninfos) {
 		echo docpop('stackparticles2','Stacks:');
-		echo "<select name='fromstackid' onchange='partrunToNone(this)'>\n";
+		echo "<select name='fromstackid' onchange='partrunToNone()'>\n";
 		echo "<option value='0'>None</option>\n";
 		foreach ($nohidestackruninfos as $stackruninfo){
 			$stackid = $stackruninfo['stackid'];
@@ -282,11 +310,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			echo "<OPTION value='$stackid'";
 			// select previously set part on resubmit
 			if ($fromstackval==$stackid) {
-				echo " SELECTED";
+				echo " selected";
 			}
 			echo">$stackname ($numpart parts)</OPTION>\n";
 		}
-		echo "</SELECT>\n";
+		echo "</select>\n";
 		// add stack selection page
 	} else {
 		echo "<input type='hidden' name='fromstackid' value='0'>";
@@ -302,7 +330,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo"<font size='-1'><i>No Mask Assessed for this Session</i></font>\n";
 	} else {
 		echo "Mask Assessment:
-		<SELECT name='massessname'>\n";
+		<select name='massessname'>\n";
 		foreach ($massessnames as $name) {
 			$massessname = $name;
 			$massessruns = $particle->getMaskAssessRunByName($sessionId,$massessname);
@@ -315,11 +343,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			}
 			echo "<OPTION value='$massessname'";
 			// select previously set assessment on resubmit
-			if ($massessval==$massessname) echo " SELECTED";
+			if ($massessval==$massessname) echo " selected";
 			$totkeepscm=commafy($totkeeps);
 			echo">$massessname ($totkeepscm regions)</OPTION>\n";
 		}
-		echo "</SELECT>\n";
+		echo "</select>\n";
 	}
 	echo "<br/>\n";
 	echo "<br/>\n";
@@ -471,6 +499,7 @@ function runMakestack() {
 
 	// get particle runId or from stack id
 	$partrunid=$_POST['partrunid'];
+	$partlabel=(!empty($_POST['partlabel']) && $_POST['labelcheck']=='on') ? $_POST['partlabel'] : '';
 	$fromstackid=$_POST['fromstackid'];
 	if (!$partrunid && !$fromstackid)
 		createMakestackForm("<b>ERROR:</b> No particle run was selected");
@@ -595,6 +624,7 @@ function runMakestack() {
 	if ($partlimit != "none") $command.="--partlimit=$partlimit ";
 	if ($boxfiles == 'on') $command.="--boxfiles ";
 	$command.="--description=\"$description\" ";
+	if (!empty($partlabel)) $command.="--label=\"$partlabel\" ";
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
@@ -628,6 +658,7 @@ function runMakestack() {
 	echo"
 	<tr><td>stack name</td><td>$single</td></tr>
 	<tr><td>selection Id</td><td>$partrunid</td></tr>
+	<tr><td>particle label</td><td>$partlabel</td></tr>
 	<tr><td>invert</td><td>$invert</td></tr>
 	<tr><td>normalize</td><td>$normalize</td></tr>
 	<tr><td>ctf correct</td><td>$ctfcorrect</td></tr>
