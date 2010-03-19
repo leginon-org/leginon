@@ -1,3 +1,7 @@
+ TiltPicker bugs are now tracked via the AMI redmine server, visit
+ http://ami.scripps.edu/redmine/projects/tiltpicker/
+ to file any bugs
+
 
 I just made a screen capture video on how to use it. It is available is low resolution on youtube:
 

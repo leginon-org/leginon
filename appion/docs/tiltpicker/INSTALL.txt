@@ -148,6 +148,9 @@ An example session it setup in the following shell files:
 --------------------------------
 --------------------------------
 
+ TiltPicker bugs are now tracked via the AMI redmine server, visit
+ http://ami.scripps.edu/redmine/projects/tiltpicker/
+ to file any bugs
 
 Still having problems or just want to chat, email me at: vossman77 (at) yahoo.com
 

@@ -1,4 +1,8 @@
 v2.0 -- March XX, 2010
+NOTES:
+ TiltPicker bugs are now tracked via the AMI redmine server, visit
+ http://ami.scripps.edu/redmine/projects/tiltpicker/
+ to file any bugs
 BUGS:
  *	Particle picking outside image area is now not allowed
  *	Made sure all functions are available from the top menu
@@ -19,6 +23,7 @@ FEATURES:
  *	Users can now reject the results from DoG picker if the picks were bad
  * A dialog asks for confirmation to reset or clear parameters
  *	Added TiltPick2Spi.py program to split single TiltPicker file into 3 spider files
+
 
 v1.0	-- Jan 22, 2009
  *	Better output file writing; completely rewritten

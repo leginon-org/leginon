@@ -29,9 +29,11 @@ I recommend using VLC to watch it:
 
 neil
 
+ TiltPicker bugs are now tracked via the AMI redmine server, visit
+ http://ami.scripps.edu/redmine/projects/tiltpicker/
+ to file any bugs
 
 EXTENED USAGE STEPS:
-
 
 TiltPicker Usage
 
