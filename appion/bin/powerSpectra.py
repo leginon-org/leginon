@@ -7,6 +7,7 @@ import numpy
 from appionlib import appionLoop2
 from appionlib import apImage
 from appionlib import apDisplay
+from appionlib import apFile
 from pyami import imagefun
 
 class powerSpectraLoop(appionLoop2.AppionLoop):
@@ -16,6 +17,11 @@ class powerSpectraLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def processImage(self, imgdata):
+		stackedname = os.path.join(self.params['rundir'], imgdata['filename']+"power.jpg")
+
+		if os.path.isfile(stackedname) and apFile.fileSize(stackedname) > 100:
+			return
+
 		### make the power spectra
 		powerspectra = imagefun.power(imgdata['image'], mask_radius=1.0, thresh=4)
 		binpowerspectra = imagefun.bin2(powerspectra, self.params['bin'])
@@ -36,7 +42,6 @@ class powerSpectraLoop(appionLoop2.AppionLoop):
 		### write to file
 		stacked = numpy.hstack([imagedata, binpowerspectra])
 		del imagedata, binpowerspectra
-		stackedname = os.path.join(self.params['rundir'], imgdata['filename']+"power.jpg")
 		apImage.arrayToJpeg(stacked, stackedname)
 
 	#======================
