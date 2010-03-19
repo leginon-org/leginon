@@ -76,7 +76,7 @@ echo "  Kerden SOM stands for 'Kernel Probability Density Estimator Self-Organiz
 	."<br/><br/>";
 echo "</td></tr>";
 
-if ($USE_IMAGIC) {
+if ($HIDE_IMAGIC) {
 	echo "<tr><td width='100' align='center'>\n";
 	echo "  <img src='img/imagic_logo.png' width='64'>\n";
 	echo "</td><td>\n";

@@ -33,7 +33,7 @@ $DATA_DIRS = array(
 $DEFAULTCS = "";
 
 // Check if IMAGIC is installed and running, otherwise hide all functions
-$USE_IMAGIC = false;
+$HIDE_IMAGIC = false;
 
 // --- path to main --- //
 set_include_path("..".PATH_SEPARATOR.get_include_path());
