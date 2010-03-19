@@ -39,7 +39,7 @@ def guessParticlesForSession(expid=None, sessionname=None):
 		apDisplay.printError("Please select one of the above runids")
 
 #===========================
-def getParticles(imgdata, selectionRunId):
+def getParticles(imgdata, selectionRunId, particlelabel=None):
 	"""
 	returns paticles (as a list of dicts) for a given image
 	ex: particles[0]['xcoord'] is the xcoord of particle 0
@@ -48,6 +48,8 @@ def getParticles(imgdata, selectionRunId):
 	prtlq = appiondata.ApParticleData()
 	prtlq['image'] = imgdata
 	prtlq['selectionrun'] = selexonrun
+	if particlelabel is not None:
+		prtlq['label'] = particlelabel
 	particles = prtlq.query()
 
 	return particles
@@ -92,7 +94,7 @@ def getSelectionRunDataFromName(imgdata, runname):
 	return selectionrundata[0]
 
 #===========================
-def getDefocPairParticles(imgdata, selectionid):
+def getDefocPairParticles(imgdata, selectionid, particlelabel=None):
 	### get defocal pair
 	defimgdata = apDefocalPairs.getDefocusPair(imgdata)
 	if defimgdata is None:
@@ -106,6 +108,8 @@ def getDefocPairParticles(imgdata, selectionid):
 	partq = appiondata.ApParticleData()
 	partq['image'] = defimgdata
 	partq['selectionrun'] = appiondata.ApSelectionRunData.direct_query(selectionid)
+	if particlelabel is not None:
+		partq['label'] = particlelabel
 	partdatas = partq.query()
 	apDisplay.printMsg("Found %d particles for defocal pair %s (id %d)"
 		%(len(partdatas), apDisplay.short(defimgdata['filename']), defimgdata.dbid,))

@@ -175,14 +175,14 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### get the particle before image filtering
 		if self.params['defocpair'] is True and self.params['selectionid'] is not None:
 			# using defocal pairs and particle picks
-			partdatas, shiftdata = apParticle.getDefocPairParticles(imgdata, self.params['selectionid'])
+			partdatas, shiftdata = apParticle.getDefocPairParticles(imgdata, self.params['selectionid'], self.params['particlelabel'])
 		elif self.params['fromstackid'] is not None:
 			# using previous stack to make a new stack
 			partdatas = self.getParticlesFromStack(imgdata)
 			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}
 		else:
 			# using particle picks
-			partdatas = apParticle.getParticles(imgdata, self.params['selectionid'])
+			partdatas = apParticle.getParticles(imgdata, self.params['selectionid'], self.params['particlelabel'])
 			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}
 
 		apDisplay.printMsg("Found %d particles"%(len(partdatas)))
@@ -810,6 +810,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			help="process only images of magification, mag")
 		self.parser.add_option("--maskassess", dest="maskassess",
 			help="Assessed mask run name")
+		self.parser.add_option("--label", dest="particlelabel", type="str", default=None,
+			help="select particles by label within the same run name")
 
 		### true/false
 		self.parser.add_option("--phaseflip", dest="phaseflipped", default=False,
