@@ -239,7 +239,7 @@ def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
 		if 'template' in peakdict and peakdict['template'] is not None:
 			particlesq['template'] = appiondata.ApTemplateImageData.direct_query(peakdict['template'])
 
-		for key in 'correlation','peakmoment','peakstddev','peakarea', 'diameter', 'label':
+		for key in 'correlation','peakmoment','peakstddev','peakarea', 'label':
 			if key in peakdict and peakdict[key] is not None:
 				if isinstance(peakdict[key], float):
 					### limit decimals
@@ -249,6 +249,7 @@ def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
 		### must be integers
 		particlesq['xcoord'] = int(round(peakdict['xcoord']))
 		particlesq['ycoord'] = int(round(peakdict['ycoord']))
+		particlesq['diameter'] = round(peakdict['diameter'], 6)
 
 		if 'peakarea' in peakdict and peakdict['peakarea'] is not None and peakdict['peakarea'] > 0:
 			peakhasarea = True
