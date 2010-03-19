@@ -3,8 +3,8 @@ from win32com.client import selecttlb
 from win32com.client import makepy
 
 info = [
-	('Tecnai Scripting', 'tecnaicom.py', 'Tecnai Scripting'),
 	('TEM Scripting', 'tecnaicom.py', 'Tecnai Scripting'),
+	('Tecnai Scripting', 'tecnaicom.py', 'Tecnai Scripting'),
         ('TOMMoniker 1.0 Type Library', 'tomcom.py', 'TOM Moniker'),
 	('Low Dose Server Library', 'ldcom.py', 'Tecnai Low Dose Kit'),
 	('adaExp Library', 'adacom.py', 'Tecnai Exposure Adaptor'),
