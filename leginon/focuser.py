@@ -156,7 +156,7 @@ class Focuser(acquisition.Acquisition):
 				'sequence': sequence_names,
 				'node name': self.name,
 			}
-			if self.session['user']['name'] == 'administrator':
+			if self.session['user']['username'] == 'administrator':
 				initializer['isdefault'] = True
 			else:
 				initializer['isdefault'] = isdefault
@@ -167,7 +167,7 @@ class Focuser(acquisition.Acquisition):
 				initializer = setting.copy()
 				initializer['session'] = self.session
 				initializer['node name'] = self.name
-				if self.session['user']['name'] == 'administrator':
+				if self.session['user']['username'] == 'administrator':
 					initializer['isdefault'] = True
 				else:
 					initializer['isdefault'] = isdefault

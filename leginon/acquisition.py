@@ -534,7 +534,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		filmdata = leginondata.FilmData(session=self.session, preset=presetdata, label=self.name, target=targetdata, emtarget=emtarget)
 
 		## first three of user name
-		self.instrument.tem.FilmUserCode = self.session['user']['name'][:3]
+		self.instrument.tem.FilmUserCode = self.session['user']['username'][:3]
 		## use next dbid for film text
 		last_film = self.lastFilmAcquisition()
 		if last_film is None:
