@@ -820,12 +820,60 @@ class Manager(node.Node):
 
 	def sortNodes(self, nodeclasses=[]):
 		allclassnames = noderegistry.getNodeClassNames()
-		neworder = []
+		classtypes = ['Priority', 'Pipeline', 'Calibrations', 'Utility']
+		sortclasses = {}
+		for classtype in classtypes:
+			sortclasses[classtype] = []
 		for classname in allclassnames:
 			for appnodealias, appnodeclassname in nodeclasses:
 				if appnodeclassname == classname:
-					neworder.append(appnodealias)
-		return neworder
+					nodeclass = noderegistry.getNodeClass(classname)
+					classtype = nodeclass.classtype
+					sortclasses[classtype].append(appnodealias)
+		# sort pipeline nodes by bindings
+		if sortclasses['Pipeline']:
+			froms = {}
+			tos = {}
+			for node in sortclasses['Pipeline']:
+				froms[node] = []
+				tos[node] = []
+			for eventclass, fromnode in self.distmap.items():
+				for node in sortclasses['Pipeline']:
+					if issubclass(eventclass,
+								(event.ImageTargetListPublishEvent, event.ImagePublishEvent)):
+						if node in fromnode:
+							for tonode in sortclasses['Pipeline']:
+								if tonode in fromnode[node]:
+									froms[node].append(tonode)
+									tos[tonode].append(fromnode)
+			starters = []
+			for key, value in tos.items():
+				if not value:
+					starters.append(key)
+
+			sorted = []
+			for starter in starters:
+				sorted += depth(starter, froms)
+			for node in sortclasses['Pipeline']:
+				if node not in sorted:
+					sorted.append(node)
+			sortclasses['Pipeline'] = []
+			for s in sorted:
+				if s not in sortclasses['Pipeline']:
+					sortclasses['Pipeline'].append(s)
+
+		nodeorder = []
+		for sortcls in classtypes:
+			try:
+				nodeorder += sortclasses[sortcls]
+				del sortclasses[sortcls]
+			except KeyError:
+				pass
+
+		for nodes in sortclasses.values():
+			nodeorder += nodes
+
+		return nodeorder
 
 def depth(parent, map):
 	l = [parent]

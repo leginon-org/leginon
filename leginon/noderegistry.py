@@ -12,13 +12,14 @@ class NotFoundError(NodeRegistryError):
 class InvalidNodeError(NodeRegistryError):
 	pass
 
-def registerNodeClass(cls):
+def registerNodeClass(cls,classtype='Utility'):
 	### make sure class is Node
 	if not issubclass(cls, leginon.node.Node):
 		raise InvalidNodeError('%s is not subclass of leginon.node.Node' % cls)
 
 	### record this in the registry
 	classname = cls.__name__
+	cls.classtype = classtype
 	reg_dict[classname] = cls
 
 def getNodeClass(classname):
