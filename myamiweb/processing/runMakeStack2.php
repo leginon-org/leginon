@@ -203,6 +203,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 #	echo "<br />\n";
 #	echo "<br />\n";
 
+	echo docpop('stackdescr','<b>Stack Description:</b>');
+	echo "<br/>\n";
+	echo "<textarea name='description' rows='2' cols='50'>$rundescrval</textarea>\n";
+	echo "<br/>\n";
+	echo "<br/>\n";
+
 	createAppionLoopTable($sessiondata, $runnameval, "stacks");
 
 	echo "<b>Density modifications:</b><br/>";
@@ -243,19 +249,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "&nbsp;<input type='radio' name='fileformat' value='spider' ";
 	if ($_POST['fileformat'] == 'spider') echo "checked";
 	echo ">\n";
-	echo "Spider: start.spi <font size='-2'><i>(must be less than 18,000 particles)</i></font> <br/>\n";
-
-
+	echo "Spider: start.spi<br/>\n";
 
 	//echo "</td></tr></table>";
 	echo "</td><td class='tablebg'>";
 	//echo "<table cellpadding='5' border='0'><tr><td valign='TOP'>";
-
-	echo docpop('stackdescr','<b>Stack Description:</b>');
-	echo "<br/>\n";
-	echo "<textarea name='description' rows='3' cols='36'>$rundescrval</textarea>\n";
-	echo "<br/>\n";
-	echo "<br/>\n";
 
 	$partruns=count($partrunids);
 
@@ -270,31 +268,33 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			$runname=$partrun['name'];
 			$partstats=$particle->getStats($partrunid);
 			$totparts=commafy($partstats['totparticles']);
-			echo "<OPTION value='$partrunid'";
+			echo "<option value='$partrunid'";
 			// select previously set part on resubmit
 			if ($partrunval==$partrunid) {
 				echo " selected";
 			}
-			echo">$runname ($totparts parts)</OPTION>\n";
+			echo">$runname ($totparts parts)</option>\n";
 		}
 		echo "</select>\n";
-		
+
+		// add particle label page
 		$particlelabels = $particle->getParticleLabels($partrunval);
-		echo "<p>\n";
-		echo"<input type='checkbox' name='labelcheck' onclick='enablelabel()' $labelcheck >\n";
-		echo docpop('stackparticlelabels','Particle labels:');
-		if (empty($particlelabels)) {
-			echo "None";
-		} else {
+		if (!empty($particlelabels)) {
+			echo "<br/>\n";
+			echo"<input type='checkbox' name='labelcheck' onclick='enablelabel()' $labelcheck >\n";
+			echo docpop('stackparticlelabels','Particle labels:');
 			echo "<select name='partlabel' $labeldisable >\n";
 			foreach ($particlelabels as $row) {
 				$label=$row['label'];
 				$sel = (trim($_POST['partlabel'])==$label) ? 'selected' : '';
 				echo '<option value="'.$label.'" '.$sel.' >'.$label."</option>\n";
 			}
+		} else {
+			echo "<input type='hidden' name='labelcheck' value='off' >";
+			echo "<input type='hidden' name='partlabel' value='' >";
 		}
 		echo "</select>\n";
-		echo "</p>\n";
+		echo "<br/><br/>\n";
 
 		// add stack selection page
 	}
@@ -307,12 +307,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			$numpart = commafy($particle->getNumStackParticles($stackid));
 			$stackdata = $particle->getStackParams($stackid);
 			$stackname = $stackdata['shownstackname'];
-			echo "<OPTION value='$stackid'";
+			echo "<option value='$stackid'";
 			// select previously set part on resubmit
 			if ($fromstackval==$stackid) {
 				echo " selected";
 			}
-			echo">$stackname ($numpart parts)</OPTION>\n";
+			echo">$stackname ($numpart parts)</option>\n";
 		}
 		echo "</select>\n";
 		// add stack selection page
