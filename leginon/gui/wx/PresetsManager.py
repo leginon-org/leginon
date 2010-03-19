@@ -1063,13 +1063,16 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 		self.itemDataMap = {}
 		sessions.reverse()
 		for i, session in enumerate(sessions):
+			usernamelist = []
 			name = session['name']
 			try:
 				time = session.timestamp
 			except:
 				time = None
 			try:
-				user = session['user']['full name']
+				usernamelist.append(session['user']['firstname'])
+				usernamelist.append(session['user']['lastname'])
+				user = ' '.join(usernamelist)
 			except:
 				continue
 			comment = session['comment']

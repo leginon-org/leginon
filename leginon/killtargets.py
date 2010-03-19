@@ -22,9 +22,9 @@ sessiondata = sessions[0]
 # prompt user to confirm session before modifying database
 prompt = """Found the following session:
 	Name:  %s
-	User:  %s
+	User:  %s %s
 	Comment:  %s
-Type "ok" if this is the correct session: """ % (sessiondata['name'], sessiondata['user']['full name'], sessiondata['comment'])
+Type "ok" if this is the correct session: """ % (sessiondata['name'], sessiondata['user']['firstname'], sessiondata['user']['lastname'], sessiondata['comment'])
 response = raw_input(prompt)
 if response != 'ok':
 	print 'no change to database'
