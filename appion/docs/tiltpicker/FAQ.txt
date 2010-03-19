@@ -11,18 +11,12 @@ I recommend using VLC to watch it:
 
 * http://www.videolan.org/vlc/
 
-
 == Finding corresponding particle pair ==
  * I am just trying it out and have few questions and maybe useful ideas. What I am missing is that the program helps me to find the particle in the other image. It seems that I can pick a hole bunch in only one image without the program complaining. Also, even if you cannot move the cursor to the appropriate position, is it possible to show something in the other image e.g. a large circle, that helps to find the corresponding particle? Or am I missing this and have to set up things? 
   * _Yes, but it is still crude. Click on one particle in one image and then either hit the "Apply" button of Crtl-A on the keyboard and it draws a circle. I am still trying to come up with a good way to deal with this. The mouse thing does not appear to be possible for now._
 
  * Two things that I could not test in the other version. Does the cursor move to the image coordinate in the tilt image after picking the 0 deg coordinate? When I looked at the manual of WX I could not see a command that would do this, but then I also do not have an overview about what WX can do.
   * _Unfortunately, this is something that is intentionally not allowed by WX. One thing you can do now is hit the "Apply" button (or Alt-a on the keyboard) and it draws a circle where the tilt pair is. Again, something better can be explored._
-
- * And if it's not implemented yet, you can pick particles in your left micrographs. If you click on the button apply, you'll see in the right micrographs the predicted particles. If you save the file of your coordinates, you won't have the coordinates of your predicted particles, so how do you validate them ? Do you have to click on them (which is a big pain...) ?
-  * _You are correct about pick in image 1, hit apply, a circle appears in image 2. Now, you need to pick the particle in the circle. It is done this way because the the alignment assumes the grid square to be perfectly flat, which it is not, so you have center the particle yourself._
-  * _No, I do not output the aligned coordinates. For the TXT format, I now provide the RMSD in the last column. _
-  * _Also, I now provide a error checking method, shown as yellow plusses. When the difference between the particle location and aligned location (RSD) is greater than 3 standard deviations from the mean difference (RMSD), then a yellow plus is drawn over the pick._
 
 == Mask region ==
 
@@ -44,6 +38,10 @@ I recommend using VLC to watch it:
   * _You can save as four types of files now: TEXT, XML, python Pickle and a SPIDER file. SPIDER has all the typical line counts, etc. I plan on expanding the TEXT and XML to include pairs on one line, a count and root square difference of predicted and selected position of the particles._
   * _It might be confusing how to select which file you want to save. When you click "Save As" and the menu pops up asking you to select  the file to save it as there is a small box in the lower right corner where you can select the file type. The spider file it writes is the three files you normally write merged into one file (without a reduction factor)._
 
+
+* I wanted to ask you if you already have a script for splitting the SPIDER spi output file of TiltPicker in the three conventional SPIDER files (dcu, dct, dcb) and you could share it with me. Do you also have one for generating a .box file for Eman's boxer ? 
+  * _In version 2.0, there is a script called TiltPick2Spi.py in the tools directory_
+
 == Auto-saving backup file ==
 
  * On thing, which I don't know if the program does this, write the coordinate each moment that it is picked (may be use two different text files for tilt. Especially if you pick particles by hand, and sometimes I can find up to 200 particles (typical would be about 130) in one image, if one gets distracted and the picking gets interrupted, that nothing gets lost.
@@ -57,7 +55,7 @@ I recommend using VLC to watch it:
 == Automated picking ==
 
  * If I understood correctly, you have to select few particles to be able to find the theta angle then you can optimize the angles. Once you obtain your initial values, is there a way to do an automatic picking on both your micrographs?
-  * _I am working on a crude automated method for the next version (sometime this month), but in the future I'd like to be able import pick from whatever your favorite picker is._
+  * _DoG picker is the solution to automated picking_
 
 I appreciate your inquiries; it helps me make the program better. email vossman77 (at) yahoo.com 
 with any questions.

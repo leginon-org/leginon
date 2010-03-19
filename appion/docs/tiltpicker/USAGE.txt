@@ -28,3 +28,60 @@ I recommend using VLC to watch it:
  http://www.videolan.org/vlc/
 
 neil
+
+
+EXTENED USAGE STEPS:
+
+
+TiltPicker Usage
+
+    * Start TiltPicker
+          o Extract TiltPicker, on command line type:
+
+            tar -zxf tiltpicker-2.0.tgz
+
+          o Go to tiltpicker directory, on command line type:
+
+            cd tiltpicker
+
+          o Display TiltPicker help, on command line type:
+
+            ./ApTiltPicker.py -h
+
+          o Open TiltPicker, on command line type:
+
+            ./ApTiltPicker.py -l data/rawu048b.jpg -r data/rawu049b.jpg -t 50.0
+
+    * Initialize alignment:
+          o Maximize window
+          o Set correct zoom for images
+          o Center the middle bar
+          o Pick 5 partcle pairs
+          o Save picks to a file
+          o Hit the apply button, circles will not match crosses
+          o Find theta (tilt angle)
+          o Optimize inplane rotations
+          o Optimize all parameters
+          o Mask region to only look at overlapping regions, overlap is shown on status bar
+          o Hit Auto optimize, it performs find theta, optimize angles and mask in a single click
+          o If you look at the Terminal it will tell you how many optimization rounds were performed
+          o Use transfer picks button, this works but is based on the alignment parameters
+
+    * Auto pick particles
+          o Measure particle size using ruler tool, zoom in to get best value
+          o Run DoG picker with wrong contrast
+          o Reject picks
+          o Run DoG picker with correct contrast
+          o Show terminal
+          o Accept picks
+          o Look at DoG map images
+
+    * Clean up particle picks
+          o Use clear bad picks button
+          o Use polygon tool
+          o Auto optimize
+          o Use cutoff button to remove picks below a threshold
+          o Add more picks
+          o Save and quit
+
+

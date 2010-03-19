@@ -1,18 +1,24 @@
 v2.0 -- March XX, 2010
- *	Shortened button row, for smaller screens
- *	Fixed polygon tool for rectagular images
- *	Fixed reversal of tilt axis angles
- *	Added TiltPick2Spi.py program to split single TiltPicker file into 3 spider files
- *	Added transfer picks option (Alt-X)
- *	Added about TiltPicker screen
- *	Added particle cutoff tool to remove all particles with error above cutoff
+BUGS:
  *	Particle picking outside image area is now not allowed
  *	Made sure all functions are available from the top menu
  *	When saving a file, it checks the extension and adds one if it does not exist
- *	Allow setting DoG picker size range and num slices in GUI
+ *	Shortened button row, for smaller screens
+ *	Fixed polygon tool for rectagular images
+ *	Fixed reversal of tilt axis angles
+ *	Fixed improper print of DoG picker particle contrast messages on command line.
+FEATURES:
+ *	Added transfer picks option (Alt-X)
+ *	Added complete features for DoG picker:
+	- specify multiple size
+	- show DoG maps in GUI for advanced threshold/size tweaking
+ *	Added particle cutoff tool to remove all particles with error above cutoff
  *	Users can now open new images from the menu
+ *	Added About TiltPicker screen
  *	Print version and citation info upon launch on command line
- *	Both DoG maps are saved and viewable in the GUI interface
+ *	Users can now reject the results from DoG picker if the picks were bad
+ * A dialog asks for confirmation to reset or clear parameters
+ *	Added TiltPick2Spi.py program to split single TiltPicker file into 3 spider files
 
 v1.0	-- Jan 22, 2009
  *	Better output file writing; completely rewritten

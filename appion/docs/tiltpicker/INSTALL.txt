@@ -30,14 +30,25 @@ all 4 modules are available through apt-get or synaptic
 ==== SUSE ====
 modules can be downloaded from, http://download.opensuse.org/repositories/science
 
+a bug in scipy may exist, see for details:
+
+https://bugzilla.redhat.com/show_bug.cgi?id=478435
+
 ==== MacOS X 10.4 (Tiger) ====
+
 For a full unix experience, install either fink (http://fink.sf.net) or macports (http://www.macports.org). 
 Alternatively, you could install MacPython.
 
+I have had difficulties getting Scipy installed on the mac if you are sucessful let me know.
+
 ==== MacOS X 10.5 (Leopard) ====
+
 wxPython and numpy are installed by default you just need to install PIL and scipy, see PIL & scipy websites (above) or fink/macports (above)
 
+I have had difficulties getting Scipy installed on the mac if you are sucessful let me know.
+
 ==== RHEL5 / CentOS 5 ====
+
 Compatible packages are available in Extra Packages for Enterprise Linux (EPEL)
  * http://fedoraproject.org/wiki/EPEL
  * contains a wealth of packages required for appion
@@ -117,8 +128,6 @@ and if nothing happens, it works
 --------------------------------
 --------------------------------
 --------------------------------
-
-
 
 == Run it ==
 
