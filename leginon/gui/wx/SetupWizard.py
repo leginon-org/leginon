@@ -60,7 +60,7 @@ class UserPage(WizardPage):
 	def setUserSelection(self):
 		self.skip = False
 		if hasattr(leginon.leginonconfig, 'USERNAME') and leginon.leginonconfig.USERNAME:
-			usernames = _indexBy('name', self.users.values())
+			usernames = _indexBy(('firstname','lastname'), self.users.values())
 			if leginon.leginonconfig.USERNAME in usernames:
 				self.userchoice.SetStringSelection(leginon.leginonconfig.USERNAME)
 				self.skip = True

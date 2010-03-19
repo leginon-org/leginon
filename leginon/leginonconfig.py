@@ -104,7 +104,7 @@ except:
 		sys.stderr.write('Error accessing image path: %s\n' % (IMAGE_PATH,))
 
 # user
-USERNAME = configparser.get('User', 'user')
+USERNAME = configparser.get('User', 'full name')
 
 try:
 	emailhost = configparser.get('Email', 'host')
