@@ -9,10 +9,10 @@ from numpy import linalg
 pi = numpy.pi
 
 try:
-	import libCV
-	#print "libCV found"
+	import libcv
+	#print "libcv found"
 except:
-	#print "libCV not found"
+	#print "libcv not found"
 	pass
 
 #-----------------------
@@ -49,7 +49,7 @@ def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=
 
 	try:
 		scaled = scaleAndPlane(image)
-		return libCV.FindRegions(scaled, minsize, maxsize, blur, sharpen, WoB, BoW)
+		return libcv.FindRegions(scaled, minsize, maxsize, blur, sharpen, WoB, BoW)
 	except:
 		mydict = { 
 			'regionBorder': numpy.array([[0,0,0,0]],[[0,0,0,0]]),
@@ -88,7 +88,7 @@ def MatchImages(image1, image2, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, Wo
 	try:
 		scaled1 = scaleAndPlane(image1)
 		scaled2 = scaleAndPlane(image2)
-		return libCV.MatchImages(scaled1, scaled2, minsize, maxsize, blur, sharpen, WoB, BoW)
+		return libcv.MatchImages(scaled1, scaled2, minsize, maxsize, blur, sharpen, WoB, BoW)
 	except:
 		return numpy.zeros([3,3], dtype=numpy.float32)
 
@@ -104,7 +104,7 @@ def PolygonVE(polygon, thresh):
 	"""
 
 	try:
-		return libCV.PolygonVE(polygon, thresh)
+		return libcv.PolygonVE(polygon, thresh)
 	except:
 		return None
 	print ""
@@ -121,16 +121,16 @@ def PolygonACD(array, value):
 	"""
 
 	try:
-		return libCV.PolygonACD(array, value)
+		return libcv.PolygonACD(array, value)
 	except:
-		print "libCV failed in PolygonACD"
+		print "libcv failed in PolygonACD"
 		return []
 
 
 #-----------------------
 def checkArrayMinMax(self, a1, a2):
 	"""
-	Tests whether an image has a valid range for libCV
+	Tests whether an image has a valid range for libcv
 	"""
 	a1b = ndimage.median_filter(a1, size=3)
 	min1 = ndimage.minimum(a1b)
@@ -149,34 +149,34 @@ def checkArrayMinMax(self, a1, a2):
 #-----------------------
 def checkLibCVResult(self, result):
 	"""
-	Tests whether the libCV resulting affine matrix is reasonable for tilting
+	Tests whether the libcv resulting affine matrix is reasonable for tilting
 	"""
 	if abs(result[0][0]) < 0.5 or abs(result[1][1]) < 0.5:
 		#max tilt angle of 60 degrees
-		self.logger.warning("Bad libCV result: bad tilt in matrix: "+affineToText(result))
-		print ("Bad libCV result: bad tilt in matrix: "+affineToText(result))
+		self.logger.warning("Bad libcv result: bad tilt in matrix: "+affineToText(result))
+		print ("Bad libcv result: bad tilt in matrix: "+affineToText(result))
 		return False
 	elif abs(result[0][0]) > 1.5 or abs(result[1][1]) > 1.5:
 		#only allow 25 degrees of expansion
-		self.logger.warning("Bad libCV result: image expansion: "+affineToText(result))
-		print ("Bad libCV result: image expansion: "+affineToText(result))
+		self.logger.warning("Bad libcv result: image expansion: "+affineToText(result))
+		print ("Bad libcv result: image expansion: "+affineToText(result))
 		return False
 	elif abs(result[0][1]) > 0.7071 or abs(result[1][0]) > 0.7071:
 		#max rotation angle of 45 degrees
-		self.logger.warning("Bad libCV result: too much rotation: "+affineToText(result))
-		print ("Bad libCV result: too much rotation: "+affineToText(result))
+		self.logger.warning("Bad libcv result: too much rotation: "+affineToText(result))
+		print ("Bad libcv result: too much rotation: "+affineToText(result))
 		return False
 	#elif abs(result[2][0]) > 200 or abs(result[2][1]) > 200:
 	#	#max rotation angle of 45 degrees
-	#	self.logger.warning("Bad libCV result: too much shift: "+affineToText(result))
-	#	print ("Bad libCV result: too much shift: "+affineToText(result))
+	#	self.logger.warning("Bad libcv result: too much shift: "+affineToText(result))
+	#	print ("Bad libcv result: too much shift: "+affineToText(result))
 	#	return False
 	return True
 
 #-----------------------
 def affineToText(matrix):
 	"""
-	Converts a libCV matrix into human readable text
+	Converts a libcv matrix into human readable text
 	"""
 	tiltv = matrix[0,0] * matrix[1,1]
 	rotv = (matrix[0,1] - matrix[1,0]) / 2.0
@@ -202,7 +202,7 @@ def scaleAndPlane(imgarray):
 	except:
 		print "regression failed"
 		planed = imgarray
-	### libCV assumes all types are float32
+	### libcv assumes all types are float32
 	try:
 		floating = numpy.asarray(planed - planed.min(), dtype=numpy.float32)*1.0e2
 	except:

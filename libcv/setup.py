@@ -12,12 +12,14 @@ else:
 
 numpyinc = numpy.get_include()
 
-module = Extension('libCV',sources=['mserpy.c','mser.c','geometry.c','lautil.c','util.c','csift.c','mutil.c','image.c','match.c','unionfind.c'],define_macros=define_macros,include_dirs=[numpyinc,])
+module = Extension('libcv._libcv',sources=['mserpy.c','mser.c','geometry.c','lautil.c','util.c','csift.c','mutil.c','image.c','match.c','unionfind.c'],define_macros=define_macros,include_dirs=[numpyinc,])
 
 setup(
-	name='libCV',
+	name='libcv',
 	version='0.2',
 	description='wrapper around libCV',
-	ext_modules=[module]
+	ext_modules=[module],
+	packages=['libcv'],
+	package_dir={'libcv': ''},
 )
 

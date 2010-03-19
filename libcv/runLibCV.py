@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import libCV
+import libcv
 import math
 import time
 from pyami import mrc, mem
@@ -73,29 +73,29 @@ def findTilt(result):
 #-----------------------
 def checkLibCVResult(result):
 	"""
-	Tests whether the libCV resulting affine matrix is reasonable for tilting
+	Tests whether the libcv resulting affine matrix is reasonable for tilting
 	"""
 	if result[0][0] < 0.5 or result[1][1] < 0.5:
 		#max tilt angle of 60 degrees
-		print ("Bad libCV result: bad tilt in matrix: "+affineToText(result))
-		print ("Bad libCV result: bad tilt in matrix: "+affineToText(result))
+		print ("Bad libcv result: bad tilt in matrix: "+affineToText(result))
+		print ("Bad libcv result: bad tilt in matrix: "+affineToText(result))
 		return False
 	elif result[0][0] > 1.1 or result[1][1] > 1.1:
 		#only allow 25 degrees of expansion
-		print ("Bad libCV result: image expansion: "+affineToText(result))
-		print ("Bad libCV result: image expansion: "+affineToText(result))
+		print ("Bad libcv result: image expansion: "+affineToText(result))
+		print ("Bad libcv result: image expansion: "+affineToText(result))
 		return False
 	elif abs(result[0][1]) > 0.7071 or abs(result[1][0]) > 0.7071:
 		#max rotation angle of 45 degrees
-		print ("Bad libCV result: too much rotation: "+affineToText(result))
-		print ("Bad libCV result: too much rotation: "+affineToText(result))
+		print ("Bad libcv result: too much rotation: "+affineToText(result))
+		print ("Bad libcv result: too much rotation: "+affineToText(result))
 		return False
 	return True
 
 #-----------------------
 def affineToValues(matrix):
 	"""
-	Converts a libCV matrix into human readable text
+	Converts a libcv matrix into human readable text
 	"""
 	tiltv = matrix[0,0] * matrix[1,1]
 	rotv = (matrix[0,1] - matrix[1,0]) / 2.0
@@ -114,7 +114,7 @@ def affineToValues(matrix):
 #-----------------------
 def affineToText(matrix):
 	"""
-	Converts a libCV matrix into human readable text
+	Converts a libcv matrix into human readable text
 	"""
 	tiltv = matrix[0,0] * matrix[1,1]
 	rotv = (matrix[0,1] - matrix[1,0]) / 2.0
@@ -160,7 +160,7 @@ def MatchImages(image1, image2, minsize=250, maxsize=0.9, blur=0, sharpen=0, WoB
 
 	try:
 		print "====================="
-		result = libCV.MatchImages(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)
+		result = libcv.MatchImages(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)
 		print "====================="
 		return result
 	except:

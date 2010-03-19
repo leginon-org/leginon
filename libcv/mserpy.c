@@ -363,15 +363,15 @@ static PyObject *PolygonToPyArray( Polygon poly ) {
 	
 }
 	
-static PyMethodDef libCVMethods[] = {
+static PyMethodDef libcvMethods[] = {
 	{"MatchImages", PyMatchImages, METH_VARARGS, "BLANK"},
 	{"FindRegions", PyFindRegions, METH_VARARGS, "BLANK"},
 	{"PolygonVE", PyPolygonVE, METH_VARARGS, "BLANK"},
 	{NULL, NULL}
 };
 
-PyMODINIT_FUNC initlibCV() {
-	(void) Py_InitModule("libCV", libCVMethods);
+PyMODINIT_FUNC init_libcv() {
+	(void) Py_InitModule("_libcv", libcvMethods);
 	import_array()
 }
 
