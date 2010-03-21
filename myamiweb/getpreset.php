@@ -45,7 +45,7 @@ if ($id) {
 	if($projectdata->checkDBConnection()) {
 		$gridinfo = $projectdata->getGridInfo($gridId);
 		if ($gridId)
-			echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='
+			echo '<a class="header" target="gridinfo" href="'.PROJECT_URL.'getgrid.php?gridId='
 				.$gridId.'">grid#'.$gridinfo[number].' info&raquo;</a>';
 	}
 	list($filename) = $leginondata->getFilename($id);

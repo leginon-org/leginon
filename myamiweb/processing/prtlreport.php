@@ -28,7 +28,7 @@ $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 if($projectdb) {
 	$currentproject = $projectdata->getProjectFromSession($sessioninfo['Name']);
-	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
+	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
 }
 
 processing_header("Particle Selection Results","Particle Selection Results",$javascript,False);

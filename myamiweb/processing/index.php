@@ -29,7 +29,6 @@ function getNumClassesFromFile ($imagicfile) {
 	return $numclass;
 }
 
-global $PROJECT_URL;
 $leginondata = new leginondata();
 
 // check if coming directly from a session

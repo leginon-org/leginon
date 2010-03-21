@@ -100,7 +100,7 @@ if (!$expId){
 // Show project & session pulldowns
 else {
 	$projectId = $currentproject['projectId'];
-  $proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
+  $proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
   $sessionDescr=$sessioninfo['Purpose'];
 	$misc = $particle->getMiscInfoFromProject ($projectId);
 
