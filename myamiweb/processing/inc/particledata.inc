@@ -218,20 +218,27 @@ class particledata {
 			."a.bin as bin, "
 			."path.`path`, "
 			."tilt.`number` as `tilt number`, "
-			."tia.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
-			."a.`REF|ApImodXcorrParamsData|coarseImodParams` as imodid, "
+			."tia.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, ";
+		if ($this->mysql->SQLTableExists('ApImodXcorrParamsData')) {
+			$q .= "a.`REF|ApImodXcorrParamsData|coarseImodParams` as imodid, "
+				."imod.`FilterSigma1` as sigma1, "
+				."imod.`FilterSigma2` as sigma2, "
+				."imod.`FilterRadius2` as radius2, ";
+		}
+		$q .= ""
 			."a.`REF|leginondata|TomographySettingsData|coarseLeginonParams` as xleginonid, "
 			."a.`REF|ApProtomoParamsData|fineProtomoParams` as protomoid, "
-			."imod.`FilterSigma1` as sigma1, "
-			."imod.`FilterSigma2` as sigma2, "
-			."imod.`FilterRadius2` as radius2, "
 			."a.`description`, "
 			."a.`hidden` "
 			."FROM `ApTomoAlignmentRunData` a "
 			."LEFT JOIN `ApPathData` path "
-			."ON a.`REF|ApPathData|path` = path.`DEF_id` "
-			."LEFT JOIN `ApImodXcorrParamsData` imod "
-			."ON a.`REF|ApImodXcorrParamsData|coarseImodParams` = imod.`DEF_id` "
+			."ON a.`REF|ApPathData|path` = path.`DEF_id` ";
+		if ($this->mysql->SQLTableExists('ApImodXcorrParamsData')) {
+			$q .= ""
+				."LEFT JOIN `ApImodXcorrParamsData` imod "
+				."ON a.`REF|ApImodXcorrParamsData|coarseImodParams` = imod.`DEF_id` ";
+		}
+		$q .= ""
 			."LEFT JOIN `ApTiltsInAlignRunData` tia "
 			."ON tia.`REF|ApTomoAlignmentRunData|alignrun` = a.`DEF_id` "
 			."LEFT JOIN ".DB_LEGINON.".`TiltSeriesData` tilt ON tia.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
