@@ -18,8 +18,8 @@ from appionlib import apParam
 from appionlib import apDisplay
 from appionlib.apTilt import apTiltTransform
 
-version = "2.0b3"
-releasedate = "March 16, 2010"
+version = "2.0b4"
+releasedate = "March 19, 2010"
 logoimage = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/tplogo.png"))
 if not os.path.isfile(logoimage):
 	logoimage = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/tplogo.png"))
