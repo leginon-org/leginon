@@ -226,7 +226,7 @@ function jobForm($extra=false) {
 	$sendfilelist .= "|--|";
 	$sendfilelist .= formatEndPath($rundir).$jobdata['tarfile'];
 	echo "<input type='hidden' NAME='sendfilelist' value='$sendfilelist'>\n";
-	$receivefilelist .= "results.tar.gz";
+	$receivefilelist .= "results.tgz";
 	echo "<input type='hidden' NAME='receivefilelist' value='$receivefilelist'>\n";
 
 	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
@@ -407,7 +407,7 @@ function writeJobFile ($extra=False) {
 	$runlines = file_get_contents($runfile);
 
 	$runlines .= "\n";
-	$runlines .= "tar -czf results.tar.gz iter*\n";
+	$runlines .= "tar -czf results.tgz *iter*\n";
 
 	$clusterjob .= $clusterdata->cluster_job_file($runlines);
 
