@@ -68,6 +68,8 @@ class StackIntoPicksScript(appionScript.AppionScript):
 
 		### stack particles
 		stackparts = apStack.getStackParticlesFromId(self.params['stackid'], msg=True)
+		stackparts.reverse()
+
 		### selection run for first particle
 		oldselectrun = stackparts[0]['particle']['selectionrun']
 

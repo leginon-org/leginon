@@ -164,7 +164,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		for stackpartdata in stackpartdatas:
 			partdata = stackpartdata['particle']
 			partdatas.append(partdata)
-
+		partdatas.reverse()
 		return partdatas
 
 	#=======================
