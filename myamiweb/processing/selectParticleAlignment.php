@@ -12,7 +12,6 @@ require "inc/particledata.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/processing.inc";
-#require "inc/displaytables.inc";
 
 $expId = $_GET['expId'];
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
@@ -75,7 +74,7 @@ echo " <p> first you select template and then this method uses the "
 //echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
 echo "</td></tr>\n";
 
-if ($HIDE_IMAGIC) {
+if (!$HIDE_IMAGIC) {
 	/*
 	** IMAGIC Reference Based Alignment
 	*/

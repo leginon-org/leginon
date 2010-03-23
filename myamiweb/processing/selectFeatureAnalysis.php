@@ -12,7 +12,6 @@ require "inc/particledata.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/processing.inc";
-#require "inc/displaytables.inc";
 
 $expId = $_GET['expId'];
 $alignId = $_GET['alignId'];
@@ -76,7 +75,7 @@ echo "  Kerden SOM stands for 'Kernel Probability Density Estimator Self-Organiz
 	."<br/><br/>";
 echo "</td></tr>";
 
-if ($HIDE_IMAGIC) {
+if (!$HIDE_IMAGIC) {
 	echo "<tr><td width='100' align='center'>\n";
 	echo "  <img src='img/imagic_logo.png' width='64'>\n";
 	echo "</td><td>\n";
