@@ -253,7 +253,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return maxjobdata[0]
 
 	#=====================
-	def insertRunIntoDatabase(self, runparams):
+	def insertRunIntoDatabase(self, alignimagicfile, runparams):
 		apDisplay.printMsg("Inserting MaxLike Run into DB")
 
 		### setup alignment run
@@ -287,16 +287,16 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 		### setup alignment stack
 		alignstackq = appiondata.ApAlignStackData()
-		alignstackq['imagicfile'] = "alignstack.hed"
+		alignstackq['imagicfile'] = alignimagicfile
 		alignstackq['avgmrcfile'] = "average.mrc"
 		alignstackq['refstackfile'] = "part"+self.params['timestamp']+"_average.hed"
 		alignstackq['iteration'] = self.lastiter
 		alignstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		alignstackq['alignrun'] = alignrunq
 		### check to make sure files exist
-		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
-		if not os.path.isfile(imagicfile):
-			apDisplay.printError("could not find stack file: "+imagicfile)
+		alignimagicfilepath = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
+		if not os.path.isfile(alignimagicfilepath):
+			apDisplay.printError("could not find stack file: "+alignimagicfilepath)
 		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile'])
 		if not os.path.isfile(avgmrcfile):
 			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
@@ -304,7 +304,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		if not os.path.isfile(refstackfile):
 			apDisplay.printError("could not find reference stack file: "+refstackfile)
 		alignstackq['stack'] = apStack.getOnlyStackData(runparams['stackid'])
-		alignstackq['boxsize'] = apFile.getBoxSize(imagicfile)[0]
+		alignstackq['boxsize'] = apFile.getBoxSize(alignimagicfilepath)[0]
 		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
 		alignstackq['description'] = runparams['description']
 		alignstackq['hidden'] =  False
@@ -441,13 +441,13 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		apImagicFile.writeImagic(alignstack, stackname, msg=False)
 
 		### merge stacks
-		self.alignimagicfile = "alignstack.hed"
-		apFile.removeStack(self.alignimagicfile, warn=False)
-		apImagicFile.mergeStacks(stacklist, self.alignimagicfile)
+		alignimagicfile = "alignstack.hed"
+		apFile.removeStack(alignimagicfile, warn=False)
+		apImagicFile.mergeStacks(stacklist, alignimagicfile)
 		#for stackname in stacklist:
-		#	emancmd = "proc2d %s %s"%(stackname, self.alignimagicfile)
+		#	emancmd = "proc2d %s %s"%(stackname, alignimagicfile)
 		#	apEMAN.executeEmanCmd(emancmd, verbose=False)
-		filepart = apFile.numImagesInStack(self.alignimagicfile)
+		filepart = apFile.numImagesInStack(alignimagicfile)
 		if filepart != numpart:
 			apDisplay.printError("number aligned particles (%d) not equal number expected particles (%d)"%
 				(filepart, numpart))
@@ -457,7 +457,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		### summarize
 		apDisplay.printMsg("rotated and shifted %d particles in %s"%(imgnum, apDisplay.timeString(time.time()-t0)))
 
-		return self.alignimagicfile
+		return alignimagicfile
 
 	#=====================
 	def writeXmippLog(self, text):
@@ -564,7 +564,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return reflist
 
 	#=====================
-	def calcResolution(self, partlist, stackfile, apix):
+	def calcResolution(self, partlist, alignimagicfile, apix):
 		### group particles by refnum
 		reflistsdict = {}
 		for partdict in partlist:
@@ -576,7 +576,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 		### get resolution
 		self.resdict = {}
-		boxsizetuple = apFile.getBoxSize(stackfile)
+		boxsizetuple = apFile.getBoxSize(alignimagicfile)
 		boxsize = boxsizetuple[0]
 		for refnum in reflistsdict.keys():
 			partlist = reflistsdict[refnum]
@@ -584,7 +584,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			apDisplay.printMsg("Ref num %d; %d parts; est time %s"
 				%(refnum, len(partlist), apDisplay.timeString(esttime)))
 
-			frcdata = apFourier.spectralSNRStack(stackfile, apix, partlist, msg=False)
+			frcdata = apFourier.spectralSNRStack(alignimagicfile, apix, partlist, msg=False)
 			frcfile = "frcplot-%03d.dat"%(refnum)
 			apFourier.writeFrcPlot(frcfile, frcdata, apix, boxsize)
 			res = apFourier.getResolution(frcdata, apix, boxsize)
@@ -613,15 +613,15 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		self.writePartDocFile(partlist)
 
 		### create aligned stacks
-		stackfile = self.createAlignedStacks(partlist, runparams['localstack'])
-		apStack.averageStack(stackfile)
+		alignimagicfile = self.createAlignedStacks(partlist, runparams['localstack'])
+		apStack.averageStack(alignimagicfile)
 
 		### calculate resolution for each reference
 		apix = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
-		self.calcResolution(partlist, stackfile, apix)
+		self.calcResolution(partlist, alignimagicfile, apix)
 
 		### insert into databse
-		self.insertRunIntoDatabase(runparams)
+		self.insertRunIntoDatabase(alignimagicfile, runparams)
 		self.insertParticlesIntoDatabase(runparams['stackid'], partlist)
 
 		apFile.removeStack(runparams['localstack'], warn=False)
