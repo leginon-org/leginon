@@ -249,7 +249,7 @@ def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
 		### must be integers
 		particlesq['xcoord'] = int(round(peakdict['xcoord']))
 		particlesq['ycoord'] = int(round(peakdict['ycoord']))
-		if peakdict['diameter'] is not None:
+		if 'diameter' in peakdict and peakdict['diameter'] is not None:
 			peakdict['diameter'] = round(peakdict['diameter'], 6)
 		particlesq['diameter'] = peakdict['diameter']
 
