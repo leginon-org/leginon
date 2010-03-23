@@ -96,7 +96,11 @@ def getSelectionRunDataFromName(imgdata, runname):
 #===========================
 def getDefocPairParticles(imgdata, selectionid, particlelabel=None):
 	### get defocal pair
-	defimgdata = apDefocalPairs.getDefocusPair(imgdata)
+	if imgdata['preset'] is not None:
+		defimgdata = apDefocalPairs.getDefocusPair(imgdata)
+	else:
+		# For pairs from Leginon Manual Application
+		defimgdata = apDefocalPairs.getManualDefocusPair(imgdata)
 	if defimgdata is None:
 		apDisplay.printWarning("Could not find defocal pair for image %s (id %d)"
 			%(apDisplay.short(imgdata['filename']), imgdata.dbid))

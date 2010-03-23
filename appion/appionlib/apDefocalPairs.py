@@ -13,7 +13,10 @@ from appionlib import apDisplay
 
 
 def getShiftFromImage(imgdata, params):
-	sibling = getDefocusPair(imgdata)
+	if imgdata['preset'] is not None and imgdata['preset']['name'] != 'upload':
+		sibling = getDefocusPair(imgdata)
+	else:
+		sibling = getManualDefocusPair(imgdata)
 	if sibling:
 		shiftpeak = getShift(imgdata, sibling)
 		recordShift(params, imgdata, sibling, shiftpeak)
@@ -40,6 +43,19 @@ def getDefocusPair(imgdata):
 				defocpair=sib
 				break
 	return defocpair
+
+def getManualDefocusPair(imgdata):
+  # This is only for manual defocus pair
+	filename = imgdata['filename']
+	namelist = filename.split('_')
+	if namelist[-1]=='1':
+		namelist[-1] = '2'
+	newfilename = '_'.join(namelist)
+	qimage=leginon.leginondata.AcquisitionImageData(session=imgdata['session'],filename=newfilename)
+	allimages = qimage.query(readimages=False)
+	if len(allimages) != 1:
+		return
+	return allimages[0]
 
 def getShift(imgdata1 ,imgdata2):
 	#assumes images are square
@@ -96,7 +112,10 @@ def insertShift(imgdata,siblingdata,peak):
 	shiftq['shiftx']=peak['shift'][1]
 	shiftq['shifty']=peak['shift'][0]
 	shiftq['scale']=peak['scalefactor']
-	shiftq['correlation']=peak['subpixel peak value']
+	if not peak['subfailed']:
+		shiftq['correlation']=peak['subpixel peak value']
+	else:
+		shiftq['correlation']=0.0
 	apDisplay.printMsg("Inserting shift beteween "+apDisplay.short(imgdata['filename'])+\
 		" and "+apDisplay.short(siblingdata['filename'])+" into database")
 	shiftq.insert()
