@@ -7,7 +7,7 @@
 
 require_once "inc/particledata.inc";
 
-function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon=0) {
+function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon=0, $desc=False) {
 	echo "<!-- BEGIN Appion Loop Param -->\n";
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
 	$nowait = ($_POST[nowait]=="") ? "" : "CHECKED";
@@ -58,6 +58,16 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	echo docpop('outdir','<b>Output Directory:</b>');
 	echo "<br />\n";
 	echo "<input type='text' name='outdir' VALUE='$outdir' size='45'><br />\n";
+
+	// write description entry
+	if ($desc!=False) {
+		if ($desc==1) $desc='';
+		echo "<br>\n";
+		echo docpop('stackdescr','<b>Stack Description:</b>');
+		echo "<br>\n";
+		echo "<textarea name='description' rows='2' cols='50'>$desc</textarea>\n";
+		echo "<br>\n";
+	}
 	echo closeRoundBorder();
 	echo "<br />\n";
 

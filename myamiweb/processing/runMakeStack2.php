@@ -152,7 +152,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 	// Set any existing parameters in form
 	$single = ($_POST['single']) ? $_POST['single'] : 'start.hed';
-	$rundescrval = $_POST['description'];
+	$rundescrval = ($_POST['description']) ? $_POST['description'] : True;
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while (file_exists($sessionpathval.'stack'.($stackruns+1)))
 		$stackruns += 1;
@@ -203,13 +203,13 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 #	echo "<br />\n";
 #	echo "<br />\n";
 
-	echo docpop('stackdescr','<b>Stack Description:</b>');
-	echo "<br/>\n";
-	echo "<textarea name='description' rows='2' cols='50'>$rundescrval</textarea>\n";
-	echo "<br/>\n";
-	echo "<br/>\n";
+#	echo docpop('stackdescr','<b>Stack Description:</b>');
+#	echo "<br/>\n";
+#	echo "<textarea name='description' rows='2' cols='50'>$rundescrval</textarea>\n";
+#	echo "<br/>\n";
+#	echo "<br/>\n";
 
-	createAppionLoopTable($sessiondata, $runnameval, "stacks");
+	createAppionLoopTable($sessiondata, $runnameval, "stacks", 0, $rundescrval);
 
 	echo "<b>Density modifications:</b><br/>";
 
