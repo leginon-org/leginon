@@ -753,11 +753,13 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 						print i, uniqrundatas[0]['stackParams'][i], stparamq[i]
 				for i in uniqstackdatas[0]:
 					print "s =======",i,"========"
-					if uniqstackdatas[0][i] != stackq[i]:
+					if str(uniqstackdatas[0][i]) != str(stackq[i]):
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 					else:
 						print i,uniqstackdatas[0][i],stackq[i]
 				for i in prevrinstack[0]:
+					if i=='stack' or i=='stackRun':
+						continue
 					print "rin =======",i,"========"
 					if prevrinstack[0][i] != rinstackq[i]:
 						print i,prevrinstack[0][i],rinstackq[i]
