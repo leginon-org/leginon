@@ -363,6 +363,7 @@ def getSecureFile(msg=True):
 		"/usr/lib64/xserver/SecurityPolicy",
 		"/usr/X11R6/lib/X11/xserver/SecurityPolicy",
 		"/usr/lib/xserver/SecurityPolicy",
+		"/etc/X11/xserver/SecurityPolicy"
 	]
 	for securfile in filelist:
 		if os.path.isfile(securfile):
