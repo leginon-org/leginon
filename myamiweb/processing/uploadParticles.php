@@ -34,7 +34,6 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 
 	// Set any existing parameters in form
 	$diam = ($_POST['diam']) ? $_POST['diam'] : '';
-	$description = $_POST['description'];
 
 	$javafunctions="<script src='../js/viewer.js'></script>\n";
 	$javafunctions .= writeJavaPopupFunctions('appion');
@@ -87,22 +86,16 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 	echo "<INPUT TYPE='text' NAME='particles' VALUE='$particles' SIZE='55'/>\n";
 	echo "<br>\n";			
 
-	echo "<br/>\n";
-
-	echo "Particle Description:<br>";
-	echo "<TEXTAREA NAME='description' ROWS='3' COLS='70'>$description</TEXTAREA>";
-
 	echo "</TD></tr><TR><TD VALIGN='TOP'>";
 
 	echo "<br>\n";
+	echo docpop("diameter", "Particle Diameter");
+	echo "<INPUT TYPE='text' NAME='diam' SIZE='5' VALUE='$diam'>\n";
+	echo "<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
+	echo "<br><br>\n";
+
 	echo docpop("particlescaling","Particle selection scaling:");
 	echo " <input type='text' name='scale' size='3' value='$scale'>\n";
-	echo "<br><br>\n";
-	echo "Particle Diameter (for imageviewer display only):<br>\n"
-		."<INPUT TYPE='text' NAME='diam' SIZE='5' VALUE='$diam'>\n"
-		."<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
-	echo "<br/>\n";
-
 	echo "<br/>\n";
 
 	echo "<br/>\n";
@@ -121,13 +114,10 @@ function runUploadParticles() {
 	$particles = $_POST['particles'];
 	$diam=$_POST['diam'];
 	$scale=$_POST['scale'];
-	$description=$_POST['description'];
 	$sessionname = $_POST['sessionname'];
 
 	// make sure box files are entered
 	if (!$particles) createUploadParticlesForm("<b>Error:</b> Specify particle files for uploading");
-	//make sure a description is provided
-	if (!$description) createUploadParticlesForm("<B>ERROR:</B> Enter a brief description of the particle selection");
 	//make sure a diam was provided
 	if (!$diam) createUploadParticlesForm("<B>ERROR:</B> Enter the particle diameter");
 
@@ -144,9 +134,8 @@ function runUploadParticles() {
 	$command.="--runname=$runname ";
 	$command.="--files=\"$particles\" ";
 	$command.="--diam=$diam ";
-	$command.="--description=\"$description\" ";
 	$command.="--rundir=$rundir ";
-	if ($scale) $command.="--scale=$scale ";
+	if ($scale) $command.="--bin=$scale ";
 	$command.="--commit ";
 
 	// submit job to cluster
@@ -191,8 +180,7 @@ function runUploadParticles() {
 	$command
 	</TD></tr>
 	<TR><td>diam</TD><td>$diam</TD></tr>
-	<TR><td>session</TD><td>$session</TD></tr>
-	<TR><td>description</TD><td>$description</TD></tr>";
+	<TR><td>session</TD><td>$session</TD></tr>";
 
 	echo"
 	</table>\n";
