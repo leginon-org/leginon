@@ -2208,8 +2208,8 @@ class particledata {
 	}
 
 	function getStackParticles ($stackId) {
-		$q= "SELECT * "
-			."FROM `ApStackParticlesData` "
+		$q= "SELECT stackpart.mean AS mean, stackpart.stdev AS stdev "
+			."FROM `ApStackParticlesData` AS stackpart "
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
