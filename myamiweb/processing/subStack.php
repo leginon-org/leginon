@@ -119,11 +119,9 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	
 	//query the database for parameters
 	$particle = new particledata();
-	
 
 	# get stack name
 	$stackParams = $particle->getStackParams($stackId);
-	$stackParts = $particle->getStackParticles($stackId);
 	$nump=$particle->getNumStackParticles($stackId);
 	$filename = $stackParams['path'].'/'.$stackParams['name'];
 

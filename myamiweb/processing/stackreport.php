@@ -40,7 +40,6 @@ $particle = new particledata();
 
 	echo "<table cellspacing='1' cellpadding='2'><tr><td>";
 	echo "<span class='datafield0'>Total particles for $runparams[stackRunName]: </span></td><td>$nump</td></tr></table>\n";
-	$stackparts = $particle->getStackParticles($stackId);
 
 	$stackfile=$s['path']."/".$s['name'];
 	echo '<span style="font-size:18px">View Stack: <a target="stackview" href="viewstack.php?stackId='.$stackId.'&file='.$stackfile.'">'.$s['name'].'</a></span><br>'."\n";	
