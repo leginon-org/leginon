@@ -1286,7 +1286,7 @@ def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
 	mySpider.close()
 
 	if not os.path.isfile(dendrogramfile):
-		apDisplay.printError("dendrogram creation (CL HC) failed")
+		apDisplay.printError("SPIDER dendrogram creation (CL HC) failed, too many particles??")
 	apImage.convertPostscriptToPng("cluster/dendrogram.ps", "dendrogram.png")
 
 	return dendrogramfile
