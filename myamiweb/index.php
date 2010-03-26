@@ -56,6 +56,7 @@ login_header(PROJECT_TITLE);
 
 
 <center><h1><?php echo PROJECT_TITLE; ?></h1></center>
+<a class="header" href="viewerxml.php">[ test Dataset ]</a>
 <hr/>
 <noscript>
 <?php echo divtitle("<center>Please enable Javascript in you Browser</center>"); ?>

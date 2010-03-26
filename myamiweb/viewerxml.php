@@ -9,6 +9,7 @@
  */
 
 require 'inc/viewer.inc';
+require 'inc/login.inc';
 require 'inc/xmldata.inc';
 
 
@@ -40,9 +41,9 @@ $view1->setSize(512);
 $viewer->add($view1);
 
 $javascript .= $viewer->getJavascriptInit();
-viewer_header('image viewer', $javascript, 'initviewer()');
+login_header('image viewer', $javascript, 'initviewer()');
 ?>
 <a class="header" target="xmldata" href="test/viewerdata.xml">View XML data &raquo;</a>
 <?$viewer->display();
-viewer_footer();
+login_footer();
 ?>
