@@ -126,6 +126,7 @@ class ChimSnapShots(object):
 		try:
 			rmin, rmax = rc.value_range(surf.surfacePieces[0])
 		except:
+			self.writeMessageToLog("using old Chimera radial method")
 			#keep for older version of chimera, e.g. v1.2509
 			vertices, triangles = surf.surfacePieces[0].geometry
 			rmin, rmax = rc.value_range(vertices, vertex_xform=None)
@@ -142,9 +143,12 @@ class ChimSnapShots(object):
 				#keep for older version of chimera, e.g. v1.2509
 				vertices, triangles = surf.surfacePieces[0].geometry
 				rmin, rmax = rc.value_range(vertices, vertex_xform=None)
+		self.writeMessageToLog("found r_max value of %.3f"%(rmax))
 		## ten percent bigger to ensure that entire particle is in frame
-		chimera.viewer.viewSize = 1.1*rmax/self.zoom
+		viewsize = 1.1*rmax/self.zoom
+		chimera.viewer.viewSize = viewsize
 		#self.runChimCommand('scale %.3f' % self.zoom)
+		self.writeMessageToLog("set view size to %.3f"%(viewsize))
 
 	# -----------------------------------------------------------------------------
 	def getColors(self):
@@ -650,56 +654,63 @@ class ChimSnapShots(object):
 		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_cylinder(s)
+
+		dfold = int(self.symmetry[1:])
+		dangle = 180.0/dfold
+
 		self.writeMessageToLog("turn: get top view")
 		self.runChimCommand('turn x 180')
 		self.save_image(self.volumepath+'.1.png')
 
-		"""
-		### hack
-		self.runChimCommand('turn x -30')	
-		self.save_image(self.volumepath+'.30deg1.png')
-		self.runChimCommand('turn y 20')
-		self.save_image(self.volumepath+'.30deg2.png')
-
-		### unhack
-		self.runChimCommand('turn y -20')
-		self.runChimCommand('turn x 30')
-		"""
-
-		### resume
 		self.writeMessageToLog("turn: get tilt view")
 		self.runChimCommand('turn x -45')
 		self.save_image(self.volumepath+'.2.png')
+
 		self.writeMessageToLog("turn: get side view")
 		self.runChimCommand('turn x -45')
-		self.save_image(self.volumepath+'.3.png')
-		dfold = int(self.symmetry[1:])
-		dangle = 180.0/dfold
+		self.save_image(self.volumepath+'.4.png')
+
 		self.writeMessageToLog("turn about dsym: %.3f"%(dangle))
 		self.runChimCommand('turn y %.3f'%(dangle))
-		self.save_image(self.volumepath+'.4.png')
+		self.save_image(self.volumepath+'.5.png')
+
+		self.writeMessageToLog("turn back to tilt")
+		self.runChimCommand('turn x 45')
+		self.save_image(self.volumepath+'.3.png')
 
 	# -----------------------------------------------------------------------------
 	def snapshot_csym(self):
 		self.writeMessageToLog("snapshot_csym")
 		self.hideDust(10)
 		for s in self.surfaces:
-			self.color_surface_height(s)
+			self.color_surface_cylinder(s)
+
+		cfold = int(self.symmetry[1:])
+		cangle = 180.0/cfold
+
 		self.writeMessageToLog("turn: get top view")
 		self.runChimCommand('turn x 180')
 		self.save_image(self.volumepath+'.1.png')
+
 		self.writeMessageToLog("turn: get tilt view")
 		self.runChimCommand('turn x -45')
 		self.save_image(self.volumepath+'.2.png')
+
 		self.writeMessageToLog("turn: get side view")
 		self.runChimCommand('turn x -45')
 		self.save_image(self.volumepath+'.3.png')
+
+		self.writeMessageToLog("turn about dsym: %.3f"%(cangle))
+		self.runChimCommand('turn y %.3f'%(cangle))
+		self.save_image(self.volumepath+'.4.png')
+
 		self.writeMessageToLog("turn: get tilt 2")
 		self.runChimCommand('turn x -45')
-		self.save_image(self.volumepath+'.4.png')
+		self.save_image(self.volumepath+'.5.png')
+
 		self.writeMessageToLog("turn: bottom view")
 		self.runChimCommand('turn x -45')
-		self.save_image(self.volumepath+'.5.png')
+		self.save_image(self.volumepath+'.6.png')
 
 	# -----------------------------------------------------------------------------
 	def runChimCommand(self, cmd):
