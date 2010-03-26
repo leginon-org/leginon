@@ -242,7 +242,7 @@ class PickerApp(wx.App):
 		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
 		self.buttonrow.Add(self.clear, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
-		self.particleCutoff = wx.Button(self.frame, -1, '&Cutoff')
+		self.particleCutoff = wx.Button(self.frame, -1, '&Cutoff...')
 		self.Bind(wx.EVT_BUTTON, self.onParticleCutoff, self.particleCutoff)
 		self.buttonrow.Add(self.particleCutoff, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
@@ -250,7 +250,7 @@ class PickerApp(wx.App):
 		self.frame.Bind(wx.EVT_BUTTON, self.onMaskRegion, self.maskregion)
 		self.buttonrow.Add(self.maskregion, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
-		self.xferpick = wx.Button(self.frame, -1, '&Xfer pick')
+		self.xferpick = wx.Button(self.frame, -1, '&Xfer picks')
 		self.frame.Bind(wx.EVT_BUTTON, self.onXferPick, self.xferpick)
 		self.buttonrow.Add(self.xferpick, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
@@ -262,7 +262,7 @@ class PickerApp(wx.App):
 		self.frame.Bind(wx.EVT_BUTTON, self.onRepairList, self.repairlist)
 		self.buttonrow.Add(self.repairlist, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
-		self.reset = wx.Button(self.frame, wx.ID_RESET, 'Reset')
+		self.reset = wx.Button(self.frame, wx.ID_RESET, 'Reset...')
 		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
 		self.buttonrow.Add(self.reset, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
@@ -271,9 +271,6 @@ class PickerApp(wx.App):
 		"""
 		These are buttons related to the standalone version of TiltPicker
 		"""
-		#spacer
-		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
-
 		self.shift_dialog = tiltDialog.GuessShiftDialog(self)
 		self.shift = wx.Button(self.frame,-1, '&Get Shift')
 		self.frame.Bind(wx.EVT_BUTTON, self.onCheckGuessShift, self.shift)
