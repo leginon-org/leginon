@@ -18,7 +18,7 @@ from appionlib.apTilt import apTiltPair
 from appionlib import apImagicFile
 import sinedon
 
-class tiltStackAlign(appionScript.AppionScript):
+class tiltStackSync(appionScript.AppionScript):
 	def __init__(self):
 		"""
 		Need to connect to DB server before moving forward
@@ -51,7 +51,7 @@ class tiltStackAlign(appionScript.AppionScript):
 	#=====================
 	def setRunDir(self):
 		stackpath = self.tiltstackdata['path']['path']
-		self.params['rundir'] = os.path.abspath(os.path.join(stackpath, "../alignedstacks", self.params['runname']))
+		self.params['rundir'] = os.path.abspath(os.path.join(stackpath, "../tiltsync", self.params['runname']))
 
 	#=====================
 	def getPartcileLists(self):
@@ -73,7 +73,7 @@ class tiltStackAlign(appionScript.AppionScript):
 
 		parttree = self.parseResults(results1, results2)
 
-		f = open("partalign-"+self.timestamp+".dat", "w")
+		f = open("tiltsync-"+self.timestamp+".dat", "w")
 		count = 0
 		for partdict in parttree:
 			count += 1
@@ -226,7 +226,7 @@ class tiltStackAlign(appionScript.AppionScript):
 			tiltparticle['particleNumber'] = count
 			tiltparticle['stack'] = tiltstack
 			tiltparticle.insert()
-		apDisplay.printMsg("\n%d particles have been inserted into the tilt aligned stacks"%(count))
+		apDisplay.printMsg("\n%d particles have been inserted into the tilt synchronized stacks"%(count))
 
 		# Insert runs in stack
 		apDisplay.printMsg("Inserting Runs in Stack")
@@ -354,7 +354,7 @@ class tiltStackAlign(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	tiltstacks = tiltStackAlign()
+	tiltstacks = tiltStackSync()
 	tiltstacks.start()
 	tiltstacks.close()
 
