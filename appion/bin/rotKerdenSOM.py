@@ -49,7 +49,6 @@ import logging
 LOG_FILENAME = './rotKerdenSOM.log'
 logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG,)
 
-
 #======================
 #======================
 class rotKerdenSOMScript(appionScript.AppionScript):
