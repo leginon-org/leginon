@@ -177,9 +177,10 @@ class UploadReconScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			reconrunid = self.params['refinementRun'].dbid
 			stackid = self.params['stack'].dbid
-			apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
-			eulerjump = apEulerJump.ApEulerJump()
-			eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, stackid)
+			if self.params['oneiter'] is None:
+				apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
+				eulerjump = apEulerJump.ApEulerJump()
+				eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, stackid)
 			### coran keep plot
 			if self.params['package']=='EMAN/SpiCoran':
 				apCoranPlot.makeCoranKeepPlot(reconrunid)
