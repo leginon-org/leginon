@@ -50,6 +50,9 @@ def getAppionDirectory():
 def makeTimestamp():
 	datestamp = time.strftime("%y%b%d").lower()
 	hourstamp = lowercase[(time.localtime()[3])%26]
+	if hourstamp == "x":
+		### SPIDER does not like x's
+		hourstamp = "z"
 	#mins = time.localtime()[3]*12 + time.localtime()[4]
 	#minstamp = lowercase[mins%26]
 	minstamp = "%02d"%(time.localtime()[4])
