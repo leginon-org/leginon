@@ -121,6 +121,9 @@ class ImageLoader(appionLoop2.AppionLoop):
 			if oldprojectid != self.params['projectid']:
 				apDisplay.printError("You cannot assign an existing session (PID %d) to a different project (PID %d)"%
 					(oldprojectid, self.params['projectid']))
+			if self.params['rundir'] is not None and self.params['rundir'] != sessiondata['image path']:
+				apDisplay.printError("Specified Rundir is different from current session path\n%s\n%s"
+					%( self.params['rundir'], sessiondata['image path']))
 		else:
 			### METHOD 2 : create new session
 			apDisplay.printColor("Creating a new session", "cyan")
