@@ -344,7 +344,7 @@ class tiltStackSync(appionScript.AppionScript):
 			apFile.removeStack(stackname, warn=False)
 
 		### upload results
-		if False:
+		if self.params['commit'] is True:
 			self.uploadResults()
 
 	#=====================
