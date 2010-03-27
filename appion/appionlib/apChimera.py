@@ -3,8 +3,10 @@
 ###############
 
 import os
+import math
 import time
 import glob
+import numpy
 import shutil
 import random
 import colorsys
@@ -79,7 +81,7 @@ def setVolumeMass(volumefile, apix=1.0, mass=1.0, rna=0.0):
 #=========================================
 #=========================================
 def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
-		contour=None, zoom=1.0, sym=None, color=None, silhouette=True, mass=None):
+		contour=None, zoom=1.0, sym='c1', color=None, silhouette=True, mass=None):
 	if isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	if box is None:
@@ -93,25 +95,41 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	filtres = 0.6*res
 	shrinkby = 1
 	if box is not None and box > 250:
-		if box % 4 == 0:
-			shrinkby = 2
-		elif box % 6 == 0:
-			shrinkby = 3
-		elif box % 10 == 0:
-			shrinkby = 5
+		shrinkby = int(math.ceil(box/160.0))
+		if box % (2*shrinkby) == 0:
+			### box is divisible by shrink by
+			lpcmd = ('proc3d %s %s apix=%.3f tlp=%.2f shrink=%d origin=0,0,0 norm=0,1'
+				% (density, tmpf, apix, filtres, shrinkby))
 		else:
-			apDisplay.printWarning('This box size might cause error in shrinking with low pass filtering')
-		lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f shrink=%d origin=0,0,0 norm=0,1' % (density, tmpf, apix, filtres,shrinkby))
+			### box not divisible by shrink by, need a clip
+			clip = math.floor(box/shrinkby/2.0)*2*shrinkby
+			lpcmd = ('proc3d %s %s apix=%.3f tlp=%.2f shrink=%d origin=0,0,0 norm=0,1 clip=%d,%d,%d'
+				% (density, tmpf, apix, filtres, shrinkby, clip, clip, clip))
 	else:
-		lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0 norm=0,1' % (density, tmpf, apix, filtres))
+		lpcmd = ('proc3d %s %s apix=%.3f tlp=%.2f origin=0,0,0 norm=0,1'
+			% (density, tmpf, apix, filtres))
 	apDisplay.printMsg("Low pass filtering model for images")
 	proc = subprocess.Popen(lpcmd, shell=True)
 	proc.wait()
+
+	### flatten solvent
+	vol = mrc.read(tmpf)
+	numpy.where(vol < 0, 0.0, vol)
+	mrc.write(vol, tmpf)
+	del vol
+
+	### set chimera to use temp volume
 	os.environ['CHIMTEMPVOL'] = tmpf
 
+	### contour volume to mass
 	if mass is not None:
 		setVolumeMass(tmpf, apix*shrinkby, mass)
 		contour = 1.0
+
+	### set pixelsize and origin
+	recmd = "proc3d %s %s apix=%.3f origin=0,0,0"%(tmpf, tmpf, apix)
+	proc = subprocess.Popen(recmd, shell=True)
+	proc.wait()
 
 	### render images
 	renderSlice(density, box=box, tmpfile=tmpf, sym=sym)
@@ -119,7 +137,7 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 		renderAnimation(density, contour, zoom, sym, color, silhouette)
 	elif chimtype != 'animate':
 		renderSnapshots(density, contour, zoom, sym, color, silhouette)
-	apFile.removeFile(tmpf)
+	#apFile.removeFile(tmpf)
 
 #=========================================
 #=========================================
