@@ -112,7 +112,14 @@ class ChimSnapShots(object):
 		self.setZoom()
 
 		### This does not work on CentOS and Chimera v1.2509, but does with Chimera v1.4
-		if float((chimera.version.release).split('_')[0]) > 1.3:
+		result = re.search("([0-9]\.[0-9]*)", chimera.version.release)
+		if not result or not result.groups():
+			self.writeMessageToLog("Failed to get numeric version of Chimera: %s"
+				%(chimera.version.release))
+			sys.exit(1)
+		version = float(result.groups()[0])
+		self.writeMessageToLog("Chimera numeric version: %lf"%(version))
+		if version > 1.3:
 			### draw scale bar if version greater than 1.3
 			self.drawScaleBar()
 		else:
