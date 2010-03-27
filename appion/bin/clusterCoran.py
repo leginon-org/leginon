@@ -12,7 +12,7 @@ from appionlib import apFile
 from appionlib import apStack
 from appionlib import apEMAN
 from appionlib import apParam
-from appionlib.apSpider import alignment
+from appionlib.apSpider import classification
 from appionlib.apSpider import operations
 from appionlib import appiondata
 
@@ -171,7 +171,7 @@ class ClusterCoranScript(appionScript.AppionScript):
 			rundir = "cluster"
 			apParam.createDirectory(rundir)
 			### step 1: use coran data to create hierarchy
-			dendrogramfile = alignment.hierarchClusterProcess(numpart, factorlist, corandata, rundir, dataext=".spi")
+			dendrogramfile = classification.hierarchClusterProcess(numpart, factorlist, corandata, rundir, dataext=".spi")
 			### step 2: asssign particles to groups based on hierarchy
 
 		for item in  numclasslist:
@@ -185,13 +185,13 @@ class ClusterCoranScript(appionScript.AppionScript):
 			#run the classification
 			if self.params['method'] == "kmeans":
 				apDisplay.printMsg("Using the k-means clustering method")
-				classavg,classvar = alignment.kmeansCluster(alignedstack, numpart, numclasses=numclass,
+				classavg,classvar = classification.kmeansCluster(alignedstack, numpart, numclasses=numclass,
 					timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
 			else:
 				apDisplay.printMsg("Using the hierarch clustering method")
-				classavg,classvar = alignment.hierarchClusterClassify(alignedstack, dendrogramfile, numclass,
+				classavg,classvar = classification.hierarchClusterClassify(alignedstack, dendrogramfile, numclass,
 					self.timestamp, rundir, dataext=".spi")
-				#classavg,classvar = alignment.hierarchCluster(alignedstack, numpart, numclasses=numclass,
+				#classavg,classvar = classification.hierarchCluster(alignedstack, numpart, numclasses=numclass,
 				#	timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
 			if self.params['commit'] is True:
 				self.insertClusterStack(classavg, classvar, numclass, insert=True)

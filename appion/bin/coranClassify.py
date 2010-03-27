@@ -10,13 +10,12 @@ import shutil
 #appion
 from appionlib import appionScript
 from appionlib import apDisplay
-from appionlib import apAlignment
 from appionlib import apFile
 from appionlib import apTemplate
 from appionlib import apStack
 from appionlib import apProject
 from appionlib import apEMAN
-from appionlib.apSpider import alignment
+from appionlib.apSpider import classification
 from appionlib import appiondata
 
 #=====================
@@ -162,20 +161,20 @@ class CoranClassifyScript(appionScript.AppionScript):
 			numpart = self.getNumAlignedParticles()
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 
-		esttime = apAlignment.estimateTime(numpart, maskpixrad)
+		esttime = classification.estimateTime(numpart, maskpixrad)
 		apDisplay.printColor("Running spider this can take awhile, estimated time: "+\
 			apDisplay.timeString(esttime),"cyan")
 
 		### do correspondence analysis
 		corantime = time.time()
-		self.contriblist = alignment.correspondenceAnalysis( alignedstack,
+		self.contriblist = classification.correspondenceAnalysis( alignedstack,
 			boxsize=boxpixdiam, maskpixrad=maskpixrad,
 			numpart=numpart, numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
 
 		### make dendrogram
 		dendrotime = time.time()
-		alignment.makeDendrogram(numfactors=min(3,self.params['numfactors']))
+		classification.makeDendrogram(numfactors=min(3,self.params['numfactors']))
 		dendrotime = time.time() - dendrotime
 
 		inserttime = time.time()
