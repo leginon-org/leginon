@@ -1,0 +1,21 @@
+svn checkout myami/trunk to desktop
+
+python setup.py install:
+	imageviewer
+	leginon
+	pyami
+	sinedon
+	pyscope
+
+numextension.pyd stays from previous install, until we can recompile
+libCV needs wrapper package called libcv with __init__.py:
+	from libCV import *
+
+config:
+	leginon:
+		leginon.cfg
+	sinedon:
+		sinedon.cfg
+	pyscope
+		instruments.cfg
+		tietz.py:   make camera size 2048x2048
