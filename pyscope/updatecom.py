@@ -1,15 +1,15 @@
 import os
 from win32com.client import selecttlb
-from win32com.client import makepy
+from win32com.client import gencache
 
 info = [
-	('TEM Scripting', 'tecnaicom.py', 'Tecnai Scripting'),
-	('Tecnai Scripting', 'tecnaicom.py', 'Tecnai Scripting'),
-        ('TOMMoniker 1.0 Type Library', 'tomcom.py', 'TOM Moniker'),
-	('Low Dose Server Library', 'ldcom.py', 'Tecnai Low Dose Kit'),
-	('adaExp Library', 'adacom.py', 'Tecnai Exposure Adaptor'),
-	('TecnaiCCD 1.0 Type Library', 'gatancom.py', 'Gatan CCD Camera'),
-	('CAMC4 1.0 Type Library', 'tietzcom.py', 'Tietz CCD Camera'),
+	('TEM Scripting', 'TEM Scripting'),
+	('Tecnai Scripting', 'Tecnai Scripting'),
+        ('TOMMoniker 1.0 Type Library', 'TOM Moniker'),
+	('Low Dose Server Library', 'Tecnai Low Dose Kit'),
+	('adaExp Library', 'Tecnai Exposure Adaptor'),
+	('TecnaiCCD 1.0 Type Library', 'Gatan CCD Camera'),
+	('CAMC4 1.0 Type Library', 'Tietz CCD Camera'),
 ]
 items = selecttlb.EnumTlbs()
 
@@ -19,33 +19,28 @@ def getTlbFromDesc(desc):
 			return item
 	return None
 
-def makeFile(desc, filename):
+def makeFile(desc):
 	typelibInfo = getTlbFromDesc(desc)
-
 	if typelibInfo is None:
 		print 'Error, cannot find typelib for "%s"' % desc
 		return
 
-	try:
-		file = open(filename, 'w')
-	except:
-		print 'Error, cannot create file "%s"' % filename
-		return
+	clsid = typelibInfo.clsid
+	major = int(typelibInfo.major)
+	minor = int(typelibInfo.minor)
+	lcid = typelibInfo.lcid
 
 	try:
-		makepy.GenerateFromTypeLibSpec(typelibInfo, file, progressInstance=makepy.SimpleProgress(0))
+		gencache.MakeModuleForTypelib(clsid, lcid, major, minor)
 	except:
-		print 'failed GenerateFromTypeLibSpec'
+		print 'failed MakeModuleForTypelib'
 		return
-	print '%s -> %s' % (desc, filename)
 
-def run(path=None):
+def run():
 	print 'Generating .py files from type libraries...'
-	for desc, filename, message in info:
-		if path is not None:
-			filename = os.path.join(path, filename)
+	for desc, message in info:
 		print message + ':',
-		makeFile(desc, filename)
+		makeFile(desc)
 	print 'Done.'
 	raw_input('enter to quit.')
 

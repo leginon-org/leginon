@@ -17,27 +17,6 @@ try:
 	import pythoncom
 	import win32com.client
 	import winerror
-	try:
-		try:
-			import tecnaicom
-		except ImportError:
-			from pyscope import tecnaicom
-	except ImportError:
-		pass
-	try:
-		try:
-			import ldcom
-		except ImportError:
-			from pyscope import ldcom
-	except ImportError:
-		pass
-	try:
-		try:
-			import adacom
-		except ImportError:
-			from pyscope import adacom
-	except ImportError:
-		adacom = None
 except ImportError:
 	pass
 
@@ -398,19 +377,19 @@ class Tecnai(tem.TEM):
 	
 	def getBeamShift(self):
 		value = {'x': None, 'y': None}
-		value['x'] = float(self.tecnai.Illumination.Shift.X)
-		value['y'] = float(self.tecnai.Illumination.Shift.Y)
+		value['x'] = float(self.tom.Illumination.BeamShiftPhysical.X)
+		value['y'] = float(self.tom.Illumination.BeamShiftPhysical.Y)
 
 		return value
 
 	def setBeamShift(self, vector, relative = 'absolute'):
 		if relative == 'relative':
 			try:
-				vector['x'] += self.tecnai.Illumination.Shift.X
+				vector['x'] += self.tom.Illumination.BeamShiftPhysical.X
 			except KeyError:
 				pass
 			try:
-				vector['y'] += self.tecnai.Illumination.Shift.Y
+				vector['y'] += self.tom.Illumination.BeamShiftPhysical.Y
 			except KeyError:
 				pass
 		elif relative == 'absolute':
@@ -418,7 +397,7 @@ class Tecnai(tem.TEM):
 		else:
 			raise ValueError
 		
-		vec = self.tecnai.Illumination.Shift
+		vec = self.tom.Illumination.BeamShiftPhysical
 		try:
 			vec.X = vector['x']
 		except KeyError:
@@ -427,7 +406,7 @@ class Tecnai(tem.TEM):
 			vec.Y = vector['y']
 		except KeyError:
 			pass
-		self.tecnai.Illumination.Shift = vec
+		self.tom.Illumination.BeamShiftPhysical = vec
 	
 	def getImageShift(self):
 		value = {'x': None, 'y': None}
