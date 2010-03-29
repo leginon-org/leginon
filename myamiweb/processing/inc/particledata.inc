@@ -1361,7 +1361,18 @@ class particledata {
 	}
 
 	function getStackSelector($stackIds,$stackidval,$onchange) {
-		/* THIS FUNCTION WAS MOVED TO summarytables.inc */
+		/* THIS FUNCTION SHOULD BE MOVED TO summarytables.inc */
+		# $stackinfo[0] = stackid
+		# $stackinfo[1] = pixel size in angstrums / pixels
+		# $stackinfo[2] = stack boxsize (length in either direction) in pixels
+		# $stackinfo[3] = number of particles in the stack
+		# $stackinfo[4] = appion stackfile path
+		# $stackinfo[5] = Imagic stack header file name, including extension but not path
+		# $stackinfo[6] = Imagic stack data file name, including extension but not path
+		# examples: 
+		# $stackinfo[4] = '/your_disk/appion/09aug267/stacks/stack1'
+		# $stackinfo[5] = 'start.hed'
+		# $stackinfo[6] = 'start.img'
 		echo "<SELECT NAME='stackval'";
 		if ($onchange) echo "onchange='".$onchange."'";
 		echo ">\n";
