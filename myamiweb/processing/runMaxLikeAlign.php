@@ -38,7 +38,6 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	// connect to particle database
 	$particle = new particledata();
 	$stackIds = $particle->getStackIds($sessionId);
-	$maxlikeIds = $particle->getMaxLikeIds($sessionId, True);
 	$alignrunsarray = $particle->getAlignStackIds($sessionId);
 	$alignruns = ($alignrunsarray) ? count($alignrunsarray) : 0;
 
