@@ -93,7 +93,6 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	$mass = ($_POST['mass']) ? $_POST['mass'] : '';
 	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.0';
 	$filter = ($_POST['filter']) ? $_POST['filter'] : '';
-	$model = ($_POST['model']) ? $_POST['model'] : '';
 	$reconname = ($_POST['reconname']) ? $_POST['reconname'] : '';
 	$description = $_POST['description'];
 	$oneiteration = ($_POST['oneiteration']=="on") ? "CHECKED" : "";
@@ -130,7 +129,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	echo "<tr><td colspan='2'>\n";
 	if ($jobId) {
 		echo "<input type='hidden' name='stack' value='$stackid'>\n";
-		stacksummarytable($stackid, $mini=true);
+		echo stacksummarytable($stackid, $mini=true);
 	} else {
 		echo "Stack:\n";
 		$stackIds = $particle->getStackIds($sessionId);
@@ -141,12 +140,12 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	// Initial Model Info
 	echo "<tr><td colspan='2'>\n";
 	if ($jobId) {
-		echo "<input type='hidden' name='model' value='$modelid'>\n";
-		modelsummarytable($modelid, $mini=true);
+		echo "<input type='hidden' name='modelid' value='$modelid'>\n";
+		echo modelsummarytable($modelid, $mini=true);
 	} else {
 		echo "Initial Model:\n";
 		echo "
-			<SELECT name='model'>
+			<SELECT name='modelid'>
 			<OPTION value=''>Select One</OPTION>\n";
 		$models=$particle->getModelsFromProject($projectId);
 		foreach ($models as $model) {
@@ -267,13 +266,14 @@ function runUploadRecon() {
 	list($stackid,$apix,$boxsz) = split('\|--\|',$_POST['stackval']);
 
 	//make sure a model was chosen
-	$model=$_POST['model'];
-	if ($_POST['model']) $model=$_POST['model'];
-	if (!$model) createUploadReconForm("<B>ERROR:</B> Select the initial model used");
+	$modelid = $_POST['modelid'];
+	if (!$modelid)
+		createUploadReconForm("<B>ERROR:</B> Select the initial model used");
 	
 	//make sure a package was chosen
 	$package=$_POST['package'];
-	if (!$package) createUploadReconForm("<B>ERROR:</B> Enter the reconstruction process used");
+	if (!$package)
+		createUploadReconForm("<B>ERROR:</B> Enter the reconstruction process used");
 
 	//make sure a description was entered
 	$description=$_POST['description'];
@@ -318,7 +318,7 @@ function runUploadRecon() {
 	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--runname=$runid ";
 	$command.="--stackid=$stackid ";
-	$command.="--modelid=$model ";
+	$command.="--modelid=$modelid ";
 	$command.="--package=$package ";
 	if (!$jobId) $command.="--rundir=$runpath ";
 	if ($jobId) $command.="--jobid=$jobId ";
@@ -351,7 +351,7 @@ function runUploadRecon() {
 	</td></tr>
 	<tr><td>run name</td><td>$runid</td></tr>
 	<tr><td>stack ID</td><td>$stackid</td></tr>
-	<tr><td>model</td><td>$model</td></tr>
+	<tr><td>model ID</td><td>$modelid</td></tr>
 	<tr><td>path</td><td>$reconpath</td></tr>
 	<tr><td>jobid</td><td>$jobId</td></tr>
 	<tr><td>snapshot contour</td><td>$contour</td></tr>
