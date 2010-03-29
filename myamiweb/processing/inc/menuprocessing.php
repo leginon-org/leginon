@@ -86,15 +86,6 @@ if ($expId) {
 		$stackruns=count($stackIds);
 	}
 
-	// --- Get NoRef Data
-	if ($stackruns>0) {
-		$norefIds = $particle->getNoRefIds($sessionId);
-		$norefruns=count($norefIds);
-	}
-	else {
-		$norefruns=0;
-	};
-
 	// --- Get Alignment Data
 	if ($stackruns>0) {
 		if ($alignIds = $particle->getAlignStackIds($sessionId)) {
@@ -409,40 +400,6 @@ if ($expId) {
 				'result'=>$tsresults,
 			);
 		}
-	
-		// =======================
-		// old spider alignment
-		// =======================
-
-		// get ref-free alignment stats:
-		$norefresults=array();
-		$norefdone = count($subclusterjobs['norefali']['done']);
-		$norefrun = count($subclusterjobs['norefali']['running']);
-		$norefq = count($subclusterjobs['norefali']['queued']);
-
-		$norefdone = ($norefruns > $norefdone) ? $norefruns : $norefdone;
-
-		// get ref-free alignment stats:
-		$norefclresults=array();
-		$norefcldone = count($subclusterjobs['norefclass']['done']);
-		$norefclrun = count($subclusterjobs['norefclass']['running']);
-		$norefclq = count($subclusterjobs['norefclass']['queued']);
-
-		$done = "<a href='norefsummary.php?expId=$sessionId'>$norefdone complete";
-		$done.= (!$norefcldone==0) ? " ($norefcldone avg)" : "";
-		$done.= "</a>";
-		$norefresults[] = ($norefdone==0) ? "" : $done;
-		$norefresults[] = ($norefrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=norefali'>$norefrun align running</a>";
-		$norefresults[] = ($norefclrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=norefclass'>$norefclrun avg running</a>";
-		$norefresults[] = ($norefq==0) ? "" : "$norefq align queued";
-		$norefresults[] = ($norefclq==0) ? "" : "$norefq avg queued";
-
-		$data[] = array(
-			'action' => array($action, $celloption),
-			'result' => array(""),
-			'newrun' => array($nruns, $celloption),
-		);
-
 	}
 
 	// ab initio reconstruction tools
@@ -478,7 +435,7 @@ if ($expId) {
 	}
 
 	/* EMAN Common Lines */
-	if ($aligndone >= 1 || $norefdone >= 1 ) {
+	if ($aligndone >= 1 ) {
 		$clinesqueue = count($subclusterjobs['createModel']['queued']);
 		$clinesrun = count($subclusterjobs['createModel']['running']);
 		$clinesresults[] = ($clinesrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$clinesrun running</a>";
@@ -488,28 +445,6 @@ if ($expId) {
 			'result'=>$clinesresults,
 		);
 
-	}
-
-	if (!$HIDE_IMAGIC) {
-		/* IMAGIC Common Lines */
-		$imagiccluster3d0=$particle->get3d0ClusterModelsFromSessionId($sessionId);
-		$imagicts3d0=$particle->get3d0TemplateStackModelsFromSessionId($sessionId);
-		if ($clusterdone > 0 || $tsdone_session > 0) {
-			if (is_array($imagiccluster3d0) && is_array($imagicts3d0)) $imagic3d0data = array_merge($imagiccluster3d0,$imagicts3d0);
-			elseif (is_array($imagiccluster3d0) && !is_array($imagicts3d0)) $imagic3d0data = $imagiccluster3d0;
-			else $imagic3d0data = $imagicts3d0;
-			$numimagic3d0 = count($imagic3d0data);
-			$threed0done = count($subclusterjobs['create3d0']['done']);
-			$threed0run = count($subclusterjobs['create3d0']['running']);
-			$threed0queue = count($subclusterjobs['create3d0']['queued']);
-			$threedresults[] = ($numimagic3d0 == 0) ? "" : "<a href='imagic3dRefine.php?expId=$sessionId&3d0=true'>$numimagic3d0 complete</a>";
-			$threedresults[] = ($threed0run == 0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=create3d0'>$threed0run running</a>";
-			
-			$nruns[] = array(
-				'name'=>"<a href='selectClassAveragesFor3d0.php?expId=$sessionId'>IMAGIC Common Lines</a>",
-				'result'=>$threedresults
-			);
-		}
 	}
 
 	if ( (array)$nruns ) {
