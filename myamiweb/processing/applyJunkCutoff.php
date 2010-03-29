@@ -40,7 +40,7 @@ function createApplyJunkCutoffForm($extra=false, $title='sortJunkStack.py Launch
 
 	// Set any existing parameters in form
 	$description = $_POST['description'];
-	$runid = ($_POST['runid']) ? $_POST['runid'] : 'sortjunksubstack'.$stackId;
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'sortjunksubstack'.$stackId;
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
 	if (!$stackId) $stackId = $_POST['stackId'];
 
@@ -82,8 +82,8 @@ function createApplyJunkCutoffForm($extra=false, $title='sortJunkStack.py Launch
 					ID: $stackId<br />
                                         <input type='hidden' name='stackId' value='$stackId'>
 					<br />\n";
-	echo docpop('runid','<b>Run Name:</b> ');
-	echo "<input type='text' name='runid' value='$runid'><br />\n";
+	echo docpop('runname','<b>Run Name:</b> ');
+	echo "<input type='text' name='runname' value='$runname'><br />\n";
 	echo "<b>Particle number:</b><br />\n";
 	echo "<input type='text' name='partnum' value='$partnum' width='5'><br />\n";
 	echo "<b>Description:</b><br />\n";
@@ -111,7 +111,7 @@ function createApplyJunkCutoffForm($extra=false, $title='sortJunkStack.py Launch
 function runApplyJunkCutoff() {
 	$expId = $_GET['expId'];
 
-	$runid=$_POST['runid'];
+	$runname=$_POST['runname'];
 	$partnum=$_POST['partnum'];
 	$stackId=$_POST['stackId'];
 	$outdir=$_POST['outdir'];
@@ -121,22 +121,22 @@ function runApplyJunkCutoff() {
 
 	//make sure a description is provided
 	$description=$_POST['description'];
-	if (!$runid) createApplyJunkCutoffForm("<b>ERROR:</b> Specify a runid");
+	if (!$runname) createApplyJunkCutoffForm("<b>ERROR:</b> Specify a runname");
 	if (!$partnum) createApplyJunkCutoffForm("<b>ERROR:</b> Specify a particle number");
 	if (!$description) createApplyJunkCutoffForm("<B>ERROR:</B> Enter a brief description");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$procdir = $outdir.$runid;
+	$procdir = $outdir.$runname;
 
 	//putting together command
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="-n $runid ";
+	$command.="--runname=$runname ";
 	$command.="--no-meanplot ";
 	$command.="--sorted ";
 	$command.="--last $partnum ";
-	$command.="-s $stackId ";
-	$command.="-d \"$description\" ";
+	$command.="--old-stack-id=$stackId ";
+	$command.="--description=\"$description\" ";
 	$command.= ($commit=='on') ? "-C " : "--no-commit ";
 
 	// submit job to cluster
@@ -146,7 +146,7 @@ function runApplyJunkCutoff() {
 
 		if (!($user && $password)) createApplyJunkCutoffForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
 		// if errors:
 		if ($sub) createApplyJunkCutoffForm("<b>ERROR:</b> $sub");
 		exit();
@@ -158,10 +158,10 @@ function runApplyJunkCutoff() {
 	echo"
 	<table width='600' border='1'>
 	<tr><td colspan='2'>
-	<b>sortJunkStack.py command:</b><br />
+	<b>subStack.py command:</b><br />
 	$command
 	</td></tr>\n";
-	echo "<tr><td>run id</td><td>$runid</td></tr>\n";
+	echo "<tr><td>run id</td><td>$runname</td></tr>\n";
 	echo "<tr><td>stack id</td><td>$stackId</td></tr>\n";
 	echo "<tr><td>description</td><td>$description</td></tr>\n";
 	echo "<tr><td>outdir</td><td>$procdir</td></tr>\n";

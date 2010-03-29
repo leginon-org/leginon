@@ -166,7 +166,7 @@ function runSubStack() {
 	echo"
 	<table width='600' border='1'>
 	<tr><td colspan='2'>
-	<b>alignSubStack.py command:</b><br />
+	<b>coranSubStack.py command:</b><br />
 	$command
 	</td></tr>\n";
 	echo "<tr><td>run id</td><td>$runname</td></tr>\n";
