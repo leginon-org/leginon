@@ -256,7 +256,7 @@ function createPyAceForm($extra=false) {
 	}
 	$ctf = new particledata();
 	$ctfruns = count($ctf->getCtfRunIds($sessionId));
-	$lastrunnumber = $ctf->getLastRunNumber($sessionId,'ApAceRunData','name',''); 
+	$lastrunnumber = $ctf->getLastRunNumberType($sessionId,'ApAceRunData','name'); 
 	while (file_exists($sessionpath.'acerun'.($lastrunnumber+1)))
 		$lastrunnumber += 1;
   $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'acerun'.($lastrunnumber+1);
