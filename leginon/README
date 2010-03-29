@@ -1,21 +1,46 @@
-svn checkout myami/trunk to desktop
+svn checkout myami/trunk to desktop:
+   svn co http://ami.scripps.edu/svn/myami/trunk myami-trunk
 
-python setup.py install:
+Create backup folder in c:\python25\Lib\site-packages and move all of these into it:
+	ImageViewer
+	Leginon
+	pyami
+	sinedon
+	pyScope
+
+For the following packages in myami-trunk:
 	imageviewer
 	leginon
 	pyami
 	sinedon
 	pyscope
+install using python:
+	python setup.py install
 
-numextension.pyd stays from previous install, until we can recompile
-libCV needs wrapper package called libcv with __init__.py:
+The following packages should stay in site-packages from previous install:
+	numextension
+	libCV
+	comarray (if you previously had it for a gatan camera)
+
+Since libCV is now libcv it needs a wrapper package.  Create a new folder in
+site-packages called "libcv", then create a new file in that folder called
+__init__.py with the following line:
 	from libCV import *
 
-config:
+Run:
+	 c:\python25\Lib\site-packages\pyscope\updatecom.py
+It's ok if it reports some things not found.
+(search bulletin board for updatecom.py if you do not understand the output)
+
+configure the following packages in site-packages according to user manual:
 	leginon:
 		leginon.cfg
 	sinedon:
 		sinedon.cfg
 	pyscope
 		instruments.cfg
-		tietz.py:   make camera size 2048x2048
+
+If camera size not power of 2 (1024,2048,...etc.), modify pyscope module
+to force camera size to power of two:
+for example tietz.py or gatan.py.  In function getCameraSize:
+	return {'x': 2048, 'y': 2048}
