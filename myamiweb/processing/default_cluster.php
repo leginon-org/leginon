@@ -25,7 +25,7 @@ define('C_CPUTIME_DEF', "240"); //in hours
 define('C_CPUTIME_MAX', "240"); //in hours
 define('C_MEMORY_MAX', "30"); //in GB
 
-define('C_APPION_BIN', "");
+define('C_APPION_BIN', ""); //ends in slash, example, /usr/local/appion/bin/
 
 class Cluster {
 
@@ -54,7 +54,7 @@ class Cluster {
 		# $stackinfo[6] = 'start.img'
 		
 		$stackpath=$stackinfo[4];
-		$stackname1= $stackinfo[5];
+		$stackname= $stackinfo[5];
 
 		$modelinfo = explode('|--|',$_POST['model']);
 		$modelpath = $modelinfo[1];
@@ -66,7 +66,7 @@ class Cluster {
 		$jobfile = "$jobname.job";
 
 		$this->clusterpath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $clusterpath;
-		$this->stackname1 = $stackname1;
+		$this->stackname = $stackname;
 		$this->jobname = $jobname;
 		$this->jobfile = $jobfile;
 		$this->clusterfullpath = $this->clusterpath.$jobname;
@@ -108,7 +108,7 @@ class Cluster {
 		$stackpath = $this->stackpath;
 		$modelpath = $this->modelpath;
 		$modelname = $this->modelname;
-		$stackname1 = $this->stackname1;
+		$stackname = $this->stackname;
 
 		$clusterjob= "rm -rf $clusterfullpath/recon\n";
 		$clusterjob.= "mkdir -p $clusterfullpath/recon\n";
