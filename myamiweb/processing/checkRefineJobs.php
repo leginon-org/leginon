@@ -196,7 +196,6 @@ function showStatus($jobinfo) {
 	} elseif ($jobinfo['status']=='A') {
 		$status='Aborted';
 	} elseif ($jobinfo['status']=='D') {
-		print_r($jobinfo);
 		$expId = $_GET['expId'];
 		$jobid = $jobinfo['DEF_id'];
 		$dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('"
