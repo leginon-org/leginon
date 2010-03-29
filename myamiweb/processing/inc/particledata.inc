@@ -3917,16 +3917,6 @@ class particledata {
 
 	}
 
-	function getNoRefClassParticleNumber($runId) {
-		$q="select classNumber, count(DEF_id) as number "
-			."from ApNoRefClassParticlesData "
-			."where `REF|ApNoRefClassRunData|classRun`='$runId' "
-			."group by classNumber "
-			."order by classNumber";
-		$r=$this->mysql->getSQLResult($q);
-		return $r;
-	}
-
 	function getAlignParticleNumber($alignId) {
 		$q="SELECT "
 			."  ref.`refnum` AS classNumber, "
