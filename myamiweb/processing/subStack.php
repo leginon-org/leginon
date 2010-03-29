@@ -316,7 +316,7 @@ function runSubStack() {
 
 	//putting together command
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="--stackid=$stackId ";
+	$command.="--old-stack-id=$stackId ";
 	$command.="--runname=$runname ";
 	$command.="--description=\"$description\" ";
 	if (!$exclude and !$minx) {
