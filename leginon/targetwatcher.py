@@ -176,6 +176,31 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.markTargetsDone(rejects)
 			self.logger.info('Passed targets processed, processing current target list')
 
+		########## THIS IS EXPERIMENTAL AND SHOULD NOT BE USED ###############
+		use_it_anyway = False
+		if use_it_anyway:
+			import random
+			import os.path
+			homedir = os.path.expanduser('~')
+			filename = os.path.join(homedir, 'settings_list.txt')
+			try:
+				f = open(filename)
+			except:
+				print '****** No ~/settings_list.txt'
+				pass
+			else:
+				lines = f.readlines()
+				f.close()
+				node_name = lines[0].strip()
+				if node_name == self.name:
+					idlines = lines[1:]
+					ids_strings = map(str.strip, idlines)
+					ids_ints = map(int, ids_strings)
+					id = random.choice(ids_ints)
+					print '************** Loading new settings:', id
+					self.loadSettingsByID(id)
+		#####################################################################
+
 		# process the good ones
 		targetliststatus = 'success'
 		for i, target in enumerate(goodtargets):

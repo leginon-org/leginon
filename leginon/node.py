@@ -138,6 +138,30 @@ class Node(correctorclient.CorrectorClient):
 				if key in self.defaultsettings:
 					self.settings[key] = copy.deepcopy(self.defaultsettings[key])
 
+	def loadSettingsByID(self, id):
+		if not hasattr(self, 'settingsclass'):
+			return
+
+		# load the requested row by id
+		settings = self.settingsclass.direct_query(id)
+		# if that failed, try to load default settings from DB
+		if not settings:
+			self.logger.error('no settings with id: %s' % (id,))
+			return
+
+		# get query result into usable form
+		self.settings = settings.toDict(dereference=True)
+		del self.settings['session']
+		del self.settings['name']
+
+		# check if None in any fields
+		for key,value in self.settings.items():
+			if value is None:
+				if key in self.defaultsettings:
+					self.settings[key] = copy.deepcopy(self.defaultsettings[key])
+
+		# set to GUI
+
 	def setSettings(self, d, isdefault=False):
 		self.settings = d
 		sd = self.settingsclass.fromDict(d)
