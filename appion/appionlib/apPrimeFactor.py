@@ -77,24 +77,19 @@ def isGoodPrime(num=4):
 	(1) no prime factor greater than 11
 	(2) if greater than 4^x, must be multiple of 2^x, 
 	"""
-
 	#print num
-	factors = prime_factors(num)
 	if num % 4 != 0:
 		return False
-	if num > 32 and num % 8 != 0:
-		return False
-	if num > 256 and num % 16 != 0:
-		return False
+
 	### get the number of powers of 4 in number
 	power = int(math.floor(math.log(float(num))/math.log(4.0)))
 	### check to make sure number is divisible by 2 to that power
 	mod = int(2**power)
-	print num, power, mod
 	if num % mod != 0:
 		return False
-	if num > 256 and num % 16 != 0:
-		return False
+
+	### get prime factors and find maximum
+	factors = prime_factors(num)
 	if max(factors) > maxprime:
 		return False
 	return True
