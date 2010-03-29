@@ -15,31 +15,29 @@ require "inc/viewer.inc";
 require "inc/project.inc";
 require "inc/appionloop.inc";
 
+/* Boxsize rules:
+* (1) no prime factor greater than 11
+* (2) if greater than 4^x, must be multiple of 2^x, 
+* (3) surely no one will make a stack bigger than 5000 pixels
+*/
+
 $goodboxes = array(
-	2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 36, 
-	40, 42, 44, 48, 50, 52, 54, 56, 60, 64, 66, 70, 72, 78, 80, 84, 
-	88, 90, 96, 98, 100, 104, 108, 110, 112, 120, 126, 128, 130, 132, 
-	140, 144, 150, 154, 156, 160, 162, 168, 176, 180, 182, 192, 196, 
-	198, 200, 208, 210, 216, 220, 224, 234, 240, 242, 250, 252, 256, 
-	260, 264, 270, 280, 286, 288, 294, 300, 308, 312, 320, 324, 330, 
-	336, 338, 350, 352, 360, 364, 378, 384, 390, 392, 396, 400, 416, 
-	420, 432, 440, 448, 450, 462, 468, 480, 484, 486, 490, 500, 504, 
-	512, 540, 560, 576, 588, 600, 630, 640, 648, 672, 686, 700, 720, 
-	750, 756, 768, 784, 800, 810, 840, 864, 882, 896, 900, 960, 972, 
-	980, 1000, 1008, 1024, 1050, 1080, 1120, 1134, 1152, 1176, 1200, 
-	1250, 1260, 1280, 1296, 1344, 1350, 1372, 1400, 1440, 1458, 1470, 
-	1500, 1512, 1536, 1568, 1600, 1620, 1680, 1728, 1750, 1764, 1792, 
-	1800, 1890, 1920, 1944, 1960, 2000, 2016, 2048, 2058, 2100, 2160, 
-	2240, 2250, 2268, 2304, 2352, 2400, 2430, 2450
+	4, 8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64, 72, 80, 96, 
+	112, 120, 128, 144, 160, 176, 192, 200, 224, 240, 256, 288, 
+	320, 336, 352, 384, 400, 432, 448, 480, 512, 560, 576, 640, 
+	672, 704, 720, 768, 800, 864, 896, 960, 1024, 1120, 1152, 
+	1280, 1344, 1408, 1440, 1536, 1568, 1600, 1728, 1760, 1792, 
+	1920, 2016, 2048, 2112, 2240, 2304, 2400, 2464, 2560, 2592, 
+	2688, 2816, 2880, 3072, 3136, 3168, 3200, 3360, 3456, 3520, 
+	3584, 3840, 3872, 4000, 4032, 4096, 4224, 4480, 4608, 4800, 
+	4928, 5120,
 );
 
-// IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
+	// IF VALUES SUBMITTED, EVALUATE DATA
 	runMakestack();
-}
-
-// Create the form page
-else {
+} else {
+	// Create the form page
 	createMakestackForm();
 }
 
@@ -535,18 +533,21 @@ function runMakestack() {
 		createMakestackForm("<b>ERROR:</b> Specify a box size");
 	if (!is_numeric($boxsize))
 		createMakestackForm("<b>ERROR:</b> Box size must be an integer");
+	if ($boxsize % $bin != 0)
+		createMakestackForm("<b>ERROR:</b> Box size must be divisible by bin size");
 
 	if ($_POST['override'] != 'on') {
+		$binnedbox = (int) floor($boxsize/$bin);
 		global $goodboxes;
 		foreach ($goodboxes as $box) {
-			if ($box == $boxsize)
+			if ($box == $binnedbox)
 				break;
-			elseif ($box > $boxsize) {
-				$bigbox = $box;
+			elseif ($box > $binnedbox) {
+				$bigbox = $box*$bin;
 				createMakestackForm("<b>ERROR:</b> Bad prime number in boxsize, try using $smallbox or $bigbox instead");
 				exit;
 			}
-			$smallbox = $box;
+			$smallbox = $box*$bin;
 		}	
 	}
 

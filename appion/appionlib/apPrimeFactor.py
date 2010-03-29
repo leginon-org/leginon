@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 import sys
+import math
 
 maxprime = 12
-twomult = 2**1
+twomult = 2**2
 
 #====================
 def prime_factors(n):
@@ -33,7 +34,7 @@ def getAllPrimes(maxn=1028):
 		if isGoodPrime(n):
 			#print n, factors
 			goodones.append(n)
-		n += 1
+		n += 2
 	return goodones
 
 #====================
@@ -71,11 +72,32 @@ def getPrimeLimits(num=4):
 
 #====================
 def isGoodPrime(num=4):
+	"""
+	Boxsize rules:
+	(1) no prime factor greater than 11
+	(2) if greater than 4^x, must be multiple of 2^x, 
+	"""
+
 	#print num
 	factors = prime_factors(num)
-	if max(factors) < maxprime:
-		return True
-	return False
+	if num % 4 != 0:
+		return False
+	if num > 32 and num % 8 != 0:
+		return False
+	if num > 256 and num % 16 != 0:
+		return False
+	### get the number of powers of 4 in number
+	power = int(math.floor(math.log(float(num))/math.log(4.0)))
+	### check to make sure number is divisible by 2 to that power
+	mod = int(2**power)
+	print num, power, mod
+	if num % mod != 0:
+		return False
+	if num > 256 and num % 16 != 0:
+		return False
+	if max(factors) > maxprime:
+		return False
+	return True
 
 #====================
 def isGoodStack(num=4):
