@@ -196,8 +196,12 @@ function showStatus($jobinfo) {
 	} elseif ($jobinfo['status']=='A') {
 		$status='Aborted';
 	} elseif ($jobinfo['status']=='D') {
-		$dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('$jobinfo[dmfpath]','$jobinfo[appath]')\" value='get from DMF'> \n";
-		$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location=('uploadrecon.php?expId=$expId&jobId=$job[DEF_id]')\" value='upload results'>\n";
+		$expId = $_GET['expId'];
+		$jobid = $jobinfo['clusterjobid'];
+		$dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('"
+			."$jobinfo[dmfpath]','$jobinfo[appath]')\" value='get from DMF'> \n";
+		$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location=('"
+			."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='upload results'>\n";
 		//if ($user == $job['user'] || is_null($job['user']))
 		//	$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location="
 		//		."('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='ignore job'>\n";
