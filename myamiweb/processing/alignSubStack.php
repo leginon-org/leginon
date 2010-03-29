@@ -22,10 +22,10 @@ if ($_POST['process']) {
 
 // Create the form page
 else {
-	createNorefSubStackForm();
+	createAlignSubStackForm();
 }
 
-function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $heading='Make a partial Stack') {
+function createAlignSubStackForm($extra=false, $title='subStack.py Launcher', $heading='Make a partial Stack') {
         // check if coming directly from a session
 	$expId=$_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
@@ -245,10 +245,10 @@ function runSubStack() {
 
 	//make sure a description is provided
 	$description=$_POST['description'];
-	if (!$runname) createNorefSubStackForm("<b>ERROR:</b> Specify a runname");
-	if (!$description) createNorefSubStackForm("<B>ERROR:</B> Enter a brief description");
-	if ($include && $exclude) createNorefSubStackForm("<B>ERROR:</B> You cannot have both included and excluded classes");
-	if (!$include && !$exclude && !is_numeric($include) && !is_numeric($exclude)) createNorefSubStackForm("<B>ERROR:</B> You must specify one of either included and excluded classes");
+	if (!$runname) createAlignSubStackForm("<b>ERROR:</b> Specify a runname");
+	if (!$description) createAlignSubStackForm("<B>ERROR:</B> Enter a brief description");
+	if ($include && $exclude) createAlignSubStackForm("<B>ERROR:</B> You cannot have both included and excluded classes");
+	if (!$include && !$exclude && !is_numeric($include) && !is_numeric($exclude)) createAlignSubStackForm("<B>ERROR:</B> You must specify one of either included and excluded classes");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -267,7 +267,7 @@ function runSubStack() {
 	} elseif ($alignId) {
 		$command.="--align-id=$alignId ";
 	} else {
-		createNorefSubStackForm("<b>ERROR:</b> You need either a cluster Id or align ID");
+		createAlignSubStackForm("<b>ERROR:</b> You need either a cluster Id or align ID");
 	}
 
 	if ($minscore)
@@ -282,11 +282,11 @@ function runSubStack() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createNorefSubStackForm("<B>ERROR:</B> You must be logged in to submit");
+		if (!($user && $password)) createAlignSubStackForm("<B>ERROR:</B> You must be logged in to submit");
 
 		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
 		// if errors:
-		if ($sub) createNorefSubStackForm("<b>ERROR:</b> $sub");
+		if ($sub) createAlignSubStackForm("<b>ERROR:</b> $sub");
 		exit();
 	}
 
