@@ -74,7 +74,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 
 	$particle=new particleData;
 	$prtlruns = count($particle->getParticleRunIds($sessionId, True));
-	$lastrunnumber = $particle->getLastRunNumber($sessionId,'ApSelectionRunData','name','dogrun'); 
+	$lastrunnumber = $particle->getLastRunNumber($sessionId,'ApSelectionRunData','name',''); 
 	// Set any existing parameters in form
 	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'dogrun'.($lastrunnumber+1);
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';

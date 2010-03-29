@@ -59,7 +59,7 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 	$particle = new particledata();
 
 	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $sessionpath;
-	$lastrunnumber = $particle->getLastRunNumber($sessionId,'ApSelectionRunData','name','manual');
+	$lastrunnumber = $particle->getLastRunNumber($sessionId,'ApSelectionRunData','name','');
 	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'manual'.($lastrunnumber+1);
 	$particles = ($_POST['particles']) ? $_POST['particles'] : '';
 	$scale = ($_POST['scale']) ? $_POST['scale'] : '';
