@@ -5,7 +5,7 @@ from win32com.client import gencache
 info = [
 	('TEM Scripting', 'TEM Scripting'),
 	('Tecnai Scripting', 'Tecnai Scripting'),
-        ('TOMMoniker 1.0 Type Library', 'TOM Moniker'),
+	('TOMMoniker 1.0 Type Library', 'TOM Moniker'),
 	('Low Dose Server Library', 'Tecnai Low Dose Kit'),
 	('adaExp Library', 'Tecnai Exposure Adaptor'),
 	('TecnaiCCD 1.0 Type Library', 'Gatan CCD Camera'),
