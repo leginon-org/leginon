@@ -169,7 +169,7 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 
 #=========================================
 #=========================================
-def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=True, xvfb=True):
+def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=True, xvfb=True, pdb=None):
 	if isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
@@ -191,6 +191,8 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 		os.environ['CHIMCOLORS'] = colorstr
 	if zoom is not None:
 		os.environ['CHIMZOOM'] = str(zoom)
+	if pdb is not None:
+		os.environ['CHIMPDBFILE'] = pdb
 	os.environ['CHIMIMGSIZE'] = "1024"
 	### unused
 	#'CHIMBACK',  'CHIMIMGSIZE', 'CHIMIMGFORMAT', 'CHIMFILEFORMAT',

@@ -2,18 +2,21 @@
 
 # -----------------------------------------------------------------------------
 # Script to radially color a contour surface of a density map and save an
-# image without starting the Chimera graphical user interface.  This uses
-# the "OSMESA" version of Chimera.
-#
+# image without starting the Chimera graphical user interface.  This would ideally use
+# the "OSMESA" version of Chimera, but it does not work, so we have been using the linux 
+# program Xvfb to make a fake X windows client.
 
-# -----------------------------------------------------------------------------
-#
-import sys
 import re
 import os
+import sys
 import time
-import numpy
 import math
+import numpy
+
+"""
+If you know where a function is in the chimera menu, but do not know how to call it
+go to the file $CHIMERA/share/chimera/tkgui.py and search there
+"""
 
 ### fail if not run from within chimera
 if __name__ == "__main__":
@@ -33,6 +36,7 @@ try:
 	from MeasureVolume import enclosed_volume
 	import ScaleBar.session
 except ImportError:
+	print "Failed to import chimera modules"
 	pass
 
 class ChimSnapShots(object):
@@ -40,6 +44,7 @@ class ChimSnapShots(object):
 	def renderVolume(self):
 		self.writeMessageToLog("rendering volume")
 		chimera.viewer.windowSize = self.imgsize
+		self.openPDBData()
 		self.openVolumeData()
 
 		### select proper function
@@ -86,7 +91,6 @@ class ChimSnapShots(object):
 			self.writeMessageToLog("FAIL Saving chimera session")
 		return
 
-
 	# -----------------------------------------------------------------------------
 	def openVolumeData(self):
 		"""
@@ -95,7 +99,7 @@ class ChimSnapShots(object):
 		create self.voldata
 		"""
 		self.writeMessageToLog("Opening volume type: %s file: %s"%(self.fileformat, self.tmpfilepath))
-		default_settings.set('limit_voxel_count', False)
+		default_settings.set('limit_voxel_count', self.voxellimit)
 		default_settings.set('surface_smoothing', True)
 		default_settings.set('smoothing_iterations', 10)
 		self.voldata = open_volume_file(self.tmpfilepath, self.fileformat)[0]
@@ -124,6 +128,17 @@ class ChimSnapShots(object):
 			self.drawScaleBar()
 		else:
 			self.writeMessageToLog("Skipping scale bar")
+
+	# -----------------------------------------------------------------------------
+	def openPDBData(self):
+		"""
+		open PDB file
+		"""
+		if self.pdbfilepath is None:
+			return
+		self.writeMessageToLog("Opening PDB file: %s"%(self.pdbfilepath))
+		chimera.openModels.open(self.pdbfilepath, type="PDB")
+
 
 	# -----------------------------------------------------------------------------
 	def setZoom(self):
@@ -776,6 +791,14 @@ class ChimSnapShots(object):
 		self.tmpfilepath = os.environ.get('CHIMTEMPVOL')
 		if self.tmpfilepath is None:
 			self.tmpfilepath = self.volumepath
+		### PDB structure
+		self.pdbfilepath = os.environ.get('CHIMPDBFILE')
+		### High resolution rendering
+		voxellimit = os.environ.get('CHIMVOXELLIMIT')
+		if voxellimit is not None and bool(voxellimit) is True:
+			self.voxellimit = True
+		else:
+			self.voxellimit = False
 		### Symmetry
 		self.symmetry = os.environ.get('CHIMSYM')
 		if self.symmetry is None:
@@ -808,7 +831,7 @@ class ChimSnapShots(object):
 			chimera.viewer.showSilhouette = True
 			chimera.viewer.silhouetteWidth = 3.0
 			self.writeMessageToLog("using chimera silhouette")
-		elif silhouette is None or bool(silhouette) is False:
+		else:
 			chimera.viewer.showSilhouette = False
 			self.writeMessageToLog("skipping chimera silhouette")
 		### Background

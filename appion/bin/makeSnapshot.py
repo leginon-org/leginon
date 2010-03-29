@@ -26,6 +26,8 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			+" [--contour=<#>] [--zoom=<#>] [--type=<snapshot>] ")
 		self.parser.add_option("-f", "--file", dest="file", 
 			help="3d MRC file to snapshot", metavar="FILE")
+		self.parser.add_option("--pdb", dest="pdb", 
+			help="PDB file to include in snapshots", metavar="FILE")
 		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.0,
 			help="Zoom factor for snapshot rendering (1.0 by default)", metavar="#")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=2.0,
@@ -63,6 +65,11 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			apDisplay.printError("Enter a file name, e.g. -f threed.20a.mrc")
 		if not os.path.isfile(self.params['file']):
 			apDisplay.printError("File not found: "+self.params['file'])
+		self.params['file'] = os.path.abspath(self.params['file'])
+		if self.params['pdb'] is not None:
+			if not os.path.isfile(self.params['pdb']):
+				apDisplay.printError("File not found: "+self.params['pdb'])
+			self.params['pdb'] = os.path.abspath(self.params['pdb'])
 		self.params['commit'] = False
 		if self.params['sym'] is None:
 			apDisplay.printError("Enter a symmetry group, e.g. d7, c1, c4, or icos")
@@ -117,8 +124,9 @@ class MakeSnapshotScript(appionScript.AppionScript):
 		if self.params['type'] != "animate":
 			apDisplay.printMsg("Creating snapshots")
 			apChimera.renderSnapshots(mrcfile, contour=self.params['contour'],
-				 zoom=self.params['zoom'], sym=self.params['sym'],
-				 color=self.params['color'], xvfb=self.params['xvfb'])
+				zoom=self.params['zoom'], sym=self.params['sym'],
+				color=self.params['color'], xvfb=self.params['xvfb'],
+				pdb=self.params['pdb'])
 
 		### clean up
 		if self.params['mass'] is not None or self.params['bin'] is not None:
