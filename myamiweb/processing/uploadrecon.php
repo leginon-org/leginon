@@ -79,10 +79,10 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo) && !$jobId) {
-	$sessionpath=$sessioninfo['Image path'];
-	$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-	$sessionpath=ereg_replace("rawdata","recon/",$sessionpath);
-	$sessionname=$sessioninfo['Name'];
+		$sessionpath=$sessioninfo['Image path'];
+		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=ereg_replace("rawdata","recon/",$sessionpath);
+		$sessionname=$sessioninfo['Name'];
 	}
 
 	echo "<input type='hidden' name='outdir' value='$sessionpath'>\n";
@@ -128,7 +128,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	// Stack Info
 	echo "<tr><td colspan='2'>\n";
 	if ($jobId) {
-		echo "<input type='hidden' name='stack' value='$stackid'>\n";
+		echo "<input type='hidden' name='stackid' value='$stackid'>\n";
 		echo stacksummarytable($stackid, $mini=true);
 	} else {
 		echo "Stack:\n";
@@ -261,9 +261,13 @@ function runUploadRecon() {
 	if (!$runid) createUploadReconForm("<B>ERROR:</B> Enter a name of the recon run");
 	
 	//make sure a stack was chosen
-	if (!$_POST['stackval'])
+	if ($_POST['stackid'])
+		$stackid = $_POST['stackid'];
+	elseif ($_POST['stackval'])
+		list($stackid, $apix, $boxsize) = split('\|--\|',$_POST['stackval']);
+	else
 		createUploadReconForm("<B>ERROR:</B> Select the image stack used");
-	list($stackid,$apix,$boxsz) = split('\|--\|',$_POST['stackval']);
+
 
 	//make sure a model was chosen
 	$modelid = $_POST['modelid'];
