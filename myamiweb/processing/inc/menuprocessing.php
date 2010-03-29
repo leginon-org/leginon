@@ -400,6 +400,12 @@ if ($expId) {
 				'result'=>$tsresults,
 			);
 		}
+
+		$data[] = array(
+			'action' => array($action, $celloption),
+			'result' => array(""),
+			'newrun' => array($nruns, $celloption),
+		);
 	}
 
 	// ab initio reconstruction tools
