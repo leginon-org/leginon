@@ -148,7 +148,9 @@ function showClusterJobTables($jobs) {
 				echo "<table class='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
 
 				// TABLE HEADER
-				echo "<tr><td colspan='15'><font size='+1'>Jobs currently running on the <b>$c</b> cluster</font></td></tr>";
+				echo "<tr><td colspan='15'><font size='+1'>Jobs currently running on the "
+					."<font color='#339933'><b>$c</b></font>"
+					." cluster</font></td></tr>";
 
 				// LABEL FIELDS
 				echo "<tr>\n";
