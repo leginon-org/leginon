@@ -42,7 +42,7 @@ class Cluster {
 		$stackinfo = explode('|--|',$_POST['stackval']);
 	
 		# $stackinfo[0] = stackid
-		# $stackinfo[1] = pixel size in angstrums / pixels
+		# $stackinfo[1] = pixel size in Angstroms per pixel
 		# $stackinfo[2] = stack boxsize (length in either direction) in pixels
 		# $stackinfo[3] = number of particles in the stack
 		# $stackinfo[4] = appion stackfile path
