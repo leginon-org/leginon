@@ -38,7 +38,6 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	// connect to particle database
 	$particle = new particledata();
 	$stackIds = $particle->getStackIds($sessionId);
-	$topolIds = $particle->getMaxLikeIds($sessionId, True);
 	$alignrunsarray = $particle->getAlignStackIds($sessionId);
 	$alignruns = ($alignrunsarray) ? count($alignrunsarray) : 0;
 
