@@ -23,7 +23,7 @@ if (!is_null($minx)) {
 }
 
 $particle = new particledata();
-$stackparts = $particle->getStackParticles($stackid);
+$stackparts = $particle->getStackMeanAndStdev($stackid);
 #print_r($stackparts[0])."<br/>\n";
 
 $minstdev = 100000;

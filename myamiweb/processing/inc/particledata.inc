@@ -2207,7 +2207,7 @@ class particledata {
 		return $r;
 	}
 
-	function getStackParticles ($stackId) {
+	function getStackMeanAndStdev ($stackId) {
 		$q= "SELECT stackpart.mean AS mean, stackpart.stdev AS stdev "
 			."FROM `ApStackParticlesData` AS stackpart "
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
