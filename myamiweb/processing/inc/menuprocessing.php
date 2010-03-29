@@ -554,17 +554,20 @@ if ($expId) {
 			);
 			$nruns[] = array(
 				'name'=>"<a href='prepareFrealign.php?expId=$sessionId'>Frealign Refinement</a>",
-				'result'=>$frealignresults,
+				'result'=> "<i>(coming soon)</i>", //$frealignresults
 			);
-			$nruns[] = "<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>";
+			$nruns[] = array(
+				'name'=>"<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>",
+				'result'=> "<i>(incomplete)</i>", //$spiderreconresults,
+			);
 			$nruns[] = array(
 				'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
-				'result'=>$xmippreconresults,
+				'result'=> "<i>(incomplete)</i>", //$xmippreconresults,
 			);
 			if (!$HIDE_IMAGIC) {
 				$nruns[] = array(
 					'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
-					'result'=>$imreconresults,
+					'result'=> "<i>(incomplete)</i>", //$imreconresults,
 				);
 			}
 		} else {
