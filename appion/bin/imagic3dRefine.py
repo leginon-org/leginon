@@ -152,7 +152,14 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-
+		### check for IMAGIC installation
+		d = os.environ
+		if d.has_key('IMAGIC_ROOT'):
+			self.imagicroot = d['IMAGIC_ROOT']
+		else:
+			apDisplay.printError("$IMAGIC_ROOT directory is not specified, please specify this in your .cshrc / .bashrc")	
+	
+		### check input parameters
 		if self.params['itn'] is None:
 			apDisplay.printError("enter iteration number")
 		if self.params['symmetry'] is None:
@@ -201,7 +208,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("cd "+str(self.params['rundir'])+"\n")
 
 		### convert to IMAGIC format
-		f.write("/usr/local/IMAGIC/stand/em2em.e <<EOF >> startFiles.log\n")
+		f.write(str(self.imagicroot)+"/stand/em2em.e <<EOF >> startFiles.log\n")
 		f.write("MRC\n")
 		f.write("MRC\n")
 		f.write("IMAGIC\n")
@@ -216,7 +223,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n")
 
 		### forward project to create references for MRA
-		f.write("/usr/local/IMAGIC/threed/forward.e SURF FORWARD <<EOF >> startFiles.log\n")
+		f.write(str(self.imagicroot)+"/threed/forward.e SURF FORWARD <<EOF >> startFiles.log\n")
 		f.write(basename[:-4]+"\n")
 		f.write("-99999\n")
 		f.write("PROJECTIONS\n")
@@ -234,26 +241,26 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		
 		if self.params['mirror_refs'] is True:
 			### mirror projections for MRA
-			f.write("/usr/local/IMAGIC/stand/arithm.e MODE MIRROR <<EOF >> startFiles.log\n")
+			f.write(str(self.imagicroot)+"/stand/arithm.e MODE MIRROR <<EOF >> startFiles.log\n")
 			if self.params['automask'] is True:
 				f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
 			else:
 				f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
 			f.write("mirror\n")
 			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/append.e <<EOF >> startFiles.log\n")
+			f.write(str(self.imagicroot)+"/stand/append.e <<EOF >> startFiles.log\n")
 			f.write("mirror\n")
 			if self.params['automask'] is True:
 				f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
 			else:
 				f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
 			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/imdel.e <<EOF >> startFiles.log\n")
+			f.write(str(self.imagicroot)+"/stand/imdel.e <<EOF >> startFiles.log\n")
 			f.write("mirror\n")
 			f.write("EOF\n")
 
 		### forward project to create euler angle anchor set
-		f.write("/usr/local/IMAGIC/threed/forward.e SURF FORWARD <<EOF >> startFiles.log\n")
+		f.write(str(self.imagicroot)+"/threed/forward.e SURF FORWARD <<EOF >> startFiles.log\n")
 		f.write(basename[:-4]+"\n")
 		f.write("-99999\n")
 		f.write("PROJECTIONS\n")
@@ -273,7 +280,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		radius = float(self.params['mask_val']) / (self.params['boxsize'] / 2)
 		if radius > 1:
 			radius = 1
-		f.write("/usr/local/IMAGIC/stand/testim.e <<EOF >> startFiles.log\n")
+		f.write(str(self.imagicroot)+"/stand/testim.e <<EOF >> startFiles.log\n")
 		f.write("msamask\n")
 		f.write(str(self.params['boxsize'])+","+str(self.params['boxsize'])+"\n")
 		f.write("REAL\n")
@@ -302,7 +309,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		### if not first iteration, create forward projections from previous model
 		f.write("echo 'start' > imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		if self.params['itn'] > 1:
-			f.write("/usr/local/IMAGIC/threed/forward.e SURF FORWARD <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/threed/forward.e SURF FORWARD <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			if self.params['automask'] is True:
 				f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned\n")
 			else:
@@ -324,25 +331,25 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 			if self.params['mirror_refs'] is True:
 				### mirror projections for MRA
-				f.write("/usr/local/IMAGIC/stand/arithm.e MODE MIRROR <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write(str(self.imagicroot)+"/stand/arithm.e MODE MIRROR <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				if self.params['automask'] is True:
 					f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
 				else:
 					f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
 				f.write("mirror\n")
 				f.write("EOF\n")
-				f.write("/usr/local/IMAGIC/stand/append.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write(str(self.imagicroot)+"/stand/append.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				f.write("mirror\n")
 				if self.params['automask'] is True:
 					f.write("mrarefs_masked_3d"+str(self.params['itn']-1)+"\n")
 				else:
 					f.write("mrarefs_3d"+str(self.params['itn']-1)+"\n")
 				f.write("EOF\n")
-				f.write("/usr/local/IMAGIC/stand/imdel.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write(str(self.imagicroot)+"/stand/imdel.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				f.write("mirror\n")
 				f.write("EOF\n")
 
-			f.write("/usr/local/IMAGIC/threed/forward.e SURF FORWARD <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/threed/forward.e SURF FORWARD <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			if self.params['automask'] is True:
 				f.write("masked_3d"+str(self.params['itn']-1)+"_ordered"+str(self.params['itn']-1)+"_repaligned\n")
 			else:
@@ -366,7 +373,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		if self.params['filt_stack'] is True:
 			hpfilt, lpfilt = apIMAGIC.convertFilteringParameters(self.params['hp_filt'], self.params['lp_filt'], self.params['apix'])
 			if self.params['itn'] == 1:
-				f.write("/usr/local/IMAGIC/fft/filt_all.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write(str(self.imagicroot)+"/fft/filt_all.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				f.write("start\n")
 				f.write("start_filt\n")
 				f.write("BANDPASS\n")
@@ -375,12 +382,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 				f.write(str(lpfilt)+"\n")
 				f.write("NO\n")
 				f.write("EOF\n")
-				f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				f.write("start_filt\n")
 				f.write("start\n")
 				f.write("EOF\n")
 			else:
-				f.write("/usr/local/IMAGIC/fft/filt_all.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write(str(self.imagicroot)+"/fft/filt_all.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				f.write("mra"+str(self.params['itn']-1)+"\n")
 				f.write("mra_filt"+str(self.params['itn']-1)+"\n")
 				f.write("BANDPASS\n")
@@ -389,7 +396,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 				f.write(str(lpfilt)+"\n")
 				f.write("NO\n")
 				f.write("EOF\n")
-				f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				f.write("mra_filt"+str(self.params['itn']-1)+"\n")
 				f.write("mra"+str(self.params['itn']-1)+"\n")
 				f.write("EOF\n")
@@ -399,24 +406,24 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		if radius > 1:
 			radius = 1
 		if self.params['itn'] == 1:
-			f.write("/usr/local/IMAGIC/stand/arithm.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/stand/arithm.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("start\n")
 			f.write("start_mask\n")
 			f.write("CIRC_MASK\n")
 			f.write(str(radius)+"\n")
 			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("start_mask\n")
 			f.write("start\n")
 			f.write("EOF\n")
 		else:
-			f.write("/usr/local/IMAGIC/stand/arithm.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/stand/arithm.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("mra"+str(self.params['itn']-1)+"\n")
 			f.write("mra_masked"+str(self.params['itn']-1)+"\n")
 			f.write("CIRC_MASK\n")
 			f.write(str(radius)+"\n")
 			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("mra_masked"+str(self.params['itn']-1)+"\n")
 			f.write("mra"+str(self.params['itn']-1)+"\n")
 			f.write("EOF\n")
@@ -424,12 +431,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		### if the first iteration, do a centering operation, i.e. reference-free translational alignment
 		if self.params['itn'] == 1 and self.params['cent_stack'] is True:
 			if self.params['nproc'] > 1:
-				f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+				f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 					" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/alimass.e_mpi <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				f.write("YES\n")
 				f.write(str(self.params['nproc'])+"\n")
 			else:
-				f.write("/usr/local/IMAGIC/align/alimass.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write(str(self.imagicroot)+"/align/alimass.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				f.write("NO\n")
 			f.write("start\n")
 			f.write("start_cent\n")
@@ -475,12 +482,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("cd "+str(self.params['rundir'])+"\n")
 		
 			if self.params['nproc'] > 1:
-				f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+				f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 					" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/mralign.e_mpi <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				f.write("YES\n")
 				f.write(str(self.params['nproc'])+"\n")
 			else:
-				f.write("/usr/local/IMAGIC/align/mralign.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+				f.write(str(self.imagicroot)+"/align/mralign.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 				f.write("NO\n")
 			f.write("FRESH\n")
 			f.write("ALIGNMENT\n")
@@ -539,12 +546,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		### Perform multivariate statistical analysis on aligned stack
 		if self.params['nproc'] > 1:
-			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+			f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 				" -x IMAGIC_BATCH  /usr/local/IMAGIC/msa/msa.e_mpi <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("YES\n")
 			f.write(str(self.params['nproc'])+"\n")
 		else:
-			f.write("/usr/local/IMAGIC/msa/msa.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/msa/msa.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("NO\n")
 		f.write("FRESH_MSA\n")
 		f.write("modulation\n")
@@ -562,7 +569,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n")
 
 		### classify the aligned particles into new classes
-		f.write("/usr/local/IMAGIC/msa/classify.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+		f.write(str(self.imagicroot)+"/msa/classify.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("IMAGES/VOLUMES\n")
 		f.write("mra"+str(self.params['itn'])+"\n")
 		f.write(str(self.params['ignore_images'])+"\n")
@@ -571,7 +578,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write(str(self.params['numclasses'])+"\n")
 		f.write("classes_"+str(self.params['itn'])+"\n")
 		f.write("EOF\n")
-		f.write("/usr/local/IMAGIC/msa/classum.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+		f.write(str(self.imagicroot)+"/msa/classum.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("mra"+str(self.params['itn'])+"\n")
 		f.write("classes_"+str(self.params['itn'])+"\n")
 		f.write("classums_"+str(self.params['itn'])+"\n")
@@ -582,7 +589,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		### sort the classums, keeping only the best ones
 		keep_classums = self.params['keep_classes'] * self.params['numclasses']
-		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+		f.write(str(self.imagicroot)+"/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("SORT\n")
 		f.write("classums_"+str(self.params['itn'])+"\n")
 		f.write("classums_"+str(self.params['itn'])+"_sorted\n")
@@ -590,17 +597,17 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("UP\n")
 		f.write(str(keep_classums)+"\n")
 		f.write("EOF\n")
-		f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+		f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("classums_"+str(self.params['itn'])+"_sorted\n")
 		f.write("classums_"+str(self.params['itn'])+"\n")
 		f.write("EOF\n")
 
 		### calculate euler angles, using anchor set for references
 		if self.params['nproc'] > 1:
-			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+			f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 				" -x IMAGIC_BATCH  /usr/local/IMAGIC/angrec/euler.e_mpi <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		else:
-			f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/angrec/euler.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write(symmetry+"\n")
 		lowercase = symmetry.lower()
 		if lowercase != "c1":
@@ -633,7 +640,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		### sort based on error in angular reconstitution
 		keep_ordered = self.params['keep_ordered'] * keep_classums
-		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+		f.write(str(self.imagicroot)+"/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("SORT\n")
 		f.write("classums_"+str(self.params['itn'])+"\n")
 		f.write("ordered"+str(self.params['itn'])+"\n")
@@ -644,12 +651,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		### build a 3d model from the ordered, sorted class averages
 		if self.params['nproc'] > 1:
-			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+			f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 				" -x IMAGIC_BATCH  /usr/local/IMAGIC/threed/true3d.e_mpi <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("YES\n")
 			f.write(str(self.params['nproc'])+"\n")
 		else:
-			f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("NO\n")
 		f.write(symmetry+"\n")
 		f.write("YES\n")
@@ -664,7 +671,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n")
 
 		### align the ordered class averages to reprojections from the model
-		f.write("/usr/local/IMAGIC/align/alipara.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+		f.write(str(self.imagicroot)+"/align/alipara.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("ALL\n")
 		f.write("CCF\n")
 		f.write("ordered"+str(self.params['itn'])+"\n")
@@ -677,12 +684,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		### build another 3d, this time from the ordered, sorted, and aligned class averages
 		if self.params['nproc'] > 1:
-			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+			f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 				" -x IMAGIC_BATCH  /usr/local/IMAGIC/threed/true3d.e_mpi <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("YES\n")
 			f.write(str(self.params['nproc'])+"\n")
 		else:
-			f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("NO\n")
 		f.write(symmetry+"\n")
 		f.write("YES\n")
@@ -701,21 +708,21 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			filtval = 2 * self.params['apix'] / self.params['threedfilt']
 			if filtval > 1:
 				filtval = 1
-			f.write("/usr/local/IMAGIC/threed/fft3d.e FORW FILTER <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/threed/fft3d.e FORW FILTER <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
 			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned_filt\n")
 			f.write("GAUSSIAN\n")
 			f.write(str(filtval)+"\n")
 			f.write("EOF\n")
 			### rename
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned_filt\n")
 			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
 			f.write("EOF\n")
 
 		if self.params['automask'] is True:
 			### automask the 3d, automasking is based on modulation analysis
-			f.write("/usr/local/IMAGIC/threed/automask3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/threed/automask3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("DO_IT_ALL\n")
 			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned\n")
 			f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned_modvar\n")
@@ -729,7 +736,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("EOF\n")
 
 		### use EM2EM to convert 3d from IMAGIC to MRC format
-		f.write("/usr/local/IMAGIC/stand/em2em.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+		f.write(str(self.imagicroot)+"/stand/em2em.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("IMAGIC\n")
 		f.write("MRC\n")
 		f.write("3D\n")
@@ -743,7 +750,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n")
 
 		### extract odd images for FSC analysis
-		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+		f.write(str(self.imagicroot)+"/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("EXTRACT\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned_odd\n")
@@ -753,7 +760,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n")
 
 		### extract even images for FSC analysis
-		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+		f.write(str(self.imagicroot)+"/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("EXTRACT\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned_even\n")
@@ -764,12 +771,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		### build 3d from odd images
 		if self.params['nproc'] > 1:
-			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+			f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 				" -x IMAGIC_BATCH  /usr/local/IMAGIC/threed/true3d.e_mpi <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("YES\n")
 			f.write(str(self.params['nproc'])+"\n")
 		else:
-			f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("NO\n")
 		f.write(symmetry+"\n")
 		f.write("YES\n")
@@ -785,12 +792,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		### build 3d from even images
 		if self.params['nproc'] > 1:
-			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+			f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 				" -x IMAGIC_BATCH  /usr/local/IMAGIC/threed/true3d.e_mpi <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("YES\n")
 			f.write(str(self.params['nproc'])+"\n")
 		else:
-			f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write(str(self.imagicroot)+"/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 			f.write("NO\n")
 		f.write(symmetry+"\n")
 		f.write("YES\n")
@@ -805,7 +812,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n")
 
 		### perform fourier shell correlation (FSC) between odd and even 3d
-		f.write("/usr/local/IMAGIC/threed/foushell.e MODE FSC <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+		f.write(str(self.imagicroot)+"/threed/foushell.e MODE FSC <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned_odd\n")
 		f.write("3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned_even\n")
 		f.write("3d"+str(self.params['itn'])+"_fsc\n")
@@ -830,7 +837,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
 		f.write("cd "+str(self.params['rundir'])+"\n")
-		f.write("/usr/local/IMAGIC/stand/em2em.e <<EOF > EM2EM.log\n")
+		f.write(str(self.imagicroot)+"/stand/em2em.e <<EOF > EM2EM.log\n")
 		if spider_to_imagic is True:
 			f.write("SPIDER\n")
 			f.write("SINGLE_FILE\n")
