@@ -81,7 +81,7 @@ define('CACHE_SCRIPT', $_SERVER['DOCUMENT_ROOT'].'/'.BASE_URL.'/makejpg.php');
 define('FLASHPLAYER_URL', "/flashplayer/");
 
 // --- path to main --- //
-set_include_path(dirname(__FILE__).PATH_SEPARATOR.dirname(__FILE__)."/project".PATH_SEPARATOR.dirname(__FILE__)."/processing");
+set_include_path(dirname(__FILE__).PATH_SEPARATOR.dirname(__FILE__)."/project".PATH_SEPARATOR.dirname(__FILE__)."/lib".PATH_SEPARATOR.dirname(__FILE__)."/processing");
 
 // --- define python commands - path --- //
 
