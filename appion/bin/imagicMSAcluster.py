@@ -48,11 +48,7 @@ class imagicClusterScript(appionScript.AppionScript):
 	#=====================
 	def checkConflicts(self):
 		### check for IMAGIC installation
-		d = os.environ
-		if d.has_key('IMAGIC_ROOT'):
-			self.imagicroot = d['IMAGIC_ROOT']
-		else:
-			apDisplay.printError("$IMAGIC_ROOT directory is not specified, please specify this in your .cshrc / .bashrc")	
+		self.imagicroot = apIMAGIC.checkImagicExecutablePath()
 	
 		### check input parameters
 		if self.params['analysisId'] is None:
