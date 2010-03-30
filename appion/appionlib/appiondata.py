@@ -1529,71 +1529,40 @@ class ApOtrRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class ApImagicReclassifyData(Data):
+class ApBootstrappedAngularReconstitutionRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('project|projects|project', int),
 			('runname', str),
-			('norefclass', ApNoRefClassRunData),
-			('lowpass', float),
-			('highpass', float),
-			('maskradius', float),
-			('maskdropoff', float),
-			('numiter', int),
-			('numaverages', int),
-			('description', str),
 			('path', ApPathData),
-			('hidden', bool),
-		)
-	typemap = classmethod(typemap)
-
-class ApImagic3d0Data(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('project|projects|project', int),
-			('name', str),
-			('runname', str),
-			('norefclass', ApNoRefClassRunData),
-			('reclass', ApImagicReclassifyData),
-			('clusterclass', ApClusteringStackData),
-			('templatestack', ApTemplateStackData),
-			#('imagicclusterclass', ApClusteringStackData),
-			('boxsize', int),
+			('aar_params', ApBootstrappedAngularReconstitutionParamsData),
 			('pixelsize', float),
-			('symmetry', ApSymmetryData),
-			('projections', str),
-			('euler_ang_inc', int),
-			('numpart', int),
-			('num_classums', int),
-			('ham_win', float),
-			('obj_size', float),
-			('repalignments', int),
-			('amask_dim', float),
-			('amask_lp', float),
-			('amask_sharp', float),
-			('amask_thresh', float),
-			('mra_ang_inc', int),
-			('forw_ang_inc', int),
+			('boxsize', int),
+			('templatestackid', ApTemplateStackData),
+			('clusterid', ApClusteringStackData),
 			('description', str),
-			('path', ApPathData),
 			('hidden', bool),
-			('density', Ap3dDensityData),
+			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 
-class ApIterCommonLinesData(Data):
+class ApBootstrappedAngularReconstitutionParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('runname', str),
-			('clusterid', ApClusteringStackData),
-			('templatestackid', ApTemplateStackData),
-			('numimgs', int),
-			('numbest', int),
-			('summaryfile', str),
-			('description', str),
-			('hidden', bool),
-			('path', ApPathData),
-			('project|projects|project', int),
+			('num_averages', int),
+			('num_volumes', int),
+			('symmetry', ApSymmetryData),
+			('num_alignment_refs', int),
+			('angular_increment', int),
+			('keep_ordered', int),
+			('threed_lpfilt', int),
+			('hamming_window', int),
+			('non_weighted_sequence', bool),
+			('PCA', bool),
+			('numeigens', int),
+			('preference_type', str),
+			('prealign_avgs', bool),
+			('scale', bool),
+			('recalculate_volumes', bool),
 		)
 	typemap = classmethod(typemap)
 
