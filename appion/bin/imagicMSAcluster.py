@@ -47,6 +47,14 @@ class imagicClusterScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
+		### check for IMAGIC installation
+		d = os.environ
+		if d.has_key('IMAGIC_ROOT'):
+			self.imagicroot = d['IMAGIC_ROOT']
+		else:
+			apDisplay.printError("$IMAGIC_ROOT directory is not specified, please specify this in your .cshrc / .bashrc")	
+	
+		### check input parameters
 		if self.params['analysisId'] is None:
 			apDisplay.printError("There is no imagic analysis Id specified")
 		if self.params['runname'] is None:
@@ -78,7 +86,7 @@ class imagicClusterScript(appionScript.AppionScript):
 		f = open(filename, 'w')
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
-		f.write("/usr/local/IMAGIC/msa/classify.e <<EOF > imagicMSAcluster_classes_"+str(numclusters)+".log\n")
+		f.write(str(self.imagicroot)+"/msa/classify.e <<EOF > imagicMSAcluster_classes_"+str(numclusters)+".log\n")
 		f.write("IMAGES/VOLUMES\n")
 		f.write("start\n")
 		f.write(str(self.params['ignore_images'])+"\n")
@@ -87,7 +95,7 @@ class imagicClusterScript(appionScript.AppionScript):
 		f.write(str(numclusters)+"\n")
 		f.write("%s\n" % (self.params['classfile'][:-4]))
 		f.write("EOF\n")
-		f.write("/usr/local/IMAGIC/msa/classum.e <<EOF >> imagicMSAcluster_classes_"+str(numclusters)+".log\n")
+		f.write(str(self.imagicroot)+"/msa/classum.e <<EOF >> imagicMSAcluster_classes_"+str(numclusters)+".log\n")
 		f.write("start\n")
 		f.write("%s\n" % (self.params['classfile'][:-4]))
 		f.write("%s\n" % (self.params['classumfile'][:-4]))
