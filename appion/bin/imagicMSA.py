@@ -63,6 +63,14 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
+		### check for IMAGIC installation
+		d = os.environ
+		if d.has_key('IMAGIC_ROOT'):
+			self.imagicroot = d['IMAGIC_ROOT']
+		else:
+			apDisplay.printError("$IMAGIC_ROOT directory is not specified, please specify this in your .cshrc / .bashrc")	
+	
+		### check input parameters
 		if self.params['alignid'] is None:
 			apDisplay.printError("There is no stack ID specified")
 		if self.params['runname'] is None:
@@ -104,12 +112,12 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 
 		### optional binning
 		if self.params['bin'] > 1:
-			f.write("/usr/local/IMAGIC/stand/coarse.e <<EOF > imagicMultivariateStatisticalAnalysis.log\n")
+			f.write(str(self.imagicroot)+"/stand/coarse.e <<EOF > imagicMultivariateStatisticalAnalysis.log\n")
 			f.write("start\n")
 			f.write("start_coarse\n")
 			f.write(str(self.params['bin'])+"\n")
 			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
+			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
 			f.write("start_coarse\n")
 			f.write("start\n")
 			f.write("EOF\n")
@@ -117,7 +125,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 
 		### optional filtering
 		if self.params['hpfilt_imagic'] and self.params['lpfilt_imagic'] is not None:
-			f.write("/usr/local/IMAGIC/incore/incband.e OPT BAND-PASS <<EOF")
+			f.write(str(self.imagicroot)+"/incore/incband.e OPT BAND-PASS <<EOF")
 			if append_log is True:
 				f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
 			else:
@@ -129,7 +137,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			f.write(str(self.params['lpfilt_imagic'])+"\n")
 			f.write("NO\n")
 			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
+			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
 			f.write("start_filt\n")
 			f.write("start\n")
 			f.write("EOF\n")
@@ -137,7 +145,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 
 #		### make a mask for MSA
 #		if self.params['mask_radius'] and self.params['mask_dropoff'] is not None:
-#			f.write("/usr/local/IMAGIC/stand/arithm.e <<EOF")
+#			f.write(str(self.imagicroot)+"/stand/arithm.e <<EOF")
 #			if append_log is True:
 #				f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
 #			else:
@@ -148,12 +156,12 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 #			f.write(str(self.params['mask_radius'])+"\n")
 #			f.write(str(self.params['mask_dropoff'])+"\n")
 #			f.write("EOF\n")
-#			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
+#			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
 #			f.write("start_masked\n")
 #			f.write("start\n")
 #			f.write("EOF\n")
 #			append_log = True
-		f.write("/usr/local/IMAGIC/stand/testim.e <<EOF")
+		f.write(str(self.imagicroot)+"/stand/testim.e <<EOF")
 		if append_log is True:
 			f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
 		else:
@@ -167,12 +175,12 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 
 		### run MSA
 		if self.params['nproc'] > 1:
-			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+			f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 				" -x IMAGIC_BATCH  /usr/local/IMAGIC/msa/msa.e_mpi <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
 			f.write("YES\n")
 			f.write(str(self.params['nproc'])+"\n")
 		else:
-			f.write("/usr/local/IMAGIC/msa/msa.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
+			f.write(str(self.imagicroot)+"/msa/msa.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
 			f.write("NO\n")
 		f.write("FRESH_MSA\n")
 		f.write(str(self.params['MSAdistance'])+"\n")
