@@ -3,8 +3,18 @@ import re
 import sys
 import stat
 import time
-from appionlib import apDisplay
 import subprocess
+from appionlib import apDisplay
+
+def checkImagicExecutablePath():
+	### check for IMAGIC installation
+	d = os.environ
+	if d.has_key('IMAGIC_ROOT'):
+		imagicroot = d['IMAGIC_ROOT']
+	else:
+		apDisplay.printError("$IMAGIC_ROOT directory is not specified, please specify this in your .cshrc / .bashrc")	
+	return imagicroot
+	
 
 def executeImagicBatchFile(filename, verbose=False, logfile=None):
 	"""
@@ -54,6 +64,8 @@ def executeImagicBatchFile(filename, verbose=False, logfile=None):
 def copyFile(path, file, headers=False):
 	# used if conversion from EMAN does not write appropriate headers
 
+	imagicroot = checkImagicExecutablePath()
+
 	batchfile = os.path.join(path, 'copyImage.batch')
 
 	if file[-4:] == ".img" or file[-4:] == ".hed":
@@ -64,19 +76,20 @@ def copyFile(path, file, headers=False):
 	f = open(batchfile, 'w')
 	f.write("#!/bin/csh -f\n")
 	f.write("setenv IMAGIC_BATCH 1\n")	 
-	f.write("/usr/local/IMAGIC/stand/copyim.e <<EOF \n")
+	f.write("cd %s\n" % (path))
+	f.write(str(imagicroot)+"/stand/copyim.e <<EOF \n")
 	f.write(stripped_file+"\n")
 	f.write(stripped_file+"_copy\n")
 	f.write("EOF\n")
-	f.write("/usr/local/IMAGIC/stand/imdel.e <<EOF \n")
+	f.write(str(imagicroot)+"/stand/imdel.e <<EOF \n")
 	f.write(stripped_file+"\n")
 	f.write("EOF\n")
-	f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF \n")
+	f.write(str(imagicroot)+"/stand/im_rename.e <<EOF \n")
 	f.write(stripped_file+"_copy\n")
 	f.write(stripped_file+"\n")
 	f.write("EOF\n")
 	if headers is True:
-		f.write("/usr/local/IMAGIC/stand/headers.e <<EOF \n")
+		f.write(str(imagicroot)+"/stand/headers.e <<EOF \n")
 		f.write(stripped_file+"\n")
 		f.write("write\n")
 		f.write("wipe\n")
