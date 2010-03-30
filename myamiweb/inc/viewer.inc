@@ -853,6 +853,7 @@ class view {
 			.'var jspresetscript'.$this->name.'="'.$this->presetscript.'";'.$this->crlf
 			.'var jsreportscript'.$this->name.'="'.$this->reportscript.'";'.$this->crlf
 			.'var jsdwdscript'.$this->name.'="'.$this->dwdscript.'";'.$this->crlf
+			.'var jsdwdformat'.$this->name.'="'.$this->jsdwdformat.'";'.$this->crlf
 			.'var jshistoscript'.$this->name.'="'.$this->histoscript.'";'.$this->crlf
 			.'var jscommentscript'.$this->name.'="'.$this->commentscript.'";'.$this->crlf
 			.'var jsvfile'.$this->name.'=1;'.$this->crlf
@@ -1065,13 +1066,26 @@ class view {
 			.$this->btdeq->display().$this->crlf
 			.'</td> ';
 		}
-		if ($this->displaydownloadicon)
+		if ($this->displaydownloadicon) {
 		$htmlframe .= '
 			<td width="15">'
-			.$this->btdownload->display().$this->crlf
-			.'
-			</td>
-		';
+			.$this->btdownload->display().$this->crlf;
+			$htmlframe .= '</td><td width="9">';
+			$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
+			$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
+			$dwdmenu = new dropdown($downimg, $name."dwd");
+			$dwdmenu->closeval=$closedownimg;
+			$dwdmenu->height="";
+			$dwdmenu->width="";
+			$formats=array("mrc", "tiff", "jpeg");
+			foreach ($formats as $format) {
+				$sel = ($this->jsdwdformat==$format) ? "checked" : "";
+				$dwdformats[]='<input type="radio" name="'.$name.'dwdformat1" id="'.$name.'dwdparam1" value="'.$format.'" '.$sel.' onClick="setFormat(\''.$name.'\', \''.$format.'\')">'.$format;
+			}
+			$dwdform=join("<br />", $dwdformats);
+			$dwdmenu->setContent($dwdform);
+			$htmlframe.=$dwdmenu->display();
+		}
 		if ($this->displayparticleicon)
 		$htmlframe .= '
 			<td width="15">ICI'

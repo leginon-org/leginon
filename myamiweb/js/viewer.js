@@ -463,6 +463,7 @@ function newfile(view){
 	if (cautoscale= eval("jsautoscale"+view)) autoscale="&autoscale="+cautoscale; else autoscale=""
 	if (cloadjpg= eval("jsloadjpg"+view)) loadjpg="&lj="+cloadjpg; else loadjpg=""
 	if (cptclsel = eval("jsptclsel"+view)) ptclsel="&psel="+escape(cptclsel); else ptclsel=""
+	if (cdwdformat = eval("jsdwdformat"+view)) dwdformat="&f="+cdwdformat; else cdwdformat=""
 
 	options = "imgsc="+jsimagescriptcur+
 		"&preset="+selpreset+
@@ -477,7 +478,7 @@ function newfile(view){
 	nlink = "javascript:popUpMap('map.php?"+options+"')"
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset
 	ndeqlink = "javascript:popUpW('removequeue.php?id="+jsimgId+"&preset="+selpreset+"')"
-	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft
+	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+dwdformat
 	nexportlink = "getfilenames.php?sessionId="+jsSessionId+"&pre="+selpreset
 
 	if (img = document.images[eval("\"" +view+ "img\"")]) {
@@ -508,6 +509,17 @@ function newfile(view){
 	}
 
 	lastoptions[vid] = options
+}
+
+function setDownloadlink(view) {
+	if (list = eval("document.viewerform."+view+"pre")) {
+		selpreset=list.options[list.selectedIndex].value
+	}
+	if (eval(view+"fft_bt_st")) fft="&fft=1"; else fft=""
+	if (cdwdformat = eval("jsdwdformat"+view)) dwdformat="&f="+cdwdformat; else cdwdformat=""
+	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+dwdformat
+	if (downloadlink = document.getElementById("download"+view+"_bthref"))
+		downloadlink.href = ndownloadlink
 }
 
 function setAceParam(view) {
@@ -550,6 +562,11 @@ function setTagParam(view) {
 	eval("jstagparam1"+view+"="+t1)
 	eval("jstagparam2"+view+"="+t2)
 	newfile(view)
+}
+
+function setFormat(view, format) {
+	eval("jsdwdformat"+view+"='"+format+"'")
+	setDownloadlink(view)
 }
 
 function setPtclParam(view) {
