@@ -90,6 +90,13 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
+		### check for IMAGIC installation
+		d = os.environ
+		if d.has_key('IMAGIC_ROOT'):
+			self.imagicroot = d['IMAGIC_ROOT']
+		else:
+			apDisplay.printError("$IMAGIC_ROOT directory is not specified, please specify this in your .cshrc / .bashrc")	
+	
 		### run parameters
 		if self.params['templateStackId'] is None:
 			apDisplay.printError("enter template stack Id")
@@ -140,7 +147,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		#### OPTION OF PREPARING MULTI-REFERENCE ALIGNMENT REFERENCES
 
 		if (self.params['refs'] is True and self.params['thresh_refs'] is not None and self.params['maskrad_refs'] is not None):
-			f.write("/usr/local/IMAGIC/align/alirefs.e <<EOF")
+			f.write(str(self.imagicroot)+"/align/alirefs.e <<EOF")
 			if append_log is True:
 				f.write(" >> multiReferenceAlignment.log\n")
 			else:
@@ -163,7 +170,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("5\n")
 			f.write("NO\n")
 			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> multiReferenceAlignment.log\n")
+			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> multiReferenceAlignment.log\n")
 			f.write("references_prep\n")
 			f.write("references\n")
 			f.write("EOF\n")
@@ -172,7 +179,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		### if centering is specified, center particle in a reference-free translational alignment to the total sum
 		if self.params['center'] is True:
 			if self.params['nproc'] > 1:
-				f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+				f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 					" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/alimass.e_mpi <<EOF")
 				if append_log is True:
 					f.write(" >> multiReferenceAlignment.log\n")
@@ -181,7 +188,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 				f.write("YES\n")
 				f.write(str(self.params['nproc'])+"\n")
 			else:
-				f.write("/usr/local/IMAGIC/align/alimass.e <<EOF")
+				f.write(str(self.imagicroot)+"/align/alimass.e <<EOF")
 				if append_log is True:
 					f.write(" >> multiReferenceAlignment.log\n")
 				else:
@@ -195,7 +202,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write(str(self.params['max_shift_orig'])+"\n")
 			f.write("3\n")
 			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> multiReferenceAlignment.log\n")
+			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> multiReferenceAlignment.log\n")
 			f.write("start_cent\n")
 			f.write("start\n")
 			f.write("EOF\n")
@@ -203,7 +210,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			
 		### multi-reference alignment		
 		if self.params['nproc'] > 1:
-			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+			f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 				" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/mralign.e_mpi <<EOF")
 			if append_log is True:
 				f.write(" >> multiReferenceAlignment.log\n")
@@ -212,7 +219,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("YES\n")
 			f.write(str(self.params['nproc'])+"\n")
 		else:
-			f.write("/usr/local/IMAGIC/align/mralign.e <<EOF")
+			f.write(str(self.imagicroot)+"/align/mralign.e <<EOF")
 			if append_log is True:
 				f.write(" >> multiReferenceAlignment.log\n")
 			else:
@@ -246,7 +253,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		f.write("EOF\n")
 		
 		### write out alignment parameters to file
-		f.write("/usr/local/IMAGIC/stand/headers.e <<EOF >> multiReferenceAlignment.log\n")
+		f.write(str(self.imagicroot)+"/stand/headers.e <<EOF >> multiReferenceAlignment.log\n")
 		f.write("alignstack\n")
 		f.write("PLT\n")
 		f.write("INDEX\n")
@@ -274,12 +281,12 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		#### Bin down stack, low-pass filter and high-pass filter images
 
 		if self.params['bin'] > 1:
-			f.write("/usr/local/IMAGIC/stand/coarse.e <<EOF > prepareStack.log\n")
+			f.write(str(self.imagicroot)+"/stand/coarse.e <<EOF > prepareStack.log\n")
 			f.write("start\n")
 			f.write("start_coarse\n")
 			f.write(str(self.params['bin'])+"\n")
 			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> prepareStack.log\n")
+			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> prepareStack.log\n")
 			f.write("start_coarse\n")
 			f.write("start\n")
 			f.write("EOF\n")
@@ -287,7 +294,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		if self.params['highpass'] is not None and self.params['lowpass'] is not None:	
 			### convert to IMAGIC-specific filtering parameters
 			highpass, lowpass = apIMAGIC.convertFilteringParameters(self.params['highpass'], self.params['lowpass'], self.params['apix'])
-			f.write("/usr/local/IMAGIC/incore/incband.e OPT BAND-PASS <<EOF")
+			f.write(str(self.imagicroot)+"/incore/incband.e OPT BAND-PASS <<EOF")
 			if append_log is True:
 				f.write(" >> prepareStack.log\n")
 			else:
@@ -299,7 +306,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write(str(lowpass)+"\n")
 			f.write("NO\n")
 			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> prepareStack.log\n")
+			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> prepareStack.log\n")
 			f.write("start_filt\n")
 			f.write("start\n")
 			f.write("EOF\n")
