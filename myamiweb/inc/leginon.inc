@@ -149,7 +149,7 @@ class leginondata {
 			//combine
 			$q = "(".$q1.") union (".$q2.") order by `stimestamp` DESC";
 		} else {
-			$q .= $where.$grouporder;
+			$q .= $where.$wherelike.$grouporder;
 		}
 		return $this->mysql->getSQLResult($q);
 	}
