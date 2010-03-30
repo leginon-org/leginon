@@ -50,10 +50,10 @@ define('DEF_PROCESSING_PREFIX', "ap");		//update mysql privileges
 // --- You can add as many as you want, just copy and paste the block
 // --- to a new one and update the connection parameters
 
-$SQL_HOSTS[$DB_HOST]['db_host'] = $DB_HOST;
-$SQL_HOSTS[$DB_HOST]['db_user'] = $DB_USER;
-$SQL_HOSTS[$DB_HOST]['db_pass'] = $DB_PASS;
-$SQL_HOSTS[$DB_HOST]['db'] = $DB;
+$SQL_HOSTS[DB_HOST]['db_host'] = DB_HOST;
+$SQL_HOSTS[DB_HOST]['db_user'] = DB_USER;
+$SQL_HOSTS[DB_HOST]['db_pass'] = DB_PASS;
+$SQL_HOSTS[DB_HOST]['db'] = DB_LEGINON;
 
 /*
 $SQL_HOSTS['example_host_name']['db_host'] = 'example_host_name';
