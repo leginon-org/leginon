@@ -331,7 +331,7 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	$medianv = (int) ($_POST['median'] || $_POST['process']) ? $_POST['median'] : '2';
 	$pixlimitv = ($_POST['pixlimit'] || $_POST['process']) ? $_POST['pixlimit'] : '4.0';
 	$maxpeaksv = (int) ($_POST['maxpeaks']) ? $_POST['maxpeaks'] : '1500';
-	$maxsizev = ($_POST['maxsize']) ? $_POST['maxsize'] : '1.0';
+	$maxsizev = ($_POST['maxsize']) ? $_POST['maxsize'] : '0.1';
 	$overlapmultv = ($_POST['overlapmult']) ? $_POST['overlapmult'] : '1.5';
 	$centerofmasscheck = ($_POST['peaktype'] && $_POST['peaktype']!='centerofmass') ? '' : 'CHECKED';
 	$maximumcheck = ($_POST['peaktype']=='maximum') ? 'CHECKED' : '';
