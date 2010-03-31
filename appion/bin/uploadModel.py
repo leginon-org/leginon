@@ -56,6 +56,8 @@ class UploadModelScript(appionScript.AppionScript):
 			help="3D Density id in the database to upload as an accepted model", metavar="INT")
 		self.parser.add_option("--name", dest="name",
 			help="Prefix name for new model, automatically append res_pixelsize_box.mrc in the program")
+		self.parser.add_option("--viper2eman", dest="viper2eman", default=False,
+			action="store_true", help="Convert VIPER orientation to EMAN orientation")
 
 	#=====================
 	def checkConflicts(self):
@@ -105,7 +107,6 @@ class UploadModelScript(appionScript.AppionScript):
 		if self.params['res'] is None:
 			apDisplay.printError("Enter the resolution of the initial model")
 
-
 	#=====================
 	def setRunDir(self):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
@@ -115,26 +116,22 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['rundir'] = os.path.join(path,"models","accepted",self.params['runname'])
 
 	#=====================
-	def setNewFileName(self, unique=False):
-		# use the part before "-" as default prefixname
-		basename = os.path.basename(self.params['file'])
-		nameparse = basename.split("-")
-		prefixname = nameparse[0]
-		# set apix, resolution, and box name
-		resname = re.sub("\.", "_", str(round(self.params['res'],2)))+"res"
-		apixname = re.sub("\.", "_", str(round(self.params['newapix'],2)))+"apix"
-		boxsizename = str(int(self.params['newbox']))+"box"
-		if unique:
-			uniqueid = '-'+str(time.time())
+	def setFileName(self):
+		if self.params['name'] is None:
+			### assign provided name
+			if self.params['oldmodelid'] is not None:
+				basename = "model%04d-%s" % (self.params['oldmodelid'], self.timestamp)
+			elif self.params['densityid'] is not None:
+				basename = "density%04d-%s" % (self.params['densityid'], self.timestamp)
+			else:
+				oldbasename = os.path.splitext(os.path.basename(self.params['file']))[0]
+				basename = "upload-%s-%s" % (oldbasename, self.timestamp)
 		else:
-			uniqueid = ''
-		# use modelid and densityid as prefixname if specified
-		if self.params['oldmodelid'] is not None:
-			prefixname = "model%03d" % self.params['oldmodelid']
-		if self.params['densityid'] is not None:
-			prefixname = "density%03d" % self.params['densityid']
-
-		self.params['name'] = prefixname+"-"+apixname+"-"+resname+"-"+boxsizename+uniqueid+".mrc"
+			### clean up provided name
+			basename = os.path.splitext(os.path.basename(self.params['name']))[0]
+		self.params['name'] = os.path.join(self.params['rundir'], basename)
+		apDisplay.printColor("Naming density model: "+self.params['name'], "cyan")
+		return
 
 	#=====================
 	def getDensityParams(self):
@@ -163,15 +160,15 @@ class UploadModelScript(appionScript.AppionScript):
 
 	#=====================
 	def checkExistingFile(self):
-		newmodelpath = os.path.join(self.params['rundir'], self.params['name'])
-		origmodelpath = self.params['file']
-		apDisplay.printWarning("a model by the same filename already exists: '"+newmodelpath+"'")
+		mrcname = os.path.join(self.params['rundir'], self.params['name']+".mrc")
+		origmodel = self.params['file']
+		apDisplay.printWarning("a model by the same filename already exists: '"+mrcname+"'")
 		### a model by the same name already exists
-		mdnew = apFile.md5sumfile(newmodelpath)
-		mdold = apFile.md5sumfile(origmodelpath)
+		mdnew = apFile.md5sumfile(mrcname)
+		mdold = apFile.md5sumfile(origmodel)
 		if mdnew != mdold:
 			### they are different, make unique name
-			self.setNewFileName(unique=True)
+			self.setFileName(unique=True)
 			apDisplay.printWarning("the models are different, cannot overwrite, so using new name: %s" % (self.params['name'],))
 			# restart
 			self.start()
@@ -179,12 +176,12 @@ class UploadModelScript(appionScript.AppionScript):
 		elif apDatabase.isModelInDB(mdnew):
 			### they are the same and its in the database already
 			apDisplay.printWarning("same model with md5sum '"+mdnew+"' already exists in the DB!")
-			apDisplay.printWarning("creating new images, but skipping upload for file: '"+newmodelpath+"'")
+			apDisplay.printWarning("creating new images, but skipping upload for file: '"+mrcname+"'")
 			self.params['commit'] = False
 			self.params['chimeraonly'] = True
 		else:
 			### they are the same, but its not in the database
-			apDisplay.printWarning("the same model with name '"+newmodelpath+"' already exists, but is not uploaded!")
+			apDisplay.printWarning("the same model with name '"+mrcname+"' already exists, but is not uploaded!")
 			if self.params['commit'] is True:
 				apDisplay.printMsg("inserting model into database")
 		if self.params['rescale'] is True:
@@ -194,7 +191,7 @@ class UploadModelScript(appionScript.AppionScript):
 	def insertModel(self):
 		apDisplay.printMsg("commiting model to database")
 		modq=appiondata.ApInitialModelData()
-		modq['project|projects|project'] = self.params['projectId']
+		modq['project|projects|project'] = self.params['projectid']
 		modq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		modq['name'] = self.params['name']
 		modq['symmetry'] = self.params['symdata']
@@ -216,47 +213,43 @@ class UploadModelScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
+		self.setFileName()
 		self.params['oldbox'] = apVolume.getModelDimensions(self.params['file'])
 		if self.params['newbox'] is None:
 			self.params['newbox'] = self.params['oldbox']
 		if self.params['oldapix'] is None:
 			self.params['oldapix'] = self.params['newapix']
 		self.params['scale'] =  float(self.params['oldapix'])/self.params['newapix']
-		if self.params['name'] is None:
-			self.setNewFileName()
-		else:
-			if self.params['name'][-4:] != ".mrc":
-				self.params['name'] += ".mrc"
-		apDisplay.printColor("Naming initial model as: "+self.params['name'], "cyan")
 
-		newmodelpath = os.path.join(self.params['rundir'], self.params['name'])
-		origmodelpath = self.params['file']
-		if os.path.isfile(newmodelpath):
+		mrcname = os.path.join(self.params['rundir'], self.params['name']+".mrc")
+		origmodel = self.params['file']
+		if os.path.isfile(mrcname):
 			### rescale old model to a new size
-			if self.checkExistingFile():
-				return
+			### I don't think this works - neil
+			if self.checkExistingFile() is True:
+				apDisplay.printError("File exists")
 		elif (abs(self.params['oldapix'] - self.params['newapix']) > 1.0e-2 or
 			abs(self.params['oldbox'] - self.params['newbox']) > 1.0e-1):
 			### rescale old model to a new size
 			apDisplay.printWarning("rescaling original model to a new size")
-			apDisplay.printMsg("rescaling model "+origmodelpath+" by "+str(round(self.params['scale']*100.0,2))+"%")
-			apVolume.rescaleVolume(origmodelpath, newmodelpath,
+			apDisplay.printMsg("rescaling model "+origmodel+" by "+str(round(self.params['scale']*100.0,2))+"%")
+			apVolume.rescaleVolume(origmodel, mrcname,
 				self.params['oldapix'], self.params['newapix'], self.params['newbox'])
 		else:
 			### simple upload, just copy file to models folder
-			apDisplay.printMsg("copying original model to a new location: "+newmodelpath)
-			shutil.copyfile(origmodelpath, newmodelpath)
-		### upload Initial Model
-		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
+			apDisplay.printMsg("copying original model to a new location: "+mrcname)
+			shutil.copyfile(origmodel, mrcname)
+
+		if self.params['viper2eman'] is True:
+			apVolume.viper2eman(mrcname, mrcname, apix=self.params['apix'])
 
 		### render chimera images of model
 		contour = self.params['contour']
 		if self.params['mass'] is not None:
-			apChimera.setVolumeMass(newmodelpath, self.params['newapix'], self.params['mass'])
+			apChimera.setVolumeMass(mrcname, self.params['newapix'], self.params['mass'])
 			contour = 1.0
-		apChimera.renderSnapshots(newmodelpath, contour=contour,
+		apChimera.renderSnapshots(mrcname, contour=contour,
 			zoom=self.params['zoom'], sym=self.params['symdata']['eman_name'])
-
 
 		self.insertModel()
 

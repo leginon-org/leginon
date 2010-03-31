@@ -256,6 +256,9 @@ class modelFromPDB(appionScript.AppionScript):
 				self.params['apix'], lp)
 			apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
+		if self.params['viper2eman'] is True:
+			apVolume.viper2eman(mrcname, mrcname, apix=self.params['apix'])
+
 		return mrcname
 
 	#=====================

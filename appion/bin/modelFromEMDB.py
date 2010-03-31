@@ -19,6 +19,7 @@ from appionlib import apSymmetry
 from appionlib import appiondata
 from appionlib import apChimera
 from appionlib import apEMAN
+from appionlib import apVolume
 
 
 class modelFromEMDB(appionScript.AppionScript):
@@ -168,8 +169,8 @@ class modelFromEMDB(appionScript.AppionScript):
 		self.mass = None
 		self.setFileName()
 
-		mrcname = newmodelpath+".mrc"
-		ccp4name = newmodelpath+".ccp4"
+		mrcname = self.params['name']+".mrc"
+		ccp4name = self.params['name']+".ccp4"
 
 		### get emdb from web
 		emdbfile = self.fetchEMDB(self.params['emdbid'], ccp4name)
@@ -179,6 +180,9 @@ class modelFromEMDB(appionScript.AppionScript):
 		emancmd = ("proc3d "+ccp4name+" "+mrcname)
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 		apFile.removeFile(ccp4name)
+
+		if self.params['viper2eman'] is True:
+			apVolume.viper2eman(mrcname, mrcname, apix=self.apix)
 
 		### lowpass filter, do both atan2 and Gaussian filter to sum up to requested lowpass
 		### total lowpass = sqrt( lp1^2 + lp2^2 )
