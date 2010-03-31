@@ -133,6 +133,48 @@ def rescaleVolume(infile, outfile, inapix, outapix=None, newbox=None, spider=Fal
 		emancmd += "spidersingle "
 	return
 
+#================
+def viper2eman(infile, outfile, apix=None):
+	"""
+	apix is requested so it puts it into the MRC file
+	sometimes yflip is needed, but I am worried this mirrors the structure
+	"""
+	### rotate 90 degrees about z
+	rotatecmd = "proc3d %s rotated.mrc rot=0,0,90"%(infile)
+	apEMAN.executeEmanCmd(rotatecmd, verbose=True)
+
+	### move 2fold facing z to 5fold facing z
+	composecmd = "proc3d rotated.mrc composed.mrc icos2fTo5f"
+	apEMAN.executeEmanCmd(composecmd, verbose=True)
+
+	### set origin and apix
+	finalcmd = "proc3d composed.mrc %s origin=0,0,0 "%(outfile)
+	if apix is not None:
+		finalcmd += "apix=%.3f "%(apix)
+	apEMAN.executeEmanCmd(finalcmd, verbose=True)
+
+	return outfile
+
+#================
+def eman2viper(infile, outfile, apix=None):
+	"""
+	apix is requested so it puts it into the MRC file
+	"""
+	### move 5fold facing z to 2fold facing z
+	rotatecmd = "proc3d %s composed.mrc icos5fTo2f"%(infile)
+	apEMAN.executeEmanCmd(rotatecmd, verbose=True)
+
+	### rotate 90 degrees about z
+	composecmd = "proc3d composed.mrc rotated.mrc rot=0,0,90"
+	apEMAN.executeEmanCmd(composecmd, verbose=True)
+
+	### set origin and apix
+	finalcmd = "proc3d rotated.mrc %s origin=0,0,0 "%(outfile)
+	if apix is not None:
+		finalcmd += "apix=%.3f "%(apix)
+	apEMAN.executeEmanCmd(finalcmd, verbose=True)
+
+	return outfile
 
 ####
 # This is a low-level file with NO database connections
