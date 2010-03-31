@@ -37,7 +37,7 @@ class modelFromPDB(appionScript.AppionScript):
 			help="PDB ID", metavar="STR")
 		self.parser.add_option("--pdbfile", dest="pdbfile",
 			help="PDB file", metavar="STR")
-		self.parser.add_option("--lowpass", dest="lowpass", type='float',
+		self.parser.add_option("--res", "--lowpass", dest="lowpass", type='float',
 			help="Lowpass filter of PDB model (in Angstroms)")
 		self.parser.add_option("--apix", dest="apix", type='float',
 			help="Pixel size of model (in Angstroms)")
