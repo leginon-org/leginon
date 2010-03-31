@@ -3044,7 +3044,15 @@ class particledata {
 		if ($order)
 			$q.=" order by symmetry ";
 		$r=$this->mysql->getSQLResult($q);
+		if (!$r) {
+			echo "<font size='+2' color='#cc3333'> Major Error: no symmetry info found in database</font>\n";
+			exit;
+		}
 		return $r;
+	}
+
+	function getSymInfo ($symId){
+		return getSymmetryInfo($symId);
 	}
 
 	function getSymmetryInfo($id) {
@@ -3433,13 +3441,6 @@ class particledata {
 				."LEFT JOIN ApPathData AS p ON "
 				."(d.`REF|ApPathData|path` = p.`DEF_id`) "
 				."WHERE d.`DEF_id` = '$modelId' ";
-		list($r) = $this->mysql->getSQLResult($q);
-		return $r;
-	}
-
-	function getSymInfo ($symId){
-		$q = "SELECT * "
-				."FROM `ApSymmetryData` WHERE `DEF_id` = '$symId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
 	}
