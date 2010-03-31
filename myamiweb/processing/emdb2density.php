@@ -98,6 +98,12 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 	echo "&nbsp;Symmetry group <i>e.g.</i> c1\n";
 
 	echo "</td></tr>\n";
+	echo "<tr><td valign='top' class='tablebg'>\n";
+
+	echo "<input type='checkbox' name='viper2eman' $viper2eman>\n";
+	echo docpop('viper2eman', "convert VIPER to EMAN orientation");
+
+	echo "</td></tr>\n";
 	echo "<tr><td align='center'>\n";
 
 	echo "<hr>";
@@ -146,7 +152,9 @@ function runUploadModel() {
 	if ($lowpass)
 		$command.="--lowpass=$lowpass ";
 	$command.="--symm=$symm ";
-	
+	if ($_POST['viper2eman']=='on')
+		$command.="--viper2eman " ;
+
 	// submit job to cluster
 	if ($_POST['process']=="Create Model") {
 		$user = $_SESSION['username'];

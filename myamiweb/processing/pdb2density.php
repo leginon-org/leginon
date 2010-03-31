@@ -130,6 +130,12 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	echo "&nbsp;<font size='-2'>(default provided)</font>\n";
 
 	echo "</td></tr>\n";
+	echo "<tr><td valign='top' class='tablebg'>\n";
+
+	echo "<input type='checkbox' name='viper2eman' $viper2eman>\n";
+	echo docpop('viper2eman', "convert VIPER to EMAN orientation");
+
+	echo "</td></tr>\n";
 	echo "<tr><td align='center'>\n";
 
 	echo "<hr>";
@@ -197,6 +203,8 @@ function runDownloadModel() {
 		$command.="--box=$box ";
 	if ($_POST['bunit']=='on')
 		$command.="--biolunit " ;
+	if ($_POST['viper2eman']=='on')
+		$command.="--viper2eman " ;
 
 		$command.="--method=$method " ;
 

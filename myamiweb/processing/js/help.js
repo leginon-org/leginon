@@ -124,6 +124,7 @@ var help = {
 		'pdbid' : 'ID for an experimentally determined biological molecule from the RCSB Protein Data Bank (www.rcsb.org)',
 		'emdbid' : 'ID for an experimentally determined electron density map from the EM Data Bank',
 		'biolunit' : 'Use the functional / oligomeric form of the structure for model creation',
+		'viper2eman' : 'Convert VIPER to EMAN orientation for icosahedral viruses',
 		'eulers' : 'Eulers assigned to the particles for this iteration will be used when creating class averages.',
 		'sigma' : 'Standard deviation multiplier to determine the quality of particle to be used.  Setting this to 0, only particles that have a quality factor equal to or greater than the mean quality factor will be used in making the class averages.  A larger sigma will result in fewer particles, but of higher \"quality\".  If no value is specified, all particles will be used.',
 		'keepavg' : 'Any particles that have a median euler jump greater than this value will not be used in the class averages',

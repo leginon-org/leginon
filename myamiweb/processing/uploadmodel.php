@@ -157,6 +157,13 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 			echo "Square Box Size <FONT SIZE='-2'>(in pixels)</FONT>\n";
 		}
 	}
+
+	echo "</td></tr>\n";
+	echo "<tr><td valign='top' class='tablebg'>\n";
+
+	echo "<input type='checkbox' name='viper2eman' $viper2eman>\n";
+	echo docpop('viper2eman', "convert VIPER to EMAN orientation");
+
 	echo "
       <P>
       <B>Snapshot Options:</B>
@@ -262,7 +269,9 @@ function runUploadModel() {
 	if ($mass) $command.="--mass=$mass ";
 	if ($zoom) $command.="--zoom=$zoom ";
 	$command.="--description=\"$description\" ";
-	
+	if ($_POST['viper2eman']=='on')
+		$command.="--viper2eman " ;
+
 	// submit job to cluster
 	if ($_POST['process']=="Upload Model") {
 		$user = $_SESSION['username'];
