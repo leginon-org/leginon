@@ -1,13 +1,14 @@
 ## python
 import os
-import sys
 import re
-import socket
+import math
+import sys
 import time
 import random
+import socket
+import string
 import subprocess
-import math
-from string import lowercase
+
 ## appion
 from appionlib import apDisplay
 
@@ -49,12 +50,12 @@ def getAppionDirectory():
 #=====================
 def makeTimestamp():
 	datestamp = time.strftime("%y%b%d").lower()
-	hourstamp = lowercase[(time.localtime()[3])%26]
+	hourstamp = string.lowercase[(time.localtime()[3])%26]
 	if hourstamp == "x":
 		### SPIDER does not like x's
 		hourstamp = "z"
 	#mins = time.localtime()[3]*12 + time.localtime()[4]
-	#minstamp = lowercase[mins%26]
+	#minstamp = string.lowercase[mins%26]
 	minstamp = "%02d"%(time.localtime()[4])
 	timestamp = datestamp+hourstamp+minstamp
 	return timestamp
@@ -472,6 +473,19 @@ def runCmd(cmd, package="", verbose=False, showcmd=True, logfile=None, fail=Fals
 		apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
 	elif waited is True:
 		print ""
+
+
+#================
+def randomString(length):
+	"""
+	return a string of random letters and numbers of defined length
+	"""
+	mystr = ""
+	### allow hexidemical chars
+	chars = string.letters[:6] + string.digits
+	for i in range(length):
+		mystr += random.choice(chars)
+	return mystr
 
 ####
 # This is a low-level file with NO database connections
