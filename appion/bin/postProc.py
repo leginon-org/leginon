@@ -9,6 +9,7 @@ from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import apEMAN
 from appionlib import apVolume
+from appionlib import apAmpCorrect
 from appionlib import apFile
 from appionlib import apSymmetry
 from appionlib import apDatabase
@@ -196,8 +197,8 @@ class PostProcScript(appionScript.AppionScript):
 		if self.params['ampfile'] is not None:
 			### run amplitude correction
 			spifile = apVolume.MRCtoSPI(self.params['file'], self.params['rundir'])
-			tmpfile = apVolume.createAmpcorBatchFile(spifile, self.params)
-			apVolume.runAmpcor()
+			tmpfile = apAmpCorrect.createAmpcorBatchFile(spifile, self.params)
+			apAmpCorrect.runAmpcor()
 
 			### check if spider was successful
 			fileroot += ".amp"
@@ -212,7 +213,7 @@ class PostProcScript(appionScript.AppionScript):
 			curfile = outfile
 		elif self.params['bfactor'] is True:
 			outfile = os.path.join( self.params['rundir'], "bfactor-fix.mrc" )
-			outfile = apVolume.applyBfactor(self.params['file'], fscfile=self.params['fscfile'], 
+			outfile = apAmpCorrect.applyBfactor(self.params['file'], fscfile=self.params['fscfile'], 
 				apix=self.params['apix'], mass=self.params['mass'], outfile=outfile)
 			curfile = outfile
 		else :

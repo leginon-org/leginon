@@ -94,7 +94,7 @@ def isValidVolume(volfile):
 	if not os.path.isfile(volfile):
 		return False
 	volarray = mrc.read(volfile)
-	if volarray.std() < 1e-6:
+	if abs(volarray.min() - volarray.max()) < 1e-6:
 		apDisplay.printWarning("Volume has zero standard deviation")
 		return False
 	return True

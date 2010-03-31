@@ -8,6 +8,7 @@ import shutil
 from appionlib import apFile
 from appionlib import apParam
 from appionlib import apDisplay
+from appionlib import apVolume
 #pyami
 from pyami import mrc
 
@@ -39,10 +40,7 @@ def applyBfactor(infile, fscfile, apix, mass=None, outfile=None):
 	cmd += " %s"%(outfile)
 	apParam.runCmd(cmd, package="B-factor", verbose=True, showcmd=True)
 
-	if not os.path.isfile(outfile):
-		apDisplay.printWarning("B-factor correction failed %s"%(embfactorfile))
-		return infile
-	if not isValidVolume(outfile):
+	if not apVolume.isValidVolume(outfile):
 		apDisplay.printWarning("B-factor correction failed %s"%(embfactorfile))
 		return infile
 
