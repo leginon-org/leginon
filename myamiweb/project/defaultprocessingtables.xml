@@ -195,7 +195,7 @@
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>UNIQUE `symmetry` (`symmetry`(12))</key>
-    <key>KEY `eman_name`</key>
+    <key>KEY `eman_name` (`eman_name`(8))</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
   </sqltable>
   <sqltable name="ApTemplateImageData" >

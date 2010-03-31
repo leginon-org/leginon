@@ -43,14 +43,16 @@ if ($_POST['linkprocessing']) {
 if ($_POST['createprocessing'] || $linkprocessing) {
 	$dbname=trim($_POST['dbname']);
 	if ($dbname) {
+		
 		$q='create database `'.$dbname.'`';
 		$r=$project->mysql->SQLQuery($q);
+		
 		if (!$r && !$linkprocessing) {
 			$dberror = $project->mysql->getError();
 			$dberrornb = $project->mysql->getErrorNumber();
 		} else {
 			// --- created default tables --- //
-			$filename = $DEF_PROCESSING_TABLES_FILE;
+			$filename = DEF_PROCESSING_TABLES_FILE;
 			$leginondata->mysql->setSQLHost( array('db'=>$dbname) );
 			$leginondata->importTables($filename);
 
@@ -93,7 +95,7 @@ $link_off = "<a class='header' href='$url&amp;ld=0'>[o]</a> ";
 $ld = ($_GET['ld']==0) ? $link_on : $link_off;
 $cat  = ($_GET['cat']==0) ? $link_on : $link_off;
 ?>
-<form method="POST" name="projectform" action="<?php echo $PHP_SELF ?>">
+<form method="POST" name="projectform" action="<?php echo $PHP_SELF."?pid=".$selectedprojectId ?>">
 <input type="hidden" name="v" value="<?=$_REQUEST['v']?>">
 <table border="0" >
 <tr>
@@ -122,6 +124,7 @@ $pId = $selectedprojectId;
 	echo "<td>";
 	echo "<b>owners: </b> ";
 	$names = array();
+
 	if (count($projectowners))
 		foreach ($projectowners as $o) $names[] = $o['full name'];
 	echo implode(", ",$names);
