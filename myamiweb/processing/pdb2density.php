@@ -32,6 +32,7 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
   
 	$javafunctions = writeJavaPopupFunctions('appion');
+	$particle = new particledata();
 
 	processing_header($title,$heading,$javafunctions,True);
 	// write out errors, if any came up:
@@ -54,32 +55,86 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	}
   
 	// Set any existing parameters in form
+	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '';
+	$symm = ($_POST['symm']) ? $_POST['symm'] : '';
+	$runtime = ($_POST['runtime']) ? $_POST['runtime'] : getTimestring();
 	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
-	$res = ($_POST['res']) ? $_POST['res'] : '';
 	$pdbid = ($_POST['pdbid']) ? $_POST['pdbid'] : '';
 	$box = ($_POST['box']) ? $_POST['box'] : '';
 	$bunitcheck = ($_POST['bunit'] == 'on') ? 'checked' : '';
-	$runtime = ($_POST['runtime']) ? $_POST['runtime'] : getTimestring();
 
-	echo "<table BORDER=3 CLASS=tableborder><tr><td valign='top'>\n";
+	echo "<table class=tablebubble cellspacing='8'>";
+
+	echo "<tr><td valign='top'>\n";
+
 	echo docpop('pdbid', '<b>PDB ID:</b>');
 	echo "<input type='text' name='pdbid' value='$pdbid' size='5'><br />\n";
 	echo "<input type='hidden' name='runtime' value='$runtime'>\n";
+
+	echo "</td></tr>\n";
+	echo "<tr><td valign='top'>\n";
+
 	echo "<input type='checkbox' name='bunit' $bunitcheck>\n";
 	echo "Use the ";
 	echo docpop('biolunit', "biological unit");
+
+	echo "</td></tr>\n";
+	echo "<tr><td valign='top'>\n";
+
+	echo docpop('outdir', 'Output directory')."<br/>\n";
+	echo "<input type='text' name='outdir' value='$outdir' size='40'>\n";
+
 	echo "</td></tr>\n";
 	echo "<tr><td valign='top' class='tablebg'>\n";
-	echo "<p>\n";
-	echo "<input type='text' name='res' value='$res' size='5'> Model Resolution<br />\n";
-	echo "<input type='text' name='apix' size='5' value='$apix'>\n";
-	echo "Pixel Size <font size='-2'>(in &Aring;ngstroms per pixel)</font><br />\n";
-	echo "<input type='text' name='box' size='5' value='$box'>\n";
-	echo "Box Size <font size='-2'>(in pixels)</font>\n";
+
+	echo "<input type='text' name='lowpass' value='$lowpass' size='5'>\n";
+	echo "&nbsp;Low pass filter\n";
+
+	echo "</td></tr>\n";
+	echo "<tr><td valign='top' class='tablebg'>\n";
+
+	$syms = $particle->getSymmetries();
+   echo "<select name='symm'>\n";
+   echo "<option value=''>select one...</option>\n";
+	foreach ($syms as $sym) {
+		echo "<option value='$sym[DEF_id]'";
+		if ($sym['DEF_id']==$_POST['sym']) echo " selected";
+		echo ">$sym[symmetry]";
+		if ($sym['symmetry']=='C1') echo " (no symmetry)";
+		echo "</option>\n";
+	}
+	echo "</select>\n";
+	echo "&nbsp;Symmetry group <i>e.g.</i> c1\n";
+
+	echo "</td></tr>\n";
+	echo "<tr><td valign='top' class='tablebg'>\n";
+
+   echo "<select name='method'>\n";
+   echo "<option value='spider'>SPIDER: CP FROM PDB</option>\n";
+   echo "<option value='eman'>EMAN: pdb2mrc</option>\n";
+	echo "</select>\n";
+	echo "&nbsp;Program to convert PDB\n";
+
+	echo "</td></tr>\n";
+	echo "<tr><td valign='top' class='tablebg'>\n";
+
+	echo docpop('apix', 'Pixel size')."<br/>\n";
+	echo "<input type='text' name='apix' value='$apix' size='5'>\n";
+	echo "&nbsp;<font size='-2'>(in &Aring;ngstroms)</font>\n";
+
+	echo "</td></tr>\n";
+	echo "<tr><td valign='top' class='tablebg'>\n";
+
+	echo docpop('boxsize', 'Box size')."<br/>\n";
+	echo "<input type='text' name='box' value='$box' size='5'>\n";
+	echo "&nbsp;<font size='-2'>(default provided)</font>\n";
+
 	echo "</td></tr>\n";
 	echo "<tr><td align='center'>\n";
+
 	echo "<hr>";
 	echo getSubmitForm("Create Model");
+
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo "</form>\n";
@@ -93,44 +148,58 @@ function runDownloadModel() {
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 
-	$command = "modelFromPDB.py ";
-
 	$session=$_POST['sessionname'];
+	$box=$_POST['box'];
+	$method=$_POST['method'];
 
 	//make sure a pdb id was entered
 	$pdbid=$_POST['pdbid'];
-  	if (!$pdbid) createForm("<B>ERROR:</B> Enter a PDB ID");
+  	if (!$pdbid)
+		createForm("<B>ERROR:</B> Enter a PDB ID");
 
 	//make sure a apix was provided
 	$apix=$_POST['apix'];
-	if (!$apix) createForm("<B>ERROR:</B> Enter the pixel size");
+	if (!$apix)
+		createForm("<B>ERROR:</B> Enter the pixel size");
+
+	//make sure a symmetry group was provided
+	$symm=$_POST['symm'];
+	if (!$symm)
+		createForm("<B>ERROR:</B> Enter a symmetry group");
 
 	//make sure a resolution was provided
-	$res=$_POST['res'];
-	if (!$res) createForm("<B>ERROR:</B> Enter the model resolution");
-
-	//make sure a boxsize was provided
-	$box=$_POST['box'];
-	if (!$box) createForm("<B>ERROR:</B> Enter a box size");
+	$lowpass=$_POST['lowpass'];
+	if (!$lowpass)
+		createForm("<B>ERROR:</B> Enter the low pass filter radius");
 
 	// check if downloading the biological unit
 
-	if (!is_float($res)) $res = $res.".0";
-	$filename = $pdbid.'-'.$apix.'-'.$res.'-'.$box;
-	// pdb id will be the runname
-	$runname = $_POST['runtime'];
-	$runname = $pdbid."_".$runname;
-	$rundir = $outdir."/".$runname;
+	if (!is_float($lowpass))
+		$lowpass = $lowpass.".0";
 
+	// pdb id will be the runname
+	$runtime = $_POST['runtime'];
+	$filename = "pdb".$pdbid."-".$runtime;
+	$runname = $filename;
+	if (substr($outdir,-1,1)!='/')
+		$outdir.='/';
+	$rundir = $outdir.$runname;
+
+	$command = "modelFromPDB.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="--runname=".$runname." ";
+	$command.="--runname=$runname ";
 	$command.="--pdbid=$pdbid ";
-	$command.="-s $session ";
-	$command.="-a $apix ";
-	$command.="-r $res ";
-	$command.="-b $box ";
-	if ($_POST['bunit']=='on') $command.="-u" ;
-	
+	$command.="--session=$session ";
+	$command.="--apix=$apix ";
+	$command.="--res=$lowpass ";
+	$command.="--symm=$symm ";
+	if ($box)
+		$command.="--box=$box ";
+	if ($_POST['bunit']=='on')
+		$command.="--biolunit " ;
+
+		$command.="--method=$method " ;
+
 	// submit job to cluster
 	if ($_POST['process']=="Create Model") {
 		$user = $_SESSION['username'];
@@ -138,7 +207,8 @@ function runDownloadModel() {
 
 		if (!($user && $password)) createForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploadmodel',False);
+		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'uploadmodel', false);
+
 		// if errors:
 		if ($sub) createForm("<b>ERROR:</b> $sub");
 		exit;
@@ -152,22 +222,6 @@ function runDownloadModel() {
 	echo "<b>DownloadModel Command:</b><br />\n";
 	echo "$command\n";
 	echo "<p>\n";
-	if (!file_exists($rundir.'/'.$filename.'.mrc')) {
-		echo "EM Density file to be created:<br />\n";
-		echo "<b>$rundir/$filename.mrc</b><br />\n";
-	}
-	else {
-		echo "EM Density file created:<br />\n";
-		$densityid = $particle -> getDensityIdFromFile($rundir,$filename.".mrc");
-		echo "<b><a href='densityreport.php?expId=$expId&densityId=$densityid'>$rundir/$filename.mrc</a></b><br />\n";
-		echo "<hr />\n";
-		$formAction="uploadmodel.php?expId=$expId";
-		$formAction.="&densityId=$densityid";
-		echo "<form name='uploadmodel' method='POST' ACTION='$formAction'>\n";
-		echo "<center><input type='submit' name='goUploadModel' value='Upload This Model'></center><br />\n";
-		echo "<font class='apcomment'>Remember that PDB may not be oriented relative to any axis</font>\n";
-		echo "</form>\n";
-	}
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	processing_footer();
