@@ -904,7 +904,9 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 			$percent = (float) preg_replace("/%/", "", $fsbit);
 	}
 	if ($percent && $percent >= 98)
-		return "Filesystem is $percent% full, please change output directory ".substr($outdir,0,15);
+		$error = "Filesystem is $percent% full, please change output directory<br/>\n";
+		$error .= "<font size='-2'>$outdir</font>";
+		return $error;
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -1052,11 +1054,11 @@ function writeTestResults($jpg,$ccclist,$bin){
 	if (!file_exists($jpg)) return "<font class='apcomment'>An Error occurred - No image was created</font><br />\n";
         $html = "<center>\n";
         $html.= "<a href='loadimg.php?filename=$jpg' target='blank'>\n";
-        $html.= "<img src='loadimg.php?filename=$jpg&s=256'></a>\n";
+        $html.= "<img src='loadimg.php?filename=$jpg&h=256'></a>\n";
         if (count($ccclist)>1) $html.=  "<br />\n";
         foreach ($ccclist as $ccc){
                 $html.= "<a href='loadimg.php?filename=$ccc' target='blank'>\n";
-                $html.= "<img src='loadimg.php?filename=$ccc&s=256'></a>\n";
+                $html.= "<img src='loadimg.php?filename=$ccc&h=256'></a>\n";
         }
         $html.= "</center>\n";
 	return $html;
