@@ -84,7 +84,17 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 	echo "</td></tr>\n";
 	echo "<tr><td valign='top' class='tablebg'>\n";
 
-	echo "<input type='text' name='symm' size='5' value='$symm'>\n";
+	$syms = $particle->getSymmetries();
+   echo "<select name='symm'>\n";
+   echo "<option value=''>select one...</option>\n";
+	foreach ($syms as $sym) {
+		echo "<option value='$sym[DEF_id]'";
+		if ($sym['DEF_id']==$_POST['sym']) echo " selected";
+		echo ">$sym[symmetry]";
+		if ($sym['symmetry']=='C1') echo " (no symmetry)";
+		echo "</option>\n";
+	}
+	echo "</select>\n";
 	echo "&nbsp;Symmetry group <i>e.g.</i> c1\n";
 
 	echo "</td></tr>\n";
@@ -106,18 +116,18 @@ function runUploadModel() {
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 
-	$command = "modelFromEMDB.py ";
-
 	$session=$_POST['sessionname'];
 	$lowpass=$_POST['lowpass'];
 
 	//make sure a emdb id was entered
 	$emdbid=$_POST['emdbid'];
-  	if (!$emdbid) createForm("<B>ERROR:</B> Enter a EMDB ID");
+  	if (!$emdbid)
+		createForm("<B>ERROR:</B> Enter a EMDB ID");
 
 	//make sure a symmetry group was provided
 	$symm=$_POST['symm'];
-	if (!$symm) createForm("<B>ERROR:</B> Enter a symmetry group");
+	if (!$symm)
+		createForm("<B>ERROR:</B> Enter a symmetry group");
 
 	if (!is_float($apix)) $apix = sprintf("%.2f", $apix);
 
@@ -128,6 +138,7 @@ function runUploadModel() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	$command = "modelFromEMDB.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--runname=$runname ";
 	$command.="--emdbid=$emdbid ";
@@ -143,7 +154,7 @@ function runUploadModel() {
 
 		if (!($user && $password)) createForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'modelfromemdb',False);
+		$sub = submitAppionJob($command, $outdir, $runname, $expId,'modelfromemdb', false);
 
 		// if errors:
 		if ($sub) createForm("<b>ERROR:</b> $sub");
