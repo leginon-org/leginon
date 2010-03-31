@@ -23,8 +23,10 @@ except:
 	apDisplay.environmentError()
 	raise
 """
-
-import mlabraw as pymat
+try:
+	import mlabraw as pymat
+except:
+	print "Matlab module did not get imported"
 
 class aceLoop(appionLoop2.AppionLoop):
 	def setProcessingDirName(self):

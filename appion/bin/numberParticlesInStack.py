@@ -9,7 +9,6 @@ try:
 	import EMAN
 except ImportError:
 	print "EMAN module did not get imported"
-	sys.exit(1)
 
 if __name__ == "__main__":
 

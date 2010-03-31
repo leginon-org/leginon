@@ -2,7 +2,7 @@
 
 import glob,os,sys
 import operator
-import EMAN
+
 import shutil
 import math
 import subprocess
@@ -11,6 +11,11 @@ import re
 import time
 from appionlib import apEMAN
 from appionlib.apSpider import alignment
+
+try:
+	import EMAN
+except:
+	print "EMAN module did not get imported"
 
 def parseInput(args,params):
 	for arg in args:

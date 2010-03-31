@@ -9,7 +9,10 @@ import re
 import cPickle
 import random
 #eman
-import EMAN
+try:
+	import EMAN
+except:
+	print "EMAN module did not get imported"
 #scipy
 import numpy
 #appion
