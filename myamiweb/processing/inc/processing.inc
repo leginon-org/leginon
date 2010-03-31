@@ -864,7 +864,7 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 }
 
 function getNumberOfProcsPerNode() {
-	return 8;
+	return 4;
 }
 
 function getNumberOfRequiredNodes($nproc, $ppn) {
@@ -903,10 +903,11 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 		if (preg_match("/^[0-9]+%$/", $fsbit))
 			$percent = (float) preg_replace("/%/", "", $fsbit);
 	}
-	if ($percent && $percent >= 98)
+	if ($percent && $percent >= 98) {
 		$error = "Filesystem is $percent% full, please change output directory<br/>\n";
 		$error .= "<font size='-2'>$outdir</font>";
 		return $error;
+	}
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
