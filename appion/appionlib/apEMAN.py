@@ -1,20 +1,22 @@
 import os
 import re
-import subprocess
 import sys
 import time
 import math
 import random
+import subprocess
 from appionlib import apDisplay
-try:
-	from appionlib import apImagicFile
-except:
-	print "You must be running on Garibaldi"
+from appionlib import apImagicFile
 try:
 	import EMAN
 except ImportError:
 	apDisplay.printWarning("EMAN module did not get imported")
 	pass
+
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
 
 #=====================
 def executeRunpar(cmd,np):
@@ -387,4 +389,9 @@ def make3d(stack, out, sym="c1", mode=2, hard=None):
 		emancmd+=" hard=%d" % hard
 	executeEmanCmd(emancmd)
 	return
+
+####
+# This is a low-level file with NO database connections
+# Please keep it this way
+####
 
