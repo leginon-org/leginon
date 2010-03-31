@@ -27,7 +27,7 @@ class UploadModelScript(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --file=<filename> --session=<name> --symm=<#> --apix=<#> \n\t "
 			+" --res=<#> --description='text' [--contour=<#>] [--zoom=<#>] \n\t "
-			+" [--rescale=<model ID,scale factor> --boxsize=<#>] ")
+			+" [ --boxsize=<#>] ")
 		self.parser.add_option("-f", "--file", dest="file",
 			help="MRC file to upload", metavar="FILE")
 		self.parser.add_option("-s", "--session", dest="session",
@@ -35,7 +35,7 @@ class UploadModelScript(appionScript.AppionScript):
 		self.parser.add_option("--sym", "--symm", "--symmetry", dest="symmetry",
 			help="Symmetry id in the database", metavar="INT")
 		self.parser.add_option("--old-apix", dest="oldapix", type="float",
-			help="Original pixel size in Angstroms if oldapix != apix, it will be rescaled", metavar="FLOAT")
+			help="Original pixel size in Angstroms if oldapix != apix, it will be rescaled", metavar="#")
 		self.parser.add_option("-a", "--apix", dest="newapix", type="float",
 			help="Pixel size in Angstroms", metavar="FLOAT")
 		self.parser.add_option("--res", "--resolution", dest="res", type="float",
@@ -43,17 +43,17 @@ class UploadModelScript(appionScript.AppionScript):
 		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.0,
 			help="Zoom factor for snapshot rendering (1.75 by default)", metavar="FLOAT")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
-			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
+			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="#")
 		self.parser.add_option("--mass", dest="mass", type="int",
-			help="Mass (in kDa) at which snapshot of density will be contoured", metavar="FLOAT")
+			help="Mass (in kDa) at which snapshot of density will be contoured", metavar="#")
 		self.parser.add_option("--chimera-only", dest="chimeraonly", default=False, action="store_true",
 			help="Do not do any reconstruction calculations only run chimera")
 		self.parser.add_option("-b", "--boxsize", "--newbox", dest="newbox", type="int",
-			help="Boxsize of new model", metavar="INT")
+			help="Boxsize of new model", metavar="#")
 		self.parser.add_option("-m", "--modelid", "--old-model-id", dest="oldmodelid", type="int",
-			help="Initial model id in the database to rescale", metavar="INT")
+			help="Initial model id in the database to manipulated", metavar="#")
 		self.parser.add_option("--densityid", dest="densityid", type="int",
-			help="3D Density id in the database to upload as an accepted model", metavar="INT")
+			help="3D Density id in the database to upload as an accepted model", metavar="#")
 		self.parser.add_option("--name", dest="name",
 			help="Prefix name for new model, automatically append res_pixelsize_box.mrc in the program")
 		self.parser.add_option("--viper2eman", dest="viper2eman", default=False,
@@ -71,19 +71,15 @@ class UploadModelScript(appionScript.AppionScript):
 			apDisplay.printError("Enter a description of the initial model")
 		if self.params['chimeraonly'] is True:
 			self.params['commit'] = False
-		if self.params['newbox'] is not None and self.params['newbox'] % 16 != 0:
-			apDisplay.printWarning("Box size is not a multiple of 16")
-		if self.params['newbox'] is None:
-			self.params['rescale'] = False
-		else:
-			self.params['rescale'] = True
+		if self.params['newbox'] is not None and self.params['newbox'] % 8 != 0:
+			apDisplay.printWarning("Box size is not a multiple of 8")
 		### program requires either a model id or density id or filename
 		checkvalue = int(self.params['file'] is not None)
 		checkvalue += int(self.params['oldmodelid'] is not None)
 		checkvalue += int(self.params['densityid'] is not None)
 		if checkvalue != 1:
 			apDisplay.printError("Either provide a modelid or densityid or file, but not more than one of them")
-		elif self.params['oldmodelid'] is not None and self.params['rescale'] is False:
+		elif self.params['oldmodelid'] is not None and self.params['newbox'] is None:
 			apDisplay.printError("Please specify either a new boxsize or scale for your model")
 		elif self.params['densityid'] is not None:
 			self.getDensityParams()
@@ -106,6 +102,12 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['symdata'] = apSymmetry.findSymmetry(self.params['symmetry'])
 		if self.params['res'] is None:
 			apDisplay.printError("Enter the resolution of the initial model")
+
+		self.params['oldbox'] = apVolume.getModelDimensions(self.params['file'])
+		if self.params['newbox'] is None:
+			self.params['newbox'] = self.params['oldbox']
+		if self.params['oldapix'] is None:
+			self.params['oldapix'] = self.params['newapix']
 
 	#=====================
 	def setRunDir(self):
@@ -158,35 +160,6 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['res'] = float(modeldata['resolution'])
 		self.params['file'] = os.path.join(modeldata['path']['path'], modeldata['name'])
 
-	#=====================
-	def checkExistingFile(self):
-		mrcname = os.path.join(self.params['rundir'], self.params['name']+".mrc")
-		origmodel = self.params['file']
-		apDisplay.printWarning("a model by the same filename already exists: '"+mrcname+"'")
-		### a model by the same name already exists
-		mdnew = apFile.md5sumfile(mrcname)
-		mdold = apFile.md5sumfile(origmodel)
-		if mdnew != mdold:
-			### they are different, make unique name
-			self.setFileName(unique=True)
-			apDisplay.printWarning("the models are different, cannot overwrite, so using new name: %s" % (self.params['name'],))
-			# restart
-			self.start()
-			return True
-		elif apDatabase.isModelInDB(mdnew):
-			### they are the same and its in the database already
-			apDisplay.printWarning("same model with md5sum '"+mdnew+"' already exists in the DB!")
-			apDisplay.printWarning("creating new images, but skipping upload for file: '"+mrcname+"'")
-			self.params['commit'] = False
-			self.params['chimeraonly'] = True
-		else:
-			### they are the same, but its not in the database
-			apDisplay.printWarning("the same model with name '"+mrcname+"' already exists, but is not uploaded!")
-			if self.params['commit'] is True:
-				apDisplay.printMsg("inserting model into database")
-		if self.params['rescale'] is True:
-			apDisplay.printError("cannot rescale an existing model")
-
 	#===========================
 	def insertModel(self):
 		apDisplay.printMsg("commiting model to database")
@@ -214,25 +187,20 @@ class UploadModelScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		self.setFileName()
-		self.params['oldbox'] = apVolume.getModelDimensions(self.params['file'])
-		if self.params['newbox'] is None:
-			self.params['newbox'] = self.params['oldbox']
-		if self.params['oldapix'] is None:
-			self.params['oldapix'] = self.params['newapix']
-		self.params['scale'] =  float(self.params['oldapix'])/self.params['newapix']
+
+		scale =  float(self.params['oldapix'])/self.params['newapix']
 
 		mrcname = os.path.join(self.params['rundir'], self.params['name']+".mrc")
 		origmodel = self.params['file']
 		if os.path.isfile(mrcname):
-			### rescale old model to a new size
-			### I don't think this works - neil
-			if self.checkExistingFile() is True:
-				apDisplay.printError("File exists")
-		elif (abs(self.params['oldapix'] - self.params['newapix']) > 1.0e-2 or
+			apDisplay.printError("File exists")
+
+		if (abs(self.params['oldapix'] - self.params['newapix']) > 1.0e-2 or
 			abs(self.params['oldbox'] - self.params['newbox']) > 1.0e-1):
 			### rescale old model to a new size
 			apDisplay.printWarning("rescaling original model to a new size")
-			apDisplay.printMsg("rescaling model "+origmodel+" by "+str(round(self.params['scale']*100.0,2))+"%")
+			scale = float(self.params['oldapix'])/self.params['newapix']
+			apDisplay.printMsg("rescaling model by scale factor of %.4f"%(scale))
 			apVolume.rescaleVolume(origmodel, mrcname,
 				self.params['oldapix'], self.params['newapix'], self.params['newbox'])
 		else:
