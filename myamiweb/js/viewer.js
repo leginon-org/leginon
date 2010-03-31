@@ -478,7 +478,7 @@ function newfile(view){
 	nlink = "javascript:popUpMap('map.php?"+options+"')"
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset
 	ndeqlink = "javascript:popUpW('removequeue.php?id="+jsimgId+"&preset="+selpreset+"')"
-	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+dwdformat
+	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft+cdwdformat
 	nexportlink = "getfilenames.php?sessionId="+jsSessionId+"&pre="+selpreset
 
 	if (img = document.images[eval("\"" +view+ "img\"")]) {
