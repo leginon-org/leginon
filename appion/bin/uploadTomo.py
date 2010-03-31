@@ -21,7 +21,7 @@ class UploadTomoScript(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --file=<filename> --session=<name> --symm=<#> \n\t "
 			+" --res=<#> --description='text' [--contour=<#>] [--zoom=<#>] \n\t "
-			+" [--rescale=<model ID,scale factor> --bin=<#>] ")
+			+" --bin=<#>] ")
 		self.parser.add_option("-i", "--image", dest="image",
 			help="snapshot image file to upload", metavar="IMAGE")
 		self.parser.add_option("-f", "--file", dest="file",

@@ -14,6 +14,7 @@ from appionlib import apDisplay
 from appionlib import apDatabase
 from appionlib import apChimera
 from appionlib import apVolume
+from appionlib import apModel
 from appionlib import apProject
 from appionlib import appiondata
 
@@ -152,23 +153,13 @@ class UploadModelScript(appionScript.AppionScript):
 
 	#=====================
 	def getModelParams(self):
-		modeldata = apVolume.getModelFromId(self.params['oldmodelid'])
+		modeldata = apModel.getModelFromId(self.params['oldmodelid'])
 		self.params['oldapix'] = float(modeldata['pixelsize'])
 		if self.params['symmetry'] is None:
 			self.params['symdata'] = modeldata['symmetry']
 			self.params['symmetry'] = self.params['symdata']['eman_name']
 		self.params['res'] = float(modeldata['resolution'])
 		self.params['file'] = os.path.join(modeldata['path']['path'], modeldata['name'])
-
-	#=====================
-	def rescaleModel(self):
-		### rescale old model to a new size
-		modeldata = apVolume.getModelFromId(self.params['origmodel'])
-		old = os.path.join(modeldata['path']['path'], modeldata['name'])
-		apDisplay.printMsg("rescaling model "+origmodelpath+" to "+newmodelpath)
-		apVolume.rescaleModel(old, new, float(oldmod['pixelsize']), self.params['newapix'], self.params['newbox'])
-		# set new apix of the rescaled model
-		self.params['apix'] = self.params['newapix']
 
 	#=====================
 	def checkExistingFile(self):
@@ -249,7 +240,7 @@ class UploadModelScript(appionScript.AppionScript):
 			### rescale old model to a new size
 			apDisplay.printWarning("rescaling original model to a new size")
 			apDisplay.printMsg("rescaling model "+origmodelpath+" by "+str(round(self.params['scale']*100.0,2))+"%")
-			apVolume.rescaleModel(origmodelpath, newmodelpath,
+			apVolume.rescaleVolume(origmodelpath, newmodelpath,
 				self.params['oldapix'], self.params['newapix'], self.params['newbox'])
 		else:
 			### simple upload, just copy file to models folder

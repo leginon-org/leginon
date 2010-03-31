@@ -22,6 +22,7 @@ from appionlib import apChimera
 from appionlib import apFile
 from appionlib import appiondata
 from appionlib import apSymmetry
+from appionlib import apVolume
 
 from appionlib.apSpider import volFun
 

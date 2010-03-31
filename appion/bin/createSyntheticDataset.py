@@ -12,7 +12,6 @@ import subprocess
 
 ### appion imports
 from appionlib import appionScript
-from appionlib import apVolume
 from appionlib import apEMAN
 from appionlib import apDisplay
 from appionlib import apDatabase

@@ -22,7 +22,7 @@ from appionlib import apDatabase
 from appionlib import apStack
 from appionlib import apProject
 from appionlib import apFile
-from appionlib import apVolume
+from appionlib import apModel
 from appionlib import spyder
 
 
@@ -1070,13 +1070,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			modeldata = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 			self.model['apix'] = modeldata['pixelsize']
 			self.model['box'] = modeldata['boxsize']
-			origmodel = os.path.join(modeldata['path']['path'], modeldata['name'])
-			modelfile = os.path.join(self.params['rundir'], "threed0.mrc")
-			shutil.copyfile(origmodel, modelfile)
 
 			### scale model
-			if self.params['apix'] != self.model['apix'] or self.params['boxsize'] != self.model['boxsize']:
-				apVolume.rescaleModel(modelfile, modelfile, self.model['apix'], self.params['apix'], self.params['boxsize'])
+			modelfile = os.path.join(self.params['rundir'], "threed0.mrc")
+			apModel.rescaleModel(self.params['modelid'], modelfile, self.params['boxsize'], self.params['apix'])
 
 			### create forward projections for MRA and Angular Reconstitution (anchor set)
 			batchfile = self.startFiles(modelfile)

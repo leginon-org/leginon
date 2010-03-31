@@ -18,7 +18,7 @@ from appionlib import apParam
 from appionlib import appiondata
 from appionlib import apXmipp
 from appionlib import apRecon
-from appionlib import apVolume
+from appionlib import apModel
 from appionlib import apSymmetry
 from appionlib import apEulerDraw
 
@@ -89,7 +89,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
         earlyresult=runq.query(results=1)
         if earlyresult:
 	        apDisplay.printWarning("Run already exists in the database.\nIdentical data will not be reinserted")
-        runq['initialModel']=apVolume.getModelFromId(protocolPrm['modelid'])
+        runq['initialModel']=apModel.getModelFromId(protocolPrm['modelid'])
         runq['package']="Xmipp"
         runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
         runq['description']=self.params['description']

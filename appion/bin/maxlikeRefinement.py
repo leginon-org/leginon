@@ -23,7 +23,7 @@ from appionlib import apParam
 from appionlib import apEMAN
 from appionlib import apXmipp
 from appionlib import appiondata
-from appionlib import apVolume
+from appionlib import apModel
 from appionlib import spyder
 from appionlib import apImagicFile
 from appionlib import apProject
@@ -379,7 +379,7 @@ xmipp_mpi_reconstruct_wbp  -i CorrectGreyscale/corrected_reference_classes.sel -
 			for i, modelid in enumerate(self.params['modelids']):
 				### Scale volume
 				mrcvolfile = os.path.join(self.params['rundir'], "volume%s_%02d_%05d.mrc"%(self.timestamp, i+1, modelid))
-				apVolume.rescaleModelId(modelid, mrcvolfile, apix, boxsize)
+				apModel.rescaleModel(modelid, mrcvolfile, boxsize, apix)
 
 				### Convert volume to spider
 				spivolfile = os.path.join(self.params['rundir'], "volume%s_%02d_%05d.spi"%(self.timestamp, i+1, modelid))

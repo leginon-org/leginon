@@ -14,7 +14,7 @@ from appionlib import appiondata
 from appionlib.apSpider import alignment
 from appionlib import spyder
 from appionlib import apRecon
-from appionlib import apVolume
+from appionlib import apModel
 
 #=====================
 #=====================
@@ -165,7 +165,7 @@ class apmqRefineScript(appionScript.AppionScript):
 
 		# rescale initial model if necessary
 		outvol = os.path.join(self.params['rundir'],"vol000.spi")
-		apVolume.rescaleVolume(self.params['modelid'],outvol,self.stack['boxsize'],self.stack['apix'],spider=True)
+		apModel.rescaleModel(self.params['modelid'], outvol, self.stack['boxsize'], self.stack['apix'], spider=True)
 
 		self.params['itervol']=outvol
 

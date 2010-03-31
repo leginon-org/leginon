@@ -8,7 +8,7 @@ import subprocess
 #appion
 from appionlib import apParam
 from appionlib import apStack
-from appionlib import apVolume
+from appionlib import apModel
 from appionlib import apCtf
 from appionlib import apImagicFile
 from appionlib import appionScript
@@ -315,7 +315,7 @@ class frealignJob(appionScript.AppionScript):
 
 	#===============
 	def setupInitialModel(self):
-		modeldata = apVolume.getModelFromId(self.params['modelid'])
+		modeldata = apModel.getModelFromId(self.params['modelid'])
 		modelfile = os.path.join(modeldata['path']['path'], modeldata['name'])
 		modelsym = modeldata['symmetry']['symmetry']
 
