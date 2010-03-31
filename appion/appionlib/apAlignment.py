@@ -3,38 +3,6 @@ import sys
 import subprocess
 from appionlib import apDisplay
 from appionlib import appiondata
-from appionlib import apEMAN
-
-#=====================
-def spiderline(var, value, comment=None):
-	"""
-	do not use this function, use appionlib.apSpider.operations
-	"""
-	# check if var is a numeric type
-	if type(var) == type(1):
-		line = "x"+str(var)+"="+str(value)+" "
-		while len(line) < 11:
-			line += " "
-		line += "; "+comment+"\n"
-	else:
-		line = "["+var+"]"+value+"\n"
-	sys.stderr.write(line)
-	return line
-
-#=====================
-def executeSpiderCmd(spidercmd, verbose=True):
-	"""
-	do not use this function, use appionlib.spyder
-	"""
-	sys.stderr.write("SPIDER: "+spidercmd+"\n")
-	try:
-		if verbose is False:
-			proc = subprocess.Popen(spidercmd, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-		else:
-			proc = subprocess.Popen(spidercmd, shell=True)
-		proc.wait()
-	except:
-		apDisplay.printError("could not run spider command: "+spidercmd)
 
 #=====================
 def getAlignParticle(stackpdata,alignstackdata):
