@@ -113,6 +113,54 @@ class PostProcScript(appionScript.AppionScript):
 		self.params['rundir'] = os.path.join(self.params['filepath'], "postproc",self.params['runname'])
 		return
 
+	#===========================
+	def insert3dDensity(self):
+		apDisplay.printMsg("committing density to database")
+		symdata=apSymmetry.findSymmetry(self.params['sym'])
+		if not symdata:
+			apDisplay.printError("no symmetry associated with this id\n")
+		self.params['syminfo'] = symdata
+		modq=appiondata.Ap3dDensityData()
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		modq['session'] = sessiondata
+		modq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		modq['name'] = self.params['name']
+		modq['resolution'] = self.params['res']
+		modq['symmetry'] = symdata
+		modq['pixelsize'] = self.params['apix']
+		modq['boxsize'] = self.params['box']
+		modq['description'] = self.params['description']
+		modq['lowpass'] = self.params['lp']
+		modq['highpass'] = self.params['hp']
+		modq['mask'] = self.params['mask']
+		modq['imask'] = self.params['imask']
+		if self.params['reconiterid'] is not None:
+			iterdata = appiondata.ApRefinementData.direct_query(self.params['reconiterid'])
+			if not iterdata:
+				apDisplay.printError("this iteration was not found in the database\n")
+			modq['iterid'] = iterdata
+		if self.params['reconid'] is not None:
+			iterdata = appiondata.ApRefinementData.direct_query(self.params['reconid'])
+			if not iterdata:
+				apDisplay.printError("this iteration was not found in the database\n")
+			modq['iterid'] = iterdata
+		### if ampfile specified
+		if self.params['ampfile'] is not None:
+			(ampdir, ampname) = os.path.split(self.params['ampfile'])
+			modq['ampPath'] = appiondata.ApPathData(path=os.path.abspath(ampdir))
+			modq['ampName'] = ampname
+			modq['maxfilt'] = self.params['maxfilt']
+		modq['handflip'] = self.params['yflip']
+		modq['norm'] = self.params['norm']
+		modq['invert'] = self.params['invert']
+		modq['hidden'] = False
+		filepath = os.path.join(self.params['rundir'], self.params['name'])
+		modq['md5sum'] = apFile.md5sumfile(filepath)
+		if self.params['commit'] is True:
+			modq.insert()
+		else:
+			apDisplay.printWarning("not commiting model to database")
+
 	#=====================
 	def getFscFile(self):
 		reconiterdata = appiondata.ApRefinementData.direct_query(self.params['reconiterid'])
@@ -241,7 +289,7 @@ class PostProcScript(appionScript.AppionScript):
 			symdata  = apSymmetry.findSymmetry(self.params['sym'])
 			symmetry = symdata['eman_name']
 			self.params['reconid'] = self.params['reconiterid']
-			apVolume.insert3dDensity(self.params)
+			self.insert3dDensity()
 			### render chimera images of model
 
 
