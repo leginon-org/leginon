@@ -1,5 +1,6 @@
 
 ###MRC functions for Frealign
+from appionlib import apParam
 from pyami import mrc
 
 #===============
@@ -71,7 +72,7 @@ def imagicToMrc(params, msg=True):
 
 	# write header to temporary file
 	hbytes = mrc.makeHeaderData(header)
-	tmpheadername = apVolume.randomfilename(8)+'.mrc'
+	tmpheadername = apParam.randomString(8)+'.mrc'
 	f = open(tmpheadername,'w')
 	f.write(hbytes)
 	f.close()
