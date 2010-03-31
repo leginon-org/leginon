@@ -136,15 +136,14 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
     <INPUT TYPE='text' NAME='boxsize' SIZE='5' VALUE='$boxsize'><B>New Box Size</B> (originally $modelinfo[boxsize])<br>\n";
 	}
 	else {
-		echo"
-      <SELECT NAME='sym'>
-      <OPTION VALUE=''>Select One</OPTION>\n";
+	   echo "<select name='sym'>\n";
+	   echo "<option value=''>select one...</option>\n";
 		foreach ($syms as $sym) {
-			echo "<OPTION VALUE='$sym[DEF_id]'";
+			echo "<option value='$sym[DEF_id]'";
 			if ($sym['DEF_id']==$_POST['sym']) echo " SELECTED";
 			echo ">$sym[symmetry]";
 			if ($sym['symmetry']=='C1') echo " (no symmetry)";
-			echo "</OPTION>\n";
+			echo "</option>\n";
 		}
 		echo "</select>\n";
 		echo "<P>\n";
