@@ -91,7 +91,7 @@ class FilterLoop(appionLoop2.AppionLoop):
 		"""
 		self.filtimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
 
-		if os.path.isfile(self.filtimgpath):
+		if os.path.isfile(self.filtimgpath) and self.params['continue'] is True:
 			apDisplay.printMsg("reading filtered image from mrc file")
 			self.filtarray = apImage.mrcToArray(self.filtimgpath, msg=False)
 		else:
