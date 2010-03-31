@@ -200,7 +200,7 @@ class modelFromPDB(appionScript.AppionScript):
 		#densq['mask'] = self.params['radius']
 		densq['description'] = "PDB id %s density"%(self.params['pdbid'])
 		if self.params['mass'] is not None:
-			densq['description'] += " with mass of %d kDa"
+			densq['description'] += " with mass of %d kDa"%(self.params['mass'])
 		densq['resolution'] = self.params['lowpass']
 		densq['session'] = self.sessiondata
 		densq['md5sum'] = apFile.md5sumfile(volfile)
