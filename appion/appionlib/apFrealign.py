@@ -1,77 +1,17 @@
+#python
 import os
-import subprocess
-from appionlib import apStack
-from appionlib import apCtf
-from appionlib import apDefocalPairs
-from pyami import mrc
-from appionlib import apVolume
-from appionlib import apDisplay
-from appionlib import appiondata
-import shutil
 import math
 import numpy
-
-#===============
-def imagicToMrc(params, msg=True):
-	# convert imagic stack to mrc "stack"
-	outstack = os.path.join(params['rundir'],'start.mrc')
-	params['stackfile']=outstack
-
-	# if mrc stack exists, don't overwrite
-	# TO DO: check if existing stack is correct
-	if os.path.exists(outstack):
-		apDisplay.printWarning(outstack + " exists, not overwriting")
-		return
-
-	# first get stack info
-	stackdata = apStack.getOnlyStackData(params['stackid'], msg=False)
-	stackfile = os.path.splitext(os.path.join(stackdata['path']['path'],stackdata['name']))
-
-	# make sure to use the 'img' file, which contains the binary data
-	stackimg = stackfile[0]+'.img'
-
-	# get box size
-	box = apStack.getStackBoxsize(params['stackid'], msg=False)
-	nump = apStack.getNumberStackParticlesFromId(params['stackid'])
-
-	## create a new MRC header
-	header = mrc.newHeader()
-	mrc.updateHeaderDefaults(header)
-
-	# fill with stack params
-	header['nx']=box
-	header['ny']=box
-	header['nz']=nump
-	header['mode']=2
-	header['mx']=box
-	header['my']=box
-	header['mz']=nump
-	header['xlen']=box
-	header['ylen']=box
-	header['zlen']=nump
-	header['amin']=0.0
-	header['amax']=0.0
-	header['amean']=0.0
-	header['rms']=0.0
-	header['xorigin']=0.0
-	header['yorigin']=0.0
-	header['zorigin']=0.0
-
-	# write header to temporary file
-	hbytes = mrc.makeHeaderData(header)
-	tmpheadername = apVolume.randomfilename(8)+'.mrc'
-	f = open(tmpheadername,'w')
-	f.write(hbytes)
-	f.close()
-
-	if msg is True:
-		apDisplay.printMsg('saving MRC stack file:')
-		apDisplay.printMsg(os.path.join(params['rundir'],outstack))
-	catcmd = "cat %s %s > %s" % (tmpheadername, stackimg, outstack)
-	print catcmd
-	proc = subprocess.Popen(catcmd, shell=True)
-	proc.wait()
-	os.remove(tmpheadername)
+import shutil
+import subprocess
+#pyami
+from pyami import mrc
+#appionlib
+from appionlib import apCtf
+from appionlib import apStack
+from appionlib import apDisplay
+from appionlib import appiondata
+from appionlib import apDefocalPairs
 
 #===============
 def generateParticleParams(params):
@@ -141,7 +81,9 @@ def generateParticleParams(params):
 #===============
 def writeParticleParamLine(particleparams, fileobject):
 	p=particleparams
-	fileobject.write("%7d%8.3f%8.3f%8.3f%8.3f%8.3f%9.1f%5d%9.1f%9.1f%8.2f%7.2f%8.2f\n" % (p['ptclnum'],p['psi'],p['theta'],p['phi'],p['shx'],p['shy'],p['mag'],p['film'],p['df1'],p['df2'],p['angast'],p['presa'],p['dpres']))
+	fileobject.write("%7d%8.3f%8.3f%8.3f%8.3f%8.3f%9.1f%5d%9.1f%9.1f%8.2f%7.2f%8.2f\n" 
+		% (p['ptclnum'],p['psi'],p['theta'],p['phi'],p['shx'],p['shy'],p['mag'],
+		p['film'],p['df1'],p['df2'],p['angast'],p['presa'],p['dpres']))
 
 #===============
 def createFrealignJob (params, jobname, nodenum=None, mode=None, inpar=None, invol=None, first=None, last=None, norecon=False):
@@ -182,16 +124,27 @@ def createFrealignJob (params, jobname, nodenum=None, mode=None, inpar=None, inv
 	f.write('cp %s workingvol.mrc\n' % invol)
 	f.write('\n')
 	f.write('frealign << EOF > frealign.out\n')
-	f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s,%d\n' % ('M', mode, params['magrefine'], params['defocusrefine'], params['astigrefine'], params['fliptilt'], params['ewald'], params['matches'], params['history'], params['finalsym'], params['fomfilter'], params['fsc']))
-	f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (params['radius'], params['iradius'], params['apix'], params['ampcontrast'], params['maskthresh'], params['phaseconstant'], params['avgresidual'], ang, params['itmax'], params['maxmatch']))
-	f.write('%d %d %d %d %d\n' % (params['psi'], params['theta'], params['phi'], params['deltax'], params['deltay']))
+	f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s,%d\n' 
+		% ('M', mode, params['magrefine'], params['defocusrefine'], params['astigrefine'], 
+		params['fliptilt'], params['ewald'], params['matches'], params['history'], 
+		params['finalsym'], params['fomfilter'], params['fsc']))
+	f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' 
+		% (params['radius'], params['iradius'], params['apix'], params['ampcontrast'], 
+		params['maskthresh'], params['phaseconstant'], params['avgresidual'], ang, 
+		params['itmax'], params['maxmatch']))
+	f.write('%d %d %d %d %d\n' % (params['psi'], params['theta'], params['phi'], 
+		params['deltax'], params['deltay']))
 	f.write('%d, %d\n' % (first, last))
 	if params['sym']=='Icos':
 		f.write('I\n')
 	else:
 		f.write('%s\n' % (params['sym']))
-	f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (params['relmag'], params['apix'], params['targetresidual'], params['residualthresh'], params['cs'], params['kv'], params['beamtiltx'], params['beamtilty']))
-	f.write('%.2f,%.2f,%.2f,%.2f\n' % (params['reslimit'], params['hp'], params['lp'], params['bfactor']))
+	f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' 
+		% (params['relmag'], params['apix'], params['targetresidual'], 
+		params['residualthresh'], params['cs'], params['kv'], params['beamtiltx'], 
+		params['beamtilty']))
+	f.write('%.2f,%.2f,%.2f,%.2f\n' 
+		% (params['reslimit'], params['hp'], params['lp'], params['bfactor']))
 	f.write('%s\n' % (params['stackfile']))
 	f.write('match.mrc\n')
 	f.write('%s\n' % inpar)
