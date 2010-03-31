@@ -197,11 +197,10 @@ function runDogPicker() {
 			$results.= "<br />\n";
 			$testjpg=ereg_replace(".mrc","",$_POST['testfilename']);
 			$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
-			$ccclist=array();
-			$cccimg=$outdir.$runname."/maps/".$testjpg.".dogmap1.jpg";
-			$ccclist[]=$cccimg;
-			$results.=writeTestResults($jpgimg,$ccclist,$_POST['bin']);
-			createDogPickerForm(false,'Particle Selection Test Results','Particle Selection Test Results',$results);
+			$dogmaplist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
+
+			$results .= writeTestResults($jpgimg, $dogmaplist, $_POST['bin']);
+			createDogPickerForm(false, 'Particle Selection Test Results', 'Particle Selection Test Results', $results);
 		}
 		exit;
 	} else {

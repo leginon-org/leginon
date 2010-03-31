@@ -454,16 +454,10 @@ function runTemplateCorrelator() {
 		$results.= "</td></tr></table>\n";
 		$results.= "<br />\n";
 		$testjpg=ereg_replace(".mrc","",$_POST['testfilename']);
+
 		$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
-		$ccclist=array();
-		$i=1;
-		$templateList=$_POST['templateList'];
-		$templates=split(",", $templateList);
-		foreach ($templates as $tmplt) {
-			$cccimg=$outdir.$runname."/maps/".$testjpg.".ccmaxmap".$i.".jpg";
-			$ccclist[]=$cccimg;
-			$i++;
-		}
+		$ccclist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
+
 		$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);
 		createTCForm($false,'Particle Selection Results','Particle Selection Results',$results);
 		exit;
