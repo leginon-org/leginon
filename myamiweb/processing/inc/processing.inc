@@ -111,7 +111,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	if ($_POST['login']) {
 		$errors = checkLogin();
 	}
-	
+
 	$leginondata = new leginondata();
 	$particle = new particledata();
 	$projectdata = new project();
@@ -170,6 +170,9 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 		$expId=$_GET['expId'];
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 		$html.=displayLogin($formAction);
+		if(!empty($errors)){
+			$html.= "<font color='#EE82EE'>".$errors."</font>";
+		}
 	}
 
 	$html.= "</div>\n"; // close login div
@@ -475,9 +478,11 @@ Password: <input type="password" name="password">
 function checkLogin() {
   // if everything is cool, then return nothing
   if (!$_SESSION['username']) {
-    if (!$_POST['username'] || !$_POST['password']) return("ERROR: enter your user name and password");
+    if (!$_POST['username'] || !$_POST['password']) 
+    	return("Please enter your username and password to server " . $_SERVER['SERVER_ADDR']);
     // authenticate username & password
-    if (!check_ssh($_SERVER['SERVER_ADDR'],$_POST['username'],$_POST['password'])) return("ERROR: authentication failed");
+    if (!check_ssh($_SERVER['SERVER_ADDR'],$_POST['username'],$_POST['password'])) 
+    	return("Authentication failed to server " . $_SERVER['SERVER_ADDR']);
     ## save username and password to the session
     $_SESSION['username']=$_POST['username'];
     $_SESSION['password']=$_POST['password'];
