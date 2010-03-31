@@ -36,6 +36,9 @@ class modelFromEMDB(appionScript.AppionScript):
 		self.parser.add_option("--sym", "--symm", "--symmetry", dest="symmetry",
 			help="Symmetry id in the database", metavar="INT")
 
+		self.parser.add_option("--viper2eman", dest="viper2eman", default=False,
+			action="store_true", help="Convert VIPER orientation to EMAN orientation")
+
 	#=====================
 	def checkConflicts(self):
 		if self.params['session'] is None:
@@ -53,11 +56,19 @@ class modelFromEMDB(appionScript.AppionScript):
 		path = os.path.abspath(self.sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
-		self.params['rundir'] = os.path.join(path,"models","emdb",self.params['runname'])
+		self.params['rundir'] = os.path.join(path, "models/emdb", self.params['runname'])
 
 	#=====================
-	def setNewFileName(self, unique=False):
-		self.params['name'] = "emdb%d-%s.mrc"%(self.params['emdbid'], self.timestamp)
+	def setFileName(self):
+		if self.params['name'] is None:
+			### assign provided name
+			basename = "emdb%s-%s"%(self.params['emdbid'], self.timestamp)
+		else:
+			### clean up provided name
+			basename = os.path.splitext(os.path.basename(self.params['name']))[0]
+		self.params['name'] = os.path.join(self.params['rundir'], basename)
+		apDisplay.printColor("Naming EMDB model: "+self.params['name'], "cyan")
+		return
 
 	#=====================
 	def getXMLInfoFromEMDB(self, emdbid):
@@ -140,7 +151,9 @@ class modelFromEMDB(appionScript.AppionScript):
 		densq['lowpass'] = self.params['lowpass']
 		#densq['highpass'] = self.params['highpasspart']
 		#densq['mask'] = self.params['radius']
-		densq['description'] = "EMDB density from id="+str(self.params['emdbid'])
+		densq['description'] = "EMDB id %d density"%(self.params['emdbid'])
+		if self.mass is not None:
+			densq['description'] += " with mass of %d kDa"
 		densq['resolution'] = self.params['lowpass']
 		densq['session'] = self.sessiondata
 		densq['md5sum'] = apFile.md5sumfile(volfile)
@@ -153,13 +166,9 @@ class modelFromEMDB(appionScript.AppionScript):
 	def start(self):
 		self.apix = None
 		self.mass = None
-		if self.params['name'] is None:
-			self.setNewFileName()
-		apDisplay.printColor("Naming emdb model: "+self.params['name'], "cyan")
+		self.setFileName()
 
-		newmodelpath = os.path.join(self.params['rundir'], self.params['name'])
-
-		mrcname = newmodelpath
+		mrcname = newmodelpath+".mrc"
 		ccp4name = newmodelpath+".ccp4"
 
 		### get emdb from web
