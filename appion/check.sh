@@ -50,7 +50,7 @@ echo ""
 echo ""
 
 sleep 1
-#rm -fv bin/importer.py importer.py
+rm -fv bin/importer.py importer.py
 exit;
 
 echo "Trying to run all binaries"
