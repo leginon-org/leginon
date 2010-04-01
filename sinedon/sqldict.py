@@ -521,6 +521,9 @@ class _multipleQueries:
 				c.execute(query)
 			except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
 				errno = e.args[0]
+				## some version of mysqlpython parses the exception differently
+				if not isinstance(errno, int):
+					errno = errno.args[0]
 				## 1146:  table does not exist
 				## 1054:  column does not exist
 				if errno in (1146, 1054):
