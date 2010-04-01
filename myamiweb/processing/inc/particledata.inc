@@ -4182,6 +4182,33 @@ class particledata {
 		return $r[0];
 	}
 
+	function getAngularReconstitutionRuns($sessionId) {
+		$q="SELECT "
+			."  ar.*, "
+			."  path.`path` AS path "
+			."FROM ApBootstrappedAngularReconstitutionRunData as ar "
+			."LEFT JOIN ApPathData AS path "
+			."  ON ar.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApTemplateStackData AS ts "
+			."  ON ar.`REF|ApTemplateStackData|templatestackid` = ts.`DEF_id` "
+			."LEFT JOIN ApClusteringStackData AS clusterstack "
+			."  ON ar.`REF|ApClusteringStackData|clusterid` = clusterstack.`DEF_id` "
+			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
+			." (clusterstack.`REF|ApClusteringRunData|clusterrun` = clusterrun.`DEF_id`) "
+			."LEFT JOIN ApAlignStackData AS ast ON "
+			." (clusterrun.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+			."LEFT JOIN ApStackData AS stack "
+			."  ON refinement.`REF|ApStackData|stackrun` = stack.`DEF_id` "
+			."LEFT JOIN ApRunsInStackData AS runsinstack "
+			."  ON stack.`DEF_id` = runsinstack.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
+			."WHERE "
+			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId'";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getImagic3dRefinementRunsFromSessionId($sessionId) {
 		$q="SELECT "
 			."  refinement.*, "
