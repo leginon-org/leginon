@@ -6,6 +6,7 @@ import time
 ## appion
 from appionlib import apDisplay
 from appionlib import apFile
+from appionlib import apEMAN
 
 """
 A large collection of SPIDER functions
@@ -22,6 +23,37 @@ that way its easy to tell what type of file it is
 
 neil
 """
+
+#===============================
+def stackToSpiderStack(stack,spiderstack,apix,boxsize,lp=0,hp=0,bin=1,numpart=0):
+	"""
+	convert an input stack (i.e. imagic) and write it out to a spider-formatted stack
+	"""
+	emancmd  = "proc2d "
+	if not os.path.isfile(stack):
+		apDisplay.printError("stackfile does not exist: "+stack)
+	emancmd += stack+" "
+
+	apFile.removeFile(spiderstack, warn=True)
+	emancmd += spiderstack+" "
+
+	emancmd += "apix="+str(apix)+" "
+	if lp > 0:
+		emancmd += "lp="+str(lp)+" "
+	if hp > 0:
+		emancmd += "hp="+str(hp)+" "
+	if bin > 1:
+		clipboxsize = boxsize*bin
+		emancmd += "shrink="+str(bin)+" "
+		emancmd += "clip="+str(clipboxsize)+","+str(clipboxsize)+" "
+	if numpart > 0:
+		emancmd += "last="+str(numpart-1)+" "
+	emancmd += "spiderswap edgenorm"
+	starttime = time.time()
+	apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
+	apEMAN.executeEmanCmd(emancmd, verbose=True)
+	apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
+	return
 
 #===============================
 def spiderOutputLine(int1, int2, float1, float2, float3, float4, float5, float6=1.0):
@@ -133,6 +165,4 @@ def intListToString(strintlist):
 	intstr = intstr[1:]
 	intkey = re.sub(",", "_", intstr)
 	return intstr, intkey
-
-
 
