@@ -11,51 +11,6 @@ from appionlib import apEMAN
 from appionlib import apDisplay
 from appionlib import appionScript
 
-
-dbconf = sinedon.getConfig('appiondata')
-db     = MySQLdb.connect(**dbconf)
-cursor = db.cursor()
-
-#=====================
-def getParticles(stackid):
-	t0 = time.time()
-	query = (
-		"SELECT \n"
-			+"  stpart1.`particleNumber` AS partnum1, \n"
-			+"  stpart2.`particleNumber` AS partnum2, \n"
-			+"  ROUND(ABS(DEGREES(scoped.`SUBD|stage position|a`))) AS alpha \n"
-			+"FROM `ApTiltParticlePairData` AS tiltd \n"
-
-			+"LEFT JOIN `ApStackParticlesData` AS stpart1 \n"
-			+"  ON stpart1.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle1` \n"
-
-			+"LEFT JOIN `ApStackParticlesData` AS stpart2 \n"
-			+"  ON stpart2.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle2` \n"
-
-			+"LEFT JOIN `ApParticleData` AS part1 \n"
-			+"  ON stpart1.`REF|ApParticleData|particle` = part1.`DEF_id` \n"
-
-			+"LEFT JOIN dbemdata.`AcquisitionImageData` AS imaged \n"
-			+"  ON part1.`REF|leginondata|AcquisitionImageData|image` = imaged.`DEF_id` \n"
-
-			+"LEFT JOIN dbemdata.`ScopeEMData` AS scoped \n"
-			+"  ON imaged.`REF|ScopeEMData|scope` = scoped.`DEF_id` \n"
-
-			+"WHERE \n"
-			+"      stpart1.`REF|ApStackData|stack` = "+str(stackid)+" \n"
-			+"  AND stpart2.`REF|ApStackData|stack` = "+str(stackid)+" \n"
-			+"ORDER BY stpart1.`particleNumber` ASC \n"
-			#+"LIMIT 21 \n"
-		)
-	cursor.execute(query)
-	results = cursor.fetchall()
-	#apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
-	if not results:
-		apDisplay.printError("Failed to get stack particles")
-	parttree = convertSQLtoTree(results)
-	parttree.sort(compPart)
-	return parttree
-
 #=====================
 def convertSQLtoTree(results):
 	t0 = time.time()
@@ -164,10 +119,6 @@ def generateProjections(parttree):
 	apDisplay.printMsg("Projected "+str(len(parttree))+" particles in "+apDisplay.timeString(time.time()-t0))
 
 class fakeStackScript(appionScript.AppionScript):
-	#######################################################
-	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
-	#######################################################
-
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --stackid=<session> --commit [options]")
@@ -178,6 +129,9 @@ class fakeStackScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
 			apDisplay.printError("enter a stackid ID, e.g. --stackid=773")
+		dbconf = sinedon.getConfig('appiondata')
+		db     = MySQLdb.connect(**dbconf)
+		self.cursor = db.cursor()
 
 	#=====================
 	def setProcessingDirName(self):
@@ -191,6 +145,47 @@ class fakeStackScript(appionScript.AppionScript):
 		path = os.path.dirname(path)
 		time.sleep(1)
 		self.params['rundir'] = os.path.join(path, "fakestack")
+
+	#=====================
+	def getParticles(self, stackid):
+		t0 = time.time()
+		query = (
+			"SELECT \n"
+				+"  stpart1.`particleNumber` AS partnum1, \n"
+				+"  stpart2.`particleNumber` AS partnum2, \n"
+				+"  ROUND(ABS(DEGREES(scoped.`SUBD|stage position|a`))) AS alpha \n"
+				+"FROM `ApTiltParticlePairData` AS tiltd \n"
+
+				+"LEFT JOIN `ApStackParticlesData` AS stpart1 \n"
+				+"  ON stpart1.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle1` \n"
+
+				+"LEFT JOIN `ApStackParticlesData` AS stpart2 \n"
+				+"  ON stpart2.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle2` \n"
+
+				+"LEFT JOIN `ApParticleData` AS part1 \n"
+				+"  ON stpart1.`REF|ApParticleData|particle` = part1.`DEF_id` \n"
+
+				+"LEFT JOIN dbemdata.`AcquisitionImageData` AS imaged \n"
+				+"  ON part1.`REF|leginondata|AcquisitionImageData|image` = imaged.`DEF_id` \n"
+
+				+"LEFT JOIN dbemdata.`ScopeEMData` AS scoped \n"
+				+"  ON imaged.`REF|ScopeEMData|scope` = scoped.`DEF_id` \n"
+
+				+"WHERE \n"
+				+"      stpart1.`REF|ApStackData|stack` = "+str(stackid)+" \n"
+				+"  AND stpart2.`REF|ApStackData|stack` = "+str(stackid)+" \n"
+				+"ORDER BY stpart1.`particleNumber` ASC \n"
+				#+"LIMIT 21 \n"
+			)
+		self.cursor.execute(query)
+		results = self.cursor.fetchall()
+		#apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
+		if not results:
+			apDisplay.printError("Failed to get stack particles")
+		parttree = convertSQLtoTree(results)
+		parttree.sort(compPart)
+		return parttree
+
 
 	#=====================
 	def start(self):
