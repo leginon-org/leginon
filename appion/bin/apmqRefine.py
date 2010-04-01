@@ -11,7 +11,7 @@ from appionlib import apStack
 from appionlib import apEMAN
 from appionlib import apParam
 from appionlib import appiondata
-from appionlib.apSpider import alignment
+from appionlib.apSpider import refine, operations
 from appionlib import spyder
 from appionlib import apRecon
 from appionlib import apModel
@@ -130,7 +130,7 @@ class apmqRefineScript(appionScript.AppionScript):
 
 		# create symmetry doc file
 		sydoc="sym.spi"
-		alignment.symmetryDoc(self.params['symtype'],self.params['symfold'],sydoc)
+		refine.symmetryDoc(self.params['symtype'],self.params['symfold'],sydoc)
 
 		# convert incr to array of increments
 		ang_inc=self.params['incr'].split(',')
@@ -141,7 +141,7 @@ class apmqRefineScript(appionScript.AppionScript):
 
 		# convert stack to spider stack
 		spiderstack=os.path.join(self.params['rundir'],'start.spi')
-		alignment.stackToSpiderStack(
+		operations.stackToSpiderStack(
 			self.stack['file'],
 			spiderstack,
 			apix=self.stack['apix'],
@@ -153,7 +153,7 @@ class apmqRefineScript(appionScript.AppionScript):
 		spiderstackfilt=spiderstack
 		if (self.params['lowpass']+self.params['highpass']) > 0:
 			spiderstackfilt=os.path.join(self.params['rundir'],'start_filt.spi')
-			alignment.stackToSpiderStack(
+			operations.stackToSpiderStack(
 				self.stack['file'],
 				spiderstackfilt,
 				apix=self.stack['apix'],
@@ -172,7 +172,7 @@ class apmqRefineScript(appionScript.AppionScript):
 		for iter in range(1,self.params['numiter']+1):
 			# create projections for projection matching
 			apDisplay.printMsg("creating reference projections of volume: %s" % self.params['itervol'])
-			projs,numprojs,ang,sel = alignment.createProjections(
+			projs,numprojs,ang,sel = refine.createProjections(
 				incr=self.params['increments'][iter-1],
 				boxsz=self.stack['boxsize'],
 				symfold=self.params['symfold'],
@@ -188,9 +188,9 @@ class apmqRefineScript(appionScript.AppionScript):
 			shf = "shifts%03d.spi" % iter
 			shiftedStack="parts_shifted.spi"
 
-			alignment.checkFile(shf)
+			apFile.removeFile(shf)
 
-			alignment.spiderAPMQ(
+			refine.spiderAPMQ(
 				projs=projs,
 				numprojs=numprojs,
 				tsearch=self.params['xysearch'],
@@ -208,12 +208,12 @@ class apmqRefineScript(appionScript.AppionScript):
 			# of the particles,
 			# results will be saved in "peakfile.spi"
 
-			alignment.checkFile(shiftedStack)
+			apFile.removeFile(shiftedStack)
 
 			# don't use MPI here - for some reason slower?
 			mySpi=spyder.SpiderSession(dataext=".spi", logo=False, log=False)
 
-			apmqlist = alignment.readDocFile(apmqfile)
+			apmqlist = refine.readDocFile(apmqfile)
 			avgccrot = 0
 
 			apDisplay.printMsg("creating shifted stack")
@@ -231,28 +231,28 @@ class apmqRefineScript(appionScript.AppionScript):
 					# mirror projection if necessary
 					ref*=-1
 					refimg=spyder.fileFilter(projs)+"@"+str(ref)
-					alignment.mirrorImg(refimg,"_3",inMySpi=mySpi)
+					refine.mirrorImg(refimg,"_3",inMySpi=mySpi)
 					img="_3"
 				else:
 					img=spyder.fileFilter(projs)+"@"+str(ref)
 
-				alignment.rotAndShiftImg(img,"_2",inplane,inMySpi=mySpi)
-				alignment.maskImg("_2","_3",self.params['rad'],"D","E",
+				refine.rotAndShiftImg(img,"_2",inplane,inMySpi=mySpi)
+				refine.maskImg("_2","_3",self.params['rad'],"D","E",
 						center=int((self.stack['boxsize']/2)+1),
 						inMySpi=mySpi)
 				# pad ref image & stack image to twice the size
-				alignment.padImg("_3","_2",2*self.stack['boxsize'],"N",1,1,0,inMySpi=mySpi)
+				refine.padImg("_3","_2",2*self.stack['boxsize'],"N",1,1,0,inMySpi=mySpi)
 				stackimg=spyder.fileFilter(spiderstack)+"@"+str(p+1)
-				alignment.padImg(stackimg,"_1",2*self.stack['boxsize'],"B",1,1,inMySpi=mySpi)
+				refine.padImg(stackimg,"_1",2*self.stack['boxsize'],"B",1,1,inMySpi=mySpi)
 
 				# calculate cross-correlation
-				alignment.getCC("_1","_2","_1",inMySpi=mySpi)
+				refine.getCC("_1","_2","_1",inMySpi=mySpi)
 
 				# crop the correllation image to allowable shift amount
 				shift=int(self.params['allowedShift']*self.stack['boxsize'])
 				dim=2*shift+1
 				topleftx=self.stack['boxsize']-shift+1
-				alignment.windowImg("_1","_2",dim,topleftx,topleftx,inMySpi=mySpi)
+				refine.windowImg("_1","_2",dim,topleftx,topleftx,inMySpi=mySpi)
 
 				# find the sub-pixel location of cc peak
 				mySpi.toSpiderQuiet("PK x11,x12,x13,x14,x15,x16,x17","_2","0")
@@ -261,7 +261,7 @@ class apmqRefineScript(appionScript.AppionScript):
 				shpos=spyder.fileFilter(shiftedStack)+"@"+str(p+1)
 				mySpi.toSpiderQuiet("IF(x17.EQ.0.0) THEN")
 				mySpi.toSpiderQuiet("GP x17","_2",str(shift+1)+","+str(shift+1))
-				alignment.copyImg(stackimg,shpos,inMySpi=mySpi)
+				refine.copyImg(stackimg,shpos,inMySpi=mySpi)
 				mySpi.toSpiderQuiet("ELSE")
 				#mySpi.toSpiderQuiet("RT SQ",stackimg,shpos,inplane*-1,"-x15,-x16")
 				mySpi.toSpiderQuiet("SH F",stackimg,shpos,"-x15,-x16")
@@ -273,7 +273,7 @@ class apmqRefineScript(appionScript.AppionScript):
 			mySpi.close()
 
 			# create class average images
-			alignment.createClassAverages(
+			refine.createClassAverages(
 				shiftedStack,
 				projs,
 				apmqfile,
@@ -301,7 +301,7 @@ class apmqRefineScript(appionScript.AppionScript):
 			apDisplay.printMsg("setting cutoff to: %f" %cccutoff)
 			# create new selection file that only has particles with good cc's
 			selectfile="select%03d.spi" % iter
-			alignment.checkFile(selectfile)
+			apFile.removeFile(selectfile)
 			mySpi = spyder.SpiderSession(nproc=self.params['proc'],dataext=".spi", logo=False, log=False)
 			i=1
 			for p in range(0,self.params['numpart']):
@@ -317,7 +317,7 @@ class apmqRefineScript(appionScript.AppionScript):
 			apDisplay.printMsg("creating 3d volume")
 			out_rawvol="vol_raw%03d.spi" % iter
 			if self.params['voliter'] is not None:
-				alignment.iterativeBackProjection(
+				refine.iterativeBackProjection(
 					shiftedStack,
 					selectfile,
 					rad=self.params['rad'],
@@ -331,7 +331,7 @@ class apmqRefineScript(appionScript.AppionScript):
 					nproc=self.params['proc'],
 				)
 			else:
-				alignment.backProjection(
+				refine.backProjection(
 					shiftedStack,
 					selectfile,
 					ang=outang,
@@ -344,13 +344,13 @@ class apmqRefineScript(appionScript.AppionScript):
 			apDisplay.printMsg("creating even/odd volumes")
 			oddfile="selectodd%03d.spi" % iter
 			evenfile="selecteven%03d.spi" % iter
-			alignment.docSplit(selectfile,oddfile,evenfile)
+			refine.docSplit(selectfile,oddfile,evenfile)
 
 			# get the even & odd volumesa
 			oddvol="vol1%03d.spi" % iter
 			evenvol="vol2%03d.spi" % iter
 			if self.params['voliter'] is not None:
-				alignment.iterativeBackProjection(
+				refine.iterativeBackProjection(
 					shiftedStack,
 					oddfile,
 					rad=self.params['rad'],
@@ -363,7 +363,7 @@ class apmqRefineScript(appionScript.AppionScript):
 					sym=sydoc,
 					nproc=self.params['proc']
 				)
-				alignment.iterativeBackProjection(
+				refine.iterativeBackProjection(
 					shiftedStack,
 					evenfile,
 					rad=self.params['rad'],
@@ -377,7 +377,7 @@ class apmqRefineScript(appionScript.AppionScript):
 					nproc=self.params['proc']
 				)
 			else:
-				alignment.backProjection(
+				refine.backProjection(
 					shiftedStack,
 					oddfile,
 					ang=outang,
@@ -385,7 +385,7 @@ class apmqRefineScript(appionScript.AppionScript):
 					sym=sydoc,
 					nproc=self.params['proc'],
 				)
-				alignment.backProjection(
+				refine.backProjection(
 					shiftedStack,
 					evenfile,
 					ang=outang,
@@ -398,9 +398,9 @@ class apmqRefineScript(appionScript.AppionScript):
 			apDisplay.printMsg("calculating FSC")
 			fscfile="fsc%03d.spi" % iter
 			emanfsc="fsc.eotest.%d" % iter
-			alignment.calcFSC(oddvol,evenvol,fscfile)
+			refine.calcFSC(oddvol,evenvol,fscfile)
 			# convert to eman-style fscfile
-			alignment.spiderFSCtoEMAN(fscfile,emanfsc)
+			refine.spiderFSCtoEMAN(fscfile,emanfsc)
 
 			# calculate the resolution at 0.5 FSC & write to file
 			res=apRecon.calcRes(emanfsc,self.stack['boxsize'],self.stack['apix'])
