@@ -1261,16 +1261,16 @@ class view {
 		if ($this->ismaster) {
 			$htmlframe .= '<td><ul style="padding:0; margin:0">';
 			 if ($this->displayhidebt) {
-				$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb;" '
+				$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
 								.' onclick=\'hide_image()\' ><u><b>h</b></u>ide</button>';
 				$htmlframe .= '</li> ';
 			}
 			if ($this->displaynextbt) {
-				$htmlframe .= '<li class="list1"><button type="button" style="border: 1px solid #bdcebb;" '
+				$htmlframe .= '<li class="list1"><button type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
 							.' onclick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button></li>';
 			}
 			if ($this->displayexemplarbt) {
-				$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb;" '
+				$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
 							.' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li></ul></td>';
 			}
 		}
