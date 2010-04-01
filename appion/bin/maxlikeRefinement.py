@@ -27,7 +27,6 @@ from appionlib import apModel
 from appionlib import spyder
 from appionlib import apImagicFile
 from appionlib import apProject
-from appionlib.apSpider import alignment
 from pyami import spider
 import sinedon
 

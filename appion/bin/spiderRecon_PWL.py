@@ -21,7 +21,7 @@ from appionlib import apChimera
 from appionlib import apProject
 from appionlib import apParam
 from appionlib.apTilt import apTiltPair
-from appionlib.apSpider import operations, alignment
+from appionlib.apSpider import operations
 try:
 	from appionlib.apSpider import backprojectPWL
 except ImportError:
