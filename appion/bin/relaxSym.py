@@ -1,22 +1,78 @@
 #!/usr/bin/env python
 
-import glob,os,sys
-import operator
 
-import shutil
-import math
-import subprocess
-import string
+import os
 import re
+import sys
+import math
 import time
+import glob
+import shutil
+import string
+import subprocess
 from appionlib import apEMAN
-from appionlib.apSpider import alignment
 
 try:
 	import EMAN
 except:
 	print "EMAN module did not get imported"
 
+#===============================
+def runSymRelax(params,cls):
+	print "processing class",cls
+
+	#set up cls dir
+	clsdir=cls.split('.')[0]+'.dir'
+	os.mkdir(clsdir)
+
+	# only align particles that passed coran
+	clscmd='clstoaligned.py -c ' + cls + ' --format=eman --clean\n\n'
+
+	# create projections of related symmetries
+	projcmd = "python <<eof\n"
+	projcmd+= "import EMAN\n"
+	projcmd+= "map3d = EMAN.EMData()\n"
+	projcmd+= "map3d.readImage('../threed.%da.asym.mrc')\n" % (params['iter']-1)
+	projcmd+= "proj = EMAN.EMData()\n"
+	projcmd+= "proj.readImage('proj.hed',%d)\n" % int(cls.split('.')[0][-4:])
+	projcmd+= "e=proj.getEuler()\n"
+	projcmd+= "e.setSym('"+params['sym']+"')\n"
+	projcmd+= "for s in range(e.getMaxSymEl()):\n"
+	projcmd+= "  ef = e.SymN(s)\n"
+	projcmd+= "  p = map3d.project3d(ef.alt(),ef.az(),ef.phi(),-1)\n"
+	projcmd+= "  p.setRAlign(ef)\n"
+	projcmd+= "  p.writeImage('%s',s)\n" % os.path.join(clsdir,'proj.hed')
+	projcmd+= "eof\n\n"
+	clscmd+=projcmd
+
+	## if multiprocessor, don't run clstoaligned yet
+	if params['proc'] == 1:
+		#make aligned stack
+		proc = subprocess.Popen(clscmd, shell=True)
+		proc.wait()
+
+	relaxcmd=clscmd
+
+	# if no particles, continue
+	params['nptcls']=apEMAN.getNPtcls(cls,onlycoran=True)
+	if params['nptcls'] == 0:
+		print "WARNING!! no particles in class"
+		return
+
+	emancmd = ("cd %s\n" % clsdir)	
+	emancmd+= "classesbymra aligned.hed proj.hed split mask=%d precen norot logit=1 maxshift=0 phase > classesbymra.log\n" % params['mask']
+	
+	for s in range(params['symnum']):
+		emancmd+="proc2d aligned.hed classes.hed list=cls%04d.lst average\n" % s
+
+	## if multiprocessor, don't run yet
+	if params['proc'] == 1:
+		proc = subprocess.Popen(emancmd, shell=True)
+		proc.wait()
+	relaxcmd+=emancmd
+	return relaxcmd
+
+#===============================
 def parseInput(args,params):
 	for arg in args:
 		elements=arg.split('=')
@@ -41,6 +97,8 @@ def parseInput(args,params):
 		else:
 			print "\nERROR: undefined parameter \'"+arg+"\'\n"
 			sys.exit(1)
+
+#===============================
 def createDefaults():
 	params={}
 	params['relaxdir']='relax'
@@ -55,6 +113,7 @@ def createDefaults():
 	params['ccCutoff']=1.0
 	return(params)
 
+#===============================
 if __name__== '__main__':
 	# write command & time to emanlog if exists:
 	if os.path.exists('refine.log'):
@@ -125,7 +184,7 @@ if __name__== '__main__':
 				cls = clslist[spnum]
 				clsdir=cls.split('.')[0]+'.dir'
 				print "creating mpi jobfile for "+cls 
-				relaxcmd = alignment.runSymRelax(params,cls)
+				relaxcmd = runSymRelax(params,cls)
 				## if enough particles, run symmetry relaxation
 				if relaxcmd is not None:
 					pfile=('relax.%i.csh' %spnum)
@@ -164,8 +223,8 @@ if __name__== '__main__':
 				proc.wait()
 	else:
 		for cls in clslist:
-		## run symmetry relaxation	
-			alignment.runSymRelax(params,cls)
+			## run symmetry relaxation	
+			runSymRelax(params,cls)
 
 	print "symmetry relaxation complete"
 	print "Combining class averages"
