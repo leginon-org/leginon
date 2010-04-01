@@ -1,19 +1,21 @@
 #!/usr/bin/env python
 
-import glob,os,sys
+import os
+import re
+import sys
+import glob
+import math
+import time
+import shutil
+import string
 import operator
+import subprocess
+from appionlib import apEMAN
+from appionlib.apSpider import emancoran
 try:
 	import EMAN
 except ImportError:
 	print "EMAN module did not get imported"
-import shutil
-import math
-import subprocess
-import string
-import re
-import time
-from appionlib import apEMAN
-from appionlib.apSpider import alignment
 
 def parseInput(args,params):
 	for arg in args:
@@ -126,7 +128,7 @@ if __name__== '__main__':
 				cls = clslist[spnum]
 				clsdir=cls.split('.')[0]+'.dir'
 				print "creating mpi jobfile for "+cls 
-				spidercmd = alignment.runCoranClass(params,cls)
+				spidercmd = emancoran.runCoranClass(params,cls)
 				## if enough particles, run spider
 				if spidercmd is not None:
 					pfile=('spider.%i.csh' %spnum)
@@ -179,7 +181,7 @@ if __name__== '__main__':
 	else:
 		for cls in clslist:
 		## create SPIDER batch file and run coran	
-			spidercmd = alignment.runCoranClass(params,cls)
+			spidercmd = emancoran.runCoranClass(params,cls)
 
 	print "classification complete"
 	print "Determining best class averages"
