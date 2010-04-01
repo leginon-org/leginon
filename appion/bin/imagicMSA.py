@@ -172,7 +172,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		### run MSA
 		if self.params['nproc'] > 1:
 			f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
-				" -x IMAGIC_BATCH  /usr/local/IMAGIC/msa/msa.e_mpi <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
+				" -x IMAGIC_BATCH  "+str(self.imagicroot)+"/msa/msa.e_mpi <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
 			f.write("YES\n")
 			f.write(str(self.params['nproc'])+"\n")
 		else:
@@ -181,8 +181,8 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		f.write("FRESH_MSA\n")
 		f.write(str(self.params['MSAdistance'])+"\n")
 		f.write("start\n")
-		if self.params['nproc'] > 1:
-			f.write("NO\n")
+#		if self.params['nproc'] > 1:
+#			f.write("NO\n")
 		f.write("NO\n")
 		f.write("msamask\n")
 		f.write("eigenimages\n")
