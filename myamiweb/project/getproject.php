@@ -95,7 +95,7 @@ $link_off = "<a class='header' href='$url&amp;ld=0'>[o]</a> ";
 $ld = ($_GET['ld']==0) ? $link_on : $link_off;
 $cat  = ($_GET['cat']==0) ? $link_on : $link_off;
 ?>
-<form method="POST" name="projectform" action="<?php echo $PHP_SELF."?pid=".$selectedprojectId ?>">
+<form method="POST" name="projectform" action="<?php echo $PHP_SELF."?pId=".$selectedprojectId ?>">
 <input type="hidden" name="v" value="<?=$_REQUEST['v']?>">
 <table border="0" >
 <tr>
@@ -126,7 +126,7 @@ $pId = $selectedprojectId;
 	$names = array();
 
 	if (count($projectowners))
-		foreach ($projectowners as $o) $names[] = $o['full name'];
+		foreach ($projectowners as $o) $names[] = $o['firstname'].' '.$o['lastname'];
 	echo implode(", ",$names);
 	if ($is_admin)
 		echo '<a alt="shareproject" target="_blank" class="header" href="shareproject.php?pId='.$selectedprojectId.'"> edit</a>';
@@ -176,7 +176,6 @@ $pId = $selectedprojectId;
 <?php
 $ln=urlencode($url);
 $projectId = $projectinfo['projectId'];
-
 // Experiments 
 	$experimentIds = $project->getExperiments($projectId);
 	echo divtitle(count($experimentIds).' Experiments');
@@ -186,7 +185,6 @@ $projectId = $projectinfo['projectId'];
 	$sessions=array();
 	$experiments=array();
 	foreach ($experimentIds as $k=>$exp) {
-	
 		$info = $leginondata->getSessionInfo($exp);
 		$sessions[trim($info['SessionId'])]=$info['Name'];
 		$sessionlink="<a class='header' target='viewer' href='".VIEWER_URL.$info['SessionId']."'>".$info['Name']."</a>";

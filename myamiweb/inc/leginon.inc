@@ -183,7 +183,7 @@ class leginondata {
 		."sc.`REF|InstrumentData|tem`  as `InstrumentId`, "
 		."c.`REF|InstrumentData|ccdcamera`  as `CameraId`, "
 		."u.`DEF_id` as userId, "
-		."u.`full name` as User "
+		."concat(u.firstname,' ',u.`lastname`) as User "
 		."from `SessionData` s "
 		."left join UserData u on (u.`DEF_id`=s.`REF|UserData|user`) "
 		."left join AcquisitionImageData a on (a.`REF|SessionData|session`=s.`DEF_id`) "

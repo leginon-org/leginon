@@ -62,10 +62,12 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 	}
 
 
-	$q = "select u.`DEF_id` as userId, u.* from UserData u "
+	$q = "select u.`DEF_id` as userId, u.* "
+			.",concat(u.firstname,' ',u.lastname) as `full name` "
+			."from UserData u "
 			."where "
 			."u.password<>'' "
-			."order by `full name`";
+			."order by u.`lastname`";
 	$users = $leginondata->mysql->getSQLResult($q);
 	if ($is_admin) {
 	$bt_add= "<input class='bt1' type='submit' name='bt' value='add'>";
@@ -75,7 +77,7 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 		echo "<option value='default' > -- select user -- </option>";
 		foreach($users as $user) {
 			$s = ($user['userId']==$_POST['userId']) ? "selected" : "";
-			$o = ($user['full name']) ? $user['full name'] : $user['name'];
+			$o = ($user['full name']) ? $user['full name'] : $user['username'];
 			echo "<option value='".$user['userId']."' $s >"
 					.$o
 					."</option>\n";
@@ -101,7 +103,6 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 		foreach ($owners as $v) {
 			$ck = "<input type='checkbox' name='ck[]' value='".$v['userId']."'>";
 			$cuser = ($v['full name']);
-#			$cuser = ($v['lastname']||$v['firstname']) ? $v['lastname']." ".$v['firstname']:$v['login'];
 			echo "<tr>";
 			echo "<td>";
 			echo " - ".$cuser;
