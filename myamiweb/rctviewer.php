@@ -2,6 +2,9 @@
 require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
+if (defined('PROCESSING')) {
+	$ptcl = (@require "inc/particledata.inc") ? true : false;
+}
 
 $sessionId = ($_POST[sessionId]) ? $_POST[sessionId] : $_GET[expId];
 $projectId = ($_POST[projectId]) ? $_POST[projectId] : 'all';
@@ -21,6 +24,11 @@ if(!$sessions)
 if($projectdb) {
 	$projects = $projectdata->getProjects('all');
 	$sessions=$projectdata->getSessions($sessions);
+}
+
+if ($ptcl) {
+	$particle = new particledata();
+	$particleruns=$particle->getParticleRunIds($sessionId);
 }
 
 // --- update SessionId while a project is selected
@@ -56,6 +64,7 @@ $javascript = $viewer->getJavascript();
 
 $view1 = new view('Main View', 'v1');
 $view1->setControl();
+$view1->setParam('ptclparams',$particleruns);
 $view1->addMenuItems($playbackcontrol);
 $view1->setDataTypes($datatypes);
 $view1->setSize(400);
@@ -66,6 +75,7 @@ $viewer->add($view1);
 
 
 $view2 = new view('RCT', 'v3');
+$view2->setParam('ptclparams',$particleruns);
 $view2->setSize(400);
 $view2->setDataTypes(array('rct'=>'rct'));
 $view2->setPresetScript("getpreset.php?tl=1&vf=0");
