@@ -153,7 +153,7 @@ class InstrumentRequestHandler(PickleRequestHandler):
 			return None
 
 	def handle_unauthorized(self, request, reason):
-		response = UnauthorizedResponse(reason=reason)
+		response = UnauthorizedRequest(reason=reason)
 		return response
 
 	def handle_login(self, request):
@@ -275,7 +275,7 @@ class Client(PickleHandler):
 		self.login = login
 		self.host = host
 		self.port = port
-		self.login(status)
+		self.doLogin(status)
 
 	def __del__(self):
 		try:
@@ -302,7 +302,7 @@ class Client(PickleHandler):
 		self.disconnect()
 		return response
 
-	def login(self, status):
+	def doLogin(self, status):
 		req = LoginRequest(status)
 		response = self.doRequest(req)
 		if response.status != status:
