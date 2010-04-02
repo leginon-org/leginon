@@ -168,8 +168,8 @@ class user {
 
 	function getUserInfo($userId){
 		$userId=trim($userId);
-		$sqlwhere = (is_numeric($userId)) ? "u.`DEF_id`=$userId" : "u.name='$userId'";
-		$q='select u.`DEF_id` as userId, u.*, u.`name` as username, '
+		$sqlwhere = (is_numeric($userId)) ? "u.`DEF_id`=$userId" : "u.username='$userId'";
+		$q='select u.`DEF_id` as userId, u.*, u.`username` as username, '
 			.'g.`DEF_id` as groupId ,g.`name` as groupname '
 			.'from ' .DB_LEGINON.'.UserData u '
 			.'left join '.DB_LEGINON.'.GroupData g on '

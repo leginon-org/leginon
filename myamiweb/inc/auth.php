@@ -188,11 +188,10 @@ class authlib{
 		$fullname = $firstname . ' '. $lastname;
 		$password = md5($password);
 		
-		$q = "insert into UserData (name, `full name`, username, firstname, lastname, 
+		$q = "insert into UserData (username, firstname, lastname, 
 							`REF|GroupData|group`, password, email) 
-				  values ('$username', '$fullname', '$username', '$firstname', '$lastname'," . $groupId 
+				  values ('$username', '$firstname', '$lastname'," . $groupId 
 							.", '$password', '$email')";
-			
 		if(!$dbc->SQLQuery($q)){
 
 			return $this->error['database_error'];		
@@ -284,7 +283,7 @@ class authlib{
 		$fullname = $firstname . ' '. $lastname;
 		
 		$q = "update UserData set 
-				`full name` = '$fullname', firstname = '$firstname', 
+				firstname = '$firstname', 
 				lastname = '$lastname', email = '$email'
 			  where DEF_id = $userId";
 
@@ -550,9 +549,9 @@ class authlib{
 			
 			$fullname = $firstname. ' '. $lastname;
 			$grUserId = $this->getGroupId(GP_USER);
-			$q = "insert into UserData (name, `full name`, username, firstname, lastname, 
+			$q = "insert into UserData (username, firstname, lastname, 
 							`REF|GroupData|group`, password, email) 
-				  values ('$username', '$fullname', '$username', '$firstname', '$lastname'," . $grUserId .", '$password', '$email')";
+				  values ('$username', '$firstname', '$lastname'," . $grUserId .", '$password', '$email')";
 				
 				// insert user to UserData table
 			if(!$dbL->SQLQuery($q)){	
