@@ -3052,7 +3052,7 @@ class particledata {
 	}
 
 	function getSymInfo ($symId){
-		return getSymmetryInfo($symId);
+		return $this->getSymmetryInfo($symId);
 	}
 
 	function getSymmetryInfo($id) {
