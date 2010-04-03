@@ -1130,6 +1130,7 @@ class particledata {
 			'stackId'=>"stackreport.php?expId=$expId&sId="
 			,'particleSelection'=>"particlerunreport.php?expId=$expId&rId="
 		);
+		if (count($params) ==0) return;
 		echo "<h4>".$title."</h4>";
 		echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
 		$selection_fields = array_keys($params);
