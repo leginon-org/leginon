@@ -291,6 +291,10 @@ if ($expId) {
 		$srun += count($subclusterjobs['stackfilter']['running']);
 		$sq += count($subclusterjobs['stackfilter']['queued']);
 
+		$sdone += count($subclusterjobs['centerparticlestack']['done']);
+		$srun += count($subclusterjobs['centerparticlestack']['running']);
+		$sq += count($subclusterjobs['centerparticlestack']['queued']);
+
 		$sresults[] = ($sdone==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId'>$sdone complete</a>";
 		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$srun running</a>";
 		$sresults[] = ($sq==0) ? "" : "$sq queued";
