@@ -58,6 +58,8 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			action="store_true", help="Use Xvfb for imaging")
 		self.parser.add_option("--no-xvfb", dest="xvfb", default=True,
 			action="store_false", help="Do not use Xvfb for imaging")
+		self.parser.add_option("--no-silhouette", dest="silhouette", default=True,
+			action="store_false", help="Do not use silhouettes for imaging")
 
 	#=====================
 	def checkConflicts(self):
@@ -118,7 +120,8 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			apDisplay.printMsg("Creating animation")
 			apChimera.renderAnimation(mrcfile, contour=self.params['contour'],
 				 zoom=self.params['zoom'], sym=self.params['sym'],
-				 color=self.params['color'], xvfb=self.params['xvfb'])
+				 color=self.params['color'], xvfb=self.params['xvfb'],
+				 name=self.params['file'], silhouette=self.params['silhouette'])
 
 		### snapshot
 		if self.params['type'] != "animate":
@@ -126,7 +129,8 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			apChimera.renderSnapshots(mrcfile, contour=self.params['contour'],
 				zoom=self.params['zoom'], sym=self.params['sym'],
 				color=self.params['color'], xvfb=self.params['xvfb'],
-				pdb=self.params['pdb'])
+				pdb=self.params['pdb'], name=self.params['file'],
+				silhouette=self.params['silhouette'])
 
 		### clean up
 		if self.params['mass'] is not None or self.params['bin'] is not None:
