@@ -12,6 +12,7 @@ import sys
 import time
 import math
 import numpy
+import shutil
 
 """
 If you know where a function is in the chimera menu, but do not know how to call it
@@ -72,6 +73,7 @@ class ChimSnapShots(object):
 				self.snapshot_csym()
 
 		self.saveChimeraState()
+		self.saveOBJfile()
 
 		self.writeMessageToLog("\n")
 		self.writeMessageToLog("====================================")
@@ -90,6 +92,43 @@ class ChimSnapShots(object):
 		else:
 			self.writeMessageToLog("FAIL Saving chimera session")
 		return
+
+	# -----------------------------------------------------------------------------
+	def saveOBJfile(self):
+		"""
+		save OBJ file for Jmol use
+		"""
+		self.objfilename = os.path.splitext(self.volumepath)[0]+".obj"
+		self.writeMessageToLog("Saving OBJ file: %s"%(self.objfilename))
+		chimcmd = "export format OBJ %s"%(self.objfilename)
+		self.runChimCommand(chimcmd)
+		if os.path.isfile(self.objfilename):
+			self.writeMessageToLog("Saved OBJ file: %s"%(self.objfilename))
+			self.convertOBJfile(self.objfilename)
+		else:
+			self.writeMessageToLog("Failed to write OBJ file: %s"%(self.objfilename))
+
+	# -----------------------------------------------------------------------------
+	def convertOBJfile(self, objfile):
+		if not os.path.isfile(objfile):
+			self.writeMessageToLog("Could not find OBJ file: %s"%(objfile))
+		self.writeMessageToLog("Converting OBJ file: %s"%(objfile))
+		f = open(objfile, "r")
+		jmolname = os.path.splitext(objfile)[0]
+		jmolname += "-jmol.obj"
+		g = open(jmolname, "w")
+		for line in f:
+			if line.startswith("v "):
+				g.write(line)
+			elif line.startswith("f "):
+				nline = re.sub("//[0-9]+", "", line)
+				g.write(nline)
+		f.close()
+		g.close()
+		if os.path.isfile(jmolname):
+			self.writeMessageToLog("Converted OBJ file: %s"%(objfile))
+			os.remove(objfile)
+			shutil.move(jmolname, objfile)
 
 	# -----------------------------------------------------------------------------
 	def openVolumeData(self):
@@ -138,7 +177,9 @@ class ChimSnapShots(object):
 			return
 		self.writeMessageToLog("Opening PDB file: %s"%(self.pdbfilepath))
 		chimera.openModels.open(self.pdbfilepath, type="PDB")
-
+		self.runChimCommand("~display #")
+		self.runChimCommand("ribbon #")
+		self.runChimCommand("color blue #")
 
 	# -----------------------------------------------------------------------------
 	def setZoom(self):
