@@ -82,6 +82,9 @@ def setVolumeMass(volumefile, apix=1.0, mass=1.0, rna=0.0):
 #=========================================
 def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 		contour=None, zoom=1.0, sym='c1', color=None, silhouette=True, mass=None):
+	"""
+	filter volume and then create a few snapshots for viewing on the web
+	"""
 	if isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	if box is None:
@@ -118,9 +121,6 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	mrc.write(vol, tmpf)
 	del vol
 
-	### set chimera to use temp volume
-	os.environ['CHIMTEMPVOL'] = tmpf
-
 	### contour volume to mass
 	if mass is not None:
 		setVolumeMass(tmpf, apix*shrinkby, mass)
@@ -134,9 +134,9 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	### render images
 	renderSlice(density, box=box, tmpfile=tmpf, sym=sym)
 	if chimtype != 'snapshot':
-		renderAnimation(density, contour, zoom, sym, color, silhouette)
+		renderAnimation(tmpf, contour, zoom, sym, color, silhouette, name=density)
 	elif chimtype != 'animate':
-		renderSnapshots(density, contour, zoom, sym, color, silhouette)
+		renderSnapshots(tmpf, contour, zoom, sym, color, silhouette, name=density)
 	#apFile.removeFile(tmpf)
 
 #=========================================
@@ -169,11 +169,20 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 
 #=========================================
 #=========================================
-def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=True, xvfb=True, pdb=None):
+def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, 
+		silhouette=True, xvfb=True, pdb=None, name=None):
+	"""
+	create a few snapshots for viewing on the web
+	"""
 	if isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
-	os.environ['CHIMVOL'] = density
+	if name is None:
+		os.environ['CHIMVOL'] = density
+	else:
+		### set chimera to use temp volume
+		os.environ['CHIMTEMPVOL'] = density
+		os.environ['CHIMVOL'] = name
 	os.environ['CHIMTYPE'] = 'snapshot'
 	if silhouette is True:
 		os.environ['CHIMSILHOUETTE'] = 'true'
@@ -200,7 +209,7 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 	apDisplay.printColor("running Chimera Snapshot for sym "+str(sym), "cyan")
 	runChimeraScript(chimsnappath, xvfb=xvfb)
 
-	image1 = density+".1.png"
+	image1 = os.environ['CHIMVOL']+".1.png"
 	if not os.path.isfile(image1):
 		apDisplay.printWarning("Chimera failed to generate images")
 		runChimeraScript(chimsnappath, xvfb=xvfb)
@@ -212,11 +221,20 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 
 #=========================================
 #=========================================
-def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=False, xvfb=True):
+def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None,
+		silhouette=False, xvfb=True, name=None):
+	"""
+	create several snapshots and merge into animated GIF
+	"""
 	if isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
-	os.environ['CHIMVOL'] = density
+	if name is None:
+		os.environ['CHIMVOL'] = density
+	else:
+		### set chimera to use temp volume
+		os.environ['CHIMTEMPVOL'] = density
+		os.environ['CHIMVOL'] = name
 	os.environ['CHIMTYPE'] = 'animate'
 	if silhouette is True:
 		os.environ['CHIMSILHOUETTE'] = 'true'
@@ -240,7 +258,7 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 	chimsnappath = getSnapPath()
 	apDisplay.printColor("running Chimera Animation for sym "+str(sym), "cyan")
 	runChimeraScript(chimsnappath, xvfb=xvfb)
-	image1 = density+".001.png"
+	image1 = os.environ['CHIMVOL']+".001.png"
 
 	if os.path.isfile(image1):
 		### merge into animated GIF
