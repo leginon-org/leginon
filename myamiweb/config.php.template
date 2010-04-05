@@ -13,12 +13,30 @@ require_once 'inc/config.inc';
 // --- define myamiweb tools base --- //
 define('PROJECT_NAME', "myamiweb");
 define('PROJECT_TITLE', "Appion and Leginon Tools");
+
+// --- define site base path -- //
+// example: http://domain.edu/myamiweb
 define('BASE_PATH',"myamiweb");
+
 define('BASE_URL', "/".BASE_PATH."/");
 define('PROJECT_URL', BASE_URL."project/");
 
-// Administrator email address
+// --- define administrator email address -- //
 define('ADMIN_EMAIL', "example@scripps.edu");
+
+// When 'ENABLE_SMTP set to true, email will send out
+// via ADMIN_EMIL's SMTP server. 
+define('ENABLE_SMTP', false);
+define('SMTP_HOST', 'mail.scripps.edu');	//your smtp host
+
+// Check this with your email administrator
+// Set it to true if your SMTP server require authentication 
+define('SMTP_AUTH', false);
+
+// If SMTP_AUTH is not required(SMTP_AUTH set to false, 
+// no need to fill in 'SMTP_USERNAME' & SMTP_PASSWORD
+define('SMTP_USERNAME', "");
+define('SMTP_PASSWORD', "");
 
 // --- Set your MySQL database server parameters
 define('DB_HOST', "");		// DB Host name
@@ -27,7 +45,7 @@ define('DB_PASS', "");		// DB Password
 define('DB_LEGINON', "leginondb");	// Leginon database name
 define('DB_PROJECT', "projectdb");	// Project database name
 
-// --- default URL for project section
+// --- default URL for project section --- //
 define('VIEWER_URL', BASE_URL."3wviewer.php?expId=");
 define('SUMMARY_URL', BASE_URL."summary.php?expId=");
 define('UPLOAD_URL', BASE_URL."processing/uploadimage.php");
@@ -81,7 +99,11 @@ define('CACHE_SCRIPT', $_SERVER['DOCUMENT_ROOT'].'/'.BASE_URL.'/makejpg.php');
 define('FLASHPLAYER_URL', "/flashplayer/");
 
 // --- path to main --- //
-set_include_path(dirname(__FILE__).PATH_SEPARATOR.dirname(__FILE__)."/project".PATH_SEPARATOR.dirname(__FILE__)."/lib".PATH_SEPARATOR.dirname(__FILE__)."/processing");
+set_include_path(dirname(__FILE__).PATH_SEPARATOR
+				.dirname(__FILE__)."/project".PATH_SEPARATOR
+				.dirname(__FILE__)."/lib".PATH_SEPARATOR
+				.dirname(__FILE__)."/lib/PEAR".PATH_SEPARATOR
+				.dirname(__FILE__)."/processing");
 
 // --- define python commands - path --- //
 

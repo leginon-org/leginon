@@ -8,6 +8,7 @@
  */
 
 require_once "config.php";
+require_once "Mail.php";
 
 class authlib{
 
@@ -27,6 +28,7 @@ class authlib{
 				 "fields_empty"=>"Some fields were left empty.",
 				 "temp_username_incorrect"=>"Temporary ID and Username combination incorrect, or account purged.",
 				 "database_error"=>"Unknown database failure, please try later.",
+				 "confirm_email_error"=>"Unknow email server failure, please try again later.",
 				 "flushing"=>"The flushing process was unsuccessful.",
 				 "username_email"=>"No username corresponding to that email.",
 				 "no_email"=>"The email address entered could not be found. ",
@@ -108,24 +110,30 @@ class authlib{
 			if(!$dbc->SQLQuery($q)){
 				return $this->error['database_error'];		
 			}	
+			$from = "AMI - The Scripps Research Institute <".ADMIN_EMAIL.">";
+			$to = $firstname . " " . $lastname . " <" . $email . ">";
 			$subject = "Registration: Appion / Legnion Tools";
-			$emailContent = "Thank you, $firstname for registering. Here is the information we received: \n\n "
+			$body = "Thank you, $firstname for registering. Here is the information we received: \n\n "
 						."First name:	$firstname \n "
 						."Last name:	$lastname \n "
 						."Email:		$email \n "
 						."Username		$username \n "
 						."You need to confirm the account by pointing your browser at \n "
 						.'http://'.$_SERVER['HTTP_HOST'].BASE_URL.'confirm.php?hash='.$hash. "\n\n "
-						."If you did not apply for the account, please ignore this message.";
-			$fromEmail = "From: ".ADMIN_EMAIL;			
-
-			@mail($email, $subject, $emailContent, $fromEmail);
-
+						."If you did not apply for the account, please ignore this message.";	
+						
+			$sendEmailResult = $this->outgoingMail($from, $to, $subject, $body);			
+			
+			if(!$sendEmailResult)
+				return $this->error['confirm_email_error'];
 			return 2;
+				
 
 		}
 
 	}
+	
+	
 	/*
 	 * This registation is for adminstrator manually create user
 	 * No email will be send out and no confirmation needed.
@@ -561,12 +569,23 @@ class authlib{
 				// remove registration 
 			$dbP->SQLDelete("confirmauth", array('username'=>$username));
 
-			@mail($email, "Account creatation Confirmation", "Thank You, $firstname for registering. Here is the information we received :\n
+			$from = "AMI - The Scripps Research Institute <".ADMIN_EMAIL.">";
+			$to = $firstname . " " . $lastname . " <" . $email . ">";
+			$subject = "Create Account Confirmation: Appion / Legnion Tools";
+			
+			$body = "Thank You, $firstname for registering. Here is the information we received :\n
 					\nFirst Name	: $firstname
 					\nLast Name		: $lastname
 					\nEmail    		: $email
-					\nUsername 		: $username", "From: ".ADMIN_EMAIL);
+					\nUsername 		: $username
+					\nYou can login to the system by using your username and password at the following link
+					\nURL			: http://". $_SERVER['HTTP_HOST'] . BASE_URL."\n\n";
 
+			
+			$sendEmailResult = $this->outgoingMail($from, $to, $subject, $body);			
+			
+			if(!$sendEmailResult)
+				return $this->error['confirm_email_error'];
 			return 2;
 
 		}
@@ -616,75 +635,24 @@ class authlib{
 		$result = $this->updatePassword($userID, $password);
 
 		// sent out email with necessary information.
-
-		$subject = "Forget password: Account Infomation";
-		$headers = "From: ". ADMIN_EMAIL;
-		$message = "Dear User,\n\nAs per your request here is your account information:\n
+		$from = "AMI - The Scripps Research Institute <".ADMIN_EMAIL.">";
+		$to = $firstname . " " . $lastname . " <" . $email . ">";
+		$subject = "Forget password: Account Infomation: Appion / Legnion Tools";
+		$body = "Dear User,\n\nAs per your request here is your account information:\n
 				Username: $username
  				Password: $password
- 				\nYou can use this password to login and update your password later.
-				\nWe hope you remember your password next time ;-)"; 
+ 				\nYou can use this password to login and change your password in your profile page.
+ 				\nPlease use the following link to login : http://". $_SERVER['HTTP_HOST'] . BASE_URL .
+				"\nWe hope you remember your password next time ;-)"; 
 
-		@mail($email, $subject, $message, $headers);
+		$sendEmailResult = $this->outgoingMail($from, $to, $subject, $body);			
+			
+		if(!$sendEmailResult)
+			return $this->error['confirm_email_error'];
 		return 2;
 
 	}
 
-	function chemail ($id, $email, $email2) {
-
-		if ($email != $email2) {
-
-			return $this->error[14];
-
-		} else {
-
-			if (!eregi("^([a-z0-9]+)([._-]([a-z0-9]+))*[@]([a-z0-9]+)([._-]([a-z0-9]+))*[.]([a-z0-9]){2}([a-z0-9])?$", $email)) {
-
-				return $this->error[4];
-
-		}
-
-			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
-
-			$q="select id from UserData where email = '$email'";
-			$query = $dbc->SQLQuery($q);
-			$result = @mysql_num_rows($query);
-
-			if ($result > 0) {
-
-				list($id_from_db) = mysql_fetch_row($query);
-
-				if ($id_from_db != $id) {
-
-					return '$this->error[13]';
-
-				}
-
-				return '$this->error[23]';
-
-			}
-
-			$mdhash = md5($id.$email);
-
-			$q="insert into confirmauth values ('$id', '$email', '$mdhash', now())";
-			$query = $dbc->SQLQuery($q);
-
-			if (!$query) {
-
-				'$this->error[20]';
-
-			}
-
-			@mail($email, "$this->wsname Email Change", "Dear User, You have requested an email change \n
-						   in our database. We, to ensure authenticity of the email\n
-						   expect you to goto $this->server_url/confirm_email.php?mdhash=$mdhash&id=$id&email=$email
-						   \n Thank You!");
-
-			return 2;
-
-		}
-
-	}
 
 	function confirm_email($id, $email, $mdhash) {
 
@@ -868,7 +836,40 @@ class authlib{
 		return $password;
 
 	}
+	
+	/*
+	 * This method is going to send out email, if will find out
+	 * the mail should use smtp or regular mail function by
+	 * looking at the config file
+	 * return false if email did not get send out
+	 * otherwise return true
+	 */
+	function outgoingMail($from, $to, $subject, $body){
 
+		// build the email headers
+		$headers = array('From' => $from,
+						 'To' => $to,
+						 'Subject' =>$subject);
+		
+		// find out what type of email sending method and build
+		// out the email factory
+		$mailFactoryType = (ENABLE_SMTP ? "smtp" : "mail");
+		
+		if($mailFactoryType == 'smtp'){			
+			$authParams = array('host' => SMTP_HOST,
+								'auth' => SMTP_AUTH,
+                        	  	'username' => SMTP_USERNAME,
+                        	  	'password' => SMTP_PASSWORD);
+		}
+		
+		$mailing = Mail::factory($mailFactoryType, $authParams);
+		$mail = $mailing->send($to, $headers, $body);
+		
+		if(PEAR::isError($mail)){
+			return false;
+		}
+		return true;
+	}
 
 }
 
