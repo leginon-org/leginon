@@ -10,6 +10,7 @@ import leginon.leginondata
 from appionlib import apStack
 import leginon.project
 from appionlib import appiondata
+import sinedon
 
 #========================
 def getProjectIdFromSessionName(sessionname):
@@ -53,7 +54,10 @@ def getAppionDBFromProjectId(projectid):
 	projectdb = projectdata.getProcessingDB(projectid)
 	return projectdb
 
-
-
+#========================
+def setDBfromProjectId(projectid):
+	newdbname = getAppionDBFromProjectId(projectid)
+	sinedon.setConfig('appiondata', db=newdbname)
+	apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
 
 
