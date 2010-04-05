@@ -331,25 +331,27 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 	return
 
 #===============
-def getStackPixelSizeFromStackId(stackId):
+def getStackPixelSizeFromStackId(stackId, msg=True):
 	"""
 	For a given stack id return stack apix
 
 	Not tested on defocal pairs
 	"""
-	stackdata = getOnlyStackData(stackId, msg=False)
+	stackdata = getOnlyStackData(stackId, msg=msg)
 	if stackdata['pixelsize'] is not None:
 		### Quicker method
 		stackapix = stackdata['pixelsize']*1e10
-		apDisplay.printMsg("Stack "+str(stackId)+" pixel size: "+str(round(stackapix,3)))
+		if msg is True:
+			apDisplay.printMsg("Stack "+str(stackId)+" pixel size: "+str(round(stackapix,3)))
 		return stackapix
 	apDisplay.printWarning("Getting stack pixel size from leginon DB, not tested on defocal pairs")
-	stackpart = getOneParticleFromStackId(stackId, msg=False)
+	stackpart = getOneParticleFromStackId(stackId, msg=msg)
 	imgapix = apDatabase.getPixelSize(stackpart['particle']['image'])
 	runsindata = getRunsInStack(stackId)
 	stackbin = runsindata[0]['stackRun']['stackParams']['bin']
 	stackapix = imgapix*stackbin
-	apDisplay.printMsg("Stack "+str(stackId)+" pixel size: "+str(round(stackapix,3)))
+	if msg is True:
+		apDisplay.printMsg("Stack "+str(stackId)+" pixel size: "+str(round(stackapix,3)))
 	return stackapix
 
 #===============
