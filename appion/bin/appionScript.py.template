@@ -6,33 +6,38 @@ This is a template on how to construct a new Appion Script from scratch
 At the top you have the '#!/usr/bin/env python'
 
 this tells the computer that this is a python program and it tells it
-to run the env program in the /usr/bin directory to find the location 
+to run the env program in the /usr/bin directory to find the location
 of the python interpreter
 """
 
 import os
 from appionlib import appionScript
 from appionlib import apDisplay
+from appionlib import apStack
+from appionlib import apModel
 
 """
 Next, you have the import commands
 
 You may not know which module you will need, so start with a couple
-and add more as you need them. For an Appion Script you will at least 
+and add more as you need them. For an Appion Script you will at least
 need the 'appionScript' module (or file) and the 'os' module is also
 very handy. 'apDisplay' is used to print messages, wanrings and errors.
+apStack will be used to get information about a stack.
 
-For Appion libraries we use the system 'from appionlib import X'
+For Appion libraries we use the system 'from appionlib import X'. This
+tells python to go into the appionlib directory and read the file 'X.py'.
 """
 
 """
 Now we need to create a class for our program that will inherit all the
 properties of appionScript.
 
-In this case I gave my program the name 'ExampleScript' and then put 
+In this case I gave my program the name 'ExampleScript' and then put
 appionScript.AppionScript in parentheses. The latter part tells python
 that my new class called ExampleScript will inherit all properties from
-AppionScript located in the appionScript module (or file)
+AppionScript located in the appionScript module (or file). The
+appionScript.AppionScript is required for an Appion Script.
 
 Within a new Appion Script class there are four required functions:
 setupParserOptions(), checkConflicts(), setRunDir(), and start(). Beyond
@@ -41,7 +46,7 @@ other special functions that you can override, OnInit() and OnClose(). These
 function are described in more detail below.
 
 Typically, I like to keep setupParserOptions(), checkConflicts(), setRunDir()
-at the top of the class and start() as the last function in the class. This 
+at the top of the class and start() as the last function in the class. This
 makes it easy to find them when reading another person's code.
 """
 
@@ -53,7 +58,7 @@ class ExampleScript(appionScript.AppionScript):
 		"""
 		This function is used to define any command line arguments.
 		Things like stackid, modelid, templateid, or shuffle files.
-		
+
 		As part of Appion Script, several global variables are already defined:
 		runname, description, projectid, rundir, and commit. Of these only
 		runname is required
@@ -71,14 +76,16 @@ class ExampleScript(appionScript.AppionScript):
 			help="Your user name", metavar="NAME")
 		self.parser.add_option("--file", dest="filename",
 			help="Some file", metavar="FILE")
-		self.parser.add_option("-i", "--id", "--userid", dest="userid", type="int",
-			help="Your user id ", metavar="#")
+		self.parser.add_option("-s", "--id", "--stackid", dest="stackid", type="int",
+			help="A stack id ", metavar="#")
+		self.parser.add_option("-m", "--modelid", dest="modelid", type="int",
+			help="An initial model id ", metavar="#")
 		self.parser.add_option("--p", "--pi", dest="pi", type="float", default=3.1415926,
 			help="The value of pi", metavar="#")
 		"""
 		When defining a new commandline option, the first to do is define how you will
-		set this option. Valid options are a single hyphen and a single letter or two 
-		hyphens and any number of letter. You can alos specify as many different ways 
+		set this option. Valid options are a single hyphen and a single letter or two
+		hyphens and any number of letter. You can alos specify as many different ways
 		to set you option as you want. The next flag is the destination or 'dest', this
 		defines what your value will be call in self.params. For example, the username
 		will be stored in self.params['username'].
@@ -97,14 +104,14 @@ class ExampleScript(appionScript.AppionScript):
 			action="store_false", help="Do not do it")
 		"""
 		In this case we have two options going to the same dest, one sets the
-		value to true the other to false through the 'action' flag. In this 
+		value to true the other to false through the 'action' flag. In this
 		case, by default the value is True. Note 'metavar' is not defined.
 
 		The third type of option is a choice:
 		"""
 		self.fruittypes = ('orange', 'apple', 'banana')
 		self.parser.add_option("--fruit", dest="fruit", default="orange",
-			type="choice", choices=self.fruittypes, 
+			type="choice", choices=self.fruittypes,
 			help="Favorite type of fruit", metavar="..")
 		"""
 		Here you provide a list of acceptable option for the user to choose from
@@ -116,12 +123,12 @@ class ExampleScript(appionScript.AppionScript):
 		After you have set the options you want to have, you need to check to make sure
 		they are valid and if they are required.
 
-		For this script, we'll say that the userid is required
+		For this script, we'll say that the stackid is required
 		"""
-		if self.params['userid'] is None:
-			apDisplay.printError("Please provide a user id, e.g. --userid=15")
+		if self.params['stackid'] is None:
+			apDisplay.printError("Please provide a user id, e.g. --stackid=15")
 		"""
-		Here we check is the userid is not define, i.e., it is equal to 'None'
+		Here we check is the stackid is not defined, i.e., it is equal to 'None'
 		If it is None the program will print an Error and automatically exit
 
 		Next, I want to check the username does not contain a space
@@ -134,11 +141,11 @@ class ExampleScript(appionScript.AppionScript):
 
 		Next we can look up the user id to make sure it is valid
 		"""
-		if not self.isUserId(self.params['userid']):
+		if not self.isStackId(self.params['stackid']):
 			apDisplay.printError("Invaid user id")
 		apDisplay.printMsg("User id is valid")
 		"""
-		We print a general message, if the userid is valid
+		We print a general message, if the stackid is valid
 
 		Next we can look up the see if a file exists
 		"""
@@ -149,15 +156,13 @@ class ExampleScript(appionScript.AppionScript):
 		"""
 
 	#=====================
-	def isUserId(self, userid):
+	def isStackId(self, stackid):
 		"""
-		Arbitrary requirements for a userid
+		Arbitrary requirements for a stackid
 		"""
-		if userid < 10:
+		if stackid < 1:
 			return False
-		elif userid > 99:
-			return False
-		elif userid not in (15,16,17,18,19):
+		elif stackid > 99999:
 			return False
 		return True
 
@@ -168,32 +173,25 @@ class ExampleScript(appionScript.AppionScript):
 
 		This function decides when the results will be stored. You can do some complicated
 		things to set a directory.
+
+		Here I will use information about the stack to set the directory
 		"""
-		from appionlib import apStack
-		if ( self.params['rundir'] is None
-		and 'session' in self.params
-		and self.params['session'] is not None ):
-			#auto set the run directory
-			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
-			path = os.path.abspath(sessiondata['image path'])
-			path = re.sub("leginon","appion",path)
-			path = re.sub("/rawdata","",path)
-			path = os.path.join(path, self.processdirname, self.params['runname'])
-			self.params['rundir'] = path
-		if ( self.params['rundir'] is None
-		and 'reconid' in self.params
-		and self.params['reconid'] is not None ):
-			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
-		if ( self.params['rundir'] is None
-		and 'stackid' in self.params
-		and self.params['stackid'] is not None ):
-			#auto set the run directory
-			stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-			path = os.path.abspath(stackdata['path']['path'])
-			path = os.path.dirname(path)
-			path = os.path.dirname(path)
-			self.params['rundir'] = os.path.join(path, self.processdirname, self.params['runname'])
-		self.params['outdir'] = self.params['rundir']
+		### get the path to input stack
+		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		stackpath = os.path.abspath(stackdata['path']['path'])
+		### go down two directories
+		uponepath = os.path.join(stackpath, "..")
+		uptwopath = os.path.join(uponepath, "..")
+		### add path strings; always add runname to end!!!
+		rundir = os.path.join(uptwopath, "example", self.params['runname'])
+		### same thing in one step
+		rundir = os.path.join(stackpath, "../../example", self.params['runname'])
+		### good idea to set absolute path,
+		### cleans up 'path/stack/stack1/../../example/ex1' -> 'path/example/ex1'
+		self.params['rundir'] = os.path.abspath(rundir)
+		"""
+		In all cases, we set the value for self.params['rundir']
+		"""
 
 	#=====================
 	def onInit(self):
@@ -217,7 +215,20 @@ class ExampleScript(appionScript.AppionScript):
 		This is the core of your function.
 		You decide what happens here!
 		"""
-		apDisplay.printMsg("Hey this works")
+		apDisplay.printMsg("\n\n")
+		### get info about the stack
+		apDisplay.printMsg("Information about stack id %d"%(self.params['stackid']))
+		apDisplay.printMsg("\tboxsize %d pixels"%(apStack.getStackBoxsize(self.params['stackid'], msg=False)))
+		apDisplay.printMsg("\tpixelsize %.3f Angstroms"%(apStack.getStackPixelSizeFromStackId(self.params['stackid'], msg=False)))
+		apDisplay.printMsg("\tsize %d particles"%(apStack.getNumberStackParticlesFromId(self.params['stackid'], msg=False)))
+
+		### get info about the model
+		if self.params['modelid'] is not None:
+			apDisplay.printMsg("Information about model id %d"%(self.params['modelid']))
+			modeldata = apModel.getModelFromId(self.params['modelid'])
+			apDisplay.printMsg("\tboxsize %d pixels"%(modeldata['boxsize']))
+			apDisplay.printMsg("\tpixelsize %.3f Angstroms"%(modeldata['pixelsize']))
+		apDisplay.printMsg("\n\n")
 
 """
 Last we need to tell python how to run your function
