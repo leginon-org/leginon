@@ -337,7 +337,7 @@ def colorString(text, fg=None, bg=None):
 		"red"   :"31",
 		"green" :"32",
 		"brown" :"33",
-		"orange" :"33",
+		"orange":"33",
 		"blue"  :"34",
 		"violet":"35",
 		"purple":"35",
