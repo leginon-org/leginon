@@ -7,7 +7,6 @@ import glob
 distutils.core.setup(
 	name='Appion',
 	packages=['appionlib'],
-	#package_dir={'': 'appionlib'},
 	scripts=glob.glob('bin/*.py'), 
 )
 
