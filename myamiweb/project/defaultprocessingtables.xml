@@ -9,7 +9,7 @@
 -	ApPathData
 -	ApSymmetryData
 -	ApTemplateImageData
--
+-	ApCtfTiltParamsData
 -->
 
 <defaulttables>
@@ -275,6 +275,46 @@
     <key>KEY `md5sum` (`md5sum`)</key>
     <key>KEY `REF|ApAlignStackData|alignstack` (`REF|ApAlignStackData|alignstack`)</key>
     <key>KEY `REF|ApClusteringStackData|clusterstack` (`REF|ApClusteringStackData|clusterstack`)</key>
+  </sqltable>
+
+  <sqltable name="ApCtfTiltParamsData" >
+    <field 
+      name="DEF_id" 
+      type="int(20)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="DEF_timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field 
+      name="medium" 
+      type="text" 
+    />
+    <field 
+      name="ampcarbon" 
+      type="double" 
+    />
+    <field 
+      name="ampice" 
+      type="double" 
+    />
+    <field 
+      name="fieldsize" 
+      type="int(20)" 
+    />
+    <field 
+      name="cs" 
+      type="double" 
+    />
+    <field 
+      name="bin" 
+      type="int(20)" 
+    />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
   </sqltable>
 
  </definition>
