@@ -271,7 +271,7 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 	for line in f:
 		sline = line.strip()
 		if re.match("[0-9]+", sline):
-			listfilelines.append(int(sline)+1)
+			listfilelines.append(int(sline.split()[0])+1)
 		else:
 			apDisplay.printWarning("Line in listfile is not int: "+str(line))
 	listfilelines.sort()
