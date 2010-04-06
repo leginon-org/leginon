@@ -28,7 +28,7 @@ class authlib{
 				 "fields_empty"=>"Some fields were left empty.",
 				 "temp_username_incorrect"=>"Temporary ID and Username combination incorrect, or account purged.",
 				 "database_error"=>"Unknown database failure, please try later.",
-				 "confirm_email_error"=>"Unknow email server failure, please try again later.",
+				 "confirm_email_error"=>"Unknown email server failure, please try again later.",
 				 "flushing"=>"The flushing process was unsuccessful.",
 				 "username_email"=>"No username corresponding to that email.",
 				 "no_email"=>"The email address entered could not be found. ",
@@ -110,7 +110,7 @@ class authlib{
 			if(!$dbc->SQLQuery($q)){
 				return $this->error['database_error'];		
 			}	
-			$from = "AMI - The Scripps Research Institute <".ADMIN_EMAIL.">";
+			$from = EMAIL_TITLE." <".ADMIN_EMAIL.">";
 			$to = $firstname . " " . $lastname . " <" . $email . ">";
 			$subject = "Registration: Appion / Legnion Tools";
 			$body = "Thank you, $firstname for registering. Here is the information we received: \n\n "
@@ -569,7 +569,7 @@ class authlib{
 				// remove registration 
 			$dbP->SQLDelete("confirmauth", array('username'=>$username));
 
-			$from = "AMI - The Scripps Research Institute <".ADMIN_EMAIL.">";
+			$from = EMAIL_TITLE . " <".ADMIN_EMAIL.">";
 			$to = $firstname . " " . $lastname . " <" . $email . ">";
 			$subject = "Create Account Confirmation: Appion / Legnion Tools";
 			
@@ -635,7 +635,7 @@ class authlib{
 		$result = $this->updatePassword($userID, $password);
 
 		// sent out email with necessary information.
-		$from = "AMI - The Scripps Research Institute <".ADMIN_EMAIL.">";
+		$from = EMAIL_TITLE . " <".ADMIN_EMAIL.">";
 		$to = $firstname . " " . $lastname . " <" . $email . ">";
 		$subject = "Forget password: Account Infomation: Appion / Legnion Tools";
 		$body = "Dear User,\n\nAs per your request here is your account information:\n

@@ -21,8 +21,9 @@ define('BASE_PATH',"myamiweb");
 define('BASE_URL', "/".BASE_PATH."/");
 define('PROJECT_URL', BASE_URL."project/");
 
-// --- define administrator email address -- //
-define('ADMIN_EMAIL', "example@scripps.edu");
+// Administrator email title and email address
+define('EMAIL_TITLE', 'The name of your institute');
+define('ADMIN_EMAIL', "example@institute.edu");
 
 // When 'ENABLE_SMTP set to true, email will send out
 // via ADMIN_EMIL's SMTP server. 
