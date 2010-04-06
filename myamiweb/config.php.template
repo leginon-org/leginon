@@ -28,7 +28,7 @@ define('ADMIN_EMAIL', "example@institute.edu");
 // When 'ENABLE_SMTP set to true, email will send out
 // via ADMIN_EMIL's SMTP server. 
 define('ENABLE_SMTP', false);
-define('SMTP_HOST', 'mail.scripps.edu');	//your smtp host
+define('SMTP_HOST', 'mail.institute.edu');	//your smtp host
 
 // Check this with your email administrator
 // Set it to true if your SMTP server require authentication 
