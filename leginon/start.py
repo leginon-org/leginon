@@ -8,6 +8,7 @@
 #	see  http://ami.scripps.edu/software/leginon-license
 #
 
+import pyami.quietscipy
 import sinedon.data as data
 import leginon.gui.wx.Manager
 import leginon.version
