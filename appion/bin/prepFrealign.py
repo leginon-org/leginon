@@ -523,7 +523,7 @@ class frealignJob(appionScript.AppionScript):
 		then reconstruct the density
 		"""
 		combineparamfile = 'params.iter%03d.par'%(iternum)
-		combinevolfile = 'iter%03d.hed'%(iternum)
+		combinevolfile = 'threed.%03da.hed'%(iternum)
 		combinejobfile = 'iter%03d/frealign.iter%03d.combine.sh'%(iternum, iternum)
 		cmd = "cat proc*/outparams.par | egrep -v '^C' | sort -n > "+combineparamfile
 
