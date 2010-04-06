@@ -46,6 +46,3 @@ for name in names:
 	if issubclass(cls, pyscope.ccdcamera.CCDCamera):
 		cameraclasses.append(cls)
 	configured[name] = cls
-
-print temclasses
-print cameraclasses
