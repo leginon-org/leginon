@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import wx
 import os
 import math
@@ -56,7 +58,7 @@ class FitThetaDialog(wx.Dialog):
 
 		inforow = wx.FlexGridSizer(3, 3, 15, 15)
 		thetastr = ("****** %3.3f ******" % self.theta)
-		label = wx.StaticText(self, -1, "Current tilt angle:  ",
+		label = wx.StaticText(self, -1, "Current tilt angle: ",
 			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.tiltvalue = wx.StaticText(self, -1, thetastr, style=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
 		#self.tiltvalue = FloatEntry(self, -1, allownone=True, chars=5, value=thetastr)
@@ -66,7 +68,7 @@ class FitThetaDialog(wx.Dialog):
 		inforow.Add(label3, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		arealimstr = str(int(self.parent.data['arealim']))
-		label = wx.StaticText(self, -1, "Minimum Triangle Area:  ",
+		label = wx.StaticText(self, -1, "Minimum Triangle Area: ",
 			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.arealimit = IntEntry(self, -1, allownone=False, chars=8, value=arealimstr)
 		label2 = wx.StaticText(self, -1, "square pixels", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -74,15 +76,15 @@ class FitThetaDialog(wx.Dialog):
 		inforow.Add(self.arealimit, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 		inforow.Add(label2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
-		label = wx.StaticText(self, -1, "Triangles Used:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		self.trilabel1 = wx.StaticText(self, -1, "  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		self.trilabel2 = wx.StaticText(self, -1, "  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Triangles Used: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.trilabel1 = wx.StaticText(self, -1, " ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.trilabel2 = wx.StaticText(self, -1, " ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 		inforow.Add(self.trilabel1, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 		inforow.Add(self.trilabel2, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		self.canceltiltang = wx.Button(self, wx.ID_CANCEL, '&Cancel')
-		self.applytiltang = wx.Button(self,  wx.ID_APPLY, '&Apply')
+		self.applytiltang = wx.Button(self, wx.ID_APPLY, '&Apply')
 		self.runtiltang = wx.Button(self, -1, '&Run')
 		self.Bind(wx.EVT_BUTTON, self.onRunTiltAng, self.runtiltang)
 		self.Bind(wx.EVT_BUTTON, self.onApplyTiltAng, self.applytiltang)
@@ -98,7 +100,7 @@ class FitThetaDialog(wx.Dialog):
 
 	#==================
 	def onRunTiltAng(self, evt):
-		arealim  = self.arealimit.GetValue()
+		arealim = self.arealimit.GetValue()
 		self.parent.data['arealim'] = arealim
 		targets1 = self.parent.panel1.getTargets('Picked')
 		a1 = self.parent.targetsToArray(targets1)
@@ -147,7 +149,7 @@ class FitAllDialog(wx.Dialog):
 		inforow = wx.FlexGridSizer(5, 4, 15, 15)
 
 		thetastr = "%3.3f" % self.parent.data['theta']
-		label = wx.StaticText(self, -1, "Tilt angle (theta):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Tilt angle (theta): ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		#self.tiltvalue = wx.StaticText(self, -1, thetastr, style=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
 		self.thetavalue = FloatEntry(self, -1, allownone=False, chars=8, value=thetastr)
 		label2 = wx.StaticText(self, -1, "degrees", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -161,7 +163,7 @@ class FitAllDialog(wx.Dialog):
 		inforow.Add(self.thetatog, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		gammastr = "%3.3f" % self.parent.data['gamma']
-		label = wx.StaticText(self, -1, "Image 1 Rotation (gamma):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Image 1 Rotation (gamma): ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.gammavalue = FloatEntry(self, -1, allownone=False, chars=8, value=gammastr)
 		label2 = wx.StaticText(self, -1, "degrees", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.gammatog = wx.ToggleButton(self, -1, "Refine")
@@ -172,7 +174,7 @@ class FitAllDialog(wx.Dialog):
 		inforow.Add(self.gammatog, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		phistr = "%3.3f" % self.parent.data['phi']
-		label = wx.StaticText(self, -1, "Image 2 Rotation (phi):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Image 2 Rotation (phi): ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.phivalue = FloatEntry(self, -1, allownone=False, chars=8, value=phistr)
 		label2 = wx.StaticText(self, -1, "degrees", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.phitog = wx.ToggleButton(self, -1, "Refine")
@@ -183,7 +185,7 @@ class FitAllDialog(wx.Dialog):
 		inforow.Add(self.phitog, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		scalestr = "%3.3f" % self.parent.data['scale']
-		label = wx.StaticText(self, -1, "Scaling factor:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Scaling factor: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.scalevalue = FloatEntry(self, -1, allownone=False, chars=8, value=scalestr)
 		label2 = wx.StaticText(self, -1, " ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.scaletog = wx.ToggleButton(self, -1, "Locked")
@@ -197,7 +199,7 @@ class FitAllDialog(wx.Dialog):
 
 		shiftxstr = "%3.3f" % self.parent.data['shiftx']
 		shiftystr = "%3.3f" % self.parent.data['shifty']
-		label = wx.StaticText(self, -1, "Shift (x,y) pixels:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Shift (x,y) pixels: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.shiftxvalue = FloatEntry(self, -1, allownone=False, chars=8, value=shiftxstr)
 		self.shiftyvalue = FloatEntry(self, -1, allownone=False, chars=8, value=shiftystr)
 		self.shifttog = wx.ToggleButton(self, -1, "Refine")
@@ -211,7 +213,7 @@ class FitAllDialog(wx.Dialog):
 		inforow.Add(self.shifttog, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		summaryrow = wx.GridSizer(1,4)
-		label = wx.StaticText(self, -1, "RMSD (pixels):  ", style=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "RMSD (pixels): ", style=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
 		self.rmsdlabel = wx.StaticText(self, -1, " unknown ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		summaryrow.Add(label, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
 		summaryrow.Add(self.rmsdlabel, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -221,7 +223,7 @@ class FitAllDialog(wx.Dialog):
 		summaryrow.Add(self.iterlabel, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		self.cancelfitall = wx.Button(self, wx.ID_CANCEL, '&Cancel')
-		self.applyfitall = wx.Button(self,  wx.ID_APPLY, '&Apply')
+		self.applyfitall = wx.Button(self, wx.ID_APPLY, '&Apply')
 		self.runfitall = wx.Button(self, -1, '&Run')
 		self.Bind(wx.EVT_BUTTON, self.onRunLeastSquares, self.runfitall)
 		self.Bind(wx.EVT_BUTTON, self.onApplyLeastSquares, self.applyfitall)
@@ -362,68 +364,122 @@ class DogPickerDialog(wx.Dialog):
 		self.parent = parent
 		wx.Dialog.__init__(self, self.parent.frame, -1, "DoG Auto Particle Picker")
 
-		inforow = wx.FlexGridSizer(3, 2, 15, 15)
+		inforow = wx.FlexGridSizer(3, 3, 10, 10)
 
-		"""
-		label = wx.StaticText(self, -1, "Pixel Size (A):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		self.apix = FloatEntry(self, -1, allownone=False, chars=5, value="1.0")
-		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(self.apix, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
-		"""
+		inforow.Add((1,1), 0, 3)
+		inforow.Add((1,1), 0, 3)
+		inforow.Add((1,1), 0, 3)
 
-		label = wx.StaticText(self, -1, "Particle diameter (pixels):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		### standard options
+		box = wx.StaticBox(self, -1, 'Standard Options')
+		boxrow = wx.StaticBoxSizer(box, wx.VERTICAL)
+
+		hbox1 = wx.FlexGridSizer(1, 2, 10, 10)
+		label = wx.StaticText(self, -1, "Particle diameter (pixels): ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.diam = FloatEntry(self, -1, allownone=False, chars=5, value="100.0")
-		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(self.diam, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		hbox1.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		hbox1.Add(self.diam, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 3)
+		hbox1.AddGrowableCol(0)
+		boxrow.Add(hbox1, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
-		label = wx.StaticText(self, -1, "Diameter range (pixels):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		self.srange = FloatEntry(self, -1, allownone=False, chars=5, value="20.0")
-		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(self.srange, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		boxrow.Add((3,3), 0)
 
-		label = wx.StaticText(self, -1, "Number of sizes:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		self.numslices = IntEntry(self, -1, allownone=False, chars=3, value="2")
-		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(self.numslices, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		hbox2 = wx.FlexGridSizer(1, 2, 10, 10)
+		label = wx.StaticText(self, -1, "Min Threshold: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.minthresh = FloatEntry(self, -1, allownone=False, chars=5, value="0.7")
+		hbox2.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		hbox2.Add(self.minthresh, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 3)
+		hbox2.AddGrowableCol(0)
+		boxrow.Add(hbox2, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
-		label = wx.StaticText(self, -1, "Threshold:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		self.thresh = FloatEntry(self, -1, allownone=False, chars=5, value="0.7")
-		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(self.thresh, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		boxrow.Add((3,3), 0)
 
-		label = wx.StaticText(self, -1, "Particle contrast:",
+		label = wx.StaticText(self, -1, "Particle contrast: ",
 			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add((1,1), 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		boxrow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 3)
 
+		hbox8 = wx.FlexGridSizer(1, 2, 10, 10)
 		self.whitePart = wx.RadioButton(self, -1, 'Light on Dark (stain)', (10, 10), style=wx.RB_GROUP)
 		self.blackPart = wx.RadioButton(self, -1, 'Dark on Light (ice)', (10, 30))
 		self.Bind(wx.EVT_RADIOBUTTON, self.partContrast, id=self.whitePart.GetId())
 		self.Bind(wx.EVT_RADIOBUTTON, self.partContrast, id=self.blackPart.GetId())
 		self.partContrast(True)
-		inforow.Add(self.whitePart, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(self.blackPart, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		hbox8.Add(self.whitePart, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		hbox8.Add(self.blackPart, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		boxrow.Add(hbox8, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
-		label = wx.StaticText(self, -1, "Max Peaks:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		boxrow.Add((3,3), 0)
+
+		inforow.Add((1,1), 0, 3)
+		inforow.Add(boxrow, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 3)
+		inforow.Add((1,1), 0, 3)
+		### end standard options
+
+		### advanced options
+		box = wx.StaticBox(self, -1, 'Advanded Options')
+		boxrow = wx.StaticBoxSizer(box, wx.VERTICAL)
+
+		hbox3 = wx.FlexGridSizer(1, 2, 10, 10)
+		label = wx.StaticText(self, -1, "Diameter range (pixels): ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.srange = FloatEntry(self, -1, allownone=False, chars=5, value="20.0")
+		hbox3.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		hbox3.Add(self.srange, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 3)
+		hbox3.AddGrowableCol(0)
+		boxrow.Add(hbox3, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		hbox4 = wx.FlexGridSizer(1, 2, 10, 10)
+		label = wx.StaticText(self, -1, "Number of sizes: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.numslices = IntEntry(self, -1, allownone=False, chars=3, value="2")
+		hbox4.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		hbox4.Add(self.numslices, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 3)
+		hbox4.AddGrowableCol(0)
+		boxrow.Add(hbox4, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		hbox5 = wx.FlexGridSizer(1, 2, 10, 10)
+		label = wx.StaticText(self, -1, "Max threshold: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.maxthresh = FloatEntry(self, -1, allownone=False, chars=5, value="1.5")
+		hbox5.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		hbox5.Add(self.maxthresh, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 3)
+		hbox5.AddGrowableCol(0)
+		boxrow.Add(hbox5, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		hbox6 = wx.FlexGridSizer(1, 2, 10, 10)
+		label = wx.StaticText(self, -1, "Max peak area (% πr^2): ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.peakarea = FloatEntry(self, -1, allownone=False, chars=5, value="0.3")
+		hbox6.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		hbox6.Add(self.peakarea, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 3)
+		hbox6.AddGrowableCol(0)
+		boxrow.Add(hbox6, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		hbox9 = wx.FlexGridSizer(1, 2, 10, 10)
+		label = wx.StaticText(self, -1, "Max peaks: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.maxpeaks = IntEntry(self, -1, allownone=False, chars=5, value="500")
-		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(self.maxpeaks, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		hbox9.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		hbox9.Add(self.maxpeaks, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 3)
+		hbox9.AddGrowableCol(0)
+		boxrow.Add(hbox9, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
-		label = wx.StaticText(self, -1, "Please wait after running",
-			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add((1,1), 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		boxrow.Add((3,3), 0)
+
+		inforow.Add((1,1), 0, 3)
+		inforow.Add(boxrow, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 3)
+		inforow.Add((1,1), 0, 3)
+		### end advanced options
 
 		self.canceldog = wx.Button(self, wx.ID_CANCEL, '&Cancel')
 		self.rundog = wx.Button(self, wx.ID_OK, '&Run')
 		self.Bind(wx.EVT_BUTTON, self.onRunDogPicker, self.rundog)
-		buttonrow = wx.GridSizer(1,2)
-		buttonrow.Add(self.canceldog, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
-		buttonrow.Add(self.rundog, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+		buttonrow = wx.FlexGridSizer(1, 2, 10, 10)
+		buttonrow.Add(self.canceldog, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 10)
+		buttonrow.Add(self.rundog, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 10)
 
-		self.sizer = wx.FlexGridSizer(2,1)
-		self.sizer.Add(inforow, 0, wx.EXPAND|wx.ALL, 10)
-		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
+		self.sizer = wx.FlexGridSizer(3, 1, 10, 10)
+		self.sizer.Add(inforow, 0, wx.ALIGN_CENTER_HORIZONTAL, border=10)
+		self.sizer.Add(buttonrow, 0, wx.ALIGN_CENTER_HORIZONTAL, border=10)
+		label = wx.StaticText(self, -1, "Check command line after running",
+			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.sizer.Add(label, 0, wx.EXPAND, 5)
+
 		self.SetSizerAndFit(self.sizer)
 
 	#==================
@@ -446,10 +502,12 @@ class DogPickerDialog(wx.Dialog):
 
 		pixdiam = self.diam.GetValue()
 		sizerange = self.srange.GetValue()
-		thresh = self.thresh.GetValue()
+		minthresh = self.minthresh.GetValue()
+		maxthresh = self.maxthresh.GetValue()
+		peakarea = self.peakarea.GetValue()
 		invert = self.partContrast(None)
 		maxpeaks = self.maxpeaks.GetValue()
-		numslices  = self.numslices.GetValue()
+		numslices = self.numslices.GetValue()
 
 		if invert is True:
 			apDisplay.printMsg("Picking dark particles on light backgound, i.e. ice")
@@ -471,9 +529,9 @@ class DogPickerDialog(wx.Dialog):
 			'overlapmult': 1.5,
 			'rundir': os.getcwd(),
 			'maxpeaks': maxpeaks,
-			'maxthresh': None,
-			'thresh': thresh,
-			'maxsize': 0.2,
+			'maxthresh': maxthresh,
+			'thresh': minthresh,
+			'maxsize': peakarea,
 			'peaktype': 'maximum',
 			'background': False,
 			'doubles': False,
@@ -635,7 +693,7 @@ class GuessShiftDialog(wx.Dialog):
 		inforow = wx.FlexGridSizer(3, 2, 15, 15)
 
 		gammastr = "%3.3f" % self.parent.data['gamma']
-		label = wx.StaticText(self, -1, "Tilt axis angle (degrees):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Tilt axis angle (degrees): ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.tiltaxis = FloatEntry(self, -1, allownone=False, chars=5, value=gammastr)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.tiltaxis, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
@@ -646,12 +704,12 @@ class GuessShiftDialog(wx.Dialog):
 		inforow.Add((1,1), 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		thetastr = "%3.3f" % self.parent.data['theta']
-		label = wx.StaticText(self, -1, "Tilt angle:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Tilt angle: ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.tiltangle = FloatEntry(self, -1, allownone=False, chars=5, value=thetastr)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.tiltangle, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
-		label = wx.StaticText(self, -1, "negative tilted on left,  positive tilted or right",
+		label = wx.StaticText(self, -1, "negative tilted on left, positive tilted or right",
 			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add((1,1), 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -670,7 +728,7 @@ class GuessShiftDialog(wx.Dialog):
 
 	#==================
 	def onRunGuessShift(self, evt):
-		tiltaxis  = self.tiltaxis.GetValue()
+		tiltaxis = self.tiltaxis.GetValue()
 		tiltangle = self.tiltangle.GetValue()
 		self.parent.data['theta'] = tiltangle
 		self.parent.data['gamma'] = tiltaxis
@@ -701,19 +759,19 @@ class PartCutoffDialog(wx.Dialog):
 		### create input area
 		inforow = wx.FlexGridSizer(3, 2, 15, 15)
 
-		meanlabel = wx.StaticText(self, -1, "Current mean RMSD:  ",
+		meanlabel = wx.StaticText(self, -1, "Current mean RMSD: ",
 			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		meanvalue = wx.StaticText(self, -1, meanvalstr, style=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(meanlabel, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(meanvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
-		worstlabel = wx.StaticText(self, -1, "Current worst RMSD:  ",
+		worstlabel = wx.StaticText(self, -1, "Current worst RMSD: ",
 			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		worstvalue = wx.StaticText(self, -1, worstvalstr, style=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(worstlabel, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(worstvalue, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
-		cutofflabel = wx.StaticText(self, -1, "RMSD cutoff:  ",
+		cutofflabel = wx.StaticText(self, -1, "RMSD cutoff: ",
 			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.cutoffvalue = FloatEntry(self, -1, allownone=False, chars=8, value=minworsterrstr)
 		inforow.Add(cutofflabel, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -721,7 +779,7 @@ class PartCutoffDialog(wx.Dialog):
 
 		### create button area
 		cancelcutoff = wx.Button(self, wx.ID_CANCEL, '&Cancel')
-		self.applycutoff = wx.Button(self,  wx.ID_APPLY, '&Apply')
+		self.applycutoff = wx.Button(self, wx.ID_APPLY, '&Apply')
 		self.Bind(wx.EVT_BUTTON, self.onApplyCutoff, self.applycutoff)
 		buttonrow = wx.GridSizer(1,2)
 		buttonrow.Add(cancelcutoff, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
@@ -736,7 +794,7 @@ class PartCutoffDialog(wx.Dialog):
 	#==================
 	def onApplyCutoff(self, evt):
 		### get values
-		cutoff  = self.cutoffvalue.GetValue()
+		cutoff = self.cutoffvalue.GetValue()
 		a1 = self.parent.getArray1()
 		a2 = self.parent.getArray2()
 		rmsd = self.parent.getRmsdArray()
