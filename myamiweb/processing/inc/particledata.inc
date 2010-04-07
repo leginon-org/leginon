@@ -978,7 +978,7 @@ class particledata {
 			."		select a.`DEF_id` from ".DB_LEGINON.".`AcquisitionImageData` a  "
 			."		where a.`REF|SessionData|session`='$sessionId'  "
 			."	AND  "
-			."    ABS(s.`SUBD|stage position|a`) < 0.9  "
+			."  ABS(s.`SUBD|stage position|a`) < 0.9  "
 			."		)  "
 			."		order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
 			."	) ctfdata ";
@@ -1327,7 +1327,7 @@ class particledata {
 		$q = "SELECT stack.*, path.path "
 			."FROM ApTemplateStackData as stack "
 			."LEFT JOIN ApPathData AS path ON "
-								."(stack.`REF|ApPathData|path`=path.`DEF_id`) "
+			."(stack.`REF|ApPathData|path`=path.`DEF_id`) "
 			."WHERE `project|projects|project`='$projectId' ";
 		if (!$getHidden) $q.= "AND (stack.`hidden` IS NULL OR stack.`hidden` = 0) ";
 		if ($type == "clsavg") $q.= "AND (stack.`cls_avgs` = 1) ";
@@ -2067,11 +2067,9 @@ class particledata {
 	function getStackIdsForProject ($projectId, $showHidden=False) {
 		$q = "SELECT "
 			."  DISTINCT(st.`DEF_id`) as stackid "
-			."FROM ApStackData as st "
-			."WHERE "
-			."  st.`project|projects|project` = '$projectId' ";
+			."FROM ApStackData as st ";
 		if (!$showHidden)
-			$q.= " AND st.`hidden` != 1 ";
+			$q.= " WHERE st.`hidden` != 1 ";
 		$q.= "ORDER BY stackid DESC";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
@@ -2454,10 +2452,6 @@ class particledata {
 			."WHERE "
 			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
 			."AND "
-			."  runsin.`project|projects|project` = '$projectId' "
-			."AND "
-			."  ast.`project|projects|project` = '$projectId' "
-			."AND "
 			."  ast.`hidden` != 1 "
 			."AND "
 			."  analysis.`hidden` != 1 "
@@ -2538,11 +2532,7 @@ class particledata {
 			." (analysis.`REF|ApCoranRunData|coranrun` = coran.`DEF_id`) ";
 		}
 		$q .=	"WHERE "
-			." strun.`REF|leginondata|SessionData|session` = '$sessionId' "
-			." AND "
-			." runsin.`project|projects|project` = '$projectId' "
-			." AND "
-			." analysis.`project|projects|project` = '$projectId' ";
+			." strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden)
 			$q.= " AND analysis.`hidden` != 1 AND ast.`hidden` != 1 ";
 		$q .= "ORDER BY analysisid DESC ";
@@ -2566,9 +2556,7 @@ class particledata {
 			."  analysis.`REF|ApAlignStackData|alignstack` = $alignstackId ";
 		if (!$showHidden)
 			$q.= " AND analysis.`hidden` != 1 ";
-		$q .= "AND "
-			."  analysis.`project|projects|project` = '$projectId' "
-			."ORDER BY analysisid DESC ";
+		$q .= "ORDER BY analysisid DESC ";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/>\n";
@@ -2632,36 +2620,7 @@ class particledata {
 		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
-/*
-	#Not used anywhere and is incorrect since it select coran that is not in query
-	function getMaxLikeRuns ($sessionId, $projectId) {
-		$q = "SELECT coran.`DEF_id` AS coranid, coran.* "
-			."FROM ApMaxLikeJobData AS maxlike "
-			."LEFT JOIN ApAlignRunData AS arun ON "
-			." (arun.`REF|ApMaxLikeRunData|maxlikerun` = maxlike.`DEF_id`) "
-			."LEFT JOIN ApAlignStackData AS ast ON "
-			." (ast.`REF|ApAlignRunData|alignrun` = arun.`DEF_id`) "
-			."LEFT JOIN ApStackData AS st ON "
-			."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
-			."LEFT JOIN ApRunsInStackData as runsin ON "
-			."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
-			."LEFT JOIN ApStackRunData as strun ON "
-			."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
-			."WHERE "
-			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
-			." AND "
-			."  runsin.`project|projects|project` = '$projectId' "
-			." AND "
-			."  arun.`project|projects|project` = '$projectId' "
-			." AND "
-			."  ast.`project|projects|project` = '$projectId' "
-			."ORDER BY alignstackid DESC";
-		//echo $q."<br/><br/>\n";
-		$r = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/><br/>\n";
-		return $r;
-	}
-*/
+
 	function getFinishedMaxLikeJobs ($projectId) {
 		$q = "SELECT maxjob.*, path.path "
 			."FROM ApMaxLikeJobData AS maxjob "
@@ -2706,11 +2665,7 @@ class particledata {
 			."LEFT JOIN ApPathData AS pd ON "
 			."  (cluster.`REF|ApPathData|path` = pd.`DEF_id`) "
 			."WHERE "
-			." strun.`REF|leginondata|SessionData|session` = '$sessionId' "
-			." AND "
-			." runsin.`project|projects|project` = '$projectId' "
-			." AND "
-			." clusterrun.`project|projects|project` = '$projectId' ";
+			." strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden)
 			$q.= " AND cluster.`hidden` != 1 AND ast.`hidden` != 1 AND analysis.`hidden` != 1 ";
 		$q .= "ORDER BY clusterid DESC ";
@@ -2737,10 +2692,6 @@ class particledata {
 			."  (analysis.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
 			."WHERE "
 			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
-			."AND "
-			."  runsin.`project|projects|project` = '$projectId' "
-			."AND "
-			."  ast.`project|projects|project` = '$projectId' "
 			."AND "
 			."  ast.`hidden` != 1 "
 			."AND "
@@ -3623,11 +3574,11 @@ class particledata {
 		$q = "SELECT job.*  "
 			. " FROM `ApClusterJobData` AS job "
 			. " LEFT JOIN ApPathData AS path "
-			. "   ON ( job.`REF|ApPathData|path` = path.`DEF_id` ) "
+			. "  ON ( job.`REF|ApPathData|path` = path.`DEF_id` ) "
 			. " WHERE "
-			. "   path.`path` = '$path' "
+			. "  path.`path` = '$path' "
 			. " AND "
-			. "   job.`jobtype` = '$type' ";
+			. "  job.`jobtype` = '$type' ";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/><br/>\n";
@@ -4250,7 +4201,7 @@ class particledata {
 
 	function getLoopProgramRuns () {
 		$q = "SELECT DISTINCT "
-			."   progrun.`DEF_id` AS id "
+			."  progrun.`DEF_id` AS id "
 			."FROM ScriptProgramRun as progrun "
 			."LEFT JOIN ScriptParamValue AS paramvalue "
 			."  ON paramvalue.`REF|ScriptProgramRun|progrun` = progrun.`DEF_id` "
@@ -4269,11 +4220,11 @@ class particledata {
 
 	function getProgramRunParams ($progrunid) {
 		$q = "SELECT "
-			."   progrun.`DEF_id` AS id,  "
-			."   progname.`name` AS progname,  "
-			."   progrun.`runname` AS runname,  "
-			."   session.`name` AS sessionname,  "
-			."   username.`name` AS username "
+			."  progrun.`DEF_id` AS id,  "
+			."  progname.`name` AS progname,  "
+			."  progrun.`runname` AS runname,  "
+			."  session.`name` AS sessionname,  "
+			."  username.`name` AS username "
 			."FROM ScriptProgramRun as progrun "
 			."LEFT JOIN ScriptProgramName AS progname "
 			."  ON progrun.`REF|ScriptProgramName|progname` = progname.`DEF_id` "
@@ -4294,8 +4245,8 @@ class particledata {
 
 	function getProgramCommands ($progrunid) {
 		$q = "SELECT "
-			."   paramvalue.*, paramname.*,  "
-			."   session.`name` AS sessionname  "
+			."  paramvalue.*, paramname.*,  "
+			."  session.`name` AS sessionname  "
 			."FROM ScriptParamValue as paramvalue "
 			."LEFT JOIN ScriptParamName AS paramname "
 			."  ON paramvalue.`REF|ScriptParamName|paramname` = paramname.`DEF_id` "
