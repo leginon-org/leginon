@@ -6,7 +6,6 @@ import time
 ## appion
 from appionlib import apDisplay
 from appionlib import apFile
-from appionlib import apEMAN
 
 """
 A large collection of SPIDER functions
@@ -51,6 +50,7 @@ def stackToSpiderStack(stack,spiderstack,apix,boxsize,lp=0,hp=0,bin=1,numpart=0)
 	emancmd += "spiderswap edgenorm"
 	starttime = time.time()
 	apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
+	from appionlib import apEMAN
 	apEMAN.executeEmanCmd(emancmd, verbose=True)
 	apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
 	return
