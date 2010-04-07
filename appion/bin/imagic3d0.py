@@ -365,11 +365,6 @@ class imagic3d0Script(appionScript.AppionScript):
 	#=====================
 	def upload3d0(self):
 		modelq = appiondata.ApImagic3d0Data()
-		if self.params['stackid'] is not None:
-			modelq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
-		elif self.params['templateStackId'] is not None:
-			tsdata = appiondata.ApTemplateStackData.direct_query(self.params['templateStackId'])
-			modelq['project|projects|project'] = apProject.getProjectIdFromSessionId(tsdata['session'].dbid)
 		modelq['name'] = "masked_3d0_ordered0_repaligned.mrc"
 		modelq['runname'] = self.params['runname']
 		if self.params['norefClassId'] is not None:
