@@ -88,6 +88,13 @@ and import the modules:
 >>> import numpy
 }}}
 
+You can test the modules with their built-in testing scripts
+
+{{{
+python -c 'import numpy; numpy.test()'
+python -c 'import scipy; scipy.test()'
+}}}
+
 --------------------------------
 --------------------------------
 --------------------------------
