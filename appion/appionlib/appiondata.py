@@ -230,13 +230,13 @@ class ApTemplateRunData(Data):
 	typemap = classmethod(typemap)
 
 class ApTemplateStackData(Data):
-        def typemap(cls):
-                return Data.typemap() + (
+	def typemap(cls):
+		return Data.typemap() + (
 			('clusterstack', ApClusteringStackData),
-                        ('templatename', str),
+			('templatename', str),
 			('cls_avgs', bool),
 			('forward_proj', bool),
-                        ('origfile', str),
+			('origfile', str),
 			('description', str),
 			('session', leginon.leginondata.SessionData),
 			('apix', float),
@@ -245,8 +245,8 @@ class ApTemplateStackData(Data):
 			('hidden', bool),
 			('path', ApPathData),
 			('project|projects|project', int),
-                )
-        typemap = classmethod(typemap)
+		)
+	typemap = classmethod(typemap)
 
 ### END Template tables ###
 ### START Transformation/shift tables ###
@@ -447,7 +447,6 @@ class ApStackData(Data):
 			('junksorted', bool),
 			('mask', int),
 			('maxshift', int),
-			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -456,7 +455,6 @@ class ApRunsInStackData(Data):
 		return Data.typemap() + (
 			('stack', ApStackData),
 			('stackRun' , ApStackRunData),
-			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -679,7 +677,6 @@ class ApAlignRunData(Data):
 			('editerrun', ApEdIterRunData),
 			('topreprun', ApTopolRepRunData),
 			('hidden', bool),
-			('project|projects|project', int),
 			('path', ApPathData),
 		)
 	typemap = classmethod(typemap)
@@ -699,7 +696,6 @@ class ApAlignStackData(Data):
 			('description', str),
 			('hidden', bool),
 			('num_particles', int),
-			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -749,7 +745,6 @@ class ApAlignAnalysisRunData(Data):
 			('coranrun', ApCoranRunData),
 			('imagicMSArun', ApImagicAlignAnalysisData),
 			('alignstack', ApAlignStackData),
-			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -851,7 +846,6 @@ class ApClusteringRunData(Data):
 			('kerdenparams', ApKerDenSOMParamsData),
 			('rotkerdenparams', ApRotKerDenSOMParamsData),
 			('affpropparams', ApAffinityPropagationClusterParamsData),
-			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1013,27 +1007,29 @@ class ApOtrRunData(Data):
 ### START Reconstruction tables ###
 
 ### this one is for each iteration
+### generic refine table
 class ApRefinementData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('refinementRun', ApRefinementRunData),
-			('refinementParams', ApRefinementParamsData),
-			('xmippRefineParams', ApXmippRefineIterationParamsData),
-			('frealignParams', ApFrealignIterationData),
 			('iteration', int),
-			('resolution', ApResolutionData),
-			('rMeasure', ApRMeasureData),
+			('exemplar',bool),
 			('classAverage', str),
 			('classVariance', str),
 			('volumeDensity',str),
-			('exemplar',bool),
 			('emanClassAvg',str),
 			('MsgPGoodClassAvg', str),
 			('SpiCoranGoodClassAvg',str),
+			('refinementRun', ApRefinementRunData),
+			('refinementParams', ApRefinementParamsData),
+			('xmippParams', ApXmippRefineIterData),
+			('frealignParams', ApFrealignIterData),
+			('resolution', ApResolutionData),
+			('rMeasure', ApRMeasureData),
 		)
 	typemap = classmethod(typemap)
 
 ### this one is for all iterations
+### generic refine table
 class ApRefinementRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1049,6 +1045,7 @@ class ApRefinementRunData(Data):
 	typemap = classmethod(typemap)
 
 ### this one is for each iteration
+### EMAN only things
 class ApRefinementParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1097,41 +1094,26 @@ class ApFrealignPrepareData(Data):
 	typemap = classmethod(typemap)
 
 ### this one is for all iterations
-class ApFrealignRefinementData(Data):
+class ApFrealignRefineData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('Niter', int),
-			('maskFilename', str),
-			('maskRadius', int),
-			('innerRadius', float),
-			('outerRadius', float),
-			('symmetryGroup', ApSymmetryData),
-			('fourierMaxFrequencyOfInterest', float),
-			('computeResol', bool),
-			('dolowpassfilter', bool),
-			('usefscforfilter', bool),
+			('num_iter', int),
+			('imask', int),
+			('mask', int),
+			('symmetry', ApSymmetryData),
 		)
 	typemap = classmethod(typemap)
 
 ### this one is for each iteration
-class ApFrealignIterationData(Data):
+class ApFrealignIterData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('angularStep', float),
-			('maxChangeInAngles', float),
-			('maxChangeOffset', float),
-			('search5dShift', float),
-			('search5dStep', float),
-			('discardPercentage', float),
-			('reconstructionMethod', str),
-			('ARTLambda', float),
-			('constantToAddToFiltration', float),
 		)
 	typemap = classmethod(typemap)
 
 ### this one is for all iterations
 ### is this even used???
-class ApXmippRefineFixedParamsData(Data):
+class ApXmippRefineParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('Niter', int),
@@ -1148,7 +1130,7 @@ class ApXmippRefineFixedParamsData(Data):
 	typemap = classmethod(typemap)
 
 ### this one is for each iteration
-class ApXmippRefineIterationParamsData(Data):
+class ApXmippRefineIterData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('angularStep', float),
@@ -1323,7 +1305,6 @@ class ApBootstrappedAngularReconstitutionRunData(Data):
 			('clusterid', ApClusteringStackData),
 			('description', str),
 			('hidden', bool),
-			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1354,7 +1335,6 @@ class ApBootstrappedAngularReconstitutionParamsData(Data):
 class ApImagic3dRefineRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('project|projects|project', int),
 			('runname', str),
 			('imagic3d0run', ApImagic3d0Data),
 			('initialModel', ApInitialModelData),
