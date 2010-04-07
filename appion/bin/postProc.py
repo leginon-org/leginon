@@ -13,6 +13,7 @@ from appionlib import apAmpCorrect
 from appionlib import apFile
 from appionlib import apSymmetry
 from appionlib import apDatabase
+from appionlib import apModel
 from appionlib import appiondata
 from appionlib import apChimera
 from pyami import mrc, spider
@@ -279,12 +280,6 @@ class PostProcScript(appionScript.AppionScript):
 		if self.params['ampfile'] is not None:
 			apFile.removeFile(spifile)
 			apFile.removeFile(tmpfile)
-
-		## see if density is in the database
-		md5 = apFile.md5sumfile(outfile)
-		if apDatabase.isModelInDB(md5):
-			### they are the same and its in the database already
-			apDisplay.printError("3d density with md5sum '"+md5+"' already exists in the DB!")
 
 		if self.params['commit'] is True:
 			symdata  = apSymmetry.findSymmetry(self.params['sym'])
