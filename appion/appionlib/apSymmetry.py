@@ -26,7 +26,9 @@ def getSymmetryDataFromName(symtext='c1', msg=True):
 	# find the symmetry entry in the database
 	# based on the text version from EMAN
 	# first convert to lower case
-	symtext = symtext.lower()
+	symtext = symtext.lower().strip()
+	if symtext == "i":
+		symtext = "icos"
 	symdataq = appiondata.ApSymmetryData(eman_name=symtext)
 	symdatas = symdataq.query()
 	if not symdatas:
