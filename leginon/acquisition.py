@@ -979,7 +979,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		request_data = leginondata.FixBeamData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
-		self.publish(request_data, database=True, pubevent=True, wait=True)
+		try:
+			self.publish(request_data, database=True, pubevent=True, wait=True)
+		except Exception, e:
+			self.logger.error(e)
 
 	def getMoveTypes(self):
 		movetypes = []
