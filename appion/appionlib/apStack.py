@@ -247,7 +247,6 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 	stackq['substackname'] = params['runname']
 	stackq['description'] = params['description']
 	stackq['pixelsize'] = oldstackdata['pixelsize']
-	stackq['project|projects|project'] = oldstackdata['project|projects|project']
 	if sorted is True:
 		stackq['junksorted'] = True
 	if centered is True:
@@ -321,7 +320,6 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 		newrunsq = appiondata.ApRunsInStackData()
 		newrunsq['stack'] = stackq
 		newrunsq['stackRun'] = run['stackRun']
-		newrunsq['project|projects|project'] = run['project|projects|project']
 		if params['commit'] is True:
 			newrunsq.insert()
 		else:
