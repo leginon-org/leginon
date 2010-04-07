@@ -61,6 +61,7 @@ class CalibrationClient(object):
 		self.abortevent = threading.Event()
 		self.tiltcorrector = tiltcorrector.TiltCorrector(node)
 		self.stagetiltcorrector = tiltcorrector.VirtualStageTilter(node)
+		self.rpixelsize = None
 
 	def checkAbort(self):
 		if self.abortevent.isSet():
@@ -791,7 +792,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			ft = t * numpy.hypot(*F[:,0])
 		else:
 			ft = t * numpy.hypot(*F[:,1])
-		print 'FT', ft
 		f = d / ft
 		return f
 	solveDefocus = classmethod(solveDefocus)
@@ -882,6 +882,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				state1['beam tilt'] = {'x': bt[0], 'y': bt[1]}
 				im1, defocusinfo = self.measureStateDefocus(state1, settle=settle)
 				defocusshift = defocusinfo['defocus']
+				self.measured_defocii.append(defocusshift)
 				d.append(defocusshift)
 				angle = math.atan2(tiltvector[1],tiltvector[0]) * tsign
 				if angle == 0.0 and tsign == -1:
@@ -893,6 +894,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		finally:
 			self.setBeamTilt(btorig)
 		return d_diff
+
+	def getMeasured_Defocii(self):
+		return self.measured_defocii
 
 	def measureMatrixC(self, m, t, settle):
 		'''
@@ -906,6 +910,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		btorig = self.getBeamTilt()
 		bt0 = btorig['x'], btorig['y']
 		diffs = {}
+		self.measured_defocii = []
 		try:
 			for axisn, axisname in ((0,'x'),(1,'y')):
 				diffs[axisname] = {}
@@ -919,7 +924,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 					tvect = [0, 0]
 					tvect[axisn] = t
 					diff = self.measureDefocusDifference(tvect, settle)
-					if diff is None:
+					if diff is None or not self.confirmDefocusInRange():
 						raise
 					diffs[axisname][msign] = diff
 		finally:
@@ -931,6 +936,17 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			matrix[:,0] = numpy.divide(numpy.subtract(diffs['x'][-1], diffs['x'][1]), 2 * m)
 			matrix[:,1] = numpy.divide(numpy.subtract(diffs['y'][-1], diffs['y'][1]), 2 * m)
 		return matrix
+
+	def confirmDefocusInRange(self):
+		if len(self.measured_defocii) < 1:
+			return False
+		defocusarray = numpy.array(self.measured_defocii)
+		defocusmean = defocusarray.mean()
+		aimed_defocus = self.instrument.tem.Defocus
+		if (((abs(aimed_defocus)+1e-6)*3) < defocusmean) or (abs((aimed_defocus+1e-6)*0.2)) > defocusmean:
+			self.node.logger.warning('Estimated defocus out of range at %e' % defocusmean)
+			return False
+		return True
 
 	def calculateImageShiftComaMatrix(self,tdata,xydata):
 		''' Fit the beam tilt vector induced by image shift 
@@ -969,11 +985,15 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			dc[axisn] = self.measureDefocusDifference(tvect, settle)
 		dc = numpy.array(dc)
 		cftilt = numpy.linalg.solve(cmatrix, dc)
+		if not self.confirmDefocusInRange():
+			cftilt[(0,0)] = 0
+			cftilt[(1,1)] = 0
 		return cftilt
 
 	def repeatMeasureComaFree(self, tilt_value, settle, repeat=1):
 		'''repeat measuremnet to increase precision'''
 		tilts = {'x':[],'y':[]}
+		self.measured_defocii = []
 		print "==================="
 		for i in range(0,repeat):
 			try:
@@ -1236,7 +1256,6 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 	def measureTiltAxisLocation(self, tilt_value=0.26, numtilts=1, tilttwice=False,
 	  update=False, snrcut=10.0, correlation_type='phase', medfilt=False):
 		"""
-		print 'onMeasure', update
 		measure position on image of tilt axis
 		tilt_value is in radians
 		"""
@@ -1325,7 +1344,6 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 	def measureTiltAxisLocation2(self, tilt_value=0.0696, tilttwice=False,
 	  update=False, correlation_type='phase', beam_tilt=0.01):
 		"""
-		print 'onMeasure', update
 		measure position on image of tilt axis
 		tilt_value is in radians
 		"""
