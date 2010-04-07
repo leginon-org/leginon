@@ -141,7 +141,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		alignrunq['lp_filt'] = self.params['lowpass']
 		alignrunq['runname'] = self.params['runname']
 		alignrunq['description'] = self.params['description']
-		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		### setup alignment stack
 		alignstackq = appiondata.ApAlignStackData()
@@ -171,7 +170,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		alignstackq['description'] = self.params['description']
 		alignstackq['hidden'] = False
 		alignstackq['num_particles'] = self.params['numpart']
-		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		if insert is True:
 			alignstackq.insert()

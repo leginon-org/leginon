@@ -325,7 +325,6 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 		analysisq['description'] = self.params['description']
 		analysisq['alignstack'] = alignstackdata
 		analysisq['hidden'] = False
-		analysisq['project|projects|project'] = projectid
 		### linked through cluster not analysis
 
 		### Clustering Run object
@@ -336,7 +335,6 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 		clusterrunq['pixelsize'] = alignstackdata['pixelsize']
 		clusterrunq['num_particles'] = self.params['numpart']
 		clusterrunq['alignstack'] = alignstackdata
-		clusterrunq['project|projects|project'] = projectid
 		clusterrunq['analysisrun'] = analysisq
 		clusterrunq['affpropparams'] = affpropq
 

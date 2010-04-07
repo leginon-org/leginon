@@ -192,14 +192,12 @@ class tiltStackSync(appionScript.AppionScript):
 		notstack['substackname'] = self.params['runname']
 		notstack['description'] = self.params['description']+" ... tilt stack sorted"
 		notstack['pixelsize'] = oldstack['pixelsize']
-		notstack['project|projects|project'] = oldstack['project|projects|project']
 		notstack.insert()
 		tiltstack['oldstack'] = oldstack
 		tiltstack['hidden'] = False
 		tiltstack['substackname'] = self.params['runname']
 		tiltstack['description'] = self.params['description']+" ... tilt stack sorted"
 		tiltstack['pixelsize'] = oldstack['pixelsize']
-		tiltstack['project|projects|project'] = oldstack['project|projects|project']
 		tiltstack.insert()
 
 		# Insert stack images
@@ -235,14 +233,12 @@ class tiltStackSync(appionScript.AppionScript):
 			newrunsq = appiondata.ApRunsInStackData()
 			newrunsq['stack'] = notstack
 			newrunsq['stackRun'] = run['stackRun']
-			newrunsq['project|projects|project'] = run['project|projects|project']
 			newrunsq.insert()
 		runsinstack = apStack.getRunsInStack(self.params['tiltstackid'])
 		for run in runsinstack:
 			newrunsq = appiondata.ApRunsInStackData()
 			newrunsq['stack'] = tiltstack
 			newrunsq['stackRun'] = run['stackRun']
-			newrunsq['project|projects|project'] = run['project|projects|project']
 			newrunsq.insert()
 
 		apDisplay.printMsg("finished")

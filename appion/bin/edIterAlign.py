@@ -145,7 +145,6 @@ class EdIterAlignScript(appionScript.AppionScript):
 		alignrunq['lp_filt'] = self.params['lowpass']
 		alignrunq['runname'] = self.params['runname']
 		alignrunq['description'] = self.params['description']
-		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		### setup aligned stack
 		alignstackq = appiondata.ApAlignStackData()
@@ -171,7 +170,6 @@ class EdIterAlignScript(appionScript.AppionScript):
 		alignstackq['description'] = self.params['description']
 		alignstackq['hidden'] = False
 		alignstackq['num_particles'] = self.params['numpart']
-		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		if insert is True:
 			alignstackq.insert() #alignstackq contains alignrunq which contains editrunq

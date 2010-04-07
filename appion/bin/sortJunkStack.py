@@ -107,7 +107,6 @@ class sortJunkStackScript(appionScript.AppionScript):
 		newstack['description'] = self.params['description']
 		newstack['pixelsize'] = oldstack['pixelsize']
 		newstack['junksorted'] = True
-		newstack['project|projects|project'] = oldstack['project|projects|project']
 		newstack.insert()
 
 		# Insert stack images
@@ -143,7 +142,6 @@ class sortJunkStackScript(appionScript.AppionScript):
 			newrunsq = appiondata.ApRunsInStackData()
 			newrunsq['stack'] = newstack
 			newrunsq['stackRun'] = run['stackRun']
-			newrunsq['project|projects|project'] = run['project|projects|project']
 			newrunsq.insert()
 
 		apDisplay.printMsg("finished")

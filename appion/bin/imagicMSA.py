@@ -221,7 +221,6 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		analysisrunq['alignstack'] = self.alignstackdata
 		analysisrunq['hidden'] = False
 		analysisrunq['description'] = self.params['description']
-		analysisrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['alignid'])
 
 		apDisplay.printMsg("inserting Align Analysis Run parameters into database")
 		if insert is True:

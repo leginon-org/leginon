@@ -208,7 +208,6 @@ class UploadStack(appionScript.AppionScript):
 		stackq['hidden'] = False
 		stackq['pixelsize'] = self.params['apix']*1e-10
 		stackq['centered'] = False
-		stackq['project|projects|project'] = self.params['projectid']
 
 		stackparamq = appiondata.ApStackParamsData()
 		stackparamq['boxSize'] = self.boxsize
@@ -230,7 +229,6 @@ class UploadStack(appionScript.AppionScript):
 		runsinstackq = appiondata.ApRunsInStackData()
 		runsinstackq['stack'] = stackq
 		runsinstackq['stackRun'] = stackrunq
-		runsinstackq['project|projects|project'] = self.params['projectid']
 
 		if self.params['commit'] is True:
 			runsinstackq.insert()

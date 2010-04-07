@@ -698,7 +698,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		stackq['description'] = self.params['description']
 		stackq['hidden'] = False
 		stackq['pixelsize'] = self.params['apix']*self.params['bin']*1e-10
-		stackq['project|projects|project'] = projectnum
 		
 		### add info for from stack ids
 		if self.params['fromstackid'] is not None:
@@ -716,7 +715,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		rinstackq = appiondata.ApRunsInStackData()
 		rinstackq['stackRun'] = runq
 #		rinstackq['stack'] = stackq
-		rinstackq['project|projects|project'] = projectnum
 
       	### if not in the database, make sure run doesn't already exist
 		if not uniqstackdatas and not uniqrundatas:
@@ -734,7 +732,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			prevrinstackq = appiondata.ApRunsInStackData()
 			prevrinstackq['stackRun'] = uniqrundatas[0]
 			prevrinstackq['stack'] = uniqstackdatas[0]
-			prevrinstackq['project|projects|project'] = projectnum
 			prevrinstack = prevrinstackq.query(results=1)
 
 			## if no runinstack found, find out which parameters are wrong:

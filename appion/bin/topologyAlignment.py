@@ -161,7 +161,6 @@ class TopologyRepScript(appionScript.AppionScript):
 		alignrunq['lp_filt'] = self.params['lowpass']
 		alignrunq['hp_filt'] = self.params['highpass']
 		alignrunq['bin'] = self.params['bin']
-		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		### set up alignment stack
 		alignstackq = appiondata.ApAlignStackData()
 		alignstackq['imagicfile'] = "mrastack.hed"
@@ -188,7 +187,6 @@ class TopologyRepScript(appionScript.AppionScript):
 		alignstackq['description'] = self.params['description']
 		alignstackq['hidden'] =  False
 		alignstackq['num_particles'] =  self.params['numpart']
-		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		if self.params['commit'] is True:
 			alignstackq.insert()

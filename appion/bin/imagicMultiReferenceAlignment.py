@@ -402,7 +402,6 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		alignrunq['lp_filt'] = self.params['lowpass']
 		alignrunq['hp_filt'] = self.params['highpass']
 		alignrunq['bin'] = self.params['bin']
-		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackId'])
 	
 		### setup alignment stack
 		alignstackq = appiondata.ApAlignStackData()
@@ -426,7 +425,6 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		alignstackq['description'] = self.params['description']
 		alignstackq['hidden'] =  False
 		alignstackq['num_particles'] = self.params['numpart']
-		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackId'])
 
 		### insert
 		if self.params['commit'] is True:

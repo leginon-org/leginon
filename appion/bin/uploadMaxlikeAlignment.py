@@ -283,7 +283,6 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		alignrunq['lp_filt'] = runparams['lowpass']
 		alignrunq['hp_filt'] = runparams['highpass']
 		alignrunq['bin'] = runparams['bin']
-		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
 
 		### setup alignment stack
 		alignstackq = appiondata.ApAlignStackData()
@@ -309,7 +308,6 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		alignstackq['description'] = runparams['description']
 		alignstackq['hidden'] =  False
 		alignstackq['num_particles'] =  runparams['numpart']
-		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
 
 		### insert
 		if self.params['commit'] is True:

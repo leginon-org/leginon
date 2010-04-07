@@ -91,7 +91,6 @@ class CoranClassifyScript(appionScript.AppionScript):
 		analysisq['description'] = self.params['description']
 		analysisq['alignstack'] = self.alignstackdata
 		analysisq['hidden'] = False
-		analysisq['project|projects|project'] = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
 		analysisq['coranrun'] = coranq
 
 		apDisplay.printMsg("inserting Align Analysis Run parameters into database")

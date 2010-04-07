@@ -965,8 +965,6 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		"""
 		
 		refineq = appiondata.ApImagic3dRefineRunData()
-		if self.params['stackid'] is not None:
-			refineq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		refineq['runname'] = self.params['runname']
 		refineq['initialModel'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 		refineq['description'] = self.params['description']

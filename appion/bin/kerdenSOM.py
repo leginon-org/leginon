@@ -85,7 +85,6 @@ class kerdenSOMScript(appionScript.AppionScript):
 		analysisq['description'] = self.params['description']
 		analysisq['alignstack'] = alignstackdata
 		analysisq['hidden'] = False
-		analysisq['project|projects|project'] = projectid
 		### linked through cluster not analysis
 		#analysisq['kerdenparams'] = kerdenq
 
@@ -104,7 +103,6 @@ class kerdenSOMScript(appionScript.AppionScript):
 		clusterrunq['pixelsize'] = pixelsize
 		clusterrunq['num_particles'] = self.params['numpart']
 		clusterrunq['alignstack'] = alignstackdata
-		clusterrunq['project|projects|project'] = projectid
 		clusterrunq['analysisrun'] = analysisq
 		clusterrunq['kerdenparams'] = kerdenq
 

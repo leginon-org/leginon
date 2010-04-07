@@ -88,7 +88,6 @@ class ClusterCoranScript(appionScript.AppionScript):
 		clusterrunq['num_particles'] = self.analysisdata['alignstack']['num_particles']
 		clusterrunq['alignstack'] = self.analysisdata['alignstack']
 		clusterrunq['analysisrun'] = self.analysisdata
-		clusterrunq['project|projects|project'] = self.analysisdata['project|projects|project']
 
 		apDisplay.printMsg("inserting clustering parameters into database")
 		if insert is True:

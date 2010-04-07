@@ -190,7 +190,6 @@ class imagicClusterScript(appionScript.AppionScript):
 		clusterrunq['num_particles'] = self.params['num_particles']
 		clusterrunq['alignstack'] = self.analysisdata['alignstack']
 		clusterrunq['analysisrun'] = self.analysisdata
-		clusterrunq['project|projects|project'] = self.analysisdata['project|projects|project']
 
 		apDisplay.printMsg("inserting clustering parameters into database")
 		if self.params['commit'] is True:

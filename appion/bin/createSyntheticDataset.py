@@ -1196,7 +1196,6 @@ ACE2: /home/vossman/appion/bin/ace2correct.exe -img /ami/data00/appion/09aug06a/
 		stackq['description'] = self.params['description']
 		stackq['hidden'] = 0
 		stackq['pixelsize'] = self.params['apix'] * 1e-10
-		stackq['project|projects|project'] = projectnum
 		self.stackdata = stackq
 
 		### finish stackRun object
@@ -1207,7 +1206,6 @@ ACE2: /home/vossman/appion/bin/ace2correct.exe -img /ami/data00/appion/09aug06a/
 		### create runinstack object
 		rinstackq = appiondata.ApRunsInStackData()
 		rinstackq['stackRun'] = runq
-		rinstackq['project|projects|project'] = projectnum
 
         	### if not in the database, make sure run doesn't already exist
 		if not uniqstackdatas and not uniqrundatas:
@@ -1227,7 +1225,6 @@ ACE2: /home/vossman/appion/bin/ace2correct.exe -img /ami/data00/appion/09aug06a/
 			prevrinstackq = appiondata.ApRunsInStackData()
 			prevrinstackq['stackRun'] = uniqrundatas[0]
 			prevrinstackq['stack'] = uniqstackdatas[0]
-			prevrinstackq['project|projects|project'] = projectnum
 			prevrinstack = prevrinstackq.query(results=1)
 
 			## if no runinstack found, find out which parameters are wrong:

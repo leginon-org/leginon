@@ -89,7 +89,6 @@ class combineStackScript(appionScript.AppionScript):
 		stackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		stackq['description'] = self.params['description']+" ... combined stack ids "+str(self.params['stacks'])
 		stackq['substackname'] = self.params['runname']
-		stackq['project|projects|project'] = apProject.getProjectIdFromStackId(stackid)
 		stackq['hidden'] = False
 
 		rinstackdata = apStack.getRunsInStack(stackid)
@@ -97,7 +96,6 @@ class combineStackScript(appionScript.AppionScript):
 			rinstackq = appiondata.ApRunsInStackData()
 			rinstackq['stack']    = stackq
 			rinstackq['stackRun'] = run['stackRun']
-			rinstackq['project|projects|project'] = run['project|projects|project']
 			rinstackq.insert()
 
 		stpartsdata = apStack.getStackParticlesFromId(stackid)
