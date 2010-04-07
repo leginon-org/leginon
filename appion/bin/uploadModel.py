@@ -161,19 +161,18 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['file'] = os.path.join(modeldata['path']['path'], modeldata['name'])
 
 	#===========================
-	def insertModel(self):
+	def insertModel(self, mrcname):
 		apDisplay.printMsg("commiting model to database")
 		modq=appiondata.ApInitialModelData()
 		modq['project|projects|project'] = self.params['projectid']
 		modq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
-		modq['name'] = self.params['name']
+		modq['name'] = os.path.basename(mrcname)
 		modq['symmetry'] = self.params['symdata']
 		modq['pixelsize'] = self.params['newapix']
 		modq['boxsize'] = self.params['newbox']
 		modq['resolution'] = self.params['res']
 		modq['hidden'] = False
-		filepath = os.path.join(self.params['rundir'], self.params['name'])
-		modq['md5sum'] = apFile.md5sumfile(filepath)
+		modq['md5sum'] = apFile.md5sumfile(mrcname)
 		modq['description'] = self.params['description']
 		if self.params['densityid'] is not None:
 			modq['original density'] = appiondata.Ap3dDensityData.direct_query(self.params['densityid'])
@@ -219,7 +218,7 @@ class UploadModelScript(appionScript.AppionScript):
 		apChimera.renderSnapshots(mrcname, contour=contour,
 			zoom=self.params['zoom'], sym=self.params['symdata']['eman_name'])
 
-		self.insertModel()
+		self.insertModel(mrcname)
 
 
 #=====================
