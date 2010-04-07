@@ -15,6 +15,7 @@ from appionlib import appionScript
 from appionlib import apProject
 from appionlib import apDisplay
 from appionlib import apFrealign
+from appionlib import apSymmetry
 from appionlib import apEMAN
 from appionlib import apFile
 from appionlib import apThread
@@ -142,6 +143,14 @@ class frealignJob(appionScript.AppionScript):
 			self.params['ppn'] = apParam.getNumProcessors()
 			apDisplay.printMsg("Setting number of processors to %d"%(self.params['ppn']))
 		self.params['nproc'] = self.params['nodes']*self.params['ppn']
+		### get the symmetry data
+		if self.params['sym'] is None:
+			apDisplay.printError("Symmetry was not defined")
+		else:
+			self.symmdata = apSymmetry.findSymmetry(self.params['sym'])
+			self.params['symm_id'] = self.symmdata.dbid
+			self.params['symm_name'] = self.symmdata['eman_name']
+			apDisplay.printMsg("Selected symmetry %s with id %s"%(self.symmdata['eman_name'], self.symmdata.dbid))
 
 	#=====================
 	def setRunDir(self):
@@ -235,7 +244,7 @@ class frealignJob(appionScript.AppionScript):
 		self.noeulers = 0
 		for particle in stackdata:
 			count += 1
-			if (count % 1000 == 0):
+			if (count % 200 == 0):
 				estime = (time.time() - t0) * (numpart-count) / float(count)
 				apDisplay.printMsg("particle %d -- %s remain"%(count, apDisplay.timeString(estime)))
 			if count > self.params['last']:
@@ -714,6 +723,7 @@ class frealignJob(appionScript.AppionScript):
 		frealignq['stack'] = appiondata.ApStackData.direct_query(self.params['stackid'])
 		frealignq['model'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 		frealignq['job'] = jobdata
+		frealignq['symmetry'] = self.symmdata
 		frealignq.insert()
 
 	#===============
