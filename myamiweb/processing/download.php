@@ -1,6 +1,6 @@
 <?php
 
-require 'inc/leginon.inc';
+//require 'inc/leginon.inc';
 $filename = ($_GET['file']) ? $_GET['file']: false;
 
 if (file_exists($filename))  {

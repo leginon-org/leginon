@@ -70,6 +70,7 @@ foreach($refine_params_fields as $param) {
 $javascript.="                newwindow.document.write('</table></BODY></HTML>');\n";
 $javascript.="                newwindow.document.close()\n";
 $javascript.="        }\n";
+
 $javascript.="</script>\n";
 
 $javascript.=eulerImgJava(); 
@@ -342,12 +343,25 @@ foreach ($iterations as $iteration){
 	$html .= "</table></TD>";
   
 	// postproc/makegoodaverages
-	$html .= "<td bgcolor='$bg'>$iteration[volumeDensity]<br />\n";
+
+	// download link
+	$html .= "<td bgcolor='$bg'>\n";
+
+	$mrcfile = $refinerun['path']."/".$iteration['volumeDensity'];
+	$html .= "<a href='download.php?file=$mrcfile'>\n";
+	$html .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download mrc'>\n";
+	$html .= "</a>\n";
+
+	// name of density
+	$html .= "$iteration[volumeDensity]<br/>\n";
+	
+	// buttons
 	$html .= "<input class='edit' type='button' onClick=\"parent.location='postproc.php?expId=$expId&refinement=$refinementData[DEF_id]'\" value='Post Processing'><br />\n";
 	$html .= "<input class='edit' type='button' onClick=\"parent.location='makegoodavg.php?expId=$expId&refId=$refinementData[DEF_id]&reconId=$reconId&iter=$iteration[iteration]'\" value='Remove Jumpers'><br />\n";
 	if ($refinerun['package']=='EMAN/SpiCoran') $html .= "<input class='edit' type='button' onClick=\"parent.location='coranSubStack.php?expId=$expId&refId=$refinementData[DEF_id]&reconId=$reconId&iter=$iteration[iteration]'\" value='Coran Substack'><br />\n";
 	if ($refinementData['exemplar']) $html .= "<input class='edit' type='submit' name='notExemplar".$refinementData['DEF_id']."' value='not exemplar'>";
 	else $html .= "<input class='edit' type='submit' name='exemplar".$refinementData['DEF_id']."' value='Make Exemplar'>";
+
 	$html .= "</td>\n";
 
 	// snapshot images
@@ -358,7 +372,9 @@ foreach ($iterations as $iteration){
 			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>"
 				."<img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></a>\n";
 		}
+
 	}
+
 	"</td></tr>\n";
 	// check for post procs
 	$postprocs = $particle->getPostProcsFromRefId($refinementData['DEF_id']);
