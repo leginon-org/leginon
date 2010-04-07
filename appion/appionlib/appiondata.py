@@ -1006,6 +1006,25 @@ class ApOtrRunData(Data):
 ### END 3d Volume tables ###
 ### START Reconstruction tables ###
 
+### this one is for all iterations
+### generic refine table
+class ApRefinementRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('package', str),
+			('description', str),
+			('hidden', bool), 
+			('stack', ApStackData),
+			('initialModel', ApInitialModelData),
+			('path', ApPathData),
+			('jobfile', ApClusterJobData),
+			### additional packages plugin here
+			('xmippParams', ApXmippRefineParamsData)
+			('frealignParams', ApFrealignParamsData)
+		)
+	typemap = classmethod(typemap)
+
 ### this one is for each iteration
 ### generic refine table
 class ApRefinementData(Data):
@@ -1020,27 +1039,31 @@ class ApRefinementData(Data):
 			('MsgPGoodClassAvg', str),
 			('SpiCoranGoodClassAvg',str),
 			('refinementRun', ApRefinementRunData),
-			('refinementParams', ApRefinementParamsData),
-			('xmippParams', ApXmippRefineIterData),
-			('frealignParams', ApFrealignIterData),
 			('resolution', ApResolutionData),
 			('rMeasure', ApRMeasureData),
+			### additional packages plugin here
+			('refinementParams', ApRefinementParamsData),
+			('xmippParams', ApXmippRefineIterData),
 		)
 	typemap = classmethod(typemap)
 
-### this one is for all iterations
-### generic refine table
-class ApRefinementRunData(Data):
+### this one is for each particle each iteration
+class ApParticleClassificationData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('name', str),
-			('jobfile', ApClusterJobData),
-			('stack', ApStackData),
-			('initialModel', ApInitialModelData),
-			('path', ApPathData),
-			('package', str),
-			('description', str),
-			('hidden', bool), 
+			('refinement', ApRefinementData),
+			('particle', ApStackParticlesData),
+			('shiftx', float),
+			('shifty', float),
+			('euler1', float),
+			('euler2', float),
+			('euler3', float),
+			('quality_factor', float),
+			('mirror', bool),
+			('thrown_out',bool),
+			('msgp_keep',bool),
+			('coran_keep',bool),
+			('euler_convention', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1094,20 +1117,10 @@ class ApFrealignPrepareData(Data):
 	typemap = classmethod(typemap)
 
 ### this one is for all iterations
-class ApFrealignRefineData(Data):
+class ApFrealignParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('num_iter', int),
-			('imask', int),
-			('mask', int),
-			('symmetry', ApSymmetryData),
-		)
-	typemap = classmethod(typemap)
-
-### this one is for each iteration
-class ApFrealignIterData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
 		)
 	typemap = classmethod(typemap)
 
@@ -1161,26 +1174,6 @@ class ApRMeasureData(Data):
 		return Data.typemap() + (
 			('volume', str),
 			('rMeasure', float),
-		)
-	typemap = classmethod(typemap)
-
-### this one is for each iteration
-class ApParticleClassificationData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('refinement', ApRefinementData),
-			('particle', ApStackParticlesData),
-			('shiftx', float),
-			('shifty', float),
-			('euler1', float),
-			('euler2', float),
-			('euler3', float),
-			('quality_factor', float),
-			('mirror', bool),
-			('thrown_out',bool),
-			('msgp_keep',bool),
-			('coran_keep',bool),
-			('euler_convention', str),
 		)
 	typemap = classmethod(typemap)
 
