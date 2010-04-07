@@ -20,6 +20,7 @@ splitdb = True
 
 data.holdImages(False)
 
+#================
 def getAllImages(stats, params):
 	startt = time.time()
 	if 'sessionname' in params and params['preset'] is not None:
@@ -43,6 +44,7 @@ def getAllImages(stats, params):
 	print " ... found",stats['imagecount'],"in",apDisplay.timeString(time.time()-startt)
 	return imgtree
 
+#================
 def getSpecificImagesFromDB(imglist):
 	print "Querying database for "+str(len(imglist))+" specific images ... "
 	imgtree=[]
@@ -60,6 +62,7 @@ def getSpecificImagesFromDB(imglist):
 			apDisplay.printError("Could not find image: "+imgname)
 	return imgtree
 
+#================
 def getImagesFromDB(session, preset):
 	"""
 	returns list of image names from DB
@@ -80,6 +83,7 @@ def getImagesFromDB(session, preset):
 		#img.holdimages=False
 	return imgtree
 
+#================
 def getAllImagesFromDB(session):
 	"""
 	returns list of image data based on session name
@@ -91,6 +95,7 @@ def getAllImagesFromDB(session):
 	imgtree = imgquery.query(readimages=False)
 	return imgtree
 
+#================
 def getExpIdFromSessionName(sessionname):
 	apDisplay.printMsg("Looking up session, "+sessionname)
 	sessionq = leginon.leginondata.SessionData(name=sessionname)
@@ -100,6 +105,7 @@ def getExpIdFromSessionName(sessionname):
 	else:
 		apDisplay.printError("could not find session, "+sessionname)
 
+#================
 def getSessionDataFromSessionName(sessionname):
 	apDisplay.printMsg("Looking up session, "+sessionname)
 	sessionq = leginon.leginondata.SessionData(name=sessionname)
@@ -109,6 +115,7 @@ def getSessionDataFromSessionName(sessionname):
 	else:
 		apDisplay.printError("could not find session, "+sessionname)
 
+#================
 def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
 	apDisplay.printMsg("Looking up session, "+ str(sessiondata.dbid));
 	tiltq = leginon.leginondata.TiltSeriesData()
@@ -119,6 +126,7 @@ def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
 	else:
 		apDisplay.printError("could not find tilt series, "+sessionname)
 
+#================
 def getImageData(imgname):
 	"""
 	get image data object from database
@@ -131,12 +139,14 @@ def getImageData(imgname):
 	else:
 		apDisplay.printError("Image "+imgname+" not found in database\n")
 
+#================
 def getImgDir(sessionname):
 	sessionq = leginon.leginondata.SessionData(name=sessionname)
 	sessiondata = sessionq.query()
 	imgdir = os.path.abspath(sessiondata[0]['image path'])
 	return imgdir
 
+#================
 def getSessionName(imgname):
 	"""
 	get session name from database
@@ -148,15 +158,18 @@ def getSessionName(imgname):
 	else:
 		apDisplay.printError("Image "+imgname+" not found in database\n")
 
+#================
 def getTiltAngleDeg(imgdata):
 	return imgdata['scope']['stage position']['a']*180.0/math.pi
 
+#================
 def getTiltAngleDegFromParticle(partdata):
 	imageref = partdata.special_getitem('image', dereference=False)
 	imgdata = leginon.leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages=False)
 	degrees = imgdata['scope']['stage position']['a']*180.0/math.pi
 	return degrees
 
+#================
 def getTiltAnglesDegFromTransform(transformdata):
 	imageref1 = transformdata.special_getitem('image1', dereference=False)
 	imgdata1 = leginon.leginondata.AcquisitionImageData.direct_query(imageref1.dbid, readimages=False)
@@ -166,9 +179,11 @@ def getTiltAnglesDegFromTransform(transformdata):
 	degrees2 = imgdata2['scope']['stage position']['a']*180.0/math.pi
 	return degrees1, degrees2
 
+#================
 def getTiltAngleRad(imgdata):
 	return imgdata['scope']['stage position']['a']
 
+#================
 def getPixelSize(imgdata):
 	"""
 	use image data object to get pixel size
@@ -190,6 +205,7 @@ def getPixelSize(imgdata):
 	pixelsize = pixelsizedata['pixelsize'] * binning
 	return(pixelsize*1e10)
 
+#================
 def getImgSize(imgdict):
 	### SHOULD BE A DIRECT QUERY
 	if 'image' in imgdict:
@@ -205,6 +221,7 @@ def getImgSize(imgdict):
 		apDisplay.printError("Image "+fname+" not found in database\n")
 	return(size)
 
+#================
 def getImgSizeFromName(imgname):
 	# get image size (in pixels) of the given mrc file
 	imageq=leginon.leginondata.AcquisitionImageData(filename=imgname)
@@ -216,6 +233,7 @@ def getImgSizeFromName(imgname):
 		apDisplay.printError("Image "+imgname+" not found in database\n")
 	return(size)
 
+#================
 def getSiblingImgAssessmentStatus(imgdata):
 	status = getImgAssessmentStatus(imgdata)
 	if status is not None:
@@ -226,6 +244,7 @@ def getSiblingImgAssessmentStatus(imgdata):
 
 	return status
 
+#================
 def insertImgAssessmentStatus(imgdata, runname="run1", assessment=None, msg=True):
 	"""
 	Insert the assessment status
@@ -263,7 +282,7 @@ def insertImgAssessmentStatus(imgdata, runname="run1", assessment=None, msg=True
 
 	return True
 
-
+#================
 def getImgCompleteStatus(imgdata):
 	assess = getImgAssessmentStatus(imgdata)
 	viewer_status = getImgViewerStatus(imgdata)
@@ -278,6 +297,7 @@ def getImgCompleteStatus(imgdata):
 		return True
 	return None
 
+#================
 def getImgAssessmentStatus(imgdata):
 	"""
 	gets the assessment status (keep/reject) from the last assessment run
@@ -303,10 +323,12 @@ def getImgAssessmentStatus(imgdata):
 
 ### flatfield correction functions
 
+#================
 cache = {}
 def camkey(camstate):
 	return camstate['dimension']['x'], camstate['binning']['x'], camstate['offset']['x']
 
+#================
 def getDarkNorm(sessionname, cameraconfig):
 	"""
 	return the most recent dark and norm image from the given session
@@ -338,6 +360,7 @@ def getDarkNorm(sessionname, cameraconfig):
 
 	return result
 
+#================
 def getImgViewerStatus(imgdata):
 	"""
 	Function that returns whether or not the image was hidden in the viewer
@@ -370,6 +393,7 @@ def getImgViewerStatus(imgdata):
 		return True
 	return None
 
+#================
 def setImgViewerStatus(imgdata, status=None, msg=True):
 	"""
 	Function that sets the image status in the viewer
@@ -421,6 +445,7 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 
 	return
 
+#================
 def checkMag(imgdata,goodmag):
 	mag = imgdata['scope']['magnification']
 	if mag ==goodmag:
@@ -428,6 +453,7 @@ def checkMag(imgdata,goodmag):
 	else:
 		return False
 
+#================
 def checkInspectDB(imgdata):
 	status = getImgViewerStatus(imgdata)
 	if status is False:
@@ -438,14 +464,7 @@ def checkInspectDB(imgdata):
 		keep = getImgAssessmentStatus(imgdata)
 		return keep
 
-def isModelInDB(md5sum):
-	modelq = appiondata.ApInitialModelData()
-	modelq['md5sum'] = md5sum
-	modeld = modelq.query(results=1)
-	if modeld:
-		return True
-	return False
-
+#================
 def isTomoInDB(md5sum, full=False,recfile=''):
 	abspath = os.path.abspath(recfile)
 	rundir = os.path.dirname(abspath)
@@ -463,6 +482,7 @@ def isTomoInDB(md5sum, full=False,recfile=''):
 			return True
 	return False
 
+#================
 def isTemplateInDB(md5sum):
 	templq = appiondata.ApTemplateImageData()
 	templq['md5sum'] = md5sum
@@ -471,13 +491,49 @@ def isTemplateInDB(md5sum):
 		return True
 	return False
 
+#================
 def queryDirectory(path):
 	pathq = appiondata.ApPathData()
 	pathq['path'] = os.path.abspath(path)
 	pathdata = pathq.query()
 	return pathdata
 
+#================
+def getJobDataFromPath(path):
+	pathq = appiondata.ApPathData()
+	pathq['path'] = os.path.abspath(path)
+	jobq = appiondata.ApClusterJobData()
+	jobq['path'] = pathq
+	jobdatas = jobq.query()
+	return jobdatas
 
+#================
+def getJobDataFromType(jobtype):
+	jobq = appiondata.ApClusterJobData()
+	jobq['jobtype'] = jobtype
+	jobdatas = jobq.query()
+	return jobdatas
+
+#================
+def getJobDataFromPathAndType(path, jobtype):
+	pathq = appiondata.ApPathData()
+	pathq['path'] = os.path.abspath(path)
+	jobq = appiondata.ApClusterJobData()
+	jobq['path'] = pathq
+	jobq['jobtype'] = jobtype
+	jobdatas = jobq.query(results=1)
+	if not jobdatas:
+		return None
+	return jobdatas[0]
+
+#================
+def getJobDataFromID(jobid):
+	jobdata = appiondata.ApClusterJobData.direct_query(jobid)
+	return jobdata
+
+#================
+#================
+#================
 if __name__ == '__main__':
 	stackid = 442
 	stackdata = appiondata.ApStackData.direct_query(stackid)
