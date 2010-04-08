@@ -200,7 +200,6 @@ class ApTemplateImageData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('project|projects|project', int),
-			#('templatepath', str),
 			('path', ApPathData),
 			('templatename', str),
 			('apix', float),
@@ -208,10 +207,8 @@ class ApTemplateImageData(Data):
 			('description', str),
 			('md5sum', str),
 			('stack', ApStackData),
-			('noref', ApNoRefClassRunData),
 			('alignstack', ApAlignStackData),
 			('clusterstack', ApClusteringStackData),
-			#('ref', ApRefRunData),
 			('stack_image_number', int),
 			('hidden', bool),
 		)
@@ -760,7 +757,6 @@ class ApCoranRunData(Data):
 class ApCoranEigenImageData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('norefRun', ApNoRefRunData),
 			('coranRun', ApCoranRunData),
 			('factor_num', int),
 			('percent_contrib', float),
