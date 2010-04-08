@@ -47,6 +47,7 @@ class ChimSnapShots(object):
 		chimera.viewer.windowSize = self.imgsize
 		self.openPDBData()
 		self.openVolumeData()
+		self.saveOBJfile()
 
 		### select proper function
 		if self.type == 'animate':
@@ -73,7 +74,6 @@ class ChimSnapShots(object):
 				self.snapshot_csym()
 
 		self.saveChimeraState()
-		self.saveOBJfile()
 
 		self.writeMessageToLog("\n")
 		self.writeMessageToLog("====================================")
