@@ -507,6 +507,9 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onClearPolygon(self, evt):
+		targets1 = self.getArray1()
+		targets2 = self.getArray2()
+
 		if len(targets1) == 0 or len(targets2) == 0:
 			self.statbar.PushStatusText("ERROR: Cannot remove polygon. There are no picks.", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot remove polygon.\nThere are no picks.",\
@@ -515,8 +518,6 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 
-		targets1 = self.getArray1()
-		targets2 = self.getArray2()
 		if len(targets1) == 0 or len(targets2) == 0:
 			self.statbar.PushStatusText("ERROR: Cannot remove polygon. There are no picks.", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot remove polygon.\nThere are no picks.",\
