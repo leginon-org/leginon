@@ -25,8 +25,6 @@ $link->addlink('template.php', 'Hole Template viewer','', 'template');
 
 if (privilege('groups') >= 2 ) 
 	$link->addlink('admin.php','Administration','', 'admin');
-if (privilege('projects') > 3 ) 
-	$link->addlink('/phpMyAdmin/','phpMyAdmin','', 'phpMyAdmin');
 if (privilege('projects') >= 2 ) 
 	$link->addlink('project','Project DB','', 'project');
 
