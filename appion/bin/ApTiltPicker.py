@@ -518,14 +518,6 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 
-		if len(targets1) == 0 or len(targets2) == 0:
-			self.statbar.PushStatusText("ERROR: Cannot remove polygon. There are no picks.", 0)
-			dialog = wx.MessageDialog(self.frame, "Cannot remove polygon.\nThere are no picks.",\
-				'Error', wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
-			return False
-
 		vert1 = self.panel1.getTargetPositions('Polygon')
 		vert2 = self.panel2.getTargetPositions('Polygon')
 		if len(vert1) < 3 and len(vert2) < 3:
