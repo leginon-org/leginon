@@ -507,11 +507,19 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onClearPolygon(self, evt):
+		if len(targets1) == 0 or len(targets2) == 0:
+			self.statbar.PushStatusText("ERROR: Cannot remove polygon. There are no picks.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot remove polygon.\nThere are no picks.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+
 		targets1 = self.getArray1()
 		targets2 = self.getArray2()
 		if len(targets1) == 0 or len(targets2) == 0:
-			self.statbar.PushStatusText("ERROR: Cannot transfer picks. There are no picks.", 0)
-			dialog = wx.MessageDialog(self.frame, "Cannot transfer picks.\nThere are no picks.",\
+			self.statbar.PushStatusText("ERROR: Cannot remove polygon. There are no picks.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot remove polygon.\nThere are no picks.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -519,15 +527,18 @@ class PickerApp(wx.App):
 
 		vert1 = self.panel1.getTargetPositions('Polygon')
 		vert2 = self.panel2.getTargetPositions('Polygon')
+		if len(vert1) < 3 and len(vert2) < 3:
+			self.statbar.PushStatusText("ERROR: Cannot remove polygon. Not enough vertices.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot remove polygon.\nNot enough vertices.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
 		newpart1 = []
 		newpart2 = []
 		eliminated = 0
 
-		if len(vert1) == len(vert2):
-			self.panel1.setTargets('Polygon', [])
-			self.panel2.setTargets('Polygon', [])
-
-		elif len(vert1) < 3 and len(vert2) < 3:
+		if len(vert1) < 3 and len(vert2) < 3:
 			self.statbar.PushStatusText("ERROR: Could not create a closed polygon. Select more vertices.", 0)
 			dialog = wx.MessageDialog(self.frame,
 				"Could not create a closed polygon.\nSelect more vertices.",\
@@ -536,11 +547,22 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 
+		elif len(vert1) >= 3 and len(vert2) >= 3:
+			self.statbar.PushStatusText("ERROR: Polygons on both images. Create a polygon on only one image.", 0)
+			dialog = wx.MessageDialog(self.frame,
+				"Polygons on both images.\nCreate a polygon on only one image.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			self.panel2.setTargets('Polygon', [])
+			return False
+
 		elif len(vert1) > len(vert2):
 			#draw transformed polygon
 			v1 = numpy.asarray(vert1, dtype=numpy.float32)
 			v2 = apTiltTransform.a1Toa2Data(v1, self.data)
 			self.panel2.setTargets('Polygon', v2)
+			self.panel2.UpdateDrawing()
 			vert1b = [ tuple((v[1],v[0])) for v in vert1 ]
 			#elim particles
 			maskimg1 = leginon.polygon.filledPolygon(self.panel1.imagedata.shape, vert1b)
@@ -560,6 +582,7 @@ class PickerApp(wx.App):
 			v2 = numpy.asarray(vert2, dtype=numpy.float32)
 			v1 = apTiltTransform.a2Toa1Data(v2, self.data)
 			self.panel1.setTargets('Polygon', v1)
+			self.panel1.UpdateDrawing()
 			vert2b = [ tuple((v[1],v[0])) for v in vert2 ]
 			#elim particles
 			maskimg2 = leginon.polygon.filledPolygon(self.panel2.imagedata.shape, vert2b)
@@ -645,8 +668,8 @@ class PickerApp(wx.App):
 
 		#CHECK IF WE HAVE POINTS
 		if len(a1) == 0 or len(a2) == 0:
-			self.statbar.PushStatusText("ERROR: Cannot mask images. Not enough picks", 0)
-			dialog = wx.MessageDialog(self.frame, "Cannot mask images.\nThere are no picks.",\
+			self.statbar.PushStatusText("ERROR: Cannot get overlap. Not enough picks", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot get overlap.\nThere are no picks.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
