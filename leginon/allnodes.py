@@ -113,6 +113,9 @@ noderegistry.registerNodeClass(HoleDepth,classtype)
 from fftmaker import FFTMaker
 noderegistry.registerNodeClass(FFTMaker,classtype)
 
+from alignmentmanager import AlignmentManager
+noderegistry.registerNodeClass(AlignmentManager,classtype)
+
 ##############################
 # Calibrations
 ##############################

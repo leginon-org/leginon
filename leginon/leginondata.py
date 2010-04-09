@@ -2128,3 +2128,29 @@ class TransformMatrixData(InSessionData):
 			('matrix', sinedon.newdict.DatabaseArrayType),
 		)
 	typemap = classmethod(typemap)
+
+class AlignmentTargetList(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('list', ImageTargetListData),
+			('label', str),
+		)
+	typemap = classmethod(typemap)
+
+class AlignmentTargetListDone(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('alignlist', AlignmentTargetList),
+		)
+	typemap = classmethod(typemap)
+
+class AlignmentManagerSettingsData(TargetRepeaterSettingsData):
+	def typemap(cls):
+		return TargetRepeaterSettingsData.typemap() + (
+			('repeat time', int),
+		)
+	typemap = classmethod(typemap)
+
+class FixAlignmentData(ReferenceRequestData):
+	pass
+

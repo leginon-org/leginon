@@ -160,6 +160,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent,
 											event.DriftMonitorRequestEvent, 
 											event.FixBeamEvent,
+											event.FixAlignmentEvent,
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
 
@@ -971,18 +972,34 @@ class Acquisition(targetwatcher.TargetWatcher):
 				imagedata.__setitem__('image', num, force=True)
 			self.setImage(numpy.asarray(imagedata['image'], numpy.float32), 'Image')
 
-	def processReferenceTarget(self,preset_name):
+	def processReferenceTarget(self):
 		refq = leginondata.ReferenceTargetData(session=self.session)
 		results = refq.query(results=1, readimages=False)
 		if not results:
 			return
-		request_data = leginondata.FixBeamData()
-		request_data['session'] = self.session
-		request_data['preset'] = preset_name
+		evt = event.FixBeamEvent()
 		try:
-			self.publish(request_data, database=True, pubevent=True, wait=True)
+			original_position = self.instrument.tem.getStagePosition()
+			status = self.outputEvent(evt, wait=True)
+			self.instrument.tem.setStagePosition({'z':original_position['z']})
+		except node.ConfirmationNoBinding, e:
+			self.logger.debug(e)
 		except Exception, e:
 			self.logger.error(e)
+
+	def fixAlignment(self):
+		evt = event.FixAlignmentEvent()
+		self.logger.info('waiting for fix alignment')
+		try:
+			original_position = self.instrument.tem.getStagePosition()
+			status = self.outputEvent(evt, wait=True)
+			self.instrument.tem.setStagePosition({'z':original_position['z']})
+		except node.ConfirmationNoBinding, e:
+			self.logger.debug(e)
+		except Exception, e:
+			self.logger.error(e)
+		else:
+			self.logger.info('done waiting for fix alignment')
 
 	def getMoveTypes(self):
 		movetypes = []

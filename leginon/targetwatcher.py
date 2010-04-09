@@ -153,12 +153,17 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.instrument.setData(state1)
 			# This is only for beamfixer now and it does not need preset_name
 			preset_name = None
+			original_position = self.instrument.tem.getStagePosition()
 			if self.settings['wait for reference']:
 				self.setStatus('waiting')
-				self.processReferenceTarget(preset_name)
+				self.processReferenceTarget()
 				self.setStatus('processing')
+			# start alignment manager.  May replace reference in the future
+			self.setStatus('waiting')
+			self.fixAlignment()
+			self.setStatus('processing')
+			self.instrument.tem.setStagePosition({'z':original_position['z']})
 			self.logger.info('Processing %d %s targets...' % (len(goodtargets), mytargettype))
-
 		# republish the rejects and wait for them to complete
 		waitrejects = rejects and self.settings['wait for rejects']
 		if waitrejects:
@@ -346,4 +351,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.info(infostr)
 		self.panel.playerEvent(state)
 	def processReferenceTarget(self,presetname):
+		raise NotImplementedError()
+	
+	def fixAlignment(self):
 		raise NotImplementedError()
