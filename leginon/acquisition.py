@@ -977,10 +977,15 @@ class Acquisition(targetwatcher.TargetWatcher):
 		results = refq.query(results=1, readimages=False)
 		if not results:
 			return
-		evt = event.FixBeamEvent()
+		# This really does not need data but beamfixer and other presetadjusters
+		# currently are subclass of targetwatcher and only watch for PublishEvent
+		# This can all be changed once alignment manager can handle different
+		# target types differently.
+		request_data = leginondata.FixBeamData()
+		request_data['session'] = self.session
 		try:
 			original_position = self.instrument.tem.getStagePosition()
-			status = self.outputEvent(evt, wait=True)
+			self.publish(request_data, database=True, pubevent=True, wait=True)
 			self.instrument.tem.setStagePosition({'z':original_position['z']})
 		except node.ConfirmationNoBinding, e:
 			self.logger.debug(e)
