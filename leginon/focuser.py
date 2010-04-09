@@ -12,7 +12,7 @@ import threading
 import event
 import time
 import math
-from pyami import imagefun, fftfun
+from pyami import imagefun, fftfun, ordereddict
 import numpy
 import copy
 import gui.wx.Focuser
@@ -35,14 +35,20 @@ class Focuser(acquisition.Acquisition):
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 
-		self.correction_types = {
-			'None': self.correctNone,
-			'Stage Z': self.correctZ,
-			'Defocus': self.correctDefocus
-		}
+		self.focus_methods = ordereddict.OrderedDict((
+			('Manual', self.manualCheckLoop),
+			('Beam Tilt', self.autoFocus),
+			('Stage Tilt', self.autoStage),
+			('None', self.noMeasure),
+		))
+
+		self.correction_types = ordereddict.OrderedDict((
+			('Defocus', self.correctDefocusStig),
+			('Stage Z', self.correctZ),
+			('None', self.correctNone),
+		))
 
 		self.correlation_types = ['cross', 'phase']
-		self.focus_methods = ['Manual', 'Beam Tilt', 'Stage Tilt']
 		self.default_setting = {
 			'switch': True,
 			'preset name': 'Grid',
@@ -265,7 +271,7 @@ class Focuser(acquisition.Acquisition):
 			self.beep()
 			return 'repeat'
 
-		if setting['stig correction']:
+		if setting['stig correction'] and correction['stigx'] and correction['stigy']:
 			sx = '%.3f' % correction['stigx']
 			sy = '%.3f' % correction['stigy']
 		else:
@@ -277,6 +283,16 @@ class Focuser(acquisition.Acquisition):
 		fitmin = correction['min']
 
 		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': lastdrift})
+		return 'ok'
+
+		#####################################################################
+
+	def validateMeasurementResult(self, setting, resultdata):
+		fitmin = resultdata['min']
+		focustype = setting['correction type']
+		defoc = resultdata['defocus']
+		stigx = resultdata['stigx']
+		stigy = resultdata['stigy']
 
 		###### focus validity checks
 		validdefocus = True
@@ -289,6 +305,7 @@ class Focuser(acquisition.Acquisition):
 			status = 'fit untrusted (%s>%s)' % (fitmin, fitlimit)
 			validdefocus = False
 			logmessage = 'Focus measurement failed: fit = %s (fit limit = %s)' % (fitmin, fitlimit)
+			self.logger.warning(logmessage)
 			if focustype == 'Defocus':
 				self.logger.info('Setting eucentric focus...')
 				self.eucentricFocusToScope()
@@ -304,11 +321,9 @@ class Focuser(acquisition.Acquisition):
 			status = 'invalid'
 			validdefocus = False
 			logmessage = 'Focus measurement failed: change = %s (change limit = %s to %s)' % (defoc, delta_min, delta_max)
-
-		if validdefocus:
-			self.logger.info(logmessage)
-		else:
 			self.logger.warning(logmessage)
+		else:
+			self.logger.info(logmessage)
 
 		### validate stig correction
 		# stig is only valid in a certain defocus range
@@ -323,32 +338,29 @@ class Focuser(acquisition.Acquisition):
 				stigdefocusmin = stigdefocrange[0]
 				stigdefocusmax = stigdefocrange[1]
 				if validdefocus and stigdefocusmin < abs(defoc) < stigdefocusmax:
-					self.correctStig(stiglens, stigx, stigy)
-					resultdata['stig correction'] = 1
+					resultdata['stig correction'] = 0
 				else:
 					self.logger.info('Stig. correction invalid due to invalid defocus')
 					resultdata['stig correction'] = 0
 		else:
 			resultdata['stig correction'] = 0
-
-		if validdefocus:
-			self.logger.info('Defocus correction...')
-			try:
-				focustype = setting['correction type']
-				correctmethod = self.correction_types[focustype]
-			except (IndexError, KeyError):
-				self.logger.warning('No method selected for correcting defocus')
-			else:
-				resultdata['defocus correction'] = focustype
-				newdefoc = defoc - self.deltaz
-				correctmethod(newdefoc, setting)
-			resultstring = 'corrected focus by %.3e (measured) - %.3e (z due to tilt) = %.3e (total) using %s (min=%s)' % (defoc, self.deltaz, newdefoc, focustype,fitmin)
-		else:
-			resultstring = 'invalid focus measurement (min=%s)' % (fitmin,)
-		if resultdata['stig correction']:
-			resultstring = resultstring + ', corrected stig by x,y=%.4f,%.4f' % (stigx, stigy)
-		self.logger.info(resultstring)
 		return status
+		
+	def correctDefocusStig(self, setting, resultdata):
+		correction_type = setting['correction type']
+		fitmin = resultdata['min']
+		if resultdata['stig correction']:
+			self.correctStig(stiglens, stigx, stigy)
+			resultstring = resultstring + ', corrected stig by x,y=%.4f,%.4f' % (stigx, stigy)
+			self.logger.info(resultstring)
+
+		self.logger.info('Defocus correction...')
+		defoc = resultdata['defocus']
+		resultdata['defocus correction'] = correction_type
+		newdefoc = defoc - self.deltaz
+		self.correctDefocus(newdefoc, setting)
+		resultstring = 'corrected focus by %.3e (measured) - %.3e (z due to tilt) = %.3e (total) using %s (min=%s)' % (defoc, self.deltaz, newdefoc, correction_type,fitmin)
+		self.logger.info(resultstring)
 
 	def autoStage(self, setting, emtarget, resultdata):
 		presetname = setting['preset name']
@@ -375,41 +387,10 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info('Measured Z: %.4e' % z)
 		resultdata['defocus'] = z
 
-		###### focus validity checks
-		validdefocus = True
-		status = 'ok'
-		logmessage = 'Good focus measurement'
-
-		### check change limit
-		delta_min = setting['delta min']
-		delta_max = setting['delta max']
-		deltarange = [abs(setting['delta min']),abs(setting['delta max'])]
-		deltarange.sort()
-		delta_min = deltarange[0]
-		delta_max = deltarange[1]
-		if not (delta_min <= abs(z) <= delta_max):
-			status = 'invalid'
-			validdefocus = False
-			logmessage = 'Focus measurement failed: change = %s (change limit = %s to %s)' % (z, delta_min, delta_max)
-
-		if not validdefocus:
-			self.logger.warning(logmessage)
-		else:
-			self.logger.info(logmessage)
-
-			self.logger.info('Defocus correction...')
-			try:
-				focustype = setting['correction type']
-				correctmethod = self.correction_types[focustype]
-			except (IndexError, KeyError):
-				self.logger.warning('No method selected for correcting defocus')
-			else:
-				resultdata['defocus correction'] = focustype
-				correctmethod(z, setting)
-			resultstring = 'corrected focus by %.3e using %s' % (z, focustype)
-
-			self.logger.info(resultstring)
 		return status
+
+	def noMeasure(self, *args, **kwargs):
+		self.logger.info('no measurement selected')
 
 	def alignRotationCenter(self, defocus1, defocus2):
 		bt = self.btcalclient.measureRotationCenter(defocus1, defocus2, correlation_type=None, settle=0.5)
@@ -442,24 +423,28 @@ class Focuser(acquisition.Acquisition):
 		resultdata['preset'] = emtarget['preset']
 		resultdata['method'] = setting['focus method']
 		status = 'unknown'
-		preset_name = setting['preset name']
-
-		if setting['focus method'] == 'Manual':
-			self.setStatus('user input')
-			self.startTimer('manualCheckLoop')
-			self.manualCheckLoop(preset_name, emtarget)
-			self.stopTimer('manualCheckLoop')
-			self.setStatus('processing')
-			status = 'ok'
-		elif setting['focus method'] == 'Beam Tilt':
-			self.startTimer('autoFocus')
-			status = self.autoFocus(setting, emtarget, resultdata)
-			self.stopTimer('autoFocus')
-		elif setting['focus method'] == 'Stage Tilt':
-			self.startTimer('autoStage')
-			status = self.autoStage(setting, emtarget, resultdata)
-			self.stopTimer('autoStage')
-
+		# measuremrnt
+		try:
+			measuretype = setting['focus method']
+			meth = self.focus_methods[measuretype]
+		except (IndexError, KeyError):
+			self.logger.warning('No method selected for correcting defocus')
+		else:
+			self.startTimer(measuretype)
+			status = meth(setting, emtarget, resultdata)
+			self.stopTimer(measuretype)
+		if status == 'ok' and measuretype != 'Manual':
+			# validation
+			status = self.validateMeasurementResult(setting, resultdata)
+			if status == 'ok':
+				# correction
+				try:
+					correcttype = setting['correction type']
+					correctmethod = self.correction_types[correcttype]
+				except (IndexError, KeyError):
+					self.logger.warning('No method selected for correcting defocus')
+				else:
+					correctmethod(setting, resultdata)
 		resultdata['status'] = status
 		scopedata = self.instrument.getData(leginondata.ScopeEMData)
 		scopedata.insert(force=True)
@@ -541,7 +526,8 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info(istr)
 		### Warning:  no target is being used, you are exposing
 		### whatever happens to be under the beam
-		t = threading.Thread(target=self.manualCheckLoop, args=(presetname,None))
+		setting = {'preset name': presetname}
+		t = threading.Thread(target=self.manualCheckLoop, args=(setting,None))
 		t.setDaemon(1)
 		t.start()
 
@@ -577,8 +563,9 @@ class Focuser(acquisition.Acquisition):
 		if t1-t0 < safetime:
 			time.sleep(safetime-(t1-t0))
 
-	def manualCheckLoop(self, presetname=None, emtarget=None):
+	def manualCheckLoop(self, setting, emtarget=None, focusresult=None):
 		## go to preset and target
+		presetname = setting['preset name']
 		if presetname is not None:
 			self.presetsclient.toScope(presetname, emtarget)
 		pixelsize,center = self.getReciprocalPixelSizeFromPreset(presetname)
@@ -613,6 +600,7 @@ class Focuser(acquisition.Acquisition):
 
 		self.onManualCheckDone()
 		self.logger.info('Manual focus check completed')
+		return 'ok'
 
 	def getReciprocalPixelSizeFromPreset(self,presetname):
 		if presetname is None:
@@ -744,7 +732,8 @@ class Focuser(acquisition.Acquisition):
 		if reset or reset is None:
 			self.resetDefocus()
 
-	def correctZ(self, delta, setting):
+	def correctZ(self, setting, resultdata):
+		delta = resultdata['defocus']
 		reset = setting['reset defocus']
 		if not self.eucset:
 			self.logger.warning('Eucentric focus was not set before measuring defocus because \'Stage Z\' was not selected then, but is now. Skipping Z correction.')
@@ -765,12 +754,12 @@ class Focuser(acquisition.Acquisition):
 		self.instrument.tem.StagePosition = {'z': newz}
 		if reset or (reset is None and self.reset):
 			self.resetDefocus()
-
+		resultdata['defocus correction'] = setting['correction type']
 		# declare drift
 		self.logger.info('Declaring drift after correcting stage Z')
 		self.declareDrift(type='stage')
 
-	def correctNone(self, delta, setting):
+	def correctNone(self, setting, resultdata):
 		self.logger.info('Not applying defocus correction')
 
 	def onTest(self):

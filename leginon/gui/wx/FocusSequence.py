@@ -396,10 +396,10 @@ class Dialog(leginon.gui.wx.Dialog.Dialog):
 			self.stig_defocus_max_entry.Disable()
 			self.stig_defocus_min_entry.Disable()
 			self.tiltlabel.SetLabel('degrees')
-		if method == 'Beam Tilt':
+		elif method == 'Beam Tilt':
 			self.enableAuto(True)
 			self.tiltlabel.SetLabel('radians')
-		if method == 'Manual':
+		else:
 			self.enableAuto(False)
 
 	def enableAuto(self, enable):
