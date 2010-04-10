@@ -2,8 +2,9 @@
 convenience functions for displayed power spectrum
 '''
 import math
+import numpy
 from pyami import imagefun, ellipse, mrc
-from scipy import ndimage
+from scipy import ndimage,fftpack
 
 def getAstigmaticDefocii(params,rpixelsize, ht):
 	minr = rpixelsize * min(params['a'],params['b'])
@@ -23,18 +24,25 @@ def getAstigmaticDefocii(params,rpixelsize, ht):
 
 	return z0, zast, ast_ratio, alpha
 
-def calculateDefocus(ht, s, Cs=2.0e-3):
-		# unit is meters
+def getElectronWavelength(ht):
+	# ht in Volts, legnth unit in meters
 	h = 6.6e-34
 	m = 9.1e-31
 	charge = 1.6e-19
+	c = 3e8
 	wavelength = h / math.sqrt( 2 * m * charge * ht)
+	relativistic_correction = 1 / math.sqrt(1 + ht * charge/(2 * m * c * c))
+	return wavelength * relativistic_correction
+	
+def calculateDefocus(ht, s, Cs=2.0e-3):
+		# unit is meters
+	wavelength = getElectronWavelength(ht)
 	return (Cs*wavelength**3*s**4/2+1.0)/(wavelength * s**2)
 
 def calculateFirstNode(ht,z,Cs=2.0e-3):
 	# length unit is meters, and ht in Volts
 	'''This works for defocus larger than about 110 nm underfocus at 120kV'''
-	wavelength = 3.7e-12 * 1e5 / ht
+	wavelength = getElectronWavelength(ht)
 	a = Cs*(wavelength**3)/4.0
 	b = z*wavelength/2
 	c = 0.5
@@ -133,3 +141,25 @@ def fitFirstCTFNode(pow, rpixelsize, defocus, ht):
 		z0, zast, ast_ratio, alpha = getAstigmaticDefocii(eparams,rpixelsize, ht)
 		return z0,zast,ast_ratio, alpha, eparams
 
+def getBeamTiltPhaseShiftCorrection(imgshape,beamtilt,Cs,wavelength,pixelsize):
+		beamtilt_size = math.sqrt(beamtilt[0]*beamtilt[0]+beamtilt[1]*beamtilt[1])
+		scaled_Cs_wavelength_squared = Cs * wavelength**2 / (pixelsize*imgshape[0])**3
+		c = imgshape[0]/2,imgshape[1]/2
+		phaseshift = numpy.fromfunction(lambda i, j: 
+			2*math.pi*scaled_Cs_wavelength_squared*((i-c[0])*(i-c[0])+(j-c[1])*(j-c[1]))*((i-c[0])*beamtilt[0]+(j-c[1])*beamtilt[1]), imgshape)
+		phaseshift = imagefun.swap_quadrants(phaseshift)
+		#print phaseshift[c[0],:] * 180.0 / math.pi
+		correction = numpy.cos(phaseshift)+numpy.sin(phaseshift)*complex(0,1)
+		return correction
+
+def correctBeamTiltPhaseShift(imgarray,pixelsize,beamtilt,Cs,ht):
+		fft = fftpack.fft2(imgarray)
+		beamtilt = (0.0,1e-4)
+		Cs = 2e-3
+		pixelsize = 1e-10
+		ht = 120000
+		wavelength = getElectronWavelength(ht)
+		correction = getBeamTiltPhaseShiftCorrection(fft.shape,beamtilt,Cs,wavelength,pixelsize)
+		cfft = fft * correction
+		corrected_image = fftpack.ifft2(cfft)
+		return corrected_image
