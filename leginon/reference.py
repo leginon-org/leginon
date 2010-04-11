@@ -15,6 +15,7 @@ import instrument
 import presets
 import targethandler
 import watcher
+import player
 import gui.wx.Reference
 import gui.wx.AlignZLP
 
@@ -57,12 +58,16 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 		self.presets_client = presets.PresetsClient(self)
 
+		self.player = player.Player(callback=self.onPlayer)
+		self.panel.playerEvent(self.player.state())
 		self.lock = threading.RLock()
 		self.reference_target = None
 
 		self.last_processed = None
 
-		self.start()
+
+		if self.__class__ == Reference:
+			self.start()
 
 	def processData(self, incoming_data):
 		if isinstance(incoming_data, leginondata.ReferenceTargetData):
@@ -145,7 +150,6 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 		if pause_time is not None:
 			time.sleep(pause_time)
-
 		try:
 			self.execute(request_data)
 		except Exception, e:
@@ -156,16 +160,41 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 	def processRequest(self, request_data):
 		self.reference_target = self.getReferenceTarget()
+		self.logger.info('Processing reference target request')
 		self.lock.acquire()
 		self.setStatus('processing')
+		self.panel.playerEvent('play')
 		try:
 			self._processRequest(request_data)
 		finally:
 			self.setStatus('idle')
+			self.panel.playerEvent('stop')
 			self.lock.release()
+		self.logger.info('Done processing reference target request')
 
 	def execute(self, request_data):
 		pass
+
+	def onTest(self, request_data=None):
+		self.logger.info('Testing...')
+		self.setStatus('processing')
+		self.player.play()
+		try:
+			self.execute(request_data)
+		finally:
+			self.panel.playerEvent('stop')
+			self.setStatus('idle')
+			self.logger.info('Done testing')
+		
+	def onPlayer(self, state):
+		infostr = ''
+		if state == 'pause':
+			infostr += 'Paused'
+		elif state == 'stop':
+			infostr += 'Aborting...'
+		if infostr:
+			self.logger.info(infostr)
+		self.panel.playerEvent(state)
 
 class AlignZeroLossPeak(Reference):
 	settingsclass = leginondata.AlignZLPSettingsData
@@ -185,6 +214,7 @@ class AlignZeroLossPeak(Reference):
 			watch = []
 		kwargs['watchfor'] = watch + [event.AlignZeroLossPeakPublishEvent]
 		Reference.__init__(self, *args, **kwargs)
+		self.start()
 
 	def processData(self, incoming_data):
 		Reference.processData(self, incoming_data)
@@ -232,7 +262,7 @@ class AlignZeroLossPeak(Reference):
 				return
 			self.last_processed = time.time()
 	
-	def execute(self, request_data):
+	def execute(self, request_data=None):
 		ccd_camera = self.instrument.ccdcamera
 		if not ccd_camera.EnergyFiltered:
 			self.logger.warning('No energy filter on this instrument.')
@@ -346,6 +376,7 @@ class MeasureDose(Reference):
 			watch = []
 		kwargs['watchfor'] = watch + [event.MeasureDosePublishEvent]
 		Reference.__init__(self, *args, **kwargs)
+		self.start()
 
 	def processData(self, incoming_data):
 		Reference.processData(self, incoming_data)
@@ -360,9 +391,15 @@ class MeasureDose(Reference):
 
 		self.presets_client.measureDose(preset_name, em_target_data)
 
-	def execute(self, request_data):
-		preset_name = request_data['preset']
-		preset = self.presets_client.getPresetByName(preset_name)
+	def execute(self, request_data=None):
+		if request_data:
+			preset_name = request_data['preset']
+			preset = self.presets_client.getPresetByName(preset_name)
+		else:
+			preset = self.presets_client.getCurrentPreset()
+			if preset is None:
+				return
+			preset_name = preset['name']
 		dose = preset['dose']/1e20
 		exposure_time = preset['exposure time']/1000.0
 		try:

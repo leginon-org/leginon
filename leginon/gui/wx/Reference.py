@@ -51,12 +51,17 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Test')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onTest,
 											id=leginon.gui.wx.ToolBar.ID_PLAY)
+		self.Bind(leginon.gui.wx.Events.EVT_PLAYER, self.onPlayer)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
+											id=leginon.gui.wx.ToolBar.ID_ABORT)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -64,7 +69,25 @@ class ReferencePanel(leginon.gui.wx.Node.Panel):
 		dialog.Destroy()
 
 	def onTest(self, evt):
-		threading.Thread(target=self.node.execute).start()
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+		threading.Thread(target=self.node.onTest).start()
+
+	def onPlayer(self, evt):
+		if evt.state == 'play':
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+		elif evt.state == 'pause':
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, True)
+		elif evt.state == 'stop':
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+
+	def onStopTool(self, evt):
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
+		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
+		self.node.player.stop()
 
 class MeasureDosePanel(ReferencePanel):
 	icon = 'dose'
