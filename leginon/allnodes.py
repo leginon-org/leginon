@@ -163,6 +163,9 @@ noderegistry.registerNodeClass(MaskAssessor,classtype)
 from beamfixer import BeamFixer
 noderegistry.registerNodeClass(BeamFixer,classtype)
 
+from exposurefixer import ExposureFixer
+noderegistry.registerNodeClass(ExposureFixer,classtype)
+
 from intensitymonitor import IntensityMonitor
 noderegistry.registerNodeClass(IntensityMonitor,classtype)
 

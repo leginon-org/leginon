@@ -6,42 +6,21 @@
 # $State: Exp $
 # $Locker:  $
 import math
-import reference
+import presetadjuster
 import leginondata
 import event
 import gui.wx.BeamFixer
 from pyami import arraystats
 
-class BeamFixer(reference.Reference):
+class BeamFixer(presetadjuster.PresetAdjuster):
 	# relay measure does events
-	eventinputs = reference.Reference.eventinputs + [event.FixBeamEvent]
-	eventoutputs = reference.Reference.eventoutputs + [event.UpdatePresetEvent]
+	eventinputs = presetadjuster.PresetAdjuster.eventinputs + [event.FixBeamEvent]
+	eventoutputs = presetadjuster.PresetAdjuster.eventoutputs
 	panelclass = gui.wx.BeamFixer.BeamFixerPanel
 	settingsclass = leginondata.BeamFixerSettingsData
-	defaultsettings = reference.Reference.defaultsettings
+	defaultsettings = presetadjuster.PresetAdjuster.defaultsettings
 	defaultsettings.update({
-		'override preset': False,
-		'instruments': {'tem':None, 'ccdcamera':None},
-		'camera settings':
-			leginondata.CameraSettingsData(
-				initializer={
-					'dimension': {
-						'x': 1024,
-						'y': 1024,
-					},
-					'offset': {
-						'x': 0,
-						'y': 0,
-					},
-					'binning': {
-						'x': 1,
-						'y': 1,
-					},
-					'exposure time': 200.0,
-				}
-			),
 		'shift step': 25.0,
-		'correction presets': [],
 	})
 	def __init__(self, *args, **kwargs):
 		try:
@@ -49,45 +28,7 @@ class BeamFixer(reference.Reference):
 		except KeyError:
 			watch = []
 		kwargs['watchfor'] = watch + [event.FixBeamEvent]
-		reference.Reference.__init__(self, *args, **kwargs)
-
-	def processData(self, incoming_data):
-		reference.Reference.processData(self, incoming_data)
-		if isinstance(incoming_data, leginondata.FixBeamData):
-			newdata = incoming_data.toDict()
-			newdata['preset'] = self.settings['correction presets'][0]
-			self.processRequest(newdata)
-
-	def acquire(self):
-		if self.settings['override preset']:
-			## use override
-			instruments = self.settings['instruments']
-			try:
-				self.instrument.setTEM(instruments['tem'])
-				self.instrument.setCCDCamera(instruments['ccdcamera'])
-			except ValueError, e:
-				self.logger.error('Cannot set instruments: %s' % (e,))
-				return
-			try:
-				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e:
-				errstr = 'Acquire image failed: %s'
-				self.logger.error(errstr % e)
-				return
-		else:
-			# default to current camera config set by preset
-			if self.presets_client.getCurrentPreset() is None:
-				self.logger.error('Preset is unknown and preset override is off')
-				return
-		return self._acquire()
-
-	def _acquire(self):
-		try:
-			imagedata = self.acquireCorrectedCameraImageData()
-		except:
-			self.logger.error('unable to get corrected image')
-			return
-		return imagedata
+		presetadjuster.PresetAdjuster.__init__(self, *args, **kwargs)
 
 	def getBeamShiftStep(self):
 		#acquire an image to get scope and camera
@@ -111,7 +52,7 @@ class BeamFixer(reference.Reference):
 		self.logger.info('Calculated Beam Shift Step: %s' %(beamshiftlength))
 		return beamshiftlength
 
-	def execute(self, request_data=None):
+	def getAdjustment(self):
 		# get current beam shift
 		original_beamshift = self.instrument.tem.BeamShift
 		bestbeamshift = original_beamshift
@@ -139,14 +80,11 @@ class BeamFixer(reference.Reference):
 				if meanvalue > maxvalue:
 					maxvalue = meanvalue
 					bestbeamshift = newbeamshift
+				state = self.player.state()
+				if state == 'stop':
+					self.instrument.tem.BeamShift = original_beamshift
+					return {}
 		# set to the best beam shift
 		self.instrument.tem.BeamShift = bestbeamshift
 		self.logger.info('Best Beam Shift: %s' % (bestbeamshift,))
-		# update the preset beam shift
-		correction_presets = self.settings['correction presets']
-		if request_data:
-			if request_data['preset'] not in correction_presets:
-				correction_presets.append(request_data['preset'])
-			for presetname in correction_presets:
-				params = {'beam shift':bestbeamshift}
-				self.presets_client.updatePreset(presetname, params)
+		return {'beam shift':bestbeamshift}

@@ -826,7 +826,10 @@ class ZeroLossCheckData(InSessionData):
 class MeasureDoseData(ReferenceRequestData):
 	pass
 
-class FixBeamData(ReferenceRequestData):
+class AdjustPresetData(ReferenceRequestData):
+	pass
+
+class FixBeamData(AdjustPresetData):
 	pass
 
 class ImageTargetListData(InSessionData):
@@ -2016,14 +2019,29 @@ class ReferenceSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class BeamFixerSettingsData(ReferenceSettingsData):
+class PresetAdjusterSettingsData(ReferenceSettingsData):
 	def typemap(cls):
 		return ReferenceSettingsData.typemap() + (
 			('override preset', bool),
 			('instruments', dict),
 			('camera settings', CameraSettingsData),
 			('correction presets', list),
+			('stage position', dict),
+		)
+	typemap = classmethod(typemap)
+
+class BeamFixerSettingsData(ReferenceSettingsData):
+	def typemap(cls):
+		return PresetAdjusterSettingsData.typemap() + (
 			('shift step', float),
+		)
+	typemap = classmethod(typemap)
+
+class ExposureFixerSettingsData(ReferenceSettingsData):
+	def typemap(cls):
+		return PresetAdjusterSettingsData.typemap() + (
+			('required dose', float),
+			('max exposure time', int),
 		)
 	typemap = classmethod(typemap)
 
