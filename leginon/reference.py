@@ -144,6 +144,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 		try:
 			self.moveToTarget(preset_name)
+			self.declareDrift('stage')
 		except Exception, e:
 			self.logger.error('Error moving to target, %s' % e)
 			return
