@@ -224,7 +224,7 @@ class PresetsManager(node.Node):
 		'blank': False,
 		'smallsize': 512,
 	}
-	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.MeasureDoseEvent]
+	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
