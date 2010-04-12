@@ -994,7 +994,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def fixAlignment(self):
 		evt = event.FixAlignmentEvent()
-		self.logger.info('waiting for fix alignment')
 		try:
 			original_position = self.instrument.tem.getStagePosition()
 			status = self.outputEvent(evt, wait=True)
@@ -1003,8 +1002,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.logger.debug(e)
 		except Exception, e:
 			self.logger.error(e)
-		else:
-			self.logger.info('done waiting for fix alignment')
 
 	def getMoveTypes(self):
 		movetypes = []
