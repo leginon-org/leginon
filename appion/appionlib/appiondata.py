@@ -1016,8 +1016,8 @@ class ApRefinementRunData(Data):
 			('path', ApPathData),
 			('jobfile', ApClusterJobData),
 			### additional packages plugin here
-			('xmippParams', ApXmippRefineParamsData)
-			('frealignParams', ApFrealignParamsData)
+			('xmippParams', ApXmippRefineParamsData),
+			('frealignParams', ApFrealignParamsData),
 		)
 	typemap = classmethod(typemap)
 
