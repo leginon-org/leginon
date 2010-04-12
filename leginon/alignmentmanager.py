@@ -95,6 +95,7 @@ class AlignmentManager(trepeater.TargetRepeater):
 
 			tid = self.makeTargetListEvent(newtargetlistdata)
 			self.publish(newtargetlistdata, pubevent=True)
+			self.declareDrift('stage')
 			status = self.waitForTargetListDone(tid)
 			self.declareDrift('stage')
 			self.saveAlignmentDone(alignlist)
