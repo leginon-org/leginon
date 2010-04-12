@@ -103,10 +103,10 @@ class PresetAdjuster(reference.Reference):
 			params['exposure time'] = None
 		# update the preset beam shift
 		correction_presets = self.settings['correction presets']
-		if request_data:
+		if request_data and params:
 			if request_data['preset'] not in correction_presets:
 				correction_presets.append(request_data['preset'])
-			for preset_name in correction_presets and params:
+			for preset_name in correction_presets:
 				# exposure time scaling
 				if scale_factor:
 					presetdata = self.presets_client.getPresetByName(preset_name)
