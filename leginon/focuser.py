@@ -381,9 +381,12 @@ class Focuser(acquisition.Acquisition):
 		## send the autofocus preset to the scope
 		self.presetsclient.toScope(presetname, emtarget)
 		target = emtarget['target']
-
-		z = self.stagetiltcalclient.measureZ(atilt, correlation_type=setting['correlation type'])
-
+		try:
+			z = self.stagetiltcalclient.measureZ(atilt, correlation_type=setting['correlation type'])
+		except:
+			status = 'failed'
+		else:
+			status = 'ok'
 		self.logger.info('Measured Z: %.4e' % z)
 		resultdata['defocus'] = z
 
