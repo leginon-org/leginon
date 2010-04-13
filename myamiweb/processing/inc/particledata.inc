@@ -1805,28 +1805,7 @@ class particledata {
 		return $r;
 	}
 
-	function getLastRunNumber ($sessionId, $table, $field='name', $runnameprefix=false) {
-		$q = "SELECT r.`".$field."` "
-			."FROM `".$table."` AS r "
-			."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' "
-			." AND r.`".$field."` REGEXP('".$runnameprefix."') "
-			."ORDER BY r.`".$field."` DESC "
-			." ";
-		$r = $this->mysql->getSQLResult($q);
-		print_r($r);
-		$lastnumber = 0;
-		if ($r && count($r) > 0) {
-			foreach ($r as $result) {
-				$parts = explode($runnameprefix, $result[$field]);
-				$numbercount = strspn($parts[1],"0123456789");
-				$number = 0 + substr($parts[1],0,$numbercount);
-				if ($number > $lastnumber) $lastnumber = $number;
-			}
-		}
-		return $lastnumber;
-	}
-
-	function getLastRunNumberType ($sessionId, $table, $field='name') {
+	function getLastRunNumberForType ($sessionId, $table, $field='name') {
 		$q = "SELECT r.`".$field."` "
 			."FROM `".$table."` AS r "
 			."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' "

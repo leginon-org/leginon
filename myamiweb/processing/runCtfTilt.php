@@ -144,7 +144,7 @@ function createCtfTiltForm($extra=false) {
 		$sessionname=$sessioninfo['Name'];
 	}
 	$ctf = new particledata();
-	$lastrunnumber = $ctf->getLastRunNumberType($sessionId,'ApAceRunData','name'); 
+	$lastrunnumber = $ctf->getLastRunNumberForType($sessionId,'ApAceRunData','name'); 
 	while (file_exists($sessionpath.'ctftiltrun'.($lastrunnumber+1)))
 		$lastrunnumber += 1;
   $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'ctftiltrun'.($lastrunnumber+1);

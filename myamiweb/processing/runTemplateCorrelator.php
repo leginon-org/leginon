@@ -265,7 +265,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 	<input type='HIDDEN' name='lastSessionId' value='$sessionId'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
-	$lastrunnumber = $particle->getLastRunNumberType($sessionId,'ApSelectionRunData','name'); 
+	$lastrunnumber = $particle->getLastRunNumberForType($sessionId,'ApSelectionRunData','name'); 
 	// Set any existing parameters in form
 	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'tmplrun'.($lastrunnumber+1);
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';

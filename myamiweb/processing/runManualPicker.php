@@ -71,7 +71,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   // Set any existing parameters in form
   $particle=new particleData;
   $prtlrunIds = $particle->getParticleRunIds($sessionId, True);
-	$lastrunnumber = $particle->getLastRunNumberType($sessionId,'ApSelectionRunData','name'); 
+	$lastrunnumber = $particle->getLastRunNumberForType($sessionId,'ApSelectionRunData','name'); 
   $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'manrun'.($lastrunnumber+1);
   $presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
   $prtlrunval = ($_POST['pickrunid']) ? $_POST['pickrunid'] : '';
