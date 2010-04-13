@@ -27,6 +27,17 @@ class template{
 		
 		echo $html;
 	}
+
+	function textEntry($title, $fieldname, $example='', $size=50){
+		$value = $_POST[$fieldname] ? $_POST[$fieldname] : '';
+		$html .= "<h3>$title:</h3>\n";
+		if ($example)
+			$html .= "<p>example: <i>$example</i></p>\n";
+		$html .= "<input type='text' size='$size' name='$fieldname' value='$value'/>\n";
+		$html .= "<br/><br/>\n";
+		echo $html;
+	}
+
 }
 
 ?>
