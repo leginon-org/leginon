@@ -1,11 +1,11 @@
 <?php
 class template{
 	
-	function wizardHeader($title){
+	function wizardHeader($title, $cssfile){
 
 		$html = "<html><head>";
 		$html .= "<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />";
-		$html .= "<link href='../css/setup.css' media='all' rel='stylesheet' type='text/css' />";
+		$html .= "<link href='$cssfile' media='all' rel='stylesheet' type='text/css' />";
 		$html .= "</head><body>";
 		$html .= "<div id='pageWrapper'>";
 		$html .= "<div id='header'>";
