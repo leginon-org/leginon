@@ -752,10 +752,11 @@ def _indexBy(bys, datalist):
 		keylist = []
 		for by in bys:
 			key = indexdata[by]
-			keylist.append(key)
-		finalkey = ' '.join(keylist)
-		index[finalkey] = indexdata
-			
+			if isinstance(key,str):
+				keylist.append(key)
+		if keylist:
+			finalkey = ' '.join(keylist)
+			index[finalkey] = indexdata
 	return index
 
 class Setup(object):
