@@ -975,7 +975,7 @@ class ApRctRunData(Data):
 			('clusterstack', ApClusteringStackData),
 		)
 	typemap = classmethod(typemap)
-	
+
 class ApOtrRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1010,7 +1010,7 @@ class ApRefinementRunData(Data):
 			('name', str),
 			('package', str),
 			('description', str),
-			('hidden', bool), 
+			('hidden', bool),
 			('stack', ApStackData),
 			('initialModel', ApInitialModelData),
 			('path', ApPathData),
@@ -1551,7 +1551,7 @@ class ApTomogramData(Data):
 			('number', int),
 			('pixelsize', float),
 			('description', str),
-			('md5sum', str),			
+			('md5sum', str),
 			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
