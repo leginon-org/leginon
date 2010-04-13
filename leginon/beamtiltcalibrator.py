@@ -213,8 +213,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 				self.panel.comaMeasurementDone(self.comameasurement)
 				return
 		try:
-			cftilt = calibration_client.measureComaFree(tilt_value, settle=self.settings['settling time'])
-			comatilt = {'x':cftilt[(0,0)],'y':cftilt[(1,1)]}
+			cftiltsx,cftiltsy = calibration_client.repeatMeasureComaFree(tilt_value, settle=self.settings['settling time'], repeat=1)
+			comatilt = {'x':cftiltsx.mean(),'y':cftiltsy.mean()}
 			self.comameasurement = comatilt
 		except Exception, e:
 			self.logger.error('Measurement failed: %s' % e)
