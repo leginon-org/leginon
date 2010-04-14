@@ -62,6 +62,7 @@ class CalibrationClient(object):
 		self.tiltcorrector = tiltcorrector.TiltCorrector(node)
 		self.stagetiltcorrector = tiltcorrector.VirtualStageTilter(node)
 		self.rpixelsize = None
+		self.powerbinning = 2
 
 	def checkAbort(self):
 		if self.abortevent.isSet():
@@ -229,7 +230,8 @@ class CalibrationClient(object):
 
 	def insertTableau(self, imagedata, angle, rad):
 		image = imagedata['image']
-		binning = 2
+		binning = self.powerbinning
+		
 		if True:
 			pow = imagefun.power(image)
 			binned = imagefun.bin(pow, binning)
@@ -259,7 +261,7 @@ class CalibrationClient(object):
 				z0 = (ctfdata['defocus1'] + ctfdata['defocus2']) / 2
 				s = '%d' % (int(z0*1e9),)
 			if s:
-				t = numpil.textArray(s)
+				t = numpil.textArray(s, binning)
 				t = min + t * (max-min)
 				imagefun.pasteInto(t, binned, (20,20))
 		else:
@@ -283,7 +285,8 @@ class CalibrationClient(object):
 		std = self.tabimage.std()
 		newmax = mean + 5 * std
 		a = numpy.where(self.tabimage >= newmax, newmax, self.tabimage)
-		self.tabimage = numpy.clip(a, 0, mean*1.5)
+		a = numpy.clip(a, 0, mean*1.5)
+		self.tabimage = scipy.ndimage.zoom(a,self.powerbinning/3.0)
 		self.displayTableau(self.tabimage)
 
 	def displayImage(self, im):
