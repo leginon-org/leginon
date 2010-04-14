@@ -1541,6 +1541,26 @@ class BeamTiltImagerSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class BeamTiltFixerSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('beam tilt', float),
+			('min threshold', float),
+			('max threshold', float),
+		)
+	typemap = classmethod(typemap)
+
+class BeamTiltMeasurementData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('preset', PresetData),
+			('target', AcquisitionImageTargetData),
+			('beam tilt', dict),
+			('mean defocus', float),
+			('correction', bool),
+		)
+	typemap = classmethod(typemap)
+
 class StigAcquisitionSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (

@@ -92,6 +92,9 @@ noderegistry.registerNodeClass(TomographySimu,classtype)
 from beamtiltimager import BeamTiltImager
 noderegistry.registerNodeClass(BeamTiltImager,classtype)
 
+from beamtiltfixer import BeamTiltFixer
+noderegistry.registerNodeClass(BeamTiltFixer,classtype)
+
 from robot2 import Robot2
 noderegistry.registerNodeClass(Robot2,classtype)
 
