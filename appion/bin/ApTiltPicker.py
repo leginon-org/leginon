@@ -20,7 +20,6 @@ from appionlib import apDisplay
 from appionlib.apSpider import operations
 from appionlib.apTilt import tiltDialog, apTiltTransform, apTiltShift, tiltfile, autotilt
 ## leginon
-import leginon.polygon
 import leginon.gui.wx.TargetPanel
 ## numpy/scipy
 import numpy
@@ -507,9 +506,9 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onClearPolygon(self, evt):
+		### check particles
 		targets1 = self.getArray1()
 		targets2 = self.getArray2()
-
 		if len(targets1) == 0 or len(targets2) == 0:
 			self.statbar.PushStatusText("ERROR: Cannot remove polygon. There are no picks.", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot remove polygon.\nThere are no picks.",\
@@ -518,19 +517,10 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 
+		### check polygon vertices
 		vert1 = self.panel1.getTargetPositions('Polygon')
 		vert2 = self.panel2.getTargetPositions('Polygon')
-		if len(vert1) < 3 and len(vert2) < 3:
-			self.statbar.PushStatusText("ERROR: Cannot remove polygon. Not enough vertices.", 0)
-			dialog = wx.MessageDialog(self.frame, "Cannot remove polygon.\nNot enough vertices.",\
-				'Error', wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
-			return False
-		newpart1 = []
-		newpart2 = []
-		eliminated = 0
-
+		### check polygon vertices
 		if len(vert1) < 3 and len(vert2) < 3:
 			self.statbar.PushStatusText("ERROR: Could not create a closed polygon. Select more vertices.", 0)
 			dialog = wx.MessageDialog(self.frame,
@@ -539,7 +529,6 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
-
 		elif len(vert1) >= 3 and len(vert2) >= 3:
 			self.statbar.PushStatusText("ERROR: Polygons on both images. Create a polygon on only one image.", 0)
 			dialog = wx.MessageDialog(self.frame,
@@ -550,21 +539,20 @@ class PickerApp(wx.App):
 			self.panel2.setTargets('Polygon', [])
 			return False
 
-		elif len(vert1) > len(vert2):
+		newpart1 = []
+		newpart2 = []
+		eliminated = 0
+
+		if len(vert1) > len(vert2):
 			#draw transformed polygon
 			v1 = numpy.asarray(vert1, dtype=numpy.float32)
 			v2 = apTiltTransform.a1Toa2Data(v1, self.data)
 			self.panel2.setTargets('Polygon', v2)
 			self.panel2.UpdateDrawing()
-			vert1b = [ tuple((v[1],v[0])) for v in vert1 ]
-			#elim particles
-			maskimg1 = leginon.polygon.filledPolygon(self.panel1.imagedata.shape, vert1b)
-			#self.panel1.setImage(maskimg1)
-			#print maskimg1.shape
 			for i in range(targets1.shape[0]):
-				coord = tuple((targets1[i,1], targets1[i,0]))
+				point = tuple((targets1[i,0], targets1[i,1]))
 				#print coord
-				if maskimg1[coord] != 0:
+				if self.insidePolygon(point, v1):
 					eliminated += 1
 				else:
 					newpart1.append(targets1[i])
@@ -576,15 +564,9 @@ class PickerApp(wx.App):
 			v1 = apTiltTransform.a2Toa1Data(v2, self.data)
 			self.panel1.setTargets('Polygon', v1)
 			self.panel1.UpdateDrawing()
-			vert2b = [ tuple((v[1],v[0])) for v in vert2 ]
-			#elim particles
-			maskimg2 = leginon.polygon.filledPolygon(self.panel2.imagedata.shape, vert2b)
-			#self.panel2.setImage(maskimg2)
-			#print maskimg2.shape
 			for i in range(targets2.shape[0]):
-				coord = tuple((targets2[i,1], targets2[i,0]))
-				#print coord
-				if maskimg2[coord] != 0:
+				point = tuple((targets2[i,0], targets2[i,1]))
+				if self.insidePolygon(point, v2):
 					eliminated += 1
 				else:
 					newpart1.append(targets1[i])
@@ -594,9 +576,58 @@ class PickerApp(wx.App):
 
 		self.panel1.setTargets('Picked',newpart1)
 		self.panel2.setTargets('Picked',newpart2)
+		self.panel1.UpdateDrawing()
+		self.panel2.UpdateDrawing()
+
+		dialog = wx.MessageDialog(self.frame,
+			"Removed %d particles inside polygon"%(eliminated), 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
+		if dialog.ShowModal() == wx.ID_OK:
+			dialog.Destroy()
 
 		self.panel1.setTargets('Polygon', [])
 		self.panel2.setTargets('Polygon', [])
+
+	#---------------------------------------
+	def insidePolygon(self, point, verts):
+		"""Test whether the points are inside the specified polygon.
+		The shape is specified by 'verts'
+		Arguments:
+		points - (x,y) point
+		verts - (N,2) array of x,y vertices
+
+		Returns:
+		- True/False based on result of in/out test.
+
+		Uses the 'ray to infinity' even-odd test.
+		Let the ray be the horizontal ray starting at p and going to +inf in x.
+		"""
+		verts = numpy.asarray(verts)
+		x,y = point
+
+		### setup edge list
+		N = verts.shape[0]
+		### create edge pairs
+		edges = numpy.column_stack([range(N),range(1, N+1)])
+		### wrap last vertex
+		edges[N-1,1] = 0
+
+		inside = False
+		for e in edges:
+			v0,v1 = verts[e[0]], verts[e[1]]
+			# Check if both verts to the left of ray
+			if v0[0]<x and v1[0]<x:
+				continue
+			# check if both on the same side of ray
+			if (v0[1]<y and v1[1]<y) or (v0[1]>y and v1[1]>y):
+				continue
+			#check for horizontal line - another horz line can't intersect it
+			if (v0[1]==v1[1]):
+				continue
+			# compute x intersection value
+			xisect = v0[0] + (v1[0]-v0[0])*((y-v0[1])/(v1[1]-v0[1]))
+			if xisect >= x:
+				inside = not inside
+		return inside
 
 	#---------------------------------------
 	def onMaskRegion(self, evt):
