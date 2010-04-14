@@ -61,11 +61,20 @@ class BeamTiltFixer(acquisition.Acquisition):
 		self.instrument.tem.BeamTilt = newbt
 		self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
 
+	def acquireEmptyCameraImageData(self):
+		imagedata = leginondata.CameraImageData()
+		imagedata['session'] = self.session
+		scopedata = self.instrument.getData(leginondata.ScopeEMData)
+		cameradata = self.instrument.getData(leginondata.CameraEMData)
+		imagedata['scope'] = scopedata
+		imagedata['camera'] = cameradata
+		return imagedata
+
 	def acquireCCD(self, presetdata, emtarget=None,channel=None):
 		targetdata = emtarget['target']
 		## set correction channel
 		## in the future, may want this based on preset or something
-		imagedata = self.acquireCameraImageData()
+		imagedata = self.acquireEmptyCameraImageData()
 		tabimage, is_corrected = self.measureBeamTiltAndCorrect()
 		imagedata['image'] = tabimage
 		self.reportStatus('acquisition', 'image acquired')
