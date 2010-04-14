@@ -11,6 +11,7 @@ BUGS:
  *	Fixed polygon tool for rectagular images
  *	Fixed reversal of tilt axis angles
  *	Fixed improper print of DoG picker particle contrast messages on command line.
+ *	Faster polygon removal
 FEATURES:
  *	Added transfer picks option (Alt-X)
  *	Added complete features for DoG picker:

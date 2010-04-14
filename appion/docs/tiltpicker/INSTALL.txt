@@ -22,7 +22,7 @@ Installation steps:
 ==== Fedora ====
 all 4 modules are available through yum
 
-Optional: you will also need to install 'python-setuptools-devel' to compile the radermacher and numextension modules (detailed below)
+Optional: you will also need to install 'python-setuptools-devel' to compile the radermacher module (detailed below)
 
 ==== Ubuntu ====
 all 4 modules are available through apt-get or synaptic
