@@ -88,6 +88,7 @@ class AlignmentManager(trepeater.TargetRepeater):
 					self.logger.info('bypass alignment: only %d seconds since last' % diff.seconds)
 					continue
 			targetlistdata = alignlist['list']
+			self.logger.info('handle fix alignment request')
 			newtargetlistdata = self.copyTargetList(targetlistdata)
 			if newtargetlistdata is None:
 				self.logger.error('copy target list failed')
