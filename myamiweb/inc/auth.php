@@ -616,13 +616,13 @@ class authlib{
 
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
-		$q="select DEF_id, username, email from UserData where username = '$username'";
+		$q="select DEF_id, username, firstname, lastname, email from UserData where username = '$username'";
 
 		$query = $dbc->SQLQuery($q);
 		$result = @mysql_num_rows($query);
 
 		// setup query result value and assign to those variables
-		list($userID, $username, $email) = @mysql_fetch_row($query);
+		list($userID, $username, $firstname, $lastname, $email) = @mysql_fetch_row($query);
 
 		if (!$username) {
 			return $this->error['no_username'];
@@ -636,7 +636,9 @@ class authlib{
 
 		// sent out email with necessary information.
 		$from = EMAIL_TITLE . " <".ADMIN_EMAIL.">";
+
 		$to = $firstname . " " . $lastname . " <" . $email . ">";
+
 		$subject = "Forget password: Account Infomation: Appion / Legnion Tools";
 		$body = "Dear User,\n\nAs per your request here is your account information:\n
 				Username: $username
@@ -646,7 +648,7 @@ class authlib{
 				"\nWe hope you remember your password next time ;-)"; 
 
 		$sendEmailResult = $this->outgoingMail($from, $to, $subject, $body);			
-			
+	
 		if(!$sendEmailResult)
 			return $this->error['confirm_email_error'];
 		return 2;
