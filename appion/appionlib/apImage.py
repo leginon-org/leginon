@@ -140,22 +140,6 @@ def binImg(imgarray, bin=1, warn=True):
 	return binned
 
 #=========================
-def oldBinImg(imgarray,bin=1):
-	"""
-	returns a binned image
-	"""
-	if bin > 1:
-		#newarray = imagefun.bin(imgarray, bin)
-		newarray = imagefun.bin2(imgarray, bin)
-		newarray = numpy.asarray(newarray)
-		mindim = min(newarray.shape)
-		if mindim < 1:
-			apDisplay.printError("problem in numextension bin, return null array")
-		return newarray
-	else:
-		return imgarray
-
-#=========================
 def invertImage(imgarray):
 	"""
 	returns a contrast inverted image
