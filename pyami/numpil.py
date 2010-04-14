@@ -5,6 +5,7 @@ import numpy
 import imagefun
 import arraystats
 import sys
+import scipy.ndimage
 
 pilformats = [
 	'BMP',
@@ -34,7 +35,7 @@ def im2numpy(im):
 	a.shape = height,width
 	return a
 
-def textArray(text):
+def textArray(text, scale=1):
 	im = Image.new('1', (1,1))
 	draw = ImageDraw.Draw(im)
 	cols,rows = draw.textsize(text)
@@ -43,6 +44,8 @@ def textArray(text):
 	draw.text((0,0), text, fill=1)
 	a = im2numpy(im)
 	a = numpy.where(a,1,0)
+	if scale != 1:
+		a = scipy.ndimage.zoom(a,scale)
 	return a
 
 def read(imfile):
