@@ -22,7 +22,7 @@ ffteng = fftengine.fftEngine()
 
 ### wrap some functions that are in numextension
 def minmax(image):
-	return numextension.minmax(image)
+	return (image.min(), image.max())
 
 def despike(image, size=11, sigma=3.5, debug=0):
 	'''
