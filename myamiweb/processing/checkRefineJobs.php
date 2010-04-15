@@ -140,7 +140,7 @@ function showClusterJobTables($jobs) {
 	}
 	if ($clusters[0]) {
 		foreach ($clusters as $c) {
-			// no clue where this function resides
+			// from inc/processing.inc
 			$queue = checkClusterJobs($c, $user, $pass);
 			if ($queue) {
 				echo "";
