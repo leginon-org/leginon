@@ -1,6 +1,6 @@
 <?php
 /**
- *      The Leginon software is Copyright 2003 
+ *      The Leginon software is Copyright 2003
  *      The Scripps Research Institute, La Jolla, CA
  *      For terms of the license agreement
  *      see  http://ami.scripps.edu/software/leginon-license
@@ -13,17 +13,6 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
-
-$projectId = trim($_GET['pId']);
-if (is_numeric($projectId)) {
-		$_SESSION['projectId']=$projectId;
-}
-
-if ($_POST) {
-	if ($_POST['projectId']) {
-		$_SESSION['projectId']=$_POST['projectId'];
-	}
-}
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -40,12 +29,13 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$particle = new particledata();
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
+	$projectId = getProjectId();
 
-	$projectId= $_SESSION['projectId'];
 	$formAction=$_SERVER['PHP_SELF'];
 	if ($expId) $formAction.="?expId=$expId";
+	if ($projectId) $formAction.="?pId=$projectId";
 
-	$javafunctions .= writeJavaPopupFunctions('appion');  
+	$javafunctions .= writeJavaPopupFunctions('appion');
 	$leginondata = new leginondata();
 
 	processing_header($title,$heading,$javafunctions);
@@ -54,18 +44,20 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
-  
+
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-	$sessiondata=getSessionList($projectId,$expId);
-	$sessioninfo=$sessiondata['info'];
-	if (!empty($sessioninfo)) {
-		$outdir=$sessioninfo['Image path'];
-		$outdir=ereg_replace("rawdata","",$outdir);
-		$sessionname=$sessioninfo['Name'];
-		$description=$sessioninfo['description'];
-		$tem=$sessioninfo['InstrumentId'];
-		$cam=$sessioninfo['CameraId'];
-		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
+	if ($expId) {
+		$sessiondata = getSessionList($projectId, $expId);
+		$sessioninfo = $sessiondata['info'];
+		if (!empty($sessioninfo)) {
+			$outdir=$sessioninfo['Image path'];
+			$outdir=ereg_replace("leginon*","leginon",$outdir);
+			$sessionname=$sessioninfo['Name'];
+			$description=$sessioninfo['description'];
+			$tem=$sessioninfo['InstrumentId'];
+			$cam=$sessioninfo['CameraId'];
+			echo "<input type='hidden' name='outdir' value='$outdir'>\n";
+		}
 	}
 	// if no session name is set, set a default
 	if (!$sessionname) {
@@ -91,12 +83,12 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$tiltgroup = ($_POST['tiltgroup']) ? $_POST['tiltgroup'] : 1;
 	$description = ($_POST['description']) ? $_POST['description']: $description;
 	$imgdir = ($_POST['imgdir']);
-	$apix = ($_POST['apix']);
+	$apix = ($_POST['apix']) ? $_POST['apix'] : "";;
 	$binx = ($_POST['binx']) ? $_POST['binx'] : "1";
 	$biny = ($_POST['biny']) ? $_POST['biny'] : "1";
-	$kev = ($_POST['kev']) ? $_POST['kev'] : "120";
-	$mag = ($_POST['mag']);
-	$df = ($_POST['df']);
+	$kv = ($_POST['kv']) ? $_POST['kv'] : "";
+	$mag = ($_POST['mag']) ? $_POST['mag'] : "";
+	$df = ($_POST['df']) ? $_POST['df'] : "";
 
 	// Start Tables
 	echo"<table class=tableborder>\n";
@@ -111,29 +103,38 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$projectdata=new project();
 	$projects=$projectdata->getProjects();
 	foreach ($projects as $project) {
-	$sel=($project['id']==$projectId) ? "selected" : "";
-	echo "<option value='".$project['id']."' $sel >".$project['name']."</option>\n";
+		$sel=($project['id']==$projectId) ? "selected" : "";
+		echo "<option value='".$project['id']."' $sel >".$project['name']."</option>\n";
 	}
 	echo "</select>\n";
 
-   echo "<br/><br/>\n";
+	echo "<br/><br/>\n";
 
 	// Setup Session Name
 	echo docpop('uploadsession', 'Session Name:');
 	echo "<br/>\n";
 	echo "<input type='text' name='sessionname' value='$sessionname' size='15'>\n";
 
-   echo "<br/><br/>\n";
+	echo "<br/><br/>\n";
 
 	// Setup Session Name
-   echo "<b>Session Description:</b><br/>";
-   echo "<input type='text' name='description' size='55' value='$description'>";
+	echo "<b>Session Description:</b><br/>";
+	echo "<input type='text' name='description' size='55' value='$description'>";
 
-   echo "<br/><br/>\n";
+	echo "<br/><br/>\n";
+
+	// Root directory
+	/*echo "<b>Root directory to store images:</b>";
+	echo "<br/>\n";
+	echo "<input type='text' name='rootdir' size='55' value='$description'>";
+	echo "<br/>\n";
+	echo "<font size='-1'><i>(Session name will be appended to the end)</i></font>";*/
+
+	echo "<br/><br/>\n";
 
 	echo"</td></tr>\n";
 	echo"<tr><td valign='top' class='tablebg'>\n";
-   echo "<br/>\n";
+	echo "<br/>\n";
 
 	// Setup Instruments
 	$instrumenthosts = $leginondata->getInstrumentHosts();
@@ -147,7 +148,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	}
 	echo"</select>";
 
-   echo "<br/><br/>\n";
+	echo "<br/><br/>\n";
 
 	// Setup Scopes
 	$scopes = $leginondata->getScopes($instrumenthostval);
@@ -224,8 +225,8 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	echo docpop('defocus', 'defocus (microns):');
 	echo "<input type='text' name='df' value='$df' size='4'\n";
 	echo "<br/>\n";
-	echo docpop('kev','high tension (keV):');
-	echo "<input type='text' name='kev' value='$kev' size='4'\n";
+	echo docpop('kev','high tension (kV):');
+	echo "<input type='text' name='kv' value='$kv' size='4'\n";
 	echo "<br/>\n";
 	echo "<br/><br/>\n";
 	echo closeRoundBorder();
@@ -257,7 +258,7 @@ function runUploadImage() {
 	$tiltgroup = $_POST['tiltgroup']+0;
 	$tem = $_POST['tem'];
 	$cam = $_POST['cam'];
-	
+
 	$outdir = $_POST['outdir'];
 
 	// start setting up the imageloader command
@@ -269,35 +270,48 @@ function runUploadImage() {
 	$leginon = new leginondata();
 	$has_session = $leginon->getSessions('',false,$sessionname);
 	$session_in_project = $leginon->getSessions('',$projectId,$sessionname);
-	if ($has_session && !$session_in_project) createUploadImageForm("<B>ERROR:</B> You have entered an existing session not belonging to this project");
-	if ($session_in_project) $warning = ("<B>Warning:</B>  Will append to an existing session with the original description");
+
+	if ($has_session && !$session_in_project)
+		createUploadImageForm("<B>ERROR:</B> You have entered an existing session not belonging to this project");
+
+	if ($session_in_project)
+		$warning = ("<B>Warning:</B>  Will append to an existing session with the original description");
 	// add session to the command
 	$command.="--session=$sessionname ";
 
 	//make sure a description was provided
 	$description=$_POST['description'];
-	if (!$description && !$session_in_project) createUploadImageForm("<B>ERROR:</B> Enter a brief description of the session");
+	if (!$description && !$session_in_project)
+		createUploadImageForm("<B>ERROR:</B> Enter a brief description of the session");
 
 	//determine if a information batch file was provided
 	if (!$batch) {
 		$errormsg = "<b>ERROR:</b> If not specifying a parameter file, ";
 		$imgdir = $_POST['imgdir'];
-		if (!$imgdir) createUploadImageForm($errormsg."specify an image directory");
+		if (!$imgdir)
+			createUploadImageForm($errormsg."specify an image directory");
 		$fileformat = $_POST['fileformat'];
 		$apix = $_POST['apix'];
-		if (!$apix) createUploadImageForm($errormsg."specify a pixel size");
+		if (!$apix)
+			createUploadImageForm($errormsg."specify a pixel size");
 		$binx = $_POST['binx'];
 		$biny = $_POST['biny'];
-		if (!($binx && $biny)) createUploadImageForm($errormsg."specify both x and y binning");
+		if (!($binx && $biny))
+			createUploadImageForm($errormsg."specify both x and y binning");
 		$mag = $_POST['mag'];
-		if (!$mag) createUploadImageForm($errormsg."specify a magnification");
+		if (!$mag)
+			createUploadImageForm($errormsg."specify a magnification");
 		$df = $_POST['df'];
-		if (!$df) createUploadImageForm($errormsg."specify a defocus");
+		if (!$df)
+			createUploadImageForm($errormsg."specify a defocus");
 		if ($df > 0) $df = $df*-1;
-		if ($df > -0.1) createUploadImageForm("<b>Error:</b> defocus must be in microns (i.e. -1.5)");
-		$kev = $_POST['kev'];
-		if (!$kev) createUploadImageForm($errormsg."specify the high tension");
-		if ($kev > 1000) createUploadImageForm("<b>Error:</b> high tension must be in kilovolts (i.e. 120)");
+		if ($df > -0.1)
+			createUploadImageForm("<b>Error:</b> defocus must be in microns (i.e. -1.5)");
+		$kv = $_POST['kv'];
+		if (!$kv)
+			createUploadImageForm($errormsg."specify the high tension");
+		if ($kv > 1000)
+			createUploadImageForm("<b>Error:</b> high tension must be in kilovolts (i.e. 120)");
 		// add options to command
 		$command.="--dir=$imgdir ";
 		$command.="--filetype=$fileformat ";
@@ -306,9 +320,10 @@ function runUploadImage() {
 		$command.="--biny=$biny ";
 		$command.="--mag=$mag ";
 		$command.="--df=$df ";
-		$command.="--kev=$kev ";
-	}
-	elseif ($batch_check) {
+		$command.="--kev=$kv ";
+
+
+	} elseif ($batch_check) {
 		if (!file_exists($batch)) createUploadImageForm("<B>ERROR:</B> Batch file does not exist");
 		//make sure  the batch file contains 7 or 8 fields separated by tab at each line
 		$bf = file($batch);
@@ -320,7 +335,7 @@ function runUploadImage() {
 			}
 		}
 		// add batch file to command
-		$command.="--batchparams=$batch ";	
+		$command.="--batchparams=$batch ";
 	}
 	else {
 		$badbatch = false;
@@ -331,8 +346,8 @@ function runUploadImage() {
 	if (!$cam) createUploadImageForm("<B>ERROR:</B> Choose a camera where the images are acquired");
 
 	// add rest of options to command
-	$command.="--scopeid=$tem ";	
-	$command.="--cameraid=$cam ";	
+	$command.="--scopeid=$tem ";
+	$command.="--cameraid=$cam ";
 	$command.="--description=\"$description\" ";
 	if ($tiltgroup >= 2)
 		$command.="--tiltgroup=$tiltgroup ";
@@ -340,6 +355,9 @@ function runUploadImage() {
 	if ($_POST['process']=="Upload Image") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
+
+		if (!$outdir)
+			createUploadImageForm("<b>Error:</b> $outdir is not provided, required for web launch, use 'just show command'");
 
 		if (!($user && $password)) createUploadImageForm("<B>ERROR:</B> You must be logged in to submit");
 		$fakerunname = 'imageloader';
@@ -356,7 +374,7 @@ function runUploadImage() {
 			$jf = file($jobf);
 			$jfnum = count($jf);
 			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
-			  // if anything is red, it's not good
+				// if anything is red, it's not good
 				if (preg_match("/red/",$jf[$i])) {
 					$status = "<font class='apcomment'>Error while uploading, check the log file:<br />$jobf</font>";
 					continue;
@@ -369,7 +387,7 @@ function runUploadImage() {
 	}
 
 	else processing_header("UploadImage Command","UploadImage Command");
-	
+
 	// rest of the page
 	echo"<font class='apcomment'>".$warning."</font>";
 	echo"
