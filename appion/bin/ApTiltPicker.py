@@ -97,7 +97,7 @@ class PickerApp(wx.App):
 	def OnInit(self):
 		self.data = {}
 		self.appionloop = None
-		self.onInitParams(None)
+		self.onInitParams(None, False)
 		self.data['pixdiam'] = 20.0
 		self.data['outfile'] = ""
 		self.data['dirname'] = ""
@@ -109,6 +109,7 @@ class PickerApp(wx.App):
 		self.appionloop = None
 		self.data['filetypeindex'] = None
 		self.data['thetarun'] = False
+		self.data['optimrun'] = False
 		self.picks1 = []
 		self.picks2 = []
 		self.buttonheight = 15
@@ -352,7 +353,8 @@ class PickerApp(wx.App):
 				)),
 				("&Edit", (
 					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
-					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),
+					( "&Init", "Initialize alignment parameters", self.onInitParams ),
+					( "&Reset", "Clear picks and reset parameters", self.onResetParams, wx.ID_RESET ),
 					( "Clear &Worst Picks", "Remove worst picked particles", self.onClearBadPicks ),
 					( "Clear &Polygon", "Clear particle with polygon", self.onClearPolygon ),
 				)),
@@ -389,7 +391,8 @@ class PickerApp(wx.App):
 				)),
 				("&Edit", (
 					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
-					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),
+					( "&Init", "Initialize alignment parameters", self.onInitParams ),
+					( "&Reset", "Clear picks and reset parameters", self.onResetParams, wx.ID_RESET ),
 					( "Clear &Worst Picks", "Remove worst picked particles", self.onClearBadPicks ),
 					( "Clear &Polygon", "Clear particle with polygon", self.onClearPolygon ),
 				)),
@@ -498,6 +501,7 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onClearPolygon(self, evt):
+		t0 = time.time()
 		### check particles
 		targets1 = self.getArray1()
 		targets2 = self.getArray2()
@@ -531,9 +535,19 @@ class PickerApp(wx.App):
 			self.panel2.setTargets('Polygon', [])
 			return False
 
+		if self.data['optimrun'] is False:
+			self.statbar.PushStatusText("ERROR: Cannot remove polygon. No alignment parameters.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot remove polygon.\nNo alignment parameters.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+
 		newpart1 = []
 		newpart2 = []
 		eliminated = 0
+
+		apDisplay.printMsg("Removing points inside polygon")
 
 		if len(vert1) > len(vert2):
 			#draw transformed polygon
@@ -564,20 +578,20 @@ class PickerApp(wx.App):
 					newpart1.append(targets1[i])
 					newpart2.append(targets2[i])
 
-		self.statbar.PushStatusText(str(eliminated)+" particle(s) eliminated inside polygon", 0)
-
 		self.panel1.setTargets('Picked',newpart1)
 		self.panel2.setTargets('Picked',newpart2)
 		self.panel1.UpdateDrawing()
 		self.panel2.UpdateDrawing()
 
+		apDisplay.printMsg("Removed %d particles inside polygon in %s"%(eliminated, apDisplay.timeString(time.time()-t0)))
+		self.statbar.PushStatusText("Removed %d particles inside polygon"%(eliminated), 0)
 		dialog = wx.MessageDialog(self.frame,
 			"Removed %d particles inside polygon"%(eliminated), 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
 		if dialog.ShowModal() == wx.ID_OK:
 			dialog.Destroy()
-
 		self.panel1.setTargets('Polygon', [])
 		self.panel2.setTargets('Polygon', [])
+		self.onUpdate(evt)
 
 	#---------------------------------------
 	def insidePolygon(self, point, verts):
@@ -641,6 +655,15 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 
+		if self.data['optimrun'] is False:
+			self.statbar.PushStatusText("ERROR: Cannot mask images. No alignment parameters.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot mask images.\nNo alignment parameters.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+
+
 		#GET IMAGES
 		self.panel1.openImageFile(self.panel1.filename)
 		self.panel2.openImageFile(self.panel2.filename)
@@ -686,6 +709,14 @@ class PickerApp(wx.App):
 		if len(a1) == 0 or len(a2) == 0:
 			self.statbar.PushStatusText("ERROR: Cannot get overlap. Not enough picks", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot get overlap.\nThere are no picks.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+
+		if self.data['optimrun'] is False:
+			self.statbar.PushStatusText("ERROR: Cannot get overlap. No alignment parameters.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot get overlap.\nNo alignment parameters.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -747,6 +778,13 @@ class PickerApp(wx.App):
 		if len(a1) == 0 or len(a2) == 0:
 			self.statbar.PushStatusText("ERROR: Cannot transfer picks. There are no picks.", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot transfer picks.\nThere are no picks.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+		if self.data['optimrun'] is False:
+			self.statbar.PushStatusText("ERROR: Cannot transfer picks. No alignment parameters.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot transfer picks.\nNo alignment parameters.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -1087,6 +1125,16 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
+
+		### make sure we have alignment
+		if self.data['optimrun'] is False:
+			self.statbar.PushStatusText("ERROR: Cannot import picks. No alignment parameters.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot import picks.\nNo alignment parameters.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+
 		### save existing picks to revert
 		olda1 = a1
 		olda2 = a2
@@ -1165,12 +1213,14 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return
 
-		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
-			dialog = wx.MessageDialog(self.frame,
-				"You should run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
+		### make sure we have alignment
+		if self.data['optimrun'] is False:
+			self.statbar.PushStatusText("ERROR: Cannot remove picks. No alignment parameters.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot remove picks.\nNo alignment parameters.",\
+				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
-			return
+			return False
 
 		### show cutoff dialog
 		self.onUpdate(env)
@@ -1188,7 +1238,6 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
-		self.data['thetarun'] = True
 		self.theta_dialog.tiltvalue.SetLabel(label=("       %3.3f       " % self.data['theta']))
 		self.theta_dialog.Show()
 
@@ -1204,10 +1253,10 @@ class PickerApp(wx.App):
 			return
 		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
 			dialog = wx.MessageDialog(self.frame,
-				"You should run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
+				"You should run 'Find Theta' first", 'Error', wx.OK|wx.ICON_WARNING)
 			dialog.ShowModal()
 			dialog.Destroy()
-		self.data['optimrun'] = True
+
 		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
 		self.fitall_dialog.gammavalue.SetValue(round(self.data['gamma'],4))
 		self.fitall_dialog.phivalue.SetValue(round(self.data['phi'],4))
@@ -1217,15 +1266,18 @@ class PickerApp(wx.App):
 		self.fitall_dialog.Show()
 		#values are then modified, if the user selected apply in tiltDialog
 
-
 	#---------------------------------------
 	def onRepairList(self, evt):
-		dialog = wx.MessageDialog(self.frame,
-			"This attempt to repairs you picks when you delete"+
-			" from one image and not the other", 'Error',
-			wx.OK|wx.ICON_ERROR)
-		dialog.ShowModal()
-		dialog.Destroy()
+		### pop up to confirm that picks are good.
+		if msg is True:
+			dialog = wx.MessageDialog(self.frame,
+				"This fucntion attempts to repairs your picks when you delete "
+				+"an unmatched pair or from one image and not the other", 
+				'Try to repair picks?', wx.NO|wx.YES|wx.ICON_QUESTION)
+			if dialog.ShowModal() == wx.ID_NO:
+				dialog.Destroy()
+				return
+			dialog.Destroy()
 		a1 = self.getArray1()
 		a2 = self.getArray2()
 		rmsd = self.getRmsdArray()
@@ -1254,7 +1306,6 @@ class PickerApp(wx.App):
 		### run find theta
 		self.theta_dialog.onRunTiltAng(None)
 		self.theta_dialog.onApplyTiltAng(None)
-		self.data['thetarun'] = True
 
 		### run optimize angles
 		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
@@ -1290,30 +1341,19 @@ class PickerApp(wx.App):
 		self.onMaskRegion(None)
 
 	#---------------------------------------
-	def onClearPicks(self, evt, msg=True):
-		### pop up to confirm that picks are good.
-		if msg is True:
-			dialog = wx.MessageDialog(self.frame,
-				"Are you sure you want to delete all picked particles?", 
-				'Clear picks?', wx.NO|wx.YES|wx.ICON_QUESTION)
-			if dialog.ShowModal() == wx.ID_NO:
-				dialog.Destroy()
-				return
-			dialog.Destroy()
-		self.panel1.setTargets('Picked', [])
-		self.panel1.setTargets('Aligned', [])
-		self.panel1.setTargets('Worst', [] )
-		self.panel1.setTargets('Polygon', [] )
-		self.panel2.setTargets('Picked', [])
-		self.panel2.setTargets('Aligned', [])
-		self.panel2.setTargets('Worst', [] )
-		self.panel2.setTargets('Polygon', [] )
-
-	#---------------------------------------
 	def onClearBadPicks(self, evt):
 		"""
 		Remove picks with RMSD > mean + 3 * stdev
 		"""
+		### make sure we have alignment
+		if self.data['optimrun'] is False:
+			self.statbar.PushStatusText("ERROR: Cannot remove picks. No alignment parameters.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot remove picks.\nNo alignment parameters.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+
 		good = self.getGoodPicks()
 		a1 = self.getArray1()
 		a2 = self.getArray2()
@@ -1348,23 +1388,52 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
-		if False and (len(self.panel1.getTargets('Picked')) < 5
-		 or len(self.panel2.getTargets('Picked')) < 5):
-			dialog = wx.MessageDialog(self.frame,
-				"You must pick at least 5 particle pairs first", 'Error', wx.OK|wx.ICON_ERROR)
+
+		if self.data['optimrun'] is False:
+			self.statbar.PushStatusText("ERROR: Cannot run Dog picker. No alignment parameters.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot run Dog picker.\nNo alignment parameters.",\
+				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
-			return
-		if self.data['gamma'] == 0.0 and self.data['optimrun'] is False:
-			dialog = wx.MessageDialog(self.frame,
-				"You must run 'Optimize Angles' first", 'Error', wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
-			return
+			return False
+
 		self.dogpick_dialog.Show()
 
 	#---------------------------------------
-	def onInitParams(self, evt):
+	def onClearPicks(self, evt, msg=True):
+		### pop up to confirm that picks are good.
+		if msg is True:
+			dialog = wx.MessageDialog(self.frame,
+				"Are you sure you want to delete all picked particles?", 
+				'Clear picks?', wx.NO|wx.YES|wx.ICON_QUESTION)
+			if dialog.ShowModal() == wx.ID_NO:
+				dialog.Destroy()
+				return
+			dialog.Destroy()
+		self.panel1.setTargets('Picked', [])
+		self.panel1.setTargets('Aligned', [])
+		self.panel1.setTargets('Worst', [] )
+		self.panel1.setTargets('Polygon', [] )
+		self.panel2.setTargets('Picked', [])
+		self.panel2.setTargets('Aligned', [])
+		self.panel2.setTargets('Worst', [] )
+		self.panel2.setTargets('Polygon', [] )
+		self.statbar.PushStatusText("Cleared all particle picks", 0)
+		if msg is True:
+			self.onUpdate(evt)
+
+	#---------------------------------------
+	def onInitParams(self, evt, msg=True):
+		### pop up to confirm that picks are good.
+		if msg is True:
+			dialog = wx.MessageDialog(self.frame,
+				"Are you sure you want to reset all alignment parameters?", 
+				'Reset?', wx.NO|wx.YES|wx.ICON_QUESTION)
+			if dialog.ShowModal() == wx.ID_NO:
+				dialog.Destroy()
+				return
+			dialog.Destroy()
+
 		self.data['thetarun'] = False
 		self.data['optimrun'] = False
 		self.data['arealim'] = 5000.0
@@ -1379,6 +1448,9 @@ class PickerApp(wx.App):
 		self.data['point1'] = (0.0, 0.0)
 		self.data['point2'] = (0.0, 0.0)
 		self.data['scale'] = 1.0
+		if msg is True:
+			self.statbar.PushStatusText("Reset all parameters", 0)
+			self.onUpdate(evt)
 
 	#---------------------------------------
 	def onResetParams(self, evt, msg=True):
@@ -1392,7 +1464,7 @@ class PickerApp(wx.App):
 				return
 			dialog.Destroy()
 
-		self.onInitParams(evt)
+		self.onInitParams(evt, msg=False)
 		#reset fit values
 		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
 		self.fitall_dialog.gammavalue.SetValue(round(self.data['gamma'],4))
@@ -1432,7 +1504,9 @@ class PickerApp(wx.App):
 		except:
 			pass
 		self.onClearPicks(None, False)
-		self.statbar.PushStatusText("Reset all parameters", 0)
+		self.statbar.PushStatusText("Reset all picks and parameters", 0)
+		if msg is True:
+			self.onUpdate(evt)
 
 	#---------------------------------------
 	def onFileSave(self, evt):
@@ -1541,6 +1615,14 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onQuit(self, evt):
+		dialog = wx.MessageDialog(self.frame,
+			"Are you sure you want to Quit?", 
+			'Quit?', wx.NO|wx.YES|wx.ICON_QUESTION)
+		if dialog.ShowModal() == wx.ID_NO:
+			dialog.Destroy()
+			return
+		dialog.Destroy()
+
 		a1 = self.getArray1()
 		a2 = self.getArray2()
 		if len(a1) > len(a2):
@@ -1677,7 +1759,7 @@ class PickerApp(wx.App):
 if __name__ == '__main__':
 
 	usage = "Usage: %prog --left-image=image1.mrc --right-image=image2.mrc [--pick-file=picksfile.txt] [options]"
-	shapes = ("circle","square","diamond","plus","cross")
+	shapes = ("circle","square","diamond","plus","cross","dot")
 
 	parser = OptionParser(usage=usage)
 	parser.add_option("-1", "-l", "--left-image", dest="img1file",
@@ -1693,22 +1775,22 @@ if __name__ == '__main__':
 
 	parser.add_option("-s", "--pick-shape", dest="pickshape",
 		help="Particle picking shape", metavar="SHAPE",
-		type="choice", choices=shapes, default="cross" )
+		type="choice", choices=shapes, default="circle" )
 	parser.add_option("-S", "--pick-shape-size", dest="pshapesize",
 		help="Particle picking shape size", metavar="INT",
-		type="int", default=16 )
+		type="int", default=30 )
 	parser.add_option("-a", "--align-shape", dest="alignshape",
 		help="Algined particles shape", metavar="SHAPE",
 		type="choice", choices=shapes, default="circle" )
 	parser.add_option("-A", "--align-shape-size", dest="ashapesize",
 		help="Algined particles shape size", metavar="INT",
-		type="int", default=16 )
+		type="int", default=12 )
 	parser.add_option("-w", "--worst-shape", dest="worstshape",
 		help="Worst particles shape", metavar="SHAPE",
 		type="choice", choices=shapes, default="plus" )
 	parser.add_option("-W", "--worst-shape-size", dest="wshapesize",
 		help="Worst particles shape size", metavar="INT",
-		type="int", default=16 )
+		type="int", default=24 )
 
 	params = apParam.convertParserToParams(parser)
 

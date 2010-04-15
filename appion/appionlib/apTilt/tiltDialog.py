@@ -130,7 +130,7 @@ class FitThetaDialog(wx.Dialog):
 		self.parent.data['tiltanglefitdata'] = self.fittheta
 		self.parent.data['point1'] = self.fittheta['point1']
 		self.parent.data['point2'] = self.fittheta['point2']
-
+		self.parent.data['thetarun'] = True
 		self.parent.onUpdate(evt)
 
 ##
@@ -348,7 +348,7 @@ class FitAllDialog(wx.Dialog):
 		self.parent.data['rmsd']   = self.lsfit['rmsd']
 		self.parent.data['point1'] = self.lsfit['point1']
 		self.parent.data['point2'] = self.lsfit['point2']
-
+		self.parent.data['optimrun'] = True
 		self.parent.onUpdate(evt)
 
 
