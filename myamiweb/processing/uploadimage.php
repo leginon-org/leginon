@@ -32,8 +32,8 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$projectId = getProjectId();
 
 	$formAction=$_SERVER['PHP_SELF'];
-	if ($expId) $formAction.="?expId=$expId";
-	if ($projectId) $formAction.="?pId=$projectId";
+	if ($expId) $formAction.="?expId=$expId&pId=$projectId";
+	elseif ($projectId) $formAction.="?pId=$projectId";
 
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	$leginondata = new leginondata();
@@ -98,15 +98,21 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	echo "<br/>\n";
 
 	// Setup Project
-	echo "<b>Project:</b><br/>\n";
-	echo "<select name='projectId'>";
-	$projectdata=new project();
-	$projects=$projectdata->getProjects();
-	foreach ($projects as $project) {
-		$sel=($project['id']==$projectId) ? "selected" : "";
-		echo "<option value='".$project['id']."' $sel >".$project['name']."</option>\n";
+	$projectdata = new project();
+	if (!$expId && !$projectId) {
+		echo "<b>Project:</b><br/>\n";
+		echo "<select name='projectId'>";
+		$projects=$projectdata->getProjects();
+		foreach ($projects as $project) {
+			$sel=($project['id']==$projectId) ? "selected" : "";
+			echo "<option value='".$project['id']."' $sel >".$project['name']."</option>\n";
+		}
+		echo "</select>\n";
+	} else {
+		$projectinfo = $projectdata->getProjectInfo($projectId);
+		echo "<font size='+1'><b>Project:</b>\n";
+		echo $projectinfo['name']." <i>($projectId)</i></font>\n";
 	}
-	echo "</select>\n";
 
 	echo "<br/><br/>\n";
 
@@ -119,12 +125,14 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 
 	// Setup Session Name
 	echo "<b>Session Description:</b><br/>";
-	echo "<input type='text' name='description' size='55' value='$description'>";
+	echo "<input type='text' name='description' size='46' value='$description'>";
 
-	echo "<br/><br/>\n";
+
 
 	// Root directory
-	/*echo "<b>Root directory to store images:</b>";
+	/*	echo "<br/><br/>\n";
+
+	echo "<b>Root directory to store images:</b>";
 	echo "<br/>\n";
 	echo "<input type='text' name='rootdir' size='55' value='$description'>";
 	echo "<br/>\n";
@@ -181,13 +189,17 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	echo "<br/><br/>\n";
 	echo "</td></tr>\n";
 	echo "<tr><td>\n";
-	echo "<b>Use one of two following options for upload:</b><hr/>\n";
+
+	echo "<hr/>\n";
+	echo "<font size='+1'><b>Use one of two following options for upload:</b></font>\n";
+	echo "<br/><br/>\n";
 
 	// Setup batchfile
-	echo "Specify a parameter file:<br/>\n";
+	echo "<font size='+1'>1. Specify a parameter file:</font><br/>\n";
+	echo "&nbsp;\n";
 	echo openRoundBorder();
 	echo docpop('batchfile', 'Information file for the images (with full path):');
-	echo "<br/>\n<input type='text' name='batch' value='$batch' size='54'>\n";
+	echo "<br/>\n<input type='text' name='batch' value='$batch' size='45'>\n";
 	echo "<br/>\n<input type='checkbox' NAME='batchcheck' $batch_check>\n";
 	echo docpop('batchcheck','<B>Confirm existence and format of the information file</B>');
 
@@ -196,39 +208,67 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	echo "<br/>\n";
 
 	// Enter parameters manually
-	echo "Or enter parameters:<br/>\n";
+	echo "<font size='+1'>2. Enter parameters manually:</font><br/>\n";
+	echo "&nbsp;\n";
 	echo openRoundBorder();
-	echo docpop('imgpath','Directory containing images');
-	echo "<br/>\n<input type='text' name='imgdir' value='$imgdir' size='54'>\n";
-	echo "<br/>\n";
-	echo docpop('fileformat', 'file format:');
-	echo " <select name='fileformat'>\n";
-	$filetypes = array("mrc","tif","dm3","dm2");
-	foreach ($filetypes as $ftype) {
-		$s = ($ftype==$_POST[fileformat]) ? ' selected' : '';
-		echo "<option".$s.">$ftype</option>";
-	}
-	echo "</select>\n";
-	echo "<br/>\n";
-	echo docpop('apix','pixel size (A):');
-	echo "<input type='text' name='apix' value='$apix' size='5'>\n";
-	echo "<br/>\n";
-	echo docpop('imgbin','binning in x:');
-	echo "<input type='text' name='binx' value='$binx' size='3'>\n";
-	echo "<br/>\n";
-	echo docpop('imgbin','binning in y:');
-	echo "<input type='text' name='biny' value='$biny' size='3'>\n";
-	echo "<br/>\n";
-	echo docpop('magnification', 'magnification:');
-	echo "<input type='text' name='mag' value='$mag' size='6'\n";
-	echo "<br/>\n";
-	echo docpop('defocus', 'defocus (microns):');
-	echo "<input type='text' name='df' value='$df' size='4'\n";
-	echo "<br/>\n";
-	echo docpop('kev','high tension (kV):');
-	echo "<input type='text' name='kv' value='$kv' size='4'\n";
-	echo "<br/>\n";
-	echo "<br/><br/>\n";
+	echo "<table border='0'>\n";
+
+	echo "<tr><td colspan='2'>\n";
+		echo docpop('imgpath','Directory containing images');
+		echo "<br/>\n";
+		echo "<input type='text' name='imgdir' value='$imgdir' size='45'>\n";
+	echo "</td></tr>\n";
+
+	echo "<tr><td>\n";
+		echo docpop('fileformat', 'file format:');
+	echo "</td><td align='right'>\n";
+		echo " <select name='fileformat'>\n";
+		$filetypes = array("mrc","tif","dm3","dm2");
+		foreach ($filetypes as $ftype) {
+			$s = ($ftype==$_POST[fileformat]) ? ' selected' : '';
+			echo "<option".$s.">$ftype</option>";
+		}
+		echo "</select>\n";
+	echo "</td></tr>\n";
+
+	echo "<tr><td>\n";
+		echo docpop('apix','pixel size (A):');
+	echo "</td><td align='right'>\n";
+		echo "<input type='text' name='apix' value='$apix' size='5' style='text-align:center'>\n";
+	echo "</td></tr>\n";
+
+	echo "<tr><td>\n";
+		echo docpop('imgbin','binning in x:');
+	echo "</td><td align='right'>\n";
+		echo "<input type='text' name='binx' value='$binx' size='2' style='text-align:center'>\n";
+	echo "</td></tr>\n";
+
+	echo "<tr><td>\n";
+		echo docpop('imgbin','binning in y:');
+	echo "</td><td align='right'>\n";
+		echo "<input type='text' name='biny' value='$biny' size='2' style='text-align:center'>\n";
+	echo "</td></tr>\n";
+
+	echo "<tr><td>\n";
+		echo docpop('magnification', 'magnification:');
+	echo "</td><td align='right'>\n";
+		echo "<input type='text' name='mag' value='$mag' size='6' style='text-align:center'>\n";
+	echo "</td></tr>\n";
+
+
+	echo "<tr><td>\n";
+		echo docpop('defocus', 'defocus (microns):');
+	echo "</td><td align='right'>\n";
+		echo "<input type='text' name='df' value='$df' size='4' style='text-align:center'>\n";
+	echo "</td></tr>\n";
+
+	echo "<tr><td>\n";
+		echo docpop('kev','high tension (kV):');
+	echo "</td><td align='right'>\n";
+		echo "<input type='text' name='kv' value='$kv' size='3' style='text-align:center'>\n";
+	echo "</td></tr>\n";
+
+	echo "</table>\n";
 	echo closeRoundBorder();
 
 	echo"<tr><td align='center'>\n";
@@ -320,7 +360,7 @@ function runUploadImage() {
 		$command.="--biny=$biny ";
 		$command.="--mag=$mag ";
 		$command.="--df=$df ";
-		$command.="--kev=$kv ";
+		$command.="--kv=$kv ";
 
 
 	} elseif ($batch_check) {

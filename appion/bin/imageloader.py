@@ -38,14 +38,27 @@ class ImageLoader(appionLoop2.AppionLoop):
 		"""
 		standard appionScript
 		"""
+		### id info
 		self.parser.add_option("--userid", dest="userid", type="int",
 			help="Leginon User database ID", metavar="INT")
-		self.parser.add_option("--batchparams", dest="batchscript", type="str",
-			help="File containing image parameters", metavar="FILEPATH")
 		self.parser.add_option("--scopeid", dest="scopeid", type="int",
 			help="Scope database ID", metavar="INT")
 		self.parser.add_option("--cameraid", dest="cameraid", type="int",
 			help="Camera database ID", metavar="INT")
+
+		self.parser.add_option("--dir", dest="imgdir", type="string", metavar="DIR",
+			help="directory containing MRC files for upload")
+		self.filetypes = ("mrc","dm3","dm2","tif")
+		self.parser.add_option("--filetype", dest="filetype", metavar="TYPE",
+			help="input image filetype",
+			type="choice", choices=self.filetypes, default="mrc")
+
+		self.parser.add_option("--append-session", dest="appendsession", default=True,
+			action="store_true", help="Append session to image names")
+		self.parser.add_option("--no-append-session", dest="appendsession", default=True,
+			action="store_false", help="Do not append session to image names")
+
+		### mode 1: command line params
 		self.parser.add_option("--tiltgroup", dest="tiltgroup", type="int", default=1,
 			help="Number of image per tilt series, default=1", metavar="INT")
 		self.parser.add_option("--apix", dest="apix", type="float", metavar="FLOAT",
@@ -54,18 +67,17 @@ class ImageLoader(appionLoop2.AppionLoop):
 			help="nominal defocus (negative, in microns)")
 		self.parser.add_option("--mag", dest="mag", type="int", metavar="MAG",
 			help="nominal magnification")
-		self.parser.add_option("--kev", dest="kev", type="int", metavar="INT",
+		self.parser.add_option("--kv", dest="kv", type="int", metavar="INT",
 			help="high tension (in kilovolts)")
 		self.parser.add_option("--binx", dest="binx", type="int", metavar="INT",
 			default=1, help="binning in x (default=1)")
 		self.parser.add_option("--biny", dest="biny", type="int", metavar="INT",
 			default=1, help="binning in y (default=1)")
-		self.parser.add_option("--dir", dest="imgdir", type="string", metavar="DIR",
-			help="directory containing MRC files for upload")
-		self.filetypes = ("mrc","dm3","dm2","tif")
-		self.parser.add_option("--filetype", dest="filetype", metavar="TYPE",
-			help="input image filetype",
-			type="choice", choices=self.filetypes, default="mrc")
+		### mode 2: batch script
+		self.parser.add_option("--batch", "--batchparams", dest="batchscript", type="str",
+			help="File containing image parameters", metavar="FILE")
+
+
 
 	#=====================
 	def checkConflicts(self):
@@ -73,6 +85,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		standard appionScript
 		"""
 		if self.params['batchscript'] is None:
+			#mode 1: command line params
 			if self.params['apix'] is None:
 				apDisplay.printError("If not specifying a parameter file, supply apix")
 			if self.params['df'] is None:
@@ -84,17 +97,18 @@ class ImageLoader(appionLoop2.AppionLoop):
 				apDisplay.printError("defocus must be in microns")
 			if self.params['mag'] is None:
 				apDisplay.printError("If not specifying a parameter file, supply magnification")
-			if self.params['kev'] is None:
+			if self.params['kv'] is None:
 				apDisplay.printError("If not specifying a parameter file, supply a high tension")
-			if self.params['kev'] > 1000:
-				apDisplay.printError("High tension must be in kilovolts (i.e. 120)")
+			if self.params['kv'] > 1000:
+				apDisplay.printError("High tension must be in kilovolts (e.g., 120)")
 			if self.params['imgdir'] is None:
 				apDisplay.printError("If not specifying a parameter file, specify directory containing images")
 			if not os.path.exists(self.params['imgdir']):
 				apDisplay.printError("specified path '%s' does not exist\n"%self.params['imgdir'])
-		else:
-			if not os.path.isfile(self.params["batchscript"]):
-				apDisplay.printError("Could not find Batch parameter file: %s"%(self.params["batchscript"]))
+		elif not os.path.isfile(self.params["batchscript"]):
+			#mode 2: batch script
+			apDisplay.printError("Could not find Batch parameter file: %s"%(self.params["batchscript"]))
+
 		if self.params['scopeid'] is None:
 			apDisplay.printError("Please provide a Scope database ID, e.g., --scopeid=12")
 		if self.params['cameraid'] is None:
@@ -105,10 +119,11 @@ class ImageLoader(appionLoop2.AppionLoop):
 			apDisplay.printError("Please provide a Project database ID, e.g., --projectid=42")
 		if self.params['description'] is None:
 			apDisplay.printError("Please provide a Description, e.g., --description='awesome data'")
+		if self.params['userid'] is None:
+			self.params['userid'] = self.getLeginonUserId()
 
 		#This really is not conflict checking but to set up new session.
 		#There is no place in Appion script for this special case
-
 
 		sessionq = leginon.leginondata.SessionData(name=self.params['sessionname'])
 		sessiondatas = sessionq.query()
@@ -161,6 +176,24 @@ class ImageLoader(appionLoop2.AppionLoop):
 	#=====================
 
 	#=====================
+	def getLeginonUserId(self):
+		"""
+		standard appionScript
+		"""
+		try:
+			### sometimes this crashes
+			username = os.getlogin()
+		except:
+			return None
+
+		userq = leginon.leginondata.UserData()
+		userq['username'] = username
+		userdatas = userq.query(results=1)
+		if not userdatas or len(userdatas) == 0:
+			return None
+		return userdatas[0].dbid
+
+	#=====================
 	def preLoopFunctions(self):
 		"""
 		standard appionLoop
@@ -178,60 +211,44 @@ class ImageLoader(appionLoop2.AppionLoop):
 		os.chdir(self.params['rundir'])
 		self.preLoopFunctions()
 		### start the loop
-		self.notdone=True
 		self.badprocess = False
 		self.stats['startloop'] = time.time()
-		while self.notdone:
-			apDisplay.printColor("\nBeginning Main Loop", "green")
-			imgnum = 0
-			while imgnum < len(self.batchinfo) and self.notdone is True:
-				self.stats['startimage'] = time.time()
-				info = self.readUploadInfo(self.batchinfo[imgnum])
-				imgnum += 1
-				### CHECK IF IT IS OKAY TO START PROCESSING IMAGE
-				if not self._startLoop(info):
-					continue
+		apDisplay.printColor("\nBeginning Main Loop", "green")
+		imgnum = 0
+		while imgnum < len(self.batchinfo):
+			self.stats['startimage'] = time.time()
+			info = self.readUploadInfo(self.batchinfo[imgnum])
+			imgnum += 1
+			### CHECK IF IT IS OKAY TO START PROCESSING IMAGE
+			if not self._startLoop(info):
+				continue
 
-				### set the pixel size
-				#self.params['apix'] = info['pixel size']
-				#if not self.params['background']:
-				#	apDisplay.printMsg("Pixel size: "+str(self.params['apix']))
-
-				### START any custom functions HERE:
-				imgdata,results = self.loopProcessImage(info)
-				### WRITE db data
-				if self.badprocess is False:
-					if self.params['commit'] is True:
-						if not self.params['background']:
-							apDisplay.printColor(" ==== Committing data to database ==== ", "blue")
-						self.loopCommitToDatabase(imgdata)
-						self.commitResultsToDatabase(imgdata, results)
-					else:
-						apDisplay.printWarning("not committing results to database, all data will be lost")
-						apDisplay.printMsg("to preserve data start script over and add 'commit' flag")
-						self.writeResultsToFiles(imgdata, results)
+			### START any custom functions HERE:
+			imgdata, results = self.loopProcessImage(info)
+			### WRITE db data
+			if self.badprocess is False:
+				if self.params['commit'] is True:
+					apDisplay.printColor(" ==== Committing data to database ==== ", "blue")
+					self.loopCommitToDatabase(imgdata)
+					self.commitResultsToDatabase(imgdata, results)
 				else:
-					apDisplay.printWarning("IMAGE FAILED; nothing inserted into database")
-					self.badprocess = False
+					apDisplay.printWarning("not committing results to database, all data will be lost")
+					apDisplay.printMsg("to preserve data start script over and add 'commit' flag")
+					self.writeResultsToFiles(imgdata, results)
+			else:
+				apDisplay.printWarning("IMAGE FAILED; nothing inserted into database")
+				self.badprocess = False
 
-				### FINISH with custom functions
+			### FINISH with custom functions
 
-				self._writeDoneDict(imgdata['filename'])
+			self._writeDoneDict(imgdata['filename'])
 
-				if os.getloadavg()[0] > 2.0:
-					apDisplay.printMsg("Load average is high "+str(round(os.getloadavg()[0],2)))
-					time.sleep(10)
+			load = os.getloadavg()[0]
+			if load > 2.0:
+				apDisplay.printMsg("Load average is high %.2f"%(load))
+				time.sleep(load)
 
-				self._printSummary()
-
-				if self.params['limit'] is not None and self.stats['count'] > self.params['limit']:
-					apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
-
-				#END LOOP OVER IMAGES
-			if self.notdone is True:
-				#self.notdone = self._waitForMoreImages()
-				self.notdone = False
-			#END NOTDONE LOOP
+			self._printSummary()
 		self.postLoopFunctions()
 		self.close()
 
@@ -259,7 +276,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			return False
 		name = info['filename']
 		# check to see if image of the same name is already in leginon
-		imgq = leginon.leginondata.AcquisitionImageData(session=self.session,filename=name)
+		imgq = leginon.leginondata.AcquisitionImageData(session=self.session, filename=name)
 		results = imgq.query(readimages=False)
 		if results:
 			apDisplay.printWarning("File %s.mrc exists at the destination" % name)
@@ -271,13 +288,10 @@ class ImageLoader(appionLoop2.AppionLoop):
 		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
 		#only if an image was processed last
 		if(self.stats['lastcount'] != self.stats['count']):
-			if self.params['background'] is False:
-				apDisplay.printColor( "\nStarting image "+str(self.stats['count'])\
-					+" ( skip:"+str(self.stats['skipcount'])+", remain:"\
-					+str(self.stats['imagesleft'])+" ) file: "\
-					+apDisplay.short(name), "green")
-			elif self.stats['count'] % 80 == 0:
-				sys.stderr.write("\n")
+			apDisplay.printColor( "\nStarting image "+str(self.stats['count'])\
+				+" ( skip:"+str(self.stats['skipcount'])+", remain:"\
+				+str(self.stats['imagesleft'])+" ) file: "\
+				+apDisplay.short(name), "green")
 			self.stats['lastcount'] = self.stats['count']
 			self._checkMemLeak()
 		# check to see if image has already been processed
@@ -294,7 +308,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		self.updatePixelSizeCalibration(imginfo)
 		imgdata = self.makeImageData(imginfo)
 		origimgfilepath = imginfo['original filepath']
-		newimgfilepath = os.path.join(self.params['rundir'],imgdata['filename']+".mrc")
+		newimgfilepath = os.path.join(self.params['rundir'], imgdata['filename']+".mrc")
 		apDisplay.printMsg("Copying original image to a new location: "+newimgfilepath)
 		### if input files are mrc, copy to new file location
 		if self.params['filetype'] == "mrc":
@@ -312,9 +326,13 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 	#=====================
 	def publish(self,data):
+		"""
+		sinedon already does this check, so this is redundant
+		"""
 		results = data.query(readimages=False)
 		if not results:
-			data.insert()
+			if self.params['commit'] is True:
+				data.insert()
 			return data
 		return results[0]
 
@@ -336,7 +354,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 			raise RuntimeError('Cannot link session, not connected to database.')
 		projectsession = leginon.project.ProjectExperiment(projectid, sessiondata['name'])
 		experiments = self.projectdata.getProjectExperiments()
-		experiments.insert([projectsession.dumpdict()])
+		if self.params['commit'] is True:
+			experiments.insert([projectsession.dumpdict()])
 
 	#=====================
 	def readBatchUploadInfo(self):
@@ -375,15 +394,15 @@ class ImageLoader(appionLoop2.AppionLoop):
 		if not upfiles:
 			apDisplay.printError("No images for upload in '%s'"%self.params['imgdir'])
 		upfiles.sort()
-		for f in upfiles:
-			fname = os.path.abspath(f)
-			apix = str(self.params['apix'])+"e-10"
-			binx = str(self.params['binx'])
-			biny = str(self.params['biny'])
-			mag = str(self.params['mag'])
-			df = str(self.params['df'])+"e-6"
-			ht = str(self.params['kev']*1000)
-			cols = [fname,apix,binx,biny,mag,df,ht]
+		for upfile in upfiles:
+			fname = os.path.abspath(upfile)
+			apix = "%.4e"%(self.params['apix']*1e-10)
+			binx = "%d"%(self.params['binx'])
+			biny = "%d"%(self.params['biny'])
+			mag =  "%d"%(self.params['mag'])
+			df =   "%.4e"%(self.params['df']*1e-6)
+			ht =   "%d"%(self.params['kv']*1000)
+			cols = [fname, apix, binx, biny, mag, df, ht]
 			batchinfo.append(cols)
 		return batchinfo
 
@@ -408,32 +427,32 @@ class ImageLoader(appionLoop2.AppionLoop):
 			# add other items in the dictionary and set to instrument in the function
 			# setInfoToInstrument if needed
 		except:
-			#self.logger.exception('Bad batch file parameters')
-			raise
+			apDisplay.printError("Bad batch file parameters")
+
 		if not os.path.isfile(uploadedInfo['original filepath']):
 			apDisplay.printWarning("Original File %s does not exist" % uploadedInfo['original filepath'])
 			apDisplay.printWarning("Skip Uploading")
 			return None
-		else:
-			uploadedInfo['filename'] = self.setNewFilename(uploadedInfo['original filepath'])
-			newimgfilepath = os.path.join(self.params['rundir'],uploadedInfo['filename']+".tmp.mrc")
-			### convert to mrc in new session directory if not mrc:
-			if self.params['filetype'] != "mrc":
-				if not os.path.isfile(newimgfilepath):
-					emancmd = "proc2d %s %s edgenorm flip mrc"%(uploadedInfo['original filepath'], newimgfilepath)
-					apEMAN.executeEmanCmd(emancmd)
-					if not os.path.exists(newimgfilepath):
-						apDisplay.printError("image conversion to mrc did not execute properly")
-				uploadedInfo['original filepath'] = newimgfilepath
-			tmpimage = mrc.read(uploadedInfo['original filepath'])
-			shape = tmpimage.shape
-			uploadedInfo['dimension'] = {'x':shape[1],'y':shape[0]}
+
+		uploadedInfo['filename'] = self.setNewFilename(uploadedInfo['original filepath'])
+		newimgfilepath = os.path.join(self.params['rundir'],uploadedInfo['filename']+".tmp.mrc")
+		### convert to mrc in new session directory if not mrc:
+		if self.params['filetype'] != "mrc":
+			if not os.path.isfile(newimgfilepath):
+				emancmd = "proc2d %s %s edgenorm flip mrc"%(uploadedInfo['original filepath'], newimgfilepath)
+				apEMAN.executeEmanCmd(emancmd)
+				if not os.path.exists(newimgfilepath):
+					apDisplay.printError("image conversion to mrc did not execute properly")
+			uploadedInfo['original filepath'] = newimgfilepath
+		tmpimage = mrc.read(uploadedInfo['original filepath'])
+		shape = tmpimage.shape
+		uploadedInfo['dimension'] = {'x':shape[1],'y':shape[0]}
 		uploadedInfo['session'] = self.session
 		uploadedInfo['pixel size'] = uploadedInfo['unbinned pixelsize']*uploadedInfo['binning']['x']
 		return uploadedInfo
 
 	#=====================
-	def setNewFilename(self,original_filepath):
+	def setNewFilename(self, original_filepath):
 		keep_old_name = True
 		if keep_old_name:
 			fullname = os.path.basename(original_filepath)
@@ -442,7 +461,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 				name = fullname[:found]
 			else:
 				name = fullname
-		else:	
+		else:
 			imgq = leginon.leginondata.AcquisitionImageData(session=self.session)
 			results = imgq.query(readimages=False)
 			if results:
@@ -450,6 +469,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 			else:
 				imgcount = 0
 			name =  self.params['sessionname']+'_%05dupload' % (imgcount+1)
+		if self.params['appendsession'] is True:
+			name = self.params['sessionname']+"_"+name
 		return name
 
 	#=====================
