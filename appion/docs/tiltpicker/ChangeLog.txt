@@ -24,7 +24,9 @@ FEATURES:
  *	Users can now reject the results from DoG picker if the picks were bad
  * A dialog asks for confirmation to reset or clear parameters
  *	Added TiltPick2Spi.py program to split single TiltPicker file into 3 spider files
-
+ *	Changed default shapes to differently sized circles, this is customizable on command line
+ * Added more dialogs and checking to prevent user error
+ * Better documentation in docs/USAGE.txt
 
 v1.0	-- Jan 22, 2009
  *	Better output file writing; completely rewritten
