@@ -93,13 +93,15 @@ h2. STEP BY STEP TUTORIAL:
 ----
 
 * DoG pick particles
-** Measure particle size using ruler tool, zoom in to get best value
-** Run DoG picker with wrong contrast
-** Reject picks
+** Measure particle size using ruler tool (at top), Use 1X zoom in to get accurate value
+** Sometimes it is best to use a 10% lower estimate for the diameter, e.g., use 30 if you measure 34
+** You can run DoG picker with wrong contrast and reject picks
 ** Run DoG picker with correct contrast
 ** Show terminal
 ** Accept picks
+** If not enough picks were made lower the threshold
 ** Look at DoG map images
+** If the peaks are not crisp dot and more like fuzzy balls, try reducing the particle diameter
 
 ----
 
