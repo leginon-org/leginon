@@ -1,9 +1,13 @@
-v2.0 -- March XX, 2010
+v2.0 -- April XX, 2010
+
 NOTES:
+
  TiltPicker bugs are now tracked via the AMI redmine server, visit
  http://ami.scripps.edu/redmine/projects/tiltpicker/
  to file any bugs
+
 BUGS:
+
  *	Particle picking outside image area is now not allowed
  *	Made sure all functions are available from the top menu
  *	When saving a file, it checks the extension and adds one if it does not exist
@@ -12,7 +16,9 @@ BUGS:
  *	Fixed reversal of tilt axis angles
  *	Fixed improper print of DoG picker particle contrast messages on command line.
  *	Faster polygon removal
+
 FEATURES:
+
  *	Added transfer picks option (Alt-X)
  *	Added complete features for DoG picker:
 	- specify multiple size
@@ -29,6 +35,7 @@ FEATURES:
  * Better documentation in docs/USAGE.txt
 
 v1.0	-- Jan 22, 2009
+
  *	Better output file writing; completely rewritten
  *	Can now both read and write SPIDER, Text and Pickle files
  *	Add all button the menus at the top
@@ -47,9 +54,11 @@ v1.0	-- Jan 22, 2009
   DOI: http://dx.doi.org/10.1016/j.jsb.2009.01.004
 
 v0.9.1	-- May 22, 2008
+
  *	Fixed bug when saving files of uneven number of particles
 
 v0.9	-- May 21, 2008
+
  *	Added aligned x,y to txt format
  *	Removed radermacher module requirement, but still recommended
  *	Removed numextension module requirement
@@ -64,6 +73,7 @@ v0.9	-- May 21, 2008
  *	Fixed overlap import to database
 
 v0.8	-- Feb 1, 2008
+
  *	Removed 'from gui.wx', should fix some importing bugs
  *	Reset mask with reset button
  *	Add DoG auto picking (experimental)
@@ -81,6 +91,7 @@ v0.8	-- Feb 1, 2008
  *	Bad picks shows unmatched particles
 
 v0.7	-- Dec 5, 2007
+
  *	Added FAQ based on emails I have received
  *	Add error values to text file output
  *	Auto-save feature to prevent against crashing
@@ -90,30 +101,36 @@ v0.7	-- Dec 5, 2007
  *	Fix for error values in text file
 
 v0.6.4	-- Nov 27, 2007
+
  *	Removed requirement for apVersion from apParam
 
 v0.6.3	-- Nov 27, 2007
+
  *	Removed requirement for sinedon and sinedon.cfg from apParam
  *	Changed gamma and phi angles to agree with WEB
  *	Fixed mask regions for non-square images
  *	Remove save buttons from bottom button row to make room for future buttons
 
 v0.6.2	-- Nov 20, 2007
+
  *	Fixed reading of JPEG, PNG, TIFF images
  *	Clean up help function
  *	Created ChangeLog file
 
 v0.6.1	-- Nov 19, 2007
+
  *	Fix for module installations
  *	Created INSTALL file
  *	Added Apache 2.0 LICENSE file
  *	Ctrl-A does 'apply' NOT 'save as'
 
 v0.6	-- Nov 7, 2007
+
  *	Major feature changes
  *	Use optparse for command line parsing
  *	Fix SPIDER commenting
  *	Allow adjusting of icon shapes & sizes
 
 v0.5	-- Oct 2, 2007
+
  *	First full-featured release
