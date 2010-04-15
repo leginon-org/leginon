@@ -510,6 +510,45 @@ function getProjectFromExpId($expId) {
   return $projectId;
 }
 
+function getProjectId() {
+/*
+** Complicated way to get the project id
+*/
+	if ($_GET['expId']) {
+		$projectid = getProjectFromExpId($_GET['expId']);
+		$_SESSION['projectId'] = $projectid;
+
+	} elseif ($_GET['projectId']) {
+		$projectid = trim($_GET['projectId']);
+		$_SESSION['projectId'] = $projectid;
+
+	} elseif ($_GET['projectid']) {
+		$projectid = trim($_GET['projectid']);
+		$_SESSION['projectId'] = $projectid;
+
+	} elseif ($_GET['pId']) {
+		$projectid = trim($_GET['pId']);
+		$_SESSION['projectId'] = $projectid;
+
+	} elseif ($_POST['projectId']) {
+		$projectid = trim($_POST['projectId']);
+		$_SESSION['projectId'] = $projectid;
+
+	} elseif ($_POST['projectid']) {
+		$projectid = trim($_POST['projectid']);
+		$_SESSION['projectId'] = $projectid;
+
+	} elseif ($_SESSION['projectId']) {
+		$projectid = trim($_SESSION['projectId']);
+		$_SESSION['projectId'] = $projectid;
+	}
+
+	if ($projectid)
+		$_SESSION['projectId'] = $projectid;
+
+	return $projectid;
+};
+
 // --- Set sessionId
 function getSessionList($projectId,$sessionId){
 	$projectdata = new project();
