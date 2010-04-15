@@ -522,10 +522,6 @@ function getProjectId() {
 		$projectid = trim($_GET['projectId']);
 		$_SESSION['projectId'] = $projectid;
 
-	} elseif ($_GET['projectid']) {
-		$projectid = trim($_GET['projectid']);
-		$_SESSION['projectId'] = $projectid;
-
 	} elseif ($_GET['pId']) {
 		$projectid = trim($_GET['pId']);
 		$_SESSION['projectId'] = $projectid;
