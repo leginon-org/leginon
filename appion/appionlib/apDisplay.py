@@ -212,14 +212,14 @@ def printDataBox(labellist,numlist,typelist=None):
 	 or ( typelist!=None and len(typelist) != len(numlist) ) ):
 		print len(labellist)," != ",len(numlist)," != ",len(typelist)
 		printError("printDataBox() list lengths are off")
-	print _headerStr(labellist)
+	sys.stderr.write(_headerStr(labellist)+"\n")
 	labelstr = " "
 	for lab in labellist:
 		labelstr += "| "+lab+" "
 		if len(lab) < 5:
 			for i in range(5-len(lab)):
 				labelstr += " "
-	print labelstr+"|"
+	sys.stderr.write(labelstr+"|\n")
 
 	datastr = " "
 	for i in range(len(labellist)):
@@ -243,11 +243,9 @@ def printDataBox(labellist,numlist,typelist=None):
 			for i in range(pad):
 				datastr += " "
 		datastr += " "
-	print datastr+"|"
+	sys.stderr.write(datastr+"|\n")
+	sys.stderr.write(_headerStr(labellist)+"\n")
 
-	print _headerStr(labellist)
-
-	
 def _headerStr(labellist):
 	headstr = " "
 	for lab in labellist:

@@ -136,7 +136,7 @@ class aceLoop(appionLoop2.AppionLoop):
 			help="display, default=1", metavar="#")
 		self.parser.add_option("--stig", dest="stig", type="int", default=0,
 			help="stig, default=0", metavar="#")
-		self.parser.add_option("--nominal", dest="nominal", 
+		self.parser.add_option("--nominal", dest="nominal", type="float",
 			help="nominal")
 		self.parser.add_option("--newnominal", dest="newnominal", default=False,
 			action="store_true", help="newnominal")
