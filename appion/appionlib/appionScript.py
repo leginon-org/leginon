@@ -207,6 +207,10 @@ class AppionScript(object):
 		hostq['ip'] = apParam.getHostIP()
 		hostq['system'] = apParam.getSystemName()
 		hostq['distro'] = apParam.getLinuxDistro()
+		hostq['nproc'] = apParam.getNumProcessors()
+		hostq['memory'] = apParam.getTotalMemory()
+		hostq['cpu_vendor'] = apParam.getCPUVendor()
+		hostq['gpu_vendor'] = apParam.getGPUVendor()
 		hostq['arch'] = apParam.getMachineArch()
 
 		progrunq = appiondata.ScriptProgramRun()

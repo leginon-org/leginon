@@ -68,6 +68,10 @@ class ScriptHostName(Data):
 			('system', str),
 			('distro', str),
 			('arch', str),
+			('nproc', int),
+			('memory', int),
+			('cpu_vendor', str),
+			('gpu_vendor', str),
 		)
 	typemap = classmethod(typemap)
 

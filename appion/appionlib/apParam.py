@@ -94,6 +94,11 @@ def getHostname():
 	return host
 
 #=====================
+def getTotalMemory():
+	from pyami import mem
+	return mem.total()
+
+#=====================
 def getSystemName():
 	try:
 		system = os.uname()[0].lower()
@@ -102,15 +107,81 @@ def getSystemName():
 	return system
 
 #=====================
+def getCPUVendor():
+	if not os.path.exists('/proc/cpuinfo'):
+		return None
+	f = open('/proc/cpuinfo', 'r')
+	vendor = None
+	for line in f:
+		if 'vendor_id' in line:
+			if 'Intel' in line:
+				vendor = 'Intel'
+				break
+			elif 'AMD' in line:
+				vendor = 'AMD'
+				break
+			elif ':' in line:
+				bits = line.split(':')
+				vendor = bits[1].strip()
+	f.close()
+	return vendor
+
+#=====================
+def getGPUVendor():
+	cmd = "/sbin/lspci"
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc.wait()
+	lines = proc.stdout.readlines()
+	vendor = None
+	for line in lines:
+		if 'VGA compatible controller:' in line:
+			sline = line.strip()
+			bits = sline.split(':')
+			if len(bits) < 3:
+				continue
+			vendor = bits[2].strip()
+			if vendor.lower().startswith('nvidia'):
+				vendor = 'nVidia'
+			elif vendor.lower().startswith('ati'):
+				vendor = 'ATI'
+			elif vendor.lower().startswith('matrox'):
+				vendor = 'Matrox'
+			elif vendor.lower().startswith('intel'):
+				vendor = 'Intel'
+			else:
+				vendor = re.sub(' .*', '', vendor)
+	return vendor
+
+#=====================
 def getLinuxDistro():
+	### redhat only
 	flavfile = "/etc/redhat-release"
-	try:
+	if os.path.exists(flavfile):
 		f = open(flavfile, "r")
 		flavor = f.readline().strip()
 		f.close()
-	except:
-		flavor = None
-	return flavor
+		return flavor
+
+	### more general at least ubuntu/redhat
+	flavfile = "/etc/issue"
+	if os.path.exists(flavfile):
+		f = open(flavfile, "r")
+		flavor = f.readline().strip()
+		f.close()
+		return flavor
+
+	### more general at least ubuntu/redhat
+	cmd = "lsb_release -d"
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc.wait()
+	descript = proc.stdout.readline().strip()
+	if descript:
+		bits = descript.split('\t')
+		if len(bits) > 1:
+			return bits[1].strip()
+
+	### fall back
+	return None
 
 #=====================
 def getMachineArch():
@@ -398,9 +469,14 @@ def getRgbFile(msg=True):
 
 #=====================
 def getNumProcessors(msg=True):
-	proc = subprocess.Popen("cat /proc/cpuinfo | grep processor", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-	proc.wait()
-	nproc = len(proc.stdout.readlines())
+	if not os.path.exists('/proc/cpuinfo'):
+		return None
+	f = open('/proc/cpuinfo', 'r')
+	nproc = 0
+	for line in f:
+		if line.startswith('processor'):
+			nproc += 1
+	f.close()
 	if msg is True:
 		apDisplay.printMsg("Found "+str(nproc)+" processors on this machine")
 	return nproc
