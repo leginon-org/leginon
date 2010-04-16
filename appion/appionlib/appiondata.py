@@ -438,7 +438,7 @@ class ApStackData(Data):
 		return Data.typemap() + (
 			#('stackPath', str),
 			('path', ApPathData),
-			('name' , str),
+			('name', str),
 			('description', str),
 			('hidden', bool),
 			('oldstack', ApStackData),
@@ -455,7 +455,7 @@ class ApRunsInStackData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('stack', ApStackData),
-			('stackRun' , ApStackRunData),
+			('stackRun', ApStackRunData),
 		)
 	typemap = classmethod(typemap)
 
@@ -499,7 +499,7 @@ class ApSyntheticStackParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('modelid', ApInitialModelData),
-			('boxsize' , int),
+			('boxsize', int),
 			('apix', float),
 			('projcount', int),
 			('projstdev', float),
