@@ -15,7 +15,7 @@ if (empty($projectId) || !($project->checkProjectExistsbyId($projectId))) {
 	$name = $curproject['Name'];
 	$category = $curproject['Category'];
 	$funding = $curproject['Funding'];
-	$short_description = $curproject['ReducedDescription'];
+	$short_description = $curproject['Title'];
 	$long_description = $curproject['Description'];
 	
 	$title='- update project: '.$name;
