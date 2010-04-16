@@ -119,4 +119,33 @@ if __name__ == "__main__":
 		appiondb.executeCustomSQL(updateq)
 	### link to stackParams via StackRun via RunsInStack to get bin, boxSize
 
+	#===================
+	# appion fields with spaces
+	#===================
+	appiondb.renameColumn('ApMaskMakerParamsData', 'mask type', 'mask_type')
+	appiondb.renameColumn('ApMaskMakerParamsData', 'region diameter', 'region_diameter')
+	appiondb.renameColumn('ApMaskMakerParamsData', 'edge blur', 'edge_blur')
+	appiondb.renameColumn('ApMaskMakerParamsData', 'edge low', 'edge_low')
+	appiondb.renameColumn('ApMaskMakerParamsData', 'edge high', 'edge_high')
+	appiondb.renameColumn('ApMaskMakerParamsData', 'region std', 'region_std')
+	appiondb.renameColumn('ApMaskMakerParamsData', 'convex hull', 'convex_hull')
+
+	appiondb.renameColumn('ApInitialModelData', 'original density', 'original_density')
+	appiondb.renameColumn('ApInitialModelData', 'original model', 'original_model')
+
+	appiondb.renameColumn('ApProtomoParamsData', 'series name', 'series_name')
+
+	appiondb.renameColumn('ApProtomoAlignerParamsData', 'refine cycle', 'refine_cycle')
+	appiondb.renameColumn('ApProtomoAlignerParamsData', 'good cycle', 'good_cycle')
+	appiondb.renameColumn('ApProtomoAlignerParamsData', 'good start', 'good_start')
+	appiondb.renameColumn('ApProtomoAlignerParamsData', 'good end', 'good_end')
+
+	appiondb.renameColumn('ApTomoAlignerParamsData', 'refine cycle', 'refine_cycle')
+	appiondb.renameColumn('ApTomoAlignerParamsData', 'good cycle', 'good_cycle')
+	appiondb.renameColumn('ApTomoAlignerParamsData', 'good start', 'good_start')
+	appiondb.renameColumn('ApTomoAlignerParamsData', 'good end', 'good_end')
+
+	appiondb.renameColumn('ApTomoAvgParticleData', 'aligned particle', 'aligned_particle')
+	appiondb.renameColumn('ApTomoAvgParticleData', 'z shift', 'z_shift')
+
 
