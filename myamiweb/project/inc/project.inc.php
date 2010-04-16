@@ -334,12 +334,13 @@ class project {
 	function getProjects($order="",$privilege_level=1){
 		$userId = getLoginUserId();
 		$q='select p.projectId, p.name, p.short_description from projects p';
-		if ($privilege_level <= 2 and $userId)
+		if ($privilege_level <= 2 and $userId !== true and $userId) {
 			$q .= " left join projectowners o "
 						."on o.`REF|projects|project` = p.`projectId` "
 						."left join ".DB_LEGINON.".UserData u "
 						."on u.`DEF_id` = o.`REF|leginondata|UserData|user` "
 						."where u.`DEF_id` = ".$userId." ";
+		}
 		if ($order)
 			$q .= " order by p.name ";
 		return $this->mysql->getSQLResult($q);

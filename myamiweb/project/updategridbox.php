@@ -1,8 +1,8 @@
 <?php
-require "inc/project.inc.php";
-require "inc/util.inc";
-require "inc/gridbox.inc.php";
-require "inc/mysql.inc";
+require_once "inc/project.inc.php";
+require_once "inc/util.inc";
+require_once "inc/gridbox.inc.php";
+require_once "inc/mysql.inc";
 $gridbox = new gridbox();
 $boxtypes = $gridbox->getBoxTypes();
 // print_r($boxtypes);

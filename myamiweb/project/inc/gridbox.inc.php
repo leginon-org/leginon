@@ -6,7 +6,7 @@ function blank() {
 class gridbox {
 
 	function gridbox($mysql=""){
-		$this->mysql = ($mysql) ? $mysql : new mysql(PRJ_DB_HOST, PRJ_DB_USER, PRJ_DB_PASS, PRJ_DB);
+		$this->mysql = ($mysql) ? $mysql : new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 	}
 
 	function updateGridBox($gridboxId, $label, $boxtypeId, $container) {
@@ -141,7 +141,7 @@ class tray extends abstractgridbox {
 	var $gridtype='tgb';
 
 	function tray($size="") {
-		$this->mysql = new mysql(PRJ_DB_HOST, PRJ_DB_USER, PRJ_DB_PASS, PRJ_DB);
+		$this->mysql = new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 		$this->size=$size;
 		$this->setSize($size);
 		$coords[] = array ($this->org_x, $this->org_y );
@@ -300,7 +300,7 @@ class drawgridbox extends abstractgridbox {
 	var $gridtype='gb';
 
 	function drawgridbox($size="") {
-		$this->mysql = new mysql(PRJ_DB_HOST, PRJ_DB_USER, PRJ_DB_PASS, PRJ_DB);
+		$this->mysql = new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 
 		$this->size=$size;
 		$this->setSize($size);
@@ -442,7 +442,7 @@ class gridboxcryo extends abstractgridbox {
 	var $offYfont=20;
 
 	function gridboxcryo() {
-		$this->mysql = new mysql(PRJ_DB_HOST, PRJ_DB_USER, PRJ_DB_PASS, PRJ_DB);
+		$this->mysql = new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 		$coords[] = array ($this->org_x_1, $this->org_y_1);
 		for ($i=0; $i<$this->nbgrids; $i++) {
 			$x = ($i==0) ? $coords[0][0] : $x;

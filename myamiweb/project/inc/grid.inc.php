@@ -2,7 +2,7 @@
 class grid extends abstractgridbox {
 
 	function grid($mysql=""){
-		$this->mysql = ($mysql) ? $mysql : new mysql(PRJ_DB_HOST, PRJ_DB_USER, PRJ_DB_PASS, PRJ_DB);
+		$this->mysql = ($mysql) ? $mysql : new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 	}
 
 	function format_date($mdy) {

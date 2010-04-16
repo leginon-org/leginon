@@ -1,8 +1,8 @@
 <?php
-require "inc/project.inc.php";
-require "inc/leginon.inc";
-require "inc/gridbox.inc.php";
-require "inc/grid.inc.php";
+require_once "inc/project.inc.php";
+require_once "inc/leginon.inc";
+require_once "inc/gridbox.inc.php";
+require_once "inc/grid.inc.php";
 
 $grid = new grid();
 $gridboxdata = new gridbox();
