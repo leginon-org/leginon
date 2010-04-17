@@ -20,11 +20,13 @@ class ScriptProgramRun(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('runname', str),
+			('revision', str),
 			('progname', ScriptProgramName),
 			('username', ScriptUserName),
 			('hostname', ScriptHostName),
 			('rundir', ApPathData),
 			('job', ApClusterJobData),
+			('appion_path', ApPathData),
 		)
 	typemap = classmethod(typemap)
 
