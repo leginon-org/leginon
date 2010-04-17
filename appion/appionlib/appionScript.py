@@ -22,6 +22,7 @@ from appionlib import apWebScript
 #leginon
 import sinedon
 from pyami import mem
+from pyami import version
 
 #=====================
 #=====================
@@ -220,6 +221,9 @@ class AppionScript(object):
 		progrunq['hostname'] = hostq
 		progrunq['rundir'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		progrunq['job'] = self.getClusterJobData()
+		progrunq['revision'] = version.getSubverionRevision()
+		appiondir = apParam.getAppionDirectory()
+		progrunq['appion_path'] = appiondata.ApPathData(path=os.path.abspath(appiondir))
 
 		for paramname in self.params.keys():
 			paramnameq = appiondata.ScriptParamName()
