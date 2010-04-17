@@ -19,6 +19,10 @@ class DogPicker(appionScript.AppionScript):
 	def uploadScriptData(self):
 		return
 
+	#=====================
+	def setupRunDirectory(self):
+		return
+
 	#=================
 	def setupParserOptions(self):
 		"""
