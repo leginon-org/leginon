@@ -17,6 +17,14 @@ class DogPicker(appionScript.AppionScript):
 	def setupRunDirectory(self):
 		return
 
+	#=====================
+	def close(self):
+		return
+
+	#=====================
+	def __del__(self):
+		return
+
 	#=================
 	def setupParserOptions(self):
 		"""
@@ -67,9 +75,7 @@ class DogPicker(appionScript.AppionScript):
 		self.params["overlapmult"] = 1.5
 		self.params["kfactor"] = 1.1
 		self.params["bin"] = 1
-
-	#=====================
-	def setRunDir(self):
+		self.params["doubles"] = False
 		self.params['rundir'] = os.getcwd()
 
 	#=================
@@ -110,7 +116,7 @@ class DogPicker(appionScript.AppionScript):
 			peaktree = apPeaks.findPeaksInMap(dogmap, thresh=self.params['thresh'],
 				pixdiam=pixdiam, count=count, olapmult=self.params["overlapmult"],
 				maxpeaks=self.params["maxpeaks"], maxsizemult=self.params["maxsizemult"],
-				maxthresh=self.params["maxthresh"], msg=True, bin=1)
+				msg=True, bin=1)
 
 			### remove peaks from areas near the border of the image
 			peaktree = apPeaks.removeBorderPeaks(peaktree, pixdiam, 
@@ -126,19 +132,19 @@ class DogPicker(appionScript.AppionScript):
 
 		### merge list in a single set of particle picks
 		imgdata = { 'filename': self.params['image'], }
-		peaktree = apPeaks.mergePeakTrees(imgdata, peaktreelist, self.params)
+		peaktree = apPeaks.mergePeakTrees(imgdata, peaktreelist, self.params, pikfile=False)
 
 		### throw away particles above maxthresh
 		precount = len(peaktree)
-		peaktree = maxThreshPeaks(peaktree, maxthresh)
+		peaktree = apPeaks.maxThreshPeaks(peaktree, self.params['maxthresh'])
 		postcount = len(peaktree)
 		apDisplay.printMsg("Filtered %d particles above max threshold %.2f"
-			%(precount-postcount,maxthresh))
+			%(precount-postcount,self.params['maxthresh']))
 
 		### create final images with pick locations
-		mapfile = "%s-finalmap.jpg"%(rootname, count)
+		mapfile = "%s-finalmap.jpg"%(rootname)
 		apPeaks.createPeakMapImage(peaktree, dogmap, imgname=mapfile, pixrad=pixrad)
-		imgfile = "%s-finalpicks.jpg"%(rootname, count)
+		imgfile = "%s-finalpicks.jpg"%(rootname)
 		apPeaks.subCreatePeakJpeg(imgarray, peaktree, pixrad, imgfile, bin=1)
 
 		### write output file
