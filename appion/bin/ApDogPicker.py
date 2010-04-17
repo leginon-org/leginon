@@ -1,18 +1,12 @@
 #!/usr/bin/env python
 
-from optparse import OptionParser
-import sys
-#PIL
-import Image
-import ImageDraw
+import os
 #appion
 from appionlib import appionScript
-from appionlib import apImage
 from appionlib import apDog
 from appionlib import apPeaks
 from appionlib import apDisplay
-from appionlib import apParam
-import math
+from pyami import mrc
 
 class DogPicker(appionScript.AppionScript):
 	#=====================
@@ -101,7 +95,7 @@ class DogPicker(appionScript.AppionScript):
 		where all the processing is done
 		"""
 
-		imgarray = apImage.mrcToArray(self.params['image'])
+		imgarray = mrc.read(self.params['image'])
 		dogmaps = apDog.diffOfGaussParam(imgarray, self.params)
 		rootname = os.path.splitext(self.params['image'])[0]
 		pixdiam = self.params['diam']/self.params['apix']
