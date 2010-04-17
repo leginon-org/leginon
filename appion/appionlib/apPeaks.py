@@ -123,7 +123,7 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 	return peaktree
 
 
-def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bin=1.0, msg=True, masxthresh=None):
+def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bin=1.0, msg=True):
 	### drop all values below zero
 	ccmap = numpy.where(ccmap<0, 0.0, ccmap)
 
