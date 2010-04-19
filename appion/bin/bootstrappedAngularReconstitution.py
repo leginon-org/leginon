@@ -619,7 +619,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		if self.params['nproc'] > 1:
 			xmippcmd1 += " -thr "+str(self.params['nproc'])
 		apParam.runCmd(xmippcmd1, package="Xmipp")
-		xmippcmd2 = "xmipp_ml_tomo -i volumes.sel -o max_like_alignment/nref%d_10deg -nref %d -doc max_like_alignment/nref%d_15deg_it000015.doc -keep_angles -iter 5 -ang 10 -ang_search 50 -maxres 0.35 -perturb" \
+		xmippcmd2 = "xmipp_ml_tomo -i volumes.sel -o max_like_alignment/nref%d_10deg -nref %d -doc max_like_alignment/nref%d_15deg_it000005.doc -keep_angles -iter 5 -ang 10 -ang_search 50 -maxres 0.35 -perturb" \
 					% (self.params['nref'], self.params['nref'], self.params['nref'])
 		if self.params['nproc'] > 1:
 			xmippcmd2 += " -thr "+str(self.params['nproc'])
