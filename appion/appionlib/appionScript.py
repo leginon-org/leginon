@@ -352,6 +352,8 @@ class AppionScript(object):
 	#=====================
 	def parsePythonPath(self):
 		pythonpath = os.environ.get("PYTHONPATH")
+		if pythonpath is None:
+			return
 		paths = pythonpath.split(":")
 		leginons = {}
 		appions = {}
