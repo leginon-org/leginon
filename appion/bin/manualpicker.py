@@ -415,7 +415,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 
 		#set vital stats
 		self.app.vitalstats.SetLabel("Vital Stats: Image "+str(self.stats['count'])
-			+" of "+str(self.stats['imagecount'])+", inserted "+str(len(targets))+" picks, "
+			+" of "+str(self.stats['imagecount'])+", inserted "+str(self.stats['peaksum'])+" picks, "
 			+" image name: "+imgdata['filename'])
 		#run the picker
 		self.app.MainLoop()
