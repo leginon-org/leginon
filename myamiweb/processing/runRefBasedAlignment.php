@@ -130,7 +130,6 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$templateForm.="<INPUT TYPE='hidden' NAME='templateid' VALUE='$templateid'>\n";
 	$templateinfo = $particle->getTemplatesFromId($templateid);
 	$stackIds = $particle->getStackIds($sessionId);
-	$refbasedIds = $particle->getRefAliIds($sessionId);
 	$alignrunsarray = $particle->getAlignStackIds($sessionId);
 	$alignruns = ($alignrunsarray) ? count($alignrunsarray) : 0;
 	$firststack = $particle->getStackParams($stackIds[0]['stackid']);
