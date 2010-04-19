@@ -8,16 +8,13 @@ class DBUpgradeTools(object):
 	#============================
 	#== PRIVATE FUNCTIONS
 	#============================
-	def __init__(self, dbname, dbconfname=None, drop=False):
-		if dbconfname is None:
-			print "setting db conf name to db name"
-			dbconfname = dbname
+	def __init__(self, confname, dbname=None, drop=False):
 		self.drop = drop
 		### get database config from sinedon.cfg
-		dbconf = dbconfig.getConfig(dbconfname)
+		dbconf = dbconfig.getConfig(confname)
 		### if database name is not config name, e.g., ap212 and appiondata
-		if dbname != dbconfname:
-			dbconf = dbconfig.setConfig(dbconfname, db=dbname)
+		if dbname is not None and dbname != confname:
+			dbconf = dbconfig.setConfig(confname, db=dbname)
 		print "\033[32mconnected to db '%s' on server '%s'\033[0m"%(dbconf['db'], dbconf['host'])
 		### connect to db
 		db = MySQLdb.connect(**dbconf)
@@ -26,9 +23,10 @@ class DBUpgradeTools(object):
 		self.debug = 1
 		self.link = 'int(20) NULL DEFAULT NULL'
 		self.int = 'int(20) NULL DEFAULT NULL' 
-		self.bool = 'tinyint(1) NULL DEFAULT NULL' 
+		self.bool = 'tinyint(1) NULL DEFAULT 0' 
 		self.str = 'text NULL DEFAULT NULL' 
-		self.float = 'double NULL DEFAULT NULL' 
+		self.float = 'double NULL DEFAULT NULL'
+		self.timestamp = 'timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP' 
 
 	#==============
 	def validTableName(self, table):
@@ -61,7 +59,7 @@ class DBUpgradeTools(object):
 		return False
 
 	#==============
-	def validColumnName(self, column):
+	def validColumnName(self, column, allowspace=False):
 		"""
 		check name of column for security reasons
 		"""
@@ -74,7 +72,7 @@ class DBUpgradeTools(object):
 		if "`" in column:
 			print "\033[31merror ` in column name\033[0m"
 			return False
-		if " " in column:
+		if not allowspace and " " in column:
 			print "\033[31merror ' ' in column name\033[0m"
 			return False
 		return True
@@ -85,9 +83,28 @@ class DBUpgradeTools(object):
 		check if column exists
 		"""
 		if self.tableExists(table) is False:
-			print "\033[31mcannot check column, table %s does not exist\033[0m"%(table)
+			if self.debug > 0:
+				print "\033[33mcannot check column, table %s does not exist\033[0m"%(table)
 			return False
-		query = "SHOW COLUMNS FROM `%s` LIKE '%s';"%(table, column)
+		query = "SHOW COLUMNS FROM `%s` WHERE Field='%s';"%(table, column)
+		if self.debug > 2:
+			print query
+		self.cursor.execute(query)
+		numrows = int(self.cursor.rowcount)
+		if numrows > 0:
+			return True
+		return False
+
+	#==============
+	def columnIndexExists(self, table, column):
+		"""
+		check if column exists
+		"""
+		if self.tableExists(table) is False:
+			if self.debug > 0:
+				print "\033[33mcannot check column, table %s does not exist\033[0m"%(table)
+			return False
+		query = "SHOW INDEX FROM  `%s` WHERE Column_name='%s';"%(table, column)
 		if self.debug > 2:
 			print query
 		self.cursor.execute(query)
@@ -145,7 +162,8 @@ class DBUpgradeTools(object):
 		if self.validTableName(table2) is False:
 			return False
 		if self.tableExists(table1) is False:
-			print "\033[31mcannot rename %s to %s, table does not exist\033[0m"%(table1, table2)
+			if self.debug > 0:
+				print "\033[33mcannot rename %s to %s, table does not exist\033[0m"%(table1, table2)
 			return
 		if self.tableExists(table2) is True:
 			print "\033[31mcannot rename %s to %s, table exists\033[0m"%(table1, table2)
@@ -171,13 +189,14 @@ class DBUpgradeTools(object):
 		"""
 		if self.validTableName(table) is False:
 			return False
-		if self.validColumnName(column1) is False:
+		if self.validColumnName(column1, allowspace=True) is False:
 			return False
 		if self.validColumnName(column2) is False:
 			return False
 
 		if self.columnExists(table, column1) is False:
-			print "\033[31mcannot rename %s to %s, column does not exist\033[0m"%(column1, column2)
+			if self.debug > 0:
+				print "\033[33mcannot rename %s to %s, column does not exist\033[0m"%(column1, column2)
 			return False
 		if self.columnExists(table, column2) is True:
 			print "\033[31mcannot rename %s to %s, column exists\033[0m"%(column1, column2)
@@ -200,7 +219,7 @@ class DBUpgradeTools(object):
 		return True
 
 	#==============
-	def addColumn(self, table, column, column_definition):
+	def addColumn(self, table, column, column_definition, index=False):
 		"""
 		add a column to a table
 		"""
@@ -209,10 +228,12 @@ class DBUpgradeTools(object):
 		if self.validColumnName(column) is False:
 			return False
 		if self.tableExists(table) is False:
-			print "\033[31mcannot add column %s, table does not exist\033[0m"%(column)
+			if self.debug > 0:
+				print "\033[33mcannot add column %s, table does not exist\033[0m"%(column)
 			return False
 		if self.columnExists(table, column) is True:
-			print "\033[31mcannot add column %s, column exists\033[0m"%(column)
+			if self.debug > 0:
+				print "\033[33mcannot add column %s, column exists\033[0m"%(column)
 			return False
 
 		query = "ALTER TABLE `%s` ADD COLUMN `%s` %s;"%(table, column, column_definition)
@@ -223,6 +244,9 @@ class DBUpgradeTools(object):
 		if self.columnExists(table, column) is False:
 			print "\033[31mfailed to add column %s\033[0m"%(column)
 			return False
+
+		if index is True:
+			self.indexColumn(table, column)
 
 		if self.debug > 0:
 			print "\033[32madded column %s\033[0m"%(column)
@@ -243,7 +267,7 @@ class DBUpgradeTools(object):
 		query += "( \n"
 		### add DEF_id and DEF_timestamp
 		query += "`DEF_id` int(20) NOT NULL auto_increment, \n"
-		query += "`DEF_timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP, \n"
+		query += "`DEF_timestamp` "+self.timestamp+", \n"
 		### set keys
 		query += "PRIMARY KEY (`DEF_id`), \n"
 		query += "KEY `DEF_timestamp` (`DEF_timestamp`) \n"
@@ -271,10 +295,11 @@ class DBUpgradeTools(object):
 			return False
 		if self.validTableName(table) is False:
 			return False
-		if self.validColumnName(column) is False:
+		if self.validColumnName(column, allowspace=True) is False:
 			return False
 		if self.columnExists(table, column) is False:
-			print "\033[31mcannot drop column %s, column does not exist\033[0m"%(column)
+			if self.debug > 0:
+				print "\033[33mcannot drop column %s, column does not exist\033[0m"%(column)
 			return False
 
 		query = "ALTER TABLE `%s` DROP COLUMN `%s` ;"%(table, column)
@@ -291,7 +316,7 @@ class DBUpgradeTools(object):
 		return True
 
 	#==============
-	def indexColumn(self, table, column):
+	def indexColumn(self, table, column, length=None):
 		"""
 		add index to a column in a table
 		"""
@@ -300,10 +325,18 @@ class DBUpgradeTools(object):
 		if self.validColumnName(column) is False:
 			return False
 		if self.columnExists(table, column) is False:
-			print "\033[31mcannot index column %s, column does not exist\033[0m"%(column)
+			if self.debug > 0:
+				print "\033[33mcannot index column %s, column does not exist\033[0m"%(column)
+			return False
+		if self.columnIndexExists(table, column) is True:
+			if self.debug > 0:
+				print "\033[33mcannot index column %s, column is already indexed\033[0m"%(column)
 			return False
 
-		query = "ALTER TABLE `%s` ADD INDEX (`%s`) ;"%(table, column)
+		if length is None:
+			query = "ALTER TABLE `%s` ADD INDEX (`%s`) ;"%(table, column)
+		else:
+			query = "CREATE INDEX %s_index%d ON %s (%s(%d)); ;"%(column, length, table, column, length)
 		if self.debug > 1:
 			print query
 		self.cursor.execute(query)
@@ -311,6 +344,23 @@ class DBUpgradeTools(object):
 		if self.debug > 0:
 			print "\033[32mindex column %s\033[0m"%(column)
 		return True
+
+	#==============
+	def getAllTables(self):
+		"""
+		get all tables in database
+		"""
+		query = "SHOW TABLES;"
+		if self.debug > 1:
+			print query
+		self.cursor.execute(query)
+		tabledatas = self.cursor.fetchall()
+		tablelist = []
+		for tabledata in tabledatas:
+			tablelist.append(tabledata[0])
+		if self.debug > 0:
+			print "\033[32mfound %d tables\033[0m"%(len(tablelist))
+		return tablelist
 
 	#============================
 	#== END CLASS
