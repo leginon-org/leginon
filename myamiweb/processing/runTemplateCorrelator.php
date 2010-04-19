@@ -439,7 +439,7 @@ function runTemplateCorrelator() {
 			$nproc = $numtemplatesused;
 		elseif ($numtemplatesused > 8)
 			$nproc = 8;
-		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'templatepicker', $testimage, False, False, $nproc);
+		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'templatecorrelator', $testimage, False, False, $nproc);
 
 		// if errors:
 		if ($sub) createTCForm("<b>ERROR:</b> $sub");
