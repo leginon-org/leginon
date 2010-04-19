@@ -70,7 +70,8 @@ class modelFromPDB(appionScript.AppionScript):
 		if self.params['pdbfile'] is not None and not os.path.isfile(self.params['pdbfile']):
 			apDisplay.printError("PDB file does not exist")
 		### PDB is case-insensitve, so make all caps for consistency
-		self.params['pdbid'] = self.params['pdbid'].upper()
+		if self.params['pdbid'] is not None:
+			self.params['pdbid'] = self.params['pdbid'].upper()
 
 		if self.params['lowpass'] is None:
 			apDisplay.printError("Enter a lowpass value")
@@ -98,7 +99,11 @@ class modelFromPDB(appionScript.AppionScript):
 	def setFileName(self, unique=False):
 		if self.params['name'] is None:
 			### assign provided name
-			basename = "pdb%s-%s"%(self.params['pdbid'], self.timestamp)
+			if self.params['pdbid'] is not None:
+				basename = "pdb%s-%s"%(self.params['pdbid'], self.timestamp)
+			else:
+				filebase = os.path.splitext(self.params['pdbfile'])[0]
+				basename = "%s-%s"%(filebase, self.timestamp)
 		else:
 			### clean up provided name
 			basename = os.path.splitext(os.path.basename(self.params['name']))[0]
