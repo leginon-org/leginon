@@ -457,6 +457,21 @@ if ($expId) {
 
 	}
 
+	/* IMAGIC Angular Reconstitution */
+	if ($aligndone >= 1 && $clusterdone >=1) {
+		$angrecondone = $particle->getAngularReconstitutionRuns($sessionId);
+		$angreconqueue = count($subclusterjobs['angrecon']['queued']);
+		$angreconrun = count($subclusterjobs['angrecon']['running']);
+		$angreconresults[] = ($angrecondone > 0) ? "<a href='angreconsummary.php?expId=$sessionId'>$angrecondone complete</a>" : '';
+		$clinesresults[] = ($clinesrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=angrecon'>$angreconrun running</a>";
+		$clinesresults[] = ($clinesqueue==0) ? "" : "$angreconqueue queued";
+		$nruns[] = array(
+			'name'=>"<a href='bootstrappedAngularReconstitution.php?expId=$sessionId'>IMAGIC Angular Reconstitution</a>",
+			'result'=>$angreconresults,
+		);
+
+	}
+
 	if ( (array)$nruns ) {
 		$data[] = array(
 			'action' => array($action, $celloption),
