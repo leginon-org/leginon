@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-
+import sys
 from sinedon import dbupgrade
 
+### warning dbemdata is hardcoded as leginon database
 
 if __name__ == "__main__":
-	appiondb = dbupgrade.DBUpgradeTools('aptest', 'appiondata', drop=True)
+	appiondb = dbupgrade.DBUpgradeTools('appiondata', 'aptest', drop=True)
 
 	#===================
 	# rename tables:
@@ -27,17 +28,10 @@ if __name__ == "__main__":
 	appiondb.renameColumn('ApRefineIterData', 
 		'REF|ApRefinementParamsData|refinementParams', 'REF|ApEmanRefineIterData|emanParams')
 	appiondb.renameColumn('ApRefineIterData', 
+		'REF|ApXmippRefineIterationParamsData|xmippRefineParams', 'REF|ApXmippRefineIterData|xmippParams')
+	appiondb.renameColumn('ApRefineIterData', 
 		'REF|ApRefinementRunData|refinementRun', 'REF|ApRefineRunData|refineRun')
 	appiondb.renameColumn('ApRefineRunData', 'name', 'runname')
-	appiondb.renameColumn('ApRefineParticleData', 'thrown_out', 'refine_keep')
-	### special: invert values
-	if appiondb.columnExists('ApRefineParticleData', 'refine_keep'):
-		updateq = ("UPDATE ApRefineParticleData AS refpart "
-			+" SET "
-			+"   refpart.`refine_keep` = MOD(IFNULL(refpart.`refine_keep`,0)+1,2), "
-			+"   refpart.`DEF_timestamp` = refpart.`DEF_timestamp` "
-		)
-		appiondb.executeCustomSQL(updateq)
 
 	#===================
 	# move columns to new table
@@ -52,7 +46,7 @@ if __name__ == "__main__":
 	if (appiondb.columnExists('ApEmanRefineIterData', 'REF|ApSymmetryData|symmetry')
 	 and appiondb.columnExists('ApEmanRefineIterData', 'mask')
 	 and appiondb.columnExists('ApEmanRefineIterData', 'imask')):
-		appiondb.addColumn('ApRefineIterData', 'REF|ApSymmetryData|symmetry', appiondb.link)
+		appiondb.addColumn('ApRefineIterData', 'REF|ApSymmetryData|symmetry', appiondb.link, index=True)
 		appiondb.addColumn('ApRefineIterData', 'mask', appiondb.int)
 		appiondb.addColumn('ApRefineIterData', 'imask', appiondb.int)
 		updateq = ("UPDATE ApRefineIterData AS refiter "
@@ -70,10 +64,57 @@ if __name__ == "__main__":
 		appiondb.dropColumn('ApEmanRefineIterData', 'imask')
 
 	#===================
+	# merge EMAN/Coran fields
+	#===================
+	if appiondb.tableExists('ApRefineIterData'):
+		appiondb.addColumn('ApRefineIterData', 'postRefineClassAverages', appiondb.str)
+		appiondb.addColumn('ApRefineIterData', 'refineClassAverages', appiondb.str)
+		updateq = ("UPDATE ApRefineIterData AS refiter "
+			+" SET "
+			+"   refiter.`postRefineClassAverages` = "
+			+" IF(refiter.`SpiCoranGoodClassAvg` IS NOT NULL, refiter.`SpiCoranGoodClassAvg`, NULL), "
+			+"   refiter.`refineClassAverages` = "
+			+" IF(refiter.`emanClassAvg` IS NOT NULL, refiter.`emanClassAvg`, refiter.`classAverage`), "
+			+"   refiter.`DEF_timestamp` = refiter.`DEF_timestamp` "
+		)
+		appiondb.executeCustomSQL(updateq)
+		appiondb.dropColumn('ApRefineIterData', 'classAverage')
+		appiondb.dropColumn('ApRefineIterData', 'SpiCoranGoodClassAvg')
+		appiondb.dropColumn('ApRefineIterData', 'emanClassAverage')
+		appiondb.dropColumn('ApRefineIterData', 'emanClassAvg')
+		appiondb.dropColumn('ApRefineIterData', 'MsgPGoodClassAvg')
+
+	if appiondb.tableExists('ApRefineParticleData'):
+		appiondb.renameColumn('ApRefineParticleData', 'coran_keep', 'postRefine_keep')
+		appiondb.renameColumn('ApRefineParticleData', 'thrown_out', 'refine_keep')
+
+		### special: invert values
+		if appiondb.columnExists('ApRefineParticleData', 'refine_keep'):
+			updateq = ("UPDATE ApRefineParticleData AS refpart "
+				+" SET "
+				+"   refpart.`refine_keep` = MOD(IFNULL(refpart.`refine_keep`,0)+1,2), "
+				+"   refpart.`DEF_timestamp` = refpart.`DEF_timestamp` "
+			)
+			appiondb.executeCustomSQL(updateq)
+		if (appiondb.columnExists('ApRefineParticleData', 'postRefine_keep') 
+		 and appiondb.columnExists('ApRefineParticleData', 'msgp_keep')):
+			updateq = ("UPDATE ApRefineParticleData AS refpart "
+				+" SET "
+				+"   refpart.`postRefine_keep` = refpart.`msgp_keep`, "
+				+"   refpart.`DEF_timestamp` = refpart.`DEF_timestamp` "
+				+" WHERE "
+				+"   refpart.`postRefine_keep` IS NULL AND refpart.`msgp_keep` IS NOT NULL "
+			)
+			appiondb.executeCustomSQL(updateq)
+		appiondb.dropColumn('ApRefineParticleData', 'msgp_keep')
+		appiondb.indexColumn('ApRefineParticleData', 'refine_keep')
+		appiondb.indexColumn('ApRefineParticleData', 'postRefine_keep')
+
+	#===================
 	# add new columns calculated from old data
 	#===================
 	### count number of iterations
-	if appiondb.addColumn('ApRefineRunData', 'num_iter', appiondb.int):
+	if appiondb.addColumn('ApRefineRunData', 'num_iter', appiondb.int, index=True):
 		"""
 		selectq = ("SELECT refrun.`DEF_id`, COUNT(refiter.`DEF_id`) FROM ApRefineRunData AS refrun "
 			+" LEFT JOIN ApRefineIterData AS refiter "
@@ -93,7 +134,7 @@ if __name__ == "__main__":
 		appiondb.executeCustomSQL(updateq)
 
 	### get boxsize
-	if appiondb.addColumn('ApStackData', 'boxsize', appiondb.int):
+	if appiondb.addColumn('ApStackData', 'boxsize', appiondb.int, index=True):
 		"""
 		selectq = ("SELECT stackparams.`boxSize`, stackparams.`bin` FROM ApStackData AS stack "
 			+" LEFT JOIN ApRunsInStackData AS runsinstack "
@@ -148,4 +189,81 @@ if __name__ == "__main__":
 	appiondb.renameColumn('ApTomoAvgParticleData', 'aligned particle', 'aligned_particle')
 	appiondb.renameColumn('ApTomoAvgParticleData', 'z shift', 'z_shift')
 
+	#===================
+	# repair misnamed ApClusterJobData job names
+	#===================
+	#selectq = "SELECT DISTINCT `jobtype` FROM `ApClusterJobData` ORDER BY `jobtype`;"
+	jobmap = {
+		'ace': 'pyace',
+		'ace2': 'pyace2',
+		'templatepicker': 'templatecorrelator',
+		'makestack': 'makestack2',
+	}
+	if appiondb.tableExists('ApClusterJobData'):
+		for key in jobmap.keys():
+			updateq = ("UPDATE ApClusterJobData AS job "
+				+" SET "
+				+("   job.`name` = '%s' "%(key))
+				+" WHERE "
+				+("   job.`name` = '%s' "%(jobmap[key]))
+			)
+			appiondb.executeCustomSQL(updateq)
+
+	#===================
+	# add index to ApStackParticleData
+	#===================
+	appiondb.indexColumn('ApParticleData', 'label', length=8)
+	appiondb.indexColumn('ApStackParticleData', 'particleNumber')
+	appiondb.indexColumn('ApAlignParticleData', 'partnum')
+	appiondb.indexColumn('ApClusteringParticleData', 'partnum')
+
+	appiondb.indexColumn('ApRefineIterData', 'iteration')
+	appiondb.indexColumn('ApCtfData', 'confidence')
+	appiondb.indexColumn('ApCtfData', 'confidence_d')
+	appiondb.indexColumn('ApPathData', 'path', length=32)
+
+	#===================
+	# index all columns named hidden
+	#===================
+	olddebug = appiondb.debug
+	appiondb.debug -= 1
+	for tablename in appiondb.getAllTables():
+		appiondb.indexColumn(tablename, 'hidden')
+		appiondb.renameColumn(tablename, 'project|projects|project', 'REF|projectdata|projects|projectid')
+		appiondb.indexColumn(tablename, 'REF|projectdata|projects|projectid')
+	appiondb.debug = olddebug
+
+	sys.exit(1)
+
+	#===================
+	# project table
+	#===================
+	projectdb = dbupgrade.DBUpgradeTools('projectdata', 'projtest', drop=True)
+	projectdb.renameColumn('projects', 'projectId', 'DEF_id')
+	projectdb.renameColumn('projects', 'timestamp', 'DEF_timestamp')
+
+	projectdb.renameColumn('projectexperiments', 'projectexperimentId', 'DEF_id')
+	projectdb.renameColumn('projectexperiments', 'projectId', 'REF|projects|projectid')
+	projectdb.addColumn('projectexperiments', 'DEF_timestamp', projectdb.timestamp, index=True)
+
+	### change session name to session id
+	projectdb.addColumn('projectexperiments', 'REF|SessionData|sessionid', projectdb.link, index=True)
+	updateq = ("UPDATE projectexperiments AS projexp "
+		+" LEFT JOIN dbemdata.SessionData AS session "
+		+"   ON session.`name` = projexp.`name` "
+		+" SET "
+		+"   projexp.`REF|SessionData|sessionid` = session.`DEF_id` "
+	)
+	projectdb.executeCustomSQL(updateq)
+	projectdb.dropColumn('projectexperiments', 'name')
+	projectdb.dropColumn('projectexperiments', 'experimentsourceId')
+
+	#===================
+	# leginon table
+	#===================
+	leginondb = dbupgrade.DBUpgradeTools('leginondata', 'dbemtest', drop=False)
+	leginondb.renameColumn('viewer_pref_image', 'id', 'DEF_id')
+	leginondb.renameColumn('viewer_pref_image', 'timestamp', 'DEF_timestamp')
+	leginondb.renameColumn('viewer_pref_image', 'sessionId', 'REF|SessionData|sessionid')
+	leginondb.renameColumn('viewer_pref_image', 'imageId', 'REF|AcquisitionImageData|imageid')
 
