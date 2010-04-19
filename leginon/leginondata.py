@@ -9,6 +9,7 @@ import sinedon.newdict
 import sinedon.data
 import os
 from pyami import weakattr
+import projectdata
 
 Data = sinedon.data.Data
 
@@ -16,7 +17,8 @@ class GroupData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
-			('description', str)
+			('description', str),
+			('privilege', projectdata.privileges),
 		)
 	typemap = classmethod(typemap)
 
