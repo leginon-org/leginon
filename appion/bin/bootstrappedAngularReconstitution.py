@@ -374,10 +374,10 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		f.write(str(self.imagicroot)+"/align/alirefs.e <<EOF > prealignClassAverages.log\n")
 		f.write("ALL\n")
 		f.write("CCF\n")
-		f.write(str(self.params['avgs'])[:-4]+"\n")
+		f.write(str(os.path.basename(self.params['avgs'])[:-4])+"\n")
 		f.write("NO\n")
 		f.write("0.99\n")
-		f.write(str(self.params['avgs'])[:-4]+"_aligned\n")
+		f.write(str(os.path.basename(self.params['avgs'])[:-4])+"_aligned\n")
 		f.write("-999.\n")
 		f.write("0.2\n")
 		f.write("-180,180\n")
@@ -1235,32 +1235,6 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 
 		##############################################		Set Initial Parameters		##############################################
 
-		'''
-		
-		self.params = {}
-		rundir = "/ami/data00/appion/Dmitry_aar/test_33_70S_Frank_1000avgs_nonweighted" ; self.params['rundir'] = rundir
-		os.chdir(self.params['rundir'])
-		class_averages = os.path.join(self.params['rundir'], "templatestack8.img") ; self.params['avgs'] = class_averages
-		self.params['numpart'] = apFile.numImagesInStack(class_averages)
-		nproc = 8 ; self.params['nproc'] = nproc
-		apix = 5.73 ; self.params['apix'] = apix
-		boxsize = 64 ; self.params['boxsize'] = boxsize
-		num_volumes = 1000 ; self.params['num_volumes'] = num_volumes
-		symid = 25 ; self.params['symid'] = symid
-		nref = 1 ; self.params['nref'] = nref
-		ang_inc = 2 ; self.params['ang_inc'] = ang_inc
-		keep_ordered = 80 ; self.params['keep_ordered'] = keep_ordered
-		lp_filt = 10 ; self.params['3d_lpfilt'] = lp_filt
-		ham_win = 0.8 ; self.params['ham_win'] = ham_win
-		non_weighted_sequence = True; self.params['non_weighted_sequence'] = non_weighted_sequence
-		PCA = True ; self.params['PCA'] = PCA
-		scale = True ; self.params['scale'] = scale
-		recalculate = False ; self.params['recalculate'] = recalculate
-		preftype = "minimum" ; self.params['preftype'] = preftype
-		do_not_remove = False ; self.params['do_not_remove'] = do_not_remove
-
-		'''
-
 		### get initial parameters and copy class averages into working directory
 		if self.params['templatestackid'] is not None:
 			stackdata = appiondata.ApTemplateStackData.direct_query(self.params['templatestackid'])
@@ -1272,7 +1246,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			clsname = stackdata['avg_imagicfile']
 			self.params['apix'] = stackdata['clusterrun']['pixelsize']
 			self.params['boxsize'] = stackdata['clusterrun']['boxsize']
-		self.params['avgs'] = os.path.join(self.params['rundir'], clsname)
+		self.params['avgs'] = os.path.join(self.params['rundir'], os.path.basename(clsname))
 		shutil.copyfile(os.path.join(stackdata['path']['path'], clsname[:-4]+".hed"), self.params['avgs'][:-4]+".hed")
 		shutil.copyfile(os.path.join(stackdata['path']['path'], clsname[:-4]+".img"), self.params['avgs'][:-4]+".img")
 		apIMAGIC.copyFile(self.params['rundir'], clsname, headers=True)
@@ -1291,11 +1265,11 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			while os.path.isfile(self.params['avgs']):
 				apFile.removeStack(self.params['avgs'])
 			apParam.runCmd(emancmd, "EMAN")
+			apIMAGIC.copyFile(self.params['rundir'], os.path.basename(self.params['avgs']), headers=True)
 			
 		if self.params['prealign'] is True:
 			self.params['avgs'] = self.prealignClassAverages()
-		
-		'''
+			apIMAGIC.checkLogFileForErrors(os.path.join(self.params['rundir'], "prealignClassAverages.log"))
 		
 		##############################################		create multiple 3d0s		##############################################
 
@@ -1353,10 +1327,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		apDisplay.printColor("Aligning volumes based on 3-D ML parameters", "cyan")
 		self.align_volumes(alignparams)
 
-		'''
-
 		##############################################    Principal Component Analysis   #############################################
-		vol_doc_file = os.path.join(self.params['rundir'], "max_like_alignment", "nref1_15deg_it000005.doc")
 		alignparams = self.read_vol_doc_file(vol_doc_file)
 		apDisplay.printColor("Calculating inter-volume similarity", "cyan")
 		if self.params['PCA'] is True:
