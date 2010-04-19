@@ -263,13 +263,11 @@ function jobForm($extra=false) {
 
 
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	$reconruns = count($particle->getJobIdsFromSession($expId, 'recon'));
-	//echo $reconruns."<br/>";
+	$reconruns = count($particle->getReconIdsFromSession($expId));
 	while (glob($outdir.'*recon'.($reconruns+1))) {
-		//echo $outdir.'*recon'.($reconruns+1)."<br/>";
 		$reconruns += 1;
 	}
-	$defrunid = 'recon'.($reconruns+1);
+	$defrunid = 'emanrecon'.($reconruns+1);
 	$jobname = ($_POST['jobname']) ? $_POST['jobname'] : $defrunid;
 
 	$nodes = ($_POST['nodes'] && $clusterdefaults) ? $_POST['nodes'] : C_NODES_DEF;

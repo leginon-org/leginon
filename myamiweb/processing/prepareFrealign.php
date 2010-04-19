@@ -118,7 +118,11 @@ function jobForm($extra=false) {
 	$sessionpath = ereg_replace("rawdata","recon/",$sessionpath);
 
 	$particle = new particledata();
-	$reconruns = count($particle->getJobIdsFromSession($expId));
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$reconruns = count($particle->getReconIdsFromSession($expId));
+	while (glob($outdir.'*recon'.($reconruns+1))) {
+		$reconruns += 1;
+	}
 	$defrunid = 'frealign_recon'.($reconruns+1);
 
 	## get stack data
@@ -174,7 +178,6 @@ function jobForm($extra=false) {
 	SCRIPT PARAMETERS
 	****************************************** */
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunid;
-	$outdir  = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '10';
 
 	echo "<table class='tableborder' border='1' cellpadding='4' cellspacing='4'>\n";

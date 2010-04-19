@@ -247,10 +247,11 @@ function jobForm($extra=false) {
 	$clusterdefaults = ($selectedcluster==$_POST['clustermemo']) ? true : false;
 	
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	$reconruns = count($particle->getJobIdsFromSession($expId, 'recon'));
-	while (file_exists($outdir.'recon'.($reconruns+1)))
+	$reconruns = count($particle->getReconIdsFromSession($expId));
+	while (glob($outdir.'*recon'.($reconruns+1))) {
 		$reconruns += 1;
-	$defrunid = 'recon'.($reconruns+1);
+	}
+	$defrunid = 'xmipprecon'.($reconruns+1);
 	$jobname = ($_POST['jobname']) ? $_POST['jobname'] : $defrunid;
 
 	$nodes = ($_POST['nodes'] && $clusterdefaults) ? $_POST['nodes'] : C_NODES_DEF;
