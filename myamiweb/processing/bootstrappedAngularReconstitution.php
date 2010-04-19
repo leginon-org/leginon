@@ -331,7 +331,7 @@ function runAngularReconstitution() {
 		
 		if (!($user && $password)) createAngularReconstitutionForm("<B>ERROR:</B> Enter a user name and password");
 		
-		$nodes=1		// currently cannot run on more than one node
+		$nodes=1;		// currently cannot run on more than one node
 		if ($nproc > 1 && $nproc <=8) $ppn=$nproc;		// hardcoded for now
 		else $ppn=1;
 		$sub = submitAppionJob($command,$rundir,$runname,$expId,'angrecon',False,False,False,$nproc,$ppn,$nodes);
