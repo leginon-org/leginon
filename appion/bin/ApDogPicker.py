@@ -55,6 +55,9 @@ class DogPicker(appionScript.AppionScript):
 		self.parser.add_option("--max-peaks", dest="maxpeaks", type="int", default=500,
 			help="Maximum number of allowed peaks", metavar="#")
 
+		self.parser.add_option("--invert", dest="invert", default=False,
+			action="store_true", help="Invert image before picking, DoG normally picks white particles")
+
 		self.parser.add_option("-o", "--outfile", dest="outfile", default="picks.txt",
 			help="Text file to write particle picks to", metavar="FILE")
 
@@ -102,6 +105,9 @@ class DogPicker(appionScript.AppionScript):
 		"""
 
 		imgarray = mrc.read(self.params['image'])
+		if self.params['invert'] is True:
+			imgarray = -1.0*imgarray
+
 		dogmaps = apDog.diffOfGaussParam(imgarray, self.params)
 		rootname = os.path.splitext(self.params['image'])[0]
 		pixdiam = self.params['diam']/self.params['apix']
