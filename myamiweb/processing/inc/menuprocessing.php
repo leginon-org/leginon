@@ -140,9 +140,9 @@ if ($expId) {
 	$drsults=array();
 	$mresults=array();
 
-	$tdone = count($subclusterjobs['templatepicker']['done']);
-	$trun = count($subclusterjobs['templatepicker']['running']);
-	$tq = count($subclusterjobs['templatepicker']['queued']);
+	$tdone = count($subclusterjobs['templatecorrelator']['done']);
+	$trun = count($subclusterjobs['templatecorrelator']['running']);
+	$tq = count($subclusterjobs['templatecorrelator']['queued']);
 
 	$ddone = count($subclusterjobs['dogpicker']['done']);
 	$drun = count($subclusterjobs['dogpicker']['running']);
