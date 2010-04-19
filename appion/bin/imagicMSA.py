@@ -292,11 +292,9 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		proc.wait()
 		apIMAGIC.executeImagicBatchFile(filename)
 		logfile = open(os.path.join(self.params['rundir'], "imagicMultivariateStatisticalAnalysis.log"))
-		loglines = logfile.readlines()
-		for line in loglines:
-			if re.search("ERROR in program", line):
-				apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: imagicMultivariateStatisticalAnalysis.log")
-		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-aligntime), "cyan")
+		apIMAGIC.checkLogFileForErrors(logfile)
+		if not os.path.isfile(os.path.join(self.params['rundir'], "eigenimages.hed")):
+			apDisplay.printError("IMAGIC did not run and did not create eigenimages")
 		aligntime = time.time() - aligntime
 
 		### remove copied stack
