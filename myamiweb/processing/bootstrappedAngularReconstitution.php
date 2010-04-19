@@ -299,17 +299,16 @@ function runAngularReconstitution() {
 	
 	// make sure outdir ends with '/' and append run name
 	if (substr($rundir,-1,1)!='/') $rundir.='/';
-	$rundir = $rundir.$runname;
 
 	// setup command
 	$command ="bootstrappedAngularReconstitution.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="--rundir=$rundir ";
+	$command.="--rundir=".$rundir.$runname." ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
 	if ($clusterid) $command.="--clusterid=$clusterid ";
 	elseif ($tsid) $command.="--templatestackid=$tsid ";
-	$command.="--nvol=$nvol ";
+	$command.="--num_volumes=$nvol ";
 	if ($scale) $command.="--scale ";
 	if ($prealign) $command.="--prealign ";
 	if (!$weight) $command.="--non_weighted_sequence ";
@@ -342,7 +341,7 @@ function runAngularReconstitution() {
 		echo "<table width='600' class='tableborder' border='1'>";
 			echo "<tr><td colspan='2'><br/>\n";
 				echo "	<tr><td colspan='2'><b>Angular Reconstitution Command:</b><br />$command</td></tr>
-						<tr><td>run id</td><td>$runname</td></tr>
+						<tr><td>run name</td><td>$runname</td></tr>
 						<tr><td>run directory</td><td>$rundir</td></tr> ";
 				if ($clusterid) echo "	<tr><td>clustering stack id</td><td>$clusterid</td></tr>";
 				elseif ($tsid) echo "	<tr><td>template stack id</td><td>$tsid</td></tr>";
