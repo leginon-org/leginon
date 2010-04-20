@@ -381,7 +381,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		f.write("1,"+str(self.params['numpart'])+"\n")
 		f.write("ALL\n")
 		f.write("EOF\n")				
-				
+			
 		### this is the actual alignment
 		f.write(str(self.imagicroot)+"/align/alirefs.e <<EOF >> prealignClassAverages.log\n")
 		f.write("ALL\n")
@@ -398,6 +398,9 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		f.write("5\n")
 		f.write("NO\n")
 		f.write("EOF\n")
+		f.write(str(self.imagicroot)+"/stand/imdel.e <<EOF >> prealignClassAverages.log\n")	### workaround for now
+		f.write("test\n")																							### workaround for now
+		f.write("EOF\n")																							### workaround for now
 		f.close()
 		
 		self.params['avgs'] = self.params['avgs'][:-4]+"_aligned.img"
@@ -1262,9 +1265,10 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		self.params['avgs'] = os.path.join(self.params['rundir'], os.path.basename(clsname))
 		shutil.copyfile(os.path.join(stackdata['path']['path'], clsname[:-4]+".hed"), self.params['avgs'][:-4]+".hed")
 		shutil.copyfile(os.path.join(stackdata['path']['path'], clsname[:-4]+".img"), self.params['avgs'][:-4]+".img")
-		apIMAGIC.copyFile(self.params['rundir'], clsname, headers=True)
 		self.params['numpart'] = apFile.numImagesInStack(self.params['avgs'])
-
+#		apIMAGIC.copyFile(self.params['rundir'], clsname, headers=True)
+		apIMAGIC.takeoverHeaders(self.params['avgs'], self.params['numpart'], self.params['boxsize'])
+		
 		#######################################		scale class averages, if necessary		##########################################
 
 		### scale class averages to 64x64, if scaling is specified
@@ -1278,7 +1282,8 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			while os.path.isfile(self.params['avgs']):
 				apFile.removeStack(self.params['avgs'])
 			apParam.runCmd(emancmd, "EMAN")
-			apIMAGIC.copyFile(self.params['rundir'], os.path.basename(self.params['avgs']), headers=True)
+#			apIMAGIC.copyFile(self.params['rundir'], os.path.basename(self.params['avgs']), headers=True)
+			apIMAGIC.takeoverHeaders(self.params['avgs'], self.params['numpart'], self.params['boxsize'])
 			
 		if self.params['prealign'] is True:
 			self.params['avgs'] = self.prealignClassAverages()
