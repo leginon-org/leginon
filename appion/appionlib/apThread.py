@@ -69,7 +69,7 @@ def threadCommands(commandlist, nproc=None, pausetime=1.0):
 #===========
 def writeThreadLog(msg):
 	f = open("threading.log", "a")
-	f.write("%s\t%s\n"%(time.asctime(), msg)
+	f.write("%s\t%s\n"%(time.asctime(), msg))
 	f.close()
 
 #===========
