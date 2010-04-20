@@ -45,9 +45,9 @@ from appionlib import apImagicFile
 from appionlib import apImage
 from pyami import mrc,spider
 #basic logging,
-import logging
-LOG_FILENAME = './rotKerdenSOM.log'
-logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG,)
+#import logging
+#LOG_FILENAME = './rotKerdenSOM.log'
+#logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG,)
 
 #======================
 #======================
@@ -259,7 +259,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 	def createKerdenSOMPlots(self):
 		apFile.removeFilePattern(os.path.join(self.params['rundir'],self.spectraTemporalFilesMask + ".png"))
 
-		logging.debug('Inside createKerdenSOMPlots')
+		#logging.debug('Inside createKerdenSOMPlots')
 		apDisplay.printMsg("Create Plots")
 		codeVectorFileName = os.path.join(self.params['rundir'], self.timestamp+'.cod')
 		f1=open(codeVectorFileName,'r')
@@ -355,14 +355,14 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		#else:
 		#	kerdencmd += " -eps 1e-7 "
 
-		logging.debug(kerdencmd)
+		#logging.debug(kerdencmd)
 		apDisplay.printColor(kerdencmd, "cyan")
 		proc = subprocess.Popen(kerdencmd, shell=True)
 		proc.wait()
 		time.sleep(1)
 		#09jul23l52.cod
 		inputSpecrtaFile=outstamp+'.cod'
-		logging.debug('code vector file name ' + inputSpecrtaFile)
+		#logging.debug('code vector file name ' + inputSpecrtaFile)
 		apDisplay.printMsg("KerDen SOM complete in %s"%(apDisplay.timeString(time.time()-kerdentime)))
 		self.createKerdenSOMPlots()
 		return
@@ -394,7 +394,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 			)
 		)
 
-		logging.debug(findcentercmd)
+		#logging.debug(findcentercmd)
 		apDisplay.printColor(findcentercmd, "cyan")
 		#ROB pipe from shell
 		proc = subprocess.Popen(findcentercmd, shell=True,stdout=subprocess.PIPE)
@@ -430,7 +430,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		"""
 		spectratime = time.time()
 		apDisplay.printMsg("Running make_spectra")
-		logging.debug('Inside make_spectra')
+		#logging.debug('Inside make_spectra')
 		#ROB
 		tempFileNameforSpectra="tempFileNameforSpectra.txt"
 		tmpSelFile=apXmipp.breakupStackIntoSingleFiles(indata, numpart=self.params['numpart']);
@@ -447,7 +447,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 			)
 		)
 
-		logging.debug(makespectracmd)
+		#logging.debug(makespectracmd)
 		apDisplay.printColor(makespectracmd, "cyan")
 		proc = subprocess.Popen(makespectracmd, shell=True,stdout=subprocess.PIPE)
 		proc.wait()
@@ -485,7 +485,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 	def createMontageInMemory(self):
 
 		apDisplay.printMsg("Converting files")
-		logging.debug('Inside createMontageInMemory')
+		#logging.debug('Inside createMontageInMemory')
 
 		montagepngs = []
 		files = glob.glob('spectra_??_??.png')
@@ -498,7 +498,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 		for monpng in montagepngs:
 			montagecmd += monpng+" "
 		montagecmd += "montage.png"
-		logging.debug('montagecmd ' + montagecmd)
+		#logging.debug('montagecmd ' + montagecmd)
 		proc = subprocess.Popen(montagecmd, shell=True)
 		proc.wait()
 		time.sleep(1)
