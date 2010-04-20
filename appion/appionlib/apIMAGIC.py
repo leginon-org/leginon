@@ -118,7 +118,7 @@ def takeoverHeaders(filename, numpart, boxsize):
 	f.write("setenv IMAGIC_BATCH 1\n")	 
 	f.write("cd %s\n" % (basedir))
 	f.write(str(imagicroot)+"/stand/testim.e <<EOF\n")
-	f.write("test,1,%d\n" % (boxsize))
+	f.write("test,1,%d\n" % (numpart))
 	f.write("%d,%d\n" % (boxsize, boxsize))
 	f.write("REAL\n")
 	f.write("BLOBS\n")
