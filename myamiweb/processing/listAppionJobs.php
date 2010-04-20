@@ -52,7 +52,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 
 			// if a particle picker, show # particles so
 			// far and correlation values
-			if ($jobtype=='dogpicker' || $jobtype=='templatepicker') {
+			if ($jobtype=='dogpicker' || $jobtype=='templatecorrelator') {
 				$pickerinfo = $particle->getSelectionRunIdFromPath($job['appath']);
 				$pstats = $particle->getStats($pickerinfo[0]['DEF_id']);
 				$numptl=$pstats['totparticles'];

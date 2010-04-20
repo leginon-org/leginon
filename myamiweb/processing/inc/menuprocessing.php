@@ -157,7 +157,7 @@ if ($expId) {
 	$tiltqueue = count($subclusterjobs['tiltalign']['queued']);
 
 	$tresults[] = ($tdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$tdone complete</a>";
-	$tresults[] = ($trun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatepicker'>$trun running</a>";
+	$tresults[] = ($trun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatecorrelator'>$trun running</a>";
 	$tresults[] = ($tq==0) ? "" : "$tq queued";
 
 	$dresults[] = ($ddone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$ddone complete</a>";
@@ -573,7 +573,7 @@ if ($expId) {
 			);
 			$nruns[] = array(
 				'name'=>"<a href='prepareFrealign.php?expId=$sessionId'>Frealign Refinement</a>",
-				'result'=> "<i>(coming soon)</i>", //$frealignresults
+				'result'=> $frealignresults,
 			);
 			$nruns[] = array(
 				'name'=>"<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>",
