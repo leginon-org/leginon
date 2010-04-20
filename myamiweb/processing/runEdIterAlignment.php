@@ -137,7 +137,6 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	$templateid = $_POST['templateid'];
 	$templateinfo = $particle->getTemplatesFromId($templateid);
 	$stackIds = $particle->getStackIds($sessionId);
-	$refbasedIds = $particle->getRefAliIds($sessionId);
 	$alignrunsarray = $particle->getAlignStackIds($sessionId);
 	$alignruns = ($alignrunsarray) ? count($alignrunsarray) : 0;
 	$firststack = $particle->getStackParams($stackIds[0]['stackid']);
