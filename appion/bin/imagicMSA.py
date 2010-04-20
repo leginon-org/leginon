@@ -292,7 +292,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		proc.wait()
 		apIMAGIC.executeImagicBatchFile(filename)
 		logfile = open(os.path.join(self.params['rundir'], "imagicMultivariateStatisticalAnalysis.log"))
-		apIMAGIC.checkLogFileForErrors(logfile)
+		apIMAGIC.checkLogFileForErrors(os.path.join(self.params['rundir'], "imagicMultivariateStatisticalAnalysis.log"))
 		if not os.path.isfile(os.path.join(self.params['rundir'], "eigenimages.hed")):
 			apDisplay.printError("IMAGIC did not run and did not create eigenimages")
 		aligntime = time.time() - aligntime
