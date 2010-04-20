@@ -128,8 +128,9 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '4';
 	$angle = ($_POST['angle']) ? $_POST['angle'] : '5';
 	$clipdiam = ($_POST['clipdiam']) ? $_POST['clipdiam'] : '';
-	$maxiter = ($_POST['maxiter']) ? $_POST['maxiter'] : '30';
+	$maxiter = ($_POST['maxiter']) ? $_POST['maxiter'] : '15';
 	$mirror = ($_POST['mirror']=='on' || !$_POST['mirror']) ? 'checked' : '';
+	$savemem = ($_POST['savemem']=='on' || !$_POST['savemem']) ? 'checked' : '';
 	$fast = ($_POST['fast']=='on' || !$_POST['fast']) ? 'checked' : '';
 
 	echo "<table border='0' class='tableborder'>\n<tr><td valign='top'>\n";
@@ -240,6 +241,10 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<br/>\n";
 	echo "<br/>\n";
 
+	echo "<INPUT TYPE='checkbox' NAME='savemem' onChange='estimatetime()' $savemem>\n";
+	echo docpop('mlsavemem','Save memory by checking less shifts');
+	echo "<br/>\n";
+
 	echo "<INPUT TYPE='checkbox' NAME='fast' onClick='estimatetime(this)' checked disabled>\n";
 	echo docpop('fastmode','Fast Mode Setting');
 	echo "<br/>\n";
@@ -310,6 +315,7 @@ function runMaxLikeAlign() {
 	$fastmode = $_POST['fastmode'];
 	$converge = $_POST['converge'];
 	$mirror = ($_POST['mirror']=="on") ? true : false;
+	$savemem = ($_POST['savemem']=="on") ? true : false;
 	$commit = ($_POST['commit']=="on") ? true : false;
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
 
@@ -397,6 +403,10 @@ function runMaxLikeAlign() {
 		$command.="--mirror ";
 	else
 		$command.="--no-mirror ";
+	if ($savemem)
+		$command.="--savemem ";
+	else
+		$command.="--no-savemem ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 	$command.="--converge=$converge ";
@@ -445,6 +455,7 @@ function runMaxLikeAlign() {
 			<tr><td>fast mode</td><td>$fastmode</td></tr>
 			<tr><td>converge</td><td>$converge</td></tr>
 			<tr><td>mirror</td><td>$mirror</td></tr>
+			<tr><td>save mem</td><td>$savemem</td></tr>
 			<tr><td>run dir</td><td>$rundir</td></tr>
 			<tr><td>commit</td><td>$commit</td></tr>
 			</table>\n";

@@ -70,6 +70,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("--no-mirror", dest="mirror", default=True,
 			action="store_false", help="Do NOT use mirror method")
 
+		self.parser.add_option("--savemem", dest="savemem", default=True,
+			action="store_true", help="Save mem by less shifts")
+		self.parser.add_option("--no-savemem", dest="savemem", default=True,
+			action="store_false", help="Do not save mem by less shifts")
+
 		self.parser.add_option("--norm", dest="norm", default=False,
 			action="store_true", help="Use internal normalization for data with normalization errors")
 		self.parser.add_option("--no-norm", dest="norm", default=False,
@@ -249,6 +254,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### mirrors
 		if self.params['mirror'] is True:
 			xmippopts += " -mirror "
+		### save mem
+		if self.params['savemem'] is True:
+			xmippopts += " -save_memB "
 		### normalization
 		if self.params['norm'] is True:
 			xmippopts += " -norm "
