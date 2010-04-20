@@ -369,12 +369,25 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		f = open(batchfile, 'w')
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
-		f.write("cd "+self.params['rundir']+"/\n")		
-	
-		f.write(str(self.imagicroot)+"/align/alirefs.e <<EOF > prealignClassAverages.log\n")
+		f.write("cd "+self.params['rundir']+"/\n")
+		
+		### complete workaround for now ... IMAGIC crashing unless headers deleted / manipulated ... some header issue
+		f.write(str(self.imagicroot)+"/incore/excopy.e <<EOF > prealignClassAverages.log\n")
+		f.write("2D_IMAGES/SECTIONS\n")
+		f.write("EXTRACT\n")
+		f.write(str(os.path.basename(self.params['avgs'])[:-4])+"\n")
+		f.write("test\n")
+		f.write("INTERACTIVE\n")
+		f.write("1,"+str(self.params['numpart'])+"\n")
+		f.write("ALL\n")
+		f.write("EOF\n")				
+				
+		### this is the actual alignment
+		f.write(str(self.imagicroot)+"/align/alirefs.e <<EOF >> prealignClassAverages.log\n")
 		f.write("ALL\n")
 		f.write("CCF\n")
-		f.write(str(os.path.basename(self.params['avgs'])[:-4])+"\n")
+#		f.write(str(os.path.basename(self.params['avgs'])[:-4])+"\n") 		### real command
+		f.write("test\n")																	### workaround
 		f.write("NO\n")
 		f.write("0.99\n")
 		f.write(str(os.path.basename(self.params['avgs'])[:-4])+"_aligned\n")
@@ -1269,6 +1282,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			
 		if self.params['prealign'] is True:
 			self.params['avgs'] = self.prealignClassAverages()
+			print self.params['avgs']
 			apIMAGIC.checkLogFileForErrors(os.path.join(self.params['rundir'], "prealignClassAverages.log"))
 		
 		##############################################		create multiple 3d0s		##############################################
