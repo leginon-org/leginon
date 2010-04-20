@@ -15,7 +15,6 @@ from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apFile
 from appionlib import apParam
-from appionlib import apThread
 
 
 
@@ -203,18 +202,15 @@ def centerParticles(stack, mask=None, maxshift=None):
 
 	stacksize = apFile.stackSize(stack)
 	freemem = mem.free()*1024 #convert memory to bytes
-	numproc = apParam.getNumProcessors()
-	apDisplay.printMsg("file is %s, mem is %s, for %d procs"
-		%(apDisplay.bytes(stacksize), apDisplay.bytes(freemem), numproc))
+	apDisplay.printMsg("file is %s, mem is %s"
+		%(apDisplay.bytes(stacksize), apDisplay.bytes(freemem)))
 	### from EMAN FAQ: need to have at least 3x as much ram as the size of the file
-	memsize = freemem/3.0/numproc
-	numpieces = int(math.ceil(stacksize/memsize))
-	numfrac = max(numpieces, numproc)
+	memsize = freemem/3.0
+	numfrac = int(math.ceil(stacksize/memsize))
 
 	apDisplay.printMsg("file is %s, will be split into %d fractions"
 		%(apDisplay.bytes(stacksize), numfrac))
 
-	cmdlist = []
 	for i in range(numfrac):
 		emancmd = "cenalignint "+stack
 		if numfrac > 1:
@@ -223,9 +219,8 @@ def centerParticles(stack, mask=None, maxshift=None):
 			emancmd += " mask="+str(mask)
 		if maxshift is not None:
 			emancmd += " maxshift="+str(maxshift)
-		cmdlist.append(emancmd)
+		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
-	apThread.threadCommands(cmdlist, numproc, pausetime=3)
 	return
 
 #===============
