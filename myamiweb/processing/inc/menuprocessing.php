@@ -382,7 +382,7 @@ if ($expId) {
 				);
 			}
 		}
-		if (!$HIDE_IMAGIC) {
+		if (!HIDE_IMAGIC) {
 			// ===================================================================
 			// template stacks (class averages & forward projections)
 			// ===================================================================
@@ -540,7 +540,7 @@ if ($expId) {
 		$frealignresults[] = ($uploadfrealigndone>0) ? "<a href='frealignSummary.php?expId=$sessionId'>$uploadfrealigndone complete</a>" : "";
 
 
-		if (!$HIDE_IMAGIC) {
+		if (!HIDE_IMAGIC) {
 			// check for how many IMAGIC reconstructions have finished / running / queued
 			$imq = count($subclusterjobs['imagic3dRefine']['queued']);
 			$imrun = count($subclusterjobs['imagic3dRefine']['running']);
@@ -583,7 +583,7 @@ if ($expId) {
 				'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
 				'result'=> "<i>(incomplete)</i>", //$xmippreconresults,
 			);
-			if (!$HIDE_IMAGIC) {
+			if (!HIDE_IMAGIC) {
 				$nruns[] = array(
 					'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
 					'result'=> "<i>(incomplete)</i>", //$imreconresults,
