@@ -14,6 +14,8 @@ require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 
+$jmol = false;
+
 /****************************************
 ****************************************/
 function stacksummarytable($stackid, $mini=false, $tiny=false) {
@@ -44,7 +46,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	if ($stackdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
 		$j.= " <input class='edit' type='submit' name='unhideItem".$stackid."' value='unhide'>\n";
-		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>";
+		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>\n";
 	} else $j.= " <input class='edit' type='submit' name='hideItem".$stackid."' value='hide'>\n";
 
 	$stacktable.= apdivtitle($j);
@@ -68,7 +70,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	$montage = $stackdata['path']."/montage".$stackdata['DEF_id'].".png";
 	if (!$mini && file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
-		$stacktable.= "<td  align='left' rowspan='30' align='center' valign='top'>";
+		$stacktable.= "<td  align='left' rowspan='30' align='center' valign='top'>\n";
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=150' height='150'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i>\n";
 		if (!$centered) $stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
@@ -78,12 +80,12 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		$stacktable.= "<br /><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
 		$stacktable.= "</td>\n";
 		if ($centered && file_exists($badstackavg)) {
-			$stacktable.= "<td  align='left' rowspan='30' align='center' valign='top'>";
+			$stacktable.= "<td  align='left' rowspan='30' align='center' valign='top'>\n";
 			$stacktable.= "<img src='loadimg.php?filename=$badstackavg&s=150' height='150'><br/>\n";
 			$stacktable.= "<i>averaged bad stack</i><br/>\n";
 			$stacktable.= "</td>\n";
 		} elseif (file_exists($montage)) {
-			$stacktable.= "<td align='left' rowspan='30' align='center' valign='top'>";
+			$stacktable.= "<td align='left' rowspan='30' align='center' valign='top'>\n";
 			$stacktable.= "<a href='loadimg.php?filename=$montage'>\n";
 			$stacktable.= "<img border=0 src='loadimg.php?filename=$montage&s=150' height='150'></a><br/>\n";
 			$stacktable.= "<i>mean/stdev montage</i><br/>\n";
@@ -94,7 +96,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	} elseif (file_exists($stackavg)) {
 		// mini version
 		$stacktable.= "<tr >\n";
-		$stacktable.= "<td align='center' rowspan='30' align='center' valign='top'>";
+		$stacktable.= "<td align='center' rowspan='30' align='center' valign='top'>\n";
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=80' height='80'><br/>\n";
 		$stacktable.= "<i>average</i>\n";
 		if (!$junksorted)
@@ -125,7 +127,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	if (!$mini) 
 		$display_keys['description']=$descDiv;
 	else
-		$display_keys['descript']="<font size='-2'>$descDiv</font>";
+		$display_keys['descript']="<font size='-2'>$descDiv</font>\n";
 
 	// Show number of particles
 	$oldnumpart = $particle->getNumStackParticles($stackdata['REF|ApStackData|oldstack']);
@@ -146,16 +148,16 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	if ($mini) {
 		$display_keys['path'] = "<font size='-2'>".$stackdata['path']
 			."/<a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&ps=$mpix'>"
-			.$stackdata['name']."</a></font>";
+			.$stackdata['name']."</a></font>\n";
 		$display_keys['box/apix'] = $boxsz." / ".$apix;
 	} else {
 		$display_keys['path']=$stackdata['path'];
 		$display_keys['stack file']= "<a target='stackview' HREF='viewstack.php?file="
-			."$stackfile&expId=$expId&stackId=$stackid&ps=$mpix'>".$stackdata['name']."</A>";
+			."$stackfile&expId=$expId&stackId=$stackid&ps=$mpix'>".$stackdata['name']."</A>\n";
 		# if stack was created by cenalignint, also view avg & bad stacks
 		if ($centered) {
 			$display_keys['iterative avgs']="<a target='stackview' HREF='viewstack.php?file=".$stackdata['path']
-				."/avg.hed&expId=$expId'>avg.hed</A>";
+				."/avg.hed&expId=$expId'>avg.hed</A>\n";
 		}
 		// if bad.hed exists provide a link
 		if (file_exists($stackdata['path']."/bad.hed")) {
@@ -191,7 +193,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 			$display_keys['selection run'] = "<a href='$parturl'>".$partrun[0]['name']."</a> (".$partrun[0]['selectionid'].")";;
 		}
 	}
-	//echo print_r($stackdata)."<br/><br/>";
+	//echo print_r($stackdata)."<br/><br/>\n";
 	//$display_keys['file type']=$stackdata['fileType'];
 	foreach($display_keys as $k=>$v) {
 	        $stacktable.= formatHtmlRow($k,$v);
@@ -247,7 +249,7 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	if ($stackdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
 		$j.= " <input class='edit' type='submit' name='unhideItem".$alignstackid."' value='unhide'>\n";
-		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>";
+		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>\n";
 	} else $j.= " <input class='edit' type='submit' name='hideItem".$alignstackid."' value='hide'>\n";
 
 	$stacktable.= apdivtitle($j);
@@ -258,7 +260,7 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	$stackavg = $stackdata['path']."/average.mrc";
 	if (file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
-		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
+		$stacktable.= "<td rowspan='30' align='center' valign='top'>\n";
 		if ($mini) {
 			$stacktable.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'><br/>\n";
 			$stacktable.= "<i>avg image</i>\n";
@@ -269,7 +271,7 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		$stacktable.= "</td>\n";
 
 		if ($type != "none") {
-			$stacktable.= "<td rowspan='30' align='center' valign='top'>";
+			$stacktable.= "<td rowspan='30' align='center' valign='top'>\n";
 			$stacktable.= "<a href='aligngraph.php?expId=$expId&alignid=$alignstackid&type=$type'>\n";
 			if ($mini && $numpart < 1000)
 				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId"
@@ -309,18 +311,18 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	$apix = $stackdata['pixelsize']; // --- in Angstroms
 	$mpix = $apix * 1e-10; // --- in meters
 	$origstackid = $stackdata['REF|ApStackData|stack'];
-	$display_keys['original stack'] = "<a href='stackreport.php?expId=$expId&sId=$origstackid'>$origstackid</a>";
+	$display_keys['original stack'] = "<a href='stackreport.php?expId=$expId&sId=$origstackid'>$origstackid</a>\n";
 	$refstack = $stackdata['path']."/".$stackdata['refstackfile'];
 	if ($stackdata['refstackfile'] && file_exists($refstack))
 		$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
-			."file=$refstack&expId=$expId&ps=$mpix&alignId=$alignstackid'>".$stackdata['refstackfile']."</a>";
+			."file=$refstack&expId=$expId&ps=$mpix&alignId=$alignstackid'>".$stackdata['refstackfile']."</a>\n";
 
 	$stackfile = $stackdata['path']."/".$stackdata['imagicfile'];
 
 	if ($mini) {
 		$display_keys['pixel / box size']=round($apix,2)." &Aring;/pixel and ".$stackdata['boxsize']." pixels";
 		$display_keys['stack file']=$stackdata['path']."/<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&ps=$mpix'>"
-			.$stackdata['imagicfile']."</a>";
+			.$stackdata['imagicfile']."</a>\n";
 	} else {
 		// get box size
 		$display_keys['box size']=$stackdata['boxsize']." pixels";
@@ -330,7 +332,7 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		//$display_keys['run time']=round($stackdata['run_seconds']/60.0,2)." minutes";
 		$display_keys['path']=$stackdata['path'];
 		$display_keys['stack file']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&ps=$mpix'>"
-			.$stackdata['imagicfile']."</A>";
+			.$stackdata['imagicfile']."</A>\n";
 	}
 
 	//$display_keys['file type']=$stackdata['fileType'];
@@ -368,7 +370,7 @@ function analysissummarytable($analysisid, $mini=false) {
 	if ($analysisdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
 		$j.= " <input class='edit' type='submit' name='unhideAnalysis".$analysisid."' value='unhide'>\n";
-		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>";
+		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>\n";
 	} else $j.= " <input class='edit' type='submit' name='hideAnalysis".$analysisid."' value='hide'>\n";
 
 	$analysistable.= apdivtitle($j);
@@ -381,7 +383,7 @@ function analysissummarytable($analysisid, $mini=false) {
 	$dendrogram = $analysisdata['path']."/dendrogram.png";
 	if (file_exists($dendrogram)) {
 
-		$analysistable.= "<td rowspan='30' align='center' valign='top'>";
+		$analysistable.= "<td rowspan='30' align='center' valign='top'>\n";
 		$analysistable.= "<a href='loadimg.php?filename=$dendrogram'>\n";
 		if ($mini)
 			$analysistable.= "<img src='loadimg.php?filename=$dendrogram&s=60' height='60' border='1'></a><br/>\n";
@@ -430,7 +432,7 @@ function analysissummarytable($analysisid, $mini=false) {
 	$display_keys['path']=$analysisdata['path'];
 	if ($imagicrun) {
 		$eigenimages = $analysisdata['path']."/eigenimages.hed";
-		$display_keys['Eigenimages'] = "<a target='Eigenimages' href='viewstack.php?expId=$expId&file=$eigenimages'> eigenimages.hed </a>";
+		$display_keys['Eigenimages'] = "<a target='Eigenimages' href='viewstack.php?expId=$expId&file=$eigenimages'> eigenimages.hed </a>\n";
 	}	
 	if (!$mini) {
 		if ($analysisdata['REF|ApCoranRunData|coranrun']) {
@@ -443,7 +445,7 @@ function analysissummarytable($analysisid, $mini=false) {
 	if (!$mini) $display_keys['run time']=round($analysisdata['run_seconds']/60.0,2)." minutes";
 	if (!$mini && $imagicrun) {
 		$eigenimages = $analysisdata['path']."/eigenimages.hed";
-		$display_keys['Eigenimages'] = "<a target='Eigenimages' href='viewstack.php?expId=$expId&file=$eigenimages'> eigenimages.hed </a>";
+		$display_keys['Eigenimages'] = "<a target='Eigenimages' href='viewstack.php?expId=$expId&file=$eigenimages'> eigenimages.hed </a>\n";
 	}
 	if (!$mini) {
 		if ($analysisdata['REF|ApCoranRunData|coranrun']) {
@@ -487,7 +489,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 	if ($clusterdatas) {
 		$clustertable .= apdivtitle("Clustering Info: <span class='aptitle'>$clusterrunname</span>"
 			." (ID: $clusterrunid) with ".count($clusterdatas)." clusters\n");
-		$clustertable .= "<br/>";
+		$clustertable .= "<br/>\n";
 		if ($clusterrun['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
 			$clustertable .= "<b>Type:</b> <i>Imagic MSA</i><br/>\n";
 			$clustertable .= "<ul>\n";
@@ -505,7 +507,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 
 			$montagefile = $clusterdata['path']."/"."montage.png";
 			$clustertable .= "<a href='loadimg.php?filename=$montagefile' target='snapshot'>\n"
-				."<img src='loadimg.php?h=120&filename=$montagefile' height='120'></a><br/>";
+				."<img src='loadimg.php?h=120&filename=$montagefile' height='120'></a><br/>\n";
 
 			$clustertable .= "<ul>\n";
 			$clustertable .= "<li><a target='snapshot' href='loadimg.php?filename=$montagefile'>View montage of self-organizing map</a>\n";
@@ -521,7 +523,7 @@ function clustersummarytable($clusterrunid, $mini=false) {
 
 			$montagefile = $clusterdata['path']."/"."montage.png";
 			$clustertable .= "<a href='loadimg.php?filename=$montagefile' target='snapshot'>\n"
-				."<img src='loadimg.php?h=120&filename=$montagefile' height='120'></a><br/>";
+				."<img src='loadimg.php?h=120&filename=$montagefile' height='120'></a><br/>\n";
 
 			$clustertable .= "<ul>\n";
 			$clustertable .= "<li><a target='snapshot' href='loadimg.php?filename=$montagefile'>View montage of self-organizing map</a>\n";
@@ -589,7 +591,7 @@ function modelsummarytable($modelid, $mini=false) {
 	if ($modeldata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
 		$j.= " <input class='edit' type='submit' name='unhideItem".$modelid."' value='unhide'>\n";
-		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>";
+		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>\n";
 	} else $j.= " <input class='edit' type='submit' name='hideItem".$modelid."' value='hide'>\n";
 
 	// start table
@@ -597,50 +599,57 @@ function modelsummarytable($modelid, $mini=false) {
 	//$display_keys['id'] = "<b>".$modeldata['DEF_id']."</b> [<a href='viewmodels.php?expId=$expId'>show all</a>]";
 	$display_keys['date time'] = $modeldata['DEF_timestamp'];
 	$display_keys['description'] = $modeldata['description'];
-	$display_keys['path'] = $modeldata['path']."/".$modelname;
-	$display_keys['symmetry'] = "".$symdata['symmetry'].": <i>".$symdata['description']."</i>";
+	$modelfile = $modeldata['path']."/".$modelname;
+	$display_keys['path'] = $modelfile;
+	$display_keys['symmetry'] = "".$symdata['symmetry'].": <i>".$symdata['description']."</i>\n";
 	$display_keys['pixel size'] = format_angstrom_number($modeldata['pixelsize']/1e10)."/pix";
 	$display_keys['box size'] = $modeldata['boxsize']." pixels";
 
 	$modeltable .= "<table border='0'>\n";
 	// get first image
 
-	$allpngs = glob($modeldata['path']."/$modelname*.png");
-	$modeltable .= "<tr><td rowspan='15'>";
-	if (count($allpngs) > 4) {
-		$modeltable .= "<table>\n";
-		$modeltable .= "<tr><td>\n";
-		$modeltable .= "<a href='loadimg.php?filename=$allpngs[0]'>\n";
-		$modeltable .= "<img src='loadimg.php?filename=$allpngs[0]&s=40' height='40' border='0'></a>\n";
-		$modeltable .= "</td><td rowspan='2'>\n";
-		$modeltable .= "<a href='loadimg.php?filename=$allpngs[1]'>\n";
-		$modeltable .= "<img src='loadimg.php?filename=$allpngs[1]&s=100' height='100' border='0'></a>\n";
-		$modeltable .= "</td><td>";
-		$modeltable .= "<a href='loadimg.php?filename=$allpngs[2]'>\n";
-		$modeltable .= "<img src='loadimg.php?filename=$allpngs[2]&s=40' height='40' border='0'></a>\n";
-		$modeltable .= "</td></tr><tr><td>";
-		$modeltable .= "<a href='loadimg.php?filename=$allpngs[3]'>\n";
-		$modeltable .= "<img src='loadimg.php?filename=$allpngs[3]&s=40' height='40' border='0'></a>\n";
-		$modeltable .= "</td><td>";
-		$modeltable .= "<a href='loadimg.php?filename=$allpngs[4]'>\n";
-		$modeltable .= "<img src='loadimg.php?filename=$allpngs[4]&s=40' height='40' border='0'></a>\n";
-		$modeltable .= "</td></tr></table>";
-	} elseif (count($allpngs) > 2) {
-		$modeltable .= "<table>\n";
-		$modeltable .= "<tr><td rowspan='2'>\n";
-		$modeltable .= "<a href='loadimg.php?filename=$allpngs[0]'>\n";
-		$modeltable .= "<img src='loadimg.php?filename=$allpngs[0]&s=100' height='100' border='0'></a>\n";
-		$modeltable .= "</td><td>";
-		$modeltable .= "<a href='loadimg.php?filename=$allpngs[1]'>\n";
-		$modeltable .= "<img src='loadimg.php?filename=$allpngs[1]&s=40' height='40' border='0'></a>\n";
-		$modeltable .= "</td></tr><tr><td>";
-		$modeltable .= "<a href='loadimg.php?filename=$allpngs[2]'>\n";
-		$modeltable .= "<img src='loadimg.php?filename=$allpngs[2]&s=40' height='40' border='0'></a>\n";
-		$modeltable .= "</td></tr></table>";
+	$modeltable .= "<tr><td rowspan='15'>\n";
+	$jmolscript = false; //JmolJavaScript($modeldata);
+	if ($jmolscript) {
+		$modeltable .= $jmolscript;
 	} else {
-		$modeltable .= "<img src='loadimg.php?filename=$allpngs[0]&s=120' height='120' border='0'></a>\n";
+		$allpngs = glob($modeldata['path']."/$modelname*.png");
+		if (count($allpngs) > 4) {
+			$modeltable .= "<table>\n";
+			$modeltable .= "<tr><td>\n";
+			$modeltable .= "<a href='loadimg.php?filename=$allpngs[0]'>\n";
+			$modeltable .= "<img src='loadimg.php?filename=$allpngs[0]&s=40' height='40' border='0'></a>\n";
+			$modeltable .= "</td><td rowspan='2'>\n";
+			$modeltable .= "<a href='loadimg.php?filename=$allpngs[1]'>\n";
+			$modeltable .= "<img src='loadimg.php?filename=$allpngs[1]&s=100' height='100' border='0'></a>\n";
+			$modeltable .= "</td><td>\n";
+			$modeltable .= "<a href='loadimg.php?filename=$allpngs[2]'>\n";
+			$modeltable .= "<img src='loadimg.php?filename=$allpngs[2]&s=40' height='40' border='0'></a>\n";
+			$modeltable .= "</td></tr><tr><td>\n";
+			$modeltable .= "<a href='loadimg.php?filename=$allpngs[3]'>\n";
+			$modeltable .= "<img src='loadimg.php?filename=$allpngs[3]&s=40' height='40' border='0'></a>\n";
+			$modeltable .= "</td><td>\n";
+			$modeltable .= "<a href='loadimg.php?filename=$allpngs[4]'>\n";
+			$modeltable .= "<img src='loadimg.php?filename=$allpngs[4]&s=40' height='40' border='0'></a>\n";
+			$modeltable .= "</td></tr></table>\n";
+		} elseif (count($allpngs) > 2) {
+			$modeltable .= "<table>\n";
+			$modeltable .= "<tr><td rowspan='2'>\n";
+			$modeltable .= "<a href='loadimg.php?filename=$allpngs[0]'>\n";
+			$modeltable .= "<img src='loadimg.php?filename=$allpngs[0]&s=100' height='100' border='0'></a>\n";
+			$modeltable .= "</td><td>\n";
+			$modeltable .= "<a href='loadimg.php?filename=$allpngs[1]'>\n";
+			$modeltable .= "<img src='loadimg.php?filename=$allpngs[1]&s=40' height='40' border='0'></a>\n";
+			$modeltable .= "</td></tr><tr><td>\n";
+			$modeltable .= "<a href='loadimg.php?filename=$allpngs[2]'>\n";
+			$modeltable .= "<img src='loadimg.php?filename=$allpngs[2]&s=40' height='40' border='0'></a>\n";
+			$modeltable .= "</td></tr></table>\n";
+		} else {
+			$modeltable .= "<img src='loadimg.php?filename=$allpngs[0]&s=120' height='120' border='0'></a>\n";
+		}
 	}
-	$modeltable .= "</td></tr>";
+
+	$modeltable .= "</td></tr>\n";
 	// show data
 	foreach($display_keys as $k=>$v) {
 		$modeltable .= formatHtmlRow($k,$v);
@@ -648,6 +657,41 @@ function modelsummarytable($modelid, $mini=false) {
 	$modeltable .= "</table>\n";
 	return $modeltable;
 }
+
+/****************************************
+****************************************/
+function JmolJavaScript($modeldata) {
+	global $jmol;
+	if ($jmol) {
+		return false;
+	}
+	$modelroot = substr($modeldata['name'], 0, -4);
+	$objfile = $modeldata['path']."/".$modelroot.".obj";
+	echo "$objfile<br/><br/>\n";
+	if (!file_exists($objfile)) {
+		//return false;
+	}
+	$jmol = true;
+	$java .= "<!-- START Jmol Scripting -->\n";
+	$java .= "<script src='js/Jmol.js' type='text/javascript'></script>\n";
+	$java .= "<script type='text/javascript'>\n";
+	$java .= "  jmolInitialize('jmol', 'JmolAppletSigned.jar');\n"; //signed applet
+	//$java .= "  jmolInitialize('jmol');\n"; //unsigned applet
+	//$java .= "  jmolDebugAlert();\n"; // annoying pop-up messages that say nothing
+	$java .= "  jmolSetLogLevel(5);\n"; // show all errors
+	$java .= "  jmolSetAppletColor('#ffffff');\n"; //white background
+	$java .= "  jmolApplet([480, 320], 'zoom 5');\n"; //create window of 128 pixels and zoom out
+
+	// load files -- absolute paths are not working
+	//$java .= "  jmolScriptWait('isosurface ccp4 \"groel.mrc.gz\"')\n"; //read test MRC file
+	$java .= "  jmolScript('isosurface obj \"groel.obj.gz\"');\n"; //load test OBJ file
+	//$java .= "  jmolScriptWait('load 1grm.pdb');\n"; //load test pdb file
+	//$java .= "  jmolScriptWait('isosurface obj \"file://$objfile\"');\n"; // read obj file
+
+	$java .= "</script>\n";
+	$java .= "<!-- END Jmol Scripting -->\n";
+	return $java;
+};
 
 /****************************************
 ****************************************/
@@ -666,8 +710,8 @@ function templateStackEntry($stackInfo, $hidden=False, $mini=False){
         $j = "Template ID: $templateId";
 	
 	if (!$mini) {
-	        if ($hidden) $j.= " <input class='edit' type='submit' name='unhideTemplate".$templateId."' value='unhide'>";
-        	else $j.= " <input class='edit' type='submit' name='hideTemplate".$templateId."' value='hide'>";
+	        if ($hidden) $j.= " <input class='edit' type='submit' name='unhideTemplate".$templateId."' value='unhide'>\n";
+        	else $j.= " <input class='edit' type='submit' name='hideTemplate".$templateId."' value='hide'>\n";
 	}
         $templatetable.= apdivtitle($j);
         $templatetable.="<table border='0' cellpadding='5'>\n";
@@ -676,18 +720,19 @@ function templateStackEntry($stackInfo, $hidden=False, $mini=False){
         $templatetable.="<td>\n";
         $templatetable.="<B>Pixel Size:</B>  $stackInfo[apix]<br>\n";
         $templatetable.="<B>Box Size: </B> $stackInfo[boxsize]<br>\n";
-        $templatetable.="<B>File: </B>";
+        $templatetable.="<B>File: </B>\n";
         $templatetable.=$filename;
         $templatetable.="<br />\n";
-        $templatetable.="<b>Description: </b>";
+        $templatetable.="<b>Description: </b>\n";
 
         # add edit button to description if logged in
 	if (!$mini) {
         	$descDiv = ($_SESSION['username']) ? editButton($templateId,$stackInfo['description']) : $stackInfo['description'];
         	$templatetable.=$descDiv;
 	}
-	else $templatetable.=$stackInfo['description']."<br>";
-        $templatetable.="<a target=tsview href='viewstack.php?file=$filename&expId=$expId&templateStackId=$templateId'><b>View Template Stack</b></a>";
+	else $templatetable.=$stackInfo['description']."<br>\n";
+        $templatetable.="<a target=tsview href='viewstack.php?file=$filename&expId=$expId"
+				."&templateStackId=$templateId'><b>View Template Stack</b></a>\n";
         $templatetable.="</td></tr>\n";
         $templatetable.="</table>\n";
         return $templatetable;
