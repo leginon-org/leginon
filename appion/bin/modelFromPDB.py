@@ -102,7 +102,7 @@ class modelFromPDB(appionScript.AppionScript):
 			if self.params['pdbid'] is not None:
 				basename = "pdb%s-%s"%(self.params['pdbid'], self.timestamp)
 			else:
-				filebase = os.path.splitext(self.params['pdbfile'])[0]
+				filebase = os.path.splitext(os.path.basename(self.params['pdbfile']))[0]
 				basename = "%s-%s"%(filebase, self.timestamp)
 		else:
 			### clean up provided name
