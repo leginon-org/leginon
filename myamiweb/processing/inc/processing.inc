@@ -899,7 +899,7 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 }
 
 function getNumberOfProcsPerNode() {
-	return 4;
+	return 8;
 }
 
 function getNumberOfRequiredNodes($nproc, $ppn) {
