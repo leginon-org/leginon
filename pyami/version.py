@@ -19,12 +19,13 @@ def getSubverionRevision(filename=None):
 		dirname = getInstalledLocation()
 	else:
 		dirname = os.path.dirname(os.path.abspath(filename))
+	print "DIRNAME: ", dirname
 	svndir = os.path.join(dirname, ".svn")
 	if not os.path.isdir(svndir):
 		return None
 	cmd = "svn info"
-	if filename is not None:
-		cmd += " "+filename
+	if dirname is not None:
+		cmd += " "+dirname
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 	proc.wait()
 	for line in proc.stdout:
