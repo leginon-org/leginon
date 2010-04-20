@@ -1,10 +1,12 @@
 import os
 import re
+import shutil
 import sys
 import stat
 import time
 import subprocess
 from appionlib import apDisplay
+from appionlib import apParam
 
 def checkImagicExecutablePath():
 	### check for IMAGIC installation
@@ -98,6 +100,36 @@ def copyFile(path, file, headers=False):
 	f.close()
 
 	executeImagicBatchFile(batchfile)
+	
+def takeoverHeaders(filename, numpart, boxsize):
+	### better workaround than copyFile ... still a workaround though
+
+	imagicroot = checkImagicExecutablePath()
+	basedir = os.path.split(filename)[0]
+	basename = os.path.split(filename)[1]
+	batchfile = os.path.join(basedir, "takeoverHeaders.batch")
+	if basename[-4:] == ".img" or basename[-4:] == ".hed":
+		stripped_file = basename[:-4]
+	else:
+		 stripped_file = basename
+
+	f = open(batchfile, 'w')
+	f.write("#!/bin/csh -f\n")
+	f.write("setenv IMAGIC_BATCH 1\n")	 
+	f.write("cd %s\n" % (basedir))
+	f.write(str(imagicroot)+"/stand/testim.e <<EOF\n")
+	f.write("test,1,%d\n" % (boxsize))
+	f.write("%d,%d\n" % (boxsize, boxsize))
+	f.write("REAL\n")
+	f.write("BLOBS\n")
+	f.write("EOF\n")
+	f.close()
+	
+	proc = subprocess.Popen('chmod 755 '+batchfile, shell=True)
+	proc.wait()
+	apParam.runCmd(batchfile, "IMAGIC")
+	shutil.move(os.path.join(basedir, "test.hed"), os.path.join(basedir, stripped_file+".hed"))
+	os.remove(os.path.join(basedir, "test.img"))
 
 def convertFilteringParameters(hpfilt, lpfilt, apix):
 	### CONVERT FILTERING PARAMETERS TO IMAGIC FORMAT BETWEEN 0-1
