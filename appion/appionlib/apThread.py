@@ -44,6 +44,7 @@ def threadCommands(commandlist, nproc=None, pausetime=1.0):
 	### initialize threads
 	for i in range(nproc):
 		cmd = localcmdlist.pop(0)
+		writeThreadLog(cmd)
 		job = AppionJob(cmd)
 		joblist.append(job)
 		job.run()
@@ -56,6 +57,7 @@ def threadCommands(commandlist, nproc=None, pausetime=1.0):
 				joblist.remove(job)
 				if len(localcmdlist) > 0:
 					cmd = localcmdlist.pop(0)
+					writeThreadLog(cmd)
 					job = AppionJob(cmd)
 					joblist.append(job)
 					job.run()
@@ -63,6 +65,12 @@ def threadCommands(commandlist, nproc=None, pausetime=1.0):
 		time.sleep(pausetime)
 		#print joblist
 	sys.stderr.write("\n")
+
+#===========
+def writeThreadLog(msg):
+	f = open("threading.log", "a")
+	f.write("%s\t%s\n"%(time.asctime(), msg)
+	f.close()
 
 #===========
 if __name__ == "__main__":
