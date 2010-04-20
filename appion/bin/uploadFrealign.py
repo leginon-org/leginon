@@ -13,15 +13,25 @@ from appionlib import apEMAN
 from appionlib import apDisplay
 from appionlib import apChimera
 from appionlib import apEulerJump
-
+from appionlib import apStack
+from appionlib import apModel
+from appionlib import apDatabase
+from appionlib import appiondata
+from appionlib import apSymmetry
 
 class UploadFrealign(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --commit --description='<text>' [options]")
 		### ints
+		self.parser.add_option("--prepid", dest="prepid", type="int",
+			help="ID for frealign prep", metavar="#")
+
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="#")
+		self.parser.add_option("--modelid", dest="modelid", type="int",
+			help="ID for initial model (optional)", metavar="#")
+
 		self.parser.add_option("--mass", dest="mass", type="int",
 			help="Particle mass in kDa for Chimera snapshots (optional)", metavar="#")
 
@@ -33,10 +43,24 @@ class UploadFrealign(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['mass'] is None:
 			apDisplay.printError("Please provide an estimate for the mass (in kDa), e.g. --mass=782")
+		if self.params['prepid'] is not None:
+			self.setPrepFrealignData(self.params['prepid'])
+		if self.params['stackid'] is None:
+			apDisplay.printError("Please provide a particle stack id")
+		if self.params['modelid'] is None:
+			apDisplay.printError("Please provide a initial model id")
 
 	#=====================
 	def setRunDir(self):
-		self.params['rundir'] = os.getcwd()
+		apDisplay.printError("Please provide a run directory")
+
+	#=====================
+	def setPrepFrealignData(self, prepid):
+		prepdata = appiondata.ApFrealignPrepareData.direct_query(prepid)
+		#print prepdata
+		self.params['stackid'] = prepdata['stack'].dbid
+		self.params['modelid'] = prepdata['model'].dbid
+		self.params['rundir'] = prepdata['path']['path']
 
 	#=====================
 	def parseFrealignParamFile(self, paramfile):
@@ -87,28 +111,91 @@ class UploadFrealign(appionScript.AppionScript):
 		return
 
 	#=====================
-	def processFrealignVolume(self, iternum):
-		apix = 1.04
-
-		volumeImagicFile = os.path.join(self.params['rundir'], "iter%03d.hed"%(iternum))
-		volumeMrcFile = os.path.join(self.params['rundir'], "iter%03d.mrc"%(iternum))
+	def processFrealignVolume(self, iternum, symname):
+		volumeImagicFile = os.path.join(self.params['rundir'], "threed.%03da.hed"%(iternum))
+		if not os.path.isfile(volumeImagicFile):
+			apDisplay.printError("Failed to find volume: %s"%(volumeImagicFile))
+		volumeMrcFile = os.path.join(self.params['rundir'], "threed.%03da.mrc"%(iternum))
 		if not os.path.isfile(volumeMrcFile):
-			emancmd = "proc3d %s %s apix=%.3f origin=0,0,0 norm=0,1"%(volumeImagicFile, volumeMrcFile, apix)
+			emancmd = "proc3d %s %s apix=%.3f origin=0,0,0 norm=0,1"%(volumeImagicFile, volumeMrcFile, self.apix)
 			apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
 		if not os.path.isfile(volumeMrcFile):
 			apDisplay.printError("Failed to convert volume")
 
-		apChimera.filterAndChimera(volumeMrcFile, res=10, apix=apix, chimtype='snapshot',
-			contour=1.0, zoom=self.params['zoom'], sym='c7', silhouette=True, mass=self.params['mass'])
+		apChimera.filterAndChimera(volumeMrcFile, res=10, apix=self.apix, chimtype='snapshot',
+			contour=1.0, zoom=self.params['zoom'], sym=symname, silhouette=True, mass=self.params['mass'])
 
 		return volumeMrcFile
 
 	#=====================
-	def uploadIteration(self, iternum):
-		volumeMrcFile = self.processFrealignVolume(iternum)
+	def readParamsFromCombineFile(self, iternum):
+		"""
+		read the combine file to get iteration parameters, 
+		such as symmetry and phase residual cutoff
+		"""
+		combinefile = "iter%03d/frealign.iter%03d.combine.sh"%(iternum, iternum)
+		f = open(combinefile, "r")
+		### locate start
+		for line in f:
+			if line.startswith("### START FREALIGN ###"):
+				break
 
+		### parse file
+		cards = []
+		for line in f:	
+			cards.append(line.strip())
+			if line.startswith("EOF"):
+				break
+		f.close()
+
+		### process data
+		symmdata = apSymmetry.findSymmetry(cards[5])
+		apDisplay.printMsg("Found symmetry %s with id %s"%(symmdata['eman_name'], symmdata.dbid))
+		iterparams['symmdata'] = symmdata
+		data = cards[6].split()
+		iterparams['phaserescutoff'] = cards[6]
+		return iterparams
+
+	#=====================
+	def readIteration(self, iternum):
+		symmdata = self.readParamsFromCombineFile(iternum)
 		paramfile = "params.iter%03d.par"%(iternum)
 		parttree = self.parseFrealignParamFile(paramfile)
+		volumeMrcFile = self.processFrealignVolume(iternum, symmdata['eman_name'])
+		print parttree[0]
+		sys.exit(1)
+
+	#=====================
+	def uploadIteration(self, iternum, parttree):
+		if self.runq is None:
+			### setup refinement run
+			jobdata = apDatabase.getJobDataFromPathAndType(self.params['rundir'], "runfrealign")
+			self.runq = appiondata.ApRefinementRunData()
+			self.runq['name'] = self.params['runname']
+			self.runq['stack'] = apStack.getOnlyStackData(self.params['stackid'])
+			self.runq['initialModel'] = apModel.getModelFromId(self.params['modelid'])
+			self.runq['path'] = os.path.abspath(self.params['rundir'])
+			self.runq['package'] = "Frealign"
+			self.runq['description'] = self.params['description']
+			self.runq['hidden'] = False 
+			self.runq['jobfile'] = jobdata
+
+		iterq = appiondata.ApRefinementData()
+		iterq['iteration'] = iternum
+		iterq['refinementRun'] = self.runq
+		iterq['refinementParams'] = ApRefinementParamsData
+		iterq['frealignParams'] = ApFrealignIterationData
+		iterq['resolution'] = ApResolutionData
+		iterq['rMeasure'] = ApRMeasureData
+		iterq['volumeDensity'] = XXXX
+		iterq['exemplar'] = False
+
+		good = 0
+		bad = 0
+		for partdict in parttree:
+			partq = ApParticleClassificationData()
+
+		ApRefineGoodBadParticleData
 
 	#=====================
 	def start(self):
@@ -116,12 +203,17 @@ class UploadFrealign(appionScript.AppionScript):
 		this is the main component of the script
 		where all the processing is done
 		"""
+		### initialize some variables
+		self.runq = None
+		self.apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+		apDisplay.printMsg("Pixel size: %.5f"%(self.apix))
+
+
 		self.checkResults()
 		numiter = 3
 		for i in range(numiter):
 			apDisplay.printColor("\nUploading iteration %d of %d\n"%(i+1, numiter), "green")
-
-			self.uploadIteration(i+1)
+			self.readIteration(i+1)
 
 		#apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
 		#eulerjump = apEulerJump.ApEulerJump()
