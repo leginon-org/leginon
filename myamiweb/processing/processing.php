@@ -161,22 +161,6 @@ if ($sessionId) {
   if ($stackIds = $particle->getStackIds($sessionId))
 		$stackruns=count($stackIds);
 
-  // --- Get NoRef Data
-  if ($stackruns>0) {
-    $norefIds = $particle->getNoRefIds($sessionId);
-    $norefruns=count($norefIds);
-  } else {
-    $norefruns=0;
-  };
-
-  // --- Get Ref-based Alignment Data
-  if ($stackruns>0) {
-    $refbasedIds = $particle->getRefAliIds($sessionId);
-		$refbasedruns=count($refbasedIds);
-  } else {
-    $refbasedruns=0;
-  };
-
   // --- Get Reconstruction Data
   if ($stackruns>0) {
     foreach ((array)$stackIds as $stackid) {
@@ -335,30 +319,6 @@ if ($sessionId) {
 	$nrun = "<a href='makestack.php?expId=$sessionId'>Stack creation</a>";
 	if ($prtlruns == 0) {
       $nrun = "<font size=-1><i>Pick some particles first</i></font>";
-	}
-
-	$data[]=array(
-		'action'=>array($action, $celloption),
-		'result'=>array($result, $celloption),
-		'newrun'=>array($nrun, $celloption),
-	);
-
-  if ($norefruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
-  else {$bgcolor=$donecolor;$gifimg=$donepic;}
-
-	$celloption="bgcolor='$bgcolor'";
-	$action = formatAction($gifimg, "Particle Alignment");
-	$result = ($norefruns==0) ? "" :
-			"<a href='norefsummary.php?expId=$sessionId'>$norefruns ref-free aligned<A><br/>\n";
-	$result .= ($refbasedruns==0) ? "" :
-			"<a href='refbasedsummary.php?expId=$sessionId'>$norefruns ref-based aligned<A><br/>\n";
-	if(!$result) $result = "none";
-
-	if ($stackruns == 0) {
-		$nrun = "<font size=-1><i>Create a stack first</i></font>";
-	} else {
-		$nrun = "<a href='runNoRefAlignment.php?expId=$sessionId'>Ref-free Alignment</a><br/>\n";
-		$nrun .= "<a href='runRefBasedAlignment.php?expId=$sessionId'>Ref-based Alignment</a><br/>\n";
 	}
 
 	$data[]=array(
