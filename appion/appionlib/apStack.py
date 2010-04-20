@@ -204,12 +204,14 @@ def centerParticles(stack, mask=None, maxshift=None):
 	stacksize = apFile.stackSize(stack)
 	freemem = mem.free()*1024 #convert memory to bytes
 	numproc = apParam.getNumProcessors()
+	apDisplay.printMsg("file is %s, mem is %s, for %d procs"
+		%(apDisplay.bytes(stacksize), apDisplay.bytes(freemem), numproc))
 	### from EMAN FAQ: need to have at least 3x as much ram as the size of the file
-	memsize = freemem/4.0/numproc #divide by 4 to be safe
-	numbits = int(math.ceil(stacksize/memsize))
-	numfrac = max(numtwogig, numproc)
+	memsize = freemem/3.0/numproc
+	numpieces = int(math.ceil(stacksize/memsize))
+	numfrac = max(numpieces, numproc)
 
-	apDisplay.printMsg("file is %s bytes, will be split into %d fractions"
+	apDisplay.printMsg("file is %s, will be split into %d fractions"
 		%(apDisplay.bytes(stacksize), numfrac))
 
 	cmdlist = []
