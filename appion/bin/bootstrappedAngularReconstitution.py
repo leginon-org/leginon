@@ -369,25 +369,13 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		f = open(batchfile, 'w')
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
-		f.write("cd "+self.params['rundir']+"/\n")
-		
-		### complete workaround for now ... IMAGIC crashing unless headers deleted / manipulated ... some header issue
-		f.write(str(self.imagicroot)+"/incore/excopy.e <<EOF > prealignClassAverages.log\n")
-		f.write("2D_IMAGES/SECTIONS\n")
-		f.write("EXTRACT\n")
-		f.write(str(os.path.basename(self.params['avgs'])[:-4])+"\n")
-		f.write("test\n")
-		f.write("INTERACTIVE\n")
-		f.write("1,"+str(self.params['numpart'])+"\n")
-		f.write("ALL\n")
-		f.write("EOF\n")				
+		f.write("cd "+self.params['rundir']+"/\n")			
 			
 		### this is the actual alignment
 		f.write(str(self.imagicroot)+"/align/alirefs.e <<EOF >> prealignClassAverages.log\n")
 		f.write("ALL\n")
 		f.write("CCF\n")
-#		f.write(str(os.path.basename(self.params['avgs'])[:-4])+"\n") 		### real command
-		f.write("test\n")																	### workaround
+		f.write(str(os.path.basename(self.params['avgs'])[:-4])+"\n") 
 		f.write("NO\n")
 		f.write("0.99\n")
 		f.write(str(os.path.basename(self.params['avgs'])[:-4])+"_aligned\n")
@@ -397,10 +385,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		f.write("NO\n")
 		f.write("5\n")
 		f.write("NO\n")
-		f.write("EOF\n")
-		f.write(str(self.imagicroot)+"/stand/imdel.e <<EOF >> prealignClassAverages.log\n")	### workaround for now
-		f.write("test\n")																							### workaround for now
-		f.write("EOF\n")																							### workaround for now
+		f.write("EOF\n")	
 		f.close()
 		
 		self.params['avgs'] = self.params['avgs'][:-4]+"_aligned.img"
@@ -1276,8 +1261,8 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			scalefactor = float(64.0 / self.params['boxsize'])
 			self.params['apix'] = self.params['apix'] / scalefactor
 			self.params['boxsize'] = 64
-			emancmd = "proc2d %s %s_scaled.img scale=%.3f clip=%i,%i,%i edgenorm" \
-				% (self.params['avgs'], self.params['avgs'][:-4], scalefactor, 64, 64, 64)
+			emancmd = "proc2d %s %s_scaled.img scale=%.3f clip=%i,%i edgenorm" \
+				% (self.params['avgs'], self.params['avgs'][:-4], scalefactor, 64, 64)
 			self.params['avgs'] = self.params['avgs'][:-4]+"_scaled.img"
 			while os.path.isfile(self.params['avgs']):
 				apFile.removeStack(self.params['avgs'])
