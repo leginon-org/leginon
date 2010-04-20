@@ -1,15 +1,22 @@
 # stack functions
 
-import os, sys, re
+import os
+import re
+import sys
 import time
 import math
+import numpy
+### appion
+from pyami import mem
 from appionlib import apDatabase
 from appionlib import apParticle
 from appionlib import apEMAN
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apFile
-import numpy
+from appionlib import apParam
+from appionlib import apThread
+
 
 
 #===============
@@ -73,7 +80,6 @@ def getNumberStackParticlesFromId(stackid, msg=True):
 	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
 	numpart = apFile.numImagesInStack(stackpath)
 	return numpart
-
 
 #===============
 def sortStackParts(a, b):
@@ -193,24 +199,31 @@ def averageStack(stack="start.hed", outfile="average.mrc", msg=True):
 
 #===============
 def centerParticles(stack, mask=None, maxshift=None):
-	apDisplay.printMsg("centering stack: "+stack)
-	ext=stack.split('.')[-1]
-	fsize = os.stat(stack)[6]
-	# if imagic file, use larger img file
-	if ext == 'hed':
-		fsize = os.stat(re.sub(".hed$",".img",stack))[6]
-	# stack will be centered in 2 gb increments, determine how many
-	frac = int(math.ceil(fsize/2000000000.0))
-	apDisplay.printMsg("file is "+str(fsize)+" bytes, will be split into "+str(frac)+" fractions")
-	for i in range(frac):
+	apDisplay.printMsg("Centering stack: "+stack)
+
+	stacksize = apFile.stackSize(stack)
+	freemem = mem.free()*1024 #convert memory to bytes
+	numproc = apParam.getNumProcessors()
+	### from EMAN FAQ: need to have at least 3x as much ram as the size of the file
+	memsize = freemem/4.0/numproc #divide by 4 to be safe
+	numbits = int(math.ceil(stacksize/memsize))
+	numfrac = max(numtwogig, numproc)
+
+	apDisplay.printMsg("file is %s bytes, will be split into %d fractions"
+		%(apDisplay.bytes(stacksize), numfrac))
+
+	cmdlist = []
+	for i in range(numfrac):
 		emancmd = "cenalignint "+stack
-		if frac > 1:
-			emancmd += " frac="+str(i)+"/"+str(frac)
+		if numfrac > 1:
+			emancmd += " frac="+str(i)+"/"+str(numfrac)
 		if mask is not None:
 			emancmd += " mask="+str(mask)
 		if maxshift is not None:
 			emancmd += " maxshift="+str(maxshift)
-		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		cmdlist.append(emancmd)
+
+	apThread.threadCommands(cmdlist, numproc, pausetime=3)
 	return
 
 #===============
