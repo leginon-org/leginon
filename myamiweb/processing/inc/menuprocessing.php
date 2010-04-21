@@ -148,6 +148,10 @@ if ($expId) {
 	$drun = count($subclusterjobs['dogpicker']['running']);
 	$dq = count($subclusterjobs['dogpicker']['queued']);
 
+	$sdone = count($subclusterjobs['signaturepicker']['done']);
+	$srun = count($subclusterjobs['signaturepicker']['running']);
+	$sq = count($subclusterjobs['signaturepicker']['queued']);
+	
 	$mdone = count($subclusterjobs['manualpicker']['done']);
 	$mrun = count($subclusterjobs['manualpicker']['running']);
 	$mq = count($subclusterjobs['manualpicker']['queued']);
@@ -163,6 +167,10 @@ if ($expId) {
 	$dresults[] = ($ddone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$ddone complete</a>";
 	$dresults[] = ($drun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=dogpicker'>$drun running</a>";
 	$dresults[] = ($dq==0) ? "" : "$dq queued";
+
+	$sresults[] = ($sdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$sdone complete</a>";
+	$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=signaturepicker'>$srun running</a>";
+	$sresults[] = ($sq==0) ? "" : "$dq queued";
 
 	$mresults[] = ($mdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$mdone complete</a>";
 	$mresults[] = ($mrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mrun running</a>";
@@ -191,6 +199,10 @@ if ($expId) {
 	$nrun[] = array(
 		'name'=>"<a href='runDogPicker.php?expId=$sessionId'>DoG Picking</a>",
 		'result'=>$dresults,
+	);
+	$nrun[] = array(
+		'name'=>"<a href='runSignature.php?expId=$sessionId'>Signature</a>",
+		'result'=>$sresults,
 	);
 	$nrun[] = array(
 		'name'=>"<a href='runManualPicker.php?expId=$sessionId'>Manual Picking</a>",
