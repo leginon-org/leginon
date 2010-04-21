@@ -4129,7 +4129,7 @@ class particledata {
 			."LEFT JOIN ApAlignStackData AS ast ON "
 			." (clusterrun.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
 			."LEFT JOIN ApStackData AS stack "
-			."  ON refinement.`REF|ApStackData|stackrun` = stack.`DEF_id` "
+			."  ON ast.`REF|ApStackData|stack` = stack.`DEF_id` "
 			."LEFT JOIN ApRunsInStackData AS runsinstack "
 			."  ON stack.`DEF_id` = runsinstack.`REF|ApStackData|stack` "
 			."LEFT JOIN ApStackRunData AS stackrun "
