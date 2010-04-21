@@ -1300,6 +1300,7 @@ class ApBootstrappedAngularReconstitutionRunData(Data):
 			('clusterid', ApClusteringStackData),
 			('description', str),
 			('hidden', bool),
+			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 
