@@ -107,7 +107,9 @@ class jeol1230(tem.TEM):
 		self.setBeamState(modes[value])
 
 	def getEmission(self):
-		return self.tom.Gun.Emission
+		states = {'on':True,'off':False}
+		state = self.getBeamState()
+		return states[state]
 
 	# attension: set the beam status, the same as the above
 	def setTurboPump(self, mode = 'off'):
