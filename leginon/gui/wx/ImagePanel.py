@@ -27,7 +27,7 @@ from pyami import mrc, arraystats
 import numpy
 import wx
 import sys
-import Image
+from PIL import Image
 import leginon.gui.wx.Stats
 import ImagePanelTools
 import SelectionTool

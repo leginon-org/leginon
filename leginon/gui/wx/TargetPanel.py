@@ -25,7 +25,7 @@
 import time
 import math
 import wx
-import Image
+from PIL import Image
 import leginon.gui.wx.ImagePanel
 import leginon.gui.wx.ImagePanelTools
 import leginon.gui.wx.TargetPanelTools
