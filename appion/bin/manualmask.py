@@ -6,6 +6,7 @@ import wx
 import time
 from appionlib import apImage
 import manualpicker
+from PIL import Image
 #import subprocess
 from appionlib import appiondata
 from appionlib import apParticle
@@ -20,14 +21,7 @@ from appionlib import filterLoop
 #Leginon
 import leginon.leginondata
 import leginon.polygon
-try:
-	from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
-except ImportError:
-	from  leginon.gui.wx import ImageViewer
-	ImagePanel = ImageViewer
-	ImagePanelTools = ImageViewer
-	TargetPanel = ImageViewer
-	TargetPanelTools = ImageViewer
+from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
 import pyami
 import numpy
 import pyami.quietscipy

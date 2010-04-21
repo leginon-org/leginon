@@ -6,9 +6,9 @@ import os
 import numpy
 import pyami.quietscipy
 from scipy import ndimage
-import Image
-import ImageDraw
-import ImageFont
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
 import random
 import time
 import pprint

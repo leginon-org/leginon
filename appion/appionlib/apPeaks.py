@@ -4,9 +4,8 @@ import os
 import math
 import numpy
 #PIL
-import Image
-import ImageDraw
-#import ImageOps
+from PIL import Image
+from PIL import ImageDraw
 #appion
 from appionlib import apImage
 from appionlib import apFile

@@ -2,9 +2,7 @@
 ## python
 import time
 import os
-## PIL
 import numpy
-#import Image
 ## spider
 from appionlib import spyder
 ## appion

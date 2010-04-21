@@ -16,8 +16,6 @@ try:
 	from pyami import mrc
 except ImportError:
 	import convolver
-import Image
-import ImageDraw
 try:
 	import numextension
 except:

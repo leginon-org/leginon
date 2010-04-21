@@ -1,7 +1,7 @@
 import math
 import sys
 #PIL
-import ImageDraw
+from PIL import ImageDraw
 #scipy
 import numpy
 from scipy import optimize, ndimage

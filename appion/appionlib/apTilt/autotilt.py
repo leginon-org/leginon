@@ -6,7 +6,7 @@ import sys
 import time
 import numpy
 import threading
-import Image
+from PIL import Image
 from pyami import quietscipy
 from scipy import ndimage, optimize
 #appion

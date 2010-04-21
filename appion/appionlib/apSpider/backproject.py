@@ -8,8 +8,6 @@ import sys
 import math
 import numpy
 import random
-## PIL
-#import Image
 ## spider
 from appionlib import spyder
 ## appion

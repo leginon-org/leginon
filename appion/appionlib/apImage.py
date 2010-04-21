@@ -6,8 +6,8 @@ import time
 import os
 import subprocess
 ## PIL
-import Image
-import ImageDraw
+from PIL import Image
+from PIL import ImageDraw
 ## numpy
 import numpy
 import pyami.quietscipy

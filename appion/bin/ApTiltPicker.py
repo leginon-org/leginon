@@ -11,7 +11,7 @@ from optparse import OptionParser
 ## wxPython
 import wx
 ## PIL
-import Image
+from PIL import Image
 ## appion
 from appionlib import apXml
 from appionlib import apImage
