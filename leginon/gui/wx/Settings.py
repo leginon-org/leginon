@@ -52,10 +52,11 @@ attributes = {
 }
 
 class ScrolledDialog(scrolledpanel.ScrolledPanel):
-	def __init__(self, parent, size=(200,200),scrolling=False):
+	def __init__(self, parent, size=(200,200),scrolling=False,show_basic=False):
 		self.node = parent.node
 		self.panel = parent.GetParent()
 		self.dialog = parent
+		self.show_basic = show_basic
 		scrolledpanel.ScrolledPanel.__init__(self,parent,size=size,style=wx.TAB_TRAVERSAL)
 		if scrolling:
 			self.SetupScrolling(scroll_x=True, scroll_y=True)
@@ -90,8 +91,10 @@ class ScrolledDialog(scrolledpanel.ScrolledPanel):
 #	is included as a child of the dialog where settings sizers are difined.
 ###
 class Dialog(wx.Dialog):
-	def __init__(self, parent, title=None):
+	def __init__(self, parent, title=None,show_basic=False):
 		self.node = parent.node
+		self.show_basic = show_basic
+		self.panel = parent
 
 		if title is None:
 			title = '%s Settings' % self.node.name
@@ -108,6 +111,10 @@ class Dialog(wx.Dialog):
 		szbuttons.Add(self.bok, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbuttons.Add(self.bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		szbuttons.Add(self.bapply, (0, 2), (1, 1), wx.ALIGN_CENTER)
+		if self.show_basic:
+			self.ball = wx.Button(self, -1, '&Advanced')
+			szbuttons.Add(self.ball, (0, 3), (1, 1), wx.ALIGN_CENTER)
+			self.settingsdialogclass = self.__class__
 
 		self.growrows = None
 
@@ -132,6 +139,8 @@ class Dialog(wx.Dialog):
 
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bok)
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bapply)
+		if self.show_basic:
+			self.Bind(wx.EVT_BUTTON, self.onSetAll, self.ball)
 
 		# work around event prop.
 		self.Bind(leginon.gui.wx.Events.EVT_TEM_CHANGE, self.onPropagateEvent)
@@ -156,7 +165,7 @@ class Dialog(wx.Dialog):
 				self.Bind(attributes[widget.__class__][2], self.onModified)
 
 	def initialize(self):
-		scr = ScrolledSettings(self,self.scrsize,False)
+		scr = ScrolledDialog(self,self.scrsize,False,self.show_basic)
 		return scr
 
 	def onModified(self, evt):
@@ -175,6 +184,13 @@ class Dialog(wx.Dialog):
 				wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
+
+	def onSetAll(self, evt):
+		self.onSet(evt)
+		dialog = self.settingsdialogclass(self,show_basic=False)
+		dialog.ShowModal()
+		dialog.Destroy()
+		self.getNodeSettings()
 
 	def getSettings(self, widgets):
 		settings = {}

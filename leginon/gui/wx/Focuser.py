@@ -101,7 +101,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 						  id=leginon.gui.wx.ToolBar.ID_ALIGN)
 
 	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self)
+		dialog = SettingsDialog(self,show_basic=True)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -160,11 +160,15 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
 		sizers = leginon.gui.wx.Acquisition.ScrolledSettings.initialize(self)
+		sbsz = self.addFocusSettings()
+		return sizers + [sbsz]
+
+	def addFocusSettings(self):
 		sb = wx.StaticBox(self, -1, 'Focusing')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -193,7 +197,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 
-		return sizers + [sbsz]
+		return sbsz
 
 class MeasureTiltAxisDialog(wx.Dialog):
 	def __init__(self, parent):

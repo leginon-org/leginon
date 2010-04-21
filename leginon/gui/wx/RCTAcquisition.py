@@ -36,7 +36,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		self.szmain.Layout()
 
 	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self)
+		dialog = SettingsDialog(self,show_basic=True)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -45,11 +45,18 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
 		sizers = leginon.gui.wx.Acquisition.ScrolledSettings.initialize(self)
+		if self.show_basic:
+			sbsz = self.addBasicRCTSettings()
+		else:
+			sbsz = self.addRCTSettings()
+		return sizers + [sbsz]
+
+	def addRCTSettings(self):
 		sb = wx.StaticBox(self, -1, 'RCT Options')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -105,4 +112,30 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER|wx.ALL, 2)
 
-		return sizers + [sbsz]
+		return sbsz
+
+	def addBasicRCTSettings(self):
+		sb = wx.StaticBox(self, -1, 'RCT Options')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+
+		sizer = wx.GridBagSizer(5, 4)
+		bordersize = 3
+
+		label = wx.StaticText(self, -1, 'List of Tilts to Collect (in degrees)')
+		sizer.Add(label, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['tilts'] = Entry(self, -1, chars=15, style=wx.ALIGN_RIGHT)
+		sizer.Add(self.widgets['tilts'], (0,2), (1,2), wx.ALL|wx.EXPAND|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		label = wx.StaticText(self, -1, 'Min Feature Size')
+		sizer.Add(label, (1,0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['minsize'] = FloatEntry(self, -1, chars=6, value='0.0')
+		sizer.Add(self.widgets['minsize'], (1,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		label = wx.StaticText(self, -1, 'Max Feature Size')
+		sizer.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['maxsize'] = FloatEntry(self, -1, chars=6, value='0.0')
+		sizer.Add(self.widgets['maxsize'], (1,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		sbsz.Add(sizer, 0, wx.ALIGN_CENTER|wx.ALL, 2)
+
+		return sbsz

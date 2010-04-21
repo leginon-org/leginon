@@ -23,13 +23,44 @@ import leginon.targethandler
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Image Acquisition')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		if self.show_basic:
+			sz = self.onAddBasicSettings()
+		else:
+			sz = self.onAddSettings()
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		return [sbsz]
+
+	def onAddBasicSettings(self):
+		# move type
+		movetypes = self.node.getMoveTypes()
+		self.widgets['move type'] = Choice(self, -1, choices=movetypes)
+		szmovetype = wx.GridBagSizer(5, 5)
+		szmovetype.Add(wx.StaticText(self, -1, 'Use'),
+										(0, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szmovetype.Add(self.widgets['move type'],
+										(0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szmovetype.Add(wx.StaticText(self, -1, 'to move to target'),
+										(0, 2), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		# preset order
+		presets = self.node.presetsclient.getPresetNames()
+		self.widgets['preset order'] = EditPresetOrder(self, -1)
+		self.widgets['preset order'].setChoices(presets)
+		sz = wx.GridBagSizer(3, 3)
+		sz.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['preset order'], (1, 0), (4, 2), wx.ALIGN_CENTER)
+		return sz
+
+	def onAddSettings(self):
 		sbsim = wx.StaticBox(self, -1, 'Simulated Target Loop')
 		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
 		sbeval = wx.StaticBox(self, -1, 'Evaluate Image Stats')
@@ -229,9 +260,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(sbszsim, (7,0), (2,1), wx.ALIGN_BOTTOM)
 		sz.Add(sz_misc, (2,1), (7,1), wx.ALIGN_TOP)
 		sz.Add(szright, (0,2),(9,1), wx.ALIGN_TOP)
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
-
-		return [sbsz]
+		return sz
 
 	def onEnterPassword(self, evt):
 		dialog = wx.PasswordEntryDialog(self, 'Enter Password:')
@@ -317,7 +346,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		threading.Thread(target=self.node.simulateTargetLoopStop).start()
 
 	def onSettingsTool(self, evt):
-		dialog = self.settingsdialogclass(self)
+		dialog = self.settingsdialogclass(self,show_basic=True)
 		dialog.ShowModal()
 		dialog.Destroy()
 

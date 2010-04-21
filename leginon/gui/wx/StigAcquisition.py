@@ -21,13 +21,13 @@ import leginon.gui.wx.FocusSequence
 
 class Panel(leginon.gui.wx.Acquisition.Panel):
 	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self)
+		dialog = SettingsDialog(self,show_basic=True)
 		dialog.ShowModal()
 		dialog.Destroy()
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):

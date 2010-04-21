@@ -30,11 +30,120 @@ class ImagePanel(object):
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,True)
+		scrolling = not self.show_basic
+		return ScrolledSettings(self,self.scrsize,scrolling,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
 		szs = leginon.gui.wx.Acquisition.ScrolledSettings.initialize(self)
+		if self.show_basic:
+			sz = self.onAddTomoBasicSettings()
+		else:
+			sz = self.onAddTomoSettings()
+		return szs + [sz]
+
+	def onAddTomoBasicSettings(self):
+		tiltsb = wx.StaticBox(self, -1, 'Tilt')
+		tiltsbsz = wx.StaticBoxSizer(tiltsb, wx.VERTICAL)
+		expsb = wx.StaticBox(self, -1, 'Exposure')
+		expsbsz = wx.StaticBoxSizer(expsb, wx.VERTICAL)
+		miscsb = wx.StaticBox(self, -1, 'Misc.')
+		miscsbsz = wx.StaticBoxSizer(miscsb, wx.VERTICAL)
+		# tiltsbsz
+		self.widgets['tilt min'] = FloatEntry(self, -1,
+											   allownone=False,
+											   chars=7,
+											   value='0.0')
+		self.widgets['tilt max'] = FloatEntry(self, -1,
+											   allownone=False,
+											   chars=7,
+											   value='0.0')
+		self.widgets['tilt start'] = FloatEntry(self, -1,
+												 allownone=False,
+												 chars=7,
+												 value='0.0')
+		self.widgets['tilt step'] = FloatEntry(self, -1,
+												allownone=False,
+												chars=7,
+												value='0.0')
+
+		tiltsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Min.')
+		tiltsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt min'], (0, 1), (1, 1),
+					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Max.')
+		tiltsz.Add(label, (0, 2), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt max'], (0, 3), (1, 1),
+					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Start')
+		tiltsz.Add(label, (0, 4), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt start'], (0, 5), (1, 1),
+					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Step')
+		tiltsz.Add(label, (0, 6), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt step'], (0, 7), (1, 1),
+					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'degree(s)')
+		tiltsz.Add(label, (0, 8), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		tiltsbsz.Add(tiltsz, 0, wx.EXPAND|wx.ALL, 5)
+		#expsz
+		self.widgets['dose'] = FloatEntry(self, -1, min=0.0,
+													allownone=False,
+													chars=7,
+													value='200.0')
+		expsz = wx.GridBagSizer(5, 10)
+		label = wx.StaticText(self, -1, 'Total dose')
+		expsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		expsz.Add(self.widgets['dose'], (0, 1), (1, 1),
+					wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'e-/A^2')
+		expsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
+		expsz.AddGrowableCol(0)
+		expsz.AddGrowableRow(0)
+		expsz.AddGrowableRow(1)
+		expsbsz.Add(expsz, 1, wx.EXPAND|wx.ALL, 5)
+		#misc
+		self.widgets['integer'] = wx.CheckBox(self, -1, 'Scale by')
+		self.widgets['intscale'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='10.0')
+		self.widgets['mean threshold'] = FloatEntry(self, -1, min=0.0,
+															allownone=False,
+															chars=5,
+															value='100.0')
+		intsz = wx.GridBagSizer(5, 5)
+		intsz.Add(self.widgets['integer'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		intsz.Add(self.widgets['intscale'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'to convert to integer')
+		intsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		mtsz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Consider images with less than')
+		mtsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		mtsz.Add(self.widgets['mean threshold'],
+				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'counts as obstructed')
+		mtsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		miscsz = wx.GridBagSizer(5, 10)
+		miscsz.Add(intsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		miscsz.Add(mtsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+
+		# overall
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(tiltsbsz, (0, 0), (1, 2), wx.EXPAND)
+		sz.Add(expsbsz, (1, 0), (1, 1), wx.EXPAND)
+		sz.Add(miscsbsz, (1, 1), (1, 1), wx.EXPAND)
+		sz.AddGrowableRow(0)
+		sz.AddGrowableRow(1)
+		sz.AddGrowableCol(0)
+		sz.AddGrowableCol(1)
+		return sz
+
+	def onAddTomoSettings(self):
 		tiltsb = wx.StaticBox(self, -1, 'Tilt')
 		tiltsbsz = wx.StaticBoxSizer(tiltsb, wx.VERTICAL)
 		expsb = wx.StaticBox(self, -1, 'Exposure')
@@ -306,7 +415,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sz.AddGrowableCol(1)
 
 		self.Bind(wx.EVT_CHECKBOX, self.onFixedModel, self.widgets['fixed model'])
-		return szs + [sz]
+		return sz
 
 	def onFixedModel(self, evt):
 		state = evt.IsChecked()

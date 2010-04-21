@@ -48,7 +48,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 						  id=leginon.gui.wx.ToolBar.ID_ALIGN)
 
 	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self)
+		dialog = SettingsDialog(self,show_basic=True)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -57,7 +57,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
