@@ -465,9 +465,9 @@ if( INSTALL_PHP_ERR_HANDLER ) {
 //Check if there were any warnings, perhaps some wrong includes by the
 //user
 //
-if( isset($GLOBALS['php_errormsg']) && CATCH_PHPERRMSG && !pregmatch('|Deprecated|', $GLOBALS['phperrormsg'])) {
-    JpGraphError::Raise("General PHP error : ".$GLOBALS['php_errormsg']);
-}
+//if( isset($GLOBALS['php_errormsg']) && CATCH_PHPERRMSG && !pregmatch('|Deprecated|', $GLOBALS['phperrormsg'])) {
+//   JpGraphError::Raise("General PHP error : ".$GLOBALS['php_errormsg']);
+//}
 
 
 // Useful mathematical function
