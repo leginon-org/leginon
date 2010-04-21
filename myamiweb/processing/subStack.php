@@ -172,10 +172,10 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 
 		// Mean plot 
 		if ($minx and $maxx and $miny and $maxy) {
-			echo "<img border='0' src='stack_mean_stdev.php?w=512&sId=$stackId"
+			echo "<img border='0' width='512' height='384' src='stack_mean_stdev.php?w=512&sId=$stackId"
 				."&minx=$minx&maxx=$maxx&miny=$miny&maxy=$maxy&expId=$expId'><br/>\n";
 		} else {
-			echo "<img border='0' src='stack_mean_stdev.php?w=512&sId=$stackId&expId=$expId'><br>\n";
+			echo "<img border='0' width='512' height='384' src='stack_mean_stdev.php?w=512&sId=$stackId&expId=$expId'><br>\n";
 		}
 
 		$montage = $stackParams['path']."/montage$stackId.png";
