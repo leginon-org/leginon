@@ -967,9 +967,9 @@ def normalizeImage(a):
 #########################################################
 
 def array2image(a):
-	"""
-	Converts array object (numarray) to image object (PIL).
-	"""
+    """
+    Converts array object (numarray) to image object (PIL).
+    """
     h, w = a.shape[:2]
     int32 = numarray.Int32
     uint32 = numarray.UInt32
