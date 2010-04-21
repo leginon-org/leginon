@@ -114,9 +114,9 @@ set_include_path(dirname(__FILE__).PATH_SEPARATOR
 // define('MRC2ANY', "/usr/local/bin/mrc2any");
 
 // Check if IMAGIC is installed and running, otherwise hide all functions
-define("HIDE_IMAGIC", false);
+define('HIDE_IMAGIC', false);
 
 // hide processing tools still under development.
-define("HIDE_FEATURE", true);
+define('HIDE_FEATURE', true);
 
 ?>
