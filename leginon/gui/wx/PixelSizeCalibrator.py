@@ -170,7 +170,8 @@ class ExtrapolateDialog(wx.Dialog):
 	def __init__(self, parent, fromps, tops):
 		self.node = parent.node
 
-		wx.Dialog.__init__(self, parent, -1, 'Extrapolate Pixel Size')
+		wx.Dialog.__init__(self, parent, -1, 'Extrapolate Pixel Size',
+												style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		sb = wx.StaticBox(self, -1, 'Select Magnifications to Calculate')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -178,6 +179,8 @@ class ExtrapolateDialog(wx.Dialog):
 		self.pslc = PixelSizeListCtrl(self, -1)
 		for pixelsize in tops:
 			self.pslc.addPixelSize(*pixelsize)
+		self.pslc.SetColumnWidth(0, 100)
+		self.pslc.SetColumnWidth(2, 120)
 		self.stps = wx.StaticText(self, -1, '')
 		self.tccomment = wx.TextCtrl(self, -1, '(Extrapolated)',
 																	style=wx.TE_MULTILINE)
@@ -187,12 +190,13 @@ class ExtrapolateDialog(wx.Dialog):
 		label = wx.StaticText(self, -1, 'Pixel Sizes:')
 		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.SetItemMinSize(self.pslc, self.pslc.getBestSize())
-		sz.Add(self.pslc, (1, 0), (1, 1), wx.EXPAND)
+		sz.Add(self.pslc, (1, 0), (3, 1), wx.EXPAND)
 
 		label = wx.StaticText(self, -1, 'Comment:')
-		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.tccomment, (3, 0), (1, 1), wx.EXPAND)
+		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.tccomment, (5, 0), (2, 1), wx.EXPAND)
 
+		sz.AddGrowableRow(0)
 		sz.AddGrowableRow(1)
 		sz.AddGrowableCol(0)
 
@@ -213,6 +217,8 @@ class ExtrapolateDialog(wx.Dialog):
 		self.sz = wx.GridBagSizer(5, 5)
 		self.sz.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
 		self.sz.Add(szbutton, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.sz.AddGrowableRow(0)
+		self.sz.AddGrowableCol(0)
 		self.SetSizerAndFit(self.sz)
 
 		self.Bind(wx.EVT_BUTTON, self.onExtrapolateButton, self.bextrapolate)
@@ -266,7 +272,10 @@ class EditDialog(wx.Dialog):
 		szedit.Add(self.tccomment, (3, 0), (1, 3), wx.EXPAND)
 
 		szedit.AddGrowableRow(3)
+		szedit.AddGrowableRow(0)
+		szedit.AddGrowableCol(0)
 		szedit.AddGrowableCol(1)
+		szedit.AddGrowableCol(2)
 
 		sbsz.Add(szedit, 1, wx.EXPAND|wx.ALL, 5)
 
@@ -321,7 +330,7 @@ class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 	def getBestSize(self):
 		count = self.GetColumnCount()
 		width = sum(map(lambda i: self.GetColumnWidth(i), range(count)))
-		height = self.GetSize().height * 3
+		height = self.GetSize().height * 3 
 		return width, height
 
 	def addPixelSize(self, mag, ps, comment):
@@ -382,6 +391,8 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		for ps in self.pixelsizes:
 			mag, ps, comment = ps
 			self.lcpixelsize.addPixelSize(mag, ps, comment)
+		self.lcpixelsize.SetColumnWidth(0, 100)
+		self.lcpixelsize.SetColumnWidth(2, 120)
 
 		self.bedit = wx.Button(self, -1, 'Edit...')
 		self.bextrapolate = wx.Button(self, -1, 'Extrapolate From Selected...')
@@ -392,11 +403,11 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		self.bdone = wx.Button(self, wx.ID_OK, 'Done')
 
 		szps = wx.GridBagSizer(5, 5)
-		szps.Add(self.lcpixelsize, (0, 0), (1, 1),wx.EXPAND )
+		szps.Add(self.lcpixelsize, (0, 0), (2, 3),wx.EXPAND )
 		szpsopt = wx.GridBagSizer(5, 5)
 		szpsopt.Add(self.bedit, (0, 0), (1, 1), wx.ALIGN_LEFT)
-		szpsopt.Add(self.bextrapolate, (0, 1), (1, 1), wx.ALIGN_CENTER)
-		szps.Add(szpsopt, (1, 0), (1, 1), wx.EXPAND)
+		szpsopt.Add(self.bextrapolate, (0, 1), (1, 2), wx.ALIGN_CENTER)
+		szps.Add(szpsopt, (2, 0), (1, 1), wx.EXPAND)
 		szps.AddGrowableRow(0)
 		szps.AddGrowableCol(0)
 

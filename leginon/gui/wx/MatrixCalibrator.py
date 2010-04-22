@@ -44,6 +44,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.Bind(leginon.gui.wx.Events.EVT_EDIT_MATRIX, self.onEditMatrix)
 		self.cparameter.AppendItems(map(capitalize, self.node.parameters.keys()))
 		self.cparameter.SetStringSelection(capitalize(self.node.parameter))
+		self.cparameter.SetSize(self.cparameter.GetBestSizeTuple())
 		self.cparameter.Bind(wx.EVT_CHOICE, self.onParameterChoice, self.cparameter)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool,
 											id=leginon.gui.wx.ToolBar.ID_PARAMETER_SETTINGS)

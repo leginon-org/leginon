@@ -31,7 +31,7 @@ class ImagePanel(object):
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
     def initialize(self):
-		return ScrolledSettings(self,self.scrsize,True)
+		return ScrolledSettings(self,self.scrsize,False)
 
 class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
     def initialize(self):
