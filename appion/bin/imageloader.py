@@ -58,6 +58,9 @@ class ImageLoader(appionLoop2.AppionLoop):
 		self.parser.add_option("--no-append-session", dest="appendsession", default=True,
 			action="store_false", help="Do not append session to image names")
 
+		self.parser.add_option("--invert", dest="invert", default=False,
+			action="store_true", help="Invert image density")
+
 		### mode 1: command line params
 		self.parser.add_option("--tiltgroup", dest="tiltgroup", type="int", default=1,
 			help="Number of image per tilt series, default=1", metavar="INT")
@@ -445,6 +448,10 @@ class ImageLoader(appionLoop2.AppionLoop):
 					apDisplay.printError("image conversion to mrc did not execute properly")
 			uploadedInfo['original filepath'] = newimgfilepath
 		tmpimage = mrc.read(uploadedInfo['original filepath'])
+		# invert image density
+		if self.params['invert'] is True:
+			tmpimage *= -1.0
+			mrc.write(tmpimage,uploadedInfo['original filepath'])
 		shape = tmpimage.shape
 		uploadedInfo['dimension'] = {'x':shape[1],'y':shape[0]}
 		uploadedInfo['session'] = self.session

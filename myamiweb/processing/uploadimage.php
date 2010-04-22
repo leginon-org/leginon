@@ -89,6 +89,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$kv = ($_POST['kv']) ? $_POST['kv'] : "";
 	$mag = ($_POST['mag']) ? $_POST['mag'] : "";
 	$df = ($_POST['df']) ? $_POST['df'] : "";
+	$invert_check = ($_POST['invert_check']=='on') ? 'checked' : '';
 
 	// Start Tables
 	echo"<table class=tableborder>\n";
@@ -185,6 +186,9 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	// Setup Images in Group
 	echo docpop('images_in_group', 'Number of images in each tilt series if any:');
 	echo "<br/>\n<input type='text' name='tiltgroup' value='$tiltgroup' size='5'>\n";
+	echo "<br/>\n";
+	echo "<br/><input type='checkbox' name='invert_check' $invert_check>\n";
+	echo "Invert image density\n";
 
 	echo "<br/><br/>\n";
 	echo "</td></tr>\n";
@@ -295,6 +299,7 @@ function runUploadImage() {
 	$sessionname = trim($_POST['sessionname']);
 	$batch = trim($_POST['batch']);
 	$batch_check = trim($_POST['batchcheck']);
+	$invert_check = trim($_POST['invert_check']);
 	$tiltgroup = $_POST['tiltgroup']+0;
 	$tem = $_POST['tem'];
 	$cam = $_POST['cam'];
@@ -323,6 +328,9 @@ function runUploadImage() {
 	$description=$_POST['description'];
 	if (!$description && !$session_in_project)
 		createUploadImageForm("<B>ERROR:</B> Enter a brief description of the session");
+
+	// for inverting density
+	if ($invert_check=='on') $command.="--invert ";
 
 	//determine if a information batch file was provided
 	if (!$batch) {
