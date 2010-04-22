@@ -541,7 +541,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		f.write("PLT_OUT\n")
 		f.write("THREED\n")
 		f.write("ordered"+str(iteration)+"\n")
-		f.write("ordered"+str(iteration)+".plt\n")
+		f.write("ordered"+str(iteration)+"_Eulers.plt\n")
 		f.write("EOF\n")
 		
 		### convert to SPIDER format, but first rotate volume by 180 degrees around IMAGIC y, to make sure that the image remains UNCHANGED
@@ -819,7 +819,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		apDisplay.printColor("Final preference value %.6f" % (prefvalue), "cyan")
 
 		### dump value to file
-		preffile = os.path.join(self.params['rundir'], 'affinity_propataion_preferences.dat')
+		preffile = os.path.join(self.params['rundir'], 'affinity_propagation_preferences.dat')
 		apDisplay.printMsg("Dumping preference value to file")
 		f = open(preffile, 'w')
 		for i in range(0,self.params['num_volumes']):
@@ -1005,7 +1005,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		### read in Euler angles as a tuple of (alpha, beta, gamma) for each model and store them in an euler list for each volume
 		euler_array = []
 		for i in range(self.params['num_volumes']):
-			eulerFile = open(os.path.join(self.params['rundir'], "angular_reconstitution", "ordered"+str(i+1)+".plt"))
+			eulerFile = open(os.path.join(self.params['rundir'], "angular_reconstitution", "ordered"+str(i+1)+"_Eulers.plt"))
 			eulerlist = []
 			for j in range(self.params['numpart']):
 				vals = eulerFile.readline().strip().split()
@@ -1253,7 +1253,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		self.params['numpart'] = apFile.numImagesInStack(self.params['avgs'])
 #		apIMAGIC.copyFile(self.params['rundir'], clsname, headers=True)
 		apIMAGIC.takeoverHeaders(self.params['avgs'], self.params['numpart'], self.params['boxsize'])
-		
+	
 		#######################################		scale class averages, if necessary		##########################################
 
 		### scale class averages to 64x64, if scaling is specified
@@ -1330,8 +1330,9 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		alignparams = self.read_vol_doc_file(vol_doc_file)
 		apDisplay.printColor("Aligning volumes based on 3-D ML parameters", "cyan")
 		self.align_volumes(alignparams)
-
+		
 		##############################################    Principal Component Analysis   #############################################
+		
 		alignparams = self.read_vol_doc_file(vol_doc_file)
 		apDisplay.printColor("Calculating inter-volume similarity", "cyan")
 		if self.params['PCA'] is True:
