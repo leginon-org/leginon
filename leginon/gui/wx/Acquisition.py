@@ -31,13 +31,13 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'Image Acquisition')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		if self.show_basic:
-			sz = self.onAddBasicSettings()
+			sz = self.addBasicSettings()
 		else:
-			sz = self.onAddSettings()
+			sz = self.addSettings()
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
 		return [sbsz]
 
-	def onAddBasicSettings(self):
+	def addBasicSettings(self):
 		# move type
 		movetypes = self.node.getMoveTypes()
 		self.widgets['move type'] = Choice(self, -1, choices=movetypes)
@@ -51,16 +51,51 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szmovetype.Add(wx.StaticText(self, -1, 'to move to target'),
 										(0, 2), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL)
+		# pause time
+		self.widgets['pause time'] = FloatEntry(self, -1,
+																		min=0.0,
+																		allownone=False,
+																		chars=4,
+																		value='0.0')
+		szpausetime = wx.GridBagSizer(5, 5)
+		szpausetime.Add(wx.StaticText(self, -1, 'Wait'),
+								(0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(self.widgets['pause time'],
+								(0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausetime.Add(wx.StaticText(self, -1, 'seconds before acquiring image'),
+								(0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		# process
+		self.widgets['wait for process'] = wx.CheckBox(self, -1,
+																				'Wait for a node to process the image')
+		# transform
+		self.widgets['adjust for transform'] = Choice(self, -1, choices=['no', 'one', 'all'])
+		sz_transform = wx.GridBagSizer(0, 0)
+		label = wx.StaticText(self, -1, 'Adjust target using')
+		sz_transform.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_transform.Add(self.widgets['adjust for transform'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'ancestor(s)')
+		sz_transform.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		# preset order
 		presets = self.node.presetsclient.getPresetNames()
 		self.widgets['preset order'] = EditPresetOrder(self, -1)
 		self.widgets['preset order'].setChoices(presets)
+
+		szleft = wx.GridBagSizer(3, 10)
+		szleft.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
+		szleft.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
+		szleft.Add(self.widgets['wait for process'], (2, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
+		szleft.Add(sz_transform, (3, 0), (1, 2), wx.ALIGN_LEFT|wx.ALL)
+
 		sz = wx.GridBagSizer(3, 3)
-		sz.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['preset order'], (1, 0), (4, 2), wx.ALIGN_CENTER)
+		sz.Add(szleft, (0, 0), (4, 2), wx.ALIGN_CENTER)
+		sz.Add(self.widgets['preset order'], (0, 2), (4, 2), wx.ALIGN_CENTER)
 		return sz
 
-	def onAddSettings(self):
+	def addSettings(self):
 		sbsim = wx.StaticBox(self, -1, 'Simulated Target Loop')
 		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
 		sbeval = wx.StaticBox(self, -1, 'Evaluate Image Stats')

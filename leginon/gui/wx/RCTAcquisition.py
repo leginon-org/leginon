@@ -136,6 +136,16 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		self.widgets['maxsize'] = FloatEntry(self, -1, chars=6, value='0.0')
 		sizer.Add(self.widgets['maxsize'], (1,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
+		label = wx.StaticText(self, -1, 'Median Filter (pixels)')
+		sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['medfilt'] = IntEntry(self, -1, chars=2, value='0')
+		sizer.Add(self.widgets['medfilt'], (2,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
+		label = wx.StaticText(self, -1, 'LowPass Filter (pixels)')
+		sizer.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['lowfilt'] = FloatEntry(self, -1, chars=2, value='0.0')
+		sizer.Add(self.widgets['lowfilt'], (2,3), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
+
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER|wx.ALL, 2)
 
 		return sbsz

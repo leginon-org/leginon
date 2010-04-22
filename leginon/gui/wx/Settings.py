@@ -54,7 +54,7 @@ attributes = {
 class ScrolledDialog(scrolledpanel.ScrolledPanel):
 	def __init__(self, parent, size=(200,200),scrolling=False,show_basic=False):
 		self.node = parent.node
-		self.panel = parent.GetParent()
+		self.panel = parent.panel
 		self.dialog = parent
 		self.show_basic = show_basic
 		scrolledpanel.ScrolledPanel.__init__(self,parent,size=size,style=wx.TAB_TRAVERSAL)
@@ -187,7 +187,7 @@ class Dialog(wx.Dialog):
 
 	def onSetAll(self, evt):
 		self.onSet(evt)
-		dialog = self.settingsdialogclass(self,show_basic=False)
+		dialog = self.settingsdialogclass(self.panel,show_basic=False)
 		dialog.ShowModal()
 		dialog.Destroy()
 		self.getNodeSettings()

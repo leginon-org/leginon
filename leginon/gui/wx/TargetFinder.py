@@ -73,7 +73,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		return self.imagepanel.getTargets(typename)
 
 	def onSettingsTool(self, evt):
-		dialog = self.SettingsDialog(self)
+		dialog = SettingsDialog(self,show_basic=True)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -97,14 +97,36 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'General Target Finder Settings ')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		if self.show_basic:
+			sz = self.addBasicSettings()
+		else:
+			sz = self.addSettings()
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		return [sbsz]
 
+	def addBasicSettings(self):
+		self.widgets['user check'] = wx.CheckBox(self, -1,
+																	'Allow for user verification of selected targets')
+		self.widgets['queue'] = wx.CheckBox(self, -1,
+																							'Queue up targets')
+		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(self.widgets['user check'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		#sz.Add(self.widgets['wait for done'], (1, 0), (1, 1),
+		#				wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['queue'], (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		return sz
+
+	def addSettings(self):
 		#self.widgets['wait for done'] = wx.CheckBox(self, -1,
 		#			'Wait for another node to process targets before marking them done')
 		self.widgets['user check'] = wx.CheckBox(self, -1,
@@ -130,9 +152,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['allow append'], (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-
-		return [sbsz]
+		return sz
 
 	def onQueueCheckbox(self, evt):
 		state = evt.IsChecked()

@@ -15,6 +15,7 @@ import leginon.gui.wx.Instrument
 
 class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin):
 	icon = 'driftmanager'
+	imagepanelclass = leginon.gui.wx.TargetPanel.TargetImagePanel
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 		leginon.gui.wx.Instrument.SelectionMixin.__init__(self)
@@ -26,17 +27,17 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE_DRIFT,
 													'ruler',
-													shortHelpString='Measure Drift')
+													shortHelpString='Measure Drift Once')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CHECK_DRIFT,
 													'play',
-													shortHelpString='Check Drift')
+													shortHelpString='Test Drift Check')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT_DRIFT,
 													'stop',
 													shortHelpString='Abort Drift Check')
 		self.toolbar.Realize()
 
 		# image
-		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel = self.imagepanelclass(self, -1)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTypeTool('Correlation', display=True)
@@ -63,7 +64,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 											id=leginon.gui.wx.ToolBar.ID_MEASURE_DRIFT)
 
 	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self)
+		dialog = SettingsDialog(self,show_basic=True)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -78,29 +79,23 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Drift Management')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		if self.show_basic:
+			sz = self.addBasicSettings()
+		else:
+			sz = self.addSettings()
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		return [sbsz]
 
-		self.widgets['threshold'] = FloatEntry(self, -1, min=0.0, chars=9)
+	def addSettings(self):
+		#pause
 		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
-		self.instrumentselection = leginon.gui.wx.Instrument.SelectionPanel(self, passive=True)
-		self.panel.setInstrumentSelection(self.instrumentselection)
-		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
-
-		szthreshold = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Wait for drift to be less than')
-		szthreshold.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szthreshold.Add(self.widgets['threshold'], (0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'meters')
-		szthreshold.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
 		szpause = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Wait at least')
 		szpause.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -108,7 +103,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'seconds between images')
 		szpause.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
+		# timeout
 		sztimeout = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Give up after')
 		sztimeout.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -118,17 +113,59 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'minutes')
 		sztimeout.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		# testing in the node
+		sbtest = wx.StaticBox(self, -1, 'Drift Monitor Testing')
+		sbsztest = wx.StaticBoxSizer(sbtest, wx.VERTICAL)
+		# drift threshold
+		self.widgets['threshold'] = FloatEntry(self, -1, min=0.0, chars=9)
+		szthreshold = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Wait for drift to be less than')
+		szthreshold.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szthreshold.Add(self.widgets['threshold'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'meters')
+		szthreshold.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		# instrument
+		self.instrumentselection = leginon.gui.wx.Instrument.SelectionPanel(self, passive=True)
+		self.panel.setInstrumentSelection(self.instrumentselection)
+		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
+		sztest = wx.GridBagSizer(5,5)
+		sztest.Add(szthreshold, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztest.Add(self.instrumentselection, (1, 0), (2, 1), wx.EXPAND)
+		sztest.Add(self.widgets['camera settings'], (3, 0), (1, 1), wx.EXPAND)
+		sbsztest.Add(sztest, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
 
 		sz = wx.GridBagSizer(5, 10)
-		sz.Add(szthreshold, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpause, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sztimeout, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.instrumentselection, (3, 0), (1, 1), wx.EXPAND)
-		sz.Add(self.widgets['camera settings'], (4, 0), (1, 1), wx.EXPAND)
+		sz.Add(sbsztest, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL,15)
+		return sz
 
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+	def addBasicSettings(self):
+		#pause
+		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
+		szpause = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Wait at least')
+		szpause.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpause.Add(self.widgets['pause time'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'seconds between images')
+		szpause.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		#timeout
+		self.widgets['timeout'] = IntEntry(self, -1, min=0, chars=4)
+		sztimeout = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Give up after')
+		sztimeout.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztimeout.Add(self.widgets['timeout'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'minutes')
+		sztimeout.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		return [sbsz]
+		sz = wx.GridBagSizer(5, 10)
+		sz.Add(szpause, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sztimeout, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return sz
 
 if __name__ == '__main__':
 	class App(wx.App):

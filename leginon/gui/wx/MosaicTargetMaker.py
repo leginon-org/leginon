@@ -51,7 +51,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 											id=leginon.gui.wx.ToolBar.ID_PLAY)
 
 	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self)
+		dialog = SettingsDialog(self, show_basic=True)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -83,14 +83,50 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Mosaic')
+		sb = wx.StaticBox(self, -1, 'Image Acquisition')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		if self.show_basic:
+			sz = self.addBasicSettings()
+		else:
+			sz = self.addSettings()
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		return [sbsz]
 
+		return ScrolledSettings(self,self.scrsize,False)
+
+	def addBasicSettings(self):
+		sz = wx.GridBagSizer(5, 10)
+		# preset
+		presets = self.node.presetsclient.getPresetNames()
+		self.widgets['preset'] = PresetChoice(self, -1)
+		self.widgets['preset'].setChoices(presets)
+		label = wx.StaticText(self, -1, 'Preset:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['preset'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		# atlas label
+		self.widgets['label'] = Entry(self, -1, allowspaces=False)
+		label = wx.StaticText(self, -1, 'Label:')
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['label'], (1, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		# radius
+		self.widgets['radius'] = FloatEntry(self, -1, min=0.0, chars=6)
+		label = wx.StaticText(self, -1, 'Radius:')
+		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		#sz.Add(szradius, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.widgets['radius'], (2, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'm')
+		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		return sz
+
+	def addSettings(self):
 		presets = self.node.presetsclient.getPresetNames()
 		self.widgets['preset'] = PresetChoice(self, -1)
 		self.widgets['preset'].setChoices(presets)
@@ -142,9 +178,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		sz.AddGrowableCol(1)
 
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
-
-		return [sbsz]
+		return sz
 
 if __name__ == '__main__':
 	class App(wx.App):

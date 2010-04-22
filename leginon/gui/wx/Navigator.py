@@ -102,7 +102,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.node.settings['move type'] = evt.GetString()
 
 	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self)
+		dialog = SettingsDialog(self,show_basic=True)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -271,31 +271,50 @@ class StageLocationsDialog(wx.Dialog):
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Navigation')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		if self.show_basic:
+			sz = self.addBasicSettings()
+		else:
+			sz = self.addSettings()
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		return [sbsz]
+
+	def addBasicSettings(self):
+		# pause time
+		self.widgets['pause time'] = FloatEntry(self, -1,
+																		min=0.0,
+																		allownone=False,
+																		chars=4,
+																		value='0.0')
+		szpausetime = wx.GridBagSizer(5, 5)
+		szpausetime.Add(wx.StaticText(self, -1, 'Wait'),
+								(0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(self.widgets['pause time'],
+								(0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausetime.Add(wx.StaticText(self, -1, 'seconds before acquiring image'),
+								(0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		# error checking and correction
+		self.widgets['check calibration'] = wx.CheckBox(self, -1,
+																										'Measure move error')
+		sz = wx.GridBagSizer(5, 10)
+		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['check calibration'], (1, 0), (1, 1))
+		return sz
+
+	def addSettings(self):
 		overridebox = wx.StaticBox(self, -1, "Override Preset")
 		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
 		errbox = wx.StaticBox(self, -1, "Error Checking and Correction")
 		errsz = wx.StaticBoxSizer(errbox, wx.VERTICAL)
-
-		# move type
-#		movetypes = self.node.calclients.keys()
-#		self.widgets['move type'] = Choice(self, -1, choices=movetypes)
-#		szmovetype = wx.GridBagSizer(5, 5)
-#		szmovetype.Add(wx.StaticText(self, -1, 'Use'),
-#										(0, 0), (1, 1),
-#										wx.ALIGN_CENTER_VERTICAL)
-#		szmovetype.Add(self.widgets['move type'],
-#										(0, 1), (1, 1),
-#										wx.ALIGN_CENTER_VERTICAL)
-#		szmovetype.Add(wx.StaticText(self, -1, 'to move to target'),
-#										(0, 2), (1, 1),
-#										wx.ALIGN_CENTER_VERTICAL)
 
 		# pause time
 		self.widgets['pause time'] = FloatEntry(self, -1,
@@ -386,10 +405,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(errsz, (2,0), (1,1))
 		#sz.AddGrowableRow(2)
-
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-
-		return [sbsz]
+		return sz
 
 class NewLocationDialog(wx.Dialog):
 	def __init__(self, parent, node):

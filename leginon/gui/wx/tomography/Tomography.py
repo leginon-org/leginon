@@ -37,12 +37,12 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def initialize(self):
 		szs = leginon.gui.wx.Acquisition.ScrolledSettings.initialize(self)
 		if self.show_basic:
-			sz = self.onAddTomoBasicSettings()
+			sz = self.addTomoBasicSettings()
 		else:
-			sz = self.onAddTomoSettings()
+			sz = self.addTomoSettings()
 		return szs + [sz]
 
-	def onAddTomoBasicSettings(self):
+	def addTomoBasicSettings(self):
 		tiltsb = wx.StaticBox(self, -1, 'Tilt')
 		tiltsbsz = wx.StaticBoxSizer(tiltsb, wx.VERTICAL)
 		expsb = wx.StaticBox(self, -1, 'Exposure')
@@ -143,7 +143,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sz.AddGrowableCol(1)
 		return sz
 
-	def onAddTomoSettings(self):
+	def addTomoSettings(self):
 		tiltsb = wx.StaticBox(self, -1, 'Tilt')
 		tiltsbsz = wx.StaticBoxSizer(tiltsb, wx.VERTICAL)
 		expsb = wx.StaticBox(self, -1, 'Exposure')
