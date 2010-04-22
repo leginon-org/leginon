@@ -20,7 +20,7 @@ if (!empty($_POST)) {
 	$result .= "</p>";
 }
 ?>
-<center><h1>Leginon and Appion Database Tools</h1></center>
+<center><h1><?php echo PROJECT_TITLE; ?></h1></center>
 <hr/>
 <fieldset>
 <form name='register' method='POST' action='<?=$_SERVER['PHP_SELF']?>'>
