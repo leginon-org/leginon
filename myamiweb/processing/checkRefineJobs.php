@@ -331,11 +331,11 @@ function showEMANJobInfo($jobinfo) {
 					$steps['clsbymra']['duration'] = getduration($lasttime,$t['timestamp']);
 
 					// get the number of classes
-					$cmd = "cd $reconpath; ls cls*.lst | wc -l";
+					$cmd = "ls $reconpath/cls*.lst | wc -l";
 					$cls = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 					$cls = trim($cls);
 					// get the number of classes that have been aligned
-					$cmd = "grep Final $reconpath/refine$current.txt | wc -l";
+					$cmd = "egrep '^Final' $reconpath/refine$current.txt | wc -l";
 					$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 					$r = trim($r);
 					// find out how much time is left for rest of particles
@@ -374,10 +374,10 @@ function showEMANJobInfo($jobinfo) {
 					$steps['make3d']['duration'] = getduration($lasttime,$t['timestamp']);
 
 					// get progress of coran
-					$cmd = "cd $reconpath/coran$current; ls cls*.lst | wc -l";
+					$cmd = "ls $reconpath/coran$current/cls*.lst | wc -l";
 					$tot = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 					$tot = trim($tot);
-					$cmd = "cd $reconpath/coran$current; ls cls*.dir/classes_avg.spi | wc -l";
+					$cmd = "ls $reconpath/coran$current/cls*.dir/classes_avg.spi | wc -l";
 					$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 					$r = trim($r);
 					// determine how much time left to finish coran
@@ -405,16 +405,16 @@ function showEMANJobInfo($jobinfo) {
 					$steps['make3d']['duration'] = getduration($lasttime,$t['timestamp']);
 
 					// see if making model
-					$cmd = "grep classalignall $reconpath/eotest$current.txt | wc -l";
+					$cmd = "egrep '^Run .classalignall' $reconpath/eotest$current.txt | wc -l";
 					$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 					$r = trim($r);
 					if ($r < 2) {
 						// get the number of e/o classes
-						$cmd = "cd $reconpath; ls cls*.lst | wc -l";
+						$cmd = "ls $reconpath/cls*.lst | wc -l";
 						$cls = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 						$cls = trim($cls);
 						// get the number of classes that have been aligned
-						$cmd = "grep Final $reconpath/eotest$current.txt | wc -l";
+						$cmd = "egrep '^Final' $reconpath/eotest$current.txt | wc -l";
 						$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 						$r = trim($r);
 						// find out how much time is left for rest of particles
@@ -424,12 +424,12 @@ function showEMANJobInfo($jobinfo) {
 					}
 					else {
 						// see if transforming
-						$cmd = "grep '[0-9]*/[0-9]*([0-9]*)' $reconpath/eotest$current.txt | wc -l";
+						$cmd = "egrep '^[0-9]+/[0-9]+([0-9]+)' $reconpath/eotest$current.txt | wc -l";
 						$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 						$r = trim($r);
 						if ($r > 0) {
 							// get the number of classes
-							$cmd = "cd $reconpath; ls cls*.lst | grep 'cls[0-9]*.lst' | wc -l";
+							$cmd = "ls $reconpath/cls[0-9]*[0-9].lst | wc -l";
 							$cls = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 							$cls = trim($cls);
 							// find number of times cycled
@@ -486,7 +486,7 @@ function checkEMANJobStatus($host,$jobpath,$jobfile,$user,$pass) {
 	$cmd = "cat $jobpath/recon/refine.log";
 	$r = exec_over_ssh($host,$user,$pass,$cmd, True);
 	if ($r) {
-		$cmd = "echo 'RESOLUTIONS';cat $jobpath/recon/resolution.txt";
+		$cmd = "echo 'RESOLUTIONS'; cat $jobpath/recon/resolution.txt";
 		$r .= exec_over_ssh($host,$user,$pass,$cmd, True);
 	}
 	$curref = streamToArray($r);
