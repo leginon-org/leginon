@@ -49,6 +49,14 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 		$jobinfo = $particle->getJobInfoFromId($jobId);
 	}
 	
+	// mark the job broken if requested
+	if ($_POST['brokenjob']) {
+		$particle->abortClusterJob($jobId,$cluster,$jobinfo['user']);
+		echo "<font class='apcomment'>Broken job \"".$jobinfo['name']."\" has been marked as aborted</font><br />\n";
+		// get updated job info
+		$jobinfo = $particle->getJobInfoFromId($jobId);
+	}
+	
 	// if clicked button, list job in queue
 	$queue = checkClusterJobs($host,$user, $pass);
 	if ($queue) {
@@ -89,29 +97,35 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	// get log file from name of job
 	$logfile = ereg_replace(".job",".log", $jobinfo['name']);
 	$logpath = $jobinfo['appath']."/".$logfile;
-	
-	if ($_SESSION['loggedin']==True && file_exists($logpath)) {
-		$tail = ($_POST['tail']) ? $_POST['tail'] : '10';
-		$statinfo=checkJobStatus($host,$jobinfo['appath'],$logfile,$user,$pass,$tail);
-		if ($statinfo) {
-			echo "<table border='0' width='600' CELLPADDING='5'>\n";
-			echo "<tr><td>\n";
-			echo "<form name='jobform' method='post' action='$formAction'>\n";
-			echo "Show last <input type='text' name='tail' size='4' value='$tail'> lines of log file<br />\n";
-			echo "<input type='submit' name='checkjob' value='Update Status'><br />\n";
-			echo "$logfile:</td></tr>\n";
-			echo "<tr><td bgcolor='#000000'>\n";
-			echo "<pre>\n";
-			echo "<font color='white' size='-1'>\n";
-			foreach ($statinfo as $l) {
-				$colored = convertToColors($l);
-				echo "$colored\n";
+	if ($_SESSION['loggedin']==True) {
+		if (file_exists($logpath)) {
+			$tail = ($_POST['tail']) ? $_POST['tail'] : '10';
+			$statinfo=checkJobStatus($host,$jobinfo['appath'],$logfile,$user,$pass,$tail);
+			if ($statinfo) {
+				echo "<table border='0' width='600' CELLPADDING='5'>\n";
+				echo "<tr><td>\n";
+				echo "<form name='jobform' method='post' action='$formAction'>\n";
+				echo "Show last <input type='text' name='tail' size='4' value='$tail'> lines of log file<br />\n";
+				echo "<input type='submit' name='checkjob' value='Update Status'><br />\n";
+				echo "$logfile:</td></tr>\n";
+				echo "<tr><td bgcolor='#000000'>\n";
+				echo "<pre>\n";
+				echo "<font color='white' size='-1'>\n";
+				foreach ($statinfo as $l) {
+					$colored = convertToColors($l);
+					echo "$colored\n";
+				}
+				echo "</font></pre>\n";
+				echo "</td></tr></table>\n";
+				if ($status=='Running') echo "<center><input type='submit' name='killjob' value='Kill this job'></center>\n";
+				echo "</form>\n";
 			}
-			echo "</font></pre>\n";
-			echo "</td></tr></table>\n";
-			if ($status=='Running') echo "<center><input type='submit' name='killjob' value='Kill this job'></center>\n";
-			echo "</form>\n";
-
+		} else {
+			if (!$queue) {
+				echo "<form name='jobform' method='post' action='$formAction'>\n";
+				if ($status=='Running') echo "<center><input type='submit' name='brokenjob' value='Mark this broken job as aborted'></center>\n";
+				echo "</form>\n";
+			}
 		}
 	}
 	processing_footer();
