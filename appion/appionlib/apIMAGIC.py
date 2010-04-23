@@ -5,9 +5,11 @@ import sys
 import stat
 import time
 import subprocess
+import glob
 from appionlib import apDisplay
 from appionlib import apParam
 
+#======================
 def checkImagicExecutablePath():
 	### check for IMAGIC installation
 	d = os.environ
@@ -18,6 +20,18 @@ def checkImagicExecutablePath():
 	return imagicroot
 	
 
+#======================
+def getImagicVersion(imagicroot):
+	### get IMAGIC version from the "version_######S" file in
+	### the imagicroot directory, return as an int
+	versionstr=glob.glob(os.path.join(imagicroot,"version_*"))
+	if versionstr:
+		v = re.search('\d\d\d\d\d\d',versionstr[0]).group(0)
+		return int(v)
+	else:
+		apDisplay.printError("Could not get version number from imagic root directory")
+
+#======================
 def executeImagicBatchFile(filename, verbose=False, logfile=None):
 	"""
 	executes an IMAGIC batch file in a controlled fashion
