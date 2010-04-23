@@ -227,6 +227,8 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		$type = 'spread';
 	elseif ($stackdata['REF|ApMultiRefAlignRunData|imagicMRA'])
 		$type = 'correlation';
+	elseif ($stackdata['REF|ApTopolRepRunData|topreprun'])
+		$type = 'correlation';
 	else
 		$type = 'score';
 
@@ -316,7 +318,18 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	if ($stackdata['refstackfile'] && file_exists($refstack))
 		$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
 			."file=$refstack&expId=$expId&ps=$mpix&alignId=$alignstackid'>".$stackdata['refstackfile']."</a>\n";
-
+	// if toplogy run, show links to last node file
+	if ($stackdata['REF|ApTopolRepRunData|topreprun']) {
+		$nodefiles = glob($stackdata['path']."/classes*.hed");
+		$numiters=-1;
+		// count # of node classes: 1 for each iteration
+		foreach ($nodefiles as $nodefile)
+			if (preg_match('/classes\d\d\.hed/',$nodefile)) $numiters++;
+		// create link to last node file
+		$lastnode=sprintf("classes%02d.hed",$numiters);
+		$display_keys['last node file'] = "<a target='stackview' href='viewstack.php?"
+			."file=".$stackdata['path']."/$lastnode&expId=$expId&ps=$mpix&alignId=$alignstackid'>$lastnode</a>\n";
+	}
 	$stackfile = $stackdata['path']."/".$stackdata['imagicfile'];
 
 	if ($mini) {
