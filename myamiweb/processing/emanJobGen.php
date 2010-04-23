@@ -870,15 +870,14 @@ function writeJobFile ($extra=False) {
 
 	$clusterdata->post_data();
 
-
-
-
 	// get the model id
 	$modelinfo=explode('|--|',$_POST['model']);
 	$modelid=$modelinfo[0];
 	$initmodel = $particle->getInitModelInfo($modelid);
 	if ($initmodel['boxsize'] != $box) $rebox = True;
-	if (round($initmodel['pixelsize'],2) != round($apix,2)) $rescale = "scale=".$initmodel['pixelsize']/$apix;
+	$scalefactor = $initmodel['pixelsize']/$apix;
+	if (abs($scalefactor - 1.0) > 0.01)
+		$rescale = sprintf("scale=%.5f", $scalefactor);
 
 	// insert the job file into the database
 	if (!$extra) {
@@ -898,17 +897,27 @@ function writeJobFile ($extra=False) {
 
 	$procs=$_POST['nodes']*$_POST['rprocs'];
 	$numiters=$_POST['numiters'];
-	$pad=intval($box*1.25);
-	// make sure $pad value is even int
-	$pad = ($pad%2==1) ? $pad+=1 : $pad;
 
-	$ejob.= "mv -v ".$initmodel['name']." threed.0a.mrc\n";
+	// calculate pad and make it even
+	$pad = intval($box*1.25/2.0)*2;
 
-	// rescale initial model if necessary:
+	$ejob = "\n";
+
+	// rescale initial model, if necessary:
 	if ($rebox || $rescale) {
-		$ejob.= "mv -v threed.0a.mrc init.mrc\n";
-		$ejob.= "proc3d init.mrc threed.0a.mrc $rescale clip=$box,$box,$box norm=0,1\n";
-		$ejob.= "rm -fv init.mrc\n";
+		$ejob .= "#rescale initial model\n";
+		$ejob .= "proc3d ".$initmodel['name']." threed.0a.mrc \\\n"
+			."  $rescale clip=$box,$box,$box norm=0,1 origin=0,0,0\n\n";
+	} else {
+		$ejob .= "mv -v ".$initmodel['name']." threed.0a.mrc\n\n";
+	}
+
+	// rename stack, if necessary:
+	if ($stackinfo[5] != "start.hed") {
+		$ejob .= "#rename stack\n";
+		$ejob .= "mv -v ".$stackinfo[5]." start.hed\n";
+		$ejob .= "mv -v ".$stackinfo[6]." start.img\n";
+		$ejob .= "\n";
 	}
 
 	for ($i=1; $i<=$numiters; $i++) {
