@@ -1385,6 +1385,8 @@ class particledata {
 			$nump=commafy($totalp);
 			// get pixel size of stack
 			$apix=($this->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
+			// truncated pixel size
+			$showapix=sprintf("%.2f",$apix);
 			// get box size
 			$box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
 			// get stack path with name
@@ -1395,7 +1397,7 @@ class particledata {
 			echo "<OPTION VALUE='$opvals'";
 			// select previously set stack on resubmit
 			if ($stackid['stackid']==$stackidval) echo " SELECTED";
-			echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
+			echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $showapix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
 		}
 		echo "</SELECT>\n";
 		return $apix;
