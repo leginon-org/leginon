@@ -238,7 +238,7 @@ if ($expId) {
 	$ctfq = count($subclusterjobs['pyace']['queued']);
 
 	$ctfresults[] = ($ctfdone==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$ctfdone complete</a>";
-	$ctfresults[] = ($ctfrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=ace'>$ctfrun running</a>";
+	$ctfresults[] = ($ctfrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=pyace'>$ctfrun running</a>";
 	$ctfresults[] = ($ctfq==0) ? "" : "$ctfq queued";
 
 	$ace2done = count($subclusterjobs['ace2']['done']);
@@ -652,7 +652,7 @@ if ($expId) {
 		$arun = count($subclusterjobs['tomoaligner']['running']);
 		$aq = count($subclusterjobs['tomoaligner']['queued']);
 		$aresults[] = ($adone==0) ? "" : "<a href='tomoalignsummary.php?expId=$sessionId'>$adone complete</a>";
-		$aresults[] = ($arun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoalign'>$srun running</a>";
+		$aresults[] = ($arun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoaligner'>$arun running</a>";
 		$aresults[] = ($aq==0) ? "" : "$aq queued";
 		
 		// get full tomogram making stats:
