@@ -194,6 +194,7 @@ var help = {
 		'learn' : 'Direct learning rate - fraction of the distance that a network node will move toward a presented data point. Higher values will make the learning more noisy but possibly explore more of "image space". Low values may prevent the network from accurately capturing your data. 0.01 suggested for cryo, higher for neg stain',
 		'ilearn' : 'Indirect learning rate - fraction of the distance that a network node connected to the highest scoring node will move toward that data point. This effect gives the network interesting "cohesive" properties and helps with classification. Should be lower than direct rate (default = 0.0005)',
 		'age' : 'Number of iterations an edge connecting two units can be unused before it is discarded. Higher values lead to a more connected network, but over-connecting can lead to inhibition of correct classification (i.e. 25)',
+		'mramethod' : 'Processing package that will be used to perform the multi-reference alignment step for each iteration (IMAGIC seems to give better results for most datasets)',
 
 /******* IMAGIC terms ********/
 

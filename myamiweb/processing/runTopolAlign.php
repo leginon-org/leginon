@@ -53,8 +53,8 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$javascript .= "	var mask = Math.floor((stackArray[2]/2)-2);\n";
 	$javascript .= "	document.viewerform.mask.value = mask;\n";
 	// set starting & ending # of classes
-	$javascript .= "	var strcls = Math.ceil(Math.sqrt(stackArray[3]));\n";
-	$javascript .= "	var endcls = Math.ceil(Math.sqrt(stackArray[3])/4);\n";
+	$javascript .= "	var strcls = Math.ceil(Math.sqrt(stackArray[3])/4);\n";
+	$javascript .= "	var endcls = Math.ceil(Math.sqrt(stackArray[3]));\n";
 	$javascript .= "	document.viewerform.startnumcls.value = strcls;\n";
 	$javascript .= "	document.viewerform.endnumcls.value = endcls;\n";
 	$javascript .= "	estimatetime();\n";
@@ -233,7 +233,17 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo "<input type='text' name='age' value='$age' size='4'>\n";
 	echo docpop('age','Edge age');
 	echo "<br/>\n";
-
+	echo "<br/>\n";
+	echo docpop('mramethod','<b>MRA package:</b>');
+	echo "<br/>\n";
+	$mramethods=array('IMAGIC','EMAN');
+	echo "<select name='mramethod'>\n";
+	foreach ($mramethods as $mra){
+		echo "<option";
+		if ($_POST['mramethod']==$mra) echo " selected";
+		echo ">$mra</option>\n";
+	}
+	echo "</select>\n";
 	echo "  </td>\n";
 	echo "  </tr>\n";
 	echo "</table>\n";
@@ -278,6 +288,7 @@ function runTopolAlign() {
 	$description=$_POST['description'];
 	$commit = ($_POST['commit']=="on") ? true : false;
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
+	$mramethod = strtolower($_POST['mramethod']);
 
 	// get stack id, apix, & box size from input
 	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
@@ -337,6 +348,7 @@ function runTopolAlign() {
 	$command.="--learn=$learn ";
 	$command.="--ilearn=$ilearn ";
 	$command.="--age=$age ";
+	$command.="--mramethod=$mramethod ";
 
 	if ($nproc && $nproc>1)
 		$command.="--nproc=$nproc ";
