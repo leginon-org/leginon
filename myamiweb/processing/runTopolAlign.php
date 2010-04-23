@@ -61,7 +61,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$javascript .= "}\n";
 	$javascript .= "
 		function estimatetime() {
-			var secperiter = 0.0025;
+			var secperiter = 0.001;
 			var stackval = document.viewerform.stackval.value;
 			var stackArray = stackval.split('|--|');
 			var numpart = document.viewerform.numpart.value;
