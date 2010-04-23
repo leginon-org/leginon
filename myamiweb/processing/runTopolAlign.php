@@ -178,7 +178,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo "  <TR><TD VALIGN='TOP'>\n";
 	//echo "<B>Particle Params:</B></A><br>\n";
 
-	echo "<b>Particle-specific params</b>\n";
+	echo "<b>Filters</b>\n";
 	echo "<br />\n";
 	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lowpass' onChange='estimatetime()'>\n";
 	echo docpop('lpstackval','Low Pass Filter Radius');
@@ -194,6 +194,13 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo docpop('partbin','Particle binning');
 	echo "<br/>\n";
 
+	echo "<INPUT TYPE='text' NAME='mask' VALUE='$mask' SIZE='4'>\n";
+	echo docpop('mask','Mask (in pixels, unbinned)');
+	echo "<br/>\n";
+	echo "<br/>\n";
+
+	echo "<b>Job Parameters</b>\n";
+	echo "<br/>\n";
 	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4' onChange='estimatetime()'>\n";
 	echo docpop('numpart','Number of Particles');
 	echo "<br/>\n";
@@ -206,17 +213,13 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo docpop('endnumcls','Ending # of classes');
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='text' NAME='mask' VALUE='$mask' SIZE='4'>\n";
-	echo docpop('mask','Mask radius (in pixels)');
-	echo "<br/>\n";
-
 	echo "<INPUT TYPE='text' NAME='iter' VALUE='$iter' SIZE='4'>\n";
 	echo docpop('topoliter','Number of iterations');
 	echo "<br/>\n";
 
 	echo "<br/>\n";
 
-	echo "<b>Topology Alignment Parameters:</b><br/>\n";
+	echo "<b>Alignment Parameters</b><br/>\n";
 
 	echo "<input type='text' name='itermult' value='$itermult' size='4'>\n";
 	echo docpop('itermult','Iteration multiplier');
