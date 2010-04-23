@@ -3047,10 +3047,10 @@ class particledata {
 			."FROM `ApClusterJobData` AS j "
 			."LEFT JOIN `ApPathData` AS p ON "
 			."(j.`REF|ApPathData|path` = p.`DEF_id`) "
-			."WHERE `REF|leginondata|SessionData|session` = $expId";
-		if ($jobtype) $q.=" AND `jobtype` = '$jobtype'";
-		if ($status) $q.=" AND `status` = '$status'";
-		if ($ignore) $q.=" AND `status` != 'I'";
+			."WHERE j.`REF|leginondata|SessionData|session` = $expId";
+		if ($jobtype) $q.=" AND j.`jobtype` = '$jobtype'";
+		if ($status) $q.=" AND j.`status` = '$status'";
+		if ($ignore) $q.=" AND j.`status` != 'I'";
 		$q.=" ORDER BY j.`DEF_id` DESC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
