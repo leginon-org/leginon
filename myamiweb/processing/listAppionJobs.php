@@ -22,6 +22,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	
 	// get info for specified job types
 	$jobinfo = $particle->getJobIdsFromSession($expId,$jobtype,'R');
+	$jobinfo = array_merge($jobinfo,$particle->getJobIdsFromSession($expId,$jobtype,'Q'));
 	// for makestack-related jobs, check all flavors:
 	if ($jobtype=='makestack') {
 		$st = $particle->getJobIdsFromSession($expId,"makestack2",'R');
@@ -61,7 +62,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 				$extraKeys['imgs processed']=commafy($numimg);
 				$extraKeys['particles so far']=commafy($numptl);
 				$extraKeys['particles per img']=$ppimg;
-				$perimg=$running/$numimg;
+				$perimg = ($numimg == 0) ? 0:$running/$numimg;
 				$perimg_m=floor($perimg/60);
 				$perimg_s=floor($perimg-$perimg_m*60);
 				$extraKeys['time per img'] = ($perimg_m>0) ? "$perimg_m min, ":'';

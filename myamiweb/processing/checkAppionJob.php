@@ -43,7 +43,11 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	if ($_POST['killjob']) {
 		$cmd = "qdel $clusterjobid";
 		exec_over_ssh($host,$user,$pass,$cmd, True);
-		$particle->updateClusterQueue($jobId,$clusterjobid,'D');
+		if ($jobinfo['status'] == 'R') {
+			$particle->updateClusterQueue($jobId,$clusterjobid,'D');
+		} else {
+			$particle->abortClusterJob($jobId,$cluster,$jobinfo['user']);
+		}
 		echo "<font class='apcomment'>Job \"$clusterjobid\" has been removed from the cluster</font><br />\n";
 		// get updated job info
 		$jobinfo = $particle->getJobInfoFromId($jobId);
@@ -117,7 +121,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 				}
 				echo "</font></pre>\n";
 				echo "</td></tr></table>\n";
-				if ($status=='Running') echo "<center><input type='submit' name='killjob' value='Kill this job'></center>\n";
+				if ($status=='Running'|| $status=='Queued') echo "<center><input type='submit' name='killjob' value='Kill this job'></center>\n";
 				echo "</form>\n";
 			}
 		} else {
