@@ -23,6 +23,20 @@ def getSubverionRevision(filename=None):
 	svndir = os.path.join(dirname, ".svn")
 	if not os.path.isdir(svndir):
 		return None
+
+	### try 1: use svnversion
+	cmd = "svnversion"
+	if dirname is not None:
+		cmd += " "+dirname
+	proc = subprocess.Popen(cmd, shell=True, 
+		stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	proc.wait()
+	line = proc.stdout.readline()
+	rev = line.strip()
+	if re.match('[0-9]', rev):
+		return rev
+
+	### try 2: use svn info
 	cmd = "svn info"
 	if dirname is not None:
 		cmd += " "+dirname
@@ -35,7 +49,8 @@ def getSubverionRevision(filename=None):
 			continue
 		rev = re.sub('Revision:', '', line).strip()
 		return rev
-	#still no revision get fourth line from entries file
+
+	### try 3: use fourth line from entries file
 	entries = os.path.join(dirname, ".svn/entries")
 	if os.path.isfile(entries):
 		f = open(entries, "r")
