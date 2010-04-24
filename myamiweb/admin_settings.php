@@ -31,9 +31,11 @@ function displayResult($result,$table,$name) {
 			}
 		}
 		$t = strtolower(substr($table,0,1));
-		echo '$data["REF|SessionData|session"]= $sessionId;'.$dlinebreak.'';
+		if ($table !='LowPassFilterSettingsData') {
+			echo '$data["REF|SessionData|session"]= $sessionId;'.$dlinebreak.'';
+			$filearray[] = '$data["REF|SessionData|session"]= $sessionId;'.$linebreak.'';
+		}
 		echo '$'.$t.'id'.$id.'=$dbc->SQLInsert($table, $data);'.$dlinebreak.'';
-		$filearray[] = '$data["REF|SessionData|session"]= $sessionId;'.$linebreak.'';
 		$filearray[] = '$'.$t.'id'.$id.'=$dbc->SQLInsert($table, $data);'.$linebreak.'';
 		echo $dlinebreak;
 		$filearray[] = $linebreak;
