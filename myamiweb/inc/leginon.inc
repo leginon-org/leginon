@@ -252,6 +252,12 @@ class leginondata {
 	function addUser($data) {
 	}
 
+	function getAdminUserId(){
+		$sql = 'SELECT `DEF_id` from `UserData` where `username` like "administrator" or "Administrator"';
+		$results = $this->mysql->getSQLResult($sql);
+		return $results[0]['DEF_id'];
+	}
+
 	function getGroups($order=null) {
 		return $this->getAll('GroupData', $order);
 	}
