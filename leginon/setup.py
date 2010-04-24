@@ -22,6 +22,8 @@ setup(
 	package_dir={'leginon': ''},
 	data_files=[
 		('leginon', ['holetemplate.mrc']),
+		('leginon', ['sq_example.jpg']),
+		('leginon', ['hl_example.jpg']),
 		('leginon/config', ['config/default.cfg']),
 		('leginon/icons', glob.glob('icons/*.png')),
 		('leginon/icons/processing', glob.glob('icons/processing/*.png')),
