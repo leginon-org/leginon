@@ -16,7 +16,6 @@ from appionlib import apDisplay
 #pyami
 from pyami import mrc
 
-
 """
 Functions to manipulate volumes
 """
