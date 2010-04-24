@@ -19,20 +19,31 @@ def getSubverionRevision(filename=None):
 		dirname = getInstalledLocation()
 	else:
 		dirname = os.path.dirname(os.path.abspath(filename))
-	print "DIRNAME: ", dirname
+	#print "DIRNAME: ", dirname
 	svndir = os.path.join(dirname, ".svn")
 	if not os.path.isdir(svndir):
 		return None
 	cmd = "svn info"
 	if dirname is not None:
 		cmd += " "+dirname
-	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc = subprocess.Popen(cmd, shell=True, 
+		stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	proc.wait()
 	for line in proc.stdout:
 		line = line.strip()
 		if not line.startswith('Revision:'):
 			continue
 		rev = re.sub('Revision:', '', line).strip()
+		return rev
+	#still no revision get fourth line from entries file
+	entries = os.path.join(dirname, ".svn/entries")
+	if os.path.isfile(entries):
+		f = open(entries, "r")
+		f.readline()
+		f.readline()
+		f.readline()
+		line = f.readline()
+		rev = line.strip()
 		return rev
 	return None
 
