@@ -989,7 +989,12 @@ function writeJobFile ($extra=False) {
 			if ($coranhp) $line .= " hp=$coranhp";
 			if ($eotest=='on') $line .= " eotest";
 			$line .= " > coran".$i.".txt\n";
-			$line.= C_APPION_BIN."getRes.pl $i $box $apix >> resolution.txt\n";
+			if ($resfile_init) { 
+				$line.= C_APPION_BIN."getRes.pl $i $box $apix >> resolution.txt\n";
+			} else {
+				$line.= C_APPION_BIN."getRes.pl $i $box $apix >! resolution.txt\n";
+				$resfile_init = true;
+			}
 			if ($amask1) {
 				$line .= "volume threed.".$i."a.mrc $apix set=$xfiles\n";
 				$line .= "mv threed.".$i."a.mrc threed.".$i."a.coran.mrc\n";
@@ -1009,7 +1014,12 @@ function writeJobFile ($extra=False) {
 			if ($refine=='on') $line.=" refine";
 			$line.=" > eotest".$i.".txt\n";
 			$line.="mv -v fsc.eotest fsc.eotest.".$i."\n";
-			$line.= C_APPION_BIN."getRes.pl >> resolution.txt $i $box $apix\n";
+			if ($resfile_init) { 
+				$line.= C_APPION_BIN."getRes.pl $i $box $apix >> resolution.txt\n";
+			} else {
+				$line.= C_APPION_BIN."getRes.pl $i $box $apix >! resolution.txt\n";
+				$resfile_init = true;
+			}
 		}
 		if ($affprop=='on') {
 			$line .="affPropSubClassify.py --mask=$mask --iter=$i";
@@ -1019,7 +1029,7 @@ function writeJobFile ($extra=False) {
 			if ($affpropMP) $line .= " --minpart=$affpropMP";
 			$line .= "\n";
 		}
-		$line.="rm cls*.lst\n";
+		$line.="rm -fv cls*.lst\n";
 		$ejob.= $line;
 	}
 
