@@ -105,7 +105,6 @@ class BasicScript(object):
 		if self.quiet is False:
 			apDisplay.printMsg("Ended at "+time.strftime("%a, %d %b %Y %H:%M:%S"))
 			apDisplay.printMsg("Memory increase during run: %.3f MB"%((mem.active()-self.startmem)/1024.0))
-			apDisplay.printMsg("Run directory:\n "+self.params['rundir'])
 			apDisplay.printColor("Total run time:\t"+apDisplay.timeString(time.time()-self.t0),"green")
 
 	#=====================
