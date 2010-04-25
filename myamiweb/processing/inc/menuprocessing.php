@@ -252,6 +252,17 @@ if ($expId) {
 	$ace2results[] = ($ace2run==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=pyace2'>$ace2run running</a>";
 	$ace2results[] = ($ace2q==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=pyace2'>$ace2q queued</a>";
 
+	$ctffinddone = count($subclusterjobs['ctfestimate']['done']);
+	$ctffindrun = count($subclusterjobs['ctfestimate']['running']);
+	$ctffindq = count($subclusterjobs['ctfestimate']['queued']);
+
+	$ctffindresults[] = ($ctffinddone==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$ctffinddone complete</a>";
+	$ctffindresults[] = ($ctffindrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=ctfestimate'>$ctffindrun running</a>";
+	$ctffindresults[] = ($ctffindq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=ctfestimate'>$ctffindq queued</a>";
+
+	// TO DO: Currently ctffind results shows all ctffind & ctftilt runs, since the same program launches both
+	// need to figure out how to get ctftilt runs specifically, and decrement from ctffind runs
+
 
 	// number running and number finished:
 	$totruns=$ctfdone+$ctfrun+$ctfq;
@@ -270,9 +281,15 @@ if ($expId) {
 		'result'=>$ace2results,
 	);
 	$nruns[] = array(
-		'name'=>"<a href='runCtfTilt.php?expId=$sessionId'>CtfTilt Estimation</a>",
-		'result'=>$ctftiltresults,
+		'name'=>"<a href='runCtfEstimate.php?expId=$sessionId'>CtfFind Estimation</a>",
+		'result'=>$ctffindresults,
 	);
+	if ($maxangle > 5) {
+		$nruns[] = array(
+			'name'=>"<a href='runCtfEstimate.php?expId=$sessionId&ctftilt=True'>CtfTilt Estimation</a>",
+			'result'=>$ctftiltresults,
+		);
+	}
 	if ($loopruns > 0) {
 		$nruns[] = array(
 			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
