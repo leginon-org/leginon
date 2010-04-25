@@ -284,7 +284,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 		# first create an aceparam object
 		paramq = appiondata.ApCtfTiltParamsData()
-		copyparamlist = ('medium','ampcarbon','ampice','fieldsize','cs','bin',)
+		copyparamlist = ('medium','ampcarbon','ampice','fieldsize','cs','bin','resmin','resmax','defstep')
 		for p in copyparamlist:
 			if p in self.params:
 				paramq[p] = self.params[p]

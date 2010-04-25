@@ -349,6 +349,9 @@ class ApCtfTiltParamsData(Data):
 			('fieldsize', int),
 			('cs', float),
 			('bin', int),
+			('resmin', float),
+			('resmax', float),
+			('defstep', float),
 		)
 	typemap = classmethod(typemap)
 
