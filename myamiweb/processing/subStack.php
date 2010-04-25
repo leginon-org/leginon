@@ -26,8 +26,13 @@ if ($_POST['process']) {
 // *************************************
 // *************************************
 function createSubStackForm($extra=false, $title='subStack.py Launcher', $heading='Make a partial Stack') {
-        // check if coming directly from a session
+	// check if coming directly from a session
 	$expId=$_GET['expId'];
+	if (!$expId) {
+		echo "<b>ERROR: Experiment ID (expId) number is missing</b><br/>\n";
+		exit;
+	}
+
 	$projectId=getProjectFromExpId($expId);
 	$stackId = $_GET['sId'];
 	$exclude = $_GET['exclude'];
