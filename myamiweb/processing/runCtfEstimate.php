@@ -51,9 +51,17 @@ function runCtfEstimate() {
 	$medium=$_POST['medium'];
 	$binval=$_POST['binval'];
 	$cs=$_POST['cs'];
+	$resmin=$_POST['resmin'];
+	$resmax=$_POST['resmax'];
+	$defstep=$_POST['defstep'];
 	//$nominal=$_POST['nominal'];
 	//$reprocess=$_POST['reprocess'];
-	$proc = $_POST['processor'];
+
+	// Error checking:
+	if (!$fieldsize) createCtfEstimateForm("Enter a fieldsize");
+	if (!$defstep) createCtfEstimateForm("Enter a search step");
+	if ($resmin<50) createCtfEstimateForm("Minimum resolution is too high");
+	if (($resmax>50)||(!$resmax)) createCtfEstimateForm("Maximum resolution is too low");
 
 	$command.="--ampcarbon=$ampcarbon ";
 	$command.="--ampice=$ampice ";
@@ -61,6 +69,9 @@ function runCtfEstimate() {
 	$command.="--medium=$medium ";
 	$command.="--cs=$cs ";
 	$command.="--bin=$binval ";
+	$command.="--resmin=$resmin ";
+	$command.="--resmax=$resmax ";
+	$command.="--defstep=$defstep ";
 
 	$progname = "CtfFind";
 	if ($ctftilt) {
@@ -172,8 +183,11 @@ function createCtfEstimateForm($extra=false) {
 	$form_cs = ($_POST['cs']) ? $_POST['cs'] : $defaultcs;
 	$form_fieldsz = ($_POST['fieldsize']) ? $_POST['fieldsize'] : 256;
 	$form_bin = ($_POST['binval']) ? $_POST['binval'] : 2;
-	$form_ampc = ($_POST['ampcarbon']) ? $_POST['ampcarbon'] : 0.15;
-	$form_ampi = ($_POST['ampice']) ? $_POST['ampice'] : 0.07;
+	$form_ampc = ($_POST['ampcarbon']) ? $_POST['ampcarbon'] : '0.15';
+	$form_ampi = ($_POST['ampice']) ? $_POST['ampice'] : '0.07';
+	$form_resmin = ($_POST['resmin']) ? $_POST['resmin'] : '400.0';
+	$form_resmax = ($_POST['resmax']) ? $_POST['resmax'] : '8.0';
+	$form_defstep = ($_POST['defstep']) ? $_POST['defstep'] : '5000.0';
 
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
@@ -188,15 +202,7 @@ function createCtfEstimateForm($extra=false) {
 	    <B>Medium:</B><br/>
 	    <INPUT TYPE='radio' NAME='medium' VALUE='carbon'>&nbsp;carbon&nbsp;&nbsp;
 	    <INPUT TYPE='radio' NAME='medium' VALUE='ice' checked>&nbsp;ice<br/>
-	    <br/>
-
-	  <TABLE CELLSPACING=0 CELLPADDING=2><TR>
-
-	    <TD VALIGN='TOP'>\n";
-	echo docpop('binval','<b>Binning</b>');
-	echo " (Pixel Average): ";
-	echo "<INPUT TYPE='text' NAME='binval' VALUE='$form_bin' SIZE='4'>\n";
-	echo "<br/><br/>\n";
+	    <br/>\n";
 
 	echo docpop('ampcontrast','<b>Amplitude Contrast:</b>');
 	echo "<br />\n";
@@ -204,15 +210,27 @@ function createCtfEstimateForm($extra=false) {
 	echo "Carbon<br />\n";
 	echo "<INPUT TYPE='text' NAME='ampice' VALUE='$form_ampi' SIZE='4'>\n";
 	echo "Ice\n";
-	echo "</TD>\n";
+	echo "<br/><br/>\n";
 
-	echo "</tr></table><br /><br />\n";
-
-	echo "<INPUT TYPE='text' NAME='fieldsize' VALUE='$form_fieldsz' size='4'>\n";
-	echo docpop('field','Field Size');
-	echo "<br />\n";
+	echo "<INPUT TYPE='text' NAME='binval' VALUE='$form_bin' SIZE='4'>\n";
+	echo docpop('binval','Binning');
+	echo "<br/><br/>\n";
 	echo "<INPUT TYPE='text' NAME='cs' VALUE='$form_cs' SIZE='4'>\n";
 	echo docpop('cs','Spherical Aberration');
+	echo "<br/><br/>\n";
+
+	echo "<b>$progname Values</b><br/>\n";
+	echo "<INPUT TYPE='text' NAME='fieldsize' VALUE='$form_fieldsz' size='6'>\n";
+	echo docpop('field','Field Size');
+	echo "<br />\n";
+	echo "<input type='text' name='resmin' value='$form_resmin' size='6'>\n";
+	echo docpop('resmin','Minimum Resolution');
+	echo "<br />\n";
+	echo "<input type='text' name='resmax' value='$form_resmax' size='6'>\n";
+	echo docpop('resmax','Maximum Resolution');
+	echo "<br />\n";
+	echo "<input type='text' name='defstep' value='$form_defstep' size='6'>\n";
+	echo docpop('defstep','Search step (Ang)');
 	echo "<br />\n";
 	echo "<br />\n";
 	//echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>\n";

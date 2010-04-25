@@ -147,11 +147,11 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'pixavg': self.params['bin'],
 
 			'box': self.params['fieldsize'],
-			'resmin': 400.0,
-			'resmax': 8.0,
+			'resmin': self.params['resmin'],
+			'resmax': self.params['resmax'],
 			'defmin': round(bestdef*0.8, 1),
 			'defmax': round(bestdef*1.2, 1),
-			'defstep': 5000.0, #round(defocus/32.0, 1),
+			'defstep': self.params['defstep'], #round(defocus/32.0, 1),
 		}
 
 		### create local link to image
@@ -177,6 +177,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			+ str(inputparams['defmin'])+","
 			+ str(inputparams['defmax'])+","
 			+ str(inputparams['defstep']))
+
 		### additional ctftilt parameters
 		if self.params['ctftilt'] is True:
 			tiltang = apDatabase.getTiltAngleDeg(imgdata)
@@ -355,6 +356,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="nominal")
 		self.parser.add_option("--newnominal", dest="newnominal", default=False,
 			action="store_true", help="newnominal")
+		self.parser.add_option("--resmin", dest="resmin", type="float", default=400.0,
+			help="Low resolution end of data to be fitted", metavar="#")
+		self.parser.add_option("--resmax", dest="resmax", type="float", default=8.0,
+			help="High resolution end of data to be fitted", metavar="#")
+		self.parser.add_option("--defstep", dest="defstep", type="float", default=5000.0,
+			help="Step width for grid search in Angstroms", metavar="#")
 		self.parser.add_option("--ctftilt", dest="ctftilt", default=False,
 			action="store_true", help="Run ctftilt instead of ctffind")
 
@@ -362,6 +369,12 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 	def checkConflicts(self):
 		if not (self.params['medium'] == 'carbon' or self.params['medium'] == 'ice'):
 			apDisplay.printError("medium can only be 'carbon' or 'ice'")
+		if self.params['resmin'] < 50.0:
+			apDisplay.printError("Please choose a lower resolution for resmin")
+		if self.params['resmax'] > 50.0:
+			apDisplay.printError("Please choose a higher resolution for resmax")
+		if self.params['defstep'] < 300.0 or self.params['defstep'] > 10000.0:
+			apDisplay.printError("Please keep the defstep between 300 & 10000 Angstroms")
 		return
 
 if __name__ == '__main__':
