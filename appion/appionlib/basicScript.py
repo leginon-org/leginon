@@ -28,6 +28,7 @@ class BasicScript(object):
 		self.startmem = mem.active()
 		self.t0 = time.time()
 		self.createDefaultStats()
+		self.quiet = False
 		self.timestamp = apParam.makeTimestamp()
 		apDisplay.printMsg("Time stamp: "+self.timestamp)
 		self.functionname = apParam.getFunctionName(sys.argv[0])

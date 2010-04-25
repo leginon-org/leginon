@@ -83,7 +83,7 @@ class MakeSnapshotScript(basicScript.BasicScript):
 		### bin the volume
 		if self.params['bin'] is not None and self.params['bin'] > 1:
 			apDisplay.printMsg("Binning volume")
-			newmrcfile = os.path.join(self.params['rundir'], "binned.mrc")
+			newmrcfile = "binned.mrc"
 			voldata = mrc.read(mrcfile)
 			voldata = imagefun.bin3(voldata, self.params['bin'])
 			mrc.write(voldata, newmrcfile)
@@ -95,7 +95,7 @@ class MakeSnapshotScript(basicScript.BasicScript):
 		### scale by mass
 		if self.params['mass'] is not None:
 			apDisplay.printMsg("Using scale by mass method")
-			newmrcfile = os.path.join(self.params['rundir'], "setmass.mrc")
+			newmrcfile = "setmass.mrc"
 			shutil.copy(self.params['file'], newmrcfile)
 			apChimera.setVolumeMass(newmrcfile, apix=self.params['apix'], mass=self.params['mass'])
 			self.params['contour'] = 1.0
