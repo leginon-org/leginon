@@ -915,8 +915,8 @@ function writeJobFile ($extra=False) {
 	// rename stack, if necessary:
 	if ($stackinfo[5] != "start.hed") {
 		$ejob .= "#rename stack\n";
-		$ejob .= "mv -v ".$stackinfo[5]." start.hed\n";
-		$ejob .= "mv -v ".$stackinfo[6]." start.img\n";
+		$ejob .= "ln -s ".$stackinfo[5]." start.hed\n";
+		$ejob .= "ln -s ".$stackinfo[6]." start.img\n";
 		$ejob .= "\n";
 	}
 
