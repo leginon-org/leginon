@@ -3,20 +3,18 @@
 import pyami.quietscipy
 
 #builtin
-import sys
 import os
 import re
+import sys
 import time
-import math
-import random
-import cPickle
+import subprocess
 from optparse import OptionParser
 #appion
-from appionlib import apDisplay
-from appionlib import apDatabase
+from appionlib import basicScript
 from appionlib import apParam
-from appionlib import apFile
+from appionlib import apDisplay
 from appionlib import apProject
+from appionlib import apDatabase
 from appionlib import appiondata
 from appionlib import apWebScript
 #leginon
@@ -26,7 +24,7 @@ from pyami import version
 
 #=====================
 #=====================
-class AppionScript(object):
+class AppionScript(basicScript.BasicScript):
 	#=====================
 	def __init__(self, useglobalparams=True):
 		"""
@@ -64,7 +62,7 @@ class AppionScript(object):
 		#	self.params['rundir'] = self.params['outdir']
 
 		### setup correct database after we have read the project id
-		if apDatabase.splitdb and 'projectid' in self.params and self.params['projectid'] is not None:
+		if 'projectid' in self.params and self.params['projectid'] is not None:
 			apDisplay.printWarning("Using split database")
 			# use a project database
 			newdbname = apProject.getAppionDBFromProjectId(self.params['projectid'])
@@ -84,8 +82,6 @@ class AppionScript(object):
 		### setup run directory
 		self.setProcessingDirName()
 		self.setupRunDirectory()
-		#if apDatabase.queryDirectory(self.params['rundir']):
-		#	self.preExistingDirectoryError()
 
 		### write function log
 		self.logfile = apParam.writeFunctionLog(sys.argv, msg=(not self.quiet))
@@ -241,80 +237,40 @@ class AppionScript(object):
 				paramvalueq.insert()
 
 	#=====================
-	def checkForDuplicateCommandLineInputs(self):
-		args = sys.argv[1:]
-		argmdict = {}
-		for arg in args:
-			elements=arg.split('=')
-			opt = elements[0].lower()
-			if opt[0] == "-":
-				## if action='append', then opt is allowed multiple times
-				option = self.parser.get_option(opt)
-				if option is not None and option.action == 'append':
-					multiple_ok = True
-				else:
-					multiple_ok = False
-				if opt in argmdict and not multiple_ok:
-					apDisplay.printError("Multiple arguments were supplied for argument: "+str(opt))
-				argmdict[opt] = True
-
-	#=====================
-	def createDefaultStats(self):
-		self.stats = {}
-		self.stats['startTime']=time.time()
-		self.stats['count'] = 1
-		self.stats['lastcount'] = 0
-		self.stats['startmem'] = mem.active()
-		self.stats['memleak'] = 0
-		self.stats['peaksum'] = 0
-		self.stats['lastpeaks'] = None
-		self.stats['imagesleft'] = 1
-		self.stats['peaksumsq'] = 0
-		self.stats['timesum'] = 0
-		self.stats['timesumsq'] = 0
-		self.stats['skipcount'] = 0
-		self.stats['waittime'] = 0
-		self.stats['lastimageskipped'] = False
-		self.stats['notpair'] = 0
-		self.stats['memlist'] = [mem.active()]
-
-	#=====================
 	def setupRunDirectory(self):
-		#IF NO RUNDIR IS SET
-		#if not 'rundir' in self.params:
-		#	self.params['rundir'] = self.params['outdir']
+		"""
+		Set the run directory
+		"""
 		if self.params['rundir'] is None:
 			apDisplay.printWarning("run directory not defined, automatically setting it")
 			self.setProcessingDirName()
 			self.setRunDir()
-			#if 'outdir' in self.params and self.params['outdir'] is not None:
-			#	self.params['rundir'] = self.params['outdir']
-		#create the run directory, if needed
-		if self.params['rundir'] is None:
-			apDisplay.printError("No run directory was set")
+			if self.params['rundir'] is None:
+				apDisplay.printError("No run directory was set")
 
 		if self.quiet is False:
 			apDisplay.printMsg("Run directory: "+self.params['rundir'])
+
+		#if apDatabase.queryDirectory(self.params['rundir']):
+		#	self.preExistingDirectoryError()
+
+		#create the run directory, if needed
 		apParam.createDirectory(self.params['rundir'], warning=(not self.quiet))
 		os.chdir(self.params['rundir'])
 
+		### make directories writable
+		sessiondir = os.path.abspath(os.path.join(self.params['rundir'], "../.."))
+		cmd = "chmod 777 `find %s -type d`"%(sessiondir)
+		subprocess.Popen(cmd, shell=True, 
+			stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 	#=====================
 	def close(self):
+		### run custom closing functions
 		self.onClose()
-		#a = appiondata.ApPathData()
-		#a.close()
-		loadavg = os.getloadavg()[0]
-		if loadavg > 2.0:
-			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
-			time.sleep(loadavg**2)
-		apParam.closeFunctionLog(functionname=self.functionname, logfile=self.logfile, msg=(not self.quiet))
-		apFile.removeFile("spider.log")
-		if self.quiet is False:
-			apDisplay.printMsg("Ended at "+time.strftime("%a, %d %b %Y %H:%M:%S"))
-			apDisplay.printMsg("Memory increase during run: %.3f MB"%((mem.active()-self.startmem)/1024.0))
-			apDisplay.printMsg("Run directory:\n "+self.params['rundir'])
-			apDisplay.printColor("Total run time:\t"+apDisplay.timeString(time.time()-self.t0),"green")
-		apParam.killVirtualFrameBuffer()
+		### run basic script closing functions
+		basicScript.BasicScript.close(self)
+		### additionally set to done is database
 		if self.params['commit'] is True:
 			clustdata = self.getClusterJobData()
 			apWebScript.setJobToDone(clustdata.dbid)
@@ -331,7 +287,8 @@ class AppionScript(object):
 		self.parser.add_option("-p", "--projectid", dest="projectid", type="int",
 			help="Project id associated with processing run, e.g. --projectid=159", metavar="#")
 		self.parser.add_option("-R", "--rundir", "--outdir", dest="rundir",
-			help="Run directory for storing output, e.g. --rundir=/ami/data00/appion/runs/run1", metavar="PATH")
+			help="Run path for storing output, e.g. --rundir=/data/appion/runs/run1",
+			metavar="PATH")
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit processing run to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
@@ -344,32 +301,8 @@ class AppionScript(object):
 		"""
 		if self.params['runname'] is None:
 			apDisplay.printError("enter a runname, e.g. --runname=run1")
-		#if self.params['rundir'] is None:
-		#	apDisplay.printError("enter a run directory, e.g. --rundir=/path/to/data")
-		#if self.params['projectid'] is None:
-		#	apDisplay.printError("enter a project id, e.g. --projectid=159")
-
-	#=====================
-	def parsePythonPath(self):
-		pythonpath = os.environ.get("PYTHONPATH")
-		if pythonpath is None:
-			return
-		paths = pythonpath.split(":")
-		leginons = {}
-		appions = {}
-		for p in paths:
-			if "appion" in p:
-				appions[p] = None
-			if "leginon" in p:
-				leginons[p] = None
-		leginons = leginons.keys()
-		appions = appions.keys()
-		if len(appions) > 1:
-			apDisplay.printWarning("There is more than one appion directory in your PYTHONPATH")
-			print appions
-		if len(leginons) > 1:
-			apDisplay.printWarning("There is more than one leginon directory in your PYTHONPATH")
-			print leginons
+		if self.params['projectid'] is None:
+			apDisplay.printError("enter a project id, e.g. --projectid=159")
 
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####

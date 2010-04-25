@@ -6,7 +6,7 @@ import re
 import glob
 import shutil
 #appion
-from appionlib import appionScript
+from appionlib import basicScript
 from appionlib import apChimera
 from appionlib import apVolume
 from appionlib import apDisplay
@@ -15,11 +15,7 @@ from pyami import mrc, imagefun
 
 #=====================
 #=====================
-class MakeSnapshotScript(appionScript.AppionScript):
-	#=====================
-	def uploadScriptData(self):
-		return
-
+class MakeSnapshotScript(basicScript.BasicScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --file=<filename> --sym=<c1,icos,d7> \n\t "
@@ -80,10 +76,6 @@ class MakeSnapshotScript(appionScript.AppionScript):
 		if not os.path.isfile(self.params['file']):
 			apDisplay.printError("Could not find file: "+self.params['file'])
 		self.params['file'] = os.path.abspath(self.params['file'])
-
-	#=====================
-	def setRunDir(self):
-		self.params['rundir'] = os.getcwd()
 
 	#=====================
 	def start(self):

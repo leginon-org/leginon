@@ -2,29 +2,13 @@
 
 import os
 #appion
-from appionlib import appionScript
+from appionlib import basicScript
 from appionlib import apDog
 from appionlib import apPeaks
 from appionlib import apDisplay
 from pyami import mrc
 
-class DogPicker(appionScript.AppionScript):
-	#=====================
-	def uploadScriptData(self):
-		return
-
-	#=====================
-	def setupRunDirectory(self):
-		return
-
-	#=====================
-	def close(self):
-		return
-
-	#=====================
-	def __del__(self):
-		return
-
+class DogPicker(basicScript.BasicScript):
 	#=================
 	def setupParserOptions(self):
 		"""
@@ -160,7 +144,7 @@ class DogPicker(appionScript.AppionScript):
 #=================
 #=================
 if __name__ == '__main__':
-	dogpicker = DogPicker(False)
+	dogpicker = DogPicker()
 	dogpicker.start()
 	dogpicker.close()
 
