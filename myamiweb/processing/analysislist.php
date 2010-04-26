@@ -42,18 +42,20 @@ if ($stackdatas) {
 			echo "<tr><td>\n";
 			echo analysissummarytable($analysisid, false);
 			$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, false);
+			$another='';
 			if ($clusterruns) {
 				echo count($clusterruns)." cluster runs completed on this feature analysis run, "
 					."<a href='clusterlist.php?expId=$expId'>view particle clusters</a><br/><br/>\n";
+				$another="Another";
 			}
 			if ($analysisdata['REF|ApCoranRunData|coranrun'] != false) {
 				echo "<a class='btp1' href='runClusterCoran.php?expId=$expId"
 					."&analysisId=$analysisid&alignId=$alignstackid'>"
-					."Run Another Particle Clustering On Analysis Id $analysisid</a><br/>\n";
+					."Run $another Particle Clustering On Analysis Id $analysisid</a><br/>\n";
 			} elseif ($analysisdata['REF|ApImagicAlignAnalysisData|imagicMSArun'] != false) {
 				echo "<a class='btp1' href='imagicMSAcluster.php?expId=$expId"
 					."&analysisId=$analysisid&alignId=$alignstackid'>"
-					."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
+					."Run $another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
 			} 
 			echo "</td></tr>\n";
 			echo "</table>\n";
