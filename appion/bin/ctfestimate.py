@@ -227,6 +227,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 					'defocus1':	-float(bits[0])*1e-10,
 					'defocus2':	-float(bits[1])*1e-10,
 					'angle_astigmatism':	-float(bits[2]),
+					'amplitude_contrast':	inputparams['ampcnst'],
 					'cross_correlation':	float(bits[numvals-3]),
 					'nominal':	defocus*1e-10,
 					'defocusinit':	-bestdef*1e-10,
@@ -329,7 +330,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		ctfq['graph1']     = self.lastjpg
 
 		ctfvaluelist = ('defocus1','defocus2','defocusinit','angle_astigmatism',\
-			'cross_correlation','confidence_d')
+			'amplitude_contrast','cross_correlation','confidence_d')
 		if self.params['ctftilt'] is True:
 			ctfvaluelist+= ('tilt_angle','tilt_axis_angle')
 		for i in range(len(ctfvaluelist)):
