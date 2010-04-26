@@ -920,7 +920,7 @@ class particledata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getCtfInfoFromImageId($imageId, $order=false) {
+	function getCtfInfoFromImageId($imageId, $order=false, $ctffind=False) {
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -945,6 +945,7 @@ class particledata {
 			."left join ".DB_LEGINON.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
 		$q .= " AND c.`graph1` IS NOT NULL ";
+		if ($ctffind) $q .= "AND r.`REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
 		$q .= "ORDER BY (c.`confidence`*c.`confidence_d`) DESC";
 		if ($order) {
 			$fields = $order['fields'];

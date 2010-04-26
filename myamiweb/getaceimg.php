@@ -8,7 +8,17 @@ require "inc/ace.inc";
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];
 $imgsize=$_GET['s'];
-$graph=($_GET['g']=="1") ? "graph1" : "graph2";
+
+switch($_GET['g']){
+	case 1: $graph="graph1"; break;
+	case 2: $graph="graph2"; break;
+	// show ctffind image
+	case 3:
+		$graph="graph1";
+		$ctffindvals=True;
+		break;
+}
+
 $opt=trim($_GET['opt']);
 if (!is_numeric($opt)) {
 	$opt=15;
@@ -36,14 +46,19 @@ $imgId = $newimage['id'];
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo['sessionId'];
 
-$path = $leginondata->getImagePath($sessionId);
 $filename = $leginondata->getFilenameFromId($imgId);
 $normfile = trim($filename).'.norm.txt';
 $ctf = new particledata();
-$runId = $ctf->getLastCtfRun($sessionId);
-list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
-$path=$ctfdata['path'].'/';
-$filename=$path."opimages/".$ctfdata[$graph];
+if ($ctffindvals) {
+	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId, $order=False, $ctffind=True);
+	$path=$ctfdata['path'].'/';
+}
+else {
+	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
+	$path=$ctfdata['path'].'/opimages/';
+}
+$filename=$path.$ctfdata[$graph];
+
 (array)$imageinfo = @getimagesize($filename);
 $imagecreate = 'imagecreatefrompng';
 $imagemime = 'image/png';
@@ -57,7 +72,7 @@ switch ($imageinfo['mime']) {
 if ($img=@$imagecreate($filename)) {
 		resample($img, $imgsize);
 } else {
-	$acedatafile =$path.$normfile;
+	$acedatafile =$ctfdata['path'].'/'.$normfile;
 	if (file_exists($acedatafile)) {
 		$acedata=readAceNormFile($acedatafile);
 		

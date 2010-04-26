@@ -27,6 +27,7 @@ function getAceViewerForm($name) {
 	$aceform.='<select id="'.$name.'aceparam">';
 	$aceform.="<option value='1'>graph1</option>";
 	$aceform.="<option value='2'>graph2</option>";
+	$aceform.="<option value='3'>CtfFind</option>";
 	$aceform.='</select>';
 	$aceform.='<li>';
 	$aceform.='<input type="checkbox" id="'.$name.'aceparam2">';

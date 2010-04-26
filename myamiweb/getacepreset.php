@@ -13,6 +13,7 @@ require "inc/particledata.inc";
 
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];
+$ctftype = $_GET['ctf'];
 
 $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
@@ -37,8 +38,10 @@ require "inc/project.inc";
 <?php
 
 $ctf = new particledata();
-$runId = $ctf->getLastCtfRun($sessionId);
-list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
+if ($ctftype=='ctffind')
+	list($ctfdata) = $ctf->getCtfInfoFromImageId($imgId,$order=False,$ctffind=True);
+else
+	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
 
 $keys[]='defocus';
 $keys[]='defocus1';

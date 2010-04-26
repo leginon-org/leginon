@@ -501,6 +501,9 @@ function newfile(view){
 
 	if (cif=eval("this."+view+"if")) {
 		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset
+		// --- for ctffind presets instead of ace2
+		if (eval("jsaceparam"+view)==3)
+			iflink = iflink+"&ctf=ctffind"
 		cif.document.location.replace(iflink)
 	}
 	if (cmt=eval("this."+view+"cmt")) {
