@@ -15,10 +15,10 @@ $allUsers = $userdata->getUsers($orderBy);
 
 foreach ($allUsers as $k=>$p) {
 	$email = $p['email'];
-	$pId = $p['userId'];
+	$userId = $p['userId'];
 	if ($is_admin) {
-		$users[$k]["edit"]="<a href='adduser.php?id=$pId'><img border='0' src='project/img/edit.png'></a>";
-		//$users[$k]["del"]="<a href='deleteuser.php?id=$pId'><img border='0' src='img/del.png'></a>";
+		$users[$k]["edit"]="<a href='adduser.php?userId=$userId'><img border='0' src='project/img/edit.png'></a>";
+		//$users[$k]["del"]="<a href='deleteuser.php?userId=$userId'><img border='0' src='img/del.png'></a>";
 	}
 	//$users[$k]["name"]=$p['lastname'].(($p['firstname'])? ', '.$p['firstname']:'');
 	$users[$k]["lastname"]=$p['lastname'];

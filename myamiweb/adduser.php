@@ -9,7 +9,7 @@ admin_header('onload="init()"');
 $login_check = $dbemauth->is_logged();
 $is_admin = (privilege('users')>3);
 
-$userId = $_GET['id'];
+$userId = $_GET['userId'];
 $groups = $leginondata->getGroups('name');
 $userdata = new user();
 

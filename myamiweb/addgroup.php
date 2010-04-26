@@ -132,9 +132,9 @@ privilege:<font color="red">*</font>
 ?>
 	<select name="f_privilegeId" onChange="javascript:document.dataimport.submit();">
 		<?php
-		foreach($privileges as $privilege_name=>$pId) {
-			$selected = ($f_privilegeId==$pId) ? "selected" : "";
-			echo "<option value='$pId' $selected >$privilege_name\n";
+		foreach($privileges as $privilege_name=>$privId) {
+			$selected = ($f_privilegeId==$privId) ? "selected" : "";
+			echo "<option value='$privId' $selected >$privilege_name\n";
 		}
 		?>
 	</select>

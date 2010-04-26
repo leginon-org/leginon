@@ -105,7 +105,7 @@ function apdivtitle($title) {
 
 function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false,$showmenu=true) {
 	$expId = $_GET['expId'];
-	$projectId = $_GET['pId'];
+	$projectId = $_GET['projectId'];
 
 	// check if logged in
 	if ($_POST['login']) {
@@ -135,7 +135,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 		$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
 		$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	}
-	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?pId=".$projectId.'">'
+	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?projectId=".$projectId.'">'
 		.$currentproject['name'].' ('.$projectId.')</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
 	$proj_link.=($misc) ? "<a href='viewmisc.php?projId=$projectId'>[Related Images, Movies, etc]</a>" : ""; 
@@ -265,7 +265,7 @@ function writeTop($title,$heading=false,$headerstuff=false) {
 
 	// Show project & session pulldowns
 	$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
-	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?pId=".$projectId.'">'
+	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?projectId=".$projectId.'">'
 		.$currentproject['name'].' ('.$projectId.')</a>';
 	$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
@@ -357,7 +357,7 @@ function writeTop_org($title,$heading=false,$headerstuff=false) {
 
 	// Show project & session pulldowns
 	$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
-	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?pId=".$projectId.'">'
+	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?projectId=".$projectId.'">'
 		.$currentproject['name'].' ('.$projectId.')</a>';
 	$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
@@ -522,16 +522,8 @@ function getProjectId() {
 		$projectid = trim($_GET['projectId']);
 		$_SESSION['projectId'] = $projectid;
 
-	} elseif ($_GET['pId']) {
-		$projectid = trim($_GET['pId']);
-		$_SESSION['projectId'] = $projectid;
-
 	} elseif ($_POST['projectId']) {
 		$projectid = trim($_POST['projectId']);
-		$_SESSION['projectId'] = $projectid;
-
-	} elseif ($_POST['projectid']) {
-		$projectid = trim($_POST['projectid']);
 		$_SESSION['projectId'] = $projectid;
 
 	} elseif ($_SESSION['projectId']) {
@@ -569,7 +561,7 @@ function displayExperimentForm($projectId,$sessionId,$expId){
 
 // 	if ($expId){
 // 		$proj_link= '<a class="header" target="project" href="'.PROJECT_URL
-// 			."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
+// 			."getproject.php?projectId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
 // 		$sessionDescr=$sessiondata['info']['Purpose'];
 // 		$session_link="<a class='header' target='project' href='../3wviewer.php?expId=$expId'>$sessionDescr</a>";
 // 		echo "Project: $proj_link<br />\nSession: $session_link\n";
@@ -1013,6 +1005,11 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 		$cput = $walltime*$nproc;
 		// create job file
 		$jobid=$particle->insertClusterJobData($host,$procdir,'',$procdir,$jobfile,$expId,$jobtype,$user);
+		/*if ($nproc < 3) {
+			$jobtext .= "#PBS -l nodes=1:ppn=2:twoProc\n";
+		} else {
+			$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
+		}*/
 		$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
 		$jobtext .= "#PBS -l walltime=$walltime:00:00\n";
 		$jobtext .= "#PBS -l cput=$cputime:00:00\n";

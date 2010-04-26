@@ -4,10 +4,10 @@ require("inc/leginon.inc");
 #require("inc/user.inc.php");
 require("inc/share.inc.php");
 #require_once("inc/mysql.php");
-if ($_GET[pId])
-	$projectId=$_GET[pId];
-if ($_POST[currentproject])
-	$projectId=$_POST[currentproject];
+if ($_GET['projectId'])
+	$projectId=$_GET['projectId'];
+if ($_POST['currentproject'])
+	$projectId=$_POST['currentproject'];
 $project = new project();
 project_header("Project Owners");
 checkProjectAccessPrivilege($projectId);

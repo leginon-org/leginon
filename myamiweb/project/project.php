@@ -24,19 +24,19 @@ $projects = $project->getProjects("order",privilege('projects'));
 
 if($projects) {
 foreach ((array)$projects as $k=>$proj) {
-	$pId = $proj['projectId'];
-	$is_proj_admin = checkProjectAdminPrivilege($pId);
+	$projectId = $proj['projectId'];
+	$is_proj_admin = checkProjectAdminPrivilege($projectId);
 	if ($is_proj_admin) {
-		$projects[$k]['edit']="<a href='updateproject.php?id=$pId'><img alt='edit' border='0' src='img/edit.png'></a>";
-		$projects[$k]['del']="<a href='deleteproject.php?id=$pId'><img alt='delete' border='0' src='img/del.png'></a>";
-		$projectowners = $project->getProjectOwners($pId);
+		$projects[$k]['edit']="<a href='updateproject.php?id=$projectId'><img alt='edit' border='0' src='img/edit.png'></a>";
+		$projects[$k]['del']="<a href='deleteproject.php?id=$projectId'><img alt='delete' border='0' src='img/del.png'></a>";
+		$projectowners = $project->getProjectOwners($projectId);
 		if (count($projectowners)) {
 			$projects[$k]['owner']=$projectowners[0]['full name'];
 			$ownerdetails = $userdata->getUserInfo($projectowners[0]['userId']);
 			$projects[$k]['institution']=(is_array($ownerdetails)) ? $ownerdetails['institution']:'';
 		}
 	}
-	$experimentIds = $project->getExperiments($pId);
+	$experimentIds = $project->getExperiments($projectId);
 	if (is_array($experimentIds)) {
 		$nb=count($experimentIds);
 		$last=current($experimentIds);
@@ -48,7 +48,7 @@ foreach ((array)$projects as $k=>$proj) {
 	if ($nb>1)
 		$exp_str .="s";
 	$projects[$k]['experiment']=$nb." ".$exp_str."<br>".$last_str;
-	$projects[$k]['name']="<a href='getproject.php?pId=$pId'>".$proj['name']."</a>";
+	$projects[$k]['name']="<a href='getproject.php?projectId=$projectId'>".$proj['name']."</a>";
 	
 }
 }

@@ -28,19 +28,17 @@ else {
 function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $heading='Upload Images') {
 	$particle = new particledata();
 	// check if coming directly from a session
-	$expId=$_GET['expId'];
+	$expId = $_GET['expId'];
 	$projectId = getProjectId();
 
 	$formAction=$_SERVER['PHP_SELF'];
-	if ($expId) $formAction.="?expId=$expId&pId=$projectId";
-	elseif ($projectId) $formAction.="?pId=$projectId";
+	if ($expId) $formAction.="?expId=$expId&projectId=$projectId";
+	elseif ($projectId) $formAction.="?projectId=$projectId";
 
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	$leginondata = new leginondata();
 
 	processing_header($title,$heading,$javafunctions);
-	#processing_header($title,$heading,False,True);
-	// write out errors, if any came up:
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}

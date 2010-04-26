@@ -6,7 +6,7 @@ login_header();
 $user = new user();
 
 $groups = $leginondata->getGroups('name');
-$userId = ($_GET[id]) ? $_GET[id] : $_POST[userId];
+$userId = ($_GET['userId']) ? $_GET['userId'] : $_POST['userId'];
 $login_userId = getLoginUserId();
 if (empty($userId) || !($user->checkUserExistsbyId($userId))) {
 	if (privilege('users') < 4) redirect(BASE_URL.'accessdeny.php');
@@ -32,8 +32,7 @@ if ($_POST[submit]) {
 
 	if ($nopass)
 		$chpass=true;
-
-$groupId = ($_POST['group'])? $_POST['group']:$groupId;
+	$groupId = ($_POST['group'])? $_POST['group']:$groupId;
 	if ($_POST['submit']=='add')
 		$userId = $user->addUser($username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $groupId, $mypass1, $mypass2);
 	else if ($_POST['submit']=='update')

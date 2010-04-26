@@ -6,8 +6,8 @@ $SHARE =  (@require "inc/share.inc.php") ? true : false;
 $SHARE =  (privilege('shareexperiments') >=1) ? $SHARE : false;
 $SHARE =  (ENABLE_LOGIN) ? $SHARE : false;
 
-if ($_GET['pId']) {
-	$selectedprojectId=$_GET['pId'];
+if ($_GET['projectId']) {
+	$selectedprojectId=$_GET['projectId'];
 }
 
 checkProjectAccessPrivilege($selectedprojectId);
@@ -18,7 +18,7 @@ $view = ($_REQUEST['v']=='s') ? 'd' : 's';
 $link = ($view=='s') ? 'Detailed view' : 'Simple view';
 $privilege = privilege('projects');
 $is_admin = checkProjectAdminPrivilege($selectedprojectId);
-$url = $_SERVER['PHP_SELF']."?v=".$_REQUEST['v']."&pId=".$selectedprojectId;
+$url = $_SERVER['PHP_SELF']."?v=".$_REQUEST['v']."&projectId=".$selectedprojectId;
 $ln=urlencode($url);
 $sharingstatus = "No";
 $sharinglink = "share.php?ln=$ln&id=";
@@ -89,13 +89,13 @@ project_header($title, 'init()');
 
 </script>
 <?php
-$url = $_SERVER['PHP_SELF']."?v=".$_REQUEST['v']."&pId=".$selectedprojectId;
+$url = $_SERVER['PHP_SELF']."?v=".$_REQUEST['v']."&projectId=".$selectedprojectId;
 $link_on = "<a class='header' href='$url&amp;ld=1'>[x]</a> ";
 $link_off = "<a class='header' href='$url&amp;ld=0'>[o]</a> ";
 $ld = ($_GET['ld']==0) ? $link_on : $link_off;
 $cat  = ($_GET['cat']==0) ? $link_on : $link_off;
 ?>
-<form method="POST" name="projectform" action="<?php echo $PHP_SELF."?pId=".$selectedprojectId ?>">
+<form method="POST" name="projectform" action="<?php echo $PHP_SELF."?projectId=".$selectedprojectId ?>">
 <input type="hidden" name="v" value="<?=$_REQUEST['v']?>">
 <table border="0" >
 <tr>
@@ -103,7 +103,7 @@ $cat  = ($_GET['cat']==0) ? $link_on : $link_off;
 <?php
 
 ?>
-<a class="header" href="<?=$_SERVER['PHP_SELF']."?v=$view&amp;pId=".$selectedprojectId?>">&lt;<?=$link?>&gt;</a>
+<a class="header" href="<?=$_SERVER['PHP_SELF']."?v=$view&amp;projectId=".$selectedprojectId?>">&lt;<?=$link?>&gt;</a>
 <?php
 	if ($is_admin)
 		echo "<a class='header' href='updateproject.php?id=$selectedprojectId&amp;ln=".urlencode($url)."'>&lt;edit&gt;<img alt='edit' border='0' src='img/edit.png'></a>";
@@ -114,7 +114,7 @@ $cat  = ($_GET['cat']==0) ? $link_on : $link_off;
 	<th>Short Description</th>
 </tr>
 <?php
-$pId = $selectedprojectId;
+$projectId = $selectedprojectId;
 	echo "<tr>\n";
 	echo "<td>";
 	echo $projectinfo['Title'];
@@ -129,7 +129,7 @@ $pId = $selectedprojectId;
 		foreach ($projectowners as $o) $names[] = $o['firstname'].' '.$o['lastname'];
 	echo implode(", ",$names);
 	if ($is_admin)
-		echo '<a alt="shareproject" target="_blank" class="header" href="shareproject.php?pId='.$selectedprojectId.'"> edit</a>';
+		echo '<a alt="shareproject" target="_blank" class="header" href="shareproject.php?projectId='.$selectedprojectId.'"> edit</a>';
 	echo "</td>";
 	echo "</tr>\n";
 	echo "<tr>\n";
@@ -180,7 +180,7 @@ $projectId = $projectinfo['projectId'];
 	$experimentIds = $project->getExperiments($projectId);
 	echo divtitle(count($experimentIds).' Experiments');
 	if ($is_admin)
-		echo '<a alt="upload" target="_blank" class="header" href="'.UPLOAD_URL.'?pId='.$selectedprojectId.'">upload images to new session</a>';
+		echo '<a alt="upload" target="_blank" class="header" href="'.UPLOAD_URL.'?projectId='.$selectedprojectId.'">upload images to new session</a>';
 
 	$sessions=array();
 	$experiments=array();

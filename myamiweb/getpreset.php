@@ -54,10 +54,10 @@ if ($id) {
 		foreach($presets as $k=>$v)
 
 			if ($k=='defocus')
-				echo " <b>$k:</b> ",($leginondata->formatDefocus($v));
+				echo " <b>defoc:</b> ",($leginondata->formatDefocus($v));
 			else if ($k=='pixelsize') {
 				$v *= $imageinfo['binning'];
-				echo " <b>$k:</b> ",($leginondata->formatPixelsize($v));
+				echo " <b>apix:</b> ",($leginondata->formatPixelsize($v));
 			}
 			else if ($k=='tilt' && (abs($v) > 1 || $showtilt)) {
 				$angle=$v;
