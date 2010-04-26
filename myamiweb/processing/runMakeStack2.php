@@ -58,6 +58,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// connect to particle and ctf databases
 	$particle = new particledata();
 	$ctfdata=$particle->hasCtfData($sessionId);
+	$ctffindids = $particle->getCtfRunIds($sessionId,$showHidden=False,$ctffind=True);
 	$partrunids = $particle->getParticleRunIds($sessionId);
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
 	$stackruninfos = $particle->getStackIds($sessionId, True);
@@ -177,6 +178,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$icedisable = ($_POST['icecheck']=='on') ? '' : 'DISABLED';
 	// ace check params
 	$acecheck = ($_POST['acecheck']=='on') ? 'CHECKED' : '';
+	$ctffindcheck = ($_POST['ctffindonly'])=='on' ? 'CHECKED' : '';
 	$acedisable = ($_POST['acecheck']=='on') ? '' : 'DISABLED';
 	$aceval = ($_POST['acecheck']=='on') ? $_POST['ace'] : '0.8';
 	// correlation check params
@@ -408,8 +410,14 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 //		(between 0.0 - 1.0)\n";
 
 	if ($ctfdata) {
+		// give option of only using ctffind values
+		if ($ctffindids) {
+			echo "<input type='checkbox' name='ctffindonly' $ctffindcheck>\n";
+			echo docpop('ctffindonly','Only use CTFFIND values');
+			echo "<br/>\n";
+		}
 		echo"<input type='checkbox' name='acecheck' onclick='enableace(this)' $acecheck>\n";
-		echo docpop('aceconf','ACE Confidence Cutoff');
+		echo docpop('aceconf','CTF Confidence Cutoff');
 		echo "<br />\n";
 		echo "Use Values Above:<input type='text' name='ace' $acedisable value='$aceval' size='4'>
 		(between 0.0 - 1.0)\n";
@@ -512,6 +520,7 @@ function runMakestack() {
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
 	$boxfiles = ($_POST['boxfiles']);
+	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
 
 	// set image inspection selection
 	$norejects=$inspected=0;
@@ -626,6 +635,7 @@ function runMakestack() {
 	if ($boxfiles == 'on') $command.="--boxfiles ";
 	$command.="--description=\"$description\" ";
 	if (!empty($partlabel)) $command.="--label=\"$partlabel\" ";
+	if ($ctffindonly) $command.="--ctffindonly ";
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {

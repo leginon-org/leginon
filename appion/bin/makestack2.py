@@ -102,7 +102,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	############################################################
 	def checkCtfParams(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
+		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata,msg=False,ctffind=self.params['ctffindonly'])
 
 		### check if we have values and if we care
 		if ctfvalue is None:
@@ -469,35 +469,64 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	def phaseFlipAceTwo(self, inimgpath, imgdata):
 
 		apix = apDatabase.getPixelSize(imgdata)
-		bestctfvalue, bestconf = apCtf.getBestAceTwoValueForImage(imgdata, msg=True)
+		if self.params['ctffindonly'] is True:
+			bestctfvalue, bestconf = apCtf.getBestCtfValueForImage(imgdata,msg=False,ctffind=self.params['ctffindonly'])
+		else:
+			bestctfvalue, bestconf = apCtf.getBestAceTwoValueForImage(imgdata, msg=True)
 
 		if bestctfvalue is None:
-			apDisplay.printWarning("No ACE2 ctf estimation for current image")
+			apDisplay.printWarning("No ctf estimation for current image")
 			self.badprocess = True
 			return None
 
 		if bestctfvalue['acerun'] is None:
-			apDisplay.printWarning("No ACE2 runid for current image")
+			apDisplay.printWarning("No ctf runid for current image")
 			self.badprocess = True
 			return None
 
-		if bestctfvalue['ctfvalues_file'] is None:
-			apDisplay.printWarning("No ACE2 ctf file for current image")
-			self.badprocess = True
-			return None
+		# create ctfvalues_file from ctffind run values
+		if self.params['ctffindonly'] is True:
+			ctfvaluesfile = "tmp_ctfvaluesfile.txt"
+
+			df1 = bestctfvalue['defocus1']
+			df2 = bestctfvalue['defocus2']
+			angast = bestctfvalue['angle_astigmatism']*math.pi/180
+			amp = bestctfvalue['amplitude_contrast']
+			kev = imgdata['scope']['high tension']/1000
+			cs = bestctfvalue['acerun']['ctftilt_params']['cs']/1000
+			conf = bestctfvalue['confidence_d']
+
+			if os.path.isfile(ctfvaluesfile):
+				os.remove(ctfvaluesfile)
+			f = open(ctfvaluesfile,'w')
+			f.write("\tFinal Params for image: %s.mrc\n"%imgdata['filename'])
+			f.write("\tFinal Defocus: %.6e %.6e %.6e\n"%(df1,df2,angast))
+			f.write("\tAmplitude Contrast: %.6e\n"%amp)
+			f.write("\tVoltage: %.6e\n"%kev)
+			f.write("\tSpherical Aberration: %.6e\n"%cs)
+			f.write("\tAngstroms per pixel: %.6e\n"%apix)
+			f.write("\tConfidence: %.6e\n"%conf)
+			f.close()
+
+		# use ace2 ctfvalues file
+		else:
+			if bestctfvalue['ctfvalues_file'] is None:
+				apDisplay.printWarning("No ctf file for current image")
+				self.badprocess = True
+				return None
+
+			ctfvaluesfile = os.path.join(bestctfvalue['acerun']['path']['path'], bestctfvalue['ctfvalues_file'])
+
+			ctfvaluesfilesplit = os.path.splitext(ctfvaluesfile)
+			while ctfvaluesfilesplit[1] != '.mrc':
+				ctfvaluesfilesplit = os.path.splitext(ctfvaluesfilesplit[0])
+
+			ctfvaluesfile = ctfvaluesfilesplit[0]+".mrc.ctf.txt"
 
 		defocus1 = bestctfvalue['defocus1']
 		defocus2 = bestctfvalue['defocus2']
 		ampconst = bestctfvalue['amplitude_contrast']
 		defocus = (defocus1+defocus2)/2.0*1.0e6
-
-		ctfvaluesfile = os.path.join(bestctfvalue['acerun']['path']['path'], bestctfvalue['ctfvalues_file'])
-
-		ctfvaluesfilesplit = os.path.splitext(ctfvaluesfile)
-		while ctfvaluesfilesplit[1] != '.mrc':
-			ctfvaluesfilesplit = os.path.splitext(ctfvaluesfilesplit[0])
-
-		ctfvaluesfile = ctfvaluesfilesplit[0]+".mrc.ctf.txt"
 
 		apDisplay.printMsg("using ctfvaluesfile: "+ctfvaluesfile)
 
@@ -837,6 +866,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			action="store_true", help="Do not delete CTF corrected MRC files when finishing")
 		self.parser.add_option("--verbose", dest="verbose", default=False,
 			action="store_true", help="Show extra ace2 information while running")
+		self.parser.add_option("--ctffindonly", dest="ctffindonly", default=False,
+			action="store_true", help="Only use ctf values coming from CTFFIND or CTFTILT")
 
 		### option based
 		#self.parser.add_option("--whole-image", dest="wholeimage", default=False,
