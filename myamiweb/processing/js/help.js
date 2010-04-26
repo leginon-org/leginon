@@ -77,7 +77,8 @@ var help = {
 		'mirror' : 'Align both regular particles and their mirror image',
 		'mlsavemem' : 'Save memory but reducing the number of xy shift for the particles for each round.',
 		'phaseflip' : 'Check this box if you wish to use the defocus value determined by ACE to flip the phases of the particle images (flipping is performed on each individual particle).  The ACE value with the highest confidence will be used.  Note: Amplitudes are NOT affected.',
-		'aceconf' : 'Only micrographs with an ACE confidence equal to or above the value specified will be used in the creation of the stack.  Values range from 0 (lowest confidence) to 1 (greatest confidence).  Empirically a confidence value of 0.8 or greater signifies a good estimation of the defocus.',
+		'ctffindonly' : 'Only CTF values estimated using CTFFIND or CTFTILT will be used for correcting the CTF',
+		'aceconf' : 'Only micrographs with a CTF confidence equal to or above the value specified will be used in the creation of the stack.  Values range from 0 (lowest confidence) to 1 (greatest confidence).  Empirically a confidence value of 0.8 or greater for ACE signifies a good estimation of the defocus.',
 		'partcutoff' : 'The automated particle selection functions assign each paticle a correlation value - here you set a range of correlation values to use.  Correlation values that are very high or low may be contamination of noise on the micrograph.',
 		'factorlist' : 'These images represent a set of eigenvectors, certain traits of the particles should be presented by each eigenvector.  Choosing an image below will use its eigenvectors as a basis for averaging the particles.',
 		'numfactor' : 'Number of eigenvectors to calculate, certain traits of the particles should be presented by each eigenvector.  Choosing an image below will use its eigenvectors as a basis for averaging the particles.',
@@ -396,6 +397,7 @@ var help = {
 		'deltay' : 'Refine delta Y',
 		'first' : 'First particle',
 		'last' : 'Last particle',
+		'ctffindonly' : 'Only CTF values estimated using CTFFIND or CTFTILT will be used for correcting the CTF',
 
 		'relmag' : 'RELMAG -- lative magnification of dataset?',
 
