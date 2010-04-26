@@ -124,6 +124,9 @@ function jobForm($extra=false) {
 	}
 	$defrunid = 'frealign_recon'.($reconruns+1);
 
+	## find if there are ctffind runs
+	$ctffindruns = $particle->getCtfRunIds($expId, $showHidden=False, $ctffind=True);
+
 	## get stack data
 	$stackinfo = explode('|--|',$_POST['stackval']);
 	$stackid=$stackinfo[0];
@@ -421,11 +424,14 @@ function jobForm($extra=false) {
 		echo " <input type='text' name='rbfact' value='$rbfact' size='4'>\n";
 		echo docpop('rbfact','B-factor correction (RBFACT)')." <font size='-2'><i>(0 = off)</i></font>\n";
 
-		// DEBUGGING FIELDS
 		echo "</td></tr><tr><td colspan='3' align='center'>\n";
-		echo "<input type='checkbox' name='ctffindonly' $ctffindcheck>";
-		echo docpop('ctffindonly','Only use ctffind values');
-		echo "&nbsp;&nbsp;&nbsp;&nbsp;\n";
+
+		// give option of only using ctffind runs
+		if ($ctffindruns) {
+			echo "<input type='checkbox' name='ctffindonly' $ctffindcheck>";
+			echo docpop('ctffindonly','Only use CTFFIND values');
+			echo "&nbsp;&nbsp;&nbsp;&nbsp;\n";
+		}
 		echo " <input type='text' name='last' value='$last' size='4'>\n";
 		echo docpop('last','Last particle to use')." \n";
 

@@ -827,13 +827,15 @@ class particledata {
 		return $r['runId'];
 	}
 
-	function getCtfRunIds($sessionId, $showHidden=False) {
+	function getCtfRunIds($sessionId, $showHidden=False, $ctffind=False) {
 		$q = "SELECT * "
 			."FROM `ApAceRunData` AS a "
 			."WHERE "
 			."  `REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden )
 			$q .= " AND ( a.`hidden` = 0 OR a.`hidden` IS NULL ) ";
+		if ($ctffind) 
+			$q .= " AND `REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
 		$q .= "ORDER BY a.`DEF_id` DESC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
