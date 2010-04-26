@@ -199,10 +199,10 @@ def getBestDefocusAndAmpConstForImage(imgdata, msg=False):
 
 	return bestdf, bestamp
 
-def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True):
+def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, ctffind=False):
 	"""
 	takes an image and get the best ctfvalues for that image
-	indepedent of method (ACE1 or ACE2)
+	indepedent of method (ACE1,ACE2,CTFTILT, or CTFFIND)
 	"""
 	### get all ctf values
 	ctfq = appiondata.ApCtfData()
@@ -217,8 +217,12 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True):
 	bestconf = 0.0
 	bestctfvalue = None
 	for ctfvalue in ctfvalues:
-		conf1 = ctfvalue['confidence']
+		### limit to ctffind values if requested:
+		if ctffind is True and ctfvalue['acerun']['ctftilt_params'] is None:
+			continue
+		conf1 = max(ctfvalue['confidence'],ctfvalue['cross_correlation'])
 		conf2 = ctfvalue['confidence_d']
+
 		if conf1 > 0 and conf2 > 0:
 			conf = max(conf1,conf2)
 			if ctfavg is True:

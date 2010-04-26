@@ -113,6 +113,8 @@ class frealignJob(appionScript.AppionScript):
 			help="number of refinement iterations to perform")
 		self.parser.add_option('--noctf', dest='noctf', default=False, action='store_true',
 			help="choose if frealign should not perform ctf correction")
+		self.parser.add_option('--ctffindonly', dest='ctffindonly', default=False,
+			action='store_true', help="only use ctf values coming from ctffind")
 
 	#=====================
 	def checkConflicts(self):
@@ -269,7 +271,7 @@ class frealignJob(appionScript.AppionScript):
 			}
 			imagedata = particle['particle']['image']
 			if self.params['noctf'] is False:
-				ctfdata, confidence = apCtf.getBestCtfValueForImage(imagedata, msg=False)
+				ctfdata, confidence = apCtf.getBestCtfValueForImage(imagedata, msg=False, ctffind=self.params['ctffindonly'])
 				if ctfdata is not None:
 					### use defocus and astigmatism values
 					particleparams['df1'] = abs(ctfdata['defocus1']*1e10)

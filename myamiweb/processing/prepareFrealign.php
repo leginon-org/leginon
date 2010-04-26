@@ -47,12 +47,11 @@ function stackModelForm($extra=False) {
 	$models = $particle->getModelsFromProject($projectId);
 
 	// find each stack entry in database
-	$stackIds = $particle->getStackIds($expId, false, false, true);
+	$stackIds = $particle->getStackIds($expId, false, false, false);
 	$stackinfo = explode('|--|', $_POST['stackval']);
 	$stackid = $stackinfo[0];
 	$apix = $stackinfo[1];
 	$box = $stackinfo[2];
-
 	// write out errors, if any came up:
 	if ($extra)
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
@@ -340,6 +339,7 @@ function jobForm($extra=false) {
 	$hp = $_POST["hp"] ? $_POST["hp"] : 50;
 	$lp = $_POST["lp"] ? $_POST["lp"] : (ceil($apix*40))/10;
 	$rbfact = $_POST["rbfact"] ? $_POST["rbfact"] : 0;
+	$ctffindcheck = ($_POST['ctffindonly']=='on') ? 'checked':'';
 
 	echo "<table class='tableborder' border='1' cellpadding='4' cellspacing='4'>\n";
 	echo "<tr><td colspan='2' align='center'>\n";
@@ -421,8 +421,11 @@ function jobForm($extra=false) {
 		echo " <input type='text' name='rbfact' value='$rbfact' size='4'>\n";
 		echo docpop('rbfact','B-factor correction (RBFACT)')." <font size='-2'><i>(0 = off)</i></font>\n";
 
-	// DEBUGGING FIELDS
-	echo "</td></tr><tr><td colspan='3' align='center'>\n";
+		// DEBUGGING FIELDS
+		echo "</td></tr><tr><td colspan='3' align='center'>\n";
+		echo "<input type='checkbox' name='ctffindonly' $ctffindcheck>";
+		echo docpop('ctffindonly','Only use ctffind values');
+		echo "&nbsp;&nbsp;&nbsp;&nbsp;\n";
 		echo " <input type='text' name='last' value='$last' size='4'>\n";
 		echo docpop('last','Last particle to use')." \n";
 
@@ -515,6 +518,7 @@ function prepareFrealign ($extra=False) {
 	$numiter=$_POST['numiter'];
 	$inpar=$_POST['inparfile'];
 	$importiter=$_POST['importiter'];
+	$ctffindonly=($_POST['ctffindonly']=='on') ? True:'';
 
 	$cmd = "prepFrealign.py ";
 	$cmd.= "--runname=$runname ";
@@ -543,6 +547,7 @@ function prepareFrealign ($extra=False) {
 	$cmd.= "--cluster ";
 	$cmd.= "--ppn=$ppn ";
 	$cmd.= "--nodes=$nodes ";
+	if ($ctffindonly) $cmd.= "--ctffindonly ";
 	if ($last) $cmd.= "--last=$last ";
 
 	// submit job to cluster
