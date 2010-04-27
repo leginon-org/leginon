@@ -7,7 +7,7 @@
  *    - form input
  *    - javascript check
  *
- * Note: each cluster file must be register in config_processing.php
+ * Note: each cluster file must be register in config.php
  **/
 	
 define('C_NAME', "default_cluster");

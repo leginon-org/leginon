@@ -15,76 +15,98 @@ define('PROJECT_NAME', "myamiweb");
 define('PROJECT_TITLE', "Appion and Leginon Tools");
 
 // --- define site base path -- //
-// example: http://domain.edu/myamiweb
+// --- example: http://domain.edu/myamiweb -- //
 define('BASE_PATH',"myamiweb");
 
 define('BASE_URL', "/".BASE_PATH."/");
 define('PROJECT_URL', BASE_URL."project/");
 
-// Administrator email title and email address
+// --- Administrator email title and email address -- //
 define('EMAIL_TITLE', 'The name of your institute');
 define('ADMIN_EMAIL', "example@institute.edu");
 
-// When 'ENABLE_SMTP set to true, email will send out
-// via ADMIN_EMIL's SMTP server. 
+// --- When 'ENABLE_SMTP set to true, email will send out -- //
+// --- via ADMIN_EMIL's SMTP server. --// 
 define('ENABLE_SMTP', false);
 define('SMTP_HOST', 'mail.institute.edu');	//your smtp host
 
-// Check this with your email administrator
-// Set it to true if your SMTP server require authentication 
+// --- Check this with your email administrator -- //
+// --- Set it to true if your SMTP server require authentication -- //
 define('SMTP_AUTH', false);
 
-// If SMTP_AUTH is not required(SMTP_AUTH set to false, 
-// no need to fill in 'SMTP_USERNAME' & SMTP_PASSWORD
+// --- If SMTP_AUTH is not required(SMTP_AUTH set to false, -- //
+// --- no need to fill in 'SMTP_USERNAME' & SMTP_PASSWORD -- //
 define('SMTP_USERNAME', "");
 define('SMTP_PASSWORD', "");
 
-// --- Set your MySQL database server parameters
+// --- Set your MySQL database server parameters -- //
 define('DB_HOST', "");		// DB Host name
 define('DB_USER', "");		// DB User name
 define('DB_PASS', "");		// DB Password
-define('DB_LEGINON', "leginondb");	// Leginon database name
-define('DB_PROJECT', "projectdb");	// Project database name
+define('DB_LEGINON', "");	// Leginon database name
+define('DB_PROJECT', "");	// Project database name
 
 // --- default URL for project section --- //
 define('VIEWER_URL', BASE_URL."3wviewer.php?expId=");
 define('SUMMARY_URL', BASE_URL."summary.php?expId=");
 define('UPLOAD_URL', BASE_URL."processing/uploadimage.php");
 
-// --- Set cookie session time
+// --- Set cookie session time -- //
 define('COOKIE_TIME', 0);		//0 is never expire. 
 
+// --- defaut user group -- //
 define('GP_USER', 'users');
 
-// --- XML test dataset
+// --- XML test dataset -- //
 $XML_DATA = "test/viewerdata.xml";
 
-// --- Set Default table definition
+// --- Set Default table definition -- //
 define('DEF_TABLES_FILE', "defaulttables.xml");
 define('DEF_PROJECT_TABLES_FILE', "defaultprojecttables.xml");
 define('DEF_PROCESSING_TABLES_FILE', "defaultprocessingtables.xml");
 define('DEF_PROCESSING_PREFIX', "ap");		//update mysql privileges
 
-// --- Set External SQL server here (use for import/export application)
-// --- You can add as many as you want, just copy and paste the block
-// --- to a new one and update the connection parameters
+// --- Set External SQL server here (use for import/export application) -- //
+// --- You can add as many as you want, just copy and paste the block -- //
+// --- to a new one and update the connection parameters -- //
+// --- $SQL_HOSTS['example_host_name']['db_host'] = 'example_host_name'; -- //
+// --- $SQL_HOSTS['example_host_name']['db_user'] = 'usr_object'; -- //
+// --- $SQL_HOSTS['example_host_name']['db_pass'] = ''; -- //
+// --- $SQL_HOSTS['example_host_name']['db'] = 'legniondb'; -- //
 
 $SQL_HOSTS[DB_HOST]['db_host'] = DB_HOST;
 $SQL_HOSTS[DB_HOST]['db_user'] = DB_USER;
 $SQL_HOSTS[DB_HOST]['db_pass'] = DB_PASS;
 $SQL_HOSTS[DB_HOST]['db'] = DB_LEGINON;
 
-/*
-$SQL_HOSTS['example_host_name']['db_host'] = 'example_host_name';
-$SQL_HOSTS['example_host_name']['db_user'] = 'usr_object';
-$SQL_HOSTS['example_host_name']['db_pass'] = '';
-$SQL_HOSTS['example_host_name']['db'] = 'legniondb';
-*/
+// --- path to main --- //
+set_include_path(dirname(__FILE__).PATH_SEPARATOR
+				.dirname(__FILE__)."/project".PATH_SEPARATOR
+				.dirname(__FILE__)."/lib".PATH_SEPARATOR
+				.dirname(__FILE__)."/lib/PEAR");
 
 // --- add plugins --- //
-
-// uncomment to enable processing web pages
+// --- uncomment to enable processing web pages -- //
 // addplugin("processing");
+
+
+// --- Add as many processing hosts as you like -- //
+// --- $PROCESSING_HOSTS[]="host1.school.edu"; -- //
+// --- $PROCESSING_HOSTS[]="host2.school.edu"; -- //
+$PROCESSING_HOSTS[]="";
+
+// --- register your cluster config file below i.e (default_cluster.php) --- //
+$CLUSTER_CONFIGS= array (
+	'default_cluster'
+);
+
+// Better if Cs came out of DB, but for now...
+$DEFAULTCS = "";
+
+// --- Restrict file server if you want --- //
+// --- Add your allowed processing directory as string in the array
+$DATA_DIRS = array(
+);
 
 // --- myamiweb login --- //
 // Browse to the administration tools in myamiweb prior to 
@@ -98,13 +120,6 @@ define('CACHE_SCRIPT', $_SERVER['DOCUMENT_ROOT'].'/'.BASE_URL.'/makejpg.php');
 
 // --- define Flash player base url --- //
 define('FLASHPLAYER_URL', "/flashplayer/");
-
-// --- path to main --- //
-set_include_path(dirname(__FILE__).PATH_SEPARATOR
-				.dirname(__FILE__)."/project".PATH_SEPARATOR
-				.dirname(__FILE__)."/lib".PATH_SEPARATOR
-				.dirname(__FILE__)."/lib/PEAR".PATH_SEPARATOR
-				.dirname(__FILE__)."/processing");
 
 // --- define python commands - path --- //
 

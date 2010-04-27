@@ -6,9 +6,9 @@ function addplugin($path, $name='') {
 	}
 	define($name, true);
 	define($name."_BASE_URL", BASE_URL.$path."/");
-	$base = $_SERVER['DOCUMENT_ROOT'] . '/' . BASE_URL;
-	$path = $base . $path;
-	addincludepath($path);
+	$pluginPath = WEB_ROOT."/".$path;
+
+	addincludepath($pluginPath);
 }
 
 function addincludepath($path) {

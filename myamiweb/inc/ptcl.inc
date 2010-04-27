@@ -17,9 +17,9 @@ class particledata_a {
 
 	function particledata_a() {
 		$this->mysql = new mysql(
-					PARTICLE_DB_HOST,
-					PARTICLE_DB_USER,
-					PARTICLE_DB_PASS,
+					DB_HOST,
+					DB_USER,
+					DB_PASS,
 					PARTICLE_DB);
 	}
 

@@ -4,7 +4,7 @@ require "inc/viewer.inc";
 require "inc/project.inc";
 require "inc/cachedb.inc";
 if (defined('PROCESSING')) {
-	$ptcl = (@require "inc/particledata.inc") ? true : false;
+	$ptcl = (require_once "inc/particledata.inc") ? true : false;
 }
 
 $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];

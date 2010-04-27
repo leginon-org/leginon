@@ -1,6 +1,6 @@
 <?php
 $expId=$_GET['expId'];
-require "config_processing.php";
+require "config.php";
 require "inc/session.inc";
 setsession();
 endsession();

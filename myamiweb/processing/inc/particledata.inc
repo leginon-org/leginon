@@ -7,12 +7,7 @@
  *	see	http://ami.scripps.edu/software/leginon-license
  */
 
-if (DB_HOST == 'DB_HOST') require_once "../config.php";
-require_once "config_processing.php";
-
-define('PARTICLE_DB_HOST', $PROCESSING_DB_HOST);
-define('PARTICLE_DB_USER', $PROCESSING_DB_USER);
-define('PARTICLE_DB_PASS', $PROCESSING_DB_PASS);
+require_once "../config.php";
 
 class particledata {
 
@@ -21,9 +16,9 @@ class particledata {
 
 	function particledata () {
 		$this->mysql = new mysql(
-					PARTICLE_DB_HOST,
-					PARTICLE_DB_USER,
-					PARTICLE_DB_PASS,
+					DB_HOST,
+					DB_USER,
+					DB_PASS,
 					PARTICLE_DB);
 	}
 
