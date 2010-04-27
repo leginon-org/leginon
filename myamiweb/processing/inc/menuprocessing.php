@@ -308,30 +308,20 @@ if ($expId) {
 
 		// get stack stats:
 		$sresults=array();
-		$sdone = count($subclusterjobs['makestack']['done']);
-		$srun = count($subclusterjobs['makestack']['running']);
-		$sq = count($subclusterjobs['makestack']['queued']);
+		$sdone = 0; $srun = 0; $sq = 0;
+		$stacktypes = array('makestack', 'makestack2', 'filterstack', 'substack', 'centerparticlestack', 'alignsubstack');
+		foreach ($stacktypes as $stacktype) {
+			$sdone += count($subclusterjobs[$stacktype]['done']);
+			$srun += count($subclusterjobs[$stacktype]['running']);
+			$sq += count($subclusterjobs[$stacktype]['queued']);
+		}
 
-		$sdone += count($subclusterjobs['makestack2']['done']);
-		$srun += count($subclusterjobs['makestack2']['running']);
-		$sq += count($subclusterjobs['makestack2']['queued']);
+		$totstack = ($sdone > $stackruns) ? $sdone : $stackruns;
 
-		$sdone += count($subclusterjobs['stackfilter']['done']);
-		$srun += count($subclusterjobs['stackfilter']['running']);
-		$sq += count($subclusterjobs['stackfilter']['queued']);
-
-		$sdone += count($subclusterjobs['centerparticlestack']['done']);
-		$srun += count($subclusterjobs['centerparticlestack']['running']);
-		$sq += count($subclusterjobs['centerparticlestack']['queued']);
-
-		$sresults[] = ($sdone==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId'>$sdone complete</a>";
-		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$srun running</a>";
+		$sresults[] = ($totstack==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId'>$totstack complete</a>";
+		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack2'>$srun running</a>";
 		$sresults[] = ($sq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$sq queued</a>";
 
-		// stacks being created and stacks completed
-		$totstack = $sdone+$srun+$sq;
-
-		$totstack = ($totstack > $stackruns) ? $totstack : $stackruns;
 		$totresult = ($totstack==0) ? "" :
 			"<a href='stackhierarchy.php?expId=$sessionId'>$totstack</a>";
 
