@@ -28,7 +28,7 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	$expId=$_GET['expId'];
 	if ($expId){
 		$sessionId=$expId;
-		$projectId=getProjectFromExpId($expId);
+		$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId&alignId=$alignid&analysisId=$analysisid";
 	} else {
 		$sessionId=$_POST['sessionId'];

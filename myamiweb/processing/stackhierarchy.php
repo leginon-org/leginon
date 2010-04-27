@@ -16,7 +16,7 @@ require "inc/summarytables.inc";
 
 $particle = new particledata();
 $expId = $_GET['expId'];
-$projectId = (int) getProjectFromExpId($expId);
+$projectId = getProjectId();
 
 /*********************************
 Show stack function is an recursive function to

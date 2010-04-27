@@ -29,7 +29,7 @@ function createrotKerDenSOMForm($extra=false, $title='rotKerdenSOM.py Launcher',
 	$selectAlignId=$_GET['alignId'];
 	if ($expId){
 		$sessionId=$expId;
-		$projectId=getProjectFromExpId($expId);
+		$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	} else {
 		$sessionId=$_POST['sessionId'];

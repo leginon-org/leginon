@@ -41,7 +41,7 @@ function createTemplateForm() {
 
 	// retrieve template info from database for this project
 	if ($expId){
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	}
 
@@ -116,7 +116,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$expId=$_GET['expId'];
 	if ($expId){
 		$sessionId=$expId;
-		$projectId=getProjectFromExpId($expId);
+		$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	} else {
 		$sessionId=$_POST['sessionId'];

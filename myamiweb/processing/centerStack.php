@@ -29,7 +29,7 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
         // check if coming directly from a session
 	$expId=$_GET['expId'];
 
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	$stackId=$_GET['sId'];

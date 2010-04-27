@@ -23,7 +23,7 @@ if ($_POST) {
 
 function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $heading='Run Stack Into Picks') {
 	$expId = $_GET['expId'];
-	$projectId = (int) getProjectFromExpId($expId);
+	$projectId = getProjectId();
 	//echo "Project ID: ".$projectId." <br/>\n";
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	if ($_GET['showHidden']) $formAction.="&showHidden=True";
@@ -93,7 +93,7 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 
 function runStackIntoPicks() {
 	$expId = $_GET['expId'];
-	$projectId = (int) getProjectFromExpId($expId);
+	$projectId = getProjectId();
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackid=$_POST['stackid'];

@@ -79,7 +79,7 @@ else initModelForm();
 function initModelForm($extra=False) {
 	// check if session provided
 	$expId = $_GET['expId'];
-	$projectId = getProjectFromExpId($expId);
+	$projectId = getProjectId();
 	
 	$javafunc="<script src='../js/viewer.js'></script>\n";
 	processing_header("IMAGIC 3d Refinement Job Form","IMAGIC 3d Refinement Job Form",$javafunc);
@@ -152,7 +152,7 @@ function jobform($extra=false) {
 	
 	// get experiment & model info
 	$expId=$_GET['expId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
@@ -492,7 +492,7 @@ function jobform($extra=false) {
 function imagic3dRefine() {
 	// get variables from $_POST[] array
 	$expId = $_GET['expId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 	$outdir = $_POST['output_directory'];

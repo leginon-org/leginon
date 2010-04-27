@@ -38,7 +38,7 @@ else
 function selectFrealignJob($extra=False) {
 	// check if session provided
 	$expId = $_GET['expId'];
-	$projectid = getProjectFromExpId($expId);
+	$projectid = getProjectId();
 	processing_header("Frealign Job Uploader", "Frealign Job Uploader", $javafunc);
 	if ($expId) {
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
@@ -140,7 +140,7 @@ function frealigntable($data) {
 function createUploadFrealignForm($extra=False) {
 	// check if session provided
 	$expId = $_GET['expId'];
-	$projectid = getProjectFromExpId($expId);
+	$projectid = getProjectId();
 	$jobid = $_POST['jobid'];
 
 	if ($expId) {
@@ -268,7 +268,7 @@ function createUploadFrealignForm($extra=False) {
 
 function runUploadFrealign() {
 	$expId=$_GET['expId'];
-	$projectid = getProjectFromExpId($expId);
+	$projectid = getProjectId();
 
 	$filter=$_POST['filter'];
 	$zoom=$_POST['zoom'];

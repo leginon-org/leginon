@@ -7,7 +7,7 @@ require"inc/processing.inc";
 $expId= $_GET['expId'];
 $densityId= $_GET['densityId'];
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId&densityId=$densityId";
-$projectId=getProjectFromExpId($expId);
+$projectId=getProjectId();
 
 $particle = new particledata();
 

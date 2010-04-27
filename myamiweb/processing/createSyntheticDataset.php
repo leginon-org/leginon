@@ -39,7 +39,7 @@ function chooseModel($extra=False) {
 		$formAction=$_SERVER['PHP_SELF'];
 	}
 	
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 		
 	if (is_numeric($projectId)) {
 		$particle = new particledata();

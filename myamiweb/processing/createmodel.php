@@ -38,7 +38,7 @@ else {
 function createEMANInitialModelForm($extra=false, $title='createModel.py Launcher', $heading='EMAN Common Lines') {
    // check if coming directly from a session
 	$expId=$_GET['expId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	$clusterid=$_GET['clusterid'];
@@ -175,7 +175,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 
 	// get from previous from
 	$expId = $_GET['expId'];
-	$projectId = getProjectFromExpId($expId);
+	$projectId = getProjectId();
 
 	// from previous form
 	$clusterid = $_POST['clusterid'];

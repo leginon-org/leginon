@@ -14,7 +14,7 @@ if ($_POST['checkjobs']) {
 function checkJobs($showjobs=False,$showall=False,$extra=False) {
 	$expId= $_GET['expId'];
 	$particle = new particledata();
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 
 	// Create DMF commands, this should move the default_cluster.php
 	$javafunc="  <script language='JavaScript'>\n";

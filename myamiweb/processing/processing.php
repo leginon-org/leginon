@@ -30,7 +30,7 @@ $leginondata = new leginondata();
 $expId=$_GET['expId'];
 if ($expId){
   $sessionId=$expId;
-  $projectId=getProjectFromExpId($expId);
+  $projectId=getProjectId();
   $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 }
 else {
@@ -140,7 +140,7 @@ if ($sessionId) {
 
   // retrieve template info from database for this project
   if ($expId){
-    $projectId=getProjectFromExpId($expId);
+    $projectId=getProjectId();
   }
   if (is_numeric($projectId)) {
     if ($templatesData=$particle->getTemplatesFromProject($projectId))

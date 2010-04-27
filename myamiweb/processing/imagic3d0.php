@@ -46,7 +46,7 @@ function jobform($extra=false) {
 	$clusterId=$_GET['clusterId'];
 	$tsId=$_GET['templateStackId'];
 //	$imagicClusterId=$_GET['imagicClusterId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
@@ -74,7 +74,7 @@ function jobform($extra=false) {
 	$reclassId=$_GET['reclassId'];
 	$norefId=$_GET['norefId'];
 	$norefClassId=$_GET['norefClassId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {

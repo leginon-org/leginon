@@ -31,7 +31,7 @@ if ($_GET['showHidden']) {
 	$formAction.="&showHidden=1";
 }
 
-$projectId = (int) getProjectFromExpId($expId);
+$projectId = getProjectId();
 
 $javascript = "<script src='../js/viewer.js'></script>\n";
 $javascript.= editTextJava();

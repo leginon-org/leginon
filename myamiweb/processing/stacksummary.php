@@ -15,7 +15,7 @@ require_once "inc/project.inc";
 require_once "inc/processing.inc";
 require "inc/summarytables.inc";
   
-$projectId = (int) getProjectFromExpId($expId);
+$projectId = getProjectId();
 //echo "Project ID: ".$projectId." <br/>\n";
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 if ($_GET['showHidden']) $formAction.="&showHidden=True";

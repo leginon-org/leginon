@@ -28,7 +28,7 @@ function createApplyJunkCutoffForm($extra=false, $title='sortJunkStack.py Launch
         // check if coming directly from a session
 	$expId=$_GET['expId'];
 
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	$stackId=$_GET['stackId'];

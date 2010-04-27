@@ -30,7 +30,7 @@ if ($_POST['process']) {
 */
 function createOtrVolumeForm($extra=false, $title='OtrVolume.py Launcher', $heading='Run Otr Volume') {
 	$expId=$_GET['expId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 
 	$alignid = $_GET['alignid'];
 	$clusterid = $_GET['clusterid'];

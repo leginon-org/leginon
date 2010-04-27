@@ -41,16 +41,14 @@ else {
 function createTemplateForm($extra=False) {
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
+	$projectId = getProjectId();
 	$formAction=$_SERVER['PHP_SELF'];	
 
 	// retrieve template info from database for this project
 	if ($expId){
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	}
-
-	// if user wants to use templates from another project
-	if($_POST['projectId']) $projectId =$_POST[projectId];
 
 	if (is_numeric($projectId)) {
 		$particle=new particleData;

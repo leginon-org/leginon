@@ -16,7 +16,7 @@ if ($_POST['checkjobs']) {
 function checkJobs($showjobs=False,$showall=False,$extra=False) {
 	$expId= $_GET['expId'];
 	$particle = new particledata();
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 
 	processing_header("Frealign Job Status","Frealign Job Status",$javafunc);
 	// write out errors, if any came up:

@@ -30,7 +30,7 @@ if ($_POST['process']) {
 */
 function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $heading='Run RCT Volume') {
 	$expId=$_GET['expId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 
 	$alignid = $_GET['alignid'];
 	$clusterid = $_GET['clusterid'];

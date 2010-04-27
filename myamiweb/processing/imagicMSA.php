@@ -36,7 +36,7 @@ function jobform($extra=false)	{
 	// get session info
 	echo "<form name='viewerform' method='POST' action='$formaction'>\n";
 	$expId=$_GET['expId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$alignId=$_GET['alignId'];
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
@@ -267,7 +267,7 @@ function jobform($extra=false)	{
 
 function runImagicMSA($extra=false)	{
 	$expId=$_GET['expId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$runid=$_POST['runid'];
 	$outdir=$_POST['outdir'];
 	$stackvalues=$_POST['alignid'];

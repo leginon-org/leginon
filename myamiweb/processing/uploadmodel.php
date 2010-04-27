@@ -53,7 +53,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	}
 	
 
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	if ($rescale) $formAction .="&rescale=TRUE&modelid=$modelid";
 	if ($densityid) $formAction .="&densityId=$densityid";

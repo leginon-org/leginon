@@ -29,7 +29,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	$expId=$_GET['expId'];
 	if ($expId){
 		$sessionId=$expId;
-		$projectId=getProjectFromExpId($expId);
+		$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	}
 	else {

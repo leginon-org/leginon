@@ -160,7 +160,7 @@ else stackModelForm();
 function stackModelForm($extra=False) {
 	// check if session provided
 	$expId = $_GET['expId'];
-	$projectId = getProjectFromExpId($expId);
+	$projectId = getProjectId();
 
 	$javafunc="<script src='../js/viewer.js'></script>\n";
 	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
@@ -277,7 +277,7 @@ function emanForm($extra=false) {
 	";
 
 	// import values from previous uploaded reconstruction
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$sessions = $leginondata->getSessions("",$projectId);
 	if (is_array($sessions)) {
 	  	$ropt = "";
@@ -639,7 +639,7 @@ function jobForm($extra=false) {
 	";
 
 	// import values from previous uploaded reconstruction
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$sessions = $leginondata->getSessions("",$projectId);
 	if (is_array($sessions)) {
 	  	$ropt = "";

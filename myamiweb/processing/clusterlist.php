@@ -15,7 +15,7 @@ require "inc/processing.inc";
 require "inc/summarytables.inc";
   
 $expId = $_GET['expId'];
-$projectId = (int) getProjectFromExpId($expId);
+$projectId = getProjectId();
 //echo "Project ID: ".$projectId." <br/>\n";
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 

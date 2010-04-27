@@ -143,7 +143,7 @@ if (ereg(".spi$", $filename)) {
 //get session name
 if ($expId){
 	$sessionId=$expId;
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 }
 
 $sessiondata=getSessionList($projectId,$sessionId);

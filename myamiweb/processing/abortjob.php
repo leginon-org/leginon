@@ -16,7 +16,7 @@ function abortJob($showjobs=False,$extra=False) {
   $expId= $_GET['expId'];
   $jobId= $_GET['jobId'];
   $particle = new particledata();
-  $projectId=getProjectFromExpId($expId);
+  $projectId=getProjectId();
 
   processing_header("Cluster Job To Be Aborted","Aborting Job",$javafunc);
   // write out errors, if any came up:

@@ -31,7 +31,7 @@ SELECT STACK AND INITIAL MODEL
 function stackModelForm($extra=False) {
 	// check if session provided
 	$expId = $_GET['expId'];
-	$projectId = getProjectFromExpId($expId);
+	$projectId = getProjectId();
 
 	processing_header("FREALIGN Job Generator","FREALIGN Job Generator",$javafunc);
 
@@ -467,7 +467,7 @@ GENERATE COMMAND
 
 function prepareFrealign ($extra=False) {
 	$expId = $_GET['expId'];
-	$projectId = getProjectFromExpId($expId);
+	$projectId = getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	$runname = $_POST['runname'];

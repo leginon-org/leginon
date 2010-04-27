@@ -28,7 +28,7 @@ else {
 function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $heading='Upload a stack') {
         // check if coming directly from a session
 	$expId=$_GET['expId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	//query the database for parameters

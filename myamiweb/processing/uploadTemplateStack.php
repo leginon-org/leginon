@@ -34,7 +34,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	$exclude = $_GET['exclude'];
 	$include = $_GET['include'];
 
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	processing_header($title,$heading,$javafunc);

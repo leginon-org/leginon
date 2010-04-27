@@ -27,7 +27,7 @@ else {
 function createSubStackForm($extra=false, $title='subStack.py Launcher', $heading='Make a Coran-only Stack') {
         // check if coming directly from a session
 	$expId=$_GET['expId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	$reconId = $_GET['reconId'];

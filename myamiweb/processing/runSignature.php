@@ -45,7 +45,7 @@ function createTemplateForm($extra=False) {
 
 	// retrieve template info from database for this project
 	if ($expId){
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	}
 

@@ -33,7 +33,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 		exit;
 	}
 
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$stackId = $_GET['sId'];
 	$exclude = $_GET['exclude'];
 	$mean = $_GET['mean'];

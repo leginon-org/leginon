@@ -73,7 +73,7 @@ elseif ($_POST['submitjob']) {
 	$clusterdata->post_data();
 
 	$expId = $_GET['expId'];
-	$projectId = getProjectFromExpId($expId);
+	$projectId = getProjectId();
 	$host = $_POST['clustername'];
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
@@ -160,7 +160,7 @@ else stackModelForm();
 function stackModelForm($extra=False) {
 	// check if session provided
 	$expId = $_GET['expId'];
-	$projectId = getProjectFromExpId($expId);
+	$projectId = getProjectId();
 
 	$javafunc="<script src='../js/viewer.js'></script>\n";
 	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
@@ -424,7 +424,7 @@ function writeJobFile ($extra=False) {
 	global $clusterdata;
 	$particle = new particledata();
 	$expId = $_GET['expId'];
-	$projectId = getProjectFromExpId($expId);
+	$projectId = getProjectId();
 
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 

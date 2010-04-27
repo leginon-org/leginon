@@ -29,7 +29,7 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
         // check if coming directly from a session
 	$expId=$_GET['expId'];
 
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	$stackId=$_GET['sId'];

@@ -32,7 +32,7 @@ function jobform($extra=false)	{
 	// get session info
 	echo "<form name='viewerform' method='POST' action='$formaction'>\n";
 	$expId=$_GET['expId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$analysisId=$_GET['analysisId'];
 	$analysisdata=$particle->getImagicAnalysisParams($analysisId);
 	$alignId=$_GET['alignId'];
@@ -144,7 +144,7 @@ function jobform($extra=false)	{
 
 function runImagicMSAcluster($extra=false)	{
 	$expId=$_GET['expId'];
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$analysisId=$_GET['analysisId'];
 	$runname=date("yMd").random_letters();
 	$outdir=$_POST['outdir'];

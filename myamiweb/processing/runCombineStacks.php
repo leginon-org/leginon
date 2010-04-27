@@ -23,7 +23,7 @@ if ($_POST) {
 
 function createCombineStackForm($extra=false, $title='combinestack.py Launcher', $heading='Combine Stack') {
 	$expId = $_GET['expId'];
-	$projectId = (int) getProjectFromExpId($expId);
+	$projectId = getProjectId();
 	//echo "Project ID: ".$projectId." <br/>\n";
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	if ($_GET['showHidden']) $formAction.="&showHidden=True";
@@ -118,7 +118,7 @@ function createCombineStackForm($extra=false, $title='combinestack.py Launcher',
 
 function runCombineStack() {
 	$expId = $_GET['expId'];
-	$projectId = (int) getProjectFromExpId($expId);
+	$projectId = getProjectId();
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 

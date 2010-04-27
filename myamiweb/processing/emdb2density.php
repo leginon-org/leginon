@@ -30,7 +30,7 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 
 	$particle = new particledata();
 
-	$projectId=getProjectFromExpId($expId);
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
   
 	$javafunctions = writeJavaPopupFunctions('appion');

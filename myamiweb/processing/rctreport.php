@@ -8,7 +8,7 @@ require"inc/summarytables.inc";
 $expId= $_GET['expId'];
 $rctId= $_GET['rctId'];
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId&rctId=$rctId";
-$projectId=getProjectFromExpId($expId);
+$projectId=getProjectId();
 
 $particle = new particledata();
 

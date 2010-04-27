@@ -22,7 +22,7 @@ $javascript = editTextJava();
 processing_header("Template Summary", "Template Summary", $javascript,False);
 
 if ($expId && is_int($expId)){
-	$projectId = (int) getProjectFromExpId($expId);
+	$projectId = getProjectId();
 }
 
 if (is_int($projectId)) {

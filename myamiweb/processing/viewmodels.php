@@ -6,7 +6,7 @@ require"inc/processing.inc";
 require "inc/summarytables.inc";
 
 $expId= $_GET['expId'];
-$projectId=getProjectFromExpId($expId);
+$projectId=getProjectId();
 $particle = new particledata();
 
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";

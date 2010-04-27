@@ -56,7 +56,7 @@ function programTableRow($progrunid, $sessionname, $formAction) {
 
 function selectLoopAgainForm($extra=false, $title='Loop Again Launcher', $heading='Loop Again Launcher') {
 	$expId = $_GET['expId'];
-	$projectId = (int) getProjectFromExpId($expId);
+	$projectId = getProjectId();
 	//echo "Project ID: ".$projectId." <br/>\n";
 	$formAction = $_SERVER['PHP_SELF']."?expId=$expId";
 	if ($_GET['showHidden']) $formAction.="&showHidden=True";
@@ -108,7 +108,7 @@ function selectLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 
 function createLoopAgainForm($extra=false, $title='Loop Again Launcher', $heading='Loop Again Launcher') {
 	$expId = $_GET['expId'];
-	$projectId = (int) getProjectFromExpId($expId);
+	$projectId = getProjectId();
 	$progrunid = $_GET['progrunid'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId&progrunid=$progrunid";
 
@@ -207,7 +207,7 @@ function createLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 
 function runLoopAgain() {
 	$expId = $_GET['expId'];
-	$projectId = (int) getProjectFromExpId($expId);
+	$projectId = getProjectId();
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$progrunid = $_GET['progrunid'];
