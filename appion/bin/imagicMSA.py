@@ -263,7 +263,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 				proc = subprocess.Popen(lnkcmd2, shell=True)
 				proc.wait()
 				### header bug
-				apImagicFile.setMachineStampInImagicHeader(os.path.join(self.params['rundir'], "start.hed"))
+				apImagicFile.setImagic4DHeader(os.path.join(self.params['rundir'], "start.hed"))
 			else:
 				apDisplay.printColor("aligned stack already exists in working directory", "green")
 

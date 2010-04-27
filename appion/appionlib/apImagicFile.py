@@ -585,65 +585,69 @@ def mergeStacks(stacklist, mergestack):
 	apDisplay.printMsg("size match %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
 	apDisplay.printMsg("finished stack merge in "+apDisplay.timeString(time.time()-t0))	
 
-
 #===============	
-def checkMachineStampInImagicHeader(oldhedfile):
-	### set four byte 69 (REALTYPE)
-	# REALTYPE  	 floating point type, machine stamp
-	# 16777216 for VAX/VMS
-	# 33686018 for OSF, ULTRIX, LINUX, MS Windows
-	# 67372036 for SiliconGraphics, SUN, HP, IBM
+def checkImagic4DHeader(oldhedfile,machineonly=False):
+	### check IMAGIC header values:
+	### IDAT(61) - int - # sections in 3D volume (1)
+	### IDAT(62) - int - # objects (number of particles)
+	### IDAT(69) - machine stamp (33686019 for Linux)
 	if oldhedfile[-4:] != ".hed":
 		oldhedfile = os.path.splitext(oldhedfile)[0]+".hed"
 
+	# number of particles in file based on hed size:
+	fnump = int(os.stat(oldhedfile)[6]/1024)
+	
 	of = open(oldhedfile, "rb")
 	data = of.read(1024)
-	code = fourByteToInt(data[68*4:69*4])
 	of.close()
-	apDisplay.printMsg("machine code: "+str(code)+" for "+os.path.basename(oldhedfile))
-	if code != 33686018:
+	if machineonly is not True:
+		if fourByteToInt(data[60*4:61*4])!=1:
+			return False
+		if fourByteToInt(data[61*4:62*4])!=fnump:
+			return False
+	if fourByteToInt(data[68*4:69*4])!=33686018:
 		return False
 	return True
 
 #===============	
-def setMachineStampInImagicHeader(oldhedfile):
-	### set four byte 69 (REALTYPE)
-	# REALTYPE  	 floating point type, machine stamp
-	# 16777216 for VAX/VMS
-	# 33686018 for OSF, ULTRIX, LINUX, MS Windows
-	# 67372036 for SiliconGraphics, SUN, HP, IBM
+def setImagic4DHeader(oldhedfile,machineonly=False):
+	### set IMAGIC header values for 2D stack:
+	### IDAT(61) - int - # sections in 3D volume (1)
+	### IDAT(62) - int - # objects (number of particles)
+	### IDAT(69) - machine stamp (33686019 for Linux)
 	if oldhedfile[-4:] != ".hed":
 		oldhedfile = os.path.splitext(oldhedfile)[0]+".hed"
 
-	if checkMachineStampInImagicHeader(oldhedfile) is True:
+	if checkImagic4DHeader(oldhedfile,machineonly) is True:
 		return
 
 	newhedfile = oldhedfile+".temp"
 
-	numimg = apFile.numImagesInStack(oldhedfile)
+	numimg = int(os.stat(oldhedfile)[6]/1024)
 	of = open(oldhedfile, "rb")
 	nf = open(newhedfile, "wb")
 	for i in range(numimg):
-		data = of.read(1024)
+		data = of.read(1024)		
 		headerstr = data[0:60*4]
-		headerstr += intToFourByte(1)
-		headerstr += data[61*4:68*4]
+		if machineonly is not True:
+			headerstr += intToFourByte(1)
+			headerstr += intToFourByte(numimg)
+		else:
+			headerstr += data[60*4:62*4]
+		headerstr += data[62*4:68*4]
 		headerstr += intToFourByte(33686018)
 		headerstr += data[69*4:]
 		nf.write(headerstr)
 	of.close()
 	nf.close()
 	if not os.path.isfile(newhedfile):
-		apDisplay.printError("failed to correct machine code in stack file")
+		apDisplay.printError("failed to imagic header in file %s"%oldhedfile)
 	oldsize = apFile.fileSize(oldhedfile)
 	newsize = apFile.fileSize(newhedfile)
 	if oldsize != newsize:
-		apDisplay.printError("failed to correct machine code in stack file")
+		apDisplay.printError("failed to imagic header in file %s"%oldhedfile)
 	shutil.move(newhedfile, oldhedfile)
-
-	if checkMachineStampInImagicHeader(oldhedfile) is True:
-		return
-
+	return
 
 #===============
 def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):

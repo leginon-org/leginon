@@ -358,7 +358,7 @@ class frealignJob(appionScript.AppionScript):
  			emancmd += "scale=%.4f "%(scale)
 
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
-		apImagicFile.setMachineStampInImagicHeader(outmodelfile)
+		apImagicFile.setImagic4DHeader(outmodelfile,machineonly=True)
 
 		return outmodelfile
 
@@ -739,7 +739,7 @@ class frealignJob(appionScript.AppionScript):
 		### get stack info
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		self.stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
-		apImagicFile.setMachineStampInImagicHeader(self.stackfile)
+		apImagicFile.setImagic4DHeader(self.stackfile)
 		### copy stack or start job file
 		if self.params['cluster'] is False:
 			#create alias to stack data

@@ -1061,7 +1061,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 #			proc.wait()
 			
 			### set machine stamp in headers to avoid IMAGIC errors
-			apImagicFile.setMachineStampInImagicHeader(os.path.join(self.params['rundir'], "start.hed"))
+			apImagicFile.setImagic4DHeader(os.path.join(self.params['rundir'], "start.hed"))
 
 			### get initial model data & copy to working directory
 			self.model = {}
