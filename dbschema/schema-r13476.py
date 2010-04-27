@@ -192,18 +192,18 @@ if __name__ == "__main__":
 	appiondb.renameColumn('ApTomoAvgParticleData', 'z shift', 'z_shift')
 
 	#===================
-	# repair misnamed ApClusterJobData job names
+	# repair misnamed ApAppionJobData job names
 	#===================
-	#selectq = "SELECT DISTINCT `jobtype` FROM `ApClusterJobData` ORDER BY `jobtype`;"
+	#selectq = "SELECT DISTINCT `jobtype` FROM `ApAppionJobData` ORDER BY `jobtype`;"
 	jobmap = {
 		'ace': 'pyace',
 		'ace2': 'pyace2',
 		'templatepicker': 'templatecorrelator',
 		'makestack': 'makestack2',
 	}
-	if appiondb.tableExists('ApClusterJobData'):
+	if appiondb.tableExists('ApAppionJobData'):
 		for key in jobmap.keys():
-			updateq = ("UPDATE ApClusterJobData AS job "
+			updateq = ("UPDATE ApAppionJobData AS job "
 				+" SET "
 				+("   job.`name` = '%s' "%(key))
 				+" WHERE "
