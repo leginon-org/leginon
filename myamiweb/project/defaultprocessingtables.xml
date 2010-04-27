@@ -219,10 +219,6 @@
       type="int(20)" 
     />
     <field 
-      name="templatepath" 
-      type="text" 
-    />
-    <field 
       name="templatename" 
       type="text" 
     />
@@ -251,10 +247,6 @@
       type="int(20)" 
     />
     <field 
-      name="REF|ApNoRefClassRunData|noref" 
-      type="int(20)" 
-    />
-    <field 
       name="stack_image_number" 
       type="int(20)" 
     />
@@ -270,7 +262,6 @@
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|ApPathData|templatepath` (`REF|ApPathData|path`)</key>
     <key>KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`)</key>
-    <key>KEY `REF|ApNoRefClassRunData|noref` (`REF|ApNoRefClassRunData|noref`)</key>
     <key>KEY `hidden` (`hidden`)</key>
     <key>KEY `md5sum` (`md5sum`)</key>
     <key>KEY `REF|ApAlignStackData|alignstack` (`REF|ApAlignStackData|alignstack`)</key>
