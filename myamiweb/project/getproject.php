@@ -21,7 +21,7 @@ $is_admin = checkProjectAdminPrivilege($selectedprojectId);
 $url = $_SERVER['PHP_SELF']."?v=".$_REQUEST['v']."&projectId=".$selectedprojectId;
 $ln=urlencode($url);
 $sharingstatus = "No";
-$sharinglink = "share.php?ln=$ln&id=";
+$sharinglink = "share.php?ln=$ln&expId=";
 if ($SHARE)
 	$d = new share();
 $project = new project();
@@ -106,7 +106,7 @@ $cat  = ($_GET['cat']==0) ? $link_on : $link_off;
 <a class="header" href="<?=$_SERVER['PHP_SELF']."?v=$view&amp;projectId=".$selectedprojectId?>">&lt;<?=$link?>&gt;</a>
 <?php
 	if ($is_admin)
-		echo "<a class='header' href='updateproject.php?id=$selectedprojectId&amp;ln=".urlencode($url)."'>&lt;edit&gt;<img alt='edit' border='0' src='img/edit.png'></a>";
+		echo "<a class='header' href='updateproject.php?projectId=$selectedprojectId&amp;ln=".urlencode($url)."'>&lt;edit&gt;<img alt='edit' border='0' src='img/edit.png'></a>";
 ?>
 <?=divtitle('Info');?>
 <table border="0" width="600">

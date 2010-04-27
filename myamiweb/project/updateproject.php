@@ -5,7 +5,7 @@ require "inc/utilpj.inc.php";
 
 $project = new project();
 
-$projectId = ($_GET['id']) ? $_GET['id'] : $_POST['projectId'];
+$projectId = ($_GET['projectId']) ? $_GET['projectId'] : $_POST['projectId'];
 if (empty($projectId) || !($project->checkProjectExistsbyId($projectId))) {
 	$title='- new project';
 	$action='add';

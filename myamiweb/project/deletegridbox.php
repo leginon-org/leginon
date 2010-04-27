@@ -8,14 +8,14 @@ require "inc/mysql.inc";
 
 $gridboxdata = new gridbox();
 
-$gridboxId = $gridboxdata->checkGridBoxExistsbyId($_GET['id']);
+$gridboxId = $gridboxdata->checkGridBoxExistsbyId($_GET['gridboxId']);
 if (!$gridboxId) {
 	header("Location: gridtray.php");
 	exit;
 } else {
 	$curgridbox = $gridboxdata->getGridBoxInfo($gridboxId);
 	$title='- delete : '.$curgridbox['label'];
-	$url = $_SERVER['PHP_SELF']."?id=".$gridboxId;
+	$url = $_SERVER['PHP_SELF']."?gridboxId=".$gridboxId;
 }
 
 if (!$_POST) {

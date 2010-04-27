@@ -7,15 +7,15 @@ require "inc/util.inc";
 
 $project = new project();
 
-$projectId = $project->checkProjectExistsbyId($_GET['id']);
+$projectId = $project->checkProjectExistsbyId($_GET['projectId']);
 if (!$projectId) {
 	header("Location: index.php");
 	exit;
 } else {
 	$curproject = $project->getProjectInfo($projectId);
 	$title='- delete project: '.$curproject['Name'];
-	$projectId= $_GET['id'];
-	$url = $_SERVER['PHP_SELF']."?id=".$projectId;
+	$projectId= $_GET['projectId'];
+	$url = $_SERVER['PHP_SELF']."?projectId=".$projectId;
 }
 
 if (!$_POST) {

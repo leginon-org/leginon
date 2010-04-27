@@ -140,8 +140,8 @@ foreach ($gridboxes as $gridbox) {
 <?
 	$menu = array(
 		'new'=>'updategridbox.php',
-		'edit'=>'updategridbox.php?id='.$selectedgridboxId,
-		'delete'=>'deletegridbox.php?id='.$selectedgridboxId
+		'edit'=>'updategridbox.php?gridboxId='.$selectedgridboxId,
+		'delete'=>'deletegridbox.php?gridboxId='.$selectedgridboxId
 	);
 	echo edit_menu($menu, true,true);
 	echo "<br>";

@@ -7,7 +7,7 @@ $gridbox = new gridbox();
 $boxtypes = $gridbox->getBoxTypes();
 // print_r($boxtypes);
 
-$gridboxId = ($_GET['id']) ? $_GET['id'] : $_POST['gridboxId'];
+$gridboxId = ($_GET['gridboxId']) ? $_GET['gridboxId'] : $_POST['gridboxId'];
 if (empty($gridboxId) || !($gridbox->checkGridBoxExistsbyId($gridboxId))) {
 	$title='- new gridbox';
 	$action='add';

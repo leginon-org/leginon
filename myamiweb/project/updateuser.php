@@ -38,7 +38,7 @@ if ($_POST[submit]) {
 	else if ($_POST['submit']=='update')
 		$user->updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $groupId, $chpass, $mypass1, $mypass2);
 		
-#		header("location: user.php?uid=$userId");
+#		header("location: user.php?userId=$userId");
 } 
 project_header("Projects $ptitle");
 ?>

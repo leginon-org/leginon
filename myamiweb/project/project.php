@@ -27,8 +27,8 @@ foreach ((array)$projects as $k=>$proj) {
 	$projectId = $proj['projectId'];
 	$is_proj_admin = checkProjectAdminPrivilege($projectId);
 	if ($is_proj_admin) {
-		$projects[$k]['edit']="<a href='updateproject.php?id=$projectId'><img alt='edit' border='0' src='img/edit.png'></a>";
-		$projects[$k]['del']="<a href='deleteproject.php?id=$projectId'><img alt='delete' border='0' src='img/del.png'></a>";
+		$projects[$k]['edit']="<a href='updateproject.php?projectId=$projectId'><img alt='edit' border='0' src='img/edit.png'></a>";
+		$projects[$k]['del']="<a href='deleteproject.php?projectId=$projectId'><img alt='delete' border='0' src='img/del.png'></a>";
 		$projectowners = $project->getProjectOwners($projectId);
 		if (count($projectowners)) {
 			$projects[$k]['owner']=$projectowners[0]['full name'];

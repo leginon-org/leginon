@@ -15,7 +15,7 @@ $projects = $project->getProjects("order");
 project_header("Experiment Sharing");
 
 // Check user privileges
-$sessionId = $_GET['id'];
+$sessionId = $_GET['expId'];
 checkExptAccessPrivilege($sessionId,'shareexperiments');
 $is_admin = checkExptAdminPrivilege($sessionId,'shareexperiments');
 ?>
@@ -26,7 +26,7 @@ $is_admin = checkExptAdminPrivilege($sessionId,'shareexperiments');
 <h3>Selected Experiment </h3>
 <table class="tableborder" border="1" valign="top">
 <?
-	$info = $leginondata->getSessionInfo($_GET['id']);
+	$info = $leginondata->getSessionInfo($_GET['expId']);
 	$keys_to_display = array('Name', 'Purpose', 'Total Duration', 'Instrument', 'User');
 	foreach ($info as $k=>$v) {
 	if (!in_array($k, $keys_to_display))
