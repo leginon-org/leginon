@@ -256,7 +256,7 @@ function parseAppionLoopParams () {
 
 	// CREATE COMMAND
 	$command=" ";
-	$command .= " --projectid=".$_SESSION['projectId']." ";
+	$command .= " --projectid=".getProjectId()." ";
 	if ($testimage) $command.=" --mrclist=$testimage";
 	elseif ($_POST['preset']) $command.=" --preset=".$_POST['preset'];
 	$command.=" --session=".$_POST['sessionname'];
