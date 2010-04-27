@@ -121,9 +121,8 @@ class project {
 	function project($mysql="") {
 		$this->mysql = ($mysql) ? $mysql : new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 		
-		if (!$this->mysql->checkDBConnection()) {
+		if (!$this->mysql->checkDBConnection())
 			$this->mysql->dbError();
-		}
 	}
 	
 	// We won't use this install function anymore.
