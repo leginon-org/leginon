@@ -148,8 +148,6 @@ if ($refinerun['package']=='EMAN/SpiCoran') {
 echo ministacksummarytable($stackId);
 $mpix = $particle->getStackPixelSizeFromStackId($stackId);
 
-#$initmodelname = showModelInfo($initmodel, $expId, $particle);
-
 echo modelsummarytable($initmodel['DEF_id']);
 
 $misc = $particle->getMiscInfoFromReconId($reconId);
