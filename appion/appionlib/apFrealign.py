@@ -44,8 +44,8 @@ def generateParticleParams(params):
 		if params['noctf'] is False:
 			if params['defocpair'] is True:
 				imagedata = apDefocalPairs.getDefocusPair(imagedata)
-			# first see if there are ctf2 values
-			ctfdata, confidence=apCtf.getBestAceTwoValueForImage(imagedata, msg=False)
+			# first see if there are ctf values
+			ctfdata, confidence=apCtf.getBestCtfValueForImage(imagedata, msg=False)
 			if ctfdata is None:
 				ctfdata, confidence=apCtf.getBestCtfValueForImage(imagedata, msg=False)
 			if ctfdata is not None:
