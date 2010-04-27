@@ -123,6 +123,7 @@ class project {
 		
 		if (!$this->mysql->checkDBConnection()) {
 			$this->mysql->dbError();
+		}
 	}
 	
 	// We won't use this install function anymore.
