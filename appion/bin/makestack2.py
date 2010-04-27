@@ -102,7 +102,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	############################################################
 	def checkCtfParams(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata,msg=False,ctffind=self.params['ctffindonly'])
+		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata,msg=False,method=self.params['ctfmethod'])
 
 		### check if we have values and if we care
 		if ctfvalue is None:
@@ -469,10 +469,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	def phaseFlipAceTwo(self, inimgpath, imgdata):
 
 		apix = apDatabase.getPixelSize(imgdata)
-		if self.params['ctffindonly'] is True:
-			bestctfvalue, bestconf = apCtf.getBestCtfValueForImage(imgdata,msg=False,ctffind=self.params['ctffindonly'])
-		else:
-			bestctfvalue, bestconf = apCtf.getBestAceTwoValueForImage(imgdata, msg=True)
+		bestctfvalue, bestconf = apCtf.getBestCtfValueForImage(imgdata,msg=True,method=self.params['ctfmethod'])
 
 		if bestctfvalue is None:
 			apDisplay.printWarning("No ctf estimation for current image")
@@ -484,8 +481,14 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			self.badprocess = True
 			return None
 
-		# create ctfvalues_file from ctffind run values
-		if self.params['ctffindonly'] is True:
+		# method=ace2 requires a ctfvalues_file
+		if bestctfvalue['ctfvalues_file'] is None:
+			if self.params['ctfmethod']=="ace2":
+				apDisplay.printWarning("No ctf file for current image")
+				self.badprocess = True
+				return None
+
+			# create ctfvalues_file from ctf run
 			ctfvaluesfile = "tmp_ctfvaluesfile.txt"
 
 			df1 = bestctfvalue['defocus1']
@@ -510,11 +513,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		# use ace2 ctfvalues file
 		else:
-			if bestctfvalue['ctfvalues_file'] is None:
-				apDisplay.printWarning("No ctf file for current image")
-				self.badprocess = True
-				return None
-
 			ctfvaluesfile = os.path.join(bestctfvalue['acerun']['path']['path'], bestctfvalue['ctfvalues_file'])
 
 			ctfvaluesfilesplit = os.path.splitext(ctfvaluesfile)
@@ -525,7 +523,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		defocus1 = bestctfvalue['defocus1']
 		defocus2 = bestctfvalue['defocus2']
-		ampconst = bestctfvalue['amplitude_contrast']
 		defocus = (defocus1+defocus2)/2.0*1.0e6
 
 		apDisplay.printMsg("using ctfvaluesfile: "+ctfvaluesfile)
@@ -804,6 +801,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	#=======================
 	def setupParserOptions(self):
 		self.flipoptions = ('emanimage', 'emanpart', 'emantilt', 'ace2image')
+		self.ctfestopts = ('ace2', 'ctffind')
 
 		### values
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
@@ -866,8 +864,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			action="store_true", help="Do not delete CTF corrected MRC files when finishing")
 		self.parser.add_option("--verbose", dest="verbose", default=False,
 			action="store_true", help="Show extra ace2 information while running")
-		self.parser.add_option("--ctffindonly", dest="ctffindonly", default=False,
-			action="store_true", help="Only use ctf values coming from CTFFIND or CTFTILT")
 
 		### option based
 		#self.parser.add_option("--whole-image", dest="wholeimage", default=False,
@@ -879,6 +875,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		self.parser.add_option("--flip-type", dest="fliptype",
 			help="CTF correction method", metavar="TYPE",
 			type="choice", choices=self.flipoptions, default="emanpart" )
+		self.parser.add_option("--ctfmethod", dest="ctfmethod",
+			help="Only use ctf values coming from this method of estimation", metavar="TYPE",
+			type="choice", choices=self.ctfestopts)
 
 	#=======================
 	def checkConflicts(self):

@@ -199,10 +199,10 @@ def getBestDefocusAndAmpConstForImage(imgdata, msg=False):
 
 	return bestdf, bestamp
 
-def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, ctffind=False):
+def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=False):
 	"""
 	takes an image and get the best ctfvalues for that image
-	indepedent of method (ACE1,ACE2,CTFTILT, or CTFFIND)
+	specified methods can be: ace2 or ctffind
 	"""
 	### get all ctf values
 	ctfq = appiondata.ApCtfData()
@@ -217,43 +217,16 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, ctffind=False):
 	bestconf = 0.0
 	bestctfvalue = None
 	for ctfvalue in ctfvalues:
-		### limit to ctffind values if requested:
-		if ctffind is True and ctfvalue['acerun']['ctftilt_params'] is None:
+		### limit to specific method if requested:
+		if method=='ctffind' and ctfvalue['acerun']['ctftilt_params'] is None:
 			continue
+		if method=='ace2' and ctfvalue['ctfvalues_file'] is None:
+			continue
+
+		# get ctf values
 		conf1 = max(ctfvalue['confidence'],ctfvalue['cross_correlation'])
 		conf2 = ctfvalue['confidence_d']
 
-		if conf1 > 0 and conf2 > 0:
-			conf = max(conf1,conf2)
-			if ctfavg is True:
-				conf = math.sqrt(conf1*conf2)
-			if conf > bestconf:
-				bestconf = conf
-				bestctfvalue = ctfvalue
-	return bestctfvalue, bestconf
-
-def getBestAceTwoValueForImage(imgdata, ctfavg=True, msg=True):
-	"""
-	takes an image and get the best ctfvalues for that image
-	ACE2 only
-	"""
-	### get all ctf values
-	ctfq = appiondata.ApCtfData()
-	ctfq['image'] = imgdata
-	ctfvalues = ctfq.query()
-
-	### check if it has values
-	if ctfvalues is None:
-		return None, None
-
-	### find the best values
-	bestconf = 0.0
-	bestctfvalue = None
-	for ctfvalue in ctfvalues:
-		if ctfvalue['ctfvalues_file'] is None:
-			continue
-		conf1 = ctfvalue['confidence']
-		conf2 = ctfvalue['confidence_d']
 		if conf1 > 0 and conf2 > 0:
 			conf = max(conf1,conf2)
 			if ctfavg is True:
@@ -266,7 +239,7 @@ def getBestAceTwoValueForImage(imgdata, ctfavg=True, msg=True):
 		return None, None
 
 	if msg is True:
-		apDisplay.printMsg( "Best CTF run info: runname='%s', confidence=%.3f, defocus=%.3f um"
+		apDisplay.printMsg("Best CTF run info: runname='%s', confidence=%.3f, defocus=%.3f um"
 			%(bestctfvalue['acerun']['name'], bestconf, bestctfvalue['defocus1']*1.0e6) )
 
 	return bestctfvalue, bestconf

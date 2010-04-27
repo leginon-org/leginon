@@ -553,7 +553,7 @@ function prepareFrealign ($extra=False) {
 	$cmd.= "--cluster ";
 	$cmd.= "--ppn=$ppn ";
 	$cmd.= "--nodes=$nodes ";
-	if ($ctffindonly) $cmd.= "--ctffindonly ";
+	if ($ctffindonly) $cmd.= "--ctfmethod=ctffind ";
 	if ($last) $cmd.= "--last=$last ";
 
 	// submit job to cluster

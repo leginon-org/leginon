@@ -29,6 +29,8 @@ class frealignJob(appionScript.AppionScript):
 	#================
 	def setupParserOptions(self):
 
+		self.ctfestopts = ('ace2', 'ctffind')
+
 		self.parser.set_usage("Usage: %prog -options")
 
 		#self.parser.add_option("--commit", dest="commit", default=True,
@@ -113,8 +115,9 @@ class frealignJob(appionScript.AppionScript):
 			help="number of refinement iterations to perform")
 		self.parser.add_option('--noctf', dest='noctf', default=False, action='store_true',
 			help="choose if frealign should not perform ctf correction")
-		self.parser.add_option('--ctffindonly', dest='ctffindonly', default=False,
-			action='store_true', help="only use ctf values coming from ctffind")
+		self.parser.add_option('--ctfmethod', dest='ctfmethod',
+			help="Only use ctf values coming from this method of estimation", metavar="TYPE",
+			type="choice", choices=self.ctfestopts)
 
 	#=====================
 	def checkConflicts(self):
@@ -271,7 +274,7 @@ class frealignJob(appionScript.AppionScript):
 			}
 			imagedata = particle['particle']['image']
 			if self.params['noctf'] is False:
-				ctfdata, confidence = apCtf.getBestCtfValueForImage(imagedata, msg=False, ctffind=self.params['ctffindonly'])
+				ctfdata, confidence = apCtf.getBestCtfValueForImage(imagedata, msg=False, method=self.params['ctfmethod'])
 				if ctfdata is not None:
 					### use defocus and astigmatism values
 					particleparams['df1'] = abs(ctfdata['defocus1']*1e10)

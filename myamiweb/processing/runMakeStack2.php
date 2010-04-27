@@ -635,7 +635,7 @@ function runMakestack() {
 	if ($boxfiles == 'on') $command.="--boxfiles ";
 	$command.="--description=\"$description\" ";
 	if (!empty($partlabel)) $command.="--label=\"$partlabel\" ";
-	if ($ctffindonly) $command.="--ctffindonly ";
+	if ($ctffindonly) $command.="--ctfmethod=ctffind ";
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
