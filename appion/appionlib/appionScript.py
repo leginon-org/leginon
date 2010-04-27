@@ -270,10 +270,12 @@ class AppionScript(basicScript.BasicScript):
 		self.onClose()
 		### run basic script closing functions
 		basicScript.BasicScript.close(self)
+		apDisplay.printMsg("Run directory:\n "+self.params['rundir'])
 		### additionally set to done is database
 		if self.params['commit'] is True:
 			clustdata = self.getClusterJobData()
 			apWebScript.setJobToDone(clustdata.dbid)
+
 
 	#=====================
 	def setupGlobalParserOptions(self):
