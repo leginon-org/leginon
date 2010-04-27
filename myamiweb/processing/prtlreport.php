@@ -24,7 +24,7 @@ processing_header("Particle Selection Results", "Particle Selection Results", $j
 $particle = new particledata();
 if ($particle->hasParticleData($expId)) {
 	//$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev', 'img');
-	$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev');
+	$display_keys = array ( 'preset','totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev');
 	$particleruns=$particle->getParticleRunIds($expId);
 	echo $particle->displayParticleStats($particleruns, $display_keys, $inspectcheck, $mselexval);
 } else {

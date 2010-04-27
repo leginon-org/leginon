@@ -1581,6 +1581,7 @@ class particledata {
 	function getStats ($runId, $inspect=false, $selexval=false) {
 		$q="select count(p.`DEF_id`) as `totparticles`, "
 			."count(distinct p.`REF|leginondata|AcquisitionImageData|image`) as num, "
+			."max(p.`REF|leginondata|AcquisitionImageData|image`) as lastimage, "
 			."min(p.correlation) as `min`, "
 			."max(p.correlation) as `max`, "
 			."avg(p.correlation) as `avg`, "
@@ -1601,6 +1602,17 @@ class particledata {
 			$q.="p.`correlation`>='$selexval' AND ";
 		$q.="p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		list($r) = $this->mysql->getSQLResult($q);
+		$q = "select p.`name` "
+			." from ".DB_LEGINON.".AcquisitionImageData a"
+			." , ".DB_LEGINON.".PresetData p"
+			." where a.`REF|PresetData|preset` = p.`DEF_id`"
+			." and a.`DEF_id` = ".$r['lastimage'];
+		list($r1) = $this->mysql->getSQLResult($q);
+		if ($r1) {
+			$r['preset'] = $r1['name'];
+		} else {
+			$r['preset'] = 'n/a';
+		}
 		return $r;
 
 	}
