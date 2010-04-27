@@ -6,8 +6,6 @@ require_once "inc/menu.inc.php";
 require_once "inc/util.inc";
 require_once "inc/xmlapplicationimport.inc";
 
-
-
 function menu($privilege=1) {
 	$link = new iconlink();
 	$link->align = 'center';
@@ -21,100 +19,99 @@ function menu($privilege=1) {
 }
 
 function project_header($title="", $javascript="") {
-global $_SERVER, $projectauth;
+	global $_SERVER, $projectauth;
 
-	if (!ereg('login.php', $_SERVER['PHP_SELF'])) {
+		if (!ereg('login.php', $_SERVER['PHP_SELF'])) {
+		}
+	$username = $login_check[0];
+	$privilege = privilege('users');
+	$onload = (empty($javascript)) ? '' : 'onload="'.$javascript.'"';
+	$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
+
+	echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+	<html>
+	<head>
+			<link rel="icon" href="img/favicon.ico" type="image/x-icon">
+			<link rel="shorcut icon" href="img/favicon.ico" type="image/x-icon">
+			<link rel="StyleSheet" type="text/css" href="css/project.css" >
+	';
+	if (!empty($title))
+		 	echo '<title>',$title,'</title>';
+	echo '
+	</head>
+	<body alink="#00CCCC" vlink="#006699" link="#006699" '.$onload.' >
+	';
+	echo '
+	<table border="0">
+	<tr>
+	<td rowspan="2" width="100" nowrap="nowrap" align="center">
+	';
+	echo '
+	<img src="img/project_logo.png" alt="[ Logo ]">
+	';
+	echo'
+	</td>
+	<td>
+	';
+	if ($username) {
+		echo '<a class="header" href="logout.php">[Logout '.$username.']</a>';
 	}
-$username = $login_check[0];
-$privilege = privilege('users');
-$onload = (empty($javascript)) ? '' : 'onload="'.$javascript.'"';
-$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
+	echo '
+	</td>
+	</tr>
+	<tr>
+	<td>
+	';
+	echo '<h3>',$title,'</h3>';
+	echo '
+	</td>
+	</tr>
+	';
+	echo '
+	<tr>
+	<td width="100" valign="top" align="center">
+	<div style="border: 1px solid #999999" >
+	<!-- Begin Menu //-->
+	';
+	echo menu($privilege);
+	echo '
+	<!-- End Menu //-->
 
+	</div>
+	</td>
 
-echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-		<link rel="icon" href="img/favicon.ico" type="image/x-icon">
-		<link rel="shorcut icon" href="img/favicon.ico" type="image/x-icon">
-		<link rel="StyleSheet" type="text/css" href="css/project.css" >
-';
-if (!empty($title))
-	 	echo '<title>',$title,'</title>';
-echo '
-</head>
-<body alink="#00CCCC" vlink="#006699" link="#006699" '.$onload.' >
-';
-echo '
-<table border="0">
-<tr>
-<td rowspan="2" width="100" nowrap="nowrap" align="center">
-';
-echo '
-<img src="img/project_logo.png" alt="[ Logo ]">
-';
-echo'
-</td>
-<td>
-';
-if ($username) {
-	echo '<a class="header" href="logout.php">[Logout '.$username.']</a>';
-}
-echo '
-</td>
-</tr>
-<tr>
-<td>
-';
-echo '<h3>',$title,'</h3>';
-echo '
-</td>
-</tr>
-';
-echo '
-<tr>
-<td width="100" valign="top" align="center">
-<div style="border: 1px solid #999999" >
-<!-- Begin Menu //-->
-';
-echo menu($privilege);
-echo '
-<!-- End Menu //-->
-
-</div>
-</td>
-
-        <td>
-';
+	        <td>
+	';
 }
 
 function project_footer() {
-echo '
-        </td>
-</tr>
-</table>
-</body>
-</html>';
+	echo '
+	        </td>
+	</tr>
+	</table>
+	</body>
+	</html>';
 }
 
 function getmenuURL($projectId="", $specimenId="", $gridId="", $gridBoxId="", $userId="") {
-$getids=array();
-if (!empty($projectId)) 
-	$getids[]='pid='.$projectId;
-if (!empty($specimenId)) 
-	$getids[]='sid='.$specimenId;
-if (!empty($gridId)) 
-	$getids[]='gid='.$gridId;
-if (!empty($gridBoxId)) 
-	$getids[]='gbid='.$gridBoxId;
-if (!empty($userId)) 
-	$getids[]='uid='.$userId;
-$getids_str=implode('&',$getids);
-return "getmenu.php?".$getids_str;
+	$getids=array();
+	if (!empty($projectId)) 
+		$getids[]='pid='.$projectId;
+	if (!empty($specimenId)) 
+		$getids[]='sid='.$specimenId;
+	if (!empty($gridId)) 
+		$getids[]='gid='.$gridId;
+	if (!empty($gridBoxId)) 
+		$getids[]='gbid='.$gridBoxId;
+	if (!empty($userId)) 
+		$getids[]='uid='.$userId;
+	$getids_str=implode('&',$getids);
+	return "getmenu.php?".$getids_str;
 }
 
 
+/* CLASS */
 class project {
-	
 	var $error = array (
 				 "projectname_exists"=>"Project Name already exists.",
 				 "projectname_empty"=>"Project Name can't be empty",
@@ -157,83 +154,6 @@ class project {
 		$data['value']=1;
 		$this->mysql->SQLInsert($table, $data);
 
-
-	}
-
-
-	function project_tables() {
-			$table="projectexperiments";
-			$sql='CREATE TABLE `'.$table.'` ('
-			.'`projectexperimentId` int(11) NOT NULL auto_increment,'
-			.'`projectId` int(11) NOT NULL default "0",'
-			.'`name` varchar(100) NOT NULL default "0",'
-			.'`experimentsourceId` int(11) NOT NULL default "0",'
-			.'PRIMARY KEY  (`projectexperimentId`),'
-			.'KEY `projectId` (`projectId`),'
-			.'KEY `name` (`name`)'
-			.');';
-			$tables[$table]=$sql;
-			$table="projects";
-			$sql='CREATE TABLE `'.$table.'` ('
-			.'`projectId` int(11) NOT NULL auto_increment,'
-			.'`timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,'
-			.'`name` text NOT NULL,'
-			.'`short_description` text NOT NULL,'
-			.'`long_description` text NOT NULL,'
-			.'`category` text NOT NULL,'
-			.'`funding` text NOT NULL,'
-			.'PRIMARY KEY  (`projectId`)'
-			.')';
-			$tables[$table]=$sql;
-			$table="boxtypes";
-			$sql='CREATE TABLE IF NOT EXISTS `'.$table.'` ('
-			.'`boxtypeId` int(11) NOT NULL auto_increment,'
-			.'`label` text NOT NULL,'
-			.'`image` varchar(100) NOT NULL default "",'
-			.'`image_tiny` varchar(100) NOT NULL default "",'
-			.'PRIMARY KEY  (`boxtypeId`)'
-			.'); ';
-			$sqldata='INSERT INTO `boxtypes` (`boxtypeId`, `label`, `image`, `image_tiny`) '
-			.'VALUES '
-			.'(1, "cryo grid box", "grid_box_cryo.jpg", "grid_box_cryo_tiny.jpg"),'
-			.'(2, "grid box", "grid_box.jpg", "grid_box_tiny.jpg"),'
-			.'(3, "tray", "tray.png", "tray_tiny.png")';
-			$tables[$table]=$sql;
-			$table="gridboxes";
-			$sql='CREATE TABLE IF NOT EXISTS `'.$table.'` ('
-			.'`gridboxId` int(11) NOT NULL auto_increment,'
-			.'`timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,'
-			.'`label` text NOT NULL,'
-			.'`boxtypeId` int(11) NULL,'
-			.'PRIMARY KEY  (`gridboxId`)'
-			.')';
-			$tables[$table]=$sql;
-			$table="gridlocations";
-			$sql='CREATE TABLE IF NOT EXISTS `'.$table.'` ('
-			.'`gridlocationId` int(11) NOT NULL auto_increment,'
-			.'`gridboxId` int(11) NULL,'
-			.'`gridId` int(11) NULL,'
-			.'`location` int(11) NOT NULL default "0",'
-			.'PRIMARY KEY  (`gridlocationId`)'
-			.')';
-			$tables[$table]=$sql;
-			$table="grids";
-			$sql='CREATE TABLE IF NOT EXISTS `'.$table.'` ('
-			.'`gridId` int(11) NOT NULL auto_increment,'
-			.'`timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,'
-			.'`label` text NOT NULL,'
-			.'`specimenId` int(11) NULL,'
-			.'`number` varchar(10) NOT NULL default "0",'
-			.'`boxId` int(11) NULL,'
-			.'PRIMARY KEY  (`gridId`)'
-			.')';
-			$tables[$table]=$sql;
-
-			foreach($tables as $table=>$sql) {
-			if (!$this->mysql->SQLTableExists($table)) 
-				$this->mysql->SQLquery($sql);
-				echo $this->mysql->getError();
-			}
 	}
 
 	function updateProject($projectId, $name, $short_description, $long_description, $category, $funding){
@@ -270,11 +190,10 @@ class project {
 		$q[]='delete from projects where projectId='.$projectId;
 		$this->mysql->SQLQueries($q);
 	}
+
 	/*
 	 * function addProject
-	 * 
 	 * return error message if require fields not exist
-	 * 
 	 */
 	function addProject($name, $short_description, $long_description, $category, $funding){
 
@@ -514,8 +433,8 @@ class project {
 			$q = "delete from projectowners "
 				."where `REF|leginondata|UserData|user` = ".$userId." "
 				."and `REF|projects|project`= ".$projectId." ";
-	echo $q;
-		#$this->mysql->SQLQuery($q, true);
+			echo $q;
+			#$this->mysql->SQLQuery($q, true);
 		}
 		return true;
 	}
@@ -549,7 +468,6 @@ class project {
 		$experimentIds = $this->mysql->getSQLResult($q);
 		return $experimentIds;
 	}
-
 
 }
 
