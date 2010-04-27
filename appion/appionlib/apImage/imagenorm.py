@@ -112,10 +112,10 @@ def _normalizeImage(img, stdevLimit=3.0, minlevel=0.0, maxlevel=255.0, trim=0.0)
 
 	#GET IMAGE STATS
 	
-	avg1 = im.mean()
-	stdev1 = im.std()
-	min1 = im.min()
-	max1 = im.max()
+	avg1 = img.mean()
+	stdev1 = img.std()
+	min1 = img.min()
+	max1 = img.max()
 	#print avg1, stdev1, min1, max1
 
 	#IF MIN/MAX are too high set them to smaller values
