@@ -126,7 +126,7 @@ function runPyAce() {
 
 		if (!($user && $password)) createPyAceForm("<b>ERROR:</b> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'ace',False,True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'pyace',False,True);
 		// if errors:
 		if ($sub) createPyAceForm("<b>ERROR:</b> $sub");
 		exit;
