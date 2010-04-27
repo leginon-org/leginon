@@ -15,7 +15,7 @@ $formAction=$_SERVER['PHP_SELF']."?expId=$sessionId";
 $aceparamsfields = array (
 	'acerun', 'display', 'stig', 'medium',
 	'df_override', 'edgethcarbon', 'edgethice', 'pfcarbon',
-	'pfice', 'overlap', 'fieldsize', 'resamplefr',
+	'pfice', 'overlap', 'fieldsize', 'resamplefr', 'bin',
 	'drange', 'reprocess', 'path',
 );
 
@@ -94,7 +94,6 @@ if ($ctfrundatas) {
 		$rName=$ctfrundata['name'];
 
 		$ctfdata= $ctf->getAceParams($ctfrunid);
-
 		if ($_POST['hideRun'.$ctfrunid] == 'hide') {
 			$ctf->updateHide('ApAceRunData', $ctfrunid, '1');
 			$ctfdata['hidden']='1';

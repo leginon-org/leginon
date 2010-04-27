@@ -27,7 +27,7 @@ var help = {
 		'hpstackval' : 'High pass filter applied to individual particles',
 		'hpval' : 'High pass filtering of the image before picking.  This removes any darkness gradients in the image.  Typically you could disable this by setting it equal to zero, otherwise 600 work pretty good.  Warning this feature typically normalizes the crud so more particles get picked from crud.',
 		'medianval' : 'Median filtering of the image or volume. Unlike a low pass filter this filters removes any noise spikes in the image or volume. Typical values are less than 5. The bigger the number the more information is thrown away.',
-		'binval' : 'Binning of the image.  This takes a power of 2 (1,2,4,8,16) and quickly shrinks the image to help make the processing faster.  Typically you want to use 4 or 8 depending on the quality of the templates.',
+		'binval' : 'Binning of the image.  This takes a power of 2 (1,2,4,8,16) and quickly shrinks the image to help make the processing faster.  Typically you want to use 4 or 8 for template particle picking and 2 for ace2 estimation if the pixel size is ~ 1.0 Angstrum.',
 		'partbin' : 'Binning of the particle images. This quickly shrinks the image to help make the processing faster.',
 		'stackbin' : 'Amount to bin the particles by after they are extracted from each image.  Note that this binning occurs AFTER boxing from the raw image, so that your box size must correspond to the UNBINNED micrograph.  Usually bin by 2.',
 		'coranbin' : 'Binning of the particle images. The speed of coran goes as the number of pixels cubed. So bin by 2 and it goes 64 times faster, bin by 3 and it goes 729 times faster.',
