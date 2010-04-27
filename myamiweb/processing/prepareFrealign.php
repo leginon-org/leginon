@@ -102,7 +102,7 @@ MAIN FORM TO SET PARAMETERS
 
 function jobForm($extra=false) {
 	$expId = $_GET['expId'];
-	$projectId = $_POST['projectId'];
+	$projectId = getProjectId();
 
 	if (!$_POST['model'])
 		stackModelForm("ERROR: no initial model selected");

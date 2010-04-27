@@ -38,15 +38,12 @@ function createTemplateForm() {
 	// check if coming directly from a session
 	$expId = $_GET[expId];
 	$formAction=$_SERVER['PHP_SELF'];	
+	$projectId=getProjectId();
 
 	// retrieve template info from database for this project
 	if ($expId){
-	$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	}
-
-	// if user wants to use templates from another project
-	if($_POST['projectId']) $projectId =$_POST['projectId'];
 
 	if (is_numeric($projectId)) {
 		$particle=new particleData;
@@ -114,20 +111,18 @@ function createTemplateForm() {
 function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launcher', $heading='Maximum Likelihood Alignment') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
+	$projectId=getProjectId();
+
 	if ($expId){
-		$sessionId=$expId;
-		$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	} else {
-		$sessionId=$_POST['sessionId'];
-		$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF'];
 	}
 
 	// connect to particle database
 	$particle = new particledata();
-	$stackIds = $particle->getStackIds($sessionId);
-	$alignrunsarray = $particle->getAlignStackIds($sessionId);
+	$stackIds = $particle->getStackIds($expId);
+	$alignrunsarray = $particle->getAlignStackIds($expId);
 	$alignruns = ($alignrunsarray) ? count($alignrunsarray) : 0;
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
@@ -191,7 +186,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	}
   
 	echo "<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-	$sessiondata=getSessionList($projectId,$sessionId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];

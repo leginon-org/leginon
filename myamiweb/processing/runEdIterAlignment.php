@@ -38,15 +38,12 @@ function createTemplateForm() {
 	// check if coming directly from a session
 	$expId = $_GET[expId];
 	$formAction=$_SERVER['PHP_SELF'];	
+	$projectId=getProjectId();
 
 	// retrieve template info from database for this project
 	if ($expId){
-	$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	}
-
-	// if user wants to use templates from another project
-	if($_POST['projectId']) $projectId =$_POST[projectId];
 
 	$projects=getProjectList();
 
@@ -122,22 +119,20 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
   // check if coming directly from a session
 
 	$expId=$_GET['expId'];
+	$projectId=getProjectId();
+
 	if ($expId){
-		$sessionId=$expId;
-		$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	} else {
-		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];
 	}
-	$projectId=$_POST['projectId'];
 
 	// connect to particle info
 	$particle = new particledata();
 	$templateid = $_POST['templateid'];
 	$templateinfo = $particle->getTemplatesFromId($templateid);
-	$stackIds = $particle->getStackIds($sessionId);
-	$alignrunsarray = $particle->getAlignStackIds($sessionId);
+	$stackIds = $particle->getStackIds($expId);
+	$alignrunsarray = $particle->getAlignStackIds($expId);
 	$alignruns = ($alignrunsarray) ? count($alignrunsarray) : 0;
 	$firststack = $particle->getStackParams($stackIds[0]['stackid']);
 	$firstmpix = $particle->getStackPixelSizeFromStackId($stackIds[0]['stackid']);

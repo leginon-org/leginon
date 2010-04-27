@@ -109,7 +109,7 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 function runUploadParticles() {
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
-	$projectId = $_POST['projectId'];
+	$projectId = getProjectId();
 	$runname = $_POST['runname'];
 	$particles = $_POST['particles'];
 	$diam=$_POST['diam'];

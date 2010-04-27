@@ -543,11 +543,8 @@ function writeJobFile ($extra=False) {
 	if ($initmodel['boxsize'] != $box) $rebox = True; 
 	if (round($initmodel['pixelsize'],2) != round($apix,2)) $rescale = "scale=".$initmodel['pixelsize']/$apix;
 
-    // Get the projectid
-	if($_POST['projectId'])
-		$projectid = $_POST['projectId'];
-	else
-		$projectid=getProjectId();
+	// Get the projectid
+	$projectid=getProjectId();
 
 	// insert the job file into the database
 	if (!$extra) {

@@ -36,7 +36,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=getProjectId();
 
 	// connect to particle and ctf databases
 	$particle = new particledata();

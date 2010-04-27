@@ -35,7 +35,7 @@ $phpself=$_SERVER['PHP_SELF'];
 if ($expId){$sessionId=$expId;}
 else {$sessionId=$_POST[sessionId];}
 
-$projectId =$_POST[projectId];
+$projectId =getProjectId();
 
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
@@ -185,7 +185,7 @@ function createPyAceForm($extra=false) {
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=getProjectId();
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$javafunctions="

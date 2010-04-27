@@ -53,7 +53,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=getProjectId();
 
 	// connect to particle and ctf databases
 	$particle = new particledata();

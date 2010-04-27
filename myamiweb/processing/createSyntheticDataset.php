@@ -123,7 +123,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=getProjectId();
 	
 	
 	// javascript functions that go into form

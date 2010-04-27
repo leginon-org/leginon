@@ -34,7 +34,7 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF']."?alignId=$alignid&analysisId=$analysisid";
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=getProjectId();
 
 	// connect to particle and ctf databases
 	$particle = new particledata();

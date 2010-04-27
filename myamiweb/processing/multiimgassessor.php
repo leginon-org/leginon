@@ -25,7 +25,7 @@ if ($expId) {
 	$sessionId=$_POST['sessionId'];
 	$formAction=$_SERVER['PHP_SELF'];	
 }
-$projectId=$_POST['projectId'];
+$projectId=getProjectId();
 
 
 /////////// temporary fix for new database //////////////

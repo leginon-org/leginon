@@ -27,7 +27,7 @@ if ($_GET['showHidden']) {
 	$formAction.="&showHidden=1";
 	$showhidden = True;
 }
-$projectId=$_POST['projectId'];
+$projectId=getProjectId();
 
 $javascript = "<script src='../js/viewer.js'></script>\n";
 $javascript.= editTextJava();

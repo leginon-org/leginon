@@ -62,10 +62,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 			$package='EMAN/SpiCoran';
 	}
 
-	if($_POST['projectId'])
-		$projectId = $_POST['projectId'];
-	else
-		$projectId=getProjectId();
+	$projectId=getProjectId();
 
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:

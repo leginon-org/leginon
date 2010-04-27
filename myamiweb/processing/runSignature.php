@@ -42,15 +42,14 @@ function createTemplateForm($extra=False) {
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	$formAction=$_SERVER['PHP_SELF'];	
+	$projectId=getProjectId();
 
 	// retrieve template info from database for this project
 	if ($expId){
-	$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	}
 
 	// if user wants to use templates from another project
-	if($_POST['projectId']) $projectId =$_POST[projectId];
 
 	if (is_numeric($projectId)) {
 		$particle=new particleData;
@@ -156,7 +155,7 @@ function createSigForm($extra=false, $title='Signature Launcher',
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=getProjectId();
 
 	$numtemplates=$_POST['numtemplates'];
 	$templateForm='';

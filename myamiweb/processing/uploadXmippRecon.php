@@ -56,10 +56,7 @@ function createUploadReconForm($extra=false, $title='UploadXmippRecon.py Launche
     }
   }
 
-  if($_POST['projectId'])
-    $projectId = $_POST['projectId'];
-  else
-    $projectId=getProjectId();
+  $projectId=getProjectId();
 
   processing_header($title,$heading,$javafunctions);
   // write out errors, if any came up:

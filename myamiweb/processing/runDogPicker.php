@@ -37,7 +37,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=getProjectId();
 
 	$javafunctions="
 	<script src='../js/viewer.js'></script>

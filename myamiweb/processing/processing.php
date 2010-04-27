@@ -37,7 +37,7 @@ else {
   $sessionId=$_POST['sessionId'];
   $formAction=$_SERVER['PHP_SELF'];  
 }
-$projectId=$_POST['projectId'];
+$projectId=getProjectId();
 
 processing_header("Appion Data Processing","Appion Data Processing", "<script src='../js/viewer.js'></script>", false);
 

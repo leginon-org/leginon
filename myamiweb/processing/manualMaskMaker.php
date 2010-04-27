@@ -176,7 +176,7 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=getProjectId();
 
 	$particle=new particleData;
 	$javascript="

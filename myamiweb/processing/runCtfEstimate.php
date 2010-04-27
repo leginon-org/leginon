@@ -138,7 +138,7 @@ function createCtfEstimateForm($extra=false) {
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=getProjectId();
 
 	// check if running ctffind or ctftilt
 	$progname = "CtfFind";

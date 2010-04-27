@@ -37,7 +37,7 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=getProjectId();
 
 	// --- find hosts to run Tilt Aligner
 

@@ -175,7 +175,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 function runUploadTemplate() {
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
-	$projectId = $_POST['projectId'];
+	$projectId = getProjectId();
 	$templateIds=$_POST['templateIds'];
 	$stackId=$_POST['stackId'];
 	$alignId=$_POST['alignId'];

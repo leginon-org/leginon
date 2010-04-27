@@ -147,7 +147,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 function runUploadTemplateStack() {
 	$expId = $_GET['expId'];
 	$rundir = $_POST['rundir'];
-	$projectId = $_POST['projectId'];
+	$projectId = getProjectId();
 	$clusterId = $_POST['clusterId'];
 	$exclude = $_POST['exclude'];
 	$include = $_POST['include'];

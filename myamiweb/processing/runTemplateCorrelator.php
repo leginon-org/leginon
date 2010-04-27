@@ -172,7 +172,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=getProjectId();
 
 	$numtemplates=$_POST['numtemplates'];
 	$templateForm='';
