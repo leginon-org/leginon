@@ -120,13 +120,13 @@ class project {
 				 
 	function project($mysql="") {
 		$this->mysql = ($mysql) ? $mysql : new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
-		if ($this->mysql->checkDBConnection()) {
-			$this->install();
-		} else {
+		
+		if (!$this->mysql->checkDBConnection()) {
 			$this->mysql->dbError();
-		}
 	}
-
+	
+	// We won't use this install function anymore.
+	// move to inital setup wizard.
 	function install() {
 		$q='select value '
 				.'from install '
