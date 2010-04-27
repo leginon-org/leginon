@@ -185,7 +185,9 @@ $projectId = $projectinfo['projectId'];
 	$sessions=array();
 	$experiments=array();
 	foreach ($experimentIds as $k=>$exp) {
-		$info = $leginondata->getSessionInfo($exp);
+		//projectdata.projectexperiments.experimentId is not a referenced index of leginon.SessionData DEF_id, in general, and therefore can not be used for getting sessioninfo. Use name instead)
+		$sessionname = $exp['name'];
+		$info = $leginondata->getSessionInfo($sessionname);
 		$sessions[trim($info['SessionId'])]=$info['Name'];
 		$sessionlink="<a class='header' target='viewer' href='".VIEWER_URL.$info['SessionId']."'>".$info['Name']."</a>";
 		$experiments[$k]['name']=$sessionlink;
