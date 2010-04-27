@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 import sys
-from sinedon import dbupgrade
-
-### warning dbemdata is hardcoded as leginon database
+from sinedon import dbupgrade, dbconfig
 
 if __name__ == "__main__":
 	appiondb = dbupgrade.DBUpgradeTools('appiondata', 'aptest', drop=True)
+	projectdb = dbupgrade.DBUpgradeTools('projectdata', 'projtest', drop=True)
+	leginondb = dbupgrade.DBUpgradeTools('leginondata', 'dbemtest', drop=False)
 
 	#===================
 	# rename tables:
@@ -68,7 +68,7 @@ if __name__ == "__main__":
 	#===================
 	# merge EMAN/Coran fields
 	#===================
-	if appiondb.tableExists('ApRefineIterData'):
+	if appiondb.tableExists('ApRefineIterData') and appiondb.columnExists('ApRefineIterData', 'SpiCoranGoodClassAvg'):
 		appiondb.addColumn('ApRefineIterData', 'postRefineClassAverages', appiondb.str)
 		appiondb.addColumn('ApRefineIterData', 'refineClassAverages', appiondb.str)
 		updateq = ("UPDATE ApRefineIterData AS refiter "
@@ -231,40 +231,40 @@ if __name__ == "__main__":
 	appiondb.debug -= 1
 	for tablename in appiondb.getAllTables():
 		appiondb.indexColumn(tablename, 'hidden')
-		appiondb.renameColumn(tablename, 'project|projects|project', 'REF|projectdata|projects|projectid')
-		appiondb.indexColumn(tablename, 'REF|projectdata|projects|projectid')
+		appiondb.renameColumn(tablename, 'project|projects|project', 
+			"REF|"+projectdb.getSinedonName()+"|projects|projectid")
+		appiondb.indexColumn(tablename, "REF|"+projectdb.getSinedonName()+"|projects|projectid")
 	appiondb.debug = olddebug
-
-	sys.exit(1)
 
 	#===================
 	# project table
 	#===================
-	projectdb = dbupgrade.DBUpgradeTools('projectdata', 'projtest', drop=True)
+
 	projectdb.renameColumn('projects', 'projectId', 'DEF_id')
 	projectdb.renameColumn('projects', 'timestamp', 'DEF_timestamp')
 
 	projectdb.renameColumn('projectexperiments', 'projectexperimentId', 'DEF_id')
 	projectdb.renameColumn('projectexperiments', 'projectId', 'REF|projects|projectid')
 	projectdb.addColumn('projectexperiments', 'DEF_timestamp', projectdb.timestamp, index=True)
-	projectdb.addColumn('projectexperiments', 'REF|leginondata|SessionData|sessionId', projectdb.link, index=True)
 
 	### change session name to session id
-	projectdb.addColumn('projectexperiments', 'REF|SessionData|sessionid', projectdb.link, index=True)
-	updateq = ("UPDATE projectexperiments AS projexp "
-		+" LEFT JOIN dbemdata.SessionData AS session "
-		+"   ON session.`name` = projexp.`name` "
-		+" SET "
-		+"   projexp.`REF|leginondata|SessionData|sessionid` = session.`DEF_id` "
-	)
-	projectdb.executeCustomSQL(updateq)
-	projectdb.dropColumn('projectexperiments', 'name')
+	projectdb.addColumn('projectexperiments', "REF|"+leginondb.getSinedonName()+"|SessionData|sessionId",
+		projectdb.link, index=True)
+	if projectdb.columnExists('projectexperiments', 'name'):
+		updateq = ("UPDATE projectexperiments AS projexp "
+			+" LEFT JOIN "+leginondb.getDatabaseName()+".SessionData AS session "
+			+"   ON session.`name` = projexp.`name` "
+			+" SET "
+			+"   projexp.`REF|"+leginondb.getSinedonName()+"|SessionData|sessionid` = session.`DEF_id` "
+		)
+		projectdb.executeCustomSQL(updateq)
+		projectdb.dropColumn('projectexperiments', 'name')
 	projectdb.dropColumn('projectexperiments', 'experimentsourceId')
 
 	#===================
 	# leginon table
 	#===================
-	leginondb = dbupgrade.DBUpgradeTools('leginondata', 'dbemtest', drop=False)
+
 	leginondb.renameColumn('viewer_pref_image', 'id', 'DEF_id')
 	leginondb.renameColumn('viewer_pref_image', 'timestamp', 'DEF_timestamp')
 	leginondb.renameColumn('viewer_pref_image', 'sessionId', 'REF|SessionData|sessionid')
