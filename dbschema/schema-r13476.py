@@ -20,6 +20,8 @@ if __name__ == "__main__":
 	appiondb.renameTable('ApStackParticlesData', 'ApStackParticleData')
 	appiondb.renameTable('ApAlignParticlesData', 'ApAlignParticleData')
 	appiondb.renameTable('ApClusteringParticlesData', 'ApClusteringParticleData')
+	### no long required to be on a cluster
+	appiondb.renameTable('ApClusterJobData', 'ApAppionJobData')
 
 	#===================
 	# rename columns:
