@@ -16,7 +16,7 @@ require "inc/processing.inc";
   
 // --- check if reconstruction is specified
 $reconId = $_GET['reconId'];
-$projectId = $_GET['projId'];
+$projectId = getProjectId();
 processing_header("Miscellaneous","Miscellaneous Stuff");
 
 // --- Get Reconstruction Data

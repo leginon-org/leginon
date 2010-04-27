@@ -109,7 +109,7 @@ else {
 	$ptable[]=array(
 		'c1'=>'<b>Project:</b>',
 		'c2'=>$proj_link,
-		'c3'=>($misc) ? "<a href='viewmisc.php?projId=$projectId'>[Related Images, Movies, etc]</a>" : "" 
+		'c3'=>($misc) ? "<a href='viewmisc.php?projectId=$projectId'>[Related Images, Movies, etc]</a>" : "" 
 	); 
 	$ptable[]=array(
 		'c1'=>'<b>Session:</b>',
