@@ -128,9 +128,9 @@ class project {
 	// We won't use this install function anymore.
 	// move to inital setup wizard.
 	function install() {
-		$q='select value '
-				.'from install '
-				.'where `key`="settable" ';
+		$q='SELECT value '
+				.'FROM install '
+				.'WHERE `key`="settable" ';
 		list($r)=$this->mysql->getSQLResult($q);
 		if ($r['value']==1) {
 			return;
@@ -186,8 +186,8 @@ class project {
 	function deleteProject($projectId) {
 		if (!$projectId)
 			return false;
-		$q[]='delete from projectexperiments where projectId='.$projectId;
-		$q[]='delete from projects where projectId='.$projectId;
+		$q[]='DELETE FROM projectexperiments WHERE projectId='.$projectId;
+		$q[]='DELETE FROM projects WHERE projectId='.$projectId;
 		$this->mysql->SQLQueries($q);
 	}
 
@@ -218,24 +218,15 @@ class project {
 
 	}
 
-	function getLastId() {
-		$q='select projectId from projects order by projectId DESC limit 1';
-		$RprojectInfo = $this->mysql->SQLQuery($q);
-		$projectInfo = mysql_fetch_array($RprojectInfo);
-		if (!$lastId=$projectInfo[projectId])
-			$lastId=0;
-		return $lastId;
-	}
-
 	function checkProjectExistsbyName($name) {
-		$q=' select projectId from projects where name="'.$name.'"';
+		$q=' SELECT projectId FROM projects WHERE name="'.$name.'"';
 		$RprojectInfo = $this->mysql->SQLQuery($q);
 		$projectInfo = mysql_fetch_array($RprojectInfo);
 		return $projectInfo['projectId'];
 	}
 
 	function checkProjectExistsbyId($id) {
-		$q=' select projectId from projects where projectId="'.$id.'"';
+		$q=' SELECT projectId FROM projects WHERE projectId="'.$id.'"';
 		$RprojectInfo = $this->mysql->SQLQuery($q);
 		echo mysql_error();
 		$projectInfo = mysql_fetch_array($RprojectInfo);
@@ -246,19 +237,15 @@ class project {
 			return $id;
 	}
 
-	function getProjectId($name){
-		$q='select projectId from projects where name="'.$name.'"';
-	}
-
 	function getProjects($order="",$privilege_level=1){
 		$userId = getLoginUserId();
-		$q='select p.projectId, p.name, p.short_description from projects p';
+		$q='SELECT p.projectId, p.name, p.short_description FROM projects p';
 		if ($privilege_level <= 2 and $userId !== true and $userId) {
 			$q .= " left join projectowners o "
 						."on o.`REF|projects|project` = p.`projectId` "
 						."left join ".DB_LEGINON.".UserData u "
 						."on u.`DEF_id` = o.`REF|leginondata|UserData|user` "
-						."where u.`DEF_id` = ".$userId." ";
+						."WHERE u.`DEF_id` = ".$userId." ";
 		}
 		if ($order)
 			$q .= " order by p.name ";
@@ -267,13 +254,13 @@ class project {
 
 	function getProjectInfo($projectId){
 		$info=array();
-		$q='select projectId, name as "Name", '
+		$q='SELECT projectId, name as "Name", '
 		  .'short_description as "Title", '
 		  .'long_description as "Description", '
 		  .'concat(substring_index(left(long_description, 120),"\n",2),"...") as `ReducedDescription`, '
 		  .'category as "Category", '
-		  .'funding as "Funding"  from projects '
-		  .'where projectId="'.$projectId.'"';
+		  .'funding as "Funding"  FROM projects '
+		  .'WHERE projectId="'.$projectId.'"';
 
 		$RprojectInfo = $this->mysql->SQLQuery($q);
 		$info = mysql_fetch_array($RprojectInfo, MYSQL_ASSOC);
@@ -282,13 +269,13 @@ class project {
 
 	function updatePIs($ids, $projectId) {
 		if (!is_array($ids)) return false;
-		$q = "delete "
-		    ."from pis "
-		    ."where projectId='".$projectId."' " ;
+		$q = "DELETE "
+		    ."FROM pis "
+		    ."WHERE projectId='".$projectId."' " ;
 		$this->mysql->SQLQuery($q);
 			
 		foreach($ids as $id) {
-			$q = "insert into pis "
+			$q = "INSERT INTO pis "
 			    ."(projectId, username) "
 			    ."values "
 			    ."($projectId, '".$id."')";
@@ -302,9 +289,9 @@ class project {
 		if(!$login || !$projectId) {
 			return False;
 		}
-		$q = "delete "
-			."from pis "
-			."where username='".$login."' "
+		$q = "DELETE "
+			."FROM pis "
+			."WHERE username='".$login."' "
 			."and projectId='".$projectId."' " ;
 		$this->mysql->SQLQuery($q);
 	}
@@ -313,9 +300,9 @@ class project {
 		if(!$login || !$projectId) {
 			return False;
 		}
-		$q = "delete "
-			."from associates "
-			."where username='".$login."' "
+		$q = "DELETE "
+			."FROM associates "
+			."WHERE username='".$login."' "
 			."and projectId='".$projectId."' " ;
 		$this->mysql->SQLQuery($q);
 	}
@@ -323,15 +310,15 @@ class project {
 	function addPI($login, $projectId) {
 		if(!$login || !$projectId)
 			return False;
-		$q = "select projectId "
-			."from pis "
-			."where username='".$login."' "
+		$q = "SELECT projectId "
+			."FROM pis "
+			."WHERE username='".$login."' "
 			."and projectId='".$projectId."' " ;
 		$RpId = $this->mysql->SQLQuery($q);
 		$n = mysql_num_rows($RpId);
 		if ($n > 0)
 			return False;
-		$q = "insert into pis "
+		$q = "INSERT INTO pis "
 		    ."(projectId, username) "
 		    ."values "
 		    ."($projectId, '".$login."')";
@@ -341,15 +328,15 @@ class project {
 	function addAssociate($login, $projectId) {
 		if(!$login || !$projectId)
 			return False;
-		$q = "select projectId "
-			."from associates "
-			."where username='".$login."' "
+		$q = "SELECT projectId "
+			."FROM associates "
+			."WHERE username='".$login."' "
 			."and projectId='".$projectId."' " ;
 		$RpId = $this->mysql->SQLQuery($q);
 		$n = mysql_num_rows($RpId);
 		if ($n > 0)
 			return False;
-		$q = "insert into associates "
+		$q = "INSERT INTO associates "
 		    ."(projectId, username) "
 		    ."values "
 		    ."($projectId, '".$login."')";
@@ -357,22 +344,22 @@ class project {
 	}
 
 	function getPIs($projectId) {
-		$q = "select "
+		$q = "SELECT "
 		   ."p.`username` "
-		   ."from pis p "
-		   ."where p.`projectId`='".$projectId."' ";
+		   ."FROM pis p "
+		   ."WHERE p.`projectId`='".$projectId."' ";
 		return $this->mysql->getSQLResult($q);
 	}
 
 	function updateAssociates($ids, $projectId) {
 		if (!is_array($ids)) return false;
-		$q = "delete "
-		    ."from associates "
-		    ."where projectId='".$projectId."' " ;
+		$q = "DELETE "
+		    ."FROM associates "
+		    ."WHERE projectId='".$projectId."' " ;
 		$this->mysql->SQLQuery($q);
 			
 		foreach($ids as $id) {
-			$q = "insert into associates "
+			$q = "INSERT INTO associates "
 			    ."(projectId, username) "
 			    ."values "
 			    ."($projectId, '".$id."')";
@@ -384,32 +371,32 @@ class project {
 
 	function getAssociates($projectId) {
 		$peopleIds = array();
-		$q = "select "
+		$q = "SELECT "
 		   ."p.`username` "
-		   ."from associates p "
-		   ."where p.`projectId`='".$projectId."' ";
+		   ."FROM associates p "
+		   ."WHERE p.`projectId`='".$projectId."' ";
 		return $this->mysql->getSQLResult($q);
 	}
 
 	function getProjectOwners($projectId) {
-		$q='select concat(u.firstname," ",u.lastname) `full name`, '
+		$q='SELECT concat(u.firstname," ",u.lastname) `full name`, '
 			.'u.`DEF_id` userId '
-			.'from projectowners o '
+			.'FROM projectowners o '
 			.'left join '.DB_LEGINON.'.UserData u '
 			.'on o.`REF|leginondata|UserData|user` = u.`DEF_id` '
-			.'where o.`REF|projects|project` = '.$projectId." ";
+			.'WHERE o.`REF|projects|project` = '.$projectId." ";
 		return $this->mysql->getSQLResult($q);
 	}
 
 	function updateOwners($ids, $projectId) {
 		if (!is_array($ids)) return false;
-		$q = "delete "
-		    ."from projectowners "
-		    ."where `REF|projects|project`='".$projectId."' " ;
+		$q = "DELETE "
+		    ."FROM projectowners "
+		    ."WHERE `REF|projects|project`='".$projectId."' " ;
 		$this->mysql->SQLQuery($q);
 			
 		foreach($ids as $id) {
-			$q = "insert into projectowners "
+			$q = "INSERT INTO projectowners "
 			    ."(`REF|projects|project`, `REF|leginondata|UserData|user`) "
 			    ."values "
 			    ."($projectId, '".$id."')";
@@ -419,7 +406,7 @@ class project {
 	}
 
 	function addProjectOwner($userId,$projectId) {
-		$q = "insert into projectowners "
+		$q = "INSERT INTO projectowners "
 	    ."(`REF|projects|project`, `REF|leginondata|UserData|user`) "
 	    ."values "
 	    ."(".$projectId.", ".$userId.")";
@@ -430,8 +417,8 @@ class project {
 	function removeProjectOwner($users,$projectId) {
 		if (!is_array($users)) return false;
 		foreach ($users as $userId) {
-			$q = "delete from projectowners "
-				."where `REF|leginondata|UserData|user` = ".$userId." "
+			$q = "DELETE FROM projectowners "
+				."WHERE `REF|leginondata|UserData|user` = ".$userId." "
 				."and `REF|projects|project`= ".$projectId." ";
 			echo $q;
 			#$this->mysql->SQLQuery($q, true);
@@ -439,31 +426,13 @@ class project {
 		return true;
 	}
 
-	function updateExperiments($ids, $projectId) {
-		if (!is_array($ids)) return false;
-		$q = "delete "
-		    ."from projectexperiments "
-		    ."where projectId='".$projectId."' " ;
-		$this->mysql->SQLQuery($q);
-			
-		foreach($ids as $id) {
-			$q = "insert into projectexperiments "
-			    ."(projectId, name) "
-			    ."values "
-			    ."($projectId, '".$id."')";
-			$this->mysql->SQLQuery($q, true);
-
-		}
-		return true;
-	}
-
 	function getExperiments($projectId="") {
 		$experimentIds = array();
-		$q = "select "
+		$q = "SELECT "
 		   ."projectexperimentId, name "
-		   ."from projectexperiments p ";
+		   ."FROM projectexperiments p ";
 		if ($projectId)
-		   $q .= "where p.`projectId`='".$projectId."' ";
+		   $q .= "WHERE p.`projectId`='".$projectId."' ";
 
 		$experimentIds = $this->mysql->getSQLResult($q);
 		return $experimentIds;
