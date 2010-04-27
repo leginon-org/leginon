@@ -319,7 +319,7 @@ if ($expId) {
 		$totstack = ($sdone > $stackruns) ? $sdone : $stackruns;
 
 		$sresults[] = ($totstack==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId'>$totstack complete</a>";
-		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack2'>$srun running</a>";
+		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$srun running</a>";
 		$sresults[] = ($sq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$sq queued</a>";
 
 		$totresult = ($totstack==0) ? "" :

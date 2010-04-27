@@ -25,12 +25,14 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	$jobinfo = array_merge($jobinfo,$particle->getJobIdsFromSession($expId,$jobtype,'Q'));
 	// for makestack-related jobs, check all flavors:
 	if ($jobtype=='makestack') {
-		$st = $particle->getJobIdsFromSession($expId,"makestack2",'R');
-		if (!empty($st)) foreach ($st as $j) $jobinfo[]=$j;
-		$st = $particle->getJobIdsFromSession($expId,"stackfilter",'R');
-		if (!empty($st)) foreach ($st as $j) $jobinfo[]=$j;
-		$st = $particle->getJobIdsFromSession($expId,"tiltalignstack",'R');
-		if (!empty($st)) foreach ($st as $j) $jobinfo[]=$j;
+		$jobinfo = array();
+		$stacktypes = array('makestack','makestack2', 'tiltalignstack', 'filterstack', 'substack', 'centerparticlestack', 'alignsubstack');
+		$st = array();
+		foreach ($stacktypes as $stacktype) {
+			$st = $particle->getJobIdsFromSession($expId,$stacktype,'R');
+			$st = array_merge($st,$particle->getJobIdsFromSession($expId,$stacktype,'Q'));
+			if (!empty($st)) foreach ($st as $j) $jobinfo[]=$j;
+		}
 	}
 
 	if (!empty($jobinfo)) {
