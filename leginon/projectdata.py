@@ -1,5 +1,5 @@
 from sinedon import Data
-from leginon import leginondata
+import leginon.leginondata
 
 class privileges(Data):
 	def typemap(cls):
@@ -32,7 +32,7 @@ class projectexperiments(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('projectId', projects),
-			('sessionId', leginondata.SessionData),
+			('sessionId', leginon.leginondata.SessionData),
 		)
 	typemap = classmethod(typemap)
 """
