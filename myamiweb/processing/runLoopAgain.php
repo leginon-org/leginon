@@ -233,7 +233,7 @@ function runLoopAgain() {
 	$progrunparams = $particle->getProgramRunParams($progrunid);
 	$command = $progrunparams['progname'].".py ";
 
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=$rundir ";
 	$command.="--runname=$runname ";
 	$command.="--session=$sessionname ";

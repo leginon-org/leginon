@@ -406,7 +406,7 @@ function create3d0() {
 
 	// create python command that will launch job
 	$command = "imagic3d0.py ";
-	$command.="--projectid=".$_SESSION['projectId'];
+	$command.="--projectid=".getProjectId();
 	if ($reclassId) {
 		$command.=" --reclassId=$reclassId";
 	}

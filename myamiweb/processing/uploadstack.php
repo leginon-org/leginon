@@ -188,7 +188,7 @@ function runUploadStack() {
 
 	//putting together command
 	$command = "uploadstack.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--session=$session ";
 	$command.="--file=$stackfile ";
 	$command.="--apix=$apix ";
@@ -226,7 +226,7 @@ function runUploadStack() {
 					<b>Upload Stack Command:</b><br/>
 					$command
 			</td></tr>
-			<tr><td>project</td><td>".$_SESSION['projectId']."</td></tr>
+			<tr><td>project</td><td>".getProjectId()."</td></tr>
 			<tr><td>session</td><td>$session</td></tr>
 			<tr><td>rundir</td><td>$rundir</td></tr>
 			<tr><td>runname</td><td>$runname</td></tr>

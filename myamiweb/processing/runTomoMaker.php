@@ -30,7 +30,7 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 
 	$particle = new particledata();
 
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	
 	$javafunctions .= writeJavaPopupFunctions('appion');  
@@ -183,7 +183,7 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 
 function runTomoMaker() {
 
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 

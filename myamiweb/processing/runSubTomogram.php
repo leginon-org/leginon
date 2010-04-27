@@ -30,7 +30,7 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 
 	$particle = new particledata();
 
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	
 	$javascript = "<script src='../js/viewer.js'></script>\n";
@@ -264,7 +264,7 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 }
 
 function runSubTomogram() {
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 

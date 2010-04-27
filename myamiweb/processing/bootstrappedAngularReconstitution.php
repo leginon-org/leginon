@@ -302,7 +302,7 @@ function runAngularReconstitution() {
 
 	// setup command
 	$command ="bootstrappedAngularReconstitution.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=".$rundir.$runname." ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";

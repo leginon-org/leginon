@@ -50,7 +50,7 @@ function createAce2Form($extra=false) {
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$javafunctions = "

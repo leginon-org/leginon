@@ -291,7 +291,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 }
 
 function runUploadImage() {
-	$projectId = $_SESSION['projectId'];
+	$projectId = getProjectId();
 	$expId = $_POST['expId'];
 	// trim removes any white space from start and end of strings
 	$sessionname = trim($_POST['sessionname']);

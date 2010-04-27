@@ -127,7 +127,7 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 
 	$javafunctions="
 		<script src='../js/viewer.js'></script>

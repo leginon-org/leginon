@@ -40,7 +40,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	}
 	$particle = new particledata();
 
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId&lastaId=$lastalignerId";
 	
 	$javafunctions .= writeJavaPopupFunctions('appion');  
@@ -277,7 +277,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 
 function runTomoAligner() {
 
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 

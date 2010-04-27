@@ -171,7 +171,7 @@ function runSubStack() {
 	$rundir = $outdir.$runname;
 
 	//putting together command
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=$rundir ";
 	$command.="--runname=$runname ";
 	$command.="--description=\"$description\" ";

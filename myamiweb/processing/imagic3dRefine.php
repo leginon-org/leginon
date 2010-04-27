@@ -547,7 +547,7 @@ function imagic3dRefine() {
 		// update actual job file that calls on the execution of each iteration
 
 		$command = "imagic3dRefine.py";
-		$command.= " --projectid=".$_SESSION['projectId'];
+		$command.= " --projectid=".getProjectId();
 		$command.= " --stackid=$stackid";
 		if ($imagic3d0id) $command.= " --imagic3d0id=$imagic3d0id";
 		else $command.= " --modelid=$modelid";

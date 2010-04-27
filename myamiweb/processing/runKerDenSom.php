@@ -269,7 +269,7 @@ function runKerDenSOM() {
 	$rundir = $outdir.$runname;
 
 	$command ="kerdenSOM.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";

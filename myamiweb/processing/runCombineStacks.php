@@ -123,7 +123,7 @@ function runCombineStack() {
 	$outdir=$_POST['outdir'];
 
 	$command.="combinestack.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	
 	//make sure a session was selected
 	$description=$_POST['description'];

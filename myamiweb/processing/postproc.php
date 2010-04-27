@@ -58,7 +58,7 @@ if ($_POST['process']) {
 	$sessname = $sessioninfo['Name'];
 
 	$command = "postProc.py ";
-	$command.= "--projectid=".$_SESSION['projectId']." ";
+	$command.= "--projectid=".getProjectId()." ";
 	$command.= "-s $sessname ";
 	$command.= "--runname $runname ";
 	$command.= "-f $densitypath ";

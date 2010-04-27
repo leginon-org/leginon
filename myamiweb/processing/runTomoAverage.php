@@ -30,7 +30,7 @@ function createAverageTomogramForm($extra=false, $title='tomoaverage.py Launcher
 
 	$particle = new particledata();
 
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	
 	$javascript = "<script src='../js/viewer.js'></script>\n";
@@ -142,7 +142,7 @@ function createAverageTomogramForm($extra=false, $title='tomoaverage.py Launcher
 }
 
 function runAverageTomogram() {
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 

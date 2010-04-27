@@ -344,7 +344,7 @@ function runRctVolume() {
 
 	//putting together command
 	$command ="rctVolume.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--description=\"$description\" ";
 	$command.="--rundir=$rundir ";
 	$command.="--runname=$runname ";

@@ -320,7 +320,7 @@ function runSubStack() {
 	}
 
 	//putting together command
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--old-stack-id=$stackId ";
 	$command.="--runname=$runname ";
 	$command.="--description=\"$description\" ";

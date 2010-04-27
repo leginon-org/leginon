@@ -159,7 +159,7 @@ function runSortJunk() {
 	$rundir = $outdir.$runname;
 
 	//putting together command
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--runname=$runname ";
 	$command.="--rundir=$rundir ";
 	$command.="--stack-id=$stackId ";

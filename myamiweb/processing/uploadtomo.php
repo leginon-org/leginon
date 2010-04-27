@@ -30,7 +30,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 
 	$particle = new particledata();
 
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	
 	$javafunctions .= writeJavaPopupFunctions('appion');  
@@ -173,7 +173,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 
 function runUploadTomogram() {
 
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 

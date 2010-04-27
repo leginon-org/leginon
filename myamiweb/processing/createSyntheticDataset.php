@@ -457,7 +457,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 
 function createSyntheticDataset() {
 	// get any passed parameters
-	$projectId = $_SESSION['projectId'];
+	$projectId = getProjectId();
 	$expId = $_GET['expId'];
 	$rundir = $_POST['rundir'];
 	$runname = $_POST['runname'];

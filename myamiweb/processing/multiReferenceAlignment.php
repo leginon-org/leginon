@@ -370,7 +370,7 @@ function runAlignment() {
 	}
 
 	$command="imagicMultiReferenceAlignment.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--runname=$runname ";
 	$command.="--stackId=$stackid ";
 	$command.="--templateStackId=$templatestackid ";

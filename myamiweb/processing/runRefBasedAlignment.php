@@ -409,7 +409,7 @@ function runAlignment() {
 	if (!$description) createAlignmentForm("<B>ERROR:</B> Enter a brief description of the alignment run");
 
 	$command="refBasedAlignment2.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--template-list=".templateIds()." ";
 	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";

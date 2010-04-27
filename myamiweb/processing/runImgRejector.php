@@ -233,7 +233,7 @@ function runImgRejector() {
 	$dfmin = ($_POST['dfmin']==$_POST['dbmin'] || $_POST['dfmin']>$_POST['dbmin']) ? '' : $_POST['dfmin'];
 	$dfmax = ($_POST['dfmax']==$_POST['dbmax'] || $_POST['dfmax']<$_POST['dbmax']) ? '' : $_POST['dfmax'];
 
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--runname=$runid ";
 	$command.="--rundir=".$outdir."/".$runid." ";
 	if ($_POST['preset']) $command.="--preset=".$_POST['preset']." ";

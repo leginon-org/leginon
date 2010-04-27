@@ -145,7 +145,7 @@ function runUploadModel() {
 	$rundir = $outdir.$runname;
 
 	$command = "modelFromEMDB.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--runname=$runname ";
 	$command.="--emdbid=$emdbid ";
 	$command.="--session=$session ";

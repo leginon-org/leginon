@@ -214,7 +214,7 @@ function runClusterCoran() {
 	//	createClusterCoranForm("<b>ERROR:</b> Number of classes must be between 2 and 999");
 
 	$command ="clusterCoran.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--analysisid=$analysisid ";
 	$command.="--num-class-list=$numclass ";
 	$command.="--factor-list=$factorlist ";

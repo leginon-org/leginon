@@ -106,7 +106,7 @@ function runStackIntoPicks() {
 	$rundir = $outdir.$runname;
 
 	$command ="stackIntoPicks.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=$rundir ";
 	$command.="--runname=$runname ";
 	$command.="--stackid=$stackid ";

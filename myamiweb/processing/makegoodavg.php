@@ -42,7 +42,7 @@ if ($_POST['process']) {
 	if (!$mass) createform('<b>ERROR:</b> Enter the estimated mass for the density');
 
 	$command = "makegoodaverages.py ";
-	$command.= "--projectid=".$_SESSION['projectId']." ";
+	$command.= "--projectid=".getProjectId()." ";
 	$command.= "--reconid=$reconId ";
 	$command.= "--iter=$iter ";
 	$command.= "--mask=$mask ";

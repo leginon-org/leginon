@@ -486,7 +486,7 @@ function runMaxLikeAlign() {
 
 	// setup command
 	$command ="refBasedMaxlikeAlign.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";

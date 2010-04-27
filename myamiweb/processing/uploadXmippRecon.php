@@ -255,7 +255,7 @@ function runUploadRecon() {
 	}
 	if ($fileerror) createUploadReconForm($fileerror);
 
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--runname=$runid ";
 	$command.="--stackid=$stack ";
 	$command.="--rundir=$runpath ";

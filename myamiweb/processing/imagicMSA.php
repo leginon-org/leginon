@@ -290,7 +290,7 @@ function runImagicMSA($extra=false)	{
 
 	// create python command for executing imagic job file	
 	$command = "imagicMSA.py";
-	$command.= " --projectid=".$_SESSION['projectId'];
+	$command.= " --projectid=".getProjectId();
 	$command.= " --alignid=$alignid --runname=$runid --rundir=$outdir$runid";
 	if ($lowpass) $command.= " --lpfilt=$lowpass";
 	if ($highpass) $command.= " --hpfilt=$highpass";

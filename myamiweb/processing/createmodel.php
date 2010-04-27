@@ -453,7 +453,7 @@ function runCreateModel() {
 	$rundir = $outdir.$runname;
 
 	//putting together command
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--method=$method ";
 	$command.="--cluster-id=$clusterid ";
 

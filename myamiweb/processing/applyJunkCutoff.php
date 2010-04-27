@@ -130,7 +130,7 @@ function runApplyJunkCutoff() {
 	$procdir = $outdir.$runname;
 
 	//putting together command
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--runname=$runname ";
 	$command.="--no-meanplot ";
 	$command.="--sorted ";

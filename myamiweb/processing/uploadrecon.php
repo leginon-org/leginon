@@ -319,7 +319,7 @@ function runUploadRecon() {
 		if ($contiteration) createUploadReconForm("<B>ERROR:</B> Enter the iteration number if you really don't want to start at the beginning");
 	}
 
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--runname=$runid ";
 	$command.="--stackid=$stackid ";
 	$command.="--modelid=$modelid ";

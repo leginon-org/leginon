@@ -338,7 +338,7 @@ function runOtrVolume() {
 
 	//putting together command
 	$command ="otrVolume.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--description=\"$description\" ";
 	$command.="--rundir=$rundir ";
 	$command.="--runname=$runname ";

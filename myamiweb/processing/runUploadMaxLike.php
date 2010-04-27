@@ -156,7 +156,7 @@ function runMaxLikeAlign() {
 	if ($timestamp) $command.="-t $timestamp ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 
 	// submit job to cluster
 	if (substr($_POST['process'],0,11)=="Upload Job ") {

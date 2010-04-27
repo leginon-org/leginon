@@ -400,7 +400,7 @@ function runAlignment() {
 //	$command.="source /ami/sw/share/python/usepython.csh common32;";
 //	$command.="source /home/$user/pyappion/useappion.csh;";
 	$command="edIterAlign.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=".$rundir." ";
 	$command.="--runname=$runname ";
 	$command.="--description=\"$description\" ";

@@ -28,7 +28,7 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
   
 	$javafunctions = writeJavaPopupFunctions('appion');
@@ -192,7 +192,7 @@ function runDownloadModel() {
 	$rundir = $outdir.$runname;
 
 	$command = "modelFromPDB.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--runname=$runname ";
 	$command.="--pdbid=$pdbid ";
 	$command.="--session=$session ";

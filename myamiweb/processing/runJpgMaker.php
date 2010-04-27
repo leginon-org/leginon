@@ -37,7 +37,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_SESSION['projectId'];
+	$projectId=getProjectId();
 
 	$javascript="
 	<script src='../js/viewer.js'></script>

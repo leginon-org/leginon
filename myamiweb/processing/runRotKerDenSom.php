@@ -318,7 +318,7 @@ function runrotKerDenSOM() {
 	--ydim=5 --numpart=1000 --commit --spectrainnerradius  14 --spectraouterradius 18; 
 	*/
 	$command ="rotKerdenSOM.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
