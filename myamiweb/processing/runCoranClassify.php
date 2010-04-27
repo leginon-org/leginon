@@ -33,7 +33,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	} else {
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];
-		$projectId=getProjectFromExpId($sessionId);
+		$projectId=getProjectId();
 	}
 	if ($selectAlignId)
 		$formAction.="&alignId=$selectAlignId";

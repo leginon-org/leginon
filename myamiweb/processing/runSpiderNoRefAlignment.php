@@ -31,7 +31,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	} else {
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];
-		$projectId=getProjectFromExpId($sessionId);
+		$projectId=getProjectId();
 	}
 
 	// connect to particle database

@@ -31,7 +31,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	} else {
 		$sessionId=$_POST['sessionId'];
-		$projectId=getProjectFromExpId($sessionId);
+		$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF'];
 	}
 

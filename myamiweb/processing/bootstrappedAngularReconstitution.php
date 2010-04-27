@@ -33,7 +33,7 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	} else {
 		$sessionId=$_POST['sessionId'];
-		$projectId=getProjectFromExpId($sessionId);
+		$projectId=getProjectId();
 		$formAction=$_SERVER['PHP_SELF'];
 	}
 	
