@@ -232,8 +232,8 @@ if __name__ == "__main__":
 	for tablename in appiondb.getAllTables():
 		appiondb.indexColumn(tablename, 'hidden')
 		appiondb.renameColumn(tablename, 'project|projects|project', 
-			"REF|"+projectdb.getSinedonName()+"|projects|projectid")
-		appiondb.indexColumn(tablename, "REF|"+projectdb.getSinedonName()+"|projects|projectid")
+			"REF|"+projectdb.getSinedonName()+"|projects|project")
+		appiondb.indexColumn(tablename, "REF|"+projectdb.getSinedonName()+"|projects|project")
 	appiondb.debug = olddebug
 
 	#===================
@@ -242,9 +242,10 @@ if __name__ == "__main__":
 
 	projectdb.renameColumn('projects', 'projectId', 'DEF_id')
 	projectdb.renameColumn('projects', 'timestamp', 'DEF_timestamp')
+	projectdb.renameColumn('projects', 'db', 'leginondb')
 
 	projectdb.renameColumn('projectexperiments', 'projectexperimentId', 'DEF_id')
-	projectdb.renameColumn('projectexperiments', 'projectId', 'REF|projects|projectid')
+	projectdb.renameColumn('projectexperiments', 'projectId', 'REF|projects|project')
 	projectdb.addColumn('projectexperiments', 'DEF_timestamp', projectdb.timestamp, index=True)
 
 	### change session name to session id
@@ -260,6 +261,12 @@ if __name__ == "__main__":
 		projectdb.executeCustomSQL(updateq)
 		projectdb.dropColumn('projectexperiments', 'name')
 	projectdb.dropColumn('projectexperiments', 'experimentsourceId')
+
+	### processingdb
+	projectdb.renameColumn('processingdb', 'id', 'DEF_id')
+	projectdb.addColumn('processingdb', 'DEF_timestamp', projectdb.timestamp, index=True)
+	projectdb.renameColumn('processingdb', 'db', 'appiondb')
+	projectdb.renameColumn('processingdb', 'projectId', 'REF|projects|project')
 
 	#===================
 	# leginon table
