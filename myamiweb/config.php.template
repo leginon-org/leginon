@@ -86,6 +86,7 @@ set_include_path(dirname(__FILE__).PATH_SEPARATOR
 				.dirname(__FILE__)."/lib/PEAR");
 
 // --- add plugins --- //
+define('WEB_ROOT',dirname(__FILE__));
 // --- uncomment to enable processing web pages -- //
 // addplugin("processing");
 
