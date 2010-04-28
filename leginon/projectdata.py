@@ -23,7 +23,7 @@ class projects(Data):
 			('long_description', str),
 			('category', str),
 			('funding', str),
-			('db', str),
+			('leginondb', str),
 			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
@@ -31,9 +31,18 @@ class projects(Data):
 class projectexperiments(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('projectId', projects),
-			('sessionId', leginon.leginondata.SessionData),
+			('project', projects),
+			('session', leginon.leginondata.SessionData),
 		)
 	typemap = classmethod(typemap)
+
+class processingdb(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('appiondb', str),
+			('project', projects),
+		)
+	typemap = classmethod(typemap)
+
 """
 
