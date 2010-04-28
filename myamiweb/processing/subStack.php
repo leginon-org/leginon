@@ -46,7 +46,6 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	
 	// Set any existing parameters in form
 	if (!$description) $description = $_POST['description'];
-
 	// set sub-stack name
 	if ($mean)
 		$defrunname = 'meanfilt'.$stackId;
@@ -65,13 +64,14 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$firstp = ($_POST['firstp']) ? $_POST['firstp'] : '';		
 	$lastp = ($_POST['lastp']) ? $_POST['lastp'] : '';
 	$numOfParticles = ($_POST['numOfParticles']) ? $_POST['numOfParticles'] : '';
+	$correctbtcheck = ($_POST['correctbt']=='on') ? 'checked' : '';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 			
 
-	$minx = ($_POST['minx']) ? $_POST['minx'] : '';	
-	$maxx = ($_POST['maxx']) ? $_POST['maxx'] : '';
-	$miny = ($_POST['miny']) ? $_POST['miny'] : '';
-	$maxy = ($_POST['maxy']) ? $_POST['maxy'] : '';
+	$minx = (is_numeric($_POST['minx'])) ? $_POST['minx'] : '';	
+	$maxx = (is_numeric($_POST['maxx'])) ? $_POST['maxx'] : '';
+	$miny = (is_numeric($_POST['miny'])) ? $_POST['miny'] : '';
+	$maxy = (is_numeric($_POST['maxy'])) ? $_POST['maxy'] : '';
 
 	// get outdir path
 	$sessiondata=getSessionList($projectId,$expId);
@@ -176,7 +176,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 		echo "<tr><td align='center' valign='top'>\n";
 
 		// Mean plot 
-		if ($minx and $maxx and $miny and $maxy) {
+		if (is_numeric($minx) and is_numeric($maxx) and is_numeric($miny) and is_numeric($maxy)) {
 			echo "<img border='0' width='512' height='384' src='stack_mean_stdev.php?w=512&sId=$stackId"
 				."&minx=$minx&maxx=$maxx&miny=$miny&maxy=$maxy&expId=$expId'><br/>\n";
 		} else {
@@ -232,6 +232,10 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 		echo "<b>Select Random Subset (less than $nump)</b><br />\n";
 		echo docpop('numOfParticlePop', '<b>Number of Particles:</b> ');
      	echo "<input type='text' name='numOfParticles' size='5' value='$numOfParticles' $randomdisable><br />\n";
+		echo "</td></tr>";
+		echo "<tr><td COLSPAN=2>";
+		echo "<input type='checkbox' name='correctbt' $correctbtcheck>\n";
+		echo "<b>Correct Beam Tilt Phase Shift According to Leginon Calibrations</b><br />\n";
 		echo "</td></tr></table>\n";
 		
 		echo closeRoundBorder();
@@ -265,6 +269,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 function runSubStack() {
 
 	$expId = $_GET['expId'];
+	$mean = $_GET['mean'];
 
 	$runname=$_POST['runname'];
 	$stackId=$_POST['stackId'];
@@ -275,19 +280,17 @@ function runSubStack() {
 	$firstp = $_POST['firstp'];
 	$lastp = $_POST['lastp'];
 	$split = $_POST['split'];
+	$correctbt=$_POST['correctbt'];
 	$stackId = $_POST['stackId'];
 	$numOfParticles = $_POST['numOfParticles'];
 	
-	$minx = ($_POST['minx']) ? $_POST['minx'] : '';	
-	$maxx = ($_POST['maxx']) ? $_POST['maxx'] : '';
-	$miny = ($_POST['miny']) ? $_POST['miny'] : '';
-	$maxy = ($_POST['maxy']) ? $_POST['maxy'] : '';
+	$minx = (is_numeric($_POST['minx'])) ? $_POST['minx'] : '';	
+	$maxx = (is_numeric($_POST['maxx'])) ? $_POST['maxx'] : '';
+	$miny = (is_numeric($_POST['miny'])) ? $_POST['miny'] : '';
+	$maxy = (is_numeric($_POST['maxy'])) ? $_POST['maxy'] : '';
 
-	if ($minx and (!$maxx or !$miny or !$maxy)){
-		createSubStackForm("<b>ERROR:</b> Specify all four coordinates");
-	}
 
-	if ($minx and $maxx and $miny and $maxy) {
+	if ($mean) {
 		$command.="stackFilter.py ";
 	} else {
 		$command.="subStack.py ";
@@ -306,16 +309,22 @@ function runSubStack() {
 	$procdir = $outdir.$runname;
 
 	// check sub stack particle numbers
-	if (!$exclude and !$minx) {
-		if ($subsplit == 'sub') {
-			if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter a starting particle");
-			if (!$lastp) createSubStackForm("<b>ERROR:</b> Enter an end particle");
+	if (!$mean) {
+		if (!$exclude) {
+			if ($subsplit == 'sub') {
+				if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter a starting particle");
+				if (!$lastp) createSubStackForm("<b>ERROR:</b> Enter an end particle");
+			}
+			elseif($subsplit == 'random'){
+				if(!$numOfParticles) createSubStackForm("<b>ERROR:</b> Enter number of Particles");
+			}
+			elseif (!$split) {
+				if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter # of stacks");
+			}
 		}
-		elseif($subsplit == 'random'){
-			if(!$numOfParticles) createSubStackForm("<b>ERROR:</b> Enter number of Particles");
-		}
-		elseif (!$split) {
-			if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter # of stacks");
+	} else {
+		if (!is_numeric($minx) || !is_numeric($maxx) || !is_numeric($miny) || !is_numeric($maxy)){
+			createSubStackForm("<b>ERROR:</b> Specify all four coordinates");
 		}
 	}
 
@@ -324,17 +333,18 @@ function runSubStack() {
 	$command.="--old-stack-id=$stackId ";
 	$command.="--runname=$runname ";
 	$command.="--description=\"$description\" ";
-	if (!$exclude and !$minx) {
+	if (!$exclude and !$mean) {
 		if ($firstp!='' && $lastp) $command.="--first=".($firstp-1)." --last=".($lastp-1)." ";
 		elseif ($split) $command.="--split=$split ";
 		elseif ($numOfParticles) $command.="--random=$numOfParticles ";
-	} elseif (!$minx) {
+	} elseif ($exclude) {
 		$command.="--exclude=".$exclude." ";
 	} else {
 		$command.="--minx=".$minx." --maxx=".$maxx." --miny=".$miny." --maxy=".$maxy." ";
 	}
 	
 	
+	$command.= ($correctbt=='on') ? "--correct-beamtilt " : "";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
 
@@ -357,7 +367,7 @@ function runSubStack() {
 	echo"
 	<table width='600' border='1'>
 	<tr><td colspan='2'>";
-	if ($minx) {
+	if ($mean) {
 		echo "<b>stackFilter.py command:</b><br />";
 	} else {
 		echo "<b>subStack.py command:</b><br />";
@@ -368,10 +378,12 @@ function runSubStack() {
 	echo "<tr><td>stack id</td><td>$stackId</td></tr>\n";
 	echo "<tr><td>description</td><td>$description</td></tr>\n";
 	echo "<tr><td>outdir</td><td>$procdir</td></tr>\n";
-	echo "<tr><td>minX</td><td>$minx</td></tr>\n";
-	echo "<tr><td>maxX</td><td>$maxx</td></tr>\n";
-	echo "<tr><td>minY</td><td>$miny</td></tr>\n";
-	echo "<tr><td>maxY</td><td>$maxy</td></tr>\n";
+	if ($mean) {
+		echo "<tr><td>minX</td><td>$minx</td></tr>\n";
+		echo "<tr><td>maxX</td><td>$maxx</td></tr>\n";
+		echo "<tr><td>minY</td><td>$miny</td></tr>\n";
+		echo "<tr><td>maxY</td><td>$maxy</td></tr>\n";
+	}
 	echo"</table>\n";
 	processing_footer();
 }
