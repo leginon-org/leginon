@@ -451,6 +451,7 @@ class ApStackData(Data):
 			('pixelsize', float),
 			('centered', bool),
 			('junksorted', bool),
+			('beamtilt_corrected', bool),
 			('mask', int),
 			('maxshift', int),
 		)

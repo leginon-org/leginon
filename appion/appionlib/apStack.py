@@ -88,12 +88,13 @@ def sortStackParts(a, b):
 		return -1
 
 #===============
-def getOneParticleFromStackId(stackid, msg=True):
+def getOneParticleFromStackId(stackid, particlenumber=1, msg=True):
 	if msg is True:
 		apDisplay.printMsg("querying one stack particle from stackid="+str(stackid)+" on "+time.asctime())
 	stackdata=appiondata.ApStackData.direct_query(stackid)
 	stackq=appiondata.ApStackParticlesData()
 	stackq['stack'] = stackdata
+	stackq['particleNumber'] = particlenumber
 	stackparticledata=stackq.query(results=1)
 	if len(stackparticledata) == 0:
 		return None
@@ -257,6 +258,7 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 	stackq['substackname'] = params['runname']
 	stackq['description'] = params['description']
 	stackq['pixelsize'] = oldstackdata['pixelsize']
+	stackq['beamtilt_corrected'] = params['correctbeamtilt']
 	if sorted is True:
 		stackq['junksorted'] = True
 	if centered is True:

@@ -9,6 +9,7 @@ from appionlib import appionScript
 from appionlib import apStack
 from appionlib import apDisplay
 from appionlib import apStackMeanPlot
+from appionlib import apBeamTilt
 
 class subStackScript(appionScript.AppionScript):
 	#=====================
@@ -38,6 +39,8 @@ class subStackScript(appionScript.AppionScript):
 
 		self.parser.add_option("--no-meanplot", dest="meanplot", default=True,
 			action="store_false", help="Do not create a mean/stdev plot")
+		self.parser.add_option("--correct-beamtilt", dest="correctbeamtilt", default=False,
+			action="store_true", help="The original stack is sorted")
 		self.parser.add_option("--sorted", dest="sorted", default=False,
 			action="store_true", help="The original stack is sorted")
 
@@ -225,7 +228,10 @@ class subStackScript(appionScript.AppionScript):
 				self.params['description'] += (" (%i of %i)" % (i+1, self.params['split']))
 
 			#create the new sub stack
-			apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=True)
+			if not self.params['correctbeamtilt']:
+				apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=True)
+			else:
+				apBeamTilt.makeCorrectionStack(self.params['stackid'], oldstack, newstack)
 			if not os.path.isfile(newstack):
 				apDisplay.printError("No stack was created")
 			apStack.commitSubStack(self.params, newname, sorted=False)
