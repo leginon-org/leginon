@@ -92,9 +92,12 @@ define('WEB_ROOT',dirname(__FILE__));
 
 
 // --- Add as many processing hosts as you like -- //
-// --- $PROCESSING_HOSTS[]="host1.school.edu"; -- //
-// --- $PROCESSING_HOSTS[]="host2.school.edu"; -- //
-$PROCESSING_HOSTS[]="";
+// --- Please enter your processing host information associate with -- //
+// --- number of processing nodes									-- //
+// --- $PROCESSING_HOSTS[] = array('host' => 'host1.school.edu', 'nproc' => 4); -- //
+// --- $PROCESSING_HOSTS[] = array('host' => 'host2.school.edu', 'nproc' => 8); -- //
+
+$PROCESSING_HOSTS[] = array('host' => 'host1.school.edu', 'nproc' => 8);
 
 // --- register your cluster config file below i.e (default_cluster.php) --- //
 $CLUSTER_CONFIGS= array (

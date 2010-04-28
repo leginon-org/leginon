@@ -79,19 +79,20 @@ function getHosts(){
 
 function getHostForm() {
 	$h=array();
-	$current_host=$_SESSION['processinghost'];
+	$selected_host=$_POST['processinghost'];
 	$proc_list = (array)getHosts();
+
 	// only list hosts if there are more than 1
 	if (count($proc_list) > 1){
 		foreach ($proc_list as $host) {
-			$s=($host==$current_host) ? "selected" : "";
-			$h[]="<option $s >$host</option>\n";
+			$s = ($host['host'] == $_POST['processinghost']) ? "selected" : "";
+			$h[]="<option value='".$host['host']."' ".$s." >".$host['host']."</option>\n";
   		}
 		$html="<select name=\"processinghost\">\n";
 		$html.=join("\n",$h);
 		$html.="</select>";
 	}
-	else $html="<input type='hidden' name=\"processinghost\" value='$proc_list[0]'>\n";
+	else $html="<input type='hidden' name=\"processinghost\" value='".$proc_list[0]['host']."'>\n";
 	return $html;
 }
 
@@ -627,9 +628,16 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 	return $javascript; 
 }
 
-function getNumberOfProcsPerNode() {
-	// this is a hack
-	return 8;
+function getNumberOfProcsPerNode($processingHost) {
+	global $PROCESSING_HOSTS;
+
+	foreach ($PROCESSING_HOSTS as $host){
+		if ($host['host'] == $processingHost){
+			$numOfNode = $host['nproc'];
+			break;
+		}
+	}
+	return $numOfNode;
 }
 
 function getNumberOfRequiredNodes($nproc, $ppn) {
@@ -643,6 +651,7 @@ function getNumberOfRequiredNodes($nproc, $ppn) {
 function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg=False,
 		 $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime="240") {
 	global $DATA_DIRS;
+	
 	$particle=new particleData();
 
 	if ($_POST['processinghost']) {
@@ -736,7 +745,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 
 	// get proper node numbers
 	if ($ppn < 1)
-		$ppn = getNumberOfProcsPerNode();
+		$ppn = getNumberOfProcsPerNode($processhost);
 	if ($nodes < 1)
 		list($nodes, $ppn) = getNumberOfRequiredNodes($nproc, $ppn);
 	if ($ppn < 1)
