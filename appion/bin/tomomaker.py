@@ -81,7 +81,6 @@ class tomoMaker(appionScript.AppionScript):
 
 	def setTiltSeries(self):
 		self.tiltdatalist = apTomo.getTiltListFromAligner(self.params['alignerid'])
-		print self.tiltdatalist[0]
 		self.params['tiltseriesnumber'] = self.tiltdatalist[0]['number']
 		self.params['tiltseries'] = self.tiltdatalist[0]
 
@@ -122,7 +121,7 @@ class tomoMaker(appionScript.AppionScript):
 		bin = int(self.params['bin'])
 		### list of particles to be excluded
 		excludelist = []
-		if self.params['exclude'] is not None:
+		if self.params['exclude'] is not '':
 			excludestrlist = self.params['exclude'].split(",")
 			for excld in excludestrlist:
 				excludelist.append(int(excld.strip()))

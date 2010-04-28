@@ -209,7 +209,7 @@ function runTomoMaker() {
 	$command.="--projectid=$projectId ";
 	$command.="--runname=$runname ";
 	$command.="--thickness=$thickness ";
-	$command.="--exclude=$excludenumber ";
+	if ($excludenumber) $command.="--exclude=$excludenumber ";
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
 	// submit job to cluster
