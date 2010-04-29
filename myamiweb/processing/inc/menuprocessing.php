@@ -284,12 +284,18 @@ if ($expId) {
 		'name'=>"<a href='runCtfEstimate.php?expId=$sessionId'>CtfFind Estimation</a>",
 		'result'=>$ctffindresults,
 	);
-	if ($maxangle > 5) {
-		$nruns[] = array(
-			'name'=>"<a href='runCtfEstimate.php?expId=$sessionId&ctftilt=True'>CtfTilt Estimation</a>",
-			'result'=>$ctftiltresults,
-		);
+	
+	//CTFTilt Estimation works and uploads, but fails alot; there is a warning
+	if (!HIDE_FEATURE)
+	{
+		if ($maxangle > 5) {
+			$nruns[] = array(
+				'name'=>"<a href='runCtfEstimate.php?expId=$sessionId&ctftilt=True'>CtfTilt Estimation</a>",
+				'result'=>$ctftiltresults,
+			);
+		}
 	}
+	
 	if ($loopruns > 0) {
 		$nruns[] = array(
 			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
@@ -401,7 +407,7 @@ if ($expId) {
 				);
 			}
 		}
-		if (!HIDE_IMAGIC) {
+		if (!HIDE_IMAGIC && !HIDE_FEATURE) {
 			// ===================================================================
 			// template stacks (class averages & forward projections)
 			// ===================================================================
@@ -591,19 +597,28 @@ if ($expId) {
 				'name'=>"<a href='emanJobGen.php?expId=$sessionId'>EMAN Refinement</a>",
 				'result'=>$emanreconresults,
 			);
-			$nruns[] = array(
-				'name'=>"<a href='prepareFrealign.php?expId=$sessionId'>Frealign Refinement</a>",
-				'result'=> $frealignresults,
-			);
-			$nruns[] = array(
-				'name'=>"<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>",
-				'result'=> "<i>(incomplete)</i>", //$spiderreconresults,
-			);
-			$nruns[] = array(
-				'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
-				'result'=> "<i>(incomplete)</i>", //$xmippreconresults,
-			);
-			if (!HIDE_IMAGIC) {
+			if (!HIDE_FEATURE)
+			{
+				$nruns[] = array(
+					'name'=>"<a href='prepareFrealign.php?expId=$sessionId'>Frealign Refinement</a>",
+					'result'=> $frealignresults,
+				);
+			}
+			if (!HIDE_FEATURE)
+			{
+				$nruns[] = array(
+					'name'=>"<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>",
+					'result'=> "<i>(incomplete)</i>", //$spiderreconresults,
+				);
+			}
+			if (!HIDE_FEATURE)
+			{
+				$nruns[] = array(
+					'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
+					'result'=> "<i>(incomplete)</i>", //$xmippreconresults,
+				);
+			}
+			if (!HIDE_IMAGIC && !HIDE_FEATURE) {
 				$nruns[] = array(
 					'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
 					'result'=> "<i>(incomplete)</i>", //$imreconresults,
@@ -787,8 +802,13 @@ if ($expId) {
 	$result = ($maskruns==0) ? "" :
 			"<a href='maskreport.php?expId=$sessionId'>$maskruns</a>";
 	$nruns=array();
-	$nrun = "<a href='runMaskMaker.php?expId=$sessionId'>Crud Finding</a>";
-	$nruns[]=$nrun;
+	
+	//Crud Finding is not yet working for 2.0 release
+	if (!HIDE_FEATURE)
+	{
+		$nrun = "<a href='runMaskMaker.php?expId=$sessionId'>Crud Finding</a>";
+		$nruns[]=$nrun;
+	}
 	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>";
 	$nrun .= "Manual Masking";
 	$nrun .= "</a>";

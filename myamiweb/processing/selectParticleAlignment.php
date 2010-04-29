@@ -74,7 +74,7 @@ echo " <p> first you select template and then this method uses the "
 //echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
 echo "</td></tr>\n";
 
-if (!$HIDE_IMAGIC) {
+if (!$HIDE_IMAGIC && !HIDE_FEATURE) {
 	/*
 	** IMAGIC Reference Based Alignment
 	*/
@@ -153,20 +153,24 @@ echo " <p> similar to reference-free but you select templates first."
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
 
-/*
-** Topology representing network alignment
-*/
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/canimg.png' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runTopolAlign.php?expId=$expId'>CAN Reference-free alignment</a></h3>\n";
-echo "<p>Fast & easy 2D ref-free alignment by iterative classification using "
-	."a topology-representing network, followed by multi-reference alignment. "
-	."The classification is performed by Vince Ramey's implementation of "
-	."<a target='blank' href='http://www.ncbi.nlm.nih.gov/pubmed/14572474'>"
-	."Ogura et al. JSB (2003)</a>"
-	."</p>\n";
-echo "</td></tr>\n";
+
+if (!HIDE_FEATURE)
+{
+	/*
+	** Topology representing network alignment
+	*/
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/canimg.png' width='64'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='runTopolAlign.php?expId=$expId'>CAN Reference-free alignment</a></h3>\n";
+	echo "<p>Fast & easy 2D ref-free alignment by iterative classification using "
+		."a topology-representing network, followed by multi-reference alignment. "
+		."The classification is performed by Vince Ramey's implementation of "
+		."<a target='blank' href='http://www.ncbi.nlm.nih.gov/pubmed/14572474'>"
+		."Ogura et al. JSB (2003)</a>"
+		."</p>\n";
+	echo "</td></tr>\n";
+}
 
 echo "</table>\n";
 processing_footer();
