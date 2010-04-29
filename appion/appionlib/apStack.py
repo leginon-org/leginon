@@ -258,7 +258,8 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 	stackq['substackname'] = params['runname']
 	stackq['description'] = params['description']
 	stackq['pixelsize'] = oldstackdata['pixelsize']
-	stackq['beamtilt_corrected'] = params['correctbeamtilt']
+	if 'correctbeamtilt' in params.keys():
+		stackq['beamtilt_corrected'] = params['correctbeamtilt']
 	if sorted is True:
 		stackq['junksorted'] = True
 	if centered is True:
