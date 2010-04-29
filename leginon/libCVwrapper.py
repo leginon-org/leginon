@@ -49,15 +49,14 @@ def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=
 
 	try:
 		scaled = scaleAndPlane(image)
-		return libcv.FindRegions(scaled, minsize, maxsize, blur, sharpen, WoB, BoW)
+		return libcv.aFindRegions(scaled, minsize, maxsize, blur, sharpen, WoB, BoW)
 	except:
 		mydict = { 
-			'regionBorder': numpy.array([[0,0,0,0]],[[0,0,0,0]]),
+			'regionBorder': numpy.array([[0,0,0,0],[0,0,0,0]]),
 			'regionEllipse': (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0),
 		}
 		mytuple = ( [mydict,], None)
 		return mytuple
-	print ""
 
 #-----------------------
 def MatchImages(image1, image2, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, WoB=True, BoW=True):
