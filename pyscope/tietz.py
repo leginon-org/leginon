@@ -14,18 +14,11 @@ import threading
 import enumproc
 import killproc
 
-try:
-	import mmapfile
-	import pythoncom
-	import pywintypes
-	import win32com.client
-	import win32com.server.register
-	try:
-		import tietzcom
-	except ImportError:
-		import pyscope.tietzcom as tietzcom
-except ImportError:
-	pass
+import mmapfile
+import pythoncom
+import pywintypes
+import win32com.client
+import win32com.server.register
 
 def listCamcProcs():
 	procs = enumproc.EnumProcesses()
@@ -64,6 +57,8 @@ class CameraControl(object):
 			except:
 				self.unlock()
 				raise
+
+		camera.setCameraType()
 
 		try:
 			hr = cameracontrol.camera.Initialize(camera.cameratype, 0)
@@ -177,9 +172,6 @@ class Tietz(object):
 		killCamcProcs()
 		self.unsupported = []
 
-		if self.cameratype is None:
-			raise NotImplementedError('Tietz virtual class')
-
 		#self.arraytypecode = 'H'
 		self.imagetype = numpy.uint16
 		self.bytesperpixel = 2
@@ -204,6 +196,9 @@ class Tietz(object):
 		## some cameras require centered geometries
 		geo = self.calculateCenteredGeometry(self.dimension['x'], self.binning['x'])
 		self.setGeometry(geo)
+
+	def setCameraType(self):
+		self.cameratype = getattr(win32com.client.constants, self.cameratypeattr)
 
 	def __getattribute__(self, attr_name):
 		if attr_name in object.__getattribute__(self, 'unsupported'):
@@ -732,10 +727,7 @@ class TietzFastScanFW(Tietz, ccdcamera.FastCCDCamera):
 	
 class TietzSCX(Tietz, ccdcamera.CCDCamera):
 	name = 'Tietz SCX'
-	try:
-		cameratype = win32com.client.constants.ctSCX
-	except:
-		pass
+	cameratypeattr = 'ctSCX'
 	mmname = 'CAM_SCX_DATA'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)

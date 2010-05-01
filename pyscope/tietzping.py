@@ -7,13 +7,14 @@
 #
 
 import win32com.server.register
-try:
-	import tietzcom
-except:
-	from pyscope import tietzcom
+import win32com.client
+import sys
+
+camc4 = win32com.client.Dispatch('CAMC4.Camera.1')
+clsid = sys.modules[camc4.__module__].CLSID
 
 class Ping(object):
-	_typelib_guid_ = tietzcom.CLSID
+	_typelib_guid_ = clsid
 	_typelib_version = 1, 0
 	_com_interfaces_ = ['ICAMCCallBack'] #[tietzcom.ICAMCCallBack.CLSID]
 	_public_methods_ = ['LivePing', 'RequestLock']
