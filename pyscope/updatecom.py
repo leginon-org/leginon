@@ -35,13 +35,14 @@ def makeFile(desc):
 	except:
 		print 'failed MakeModuleForTypelib'
 		return
+	else:
+		print 'done.'
 
 def run():
 	print 'Generating .py files from type libraries...'
 	for desc, message in info:
-		print message + ':',
+		print 'initializing', message,
 		makeFile(desc)
-	print 'Done.'
 	raw_input('enter to quit.')
 
 if __name__ == '__main__':
