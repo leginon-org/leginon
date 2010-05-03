@@ -39,9 +39,16 @@ class Tecnai(tem.TEM):
 		self.correctedstage = True
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 
-		try:
-			self.tecnai = win32com.client.Dispatch('Tecnai.Instrument')
-		except pythoncom.com_error, (hr, msg, exc, arg):
+		self.tecnai = None
+		# should determine this in updatecom instead of guessing it here
+		for comname in ('Tecnai.Instrument', 'TEMScripting.Instrument.1'):
+			try:
+				self.tecnai = win32com.client.Dispatch(comname)
+				break
+			except:
+				pass
+
+		if self.tecnai is None:
 			raise RuntimeError('unable to initialize Tecnai interface, %s' % msg)
 
 		try:
@@ -64,6 +71,14 @@ class Tecnai(tem.TEM):
 
 		self.magnifications = []
 		self.mainscreenscale = 44000.0 / 50000.0
+
+		## figure out which intensity property to use
+		try:
+			ia = self.tecnai.Illumination.IlluminatedArea
+		except:
+			self.intensity_prop = 'Intensity'
+		else:
+			self.intensity_prop = 'IlluminatedArea'
 
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
