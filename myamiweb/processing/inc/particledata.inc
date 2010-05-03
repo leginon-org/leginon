@@ -930,6 +930,7 @@ class particledata {
 			."c.`angle_astigmatism`, "
 			."c.`confidence` , "
 			."c.`confidence_d` , "
+			."c.`cross_correlation` , "
 			."c.`snr` , "
 			."p.`path`, "
 			."c.`graph1` , "
