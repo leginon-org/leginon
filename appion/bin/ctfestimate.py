@@ -149,11 +149,14 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			'box': self.params['fieldsize'],
 			'resmin': self.params['resmin'],
 			'resmax': self.params['resmax'],
-			'defmin': round(bestdef*0.8, 1),
-			'defmax': round(bestdef*1.2, 1),
 			'defstep': self.params['defstep'], #round(defocus/32.0, 1),
 		}
-
+		if bestdef<10000:
+			inputparams['defmin']=2000.0
+			inputparams['defmax']=20000.0
+		else:
+			inputparams['defmin']= round(bestdef*0.5, 1)
+			inputparams['defmax']= round(bestdef*1.5, 1)
 		### create local link to image
 		if not os.path.exists(inputparams['input']):
 			cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
