@@ -2652,14 +2652,12 @@ class particledata {
 			." (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
 			."LEFT JOIN ApStackRunData as strun ON "
 			." (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
-			."LEFT JOIN ApAlignAnalysisRunData AS analysis ON "
-			."  (analysis.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
 			."LEFT JOIN ApPathData AS pd ON "
 			."  (cluster.`REF|ApPathData|path` = pd.`DEF_id`) "
 			."WHERE "
 			." strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden)
-			$q.= " AND cluster.`hidden` != 1 AND ast.`hidden` != 1 AND analysis.`hidden` != 1 ";
+			$q.= " AND cluster.`hidden` != 1 AND ast.`hidden` != 1 ";
 		$q .= "ORDER BY clusterid DESC ";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
