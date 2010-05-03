@@ -209,6 +209,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		appionLoop OVERRIDE
 		processes all images
 		"""
+		self.pixelsizes = {}
 		### get images from upload image parameters file
 		self.getAllImages()
 		os.chdir(self.params['rundir'])
@@ -328,14 +329,15 @@ class ImageLoader(appionLoop2.AppionLoop):
 	#=====================
 
 	#=====================
-	def publish(self,data):
+	def publish(self,data,dbforce=False):
 		"""
-		sinedon already does this check, so this is redundant
+		sinedon already does this check, but since we want
+		the results back whether commit or not, we need to do it here.
 		"""
 		results = data.query(readimages=False)
-		if not results:
+		if not results or dbforce:
 			if self.params['commit'] is True:
-				data.insert()
+				data.insert(force=dbforce)
 			return data
 		return results[0]
 
@@ -536,15 +538,24 @@ class ImageLoader(appionLoop2.AppionLoop):
 		# This updates the pixel size for the magnification on the
 		# instruments before the image is published.  Later query will look up the
 		# pixelsize calibration closest and before the published image 
+		mag = info['magnification']
+		pixelsize = info['unbinned pixelsize']
 		caldata = leginon.leginondata.PixelSizeCalibrationData()
-		caldata['magnification'] = info['magnification']
-		caldata['pixelsize'] = info['unbinned pixelsize']
+		caldata['magnification'] = mag
+		caldata['pixelsize'] = pixelsize
 		caldata['comment'] = 'based on uploaded pixel size'
 		caldata['session'] = self.session
 		caldata['tem'] = self.temdata
 		caldata['ccdcamera'] = self.camdata
-		self.publish(caldata)
-		time.sleep(1.0)
+		# If this pixel size is not what last entered in this upload,
+		# force db insert even if the same values exists because someone might 
+		# have changed the calibration earlier and now you need to change it back
+		if mag in self.pixelsizes.keys() and pixelsize == self.pixelsizes[mag]:
+			return
+		else:
+			self.publish(caldata, dbforce=True)
+			self.pixelsizes[mag] = pixelsize
+			time.sleep(1.0)
 
 #=====================
 #=====================
