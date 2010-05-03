@@ -320,8 +320,9 @@ def printCtfSummary(params):
 		for ctfvalue in ctfvalues:
 			conf1 = ctfvalue['confidence']
 			conf2 = ctfvalue['confidence_d']
+			confcc = ctfvalue['cross_correlation']
+			conf1 = max(conf1,confcc)
 			if conf1 > 0 and conf2 > 0:
-				#conf = max(conf1,conf2)
 				conf = math.sqrt(conf1*conf2)
 				if conf > bestconf:
 					bestconf = conf
