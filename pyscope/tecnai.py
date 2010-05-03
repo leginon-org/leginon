@@ -73,6 +73,7 @@ class Tecnai(tem.TEM):
 		self.mainscreenscale = 44000.0 / 50000.0
 
 		## figure out which intensity property to use
+		## try to move this to installation
 		try:
 			ia = self.tecnai.Illumination.IlluminatedArea
 		except:
@@ -234,17 +235,18 @@ class Tecnai(tem.TEM):
 		self.tecnai.Gun.HTValue = ht
 	
 	def getIntensity(self):
-		return float(self.tecnai.Illumination.Intensity)
-	
+		intensity = getattr(self.tecnai.Illumination, self.intensity_prop)
+		return float(intensity)
+
 	def setIntensity(self, intensity, relative = 'absolute'):
 		if relative == 'relative':
-			intensity += self.tecnai.Illumination.Intensity
+			intensity += getattr(self.tecnai.Illumination, self.intensity_prop)
 		elif relative == 'absolute':
 			pass
 		else:
 			raise ValueError
 		
-		self.tecnai.Illumination.Intensity = intensity
+		setattr(self.tecnai.Illumination, self.intensity_prop, intensity)
 
 	def getDarkFieldMode(self):
 		if self.tecnai.Illumination.DFMode == win32com.client.constants.dfOff:
