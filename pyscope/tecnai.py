@@ -81,6 +81,15 @@ class Tecnai(tem.TEM):
 		else:
 			self.intensity_prop = 'IlluminatedArea'
 
+		## figure out which intensity property to use
+		## try to move this to installation
+		try:
+			p = self.tecnai.Vacuum.Gauges('PPcl')
+		except:
+			self.pressure_prop = 'P4'
+		else:
+			self.pressure_prop = 'PPcl'
+
 	def getMagnificationsInitialized(self):
 		if self.magnifications:
 			return True
@@ -1008,7 +1017,7 @@ class Tecnai(tem.TEM):
 			return 'unknown'
 
 	def getColumnPressure(self):
-		return float(self.tecnai.Vacuum.Gauges('P4').Pressure)
+		return float(self.tecnai.Vacuum.Gauges(self.pressure_prop).Pressure)
 
 	def getObjectiveExcitation(self):
 		return float(self.tecnai.Projection.ObjectiveExcitation)
