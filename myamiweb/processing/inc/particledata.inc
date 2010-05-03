@@ -945,7 +945,8 @@ class particledata {
 			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
 		$q .= " AND c.`graph1` IS NOT NULL ";
 		if ($ctffind) $q .= "AND r.`REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
-		$q .= "ORDER BY (c.`confidence`*c.`confidence_d`) DESC";
+		if ($ctffind) $q .="ORDER BY (c.`cross_correlation`) DESC";
+		else $q .= "ORDER BY (c.`confidence`*c.`confidence_d`) DESC";
 		if ($order) {
 			$fields = $order['fields'];
 			$q .= " order by ".join(", ",$fields);
