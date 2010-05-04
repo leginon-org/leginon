@@ -51,10 +51,18 @@ class Gatan(ccdcamera.CCDCamera):
             ('AFGetSlitWidth', 'getEnergyFilterWidth'),
             ('AFSetSlitWidth', 'setEnergyFilterWidth'),
             ('AFDoAlignZeroLoss', 'alignEnergyFilterZeroLossPeak'),
+            ('IFCGetSlitState', 'getEnergyFilter'),
+            ('IFCSetSlitState', 'setEnergyFilter'),
+            ('IFCGetSlitWidth', 'getEnergyFilterWidth'),
+            ('IFCSetSlitWidth', 'setEnergyFilterWidth'),
+            ('IFCDoAlignZeroLoss', 'alignEnergyFilterZeroLossPeak'),
         ]
 
+        self.filter_functions = {}
         for name, method_name in self.script_functions:
-            if not self.hasScriptFunction(name):
+            if self.hasScriptFunction(name):
+                self.filter_functions[method_name] = name
+            else:
                 self.unsupported.append(method_name)
 
     def __getattribute__(self, attr_name):
@@ -233,32 +241,31 @@ class Gatan(ccdcamera.CCDCamera):
         return True
 
     def getEnergyFilter(self):
-        script = 'if(IFCGetSlitIn()) Exit(1.0) else Exit(-1.0)'
+        script = 'if(%s()) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['getEnergyFilter'],)
         result = self.camera.ExecuteScript(script)
         return result > 0.0
 
     def setEnergyFilter(self, value):
-        script = 'IFCSetSlitIn(%d)'
         if value:
-            script %= 1
+            i = 1
         else:
-            script %= 0
+            i = 0
+        script = '%s(%d)' % (self.filter_functions['setEnergyFilter'], i)
         self.camera.ExecuteScript(script)
 
     def getEnergyFilterWidth(self):
-        script = 'Exit(AFGetSlitWidth())'
+        script = 'Exit(%s())' % (self.filter_functions['getEnergyFilterWidth'],)
         result = self.camera.ExecuteScript(script)
         return result
 
     def setEnergyFilterWidth(self, value):
-        script = 'if(AFSetSlitWidth(%f)) Exit(1.0) else Exit(-1.0)'
-        script %= value
+        script = 'if(%s(%f)) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['setEnergyFilterWidth'], value)
         result = self.camera.ExecuteScript(script)
         if result < 0.0:
             raise RuntimeError('unable to set energy filter width')
 
     def alignEnergyFilterZeroLossPeak(self):
-        script = 'if(AFDoAlignZeroLoss()) Exit(1.0) else Exit(-1.0)'
+        script = 'if(%s()) Exit(1.0) else Exit(-1.0)' % (self.filter_functions['alignEnergyFilterZeroLossPeak'],)
         result = self.camera.ExecuteScript(script)
         if result < 0.0:
             raise RuntimeError('unable to align energy filter zero loss peak')
