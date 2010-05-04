@@ -2,6 +2,7 @@ import numpy
 import os
 from pyami.ordereddict import OrderedDict 
 from pyami import weakattr
+import array
 
 class FileReference(object):
 	'''
@@ -83,8 +84,18 @@ class TypedDict(OrderedDict):
 			except KeyError:
 				pass
 
+def validateStr(obj):
+	if isinstance(obj, str):
+		return obj
+	elif isinstance(obj, array.array):
+		return obj.tostring()
+	else:
+		return str(obj)
+
+registerValidator(str, validateStr)
+
 ## most common types are their own validator
-for t in (bool, complex, dict, float, int, list, long, type(None), str, tuple):
+for t in (bool, complex, dict, float, int, list, long, type(None), tuple):
 	registerValidator(t, t)
 
 ## other types we define here, and validators too
