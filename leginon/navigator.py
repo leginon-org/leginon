@@ -136,7 +136,11 @@ class Navigator(node.Node):
 		else:
 			check=False
 		self.startTimer('move')
-		status = self.move(rows, cols, movetype, precision, accept_precision, check, preset=preset, final_imageshift=final_imageshift)
+		# Force cycle_after to True because PresetsManager does not know that preset
+		# has been changed by Navigator and will not cycle on the first target.  
+		# Later targets in the list do cycle according to PresetsManager settings
+		# even if Navigator settings['cycle after'] is off
+		status = self.move(rows, cols, movetype, precision, accept_precision, check, preset=preset, final_imageshift=final_imageshift, cycle_after=True)
 		self.stopTimer('move')
 
 		evt = event.MoveToTargetDoneEvent(status=status, target=targetdata)
@@ -282,7 +286,7 @@ class Navigator(node.Node):
 		self.logger.info('preset cycle')
 		self.presetsclient.toScope(preset['name'], keep_shift=keep_shift)
 
-	def move(self, row, col, movetype, precision=0.0, accept_precision=1e-3, check=False, preset=None, final_imageshift=False):
+	def move(self, row, col, movetype, precision=0.0, accept_precision=1e-3, check=False, preset=None, cycle_after=True, final_imageshift=False):
 		self.setStatus('processing')
 		self.origimagedata = self.newimagedata
 		self.origmove = row,col
@@ -332,7 +336,7 @@ class Navigator(node.Node):
 					self._move(r, c, 'image shift')
 					
 				self.logger.info('move correction done, status: %s' % (status,))
-				if self.settings['cycle after']:
+				if self.settings['cycle after'] or cycle_after:
 					self.cycleToPreset(preset, keep_shift=True)
 
 		self.setStatus('idle')
