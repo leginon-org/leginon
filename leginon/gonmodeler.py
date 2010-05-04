@@ -252,7 +252,6 @@ class GonModeler(calibrator.Calibrator):
 		return
 
 	def setModelDefaults(self):
-		print "stopped and changed"
 		self.settings['model label'] = self.settings['measure label']
 		self.settings['model axis'] = self.settings['measure axis']
 		currentmag,allmags = self.getMagnification()

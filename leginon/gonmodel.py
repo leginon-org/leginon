@@ -59,9 +59,6 @@ class GonData:
 		self.mag = float(headlines[0][0])
 		self.axis = headlines[1][0]
 
-		print 'mag', self.mag
-		print 'axis', self.axis
-
 		datalines = lines[2:]
 		datapoints = self.datalines2floats(datalines)
 		self.process_data(datapoints)
@@ -93,7 +90,6 @@ class GonData:
 			n += 1
 
 		self.ndata = n
-		print 'NNN', n
 		self.avg /= n
 		self.avg = 1.0 / self.avg
 		self.angle /= n
