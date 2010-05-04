@@ -2,13 +2,14 @@
 require "config.php";
 require "inc/mysql.inc";
 
-$databases[]=$DB;
+$databases[]=DB_LEGINON;
+$databases[]=DB_PROJECT;
 //$databases[]="ap172";
 
-$s_db=($_POST['s_db']) ? $_POST['s_db'] : $DB;
+$s_db=($_POST['s_db']) ? $_POST['s_db'] : DB_LEGINON;
 $dbchanged=($s_db==$_POST['db_memo']) ? false : true;
 
-$dbc=new mysql($DB_HOST, $DB_USER, $DB_PASS, $s_db);
+$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, $s_db);
 $tables = $dbc->getTables();
 
 $table = (!empty($_POST['table'])) ? $_POST['table'] : $tables[0];
