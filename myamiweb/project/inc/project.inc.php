@@ -380,6 +380,8 @@ class project {
 
 	function getProjectOwners($projectId) {
 		$q='SELECT concat(u.firstname," ",u.lastname) `full name`, '
+			.'u.firstname as firstname, '
+			.'u.lastname as lastname, '
 			.'u.`DEF_id` userId '
 			.'FROM projectowners o '
 			.'left join '.DB_LEGINON.'.UserData u '
