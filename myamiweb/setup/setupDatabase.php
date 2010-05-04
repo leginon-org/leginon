@@ -3,6 +3,13 @@
 require_once('template.inc');
 require_once('setupUtils.inc');
 
+	setupUtils::checkSession();
+	$update = false;	
+	if($_SESSION['loginCheck']){
+		require_once(CONFIG_FILE);
+		$update = true;
+	}
+
 	$template = new template;
 	$template->wizardHeader("Step 3 : Setup your MySQL database server parameters");
 	
@@ -15,8 +22,6 @@ require_once('setupUtils.inc');
 			$value = trim($value);
 			echo "<input type='hidden' name='".$key."' value='".$value."' />";
 		}
-		//echo "<input type='hidden' name='gp_user' value='users' />";
-		echo "<input type='hidden' name='def_processing_prefix' value='ap' />";
 	?>
 		<font style="color: red">Web Tools require one database for Leginon, one database for manage all your projects,<br />
 		and at least one database for Appion. (example : "dbemdata", "project", "ap100")<br />
@@ -25,28 +30,24 @@ require_once('setupUtils.inc');
 		Database setup</a> for more detail information before you fill in this form.</font><br /><br />
 		<h3>Enter the Database Host Name:</h3>
 		<p>example: "localhost", or IP</p>
-		<input type="text" size=20 name="db_host" value="" /><br /><br />
+		<input type="text" size=20 name="db_host" <?php ($update)? print("value='".DB_HOST."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter the Database username:</h3>
 		<p>This is the web database user, it needs to have full access to Leginon and Project databases<br />
 		   It also needs to have the ability to create Appion databases.</p>
-		<input type="text" size=20 name="db_user" value="" /><br /><br />
+		<input type="text" size=20 name="db_user" <?php ($update)? print("value='".DB_USER."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter the Database password:</h3>
 		<p>If no password required, leave it blank.</p>
-		<input type="text" size=20 name="db_pass" value="" /><br /><br />
+		<input type="text" size=20 name="db_pass" <?php ($update)? print("value='".DB_PASS."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter the Leginon database name:</h3>
 		<p>example: "leginondb"</p>
-		<input type="text" size=20 name="db_leginon" value="" /><br /><br />
+		<input type="text" size=20 name="db_leginon" <?php ($update)? print("value='".DB_LEGINON."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter the Project database name:</h3>
 		<p>example: "projectdb"</p>
-		<input type="text" size=20 name="db_project" value="" /><br /><br />
-		<br />
-		<h3>Enter Appion database prefix:</h3>
-		<p>We recommend to use 'ap' as Appion database prefix.</p>
-		<input type="text" size=5 name="def_processing_prefix" value="ap" /><br /><br />
+		<input type="text" size=20 name="db_project" <?php ($update)? print("value='".DB_PROJECT."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		
 		<input type="submit" value="NEXT" />

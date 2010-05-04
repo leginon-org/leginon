@@ -1,7 +1,8 @@
 <?php
+
 class template{
 	
-	function wizardHeader($title, $cssfile){
+	function wizardHeader($title, $cssfile = "../css/setup.css"){
 
 		$html = "<html><head>\n";
 		$html .= "<title>$title</title>\n";

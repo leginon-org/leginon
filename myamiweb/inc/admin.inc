@@ -8,11 +8,6 @@
  */
 require_once('inc/leginon.inc');
 
-if ($leginondata->mysql->checkDBConnection()) {
-	$leginondata->importTables(DEF_TABLES_FILE);
-	$leginondata->addDefaultGroupData();
-}
-
 function admin_header($javascriptinit="") {
 login_header();
 

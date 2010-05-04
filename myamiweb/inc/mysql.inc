@@ -21,7 +21,7 @@ class mysql {
 		);
 	var $crlf = "\n";
 
-	function mysql ($db_host, $db_user, $db_pass, $db) {
+	function mysql ($db_host, $db_user, $db_pass, $db=null) {
 		$this->db_host	= $db_host;
 		$this->db_user	= $db_user;
 		$this->db_pass	= $db_pass;
@@ -47,7 +47,15 @@ class mysql {
 			$this->mysqlerrornb = mysql_errno();
 			return False;
 		}
-		$db = mysql_select_db($this->db, $link);
+
+		if(!empty($this->db))
+			$link = $this->select_db($this->db, $link);
+		return $link;
+	}
+	
+	function select_db($database , $link) {
+		
+		$db = mysql_select_db($database, $link);
 		if(!$db) {
 			$this->mysqlerror = "Error: ".mysql_error();
 			$this->mysqlerrornb = mysql_errno();
@@ -83,7 +91,18 @@ class mysql {
 			}
 		return $table_exists;
 	}
-
+	
+	function listTables(){
+		
+		$Rtables = $this->SQLQuery("SHOW TABLES");
+	    
+		$listOfTables = array();
+		while($table = mysql_fetch_array($Rtables))
+			$listOfTables[] = $table[0];
+		
+		return $listOfTables;
+	}
+	
 	function getSQLTableDefinition($table) {
 
 	    $crlf = $this->crlf;
@@ -275,7 +294,7 @@ class mysql {
 			$sql .= join(' AND ', $sqlformat);
 		return $sql;
 	}
-
+	
 	function array_to_select($data) {
 		if (!$data || !is_array($data))
 			return False;

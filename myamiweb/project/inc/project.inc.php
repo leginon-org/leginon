@@ -125,18 +125,10 @@ class project {
 			$this->mysql->dbError();
 	}
 	
-	// We won't use this install function anymore.
-	// move to inital setup wizard.
-	function install() {
-		$q='SELECT value '
-				.'FROM install '
-				.'WHERE `key`="settable" ';
-		list($r)=$this->mysql->getSQLResult($q);
-		if ($r['value']==1) {
-			return;
-		}
+	// This install function is for setup wizard.
+	function install($defaultProjectSchema) {
 
-		$app = new XMLApplicationImport(DEF_PROJECT_TABLES_FILE);
+		$app = new XMLApplicationImport($defaultProjectSchema);
 		$sqldef = $app->getSQLDefinitionQueries();
 		$fieldtypes = $app->getFieldTypes();
 		if ($this->mysql->checkDBConnection())
@@ -145,15 +137,10 @@ class project {
 		//--- insert data;
 		foreach ((array)$sqldata as $table=>$queries) {
 			foreach($queries as $query) {
+
 					$this->mysql->SQLQuery($query,true);
 			}
 		}
-
-		$table='install';
-		$data['key']='settable';
-		$data['value']=1;
-		$this->mysql->SQLInsert($table, $data);
-
 	}
 
 	function updateProject($projectId, $name, $short_description, $long_description, $category, $funding){

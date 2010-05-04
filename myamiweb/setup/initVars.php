@@ -1,19 +1,25 @@
 <?php
-/**
- *	The Leginon software is Copyright 2003 
- *	The Scripps Research Institute, La Jolla, CA
- *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
- */
-require_once('inc/leginon.inc');
-var_dump($leginondata->mysql->getDBInfo());
-if(!$leginondata->mysql->checkDBConnection())
-	echo "DB_LEGINON is not existError in database connection. Please check your config.php file";
+require_once("../config.php");
+require_once("setupUtils.inc");
+require_once("../inc/leginon.inc");
+require_once("../project/inc/project.inc.php");
 
-if ($leginondata->mysql->checkDBConnection()) {
-	$leginondata->importTables(DEF_TABLES_FILE);
-	$leginondata->addDefaultGroupData();
-}
+$db_username = "erichou";
+$db_password = "tynOynk2";
+$db_host = "fly.scripps.edu";
+$db_database = "webtoolleginon";
+
+
+//var_dump(defined(DEF_TABLES_FILE));
+
+	//$result = $leginondata->importTables("../xml/defaulttables.xml");
+	//var_dump($result);
+	//$leginondata->addDefaultGroupData();
 
 //var_dump(gd_info());
-?>
+			//$filename = DEF_PROCESSING_TABLES_FILE;
+			//$leginondata->mysql->setSQLHost( array('db'=>$dbname) );
+			//$leginondata->importTables($filename);
+			
+	//setupUtils::installProjectDB("../xml/projectDBSchema.xml");
+	//setupUti

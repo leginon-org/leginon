@@ -2,36 +2,47 @@
 
 require_once('template.inc');
 require_once('setupUtils.inc');
+
+	session_start();
+	session_destroy();
+
+		// if no post variable, redirect back to index page
+	if(empty($_POST)){
+		header("Location: index.php");
+		exit();
+	}
 	
 	$template = new template;
-	$template->wizardHeader("Step 5 : Review your setup");
+	$template->wizardHeader("Step 6 : Review your setup");
 	
-	if($_POST['create_file']){
-		var_dump($_POST);
+	$setupUtils = new SetupUtils();
+	$setupUtils->copyFiles(CONFIG_TEMPLATE, CONFIG_FILE) or die("Can't copy file");		
+	$result = $setupUtils->editConfigFile(CONFIG_FILE, $_POST);
+	
+	if($result){
+		$fileContents = $setupUtils->fileToArray(CONFIG_FILE);
 	}
+
 ?>
 
-	<form name='wizard_form' method='POST' action='<?php echo $PHP_SELF; ?>'>
-
-	<?php 
-		foreach ($_POST as $key => $value){
-			$value = trim($value);
-			echo "<input type='hidden' name='".$key."' value='".$value."' />";
-		}
-	?>
+	<form name='wizard_form' method='POST' action='initDBTables.php'>
 		
-		<h3>Please review all the inputs you have been entered.</h3>
+		<h3>Start to build database tables and insert initial variables</h3>
+		<p>Web tools require default tables creation in both databases and some initial variables to start.<br />
+		If this is your first time setup this web tools, Please click the following button</p>
+		&nbsp;&nbsp;<input type="submit" value="Setup initial variables" />
+		<br /><br />
+		<h3>There is your config file looks like base on your inputs: </h3>
+		<p>You can change the values by coming back to this wizard</p>
 		
+		<p>
 	<?php 
-		foreach ($_POST as $key => $value){
-			echo "<p>" . strtoupper($key) . " : " . $value . "</p>";
+		foreach ($fileContents as $eachLineOfFile){
+			echo $eachLineOfFile . "<br />";
 		}
 	
 	?>
-		
-		<br />
-		<input type="hidden" name="create_file" value="true" />
-		<input type="submit" value="Create Web Tools Config file" />
+		</p>
 	</form>
 	
 <?php 

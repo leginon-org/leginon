@@ -97,20 +97,17 @@ define('WEB_ROOT',dirname(__FILE__));
 // --- $PROCESSING_HOSTS[] = array('host' => 'host1.school.edu', 'nproc' => 4); -- //
 // --- $PROCESSING_HOSTS[] = array('host' => 'host2.school.edu', 'nproc' => 8); -- //
 
-$PROCESSING_HOSTS[] = array('host' => 'host1.school.edu', 'nproc' => 8);
+// $PROCESSING_HOSTS[] = array('host' => '', 'nproc' => );
 
 // --- register your cluster config file below i.e (default_cluster.php) --- //
-$CLUSTER_CONFIGS= array (
-	'default_cluster'
-);
+$CLUSTER_CONFIGS= array ('default_cluster');
 
 // Better if Cs came out of DB, but for now...
 $DEFAULTCS = "";
 
 // --- Restrict file server if you want --- //
 // --- Add your allowed processing directory as string in the array
-$DATA_DIRS = array(
-);
+$DATA_DIRS = array();
 
 // --- myamiweb login --- //
 // Browse to the administration tools in myamiweb prior to 
