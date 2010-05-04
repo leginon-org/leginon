@@ -49,7 +49,8 @@ if ($ctfdata['angle_astigmatism']) {
 	$keys[]='defocus2';
 	$keys[]='angle_astigmatism';
 }
-$keys[]='confidence';
+if ($ctftype=='ctffind') $keys[]='cross_correlation';
+else $keys[]='confidence';
 $keys[]='confidence_d';
 
 if ($ctfdata) {
