@@ -54,7 +54,7 @@ function graphXY($prediction, $position, $correlation, $tilts, $pixel_size, $dim
 
     $graph->xaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
     $graph->xaxis->title->SetFont(FF_FONT2);
-    $graph->xaxis->title->Set("Tilt (degrees)".$dimension);
+    $graph->xaxis->title->Set("Tilt (degrees)");
 
     $graph->xaxis->SetTickLabels($tilts);
     $graph->xaxis->SetTextTickInterval(10);
