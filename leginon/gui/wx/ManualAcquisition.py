@@ -147,8 +147,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, True)
 
 	def onSettingsTool(self, evt):
-		if self.settingsdialog.ShowModal() == wx.ID_OK:
+		dialog = SettingsDialog(self,show_basic=True)
+		if dialog.ShowModal() == wx.ID_OK:
 			self.node.initSameCorrection()
+		dialog.Destroy()
 
 	def onGridTool(self, evt):
 		dialog = GridDialog(self)
@@ -306,13 +308,67 @@ class GridDialog(wx.Dialog):
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Acquisition')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		if self.show_basic:
+			sz = self.addBasicSettings()
+		else:
+			sz = self.addSettings()
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		return [sbsz]
+
+	def addBasicSettings(self):
+		sb = wx.StaticBox(self, -1, 'Low Dose')
+		sbszlowdose = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Defocus Pair')
+		sbszdefocus = wx.StaticBoxSizer(sb, wx.VERTICAL)
+
+		self.instrumentselection = leginon.gui.wx.Instrument.SelectionPanel(self)
+		self.panel.setInstrumentSelection(self.instrumentselection)
+
+		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
+		self.widgets['low dose'] = wx.CheckBox(self, -1, 'Use low dose')
+
+		szlowdose = wx.GridBagSizer(5, 5)
+		szlowdose.Add(self.widgets['low dose'], (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL)
+		szlowdose.AddGrowableCol(1)
+		sbszlowdose.Add(szlowdose, 1, wx.EXPAND|wx.ALL, 5)
+
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(self.instrumentselection, (0, 0), (1, 3), wx.EXPAND)
+		sz.Add(self.widgets['camera settings'], (1, 0), (1, 3), wx.EXPAND)
+		sz.AddGrowableCol(1)
+
+		szdefocus= wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1,'(leave both unchecked to use current defocus)')
+		szdefocus.Add(label, (0,0), (1,2))
+		self.widgets['defocus1switch'] = wx.CheckBox(self, -1, 'Defocus 1')
+		szdefocus.Add(self.widgets['defocus1switch'], (1,0), (1,1))
+		self.widgets['defocus1'] = FloatEntry(self, -1, chars=6)
+		szdefocus.Add(self.widgets['defocus1'], (1,1), (1,1))
+		self.widgets['defocus2switch'] = wx.CheckBox(self, -1, 'Defocus 2')
+		szdefocus.Add(self.widgets['defocus2switch'], (2,0), (1,1))
+		self.widgets['defocus2'] = FloatEntry(self, -1, chars=6)
+		szdefocus.Add(self.widgets['defocus2'], (2,1), (1,1))
+		sbszdefocus.Add(szdefocus, 1, wx.EXPAND|wx.ALL, 5)
+
+		sb2 = wx.GridBagSizer(5,5)
+		sb2.Add(sbszlowdose,(0,0),(1,1), wx.EXPAND)
+		sb2.Add(sbszdefocus,(1,0),(1,1), wx.EXPAND)
+
+		sba = wx.GridBagSizer(5,5)
+		sba.Add(sz,(0,0),(1,1))
+		sba.Add(sb2,(0,1),(1,1))
+		return sba
+
+	def addSettings(self):
 		sb = wx.StaticBox(self, -1, 'Main Screen')
 		sbszscreen = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Low Dose')
@@ -400,19 +456,16 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szdefocus.Add(self.widgets['defocus2'], (2,1), (1,1))
 		sbszdefocus.Add(szdefocus, 1, wx.EXPAND|wx.ALL, 5)
 
-
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
-		
 		sb2 = wx.GridBagSizer(5,5)
 		sb2.Add(sbszscreen,(0,0),(1,1), wx.EXPAND)
 		sb2.Add(sbszlowdose,(1,0),(1,1), wx.EXPAND)
 		sb2.Add(sbszdefocus,(2,0),(1,1), wx.EXPAND)
 
 		sba = wx.GridBagSizer(5,5)
-		sba.Add(sbsz,(0,0),(1,1))
+		sba.Add(sz,(0,0),(1,1))
 		sba.Add(sb2,(0,1),(1,1))
 
-		return [sba, ]
+		return sba
 
 class ManualFocusSettingsDialog(leginon.gui.wx.Dialog.Dialog):
 	def onInitialize(self):

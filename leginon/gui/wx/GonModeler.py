@@ -14,11 +14,58 @@ import leginon.gui.wx.ToolBar
 
 class SettingsDialog(leginon.gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.Calibrator.ScrolledSettings):
 	def initialize(self):
 		szcal = leginon.gui.wx.Calibrator.ScrolledSettings.initialize(self)
+		if self.show_basic:
+			sbszs = self.addBasicGonModelerSettings()
+		else:
+			sbszs = self.addGonModelerSettings()
+		return szcal + sbszs
+
+	def addBasicGonModelerSettings(self):
+		sb = wx.StaticBox(self, -1, 'Measurement')
+		sbszmeasure = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Modeling')
+		sbszmodel = wx.StaticBoxSizer(sb, wx.VERTICAL)
+
+		self.widgets['measure axis'] = Choice(self, -1, choices=self.node.axes)
+		self.widgets['measure points'] = IntEntry(self, -1, min=2, chars=5)
+		self.widgets['measure interval'] = FloatEntry(self, -1, chars=9)
+		self.widgets['model mag only'] = wx.CheckBox(self, -1,
+																									'Scale and Rotation Adjustment Only')
+		self.widgets['model terms'] = IntEntry(self, -1, chars=2)
+
+		szmeasure = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Axis:')
+		szmeasure.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmeasure.Add(self.widgets['measure axis'], (0, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Points:')
+		szmeasure.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmeasure.Add(self.widgets['measure points'], (1, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Interval')
+		szmeasure.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmeasure.Add(self.widgets['measure interval'], (2, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		sbszmeasure.Add(szmeasure, 1, wx.EXPAND|wx.ALL, 5)
+
+		szmodel = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Terms:')
+		szmodel.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmodel.Add(self.widgets['model terms'], (0, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		szmodel.Add(self.widgets['model mag only'], (1, 0), (1, 2), wx.ALIGN_CENTER)
+		szmodel.AddGrowableCol(1)
+		
+		sbszmodel.Add(szmodel, 1, wx.EXPAND|wx.ALL, 5)
+
+		return [sbszmeasure, sbszmodel]
+
+	def addGonModelerSettings(self):
 		sb = wx.StaticBox(self, -1, 'Measurement')
 		sbszmeasure = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Modeling')
@@ -86,11 +133,11 @@ class ScrolledSettings(leginon.gui.wx.Calibrator.ScrolledSettings):
 
 		sbszmodel.Add(szmodel, 1, wx.EXPAND|wx.ALL, 5)
 
-		return szcal + [sbszmeasure, sbszmodel]
+		return [sbszmeasure, sbszmodel]
 
 class Panel(leginon.gui.wx.Calibrator.Panel):
 	icon = 'sine'
-	settingsclass = SettingsDialog
+	settingsdialogclass = SettingsDialog
 	def initialize(self):
 		leginon.gui.wx.Calibrator.Panel.initialize(self)
 		self.toolbar.Realize()
@@ -112,6 +159,11 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 											id=leginon.gui.wx.ToolBar.ID_MEASURE)
 		self.node.settings['measure label'] =  self.node.session['name']
 		self.node.setSettings(self.node.settings)
+
+	def onSettingsTool(self, evt):
+		dialog = self.settingsdialogclass(self,show_basic=True)
+		dialog.ShowModal()
+		dialog.Destroy()
 
 	def onMeasurementDone(self, evt):
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_MEASURE, True)

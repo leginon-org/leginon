@@ -18,15 +18,28 @@ import leginon.gui.wx.Instrument
 
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
-		scr = ScrolledSettings(self,self.scrsize,False)
-		return scr
+		return ScrolledSettings(self,self.scrsize,False,False)
 
 class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		if self.show_basic:
+			sz = self.addBasicSettings()
+		else:
+			sz = self.addSettings()
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
+		return [sbsz]
 
+	def addBasicSettings(self):
+		self.widgets['override preset'] = wx.CheckBox(self, -1, 'Override Preset')
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(self.widgets['override preset'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.AddGrowableCol(0)
+		return sz
+
+	def addSettings(self):
 		self.widgets['correlation type'] = Choice(self, -1, choices=self.node.cortypes)
 		self.widgets['override preset'] = wx.CheckBox(self, -1, 'Override Preset')
 		self.widgets['instruments'] = leginon.gui.wx.Instrument.SelectionPanel(self)
@@ -50,14 +63,11 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.AddGrowableRow(2)
 		sz.AddGrowableCol(0)
 		sz.AddGrowableCol(1)
-
-		sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
-
-		return [sbsz]
+		return sz
 
 class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin):
 	imageclass = leginon.gui.wx.TargetPanel.TargetImagePanel
-	settingsclass = SettingsDialog
+	settingsdialogclass = SettingsDialog
 	def __init__(self, *args, **kwargs):
 		leginon.gui.wx.Node.Panel.__init__(self, *args, **kwargs)
 		leginon.gui.wx.Instrument.SelectionMixin.__init__(self)
@@ -104,7 +114,6 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 	def onNodeInitialized(self):
 		leginon.gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
-		self.settingsdialog = self.settingsclass(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
@@ -135,7 +144,9 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		threading.Thread(target=self.node.acquireImage).start()
 
 	def onSettingsTool(self, evt):
-		self.settingsdialog.ShowModal()
+		dialog = self.settingsdialogclass(self,show_basic=True)
+		dialog.ShowModal()
+		dialog.Destroy()
 
 	def onCalibrateTool(self, evt):
 		raise NotImplementedError
