@@ -160,19 +160,6 @@ class TargetTransformer(targethandler.TargetHandler):
 			return mymatrix
 
 	def calculateMatrix(self, image1, image2):
-		## Debugging...
-		print 'IMAGE DBID', image1.dbid
-		print 'IMAGE PATH', image1.getpath()
-		print 'IMAGE FILENAME', image1.filename()
-		fileref = image1.special_getitem('image', dereference=False)
-		import sinedon.newdict
-		import numpy
-		if isinstance(fileref, sinedon.newdict.FileReference):
-			print 'FILEREF PATH', fileref.path
-			print 'FILEREF FILENAME', fileref.filename
-		elif isinstance(fileref, numpy.ndarray):
-			print 'FILEREF ALREADY READ'
-		## End debugging
 		array1 = image1['image']
 		array2 = image2['image']
 		shape = array1.shape
@@ -181,8 +168,6 @@ class TargetTransformer(targethandler.TargetHandler):
 		reg = self.registrations[regtype]
 		self.logger.info('Calculating main transform. Registration: %s' % (regtype,))
 		matrix = reg.registerImageData(image1,image2)
-		print "---target transform matrix----"
-		print matrix
 		self.logger.info('Target transform matrix calculated')
 		matrixquery = leginondata.TransformMatrixData()
 		matrixquery['session'] = self.session
