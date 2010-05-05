@@ -146,6 +146,8 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def addTomoSettings(self):
 		tiltsb = wx.StaticBox(self, -1, 'Tilt')
 		tiltsbsz = wx.StaticBoxSizer(tiltsb, wx.VERTICAL)
+		equalslopesb = wx.StaticBox(self, -1, 'Equally Slopped')
+		equalslopesbsz = wx.StaticBoxSizer(equalslopesb, wx.VERTICAL)
 		expsb = wx.StaticBox(self, -1, 'Exposure')
 		expsbsz = wx.StaticBoxSizer(expsb, wx.VERTICAL)
 		bcsb = wx.StaticBox(self, -1, 'Before Collection')
@@ -173,6 +175,8 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 												allownone=False,
 												chars=7,
 												value='0.0')
+		self.widgets['equally sloped'] = wx.CheckBox(self, -1, 'Use Equal Slope')
+		self.widgets['equally sloped n'] = IntEntry(self, -1, min=2, allownone=False, chars=5, value='8')
 
 		tiltsz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min.')
@@ -186,13 +190,22 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		label = wx.StaticText(self, -1, 'Start')
 		tiltsz.Add(label, (0, 4), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
 		tiltsz.Add(self.widgets['tilt start'], (0, 5), (1, 1),
-					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Step')
 		tiltsz.Add(label, (0, 6), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
 		tiltsz.Add(self.widgets['tilt step'], (0, 7), (1, 1),
-					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'degree(s)')
 		tiltsz.Add(label, (0, 8), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		equalslopesz = wx.GridBagSizer(5, 5)
+		equalslopesz.Add(self.widgets['equally sloped'], (0, 0), (1, 2),
+					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+		equalslopesz.Add(self.widgets['equally sloped n'], (1, 0), (1, 1),
+					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'tilts in 180 degree range (power of 2)')
+		equalslopesz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		equalslopesbsz.Add(equalslopesz, 0, wx.EXPAND|wx.ALL, 5)
+		tiltsz.Add(equalslopesbsz, (0, 9), (1, 2), wx.EXPAND|wx.ALL, 5)
 		tiltsbsz.Add(tiltsz, 0, wx.EXPAND|wx.ALL, 5)
 
 		self.widgets['dose'] = FloatEntry(self, -1, min=0.0,
@@ -330,6 +343,8 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 			chars=6, value='0.0')
 		self.widgets['offset2'] = FloatEntry(self, -1, allownone=False,
 			chars=6, value='0.0')
+		self.widgets['z0'] = FloatEntry(self, -1, allownone=False,
+			chars=6, value='0.0')
 		self.widgets['z0 error'] = FloatEntry(self, -1, min=0.0,
 			allownone=False, chars=6, value='2e-6')
 		self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the tilt axis parameters fixed')
@@ -369,10 +384,18 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		offsetsz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		offsetsz.Add(self.widgets['offset2'],
 				   (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		z0sz = wx.GridBagSizer(2, 2)
+		label = wx.StaticText(self, -1, 'Z0:')
+		z0sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		z0sz.Add(self.widgets['z0'],
+				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'um')
+		z0sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		
 		optsz = wx.GridBagSizer(5, 10)
 		optsz.Add(phisz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		optsz.Add(offsetsz, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
+		optsz.Add(z0sz, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		optbsz.Add(optsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 		optsz.AddGrowableCol(0)
 		

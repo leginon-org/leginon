@@ -32,8 +32,8 @@ class Tomography(leginon.acquisition.Acquisition):
 		'tilt max': 60.0,
 		'tilt start': 0.0,
 		'tilt step': 1.0,
-#		'equally sloped': False,
-#		'equally sloped n': 8,
+		'equally sloped': False,
+		'equally sloped n': 8,
 		'xcf bin': 1,
 		'run buffer cycle': True,
 		'align zero loss peak': True,
@@ -54,6 +54,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		'phi2': 0.0,
 		'offset': 0.0,
 		'offset2': 0.0,
+		'z0': 0.0,
 		'fixed model': False,
 		'use lpf': True,
 #		'use wiener': False,
@@ -109,12 +110,12 @@ class Tomography(leginon.acquisition.Acquisition):
 
 	def update(self):
 		try:
-			self.tilts.update(equally_sloped=False,
+			self.tilts.update(equally_sloped=self.settings['equally sloped'],
 							  min=math.radians(self.settings['tilt min']),
 							  max=math.radians(self.settings['tilt max']),
 							  start=math.radians(self.settings['tilt start']),
 							  step=math.radians(self.settings['tilt step']),
-							  n=8)
+							  n=self.settings['equally sloped n'])
 		except ValueError, e:
 			self.logger.warning('Tilt parameters invalid: %s.' % e)
 		else:
@@ -340,6 +341,7 @@ class Tomography(leginon.acquisition.Acquisition):
 			## acquire parent preset image, final image
 			imagedata1 = self.acquireCorrectedCameraImageData(1)
 
+			self.presetsclient.toScope(preset_name)
 			## return to tomography preset
 			if emtarget['movetype'] == 'image shift':
 				presetdata = self.presetsclient.getPresetFromDB(preset_name)
@@ -463,7 +465,8 @@ class Tomography(leginon.acquisition.Acquisition):
 					axis_offset = offsetlist[0]
 					phi = math.radians(philist[0])
 				optical_axis = axis_offset*(1e-6)/presetimage_pixel_size
-				params = [phi, optical_axis, 0]
+				custom_z0 = self.settings['z0']*(1e-6)/presetimage_pixel_size
+				params = [phi, optical_axis, custom_z0]
 			else:
 				params = [0, 0, 0]
 		else:
