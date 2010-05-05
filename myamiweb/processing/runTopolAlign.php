@@ -120,7 +120,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$endnumcls = ($_POST['endnumcls']) ? $_POST['endnumcls'] : $numpart/50;
 	$mask = ($_POST['mask']) ? $_POST['mask'] : 100;
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '4';
-	$iter = ($_POST['iter']) ? $_POST['iter'] : '15';
+	$iter = ($_POST['iter']) ? $_POST['iter'] : '10';
 	// topology alignment parameters
 	$itermult = ($_POST['itermult']) ? $_POST['itermult'] : '10';
 	$learn = ($_POST['learn']) ? $_POST['learn'] : '0.01';
@@ -353,7 +353,7 @@ function runTopolAlign() {
 	$command.="--age=$age ";
 	$command.="--mramethod=$mramethod ";
 
-	if ($nproc && $nproc>1)
+	if ($nproc)
 		$command.="--nproc=$nproc ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
