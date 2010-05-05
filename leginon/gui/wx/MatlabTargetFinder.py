@@ -47,6 +47,11 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.Bind(leginon.gui.wx.Events.EVT_FOUND_TARGETS, self.onFoundTargets)
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 
+	def onSettingsTool(self, evt):
+		dialog = SettingsDialog(self,show_basic=True)
+		dialog.ShowModal()
+		dialog.Destroy()
+
 	def onImageSettings(self, evt):
 		if evt.name == 'Image':
 			dialog = OriginalSettingsDialog(self,'Image')
@@ -113,29 +118,32 @@ class OriginalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 class SettingsDialog(leginon.gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 	def initialize(self):
 		tfsbsz = leginon.gui.wx.TargetFinder.ScrolledSettings.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Matlab Module')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		#leginon.gui.wx.Settings.Dialog.initialize(self)
+		if self.show_basic:
+			return tfsbsz
+		else:
+			sb = wx.StaticBox(self, -1, 'Matlab Module')
+			sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+			#leginon.gui.wx.Settings.Dialog.initialize(self)
 
-#		self.widgets['test image'] = filebrowse.FileBrowseButton(self,
-#								labelText='Test Image:', fileMask='*.mrc')
-		self.widgets['module path'] = filebrowse.FileBrowseButton(self,
-								labelText='Matlab File:', fileMask='*.m')
+	#		self.widgets['test image'] = filebrowse.FileBrowseButton(self,
+	#								labelText='Test Image:', fileMask='*.mrc')
+			self.widgets['module path'] = filebrowse.FileBrowseButton(self,
+									labelText='Matlab File:', fileMask='*.m')
 
-		sz = wx.GridBagSizer(5, 5)
-#		sz.Add(self.widgets['test image'], (0, 0), (1, 1),
-#						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['module path'], (1, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+			sz = wx.GridBagSizer(5, 5)
+	#		sz.Add(self.widgets['test image'], (0, 0), (1, 1),
+	#						wx.ALIGN_CENTER_VERTICAL)
+			sz.Add(self.widgets['module path'], (1, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
 
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+			sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
-		return tfsbsz + [sbsz]
+			return tfsbsz + [sbsz]
 
 if __name__ == '__main__':
 	class App(wx.App):

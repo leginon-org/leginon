@@ -48,6 +48,11 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 
+	def onSettingsTool(self, evt):
+		dialog = SettingsDialog(self,show_basic=True)
+		dialog.ShowModal()
+		dialog.Destroy()
+
 	def onImageSettings(self, evt):
 		if evt.name == 'Original':
 			dialog = OriginalSettingsDialog(self)
@@ -391,22 +396,25 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 class SettingsDialog(leginon.gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
-		return ScrolledSettings(self,self.scrsize,False)
+		return ScrolledSettings(self,self.scrsize,False,self.show_basic)
 
 class ScrolledSettings(leginon.gui.wx.TargetFinder.ScrolledSettings):
 	def initialize(self):
 		tfsd = leginon.gui.wx.TargetFinder.ScrolledSettings.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Raster Finder Settings')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		if self.show_basic:
+			return tfsd
+		else:
+			sb = wx.StaticBox(self, -1, 'Raster Finder Settings')
+			sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		self.widgets['skip'] = wx.CheckBox(self, -1, 'Skip automated raster target making')
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.widgets['skip'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+			self.widgets['skip'] = wx.CheckBox(self, -1, 'Skip automated raster target making')
+			sz = wx.GridBagSizer(5, 5)
+			sz.Add(self.widgets['skip'], (0, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
 
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+			sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		return tfsd + [sbsz]
+			return tfsd + [sbsz]
 
 
 if __name__ == '__main__':
