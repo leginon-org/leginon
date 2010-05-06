@@ -238,12 +238,12 @@ def getSpiderHeader(filename, n=27):
 def makeSpiderHeader(dims):
 	" dims must be (nsam, nrow), or (nsam, nrow, nslice) "
 	if len(dims) == 2:
-		nsam, nrow = dims[0], dims[1]
+		nsam, nrow = dims[1], dims[0]
 		nslice = 1.0
 		iform = 1.0
 		isVolume = 0
 	elif len(dims) == 3:
-		nsam, nrow, nslice = dims[0], dims[1], dims[2]
+		nsam, nrow, nslice = dims[1], dims[0], dims[2]
 		iform = 3.0
 		isVolume = 1
 	else:
