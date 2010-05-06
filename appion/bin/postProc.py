@@ -137,12 +137,12 @@ class PostProcScript(appionScript.AppionScript):
 		modq['mask'] = self.params['mask']
 		modq['imask'] = self.params['imask']
 		if self.params['reconiterid'] is not None:
-			iterdata = appiondata.ApRefinementData.direct_query(self.params['reconiterid'])
+			iterdata = appiondata.ApRefineIterData.direct_query(self.params['reconiterid'])
 			if not iterdata:
 				apDisplay.printError("this iteration was not found in the database\n")
 			modq['iterid'] = iterdata
 		if self.params['reconid'] is not None:
-			iterdata = appiondata.ApRefinementData.direct_query(self.params['reconid'])
+			iterdata = appiondata.ApRefineIterData.direct_query(self.params['reconid'])
 			if not iterdata:
 				apDisplay.printError("this iteration was not found in the database\n")
 			modq['iterid'] = iterdata
@@ -165,9 +165,9 @@ class PostProcScript(appionScript.AppionScript):
 
 	#=====================
 	def getFscFile(self):
-		reconiterdata = appiondata.ApRefinementData.direct_query(self.params['reconiterid'])
+		reconiterdata = appiondata.ApRefineIterData.direct_query(self.params['reconiterid'])
 		fscfilename = "fsc.eotest.%d"%(reconiterdata['iteration'])
-		fscfile = os.path.join(reconiterdata['refinementRun']['path']['path'], fscfilename)
+		fscfile = os.path.join(reconiterdata['refineRun']['path']['path'], fscfilename)
 		if not os.path.isfile(fscfile):
 			apDisplay.printError("failed to find fscfile: "+fscfile)
 

@@ -25,6 +25,11 @@
       null="NOT NULL" 
     />
     <field 
+      name="DEF_timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field 
       name="value" 
       type="varchar(100)" 
       null="NOT NULL" 
@@ -180,6 +185,11 @@
       extra="auto_increment" 
     />
     <field 
+      name="DEF_timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field 
       name="gridboxId" 
       type="int(11)" 
       null="NULL" 
@@ -198,21 +208,26 @@
   </sqltable>
   <sqltable name="processingdb" >
     <field 
-      name="id" 
+      name="DEF_id" 
       type="int(20)" 
       null="NOT NULL" 
       extra="auto_increment" 
     />
+    <field 
+      name="DEF_timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
     <field
-      name="projectId" 
+      name="REF|projects|project" 
       type="int(20)" 
     />
     <field 
-      name="db" 
+      name="appiondb" 
       type="varchar(50)" 
     />
-    <key>PRIMARY KEY (`id`)</key>
-    <key>KEY `projectId` (`projectId`)</key>
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `REF|projects|project` (`REF|projects|project`)</key>
   </sqltable>
   <sqltable name="userdetails" >
     <field 
@@ -286,13 +301,13 @@
   </sqltable>
   <sqltable name="projects" >
     <field 
-      name="projectId" 
+      name="DEF_id" 
       type="int(11)" 
       null="NOT NULL" 
       extra="auto_increment" 
     />
     <field 
-      name="timestamp" 
+      name="DEF_timestamp" 
       type="timestamp" 
       default="DEFAULT 'CURRENT_TIMESTAMP'" 
     />
@@ -322,8 +337,14 @@
       null="NOT NULL" 
     />
     <field 
-      name="db" 
+      name="leginondb" 
       type="varchar(50)" 
+    />
+    <field 
+      name="hidden" 
+      type="tinyint(1)" 
+      null="NOT NULL" 
+      default="DEFAULT 0" 
     />
     <key>PRIMARY KEY (`projectId`)</key>
   </sqltable>
@@ -387,31 +408,31 @@
   </sqltable>  
   <sqltable name="projectexperiments" >
     <field 
-      name="projectexperimentId" 
+      name="DEF_id" 
       type="int(11)" 
       null="NOT NULL" 
       extra="auto_increment" 
     />
     <field 
-      name="projectId" 
+      name="DEF_timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field 
+      name="REF|projects|project" 
       type="int(11)" 
       default="DEFAULT '0'" 
       null="NOT NULL" 
     />
     <field 
-      name="name" 
-      type="varchar(100)" 
+      name="REF|leginondata|SessionData|session" 
+      type="int(11)" 
       default="DEFAULT '0'" 
       null="NOT NULL" 
     />
-    <field 
-      name="experimentsourceId" 
-      type="int(11)" 
-      null="NULL" 
-    />
-    <key>PRIMARY KEY (`projectexperimentId`)</key>
-    <key>KEY `projectId` (`projectId`)</key>
-    <key>KEY `name` (`name`)</key>
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `REF|projects|project` (`REF|projects|project`)</key>
+    <key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key>
   </sqltable>
   <sqltable name="shareexperiments" >
     <field 

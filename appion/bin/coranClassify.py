@@ -123,7 +123,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 	#=====================
 	def getNumAlignedParticles(self):
 		t0 = time.time()
-		partq = appiondata.ApAlignParticlesData()
+		partq = appiondata.ApAlignParticleData()
 		self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		partq['alignstack'] = self.alignstackdata
 		partdata = partq.query()

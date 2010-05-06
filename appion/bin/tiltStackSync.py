@@ -115,16 +115,16 @@ class tiltStackSync(appionScript.AppionScript):
 		)
 		if swap is True:
 			query += (
-				"LEFT JOIN `ApStackParticlesData` AS stpart1 "
+				"LEFT JOIN `ApStackParticleData` AS stpart1 "
 				+"	ON stpart1.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle2` "
-				+"LEFT JOIN `ApStackParticlesData` AS stpart2 "
+				+"LEFT JOIN `ApStackParticleData` AS stpart2 "
 				+"	ON stpart2.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle1` "
 			)
 		else:
 			query += (
-				"LEFT JOIN `ApStackParticlesData` AS stpart1 "
+				"LEFT JOIN `ApStackParticleData` AS stpart1 "
 				+"	ON stpart1.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle1` "
-				+"LEFT JOIN `ApStackParticlesData` AS stpart2 "
+				+"LEFT JOIN `ApStackParticleData` AS stpart2 "
 				+"	ON stpart2.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle2` "
 			)
 		query += (
@@ -214,12 +214,12 @@ class tiltStackSync(appionScript.AppionScript):
 			oldtiltparticle = apStack.getStackParticle(self.params['tiltstackid'], partdict['tilt'])
 
 			# Insert particle
-			notparticle = appiondata.ApStackParticlesData()
+			notparticle = appiondata.ApStackParticleData()
 			notparticle.update(oldnotparticle)
 			notparticle['particleNumber'] = count
 			notparticle['stack'] = notstack
 			notparticle.insert()
-			tiltparticle = appiondata.ApStackParticlesData()
+			tiltparticle = appiondata.ApStackParticleData()
 			tiltparticle.update(oldtiltparticle)
 			tiltparticle['particleNumber'] = count
 			tiltparticle['stack'] = tiltstack

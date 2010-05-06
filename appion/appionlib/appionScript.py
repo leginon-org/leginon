@@ -162,7 +162,7 @@ class AppionScript(basicScript.BasicScript):
 	#=====================
 	def getClusterJobData(self):
 		partq = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
-		clustq = appiondata.ApClusterJobData()
+		clustq = appiondata.ApAppionJobData()
 		clustq['path'] = partq
 		clustdatas = clustq.query()
 		if not clustdatas:

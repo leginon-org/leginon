@@ -22,7 +22,7 @@ if ($_POST['process']) {
 
 	$runname=$_POST['runname'];
 	$expId = $_GET['expId'];
-	$refIterId = $_GET['refinement'];
+	$refIterId = $_GET['refineIter'];
 	$ampcor=$_POST['ampcor'];
 	$lp=$_POST['lp'];
 	$yflip=$_POST['yflip'];
@@ -142,7 +142,7 @@ else createform();
 
 function createform($extra=False) {
 	$expId = $_GET['expId'];
-	$refIterId = $_GET['refinement'];
+	$refIterId = $_GET['refineIter'];
 
 	$particle = new particledata();
 

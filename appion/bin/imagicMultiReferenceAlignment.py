@@ -466,7 +466,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 				apDisplay.printError("could not find reference file: "+reffile)
 
 			### setup particle
-			alignpartq = appiondata.ApAlignParticlesData()
+			alignpartq = appiondata.ApAlignParticleData()
 			alignpartq['partnum'] = partnum
 			alignpartq['alignstack'] = self.alignstackdata
 			stackpartdata = apStack.getStackParticle(self.params['stackId'], partnum)

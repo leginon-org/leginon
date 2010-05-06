@@ -372,7 +372,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 				alignpartdata = self.getAlignParticleData(partnum, alignstackdata)
 
 				### Clustering Particle objects
-				clusterpartq = appiondata.ApClusteringParticlesData()
+				clusterpartq = appiondata.ApClusteringParticleData()
 				clusterpartq['clusterstack'] = clusterstackq
 				clusterpartq['alignparticle'] = alignpartdata
 				clusterpartq['partnum'] = partnum
@@ -386,7 +386,7 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 
 	#=====================
 	def getAlignParticleData(self, partnum, alignstackdata):
-		alignpartq = appiondata.ApAlignParticlesData()
+		alignpartq = appiondata.ApAlignParticleData()
 		alignpartq['alignstack'] = alignstackdata
 		alignpartq['partnum'] = partnum
 		alignparts = alignpartq.query(results=1)

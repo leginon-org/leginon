@@ -698,6 +698,15 @@ class AcquisitionImageData(PresetImageData):
 		)
 	typemap = classmethod(typemap)
 
+class ViewerImageStatus(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('status', str),
+			('image', AcquisitionImageData),
+			('session', SessionData),
+		)
+	typemap = classmethod(typemap)
+
 class AcquisitionImageStatsData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (

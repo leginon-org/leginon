@@ -25,7 +25,7 @@ class ScriptProgramRun(Data):
 			('username', ScriptUserName),
 			('hostname', ScriptHostName),
 			('rundir', ApPathData),
-			('job', ApClusterJobData),
+			('job', ApAppionJobData),
 			('appion_path', ApPathData),
 		)
 	typemap = classmethod(typemap)
@@ -77,7 +77,7 @@ class ScriptHostName(Data):
 		)
 	typemap = classmethod(typemap)
 
-class ApClusterJobData(Data):
+class ApAppionJobData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
@@ -205,7 +205,7 @@ class ApTiltAlignParamsData(Data):
 class ApTemplateImageData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('project|projects|project', int),
+			('REF|projectdata|projects|project', int),
 			('path', ApPathData),
 			('templatename', str),
 			('apix', float),
@@ -247,7 +247,7 @@ class ApTemplateStackData(Data):
 			('numimages', int),
 			('hidden', bool),
 			('path', ApPathData),
-			('project|projects|project', int),
+			('REF|projectdata|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -422,15 +422,15 @@ class ApMaskMakerParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('bin', int),
-			('mask type', str),
+			('mask_type', str),
 			('pdiam', int),
-			('region diameter', int),
-			('edge blur', float),
-			('edge low', float),
-			('edge high', float),
-			('region std', float),
+			('region_diameter', int),
+			('edge_blur', float),
+			('edge_low', float),
+			('edge_high', float),
+			('region_std', float),
 			('convolve', float),
-			('convex hull', bool),
+			('convex_hull', bool),
 			('libcv', bool),
 		)
 	typemap = classmethod(typemap)
@@ -532,7 +532,7 @@ class ApSyntheticStackParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class ApStackParticlesData(Data):
+class ApStackParticleData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('particleNumber', int),
@@ -561,7 +561,7 @@ class ApMaxLikeJobData(Data):
 			('runname', str),
 			('timestamp', str),
 			('path', ApPathData),
-			('project|projects|project', int),
+			('REF|projectdata|projects|project', int),
 			('finished', bool),
 			('hidden', bool),
 		)
@@ -587,7 +587,7 @@ class ApTopolRepJobData(Data):
 			('runname', str),
 			('timestamp', str),
 			('path', ApPathData),
-			('project|projects|project', int),
+			('REF|projectdata|projects|project', int),
 			('finished', bool),
 			('hidden', bool),
 		)
@@ -706,12 +706,12 @@ class ApAlignStackData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class ApAlignParticlesData(Data):
+class ApAlignParticleData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('partnum', int),
 			('alignstack', ApAlignStackData),
-			('stackpart', ApStackParticlesData),
+			('stackpart', ApStackParticleData),
 			('xshift', float),
 			('yshift', float),
 			('rotation', float),
@@ -870,14 +870,14 @@ class ApClusteringStackData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class ApClusteringParticlesData(Data):
+class ApClusteringParticleData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('partnum', int),
 			('refnum', int),
 			('clusterreference', ApClusteringReferenceData),
 			('clusterstack', ApClusteringStackData),
-			('alignparticle', ApAlignParticlesData),
+			('alignparticle', ApAlignParticleData),
 			('imagic_cls_quality', float),
 		)
 	typemap = classmethod(typemap)
@@ -901,7 +901,7 @@ class ApClusteringReferenceData(Data):
 class ApInitialModelData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('project|projects|project', int),
+			('REF|projectdata|projects|project', int),
 			('path', ApPathData),
 			('name', str),
 			('resolution', float),
@@ -912,8 +912,8 @@ class ApInitialModelData(Data):
 			('hidden', bool),
 			('md5sum', str),
 			('mass', int),
-			('original density', Ap3dDensityData),
-			('original model', ApInitialModelData),
+			('original_density', Ap3dDensityData),
+			('original_model', ApInitialModelData),
 		)
 	typemap = classmethod(typemap)
 
@@ -943,7 +943,7 @@ class Ap3dDensityData(Data):
 			('path', ApPathData),
 			('ampPath', ApPathData),
 			('symmetry', ApSymmetryData),
-			('iterid', ApRefinementData),
+			('iterid', ApRefineIterData),
 			('rctrun', ApRctRunData),
 			('otrrun', ApOtrRunData),
 			('session', leginon.leginondata.SessionData),
@@ -1014,7 +1014,7 @@ class ApOtrRunData(Data):
 
 ### this one is for all iterations
 ### generic refine table
-class ApRefinementRunData(Data):
+class ApRefineRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
@@ -1024,7 +1024,7 @@ class ApRefinementRunData(Data):
 			('stack', ApStackData),
 			('initialModel', ApInitialModelData),
 			('path', ApPathData),
-			('jobfile', ApClusterJobData),
+			('jobfile', ApAppionJobData),
 			### additional packages plugin here
 			('xmippParams', ApXmippRefineParamsData),
 			('frealignParams', ApFrealignParamsData),
@@ -1033,32 +1033,32 @@ class ApRefinementRunData(Data):
 
 ### this one is for each iteration
 ### generic refine table
-class ApRefinementData(Data):
+class ApRefineIterData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('iteration', int),
 			('exemplar',bool),
-			('classAverage', str),
+			('refineClassAverages', str),
 			('classVariance', str),
 			('volumeDensity',str),
-			('emanClassAvg',str),
-			('MsgPGoodClassAvg', str),
-			('SpiCoranGoodClassAvg',str),
-			('refinementRun', ApRefinementRunData),
+			('refineClassAverages',str),
+			('postRefineClassAverages', str),
+			('postRefineClassAverages',str),
+			('refineRun', ApRefineRunData),
 			('resolution', ApResolutionData),
 			('rMeasure', ApRMeasureData),
 			### additional packages plugin here
-			('refinementParams', ApRefinementParamsData),
+			('emanParams', ApEmanRefineIterData),
 			('xmippParams', ApXmippRefineIterData),
 		)
 	typemap = classmethod(typemap)
 
 ### this one is for each particle each iteration
-class ApParticleClassificationData(Data):
+class ApRefineParticleData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('refinement', ApRefinementData),
-			('particle', ApStackParticlesData),
+			('refineIter', ApRefineIterData),
+			('particle', ApStackParticleData),
 			('shiftx', float),
 			('shifty', float),
 			('euler1', float),
@@ -1066,16 +1066,16 @@ class ApParticleClassificationData(Data):
 			('euler3', float),
 			('quality_factor', float),
 			('mirror', bool),
-			('thrown_out',bool),
-			('msgp_keep',bool),
-			('coran_keep',bool),
+			('refine_keep',bool),
+			('postRefine_keep',bool),
+			('postRefine_keep',bool),
 			('euler_convention', str),
 		)
 	typemap = classmethod(typemap)
 
 ### this one is for each iteration
 ### EMAN only things
-class ApRefinementParamsData(Data):
+class ApEmanRefineIterData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('ang', float),
@@ -1118,7 +1118,7 @@ class ApFrealignPrepareData(Data):
 			('path', ApPathData),
 			('stack', ApStackData),
 			('model', ApInitialModelData),
-			('job', ApClusterJobData),
+			('job', ApAppionJobData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1187,13 +1187,11 @@ class ApRMeasureData(Data):
 class ApRefineGoodBadParticleData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('refine', ApRefinementData),
-			('good_normal', int),
-			('bad_normal', int),
-			('good_coran', int),
-			('bad_coran', int),
-			('good_msgp', int),
-			('bad_msgp', int),
+			('refine', ApRefineIterData),
+			('good_refine', int),
+			('bad_refine', int),
+			('good_postRefine', int),
+			('bad_postRefine', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1201,8 +1199,8 @@ class ApRefineGoodBadParticleData(Data):
 class ApEulerJumpData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('particle', ApStackParticlesData),
-			('refRun', ApRefinementRunData),
+			('particle', ApStackParticleData),
+			('refRun', ApRefineRunData),
 			('median', float),
 			('mean', float),
 			('stdev', float),
@@ -1214,7 +1212,7 @@ class ApEulerJumpData(Data):
 class ApFSCData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('refinementData', ApRefinementData),
+			('refinementData', ApRefineIterData),
 			('pix', int),
 			('value', float),
 		)
@@ -1304,7 +1302,7 @@ class ApBootstrappedAngularReconstitutionRunData(Data):
 			('clusterid', ApClusteringStackData),
 			('description', str),
 			('hidden', bool),
-			('project|projects|project', int),
+			('REF|projectdata|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1410,7 +1408,7 @@ class ApImodXcorrParamsData(Data):
 class ApProtomoParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('series name', str),
+			('series_name', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1432,10 +1430,10 @@ class ApProtomoAlignerParamsData(Data):
 		return Data.typemap() + (
 			('alignrun', ApTomoAlignmentRunData),
 			('protomo', ApProtomoParamsData),
-			('refine cycle', ApProtomoRefinementParamsData),
-			('good cycle', ApProtomoRefinementParamsData),
-			('good start', int),
-			('good end', int),
+			('refine_cycle', ApProtomoRefinementParamsData),
+			('good_cycle', ApProtomoRefinementParamsData),
+			('good_start', int),
+			('good_end', int),
 			('description', str),
 			('hidden', bool),
 		)
@@ -1446,10 +1444,10 @@ class ApTomoAlignerParamsData(Data):
 		return Data.typemap() + (
 			('alignrun', ApTomoAlignmentRunData),
 			('protomo', ApProtomoParamsData),
-			('refine cycle', ApProtomoRefinementParamsData),
-			('good cycle', ApProtomoRefinementParamsData),
-			('good start', int),
-			('good end', int),
+			('refine_cycle', ApProtomoRefinementParamsData),
+			('good_cycle', ApProtomoRefinementParamsData),
+			('good_start', int),
+			('good_end', int),
 			('description', str),
 			('hidden', bool),
 		)
@@ -1585,8 +1583,8 @@ class ApTomoAvgParticleData(Data):
 		return Data.typemap() + (
 			('avgrun', ApTomoAverageRunData),
 			('subtomo', ApTomogramData),
-			('aligned particle', ApAlignParticlesData),
-			('z shift', float),
+			('aligned_particle', ApAlignParticleData),
+			('z_shift', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1595,8 +1593,8 @@ class ApTomoAvgParticleData(Data):
 class ApMiscData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('project|projects|project', int),
-			('refinementRun', ApRefinementRunData),
+			('REF|projectdata|projects|project', int),
+			('refineRun', ApRefineRunData),
 			('session', leginon.leginondata.SessionData),
 			('fulltomogram', ApFullTomogramData),
 			('path', ApPathData),

@@ -66,7 +66,7 @@ def commitScaledStack(stackdata,params):
 
 	#loop in reverse order so that order of ptcls in db is like that of orig
 	for particle in range(len(stackdata)-1,-1,-1):
-		stackparticleq=appiondata.ApStackParticlesData()
+		stackparticleq=appiondata.ApStackParticleData()
 		stackparticleq['particleNumber']=stackdata[particle]['particleNumber']
 		stackparticleq['stack']=newstackq
 		stackparticleq['stackRun']=newstackrunq

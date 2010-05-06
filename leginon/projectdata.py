@@ -14,7 +14,6 @@ class privileges(Data):
 		)
 	typemap = classmethod(typemap)
 
-"""
 class projects(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -43,6 +42,4 @@ class processingdb(Data):
 			('project', projects),
 		)
 	typemap = classmethod(typemap)
-
-"""
 

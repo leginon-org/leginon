@@ -106,11 +106,11 @@ class subStackScript(appionScript.AppionScript):
 		apDisplay.printMsg("Querying database for particles")
 		q0 = time.time()
 		if self.params['alignid'] is not None:
-			alignpartq =  appiondata.ApAlignParticlesData()
+			alignpartq =  appiondata.ApAlignParticleData()
 			alignpartq['alignstack'] = self.alignstackdata
 			particles = alignpartq.query()
 		elif self.params['clusterid'] is not None:
-			clusterpartq = appiondata.ApClusteringParticlesData()
+			clusterpartq = appiondata.ApClusteringParticleData()
 			clusterpartq['clusterstack'] = self.clusterstackdata
 			particles = clusterpartq.query()
 		apDisplay.printMsg("Complete in "+apDisplay.timeString(time.time()-q0))

@@ -104,7 +104,7 @@ class particledata {
 		$q = "SELECT count(*) AS particles, "
 			."COUNT(DISTINCT p.`REF|ApStackData|stack`) AS stacks "
 			."FROM `ApStackData` AS s "
-			."LEFT JOIN `ApStackParticlesData` AS p "
+			."LEFT JOIN `ApStackParticleData` AS p "
 			."ON s.`DEF_id` = p.`REF|ApStackData|stack` ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
@@ -117,7 +117,7 @@ class particledata {
 		$results=array();
 		$results['stacks']=$r[0]['s'];
 		$q = "SELECT count(*) AS p "
-			."FROM `ApStackParticlesData`";
+			."FROM `ApStackParticleData`";
 		$r = $this->mysql->getSQLResult($q);
 		$results['particles']=$r[0]['p'];
 		return $results;
@@ -125,27 +125,27 @@ class particledata {
 
 	function getTotalReconStats(){
 		$q = "SELECT count(*) AS particles, "
-			."COUNT(DISTINCT p.`REF|ApRefinementData|refinement`) AS iter, "
-			."COUNT(DISTINCT i.`REF|ApRefinementRunData|refinementRun`) AS runs "
-			."FROM `ApRefinementData` AS i "
-			."LEFT JOIN `ApParticleClassificationData` AS p "
-			."ON i.`DEF_id` = p.`REF|ApRefinementData|refinement` ";
+			."COUNT(DISTINCT p.`REF|ApRefineIterData|refineIter`) AS iter, "
+			."COUNT(DISTINCT i.`REF|ApRefineRunData|refineRun`) AS runs "
+			."FROM `ApRefineIterData` AS i "
+			."LEFT JOIN `ApRefineParticleData` AS p "
+			."ON i.`DEF_id` = p.`REF|ApRefineIterData|refineIter` ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
 
 	function getSloppyTotalReconStats(){
 		$q = "SELECT count(*) AS i "
-			."FROM `ApRefinementData`";
+			."FROM `ApRefineIterData`";
 		$r = $this->mysql->getSQLResult($q);
 		$results=array();
 		$results['iter']=$r[0]['i'];
 		$q = "SELECT count(*) AS p "
-			."FROM `ApParticleClassificationData`";
+			."FROM `ApRefineParticleData`";
 		$r = $this->mysql->getSQLResult($q);
 		$results['particles']=$r[0]['p'];
 		$q = "SELECT count(*) AS r "
-			."FROM `ApRefinementRunData`";
+			."FROM `ApRefineRunData`";
 		$r = $this->mysql->getSQLResult($q);
 		$results['runs']=$r[0]['r'];
 		return $results;
@@ -497,7 +497,7 @@ class particledata {
 			."s.* "
 			."FROM ( "
 			."SELECT st.*, stpm.`DEF_id` as stackparamsid "
-			."FROM `ApStackParticlesData` as st  "
+			."FROM `ApStackParticleData` as st  "
 			."LEFT JOIN `ApStackRunData` as str "
 			."ON st.`REF|ApStackRunData|stackRun` = str.`DEF_id` "
 			."LEFT JOIN `ApStackParamsData` as stpm "
@@ -556,7 +556,7 @@ class particledata {
 			."ON  avgt.`REF|ApSubTomogramRunData|subtomorun` = sub.DEF_id "
 			."LEFT JOIN `ApStackData` stack "
 			."ON  avgt.`REF|ApStackData|stack` = stack.DEF_id "
-			."LEFT JOIN `ApStackParticlesData` stackp "
+			."LEFT JOIN `ApStackParticleData` stackp "
 			."ON  stackp.`REF|ApStackData|stack` = stack.DEF_id "
 			."LEFT JOIN `ApParticleData` p "
 			."ON  stackp.`REF|ApParticleData|particle` = p.DEF_id "
@@ -581,8 +581,8 @@ class particledata {
 			."FROM `ApTomoAvgParticleData` avgtp "
 			."LEFT JOIN `ApTomogramData` sub "
 			."ON  avgtp.`REF|ApTomogramData|subtomo` = sub.DEF_id "
-			."LEFT JOIN `ApAlignParticlesData` p "
-			."ON  avgtp.`REF|ApAlignParticlesData|aligned particle` = p.DEF_id "
+			."LEFT JOIN `ApAlignParticleData` p "
+			."ON  avgtp.`REF|ApAlignParticleData|aligned particle` = p.DEF_id "
 			."WHERE avgtp.`REF|ApTomoAverageRunData|avgrun` = " .$avgid." "
 			."AND avgtp.`REF|ApTomogramData|subtomo` = ".$subtomoid." ";
 		$r = $this->mysql->getSQLResult($q);
@@ -649,7 +649,7 @@ class particledata {
 				$selector .= ' selected ';
 				$selected_number = $aligner;
 			}
-			$shownumber = str_pad($data['refine cycle'], $length, ' ', STR_PAD_LEFT).'. ';
+			$shownumber = str_pad($data['refine_cycle'], $length, ' ', STR_PAD_LEFT).'. ';
 			$shownumber = str_replace(" ", "&nbsp;", $shownumber);
 			$selector .= '>'.$shownumber.'sampling@'.$data['align sampling'].'</option>';
 		}
@@ -672,9 +672,9 @@ class particledata {
 				$selected_aligner = $alignerid;
 			}
 			if ($runinfo['method'] == 'protomo') {
-				if ($data['refine cycle'] != 0) {
+				if ($data['refine_cycle'] != 0) {
 					$showmethod = $runinfo['method'];
-					$showstr = str_pad(': itr '.$data['refine cycle'], $length, ' ', STR_PAD_LEFT).'. ';
+					$showstr = str_pad(': itr '.$data['refine_cycle'], $length, ' ', STR_PAD_LEFT).'. ';
 					$showstr = str_replace(" ", "&nbsp;", $showstr);
 					$showstr .= ' sampling@'.$data['align sampling'];
 				} else {
@@ -1227,7 +1227,7 @@ class particledata {
 			,'subtomo'=>"subtomosummary.php?expId=$expId&fullId="
 			,'alignrun id'=>"tomoalignreport.php?expId=$expId&alignId="
 			,'alignerid'=>"protomoreport.php?expId=$expId&aId="
-			,'refine cycle'=>"protomoreport.php?expId=$expId&aId="
+			,'refine_cycle'=>"protomoreport.php?expId=$expId&aId="
 		);
 		$html  = '<tr>';
 		foreach($display_fields as $key) {
@@ -1651,8 +1651,8 @@ class particledata {
 		$rid = $this->getLastAssessmentRun($sessionId);
 		$q = "SELECT COUNT(assess.`DEF_id`) as num "
 			."FROM `ApAssessmentData` AS assess "
-			."LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
-			."  ON viewer.`imageId` = assess.`REF|leginondata|AcquisitionImageData|image` "
+			."LEFT JOIN ".DB_LEGINON.".`ViewerImageStatus` AS viewer"
+			."  ON viewer.`REF|AcquisitionImageData|image` = assess.`REF|leginondata|AcquisitionImageData|image` "
 			."WHERE "
 			." ( assess.`selectionkeep` IS NOT NULL "
 			."OR "
@@ -1668,8 +1668,8 @@ class particledata {
 			. "FROM `ApParticleData` AS p "
 			. "LEFT JOIN `ApSelectionRunData` AS r "
 			. "  ON (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
-			. "LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
-			. "  ON viewer.`imageId` = p.`REF|leginondata|AcquisitionImageData|image` "
+			. "LEFT JOIN ".DB_LEGINON.".`ViewerImageStatus` AS viewer"
+			. "  ON viewer.`REF|AcquisitionImageData|image` = p.`REF|leginondata|AcquisitionImageData|image` "
 			. "WHERE "
 			. "  viewer.`status` IS NOT NULL "
 			. " AND "
@@ -1686,8 +1686,8 @@ class particledata {
 			. "FROM `ApParticleData` AS part "
 			. "LEFT JOIN `ApSelectionRunData` AS partrun "
 			. "  ON (part.`REF|ApSelectionRunData|selectionrun` = partrun.`DEF_id`) "
-			. "LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
-			. "  ON viewer.`imageId` = part.`REF|leginondata|AcquisitionImageData|image` "
+			. "LEFT JOIN ".DB_LEGINON.".`ViewerImageStatus` AS viewer"
+			. "  ON viewer.`REF|AcquisitionImageData|image` = part.`REF|leginondata|AcquisitionImageData|image` "
 			. "LEFT JOIN `ApAssessmentData` AS assess "
 			. "  ON assess.`REF|leginondata|AcquisitionImageData|image` = part.`REF|leginondata|AcquisitionImageData|image` "
 			. "WHERE ("
@@ -1718,8 +1718,8 @@ class particledata {
 			. "FROM `ApParticleData` AS p "
 			. "LEFT JOIN `ApSelectionRunData` AS r "
 			. "  ON (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
-			. "LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
-			. "  ON viewer.`imageId` = p.`REF|leginondata|AcquisitionImageData|image` "
+			. "LEFT JOIN ".DB_LEGINON.".`ViewerImageStatus` AS viewer"
+			. "  ON viewer.`REF|AcquisitionImageData|image` = p.`REF|leginondata|AcquisitionImageData|image` "
 			. "WHERE "
 			. "  viewer.`status` = 'hidden' "
 			. "AND "
@@ -1735,8 +1735,8 @@ class particledata {
 			. "FROM `ApParticleData` AS part "
 			. "LEFT JOIN `ApSelectionRunData` AS partrun "
 			. "  ON (part.`REF|ApSelectionRunData|selectionrun` = partrun.`DEF_id`) "
-			. "LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
-			. "  ON viewer.`imageId` = part.`REF|leginondata|AcquisitionImageData|image` "
+			. "LEFT JOIN ".DB_LEGINON.".`ViewerImageStatus` AS viewer"
+			. "  ON viewer.`REF|AcquisitionImageData|image` = part.`REF|leginondata|AcquisitionImageData|image` "
 			. "LEFT JOIN `ApAssessmentData` AS assess "
 			. "  ON assess.`REF|leginondata|AcquisitionImageData|image` = part.`REF|leginondata|AcquisitionImageData|image` "
 			. "WHERE ("
@@ -1754,8 +1754,8 @@ class particledata {
 		$rid = $this->getLastAssessmentRun($sessionId);
 		$q = "SELECT COUNT(assess.`DEF_id`) as num "
 			."FROM `ApAssessmentData` AS assess "
-			."LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
-			."  ON viewer.`imageId` = assess.`REF|leginondata|AcquisitionImageData|image` "
+			."LEFT JOIN ".DB_LEGINON.".`ViewerImageStatus` AS viewer"
+			."  ON viewer.`REF|AcquisitionImageData|image` = assess.`REF|leginondata|AcquisitionImageData|image` "
 			."WHERE "
 			." assess.`selectionkeep` = 1 "
 			."AND `REF|ApAssessmentRunData|assessmentrun` = '$rid'";
@@ -1769,8 +1769,8 @@ class particledata {
 			. "FROM `ApParticleData` AS p "
 			. "LEFT JOIN `ApSelectionRunData` AS r "
 			. "  ON (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
-			. "LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
-			. "  ON viewer.`imageId` = p.`REF|leginondata|AcquisitionImageData|image` "
+			. "LEFT JOIN ".DB_LEGINON.".`ViewerImageStatus` AS viewer"
+			. "  ON viewer.`REF|AcquisitionImageData|image` = p.`REF|leginondata|AcquisitionImageData|image` "
 			. "WHERE "
 			. "  viewer.`status` = 'exemplar' "
 			. "AND "
@@ -1787,8 +1787,8 @@ class particledata {
 			. "FROM `ApParticleData` AS part "
 			. "LEFT JOIN `ApSelectionRunData` AS partrun "
 			. "  ON (part.`REF|ApSelectionRunData|selectionrun` = partrun.`DEF_id`) "
-			. "LEFT JOIN ".DB_LEGINON.".`viewer_pref_image` AS viewer"
-			. "  ON viewer.`imageId` = part.`REF|leginondata|AcquisitionImageData|image` "
+			. "LEFT JOIN ".DB_LEGINON.".`ViewerImageStatus` AS viewer"
+			. "  ON viewer.`REF|AcquisitionImageData|image` = part.`REF|leginondata|AcquisitionImageData|image` "
 			. "LEFT JOIN `ApAssessmentData` AS assess "
 			. "  ON assess.`REF|leginondata|AcquisitionImageData|image` = part.`REF|leginondata|AcquisitionImageData|image` "
 			. "WHERE ( "
@@ -1862,7 +1862,7 @@ class particledata {
 			// each run
 			$q = "SELECT `REF|ApSelectionRunData|selectionrun` as DEF_id "
 				. "FROM `ApParticleData` as p "
-				. "LEFT JOIN `ApStackParticlesData` AS sp "
+				. "LEFT JOIN `ApStackParticleData` AS sp "
 				. "ON sp.`REF|ApParticleData|particle` = p.`DEF_id` "
 				. "WHERE sp.`REF|ApStackRunData|stackRun`=".$srun['stackrun']." "
 				. "LIMIT 1 ";
@@ -1964,14 +1964,14 @@ class particledata {
 	function getClusterRefNumsFromSubStack ($substackid,$clusterstackid) {
 		$q = "SELECT "
 			."cp.`refnum` as classnum "
-			."FROM `ApClusteringParticlesData` as cp "
-			."LEFT JOIN `ApAlignParticlesData` as ap "
-			."ON cp.`REF|ApAlignParticlesData|alignparticle` = ap.`DEF_id` "
-			."LEFT JOIN `ApStackParticlesData` as pst "
-			."ON ap.`REF|ApStackParticlesData|stackpart` = pst.`DEF_id` "
+			."FROM `ApClusteringParticleData` as cp "
+			."LEFT JOIN `ApAlignParticleData` as ap "
+			."ON cp.`REF|ApAlignParticleData|alignparticle` = ap.`DEF_id` "
+			."LEFT JOIN `ApStackParticleData` as pst "
+			."ON ap.`REF|ApStackParticleData|stackpart` = pst.`DEF_id` "
 			."LEFT JOIN `ApParticleData` as pp "
 			."ON pst.`REF|ApParticleData|particle` = pp.`DEF_id` "
-			."LEFT JOIN `ApStackParticlesData` as sst "
+			."LEFT JOIN `ApStackParticleData` as sst "
 			."ON sst.`REF|ApParticleData|particle` = pp.`DEF_id` "
 			."WHERE "
 			."sst.`REF|ApStackData|stack` = ".$substackid." "
@@ -2075,7 +2075,7 @@ class particledata {
 		$q = "select spar.stackid "
 		."from ("
 		."select `REF|ApParticleData|particle` as pid, `REF|ApStackRunData|stackRun` as stackid "
-		."from ApStackParticlesData group by `REF|ApStackRunData|stackRun`) spar "
+		."from ApStackParticleData group by `REF|ApStackRunData|stackRun`) spar "
 		."left join ApParticleData p on (p.`DEF_id` = spar.pid) "
 		."left join ApSelectionRunData r on	(p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id` ) "
 		."where r.`REF|leginondata|SessionData|session` = '$sessionId'";
@@ -2188,7 +2188,7 @@ class particledata {
 		$q = "SELECT pr . `DEF_id` selectionid , "
 		." pr . `name`, "
 		." pr . `REF|leginondata|SessionData|session` as sessionId "
-		." FROM ( SELECT * FROM `ApStackParticlesData` "
+		." FROM ( SELECT * FROM `ApStackParticleData` "
 		." WHERE `REF|ApStackData|stack` = ".$stackId." "
 		." group by `REF|ApStackRunData|stackRun` ) sp1 "
 		." LEFT JOIN `ApParticleData` p "
@@ -2206,7 +2206,7 @@ class particledata {
 		."pr . `DEF_id` as selectionid  "
 		."FROM ( "
 		."SELECT st.*, stpm.`DEF_id` as stackparamsid "
-		."FROM `ApStackParticlesData` as st  "
+		."FROM `ApStackParticleData` as st  "
 		."LEFT JOIN `ApStackRunData` as str "
 		."ON st.`REF|ApStackRunData|stackRun` = str.`DEF_id` "
 		."LEFT JOIN `ApStackParamsData` as stpm "
@@ -2226,7 +2226,7 @@ class particledata {
 
 	function getStackMeanAndStdev ($stackId) {
 		$q= "SELECT stackpart.mean AS mean, stackpart.stdev AS stdev "
-			."FROM `ApStackParticlesData` AS stackpart "
+			."FROM `ApStackParticleData` AS stackpart "
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
@@ -2236,7 +2236,7 @@ class particledata {
 
 	function getNumStackParticles ($stackId) {
 		$q= "SELECT count(DEF_id) as num "
-			."FROM `ApStackParticlesData` "
+			."FROM `ApStackParticleData` "
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['num'];
@@ -2244,7 +2244,7 @@ class particledata {
 
 	function getNumStackImages ($stackId) {
 		$q= "SELECT DISTINCT im.`DEF_id` AS imgid "
-			."FROM ApStackParticlesData AS stpart "
+			."FROM ApStackParticleData AS stpart "
 			."LEFT JOIN ApParticleData AS part "
 			."ON stpart.`REF|ApParticleData|particle` = part.`DEF_id` "
 			."LEFT JOIN ".DB_LEGINON.".`AcquisitionImageData` AS im "
@@ -2257,7 +2257,7 @@ class particledata {
 	//////// fix me ////////
 	function getStackIdFromReconId ($reconId) {
 		$q= "SELECT * "
-			."FROM `ApRefinementRunData` "
+			."FROM `ApRefineRunData` "
 			."WHERE `DEF_id` = '$reconId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['REF|ApStackData|stack'];
@@ -2284,7 +2284,7 @@ class particledata {
 			." ( SELECT "
 			." p . `REF|leginondata|AcquisitionImageData|image` as image , pa . `defocpair` ,"
 			." pa.`bin` as stackbin "
-			." FROM `ApStackParticlesData` sp "
+			." FROM `ApStackParticleData` sp "
 			." LEFT JOIN `ApStackRunData` r ON "
 			." ( sp . `REF|ApStackRunData|stackRun` = r . `DEF_id` ) "
 			." LEFT JOIN `ApStackParamsData` pa ON "
@@ -2295,7 +2295,7 @@ class particledata {
 			." limit 1 ) pimage , "
 			." ( SELECT "
 			." sb . `REF|leginondata|AcquisitionImageData|image2` as image "
-			." FROM `ApStackParticlesData` sp "
+			." FROM `ApStackParticleData` sp "
 			." LEFT JOIN `ApStackRunData` r ON "
 			." ( sp . `REF|ApStackRunData|stackRun` = r . `DEF_id` ) "
 			." LEFT JOIN `ApStackParamsData` pa ON "
@@ -2484,7 +2484,7 @@ class particledata {
 
 	function getNumAlignStackParticles ($alignstackid) {
 		$q= "SELECT count(DEF_id) as num "
-			."FROM `ApAlignParticlesData` "
+			."FROM `ApAlignParticleData` "
 			."WHERE `REF|ApAlignStackData|alignstack` = '$alignstackid'";
 
 		//echo $q."<br/>\n";
@@ -3057,7 +3057,7 @@ class particledata {
 	function getJobIdsFromSession($expId, $jobtype=False, $status=False, $ignore=True) {
 		$q="SELECT j.*, "
 			."p.path as appath "
-			."FROM `ApClusterJobData` AS j "
+			."FROM `ApAppionJobData` AS j "
 			."LEFT JOIN `ApPathData` AS p ON "
 			."(j.`REF|ApPathData|path` = p.`DEF_id`) "
 			."WHERE j.`REF|leginondata|SessionData|session` = $expId";
@@ -3072,7 +3072,7 @@ class particledata {
 	function getFscFromRefinementDataId ($id) {
 		$q = "SELECT * "
 			."FROM ApFSCData "
-			."WHERE `REF|ApRefinementData|refinementData` = $id "
+			."WHERE `REF|ApRefineIterData|refineIterData` = $id "
 			."ORDER BY pix";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
@@ -3085,7 +3085,7 @@ class particledata {
 			."p.path as appath, "
 			."d.path as dmfpath, "
 			."c.path as clusterpath "
-			."FROM `ApClusterJobData` AS j "
+			."FROM `ApAppionJobData` AS j "
 			."LEFT JOIN ApPathData AS p ON "
 			."(j.`REF|ApPathData|path` = p.`DEF_id`) "
 			."LEFT JOIN ApPathData AS d ON "
@@ -3099,7 +3099,7 @@ class particledata {
 
 	function getJobFileFromPath($path,$name) {
 		$q="SELECT j.*, p.path "
-			."FROM `ApClusterJobData` AS j "
+			."FROM `ApAppionJobData` AS j "
 			."LEFT JOIN ApPathData AS p ON "
 			."(j.`REF|ApPathData|path` = p.`DEF_id`) "
 			."WHERE p.`path` = '$path' AND j.`name` = '$name'";
@@ -3140,7 +3140,7 @@ class particledata {
 		}
 		// find if job is in database
 		$q = "SELECT DEF_id "
-			."FROM `ApClusterJobData` "
+			."FROM `ApAppionJobData` "
 			."WHERE `REF|ApPathData|path` = $pathid AND "
 			."`name` = '$name' AND "
 			."`REF|leginondata|SessionData|session` = $expId";
@@ -3156,7 +3156,7 @@ class particledata {
 			$jdata['REF|ApPathData|clusterpath'] = $clusterpathid;
 			$jdata['cluster'] = $host;
 			$jdata['user'] = $user;
-			$jid=$this->mysql->SQLInsert('ApClusterJobData',$jdata);
+			$jid=$this->mysql->SQLInsert('ApAppionJobData',$jdata);
 		}
 		return $jid;
 	}
@@ -3214,19 +3214,19 @@ class particledata {
 		$data = array('clusterjobid'=>$queueid);
 		$data['status']=$status;
 		$where = array('DEF_id'=>$jobid);
-		$this->mysql->SQLUpdate('ApClusterJobData',$data,$where);
+		$this->mysql->SQLUpdate('ApAppionJobData',$data,$where);
 	}
 
 	function abortClusterJob($jobid,$user=NULL) {
 		$data = array('status'=>'A');
 		$where = array('DEF_id'=>$jobid);
 		if (!is_null($user)) $where['user'] = $user;
-		$this->mysql->SQLUpdate('ApClusterJobData',$data,$where);
+		$this->mysql->SQLUpdate('ApAppionJobData',$data,$where);
 	}
 
 	function getSubmittedJobs($expId) {
 		$q="SELECT * "
-			."FROM `ApClusterJobData` "
+			."FROM `ApAppionJobData` "
 			."WHERE `REF|leginondata|SessionData|session`=$expId";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -3234,15 +3234,15 @@ class particledata {
 
 	function getReconIdFromClusterJobId ($jobid) {
 		$q="SELECT * "
-			."FROM `ApRefinementRunData` "
-			."WHERE `REF|ApClusterJobData|jobfile` = $jobid";
+			."FROM `ApRefineRunData` "
+			."WHERE `REF|ApAppionJobData|jobfile` = $jobid";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
 
 	function getReconIdsFromSession ($sessionId, $showHidden=False) {
 		$q = "SELECT DISTINCT(refrun.`DEF_id`) AS refid, refrun.*, path.path AS path  "
-			." FROM `ApRefinementRunData` AS refrun "
+			." FROM `ApRefineRunData` AS refrun "
 			."LEFT JOIN ApRunsInStackData AS runs "
 			." ON refrun.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
 			."LEFT JOIN ApStackRunData AS stackrun "
@@ -3261,7 +3261,7 @@ class particledata {
 	function getReconIterIdRelatedToStackid ($stackId, $showHidden=False) {
 		// First get a three random particle ids from the stack id
 		$q = "SELECT `REF|ApParticleData|particle` AS partid "
-			." FROM ApStackParticlesData AS stpart "
+			." FROM ApStackParticleData AS stpart "
 			."WHERE `REF|ApStackData|stack` = '$stackId' "
 			." ORDER BY RAND() LIMIT 3 ";
 		//echo $q."<br/><br/>\n";
@@ -3273,13 +3273,13 @@ class particledata {
 
 		// Second get all recons using those particles
 		$q = "SELECT refrun.* "
-			." FROM ApParticleClassificationData AS refpart "
-			."LEFT JOIN ApStackParticlesData AS stpart "
-			." ON refpart.`REF|ApStackParticlesData|particle` = stpart.`DEF_id` "
-			."LEFT JOIN ApRefinementData AS refiter "
-			." ON refpart.`REF|ApRefinementData|refinement` = refiter.`DEF_id` "
-			."LEFT JOIN ApRefinementRunData AS refrun "
-			." ON refiter.`REF|ApRefinementRunData|refinementRun` = refrun.`DEF_id` "
+			." FROM ApRefineParticleData AS refpart "
+			."LEFT JOIN ApStackParticleData AS stpart "
+			." ON refpart.`REF|ApStackParticleData|particle` = stpart.`DEF_id` "
+			."LEFT JOIN ApRefineIterData AS refiter "
+			." ON refpart.`REF|ApRefineIterData|refineIter` = refiter.`DEF_id` "
+			."LEFT JOIN ApRefineRunData AS refrun "
+			." ON refiter.`REF|ApRefineRunData|refineRun` = refrun.`DEF_id` "
 			."WHERE "
 			." stpart.`REF|ApParticleData|particle` = '$partId1' "
 			."OR "
@@ -3298,11 +3298,11 @@ class particledata {
 		$q = "SELECT refdata.`DEF_id` as refdataid, "
 			."refrun.`DEF_id` as refrunid, "
 			."refdata.*, refrun.*, stackrun.*, runs.*, p.*, params.* "
-			." FROM `ApRefinementData` AS refdata "
-			."LEFT JOIN `ApRefinementRunData` AS refrun "
-			. "ON refdata.`REF|ApRefinementRunData|refinementRun` = refrun.`DEF_id` "
-			."LEFT JOIN `ApRefinementParamsData` AS params "
-			." ON (refdata.`REF|ApRefinementParamsData|refinementParams` = params.`DEF_id`) "
+			." FROM `ApRefineIterData` AS refdata "
+			."LEFT JOIN `ApRefineRunData` AS refrun "
+			. "ON refdata.`REF|ApRefineRunData|refineRun` = refrun.`DEF_id` "
+			."LEFT JOIN `ApEmanRefineIterData` AS params "
+			." ON (refdata.`REF|ApEmanRefineIterData|emanParams` = params.`DEF_id`) "
 			."LEFT JOIN ApRunsInStackData AS runs "
 			." ON refrun.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
 			."LEFT JOIN ApStackRunData AS stackrun "
@@ -3321,7 +3321,7 @@ class particledata {
 
 	function getReconIds ($stackId, $showHidden=False) {
 		$q = "SELECT * "
-			."FROM `ApRefinementRunData` AS r ";
+			."FROM `ApRefineRunData` AS r ";
 		if (!$showHidden)
 			$q.= "LEFT JOIN ApStackData AS s "
 				." ON r.`REF|ApStackData|stack` = s.`DEF_id` ";
@@ -3336,7 +3336,7 @@ class particledata {
 
 	function getRefinementRunInfo($refinementRun) {
 		$q="select r.*, p.path "
-			."FROM `ApRefinementRunData` AS r "
+			."FROM `ApRefineRunData` AS r "
 			."LEFT JOIN ApPathData AS p ON "
 			."(r.`REF|ApPathData|path` = p.`DEF_id`) "
 			."WHERE r.`DEF_id` = '$refinementRun' ";
@@ -3352,7 +3352,7 @@ class particledata {
 			."(d.`REF|ApPathData|path` = p.`DEF_id`) "
 			."LEFT JOIN `ApPathData` AS a ON "
 			."(d.`REF|ApPathData|ampPath` = a.`DEF_id`) "
-			."WHERE d.`REF|ApRefinementData|iterid` = $refid ";
+			."WHERE d.`REF|ApRefineIterData|iterid` = $refid ";
 		if (!$getHidden) $q.= "AND (d.`hidden` IS NULL OR d.`hidden` = 0) ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -3405,12 +3405,12 @@ class particledata {
 
 	function getHighestResForRecon ($reconid) {
 		$q = "SELECT ref.iteration AS iter, res.half AS half, rmeas.rMeasure AS rmeas "
-				."FROM `ApRefinementData` AS ref "
+				."FROM `ApRefineIterData` AS ref "
 				."LEFT JOIN `ApResolutionData` AS res "
 				." ON (ref.`REF|ApResolutionData|resolution` = res.`DEF_id`) "
 				."LEFT JOIN `ApRMeasureData` AS rmeas "
 				." ON (ref.`REF|ApRMeasureData|rMeasure` = rmeas.`DEF_id`) "
-				."WHERE ref.`REF|ApRefinementRunData|refinementRun` = '$reconid' "
+				."WHERE ref.`REF|ApRefineRunData|refineRun` = '$reconid' "
 				//."ORDER by rmeas.rMeasure ";
 				."ORDER by res.half ";
 		$r = $this->mysql->getSQLResult($q);
@@ -3419,12 +3419,12 @@ class particledata {
 
 	function getHighestRMeasureForRecon ($reconid) {
 		$q = "SELECT ref.iteration AS iter, res.half AS half, rmeas.rMeasure AS rmeas "
-				."FROM `ApRefinementData` AS ref "
+				."FROM `ApRefineIterData` AS ref "
 				."LEFT JOIN `ApResolutionData` AS res "
 				." ON (ref.`REF|ApResolutionData|resolution` = res.`DEF_id`) "
 				."LEFT JOIN `ApRMeasureData` AS rmeas "
 				." ON (ref.`REF|ApRMeasureData|rMeasure` = rmeas.`DEF_id`) "
-				."WHERE ref.`REF|ApRefinementRunData|refinementRun` = '$reconid' "
+				."WHERE ref.`REF|ApRefineRunData|refineRun` = '$reconid' "
 				."ORDER by rmeas.rMeasure ";
 				//."ORDER by res.half ";
 		$r = $this->mysql->getSQLResult($q);
@@ -3433,23 +3433,23 @@ class particledata {
 
 	function getIterationInfo ($reconId,$iteration=0) {
 		$q = "SELECT * "
-				."FROM `ApRefinementData` r "
-				."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' "
+				."FROM `ApRefineIterData` r "
+				."WHERE r.`REF|ApRefineRunData|refineRun` = '$reconId' "
 				."ORDER BY r.`iteration` ASC ";
 		$r = $this->mysql->getSQLResult($q);
-		if ($r[0]['REF|ApRefinementParamsData|refinementParams']) {
+		if ($r[0]['REF|ApEmanRefineIterData|emanParams']) {
 			$q = "SELECT * "
-					."FROM `ApRefinementData` r "
-					."LEFT JOIN `ApRefinementParamsData` p "
-					."ON (r.`REF|ApRefinementParamsData|refinementParams` = p.`DEF_id`) "
-					."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' "
+					."FROM `ApRefineIterData` r "
+					."LEFT JOIN `ApEmanRefineIterData` p "
+					."ON (r.`REF|ApEmanRefineIterData|emanParams` = p.`DEF_id`) "
+					."WHERE r.`REF|ApRefineRunData|refineRun` = '$reconId' "
 					."ORDER BY r.`iteration` ASC ";
-		} elseif ($r[0]['REF|ApXmippRefineIterationParamsData|xmippRefineParams']) {
+		} elseif ($r[0]['REF|ApXmippRefineIterData|xmippParams']) {
 			$q = "SELECT * "
-					."FROM `ApRefinementData` r "
-					."LEFT JOIN `ApXmippRefineIterationParamsData` p "
-					."ON (r.`REF|ApXmippRefineIterationParamsData|xmippRefineParams` = p.`DEF_id`) "
-					."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' "
+					."FROM `ApRefineIterData` r "
+					."LEFT JOIN `ApXmippRefineIterData` p "
+					."ON (r.`REF|ApXmippRefineIterData|xmippParams` = p.`DEF_id`) "
+					."WHERE r.`REF|ApRefineRunData|refineRun` = '$reconId' "
 					."ORDER BY r.`iteration` ASC ";
 		}
 		//echo $q."<br/><br/>\n";
@@ -3463,8 +3463,8 @@ class particledata {
 
 	function getRefinementData ($refinementRun,$iteration=False) {
 		$q = "SELECT * "
-			."FROM `ApRefinementData` "
-			."WHERE `REF|ApRefinementRunData|refinementRun` = $refinementRun ";
+			."FROM `ApRefineIterData` "
+			."WHERE `REF|ApRefineRunData|refineRun` = $refinementRun ";
 		if ($iteration) $q.="AND `iteration` = $iteration";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -3472,9 +3472,9 @@ class particledata {
 
 	function getParamsFromRefinementDataId ($refinementId) {
 		$q = "SELECT * "
-				."FROM `ApRefinementData` r "
-				."LEFT JOIN `ApRefinementParamsData` p "
-				."ON (r.`REF|ApRefinementParamsData|refinementParams` = p.`DEF_id`) "
+				."FROM `ApRefineIterData` r "
+				."LEFT JOIN `ApEmanRefineIterData` p "
+				."ON (r.`REF|ApEmanRefineIterData|emanParams` = p.`DEF_id`) "
 				."WHERE r.`DEF_id` = $refinementId";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
@@ -3482,9 +3482,9 @@ class particledata {
 
 	function getStackFromRefinement ($refinementDataId) {
 		$q = "SELECT r.*, rr.*, s.*, path.path "
-				."FROM `ApRefinementData` r "
-				."LEFT JOIN `ApRefinementRunData` rr "
-				."ON (r.`REF|ApRefinementRunData|refinementRun` = rr.`DEF_id`) "
+				."FROM `ApRefineIterData` r "
+				."LEFT JOIN `ApRefineRunData` rr "
+				."ON (r.`REF|ApRefineRunData|refineRun` = rr.`DEF_id`) "
 				."LEFT JOIN `ApStackData` s "
 				."ON (rr.`REF|ApStackData|stack` = s.`DEF_id`) "
 				."LEFT JOIN `ApPathData` path "
@@ -3498,7 +3498,7 @@ class particledata {
 		//check for cached values
 		$q = "SELECT * "
 			."FROM `ApRefineGoodBadParticleData` gb "
-			."WHERE gb.`REF|ApRefinementData|refine` = '$refinementDataId' ";
+			."WHERE gb.`REF|ApRefineIterData|refine` = '$refinementDataId' ";
 		$r = $this->mysql->getSQLResult($q);
 		if (count($r) && $count) {
 			//using cached values
@@ -3522,10 +3522,10 @@ class particledata {
 		//Fall back to old method
 		$q = "SELECT particleNumber as p ";
 		if ($count) $q = "SELECT count(particleNumber) as p ";
-		$q .= "FROM `ApParticleClassificationData` apcd "
-			."LEFT JOIN `ApStackParticlesData` aspd "
-			."ON (apcd.`REF|ApStackParticlesData|particle` = aspd.`DEF_id`) "
-			."WHERE apcd.`REF|ApRefinementData|refinement` = '$refinementDataId' ";
+		$q .= "FROM `ApRefineParticleData` apcd "
+			."LEFT JOIN `ApStackParticleData` aspd "
+			."ON (apcd.`REF|ApStackParticleData|particle` = aspd.`DEF_id`) "
+			."WHERE apcd.`REF|ApRefineIterData|refineIter` = '$refinementDataId' ";
 		switch ($refinetype) {
 			case 'EMAN':
 				if ($subset=='bad') $q.="AND `thrown_out` = 1 ";
@@ -3550,7 +3550,7 @@ class particledata {
 		$q = "SELECT fre.*, path.path  "
 			. " FROM `ApFrealignPrepareData` AS fre "
 			. " LEFT JOIN ApPathData AS path ON ( fre.`REF|ApPathData|path` = path.`DEF_id` ) "
-			. " LEFT JOIN ApClusterJobData AS job ON ( fre.`REF|ApClusterJobData|job` = job.`DEF_id` ) ";
+			. " LEFT JOIN ApAppionJobData AS job ON ( fre.`REF|ApAppionJobData|job` = job.`DEF_id` ) ";
 		if ($jobid) {
 			$q .= " WHERE fre.`DEF_id` = '$jobid' ";
 		} elseif ($path) {
@@ -3564,7 +3564,7 @@ class particledata {
 
 	function getClusterJobByTypeAndPath ($type, $path) {
 		$q = "SELECT job.*  "
-			. " FROM `ApClusterJobData` AS job "
+			. " FROM `ApAppionJobData` AS job "
 			. " LEFT JOIN ApPathData AS path "
 			. "  ON ( job.`REF|ApPathData|path` = path.`DEF_id` ) "
 			. " WHERE "
@@ -3579,9 +3579,9 @@ class particledata {
 
 	function getRawStackFromCluster ($clusterStackId) {
 		$q = "SELECT asd.*, path.path "
-			. " FROM `ApClusteringParticlesData` acpd "
-			. " LEFT JOIN ApAlignParticlesData aapd ON ( acpd.`REF|ApAlignParticlesData|alignparticle` = aapd.`DEF_id` ) "
-			. " LEFT JOIN ApStackParticlesData aspd ON ( aapd.`REF|ApStackParticlesData|stackpart` = aspd.`DEF_id`) "
+			. " FROM `ApClusteringParticleData` acpd "
+			. " LEFT JOIN ApAlignParticleData aapd ON ( acpd.`REF|ApAlignParticleData|alignparticle` = aapd.`DEF_id` ) "
+			. " LEFT JOIN ApStackParticleData aspd ON ( aapd.`REF|ApStackParticleData|stackpart` = aspd.`DEF_id`) "
 			. " LEFT JOIN ApStackData asd ON ( aspd.`REF|ApStackData|stack` = asd.`DEF_id`) "
 			. " LEFT JOIN `ApPathData` path ON ( asd.`REF|ApPathData|path` = path.`DEF_id`) "
 			. " WHERE acpd.`REF|ApClusteringStackData|clusterstack` = '$clusterStackId' ";
@@ -3591,8 +3591,8 @@ class particledata {
 
 	function getRawStackFromAlign ($alignStackId) {
 		$q = "SELECT asd.*, path.path "
-			. " FROM ApAlignParticlesData aapd "
-			. " LEFT JOIN ApStackParticlesData aspd ON ( aapd.`REF|ApStackParticlesData|stackpart` = aspd.`DEF_id`) "
+			. " FROM ApAlignParticleData aapd "
+			. " LEFT JOIN ApStackParticleData aspd ON ( aapd.`REF|ApStackParticleData|stackpart` = aspd.`DEF_id`) "
 			. " LEFT JOIN ApStackData asd ON ( aspd.`REF|ApStackData|stack` = asd.`DEF_id`) "
 			. " LEFT JOIN `ApPathData` path ON ( asd.`REF|ApPathData|path` = path.`DEF_id`) "
 			. " WHERE aapd.`REF|ApAlignStackData|alignstack` = '$alignStackId' ";
@@ -3602,8 +3602,8 @@ class particledata {
 
 	function getAlignedStackFromCluster ($clusterStackId) {
 		$q = "SELECT aasd.*, path.path "
-			. " FROM `ApClusteringParticlesData` acpd "
-			. " LEFT JOIN ApAlignParticlesData aapd ON ( acpd.`REF|ApAlignParticlesData|alignparticle` = aapd.`DEF_id` ) "
+			. " FROM `ApClusteringParticleData` acpd "
+			. " LEFT JOIN ApAlignParticleData aapd ON ( acpd.`REF|ApAlignParticleData|alignparticle` = aapd.`DEF_id` ) "
 			. " LEFT JOIN ApAlignStackData aasd ON ( aapd.`REF|ApAlignStackData|alignstack` = aasd.`DEF_id`) "
 			. " LEFT JOIN `ApPathData` path ON ( aasd.`REF|ApPathData|path` = path.`DEF_id`) "
 			. " WHERE acpd.`REF|ApClusteringStackData|clusterstack` = '$clusterStackId' ";
@@ -3613,7 +3613,7 @@ class particledata {
 
 	function getAlignedStackFromAlign ($alignStackId) {
 		$q = "SELECT aasd.*, path.path "
-			. " FROM ApAlignParticlesData aapd "
+			. " FROM ApAlignParticleData aapd "
 			. " LEFT JOIN ApAlignStackData aasd ON ( aapd.`REF|ApAlignStackData|alignstack` = aasd.`DEF_id`) "
 			. " LEFT JOIN `ApPathData` path ON ( aasd.`REF|ApPathData|path` = path.`DEF_id`) "
 			. " WHERE aapd.`REF|ApAlignStackData|alignstack` = '$alignStackId' ";
@@ -3624,9 +3624,9 @@ class particledata {
 	function getSubsetParticlesFromCluster ($clusterStackId, $refnums, $count=False) {
 		$q = "SELECT particleNumber as p ";
 		if ($count) $q = "SELECT count(particleNumber) as p ";
-		$q .= "FROM `ApClusteringParticlesData` acpd "
-			."LEFT JOIN ApAlignParticlesData aapd ON ( acpd.`REF|ApAlignParticlesData|alignparticle` = aapd.`DEF_id` )"
-			."LEFT JOIN ApStackParticlesData aspd ON ( aapd.`REF|ApStackParticlesData|stackpart` = aspd.`DEF_id`)"
+		$q .= "FROM `ApClusteringParticleData` acpd "
+			."LEFT JOIN ApAlignParticleData aapd ON ( acpd.`REF|ApAlignParticleData|alignparticle` = aapd.`DEF_id` )"
+			."LEFT JOIN ApStackParticleData aspd ON ( aapd.`REF|ApStackParticleData|stackpart` = aspd.`DEF_id`)"
 			."LEFT JOIN ApStackData asd ON ( aspd.`REF|ApStackData|stack` = asd.`DEF_id`)"
 			."WHERE acpd.`REF|ApClusteringStackData|clusterstack` = '$clusterStackId' AND (";
 
@@ -3647,9 +3647,9 @@ class particledata {
 	function getSubsetParticlesFromAlign ($alignStackId, $refnums, $count=False) {
 		$q = "SELECT particleNumber as p ";
 		if ($count) $q = "SELECT count(particleNumber) as p ";
-		$q .= "FROM `ApAlignParticlesData` aapd "
+		$q .= "FROM `ApAlignParticleData` aapd "
 			."LEFT JOIN ApAlignReferenceData aard ON ( aapd.`REF|ApAlignReferenceData|ref` = aard.`DEF_id`)"
-			."LEFT JOIN ApStackParticlesData aspd ON ( aapd.`REF|ApStackParticlesData|stackpart` = aspd.`DEF_id`)"
+			."LEFT JOIN ApStackParticleData aspd ON ( aapd.`REF|ApStackParticleData|stackpart` = aspd.`DEF_id`)"
 			."LEFT JOIN ApStackData asd ON ( aspd.`REF|ApStackData|stack` = asd.`DEF_id`)"
 			."WHERE aapd.`REF|ApAlignStackData|alignstack` = '$alignStackId' AND (";
 
@@ -3680,7 +3680,7 @@ class particledata {
 	function listAllStackParticles ($stackId) {
 		$q="SELECT sp.`particleNumber`, db.`MRC|image`, "
 			."p.`xcoord` , p.`ycoord` "
-			."FROM  `ApStackParticlesData` sp "
+			."FROM  `ApStackParticleData` sp "
 			."LEFT JOIN ApParticleData p ON "
 			."( sp.`REF|ApParticleData|particle` = p.`DEF_id` ) "
 			."LEFT JOIN ".DB_LEGINON.".AcquisitionImageData db ON "
@@ -3697,8 +3697,8 @@ class particledata {
 			."STDDEV(e.`median`) AS stdev "
 			."FROM ApEulerJumpData AS e "
 			."WHERE "
-			."  e.`REF|ApRefinementRunData|refRun` = '$refineRunId' "
-			."GROUP BY e.`REF|ApRefinementRunData|refRun` ";
+			."  e.`REF|ApRefineRunData|refRun` = '$refineRunId' "
+			."GROUP BY e.`REF|ApRefineRunData|refRun` ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
@@ -3709,7 +3709,7 @@ class particledata {
 			."  e.`median` "
 			."FROM ApEulerJumpData AS e "
 			."WHERE "
-			."  e.`REF|ApRefinementRunData|refRun` = '$refineRunId' ";
+			."  e.`REF|ApRefineRunData|refRun` = '$refineRunId' ";
 			//."ORDER BY e.`median` "
 			//."LIMIT 100 ";
 		$r=$this->mysql->getSQLResult($q);
@@ -3719,16 +3719,16 @@ class particledata {
 	// no more ApEulerData tables
 	//function getParticleEuler ($refinementDataId) {
 	//	$q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
-	//		."FROM `ApParticleClassificationData` "
-	//		."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' ";
+	//		."FROM `ApRefineParticleData` "
+	//		."WHERE `REF|ApRefineIterData|refineIter` = '$refinementDataId' ";
 	//	$r = $this->mysql->getSQLResult($q);
 	//	return $r;
 	//}
 
 	//function getNumInClass ($refinementDataId,$eulerId) {
 	//	$q = "SELECT count(DEF_id) as num "
-	//		."FROM `ApParticleClassificationData` "
-	//		."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
+	//		."FROM `ApRefineParticleData` "
+	//		."WHERE `REF|ApRefineIterData|refineIter` = '$refinementDataId' "
 	//		."AND `REF|ApEulerData|eulers` = $eulerId";
 	//	list($r) = $this->mysql->getSQLResult($q);
 	//	return $r['num'];
@@ -3745,7 +3745,7 @@ class particledata {
 	function getCommonParticles ($refine1, $refine2) {
 		# compare 2 iterations, get all the particles that were used in both
 		# reconstructions (ignore those that were thrown out) and return the eulers"
-		$q = "SELECT cls1.`REF|ApStackParticlesData|particle` as prtl, "
+		$q = "SELECT cls1.`REF|ApStackParticleData|particle` as prtl, "
 				."spd.particleNumber, "
 				."cls1.euler1 as euler1_1, "
 				."cls1.euler2 as euler1_2, "
@@ -3761,20 +3761,20 @@ class particledata {
 				."cls2.`euler3` as rot2, "
 				."cls1.`quality_factor` as qf1, "
 				."cls2.`quality_factor` as qf2 "
-				."FROM (`ApParticleClassificationData` as cls1) "
+				."FROM (`ApRefineParticleData` as cls1) "
 				."LEFT JOIN ( "
-				." `ApParticleClassificationData` as cls2, "
-				." `ApStackParticlesData` as spd) "
+				." `ApRefineParticleData` as cls2, "
+				." `ApStackParticleData` as spd) "
 				//." `ApEulerData` euler1, `ApEulerData` euler2) "
 				."ON ( "
-				."cls1.`REF|ApStackParticlesData|particle`=cls2.`REF|ApStackParticlesData|particle` "
-				."AND spd.DEF_id=cls1.`REF|ApStackParticlesData|particle` "
+				."cls1.`REF|ApStackParticleData|particle`=cls2.`REF|ApStackParticleData|particle` "
+				."AND spd.DEF_id=cls1.`REF|ApStackParticleData|particle` "
 				."AND cls1.`thrown_out` is NULL AND cls2.`thrown_out` is NULL "
 				//."AND euler1.DEF_id=cls1.`REF|ApEulerData|eulers` "
 				//."AND euler2.DEF_id=cls2.`REF|ApEulerData|eulers` "
 				.") "
-				."WHERE (cls1.`REF|ApRefinementData|refinement`=$refine1 "
-				."AND cls2.`REF|ApRefinementData|refinement`=$refine2 "
+				."WHERE (cls1.`REF|ApRefineIterData|refineIter`=$refine1 "
+				."AND cls2.`REF|ApRefineIterData|refineIter`=$refine2 "
 				.") "
 				."ORDER by prtl";
 		$r = $this->mysql->getSQLResult($q);
@@ -3784,7 +3784,7 @@ class particledata {
 	function getParticlesFromRefinementId($refine1) {
 		# compare 2 iterations, get all the particles that were used in both
 		# reconstructions (ignore those that were thrown out) and return the eulers"
-		$q = "SELECT cls1.`REF|ApStackParticlesData|particle` as prtl, "
+		$q = "SELECT cls1.`REF|ApStackParticleData|particle` as prtl, "
 				."spd.particleNumber, "
 				."cls1.euler1 as euler1_1, "
 				."cls1.euler2 as euler1_2, "
@@ -3793,17 +3793,17 @@ class particledata {
 				."cls1.`shifty` as shifty1, "
 				."cls1.`inplane_rotation` as rot1, "
 				."cls1.`quality_factor` as qf1 "
-				."FROM (`ApParticleClassificationData` as cls1) "
+				."FROM (`ApRefineParticleData` as cls1) "
 				."LEFT JOIN ( "
-				." `ApStackParticlesData` as spd) "
+				." `ApStackParticleData` as spd) "
 				//." `ApEulerData` euler1) "
 				."ON ( "
-				."spd.DEF_id=cls1.`REF|ApStackParticlesData|particle` "
+				."spd.DEF_id=cls1.`REF|ApStackParticleData|particle` "
 				."AND cls1.`thrown_out` is NULL "
 				//."AND euler1.DEF_id=cls1.`REF|ApEulerData|eulers` "
 				.") "
 				."WHERE ( "
-				." cls1.`REF|ApRefinementData|refinement`=$refine1 "
+				." cls1.`REF|ApRefineIterData|refineIter`=$refine1 "
 				.") "
 				."ORDER by prtl";
 		$r = $this->mysql->getSQLResult($q);
@@ -3812,7 +3812,7 @@ class particledata {
 
 	function getStackParticleNum ($particleId) {
 					$q = "SELECT particleNumber "
-					."FROM `ApStackParticlesData` "
+					."FROM `ApStackParticleData` "
 					."WHERE `DEF_id` = $particleId";
 					list($r) = $this->mysql->getSQLResult($q);
 					return $r['particleNumber'];
@@ -3823,7 +3823,7 @@ class particledata {
 		."FROM `ApMiscData` AS m "
 		."LEFT JOIN ApPathData AS p ON "
 		."(m.`REF|ApPathData|path` = p.`DEF_id`) "
-		."WHERE m.`REF|ApRefinementRunData|refinementRun` = $reconid";
+		."WHERE m.`REF|ApRefineRunData|refineRun` = $reconid";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -3839,12 +3839,12 @@ class particledata {
 	function getReconInfoFromRefinementId($refineid) {
 		$q="SELECT *"
 		."FROM "
-		."`ApRefinementData` AS `ApRefinementData` "
-		."LEFT JOIN `ApRefinementRunData` AS `ApRefinementRunData` "
-		."ON (`ApRefinementRunData`.`DEF_id`=`ApRefinementData`.`REF|ApRefinementRunData|refinementRun`) "
+		."`ApRefineIterData` AS `ApRefineIterData` "
+		."LEFT JOIN `ApRefineRunData` AS `ApRefineRunData` "
+		."ON (`ApRefineRunData`.`DEF_id`=`ApRefineIterData`.`REF|ApRefineRunData|refineRun`) "
 		."LEFT JOIN `ApPathData` AS `ApPathData` "
-		."ON (`ApPathData`.`DEF_id`=`ApRefinementRunData`.`REF|ApPathData|path`) "
-		."WHERE `ApRefinementData`.`DEF_id`=$refineid ";
+		."ON (`ApPathData`.`DEF_id`=`ApRefineRunData`.`REF|ApPathData|path`) "
+		."WHERE `ApRefineIterData`.`DEF_id`=$refineid ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r[0];
 	}
@@ -3890,7 +3890,7 @@ class particledata {
 			."  ref.`refnum` AS classNumber, "
 			."  count(part.`DEF_id`) as number,  "
 			."  ROUND(ref.`ssnr_resolution`,3) AS resolution "
-			."FROM ApAlignParticlesData AS part "
+			."FROM ApAlignParticleData AS part "
 			."LEFT JOIN ApAlignReferenceData AS ref "
 			."  ON (part.`REF|ApAlignReferenceData|ref` = ref.`DEF_id`) "
 			."WHERE part.`REF|ApAlignStackData|alignstack` = '$alignId' "
@@ -3908,7 +3908,7 @@ class particledata {
 			."  a.`spread`, "
 			."  a.`correlation`, "
 			."  a.`score` "
-			."FROM ApAlignParticlesData AS a "
+			."FROM ApAlignParticleData AS a "
 			."WHERE "
 			."  a.`REF|ApAlignStackData|alignstack` = '$alignid' ";
 			//."ORDER BY e.`median` "
@@ -3923,7 +3923,7 @@ class particledata {
 		$q="SELECT part.`refnum` AS classNumber, "
 			."  COUNT(part.`DEF_id`) AS number, "
 			."  ROUND(ref.`ssnr_resolution`,3) AS resolution "
-			."FROM ApClusteringParticlesData AS part "
+			."FROM ApClusteringParticleData AS part "
 			."LEFT JOIN ApClusteringReferenceData AS ref "
 			."  ON (part.`REF|ApClusteringReferenceData|clusterreference` = ref.`DEF_id`) "
 			."WHERE part.`REF|ApClusteringStackData|clusterstack` = '$clusterId' "
@@ -4085,15 +4085,15 @@ class particledata {
 		$q="SELECT "
 			."  dens.*, "
 			."  path.`path` AS path ";
-		if ($this->mysql->SQLTableExists('ApRefinementData')) {
-			$q .= ", iterid.`REF|ApRefinementRunData|refinementRun` AS refrun ";
+		if ($this->mysql->SQLTableExists('ApRefineIterData')) {
+			$q .= ", iterid.`REF|ApRefineRunData|refineRun` AS refrun ";
 		}
 		$q .=	"FROM Ap3dDensityData as dens "
 			."LEFT JOIN ApPathData AS path "
 			."  ON dens.`REF|ApPathData|path` = path.`DEF_id` ";
-		if ($this->mysql->SQLTableExists('ApRefinementData')) {
-			$q .=	"LEFT JOIN ApRefinementData AS iterid "
-				."  ON dens.`REF|ApRefinementData|iterid` = iterid.`DEF_id` ";
+		if ($this->mysql->SQLTableExists('ApRefineIterData')) {
+			$q .=	"LEFT JOIN ApRefineIterData AS iterid "
+				."  ON dens.`REF|ApRefineIterData|iterid` = iterid.`DEF_id` ";
 		}
 		$q .= "WHERE "
 			."  dens.`REF|leginondata|SessionData|session` = '$sessionId' ";
@@ -4110,15 +4110,15 @@ class particledata {
 		$q="SELECT "
 			."  dens.*, "
 			."  path.`path` AS path ";
-		if ($this->mysql->SQLTableExists('ApRefinementData')) {
-			$q .= ", iterid.`REF|ApRefinementRunData|refinementRun` AS refrun ";
+		if ($this->mysql->SQLTableExists('ApRefineIterData')) {
+			$q .= ", iterid.`REF|ApRefineRunData|refineRun` AS refrun ";
 		}
 		$q .=	"FROM Ap3dDensityData as dens "
 			."LEFT JOIN ApPathData AS path "
 			."  ON dens.`REF|ApPathData|path` = path.`DEF_id` ";
-		if ($this->mysql->SQLTableExists('ApRefinementData')) {
-			$q .=	"LEFT JOIN ApRefinementData AS iterid "
-				."  ON dens.`REF|ApRefinementData|iterid` = iterid.`DEF_id` ";
+		if ($this->mysql->SQLTableExists('ApRefineIterData')) {
+			$q .=	"LEFT JOIN ApRefineIterData AS iterid "
+				."  ON dens.`REF|ApRefineIterData|iterid` = iterid.`DEF_id` ";
 		}
 		$q .= "WHERE "
 			."  dens.`DEF_id` = '$densityId' ";
@@ -4200,7 +4200,7 @@ class particledata {
 			."LEFT JOIN ScriptParamName AS paramname "
 			."  ON paramvalue.`REF|ScriptParamName|paramname` = paramname.`DEF_id` "
 			."WHERE "
-			."  progrun.`REF|ApClusterJobData|job` IS NOT NULL "
+			."  progrun.`REF|ApAppionJobData|job` IS NOT NULL "
 			."AND "
 			."  paramname.`name` = 'preset' "
 			."; ";
@@ -4222,8 +4222,8 @@ class particledata {
 			."  ON progrun.`REF|ScriptProgramName|progname` = progname.`DEF_id` "
 			."LEFT JOIN ScriptUserName AS username "
 			."  ON progrun.`REF|ScriptUserName|username` = username.`DEF_id` "
-			."LEFT JOIN ApClusterJobData AS job "
-			."  ON progrun.`REF|ApClusterJobData|job` = job.`DEF_id` "
+			."LEFT JOIN ApAppionJobData AS job "
+			."  ON progrun.`REF|ApAppionJobData|job` = job.`DEF_id` "
 			."LEFT JOIN ".DB_LEGINON.".SessionData AS session "
 			."  ON job.`REF|leginondata|SessionData|session` = session.`DEF_id` "
 			."WHERE "
@@ -4245,8 +4245,8 @@ class particledata {
 
 			."LEFT JOIN ScriptProgramRun AS progrun "
 			."  ON paramvalue.`REF|ScriptProgramRun|progrun` = progrun.`DEF_id` "
-			."LEFT JOIN ApClusterJobData AS job "
-			."  ON progrun.`REF|ApClusterJobData|job` = job.`DEF_id` "
+			."LEFT JOIN ApAppionJobData AS job "
+			."  ON progrun.`REF|ApAppionJobData|job` = job.`DEF_id` "
 			."LEFT JOIN ".DB_LEGINON.".SessionData AS session "
 			."  ON job.`REF|leginondata|SessionData|session` = session.`DEF_id` "
 

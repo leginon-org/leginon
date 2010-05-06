@@ -227,7 +227,7 @@ def insertTemplateImage(params):
 			imgnums = params['imgnums'].split(",")
 			templateq['stack_image_number']=int(imgnums[i])
 		templateq['description']=params['description']
-		templateq['project|projects|project']=params['projectId']
+		templateq['REF|projectdata|projects|project']=params['projectId']
 		## PHP web tools expect 'hidden' field, set it to False initially
 		templateq['hidden'] = False
 		if params['commit'] is True:

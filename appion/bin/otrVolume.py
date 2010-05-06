@@ -227,7 +227,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		t0 = time.time()
 		if self.params['clusterid'] is not None:
 			### method 1: get particles from clustering data
-			clusterpartq = appiondata.ApClusteringParticlesData()
+			clusterpartq = appiondata.ApClusteringParticleData()
 			clusterpartq['clusterstack'] = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
 			clusterpartdatas = clusterpartq.query()
 			apDisplay.printMsg("Sorting "+str(len(clusterpartdatas))+" clustered particles")
@@ -268,7 +268,7 @@ class otrVolumeScript(appionScript.AppionScript):
 					excludeParticle += 1
 		else:
 			### method 2: get particles from alignment data
-			alignpartq = appiondata.ApAlignParticlesData()
+			alignpartq = appiondata.ApAlignParticleData()
 			alignpartq['alignstack'] = self.alignstackdata
 			alignpartdatas = alignpartq.query()
 			apDisplay.printMsg("Sorting "+str(len(alignpartdatas))+" aligned particles")
@@ -334,7 +334,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		notstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['tiltstackid'],
 			partnum, self.params['notstackid'])
 
-		alignpartq = appiondata.ApAlignParticlesData()
+		alignpartq = appiondata.ApAlignParticleData()
 		alignpartq['stackpart'] = notstackpartdata
 		alignpartq['alignstack'] = self.alignstackdata
 		alignpartdatas = alignpartq.query()

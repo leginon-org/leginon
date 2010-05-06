@@ -12,7 +12,7 @@ import subprocess
 import os
 
 if __name__ == "__main__":
-	rjobs = appiondata.ApClusterJobData(status='R', jobtype='recon')
+	rjobs = appiondata.ApAppionJobData(status='R', jobtype='recon')
 	rjobs = rjobs.query()
 
 	print 'Recon jobs listed as "Running" in the database:'

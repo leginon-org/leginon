@@ -101,7 +101,7 @@ class combineStackScript(appionScript.AppionScript):
 		stpartsdata = apStack.getStackParticlesFromId(stackid)
 		apDisplay.printMsg("inserting "+str(len(stpartsdata))+" particles into DB")
 		for particle in stpartsdata:
-			stpartq = appiondata.ApStackParticlesData()
+			stpartq = appiondata.ApStackParticleData()
 			stpartq['particleNumber'] = self.partnum
 			stpartq['stack']    = stackq
 			stpartq['stackRun'] = particle['stackRun']

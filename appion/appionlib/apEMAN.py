@@ -7,11 +7,6 @@ import random
 import subprocess
 from appionlib import apDisplay
 from appionlib import apImagicFile
-try:
-	import EMAN
-except ImportError:
-	apDisplay.printWarning("EMAN module did not get imported")
-	pass
 
 ####
 # This is a low-level file with NO database connections
@@ -33,6 +28,7 @@ def executeRunpar(cmd,np):
 
 #=====================
 def alignParticlesInLST(lstfile,outstack):
+	import EMAN
 	### create a stack of particles aligned according to an LST file
 	apDisplay.printMsg("aligning particles in '%s', saving to stack: %s"%(lstfile,outstack))	
 	images=EMAN.readImages(lstfile,-1,-1,0)
@@ -104,6 +100,7 @@ def combineSpiParticleList(infiles, outfile):
 
 #=====================
 def makeClassAverages(lst, outputstack,e,mask):
+	import EMAN
 	#align images in class
 	print "creating class average from",lst,"to",outputstack
 	images=EMAN.readImages(lst,-1,-1,0)
@@ -165,6 +162,7 @@ def parseSpiderPtcl(line):
 
 #=====================
 def writeBlankImage(outfile,boxsize,place,type=None):
+	import EMAN
 	a=EMAN.EMData()
 	a.setSize(boxsize,boxsize)
 	a.zero()
@@ -269,11 +267,13 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None, fail=Fals
 
 #=====================
 def getNumParticlesInStack(stackname):
+	import EMAN
 	numparticles = EMAN.fileCount(stackname)[0]
 	return numparticles
 
 #=====================
 def checkStackNumbering(stackname):
+	import EMAN
 	# check that the numbering is stored in the NImg parameter
 	apDisplay.printMsg("checking that original stack is numbered")
 	n=EMAN.fileCount(stackname)[0]
@@ -288,6 +288,7 @@ def checkStackNumbering(stackname):
 	return
 
 def writeImageToImage(instack, inn, outstack, outn=-1, particles=0):
+	import EMAN
 	# copy an image from an input stack to another one
 	img = EMAN.EMData()
 	img.readImage(instack,inn)
@@ -303,6 +304,7 @@ def numberParticlesInStack(stackname, startnum=0, verbose=True):
 
 	# store the particle number in the stack header
 	# NOTE!!! CONFORMS TO EMAN CONVENTION, STARTS AT 0!!!
+	import EMAN
 	t0 = time.time()
 	apDisplay.printMsg("saving particle numbers to stack header")
 	n=EMAN.fileCount(stackname)[0]
@@ -323,6 +325,7 @@ def numberParticlesInStack(stackname, startnum=0, verbose=True):
 
 #=====================
 def writeStackParticlesToFile(stackname, filename):
+	import EMAN
 	# write out the particle numbers from imagic header to a file
 	# NOTE!!! CONFORMS TO EMAN CONVENTION, STARTS AT 0!!!
 	apDisplay.printMsg("saving list of saved particles to:")
@@ -362,6 +365,7 @@ def getCC(ref,img):
 
 #=====================
 def getClassInfo(classes):
+	import EMAN
 	# read a classes.*.img file, get # of images
 	imgnum, imgtype = EMAN.fileCount(classes)
 	img = EMAN.EMData()

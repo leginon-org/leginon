@@ -55,7 +55,7 @@ if ($reconRuns) {
 
 		// update description
 		if ($_POST['updateDesc'.$reconid]) {
-			updateDescription('ApRefinementRunData', $reconid, $_POST['newdescription'.$reconid]);
+			updateDescription('ApRefineRunData', $reconid, $_POST['newdescription'.$reconid]);
 			$reconrun['description']=$_POST['newdescription'.$reconid];
 
 		}
@@ -63,7 +63,7 @@ if ($reconRuns) {
 		// hide recon
 		if ($_POST['hideItem'.$reconid]) {
 			echo "Hiding Recon $reconid\n<br/>\n";
-			$particle->updateHide('ApRefinementRunData', $reconid, '1');
+			$particle->updateHide('ApRefineRunData', $reconid, '1');
 			continue;
 		}
 

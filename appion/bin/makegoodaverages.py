@@ -34,12 +34,12 @@ def getParticleInfo(reconid, iteration):
 	"""
 	Get all particle data for given recon and iteration
 	"""
-	refinerundata = appiondata.ApRefinementRunData.direct_query(reconid)
+	refinerundata = appiondata.ApRefineRunData.direct_query(reconid)
 	if not refinerundata:
 		apDisplay.printError("Could not find refinerundata for reconrun id="+str(reconid))
 
-	refineq = appiondata.ApRefinementData()
-	refineq['refinementRun']=refinerundata
+	refineq = appiondata.ApRefineIterData()
+	refineq['refineRun']=refinerundata
 	refineq['iteration']=iteration
 	refinedata = refineq.query(results=1)
 
@@ -47,8 +47,8 @@ def getParticleInfo(reconid, iteration):
 		apDisplay.printError("Could not find refinedata for reconrun id="
 			+str(reconid)+" iter="+str(iteration))
 
-	refinepartq=appiondata.ApParticleClassificationData()
-	refinepartq['refinement']=refinedata[0]
+	refinepartq=appiondata.ApRefineParticleData()
+	refinepartq['refineIter']=refinedata[0]
 	t0 = time.time()
 	apDisplay.printMsg("querying particles on "+time.asctime())
 	refineparticledata = refinepartq.query()
@@ -287,7 +287,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 	#=====================
 	def setRunDir(self):
 		reconid = self.params['reconid']
-		refinerundata=appiondata.ApRefinementRunData.direct_query(reconid)
+		refinerundata=appiondata.ApRefineRunData.direct_query(reconid)
 		if not refinerundata:
 			apDisplay.printError("reconid "+str(reconid)+" does not exist in the database")
 		self.params['rundir'] = os.path.join(refinerundata['path']['path'], 'eulers',self.params['runname'])

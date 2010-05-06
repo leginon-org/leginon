@@ -126,7 +126,7 @@ class TopologyRepScript(appionScript.AppionScript):
 			alignrundata = alignrunq.query(results=1)
 			if topoljobdatas[0]['finished'] is True or alignrundata:
 				apDisplay.printError("This run name already exists as finished in the database, please change the runname")
-		topoljobq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
+		topoljobq['REF|projectdata|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		topoljobq['timestamp'] = self.timestamp
 		topoljobq['finished'] = False
 		topoljobq['hidden'] = False
@@ -222,7 +222,7 @@ class TopologyRepScript(appionScript.AppionScript):
 				apDisplay.printError("could not find reference file: "+reffile)
 
 			### set up particle
-			alignpartq = appiondata.ApAlignParticlesData()
+			alignpartq = appiondata.ApAlignParticleData()
 			## EMAN particles start with 0, database starts at 1
 			alignpartq['partnum'] = partdict['partnum'] + 1
 			alignpartq['alignstack'] = self.alignstackdata

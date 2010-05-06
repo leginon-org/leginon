@@ -156,10 +156,10 @@ class fakeStackScript(appionScript.AppionScript):
 				+"  ROUND(ABS(DEGREES(scoped.`SUBD|stage position|a`))) AS alpha \n"
 				+"FROM `ApTiltParticlePairData` AS tiltd \n"
 
-				+"LEFT JOIN `ApStackParticlesData` AS stpart1 \n"
+				+"LEFT JOIN `ApStackParticleData` AS stpart1 \n"
 				+"  ON stpart1.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle1` \n"
 
-				+"LEFT JOIN `ApStackParticlesData` AS stpart2 \n"
+				+"LEFT JOIN `ApStackParticleData` AS stpart2 \n"
 				+"  ON stpart2.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle2` \n"
 
 				+"LEFT JOIN `ApParticleData` AS part1 \n"

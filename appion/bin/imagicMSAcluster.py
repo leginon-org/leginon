@@ -174,7 +174,7 @@ class imagicClusterScript(appionScript.AppionScript):
 			return
 				
 	def getAlignParticleData(self, partnum):
-		alignpartq = appiondata.ApAlignParticlesData()
+		alignpartq = appiondata.ApAlignParticleData()
 		alignpartq['alignstack'] = self.analysisdata['alignstack']
 		alignpartq['partnum'] = partnum
 		alignparts = alignpartq.query(results=1)
@@ -250,7 +250,7 @@ class imagicClusterScript(appionScript.AppionScript):
 			
 			for partnum in particles:
 				alignpartdata = self.getAlignParticleData(partnum)
-				cpartq = appiondata.ApClusteringParticlesData()
+				cpartq = appiondata.ApClusteringParticleData()
 				cpartq['clusterstack'] = clusterstackq
 				cpartq['alignparticle'] = alignpartdata
 				cpartq['refnum'] = cls_num

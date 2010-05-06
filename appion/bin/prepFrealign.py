@@ -195,9 +195,9 @@ class frealignJob(appionScript.AppionScript):
 				'shifty': 0.0,
 			}
 		else:
-			pclassq = appiondata.ApParticleClassificationData()
+			pclassq = appiondata.ApRefineParticleData()
 			pclassq['particle'] = refstackp
-			pclassq['refinement'] = appiondata.ApRefinementData.direct_query(self.params['reconiterid'])
+			pclassq['refineIter'] = appiondata.ApRefineIterData.direct_query(self.params['reconiterid'])
 			pclasses = pclassq.query(results=1)
 			pclass = pclasses[0]
 
@@ -708,7 +708,7 @@ class frealignJob(appionScript.AppionScript):
 
 		### find cluster job based on path
 		partq = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
-		jobq = appiondata.ApClusterJobData()
+		jobq = appiondata.ApAppionJobData()
 		jobq['path'] = partq
 		jobq['jobtype'] = 'prepfrealign'
 		jobdatas = jobq.query(results=1)

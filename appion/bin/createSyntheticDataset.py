@@ -1284,7 +1284,7 @@ ACE2: /home/vossman/appion/bin/ace2correct.exe -img /ami/data00/appion/09aug06a/
 #			partq['selectionrun'] = selectq
 			partq['xcoord'] = partNumber
 
-			stpartq = appiondata.ApStackParticlesData()
+			stpartq = appiondata.ApStackParticleData()
 
 			### check unique params
 			stpartq['stack'] = self.stackdata

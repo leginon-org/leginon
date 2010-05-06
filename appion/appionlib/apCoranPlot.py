@@ -23,12 +23,12 @@ def getTotalNumParticles(reconid, numiter):
 	# create a cursor
 	cursor = db.cursor()
 	query = ( " SELECT stackpart.`particleNumber` AS p "
-		+" FROM `ApParticleClassificationData` AS reconpart "
-		+" LEFT JOIN `ApStackParticlesData` AS stackpart "
-		+"   ON (reconpart.`REF|ApStackParticlesData|particle` = stackpart.`DEF_id`) "
-		+" LEFT JOIN `ApRefinementData` AS refdat "
-		+"   ON (reconpart.`REF|ApRefinementData|refinement` = refdat.`DEF_id`) "
-		+" WHERE refdat.`REF|ApRefinementRunData|refinementRun` = '"+str(reconid)+"' "
+		+" FROM `ApRefineParticleData` AS reconpart "
+		+" LEFT JOIN `ApStackParticleData` AS stackpart "
+		+"   ON (reconpart.`REF|ApStackParticleData|particle` = stackpart.`DEF_id`) "
+		+" LEFT JOIN `ApRefineIterData` AS refdat "
+		+"   ON (reconpart.`REF|ApRefineIterData|refineIter` = refdat.`DEF_id`) "
+		+" WHERE refdat.`REF|ApRefineRunData|refineRun` = '"+str(reconid)+"' "
 		+"   AND refdat.`iteration` = '"+str(numiter)+"' " )
 	cursor.execute(query)
 	numpart = int(cursor.rowcount)
@@ -42,12 +42,12 @@ def getParticlesForIter(reconid, iternum):
 	# create a cursor
 	cursor = db.cursor()
 	query = ( " SELECT stackpart.`particleNumber` AS p "
-		+" FROM `ApParticleClassificationData` AS reconpart "
-		+" LEFT JOIN `ApStackParticlesData` AS stackpart "
-		+"   ON (reconpart.`REF|ApStackParticlesData|particle` = stackpart.`DEF_id`) "
-		+" LEFT JOIN `ApRefinementData` AS refdat "
-		+"   ON (reconpart.`REF|ApRefinementData|refinement` = refdat.`DEF_id`) "
-		+" WHERE refdat.`REF|ApRefinementRunData|refinementRun` = '"+str(reconid)+"' "
+		+" FROM `ApRefineParticleData` AS reconpart "
+		+" LEFT JOIN `ApStackParticleData` AS stackpart "
+		+"   ON (reconpart.`REF|ApStackParticleData|particle` = stackpart.`DEF_id`) "
+		+" LEFT JOIN `ApRefineIterData` AS refdat "
+		+"   ON (reconpart.`REF|ApRefineIterData|refineIter` = refdat.`DEF_id`) "
+		+" WHERE refdat.`REF|ApRefineRunData|refineRun` = '"+str(reconid)+"' "
 		+"   AND reconpart.`coran_keep` = 1 " # for Coran plot
 		#+"   AND reconpart.`thrown_out` IS NULL " # for EMAN plot
 		+"   AND refdat.`iteration` = '"+str(iternum)+"' " )
@@ -62,8 +62,8 @@ def getAllCoranRecons():
 	db     = MySQLdb.connect(**dbconf)
 	# create a cursor
 	cursor = db.cursor()
-	query = ( " SELECT DISTINCT refdat.`REF|ApRefinementRunData|refinementRun` AS reconid "
-		+" FROM `ApRefinementData` AS refdat "
+	query = ( " SELECT DISTINCT refdat.`REF|ApRefineRunData|refineRun` AS reconid "
+		+" FROM `ApRefineIterData` AS refdat "
 		+" WHERE refdat.`SpiCoranGoodClassAvg` IS NOT NULL "
 		+"   AND refdat.`iteration` > '7' " )
 	cursor.execute(query)

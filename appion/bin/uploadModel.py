@@ -164,7 +164,7 @@ class UploadModelScript(appionScript.AppionScript):
 	def insertModel(self, mrcname):
 		apDisplay.printMsg("commiting model to database")
 		modq=appiondata.ApInitialModelData()
-		modq['project|projects|project'] = self.params['projectid']
+		modq['REF|projectdata|projects|project'] = self.params['projectid']
 		modq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		modq['name'] = os.path.basename(mrcname)
 		modq['symmetry'] = self.params['symdata']
@@ -175,9 +175,9 @@ class UploadModelScript(appionScript.AppionScript):
 		modq['md5sum'] = apFile.md5sumfile(mrcname)
 		modq['description'] = self.params['description']
 		if self.params['densityid'] is not None:
-			modq['original density'] = appiondata.Ap3dDensityData.direct_query(self.params['densityid'])
+			modq['original_density'] = appiondata.Ap3dDensityData.direct_query(self.params['densityid'])
 		if self.params['oldmodelid'] is not None:
-			modq['original model'] = appiondata.ApInitialModelData.direct_query(self.params['oldmodelid'])
+			modq['original_model'] = appiondata.ApInitialModelData.direct_query(self.params['oldmodelid'])
 		if self.params['commit'] is True:
 			modq.insert()
 		else:

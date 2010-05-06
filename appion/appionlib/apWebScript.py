@@ -25,7 +25,7 @@ def setJobStatus(jobid, status):
 	newstat = str(status[0]).upper()
 
 	### cluster job data
-	clustdata = appiondata.ApClusterJobData.direct_query(jobid)
+	clustdata = appiondata.ApAppionJobData.direct_query(jobid)
 	if not clustdata:
 		print "Did not find jobid=%d"%(jobid)
 		return False
@@ -36,7 +36,7 @@ def setJobStatus(jobid, status):
 	cursor = db.cursor()
 	query = (
 		"UPDATE \n"
-		+"  `ApClusterJobData` as job \n"
+		+"  `ApAppionJobData` as job \n"
 		+"SET \n"
 		+"  job.`status` = '"+str(newstat)+"' \n"
 		+"WHERE \n"
@@ -53,7 +53,7 @@ def setJobStatus(jobid, status):
 
 #=====================
 def getJobStatus(jobid):
-	clustdata = appiondata.ApClusterJobData.direct_query(jobid)
+	clustdata = appiondata.ApAppionJobData.direct_query(jobid)
 	if not clustdata:
 		return None
 	return clustdata['status']

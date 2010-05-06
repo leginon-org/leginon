@@ -65,7 +65,7 @@ class ClusterCoranScript(appionScript.AppionScript):
 
 	#=====================
 	def getAlignParticleData(self, partnum):
-		alignpartq = appiondata.ApAlignParticlesData()
+		alignpartq = appiondata.ApAlignParticleData()
 		alignpartq['alignstack'] = self.analysisdata['alignstack']
 		alignpartq['partnum'] = partnum
 		alignparts = alignpartq.query(results=1)
@@ -126,7 +126,7 @@ class ClusterCoranScript(appionScript.AppionScript):
 			sys.stderr.write(".")
 			for partnum in partlist:
 				alignpartdata = self.getAlignParticleData(partnum)
-				cpartq = appiondata.ApClusteringParticlesData()
+				cpartq = appiondata.ApClusteringParticleData()
 				cpartq['clusterstack'] = clusterstackq
 				cpartq['alignparticle'] = alignpartdata
 				cpartq['partnum'] = partnum

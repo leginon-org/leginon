@@ -35,10 +35,10 @@ def getEulersForIteration(reconid, iteration=1):
 	t0 = time.time()
 	query = (
 		"SELECT pc.euler1, pc.euler2, pc.`thrown_out`, pc.`coran_keep` "
-			+"FROM `ApParticleClassificationData` AS pc "
-			+"LEFT JOIN `ApRefinementData` AS rd "
-			+"ON pc.`REF|ApRefinementData|refinement` = rd.`DEF_id` "
-			+"WHERE rd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" "
+			+"FROM `ApRefineParticleData` AS pc "
+			+"LEFT JOIN `ApRefineIterData` AS rd "
+			+"ON pc.`REF|ApRefineIterData|refineIter` = rd.`DEF_id` "
+			+"WHERE rd.`REF|ApRefineRunData|refineRun` = "+str(reconid)+" "
 			+"AND rd.`iteration` = "+str(iteration)+" "
 		)
 	#print query

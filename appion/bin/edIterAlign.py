@@ -210,7 +210,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
 		partlist = self.readApshDocFile("apshdoc.spi","apshdoc.pickle")
 		for partdict in partlist:
-			alignpartq = appiondata.ApAlignParticlesData()
+			alignpartq = appiondata.ApAlignParticleData()
 			alignpartq['ref'] = reflist[partdict['template']-1]
 			alignpartq['partnum'] = partdict['num']
 			alignpartq['alignstack'] = alignstackq

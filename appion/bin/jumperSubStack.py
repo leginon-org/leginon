@@ -41,7 +41,7 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printError("Please provide --description")
 
 		### get the stack ID from the other IDs
-		self.recondata = appiondata.ApRefinementRunData.direct_query(self.params['reconid'])
+		self.recondata = appiondata.ApRefineRunData.direct_query(self.params['reconid'])
 		self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'])
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 
@@ -65,7 +65,7 @@ class subStackScript(appionScript.AppionScript):
 		### get particles from stack
 		apDisplay.printMsg("Querying stack particles")
 		t0 = time.time()
-		stackpartq =  appiondata.ApStackParticlesData()
+		stackpartq =  appiondata.ApStackParticleData()
 		stackpartq['stack'] = self.stackdata
 		particles = stackpartq.query()
 		apDisplay.printMsg("Finished in "+apDisplay.timeString(time.time()-t0))

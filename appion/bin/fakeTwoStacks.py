@@ -264,7 +264,7 @@ class fakeStackScript(appionScript.AppionScript):
 
 				+"FROM `ApTiltParticlePairData` AS tiltd \n"
 
-				+"LEFT JOIN `ApStackParticlesData` AS stpart1 \n"
+				+"LEFT JOIN `ApStackParticleData` AS stpart1 \n"
 				+"  ON stpart1.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle1` \n"
 				+"LEFT JOIN `ApParticleData` AS part1 \n"
 				+"  ON stpart1.`REF|ApParticleData|particle` = part1.`DEF_id` \n"
@@ -273,7 +273,7 @@ class fakeStackScript(appionScript.AppionScript):
 				+"LEFT JOIN dbemdata.`ScopeEMData` AS scoped1 \n"
 				+"  ON imaged1.`REF|ScopeEMData|scope` = scoped1.`DEF_id` \n"
 
-				+"LEFT JOIN `ApStackParticlesData` AS stpart2 \n"
+				+"LEFT JOIN `ApStackParticleData` AS stpart2 \n"
 				+"  ON stpart2.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle2` \n"
 				+"LEFT JOIN `ApParticleData` AS part2 \n"
 				+"  ON stpart2.`REF|ApParticleData|particle` = part2.`DEF_id` \n"

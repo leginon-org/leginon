@@ -502,14 +502,14 @@ def queryDirectory(path):
 def getJobDataFromPath(path):
 	pathq = appiondata.ApPathData()
 	pathq['path'] = os.path.abspath(path)
-	jobq = appiondata.ApClusterJobData()
+	jobq = appiondata.ApAppionJobData()
 	jobq['path'] = pathq
 	jobdatas = jobq.query()
 	return jobdatas
 
 #================
 def getJobDataFromType(jobtype):
-	jobq = appiondata.ApClusterJobData()
+	jobq = appiondata.ApAppionJobData()
 	jobq['jobtype'] = jobtype
 	jobdatas = jobq.query()
 	return jobdatas
@@ -518,7 +518,7 @@ def getJobDataFromType(jobtype):
 def getJobDataFromPathAndType(path, jobtype):
 	pathq = appiondata.ApPathData()
 	pathq['path'] = os.path.abspath(path)
-	jobq = appiondata.ApClusterJobData()
+	jobq = appiondata.ApAppionJobData()
 	jobq['path'] = pathq
 	jobq['jobtype'] = jobtype
 	jobdatas = jobq.query(results=1)
@@ -528,7 +528,7 @@ def getJobDataFromPathAndType(path, jobtype):
 
 #================
 def getJobDataFromID(jobid):
-	jobdata = appiondata.ApClusterJobData.direct_query(jobid)
+	jobdata = appiondata.ApAppionJobData.direct_query(jobid)
 	return jobdata
 
 #================

@@ -30,7 +30,7 @@ class EqualViews(appionScript.AppionScript):
 		if self.params['description'] is None:
 			apDisplay.printError("Please provide a description, e.g. --description='awesome'")
 
-		self.reconrundata = appiondata.ApRefinementRunData.direct_query(self.params['reconid'])
+		self.reconrundata = appiondata.ApRefineRunData.direct_query(self.params['reconid'])
 		if self.params['iternums'] is None:
 			apDisplay.printError("Please provide a list of iterations to use, e.g. --iternums=2,3,4")
 		try:
@@ -53,14 +53,14 @@ class EqualViews(appionScript.AppionScript):
 		### get Euler angles for each particle
 		for iternum in self.iternums:
 			### get recon iter data
-			reconiterq = appiondata.ApRefinementData()
-			reconiterq['refinementRun'] = self.reconrundata
+			reconiterq = appiondata.ApRefineIterData()
+			reconiterq['refineRun'] = self.reconrundata
 			reconiterq['iteration'] = iternum
 			reconiterdata = reconiterq.query(results=1)[0] #this should be unique
 
 			### get particle data
-			reconpartq = appiondata.ApParticleClassificationData()
-			reconpartq['refinement'] = reconiterdata
+			reconpartq = appiondata.ApRefineParticleData()
+			reconpartq['refineIter'] = reconiterdata
 			apDisplay.printMsg("Querying for particles at "+time.asctime())
 			reconpartdatas = reconpartq.query()
 

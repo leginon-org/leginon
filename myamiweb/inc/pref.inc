@@ -131,12 +131,5 @@ class ViewerPreference{
 		return $this->mysql->SQLQueries($q);
 	}
 
-	function get_my_memoved_files($username, $sessionId) {
-		$q = "SELECT imageId from `viewer_pref_image` "
-			."WHERE `username`='$username' AND "
-			."`sessionId`='$sessionId'";
-		return $this->mysql->getSQLResult($q);
-	}
-
 }
 ?>

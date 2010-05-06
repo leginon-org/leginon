@@ -192,11 +192,11 @@ foreach ($iterations as $iteration){
 	$refinementData=$ref[0];
 	// set as exemplar if submitted
 	if ($_POST['exemplar'.$refinementData['DEF_id']]) {
-		$particle->updateExemplar('ApRefinementData',$refinementData['DEF_id'],1);
+		$particle->updateExemplar('ApRefineIterData',$refinementData['DEF_id'],1);
 		$refinementData['exemplar'] = 1;
 	}
 	elseif ($_POST['notExemplar'.$refinementData['DEF_id']]) {
-		$particle->updateExemplar('ApRefinementData',$refinementData['DEF_id'],0);
+		$particle->updateExemplar('ApRefineIterData',$refinementData['DEF_id'],0);
 		$refinementData['exemplar'] = False;
 	}
 
@@ -218,13 +218,13 @@ foreach ($iterations as $iteration){
 	foreach ($refinetypes as $type) {
 		switch ($type) {
 			case 'EMAN':
-				$clsavgfield = 'emanClassAvg';
+				$clsavgfield = 'refineClassAverages';
 				break;
 			case 'SpiCoran':
-				$clsavgfield = 'SpiCoranGoodClassAvg';
+				$clsavgfield = 'postRefineClassAverages';
 			  break; 	 
 			case 'MsgP':
-				$clsavgfield = 'MsgPGoodClassAvg';
+				$clsavgfield = 'postRefineClassAverages';
 			  break;
 		}
 		if ($refinementData[$clsavgfield]) {
@@ -239,13 +239,13 @@ foreach ($iterations as $iteration){
 		//$goodprtls['EMAN']=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'good', 'EMAN', True);
 	# old data has no class average distinction, force association 
 	if ((count($clsavgs)==0 && ($refinerun['package'] == 'EMAN')) || ($refinerun['package']=='EMAN/MsgP' && (!array_key_exists('EMAN',$clsavgs)))) { 
-		$clsavgs['EMAN']= $refinementData['classAverage'];
+		$clsavgs['EMAN']= $refinementData['refineClassAverages'];
 	} elseif (count($clsavgs)==0 && $refinerun['package']=='EMAN/SpiCoran') {
-		$classnamearray = explode('.',$refinementData['classAverage']);
+		$classnamearray = explode('.',$refinementData['refineClassAverages']);
 		$newnamearray = array_slice($classnamearray,0,count($classnamearray)-1);
 		array_push($newnamearray,'old',$classnamearray[count($classnamearray)-1]);
 		$clsavgs['EMAN'] = implode('.',$newnamearray);
-		$clsavgs['SpiCoran']= $refinementData['classAverage'];
+		$clsavgs['SpiCoran']= $refinementData['refineClassAverages'];
 	}
 	$html .= "<tr>\n";
 	$html .= "<td bgcolor='$bg'>\n";

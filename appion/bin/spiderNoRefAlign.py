@@ -165,7 +165,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			'yshift': float(data[6]),
 			"""
 
-			alignpartq = appiondata.ApAlignParticlesData()
+			alignpartq = appiondata.ApAlignParticleData()
 			alignpartq['ref'] = refq
 			alignpartq['partnum'] = partdict['num']
 			alignpartq['alignstack'] = alignstackq

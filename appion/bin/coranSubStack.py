@@ -35,8 +35,8 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printError("Please provide --runname")
 
 		### get the stack ID from the other IDs
-		self.iterdata = appiondata.ApRefinementData.direct_query(self.params['iterid'])
-		self.params['stackid'] = apStack.getStackIdFromRecon(self.iterdata['refinementRun'].dbid)
+		self.iterdata = appiondata.ApRefineIterData.direct_query(self.params['iterid'])
+		self.params['stackid'] = apStack.getStackIdFromRecon(self.iterdata['refineRun'].dbid)
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 
 		### check and make sure we got the stack id
@@ -59,8 +59,8 @@ class subStackScript(appionScript.AppionScript):
 		### get particles from stack
 		apDisplay.printMsg("Querying stack particles")
 		t0 = time.time()
-		stackpartq =  appiondata.ApParticleClassificationData()
-		stackpartq['refinement'] = self.iterdata
+		stackpartq =  appiondata.ApRefineParticleData()
+		stackpartq['refineIter'] = self.iterdata
 		particles = stackpartq.query()
 		apDisplay.printMsg("Finished in "+apDisplay.timeString(time.time()-t0))
 
@@ -77,7 +77,7 @@ class subStackScript(appionScript.AppionScript):
 				sys.stderr.write(".")
 			emanstackpartnum = part['particle']['particleNumber']-1
 
-			if part['coran_keep'] == 1:
+			if part['postRefine_keep'] == 1:
 				### good particle
 				includeParticle.append(emanstackpartnum)
 				f.write("%d\t%d\tinclude\n"%(count, emanstackpartnum))

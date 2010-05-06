@@ -125,7 +125,7 @@ class sortJunkStackScript(appionScript.AppionScript):
 			oldparticle = apStack.getStackParticle(self.params['stackid'], fileorder[i]+1)
 
 			# Insert particle
-			newparticle = appiondata.ApStackParticlesData()
+			newparticle = appiondata.ApStackParticleData()
 			newparticle['particleNumber'] = i+1
 			newparticle['stack'] = newstack
 			newparticle['stackRun'] = oldparticle['stackRun']

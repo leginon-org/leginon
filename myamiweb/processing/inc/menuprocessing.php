@@ -104,7 +104,7 @@ if ($expId) {
 			if ($reconIds) {
 				$reconruns+=count($reconIds);
 				foreach ($reconIds as $reconId) {
-					if ($reconId['REF|ApClusterJobData|jobfile']) {
+					if ($reconId['REF|ApAppionJobData|jobfile']) {
 						$reconswithjob++;
 					}
 				}

@@ -170,7 +170,7 @@ class UploadFrealign(appionScript.AppionScript):
 		if self.runq is None:
 			### setup refinement run
 			jobdata = apDatabase.getJobDataFromPathAndType(self.params['rundir'], "runfrealign")
-			self.runq = appiondata.ApRefinementRunData()
+			self.runq = appiondata.ApRefineRunData()
 			self.runq['name'] = self.params['runname']
 			self.runq['stack'] = apStack.getOnlyStackData(self.params['stackid'])
 			self.runq['initialModel'] = apModel.getModelFromId(self.params['modelid'])
@@ -180,10 +180,10 @@ class UploadFrealign(appionScript.AppionScript):
 			self.runq['hidden'] = False 
 			self.runq['jobfile'] = jobdata
 
-		iterq = appiondata.ApRefinementData()
+		iterq = appiondata.ApRefineIterData()
 		iterq['iteration'] = iternum
-		iterq['refinementRun'] = self.runq
-		iterq['refinementParams'] = ApRefinementParamsData
+		iterq['refineRun'] = self.runq
+		iterq['emanParams'] = ApEmanRefineIterData
 		iterq['frealignParams'] = ApFrealignIterationData
 		iterq['resolution'] = ApResolutionData
 		iterq['rMeasure'] = ApRMeasureData
@@ -193,7 +193,7 @@ class UploadFrealign(appionScript.AppionScript):
 		good = 0
 		bad = 0
 		for partdict in parttree:
-			partq = ApParticleClassificationData()
+			partq = ApRefineParticleData()
 
 		ApRefineGoodBadParticleData
 

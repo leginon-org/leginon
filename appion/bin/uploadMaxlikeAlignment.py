@@ -245,7 +245,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		maxjobq = appiondata.ApMaxLikeJobData()
 		maxjobq['runname'] = runparams['runname']
 		maxjobq['path'] = appiondata.ApPathData(path=os.path.abspath(runparams['rundir']))
-		maxjobq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
+		maxjobq['REF|projectdata|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
 		maxjobq['timestamp'] = self.params['timestamp']
 		maxjobdata = maxjobq.query(results=1)
 		if not maxjobdata:
@@ -346,7 +346,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 				apDisplay.printError("could not find reference file: "+reffile)
 
 			### setup particle
-			alignpartq = appiondata.ApAlignParticlesData()
+			alignpartq = appiondata.ApAlignParticleData()
 			alignpartq['partnum'] = partdict['partnum']
 			alignpartq['alignstack'] = self.alignstackdata
 			stackpartdata = apStack.getStackParticle(stackid, partdict['partnum'])

@@ -54,15 +54,15 @@ class MaskMaker(appionLoop2.AppionLoop):
 		maskPdata=appiondata.ApMaskMakerParamsData()
 
 		maskPdata['bin']=params['bin']
-		maskPdata['mask type']=params['masktype']
+		maskPdata['mask_type']=params['masktype']
 		maskPdata['pdiam']=params['diam']
-		maskPdata['region diameter']=params['cdiam']
-		maskPdata['edge blur']=params['cblur']
-		maskPdata['edge low']=params['clo']
-		maskPdata['edge high']=params['chi']
-		maskPdata['region std']=params['stdev']
+		maskPdata['region_diameter']=params['cdiam']
+		maskPdata['edge_blur']=params['cblur']
+		maskPdata['edge_low']=params['clo']
+		maskPdata['edge_high']=params['chi']
+		maskPdata['region_std']=params['stdev']
 		maskPdata['convolve']=params['convolve']
-		maskPdata['convex hull']=not params['no_hull']
+		maskPdata['convex_hull']=not params['no_hull']
 		maskPdata['libcv']=params['cv']
 
 		maskPdata.insert()

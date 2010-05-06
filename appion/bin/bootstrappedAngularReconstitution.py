@@ -1213,7 +1213,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		else:
 			aarq['clusterid'] = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
 		aarq['description'] = self.params['description']
-		aarq['project|projects|project'] = self.params['projectid']
+		aarq['REF|projectdata|projects|project'] = self.params['projectid']
 		aarq['hidden'] = False
 		
 		if self.params['commit'] is True:

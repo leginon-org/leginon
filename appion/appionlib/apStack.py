@@ -59,7 +59,7 @@ def getStackParticlesFromId(stackid, msg=True):
 	if msg is True:
 		apDisplay.printMsg("querying stack particles from stackid="+str(stackid)+" at "+time.asctime())
 	stackdata = appiondata.ApStackData.direct_query(stackid)
-	stackq = appiondata.ApStackParticlesData()
+	stackq = appiondata.ApStackParticleData()
 	stackq['stack'] = stackdata
 	stackpartdata = stackq.query(readimages=False)
 	if not stackpartdata:
@@ -92,7 +92,7 @@ def getOneParticleFromStackId(stackid, particlenumber=1, msg=True):
 	if msg is True:
 		apDisplay.printMsg("querying one stack particle from stackid="+str(stackid)+" on "+time.asctime())
 	stackdata=appiondata.ApStackData.direct_query(stackid)
-	stackq=appiondata.ApStackParticlesData()
+	stackq=appiondata.ApStackParticleData()
 	stackq['stack'] = stackdata
 	stackq['particleNumber'] = particlenumber
 	stackparticledata=stackq.query(results=1)
@@ -120,7 +120,7 @@ def getStackParticle(stackid, partnum, nodie=False):
 	if partnum <= 0:
 		apDisplay.printMsg("cannot get particle %d from stack %d"%(partnum,stackid))
 	#apDisplay.printMsg("getting particle %d from stack %d"%(partnum,stackid))
-	stackparticleq = appiondata.ApStackParticlesData()
+	stackparticleq = appiondata.ApStackParticleData()
 	stackparticleq['stack'] = appiondata.ApStackData.direct_query(stackid)
 	stackparticleq['particleNumber'] = partnum
 	stackparticledata = stackparticleq.query()
@@ -168,14 +168,14 @@ def checkForPreviousStack(stackname, stackpath=None):
 
 #===============
 def getStackIdFromIterationId(iterid, msg=True):
-	iterdata = appiondata.ApRefinementData.direct_query(iterid)
-	refrun = iterdata['refinementRun'].dbid
+	iterdata = appiondata.ApRefineIterData.direct_query(iterid)
+	refrun = iterdata['refineRun'].dbid
 	stackid = getStackIdFromRecon(refrun)
 	return stackid
 
 #===============
 def getStackIdFromRecon(reconrunid, msg=True):
-	reconrundata = appiondata.ApRefinementRunData.direct_query(reconrunid)
+	reconrundata = appiondata.ApRefineRunData.direct_query(reconrunid)
 	if not reconrundata:
 		apDisplay.printWarning("Could not find stack id for Recon Run="+str(reconrunid))
 		return None
@@ -314,7 +314,7 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 			oldstackpartdata = getStackParticle(params['stackid'], origpartnum)
 
 		# Insert particle
-		newstackq = appiondata.ApStackParticlesData()
+		newstackq = appiondata.ApStackParticleData()
 		newstackq.update(oldstackpartdata)
 		newstackq['particleNumber'] = newpartnum
 		newstackq['stack'] = stackq
@@ -388,7 +388,7 @@ def getStackParticleTilt(stpartid):
 	"""
 	For a given stack part dbid return tilt angle
 	"""
-	stpartdata = appiondata.ApStackParticlesData.direct_query(stpartid)
+	stpartdata = appiondata.ApStackParticleData.direct_query(stpartid)
 	tilt = stpartdata['particle']['image']['scope']['stage position']['a']*180.0/math.pi
 	return abs(tilt)
 
@@ -414,7 +414,7 @@ def getStackParticleFromParticleId(particleid,stackid, nodie=False):
 	"""
 	Provided a Stack Id & an ApParticle Id, find the stackparticle Id
 	"""
-	stackdata = appiondata.ApStackParticlesData()
+	stackdata = appiondata.ApStackParticleData()
 	stackdata['particle'] = appiondata.ApParticleData.direct_query(particleid)
 	stackdata['stack'] = appiondata.ApStackData.direct_query(stackid)
 	stackpnum = stackdata.query()
@@ -433,7 +433,7 @@ def getImageParticles(imagedata,stackid,nodie=True):
 	"""
 	particleq = appiondata.ApParticleData(image=imagedata)
 
-	stackpdata = appiondata.ApStackParticlesData()
+	stackpdata = appiondata.ApStackParticleData()
 	stackpdata['particle'] = particleq
 	stackpdata['stack'] = appiondata.ApStackData.direct_query(stackid)
 	stackps = stackpdata.query()
@@ -475,7 +475,7 @@ def getAlignStack(substacktype,conditionstackdata):
 
 #===============
 def getStackParticleDiameter(stackdata):
-	stackpdata = appiondata.ApStackParticlesData()
+	stackpdata = appiondata.ApStackParticleData()
 	stackpdata['stack'] = stackdata
 	results = stackpdata.query(results=1)
 	if results:

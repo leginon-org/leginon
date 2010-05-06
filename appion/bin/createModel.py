@@ -222,7 +222,7 @@ class createModelScript(appionScript.AppionScript):
 		apDisplay.printMsg("Include list: "+str(includelist))
 
 		apDisplay.printMsg("Querying for clustered particles")
-		clusterpartq = appiondata.ApClusteringParticlesData()
+		clusterpartq = appiondata.ApClusteringParticleData()
 		clusterpartq['clusterstack'] = self.clusterstackdata
 		particles = clusterpartq.query()
 		apDisplay.printMsg("Sorting "+str(len(particles))+" clustered particles")

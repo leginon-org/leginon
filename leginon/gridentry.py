@@ -49,14 +49,7 @@ class GridEntry(node.Node):
 		except project.NotConnectedError, e:
 			self.logger.warning('Failed to associate the grid to a project: %s' % e)
 			return None
-		projectexperiments = projectdata.getProjectExperiments()
-		allprojectexperiments = projectexperiments.getall()
-		sessionname = sessiondata['name']
-		for experiment in allprojectexperiments:
-			if sessionname == experiment['name']:
-				projectsession = experiment
-				return int(projectsession['projectId'])
-		return None	
+		return projectdata.getProjectId(sessiondata)
 
 	def getGridNames(self):
 		gridnames = []

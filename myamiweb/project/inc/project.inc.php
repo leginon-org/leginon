@@ -96,7 +96,7 @@ function project_footer() {
 function getmenuURL($projectId="", $specimenId="", $gridId="", $gridBoxId="", $userId="") {
 	$getids=array();
 	if (!empty($projectId)) 
-		$getids[]='pid='.$projectId;
+		$getids[]='projectId='.$projectId;
 	if (!empty($specimenId)) 
 		$getids[]='sid='.$specimenId;
 	if (!empty($gridId)) 
@@ -104,7 +104,7 @@ function getmenuURL($projectId="", $specimenId="", $gridId="", $gridBoxId="", $u
 	if (!empty($gridBoxId)) 
 		$getids[]='gbid='.$gridBoxId;
 	if (!empty($userId)) 
-		$getids[]='uid='.$userId;
+		$getids[]='userId='.$userId;
 	$getids_str=implode('&',$getids);
 	return "getmenu.php?".$getids_str;
 }
@@ -120,11 +120,10 @@ class project {
 				 
 	function project($mysql="") {
 		$this->mysql = ($mysql) ? $mysql : new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
-		
 		if (!$this->mysql->checkDBConnection())
 			$this->mysql->dbError();
 	}
-	
+
 	// This install function is for setup wizard.
 	function install($defaultProjectSchema) {
 
@@ -165,7 +164,7 @@ class project {
 		$data['long_description']=$long_description;
 		$data['category']=$category;
 		$data['funding']=$funding;
-		$where['projectId']=$projectId;
+		$where['DEF_id']=$projectId;
 
 		$this->mysql->SQLUpdate($table, $data, $where);
 	}
@@ -173,8 +172,8 @@ class project {
 	function deleteProject($projectId) {
 		if (!$projectId)
 			return false;
-		$q[]='DELETE FROM projectexperiments WHERE projectId='.$projectId;
-		$q[]='DELETE FROM projects WHERE projectId='.$projectId;
+		$q[]='DELETE FROM projectexperiments WHERE `REF|projects|project`='.$projectId;
+		$q[]='DELETE FROM projects WHERE DEF_id='.$projectId;
 		$this->mysql->SQLQueries($q);
 	}
 
@@ -206,18 +205,18 @@ class project {
 	}
 
 	function checkProjectExistsbyName($name) {
-		$q=' SELECT projectId FROM projects WHERE name="'.$name.'"';
+		$q="SELECT DEF_id FROM projects WHERE name='$name'";
 		$RprojectInfo = $this->mysql->SQLQuery($q);
 		$projectInfo = mysql_fetch_array($RprojectInfo);
-		return $projectInfo['projectId'];
+		return $projectInfo['DEF_id'];
 	}
 
-	function checkProjectExistsbyId($id) {
-		$q=' SELECT projectId FROM projects WHERE projectId="'.$id.'"';
+	function checkProjectExistsbyId($projectId) {
+		$q=' SELECT DEF_id FROM projects WHERE DEF_id="'.$projectId.'"';
 		$RprojectInfo = $this->mysql->SQLQuery($q);
 		echo mysql_error();
 		$projectInfo = mysql_fetch_array($RprojectInfo);
-		$id = $projectInfo['projectId'];
+		$id = $projectInfo['DEF_id'];
 		if(empty($id))
 			return false;
 		else
@@ -226,10 +225,10 @@ class project {
 
 	function getProjects($order="",$privilege_level=1){
 		$userId = getLoginUserId();
-		$q='SELECT p.projectId, p.name, p.short_description FROM projects p';
+		$q='SELECT p.DEF_id AS projectId, p.name, p.short_description FROM projects AS p';
 		if ($privilege_level <= 2 and $userId !== true and $userId) {
 			$q .= " left join projectowners o "
-						."on o.`REF|projects|project` = p.`projectId` "
+						."on o.`REF|projects|project` = p.`DEF_id` "
 						."left join ".DB_LEGINON.".UserData u "
 						."on u.`DEF_id` = o.`REF|leginondata|UserData|user` "
 						."WHERE u.`DEF_id` = ".$userId." ";
@@ -241,13 +240,13 @@ class project {
 
 	function getProjectInfo($projectId){
 		$info=array();
-		$q='SELECT projectId, name as "Name", '
+		$q='SELECT DEF_id as projectId, name as "Name", '
 		  .'short_description as "Title", '
 		  .'long_description as "Description", '
 		  .'concat(substring_index(left(long_description, 120),"\n",2),"...") as `ReducedDescription`, '
 		  .'category as "Category", '
 		  .'funding as "Funding"  FROM projects '
-		  .'WHERE projectId="'.$projectId.'"';
+		  .'WHERE DEF_id="$projectId"';
 
 		$RprojectInfo = $this->mysql->SQLQuery($q);
 		$info = mysql_fetch_array($RprojectInfo, MYSQL_ASSOC);
@@ -415,13 +414,24 @@ class project {
 		return true;
 	}
 
+	function getSessionIdFromName($sessionname) {
+		$q = "SELECT DEF_id "
+		   . "FROM ".DB_LEGINON.".SessionData AS session "
+			. "WHERE session.`name`='$sessionname' "
+			. "LIMIT 1 ";
+		$sessionIds = $this->mysql->getSQLResult($q);
+		return $sessionIds[0]['DEF_id'];
+	}
+
 	function getExperiments($projectId="") {
 		$experimentIds = array();
 		$q = "SELECT "
-		   ."projectexperimentId, name "
-		   ."FROM projectexperiments p ";
+		   ."DEF_id AS projectexperimentId, session.name AS name"
+		   ."FROM projectexperiments AS projexp "
+		   ."LEFT JOIN ".DB_LEGINON.".SessionData AS session "
+			." ON projexp.`REF|legiondata|SessionData|session` = session.`DEF_id` ";
 		if ($projectId)
-		   $q .= "WHERE p.`projectId`='".$projectId."' ";
+		   $q .= "WHERE projexp.`REF|projects|project`='".$projectId."' ";
 
 		$experimentIds = $this->mysql->getSQLResult($q);
 		return $experimentIds;

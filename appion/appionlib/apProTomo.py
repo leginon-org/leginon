@@ -331,7 +331,7 @@ def convertProtomoToImod(specimen_euler, tiltaz, origins, rotations,center):
 def insertProtomoParams(seriesname):
 	# general protmo parameters
 	protomoq = appiondata.ApProtomoParamsData()
-	protomoq['series name'] = seriesname
+	protomoq['series_name'] = seriesname
 	protomodata = apTomo.publish(protomoq)
 	return protomodata
 

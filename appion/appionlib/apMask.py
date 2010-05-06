@@ -35,7 +35,7 @@ def insertManualMaskParams(bin):
 	maskPdata=appiondata.ApMaskMakerParamsData()
 
 	maskPdata['bin']=bin
-	maskPdata['mask type']='manual'
+	maskPdata['mask_type']='manual'
 
 	maskPdata.insert()
 

@@ -214,7 +214,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			'yshift': float(data[6]),
 			"""
 
-			alignpartq = appiondata.ApAlignParticlesData()
+			alignpartq = appiondata.ApAlignParticleData()
 			alignpartq['ref'] = reflist[partdict['template']-1]
 			alignpartq['partnum'] = partdict['num']
 			alignpartq['alignstack'] = alignstackq

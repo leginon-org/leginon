@@ -150,13 +150,13 @@ foreach ($reconRuns as $recon) {
 	foreach ($refinetypes as $type) {
 		switch ($type) {
 			case 'EMAN':
-				$clsavgfield = 'emanClassAvg';
+				$clsavgfield = 'refineClassAverages';
 				break;
 			case 'SpiCoran':
-				$clsavgfield = 'SpiCoranGoodClassAvg';
+				$clsavgfield = 'postRefineClassAverages';
 			  break; 	 
 			case 'MsgP':
-				$clsavgfield = 'MsgPGoodClassAvg';
+				$clsavgfield = 'postRefineClassAverages';
 			  break;
 		}
 		if ($recon[$clsavgfield]) {
@@ -171,13 +171,13 @@ foreach ($reconRuns as $recon) {
 		$goodprtls['EMAN']=$particle->getSubsetParticlesInStack($reconid, 'good', 'EMAN', True);
 	# old data has no class average distinction, force association 
 	if ((count($clsavgs)==0 && ($recon['package'] == 'EMAN')) || ($recon['package']=='EMAN/MsgP' && (!array_key_exists('EMAN',$clsavgs)))) { 
-		$clsavgs['EMAN']= $recon['classAverage'];
+		$clsavgs['EMAN']= $recon['refineClassAverages'];
 	} elseif (count($clsavgs)==0 && $recon['package']=='EMAN/SpiCoran') {
-		$classnamearray = explode('.',$recon['classAverage']);
+		$classnamearray = explode('.',$recon['refineClassAverages']);
 		$newnamearray = array_slice($classnamearray,0,count($classnamearray)-1);
 		array_push($newnamearray,'old',$classnamearray[count($classnamearray)-1]);
 		$clsavgs['EMAN'] = implode('.',$newnamearray);
-		$clsavgs['SpiCoran']= $recon['classAverage'];
+		$clsavgs['SpiCoran']= $recon['refineClassAverages'];
 	}
 	$html .= "<tr>\n";
 

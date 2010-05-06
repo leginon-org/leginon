@@ -100,10 +100,10 @@ class ApEulerJump(object):
 
 	#=====================
 	def insertJumpIntoDB(self, stackpartid, reconrunid, jumpdata):
-		#refinerundata=appiondata.ApRefinementRunData.direct_query(reconid)
+		#refinerundata=appiondata.ApRefineRunData.direct_query(reconid)
 		ejumpq = appiondata.ApEulerJumpData()
-		ejumpq['particle'] = appiondata.ApStackParticlesData.direct_query(stackpartid)
-		ejumpq['refRun'] = appiondata.ApRefinementRunData.direct_query(reconrunid)
+		ejumpq['particle'] = appiondata.ApStackParticleData.direct_query(stackpartid)
+		ejumpq['refRun'] = appiondata.ApRefineRunData.direct_query(reconrunid)
 		for key in ('median', 'mean', 'stdev', 'min', 'max'):
 			ejumpq[key] = jumpdata[key]
 		ejumpq.insert()
@@ -112,8 +112,8 @@ class ApEulerJump(object):
 	#=====================
 	def getJumpDataFromDB(self, stackpartid, reconrunid):
 		jumpq = appiondata.ApEulerJumpData()
-		jumpq['particle'] = appiondata.ApStackParticlesData.direct_query(stackpartid)
-		jumpq['refRun'] = appiondata.ApRefinementRunData.direct_query(reconrunid)
+		jumpq['particle'] = appiondata.ApStackParticleData.direct_query(stackpartid)
+		jumpq['refRun'] = appiondata.ApRefineRunData.direct_query(reconrunid)
 		jumpdatas = jumpq.query(results=1)
 		if not jumpdatas:
 			return None
@@ -125,7 +125,7 @@ class ApEulerJump(object):
 		if stackid is None:
 			stackid = apStack.getStackIdFromRecon(reconrunid, msg=False)
 
-		stackpartq = appiondata.ApStackParticlesData()
+		stackpartq = appiondata.ApStackParticleData()
 		stackpartq['stack'] = appiondata.ApStackData.direct_query(stackid)
 		stackpartq['particleNumber'] = stackpartnum
 		stackpartdata = stackpartq.query(results=1)
@@ -177,16 +177,16 @@ class ApEulerJump(object):
 		"""
 		returns all classdata for a particular particle and refinement
 		"""
-		refrundata = appiondata.ApRefinementRunData.direct_query(reconrunid)
-		stackpartdata = appiondata.ApStackParticlesData.direct_query(stackpartid)
+		refrundata = appiondata.ApRefineRunData.direct_query(reconrunid)
+		stackpartdata = appiondata.ApStackParticleData.direct_query(stackpartid)
 
-		refmentq = appiondata.ApRefinementData()
-		refmentq['refinementRun'] = refrundata
+		refmentq = appiondata.ApRefineIterData()
+		refmentq['refineRun'] = refrundata
 
 		particledata = stackpartdata
-		partclassq = appiondata.ApParticleClassificationData()
+		partclassq = appiondata.ApRefineParticleData()
 		partclassq['particle'] = particledata
-		partclassq['refinement']  = refmentq
+		partclassq['refineIter']  = refmentq
 		partclassdata = partclassq.query()
 
 		eulertree = []
@@ -198,8 +198,8 @@ class ApEulerJump(object):
 				euler['euler2'] = float(data['euler2'])
 				euler['euler3'] = float(data['euler3'])
 				euler['mirror'] = self.nullOrValue(data['mirror'])
-				euler['reject'] = self.nullOrValue(data['thrown_out'])
-				euler['iteration'] = int(data['refinement']['iteration'])
+				euler['reject'] = self.nullOrValue(data['refine_keep'])
+				euler['iteration'] = int(data['refineIter']['iteration'])
 				eulertree.append(euler)
 			except:
 				print euler
@@ -222,15 +222,15 @@ class ApEulerJump(object):
 			+"  partclass.`mirror` AS mirror, \n"
 			+"  partclass.`thrown_out` AS reject, \n"
 			+"  ref.`iteration` AS iteration \n"
-			+"FROM `ApStackParticlesData` as stackpart \n"
-			+"LEFT JOIN `ApParticleClassificationData` AS partclass \n"
-			+"  ON partclass.`REF|ApStackParticlesData|particle` = stackpart.`DEF_id` \n"
-			+"LEFT JOIN `ApRefinementData` AS ref \n"
-			+"  ON partclass.`REF|ApRefinementData|refinement` = ref.`DEF_id` \n"
+			+"FROM `ApStackParticleData` as stackpart \n"
+			+"LEFT JOIN `ApRefineParticleData` AS partclass \n"
+			+"  ON partclass.`REF|ApStackParticleData|particle` = stackpart.`DEF_id` \n"
+			+"LEFT JOIN `ApRefineIterData` AS ref \n"
+			+"  ON partclass.`REF|ApRefineIterData|refineIter` = ref.`DEF_id` \n"
 			+"WHERE \n"
 			+"  stackpart.`DEF_id` = "+str(stackpartid)+" \n"
 			+"AND \n"
-			+"  ref.`REF|ApRefinementRunData|refinementRun` = "+str(reconrunid)+" \n"
+			+"  ref.`REF|ApRefineRunData|refineRun` = "+str(reconrunid)+" \n"
 		)
 		self.cursor.execute(query)
 		results = self.cursor.fetchall()

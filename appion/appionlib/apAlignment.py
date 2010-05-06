@@ -8,8 +8,8 @@ from appionlib import appiondata
 def getAlignParticle(stackpdata,alignstackdata):
 	oldstack = stackpdata['stack']['oldstack']
 	particledata = stackpdata['particle']
-	oldstackpdata = appiondata.ApStackParticlesData(stack=oldstack,particle=particledata)
-	q = appiondata.ApAlignParticlesData(alignstack=alignstackdata,stackpart=oldstackpdata)
+	oldstackpdata = appiondata.ApStackParticleData(stack=oldstack,particle=particledata)
+	q = appiondata.ApAlignParticleData(alignstack=alignstackdata,stackpart=oldstackpdata)
 	results = q.query(readimages=False)
 	if results:
 		return results[0]

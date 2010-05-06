@@ -156,7 +156,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			alignrundata = alignrunq.query(results=1)
 			if maxjobdatas[0]['finished'] is True or alignrundata:
 				apDisplay.printError("This run name already exists as finished in the database, please change the runname")
-		maxjobq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
+		maxjobq['REF|projectdata|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		maxjobq['timestamp'] = self.timestamp
 		maxjobq['finished'] = False
 		maxjobq['hidden'] = False

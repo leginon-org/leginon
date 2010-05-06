@@ -343,9 +343,9 @@ def getStackParticleEulersForIteration(params,pnum):
 		pclass['shiftx']=0.0
 		pclass['shifty']=0.0
 	else:
-		pclassq = appiondata.ApParticleClassificationData()
+		pclassq = appiondata.ApRefineParticleData()
 		pclassq['particle'] = refstackp
-		pclassq['refinement'] = appiondata.ApRefinementData.direct_query(params['reconiterid'])
+		pclassq['refineIter'] = appiondata.ApRefineIterData.direct_query(params['reconiterid'])
 		pclass = pclassq.query()
 		pclass=pclass[0]
 

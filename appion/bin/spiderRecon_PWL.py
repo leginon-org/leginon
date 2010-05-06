@@ -253,7 +253,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		notstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['tiltstackid'], 
 			partnum, self.params['notstackid'])
 
-		alignpartq = appiondata.ApAlignParticlesData()
+		alignpartq = appiondata.ApAlignParticleData()
 		alignpartq['stackpart'] = notstackpartdata
 		alignpartq['alignstack'] = self.alignstackdata
 		alignpartdatas = alignpartq.query()

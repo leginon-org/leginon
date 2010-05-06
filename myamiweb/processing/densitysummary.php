@@ -42,7 +42,7 @@ $allDensityRuns = $particle->get3dDensitysFromSession($sessionId, false);
 if ($allDensityRuns) {
 	$densityRuns=array();
 	foreach ($allDensityRuns as $drun) {
-		if (!$drun['REF|ApRefinementData|iterid']) $densityRuns[]=$drun;
+		if (!$drun['REF|ApRefineIterData|iterid']) $densityRuns[]=$drun;
 	}
 }
 $densityRuns = $allDensityRuns;
@@ -102,7 +102,7 @@ if ($densityRuns) {
 			$html .= "<td><A HREF='rctreport.php?expId=$expId&rctId="
 				.$densityrun['REF|ApRctRunData|rctrun']."'>rctrun #"
 				.$densityrun['REF|ApRctRunData|rctrun']."</A></TD>\n";
-		elseif ($densityrun['REF|ApRefinementData|iterid'])
+		elseif ($densityrun['REF|ApRefineIterData|iterid'])
 			$html .= "<td><A HREF='reconreport.php?expId=$expId&reconId="
 				.$densityrun['refrun']."'> refine run #"
 				.$densityrun['refrun']."</A></TD>\n";

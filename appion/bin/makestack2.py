@@ -154,7 +154,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		partq = appiondata.ApParticleData()
 		partq['image'] = imgdata
 
-		stackpartq = appiondata.ApStackParticlesData()
+		stackpartq = appiondata.ApStackParticleData()
 		stackpartq['stack'] = appiondata.ApStackData.direct_query(self.params['fromstackid'])
 		stackpartq['particle'] = partq
 		
@@ -1049,7 +1049,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			partmeandict = self.partmeantree[i]
 
 			self.particleNumber += 1
-			stpartq = appiondata.ApStackParticlesData()
+			stpartq = appiondata.ApStackParticleData()
 
 			### check unique params
 			stpartq['stack'] = self.stackdata

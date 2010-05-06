@@ -114,7 +114,7 @@ class protomoAligner(appionScript.AppionScript):
 	def createParamsFromGoodAligner(self,alignerid):
 		q = appiondata.ApTomoAlignerParamsData()
 		alignerdata = q.direct_query(alignerid)
-		self.params['goodcycle'] = alignerdata['refine cycle']['cycle']
+		self.params['goodcycle'] = alignerdata['refine_cycle']['cycle']
 		alignrundata = alignerdata['alignrun']
 		if self.params['runname'] is None:
 			self.params['runname'] = alignrundata['name']

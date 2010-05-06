@@ -38,7 +38,7 @@ if __name__ == "__main__":
 	cursor = dbc.cursor()
 
 	# execute update
-	q = "UPDATE ApClusterJobData SET `status` = '%s' WHERE `DEF_id` = '%s'" %(status,jobid)
+	q = "UPDATE ApAppionJobData SET `status` = '%s' WHERE `DEF_id` = '%s'" %(status,jobid)
 	cursor.execute(q)
 
 	# close

@@ -395,10 +395,10 @@ def insertAlignerParams(alignrundata,params,protomodata=None,refineparamsdata=No
 	alignerq['description'] = params['description']
 	if alignrundata['fineProtomoParams']:
 		alignerq['protomo'] = protomodata
-		alignerq['refine cycle'] = refineparamsdata
-		alignerq['good cycle'] = goodrefineparamsdata
-		alignerq['good start'] = params['goodstart']
-		alignerq['good end'] = params['goodend']
+		alignerq['refine_cycle'] = refineparamsdata
+		alignerq['good_cycle'] = goodrefineparamsdata
+		alignerq['good_start'] = params['goodstart']
+		alignerq['good_end'] = params['goodend']
 	alignerdata = publish(alignerq)
 	return alignerdata
 
@@ -829,7 +829,7 @@ def insertTomoAvgParticle(avgrundata,subvolumedata,alignp,shiftz):
 	tomoaq = appiondata.ApTomoAvgParticleData()
 	tomoaq['avgrun'] = avgrundata
 	tomoaq['subtomo'] = subvolumedata
-	tomoaq['aligned particle'] = alignp
-	tomoaq['z shift'] = shiftz
+	tomoaq['aligned_particle'] = alignp
+	tomoaq['z_shift'] = shiftz
 	return publish(tomoaq)
 

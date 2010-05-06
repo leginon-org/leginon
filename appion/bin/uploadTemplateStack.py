@@ -258,7 +258,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 
 		uploadq = appiondata.ApTemplateStackData()
-		uploadq['project|projects|project'] = self.params['projectid']
+		uploadq['REF|projectdata|projects|project'] = self.params['projectid']
 		if self.params['clusterId'] is not None:
 			uploadq['clusterstack'] = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 		elif self.params['templatestack'] is not None:

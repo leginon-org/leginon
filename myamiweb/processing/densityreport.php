@@ -57,7 +57,7 @@ if ($density['REF|ApRctRunData|rctrun'])
 	$densitytable .= "<A HREF='rctreport.php?expId=$expId&rctId="
 		.$density['REF|ApRctRunData|rctrun']."'>RCT volume run #"
 		.$density['REF|ApRctRunData|rctrun']."</A>\n";
-elseif ($density['REF|ApRefinementData|iterid'])
+elseif ($density['REF|ApRefineIterData|iterid'])
 	$densitytable .= "<A HREF='reconreport.php?expId=$expId&reconId="
 		.$density['refrun']."'>EMAN refinement run #"
 		.$density['refrun']."</A>\n";

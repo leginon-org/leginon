@@ -68,21 +68,21 @@ class UploadMiscScript(appionScript.AppionScript):
 		print "inserting into database"
 		miscq = appiondata.ApMiscData()
 		if self.params['reconid'] is not None:
-			miscq['refinementRun'] = self.recondata
+			miscq['refineRun'] = self.recondata
 			sessiondata = apRecon.getSessionDataFromReconId(self.params['reconid'])
 			miscq['session'] = sessiondata
 			projectid = apProject.getProjectIdFromSessionName(sessiondata['name'])
-			miscq['project|projects|project'] = projectid
+			miscq['REF|projectdata|projects|project'] = projectid
 		elif self.params['fulltomoid'] is not None:
 			miscq['fulltomogram'] = self.tomodata
 			sessiondata = self.tomodata['session']
 			miscq['session'] = sessiondata
 			projectid = apProject.getProjectIdFromSessionName(sessiondata['name'])
-			miscq['project|projects|project'] = projectid
+			miscq['REF|projectdata|projects|project'] = projectid
 		elif self.params['session'] is not None:
 			miscq['session'] = self.sessiondata
 			projectid = apProject.getProjectIdFromSessionName(self.params['session'])
-			miscq['project|projects|project'] = projectid
+			miscq['REF|projectdata|projects|project'] = projectid
 		miscq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		miscq['name'] = self.filename
 		miscq['description'] = self.params['description']

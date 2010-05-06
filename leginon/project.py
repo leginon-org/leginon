@@ -2,34 +2,11 @@
 import sinedon
 from sinedon import sqldict
 import leginonconfig
+import projectdata
 
 use_processingdb_table = False
 class NotConnectedError(Exception):
 	pass
-
-
-class Project(sqldict.ObjectBuilder):
-	'''Project: a class object to access the
-	`projects` table in the project DB
-	'''
-	table = 'projects'
-	columns = ['projectId', 'name', 'short_description']
-
-class ProjectExperiment(sqldict.ObjectBuilder):
-	'''ProjectExperiment: a class object to access the
-	`projectexperiments` table in the project DB
-	'''
-	table = "projectexperiments"
-	columns = ['projectId', 'name']
-	indices = [ ('projectId', ['projectId'] )]
-
-class ProjectProcessingDB(sqldict.ObjectBuilder):
-	'''ProjectProcessingDB: a class object to access the
-	`processingdb` table in the project DB
-	'''
-	table = "processingdb"
-	columns = ['projectId', 'db']
-	indices = [ ('projectId', ['projectId'] )]
 
 class GridBox(sqldict.ObjectBuilder):
 	table = 'gridboxes'
@@ -59,41 +36,36 @@ class ProjectData:
 		except Exception, e:
 			raise NotConnectedError(e)
 
-		self.projects = Project().register(self.db)
-		self.projectexperiments = ProjectExperiment().register(self.db)
-		if use_processingdb_table:
-			self.projectprocessingdb = ProjectProcessingDB().register(self.db)
 		self.gridboxes = GridBox().register(self.db)
 		self.grids = Grid().register(self.db)
 		self.gridlocations = GridLocation().register(self.db)
 
 	def getProjects(self):
-		return self.projects
+		projq = projectdata.projects()
+		return projq.query()
 
 	def getProjectExperiments(self):
-		return self.projectexperiments
+		projq = projectdata.projectexperiments()
+		return projq.query()
 
-	def getProjectId(self,sessiondata):
-		projectexperiments = self.getProjectExperiments()
-		allprojectexperiments = projectexperiments.getall()
-		sessionname = sessiondata['name']
-		for experiment in allprojectexperiments:
-			if sessionname == experiment['name']:
-				projectsession = experiment
-				return int(projectsession['projectId'])
-		return None	
+	def getProjectId(self, sessiondata):
+		projq = projectdata.projectexperiments()
+		projq['session'] = sessiondata
+		projdatas = projq.query(results=1)
+		if not projdatas:
+			print "Project Id not found for session"
+			return None
+		return projdatas[0].dbid
 
 	def getProcessingDB(self, projectId):
-		if not use_processingdb_table:
-			return 'ap'+str(projectId)
-		processingdblist = self.projectprocessingdb.Index(['projectId'])
-		result = processingdblist[projectId].fetchone()
-		if result is None:
+		procq = projectdata.processingdb()
+		projdata = projectdata.projects.direct_query(projectId)
+		procq['project'] = projdata
+		procdatas = procq.query(results=1)
+		if not procdatas:
+			print "Appion database not found for project id"
 			return None
-		try:
-			return result['db']
-		except KeyError:
-			return None
+		return procdatas[0]['appiondb']
 
 	def getGridBoxes(self):
 		return self.gridboxes
@@ -158,16 +130,17 @@ class ProjectData:
 if __name__ == "__main__":
 	import sys
 	# getall projects
-	projectdata = ProjectData()
-	projects = projectdata.getProjects()
+	projdata = ProjectData()
+	projects = projdata.getProjects()
+	print projects
 	allprojects = projects.getall()
-	#print allprojects;
+	print allprojects;
 	"""
-	projectdata = ProjectData()
+	projdata = ProjectData()
 
-	print projectdata.getGridName(111)
+	#print projdata.getGridName(111)
 	gridid = 751
-	grids = projectdata.getGrids()
+	grids = projdata.getGrids()
 	gridsindex = grids.Index(['gridId'])
 	grid = gridsindex[gridid].fetchone()
 	print grid
@@ -176,7 +149,7 @@ if __name__ == "__main__":
 	gridtrayid = 58
 	if grid['boxId'] != gridtrayid:
 		print
-	gridlocations = projectdata.getGridLocations()
+	gridlocations = projdata.getGridLocations()
 	gridlocationsindex = gridlocations.Index(['gridId'])
 	gridlocation = gridlocationsindex[gridid].fetchone()
 	if gridlocation is None:
@@ -187,18 +160,18 @@ if __name__ == "__main__":
 	#return int(gridlocation['location'])
 
 	for i in range(1, 97):
-		projectdata.newGrid('Robot Grids 2, #%d' % i, 113, i, 12, i)
+		projdata.newGrid('Robot Grids 2, #%d' % i, 113, i, 12, i)
 
-	gridboxes = projectdata.getGridBoxes()
+	gridboxes = projdata.getGridBoxes()
 	labelindex = gridboxes.Index(['label'])
 	gridboxlabels = map(lambda d: d['label'], gridboxes.getall())
 	print gridboxlabels
 	gridbox = labelindex['Simple Test Tray'].fetchone()
 	gridboxid = gridbox['gridboxId']
-	gridlocations = projectdata.getGridLocations()
+	gridlocations = projdata.getGridLocations()
 	gridboxidindex = gridlocations.Index(['gridboxId'])
 	gridlocations = gridboxidindex[gridboxid].fetchall()
-	grids = projectdata.getGrids()
+	grids = projdata.getGrids()
 	grididindex = grids.Index(['gridId'])
 	gridmapping = {}
 	for gridlocation in gridlocations:
@@ -207,17 +180,17 @@ if __name__ == "__main__":
 																	'location': gridlocation['location']}
 	print gridmapping
 
-	projectdata1 = ProjectData()
-	projects = projectdata1.getProjects()
+	projdata1 = ProjectData()
+	projects = projdata1.getProjects()
 	print projects.getall()
-	projectdata2 = ProjectData()
-	projects = projectdata2.getProjects()
+	projdata2 = ProjectData()
+	projects = projdata2.getProjects()
 	allprojects = projects.getall()
 
 	print allprojects
 
 	# getall experiment name with his projectId
-	projectexperiments = projectdata.getProjectExperiments()
+	projectexperiments = projdata.getProjectExperiments()
 	allprojectexperiments = projectexperiments.getall()
 	print allprojectexperiments
 

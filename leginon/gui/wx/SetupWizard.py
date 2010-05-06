@@ -840,8 +840,7 @@ class Setup(object):
 	def getProjects(self):
 		if self.projectdata is None:
 			return {}
-		projects = self.projectdata.getProjects()
-		projectdatalist = projects.getall()
+		projectdatalist = self.projectdata.getProjects()
 		return _indexBy('name', projectdatalist)
 
 	def suggestSessionName(self):

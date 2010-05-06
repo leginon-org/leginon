@@ -344,16 +344,16 @@ class leginondata {
 			$defaultname=$name;
 			$name="";
 		}
-			$hiddenjoin = "left join `viewer_pref_image` r on (r.imageId=a.DEF_id) ";
+			$hiddenjoin = "left join `ViewerImageStatus` r on (r.`REF|AcquisitionImageData|image`=a.DEF_id) ";
 			if ($has_ImageStatus)
 				$hiddenjoin .= "left join `ImageStatusData` ir on (ir.`REF|AcquisitionImageData|image`=a.DEF_id) ";
 		if ($defaultname=="hidden" || $defaultname=="exemplar") {
-			$hiddenwhere = "and  ((r.id is not null and r.status='$defaultname') ";
+			$hiddenwhere = "and  ((r.DEF_id is not null and r.status='$defaultname') ";
 			if ($has_ImageStatus)
 				$hiddenwhere .= "or  (ir.`DEF_id` is not null and ir.status='$defaultname')";
 			$hiddenwhere .=")";
 		} else {
-			$hiddenwhere = "and ((r.id is NULL or r.status <>'hidden') ";
+			$hiddenwhere = "and ((r.DEF_id is NULL or r.status <>'hidden') ";
 			if ($has_ImageStatus)
 				$hiddenwhere .= "and (ir.`DEF_id` is NULL or ir.status <>'hidden')";
 			$hiddenwhere .=") ";

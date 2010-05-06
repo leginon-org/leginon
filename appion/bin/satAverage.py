@@ -77,12 +77,12 @@ class satAverageScript(appionScript.AppionScript):
 			refineparticledata = cPickle.load(f)
 			f.close()
 		else:
-			refinerundata = appiondata.ApRefinementRunData.direct_query(reconid)
+			refinerundata = appiondata.ApRefineRunData.direct_query(reconid)
 			if not refinerundata:
 				apDisplay.printError("Could not find refinerundata for reconrun id="+str(reconid))
 
-			refineq = appiondata.ApRefinementData()
-			refineq['refinementRun'] = refinerundata
+			refineq = appiondata.ApRefineIterData()
+			refineq['refineRun'] = refinerundata
 			refineq['iteration'] = iteration
 			refinedata = refineq.query(results=1)
 
@@ -90,8 +90,8 @@ class satAverageScript(appionScript.AppionScript):
 				apDisplay.printError("Could not find refinedata for reconrun id="
 					+str(reconid)+" iter="+str(iteration))
 
-			refinepartq=appiondata.ApParticleClassificationData()
-			refinepartq['refinement']=refinedata[0]
+			refinepartq=appiondata.ApRefineParticleData()
+			refinepartq['refineIter']=refinedata[0]
 
 			apDisplay.printMsg("querying particles on "+time.asctime())
 			refineparticledata = refinepartq.query()
@@ -250,7 +250,7 @@ class satAverageScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		refdata = appiondata.ApRefinementRunData.direct_query(self.params['reconid'])
+		refdata = appiondata.ApRefineRunData.direct_query(self.params['reconid'])
 		if not refdata:
 			apDisplay.printError("reconid "+str(self.params['reconid'])+" does not exist in the database")
 		refpath = refdata['path']['path']

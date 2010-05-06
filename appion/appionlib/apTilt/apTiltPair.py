@@ -196,7 +196,7 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 
 	### get tilt stack particle
 	tiltstackdata = apStack.getOnlyStackData(tiltstackid, msg=False)
-	stackpartq = appiondata.ApStackParticlesData()
+	stackpartq = appiondata.ApStackParticleData()
 	stackpartq['stack'] = tiltstackdata
 	stackpartq['particle'] = otherpart
 	stackpartdatas2 = stackpartq.query(results=1, readimages=False)

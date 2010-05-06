@@ -245,7 +245,7 @@ class UploadStack(appionScript.AppionScript):
 			partq['ycoord'] = int(i/1000)
 			partq['diameter'] = self.params['diameter']
 
-			stackpartq = appiondata.ApStackParticlesData()
+			stackpartq = appiondata.ApStackParticleData()
 			stackpartq['particleNumber'] = i+1
 			stackpartq['stack'] = stackq
 			stackpartq['stackRun'] = stackrunq

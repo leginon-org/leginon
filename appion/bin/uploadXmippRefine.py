@@ -83,7 +83,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 		fixedq.insert()
 
 		# Insert this run in the table of runs
-		runq=appiondata.ApRefinementRunData()
+		runq=appiondata.ApRefineRunData()
 		runq['name']=self.params['runname']
 		runq['stack']=apStack.getOnlyStackData(self.params['stackid'])
 		earlyresult=runq.query(results=1)
@@ -120,7 +120,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			rmeasure.insert()
 
 			# Fill the iteration dependent parameters
-			iterparamq=appiondata.ApXmippRefineIterationParamsData()
+			iterparamq=appiondata.ApXmippRefineIterData()
 			iterparamq['angularStep']=float(arg.getComponentFromVector(protocolPrm['AngSamplingRateDeg'],i-1))
 			iterparamq['maxChangeInAngles']=float(arg.getComponentFromVector(protocolPrm['MaxChangeInAngles'],i-1))
 			iterparamq['maxChangeOffset']=float(arg.getComponentFromVector(protocolPrm['MaxChangeOffset'],i-1))
@@ -134,15 +134,15 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			iterparamq.insert()
 
 			# Insert the main information for this iteration
-			mainq=appiondata.ApRefinementData()
+			mainq=appiondata.ApRefineIterData()
 			mainq['volumeDensity']=rmeasure['volume']
-			mainq['refinementRun']=runq
-			mainq['xmippRefineParams']=iterparamq
+			mainq['refineRun']=runq
+			mainq['xmippParams']=iterparamq
 			mainq['iteration']=i
 			mainq['resolution']=resolq
 			mainq['rMeasure']=rmeasure
-			mainq['classAverage']=os.path.join(iterDir,"classAverages.img")
-			mainq['emanClassAvg']=mainq['classAverage']
+			mainq['refineClassAverages']=os.path.join(iterDir,"classAverages.img")
+			mainq['refineClassAverages']=mainq['refineClassAverages']
 			apDisplay.printMsg("inserting main iteration data into database")
 			mainq.insert()
 
@@ -169,8 +169,8 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 					projectionName=(line.split())[1]
 				else:
 					docline=line.split()
-					particleq=appiondata.ApParticleClassificationData()
-					particleq['refinement']=mainq
+					particleq=appiondata.ApRefineParticleData()
+					particleq['refineIter']=mainq
 					particleq['particle']=apStack.getStackParticle(
 						self.params['stackid'], particleNo+1)
 					particleq['euler1']=docline[2]
