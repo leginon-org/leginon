@@ -13,7 +13,6 @@ except:
 import leginon.leginondata
 from pyami import arraystats, mrc, imagefun, numpil,correlator, peakfinder
 from appionlib import appiondata
-from leginon import libCVwrapper
 try:
 	import node
 except:
@@ -256,43 +255,6 @@ def getGlobalShift(ordered_imagelist, corr_bin, refimg):
 	globalshifts = shiftHalfSeries(zeroshift, globalshifts, refimg)
 	return globalshifts
 		
-def getFeatureMatchTransform(ordered_imagelist, bin):
-	xfname = os.path.join('/ami/data15/appion/08jun11b/tomo/tiltseries3/full3/08jun11b_003'+'.prexf')
-	transformlist = []
-	shape = ordered_imagelist[0]['image'].shape
-	minsize = 250
-	for i,imagedata in enumerate(ordered_imagelist):
-		f = open(xfname, 'a')
-		if i == 0:
-			array1 = imagedata['image']
-		array2 = imagedata['image']
-		resultmatrix = libCVwrapper.MatchImages(array2, array1, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
-		if abs(resultmatrix[0,0]) < 0.9 :
-			resultmatrix[0,0]=1.0
-			resultmatrix[1,0]=0.0
-			resultmatrix[0,1]=0.0
-			resultmatrix[0,0]=1.0
-			shift = simpleCorrelation(array2,array1)
-			resultmatrix[2,0]=shift[0]
-			resultmatrix[2,1]=shift[1]
-			resultmatrix[2,2]=1.0
-		matrix = numpy.zeros((3,3))
-		matrix[2,2] = 1.0
-		matrix[0,0] = resultmatrix[1,1]
-		matrix[0,1] = resultmatrix[1,0]
-		matrix[1,0] = resultmatrix[0,1]
-		matrix[1,1] = resultmatrix[0,0]
-		matrix[2,0] = resultmatrix[2,1]-shape[1]*(1-resultmatrix[1,0]-resultmatrix[1,1])
-		matrix[2,1] = resultmatrix[2,0]-shape[0]*(1-resultmatrix[0,0]-resultmatrix[0,1])
-		f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (
-			matrix[0,0],matrix[0,1],
-			matrix[1,0],matrix[1,1],
-			matrix[2,0],matrix[2,1]))
-		transformlist.append(matrix)
-		array1 = imagedata['image']
-		f.close()
-	return transformlist
-
 def simpleCorrelation(array1,array2):
 	c = correlator.Correlator()
 	p = peakfinder.PeakFinder()
