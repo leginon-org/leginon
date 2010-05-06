@@ -3,10 +3,27 @@
 import sys
 from sinedon import dbupgrade, dbconfig
 
-if __name__ == "__main__":
-	appiondb = dbupgrade.DBUpgradeTools('appiondata', 'aptest', drop=True)
-	projectdb = dbupgrade.DBUpgradeTools('projectdata', 'projtest', drop=True)
-	leginondb = dbupgrade.DBUpgradeTools('leginondata', 'dbemtest', drop=False)
+def getAppionDatabases(projectdb):
+	"""
+	Get list of appion databases to upgrade
+	"""
+	selectq = "SELECT DISTINCT db FROM processingdb ORDER BY db"
+	results = projectdb.returnCustomSQL(selectq)
+	appiondblist = []
+	for result in results:
+		appiondblist.append(result[0])
+	return appiondblist
+
+
+#===================
+#===================
+# APPION UPGRADE
+#===================
+#===================
+def upgradeAppionDB(appiondbname, projectdb):
+	print "Upgrading appion database: "+appiondbname
+
+	appiondb = dbupgrade.DBUpgradeTools('appiondata', appiondbname, drop=True)
 
 	#===================
 	# rename tables:
@@ -235,6 +252,20 @@ if __name__ == "__main__":
 			"REF|"+projectdb.getSinedonName()+"|projects|project")
 		appiondb.indexColumn(tablename, "REF|"+projectdb.getSinedonName()+"|projects|project")
 	appiondb.debug = olddebug
+
+
+#===================
+#===================
+# MAIN PROGRAM
+#===================
+#===================
+if __name__ == "__main__":
+	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
+	leginondb = dbupgrade.DBUpgradeTools('leginondata', drop=False)
+
+	appiondblist = getAppionDatabases(projectdb)
+	for appiondbname in appiondblist:
+		upgradeAppionDB(appiondbname, projectdb)
 
 	#===================
 	# project table
