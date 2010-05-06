@@ -68,7 +68,7 @@ if ($reconRuns) {
 		}
 
 		// GET INFO
-		$reconname = $reconrun['name'];
+		$reconname = $reconrun['runname'];
 		$path = $reconrun['path'];
 
 		$stackid = $reconrun['REF|ApStackData|stack'];

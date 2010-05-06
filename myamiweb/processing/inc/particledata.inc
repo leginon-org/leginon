@@ -3334,13 +3334,15 @@ class particledata {
 		return $r;
 	}
 
-	function getRefinementRunInfo($refinementRun) {
+	function getRefinementRunInfo($refineRunId) {
 		$q="select r.*, p.path "
 			."FROM `ApRefineRunData` AS r "
 			."LEFT JOIN ApPathData AS p ON "
 			."(r.`REF|ApPathData|path` = p.`DEF_id`) "
-			."WHERE r.`DEF_id` = '$refinementRun' ";
+			."WHERE r.`DEF_id` = '$refineRunId' ";
+		//echo $q."<br/><br/>\n";
 		list($r) = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
 
@@ -3697,8 +3699,8 @@ class particledata {
 			."STDDEV(e.`median`) AS stdev "
 			."FROM ApEulerJumpData AS e "
 			."WHERE "
-			."  e.`REF|ApRefineRunData|refRun` = '$refineRunId' "
-			."GROUP BY e.`REF|ApRefineRunData|refRun` ";
+			."  e.`REF|ApRefineRunData|refineRun` = '$refineRunId' "
+			."GROUP BY e.`REF|ApRefineRunData|refineRun` ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}

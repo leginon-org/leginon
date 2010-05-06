@@ -120,7 +120,7 @@ $title = "recon info";
 
 $reconinfo = array(
 	'id'=>"<A HREF='reconsummary.php?expId=$expId'>$refinerun[DEF_id]</A>",
-	'name'=>$refinerun['name'],
+	'name'=>$refinerun['runname'],
 	'description'=>$refinerun['description'],
 	'path'=>$refinerun['path'],
 	'refine package'=>$refinerun['package'],
