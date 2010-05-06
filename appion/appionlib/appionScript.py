@@ -44,7 +44,6 @@ class AppionScript(basicScript.BasicScript):
 		apDisplay.printMsg("Function name: "+self.functionname)
 		self.appiondir = apParam.getAppionDirectory()
 		apDisplay.printMsg("Appion directory: "+self.appiondir)
-		apParam.setUmask()
 		self.parsePythonPath()
 		loadavg = os.getloadavg()[0]
 		if loadavg > 2.0:
@@ -257,12 +256,6 @@ class AppionScript(basicScript.BasicScript):
 		#create the run directory, if needed
 		apParam.createDirectory(self.params['rundir'], warning=(not self.quiet))
 		os.chdir(self.params['rundir'])
-
-		### make directories writable
-		sessiondir = os.path.abspath(os.path.join(self.params['rundir'], "../.."))
-		cmd = "chmod 777 `find %s -type d`"%(sessiondir)
-		subprocess.Popen(cmd, shell=True, 
-			stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 	#=====================
 	def close(self):
