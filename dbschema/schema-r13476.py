@@ -272,10 +272,11 @@ if __name__ == "__main__":
 	# leginon table
 	#===================
 
-	leginondb.renameColumn('viewer_pref_image', 'id', 'DEF_id')
-	leginondb.renameColumn('viewer_pref_image', 'timestamp', 'DEF_timestamp')
-	leginondb.renameColumn('viewer_pref_image', 'sessionId', 'REF|SessionData|sessionid')
-	leginondb.renameColumn('viewer_pref_image', 'imageId', 'REF|AcquisitionImageData|imageid')
+	leginondb.renameTable('viewer_pref_image', 'ViewerImageStatus')
+	leginondb.renameColumn('ViewerImageStatus', 'id', 'DEF_id')
+	leginondb.renameColumn('ViewerImageStatus', 'timestamp', 'DEF_timestamp')
+	leginondb.renameColumn('ViewerImageStatus', 'sessionId', 'REF|SessionData|session')
+	leginondb.renameColumn('ViewerImageStatus', 'imageId', 'REF|AcquisitionImageData|image')
 
 	if leginondb.columnExists('PresetData', 'exposure time'):
 		updateq = ("ALTER TABLE `PresetData` "
