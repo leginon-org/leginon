@@ -325,11 +325,11 @@ class Tietz(object):
 		self.binning = dict(value)
 
 	def getExposureTime(self):
-		return self.exposuretime
+		return float(self.exposuretime)
 
 	def setExposureTime(self, value):
 		# {'type': int, 'range': [0, None]
-		self.exposuretime = value
+		self.exposuretime = int(round(value))
 
 	def getExposureTypes(self):
 		return ['normal', 'dark', 'bias', 'readout']

@@ -91,10 +91,10 @@ class Gatan(ccdcamera.CCDCamera):
         self.binning = dict(value)
 
     def getExposureTime(self):
-        return int(self.camera.ExposureTime*1000)
+        return self.camera.ExposureTime*1000.0
 
     def setExposureTime(self, value):
-        self.camera.ExposureTime = float(value)/1000.0
+        self.camera.ExposureTime = value/1000.0
 
     def getExposureTypes(self):
         return ['normal', 'dark']

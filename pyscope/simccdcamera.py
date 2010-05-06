@@ -75,12 +75,12 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 				pass
 
 	def getExposureTime(self):
-		return int(self.exposure_time*1000)
+		return self.exposure_time*1000.0
 
 	def setExposureTime(self, value):
 		if value < 0:
 			raise ValueError('invalid exposure time')
-		self.exposure_time = float(value)/1000.0
+		self.exposure_time = value/1000.0
 
 	def getExposureTypes(self):
 		return self.exposure_types

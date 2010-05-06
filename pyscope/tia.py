@@ -26,7 +26,7 @@ class TIA(ccdcamera.CCDCamera):
 		self.dimension = self.getCameraSize()
 		self.binning = {'x':1, 'y':1}
 		self.offset = {'x':0, 'y':0}
-		self.exposure = 500
+		self.exposure = 500.0
 		self.exposuretype = 'normal'
 	def setDimension(self, value):
 		self.dimension = value
@@ -41,9 +41,9 @@ class TIA(ccdcamera.CCDCamera):
 	def getOffset(self):
 		return self.offset
 	def setExposureTime(self, value):
-		self.exposure = value
+		self.exposure = int(round(value))
 	def getExposureTime(self):
-		return self.exposure
+		return float(self.exposure)
 
 	def _connectToESVision(self):
 		'''
