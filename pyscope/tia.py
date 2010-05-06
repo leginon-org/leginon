@@ -41,7 +41,7 @@ class TIA(ccdcamera.CCDCamera):
 	def getOffset(self):
 		return self.offset
 	def setExposureTime(self, value):
-		self.exposure = int(round(value))
+		self.exposure = value
 	def getExposureTime(self):
 		return float(self.exposure)
 
