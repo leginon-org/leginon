@@ -114,18 +114,9 @@ class project {
 	}
 
 	function getProjectfromSessionId($sessionId) {
-		$dbemdata = &new leginondata;
-		$db  = &$dbemdata->mysql;
-		$q='select `name` as sessionname '
-			.'from `SessionData` '
-			.'where `DEF_id`='.$sessionId;
-		list($r)=$db->getSQLResult($q);
-		$sname=$r['sessionname'];
- 		$q='select p.projectId, p.name  '
- 			.'from projectexperiments pe '
- 			.'left join projects p '
- 			.'on (pe.projectId=p.projectId) '
- 		  .'where pe.name="'.$sname.'"';
+ 		$q="SELECT projexp.`REF|projects|project` AS projectId  "
+			."FROM projectexperiments AS projexp "
+			."WHERE projexp.`REF|dbemdata|SessionData|session` = '$sessionId' ";
 		list($info) = $this->mysql->getSQLResult($q);
 
 		$projectId=$info['projectId'];
@@ -192,7 +183,7 @@ class project {
 		} 
 		
 		// Begin SQL to select the projects that the user may view
-		$q = 'SELECT projects.projectId as id, projects.name FROM projects ';
+		$q = 'SELECT projects.`DEF_id` as id, projects.name FROM projects ';
 		
 		// Build the query based on the combination of checking for the hidden flag
 		// and showing only projects owned by the user
@@ -214,7 +205,7 @@ class project {
 		$q .= ' ORDER by name';
 		
 		$rprojects = $this->mysql->getSQLResult($q);
-			
+
 		$projects = array();
 		if ($type=="all") {
 			$projects[] = array(	'id' => DEFAULT_PROJECT, 'name' => DEFAULT_PROJECT);
@@ -235,8 +226,8 @@ class project {
 	}
 
 	function getProjectInfo($projectId) {
-		$q='select projectId, name  from projects '
-			.'where projectId='.$projectId;
+		$q='select DEF_id AS projectId, name  from projects '
+			.'where DEF_id='.$projectId;
 		list($r)=$this->mysql->getSQLResult($q);
 
 		if (ENABLE_LOGIN && $this->isRestricted($projectId)) {
@@ -325,7 +316,7 @@ class project {
 			}
 			$q='select pe.name  '
 				.'from projectexperiments pe '
-				.'where pe.projectId="'.$rp['projectId'].'"';
+				.'where pe.`REF|projects|project`="'.$rp['projectId'].'"';
 			$r = $this->mysql->getSQLResult($q);
 			$r = array_merge($r, $r);
 		}
@@ -365,10 +356,10 @@ class project {
 
 	function getProcessingDB($projectId) {
 		$db="";
-		$q="select `db` from processingdb "
-			."where projectId=$projectId";
+		$q="select `appiondb` from processingdb "
+			."where `REF|projects|project`=$projectId";
 		if ($r=$this->mysql->getSQLResult($q)) {
-			$db=$r[0]['db'];
+			$db=$r[0]['appiondb'];
 		}
 		return $db;
 	}

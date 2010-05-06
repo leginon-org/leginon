@@ -52,9 +52,11 @@ $hasProcDB = ($_SESSION['processingdb']) ? true : false;
 $data = processing_header("Appion Data Processing","Appion Data Processing", $javascript, $pleaseWait=false,$showmenu=$hasProcDB);
 // --- main window starts here --- //
 if (!$hasProcDB) {
+	echo "<font size='+3'>\n";
 	echo "No processing database can be found for this project<br>";
-	echo "<a class='header' target='project' href='".PROJECT_URL."getproject.php?projectId=$projectId'><b>click here</b></a> to create one";
+	echo "<a href='".PROJECT_URL."getproject.php?projectId=$projectId'><b>click here</b></a> to create one";
 	echo "$proj_link";
+	echo "</font>\n";
 }
 
 $particle=new particleData();

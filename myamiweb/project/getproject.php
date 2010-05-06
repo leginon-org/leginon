@@ -28,6 +28,7 @@ $project = new project();
 $projects = $project->getProjects("order");
 $projectinfo = $project->getProjectInfo($selectedprojectId);
 $projectowners = $project->getProjectOwners($selectedprojectId);
+print_r( $projectowners);
 $projectname = ": ".$projectinfo['Name'];
 
 if ($_POST['updateprocessing']) {

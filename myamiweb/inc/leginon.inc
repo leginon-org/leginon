@@ -98,7 +98,11 @@ class leginondata {
 			// --- project database information
 			$project = &new project;
 			$db  = &$project->mysql;
-			$q = "select p.name from ".DB_PROJECT.".projectexperiments p where p.projectId='$projectId'";
+			$q = "SELECT session.`name` "
+				."FROM ".DB_PROJECT.".projectexperiments p "
+				."LEFT JOIN ".DB_LEGINON.".SessionData AS session "
+				."  ON session.`DEF_id` =  p.`REF|dbemdata|SessionData|session` "
+				."WHERE p.`REF|projects|project`='$projectId'";
 			$psessions = $db->getSQLResult($q);
 			$ps=array();
 			foreach ($psessions as $psession) {
@@ -388,7 +392,6 @@ class leginondata {
 			}
 		    $q .=" order by a.`DEF_id` DESC ";
 		}
-
 		$filenames = $this->mysql->getSQLResult($q);
 
 		return $filenames;

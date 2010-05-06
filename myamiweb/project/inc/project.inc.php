@@ -228,10 +228,10 @@ class project {
 		$q='SELECT p.DEF_id AS projectId, p.name, p.short_description FROM projects AS p';
 		if ($privilege_level <= 2 and $userId !== true and $userId) {
 			$q .= " left join projectowners o "
-						."on o.`REF|projects|project` = p.`DEF_id` "
-						."left join ".DB_LEGINON.".UserData u "
-						."on u.`DEF_id` = o.`REF|leginondata|UserData|user` "
-						."WHERE u.`DEF_id` = ".$userId." ";
+				."on o.`REF|projects|project` = p.`DEF_id` "
+				."left join ".DB_LEGINON.".UserData u "
+				."on u.`DEF_id` = o.`REF|leginondata|UserData|user` "
+				."WHERE u.`DEF_id` = ".$userId." ";
 		}
 		if ($order)
 			$q .= " order by p.name ";
@@ -240,14 +240,14 @@ class project {
 
 	function getProjectInfo($projectId){
 		$info=array();
-		$q='SELECT DEF_id as projectId, name as "Name", '
-		  .'short_description as "Title", '
-		  .'long_description as "Description", '
-		  .'concat(substring_index(left(long_description, 120),"\n",2),"...") as `ReducedDescription`, '
-		  .'category as "Category", '
-		  .'funding as "Funding"  FROM projects '
-		  .'WHERE DEF_id="$projectId"';
-
+		$q="SELECT DEF_id as projectId, name as 'Name', "
+		  ."short_description as 'Title', "
+		  ."long_description as 'Description', "
+		  ."concat(substring_index(left(long_description, 120),'\n',2),'...') as `ReducedDescription`, "
+		  ."category as 'Category', "
+		  ."funding as 'Funding'  FROM projects "
+		  ."WHERE DEF_id='$projectId'";
+		echo $q;
 		$RprojectInfo = $this->mysql->SQLQuery($q);
 		$info = mysql_fetch_array($RprojectInfo, MYSQL_ASSOC);
 		return $info;
@@ -365,14 +365,14 @@ class project {
 	}
 
 	function getProjectOwners($projectId) {
-		$q='SELECT concat(u.firstname," ",u.lastname) `full name`, '
-			.'u.firstname as firstname, '
-			.'u.lastname as lastname, '
-			.'u.`DEF_id` userId '
-			.'FROM projectowners o '
-			.'left join '.DB_LEGINON.'.UserData u '
-			.'on o.`REF|leginondata|UserData|user` = u.`DEF_id` '
-			.'WHERE o.`REF|projects|project` = '.$projectId." ";
+		$q="SELECT concat(u.firstname,' ',u.lastname) `full name`, "
+			."u.firstname as firstname, "
+			."u.lastname as lastname, "
+			."u.`DEF_id` userId "
+			."FROM projectowners o "
+			."left join ".DB_LEGINON.".UserData u "
+			."on o.`REF|leginondata|UserData|user` = u.`DEF_id` "
+			."WHERE o.`REF|projects|project` = $projectId ";
 		return $this->mysql->getSQLResult($q);
 	}
 
