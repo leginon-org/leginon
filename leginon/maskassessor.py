@@ -17,8 +17,8 @@ import numpy
 from pyami import imagefun, mrc
 import leginondata
 try:
-	import apMask
-	import apDatabase
+	from appionlib import apMask
+	from appionlib import apDatabase
 except:
 	pass
 
