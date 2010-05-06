@@ -130,7 +130,6 @@ class SpiderSession:
 				+str(int(round( (tottime % base)/subbase )))+" "+minorunit )
 		return str(timestr)
 
-
 	def showlogo(self):
 		time.sleep(1)
 		self.logf.flush()
@@ -138,6 +137,22 @@ class SpiderSession:
 		for i in range(7):
 			sys.stderr.write(f.readline())
 		f.close()
+
+	def version(self):
+		time.sleep(1)
+		self.logf.flush()
+		f = open("spider.log", "r")
+		version = None
+		for i in range(7):
+			line = f.readline()
+			if "version" in line.lower():
+				sline = line.strip()
+				regex = re.search("VERSION:\s+[A-Z]*\s+([0-9\.]+)", sline)
+				if regex and regex.groups():
+					version = float(regex.groups()[0])
+				break
+		f.close()
+		return version
 
 	def wait(self):
 		### waits until spider quits
