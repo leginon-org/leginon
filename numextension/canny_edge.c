@@ -80,7 +80,6 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
    short int *smoothedim,     /* The image after gaussian smoothing.      */
              *delta_x,        /* The first devivative image, x-direction. */
              *delta_y;        /* The first derivative image, y-direction. */
-   int r, c, pos;
    float *dir_radians=NULL;   /* Gradient direction image.                */
 
    /****************************************************************************
@@ -442,13 +441,12 @@ void make_gaussian_kernel(float sigma, float **kernel, int *windowsize)
 * NAME: Mike Heath
 * DATE: 2/15/96
 *******************************************************************************/
-follow_edges(unsigned char *edgemapptr, short *edgemagptr, short lowval,
+void follow_edges(unsigned char *edgemapptr, short *edgemagptr, short lowval,
    int cols)
 {
    short *tempmagptr;
    unsigned char *tempmapptr;
    int i;
-   float thethresh;
    int x[8] = {1,1,0,-1,-1,-1,0,1},
        y[8] = {0,1,1,1,0,-1,-1,-1};
 
@@ -474,10 +472,10 @@ follow_edges(unsigned char *edgemapptr, short *edgemagptr, short lowval,
 void apply_hysteresis(short int *mag, unsigned char *nms, int rows, int cols,
 	float tlow, float thigh, unsigned char *edge)
 {
-   int r, c, pos, numedges, lowcount, highcount, lowthreshold, highthreshold,
-       i, hist[32768], rr, cc;
-   short int maximum_mag, sumpix;
-
+   int r, c, pos, numedges, highcount, lowthreshold, highthreshold,
+       hist[32768];
+   short int maximum_mag;
+   maximum_mag=0;
    /****************************************************************************
    * Initialize the edge map to possible edges everywhere the non-maximal
    * suppression suggested there could be an edge except for the border. At
@@ -579,7 +577,7 @@ void apply_hysteresis(short int *mag, unsigned char *nms, int rows, int cols,
 * NAME: Mike Heath
 * DATE: 2/15/96
 *******************************************************************************/
-non_max_supp(short *mag, short *gradx, short *grady, int nrows, int ncols,
+void non_max_supp(short *mag, short *gradx, short *grady, int nrows, int ncols,
     unsigned char *result) 
 {
     int rowcount, colcount,count;
@@ -590,6 +588,10 @@ non_max_supp(short *mag, short *gradx, short *grady, int nrows, int ncols,
     float mag1,mag2,xperp,yperp;
     unsigned char *resultrowptr, *resultptr;
     
+    xperp=0.0;
+    yperp=0.0;
+    gx=0;
+    gy=0;
 
    /****************************************************************************
    * Zero the edges of the result image.

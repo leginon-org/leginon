@@ -36,8 +36,8 @@
   #define SQRT_2_PI   2.50662827463100050241
 #endif
 
-float mh_sqrarg;  /* used in the Macro SQR(). */
-#define SQR(a)  ((mh_sqrarg=(float)(a)) == 0.0 ? 0.0 : mh_sqrarg*mh_sqrarg)
+//float mh_sqrarg;  /* used in the Macro SQR(). */
+//#define SQR(a)  ((mh_sqrarg=(float)(a)) == 0.0 ? 0.0 : mh_sqrarg*mh_sqrarg)
 
 #ifndef BOOSTBLURFACTOR
 #define BOOSTBLURFACTOR 90.0
