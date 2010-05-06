@@ -296,7 +296,7 @@ def closeFunctionLog(functionname=None, logfile=None, msg=True, stats=None):
 	f.close()
 
 #=====================
-def createDirectory(path, mode=0777, warning=True):
+def createDirectory(path, mode=0775, warning=True):
 	"""
 	Used by appionLoop
 	"""
