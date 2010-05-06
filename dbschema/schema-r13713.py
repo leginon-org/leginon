@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
 import sys
+import time
 from sinedon import dbupgrade, dbconfig
 
 def getAppionDatabases(projectdb):
 	"""
 	Get list of appion databases to upgrade
 	"""
-	selectq = "SELECT DISTINCT db FROM processingdb ORDER BY db"
+	#selectq = "SELECT DISTINCT db FROM processingdb ORDER BY `projectId` ASC"
+	selectq = "SELECT DISTINCT appiondb FROM processingdb ORDER BY `REF|projects|project` ASC"
 	results = projectdb.returnCustomSQL(selectq)
 	appiondblist = []
 	for result in results:
@@ -21,7 +23,10 @@ def getAppionDatabases(projectdb):
 #===================
 #===================
 def upgradeAppionDB(appiondbname, projectdb):
+	print ""
+	print "========================"
 	print "Upgrading appion database: "+appiondbname
+	time.sleep(0.1)
 
 	appiondb = dbupgrade.DBUpgradeTools('appiondata', appiondbname, drop=True)
 
@@ -47,10 +52,20 @@ def upgradeAppionDB(appiondbname, projectdb):
 	appiondb.renameColumn('ApRefineIterData', 
 		'REF|ApRefinementParamsData|refinementParams', 'REF|ApEmanRefineIterData|emanParams')
 	appiondb.renameColumn('ApRefineIterData', 
-		'REF|ApXmippRefineIterationParamsData|xmippRefineParams', 'REF|ApXmippRefineIterData|xmippParams')
-	appiondb.renameColumn('ApRefineIterData', 
 		'REF|ApRefinementRunData|refinementRun', 'REF|ApRefineRunData|refineRun')
 	appiondb.renameColumn('ApRefineRunData', 'name', 'runname')
+	appiondb.renameColumn('ApEulerJumpData', 
+		'REF|ApRefinementRunData|refRun', 'REF|ApRefineRunData|refineRun')
+	appiondb.renameColumn('Ap3dDensityData', 
+		'REF|ApRefinementData|iterid', 'REF|ApRefineRunData|refineIter')
+
+	### special case of conflicting Xmipp columns
+	if (appiondb.columnExists('ApRefineIterData', 'REF|ApXmippRefineIterationParamsData|xmippRefineParams') and 
+		appiondb.columnExists('ApRefineIterData', 'REF|ApXmippRefineIterData|xmippParams')):
+		appiondb.dropColumn('ApRefineIterData', 'REF|ApXmippRefineIterationParamsData|xmippRefineParams')
+	else:
+		appiondb.renameColumn('ApRefineIterData', 
+			'REF|ApXmippRefineIterationParamsData|xmippRefineParams', 'REF|ApXmippRefineIterData|xmippParams')
 
 	#===================
 	# move columns to new table
@@ -265,7 +280,12 @@ if __name__ == "__main__":
 
 	appiondblist = getAppionDatabases(projectdb)
 	for appiondbname in appiondblist:
+		if not projectdb.databaseExists(appiondbname):
+			print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
+			time.sleep(1)
+			continue
 		upgradeAppionDB(appiondbname, projectdb)
+	
 
 	#===================
 	# project table
@@ -280,14 +300,14 @@ if __name__ == "__main__":
 	projectdb.addColumn('projectexperiments', 'DEF_timestamp', projectdb.timestamp, index=True)
 
 	### change session name to session id
-	projectdb.addColumn('projectexperiments', "REF|"+leginondb.getSinedonName()+"|SessionData|sessionId",
+	projectdb.addColumn('projectexperiments', "REF|"+leginondb.getSinedonName()+"|SessionData|session",
 		projectdb.link, index=True)
 	if projectdb.columnExists('projectexperiments', 'name'):
 		updateq = ("UPDATE projectexperiments AS projexp "
 			+" LEFT JOIN "+leginondb.getDatabaseName()+".SessionData AS session "
 			+"   ON session.`name` = projexp.`name` "
 			+" SET "
-			+"   projexp.`REF|"+leginondb.getSinedonName()+"|SessionData|sessionid` = session.`DEF_id` "
+			+"   projexp.`REF|"+leginondb.getSinedonName()+"|SessionData|session` = session.`DEF_id` "
 		)
 		projectdb.executeCustomSQL(updateq)
 		projectdb.dropColumn('projectexperiments', 'name')
