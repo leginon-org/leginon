@@ -277,3 +277,16 @@ if __name__ == "__main__":
 	leginondb.renameColumn('viewer_pref_image', 'sessionId', 'REF|SessionData|sessionid')
 	leginondb.renameColumn('viewer_pref_image', 'imageId', 'REF|AcquisitionImageData|imageid')
 
+	if leginondb.columnExists('PresetData', 'exposure time'):
+		updateq = ("ALTER TABLE `PresetData` "
+			+" CHANGE `exposure time` `exposure time` DOUBLE NULL DEFAULT NULL "
+		)
+		leginondb.executeCustomSQL(updateq)
+
+	if leginondb.columnExists('AcquisitionImageTargetData', 'delta row'):
+		updateq = ("ALTER TABLE `AcquisitionImageTargetData` "
+			+" CHANGE `delta row` `delta row` DOUBLE NULL DEFAULT NULL "
+			+", CHANGE `delta column` `delta column` DOUBLE NULL DEFAULT NULL "
+		)
+		leginondb.executeCustomSQL(updateq)
+
