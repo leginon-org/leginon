@@ -1474,7 +1474,6 @@ class Parameters(wx.StaticBoxSizer):
 		for key, value in labels:
 			self.labels[key] = self.labelclass(parent, -1, value)
 			self.values[key] = wx.StaticText(parent, -1, '')
-
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.labels['tem'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['tem'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -1542,7 +1541,10 @@ class Parameters(wx.StaticBoxSizer):
 				'pre exposure',
 			]
 			for key in keys:
-				self.values[key].SetLabel(str(parameters[key]))
+				if key == 'exposure time':
+					self.values[key].SetLabel('%.1f' % (float(parameters[key])))
+				else:
+					self.values[key].SetLabel(str(parameters[key]))
 
 			r = []
 			for key in ('defocus range min','defocus range max'):
@@ -1689,7 +1691,7 @@ if __name__ == '__main__':
 				'dimension': {'x': 1024, 'y': 1024},
 				'offset': {'x': 0, 'y': 0},
 				'binning': {'x': 1, 'y': 1},
-				'exposure time': 1000,
+				'exposure time': 1000.0,
 				'pre exposure': 0.0,
 				'energy filter': True,
 				'energy filter width': 0.0,

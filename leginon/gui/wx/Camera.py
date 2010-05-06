@@ -75,7 +75,7 @@ class CameraPanel(wx.Panel):
 
 		# exposure time
 		stet = wx.StaticText(self, -1, 'Exposure time:')
-		self.feexposuretime = FloatEntry(self, -1, min=0, chars=7)
+		self.feexposuretime = FloatEntry(self, -1, min=0.0, chars=7)
 		stms = wx.StaticText(self, -1, 'ms')
 
 		self.szmain.Add(stet, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)

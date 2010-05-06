@@ -1018,8 +1018,8 @@ class PresetsManager(node.Node):
 		old_time = camdata0['exposure time']
 		self.old_time = old_time
 		new_time = old_time * dose_to_match / old_dose
-		if new_time > 5000 or new_time <= 1:
-			self.logger.warning('Ignore unreasonable exposure time at %d ms' % new_time)
+		if new_time > 5000.0 or new_time <= 1.0:
+			self.logger.warning('Ignore unreasonable exposure time at %.1f ms' % float(new_time))
 			new_time = old_time
 
 		params = {'exposure time': new_time}
@@ -1656,7 +1656,7 @@ class PresetsManager(node.Node):
 		if temp_exptime < 5:
 			temp_exptime = 5
 		self.instrument.ccdcamera.ExposureTime = temp_exptime
-		self.logger.info('Beam image using temporary exposure time: %d' % (temp_exptime,))
+		self.logger.info('Beam image using temporary exposure time: %.1f' % (float(temp_exptime),))
 		# acquire image
 		self.beamimagedata = self.acquireCorrectedCameraImageData()
 		im = self.beamimagedata['image']

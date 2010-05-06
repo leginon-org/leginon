@@ -110,7 +110,7 @@ class PresetAdjuster(reference.Reference):
 				# exposure time scaling
 				if scale_factor:
 					presetdata = self.presets_client.getPresetByName(preset_name)
-					params['exposure time'] = int(presetdata['exposure time'] * scale_factor)
+					params['exposure time'] = presetdata['exposure time'] * scale_factor
 				self.presets_client.updatePreset(preset_name, params)
 
 	def getAdjustment(self):
