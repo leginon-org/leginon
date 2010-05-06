@@ -45,7 +45,7 @@ class TiltTargetPanel(leginon.gui.wx.TargetPanel.TargetImagePanel):
 		### check for out of bounds particles
 		if x < 2 or y < 2:
 			return
-		if x > self.imagedata.shape[0] or y > self.imagedata.shape[1]:
+		if x > self.imagedata.shape[1] or y > self.imagedata.shape[0]:
 			return
 		#sys.stderr.write("%s: (%4d,%4d),\n" % (self.outname,x,y))
 		numtargets = len(self.getTargets(name))
