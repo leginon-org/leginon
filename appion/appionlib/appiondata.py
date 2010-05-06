@@ -943,7 +943,7 @@ class Ap3dDensityData(Data):
 			('path', ApPathData),
 			('ampPath', ApPathData),
 			('symmetry', ApSymmetryData),
-			('iterid', ApRefineIterData),
+			('refineIter', ApRefineIterData),
 			('rctrun', ApRctRunData),
 			('otrrun', ApOtrRunData),
 			('session', leginon.leginondata.SessionData),
@@ -1200,7 +1200,7 @@ class ApEulerJumpData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('particle', ApStackParticleData),
-			('refRun', ApRefineRunData),
+			('refineRun', ApRefineRunData),
 			('median', float),
 			('mean', float),
 			('stdev', float),

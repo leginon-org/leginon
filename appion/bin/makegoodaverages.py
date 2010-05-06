@@ -404,7 +404,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			modq['sigma']=self.params['sigma']
 			modq['hard']=self.params['hard']
 			modq['symmetry']=symdata
-			modq['iterid']=self.params['refineiter']
+			modq['refineIter']=self.params['refineiter']
 			if self.params['commit'] is True:
 				modq.insert()
 

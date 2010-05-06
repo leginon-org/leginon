@@ -140,12 +140,12 @@ class PostProcScript(appionScript.AppionScript):
 			iterdata = appiondata.ApRefineIterData.direct_query(self.params['reconiterid'])
 			if not iterdata:
 				apDisplay.printError("this iteration was not found in the database\n")
-			modq['iterid'] = iterdata
+			modq['refineIter'] = iterdata
 		if self.params['reconid'] is not None:
 			iterdata = appiondata.ApRefineIterData.direct_query(self.params['reconid'])
 			if not iterdata:
 				apDisplay.printError("this iteration was not found in the database\n")
-			modq['iterid'] = iterdata
+			modq['refineIter'] = iterdata
 		### if ampfile specified
 		if self.params['ampfile'] is not None:
 			(ampdir, ampname) = os.path.split(self.params['ampfile'])
