@@ -141,35 +141,20 @@ class project {
 		$findOwnedProjects = ($privilege_level <= 2 && $userId); 
 
 		if ($findOwnedProjects) {
-			
-			// The sharedProjectsQuery below is a bit hairy. Found a Mysql bug while writing it.
-			// For more info see http://ami.scripps.edu/redmine/projects/amigroup/wiki/Mysql_Nested_Subqueries_Problem
-			// Here we find all the session ids that correspond to the SessionData table and are shared with the user.
-			// Then we find the session name that corresponds to the ID, then find the Project ID that corresponds 
-			// with the session name.
-
-			// NOTE: shareexperiments.experimentId and projectexperiments.projectexperimentId match but are not 
-			// the same as DB_LEGINON.SessionData.DEF_id. For finding the ProjectIds that correspond to a session,
-			// we need to use the SessionData id.
-						
-			$sharedProjectsQuery = " SELECT ".DB_PROJECT.".projectexperiments.projectId "
+									
+			$sharedProjectsQuery = " SELECT ".DB_PROJECT.".projectexperiments.`REF|projects|project` "
 				." FROM ".DB_PROJECT.".projectexperiments " 
-				." INNER JOIN ( "
-					." SELECT ".DB_LEGINON.".SessionData.name AS SessionName "
-					." FROM ".DB_LEGINON.".SessionData "
-					." INNER JOIN ( "					
-						." SELECT ".DB_PROJECT.".shareexperiments.`REF|leginondata|SessionData|experiment` AS SessionId "
+				." WHERE ".DB_PROJECT.".projectexperiments.`REF|leginondata|SessionData|session` IN ( "
+						." SELECT ".DB_PROJECT.".shareexperiments.`REF|leginondata|SessionData|experiment` "
 						." FROM ".DB_PROJECT.".shareexperiments "
-						." WHERE ".DB_PROJECT.".shareexperiments.`REF|leginondata|UserData|user` = ".$userId." "
-					." ) AS SessionIds ON ".DB_LEGINON.".SessionData.`DEF_id` = SessionIds.SessionId "
-				." ) AS SessionNames ON ".DB_PROJECT.".projectexperiments.name = SessionNames.SessionName ";
+						." WHERE ".DB_PROJECT.".shareexperiments.`REF|leginondata|UserData|user` = ".$userId." ) ";
 
 			// Build a query to find the projects that are owned by the user, then add on the query to find
 			// the projects that are shared with the user.
-			$ownedProjectsQuery = "projects.projectId IN ( "
+			$ownedProjectsQuery = "projects.DEF_id IN ( "
 				."SELECT projectowners.`REF|projects|project` "
 				."FROM projectowners WHERE projectowners.`REF|leginondata|UserData|user` = ".$userId." ) " 
-				."OR projects.projectId IN ( ".$sharedProjectsQuery." )";
+				."OR projects.DEF_id IN ( ".$sharedProjectsQuery." )";
 			
 		}
 		
@@ -315,9 +300,12 @@ class project {
 			if (in_array($rp['projectId'], $allowprojects)) {
 				continue;
 			}
-			$q='select pe.name  '
-				.'from projectexperiments pe '
-				.'where pe.`REF|projects|project`="'.$rp['projectId'].'"';
+			$q = 'SELECT '.DB_LEGINON.'.SessionData.name '
+				.'FROM '.DB_LEGINON.'.SessionData '
+				.'WHERE '.DB_LEGINON.'.SessionData.DEF_id IN ( '
+				.'SELECT pe.`REF|leginondata|SessionData|session`  '
+				.'FROM projectexperiments pe '
+				.'WHERE pe.`REF|projects|project`="'.$rp['projectId'].'" ) ';
 			$r = $this->mysql->getSQLResult($q);
 			$r = array_merge($r, $r);
 		}
@@ -330,7 +318,7 @@ class project {
 	}
 
 	function getSessions($sessions) {
-			if (!ENABLE_LOGIN) {
+		if (!ENABLE_LOGIN) {
 				return $sessions;
 			}
 			$rsessions=$this->getRestrictedSessions();
