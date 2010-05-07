@@ -96,29 +96,6 @@ if ($expId) {
 		$alignruns=0;
 	}
 
-	// --- Get Reconstruction Data
-	if ($stackruns>0) {
-		$reconswithjob = 0;
-		foreach ((array)$stackIds as $stackid) {
-			$reconIds = $particle->getReconIds($stackid['stackid']);
-			if ($reconIds) {
-				$reconruns+=count($reconIds);
-				foreach ($reconIds as $reconId) {
-					if ($reconId['REF|ApAppionJobData|jobfile']) {
-						$reconswithjob++;
-					}
-				}
-			}
-		}
-		// get number of jobs submitted
-		$subjobs = $particle->getSubmittedJobs($sessionId);
-
-		// get num of jubs queued, submitted or done
-		$jobqueue=count($subclusterjobs['recon']['queued']);
-		$jobrun=count($subclusterjobs['recon']['running']);
-		$jobdone=count($subclusterjobs['recon']['done']);
-	}
-
 	// --- Get TiltSeries Data
 	if ($tiltseries = $particle->getTiltSeries($sessionId)) {
 		$tiltruns=count($tiltseries);
@@ -510,9 +487,25 @@ if ($expId) {
 
 	// display reconstructions only if there is a stack
 	if ($stackruns > 0) {
+		$reconIds = $particle->getReconIdsFromSession($sessionId);
+		$emanreconswithjob = 0;
+		if ($reconIds) {
+			$emanreconruns = count($reconIds);
+			foreach ($reconIds as $reconId) {
+				if ($reconId['REF|ApAppionJobData|jobfile']) {
+					$emanreconswithjob++;
+				}
+			}
+		}
+
+		// get num of jubs queued, submitted or done
+		$emanjobqueue=count($subclusterjobs['emanrecon']['queued']);
+		$emanjobrun=count($subclusterjobs['emanrecon']['running']);
+		$emanjobdone=count($subclusterjobs['emanrecon']['done']);
+
 		// for every uploaded job, subtract a submitted job
 		// if all submitted jobs are uploaded, it should be 0
-		$jobincomp = $jobdone-$reconswithjob; //incomplete
+		$emanjobincomp = $emanjobdone-$emanreconswithjob; //incomplete
 
 		$action = "Refine Reconstruction";
 
@@ -524,10 +517,10 @@ if ($expId) {
 		$ejrun = count($subclusterjobs['removeJumpers']['running']);
 
 		// check for how many EMAN reconstructions have finished / running / queued
-		$emanreconresults[] = ($jobqueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$jobqueue queued</a>" : "";
-		$emanreconresults[] = ($jobrun>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$jobrun running</a>" : "";
-		$emanreconresults[] = ($jobincomp>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
-		$emanreconresults[] = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns complete</a>" : "";
+		$emanreconresults[] = ($emanjobqueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$emanjobqueue queued</a>" : "";
+		$emanreconresults[] = ($emanjobrun>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$emanjobrun running</a>" : "";
+		$emanreconresults[] = ($emanjobincomp>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
+		$emanreconresults[] = ($emanreconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$emanreconruns complete</a>" : "";
 		$emanreconresults[] = ($ejrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=removeJumpers'>$ejrun reclassifying</a>";
 
 		$totresult = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns</a>" : "";
