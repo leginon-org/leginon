@@ -724,7 +724,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		stackq['description'] = self.params['description']
 		stackq['hidden'] = False
 		stackq['pixelsize'] = self.params['apix']*self.params['bin']*1e-10
-		
+		stackq['boxsize'] = self.params['box']/self.params['bin']
+
 		### add info for from stack ids
 		if self.params['fromstackid'] is not None:
 			stackq['oldstack'] = appiondata.ApStackData.direct_query(self.params['fromstackid'])
