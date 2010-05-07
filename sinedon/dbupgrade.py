@@ -145,7 +145,7 @@ class DBUpgradeTools(object):
 	#==============
 	def columnIndexExists(self, table, column):
 		"""
-		check if column exists
+		check if column index exists
 		"""
 		if self.tableExists(table) is False:
 			if messaging['not exist'] is True:
@@ -159,6 +159,31 @@ class DBUpgradeTools(object):
 		if numrows > 0:
 			return True
 		return False
+
+	#==============
+	def getColumnIndexInfo(self, table, column):
+		"""
+		check if column exists
+		"""
+		if self.tableExists(table) is False:
+			if messaging['not exist'] is True:
+				print "\033[33mcannot check column, table %s does not exist\033[0m"%(table)
+			return False
+		query = "SHOW INDEX FROM  `%s` WHERE Column_name='%s';"%(table, column)
+		if messaging['query'] is True:
+			print query
+		self.cursor.execute(query)
+		result = self.cursor.fetchone()
+		if not result:
+			return None
+		indexinfo = {
+			'index name': result[2],
+			'column name': result[4],
+			'cardinality': 0,
+		}
+		if result[6] is not None:
+			indexinfo['cardinality'] = int(result[6])
+		return indexinfo
 
 	#==============
 	def getColumnDefinition(self, table, column):
@@ -306,7 +331,7 @@ class DBUpgradeTools(object):
 		if messaging['query'] is True:
 			print query
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
-			print "renaming column `%s` to `%s`..."%(column1, column2)
+			print "\033[34mrenaming column `%s` to `%s`...\033[0m"%(column1, column2)
 		self.cursor.execute(query)
 		if self.debug > 0 and time.time()-t0 > 20:
 			print "column rename time: %.1f min"%((time.time()-t0)/60.0)
@@ -448,7 +473,42 @@ class DBUpgradeTools(object):
 			query = "CREATE INDEX %s_index%d ON %s (%s(%d)); ;"%(column, length, table, column, length)
 
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
-			print "indexing column `%s`..."%(column)
+			print "\033[34mindexing column `%s`...\033[0m"%(column)
+		if messaging['query'] is True:
+			print query
+		self.cursor.execute(query)
+
+		if messaging['success'] is True:
+			print "\033[32mindex column %s\033[0m"%(column)
+		return True
+
+	#==============
+	def dropColumnIndex(self, table, column):
+		"""
+		remove index from a column in a table
+		"""
+		if self.drop is False:
+			print "\033[31mcannot drop column, safe mode enabled\033[0m"
+			if self.exit is True: sys.exit(1)
+			return False
+		if self.validTableName(table) is False:
+			return False
+		if self.validColumnName(column) is False:
+			return False
+		if self.columnExists(table, column) is False:
+			if messaging['not exist'] is True:
+				print "\033[33mcannot drop index for column %s, column does not exist\033[0m"%(column)
+			return False
+		if self.columnIndexExists(table, column) is False:
+			if messaging['not exist'] is True:
+				print "\033[33mcannot drop index for column %s, column is not indexed\033[0m"%(column)
+			return False
+
+		indexinfo = self.getColumnIndexInfo(table, column)
+		query = "ALTER TABLE `%s` DROP INDEX `%s` ;"%(table, indexinfo['index name'])
+
+		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
+			print "\033[34mdropping column index `%s`...\033[0m"%(column)
 		if messaging['query'] is True:
 			print query
 		self.cursor.execute(query)
@@ -478,7 +538,7 @@ class DBUpgradeTools(object):
 			return False
 
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
-			print "modifying column `%s`..."%(column)
+			print "\033[34mmodifying column `%s`...\033[0m"%(column)
 		query = "ALTER TABLE `%s` MODIFY `%s` %s;"%(table, column, columndefine)
 		if messaging['query'] is True:
 			print query
