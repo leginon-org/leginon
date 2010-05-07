@@ -240,6 +240,7 @@ def upgradeAppionDB(appiondbname, projectdb):
 		'ace2': 'pyace2',
 		'templatepicker': 'templatecorrelator',
 		'makestack': 'makestack2',
+		'recon': 'emanrecon',
 	}
 	if appiondb.tableExists('ApAppionJobData'):
 		for key in jobmap.keys():
