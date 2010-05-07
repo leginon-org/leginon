@@ -271,6 +271,7 @@ def upgradeAppionDB(appiondbname, projectdb):
 	for tablename in appiondb.getAllTables():
 		appiondb.changeColumnDefinition(tablename, 'hidden', appiondb.bool)
 		appiondb.indexColumn(tablename, 'hidden')
+		### old version misnamed column
 		appiondb.renameColumn(tablename, 'REF|project|projects|project', 
 			"REF|"+projectdb.getSinedonName()+"|projects|project")
 		appiondb.renameColumn(tablename, 'project|projects|project', 
