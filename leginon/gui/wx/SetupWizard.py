@@ -13,6 +13,7 @@ import wx.lib.intctrl
 import socket
 
 import leginon.leginondata
+import leginon.projectdata
 import leginon.icons
 import leginon.leginonconfig
 import leginon.project
@@ -448,7 +449,7 @@ class SessionProjectPage(WizardPage):
 
 	def getSelectedProjectId(self):
 		project = self.projectchoice.GetStringSelection()
-		return self.projects[project]['projectId']
+		return self.projects[project].dbid
 
 	def GetPrev(self):
 		return self.GetParent().namepage
@@ -602,6 +603,7 @@ class SetupWizard(wx.wizard.Wizard):
 		self.setup = Setup(manager.research, manager.publish)
 		self.publish = manager.publish
 		self.session = None
+		self.clients = []
 		image = wx.Image(leginon.icons.getPath('setup.png'))
 		bitmap = wx.BitmapFromImage(image)
 		wx.wizard.Wizard.__init__(self, parent, -1, 'Leginon Setup', bitmap=bitmap)
@@ -687,7 +689,8 @@ class SetupWizard(wx.wizard.Wizard):
 			self.publish(self.session, database=True)
 			if self.projectpage is not None:
 				projectid = self.projectpage.getSelectedProjectId()
-				self.setup.linkSessionProject(self.session, projectid)
+				project_experiment = self.setup.linkSessionProject(self.session['name'], projectid)
+				self.publish(project_experiment, database=True)
 			self.clients = self.sessioncreatepage.clients
 			self.history = self.sessioncreatepage.history
 			self.setup.saveClients(self.session, self.clients)
@@ -870,12 +873,17 @@ class Setup(object):
 		}
 		return leginon.leginondata.SessionData(initializer=initializer)
 
-	def linkSessionProject(self, sessiondata, projectid):
+	def linkSessionProject(self, sessionname, projectid):
 		if self.projectdata is None:
 			raise RuntimeError('Cannot link session, not connected to database.')
-		projectsession = leginon.project.ProjectExperiment(projectid, sessiondata['name'])
-		experiments = self.projectdata.getProjectExperiments()
-		experiments.insert([projectsession.dumpdict()])
+		projq = leginon.projectdata.projects()
+		projdata = projq.direct_query(projectid)
+		projeq = leginon.projectdata.projectexperiments()
+		sessionq = leginon.leginondata.SessionData(name=sessionname)
+		sdata = sessionq.query()
+		projeq['session'] = sdata[0]
+		projeq['project'] = projdata
+		return projeq
 
 class EditClientsDialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent, clients, history):
