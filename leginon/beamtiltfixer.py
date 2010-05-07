@@ -112,7 +112,7 @@ class BeamTiltFixer(acquisition.Acquisition):
 		# measure axial coma beam tilt
 		self.logger.info('Measuring axial coma beam tilt....')
 		try:
-			cftilt = calibration_client.repeatMeasureComaFree(tilt_value, settle=self.settings['pause time'],repeat=1)
+			cftilt = calibration_client.repeatMeasureComaFree(tilt_value, settle=self.settings['pause time'],repeat=2)
 			comatilt = {'x':cftilt[0].mean(),'y':cftilt[1].mean()}
 			self.comameasurement = comatilt
 			self.logger.info('Measured beam tilt x:%8.5f, y:%8.5f' % (comatilt['x'],comatilt['y']))
@@ -124,7 +124,7 @@ class BeamTiltFixer(acquisition.Acquisition):
 			btilt_offset = math.hypot(comatilt['x'],comatilt['y'])
 			if self.settings['min threshold'] < btilt_offset < self.settings['max threshold']:
 				try:
-					calibration_client.setBeamTilt({'x':-comatilt['x']+btilt0['x'],'y':-comatilt['y']+btilt0['y']})
+					calibration_client.setBeamTilt({'x':comatilt['x']+btilt0['x'],'y':comatilt['y']+btilt0['y']})
 					is_corrected = True
 					self.logger.info('Beam Tilt Corrected')
 				except Exception, e:

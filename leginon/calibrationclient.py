@@ -936,8 +936,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		matrix = numpy.zeros((2,2), numpy.float32)
 		if m!=0:
-			matrix[:,0] = numpy.divide(numpy.subtract(diffs['x'][-1], diffs['x'][1]), 2 * m)
-			matrix[:,1] = numpy.divide(numpy.subtract(diffs['y'][-1], diffs['y'][1]), 2 * m)
+			matrix[:,0] = numpy.divide(numpy.subtract(diffs['x'][-1], diffs['x'][1]), 2 * m * t)
+			matrix[:,1] = numpy.divide(numpy.subtract(diffs['y'][-1], diffs['y'][1]), 2 * m * t)
 		return matrix
 
 	def confirmDefocusInRange(self):
@@ -986,7 +986,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			tvect = [0, 0]
 			tvect[axisn] = tilt_value
 			dc[axisn] = self.measureDefocusDifference(tvect, settle)
-		dc = numpy.array(dc)
+		dc = numpy.array(dc) / tilt_value
 		cftilt = numpy.linalg.solve(cmatrix, dc)
 		if not self.confirmDefocusInRange():
 			cftilt[(0,0)] = 0
