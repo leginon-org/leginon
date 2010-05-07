@@ -40,9 +40,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	def checkPixelSize(self):
 		# make sure that images all have same pixel size:
 		# first get pixel size of first image:
-		if len(self.imgtree) == 0:
-			apDisplay.printError("No images were found to process")
-			return
 		self.params['apix'] = None
 		for imgdata in self.imgtree:
 			# get pixel size
@@ -929,6 +926,11 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		self.mergestacktimes = []
 		self.meanreadtimes = []
 		self.insertdbtimes = []
+		self.noimages = False
+		if len(self.imgtree) == 0:
+			apDisplay.printWarning("No images were found to process")
+			self.noimages = True
+			return
 		self.checkPixelSize()
 		if self.params['commit'] is True:
 			self.insertStackRun()
@@ -1017,6 +1019,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			### remove Ace2 images
 			pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*mrc.corrected.mrc')
 			apFile.removeFilePattern(pattern)
+		if self.noimages is True:
+			return
 		### Averaging completed stack
 		stackpath = os.path.join(self.params['rundir'], "start.hed")
 		apStack.averageStack(stack=stackpath)
