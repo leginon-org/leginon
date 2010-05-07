@@ -163,16 +163,18 @@ class DBUpgradeTools(object):
 			print "\033[31mcolumn definition not found %s.%s\033[0m"%(table, column)
 			sys.exit(1)
 			return None
-		coldef = "%s "%(result[1])
+		columndefine = "%s "%(result[1])
 		if result[2] == "NO":
-			coldef += "NOT NULL "
+			columndefine += "NOT NULL "
 		else:
-			coldef += "NULL "
+			columndefine += "NULL "
 		if result[4]:
-			coldef += "default %s "%(result[4])
+			columndefine += "default %s "%(result[4])
+		else:
+			columndefine += "default NULL "
 		if result[5]:
-			coldef += result[5]+" "
-		return coldef
+			columndefine += result[5]+" "
+		return columndefine.strip()
 
 	#============================
 	#== PUBLIC FUNCTIONS
@@ -283,7 +285,7 @@ class DBUpgradeTools(object):
 		return True
 
 	#==============
-	def addColumn(self, table, column, column_definition, index=False):
+	def addColumn(self, table, column, columndefine, index=False):
 		"""
 		add a column to a table
 		"""
@@ -300,7 +302,7 @@ class DBUpgradeTools(object):
 				print "\033[33mcannot add column %s, column exists\033[0m"%(column)
 			return False
 
-		query = "ALTER TABLE `%s` ADD COLUMN `%s` %s;"%(table, column, column_definition)
+		query = "ALTER TABLE `%s` ADD COLUMN `%s` %s;"%(table, column, columndefine)
 		if self.debug > 1:
 			print query
 		self.cursor.execute(query)
@@ -415,7 +417,7 @@ class DBUpgradeTools(object):
 		return True
 
 	#==============
-	def changeColumnDefinition(self, table, column, definition):
+	def changeColumnDefinition(self, table, column, columndefine):
 		"""
 		set new column definition (e.g., TINYINT(1) NULL DEFAULT 0)
 		"""
@@ -428,13 +430,19 @@ class DBUpgradeTools(object):
 				print "\033[33mcannot modify column %s, column does not exist\033[0m"%(column)
 			return False
 
-		query = "ALTER TABLE `%s` MODIFY `%s` %s;"%(table, column, definition)
+		oldcolumndefine = self.getColumnDefinition(table, column)
+		if oldcolumndefine.lower().strip() == columndefine.lower().strip():
+			if self.debug > 1:
+				print "\033[33mcolumn '%s' definition unchanged\033[0m"%(column)
+			return False
+
+		query = "ALTER TABLE `%s` MODIFY `%s` %s;"%(table, column, columndefine)
 		if self.debug > 2:
 			print query
 		self.cursor.execute(query)
 
 		if self.debug > 0:
-			print "\033[32mchanged column %s definition\033[0m"%(column)
+			print "\033[32mchanged column '%s' definition\033[0m"%(column)
 		return True
 
 	#==============
