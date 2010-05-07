@@ -57,7 +57,9 @@ def upgradeAppionDB(appiondbname, projectdb):
 	appiondb.renameColumn('ApEulerJumpData', 
 		'REF|ApRefinementRunData|refRun', 'REF|ApRefineRunData|refineRun')
 	appiondb.renameColumn('Ap3dDensityData', 
-		'REF|ApRefinementData|iterid', 'REF|ApRefineRunData|refineIter')
+		'REF|ApRefinementData|iterid', 'REF|ApRefineIterData|refineIter')
+	appiondb.renameColumn('ApFSCData', 
+		'REF|ApRefinementData|refinementData', 'REF|ApRefineIterData|refineIter')
 
 	### special case of conflicting Xmipp columns
 	if (appiondb.columnExists('ApRefineIterData', 'REF|ApXmippRefineIterationParamsData|xmippRefineParams') and 
@@ -120,16 +122,17 @@ def upgradeAppionDB(appiondbname, projectdb):
 
 	if appiondb.tableExists('ApRefineParticleData'):
 		appiondb.renameColumn('ApRefineParticleData', 'coran_keep', 'postRefine_keep')
-		appiondb.renameColumn('ApRefineParticleData', 'thrown_out', 'refine_keep')
-
+		
 		### special: invert values
-		if appiondb.columnExists('ApRefineParticleData', 'refine_keep'):
+		if appiondb.addColumn('ApRefineParticleData', 'refine_keep', appiondb.bool):
 			updateq = ("UPDATE ApRefineParticleData AS refpart "
 				+" SET "
-				+"   refpart.`refine_keep` = MOD(IFNULL(refpart.`refine_keep`,0)+1,2), "
+				+"   refpart.`refine_keep` = MOD(IFNULL(refpart.`thrown_out`,0)+1,2), "
 				+"   refpart.`DEF_timestamp` = refpart.`DEF_timestamp` "
 			)
 			appiondb.executeCustomSQL(updateq)
+			appiondb.dropColumn('ApRefineParticleData', 'thrown_out')
+
 		if (appiondb.columnExists('ApRefineParticleData', 'postRefine_keep') 
 		 and appiondb.columnExists('ApRefineParticleData', 'msgp_keep')):
 			updateq = ("UPDATE ApRefineParticleData AS refpart "
@@ -141,8 +144,12 @@ def upgradeAppionDB(appiondbname, projectdb):
 			)
 			appiondb.executeCustomSQL(updateq)
 		appiondb.dropColumn('ApRefineParticleData', 'msgp_keep')
+		appiondb.changeColumnDefinition('ApRefineParticleData', 'refine_keep', appiondb.bool)
+		appiondb.changeColumnDefinition('ApRefineParticleData', 'postRefine_keep', appiondb.bool)
+
 		appiondb.indexColumn('ApRefineParticleData', 'refine_keep')
 		appiondb.indexColumn('ApRefineParticleData', 'postRefine_keep')
+
 
 	#===================
 	# add new columns calculated from old data
@@ -262,12 +269,22 @@ def upgradeAppionDB(appiondbname, projectdb):
 	olddebug = appiondb.debug
 	appiondb.debug -= 1
 	for tablename in appiondb.getAllTables():
+		appiondb.changeColumnDefinition(tablename, 'hidden', appiondb.bool)
 		appiondb.indexColumn(tablename, 'hidden')
+		appiondb.renameColumn(tablename, 'REF|project|projects|project', 
+			"REF|"+projectdb.getSinedonName()+"|projects|project")
 		appiondb.renameColumn(tablename, 'project|projects|project', 
 			"REF|"+projectdb.getSinedonName()+"|projects|project")
 		appiondb.indexColumn(tablename, "REF|"+projectdb.getSinedonName()+"|projects|project")
 	appiondb.debug = olddebug
 
+	#===================
+	# set all boolean columns to TINYINT(1), there was an old bug
+	#===================
+	appiondb.changeColumnDefinition('ApAssessmentData', 'selectionkeep', appiondb.bool)
+	appiondb.indexColumn('ApAssessmentData', 'selectionkeep')
+	appiondb.changeColumnDefinition('ApAlignParticleData', 'mirror', appiondb.bool)
+	print "DONE"
 
 #===================
 #===================
@@ -291,12 +308,12 @@ if __name__ == "__main__":
 	# project table
 	#===================
 
-	projectdb.renameColumn('projects', 'projectId', 'DEF_id')
-	projectdb.renameColumn('projects', 'timestamp', 'DEF_timestamp')
+	projectdb.renameColumn('projects', 'projectId', 'DEF_id', projectdb.defid)
+	projectdb.renameColumn('projects', 'timestamp', 'DEF_timestamp', projectdb.timestamp)
 	projectdb.renameColumn('projects', 'db', 'leginondb')
 
-	projectdb.renameColumn('projectexperiments', 'projectexperimentId', 'DEF_id')
-	projectdb.renameColumn('projectexperiments', 'projectId', 'REF|projects|project')
+	projectdb.renameColumn('projectexperiments', 'projectexperimentId', 'DEF_id', projectdb.defid)
+	projectdb.renameColumn('projectexperiments', 'projectId', 'REF|projects|project', projectdb.link)
 	projectdb.addColumn('projectexperiments', 'DEF_timestamp', projectdb.timestamp, index=True)
 
 	### change session name to session id
@@ -314,31 +331,27 @@ if __name__ == "__main__":
 	projectdb.dropColumn('projectexperiments', 'experimentsourceId')
 
 	### processingdb
-	projectdb.renameColumn('processingdb', 'id', 'DEF_id')
+	projectdb.renameColumn('processingdb', 'id', 'DEF_id', projectdb.defid)
 	projectdb.addColumn('processingdb', 'DEF_timestamp', projectdb.timestamp, index=True)
 	projectdb.renameColumn('processingdb', 'db', 'appiondb')
-	projectdb.renameColumn('processingdb', 'projectId', 'REF|projects|project')
+	projectdb.renameColumn('processingdb', 'projectId', 'REF|projects|project', projectdb.link)
+	projectdb.indexColumn('projectexperiments', 'appiondb')
+
+	### shareexperiments
+	projectdb.renameColumn('shareexperiments', 'id', 'DEF_id', projectdb.defid)
+	projectdb.addColumn('shareexperiments', 'DEF_timestamp', projectdb.timestamp, index=True)
 
 	#===================
 	# leginon table
 	#===================
 
 	leginondb.renameTable('viewer_pref_image', 'ViewerImageStatus')
-	leginondb.renameColumn('ViewerImageStatus', 'id', 'DEF_id')
-	leginondb.renameColumn('ViewerImageStatus', 'timestamp', 'DEF_timestamp')
-	leginondb.renameColumn('ViewerImageStatus', 'sessionId', 'REF|SessionData|session')
-	leginondb.renameColumn('ViewerImageStatus', 'imageId', 'REF|AcquisitionImageData|image')
+	leginondb.renameColumn('ViewerImageStatus', 'id', 'DEF_id', projectdb.defid)
+	leginondb.renameColumn('ViewerImageStatus', 'timestamp', 'DEF_timestamp', projectdb.timestamp)
+	leginondb.renameColumn('ViewerImageStatus', 'sessionId', 'REF|SessionData|session', projectdb.link)
+	leginondb.renameColumn('ViewerImageStatus', 'imageId', 'REF|AcquisitionImageData|image', projectdb.link)
 
-	if leginondb.columnExists('PresetData', 'exposure time'):
-		updateq = ("ALTER TABLE `PresetData` "
-			+" CHANGE `exposure time` `exposure time` DOUBLE NULL DEFAULT NULL "
-		)
-		leginondb.executeCustomSQL(updateq)
-
-	if leginondb.columnExists('AcquisitionImageTargetData', 'delta row'):
-		updateq = ("ALTER TABLE `AcquisitionImageTargetData` "
-			+" CHANGE `delta row` `delta row` DOUBLE NULL DEFAULT NULL "
-			+", CHANGE `delta column` `delta column` DOUBLE NULL DEFAULT NULL "
-		)
-		leginondb.executeCustomSQL(updateq)
+	leginondb.changeColumnDefinition('PresetData', 'exposure time', leginondb.float)
+	leginondb.changeColumnDefinition('AcquisitionImageTargetData', 'delta row', leginondb.float)
+	leginondb.changeColumnDefinition('AcquisitionImageTargetData', 'delta column', leginondb.float)
 
