@@ -90,7 +90,7 @@ class leginondata {
 	function getSessions($comment="", $projectId=false, $like="") {
 	
 		if ($like)
-			$wherelike = "and s.`Name` like '$like' ";
+			$wherelike = "and s.`name` like '$like' ";
 		
 		$selectcomment = ($comment) ? 
 				"if (length(s.comment)>0, concat(s.name,' - ',s.comment), s.name)" : "s.name";
@@ -103,7 +103,7 @@ class leginondata {
 				."LEFT JOIN ".DB_LEGINON.".SessionData AS session "
 				."  ON session.`DEF_id` =  p.`REF|leginondata|SessionData|session` "
 				."WHERE p.`REF|projects|project`='$projectId'";
-			#echo $q;
+			//echo $q;
 			$psessions = $db->getSQLResult($q);
 			$ps=array();
 			foreach ($psessions as $psession) {
@@ -126,8 +126,8 @@ class leginondata {
 
 		$userId = getLoginUserId();
 		$privilege_level = privilege('data');
-    $q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.Name as `name_org`, s.`DEF_timestamp` as `stimestamp` "
-			."from AcquisitionImageData a "
+    $q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.name as `name_org`, s.`DEF_timestamp` as `stimestamp` "
+			."from ".DB_LEGINON.".AcquisitionImageData a "
 			."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) ";
     $where = "where a.`REF|SessionData|Session` IS NOT NULL ";
 		$grouporder = " "
@@ -136,9 +136,9 @@ class leginondata {
 	  if ($privilege_level <=2) {
 			//project owners
       $q1 = "left join ".DB_PROJECT.".`projectexperiments` p "
-        ."on (p.`name` = s.`name`) "
+        ."on (p.`REF|leginondata|SessionData|session` = s.`DEF_id`) "
         ."left join ".DB_PROJECT.".`projectowners` o "
-				."on p.`projectId` = o.`REF|projects|project` ";
+				."on p.`DEF_id` = o.`REF|projects|project` ";
       $where1 .= " "
         ."and o.`REF|leginondata|UserData|user` = ".$userId." "
 			." ";
@@ -153,6 +153,7 @@ class leginondata {
 			$q2 = $q.$q2.$where2.$grouporder;
 			//combine
 			$q = "(".$q1.") union (".$q2.") order by `stimestamp` DESC";
+		echo $q ."<br/>";
 		} else {
 			$q .= $where.$wherelike.$grouporder;
 		}
