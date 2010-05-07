@@ -25,7 +25,7 @@ def getProjectIdFromSessionName(sessionname):
 	if not projdatas:
 		apDisplay.printError("could not find project for session "+sessionname)	
 	projdata = projdatas[0]
-	projectid = projdata.dbid
+	projectid = projdata['project'].dbid
 
 	apDisplay.printMsg("Found project id="+str(projectid)+" for session "+sessionname
 		+" in "+apDisplay.timeString(time.time()-t0))
