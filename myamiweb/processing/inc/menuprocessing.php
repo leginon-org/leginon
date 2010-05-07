@@ -299,11 +299,11 @@ if ($expId) {
 			$sq += count($subclusterjobs[$stacktype]['queued']);
 		}
 
-		$totstack = ($sdone > $stackruns) ? $sdone : $stackruns;
+		$totstack = ($sdone > $stackruns-$srun) ? $sdone : $stackruns-$srun;
 
 		// for each stack running, decrement complete stacks
 		// since they are counted twice
-		$sresults[] = ($totstack-$srun==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId'>".($totstack-$srun)." complete</a>";
+		$sresults[] = ($totstack==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId'>".($totstack)." complete</a>";
 		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$srun running</a>";
 		$sresults[] = ($sq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$sq queued</a>";
 
