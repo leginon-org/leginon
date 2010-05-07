@@ -1047,6 +1047,9 @@ class ApRefineIterData(Data):
 			('refineRun', ApRefineRunData),
 			('resolution', ApResolutionData),
 			('rMeasure', ApRMeasureData),
+			('mask', int),
+			('imask', int),
+			('symmetry', ApSymmetryData),
 			### additional packages plugin here
 			('emanParams', ApEmanRefineIterData),
 			('xmippParams', ApXmippRefineIterData),
@@ -1079,12 +1082,9 @@ class ApEmanRefineIterData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('ang', float),
-			('mask', int),
-			('imask', int),
 			('lpfilter', int),
 			('hpfilter', int),
 			('pad', int),
-			('symmetry', ApSymmetryData),
 			('EMAN_maxshift', int),
 			('EMAN_hard', int),
 			('EMAN_classkeep', float),

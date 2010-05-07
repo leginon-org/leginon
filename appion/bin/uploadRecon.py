@@ -283,7 +283,7 @@ class UploadReconScript(appionScript.AppionScript):
 
 	#==================
 	#==================
-	def insertFSC(self, fscfile, refineData, commit=True):
+	def insertFSC(self, fscfile, refineIterData, commit=True):
 		if not os.path.isfile(fscfile):
 			apDisplay.printWarning("Could not open FSC file: "+fscfile)
 
@@ -292,7 +292,7 @@ class UploadReconScript(appionScript.AppionScript):
 		numinserts = 0
 		for line in f:
 			fscq = appiondata.ApFSCData()
-			fscq['refinementData'] = refineData
+			fscq['refineIter'] = refineIterData
 			line = string.rstrip(line)
 			bits = line.split('\t')
 			fscq['pix'] = int(bits[0])
@@ -546,12 +546,9 @@ class UploadReconScript(appionScript.AppionScript):
 	def insertIteration(self, iteration):
 		refineparamsq=appiondata.ApEmanRefineIterData()
 		refineparamsq['ang']=iteration['ang']
-		refineparamsq['mask']=iteration['mask']
-		refineparamsq['imask']=iteration['imask']
 		refineparamsq['lpfilter']=iteration['lpfilter']
 		refineparamsq['hpfilter']=iteration['hpfilter']
 		refineparamsq['pad']=iteration['pad']
-		refineparamsq['symmetry']=iteration['sym']
 		refineparamsq['EMAN_maxshift']=iteration['maxshift']
 		refineparamsq['EMAN_hard']=iteration['hard']
 		refineparamsq['EMAN_classkeep']=iteration['classkeep']
@@ -617,6 +614,9 @@ class UploadReconScript(appionScript.AppionScript):
 		refineq['iteration'] = iteration['num']
 		refineq['resolution'] = resData
 		refineq['rMeasure'] = RmeasureData
+		refineq['mask'] = iteration['mask']
+		refineq['imask'] = iteration['imask']
+		refineq['symmetry']=iteration['sym']
 		refineq['exemplar'] = False
 		classvar = 'classes.'+iteration['num']+'.var.img'
 		if classavg in self.params['classavgs']:
