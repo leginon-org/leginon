@@ -3072,7 +3072,7 @@ class particledata {
 	function getFscFromRefinementDataId ($id) {
 		$q = "SELECT * "
 			."FROM ApFSCData "
-			."WHERE `REF|ApRefineIterData|refineIterData` = $id "
+			."WHERE `REF|ApRefineIterData|refineIter` = $id "
 			."ORDER BY pix";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
@@ -3701,7 +3701,9 @@ class particledata {
 			."WHERE "
 			."  e.`REF|ApRefineRunData|refineRun` = '$refineRunId' "
 			."GROUP BY e.`REF|ApRefineRunData|refineRun` ";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return $r[0];
 	}
 
@@ -3813,12 +3815,12 @@ class particledata {
 	}
 
 	function getStackParticleNum ($particleId) {
-					$q = "SELECT particleNumber "
-					."FROM `ApStackParticleData` "
-					."WHERE `DEF_id` = $particleId";
-					list($r) = $this->mysql->getSQLResult($q);
-					return $r['particleNumber'];
-		}
+		$q = "SELECT particleNumber "
+			."FROM `ApStackParticleData` "
+			."WHERE `DEF_id` = $particleId";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['particleNumber'];
+	}
 
 	function getMiscInfoFromReconId ($reconid) {
 		$q = "SELECT m.*, p.path "
