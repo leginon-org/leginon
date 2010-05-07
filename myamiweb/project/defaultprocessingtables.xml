@@ -4,7 +4,7 @@
 - http://ami.scripps.edu/ 
 -
 - Tables: 
--	ApClusterJobData
+-	ApAppionJobData
 -	ApInitialModelData
 -	ApPathData
 -	ApSymmetryData
@@ -14,7 +14,7 @@
 
 <defaulttables>
  <definition>
-  <sqltable name="ApClusterJobData" >
+  <sqltable name="ApAppionJobData" >
     <field 
       name="DEF_id" 
       type="int(20)" 
