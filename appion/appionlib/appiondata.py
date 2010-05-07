@@ -454,6 +454,7 @@ class ApStackData(Data):
 			('beamtilt_corrected', bool),
 			('mask', int),
 			('maxshift', int),
+			('boxsize', int),
 		)
 	typemap = classmethod(typemap)
 
