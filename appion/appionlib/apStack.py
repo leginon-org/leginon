@@ -372,6 +372,13 @@ def getStackBoxsize(stackId, msg=True):
 
 	Not tested on defocal pairs
 	"""
+	stackdata = getOnlyStackData(stackId, msg=msg)
+	if stackdata['boxsize'] is not None:
+		### Quicker method
+		stackboxsize = stackdata['boxsize']
+		return stackboxsize
+
+	### old method
 	stackpart = getOneParticleFromStackId(stackId, msg=False)
 	if stackpart is None:
 		return None
@@ -410,7 +417,7 @@ def getStackIdFromPath(stackpath):
 	return stackdatas[0].dbid
 
 #===============
-def getStackParticleFromParticleId(particleid,stackid, nodie=False):
+def getStackParticleFromParticleId(particleid, stackid, nodie=False):
 	"""
 	Provided a Stack Id & an ApParticle Id, find the stackparticle Id
 	"""
