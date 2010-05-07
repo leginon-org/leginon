@@ -15,7 +15,7 @@ from appionlib import apProject
 from appionlib import apEMAN
 #leginon
 import leginon.leginondata
-import leginon.project
+import leginon.projectdata
 import leginon.leginonconfig
 #pyami
 from pyami import mrc
@@ -26,10 +26,6 @@ class ImageLoader(appionLoop2.AppionLoop):
 		"""
 		appionScript OVERRIDE
 		"""
-		try:
-			self.projectdata = leginon.project.ProjectData()
-		except:
-			self.projectdata = None
 		self.processcount = 0
 		appionLoop2.AppionLoop.__init__(self)
 
@@ -355,12 +351,11 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 	#=====================
 	def linkSessionProject(self, sessiondata, projectid):
-		if self.projectdata is None:
-			raise RuntimeError('Cannot link session, not connected to database.')
-		projectsession = leginon.project.ProjectExperiment(projectid, sessiondata['name'])
-		experiments = self.projectdata.getProjectExperiments()
+		projectexpq = leginon.projectdata.projectexperiments()
+		projectexpq['project'] = leginon.projectdata.projects.direct_query(projectid)
+		projectexpq['session'] = sessiondata
 		if self.params['commit'] is True:
-			experiments.insert([projectsession.dumpdict()])
+			projectexpq.insert()
 
 	#=====================
 	def readBatchUploadInfo(self):
