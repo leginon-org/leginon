@@ -315,7 +315,7 @@ class DBUpgradeTools(object):
 				print "\033[33mcannot rename %s to %s, column does not exist\033[0m"%(column1, column2)
 			return False
 		if self.columnExists(table, column2) is True:
-			print "\033[31mcannot rename %s to %s, column exists\033[0m"%(column1, column2)
+			print "\033[31mcannot rename %s to %s, column exists in %s\033[0m"%(column1, column2, table)
 			if self.exit is True: sys.exit(1)
 			return False
 
