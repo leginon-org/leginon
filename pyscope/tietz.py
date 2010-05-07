@@ -672,10 +672,7 @@ class Tietz(object):
 
 class TietzPXL(Tietz, ccdcamera.CCDCamera):
 	name = 'Tietz PXL'
-	try:
-		cameratype = win32com.client.constants.ctPXL
-	except:
-		pass
+	cameratypeattr = 'ctPXL'
 	mmname = 'CAM_PXL_DATA'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
@@ -683,10 +680,7 @@ class TietzPXL(Tietz, ccdcamera.CCDCamera):
 	
 class TietzSimulation(Tietz, ccdcamera.CCDCamera):
 	name = 'Tietz Simulation'
-	try:
-		cameratype = win32com.client.constants.ctSimulation
-	except:
-		pass
+	cameratypeattr = 'ctSimulation'
 	mmname = 'CAM_SIMU_DATA'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
@@ -694,10 +688,7 @@ class TietzSimulation(Tietz, ccdcamera.CCDCamera):
 
 class TietzPVCam(Tietz, ccdcamera.CCDCamera):
 	name = 'Tietz PVCam'
-	try:
-		cameratype = win32com.client.constants.ctPVCam
-	except:
-		pass
+	cameratypeattr = 'ctPVCam'
 	mmname = 'CAM_PVCAM_DATA'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
@@ -705,10 +696,7 @@ class TietzPVCam(Tietz, ccdcamera.CCDCamera):
 	
 class TietzFastScan(Tietz, ccdcamera.FastCCDCamera):
 	name = 'Tietz FastScan'
-	try:
-		cameratype = win32com.client.constants.ctFastScan
-	except:
-		pass
+	cameratypeattr = 'ctFastScan'
 	mmname = 'CAM_FASTSCAN_DATA'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
@@ -716,10 +704,7 @@ class TietzFastScan(Tietz, ccdcamera.FastCCDCamera):
 	
 class TietzFastScanFW(Tietz, ccdcamera.FastCCDCamera):
 	name = 'Tietz FastScan Firewire'
-	try:
-		cameratype = win32com.client.constants.ctF114_FW
-	except:
-		pass
+	cameratypeattr = 'ctF114_FW'
 	mmname = 'CAM_FSFW_DATA'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
@@ -735,10 +720,7 @@ class TietzSCX(Tietz, ccdcamera.CCDCamera):
 
 class TietzFC415(Tietz, ccdcamera.CCDCamera):
 	name = 'Tietz FC415'
-	try:
-		cameratype = win32com.client.constants.ctFC415
-	except:
-		pass
+	cameratypeattr = 'ctFC415'
 	mmname = 'CAM_FC415_DATA'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
