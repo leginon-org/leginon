@@ -13,12 +13,7 @@ import leginon.projectdata
 import leginon.leginondata
 
 #========================
-def getProjectIdFromSessionName(sessionname):
-	t0 = time.time()
-	### get session
-	sessiondata = getSessionDataFromSessionName(sessionname)
-
-	### get project
+def getProjectIdFromSessionData(sessiondata):
 	projq = leginon.projectdata.projectexperiments()
 	projq['session'] = sessiondata
 	projdatas = projq.query(results=1)
@@ -26,6 +21,22 @@ def getProjectIdFromSessionName(sessionname):
 		apDisplay.printError("could not find project for session "+sessionname)	
 	projdata = projdatas[0]
 	projectid = projdata['project'].dbid
+	return projectid
+
+#========================
+def getProjectIdFromSessionId(sessionid):
+	sessiondata = leginon.leginondata.SessionData.direct_query(sessionid)
+	projectid = getProjectIdFromSessionData(sessiondata)
+	return projectid
+
+#========================
+def getProjectIdFromSessionName(sessionname):
+	t0 = time.time()
+	### get session
+	sessiondata = getSessionDataFromSessionName(sessionname)
+
+	### get project
+	projectid = getProjectIdFromSessionData(sessiondata)
 
 	apDisplay.printMsg("Found project id="+str(projectid)+" for session "+sessionname
 		+" in "+apDisplay.timeString(time.time()-t0))
@@ -50,17 +61,9 @@ def getSessionIdFromSessionName(sessionname):
 	return sessionid
 
 #========================
-def getProjectIdFromSessionId(sessionid):
-	sessiondata = leginon.leginondata.SessionData.direct_query(sessionid)
-	sessionname = sessiondata['name']
-	projectid = getProjectIdFromSessionName(sessionname)
-	return projectid
-
-#========================
 def getProjectIdFromStackId(stackid):
 	sessiondata = apStack.getSessionDataFromStackId(stackid)
-	sessionname = sessiondata['name']
-	projectid = getProjectIdFromSessionName(sessionname)
+	projectid = getProjectIdFromSessionData(sessiondata)
 	return projectid
 
 #========================
