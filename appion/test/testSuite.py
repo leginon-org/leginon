@@ -9,6 +9,7 @@ import subprocess
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apDatabase
+from appionlib import apStack
 from appionlib import apParam
 
 class testScript(appionScript.AppionScript):
@@ -53,17 +54,17 @@ class testScript(appionScript.AppionScript):
 				proc = subprocess.Popen(cmd, shell=True)
 			proc.wait()
 		except:
-			apDisplay.printWarning("could not run command: "+cmd)
-			sys.exit(1)
-			return False
+			apDisplay.printError("could not run command: "+cmd)
 		runtime = time.time() - t0
 		if self.params['showcmd'] is True:
 			apDisplay.printColor("###################################", "cyan")
 			apDisplay.printColor("command ran in "+apDisplay.timeString(runtime), "cyan")
-		if runtime < 10:
+		if runtime < 1:
+			apDisplay.printError("command runtime was too short: "
+				+apDisplay.timeString(runtime))
+		elif runtime < 10:
 			apDisplay.printWarning("command runtime was very short: "
 				+apDisplay.timeString(runtime))
-			sys.exit(1)
 			return False
 
 		#self.timestamp = apParam.makeTimestamp()
@@ -77,34 +78,6 @@ class testScript(appionScript.AppionScript):
 			+" diam=140 bin=4 maxpeaks=50 overlapmult=3 nocontinue "
 			+" templateIds=53 range1=0,180,30 thresh=0.50 maxthresh=0.60 "
 			+" lp=25 hp=600 pixlimit=3.0 median=3 ")
-		if self.params['commit'] is True:
-			params += " --commit "
-		else:
-			params += " --no-commit "
-		self.runCommand(script+" "+params)
-
-	#=====================
-	def runManualPicker(self):
-		runid = "manpick"
-		cmd = (os.path.join(self.appiondir, "bin", "manualpicker.py ")
-			+" "+self.images+" runid="+runid+" outdir="+self.params['outdir']+" "
-			+" diam=140 bin=4 nocontinue "
-			+" pickrunid=53 "
-			+" lp=25 hp=600 pixlimit=3.0 median=3 ")
-		if self.params['commit'] is True:
-			params += " --commit "
-		else:
-			params += " --no-commit "
-		self.runCommand(script+" "+params)
-
-	#=====================
-	def runMakeStack(self):
-		runid = "stack"
-		cmd = (os.path.join(self.appiondir, "bin", "makestack.py ")
-			+" "+self.images+" runid="+runid+" outdir="+self.params['outdir']+" "
-			+" single=start.hed phaseflip boxsize=128 bin=4 "
-			+" pickrunid=53 mindefocus=-0.25e-6 ace=0.95 "
-			+" lp=25 hp=600 partlimit=150  description='testing makestack'")
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
@@ -129,7 +102,7 @@ class testScript(appionScript.AppionScript):
 			'06jul12a_00022gr_00037sq_00025hl_00004en.mrc',
 		]
 
-		imgtree = apDatabase.getSpecificImagesFromDB(imglist)
+		imgtree = apDatabase.getSpecificImagesFromSession(imglist, '06jul12a')
 
 		### create batch file
 		imagedatfile = os.path.join(self.params['rundir'], "image%s.dat"%(self.timestamp))
@@ -157,6 +130,9 @@ class testScript(appionScript.AppionScript):
 
 	#=====================
 	def dogPicker(self):
+		if apDatabase.getSelectionIdFromName('dogrun1', self.timestamp) is not None:
+			return
+
 		script = os.path.join(self.appiondir, "bin", "dogPicker.py ")
 		params = (" --runname=dogrun1 --projectid=%d --session=%s --diam=%d --thresh=%.2f --invert --no-wait"
 			%(self.params['projectid'], self.timestamp, 200, 0.5))
@@ -179,12 +155,44 @@ class testScript(appionScript.AppionScript):
 
 	#=====================
 	def makeStack(self):
-		runid = "stack"
-		script = os.path.join(self.appiondir, "bin", "makestack2.py ")
+		if apStack.getStackIdFromRunName('stack1', self.timestamp) is not None:
+			return
+
 		selectid = apDatabase.getSelectionIdFromName('dogrun1', self.timestamp)
 
-		params = ((" --runname=stack%s --projectid=%d --session=%s --no-wait --boxsize=%d --bin=%d --acecutoff=%.2f --invert --phaseflip --selectionid=%d --description='%'")
-			%(self.timestamp, self.params['projectid'], self.timestamp, 320, 2, 0.7, selectid, 'running test suite application'))
+		script = os.path.join(self.appiondir, "bin", "makestack2.py ")
+		params = ((" --runname=stack1 --projectid=%d --session=%s --no-wait --boxsize=%d --bin=%d --acecutoff=%.2f --invert --phaseflip --selectionid=%d --description='%s'")
+			%(self.params['projectid'], self.timestamp, 320, 2, 0.7, selectid, 'running test suite application'))
+		if self.params['commit'] is True:
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
+
+	#=====================
+	def filterStack(self):
+		if apStack.getStackIdFromSubStackName('meanfilt2', self.timestamp) is not None:
+			return
+
+		stackid = apStack.getStackIdFromRunName('stack1', self.timestamp)
+
+		script = os.path.join(self.appiondir, "bin", "stackFilter.py ")
+		params = ((" --runname=meanfilt2 --projectid=%d --old-stack-id=%d --minx=%d --maxx=%d --miny=%d --maxy=%d --description='%s'")
+			%(self.params['projectid'], stackid, 600, 1000, 82, 105, 'filtering junk with test suite application'))
+		if self.params['commit'] is True:
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
+
+
+	#=====================
+	def maxLike(self):
+		stackid = apStack.getStackIdFromSubStackName('meanfilt2', self.timestamp)
+
+		script = os.path.join(self.appiondir, "bin", "maxlikeAlignment.py")
+		params = ((" --runname=maxlike1 --projectid=%d --stack=%d --lowpass=%d --highpass=%d --num-ref=%d --bin=%d --savemem --converge=fast --mirror --fast --fast-mode=narrow --max-iter=12 --description='%s'")
+			%(self.params['projectid'], stackid, 10, 2000, 3, 1, 'max like with test suite application'))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
@@ -200,12 +208,17 @@ class testScript(appionScript.AppionScript):
 		self.dogPicker()
 
 		### Ace 2
-		#self.aceTwo(bin=1)
 		self.aceTwo(bin=2)
 		self.aceTwo(bin=4)
 
 		### Make stack
 		self.makeStack()
+
+		### Filter stack
+		self.filterStack()
+
+		### Maximum likelihood
+		self.maxLike()
 
 		sys.exit(1)
 		### FindEM
