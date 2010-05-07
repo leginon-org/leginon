@@ -425,9 +425,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.estimateIterTime()
 		if nproc > 2 and mpirun is not None:
 			### use multi-processor
-			apDisplay.printColor("Using "+str(nproc-1)+" processors!", "green")
+			apDisplay.printColor("Using "+str(nproc)+" processors!", "green")
 			xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d", die=True)
-			mpiruncmd = mpirun+" -np "+str(nproc-1)+" "+xmippexe+" "+xmippopts
+			mpiruncmd = mpirun+" -np "+str(nproc)+" "+xmippexe+" "+xmippopts
 			self.writeXmippLog(mpiruncmd)
 			apParam.runCmd(mpiruncmd, package="Xmipp", verbose=True, showcmd=True)
 		else:
