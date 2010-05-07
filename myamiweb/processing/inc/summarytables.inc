@@ -111,8 +111,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	$apix=format_angstrom_number($mpix)."/pixel";
 
 	// get box size
-	$boxsz=($stackdata['bin']) ? $stackdata['boxSize']/$stackdata['bin'] : $stackdata['boxSize'];
-	$boxsz.=" pixels";
+	$boxsz= $stackdata['boxsize']." pixels";
 
 	$display_keys['date time'] = $stackdata['DEF_timestamp'];
 

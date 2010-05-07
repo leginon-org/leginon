@@ -76,7 +76,7 @@ if ($reconRuns) {
 		$stackmpix = $particle->getStackPixelSizeFromStackId($stackid);
 		$stackparams = $particle->getStackParams($stackid);
 		$stackapix = format_angstrom_number($stackmpix);
-		$stackbox = (int) $stackparams['boxSize']/$stackparams['bin'];
+		$stackbox = (int) $stackparams['boxsize'];
 		//print_r($stackparams);
 
 		$modelid = $reconrun['REF|ApInitialModelData|initialModel'];

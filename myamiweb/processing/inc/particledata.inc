@@ -1389,7 +1389,7 @@ class particledata {
 			// truncated pixel size
 			$showapix=sprintf("%.2f",$apix);
 			// get box size
-			$box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
+			$box = $s['boxsize'];
 			// get stack path with name
 			$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$totalp|--|$s[path]|--|$s[name]";
 			// if imagic stack, send both hed & img files for dmf
@@ -2139,8 +2139,6 @@ class particledata {
 			$r['shownstackname'] = $runname.'-'.$stack_primary_array['substackname'];
 			$r['REF|ApStackData|oldstack'] = $stack_primary_array['REF|ApStackData|oldstack'];
 			//add needed parent stackrun parameters, but not all since they overwrites the primary values
-			$r['bin'] = $params[0]['bin'];
-			$r['boxSize'] = $params[0]['boxSize'];
 			$r['tiltangle'] = $params[0]['tiltangle'];
 			$r['fliptype'] = $params[0]['fliptype'];
 			$r['inverted'] = $params[0]['inverted'];
@@ -2156,12 +2154,11 @@ class particledata {
 			$r = array_merge($params[0],$runarray);
 		} else {
 			$r = $runarray;
-			$r['bin'] = $params[0]['bin'];
-			$r['boxSize'] = $params[0]['boxSize'];
 			$r['tiltangle'] = $params[0]['tiltangle'];
 			$r['fliptype'] = $params[0]['fliptype'];
 			$r['inverted'] = $params[0]['inverted'];
 			$r['pixelsize'] = $params[0]['pixelsize'];
+			$r['boxsize'] = $params[0]['boxsize'];
 		}
 		$r['selectionstacks'] = $selectionstacks;
 		return $r;
