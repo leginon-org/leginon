@@ -519,6 +519,17 @@ def getJobDataFromID(jobid):
 	return jobdata
 
 #================
+def getSelectionIdFromName(runname, sessionname):
+	sessiondata = getSessionDataFromSessionName(sessionname)
+	selectq = appiondata.ApSelectionRunData()
+	selectq['name'] = runname
+	selectq['session'] = sessiondata
+	selectdatas = selectq.query(results=1)
+	if not selectdatas:
+		return None
+	return selectdatas[0].dbid
+
+#================
 #================
 #================
 if __name__ == '__main__':
