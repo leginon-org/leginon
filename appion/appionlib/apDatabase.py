@@ -63,6 +63,27 @@ def getSpecificImagesFromDB(imglist):
 	return imgtree
 
 #================
+def getSpecificImagesFromSession(imglist, sessionname):
+	print "Querying database for "+str(len(imglist))+" specific images ... "
+	sessiondata = getSessionDataFromSessionName(sessionname)
+	imgtree=[]
+	for imgname in imglist:
+		if imgname[-4:] == ".mrc" or imgname[-4:] == ".box":
+			imgname = imgname[:-4]
+		if '/' in imgname:
+			imgname = os.path.basename(imgname)
+		imgquery = leginon.leginondata.AcquisitionImageData()
+		imgquery['filename'] = imgname
+		imgquery['session'] = sessiondata
+		imgres   = imgquery.query(readimages=False, results=1)
+		if len(imgres) >= 1:
+			imgtree.append(imgres[0])
+		else:
+			print imgres
+			apDisplay.printError("Could not find image: "+imgname)
+	return imgtree
+
+#================
 def getImagesFromDB(session, preset):
 	"""
 	returns list of image names from DB
