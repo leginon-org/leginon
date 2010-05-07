@@ -6,11 +6,11 @@ import sys
 import time
 #appion
 from appionlib import apDisplay
-import leginon.leginondata
 from appionlib import apStack
-import leginon.projectdata
 from appionlib import appiondata
 import sinedon
+import leginon.projectdata
+import leginon.leginondata
 
 #========================
 def getProjectIdFromSessionName(sessionname):
@@ -59,9 +59,15 @@ def getProjectIdFromAlignStackId(alignstackid):
 
 #========================
 def getAppionDBFromProjectId(projectid):
-	projectdata = leginon.project.ProjectData()
-	projectdb = projectdata.getProcessingDB(projectid)
-	return projectdb
+	projdata = leginon.projectdata.projects.direct_query(projectid)
+	processingdbq = leginon.projectdata.processingdb()
+	processingdbq['project'] = projdata
+	procdatas = processingdbq.query(results=1)
+	if not procdatas:
+		apDisplay.printError("could not find appion db name for project %d "%(projectid))
+	procdata = procdatas[0]
+	dbname = procdata['appiondb']
+	return dbname
 
 #========================
 def setDBfromProjectId(projectid):
