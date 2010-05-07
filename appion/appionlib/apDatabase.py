@@ -370,7 +370,7 @@ def getImgViewerStatus(imgdata):
 
 	see 'ViewerImageStatus' table in dbemdata
 	"""
-	statusq = leginondata.ViewerImageStatus()
+	statusq = leginon.leginondata.ViewerImageStatus()
 	statusq['image'] = imgdata
 	statusdatas = statusq.query(results=1)
 	if not statusdatas:
@@ -406,7 +406,7 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 
 	if status is None:
 		#insert new
-		statusq = leginondata.ViewerImageStatus()
+		statusq = leginon.leginondata.ViewerImageStatus()
 		statusq['image'] = imgdata
 		statusq.insert()
 	elif result['status'] != statusVal:
