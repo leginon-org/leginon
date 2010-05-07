@@ -371,25 +371,16 @@ def getImgViewerStatus(imgdata):
 	see 'ImageStatusData' table in dbemdata
 	or 'viewer_pref_image' table in dbemdata
 	"""
-	#statusq = leginon.leginondata.ImageStatusData()
-	#statusq['image'] = imgdata
-	#statusdata = statusq.query(results=1)
-
-	### quick fix to get status from viewer_pref_image
-	dbconf=sinedon.getConfig('leginon.leginondata')
-	db=sinedon.sqldb.sqlDB(**dbconf)
-	imageId=imgdata.dbid
-	q="select `status` from "+dbconf['db']+".`viewer_pref_image` where imageId=%i" % (imageId,)
-	### to add: something like if statusdata has a higher priority than
-	### viewer hidden status
-	### if statusdata is not None: return statusdata ...
-
-	result=db.selectone(q)
-	if result is None:
+	statusq = leginondata.ViewerImageStatus()
+	statusq['image'] = imgdata
+	statusdatas = statusq.query(results=1)
+	if not statusdatas:
 		return None
-	if result['status']=='hidden':
+
+	statusdata = statusdata[0]
+	if statusdata['status']=='hidden':
 		return False
-	if result['status']=='exemplar':
+	if statusdata['status']=='exemplar':
 		return True
 	return None
 
