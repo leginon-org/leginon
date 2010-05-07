@@ -368,8 +368,7 @@ def getImgViewerStatus(imgdata):
 	True: Image is an exemplar
 	None: Image is visible
 
-	see 'ImageStatusData' table in dbemdata
-	or 'viewer_pref_image' table in dbemdata
+	see 'ViewerImageStatus' table in dbemdata
 	"""
 	statusq = leginondata.ViewerImageStatus()
 	statusq['image'] = imgdata
@@ -392,7 +391,7 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 	True: Image is an exemplar
 	None: Image is visible
 
-	see 'viewer_pref_image' table in dbemdata
+	see 'ViewerImageStatus' table in dbemdata
 	"""
 
 	if status is False:
@@ -403,23 +402,20 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 		print "skipping set viewer status"
 		return
 
-	dbconf=sinedon.getConfig('leginon.leginondata')
-	db=sinedon.sqldb.sqlDB(**dbconf)
-	imageId=imgdata.dbid
-	q="SELECT `status` FROM "+dbconf['db']+".`viewer_pref_image` WHERE imageId=%i" % (imageId,)
-	result=db.selectone(q)
-	if result is None:
+	status = getImgViewerStatus(imgdata)
+
+	if status is None:
 		#insert new
-		sessionId = imgdata['session'].dbid
-		q= ( "INSERT INTO "+dbconf['db']+".`viewer_pref_image` "
-			+" (sessionId, imageId, status) VALUES "
-			+ (" ( %d, %d, '%s')" % (sessionId, imageId, statusVal)))
-		db.execute(q)
+		statusq = leginondata.ViewerImageStatus()
+		statusq['image'] = imgdata
+		statusq.insert()
 	elif result['status'] != statusVal:
 		#update column
-		q= ( "UPDATE "+dbconf['db']+".`viewer_pref_image` "
+		dbconf=sinedon.getConfig('leginondata')
+		db=sinedon.sqldb.sqlDB(**dbconf)
+		q= ( "UPDATE "+dbconf['db']+".`ViewerImageStatus` "
 			+"SET status = '"+statusVal
-			+ ("' WHERE imageId=%i" % (imageId,)))
+			+ ("' WHERE `REF|AcquisitionImageData|image=%d" % (imageId,)))
 		db.execute(q)
 
 	#check assessment
