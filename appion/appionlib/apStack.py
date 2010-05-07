@@ -403,7 +403,7 @@ def getStackParticleTilt(stpartid):
 #===============
 def getStackIdFromPath(stackpath):
 	"""
-	For a given stack part dbid return tilt angle
+	For a given path find stack id
 	"""
 	path = os.path.dirname(stackpath)
 	name = os.path.basename(stackpath)
@@ -416,6 +416,36 @@ def getStackIdFromPath(stackpath):
 	if len(stackdatas) > 1:
 		apDisplay.printError("More than one stack has path: "+stackpath)
 	return stackdatas[0].dbid
+
+
+#===============
+def getStackIdFromRunName(runname, sessionname, msg=True):
+	"""
+	For a given run name and session name find stack id
+	"""
+	sessiondata = getSessionDataFromSessionName(sessionname)
+
+	stackrunq = appiondata.ApStackRunData()
+	stackrunq['stackRunName'] = runname
+	stackrunq['session'] = sessiondata
+
+	stackq = appiondata.ApStackData()
+	stackq['substackname'] = None
+	stackq['oldstack'] = None
+
+	runsinstackq = appiondata.ApRunsInStackData()
+	runsinstackq['stackrun'] = stackrunq
+	runsindatas = runsinstackq.query()
+	if not runsindatas:
+		return None
+	if len(runsindatas) == 1:
+		### simpe case
+		stackid = runsindatas['stack'].dbid
+	else:
+		apDisplay.printError("Found too many stacks for specified criteria")
+
+	apDisplay.printMsg("Found stack id %d with runname %s from session %s"%(stackid, runname, sessionname))
+	return stackid
 
 #===============
 def getStackParticleFromParticleId(particleid, stackid, nodie=False):
