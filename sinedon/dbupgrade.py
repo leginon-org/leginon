@@ -25,7 +25,7 @@ class DBUpgradeTools(object):
 		db = MySQLdb.connect(**dbconf)
 		### create cursor
 		self.cursor = db.cursor()
-		self.debug = 15
+		self.debug = 1
 		self.defid = 'int(20) NOT NULL auto_increment'
 		self.link = 'int(20) NULL DEFAULT NULL'
 		self.int = 'int(20) NULL DEFAULT NULL' 
@@ -432,7 +432,7 @@ class DBUpgradeTools(object):
 
 		oldcolumndefine = self.getColumnDefinition(table, column)
 		if oldcolumndefine.lower().strip() == columndefine.lower().strip():
-			if self.debug > 1:
+			if self.debug > 0:
 				print "\033[33mcolumn '%s' definition unchanged\033[0m"%(column)
 			return False
 
