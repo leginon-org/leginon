@@ -1,8 +1,8 @@
 <?php
 require "inc/leginon.inc";
 
-$imageId = $_GET['REF|AcquisitionImageData|image'];
-$sessionId = $_GET['REF|SessionData|session'];
+$imageId = $_GET['imageId'];
+$sessionId = $_GET['sessionId'];
 $action = $_GET['ac'];
 $status = ($_GET['s']=="ex") ? "exemplar" : "hidden";
 $preset = $_GET['p'];
