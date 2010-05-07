@@ -417,34 +417,68 @@ def getStackIdFromPath(stackpath):
 		apDisplay.printError("More than one stack has path: "+stackpath)
 	return stackdatas[0].dbid
 
-
 #===============
 def getStackIdFromRunName(runname, sessionname, msg=True):
 	"""
 	For a given run name and session name find stack id
 	"""
-	sessiondata = getSessionDataFromSessionName(sessionname)
+	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 
 	stackrunq = appiondata.ApStackRunData()
 	stackrunq['stackRunName'] = runname
 	stackrunq['session'] = sessiondata
 
+	runsinstackq = appiondata.ApRunsInStackData()
+	runsinstackq['stackRun'] = stackrunq
+	runsindatas = runsinstackq.query()
+	if not runsindatas:
+		return None
+
+	### remove substacks
+	if len(runsindatas) > 1:
+		for runsindata in runsindatas:
+			if runsindata['stack']['oldstack'] is not None or runsindata['stack']['substackname'] is not None:
+				runsindatas.remove(runsindata)
+
+	if len(runsindatas) == 1:
+		### simpe case
+		stackid = runsindatas[0]['stack'].dbid
+	else:
+		for runsindata in runsindatas:
+			print runsindata
+		apDisplay.printError("Found too many stacks for specified criteria")
+
+	apDisplay.printMsg("Found stack id %d with runname %s from session %s"%(stackid, runname, sessionname))
+	return stackid
+
+#===============
+def getStackIdFromSubStackName(substackname, sessionname, msg=True):
+	"""
+	For a given run name and session name find stack id
+	"""
+	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
+
+	stackrunq = appiondata.ApStackRunData()
+	stackrunq['session'] = sessiondata
+
 	stackq = appiondata.ApStackData()
-	stackq['substackname'] = None
-	stackq['oldstack'] = None
+	stackq['substackname'] = substackname
 
 	runsinstackq = appiondata.ApRunsInStackData()
-	runsinstackq['stackrun'] = stackrunq
+	runsinstackq['stackRun'] = stackrunq
+	runsinstackq['stack'] = stackq
 	runsindatas = runsinstackq.query()
 	if not runsindatas:
 		return None
 	if len(runsindatas) == 1:
 		### simpe case
-		stackid = runsindatas['stack'].dbid
+		stackid = runsindatas[0]['stack'].dbid
 	else:
-		apDisplay.printError("Found too many stacks for specified criteria")
+		for runsindata in runsindatas:
+			print runsindata
+		apDisplay.printError("Found too many sub-stacks for specified criteria")
 
-	apDisplay.printMsg("Found stack id %d with runname %s from session %s"%(stackid, runname, sessionname))
+	apDisplay.printMsg("Found stack id %d with substackname %s from session %s"%(stackid, substackname, sessionname))
 	return stackid
 
 #===============
