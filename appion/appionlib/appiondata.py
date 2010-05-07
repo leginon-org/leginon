@@ -1212,7 +1212,7 @@ class ApEulerJumpData(Data):
 class ApFSCData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('refinementData', ApRefineIterData),
+			('refineIter', ApRefineIterData),
 			('pix', int),
 			('value', float),
 		)
