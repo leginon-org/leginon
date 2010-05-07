@@ -103,7 +103,7 @@ class leginondata {
 				."LEFT JOIN ".DB_LEGINON.".SessionData AS session "
 				."  ON session.`DEF_id` =  p.`REF|leginondata|SessionData|session` "
 				."WHERE p.`REF|projects|project`='$projectId'";
-			echo $q;
+			#echo $q;
 			$psessions = $db->getSQLResult($q);
 			$ps=array();
 			foreach ($psessions as $psession) {
