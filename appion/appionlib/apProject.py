@@ -8,21 +8,30 @@ import time
 from appionlib import apDisplay
 import leginon.leginondata
 from appionlib import apStack
-import leginon.project
+import leginon.projectdata
 from appionlib import appiondata
 import sinedon
 
 #========================
 def getProjectIdFromSessionName(sessionname):
 	t0 = time.time()
-	projectdata = leginon.project.ProjectData()
-	projects = projectdata.getProjectExperiments()
-	projectid = None
-	for i in projects.getall():
-		if i['name'] == sessionname:
-			projectid = i['projectId']
-	if not projectid:
-		apDisplay.printError("no project associated with session "+sessionname)
+	### get session
+	sessionq = leginon.leginondata.SessionData()
+	sessionq['name'] = sessionname
+	sessiondatas = sessionq.query(results=1)
+	if not sessiondatas:
+		apDisplay.printError("could not find session "+sessionname)	
+	sessiondata = sessiondatas[0]
+
+	### get project
+	projq = leginon.projectdata.projects()
+	projq['session'] = sessiondata
+	projdatas = projq.query(results=1)
+	if not projdatas:
+		apDisplay.printError("could not find project for session "+sessionname)	
+	projdata = projdatas[0]
+	projectid = projdata.dbid
+
 	apDisplay.printMsg("Found project id="+str(projectid)+" for session "+sessionname
 		+" in "+apDisplay.timeString(time.time()-t0))
 	return projectid
