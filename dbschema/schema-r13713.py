@@ -246,9 +246,9 @@ def upgradeAppionDB(appiondbname, projectdb):
 		for key in jobmap.keys():
 			updateq = ("UPDATE ApAppionJobData AS job "
 				+" SET "
-				+("   job.`name` = '%s' "%(key))
+				+("   job.`jobtype` = '%s' "%(jobmap[key]))
 				+" WHERE "
-				+("   job.`name` = '%s' "%(jobmap[key]))
+				+("   job.`jobtype` = '%s' "%(key))
 			)
 			appiondb.executeCustomSQL(updateq)
 
