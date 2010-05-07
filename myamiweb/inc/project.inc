@@ -116,7 +116,8 @@ class project {
 	function getProjectfromSessionId($sessionId) {
  		$q="SELECT projexp.`REF|projects|project` AS projectId  "
 			."FROM projectexperiments AS projexp "
-			."WHERE projexp.`REF|dbemdata|SessionData|session` = '$sessionId' ";
+			."WHERE projexp.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		echo $q;
 		list($info) = $this->mysql->getSQLResult($q);
 
 		$projectId=$info['projectId'];
