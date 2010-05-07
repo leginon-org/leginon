@@ -519,7 +519,7 @@ if ($expId) {
 		// check for how many EMAN reconstructions have finished / running / queued
 		$emanreconresults[] = ($emanjobqueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$emanjobqueue queued</a>" : "";
 		$emanreconresults[] = ($emanjobrun>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$emanjobrun running</a>" : "";
-		$emanreconresults[] = ($emanjobincomp>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
+		$emanreconresults[] = ($emanjobincomp>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$emanjobincomp ready for upload</a>" : "";
 		$emanreconresults[] = ($emanreconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$emanreconruns complete</a>" : "";
 		$emanreconresults[] = ($ejrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=removeJumpers'>$ejrun reclassifying</a>";
 

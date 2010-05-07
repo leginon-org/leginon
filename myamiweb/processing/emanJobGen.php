@@ -76,7 +76,7 @@ function submitJob($extra=False) {
 	if (!file_exists($tmpjobfile))
 		writeJobFile("<B>ERROR:</B> Could not find temp jobfile: $tmpjobfile");
 
-	$jobid=$particle->insertClusterJobData($host,$outdir,$dmfpath,$clusterpath,$jobfile,$expId,'recon',$user);
+	$jobid=$particle->insertClusterJobData($host,$outdir,$dmfpath,$clusterpath,$jobfile,$expId,'emanrecon',$user);
 
 	// add header & job id to the beginning of the script
 	// convert /\n's back to \n for the script

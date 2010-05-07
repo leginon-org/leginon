@@ -52,7 +52,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 
 	// change next line for different types of jobs
 	$frealignjobs = $particle->getJobIdsFromSession($expId, 'runfrealign');
-	$emanjobs = $particle->getJobIdsFromSession($expId, 'recon');
+	$emanjobs = $particle->getJobIdsFromSession($expId, 'emanrecon');
 	$jobs = array_merge($frealignjobs, $emanjobs);
 
 	// if clicked button, list jobs in queue
