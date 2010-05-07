@@ -87,13 +87,14 @@ class project {
 		return $info;
 	}
 
-	function getProjectfromSession($session) {
-		$q='select p.projectId, p.name  '
+	function getProjectFromSession($session) {
+		$q='select p.`DEF_id` as projectId, p.name  '
 			.'from projectexperiments pe '
 			.'left join projects p '
-			.'on (pe.projectId=p.projectId) '
-		  .'where pe.name="'.$session.'"';
-
+			.'on (pe.`REF|projects|project` = p.`DEF_id`) '
+			.'left join '.DB_LEGINON.'.`SessionData` s '
+			.'on (s.`DEF_id` = pe.`REF|leginondata|SessionData|session`) '
+		  .'where s.name="'.$session.'"';
 		list($info) = $this->mysql->getSQLResult($q);
 
 		$projectId=$info['projectId'];
@@ -117,7 +118,6 @@ class project {
  		$q="SELECT projexp.`REF|projects|project` AS projectId  "
 			."FROM projectexperiments AS projexp "
 			."WHERE projexp.`REF|leginondata|SessionData|session` = '$sessionId' ";
-		//echo $q;
 		list($info) = $this->mysql->getSQLResult($q);
 
 		$projectId=$info['projectId'];

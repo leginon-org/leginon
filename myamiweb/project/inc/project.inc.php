@@ -247,7 +247,6 @@ class project {
 		  ."category as 'Category', "
 		  ."funding as 'Funding'  FROM projects "
 		  ."WHERE DEF_id='$projectId'";
-		echo $q;
 		$RprojectInfo = $this->mysql->SQLQuery($q);
 		$info = mysql_fetch_array($RprojectInfo, MYSQL_ASSOC);
 		return $info;
@@ -408,7 +407,6 @@ class project {
 			$q = "DELETE FROM projectowners "
 				."WHERE `REF|leginondata|UserData|user` = ".$userId." "
 				."and `REF|projects|project`= ".$projectId." ";
-			echo $q;
 			#$this->mysql->SQLQuery($q, true);
 		}
 		return true;
@@ -426,13 +424,12 @@ class project {
 	function getExperiments($projectId="") {
 		$experimentIds = array();
 		$q = "SELECT "
-		   ."DEF_id AS projectexperimentId, session.name AS name"
-		   ."FROM projectexperiments AS projexp "
-		   ."LEFT JOIN ".DB_LEGINON.".SessionData AS session "
-			." ON projexp.`REF|legiondata|SessionData|session` = session.`DEF_id` ";
+		   ."projexp.DEF_id AS projectexperimentId, session.name AS name "
+		   ."FROM projectexperiments projexp "
+		   ."LEFT JOIN ".DB_LEGINON.".SessionData session "
+			." ON projexp.`REF|leginondata|SessionData|session` = session.`DEF_id` ";
 		if ($projectId)
-		   $q .= "WHERE projexp.`REF|projects|project`='".$projectId."' ";
-
+		   $q .= "WHERE projexp.`REF|projects|project`=".$projectId." ";
 		$experimentIds = $this->mysql->getSQLResult($q);
 		return $experimentIds;
 	}
