@@ -7,7 +7,7 @@ import dbconfig
 
 messaging = {
 	'long query': True,
-	'long query rows': 10000,
+	'long query rows': 100000,
 	'cannot rename': False,
 	'cannot index': False,
 	'cannot add': False,
@@ -331,9 +331,9 @@ class DBUpgradeTools(object):
 		if messaging['query'] is True:
 			print query
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
-			print "\033[34mrenaming column `%s` to `%s`...\033[0m"%(column1, column2)
+			print "\033[34mrenaming column `%s` to `%s` at %s\033[0m"%(column1, column2, time.asctime())
 		self.cursor.execute(query)
-		if self.debug > 0 and time.time()-t0 > 20:
+		if messaging['long query'] is True and time.time()-t0 > 20:
 			print "column rename time: %.1f min"%((time.time()-t0)/60.0)
 
 		if self.columnExists(table, column2) is False:
@@ -472,11 +472,14 @@ class DBUpgradeTools(object):
 		else:
 			query = "CREATE INDEX %s_index%d ON %s (%s(%d)); ;"%(column, length, table, column, length)
 
+		t0 = time.time()
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
-			print "\033[34mindexing column `%s`...\033[0m"%(column)
+			print "\033[34mindexing column `%s` at %s\033[0m"%(column, time.asctime())
 		if messaging['query'] is True:
 			print query
 		self.cursor.execute(query)
+		if messaging['long query'] is True and time.time()-t0 > 20:
+			print "column index time: %.1f min"%((time.time()-t0)/60.0)
 
 		if messaging['success'] is True:
 			print "\033[32mindex column %s\033[0m"%(column)
@@ -507,11 +510,14 @@ class DBUpgradeTools(object):
 		indexinfo = self.getColumnIndexInfo(table, column)
 		query = "ALTER TABLE `%s` DROP INDEX `%s` ;"%(table, indexinfo['index name'])
 
+		t0 = time.time()
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
-			print "\033[34mdropping column index `%s`...\033[0m"%(column)
+			print "\033[34mdropping column index `%s` at %s\033[0m"%(column, time.asctime())
 		if messaging['query'] is True:
 			print query
 		self.cursor.execute(query)
+		if messaging['long query'] is True and time.time()-t0 > 20:
+			print "drop column index time: %.1f min"%((time.time()-t0)/60.0)
 
 		if messaging['success'] is True:
 			print "\033[32mindex column %s\033[0m"%(column)
@@ -537,12 +543,15 @@ class DBUpgradeTools(object):
 				print "\033[33mcolumn '%s' definition unchanged\033[0m"%(column)
 			return False
 
+		t0 = time.time()
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
-			print "\033[34mmodifying column `%s`...\033[0m"%(column)
+			print "\033[34mmodifying column `%s` at %s\033[0m"%(column, time.asctime())
 		query = "ALTER TABLE `%s` MODIFY `%s` %s;"%(table, column, columndefine)
 		if messaging['query'] is True:
 			print query
 		self.cursor.execute(query)
+		if messaging['long query'] is True and time.time()-t0 > 20:
+			print "column modify time: %.1f min"%((time.time()-t0)/60.0)
 
 		if messaging['success'] is True:
 			print "\033[32mchanged column '%s' definition\033[0m"%(column)
