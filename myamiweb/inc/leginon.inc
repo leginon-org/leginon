@@ -138,7 +138,7 @@ class leginondata {
       $q1 = "left join ".DB_PROJECT.".`projectexperiments` p "
         ."on (p.`REF|leginondata|SessionData|session` = s.`DEF_id`) "
         ."left join ".DB_PROJECT.".`projectowners` o "
-				."on p.`DEF_id` = o.`REF|projects|project` ";
+				."on p.`REF|projects|project` = o.`REF|projects|project` ";
       $where1 .= " "
         ."and o.`REF|leginondata|UserData|user` = ".$userId." "
 			." ";
@@ -153,7 +153,6 @@ class leginondata {
 			$q2 = $q.$q2.$where2.$grouporder;
 			//combine
 			$q = "(".$q1.") union (".$q2.") order by `stimestamp` DESC";
-		echo $q ."<br/>";
 		} else {
 			$q .= $where.$wherelike.$grouporder;
 		}
