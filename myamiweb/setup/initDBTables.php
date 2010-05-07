@@ -5,31 +5,31 @@ require_once('setupUtils.inc');
 require_once("../inc/mysql.inc");
 
 	$dbNotExistSolution = "Solution:<br />
-							1.  You might enter the wrong database name in your config.php file.<br /> 
+							1.  You might have entered the wrong database name in your config.php file.<br /> 
 							    You can go back to the <a href='index.php'>setup wizard</a> and edit the database name.<br /><br />
-							2.  You have not created this database in your mysql server.<br />You have 
-								to create this database before we can do database initialization.<br /><br />
-							3.  The database username does not have the access privilege to this 
+							2.  You have not created this database on your mysql server.<br />You have 
+								to create this database before database initialization.<br /><br />
+							3.  The database username does not have access privilege to this 
 								database. You need to make sure this database user has certain 
-								access privilege to this database. Please visit 
+								access privileges to the database. Please visit 
 								<a href='http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database' 
-								target='_blank'>Database setup</a> for more detail information.<br />";
+								target='_blank'>Database setup</a> for more detailed information.<br />";
 	
 	$dbConnectionSolution = "Solution:<br />
-							 1.	You might enter the wrong database hostname, username or password.<br />&nbsp;&nbsp;&nbsp;&nbsp;
+							 1.	You might have entered the wrong database hostname, username or password.<br />&nbsp;&nbsp;&nbsp;&nbsp;
 							    You can go back to the <a href='index.php'>setup wizard</a> to edit this information.<br /><br />
 							 2.	Your database server is not running.<br />&nbsp;&nbsp;&nbsp;&nbsp;
 							 	Please visit <a href='http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database' 
-								target='_blank'>Database setup</a> for more detail information.<br /><br />
+								target='_blank'>Database setup</a> for more detailed information.<br /><br />
 							 3.	Your database server is not using standard port number 3306.<br />&nbsp;&nbsp;&nbsp;&nbsp;
-							    If your database using different port, please enter the following example to your host name.<br />&nbsp;&nbsp;&nbsp;&nbsp;
+							    If your database is using a different port, please following the following example for setting up your host name.<br />&nbsp;&nbsp;&nbsp;&nbsp;
 							    Syntax: dbhost.school.edu:portnumber<br /> &nbsp;&nbsp;&nbsp;&nbsp;
 							    Example: test.school.edu:3308<br /> <br />
-							 4.	If your web server and database server is in different machines,<br />&nbsp;&nbsp;&nbsp;&nbsp;
-							 	please make sure there is no firewall between web server and database server.<br /><br />
-							 5.	Please make sure the database server's user allow to connect from the web host.<br />&nbsp;&nbsp;&nbsp;&nbsp;
+							 4.	If your web server and database server are on different machines,<br />&nbsp;&nbsp;&nbsp;&nbsp;
+							 	please make sure there is no firewall between the web server and the database server.<br /><br />
+							 5.	Please make sure the database server's user is allowed to connect from the web host.<br />&nbsp;&nbsp;&nbsp;&nbsp;
 							    Please visit <a href='http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database' 
-								target='_blank'>Database setup</a> for more detail information.<br />";
+								target='_blank'>Database setup</a> for more detailed information.<br />";
 	$confNotExistSolution = "Solution:<br />
 							 There is no config.php in your myamiweb directory<br />
 							 Please go to the <a href='index.php'>setup wizard</a> to create config.php file.<br />";
@@ -45,7 +45,7 @@ require_once("../inc/mysql.inc");
 		$mysqld = new mysql(DB_HOST, DB_USER, DB_PASS);
 		$dbLink = $mysqld->connect_db();
 
-		if($dbLink == false)	$has_errors[] = "Can not connect to database server by the following information:<br />
+		if($dbLink == false)	$has_errors[] = "Cannot connect to database server with the following information:<br />
 												 db_host : ".DB_HOST."<br />
 												 db_usr : ".DB_USER."<br /><br />".$dbConnectionSolution;
 		

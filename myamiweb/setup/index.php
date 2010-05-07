@@ -6,7 +6,7 @@ require_once('setupUtils.inc');
 	session_destroy();
 	
 	$template = new template;
-	$template->wizardHeader("Welcome : Start setup your config file", SETUP_CONFIG);
+	$template->wizardHeader("Welcome : Configure file creation and mollification", SETUP_CONFIG);
 	
 	$fileExist = setupUtils::checkFile(CONFIG_FILE);
 	
