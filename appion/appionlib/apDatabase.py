@@ -376,7 +376,7 @@ def getImgViewerStatus(imgdata):
 	if not statusdatas:
 		return None
 
-	statusdata = statusdata[0]
+	statusdata = statusdatas[0]
 	if statusdata['status']=='hidden':
 		return False
 	if statusdata['status']=='exemplar':
