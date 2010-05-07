@@ -13,7 +13,7 @@ require_once('setupUtils.inc');
 	}
 	
 	$template = new template;
-	$template->wizardHeader("Step 6 : Review your setup");
+	$template->wizardHeader("Step 6 : Review your setup", SETUP_CONFIG);
 	
 	$setupUtils = new SetupUtils();
 	$setupUtils->copyFiles(CONFIG_TEMPLATE, CONFIG_FILE) or die("Can't copy file");		
@@ -27,13 +27,13 @@ require_once('setupUtils.inc');
 
 	<form name='wizard_form' method='POST' action='initDBTables.php'>
 		
-		<h3>Start to build database tables and insert initial variables</h3>
-		<p>Web tools require default tables creation in both databases and some initial variables to start.<br />
-		If this is your first time setup this web tools, Please click the following button</p>
-		&nbsp;&nbsp;<input type="submit" value="Setup initial variables" />
+		<h3>Initializing database table</h3>
+		<p>Web tools require some default tables to be created in both databases and some initial variables to get started.<br />
+		   If this is your first time setting up these web tools, please click the following button:</p>
+		&nbsp;&nbsp;<input type="submit" value="DB Initialization" />
 		<br /><br />
-		<h3>There is your config file looks like base on your inputs: </h3>
-		<p>You can change the values by coming back to this wizard</p>
+		<h3>There is what your config file looks like based on your settings: </h3>
+		<p>You can change the values later by coming back to this <a href="index.php">wizard</a></p>
 		
 		<p>
 	<?php 

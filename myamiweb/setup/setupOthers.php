@@ -11,7 +11,7 @@ require_once('setupUtils.inc');
 	}
 
 	$template = new template;
-	$template->wizardHeader("Step 4 : Others setup for web tools");
+	$template->wizardHeader("Step 4 : Others setup for web tools", SETUP_CONFIG);
 	
 ?>
 	<script language="javascript">

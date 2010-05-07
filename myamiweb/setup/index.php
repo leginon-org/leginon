@@ -6,7 +6,7 @@ require_once('setupUtils.inc');
 	session_destroy();
 	
 	$template = new template;
-	$template->wizardHeader("Welcome : Start setup your config file");
+	$template->wizardHeader("Welcome : Start setup your config file", SETUP_CONFIG);
 	
 	$fileExist = setupUtils::checkFile(CONFIG_FILE);
 	
@@ -45,16 +45,17 @@ require_once('setupUtils.inc');
 	}
 
 ?>
-	<h3>There is where you start to setup and configure the web tools config file.</h3>
+	<h3>Here is where you start to setup and configure the web tools config file.</h3>
 	<p>Please follow each step.</p>
 	
 	<form name='wizard_form' method='POST' action='<?php echo $PHP_SELF; ?>'>
 <?php 
 	if($fileExist){
 ?>
-		<p>We have detected there is already a config file setup in the system<br />
-		Please enter the <b>"Database username and Password"</b> for verification<br />
-		If you forget your username and password, it is in your config.php under myamiweb forder.</p>
+		<p>We have detected that there is already a config file setup on your system.<br />
+		Please enter the <b>"Database Username and Password"</b> for verification.<br />
+		If have forgotten your username and password, you may retrieve it from 
+		your config.php file in the myamiweb folder.</p>
 
 		<form name='wizard_form' method='POST' action='<?php echo $PHP_SELF; ?>'>
 		<?php if(!empty($errorMessage)) echo"<font color='red'><p>$errorMessage</p></font>"; ?>
@@ -67,8 +68,9 @@ require_once('setupUtils.inc');
 	}
 	else{
 		
-		echo"<p>This wizard will asks you few questions about.....<br />";
-		echo"To Start it, please click the \"NEXT\" button.</p>";
+		echo"<p>This wizard will take you step by step through the process of 
+		        setting up the Appion web tools config file.<br /><br />";
+		echo"When you are ready to start please click on the \"NEXT\" button.</p><br />";
 		echo"<input type='hidden' name='newSetup' value=true />";
  		
 	}

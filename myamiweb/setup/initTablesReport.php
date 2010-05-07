@@ -5,7 +5,7 @@ require_once('setupUtils.inc');
 require_once("../inc/mysql.inc");
 
 	$template = new template;
-	$template->wizardHeader("Step 2 : Tables Creation Report");
+	$template->wizardHeader("Step 2 : Tables Creation Report", DB_INITIALIZATION);
 	
 	if(file_exists(CONFIG_FILE)){
 		require_once(CONFIG_FILE);
@@ -38,7 +38,7 @@ require_once("../inc/mysql.inc");
 	<form name='wizard_form' method='POST' action='insertInitData.php'>
 		
 		<h3>The following tables has been created in both Databases :</h3>
-		<p>To start insert default data and values in the database tables, please click the "NEXT" button</p>
+		<p>To insert default data and values in the database tables, please click the "NEXT" button</p>
 		
 		<input type="submit" value="NEXT" />
 		<br /><br />

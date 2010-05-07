@@ -6,7 +6,7 @@ require_once('setupUtils.inc');
 	setupUtils::checkSession();
 
 	$template = new template;
-	$template->wizardHeader("Step 5 : Confirm all your inputs");
+	$template->wizardHeader("Step 5 : Confirm all your inputs", SETUP_CONFIG);
 
 ?>
 

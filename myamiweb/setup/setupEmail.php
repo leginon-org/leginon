@@ -11,7 +11,7 @@ require_once('setupUtils.inc');
 	}
 
 	$template = new template;
-	$template->wizardHeader("Step 2 : Login System and Administrator Email Address");
+	$template->wizardHeader("Step 2 : Login System and Administrator Email Address", SETUP_CONFIG);
 	
 ?>
 	<script language="javascript">

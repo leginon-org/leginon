@@ -5,7 +5,7 @@ require_once('setupUtils.inc');
 require_once("../inc/mysql.inc");
 
 	$template = new template;
-	$template->wizardHeader("Step 4 : Data Insertion Report");
+	$template->wizardHeader("Step 4 : Data Insertion Report", DB_INITIALIZATION);
 	
 	if(file_exists(CONFIG_FILE)){
 
@@ -40,12 +40,12 @@ require_once("../inc/mysql.inc");
 ?>
 		
 		<h3>Data Insertion Sucess:</h3>
-		<p>Web tools wizard has successfully insert all the require tables and values to your databases.<br />
-		   You can now start using this web tools.<br /><br />
+		<p>Web tools wizard has successfully insert all the required tables and values to your databases.<br />
+		   You can now start using web tools.<br /><br />
 		   If you have enabled the login system, use your administrator's password to login,<br />
-		   or you can use register link to create a new user.<br /><br />
-           To start using the web tools, please click 
+           Otherwise to start using the web tools, please click 
            <a href="http://<?php echo $_SERVER['SERVER_NAME'].BASE_URL; ?>">here</a>.<br /><br />
+           To go back to the wizard, please click <a href="index.php">here</a><br /><br />
 			Thanks you for using this wizard.</p>	
 
 <?php 

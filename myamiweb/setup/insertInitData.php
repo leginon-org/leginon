@@ -5,7 +5,7 @@ require_once('setupUtils.inc');
 require_once("../inc/mysql.inc");
 
 	$template = new template;
-	$template->wizardHeader("Step 3 : Insert Default Values");
+	$template->wizardHeader("Step 3 : Insert Default Values", DB_INITIALIZATION);
 	
 	$has_errors = array();
 	

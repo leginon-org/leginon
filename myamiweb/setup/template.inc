@@ -1,19 +1,21 @@
 <?php
+define('SETUP_CONFIG', "Web Tools Setup and Installation Wizard");
+define('DB_INITIALIZATION', "Database Initialization");
 
 class template{
 	
-	function wizardHeader($title, $cssfile = "../css/setup.css"){
+	function wizardHeader($header, $title, $cssfile = "../css/setup.css"){
 
 		$html = "<html><head>\n";
-		$html .= "<title>$title</title>\n";
+		$html .= "<title>$header</title>\n";
 		$html .= "<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />\n";
 		$html .= "<link href='$cssfile' media='all' rel='stylesheet' type='text/css' />\n";
 		$html .= "</head><body>\n";
 		$html .= "<div id='pageWrapper'>\n";
 		$html .= "<div id='header'>\n";
-		$html .= "<p>Web Tools Setup and Installation Wizard</p>\n";
+		$html .= "<p>$title</p>\n";
 		$html .= "</div>\n";
-		$html .= "<div id='nav'><h3>". $title . "</h3></div>\n";
+		$html .= "<div id='nav'><h3>". $header . "</h3></div>\n";
 		$html .= "<div id='main'>\n";
 		
 		echo $html;

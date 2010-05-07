@@ -11,7 +11,7 @@ require_once('setupUtils.inc');
 	}
 
 	$template = new template;
-	$template->wizardHeader("Step 3 : Setup your MySQL database server parameters");
+	$template->wizardHeader("Step 3 : Setup your MySQL database server parameters", SETUP_CONFIG);
 	
 ?>
 
