@@ -6,18 +6,15 @@ import sys
 import time
 import subprocess
 #appion
-import appionScript
-import apDisplay
+from appionlib import appionScript
+from appionlib import apDisplay
+from appionlib import apDatabase
+from appionlib import apParam
 
 class testScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog [ --commit --show-cmd --verbose ]")
-		### commit
-		self.parser.add_option("-C", "--commit", dest="commit", default=False,
-			action="store_true", help="Commit runs to database")
-		self.parser.add_option("--no-commit", dest="commit", default=False,
-			action="store_false", help="Do not commit runs to database")
 		### showcmd
 		self.parser.add_option("-S", "--show-cmd", dest="showcmd", default=True,
 			action="store_true", help="Show each command before running")
@@ -28,9 +25,6 @@ class testScript(appionScript.AppionScript):
 			action="store_true", help="Show command output while running")
 		self.parser.add_option("-q", "--quiet", dest="verbose", default=True,
 			action="store_false", help="Do not show command output while running")
-		### outdir
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location to store output files", metavar="PATH")
 		return
 
 	#=====================
@@ -60,6 +54,7 @@ class testScript(appionScript.AppionScript):
 			proc.wait()
 		except:
 			apDisplay.printWarning("could not run command: "+cmd)
+			sys.exit(1)
 			return False
 		runtime = time.time() - t0
 		if self.params['showcmd'] is True:
@@ -68,19 +63,11 @@ class testScript(appionScript.AppionScript):
 		if runtime < 10:
 			apDisplay.printWarning("command runtime was very short: "
 				+apDisplay.timeString(runtime))
-			return False			
-		return True
+			sys.exit(1)
+			return False
 
-	#=====================
-	def runDogPicker(self):
-		runid = "dog"
-		cmd = (os.path.join(self.appiondir, "bin", "dogPicker.py ")
-			+" "+self.images+" runid="+runid+" outdir="+self.params['outdir']+" "
-			+" diam=160 bin=8 maxpeaks=50 overlapmult=3 nocontinue "
-			+" lp=0 hp=0 pixlimit=3.0 median=3 thresh=0.70 maxthresh=1.00 ")
-		if self.params['commit'] is True:
-			cmd += " commit "
-		self.runCommand(cmd)
+		#self.timestamp = apParam.makeTimestamp()
+		return True
 
 	#=====================
 	def runFindEM(self):
@@ -91,8 +78,10 @@ class testScript(appionScript.AppionScript):
 			+" templateIds=53 range1=0,180,30 thresh=0.50 maxthresh=0.60 "
 			+" lp=25 hp=600 pixlimit=3.0 median=3 ")
 		if self.params['commit'] is True:
-			cmd += " commit "
-		self.runCommand(cmd)
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
 
 	#=====================
 	def runManualPicker(self):
@@ -103,20 +92,10 @@ class testScript(appionScript.AppionScript):
 			+" pickrunid=53 "
 			+" lp=25 hp=600 pixlimit=3.0 median=3 ")
 		if self.params['commit'] is True:
-			cmd += " commit "
-		self.runCommand(cmd)
-
-	#=====================
-	def runAce(self):
-		runid = "ace"
-		cmd = (os.path.join(self.appiondir, "bin", "pyace.py ")
-			+" "+self.images+" runid="+runid+" outdir="+self.params['outdir']+" "
-			+" edgethcarbon=0.8 edgethice=0.6 pfcarbon=0.9 pfice=0.3 "
-			+" overlap=2 fieldsize=512 resamplefr=1 medium=carbon cs=2.0 drange=0 "
-			+" display=1 stig=0 nocontinue ")
-		if self.params['commit'] is True:
-			cmd += " commit "
-		self.runCommand(cmd)
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
 
 	#=====================
 	def runMakeStack(self):
@@ -127,19 +106,108 @@ class testScript(appionScript.AppionScript):
 			+" pickrunid=53 mindefocus=-0.25e-6 ace=0.95 "
 			+" lp=25 hp=600 partlimit=150  description='testing makestack'")
 		if self.params['commit'] is True:
-			cmd += " commit "
-		self.runCommand(cmd)
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
 
 	#=====================
+	def uploadImages(self):
+		imglist = [
+			'06jul12a_00004gr_00054sq_00022hl_00005en.mrc',
+			'06jul12a_00022gr_00013sq_00002hl_00004en.mrc',
+			'06jul12a_00022gr_00037sq_00025hl_00005en.mrc',
+			'06jul12a_00015gr_00028sq_00004hl_00002en.mrc',
+			'06jul12a_00022gr_00013sq_00003hl_00005en.mrc',
+			'06jul12a_00027gr_00065sq_00009hl_00005en.mrc',
+			'06jul12a_00015gr_00028sq_00011hl_00003en.mrc',
+			'06jul12a_00022gr_00037sq_00005hl_00002en.mrc',
+			'06jul12a_00035gr_00063sq_00012hl_00004en.mrc',
+			'06jul12a_00015gr_00028sq_00023hl_00002en.mrc',
+			'06jul12a_00022gr_00037sq_00005hl_00005en.mrc',
+			'06jul12a_00015gr_00028sq_00023hl_00004en.mrc',
+			'06jul12a_00022gr_00037sq_00025hl_00004en.mrc',
+		]
+
+		imgtree = apDatabase.getSpecificImagesFromDB(imglist)
+
+		### create batch file
+		imagedatfile = os.path.join(self.params['rundir'], "image%s.dat"%(self.timestamp))
+		f = open(imagedatfile, "w")
+		for imgdata in imgtree:
+			imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
+			apix = apDatabase.getPixelSize(imgdata)
+			mag = imgdata['scope']['magnification']
+			defocus = imgdata['scope']['defocus']
+			voltage = imgdata['scope']['high tension']
+			outstr = ("%s\t%.3e\t%d\t%d\t%d\t%.3e\t%d\n"%(imgpath, apix*1e-10, 1, 1, mag, defocus, voltage))
+			f.write(outstr)
+		f.close()
+
+		### run command
+		script = os.path.join(self.appiondir, "bin", "imageloader.py ")
+		params = (" --runname=%s --projectid=%d --session=%s --batch=%s --scopeid=%d --cameraid=%d --description='%s' "
+			%(self.timestamp, self.params['projectid'], self.timestamp, 
+			imagedatfile, 89, 90, 'running test suite application'))
+		if self.params['commit'] is True:
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
+
+	#=====================
+	def dogPicker(self):
+		script = os.path.join(self.appiondir, "bin", "dogPicker.py ")
+		params = (" --runname=dogrun1 --projectid=%d --session=%s --diam=%d --thresh=%.2f --invert --no-wait"
+			%(self.params['projectid'], self.timestamp, 200, 0.5))
+		if self.params['commit'] is True:
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
+
+	#=====================
+	def aceTwo(self, bin):
+		script = os.path.join(self.appiondir, "bin", "pyace2.py ")
+		params = (" --runname=acetwo%d --projectid=%d --session=%s --no-wait --bin=%d"
+			%(bin, self.params['projectid'], self.timestamp, bin))
+		if self.params['commit'] is True:
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
+
+	#=====================
+	def makeStack(self):
+		runid = "stack"
+		script = os.path.join(self.appiondir, "bin", "makestack2.py ")
+		selectid = apDatabase.getSelectionIdFromName('dogrun1', self.timestamp)
+
+		params = ((" --runname=stack%s --projectid=%d --session=%s --no-wait --boxsize=%d --bin=%d --acecutoff=%.2f --invert --phaseflip --selectionid=%d --description='%'")
+			%(self.timestamp, self.params['projectid'], self.timestamp, 320, 2, 0.7, selectid, 'running test suite application'))
+		if self.params['commit'] is True:
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
+
+	#=====================.
 	def start(self):
-		self.images = ("07jan05b_00012gr_00001sq_v01_00002sq_00_00002en_00.mrc "
-			+"07jan05b_00012gr_00001sq_v01_00002sq_00_00003en_00.mrc "
-			+"07jan05b_00012gr_00001sq_v01_00002sq_00_00004en_00.mrc "
-			+"07jan05b_00012gr_00001sq_v01_00002sq_00_00005en_00.mrc "
-			+"07jan05b_00012gr_00001sq_v01_00002sq_00_00006en_00.mrc ")
+		self.timestamp = '10may07o04'
+		#self.uploadImages()
 
 		### Dog Picker
-		self.runDogPicker()
+		self.dogPicker()
+
+		### Ace 2
+		#self.aceTwo(bin=1)
+		self.aceTwo(bin=2)
+		self.aceTwo(bin=4)
+
+		### Make stack
+		self.makeStack()
+
+		sys.exit(1)
 		### FindEM
 		self.runFindEM()
 		### Man Picker
