@@ -1295,7 +1295,7 @@ class particledata {
 			."FROM `ApTemplateImageData` AS temp "
 			."LEFT JOIN ApPathData AS path ON "
 			."(temp.`REF|ApPathData|path`=path.`DEF_id`) "
-			."WHERE `project|projects|project`='$projectId' ";
+			."WHERE `REF|projectdata|projects|project`='$projectId' ";
 		if (!$getHidden) $q.= "AND (temp.`hidden` IS NULL OR temp.`hidden` = 0) ";
 		$q.= "ORDER BY temp.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
@@ -1329,7 +1329,7 @@ class particledata {
 			."FROM ApTemplateStackData as stack "
 			."LEFT JOIN ApPathData AS path ON "
 			."(stack.`REF|ApPathData|path`=path.`DEF_id`) "
-			."WHERE `project|projects|project`='$projectId' ";
+			."WHERE `REF|projectdata|projects|project`='$projectId' ";
 		if (!$getHidden) $q.= "AND (stack.`hidden` IS NULL OR stack.`hidden` = 0) ";
 		if ($type == "clsavg") $q.= "AND (stack.`cls_avgs` = 1) ";
 		if ($type == "forward") $q.= "AND (stack.`forward_proj` = 1) ";
@@ -2622,7 +2622,7 @@ class particledata {
 			."  maxrun.`REF|ApMaxLikeJobData|job` = maxjob.`DEF_id` ";
 		}
 		$q .=	"WHERE "
-			."  maxjob.`project|projects|project` = '$projectId' "
+			."  maxjob.`REF|projectdata|projects|project` = '$projectId' "
 			." AND "
 			."  maxjob.`finished` = '1' "
 			." AND "
@@ -3019,7 +3019,7 @@ class particledata {
 			."FROM `ApInitialModelData` i "
 			."LEFT JOIN `ApPathData` p "
 			." ON (p.`DEF_id` = i.`REF|ApPathData|path`) "
-			."WHERE i.`project|projects|project`='$projectId' ";
+			."WHERE i.`REF|projectdata|projects|project`='$projectId' ";
 		if (!$getHidden) $q.= "AND (i.`hidden` IS NULL OR i.`hidden` = 0) ";
 		$q.= "ORDER BY i.`DEF_id` DESC";
 		//echo $q."\n<BR/>\n";
@@ -3045,7 +3045,7 @@ class particledata {
 			."FROM `ApMiscData` i "
 			."LEFT JOIN `ApPathData` p "
 			." ON (p.`DEF_id` = i.`REF|ApPathData|path`) "
-			."WHERE i.`project|projects|project`='$projectId' "
+			."WHERE i.`REF|projectdata|projects|project`='$projectId' "
 			."ORDER BY i.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
