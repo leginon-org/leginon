@@ -85,7 +85,7 @@ class testScript(appionScript.AppionScript):
 		self.runCommand(script+" "+params)
 
 	#=====================
-	def uploadImages(self):
+	def uploadImagesFromDB(self):
 		imglist = [
 			'06jul12a_00004gr_00054sq_00022hl_00005en.mrc',
 			'06jul12a_00022gr_00013sq_00002hl_00004en.mrc',
@@ -208,7 +208,7 @@ class testScript(appionScript.AppionScript):
 	#=====================.
 	def start(self):
 		self.timestamp = '10may07o04'
-		#self.uploadImages()
+		#self.uploadImagesFromDB()
 
 		### Dog Picker
 		self.dogPicker()
