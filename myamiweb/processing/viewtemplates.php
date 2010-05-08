@@ -21,14 +21,12 @@ $javascript = editTextJava();
 
 processing_header("Template Summary", "Template Summary", $javascript,False);
 
-if ($expId && is_int($expId)){
-	$projectId = getProjectId();
-}
+$projectId = getProjectId();
 
-if (is_int($projectId)) {
-	$particle=new particleData;
-	$templateData=$particle->getTemplatesFromProject($projectId,True);
-}
+
+$particle=new particleData;
+$templateData=$particle->getTemplatesFromProject($projectId,True);
+
 
 // extract template info
 if ($templateData) {
