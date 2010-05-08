@@ -134,8 +134,8 @@ class testScript(appionScript.AppionScript):
 			return
 
 		script = os.path.join(self.appiondir, "bin", "dogPicker.py ")
-		params = (" --runname=dogrun1 --projectid=%d --session=%s --diam=%d --thresh=%.2f --invert --no-wait --planereg --maxsize=%.2f"
-			%(self.params['projectid'], self.timestamp, 200, 0.45, 0.02))
+		params = (" --runname=dogrun1 --projectid=%d --session=%s --diam=%d --thresh=%.2f --invert --no-wait --planereg --maxsize=%.2f --num-slice=%d --size-range=%d"
+			%(self.params['projectid'], self.timestamp, 200, 0.45, 0.02, 3, 200))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
@@ -204,6 +204,8 @@ class testScript(appionScript.AppionScript):
 		else:
 			params += " --no-commit "
 		self.runCommand(script+" "+params)
+
+		#uploadMaxlikeAlignment.py --rundir=/ami/data00/appion/10may07o04/align/maxlike1 -t 10may07q59 --commit --projectid=5 
 
 	#=====================.
 	def start(self):
