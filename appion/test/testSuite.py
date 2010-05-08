@@ -134,8 +134,8 @@ class testScript(appionScript.AppionScript):
 			return
 
 		script = os.path.join(self.appiondir, "bin", "dogPicker.py ")
-		params = (" --runname=dogrun1 --projectid=%d --session=%s --diam=%d --thresh=%.2f --invert --no-wait"
-			%(self.params['projectid'], self.timestamp, 200, 0.5))
+		params = (" --runname=dogrun1 --projectid=%d --session=%s --diam=%d --thresh=%.2f --invert --no-wait --planereg --maxsize=%.2f"
+			%(self.params['projectid'], self.timestamp, 200, 0.45, 0.02))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
@@ -154,15 +154,15 @@ class testScript(appionScript.AppionScript):
 		self.runCommand(script+" "+params)
 
 	#=====================
-	def makeStack(self):
-		if apStack.getStackIdFromRunName('stack1', self.timestamp) is not None:
+	def makeStack(self, stackname):
+		if apStack.getStackIdFromRunName(stackname, self.timestamp) is not None:
 			return
 
 		selectid = apDatabase.getSelectionIdFromName('dogrun1', self.timestamp)
 
 		script = os.path.join(self.appiondir, "bin", "makestack2.py ")
-		params = ((" --runname=stack1 --projectid=%d --session=%s --no-wait --boxsize=%d --bin=%d --acecutoff=%.2f --invert --phaseflip --selectionid=%d --description='%s'")
-			%(self.params['projectid'], self.timestamp, 320, 2, 0.7, selectid, 'running test suite application'))
+		params = ((" --runname=%s --projectid=%d --session=%s --no-wait --boxsize=%d --bin=%d --acecutoff=%.2f --invert --phaseflip --selectionid=%d --description='%s'")
+			%(stackname, self.params['projectid'], self.timestamp, 320, 2, 0.7, selectid, 'running test suite application'))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
@@ -170,29 +170,35 @@ class testScript(appionScript.AppionScript):
 		self.runCommand(script+" "+params)
 
 	#=====================
-	def filterStack(self):
-		if apStack.getStackIdFromSubStackName('meanfilt2', self.timestamp) is not None:
+	def filterStack(self, stackname, substackname):
+		if apStack.getStackIdFromSubStackName(substackname, self.timestamp) is not None:
 			return
 
-		stackid = apStack.getStackIdFromRunName('stack1', self.timestamp)
+		stackid = apStack.getStackIdFromRunName(stackname, self.timestamp)
 
 		script = os.path.join(self.appiondir, "bin", "stackFilter.py ")
-		params = ((" --runname=meanfilt2 --projectid=%d --old-stack-id=%d --minx=%d --maxx=%d --miny=%d --maxy=%d --description='%s'")
-			%(self.params['projectid'], stackid, 600, 1000, 82, 105, 'filtering junk with test suite application'))
+		params = ((" --runname=%s --projectid=%d --old-stack-id=%d --minx=%d --maxx=%d --miny=%d --maxy=%d --description='%s'")
+			%(substackname, self.params['projectid'], stackid, 
+			600, 1000, 82, 105, 
+			'filtering junk with test suite application'))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
 			params += " --no-commit "
 		self.runCommand(script+" "+params)
 
+		return substackname
 
 	#=====================
-	def maxLike(self):
-		stackid = apStack.getStackIdFromSubStackName('meanfilt2', self.timestamp)
+	def maxLike(self, substackname):
+		stackid = apStack.getStackIdFromSubStackName(substackname, self.timestamp)
+
+		print (self.params['projectid'], stackid, 10, 2000, 3, 1, 12, 'max like with test suite application')
 
 		script = os.path.join(self.appiondir, "bin", "maxlikeAlignment.py")
-		params = ((" --runname=maxlike1 --projectid=%d --stack=%d --lowpass=%d --highpass=%d --num-ref=%d --bin=%d --savemem --converge=fast --mirror --fast --fast-mode=narrow --max-iter=12 --description='%s'")
-			%(self.params['projectid'], stackid, 10, 2000, 3, 1, 'max like with test suite application'))
+		params = (" --runname=maxlike1 --projectid=%d --stack=%d --lowpass=%d --highpass=%d --num-ref=%d --bin=%d --savemem --converge=slow --mirror --fast --fast-mode=narrow --max-iter=%d --description='%s'"
+			%(self.params['projectid'], stackid, 10, 2000, 3, 1, 12, 
+			'max like with test suite application'))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
@@ -212,24 +218,23 @@ class testScript(appionScript.AppionScript):
 		self.aceTwo(bin=4)
 
 		### Make stack
-		self.makeStack()
+		self.makeStack('stack1')
 
 		### Filter stack
-		self.filterStack()
+		self.filterStack('stack1', 'meanfilt2')
 
 		### Maximum likelihood
-		self.maxLike()
+		self.maxLike('meanfilt2')
 
-		sys.exit(1)
-		### FindEM
-		self.runFindEM()
-		### Man Picker
-		#self.runManualPicker()
-		### ACE
-		self.runAce()
-		### Make Stack
-		self.runMakeStack()
+		### Upload max like
 
+		### Upload templates
+		### Template pick
+		### Make stack
+		### Filter stack
+		### Upload model
+		### Do reconstruction
+		### Upload recon
 		return
 
 #=====================

@@ -482,6 +482,26 @@ def getStackIdFromSubStackName(substackname, sessionname, msg=True):
 	return stackid
 
 #===============
+def getNumStacksFromSession(sessionname):
+	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
+
+	stackrunq = appiondata.ApStackRunData()
+	stackrunq['session'] = sessiondata
+
+	runsinstackq = appiondata.ApRunsInStackData()
+	runsinstackq['stackRun'] = stackrunq
+	runsindatas = runsinstackq.query()
+
+	if not runsindatas:
+		return 0
+	stacklist = []
+	for runsindata in runsindatas:
+		stackid = runsindata['stack'].dbid
+		if not stackid in stacklist:
+			stacklist.append(stackid)
+	return len(stacklist)
+
+#===============
 def getStackParticleFromParticleId(particleid, stackid, nodie=False):
 	"""
 	Provided a Stack Id & an ApParticle Id, find the stackparticle Id
