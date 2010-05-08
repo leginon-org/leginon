@@ -3,6 +3,15 @@ require_once "inc/project.inc.php";
 require_once "inc/util.inc";
 require_once "inc/gridbox.inc.php";
 require_once "inc/mysql.inc";
+
+if (privilege('gridboxes')>2) {
+	$title = "Grid boxes";
+	login_header($title);
+} else {
+	redirect(BASE_URL.'accessdeny.php?text=Only Superusers and Administrators can update gridboxes.');
+	redirect(BASE_URL.'login.php?ln='.$redirect);
+}
+
 $gridbox = new gridbox();
 $boxtypes = $gridbox->getBoxTypes();
 // print_r($boxtypes);

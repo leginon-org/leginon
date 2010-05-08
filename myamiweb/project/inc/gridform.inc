@@ -82,7 +82,17 @@
 	</font>
       </td>
     </tr>
+    <tr>
+      <td >
+        <input type="submit" value="<?=$action?>" name="submitgrid">
+      </td>
+    </tr>
 <? if ($gridId) { ?>
+		<tr>
+			<td colspan=2>
+				<hr/>
+			</td>
+		</tr>
     <tr>
       <td> 
         <div align="right"><font face="Arial, Helvetica, sans-serif" size="2">Grid Box
@@ -107,18 +117,19 @@ foreach ($gridboxes as $gridbox) {
       </td>
     </tr>
 <? } ?>
-    <tr>
-      <td >
-        <input type="submit" value="<?=$action?>" name="submitgrid">
-      </td>
-    </tr>
   </table>
 </form>
 <?
-if ($gridId) {
-$gridboxId=$selectedgridboxId;
-$gridboxinfo = $gridboxdata->getGridBoxInfo($gridboxId);
 
+if ($gridId) {
+	$gridboxId=$selectedgridboxId;
+	$gridboxinfo = $gridboxdata->getGridBoxInfo($gridboxId);
+	if ($gridboxinfo) {
+?>
+		<h4> Click at the position where you want the grid to be stored </h4>
+		<p> No need to click on the update button </p>
+<?
+	}
 	switch ($gridboxinfo['boxtypeId']) {
 		case '1':
 			$cryobox = new gridboxcryo(); 

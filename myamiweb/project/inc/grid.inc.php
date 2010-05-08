@@ -76,7 +76,7 @@ class grid extends abstractgridbox {
 	}
 
 	function checkGridExistsbyId($id) {
-		$q=' select gridId from grids where gridId="'.$id.'"';
+		$q=' select gridId from '.DB_PROJECT.'.grids where gridId="'.$id.'"';
 		list($gridInfo) = $this->mysql->getSQLResult($q);
 		$id = $gridInfo['gridId'];
 		if(empty($id))
@@ -116,12 +116,20 @@ class grid extends abstractgridbox {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getGrids($projectId=""){
-		$where = ($projectId) ? ' where p.projectId="'.$projectId.'"' : "";
+	function getGrids($projectId=0, $userId=""){
+		if ($projectId > 0) {
+				$where = ' p.`DEF_id`="'.$projectId.'"';
+				$where .= ($userId) ? 'and po.`REF|leginondata|UserData|user`='.$userId : " ";
+				$ujoin = ($userId) ? 'left join projectowner po on p.`DEF_id`=po.`REF|projects|project` ' :" ";
+		} else {
+			$where .= ($userId) ? ' po.`REF|leginondata|UserData|user`='.$userId : " 1";
+			$ujoin = ($userId) ? 'left join projectowners po on p.`DEF_id`=po.`REF|projects|project` ' :" ";
+		}
 		$grids=array();
-		$q='select p.Name as project, g.gridId, g.label from grids g '
-			.'left join projects p '
-			.'on (p.projectId=g.projectId) '.$where;
+		$q=' select p.Name as project, g.gridId, g.label from grids g '
+			.' left join projects p '
+			.' on (p.`DEF_id`=g.projectId) '.$ujoin.' where '.$where
+			.' or g.projectId = 0 ';
 		$grids = $this->mysql->getSQLResult($q);
 		return $grids;
 	}
@@ -135,7 +143,8 @@ class grid extends abstractgridbox {
 		  .'g.number, '
 		  .'g.note, '
 		  .'g.boxId, '
-		  .'l.location '
+		  .'l.location, '
+		  .'g.projectId '
 		  .'from grids g '
 		  .'left join gridlocations l '
 		  .'on (l.gridId = g.gridId) '

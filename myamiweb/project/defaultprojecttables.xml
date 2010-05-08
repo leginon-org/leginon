@@ -537,6 +537,11 @@
       type="tinyint(4)" 
       null="NOT NULL" 
     />
+    <field 
+      name="gridboxes" 
+      type="tinyint(4)" 
+      null="NOT NULL" 
+    />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
 	</sqltable>

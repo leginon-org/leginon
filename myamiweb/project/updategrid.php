@@ -4,6 +4,14 @@ require_once "inc/leginon.inc";
 require_once "inc/gridbox.inc.php";
 require_once "inc/grid.inc.php";
 
+if (privilege('projects')) {
+	$title = "Projects";
+	login_header($title);
+} else {
+	$redirect=$_SERVER['PHP_SELF'];
+	redirect(BASE_URL.'login.php?ln='.$redirect);
+}
+
 $grid = new grid();
 $gridboxdata = new gridbox();
 
@@ -56,7 +64,7 @@ if (empty($gridId) || !($grid->checkGridExistsbyName($label, $projectId))) {
 	$action='update';
 }
 $projectdata=new project();
-$projects=$projectdata->getProjects();
+$projects = $projectdata->getProjects("order",privilege('projects'));
 
 project_header("Projects $title");
 ?>

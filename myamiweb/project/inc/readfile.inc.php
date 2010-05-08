@@ -7,9 +7,11 @@ function readtxtfile ($file) {
 	$fields = array();
 	$data = array();
 	$fieldsline = fgets($fp);
+	$fieldsline = rtrim($fieldsline);
 	$fields = explode($delimiter, $fieldsline);
 	while ($dataline = fgets($fp)) {
 		$nrow = array();
+		$dataline = rtrim($dataline);
 		$row  = explode($delimiter, $dataline);
 		for ($i=0; $i<count($fields); $i++)
 			$nrow[trim($fields[$i])] = trim($row[$i]);

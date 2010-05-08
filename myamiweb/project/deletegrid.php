@@ -1,14 +1,15 @@
 <?php
 
-require "inc/project.inc.php";
-require "inc/gridbox.inc.php";
-require "inc/grid.inc.php";
-require "inc/util.inc";
-require "inc/mysql.inc";
+require_once "inc/project.inc.php";
+require_once "inc/gridbox.inc.php";
+require_once "inc/grid.inc.php";
+require_once "inc/util.inc";
+require_once "inc/mysql.inc";
 
 $griddata = new grid();
 
 $gridId = $griddata->checkGridExistsbyId($_GET['gid']);
+
 if (!$gridId) {
 	header("Location: index.php");
 	exit;
@@ -19,9 +20,16 @@ if (!$gridId) {
 	$url = $_SERVER['PHP_SELF']."?gid=".$gridId;
 }
 
+$is_admin = checkProjectAdminPrivilege($curgrid['projectId']);
+if (privilege('projects') and $is_admin) {
+	$title = "Projects";
+	login_header($title);
+} else {
+	redirect(BASE_URL.'accessdeny.php?text=You are only allowed to delete grids in projects you own.');
+}
+
 if (!$_POST) {
 project_header("Grid $title");
-
 ?>
 <p>
 <form method="POST" name="confirm" action="<?php echo $url ?>">

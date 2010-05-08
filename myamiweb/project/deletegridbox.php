@@ -1,10 +1,18 @@
 <?php
 
-require "inc/project.inc.php";
-require "inc/gridbox.inc.php";
-require "inc/grid.inc.php";
-require "inc/util.inc";
-require "inc/mysql.inc";
+require_once "inc/project.inc.php";
+
+if (privilege('gridboxes')>2) {
+	$title = "Grid boxes";
+	login_header($title);
+} else {
+	redirect(BASE_URL.'accessdeny.php?text=Only Superusers and Administrators can delete gridboxes.');
+}
+
+require_once "inc/gridbox.inc.php";
+require_once "inc/grid.inc.php";
+require_once "inc/util.inc";
+require_once "inc/mysql.inc";
 
 $gridboxdata = new gridbox();
 

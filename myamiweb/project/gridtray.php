@@ -1,9 +1,17 @@
 <?php
-require "inc/project.inc.php";
-require "inc/leginon.inc";
-require "inc/gridbox.inc.php";
-require "inc/grid.inc.php";
-require "inc/utilpj.inc.php";
+require_once "inc/project.inc.php";
+require_once "inc/leginon.inc";
+require_once "inc/gridbox.inc.php";
+require_once "inc/grid.inc.php";
+require_once "inc/utilpj.inc.php";
+
+if (privilege('projects')) {
+	$title = "Projects";
+	login_header($title);
+} else {
+	$redirect=$_SERVER['PHP_SELF'];
+	redirect(BASE_URL.'login.php?ln='.$redirect);
+}
 
 if($_GET['gid']) {
 	$selectedgridId=$_GET['gid'];
@@ -32,7 +40,8 @@ function build_get_args() {
 
 
 $griddata = new grid();
-$grids = $griddata->getGrids();
+$loginuser = privilege('projects') > 2 ? '' : getLoginUserId(); 
+$grids = $griddata->getGrids('',$loginuser);
 $selectedgridId=(empty($selectedgridId)) ? $grids[0]['gridId'] : $selectedgridId;
 
 $gridboxdata = new gridbox();
@@ -91,14 +100,20 @@ foreach ($grids as $grid) {
 </td>
 <td valign=top >
 <?
-	$menu = array(
-		'new'=>'updategrid.php',
-		'edit'=>'updategrid.php?gid='.$selectedgridId,
-		'delete'=>'deletegrid.php?gid='.$selectedgridId
-	);
-	echo edit_menu($menu, true,true);
-
 $gridinfo = $griddata->getGridInfo($selectedgridId);
+$menu = array(
+	'new'=>'updategrid.php',
+);
+$is_admin = checkProjectAdminPrivilege($gridinfo['projectId']);
+if ((!$gridinfo['projectId'] || $is_admin) && $selectedgridId) {
+$menu = array_merge($menu,array(
+	'edit'=>'updategrid.php?gid='.$selectedgridId,
+	'delete'=>'deletegrid.php?gid='.$selectedgridId
+	)
+);
+}
+echo edit_menu($menu, true,true);
+
 $projectinfo = $projectdata->getProjectInfo($gridinfo['projectId']);
 if (is_array($gridinfo)) {
 	$gridId = $gridinfo['gridId'];
@@ -143,7 +158,11 @@ foreach ($gridboxes as $gridbox) {
 		'edit'=>'updategridbox.php?gridboxId='.$selectedgridboxId,
 		'delete'=>'deletegridbox.php?gridboxId='.$selectedgridboxId
 	);
-	echo edit_menu($menu, true,true);
+	/// Not sure who should allow to add/update/delete grud boxes since a box, 
+	/// especially a robot tray can have grids for multiple projects and users.
+	/// Now only allow superusers to do so
+	if (privilege('gridboxes') > 2)
+		echo edit_menu($menu, true,true);
 	echo "<br>";
 $gridboxinfo = $gridboxdata->getGridBoxInfo($selectedgridboxId);
 switch ($gridboxinfo['boxtypeId']) {

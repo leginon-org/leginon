@@ -1,17 +1,24 @@
 <?
-require "inc/project.inc.php";
-require "inc/gridbox.inc.php";
-require "inc/grid.inc.php";
-require "inc/readfile.inc.php";
-require "inc/util.inc";
-require "inc/mysql.inc";
+require_once "inc/project.inc.php";
+require_once "inc/gridbox.inc.php";
+require_once "inc/grid.inc.php";
+require_once "inc/readfile.inc.php";
+require_once "inc/util.inc";
+
+if (privilege('projects') > 1) {
+	$title = "Projects";
+	login_header($title);
+} else {
+	$redirect=$_SERVER['PHP_SELF'];
+	redirect(BASE_URL.'accessdeny.php?text=You are not allowed to add grids.');
+}
 
 $error = false;
 $warning = false;
 $error_msg = array();
 
 $projectdata=new project();
-$projects=$projectdata->getProjects();
+$projects=$projectdata->getProjects(true,privilege('projects'));
 
 if($_POST) {
 	$filesize  = $_FILES['grid_file']['size'];
@@ -60,7 +67,9 @@ if($_POST) {
 		$data = array();
 		$fields = $info['fields'];
 		$data = $info['data'];
-
+print_r($fields);
+print_r($data);
+echo in_array('location', $fields);
 
 		$grid_fields = array ('label', 'prepdate', 'specimen', 'preparation', 'number', 'concentration', 'fraction', 'note' );
 		$required_fields = array ('label', 'location');
