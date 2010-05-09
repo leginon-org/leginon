@@ -103,7 +103,7 @@ class ApEulerJump(object):
 		#refinerundata=appiondata.ApRefineRunData.direct_query(reconid)
 		ejumpq = appiondata.ApEulerJumpData()
 		ejumpq['particle'] = appiondata.ApStackParticleData.direct_query(stackpartid)
-		ejumpq['refRun'] = appiondata.ApRefineRunData.direct_query(reconrunid)
+		ejumpq['refineRun'] = appiondata.ApRefineRunData.direct_query(reconrunid)
 		for key in ('median', 'mean', 'stdev', 'min', 'max'):
 			ejumpq[key] = jumpdata[key]
 		ejumpq.insert()
@@ -113,7 +113,7 @@ class ApEulerJump(object):
 	def getJumpDataFromDB(self, stackpartid, reconrunid):
 		jumpq = appiondata.ApEulerJumpData()
 		jumpq['particle'] = appiondata.ApStackParticleData.direct_query(stackpartid)
-		jumpq['refRun'] = appiondata.ApRefineRunData.direct_query(reconrunid)
+		jumpq['refineRun'] = appiondata.ApRefineRunData.direct_query(reconrunid)
 		jumpdatas = jumpq.query(results=1)
 		if not jumpdatas:
 			return None
@@ -220,7 +220,7 @@ class ApEulerJump(object):
 			+"  partclass.`euler2` AS az, \n"
 			+"  partclass.`euler3` AS phi, \n"
 			+"  partclass.`mirror` AS mirror, \n"
-			+"  partclass.`thrown_out` AS reject, \n"
+			+"  partclass.`refine_keep` AS refine_keep, \n"
 			+"  ref.`iteration` AS iteration \n"
 			+"FROM `ApStackParticleData` as stackpart \n"
 			+"LEFT JOIN `ApRefineParticleData` AS partclass \n"
@@ -252,7 +252,7 @@ class ApEulerJump(object):
 				euler['euler2'] = float(row[2])
 				euler['euler3'] = float(row[3])
 				euler['mirror'] = self.nullOrValue(row[4])
-				euler['reject'] = self.nullOrValue(row[5])
+				euler['reject'] = not self.nullOrValue(row[5])
 				euler['iteration'] = int(row[6])
 				eulertree.append(euler)
 			except:

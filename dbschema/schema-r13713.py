@@ -151,6 +151,8 @@ def upgradeAppionDB(appiondbname, projectdb):
 		appiondb.indexColumn('ApRefineParticleData', 'refine_keep')
 		appiondb.indexColumn('ApRefineParticleData', 'postRefine_keep')
 
+	### Need to change:
+	###ApRefineGoodBadParticleData
 
 	#===================
 	# add new columns calculated from old data

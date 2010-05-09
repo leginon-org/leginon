@@ -21,7 +21,7 @@ if __name__ == "__main__":
 	# set new db
 	if projectid is not None:
 		pjc = dbconfig.getConfig('projectdata')
-		q = "select db from processingdb where projectId='%s'" % (projectid,)
+		q = "SELECT appiondb FROM processingdb WHERE `REF|projects|project`='%s'" % (projectid,)
 		dbc = MySQLdb.Connect(**pjc)
 		cursor = dbc.cursor()
 		result = cursor.execute(q)
@@ -44,4 +44,5 @@ if __name__ == "__main__":
 	# close
 	cursor.close()
 	dbc.close()
+
 

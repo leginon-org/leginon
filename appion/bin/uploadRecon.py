@@ -3,9 +3,11 @@
 
 #python
 import os
+import re
 import sys
 import time
 import glob
+import math
 import tarfile
 #appion
 from appionlib import appionScript
@@ -219,7 +221,7 @@ class UploadReconScript(appionScript.AppionScript):
 			resq=appiondata.ApResolutionData()
 
 			# calculate the resolution:
-			halfres = calcRes(fscfile, self.params['boxsize'], self.params['apix'])
+			halfres = apRecon.calcRes(fscfile, self.params['boxsize'], self.params['apix'])
 
 			# save to database
 			resq['half'] = halfres
@@ -243,7 +245,7 @@ class UploadReconScript(appionScript.AppionScript):
 			apDisplay.printWarning("R Measure failed, volume density not found: "+volPath)
 			return None
 
-		resolution = runRMeasure(self.params['apix'], volPath)
+		resolution = apRecon.runRMeasure(self.params['apix'], volPath)
 
 		if resolution is None:
 			return None
@@ -271,12 +273,12 @@ class UploadReconScript(appionScript.AppionScript):
 		badprtls=[]
 		n=str(int(iternum)+1)
 		for line in f:
-			line=string.rstrip(line)
-			if re.search("X\t\d+\t"+str(iternum)+"$",line):
-				bits=line.split()
+			rline=line.rstrip()
+			if re.search("X\t\d+\t"+str(iternum)+"$",rline):
+				bits=rline.split()
 				badprtls.append(bits[1])
 			# break out of into the next iteration
-			elif re.search("X\t\d+\t"+n+"$",line):
+			elif re.search("X\t\d+\t"+n+"$",rline):
 				break
 		f.close()
 		return badprtls
@@ -293,7 +295,7 @@ class UploadReconScript(appionScript.AppionScript):
 		for line in f:
 			fscq = appiondata.ApFSCData()
 			fscq['refineIter'] = refineIterData
-			line = string.rstrip(line)
+			line = line.rstrip()
 			bits = line.split('\t')
 			fscq['pix'] = int(bits[0])
 			fscq['value'] = float(bits[1])
@@ -310,7 +312,7 @@ class UploadReconScript(appionScript.AppionScript):
 	def insertRefinementRun(self):
 		runq=appiondata.ApRefineRunData()
 		#first two must be unique
-		runq['name']=self.params['runname']
+		runq['runname']=self.params['runname']
 		runq['stack']=self.params['stack']
 
 		#Recon upload can be continued
@@ -349,7 +351,7 @@ class UploadReconScript(appionScript.AppionScript):
 		#if we insert runq then this returns no results !!!
 		# this is a workaround (annoying & bad)
 		runq=appiondata.ApRefineRunData()
-		runq['name']=self.params['runname']
+		runq['runname']=self.params['runname']
 		runq['stack']=self.params['stack']
 		runq['jobfile']=self.params['jobinfo']
 		runq['initialModel']=self.params['model']
@@ -382,7 +384,7 @@ class UploadReconScript(appionScript.AppionScript):
 			lines=open(emanJobFile,'r')
 			j=0
 			for i,line in enumerate(lines):
-				line=string.rstrip(line)
+				line=line.rstrip()
 				if re.search("^msgPassing_subClassification.py", line):
 					msgpassparams=line.split()
 					iteration = self.params['iterations'][j]
@@ -455,14 +457,14 @@ class UploadReconScript(appionScript.AppionScript):
 		self.params['iterations'] = []
 		for line in lines:
 			# if read a refine line, get the parameters
-			line=string.rstrip(line)
+			line=line.rstrip()
 			if re.search("refine \d+ ", line):
 				emanparams=line.split(' ')
 				if emanparams[0] is "#":
 					emanparams.pop(0)
 				# get rid of first "refine"
 				emanparams.pop(0)
-				iteration=defineIteration()
+				iteration=self.defineIteration()
 				iteration['num']=emanparams[0]
 				iteration['sym']=''
 				for p in emanparams:
@@ -568,7 +570,7 @@ class UploadReconScript(appionScript.AppionScript):
 
 		#create Chimera snapshots
 		fscfile = os.path.join(self.params['rundir'], "fsc.eotest."+iteration['num'])
-		halfres = calcRes(fscfile, self.params['boxsize'], self.params['apix'])
+		halfres = apRecon.calcRes(fscfile, self.params['boxsize'], self.params['apix'])
 		if self.params['snapfilter']:
 			halfres = self.params['snapfilter']
 		volumeDensity = 'threed.'+iteration['num']+'a.mrc'
@@ -590,20 +592,15 @@ class UploadReconScript(appionScript.AppionScript):
 			return
 		RmeasureData = self.insertRMeasureData(iteration)
 
-		classavg='classes.'+iteration['num']+'.img'
-
 		if self.params['package']== 'EMAN':
-			emanclassavg='classes_eman.'+iteration['num']+'.img'
-			coranclassavg=None
-			msgpassclassavg=None
+			refineclassavg='classes_eman.'+iteration['num']+'.img'
+			postrefineclassavg=None
 		elif self.params['package']== 'EMAN/SpiCoran':
-			emanclassavg='classes_eman.'+iteration['num']+'.img'
-			coranclassavg='classes_coran.'+iteration['num']+'.img'
-			msgpassclassavg=None
+			refineclassavg='classes_eman.'+iteration['num']+'.img'
+			postrefineclassavg='classes_coran.'+iteration['num']+'.img'
 		elif self.params['package']== 'EMAN/MsgP':
-			emanclassavg='classes_eman.'+iteration['num']+'.img'
-			coranclassavg=None
-			msgpassclassavg='classes_msgp.'+iteration['num']+'.img'
+			refineclassavg='classes_eman.'+iteration['num']+'.img'
+			postrefineclassavg='classes_msgp.'+iteration['num']+'.img'
 		else:
 			apDisplay.printError("Refinement Package Not Valid")
 
@@ -619,18 +616,13 @@ class UploadReconScript(appionScript.AppionScript):
 		refineq['symmetry']=iteration['sym']
 		refineq['exemplar'] = False
 		classvar = 'classes.'+iteration['num']+'.var.img'
-		if classavg in self.params['classavgs']:
-			refineq['refineClassAverages'] = classavg
+		refineq['refineClassAverages'] = refineclassavg
+		refineq['postRefineClassAverages'] = postrefineclassavg
 		if classvar in self.params['classvars']:
 			refineq['classVariance'] = classvar
 		if volumeDensity in self.params['volumes']:
 			refineq['volumeDensity'] = volumeDensity
-		if emanclassavg in self.params['emanavgs']:
-			refineq['refineClassAverages'] = emanclassavg
-		if coranclassavg in self.params['coranavgs']:
-			refineq['postRefineClassAverages'] = coranclassavg
-		elif msgpassclassavg in self.params['msgpavgs']:
-			refineq['postRefineClassAverages'] = msgpassclassavg
+
 		apDisplay.printMsg("inserting Refinement Data into database")
 		if self.params['commit'] is True:
 			refineq.insert()
@@ -639,15 +631,15 @@ class UploadReconScript(appionScript.AppionScript):
 
 		#insert FSC data
 		fscfile = os.path.join(self.params['rundir'], "fsc.eotest."+iteration['num'])
-		insertFSC(fscfile, refineq, self.params['commit'])
-		halfres = calcRes(fscfile, self.params['boxsize'], self.params['apix'])
+		self.insertFSC(fscfile, refineq, self.params['commit'])
+		halfres = apRecon.calcRes(fscfile, self.params['boxsize'], self.params['apix'])
 		apDisplay.printColor("FSC 0.5 Resolution: "+str(halfres), "cyan")
 
 		# get projections eulers for iteration:
 		eulers = self.getEulersFromProj(iteration['num'])
 
 		# get list of bad particles for this iteration
-		badprtls = readParticleLog(self.params['rundir'], iteration['num'])
+		badprtls = self.readParticleLog(self.params['rundir'], iteration['num'])
 
 		# expand cls.*.tar into temp file
 		clsf=os.path.join(self.params['rundir'], "cls."+iteration['num']+".tar")
@@ -677,17 +669,17 @@ class UploadReconScript(appionScript.AppionScript):
 		apDisplay.printMsg("creating euler frequency map")
 		refrunid = int(self.params['refineRun'].dbid)
 		iternum = int(iteration['num'])
-		if self.params['package'] == 'EMAN/SpiCoran':
-			coran = True
+		if self.params['package'] != 'EMAN':
+			postrefine = True
 		else:
-			coran = False
+			postrefine = False
 
-		apEulerDraw.createEulerImages(refrunid, iternum, path=self.params['rundir'], coran=coran)
+		apEulerDraw.createEulerImages(refrunid, iternum, path=self.params['rundir'], postrefine=postrefine)
 		return
 
 	#==================
 	#==================
-	def insertReinfeParticleData(self,cls,iteration,eulers,badprtls,refineq,numcls,euler_convention='zxz'):
+	def insertRefineParticleData(self,cls,iteration,eulers,badprtls,refineq,numcls,euler_convention='zxz'):
 		# get the corresponding proj number & eulers from filename
 		replace=re.compile('\D')
 		projnum=int(replace.sub('',cls))
@@ -713,7 +705,7 @@ class UploadReconScript(appionScript.AppionScript):
 
 				# check if bad particle
 				if str(prtlnum) in badprtls:
-					prtlaliq['refine_keep']=True
+					prtlaliq['refine_keep'] = False
 
 				prtlnum+=1 # offset for EMAN
 				qualf=float(ali[2].strip(','))
@@ -755,8 +747,10 @@ class UploadReconScript(appionScript.AppionScript):
 				prtlaliq['euler2']=eulers[projnum][1]
 				prtlaliq['euler3']=rot
 				prtlaliq['quality_factor']=qualf
-				prtlaliq['postRefine_keep']=msgk
-				prtlaliq['postRefine_keep']=corank
+				if self.params['package']== 'EMAN/MsgP':
+					prtlaliq['postRefine_keep']=msgk
+				else:
+					prtlaliq['postRefine_keep']=corank
 				prtlaliq['euler_convention']=euler_convention
 
 				#apDisplay.printMsg("inserting Particle Classification Data into database")
@@ -777,27 +771,27 @@ class UploadReconScript(appionScript.AppionScript):
 		apParam.createDirectory(self.params['tmpdir'], warning=True)
 
 		### make sure that the stack & model IDs exist in database
-		emanJobFile = self.findEmanJobFile(self.params)
+		emanJobFile = self.findEmanJobFile()
 		self.params['stack'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.params['stackmapping'] = apRecon.partnum2defid(self.params['stackid'])
 		self.params['model'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 		self.params['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 
 		### parse out the refinement parameters from the log file
-		self.parseLogFile(self.params)
+		self.parseLogFile()
 
 		### parse out the message passing subclassification parameters from the job/log file
 		if self.params['package'] == 'EMAN/MsgP':
-			self.parseMsgPassingParams(self.params)
+			self.parseMsgPassingParams()
 
 		### convert class average files from old to new format
-		self.convertClassAvgFiles(self.params)
+		self.convertClassAvgFiles()
 
 		### get a list of the files in the directory
-		self.listFiles(self.params)
+		self.listFiles()
 
 		### create a refinementRun entry in the database
-		self.insertRefinementRun(self.params)
+		self.insertRefinementRun()
 
 		if self.params['euleronly'] is False:
 			### insert the Iteration info
@@ -813,7 +807,7 @@ class UploadReconScript(appionScript.AppionScript):
 				for i in range(75):
 					sys.stderr.write("#")
 				sys.stderr.write("\n")
-				self.insertIteration(iteration, self.params)
+				self.insertIteration(iteration)
 
 		### calculate euler jumps
 		if self.params['commit'] is True:

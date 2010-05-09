@@ -3,6 +3,7 @@
 import MySQLdb
 import math
 import os
+import sys
 import numpy
 import pyami.quietscipy
 from scipy import ndimage
@@ -34,14 +35,14 @@ def getEulersForIteration(reconid, iteration=1):
 
 	t0 = time.time()
 	query = (
-		"SELECT pc.euler1, pc.euler2, pc.`thrown_out`, pc.`coran_keep` "
+		"SELECT pc.euler1, pc.euler2, pc.`refine_keep`, pc.`postRefine_keep` "
 			+"FROM `ApRefineParticleData` AS pc "
 			+"LEFT JOIN `ApRefineIterData` AS rd "
 			+"ON pc.`REF|ApRefineIterData|refineIter` = rd.`DEF_id` "
 			+"WHERE rd.`REF|ApRefineRunData|refineRun` = "+str(reconid)+" "
 			+"AND rd.`iteration` = "+str(iteration)+" "
 		)
-	#print query
+	print query
 	print "querying for euler values at "+time.asctime()
 	cursor.execute(query)
 	numrows = int(cursor.rowcount)
@@ -50,10 +51,10 @@ def getEulersForIteration(reconid, iteration=1):
 	apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
 
 	# sort eulers into classes
-	alldict, eulerdict, corandict = calcDictNative(result)
+	alldict, eulerdict, postrefinedict = calcDictNative(result)
 	db.close()
 
-	return alldict, eulerdict, corandict
+	return alldict, eulerdict, postrefinedict
 
 #===========
 def freqListStat(freqlist):
@@ -166,38 +167,38 @@ def calcFreqNative(points):
 
 #===========
 def calcDictNative(points):
-	""" SELECT e.euler1, e.euler2, pc.`thrown_out`, pc.`coran_keep` """
+	""" SELECT e.euler1, e.euler2, pc.`refine_keep`, pc.`postRefine_keep` """
 	alldict = {}
 	eulerdict = {}
-	corandict = {}
+	postrefinedict = {}
 	for point in points:
 		### convert data
 		#print point
 		rad = float(point[0])
 		theta = float(point[1])
-		thrownout = bool(point[2])
-		corankeep = bool(point[3])
+		refinekeep = bool(point[2])
+		postrefinekeep = bool(point[3])
 		key = ( "%.3f,%.3f" % (rad, theta))
-		#print thrownout,corankeep,key
+		#print refinekeep,postrefinekeep,key
 
 		### sort points
 		if key in alldict:
 			alldict[key] += 1
 		else:
 			alldict[key] = 0
-		if thrownout is False:
+		if refinekeep is True:
 			if key in eulerdict:
 				eulerdict[key] += 1
 			else:
 				eulerdict[key] = 0
-		if corankeep is True:
-			if key in corandict:
-				corandict[key] += 1
+		if postrefinekeep is True:
+			if key in postrefinedict:
+				postrefinedict[key] += 1
 			else:
-				corandict[key] = 0
+				postrefinedict[key] = 0
 	#import pprint
 	#pprint.pprint( alldict)
-	return alldict, eulerdict, corandict
+	return alldict, eulerdict, postrefinedict
 
 
 #===========
@@ -265,7 +266,7 @@ def fillDataDict(radlist, anglelist, freqlist):
 	d['maxf'] = float(ndimage.maximum(freqnumpy))
 	if ndimage.sum(freqnumpy) < 10:
 		apDisplay.printWarning("not enough eulers to draw a map")
-		return
+		return None
 	d['rangef'] = d['maxf']-d['minf']+1
 
 	angnumpy = numpy.asarray(anglelist, dtype=numpy.float32)
@@ -310,6 +311,9 @@ def makeTriangleImage(eulerdict, imgname="temp.png",
 
 	### find min/max data
 	d = fillDataDict(radlist, anglelist, freqlist)
+	if d is None:
+		apDisplay.printWarning("No rejected particles found!")
+		return
 	#pprint.pprint(d)
 
 	img = Image.new("RGB", (imgdim, imgdim), color="#ffffff")
@@ -436,7 +440,11 @@ def drawAxes(draw, imgdim, crad, img, d):
 	coord = (mid-shiftx, end)
 	draw.text(coord, txt, fill="black")
 	#Min/Max Numbers for Latitude / Altitude
-	txt = str(round(d['minr']*90.0,1))
+	try:
+		txt = str(round(d['minr']*90.0,1))
+	except:
+		print d
+		sys.exit(1)
 	shifty = draw.textsize(txt)[0]
 	shiftx = draw.textsize(txt)[1]
 	coord = (start-shiftx, start)
@@ -710,9 +718,9 @@ def addRotatedText(im, text, where, rotation, color = "black", maxSize = None):
 	return im
 
 #===========
-def createEulerImages(recon=239, iternum=1, path=".", coran=False):
+def createEulerImages(recon=239, iternum=1, path=".", postrefine=False):
 	### get data from database
-	alldict, eulerdict, corandict = getEulersForIteration(recon, iternum)
+	alldict, eulerdict, postrefinedict = getEulersForIteration(recon, iternum)
 
 	### create image in triangle form
 	triangfile = os.path.join(path, "eulerTriangle-"+str(recon)+"_"+str(iternum)+".png")
@@ -729,17 +737,17 @@ def createEulerImages(recon=239, iternum=1, path=".", coran=False):
 		rejectdict[key] -= val
 	makePolarImage(rejectdict, imgname=rejectfile)
 
-	if coran is True and corandict:
-		### create image of coran keep particle
-		coranfile = os.path.join(path, "eulerPolarCoran-"+str(recon)+"_"+str(iternum)+".png")
-		makePolarImage(corandict, imgname=coranfile)
+	if postrefine is True and postrefinedict:
+		### create image of postrefine keep particle
+		postrefinefile = os.path.join(path, "eulerPolarPostRefine-"+str(recon)+"_"+str(iternum)+".png")
+		makePolarImage(postrefinedict, imgname=postrefinefile)
 
-		### create image of coran difference
-		corandiffdict = eulerdict
-		for key,val in corandict.items():
-			corandiffdict[key] -= val
-		corandifffile = os.path.join(path, "eulerPolarCoranDiff-"+str(recon)+"_"+str(iternum)+".png")
-		makePolarImage(corandiffdict, imgname=corandifffile)
+		### create image of postrefine difference
+		postrefinediffdict = eulerdict
+		for key,val in postrefinedict.items():
+			postrefinediffdict[key] -= val
+		postrefinedifffile = os.path.join(path, "eulerPolarPostRefineDiff-"+str(recon)+"_"+str(iternum)+".png")
+		makePolarImage(postrefinediffdict, imgname=postrefinedifffile)
 
 #===========
 #===========
@@ -765,7 +773,7 @@ if __name__ == "__main__":
 		print i
 		createEulerImages(110, i, ".", True)
 
-	### coran
+	### postrefine
 	#createEulerImages(296, 2, ".", True)
 	#createEulerImages(305, 12, ".", True)
 	apDisplay.printColor("Finished in "+apDisplay.timeString(time.time()-t0), "cyan")

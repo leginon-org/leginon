@@ -1018,7 +1018,7 @@ class ApOtrRunData(Data):
 class ApRefineRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('name', str),
+			('runname', str),
 			('package', str),
 			('description', str),
 			('hidden', bool),

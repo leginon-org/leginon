@@ -177,14 +177,14 @@ def partnum2defid(stackid):
 	db     = MySQLdb.connect(**dbconf)
 	cursor = db.cursor()
 
-	cursor.execute('SELECT * from ApStackParticleData where `REF|ApStackData|stack` = %s' % (stackid,))
+	cursor.execute('SELECT DEF_id, particleNumber from ApStackParticleData where `REF|ApStackData|stack` = %s' % (stackid,))
 	partdict = {}
 	while True:
 		row = cursor.fetchone()
 		if row is None:
 			break
-		defid = row['DEF_id']
-		num = row['particleNumber']
+		defid = int(row[0]) #row['DEF_id']
+		num = int(row[1]) #row['particleNumber']
 		partdict[num] = defid
 	return partdict
 
