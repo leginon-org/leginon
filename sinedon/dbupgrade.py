@@ -67,8 +67,8 @@ class DBUpgradeTools(object):
 	#==============
 	def executeQuery(self, query):
 		querytype = query.lstrip().lower().split()[0]
-		if querytype == 'show' and messaging[querytype+' query'] is True:
-			print query	
+		if messaging[querytype+' query'] is True:
+			print query
 		self.cursor.execute(query)
 
 	#==============
