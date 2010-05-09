@@ -22,6 +22,7 @@ messaging = {
 	'drop query': True,
 	'rename query': False,
 	'create query': True,
+	'update query': True,
 }
 
 class DBUpgradeTools(object):
