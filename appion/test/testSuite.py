@@ -134,7 +134,7 @@ class testScript(appionScript.AppionScript):
 			return
 
 		script = os.path.join(self.appiondir, "bin", "dogPicker.py ")
-		params = (" --runname=dogrun1 --projectid=%d --session=%s --diam=%d --thresh=%.2f --invert --no-wait --planereg --maxsize=%.2f --num-slice=%d --size-range=%d"
+		params = (" --runname=dogrun1 --projectid=%d --session=%s --diam=%d --thresh=%.2f --invert --no-wait --planereg --maxsize=%.2f --numslices=%d --sizerange=%d"
 			%(self.params['projectid'], self.timestamp, 200, 0.45, 0.02, 3, 200))
 		if self.params['commit'] is True:
 			params += " --commit "
