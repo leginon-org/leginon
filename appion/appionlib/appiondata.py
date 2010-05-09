@@ -1192,7 +1192,7 @@ class ApRMeasureData(Data):
 class ApRefineGoodBadParticleData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('refineIter', ApRefineIterData),
+			('refine', ApRefineIterData),
 			('good_refine', int),
 			('bad_refine', int),
 			('good_postRefine', int),

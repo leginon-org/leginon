@@ -276,7 +276,7 @@ class UploadReconScript(appionScript.AppionScript):
 			rline=line.rstrip()
 			if re.search("X\t\d+\t"+str(iternum)+"$",rline):
 				bits=rline.split()
-				badprtls.append(bits[1])
+				badprtls.append(int(bits[1]))
 			# break out of into the next iteration
 			elif re.search("X\t\d+\t"+n+"$",rline):
 				break
@@ -704,8 +704,10 @@ class UploadReconScript(appionScript.AppionScript):
 				prtlnum = int(ali[0])
 
 				# check if bad particle
-				if str(prtlnum) in badprtls:
+				if prtlnum in badprtls:
 					prtlaliq['refine_keep'] = False
+				else:
+					prtlaliq['refine_keep'] = True
 
 				prtlnum+=1 # offset for EMAN
 				qualf=float(ali[2].strip(','))

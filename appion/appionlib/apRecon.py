@@ -209,7 +209,7 @@ def setGoodBadParticlesFromReconId(reconid):
 		t0 = time.time()
 		#print "Iteration %d"%(refineiterdata['iteration'])
 		goodbadq = appiondata.ApRefineGoodBadParticleData()
-		goodbadq['refineIter'] = refineiterdata
+		goodbadq['refine'] = refineiterdata
 		goodbaddata = goodbadq.query()
 		if goodbaddata:
 			continue
