@@ -4082,14 +4082,14 @@ class particledata {
 			."  dens.*, "
 			."  path.`path` AS path ";
 		if ($this->mysql->SQLTableExists('ApRefineIterData')) {
-			$q .= ", iterid.`REF|ApRefineRunData|refineRun` AS refrun ";
+			$q .= ", refineiter.`REF|ApRefineRunData|refineRun` AS refrun ";
 		}
 		$q .=	"FROM Ap3dDensityData as dens "
 			."LEFT JOIN ApPathData AS path "
 			."  ON dens.`REF|ApPathData|path` = path.`DEF_id` ";
 		if ($this->mysql->SQLTableExists('ApRefineIterData')) {
-			$q .=	"LEFT JOIN ApRefineIterData AS iterid "
-				."  ON dens.`REF|ApRefineIterData|iterid` = iterid.`DEF_id` ";
+			$q .=	"LEFT JOIN ApRefineIterData AS refineiter "
+				."  ON dens.`REF|ApRefineIterData|refineIter` = refineiter.`DEF_id` ";
 		}
 		$q .= "WHERE "
 			."  dens.`REF|leginondata|SessionData|session` = '$sessionId' ";
@@ -4107,14 +4107,14 @@ class particledata {
 			."  dens.*, "
 			."  path.`path` AS path ";
 		if ($this->mysql->SQLTableExists('ApRefineIterData')) {
-			$q .= ", iterid.`REF|ApRefineRunData|refineRun` AS refrun ";
+			$q .= ", refineIter.`REF|ApRefineRunData|refineRun` AS refrun ";
 		}
 		$q .=	"FROM Ap3dDensityData as dens "
 			."LEFT JOIN ApPathData AS path "
 			."  ON dens.`REF|ApPathData|path` = path.`DEF_id` ";
 		if ($this->mysql->SQLTableExists('ApRefineIterData')) {
-			$q .=	"LEFT JOIN ApRefineIterData AS iterid "
-				."  ON dens.`REF|ApRefineIterData|iterid` = iterid.`DEF_id` ";
+			$q .=	"LEFT JOIN ApRefineIterData AS refineIter "
+				."  ON dens.`REF|ApRefineIterData|refineIter` = refineIter.`DEF_id` ";
 		}
 		$q .= "WHERE "
 			."  dens.`DEF_id` = '$densityId' ";
