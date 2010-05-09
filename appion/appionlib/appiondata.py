@@ -27,6 +27,7 @@ class ScriptProgramRun(Data):
 			('rundir', ApPathData),
 			('job', ApAppionJobData),
 			('appion_path', ApPathData),
+			('shell', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -59,6 +60,9 @@ class ScriptUserName(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
+			('uid', int),
+			('gid', int),
+			('fullname', str),
 		)
 	typemap = classmethod(typemap)
 

@@ -3,6 +3,7 @@ import os
 import re
 import math
 import sys
+import pwd
 import time
 import random
 import socket
@@ -74,11 +75,28 @@ def getFunctionName(arg=None):
 
 #=====================
 def getUsername():
-	try:
-		user = os.getlogin() #os.environ.get('USER')
-	except:
-		user = "unknown"
-	return user
+	userdict = getUserDict()
+	if not userdict:
+		return "unknown"
+	return userdict['username']
+
+#=====================
+def getUserDict():
+	uid = os.getuid()
+	if not uid:
+		return None
+	userinfo = pwd.getpwuid(uid)
+	if not userinfo or len(userinfo) < 6:
+		return None
+	userdict = {
+		'username': userinfo[0],
+		'uid': int(userinfo[2]),
+		'gid': int(userinfo[3]),
+		'fullname': userinfo[4],
+		'homedir': userinfo[5],
+		'shell': os.path.basename(userinfo[6]),
+	}
+	return userdict
 
 #=====================
 def getHostname():

@@ -6,6 +6,7 @@ import pyami.quietscipy
 import os
 import re
 import sys
+import pwd
 import time
 import subprocess
 from optparse import OptionParser
@@ -196,7 +197,16 @@ class AppionScript(basicScript.BasicScript):
 		prognameq['name'] = self.functionname
 
 		userq = appiondata.ScriptUserName()
-		userq['name'] = apParam.getUsername()
+		userdict = apParam.getUserDict()
+		if userdict:
+			userq['name'] = userdict['username']
+			userq['uid'] = userdict['uid']
+			userq['gid'] = userdict['gid']
+			userq['fullname'] = userdict['fullname']
+			usershell = userdict['shell']
+		else:
+			userq['name'] = "unknown"
+			usershell = None
 
 		hostq = appiondata.ScriptHostName()
 		hostq['name'] = apParam.getHostname()
@@ -214,6 +224,7 @@ class AppionScript(basicScript.BasicScript):
 		progrunq['progname'] = prognameq
 		progrunq['username'] = userq
 		progrunq['hostname'] = hostq
+		progrunq['shell'] = usershell
 		progrunq['rundir'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		progrunq['job'] = self.getClusterJobData()
 		progrunq['revision'] = version.getSubverionRevision()
