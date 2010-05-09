@@ -152,7 +152,15 @@ def upgradeAppionDB(appiondbname, projectdb):
 		appiondb.indexColumn('ApRefineParticleData', 'postRefine_keep')
 
 	### Need to change:
-	###ApRefineGoodBadParticleData
+	if appiondb.tableExists('ApRefineGoodBadParticleData'):
+		appiondb.renameColumn('ApRefineGoodBadParticleData', 'REF|ApRefinementData|refine', 
+			'REF|ApRefineIterData|refine', appiondb.link)
+		appiondb.renameColumn('ApRefineGoodBadParticleData', 'good_normal', 'good_refine', appiondb.int)
+		appiondb.renameColumn('ApRefineGoodBadParticleData', 'bad_normal', 'bad_refine', appiondb.int)
+		appiondb.renameColumn('ApRefineGoodBadParticleData', 'good_coran', 'good_postRefine', appiondb.int)
+		appiondb.renameColumn('ApRefineGoodBadParticleData', 'bad_coran', 'bad_postRefine', appiondb.int)
+		appiondb.dropColumn('ApRefineGoodBadParticleData', 'good_msgp')
+		appiondb.dropColumn('ApRefineGoodBadParticleData', 'bad_msgp')
 
 	#===================
 	# add new columns calculated from old data
