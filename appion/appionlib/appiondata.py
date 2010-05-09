@@ -1025,7 +1025,7 @@ class ApRefineRunData(Data):
 			('stack', ApStackData),
 			('initialModel', ApInitialModelData),
 			('path', ApPathData),
-			('jobfile', ApAppionJobData),
+			('job', ApAppionJobData),
 			### additional packages plugin here
 			('xmippParams', ApXmippRefineParamsData),
 			('frealignParams', ApFrealignParamsData),
@@ -1188,7 +1188,7 @@ class ApRMeasureData(Data):
 class ApRefineGoodBadParticleData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('refine', ApRefineIterData),
+			('refineIter', ApRefineIterData),
 			('good_refine', int),
 			('bad_refine', int),
 			('good_postRefine', int),

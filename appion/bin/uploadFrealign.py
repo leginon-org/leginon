@@ -178,7 +178,7 @@ class UploadFrealign(appionScript.AppionScript):
 			self.runq['package'] = "Frealign"
 			self.runq['description'] = self.params['description']
 			self.runq['hidden'] = False 
-			self.runq['jobfile'] = jobdata
+			self.runq['job'] = jobdata
 
 		iterq = appiondata.ApRefineIterData()
 		iterq['iteration'] = iternum
@@ -195,7 +195,7 @@ class UploadFrealign(appionScript.AppionScript):
 		for partdict in parttree:
 			partq = ApRefineParticleData()
 
-		ApRefineGoodBadParticleData
+
 
 	#=====================
 	def start(self):
@@ -218,7 +218,7 @@ class UploadFrealign(appionScript.AppionScript):
 		#apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
 		#eulerjump = apEulerJump.ApEulerJump()
 		#eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, stackid)
-		#apRecon.getGoodBadParticlesFromReconId(reconrunid)
+		apRecon.getGoodBadParticlesFromReconId(reconrunid)
 
 if __name__ == '__main__':
 	upfrealign = UploadFrealign()

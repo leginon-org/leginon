@@ -203,25 +203,25 @@ def setGoodBadParticlesFromReconId(reconid):
 	refinerundata = appiondata.ApRefineRunData.direct_query(reconid)
 	refineq = appiondata.ApRefineIterData()
 	refineq['refineRun'] = refinerundata
-	refinedatas = refineq.query()
+	refineiterdatas = refineq.query()
 	r0 = time.time()
-	for refinedata in refinedatas:
+	for refineiterdata in refineiterdatas:
 		t0 = time.time()
-		#print "Iteration %d"%(refinedata['iteration'])
+		#print "Iteration %d"%(refineiterdata['iteration'])
 		goodbadq = appiondata.ApRefineGoodBadParticleData()
-		goodbadq['refine'] = refinedata
+		goodbadq['refineIter'] = refineiterdata
 		goodbaddata = goodbadq.query()
 		if goodbaddata:
 			continue
 		fields = {
-			'good_refine': getParticleCount(refinedata.dbid, cursor, 'refine_keep', True),
-			'bad_refine':  getParticleCount(refinedata.dbid, cursor, 'refine_keep', False),
-			'good_postRefine':  getParticleCount(refinedata.dbid, cursor, 'postRefine_keep', True),
-			'bad_postRefine':   getParticleCount(refinedata.dbid, cursor, 'postRefine_keep', False),
+			'good_refine': getParticleCount(refineiterdata.dbid, cursor, 'refine_keep', True),
+			'bad_refine':  getParticleCount(refineiterdata.dbid, cursor, 'refine_keep', False),
+			'good_postRefine':  getParticleCount(refineiterdata.dbid, cursor, 'postRefine_keep', True),
+			'bad_postRefine':   getParticleCount(refineiterdata.dbid, cursor, 'postRefine_keep', False),
 		}
 		#print fields
 		goodbadq = appiondata.ApRefineGoodBadParticleData()
-		goodbadq['refine'] = refinedata
+		goodbadq['refine'] = refineiterdata
 		goodbadq['good_refine'] = fields['good_refine']
 		goodbadq['bad_refine'] = fields['bad_refine']
 		goodbadq['good_postRefine'] = fields['good_postRefine']

@@ -324,7 +324,7 @@ class UploadReconScript(appionScript.AppionScript):
 		if not paramdescription:
 			paramdescription=None
 
-		runq['jobfile']=self.params['jobinfo']
+		runq['job']=self.params['jobinfo']
 		runq['initialModel']=self.params['model']
 		runq['package']=self.params['package']
 		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
@@ -353,7 +353,7 @@ class UploadReconScript(appionScript.AppionScript):
 		runq=appiondata.ApRefineRunData()
 		runq['runname']=self.params['runname']
 		runq['stack']=self.params['stack']
-		runq['jobfile']=self.params['jobinfo']
+		runq['job']=self.params['jobinfo']
 		runq['initialModel']=self.params['model']
 		runq['package']=self.params['package']
 		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
