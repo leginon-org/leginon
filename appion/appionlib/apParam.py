@@ -94,7 +94,7 @@ def getUserDict():
 		'gid': int(userinfo[3]),
 		'fullname': userinfo[4],
 		'homedir': userinfo[5],
-		'shell': os.path.basename(userinfo[6]),
+		'unixshell': os.path.basename(userinfo[6]),
 	}
 	return userdict
 

@@ -27,7 +27,7 @@ class ScriptProgramRun(Data):
 			('rundir', ApPathData),
 			('job', ApAppionJobData),
 			('appion_path', ApPathData),
-			('shell', str),
+			('unixshell', str),
 		)
 	typemap = classmethod(typemap)
 

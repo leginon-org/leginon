@@ -203,10 +203,10 @@ class AppionScript(basicScript.BasicScript):
 			userq['uid'] = userdict['uid']
 			userq['gid'] = userdict['gid']
 			userq['fullname'] = userdict['fullname']
-			usershell = userdict['shell']
+			unixshell = userdict['unixshell']
 		else:
 			userq['name'] = "unknown"
-			usershell = None
+			unixshell = None
 
 		hostq = appiondata.ScriptHostName()
 		hostq['name'] = apParam.getHostname()
@@ -224,7 +224,7 @@ class AppionScript(basicScript.BasicScript):
 		progrunq['progname'] = prognameq
 		progrunq['username'] = userq
 		progrunq['hostname'] = hostq
-		progrunq['shell'] = usershell
+		progrunq['unixshell'] = unixshell
 		progrunq['rundir'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		progrunq['job'] = self.getClusterJobData()
 		progrunq['revision'] = version.getSubverionRevision()
