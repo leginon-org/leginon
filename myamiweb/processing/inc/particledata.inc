@@ -3501,21 +3501,16 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		if (count($r) && $count) {
 			//using cached values
-			if ($refinetype == 'SpiCoran') {
+			if ($refinetype == 'SpiCoran' || $refinetype == 'MsgP') {
 				if ($subset=='bad')
-					return $r[0]['bad_coran'];
+					return $r[0]['bad_postRefine'];
 				else
-					return $r[0]['good_coran'];
-			} elseif ($refinetype == 'MsgP') {
-				if ($subset=='bad')
-					return $r[0]['bad_msgp'];
-				else
-					return $r[0]['good_msgp'];
+					return $r[0]['good_postRefine'];
 			} else {
 				if ($subset=='bad')
-					return $r[0]['bad_normal'];
+					return $r[0]['bad_refine'];
 				else
-					return $r[0]['good_normal'];
+					return $r[0]['good_refine'];
 			}
 		}
 		//Fall back to old method
