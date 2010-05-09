@@ -289,6 +289,21 @@ def upgradeAppionDB(appiondbname, projectdb):
 		appiondb.renameColumn(tablename, 'project|projects|project', 
 			"REF|"+projectdb.getSinedonName()+"|projects|project")
 		appiondb.indexColumn(tablename, "REF|"+projectdb.getSinedonName()+"|projects|project")
+
+		### refine tables
+		appiondb.renameColumn(tablename, 'REF|ApRefinementData|refinementData', 'REF|ApRefineIterData|refineIter', appiondb.link)
+		appiondb.renameColumn(tablename, 'REF|ApRefinementData|refinement', 'REF|ApRefineIterData|refineIter', appiondb.link)
+		appiondb.renameColumn(tablename, 'REF|ApRefinementData|refine', 'REF|ApRefineIterData|refineIter', appiondb.link)
+		appiondb.renameColumn(tablename, 'REF|ApRefinementRunData|refinementRun', 'REF|ApRefineRunData|refineRun', appiondb.link)
+		appiondb.renameColumn(tablename, 'REF|ApRefinementParamsData|refinementParams', 'REF|ApEmanRefineIterData|emanParams', appiondb.link)
+		### plural particles tables
+		appiondb.renameColumn(tablename, 'REF|ApStackParticlesData|particle', 'REF|ApStackParticleData|particle', appiondb.link)
+		appiondb.renameColumn(tablename, 'REF|ApStackParticlesData|stackpart', 'REF|ApStackParticleData|stackpart', appiondb.link)
+		appiondb.renameColumn(tablename, 'REF|ApAlignParticlesData|alignparticle', 'REF|ApAlignParticleData|alignparticle', appiondb.link)
+		### no long required to be on a cluster
+		appiondb.renameColumn(tablename, 'REF|ApClusterJobData|job', 'REF|ApAppionJobData|job')
+		appiondb.renameColumn(tablename, 'REF|ApClusterJobData|jobfile', 'REF|ApAppionJobData|job')
+
 	appiondb.debug = olddebug
 
 	#===================
