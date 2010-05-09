@@ -236,6 +236,22 @@ class DBUpgradeTools(object):
 		numrows = int(result[0])
 		return numrows
 
+	#==============
+	def getTablesWithTableReference(table):
+		"""
+		gets all tables in current database with specified column name
+		"""
+		query = ("SELECT DISTINCT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS "
+			+"WHERE COLUMN_NAME LIKE ('REF|"+table+"|%') "
+			+"AND TABLE_SCHEMA='"+self.dbname+"';")
+		if messaging['query'] is True:
+			print query
+		self.cursor.execute(query)
+		results = self.cursor.fetchall()
+		if not results:
+			return None
+		return results
+
 	#============================
 	#== PUBLIC FUNCTIONS
 	#============================
@@ -294,6 +310,8 @@ class DBUpgradeTools(object):
 			if self.exit is True: sys.exit(1)
 			return
 
+		print self.getTablesWithTableReference(table)
+
 		if messaging['success'] is True:
 			print "\033[32mrenamed table %s to %s\033[0m"%(table1, table2)
 		return True
@@ -331,7 +349,7 @@ class DBUpgradeTools(object):
 		if messaging['query'] is True:
 			print query
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
-			print "\033[34mrenaming column `%s` to `%s` at %s\033[0m"%(column1, column2, time.asctime())
+			print "\033[34mrenaming column `%s` to `%s` in table %s at %s\033[0m"%(column1, column2, table, time.asctime())
 		self.cursor.execute(query)
 		if messaging['long query'] is True and time.time()-t0 > 20:
 			print "column rename time: %.1f min"%((time.time()-t0)/60.0)
@@ -474,7 +492,7 @@ class DBUpgradeTools(object):
 
 		t0 = time.time()
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
-			print "\033[34mindexing column `%s` at %s\033[0m"%(column, time.asctime())
+			print "\033[34mindexing column `%s` in table %s at %s\033[0m"%(column, table, time.asctime())
 		if messaging['query'] is True:
 			print query
 		self.cursor.execute(query)
@@ -512,7 +530,7 @@ class DBUpgradeTools(object):
 
 		t0 = time.time()
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
-			print "\033[34mdropping column index `%s` at %s\033[0m"%(column, time.asctime())
+			print "\033[34mdropping column index `%s` in table %s at %s\033[0m"%(column, table, time.asctime())
 		if messaging['query'] is True:
 			print query
 		self.cursor.execute(query)
@@ -545,7 +563,7 @@ class DBUpgradeTools(object):
 
 		t0 = time.time()
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
-			print "\033[34mmodifying column `%s` at %s\033[0m"%(column, time.asctime())
+			print "\033[34mmodifying column `%s` in table %s at %s\033[0m"%(column, table, time.asctime())
 		query = "ALTER TABLE `%s` MODIFY `%s` %s;"%(table, column, columndefine)
 		if messaging['query'] is True:
 			print query
