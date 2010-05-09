@@ -3497,8 +3497,10 @@ class particledata {
 		//check for cached values
 		$q = "SELECT * "
 			."FROM `ApRefineGoodBadParticleData` gb "
-			."WHERE gb.`REF|ApRefineIterData|refine` = '$refinementDataId' ";
+			."WHERE gb.`REF|ApRefineIterData|refineIter` = '$refinementDataId' ";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		if (count($r) && $count) {
 			//using cached values
 			if ($refinetype == 'SpiCoran' || $refinetype == 'MsgP') {
@@ -3520,22 +3522,21 @@ class particledata {
 			."LEFT JOIN `ApStackParticleData` aspd "
 			."ON (apcd.`REF|ApStackParticleData|particle` = aspd.`DEF_id`) "
 			."WHERE apcd.`REF|ApRefineIterData|refineIter` = '$refinementDataId' ";
-		switch ($refinetype) {
-			case 'EMAN':
-				if ($subset=='bad') $q.="AND `thrown_out` = 1 ";
-				elseif ($subset=='good') $q.="AND `thrown_out` is NULL ";
-				break;
-			case 'SpiCoran':
-				if ($subset=='bad') $q.="AND `coran_keep` = 0 ";
-				elseif ($subset=='good') $q.="AND `coran_keep` = 1 ";
-				break;
-			case 'MsgP':
-				if ($subset=='bad') $q.="AND `msgp_keep` = 0 ";
-				elseif ($subset=='good') $q.="AND `msgp_keep` = 1 ";
-				break;
+		if ($refinetype == 'SpiCoran' || $refinetype == 'MsgP') {
+			if ($subset=='bad')
+				$q.="AND (`refine_keep` = 0 OR `refine_keep` IS NULL) ";
+			else
+				$q.="AND `refine_keep` = 1 ";
+		} else {
+			if ($subset=='bad')
+				$q.="AND (`postRefine_keep` = 0 OR `postRefine_keep` IS NULL) ";
+			else
+				$q.="AND `postRefine_keep` = 1 ";
 		}
 		if (!$count) $q.= "ORDER BY aspd.`DEF_id` ASC ";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		if ($count) return $r[0]['p'];
 		return $r;
 	}
