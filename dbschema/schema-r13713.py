@@ -31,7 +31,7 @@ def upgradeAppionDB(appiondbname, projectdb):
 	appiondb = dbupgrade.DBUpgradeTools('appiondata', appiondbname, drop=True)
 
 	#===================
-	# rename tables:
+	# rename tables: when renaming table you must rename all columns linking to that table
 	#===================
 	### refinement tables
 	appiondb.renameTable('ApRefinementData', 'ApRefineIterData')
