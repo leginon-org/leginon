@@ -13,9 +13,15 @@ messaging = {
 	'cannot add': False,
 	'not exist': False,
 	'no change': False,
-	'query': False,
 	'success': True,
 	'custom': True,
+	'show query': False,
+	'describe query': False,
+	'select query': False,
+	'alter query': True,
+	'drop query': True,
+	'rename query': False,
+	'create query': True,
 }
 
 class DBUpgradeTools(object):
@@ -50,23 +56,28 @@ class DBUpgradeTools(object):
 		self.timestamp = 'timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP' 
 
 	#==============
-	def databaseExists(self, dbname):
-		query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '%s';"%(dbname)
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
-		numrows = int(self.cursor.rowcount)
-		if numrows > 0:
-			return True
-		return False
-
-	#==============
 	def getDatabaseName(self):
 		return self.dbname
 
 	#==============
 	def getSinedonName(self):
 		return self.confname
+
+	#==============
+	def executeQuery(self, query):
+		querytype = query.lstrip().lower().split()[0]
+		if querytype == 'show' and messaging[querytype+' query'] is True:
+			print query	
+		self.cursor.execute(query)
+
+	#==============
+	def databaseExists(self, dbname):
+		query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '%s';"%(dbname)
+		self.executeQuery(query)
+		numrows = int(self.cursor.rowcount)
+		if numrows > 0:
+			return True
+		return False
 
 	#==============
 	def validTableName(self, table):
@@ -93,9 +104,7 @@ class DBUpgradeTools(object):
 		check if table exists
 		"""
 		query = "SHOW TABLES LIKE '%s';"%(table)
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		numrows = int(self.cursor.rowcount)
 		if numrows > 0:
 			return True
@@ -134,9 +143,7 @@ class DBUpgradeTools(object):
 				print "\033[33mcannot check column, table %s does not exist\033[0m"%(table)
 			return False
 		query = "SHOW COLUMNS FROM `%s` WHERE Field='%s';"%(table, column)
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		numrows = int(self.cursor.rowcount)
 		if numrows > 0:
 			return True
@@ -152,9 +159,7 @@ class DBUpgradeTools(object):
 				print "\033[33mcannot check column, table %s does not exist\033[0m"%(table)
 			return False
 		query = "SHOW INDEX FROM  `%s` WHERE Column_name='%s';"%(table, column)
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		numrows = int(self.cursor.rowcount)
 		if numrows > 0:
 			return True
@@ -170,9 +175,7 @@ class DBUpgradeTools(object):
 				print "\033[33mcannot check column, table %s does not exist\033[0m"%(table)
 			return False
 		query = "SHOW INDEX FROM  `%s` WHERE Column_name='%s';"%(table, column)
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		result = self.cursor.fetchone()
 		if not result:
 			return None
@@ -191,13 +194,11 @@ class DBUpgradeTools(object):
 		get column definition (e.g., TINYINT(1) NULL DEFAULT 0)
 		"""
 		#query = "SHOW CREATE TABLE `%s`;"%(table)
-		#self.cursor.execute(query)
+		#self.executeQuery(query)
 		#print self.cursor.fetchone()
 
 		query = "DESCRIBE `%s` `%s`;"%(table, column)
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		result = self.cursor.fetchone()
 		if not result:
 			print "\033[31mcolumn definition not found %s.%s\033[0m"%(table, column)
@@ -226,9 +227,7 @@ class DBUpgradeTools(object):
 				print "\033[33mcannot count rows, table %s does not exist\033[0m"%(table)
 			return None
 		query = "SELECT COUNT(*) FROM %s;"%(table)
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		result = self.cursor.fetchone()
 		if not result:
 			print "\033[33mfailed to count rows in table %s\033[0m"%(table)
@@ -244,9 +243,7 @@ class DBUpgradeTools(object):
 		query = ("SELECT DISTINCT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS "
 			+"WHERE COLUMN_NAME LIKE ('REF|"+table+"|%') "
 			+"AND TABLE_SCHEMA='"+self.dbname+"';")
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		results = self.cursor.fetchall()
 		if not results:
 			return None
@@ -264,7 +261,7 @@ class DBUpgradeTools(object):
 		if messaging['custom'] is True:
 			print "CUSTOM: \033[33m", query, "\033[0m"
 		t0 = time.time()
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		if messaging['custom'] is True and time.time()-t0 > 20:
 			print "custom query time: %.1f min"%((time.time()-t0)/60.0)
 		return True
@@ -277,7 +274,7 @@ class DBUpgradeTools(object):
 		if messaging['custom'] is True:
 			print "CUSTOM: \033[33m", query, "\033[0m"
 		t0 = time.time()
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		if messaging['custom'] is True and time.time()-t0 > 20:
 			print "custom query time: %.1f min"%((time.time()-t0)/60.0)
 		return self.cursor.fetchall()
@@ -301,9 +298,7 @@ class DBUpgradeTools(object):
 			return
 
 		query = "RENAME TABLE `%s` TO `%s`;"%(table1, table2)
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 
 		if self.tableExists(table2) is False:
 			print "\033[31mfailed to rename %s to %s\033[0m"%(table1, table2)
@@ -346,11 +341,9 @@ class DBUpgradeTools(object):
 			print query
 
 		t0 = time.time()
-		if messaging['query'] is True:
-			print query
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
 			print "\033[34mrenaming column `%s` to `%s` in table %s at %s\033[0m"%(column1, column2, table, time.asctime())
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		if messaging['long query'] is True and time.time()-t0 > 20:
 			print "column rename time: %.1f min"%((time.time()-t0)/60.0)
 
@@ -384,9 +377,7 @@ class DBUpgradeTools(object):
 
 		query = "ALTER TABLE `%s` ADD COLUMN `%s` %s;"%(table, column, columndefine)
 
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 
 		if self.columnExists(table, column) is False:
 			print "\033[31mfailed to add column %s\033[0m"%(column)
@@ -422,9 +413,7 @@ class DBUpgradeTools(object):
 		query += "KEY `DEF_timestamp` (`DEF_timestamp`) \n"
 		### set defaults
 		query += ") ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;\n"
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 
 		if self.tableExists(table) is False:
 			print "\033[31mfailed to create table %s\033[0m"%(table)
@@ -454,9 +443,7 @@ class DBUpgradeTools(object):
 			return False
 
 		query = "ALTER TABLE `%s` DROP COLUMN `%s` ;"%(table, column)
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 
 		if self.columnExists(table, column) is True:
 			print "\033[31mfailed to drop column %s\033[0m"%(column)
@@ -493,9 +480,7 @@ class DBUpgradeTools(object):
 		t0 = time.time()
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
 			print "\033[34mindexing column `%s` in table %s at %s\033[0m"%(column, table, time.asctime())
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		if messaging['long query'] is True and time.time()-t0 > 20:
 			print "column index time: %.1f min"%((time.time()-t0)/60.0)
 
@@ -531,9 +516,7 @@ class DBUpgradeTools(object):
 		t0 = time.time()
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
 			print "\033[34mdropping column index `%s` in table %s at %s\033[0m"%(column, table, time.asctime())
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		if messaging['long query'] is True and time.time()-t0 > 20:
 			print "drop column index time: %.1f min"%((time.time()-t0)/60.0)
 
@@ -565,9 +548,7 @@ class DBUpgradeTools(object):
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
 			print "\033[34mmodifying column `%s` in table %s at %s\033[0m"%(column, table, time.asctime())
 		query = "ALTER TABLE `%s` MODIFY `%s` %s;"%(table, column, columndefine)
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		if messaging['long query'] is True and time.time()-t0 > 20:
 			print "column modify time: %.1f min"%((time.time()-t0)/60.0)
 
@@ -581,9 +562,7 @@ class DBUpgradeTools(object):
 		get all tables in database
 		"""
 		query = "SHOW TABLES;"
-		if messaging['query'] is True:
-			print query
-		self.cursor.execute(query)
+		self.executeQuery(query)
 		tabledatas = self.cursor.fetchall()
 		tablelist = []
 		for tabledata in tabledatas:
