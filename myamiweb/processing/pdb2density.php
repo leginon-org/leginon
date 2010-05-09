@@ -98,9 +98,11 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
    echo "<option value=''>select one...</option>\n";
 	foreach ($syms as $sym) {
 		echo "<option value='$sym[DEF_id]'";
-		if ($sym['DEF_id']==$_POST['sym']) echo " selected";
+		if ($sym['DEF_id']==$_POST['symm'])
+			echo " selected";
 		echo ">$sym[symmetry]";
-		if ($sym['symmetry']=='C1') echo " (no symmetry)";
+		if ($sym['symmetry']=='C1')
+			echo " (no symmetry)";
 		echo "</option>\n";
 	}
 	echo "</select>\n";
@@ -110,8 +112,15 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	echo "<tr><td valign='top' class='tablebg'>\n";
 
    echo "<select name='method'>\n";
-   echo "<option value='spider'>SPIDER: CP FROM PDB</option>\n";
-   echo "<option value='eman'>EMAN: pdb2mrc</option>\n";
+	   echo "<option value='eman'";
+		if ($_POST['method']=='eman')
+			echo " selected";
+	   echo ">EMAN: pdb2mrc</option>\n";
+
+	   echo "<option value='spider'";
+		if ($_POST['method']=='spider')
+			echo " selected";
+	   echo ">SPIDER: CP FROM PDB</option>\n";
 	echo "</select>\n";
 	echo "&nbsp;Program to convert PDB\n";
 
