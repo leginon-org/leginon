@@ -121,7 +121,7 @@ def createAmpcorBatchFile(infile,params):
 			elif re.search("^\[pwsc\]",line):
 				outf.write(spiderline("pwsc","pwsc","scaling script"))
 			elif re.search("^\[applyfen\]",line):
-				outf.write(spiderline("applyfen",os.path.join(appiondir,"lib/applyfen"),"apply curve to data script"))
+				outf.write(spiderline("applyfen",os.path.join(appiondir,"appionlib/applyfen"),"apply curve to data script"))
 			else:
 				outf.write(line)
 	return tmpfile
