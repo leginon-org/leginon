@@ -276,8 +276,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.reportTargetListDone(newdata, targetliststatus)
 		self.setStatus('idle')
 
-	def doneTarget
-
 	def waitForRejects(self):
 		# wait for other targets to complete
 		for tid, teventinfo in self.targetlistevents.items():
