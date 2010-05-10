@@ -8,8 +8,10 @@ if (file_exists($filename))  {
 	header("Content-Type: application/octet-stream");
 	header("Content-Type: application/force-download");
 	header("Content-Type: application/download");
+	header("Content-Transfer-Encoding: binary");
 	header("Content-Length: $size");
-	header("Content-Disposition: attachment; filename=".$filename);
+	$basename=basename($filename)
+	header("Content-Disposition: attachment; filename='$basename';");
 	readfile($filename);
 } else {
 	echo "
