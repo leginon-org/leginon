@@ -18,7 +18,6 @@ require "inc/processing.inc";
 if ($_POST['process']) {
 	runSubStack();
 }
-
 // Create the form page
 else {
 	createSubStackForm();
@@ -93,8 +92,6 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	echo "Output directory:<i>$outdir</i><br/>\n";
 	echo "<br/>\n";
 	
-	$goodprtls = $particle->getSubsetParticlesInStack($refId,'good','SpiCoran',True);
-	echo "Keeping $goodprtls of $nump particles<br><br>\n";
 	echo "<b>Description:</b><br />\n";
 	echo "<textarea name='description' rows='2' cols='60'>$description</textarea>\n";
 	echo "<br/>\n";
