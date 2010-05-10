@@ -3479,7 +3479,7 @@ class particledata {
 		return $r[0];
 	}
 
-	function getStackFromRefinement ($refinementDataId) {
+	function getStackFromRefineIter ($refineIterId) {
 		$q = "SELECT r.*, rr.*, s.*, path.path "
 				."FROM `ApRefineIterData` r "
 				."LEFT JOIN `ApRefineRunData` rr "
@@ -3488,56 +3488,45 @@ class particledata {
 				."ON (rr.`REF|ApStackData|stack` = s.`DEF_id`) "
 				."LEFT JOIN `ApPathData` path "
 				."ON (s.`REF|ApPathData|path` = path.`DEF_id`) "
-				."WHERE r.`DEF_id` = $refinementDataId";
+				."WHERE r.`DEF_id` = $refineIterId";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
 
-	function getSubsetParticlesInStack ($refinementDataId, $subset, $refinetype='EMAN', $count=False) {
+	function getRefineParticleCounts($refineIterId) {
 		//check for cached values
 		$q = "SELECT * "
 			."FROM `ApRefineGoodBadParticleData` gb "
-			."WHERE gb.`REF|ApRefineIterData|refine` = '$refinementDataId' ";
+			."WHERE gb.`REF|ApRefineIterData|refine` = '$refineIterId' ";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/><br/>\n";
-		if (count($r) && $count) {
-			//using cached values
-			if ($refinetype == 'SpiCoran' || $refinetype == 'MsgP') {
-				if ($subset=='bad')
-					return $r[0]['bad_postRefine'];
-				else
-					return $r[0]['good_postRefine'];
-			} else {
-				if ($subset=='bad')
-					return $r[0]['bad_refine'];
-				else
-					return $r[0]['good_refine'];
-			}
-		}
-		//Fall back to old method
+		if (!$r)
+			return;
+		return $r[0];
+	}
+
+	function getSubsetParticlesInStack ($refineIterId, $subset, $refinetype='refine') {
 		$q = "SELECT particleNumber as p ";
-		if ($count) $q = "SELECT count(particleNumber) as p ";
-		$q .= "FROM `ApRefineParticleData` apcd "
-			."LEFT JOIN `ApStackParticleData` aspd "
-			."ON (apcd.`REF|ApStackParticleData|particle` = aspd.`DEF_id`) "
-			."WHERE apcd.`REF|ApRefineIterData|refineIter` = '$refinementDataId' ";
-		if ($refinetype == 'SpiCoran' || $refinetype == 'MsgP') {
+		$q .= "FROM `ApRefineParticleData` AS refinepart "
+			."LEFT JOIN `ApStackParticleData` AS stackpart "
+			."  ON (refinepart.`REF|ApStackParticleData|particle` = stackpart.`DEF_id`) "
+			."WHERE refinepart.`REF|ApRefineIterData|refineIter` = '$refineIterId' ";
+		if ($refinetype == 'postRefine') {
 			if ($subset=='bad')
-				$q.="AND (`refine_keep` = 0 OR `refine_keep` IS NULL) ";
+				$q.="AND (refinepart.`postRefine_keep` = 0 OR refinepart.`postRefine_keep` IS NULL) ";
 			else
-				$q.="AND `refine_keep` = 1 ";
+				$q.="AND refinepart.`postRefine_keep` = 1 ";
 		} else {
 			if ($subset=='bad')
-				$q.="AND (`postRefine_keep` = 0 OR `postRefine_keep` IS NULL) ";
+				$q.="AND (refinepart.`refine_keep` = 0 OR refinepart.`refine_keep` IS NULL) ";
 			else
-				$q.="AND `postRefine_keep` = 1 ";
+				$q.="AND refinepart.`refine_keep` = 1 ";
 		}
-		if (!$count) $q.= "ORDER BY aspd.`DEF_id` ASC ";
+		$q.= "ORDER BY stackpart.`particleNumber` ASC ";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/><br/>\n";
-		if ($count) return $r[0]['p'];
 		return $r;
 	}
 
@@ -3660,16 +3649,6 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		if ($count) return $r[0]['p'];
 		return $r;
-	}
-
-	function getNumBadParticles ($refinementDataId, $refinetype='EMAN' ) {
-		$r = $this->getSubsetParticlesInStack($refinementDataId, 'bad',$refinetype);
-		return count($r);
-	}
-
-	function getNumGoodParticles ($refinementDataId, $refinetype='EMAN' ) {
-		$r = $this->getSubsetParticlesInStack($refinementDataId, 'good',$refinetype);
-		return count($r);
 	}
 
 	function listAllStackParticles ($stackId) {
