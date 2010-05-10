@@ -9,6 +9,7 @@ from appionlib import apFile
 from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import apVolume
+from appionlib import spyder
 #pyami
 from pyami import mrc
 
