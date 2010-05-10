@@ -328,10 +328,20 @@ class TargetHandler(object):
 		except IndexError:
 			return None
 
+	def reportTargetStatus(self, target, status):
+			## NOTE: This function was created because there are several
+			## places where we just want to update the status of the target.
+			## Previous to having this function, several places were not
+			## forcing the insert.  Now we force it, so watch out for extra
+			## inserts that are not wanted.
+			newtarget = leginondata.AcquisitionImageTargetData(initializer=target, status=status)
+			newtarget.insert(force=True)
+			self.logger.debug('target stored in DB: %s, %s' % (newtarget.dbid, status))
+			return newtarget
+
 	def markTargetsDone(self, targets):
 		for target in targets:
-			done_target = leginondata.AcquisitionImageTargetData(initializer=target, status='done')
-			self.publish(done_target, database=True)
+			self.reportTargetStatus(target, 'done')
 
 class TargetWaitHandler(TargetHandler):
 	eventinputs = TargetHandler.eventinputs + [event.TargetListDoneEvent]

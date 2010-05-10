@@ -220,8 +220,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			if state in ('stop', 'stopqueue'):
 				self.logger.info('Aborting current target list')
 				targetliststatus = 'aborted'
-				donetarget = leginondata.AcquisitionImageTargetData(initializer=target, status='aborted')
-				self.publish(donetarget, database=True)
+				self.reportTargetStatus(target, 'aborted')
 				## continue so that remaining targets are marked as done also
 				continue
 
@@ -230,12 +229,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.logger.info('Target has been done, processing next target')
 				continue
 
-			self.logger.debug('Creating processing target...')
-			adjustedtarget = leginondata.AcquisitionImageTargetData(initializer=target,
-																												status='processing')
-			self.logger.debug('Publishing processing target...')
-			self.publish(adjustedtarget, database=True)
-			self.logger.debug('Processing target published')
+			adjustedtarget = self.reportTargetStatus(target, 'processing')
 
 			#self.setZ(adjustedtarget)
 			# this while loop allows target to repeat
@@ -274,20 +268,15 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 				# end of target repeat loop
 
-			self.logger.debug('Creating done target...')
-			donetarget = leginondata.AcquisitionImageTargetData(initializer=adjustedtarget,
-																										status='done')
-			#self.publish(donetarget, database=True, dbforce=True)
-			## Why force???
-			self.logger.debug('Publishing done target...')
-			self.publish(donetarget, database=True)
-			self.logger.debug('Done target published')
+			self.reportTargetStatus(adjustedtarget, 'done')
 
 		# (Hack removed: Sometimes we are processing an empty
 		# target list. The TargetListDone event still has to go
 		# back to the other node or else application hangs.
 		self.reportTargetListDone(newdata, targetliststatus)
 		self.setStatus('idle')
+
+	def doneTarget
 
 	def waitForRejects(self):
 		# wait for other targets to complete
