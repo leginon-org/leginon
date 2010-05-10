@@ -348,7 +348,7 @@ function showReport () {
 		$html .= "$iteration[volumeDensity]<br/>\n";
 		
 		// buttons
-		$html .= "<input class='edit' type='button' onClick=\"parent.location='postproc.php?expId=$expId&refinement=$refineIterId'\" value='Post Processing'><br />\n";
+		$html .= "<input class='edit' type='button' onClick=\"parent.location='postproc.php?expId=$expId&refineIter=$refineIterId'\" value='Post Processing'><br />\n";
 		$html .= "<input class='edit' type='button' onClick=\"parent.location='makegoodavg.php?expId=$expId&refId=$refineIterId&reconId=$reconId&iter=$iternum'\" value='Remove Jumpers'><br />\n";
 		if ($refinerun['package']=='EMAN/SpiCoran') $html .= "<input class='edit' type='button' onClick=\"parent.location='coranSubStack.php?expId=$expId&refId=$refineIterId&reconId=$reconId&iter=$iternum'\" value='Coran Substack'><br />\n";
 		if ($refineIterData['exemplar']) $html .= "<input class='edit' type='submit' name='notExemplar".$refineIterId."' value='not exemplar'>";

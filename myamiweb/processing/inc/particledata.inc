@@ -3460,22 +3460,24 @@ class particledata {
 		return $r;
 	}
 
-	function getRefinementData ($refinementRun,$iteration=False) {
+	function getRefinementData ($refineRunId, $iteration=False) {
 		$q = "SELECT * "
 			."FROM `ApRefineIterData` "
-			."WHERE `REF|ApRefineRunData|refineRun` = $refinementRun ";
+			."WHERE `REF|ApRefineRunData|refineRun` = $refineRunId ";
 		if ($iteration) $q.="AND `iteration` = $iteration";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
 
-	function getParamsFromRefinementDataId ($refinementId) {
+	function getParamsFromRefinementDataId ($refineIterId) {
 		$q = "SELECT * "
-				."FROM `ApRefineIterData` r "
-				."LEFT JOIN `ApEmanRefineIterData` p "
-				."ON (r.`REF|ApEmanRefineIterData|emanParams` = p.`DEF_id`) "
-				."WHERE r.`DEF_id` = $refinementId";
+				."FROM `ApRefineIterData` AS refineIter "
+				."LEFT JOIN `ApEmanRefineIterData` emanparams "
+				."  ON (refineIter.`REF|ApEmanRefineIterData|emanParams` = emanparams.`DEF_id`) "
+				."WHERE refineIter.`DEF_id` = $refineIterId";
+		echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		echo print_r($r)."<br/><br/>\n";
 		return $r[0];
 	}
 
