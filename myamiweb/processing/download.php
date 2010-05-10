@@ -10,7 +10,7 @@ if (file_exists($filename))  {
 	header("Content-Type: application/download");
 	header("Content-Transfer-Encoding: binary");
 	header("Content-Length: $size");
-	$basename=basename($filename)
+	$basename=basename($filename);
 	header("Content-Disposition: attachment; filename='$basename';");
 	readfile($filename);
 } else {
