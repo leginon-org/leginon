@@ -3687,7 +3687,7 @@ class particledata {
 			."  e.`median` "
 			."FROM ApEulerJumpData AS e "
 			."WHERE "
-			."  e.`REF|ApRefineRunData|refRun` = '$refineRunId' ";
+			."  e.`REF|ApRefineRunData|refineRun` = '$refineRunId' ";
 			//."ORDER BY e.`median` "
 			//."LIMIT 100 ";
 		$r=$this->mysql->getSQLResult($q);
