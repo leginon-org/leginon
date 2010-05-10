@@ -926,7 +926,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		targetdata = self.newSimulatedTarget(preset=currentpreset,grid=self.grid)
 		self.publish(targetdata, database=True)
 		## change to 'processing' just like targetwatcher does
-		proctargetdata = leginondata.AcquisitionImageTargetData(initializer=targetdata, status='processing')
+		proctargetdata = self.reportTargetStatus(targetdata, 'processing')
 		try:
 			ret = self.processTargetData(targetdata=proctargetdata, attempt=1)
 		except BadImageStatsPause, e:
@@ -936,6 +936,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		except BadImageStatsAbort, e:
 			self.logger.error('processing target failed: %s' %e)
 			ret = 'aborted'
+		self.reportTargetStatus(proctargetdata, 'done')
 		self.logger.info('Done with simulated target, status: %s (repeat will not be honored)' % (ret,))
 		self.setStatus('idle')
 
