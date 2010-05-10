@@ -256,6 +256,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					process_status = 'exception'
 				self.stopTimer('processTargetData')
 
+				self.reportTargetStatus(adjustedtarget, 'done')
+
 				# pause
 				# ...
 				if self.player.state() == 'pause':
@@ -268,11 +270,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 				# end of target repeat loop
 
-			self.reportTargetStatus(adjustedtarget, 'done')
-
-		# (Hack removed: Sometimes we are processing an empty
-		# target list. The TargetListDone event still has to go
-		# back to the other node or else application hangs.
 		self.reportTargetListDone(newdata, targetliststatus)
 		self.setStatus('idle')
 
