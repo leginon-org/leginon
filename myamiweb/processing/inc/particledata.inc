@@ -3475,9 +3475,9 @@ class particledata {
 				."LEFT JOIN `ApEmanRefineIterData` emanparams "
 				."  ON (refineIter.`REF|ApEmanRefineIterData|emanParams` = emanparams.`DEF_id`) "
 				."WHERE refineIter.`DEF_id` = $refineIterId";
-		echo $q."<br/><br/>\n";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		echo print_r($r)."<br/><br/>\n";
+		//echo print_r($r)."<br/><br/>\n";
 		return $r[0];
 	}
 
