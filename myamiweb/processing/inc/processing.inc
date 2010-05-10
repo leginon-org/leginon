@@ -909,20 +909,6 @@ function editTextJava() {
 	return $javascript;
 }
 
-function eulerImgJava() {
-	// javascript to switch the euler image
-	$javascript = "<script language='javascript' type='text/javascript'>\n";
-	$javascript.="	function switchEulerImg(i,img) {\n";
-	$javascript.="		var eulerimage = 'eulerimg'+i;\n";
-	$javascript.="		var eulerlink = 'loadimg.php?scale=.125&filename='+img;\n";
-	$javascript.="		var eulerbiglink = 'loadimg.php?filename='+img;\n";
-	$javascript.="		document['eulerimg'+i].src = eulerlink;\n";
-	$javascript.="		document.getElementById('eulerlink'+i).href = eulerbiglink;\n";
-	$javascript.="	}\n";
-	$javascript.="</script>\n";
-	return $javascript;
-}
-
 function editButton($editid,$text) {
 	$len=(strlen($text)==0) ? 15 : strlen($text);
 	$cols = ($len > 50) ? 50 : $len;
