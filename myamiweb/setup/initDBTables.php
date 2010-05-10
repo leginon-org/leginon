@@ -68,8 +68,8 @@ require_once("../inc/mysql.inc");
 	<form name='wizard_form' method='POST' action='initTablesReport.php'>
 		
 		<h3>Start initial variables setup :</h3>
-		<p>Web tools require some default tables and variables to get started.<br />
-		This is required for new databases.</p>
+		<p>Web tools require some default tables and variables to get started.</p>
+		<p><font color="red">This is required for new databases Only.</font></p>
 	<?php if(empty($has_errors)){ ?>
 		<p>System has checked your datbase connection to both databases<br /><br />
 		<?php echo DB_LEGINON . " is ready to import !<br /> ";
