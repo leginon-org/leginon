@@ -1048,7 +1048,6 @@ class ApRefineIterData(Data):
 			('volumeDensity',str),
 			('refineClassAverages',str),
 			('postRefineClassAverages', str),
-			('postRefineClassAverages',str),
 			('refineRun', ApRefineRunData),
 			('resolution', ApResolutionData),
 			('rMeasure', ApRMeasureData),
