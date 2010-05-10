@@ -487,12 +487,13 @@ if ($expId) {
 
 	// display reconstructions only if there is a stack
 	if ($stackruns > 0) {
-		$reconIds = $particle->getReconIdsFromSession($sessionId);
+		$reconruns = $particle->getReconIdsFromSession($sessionId, false);
+		$allreconruns = $particle->getReconIdsFromSession($sessionId, true);
 		$emanreconswithjob = 0;
-		if ($reconIds) {
-			$emanreconruns = count($reconIds);
-			foreach ($reconIds as $reconId) {
-				if ($reconId['REF|ApAppionJobData|job']) {
+		if ($allreconruns) {
+			$emanreconruns = count($reconruns);
+			foreach ($allreconruns as $reconrun) {
+				if ($reconrun['REF|ApAppionJobData|job']) {
 					$emanreconswithjob++;
 				}
 			}
@@ -508,6 +509,7 @@ if ($expId) {
 		$emanjobincomp = $emanjobdone-$emanreconswithjob; //incomplete
 
 		$action = "Refine Reconstruction";
+		$totresult = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$emanreconruns</a>" : "";
 
 		$emanreconresults = array();
 
@@ -523,7 +525,6 @@ if ($expId) {
 		$emanreconresults[] = ($emanreconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$emanreconruns complete</a>" : "";
 		$emanreconresults[] = ($ejrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=removeJumpers'>$ejrun reclassifying</a>";
 
-		$totresult = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns</a>" : "";
 
 		// check for how many FREALIGN reconstructions are upload / ready to upload / ready to run / running / queued
 		$prepfrealignqueue = count($subclusterjobs['prepfrealign']['queued']);
