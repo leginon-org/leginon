@@ -3351,7 +3351,7 @@ class particledata {
 			."(d.`REF|ApPathData|path` = p.`DEF_id`) "
 			."LEFT JOIN `ApPathData` AS a ON "
 			."(d.`REF|ApPathData|ampPath` = a.`DEF_id`) "
-			."WHERE d.`REF|ApRefineIterData|iterid` = $refid ";
+			."WHERE d.`REF|ApRefineIterData|refineIter` = $refid ";
 		if (!$getHidden) $q.= "AND (d.`hidden` IS NULL OR d.`hidden` = 0) ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
