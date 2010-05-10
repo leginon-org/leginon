@@ -329,8 +329,12 @@ class PresetsManager(node.Node):
 					if ievent['keep image shift']:
 						# figure out image shift offset from current preset
 						scope_ishift = self.instrument.tem.ImageShift
-						dx = scope_ishift['x'] - self.currentpreset['image shift']['x']
-						dy = scope_ishift['y'] - self.currentpreset['image shift']['y']
+						if self.currentpreset is None:
+							dx = scope_ishift['x']
+							dy = scope_ishift['y']
+						else:
+							dx = scope_ishift['x'] - self.currentpreset['image shift']['x']
+							dy = scope_ishift['y'] - self.currentpreset['image shift']['y']
 					self._cycleToScope(pname)
 					if ievent['keep image shift']:
 						self.logger.info('Keeping pre-existing image shift offset')
