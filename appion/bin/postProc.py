@@ -181,7 +181,7 @@ class PostProcScript(appionScript.AppionScript):
 			return ampabspath
 		### try to find it in the appion directory
 		appiondir = apParam.getAppionDirectory()
-		ampabspath = os.path.join(appiondir, "lib", os.path.basename(self.params['ampfile']))
+		ampabspath = os.path.join(appiondir, "appionlib/data", os.path.basename(self.params['ampfile']))
 		if os.path.isfile(ampabspath):
 			return ampabspath
 		### can't find it
