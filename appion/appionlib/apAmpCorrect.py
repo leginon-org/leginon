@@ -76,8 +76,8 @@ def createAmpcorBatchFile(infile,params):
 	localinfile = spyder.fileFilter(infile)
 
 	appiondir = apParam.getAppionDirectory()
-	scriptfile = os.path.join(appiondir, "lib/enhance.bat")
-	pwscfile = os.path.join(appiondir, "lib/pwsc.bat")
+	scriptfile = os.path.join(appiondir, "appionlib/enhance.bat")
+	pwscfile = os.path.join(appiondir, "appionlib/pwsc.bat")
 	if not os.path.isfile(scriptfile):
 		apDisplay.printError("could not find spider script: "+scriptfile)
 	if not os.path.isfile(pwscfile):
