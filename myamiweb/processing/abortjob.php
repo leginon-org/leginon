@@ -88,7 +88,7 @@ function abortJob($showjobs=False,$extra=False) {
     $display_keys['cluster'] = $jobinfo['cluster'];
 
     // find if job has been uploaded
-    if ($particle->getReconIdFromClusterJobId($job['DEF_id'])) continue;
+    if ($particle->getReconIdFromAppionJobId($job['DEF_id'])) continue;
 
     // get stack id for job from job file
     $jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];

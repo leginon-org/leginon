@@ -3229,10 +3229,10 @@ class particledata {
 		return $r;
 	}
 
-	function getReconIdFromClusterJobId ($jobid) {
+	function getReconIdFromAppionJobId ($jobid) {
 		$q="SELECT * "
 			."FROM `ApRefineRunData` "
-			."WHERE `REF|ApAppionJobData|jobfile` = $jobid";
+			."WHERE `REF|ApAppionJobData|job` = $jobid";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
@@ -3497,7 +3497,7 @@ class particledata {
 		//check for cached values
 		$q = "SELECT * "
 			."FROM `ApRefineGoodBadParticleData` gb "
-			."WHERE gb.`REF|ApRefineIterData|refineIter` = '$refinementDataId' ";
+			."WHERE gb.`REF|ApRefineIterData|refine` = '$refinementDataId' ";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/><br/>\n";

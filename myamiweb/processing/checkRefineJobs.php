@@ -63,7 +63,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 	// loop over jobs and show info
 	foreach ($jobs as $job) {
 		// check if job has been uploaded
-		if ($particle->getReconIdFromClusterJobId($job['DEF_id']))
+		if ($particle->getReconIdFromAppionJobId($job['DEF_id']))
 			continue;
 
 		// check if job has been aborted
