@@ -20,7 +20,7 @@ $templateStackId=$_GET['templateStackId'];
 $alignId=$_GET['alignId'];
 $stackId=$_GET['stackId'];
 $substack=$_GET['substack'];
-$refinement=$_GET['refineIter'];
+$refineIter=$_GET['refineIter'];
 $refinetype=$_GET['refinetype'];
 $junksort=$_GET['junksort'];
 $aligned=$_GET['aligned'];
@@ -67,13 +67,13 @@ if ($alignId) {
 	$classnumber=$particle->getClusteringParticleNumber($clusterId);
 }
 
-if ($refinement) {
-  	$stack=$particle->getStackFromRefinement($refinement);
+if ($refineIter) {
+  	$stack=$particle->getStackFromRefineIter($refineIter);
   	//echo print_r($stack);
 	$filename=$stack['path'].'/'.$stack['name'];
 	if ($substack) {
 	// get all bad particles in stack
-		$subprtls=$particle->getSubsetParticlesInStack($refinement,$substack,$refinetype);
+		$subprtls=$particle->getSubsetParticlesInStack($refineIter,$substack,$refinetype);
    	$numbad = count($subprtls);
   	}
 }
