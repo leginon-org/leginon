@@ -144,15 +144,33 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		$display_keys['file size'] = getStackSize($stackdata);
 	}
 
+
+	// provide a link to download a stack
+	if (substr($stackdata['name'], -4) == ".hed") {
+		$imgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
+		$hedfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".hed";
+		$stacklink .= "<font size='-2'><a href='download.php?file=$hedfile'>\n";
+		$stacklink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download mrc'>hed\n";
+		$stacklink .= "</a>\n";
+		$stacklink .= "&nbsp;<a href='download.php?file=$imgfile'>\n";
+		$stacklink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download mrc'>img\n";
+		$stacklink .= "</a></font>\n";
+	} else {
+		$ext = substr($stackdata['name'], -3);
+		$stacklink .= "<font size='-2'><a href='download.php?file=$stackfile'>\n";
+		$stacklink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download mrc'>$ext\n";
+		$stacklink .= "</a></font>\n";
+	}
+
 	if ($mini) {
 		$display_keys['path'] = "<font size='-2'>".$stackdata['path']
 			."/<a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&ps=$mpix'>"
-			.$stackdata['name']."</a></font>\n";
+			.$stackdata['name']."</a></font>&nbsp;$stacklink\n";
 		$display_keys['box/apix'] = $boxsz." / ".$apix;
 	} else {
 		$display_keys['path']=$stackdata['path'];
 		$display_keys['stack file']= "<a target='stackview' HREF='viewstack.php?file="
-			."$stackfile&expId=$expId&stackId=$stackid&ps=$mpix'>".$stackdata['name']."</A>\n";
+			."$stackfile&expId=$expId&stackId=$stackid&ps=$mpix'>".$stackdata['name']."</A>&nbsp;$stacklink\n";
 		# if stack was created by cenalignint, also view avg & bad stacks
 		if ($centered) {
 			$display_keys['iterative avgs']="<a target='stackview' HREF='viewstack.php?file=".$stackdata['path']
