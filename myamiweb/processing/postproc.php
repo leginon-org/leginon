@@ -18,145 +18,34 @@ require "inc/summarytables.inc";
 // --- check if reconstruction is specified
 
 if ($_POST['process']) {
-	$leginon = new leginondata();
-
-	$runname=$_POST['runname'];
-	$expId = $_GET['expId'];
-	$refIterId = $_GET['refineIter'];
-	$ampcor=$_POST['ampcor'];
-	$lp=$_POST['lp'];
-	$yflip=$_POST['yflip'];
-	$invert=$_POST['invert'];
-	$viper=$_POST['viper'];
-	$bfactor=$_POST['bfactor'];
-	$file=$_POST['file'];
-	$path=$_POST['path'];
-	$apix=$_POST['apix'];
-	$norm=$_POST['norm'];
-	$mask=$_POST['mask'];
-	$imask=$_POST['imask'];
-	$symname=$_POST['symname'];
-	$res = $_POST['res'];
-	$zoom = $_POST['zoom'];
-	$mass = $_POST['mass'];
-	$median = $_POST['median'];
-	$contour = $_POST['contour'];
-	$densitypath=$path."/".$file;
-	$outdir=$path."/postproc";
-	$densityname = $_POST['densityname'];
-
-	// make sure that an amplitude curve was selected
-	if ($ampcor && $bfactor)
-		createform('<B>ERROR:</B> Select only one of amplitude or b-factor correction');
-	if (!$ampcor && !$bfactor)
-		createform('<B>ERROR:</B> Select an amplitude adjustment curve or b-factor correction');
-	if ($ampcor)
-		list($ampfile, $maxfilt) = explode('|~~|',$ampcor);
-
-	// get session name from expId
-	$sessioninfo = $leginondata->getSessionInfo($expId);
-	$sessname = $sessioninfo['Name'];
-
-	$command = "postProc.py ";
-	$command.= "--projectid=".getProjectId()." ";
-	$command.= "-s $sessname ";
-	$command.= "--runname $runname ";
-	$command.= "-f $densitypath ";
-	if ($ampcor) {
-		$command.= "--amp=/ami/sw/packages/pyappion/lib/$ampfile ";
-		if ($maxfilt < $apix*2)
-			$maxfilt = $apix*2.1;
-		$command.= "--maxfilt=$maxfilt ";
-	}
-	$command.= "--apix=$apix ";
-	$command.= "--res=$res ";
-	$command.= "--sym=$symname ";
-	$command.= "--reconiterid=$refIterId ";
-	if ($median) $command.= "--median=$median ";
-	if ($zoom) $command.= "--zoom=$zoom ";
-	if ($contour) $command.= "--contour=$contour ";
-	if ($mass) $command.="--mass=$mass ";
-	if ($mask) $command.="--mask=$mask ";
-	if ($imask) $command.="--imask=$imask ";
-	if ($lp) $command.="--lp=$lp ";
-	if ($norm=='on') $command.="--norm ";
-	if ($yflip=='on') $command.="--yflip ";
-	if ($invert=='on') $command.="--invert ";
-	if ($viper=='on') $command.="--viper ";
-	if ($bfactor=='on') $command.="--bfactor ";
-
-
-	// submit job to cluster
-	if ($_POST['process']=='Post Process') {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploaddensity',True);
-		// if errors:
-		if ($sub) createform("<b>ERROR:</b> $sub");
-
-		// check that upload finished properly
-		$jobf = $outdir.'/'.$runname.'/'.$runname.'.appionsub.log';
-		$status = "Filtered and amplitude-corrected density uploaded";
-		if (file_exists($jobf)) {
-			$jf = file($jobf);
-			$jfnum = count($jf);
-			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
-			  // if anything is red, it's not good
-				if (preg_match("/red/",$jf[$i])) {
-					$status = "<font class='apcomment'>Error while uploading, check the log file:<br/>$jobf</font>";
-					continue;
-				}
-			}
-		}
-		else $status = "Job did not run, contact the appion team";
-	}
-
-	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density");
-	echo $status;
-	echo "<br/>\n";
-	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<tr><td colspan='2'>
-	<B>PostProc Command:</B><br>
-	$command
-	</td></tr>
-        <tr><td>runname</td><td>$runname</td></tr>
-        <tr><td>file</td><td>$densitypath</td></tr>
-        <tr><td>ampcor curve</td><td>$ampfile</td></tr>
-        <tr><td>max filt</td><td>$maxfilt</td></tr>
-        <tr><td>mask</td><td>$mask</td></tr>
-        <tr><td>imask</td><td>$imask</td></tr>
-        <tr><td>norm</td><td>$norm</td></tr>
-        <tr><td>apix</td><td>$apix</td></tr>
-        <tr><td>lp</td><td>$lp</td></tr>
-        <tr><td>yflip</td><td>$yflip</td></tr>
-        <tr><td>invert</td><td>$invert</td></tr>
-        <tr><td>viper</td><td>$viper</td></tr>
-        </table>\n";
-	processing_footer();
-	exit;
+	runPostProc();
+} else {
+	createform();
 }
-
-else createform();
 
 function createform($extra=False) {
 	$expId = $_GET['expId'];
 	$refIterId = $_GET['refineIter'];
 
+	$appiondir = "/ami/sw/packages/Appion";
+
 	$particle = new particledata();
 
-	$refinementParams = $particle->getParamsFromRefinementDataId($refIterId);
-	$symid =$refinementParams['REF|ApSymmetryData|symmetry'];
+	$info = $particle->getReconInfoFromRefinementId($refIterId);
+	$modelid = $info['REF|ApInitialModelData|initialModel'];
+	$stackid = $info['REF|ApStackData|stack'];
+	$apix = ($particle->getStackPixelSizeFromStackId($stackid))*1e10;
+
+	$refineIterParams = $particle->getParamsFromRefinementDataId($refIterId);
+	$symid =$refineIterParams['REF|ApSymmetryData|symmetry'];
+	$defmask = $refineIterParams['mask'] ? floor($refineIterParams['mask']*$apix) : '';
+	$defimask = $refineIterParams['imask'] ? ceil($refineIterParams['imask']*$apix) : '';
 	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density");
 
 	// write out errors, if any came up:
 	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 		
-	$info = $particle->getReconInfoFromRefinementId($refIterId);
 
-	$modelid = $info['REF|ApInitialModelData|initialModel'];
-	$stackid = $info['REF|ApStackData|stack'];
 
 	// get symmetry of initial model if no symmetry saved for iteration
 	if (!$symid) {
@@ -169,12 +58,11 @@ function createform($extra=False) {
 	$halfres = ($fscres) ? sprintf("%.2f",$fscres['half']) : "None" ;
 	$rmeas = $particle->getRMeasureInfo($info['REF|ApRMeasureData|rMeasure']);
 	$rmeasureres = ($rmeas) ? sprintf("%.2f",$rmeas['rMeasure']) : "None" ;
-	$appiondir = "/ami/sw/packages/pyappion/lib/";
 	$densityfile = $info['path']."/".$info['volumeDensity'];
 
-	$apix = ($particle->getStackPixelSizeFromStackId($stackid))*1e10;
 
-	$formAction=$_SERVER['PHP_SELF']."?expId=$expId&refinement=$refIterId";
+
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId&refineIter=$refIterId";
 
 	$amplist = array();
 
@@ -186,8 +74,8 @@ function createform($extra=False) {
 	
 	$runname=($_POST['runname']) ? $_POST['runname'] : $runname;
 	$lpval=($_POST['lp']) ? $_POST['lp'] : round($halfres*0.5,2);
-	$maskval=($_POST['mask']) ? $_POST['mask'] : '';
-	$imaskval=($_POST['imask']) ? $_POST['imask'] : '';
+	$maskval=($_POST['mask']) ? $_POST['mask'] : $defmask;
+	$imaskval=($_POST['imask']) ? $_POST['imask'] : $defimask;
 	$yflipcheck=($_POST['yflip']=='on') ? 'checked' : '';
 	$invertcheck=($_POST['invert']=='on') ? 'checked' : '';
 	$vipercheck=($_POST['viper']=='on') ? 'checked' : '';
@@ -196,10 +84,10 @@ function createform($extra=False) {
 
 	$res = ($_POST['res']) ? $_POST['res'] : round($halfres,2);
 	$maxfilt = ($_POST['maxfilt']) ? $_POST['maxfilt'] : '';
-	$contour = ($_POST['contour']) ? $_POST['contour'] : '3.0';
+	$contour = ($_POST['contour']) ? $_POST['contour'] : '2.0';
 	$mass = ($_POST['mass']) ? $_POST['mass'] : '';
 	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.0';
-	$median = ($_POST['median']) ? $_POST['median'] : '3';
+	$median = ($_POST['median']) ? $_POST['median'] : '2';
 
 	// manually create list of the amplitude adjustment files
 	$amplist[0]['name']="ampcor5.spi";
@@ -256,11 +144,12 @@ function createform($extra=False) {
 	echo "</td></tr>\n";
 
 	foreach ($amplist as $amp) {
-		$ampfile = $appiondir.$amp['name'];
+		$ampfile = $appiondir.'/appionlib/data/'.$amp['name'];
 		echo "<TR><td>\n";
 		if (file_exists($ampfile)) {
-			echo "<A HREF='ampcorplot.php?file=$ampfile&width=800&height=600'>"
-				."<img src='ampcorplot.php?file=$ampfile&width=200&height=150&nomargin=True'>\n";
+			echo "<A HREF='ampcorplot.php?file=$ampfile&width=800&height=600'>";
+			echo $ampfile;
+			echo "<img src='ampcorplot.php?file=$ampfile&width=200&height=150&nomargin=True'>\n";
 		}	else {
 			echo "&nbsp;";
 		}
@@ -341,4 +230,113 @@ function createform($extra=False) {
 	processing_footer();
 	exit();
 }
+
+function runPostProc() {
+	$leginondata = new leginondata();
+
+	$runname=$_POST['runname'];
+	$expId = $_GET['expId'];
+	$refIterId = $_GET['refineIter'];
+	$ampcor=$_POST['ampcor'];
+	$lp=$_POST['lp'];
+	$yflip=$_POST['yflip'];
+	$invert=$_POST['invert'];
+	$viper=$_POST['viper'];
+	$bfactor=$_POST['bfactor'];
+	$file=$_POST['file'];
+	$path=$_POST['path'];
+	$apix=$_POST['apix'];
+	$norm=$_POST['norm'];
+	$mask=$_POST['mask'];
+	$imask=$_POST['imask'];
+	$symname=$_POST['symname'];
+	$res = $_POST['res'];
+	$zoom = $_POST['zoom'];
+	$mass = $_POST['mass'];
+	$median = $_POST['median'];
+	$contour = $_POST['contour'];
+	$densitypath=$path."/".$file;
+	$outdir=$path."/postproc";
+	$densityname = $_POST['densityname'];
+
+	// make sure that an amplitude curve was selected
+	if ($ampcor && $bfactor)
+		createform('<B>ERROR:</B> Select only one of amplitude or b-factor correction');
+	if (!$ampcor && !$bfactor)
+		createform('<B>ERROR:</B> Select an amplitude adjustment curve or b-factor correction');
+	if ($ampcor)
+		list($ampfile, $maxfilt) = explode('|~~|',$ampcor);
+
+	// get session name from expId
+	$sessioninfo = $leginondata->getSessionInfo($expId);
+	$sessname = $sessioninfo['Name'];
+
+	$command = "postProc.py ";
+	$command.= "--projectid=".getProjectId()." ";
+	$command.= "--reconiterid=$refIterId ";
+	$command.= "-s $sessname ";
+	$command.= "--runname $runname ";
+	$command.= "-f $densitypath ";
+	if ($ampcor) {
+		$command.= "--amp=$ampfile ";
+		if ($maxfilt < $apix*2)
+			$maxfilt = $apix*2.1;
+		$command.= "--maxfilt=$maxfilt ";
+	} else {
+		$command.="--bfactor ";
+	}
+	$command.= "--apix=$apix ";
+	$command.= "--res=$res ";
+	$command.= "--sym=$symname ";
+	if ($median) $command.= "--median=$median ";
+	if ($zoom) $command.= "--zoom=$zoom ";
+	if ($contour) $command.= "--contour=$contour ";
+	if ($mass) $command.="--mass=$mass ";
+	if ($mask) $command.="--mask=$mask ";
+	if ($imask) $command.="--imask=$imask ";
+	if ($lp) $command.="--lp=$lp ";
+	if ($norm=='on') $command.="--norm ";
+	if ($yflip=='on') $command.="--yflip ";
+	if ($invert=='on') $command.="--invert ";
+	if ($viper=='on') $command.="--viper ";
+
+	// submit job to cluster
+	if ($_POST['process']=='Post Process') {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'postproc');
+		// if errors:
+		if ($sub)
+			createform("<b>ERROR:</b> $sub");
+		exit();
+	}
+
+	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density");
+	echo $status;
+	echo "<br/>\n";
+	echo"
+	<TABLE WIDTH='600' BORDER='1'>
+	<tr><td colspan='2'>
+	<B>PostProc Command:</B><br>
+	$command
+	</td></tr>
+        <tr><td>runname</td><td>$runname</td></tr>
+        <tr><td>file</td><td>$densitypath</td></tr>
+        <tr><td>ampcor curve</td><td>$ampfile</td></tr>
+        <tr><td>max filt</td><td>$maxfilt</td></tr>
+        <tr><td>mask</td><td>$mask</td></tr>
+        <tr><td>imask</td><td>$imask</td></tr>
+        <tr><td>norm</td><td>$norm</td></tr>
+        <tr><td>apix</td><td>$apix</td></tr>
+        <tr><td>lp</td><td>$lp</td></tr>
+        <tr><td>yflip</td><td>$yflip</td></tr>
+        <tr><td>invert</td><td>$invert</td></tr>
+        <tr><td>viper</td><td>$viper</td></tr>
+        </table>\n";
+	processing_footer();
+	exit;
+}
+
+
 ?>
