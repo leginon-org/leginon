@@ -492,7 +492,7 @@ if ($expId) {
 		if ($reconIds) {
 			$emanreconruns = count($reconIds);
 			foreach ($reconIds as $reconId) {
-				if ($reconId['REF|ApAppionJobData|jobfile']) {
+				if ($reconId['REF|ApAppionJobData|job']) {
 					$emanreconswithjob++;
 				}
 			}
