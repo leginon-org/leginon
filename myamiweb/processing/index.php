@@ -145,8 +145,6 @@ foreach ($reconRuns as $recon) {
 	$fscfile = ($res) ? $recon['path'].'/'.$res['fscfile'] : "None" ;
 	$halfres = ($res) ? sprintf("%.2f",$res['half']) : "None" ;
 	$rmeasureres = ($RMeasure) ? sprintf("%.2f",$RMeasure['rMeasure']) : "None" ;
-	$badprtls = array();
-	$goodprtls = array();
 	$clsavgs = array();
 	$refinetypes = array('EMAN','SpiCoran','MsgP');
 	foreach ($refinetypes as $type) {
@@ -163,14 +161,9 @@ foreach ($reconRuns as $recon) {
 		}
 		if ($recon[$clsavgfield]) {
 			$clsavgs[$type] = $recon[$clsavgfield]; 
-			$badprtls[$type]=$particle->getSubsetParticlesInStack($reconid, 'bad', $type, True);
-			$goodprtls[$type]=$particle->getSubsetParticlesInStack($reconid, 'good', $type, True);
 		}
 	}
 	# old data has no class average distinction, only eman bad particles
-	if ((count($badprtls)==0) || ($recon['package']=='EMAN/MsgP' && (!array_key_exists('EMAN',$badprtls)))) 
-		$badprtls['EMAN']=$particle->getSubsetParticlesInStack($reconid, 'bad', 'EMAN', True);
-		$goodprtls['EMAN']=$particle->getSubsetParticlesInStack($reconid, 'good', 'EMAN', True);
 	# old data has no class average distinction, force association 
 	if ((count($clsavgs)==0 && ($recon['package'] == 'EMAN')) || ($recon['package']=='EMAN/MsgP' && (!array_key_exists('EMAN',$clsavgs)))) { 
 		$clsavgs['EMAN']= $recon['refineClassAverages'];
@@ -226,15 +219,6 @@ foreach ($reconRuns as $recon) {
 
 	// particle stacks classification/viewing 
 	$phtml="<table border='0' cellpadding='3' cellspacing='2'><tr><td>\n";
-	foreach ($refinetypes as $type) {
-		if (array_key_exists($type,$badprtls)) {
-			$prtlsused=$stackparticles-$badprtls[$type];
-			$phtml .= "$type<br />";
-			if ($prtlsused != $goodprtls[$type]) $phtml .= "Not all prtls accounted for!";
-			$phtml .= "<a target='stackview' href='viewstack.php?expId=$expId&refinement=$reconid&substack=good&refinetype=$type'>[$goodprtls[$type]-good]</a><br />\n"
-			."<a target='stackview' HREF='viewstack.php?expId=$expId&refinement=$reconid&substack=bad&refinetype=$type'>[$badprtls[$type]-bad]</a></td><td>\n";
-		}
-	}	
 	$phtml .= "</tr></table>\n";
 	
 	$modhtml = "<table class='tableborder' border='1'>\n";
@@ -319,9 +303,6 @@ foreach ($reconRuns as $recon) {
 	  $m .= "after which a SPIDER script was employed to perform a reference-free hierarchical clustering analysis of the particles in each class\n";
 	  $m .= "The resulting SPIDER class that exhibited the highest cross-correlation value to the original model projection of the given class was\n";
 	  $m .= "used in the creation of the 3D density for the following iteration by using EMAN.\n";
-	  // calculate % of particles used
-	  $tossed = round((($stackparticles - $badprtls['SpiCoran'])/$stackparticles)*100);
-	  $m .= "With this methodology, $tossed% of the initial stacked particles were used in the final reconstruction. \n";
 	}
 	else $m .= "The 3D reconstruction was carried out using the EMAN reconstruction package (Ludtke <i>et al.</i>, 1999). \n";
 	$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
