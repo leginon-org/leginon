@@ -162,6 +162,8 @@ class AppionScript(basicScript.BasicScript):
 
 	#=====================
 	def getClusterJobData(self):
+		if self.params['commit'] is False:
+			return None
 		partq = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clustq = appiondata.ApAppionJobData()
 		clustq['path'] = partq
@@ -243,7 +245,7 @@ class AppionScript(basicScript.BasicScript):
 			paramvalueq['usage'] = usage
 			paramvalueq['paramname'] = paramnameq
 			paramvalueq['progrun'] = progrunq
-			if usage is not None and self.params['commit'] is True:
+			if usage is not None:
 				paramvalueq.insert()
 
 	#=====================
