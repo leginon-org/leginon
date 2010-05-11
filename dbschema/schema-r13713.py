@@ -312,6 +312,19 @@ def upgradeAppionDB(appiondbname, projectdb):
 
 	appiondb.debug = olddebug
 
+
+	## special fix for tables that are mis-described
+	if appiondb.tableExists('ApSymmetryData'):
+		updateq = ("UPDATE ApSymmetryData AS sym "
+			+" SET "
+			+"   sym.`description` = '7-fold symmetry along the z axis' "
+			+" WHERE "
+			+"   sym.`symmetry` = 'C7 (z)' "
+			+" AND "
+			+"   sym.`description` LIKE '3-fold symmetry%' "
+		)
+		appiondb.executeCustomSQL(updateq)
+
 	#===================
 	# set all boolean columns to TINYINT(1), there was an old bug
 	#===================
