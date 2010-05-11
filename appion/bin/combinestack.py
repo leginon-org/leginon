@@ -95,7 +95,6 @@ class combineStackScript(appionScript.AppionScript):
 
 		stackq = appiondata.ApStackData()
 		oldstackdata = apStack.getOnlyStackData(stackid)
-		stackq.update(oldstackdata)
 		stackq['name'] = self.params['stackfilename']
 		stackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		stackq['description'] = self.params['description']+" ... combined stack ids "+str(self.params['stacks'])
