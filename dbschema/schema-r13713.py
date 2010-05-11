@@ -2,6 +2,7 @@
 
 import sys
 import time
+import random
 from sinedon import dbupgrade, dbconfig
 
 def getAppionDatabases(projectdb):
@@ -21,6 +22,7 @@ def getAppionDatabases(projectdb):
 	appiondblist = []
 	for result in results:
 		appiondblist.append(result[0])
+	#random.shuffle(appiondblist)
 	return appiondblist
 
 #===================
@@ -40,16 +42,16 @@ def upgradeAppionDB(appiondbname, projectdb):
 	# rename tables: when renaming table you must rename all columns linking to that table
 	#===================
 	### refinement tables
-	appiondb.renameTable('ApRefinementData', 'ApRefineIterData')
-	appiondb.renameTable('ApRefinementRunData', 'ApRefineRunData')
-	appiondb.renameTable('ApParticleClassificationData', 'ApRefineParticleData')
-	appiondb.renameTable('ApRefinementParamsData', 'ApEmanRefineIterData')
+	appiondb.renameTable('ApRefinementData', 'ApRefineIterData', updaterefs=False)
+	appiondb.renameTable('ApRefinementRunData', 'ApRefineRunData', updaterefs=False)
+	appiondb.renameTable('ApParticleClassificationData', 'ApRefineParticleData', updaterefs=False)
+	appiondb.renameTable('ApRefinementParamsData', 'ApEmanRefineIterData', updaterefs=False)
 	### plural particles tables
-	appiondb.renameTable('ApStackParticlesData', 'ApStackParticleData')
-	appiondb.renameTable('ApAlignParticlesData', 'ApAlignParticleData')
-	appiondb.renameTable('ApClusteringParticlesData', 'ApClusteringParticleData')
+	appiondb.renameTable('ApStackParticlesData', 'ApStackParticleData', updaterefs=False)
+	appiondb.renameTable('ApAlignParticlesData', 'ApAlignParticleData', updaterefs=False)
+	appiondb.renameTable('ApClusteringParticlesData', 'ApClusteringParticleData', updaterefs=False)
 	### no long required to be on a cluster
-	appiondb.renameTable('ApClusterJobData', 'ApAppionJobData')
+	appiondb.renameTable('ApClusterJobData', 'ApAppionJobData', updaterefs=False)
 
 	#===================
 	# rename columns:
@@ -131,24 +133,15 @@ def upgradeAppionDB(appiondbname, projectdb):
 		
 		### special: invert values
 		if appiondb.addColumn('ApRefineParticleData', 'refine_keep', appiondb.bool):
-			updateq = ("UPDATE ApRefineParticleData AS refpart "
-				+" SET "
-				+"   refpart.`refine_keep` = MOD(IFNULL(refpart.`thrown_out`,0)+1,2), "
-				+"   refpart.`DEF_timestamp` = refpart.`DEF_timestamp` "
-			)
-			appiondb.executeCustomSQL(updateq)
+			appiondb.updateColumn('ApRefineParticleData', 'refine_keep', 
+				"MOD(IFNULL(`thrown_out`,0)+1,2)", "")
 			appiondb.dropColumn('ApRefineParticleData', 'thrown_out')
 
 		if (appiondb.columnExists('ApRefineParticleData', 'postRefine_keep') 
 		 and appiondb.columnExists('ApRefineParticleData', 'msgp_keep')):
-			updateq = ("UPDATE ApRefineParticleData AS refpart "
-				+" SET "
-				+"   refpart.`postRefine_keep` = refpart.`msgp_keep`, "
-				+"   refpart.`DEF_timestamp` = refpart.`DEF_timestamp` "
-				+" WHERE "
-				+"   refpart.`postRefine_keep` IS NULL AND refpart.`msgp_keep` IS NOT NULL "
-			)
-			appiondb.executeCustomSQL(updateq)
+			appiondb.updateColumn('ApRefineParticleData', 'postRefine_keep', 
+				"`msgp_keep`", "`postRefine_keep` IS NULL AND `msgp_keep` IS NOT NULL")
+
 		appiondb.dropColumn('ApRefineParticleData', 'msgp_keep')
 		appiondb.changeColumnDefinition('ApRefineParticleData', 'refine_keep', appiondb.bool)
 		appiondb.changeColumnDefinition('ApRefineParticleData', 'postRefine_keep', appiondb.bool)
@@ -248,6 +241,13 @@ def upgradeAppionDB(appiondbname, projectdb):
 	appiondb.renameColumn('ApTomoAvgParticleData', 'z shift', 'z_shift')
 
 	#===================
+	# special fix for symmetry tables that are mis-described
+	#===================
+	appiondb.updateColumn('ApSymmetryData', 'description', 
+		"'7-fold symmetry along the z axis'",
+		"`symmetry` = 'C7 (z)' AND `description` LIKE '3-fold symmetry%'")
+
+	#===================
 	# repair misnamed ApAppionJobData job names
 	#===================
 	#selectq = "SELECT DISTINCT `jobtype` FROM `ApAppionJobData` ORDER BY `jobtype`;"
@@ -260,13 +260,8 @@ def upgradeAppionDB(appiondbname, projectdb):
 	}
 	if appiondb.tableExists('ApAppionJobData'):
 		for key in jobmap.keys():
-			updateq = ("UPDATE ApAppionJobData AS job "
-				+" SET "
-				+("   job.`jobtype` = '%s' "%(jobmap[key]))
-				+" WHERE "
-				+("   job.`jobtype` = '%s' "%(key))
-			)
-			appiondb.executeCustomSQL(updateq)
+			appiondb.updateColumn('ApAppionJobData', 'jobtype', 
+				"'"+jobmap[key]+"'", "`jobtype` = '"+key+"' ")
 
 	#===================
 	# add index to ApStackParticleData
@@ -284,8 +279,6 @@ def upgradeAppionDB(appiondbname, projectdb):
 	#===================
 	# index all columns named hidden
 	#===================
-	olddebug = appiondb.debug
-	appiondb.debug -= 1
 	for tablename in appiondb.getAllTables():
 		appiondb.changeColumnDefinition(tablename, 'hidden', appiondb.bool)
 		appiondb.indexColumn(tablename, 'hidden')
@@ -310,21 +303,6 @@ def upgradeAppionDB(appiondbname, projectdb):
 		appiondb.renameColumn(tablename, 'REF|ApClusterJobData|job', 'REF|ApAppionJobData|job')
 		appiondb.renameColumn(tablename, 'REF|ApClusterJobData|jobfile', 'REF|ApAppionJobData|job')
 
-	appiondb.debug = olddebug
-
-
-	## special fix for tables that are mis-described
-	if appiondb.tableExists('ApSymmetryData'):
-		updateq = ("UPDATE ApSymmetryData AS sym "
-			+" SET "
-			+"   sym.`description` = '7-fold symmetry along the z axis' "
-			+" WHERE "
-			+"   sym.`symmetry` = 'C7 (z)' "
-			+" AND "
-			+"   sym.`description` LIKE '3-fold symmetry%' "
-		)
-		appiondb.executeCustomSQL(updateq)
-
 	#===================
 	# set all boolean columns to TINYINT(1), there was an old bug
 	#===================
@@ -341,6 +319,8 @@ def upgradeAppionDB(appiondbname, projectdb):
 if __name__ == "__main__":
 	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 	leginondb = dbupgrade.DBUpgradeTools('leginondata', drop=False)
+	upgradeAppionDB('aptest', projectdb)
+	sys.exit(1)
 
 	appiondblist = getAppionDatabases(projectdb)
 	for appiondbname in appiondblist:
@@ -392,7 +372,7 @@ if __name__ == "__main__":
 	# leginon table
 	#===================
 
-	leginondb.renameTable('viewer_pref_image', 'ViewerImageStatus')
+	leginondb.renameTable('viewer_pref_image', 'ViewerImageStatus', updaterefs=False)
 	leginondb.renameColumn('ViewerImageStatus', 'id', 'DEF_id', projectdb.defid)
 	leginondb.renameColumn('ViewerImageStatus', 'timestamp', 'DEF_timestamp', projectdb.timestamp)
 	leginondb.renameColumn('ViewerImageStatus', 'sessionId', 'REF|SessionData|session', projectdb.link)

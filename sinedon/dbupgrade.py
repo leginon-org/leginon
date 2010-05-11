@@ -47,7 +47,6 @@ class DBUpgradeTools(object):
 		db = MySQLdb.connect(**dbconf)
 		### create cursor
 		self.cursor = db.cursor()
-		self.debug = 1
 		self.defid = 'int(20) NOT NULL auto_increment'
 		self.link = 'int(20) NULL DEFAULT NULL'
 		self.int = 'int(20) NULL DEFAULT NULL' 
@@ -68,7 +67,7 @@ class DBUpgradeTools(object):
 	def executeQuery(self, query):
 		querytype = query.lstrip().lower().split()[0]
 		if messaging[querytype+' query'] is True:
-			print query
+			print "\033[35m%s:\033[0m %s"%(querytype.upper(), query)
 		self.cursor.execute(query)
 
 	#==============
@@ -237,7 +236,7 @@ class DBUpgradeTools(object):
 		return numrows
 
 	#==============
-	def getTablesWithTableReference(table):
+	def getTablesWithTableReference(self, table):
 		"""
 		gets all tables in current database with specified column name
 		"""
@@ -281,7 +280,7 @@ class DBUpgradeTools(object):
 		return self.cursor.fetchall()
 
 	#==============
-	def renameTable(self, table1, table2):
+	def renameTable(self, table1, table2, updaterefs=True):
 		"""
 		rename table1 to table2
 		"""
@@ -306,7 +305,8 @@ class DBUpgradeTools(object):
 			if self.exit is True: sys.exit(1)
 			return
 
-		print self.getTablesWithTableReference(table)
+		if updaterefs is True:
+			print self.getTablesWithTableReference(table1)
 
 		if messaging['success'] is True:
 			print "\033[32mrenamed table %s to %s\033[0m"%(table1, table2)
@@ -338,8 +338,6 @@ class DBUpgradeTools(object):
 		if not columndefine:
 			return False
 		query = "ALTER TABLE `%s` CHANGE `%s` `%s` %s;"%(table, column1, column2, columndefine)
-		if self.debug > 1:
-			print query
 
 		t0 = time.time()
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
@@ -355,6 +353,46 @@ class DBUpgradeTools(object):
 
 		if messaging['success'] is True:
 			print "\033[32mrenamed column %s to %s\033[0m"%(column1, column2)
+
+		return True
+
+	#==============
+	def updateColumn(self, table, column, setvalue, whereclause, timestamp=True):
+		"""
+		rename column1 to column2 in table
+		"""
+		if self.validTableName(table) is False:
+			return False
+		if self.validColumnName(column) is False:
+			return False	
+		if not whereclause.strip():
+			whereclause = "true"
+
+		if self.columnExists(table, column) is False:
+			if messaging['not exist'] is True:
+				print "\033[33mcannot rename %s to %s, column does not exist\033[0m"%(column1, column2)
+			return False
+
+		query = "SELECT COUNT(`%s`) FROM `%s` WHERE %s;"%(column, table, whereclause)
+		self.executeQuery(query)
+		
+		result = self.cursor.fetchone()
+		if not result or len(result) == 0:
+			print "error: no queries to update"
+			return False
+
+		numrow = int(result[0])
+		if numrow == 0:
+			return False
+
+		query = "UPDATE `%s` SET `%s`=%s, `DEF_timestamp`=`DEF_timestamp` WHERE %s;"%(table, column, setvalue, whereclause)
+
+		t0 = time.time()
+		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
+			print "\033[34mrenaming column `%s` to `%s` in table %s at %s\033[0m"%(column1, column2, table, time.asctime())
+		self.executeQuery(query)
+		if messaging['long query'] is True and time.time()-t0 > 0.020:
+			print "column update time: %.1f min"%((time.time()-t0)/60.0)
 
 		return True
 
