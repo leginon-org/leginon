@@ -17,7 +17,7 @@ import threading
 from appionlib import apParam
 
 class ParticleLoop(filterLoop.FilterLoop):
-	threadJpeg = True
+	threadJpeg = False
 
 	#######################################################
 	#### ITEMS BELOW MUST BE SPECIFIED IN A NEW PROGRAM ####
