@@ -8,8 +8,18 @@ def getAppionDatabases(projectdb):
 	"""
 	Get list of appion databases to upgrade
 	"""
-	#selectq = "SELECT DISTINCT db FROM processingdb ORDER BY `projectId` ASC"
-	selectq = "SELECT DISTINCT appiondb FROM processingdb ORDER BY `REF|projects|project` ASC"
+	describeq = "DESCRIBE processingdb"
+	fields = projectdb.returnCustomSQL(describeq)
+	fieldnames = []
+	for field in fields:
+		fieldnames.append(field[0])
+	if 'db' in fieldnames:
+		selectq = "SELECT DISTINCT db FROM processingdb ORDER BY `projectId` ASC"
+	else:
+		if 'appiondb' in fieldnames:
+			selectq = "SELECT DISTINCT appiondb FROM processingdb ORDER BY `REF|projects|project` ASC"
+		else:
+			return []
 	results = projectdb.returnCustomSQL(selectq)
 	appiondblist = []
 	for result in results:
