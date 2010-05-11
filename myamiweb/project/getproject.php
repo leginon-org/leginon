@@ -31,7 +31,7 @@ $projectowners = $project->getProjectOwners($selectedprojectId);
 $projectname = ": ".$projectinfo['Name'];
 
 if ($_POST['updateprocessing']) {
-	$q="delete from processingdb where projectId='$selectedprojectId'";
+	$q="delete from processingdb where `REF|projects|project`='$selectedprojectId'";
 	$r=$project->mysql->SQLQuery($q);
 }
 
@@ -57,8 +57,8 @@ if ($_POST['createprocessing'] || $linkprocessing) {
 			$leginondata->importTables($filename);
 
 			$data=array();
-			$data['projectId']=$selectedprojectId;
-			$data['db']=$dbname;
+			$data['REF|projects|project']=$selectedprojectId;
+			$data['appiondb']=$dbname;
 			$project->mysql->SQLInsertIfNotExists('processingdb', $data);
 		}
 	}
@@ -68,10 +68,10 @@ if (!$p_prefix = trim(DEF_PROCESSING_PREFIX)) {
 	$p_prefix = false;
 }
 
-$q="select db from processingdb where projectId='$selectedprojectId'";
+$q="select appiondb from processingdb where `REF|projects|project`='$selectedprojectId'";
 list($r)=$project->mysql->getSQLResult($q);
 
-$processingdb=$r['db'];
+$processingdb=$r['appiondb'];
 $title = "Project".$projectname;
 login_header($title);
 project_header($title, 'init()');
