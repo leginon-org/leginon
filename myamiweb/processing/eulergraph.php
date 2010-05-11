@@ -32,6 +32,8 @@ foreach($eulerinfo as $e) {
 	$data[$e['DEF_id']] = $e['median'];
 }
 
+//print_r($data);
+
 if (!$data) {
 	$width = 12;
 	$height = 12;
@@ -41,12 +43,15 @@ if (!$data) {
 
 	$graph->img->SetMargin(60,30,40,50);
 	$histogram = new histogram($data);
-	$histogram->setBarsNumber(50);
+	$histogram->minval = 0.0;
+	//$histogram->setInterval(1.0);
+	$histogram->setBarsNumber(80);
 	$rdata = $histogram->getData();
 	$rdatax = $rdata['x'];
 	$rdatay = $rdata['y'];
-	
-	$graph->SetScale("linlin");
+
+	//$graph->SetScale("linlin",0.0,1.0,$sx[0],$last);
+	$graph->SetScale("linlin", 0.0, $histogram->idealmaxy, 0.0, $histogram->idealmaxx);
                
 	$bplot = new BarPlot($rdatay, $rdatax);
 	$graph->Add($bplot);
