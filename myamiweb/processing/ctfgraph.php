@@ -83,15 +83,17 @@ if (!$data) {
 	if ($histogram) {
 		$graph->img->SetMargin(60,30,40,50);
 		$histogram = new histogram($data);
+		$histogram->maxval = 1.0;
 		$histogram->setBarsNumber(50);
 		$rdata = $histogram->getData();
 
 		$rdatax = $rdata['x'];
 		$rdatay = $rdata['y'];
-		
-		$maxy = max($rdatay);
-		$maxx = max($rdatax);
-		$graph->SetScale("linlin",0.0,$maxy*1.1,$minimum,$maxx);
+
+		// Do not confidence values below 40%
+		$minx = max($histogram->idealminx, 0.4);
+
+		$graph->SetScale("linlin",0.0,$histogram->idealmaxy,$minx,$histogram->idealmaxx);
 
 		$bplot = new BarPlot($rdatay, $rdatax);
 		$graph->Add($bplot);
