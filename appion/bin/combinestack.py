@@ -28,27 +28,36 @@ class combineStackScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
+		if self.params['runname'] is None:
+			apDisplay.printError("enter a stack run name, e.g. combinestack1")
+		if self.params['description'] is None:
+			apDisplay.printError("enter a stack description")
+
 		if self.params['stacks'] and ',' in self.params['stacks']:
 			#remember stackids are a list of strings
 			stackids = self.params['stacks'].split(',')
 			self.params['stackids'] = stackids
 		else:
 			apDisplay.printError("enter a list of stack ids to combine, e.g. --stackids=11,14,7")
-		newboxsize = None
+
+		### check to make sure all pixel and box size are the same
+		self.newboxsize = None
+		self.newpixelsize = None
 		for stackidstr in self.params['stackids']:
 			if not re.match("^[0-9]+$", stackidstr):
 				apDisplay.printError("Stack id '%s' is not an integer"%(stackidstr))
 			stackid = int(stackidstr)
 			boxsize = apStack.getStackBoxsize(stackid, msg=False)
-			apDisplay.printMsg("Stack id: %d\tBoxsize: %d"%(stackid, boxsize))
-			if newboxsize is None:
-				newboxsize = boxsize
-			if boxsize != newboxsize:
-				apDisplay.printError("Trying to combine stacks with different boxsizes")
-		if self.params['runname'] is None:
-			apDisplay.printError("enter a stack run name, e.g. combinestack1")
-		if self.params['description'] is None:
-			apDisplay.printError("enter a stack description")
+			pixelsize = apStack.getStackPixelSizeFromStackId(stackid, msg=False)
+			apDisplay.printMsg("Stack id: %d\tBoxsize: %d\tPixelsize: %.3f"%(stackid, boxsize, pixelsize))
+			if self.newboxsize is None:
+				self.newboxsize = boxsize
+			if self.newpixelsize is None:
+				self.newpixelsize = pixelsize
+			if boxsize != self.newboxsize:
+				apDisplay.printError("Trying to combine stacks with different box sizes")
+			if abs(pixelsize - self.newpixelsize) > 0.01:
+				apDisplay.printError("Trying to combine stacks with different pixel sizes")
 
 	#=====================
 	def setRunDir(self):
@@ -85,11 +94,15 @@ class combineStackScript(appionScript.AppionScript):
 		startpart = self.partnum
 
 		stackq = appiondata.ApStackData()
+		oldstackdata = apStack.getOnlyStackData(stackid)
+		stackq.update(oldstackdata)
 		stackq['name'] = self.params['stackfilename']
 		stackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		stackq['description'] = self.params['description']+" ... combined stack ids "+str(self.params['stacks'])
 		stackq['substackname'] = self.params['runname']
 		stackq['hidden'] = False
+		stackq['pixelsize'] = self.newpixelsize
+		stackq['boxsize'] = self.newboxsize
 
 		rinstackdata = apStack.getRunsInStack(stackid)
 		for run in rinstackdata:
