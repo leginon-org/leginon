@@ -75,7 +75,7 @@ var help = {
 		'numpart' : 'Number of particles to use',
 		'numref' : 'Number of references to use',
 		'mirror' : 'Align both regular particles and their mirror image',
-		'mlsavemem' : 'Save memory but reducing the number of xy shift for the particles for each round.',
+		'mlsavemem' : 'Save memory by reducing the number of xy shift for the particles for each round.',
 		'phaseflip' : 'Check this box if you wish to use the defocus value determined by ACE to flip the phases of the particle images (flipping is performed on each individual particle).  The ACE value with the highest confidence will be used.  Note: Amplitudes are NOT affected.',
 		'ctffindonly' : 'Only CTF values estimated using CTFFIND or CTFTILT will be used for correcting the CTF',
 		'aceconf' : 'Only micrographs with a CTF confidence equal to or above the value specified will be used in the creation of the stack.  Values range from 0 (lowest confidence) to 1 (greatest confidence).  Empirically a confidence value of 0.8 or greater for ACE signifies a good estimation of the defocus.',
