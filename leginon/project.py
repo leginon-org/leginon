@@ -55,7 +55,7 @@ class ProjectData:
 		if not projdatas:
 			print "Project Id not found for session"
 			return None
-		return projdatas[0].dbid
+		return projdatas[0]['project'].dbid
 
 	def getProcessingDB(self, projectId):
 		procq = projectdata.processingdb()
