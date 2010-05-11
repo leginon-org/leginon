@@ -37,6 +37,7 @@ def upgradeAppionDB(appiondbname, projectdb):
 	time.sleep(0.1)
 
 	appiondb = dbupgrade.DBUpgradeTools('appiondata', appiondbname, drop=True)
+	appiondb.backupDatabase(appiondbname+".sql", data=False)
 
 	#===================
 	# rename tables: when renaming table you must rename all columns linking to that table

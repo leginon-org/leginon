@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import time
 import MySQLdb
@@ -78,6 +79,33 @@ class DBUpgradeTools(object):
 		if numrows > 0:
 			return True
 		return False
+
+	#==============
+	def backupDatabase(self, filename, data=False):
+		if os.path.isfile(filename):
+			print "\033[31merror file exists for backup\033[0m"
+			if self.exit is True: sys.exit(1)
+			return False
+		dbconf = dbconfig.getConfig(self.confname)
+		print dbconf
+		import subprocess
+		cmd = ("mysqldump --host=%s --user=%s --password=%s --skip-lock-tables --extended-insert"
+			%(dbconf['host'], dbconf['user'], dbconf['passwd']))
+		if data is False:
+			cmd += " --no-data"
+		cmd += " %s > %s"%(self.dbname, filename)
+		proc = subprocess.Popen(cmd, shell=True)
+		proc.wait()
+		if not os.path.isfile(filename):
+			print "\033[31merror failed to backup database\033[0m"
+			if self.exit is True: sys.exit(1)
+			return False
+		if messaging['success'] is True:
+			backtype = "structure"
+			if data is True:
+				backtype = "data"
+			print "\033[32msuccessfully backed up database %s to file %s\033[0m"%(backtype, filename)
+		return True
 
 	#==============
 	def validTableName(self, table):
