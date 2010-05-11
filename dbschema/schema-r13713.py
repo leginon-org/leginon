@@ -16,7 +16,7 @@ def getAppionDatabases(projectdb):
 		print "could not find appion tables"
 		return []
 
-	selectq = "SELECT DISTINCT appiondb FROM processingdb ORDER BY `REF|projects|project` ASC"
+	selectq = "SELECT DISTINCT "+colname+" FROM processingdb ORDER BY `REF|projects|project` ASC"
 	results = projectdb.returnCustomSQL(selectq)
 	appiondblist = []
 	for result in results:
