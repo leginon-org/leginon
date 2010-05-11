@@ -101,7 +101,7 @@ class combineStackScript(appionScript.AppionScript):
 		stackq['description'] = self.params['description']+" ... combined stack ids "+str(self.params['stacks'])
 		stackq['substackname'] = self.params['runname']
 		stackq['hidden'] = False
-		stackq['pixelsize'] = self.newpixelsize
+		stackq['pixelsize'] = self.newpixelsize*1e-10
 		stackq['boxsize'] = self.newboxsize
 
 		rinstackdata = apStack.getRunsInStack(stackid)
