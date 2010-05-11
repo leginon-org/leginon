@@ -1,25 +1,41 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
+ *	The Leginon software is Copyright 2010 
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  *
  */
+ 
+ /**
+  *  Please visit http://yourhost/myamiwebfolder/setup
+  *  for automatically setup this config file for the
+  *  first time.
+  */
+ 
 
 require_once 'inc/config.inc';
+define('WEB_ROOT',dirname(__FILE__));
 
 // --- define myamiweb tools base --- //
 define('PROJECT_NAME', "myamiweb");
 define('PROJECT_TITLE', "Appion and Leginon Tools");
 
 // --- define site base path -- //
-// --- example: http://domain.edu/myamiweb -- //
+// --- This should be changed if the myamiweb directory is located -- //
+// --- in a sub-directory of the Apache web directory. -- //
+// --- ex. myamiweb is in /var/www/html/applications/myamiweb/ then -- //
+// --- change "myamiweb to "applications/myamiweb" -- //
 define('BASE_PATH',"myamiweb");
 
 define('BASE_URL', "/".BASE_PATH."/");
 define('PROJECT_URL', BASE_URL."project/");
+
+// --- myamiweb login --- //
+// Browse to the administration tools in myamiweb prior to 
+// changing this to true to populate DB tables correctly.
+define('ENABLE_LOGIN', false);	
 
 // --- Administrator email title and email address -- //
 define('EMAIL_TITLE', 'The name of your institute');
@@ -31,7 +47,7 @@ define('ENABLE_SMTP', false);
 define('SMTP_HOST', 'mail.institute.edu');	//your smtp host
 
 // --- Check this with your email administrator -- //
-// --- Set it to true if your SMTP server require authentication -- //
+// --- Set it to true if your SMTP server requires authentication -- //
 define('SMTP_AUTH', false);
 
 // --- If SMTP_AUTH is not required(SMTP_AUTH set to false, -- //
@@ -61,8 +77,6 @@ define('GP_USER', 'users');
 $XML_DATA = "test/viewerdata.xml";
 
 // --- Set Default table definition -- //
-define('DEF_TABLES_FILE', "defaulttables.xml");
-define('DEF_PROJECT_TABLES_FILE', "defaultprojecttables.xml");
 define('DEF_PROCESSING_TABLES_FILE', "defaultprocessingtables.xml");
 define('DEF_PROCESSING_PREFIX', "ap");		//update mysql privileges
 
@@ -86,33 +100,27 @@ set_include_path(dirname(__FILE__).PATH_SEPARATOR
 				.dirname(__FILE__)."/lib/PEAR");
 
 // --- add plugins --- //
-define('WEB_ROOT',dirname(__FILE__));
 // --- uncomment to enable processing web pages -- //
 // addplugin("processing");
 
 
 // --- Add as many processing hosts as you like -- //
 // --- Please enter your processing host information associate with -- //
-// --- number of processing nodes									-- //
+// --- Maximum number of the processing nodes									-- //
 // --- $PROCESSING_HOSTS[] = array('host' => 'host1.school.edu', 'nproc' => 4); -- //
 // --- $PROCESSING_HOSTS[] = array('host' => 'host2.school.edu', 'nproc' => 8); -- //
 
 // $PROCESSING_HOSTS[] = array('host' => '', 'nproc' => );
 
 // --- register your cluster config file below i.e (default_cluster.php) --- //
-$CLUSTER_CONFIGS= array ('default_cluster');
+// $CLUSTER_CONFIGS= array ('');
 
-// Better if Cs came out of DB, but for now...
-$DEFAULTCS = "";
+// --- Microscope spherical aberration constant
+$DEFAULTCS = "2.0";
 
 // --- Restrict file server if you want --- //
 // --- Add your allowed processing directory as string in the array
 $DATA_DIRS = array();
-
-// --- myamiweb login --- //
-// Browse to the administration tools in myamiweb prior to 
-// changing this to true to populate DB tables correctly.
-define('ENABLE_LOGIN', false);	
 
 // --- Enable Image Cache --- //
 define('ENABLE_CACHE', false);
