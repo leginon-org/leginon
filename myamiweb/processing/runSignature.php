@@ -93,7 +93,7 @@ function createTemplateForm($extra=False) {
 
 
 				// Table separator
-				$templatetable.="</td><td align='left'>\n";
+				$templatetable.="</td><td align='left' border=1>\n";
 
 				// set parameters
 				$templatetable.="<input type='hidden' name='templateId".$templatenum."' value='$templateinfo[DEF_id]'>\n";
@@ -110,8 +110,9 @@ function createTemplateForm($extra=False) {
 			else
 				$templatetable.="</td>\n";
 		}
+		if ($templatenum%2!=1 && $templatenum>2) $templatetable.="<td></td><td></td>\n";
 		$javafunctions.="</SCRIPT>\n";
-		$templatetable.="</table>\n";
+		$templatetable.="</tr></table>\n";
 	}
 	$javafunctions.="<script src='../js/viewer.js'></script>\n";
 
@@ -400,14 +401,14 @@ function runSignaturePicker() {
 	$command .= $partcommand;
 
 	// get the list of templates
-	$i=1;
+	$templatenum=1;
 	$templateList = $_POST['templateList'];
 	$templates=split(",", $templateList);
 	$templateliststr = "";
 	foreach ($templates as $template) {
 		list($num, $templateid) = split(":",$template);
 		$templateliststr .= $templateid.",";
-		$i++;
+		$templatenum++;
 	}
 	// remove extra commas and x's
 	$templateliststr = substr($templateliststr,0,-1);
@@ -470,10 +471,10 @@ function runSignaturePicker() {
 			$command
 			<hr>
 			</td></tr>";
-		$i = 0;
+		$templatenum = 0;
 		foreach ( split(",", $templateliststr) as $templateid ) {
-			$i++;
-			echo"<tr><td>template $i id</td><td>$templateid</td></tr>";
+			$templatenum++;
+			echo"<tr><td>template $templatenum id</td><td>$templateid</td></tr>";
 		}
 		echo"<tr><td>template list</td><td>$templateliststr</td></tr>";
 		echo"<tr><td>testimage</td><td>$testimage</td></tr>";
