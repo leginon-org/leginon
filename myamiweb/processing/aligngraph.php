@@ -49,14 +49,18 @@ if (!$data) {
 	$source = blankimage($width, $height);
 } else {
 	$histogram = new histogram($data);
-	$histogram->setBarsNumber(50);
+	$histogram->setBarsNumber(70);
+	if ($type == 'spread')
+		$histogram->maxval = 1.0;
 	$rdata = $histogram->getData();
 	$rdatax = $rdata['x'];
 	$rdatay = $rdata['y'];
 
 	$graph = new Graph(640,480,"auto");    
 	$graph->img->SetMargin(60,30,40,50);
-	$graph->SetScale("linlin"); 
+
+	$graph->SetScale("linlin", 0.0, $histogram->idealmaxy, $histogram->idealminx, $histogram->idealmaxx);
+	//$graph->SetScale("linlin"); 
       
 	$bplot = new BarPlot($rdatay, $rdatax);
 	$graph->Add($bplot);
