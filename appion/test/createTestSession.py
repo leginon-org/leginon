@@ -107,7 +107,7 @@ class testScript(appionScript.AppionScript):
 		script = os.path.join(self.appiondir, "bin", "imageloader.py ")
 		params = (" --runname=%s --projectid=%d --session=%s --batch=%s --scopeid=%d --cameraid=%d --description='%s' "
 			%(self.timestamp, self.params['projectid'], self.timestamp, 
-			imagedatfile, 89, 90, 'running test suite application'))
+			imagedatfile, 89, 90, self.params['description']+' running test suite application'))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
