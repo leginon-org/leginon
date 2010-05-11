@@ -8,19 +8,19 @@ from appionlib import apDisplay
 from appionlib import apFile
 
 """
-A large collection of SPIDER functions
+A large collection of SPIDER functions for that are common to other SPIDER functions
 
 I try to keep the trend
-image file: 
+image file:
 	*****img.spi
-doc/keep/reject file: 
+image stack file:
+	*****stack.spi
+doc/keep/reject file:
 	*****doc.spi
 file with some data:
 	*****data.spi
 
 that way its easy to tell what type of file it is
-
-neil
 """
 
 #===============================

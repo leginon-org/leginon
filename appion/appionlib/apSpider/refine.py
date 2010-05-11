@@ -23,7 +23,7 @@ except:
 	pass
 
 """
-A large collection of SPIDER functions
+A large collection of SPIDER functions for 3D RECONSTRUCTION purposes only
 
 I try to keep the trend
 image file:
@@ -36,8 +36,6 @@ file with some data:
 	*****data.spi
 
 that way its easy to tell what type of file it is
-
-neil
 """
 
 #===============================

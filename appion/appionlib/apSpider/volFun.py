@@ -15,20 +15,21 @@ try:
 except:
 	print "could not import spider from pyami"
 
+
 """
-A collection of volume-related SPIDER functions
+A large collection of SPIDER functions for 3D VOLUME MANIPULATION purposes only
 
-syntax/nomenclature:
-
-volume file:
-        *****vol.spi
-image file: 
+I try to keep the trend
+image file:
 	*****img.spi
-doc/keep/reject file: 
+image stack file:
+	*****stack.spi
+doc/keep/reject file:
 	*****doc.spi
 file with some data:
 	*****data.spi
 
+that way its easy to tell what type of file it is
 """
 
 

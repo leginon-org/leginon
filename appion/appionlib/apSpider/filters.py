@@ -12,19 +12,19 @@ from appionlib import apFile
 from pyami import spider
 
 """
-A large collection of SPIDER functions
+A large collection of SPIDER functions for 2D WHOLE IMAGE FILTERS purposes only
 
 I try to keep the trend
-image file: 
+image file:
 	*****img.spi
-doc/keep/reject file: 
+image stack file:
+	*****stack.spi
+doc/keep/reject file:
 	*****doc.spi
 file with some data:
 	*****data.spi
 
 that way its easy to tell what type of file it is
-
-neil
 """
 
 #===============================
