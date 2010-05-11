@@ -48,16 +48,6 @@ class histogram {
 			//echo $k."<br/>\n";
 			$classes[$k]++;
 		}
-		/*
-		for($k=0; $k<$this->nbbars+1; $k++ ) {
-			$classes[$k] = 0;
-			foreach($this->data as $data) {
-				$i1 = ($this->minval+ ($k)*$this->interval);
-				$i2 = ($this->minval+ ($k+1)*$this->interval);
-				if ($data >= $i1 && $data < $i2)
-					$classes[$k]++;
-			}
-		}*/
 		if ($classes)
 			foreach ($classes as $k=>$nb) {
 				if ($nb > $this->maxcount)
