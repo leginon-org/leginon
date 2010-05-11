@@ -844,8 +844,11 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 }
 
 function writeTestResults($jpg,$ccclist,$bin){
-	if (!file_exists($jpg))
-		return "<font class='apcomment'>An Error occurred - No image was created</font><br />\n";
+	if (!file_exists($jpg)) {
+		$base = basename($jpg);
+		$dir = dirname($jpg);
+		return "<font color='#990000' size='+2'>An Error occurred - the image $base was not found in folder $dir</font><br />\n";
+	}
 	$html = "<center>\n";
 	$html.= "<a href='loadimg.php?filename=$jpg' target='blank'>\n";
 	$html.= "<img src='loadimg.php?filename=$jpg&h=256'></a>\n";
