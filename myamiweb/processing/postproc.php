@@ -148,8 +148,8 @@ function createform($extra=False) {
 		echo "<TR><td>\n";
 		if (file_exists($ampfile)) {
 			echo "<A HREF='ampcorplot.php?file=$ampfile&width=800&height=600'>";
-			echo $ampfile;
-			echo "<img src='ampcorplot.php?file=$ampfile&width=200&height=150&nomargin=True'>\n";
+			//echo $ampfile;
+			echo "<img src='ampcorplot.php?file=$ampfile&width=150&height=75&nomargin=True'>\n";
 		}	else {
 			echo "&nbsp;";
 		}
