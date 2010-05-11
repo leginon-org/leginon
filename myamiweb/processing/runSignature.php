@@ -58,18 +58,18 @@ function createTemplateForm($extra=False) {
 
 	// extract template info
 	if ($templateData) {
-		$i=1;
+		$templatenum=1;
 		$javafunctions="<script type='text/javascript'>\n";
 		$templatetable="<table class='tableborder' border='1' cellpadding='5'>\n";
 		$numtemplates = count($templateData);
 		foreach($templateData as $templateinfo) {
-			if ($i%2 == 1)
+			if ($templatenum%2 == 1)
 				$templatetable.="<tr><td align='left'>\n";
 			else
 				$templatetable.="<td align='left'>\n";
 			if (is_array($templateinfo)) {
 				$filename = $templateinfo[path] ."/".$templateinfo[templatename];
-				$checkboxname='template'.$i;
+				$checkboxname='template'.$templatenum;
 				$templaterundata = $particle->getRecentTemplateRunFromId($templateinfo[DEF_id]);
 				// create the javascript functions to enable/disable the templates
 				$javafunctions.="function enable".$checkboxname."() {
@@ -96,16 +96,16 @@ function createTemplateForm($extra=False) {
 				$templatetable.="</td><td align='left'>\n";
 
 				// set parameters
-				$templatetable.="<input type='hidden' name='templateId".$i."' value='$templateinfo[DEF_id]'>\n";
+				$templatetable.="<input type='hidden' name='templateId".$templatenum."' value='$templateinfo[DEF_id]'>\n";
 				$templatetable.="<input type='checkbox' name='$checkboxname' onclick='enable".$checkboxname."()'>\n";
 				$templatetable.="<b>Use Template $templateinfo[DEF_id]</b>\n";
 				$templatetable.="<br/>\n";
 				$templatetable.="<table width='200'><tr><td>\n";
 				$templatetable.="<b>Description:</b>&nbsp;<font size='-2'>$templateinfo[description]</font>\n";
 				$templatetable.="</td></tr></table>\n";
-				$i++;
+				$templatenum++;
 			}
-			if ($i%2 == 1)
+			if ($templatenum%2 == 1)
 				$templatetable.="</td></tr>\n";
 			else
 				$templatetable.="</td>\n";
