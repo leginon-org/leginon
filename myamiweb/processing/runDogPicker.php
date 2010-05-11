@@ -195,8 +195,8 @@ function runDogPicker() {
 			$results.= "<B>DogPicker Command:</B><br />$command";
 			$results.= "</td></tr></table>\n";
 			$results.= "<br />\n";
-			$testjpg=ereg_replace(".mrc","",$_POST['testfilename']);
-			$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
+			$testjpg = ereg_replace(".mrc","",$_POST['testfilename']);
+			$jpgimg = $outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
 			$dogmaplist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
 
 			$results .= writeTestResults($jpgimg, $dogmaplist, $_POST['bin']);
