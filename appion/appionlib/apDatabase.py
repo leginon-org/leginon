@@ -22,6 +22,9 @@ data.holdImages(False)
 
 #================
 def getAllImages(stats, params):
+	"""
+	This is a depricated function, use something else
+	"""
 	startt = time.time()
 	if 'sessionname' in params and params['preset'] is not None:
 		imgtree = getImagesFromDB(params['sessionname'],params['preset'])
