@@ -460,7 +460,10 @@ class AppionLoop(appionScript.AppionScript):
 		startt = time.time()
 		if self.params['mrcnames'] is not None:
 			mrcfileroot = self.params['mrcnames'].split(",")
-			self.imgtree = apDatabase.getSpecificImagesFromDB(mrcfileroot)
+			if self.params['sessionname'] is not None:
+				self.imgtree = apDatabase.getSpecificImagesFromSession(mrcfileroot, self.params['sessionname'])
+			else:
+				self.imgtree = apDatabase.getSpecificImagesFromDB(mrcfileroot)
 		elif self.params['sessionname'] is not None:
 			if self.params['preset'] is not None:
 				self.imgtree = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['preset'])
