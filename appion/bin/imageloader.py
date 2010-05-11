@@ -246,6 +246,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			load = os.getloadavg()[0]
 			if load > 2.0:
 				apDisplay.printMsg("Load average is high %.2f"%(load))
+				sleeptime = min(load, 60)
 				time.sleep(load)
 
 			self._printSummary()
