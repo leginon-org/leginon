@@ -89,8 +89,12 @@ class DBUpgradeTools(object):
 		dbconf = dbconfig.getConfig(self.confname)
 		print dbconf
 		import subprocess
-		cmd = ("mysqldump --host=%s --user=%s --password=%s --skip-lock-tables --extended-insert"
-			%(dbconf['host'], dbconf['user'], dbconf['passwd']))
+		if 'passwd' in dbconf.keys():
+			cmd = ("mysqldump --host=%s --user=%s --password=%s --skip-lock-tables --extended-insert"
+				%(dbconf['host'], dbconf['user'], dbconf['passwd']))
+		else:
+			cmd = ("mysqldump --host=%s --user=%s --skip-lock-tables --extended-insert"
+				%(dbconf['host'], dbconf['user']))
 		if data is False:
 			cmd += " --no-data"
 		cmd += " %s > %s"%(self.dbname, filename)
