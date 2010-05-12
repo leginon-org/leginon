@@ -8,6 +8,7 @@
  */
 
 function exec_over_ssh($host, $username, $password, $command, $result=false, $port=22) {
+	if (!function_exists(ssh2_connect)) return false;
 	$connection = ssh2_connect($host, $port);
 	if (!@ssh2_auth_password($connection, $username, $password)) {
 		return false;
