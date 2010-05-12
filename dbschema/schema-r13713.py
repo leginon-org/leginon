@@ -30,14 +30,15 @@ def getAppionDatabases(projectdb):
 # APPION UPGRADE
 #===================
 #===================
-def upgradeAppionDB(appiondbname, projectdb):
+def upgradeAppionDB(appiondbname, projectdb, backup=True):
 	print ""
 	print "========================"
 	print "Upgrading appion database: "+appiondbname
 	time.sleep(0.1)
 
 	appiondb = dbupgrade.DBUpgradeTools('appiondata', appiondbname, drop=True)
-	appiondb.backupDatabase(appiondbname+".sql", data=False)
+	if backup:
+		appiondb.backupDatabase(appiondbname+".sql", data=True)
 
 	#===================
 	# rename tables: when renaming table you must rename all columns linking to that table
@@ -312,7 +313,11 @@ def upgradeAppionDB(appiondbname, projectdb):
 	appiondb.changeColumnDefinition('ApAlignParticleData', 'mirror', appiondb.bool)
 	print "DONE"
 
-def upgradeProjectDB(projectdb):
+def upgradeProjectDB(projectdb,backup=True):
+	dbname = projectdb.getDatabaseName()
+	if backup:
+		projectdb.backupDatabase(dbname+".sql", data=True)
+
 	projectdb.renameColumn('projects', 'projectId', 'DEF_id', projectdb.defid)
 	projectdb.renameColumn('projects', 'timestamp', 'DEF_timestamp', projectdb.timestamp)
 	projectdb.renameColumn('projects', 'db', 'leginondb')
@@ -332,6 +337,7 @@ def upgradeProjectDB(projectdb):
 			+"   projexp.`REF|"+leginondb.getSinedonName()+"|SessionData|session` = session.`DEF_id` "
 		)
 		projectdb.executeCustomSQL(updateq)
+	
 		projectdb.dropColumn('projectexperiments', 'name')
 	projectdb.dropColumn('projectexperiments', 'experimentsourceId')
 
@@ -346,11 +352,13 @@ def upgradeProjectDB(projectdb):
 	projectdb.renameColumn('shareexperiments', 'id', 'DEF_id', projectdb.defid)
 	projectdb.addColumn('shareexperiments', 'DEF_timestamp', projectdb.timestamp, index=True)
 
-def upgradeLeginonDB(leginondb):
+def upgradeLeginonDB(leginondb, backup=True):
+	dbname = leginondb.getDatabaseName()
+	if backup:
+		leginondb.backupDatabase(dbname+".sql", data=True)
 	#===================
 	# leginon table
 	#===================
-
 	leginondb.renameTable('viewer_pref_image', 'ViewerImageStatus', updaterefs=False)
 	leginondb.renameColumn('ViewerImageStatus', 'id', 'DEF_id', projectdb.defid)
 	leginondb.renameColumn('ViewerImageStatus', 'timestamp', 'DEF_timestamp', projectdb.timestamp)
@@ -367,8 +375,14 @@ def upgradeLeginonDB(leginondb):
 if __name__ == "__main__":
 	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 	leginondb = dbupgrade.DBUpgradeTools('leginondata', drop=False)
-	upgradeProjectDB(projectdb)
-	upgradeLeginonDB(leginondb)
+	print "Do you want to dump the databases into sql files before the conversion?"
+	answer = raw_input('(Y/N) default=Y :')
+	if answer in ('N','n', 'No','no'):
+		backup = False
+	else:
+		backup = True
+	upgradeProjectDB(projectdb,backup=backup)
+	upgradeLeginonDB(leginondb,backup=backup)
 	#upgradeAppionDB('ap1', projectdb)
 	#sys.exit(1)
 
@@ -378,4 +392,4 @@ if __name__ == "__main__":
 			print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
 			time.sleep(1)
 			continue
-		upgradeAppionDB(appiondbname, projectdb)
+		upgradeAppionDB(appiondbname, projectdb,backup=backup)
