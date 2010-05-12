@@ -177,10 +177,16 @@ if ($expId) {
 		'name'=>"<a href='runDogPicker.php?expId=$sessionId'>DoG Picking</a>",
 		'result'=>$dresults,
 	);
-	$nrun[] = array(
-		'name'=>"<a href='runSignature.php?expId=$sessionId'>Signature</a>",
-		'result'=>$sresults,
-	);
+	// The signature feature is added with issue #368, however was not tested prior to 2.0 release.
+	// It should be hidden until it can be tested at AMI. The HIDE_FEATURE flag can be set
+	// in config.php in the myamiweb directory.
+	if (!HIDE_FEATURE)
+	{
+		$nrun[] = array(
+			'name'=>"<a href='runSignature.php?expId=$sessionId'>Signature</a>",
+			'result'=>$sresults,
+		);
+	}
 	$nrun[] = array(
 		'name'=>"<a href='runManualPicker.php?expId=$sessionId'>Manual Picking</a>",
 		'result'=>$mresults,
