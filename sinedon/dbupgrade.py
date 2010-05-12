@@ -401,7 +401,7 @@ class DBUpgradeTools(object):
 				print "\033[33mcannot rename %s to %s, column does not exist\033[0m"%(column1, column2)
 			return False
 
-		query = "SELECT COUNT(`%s`) FROM `%s` WHERE %s;"%(column, table, whereclause)
+		query = "SELECT COUNT(*) FROM `%s` WHERE %s;"%( table, whereclause)
 		self.executeQuery(query)
 		
 		result = self.cursor.fetchone()
