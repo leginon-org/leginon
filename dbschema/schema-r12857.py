@@ -166,14 +166,14 @@ if __name__ == "__main__":
 				)
 	 	
 		leginondb.executeCustomSQL(updateq)
-		'''	
+			
 		updateq = (" UPDATE "+leginondb.dbname+".UserData "
-				+" SET "+leginondb.dbname+".UserData.password = "+leginondb.dbname+".UserData.username "
+				+" SET "+leginondb.dbname+".UserData.password = MD5("+leginondb.dbname+".UserData.username) "
 				+" WHERE "+leginondb.dbname+".UserData.password IS NULL; "
 				)
 
 		leginondb.executeCustomSQL(updateq)
-		'''	
+			
 		updateq = (" UPDATE "+leginondb.dbname+".UserData "
 				+' SET '+leginondb.dbname+'.UserData.firstname = "" ' 
 				+" WHERE "+leginondb.dbname+".UserData.firstname IS NULL; "
