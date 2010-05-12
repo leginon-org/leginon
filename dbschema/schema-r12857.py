@@ -10,21 +10,18 @@ from sinedon import dbupgrade, dbconfig
 # and project[users,login,pis,userdetails,projectowner]
 
 if __name__ == "__main__":
-	appiondb = dbupgrade.DBUpgradeTools('appiondata', 'aptest', drop=True)
-	projectdb = dbupgrade.DBUpgradeTools('projectdata', 'projtest', drop=True)
-	leginondb = dbupgrade.DBUpgradeTools('leginondata', 'dbemtest', drop=False)
+	appiondb = dbupgrade.DBUpgradeTools('appiondata', drop=True)
+	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
+	leginondb = dbupgrade.DBUpgradeTools('leginondata', drop=False)
 
 	#===================
 	# leginon table
 	# update from Anchi which occured in revison 12330
 	#===================
 
-	if leginondb.columnExists('PresetData', 'exposure time'):
-		updateq = ("ALTER TABLE `PresetData` "
-			+" CHANGE `exposure time` `exposure time` DOUBLE NULL DEFAULT NULL "
-		)
-		
-		leginondb.executeCustomSQL(updateq)
+	if leginondb.columnExists('AcquisitionImageTargetData', 'delta row'):
+	leginondb.changeColumnDefinition('AcquisitionImageTargetData', 'delta row', leginondb.float)
+	leginondb.changeColumnDefinition('AcquisitionImageTargetData', 'delta column', leginondb.float)
 
 	#===================
 	# Check to see if this script has already been run. 

@@ -380,6 +380,4 @@ if __name__ == "__main__":
 	leginondb.renameColumn('ViewerImageStatus', 'imageId', 'REF|AcquisitionImageData|image', projectdb.link)
 
 	leginondb.changeColumnDefinition('PresetData', 'exposure time', leginondb.float)
-	leginondb.changeColumnDefinition('AcquisitionImageTargetData', 'delta row', leginondb.float)
-	leginondb.changeColumnDefinition('AcquisitionImageTargetData', 'delta column', leginondb.float)
 
