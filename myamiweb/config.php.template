@@ -137,10 +137,13 @@ define('FLASHPLAYER_URL', "/flashplayer/");
 // putenv("PYTHONPATH=$pythonpath");
 // define('MRC2ANY', "/usr/local/bin/mrc2any");
 
-// Check if IMAGIC is installed and running, otherwise hide all functions
+// --- Check if IMAGIC is installed and running, otherwise hide all functions --- //
 define('HIDE_IMAGIC', false);
 
-// hide processing tools still under development.
+// --- hide processing tools still under development. --- //
 define('HIDE_FEATURE', true);
+
+// --- temporary images upload directory --- //
+define('TEMP_IMAGES_DIR', "");
 
 ?>

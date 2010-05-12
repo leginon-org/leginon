@@ -26,6 +26,7 @@ require_once('setupUtils.inc');
 				wizard_form.hide_imagic[1].disabled = false;
 				wizard_form.hide_feature[0].disabled = false
 				wizard_form.hide_feature[1].disabled = false;
+				wizard_form.temp_images_dir.disabled = false;
 				
 			}else{
 
@@ -35,6 +36,7 @@ require_once('setupUtils.inc');
 				wizard_form.hide_imagic[1].disabled = true;
 				wizard_form.hide_feature[0].disabled = true;
 				wizard_form.hide_feature[1].disabled = true;
+				wizard_form.temp_images_dir.disabled = true;
 			}
 		}
 
@@ -132,6 +134,11 @@ require_once('setupUtils.inc');
 		&nbsp;&nbsp;YES<br />
 		<input type="radio" name="hide_feature" value="false" <?php ($update) ? (defined("HIDE_FEATURE") && HIDE_FEATURE)? print("") : print("checked='yes'") : print("disabled checked='yes'"); ?> />
 		&nbsp;&nbsp;NO<br />		
+		<br />
+		
+		<h3>Enter a temporary upload directory location.</h3>
+		<p>You can setup a temporary directory for upload images, templates, models. (Optional)</p>
+		<input type="text" size=20 name="temp_images_dir" <?php ($update && PROCESSING === true) ? print("value='".TEMP_IMAGES_DIR."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
 		<br />
 		<input type="submit" value="NEXT" />
 	</form>
