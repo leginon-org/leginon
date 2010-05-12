@@ -217,7 +217,7 @@
       name="appiondb" 
       type="varchar(50)" 
     />
-    <key>PRIMARY KEY (`id`)</key>
+    <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|projects|project` (`REF|projects|project`)</key>
     <key>KEY `appiondb` (`appiondb`)</key>
