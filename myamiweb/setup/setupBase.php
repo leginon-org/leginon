@@ -25,12 +25,12 @@ require_once('setupUtils.inc');
 		<input type="hidden" name="base_url" value="<?php echo $utils->baseURL; ?>" />
 		<input type="hidden" name="project_url" value=<?php echo $utils->projectURL; ?> />
 		
-		<h3>Enter the name of the project title you want to be:</h3><br />
-		<p>Project Title is going to be the title of all the tools.</p>	
+		<h3>Enter a title for your Appion and Leginon tools web pages:</h3><br />
+		<p>Project Title will be the title of all the tools web pages.</p>	
 		<p>example: Appion and Leginon DB Tools</p><br />
 		<input type="text" size=50 name="project_title" value="<?php ($update) ? print(PROJECT_TITLE) : print("Appion and Leginon DB Tools"); ?>" /><br /><br />
 		<br />
-		<h3>Base on your current URL we can setup the following path and url</h3>
+		<h3>Based on your current URL we can setup the following path and url</h3>
 		<p>Base_PATH : <?php echo $utils->basePath; ?></p>
 		<p>BASE_URL : <?php echo $utils->baseURL; ?></p>
 		<p>PROJECT_URL : <?php echo $utils->projectURL; ?></p>

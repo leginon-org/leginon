@@ -34,19 +34,19 @@ require_once("../inc/mysql.inc");
 
 	}
 	else{
-		$has_error[] = "Config file does not exist. Please create it first.";
+		$has_error[] = "The configuration file does not exist. Please create it first.";
 	}
 
 ?>
 		
-		<h3>Data Insertion Sucess:</h3>
-		<p>Web tools wizard has successfully insert all the required tables and values to your databases.<br />
-		   You can now start using web tools.<br /><br />
-		   If you have enabled the login system, use your administrator's password to login,<br />
-           Otherwise to start using the web tools, please click 
+		<h3>Data Insertion Success:</h3>
+		<p>Web tools wizard has successfully inserted all the required tables and values to your databases.<br />
+		   You can now start using the Appion and Leginon web tools.<br /><br />
+		   If you have enabled the login system, use your administrator's password to login.<br />
+           To start using the web tools, please click 
            <a href="http://<?php echo $_SERVER['SERVER_NAME'].BASE_URL; ?>">here</a>.<br /><br />
            To go back to the wizard, please click <a href="index.php">here</a><br /><br />
-			Thanks you for using this wizard.</p>	
+		</p>	
 
 <?php 
 		

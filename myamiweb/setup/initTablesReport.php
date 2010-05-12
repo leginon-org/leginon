@@ -30,15 +30,15 @@ require_once("../inc/mysql.inc");
 		
 	}
 	else{
-		$has_error[] = "Config file does not exist. Please create it first.";
+		$has_error[] = "The configuration file does not exist. Please create it first.";
 	}
 
 ?>
 
 	<form name='wizard_form' method='POST' action='insertInitData.php'>
 		
-		<h3>The following tables has been created in both Databases :</h3>
-		<p>To insert default data and values in the database tables, please click the "NEXT" button</p>
+		<h3>The following tables have been created in the Databases :</h3>
+		<p>To insert default data and values in the database tables, please click the "NEXT" button.</p>
 		
 		<input type="submit" value="NEXT" />
 		<br /><br />

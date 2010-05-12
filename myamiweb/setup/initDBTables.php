@@ -22,7 +22,7 @@ require_once("../inc/mysql.inc");
 							 	Please visit <a href='http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database' 
 								target='_blank'>Database setup</a> for more detailed information.<br /><br />
 							 3.	Your database server is not using standard port number 3306.<br />&nbsp;&nbsp;&nbsp;&nbsp;
-							    If your database is using a different port, please following the following example for setting up your host name.<br />&nbsp;&nbsp;&nbsp;&nbsp;
+							    If your database is using a different port, please follow the following example for setting up your host name.<br />&nbsp;&nbsp;&nbsp;&nbsp;
 							    Syntax: dbhost.school.edu:portnumber<br /> &nbsp;&nbsp;&nbsp;&nbsp;
 							    Example: test.school.edu:3308<br /> <br />
 							 4.	If your web server and database server are on different machines,<br />&nbsp;&nbsp;&nbsp;&nbsp;
@@ -45,7 +45,7 @@ require_once("../inc/mysql.inc");
 		$mysqld = new mysql(DB_HOST, DB_USER, DB_PASS);
 		$dbLink = $mysqld->connect_db();
 
-		if($dbLink == false)	$has_errors[] = "Cannot connect to database server with the following information:<br />
+		if($dbLink == false)	$has_errors[] = "Cannot connect to the database server with the following information:<br />
 												 db_host : ".DB_HOST."<br />
 												 db_usr : ".DB_USER."<br /><br />".$dbConnectionSolution;
 		
@@ -68,18 +68,18 @@ require_once("../inc/mysql.inc");
 	<form name='wizard_form' method='POST' action='initTablesReport.php'>
 		
 		<h3>Start initial variables setup :</h3>
-		<p>Web tools require some default tables and variables to get started.</p>
+		<p>Web tools requires default tables and variables.</p>
 		<p><font color="red">This is required for new databases Only.</font></p>
 	<?php if(empty($has_errors)){ ?>
-		<p>System has checked your datbase connection to both databases<br /><br />
+		<p>The system has checked your connection to both databases<br /><br />
 		<?php echo DB_LEGINON . " is ready to import !<br /> ";
 			  echo DB_PROJECT . " is ready to import !<br />"; ?><br /> 
-		Please click the "NEXT" button to craete tables for both databases.</p>
+		Please click the "NEXT" button to create tables for both databases.</p>
 		<input type="submit" value="NEXT" />
 	<?php } else { ?>
 		<br />
 		<h3><font color="red">Error(s) have occured !</font></h3>
-		<p>Please solve the following problem before you can continue:</p>
+		<p>Please solve the following problem before continuing:</p>
 	<?php 
 			foreach($has_errors as $error){
 				echo "<p>".$error . "</p>";

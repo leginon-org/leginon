@@ -115,25 +115,25 @@ require_once('setupUtils.inc');
 		
 	?>
 		<h3>Enable Login System:</h3>		
-		<p>You can select if you want to use Web Tools Login System for User management and Project management functionally.</p>
+		<p>You may enable the login feature to restrict access to Leginon and Appion projects.</p>
 		 
 		<input type="radio" name="enable_login" value="false" <?php ($update) ? (ENABLE_LOGIN)? print("") : print("checked='yes'") : print("checked='yes'"); ?> 
 			onclick="setLogin(this)" />&nbsp;&nbsp;NO<br />
 		<input type="radio" name="enable_login" value="true" <?php ($update) ? (ENABLE_LOGIN)? print("checked='yes'") : print("") : print(""); ?> 
 			onclick="setLogin(this)" />&nbsp;&nbsp;YES<br />
 		<br />
-		<h3>Enter outgoing email subject:</h3>
+		<h3>Enter outgoing email subject line:</h3>
 		<p>example: AMI - The Scripps Research Institute</p>
 		<input type="text" size=50 name="email_title" <?php ($update && ENABLE_LOGIN === true)? print("value='".EMAIL_TITLE."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter administrator email address:</h3>
-		<p>This web tools will use the email address you entered to 
-		send out email to the web tools users.</p>
+		<p>The web tools will use this email address to 
+		send email to the web tools users.</p>
 		<input type="text" size=35 name="admin_email" <?php ($update && ENABLE_LOGIN === true)? print("value='".ADMIN_EMAIL."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Using your SMTP server or regular php mail to send out email?</h3>
-		<p>Select SMTP server require to enter your SMTP host information.<br />
-		If your email does not provide SMTP server, please select "Use regular PHP mail."</p>
+		<p>Select "SMTP server" to enter your SMTP host information.<br />
+		If your email does not provide SMTP server, please select "Use regular PHP mail".</p>
 		&nbsp;<input type="radio" name="enable_smtp" value="false" <?php ($update && ENABLE_LOGIN === true) ? (ENABLE_SMTP)? print("") : print("checked='yes'") : print("disabled"); ?> 
 			onclick="setReadOnly_SMTP(this)" />&nbsp;&nbsp;I want to use regular PHP mail.<br />
 		&nbsp;<input type="radio" name="enable_smtp" value="true" <?php ($update && ENABLE_LOGIN === true) ? (ENABLE_SMTP)? print("checked='yes'") : print("") : print("disabled"); ?> 

@@ -23,11 +23,11 @@ require_once('setupUtils.inc');
 			echo "<input type='hidden' name='".$key."' value='".$value."' />";
 		}
 	?>
-		<font style="color: red">Web Tools require one database for Leginon, one database for manage all your projects,<br />
+		<font style="color: red">Web Tools require one database for Leginon, one database to manage projects,<br />
 		and at least one database for Appion. (example : "dbemdata", "project", "ap100")<br />
-		Appion require all three types of database, but Leginon does not require ap database<br />
+		Appion requires all three types of database, but Leginon does not require an Appion database<br />
 		Please visit <a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database" target="_blank">
-		Database setup</a> for more detail information before you fill in this form.</font><br /><br />
+		Database setup</a> for more detailed information before you fill in this form.</font><br /><br />
 		<h3>Enter the Database Host Name:</h3>
 		<p>example: "localhost", or IP</p>
 		<input type="text" size=20 name="db_host" <?php ($update)? print("value='".DB_HOST."'") : print("value=\"\""); ?> /><br /><br />
@@ -38,7 +38,7 @@ require_once('setupUtils.inc');
 		<input type="text" size=20 name="db_user" <?php ($update)? print("value='".DB_USER."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter the Database password:</h3>
-		<p>If no password required, leave it blank.</p>
+		<p>If no password is required, leave it blank.</p>
 		<input type="text" size=20 name="db_pass" <?php ($update)? print("value='".DB_PASS."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter the Leginon database name:</h3>

@@ -6,7 +6,7 @@ require_once('setupUtils.inc');
 	setupUtils::checkSession();
 
 	$template = new template;
-	$template->wizardHeader("Step 5 : Confirm all your inputs", SETUP_CONFIG);
+	$template->wizardHeader("Step 5 : Confirm your settings", SETUP_CONFIG);
 
 ?>
 
@@ -30,7 +30,7 @@ require_once('setupUtils.inc');
 		}
 	?>
 		
-		<h3>Please review all the inputs you have been entered.</h3>
+		<h3>Please review the settings you have entered.</h3>
 		
 	<?php 
 		foreach ($_POST as $name => $value){

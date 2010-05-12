@@ -15,7 +15,7 @@ require_once("../inc/mysql.inc");
 		$mysqld = new mysql(DB_HOST, DB_USER, DB_PASS);
 		$dbLink = $mysqld->connect_db();
 
-		if($dbLink == false)	$has_errors[] = "Can not connect to Database, Check your db_host, db_usr, and db_password.";
+		if($dbLink == false)	$has_errors[] = "Can not connect to Database, Check your db_host, db_usr, and db_password settings.";
 		
 		else{
 
@@ -50,8 +50,8 @@ require_once("../inc/mysql.inc");
 		<input type="submit" value="NEXT" />
 	<?php } else { ?>
 		<br />
-		<h3><font color="red">Error occur !!</font></h3>
-		<p>Please solved the following problem before you can move on:</p>
+		<h3><font color="red">An error occurred!!</font></h3>
+		<p>Please solve the following problem before continuing:</p>
 	<?php 
 			foreach($has_errors as $error){
 				echo $error . "<br />";

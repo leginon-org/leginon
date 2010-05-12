@@ -28,12 +28,12 @@ require_once('setupUtils.inc');
 	<form name='wizard_form' method='POST' action='initDBTables.php'>
 		
 		<h3>Initializing database table</h3>
-		<p>Web tools require some default tables to be created in both databases and some initial variables to get started.<br />
+		<p>Web tools require default tables to be created in both databases.<br />
 		   If this is your first time setting up these web tools, please click the following button:</p>
 		&nbsp;&nbsp;<input type="submit" value="DB Initialization" />
 		<br /><br />
-		<h3>There is what your config file looks like based on your settings: </h3>
-		<p>You can change the values later by coming back to this <a href="index.php">wizard</a></p>
+		<h3>This is what your config file looks like based on the settings you provided: </h3>
+		<p>You can change the settings later by returning to this <a href="index.php">wizard</a></p>
 		
 		<p>
 	<?php 

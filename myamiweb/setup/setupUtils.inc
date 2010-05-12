@@ -33,7 +33,7 @@ class setupUtils{
 	}
 	
 	/*
-	 * This function set Base URL base on Base Path 
+	 * This function sets Base URL based on Base Path 
 	 */
 	private function setBaseURL(){
 		
@@ -41,7 +41,7 @@ class setupUtils{
 	}
 	
 	/*
-	 * This function set Project URL base on Base URL
+	 * This function sets Project URL based on Base URL
 	 */
 	private function setProjectURL(){
 
@@ -107,7 +107,7 @@ class setupUtils{
 	
 	/*
 	 * Function will take an array of content and array of inputs
-	 * The output will become a key, value paire array.
+	 * The output will become a key, value pair array.
 	 * keys are $inputs, $values are from $arrayOfContent 
 	 * PS: We only want to find php Constant.
 	 * define("DB_USER", "dbuser");
@@ -179,7 +179,7 @@ class setupUtils{
 			
 		}
 		// nothing match with matchingString, just return the original string.
-		if($pos1 === false)	return $inputString;
+		if($pos1 == false)	return $inputString;
 
 		// loop through each params. find matching one and change the string and break the loop.
 		// if can't find the matching one, just keep looping until the last param.
