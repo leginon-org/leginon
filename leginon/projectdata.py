@@ -11,6 +11,7 @@ class privileges(Data):
 			('projectowners', int),
 			('shareexperiments', int),
 			('data', int),
+			('gridboxes', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -40,6 +41,31 @@ class processingdb(Data):
 		return Data.typemap() + (
 			('appiondb', str),
 			('project', projects),
+		)
+	typemap = classmethod(typemap)
+
+class projectowners(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('project', projects),
+			('user', leginon.leginondata.UserData),
+		)
+	typemap = classmethod(typemap)
+
+class userdetails(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('user', leginon.leginondata.UserData),
+			('title', str),
+			('institution', str),
+			('dept', str),
+			('address', str),
+			('city', str),
+			('statecountry', str),
+			('zip', str),
+			('phone', str),
+			('fax', str),
+			('url', str),
 		)
 	typemap = classmethod(typemap)
 
