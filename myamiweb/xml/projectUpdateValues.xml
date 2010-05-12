@@ -1,0 +1,58 @@
+<defaulttables> 
+ <data>
+   <!-- install -->
+    <sqltable name="install" >
+        <field name="key" >settable</field>
+        <field name="value" >1</field>
+    </sqltable>
+    <!-- privileges -->
+    <sqltable name="privileges" >
+        <field name="DEF_id" >1</field>
+        <field name="DEF_timestamp" >NOW()</field>
+        <field name="description" >All at administration level</field>
+        <field name="groups" >4</field>
+        <field name="users" >4</field>
+        <field name="projects" >4</field>
+        <field name="projectowners" >4</field>
+        <field name="shareexperiments" >4</field>
+        <field name="data" >4</field>
+        <field name="gridboxes" >4</field>
+    </sqltable>
+    <sqltable name="privileges" >
+        <field name="DEF_id" >2</field>
+        <field name="DEF_timestamp" >NOW()</field>
+        <field name="description" >View all but administrate owned</field>
+        <field name="groups" >3</field>
+        <field name="users" >3</field>
+        <field name="projects" >3</field>
+        <field name="projectowners" >3</field>
+        <field name="shareexperiments" >3</field>
+        <field name="data" >3</field>
+        <field name="gridboxes" >4</field>
+    </sqltable>
+    <sqltable name="privileges" >
+        <field name="DEF_id" >3</field>
+        <field name="DEF_timestamp" >NOW()</field>
+        <field name="description" >Administrate/view only  owned projects and view shared experiments</field>
+        <field name="groups" >1</field>
+        <field name="users" >2</field>
+        <field name="projects" >2</field>
+        <field name="projectowners" >2</field>
+        <field name="shareexperiments" >2</field>
+        <field name="data" >2</field>
+        <field name="gridboxes" >1</field>
+    </sqltable>
+    <sqltable name="privileges" >
+        <field name="DEF_id" >4</field>
+        <field name="DEF_timestamp" >NOW()</field>
+        <field name="description" >View owned projects and shared experiments</field>
+        <field name="groups" >1</field>
+        <field name="users" >1</field>
+        <field name="projects" >1</field>
+        <field name="projectowners" >1</field>
+        <field name="shareexperiments" >1</field>
+        <field name="data" >1</field>
+        <field name="gridboxes" >1</field>
+    </sqltable>
+ </data>
+</defaulttables>
