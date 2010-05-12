@@ -165,7 +165,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 		$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
 		$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	}
-	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?projectId=".$projectId.'">'
+	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."/getproject.php?projectId=".$projectId.'">'
 		.$currentproject['name'].' ('.$projectId.')</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
 	$proj_link.=($misc) ? "<a href='viewmisc.php?projectId=$projectId'>[Related Images, Movies, etc]</a>" : ""; 
@@ -757,15 +757,15 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	// insert cluster job data and set job as queued
 	$jobid=$particle->insertClusterJobData($processhost,$rundir,'',$rundir,$jobfile,$expId,$jobtype,$user);
 
-	/*// AMI guppy specific to get small jobs to run on 2 proc nodes
-	if ($nproc < 3) {
-		$jobtext .= "#PBS -l nodes=1:ppn=2:twoProc\n";
+	// AMI guppy specific to get small jobs to run on 4 proc nodes
+	if ($nproc < 5) {
+		$jobtext .= "#PBS -l nodes=1:ppn=4:fourProc\n";
 	} else {
 		$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
-	}*/
+	}
 
 	// create job file
-	$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
+	//$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
 	$jobtext .= "#PBS -l walltime=$walltime:00:00\n";
 	$jobtext .= "#PBS -l cput=$cputime:00:00\n";
 	$jobtext .= "#PBS -j oe\n";
