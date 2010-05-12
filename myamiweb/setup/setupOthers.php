@@ -38,6 +38,8 @@ require_once('setupUtils.inc');
 				wizard_form.hide_feature[1].disabled = true;
 				wizard_form.temp_images_dir.disabled = true;
 				wizard_form.temp_images_dir.value = "";
+				wizard_form.defaultcs.disabled = true;
+				wizard_form.defaultcs.value = "";
 			}
 		}
 
@@ -135,6 +137,11 @@ require_once('setupUtils.inc');
 		&nbsp;&nbsp;YES<br />
 		<input type="radio" name="hide_feature" value="false" <?php ($update) ? (defined("HIDE_FEATURE") && HIDE_FEATURE)? print("") : print("checked='yes'") : print("disabled checked='yes'"); ?> />
 		&nbsp;&nbsp;NO<br />		
+		<br />
+		
+		<h3>Enter the spherical aberration constant for the microscope (Cs. Value).</h3>
+		<p>Example : 2.0</p>
+		<input type="text" size=5 name="defaultcs" <?php ($update && PROCESSING === true) ? print("value='".DEFAULTCS."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
 		<br />
 		
 		<h3>Enter a temporary upload directory location.</h3>
