@@ -3,51 +3,61 @@
 rm -f `find . -name "*.pyo"`
 rm -f `find . -name "*.pyc"`
 
-echo ""
-echo "Trying to import all libraries"
-echo "----------------"
-rm -f importer.py
-echo "#!/usr/bin/env python" > importer.py
-echo "from pyami import quietscipy" >> importer.py
-for i in appionlib/*.py;
-do
-   j=`basename $i | sed 's/\.py//'`
-	#echo $j
-	echo "print '... $j'" >> importer.py
-   echo from appionlib import $j >> importer.py
-done
-echo "import sys" >> importer.py
-echo "sys.stderr.write('\n\n** SUCCESS **\n\n')" >> importer.py
-echo "sys.exit(1)" >> importer.py
-chmod 775 importer.py
-./importer.py
-echo "----------------"
-echo ""
-echo ""
+if [ -d "appionlib" ]
+then
+	echo ""
+	echo "Trying to import all libraries"
+	echo "----------------"
+	rm -f importer.py
+	echo "#!/usr/bin/env python" > importer.py
+	echo "from pyami import quietscipy" >> importer.py
+	for i in appionlib/*.py;
+	do
+	   j=`basename $i | sed 's/\.py//'`
+		#echo $j
+		echo "print '... $j'" >> importer.py
+	   echo from appionlib import $j >> importer.py
+	done
+	echo "import sys" >> importer.py
+	echo "sys.stderr.write('\n\n** SUCCESS **\n\n')" >> importer.py
+	echo "sys.exit(1)" >> importer.py
+	chmod 775 importer.py
+	./importer.py
+	echo "----------------"
+	echo ""
+	echo ""
+else
+	echo "appionlib folder does not exist in ."
+fi
 
 sleep 1
 
-echo "Trying to import all binaries"
-echo "----------------"
-cd bin
-rm -f importer.py
-echo "#!/usr/bin/env python" > importer.py
-echo "from pyami import quietscipy" >> importer.py
-for i in *.py;
-do
-   j=`basename $i | sed 's/\.py//'`
-	echo "print '... $j'" >> importer.py
-   echo import $j >> importer.py
-done
-echo "import sys" >> importer.py
-echo "sys.stderr.write('\n\n** SUCCESS **\n\n')" >> importer.py
-echo "sys.exit(1)" >> importer.py
-chmod 775 importer.py
-./importer.py
-cd ..
-echo "----------------"
-echo ""
-echo ""
+if [ -d "bin" ]
+then
+	echo "Trying to import all binaries"
+	echo "----------------"
+	cd bin
+	rm -f importer.py
+	echo "#!/usr/bin/env python" > importer.py
+	echo "from pyami import quietscipy" >> importer.py
+	for i in *.py;
+	do
+	   j=`basename $i | sed 's/\.py//'`
+		echo "print '... $j'" >> importer.py
+	   echo import $j >> importer.py
+	done
+	echo "import sys" >> importer.py
+	echo "sys.stderr.write('\n\n** SUCCESS **\n\n')" >> importer.py
+	echo "sys.exit(1)" >> importer.py
+	chmod 775 importer.py
+	./importer.py
+	cd ..
+	echo "----------------"
+	echo ""
+	echo ""
+else
+	echo "bin folder does not exist in ."
+fi
 
 sleep 1
 rm -fv bin/importer.py importer.py
