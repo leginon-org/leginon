@@ -11,7 +11,7 @@ require_once('setupUtils.inc');
 	}
 
 	$template = new template;
-	$template->wizardHeader("Step 4 : Others setup for web tools", SETUP_CONFIG);
+	$template->wizardHeader("Step 4 : Additional setup for web tools", SETUP_CONFIG);
 	
 ?>
 	<script language="javascript">
@@ -67,9 +67,9 @@ require_once('setupUtils.inc');
 		  
 		  	cellRight.appendChild(el);
 	
-		    // thired cell
+		    // third cell
 			var cellFirst = row.insertCell(2);
-		  	var textNode = document.createTextNode("Max number of processing node :");
+		  	var textNode = document.createTextNode("Max number of processing nodes :");
 		  	cellFirst.appendChild(textNode);
 		  
   		    // last cell
@@ -101,9 +101,9 @@ require_once('setupUtils.inc');
 	?>
 	
 		
-		<h3>Do you want to enable the image processing pipeline (Appion)</h3>
+		<h3>Do you want to enable the Appion image processing pipeline </h3>
 		<p>Select "YES" if you want to use Appion image processing.</p>
-		<p>PS: Other processing software installation required.</p>
+		<p>Note: Other processing software installation required.</p>
 		<input type="radio" name="processing" value="true" <?php ($update) ? (defined("PROCESSING") && PROCESSING)? print("checked='yes'") : print("") : print(""); ?>
 			onclick="setAppion(this)" />&nbsp;&nbsp;YES<br />
 		<input type="radio" name="processing" value="false" <?php ($update) ? (defined("PROCESSING") && PROCESSING)? print("") : print("checked='yes'") : print("checked='yes'"); ?>
@@ -111,28 +111,28 @@ require_once('setupUtils.inc');
 		<br />
 
 		<h3>Enter Appion database prefix:</h3>
-		<p>We recommend to use 'ap' as Appion database prefix.</p>
+		<p>We reccommend using 'ap' as the Appion database prefix.</p>
 		<input type="text" size=5 name="def_processing_prefix" <?php ($update && PROCESSING === true) ? print("value='".DEF_PROCESSING_PREFIX."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value='ap'"); ?> /><br /><br />
 		<br />
 
 		<h3>Enter Image Processing Host(s) information:</h3>
-		<p>Please enter your processing host information associate with number of processing nodes can be assigned.</p>
+		<p>Please enter your processing host name and the number of processors on individual nodes of this host.</p>
 		<input type="button" value="Add" onclick="addRowToTable('', '');" />
 		<input type="button" value="Remove" onclick="removeRowFromTable();" />
-		Please Click the "Add" Button to start. If you don't have process host, left it empty.<br />
+		Please Click the "Add" Button to start. If you don't have a processing host, leave it empty.<br />
 		<table border=0 cellspacing=8 style="font-size: 12px" id="hosts"></table><br />
 
-		<h3>Do you want to hide the IMAGIC in image processing pipeline</h3>
+		<h3>Do you want to hide the IMAGIC image processing package menu items in image processing pipeline</h3>
 		<p>Select "NO" if you want to use IMAGIC.</p>
-		<p>PS: IMAGIC software installation required.</p>
+		<p>Note: IMAGIC software installation required.</p>
 		<input type="radio" name="hide_imagic" value="true" <?php ($update) ? (defined("HIDE_IMAGIC") && HIDE_IMAGIC)? print("checked='yes'") : print("") : print("disabled checked='yes'"); ?> />
 		&nbsp;&nbsp;YES<br />
 		<input type="radio" name="hide_imagic" value="false" <?php ($update) ? (defined("HIDE_IMAGIC") && HIDE_IMAGIC)? print("") : print("checked='yes'") : print("disabled"); ?> />
 		&nbsp;&nbsp;NO<br />
 		<br />
 
-		<h3>Do you want to hide image processing tools still under development?</h3>
-		<p>PS: Tools still under development are not fully working. We suggest not to enable it.</p>
+		<h3>Do you want to hide image processing tools that are under development?</h3>
+		<p>Note: Tools still under development are not fully functioning. We suggest hiding these features.</p>
 		<input type="radio" name="hide_feature" value="true" <?php ($update) ? (defined("HIDE_FEATURE") && HIDE_FEATURE)? print("checked='yes'") : print("") : print("disabled"); ?> />
 		&nbsp;&nbsp;YES<br />
 		<input type="radio" name="hide_feature" value="false" <?php ($update) ? (defined("HIDE_FEATURE") && HIDE_FEATURE)? print("") : print("checked='yes'") : print("disabled checked='yes'"); ?> />
