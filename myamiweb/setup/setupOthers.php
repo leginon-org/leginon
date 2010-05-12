@@ -37,6 +37,7 @@ require_once('setupUtils.inc');
 				wizard_form.hide_feature[0].disabled = true;
 				wizard_form.hide_feature[1].disabled = true;
 				wizard_form.temp_images_dir.disabled = true;
+				wizard_form.temp_images_dir.value = "";
 			}
 		}
 
