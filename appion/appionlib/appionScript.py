@@ -229,8 +229,20 @@ class AppionScript(basicScript.BasicScript):
 		progrunq['unixshell'] = unixshell
 		progrunq['rundir'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		progrunq['job'] = self.getClusterJobData()
-		progrunq['revision'] = version.getSubverionRevision()
 		appiondir = apParam.getAppionDirectory()
+		### get appion version/subversion revision
+		versionfile = os.path.join(appiondir, "version.txt")
+		if os.path.isdir(os.path.join(appiondir, ".svn")):
+			progrunq['revision'] = version.getSubverionRevision(appiondir)
+		if not progrunq['revision'] and os.path.isfile(versionfile):
+			f = open(versionfile, 'r')
+			line = f.readline()
+			f.close()
+			sline = line.strip()
+			progrunq['revision'] = sline
+		if not progrunq['revision']:
+			progrunq['revision'] = 'unknown'
+		apDisplay.printMsg("Running Appion version '%s'"%(progrunq['revision']))
 		progrunq['appion_path'] = appiondata.ApPathData(path=os.path.abspath(appiondir))
 
 		for paramname in self.params.keys():

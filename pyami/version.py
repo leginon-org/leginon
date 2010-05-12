@@ -4,7 +4,6 @@ import os
 import re
 import subprocess
 
-
 def getInstalledLocation():
 	'''where is this module located'''
 	# full path of this module
@@ -13,12 +12,13 @@ def getInstalledLocation():
 	dirname = os.path.dirname(fullmod)
 	return dirname
 
-
 def getSubverionRevision(filename=None):
 	if filename is None:
 		dirname = getInstalledLocation()
-	else:
+	elif os.path.isfile(filename):
 		dirname = os.path.dirname(os.path.abspath(filename))
+	else:
+		dirname = os.path.abspath(filename)
 	#print "DIRNAME: ", dirname
 	svndir = os.path.join(dirname, ".svn")
 	if not os.path.isdir(svndir):
