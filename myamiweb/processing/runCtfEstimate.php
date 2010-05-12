@@ -15,7 +15,7 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/appionloop.inc";
 
-$defaultcs=$DEFAULTCS;
+$defaultcs=DEFAULTCS;
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {

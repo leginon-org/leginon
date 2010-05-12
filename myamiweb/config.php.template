@@ -116,7 +116,8 @@ set_include_path(dirname(__FILE__).PATH_SEPARATOR
 // $CLUSTER_CONFIGS= array ('');
 
 // --- Microscope spherical aberration constant
-$DEFAULTCS = "2.0";
+// --- Example : 2.0 --- //
+define('DEFAULTCS', "");
 
 // --- Restrict file server if you want --- //
 // --- Add your allowed processing directory as string in the array
