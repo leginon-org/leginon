@@ -23,6 +23,13 @@ require_once('setupUtils.inc');
 					$count++;
 				}
 			}
+			elseif($name == 'cluster_configs' && is_array($value)){
+				$count = 0;
+
+				foreach($value as $key){
+					echo "<input type='hidden' name='".$name."[]' value='".$key."' />";
+				}
+			}
 			else{
 				$value = trim($value);
 				echo "<input type='hidden' name='".$name."' value='".$value."' />";
@@ -42,6 +49,11 @@ require_once('setupUtils.inc');
 					echo "&nbsp;&nbsp;&nbsp;&nbsp;Number of Nodes : " . $key['nproc'] . "<br />";
 				}
 				echo "</p>";
+			}
+			elseif($name == 'cluster_configs' && is_array($value)){
+				echo"<p>" . strtoupper($name) . " : <br />";
+				foreach($value as $name)
+					echo "&nbsp;&nbsp;&nbsp;&nbsp;Cluster configure file : " . $name . "<br />";
 			}				
 			elseif(!empty($value))
 				echo "<p>" . strtoupper($name) . " : " . $value . "</p>";

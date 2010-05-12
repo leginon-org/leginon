@@ -125,7 +125,7 @@ class setupUtils{
 	 */
 	function editConfigFile($configFile, $params){
 		
-		$matchingStrings = Array("define", "addplugin", "PROCESSING_HOSTS");
+		$matchingStrings = Array("define", "addplugin", "PROCESSING_HOSTS", "CLUSTER_CONFIGS");
 		
 		if(empty($params) || !is_array($params)) return false; 
 		
@@ -168,8 +168,8 @@ class setupUtils{
 
 		foreach($matchingStrings as $matchingString){
 			
-			// if the matchingString is in the php title commenting
-			// we want to skip it.
+			// if the matchingString is in the php title commenting which
+			// start with // --- , we want to skip it.
 			$titleCommenting = stripos($inputString, "// ---");
 			if($titleCommenting !== false) return $inputString;
 			
@@ -225,11 +225,29 @@ class setupUtils{
 				if($pos2 !== false){
 					$inputString = "";
 					foreach($value as $name)
-					// build this string: 
-					// $PROCESSING_HOSTS[] = array('host' => 'host1.school.edu', 'nproc' => 8);
-					$inputString .= $key." = array('host' => '".$name['host']."', 'nproc' => ".$name['nproc'].");\n";
+						// build this string: 
+						// $PROCESSING_HOSTS[] = array('host' => 'host1.school.edu', 'nproc' => 8);
+						$inputString .= $key." = array('host' => '".$name['host']."', 'nproc' => ".$name['nproc'].");\n";
 					break;
 				}
+			}
+			// need to construct $CLUSTER_CONFIGS= array ('');
+			elseif($matchingString == "CLUSTER_CONFIGS"){
+				
+				$key = "$".strtoupper($key)."[]";
+				
+				$pos2 = strpos($inputString, $key);
+				
+				if($pos2 !== false){
+					$inputString = "";
+
+					foreach($value as $name)
+						// build this string: 
+						// $CLUSTER_CONFIGS[]= 'cluster1';
+						$inputString .= $key." = '".$name."';\n";
+					
+					break;
+				}				
 			}
 		}		
 

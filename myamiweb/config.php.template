@@ -112,8 +112,11 @@ set_include_path(dirname(__FILE__).PATH_SEPARATOR
 
 // $PROCESSING_HOSTS[] = array('host' => '', 'nproc' => );
 
-// --- register your cluster config file below i.e (default_cluster.php) --- //
-// $CLUSTER_CONFIGS= array ('');
+// --- register your cluster configure file below i.e (default_cluster) --- //
+// --- $CLUSTER_CONFIGS[] = 'cluster1'; -- //
+// --- $CLUSTER_CONFIGS[] = 'cluster2'; -- //
+
+// $CLUSTER_CONFIGS[]= '';
 
 // --- Microscope spherical aberration constant
 // --- Example : 2.0 --- //

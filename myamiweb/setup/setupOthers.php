@@ -26,7 +26,14 @@ require_once('setupUtils.inc');
 				wizard_form.hide_imagic[1].disabled = false;
 				wizard_form.hide_feature[0].disabled = false
 				wizard_form.hide_feature[1].disabled = false;
-				wizard_form.temp_images_dir.disabled = false;
+				wizard_form.temp_images_dir.style.backgroundColor = "#ffffff";
+				wizard_form.temp_images_dir.readOnly = false;
+				wizard_form.defaultcs.style.backgroundColor = "#ffffff";
+				wizard_form.defaultcs.readOnly = false;
+				wizard_form.addHost.disabled = false;
+				wizard_form.removeHost.disabled = false;
+				wizard_form.addCluster.disabled = false;
+				wizard_form.removeCluster.disabled = false;
 				
 			}else{
 
@@ -36,10 +43,33 @@ require_once('setupUtils.inc');
 				wizard_form.hide_imagic[1].disabled = true;
 				wizard_form.hide_feature[0].disabled = true;
 				wizard_form.hide_feature[1].disabled = true;
-				wizard_form.temp_images_dir.disabled = true;
+				wizard_form.temp_images_dir.style.backgroundColor = "#eeeeee";
+				wizard_form.temp_images_dir.readOnly = true;
 				wizard_form.temp_images_dir.value = "";
-				wizard_form.defaultcs.disabled = true;
+				wizard_form.defaultcs.style.backgroundColor = "#eeeeee";
+				wizard_form.defaultcs.readOnly = true;
 				wizard_form.defaultcs.value = "";
+				wizard_form.addHost.disabled = true;
+				wizard_form.removeHost.disabled = true;
+				wizard_form.addCluster.disabled = true;
+				wizard_form.removeCluster.disabled = true;
+				
+
+				var tbl = document.getElementById('hosts');
+				var lastRow = tbl.rows.length;
+				var i = 0;
+
+				for(i=0 ; i<lastRow ; i++){
+					removeRowFormTable('hosts');
+				}
+
+				var tbl = document.getElementById('clusters');
+				var lastRow = tbl.rows.length;
+				var i = 0;
+
+				for(i=0 ; i<lastRow ; i++){
+					removeRowFormTable('clusters');
+				}
 			}
 		}
 
@@ -55,10 +85,10 @@ require_once('setupUtils.inc');
 			// first cell
 		  	var cellFirst = row.insertCell(0);
 		  	var textNode = document.createTextNode("Processing Host Name : ");
-			  cellFirst.appendChild(textNode);
+			cellFirst.appendChild(textNode);
 			  
-			  // second cell
-			  var cellRight = row.insertCell(1);
+			// second cell
+			var cellRight = row.insertCell(1);
 		  	var el = document.createElement('input');
 		  	el.type = 'text';
 		  	el.name = 'processing_hosts['+lastRow+'][host]';
@@ -67,9 +97,9 @@ require_once('setupUtils.inc');
 		  
 		  	cellRight.appendChild(el);
 	
-		    // third cell
+		    // thired cell
 			var cellFirst = row.insertCell(2);
-		  	var textNode = document.createTextNode("Max number of processing nodes :");
+		  	var textNode = document.createTextNode("Max number of processing node :");
 		  	cellFirst.appendChild(textNode);
 		  
   		    // last cell
@@ -83,9 +113,35 @@ require_once('setupUtils.inc');
 		  	cellRight.appendChild(el);
 		}
 	
-		function removeRowFromTable()
+		function addClusterRow(cluster)
 		{
-		  	var tbl = document.getElementById('hosts');
+			var tbl = document.getElementById('clusters');
+			var lastRow = tbl.rows.length;
+
+			// if there's no header row in the table, then iteration = lastRow + 1
+			var iteration = lastRow;
+			var row = tbl.insertRow(lastRow);
+		  
+			// first cell
+		  	var cellFirst = row.insertCell(0);
+		  	var textNode = document.createTextNode("Cluster configure filename : ");
+			cellFirst.appendChild(textNode);
+			  
+			// second cell
+			var cellRight = row.insertCell(1);
+		  	var el = document.createElement('input');
+		  	el.type = 'text';
+		  	el.name = 'cluster_configs['+lastRow+']';
+		  	el.value = cluster;
+		  	el.size = 10;
+		  
+		  	cellRight.appendChild(el);
+	
+		}
+	
+		function removeRowFormTable(host)
+		{
+		  	var tbl = document.getElementById(host);
 		  	var lastRow = tbl.rows.length;
 		  	if (lastRow > 0) tbl.deleteRow(lastRow - 1);
 		}
@@ -101,7 +157,7 @@ require_once('setupUtils.inc');
 	?>
 	
 		
-		<h3>Do you want to enable the Appion image processing pipeline </h3>
+		<h3>Do you want to enable the Appion image processing pipeline</h3>
 		<p>Select "YES" if you want to use Appion image processing.</p>
 		<p>Note: Other processing software installation required.</p>
 		<input type="radio" name="processing" value="true" <?php ($update) ? (defined("PROCESSING") && PROCESSING)? print("checked='yes'") : print("") : print(""); ?>
@@ -111,17 +167,28 @@ require_once('setupUtils.inc');
 		<br />
 
 		<h3>Enter Appion database prefix:</h3>
-		<p>We reccommend using 'ap' as the Appion database prefix.</p>
+		<p>We recommend using 'ap' as Appion database prefix.</p>
 		<input type="text" size=5 name="def_processing_prefix" <?php ($update && PROCESSING === true) ? print("value='".DEF_PROCESSING_PREFIX."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value='ap'"); ?> /><br /><br />
 		<br />
 
 		<h3>Enter Image Processing Host(s) information:</h3>
 		<p>Please enter your processing host name and the number of processors on individual nodes of this host.</p>
-		<input type="button" value="Add" onclick="addRowToTable('', '');" />
-		<input type="button" value="Remove" onclick="removeRowFromTable();" />
+		<input name="addHost" type="button" value="Add" <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="addRowToTable('', '');" />
+		<input name="removeHost" type="button" value="Remove"  <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="removeRowFormTable('hosts');" />
 		Please Click the "Add" Button to start. If you don't have a processing host, leave it empty.<br />
 		<table border=0 cellspacing=8 style="font-size: 12px" id="hosts"></table><br />
 
+		<h3>Register your cluster configure file(s)</h3>
+		<p>You can find a default cluster configure file (default_cluster.php) under the processing folder.<br />
+		   Create a new configure file for each cluster with different name base on the default_cluster.php.<br />
+		   Please make sure <font color="red">do not include (.php) in the input box</font>.<br />
+		   Example: If your cluster configure file name is cluster1.php, just enter cluster1 below.<br />	   
+		</p>
+		<input name="addCluster" type="button" value="Add" <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="addClusterRow('');" />
+		<input name="removeCluster" type="button" value="Remove" <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="removeRowFormTable('clusters');" />
+		Please Click the "Add" Button to start. If you don't know the cluster configure file name, left it empty.<br />
+		<table border=0 cellspacing=8 style="font-size: 12px" id="clusters"></table><br />	
+		
 		<h3>Do you want to hide the IMAGIC image processing package menu items in image processing pipeline</h3>
 		<p>Select "NO" if you want to use IMAGIC.</p>
 		<p>Note: IMAGIC software installation required.</p>
@@ -155,6 +222,10 @@ require_once('setupUtils.inc');
 	if(!empty($PROCESSING_HOSTS)){
 		foreach($PROCESSING_HOSTS as $processingHost)
 			echo "<script language=javascript>addRowToTable('".$processingHost['host']."', '".$processingHost['nproc']."')</script>";
+	}
+	if(!empty($CLUSTER_CONFIGS)){
+		foreach($CLUSTER_CONFIGS as $clusterConfig)
+			echo "<script language=javascript>addClusterRow('".$clusterConfig."')</script>";
 	}
 	$template->wizardFooter();
 ?>
