@@ -312,30 +312,7 @@ def upgradeAppionDB(appiondbname, projectdb):
 	appiondb.changeColumnDefinition('ApAlignParticleData', 'mirror', appiondb.bool)
 	print "DONE"
 
-#===================
-#===================
-# MAIN PROGRAM
-#===================
-#===================
-if __name__ == "__main__":
-	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
-	leginondb = dbupgrade.DBUpgradeTools('leginondata', drop=False)
-	upgradeAppionDB('aptest', projectdb)
-	sys.exit(1)
-
-	appiondblist = getAppionDatabases(projectdb)
-	for appiondbname in appiondblist:
-		if not projectdb.databaseExists(appiondbname):
-			print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
-			time.sleep(1)
-			continue
-		upgradeAppionDB(appiondbname, projectdb)
-	
-
-	#===================
-	# project table
-	#===================
-
+def upgradeProjectDB(projectdb):
 	projectdb.renameColumn('projects', 'projectId', 'DEF_id', projectdb.defid)
 	projectdb.renameColumn('projects', 'timestamp', 'DEF_timestamp', projectdb.timestamp)
 	projectdb.renameColumn('projects', 'db', 'leginondb')
@@ -369,6 +346,7 @@ if __name__ == "__main__":
 	projectdb.renameColumn('shareexperiments', 'id', 'DEF_id', projectdb.defid)
 	projectdb.addColumn('shareexperiments', 'DEF_timestamp', projectdb.timestamp, index=True)
 
+def upgradeLeginonDB(leginondb):
 	#===================
 	# leginon table
 	#===================
@@ -381,3 +359,23 @@ if __name__ == "__main__":
 
 	leginondb.changeColumnDefinition('PresetData', 'exposure time', leginondb.float)
 
+#===================
+#===================
+# MAIN PROGRAM
+#===================
+#===================
+if __name__ == "__main__":
+	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
+	leginondb = dbupgrade.DBUpgradeTools('leginondata', drop=False)
+	upgradeProjectDB(projectdb)
+	upgradeLeginonDB(leginondb)
+	#upgradeAppionDB('ap1', projectdb)
+	#sys.exit(1)
+
+	appiondblist = getAppionDatabases(projectdb)
+	for appiondbname in appiondblist:
+		if not projectdb.databaseExists(appiondbname):
+			print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
+			time.sleep(1)
+			continue
+		upgradeAppionDB(appiondbname, projectdb)
