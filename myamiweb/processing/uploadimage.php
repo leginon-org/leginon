@@ -369,8 +369,9 @@ function runUploadImage() {
 		$command.="--kv=$kv ";
 
 
-	} elseif ($batch_check) {
-		if (!file_exists($batch)) createUploadImageForm("<B>ERROR:</B> Batch file does not exist");
+	} elseif ($batch) {
+		if ($batch_check && !file_exists($batch))
+			createUploadImageForm("<B>ERROR:</B> Batch file does not exist");
 		//make sure  the batch file contains 7 or 8 fields separated by tab at each line
 		$bf = file($batch);
 		foreach ($bf as $line) {
