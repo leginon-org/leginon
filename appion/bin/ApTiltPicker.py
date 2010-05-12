@@ -1,31 +1,25 @@
 #!/usr/bin/env python
 
 ## pythonlib
-import re
 import os
-import sys
 import time
 import math
-import cPickle
 from optparse import OptionParser
 ## wxPython
 import wx
 ## PIL
 from PIL import Image
 ## appion
-from appionlib import apXml
 from appionlib import apImage
 from appionlib import apParam
 from appionlib import apDisplay
-from appionlib.apSpider import operations
 from appionlib.apTilt import tiltDialog, apTiltTransform, apTiltShift, tiltfile, autotilt
 ## leginon
 import leginon.gui.wx.TargetPanel
 ## numpy/scipy
 import numpy
 import pyami.quietscipy
-from scipy import ndimage, optimize
-
+from scipy import ndimage
 
 class TiltTargetPanel(leginon.gui.wx.TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
@@ -47,7 +41,6 @@ class TiltTargetPanel(leginon.gui.wx.TargetPanel.TargetImagePanel):
 			return
 		if x > self.imagedata.shape[1] or y > self.imagedata.shape[0]:
 			return
-		#sys.stderr.write("%s: (%4d,%4d),\n" % (self.outname,x,y))
 		numtargets = len(self.getTargets(name))
 		numotargets = len(self.other.getTargets(name))
 		#self.parent.statbar.PushStatusText("Added %d target at location (%d,%d)" % numtargets, x, y)
