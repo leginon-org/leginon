@@ -231,7 +231,7 @@ class AppionScript(basicScript.BasicScript):
 		progrunq['job'] = self.getClusterJobData()
 		appiondir = apParam.getAppionDirectory()
 		### get appion version/subversion revision
-		versionfile = os.path.join(appiondir, "version.txt")
+		versionfile = os.path.join(appiondir, "appionlib/version.txt")
 		if os.path.isdir(os.path.join(appiondir, ".svn")):
 			progrunq['revision'] = version.getSubverionRevision(appiondir)
 		if not progrunq['revision'] and os.path.isfile(versionfile):
