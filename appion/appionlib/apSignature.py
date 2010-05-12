@@ -38,7 +38,7 @@ def runSignature(imgdict, params):
 	return outf
 
 #===========
-class signaturejob():
+class signaturejob(object):
 	def __init__ (self, feed):
 		self.feed = feed
 	def run(self):
