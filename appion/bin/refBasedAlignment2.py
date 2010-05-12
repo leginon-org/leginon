@@ -16,9 +16,9 @@ from appionlib import apTemplate
 from appionlib import apParam
 from appionlib import appiondata
 from appionlib import apProject
-from appionlib import apImage
 from appionlib import apFourier
 from appionlib.apSpider import alignment
+from appionlib.apImage import imagenorm, imagefile
 
 #=====================
 #=====================
@@ -369,9 +369,9 @@ class RefBasedAlignScript(appionScript.AppionScript):
 				lasttemplate = "templates/templateavg%02d-%02d.mrc" % (iternum-1, templatenum)
 				if not os.path.isfile(lasttemplate):
 					lasttemplate = "templates/scaledTemplate%d.mrc" % (templatenum)
-				lastdata = apImage._maxNormalizeImage(apImage.mrcToArray(lasttemplate))
-				junkdata = apImage._maxNormalizeImage(apImage.mrcToArray(junkmrcfile))
-				apImage.arrayToMrc((lastdata+3.0*junkdata), "temp.mrc")
+				lastdata = imagenorm.maxNormalizeImage(imagefile.mrcToArray(lasttemplate))
+				junkdata = imagenorm.maxNormalizeImage(imagefile.mrcToArray(junkmrcfile))
+				imagefile.arrayToMrc((lastdata+3.0*junkdata), "temp.mrc")
 				emancmd  = ("proc2d temp.mrc "+mrcfile
 					+" addnoise=1.5 "
 					+" edgenorm norm=0,1 ")

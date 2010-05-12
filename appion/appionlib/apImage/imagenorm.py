@@ -77,31 +77,31 @@ def normStdevMask(img,mask):
 	return (img - avg1) / std1
 
 #=========================
-def _maxNormalizeImage(a, stdevLimit=3.0):
+def maxNormalizeImage(a, stdevLimit=3.0):
 	"""
 	Normalizes numpy to fit into an image format,
 	but maximizes the contrast
 	"""
-	return _normalizeImage(a, stdevLimit, minlevel= 20.0, maxlevel=240.0, trim=0.1)
+	return normalizeImage(a, stdevLimit, minlevel= 20.0, maxlevel=240.0, trim=0.1)
 
 #=========================
-def _blackNormalizeImage(a, stdevLimit=3.0):
+def blackNormalizeImage(a, stdevLimit=3.0):
 	"""
 	Normalizes numpy to fit into an image format,
 	but makes it a darker than normal
 	"""
-	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 0.0,maxlevel=200.0)
+	return normalizeImage(a,stdevLimit=stdevLimit,minlevel= 0.0,maxlevel=200.0)
 
 #=========================
-def _whiteNormalizeImage(a, stdevLimit=3.0):
+def whiteNormalizeImage(a, stdevLimit=3.0):
 	"""
 	Normalizes numpy to fit into an image format,
 	but makes it a lighter than normal
 	"""
-	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0,trim=0.0)
+	return normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0,trim=0.0)
 
 #=========================
-def _normalizeImage(img, stdevLimit=3.0, minlevel=0.0, maxlevel=255.0, trim=0.0):
+def normalizeImage(img, stdevLimit=3.0, minlevel=0.0, maxlevel=255.0, trim=0.0):
 	"""
 	Normalizes numpy to fit into an image format
 	that is values between 0 (minlevel) and 255 (maxlevel).

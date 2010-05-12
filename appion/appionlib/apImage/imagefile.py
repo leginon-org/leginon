@@ -114,7 +114,7 @@ def arrayToImage(numer, normalize=True, stdevLimit=3.0):
 	best for micrographs and photographs
 	"""
 	if normalize:
-		numer = imagenorm._maxNormalizeImage(numer, stdevLimit)
+		numer = imagenorm.maxNormalizeImage(numer, stdevLimit)
 	else:
 		numer = numer*255
 	image = _arrayToImage(numer)
@@ -173,7 +173,7 @@ def arrayToJpeg(numer,filename,normalize=True, msg=True):
 	best for micrographs and photographs
 	"""
 	if normalize:
-		numer = imagenorm._maxNormalizeImage(numer)
+		numer = imagenorm.maxNormalizeImage(numer)
 	else:
 		numer = numer*255
 	image = _arrayToImage(numer)
@@ -189,7 +189,7 @@ def arrayToPng(numer, filename, normalize=True, msg=True):
 	best for masks and line art
 	"""
 	if normalize:
-		numer = imagenorm._maxNormalizeImage(numer)
+		numer = imagenorm.maxNormalizeImage(numer)
 	else:
 		numer = numer*255
 	image = _arrayToImage(numer)
@@ -252,7 +252,7 @@ def arrayToJpegPlusPeak(numer, outfile, peak=None, normalize=True):
 	best for micrographs and photographs
 	"""
 	if normalize:
-		numer = imagenorm._maxNormalizeImage(numer)
+		numer = imagenorm.maxNormalizeImage(numer)
 	else:
 		numer = numer*255
 	image = _arrayToImage(numer)
