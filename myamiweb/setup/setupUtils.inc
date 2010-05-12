@@ -179,7 +179,7 @@ class setupUtils{
 			
 		}
 		// nothing match with matchingString, just return the original string.
-		if($pos1 == false)	return $inputString;
+		if($pos1 === false)	return $inputString;
 
 		// loop through each params. find matching one and change the string and break the loop.
 		// if can't find the matching one, just keep looping until the last param.
