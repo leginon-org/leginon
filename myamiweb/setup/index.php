@@ -6,7 +6,7 @@ require_once('setupUtils.inc');
 	session_destroy();
 	
 	$template = new template;
-	$template->wizardHeader("Welcome : Configure file creation and modification", SETUP_CONFIG);
+	$template->wizardHeader("Welcome : Start configuration of your system", SETUP_CONFIG);
 	
 	$fileExist = setupUtils::checkFile(CONFIG_FILE);
 	
@@ -35,7 +35,7 @@ require_once('setupUtils.inc');
 				header("Location: setupBase.php");
 				exit;
 			} else {
-				$errorMessage = "Your username and password do not match. Enter again...";
+				$errorMessage = "The username and password you provided are incorrect. Enter again...";
 			
 				// destroy the session because error.
 				session_destroy();
@@ -45,17 +45,16 @@ require_once('setupUtils.inc');
 	}
 
 ?>
-	<h3>Here is where you start to setup and configure the web tools config file.</h3>
+	<h3>Start here to setup and configure the web tools configuration file.</h3>
 	<p>Please follow each step.</p>
 	
 	<form name='wizard_form' method='POST' action='<?php echo $PHP_SELF; ?>'>
 <?php 
 	if($fileExist){
 ?>
-		<p>We have detected that there is already a config file setup on your system.<br />
+		<p>An existing configuration file has been detected.<br />
 		Please enter the <b>"Database Username and Password"</b> for verification.<br />
-		If have forgotten your username and password, you may retrieve it from 
-		your config.php file in the myamiweb folder.</p><br />
+		If you forgot your username and password, it can be found in config.php in the myamiweb folder.</p>
 
 		<form name='wizard_form' method='POST' action='<?php echo $PHP_SELF; ?>'>
 		<?php if(!empty($errorMessage)) echo"<font color='red'><p>$errorMessage</p></font>"; ?>
@@ -68,19 +67,10 @@ require_once('setupUtils.inc');
 	}
 	else{
 		
-		echo "<p>This wizard will take you step by step through the process of 
+		echo"<p>This wizard will take you step by step through the process of 
 		        setting up the Appion web tools config file.<br /><br />";
-		
-		echo "<h3>Requirements</h3>";
-		echo "<p>1. Start the database server.<br />";
-		echo "2. Database username and password.<br />";
-		echo "3. Leginon database name.<br />";
-		echo "4. Project database name.<br /><br />";
-		echo "If you have any question about database setup and installation<br />";
-		echo "Please visit \"<a href='http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database' ";
-		echo "target='_blank'>Database Server Installation</a>\" for more detailed information.<br /><br />";
-		echo "When you are ready to start please click on the \"NEXT\" button.<br /><br /></p>";
-		echo "<input type='hidden' name='newSetup' value=true />";
+		echo"When you are ready to start please click on the \"NEXT\" button.</p><br />";
+		echo"<input type='hidden' name='newSetup' value=true />";
  		
 	}
 ?>
