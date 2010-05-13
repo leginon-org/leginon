@@ -35,6 +35,6 @@ distutils.core.setup(
 	author_email='appion@scripps.edu',
 	packages=['appionlib', 'appionlib.apSpider', 'appionlib.apTilt', 'appionlib.apImage'],
 	package_data={'appionlib': ['data/*.*', 'version.txt']},
-	scripts=glob.glob('bin/*.py'),
+	scripts=glob.glob('bin/*.*'),
 )
 
