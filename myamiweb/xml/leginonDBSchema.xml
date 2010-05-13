@@ -544,28 +544,24 @@
     <key>PRIMARY KEY (`userId`)</key>
     <key>KEY `login` (`login`)</key>
   </sqltable>
-  <sqltable name="viewer_pref_image" >
+  <sqltable name="ViewerImageStatus" >
     <field 
-      name="id" 
+      name="DEF_id" 
       type="int(11)" 
       null="NOT NULL" 
       extra="auto_increment" 
     />
     <field 
-      name="timestamp" 
+      name="DEF_timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
     />
     <field 
-      name="username" 
-      type="varchar(50)" 
-    />
-    <field 
-      name="sessionId" 
+      name="REF|SessionData|session" 
       type="int(11)" 
     />
     <field 
-      name="imageId" 
+      name="REF|AcquisitionImageData|image" 
       type="int(11)" 
     />
     <field 
@@ -573,10 +569,9 @@
       type="enum('hidden','visible','exemplar')" 
     />
     <key>PRIMARY KEY (`id`)</key>
-    <key>KEY `timestamp` (`timestamp`)</key>
-    <key>KEY `userId` (`username`)</key>
-    <key>KEY `sessionId` (`sessionId`)</key>
-    <key>KEY `imageId` (`imageId`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
+    <key>KEY `REF|AcquisitionImageData|image` (`REF|AcquisitionImageData|image`)</key>
     <key>KEY `status` (`status`)</key>
   </sqltable>
   <sqltable name="viewer_del_image" >
