@@ -659,10 +659,13 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	}
 	$processhost = $_SESSION['processinghost'];
 	$webserver = $_SERVER['SERVER_ADDR'];
-	$user = $_SESSION['username'];
+	$user = $_SESSION['username'];processing.inc
 	$pass = $_SESSION['password'];
 
 	// check if database is configured on processing host
+	$cmd = "echo 'hello'";
+	$syscheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
+	if (trim($syscheck)=='') return "could not connect to processing host: $processhost";
 	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"leginondata\")'";
 	$dbcheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
 	if (trim($dbcheck)=='') return "sinedon is not configured for leginondata, check your sinedon.cfg file";
@@ -758,11 +761,11 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	$jobid=$particle->insertClusterJobData($processhost,$rundir,'',$rundir,$jobfile,$expId,$jobtype,$user);
 
 	// AMI guppy specific to get small jobs to run on 4 proc nodes
-	if ($nproc < 5) {
+	/*if ($nproc < 5) {
 		$jobtext .= "#PBS -l nodes=1:ppn=4:fourProc\n";
 	} else {
 		$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
-	}
+	}*/
 
 	// create job file
 	//$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
