@@ -659,7 +659,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	}
 	$processhost = $_SESSION['processinghost'];
 	$webserver = $_SERVER['SERVER_ADDR'];
-	$user = $_SESSION['username'];processing.inc
+	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
 	// check if database is configured on processing host
