@@ -99,7 +99,7 @@ require_once('setupUtils.inc');
 	
 		    // thired cell
 			var cellFirst = row.insertCell(2);
-		  	var textNode = document.createTextNode("Max number of processing node :");
+		  	var textNode = document.createTextNode("Max number of processor per node :");
 		  	cellFirst.appendChild(textNode);
 		  
   		    // last cell
