@@ -7,13 +7,27 @@ import distutils.core
 
 #--install-scripts=/usr/local/bin
 
-version = None
-verfile = 'appionlib/version.txt'
-if os.path.isfile(verfile):
+def getVersion():
+	verfile = 'appionlib/version.txt'
+	if not os.path.isfile(verfile):
+		if not os.path.isfile(".svn/entries"):
+			raise FileError, "Could not find version.txt file"
+		### use fourth line from entries file
+		f = open(".svn/entries", "r")
+		for i in range(4):
+			line = f.readline()
+		version = "r"+line.strip()
+		f.close()
+		f = open(verfile, "w")
+		f.write("%s\n"%(version))
+		f.close()
 	f = open(verfile, "r")
 	line = f.readline()
 	f.close()
 	version = line.strip()
+	return version
+
+version=getVersion()
 
 distutils.core.setup(
 	name='Appion',
