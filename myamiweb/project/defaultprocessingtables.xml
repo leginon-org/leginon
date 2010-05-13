@@ -92,7 +92,7 @@
       type="bigint(20)" 
     />
     <field 
-      name="project|projects|project" 
+      name="REF|projectdata|projects|project" 
       type="int(20)" 
     />
     <field 
@@ -122,6 +122,7 @@
     <field 
       name="hidden" 
       type="tinyint(1)" 
+		default="default 0"
     />
     <field 
       name="md5sum" 
@@ -140,7 +141,7 @@
     <key>KEY `REF|ApSymmetryData|symmetry` (`REF|ApSymmetryData|symmetry`)</key>
     <key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key>
     <key>KEY `md5sum` (`md5sum`)</key>
-    <key>KEY `project|projects|project` (`project|projects|project`)</key>
+    <key>KEY `REF|projectdata|projects|project` (`REF|projectdata|projects|project`)</key>
     <key>KEY `hidden` (`hidden`)</key>
     <key>KEY `REF|Ap3dDensityData|original density` (`REF|Ap3dDensityData|original density`)</key>
     <key>KEY `REF|ApInitialModelData|original model` (`REF|ApInitialModelData|original model`)</key>
@@ -215,7 +216,7 @@
       type="bigint(20)" 
     />
     <field 
-      name="project|projects|project" 
+      name="REF|projectdata|projects|project" 
       type="int(20)" 
     />
     <field 
@@ -236,7 +237,8 @@
     />
     <field 
       name="hidden" 
-      type="tinyint(1)" 
+      type="tinyint(1)"
+		default="default 0"
     />
     <field 
       name="md5sum" 

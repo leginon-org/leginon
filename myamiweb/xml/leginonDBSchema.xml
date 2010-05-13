@@ -227,7 +227,7 @@
     />
     <field 
       name="exposure time" 
-      type="int(20)" 
+      type="double" 
     />
     <field 
       name="removed" 
