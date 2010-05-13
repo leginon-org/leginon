@@ -466,7 +466,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	def phaseFlipAceTwo(self, inimgpath, imgdata):
 
 		apix = apDatabase.getPixelSize(imgdata)
-		bestctfvalue, bestconf = apCtf.getBestCtfValueForImage(imgdata,msg=True,method=self.params['ctfmethod'])
+		bestctfvalue, bestconf = apCtf.getBestCtfValueForImage(imgdata, msg=True, method=self.params['ctfmethod'])
 
 		if bestctfvalue is None:
 			apDisplay.printWarning("No ctf estimation for current image")
@@ -905,7 +905,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if self.params['maskassess'] is not None and not self.params['checkmask']:
 			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
-
+		if self.params['fliptype'] == 'ace2image' and self.params['ctfmethod'] is None:
+			apDisplay.printMsg("setting ctf method to ace2")
+			self.params['ctfmethod'] = 'ace2'
 
 	#=====================
 	def setRunDir(self):
