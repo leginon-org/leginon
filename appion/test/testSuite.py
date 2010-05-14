@@ -47,6 +47,8 @@ class testScript(appionScript.AppionScript):
 			apDisplay.printError("Please set uploadimages to true or provide a GroEL session name")
 		if self.params['uploadimages'] is True and self.params['sessionname'] is not None:
 			apDisplay.printError("Please set uploadimages to false or remove session name")
+		if self.params['description'] is None:
+			self.params['description'] = 'running test suite application'
 		return
 
 	#=====================
@@ -197,7 +199,7 @@ class testScript(appionScript.AppionScript):
 		script = os.path.join(self.appiondir, "bin", "imageloader.py ")
 		params = (" --runname=%s --projectid=%d --session=%s --batch=%s --scopeid=%d --cameraid=%d --description='%s' "
 			%(self.sessionname, self.params['projectid'], self.sessionname, 
-			imagedatfile, scopeid, cameraid, self.params['description']+' running test suite application'))
+			imagedatfile, scopeid, cameraid, self.params['description']))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
