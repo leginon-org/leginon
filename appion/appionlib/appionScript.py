@@ -371,7 +371,7 @@ class AppionScript(basicScript.BasicScript):
 			#auto set the run directory
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 			path = os.path.abspath(sessiondata['image path'])
-			path = re.sub("leginon","appion",path)
+			path.replace("leginon", "appion")
 			path = re.sub("/rawdata","",path)
 			path = os.path.join(path, self.processdirname, self.params['runname'])
 			self.params['rundir'] = path

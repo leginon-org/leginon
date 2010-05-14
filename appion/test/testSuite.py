@@ -1,6 +1,7 @@
 #!/usr/bin/python -O
 
 #python
+import re
 import os
 import sys
 import time
@@ -16,6 +17,7 @@ from appionlib import apParam
 from appionlib import apFile
 from appionlib import apCtf
 from appionlib import apAlignment
+from appionlib import apDatabase
 
 class testScript(appionScript.AppionScript):
 	#=====================
@@ -49,7 +51,19 @@ class testScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		self.params['rundir'] = os.path.join(os.getcwd(), self.timestamp)
+		if self.params['uploadimages'] is True:
+			try:
+				basedir = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
+				basedir.replace("leginon", "appion")
+			except:
+				basedir = os.getcwd()
+			self.params['rundir'] = os.path.join(basedir, "testsuite", self.timestamp
+		else:
+			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+			basedir = os.path.abspath(sessiondata['image path'])
+			basedir.replace("leginon", "appion")
+			basedir = re.sub("/rawdata","",basedir)
+			self.params['rundir'] = os.path.join(basedir, "testsuite", self.timestamp)
 		return
 
 	#=====================
