@@ -5,6 +5,10 @@
         <field name="key" >settable</field>
         <field name="value" >1</field>
     </sqltable>
+    <sqltable name="install" >
+        <field name="key" >version</field>
+        <field name="value" >2.0</field>
+    </sqltable>
   <!-- boxtypes -->
     <sqltable name="boxtypes" >
         <field name="boxtypeId" >1</field>
