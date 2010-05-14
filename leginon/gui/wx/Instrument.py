@@ -1330,11 +1330,22 @@ class SelectionMixin(object):
 		threading.Thread(target=self.proxy.setCCDCamera, args=(evt.name,)).start()
 
 	def instrumentSelectionEvent(self, evt, passive):
+		if not self.instrumentselections:
+			return
+		still_exist = []
 		for i in self.instrumentselections:
+			## handle if SelectionPanel was destroyed already
+			try:
+				selector_is_passive = i.passive
+			except:
+				continue
+			still_exist.append(i)
 			if i.passive and not passive:
 				continue
 			evthandler = i.GetEventHandler()
 			evthandler.AddPendingEvent(evt)
+		## new list of selection panels that still exist
+		self.instrumentselections = still_exist
 
 	def setCameraSize(self):
 		try:
