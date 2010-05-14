@@ -279,3 +279,9 @@ if __name__ == "__main__":
 	 	
 		leginondb.executeCustomSQL(updateq)
 
+		updateq = (" UPDATE "+projectdb.dbname+".install "
+				+" SET "+projectdb.dbname+".install.value = '2.0' "
+				+" WHERE "+projectdb.dbname+".install.key = 'version '"
+				)
+
+		leginondb.executeCustomSQL(updateq)
