@@ -24,6 +24,7 @@ import gui.wx.PresetsManager
 import instrument
 import random
 import math
+import numpy
 
 class PresetChangeError(Exception):
 	pass
@@ -1330,18 +1331,58 @@ class PresetsManager(node.Node):
 			newimageshift = newpreset['image shift']
 			oldimageshift = oldpreset['image shift']
 
-		## this assumes that image shift is preserved through a mag change
-		## although this may not always be true.  In particular, I think
-		## that LM and M/SA mag ranges have different image shift coord systems
-		myimage['x'] -= oldimageshift['x']
-		myimage['x'] += newimageshift['x']
-		myimage['y'] -= oldimageshift['y']
-		myimage['y'] += newimageshift['y']
+		newmethod = True
+		if newmethod:
+			## transform between microscope mode
+			print 'old',myimage
+			fakescope1 = leginondata.ScopeEMData()
+			fakescope1.friendly_update(oldpreset)
+			fakecam1 = leginondata.CameraEMData()
+			fakecam1.friendly_update(oldpreset)
+			fakescope2 = leginondata.ScopeEMData()
+			fakescope2.friendly_update(newpreset)
+			fakecam2 = leginondata.CameraEMData()
+			fakecam2.friendly_update(newpreset)
+			tem = newpreset['tem']
+			ccdcamera = newpreset['ccdcamera']
+			ht = self.instrument.tem.HighTension
+			pixelshift1 = self.calclients['image'].itransform(myimage, fakescope1, fakecam1)
+			print 'pre-converted pixel shift',pixelshift1
+			pixrow = pixelshift1['row'] * oldpreset['binning']['y']
+			pixcol = pixelshift1['col'] * oldpreset['binning']['x']
+			pixvect1 = numpy.array((pixrow, pixcol))
+			pixvect2 = self.calclients['image'].pixelToPixel(tem,ccdcamera,ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
+			pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
+			print 'converted pixel shift',pixelshift2
+			newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
+			myimage = newscope['image shift']
+			print 'new',myimage
+		else:
+			## this assumes that image shift is preserved through a mag change
+			## although this may not always be true.  In particular, I think
+			## that LM and M/SA mag ranges have different image shift coord systems
+			myimage['x'] -= oldimageshift['x']
+			myimage['y'] -= oldimageshift['y']
+			myimage['x'] += newimageshift['x']
+			myimage['y'] += newimageshift['y']
 
-		mybeam['x'] -= oldpreset['beam shift']['x']
-		mybeam['x'] += newpreset['beam shift']['x']
-		mybeam['y'] -= oldpreset['beam shift']['y']
-		mybeam['y'] += newpreset['beam shift']['y']
+		print '****** targetToScope ********'
+		print 'movetype',emtargetdata['movetype']
+		print 'initial mybeam', mybeam
+		print '-oldpreset', oldpreset['name'], oldpreset.dbid, oldpreset['beam shift']
+		print '+newpreset', newpreset['name'], newpreset.dbid, newpreset['beam shift']
+		# Shouldn't have to make special case for non-beam shift, but for precaution
+		# of avoiding problem of random beam shift on 10apr29b, let's do this now.
+		if emtargetdata['movetype'] == 'image beam shift' or emtargetdata['movetype'] == 'beam shift':
+			mybeam['x'] -= oldpreset['beam shift']['x']
+			mybeam['x'] += newpreset['beam shift']['x']
+			mybeam['y'] -= oldpreset['beam shift']['y']
+			mybeam['y'] += newpreset['beam shift']['y']
+		else:
+			mybeam['x'] = newpreset['beam shift']['x']
+			mybeam['y'] = newpreset['beam shift']['y']
+		print 'final mybeam', mybeam
+		print ''
 
 		mymin = newpreset['defocus range min']
 		mymax = newpreset['defocus range max']
