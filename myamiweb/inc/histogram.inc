@@ -61,7 +61,9 @@ class histogram {
 		## find power of ten
 		$this->factor = (int) pow(10, floor(log10($this->maxcount)-1));
 		## set max based on power, e.g., 13426 -> 15000, 52 -> 70, or 425 -> 600
+		if ($this->factor < 1) $this->factor=1;
 		$this->idealmaxy = (int) ceil($this->maxcount/$this->factor+1)*$this->factor;
+
 
 		if ($this->debug) {
 			$end = microtime(true);
