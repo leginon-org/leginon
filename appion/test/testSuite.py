@@ -187,12 +187,12 @@ class testScript(appionScript.AppionScript):
 
 	#=====================
 	def uploadImages(self):
+		### get simulated instrument ids
+		scopeid, cameraid = self.getInstrumentIds()
 		### Download images
 		imglist = self.downloadImagesFromAMI()
 		### create batch file
 		imagedatfile = self.createImageBatchFile(imglist)
-		### get simulated instrument ids
-		scopeid, cameraid = self.getInstrumentIds()
 		### run command
 		script = os.path.join(self.appiondir, "bin", "imageloader.py ")
 		params = (" --runname=%s --projectid=%d --session=%s --batch=%s --scopeid=%d --cameraid=%d --description='%s' "
