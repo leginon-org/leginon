@@ -1565,7 +1565,7 @@ class particledata {
 	}
 
 	function getParticles ($runId) {
-		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation "
+		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation, p.`REF|leginondata|AcquisitionImageData|image` "
 			."from ApParticleData p "
 			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		$r=$this->mysql->getSQLResult($q);

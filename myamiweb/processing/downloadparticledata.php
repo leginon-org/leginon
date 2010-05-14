@@ -8,28 +8,25 @@ require "inc/processing.inc";
 
 //This file dumps the best CTF parameters for all images in the session
 
-$sessionId = $_GET['expId'];
+$expId = $_GET['expId'];
+$selectionId = $_GET['selectionId'];
 $appiondb = new particledata();
 
-$ctfrundatas = $appiondb->getCtfRunIds($sessionId, True);
-if (!$ctfrundatas) {
-	echo "No CTF information available<br/>\n";
+if (!$appiondb->hasParticleData($expId)) {
+	echo "No particle information available<br/>\n";
 	exit;
 }
 
-$ctfdatas = $appiondb->getBestCtfInfoForSessionId($sessionId);
+$partdatas = $appiondb->getParticles($selectionId);
 
-$data[] = "nominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\timage_name\n";
+$data[] = "x_coord\ty_coord\timage_name\n";
 //echo "</br>\n";
 
-foreach ($ctfdatas as $ctfdata) {
-	$filename = $appiondb->getImageNameFromId($ctfdata['REF|leginondata|AcquisitionImageData|image']);
-	$data[] = sprintf("%.4e\t%.5e\t%.5e\t%.5e\t%.4f\t%s\n",
-		$ctfdata['defocus'],
-		$ctfdata['defocus1'],
-		$ctfdata['defocus2'],
-		$ctfdata['angle_astigmatism'],
-		$ctfdata['amplitude_contrast'],
+foreach ($partdatas as $partdata) {
+	$filename = $appiondb->getImageNameFromId($partdata['REF|leginondata|AcquisitionImageData|image']);
+	$data[] = sprintf("%d\t%d\t%s\n",
+		$partdata['xcoord'],
+		$partdata['ycoord'],
 		$filename);
 }
 
@@ -39,12 +36,13 @@ foreach ($data as $line) {
 }
 //echo "filesize $size\n";
 
+
 header("Content-Type: application/text");
 header("Content-Type: application/force-download");
 header("Content-Type: application/download");
 header("Content-Transfer-Encoding: binary");
 header("Content-Length: $size");
-$downname = sprintf("ctfdata-%04d.dat", $sessionId);
+$downname = sprintf("particledata-%04d_%04d.dat", $expId, $selectionId);
 header("Content-Disposition: attachment; filename=$downname;");
 foreach ($data as $line) {
 	echo $line;

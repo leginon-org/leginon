@@ -43,6 +43,12 @@ if ($templateparams) {
 	}
 	echo "</table>";
 }
+
+$partdownlink .= "<font size='+1'><a href='downloadparticledata.php?expId=$expId&selectionId=$runId'>\n";
+$partdownlink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download stack'>&nbsp;download particle data\n";
+$partdownlink .= "</a></font><br/>\n";
+echo $partdownlink;
+
 echo "<h4>Particle Position Histograms</h4>\n";
 echo "<table cellspacing='1' cellpadding='2'><tr><td>";
 
