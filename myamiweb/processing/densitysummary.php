@@ -85,11 +85,17 @@ if ($densityRuns) {
 		$html .= "</td>\n";
 
 		# name
-		$html .= "<td><A HREF='densityreport.php?expId=$expId&densityId=$densityid'>$densityrun[name]</A></TD>\n";
+		$modelfile = $densityrun['path']."/".$densityrun['name'];
+		$html .= "<td><A HREF='densityreport.php?expId=$expId&densityId=$densityid'>$densityrun[name]</A>\n";
+		$modellink .= "<font size='-2'><a href='download.php?file=$modelfile'>\n";
+		$modellink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download model'>\n";
+		$modellink .= "</a></font>\n";
+		$html .= $modellink."</td>\n";
 
 		# sample image
 		$giffile = $densityrun['path']."/".$densityrun['name'].".animate.gif";
 		$pngfile = $densityrun['path']."/".$densityrun['name'].".1.png";
+
 		if ($giffile && file_exists($giffile))
 			$html .= "<td valign='center' align='center'><img src='loadimg.php?rawgif=1&filename=".$giffile."' height='128'></td>\n";
 		elseif ($pngfile && file_exists($pngfile))

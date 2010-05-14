@@ -380,7 +380,13 @@ function showReport () {
 				if ($p['handflip']) $html .= "(handedness flipped)\n";
 				$html .= "<table border='0' cellpadding='0' cellspacing='0'>\n";
 				$html .= "<tr><td><b>path: </b></td><td>".$p['path']."</td></td>\n";
-				$html .= "<tr><td><b>name: </b></td><td>".$p['name']."</td></td>\n";
+
+				$postprocfile = $p['path']."/".$p['name'];
+				$modellink .= "<font size='-2'><a href='download.php?file=$postprocfile'>\n";
+				$modellink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download model'>\n";
+				$modellink .= "</a></font>\n";
+				$html .= "<tr><td><b>name: </b></td><td>".$p['name']." $modellink</td></td>\n";
+
 				if ($p['ampName']) $html .= "<tr><td><b>ampcor file: </b></td><td>".$p['amppath']."/".$p['ampName']."</td></tr>\n";
 				if ($p['lowpass']) $html .= "<tr><td><b>low pass filter: </b></td><td>".$p['lowpass']." angstroms</td></tr>\n";
 				if ($p['highpass']) $html .= "<tr><td><b>high pass filter: </b></td><td>".$p['highpass']." angstroms</td></tr>\n";

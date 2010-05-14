@@ -49,7 +49,11 @@ $densitytable.= "<b>pixel size:</b> $density[pixelsize]<br />\n";
 $densitytable.= "<b>box size:</b> $density[boxsize]<br />\n";
 $densitytable.= "<b>symmetry:</b> $sym[symmetry]<br />\n";
 $densitytable.= "<b>resolution:</b> $density[resolution]<br />\n";
-$densitytable.= "<b>Filename:</b><br />$density[path]/$density[name]<br />\n";
+$modelfile = $density['path']."/".$density['name'];
+$modellink .= "<font size='-2'><a href='download.php?file=$modelfile'>\n";
+$modellink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download model'>\n";
+$modellink .= "</a></font>\n";
+$densitytable.= "<b>Filename:</b><br />$modelfile $modellink<br />\n";
 $densitytable.= "<b>Description:</b><br />$descDiv<br />\n";
 
 $densitytable.= "<b>History:</b><br />\n";

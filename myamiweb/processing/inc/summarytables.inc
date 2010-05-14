@@ -150,15 +150,15 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		$imgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
 		$hedfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".hed";
 		$stacklink .= "<font size='-2'><a href='download.php?file=$hedfile'>\n";
-		$stacklink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download mrc'>hed\n";
+		$stacklink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download hed'>hed\n";
 		$stacklink .= "</a>\n";
 		$stacklink .= "&nbsp;<a href='download.php?file=$imgfile'>\n";
-		$stacklink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download mrc'>img\n";
+		$stacklink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download img'>img\n";
 		$stacklink .= "</a></font>\n";
 	} else {
 		$ext = substr($stackdata['name'], -3);
 		$stacklink .= "<font size='-2'><a href='download.php?file=$stackfile'>\n";
-		$stacklink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download mrc'>$ext\n";
+		$stacklink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download stack'>$ext\n";
 		$stacklink .= "</a></font>\n";
 	}
 
@@ -495,8 +495,6 @@ function analysissummarytable($analysisid, $mini=false) {
 		$display_keys['MSA method'] = $imagicrun['MSAmethod'];
 	}
 
-
-
 	// show data
 	foreach($display_keys as $k=>$v) {
 		$analysistable.= formatHtmlRow($k,$v);
@@ -630,7 +628,11 @@ function modelsummarytable($modelid, $mini=false) {
 	$display_keys['date time'] = $modeldata['DEF_timestamp'];
 	$display_keys['description'] = $modeldata['description'];
 	$modelfile = $modeldata['path']."/".$modelname;
-	$display_keys['path'] = $modelfile;
+	$modellink .= "<font size='-2'><a href='download.php?file=$modelfile'>\n";
+	$modellink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download model'>\n";
+	$modellink .= "</a></font>\n";
+	$display_keys['path'] = $modeldata['path'];
+	$display_keys['filename'] = $modelname.$modellink;
 	$display_keys['symmetry'] = "".$symdata['symmetry'].": <i>".$symdata['description']."</i>\n";
 	$display_keys['pixel size'] = format_angstrom_number($modeldata['pixelsize']/1e10)."/pix";
 	$display_keys['box size'] = $modeldata['boxsize']." pixels";
