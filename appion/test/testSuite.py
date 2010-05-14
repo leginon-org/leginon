@@ -10,10 +10,12 @@ import subprocess
 import leginon.leginondata
 from appionlib import appionScript
 from appionlib import apDisplay
-from appionlib import apDatabase
+from appionlib import apParticle
 from appionlib import apStack
 from appionlib import apParam
 from appionlib import apFile
+from appionlib import apCtf
+from appionlib import apAlignment
 
 class testScript(appionScript.AppionScript):
 	#=====================
@@ -173,13 +175,10 @@ class testScript(appionScript.AppionScript):
 	def uploadImages(self):
 		### Download images
 		imglist = self.downloadImagesFromAMI()
-
 		### create batch file
 		imagedatfile = self.createImageBatchFile(imglist)
-
 		### get simulated instrument ids
 		scopeid, cameraid = self.getInstrumentIds()
-
 		### run command
 		script = os.path.join(self.appiondir, "bin", "imageloader.py ")
 		params = (" --runname=%s --projectid=%d --session=%s --batch=%s --scopeid=%d --cameraid=%d --description='%s' "
@@ -193,23 +192,27 @@ class testScript(appionScript.AppionScript):
 
 	#=====================
 	def dogPicker(self):
-		if apDatabase.getSelectionIdFromName('dogrun1', self.sessionname) is not None:
-			return
+		runnum = apParticle.getNumSelectionRunsFromSession(self.sessionname)
+		dogname = "dogrun%d-%s"%(runnum+1, self.timestamp)
 
 		script = os.path.join(self.appiondir, "bin", "dogPicker.py ")
-		params = (" --runname=dogrun1 --projectid=%d --session=%s --diam=%d --thresh=%.2f --maxthresh=%.2f --invert --no-wait --planereg --maxsize=%.2f --numslices=%d --sizerange=%d"
-			%(self.params['projectid'], self.sessionname, 150, 0.42, 0.8, 0.5, 3, 50))
+		params = (" --runname=%s --projectid=%d --session=%s --diam=%d --thresh=%.2f --maxthresh=%.2f --invert --no-wait --planereg --maxsize=%.2f --numslices=%d --sizerange=%d"
+			%(dogname, self.params['projectid'], self.sessionname, 150, 0.42, 0.8, 0.5, 3, 50))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
 			params += " --no-commit "
 		self.runCommand(script+" "+params)
+		return dogname
 
 	#=====================
-	def aceTwo(self, bin):
+	def aceTwo(self, bin, blur=10):
+		runnum = apCtf.getNumCtfRunsFromSession(self.sessionname)
+		acetwoname = "acetwo%d-%s"%(runnum+1, self.timestamp)
+
 		script = os.path.join(self.appiondir, "bin", "pyace2.py ")
-		params = (" --runname=acetwo%d --projectid=%d --session=%s --no-wait --bin=%d"
-			%(bin, self.params['projectid'], self.sessionname, bin))
+		params = (" --runname=%s --projectid=%d --session=%s --no-wait --bin=%d --edge1=%.1f --cs=2.0 "
+			%(acetwoname, self.params['projectid'], self.sessionname, bin, blur))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
@@ -217,31 +220,32 @@ class testScript(appionScript.AppionScript):
 		self.runCommand(script+" "+params)
 
 	#=====================
-	def makeStack(self, stackname):
-		if apStack.getStackIdFromRunName(stackname, self.sessionname) is not None:
-			return
+	def makeStack(self):
+		runnum = apStack.getNumStacksFromSession(self.sessionname)
+		stackname = "stack%d-%s"%(runnum+1, self.timestamp)
 
-		selectid = apDatabase.getSelectionIdFromName('dogrun1', self.sessionname)
+		selectid = apParticle.getRecentSelectionIdFromSession(self.sessionname)
 
 		script = os.path.join(self.appiondir, "bin", "makestack2.py ")
-		params = ((" --runname=%s --projectid=%d --session=%s --no-wait --boxsize=%d --bin=%d --acecutoff=%.2f --invert --phaseflip --selectionid=%d --description='%s'")
+		params = ((" --runname=%s --projectid=%d --session=%s --no-wait --boxsize=%d --bin=%d --acecutoff=%.2f --invert --phaseflip --flip-type=ace2image --selectionid=%d --description='%s'")
 			%(stackname, self.params['projectid'], self.sessionname, 512, 2, 0.7, selectid, 'running test suite application'))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
 			params += " --no-commit "
 		self.runCommand(script+" "+params)
+		return stackname
 
 	#=====================
-	def filterStack(self, stackname, substackname):
-		if apStack.getStackIdFromSubStackName(substackname, self.sessionname) is not None:
-			return
+	def filterStack(self, stackname):
+		runnum = apStack.getNumStacksFromSession(self.sessionname)
+		filtstackname = "meanfilt%d-%s"%(runnum+1, self.timestamp)
 
 		stackid = apStack.getStackIdFromRunName(stackname, self.sessionname)
 
 		script = os.path.join(self.appiondir, "bin", "stackFilter.py ")
 		params = ((" --runname=%s --projectid=%d --old-stack-id=%d --minx=%d --maxx=%d --miny=%d --maxy=%d --description='%s'")
-			%(substackname, self.params['projectid'], stackid, 
+			%(filtstackname, self.params['projectid'], stackid, 
 			600, 1000, 82, 105, 
 			'filtering junk with test suite application'))
 		if self.params['commit'] is True:
@@ -250,17 +254,20 @@ class testScript(appionScript.AppionScript):
 			params += " --no-commit "
 		self.runCommand(script+" "+params)
 
-		return substackname
+		return filtstackname
 
 	#=====================
 	def maxLike(self, substackname):
+		runnum = apAlignment.getNumAlignRunsFromSession(self.sessionname)
+		maxlikename = "maxlike%d-%s"%(runnum+1, self.timestamp)
+
 		stackid = apStack.getStackIdFromSubStackName(substackname, self.sessionname)
 
 		print (self.params['projectid'], stackid, 10, 2000, 3, 1, 12, 'max like with test suite application')
 
 		script = os.path.join(self.appiondir, "bin", "maxlikeAlignment.py")
-		params = (" --runname=maxlike1 --projectid=%d --stack=%d --lowpass=%d --highpass=%d --num-ref=%d --bin=%d --savemem --converge=slow --mirror --fast --fast-mode=narrow --max-iter=%d --description='%s'"
-			%(self.params['projectid'], stackid, 10, 2000, 3, 1, 12, 
+		params = (" --runname=%s --projectid=%d --stack=%d --lowpass=%d --highpass=%d --num-ref=%d --bin=%d --savemem --converge=slow --mirror --fast --fast-mode=narrow --max-iter=%d --description='%s'"
+			%(maxlikename, self.params['projectid'], stackid, 10, 2000, 3, 1, 12, 
 			'max like with test suite application'))
 		if self.params['commit'] is True:
 			params += " --commit "
@@ -268,7 +275,21 @@ class testScript(appionScript.AppionScript):
 			params += " --no-commit "
 		self.runCommand(script+" "+params)
 
+		return maxlikename
+
 		#uploadMaxlikeAlignment.py --rundir=/ami/data00/appion/10may07o04/align/maxlike1 -t 10may07q59 --commit --projectid=5 
+
+	#=====================
+	def uploadMaxLike(self, maxlikename):
+		maxjobdata = apAlignment.getMaxlikeJobDataForUpload(maxlikename)
+		tstamp = maxjobdata['timestamp']
+		script = os.path.join(self.appiondir, "bin", "uploadMaxlikeAlignment.py")
+		params = (" --projectid=%d --timestamp=%s "%(self.params['projectid'], tstamp,))
+		if self.params['commit'] is True:
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
 
 	#=====================.
 	def start(self):
@@ -282,19 +303,21 @@ class testScript(appionScript.AppionScript):
 		self.dogPicker()
 
 		### Ace 2
-		self.aceTwo(bin=2)
+		self.aceTwo(bin=2, blur=10)
+		self.aceTwo(bin=2, blur=6)
 		self.aceTwo(bin=4)
 
 		### Make stack
-		self.makeStack('stack1')
+		stackname = self.makeStack()
 
 		### Filter stack
-		self.filterStack('stack1', 'meanfilt2')
+		filtstackname = self.filterStack(stackname)
 
 		### Maximum likelihood
-		self.maxLike('meanfilt2')
+		maxlikename = self.maxLike(filtstackname)
 
 		### Upload max like
+		self.uploadMaxLike(maxlikename)
 
 		### Upload templates
 		### Template pick

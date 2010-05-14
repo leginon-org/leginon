@@ -13,6 +13,11 @@ from appionlib import apDatabase
 from appionlib import apDisplay
 from appionlib import apDefocalPairs
 
+####
+# This is a database connections file with no file functions
+# Please keep it this way
+####
+
 #===========================
 def guessParticlesForSession(expid=None, sessionname=None):
 	if expid is None and sessionname is not None:
@@ -283,6 +288,42 @@ def getParticleDiameter(particledata):
 	for p in selection_params:
 		if selectionrun[p]:
 			return selectionrun[p]['diam']
+
+#================
+def getSelectionIdFromName(runname, sessionname):
+	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
+	selectq = appiondata.ApSelectionRunData()
+	selectq['name'] = runname
+	selectq['session'] = sessiondata
+	selectdatas = selectq.query(results=1)
+	if not selectdatas:
+		return None
+	return selectdatas[0].dbid
+
+#================
+def getRecentSelectionIdFromSession(sessionname):
+	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
+	selectq = appiondata.ApSelectionRunData()
+	selectq['session'] = sessiondata
+	selectdatas = selectq.query(results=1)
+	if not selectdatas:
+		return None
+	return selectdatas[0].dbid
+
+#================
+def getNumSelectionRunsFromSession(sessionname):
+	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
+	selectq = appiondata.ApSelectionRunData()
+	selectq['session'] = sessiondata
+	selectdatas = selectq.query()
+	if not selectdatas:
+		return 0
+	return len(selectdatas)
+
+####
+# This is a database connections file with no file functions
+# Please keep it this way
+####
 
 #===========================
 #===========================

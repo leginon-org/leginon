@@ -16,6 +16,11 @@ from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apDefocalPairs
 
+####
+# This is a database connections file with no file functions
+# Please keep it this way
+####
+
 splitdb = True
 
 data.holdImages(False)
@@ -542,16 +547,10 @@ def getJobDataFromID(jobid):
 	jobdata = appiondata.ApAppionJobData.direct_query(jobid)
 	return jobdata
 
-#================
-def getSelectionIdFromName(runname, sessionname):
-	sessiondata = getSessionDataFromSessionName(sessionname)
-	selectq = appiondata.ApSelectionRunData()
-	selectq['name'] = runname
-	selectq['session'] = sessiondata
-	selectdatas = selectq.query(results=1)
-	if not selectdatas:
-		return None
-	return selectdatas[0].dbid
+####
+# This is a database connections file with no file functions
+# Please keep it this way
+####
 
 #================
 #================

@@ -12,6 +12,22 @@ from appionlib import apParam
 from appionlib import apDisplay
 from appionlib import apDatabase
 
+####
+# This is a database connections file with no file functions
+# Please keep it this way
+####
+
+#=====================
+def getNumCtfRunsFromSession(sessionname):
+	sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
+	ctfrunq = appiondata.ApAceRunData()
+	ctfrunq['session'] = sessiondata
+	ctfrundatas = ctfrunq.query()
+	if not ctfrundatas:
+		return 0
+	return len(ctfrundatas)
+
+#=====================
 def commitCtfValueToDatabase(imgdict, matlab, ctfvalue, params):
 	imgname = imgdict['filename']
 	matfile = imgname+".mrc.mat"
@@ -34,6 +50,7 @@ def commitCtfValueToDatabase(imgdict, matlab, ctfvalue, params):
 
 	insertCtfValue(imgdict, params, matfile, ctfvalue, opimfile1, opimfile2)
 
+#=====================
 def printResults(params, nominal, ctfvalue):
 	nom1 = float(-nominal*1e6)
 	defoc1 = float(ctfvalue[0]*1e6)
@@ -65,7 +82,7 @@ def printResults(params, nominal, ctfvalue):
 		apDisplay.printDataBox(labellist,numlist,typelist)
 	return
 
-
+#=====================
 def insertAceParams(imgdata, params):
 	# first create an aceparam object
 	aceparamq = appiondata.ApAceParamsData()
@@ -107,6 +124,7 @@ def insertAceParams(imgdata, params):
 
 	return True
 
+#=====================
 def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
 	runq=appiondata.ApAceRunData()
 	runq['name']=params['runname']
@@ -137,9 +155,11 @@ def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
 
 	return
 
+#=====================
 def mkTempDir(temppath):
 	return apParam.createDirectory(temppath)
 
+#=====================
 def getBestDefocusForImage(imgdata, msg=False):
 	"""
 	takes an image and get the best defocus (in negative meters) for that image
@@ -169,6 +189,7 @@ def getBestDefocusForImage(imgdata, msg=False):
 
 	return bestdf
 
+#=====================
 def getBestDefocusAndAmpConstForImage(imgdata, msg=False):
 	"""
 	takes an image and get the best defocus (in negative meters) for that image
@@ -199,6 +220,7 @@ def getBestDefocusAndAmpConstForImage(imgdata, msg=False):
 
 	return bestdf, bestamp
 
+#=====================
 def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=False):
 	"""
 	takes an image and get the best ctfvalues for that image
@@ -244,6 +266,7 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=False):
 
 	return bestctfvalue, bestconf
 
+#=====================
 def getBestTiltCtfValueForImage(imgdata):
 	"""
 	takes an image and get the tilted ctf parameters for that image
@@ -267,7 +290,7 @@ def getBestTiltCtfValueForImage(imgdata):
 
 	return bestctftiltvalue
 
-
+#=====================
 def ctfValuesToParams(ctfvalue, params, msg=True):
 	if ctfvalue['acerun'] is not None:
 		if abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
@@ -289,8 +312,7 @@ def ctfValuesToParams(ctfvalue, params, msg=True):
 
 	return None
 
-
-
+#=====================
 def printCtfSummary(params):
 	"""
 	prints a histogram of the best ctfvalues for the session
@@ -372,4 +394,9 @@ def printCtfSummary(params):
 			for k in range(int(confhist[j]*scale)):
 				sys.stderr.write(apDisplay.color("*",colorstr[j]))
 		sys.stderr.write("\n")
+
+####
+# This is a database connections file with no file functions
+# Please keep it this way
+####
 

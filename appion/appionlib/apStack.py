@@ -16,7 +16,10 @@ from appionlib import appiondata
 from appionlib import apFile
 from appionlib import apParam
 
-
+####
+# This is a database connections file with no file functions
+# Please keep it this way
+####
 
 #===============
 def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
@@ -573,4 +576,10 @@ def getStackParticleDiameter(stackdata):
 	if results:
 		stackp = results[0]
 		return apParticle.getParticleDiameter(stackp['particle'])
+
+####
+# This is a database connections file with no file functions
+# Please keep it this way
+####
+
 
