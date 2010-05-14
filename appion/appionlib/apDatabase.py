@@ -142,7 +142,8 @@ def getSessionDataFromSessionName(sessionname):
 	if sessioninfo:
 		return sessioninfo[0]
 	else:
-		apDisplay.printError("could not find session, "+sessionname)
+		apDisplay.printWarning("could not find session, "+sessionname)
+		return None
 
 #================
 def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
