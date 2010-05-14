@@ -57,7 +57,7 @@ class testScript(appionScript.AppionScript):
 				basedir.replace("leginon", "appion")
 			except:
 				basedir = os.getcwd()
-			self.params['rundir'] = os.path.join(basedir, "testsuite", self.timestamp)
+			self.params['rundir'] = os.path.join(basedir, self.timestamp, "testsuite", self.timestamp)
 		else:
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 			basedir = os.path.abspath(sessiondata['image path'])
