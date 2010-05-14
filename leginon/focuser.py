@@ -383,12 +383,12 @@ class Focuser(acquisition.Acquisition):
 		target = emtarget['target']
 		try:
 			z = self.stagetiltcalclient.measureZ(atilt, correlation_type=setting['correlation type'])
+			self.logger.info('Measured Z: %.4e' % z)
+			resultdata['defocus'] = z
 		except:
 			status = 'failed'
 		else:
 			status = 'ok'
-		self.logger.info('Measured Z: %.4e' % z)
-		resultdata['defocus'] = z
 
 		return status
 
