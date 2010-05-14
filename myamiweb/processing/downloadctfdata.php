@@ -19,12 +19,12 @@ if (!$ctfrundatas) {
 
 $ctfdatas = $appiondb->getBestCtfInfoForSessionId($sessionId);
 
-$data[] = "nominal_def\tdefocus1\tdefocus2\tangle_astig\tamp_contrast\timage_name\n";
+$data[] = "nominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\timage_name\n";
 //echo "</br>\n";
 
 foreach ($ctfdatas as $ctfdata) {
 	$filename = $appiondb->getImageNameFromId($ctfdata['REF|leginondata|AcquisitionImageData|image']);
-	$data[] = sprintf("%.4e\t%.6e\t%.6e\t%.6f\t%.6f\t%s\n",
+	$data[] = sprintf("%.4e\t%.5e\t%.5e\t%.5e\t%.4f\t%s\n",
 		$ctfdata['defocus'],
 		$ctfdata['defocus1'],
 		$ctfdata['defocus2'],
