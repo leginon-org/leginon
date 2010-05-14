@@ -302,11 +302,12 @@ class HoleFinder(object):
 				blobs.append(blob)
 			return blobs
 
-	def blobs_to_lattice(self, tolerance=None, spacing=None, minspace=None, extend=None):
+	def blobs_to_lattice(self, tolerance=None, spacing=None, minspace=None, extend=None, auto_center=False):
 		if self.__results['blobs'] is None:
 			raise RuntimeError('need blobs to create lattice')
 		self.configure_lattice(tolerance=tolerance,spacing=spacing,minspace=minspace, extend=extend)
 
+		shape = self.__results['original'].shape
 		blobs = self.__results['blobs']
 		tolerance = self.lattice_config['tolerance']
 		spacing = self.lattice_config['spacing']
@@ -314,12 +315,18 @@ class HoleFinder(object):
 		# make make list of blob coords:
 		points = []
 		pointdict = {}
+		if len(blobs) < 2 and extend !='off':
+			self.__update_result('holes', [])
+			return
+			
 		for blob in blobs:
 			point = tuple(blob.stats['center'])
 			points.append(point)
 			pointdict[point] = blob
 
 		if extend == '3x3':
+			if auto_center:
+				points = lattice.sortPointsByDistances(points, (shape[0]/2,shape[1]/2))
 			best_lattice = lattice.pointsToLattice(points, spacing, tolerance, first_is_center=True)
 		else:
 			best_lattice = lattice.pointsToLattice(points, spacing, tolerance)
@@ -328,11 +335,9 @@ class HoleFinder(object):
 			best_lattice = []
 			holes = []
 		elif extend == 'full':
-			shape = self.__results['original'].shape
 			best_lattice = best_lattice.raster(shape)
 			holes = self.points_to_blobs(best_lattice)
 		elif extend == '3x3':
-			shape = self.__results['original'].shape
 			best_lattice = best_lattice.raster(shape, layers=1)
 			holes = self.points_to_blobs(best_lattice)
 		else:
@@ -451,7 +456,7 @@ class HoleFinder(object):
 		self.correlate_template()
 		self.threshold_correlation()
 		self.find_blobs()
-		self.blobs_to_lattice()
+		self.blobs_to_lattice(auto_center=True)
 		self.mark_holes()
 		self.calc_holestats()
 		#self.calc_ice()

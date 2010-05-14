@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy
+import math
 
 class Lattice(object):
 	def __init__(self, firstpoint, spacing, tolerance):
@@ -158,6 +159,22 @@ def pointsToLattice(points, spacing, tolerance, first_is_center=False):
 				best_lattice = lat
 	return best_lattice
 
+def sortPointsByDistances(points, center=(0,0)):
+	if len(points) < 2:
+		return points
+	pointdistances = {}
+	distlist = []
+	for point in points:
+		dist = math.hypot(point[0]-center[0],point[1]-center[1])
+		if dist in distlist:
+			dist = dist+0.0001
+		pointdistances[dist] = point
+		distlist.append(dist)
+	distlist.sort()
+	newpoints = []
+	for dist in distlist:
+		newpoints.append(pointdistances[dist])
+	return newpoints
 
 if __name__ == '__main__':
 	from numpy.random import randint

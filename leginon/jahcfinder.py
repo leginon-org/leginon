@@ -205,7 +205,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			targets.append(target)
 		return targets
 
-	def fitLattice(self):
+	def fitLattice(self, auto_center=False):
 		self.logger.info('fit lattice')
 		latspace = self.settings['lattice spacing']
 		lattol = self.settings['lattice tolerance']
@@ -215,7 +215,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.icecalc.set_i0(i0)
 
 		self.hf.configure_lattice(spacing=latspace, tolerance=lattol, extend=extend)
-		self.hf.blobs_to_lattice()
+		self.hf.blobs_to_lattice(auto_center=False)
 
 		self.hf.configure_holestats(radius=r)
 		self.hf.calc_holestats()
@@ -365,8 +365,11 @@ class JAHCFinder(targetfinder.TargetFinder):
 		extend = self.settings['lattice extend']
 		if extend == '3x3':
 			allcenters = self.blobCenters(self.hf['holes'])
-			center = allcenters[0]
-			focuscenters = [center]
+			if len(allcenters) > 0:
+				center = allcenters[0]
+				focuscenters = [center]
+			else:
+				return newtargets
 		else:
 			focuscenters = centers
 
@@ -417,7 +420,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		# find blobs
 		self.findBlobs()
 		# lattice
-		self.fitLattice()
+		self.fitLattice(auto_center=True)
 		# ice
 		self.ice()
 
@@ -517,7 +520,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 				if newblobs:
 					try:
 						self.usePickedBlobs()
-						self.fitLattice()
+						self.fitLattice(auto_center=False)
 						self.ice()
 					except Exception, e:
 						raise
