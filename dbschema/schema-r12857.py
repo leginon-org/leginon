@@ -15,6 +15,13 @@ if __name__ == "__main__":
 	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 	leginondb = dbupgrade.DBUpgradeTools('leginondata', drop=False)
 
+	print "\nWould you like to back up the database to local file before upgrading?"
+	answer = raw_input('Yes/No (default=Yes): ')
+	if not answer.lower().startswith('n'):
+		leginondb.backupDatabase("leginondb.sql", data=True)
+		projectdb.backupDatabase("projectdb.sql", data=True)
+
+
 	#===================
 	# leginon table
 	# update from Anchi which occured in revison 12330

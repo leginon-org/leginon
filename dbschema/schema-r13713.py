@@ -375,9 +375,9 @@ def upgradeLeginonDB(leginondb, backup=True):
 if __name__ == "__main__":
 	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 	leginondb = dbupgrade.DBUpgradeTools('leginondata', drop=False)
-	print "Do you want to dump the databases into sql files before the conversion?"
-	answer = raw_input('(Y/N) default=Y :')
-	if answer in ('N','n', 'No','no'):
+	print "\nWould you like to back up the database to local file before upgrading?"
+	answer = raw_input('Yes/No (default=Yes): ')
+	if answer.lower().startswith('n'):
 		backup = False
 	else:
 		backup = True
