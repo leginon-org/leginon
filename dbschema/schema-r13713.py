@@ -352,6 +352,16 @@ def upgradeProjectDB(projectdb,backup=True):
 	projectdb.renameColumn('shareexperiments', 'id', 'DEF_id', projectdb.defid)
 	projectdb.addColumn('shareexperiments', 'DEF_timestamp', projectdb.timestamp, index=True)
 
+	### set version of database
+	selectq = " SELECT * FROM `install` WHERE `key`='version'"
+	values = projectdb.returnCustomSQL(selectq)
+	if values:
+		projectdb.updateColumn("install", "value", "'2.0'", 
+			"install.key = 'version'")
+	else:
+		insertq = "INSERT INTO `install` (`key`, `value`) VALUES ('version', '2.0')"
+		projectdb.executeCustomSQL(insertq)
+
 def upgradeLeginonDB(leginondb, backup=True):
 	dbname = leginondb.getDatabaseName()
 	if backup:

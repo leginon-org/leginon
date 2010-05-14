@@ -11,7 +11,6 @@ from leginon import projectdata, leginondata
 # and project[users,login,pis,userdetails,projectowner]
 
 if __name__ == "__main__":
-	appiondb = dbupgrade.DBUpgradeTools('appiondata', drop=True)
 	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 	leginondb = dbupgrade.DBUpgradeTools('leginondata', drop=False)
 
@@ -257,7 +256,7 @@ if __name__ == "__main__":
 				+" WHERE "+projectdb.dbname+".shareexperiments.`REF|leginondata|SessionData|experiment` IS NULL; "
 				)
 	 	
-		leginondb.executeCustomSQL(updateq)
+		projectdb.executeCustomSQL(updateq)
 	
 		# add usernames where they are missing
 	
@@ -267,7 +266,7 @@ if __name__ == "__main__":
 				+" AND "+projectdb.dbname+".shareexperiments.username IS NULL "
 				)
 	 	
-		leginondb.executeCustomSQL(updateq)
+		projectdb.executeCustomSQL(updateq)
 	
 		# update users who have a matching username in dbemdata
 	
@@ -277,11 +276,15 @@ if __name__ == "__main__":
 				+" AND "+projectdb.dbname+".shareexperiments.`REF|leginondata|UserData|user` IS NULL "
 				)
 	 	
-		leginondb.executeCustomSQL(updateq)
+		projectdb.executeCustomSQL(updateq)
 
-		updateq = (" UPDATE "+projectdb.dbname+".install "
-				+" SET "+projectdb.dbname+".install.value = '2.0' "
-				+" WHERE "+projectdb.dbname+".install.key = 'version '"
-				)
+		### set version of database
+		selectq = " SELECT * FROM `install` WHERE `key`='version'"
+		values = projectdb.returnCustomSQL(selectq)
+		if values:
+			projectdb.updateColumn("install", "value", "'1.7'", 
+				"install.key = 'version'")
+		else:
+			insertq = "INSERT INTO `install` (`key`, `value`) VALUES ('version', '1.7')"
+			projectdb.executeCustomSQL(insertq)
 
-		leginondb.executeCustomSQL(updateq)
