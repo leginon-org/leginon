@@ -568,7 +568,7 @@
       name="status" 
       type="enum('hidden','visible','exemplar')" 
     />
-    <key>PRIMARY KEY (`id`)</key>
+    <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
     <key>KEY `REF|AcquisitionImageData|image` (`REF|AcquisitionImageData|image`)</key>
