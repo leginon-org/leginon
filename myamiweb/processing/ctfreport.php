@@ -89,6 +89,11 @@ if ($ctfrundatas) {
 	echo "<img border='0' width='400' src='ctfgraph.php?w=400&hg=1&expId=$sessionId&s=1&f=confidence'></a>\n";
 	echo "<br/>\n";
 
+	$ctfdownlink .= "<font size='+1'><a href='downloadctfdata.php?expId=$sessionId'>\n";
+	$ctfdownlink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download stack'>download ctf data\n";
+	$ctfdownlink .= "</a></font>\n";
+
+
 	foreach ($ctfrundatas as $ctfrundata) {
 		$ctfrunid=$ctfrundata['DEF_id'];
 		$rName=$ctfrundata['name'];

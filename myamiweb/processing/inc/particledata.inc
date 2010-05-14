@@ -38,6 +38,21 @@ class particledata {
 		return $path;
 	}
 
+	function getImageNameFromId ($imageId) {
+		$q = "SELECT "
+			."img.filename "
+			."FROM ".DB_LEGINON.".AcquisitionImageData as img "
+			."WHERE "
+			."  img.`DEF_id` = '$imageId' "
+			."LIMIT 1 ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		$filename = $r[0]['filename'];
+		//echo "$filename<br/><br/>\n";
+		return $filename;
+	}
+
 	function getSessionData ($sessionId) {
 		$q = "SELECT "
 			."s.* "
@@ -888,6 +903,7 @@ class particledata {
 				$q .= "and r.`DEF_id`='$runId' ";
 			else
 				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image`)";
+		echo $q."<br/><br/>\n";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -964,7 +980,7 @@ class particledata {
 			."		i.`DEF_id`, "
 			."		p.`name`, "
 			."		s.`defocus`, "
-			."		c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
+			."		c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, c.`amplitude_contrast`, "
 			."		c.`noise1`, c.`noise2`, c.`noise3`, c.`noise4`, "
 			."		c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
 			."		c.`confidence`,c.`confidence_d` , "
