@@ -205,6 +205,8 @@ class testScript(appionScript.AppionScript):
 		else:
 			params += " --no-commit "
 		self.runCommand(script+" "+params)
+		for imgname in imglist:
+			apFile.removeFile(imgname)
 
 	#=====================
 	def dogPicker(self):
