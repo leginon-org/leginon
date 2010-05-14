@@ -34,6 +34,8 @@ def getProjectIdFromSessionName(sessionname):
 	t0 = time.time()
 	### get session
 	sessiondata = getSessionDataFromSessionName(sessionname)
+	if sessiondata is None:
+		return None
 
 	### get project
 	projectid = getProjectIdFromSessionData(sessiondata)
@@ -50,7 +52,8 @@ def getSessionDataFromSessionName(sessionname):
 	sessionq['name'] = sessionname
 	sessiondatas = sessionq.query(results=1)
 	if not sessiondatas:
-		apDisplay.printError("could not find session "+sessionname)	
+		apDisplay.printWarning("could not find session "+sessionname)
+		return None
 	sessiondata = sessiondatas[0]
 	return sessiondata
 

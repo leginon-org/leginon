@@ -270,7 +270,7 @@ class AppionLoop(appionScript.AppionScript):
 		if self.params['sessionname'] is not None and self.params['projectid'] is not None:
 			### Check that project and images are in sync
 			imgproject = apProject.getProjectIdFromSessionName(self.params['sessionname'])
-			if imgproject != self.params['projectid']:
+			if imgproject and imgproject != self.params['projectid']:
 				apDisplay.printError("project id and session do not correlate")
 
 	#=====================

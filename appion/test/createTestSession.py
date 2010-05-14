@@ -4,13 +4,16 @@
 import os
 import sys
 import time
+import random
 import subprocess
 #appion
+import leginon.leginondata
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apDatabase
 from appionlib import apStack
 from appionlib import apParam
+from appionlib import apFile
 
 class testScript(appionScript.AppionScript):
 	#=====================
@@ -71,49 +74,98 @@ class testScript(appionScript.AppionScript):
 		return True
 
 	#=====================
-	def uploadImages(self):
-		imglist = [
-			'06jul12a_00004gr_00054sq_00022hl_00005en.mrc',
-			'06jul12a_00022gr_00013sq_00002hl_00004en.mrc',
-			'06jul12a_00022gr_00037sq_00025hl_00005en.mrc',
-			'06jul12a_00015gr_00028sq_00004hl_00002en.mrc',
-			'06jul12a_00022gr_00013sq_00003hl_00005en.mrc',
-			'06jul12a_00027gr_00065sq_00009hl_00005en.mrc',
-			'06jul12a_00015gr_00028sq_00011hl_00003en.mrc',
-			'06jul12a_00022gr_00037sq_00005hl_00002en.mrc',
-			'06jul12a_00035gr_00063sq_00012hl_00004en.mrc',
-			'06jul12a_00015gr_00028sq_00023hl_00002en.mrc',
-			'06jul12a_00022gr_00037sq_00005hl_00005en.mrc',
-			'06jul12a_00015gr_00028sq_00023hl_00004en.mrc',
-			'06jul12a_00022gr_00037sq_00025hl_00004en.mrc',
-		]
+	def downloadImagesFromAMI(self):
+		imglist = []
+		from urllib import urlretrieve
+		imgdict = {
+			110: '06jul12a_00022gr_00037sq_00025hl_00005en.mrc',
+			111: '06jul12a_00035gr_00063sq_00012hl_00004en.mrc',
+			112: '06jul12a_00015gr_00028sq_00004hl_00002en.mrc',
+			113: '06jul12a_00015gr_00028sq_00023hl_00002en.mrc',
+			114: '06jul12a_00015gr_00028sq_00023hl_00004en.mrc',
+			115: '06jul12a_00022gr_00013sq_00002hl_00004en.mrc',
+			116: '06jul12a_00022gr_00013sq_00003hl_00005en.mrc',
+		}
+		for key in imgdict.keys():
+			imgfile = os.path.join(self.params['rundir'], imgdict[key])
+			url = ("http://ami.scripps.edu/redmine/attachments/download/%d/%s"
+				%(key, imgdict[key]))
+			urlretrieve(url, imgfile)
+			if not os.path.isfile(imgfile):
+				apDisplay.printError("could not download file: %s"%(url))
+			if apFile.fileSize(imgfile) < 30e6:
+				apDisplay.printError("error in downloaded file: %s"%(url))
+			imglist.append(imgfile)
+		return imglist
 
-		imgtree = apDatabase.getSpecificImagesFromDB(imglist)
+	#=====================
+	def createImageBatchFile(self, imglist):
+		imgstats = {
+			'pixelsize': 0.815e-10,
+			'binx': 1,
+			'biny': 1,
+			'mag': 100000,
+			'defocus': -2.0e-6,
+			'voltage': 120000,
+		}
 
-		### create batch file
 		imagedatfile = os.path.join(self.params['rundir'], "image%s.dat"%(self.timestamp))
 		f = open(imagedatfile, "w")
-		for imgdata in imgtree:
-			imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
-			apix = apDatabase.getPixelSize(imgdata)
-			mag = imgdata['scope']['magnification']
-			defocus = imgdata['scope']['defocus']
-			voltage = imgdata['scope']['high tension']
-			outstr = ("%s\t%.3e\t%d\t%d\t%d\t%.3e\t%d\n"%(imgpath, apix*1e-10, 1, 1, mag, defocus, voltage))
+		for imgfile in imglist:
+			outstr = ("%s\t%.3e\t%d\t%d\t%d\t%.3e\t%d\n"
+				%(imgfile, imgstats['pixelsize'], imgstats['binx'], imgstats['biny'], 
+				imgstats['mag'], imgstats['defocus'], imgstats['voltage']))
 			f.write(outstr)
 		f.close()
+		return imagedatfile
+
+	#=====================
+	def getInstrumentIds(self):
+		### get scope
+		scopeq = leginon.leginondata.InstrumentData()
+		print scopeq
+		scopeq['name'] = 'SimTEM'
+		scopedatas = scopeq.query(results=1)
+		if not scopedatas or len(scopedatas) < 1:
+			apDisplay.printError("Could not find simulated scope")
+		random.shuffle(scopedatas)
+		scopeid = scopedatas[0].dbid
+		apDisplay.printMsg("Selected scope %d from host %s"	
+			%(scopeid, scopedatas[0]['hostname']))
+
+		### get camera
+		cameraq = leginon.leginondata.InstrumentData()
+		cameraq['name'] = 'SimCCDCamera'
+		cameradatas = cameraq.query(results=1)
+		if not cameradatas or len(cameradatas) < 1:
+			apDisplay.printError("Could not find simulated CCD camera")
+		random.shuffle(scopedatas)
+		carmeraid = cameradatas[0].dbid
+		apDisplay.printMsg("Selected camera %d from host %s"	
+			%(carmeraid, cameradatas[0]['hostname']))
+		return scopeid, carmeraid
+
+	#=====================
+	def uploadImages(self):
+		### Download images
+		imglist = self.downloadImagesFromAMI()
+
+		### create batch file
+		imagedatfile = self.createImageBatchFile(imglist)
+
+		### get simulated instrument ids
+		scopeid, cameraid = self.getInstrumentIds()
 
 		### run command
 		script = os.path.join(self.appiondir, "bin", "imageloader.py ")
 		params = (" --runname=%s --projectid=%d --session=%s --batch=%s --scopeid=%d --cameraid=%d --description='%s' "
 			%(self.timestamp, self.params['projectid'], self.timestamp, 
-			imagedatfile, 89, 90, self.params['description']+' running test suite application'))
+			imagedatfile, scopeid, cameraid, self.params['description']+' running test suite application'))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
 			params += " --no-commit "
 		self.runCommand(script+" "+params)
-
 
 	#=====================.
 	def start(self):
