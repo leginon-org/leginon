@@ -146,14 +146,15 @@ class AppionScript(basicScript.BasicScript):
 	#=====================
 	def getSessionData(self):
 		sessiondata = None
-		if 'sessionname' in self.params:
+		if 'sessionname' in self.params and self.params['sessionname'] is not None:
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		elif not sessiondata and 'session' in self.params and isinstance(self.params['session'],str):
+		if not sessiondata and 'session' in self.params and isinstance(self.params['session'],str):
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
-		elif not sessiondata and 'stackid' in self.params:
+		if not sessiondata and 'stackid' in self.params:
 			from appionlib import apStack
 			sessiondata = apStack.getSessionDataFromStackId(self.params['stackid'])
-		else:
+		if not sessiondata:
+			### works with only canonical session names
 			s = re.search('/([0-9][0-9][a-z][a-z][a-z][0-9][0-9][^/]*)/', self.params['rundir'])
 			if s:
 				self.params['sessionname'] = s.groups()[0]
