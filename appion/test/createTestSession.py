@@ -90,6 +90,7 @@ class testScript(appionScript.AppionScript):
 			imgfile = os.path.join(self.params['rundir'], imgdict[key])
 			url = ("http://ami.scripps.edu/redmine/attachments/download/%d/%s"
 				%(key, imgdict[key]))
+			apDisplay.printMsg("Downloading image '%s'"%(imgdict[key]))
 			urlretrieve(url, imgfile)
 			if not os.path.isfile(imgfile):
 				apDisplay.printError("could not download file: %s"%(url))
