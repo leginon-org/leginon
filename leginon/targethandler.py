@@ -84,13 +84,12 @@ class TargetHandler(object):
 			self.logger.debug('Found %s targets' % (len(havelist),))
 		return havelist
 
-	def NEWresearchTargets(self, **kwargs):
+	def NewresearchTargets(self, **kwargs):
 		targetquery = leginondata.AcquisitionImageTargetData(**kwargs)
 		targets = targetquery.query()
 		# organize by list, number, version, status
 		organized = {}
 		for target in targets:
-
 			targetlist = target['list'].dbid
 			if targetlist not in organized:
 				organized[targetlist] = {}
@@ -123,6 +122,17 @@ class TargetHandler(object):
 					if status in organized[targetlist][number]['targets']:
 						final.append(organized[targetlist][number]['targets'][status])
 						break
+				# if any of the version is done, consider the status as done
+				if targetlist:
+					tlistquery = leginondata.ImageTargetListData()
+					targetlistdata = tlistquery.direct_query(targetlist)
+					targetquery = leginondata.AcquisitionImageTargetData(list=targetlistdata,number=number,status='done')
+					targets = targetquery.query(results=1)
+					if targets:
+						del(final[-1])
+						final.append(targets[0])
+				print targetlist,number,final[-1]['status']
+				
 		return final
 
 	def startQueueProcessor(self):
