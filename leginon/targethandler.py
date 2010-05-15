@@ -84,6 +84,47 @@ class TargetHandler(object):
 			self.logger.debug('Found %s targets' % (len(havelist),))
 		return havelist
 
+	def NEWresearchTargets(self, **kwargs):
+		targetquery = leginondata.AcquisitionImageTargetData(**kwargs)
+		targets = targetquery.query()
+		# organize by list, number, version, status
+		organized = {}
+		for target in targets:
+
+			targetlist = target['list'].dbid
+			if targetlist not in organized:
+				organized[targetlist] = {}
+
+			number = target['number']
+			version = target['version']
+			status = target['status']
+
+			if number not in organized[targetlist]:
+				organized[targetlist][number] = {'version': 0, 'targets': {}}
+
+			recentversion = organized[targetlist][number]['version']
+
+			if version > recentversion:
+				organized[targetlist][number]['version'] = version
+				organized[targetlist][number]['targets'] = {status: target}
+			elif version == recentversion:
+				organized[targetlist][number]['targets'][status] = target
+
+		final = []
+		tls = organized.keys()
+		tls.sort()
+		for targetlist in tls:
+			numbers = organized[targetlist].keys()
+			numbers.sort()
+			for number in numbers:
+				statuses = organized[targetlist][number]['targets'].keys()
+				## take only most recent status in this order:
+				for status in ('done', 'aborted', 'processing', 'new'):
+					if status in organized[targetlist][number]['targets']:
+						final.append(organized[targetlist][number]['targets'][status])
+						break
+		return final
+
 	def startQueueProcessor(self):
 		t = threading.Thread(target=self.queueProcessor)
 		t.setDaemon(True)
