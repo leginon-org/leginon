@@ -378,6 +378,9 @@ class PresetsManager(node.Node):
 		'''
 		self.presets = self.presetsclient.getPresetsFromDB()
 		self.setOrder()
+		if self.presets:
+			firstname = self.presets.keys()[0]
+			self.selectPreset(firstname)
 
 	def importPresets(self, pdict):
 		'''
