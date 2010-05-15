@@ -57,7 +57,6 @@ class CorrectorClient(cameraclient.CameraClient):
 			ref = ref[0]
 		else:
 			ref = None
-
 		return ref
 
 	def formatCorrectorKey(self, key):
@@ -127,7 +126,6 @@ class CorrectorClient(cameraclient.CameraClient):
 			return self.getCorrectorImageFromCache(type, scopedata, cameradata, channel)
 		except KeyError:
 			self.logger.info('Loading %s...' % self.formatCorrectorKey(key))
-
 		## use reference image from database
 		ref = self.researchCorrectorImageData(type, scopedata, cameradata, channel)
 		if ref:
@@ -198,8 +196,9 @@ class CorrectorClient(cameraclient.CameraClient):
 		try:
 			self.normalizeCameraImageData(imagedata, channel)
 			imagedata['correction channel'] = channel
-		except:
-			self.logger.error('Normalize failed')
+		except Exception, e:
+			self.logger.error('Normalize failed: %s' % e)
+			self.logger.warning('Image will not be normalized')
 
 		cameradata = imagedata['camera']
 		plan = self.retrieveCorrectorPlan(cameradata)
@@ -209,6 +208,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		pixelmax = imagedata['camera']['ccdcamera']['pixelmax']
 		if pixelmax is None:
 			pixelmax = 2**16
+		imagedata['image'] = imagedata['image'].astype(numpy.float32)
 		imagedata['image'] = numpy.clip(imagedata['image'], 0, pixelmax)
 		'''
 		if despike:
