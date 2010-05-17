@@ -102,6 +102,7 @@ if __name__ == "__main__":
 	count = 0
 	if options.xmlfile is not None:
 		xmlf = open(options.xmlfile, 'w')
+		xmlf.write("<defaulttables>\n <definition>\n")
 	for func in funcs:
 		### Check if member is valid len 2 tuple
 		if len(func) != 2:
@@ -123,6 +124,7 @@ if __name__ == "__main__":
 		count += 1
 
 	if options.xmlfile is not None:
+		xmlf.write(" </definition>\n</defaulttables>\n")
 		xmlf.close()
 
 	print "Created %d tables"%(count)
