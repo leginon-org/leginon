@@ -13,9 +13,8 @@ require_once("../inc/mysql.inc");
 		require_once("../inc/leginon.inc");
 		require_once("../project/inc/project.inc.php");
 
-		// please uncomment the following two lines after we done the content. //
-		//$project = new project();
-		//$project->install('../xml/projectUpdateValues.xml');	
+		$project = new project();
+		$project->install('../xml/projectUpdateValues.xml');	
 
 	}
 	else{
