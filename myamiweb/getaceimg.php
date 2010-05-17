@@ -45,7 +45,6 @@ $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo['sessionId'];
-
 $filename = $leginondata->getFilenameFromId($imgId);
 $normfile = trim($filename).'.norm.txt';
 $ctf = new particledata();
@@ -56,26 +55,31 @@ if ($ctffindvals) {
 else {
 	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
 	$path=$ctfdata['path'].'/opimages/';
+	$aceparams = $ctf->getAceParams($ctfdata['acerunId']);
 }
 $filename=$path.$ctfdata[$graph];
-
-(array)$imageinfo = @getimagesize($filename);
+(array)$ctfimageinfo = @getimagesize($filename);
 $imagecreate = 'imagecreatefrompng';
 $imagemime = 'image/png';
-switch ($imageinfo['mime']) {
+switch ($ctfimageinfo['mime']) {
 	case 'image/jpeg':
 		$imagecreate = "imagecreatefromjpeg";
-		$imagemime = $imageinfo['mime'];
+		$imagemime = $ctfimageinfo['mime'];
 	break;
 }
-
 if ($img=@$imagecreate($filename)) {
 		resample($img, $imgsize);
 } else {
 	$acedatafile =$ctfdata['path'].'/'.$normfile;
 	if (file_exists($acedatafile)) {
 		$acedata=readAceNormFile($acedatafile);
-		
+		//ace2 image is always 1024 in size so the radial data go out to 512
+		$datasize = 512;
+		$imagepixelsize = $imageinfo['pixelsize']*$imageinfo['binning'];
+		$imagesize = min($imageinfo['dimx'],$imageinfo['dimy']);
+		$acebin = ($aceparams['bin']) ? $aceparams['bin']:1;
+		$inverse_pixelsize = 1e-10 / (2*$acebin*$datasize*$imagepixelsize);
+
 		require 'inc/jpgraph.php';
 		require 'inc/jpgraph_line.php';
 
@@ -83,6 +87,10 @@ if ($img=@$imagecreate($filename)) {
 		$d2= $acedata['d2'];
 		$d3= $acedata['d3'];
 		$d4= $acedata['d4'];
+		$inverse_distance= array();
+		for ($i = 0; $i < count($acedata['d1']);$i++) {
+			$inverse_distance[]=$i*$inverse_pixelsize;
+		}
 
 		$graph = new Graph(512,400);
 		$graph->SetScale("linlin");
@@ -91,12 +99,13 @@ if ($img=@$imagecreate($filename)) {
 		$graph->ygrid->SetFill(true,'#EFEFEF@0.5','#BBCCFF@0.5');
 		$graph->SetTickDensity(TICKD_SPARSE);
 		$graph->xscale->SetAutoTicks();
+		$graph->xaxis->title->Set('1/Angstrum');
 
 		$ngraph=count((array)$des);
 
 		foreach ((array)$des as $k=>$val) {
 			unset($p);
-			$p = new LinePlot($$k);
+			$p = new LinePlot($$k,$inverse_distance);
 			$p->SetColor($val['c']);
 			$p->SetLegend($val['t']);
 			if ($k=='d1' && $ngraph>1) {
@@ -113,7 +122,7 @@ if ($img=@$imagecreate($filename)) {
 
 		$graph->legend->SetShadow('gray@0.4',5);
 		$graph->Stroke();
-		
+
 	} else {
 
 		header('Content-type: '.$imagemime);
