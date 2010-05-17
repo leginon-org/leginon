@@ -189,30 +189,29 @@ require_once('setupUtils.inc');
 		Please Click the "Add" Button to start. If you don't know the cluster configure file name, left it empty.<br />
 		<table border=0 cellspacing=8 style="font-size: 12px" id="clusters"></table><br />	
 		
-		<h3>Do you want to hide the IMAGIC image processing package menu items in image processing pipeline</h3>
-		<p>Select "NO" if you want to use IMAGIC.</p>
+		<h3>Do you wish to use the IMAGIC image processing package</h3>
 		<p>Note: IMAGIC software installation required.</p>
 		<input type="radio" name="hide_imagic" value="true" <?php ($update) ? (defined("HIDE_IMAGIC") && HIDE_IMAGIC)? print("checked='yes'") : print("") : print("disabled checked='yes'"); ?> />
-		&nbsp;&nbsp;YES<br />
-		<input type="radio" name="hide_imagic" value="false" <?php ($update) ? (defined("HIDE_IMAGIC") && HIDE_IMAGIC)? print("") : print("checked='yes'") : print("disabled"); ?> />
 		&nbsp;&nbsp;NO<br />
+		<input type="radio" name="hide_imagic" value="false" <?php ($update) ? (defined("HIDE_IMAGIC") && HIDE_IMAGIC)? print("") : print("checked='yes'") : print("disabled"); ?> />
+		&nbsp;&nbsp;YES<br />
 		<br />
 
-		<h3>Do you want to hide image processing tools that are under development?</h3>
+		<h3>Do you want to show any image processing tools that are still under development?</h3>
 		<p>Note: Tools still under development are not fully functioning. We suggest hiding these features.</p>
 		<input type="radio" name="hide_feature" value="true" <?php ($update) ? (defined("HIDE_FEATURE") && HIDE_FEATURE)? print("checked='yes'") : print("") : print("disabled"); ?> />
-		&nbsp;&nbsp;YES<br />
+		&nbsp;&nbsp;NO<br />
 		<input type="radio" name="hide_feature" value="false" <?php ($update) ? (defined("HIDE_FEATURE") && HIDE_FEATURE)? print("") : print("checked='yes'") : print("disabled checked='yes'"); ?> />
-		&nbsp;&nbsp;NO<br />		
+		&nbsp;&nbsp;YES<br />		
 		<br />
-		
-		<h3>Enter the spherical aberration constant for the microscope (Cs. Value).</h3>
-		<p>Example : 2.0</p>
+
+		<h3>Enter the spherical aberration (Cs) constant for the microscope (in millimeters). See also <a href='http://en.wikipedia.org/wiki/Spherical_aberration'>wikipedia</a>.</h3>
+		<p>Example : 2.0  </p>
 		<input type="text" size=5 name="defaultcs" <?php ($update && PROCESSING === true) ? print("value='".DEFAULTCS."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
 		<br />
 		
-		<h3>Enter a temporary upload directory location.</h3>
-		<p>You can setup a temporary directory for upload images, templates, models. (Optional)</p>
+		<h3>Enter a temporary upload directory location (Optional).</h3>
+		<p>This is a temporary directory for uploading any images, templates, or models that is accessible to both the web server and the processing servers.</p>
 		<input type="text" size=20 name="temp_images_dir" <?php ($update && PROCESSING === true) ? print("value='".TEMP_IMAGES_DIR."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
 		<br />
 		<input type="submit" value="NEXT" />
