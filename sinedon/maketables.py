@@ -68,7 +68,7 @@ def definitionToXml(xmlf, tablename, definition):
 			elif column['Key'] == 'INDEX':
 				tabledef += ("\t<key>KEY `%s` (`%s`)<key/> \n"%(column['Field'], column['Field']))
 
-	tabledef += ("</sqltable>")
+	tabledef += ("</sqltable>\n")
 	xmlf.write(tabledef)
 
 #=================
