@@ -1860,14 +1860,7 @@ class TargetOutputPanel(TargetImagePanel):
 			print '%s\t%s' % (target.x, target.y)
 		wx.Exit()
 
-if __name__ == '__main__':
-	import sys
-
-	try:
-		filename = sys.argv[1]
-	except IndexError:
-		filename = None
-
+def run(filename):
 	class MyApp(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Image Viewer')
@@ -1899,4 +1892,13 @@ if __name__ == '__main__':
 	else:
 		app.panel.setImage(Image.open(filename))
 	app.MainLoop()
+
+if __name__ == '__main__':
+	import sys
+
+	try:
+		filename = sys.argv[1]
+	except IndexError:
+		filename = None
+	run(filename)
 
