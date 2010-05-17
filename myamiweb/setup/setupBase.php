@@ -30,7 +30,8 @@ require_once('setupUtils.inc');
 		<p>example: Appion and Leginon DB Tools</p><br />
 		<input type="text" size=50 name="project_title" value="<?php ($update) ? print(PROJECT_TITLE) : print("Appion and Leginon DB Tools"); ?>" /><br /><br />
 		<br />
-		<h3>Based on your current URL we can setup the following path and url</h3>
+		<h3>We have automatically setup these values for your web server.</h3>
+		<p>Ignore these unless there is an error.</p>
 		<p>Base_PATH : <?php echo $utils->basePath; ?></p>
 		<p>BASE_URL : <?php echo $utils->baseURL; ?></p>
 		<p>PROJECT_URL : <?php echo $utils->projectURL; ?></p>
