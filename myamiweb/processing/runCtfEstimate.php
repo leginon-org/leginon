@@ -57,6 +57,11 @@ function runCtfEstimate() {
 	//$nominal=$_POST['nominal'];
 	//$reprocess=$_POST['reprocess'];
 
+	if (!is_numeric($cs)) {
+		createCtfEstimateForm("Invalid value for the Spherical Aberration");
+		exit;
+	}
+
 	// Error checking:
 	if (!$fieldsize) createCtfEstimateForm("Enter a fieldsize");
 	if (!$defstep) createCtfEstimateForm("Enter a search step");

@@ -86,6 +86,11 @@ function runPyAce() {
 	$commit = ($_POST[commit]=="on") ? "1" : '0';
 	$proc = $_POST[processor];
 
+	if (!is_numeric($cs)) {
+		createPyAceForm("Invalid value for the Spherical Aberration");
+		exit;
+	}
+
 	$command.="--edgethcarbon=$edgethcarbon ";
 	$command.="--edgethice=$edgethice ";
 	$command.="--pfcarbon=$pfcarbon ";
@@ -342,7 +347,10 @@ function createPyAceForm($extra=false) {
 	echo "<br />\n";
 	echo "<INPUT TYPE='text' NAME='cs' VALUE='".$defaultcs."' SIZE='4'>\n";
 	echo docpop('cs','Spherical Aberration');
-	echo "<br />\n";
+	echo "&nbsp;(<a href='http://en.wikipedia.org/wiki/Spherical_aberration'>wiki\n";
+	echo "<img border='0' src='img/external.png'></a>)\n";
+	echo "<br/><br/>\n";
+
 	echo "<INPUT TYPE='checkbox' NAME='drange'>\n";
 	echo docpop('drange','Compress Dynamic Range');
 	echo "<br />\n";

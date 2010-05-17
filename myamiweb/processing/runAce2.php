@@ -115,6 +115,8 @@ function createAce2Form($extra=false) {
 
 	echo "<input type='text' name='cs' value='".$cs."' size='4'>\n";
 	echo docpop('cs','Spherical Aberration');
+	echo "&nbsp;(<a href='http://en.wikipedia.org/wiki/Spherical_aberration'>wiki\n";
+	echo "<img border='0' src='img/external.png'></a>)\n";
 	echo "<br/><br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)' $confcheck >\n";
@@ -130,12 +132,12 @@ function createAce2Form($extra=false) {
 	echo docpop('hpmask','High Pass Filter');
 	echo "<br/>\n";
 	echo "<input type='text' name='hpzero' value='$hpzero' size='4'>\n";
-	echo docpop('hpzero','0% pass resolution limit (Angstrum)');
-	echo "<br/>\n";
+	echo docpop('hpzero','0% pass resolution limit');
+	echo "<font size='-2'>(in &Aring;ngstroms)</font><br/>\n";
 
 	echo "<input type='text' name='hpone' value='$hpone' size='4'>\n";
-	echo docpop('hpone','100% pass resolution limit (Angstrum)');
-	echo "<br/><br/>\n";
+	echo docpop('hpone','100% pass resolution limit');
+	echo "<font size='-2'>(in &Aring;ngstroms)</font><br/><br/>\n";
 
 	echo "<input type='text' name='edge1' value='10' size='4'>\n";
 	echo docpop('edge1','Canny, edge Blur Sigma');
@@ -194,6 +196,7 @@ function runAce2() {
 	// parse params
 	$refine2d=$_POST['refine2d'];
 	$binval=$_POST['binval'];
+
 	$cs=$_POST['cs'];
 	$hpzero=trim($_POST['hpzero']);
 	$hpone=trim($_POST['hpone']);
@@ -201,6 +204,11 @@ function runAce2() {
 	$edge2=trim($_POST['edge2']);
 	$rotblur=trim($_POST['rotblur']);
 	$reprocess=$_POST['reprocess'];
+
+	if (!is_numeric($cs)) {
+		createAce2Form("Invalid value for the Spherical Aberration");
+		exit;
+	}		
 
 	// check the tilt situation
 	$particle = new particledata();
