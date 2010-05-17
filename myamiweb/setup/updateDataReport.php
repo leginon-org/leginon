@@ -24,12 +24,12 @@ require_once("../inc/mysql.inc");
 ?>
 		
 		<h3>Database Update Successful:</h3>
-		<p>Wizard has successfully insert all require data into your databases. But you are not done yet.<br />
-		   You also need to run two python scripts (schema-r12857.py and chema-r13713.py) under "Leginon2.0/dbschema" folder
-		   in order to complete the whole upgrade process.</p>
+		<p>All required data has been successfully inserted into the databases. <br ></br><font color="red">You are not done yet</font>.</p>
+		<p>You need to run two python scripts (schema-r12857.py and chema-r13713.py) under "Leginon2.0/dbschema"
+		   in order to complete the upgrade process.</p>
 		   
-		<p>For more detail information please visit upgrade manual  
-		<a href="http://ami.scripps.edu/redmine/projects/leginon/wiki/How_to_Update_from_v16_%28Linux%29">here</a>.</p>	
+		<p>For more details visit 
+		<a target="_blank" href="http://ami.scripps.edu/redmine/projects/leginon/wiki/How_to_Update_from_v16_%28Linux%29">upgrade manual</a>.</p>	
 
 <?php 
 		
