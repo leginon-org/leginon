@@ -1507,6 +1507,9 @@ def type2column(key, value, value_type, parentdata):
 		# simple types
 		column['Field'] = key
 		column['Type'] = sql_type
+		### index all bools
+		if column['Type'] == 'TINYINT(1)':
+			column['Key'] = 'INDEX'
 		row[key] = value
 	else:
 		try:
