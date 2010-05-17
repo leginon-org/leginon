@@ -948,6 +948,7 @@ class particledata {
 			."c.`confidence_d` , "
 			."c.`cross_correlation` , "
 			."c.`snr` , "
+			."r.`DEF_id` as acerunId , "
 			."p.`path`, "
 			."c.`graph1` , "
 			."c.`graph2` , "
