@@ -59,7 +59,7 @@ require_once("../inc/mysql.inc");
 			if($result == false)	$has_errors[] = "\"".DB_PROJECT."\" database does not exist.<br /><br />".$dbNotExistSolution;	
 		
 			// find out is the databases already be initialize 
-			if(empty($has_error)){
+			if(empty($has_errors)){
 				$results = $mysqld->getSQLResult('select `key`, value from install where `key` = \'version\'');
 				
 				foreach($results as $result){
