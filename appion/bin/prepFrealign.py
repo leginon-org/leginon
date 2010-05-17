@@ -645,9 +645,9 @@ class frealignJob(appionScript.AppionScript):
 		#mainf.write("#PBS -r n\n")
 		#mainf.write("#PBS -j oe\n")
 		#mainf.write("\n")
-		### if guppy
+		### if local cluster
 		#mainf.write("cd %s\n"%(self.params['rundir']))
-		### elseif garibaldi
+		### elseif remote cluster
 		mainf.write("tar -xkf %s.tar\n"%(self.params['runname']))
 		mainf.write("\n")
 

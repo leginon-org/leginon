@@ -80,8 +80,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("--no-norm", dest="norm", default=False,
 			action="store_false", help="Do NOT use internal normalization")
 
-		self.parser.add_option("--garibaldi", dest="garibaldi", default=False,
-			action="store_true", help="Write a garibaldi job file and quit")
+		self.parser.add_option("--cluster", dest="cluster", default=False,
+			action="store_true", help="Write a cluster job file and quit, needs work")
 
 		### choices
 		self.fastmodes = ( "normal", "narrow", "wide" )
@@ -221,7 +221,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			return mpiexe
 
 	#=====================
-	def writeGaribaldiJobFile(self):
+	def writeClusterJobFile(self):
 		if self.params['nproc'] is None:
 			nproc = 128
 		else:
@@ -315,9 +315,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f.close()
 		apDisplay.printMsg("mysql -u usr_object -h cronus4 ap"+str(self.params['projectid'])+" < readyupload.sql")
 		apDisplay.printMsg("tar cf particles.tar partlist.doc partfiles/")
-		apDisplay.printMsg("rsync -vaP "+jobfile+" garibaldi:"+rundir+"/")
-		apDisplay.printMsg("rsync -vaP particles.tar garibaldi:"+rundir+"/")
-		apDisplay.printColor("ready to run job on garibaldi", "cyan")
+		apDisplay.printMsg("rsync -vaP "+jobfile+" cluster:"+rundir+"/")
+		apDisplay.printMsg("rsync -vaP particles.tar cluster:"+rundir+"/")
+		apDisplay.printColor("ready to run job on cluster", "cyan")
 		sys.exit(1)
 
 	#=====================
@@ -412,9 +412,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['norm'] is True:
 			xmippopts += " -norm "
 
-		### write garibaldi job file
-		if self.params['garibaldi'] is True:
-			self.writeGaribaldiJobFile()
+		### write cluster job file
+		if self.params['cluster'] is True:
+			self.writeClusterJobFile()
 
 		### find number of processors
 		if self.params['nproc'] is None:

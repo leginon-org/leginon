@@ -540,18 +540,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("ace2 command: "+ace2cmd)
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
 
-#		Commented this out because ace2.exe and ace2correct.exe are now staticallt compiled and don't need
-#		to link to anything
-#
-#		### hate to do this but have to, MATLAB's bad fftw3 library gets linked otherwise
-#		hostname = socket.gethostname()
-#		try:
-#			user = os.getlogin()
-#		except:
-#			user = None
-#		if hostname[:5] == "guppy" or (user != "craigyk" and user != "vossman"):
-#			ace2cmd = "unset LD_LIBRARY_PATH; "+ace2cmd
-
 		#apEMAN.executeEmanCmd(ace2cmd, showcmd=True)
 		if self.params['verbose'] is True:
 			ace2proc = subprocess.Popen(ace2cmd, shell=True)
