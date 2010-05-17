@@ -25,6 +25,21 @@ require_once("../inc/mysql.inc");
 		
 			$result = $mysqld->select_db(DB_PROJECT, $dbLink);
 			if($result == false)	$has_errors[] = "Project Database does not exist. Please create it first.";	
+			
+			// find out is the databases already be initialize 
+			$results = $mysqld->getSQLResult('select `key`, value from install where `key` = \'settable\'');
+			
+			if(empty($has_errors) && (!empty($results))){				
+				
+				foreach($results as $result){
+					$settable = $result['value'];
+				}
+				
+				if($settable){
+					header ('Location: updateDataReport.php');
+					exit();
+				} 
+			}
 		}
 	}
 	else{

@@ -81,7 +81,7 @@ require_once("../inc/mysql.inc");
 		
 		<h3>Start initial variables setup :</h3>
 		<p>Web tools requires default tables and variables.</p>
-		<p><font color="red">This is required for new databases Only. </font><?php echo $msg; ?></p>
+		<p><font color="red">This is required for new and upgrade databases Only. </font><?php echo $msg; ?></p>
 		
 	<?php if(empty($has_errors) && (empty($msg))){ ?>
 		<p>The system has checked your connection to both databases<br /><br />

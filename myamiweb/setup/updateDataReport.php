@@ -5,7 +5,7 @@ require_once('setupUtils.inc');
 require_once("../inc/mysql.inc");
 
 	$template = new template;
-	$template->wizardHeader("DATABASE UPGRADE", DB_INITIALIZATION);
+	$template->wizardHeader("Database Upgrade to v2.0", DB_INITIALIZATION);
 	
 	if(file_exists(CONFIG_FILE)){
 
@@ -24,8 +24,13 @@ require_once("../inc/mysql.inc");
 
 ?>
 		
-		<h3>Database Update Sucess:</h3>
-		<p>Need content.</p>	
+		<h3>Database Update Successful:</h3>
+		<p>Wizard has successfully insert all require data into your databases. But you are not done yet.<br />
+		   You also need to run two python scripts (schema-r12857.py and chema-r13713.py) under "Leginon2.0/dbschema" folder
+		   in order to complete the whole upgrade process.</p>
+		   
+		<p>For more detail information please visit upgrade manual  
+		<a href="http://ami.scripps.edu/redmine/projects/leginon/wiki/How_to_Update_from_v16_%28Linux%29">here</a>.</p>	
 
 <?php 
 		
