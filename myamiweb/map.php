@@ -12,6 +12,7 @@ $sb='';
 $minpix = ($_GET['np']) ? '&np='.$_GET['np'] : '';
 $maxpix = ($_GET['xp']) ? '&xp='.$_GET['xp'] : '';
 $fft = ($_GET['fft']) ? '&fft='.$_GET['fft'] : '';
+$fftflag = ($_GET['fft']) ? 1:0;
 $filter = ($_GET['flt']) ? '&flt='.$_GET['flt'] : '';
 $binning = ($_GET['binning']) ? '&binning='.$_GET['binning'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
@@ -51,6 +52,8 @@ if (!$imgsize)
 	$imgsize=1;
 $imgratio = $imgwidth/$imgsize ;
 $pixelsize = $imginfo['pixelsize']*$imginfo['binning']*$imgratio;
+# binning of the display is done with power spectrum image
+$fftpixelsize = $imgratio/($imgwidth*$imginfo['pixelsize']*$imginfo['binning']);
 $filename = $imginfo['filename'];
 
 $imgmapsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id."&t=75&s=$imgmapsize&binning=$mapbinning".$options;
@@ -67,7 +70,8 @@ MAP: <?php echo $filename; ?>
 <script language="javascript" src="js/scale.js"></script>
 <script>
 var filename="<?=$filename; ?>"
-var pixsize ="<?=$pixelsize; ?>"
+var pixsize ="<?= ($fftflag) ? $fftpixelsize : $pixelsize; ?>"
+var fftflag="<?=$fftflag; ?>"
 var jsimgwidth=<?=$imgwidth; ?>
 
 var jssize=<?=$imgsize; ?>
@@ -307,8 +311,14 @@ function displayCoord(val) {
 function formatpixsize(val) {
 		ps = parseFloat(pixsize)
 		val *= ps
-		val /= 1e-9
-		return val.toFixed(2)+" nm"
+		if (fftflag > 0) {
+			val *=1e-10
+			val = 1 / val
+			
+		} else {
+			val /= 1e-10
+		}
+		return val.toFixed(1)+" &Aring"
 }
 
 function newLocation() {
