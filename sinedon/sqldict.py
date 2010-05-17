@@ -1535,6 +1535,8 @@ def type2column(key, value, value_type, parentdata):
 	column['Null'] = 'YES'
 	if not ('TEXT' in column['Type'] or 'BLOB' in column['Type']):
 		column['Default'] = 'NULL'
+	if column['Type'] == 'TINYINT(1)':
+		column['Default'] = '0'
 	return column, row
 
 def type2columns(key, value, value_type, parentdata):
