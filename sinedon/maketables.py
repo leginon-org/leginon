@@ -18,6 +18,8 @@ def getOptions():
 		help="Module name of database, e.g., appionlib.appiondata", metavar="X")
 	parser.add_option("-d", "--db-name", dest="dbname",
 		help="Name of database, e.g., ap74", metavar="X")
+	parser.add_option("-x", "--xml-file", dest="xmlfile",
+		help="Write XML file do not modify database", metavar="X")
 
 	if len(sys.argv) < 2:
 		parser.print_help()
@@ -37,6 +39,38 @@ def getOptions():
 
 	return options
 
+def definitionToXml(xmlf, tablename, definition):
+	tabledef = ("<sqltable name=\"%s\" >\n"%(tablename))
+
+	### write column definitions
+	for column in definition:
+		tabledef += ("\t<field \n")
+		tabledef += ("\t\tname=\"%s\" \n"%(column['Field']))
+		tabledef += ("\t\ttype=\"%s\" \n"%(column['Type']))
+		if not 'Null' in column or column['Null'] == 'NO':
+			tabledef += ("\t\tnull=\"NOT NULL\" \n")
+		else:
+			tabledef += ("\t\tnull=\"DEFAULT 'NULL'\" \n")
+		if column['Field'] == 'DEF_timestamp':
+			tabledef += ("\t\tdefault=\"DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'\" \n")
+		elif 'Default' in column:
+			tabledef += ("\t\tdefault=\"%s\" \n"%(column['Default']))
+		if 'Extra' in column:
+			tabledef += ("\t\textra=\"%s\" \n"%(column['Extra']))
+
+		tabledef += ("\t/> \n")
+
+	### add column indexing
+	for column in definition:
+		if 'Key' in column:
+			if column['Key'] == 'PRIMARY':
+				tabledef += ("\t<key>PRIMARY KEY (`%s`)<key/> \n"%(column['Field']))
+			elif column['Key'] == 'INDEX':
+				tabledef += ("\t<key>KEY `%s` (`%s`)<key/> \n"%(column['Field'], column['Field']))
+
+	tabledef += ("</sqltable>")
+	xmlf.write(tabledef)
+
 #=================
 #=================
 #=================
@@ -49,8 +83,9 @@ if __name__ == "__main__":
 		sinedon.setConfig(options.sinedonname, db=options.dbname)
 
 	### connect to DB
-	dbconf = sinedon.getConfig(options.sinedonname)
-	dbd = sqldict.SQLDict(**dbconf)
+	if options.xmlfile is None:
+		dbconf = sinedon.getConfig(options.sinedonname)
+		dbd = sqldict.SQLDict(**dbconf)
 
 	### import desire module
 	module = __import__(options.modulename)
@@ -65,6 +100,8 @@ if __name__ == "__main__":
 
 	### parse members
 	count = 0
+	if options.xmlfile is not None:
+		xmlf = open(options.xmlfile, 'w')
 	for func in funcs:
 		### Check if member is valid len 2 tuple
 		if len(func) != 2:
@@ -79,8 +116,16 @@ if __name__ == "__main__":
 		tableclass = func[1]()
 		table = (options.dbname, tablename)
 		definition, formatedData = sqldict.dataSQLColumns(tableclass, False)
-		dbd.createSQLTable(table, definition)
+		if options.xmlfile is None:
+			dbd.createSQLTable(table, definition)
+		else:
+			definitionToXml(xmlf, tablename, definition)
 		count += 1
 
+	if options.xmlfile is not None:
+		xmlf.close()
+
 	print "Created %d tables"%(count)
+
+
 
