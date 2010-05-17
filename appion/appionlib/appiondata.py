@@ -379,7 +379,7 @@ class ApCtfData(Data):
 			('mat_file', str),
 			('cross_correlation', float),
 			('ctfvalues_file', str),
-			('cs', float)
+			('cs', float),
 			('noise1', float),
 			('noise2', float),
 			('noise3', float),
