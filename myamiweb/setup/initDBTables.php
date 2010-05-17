@@ -59,15 +59,14 @@ require_once("../inc/mysql.inc");
 			if($result == false)	$has_errors[] = "\"".DB_PROJECT."\" database does not exist.<br /><br />".$dbNotExistSolution;	
 		
 			// find out is the databases already be initialize 
-			if(empty($has_errors)){
-				$results = $mysqld->getSQLResult('select `key`, value from install where `key` = \'version\'');
+			$results = $mysqld->getSQLResult('select `key`, value from install where `key` = \'version\'');
+			if(empty($has_errors) && (!empty($results))){				
 				
 				foreach($results as $result){
 					$currentDBVersion = $result['value'];
 				}
 				
-				if(empty($currentDBVersion)) $has_errors[] = 'There is no version number in your databases. Please contact your administrator.';
-				else $msg = 'You do not need to do anything';
+				if(!empty($currentDBVersion)) $has_errors[] = $msg = 'You do not need to do anything';
 			}
 			$mysqld->close_db($dbLink);
 		}
@@ -82,7 +81,7 @@ require_once("../inc/mysql.inc");
 		
 		<h3>Start initial variables setup :</h3>
 		<p>Web tools requires default tables and variables.</p>
-		<p><font color="red">This is required for new databases Only.</font></p>
+		<p><font color="red">This is required for new databases Only. </font><?php echo $msg; ?></p>
 		
 	<?php if(empty($has_errors) && (empty($msg))){ ?>
 		<p>The system has checked your connection to both databases<br /><br />
