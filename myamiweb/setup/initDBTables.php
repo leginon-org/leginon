@@ -57,6 +57,19 @@ require_once("../inc/mysql.inc");
 		
 			$result = $mysqld->select_db(DB_PROJECT, $dbLink);
 			if($result == false)	$has_errors[] = "\"".DB_PROJECT."\" database does not exist.<br /><br />".$dbNotExistSolution;	
+		
+			// find out is the databases already be initialize 
+			if(empty($has_error)){
+				$results = $mysqld->getSQLResult('select `key`, value from install where `key` = \'version\'');
+				
+				foreach($results as $result){
+					$currentDBVersion = $result['value'];
+				}
+				
+				if(empty($currentDBVersion)) $has_errors[] = 'There is no version number in your databases. Please contact your administrator.';
+				else $msg = 'You do not need to do anything';
+			}
+			$mysqld->close_db($dbLink);
 		}
 	}
 	else{
@@ -70,13 +83,14 @@ require_once("../inc/mysql.inc");
 		<h3>Start initial variables setup :</h3>
 		<p>Web tools requires default tables and variables.</p>
 		<p><font color="red">This is required for new databases Only.</font></p>
-	<?php if(empty($has_errors)){ ?>
+		
+	<?php if(empty($has_errors) && (empty($msg))){ ?>
 		<p>The system has checked your connection to both databases<br /><br />
 		<?php echo DB_LEGINON . " is ready to import !<br /> ";
 			  echo DB_PROJECT . " is ready to import !<br />"; ?><br /> 
 		Please click the "NEXT" button to create tables for both databases.</p>
 		<input type="submit" value="NEXT" />
-	<?php } else { ?>
+	<?php } elseif(empty($msg)) { ?>
 		<br />
 		<h3><font color="red">Error(s) have occured !</font></h3>
 		<p>Please solve the following problem before continuing:</p>
@@ -84,7 +98,13 @@ require_once("../inc/mysql.inc");
 			foreach($has_errors as $error){
 				echo "<p>".$error . "</p>";
 			}
-		} ?>
+		} else {?>
+
+		<p>Tables creation and initialization have been done in both your databases (<?php echo DB_LEGINON.', '.DB_PROJECT; ?>) 
+		<p>Your current database schema is in version <?php echo $currentDBVersion; ?>.</p>
+		<p>To run the wizard again, please click <a href="index.php">here</a>.<br />
+		   To run the web tools, please click <a href="http://<?php echo $_SERVER['SERVER_NAME'].BASE_URL; ?>">here</a>. </p>
+	<?php } ?>
 	</form>
 	
 <?php 
