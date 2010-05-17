@@ -208,7 +208,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		pixelmax = imagedata['camera']['ccdcamera']['pixelmax']
 		if pixelmax is None:
 			pixelmax = 2**16
-		imagedata['image'] = imagedata['image'].astype(numpy.float32)
+		imagedata['image'] = numpy.asarray(imagedata['image'], numpy.float32)
 		imagedata['image'] = numpy.clip(imagedata['image'], 0, pixelmax)
 		'''
 		if despike:
