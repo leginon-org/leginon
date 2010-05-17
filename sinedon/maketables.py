@@ -19,6 +19,10 @@ def getOptions():
 	parser.add_option("-d", "--db-name", dest="dbname",
 		help="Name of database, e.g., ap74", metavar="X")
 
+	if len(sys.argv) < 2:
+		parser.print_help()
+		parser.error("no options defined")
+
 	(options, args) = parser.parse_args()
 
 	if options.sinedonname is None:
