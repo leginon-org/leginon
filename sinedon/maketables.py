@@ -1,75 +1,82 @@
 #!/usr/bin/env python
 
-
+import re
 import sys
 import sqldict
-import dbdatakeeper
 import inspect
-import _mysql_exceptions
 import sinedon
-import imp
-
-Data = sinedon.data.Data
+from optparse import OptionParser
 
 #=================
-class DatabaseError(Exception):
-	pass
+def getOptions():
+	usage = "Usage: %prog --sinedon-name=appiondata --module-name=appionlib.appiondata --db-name=ap73"
 
-#=================
-columns_created = {}
-dbd = None
+	parser = OptionParser(usage=usage)
+	parser.add_option("-s", "--sinedon-name", dest="sinedonname",
+		help="Sinedon name of database, e.g., appiondata", metavar="X")
+	parser.add_option("-m", "--module-name", dest="modulename",
+		help="Module name of database, e.g., appionlib.appiondata", metavar="X")
+	parser.add_option("-d", "--db-name", dest="dbname",
+		help="Name of database, e.g., ap74", metavar="X")
+
+	(options, args) = parser.parse_args()
+
+	if options.sinedonname is None:
+		print "Please provide a sinedon name of database, e.g., appiondata"
+	if options.modulename is None:
+		print "Please provide a module name of database, e.g., appionlib.appiondata"
+
+	print "Using sinedon name: "+options.sinedonname
+	print "Using module name: "+options.modulename
+	if options.dbname is not None:
+		print "Using database name: "+options.dbname
+
+	return options
 
 #=================
 #=================
 #=================
 if __name__ == "__main__":
-	if len(sys.argv) < 2:
-		print "Usage:   maketables.py modulename <dbname>"
-		print "Example: maketables.py appionData ap218"
-		sys.exit(1)
+	options = getOptions()
 
-	# clean up name
-	modulename = sys.argv[1].strip()
-	if modulename[-3:] == ".py":
-		modulename = modulename[:-3]
-	print "Using module name: "+modulename
+	### use alternate db name if desired
+	if options.dbname is not None:
+		print "setting alternate database name"
+		sinedon.setConfig(options.sinedonname, db=options.dbname)
 
-	# use alternate db name if desired
-	if len(sys.argv) > 2:
-		newdbname = sys.argv[2].strip()
-		print "Using alternate DB name for module: "+newdbname
-		try:
-			sinedon.setConfig(modulename, db=newdbname)
-			dbconf = sinedon.getConfig(modulename)
-			print dbconf
-			dbd = sqldict.SQLDict(**dbconf)
-		except _mysql_exceptions.OperationalError, e:
-			raise DatabaseError(e.args[-1])
-	else:
-		dbconf = sinedon.getConfig(modulename)
-		print dbconf
-		dbd = sqldict.SQLDict(**dbconf)
+	### connect to DB
+	dbconf = sinedon.getConfig(options.sinedonname)
+	dbd = sqldict.SQLDict(**dbconf)
 
-	# import desire module
-	(file, pathname, description) = imp.find_module(modulename)
-	tableData = imp.load_module(modulename, file, pathname, description)
+	### import desire module
+	module = __import__(options.modulename)
+	modbase = re.sub("^.*\.", "", options.modulename)
+	tableData = getattr(module, modbase) ## hope this works
 	
-	# get module members
+	### get module members
 	funcs = inspect.getmembers(tableData, inspect.isclass)
-	dbkeeper = dbdatakeeper.DBDataKeeper(**dbconf)
 
-	# parse members
+	print "Found %d classes in module"%(len(funcs))
+	#print funcs
+
+	### parse members
+	count = 0
 	for func in funcs:
-		# check if member is a class
+		### Check if member is valid len 2 tuple
+		if len(func) != 2:
+			continue
+		### Check if member is a sinedon Data class
+		if not issubclass(func[1], sinedon.data.Data) or func[0] == "Data":
+			continue
 
-		if issubclass(func[1], Data):
-			a = func[1]()
-			#print "=============\n", a, "\n"
-			#print func
-			if not a:
-				print "Did not do "+str(func)
-			else:
-				dbkeeper.flatInsert(a, skipinsert=True, fail=False)
+		### Create table
+		tablename = func[0]
+		print tablename
+		tableclass = func[1]()
+		table = (options.dbname, tablename)
+		definition, formatedData = sqldict.dataSQLColumns(tableclass, False)
+		dbd.createSQLTable(table, definition)
+		count += 1
 
-
+	print "Created %d tables"%(count)
 
