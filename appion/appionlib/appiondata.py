@@ -1033,7 +1033,6 @@ class ApRefineRunData(Data):
 			('job', ApAppionJobData),
 			### additional packages plugin here
 			('xmippParams', ApXmippRefineParamsData),
-			('frealignParams', ApFrealignParamsData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1058,6 +1057,7 @@ class ApRefineIterData(Data):
 			### additional packages plugin here
 			('emanParams', ApEmanRefineIterData),
 			('xmippParams', ApXmippRefineIterData),
+			('frealignParams', ApFrealignIterData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1128,7 +1128,7 @@ class ApFrealignPrepareData(Data):
 	typemap = classmethod(typemap)
 
 ### this one is for all iterations
-class ApFrealignParamsData(Data):
+class ApFrealignInitData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('num_iter', int),
