@@ -1339,7 +1339,6 @@ class ApImagic3dRefineRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('runname', str),
-			('imagic3d0run', ApImagic3d0Data),
 			('initialModel', ApInitialModelData),
 			('stackrun', ApStackData),
 			('radius', int),
