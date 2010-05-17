@@ -1,12 +1,5 @@
 <?php
 
-// --- change with query --- //
-$filenames[]="/ami/data13/appion/07may16c/stacks/stack1/start.hed";
-for ($num=1; $num<=16; $num++) {
-	$filenames[]="/ami/data13/appion/07may16c/refine/garibaldi/classes.$num.hed";
-}
-
-
 if (!$filename=$_POST['file'])
 	$filename = $filenames[0];
 
