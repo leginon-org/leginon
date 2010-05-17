@@ -331,6 +331,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		ctfq['acerun'] = self.ctfrun
 		ctfq['image']      = imgdata
 		ctfq['graph1']     = self.lastjpg
+		ctfq['cs']     = self.params['cs']
 
 		ctfvaluelist = ('defocus1','defocus2','defocusinit','angle_astigmatism',\
 			'amplitude_contrast','cross_correlation','confidence_d')

@@ -21,14 +21,11 @@ from appionlib import apFile
 from pyami import mrc
 
 class Ace2Loop(appionLoop2.AppionLoop):
-
 	"""
 	appion Loop function that
 	runs Craig's ace2 program
 	to estimate the CTF in images
 	"""
-
-
 
 	#======================
 	def setProcessingDirName(self):
@@ -279,8 +276,9 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		runq['ace2_params'] = paramq
 
 		ctfq = appiondata.ApCtfData()
-		ctfq['acerun'] = runq
-		ctfq['image']      = imgdata
+		ctfq['acerun']   = runq
+		ctfq['image']    = imgdata
+		ctfq['cs']       = self.params['cs']
 		ctfq['mat_file'] = imgdata['filename']+".mrc.ctf.txt"
 		jpegfile = os.path.join(self.powerspecdir, imgdata['filename']+".jpg")
 		if os.path.isfile(jpegfile):

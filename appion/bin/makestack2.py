@@ -485,15 +485,21 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				self.badprocess = True
 				return None
 
+			### cannot use ACE2 correction without CS value in database
+			if not 'cs' in bestctfvalue:
+				apDisplay.printMsg('No spherical abberation value in database, skipping image')
+				self.badprocess = True
+				return None
+
 			# create ctfvalues_file from ctf run
 			ctfvaluesfile = "tmp_ctfvaluesfile.txt"
 
 			df1 = bestctfvalue['defocus1']
 			df2 = bestctfvalue['defocus2']
-			angast = bestctfvalue['angle_astigmatism']*math.pi/180
+			angast = bestctfvalue['angle_astigmatism']*math.pi/180.0
 			amp = bestctfvalue['amplitude_contrast']
 			kev = imgdata['scope']['high tension']/1000
-			cs = bestctfvalue['acerun']['ctftilt_params']['cs']/1000
+			cs = bestctfvalue['cs']/1000
 			conf = bestctfvalue['confidence_d']
 
 			if os.path.isfile(ctfvaluesfile):

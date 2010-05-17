@@ -371,6 +371,15 @@ class ApCtfData(Data):
 			('angle_astigmatism', float),
 			('tilt_angle', float),
 			('tilt_axis_angle', float),
+			('snr', float),
+			('confidence', float),
+			('confidence_d', float),
+			('graph1', str),
+			('graph2', str),
+			('mat_file', str),
+			('cross_correlation', float),
+			('ctfvalues_file', str),
+			('cs', float)
 			('noise1', float),
 			('noise2', float),
 			('noise3', float),
@@ -381,14 +390,6 @@ class ApCtfData(Data):
 			('envelope4', float),
 			('lowercutoff', float),
 			('uppercutoff', float),
-			('snr', float),
-			('confidence', float),
-			('confidence_d', float),
-			('graph1', str),
-			('graph2', str),
-			('mat_file', str),
-			('cross_correlation', float),
-			('ctfvalues_file', str),
 		)
 	typemap = classmethod(typemap)
 
