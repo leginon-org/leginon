@@ -576,10 +576,6 @@ class TransformManager(node.Node, TargetTransformer):
 		current_drift = meters / seconds
 		self.logger.info('Drift rate: %.2e' % (current_drift,))
 
-	def targetsToDatabase(self):
-		for target in self.targetlist:
-			self.publish(target, database=True)
-
 	def displayTarget(self, targetdata):
 		halfrows = targetdata['image']['camera']['dimension']['y'] / 2
 		halfcols = targetdata['image']['camera']['dimension']['x'] / 2

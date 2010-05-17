@@ -316,8 +316,3 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('Seconds %s' % seconds)
 		current_drift = meters / seconds
 		self.logger.info('Drift rate: %.2e' % (current_drift,))
-
-	def targetsToDatabase(self):
-		for target in self.targetlist:
-			self.publish(target, database=True)
-
