@@ -90,13 +90,14 @@ function selectFrealignJob($extra=False) {
 	foreach ($frealignjobs as $frealignjob) {
 		echo "<tr><td>\n";
 		$id = $frealignjob['DEF_id'];
-		echo "<input type='radio' NAME='jobid' value='$id' ";
-		echo "><br/>\n";
-		echo"Launch<br/>Job\n";
-
+		if ($frealignjob['hidden'] != 1) {
+			echo "<input type='radio' NAME='jobid' value='$id' ";
+			echo "><br/>\n";
+			echo"Launch<br/>Job\n";
+		}
 		echo "</td><td>\n";
 
-		echo frealigntable($frealignjob);
+		echo frealigntable($frealignjob['DEF_id']);
 
 		echo "</td></tr>\n";
 	}
@@ -106,39 +107,6 @@ function selectFrealignJob($extra=False) {
 
 	processing_footer();
 	exit;
-};
-
-/*
-******************************************
-******************************************
-******************************************
-*/
-
-function frealigntable($data) {
-	// initialization
-	$table = "";
-
-	$expId = $_GET['expId'];
-	$particle = new particledata();
-
-	// start table
-	$name = $data['name'];
-	$id = $data['DEF_id'];
-
-	$table .= apdivtitle("Frealign Job: <span class='aptitle'>$name</span> (ID: $id) $j\n");
-	$display_keys['date time'] = $data['DEF_timestamp'];
-	$display_keys['path'] = $data['path'];
-	$display_keys['model'] = modelsummarytable($data['REF|ApInitialModelData|model'], true);
-	$display_keys['stack'] = stacksummarytable($data['REF|ApStackData|stack'], true);
-
-	$table .= "<table border='0'>\n";
-	// show data
-	foreach($display_keys as $k=>$v) {
-		$table .= formatHtmlRow($k,$v);
-	}
-
-	$table .= "</table>\n";
-	return $table;
 };
 
 /*
@@ -175,6 +143,7 @@ function jobForm($extra=false) {
 	$name = $jobdata['name'];
 	$nodes = $jobdata['nodes'];
 	$ppn = $jobdata['ppn'];
+	$rpn = $jobdata['rpn'];
 	$memory = $jobdata['memory'];
 
 	// prepare stack values
@@ -226,7 +195,7 @@ function jobForm($extra=false) {
 	$sendfilelist .= "|--|";
 	$sendfilelist .= formatEndPath($rundir).$jobdata['tarfile'];
 	echo "<input type='hidden' NAME='sendfilelist' value='$sendfilelist'>\n";
-	$receivefilelist .= "results.tgz";
+	$receivefilelist = array("results.tgz", "models.tgz");
 	echo "<input type='hidden' NAME='receivefilelist' value='$receivefilelist'>\n";
 
 	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
@@ -277,6 +246,11 @@ function jobForm($extra=false) {
 	echo "</td><td>\n";
 		echo "<b>$ppn</b>";
 	echo "<input type='hidden' name='ppn' value='$ppn'>\n";
+	echo "</td><td>\n";
+		echo docpop('reconpernode',"Recons/Node: ");
+	echo "</td><td>\n";
+		echo "<b>$rpn</b>";
+	echo "<input type='hidden' name='rpn' value='$rpn'>\n";
 	// row 1 col 5-6
 	echo "</td><td>\n";
 		echo docpop('memory',"Memory: ");
@@ -379,7 +353,6 @@ function writeJobFile ($extra=False) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
 
-
 	// get the stack info (pixel size, box size)
 	$stackinfo = explode('|--|',$_POST['stackval']);
 	$stackidval = $stackinfo[0];
@@ -401,13 +374,14 @@ function writeJobFile ($extra=False) {
 	$clusterjob = "# stackId: $stackidval\n";
 	$clusterjob.= "# modelId: $modelid\n\n";
 	
-	$procs=$jobdata['nodes']*$jobdata['ppn'];
+	$procs=$jobdata['nodes']*$jobdata['rpn'];
 
 	$runfile = formatEndPath($jobdata['path'])."frealign.run.job";
 	$runlines = file_get_contents($runfile);
 
 	$runlines .= "\n";
-	$runlines .= "tar -czf results.tgz *iter*\n";
+	$runlines .= "tar -czf results.tgz *iter* *.txt\n";
+	$runlines .= "tar -czf models.tgz threed*\n";
 
 	$clusterjob .= $clusterdata->cluster_job_file($runlines);
 
