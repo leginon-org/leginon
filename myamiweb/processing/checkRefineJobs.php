@@ -62,13 +62,20 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 
 	// loop over jobs and show info
 	foreach ($jobs as $job) {
-		// check if job has been uploaded
-		if ($particle->getReconIdFromAppionJobId($job['DEF_id']))
-			continue;
+		$jobid = $job['DEF_id'];
 
-		// check if job has been aborted
-		if ($showall != True && $jobinfo['status'] == 'A')
+		// check if job has been uploaded
+		if ($particle->getReconIdFromAppionJobId($jobid)) {
+			//echo "recon $jobid";
 			continue;
+		}
+
+		$jobinfo = $particle->getJobInfoFromId($jobid);
+		// check if job has been aborted
+		if ($showall != True && $jobinfo['status'] == 'A') {
+			//echo "abort $jobid";
+			continue;
+		}
 
 		// check if job has an associated jobfile
 		$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
@@ -79,7 +86,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 		}
 
 		// display relevant info
-		$jobinfo = $particle->getJobInfoFromId($job['DEF_id']);
+
 		$display_keys['job name'] = $jobinfo['name'];
 		$display_keys['local path'] = $jobinfo['appath'];
 		$display_keys['cluster name'] = $jobinfo['cluster'];
@@ -107,10 +114,15 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 
 		if ($_SESSION['loggedin'] == true && $showjobs) {
 			if ($jobinfo['status']=='R' || $jobinfo['status']=='D') {
-				// if recon is of type EMAN
-				showEMANJobInfo($jobinfo);
-				// if recon is of type FREALIGN
-				showFrealignJobInfo($jobinfo);
+				if ($jobinfo['jobtype'] == 'emanrecon') {
+					// if recon is of type EMAN
+					showEMANJobInfo($jobinfo);
+				} elseif ($jobinfo['jobtype'] == 'runfrealign') {
+					// if recon is of type FREALIGN
+					showFrealignJobInfo($jobinfo);
+				} else {
+					print_r($jobinfo);
+				}
 			}
 		}
 		echo "<br/><br/>\n\n";
@@ -185,28 +197,35 @@ function showStatus($jobinfo) {
 	//$user = $_SESSION['username'];
 	$dlbuttons = '';
 	$status='Unknown';
+	$jobid = $jobinfo['DEF_id'];
+	$expId = $_GET['expId'];
+
 	if ($jobinfo['status']=='Q') {
-		//if ($user == $job['user'] || is_null($job['user']))
-		//	$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location="
-		//		."('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='abort job'>\n";
+		if ($user == $job['user'] || is_null($job['user']))
+			$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location="
+				."('abortjob.php?expId=$expId&jobId=$jobid')\" value='Abort job'>\n";
 		$status='Queued';
 	} elseif ($jobinfo['status']=='R') {
-		//if ($user == $job['user'] || is_null($job['user']))
-		//	$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location="
-		//		."('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='abort job'>\n";
+		if ($user == $job['user'] || is_null($job['user']))
+			$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location="
+				."('abortjob.php?expId=$expId&jobId=$jobid')\" value='Abort job'>\n";
 		$status='Running';
 	} elseif ($jobinfo['status']=='A') {
 		$status='Aborted';
 	} elseif ($jobinfo['status']=='D') {
-		$expId = $_GET['expId'];
-		$jobid = $jobinfo['DEF_id'];
 		$dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('"
-			."$jobinfo[dmfpath]','$jobinfo[appath]')\" value='get from DMF'> \n";
-		$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location=('"
-			."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='upload results'>\n";
-		//if ($user == $job['user'] || is_null($job['user']))
-		//	$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location="
-		//		."('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='ignore job'>\n";
+			."$jobinfo[dmfpath]','$jobinfo[appath]')\" value='Get files from DMF'>&nbsp;\n";
+		if ($jobinfo['type'] == 'emanrecon') {
+			$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location=('"
+				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload EMAN results'>&nbsp;\n";
+		} elseif ($jobinfo['type'] == 'runfrealign') {
+			$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location=('"
+				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
+		}
+		if ($user == $job['user'] || is_null($job['user'])) {
+			$dlbuttons .= "&nbsp;<input type='BUTTON' onclick=\"parent.location="
+				."('abortjob.php?expId=$expId&jobId=$jobid')\" value='Hide job'>\n";
+		}
 		$status='Awaiting Upload';
 	}
 	return array($status,$dlbuttons);
