@@ -15,6 +15,13 @@ require "inc/viewer.inc";
 require "inc/project.inc";
 require "inc/summarytables.inc";
 
+$selectedcluster=$CLUSTER_CONFIGS[0];
+if ($_POST['cluster']) {
+	$selectedcluster=$_POST['cluster'];
+}
+$selectedcluster=strtolower($selectedcluster);
+@include_once $selectedcluster.".php";
+
 if ($_POST['process'])
 	prepareFrealign(); // generate command
 elseif ($_POST['stackval'] && $_POST['model'])
@@ -148,8 +155,9 @@ function jobForm($extra=false) {
 	$modsym = $syminfo[0];
 	if ($modsym == 'Icosahedral') $modsym='icos';
 
-	$nodes = ($_POST['nodes']) ? $_POST['nodes'] : 1;
-	$ppn = ($_POST['ppn']) ? $_POST['ppn'] : 8;
+	$nodes = ($_POST['nodes']) ? $_POST['nodes'] : C_NODES_DEF;
+	$ppn = ($_POST['ppn']) ? $_POST['ppn'] : C_PPN_DEF;
+	$rpn = ($_POST['rpn']) ? $_POST['rpn'] : C_RPROCS_DEF;
 
 	// preset information from stackid
 	$presetinfo = $particle->getPresetFromStackId($stackid);
@@ -293,8 +301,9 @@ function jobForm($extra=false) {
 	/* ******************************************
 	CLUSTER PARAMETERS
 	****************************************** */
-	$nodes = ($_POST['nodes']) ? $_POST['nodes'] : 32;
-	$ppn = ($_POST['ppn']) ? $_POST['ppn'] : 8;
+	$nodes = ($_POST['nodes']) ? $_POST['nodes'] : C_NODES_DEF;
+	$ppn = ($_POST['ppn']) ? $_POST['ppn'] : C_PPN_DEF;
+	$rpn = ($_POST['rpn']) ? $_POST['rpn'] : C_RPROCS_DEF;
 
 	echo openRoundBorder();
 	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
@@ -308,9 +317,13 @@ function jobForm($extra=false) {
 	echo "</td><td>\n";
 		echo "<input type='text' NAME='nodes' VALUE='$nodes' SIZE='4' MAXCHAR='4'>";
 	echo "</td><td>\n";
-		echo docpop('procpernode',"Proc/Node: ");
+		echo docpop('ppn',"Proc/Node: ");
 	echo "</td><td>\n";
 		echo "<input type='text' NAME='ppn' VALUE='$ppn' SIZE='3'>";
+	echo "</td><td>\n";
+		echo docpop('rpn',"Refines/Node: ");
+	echo "</td><td>\n";
+		echo "<input type='text' NAME='rpn' VALUE='$rpn' SIZE='3'>";
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo closeRoundBorder();
@@ -474,16 +487,15 @@ function prepareFrealign ($extra=False) {
 
 	$nodes = $_POST['nodes'];
 	$ppn = $_POST['ppn'];
+	$rpn = $_POST['rpn'];
 	$outdir = $_POST['outdir'];
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
-	/*
 	if ($_POST['ppn'] > C_PPN_MAX )
 		jobForm("ERROR: Max processors per node is ".C_PPN_MAX);
 	if ($_POST['nodes'] > C_NODES_MAX )
 		jobForm("ERROR: Max nodes on ".C_NAME." is ".C_NODES_MAX);
-	*/
 
 	if ($_POST['initmethod']=='projmatch' && !$_POST['dang'])
 		jobForm("<b>ERROR:</b> Enter an angular increment");
@@ -552,6 +564,7 @@ function prepareFrealign ($extra=False) {
 	#enforce cluster mode, for now
 	$cmd.= "--cluster ";
 	$cmd.= "--ppn=$ppn ";
+	$cmd.= "--rpn=$rpn ";
 	$cmd.= "--nodes=$nodes ";
 	if ($ctffindonly) $cmd.= "--ctfmethod=ctffind ";
 	if ($last) $cmd.= "--last=$last ";
