@@ -415,7 +415,10 @@ class DBUpgradeTools(object):
 		if numrow == 0:
 			return False
 
-		query = "UPDATE `%s` SET `%s`=%s, `DEF_timestamp`=`DEF_timestamp` WHERE %s;"%(table, column, setvalue, whereclause)
+		if timestamp is False:
+			query = "UPDATE `%s` SET `%s`=%s WHERE %s;"%(table, column, setvalue, whereclause)
+		else:
+			query = "UPDATE `%s` SET `%s`=%s, `DEF_timestamp`=`DEF_timestamp` WHERE %s;"%(table, column, setvalue, whereclause)
 
 		t0 = time.time()
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
