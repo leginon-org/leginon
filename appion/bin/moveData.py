@@ -89,7 +89,7 @@ class MoveData(appionScript.AppionScript):
 		pathlist = []
 
 		### appion paths
-		allpathq = ("SELECT path FROM ApPathData WHERE path LIKE '%/"
+		allpathq = ("SELECT path FROM ApPathData WHERE path LIKE '/%/"
 			+self.params['sessionname']+"/%'; ")
 		self.cursor.execute(allpathq)
 		paths = self.cursor.fetchall()
