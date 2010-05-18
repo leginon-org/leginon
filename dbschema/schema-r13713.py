@@ -250,6 +250,16 @@ def upgradeAppionDB(appiondbname, projectdb, backup=True):
 		"`symmetry` = 'C7 (z)' AND `description` LIKE '3-fold symmetry%'")
 
 	#===================
+	# clarify icosahedral symmetry
+	#===================
+	appiondb.updateColumn('ApSymmetryData', 'symmetry', 
+		"'Icos (2 3 5) Viper/3DEM'", "`symmetry` = 'Icos (2 3 5)'")
+	appiondb.updateColumn('ApSymmetryData', 'symmetry', 
+		"'Icos (5 3 2) EMAN'", "`symmetry` = 'Icos (5 3 2)'")
+	appiondb.updateColumn('ApSymmetryData', 'symmetry', 
+		"'Icos (2 5 3) Crowther'", "`symmetry` = 'Icos (2 5 3)'")
+
+	#===================
 	# repair misnamed ApAppionJobData job names
 	#===================
 	#selectq = "SELECT DISTINCT `jobtype` FROM `ApAppionJobData` ORDER BY `jobtype`;"
