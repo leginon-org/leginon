@@ -53,44 +53,15 @@ class TargetHandler(object):
 		self.outputEvent(e)
 
 	def researchTargets(self, **kwargs):
-		'''
-		Get a list of all targets that match the specified keywords.
-		Only get most recent versions of each
-		'''
-		targetquery = leginondata.AcquisitionImageTargetData(**kwargs)
-		targets = self.research(datainstance=targetquery)
-
-		## now filter out only the latest versions
-		# map target id to latest version
-		# assuming query result is ordered by timestamp, this works
-		have = {}
-		for target in targets:
-			targetnum = target['number']
-			parentnum = None
-
-			parentim = target.special_getitem('image', dereference=False)
-			if parentim is not None:
-				parentim = parentim.dbid
-				parentim = self.researchDBID(leginondata.AcquisitionImageData, parentim, readimages=False)
-				if parentim['target'] is not None:
-					parentnum = target['image']['target']['number']
-
-			key = (parentnum, targetnum)
-			if key not in have:
-				have[key] = target
-		havelist = have.values()
-		havelist.sort(self.compareTargetNumber)
-		if havelist:
-			self.logger.debug('Found %s targets' % (len(havelist),))
-		return havelist
-
-	def NewresearchTargets(self, **kwargs):
 		targetquery = leginondata.AcquisitionImageTargetData(**kwargs)
 		targets = targetquery.query()
 		# organize by list, number, version, status
 		organized = {}
 		for target in targets:
-			targetlist = target['list'].dbid
+			if target['list'] is None:
+				targetlist = None
+			else:
+				targetlist = target['list'].dbid
 			if targetlist not in organized:
 				organized[targetlist] = {}
 
@@ -122,17 +93,6 @@ class TargetHandler(object):
 					if status in organized[targetlist][number]['targets']:
 						final.append(organized[targetlist][number]['targets'][status])
 						break
-				# if any of the version is done, consider the status as done
-				if targetlist:
-					tlistquery = leginondata.ImageTargetListData()
-					targetlistdata = tlistquery.direct_query(targetlist)
-					targetquery = leginondata.AcquisitionImageTargetData(list=targetlistdata,number=number,status='done')
-					targets = targetquery.query(results=1)
-					if targets:
-						del(final[-1])
-						final.append(targets[0])
-				print targetlist,number,final[-1]['status']
-				
 		return final
 
 	def startQueueProcessor(self):
@@ -380,15 +340,20 @@ class TargetHandler(object):
 			return None
 
 	def reportTargetStatus(self, target, status):
-			## NOTE: This function was created because there are several
-			## places where we just want to update the status of the target.
-			## Previous to having this function, several places were not
-			## forcing the insert.  Now we force it, so watch out for extra
-			## inserts that are not wanted.
-			newtarget = leginondata.AcquisitionImageTargetData(initializer=target, status=status)
-			newtarget.insert(force=True)
-			self.logger.debug('target stored in DB: %s, %s' % (newtarget.dbid, status))
-			return newtarget
+		# look up most recent version of this target
+		tquery = leginondata.AcquisitionImageTargetData()
+		tquery['list'] = target['list']
+		tquery['number'] = target['number']
+		mostrecent = tquery.query(results=1)
+		if mostrecent:
+			mostrecent = mostrecent[0]
+		else:
+			mostrecent = target
+
+		newtarget = leginondata.AcquisitionImageTargetData(initializer=mostrecent, status=status)
+		newtarget.insert(force=True)
+		self.logger.debug('target stored in DB: %s, %s' % (newtarget.dbid, status))
+		return newtarget
 
 	def markTargetsDone(self, targets):
 		for target in targets:

@@ -178,7 +178,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.setStatus('idle')
 				if rejectstatus != 'aborted':
 					return
-			self.markTargetsDone(rejects)
 			self.logger.info('Passed targets processed, processing current target list')
 
 		########## THIS IS EXPERIMENTAL AND SHOULD NOT BE USED ###############

@@ -183,27 +183,11 @@ class TargetTransformer(targethandler.TargetHandler):
 	
 		return matrix
 
-	def recentTargetVersions(self, targetdata):
-		# find all siblings of this target, but only most recent versions
-		q = leginondata.AcquisitionImageTargetData()
-		q['session'] = targetdata['session']
-		q['image'] = targetdata['image']
-		q['list'] = targetdata['list']
-		alltargets = q.query()
-		mostrecent = {}
-		for t in alltargets:
-			key = (t['number'],t['status'])
-			if key in mostrecent:
-				continue
-			mostrecent[key] = t
-		final = mostrecent.values()
-		return final
-
 	def matrixTransform(self, target, matrix, newimage=None):
-		alltargets = self.recentTargetVersions(target)
+		alltargets = self.researchTargets(list=target['list'])
 		for t in alltargets:
 			newt = self.matrixTransformOne(t, matrix, newimage)
-			if t['number'] == target['number'] and t['status'] == target['status']:
+			if t['number'] == target['number']:
 				ret = newt
 		return ret
 	

@@ -291,35 +291,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (offset['x'],offset['y']))
 		return newtarget
 	
-	def transformTarget(self, target, level):
-		parentimage = target['image']
-		matrix = self.lookupMatrix(parentimage)
-		if parentimage is None:
-			return target
-		## check all transforms declared to decide on minimum mag
-		## for now there is only one
-		minimum_mag = self.settings['min mag']
-		if parentimage['preset']['magnification'] < minimum_mag:
-			self.logger.info('not transforming target because parent image has low mag')
-			return target
-		if matrix is None:
-			parenttarget = parentimage['target']
-			if level == 'all':
-				newparenttarget = self.transformTarget(parenttarget, level)
-			elif level == 'one':
-				newparenttarget = parenttarget
-			newparentimage = self.reacquire(newparenttarget)
-			if newparentimage is None:
-				return None
-			matrix = self.calculateMatrix(parentimage, newparentimage)
-		newtarget = self.matrixTransform(target, matrix,newparentimage)
-		return newtarget
 	def adjustTargetForTransform(self, targetdata):
 		## look up most recent version of this target
 		targetlist = targetdata['list']
 		targetnumber = targetdata['number']
-		newtargetdata = self.researchTargets(session=self.session, number=targetnumber, list=targetlist, status='new')
-		# this is the most recent version with status "new"
+		newtargetdata = self.researchTargets(session=self.session, number=targetnumber, list=targetlist)
 		newtargetdata = newtargetdata[0]
 		
 		## look up all transforms declared for this session
