@@ -50,7 +50,7 @@ def definitionToXml(xmlf, tablename, definition):
 		if not 'Null' in column or column['Null'] == 'NO':
 			tabledef += ("\t\tnull=\"NOT NULL\" \n")
 		else:
-			tabledef += ("\t\tnull=\"DEFAULT 'NULL'\" \n")
+			tabledef += ("\t\tnull=\"NULL\" \n")
 		if column['Field'] == 'DEF_timestamp':
 			tabledef += ("\t\tdefault=\"DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'\" \n")
 		elif 'Default' in column:
@@ -64,9 +64,9 @@ def definitionToXml(xmlf, tablename, definition):
 	for column in definition:
 		if 'Key' in column:
 			if column['Key'] == 'PRIMARY':
-				tabledef += ("\t<key>PRIMARY KEY (`%s`)<key/> \n"%(column['Field']))
+				tabledef += ("\t<key>PRIMARY KEY (`%s`)</key> \n"%(column['Field']))
 			elif column['Key'] == 'INDEX':
-				tabledef += ("\t<key>KEY `%s` (`%s`)<key/> \n"%(column['Field'], column['Field']))
+				tabledef += ("\t<key>KEY `%s` (`%s`)</key> \n"%(column['Field'], column['Field']))
 
 	tabledef += ("</sqltable>\n")
 	xmlf.write(tabledef)
