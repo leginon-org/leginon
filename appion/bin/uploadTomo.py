@@ -196,7 +196,6 @@ class UploadTomoScript(appionScript.AppionScript):
 				currentshape = currentheader['shape']
 				currentxyshape = currentshape[0], currentshape[2]
 				imageshape = self.imageshape
-				print imageshape, currentxyshape
 				if currentxyshape[0] < imageshape[0]/bin or currentxyshape[1] < imageshape[1]/bin:
 					currenttomopath = apImod.pad(currenttomopath,currentxyshape,imageshape,bin,'XZY')
 					cleanlist.append(currenttomopath)

@@ -121,7 +121,7 @@ class tomoMaker(appionScript.AppionScript):
 		bin = int(self.params['bin'])
 		### list of particles to be excluded
 		excludelist = []
-		if self.params['exclude'] is not '':
+		if self.params['exclude']:
 			excludestrlist = self.params['exclude'].split(",")
 			for excld in excludestrlist:
 				excludelist.append(int(excld.strip()))

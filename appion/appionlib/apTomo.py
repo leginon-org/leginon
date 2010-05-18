@@ -466,8 +466,10 @@ def uploadTomo(params):
 	else:
 		fullbin = 1
 		subbin = params['bin']
-	alignrun = insertTomoAlignmentRun(sessiondata,tiltdata,None,None,None,fullbin,runname,params['aligndir'],'manual alignment from upload')
-	alignerdata = apProTomo.insertAlignerParams(alignrun,params)
+	alignrun = insertTomoAlignmentRun(sessiondata,None,None,None,fullbin,runname,params['aligndir'],'manual alignment from upload')
+	# only tilt series in one alignrun for now
+	insertTiltsInAlignRun(alignrun, tiltdata,None,True)
+	alignerdata = insertAlignerParams(alignrun,params)
 	firstimagedata = getFirstImage(tiltdata)
 	path = os.path.abspath(params['rundir'])
 	description = params['description']
@@ -479,11 +481,11 @@ def uploadTomo(params):
 		return insertFullTomogram(sessiondata,tiltdata,alignerdata,fullrundata,name,description,projectimagedata,thickness,fullbin)
 	else:
 		projectimagedata = None
-		fulltpath = params['rundir'].replace('/'+params['volume'],'')
+		fulltomopath = params['rundir'].replace('/'+params['volume'],'')
 		dummyname = 'dummy'
 		dummydescription = 'fake full tomogram for subtomogram upload'
 		thickness = params['shape'][0] * subbin
-		fullrundata = insertFullTomoRun(sessiondata,fullpath,runname,'upload')
+		fullrundata = insertFullTomoRun(sessiondata,fulltomopath,runname,'upload')
 		fulltomogram = insertFullTomogram(sessiondata,tiltdata,alignerdata,fullrundata,dummyname,dummydescription,projectimagedata,thickness,fullbin)
 		apix = apDatabase.getPixelSize(firstimagedata)
 		tomoq = appiondata.ApTomogramData()
@@ -578,8 +580,6 @@ def makeAlignStackMovie(filename,xsize=512):
 		key = alignsplit[-1]
 	else:
 		key = ''
-	print 'dirpath',dirpath
-	print 'key',key
 	apDisplay.printMsg('Reading align stack %s' % mrcpath)
 	array = mrc.read(mrcpath)
 	shape = array.shape
@@ -752,7 +752,7 @@ def transformTomo(a,name,package,alignpdata,zshift=0.0,bin=1):
 	shift = (alignpdata['xshift']/bin,alignpdata['yshift']/bin,zshift)
 	angle = alignpdata['rotation']
 	mirror = alignpdata['mirror']
-	print 'shift= (%.2f, %.2f)' % shift, 'rotate=%.1 deg' % (angle,), 'upside-down=',mirror
+	print 'shift= (%.2f, %.2f, %.2f)' % shift, 'rotate=%.1f deg' % (angle,), 'upside-down=',mirror
 	"""
 		zoom the array by 2 to get better interpretation of noisy volume and then
 		use numpy affine transform to rotate and shift. prefilter should be False to 
