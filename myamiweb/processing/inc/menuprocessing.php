@@ -535,7 +535,8 @@ if ($expId) {
 		// check for how many FREALIGN reconstructions are upload / ready to upload / ready to run / running / queued
 		$prepfrealignqueue = count($subclusterjobs['prepfrealign']['queued']);
 		$prepfrealignrun = count($subclusterjobs['prepfrealign']['running']);
-		$prepfrealigndone = count($subclusterjobs['prepfrealign']['done']);
+		//$prepfrealigndone = count($subclusterjobs['prepfrealign']['done']);
+		$prepfrealigndone = count($particle->getPreparedFrealignJobs(false, false, false));
 		$runfrealignqueue = count($subclusterjobs['runfrealign']['queued']);
 		$runfrealignrun = count($subclusterjobs['runfrealign']['running']);
 		$runfrealigndone = count($subclusterjobs['runfrealign']['done']);
