@@ -54,18 +54,19 @@ class testScript(appionScript.AppionScript):
 	#=====================
 	def setRunDir(self):
 		if self.params['uploadimages'] is True:
+			self.sessionname = self.timestamp
 			try:
 				basedir = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
 				basedir.replace("leginon", "appion")
 			except:
 				basedir = os.getcwd()
-			self.params['rundir'] = os.path.join(basedir, self.timestamp, "testsuite", self.timestamp)
 		else:
+			self.sessionname = self.params['sessionname']
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 			basedir = os.path.abspath(sessiondata['image path'])
 			basedir.replace("leginon", "appion")
-			basedir = re.sub("/rawdata","",basedir)
-			self.params['rundir'] = os.path.join(basedir, "testsuite", self.timestamp)
+			basedir = re.sub("appion.*","appion",basedir)
+		self.params['rundir'] = os.path.join(basedir, self.sessionname, "testsuite", self.timestamp)
 		return
 
 	#=====================
@@ -301,8 +302,9 @@ class testScript(appionScript.AppionScript):
 	def uploadMaxLike(self, maxlikename):
 		maxjobdata = apAlignment.getMaxlikeJobDataForUpload(maxlikename)
 		tstamp = maxjobdata['timestamp']
+		rundir = maxjobdata['path']['path']
 		script = os.path.join(self.appiondir, "bin", "uploadMaxlikeAlignment.py")
-		params = (" --projectid=%d --timestamp=%s "%(self.params['projectid'], tstamp,))
+		params = (" --projectid=%d --timestamp=%s --rundir=%s "%(self.params['projectid'], tstamp, rundir))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
@@ -312,10 +314,7 @@ class testScript(appionScript.AppionScript):
 	#=====================.
 	def start(self):
 		if self.params['uploadimages'] is True:
-			self.sessionname = self.timestamp
 			self.uploadImages()
-		else:
-			self.sessionname = self.params['sessionname']
 
 		### Dog Picker
 		self.dogPicker()
