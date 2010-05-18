@@ -400,7 +400,7 @@ class DBUpgradeTools(object):
 
 		if self.columnExists(table, column) is False:
 			if messaging['not exist'] is True:
-				print "\033[33mcannot rename %s to %s, column does not exist\033[0m"%(column1, column2)
+				print "\033[33mcannot update %s, column does not exist\033[0m"%(column)
 			return False
 
 		query = "SELECT COUNT(*) FROM `%s` WHERE %s;"%( table, whereclause)
