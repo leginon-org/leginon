@@ -1026,6 +1026,7 @@ class ApRefineRunData(Data):
 			('runname', str),
 			('package', str),
 			('description', str),
+			('num_iter', int),
 			('hidden', bool),
 			('stack', ApStackData),
 			('initialModel', ApInitialModelData),
@@ -1043,17 +1044,16 @@ class ApRefineIterData(Data):
 		return Data.typemap() + (
 			('iteration', int),
 			('exemplar',bool),
-			('refineClassAverages', str),
-			('classVariance', str),
+			('mask', int),
+			('imask', int),
 			('volumeDensity',str),
 			('refineClassAverages',str),
 			('postRefineClassAverages', str),
+			('classVariance', str),
+			('symmetry', ApSymmetryData),
 			('refineRun', ApRefineRunData),
 			('resolution', ApResolutionData),
 			('rMeasure', ApRMeasureData),
-			('mask', int),
-			('imask', int),
-			('symmetry', ApSymmetryData),
 			### additional packages plugin here
 			('emanParams', ApEmanRefineIterData),
 			('xmippParams', ApXmippRefineIterData),
@@ -1073,9 +1073,9 @@ class ApRefineParticleData(Data):
 			('euler2', float),
 			('euler3', float),
 			('quality_factor', float),
+			('phase_residual', float),
 			('mirror', bool),
 			('refine_keep',bool),
-			('postRefine_keep',bool),
 			('postRefine_keep',bool),
 			('euler_convention', str),
 		)
@@ -1115,6 +1115,7 @@ class ApFrealignPrepareData(Data):
 		return Data.typemap() + (
 			('name', str),
 			('ppn', int),
+			('rpn', int),
 			('nodes', int),
 			('memory', int),
 			('hidden', bool),
@@ -1128,10 +1129,23 @@ class ApFrealignPrepareData(Data):
 	typemap = classmethod(typemap)
 
 ### this one is for all iterations
-class ApFrealignInitData(Data):
+class ApFrealignIterData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('num_iter', int),
+			('iflag', int),
+			('wgh', float),
+			('xstd', float),
+			('pbc', float),
+			('boff', float),
+			('itmax', int),
+			('ipmax', int),
+			('target', float),
+			('thresh', float),
+			('cs', float),
+			('rrec', float),
+			('highpass', float),
+			('lowpass', float),
+			('rbfact', float),
 		)
 	typemap = classmethod(typemap)
 
