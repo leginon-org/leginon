@@ -27,7 +27,7 @@ function createform($extra=False) {
 	$expId = $_GET['expId'];
 	$refIterId = $_GET['refineIter'];
 
-	$appiondir = "/ami/sw/packages/Appion";
+	$appionlibdir = "/ami/sw/leginon/betaleginon/appion/appionlib";
 
 	$particle = new particledata();
 
@@ -44,8 +44,6 @@ function createform($extra=False) {
 
 	// write out errors, if any came up:
 	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
-		
-
 
 	// get symmetry of initial model if no symmetry saved for iteration
 	if (!$symid) {
@@ -144,7 +142,7 @@ function createform($extra=False) {
 	echo "</td></tr>\n";
 
 	foreach ($amplist as $amp) {
-		$ampfile = $appiondir.'/appionlib/data/'.$amp['name'];
+		$ampfile = $appionlibdir.'/data/'.$amp['name'];
 		echo "<TR><td>\n";
 		if (file_exists($ampfile)) {
 			echo "<A HREF='ampcorplot.php?file=$ampfile&width=800&height=600'>";
