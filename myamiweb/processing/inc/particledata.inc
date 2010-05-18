@@ -3238,11 +3238,12 @@ class particledata {
 		$this->mysql->SQLUpdate('ApAppionJobData',$data,$where);
 	}
 
-	function abortClusterJob($jobid,$user=NULL) {
+	function abortClusterJob($jobid, $user=false) {
 		$data = array('status'=>'A');
 		$where = array('DEF_id'=>$jobid);
-		if (!is_null($user)) $where['user'] = $user;
-		$this->mysql->SQLUpdate('ApAppionJobData',$data,$where);
+		if ($user)
+			$where['user'] = $user;
+		$this->mysql->SQLUpdate('ApAppionJobData', $data, $where);
 	}
 
 	function getSubmittedJobs($expId) {
@@ -3556,7 +3557,7 @@ class particledata {
 		return $r;
 	}
 
-	function getPreparedFrealignJobs ($jobid=False, $path=False) {
+	function getPreparedFrealignJobs ($jobid=False, $path=False, $showHidden=true) {
 		$q = "SELECT fre.*, path.path  "
 			. " FROM `ApFrealignPrepareData` AS fre "
 			. " LEFT JOIN ApPathData AS path ON ( fre.`REF|ApPathData|path` = path.`DEF_id` ) "
@@ -3565,7 +3566,29 @@ class particledata {
 			$q .= " WHERE fre.`DEF_id` = '$jobid' ";
 		} elseif ($path) {
 			$q .= " WHERE path.`path` = '$path' ";
+		} elseif (!$showHidden) {
+			$q .= " WHERE fre.`hidden` != '1' ";
 		}
+		$q .=  "  ORDER BY fre.`DEF_id` DESC ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+
+	function getUploadFrealignJobs ($jobid=False, $path=False, $showHidden=true) {
+		$q = "SELECT fre.*, path.path  "
+			. " FROM `ApFrealignPrepareData` AS fre "
+			. " LEFT JOIN ApPathData AS path ON ( fre.`REF|ApPathData|path` = path.`DEF_id` ) "
+			. " LEFT JOIN ApAppionJobData AS job ON ( fre.`REF|ApAppionJobData|job` = job.`DEF_id` ) ";
+		if ($jobid) {
+			$q .= " WHERE fre.`DEF_id` = '$jobid' ";
+		} elseif ($path) {
+			$q .= " WHERE path.`path` = '$path' ";
+		} elseif (!$showHidden) {
+			$q .= " WHERE fre.`hidden` != '1' ";
+		}
+		$q .=  "  ORDER BY fre.`DEF_id` DESC ";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/><br/>\n";
@@ -3580,7 +3603,8 @@ class particledata {
 			. " WHERE "
 			. "  path.`path` = '$path' "
 			. " AND "
-			. "  job.`jobtype` = '$type' ";
+			. "  job.`jobtype` = '$type' "
+			. "  ORDER BY job.`DEF_id` DESC ";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/><br/>\n";
