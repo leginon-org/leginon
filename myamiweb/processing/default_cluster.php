@@ -10,22 +10,22 @@
  * Note: each cluster file must be register in config.php
  **/
 	
-define('C_NAME', "default_cluster");
+define('C_NAME', "default_cluster"); // name of cluster, must be single name, e.g., HOST.INSTITUTE.EDU -> HOST
 
-define('C_NODES_DEF', "2");
-define('C_NODES_MAX', "8");
+define('C_NODES_DEF', "2");// default number of requested nodes
+define('C_NODES_MAX', "8"); // maximum number of requested nodes
 
-define('C_PPN_DEF', "8");
-define('C_PPN_MAX', "8");
-define('C_RPROCS_DEF', "8");
+define('C_PPN_DEF', "8"); // default processors per node
+define('C_PPN_MAX', "8"); // maximum processors per node
+define('C_RPROCS_DEF', "8"); // default reconstructions per node
 
-define('C_WALLTIME_DEF', "240"); //in hours
-define('C_WALLTIME_MAX', "240"); //in hours
-define('C_CPUTIME_DEF', "240"); //in hours
-define('C_CPUTIME_MAX', "240"); //in hours
-define('C_MEMORY_MAX', "30"); //in GB
+define('C_WALLTIME_DEF', "240"); // default Wall time in hours
+define('C_WALLTIME_MAX', "240"); // maximum Wall time in hours
+define('C_CPUTIME_DEF', "240"); // default CPU time in hours
+define('C_CPUTIME_MAX', "240"); // maximum CPU time in hours
+define('C_MEMORY_MAX', "30"); // maximum memory available per node in gigabytes
 
-define('C_APPION_BIN', ""); //ends in slash, example, /usr/local/appion/bin/
+define('C_APPION_BIN', ""); // location of appion scripts on cluster, must end in slash, e.g., /usr/local/appion/bin/
 
 class Cluster {
 
