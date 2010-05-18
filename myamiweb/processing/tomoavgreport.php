@@ -176,7 +176,8 @@ if ($tomograms) {
 			$alignpackage = $alignstackinfo['package'];
 		if (!$alignpinfo) continue;
 		$alignpshiftprint = "(".sprintf('%.1f',$alignpinfo['xshift']).",".sprintf('%.1f',$alignpinfo['yshift']).") ".sprintf('%5.1f',$alignpinfo['zshift']);
-		$alignprmprint = sprintf('%.1f',$alignpinfo['rotation'])." mirror=".$alignpinfo['mirror'];
+		$mprint = ($alignpinfo['mirror']) ? 'true':'false';
+		$alignprmprint = sprintf('%.1f',$alignpinfo['rotation'])." mirror=".$mprint;
 		// PRINT INFO
 		$html .= "<TR>\n";
 		$html .= "<td>$tiltseriesnumber</TD>\n";

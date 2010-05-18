@@ -88,6 +88,11 @@ function createAverageTomogramForm($extra=false, $title='tomoaverage.py Launcher
 			}
 		}
 	}
+	// only allow most recent subtomogram stack in the selection for now
+	$unique_stacks = array();
+	foreach ($stackIds as $info) {
+		if (!array_key_exists($info['stackid'],$unique_stacks)) $unique_stacks[$info['stackid']]=$info;
+	}
 	$stackinfo=explode('|--|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
 	$apix=$stackinfo[1];
@@ -98,7 +103,7 @@ function createAverageTomogramForm($extra=false, $title='tomoaverage.py Launcher
   <TR>
     <TD VALIGN='TOP'>\n";
 	echo docpop('tomostack','Stack:');
-	$particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
+	$particle->getStackSelector($unique_stacks,$stackidval,'switchDefaults(this.value)');
 	echo "<br/>\n";
   echo "<P>";
 	echo docpop('avgtomorunname','Runname');

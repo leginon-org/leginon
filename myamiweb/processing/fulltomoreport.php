@@ -38,15 +38,17 @@ if ($_POST) {
 	$particle->updateTableDescriptionAndHiding($_POST,'ApFullTomogramData',$tomoId);
 }
 $tomogram = $particle->getFullTomogramInfo($tomoId);
-$alignment = $particle->getTomoAlignmentInfo($tomogram['alignment']);
-// get pixel size
-#$html .= "<br>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+// alignrunid is obtained from aligner
+$refinedata = $particle->getAlignerInfo($tomogram['aligner']);
+$alignment = $particle->getTomoAlignmentInfo($refinedata[0]['alignrunid']);
 $title = "tomogram processing info";
-$tomogram['tomogram path'] = $tomogram['path'];
-$alignment['align path'] = $alignment['path'];
-$tomograminfo = array_merge($tomogram,$alignment);
+$tomograminfo = $tomogram;
+$stripstr = array('L'=>'','['=>'',']'=>'');
+$tomograminfo['excluded imageIds'] = strtr($tomograminfo['excluded imageIds'],$stripstr);
+$tomograminfo['align method'] = $alignment['method'];
+$tomograminfo['tomogram path'] = $tomogram['path'];
 $tomograminfo['hidden'] = $tomogram['hidden'];
-$excluded_keys = array('alignment','path','tilt number');
+$excluded_keys = array('path','tilt number');
 echo "<table><tr><td colspan=2>\n";
 $particle->displayParameters($title,$tomograminfo,$excluded_keys,$expId,'',True);
 echo "</form>";

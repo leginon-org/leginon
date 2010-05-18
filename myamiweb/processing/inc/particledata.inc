@@ -277,9 +277,9 @@ class particledata {
 	function getTomoAlignerInfoFromAlignmentRun($alignid,$showiHidden=false) {
 		$q = " SELECT a.`DEF_id` as alignerid, "
 			." a.`REF|ApTomoAlignmentRunData|alignrun` as `alignrunid`, "
-			." a.`REF|ApProtomoRefinementParamsData|refine cycle` as `cycleid`, "
-			." a.`REF|ApProtomoRefinementParamsData|good cycle` as `goodid`, "
-			." p.`series name`, "
+			." a.`REF|ApProtomoRefinementParamsData|refine_cycle` as `cycleid`, "
+			." a.`REF|ApProtomoRefinementParamsData|good_cycle` as `goodid`, "
+			." p.`series_name`, "
 			." f.`cycle` as `refine cycle`, "
 			." g.`cycle` as `good cycle`, "
 			." f.`alismp` as `align sampling`, "
@@ -292,9 +292,9 @@ class particledata {
 			." a.* "
 			."FROM `ApTomoAlignerParamsData` a "
 			."LEFT JOIN `ApProtomoRefinementParamsData` f "
-			."ON a.`REF|ApProtomoRefinementParamsData|refine cycle` = f.`DEF_id` "
+			."ON a.`REF|ApProtomoRefinementParamsData|refine_cycle` = f.`DEF_id` "
 			."LEFT JOIN `ApProtomoRefinementParamsData` g "
-			."ON a.`REF|ApProtomoRefinementParamsData|good cycle` = g.`DEF_id` "
+			."ON a.`REF|ApProtomoRefinementParamsData|good_cycle` = g.`DEF_id` "
 			."LEFT JOIN `ApProtomoParamsData` p "
 			."ON a.`REF|ApProtomoParamsData|protomo` = p.`DEF_id` "
 			."LEFT JOIN `ApTomoAlignmentRunData` r "
@@ -321,6 +321,10 @@ class particledata {
 		return $r;
 	}
 
+	function getAlignerInfo($alignerid) {
+		return $this->getProtomoAlignmentInfo($alignerid);
+	}
+
 	function getProtomoAlignmentInfo($alignerid) {
 		$q = " SELECT m.`DEF_id` as modelid, "
 			." a.`REF|ApTomoAlignerParamsData|aligner` as `alignerid`, "
@@ -345,7 +349,7 @@ class particledata {
 			."LEFT JOIN `ApTomoAlignerParamsData` ar "
 			."ON a.`REF|ApTomoAlignerParamsData|aligner` = ar.`DEF_id` "
 			."LEFT JOIN `ApProtomoRefinementParamsData` r "
-			."ON ar.`REF|ApProtomoRefinementParamsData|refine cycle` = r.`DEF_id` "
+			."ON ar.`REF|ApProtomoRefinementParamsData|refine_cycle` = r.`DEF_id` "
 			."LEFT JOIN `ApTomoAlignmentRunData` arun "
 			."ON ar.`REF|ApTomoAlignmentRunData|alignrun` = arun.`DEF_id` "
 			."LEFT JOIN `ApTiltsInAlignRunData` tilts "
@@ -365,17 +369,18 @@ class particledata {
 		list($r) = $this->mysql->getSQLResult($q);
 		if ($r['REF|ApFullTomogramRunData|reconrun']) $has_run=True;
 
-		$q =  "SELECT t.`DEF_id` as DEF_id, "
-			."t.`REF|ApTomoAlignerParamsData|aligner` as aligner, ";
+		$q =  "SELECT t.`DEF_id` as DEF_id, ";
 		if ($has_run) {
-			$q .= "r.`runname` as runname, ";
-			$q .= "r.`method` as `recon method`, ";
+			$q .= "r.`runname` as runname, "
+				."r.`method` as `recon method`, ";
 		}
 		$q .= "t.name as tomofilename, "
 			."t.description as description, "
 			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
 			."tilt.number as 'tiltseries number', "
 			." p.`path` as path, "
+			." r.`SEQ|excluded` as 'excluded imageIds', "
+			."t.`REF|ApTomoAlignerParamsData|aligner` as aligner, "
 			." t.`hidden` "
 			."FROM `ApFullTomogramData` t ";
 		if ($has_run) {
@@ -591,13 +596,13 @@ class particledata {
 			."p.`yshift`, "
 			."p.`rotation`, "
 			."p.`mirror`, "
-			."avgtp.`z shift` as zshift, "
+			."avgtp.`z_shift` as zshift, "
 			."p.`REF|ApAlignStackData|alignstack` as `alignstack` "
 			."FROM `ApTomoAvgParticleData` avgtp "
 			."LEFT JOIN `ApTomogramData` sub "
 			."ON  avgtp.`REF|ApTomogramData|subtomo` = sub.DEF_id "
 			."LEFT JOIN `ApAlignParticleData` p "
-			."ON  avgtp.`REF|ApAlignParticleData|aligned particle` = p.DEF_id "
+			."ON  avgtp.`REF|ApAlignParticleData|aligned_particle` = p.DEF_id "
 			."WHERE avgtp.`REF|ApTomoAverageRunData|avgrun` = " .$avgid." "
 			."AND avgtp.`REF|ApTomogramData|subtomo` = ".$subtomoid." ";
 		$r = $this->mysql->getSQLResult($q);
@@ -664,7 +669,7 @@ class particledata {
 				$selector .= ' selected ';
 				$selected_number = $aligner;
 			}
-			$shownumber = str_pad($data['refine_cycle'], $length, ' ', STR_PAD_LEFT).'. ';
+			$shownumber = str_pad($data['refine cycle'], $length, ' ', STR_PAD_LEFT).'. ';
 			$shownumber = str_replace(" ", "&nbsp;", $shownumber);
 			$selector .= '>'.$shownumber.'sampling@'.$data['align sampling'].'</option>';
 		}
@@ -1147,6 +1152,7 @@ class particledata {
 		$links=array(
 			'stackId'=>"stackreport.php?expId=$expId&sId="
 			,'particleSelection'=>"particlerunreport.php?expId=$expId&rId="
+			,'aligner'=>"protomoreport.php?expId=$expId&aId="
 		);
 		if (count($params) ==0) return;
 		echo "<h4>".$title."</h4>";
@@ -1412,8 +1418,9 @@ class particledata {
 			// if imagic stack, send both hed & img files for dmf
 			if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
 			if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
+		
 			echo "<OPTION VALUE='$opvals'";
-			// select previously set stack on resubmit
+			// select previously set stack on resubmita
 			if ($stackid['stackid']==$stackidval) echo " SELECTED";
 			echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $showapix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
 		}
