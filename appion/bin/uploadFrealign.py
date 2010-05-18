@@ -18,6 +18,7 @@ from appionlib import apModel
 from appionlib import apDatabase
 from appionlib import appiondata
 from appionlib import apSymmetry
+from appionlib import apRecon
 
 class UploadFrealign(appionScript.AppionScript):
 	#=====================
@@ -36,7 +37,7 @@ class UploadFrealign(appionScript.AppionScript):
 			help="Particle mass in kDa for Chimera snapshots (optional)", metavar="#")
 
 		### floats
-		self.parser.add_option("--zoom", dest="zoom", type="float", default=1.0, 
+		self.parser.add_option("--zoom", dest="zoom", type="float", default=1.0,
 			help="Zoom factor for Chimera snapshots (optional)", metavar="#")
 
 	#=====================
@@ -63,10 +64,12 @@ class UploadFrealign(appionScript.AppionScript):
 		self.params['rundir'] = prepdata['path']['path']
 
 	#=====================
-	def parseFrealignParamFile(self, paramfile):
+	def parseFrealignParamFile(self, iternum):
 		"""
 		parse a typical FREALIGN parameter file from v8.08
 		"""
+		paramfile = "params.iter%03d.par"%(iternum)
+
 		if not os.path.isfile(paramfile):
 			apDisplay.printError("Parameter file does not exist: %s"%(paramfile))
 
@@ -87,28 +90,40 @@ class UploadFrealign(appionScript.AppionScript):
 				'euler1': float(line[8:15]),
 				'euler2': float(line[16:23]),
 				'euler3': float(line[24:31]),
-				'xshift': float(line[32:39]),
-				'yshift': float(line[40:47]),
-				'phaseres': float(line[88:94]),
+				'shiftx': float(line[32:39]),
+				'shifty': float(line[40:47]),
+				'phase_residual': float(line[88:94]),
 			}
 			parttree.append(partdict)
 		f.close()
+		if len(parttree) < 2:
+			apDisplay.printError("No particles found in parameter file %s"%(paramfile))
+
+
 		apDisplay.printMsg("Processed %d particles"%(len(parttree)))
 		return parttree
-			
+
 	#=====================
 	def checkResults(self):
 		if not os.path.isfile("params.iter001.par"):
 			### we do not have results
-			if os.path.isfile("results.tgz"):
-				### the results are still zipped
-				apDisplay.printMsg("Unzipping Frealign results...")
-				cmd = "tar -xzf results.tgz"
-				proc = subprocess.Popen(cmd, shell=True)
-				proc.wait()
-			else:
+			if not os.path.isfile("results.tgz"):
 				apDisplay.printError("Could not find Frealign results...")
-		return
+			### the results are still zipped
+			apDisplay.printMsg("Unzipping Frealign results...")
+			cmd = "tar -xzf results.tgz"
+			proc = subprocess.Popen(cmd, shell=True)
+			proc.wait()
+		if not os.path.isfile("threed.001a.hed"):
+			### we do not have results
+			if not os.path.isfile("models.tgz"):
+				apDisplay.printError("Could not find Frealign models...")
+			### the models are still zipped
+			apDisplay.printMsg("Unzipping Frealign models...")
+			cmd = "tar -xzf models.tgz"
+			proc = subprocess.Popen(cmd, shell=True)
+			proc.wait()
+		return			
 
 	#=====================
 	def processFrealignVolume(self, iternum, symname):
@@ -127,12 +142,21 @@ class UploadFrealign(appionScript.AppionScript):
 
 		return volumeMrcFile
 
+	#===============
+	def cb(self, val):
+		""" Convert single letter T or F to bool"""
+		if val.lower().startswith('f') or val.strip() == '0':
+			return False
+		return True
+
 	#=====================
 	def readParamsFromCombineFile(self, iternum):
 		"""
-		read the combine file to get iteration parameters, 
+		read the combine file to get iteration parameters,
 		such as symmetry and phase residual cutoff
 		"""
+		iterparams = {'iternum': iternum,}
+
 		combinefile = "iter%03d/frealign.iter%03d.combine.sh"%(iternum, iternum)
 		f = open(combinefile, "r")
 		### locate start
@@ -142,60 +166,237 @@ class UploadFrealign(appionScript.AppionScript):
 
 		### parse file
 		cards = []
-		for line in f:	
+		for line in f:
 			cards.append(line.strip())
 			if line.startswith("EOF"):
 				break
 		f.close()
 
-		### process data
+		### get lots of info from card #1
+		data = cards[1].split(",")
+		#print data
+		iterparams['cform'] = data[0]
+		iterparams['iflag'] = int(data[1])
+		iterparams['fmag'] = self.cb(data[2])
+		iterparams['fdef'] = self.cb(data[3])
+		iterparams['fastig'] = self.cb(data[4])
+		iterparams['fpart'] = self.cb(data[5])
+		iterparams['iewald'] = float(data[6])
+		iterparams['fbeaut'] = self.cb(data[7])
+		iterparams['fcref'] = self.cb(data[8])
+		iterparams['fmatch'] = self.cb(data[9])
+		iterparams['ifsc'] = self.cb(data[10])
+		iterparams['fstat'] = self.cb(data[11])
+		iterparams['iblow'] = int(data[12])
+
+		### get lots of info from card #2
+		data = cards[2].split(",")
+		#print data
+		iterparams['mask'] = float(data[0])
+		iterparams['imask'] = float(data[1])
+		iterparams['wgh'] = float(data[3])
+		iterparams['xstd'] = float(data[4])
+		iterparams['pbc'] = float(data[5])
+		iterparams['boff'] = float(data[6])
+		iterparams['dang'] = float(data[7]) ### only used for recon search
+		iterparams['itmax'] = int(data[8])
+		iterparams['ipmax'] = int(data[9])
+
+		### get symmetry info from card #5
 		symmdata = apSymmetry.findSymmetry(cards[5])
 		apDisplay.printMsg("Found symmetry %s with id %s"%(symmdata['eman_name'], symmdata.dbid))
 		iterparams['symmdata'] = symmdata
-		data = cards[6].split()
-		iterparams['phaserescutoff'] = cards[6]
+
+		### get threshold info from card #6
+		data = cards[6].split(",")
+		#print data
+		iterparams['target'] = float(data[2])
+		iterparams['thresh'] = float(data[3])
+		iterparams['cs'] = float(data[4])
+
+		### get limit info from card #7
+		data = cards[7].split(",")
+		#print data
+		iterparams['rrec'] = float(data[0])
+		iterparams['highpass'] = float(data[1])
+		iterparams['lowpass'] = float(data[2])
+		iterparams['rbfact'] = float(data[4])
+
+		#print iterparams
 		return iterparams
 
-	#=====================
-	def readIteration(self, iternum):
-		symmdata = self.readParamsFromCombineFile(iternum)
-		paramfile = "params.iter%03d.par"%(iternum)
-		parttree = self.parseFrealignParamFile(paramfile)
-		volumeMrcFile = self.processFrealignVolume(iternum, symmdata['eman_name'])
-		print parttree[0]
-		sys.exit(1)
+	#==================
+	def getRMeasureData(self, volumeDensity):
+		volPath = os.path.join(self.params['rundir'], volumeDensity)
+		if not os.path.exists(volPath):
+			apDisplay.printWarning("R Measure failed, volume density not found: "+volPath)
+			return None
+
+		resolution = apRecon.runRMeasure(self.apix, volPath)
+		if resolution is None:
+			return None
+
+		rmesq = appiondata.ApRMeasureData()
+		rmesq['volume']=volumeDensity
+		rmesq['rMeasure']=resolution
+		return rmesq
+
+	#==================
+	def getResolutionData(self, iternum):
+		fscfile = 'fsc.eotest.'+iternum
+		fscpath = os.path.join(self.params['rundir'], "iter%03d"%(iternum), fscfile)
+
+		if not os.path.isfile(fscfile):
+			apDisplay.printWarning("Could not find FSC file: "+fscfile)
+
+		# calculate the resolution:
+		halfres = apRecon.calcRes(fscpath, self.params['boxsize'], self.apix)
+		apDisplay.printColor("FSC 0.5 Resolution of %.3f Angstroms"%(halfres), "cyan")
+
+		# save to database
+		resq=appiondata.ApResolutionData()
+		resq['half'] = halfres
+		resq['fscfile'] = fsc
+
+		return resq
 
 	#=====================
-	def uploadIteration(self, iternum, parttree):
-		if self.runq is None:
-			### setup refinement run
-			jobdata = apDatabase.getJobDataFromPathAndType(self.params['rundir'], "runfrealign")
-			self.runq = appiondata.ApRefineRunData()
-			self.runq['name'] = self.params['runname']
-			self.runq['stack'] = apStack.getOnlyStackData(self.params['stackid'])
-			self.runq['initialModel'] = apModel.getModelFromId(self.params['modelid'])
-			self.runq['path'] = os.path.abspath(self.params['rundir'])
-			self.runq['package'] = "Frealign"
-			self.runq['description'] = self.params['description']
-			self.runq['hidden'] = False 
-			self.runq['job'] = jobdata
+	def getRunData(self):
+		### setup refinement run
+		jobdata = apDatabase.getJobDataFromPathAndType(self.params['rundir'], "runfrealign")
+		runq = appiondata.ApRefineRunData()
+		runq['runname'] = self.params['runname']
+		runq['package'] = "Frealign"
+		runq['description'] = self.params['description']
+		runq['hidden'] = False
+		runq['num_iter'] = self.numiter
+		runq['stack'] = apStack.getOnlyStackData(self.params['stackid'])
+		runq['initialModel'] = apModel.getModelFromId(self.params['modelid'])
+		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		runq['job'] = jobdata
+		return runq
+
+	#=====================
+	def setIterData(self, iterparams, volumeDensity):
+		frealigniterq = appiondata.ApFrealignIterData()
+		frealignkeys = ('wgh', 'xstd', 'pbc',
+			'itmax', 'ipmax', 'target', 'thresh', 'cs',
+			'rrec', 'highpass', 'lowpass', 'rbfact')
+		for key in frealignkeys:
+			frealigniterq[key] = iterparams[key]
+
+		iternum = iterparams['iternum']
 
 		iterq = appiondata.ApRefineIterData()
 		iterq['iteration'] = iternum
-		iterq['refineRun'] = self.runq
-		iterq['emanParams'] = ApEmanRefineIterData
-		iterq['frealignParams'] = ApFrealignIterationData
-		iterq['resolution'] = ApResolutionData
-		iterq['rMeasure'] = ApRMeasureData
-		iterq['volumeDensity'] = XXXX
 		iterq['exemplar'] = False
+		### mask values are in pixels
+		iterq['mask'] = iterparams['mask']/self.apix
+		iterq['imask'] = iterparams['imask']/self.apix
+		iterq['volumeDensity'] = volumeDensity
 
-		good = 0
-		bad = 0
+		### Frealign does not produce class averages :(
+		iterq['refineClassAverages'] = None
+		iterq['postRefineClassAverages'] = None
+		iterq['classVariance'] = None
+
+		iterq['symmetry'] = iterparams['symmdata']
+		iterq['refineRun'] = self.runq
+		iterq['resolution'] = self.getResolutionData(iternum)
+		iterq['rMeasure'] = self.getRMeasureData(volumeDensity)
+		iterq['frealignParams'] = frealigniterq
+		return iterq
+
+	#==================
+	def insertRefineParticleData(self, iterdata, parttree):
+		apDisplay.printMsg("Inserting particle data")
+		phase_threshold = float(iterdata['frealignParams']['thresh'])
+		count = 0
 		for partdict in parttree:
-			partq = ApRefineParticleData()
+			count += 1
+			if count % 1000 == 0:
+				apDisplay.printMsg("Inserted %d particles"%(count))
+			partrefineq = appiondata.ApRefineParticleData()
 
+			partrefineq['refineIter'] = iterdata
+			partnum = partdict['partnum']
+			stackpartid = self.stackmapping[partnum]
+			stackpartdata = appiondata.ApStackParticleData.direct_query(stackpartid)
+			partrefineq['particle'] = stackpartdata
 
+			partkeys = ('shiftx', 'shifty', 'euler1', 'euler2', 'euler3', 'phase_residual')
+			for key in partkeys:
+				partrefineq[key] = partdict[key]
+
+			### check if particle was rejected
+			if partdict['phase_residual'] > iterdata['frealignParams']['thresh']:
+				partrefineq['refine_keep'] = False
+			else:
+				partrefineq['refine_keep'] = True
+
+			partrefineq['mirror'] = False
+			partrefineq['postRefine_keep'] = False
+			partrefineq['euler_convention'] = 'zyz'
+
+			if self.params['commit'] is True:
+				partrefineq.insert()
+
+		return
+
+	#=====================
+	def uploadIteration(self, iternum):
+		if self.runq is None:
+			### setup refinement run
+			self.runq = self.getRunData()
+
+		### read iteration info
+		iterparams = self.readParamsFromCombineFile(iternum)
+
+		### read particle info
+		parttree = self.parseFrealignParamFile(iternum)
+
+		### get volume info
+		volumeMrcFile = self.processFrealignVolume(iternum, symname=iterparams['symmdata']['eman_name'])
+
+		### get volume info
+		iterdata = self.setIterData(iterparams, volumeMrcFile)
+
+		### insert particle data
+		self.insertRefineParticleData(iterdata, parttree)
+
+	#=====================
+	def getNumberOfIterations(self):
+		iternum = 0
+		stop = False
+		while stop is False:
+			## check if iteration is complete
+			iternum += 1
+
+			paramfile = "params.iter%03d.par"%(iternum)
+			if not os.path.isfile(paramfile):
+				apDisplay.printWarning("Parameter file %s is missing"%(paramfile))
+				stop = True
+				break
+
+			imagicvolume = "threed.%03da.hed"%(iternum)
+			if not os.path.isfile(imagicvolume):
+				apDisplay.printWarning("Volume file %s is missing"%(imagicvolume))
+				stop = True
+				break
+
+			combineshell = "iter%03d/frealign.iter%03d.combine.sh"%(iternum, iternum)
+			if not os.path.isfile(combineshell):
+				apDisplay.printWarning("Shell file %s is missing"%(combineshell))
+				stop = True
+				break
+
+		### set last working iteration
+		numiter = iternum-1
+		if numiter < 1:
+			apDisplay.printError("No iterations were found")
+		apDisplay.printColor("Found %d complete iterations"%(numiter), "green")
+
+		return numiter
 
 	#=====================
 	def start(self):
@@ -207,18 +408,25 @@ class UploadFrealign(appionScript.AppionScript):
 		self.runq = None
 		self.apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		apDisplay.printMsg("Pixel size: %.5f"%(self.apix))
-
+		self.boxsize = apStack.getStackBoxsize(self.params['stackid'])
+		apDisplay.printMsg("Box size: %d"%(self.boxsize))
 
 		self.checkResults()
-		numiter = 3
-		for i in range(numiter):
-			apDisplay.printColor("\nUploading iteration %d of %d\n"%(i+1, numiter), "green")
-			self.readIteration(i+1)
+		self.stackmapping = apRecon.partnum2defid(self.params['stackid'])
+		self.numiter = self.getNumberOfIterations()
+		for i in range(self.numiter):
+			iternum = i+1
+			apDisplay.printColor("\nUploading iteration %d of %d\n"%(iternum, self.numiter), "green")
+			self.uploadIteration(iternum)
 
-		#apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
-		#eulerjump = apEulerJump.ApEulerJump()
-		#eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, stackid)
-		apRecon.getGoodBadParticlesFromReconId(reconrunid)
+		reconrunid = apRecon.getReconRunIdFromNamePath(self.params['runname'], self.params['rundir'])
+		if reconrunid:
+			apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
+			eulerjump = apEulerJump.ApEulerJump()
+			eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, self.params['stackid'])
+			apRecon.setGoodBadParticlesFromReconId(reconrunid)
+		else:
+			apDisplay.printWarning("Could not find recon run id")
 
 if __name__ == '__main__':
 	upfrealign = UploadFrealign()

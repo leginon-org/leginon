@@ -3262,7 +3262,7 @@ class particledata {
 		return $r[0];
 	}
 
-	function getReconIdsFromSession ($sessionId, $showHidden=False) {
+	function getReconIdsFromSession ($sessionId, $showHidden=false, $package=false) {
 		$q = "SELECT DISTINCT(refrun.`DEF_id`) AS refid, refrun.*, path.path AS path  "
 			." FROM `ApRefineRunData` AS refrun "
 			."LEFT JOIN ApRunsInStackData AS runs "
@@ -3273,6 +3273,7 @@ class particledata {
 			." ON refrun.`REF|ApPathData|path` = path.`DEF_id` "
 			."WHERE stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden) $q.= " AND (refrun.`hidden` IS NULL OR refrun.`hidden` = 0) ";
+		if ($package) $q.= " AND (refrun.`package` = '$package') ";
 		$q.= " ORDER BY refrun.`DEF_id` DESC";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);

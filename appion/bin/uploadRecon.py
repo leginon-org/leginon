@@ -209,7 +209,7 @@ class UploadReconScript(appionScript.AppionScript):
 
 	#==================
 	#==================
-	def insertResolutionData(self, iteration):
+	def getResolutionData(self, iteration):
 		fsc = 'fsc.eotest.'+iteration['num']
 		fscfile = os.path.join(self.params['rundir'],fsc)
 
@@ -217,27 +217,22 @@ class UploadReconScript(appionScript.AppionScript):
 			apDisplay.printWarning("Could not find FSC file: "+fscfile)
 
 		iteration['fscfile'] = fscfile
-		if fsc in self.params['fscs']:
-			resq=appiondata.ApResolutionData()
+		if not fsc in self.params['fscs']:
+			return None
 
-			# calculate the resolution:
-			halfres = apRecon.calcRes(fscfile, self.params['boxsize'], self.params['apix'])
+		# calculate the resolution:
+		halfres = apRecon.calcRes(fscfile, self.params['boxsize'], self.params['apix'])
 
-			# save to database
-			resq['half'] = halfres
-			resq['fscfile'] = fsc
+		# save to database
+		resq=appiondata.ApResolutionData()
+		resq['half'] = halfres
+		resq['fscfile'] = fsc
 
-			apDisplay.printMsg("inserting FSC resolution data into database")
-			if self.params['commit'] is True:
-				resq.insert()
-			else:
-				apDisplay.printWarning("not committing results to database")
-
-			return resq
+		return resq
 
 	#==================
 	#==================
-	def insertRMeasureData(self, iteration):
+	def getRMeasureData(self, iteration):
 		volumeDensity='threed.'+iteration['num']+'a.mrc'
 
 		volPath = os.path.join(self.params['rundir'], volumeDensity)
@@ -250,17 +245,11 @@ class UploadReconScript(appionScript.AppionScript):
 		if resolution is None:
 			return None
 
-		resq=appiondata.ApRMeasureData()
-		resq['volume']=volumeDensity
-		resq['rMeasure']=resolution
+		rmesq=appiondata.ApRMeasureData()
+		rmesq['volume']=volumeDensity
+		rmesq['rMeasure']=resolution
 
-		apDisplay.printMsg("inserting R Measure Data into database")
-		if self.params['commit'] is True:
-			resq.insert()
-		else:
-			apDisplay.printWarning("not committing results to database")
-
-		return resq
+		return rmesq
 
 	#==================
 	#==================
@@ -330,6 +319,7 @@ class UploadReconScript(appionScript.AppionScript):
 		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		runq['description']=paramdescription
 		runq['initialModel']=self.params['model']
+		runq['num_iter']=self.params['iterations']
 
 		result=runq.query(results=1)
 
@@ -586,11 +576,10 @@ class UploadReconScript(appionScript.AppionScript):
 
 		# insert resolution data
 		if halfres != True:
-			resData = self.insertResolutionData(iteration)
+			resData = self.getResolutionData(iteration)
 		else:
 			apDisplay.printWarning("resolution reported as nan, not committing results to database")
 			return
-		RmeasureData = self.insertRMeasureData(iteration)
 
 		if self.params['package']== 'EMAN':
 			refineclassavg='classes_eman.'+iteration['num']+'.img'
@@ -610,7 +599,7 @@ class UploadReconScript(appionScript.AppionScript):
 		refineq['emanParams'] = refineparamsq
 		refineq['iteration'] = iteration['num']
 		refineq['resolution'] = resData
-		refineq['rMeasure'] = RmeasureData
+		refineq['rMeasure'] = self.getRMeasureData(iteration)
 		refineq['mask'] = iteration['mask']
 		refineq['imask'] = iteration['imask']
 		refineq['symmetry']=iteration['sym']
@@ -734,7 +723,7 @@ class UploadReconScript(appionScript.AppionScript):
 				else:
 					msgk=None
 				# find particle in stack database
-				defid = self.params['stackmapping'][prtlnum]
+				defid = self.stackmapping[prtlnum]
 				stackp = appiondata.ApStackParticleData.direct_query(defid)
 
 				if not stackp:
@@ -775,7 +764,7 @@ class UploadReconScript(appionScript.AppionScript):
 		### make sure that the stack & model IDs exist in database
 		emanJobFile = self.findEmanJobFile()
 		self.params['stack'] = apStack.getOnlyStackData(self.params['stackid'])
-		self.params['stackmapping'] = apRecon.partnum2defid(self.params['stackid'])
+		self.stackmapping = apRecon.partnum2defid(self.params['stackid'])
 		self.params['model'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 		self.params['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 

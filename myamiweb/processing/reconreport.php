@@ -57,10 +57,10 @@ function showReport () {
 	$refinestring=rtrim($refinestring,',');
 	$javascript.=$refinestring;
 	$javascript.=") {
-	                var newwindow=window.open('','name','height=400, width=200, resizable=1, scrollbar=1');
-	                newwindow.document.write(\"<HTML><HEAD><link rel='stylesheet' type='text/css' href='css/viewer.css'>\");
-	                newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
-	                newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");\n";
+      var newwindow=window.open('','name','height=400, width=200, resizable=1, scrollbar=1');
+      newwindow.document.write(\"<HTML><HEAD><link rel='stylesheet' type='text/css' href='css/viewer.css'>\");
+      newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
+      newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");\n";
 	foreach($refine_params_fields as $param) {
 		if (ereg("\|", $param)) {
 			$namesplit=explode("|", $param);
@@ -170,22 +170,6 @@ function showReport () {
 	# get list of png files in directory
 	$pngimages = getPngList($refinerun['path']);
 
-	# display starting model
-	$html .= "<TR>\n";
-	foreach ($display_keys as $p) {
-		$html .= "<td>";
-		if ($p == 'iteration') $html .= "0";
-		elseif ($p == 'snapshot') {
-			foreach ($initpngs as $snapshot) {
-				$snapfile = $snapshot;
-				$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>"
-					."<img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></A>\n";
-			}
-		}
-		$html .= "</TD>";
-	}
-	$html .= "</tr>\n";
-
 	//************************
 	//************************
 	// show info for each iteration
@@ -197,7 +181,6 @@ function showReport () {
 		$ref=$particle->getRefinementData($refinerun['DEF_id'], $iternum);
 		$refineIterData=$ref[0];
 		$refineIterId = $refineIterData['DEF_id'];
-
 
 		//************************
 		// Set as exemplar if submitted
@@ -223,7 +206,10 @@ function showReport () {
 
 		//************************
 		// Show ang increment
-		$html .= "<TD bgcolor='$bg'>$iteration[ang]&deg;</TD>\n";
+		if (array_key_exists('ang', $iteration))
+			$html .= "<TD bgcolor='$bg'>$iteration[ang]&deg;</TD>\n";
+		else
+			$html .= "<TD bgcolor='$bg'></TD>\n";
 
 		//************************
 		// Resolution fields
@@ -253,9 +239,11 @@ function showReport () {
 		$html .="<td bgcolor='$bg'><table>";
 		$html .= "<TR><td bgcolor='$bg'>";
 
-		$refineClassAverages = $refinerun['path'].'/'.$refineIterData['refineClassAverages'];
-		$html .= "<a target='stackview' href='viewstack.php?file="
-			.$refineClassAverages.'&ps='.$mpix."'>".$refineIterData['refineClassAverages']."</a><br>";
+		if ($refineIterData['refineClassAverages']) {
+			$refineClassAverages = $refinerun['path'].'/'.$refineIterData['refineClassAverages'];
+			$html .= "<a target='stackview' href='viewstack.php?file="
+				.$refineClassAverages.'&ps='.$mpix."'>".$refineIterData['refineClassAverages']."</a><br>";
+		}
 
 		if ($refineIterData['postRefineClassAverages']) {
 			$postRefineClassAverages = $refinerun['path'].'/'.$refineIterData['postRefineClassAverages'];
@@ -263,8 +251,10 @@ function showReport () {
 				.$postRefineClassAverages.'&ps='.$mpix."'>".$refineIterData['postRefineClassAverages']."</a><br>";
 		}
 
-		$numclasses = getNumClassesFromFile($refineClassAverages);
-		$html .= "$numclasses classes<br />\n";
+		if ($refineIterData['refineClassAverages']) {
+			$numclasses = getNumClassesFromFile($refineClassAverages);
+			$html .= "$numclasses classes<br />\n";
+		}
 
 		//Euler plots
 		$firsteulerimg='';

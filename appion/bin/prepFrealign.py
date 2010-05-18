@@ -103,7 +103,9 @@ class frealignJob(appionScript.AppionScript):
 		self.parser.add_option('--reconiterid', dest='reconiterid', type='int',
 			help="id for specific iteration from a refinement, used for retrieving particle orientations")
 		self.parser.add_option('--ppn', dest='ppn', type='int',
-			help="number of processors per node")
+			help="number of processors to request per node")
+		self.parser.add_option('--rpn', dest='rpn', type='int',
+			help="number of processors to use per node")
 		self.parser.add_option('--nodes', dest='nodes', default=1, type='int',
 			help="number of nodes")
 		self.parser.add_option("--cluster", dest="cluster", default=True,
@@ -139,7 +141,8 @@ class frealignJob(appionScript.AppionScript):
 			apDisplay.printWarning("mask was too big, setting to boxsize: %d"%(maxmask))
 			self.params['mask'] = maxmask
 		if self.params['noctf'] is True:
-			 self.params['wgh'] = -1.0
+			apDisplay.printWarning("Using no CTF method")
+			self.params['wgh'] = -1.0
 		if self.params['nodes'] > 1 and self.params['cluster'] is False:
 			apDisplay.printError("cluster mode must be enabled to run on more than 1 node")
 		if self.params['ppn'] is None:
@@ -147,7 +150,9 @@ class frealignJob(appionScript.AppionScript):
 				apDisplay.printError("you must define ppn for cluster mode")
 			self.params['ppn'] = apParam.getNumProcessors()
 			apDisplay.printMsg("Setting number of processors to %d"%(self.params['ppn']))
-		self.params['nproc'] = self.params['nodes']*self.params['ppn']
+		if self.params['rpn'] is None:
+			self.params['rpn'] = self.params['ppn']
+		self.params['nproc'] = self.params['nodes']*self.params['rpn']
 		### get the symmetry data
 		if self.params['sym'] is None:
 			apDisplay.printError("Symmetry was not defined")
@@ -333,14 +338,16 @@ class frealignJob(appionScript.AppionScript):
 		modelfile = os.path.join(modeldata['path']['path'], modeldata['name'])
 		modelsym = modeldata['symmetry']['symmetry']
 
+		apDisplay.printMsg("Current symmetry: %s"%(modeldata['symmetry']['description']))
+
 		# if icosahedral recon, rotate volume to 3DEM standard orientation
-		if modelsym == 'Icos (5 3 2)':
+		if modelsym.startswith('Icos (5 3 2)'):
 			tempfile = "temp.mrc"
 			emancmd = 'proc3d %s %s icos5fTo2f' % (modelfile, tempfile)
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 			modelfile = tempfile
 
-		if modelsym == 'Icos (5 3 2)' or modelsym == 'Icos (2 5 3)':
+		if modelsym.startswith('Icos (5 3 2)') or modelsym.startswith('Icos (2 5 3)'):
 			tempfile = "temp.mrc"
 			emancmd = 'proc3d %s %s rotspin=0,0,1,90' % (modelfile, tempfile)
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
@@ -358,7 +365,7 @@ class frealignJob(appionScript.AppionScript):
  			emancmd += "scale=%.4f "%(scale)
 
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
-		apImagicFile.setImagic4DHeader(outmodelfile,machineonly=True)
+		apImagicFile.setImagic4DHeader(outmodelfile, machineonly=True)
 
 		return outmodelfile
 
@@ -398,7 +405,7 @@ class frealignJob(appionScript.AppionScript):
 		f = open(jobfile, 'a')
 		if recon is True:
 			### environmental variable decide how many cpus for volume
-			f.write('export NCPUS=%d\n'%(self.params['ppn']))
+			f.write('export NCPUS=%d\n'%(self.params['rpn']))
 		f.write('\n')
 		f.write('# IFLAG %d\n'%(iflag))
 		f.write('# PARTICLES %d THRU %d\n'%(first, last))
@@ -421,7 +428,7 @@ class frealignJob(appionScript.AppionScript):
 
 		### CARD 2
 		f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (
-			self.params['mask'], self.params['imask'], 
+			self.params['mask'], self.params['imask'], ### mask radii are in Angstroms
 			self.apix, self.params['wgh'], 
 			self.params['xstd'], self.params['pbc'], 
 			self.params['boff'], self.params['dang'], self.params['itmax'], self.params['ipmax']))
@@ -475,6 +482,7 @@ class frealignJob(appionScript.AppionScript):
 		f.write('### END FREALIGN ###\n')
 		f.write('echo "END FREALIGN"\n')
 		f.write('\n')
+
 		f.close()
 		os.chmod(jobfile, 0755)
 
@@ -556,8 +564,13 @@ class frealignJob(appionScript.AppionScript):
 		self.appendFrealignJobFile(combinejobfile, iflag=0, logfile="frealign.combine.out")
 
 		f = open(combinejobfile, 'a')
-		f.write('cp -v iter%03d.hed ..\n'%(iternum))
-		f.write('cp -v iter%03d.img ..\n'%(iternum))
+		### calculate EMAN fsc curve
+		f.write('proc3d odd.hed even.hed fsc=fsc.eotest.%d\n'%(iternum))
+		f.write('getRes.pl %d %d %.3f >> ../resolution.txt\n'%(iternum, self.boxsize, self.apix))
+
+		### move file down directory
+		f.write('cp -v threed.%03da.hed ..\n'%(iternum))
+		f.write('cp -v threed.%03da.img ..\n'%(iternum))
 		f.write('cp -v %s ..\n'%(combineparamfile))
 		time.sleep(0.05)
 		f.close()
@@ -626,7 +639,7 @@ class frealignJob(appionScript.AppionScript):
 		memneed = 24 * nn1**3 + 4 * nnbig**3 + 200e6
 
 		### multiply by number of procs per node
-		memneed *= self.params['ppn']
+		memneed *= self.params['rpn']
 
 		## double it just in case
 		memneed *= 2.0
@@ -660,9 +673,10 @@ class frealignJob(appionScript.AppionScript):
 		apDisplay.printMsg("Multi node run, iteration %d"%(iternum))
 
 		### create individual processor jobs
-		self.stackfile = "../../start"
+		stackbase = os.path.splitext(os.path.basename(self.origstackfile))[0]
+		self.stackfile = "../../%s"%(stackbase)
 		procjobfiles = self.createMultipleJobs(iternum)
-		self.stackfile = "../start"
+		self.stackfile = "../%s"%(stackbase)
 		combinejobfile = self.combineMultipleJobs(iternum)
 
 		### write to jobfile
@@ -681,10 +695,16 @@ class frealignJob(appionScript.AppionScript):
 		mainf.write("echo 'starting volume reconstruction for iter %d' >> refine.log\n"%(iternum))
 		mainf.write("mpirun --hostfile $PBS_NODEFILE -np 1 %s\n"
 			%(combinejobfile))
+
+		### stop job if files is missing or has size of zero
+		volfile = "threed.%03da.img"%(iternum)
+		mainf.write("test -s %s || exit\n"%(volfile))
+		paramfile = "params.iter%03d.par"%(iternum)
+		mainf.write("test -s %s || exit\n"%(paramfile))
+
 		mainf.write("echo 'volume reconstruction complete for iter %d' >> refine.log\n"%(iternum))
 		mainf.write("echo 'iteration %d is complete' >> refine.log\n"%(iternum))
-		mainf.write("echo '' >> refine.log\n")
-		#mainf.write("if [ -e 'iter%03d' ]\nthen\n  exit\nfi\n\n"%(iternum))	
+		mainf.write("echo '' >> refine.log\n\n")
 
 		### PBS pro
 		#mainf.write("pbsdsh -v %s\n" % iterjobfile)
@@ -720,6 +740,7 @@ class frealignJob(appionScript.AppionScript):
 		frealignq = appiondata.ApFrealignPrepareData()
 		frealignq['name'] = self.params['runname']
 		frealignq['ppn'] = self.params['ppn']
+		frealignq['rpn'] = self.params['rpn']
 		frealignq['nodes'] = self.params['nodes']
 		frealignq['memory'] = self.calcMemNeeded()/1e9 #memory in gigabytes
 		frealignq['hidden'] = False

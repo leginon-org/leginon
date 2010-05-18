@@ -349,7 +349,7 @@ function jobForm($extra=false) {
 	$ipmax = $_POST["ipmax"] ? $_POST["ipmax"] : 0;
 
 	$target = $_POST["target"] ? $_POST["target"] : 15;
-	$thresh = $_POST["thresh"] ? $_POST["thresh"] : 90;
+	$thresh = $_POST["thresh"] ? $_POST["thresh"] : 85;
 
 	$rrec = $_POST["rrec"] ? $_POST["rrec"] : (ceil($apix*20))/10;
 	$hp = $_POST["hp"] ? $_POST["hp"] : 50;

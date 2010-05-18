@@ -61,6 +61,17 @@ def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
 
 #==================
 #==================
+def getReconRunIdFromNamePath(runname, path):
+	reconrunq = appiondata.ApRefineRunData()
+	reconrunq['runname'] = runname
+	reconrunq['path'] = appiondata.ApPathData(path=os.path.abspath(path))
+	reconrundatas = reconrunq.query(results=1)
+	if not reconrundatas:
+		return None
+	return reconrundatas[0].dbid
+
+#==================
+#==================
 def calcRes(fscfile, boxsize, apix):
 	return getResolutionFromFSCFile(fscfile, boxsize, apix, False)
 
@@ -171,21 +182,35 @@ def partnum2defid(stackid):
 	"""
 	This function must be used because sinedon would take up too much memory?
 	"""
+	t0 = time.time()
+	stackpartnum = apStack.getNumberStackParticlesFromId(stackid)
+
+	apDisplay.printMsg("Mapping %d stack particle IDs"%(stackpartnum))
+
 	import sinedon
 	import MySQLdb
 	dbconf = sinedon.getConfig('appiondata')
 	db     = MySQLdb.connect(**dbconf)
 	cursor = db.cursor()
 
-	cursor.execute('SELECT DEF_id, particleNumber from ApStackParticleData where `REF|ApStackData|stack` = %s' % (stackid,))
+	cursor.execute('SELECT DEF_id, particleNumber FROM ApStackParticleData WHERE `REF|ApStackData|stack` = %s' % (stackid,))
 	partdict = {}
+	maxnum = 0
 	while True:
 		row = cursor.fetchone()
 		if row is None:
 			break
 		defid = int(row[0]) #row['DEF_id']
 		num = int(row[1]) #row['particleNumber']
+		if num > maxnum:
+			maxnum = num
 		partdict[num] = defid
+
+	if stackpartnum != maxnum:
+		apDisplay.printError("Expected to get %d particles, but received %d particles"%(stackpartnum, maxnum))
+
+	apDisplay.printMsg("Mapped %d stack particle IDs in %s"%(stackpartnum, apDisplay.timeString(time.time()-t0)))
+
 	return partdict
 
 #==================

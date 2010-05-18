@@ -533,6 +533,8 @@ if ($expId) {
 
 
 		// check for how many FREALIGN reconstructions are upload / ready to upload / ready to run / running / queued
+		$frealigndone = count($particle->getReconIdsFromSession($sessionId, false, 'frealign'));
+
 		$prepfrealignqueue = count($subclusterjobs['prepfrealign']['queued']);
 		$prepfrealignrun = count($subclusterjobs['prepfrealign']['running']);
 		//$prepfrealigndone = count($subclusterjobs['prepfrealign']['done']);
@@ -542,10 +544,10 @@ if ($expId) {
 		$runfrealigndone = count($subclusterjobs['runfrealign']['done']);
 		$uploadfrealignqueue = count($subclusterjobs['uploadfrealign']['queued']);
 		$uploadfrealignrun = count($subclusterjobs['uploadfrealign']['running']);
-		$uploadfrealigndone = count($subclusterjobs['uploadfrealign']['done']);
 
+		// summed fields
 		$runfrealign = $runfrealignqueue + $runfrealignrun + $runfrealigndone;
-		$uploadfrealign = $uploadfrealignqueue + $uploadfrealignrun + $uploadfrealigndone;
+		$uploadfrealign = $uploadfrealignqueue + $uploadfrealignrun + $frealigndone;
 		$frealignprepared = $prepfrealigndone - $runfrealign;
 		$frealignran = $runfrealigndone - $uploadfrealign;
 
@@ -566,7 +568,7 @@ if ($expId) {
 		$frealignresults[] = ($frealignran>0) ? "<a href='uploadFrealign.php?expId=$sessionId'>$frealignran ready to upload</a>" : "";
 
 		// COMPLETE
-		$frealignresults[] = ($uploadfrealigndone>0) ? "<a href='frealignSummary.php?expId=$sessionId'>$uploadfrealigndone complete</a>" : "";
+		$frealignresults[] = ($frealigndone>0) ? "<a href='frealignSummary.php?expId=$sessionId'>$frealigndone complete</a>" : "";
 
 
 		if (!HIDE_IMAGIC) {

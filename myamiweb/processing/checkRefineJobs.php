@@ -11,7 +11,7 @@ if ($_POST['checkjobs']) {
 	checkJobs();
 }
 
-function checkJobs($showjobs=False,$showall=False,$extra=False) {
+function checkJobs($showjobs=True, $showall=False, $extra=False) {
 	$expId= $_GET['expId'];
 	$particle = new particledata();
 	$projectId=getProjectId();
@@ -180,15 +180,15 @@ function showClusterJobTables($jobs) {
 					echo "</tr>\n";
 				}
 				// CLOSE TABLE
-				echo "</table>\n";
+				echo "</table><br/><br/>\n";
 			} else {
-				echo "<i>no queue on $c cluster</i>\n";
+				echo "<i>no queue on $c cluster</i><br/><br/>\n";
 			}
 		}
 	} else {
-		echo "<i>no jobs found on any cluster</i>\n";
+		echo "<i>no jobs found on any cluster</i><br/><br/>\n";
 	}
-	echo "<br/><br/>\n";
+	echo "\n";
 };
 
 /******************************
@@ -215,12 +215,12 @@ function showStatus($jobinfo) {
 	} elseif ($jobinfo['status']=='D') {
 		$dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('"
 			."$jobinfo[dmfpath]','$jobinfo[appath]')\" value='Get files from DMF'>&nbsp;\n";
-		if ($jobinfo['type'] == 'emanrecon') {
-			$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location=('"
+		if ($jobinfo['jobtype'] == 'emanrecon') {
+			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
 				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload EMAN results'>&nbsp;\n";
-		} elseif ($jobinfo['type'] == 'runfrealign') {
-			$dlbuttons .= "<input type='BUTTON' onclick=\"parent.location=('"
-				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
+		} elseif ($jobinfo['jobtype'] == 'runfrealign') {
+			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
+				."uploadFrealign.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
 		}
 		if ($user == $job['user'] || is_null($job['user'])) {
 			$dlbuttons .= "&nbsp;<input type='BUTTON' onclick=\"parent.location="
@@ -236,19 +236,41 @@ function showStatus($jobinfo) {
 function showFrealignJobInfo($jobinfo) {
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
+	$cluster = $jobinfo['cluster'];
 	$particle = new particledata();
 	$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
 
+	
 	$refinelogfile = $jobinfo['clusterpath']."/recon/refine.log";
-	$cmd = "cat $refinelogfile | egrep '^iteration'";
-	$refinelog = exec_over_ssh($jobinfo['cluster'], $user, $pass, $cmd, True);
+	$cmd = "cat $refinelogfile | tail -n 2";
+	$refinelog = exec_over_ssh($cluster, $user, $pass, $cmd, True);
 	$refinelog = trim($refinelog);
-	if ($refinelog) {
-		echo "<table class='tablebubble' cellspacing='10'><tr><td>\n";
-		echo "<pre>\n";
-		echo $refinelog;
-		echo "</pre>\n";
-		echo "</td></tr></table>\n";
+	
+
+	$resolutionfile = $jobinfo['clusterpath']."/recon/resolution.txt";
+	$cmd = "cat $resolutionfile | cut -c-19 | sed 's/$/ \&Aring\;/'";
+	$resolutiondata = exec_over_ssh($cluster, $user, $pass, $cmd, True);
+	$resolutiondata = trim($resolutiondata);
+
+	if ($resolutiondata) {
+		echo "<table class='tablebg'><tr><td><pre>\n";
+			echo $resolutiondata."\n";
+			echo $refinelog."\n";
+		echo "</pre></td></tr></table>\n";
+	} else {
+		$refinelogfile = $jobinfo['clusterpath']."/recon/refine.log";
+		$cmd = "cat $refinelogfile | tail -n 2";
+		$refinelog = exec_over_ssh($cluster, $user, $pass, $cmd, True);
+		$refinelog = trim($refinelog);
+		// there are no results, just say downloading
+		if ($refinelog) {
+			echo "<table class='tablebubble'><tr><td><pre>\n";
+				//echo $refinelog."\n";
+				echo $refinelog."\n";
+			echo "</pre></td></tr></table>\n";
+		} else {
+			echo "<p><font size='+2'>downloading files...</font></p>\n";
+		}
 	}
 };
 
