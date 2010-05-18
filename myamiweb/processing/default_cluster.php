@@ -17,7 +17,7 @@ define('C_NODES_MAX', "8"); // maximum number of requested nodes
 
 define('C_PPN_DEF', "8"); // default processors per node
 define('C_PPN_MAX', "8"); // maximum processors per node
-define('C_RPROCS_DEF', "8"); // default reconstructions per node
+define('C_RPROCS_DEF', "8"); // default reconstructions per node, a memory saving option
 
 define('C_WALLTIME_DEF', "240"); // default Wall time in hours
 define('C_WALLTIME_MAX', "240"); // maximum Wall time in hours
