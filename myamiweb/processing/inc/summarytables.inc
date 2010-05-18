@@ -770,7 +770,59 @@ function templateStackEntry($stackInfo, $hidden=False, $mini=False){
         return $templatetable;
 }
 
+/*
+******************************************
+*/
 
+function frealigntable($frealignprepid) {
+	// initialization
+	$table = "";
+
+	$expId = $_GET['expId'];
+	$particle = new particledata();
+
+	$datas = $particle->getPreparedFrealignJobs($frealignprepid);
+	if (!$datas)
+		return;
+	$data = $datas[0];
+	//echo print_r($data)."<br/><br/>\n";
+
+	// start table
+	$name = $data['name'];
+	$id = $data['DEF_id'];
+
+	if ($_POST['hideItem'.$id] == 'hide') {
+		$particle->updateHide('ApFrealignPrepareData', $id, '1');
+		$data['hidden']=1;
+	} elseif ($_POST['unhideItem'.$id] == 'unhide') {
+		$particle->updateHide('ApFrealignPrepareData', $id, '0');
+		$data['hidden']='0';
+	}
+
+	if ($data['hidden'] == 1) {
+		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
+		$j.= " <input class='edit' type='submit' name='unhideItem".$id."' value='unhide'>\n";
+		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>\n";
+	} else $j.= " <input class='edit' type='submit' name='hideItem".$id."' value='hide'>\n";
+
+	$table .= apdivtitle("Frealign Job: <span class='aptitle'>$name</span> (ID: $id) $j\n");
+	if ($data['hidden'] == 1)
+		return $table;
+
+	$display_keys['date time'] = $data['DEF_timestamp'];
+	$display_keys['path'] = $data['path'];
+	$display_keys['model'] = modelsummarytable($data['REF|ApInitialModelData|model'], true);
+	$display_keys['stack'] = stacksummarytable($data['REF|ApStackData|stack'], true);
+
+	$table .= "<table border='0'>\n";
+	// show data
+	foreach($display_keys as $k=>$v) {
+		$table .= formatHtmlRow($k,$v);
+	}
+
+	$table .= "</table>\n";
+	return $table;
+};
 
 
 ?>
