@@ -100,7 +100,7 @@ function submitJob($extra=False) {
 	exec_over_ssh($_SERVER['SERVER_ADDR'], $user, $pass, $cmd, True);
 
 	$clusterdata->cluster_cmd($host, $user, $pass);
-	// if on guppy, clusterpath is same as outdir
+	// if on local cluster, clusterpath is same as outdir
 	$path = formatEndPath($clusterdata->get_path()).$jobname;
 
 	echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
