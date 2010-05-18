@@ -326,24 +326,24 @@
         <field name="DEF_timestamp" >2008-02-19 10:28:20</field>
         <field name="eman_name" >icos</field>
         <field name="fold_symmetry" >60</field>
-        <field name="symmetry" >Icos (5 3 2)</field>
-        <field name="description" >EMAN icosahedral convention: 5-fold along the z axis, 2-fold along the x and y axes.</field>
+        <field name="symmetry" >Icos (5 3 2) EMAN</field>
+        <field name="description" >EMAN icosahedral convention: 5-fold along the z axis, 2-fold along the x and y axes. Symmetries along the xz-plane are 2, 3, 5, 2, 5.</field>
     </sqltable>
     <sqltable name="ApSymmetryData" >
         <field name="DEF_id" >3</field>
         <field name="DEF_timestamp" >2008-11-10 08:50:23</field>
         <field name="eman_name" >icos</field>
         <field name="fold_symmetry" >60</field>
-        <field name="symmetry" >Icos (2 3 5)</field>
-        <field name="description" >Viper icosahedral convention: 2-fold icosahedral symmetry along the x, y, and z axes.</field>
+        <field name="symmetry" >Icos (2 3 5) Viper/3DEM</field>
+        <field name="description" >Viper/3DEM icosahedral convention: 2-fold icosahedral symmetry along the x, y, and z axes, front-most 5-fold vertices in yz plane. Symmetries along the xz-plane are 5, 3, 2, 3, 5.</field>
     </sqltable>
     <sqltable name="ApSymmetryData" >
         <field name="DEF_id" >4</field>
         <field name="DEF_timestamp" >2009-03-02 15:01:07</field>
         <field name="eman_name" >icos</field>
         <field name="fold_symmetry" >60</field>
-        <field name="symmetry" >Icos (2 5 3)</field>
-        <field name="description" >Crowther icosahedral convention. 2-fold icosahedral symmetry along the x, y, and z axes.</field>
+        <field name="symmetry" >Icos (2 5 3) Crowther</field>
+        <field name="description" >Crowther icosahedral convention. 2-fold icosahedral symmetry along the x, y, and z axes, front-most 5-fold vertices in xz plane. Symmetries along the xz-plane are 2, 5, 3, 2, 3.</field>
     </sqltable>
     <sqltable name="ApSymmetryData" >
         <field name="DEF_id" >5</field>
