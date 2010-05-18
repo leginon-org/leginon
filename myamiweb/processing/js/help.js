@@ -290,7 +290,7 @@ var help = {
 		'walltime' : 'Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock.  (The reference to a wall clock is how the term originally got its name.)',
 		'cputime' : 'Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock.  (The reference to a wall clock is how the term originally got its name.)',
 		'memory' : 'Amount of memory needed per node (not per processor)',
-		'procpernode' : 'Processors per node.  Each computer (node) or Garibaldi has 4 processors (procs), so proc/node=4.  For some cases, you may want to use less processors on each node, leaving more memory and system resources for each process.',
+		'procpernode' : 'Processors per node.  If each computer (node) has 4 processors (procs), then proc/node=4.  For some cases, you may want to use less processors on each node, leaving more memory and system resources for each process.',
 		'ang' : 'Angular step for projections (in degrees)',
 		'itn' : 'Iteration Number',
 		'copy' : 'Duplicate the parameters for this iteration',
@@ -344,9 +344,13 @@ var help = {
 	
 	'frealign' : {
 
+
+
 		// script parameters
 		'nodes' : 'Nodes refers to the number of computer to process on simultaneously.  The more nodes you get the faster things will get process, but more nodes requires that you wait longer before being allowed to begin processing.',
-		'ppn' : 'Processors per node.  Each computer (node) or Garibaldi has 4 processors (procs), so proc/node=4.  For some cases, you may want to use less processors on each node, leaving more memory and system resources for each process.',
+		'ppn' : 'Processors per node.  If each computer (node) has 4 processors (procs), then proc/node=4.',
+		'rpn' : 'Reconstructions per node.  For some cases, you may want to use less processors on each node, leaving more memory and system resources for each process. If each computer (node) has 4 processors (procs), but you want to use 2, then ppn=4 and rpn=2.  ',
+
 		'dang' : 'angular increment used in creating projections for determining initial aligments',
 		'numiter' : 'number of refinement iterations to perform',
 		'outdir' : 'The base output directory to which files will be stored. A subdirectory of the run name will be appended for actual output',
