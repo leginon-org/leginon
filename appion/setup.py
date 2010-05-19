@@ -7,24 +7,38 @@ import distutils.core
 
 #--install-scripts=/usr/local/bin
 
-def getVersion():
-	verfile = 'appionlib/version.txt'
-	if not os.path.isfile(verfile):
-		if not os.path.isfile(".svn/entries"):
-			raise FileError, "Could not find version.txt file"
-		### use fourth line from entries file
-		f = open(".svn/entries", "r")
-		for i in range(4):
-			line = f.readline()
-		version = "r"+line.strip()
-		f.close()
-		f = open(verfile, "w")
-		f.write("%s\n"%(version))
-		f.close()
-	f = open(verfile, "r")
-	line = f.readline()
+def getSubversionRevision():
+	if not os.path.isfile(".svn/entries"):
+		return None
+	### use fourth line from entries file
+	f = open(".svn/entries", "r")
+	for i in range(4):
+		line = f.readline()
+	revision = "r"+line.strip()
 	f.close()
-	version = line.strip()
+	return revision
+
+def getVersion()
+	prettyversion = None
+	verfile = 'appionlib/version.txt'
+	if os.path.isfile(verfile):
+		f = open(verfile, "r")
+		line = f.readline()
+		f.close()
+		prettyversion = line.strip()
+	revision = getSubversionRevision()
+	if prettyversion is not None and revision is not None:
+		version = "%s-%s"%(prettyversion, revision)
+	elif revision is not None:
+		version = revision
+		### write revision to file
+		f = open(verfile, "w")
+		f.write("%s\n"%(revision))
+		f.close()
+	elif prettyversion is not None:
+		version = prettyversion
+	else:
+		raise VersionError, "cound not find appion version number"
 	return version
 
 version=getVersion()
