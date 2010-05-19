@@ -320,7 +320,7 @@ function runTopolAlign() {
 
 	// determine calc time
 	$stackdata = $particle->getStackParams($stackid);
-	$boxsize = ($stackdata['bin']) ? $stackdata['boxSize']/$stackdata['bin'] : $stackdata['boxSize'];
+	$boxsize = $stackdata['boxsize'];
 	$secperiter = 0.0025;
 	$calctime = ($numpart/1000.0)*$startnumcls*($boxsize/$bin)*($boxsize/$bin)*$secperiter/$nproc;
 	// kill if longer than 10 hours

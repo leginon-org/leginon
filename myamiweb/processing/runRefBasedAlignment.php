@@ -178,7 +178,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 2000;
 	$xysearch = ($_POST['xysearch']) ? $_POST['xysearch'] : '5';
 	$xystep = ($_POST['xystep']) ? $_POST['xystep'] : '1';
-	$boxsz = ($firststack['bin']) ? $firststack['boxSize']/$firststack['bin'] : $firststack['boxSize'];
+	$boxsz = $firststack['boxsize'];
 	$bestbin = floor($boxsz/100)+1;
 	$lastring = ($_POST['lastring']) ? $_POST['lastring'] : floor($boxsz/3.0/$bestbin);
 	$firstring = ($_POST['firstring']) ? $_POST['firstring'] : '4';

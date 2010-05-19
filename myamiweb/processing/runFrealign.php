@@ -151,7 +151,7 @@ function jobForm($extra=false) {
 	$stackdata = $particle->getStackParams($stackid);
 	$numpart=$particle->getNumStackParticles($stackid);
 	$apix = $particle->getStackPixelSizeFromStackId($stackid)*1e10;
-	$boxsize = ($stackdata['bin']) ? $stackdata['boxSize']/$stackdata['bin'] : $stackdata['boxSize'];
+	$boxsize = $stackdata['boxsize'];
 	$stackvals = "$stackid|--|$apix|--|$boxsize|--|$numpart|--|$stackdata[path]|--|$stackdata[name]";
 	// prepare model values
 	$modelid = $jobdata['REF|ApInitialModelData|model'];

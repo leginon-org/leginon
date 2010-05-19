@@ -136,7 +136,7 @@ function createUploadReconForm($extra=false, $title='UploadXmippRecon.py Launche
       // get pixel size of stack
       $apix=($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
       // get box size
-      $box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
+      $box=$s['boxsize'];
       // get stack path with name
       $opvals = "$stackid[stackid]";
       echo "<option value='$stackid[stackid]'";

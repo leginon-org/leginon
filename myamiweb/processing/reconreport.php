@@ -93,7 +93,7 @@ function showReport () {
 	$apix=($particle->getStackPixelSizeFromStackId($stackId))*1e10;
 	// don't think we need to calculate the binned pixel size
 	//$apix=($stackparams['bin']) ? $apix*$stackparams['bin'] : $apix;
-	$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
+	$boxsz = $stackparams['boxsize'];
 	$stackparticles= $particle->getNumStackParticles($stackId);
 
 	$html .= "<form name='iterations' method='post' action='$formAction'>\n";

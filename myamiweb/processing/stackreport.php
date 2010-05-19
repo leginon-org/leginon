@@ -29,7 +29,7 @@ $particle = new particledata();
 	$mpix=($particle->getStackPixelSizeFromStackId($stackId));
 	$apix=format_angstrom_number($mpix)."/pixel";
 	$s['pixelsize']=$apix;
-	$boxsize= $s[boxSize]/$s[bin];
+	$boxsize= $s['boxsize'];
 	$s['boxsize']=$boxsize;
 
 	echo openRoundBorder();

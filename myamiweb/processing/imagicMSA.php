@@ -117,7 +117,7 @@ function jobform($extra=false)	{
 				$apix = $mpix*1E10;
 				$apixtxt=format_angstrom_number($mpix)."/pixel";
 			}
-			$boxsize=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
+			$boxsize=$stackparams['boxsize'];
 
 			//handle multiple runs in stack
 			$runname=$stackparams[shownstackname];

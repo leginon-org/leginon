@@ -361,7 +361,7 @@ function runMaxLikeAlign() {
 
 	// determine calc time
 	$stackdata = $particle->getStackParams($stackid);
-	$boxsize = ($stackdata['bin']) ? $stackdata['boxSize']/$stackdata['bin'] : $stackdata['boxSize'];
+	$boxsize = $stackdata['boxsize'];
 	$secperiter = 0.12037;
 	$calctime = ($numpart/1000.0)*$numref*($boxsize/$bin)*($boxsize/$bin)/$angle*$secperiter/$nproc;
 	if ($mirror) $calctime *= 2.0;

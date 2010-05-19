@@ -127,7 +127,7 @@ foreach ($reconRuns as $recon) {
 	// stack information
 	// get pixel size
 	$apix=($particle->getStackPixelSizeFromStackId($stackid))*1e10;
-	$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
+	$boxsz=$stackparams['boxsize'];
 
 	// stack info
 	$stackparticles = $particle->getNumStackParticles($stackid);

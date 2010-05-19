@@ -418,7 +418,7 @@ function jobForm($extra=false) {
 		$initmodel = $particle->getInitModelInfo($refinfo['REF|ApInitialModelData|initialModel']);
 		$stackinfo = $particle->getStackParams($refinfo['REF|ApStackData|stack']);
 		// get scaling factor for box sizes
-		$prevboxsize = ($stackinfo['bin']) ? $stackinfo['boxsize']/$stackinfo['bin'] : $stackinfo['boxsize'];
+		$prevboxsize = $stackinfo['boxsize'];
 		$boxscale = $box / $prevboxsize;
 		$numiters = count($iterinfo);
 	}

@@ -70,7 +70,7 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 	# get stack name
 	$stackp = $particle->getStackParams($stackId);
 	$filename = $stackp['path'].'/'.$stackp['name'];
-	$boxsize = $stackp['boxSize']/$stackp['bin'];
+	$boxsize = $stackp['boxsize'];
 	echo "<input type='hidden' name='box' value='$boxsize'>\n";
 
 	echo"<table border=3 class=tableborder>";

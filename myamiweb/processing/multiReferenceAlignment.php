@@ -118,7 +118,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	$samp_param = ($_POST['samp_param']) ? $_POST['samp_param'] : 12;
 	$minrad = ($_POST['minrad']) ? $_POST['minrad'] : 0.0;
 	$maxrad = ($_POST['maxrad']) ? $_POST['maxrad'] : 0.9;
-	$boxsz = ($firststack['bin']) ? $firststack['boxSize']/$firststack['bin'] : $firststack['boxSize'];
+	$boxsz = $firststack['boxsize'];
 	$bestbin = floor($boxsz/100);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
 	$mirror = ($_POST['mirror']=="on" || !$_POST['process']) ? 'checked' : '';
