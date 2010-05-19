@@ -115,6 +115,8 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None, fi
 
 	### setup
 	breaker = breakUpStack()
+	if numpart is not None:
+		breaker.numpart = numpart
 	breaker.rootdir = partdir
 	breaker.filetype = filetype
 	breaker.partdocfile = partdocfile
