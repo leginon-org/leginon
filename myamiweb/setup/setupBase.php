@@ -26,7 +26,7 @@ require_once('setupUtils.inc');
 		<input type="hidden" name="project_url" value=<?php echo $utils->projectURL; ?> />
 		
 		<h3>Enter a title for your Appion and Leginon tools web pages:</h3><br />
-		<p>Project Title will be the title of all the tools web pages.</p>	
+		<p>This title will appear on all the tools web pages.</p>	
 		<p>example: Appion and Leginon DB Tools</p><br />
 		<input type="text" size=50 name="project_title" value="<?php ($update) ? print(PROJECT_TITLE) : print("Appion and Leginon DB Tools"); ?>" /><br /><br />
 		<br />

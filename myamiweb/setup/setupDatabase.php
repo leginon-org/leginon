@@ -29,12 +29,13 @@ require_once('setupUtils.inc');
 		Please visit <a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database" target="_blank">
 		Database setup</a> for more detailed information before you fill in this form.</font><br /><br />
 		<h3>Enter the Database Host Name:</h3>
-		<p>example: "localhost", or IP</p>
+		<p>example: localhost, or IP</p>
 		<input type="text" size=20 name="db_host" <?php ($update)? print("value='".DB_HOST."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter the Database username:</h3>
-		<p>This is the web database user, it needs to have full access to Leginon and Project databases<br />
-		   It also needs to have the ability to create Appion databases.</p>
+		<p>This is the web database user, it needs to have full access to Leginon and Project databases.<br />
+		   It also needs to have the ability to create Appion databases.<br />
+		   Example: usr_object</p>
 		<input type="text" size=20 name="db_user" <?php ($update)? print("value='".DB_USER."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter the Database password:</h3>
@@ -42,11 +43,11 @@ require_once('setupUtils.inc');
 		<input type="text" size=20 name="db_pass" <?php ($update)? print("value='".DB_PASS."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter the Leginon database name:</h3>
-		<p>example: "leginondb"</p>
+		<p>example: leginondb</p>
 		<input type="text" size=20 name="db_leginon" <?php ($update)? print("value='".DB_LEGINON."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter the Project database name:</h3>
-		<p>example: "projectdb"</p>
+		<p>example: projectdb</p>
 		<input type="text" size=20 name="db_project" <?php ($update)? print("value='".DB_PROJECT."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		

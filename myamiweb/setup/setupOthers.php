@@ -167,7 +167,9 @@ require_once('setupUtils.inc');
 		<br />
 
 		<h3>Enter Appion database prefix:</h3>
-		<p>We recommend using 'ap' as Appion database prefix.</p>
+		<p>We recommend using 'ap' as Appion database prefix.<br /> 
+		   This prefix must match the prefix used during step number 11 of the 
+		   <a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Database_Server_Installation">Database Server Setup</a>. </p>
 		<input type="text" size=5 name="def_processing_prefix" <?php ($update && PROCESSING === true) ? print("value='".DEF_PROCESSING_PREFIX."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value='ap'"); ?> /><br /><br />
 		<br />
 
@@ -178,11 +180,11 @@ require_once('setupUtils.inc');
 		Please Click the "Add" Button to start. If you don't have a processing host, leave it empty.<br />
 		<table border=0 cellspacing=8 style="font-size: 12px" id="hosts"></table><br />
 
-		<h3>Register your cluster configure file(s)</h3>
-		<p>You can find a default cluster configure file (default_cluster.php) under the processing folder.<br />
-		   Create a new configure file for each cluster with different name base on the default_cluster.php.<br />
-		   Please make sure <font color="red">do not include (.php) in the input box</font>.<br />
-		   Example: If your cluster configure file name is cluster1.php, just enter cluster1 below.<br />	   
+		<h3>Register your cluster configuration file(s)</h3>
+		<p>You can find a default cluster configuration file (default_cluster.php) under the processing folder.<br />
+		   Create a new configuration file for each cluster with a different name base on the default_cluster.php.<br />
+		   Please make sure you <font color="red">do not include (.php) in the input box</font>.<br />
+		   Example: If your cluster configuration file name is cluster1.php, just enter cluster1 below.<br />	   
 		</p>
 		<input name="addCluster" type="button" value="Add" <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="addClusterRow('');" />
 		<input name="removeCluster" type="button" value="Remove" <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="removeRowFormTable('clusters');" />
@@ -197,7 +199,7 @@ require_once('setupUtils.inc');
 		&nbsp;&nbsp;YES<br />
 		<br />
 
-		<h3>Do you want to show any image processing tools that are still under development?</h3>
+		<h3>Do you want to use image processing tools that are still under development?</h3>
 		<p>Note: Tools still under development are not fully functioning. We suggest hiding these features.</p>
 		<input type="radio" name="hide_feature" value="true" <?php ($update) ? (defined("HIDE_FEATURE") && HIDE_FEATURE)? print("checked='yes'") : print("") : print("disabled"); ?> />
 		&nbsp;&nbsp;NO<br />
@@ -211,7 +213,7 @@ require_once('setupUtils.inc');
 		<br />
 		
 		<h3>Enter a temporary upload directory location (Optional).</h3>
-		<p>This is a temporary directory for uploading any images, templates, or models that is accessible to both the web server and the processing servers.</p>
+		<p>This is a temporary directory that is accessible to both the web server and the processing servers for uploading images, templates, or models.</p>
 		<input type="text" size=20 name="temp_images_dir" <?php ($update && PROCESSING === true) ? print("value='".TEMP_IMAGES_DIR."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
 		<br />
 		<input type="submit" value="NEXT" />

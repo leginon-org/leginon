@@ -131,9 +131,9 @@ require_once('setupUtils.inc');
 		send email to the web tools users.</p>
 		<input type="text" size=35 name="admin_email" <?php ($update && ENABLE_LOGIN === true)? print("value='".ADMIN_EMAIL."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); ?> /><br /><br />
 		<br />
-		<h3>Using your SMTP server or regular php mail to send out email?</h3>
+		<h3>Determine a mail server to send outgoing email:</h3>
 		<p>Select "SMTP server" to enter your SMTP host information.<br />
-		If your email does not provide SMTP server, please select "Use regular PHP mail".</p>
+		If your institution does not provide an SMTP server, please select "Use regular PHP mail" to use the local computer.</p>
 		&nbsp;<input type="radio" name="enable_smtp" value="false" <?php ($update && ENABLE_LOGIN === true) ? (ENABLE_SMTP)? print("") : print("checked='yes'") : print("disabled"); ?> 
 			onclick="setReadOnly_SMTP(this)" />&nbsp;&nbsp;I want to use regular PHP mail.<br />
 		&nbsp;<input type="radio" name="enable_smtp" value="true" <?php ($update && ENABLE_LOGIN === true) ? (ENABLE_SMTP)? print("checked='yes'") : print("") : print("disabled"); ?> 
@@ -144,15 +144,15 @@ require_once('setupUtils.inc');
 		<input type="text" size=35 name="smtp_host" <?php ($update && ENABLE_SMTP === true)? print("value='".SMTP_HOST."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Does your SMTP server require authentication?</h3>
-		<p>Check with your email administrator<br />
-		Select "Yes" if require authentication. "No" if server not using SMTP Authentication</p>
+		<p>Check with your email administrator.<br />
+		Select "Yes" if using authentication. "No" if authentication is not required.</p>
 		&nbsp;<input type="radio" name="smtp_auth" value="false" <?php ($update && ENABLE_SMTP === true) ? (SMTP_AUTH)? print("") : print("checked='yes'") : print("disabled"); ?> 
 			onclick="setReadOnly_AUTH(this)" />&nbsp;&nbsp;No.<br />
 		&nbsp;<input type="radio" name="smtp_auth" value="true" <?php ($update && ENABLE_SMTP === true) ? (SMTP_AUTH)? print("checked='yes'") : print("") : print("disabled"); ?> 
 			onclick="setReadOnly_AUTH(this)" />&nbsp;&nbsp;Yes.<br /><br />
 		<br />
 		<h3>Enter your SMTP Authentication Username and Password:</h3>
-		<p>If your SMTP server require authentication, You need to enter username and password</p>
+		<p>If your SMTP server requires authentication, You need to enter the username and password.</p>
 		&nbsp;Username: &nbsp;
 		<input type="text" size=20 name="smtp_username" <?php ($update && SMTP_AUTH === true) ? print("value='".SMTP_USERNAME."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); ?> /><br /><br />
 		&nbsp;Password: &nbsp;

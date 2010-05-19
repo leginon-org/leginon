@@ -52,7 +52,7 @@ require_once("../inc/mysql.inc");
 		
 		<h3>Start initial variables setup :</h3>
 	<?php if(empty($has_errors)){ ?>
-		<p>Web tools require an administrator account to start.<br />
+		<p>An administrator account is required.<br />
 		   Please fill in the following values.<br /><br />
 		   Username: (Can not change the default username)<br /> 
 		   <input type="text" size=15 name="username" value="administrator" readOnly style="background:#eeeeee" /><br /><br />
@@ -61,7 +61,7 @@ require_once("../inc/mysql.inc");
 		   Email:<br />
 		   <input type="text" size=20 name="email" value="" /><br />
 
-		<p>Please click the "NEXT" button to start.</p>
+		<p>Please click the "NEXT" button to continue.</p>
 		<input type="submit" value="NEXT" />
 	<?php } else { ?>
 		<br />

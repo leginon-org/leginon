@@ -47,7 +47,7 @@ require_once("../inc/mysql.inc");
 	<?php 
 		foreach($dbTables as $key => $tables){
 			echo "<td valign=top width='350px'>";
-			echo "<h3>'$key' contain the following tables </h3><br />";
+			echo "<h3>'$key' contains the following tables </h3><br />";
 			foreach($tables as $table){
 				echo"$table <br/>";
 			}
