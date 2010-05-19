@@ -25,8 +25,11 @@ class CenterTargetFilter(targetfilter.TargetFilter):
 		distlist = []
 		targetdistances = {}
 		for target in targetlist:
+			print target.dbid
 			oldtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 			dist = oldtarget['delta row']**2+oldtarget['delta column']**2
+			while dist in distlist:
+				dist += 0.0001
 			targetdistances[dist] = target
 			distlist.append(dist)
 		distlist.sort()
