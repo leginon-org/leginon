@@ -76,7 +76,6 @@ require_once("../inc/mysql.inc");
 	}
 
 ?>
-
 	<form name='wizard_form' method='POST' action='initTablesReport.php'>
 		
 		<h3>Start initial variables setup :</h3>
@@ -92,7 +91,11 @@ require_once("../inc/mysql.inc");
 	<?php } elseif(empty($msg)) { ?>
 		<br />
 		<h3><font color="red">Error(s) have occured !</font></h3>
-		<p>Please solve the following problem before continuing:</p>
+		<p>Please solve the following problem then click "Try Again":</p>
+		<form>
+			<input type="button" value="Try Again" onClick="location.href='<?php echo $PHP_SELF; ?>'">
+		</form>
+		<br />
 	<?php 
 			foreach($has_errors as $error){
 				echo "<p>".$error . "</p>";
