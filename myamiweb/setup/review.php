@@ -16,13 +16,21 @@ require_once('setupUtils.inc');
 	$template->wizardHeader("Step 6 : Review your setup", SETUP_CONFIG);
 
 	$setupUtils = new SetupUtils();
+	
+	// Builds the config file from the template with the users input and stores in an array 
 	$fileContents = $setupUtils->editConfigFile(CONFIG_TEMPLATE, $_POST);
 
+	// Check to see if the apache user has permission to write to the Myami web 
+	// directory and copys the template to the file location 
+	// (config.php.template to config.php)
 	$copyResult = $setupUtils->copyFiles(CONFIG_TEMPLATE, CONFIG_FILE);
 
+	// If the user has write access, copy array contents to file
 	if($copyResult){
 			$result = $setupUtils->arrayToFile(CONFIG_FILE, $fileContents);
 
+		// If the copy succeded, store the config file to the array to display the actual
+		// contents of config.php to the user.
 		if($result)
 			$fileContents = $setupUtils->fileToArray(CONFIG_FILE);
 	}
