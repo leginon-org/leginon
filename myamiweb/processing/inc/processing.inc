@@ -332,11 +332,6 @@ function getSessionList($projectId,$sessionId){
 function checkClusterJobs($processhost, $user, $pass) {
 	$cmd = "qstat -au ".$user." | egrep '^[0-9]'";
 	$subjobs = exec_over_ssh($processhost, $user, $pass, $cmd, true);
-	if (!$subjobs) {
-		// this is an additional hack for garibaldi
-		$cmd = "/usr/pbs/bin/qstat -au ".$user." | egrep '^[0-9]'";
-		$subjobs = exec_over_ssh($processhost, $user, $pass, $cmd, true);
-	}
 	return $subjobs;
 }
 
