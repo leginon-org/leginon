@@ -30,7 +30,7 @@ import sys
 import glob
 import time
 import math
-import pylab
+
 import subprocess
 # appion
 from appionlib import appionScript
@@ -48,6 +48,11 @@ from pyami import mrc,spider
 #import logging
 #LOG_FILENAME = './rotKerdenSOM.log'
 #logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG,)
+
+### pylab tries to open a window, this is a workaround
+import matplotlib
+matplotlib.use('cairo')
+import pylab
 
 #======================
 #======================
