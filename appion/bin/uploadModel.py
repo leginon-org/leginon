@@ -139,6 +139,7 @@ class UploadModelScript(appionScript.AppionScript):
 	def getDensityParams(self):
 		densitydata = appiondata.Ap3dDensityData.direct_query(self.params['densityid'])
 		self.params['oldapix'] = float(densitydata['pixelsize'])
+		self.params['oldbox'] = float(densitydata['boxsize'])
 		if self.params['symmetry'] is None:
 			self.params['symdata'] = densitydata['symmetry']
 			self.params['symmetry'] = self.params['symdata']['eman_name']
@@ -147,8 +148,12 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['file'] = os.path.join(densitydata['path']['path'], densitydata['name'])
 		if self.params['newapix'] is None:
 			self.params['newapix'] = self.params['oldapix']
-		if self.params['newapix'] is None:
-			self.params['newapix'] = self.params['oldapix']
+		if self.params['newbox'] is None:
+			self.params['newbox'] = self.params['oldbox']
+		if self.params['mass'] is None:
+			self.params['mass'] = densitydata['mass']
+		self.params['description'] += ("...from density id %d"%(self.params['densityid']))
+
 
 	#=====================
 	def getModelParams(self):
