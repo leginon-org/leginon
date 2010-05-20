@@ -199,11 +199,11 @@ def spectralSNR(partarray, apix=1.0):
 		K = len(indexlist)
 		ssnr = numer / ( K/(K-1.0) * denom ) - 1.0
 		frc = ssnr / (ssnr + 1)
-		if key >= 3  and key <= 5:
-			print "======================"
-			print "numerring=", key, numer
-			print "denomring=", key, denom
-			print "ssnr=", key, ssnr
+		#if key >= 3  and key <= 5:
+		#	print "======================"
+		#	print "numerring=", key, numer
+		#	print "denomring=", key, denom
+		#	print "ssnr=", key, ssnr
 		#print "%02d %.3f %.3f (%.3f / %.3f)"%(key, ssnr, frc, numer/K, denom/K)
 		#print key, frc
 		linear[key] = frc
