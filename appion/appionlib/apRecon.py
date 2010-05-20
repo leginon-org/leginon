@@ -252,8 +252,10 @@ def setGoodBadParticlesFromReconId(reconid):
 		goodbadq['good_postRefine'] = fields['good_postRefine']
 		goodbadq['bad_postRefine'] = fields['bad_postRefine']
 		goodbadq.insert()
-		apDisplay.printMsg("Iter completed in %s"%(apDisplay.timeString(time.time()-t0)))
-	apDisplay.printMsg("Refine completed in %s"%(apDisplay.timeString(time.time()-r0)))
+		if time.time()-t0 > 2.0:
+			apDisplay.printMsg("Iter completed in %s"%(apDisplay.timeString(time.time()-t0)))
+	if time.time()-r0 > 2.0:
+		apDisplay.printMsg("Refine completed in %s"%(apDisplay.timeString(time.time()-r0)))
 	return
 
 #=====================
