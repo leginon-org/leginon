@@ -47,6 +47,8 @@ def makeNewStack(oldstack, newstack, listfile=None, remove=False, bad=False):
 			badstack = os.path.join(os.path.dirname(newstack), "bad.hed")
 			emancmd = "proc2d %s %s exclude=%s"%(oldstack, badstack, listfile)
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
+		else:
+			apDisplay.printMsg("Rejecting more particles than keeping, not creating a bad stack")
 	return
 
 #===============
