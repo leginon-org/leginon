@@ -23,7 +23,7 @@ require_once('setupUtils.inc');
 			echo "<input type='hidden' name='".$key."' value='".$value."' />";
 		}
 	?>
-		<font style="color: red">Web Tools require one database for Leginon, one database to manage projects,<br />
+		<font style="color: red">The web tools require one database for Leginon, one database to manage projects,<br />
 		and at least one database for Appion. (example : "dbemdata", "project", "ap100")<br />
 		Appion requires all three types of database, but Leginon does not require an Appion database<br />
 		Please visit <a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database" target="_blank">
@@ -35,7 +35,7 @@ require_once('setupUtils.inc');
 		<h3>Enter the Database username:</h3>
 		<p>This is the web database user, it needs to have full access to Leginon and Project databases.<br />
 		   It also needs to have the ability to create Appion databases.<br />
-		   Example: usr_object</p>
+		   example: usr_object</p>
 		<input type="text" size=20 name="db_user" <?php ($update)? print("value='".DB_USER."'") : print("value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter the Database password:</h3>

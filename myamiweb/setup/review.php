@@ -36,7 +36,7 @@ require_once('setupUtils.inc');
 	}
 	else{
 
-		$cpErrorMsg = "Apache User does not have permission to create configure file.<br />
+		$cpErrorMsg = "Apache User does not have permission to create the configuration file.<br />
 				You can change your \"myamiweb\" folder's permission or <br />
 				you can use the code below and create a config.php under the myamiweb folder.";
 

@@ -167,7 +167,7 @@ require_once('setupUtils.inc');
 		<br />
 
 		<h3>Enter Appion database prefix:</h3>
-		<p>We recommend using 'ap' as Appion database prefix.<br /> 
+		<p>We recommend using 'ap' as the Appion database prefix.<br /> 
 		   This prefix must match the prefix used during step number 11 of the 
 		   <a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Database_Server_Installation">Database Server Setup</a>. </p>
 		<input type="text" size=5 name="def_processing_prefix" <?php ($update && PROCESSING === true) ? print("value='".DEF_PROCESSING_PREFIX."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value='ap'"); ?> /><br /><br />
@@ -181,14 +181,14 @@ require_once('setupUtils.inc');
 		<table border=0 cellspacing=8 style="font-size: 12px" id="hosts"></table><br />
 
 		<h3>Register your cluster configuration file(s)</h3>
-		<p>You can find a default cluster configuration file (default_cluster.php) under the processing folder.<br />
+		<p>You can find a default cluster configuration file (default_cluster.php) in the myamiweb/processing folder.<br />
 		   Create a new configuration file for each cluster with a different name base on the default_cluster.php.<br />
 		   Please make sure you <font color="red">do not include (.php) in the input box</font>.<br />
 		   Example: If your cluster configuration file name is cluster1.php, just enter cluster1 below.<br />	   
 		</p>
 		<input name="addCluster" type="button" value="Add" <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="addClusterRow('');" />
 		<input name="removeCluster" type="button" value="Remove" <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="removeRowFormTable('clusters');" />
-		Please Click the "Add" Button to start. If you don't know the cluster configure file name, left it empty.<br />
+		Please Click the "Add" Button to start. If you don't know the cluster configure file name, leave it empty.<br />
 		<table border=0 cellspacing=8 style="font-size: 12px" id="clusters"></table><br />	
 		
 		<h3>Do you wish to use the IMAGIC image processing package</h3>
