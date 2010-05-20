@@ -253,7 +253,8 @@ function showReport () {
 
 		if ($refineIterData['refineClassAverages']) {
 			$numclasses = getNumClassesFromFile($refineClassAverages);
-			$html .= "$numclasses classes<br />\n";
+			if ($numclasses > 0)
+				$html .= "$numclasses classes<br />\n";
 		}
 
 		//Euler plots
