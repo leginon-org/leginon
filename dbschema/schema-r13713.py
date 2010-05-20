@@ -70,6 +70,8 @@ def upgradeAppionDB(appiondbname, projectdb, backup=True):
 		'REF|ApRefinementData|iterid', 'REF|ApRefineIterData|refineIter')
 	appiondb.renameColumn('ApFSCData', 
 		'REF|ApRefinementData|refinementData', 'REF|ApRefineIterData|refineIter')
+	appiondb.renameColumn('ApTiltsInAlignRunData', 
+		'primary', 'primary_tiltseries')
 
 	### special case of conflicting Xmipp columns
 	if (appiondb.columnExists('ApRefineIterData', 'REF|ApXmippRefineIterationParamsData|xmippRefineParams') and 

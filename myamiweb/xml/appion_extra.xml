@@ -243,9 +243,58 @@
 		null="NULL" 
 		default="0" 
 	/> 
+	<field 
+		name="min_defocus" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="max_defocus" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="edge_thresh" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="edge_blur" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="rot_blur" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="refine2d" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="onepass" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="zeropass" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `stig` (`stig`)</key> 
+	<key>KEY `refine2d` (`refine2d`)</key> 
 </sqltable>
 <sqltable name="ApAceParamsData" >
 	<field 
@@ -6106,7 +6155,7 @@
 		default="NULL" 
 	/> 
 	<field 
-		name="primary" 
+		name="primary_tiltseries" 
 		type="TINYINT(1)" 
 		null="NULL" 
 		default="0" 
@@ -6116,7 +6165,7 @@
 	<key>KEY `REF|ApTomoAlignmentRunData|alignrun` (`REF|ApTomoAlignmentRunData|alignrun`)</key> 
 	<key>KEY `REF|leginondata|TiltSeriesData|tiltseries` (`REF|leginondata|TiltSeriesData|tiltseries`)</key> 
 	<key>KEY `REF|leginondata|TomographySettingsData|settings` (`REF|leginondata|TomographySettingsData|settings`)</key> 
-	<key>KEY (`primary`)</key> 
+	<key>KEY `primary_tiltseries` (`primary_tiltseries`)</key> 
 </sqltable>
 <sqltable name="ApTomoAlignerParamsData" >
 	<field 
