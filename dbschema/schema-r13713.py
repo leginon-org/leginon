@@ -380,7 +380,7 @@ def upgradeProjectDB(projectdb,backup=True):
 	selectq = " SELECT * FROM `install` WHERE `key`='version'"
 	values = projectdb.returnCustomSQL(selectq)
 	if values:
-		projectdb.updateColumn("install", "value", "'2.0'", 
+		projectdb.updateColumn("install", "value", "'1.9'", 
 			"install.key = 'version'",timestamp=False)
 	else:
 		insertq = "INSERT INTO `install` (`key`, `value`) VALUES ('version', '2.0')"
