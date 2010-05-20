@@ -344,7 +344,8 @@ def upgradeProjectDB(projectdb,backup=True):
 			+" LEFT JOIN "+leginondb.getDatabaseName()+".SessionData AS session "
 			+"   ON session.`name` = projexp.`name` "
 			+" SET "
-			+"   projexp.`REF|"+leginondb.getSinedonName()+"|SessionData|session` = session.`DEF_id` "
+			+"   projexp.`REF|"+leginondb.getSinedonName()+"|SessionData|session` = session.`DEF_id`, "
+			+"   projexp.`DEF_timestamp` = session.`DEF_timestamp` "
 		)
 		projectdb.executeCustomSQL(updateq)
 	
