@@ -77,21 +77,28 @@ def getProjectIdFromAlignStackId(alignstackid):
 	return projectid
 
 #========================
-def getAppionDBFromProjectId(projectid):
+def getAppionDBFromProjectId(projectid, die=True):
 	projdata = leginon.projectdata.projects.direct_query(projectid)
 	processingdbq = leginon.projectdata.processingdb()
 	processingdbq['project'] = projdata
 	procdatas = processingdbq.query(results=1)
 	if not procdatas:
-		apDisplay.printError("could not find appion db name for project %d "%(projectid))
+		if die is True:
+			apDisplay.printError("could not find appion db name for project %d "%(projectid))
+		else:
+			apDisplay.printWarning("could not find appion db name for project %d "%(projectid))
+			return None
 	procdata = procdatas[0]
 	dbname = procdata['appiondb']
 	return dbname
 
 #========================
-def setDBfromProjectId(projectid):
-	newdbname = getAppionDBFromProjectId(projectid)
+def setDBfromProjectId(projectid, die=True):
+	newdbname = getAppionDBFromProjectId(projectid, die=die)
+	if newdbname is None:
+		return False
 	sinedon.setConfig('appiondata', db=newdbname)
 	apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
+	return True
 
 
