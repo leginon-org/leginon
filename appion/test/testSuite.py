@@ -18,6 +18,7 @@ from appionlib import apFile
 from appionlib import apCtf
 from appionlib import apAlignment
 from appionlib import apDatabase
+from appionlib import appiondata
 
 class testScript(appionScript.AppionScript):
 	#=====================
@@ -35,7 +36,7 @@ class testScript(appionScript.AppionScript):
 			action="store_false", help="Do not show command output while running")
 
 		self.parser.add_option("-u", "--uploadimages", dest="uploadimages", default=False,
-			action="store_true", help="Do not show command output while running")
+			action="store_true", help="Download and upload images to new session to process")
 		self.parser.add_option("--session", dest="sessionname",
 			help="Session name containing GroEL images to process", metavar="XX")
 
@@ -80,8 +81,9 @@ class testScript(appionScript.AppionScript):
 			apDisplay.printColor("###################################", "cyan")
 		try:
 			if self.params['verbose'] is False:
+				logf = open('testsuite-programs.log' ,'a')
 				proc = subprocess.Popen(cmd, shell=True, 
-					stdout=subprocess.PIPE)#, stderr=subprocess.PIPE)
+					stdout=logf, stderr=logf)
 			else:
 				proc = subprocess.Popen(cmd, shell=True)
 			proc.wait()
@@ -99,21 +101,10 @@ class testScript(appionScript.AppionScript):
 				+apDisplay.timeString(runtime))
 			return False
 
-		return True
+		if self.params['verbose'] is False:
+			logf.close()
 
-	#=====================
-	def runFindEM(self):
-		runid = "findem"
-		cmd = (os.path.join(self.appiondir, "bin", "templateCorrelator.py ")
-			+" "+self.images+" runid="+runid+" outdir="+self.params['outdir']+" "
-			+" diam=140 bin=4 maxpeaks=50 overlapmult=3 nocontinue "
-			+" templateIds=53 range1=0,180,30 thresh=0.50 maxthresh=0.60 "
-			+" lp=25 hp=600 pixlimit=3.0 median=3 ")
-		if self.params['commit'] is True:
-			params += " --commit "
-		else:
-			params += " --no-commit "
-		self.runCommand(script+" "+params)
+		return True
 
 	#=====================
 	def downloadImagesFromAMI(self):
@@ -215,8 +206,8 @@ class testScript(appionScript.AppionScript):
 		dogname = "dogrun%d-%s"%(runnum+1, self.timestamp)
 
 		script = os.path.join(self.appiondir, "bin", "dogPicker.py ")
-		params = (" --runname=%s --projectid=%d --session=%s --diam=%d --thresh=%.2f --maxthresh=%.2f --invert --no-wait --planereg --maxsize=%.2f --numslices=%d --sizerange=%d"
-			%(dogname, self.params['projectid'], self.sessionname, 150, 0.42, 0.8, 0.5, 3, 50))
+		params = (" --runname=%s --projectid=%d --session=%s --diam=%d --thresh=%.2f --maxthresh=%.2f --invert --no-wait --planereg --maxsize=%.2f --numslices=%d --sizerange=%d  --bin=%d "
+			%(dogname, self.params['projectid'], self.sessionname, 150, 0.42, 0.8, 0.5, 3, 50, 4))
 		if self.params['commit'] is True:
 			params += " --commit "
 		else:
@@ -261,6 +252,9 @@ class testScript(appionScript.AppionScript):
 		filtstackname = "meanfilt%d-%s"%(runnum+1, self.timestamp)
 
 		stackid = apStack.getStackIdFromRunName(stackname, self.sessionname)
+		if not stackid:
+			apDisplay.printError("Failed to find stack %s for session %s"%(stackname, self.sessionname))
+
 
 		script = os.path.join(self.appiondir, "bin", "stackFilter.py ")
 		params = ((" --runname=%s --projectid=%d --old-stack-id=%d --minx=%d --maxx=%d --miny=%d --maxy=%d --description='%s'")
@@ -286,7 +280,7 @@ class testScript(appionScript.AppionScript):
 
 		script = os.path.join(self.appiondir, "bin", "maxlikeAlignment.py")
 		params = (" --runname=%s --projectid=%d --stack=%d --lowpass=%d --highpass=%d --num-ref=%d --bin=%d --savemem --converge=slow --mirror --fast --fast-mode=narrow --max-iter=%d --description='%s'"
-			%(maxlikename, self.params['projectid'], stackid, 10, 2000, 3, 1, 12, 
+			%(maxlikename, self.params['projectid'], stackid, 10, 2000, 3, 2, 12, 
 			'max like with test suite application'))
 		if self.params['commit'] is True:
 			params += " --commit "
@@ -310,6 +304,103 @@ class testScript(appionScript.AppionScript):
 		else:
 			params += " --no-commit "
 		self.runCommand(script+" "+params)
+
+	#=====================
+	def createTemplates(self, maxlikename):
+		runname = "template-%s"%(self.timestamp)
+
+		alignrunid = apAlignment.getAlignRunIdFromName(maxlikename)
+		script = os.path.join(self.appiondir, "bin", "uploadTemplate.py")
+		params = (" --projectid=%d --alignid=%d --session=%s --diam=180 --imgnums=0,1,2 --runname=%s --description='%s'"
+			%(self.params['projectid'], alignrunid, self.sessionname, 
+			runname, 'templates from max like with test suite application'))
+		if self.params['commit'] is True:
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
+
+	#=====================
+	def getMostRecentTemplates(self, num=3):
+		templateq = appiondata.ApTemplateImageData()
+		templatedatas = templateq.query(results=num)
+		if not templatedatas:
+			apDisplay.printError("No templates found")
+		templateids = []
+		for templatedata in templatedatas:
+			templateids.append(templatedata.dbid)
+		return templateids
+
+	#=====================
+	def templatePick(self):
+		runnum = apParticle.getNumSelectionRunsFromSession(self.sessionname)
+		tmplname = "tmplrun%d-%s"%(runnum+1, self.timestamp)
+
+		templateids = self.getMostRecentTemplates(3)
+		
+		script = os.path.join(self.appiondir, "bin", "templateCorrelator.py ")
+		params = (" --runname=%s --projectid=%d --session=%s --diam=%d --thresh=%.2f --maxthresh=%.2f --invert --no-wait --planereg --maxsize=%.2f --lowpass=%d --bin=%d --thread-findem "
+			%(tmplname, self.params['projectid'], self.sessionname, 256, 0.5, 0.8, 0.05, 25, 4))
+
+		tmplliststr = " --template-list="
+		rangeliststr = " --range-list="
+		for templateid in templateids:
+			tmplliststr += "%d,"%(templateid)
+			rangeliststr += "%d,%d,%dx"%(0,360,15)
+		params += tmplliststr[:-1]
+		params += rangeliststr[:-1]
+		if self.params['commit'] is True:
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
+		return tmplname
+
+	#=====================
+	def pdbToModel(self):
+		runname = "pdbdensity-%s"%(self.timestamp)
+
+		script = os.path.join(self.appiondir, "bin", "modelFromPDB.py ")
+		params = (" --runname=%s --projectid=%d --session=%s --pdbid=%s --apix=%.2f --boxsize=%d --res=%d --symm=%s --biolunit --method=%s "
+			%(runname, self.params['projectid'], self.sessionname, '1grl', 1.63, 256, 30, 'd7', 'eman'))
+		if self.params['commit'] is True:
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
+		return runname
+
+	#=====================
+	def getMostRecentDensities(self, num=3):
+		densityq = appiondata.Ap3dDensityData()
+		densitydatas = densityq.query(results=num)
+		if not densitydatas:
+			apDisplay.printError("No densities found")
+		densityids = []
+		for densitydata in densitydatas:
+			densityids.append(densitydata.dbid)
+		return densityids
+
+	#=====================
+	def uploadModel(self):
+		densityids = self.getMostRecentDensities(1)
+		if not densityids:
+			apDisplay.printError("failed to get 3d density")
+
+		densityid = densityids[0]
+		densitydata = appiondata.Ap3dDensityData.direct_query(densityid)
+
+		runname = "pdbmodel-%s"%(self.timestamp)
+
+		script = os.path.join(self.appiondir, "bin", "uploadModel.py ")
+		params = (" --runname=%s --projectid=%d --session=%s --densityid=%d --zoom=1.0 --description='%s' "
+			%(runname, self.params['projectid'], self.sessionname, densityid, densitydata['description'],))
+		if self.params['commit'] is True:
+			params += " --commit "
+		else:
+			params += " --no-commit "
+		self.runCommand(script+" "+params)
+		return runname
 
 	#=====================.
 	def start(self):
@@ -337,10 +428,23 @@ class testScript(appionScript.AppionScript):
 		self.uploadMaxLike(maxlikename)
 
 		### Upload templates
+		self.createTemplates(maxlikename)
+
 		### Template pick
+		self.templatePick()
+
 		### Make stack
+		stackname = self.makeStack()
+
 		### Filter stack
-		### Upload model
+		#filtstackname = self.filterStack(stackname)
+
+		### create PDB model
+		self.pdbToModel()
+
+		### Upload model as initial model
+		self.uploadModel()
+
 		### Do reconstruction
 		### Upload recon
 		return
