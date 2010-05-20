@@ -32,10 +32,9 @@ require_once("../inc/mysql.inc");
 			echo "using new install";
 			// for new install
 			$project->install('../xml/projectDBSchema.xml');
+			$leginondata->importTables('../xml/leginonDBSchema.xml');
 		}
 			
-		$leginondata->importTables('../xml/leginonDBSchema.xml');		
-		
 		// put both databases table in an array $dbTables for display
 		// need to reconnect again, because SQLQuery function close the db connection.
 		$dbLink = $mysqld->connect_db();
