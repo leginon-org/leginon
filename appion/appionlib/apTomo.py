@@ -64,7 +64,7 @@ def getTiltListFromAligner(alignerid):
 	q = appiondata.ApTiltsInAlignRunData(alignrun=alignerdata['alignrun'])
 	results = q.query()
 	for i,result in enumerate(results):
-		if result['primary']:
+		if result['primary_tiltseries']:
 			primkey = i
 			break
 	tiltdatalist = [results[primkey]['tiltseries'],]
@@ -368,7 +368,7 @@ def	insertTiltsInAlignRun(alignrundata,tiltdata,settingsdata,primary=True):
 	q['alignrun'] = alignrundata
 	q['tiltseries'] = tiltdata
 	q['settings'] = settingsdata
-	q['primary'] = primary
+	q['primary_tiltseries'] = primary
 	return publish(q)
 
 def insertTomoAlignmentRun(sessiondata,leginoncorrdata,imodxcorrdata,protomorundata,bin,name,path,description=None):

@@ -357,7 +357,7 @@ class particledata {
 			."LEFT JOIN `ApPathData` path "
 			."ON arun.`REF|ApPathData|path` = path.`DEF_id` "
 			."WHERE ar.`DEF_id`=".$alignerid." "
-			."AND tilts.`primary` = 1 ";
+			."AND tilts.`primary_tiltseries` = 1 ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}

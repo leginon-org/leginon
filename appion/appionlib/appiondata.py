@@ -1507,7 +1507,7 @@ class ApTiltsInAlignRunData(Data):
 			('alignrun', ApTomoAlignmentRunData),
 			('tiltseries', leginon.leginondata.TiltSeriesData),
 			('settings', leginon.leginondata.TomographySettingsData),
-			('primary', bool),
+			('primary_tiltseries', bool),
 		)
 	typemap = classmethod(typemap)
 
