@@ -4,7 +4,6 @@ from sinedon import sqldict
 import leginonconfig
 import projectdata
 
-use_processingdb_table = False
 class NotConnectedError(Exception):
 	pass
 
