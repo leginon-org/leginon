@@ -54,7 +54,7 @@ function stackModelForm($extra=False) {
 	$models = $particle->getModelsFromProject($projectId);
 
 	// find each stack entry in database
-	$stackIds = $particle->getStackIds($expId, false, false, false);
+	$stackIds = $particle->getStackIds($expId, false, false, true);
 	$stackinfo = explode('|--|', $_POST['stackval']);
 	$stackid = $stackinfo[0];
 	$apix = $stackinfo[1];
