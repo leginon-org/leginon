@@ -334,7 +334,7 @@ def upgradeAppionDB(appiondbname, projectdb, backup=True):
 def makeAppionTables(dbname):
 	sinedonname = 'appiondata'
 	modulename = 'appionlib.'+sinedonname
-	maketables.makeNonExistingTables(sinedonname,modulename,dbname,None)
+	maketables.makeNonExistingTables(sinedonname, modulename, dbname, None)
 
 def upgradeProjectDB(projectdb,backup=True):
 	dbname = projectdb.getDatabaseName()
@@ -424,5 +424,7 @@ if __name__ == "__main__":
 			print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
 			time.sleep(1)
 			continue
-		upgradeAppionDB(appiondbname, projectdb,backup=backup)
+		upgradeAppionDB(appiondbname, projectdb, backup=backup)
 		makeAppionTables(appiondbname)
+		upgradeAppionDB(appiondbname, projectdb, backup=False)
+
