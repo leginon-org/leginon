@@ -21,34 +21,46 @@ from appionlib import appiondata
 from appionlib import apProject
 from pyami import mrc
 
-
-#=====================
-#=====================
-class AffinityPropagationClusterScript(appionScript.AppionScript):
+class ccStack(apImagicFile.processStack):
 	#=====================
 	def getCCValue(self, imgarray1, imgarray2):
 		### faster cc, thanks Jim
 		ccs = stats.pearsonr(numpy.ravel(imgarray1), numpy.ravel(imgarray2))
 		return ccs[0]
 
-		### old methods follow
-		npix = imgarray1.shape[0] * imgarray1.shape[1]
+	#===============
+	def processParticle(self, partarray):
+		ccval = self.getCCValue(partarray, self.ccpart)
+		str1 = "%05d %05d %.10f\n" % (self.index+1, self.ccindex+1, ccval)
+		self.simf.write(str1)
+		str2 = "%05d %05d %.10f\n" % (self.ccindex+1, self.index+1, ccval)
+		#print "  index2", self.index
+		self.simf.write(str2)
 
-		avg1=imgarray1.mean()
-		avg2=imgarray2.mean()
+class similarityStack(apImagicFile.processStack):
+	#===============
+	def preLoop(self):
+		self.simf = open(self.similarfile, 'w')
 
-		std1=imgarray1.std()
-		var1=std1*std1
-		std2=imgarray2.std()
-		var2=std2*std2
+	#===============
+	def processParticle(self, partarray):
+		if self.index == 0:
+			return
+		#print "index1", self.index
+		substack = ccStack(msg=False)
+		substack.ccpart = partarray
+		substack.simf = self.simf
+		substack.ccindex = self.index
+		substack.numpart = self.index
+		substack.start(self.stackfile)
 
-		### convert 2d -> 1d array and compute dot product
-		cc = numpy.dot(numpy.ravel(imgarray1), numpy.ravel(imgarray2))
-		cc /= npix
-		cc -= (avg1*avg2)
-		cc /= math.sqrt(var1*var2)
-		return cc
+	#===============
+	def postLoop(self):
+		self.simf.close()
 
+#=====================
+#=====================
+class AffinityPropagationClusterScript(appionScript.AppionScript):
 	#=====================
 	#=====================
 	#=====================
@@ -56,57 +68,30 @@ class AffinityPropagationClusterScript(appionScript.AppionScript):
 		### Get initial correlation values
 		### this is really, really slow
 
-		numpart = apFile.numImagesInStack(alignedstack)
-
 		similarfile = "similarities.dat"
-		if os.path.isfile(similarfile):
-			simf = open(similarfile, 'r')
-			simlist = []
-			count = 0
-			for line in simf:
-				count += 1
-				sline = line.strip()
-				slist = sline.split()
-				ccval = float(slist[2])
-				simlist.append(ccval)
-			simf.close()
-			apDisplay.printMsg("There are %d lines in the sim file: %s"%(count, similarfile))
-			if count == numpart*(numpart-1):
-				### we have a valid file already
-				return similarfile, simlist
+		simstack = similarityStack()
+		simstack.similarfile = similarfile
+		simstack.start(alignedstack)
 
-		### read data and estimate time
-		imagicdict = apImagicFile.readImagic(alignedstack)
-		partarray = imagicdict['images']
-		numpart = partarray.shape[0]
-		boxsize = partarray.shape[1]
-		#timeper = 27.0e-9
-		timeper = 17.0e-9
-		apDisplay.printMsg("Computing CC values in about %s"
-			%(apDisplay.timeString(timeper*numpart**2*boxsize**2)))
+		if not os.path.isfile(similarfile):
+			apDisplay.printError("Failed to create similarity file")
 
-		### Computing CC values
-		simf = open(similarfile, 'w')
-		cctime = time.time()
+		simf = open(similarfile, 'r')
 		simlist = []
-		for i in range(0, numpart):
-			if i % 100 == 99:
-				sys.stderr.write(".")
-			for j in range(i+1, numpart):
-				ccval = self.getCCValue(partarray[i],partarray[j])
-				str1 = "%05d %05d %.10f\n" % (i+1, j+1, ccval)
-				simf.write(str1)
-				str2 = "%05d %05d %.10f\n" % (j+1, i+1, ccval)
-				simf.write(str2)
-				simlist.append(ccval)
-		sys.stderr.write("\n")
+		count = 0
+		for line in simf:
+			count += 1
+			sline = line.strip()
+			slist = sline.split()
+			ccval = float(slist[2])
+			simlist.append(ccval)
 		simf.close()
-		del partarray
-		del imagicdict['images']
-		apDisplay.printMsg("CC calc time: %s :: %s per part :: %s per part per pixel"
-			%(apDisplay.timeString(time.time()-cctime),
-			apDisplay.timeString((time.time()-cctime)/numpart**2),
-			apDisplay.timeString((time.time()-cctime)/numpart**2/boxsize**2)))
+		apDisplay.printMsg("There are %d lines in the sim file: %s"%(count, similarfile))
+
+		numpart = apFile.numImagesInStack(alignedstack)
+		if count != numpart*(numpart-1):
+			### we have a valid file already
+			apDisplay.printError("There are only %d lines need to have %d"%(count, numpart*(numpart-1)))
 
 		return similarfile, simlist
 
