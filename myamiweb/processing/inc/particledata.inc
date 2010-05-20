@@ -3262,6 +3262,12 @@ class particledata {
 		$this->mysql->SQLUpdate('ApAppionJobData',$data,$where);
 	}
 
+	function updateClusterJobStatus($jobid, $status) {
+		$data = array('status'=>$status);
+		$where = array('DEF_id'=>$jobid);
+		$this->mysql->SQLUpdate('ApAppionJobData',$data, $where);
+	}
+
 	function abortClusterJob($jobid, $user=false) {
 		$data = array('status'=>'A');
 		$where = array('DEF_id'=>$jobid);
@@ -3583,7 +3589,7 @@ class particledata {
 	}
 
 	function getPreparedFrealignJobs ($jobid=False, $path=False, $showHidden=true) {
-		$q = "SELECT fre.*, path.path  "
+		$q = "SELECT fre.*, path.path, job.`DEF_id` AS jobid  "
 			. " FROM `ApFrealignPrepareData` AS fre "
 			. " LEFT JOIN ApPathData AS path ON ( fre.`REF|ApPathData|path` = path.`DEF_id` ) "
 			. " LEFT JOIN ApAppionJobData AS job ON ( fre.`REF|ApAppionJobData|job` = job.`DEF_id` ) ";
@@ -3592,7 +3598,7 @@ class particledata {
 		} elseif ($path) {
 			$q .= " WHERE path.`path` = '$path' ";
 		} elseif (!$showHidden) {
-			$q .= " WHERE fre.`hidden` != '1' ";
+			$q .= " WHERE fre.`hidden` != '1' AND job.`DEF_id` == 'D' ";
 		}
 		$q .=  "  ORDER BY fre.`DEF_id` DESC ";
 		//echo $q."<br/><br/>\n";
