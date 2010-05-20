@@ -354,14 +354,16 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 	float lp = 0, hp = 0;
 	PyObject * image;
 	PyArray_Descr * type;
+	npy_intp *dims;
+	npy_intp ndim;
 	
 	if ( !PyArg_ParseTuple(args,"Off",&image,&lp,&hp) ) return NULL;
 	
 	type = PyArray_DescrNewFromType(NPY_FLOAT64);
 	image = PyArray_FromAny(image,type,0,0,NPY_CARRAY|NPY_FORCECAST,NULL);
 
-	npy_intp * dims = PyArray_DIMS(image);	
-	npy_intp ndim = PyArray_NDIM(image);
+	dims = PyArray_DIMS(image);	
+	ndim = PyArray_NDIM(image);
 	
 	if ( ndim != 2 ) return NULL;
 	
