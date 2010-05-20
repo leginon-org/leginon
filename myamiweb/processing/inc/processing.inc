@@ -41,6 +41,10 @@ function getProjectId() {
 		$projectid = getProjectFromExpId($_GET['expId']);
 		$_SESSION['projectId'] = $projectid;
 
+	} elseif ($_POST['sessionId']) {
+		$projectid = getProjectFromExpId($_POST['sessionId']);
+		$_SESSION['projectId'] = $projectid;
+
 	} elseif ($_GET['projectId']) {
 		$projectid = trim($_GET['projectId']);
 		$_SESSION['projectId'] = $projectid;
@@ -148,6 +152,12 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 		$errors = checkLogin();
 	}
 
+	if (!is_numeric($expId) && !is_numeric($projectId)) {
+		echo "<h3>cannot display Appion page</h3>";
+		echo "<h4>you are missing the expId in the URL above, e.g., <i>myamiweb/processing/page.php?expId=###</i></h4>";
+		exit;
+	}
+
 	$leginondata = new leginondata();
 	$particle = new particledata();
 	$projectdata = new project();
@@ -237,13 +247,13 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	// --- for help popup documentation --- //
 	$helpdiv = "<div id='dhelp' class='aphelpdoc' onmouseover='overdiv=1;' onmouseout='overdiv=0;'></div>\n";
 	$html.=$helpdiv;
-	if ($expId && $showmenu) {
+	if (($expId || $projectId) && $showmenu) {
 		require "menuprocessing.php";
 		$html.= $menujs;
 		$html.= $menulink;
 	}
 	$html.= "<div id='content' style='padding-left: 5px'>\n";
-	if ($expId && $showmenu) {
+	if (($expId || $projectId) && $showmenu) {
 		$html.= "<div style='position: relative; float:left; margin-right:10px' id='leftcontent'>\n";
 		$html.= "<div class='lvmenu'>";
 		$html.= $menuprocesing;

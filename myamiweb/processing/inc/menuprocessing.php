@@ -14,28 +14,31 @@ require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 
-// check if coming directly from a session
-$expId=$_GET['expId'];
-if ($expId){
-	$sessionId=$expId;
-	$projectId=getProjectFromExpId($expId);
-	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-}
 
-else {
+$expId=$_GET['expId'];
+$projectId = getProjectId();
+
+// check if coming directly from a session
+if (!is_numeric($expId) && is_numeric($_POST['sessionId'])) {
 	$sessionId=$_POST['sessionId'];
-	$formAction=$_SERVER['PHP_SELF'];
+	$expId = $sessionId;
+}
+if (is_numeric($expId)) {
+	$sessionId=$expId;
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";;
+} elseif (is_numeric($projectId)) {
+	$sessionId=$_POST['sessionId'];
+	$formAction=$_SERVER['PHP_SELF']."?projectId=$projectId";;
 }
 
 // Collect session info from database
-$sessiondata=getSessionList($projectId,$sessionId);
+$sessiondata=getSessionList($projectId, $sessionId);
 $sessioninfo=$sessiondata['info'];
 $sessions=$sessiondata['sessions'];
-$currentproject=$sessiondata['currentproject'];
 
 $particle = new particledata();
 
-if ($expId) {
+if (is_numeric($expId)) {
 	// sort out submitted job information
 	if ($clusterjobs = $particle->getJobIdsFromSession($expId)) {
 		$subclusterjobs=array();
@@ -596,41 +599,33 @@ if ($expId) {
 
 		// list out refinement jobs in the web menu
 		$nruns=array();
-//		if ($_SESSION['loggedin']) {
-		if (TRUE) {
+		$nruns[] = array(
+			'name'=>"<a href='emanJobGen.php?expId=$sessionId'>EMAN Refinement</a>",
+			'result'=>$emanreconresults,
+		);
+		$nruns[] = array(
+			'name'=>"<a href='prepareFrealign.php?expId=$sessionId'>Frealign Refinement</a>",
+			'result'=> $frealignresults,
+		);
+		if (!HIDE_FEATURE)
+		{
 			$nruns[] = array(
-				'name'=>"<a href='emanJobGen.php?expId=$sessionId'>EMAN Refinement</a>",
-				'result'=>$emanreconresults,
+				'name'=>"<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>",
+				'result'=> "<i>(incomplete)</i>", //$spiderreconresults,
 			);
-			if (!HIDE_FEATURE)
-			{
-				$nruns[] = array(
-					'name'=>"<a href='prepareFrealign.php?expId=$sessionId'>Frealign Refinement</a>",
-					'result'=> $frealignresults,
-				);
-			}
-			if (!HIDE_FEATURE)
-			{
-				$nruns[] = array(
-					'name'=>"<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>",
-					'result'=> "<i>(incomplete)</i>", //$spiderreconresults,
-				);
-			}
-			if (!HIDE_FEATURE)
-			{
-				$nruns[] = array(
-					'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
-					'result'=> "<i>(incomplete)</i>", //$xmippreconresults,
-				);
-			}
-			if (!HIDE_IMAGIC && !HIDE_FEATURE) {
-				$nruns[] = array(
-					'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
-					'result'=> "<i>(incomplete)</i>", //$imreconresults,
-				);
-			}
-		} else {
-			$nruns[] = "<font color='888888'><i>please login first</i></font>";
+		}
+		if (!HIDE_FEATURE)
+		{
+			$nruns[] = array(
+				'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
+				'result'=> "<i>(incomplete)</i>", //$xmippreconresults,
+			);
+		}
+		if (!HIDE_IMAGIC && !HIDE_FEATURE) {
+			$nruns[] = array(
+				'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
+				'result'=> "<i>(incomplete)</i>", //$imreconresults,
+			);
 		}
 		$data[] = array(
 			'action' => array($action, $celloption),
@@ -854,9 +849,17 @@ if ($expId) {
 			'newrun' => array($nruns, $celloption),
 		);		
 	}
-	
-
-}
+} elseif (is_numeric($projectId)) {
+	$action = "Upload images";
+	$nruns[] = array(
+		'name'=>"<a href='uploadimage.php?projectId=$projectId'>Upload images</a>",
+	);
+	$data[] = array(
+		'action' => array($action, $celloption),
+		'result' => array(),
+		'newrun' => array($nruns, $celloption),
+	);
+};
 
 $menujs='<script type="text/javascript">
 
