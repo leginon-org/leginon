@@ -423,7 +423,7 @@ class DBUpgradeTools(object):
 
 		t0 = time.time()
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
-			print "\033[34mrenaming column `%s` to `%s` in table %s at %s\033[0m"%(column1, column2, table, time.asctime())
+			print "\033[34mupdating column `%s` in table %s at %s\033[0m"%(column, table, time.asctime())
 		self.executeQuery(query)
 		if messaging['long query'] is True and time.time()-t0 > 0.020:
 			print "column update time: %.1f min"%((time.time()-t0)/60.0)
