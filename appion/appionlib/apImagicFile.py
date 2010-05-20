@@ -737,6 +737,7 @@ class processStack(object):
 	#===============
 	def __init__(self, msg=True):
 		self.msg = msg
+		self.numpart = None
 
 	#===============
 	def message(self, msg):
@@ -764,7 +765,9 @@ class processStack(object):
 		self.partallowed = int(self.maxpartinmem/20.0)
 		self.message("Particles allowed in memory: %d"%(self.partallowed))
 		### number particles in stack
-		self.numpart = apFile.numImagesInStack(stackfile)
+		numpart = apFile.numImagesInStack(stackfile)
+		if self.numpart is None or self.numpart > numpart:
+			self.numpart = numpart
 		if numrequest is not None and self.numpart > numrequest:
 			self.numpart = numrequest
 		self.message("Number of particles in stack: %d"%(self.numpart))
