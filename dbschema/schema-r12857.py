@@ -280,9 +280,9 @@ if __name__ == "__main__":
 	selectq = " SELECT * FROM `install` WHERE `key`='version'"
 	values = projectdb.returnCustomSQL(selectq)
 	if values:
-		projectdb.updateColumn("install", "value", "'1.7'", 
+		projectdb.updateColumn("install", "value", "'1.8'", 
 			"install.key = 'version'",timestamp=False)
 	else:
-		insertq = "INSERT INTO `install` (`key`, `value`) VALUES ('version', '1.7')"
+		insertq = "INSERT INTO `install` (`key`, `value`) VALUES ('version', '1.8')"
 		projectdb.executeCustomSQL(insertq)
 
