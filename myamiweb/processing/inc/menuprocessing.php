@@ -635,26 +635,6 @@ if (is_numeric($expId)) {
 		);
 	}
 
-	/* 3d Density Volumes */
-	$action = "3d Density Volumes";
-	$nruns=array();
-	if ($threedvols = $particle->get3dDensitysFromSession($sessionId)) {
-		$num3dvols = count($threedvols);
-	}
-	if ($num3dvols >= 1) {
-		$nruns[] = array(
-			'result'=>"<a href='densitysummary.php?expId=$sessionId'>$num3dvols complete</a>",
-		);
-	}
-	$totresult = ($num3dvols>0) ? "<a href='densitysummary.php?expId=$sessionId'>$num3dvols</a>" : "";
-	if ( (array)$nruns ) {
-		$data[] = array(
-			'action' => array($action, $celloption),
-			'result' => array($totresult),
-			'newrun' => array($nruns, $celloption),
-		);
-	}
-
 	// display the tomography menu only if there are tilt serieses
 	if ($tiltruns > 0) {
 		$action = "Tomography";
@@ -736,6 +716,19 @@ if (is_numeric($expId)) {
 	$action = "Import tools";
 
 	$nruns=array();
+
+	/* 3d Density Volumes */
+	if ($threedvols = $particle->get3dDensitysFromSession($sessionId)) {
+		$num3dvols = count($threedvols);
+	}
+	if ($num3dvols >= 1) {
+		$totresult = ($num3dvols>0) ? "<a href='densitysummary.php?expId=$sessionId'>$num3dvols</a>" : "";
+		$nruns[] = array(
+			'name'=>"<a href='densitysummary.php?expId=$sessionId'>3D Densities</a>"
+			'result'=>"<a href='densitysummary.php?expId=$sessionId'>$num3dvols ready to upload</a>",
+		);
+	}
+
 	$nruns[] = array(
 		'name'=>"<a href='pdb2density.php?expId=$sessionId'>PDB to Model</a>"
 	);
