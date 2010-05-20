@@ -317,7 +317,7 @@ class rotKerdenSOMScript(appionScript.AppionScript):
 			#print line
 			data = []
 			for colNo in pylab.arange(numberHarmonic):
-				data.append(splitLine[colNo])
+				data.append(float(splitLine[colNo]))
 			print xvalues
 			print data
 			#clear previous plot
