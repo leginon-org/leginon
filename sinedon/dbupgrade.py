@@ -39,6 +39,8 @@ class DBUpgradeTools(object):
 			self.dbname = dbname
 			dbconf = dbconfig.setConfig(self.confname, db=dbname)
 		else:
+			### get database config from sinedon.cfg
+			dbconf = dbconfig.getConfig(self.confname)
 			self.dbname = dbconf['db']
 		dbconf = dbconfig.getConfig(self.confname)
 		if messaging['success'] is True:
