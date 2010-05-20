@@ -4,7 +4,7 @@ import numpy
 
 numpyinc = numpy.get_include()
 
-numextmod = Extension('numextension._numextension', sources = ['numextension.c', 'canny_edge.c'], libraries=['m'], include_dirs=[numpyinc])
+numextmod = Extension('numextension._numextension', sources = ['numextension.c', 'canny_edge.c'], include_dirs=[numpyinc])
 
 setup(
 	name='numextension',

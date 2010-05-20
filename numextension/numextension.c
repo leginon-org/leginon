@@ -1,6 +1,5 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
-#include <math.h>
 #include "imgbase.h"
 #include "edge.h"
 
