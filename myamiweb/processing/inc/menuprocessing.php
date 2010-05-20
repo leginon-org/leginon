@@ -724,7 +724,7 @@ if (is_numeric($expId)) {
 	if ($num3dvols >= 1) {
 		$totresult = ($num3dvols>0) ? "<a href='densitysummary.php?expId=$sessionId'>$num3dvols</a>" : "";
 		$nruns[] = array(
-			'name'=>"<a href='densitysummary.php?expId=$sessionId'>3D Densities</a>"
+			'name'=>"<a href='densitysummary.php?expId=$sessionId'>3D Densities</a>",
 			'result'=>"<a href='densitysummary.php?expId=$sessionId'>$num3dvols ready to upload</a>",
 		);
 	}
