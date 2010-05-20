@@ -70,9 +70,10 @@ class viewer {
 	function addProjectSelector($projects=array(), $currentproject=false) {
 		$projectselector = '<select name="projectId" onchange="newexp()">'.$this->crlf;
 		foreach ($projects as $project) {
-			if ($project[id]==$this->projectId) $s='selected'; else $s='';
-			$projectselector .= '<option value='.$project[id].' '.$s.' >'
-						.substr($project[name],0,32).' ('.$project[id].')</option>'.$this->crlf; 
+			if ($project['id']==$this->projectId) $s='selected'; else $s='';
+			if ($project['age'] && $project['age'] < 30) $style="style='background-color: Beige;'"; else $style='';
+			$projectselector .= "<option $style value=".$project['id']." ".$s." >"
+						.substr($project[name],0,32)." (".$project['id'].")</option>".$this->crlf; 
 		}
 		$projectselector .= '</select>'.$this->crlf;
 		if ($currentproject) {

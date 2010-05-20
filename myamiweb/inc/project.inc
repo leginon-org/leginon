@@ -140,8 +140,7 @@ class project {
 		// that have been shared with the user.
 		$findOwnedProjects = ($privilege_level <= 2 && $userId); 
 
-		if ($findOwnedProjects) {
-									
+		if ($findOwnedProjects) {		
 			$sharedProjectsQuery = " SELECT ".DB_PROJECT.".projectexperiments.`REF|projects|project` "
 				." FROM ".DB_PROJECT.".projectexperiments " 
 				." WHERE ".DB_PROJECT.".projectexperiments.`REF|leginondata|SessionData|session` IN ( "
@@ -155,41 +154,34 @@ class project {
 				."SELECT projectowners.`REF|projects|project` "
 				."FROM projectowners WHERE projectowners.`REF|leginondata|UserData|user` = ".$userId." ) " 
 				."OR projects.DEF_id IN ( ".$sharedProjectsQuery." )";
-			
 		}
 		
 		// The hidden field of the projects table apparently may not exist. 
 		// Don't know the history of that.
 		// If it does exist, we do not want to show hidden projects
 		$projectdef = $this->mysql->getFieldTypes('projects');
-		$checkForHidden = (array_key_exists('hidden', $projectdef));
-		
-		if ($checkForHidden) {
-			$checkForHiddenQuery = " projects.hidden !=1 OR projects.hidden IS NULL ";
-		} 
 		
 		// Begin SQL to select the projects that the user may view
-		$q = 'SELECT projects.`DEF_id` as id, projects.name FROM projects ';
-		
+		$q = "SELECT projexp.`REF|projects|project` AS id, "
+			."   projects.`name` AS name, "
+			."   DATEDIFF(NOW(), MAX(projexp.`DEF_timestamp`)) AS age "
+			." FROM projectexperiments AS projexp "
+			." LEFT JOIN projects "
+			."   ON projects.`DEF_id` = projexp.`REF|projects|project` "
+			." WHERE projexp.`REF|projects|project` IS NOT NULL AND projects.`name` IS NOT NULL ";
+
 		// Build the query based on the combination of checking for the hidden flag
 		// and showing only projects owned by the user
-		if ($checkForHidden && $findOwnedProjects == false) {
-			$q .= " WHERE ";
-			$q .= $checkForHiddenQuery;
-		} else if ($checkForHidden && $findOwnedProjects) {
-			$q .= " WHERE ";
-			$q .= $checkForHiddenQuery;
-			$q .= " AND ( ";
-			$q .= $ownedProjectsQuery;
-			$q .= " ) ";
-		} else if ($checkForHidden == false && $findOwnedProjects) {
-			$q .= " WHERE ";
-			$q .= $ownedProjectsQuery;
+		if ($findOwnedProjects) {
+			$q .= " AND ( ".$ownedProjectsQuery." ) ";
 		}
 		
+		$q .= " GROUP BY projexp.`REF|projects|project` ";
+
 		// Make sure the projects appear in alphabetical order
-		$q .= ' ORDER by name';
-		
+		$q .= ' ORDER by projects.`name`';
+		//echo $q."<br/><br/>\n";
+
 		$rprojects = $this->mysql->getSQLResult($q);
 
 		$projects = array();
@@ -197,6 +189,7 @@ class project {
 			$projects[] = array(	'id' => DEFAULT_PROJECT, 'name' => DEFAULT_PROJECT);
 		}
 		$projects = array_merge($projects, $rprojects);
+		//print_r($rprojects);
 
 		if (ENABLE_LOGIN) {
 			$login_check = $dbemauth->is_logged();
