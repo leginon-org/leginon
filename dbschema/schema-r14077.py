@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-
+import time
 from appionlib import appiondata
 from appionlib import apRecon
 from appionlib import apProject
 import leginon.projectdata
+from sinedon import dbupgrade
 
 """
 This is a simple script that will insert 
@@ -33,10 +34,28 @@ def getReconRunsIds():
 		reconrunids.append(reconrundata.dbid)
 	return reconrunids
 
+def upgradeProjectDB(projectdb,backup=True):
+	### set version of database
+	selectq = " SELECT * FROM `install` WHERE `key`='version'"
+	values = projectdb.returnCustomSQL(selectq)
+	if values:
+		projectdb.updateColumn("install", "value", "'2.0'", 
+			"install.key = 'version'",timestamp=False)
+	else:
+		insertq = "INSERT INTO `install` (`key`, `value`) VALUES ('version', '2.0')"
+		projectdb.executeCustomSQL(insertq)
+
 if __name__ == "__main__":
 	projectids = getProjectIds()
+	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 	for projectid in projectids:
+		appiondbname = apProject.getAppionDBFromProjectId(projectid, die=False)
+		if not projectdb.databaseExists(appiondbname):
+			print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
+			time.sleep(1)
+			continue
 		if apProject.setDBfromProjectId(projectid, die=False):
 			reconrunids = getReconRunsIds()
 			for reconrunid in reconrunids:
 				apRecon.setGoodBadParticlesFromReconId(reconrunid)
+	upgradeProjectDB(projectdb,backup=False)
