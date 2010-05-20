@@ -241,7 +241,7 @@ function uploadavg() {
 function runCommonLines() {
 	var sindex = $('selectedIndex').value
 	var eindex = $('excludedIndex').value
-	if (sindex!="" && seindex.length <= eindex.length) {
+	if (sindex!="" && sindex.length <= eindex.length) {
 		window.open("createmodel.php?expId="+expId+"&include="+sindex+"&clusterid="+clusterId+"",'height=250,width=400');
 	} else if (eindex!="") {
 		window.open("createmodel.php?expId="+expId+"&exclude="+eindex+"&clusterid="+clusterId+"",'height=250,width=400');
