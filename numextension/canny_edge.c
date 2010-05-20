@@ -81,6 +81,7 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
              *delta_x,        /* The first devivative image, x-direction. */
              *delta_y;        /* The first derivative image, y-direction. */
    float *dir_radians=NULL;   /* Gradient direction image.                */
+	 size_t count;
 
    /****************************************************************************
    * Perform gaussian smoothing on the image using the input standard
@@ -114,7 +115,7 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
          fprintf(stderr, "Error opening the file %s for writing.\n", fname);
          exit(1);
       }
-      fwrite(dir_radians, sizeof(float), rows*cols, fpdir);
+      count = fwrite(dir_radians, sizeof(float), rows*cols, fpdir);
       fclose(fpdir);
       free(dir_radians);
    }
