@@ -18,7 +18,7 @@ def getSubversionRevision():
 	f.close()
 	return revision
 
-def getVersion()
+def getVersion():
 	prettyversion = None
 	verfile = 'appionlib/version.txt'
 	if os.path.isfile(verfile):
