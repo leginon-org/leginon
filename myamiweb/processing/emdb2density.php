@@ -89,7 +89,7 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
    echo "<option value=''>select one...</option>\n";
 	foreach ($syms as $sym) {
 		echo "<option value='$sym[DEF_id]'";
-		if ($sym['DEF_id']==$_POST['sym']) echo " selected";
+		if ($sym['DEF_id']==$symm) echo " selected";
 		echo ">$sym[symmetry]";
 		if ($sym['symmetry']=='C1') echo " (no symmetry)";
 		echo "</option>\n";
@@ -129,6 +129,10 @@ function runUploadModel() {
 	$emdbid=$_POST['emdbid'];
   	if (!$emdbid)
 		createForm("<B>ERROR:</B> Enter a EMDB ID");
+  	if (!is_numeric($emdbid) && strlen($emdbid) == 4)
+		createForm("<B>ERROR:</B> Enter a valid EMDB id, not a PDB id");
+  	if (!is_numeric($emdbid))
+		createForm("<B>ERROR:</B> Enter a valid EMDB ID, which is an integer");
 
 	//make sure a symmetry group was provided
 	$symm=$_POST['symm'];
