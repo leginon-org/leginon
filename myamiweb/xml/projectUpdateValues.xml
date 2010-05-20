@@ -7,7 +7,7 @@
     </sqltable>
     <sqltable name="install" >
         <field name="key" >version</field>
-        <field name="value" >2.0</field>
+        <field name="value" >1.7</field>
     </sqltable>
     <!-- privileges -->
     <sqltable name="privileges" >
