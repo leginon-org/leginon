@@ -5,7 +5,7 @@ require_once('setupUtils.inc');
 require_once("../inc/mysql.inc");
 
 	$template = new template;
-	$template->wizardHeader("Database Upgrade to v2.0", DB_INITIALIZATION);
+	$template->wizardHeader("Database Upgrade to v1.7", DB_INITIALIZATION);
 	
 	if(file_exists(CONFIG_FILE)){
 

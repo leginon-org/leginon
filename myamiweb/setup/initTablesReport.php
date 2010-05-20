@@ -12,21 +12,41 @@ require_once("../inc/mysql.inc");
 		require_once("../inc/leginon.inc");
 		require_once("../project/inc/project.inc.php");
 
+		$mysqld = new mysql(DB_HOST, DB_USER, DB_PASS);
 		$project = new project();
-		$project->install('../xml/projectDBSchema.xml');		
+		
+		$dbLink = $mysqld->connect_db();
+		$mysqld->select_db(DB_PROJECT, $dbLink);	
+		
+		// query out the settable value, so we can find out the user already have database schema or not.
+		// we might also need to check the version number for feature update, but not this release.
+		
+		$results = $mysqld->SQLQuery('select `key`, value from install where `key` = \'settable\'');
+
+		if(($results != false) && mysql_num_rows($results) > 0){				
+			// for upgrade			
+			echo "using upgrade";	
+			$project->install('../xml/projectUpdateSchema.xml');	
+		}
+		else{
+			echo "using new install";
+			// for new install
+			$project->install('../xml/projectDBSchema.xml');
+		}
+			
 		$leginondata->importTables('../xml/leginonDBSchema.xml');		
 		
 		// put both databases table in an array $dbTables for display
-		$mysqld = new mysql(DB_HOST, DB_USER, DB_PASS);
+		// need to reconnect again, because SQLQuery function close the db connection.
 		$dbLink = $mysqld->connect_db();
 		
+		$mysqld->select_db(DB_PROJECT, $dbLink);	
+		$dbTables[DB_PROJECT] = $mysqld->listTables();
+				
 		$mysqld->select_db(DB_LEGINON, $dbLink);	
 		
 		$dbTables[DB_LEGINON] = $mysqld->listTables();
 
-		$mysqld->select_db(DB_PROJECT, $dbLink);	
-		
-		$dbTables[DB_PROJECT] = $mysqld->listTables();
 		
 	}
 	else{

@@ -66,7 +66,7 @@ require_once("../inc/mysql.inc");
 					$currentDBVersion = $result['value'];
 				}
 				
-				if(!empty($currentDBVersion)) $has_errors[] = $msg = 'You do not need to do anything';
+				if(!empty($currentDBVersion)) $has_errors[] = $msg = 'You do not need to do anything.';
 			}
 			$mysqld->close_db($dbLink);
 		}

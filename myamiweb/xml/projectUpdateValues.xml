@@ -2,10 +2,6 @@
  <data>
    <!-- install -->
     <sqltable name="install" >
-        <field name="key" >settable</field>
-        <field name="value" >1</field>
-    </sqltable>
-    <sqltable name="install" >
         <field name="key" >version</field>
         <field name="value" >1.7</field>
     </sqltable>
