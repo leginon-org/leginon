@@ -223,7 +223,7 @@ function runUploadTemplate() {
 	elseif ($clusterId)
 		$command.="--clusterid=$clusterId ";
 	else 
-		$command.="--template=$template ";
+		$command.="--template=\"$template\" ";
 
 	$command.="--projectid=$projectId ";
 	$command.="--session=$session ";
