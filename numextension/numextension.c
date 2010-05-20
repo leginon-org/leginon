@@ -355,7 +355,15 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 	PyArray_Descr * type;
 	npy_intp *dims;
 	npy_intp ndim;
-	
+	int rows, cols, rad_size;
+	double x_rad, y_rad;
+	double *data, *rad_avg, *rad_cnt;
+	int r,c;
+	double x, y, rad, rwt1, rwt2;
+	int i_rad;
+	npy_intp rad_dim;
+	PyObject *radial_avg;
+
 	if ( !PyArg_ParseTuple(args,"Off",&image,&lp,&hp) ) return NULL;
 	
 	type = PyArray_DescrNewFromType(NPY_FLOAT64);
@@ -366,48 +374,42 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 	
 	if ( ndim != 2 ) return NULL;
 	
-	int cur_dim[ndim+1];
-	
-	for(i=0;i<ndim;i++) cur_dim[i] = dims[i];
-	cur_dim[ndim] = 0;
-
 	fprintf(stderr,"Computing radial average...");
 	
 	/*
 	 Now we rotationally average the power spectrum
 	*/
 	
-	int rows = cur_dim[0];
-	int cols = cur_dim[1];
-	int rad_size = MIN(rows/2,cols/2);
+	rows = dims[0];
+	cols = dims[1];
+	rad_size = MIN(rows/2,cols/2);
 	
-	double x_rad = cols / 2.0;
-	double y_rad = rows / 2.0;
+	x_rad = cols / 2.0;
+	y_rad = rows / 2.0;
 
-	npy_intp rad_dim[1] = { rad_size };
-	PyObject * radial_avg = PyArray_SimpleNew(1,rad_dim,NPY_FLOAT64);
+	rad_dim = rad_size;
+	radial_avg = PyArray_SimpleNew(1,&rad_dim,NPY_FLOAT64);
 	if (radial_avg == NULL) return NULL;
 	
-	double * data = (double *)PyArray_DATA(image);
-	double * rad_avg = (double *)PyArray_DATA(radial_avg); 
-	double * rad_cnt = (double *)malloc(sizeof(double)*rad_size);
+	data = (double *)PyArray_DATA(image);
+	rad_avg = (double *)PyArray_DATA(radial_avg); 
+	rad_cnt = (double *)malloc(sizeof(double)*rad_size);
 	if (rad_avg == NULL) return NULL;
 	if (rad_cnt == NULL) return NULL;
 	
 	for(i=0;i<rad_size;i++) rad_avg[i] = 0.0;
 	for(i=0;i<rad_size;i++) rad_cnt[i] = 0.0;
 	
-	int r,c;
 	for(r=0;r<rows;r++) {
 		for(c=0;c<cols;c++) {
-			double x = c - x_rad;
-			double y = r - y_rad;
-			double rad = sqrt(x*x+y*y);
+			x = c - x_rad;
+			y = r - y_rad;
+			rad = sqrt(x*x+y*y);
 			if ( rad >= rad_size-1 ) continue;
 			if ( rad < 5 ) continue;
-			int i_rad = rad;
-			double rwt1 = rad - i_rad;
-			double rwt2 = 1.0 - rwt1;
+			i_rad = rad;
+			rwt1 = rad - i_rad;
+			rwt2 = 1.0 - rwt1;
 			rad_avg[i_rad] += rwt2 * data[r*cols+c];
 			rad_avg[i_rad+1] += rwt1 * data[r*cols+c];
 			rad_cnt[i_rad] += rwt2;
@@ -440,6 +442,8 @@ void bandpass1D( double * data, int size, double sigma1, double sigma2 ) {
 	double * temp = (double *)malloc(sizeof(double)*size);
 
 	double two_s2, norm;
+	double sum;
+	int pos1, pos2;
 	
 	if ( sigma1 >= 0.8 ) {
 		krad = MAX(sigma1*4,1);
@@ -449,10 +453,10 @@ void bandpass1D( double * data, int size, double sigma1, double sigma2 ) {
 		norm    = 1.0 / ( sigma1 * sqrt(2.0*M_PI) );
 		for (i=0;i<krad;i++) kernel[i] = norm * exp( -(double)i*(double)i*two_s2 );
 		for (i=0;i<size;i++) {
-			double sum = data[i] * kernel[0];
+			sum = data[i] * kernel[0];
 			for(k=1;k<krad;k++) {
-				int pos1 = i - k;
-				int pos2 = i + k;
+				pos1 = i - k;
+				pos2 = i + k;
 				if ( pos1 < 0 ) pos1 = 0;
 				if ( pos2 > size-1 ) pos2 = size-1;
 				sum += ( data[pos1] + data[pos2] ) * kernel[k];
@@ -471,10 +475,10 @@ void bandpass1D( double * data, int size, double sigma1, double sigma2 ) {
 		norm    = 1.0 / ( sigma2 * sqrt(2.0*M_PI) );
 		for (i=0;i<krad;i++) kernel[i] = norm * exp( -(double)i*(double)i*two_s2 );
 		for(i=0;i<size;i++) {
-			double sum = data[i] * kernel[0];
+			sum = data[i] * kernel[0];
 			for(k=1;k<krad;k++) {
-				int pos1 = i - k;
-				int pos2 = i + k;
+				pos1 = i - k;
+				pos2 = i + k;
 				if ( pos1 < 0 ) pos1 = 0;
 				if ( pos2 > size-1 ) pos2 = size-1;
 				sum += ( data[pos1] + data[pos2] ) * kernel[k];
