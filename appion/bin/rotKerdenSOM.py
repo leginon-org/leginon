@@ -49,9 +49,10 @@ from pyami import mrc,spider
 #LOG_FILENAME = './rotKerdenSOM.log'
 #logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG,)
 
-### pylab tries to open a window, this is a workaround
+### pylab tries to open a window, change the backend to only produce png files
+### see http://matplotlib.sourceforge.net/faq/installing_faq.html#backends
 import matplotlib
-matplotlib.use('cairo')
+matplotlib.use('agg')
 import pylab
 
 #======================
