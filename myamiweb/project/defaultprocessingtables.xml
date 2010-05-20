@@ -128,11 +128,11 @@
       type="varchar(32)" 
     />
     <field 
-      name="REF|Ap3dDensityData|original density" 
+      name="REF|Ap3dDensityData|original_density" 
       type="int(20)" 
     />
     <field 
-      name="REF|ApInitialModelData|original model" 
+      name="REF|ApInitialModelData|original_model" 
       type="int(20)" 
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
@@ -142,8 +142,8 @@
     <key>KEY `md5sum` (`md5sum`)</key>
     <key>KEY `REF|projectdata|projects|project` (`REF|projectdata|projects|project`)</key>
     <key>KEY `hidden` (`hidden`)</key>
-    <key>KEY `REF|Ap3dDensityData|original density` (`REF|Ap3dDensityData|original density`)</key>
-    <key>KEY `REF|ApInitialModelData|original model` (`REF|ApInitialModelData|original model`)</key>
+    <key>KEY `REF|Ap3dDensityData|original_density` (`REF|Ap3dDensityData|original_density`)</key>
+    <key>KEY `REF|ApInitialModelData|original_model` (`REF|ApInitialModelData|original_model`)</key>
   </sqltable>
   <sqltable name="ApPathData" >
     <field 
