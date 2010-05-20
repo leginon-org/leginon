@@ -165,88 +165,6 @@ int despike_FLOAT(float *array, int rows, int cols, int statswidth, float ztest)
 	return spikes;
 }
 
-static PyObject * gaussian_nd( PyObject *self, PyObject *args) {
-	
-	PyObject *input_image, *output_image;
-	float sigma = 1.0;
-	
-	if ( !PyArg_ParseTuple(args, "Of", &input_image, &sigma) ) return NULL;
-	
-	int krad = sigma * 4;
-	krad = MAX(krad,2);
-
-	float *kernel = malloc(sizeof(float)*krad);
-	float two_s2  = 1.0 / ( sigma * sigma * 2 );
-	float norm    = 1.0 / ( sigma * sqrt( 2 * M_PI ) );
-	
-	int d, k, i, r;
-	
-	for (i=0;i<krad;i++) kernel[i] = norm * exp( -i*i*two_s2 );
-	
-	int   ndim = PyArray_NDIM(input_image);
-	npy_intp *dims = PyArray_DIMS(input_image);
-	int   size = PyArray_SIZE(input_image);
-	
-	output_image = PyArray_SimpleNew(ndim, dims, NPY_FLOAT32);
-	
-	fprintf(stderr,"Blurring matrix with %d dimensions :",ndim);
-	for(d=0;d<ndim;d++) fprintf(stderr,"%d.",(int)dims[d]);
-	fprintf(stderr," with sigma %f\n",sigma);
-
-	float * tmp_pixels = malloc(sizeof(float)*size);
-	float * inp_pixels = (float *)PyArray_DATA(input_image);
-	float * out_pixels = (float *)PyArray_DATA(output_image);
-	
-	memcpy(out_pixels,inp_pixels,sizeof(float)*size);
-
-	float *x1 = out_pixels;
-	float *x2 = tmp_pixels;
-	float *x3 = NULL;
-
-	for(d=0;d<ndim;d++) {
-		
-		// The number of elements in each 1d vector along dimensions d, and the number of such vectors
-		// which is equal to the total number of elements divided by the current dimension length.
-		int cols = dims[d];
-		int rots = size / dims[d];
-		
-		// Handy dandy border values (out of range comparisons) used in the MIN, MAX functions below.  
-		int minb = 0;
-		int maxb = cols - 1;
-
-		int t = 0, x = 0;
-		
-		// Convolve 1d kernel with 1d vector replicating border pixels.  Write the results along the slowest
-		// array dimensions (effectively rotating the array so the next 1d pass will go along the next dimension
-
-		for(k=0;k<size;k+=cols) {
-			for(r=0;r<cols;r++) {
-				float sum = x1[k+r] * kernel[0];
-				for(i=1;i<krad;i++) {
-					int pix1 = MAX(minb,r-i) + k;
-					int pix2 = MIN(maxb,r+i) + k;
-					sum += ( x1[pix1] + x1[pix2] ) * kernel[i];
-				}
-				x2[t] = sum;
-				if ( (t += rots) >= size ) t = ++x;
-			}
-		}
-		
-		x3 = x1;
-		x1 = x2;
-		x2 = x3;
-		
-	}
-	
-	if ( x1 != out_pixels ) memcpy(out_pixels,tmp_pixels,size*sizeof(float));
-	
-	free(kernel);
-	free(tmp_pixels);
-	
-	return output_image; 
-
-} 
-
 static PyObject * despike(PyObject *self, PyObject *args) {
 	PyObject *image, *floatimage;
 	int rows, cols, size, debug;
@@ -364,76 +282,6 @@ static PyObject * bin(PyObject *self, PyObject *args) {
 	return result;
 }
 
-static PyObject * rgbstring(PyObject *self, PyObject *args) {
-	PyObject *input, *output, *colormap = NULL, *values = NULL, *cvalue = NULL;
-	PyObject *inputarray;
-	int i, j, size;
-	float frommin, frommax, fromrange, scale, value;
-	unsigned char *index;
-	int scaledvalue;
-	float colors = 255.0;
-	unsigned char *rgb = NULL;
-	PyArray_Descr *desc;
-
-	if(!PyArg_ParseTuple(args, "Off|O", &input, &frommin, &frommax, &colormap))
-		return NULL;
-
-	if(colormap != NULL) {
-		colors = (float)(PySequence_Size(colormap) - 1);
-		rgb = PyMem_New(unsigned char, colors*3);
-		for(i = 0; i <= colors; i++) {
-			values = PySequence_Fast_GET_ITEM(colormap, i);
-			for(j = 0; j < 3; j++) {
-				cvalue = PySequence_Fast_GET_ITEM(values, j);
-				rgb[i*3 + j] = (unsigned char)PyInt_AsUnsignedLongMask(cvalue);
-			}
-		}
-	}
-
-	desc = PyArray_DescrNewFromType(NPY_FLOAT32);
-	inputarray = PyArray_FromAny(input, desc, 0, 0, NPY_CARRAY | NPY_FORCECAST, NULL);
-
-	fromrange = frommax - frommin;
-	if(fromrange == 0.0)
-		scale = 0.0;
-	else
-		scale = (float)colors/fromrange;
-
-	size = PyArray_DIMS(inputarray)[0]*PyArray_DIMS(inputarray)[1]*3;
-	output = PyString_FromStringAndSize(NULL, size);
-	index = (unsigned char *)PyString_AsString(output);
-	for(i = 0; i < PyArray_DIMS(inputarray)[0]; i++) {
-		for(j = 0; j < PyArray_DIMS(inputarray)[1]; j++) {
-			value = *(float *)(PyArray_DATA(inputarray)
-												+ i*PyArray_STRIDES(inputarray)[0] + j*PyArray_STRIDES(inputarray)[1]);
-			
-			if(value <= frommin) {
-				scaledvalue = 0;
-			} else if(value >= frommax) {
-				scaledvalue = colors;
-			} else {
-				scaledvalue = (int)(scale*(value - frommin));
-			}
-			if(colormap == NULL) {
-				*index = (unsigned char)scaledvalue;
-				*(index + 1) = (unsigned char)scaledvalue;
-				*(index + 2) = (unsigned char)scaledvalue;
-			} else {
-				scaledvalue *= 3;
-				*index = rgb[scaledvalue];
-				*(index + 1) = rgb[scaledvalue + 1];
-				*(index + 2) = rgb[scaledvalue + 2];
-			}
-			index += 3;
-		}
-	}
-	//PyMem_Del(rgb);
-
-	Py_DECREF(inputarray);
-
-	return output;
-}
-
 static PyObject * hanning(PyObject * self, PyObject *args, PyObject *kwargs) {
 	int m, n;
 	npy_intp dims[2];
@@ -494,13 +342,14 @@ static PyObject * highpass(PyObject *self, PyObject *args) {
 }
 
 static PyObject * radialPower( PyObject * self, PyObject * args ) {
-	
-	// Caveats to this function:
-	//  1.  The inverting used to center the FFT in the middle is only technically accurate when the
-	//      image dimensions are multiples of 2
-	//  2.  TODO: The function could be made about 2X faster if the R2C fft is used rather than the complex fft
-	//  3.  The radial averaging should be done based on the sampling frequency along both axis, right now the
-	//      averaging is not correct if the image dimensions are not the same.
+	/*
+	 Caveats to this function:
+	  1.  The inverting used to center the FFT in the middle is only technically accurate when the
+	      image dimensions are multiples of 2
+	  2.  TODO: The function could be made about 2X faster if the R2C fft is used rather than the complex fft
+	  3.  The radial averaging should be done based on the sampling frequency along both axis, right now the
+	      averaging is not correct if the image dimensions are not the same.
+	*/
 	
 	int i;
 	float lp = 0, hp = 0;
@@ -524,7 +373,9 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 
 	fprintf(stderr,"Computing radial average...");
 	
-	// Now we rotationally average the power spectrum
+	/*
+	 Now we rotationally average the power spectrum
+	*/
 	
 	int rows = cur_dim[0];
 	int cols = cur_dim[1];
@@ -537,9 +388,9 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 	PyObject * radial_avg = PyArray_SimpleNew(1,rad_dim,NPY_FLOAT64);
 	if (radial_avg == NULL) return NULL;
 	
-	double * data = PyArray_DATA(image);
-	double * rad_avg = PyArray_DATA(radial_avg); 
-	double * rad_cnt = malloc(sizeof(double)*rad_size);
+	double * data = (double *)PyArray_DATA(image);
+	double * rad_avg = (double *)PyArray_DATA(radial_avg); 
+	double * rad_cnt = (double *)malloc(sizeof(double)*rad_size);
 	if (rad_avg == NULL) return NULL;
 	if (rad_cnt == NULL) return NULL;
 	
@@ -586,13 +437,13 @@ void bandpass1D( double * data, int size, double sigma1, double sigma2 ) {
 	int i, k, krad = 0;
 	
 	double * kernel;
-	double * temp = malloc(sizeof(double)*size);
+	double * temp = (double *)malloc(sizeof(double)*size);
 
 	double two_s2, norm;
 	
 	if ( sigma1 >= 0.8 ) {
 		krad = MAX(sigma1*4,1);
-		kernel = malloc(sizeof(double)*krad);
+		kernel = (double *)malloc(sizeof(double)*krad);
 		if ( kernel == NULL ) goto error;
 		two_s2  = 1.0 / ( sigma1 * sigma1 * 2.0 );
 		norm    = 1.0 / ( sigma1 * sqrt(2.0*M_PI) );
@@ -614,7 +465,7 @@ void bandpass1D( double * data, int size, double sigma1, double sigma2 ) {
 	
 	if ( sigma2 >= 0.8 ) {
 		krad = MAX(sigma2*4,1);
-		kernel = malloc(sizeof(double)*krad);
+		kernel = (double *)malloc(sizeof(double)*krad);
 		if ( kernel == NULL ) goto error;		
 		two_s2  = 1.0 / ( sigma2 * sigma1 * 2.0 );
 		norm    = 1.0 / ( sigma2 * sqrt(2.0*M_PI) );
@@ -758,46 +609,6 @@ int isLocalMaximum(double *buffer, int filter_size, double *return_value, void *
 	return 1;
 }
 
-/* return 1 if center element of buffer is local minimum, otherwise 0 */
-/* callback_data points to index of center element */
-int isLocalMinimum(double *buffer, int filter_size, double *return_value, void *callback_data) {
-	double center_value, *p;
-	int i;
-	center_value = buffer[*(int *)callback_data];
-	p = buffer;
-	for(i=0; i<filter_size; i++,p++) {
-		if(i == *(int *)callback_data) continue;
-		if(*p <= center_value) {
-			*return_value = 0;
-			return 1;
-		}
-	}
-	*return_value = 1;
-	return 1;
-}
-
-static PyObject * py_isLocalMaximum(PyObject *obj, PyObject *args) {
-	int center_index;
-	if (!PyArg_ParseTuple(args, "i", &center_index)) {
-		PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
-		return NULL;
-	} else {
-		/* wrap function and callback_data in a CObject: */
-		return PyCObject_FromVoidPtrAndDesc(isLocalMaximum, &center_index, NULL);
-	}
-}
-
-static PyObject * py_isLocalMinimum(PyObject *obj, PyObject *args) {
-	int center_index;
-	if (!PyArg_ParseTuple(args, "i", &center_index)) {
-		PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
-		return NULL;
-	} else {
-		/* wrap function and callback_data in a CObject: */
-		return PyCObject_FromVoidPtrAndDesc(isLocalMinimum, &center_index, NULL);
-	}
-}
-
 int pointInPolygon(float x, float y, float *polygon, int nvertices) {
 	int intersections=0;
 	float *ax, *ay, *bx, *by;
@@ -884,7 +695,7 @@ static PyObject * py_pointsInPolygon(PyObject *obj, PyObject *args) {
 
 		insidebool = PyBool_FromLong(inside);
 		PyList_SetItem(insidelist, i, insidebool);
-		//Py_DECREF(insidebool);
+		/* Py_DECREF(insidebool); */
 	}
 
 	free(vertices);
@@ -962,49 +773,43 @@ static PyObject *cannyedge(PyObject *self, PyObject *args) {
 	outputarray = PyArray_SimpleNewFromData(PyArray_NDIM(inputarray), PyArray_DIMS(inputarray), NPY_UINT8, edge);
 	Py_DECREF(inputarray);
 
-	//return (PyObject *)outputarray;
+	/* return (PyObject *)outputarray; */
 	return Py_BuildValue("OO", outputarray, outputarraym);
 
 }
 
-static struct PyMethodDef numeric_methods[] = {
+static PyMethodDef numeric_methods[] = {
 
-// used by align, ImageViewer2,
-	{"minmax", minmax, METH_VARARGS},
+/* used by align, ImageViewer2, */
+	{"minmax", minmax, METH_VARARGS, ""},
 
-// used by rctacquisition, maybe could use nd_image interpolation instead
-	{"bin", bin, METH_VARARGS},
 
-// should find a way to do this using numarray
-	{"despike", despike, METH_VARARGS},
-	
-// craig's fast multi-dimensional gaussian blur
-	{"gaussian",gaussian_nd,METH_VARARGS},
+/* used by rctacquisition, maybe could use nd_image interpolation instead */
+	{"bin", bin, METH_VARARGS, ""},
 
-// used by Leginon.gui.wx.ImageViewer and ImageViewer2
-	{"rgbstring", rgbstring, METH_VARARGS},
+/* should find a way to do this using numarray */
+	{"despike", despike, METH_VARARGS, ""},
 
-// used by Leginon.align
-	{"hanning", hanning, METH_VARARGS|METH_KEYWORDS},
-	{"highpass", highpass, METH_VARARGS},
-	{"logpolar", logpolar, METH_VARARGS},
+/* used by Leginon.align */
+	{"hanning", (PyCFunction)hanning, METH_VARARGS | METH_KEYWORDS, ""},
+	{"highpass", highpass, METH_VARARGS, ""},
+	{"logpolar", logpolar, METH_VARARGS, ""},
 
-// new stuff
-	{"islocalmaximum", py_isLocalMaximum, METH_VARARGS},
-	{"islocalminimum", py_isLocalMinimum, METH_VARARGS},
-	{"pointsInPolygon", py_pointsInPolygon, METH_VARARGS},
+/* new stuff */
+	{"pointsInPolygon", py_pointsInPolygon, METH_VARARGS, ""},
 
-	{"radialPower",radialPower,METH_VARARGS},
+	{"radialPower",radialPower,METH_VARARGS, ""},
 
-	{"cannyedge", cannyedge, METH_VARARGS},
+	{"cannyedge", cannyedge, METH_VARARGS, ""},
 
-// from beamfinder.c
-//	{"resamplearray", resamplearray, METH_VARARGS},
-//	{"componentlabeling", componentlabeling, METH_VARARGS}, 
-//	{"fitcircle2edges", fitcircle2edges, METH_VARARGS}, 
+/*
+ from beamfinder.c
+	{"resamplearray", resamplearray, METH_VARARGS},
+ {"componentlabeling", componentlabeling, METH_VARARGS}, 
+	{"fitcircle2edges", fitcircle2edges, METH_VARARGS}, 
+*/
 
-	{NULL, NULL}
-	
+	{NULL, NULL, 0, NULL}
 };
 
 void init_numextension() {
