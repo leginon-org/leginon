@@ -719,7 +719,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### add info for from stack ids
 		if self.params['fromstackid'] is not None:
-			stackq['oldstack'] = appiondata.ApStackData.direct_query(self.params['fromstackid'])
+			#stackq['oldstack'] = appiondata.ApStackData.direct_query(self.params['fromstackid'])
 			stackq['substackname'] = "restack%d"%(self.params['fromstackid'])
 			stackq['description'] += " ... restack from stack id %d"%(self.params['fromstackid'])
 
