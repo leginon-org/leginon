@@ -30,6 +30,8 @@ class ApEulerJump(object):
 		### create a cursor
 		self.cursor = self.db.cursor()
 		### keep sinedon version too
+		self.jumperror = False
+
 
 	#=====================
 	def calculateEulerJumpsForEntireRecon(self, reconrunid, stackid=None, sym=None):
@@ -50,9 +52,15 @@ class ApEulerJump(object):
 		t0 = time.time()
 		medians = []
 		count = 0
+		miscount = 0
 		for stackpart in stackparts:
 			count += 1
 			jumpdata = self.getEulerJumpData(reconrunid, stackpartid=stackpart.dbid, stackid=stackid, sym=sym)
+			if jumpdata is None:
+				if miscount < 25:
+					continue
+				else:
+					break
 			medians.append(jumpdata['median'])
 			if count % 500 == 0:
 				timeremain = (time.time()-t0)/(count+1)*(numparts-count)
@@ -88,8 +96,12 @@ class ApEulerJump(object):
 		### need to calculate the jump
 		jumpdata = self.calculateJumpData(stackpartid, reconrunid, sym)
 		if jumpdata is None:
-			apDisplay.printError("Could not get or calculate jump data for stackpartid="
-				+str(stackpartid)+" and reconrunid="+str(reconrunid))
+			### No jump data for particle stackpartid
+			if self.jumperror is False:
+				self.jumperror = True
+				apDisplay.printWarning("Could not get or calculate jump data for stackpartid="
+					+str(stackpartid)+" and reconrunid="+str(reconrunid))
+			return None
 		### insert into DB
 		self.insertJumpIntoDB(stackpartid, reconrunid, jumpdata)
 		return jumpdata
@@ -139,6 +151,8 @@ class ApEulerJump(object):
 		#apDisplay.printMsg("calculating jump data for "+str(stackpartid))
 		jumpdata = {}
 		eulers = self.getEulersForParticle(stackpartid, reconrunid)
+		if eulers is None:
+			return None
 		eulers.sort(self.sortByIteration)
 		distances = []
 		for i in range(len(eulers)-1):
@@ -235,8 +249,8 @@ class ApEulerJump(object):
 		self.cursor.execute(query)
 		results = self.cursor.fetchall()
 		if not results:
-			print query
-			apDisplay.printError("Failed to get Eulers for Particle "+str(partnum))
+			### this particle was not used in the recon
+			return None
 		eulertree = self.convertSQLtoEulerTree(results)
 		return eulertree
 
