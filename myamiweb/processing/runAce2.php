@@ -94,7 +94,7 @@ function createAce2Form($extra=false) {
   $hpone = ($_POST['hpone']) ? $_POST['hpone'] : '';
   $edge1 = ($_POST['edge1']) ? $_POST['edge1'] : 10;
   $edge2 = ($_POST['edge2']) ? $_POST['edge2'] : 0.001;
-  $refine2d = ($_POST['refine2d']== 'on') ? 'CHECKED' : '';
+  //$refine2d = ($_POST['refine2d']== 'on') ? 'CHECKED' : '';
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
@@ -151,9 +151,9 @@ function createAce2Form($extra=false) {
 	echo docpop('rotblur','Rotational blur <font size="-2">(in degrees)</font>');
 	echo "<br/><br/>\n";
 
-	echo "<input type='checkbox' name='refine2d' $refine2d>\n";
+	/*echo "<input type='checkbox' name='refine2d' $refine2d>\n";
 	echo docpop('refine2d','Extra 2d Refine');
-	echo "<br/><br/>\n";
+	echo "<br/><br/>\n";*/
 
 	echo"
 	  </TD>
@@ -194,7 +194,7 @@ function runAce2() {
 	$command .= $apcommand;
 
 	// parse params
-	$refine2d=$_POST['refine2d'];
+	//$refine2d=$_POST['refine2d'];
 	$binval=$_POST['binval'];
 
 	$cs=$_POST['cs'];
@@ -236,7 +236,7 @@ function runAce2() {
 	if (is_numeric($rotblur))
 		$command.="--rotblur=$rotblur ";
 
-	if($refine2d) $command.="--refine2d ";
+	//if($refine2d) $command.="--refine2d ";
 	$command.="--cs=$cs ";
 	$command.="--bin=$binval ";
 
@@ -262,8 +262,8 @@ function runAce2() {
 		$command<HR>
 		</TD></tr>";
 		appionLoopSummaryTable();
+		//<TR><td>refine 2d</TD><td>$refine2d</TD></tr>
 		echo"
-		<TR><td>refine 2d</TD><td>$refine2d</TD></tr>
 		<TR><td>bin</TD><td>$binval</TD></tr>
 		<TR><td>cs</TD><td>$cs</TD></tr>
 		<TR><td>rotblur</TD><td>$rotblur</TD></tr>\n";
