@@ -86,10 +86,12 @@ if ($reconRuns) {
 		$avgmedjump = $particle->getAverageMedianJump($reconid);
 
 		//print_r($reconrun);
-		$bestimage = $reconrun['path'].'/threed.'.$res['iter'].'a.mrc.1.png';
+		$bestimages = glob($reconrun['path'].'/threed.*'.$res['iter'].'a.mrc.1.png');
+		if ($bestimages)
+			$bestimage = $bestimages[0];
 
 		// recon info
-		$html .= "<TR>\n";
+		$html .= "<tr>\n";
 		// image
 		if (file_exists($bestimage)) 
 			$html .= "<td><a href='loadimg.php?filename=$bestimage' target='snapshot'>"
