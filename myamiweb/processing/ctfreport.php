@@ -12,12 +12,10 @@ $ctf = new particledata();
 $sessionId = $_GET['expId'];
 $formAction=$_SERVER['PHP_SELF']."?expId=$sessionId";
 
-$aceparamsfields = array (
-	'acerun', 'display', 'stig', 'medium',
-	'df_override', 'edgethcarbon', 'edgethice', 'pfcarbon',
-	'pfice', 'overlap', 'fieldsize', 'resamplefr', 'bin',
-	'drange', 'reprocess', 'path',
-);
+$fieldarray = $ctf->getCTFParameterFields();
+foreach ($fieldarray as $k=>$v) {
+	$aceparamsfields[] = $k;
+}
 
 // *********************
 // SETUP JAVA SCRIPT
@@ -37,7 +35,7 @@ foreach ($aceparamsfields as $param) {
 $acestring=rtrim($acestring,',');	
 $javafunctions.= $acestring;
 $javafunctions.="){
-		var newwindow=window.open('','name','height=400, width=200, resizable=1, scrollbars=1');
+		var newwindow=window.open('','name','height=560, width=480, resizable=1, scrollbars=1');
 		newwindow.document.write(\"<HTML><HEAD><link rel='stylesheet' type='text/css' href='../css/viewer.css'>\");
 		newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
 		newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");";
@@ -47,8 +45,11 @@ foreach ($aceparamsfields as $param) {
 		$namesplit=explode("|",$param);
 		$param=end($namesplit);
 	}
-	$javafunctions.= "newwindow.document.write('<TR><td>$param</TD>');\n";
-	$javafunctions.= "newwindow.document.write('<td>'+$param+'</TD></tr>');\n";
+	
+	$javafunctions.= "if ($param && $param.length > 0) {\n";
+	$javafunctions.= "  newwindow.document.write('<tr><td><b>$param</b></td>');\n";
+	$javafunctions.= "  newwindow.document.write('<td>'+$param+'</td></tr>');\n";
+	$javafunctions.= "};\n";
 }
 $javafunctions.= "newwindow.document.write('</table></BODY></HTML>');\n";
 $javafunctions.= "newwindow.document.close();\n";
@@ -85,13 +86,15 @@ if (count($ctfrundatas) != count($hidectfrundatas) && !$_GET['showHidden']) {
 }
 
 if ($ctfrundatas) {
+	echo "<h3>Summary of confidence values from all runs</h3>\n";
 	echo "<a href='ctfgraph.php?hg=1&expId=$sessionId&s=1&f=confidence'>\n";
 	echo "<img border='0' width='400' height='300' src='ctfgraph.php?w=400&h=300&hg=1&expId=$sessionId&s=1&f=confidence'></a>\n";
 	echo "<br/>\n";
 
-	$ctfdownlink .= "<font size='+1'><a href='downloadctfdata.php?expId=$sessionId'>\n";
+	$ctfdownlink .= "<h3>";
+	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$sessionId'>\n";
 	$ctfdownlink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download stack'>&nbsp;download ctf data\n";
-	$ctfdownlink .= "</a></font><br/>\n";
+	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 
 	foreach ($ctfrundatas as $ctfrundata) {
@@ -159,9 +162,15 @@ if ($ctfrundatas) {
 				echo "<td>Path:&nbsp;<i>".$ctfdata['path']."</i></td>\n";
 			echo "</tr>\n";
 
-			echo "<tr bgcolor='#ffffff'>\n";
-				echo "<td>Resample Freq:&nbsp;".$ctfdata['resamplefr']."</td>\n";
-			echo "</tr>\n";
+			if ($ctfdata['resamplefr']) {
+				echo "<tr bgcolor='#ffffff'>\n";
+					echo "<td>Resample Freq:&nbsp;".$ctfdata['resamplefr']."</td>\n";
+				echo "</tr>\n";
+			} elseif ($ctfdata['bin']) {
+				echo "<tr bgcolor='#ffffff'>\n";
+					echo "<td>Binning:&nbsp;".$ctfdata['bin']."</td>\n";
+				echo "</tr>\n";
+			}
 
 			echo "<tr><td colspan='10'>\n";
 				echo displayCTFstats($stats, $display_keys);

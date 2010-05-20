@@ -1014,6 +1014,30 @@ class particledata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getCTFParameterFields() {
+		$q = "SELECT *, path.`path` as path, acerun.`DEF_id` as acerun "
+			."FROM ApAceRunData AS acerun ";
+		if ($this->mysql->SQLTableExists("ApAceParamsData")) {
+			$q .= "LEFT JOIN ApAceParamsData AS aceparams "
+				."  ON (aceparams.`DEF_id` = acerun.`REF|ApAceParamsData|aceparams`) ";
+		}
+		if ($this->mysql->SQLTableExists("ApCtfTiltParamsData")) {
+			$q .= "LEFT JOIN ApCtfTiltParamsData AS ctftilt "
+			."  ON (ctftilt.`DEF_id` = acerun.`REF|ApCtfTiltParamsData|ctftilt_params`) ";
+		}
+		if ($this->mysql->SQLTableExists("ApAce2ParamsData")) {
+			$q .= "LEFT JOIN ApAce2ParamsData AS ace2params "
+			."  ON (ace2params.`DEF_id` = acerun.`REF|ApAce2ParamsData|ace2_params`) ";
+		}
+		$q .= "LEFT JOIN ApPathData AS path "
+			."  ON (path.`DEF_id` = acerun.`REF|ApPathData|path`) "
+			." LIMIT 1; ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r[0];
+	}
+
 	function getCTFStats($fields, $sessionId, $runId=false) {
 		if (!is_array($fields))
 			return False;
