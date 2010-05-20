@@ -341,6 +341,14 @@ class ApAce2ParamsData(Data):
 			('reprocess', float),
 			('cs', float),
 			('stig', bool),
+			('min_defocus', float),
+			('max_defocus', float),
+			('edge_thresh', float),
+			('edge_blur', float),
+			('rot_blur', float),
+			('refine2d', bool),
+			('onepass', float),
+			('zeropass', float),
 		)
 	typemap = classmethod(typemap)
 

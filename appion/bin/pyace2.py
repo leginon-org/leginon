@@ -253,6 +253,28 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		#print self.ctfvalues
 		return
 
+
+		self.parser.add_option("--mindefocus", dest="mindefocus", type="float", default=-0.1e-6,
+			help="Minimal acceptable defocus (in meters)", metavar="#")
+		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float", default=-10e-6,
+			help="Maximal acceptable defocus (in meters)", metavar="#")
+		self.parser.add_option("--edge1", dest="edge_b", type="float", default=12.0,
+			help="Canny edge parameters Blur Sigma", metavar="#")
+		self.parser.add_option("--edge2", dest="edge_t", type="float", default=0.001,
+			help="Canny edge parameters Edge Treshold(0.0-1.0)", metavar="#")
+		self.parser.add_option("--rotblur", dest="rotblur", type="float", default=0.0,
+			help="Rotational blur for low contrast CTF (in degrees), default 0", metavar="#")
+		### true/false
+		self.parser.add_option("--refine2d", dest="refine2d", default=False,
+			action="store_true", help="Refine the defocus after initial ACE with 2d cross-correlation")
+		self.parser.add_option("--verbose", dest="verbose", default=False,
+			action="store_true", help="Show all ace2 messages")
+		self.parser.add_option("--onepass", dest="onepass", type="float",
+			help="Mask High pass filter radius for end of gradient mask in Angstroms", metavar="FLOAT")
+		self.parser.add_option("--zeropass", dest="zeropass", type="float",
+			help="Mask High pass filter radius for zero mask in Angstroms", metavar="FLOAT")
+
+
 	#======================
 	def commitToDatabase(self, imgdata):
 		if self.ctfvalues is None:
@@ -267,6 +289,14 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		paramq['reprocess'] = self.params['reprocess']
 		paramq['cs']      = self.params['cs']
 		paramq['stig']    = True
+		paramq['min_defocus'] = self.params['mindefocus']
+		paramq['max_defocus'] = self.params['maxdefocus']
+		paramq['edge_thresh'] = self.params['edge_t']
+		paramq['edge_blur'] = self.params['edge_b']
+		paramq['rot_blur']  = self.params['rotblur']
+		paramq['refine2d']  = self.params['refine2d']
+		paramq['onepass']   = self.params['onepass']
+		paramq['zeropass']  = self.params['zeropass']
 
 		runq=appiondata.ApAceRunData()
 		runq['name']    = self.params['runname']
