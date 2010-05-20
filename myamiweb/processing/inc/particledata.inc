@@ -954,6 +954,7 @@ class particledata {
 			."c.`cross_correlation` , "
 			."c.`snr` , "
 			."r.`DEF_id` as acerunId , "
+			."r.`name` as runname , "
 			."p.`path`, "
 			."c.`graph1` , "
 			."c.`graph2` , "

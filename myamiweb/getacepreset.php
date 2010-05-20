@@ -43,6 +43,7 @@ if ($ctftype=='ctffind')
 else
 	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
 
+$keys[]='runname';
 $keys[]='defocus';
 $keys[]='defocus1';
 if ($ctfdata['angle_astigmatism']) {
