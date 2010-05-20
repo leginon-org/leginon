@@ -110,7 +110,7 @@ class authlib{
 			if(!$dbc->SQLQuery($q)){
 				return $this->error['database_error'];		
 			}	
-			$from = EMAIL_TITLE." <".ADMIN_EMAIL.">";
+			$from = 'EMAIL_TITLE'." <".ADMIN_EMAIL.">";
 			$to = $firstname . " " . $lastname . " <" . $email . ">";
 			$subject = "Registration: Appion / Legnion Tools";
 			$body = "Thank you, $firstname for registering. Here is the information we received: \n\n "
