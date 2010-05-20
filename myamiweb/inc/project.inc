@@ -69,19 +69,19 @@ class project {
 
 	function getGridInfo($gridId){
 		$q='select g.gridId, label as "label", '
-		  .'date_format(g.prepdate,"%m/%e/%Y") as prepdate, '
-		  .'g.specimenId, '
-		  .'g.substrate, '
-		  .'g.preparation, '
-		  .'g.number, '
-		  .'g.note, '
-		  .'g.boxId, '
-		  .'g.peopleId, '
-		  .'l.location '
-		  .'from grids g '
-		  .'left join gridlocations l '
-		  .'on (l.gridId = g.gridId) '
-		  .'where g.gridId="'.$gridId.'"';
+			.'date_format(g.prepdate,"%m/%e/%Y") as prepdate, '
+			.'g.specimenId, '
+			.'g.substrate, '
+			.'g.preparation, '
+			.'g.number, '
+			.'g.note, '
+			.'g.boxId, '
+			.'g.peopleId, '
+			.'l.location '
+			.'from grids g '
+			.'left join gridlocations l '
+			.'on (l.gridId = g.gridId) '
+			.'where g.gridId="'.$gridId.'"';
 
 		list($info) = $this->mysql->getSQLResult($q);
 		return $info;
@@ -94,7 +94,7 @@ class project {
 			.'on (pe.`REF|projects|project` = p.`DEF_id`) '
 			.'left join '.DB_LEGINON.'.`SessionData` s '
 			.'on (s.`DEF_id` = pe.`REF|leginondata|SessionData|session`) '
-		  .'where s.name="'.$session.'"';
+			.'where s.name="'.$session.'"';
 		list($info) = $this->mysql->getSQLResult($q);
 
 		$projectId=$info['projectId'];
@@ -212,7 +212,7 @@ class project {
 	}
 
 	function getProjectInfo($projectId) {
-		$q='select DEF_id AS projectId, name  from projects '
+		$q='select DEF_id AS projectId, name from projects '
 			.'where DEF_id='.$projectId;
 		list($r)=$this->mysql->getSQLResult($q);
 
@@ -303,7 +303,7 @@ class project {
 			$q = 'SELECT '.DB_LEGINON.'.SessionData.name '
 				.'FROM '.DB_LEGINON.'.SessionData '
 				.'WHERE '.DB_LEGINON.'.SessionData.DEF_id IN ( '
-				.'SELECT pe.`REF|leginondata|SessionData|session`  '
+				.'SELECT pe.`REF|leginondata|SessionData|session` '
 				.'FROM projectexperiments pe '
 				.'WHERE pe.`REF|projects|project`="'.$rp['projectId'].'" ) ';
 			$r = $this->mysql->getSQLResult($q);
