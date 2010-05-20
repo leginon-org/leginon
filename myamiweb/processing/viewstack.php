@@ -241,7 +241,7 @@ function uploadavg() {
 function runCommonLines() {
 	var sindex = $('selectedIndex').value
 	var eindex = $('excludedIndex').value
-	if (sindex!="" && sindex.length <= eindex.length) {
+	if (sindex!="" && (eindex=="" || sindex.length <= eindex.length)) {
 		window.open("createmodel.php?expId="+expId+"&include="+sindex+"&clusterid="+clusterId+"",'height=250,width=400');
 	} else if (eindex!="") {
 		window.open("createmodel.php?expId="+expId+"&exclude="+eindex+"&clusterid="+clusterId+"",'height=250,width=400');
@@ -252,7 +252,7 @@ function createAlignSubStack() {
 	var sindex = $('selectedIndex').value
 	var eindex = $('excludedIndex').value
 	window.status=sindex;
-	if (sindex!="" && sindex.length <= eindex.length) {
+	if (sindex!="" && (eindex=="" || sindex.length <= eindex.length)) {
 		if (clusterId!="") {
 			window.open("alignSubStack.php?expId="+expId+"&file="+filename+"&include="+sindex+"&clusterId="+clusterId+"",'height=250,width=400');
 		} else if (alignId!="") {
