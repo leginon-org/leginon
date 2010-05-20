@@ -84,7 +84,7 @@ require_once('setupUtils.inc');
 		  
 			// first cell
 		  	var cellFirst = row.insertCell(0);
-		  	var textNode = document.createTextNode("Processing Host Name : ");
+		  	var textNode = document.createTextNode("Local cluster host name : ");
 			cellFirst.appendChild(textNode);
 			  
 			// second cell
@@ -99,7 +99,7 @@ require_once('setupUtils.inc');
 	
 		    // thired cell
 			var cellFirst = row.insertCell(2);
-		  	var textNode = document.createTextNode("Max number of processor per node :");
+		  	var textNode = document.createTextNode("Max number of processors per node :");
 		  	cellFirst.appendChild(textNode);
 		  
   		    // last cell
@@ -124,7 +124,7 @@ require_once('setupUtils.inc');
 		  
 			// first cell
 		  	var cellFirst = row.insertCell(0);
-		  	var textNode = document.createTextNode("Cluster configure filename : ");
+		  	var textNode = document.createTextNode("Remote cluster configuration filename : ");
 			cellFirst.appendChild(textNode);
 			  
 			// second cell
