@@ -295,7 +295,6 @@ class UploadReconScript(appionScript.AppionScript):
 		apDisplay.printMsg("inserted "+str(numinserts)+" rows of FSC data into database")
 		f.close()
 
-
 	#==================
 	#==================
 	def insertRefinementRun(self):
