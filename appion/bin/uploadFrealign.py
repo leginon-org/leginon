@@ -237,28 +237,56 @@ class UploadFrealign(appionScript.AppionScript):
 			return None
 
 		rmesq = appiondata.ApRMeasureData()
-		rmesq['volume']=volumeDensity
+		rmesq['volume']=os.path.basename(volumeDensity)
 		rmesq['rMeasure']=resolution
 		return rmesq
 
 	#==================
 	def getResolutionData(self, iternum):
-		fscfile = 'fsc.eotest.'+iternum
+		fscfile = 'fsc.eotest.%d'%(iternum)
 		fscpath = os.path.join(self.params['rundir'], "iter%03d"%(iternum), fscfile)
 
-		if not os.path.isfile(fscfile):
-			apDisplay.printWarning("Could not find FSC file: "+fscfile)
+		if not os.path.isfile(fscpath):
+			apDisplay.printWarning("Could not find FSC file: "+fscpath)
+			return None
 
 		# calculate the resolution:
-		halfres = apRecon.calcRes(fscpath, self.params['boxsize'], self.apix)
+		halfres = apRecon.calcRes(fscpath, self.boxsize, self.apix)
 		apDisplay.printColor("FSC 0.5 Resolution of %.3f Angstroms"%(halfres), "cyan")
 
 		# save to database
 		resq=appiondata.ApResolutionData()
 		resq['half'] = halfres
-		resq['fscfile'] = fsc
+		resq['fscfile'] = fscfile
 
 		return resq
+
+	#==================
+	def insertFSCData(self, iternum, refineIterData):
+		fscfile = 'fsc.eotest.%d'%(iternum)
+		fscpath = os.path.join(self.params['rundir'], "iter%03d"%(iternum), fscfile)
+
+		if not os.path.isfile(fscpath):
+			apDisplay.printWarning("Could not find FSC file: "+fscpath)
+			return None
+
+		f = open(fscpath, 'r')
+		apDisplay.printMsg("inserting FSC Data into database")
+		numinserts = 0
+		for line in f:
+			fscq = appiondata.ApFSCData()
+			fscq['refineIter'] = refineIterData
+			sline = line.strip()
+			bits = sline.split('\t')
+			fscq['pix'] = int(bits[0])
+			fscq['value'] = float(bits[1])
+
+			numinserts+=1
+			if self.params['commit'] is True:
+				fscq.insert()
+
+		apDisplay.printMsg("inserted "+str(numinserts)+" rows of FSC data into database")
+		f.close()
 
 	#=====================
 	def getRunData(self):
@@ -360,6 +388,9 @@ class UploadFrealign(appionScript.AppionScript):
 
 		### get volume info
 		iterdata = self.setIterData(iterparams, volumeMrcFile)
+
+		### insert FSC data
+		self.insertFSCData(iternum, iterdata)
 
 		### insert particle data
 		self.insertRefineParticleData(iterdata, parttree)
