@@ -34,14 +34,13 @@ class DBUpgradeTools(object):
 		self.drop = drop
 		self.confname = confname
 		self.exit = exit
-		### get database config from sinedon.cfg
-		dbconf = dbconfig.getConfig(self.confname)
 		### if database name is not config name, e.g., ap212 and appiondata
-		if dbname is not None and dbname != dbconf['db']:
+		if dbname is not None:
 			self.dbname = dbname
 			dbconf = dbconfig.setConfig(self.confname, db=dbname)
 		else:
 			self.dbname = dbconf['db']
+		dbconf = dbconfig.getConfig(self.confname)
 		if messaging['success'] is True:
 			print "\033[32mconnected to db '%s' on server '%s'\033[0m"%(dbconf['db'], dbconf['host'])
 		### connect to db
