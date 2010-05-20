@@ -782,6 +782,7 @@ class processStack(object):
 
 	#===============
 	def start(self, stackfile, partlist=None):
+		self.stackfile = stackfile
 		self.starttime = time.time()
 		if partlist is not None:
 			partlist.sort()
@@ -798,7 +799,7 @@ class processStack(object):
 		self.index = 0
 		t0 = time.time()
 
-		while self.index < self.numpart and first < self.numpart:
+		while self.index < self.numpart and first <= self.numpart:
 			### print message
 			if self.index > 10:
 				esttime = (time.time()-t0)/float(self.index+1)*float(self.numpart-self.index)
