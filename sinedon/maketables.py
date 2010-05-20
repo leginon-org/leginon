@@ -5,6 +5,8 @@ import sys
 import sqldict
 import inspect
 import sinedon
+import MySQLdb
+
 from optparse import OptionParser
 
 #=================
@@ -71,25 +73,19 @@ def definitionToXml(xmlf, tablename, definition):
 	tabledef += ("</sqltable>\n")
 	xmlf.write(tabledef)
 
-#=================
-#=================
-#=================
-if __name__ == "__main__":
-	options = getOptions()
-
+def makeNonExistingTables(sinedonname,modulename,dbname=None,xmlfile=None):
 	### use alternate db name if desired
-	if options.dbname is not None:
+	if dbname is not None:
 		print "setting alternate database name"
-		sinedon.setConfig(options.sinedonname, db=options.dbname)
+		sinedon.setConfig(sinedonname, db=dbname)
 
 	### connect to DB
-	if options.xmlfile is None:
-		dbconf = sinedon.getConfig(options.sinedonname)
-		dbd = sqldict.SQLDict(**dbconf)
+	dbconf = sinedon.getConfig(sinedonname)
+	dbd = sqldict.SQLDict(**dbconf)
 
 	### import desire module
-	module = __import__(options.modulename)
-	modbase = re.sub("^.*\.", "", options.modulename)
+	module = __import__(modulename)
+	modbase = re.sub("^.*\.", "", modulename)
 	tableData = getattr(module, modbase) ## hope this works
 	
 	### get module members
@@ -100,8 +96,8 @@ if __name__ == "__main__":
 
 	### parse members
 	count = 0
-	if options.xmlfile is not None:
-		xmlf = open(options.xmlfile, 'w')
+	if xmlfile is not None:
+		xmlf = open(xmlfile, 'w')
 		xmlf.write("<defaulttables>\n <definition>\n")
 	for func in funcs:
 		### Check if member is valid len 2 tuple
@@ -113,21 +109,36 @@ if __name__ == "__main__":
 
 		### Create table
 		tablename = func[0]
-		print tablename
 		tableclass = func[1]()
-		table = (options.dbname, tablename)
+		table = (dbname, tablename)
 		definition, formatedData = sqldict.dataSQLColumns(tableclass, False)
-		if options.xmlfile is None:
-			dbd.createSQLTable(table, definition)
-		else:
-			definitionToXml(xmlf, tablename, definition)
-		count += 1
+		try:
+			dbd.diffSQLTable(tablename,definition)
+		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
+			errno = e.args[0]
+			## some version of mysqlpython parses the exception differently
+			if not isinstance(errno, int):
+				errno = errno.args[0]
+			## 1146:  table does not exist
+			if errno in (1146,):
+				print tablename,' does not yet exist, and will be created'
+				if xmlfile is None:
+					dbd.createSQLTable(table, definition)
+				else:
+					definitionToXml(xmlf, tablename, definition)
+				count += 1
 
-	if options.xmlfile is not None:
+	if xmlfile is not None:
 		xmlf.write(" </definition>\n</defaulttables>\n")
 		xmlf.close()
 
 	print "Created %d tables"%(count)
 
+#=================
+#=================
+#=================
+if __name__ == "__main__":
+	options = getOptions()
 
-
+	makeNonExistingTables(options.sinedonname,options.modulename,
+		options.dbname,options.xmlfile)

@@ -56,9 +56,11 @@ if ($_POST['createprocessing'] || $linkprocessing) {
 			$leginondata->mysql->setSQLHost( array('db'=>$dbname) );
 			$leginondata->importTables($filename);
 			//appion_extra.xml is created by sinedon/maketables.py
-			//it was edited to remove tables already defined in 
-			//DEF_PROCESSING_TABLES_FILE since sinedon does not set type
-			//varchar that makes it indexable and faster
+			//based on a database without importing the existing appion_extra.xml 
+			//Since sinedon/maketables.py does not create table definition if
+			//the table exists in the designated database,
+			//DEF_PROCESSING_TABLES_FILE set type
+			//varchar is retained that makes it indexable and faster
 			$filename = "../xml/appion_extra.xml";
 			$leginondata->mysql->setSQLHost( array('db'=>$dbname) );
 			$leginondata->importTables($filename);

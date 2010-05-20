@@ -3,7 +3,7 @@
 import sys
 import time
 import random
-from sinedon import dbupgrade, dbconfig
+from sinedon import dbupgrade, maketables
 
 def getAppionDatabases(projectdb):
 	"""
@@ -323,6 +323,11 @@ def upgradeAppionDB(appiondbname, projectdb, backup=True):
 	appiondb.changeColumnDefinition('ApAlignParticleData', 'mirror', appiondb.bool)
 	print "DONE"
 
+def makeAppionTables(dbname):
+	sinedonname = 'appiondata'
+	modulename = 'appionlib.'+sinedonname
+	maketables.makeNonExistingTables(sinedonname,modulename,dbname,None)
+
 def upgradeProjectDB(projectdb,backup=True):
 	dbname = projectdb.getDatabaseName()
 	if backup:
@@ -404,8 +409,6 @@ if __name__ == "__main__":
 		backup = True
 	upgradeProjectDB(projectdb,backup=backup)
 	upgradeLeginonDB(leginondb,backup=backup)
-	#upgradeAppionDB('ap1', projectdb)
-	#sys.exit(1)
 
 	appiondblist = getAppionDatabases(projectdb)
 	for appiondbname in appiondblist:
@@ -414,3 +417,4 @@ if __name__ == "__main__":
 			time.sleep(1)
 			continue
 		upgradeAppionDB(appiondbname, projectdb,backup=backup)
+		makeAppionTables(appiondbname)
