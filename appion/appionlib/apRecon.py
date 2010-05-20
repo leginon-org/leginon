@@ -102,7 +102,7 @@ def getRMeasurePath():
 def runRMeasure(apix, volpath, imask=0):
 	t0 = time.time()
 
-	apDisplay.printMsg("R Measure, processing volume: "+volpath)
+	apDisplay.printMsg("R Measure at %s, processing volume:\n\t%s"%(time.asctime(), volpath))
 	rmeasexe = getRMeasurePath()
 	if rmeasexe is None:
 		apDisplay.printWarning("R Measure failed: could not find rmeasure program")
