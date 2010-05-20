@@ -131,9 +131,9 @@ if __name__ == "__main__":
 		#
 		#===================	
 	
-		updateq = (" UPDATE "+leginondb.dbname+".UserData "
-				+" SET "+leginondb.dbname+".UserData.`full name` = concat("+leginondb.dbname+".UserData.firstname, ' ', "+leginondb.dbname+".UserData.lastname) "
-				+" WHERE "+leginondb.dbname+".UserData.`full name` IS NULL; "
+		updateq = (" UPDATE UserData "
+				+" SET UserData.`full name` = concat(UserData.firstname, ' ', UserData.lastname) "
+				+" WHERE UserData.`full name` IS NULL; "
 				)
 	 	
 		leginondb.executeCustomSQL(updateq)
@@ -143,20 +143,18 @@ if __name__ == "__main__":
 		#
 		#===================	
 	
-		updateq = (" UPDATE "+leginondb.dbname+".UserData "
-				+" SET "+leginondb.dbname+".UserData.`firstname` = left("+leginondb.dbname+".UserData.`full name`, instr("+leginondb.dbname+".UserData.`full name`,' ')-1) "
-				+" WHERE 1; "
-				#+" WHERE "+leginondb.dbname+".UserData.`lastname` IS NULL; "
+		updateq = (" UPDATE UserData "
+				+" SET UserData.`firstname` = left(UserData.`full name`, instr(UserData.`full name`,' ')-1) "
+				+" WHERE UserData.`lastname` IS NULL; "
 				)
 	 	
 		leginondb.executeCustomSQL(updateq)
 		
-		updateq = (" UPDATE "+leginondb.dbname+".UserData "
-				+" SET "+leginondb.dbname+".UserData.`lastname` = "
-				+" right("+leginondb.dbname+".UserData.`full name`, "
-				+" length("+leginondb.dbname+".UserData.`full name`)-instr("+leginondb.dbname+".UserData.`full name`,' ')) "
-				+" WHERE 1; "
-				#+" WHERE "+leginondb.dbname+".UserData.`lastname` IS NULL; "
+		updateq = (" UPDATE UserData "
+				+" SET UserData.`lastname` = "
+				+" right(UserData.`full name`, "
+				+" length(UserData.`full name`)-instr(UserData.`full name`,' ')) "
+				+" WHERE UserData.`lastname` IS NULL; "
 				)
 	 	
 		leginondb.executeCustomSQL(updateq)
@@ -166,23 +164,23 @@ if __name__ == "__main__":
 		# 7 Set the username in dbemdata.UserData to the name.
 		#===================	
 	
-		updateq = (" UPDATE "+leginondb.dbname+".UserData "
-				+" SET "+leginondb.dbname+".UserData.`username` = "+leginondb.dbname+".UserData.`name` "
-				+" WHERE "+leginondb.dbname+".UserData.`username` IS NULL; "
+		updateq = (" UPDATE UserData "
+				+" SET UserData.`username` = UserData.`name` "
+				+" WHERE UserData.`username` IS NULL; "
 				)
 	 	
 		leginondb.executeCustomSQL(updateq)
 			
-		updateq = (" UPDATE "+leginondb.dbname+".UserData "
-				+" SET "+leginondb.dbname+".UserData.password = MD5("+leginondb.dbname+".UserData.username) "
-				+" WHERE "+leginondb.dbname+".UserData.password IS NULL; "
+		updateq = (" UPDATE UserData "
+				+" SET UserData.password = MD5(UserData.username) "
+				+" WHERE UserData.password IS NULL; "
 				)
 
 		leginondb.executeCustomSQL(updateq)
 			
-		updateq = (" UPDATE "+leginondb.dbname+".UserData "
-				+' SET '+leginondb.dbname+'.UserData.firstname = "" ' 
-				+" WHERE "+leginondb.dbname+".UserData.firstname IS NULL; "
+		updateq = (" UPDATE UserData "
+				+' SET UserData.firstname = "" ' 
+				+" WHERE UserData.firstname IS NULL; "
 				)
 	 	
 		leginondb.executeCustomSQL(updateq)
@@ -199,10 +197,10 @@ if __name__ == "__main__":
 		adminuser = q.query(results=1)
 		admingroupid = adminuser[0]['group'].dbid
 		if adminprivid and admingroupid:	
-			updateq = (" UPDATE "+leginondb.dbname+".GroupData "
-					+" SET "+leginondb.dbname+".GroupData.`REF|projectdata|privileges|privilege`= %d"
+			updateq = (" UPDATE GroupData "
+					+" SET GroupData.`REF|projectdata|privileges|privilege`= %d"
 					% (adminprivid,)
-					+" WHERE "+leginondb.dbname+".GroupData.`DEF_id`= %d" % (admingroupid,)
+					+" WHERE GroupData.`DEF_id`= %d" % (admingroupid,)
 					)
 		
 			leginondb.executeCustomSQL(updateq)
@@ -217,10 +215,10 @@ if __name__ == "__main__":
 		userpriv = q.query(results=1)
 		if userpriv:
 			userprivid = userpriv[0].dbid
-			updateq = (" UPDATE "+leginondb.dbname+".GroupData "
-					+" SET "+leginondb.dbname+".GroupData.`REF|projectdata|privileges|privilege`= %d"
+			updateq = (" UPDATE GroupData "
+					+" SET GroupData.`REF|projectdata|privileges|privilege`= %d"
 					% (userprivid,)
-					+" WHERE "+leginondb.dbname+".GroupData.`REF|projectdata|privileges|privilege` IS NULL "
+					+" WHERE GroupData.`REF|projectdata|privileges|privilege` IS NULL "
 					)
 		
 			leginondb.executeCustomSQL(updateq)
@@ -240,9 +238,9 @@ if __name__ == "__main__":
 				anygroup = q.query(results=1)
 				if anygroup:
 					usergroupid = anygroup[0].dbid
-				updateq = (" UPDATE "+leginondb.dbname+".UserData "
-					+" SET "+leginondb.dbname+".UserData.`REF|GroupData|group`= %d" %(usergroupid,)
-					+" WHERE "+leginondb.dbname+".UserData.`REF|GroupData|group` IS NULL "
+				updateq = (" UPDATE UserData "
+					+" SET UserData.`REF|GroupData|group`= %d" %(usergroupid,)
+					+" WHERE UserData.`REF|GroupData|group` IS NULL "
 					)
 	
 				leginondb.executeCustomSQL(updateq)
@@ -251,19 +249,19 @@ if __name__ == "__main__":
 
 		# update shareexperiments
 	if projectdb.tableExists('shareexperiments') and projectdb.getNumberOfRows('shareexperiments') and projectdb.columnExists('shareexperiments','experimentId'):
-		updateq = (" UPDATE "+projectdb.dbname+".shareexperiments "
-				+" SET "+projectdb.dbname+".shareexperiments.`REF|leginondata|SessionData|experiment` = "+projectdb.dbname+".shareexperiments.experimentId "
-				+" WHERE "+projectdb.dbname+".shareexperiments.`REF|leginondata|SessionData|experiment` IS NULL; "
+		updateq = (" UPDATE shareexperiments "
+				+" SET shareexperiments.`REF|leginondata|SessionData|experiment` = shareexperiments.experimentId "
+				+" WHERE shareexperiments.`REF|leginondata|SessionData|experiment` IS NULL; "
 				)
 	 	
 		projectdb.executeCustomSQL(updateq)
 	
 		# add usernames where they are missing
 	
-		updateq = (" UPDATE "+projectdb.dbname+".shareexperiments, "+projectdb.dbname+".users "
-				+" SET "+projectdb.dbname+".shareexperiments.username = "+projectdb.dbname+".users.username " 
-				+" WHERE "+projectdb.dbname+".users.userId = "+projectdb.dbname+".shareexperiments.userId "
-				+" AND "+projectdb.dbname+".shareexperiments.username IS NULL "
+		updateq = (" UPDATE shareexperiments, users "
+				+" SET shareexperiments.username = users.username " 
+				+" WHERE users.userId = shareexperiments.userId "
+				+" AND shareexperiments.username IS NULL "
 				)
 	 	
 		projectdb.executeCustomSQL(updateq)
