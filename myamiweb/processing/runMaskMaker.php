@@ -85,7 +85,7 @@ function parseMaskMakerParams () {
 	$convolve = $_POST[convolve];
 
 	$command .=" --diam=$diam";
-	$command .=" --cruddiam=$cdiam";
+	if (is_numeric($cdiam)) $command .=" --cruddiam=$cdiam";
 	if ($maxthresh && $maxthresh > 0) $command.=" --crudhi=$maxthresh";
 	if ($blur && $blur > 0.01) $command.=" --crudblur=$blur";
 	if ($minthresh && $minthresh > 0) $command.=" --crudlo=$minthresh";
@@ -128,7 +128,6 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
 	$projectId=getProjectId();
-
 	$javafunctions="
 		<script src='../js/viewer.js'></script>
 		<script LANGUAGE='JavaScript'>
@@ -198,13 +197,14 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 				<td CLASS='tablebg'>
 					<B>Particle Diameter:</B><br>
 					<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
-	echo docpop('pdiam','Particle diameter as reference for template');
+	echo docpop('crudpdiam','Particle diameter as reference for template');
 	echo "	<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>\n";
 	echo "	<br /><br />";
 	echo"
 					<B>Minimal Mask Region Diameter:</B><br>
-					<INPUT TYPE='text' NAME='cdiam' VALUE='$cdiam' SIZE='4'>&nbsp;
-						Mask Region diameter as lower area/perimeter threshold <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
+					<INPUT TYPE='text' NAME='cdiam' VALUE='$cdiam' SIZE='4'>\n";
+	echo docpop('crudmindiam','Mask Region diameter as lower area/perimeter threshold');
+	echo " <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
 					<br><br>";
 
 	createMaskMakerTable(0.6,0.95);
@@ -243,22 +243,21 @@ function runMaskMaker() {
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 	$process = $_POST['process'];
+	$masktype = $_POST['masktype'];
 
 	$diam = $_POST[diam];
-	if (!$diam) {
+	if (!$diam and $masktype !='crud') {
 		createMMForm("<B>ERROR:</B> Specify a particle diameter");
 		exit;
 	}
-
 	$convolve = $_POST[convolve];
 	if (!$convolve && $_POST[masktype] == "aggr") {
 		createMMForm("<B>ERROR:</B> Specify a convolution map threshold");
 		exit;
 	}
-
 	$cdiam = $_POST[cdiam];
-	if (!cdiam) {
-		createMMForm("<B>ERROR:</B> No minimal mask region diameter");
+	if (!is_numeric($cdiam) && !is_numeric($diam)) {
+		createMMForm("<B>ERROR:</B> Specify a mask region diameter");
 		exit;
 	}
 
