@@ -69,8 +69,8 @@ require_once('setupUtils.inc');
 		
 		echo"<p>This wizard will take you step by step through the process of 
 		        setting up the Appion web tools config file.<br /><br />";
-		echo"When you are ready to start please click on the \"NEXT\" button.<br />";
-		echo"For security reasons, there is a 30 minute time limit for each page. If you exceed this limit, you will be returned to this page.</p><br />";
+		echo"Please use alphanumeric characters in your entries. Special characters may not be used. For security reasons, there is a 30 minute time limit for each page. If you exceed this limit, you will be returned to this page.<br />";
+		echo"When you are ready to start please click on the \"NEXT\" button.</p><br />";
 		echo"<input type='hidden' name='newSetup' value=true />";
  		
 	}
