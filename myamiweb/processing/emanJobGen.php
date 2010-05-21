@@ -901,15 +901,15 @@ function writeJobFile ($extra=False) {
 	// calculate pad and make it even
 	$pad = intval($box*1.25/2.0)*2;
 
-	$ejob = "\n";
+	$ejob = "\n### modify input files, if necessary\n";
 
 	// rescale initial model, if necessary:
 	if ($rebox || $rescale) {
 		$ejob .= "#rescale initial model\n";
 		$ejob .= "proc3d ".$initmodel['name']." threed.0a.mrc \\\n"
-			."  $rescale clip=$box,$box,$box norm=0,1 origin=0,0,0\n\n";
+			."  $rescale clip=$box,$box,$box norm=0,1 origin=0,0,0\n";
 	} else {
-		$ejob .= "mv -v ".$initmodel['name']." threed.0a.mrc\n\n";
+		$ejob .= "proc3d ".$initmodel['name']." threed.0a.mrc norm=0,1 origin=0,0,0\n";
 	}
 
 	// rename stack, if necessary:
@@ -917,8 +917,14 @@ function writeJobFile ($extra=False) {
 		$ejob .= "#rename stack\n";
 		$ejob .= "ln -s ".$stackinfo[5]." start.hed\n";
 		$ejob .= "ln -s ".$stackinfo[6]." start.img\n";
-		$ejob .= "\n";
 	}
+
+	// only start job if files exist
+	$ejob .= "\n### only start job if files exist\n";
+	$ejob .= "test -s threed.0a.mrc || ( echo initial model not found && exit )\n";
+	$ejob .= "( test -s start.hed && test -s start.img ) || ( echo stack not found && exit )\n";
+
+	$ejob .= "\n### start reconstruction\n";
 
 	for ($i=1; $i<=$numiters; $i++) {
 		$ang=$_POST["ang".$i];
