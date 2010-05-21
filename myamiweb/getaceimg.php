@@ -99,7 +99,7 @@ if ($img=@$imagecreate($filename)) {
 		$graph->ygrid->SetFill(true,'#EFEFEF@0.5','#BBCCFF@0.5');
 		$graph->SetTickDensity(TICKD_SPARSE);
 		$graph->xscale->SetAutoTicks();
-		$graph->xaxis->title->Set('1/Angstrum');
+		$graph->xaxis->title->Set('1/Angstrom');
 
 		$ngraph=count((array)$des);
 
