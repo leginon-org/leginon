@@ -641,6 +641,10 @@ class frealignJob(appionScript.AppionScript):
 			self.iblow = 2
 		if self.calcMemNeeded() > 4e9:
 			self.iblow = 1
+		### more than 40GB need then die
+		if self.calcMemNeeded() > 40e9:
+			apDisplay.printError("%s of memory is required which is too much, reduce box size or recons per processor"
+				%(apDisplay.bytes(self.calcMemNeeded())))
 		apDisplay.printMsg("IBLOW set to %d, requiring %s memory"
 			%(self.iblow, apDisplay.bytes(self.calcMemNeeded())))
 
