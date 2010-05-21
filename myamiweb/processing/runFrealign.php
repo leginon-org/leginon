@@ -147,12 +147,17 @@ function jobForm($extra=false) {
 	$memory = $jobdata['memory'];
 
 	// prepare stack values
-	$stackid = $jobdata['REF|ApStackData|stack'];
-	$stackdata = $particle->getStackParams($stackid);
-	$numpart=$particle->getNumStackParticles($stackid);
-	$apix = $particle->getStackPixelSizeFromStackId($stackid)*1e10;
-	$boxsize = $stackdata['boxsize'];
-	$stackvals = "$stackid|--|$apix|--|$boxsize|--|$numpart|--|$stackdata[path]|--|$stackdata[name]";
+	$refinestackid = $jobdata['REF|ApStackData|stack'];
+	$refinestackdata = $particle->getStackParams($refinestackid);
+	$numpart=$particle->getNumStackParticles($refinestackid);
+	$apix = $particle->getStackPixelSizeFromStackId($refinestackid)*1e10;
+	$boxsize = $refinestackdata['boxsize'];
+	$refinestackvals = "$refinestackid|--|$apix|--|$boxsize|--|$numpart|--|$refinestackdata[path]|--|$refinestackdata[name]";
+	$reconstackid = $jobdata['REF|ApStackData|reconstack'];
+	if ($reconstackid) {
+		$reconstackdata = $particle->getStackParams($reconstackid);
+		$reconstackvals = "$reconstackid|--|$apix|--|$boxsize|--|$numpart|--|$reconstackdata[path]|--|$reconstackdata[name]";
+	}
 	// prepare model values
 	$modelid = $jobdata['REF|ApInitialModelData|model'];
 	$modeldata = $particle->getInitModelInfo($modelid);
@@ -160,7 +165,6 @@ function jobForm($extra=false) {
 	$modelvals = "$modelid|--|$modeldata[path]|--|$modeldata[name]|--|$modeldata[boxsize]|--|$symdata[symmetry]";
 	// Hack: we must assign the POST values
 	$_POST['model'] = $modelvals;
-	$_POST['stackval'] = $stackvals;
 
 	// set remote path
 	$leginondata = new leginondata();
@@ -183,17 +187,25 @@ function jobForm($extra=false) {
 	echo "<input type='hidden' name='clustermemo' value='$selectedcluster'>\n";
 	echo "<input type='hidden' name='jobid' value='$jobid'>\n";
 	echo "<input type='hidden' NAME='model' value='$modelvals'>\n";
-	echo "<input type='hidden' NAME='stackval' value='$stackvals'>\n";
+	echo "<input type='hidden' NAME='refinestackvals' value='$refinestackvals'>\n";
+	echo "<input type='hidden' NAME='reconstackvals' value='$reconstackvals'>\n";
 
 	// SETUP FILELIST TO COPY OVER FILES
 	$sendfilelist = "";
-	$ext=strrchr($stackdata['name'],'.');
-	$stackname=substr($stackdata['name'],0,-strlen($ext));
-	$sendfilelist .= formatEndPath($stackdata['path']).$stackname.".hed";
+	$ext=strrchr($refinestackdata['name'],'.');
+	$refinestackname=substr($refinestackdata['name'],0,-strlen($ext));
+	$sendfilelist .= formatEndPath($refinestackdata['path']).$refinestackname.".hed";
 	$sendfilelist .= "|--|";
-	$sendfilelist .= formatEndPath($stackdata['path']).$stackname.".img";
+	$sendfilelist .= formatEndPath($refinestackdata['path']).$refinestackname.".img";
 	$sendfilelist .= "|--|";
 	$sendfilelist .= formatEndPath($rundir).$jobdata['tarfile'];
+	if ($reconstackid) {
+		$reconstackname=substr($reconstackdata['name'],0,-strlen($ext));
+		$sendfilelist .= "|--|";
+		$sendfilelist .= formatEndPath($reconstackdata['path']).$reconstackname.".hed";
+		$sendfilelist .= "|--|";
+		$sendfilelist .= formatEndPath($reconstackdata['path']).$reconstackname.".img";
+	}
 	echo "<input type='hidden' NAME='sendfilelist' value='$sendfilelist'>\n";
 	$receivefilelist = "results.tgz|--|models.tgz";
 	echo "<input type='hidden' NAME='receivefilelist' value='$receivefilelist'>\n";
@@ -288,7 +300,11 @@ function jobForm($extra=false) {
 
 	//echo "StackID: $stackid -- ModelID: $modelid<br/>\n";
 	echo "<table class='tablebubble'><tr><td>\n";
-	echo stacksummarytable($stackid, true);
+	echo stacksummarytable($refinestackid, true);
+	if ($reconstackid) {
+		echo "</td></tr><tr><td>\n";
+		echo stacksummarytable($reconstackid, true);
+	}
 	echo "</td></tr><tr><td>\n";
 	echo modelsummarytable($modelid, true);
 	echo "</td></tr></table>\n";
@@ -354,10 +370,10 @@ function writeJobFile ($extra=False) {
 	}
 
 	// get the stack info (pixel size, box size)
-	$stackinfo = explode('|--|',$_POST['stackval']);
-	$stackidval = $stackinfo[0];
-	$apix = $stackinfo[1];
-	$box = $stackinfo[2];
+	$refinestackinfo = explode('|--|',$_POST['refinestackvals']);
+	$refinestackid = $refinestackinfo[0];
+	$reconstackinfo = explode('|--|',$_POST['reconstackvals']);
+	$reconstackid = $reconstackinfo[0];
 
 	// get the model id
 	$modelinfo=explode('|--|',$_POST['model']);
@@ -371,7 +387,9 @@ function writeJobFile ($extra=False) {
 	$header.= "#PBS -m e\n";
 	$header.= "#PBS -r n\n";
 	$header.= "#PBS -j oe\n\n";
-	$clusterjob = "# stackId: $stackidval\n";
+
+	$clusterjob.= "# refineStackId: $refinestackid\n";
+	$clusterjob.= "# reconStackId: $reconstackid\n";
 	$clusterjob.= "# modelId: $modelid\n\n";
 	
 	$procs=$jobdata['nodes']*$jobdata['rpn'];
@@ -396,7 +414,6 @@ function writeJobFile ($extra=False) {
 	echo "<input type='hidden' NAME='outdir' value='".$_POST['outdir']."'>\n";
 	echo "<input type='hidden' NAME='mem' value='".$jobdata['memory']."gb'>\n";
 	echo "<input type='hidden' NAME='model' value='".$_POST['model']."'>\n";
-	echo "<input type='hidden' NAME='stackval' value='".$_POST['stackval']."'>\n";
 
 	// convert \n to /\n's for script
 	$header_conv=preg_replace('/\n/','|--|',$header);

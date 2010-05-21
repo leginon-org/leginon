@@ -97,7 +97,9 @@ class frealignJob(appionScript.AppionScript):
 
 		#### Appion params
 		self.parser.add_option('--stackid', dest='stackid', type='int',
-			help="stack id from database")
+			help="refine stack id from database")
+		self.parser.add_option('--reconstackid', dest='reconstackid', type='int',
+			help="recon stack id from database")
 		self.parser.add_option('--modelid', dest='modelid', type='int',
 			help="initial model id from database")
 		self.parser.add_option('--reconiterid', dest='reconiterid', type='int',
@@ -133,6 +135,17 @@ class frealignJob(appionScript.AppionScript):
 			self.params['last'] = apStack.getNumberStackParticlesFromId(self.params['stackid'])
 		self.boxsize = apStack.getStackBoxsize(self.params['stackid'], msg=False)
 		self.apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+		if self.params['reconstackid'] is not None:	
+			reconboxsize = apStack.getStackBoxsize(self.params['reconstackid'], msg=False)
+			reconapix = apStack.getStackPixelSizeFromStackId(self.params['reconstackid'])
+			refinenumpart = apStack.getNumberStackParticlesFromId(self.params['stackid'])
+			reconnumpart = apStack.getNumberStackParticlesFromId(self.params['reconstackid'])
+			if reconboxsize != self.boxsize:
+				apDisplay.printError("Boxsize do not match for stacks")
+			if reconapix != self.apix:
+				apDisplay.printError("Pixelsize do not match for stacks")
+			if refinenumpart != reconnumpart:
+				apDisplay.printError("Number of particles do not match for stacks")
 		maxmask = math.floor(self.apix*(self.boxsize-10)/2.0)
 		if self.params['mask'] is None:
 			apDisplay.printWarning("mask was not defined, setting to boxsize: %d"%(maxmask))
@@ -184,7 +197,7 @@ class frealignJob(appionScript.AppionScript):
 		particleid = stackp['particle'].dbid
 
 		# find particle in reference stack
-		refstackp = apStack.getStackParticleFromParticleId(particleid, self.params['reconstackid'], nodie=True)
+		refstackp = apStack.getStackParticleFromParticleId(particleid, self.oldreconstackid, nodie=True)
 		if not refstackp:
 			percentnoeuler = 100*self.noeulers/float(self.params['last'])
 			apDisplay.printWarning('No eulers for particle %d (%.1f%%)' % (pnum, percentnoeuler))
@@ -316,7 +329,7 @@ class frealignJob(appionScript.AppionScript):
 		if self.params['reconiterid'] is not None:
 			### use parameters from previous reconstruction
 			self.iflag = 1
-			self.params['reconstackid'] = apStack.getStackIdFromIterationId(self.params['reconiterid'])
+			self.oldreconstackid = apStack.getStackIdFromIterationId(self.params['reconiterid'])
 		elif self.params['dang'] is not None:
 			### use slow projection matching search to determine initial Eulers
 			self.iflag = 3
@@ -353,11 +366,9 @@ class frealignJob(appionScript.AppionScript):
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 			modelfile = tempfile
 
-		boxsize = apStack.getStackBoxsize(self.params['stackid'])
-
 		outmodelfile = os.path.join(self.params['rundir'], "initmodel.hed")
 		apFile.removeStack(outmodelfile, warn=False)
-		emancmd = "proc3d %s %s clip=%d,%d,%d " % (modelfile, outmodelfile, boxsize, boxsize, boxsize)
+		emancmd = "proc3d %s %s clip=%d,%d,%d " % (modelfile, outmodelfile, self.boxsize, self.boxsize, self.boxsize)
 
 		# rescale initial model if necessary
 		scale = modeldata['pixelsize']/self.apix
@@ -586,7 +597,8 @@ class frealignJob(appionScript.AppionScript):
 		apDisplay.printMsg("Single node run, iteration %d"%(iternum))
 
 		### create individual processor jobs
-		self.stackfile = "../../start"
+		stackbase = os.path.splitext(os.path.basename(self.refinestackfile))[0]
+		self.stackfile = "../../%s"%(stackbase)
 		procjobfiles = self.createMultipleJobs(iternum)
 
 		### convert job files to commands
@@ -601,7 +613,8 @@ class frealignJob(appionScript.AppionScript):
 		apDisplay.printColor("Refinement complete in %s"%(apDisplay.timeString(time.time()-t0)), "green")
 
 		### create combine processor jobs
-		self.stackfile = "../start"
+		stackbase = os.path.splitext(os.path.basename(self.reconstackfile))[0]
+		self.stackfile = "../%s"%(stackbase)
 		combinejobfile = self.combineMultipleJobs(iternum)
 
 
@@ -673,9 +686,11 @@ class frealignJob(appionScript.AppionScript):
 		apDisplay.printMsg("Multi node run, iteration %d"%(iternum))
 
 		### create individual processor jobs
-		stackbase = os.path.splitext(os.path.basename(self.origstackfile))[0]
+		stackbase = os.path.splitext(os.path.basename(self.refinestackfile))[0]
 		self.stackfile = "../../%s"%(stackbase)
 		procjobfiles = self.createMultipleJobs(iternum)
+
+		stackbase = os.path.splitext(os.path.basename(self.reconstackfile))[0]
 		self.stackfile = "../%s"%(stackbase)
 		combinejobfile = self.combineMultipleJobs(iternum)
 
@@ -722,8 +737,8 @@ class frealignJob(appionScript.AppionScript):
 
 		needf = open("files-needed.txt", "w")
 		needf.write("%s.tar\n"%(os.path.join(self.params['rundir'], self.params['runname'])))
-		needf.write("%s\n"%(os.path.splitext(self.origstackfile)[0]+".hed"))
-		needf.write("%s\n"%(os.path.splitext(self.origstackfile)[0]+".img"))
+		needf.write("%s\n"%(os.path.splitext(self.refinestackfile)[0]+".hed"))
+		needf.write("%s\n"%(os.path.splitext(self.refinestackfile)[0]+".img"))
 		needf.close()
 
 		### find cluster job based on path
@@ -747,6 +762,7 @@ class frealignJob(appionScript.AppionScript):
 		frealignq['tarfile'] = "%s.tar"%(self.params['runname'])
 		frealignq['path'] = partq
 		frealignq['stack'] = appiondata.ApStackData.direct_query(self.params['stackid'])
+		frealignq['reconstack'] = appiondata.ApStackData.direct_query(self.params['reconstackid'])
 		frealignq['model'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 		frealignq['job'] = jobdata
 		frealignq['symmetry'] = self.symmdata
@@ -759,16 +775,21 @@ class frealignJob(appionScript.AppionScript):
 
 		### get stack info
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
-		self.stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
-		apImagicFile.setImagic4DHeader(self.stackfile)
+		self.refinestackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
+		apImagicFile.setImagic4DHeader(self.refinestackfile)
 		### copy stack or start job file
 		if self.params['cluster'] is False:
 			#create alias to stack data
 			pass
 		if self.params['cluster'] is True:
 			self.setupMultiNode()
-		self.origstackfile = self.stackfile
-		self.stackfile = "start"
+
+		if self.params['reconstackid'] is not None:
+			self.reconstackdata = apStack.getOnlyStackData(self.params['stackid'])
+			self.reconstackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])		
+		else:
+			self.reconstackfile = self.refinestackfile
+
 
 		### create initial model file
 		self.currentvol = os.path.basename(self.setupInitialModel())
@@ -776,7 +797,7 @@ class frealignJob(appionScript.AppionScript):
 		### create parameter file
 		self.currentparam = os.path.basename(self.setupParticleParams())
 		apDisplay.printColor("Initial files:\n Stack: %s\n Volume: %s\n Params: %s\n"
-			%(self.stackfile, self.currentvol, self.currentparam), "violet")
+			%(os.path.basename(self.refinestackfile), self.currentvol, self.currentparam), "violet")
 
 		## run frealign for number for refinement cycles
 		for i in range(self.params['numiter']):

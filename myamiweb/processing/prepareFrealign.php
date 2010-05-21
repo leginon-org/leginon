@@ -55,18 +55,30 @@ function stackModelForm($extra=False) {
 
 	// find each stack entry in database
 	$stackIds = $particle->getStackIds($expId, false, false, true);
+
 	$stackinfo = explode('|--|', $_POST['stackval']);
 	$stackid = $stackinfo[0];
-	$apix = $stackinfo[1];
-	$box = $stackinfo[2];
+	$reconstackinfo = explode('|--|', $_POST['reconstackval']);
+	$reconstackid = $reconstackinfo[0];
+
 	// write out errors, if any came up:
 	if ($extra)
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
-	echo"<b>Not ctf-corrected Stacks:</b><br>";
+	echo "<table class='tableborder' border='1'>\n";
+	echo "<tr><td>\n";
+	echo"<h3>Select stacks:</h3>";
+	echo"<h4>Refinement Non CTF-corrected Stacks:</h4>";
 	$particle->getStackSelector($stackIds, $stackid, '');
+
+	if (count($stackIds) > 0) {
+		echo"<h4>Reconstruction Non CTF-corrected Stacks:</h4>";
+		specialStackSelector($stackIds, $reconstackid);
+	}
+	echo "</td></tr>\n";
+	echo "</table>\n\n";
 
 	// show initial models
 	echo "<P><B>Initial models:</B><br>"
@@ -116,6 +128,7 @@ function jobForm($extra=false) {
 	if (!$_POST['stackval'])
 		stackModelForm("ERROR: no stack selected");
 
+
 	## get path data for this session for output
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
@@ -140,10 +153,20 @@ function jobForm($extra=false) {
 	$nump=$particle->getNumStackParticles($stackid);
 	$apix=$stackinfo[1];
 	$box=$stackinfo[2];
-	$stackpath=$stackinfo[4];
-	$stackname1=$stackinfo[5];
   
-	$stack=$stackname1 ;
+	if ($_POST['reconstackval']) {
+		$reconstackinfo = explode('|--|',$_POST['reconstackval']);
+		$reconstackid=$reconstackinfo[0];
+		$reconapix=$reconstackinfo[1];
+		$reconbox=$reconstackinfo[2];
+		$reconnumpart=$particle->getNumStackParticles($reconstackid);
+		if ($reconbox != $box)
+			stackModelForm("ERROR: refine stack boxsize ($box) is different from recon stack boxsize ($reconbox)");
+		if ($reconapix != $apix)
+			stackModelForm("ERROR: refine stack apix ($apix) is different from recon stack apix ($reconapix)");
+		if ($reconnumpart != $nump)
+			stackModelForm("ERROR: refine stack particle count ($nump) is different from recon stack particle count ($reconnumpart)");
+	}
 	
 	## get model data
 	$modelinfo = explode('|--|',$_POST['model']);
@@ -172,6 +195,8 @@ function jobForm($extra=false) {
 	echo "<form name='frealignjob' method='post' action='$formaction'><br/>\n";
 	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
 	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
+	if ($_POST['reconstackval'] && $stackid != $reconstackid)
+		echo "<input type='hidden' name='reconstackval' value='".$_POST['reconstackval']."'>\n";
 
 	$sym = ($_POST['sym']) ? $_POST['sym'] : $modsym;
 
@@ -464,6 +489,10 @@ function jobForm($extra=false) {
 	//echo "StackID: $stackid -- ModelID: $modelid<br/>\n";
 	echo "<table class='tablebubble'><tr><td>\n";
 	echo stacksummarytable($stackid, true);
+	if ($_POST['reconstackval'] && $stackid != $reconstackid) {
+		echo "</td></tr><tr><td>\n";
+		echo stacksummarytable($reconstackid, true);
+	}
 	echo "</td></tr><tr><td>\n";
 	echo modelsummarytable($modelid, true);
 	echo "</td></tr></table>\n";
@@ -505,9 +534,12 @@ function prepareFrealign ($extra=False) {
 	// get the stack info (pixel size, box size)
 	$stackinfo=explode('|--|',$_POST['stackval']);
 	$stackid=$stackinfo[0];
-	$stackpath=$stackinfo[4];
-	$stackname1=$stackinfo[5];
- 
+
+	if ($_POST['reconstackval']) {
+		$reconstackinfo=explode('|--|',$_POST['reconstackval']);
+		$reconstackid=$reconstackinfo[0];
+	}
+
 	// get the model id
 	$modelinfo=explode('|--|',$_POST['model']);
 	$modelid=$modelinfo[0];
@@ -543,6 +575,8 @@ function prepareFrealign ($extra=False) {
 	$cmd.= "--rundir=$rundir ";
 	$cmd.= "--project=$projectId ";
 	$cmd.= "--stackid=$stackid ";
+	if ($reconstackid)
+		$cmd.= "--reconstackid=$reconstackid ";
 	$cmd.= "--modelid=$modelid ";
 	if ($importiter) $cmd.= "--reconiterid=$importiter ";
 	if ($dang) $cmd.= "--dang=$dang ";
@@ -595,4 +629,50 @@ function prepareFrealign ($extra=False) {
 	}
 	exit;
 };
+
+function specialStackSelector($stackIds, $stackidval) {
+	/* THIS FUNCTION SHOULD BE MOVED TO summarytables.inc */
+	# $stackinfo[0] = stackid
+	# $stackinfo[1] = pixel size in angstrums / pixels
+	# $stackinfo[2] = stack boxsize (length in either direction) in pixels
+	# $stackinfo[3] = number of particles in the stack
+	# $stackinfo[4] = appion stackfile path
+	# $stackinfo[5] = Imagic stack header file name, including extension but not path
+	# $stackinfo[6] = Imagic stack data file name, including extension but not path
+	# examples: 
+	# $stackinfo[4] = '/your_disk/appion/09aug267/stacks/stack1'
+	# $stackinfo[5] = 'start.hed'
+	# $stackinfo[6] = 'start.img'
+	echo "<SELECT NAME='reconstackval' >\n";
+	echo "<OPTION VALUE='' style='color:green;' >Same as refinement</option>\n";
+	$particle = new particledata();
+	foreach ($stackIds as $stackid){
+		// get stack parameters from database
+		$s=$particle->getStackParams($stackid['stackid']);
+		// get number of particles in each stack
+		$totalp=$particle->getNumStackParticles($stackid['stackid']);
+		$nump=commafy($totalp);
+		// get pixel size of stack
+		$apix=($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
+		// truncated pixel size
+		$showapix=sprintf("%.2f",$apix);
+		// get box size
+		$box = $s['boxsize'];
+		// get stack path with name
+		$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$totalp|--|$s[path]|--|$s[name]";
+		// if imagic stack, send both hed & img files for dmf
+		if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
+		if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
+	
+		echo "<OPTION VALUE='$opvals'";
+		// select previously set stack on resubmita
+		if ($stackid['stackid']==$stackidval) echo " SELECTED";
+		echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $showapix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
+	}
+	echo "</SELECT>\n";
+	return $apix;
+	/* THIS FUNCTION WAS MOVED TO summarytables.inc */
+};
+?>
+
 

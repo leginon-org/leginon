@@ -1131,6 +1131,7 @@ class ApFrealignPrepareData(Data):
 			('symmetry', ApSymmetryData),
 			('path', ApPathData),
 			('stack', ApStackData),
+			('reconstack', ApStackData),
 			('model', ApInitialModelData),
 			('job', ApAppionJobData),
 		)
