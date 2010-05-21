@@ -73,7 +73,7 @@ def definitionToXml(xmlf, tablename, definition):
 	tabledef += ("</sqltable>\n")
 	xmlf.write(tabledef)
 
-def makeNonExistingTables(sinedonname,modulename,dbname=None,xmlfile=None):
+def makeTables(sinedonname,modulename,dbname=None,xmlfile=None,check_exist=False):
 	### use alternate db name if desired
 	if dbname is not None:
 		print "setting alternate database name"
@@ -112,16 +112,22 @@ def makeNonExistingTables(sinedonname,modulename,dbname=None,xmlfile=None):
 		tableclass = func[1]()
 		table = (dbname, tablename)
 		definition, formatedData = sqldict.dataSQLColumns(tableclass, False)
-		try:
-			dbd.diffSQLTable(tablename,definition)
-		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
-			errno = e.args[0]
-			## some version of mysqlpython parses the exception differently
-			if not isinstance(errno, int):
-				errno = errno.args[0]
-			## 1146:  table does not exist
-			if errno in (1146,):
-				print tablename,' does not yet exist, and will be created'
+		create_flag=False
+		if check_exist:
+			try:
+				dbd.diffSQLTable(tablename,definition)
+			except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
+				errno = e.args[0]
+				## some version of mysqlpython parses the exception differently
+				if not isinstance(errno, int):
+					errno = errno.args[0]
+				## 1146:  table does not exist
+				if errno in (1146,):
+					print tablename,' does not yet exist, and will be created'
+					create_flag=True
+		else:
+			create_flag=True
+		if create_flag:
 				if xmlfile is None:
 					dbd.createSQLTable(table, definition)
 				else:
@@ -139,6 +145,9 @@ def makeNonExistingTables(sinedonname,modulename,dbname=None,xmlfile=None):
 #=================
 if __name__ == "__main__":
 	options = getOptions()
-
-	makeNonExistingTables(options.sinedonname,options.modulename,
-		options.dbname,options.xmlfile)
+	if options.xmlfile is not None:
+		existcheck = True
+	else:
+		existcheck = False
+	makeTables(options.sinedonname,options.modulename,
+		options.dbname,options.xmlfile,check_exist=existcheck)

@@ -334,7 +334,7 @@ def upgradeAppionDB(appiondbname, projectdb, backup=True):
 def makeAppionTables(dbname):
 	sinedonname = 'appiondata'
 	modulename = 'appionlib.'+sinedonname
-	maketables.makeNonExistingTables(sinedonname, modulename, dbname, None)
+	maketables.makeTables(sinedonname, modulename, dbname, None,True)
 
 def upgradeProjectDB(projectdb,backup=True):
 	dbname = projectdb.getDatabaseName()
