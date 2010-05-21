@@ -1275,7 +1275,7 @@ class particledata {
 			,'subtomo'=>"subtomosummary.php?expId=$expId&fullId="
 			,'alignrun id'=>"tomoalignreport.php?expId=$expId&alignId="
 			,'alignerid'=>"protomoreport.php?expId=$expId&aId="
-			,'refine_cycle'=>"protomoreport.php?expId=$expId&aId="
+			,'refine cycle'=>"protomoreport.php?expId=$expId&aId="
 		);
 		$html  = '<tr>';
 		foreach($display_fields as $key) {

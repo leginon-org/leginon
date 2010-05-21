@@ -93,8 +93,8 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 				$i += 1;
 			}
 		}
-		$alignerkey = (!is_null($_POST['goodalignerkey'])) ? $_POST['goodalignerkey'] : count($validcycles)-1;
-		$alignerselector_array = $particle->getTomoAlignerSelector($validcycles, $alignerkey,'goodalignerkey');
+		$alignerkey = (!is_null($_POST['goodcycle'])) ? $_POST['goodcycle'] : count($validcycles)-1;
+		$alignerselector_array = $particle->getTomoAlignerSelector($validcycles, $alignerkey,'goodcycle');
 		echo "<p>";
 		//get valid region range
 		$goodrefinedata = $particle->getProtomoAlignmentInfo($validcycles[$alignerkey]['alignerid']);
@@ -282,11 +282,6 @@ function runTomoAligner() {
 	$outdir = $_POST['outdir'];
 
 	$command = "tomoaligner.py ";
-	if ($_GET['lastaId']) {
-		$lastalignerId = $_GET['lastaId'];
-		$goodstart=$_POST['minx'];
-		$goodend=$_POST['maxx'];
-	}
 	$description=$_POST['description'];
 	$tiltseriesId=$_POST['tiltseriesId'];
 	$tiltseriesId2=$_POST['tiltseriesId2'];
@@ -295,6 +290,12 @@ function runTomoAligner() {
 	$sessionname=$_POST['sessionname'];
 	$alignmethod = $_POST['alignmethod'];
 	$cycle=$_POST['cycle'];
+	if ($_GET['lastaId']) {
+		$lastalignerId = $_GET['lastaId'];
+		$goodcycle = is_numeric($_GET['goodcycle'])? $_GET['goodcycle']: max($cycle-2,0);
+		$goodstart=$_POST['minx'];
+		$goodend=$_POST['maxx'];
+	}
 	$sample=$_POST['sample'];
 	$region=$_POST['region'];
 	$maxregion=$_POST['maxregion'];
@@ -322,6 +323,7 @@ function runTomoAligner() {
 		if ($maxregion < $region) 
 			createTomoAlignerForm("<b>ERROR:</b> The alignment region can not be larger than ".$maxregion." % of the image");
 		$command.="--goodaligner=$lastalignerId ";
+		$command.="--goodcycle=$goodcycle ";
 		$command.="--goodstart=$goodstart ";
 		$command.="--goodend=$goodend ";
 	}

@@ -67,7 +67,7 @@ if (!$runinfo['protomoid']) {
 		$html = "<h4>Protomo Alignment Cycles</h4>";
 		$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 		$html .= "<TR>\n";
-		$selected_keys = array ( 'refine_cycle','alignerid','refnum','reset cycle','align sampling','align box size','description','rotation');
+		$selected_keys = array ( 'refine cycle','alignerid','refnum','reset cycle','align sampling','align box size','description','rotation');
 		$display_keys = $selected_keys;
 		$display_keys[3] = "reset cycle<br>[accept range]";
 		$display_keys[4] = "align<br>sampling";
@@ -76,10 +76,11 @@ if (!$runinfo['protomoid']) {
 		}
 		$html .= "</TR>\n";
 		foreach ($showncycles as $t) {
-			if ($t['good_cycle'])
-				$t['reset cycle'] = $t['good_cycle'].'<br>['.$t['good_start'].' : '.$t['good_end'].']';
+			if ($t['good cycle'])
+				$t['reset cycle'] = $t['good cycle'].'<br>['.$t['good_start'].' : '.$t['good_end'].']';
+
 			$t['align box size'] = '('.$t['align box x']*$t['align sampling'].','.$t['align box y']*$t['align sampling'].')';
-		$t['refine_cycle'] = array('display'=>$t['refine_cycle'],'link'=>$t['alignerid']);
+		$t['refine cycle'] = array('display'=>$t['refine cycle'],'link'=>$t['alignerid']);
 		$t['rotation'] = 
 			"<img border='0' src='tomoaligngraph.php?w=256&&h=128&aId=".$t['alignerid']."&expId=$expId&ref=".$t['refnum']."&type=rot'>\n";
 			$html .= $particle->displayParametersInSummary($t,$selected_keys,$expId,$hide_button_field='alignerid');
