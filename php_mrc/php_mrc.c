@@ -737,7 +737,6 @@ ZEND_FUNCTION(mrctoimage)
 	nHeight = pmrc->header.ny;
 		
 	im = gdImageCreateTrueColor(nWidth, nHeight);
-	gdImageColorAllocate(im, 0, 0, 0);
 
 	mrc_to_gd(pmrc, im, minPix, maxPix);
 	ZEND_REGISTER_RESOURCE(return_value, im, le_gd);
