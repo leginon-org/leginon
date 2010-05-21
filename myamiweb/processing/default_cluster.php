@@ -79,6 +79,8 @@ class Cluster {
 		$this->stackpath = $stackpath;
 		$this->modelpath = $modelpath;
 		$this->modelname = $modelname;
+		$this->outdir = $_POST['outdir'];
+		$this->outfullpath = $this->outdir.$jobname."/";
 	}
 
 	function cluster_parameters() {
@@ -103,30 +105,53 @@ class Cluster {
 		$outfullpath = $this->outfullpath;
 		$filelist = explode('|--|',$_POST['receivefilelist']);
 		foreach ($filelist as $filepath) {
-			$movestr.= "mv $filepath ".formatEndPath($outfullpath)."\n";
+			$movestr.= "mv -v $filepath ".formatEndPath($outfullpath)."\n";
 		}
 		return $movestr;
 	}
 
 
-	function cluster_job_file($job) {
+	function cluster_job_file($jobdata) {
 		$clusterfullpath=$this->clusterfullpath;
 		$stackpath = $this->stackpath;
+		$jobname = $this->jobname;
+		$jobfile = $this->jobfile;
 		$modelpath = $this->modelpath;
 		$modelname = $this->modelname;
-		$stackname = $this->stackname;
+		$stackname1 = $this->stackname1;
+		$outfullpath = $this->outfullpath;
 
-		$clusterjob= "rm -rf $clusterfullpath/recon\n";
+		$clusterjob.= "#DEBUGGING INFO\n";
+		$clusterjob.= "# clusterfull $clusterfullpath\n";
+		$clusterjob.= "# jobname     $jobname\n";
+		$clusterjob.= "# jobfile     $jobfile\n";
+		$clusterjob.= "# outfullpath $outfullpath\n";
+		$clusterjob.= "# stackname1  $stackname1\n";
+		$clusterjob.= "# stackpath   $stackpath\n";
+		$clusterjob.= "# modelname   $modelname\n";
+		$clusterjob.= "# modelpath   $modelpath\n";
+		$filelist = explode('|--|', $_POST['sendfilelist']);
+		foreach ($filelist as $filepath) {
+			$clusterjob.= "#   send file   $filepath\n";
+		}
+		$filelist = explode('|--|', $_POST['receivefilelist']);
+		foreach ($filelist as $filepath) {
+			$clusterjob.= "#   get file    $filepath\n";
+		}
+		$clusterjob.= "\n";
+
+		$clusterjob.= "rm -rf $clusterfullpath/recon\n";
 		$clusterjob.= "mkdir -p $clusterfullpath/recon\n";
 		$clusterjob.= "cd $clusterfullpath/recon\n\n";
+		$clusterjob.= "#download files from main filesystem\n";
 		$clusterjob.= $this->cluster_send_data();
 		$clusterjob.= "setenv RUNPAR_RSH 'ssh'\n\n";
 
-		$clusterjob .= $job;
+		$clusterjob .= $jobdata;
 
+		$clusterjob.= "#upload files back to main filesystem\n";
 		$clusterjob.= $this->cluster_receive_data();
 		$clusterjob.= "\ncd $clusterfullpath\n";
-		$clusterjob.= "\nrm -rf $clusterfullpath/recon\n";
 		return $clusterjob;
 	}
 
