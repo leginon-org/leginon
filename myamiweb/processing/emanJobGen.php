@@ -909,7 +909,7 @@ function writeJobFile ($extra=False) {
 		$ejob .= "proc3d ".$initmodel['name']." threed.0a.mrc \\\n"
 			."  $rescale clip=$box,$box,$box norm=0,1 origin=0,0,0\n";
 	} else {
-		$ejob .= "proc3d ".$initmodel['name']." threed.0a.mrc norm=0,1 origin=0,0,0\n";
+		$ejob .= "proc3d ".$initmodel['name']." threed.0a.mrc clip=$box,$box,$box norm=0,1 origin=0,0,0\n";
 	}
 
 	// rename stack, if necessary:
