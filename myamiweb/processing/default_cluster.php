@@ -9,7 +9,13 @@
  *
  * Note: each cluster file must be register in config.php
  **/
-	
+
+// For PBS Pro run:
+//   pbsnodes -a | egrep "resources_available\.(mem|ncpus)" | sort | uniq -c
+// For Torque run:
+//   pbsnodes -a | tr ',' '\n' | egrep "(physmem|np)\s*=" | sort | uniq -c
+// to get a summary
+
 define('C_NAME', "default_cluster"); // name of cluster, must be single name, e.g., HOST.INSTITUTE.EDU -> HOST
 
 define('C_NODES_DEF', "2");// default number of requested nodes
