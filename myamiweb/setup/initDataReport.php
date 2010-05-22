@@ -20,18 +20,18 @@ require_once("../inc/mysql.inc");
 		
 		$data = array('username' => $_POST['username'], 
 					  'password' => md5($_POST['password']), 
-					  'firstname' => 'Admin',
-					  'lastname' => 'Admin',
+					  'firstname' => 'Appion-Leginon',
+					  'lastname' => 'Administrator',
 					  'email' => $_POST['email'], 
 					  'REF|GroupData|group' => 1);
-		
 		$mysqld = new mysql(DB_HOST, DB_USER, DB_PASS);
 		$dbLink = $mysqld->connect_db();
 		
 		$mysqld->select_db(DB_LEGINON, $dbLink);	
 		
 		$mysqld->SQLInsert('UserData', $data);
-
+		# insert leginon settings default
+		require_once("../inc/setdefault.php");
 	}
 	else{
 		$has_error[] = "The configuration file does not exist. Please create it first.";
