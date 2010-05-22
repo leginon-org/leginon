@@ -280,9 +280,15 @@ class SessionSelectPage(WizardPage):
 			self.imagedirectorytext.SetLabel('')
 		else:
 			session = parent.userpage.sessions[selection]
-			self.descriptiontext.SetLabel(session['comment'])
-			directory = leginon.leginonconfig.mapPath(session['image path'])
-			self.imagedirectorytext.SetLabel(directory)
+			if session['comment']:
+				self.descriptiontext.SetLabel(session['comment'])
+			else:
+				self.descriptiontext.SetLabel('(No description)')
+			if session['image path']:
+				directory = leginon.leginonconfig.mapPath(session['image path'])
+				self.imagedirectorytext.SetLabel(directory)
+			else:
+				self.imagedirectorytext.SetLabel('(No image path)')
 		# autoresize on static text gets reset by sizer during layout
 		for i in [self.descriptiontext, self.imagedirectorytext]:
 			# if label is too big for wizard (presized) need to resize or truncate
