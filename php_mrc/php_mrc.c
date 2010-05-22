@@ -264,7 +264,7 @@ ZEND_FUNCTION(imagegaussianfilter)
 		WRONG_PARAM_COUNT;
 	} 
 
-	zend_parse_arguments(argc TSRMLS_CC, "zzz", &imgind, &KERNEL, &SIGMA);
+	zend_parse_parameters(argc TSRMLS_CC, "zzz", &imgind, &KERNEL, &SIGMA);
 
 	convert_to_long_ex(KERNEL);
 	convert_to_double_ex(SIGMA);
@@ -300,7 +300,7 @@ ZEND_FUNCTION(imagehistogram)
         {
                 WRONG_PARAM_COUNT;
         }
-        zend_parse_arguments(argc TSRMLS_CC, "zz", &imgind, &NBBARS);
+        zend_parse_parameters(argc TSRMLS_CC, "zz", &imgind, &NBBARS);
 
         if (argc == 2)
         {
@@ -371,7 +371,7 @@ ZEND_FUNCTION(imagegradient)
 		WRONG_PARAM_COUNT;
 	}
 
-	zend_parse_arguments(argc TSRMLS_CC, "zz", &IM, &gradient_input);
+	zend_parse_parameters(argc TSRMLS_CC, "zz", &IM, &gradient_input);
 
 
 	if (Z_TYPE_PP(gradient_input) != IS_ARRAY) {
@@ -441,7 +441,7 @@ ZEND_FUNCTION(mrcfftw)
 		WRONG_PARAM_COUNT;
 	} 
 
-	zend_parse_arguments(argc TSRMLS_CC, "zz", &data, &MASK);
+	zend_parse_parameters(argc TSRMLS_CC, "zz", &data, &MASK);
 
 	if (argc == 2)
 	{
@@ -470,7 +470,7 @@ ZEND_FUNCTION(mrcinfo)
 	zval **data;
 	MRCPtr pmrc;
 
-	if (ZEND_NUM_ARGS() != 1 || zend_parse_arguments(1, "z", &data) == FAILURE) {
+	if (ZEND_NUM_ARGS() != 1 || zend_parse_parameters(1, "z", &data) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
@@ -491,7 +491,7 @@ ZEND_FUNCTION(mrcgetinfo)
 	zval **MRCD;
 	MRCPtr pmrc;
 
-	if (ZEND_NUM_ARGS() != 1 || zend_parse_arguments(1, "z", &MRCD) == FAILURE) {
+	if (ZEND_NUM_ARGS() != 1 || zend_parse_parameters(1, "z", &MRCD) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
@@ -511,7 +511,7 @@ ZEND_FUNCTION(mrcsx)
 	MRCPtr pmrc;
 	int val;
 
-	if (ZEND_NUM_ARGS() != 1 || zend_parse_arguments(1, "z", &MRCD) == FAILURE) {
+	if (ZEND_NUM_ARGS() != 1 || zend_parse_parameters(1, "z", &MRCD) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
@@ -533,7 +533,7 @@ ZEND_FUNCTION(mrcsy)
 	MRCPtr pmrc;
 	int val;
 
-	if (ZEND_NUM_ARGS() != 1 || zend_parse_arguments(1, "z", &MRCD) == FAILURE) {
+	if (ZEND_NUM_ARGS() != 1 || zend_parse_parameters(1, "z", &MRCD) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
@@ -561,7 +561,7 @@ ZEND_FUNCTION(mrcread)
 		WRONG_PARAM_COUNT;
 	} 
 
-	zend_parse_arguments(argc TSRMLS_CC, "z", &data);
+	zend_parse_parameters(argc TSRMLS_CC, "z", &data);
 
 	pmrc = (MRC *) malloc (sizeof (MRC));
 	_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
@@ -589,7 +589,7 @@ ZEND_FUNCTION(mrcreadfromstring)
 		WRONG_PARAM_COUNT;
 	} 
 
-	zend_parse_arguments(argc TSRMLS_CC, "z", &data);
+	zend_parse_parameters(argc TSRMLS_CC, "z", &data);
 
 	pmrc = (MRC *) malloc (sizeof (MRC));
 	_mrc_image_create_from_string(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
@@ -610,7 +610,7 @@ ZEND_FUNCTION(mrccreate)
 	zval **x_size, **y_size;
 	MRCPtr pmrc;
 
-	if (ZEND_NUM_ARGS() != 2 || zend_parse_arguments(2, "zz", &x_size, &y_size) == FAILURE) {
+	if (ZEND_NUM_ARGS() != 2 || zend_parse_parameters(2, "zz", &x_size, &y_size) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
@@ -640,7 +640,7 @@ ZEND_FUNCTION(mrcnormalize)
 		WRONG_PARAM_COUNT;
 	} 
 
-	zend_parse_arguments(argc TSRMLS_CC, "zzz", &MRCR, &MRCN, &MRCD);
+	zend_parse_parameters(argc TSRMLS_CC, "zzz", &MRCR, &MRCN, &MRCD);
 
 	ZEND_FETCH_RESOURCE(pmrc_raw, MRCPtr, MRCR, -1, "MRCdata", le_mrc);
 	ZEND_FETCH_RESOURCE(pmrc_norm, MRCPtr, MRCN, -1, "MRCdata", le_mrc);
@@ -664,7 +664,7 @@ zval	**MRCD, **file;
 	FILE *fp;
 	int argc = ZEND_NUM_ARGS();
 
-	if (argc < 1 || argc > 2 || zend_parse_arguments(argc TSRMLS_CC, "zz", &MRCD, &file) == FAILURE) {
+	if (argc < 1 || argc > 2 || zend_parse_parameters(argc TSRMLS_CC, "zz", &MRCD, &file) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
@@ -716,7 +716,7 @@ ZEND_FUNCTION(mrctoimage)
 		WRONG_PARAM_COUNT;
 	} 
 
-	zend_parse_arguments(argc TSRMLS_CC, "zzz", &MRCD, &PMIN, &PMAX);
+	zend_parse_parameters(argc TSRMLS_CC, "zzz", &MRCD, &PMIN, &PMAX);
 
 	if (argc>1) {
 		convert_to_long_ex(PMIN);
@@ -756,7 +756,7 @@ ZEND_FUNCTION(mrccopy)
 	int srcH, srcW, srcY, srcX, dstY, dstX;
 
 	if (ZEND_NUM_ARGS() != 8 ||	
-		zend_parse_arguments(8, "zzzzzzzz", &DMRC, &SMRC, &DX, &DY, &SX, &SY, &SW, &SH) == FAILURE) {
+		zend_parse_parameters(8, "zzzzzzzz", &DMRC, &SMRC, &DX, &DY, &SX, &SY, &SW, &SH) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
@@ -803,7 +803,7 @@ ZEND_FUNCTION(mrccopyfromfile)
 
 
 	if (argc != 7 ||	
-		zend_parse_arguments(7, "zzzzzzz", &filename, &DX, &DY, &DW, &DH, &SX, &SY) == FAILURE) {
+		zend_parse_parameters(7, "zzzzzzz", &filename, &DX, &DY, &DW, &DH, &SX, &SY) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
@@ -857,7 +857,7 @@ ZEND_FUNCTION(mrcbinning)
 		WRONG_PARAM_COUNT;
 	} 
 
-	zend_parse_arguments(argc TSRMLS_CC, "zzz", &data, &BINNING, &SKIP_AVG);
+	zend_parse_parameters(argc TSRMLS_CC, "zzz", &data, &BINNING, &SKIP_AVG);
 
 	if (argc>1) {
 		convert_to_long_ex(BINNING);
@@ -899,7 +899,7 @@ ZEND_FUNCTION(mrcgaussianfilter)
 		WRONG_PARAM_COUNT;
 	} 
 
-	zend_parse_arguments(argc TSRMLS_CC, "zzzz", &data, &BINNING, &KERNEL, &SIGMA);
+	zend_parse_parameters(argc TSRMLS_CC, "zzzz", &data, &BINNING, &KERNEL, &SIGMA);
 
 	convert_to_long_ex(BINNING);
 	convert_to_long_ex(KERNEL);
@@ -940,7 +940,7 @@ ZEND_FUNCTION(mrclogscale)
 		WRONG_PARAM_COUNT;
 	} 
 
-	zend_parse_arguments(argc TSRMLS_CC, "z", &data);
+	zend_parse_parameters(argc TSRMLS_CC, "z", &data);
 
 	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, data, -1, "MRCdata", le_mrc);
 	mrc_log(pmrc);
@@ -966,7 +966,7 @@ ZEND_FUNCTION(mrcgetdata)
 		int	i,n;
 
 
-	if (ZEND_NUM_ARGS() != 1 || zend_parse_arguments(1, "z", &MRCD) == FAILURE) {
+	if (ZEND_NUM_ARGS() != 1 || zend_parse_parameters(1, "z", &MRCD) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
@@ -1005,7 +1005,7 @@ ZEND_FUNCTION(mrcstdevscale)
 			ZEND_WRONG_PARAM_COUNT();
 		}
 
-		zend_parse_arguments(argc TSRMLS_CC, "zz", &MRCD, &N_STDEV);
+		zend_parse_parameters(argc TSRMLS_CC, "zz", &MRCD, &N_STDEV);
 
 		if (argc>1) {
 			convert_to_long_ex(N_STDEV);
@@ -1064,7 +1064,7 @@ ZEND_FUNCTION(mrcputdata)
 
 	int i, argc = ZEND_NUM_ARGS();
 
-	if (argc != 2 || zend_parse_arguments(argc TSRMLS_CC, "zz", &MRCD, &input) == FAILURE) {
+	if (argc != 2 || zend_parse_parameters(argc TSRMLS_CC, "zz", &MRCD, &input) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
@@ -1123,7 +1123,7 @@ ZEND_FUNCTION(mrcrotate)
 		ZEND_WRONG_PARAM_COUNT();
 	} 
 
-	zend_parse_arguments(argc TSRMLS_CC, "zzz", &MRCD, &ANGLE, &RESIZE);
+	zend_parse_parameters(argc TSRMLS_CC, "zzz", &MRCD, &ANGLE, &RESIZE);
 
 	convert_to_double_ex(ANGLE);
 	angle = Z_DVAL_PP(ANGLE);
@@ -1152,7 +1152,7 @@ ZEND_FUNCTION(mrcupdateheader)
 	zval	**MRCD;
 	MRCPtr	pmrc;
 
-	if (ZEND_NUM_ARGS() != 1 || zend_parse_arguments(1, "z", &MRCD) == FAILURE) {
+	if (ZEND_NUM_ARGS() != 1 || zend_parse_parameters(1, "z", &MRCD) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
@@ -1174,7 +1174,7 @@ ZEND_FUNCTION(mrcset)
 	char *str_key = NULL;
 	int argc = ZEND_NUM_ARGS();
 
-	if (argc != 3 || zend_parse_arguments(argc TSRMLS_CC, "zzz", &MRCD, &key, &value) == FAILURE) {
+	if (argc != 3 || zend_parse_parameters(argc TSRMLS_CC, "zzz", &MRCD, &key, &value) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
@@ -1242,7 +1242,7 @@ ZEND_FUNCTION(mrchistogram)
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
-	zend_parse_arguments(argc TSRMLS_CC, "zz", &data, &NBBARS);
+	zend_parse_parameters(argc TSRMLS_CC, "zz", &data, &NBBARS);
 	convert_to_string_ex(data);
 
 	if (argc == 2)
@@ -1302,7 +1302,7 @@ ZEND_FUNCTION(mrccdfscale)
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
-	zend_parse_arguments(argc TSRMLS_CC, "zzz", &MRCD, &PER_MIN, &PER_MAX);
+	zend_parse_parameters(argc TSRMLS_CC, "zzz", &MRCD, &PER_MIN, &PER_MAX);
 
 	if (argc>2) {
 		convert_to_double_ex(PER_MIN);
@@ -1363,7 +1363,7 @@ ZEND_FUNCTION(mrcdestroy)
 	zval **MRCD;
 	MRCPtr pmrc;
 
-	if (ZEND_NUM_ARGS() != 1 || zend_parse_arguments(1, "z", &MRCD) == FAILURE) {
+	if (ZEND_NUM_ARGS() != 1 || zend_parse_parameters(1, "z", &MRCD) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
@@ -1393,7 +1393,7 @@ ZEND_FUNCTION(imagicinfo)
 		ZEND_WRONG_PARAM_COUNT();
 	} 
 
-	zend_parse_arguments(argc TSRMLS_CC, "zz", &data, &IMGNUM);
+	zend_parse_parameters(argc TSRMLS_CC, "zz", &data, &IMGNUM);
 
 	if (argc == 2)
 	{
@@ -1431,7 +1431,7 @@ ZEND_FUNCTION(imagicread)
 		ZEND_WRONG_PARAM_COUNT();
 	} 
 
-	zend_parse_arguments(argc TSRMLS_CC, "zzz", &heddata, &imgdata, &IMGNUM);
+	zend_parse_parameters(argc TSRMLS_CC, "zzz", &heddata, &imgdata, &IMGNUM);
 
 	if (argc == 3)
 	{
