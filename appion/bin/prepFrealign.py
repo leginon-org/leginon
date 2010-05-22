@@ -766,7 +766,8 @@ class frealignJob(appionScript.AppionScript):
 		frealignq['tarfile'] = "%s.tar"%(self.params['runname'])
 		frealignq['path'] = partq
 		frealignq['stack'] = appiondata.ApStackData.direct_query(self.params['stackid'])
-		frealignq['reconstack'] = appiondata.ApStackData.direct_query(self.params['reconstackid'])
+		if self.params['reconstackid'] is not None:
+			frealignq['reconstack'] = appiondata.ApStackData.direct_query(self.params['reconstackid'])
 		frealignq['model'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 		frealignq['job'] = jobdata
 		frealignq['symmetry'] = self.symmdata
