@@ -70,7 +70,7 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 	$q = "select u.`DEF_id` as userId, u.* from UserData u "
 			."where "
 			."u.password<>'' "
-			."order by `full name`";
+			."order by `lastname`";
 
 	$users = $leginondata->mysql->getSQLResult($q);
 
@@ -81,9 +81,12 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 		echo "<option value='default' > -- select user -- </option>";
 		foreach($users as $user) {
 			$s = ($user['userId']==$_POST['userId']) ? "selected" : "";
-			$o = ($user['full name']) ? $user['full name'] : $user['name'];
+			$firstname = $user['firstname'];
+			$lastname = $user['lastname'];
 			echo "<option value='".$user['userId']."' $s >"
-					.$o
+					.$firstname
+					." "
+					.$lastname
 					."</option>\n";
 			
 		}
