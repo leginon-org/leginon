@@ -35,8 +35,7 @@ if test "$PHP_MRC" = "yes"; then
 			fft_source="fft3.c"
 		fi
 	fi
-dnl	for i in /usr/include; do
-	for i in /usr/include/php/ext/gd/libgd; do
+	for i in /usr/include; do
 		test -f "$i/gd.h" && GD_DIR=$i && break
 	done
 	if test -z "$GD_DIR"; then
