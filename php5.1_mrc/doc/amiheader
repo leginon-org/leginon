@@ -1,0 +1,5 @@
+<?php
+require('ami.inc');
+ami_header('Documentation','MRC extension PHP');
+?>
+<link rel="StyleSheet" type="text/css" href="doxygen.css" />
