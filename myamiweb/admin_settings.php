@@ -22,6 +22,7 @@ function displayResult($result,$table,$name) {
 		$filearray[] = '$table = "'.$table.'";'.$linebreak.'';
 		$filearray[] = '$data=array();'.$linebreak.''; 
 		foreach ($result as $key=>$r) {
+			if (!is_numeric($r) && !$r) continue;
 			if (substr_count($r,'$') == 0) {
 				echo '$data["'.$key.'"] = "'.$r.'";'.$dlinebreak.''; 
 				$filearray[] = '$data["'.$key.'"] = "'.$r.'";'.$linebreak.''; 
@@ -102,7 +103,7 @@ function getFocusSequenceData($user_id,$table,$name) {
         . ' ORDER BY a.`DEF_timestamp` DESC'
         . ' LIMIT 0,1';
 	$results = $leginondata->mysql->getSQLResult($sql);
-	displayFirstResult($results,$table.': '.$name);
+	displayFirstResult($results,$table);
 	$focusnamesstr = $results[0]['SEQ|sequence'];
 	$focusnames = explode("'",$focusnamesstr);
 	foreach ($focusnames as $focusname) {
@@ -121,7 +122,7 @@ function getFocusSettingData($user_id,$nodename,$focusname) {
         . ' ORDER BY a.`DEF_timestamp` DESC'
         . ' LIMIT 0,1';
 
-	displayFirstResult( $leginondata->mysql->getSQLResult($sql),'FocusSettingData: '.$nodename.': '.$focusname);
+	displayFirstResult( $leginondata->mysql->getSQLResult($sql),'FocusSettingData');
 }
 
 function getSettingsData($user_id,$table,$name) {
@@ -151,6 +152,7 @@ $nodenames = array(
 	'DTFinderSettingsData'=>array('Tissue Centering'),
 	'CorrectorSettingsData'=>array('Correction'),
 	'BeamFixerSettingsData'=>array('Fix Beam'),
+	'GonModelerSettingsData'=>array('GonioModeling'),
 );
 $show_tables = false;
 $filename = 'test.php';
