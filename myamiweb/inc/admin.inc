@@ -22,8 +22,8 @@ $link->setImagePath('img/');
 $link->addlink('addgroup.php','Groups','', 'group1', '');
 $link->addlink('user.php','Users','', 'user', '');
 $link->addlink('addinstrument.php','Instruments','', 'tem_tecnai_icon', '');
-$link->addlink('addsettings.php','Default Settings','', 'calibration', '');
-$link->addlink('addcal.php','Calibrations','', 'calibration', '');
+#$link->addlink('addsettings.php','Default Settings','', 'calibration', '');
+#$link->addlink('addcal.php','Calibrations','', 'calibration', '');
 $link->addlink('addapp.php','Applications','', 'application', '');
 $link->addlink('goniometer.php','Goniometer','', 'goniometer', '');
 
