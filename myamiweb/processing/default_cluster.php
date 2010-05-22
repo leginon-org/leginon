@@ -167,7 +167,8 @@ class Cluster {
 	}
 
 	function formatEndPath($path) {
-		$path = ereg(DIRECTORY_SEPARATOR."$", $path) ? $path : $path.DIRECTORY_SEPARATOR;
+		if (substr($path,-1,1)!='/')
+			$path.='/';
 		return $path;
 	}
 

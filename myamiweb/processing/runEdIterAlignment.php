@@ -343,6 +343,8 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	echo "$templateForm\n";
 	echo "$templateTable\n";
 
+	echo referenceBox("Conformational flexibility of metazoan fatty acid synthase enables catalysis.", 2009, "Brignole EJ, Smith S, Asturias FJ.", "Nat Struct Mol Biol.", 16, 2, 19151726, 2653270, false, "img/editer.jpg");
+
 	processing_footer();
 	exit;
 }
@@ -429,6 +431,8 @@ function runAlignment() {
 		exit;
 	} else {
 		processing_header("Alignment Run","Alignment Params");
+
+		echo referenceBox("Conformational flexibility of metazoan fatty acid synthase enables catalysis.", 2009, "Brignole EJ, Smith S, Asturias FJ.", "Nat Struct Mol Biol.", 16, 2, 19151726, 2653270, false, "img/editer.jpg");
 
 		echo"
 		<TABLE WIDTH='600' BORDER='1'>

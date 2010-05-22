@@ -162,6 +162,8 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 
 	echo "</td></tr></table></form>\n";
 
+	echo emanRef();
+
 	processing_footer();
 	exit;
 }
@@ -403,6 +405,8 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 	echo getSubmitForm("Create Model");
 	echo "</td></tr></table></form>\n";
 
+	echo emanRef();
+
 }
 
 
@@ -490,6 +494,8 @@ function runCreateModel() {
 	} else {
 		processing_header("Creating an Initial Model", "Creating an Initial Model");
 		//rest of the page
+		echo emanRef();
+
 		echo"
 		<table width='600' border='1'>
 		<tr><td colspan='2'>

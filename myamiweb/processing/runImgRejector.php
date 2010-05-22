@@ -205,6 +205,9 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	</table>
 	</form>
 	</center>\n";
+
+	echo appionRef();
+
 	processing_footer();
 	exit;
 }
@@ -262,6 +265,8 @@ function runImgRejector() {
 	}
 
 	processing_header("ImgRejector Run","ImgRejector Params");
+
+	echo appionRef();
 
 	echo"
 	<table width='600' border='1'>

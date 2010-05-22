@@ -1105,4 +1105,63 @@ function getPngList($dir) {
 	return $pngimages;
 }
 
+function emanRef() {
+	return referenceBox("EMAN: semiautomated software for high-resolution single-particle reconstructions.", 1999, "Ludtke SJ, Baldwin PR, Chiu W.", "J Struct Biol.", 128, 1, 10600563, false, false, "img/eman_logo.png");
+}
+
+function spiderRef() {
+	return referenceBox("SPIDER and WEB: processing and visualization of images in 3D electron microscopy and related fields.", 1996, "Frank J, Radermacher M, Penczek P, Zhu J, Li Y, Ladjadj M, Leith A.", "J Struct Biol.", 116, 1, 8742743, false, false, "img/spider_logo.png");
+};
+
+function appionRef() {
+	return referenceBox("Appion: an integrated, database-driven pipeline to facilitate EM image processing.", 2009, "Lander GC, Stagg SM, Voss NR, <i>et&nbsp;al.</i>", "J Struct Biol.", 166, 1, 19263523, 2775544, "10.1016/j.jsb.2009.01.002", "img/topbarbackgrnd.jpg");
+}
+
+function frealignRef() {
+	return referenceBox("FREALIGN: high-resolution refinement of single particle structures.", 2007, "Grigorieff, N.", "J Struct Biol.", 157, 1, 16828314, false, "10.1016/j.jsb.2006.05.004", false);
+}
+
+function initModelRef() {
+	return referenceBox("A toolbox for ab initio 3-D reconstructions in single-particle electron microscopy.", 2010, "Voss NR, Lyumkis D, Cheng A, <i>et&nbsp;al.</i>", "J Struct Biol.", 169, 3, 20018246, false, false, "img/topbarbackgrnd.jpg");
+}
+
+function referenceBox($title, $year, $authorlist, $journal, $volume=false, $issue=false, $pmid=false, $pmcid=false, $doi=false, $logo=false) {
+	$refbox = "<br/>";
+	$refbox .= "<table class='tablebubble' border='0'><tr><td>\n";
+	if ($logo)
+		$refbox .= "<img height='80' src='$logo'>";
+	$refbox .= "</td><td width='480'>\n";
+	$refbox .= "<h4>If you find this software useful please cite:</h4>\n";
+	$refbox .= "\n";
+	// add period at end of certain fields
+	if (substr($title,-1,1)!='.')
+		$title.='.';
+	if (substr($authorlist,-1,1)!='.')
+		$authorlist.='.';
+	if (substr($journal,-1,1)!='.')
+		$journal.='.';
+
+	$refbox .= "<i>\"$title\"</i>&nbsp;($year)\n";
+	$refbox .= "$authorlist\n";
+	$refbox .= "$journal";
+	if ($volume)
+		$refbox .= " v$volume";
+	if ($issue)
+		$refbox .= "<i>($issue)</i>";
+	$refbox .= ".&nbsp;\n";
+	if ($pmid)
+		$refbox .= "PMID:&nbsp;<a href='http://www.ncbi.nlm.nih.gov/pubmed/$pmid'>$pmid</a>&nbsp;\n";
+	if ($pmcid)
+		$refbox .= "Free text:&nbsp;<a href='http://www.ncbi.nlm.nih.gov/pmc/articles/PMC$pmcid'>PMC$pmcid</a>&nbsp;\n";
+	if ($doi)
+		$refbox .= "DOI:&nbsp;<a href='http://dx.doi.org/$doi'>$doi</a>&nbsp;\n";
+	$refbox .= "\n";
+	$refbox .= "</td></tr></table><br/>\n";
+	return ($refbox);
+	//echo referenceBox(title, year, authorlist, journal, volume, issue, pmid, pmc, doi, logo);
+
+}
+
+
+
 ?>

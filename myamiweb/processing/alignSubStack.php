@@ -224,6 +224,8 @@ function createAlignSubStackForm($extra=false, $title='subStack.py Launcher', $h
   </table>
   </form>\n";
 
+	echo initModelRef();
+
 	processing_footer();
 	exit;
 }
@@ -291,7 +293,7 @@ function runSubStack() {
 	}
 
 	processing_header("Creating a SubStack", "Creating a SubStack");
-
+	echo initModelRef();
 	//rest of the page
 	echo"
 	<table width='600' border='1'>

@@ -207,6 +207,9 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	if (!$_POST['process']) {
 		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
+
+	echo spiderRef();
+
 	processing_footer();
 	exit;
 }
@@ -269,6 +272,7 @@ function runSpiderCoranClassify() {
 	}
 	else {
 		processing_header("Spider Coran Classification","Spider Coran Classification");
+		echo spiderRef();
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>

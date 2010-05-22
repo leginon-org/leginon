@@ -103,7 +103,7 @@ function createApplyJunkCutoffForm($extra=false, $title='sortJunkStack.py Launch
 	</tr>
   </table>
   </form>\n";
-
+	echo referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "C.O.S. Sorzano, R. Marabini, J. Velazquez-Muriel, J.R. Bilbao-Castro, S.H.W. Scheres, J.M. Carazo, A. Pascual-Montano.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
 	processing_footer();
 	exit;
 }
@@ -153,7 +153,7 @@ function runApplyJunkCutoff() {
 	}
 
 	processing_header("Apply Junk Cutoff", "Apply Junk Cutoff");
-
+	echo referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "C.O.S. Sorzano, R. Marabini, J. Velazquez-Muriel, J.R. Bilbao-Castro, S.H.W. Scheres, J.M. Carazo, A. Pascual-Montano.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
 	//rest of the page
 	echo"
 	<table width='600' border='1'>

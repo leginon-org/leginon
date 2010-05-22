@@ -142,6 +142,7 @@ elseif ($_POST['submitjob']) {
 	else {echo "<FONT COLOR='RED'>No Jobs on the cluster, check your settings</FONT>\n";}
 	echo "<p><a href='checkRefineJobs.php?expId=$expId'>[Check Status of Jobs Associated with this Experiment]</a><p>\n";
 	echo "<P><hr>\n<font color='#CC3333' size='+1'>Do not hit 'reload' - it will re-submit job</FONT><P>\n";
+
 	processing_footer(True, True);
 	exit;
 }
@@ -210,6 +211,9 @@ function stackModelForm($extra=False) {
 		echo "<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
 	}
 	else echo "No initial models in database";
+
+	echo referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "Sorzano CO, Marabini R, Velázquez-Muriel J, Bilbao-Castro JR, Scheres SH, Carazo JM, Pascual-Montano A.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
+
 	processing_footer();
 	exit;
 }
@@ -502,6 +506,8 @@ function jobForm($extra=false) {
     echo "<input type='SUBMIT' NAME='write' VALUE='Create Job File'>\n";
     echo "</form>\n";
 
+	echo referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "Sorzano CO, Marabini R, Velázquez-Muriel J, Bilbao-Castro JR, Scheres SH, Carazo JM, Pascual-Montano A.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
+
 	processing_footer();
 	exit;
 }
@@ -629,7 +635,10 @@ function writeJobFile ($extra=False) {
 		$f = fopen($tmpfile,'w');
 		fwrite($f,$clusterjob);
 		fclose($f);
-	}	
+	}
+
+	echo referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "Sorzano CO, Marabini R, Velázquez-Muriel J, Bilbao-Castro JR, Scheres SH, Carazo JM, Pascual-Montano A.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
+
 	processing_footer();
 	exit;
 }

@@ -21,8 +21,6 @@ if ($_POST['process']) {
 }
 else jobform();
 
-
-
 function jobform($extra=false)	{
 
 	$javafunc .= writeJavaPopupFunctions('appion');

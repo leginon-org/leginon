@@ -255,6 +255,9 @@ function createrotKerDenSOMForm($extra=false, $title='rotKerdenSOM.py Launcher',
 	if (!$_POST['process']) {
 		echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
 	}
+
+	echo referenceBox("A Novel Neural Network Technique for Analysis and Classification of EM Single-Particle Images", 2001, "A. Pascual-Montano, L. E. Donate, M. Valle, M. Bárcena, R. D. Pascual-Marqui, J. M. Carazo", "J Struct Biol.", 133, '2/3', 11472094, false, false, "img/xmipp_logo.png");
+
 	processing_footer();
 	exit;
 }
@@ -360,6 +363,9 @@ function runrotKerDenSOM() {
 	} else {
 		processing_header("Kernel Probability Density Estimator Self-Organizing Map Applied to Rotational Spectra",
 			"Kernel Probability Density Estimator Self-Organizing Map Applied to Rotational Spectra");
+
+		echo referenceBox("A Novel Neural Network Technique for Analysis and Classification of EM Single-Particle Images", 2001, "A. Pascual-Montano, L. E. Donate, M. Valle, M. Bárcena, R. D. Pascual-Marqui, J. M. Carazo", "J Struct Biol.", 133, '2/3', 11472094, false, false, "img/xmipp_logo.png");
+
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>

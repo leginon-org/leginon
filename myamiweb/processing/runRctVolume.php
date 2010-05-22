@@ -280,6 +280,8 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	echo getSubmitForm("Rct Volume");
 	echo "</td></tr></table></form>\n";
 
+	echo spiderRef();
+
 	processing_footer();
 	exit;
 }
@@ -384,6 +386,8 @@ function runRctVolume() {
 		exit;
 	} else {
 		processing_header("Rct Volume Command", "Rct Volume Command");
+
+		echo spiderRef();
 
 		echo"
 		<table width='600' border='1'>

@@ -196,6 +196,9 @@ function createUploadReconForm($extra=false, $title='UploadXmippRecon.py Launche
   </table>
   </form>
   </center>\n";
+
+	echo referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "Sorzano CO, Marabini R, Velázquez-Muriel J, Bilbao-Castro JR, Scheres SH, Carazo JM, Pascual-Montano A.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
+
   processing_footer();
   exit;
 }
@@ -270,7 +273,7 @@ function runUploadRecon() {
 		exit;
 	}
 	processing_header("UploadRecon Run","UploadRecon Params");
-	
+	echo referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "Sorzano CO, Marabini R, Velázquez-Muriel J, Bilbao-Castro JR, Scheres SH, Carazo JM, Pascual-Montano A.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
 	echo"
 	<table class='tableborder' width='600' border='1'>
 	<tr><td colspan='2'>

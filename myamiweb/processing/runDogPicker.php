@@ -133,6 +133,9 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	</tr>
 	</form>
 	</table>\n";
+
+	echo referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
+
 	processing_footer();
 	exit;
 }
@@ -221,6 +224,8 @@ function runDogPicker() {
 			createDogPickerForm(false,'Particle Selection Test Results','Particle Selection Test Results',$results);
 		} else {
 			processing_header("Particle Selection Results","DogPicker Command");
+
+			echo referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
 
 			echo"
 				<TABLE WIDTH='600'>

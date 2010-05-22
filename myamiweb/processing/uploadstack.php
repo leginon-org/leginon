@@ -146,6 +146,8 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 	echo getSubmitForm("Upload Stack");
 	echo "</td></tr></table></form>\n";
 
+	echo appionRef();
+
 	processing_footer();
 	exit;
 }
@@ -220,6 +222,8 @@ function runUploadStack() {
 	else {
 		processing_header("Upload Stack Command", "Upload Stack Command");
 		//rest of the page
+		echo appionRef();
+
 		echo"
 		<table class='tableborder' width='600' border='1'>
 			<tr><td colspan='2'>

@@ -219,6 +219,9 @@ function stackModelForm($extra=False) {
 		echo "<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
 	}
 	else echo "No initial models in database";
+
+	echo spiderRef();
+
 	processing_footer();
 	exit;
 }
@@ -396,6 +399,9 @@ function jobForm($extra=false) {
 	echo "<br>\n";
 	echo "<input type='submit' name='write' value='Create Job File'>\n";
   	echo "</form>\n";
+
+	echo spiderRef();
+
 	processing_footer();
 	exit;
 }
@@ -543,6 +549,9 @@ function writeJobFile ($extra=False) {
 		fwrite($f,$clusterjob);
 		fclose($f);
 	}	
+
+	echo spiderRef();
+
 	processing_footer();
 	exit;
 }

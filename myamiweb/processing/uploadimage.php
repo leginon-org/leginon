@@ -286,6 +286,8 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	echo"</table>\n";
 	echo"</form>\n";
 
+	echo appionRef();
+
 	processing_footer();
 	exit;
 }
@@ -434,7 +436,7 @@ function runUploadImage() {
 	}
 
 	else processing_header("UploadImage Command","UploadImage Command");
-
+	echo appionRef();
 	// rest of the page
 	echo"<font class='apcomment'>".$warning."</font>";
 	echo"

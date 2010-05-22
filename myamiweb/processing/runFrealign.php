@@ -105,6 +105,8 @@ function selectFrealignJob($extra=False) {
 
 	echo "<P><input type='SUBMIT' NAME='submitprepared' VALUE='Use this prepared job'></FORM>\n";
 
+	echo frealignRef();
+
 	processing_footer();
 	exit;
 };
@@ -298,6 +300,8 @@ function jobForm($extra=false) {
 
 	echo"</form><br/>\n";
 
+	echo frealignRef();
+
 	//echo "StackID: $stackid -- ModelID: $modelid<br/>\n";
 	echo "<table class='tablebubble'><tr><td>\n";
 	echo stacksummarytable($refinestackid, true);
@@ -433,7 +437,10 @@ function writeJobFile ($extra=False) {
 		$f = fopen($tmpfile,'w');
 		fwrite($f, $clusterjob);
 		fclose($f);
-	}	
+	}
+
+	echo frealignRef();
+
 	processing_footer();
 	exit;
 }
@@ -538,10 +545,6 @@ function submitJob($extra=False) {
 	exit;
 }
 
-
-
-
-
 /*
 ******************************************
 ******************************************
@@ -549,7 +552,8 @@ function submitJob($extra=False) {
 */
 
 function formatEndPath($path) {
-	$path = ereg(DIRECTORY_SEPARATOR."$", $path) ? $path : $path.DIRECTORY_SEPARATOR;
+	if (substr($path,-1,1)!='/')
+		$path.='/';
 	return $path;
 }
 

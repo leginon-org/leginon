@@ -58,8 +58,6 @@ function createform($extra=False) {
 	$rmeasureres = ($rmeas) ? sprintf("%.2f",$rmeas['rMeasure']) : "None" ;
 	$densityfile = $info['path']."/".$info['volumeDensity'];
 
-
-
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId&refineIter=$refIterId";
 
 	$amplist = array();
@@ -219,6 +217,9 @@ function createform($extra=False) {
 	echo "</center>\n";
 	echo "</form>\n";
 
+	echo spiderRef();
+	echo referenceBox("Sharpening high resolution information in single particle electron cryomicroscopy", 2008, "J.J. Fernandez, D. Luque, J.R. Caston, J.L. Carrascosa", "J Struct Biol.", 164, 1, 18614378, false, false, false);
+
 	echo "<table class='tablebubble'><tr><td>\n";
 	echo stacksummarytable($stackid, true);
 	echo "</td></tr><tr><td>\n";
@@ -311,6 +312,9 @@ function runPostProc() {
 	}
 
 	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density");
+	echo spiderRef();
+	echo referenceBox("Sharpening high resolution information in single particle electron cryomicroscopy", 2008, "J.J. Fernandez, D. Luque, J.R. Caston, J.L. Carrascosa", "J Struct Biol.", 164, 1, 18614378, false, false, false);
+
 	echo $status;
 	echo "<br/>\n";
 	echo"

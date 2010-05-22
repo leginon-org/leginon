@@ -111,7 +111,7 @@ function createCombineStackForm($extra=false, $title='combinestack.py Launcher',
 	} else {
 		echo "<B>Project does not contain any stacks.</B>\n";
 	}
-
+	echo appionRef();
 	processing_footer();
 	exit;
 }
@@ -165,14 +165,16 @@ function runCombineStack() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createCombineStackForm("<B>ERROR:</B> Enter a user name and password");
+		if (!($user && $password))
+			createCombineStackForm("<B>ERROR:</B> Enter a user name and password");
 
 		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
 		// if errors:
 		if ($sub) createCombineStackForm("<b>ERROR:</b> $sub");
 		exit;
 	} else {
-		processing_header("Combine Stack Params","Combine Stack  Params");
+		processing_header("Combine Stack Params","Combine Stack Params");
+		echo appionRef();
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>

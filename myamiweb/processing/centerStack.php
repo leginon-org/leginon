@@ -133,6 +133,8 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
   </table>
   </form>\n";
 
+	echo emanRef();
+
 	processing_footer();
 	exit;
 }
@@ -189,7 +191,7 @@ function runCenterParticles() {
 	}
 
 	processing_header("Center Particles in Stack", "Center Particles in Stack");
-
+	echo emanRef();
 	//rest of the page
 	echo"
 	<table width='600' border='1'>

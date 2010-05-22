@@ -130,6 +130,11 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 	if (!$_POST['process']) {
 		echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
 	}
+
+	echo referenceBox("Maximum-likelihood multi-reference refinement for electron microscopy images.", 2005, "Scheres SH, Valle M, Nuñez R, Sorzano CO, Marabini R, Herman GT, Carazo JM.", "J Mol Biol.", 348, 1, 15808859, false, false, "img/xmipp_logo.png");
+
+	echo referenceBox("Fast maximum-likelihood refinement of electron microscopy images.", 2005, "Scheres SH, Valle M, Carazo JM.", "Bioinformatics.", 21, "Suppl 2", 16204112, false, false, "img/xmipp_logo.png");
+
 	processing_footer();
 	exit;
 }
@@ -172,6 +177,11 @@ function runMaxLikeAlign() {
 	}
 	else {
 		processing_header("Max Like Align Upload Params","Max Like Upload Params");
+
+		echo referenceBox("Maximum-likelihood multi-reference refinement for electron microscopy images.", 2005, "Scheres SH, Valle M, Nuñez R, Sorzano CO, Marabini R, Herman GT, Carazo JM.", "J Mol Biol.", 348, 1, 15808859, false, false, "img/xmipp_logo.png");
+
+		echo referenceBox("Fast maximum-likelihood refinement of electron microscopy images.", 2005, "Scheres SH, Valle M, Carazo JM.", "Bioinformatics.", 21, "Suppl 2", 16204112, false, false, "img/xmipp_logo.png");
+
 		echo "<table width='600' class='tableborder' border='1'>";
 		echo "
 			<tr><td colspan='2'>

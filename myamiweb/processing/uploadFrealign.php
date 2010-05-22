@@ -97,6 +97,8 @@ function selectFrealignJob($extra=False) {
 
 	echo "<P><input type='SUBMIT' NAME='selectupload' VALUE='Select Frealign job'></FORM>\n";
 
+	echo frealignRef();
+
 	processing_footer();
 	exit;
 };
@@ -205,6 +207,8 @@ function createUploadFrealignForm($extra=False) {
 	echo "</form>\n";
 	echo "</center>\n";
 
+	echo frealignRef();
+
 	processing_footer();
 	exit;
 };
@@ -261,6 +265,8 @@ function runUploadFrealign() {
 	}
 	else {
 		processing_header("Upload Frealign Params","Upload Frealign Params");
+		echo frealignRef();
+
 		echo "<table width='600' class='tableborder' border='1'>";
 		echo "
 			<tr><td colspan='2'>

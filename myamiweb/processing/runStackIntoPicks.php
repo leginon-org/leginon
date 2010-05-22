@@ -87,6 +87,8 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 		echo "<B>Project does not contain any stacks.</B>\n";
 	}
 
+	echo appionRef();
+
 	processing_footer();
 	exit;
 }
@@ -125,6 +127,8 @@ function runStackIntoPicks() {
 		exit;
 	} else {
 		processing_header("Run Stack Into Picks","Run Stack Into Picks");
+		echo appionRef();
+
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>

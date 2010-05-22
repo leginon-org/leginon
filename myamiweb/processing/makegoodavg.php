@@ -84,6 +84,9 @@ if ($_POST['process']) {
 	<tr><td>reconId</td><td>$reconId</td></tr>
 	<tr><td>sigma</td><td>$sigma</td></tr>
 	</table>\n";
+
+	echo appionRef();
+
 	processing_footer();
 	exit;
 }
@@ -174,6 +177,9 @@ function createform($extra=False) {
 	echo "</tr>\n";
 	echo "</table>\n";
 	echo "</FORM>\n";
+
+	echo appionRef();
+
 	processing_footer();
 	exit();
 }

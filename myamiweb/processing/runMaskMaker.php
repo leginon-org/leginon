@@ -236,6 +236,9 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	</CENTER>
 	</FORM>
 	<?
+
+	echo appionRef();
+
 	processing_footer();
 }
 function runMaskMaker() {
@@ -318,6 +321,8 @@ function runMaskMaker() {
 	} else {
 		processing_header("Create Mask","Create Reusable Image Mask",$javafunctions,True);
 	}
+	echo appionRef();
+
 	echo"
 		<TABLE WIDTH='600'>
 			<tr>

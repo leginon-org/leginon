@@ -71,6 +71,7 @@ function createAffinityPropForm($extra=false, $title='affPropCluster.py Launcher
 	$javascript .= writeJavaPopupFunctions('appion');	
 
 	processing_header($title,$heading,$javascript);
+
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
@@ -232,6 +233,9 @@ function createAffinityPropForm($extra=false, $title='affPropCluster.py Launcher
 	if (!$_POST['process']) {
 		echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
 	}
+
+	echo referenceBox("Clustering by Passing Messages Between Data Points.", 2007, "Brendan J. Frey and Delbert Dueck", "Science", 315, 5814, 17218491, false, false, "img/affinityprop.png");
+
 	processing_footer();
 	exit;
 }
@@ -299,6 +303,9 @@ function runAffinityProp() {
 	}
 	else {
 		processing_header("Clustering by Affinity Propagation","Clustering by Affinity Propagation");
+
+		echo referenceBox("Clustering by Passing Messages Between Data Points.", 2007, "Brendan J. Frey and Delbert Dueck", "Science", 315, 5814, 17218491, false, false, "img/affinityprop.png");
+
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>

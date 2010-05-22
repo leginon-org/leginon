@@ -161,6 +161,8 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	</center>
 	</form>
 	<?
+
+	echo appionRef();
 	processing_footer();
 	exit;
 }
@@ -231,6 +233,7 @@ function runjpgmaker() {
 		createJMForm(false,'JPG File Maker Test Results','JPEG Maker Results',$images);
 	} else {
 		processing_header("JPEG Maker Results","JPEG Maker Results",$javascript);
+		echo appionRef();
 		echo"
 			<table width='600'>
 			<tr><td colspan='2'>

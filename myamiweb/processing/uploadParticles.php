@@ -102,6 +102,9 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 	echo "</td></tr></table></td></tr><tr><td align='center'>";
 	echo getSubmitForm("Upload Particles");
 	echo "</td></tr></table></form>\n";
+
+	echo appionRef();
+
 	processing_footer();
 	exit;
 }
@@ -172,6 +175,8 @@ function runUploadParticles() {
 		processing_header("UploadParticles Command", "UploadParticles Command");
 		if ($particle_warning) echo"$particle_warning<br />";
 	}
+	echo appionRef();
+
 	//rest of the page
 	echo"
 	<table class='tableborder' width='600' border='1'>

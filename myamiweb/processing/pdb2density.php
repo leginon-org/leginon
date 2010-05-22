@@ -154,6 +154,8 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	echo "</table>\n";
 	echo "</form>\n";
 
+	echo initModelRef();
+
 	processing_footer();
 	exit;
 }
@@ -232,6 +234,9 @@ function runDownloadModel() {
 	}
 
 	processing_header("PDB to EM Density", "PDB to EM Density");
+
+	echo initModelRef();
+
 	// rest of the page
 	echo"<table class='tableborder' width='600' border='1'>\n";
 	echo "<tr><td>\n";

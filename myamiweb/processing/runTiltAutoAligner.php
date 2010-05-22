@@ -154,6 +154,9 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 		</TD>
 	</tr>
 	</table>";
+
+	echo referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
+
 	processing_footer();
 	?>
 
@@ -215,6 +218,8 @@ function runTiltAutoAligner() {
 	} else {
 
 		processing_header("Tilt Auto Aligner Command","Tilt Auto Aligner Command");
+
+		echo referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
 
 		echo"
 			<TABLE WIDTH='600'>

@@ -150,6 +150,9 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   </CENTER>
   </FORM>
 ";
+
+	echo appionRef();
+
   processing_footer();
   exit;
 }
@@ -216,6 +219,8 @@ function runManualPicker() {
   }
 
   else processing_header("Particle Selection Results","Particle Selection Results");
+
+	echo appionRef();
 
   echo"
     <table WIDTH='600'>

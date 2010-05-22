@@ -101,6 +101,8 @@ function runCtfEstimate() {
 
 	processing_header("$progname Results","$progname Results");
 
+	echo referenceBox("Accurate determination of local defocus and specimen tilt in electron microscopy.", 2003, "Mindell, JA, Grigorieff N.", "J Struct Biol.", 142, 3, 12781660, false, false, false);
+
 	echo"
 	<TABLE WIDTH='600'>
 	<TR><TD COLSPAN='2'>
@@ -119,6 +121,9 @@ function runCtfEstimate() {
 	//if ($reprocess) echo "<TR><td>reprocess</TD><td>$reprocess</TD></tr>\n";
 	//else echo "<TR><td>reprocess</TD><td><I>NULL</I></TD></tr>\n";
 	echo "</table>\n";
+
+
+
 	processing_footer(True, True);
 }
 
@@ -264,6 +269,9 @@ function createCtfEstimateForm($extra=false) {
 	</tr>
 	</table>
 	</form>\n";
+
+	echo referenceBox("Accurate determination of local defocus and specimen tilt in electron microscopy.", 2003, "Mindell, JA, Grigorieff N.", "J Struct Biol.", 142, 3, 12781660, false, false, false);
+
 	processing_footer();
 }
 

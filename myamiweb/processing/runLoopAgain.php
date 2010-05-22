@@ -102,6 +102,8 @@ function selectLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 	}
 	echo "</table>\n";
 
+	echo appionRef();
+
 	processing_footer();
 	exit(1);
 }
@@ -201,6 +203,8 @@ function createLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 
 	echo getSubmitForm("Run Loop Program Again");
 
+	echo appionRef();
+
 	processing_footer();
 	exit;
 }
@@ -262,6 +266,9 @@ function runLoopAgain() {
 		exit;
 	} else {
 		processing_header("Loop Again Launcher","Loop Again Launcher");
+
+		echo appionRef();
+
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>

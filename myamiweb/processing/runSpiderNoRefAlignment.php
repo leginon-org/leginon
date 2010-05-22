@@ -228,6 +228,9 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	if (!$_POST['process']) {
 		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
+
+	echo spiderRef();
+
 	processing_footer();
 	exit;
 }
@@ -320,6 +323,9 @@ function runSpiderNoRefAlign() {
 	}
 	else {
 		processing_header("No Ref Align Run Params","No Ref Align Params");
+
+		echo spiderRef();
+
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>

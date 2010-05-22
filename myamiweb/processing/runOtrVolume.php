@@ -275,6 +275,8 @@ function createOtrVolumeForm($extra=false, $title='OtrVolume.py Launcher', $head
 	echo getSubmitForm("Otr Volume");
 	echo "</td></tr></table></form>\n";
 
+	echo spiderRef();
+
 	processing_footer();
 	exit;
 }
@@ -374,6 +376,8 @@ function runOtrVolume() {
 		exit;
 	} else {
 		processing_header("Otr Volume Command", "Otr Volume Command");
+
+		echo spiderRef();
 
 		echo"
 		<table width='600' border='1'>

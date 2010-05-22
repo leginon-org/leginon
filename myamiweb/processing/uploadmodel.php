@@ -190,6 +190,8 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   </table>
   </form>\n";
 
+	echo initModelRef();
+
 	processing_footer();
 	exit;
 }
@@ -286,7 +288,7 @@ function runUploadModel() {
 	}
 
 	else processing_header("UploadModel Command","UploadModel Command");
-	
+	echo initModelRef();
 	// rest of the page
 	echo"
 	<table class='tableborder' width='600' border='1'>

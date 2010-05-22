@@ -168,6 +168,9 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	echo "</td></tr></table></td></tr><tr><td align='center'><hr/>";
 	echo getSubmitForm("Upload Template");
 	echo "</td></tr></table></form>\n";
+
+	echo appionRef();
+
 	processing_footer();
 	exit;
 }
@@ -272,6 +275,9 @@ function runUploadTemplate() {
 		processing_header("UploadTemplate Command", "UploadTemplate Command");
 		if ($template_warning) echo"$template_warning<br />";
 	}
+
+	echo appionRef();
+
 	//rest of the page
 	echo"
 	<table class='tableborder' width='600' border='1'>

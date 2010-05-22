@@ -163,6 +163,9 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	echo "</tr>";
 	echo "</table>";
 	echo "</form>";
+
+	echo spiderRef();
+
 	processing_footer();
 	exit;
 }
@@ -244,6 +247,9 @@ function runClusterCoran() {
 		exit;
 	} else {
 		processing_header("Cluster Coran Params","Cluster Coran Params");
+
+		echo spiderRef();
+
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>

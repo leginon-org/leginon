@@ -113,6 +113,9 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
   </table>
   </form>\n";
 
+	echo spiderRef();
+	echo appionRef();
+
 	processing_footer();
 	exit;
 }
@@ -158,7 +161,8 @@ function runSubStack() {
 	}
 
 	processing_header("Creating a SubStack", "Creating a SubStack");
-
+	echo spiderRef();
+	echo appionRef();
 	//rest of the page
 	echo"
 	<table width='600' border='1'>

@@ -483,7 +483,13 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "</td>\n";
 	echo "</tr>\n";
 	echo "</table>\n";
+	echo "</td>\n";
+	echo "</tr>\n";
+	echo "</table>\n";
 	echo "</form>\n";
+
+	echo appionRef();
+
 	processing_footer();
 	exit;
 }
@@ -658,6 +664,8 @@ function runMakestack() {
 	}
 
 	processing_header("Makestack Run","Makestack Params");
+
+	echo appionRef();
 
 	echo"
 	<table width='600' border='1'>

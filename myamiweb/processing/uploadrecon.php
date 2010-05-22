@@ -228,6 +228,9 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 
 	echo "</form>\n";
 	echo "</center>\n";
+
+	echo emanRef();
+
 	processing_footer();
 	exit;
 }
@@ -343,7 +346,7 @@ function runUploadRecon() {
 		exit;
 	}
 	processing_header("UploadRecon Run","UploadRecon Params");
-	
+	echo emanRef();
 	echo "
 	<table class='tableborder' width='600' border='1'>
 	<tr><td colspan='2'>

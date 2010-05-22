@@ -138,6 +138,7 @@ function submitJob($extra=False) {
 	else {echo "<FONT COLOR='RED'>No Jobs on the cluster, check your settings</FONT>\n";}
 	echo "<p><a href='checkRefineJobs.php?expId=$expId'>[Check Status of Jobs Associated with this Experiment]</a><p>\n";
 	echo "<P><hr>\n<font color='#CC3333' size='+1'>Do not hit 'reload' - it will re-submit job</FONT><P>\n";
+
 	processing_footer(True, True);
 	exit;
 }
@@ -211,6 +212,9 @@ function stackModelForm($extra=False) {
 		echo "<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
 	}
 	else echo "No initial models in database";
+
+	echo emanRef();
+
 	processing_footer();
 	exit;
 }
@@ -720,6 +724,8 @@ function jobForm($extra=false) {
 	echo modelsummarytable($modelid, true);
 	echo "</td></tr></table>\n";
 
+	echo emanRef();
+
 	processing_footer();
 	exit;
 }
@@ -731,7 +737,8 @@ function jobForm($extra=false) {
 */
 
 function formatEndPath($path) {
-	$path = ereg(DIRECTORY_SEPARATOR."$", $path) ? $path : $path.DIRECTORY_SEPARATOR;
+	if (substr($path,-1,1)!='/')
+		$path.='/';
 	return $path;
 }
 
@@ -1082,6 +1089,9 @@ function writeJobFile ($extra=False) {
 		fwrite($f,$clusterjob);
 		fclose($f);
 	}
+
+	echo emanRef();
+
 	processing_footer();
 	exit;
 }

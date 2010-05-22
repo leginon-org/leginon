@@ -339,6 +339,9 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 		</td>
 	</tr></table>
 	</form>\n";
+
+	echo referenceBox("FindEM--a fast, efficient program for automatic selection of particles from electron micrographs.", 2004, "Roseman AM.", "J Struct Biol.", 145, "1-2", 15065677, false, false, "img/findem.png");
+
 	processing_footer();
 	exit;
 }
@@ -460,6 +463,8 @@ function runTemplateCorrelator() {
 		exit;
 	} else {
 		processing_header("Particle Selection Results","Particle Selection Results");
+
+		echo referenceBox("FindEM--a fast, efficient program for automatic selection of particles from electron micrographs.", 2004, "Roseman AM.", "J Struct Biol.", 145, "1-2", 15065677, false, false, "img/findem.png");
 
 		echo"
 			<table width='600'>

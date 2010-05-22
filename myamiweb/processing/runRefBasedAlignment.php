@@ -348,6 +348,8 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	echo "$templateForm\n";
 	echo "$templateTable\n";
 
+	echo spiderRef();
+
 	processing_footer();
 	exit;
 }
@@ -441,6 +443,8 @@ function runAlignment() {
 		exit;
 	} else {
 		processing_header("Alignment Run","Alignment Params");
+
+		echo spiderRef();
 
 		echo"
 		<TABLE WIDTH='600' BORDER='1'>

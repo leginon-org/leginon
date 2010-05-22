@@ -109,6 +109,9 @@ function stackModelForm($extra=False) {
 		echo "<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
 	}
 	else echo "No initial models in database";
+
+	echo frealignRef();
+
 	processing_footer();
 	exit;
 }
@@ -497,6 +500,8 @@ function jobForm($extra=false) {
 	echo modelsummarytable($modelid, true);
 	echo "</td></tr></table>\n";
 
+	echo frealignRef();
+
 	processing_footer();
 	exit;
 }
@@ -616,7 +621,7 @@ function prepareFrealign ($extra=False) {
 		exit;
 	} else {
 		processing_header("Frealign Job Generator","Frealign Job Generator", $javafunc);
-
+		echo frealignRef();
 		echo"
 		<TABLE WIDTH='600'>
 		<TR><TD COLSPAN='2'>

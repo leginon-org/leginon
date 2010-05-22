@@ -267,6 +267,9 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	if (!$_POST['process']) {
 		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
+
+	echo referenceBox("Topology representing network enables highly accurate classification of protein images taken by cryo electron-microscope without masking.", 2003, "Ogura T, Iwasaki K, Sato C.", "J Struct Biol.", 143, 3, 14572474, false, false, "img/canimg.png");
+
 	processing_footer();
 	exit;
 }
@@ -371,6 +374,9 @@ function runTopolAlign() {
 	}
 	else {
 		processing_header("Topology Align Run Params","Topology Align Params");
+
+		echo referenceBox("Topology representing network enables highly accurate classification of protein images taken by cryo electron-microscope without masking.", 2003, "Ogura T, Iwasaki K, Sato C.", "J Struct Biol.", 143, 3, 14572474, false, false, "img/canimg.png");
+
 		echo "<table width='600' class='tableborder' border='1'>";
 		echo "<tr><td colspan='2'><br/>\n";
 		if ($calctime < 60)

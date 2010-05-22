@@ -113,6 +113,8 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 	echo "</table>\n";
 	echo "</form>\n";
 
+	echo initModelRef();
+
 	processing_footer();
 	exit;
 }
@@ -174,6 +176,9 @@ function runUploadModel() {
 	}
 
 	processing_header("EMDB to EM Density", "EMDB to EM Density");
+
+	echo initModelRef();
+
 	// rest of the page
 	echo"<table class='tableborder' width='600' border='1'>\n";
 	echo "<tr><td>\n";

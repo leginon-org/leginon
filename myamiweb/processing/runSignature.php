@@ -228,6 +228,7 @@ function createSigForm($extra=false, $title='Signature Launcher',
 	</SCRIPT>\n";
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title,$heading,$javafunctions,True);
+
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
@@ -360,6 +361,9 @@ function createSigForm($extra=false, $title='Signature Launcher',
 		</td>
 	</tr></table>
 	</form>\n";
+
+	echo referenceBox("SIGNATURE: a single-particle selection system for molecular electron microscopy.", 2007, "Chen JZ, Grigorieff N.", "J Struct Biol.", 157, 1, 16870473, false, false, "img/signature.jpg");
+
 	processing_footer();
 	exit;
 }
@@ -464,6 +468,8 @@ function runSignaturePicker() {
 	} else {
 		processing_header("Particle Selection Results","Particle Selection Results");
 
+		echo referenceBox("SIGNATURE: a single-particle selection system for molecular electron microscopy.", 2007, "Chen JZ, Grigorieff N.", "J Struct Biol.", 157, 1, 16870473, false, "img/signature.jpg");
+
 		echo"
 			<table width='600'>
 			<tr><td colspan='2'>
@@ -484,6 +490,7 @@ function runSignaturePicker() {
 		particleLoopSummaryTable($_POST);
 
 		echo"</table>\n";
+
 		processing_footer(True, True);
 	}
 

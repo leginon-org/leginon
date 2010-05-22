@@ -84,8 +84,6 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 	// Information table
 	echo "<table border='1' class='tableborder' width='640'>";
 		echo "<tr><td width='100' align='center'>\n";
-		echo "  <img src='img/xmipp_logo.png' width='128'>\n";
-		echo "</td><td>\n";
 		echo "  <h3>Xmipp Sort by Statistics</h3>";
 		echo "  This function sorts the particles in a stack by how closely they resemble the average. "
 			."In general, this will sort the particles by how likely that they are junk. "
@@ -94,15 +92,7 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 			."The second function, <b>Apply junk cutoff</b> will then create a third stack with no junk in it. "
 			."<br/>For more information, please see the following "
 			."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/SortByStatistics'>Xmipp webpage"
-			."&nbsp;<img border='0' src='img/external.png'></a>. "
-			."<br/><br/>";
-		echo "  If you use this function, please, cite: "
-            ."<br/><br/>"
-            ."C.O.S. Sorzano, R. Marabini, J. Velazquez-Muriel, J.R. Bilbao-Castro, S.H.W. Scheres, "
-            ."J.M. Carazo, A. Pascual-Montano. XMIPP: a new generation of an open-source image "
-            ."processing package for Electron Microscopy. <i>J. Struct. Biol.</i> 148(2), 194-204, (<b>2008</b>)<br/>"
-			."<br/><br/>";
-        
+			."&nbsp;<img border='0' src='img/external.png'></a>. ";
 		echo "</td></tr>";
 	echo "</table>";
 
@@ -134,6 +124,8 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 	</tr>
   </table>
   </form>\n";
+
+	echo referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "C.O.S. Sorzano, R. Marabini, J. Velazquez-Muriel, J.R. Bilbao-Castro, S.H.W. Scheres, J.M. Carazo, A. Pascual-Montano.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
 
 	processing_footer();
 	exit;
@@ -180,7 +172,7 @@ function runSortJunk() {
 	}
 
 	processing_header("Sort Junk in Stack", "Sort Junk in Stack");
-
+	echo referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "C.O.S. Sorzano, R. Marabini, J. Velazquez-Muriel, J.R. Bilbao-Castro, S.H.W. Scheres, J.M. Carazo, A. Pascual-Montano.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
 	//rest of the page
 	echo"
 	<table width='600' border='1'>

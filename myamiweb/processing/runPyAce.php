@@ -139,6 +139,8 @@ function runPyAce() {
 
 	processing_header("PyACE Results","PyACE Results");
 
+	echo referenceBox("ACE: automated CTF estimation.", 2005, "Mallick SP, Carragher B, Potter CS, Kriegman DJ.", "Ultramicroscopy.", 104, 1, 15935913, false, false, false);
+
 	echo"
 	<TABLE WIDTH='600'>
 	<TR><TD COLSPAN='2'>
@@ -366,6 +368,9 @@ function createPyAceForm($extra=false) {
 	</tr>
 	</table>
 	</form>\n";
+
+	echo referenceBox("ACE: automated CTF estimation.", 2005, "Mallick SP, Carragher B, Potter CS, Kriegman DJ.", "Ultramicroscopy.", 104, 1, 15935913, false, false, false);
+
 	processing_footer();
 }
 

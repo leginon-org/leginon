@@ -139,7 +139,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	echo "</td></tr></table></td></tr><tr><td align='center'><hr/>";
 	echo getSubmitForm("Upload Template Stack");
 	echo "</td></tr></table></form>\n";
-
+	echo appionRef();
 	processing_footer();
 	exit;
 }
@@ -250,6 +250,7 @@ function runUploadTemplateStack() {
 		processing_header("Upload Template Stack Command", "Upload Template Stack Command");
 		if ($template_warning) echo"$template_warning<br />";
 	}
+	echo appionRef();
 	//rest of the page
 	echo"
 	<br/>
