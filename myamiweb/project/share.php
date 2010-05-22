@@ -125,8 +125,7 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 	echo "<table>";
 	foreach ($r as $v) {
 		$ck = "<input type='checkbox' name='ck[]' value='".$v['userId']."'>";
-		$cuser = ($v['full name']);
-#		$cuser = ($v['lastname']||$v['firstname']) ? $v['lastname']." ".$v['firstname']:$v['login'];
+		$cuser = ($v['lastname']||$v['firstname']) ? $v['firstname']." ".$v['lastname']:$v['username'];
 		echo "<tr>";
 		echo "<td>";
 		echo $ck."  ".$cuser;

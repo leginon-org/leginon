@@ -77,9 +77,12 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 		echo "<option value='default' > -- select user -- </option>";
 		foreach($users as $user) {
 			$s = ($user['userId']==$_POST['userId']) ? "selected" : "";
-			$o = ($user['full name']) ? $user['full name'] : $user['username'];
+			$firstname = $user['firstname'];
+			$lastname = $user['lastname'];
 			echo "<option value='".$user['userId']."' $s >"
-					.$o
+					.$firstname
+					." "
+					.$lastname
 					."</option>\n";
 			
 		}
@@ -102,7 +105,7 @@ to <a class="header" href="user.php">[user]</a> to update user's profile.
 	if ($owners) {
 		foreach ($owners as $v) {
 			$ck = "<input type='checkbox' name='ck[]' value='".$v['userId']."'>";
-			$cuser = ($v['full name']);
+			$cuser = ($v['lastname']||$v['firstname']) ? $v['firstname']." ".$v['lastname']:$v['username'];
 			echo "<tr>";
 			echo "<td>";
 			echo " - ".$cuser;
