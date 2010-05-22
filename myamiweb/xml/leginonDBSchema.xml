@@ -65,6 +65,9 @@
 		<field name="REF|CameraSettingsData|camera settings" type="int(20)" />
 		<field name="SUBD|instruments|ccdcamera" type="text" />
 		<field name="SUBD|instruments|tem" type="text" />
+		<field name="SUBD|stage position|x" type="double" />
+		<field name="SUBD|stage position|y" type="double" />
+		<field name="SUBD|stage position|z" type="double" />
 		<field name="SEQ|correction presets" type="text" />
 		<field name="shift step" type="double" />
     <key>PRIMARY KEY (`DEF_id`)</key>
@@ -819,6 +822,7 @@
 		<field name="ice max std" type="double" />
 		<field name="SEQ|focus convolve template" type="text" />
 		<field name="ice min mean" type="double" />
+		<field name="ice min std" type="double" />
 		<field name="wait for done" type="tinyint(1)" />
 		<field name="raster spacing" type="int(20)" />
 		<field name="SEQ|acquisition convolve template" type="text" />
