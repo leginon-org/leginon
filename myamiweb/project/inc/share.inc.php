@@ -17,7 +17,7 @@ class share {
 	}
 
 	function get_share_info($experiments) {
-		$q="select concate(u.`firstname`,' ',`lastname`) as name, u.username as username, s.`REF|leginondata|SessionData|experiment` as experimentId "
+		$q="select concat(u.`firstname`,' ',u.`lastname`) as name, u.username as username, s.`REF|leginondata|SessionData|experiment` as experimentId "
 			."from shareexperiments s "
 			."left join ".DB_LEGINON.".UserData u on (u.`DEF_id`=s.`REF|leginondata|UserData|user`) "
 			."where s.`REF|leginondata|SessionData|experiment` in (".implode(',',$experiments).") "

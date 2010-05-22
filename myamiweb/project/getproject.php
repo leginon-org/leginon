@@ -22,8 +22,13 @@ $url = $_SERVER['PHP_SELF']."?v=".$_REQUEST['v']."&projectId=".$selectedprojectI
 $ln=urlencode($url);
 $sharingstatus = "No";
 $sharinglink = "share.php?ln=$ln&expId=";
+
+// If this user has sufficient privilege to view experiment sharing,
+// create an instance of share, which is a class holding functions 
+// that access the shareexperiment table in projectdb.
 if ($SHARE)
-	$d = new share();
+	$shareExpDb = new share();
+	
 $project = new project();
 $projects = $project->getProjects("order");
 $projectinfo = $project->getProjectInfo($selectedprojectId);
@@ -205,7 +210,7 @@ $projectId = $projectinfo['projectId'];
 		$experiments[$k]['totaltime']=$info['Total Duration'];
 		if ($SHARE) {
 			$share_admin = checkExptAdminPrivilege($info['SessionId'],'shareexperiments');
-			$sharingstatus = ($d->is_shared($info['SessionId'])) ? "Yes" : "No";
+			$sharingstatus = ($shareExpDb->is_shared($info['SessionId'])) ? "Yes" : "No";
 			if ($share_admin) {
 				$sharelink="<a class='header' href='$sharinglink".
 						$info['SessionId']."'>$sharingstatus [->]</a>";
@@ -235,8 +240,8 @@ echo data2table($experiments, $columns, $display_header);
 if ($view=='d') {
 	echo divtitle('Share :: Users');
 		if ($SHARE) {
-			$sessionIds=array_keys($sessions);
-			$r=$d->get_share_info($sessionIds);
+			$sessionIds = array_keys($sessions);
+			$r = $shareExpDb->get_share_info($sessionIds);
 			foreach($r as $row) {
 				$name=($row['name']) ? $row['name'] : $row['username'];
 				$session="<a class='header' target='viewer' href='".VIEWER_URL.$row['experimentId']."'>";
