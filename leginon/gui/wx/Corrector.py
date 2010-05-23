@@ -158,6 +158,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.stbadrowscount = wx.StaticText(self, -1)
 		self.stbadcolumnscount = wx.StaticText(self, -1)
 		self.stbadpixelscount = wx.StaticText(self, -1)
+		self.stdespike = wx.StaticText(self, -1)
 		self.beditplan = wx.Button(self, -1, 'Edit...')
 		self.bgrabpixels = wx.Button(self, -1, 'Grab From Image')
 		self.bclearpixels = wx.Button(self, -1, 'Clear Bad Pixels')
@@ -171,9 +172,11 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 		self.szplan.Add(self.stbadpixelscount, (4, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-		self.szplan.Add(self.bclearpixels, (5, 0), (1, 1),
+		self.szplan.Add(self.stdespike, (5, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		self.szplan.Add(self.bclearpixels, (6, 0), (1, 1),
 												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-		self.szplan.Add(self.bgrabpixels, (6, 0), (1, 1),
+		self.szplan.Add(self.bgrabpixels, (7, 0), (1, 1),
 												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
 
 		# image
@@ -294,12 +297,17 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 			self.stbadrowscount.SetLabel('0')
 			self.stbadcolumnscount.SetLabel('0')
 			self.stbadpixelscount.SetLabel('0')
+			self.stdespike.SetLabel('Despike: Off')
 		else:
 			self.plan.update(plan)
 			self.imagepanel.setTargets('Bad_Pixels', self.plan['pixels'])
 			self.stbadrowscount.SetLabel(str(len(self.plan['rows']))+' Bad rows')
 			self.stbadcolumnscount.SetLabel(str(len(self.plan['columns']))+' Bad columns')
 			self.stbadpixelscount.SetLabel(str(len(self.plan['pixels']))+' Bad pixels')
+			if self.plan['despike']:
+				self.stdespike.SetLabel('Despike: On')
+			else:
+				self.stdespike.SetLabel('Despike: Off')
 
 	def onEditPlan(self, evt):
 		dialog = EditPlanDialog(self)
@@ -329,8 +337,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Clipping')
 		sbszclip = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sb = wx.StaticBox(self, -1, 'Despike')
-		sbszdespike = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Reference Creation')
 		sbszref = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -342,9 +348,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		self.widgets['camera settings'] = leginon.gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
-		self.widgets['despike'] = wx.CheckBox(self, -1, 'Despike images')
-		self.widgets['despike size'] = IntEntry(self, -1, min=1, chars=4)
-		self.widgets['despike threshold'] = FloatEntry(self, -1, min=0, chars=4)
 		self.widgets['clip min'] = FloatEntry(self, -1, chars=6)
 		self.widgets['clip max'] = FloatEntry(self, -1, chars=6)
 
@@ -358,19 +361,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szclip.AddGrowableCol(1)
 		sbszclip.Add(szclip, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 
-		szdespike = wx.GridBagSizer(5, 5)
-		szdespike.Add(self.widgets['despike'], (0, 0), (1, 2),
-									wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Neighborhood size:')
-		szdespike.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szdespike.Add(self.widgets['despike size'], (1, 1), (1, 1),
-									wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'Threshold:')
-		szdespike.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szdespike.Add(self.widgets['despike threshold'], (2, 1), (1, 1),
-									wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szdespike.AddGrowableCol(1)
-		sbszdespike.Add(szdespike, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 
 		szref = wx.GridBagSizer(5, 5)
 
@@ -389,7 +379,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(self.widgets['camera settings'], (1, 0), (2, 1), wx.ALIGN_CENTER)
 		sz.Add(sbszref, (0, 1), (1, 1), wx.EXPAND)
 		sz.Add(sbszclip, (1, 1), (1, 1), wx.EXPAND)
-		sz.Add(sbszdespike, (2, 1), (1, 1), wx.EXPAND)
 
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
@@ -400,7 +389,7 @@ class EditPlanDialog(wx.Dialog):
 		wx.Dialog.__init__(self, parent.GetParent(), -1, 'Edit Plan')
 		self.parent = parent
 		self.plan = parent.plan
-
+		
 		strows = wx.StaticText(self, -1, 'Bad rows:')
 		stcolumns = wx.StaticText(self, -1, 'Bad columns:')
 		stpixels = wx.StaticText(self, -1, 'Bad Pixels:')
@@ -412,6 +401,26 @@ class EditPlanDialog(wx.Dialog):
 		self.tcrows = wx.TextCtrl(self, -1, rows)
 		self.tccolumns = wx.TextCtrl(self, -1, columns)
 		self.tcpixels = wx.TextCtrl(self, -1, pixels)
+
+		self.cdespike = wx.CheckBox(self, -1, 'Despike images')
+		self.cdespike_size = IntEntry(self, -1, min=1, chars=4)
+		self.cdespike_threshold = FloatEntry(self, -1, min=0, chars=4)
+		self.cdespike.SetValue(self.plan['despike'])
+		self.cdespike_size.SetValue(self.plan['despike size'])
+		self.cdespike_threshold.SetValue(self.plan['despike threshold'])
+
+		szdespike = wx.GridBagSizer(5, 5)
+		szdespike.Add(self.cdespike, (0, 0), (1, 2),
+									wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Neighborhood size:')
+		szdespike.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szdespike.Add(self.cdespike_size, (1, 1), (1, 1),
+									wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Threshold:')
+		szdespike.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szdespike.Add(self.cdespike_threshold, (2, 1), (1, 1),
+									wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szdespike.AddGrowableCol(1)
 
 		bsave = wx.Button(self, wx.ID_OK, 'Save')
 		bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
@@ -426,6 +435,7 @@ class EditPlanDialog(wx.Dialog):
 		szplan.Add(self.tccolumns, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szplan.Add(stpixels, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szplan.Add(self.tcpixels, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szplan.Add(szdespike, (3, 0), (1, 2), wx.EXPAND)
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szplan, (0, 0), (1, 1), wx.ALIGN_RIGHT|wx.ALL, border=5)
@@ -446,7 +456,11 @@ class EditPlanDialog(wx.Dialog):
 			dialog.ShowModal()
 			dialog.Destroy()
 		else:
-			self.plan = {'rows': rows, 'columns': columns, 'pixels': pixels}
+			self.plan = {'rows': rows, 'columns': columns, 'pixels': pixels,
+				'despike':self.cdespike.GetValue(),
+				'despike size': self.cdespike_size.GetValue(),
+				'despike threshold': self.cdespike_threshold.GetValue()
+			}
 			evt.Skip()
 
 if __name__ == '__main__':

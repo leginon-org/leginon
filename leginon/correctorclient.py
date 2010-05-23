@@ -210,18 +210,17 @@ class CorrectorClient(cameraclient.CameraClient):
 			pixelmax = 2**16
 		imagedata['image'] = numpy.asarray(imagedata['image'], numpy.float32)
 		imagedata['image'] = numpy.clip(imagedata['image'], 0, pixelmax)
-		'''
-		if despike:
-			self.logger.debug('Despiking...')
-			nsize = despikesize
-			thresh = despikethresh
-			imagefun.despike(clipped, nsize, thresh)
-			self.logger.debug('Despiked')
 
+		if plan is not None and plan['despike']:
+			self.logger.debug('Despiking...')
+			nsize = plan['despike size']
+			thresh = plan['despike threshold']
+			imagefun.despike(imagedata['image'], nsize, thresh)
+			self.logger.debug('Despiked')
+		'''
 		final = numpy.asarray(clipped, numpy.float32)
 		return final
 		'''
-
 	def retrieveCorrectorPlan(self, cameradata):
 		qcamera = leginondata.CameraEMData()
 		for key in ('ccdcamera','dimension','binning','offset'):
@@ -235,13 +234,16 @@ class CorrectorClient(cameraclient.CameraClient):
 			result = {}
 			result['rows'] = list(plandata['bad_rows'])
 			result['columns'] = list(plandata['bad_cols'])
+			result['despike'] = plandata['despike']
+			result['despike size'] = plandata['despike size']
+			result['despike threshold'] = plandata['despike threshold']
 			if plandata['bad_pixels'] is None:
 				result['pixels'] = []
 			else:
 				result['pixels'] = list(plandata['bad_pixels'])
 			return result
 		else:
-			return {'rows': [], 'columns': [], 'pixels': []}
+			return {'rows': [], 'columns': [], 'pixels': [], 'despike': False, 'despike size': 11, 'despike threshold': 3.5}
 
 	def fixBadPixels(self, image, plan):
 		badrows = plan['rows']
@@ -353,6 +355,9 @@ class CorrectorClient(cameraclient.CameraClient):
 		plandata['bad_rows'] = plan['rows']
 		plandata['bad_cols'] = plan['columns']
 		plandata['bad_pixels'] = plan['pixels']
+		plandata['despike'] = plan['despike']
+		plandata['despike size'] = plan['despike size']
+		plandata['despike threshold'] = plan['despike threshold']
 		plandata.insert(force=True)
 
 	def makeCorrectorImageFilename(self, type, channel):

@@ -758,6 +758,9 @@ class CorrectorPlanData(InSessionData):
 			('bad_cols', tuple),
 			('bad_pixels', tuple),
 			('clip_limits', tuple),
+			('despike', bool),
+			('despike size', int),
+			('despike threshold', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1154,9 +1157,6 @@ class CorrectorSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('instruments', dict),
 			('n average', int),
-			('despike', bool),
-			('despike size', int),
-			('despike threshold', float),
 			('camera settings', CameraSettingsData),
 			('combine', str),
 			('clip min', float),
