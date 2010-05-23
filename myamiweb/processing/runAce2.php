@@ -110,7 +110,7 @@ function createAce2Form($extra=false) {
 
 
 	echo "<input type='text' name='binval' value=$binval size='4'>\n";
-	echo docpop('binval','Binning');
+	echo docpop('ace2bin','Binning');
 	echo "<br/><br/>\n";
 
 	echo "<input type='text' name='cs' value='".$cs."' size='4'>\n";
@@ -132,11 +132,11 @@ function createAce2Form($extra=false) {
 	echo docpop('hpmask','High Pass Filter');
 	echo "<br/>\n";
 	echo "<input type='text' name='hpzero' value='$hpzero' size='4'>\n";
-	echo docpop('hpzero','0% pass resolution limit');
+	echo docpop('hpzero','low frequency set point');
 	echo "<font size='-2'>(in &Aring;ngstroms)</font><br/>\n";
 
 	echo "<input type='text' name='hpone' value='$hpone' size='4'>\n";
-	echo docpop('hpone','100% pass resolution limit');
+	echo docpop('hpone','high frequency set point');
 	echo "<font size='-2'>(in &Aring;ngstroms)</font><br/><br/>\n";
 
 	echo "<input type='text' name='edge1' value='10' size='4'>\n";
