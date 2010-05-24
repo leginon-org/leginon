@@ -636,7 +636,6 @@ function prepareFrealign ($extra=False) {
 };
 
 function specialStackSelector($stackIds, $stackidval) {
-	/* THIS FUNCTION SHOULD BE MOVED TO summarytables.inc */
 	# $stackinfo[0] = stackid
 	# $stackinfo[1] = pixel size in angstrums / pixels
 	# $stackinfo[2] = stack boxsize (length in either direction) in pixels
@@ -676,7 +675,6 @@ function specialStackSelector($stackIds, $stackidval) {
 	}
 	echo "</SELECT>\n";
 	return $apix;
-	/* THIS FUNCTION WAS MOVED TO summarytables.inc */
 };
 ?>
 

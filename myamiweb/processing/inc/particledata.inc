@@ -1451,7 +1451,7 @@ class particledata {
 		}
 		echo "</SELECT>\n";
 		return $apix;
-		/* THIS FUNCTION WAS MOVED TO summarytables.inc */
+		/* THIS FUNCTION SHOULD BE MOVED TO summarytables.inc */
 	}
 
 	function getParticlesFromImageId ($runId, $imageId){
