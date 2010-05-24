@@ -157,7 +157,7 @@ function createCtfEstimateForm($extra=false) {
 	if ($ctftilt) {
 		$progname = "CtfTilt";
 		$runbase = "ctftilt";
-		$formAction .= "ctftilt=True";
+		$formAction .= "&ctftilt=True";
 	}
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
