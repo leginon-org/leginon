@@ -154,7 +154,7 @@ class modelFromEMDB(appionScript.AppionScript):
 		#densq['mask'] = self.params['radius']
 		densq['description'] = "EMDB id %d density"%(self.params['emdbid'])
 		if self.mass is not None:
-			densq['description'] += " with mass of %d kDa"
+			densq['description'] += " with mass of %d kDa"%(self.mass)
 		densq['resolution'] = self.params['lowpass']
 		densq['session'] = self.sessiondata
 		densq['md5sum'] = apFile.md5sumfile(volfile)
