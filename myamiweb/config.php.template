@@ -128,8 +128,10 @@ $DATA_DIRS = array();
 
 // --- Enable Image Cache --- //
 define('ENABLE_CACHE', false);
+// --- caching location --- //
+// --- please make sure the apache user has write access to this folder --- //
 define('CACHE_PATH', '/srv/www/cache/');
-define('CACHE_SCRIPT', $_SERVER['DOCUMENT_ROOT'].'/'.BASE_URL.'/makejpg.php');
+define('CACHE_SCRIPT', WEB_ROOT.'/makejpg.php');
 
 // --- define Flash player base url --- //
 define('FLASHPLAYER_URL', "/flashplayer/");
