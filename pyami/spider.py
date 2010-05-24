@@ -359,6 +359,25 @@ def randTest():
 	array6 = read("rand5.spi")
 	print "********", array6.mean(), array6.std(), array6.shape
 
+def test_read_equals_write():
+	'''write out an image and test that it is the same if we read it back in'''
+	r,c = 128,256
+	test_array1 = numpy.arange(r*c, dtype=numpy.float32)
+	test_array1.shape = r,c
+	print 'array to write:'
+	print test_array1
+	print 'writing...'
+	write(test_array1, 'test.spi')
+	print 'reading...'
+	test_array2 = read('test.spi')
+	print 'array read:'
+	print test_array2
+	## test that shapes are the same
+	assert test_array1.shape == test_array2.shape
+	## test that values are the same
+	assert numpy.alltrue(test_array1 == test_array2)
+	print 'test completed successfully'
+
 # --------------------------------------------------------------------
 if __name__ == '__main__':
 	if len(sys.argv[1:]) < 2:
