@@ -9,6 +9,7 @@ import math
 import gzip
 import shutil
 import urllib
+import xml.dom.minidom
 #appion
 from appionlib import appionScript
 from appionlib import apParam
@@ -74,46 +75,47 @@ class modelFromEMDB(appionScript.AppionScript):
 	#=====================
 	def getXMLInfoFromEMDB(self, emdbid):
 		# retrieve emdb from web based on emdb id
-		xmlurl = ( "ftp://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-%d/header/emd-%d.xml"
+		#xmlurl = ( "ftp://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-%d/header/emd-%d.xml"
+		#	%(emdbid, emdbid) )
+		xmlurl = ( "ftp://emdb.rutgers.edu/structures/EMD-%d/header/emd-%d.xml"
 			%(emdbid, emdbid) )
 
 		apDisplay.printMsg("retrieving emdb XML file: "+xmlurl)
-		# uncompress file & save
-		data = urllib.urlopen(xmlurl)
-		goodlines = []
-		massline = None
-		for line in data:
-			sline = line.strip()
-			if re.search("pixel", sline):
-				goodlines.append(sline)
-			if re.search("molWtTheo", sline):
-				massline = sline
+		tmpfile = urllib.urlretrieve(xmlurl)[0]
 
-		### parse pixel info lines
-		for line in goodlines:
-			a = re.search(" units=\"A\">([0-9\.]+)<\/pixel", line)
-			if a:
-				apix = float(a.groups()[0])
-				break
-		apDisplay.printMsg("file has a pixel size of %.3f A/pix"%(apix))
-		if apix < 0.3:
+		### parse XML
+		dom = xml.dom.minidom.parse(tmpfile)
+		emdnode = dom.getElementsByTagName("emdEntry")[0]
+
+		### parse clunky XML
+		mapnode = emdnode.getElementsByTagName("map")[0]
+		pixelspacenode = mapnode.getElementsByTagName("pixelSpacing")[0]
+		pixelXnode = pixelspacenode.getElementsByTagName("pixelX")[0]
+		## parse data
+		pixelunits = pixelXnode.getAttribute("units")
+		pixelsize = float(pixelXnode.firstChild.data)
+		if pixelunits == "A":
+			self.apix = pixelsize	
+		else:
+			apDisplay.printError("Unknown pixel size units")
+		### get pixelsize
+		apDisplay.printMsg("structure has a pixel size of %.3f A/pix"%(self.apix))
+		if self.apix < 0.3:
 			apDisplay.printError("could not get appropriate pixel size")
-		self.apix = apix
-		
-		# try and get the mass
-		if massline is not None:
-			#print "Mass: ", massline
-			b = re.search(" units=\"(.*)\">([0-9\.]+)<\/", massline)
-			if b:
-				unit = b.groups()[0].lower()
-				mass = float(b.groups()[1])
-				#print mass, unit
-				if unit == "mda":
-					mass *= 1000
-				elif unit == "da":
-					mass /= 1000
-				self.mass = mass
-			apDisplay.printMsg("file has a mass of %.1f kDa"%(self.mass))
+
+		### parse clunky XML
+		samplenode = emdnode.getElementsByTagName("sample")[0]
+		massnode = emdnode.getElementsByTagName("molWtTheo")[0]
+		## parse data
+		massunits = massnode.getAttribute("units")
+		rawmass = float(massnode.firstChild.data)
+		### get mass
+		if massunits.lower() == "mda":
+			rawmass *= 1000
+		elif massunits.lower() == "da":
+			rawmass /= 1000
+		self.mass = rawmass
+		apDisplay.printMsg("structure has a mass of %.1f kDa"%(self.mass))
 
 		return
 
