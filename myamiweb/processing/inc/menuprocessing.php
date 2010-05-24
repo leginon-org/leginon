@@ -542,7 +542,7 @@ if (is_numeric($expId)) {
 		$prepfrealignrun = count($subclusterjobs['prepfrealign']['running']);
 		//$prepfrealigndone = count($subclusterjobs['prepfrealign']['done']);
 		$prepfrealignruns = $particle->getPreparedFrealignJobs(false, false, false);
-		$frealignprepared = ($prepfrealignruns) ? count($prepfrealignruns) : 0;
+		$prepfrealigndone = count($prepfrealignruns);
 		$runfrealignqueue = count($subclusterjobs['runfrealign']['queued']);
 		$runfrealignrun = count($subclusterjobs['runfrealign']['running']);
 		$runfrealigndone = count($subclusterjobs['runfrealign']['done']);

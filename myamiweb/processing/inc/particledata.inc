@@ -3599,7 +3599,7 @@ class particledata {
 		} elseif ($path) {
 			$q .= " WHERE path.`path` = '$path' ";
 		} elseif (!$showHidden) {
-			$q .= " WHERE fre.`hidden` != '1' AND job.`DEF_id` == 'D' ";
+			$q .= " WHERE fre.`hidden` != '1' AND job.`status` = 'D' ";
 		}
 		$q .=  "  ORDER BY fre.`DEF_id` DESC ";
 		//echo $q."<br/><br/>\n";

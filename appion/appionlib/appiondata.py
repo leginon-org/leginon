@@ -1134,6 +1134,7 @@ class ApFrealignPrepareData(Data):
 			('reconstack', ApStackData),
 			('model', ApInitialModelData),
 			('job', ApAppionJobData),
+			('refineIter', ApRefineIterData),
 		)
 	typemap = classmethod(typemap)
 

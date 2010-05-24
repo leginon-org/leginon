@@ -771,6 +771,7 @@ class frealignJob(appionScript.AppionScript):
 		frealignq['model'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 		frealignq['job'] = jobdata
 		frealignq['symmetry'] = self.symmdata
+		frealignq['refineIter'] = appiondata.ApRefineIterData.direct_query(self.params['reconiterid'])
 		frealignq.insert()
 
 	#===============
