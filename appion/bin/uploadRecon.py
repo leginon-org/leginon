@@ -318,7 +318,7 @@ class UploadReconScript(appionScript.AppionScript):
 		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		runq['description']=paramdescription
 		runq['initialModel']=self.params['model']
-		runq['num_iter']=self.params['iterations']
+		runq['num_iter']=len(self.iterationdatas)
 
 		result=runq.query(results=1)
 
@@ -376,7 +376,7 @@ class UploadReconScript(appionScript.AppionScript):
 				line=line.rstrip()
 				if re.search("^msgPassing_subClassification.py", line):
 					msgpassparams=line.split()
-					iteration = self.params['iterations'][j]
+					iteration = self.iterationdatas[j]
 					for p in msgpassparams:
 						elements=p.split('=')
 						if elements[0]=='corCutOff':
@@ -443,7 +443,7 @@ class UploadReconScript(appionScript.AppionScript):
 		logfile = self.findEmanJobFile()
 		apDisplay.printMsg("parsing eman log file: "+logfile)
 		lines=open(logfile,'r')
-		self.params['iterations'] = []
+		self.iterationdatas = []
 		for line in lines:
 			# if read a refine line, get the parameters
 			line=line.rstrip()
@@ -505,12 +505,12 @@ class UploadReconScript(appionScript.AppionScript):
 						iteration['goodbad']=True
 					elif elements[0]=='perturb':
 						iteration['perturb']=True
-				self.params['iterations'].append(iteration)
+				self.iterationdatas.append(iteration)
 			if re.search("coran_for_cls.py \d+ ", line):
 					self.params['package']='EMAN/SpiCoran'
 			if re.search("msgPassing_subClassification.py \d+ ", line):
 					self.params['package']='EMAN/MsgP'
-		apDisplay.printColor("Found "+str(len(self.params['iterations']))+" iterations", "green")
+		apDisplay.printColor("Found "+str(len(self.iterationdatas))+" iterations", "green")
 		lines.close()
 
 	#==================
@@ -785,7 +785,7 @@ class UploadReconScript(appionScript.AppionScript):
 
 		if self.params['euleronly'] is False:
 			### insert the Iteration info
-			for iteration in self.params['iterations']:
+			for iteration in self.iterationdatas:
 				### if only uploading one iteration, skip to that one
 				if self.params['oneiter'] and int(iteration['num']) != self.params['oneiter']:
 					continue
@@ -793,7 +793,7 @@ class UploadReconScript(appionScript.AppionScript):
 				if self.params['startiter'] and int(iteration['num']) < self.params['startiter']:
 					continue
 				apDisplay.printColor("\nUploading iteration "+str(iteration['num'])+" of "
-					+str(len(self.params['iterations']))+"\n", "green")
+					+str(len(self.iterationdatas))+"\n", "green")
 				for i in range(75):
 					sys.stderr.write("#")
 				sys.stderr.write("\n")
@@ -803,7 +803,7 @@ class UploadReconScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			reconrunid = self.params['refineRun'].dbid
 			stackid = self.params['stack'].dbid
-			if self.params['oneiter'] is None and len(self.params['iterations']) > 1:
+			if self.params['oneiter'] is None and len(self.iterationdatas) > 1:
 				apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
 				eulerjump = apEulerJump.ApEulerJump()
 				eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, stackid)
