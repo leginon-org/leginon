@@ -45,7 +45,7 @@ class setupUtils{
 	 */
 	private function setProjectURL(){
 
-		$this->projectURL = $this->baseURL."project";
+		$this->projectURL = $this->baseURL."project/";
 	}
 
 	/*
