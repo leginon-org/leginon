@@ -177,6 +177,7 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
   </table>
   </form>\n";
 
+	echo referenceBox("Dual-axis tomography: an approach with alignment methods that preserve resolution.", 1997, "D.N. Mastronarde", "J. Struct. Biol.", 120,3, 9441937, false, "doi:10.1006/jsbi.1997.3919", false);
 	processing_footer();
 	exit;
 }

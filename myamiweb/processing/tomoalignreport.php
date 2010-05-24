@@ -34,6 +34,7 @@ if ($_GET['showHidden']) {
 $projectId = getProjectId();
 
 $javascript = "<script src='../js/viewer.js'></script>\n";
+$javascript .= writeJavaPopupFunctions('appion');  
 $javascript.= editTextJava();
 
 processing_header("Tomographic Alignment Run Report","Tilt Series Alignment Report Page", $javascript);
@@ -89,11 +90,12 @@ if (!$runinfo['protomoid']) {
 		$html .= "<br>\n";
 		$total = count($showncycles);
 		if ($total >= 2) {
-			$html .= "<a href='runTomoAligner.php?expId=".$expId."&lastaId=".$showncycles[$total-2]['alignerid']."'><b>[Repeat Last Aligner Cycle]</b></a>";
+			$html .= docpop('protomorepeat','help');
+			$html .= "<a href='runTomoAligner.php?expId=".$expId."&lastaId=".$showncycles[$total-2]['alignerid']."'><b>[Repeat Last Aligner Iteration]</b></a>";
 		} else {
-			$html .= "<a href='runTomoAligner.php?expId=".$expId."'>[Repeat Last Aligner Cycle]</b></a>";
+			$html .= "<a href='runTomoAligner.php?expId=".$expId."'>[Repeat Last Aligner Iteration]</b></a>";
 		}
-		$html .= "<a href='runTomoAligner.php?expId=".$expId."&lastaId=".$t['alignerid']."'><b>[Set up Next Aligner Cycle]</b></a>";
+		$html .= "<a href='runTomoAligner.php?expId=".$expId."&lastaId=".$t['alignerid']."'><b>[Set up Next Aligner Iteration]</b></a>";
 		echo $html;
 	} else {
 		$html = "<p>no alignment information available</p>";

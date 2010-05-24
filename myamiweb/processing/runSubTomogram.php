@@ -259,6 +259,7 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 	if (!$_POST['process']) {
 		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
+	echo referenceBox("Computer visualization of three-dimensional image data using IMOD", 1996, "Kremer J.R., D.N. Mastronarde and J.R. McIntosh", "J. Struct. Biol.", 116, 1, 8742726, false, "doi:10.1006/jsbi.1996.0013", false);
 	processing_footer();
 	exit;
 }

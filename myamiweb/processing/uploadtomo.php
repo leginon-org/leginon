@@ -127,7 +127,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 		<p><br />";
 		echo $seriesselector_array[0];
   #    <INPUT TYPE='text' NAME='tiltseries' VALUE='$tiltseries' SIZE='5'>\n";
-		echo docpop('tiltseries', 'Tilt Series');
+		echo docpop('tiltseries_upload', 'Tilt Series');
 		#echo "<FONT>(tilt series)</FONT>";
    
 	if (!$sessionname) {

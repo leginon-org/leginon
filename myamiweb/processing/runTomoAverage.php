@@ -108,7 +108,7 @@ function createAverageTomogramForm($extra=false, $title='tomoaverage.py Launcher
   echo "<P>";
 	echo docpop('avgtomorunname','Runname');
   echo "<INPUT TYPE='text' NAME='runname' SIZE='15' VALUE='$runname'>\n";
-	echo "<FONT>(avgtomogram creating run name)</FONT>
+	echo "<FONT>(averaged tomogram creating run name)</FONT>
 		<br/>";
 	echo"<P>
 			<B> Tomogram Average Description:</B><br>
@@ -142,6 +142,7 @@ function createAverageTomogramForm($extra=false, $title='tomoaverage.py Launcher
 	if (!$_POST['process']) {
 		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
+	echo initModelRef();
 	processing_footer();
 	exit;
 }

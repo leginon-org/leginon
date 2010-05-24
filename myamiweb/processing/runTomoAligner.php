@@ -155,9 +155,11 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 			if ($tiltseriesId)
 				echo "<br/><b>Bad Tilt Series! Do not use.</b><br/>";
 		}
-		echo "</td><td Valign='TOP'>\n";
-		echo $seriesselector_array2[0];
-		echo docpop('tiltseriestwo', '2ndary Tilt Series');
+		if (!HIDE_FEATURE) {
+			echo "</td><td Valign='TOP'>\n";
+			echo $seriesselector_array2[0];
+			echo docpop('tiltseriestwo', '2ndary Tilt Series');
+		}
 		if (count($tiltseriesinfos2) && $tiltseriesId2) {
 			if ($tiltseriesId2==$tiltseriesId){
 				echo "<br/><b>2nd tilt series must be different.</b><br/>";
@@ -269,7 +271,15 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
         </td>
 	</tr>
   </table>
+	";
+	if ($protomocheck) {
+		echo referenceBox("Accurate marker-free alignment with simultaneous geometry determination and reconstruction of tilt series in electron tomography.", 2006, "Winkler H, Taylor KA", "Ultramicroscopy.", 106, 3, 16137829, false, "doi:10.1016/j.ultramic.2005.07.007", false);
+	} else {
+		echo referenceBox("Computer visualization of three-dimensional image data using IMOD", 1996, "Kremer J.R., D.N. Mastronarde and J.R. McIntosh", "J. Struct. Biol.", 116, 1, 8742726, false, "doi:10.1006/jsbi.1996.0013", false);
+	}
+	echo "
   </form>\n";
+
 
 	processing_footer();
 	exit;
