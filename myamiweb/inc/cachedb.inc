@@ -14,7 +14,7 @@
  *  ENABLE_CACHE, CACHE_SCRIPT, CACHE_PATH set in config.php
  *	
  */
-
+require_once 'config.php';
 require_once 'inc/mysql.inc';
 
 function startcache($session) {
@@ -47,9 +47,10 @@ function isrunning($cmd, $pattern) {
 }
 
 function updateCacheTime($session) {
-	$dbc = &new mysql(DB_HOST, DB_USER, DB_PASS, DB);
+	$dbc = &new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 	$q = "replace `viewer_cache` set session='".$session."'";
-	$dbc->SQLQuery($q);
+
+	$result = $dbc->SQLQuery($q);
 }
 
 ?>
