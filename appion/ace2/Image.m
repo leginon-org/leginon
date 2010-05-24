@@ -278,10 +278,16 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 		return self;
 	}
 	
+	#ifdef FFTW32
 	restoreFFTWisdom();
+	#endif
 	
-//	fftw_plan plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_ESTIMATE);
+	#ifdef FFTW32
 	fftw_plan plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE|FFTW_WISDOM_ONLY);
+	#else
+	fftw_plan plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_ESTIMATE);
+	#endif
+
 	if ( plan == NULL ) {
 		xi = NEWV(f64,size);
 		plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE);
@@ -299,8 +305,10 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	
 	fftw_destroy_plan(plan);
 	
+	#ifdef FFTW32
 	saveFFTWisdom();
-	
+	#endif
+
 	[self setDataTo:NULL];
 	[self setShapeTo:new_dims];
 	[self setTypeTo:TYPE_C64];
@@ -342,10 +350,16 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	// Restore FFTW Wisdom from file, and if this is not possible create a new data array
 	// for performing the FFTW_MEASURE, otherwise the input would be destroyed.
 	
+	#ifdef FFTW32
 	restoreFFTWisdom();
+	#endif
 	
-//	fftw_plan plan = fftw_plan_dft_c2r(ndim,dims,xi,xt,FFTW_ESTIMATE);
+	#ifdef FFTW32
 	fftw_plan plan = fftw_plan_dft_c2r(ndim, dims, xi, xt, FFTW_MEASURE|FFTW_WISDOM_ONLY);
+	#else
+	fftw_plan plan = fftw_plan_dft_c2r(ndim, dims, xi, xt, FFTW_ESTIMATE);
+	#endif
+
 	if ( plan == NULL ) {
 		xi = NEWV(c64,size);
 		plan = fftw_plan_dft_c2r(ndim, dims, xi, xt, FFTW_MEASURE);
@@ -363,7 +377,9 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	
 	fftw_destroy_plan(plan);
 	
+	#ifdef FFTW32
 	saveFFTWisdom();
+	#endif
 	
 	[self setDataTo:NULL];
 	[self setShapeTo:new_dims];
@@ -407,7 +423,9 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	// so we don't copy the data over until after the measurement has been done, just in case.
 	// Then perform the transform, and clean-up
 	
+	#ifdef FFTW32
 	restoreFFTWisdom();
+	#endif
 	
 	fftw_plan plan = fftw_plan_dft(ndim, dims, xt, xt, FFTW_FORWARD, FFTW_MEASURE);
 	if ( plan == NULL ) {
@@ -421,7 +439,9 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	
 	fftw_destroy_plan(plan);
 	
+	#ifdef FFTW32
 	saveFFTWisdom();
+	#endif
 	
 	// Delete the original array data, change the type, then set to the new data.
 	// Doing things in this order means that we do not waste time trying to convert
@@ -457,10 +477,16 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	int dims[ndim];
 	for(i=0;i<ndim;i++) dims[i] = dim_size[ndim-1-i];
 	
+	#ifdef FFTW32
 	restoreFFTWisdom();
+	#endif
 	
-//	fftw_plan plan = fftw_plan_dft(ndim,dims,xi,xi,FFTW_BACKWARD,FFTW_ESTIMATE);	
+	#ifdef FFTW32
 	fftw_plan plan = fftw_plan_dft(ndim, dims, xi, xi, FFTW_BACKWARD, FFTW_MEASURE|FFTW_WISDOM_ONLY);
+	#else
+	fftw_plan plan = fftw_plan_dft(ndim, dims, xi, xi, FFTW_BACKWARD, FFTW_ESTIMATE);	
+	#endif
+
 	if ( plan == NULL ) {
 		xi = NEWV(c64,size);
 		plan = fftw_plan_dft(ndim, dims, xi, xi, FFTW_BACKWARD, FFTW_MEASURE);
@@ -480,7 +506,9 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 
 	fftw_destroy_plan(plan);
 	
+	#ifdef FFTW32
 	saveFFTWisdom();
+	#endif
 	
 	[self setDataTo:NULL];
 	[self setTypeTo:TYPE_F64];

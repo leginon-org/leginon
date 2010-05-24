@@ -13,7 +13,8 @@ BINPATH=.
 CC = gcc 
 SVNDEF := -D'VERSION="svn revision $(shell svnversion -n .)"'
 CFLAGS := -O3 ${SVNDEF}
-#CFLAGS := -O3 --static ${SVNDEF}
+## add -DFFTW32 to the line above for FFTW 3.2 or higher
+## add --static to the line above for static binaries
 
 
 # --------------------- Code modules ----------------------------
