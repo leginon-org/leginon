@@ -56,6 +56,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			ctfprgmexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
 		if not os.path.isfile(ctfprgmexe):
 			apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
+		apDisplay.printColor("Running program %s"%(exename), "magenta")
 		return ctfprgmexe
 
 	#======================
