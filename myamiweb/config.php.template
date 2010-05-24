@@ -30,7 +30,7 @@ define('PROJECT_TITLE', "Appion and Leginon Tools");
 define('BASE_PATH',"myamiweb");
 
 define('BASE_URL', "/".BASE_PATH."/");
-define('PROJECT_URL', BASE_URL."project."/");
+define('PROJECT_URL', BASE_URL."project/");
 
 // --- myamiweb login --- //
 // Browse to the administration tools in myamiweb prior to 
