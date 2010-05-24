@@ -328,7 +328,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		### convert stack into single spider files
 		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
-		apFile.removeStack(self.params['localstack'])
 
 		### convert stack into single spider files
 		templateselfile = self.initializeTemplates()
