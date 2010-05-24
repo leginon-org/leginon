@@ -572,7 +572,7 @@ if (is_numeric($expId)) {
 		$frealignresults[] = ($frealignran>0) ? "<a href='uploadFrealign.php?expId=$sessionId'>$frealignran ready to upload</a>" : "";
 
 		// COMPLETE
-		$frealignresults[] = ($frealigndone>0) ? "<a href='frealignSummary.php?expId=$sessionId'>$frealigndone complete</a>" : "";
+		$frealignresults[] = ($frealigndone>0) ? "<a href='reconsummary.php?expId=$sessionId'>$frealigndone complete</a>" : "";
 
 
 		if (!HIDE_IMAGIC) {
