@@ -250,8 +250,8 @@ def maskHighPassFilter(imgarray, apix=1.0, bin=1, zero_res=0.0, one_res=0.0, msg
 			apDisplay.printMsg("skipping high pass filter")
 		return(imgarray)
 	shape = imgarray.shape
-	zero_radius = apix*min(shape)/2.0/zero_res/bin
-	one_radius = apix*min(shape)/2.0/one_res/bin
+	zero_radius = apix*min(shape)/zero_res/bin
+	one_radius = apix*min(shape)/one_res/bin
 	print zero_radius, one_radius
 	try:
 		filtimg = _maskHighPassFilter(imgarray,zero_radius, one_radius)
