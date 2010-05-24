@@ -30,8 +30,10 @@ logfile=$myamidir/pysetup.log
 # These are python packages that we want to process using
 # "python setup.py ..."
 #
+#	leaving out appion for now, since it has a lot of scripts that could
+# clutter up /usr/bin/
+#
 packages=(
-	appion
 	appion/radermacher
 	imageviewer
 	leginon
