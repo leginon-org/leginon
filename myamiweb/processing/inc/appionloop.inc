@@ -11,7 +11,7 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	echo "<!-- BEGIN Appion Loop Param -->\n";
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
 	$nowait = ($_POST[nowait]=="") ? "" : "CHECKED";
-	$background = ($_POST[background]=="on") ? "CHECKED" : "";
+	//$background = ($_POST[background]=="on") ? "CHECKED" : "";
 	$shuffle = ($_POST['shuffle']=="on") ? "CHECKED" : "";
 	$reverse = ($_POST['reverse']=="on") ? "CHECKED" : "";
 	$limit = $_POST[limit];
@@ -122,9 +122,9 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	echo docpop('nowait','Wait for more images after finishing');
 	echo "<br />\n";
 
-	echo "<input type='checkbox' name='background' $background>\n";
+	/*echo "<input type='checkbox' name='background' $background>\n";
 	echo docpop('background','Run in background mode');
-	echo "<br />\n";
+	echo "<br />\n";*/
 
 	echo docpop('limit','Limit: ');
 	echo "only process&nbsp; <input type='texlt' name='limit' VALUE='$limit' size='4'>&nbsp; images\n";
@@ -181,7 +181,7 @@ function appionLoopSummaryTable () {
 		$bestimages = "<font color='red'>false</font>";
 	}
 	$nowait = ($_POST[nowait]=="on") ? "<font color='red'>false</font>" : "<font color='green'>true</font>";
-	$background = ($_POST[background]=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	//$background = ($_POST[background]=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$shuffle = ($_POST['imgorder']=="shuffle") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$reverse = ($_POST['imgorder']=="reverse") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$limit = ($_POST[limit]) ? $_POST[limit] : "all";
@@ -205,7 +205,7 @@ function appionLoopSummaryTable () {
 	echo "<TR><TD>only best images</TD><TD>$bestimages</TD></TR>\n";
 	echo "<TR><TD>do not wait for more images</TD><TD>$nowait</TD></TR>\n";
 	echo "<TR><TD>commit to database</TD><TD>$commit</TD></TR>\n";
-	echo "<TR><TD>background</TD><TD>$background</TD></TR>\n";
+	//echo "<TR><TD>background</TD><TD>$background</TD></TR>\n";
 	echo "<TR><TD>shuffle images</TD><TD>$shuffle</TD></TR>\n";
 	echo "<TR><TD>process new images first</TD><TD>$reverse</TD></TR>\n";
 	echo "<TR><TD>image limit</TD><TD>$limit</TD></TR>\n";
@@ -231,7 +231,7 @@ function parseAppionLoopParams () {
 		$bestimages = 0;
 	}
 	$nowait = ($_POST['nowait']=="on") ? false : true;
-	$background = ($_POST['background']=="on") ? true : false;
+	//$background = ($_POST['background']=="on") ? true : false;
 	$shuffle = ($_POST['imgorder']=="shuffle") ? true : false;
 	$reverse = ($_POST['imgorder']=="reverse") ? true : false;
 	$limit = $_POST['limit'];
@@ -269,7 +269,7 @@ function parseAppionLoopParams () {
 		$command.=" --commit";
 	else
 		$command.=" --no-commit";
-	if ($background) $command.=" --background";
+	//if ($background) $command.=" --background";
 	if ($reverse) $command.=" --reverse";
 	if ($shuffle) $command.=" --shuffle";
 	if ($limit) $command.=" --limit=$limit";
