@@ -5,6 +5,7 @@
  *	- getargs
  *	- getdirs
  *	- getfiles
+ *	- commenting.
  */
 
 function getargs($args) {
