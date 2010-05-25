@@ -234,17 +234,17 @@ class AppionScript(basicScript.BasicScript):
 		### get appion version/subversion revision
 		progrunq['revision'] = None
 		versionfile = os.path.join(appiondir, "appionlib/version.txt")
-		if os.path.isdir(os.path.join(appiondir, ".svn")):
-			progrunq['revision'] = version.getSubverionRevision(appiondir)
-		if not progrunq['revision'] and os.path.isfile(versionfile):
+		if os.path.isfile(versionfile):
 			f = open(versionfile, 'r')
 			line = f.readline()
 			f.close()
 			sline = line.strip()
+			progrunq['revision'] = sline
+		if os.path.isdir(os.path.join(appiondir, ".svn")):
 			if progrunq['revision'] is None:
-				progrunq['revision'] = sline
+				progrunq['revision'] = version.getSubverionRevision(appiondir)
 			else:
-				progrunq['revision'] += "-"+sline
+				progrunq['revision'] += "-"+version.getSubverionRevision(appiondir)
 		if not progrunq['revision']:
 			progrunq['revision'] = 'unknown'
 		apDisplay.printMsg("Running Appion version '%s'"%(progrunq['revision']))
