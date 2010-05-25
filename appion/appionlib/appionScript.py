@@ -232,6 +232,7 @@ class AppionScript(basicScript.BasicScript):
 		progrunq['job'] = self.getClusterJobData()
 		appiondir = apParam.getAppionDirectory()
 		### get appion version/subversion revision
+		progrunq['revision'] = None
 		versionfile = os.path.join(appiondir, "appionlib/version.txt")
 		if os.path.isdir(os.path.join(appiondir, ".svn")):
 			progrunq['revision'] = version.getSubverionRevision(appiondir)
@@ -240,7 +241,10 @@ class AppionScript(basicScript.BasicScript):
 			line = f.readline()
 			f.close()
 			sline = line.strip()
-			progrunq['revision'] = sline
+			if progrunq['revision'] is None:
+				progrunq['revision'] = sline
+			else:
+				progrunq['revision'] += "-"+sline
 		if not progrunq['revision']:
 			progrunq['revision'] = 'unknown'
 		apDisplay.printMsg("Running Appion version '%s'"%(progrunq['revision']))
