@@ -1274,8 +1274,6 @@ def findWrongName(modulename):
 	## try sys.modules (last component of each name)
 	for sysmodname,sysmod in sys.modules.items():
 		if sysmodname.split('.')[-1] == modulename:
-			sys.stderr.write('***************************************************************\n')
-			sys.stderr.write('WARNING:  DB field names containing "REF" should use full absolute python module names.  "%s" should be "%s".  Warning will become Exception in the future.\n\n' % (modulename, sysmodname))
 			wrong_names[modulename] = sysmod
 			return sysmod
 	return None
