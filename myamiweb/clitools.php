@@ -3,8 +3,6 @@
  * Tools:
  *	- mkdirs
  *	- getargs
- *  - getdirs
- *  - getfiles
  */
 
 function getargs($args) {
