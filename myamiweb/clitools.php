@@ -1,11 +1,10 @@
 <?php
 /**
- * Tools:
+ * clitools.php:
  *	- mkdirs
  *	- getargs
  *	- getdirs
  *	- getfiles
- *	- commenting.
  */
 
 function getargs($args) {
