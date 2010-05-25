@@ -40,7 +40,8 @@ function isrunning($cmd, $pattern) {
   $numOfRun = count($res);
   
   // not allow more than two caching processing running at the same time.
-  if($numOfRun >= 2)
+  // the reason to put 4 is because "ps" use one and "grep" use one.
+  if($numOfRun >= 4)
   	return true;
   	
   foreach($res as $row) {
