@@ -37,6 +37,12 @@ function isrunning($cmd, $pattern) {
   $isrunning=false;
   $cmd="ps -ef | grep $cmd";
   exec($cmd, $res);
+  $numOfRun = count($res);
+  
+  // not allow more than two caching processing running at the same time.
+  if($numOfRun >= 2)
+  	return true;
+  	
   foreach($res as $row) {
     if (ereg($pattern, $row)) {
       $isrunning=true;
