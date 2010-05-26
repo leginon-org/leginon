@@ -25,6 +25,7 @@ function addToGlobalString($array) {
 
 function revertToDefaults($user_id) {
 	global $code_string;
+	global $leginondata;
 	$array = defaultsettings_fileheader($user_id,$admin_init=false);
 	addToGlobalString($array);
 	makeSettingsCode($user_id);
