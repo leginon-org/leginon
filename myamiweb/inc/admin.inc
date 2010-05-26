@@ -22,7 +22,8 @@ $link->setImagePath('img/');
 $link->addlink('addgroup.php','Groups','', 'group1', '');
 $link->addlink('user.php','Users','', 'user', '');
 $link->addlink('addinstrument.php','Instruments','', 'tem_tecnai_icon', '');
-#$link->addlink('addsettings.php','Default Settings','', 'calibration', '');
+if (privilege('users')>1)
+	$link->addlink('revertsettings.php','Revert Settings','', 'calibration', '');
 #$link->addlink('addcal.php','Calibrations','', 'calibration', '');
 $link->addlink('addapp.php','Applications','', 'application', '');
 $link->addlink('goniometer.php','Goniometer','', 'goniometer', '');
@@ -100,4 +101,149 @@ function display($r, $display_fields=False) {
 	}
 	echo "</table>";
 }
+
+function defaultsettings_fileheader($user_id,$admin_init=false) {
+	global $filename;
+	$array = array();
+	$linebreak = "\n";
+	if ($admin_init) {
+		$array[] = '<?php'.$linebreak;
+		$error_msg = 'Create administrator user first';
+	} else {
+		$error_msg = 'Can not revert without a known user';
+	}
+	$array[] = 'if ($user_id < 1) {'.$linebreak;
+	$array[] = '	echo "<h3> Error: '.$error_msg.' </h3>";'.$linebreak;
+	$array[] = '	exit();'.$linebreak;
+	$array[] = '}'.$linebreak;
+	$array[] = '$dbc=$leginondata->mysql;'.$linebreak;
+	$array[] = '$q = "insert into `SessionData` (`name`,`REF|UserData|user` ) "'.$linebreak;
+	$array[] = '      . " VALUES "'.$linebreak;
+	$array[] = '      . " ( concat(\'importsettings\', DATE_FORMAT(now(), \'%Y%m%d%H%i%s\')), "'.$linebreak;
+	$array[] = '			. " ".$user_id." ) ";'.$linebreak;
+	$array[] = '$sessionId = $dbc->SQLQuery($q, true);'.$linebreak;
+	$array[] = $linebreak;
+	return $array;
+}
+
+function makeSettingsCode($user_id) {
+	global $leginondata;
+	global $code_string;
+	$nodenames = array(
+		'AcquisitionSettingsData'=>array('Grid','Square','Hole','Preview','Exposure','Square Q','Hole Q','Tomography Preview','Final Section','Subsquare','Centered Square','Rough Tissue','Final Raster','Grid Survey','Mid Mag Survey','Reacquisition','High Mag Acquisition'),
+		'FocuserSettingsData'=>array('Focus','Z Focus','Tomo Focus','Tomo Z Focus','RCT Focus','Section Z Focus','Grid Focus','Section Focus','Screen Z Focus'),
+		'MosaicTargetMakerSettingsData'=>array('Grid Targeting','Grid Targeting Robot','Grid Survey Targeting'),
+		'MosaicClickTargetFinderSettingsData'=>array('Square Targeting','Raster Center Targeting','Rough Tissue Targeting','Atlas View'),
+		'ClickTargetFinderSettingsData'=>array('Hole Targeting','Tomography Targeting'),
+		'HoleFinderSettingsData'=>array('Hole Targeting','Exposure Targeting'),
+		'JAHCFinderSettingsData'=>array('Hole Targeting','Exposure Targeting','RCT Targeting','Square Targeting'),
+		'RasterFinderSettingsData'=>array('Subsquare Targeting','Exposure Targeting','Square Centering','RCT Targeting','Mid Mag Survey Targeting','High Mag Raster Targeting'),
+		'RasterTargetFilterSettingsData'=>array('Raster Generation','Final Raster Targeting'),
+		'CenterTargetFilterSettingsData'=>array('Square Target Filtering'),
+		'TomographySettingsData'=>array('Tomography'),
+		'RCTAcquisitionSettingsData'=>array('RCT'),
+		'DTFinderSettingsData'=>array('Tissue Centering'),
+		'CorrectorSettingsData'=>array('Correction'),
+		'BeamFixerSettingsData'=>array('Fix Beam'),
+		'GonModelerSettingsData'=>array('GonioModeling'),
+	);
+	$show_tables = false;
+	$lpfids = array();
+	$bfids = array();
+	defaultsettings_fileheader($user_id);
+	$aliases = array('edge lpf','template lpf','lpf');
+	$admin_id = $leginondata->getAdminUserId();
+	$extratables = array('LowPassFilterSettingsData','BlobFinderSettingsData','FocusSequenceData');
+	//Tables
+	if ($show_tables) {
+		foreach ($extratables as $table) {
+			echo $table?></br><?;
+		}
+		foreach (array_keys($nodenames) as $table) {
+			echo $table?></br><?;
+		}
+	}
+	//Default values
+	$lpfids = array();
+	$blobids = array();
+	foreach (array_keys($nodenames) as $table) {
+		foreach ($nodenames[$table] as $name) { 
+			$sqldata1 = $leginondata->getSettingsData($admin_id,$table,$name);
+			if ($table == 'MosaicClickTargetFinderSettingsData' or 'HoleFinderSettingsData' or 'JAHCFinderSettingsData' or 'DTFinderSettingsData') {
+				foreach ($aliases as $alias) {
+					$lid = $sqldata1['REF|LowPassFilterSettingsData|'.$alias]; 
+					if ($lid != 0 ) {
+						if (!in_array($lid,$lpfids)) {
+							array_push($lpfids,$sqldata1['REF|LowPassFilterSettingsData|'.$alias]);
+							$result = $leginondata->getSettingsById('LowPassFilterSettingsData',$lid);
+							$lpfids[$table.'.'.$name.'.'.$alias] = $result;
+							assembleResult($result,'LowPassFilterSettingsData',$lid);
+						}
+						$sqldata1['REF|LowPassFilterSettingsData|'.$alias] = '$lid'.$lid; 
+					} else {
+						$sqldata1 = array_diff_key($sqldata1,array('REF|LowPassFilterSettingsData|'.$alias=>$lid)); 
+					}
+				}
+			}
+
+			if ($table == 'MosaicClickTargetFinderSettingsData') {
+				$id = $sqldata1['REF|BlobFinderSettingsData|blobs']; 
+				if ($id != 0) {
+					if (!in_array($id,$bfids)) {
+						array_push($bfids,$sqldata1['REF|BlobFinderSettingsData|blobs']);
+						$result = $leginondata->getSettingsById('BlobFinderSettingsData',$id);
+						assembleResult($result,'BlobFinderSettingsData',$id);
+						$blobids[$table.'.'.$name.'.'.'blobs'] = $id;
+					}
+					$sqldata1['REF|BlobFinderSettingsData|blobs'] = '$bid'.$id;
+				} else {
+						$sqldata1 = array_diff_key($sqldata1,array('REF|BlobFinderSettingsData|blobs'=>$id));
+				} 
+			}
+		assembleResult($sqldata1,$table,$name);
+		}
+	}
+	$focusernodenames = $nodenames['FocuserSettingsData'];
+	$table = 'FocusSequenceData';
+	foreach ($focusernodenames as $name) { 
+		$sequence_results = $leginondata->getUserFocusSequenceDataByName($admin_id,$table,$name);
+		assembleResult($sequence_results[0],$table);
+		$focusnamesstr = $sequence_results[0]['SEQ|sequence'];
+		$focusnames = explode("'",$focusnamesstr);
+		foreach ($focusnames as $focusname) {
+			if (strlen($focusname)>2 && (strcmp($focusname,', u')!=0))  {
+				$focus_results = $leginondata->getUserFocusSettingDataByName($admin_id,$name,$focusname);
+				assembleResult($focus_results[0],'FocusSettingData');
+			}
+		}
+	}
+}
+
+function assembleResult($result,$table,$name) {
+	$filearray = array();
+	if ($result) {
+		$id = $result['DEF_id'];
+		$removekeys = array('DEF_id'=>1,'DEF_timestamp'=>2,'REF|SessionData|session'=>null);
+		$result = array_diff_key($result,$removekeys);
+		$filearray[] = '$table = "'.$table.'";'.$linebreak.'';
+		$filearray[] = '$data=array();'.$linebreak.''; 
+		foreach ($result as $key=>$r) {
+			if (!is_numeric($r) && !$r) continue;
+			if (substr_count($r,'$') == 0) {
+				$filearray[] = '$data["'.$key.'"] = "'.$r.'";'.$linebreak.''; 
+			} else {
+				$filearray[] = '$data["'.$key.'"] = '.$r.';'.$linebreak.''; 
+			}
+		}
+		$t = strtolower(substr($table,0,1));
+		if ($table !='LowPassFilterSettingsData') {
+			$filearray[] = '$data["REF|SessionData|session"]= $sessionId;'.$linebreak.'';
+		}
+		$filearray[] = '$'.$t.'id'.$id.'=$dbc->SQLInsert($table, $data);'.$linebreak.'';
+		$filearray[] = $linebreak;
+	}
+	# addToGlobalString() is defined at the script calling this
+	return addToGlobalString($filearray);
+}
+
 ?>
