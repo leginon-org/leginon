@@ -5,7 +5,7 @@
  *      For terms of the license agreement
  *      see  http://ami.scripps.edu/software/leginon-license
  *
- *      Form for starting a reference-based alignment of a stack
+ *      Form for starting iterative classification &  alignment of a stack
  */
 
 require "inc/particledata.inc";
@@ -146,8 +146,8 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
 	// set max last ring radius
-	$javascript .= "	var bestbin = Math.ceil(stackArray[2]/100);\n";
-	$javascript .= "	var radius = Math.ceil(stackArray[2]/3.0*stackArray[1]);\n";
+	$javascript .= "	var bestbin = Math.floor(stackArray[2]/100);\n";
+	$javascript .= "	var radius = Math.floor(stackArray[2]/3*bestbin);\n";
 	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
 	$javascript .= "	document.viewerform.radius.value = radius;\n";
 	// set particle & mask radius and lp
@@ -181,14 +181,14 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	// alignment params
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $initparts;
 	$iters = ($_POST['iters']) ? $_POST['iters'] : 10;
-	$freealigns = ($_POST['freealigns']) ? $_POST['freealigns'] : 3;
+	$freealigns = ($_POST['freealigns']) ? $_POST['freealigns'] : 1;
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : 10;
 	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 2000;
 	$orientref = $_POST['orientref'];
 
 	$boxsz = $firststack['boxsize'];
-	$bestbin = ceil($boxsz/100);
-	$radius = ($_POST['radius']) ? $_POST['radius'] : ceil($boxsz/3.0*$firstmpix*1e10);
+	$bestbin = floor($boxsz/100)+1;
+	$radius = ($_POST['radius']) ? $_POST['radius'] : floor($boxsz/3.0/$bestbin*$firstmpix*1e10);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
 	$templateList=($_POST['templateList']) ? $_POST['templateList']: '';
 
