@@ -25,7 +25,7 @@ require_once("../inc/mysql.inc");
 		
 		<h3>Database Update Successful:</h3>
 		<p>All required data has been successfully inserted into the databases. <br ></br><font color="red">You are not done yet</font>.</p>
-		<p>You need to run two python scripts (schema-r12857.py, schema-r13713.py and chema-r14077.py) under your downloaded "myami-2.0/dbschema"
+		<p>You need to run three python scripts (schema-r12857.py, schema-r13713.py and chema-r14077.py) under your downloaded "myami-2.0/dbschema"
 		   in order to complete the upgrade process.</p>
 		   
 		<p>For more details visit 

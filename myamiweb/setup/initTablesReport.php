@@ -25,11 +25,10 @@ require_once("../inc/mysql.inc");
 
 		if(($results != false) && mysql_num_rows($results) > 0){				
 			// for upgrade			
-			echo "using upgrade";	
+
 			$project->install('../xml/projectUpdateSchema.xml');	
 		}
 		else{
-			echo "using new install";
 			// for new install
 			$project->install('../xml/projectDBSchema.xml');
 			$leginondata->importTables('../xml/leginonDBSchema.xml');
