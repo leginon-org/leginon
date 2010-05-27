@@ -18,18 +18,20 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 
 	// Create DMF commands, this should move the default_cluster.php
 	$javafunc="  <script language='JavaScript'>\n";
-	$javafunc.="  function displayDMF(dmfdir,outdir,runid) {\n";
+	$javafunc.="  function displayDMF(dmfdir,outdir,has_coran) {\n";
 	$javafunc.="  newwindow=window.open('','name','height=150, width=900')\n";
 	$javafunc.="  newwindow.document.write('<html><body>')\n";
 	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/model.tar.gz '+outdir+'/.<br />')\n";
 	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.<br />')\n";
-	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/coran.tar.gz '+outdir+'/.<br />')\n";
 	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar.gz -C '+outdir+'<br />')\n";
 	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar.gz -C '+outdir+'<br />')\n";
+	$javafunc.="  if (has_coran > 0) { \n";
+	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/coran.tar.gz '+outdir+'/.<br />')\n";
 	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/coran.tar.gz -C '+outdir+'<br />')\n";
+	$javafunc.="    newwindow.document.write('rm -vf '+outdir+'/coran.tar*<br />')\n";
+	$javafunc.="  } \n";
 	$javafunc.="    newwindow.document.write('rm -vf '+outdir+'/model.tar*<br />')\n";
 	$javafunc.="    newwindow.document.write('rm -vf '+outdir+'/results.tar*<br />')\n";
-	$javafunc.="    newwindow.document.write('rm -vf '+outdir+'/coran.tar*<br />')\n";
 	$javafunc.="    newwindow.document.write('echo done<br />')\n";
 	$javafunc.="    newwindow.document.write('<p>&nbsp;<br /></body></html>')\n";
 	$javafunc.="    newwindow.document.close()\n";
@@ -213,8 +215,9 @@ function showStatus($jobinfo) {
 	} elseif ($jobinfo['status']=='A') {
 		$status='Aborted';
 	} elseif ($jobinfo['status']=='D') {
+		$has_coran = checkCoranTarGz($jobinfo);
 		$dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('"
-			."$jobinfo[dmfpath]','$jobinfo[appath]')\" value='Get files from DMF'>&nbsp;\n";
+			."$jobinfo[dmfpath]','$jobinfo[appath]',$has_coran)\" value='Get files from DMF'>&nbsp;\n";
 		if ($jobinfo['jobtype'] == 'emanrecon') {
 			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
 				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload EMAN results'>&nbsp;\n";
@@ -545,6 +548,19 @@ function checkEMANJobStatus($host,$jobpath,$jobfile,$user,$pass) {
 	}
 	return $stat;
 };
+
+function checkCoranTarGz($jobinfo) {
+	// transfer coran results only if tar.gz exists
+	$user = $_SESSION['username'];
+	$pass = $_SESSION['password'];
+	$cluster = $jobinfo['cluster'];
+	$coranfile = $jobinfo['dmfpath'].'/coran.tar.gz';
+	$cmd = "dmf ls $coranfile";
+	echo $cmd;
+	$lscoran = exec_over_ssh($cluster, $user, $pass, $cmd, True);
+	$has_coran = ($lscoran) ? 1:0;
+	return $has_coran;
+}
 
 /******************************
 ******************************/
