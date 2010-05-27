@@ -2899,6 +2899,46 @@ class leginondata {
 		$q='select `DEF_id`, `description` from '.DB_PROJECT.'.privileges';
 		return $this->mysql->getSQLResult($q);
 	}
+
+	function getSettingsData($user_id,$table,$name) {
+		$sql = 'SELECT a.* from `'.$table.'` a'
+        . ' left join `SessionData` s on a.`REF|SessionData|session`=s.`DEF_id`'
+        . ' where s.`REF|UserData|user`='.$user_id.' and a.`name`=\''.$name.'\' '
+        . ' ORDER BY a.`DEF_timestamp` DESC'
+        . ' LIMIT 0,1';
+		$results = $this->mysql->getSQLResult($sql);
+		return $results[0];
+	}
+
+	function getSettingsById($table,$id) {
+		$sql = 'SELECT * from `'.$table.'` '
+			. 'where `DEF_id`='.$id.' ';
+		$results = $this->mysql->getSQLResult($sql);
+		return $results[0];
+	}
+
+	function getUserFocusSequenceDataByName($user_id,$table,$name) {
+		global $leginondata;
+		$sql = 'SELECT a.* from `'.$table.'` a'
+					. ' left join `SessionData` s on a.`REF|SessionData|session`=s.`DEF_id`'
+					. ' where s.`REF|UserData|user`='.$user_id.' and a.`node name`=\''.$name.'\' '
+					. ' ORDER BY a.`DEF_timestamp` DESC'
+					. ' LIMIT 0,1';
+		$results = $leginondata->mysql->getSQLResult($sql);
+		return $results;
+	}
+
+	function getUserFocusSettingDataByName($user_id,$nodename,$focusname) {
+		global $leginondata;
+		$sql = 'SELECT a.* from `FocusSettingData` a'
+					. ' left join `SessionData` s on a.`REF|SessionData|session`=s.`DEF_id`'
+					. ' where s.`REF|UserData|user`='.$user_id.' and a.`node name`=\''.$nodename.'\' and a.`name`=\''.$focusname.'\''
+					. ' ORDER BY a.`DEF_timestamp` DESC'
+					. ' LIMIT 0,1';
+		$results = $this->mysql->getSQLResult($sql);
+		return $results;
+	}
+
 }
 
 function rsum($v, $w) {
