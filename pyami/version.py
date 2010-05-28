@@ -34,7 +34,7 @@ def getSubverionRevision(filename=None):
 	line = proc.stdout.readline()
 	rev = line.strip()
 	if re.match('[0-9]', rev):
-		return rev
+		return "r"+rev
 
 	### try 2: use svn info
 	cmd = "svn info"
@@ -48,7 +48,7 @@ def getSubverionRevision(filename=None):
 		if not line.startswith('Revision:'):
 			continue
 		rev = re.sub('Revision:', '', line).strip()
-		return rev
+		return "r"+rev
 
 	### try 3: use fourth line from entries file
 	entries = os.path.join(dirname, ".svn/entries")
@@ -59,7 +59,7 @@ def getSubverionRevision(filename=None):
 		f.readline()
 		line = f.readline()
 		rev = line.strip()
-		return rev
+		return "r"+rev
 	return None
 
 if __name__ == "__main__":
