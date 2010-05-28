@@ -11,6 +11,7 @@ from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apDatabase
+from appionlib import apParam
 
 #=====================
 #=====================
@@ -95,7 +96,8 @@ class MoveData(appionScript.AppionScript):
 		paths = self.cursor.fetchall()
 		for item in paths:
 			path = item[0]
-			pathlist.append(path)
+			if not path in pathlist:
+				pathlist.append(path)
 
 		### leginon paths
 		legpathq = ("SELECT `image path` FROM dbemdata.SessionData WHERE name='%s';"
@@ -104,7 +106,9 @@ class MoveData(appionScript.AppionScript):
 		paths = self.cursor.fetchall()
 		for item in paths:
 			path = item[0]
-			pathlist.append(path)
+			if not path in pathlist:
+				pathlist.append(path)
+		print pathlist
 		return pathlist
 
 	#=====================
@@ -116,14 +120,15 @@ class MoveData(appionScript.AppionScript):
 				apDisplay.printMsg("Skipping: %s"%(oldpath))
 				continue
 
+			apDisplay.printMsg("Processing: %s"%(oldpath))
+
 			### make sure old path exists
 			if not os.path.isdir(oldpath):
 				apDisplay.printError("Major error missing directory: %s"%(oldpath))
 
-			apDisplay.printMsg("Processing: %s"%(oldpath))
-
 			### get new path
 			newpath = self.changePath(oldpath)
+			apParam.createDirectory(os.path.dirname(newpath))
 
 			### copy files
 			shutil.copytree(oldpath, newpath)
