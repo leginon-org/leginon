@@ -99,9 +99,6 @@ class project {
 
 		$projectId=$info['projectId'];
 
-		if ($this->isRestricted($projectId)) {
-			return "restricted";
-		}
 		return $info;
 	}
 
@@ -122,9 +119,6 @@ class project {
 
 		$projectId=$info['projectId'];
 		
-		if ($this->isRestricted($projectId)) {
-			return "restricted";
-		}
 		return $info;
 	}
 
@@ -189,12 +183,6 @@ class project {
 			$projects[] = array(	'id' => DEFAULT_PROJECT, 'name' => DEFAULT_PROJECT);
 		}
 		$projects = array_merge($projects, $rprojects);
-		//print_r($rprojects);
-
-		if (ENABLE_LOGIN) {
-			$login_check = $dbemauth->is_logged();
-			$projects=$this->restrict($projects, $login_check);
-		}
 		return $projects;
 	}
 
@@ -209,118 +197,16 @@ class project {
 			.'where DEF_id='.$projectId;
 		list($r)=$this->mysql->getSQLResult($q);
 
-		if (ENABLE_LOGIN && $this->isRestricted($projectId)) {
-			return array();
-		}
 		return $r;
-	}
-
-	function getRestrictedProject($projectId="") {
-		$q="select r.projectId, r.type, u.username from restriction r left join pis u on (u.projectId=r.projectId)";
-		if (is_numeric($projectId)) {
-			$q.=" where r.projectId=$projectId ";
-		}
-		$r=$this->mysql->getSQLResult($q);
-		return $r;
-	}
-
-	function restrict($projects, $authentication) {
-		### check if is admin ###
-		if ($authentication[2]==2) {
-			return $projects;
-		}
-		### check if user belongs to restricted projects ###
-		$rprojects=$this->getRestrictedProject();
-		$username=$authentication[0];
-		$rprojectIds=array();
-		foreach ($rprojects as $rp) {
-			if ($rp['type']=='USER' && $rp['username']==$username) {
-				continue;
-			}
-			$rprojectIds[]=$rp['projectId'];
-		}
-		
-		$newprojects=array();
-		foreach ($projects as $p) {
-			if (in_array($p['id'], $rprojectIds)) {
-				continue;
-			}
-			$newprojects[]=$p;
-		}
-		return $newprojects;
-	}
-
-	function isRestricted($projectId) {
-		if (!ENABLE_LOGIN) {
-			return;
-		}
-		global $dbemauth;
-		$authentication = $dbemauth->is_logged();
-		if ($authentication[2]==2) {
-			return false;
-		}
-		$username=$authentication[0];
-		$rprojects=$this->getRestrictedProject($projectId);
-		
-		if (!$rprojects)
-			return false;
-		$isrestricted=true;
-		foreach ($rprojects as $rp) {
-			if ($rp['type']=='USER' && $rp['username']==$username) {
-				$isrestricted=false;
-				break;
-			}
-		}
-		return $isrestricted;
-	}
-
-	function getRestrictedSessions() {
-		global $dbemauth;
-		$rsessions=array();
-		$r=array();
-		$allowprojects=array();
-		$authentication = $dbemauth->is_logged();
-		$username=$authentication[0];
-		if ($authentication[2]==2) {
-			return $rsessions;
-		}
-		$rprojects=$this->getRestrictedProject();
-		foreach ($rprojects as $rp) {
-			if ($rp['type']=='USER' && $rp['username']==$username) {
-				$allowprojects[]=$rp['projectId'];
-				continue;
-			}
-			if (in_array($rp['projectId'], $allowprojects)) {
-				continue;
-			}
-			$q = 'SELECT '.DB_LEGINON.'.SessionData.name '
-				.'FROM '.DB_LEGINON.'.SessionData '
-				.'WHERE '.DB_LEGINON.'.SessionData.DEF_id IN ( '
-				.'SELECT pe.`REF|leginondata|SessionData|session` '
-				.'FROM projectexperiments pe '
-				.'WHERE pe.`REF|projects|project`="'.$rp['projectId'].'" ) ';
-			$r = $this->mysql->getSQLResult($q);
-			$r = array_merge($r, $r);
-		}
-		foreach ($r as $rs) {
-			if (!in_array($rs['name'], $rsessions)) {
-				$rsessions[]=$rs['name'];
-			}
-		}
-		return $rsessions;
 	}
 
 	function getSessions($sessions) {
 		if (!ENABLE_LOGIN) {
 				return $sessions;
 			}
-			$rsessions=$this->getRestrictedSessions();
 			$nsessions=array();
 			foreach ($sessions as $s) {
-				$id=$s['name_org'];
-				if (!in_array($id, $rsessions)) {
 					$nsessions[]=$s;
-				}
 			}
 		return $nsessions;
 	}
