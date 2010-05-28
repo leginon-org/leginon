@@ -139,10 +139,10 @@
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
 		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
 		<field name="exposure time" type="double" />
-		<field name="SUBD|dimension|x" type="double" />
-		<field name="SUBD|dimension|y" type="double" />
-		<field name="SUBD|offset|x" type="double" />
-		<field name="SUBD|offset|y" type="double" />
+		<field name="SUBD|dimension|x" type="int(20)" />
+		<field name="SUBD|dimension|y" type="int(20)" />
+		<field name="SUBD|offset|x" type="int(20)" />
+		<field name="SUBD|offset|y" type="int(20)" />
 		<field name="SUBD|binning|x" type="int(20)" />
 		<field name="SUBD|binning|y" type="int(20)" />
     <key>PRIMARY KEY (`DEF_id`)</key>
