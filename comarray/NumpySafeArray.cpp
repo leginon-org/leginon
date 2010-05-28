@@ -237,8 +237,8 @@ static struct PyMethodDef methods[] = {
 	{NULL, NULL}
 };
 
-void initNumpySafeArray() {
-	Py_InitModule("NumpySafeArray", methods);
+void init_numpysafearray() {
+	Py_InitModule("_numpysafearray", methods);
 	import_array()
 }
 
