@@ -31,7 +31,7 @@ require_once("../inc/mysql.inc");
 		   
 		<p>For more details visit 
 		<a target="_blank" href="http://ami.scripps.edu/redmine/projects/leginon/wiki/How_to_Update_from_v16_%28Linux%29">upgrade manual</a>.</p>	
-
+		<p>You can visit the web tools <a href="http://<?php echo $_SERVER['SERVER_NAME'].BASE_URL; ?>">here</a> after you complete all the upgrade process.</p>
 <?php 
 		
 	$template->wizardFooter();
