@@ -79,6 +79,15 @@ class CentosAutoInstall(object):
 		proc.wait()
 
 	#=====================================================
+	def removeOldPackages(self):
+		arch = self.getMachineArch()
+		if arch != "x86_64":
+			return
+		self.runCommand("yum remove `rpm -qa --qf '%{NAME}.%{ARCH}\n' | grep i.86`")
+		shutil.move('/etc/yum.conf', '/etc/yum.conf-backup')
+		self.runCommand("echo 'exclude=*i686 *i386' >> /etc/yum.conf")
+
+	#=====================================================
 	def yumUpdate(self):
 		print "Updating system files this can take awhile"
 		### install EPEL
@@ -324,6 +333,7 @@ class CentosAutoInstall(object):
 		self.checkDistro()
 		self.checkRoot()
 		self.selectInstallType()
+		self.removeOldPackages()
 		self.yumUpdate()
 		if self.web_server is True:
 			self.setupWebServer()
