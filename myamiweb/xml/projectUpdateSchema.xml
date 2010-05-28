@@ -4,16 +4,12 @@
 - http://ami.scripps.edu/ 
 -
 - Tables: 
--	boxtypes
--	grids
--	gridboxes
--	gridlocations
--	processingdb
--	projects
--	pis
+-	install
+-	userdetails
 -	confirmauth
--	projectexperiments
--
+-	shareexperiments
+-	projectowners
+-	privileges
 -->
 
 <defaulttables>
