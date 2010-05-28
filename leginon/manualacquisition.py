@@ -126,9 +126,9 @@ class ManualAcquisition(node.Node):
 			scopeclass = leginondata.ScopeEMData
 
 		if correct:
-			imagedata = self.acquireCorrectedCameraImageData(repeatconfig=True, scopeclass=scopeclass)
+			imagedata = self.acquireCorrectedCameraImageData(repeatconfig=False, scopeclass=scopeclass)
 		else:
-			imagedata = self.acquireCameraImageData(repeatconfig=True, scopeclass=scopeclass)
+			imagedata = self.acquireCameraImageData(repeatconfig=False, scopeclass=scopeclass)
 
 		image = imagedata['image']
 
