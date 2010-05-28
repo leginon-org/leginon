@@ -26,6 +26,7 @@ class CentosAutoInstall(object):
 		if not flavor.startswith("CentOS"):
 			print "This is not CentOS, exiting..."
 			sys.exit(1)
+		print flavor
 		return flavor
 
 	#=====================================================
@@ -47,7 +48,7 @@ class CentosAutoInstall(object):
 		print "(2) Database server"
 		print "(3) Processing host"
 		print "(4) Job submission head node"
-		print "(1234) All of the above, or any compination"
+		print "(1234) All of the above, or any combination"
 		print "(0) Exit"
 		value = raw_input("Please select an option: ")
 		svalue = value.strip()
@@ -69,6 +70,28 @@ class CentosAutoInstall(object):
 		if '4' in value:
 			print "4. installing job submission server"
 			self.job_server = True
+		self.db_host = "cronus4.scripps.edu"
+		self.db_user = "ami_object"
+		self.db_pass = "notsosuper"
+		self.db_leginon = "dbemdata"
+		self.db_project = "project"
+		self.cs = 2.0
+
+	#=====================================================
+	def extendedInterview(self):
+		if not self.database_server:
+			value = raw_input("What is the hostname of your database server: ")
+			value = raw_input("What is the login to your database server: ")
+			value = raw_input("What is the password to your database server: ")
+			value = raw_input("What is the name to your project database: ")
+			value = raw_input("What is the name to your leginon database: ")
+			value = raw_input("What is the prefix to your appion databases: ")
+		if not self.process_server:
+			value = raw_input("How many processing servers do you have?: ")
+			value = raw_input("What is the hostname of your process server 1: ")
+			value = raw_input("What is the hostname of your process server 2: ")
+		if not self.job_server:
+			value = raw_input("What is the hostname of your job server head node: ")
 
 	#=====================================================
 	def runCommand(self, cmd):
@@ -83,7 +106,12 @@ class CentosAutoInstall(object):
 		arch = self.getMachineArch()
 		if arch != "x86_64":
 			return
-		self.runCommand("yum -y remove `rpm -qa --qf '%{NAME}.%{ARCH}\\n' | grep i.86`")
+		cmd = "rpm -qa --qf '%{NAME}.%{ARCH}\\n' | grep i.86 | wc -l"
+		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+		proc.wait()
+		line = proc.stdout.readline()
+		if re.match("^[0-9]", line.strip()):
+			self.runCommand("yum -y remove `rpm -qa --qf '%{NAME}.%{ARCH}\\n' | grep i.86`")
 		shutil.copy('/etc/yum.conf', '/etc/yum.conf-backup')
 		self.runCommand("echo 'exclude=*i686 *i386' >> /etc/yum.conf")
 
@@ -96,10 +124,12 @@ class CentosAutoInstall(object):
 		self.runCommand("yum -y update yum*")
 		### install yum tools
 		self.yumInstall(['yum-fastestmirror.noarch', 'yum-utils.noarch'], clean=False)
+		### remove old 32bit packages, if 32bit
+		self.removeOldPackages()
 		### update all programs
 		self.runCommand("yum -y update")
 		### clean up
-		self.runCommand("yum clean all")
+		self.runCommand("yum clean packages")
 		### index drive
 		self.runCommand("updatedb") 
 		return
@@ -127,11 +157,6 @@ class CentosAutoInstall(object):
 		return nproc
 
 	#=====================================================
-	def getHostname(self):
-		host = os.uname()[1]
-		return host
-
-	#=====================================================
 	def yumInstall(self, packagelist, clean=True):
 		print "Installing system files this can take awhile"
 		arch = self.getMachineArch()
@@ -140,14 +165,24 @@ class CentosAutoInstall(object):
 		packagestr = ""
 		for package in packagelist:
 			packagestr += " "+package
-			if arch is not None and not package.endswith("noarch"):
-				packagestr += "."+arch
+			#if arch is not None and not package.endswith("noarch"):
+			#	packagestr += "."+arch
 		cmd = "yum -y install"+packagestr
 		self.runCommand(cmd)
 		if clean is True:
-			self.runCommand("yum clean all")
+			self.runCommand("yum clean packages")
 		self.runCommand("updatedb")
 		return
+
+	#=====================================================
+	def openFirewallPort(self, port):
+		### this command is only temporary
+		self.runCommand("/sbin/iptables --insert RH-Firewall-1-INPUT --proto tcp --dport %d --jump ACCEPT"%(port))
+		#portstr = "-A RH-Firewall-1-INPUT -p tcp -m tcp --dport %d -j ACCEPT"%(port)
+		#cmd = "echo '%s' >> /etc/sysconfig/iptables"%(portstr)
+		#self.runCommand(cmd)
+		self.runCommand("/sbin/iptables-save > /etc/sysconfig/iptables")
+
 
 	#=====================================================
 	#=========             WEB SERVER              =======
@@ -160,13 +195,18 @@ class CentosAutoInstall(object):
 		self.editHttpdConf()
 		myamidir = self.getMyami()
 		self.installPhpMrc(myamidir)
+		self.installPhpSsh2()
 		self.installMyamiWeb(myamidir)
-		#self.editMyamiWebConfig()
+		self.editMyamiWebConfig()
+		self.runCommand("/sbin/service httpd restart")
+		# open port 80 in firewall for web traffic
+		self.openFirewallPort(80)
 		return
 
 	#=====================================================
 	def webServerYumInstall(self):
-		packagelist = ['fftw3-devel', 'httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', 'subversion', ]
+		packagelist = ['fftw3-devel', 'gcc', 'httpd', 'libssh2-devel', 'php', 
+			'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd', 'subversion', ]
 		self.yumInstall(packagelist)
 
 	#=====================================================
@@ -232,23 +272,90 @@ class CentosAutoInstall(object):
 
 	#=====================================================
 	def installPhpMrc(self, myamidir):
+		if os.path.isfile('/etc/php.d/mrc.ini'):
+			return
+		cwd = os.getcwd()
 		phpmrcdir = os.path.join(myamidir, "php_mrc")
 		os.chdir(phpmrcdir)
 		self.runCommand("phpize")
 		self.runCommand("./configure")
 		self.runCommand("make")
+		module = os.path.join(phpmrcdir, "modules/mrc.so")
+		if not os.path.isfile(module):
+			print "ERROR mrc.so failed"
+			sys.exit(1)
 		self.runCommand("make install")
 		f = open('/etc/php.d/mrc.ini', 'w')
-		f.write('; Enable mrc extension module')
-		f.write('extension=mrc.so')
+		f.write('; Enable mrc extension module\n')
+		f.write('extension=mrc.so\n')
 		f.close()
+		os.chdir(cwd)
+
+	#=====================================================
+	def installPhpSsh2(self):
+		if os.path.isfile('/etc/php.d/ssh2.ini'):
+			return
+		cwd = os.getcwd()
+		self.runCommand("wget -c http://pecl.php.net/get/ssh2-0.11.0.tgz")
+		self.runCommand("tar zxvf ssh2-0.11.0.tgz")
+		sshdir = os.path.join(cwd, "ssh2-0.11.0")
+		os.chdir(sshdir)
+		self.runCommand("phpize")
+		self.runCommand("./configure")
+		self.runCommand("make")
+		module = "modules/ssh2.so"
+		if not os.path.isfile(module):
+			print "ERROR ssh2.so failed"
+			sys.exit(1)
+		self.runCommand("make install")
+		f = open('/etc/php.d/ssh2.ini', 'w')
+		f.write('; Enable ssh2 extension module\n')
+		f.write('extension=ssh2.so\n')
+		f.close()
+		os.chdir(cwd)
 
 	#=====================================================
 	def installMyamiWeb(self, myamidir):
 		svnmyamiwebdir = os.path.join(myamidir, "myamiweb")
 		myamiwebdir = "/var/www/html/myamiweb"
-		shutil.copytree(svnmyamiwebdir, myamiwebdir)
+		self.runCommand("rsync -rtou %s/ %s/"%(svnmyamiwebdir, myamiwebdir))
 		return
+
+	#=====================================================
+	def editMyamiWebConfig(self):
+		"""
+		this is not very good
+		"""
+		configfile = os.path.join("/var/www/html/myamiweb/config.php")
+		inf = open(configfile+".template", "r")
+		outf = open(configfile, "w")
+		for line in inf:
+			rline = line.rstrip()
+			if rline.startswith("// --- ") or len(rline) == 0:
+				outf.write(rline+"\n")
+			elif rline.startswith("define('ENABLE_LOGIN'"):
+				outf.write("define('ENABLE_LOGIN', false);\n")
+			elif rline.startswith("define('DB_HOST'"):
+				outf.write("define('DB_HOST', '%s');\n"%(self.db_host))
+			elif rline.startswith("define('DB_USER'"):
+				outf.write("define('DB_USER', '%s');\n"%(self.db_user))
+			elif rline.startswith("define('DB_PASS'"):
+				outf.write("define('DB_PASS', '%s');\n"%(self.db_pass))
+			elif rline.startswith("define('DB_LEGINON'"):
+				outf.write("define('DB_LEGINON', '%s');\n"%(self.db_leginon))
+			elif rline.startswith("define('DB_PROJECT'"):
+				outf.write("define('DB_PROJECT', '%s');\n"%(self.db_project))
+			elif "addplugin(\"processing\");" in rline:
+				outf.write("addplugin(\"processing\");\n")
+			elif "// $PROCESSING_HOSTS[]" in rline:
+				nproc = self.getNumProcessors() 
+				outf.write("$PROCESSING_HOSTS[] = array('host' => 'localhost', 'nproc' => %d);\n"%(nproc))
+			elif rline.startswith("define('DEFAULTCS', "):
+				outf.write("define('DEFAULTCS', '%.1f');\n"%(self.cs))
+			else:
+				outf.write(rline+"\n")
+		inf.close()
+		outf.close()
 
 	#=====================================================
 	#=========         DATABASE SERVER             =======
@@ -257,12 +364,67 @@ class CentosAutoInstall(object):
 		self.databaseServerYumInstall()
 		# enable db server
 		self.runCommand("/sbin/chkconfig mysqld on")
+
+		### start mysqld
+		self.runCommand("/sbin/service mysqld restart")
+
+		self.createSQLDatabase("leginondb")
+		self.createSQLDatabase("projectdb")
+
+		### open mysql port
+		self.openFirewallPort(3306)
+
 		return
 
 	#=====================================================
 	def databaseServerYumInstall(self):
 		packagelist = ['mysql-server',]
 		self.yumInstall(packagelist)
+
+	#=====================================================
+	def editMyCnf(self):
+		shutil.copy('/usr/share/mysql/my-huge.cnf', '/etc/my.cnf-backup')
+		inf = open('/etc/my.cnf-backup', 'r')
+		outf = open('/etc/my.cnf', 'w')
+		for line in inf:
+			rline = line.rstrip()
+			if rline.startswith('#'):
+				outf.write(rline+"\n")
+			elif rline.startswith('query_cache_type'):
+				pass
+			elif rline.startswith('query_cache_size'):
+				pass
+			elif rline.startswith('query_cache_limit'):
+				pass
+			elif rline.startswith('default-storage-engine'):
+				pass
+			else:
+				outf.write(rline+"\n")
+		inf.close()
+		outf.write('# custom parameters from CentOS Auto Install script\n')
+		outf.write("query_cache_type = 1\n")
+		outf.write("query_cache_size = 100M\n")
+		outf.write("query_cache_limit = 100M\n")
+		outf.write("default-storage-engine = MyISAM\n")
+		outf.write('\n')
+		outf.close()
+
+	#=====================================================
+	def createSQLDatabase(self, dbname):
+		cmd = "mysqladmin create %s"%(dbname)
+ 		self.runCommand(cmd)
+
+	#=====================================================
+	def addSQLUser(self, username, password, database):
+		"""
+		CREATE USER usr_object@'localhost' IDENTIFIED BY 'YOUR PASSWORD';
+		GRANT ALTER, CREATE, INSERT, SELECT, UPDATE ON leginondb.* TO usr_object@'localhost';
+		GRANT ALTER, CREATE, INSERT, SELECT, UPDATE ON projectdb.* TO usr_object@'localhost';
+		"""
+		sys.exit(1)
+		cmd = ("echo '%s' | mysql -u %s --password=%s -h %s"
+			%(sqlcmd, username, password, database))
+ 		self.runCommand(cmd)
 
 
 	#=====================================================
@@ -333,7 +495,6 @@ class CentosAutoInstall(object):
 		self.checkDistro()
 		self.checkRoot()
 		self.selectInstallType()
-		self.removeOldPackages()
 		self.yumUpdate()
 		if self.web_server is True:
 			self.setupWebServer()
