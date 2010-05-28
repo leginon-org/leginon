@@ -84,7 +84,7 @@ class CentosAutoInstall(object):
 		if arch != "x86_64":
 			return
 		self.runCommand("yum -y remove `rpm -qa --qf '%{NAME}.%{ARCH}\\n' | grep i.86`")
-		shutil.move('/etc/yum.conf', '/etc/yum.conf-backup')
+		shutil.copy('/etc/yum.conf', '/etc/yum.conf-backup')
 		self.runCommand("echo 'exclude=*i686 *i386' >> /etc/yum.conf")
 
 	#=====================================================
