@@ -60,7 +60,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	// if no session name is set, set a default
 	if (!$sessionname) {
 		$prefix = strtolower(date('yMd'));
-		for ($i=65; $i<=90; $i++) {
+		for ($i=90; $i>=65; $i--) {
 			$letter = strtolower(chr($i));
 			$sessionname = $prefix.$letter;
 			$testinfo = $leginondata->getSessionInfo($sessionname);
@@ -144,7 +144,8 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	echo "<br/>\n";
 
 	// Setup Instruments
-	$instrumenthosts = $leginondata->getInstrumentHosts();
+	// Force to use the fake appion host to avoid accidental changing real calibration
+	$instrumenthosts = array('appion');
 	sort($instrumenthosts);
 	$instrumenthostval = ($_POST[instrumenthost]) ? $_POST[instrumenthost] : $instrumenthosts[0];
 	echo docpop('host', 'Host:');

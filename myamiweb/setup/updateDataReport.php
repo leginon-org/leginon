@@ -13,6 +13,7 @@ require_once("../inc/mysql.inc");
 		require_once("../inc/leginon.inc");
 		require_once("../project/inc/project.inc.php");
 
+		$leginondata->importTables('../xml/leginonUpdateValues.xml');		
 		$project = new project();
 		$project->install('../xml/projectUpdateValues.xml');	
 
