@@ -144,7 +144,8 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	echo "<br/>\n";
 
 	// Setup Instruments
-	$instrumenthosts = $leginondata->getInstrumentHosts();
+	// Force to use the fake appion host to avoid accidental changing real calibration
+	$instrumenthosts = array('appion');
 	sort($instrumenthosts);
 	$instrumenthostval = ($_POST[instrumenthost]) ? $_POST[instrumenthost] : $instrumenthosts[0];
 	echo docpop('host', 'Host:');
