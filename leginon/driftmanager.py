@@ -181,9 +181,7 @@ class DriftManager(watcher.Watcher):
 			dt = t1 - t0
 			pausetime = self.settings['pause time']
 			# make sure we have waited at least "pause time" before acquire
-			# disabled but use the setting for before the first image.
-#			if dt < pausetime:
-			if False:
+			if dt < pausetime:
 				thispause = pausetime - dt
 				self.startTimer('drift pause')
 				time.sleep(thispause)
