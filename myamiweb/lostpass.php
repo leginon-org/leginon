@@ -15,6 +15,7 @@ if (!empty($_POST)) {
 	else {
 		
 		$result .= $lostpass;
+		$result .= "<p><input name='back' type='button' value='Try Again' onclick='history.go(-1)' />";
 		
 	}
 	$result .= "</p>";
