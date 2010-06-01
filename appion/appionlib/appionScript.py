@@ -32,6 +32,8 @@ class AppionScript(basicScript.BasicScript):
 		Starts a new function and gets all the parameters
 		"""
 		### setup some expected values
+		self.successful_run = False
+		self.clusterjobdata = None
 		sys.stdout.write("\n\n")
 		self.quiet = False
 		self.startmem = mem.active()
@@ -163,16 +165,18 @@ class AppionScript(basicScript.BasicScript):
 
 	#=====================
 	def getClusterJobData(self):
+		if self.clusterjobdata is not None:
+			return self.clusterjobdata
 		if self.params['commit'] is False:
 			return None
-		partq = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		pathq = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clustq = appiondata.ApAppionJobData()
-		clustq['path'] = partq
+		clustq['path'] = pathq
 		clustdatas = clustq.query()
 		if not clustdatas:
 			### insert a cluster job
 			clustq['name'] = self.params['runname']+".appionsub.job"
-			clustq['clusterpath'] = partq
+			clustq['clusterpath'] = pathq
 			clustq['user'] = apParam.getUsername()
 			clustq['cluster'] = apParam.getHostname()
 			clustq['status'] = "R"
@@ -184,10 +188,12 @@ class AppionScript(basicScript.BasicScript):
 			### we have an entry
 			### we need to say that we are running
 			apWebScript.setJobToRun(clustdatas[0].dbid)
+			self.clusterjobdata = clustdatas[0]
 			return clustdatas[0]
 		else:
 			### special case: more than one job with given path
 			apDisplay.printWarning("More than one cluster job has this path")
+			self.clusterjobdata = clustdatas[0]
 			return clustdatas[0]
 
 	#=====================
@@ -288,6 +294,16 @@ class AppionScript(basicScript.BasicScript):
 		os.chdir(self.params['rundir'])
 
 	#=====================
+	def __del__(self):
+		"""
+		This functions runs whenever the program stops, even if it crashes
+		"""
+		if self.successful_run is False:
+			clustdata = self.getClusterJobData()
+			from appionlib import apWebScript
+			apWebScript.setJobToError(clustdata.dbid)
+
+	#=====================
 	def close(self):
 		### run custom closing functions
 		self.onClose()
@@ -298,6 +314,7 @@ class AppionScript(basicScript.BasicScript):
 		if self.params['commit'] is True:
 			clustdata = self.getClusterJobData()
 			apWebScript.setJobToDone(clustdata.dbid)
+		self.successful_run = True
 
 
 	#=====================
@@ -419,6 +436,7 @@ class TestScript(AppionScript):
 		self.params['rundir'] = os.getcwd()
 	def start(self):
 		apDisplay.printMsg("Hey this works")
+		raise NotImplementedError
 
 if __name__ == '__main__':
 	print "__init__"
