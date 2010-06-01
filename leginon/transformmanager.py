@@ -380,18 +380,17 @@ class TransformManager(node.Node, TargetTransformer):
 		return emtargetdata
 	
 	def reacquire(self, targetdata):
-		if targetdata['fromtarget'] is None:
-			oldtargetdata = targetdata
-		else:
-			oldtargetdata = targetdata['fromtarget']
-		aquery = leginondata.AcquisitionImageData(target=oldtargetdata)
+		oldimage = None
+		targetlist = targetdata['list']
+		tquery = leginondata.AcquisitionImageTargetData(list=targetlist,number=targetdata['number'])
+		aquery = leginondata.AcquisitionImageData(target=tquery)
 		results = aquery.query(readimages=False, results=1)
 		if len(results) > 0:
 			oldimage = results[0]
-		else:
-			aquery = leginondata.AcquisitionImageData(target=targetdata)
-			results = aquery.query(readimages=False, results=1)
-			oldimage = results[0]
+		if oldimage is None:
+			print "can not find an image that is acquired with this target"
+			print targetdata.dbid
+			return None
 		oldemtarget = oldimage['emtarget']
 		movetype = oldemtarget['movetype']
 		try:
