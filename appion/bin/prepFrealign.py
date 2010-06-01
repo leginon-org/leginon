@@ -567,6 +567,7 @@ class frealignJob(appionScript.AppionScript):
 		f.write(cmd+"\n\n")
 		f.write("wc -l %s \n"%(combineparamfile))
 		f.write("rm -fv iter%03d.???\n"%(iternum))
+		f.write("rm -fv threed.%03da.???\n"%(iternum))
 		time.sleep(0.05)
 		f.close()
 
