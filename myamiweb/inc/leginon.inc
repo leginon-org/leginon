@@ -486,6 +486,9 @@ class leginondata {
 
 
 	function getLastFilenameId($sessionId) {
+		if(empty($sessionId))
+			return NULL;
+		
 		$q = "select `DEF_id` as `id` from AcquisitionImageData "
 			." where `REF|SessionData|session`='$sessionId' "
 			." order by `DEF_timestamp` desc limit 1 ";
@@ -495,6 +498,9 @@ class leginondata {
 	} 
 
 	function getImagePath($sessionId) {
+		if(empty($sessionId))
+			return NULL;
+		
 		$q = "select `image path` as path from `SessionData` "
 				." where `DEF_id`='$sessionId' ";
 		$Rpath=$this->mysql->SQLQuery($q);
