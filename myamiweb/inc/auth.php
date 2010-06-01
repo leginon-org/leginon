@@ -32,7 +32,7 @@ class authlib{
 				 "flushing"=>"The flushing process was unsuccessful.",
 				 "username_email"=>"No username corresponding to that email.",
 				 "no_email"=>"The email address entered could not be found. ",
-				 "no_username" => "The username entered could not be found.<br>Please go back and try again.",
+				 "no_username" => "The username entered could not be found.",
 				 "database_err1"=>"Your registration details could not be updated.",
 				 "database_err2"=>"Your password could not be updated due to a database fault.",
 				 "emails_not_match"=>"Your emails do not match.",
