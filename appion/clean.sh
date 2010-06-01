@@ -8,4 +8,3 @@ rm -vf `find . -name "*.out"`
 rm -fv `find . -name ".DS_Store"`
 rm -fv `find . -name "svn-commit.tmp"`
 rm -fv `find . -name ".emanlog"`
-rm -fv maps/* *.jpg *.spi

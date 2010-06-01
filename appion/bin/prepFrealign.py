@@ -416,7 +416,7 @@ class frealignJob(appionScript.AppionScript):
 		f = open(jobfile, 'a')
 		if recon is True:
 			### environmental variable decide how many cpus for volume
-			f.write('export NCPUS=%d\n'%(self.params['ppn']))
+			f.write('export NCPUS=%d\n'%(self.params['rpn']))
 		f.write('\n')
 		f.write('# IFLAG %d\n'%(iflag))
 		f.write('# PARTICLES %d THRU %d\n'%(first, last))
