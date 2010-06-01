@@ -201,14 +201,7 @@ class project {
 	}
 
 	function getSessions($sessions) {
-		if (!ENABLE_LOGIN) {
-				return $sessions;
-			}
-			$nsessions=array();
-			foreach ($sessions as $s) {
-					$nsessions[]=$s;
-			}
-		return $nsessions;
+		return $sessions;
 	}
 
 	function hasProjectId($projectId, $projects) {
