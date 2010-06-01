@@ -123,13 +123,11 @@ class CentosAutoInstall(object):
 		### update yum program
 		self.runCommand("yum -y update yum*")
 		### install yum tools
-		self.yumInstall(['yum-fastestmirror.noarch', 'yum-utils.noarch'], clean=False)
+		self.yumInstall(['yum-fastestmirror.noarch', 'yum-utils.noarch'])
 		### remove old 32bit packages, if 32bit
 		self.removeOldPackages()
 		### update all programs
 		self.runCommand("yum -y update")
-		### clean up
-		self.runCommand("yum clean packages")
 		### index drive
 		self.runCommand("updatedb") 
 		return
@@ -157,7 +155,7 @@ class CentosAutoInstall(object):
 		return nproc
 
 	#=====================================================
-	def yumInstall(self, packagelist, clean=True):
+	def yumInstall(self, packagelist):
 		print "Installing system files this can take awhile"
 		arch = self.getMachineArch()
 		if not packagelist:
@@ -169,8 +167,6 @@ class CentosAutoInstall(object):
 			#	packagestr += "."+arch
 		cmd = "yum -y install"+packagestr
 		self.runCommand(cmd)
-		if clean is True:
-			self.runCommand("yum clean packages")
 		self.runCommand("updatedb")
 		return
 
