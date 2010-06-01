@@ -149,6 +149,7 @@ class Tomography(leginon.acquisition.Acquisition):
 								 exposure_max=exposure_max)
 		except leginon.tomography.exposure.LimitError, e:
 			self.logger.warning('Exposure time out of range: %s.' % e)
+			raise
 		except leginon.tomography.exposure.Default, e:
 			self.logger.warning('Using preset exposure time: %s.' % e)
 		else:
@@ -208,6 +209,7 @@ class Tomography(leginon.acquisition.Acquisition):
 		collect.tilts = tilts
 		collect.exposures = exposures
 		collect.prediction = self.prediction
+		collect.setStatus = self.setStatus
 
 		try:
 			collect.start()
