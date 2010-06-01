@@ -20,6 +20,12 @@ def setJobToDone(jobid):
 	return setJobStatus(jobid, "D")
 
 #=====================
+def setJobToError(jobid):
+	if getJobStatus(jobid) == "E":
+		return False
+	return setJobStatus(jobid, "E")
+
+#=====================
 def setJobStatus(jobid, status):
 	### clean status
 	newstat = str(status[0]).upper()
