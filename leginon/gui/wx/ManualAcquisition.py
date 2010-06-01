@@ -137,7 +137,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
-		if self.settingsdialog.widgets['force annotate'].GetValue():
+		if self.node.getOneSetting('force annotate'):
 			self.onCommentTool(None)
 
 	def onSetRobotGrid(self):

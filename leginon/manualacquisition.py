@@ -592,3 +592,9 @@ class ManualAcquisition(node.Node):
 		self.gridlabel = gridlabeler.getGridLabel(griddata)
 		self.logger.info('Add grid prefix as '+self.gridlabel)
 		self.panel.onSetRobotGrid()
+
+	def getOneSetting(self,keyname):
+		if keyname not in self.settings.keys():
+			return
+		else:
+			return self.settings[keyname]
