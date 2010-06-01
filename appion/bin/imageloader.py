@@ -59,7 +59,9 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 		### mode 1: command line params
 		self.parser.add_option("--tiltgroup", dest="tiltgroup", type="int", default=1,
-			help="Number of image per tilt series, default=1", metavar="INT")
+			help="Number of images per tilt series, default=1", metavar="INT")
+		self.parser.add_option("--defocalgroup", dest="defocalgroup", type="int", default=1,
+			help="Number of images per defocal series, default=1", metavar="INT")
 		self.parser.add_option("--apix", dest="apix", type="float", metavar="FLOAT",
 			help="angstroms per pixel")
 		self.parser.add_option("--df", dest="df", type="float", metavar="DEFOCUS",
@@ -75,8 +77,6 @@ class ImageLoader(appionLoop2.AppionLoop):
 		### mode 2: batch script
 		self.parser.add_option("--batch", "--batchparams", dest="batchscript", type="str",
 			help="File containing image parameters", metavar="FILE")
-
-
 
 	#=====================
 	def checkConflicts(self):
