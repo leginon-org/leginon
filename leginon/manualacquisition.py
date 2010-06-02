@@ -400,7 +400,7 @@ class ManualAcquisition(node.Node):
 		try:
 			dose = self.dosecal.dose_from_imagedata(imagedata)
 		except Exception, e:
-			self.logger.error('Failed calculating dose')
+			self.logger.error('Failed calculating dose: %s' % (e,))
 			return
 		dosedata = leginondata.DoseMeasurementData()
 		dosedata['dose'] = dose
