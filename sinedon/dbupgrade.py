@@ -548,7 +548,7 @@ class DBUpgradeTools(object):
 		if length is None:
 			query = "ALTER TABLE `%s` ADD INDEX (`%s`) ;"%(table, column)
 		else:
-			query = "CREATE INDEX `%s_index%d` ON `%s` (%s(%d)); ;"%(column, length, table, column, length)
+			query = "ALTER TABLE `%s` ADD INDEX `%s_index%d` (`%s`(%d)) ;"%(table, column, length, column, length)
 
 		t0 = time.time()
 		if messaging['long query'] is True and self.getNumberOfRows(table) > messaging['long query rows']:
