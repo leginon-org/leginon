@@ -34,6 +34,29 @@ def getReconRunsIds():
 		reconrunids.append(reconrundata.dbid)
 	return reconrunids
 
+def createExcludedColumnByFakeInsert():
+	# maketable can not create this column.  Use an insert 
+	# without other references.
+	fakerunq = appiondata.ApFullTomogramRunData()
+	fakerunq['excluded'] = [0]
+	fakerunq.insert()
+
+def getTomoAlignmentRuns():
+	alignrunids = []
+	alignrunq = appiondata.ApTomoAlignmentRunData()
+	alignrundatas = alignrunq.query()
+
+	if not alignrundatas:
+		return []
+	return alignrundatas
+
+def insertTiltsInAlign(alignrun):
+	q = appiondata.ApTiltsInAlignRunData()
+	q['alignrun'] = alignrun
+	q['tiltseries'] = alignrun['tiltseries']
+	q['primary_tiltseries'] = True
+	q.insert()
+
 def upgradeProjectDB(projectdb,backup=True):
 	### set version of database
 	selectq = " SELECT * FROM `install` WHERE `key`='version'"
@@ -58,4 +81,9 @@ if __name__ == "__main__":
 			reconrunids = getReconRunsIds()
 			for reconrunid in reconrunids:
 				apRecon.setGoodBadParticlesFromReconId(reconrunid)
+			# Tomography upgrades
+			createExcludedColumnByFakeInsert()
+			allalignrundata = getTomoAlignmentRuns()
+			for alignrun in allalignrundata:
+				insertTiltsInAlign(alignrun)
 	upgradeProjectDB(projectdb,backup=False)
