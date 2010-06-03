@@ -138,6 +138,7 @@ class Collection(object):
 		self.instrument_state = None
 
 		self.logger.info('Data collection ended.')
+		self.setStatus('idle')
 
 		self.viewer.clearImages()
 
@@ -386,8 +387,9 @@ class Collection(object):
 		self.node.publish(tomo_prediction_data, database=True, dbforce=True)
 
 	def checkAbort(self):
+		if self.player.state() == 'pause':
+			self.setStatus('user input')
 		state = self.player.wait()
 		if state in ('stop', 'stopqueue'):
 			self.finalize()
 			raise Abort
-

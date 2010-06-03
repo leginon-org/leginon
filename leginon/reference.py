@@ -401,6 +401,9 @@ class MeasureDose(Reference):
 			if preset is None:
 				return
 			preset_name = preset['name']
+		if preset['dose'] is None:
+			self.logger.warning('Failed measuring dose for preset \'%s\'' % preset_name)
+			return
 		dose = preset['dose']/1e20
 		exposure_time = preset['exposure time']/1000.0
 		try:

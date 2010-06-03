@@ -326,6 +326,7 @@ class HoleFinder(object):
 
 		if extend == '3x3':
 			if auto_center:
+				self.logger.info('Use the blob closest to the center as the 3x3 lattice center')
 				points = lattice.sortPointsByDistances(points, (shape[0]/2,shape[1]/2))
 			best_lattice = lattice.pointsToLattice(points, spacing, tolerance, first_is_center=True)
 		else:

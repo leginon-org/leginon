@@ -307,8 +307,24 @@ class Acquisition(targetwatcher.TargetWatcher):
 			return newtargetdata
 
 		## if recent target after transforms declared, return recent target
-		newtargettime = newtargetdata.timestamp
+		if newtargetdata['image'] is None:
+			# simulated target
+			newtargettime = newtargetdata.timestamp
+		else:
+			# need to compare when the parent image is acquired not when target is
+			# selected
+			try:
+				# newtargetdata['image'] does not always has timestamp attribute. 
+				# Do direct query
+				parentid = newtargetdata['image'].dbid
+				q = leginondata.AcquisitionImageData
+				parentdata = q.direct_query(parentid, readimages=False)
+				newtargettime = parentdata.timestamp
+			except:
+				self.logger.warning("Could not find parent image (ID: %d) timestamp,use targetinstead" % parentdata.dbid)
+				newtargettime = newtargetdata.timestamp
 		declaredtime = transformsdeclared[0].timestamp
+		print newtargettime,declaredtime
 		if newtargettime > declaredtime:
 			return newtargetdata
 
@@ -386,18 +402,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# seems to have trouple with using original targetdata as
 		# a query, so use a copy with only some of the fields
 		presetquery = leginondata.PresetData(name=presetname)
-		## don't care if drift correction was done on target after image was
-		## acquired, so ignore version, delta row/col
 		targetquery = leginondata.AcquisitionImageTargetData(initializer=targetdata)
+		## don't care if drift correction was done on target after image was
+		## acquired, so ignore version, delta row/col, parentimage, and fromtarget
 		targetquery['version'] = None
 		targetquery['delta row'] = None
 		targetquery['delta column'] = None
+		targetquery['image'] = None
+		targetquery['fromtarget'] = None
 		imagequery = leginondata.AcquisitionImageData(target=targetquery, preset=presetquery)
 		## other things to fill in
 		imagequery['scope'] = leginondata.ScopeEMData()
 		imagequery['camera'] = leginondata.CameraEMData()
 		imagequery['session'] = leginondata.SessionData()
-
+		print 'check alreadyacquired',targetdata.dbid,presetname
 		datalist = self.research(datainstance=imagequery)
 		if datalist:
 			## no need to acquire again, but need to republish

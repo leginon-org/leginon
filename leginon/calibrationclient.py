@@ -342,7 +342,7 @@ class DoseCalibrationClient(CalibrationClient):
 		if results:
 			result = results[0]['sensitivity']
 		else:
-			raise NoSensitivityError
+			raise NoSensitivityError('No sensitivity calibration.')
 		return result
 
 	def dose_from_screen(self, screen_mag, beam_current, beam_diameter):

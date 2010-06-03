@@ -145,6 +145,19 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		#if ignored:
 		#	self.logger.info('%d target(s) will be ignored' % len(ignored))
 		if goodtargets:
+			# pause and abort check before reference and rejected targets are sent away
+			if self.player.state() == 'pause':
+				self.setStatus('user input')
+			state = self.player.wait()
+			self.setStatus('processing')
+			if state in ('stop', 'stopqueue'):
+				targetliststatus = 'aborted'
+				print "aborting before rejects are sent"
+				# If I report targets done then rejected target are also done.  Which make
+				# them unrestartable What to do???????
+				self.reportTargetListDone(newdata, targetliststatus)
+				self.setStatus('idle')
+				return
 			#tilt the stage first
 			if self.settings['use parent tilt']:
 				state1 = leginondata.ScopeEMData()
@@ -257,8 +270,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 				self.reportTargetStatus(adjustedtarget, 'done')
 
-				# pause
-				# ...
+				# pause check after a good target processing
 				if self.player.state() == 'pause':
 					self.setStatus('user input')
 				state = self.player.wait()

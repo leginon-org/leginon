@@ -75,6 +75,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.hf = jahcfinderback.HoleFinder()
+		self.hf.logger = self.logger
 		self.icecalc = ice.IceCalculator()
 
 		self.images = {

@@ -397,8 +397,11 @@ class ManualAcquisition(node.Node):
 		self.setImage(imagedata['image'])
 
 		# calculate dose
-		dose = self.dosecal.dose_from_imagedata(imagedata)
-
+		try:
+			dose = self.dosecal.dose_from_imagedata(imagedata)
+		except Exception, e:
+			self.logger.error('Failed calculating dose: %s' % (e,))
+			return
 		dosedata = leginondata.DoseMeasurementData()
 		dosedata['dose'] = dose
 		self.publish(dosedata, database=True, dbforce=True)
