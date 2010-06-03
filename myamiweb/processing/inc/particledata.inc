@@ -379,10 +379,11 @@ class particledata {
 			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
 			."tilt.number as 'tiltseries number', "
 			." p.`path` as path, "
-			." r.`SEQ|excluded` as 'excluded imageIds', "
 			."t.`REF|ApTomoAlignerParamsData|aligner` as aligner, "
-			." t.`hidden` "
-			."FROM `ApFullTomogramData` t ";
+			." t.`hidden` ";
+		if ($has_run)
+			$q .= ", r.`SEQ|excluded` as 'excluded imageIds' ";
+		$q .= "FROM `ApFullTomogramData` t ";
 		if ($has_run) {
 			$q .= "LEFT JOIN `ApFullTomogramRunData` r ON t.`REF|ApFullTomogramRunData|reconrun` = r.`DEF_id` "
 				."LEFT JOIN `ApPathData` p ON r.`REF|ApPathData|path` = p.`DEF_id` ";

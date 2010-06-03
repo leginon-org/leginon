@@ -62,7 +62,7 @@ if ($shownfulltomos) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
 	foreach ($tiltseries as $t) {
-		$fulltomos = $particle->checkforFulltomogram($t['id'], $showhidden);
+		$fulltomos = $particle->checkforFullTomogram($t['id'], $showhidden);
 		foreach ($fulltomos as $fulltomo) {
 			$fulltomoid = $fulltomo['DEF_id'];
 			$a = array('tiltseries'=>$t['number'],'fulltomoid'=>$fulltomoid);
