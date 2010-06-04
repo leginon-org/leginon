@@ -764,7 +764,11 @@ def _indexBy(bys, datalist):
 			if isinstance(key,str):
 				keylist.append(key)
 		if keylist:
-			finalkey = ' '.join(keylist)
+			if len(keylist) == 1:
+				finalkey = keylist[0]
+			else:
+				finalkey = ' '.join(keylist)
+			finalkey = finalkey.strip()
 			index[finalkey] = indexdata
 	return index
 
