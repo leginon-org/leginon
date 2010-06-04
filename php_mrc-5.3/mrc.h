@@ -1,12 +1,8 @@
 #ifndef __MRC_H
 #define __MRC_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// might be already define
-// #define LITTLE_ENDIAN
+/*  might be already define */
+/*  #define LITTLE_ENDIAN */
 
 #ifdef LITTLE_ENDIAN
 #define LITTLE_ENDIAN_HOST 1
@@ -31,6 +27,7 @@ extern "C" {
 #define MRC_LABEL_SIZE      80
 #define MRC_NUM_LABELS      10
 
+#include <stdio.h>
 
 typedef struct MRCHeaderStruct {
 	int			nx;		/* Number of columns */
@@ -86,67 +83,67 @@ int readMRCHeader(FILE *pFMRC, MRCHeader *pMRCHeader);
 
 typedef struct Imagic5HeaderStruct {
 
-		int imgnum;             // image number, [1,n]
-		int count;              // total number of images - 1 (only first image), [0,n-1]
-		int error;              // Error code for this image
-		int headrec;            // # of header records/image (always 1)
-		int mday;               // image creation time
+		int imgnum;             /*  image number, [1,n] */
+		int count;              /*  total number of images - 1 (only first image), [0,n-1] */
+		int error;              /*  Error code for this image */
+		int headrec;            /*  # of header records/image (always 1) */
+		int mday;               /*  image creation time */
 		int month;
 		int year;
 		int hour;
 		int minute;
 		int sec;
-		int reals;              // image size in reals
-		int pixels;             // image size in pixels
-		int ny;                 // # of lines / image
-		int nx;                 // # of pixels / line
-		char type[4];           // PACK, INTG, REAL, COMP, RECO
-		int ixold;              // Top left X-coord. in image before windowing 
-		int iyold;              // Top left Y-coord. in image before windowing 
-		float avdens;           // average density
-		float sigma;            // deviation of density
-		float varia;            // variance of density
-		float oldav;            // old average density
-		float max;              // max density
-		float min;              // min density
-		int complex;            // not used
-		float cellx;            // not used
-		float celly;            // not used
-		float cellz;            // not used
-		float cella1;           // not used
-		float cella2;           // not used
-		char label[80];         // image id string
+		int reals;              /*  image size in reals */
+		int pixels;             /*  image size in pixels */
+		int ny;                 /*  # of lines / image */
+		int nx;                 /*  # of pixels / line */
+		char type[4];           /*  PACK, INTG, REAL, COMP, RECO */
+		int ixold;              /*  Top left X-coord. in image before windowing  */
+		int iyold;              /*  Top left Y-coord. in image before windowing  */
+		float avdens;           /*  average density */
+		float sigma;            /*  deviation of density */
+		float varia;            /*  variance of density */
+		float oldav;            /*  old average density */
+		float max;              /*  max density */
+		float min;              /*  min density */
+		int complex;            /*  not used */
+		float cellx;            /*  not used */
+		float celly;            /*  not used */
+		float cellz;            /*  not used */
+		float cella1;           /*  not used */
+		float cella2;           /*  not used */
+		char label[80];         /*  image id string */
 		int space[8];
 		float mrc1[4];
 		int mrc2;
 		int space2[7];
-		int lbuf;               // effective buffer len = nx
-		int inn;                // lines in buffer = 1
-		int iblp;               // buffer lines/image = ny
-		int ifb;                // 1st line in buf = 0
-		int lbr;                // last buf line read = -1
-		int lbw;                // last buf line written = 0
-		int lastlr;             // last line called for read = -1
-		int lastlw;             // last line called for write = 1
-		int ncflag;             // decode to complex = 0
-		int num;                // file number = 40 (?)
-		int nhalf;              // leff/2
-		int ibsd;               // record size for r/w (words) = nx*2
-		int ihfl;               // file # = 8
-		int lcbr;               // lin count read buf = -1
-		int lcbw;               // lin count wr buf = 1
-		int imstr;              // calc stat on rd = -1
-		int imstw;              // calc stat on wr = -1
-		int istart;             // begin line in buf = 1
-		int iend;               // end line in buf = nx
-		int leff;               // eff line len = nx
-		int linbuf;             // line len (16 bit) nx *2
-		int ntotbuf;            // total buf in pgm = -1
+		int lbuf;               /*  effective buffer len = nx */
+		int inn;                /*  lines in buffer = 1 */
+		int iblp;               /*  buffer lines/image = ny */
+		int ifb;                /*  1st line in buf = 0 */
+		int lbr;                /*  last buf line read = -1 */
+		int lbw;                /*  last buf line written = 0 */
+		int lastlr;             /*  last line called for read = -1 */
+		int lastlw;             /*  last line called for write = 1 */
+		int ncflag;             /*  decode to complex = 0 */
+		int num;                /*  file number = 40 (?) */
+		int nhalf;              /*  leff/2 */
+		int ibsd;               /*  record size for r/w (words) = nx*2 */
+		int ihfl;               /*  file # = 8 */
+		int lcbr;               /*  lin count read buf = -1 */
+		int lcbw;               /*  lin count wr buf = 1 */
+		int imstr;              /*  calc stat on rd = -1 */
+		int imstw;              /*  calc stat on wr = -1 */
+		int istart;             /*  begin line in buf = 1 */
+		int iend;               /*  end line in buf = nx */
+		int leff;               /*  eff line len = nx */
+		int linbuf;             /*  line len (16 bit) nx *2 */
+		int ntotbuf;            /*  total buf in pgm = -1 */
 		int space3[5];
-		int icstart;            // complex line start = 1
-		int icend;              // complex line end = nx/2
-		int rdonly;             // read only = 0
-		int misc[157];          // Remainder of header (EMAN1 specific settings not supported)
+		int icstart;            /*  complex line start = 1 */
+		int icend;              /*  complex line end = nx/2 */
+		int rdonly;             /*  read only = 0 */
+		int misc[157];          /*  Remainder of header (EMAN1 specific settings not supported) */
 } Imagic5Header;
 
 typedef struct Imagic5Struct {
@@ -176,41 +173,41 @@ void freeImagic5one(Imagic5one *pImagic5);
 #define NUM_SPIDER_HEADER_ENTRIES 256
 
 typedef struct SpiderHeaderStruct {
-	float nslice;           // number of slices in volume; 1 for a 2D image.
-	float nrow;         // nrow, number of rows per slice 
-	float irec;                     // total number of records in the file (unused)
-	float nhistrec;     // obsolete, unused
+	float nslice;           /*  number of slices in volume; 1 for a 2D image. */
+	float nrow;         /*  nrow, number of rows per slice  */
+	float irec;                     /*  total number of records in the file (unused) */
+	float nhistrec;     /*  obsolete, unused */
 
-	float type;             //iform, file type
+	float type;             /* iform, file type */
 
-	float mmvalid;          // imami, max/min flag.
-	float max;          // fmax, max value
-	float min;          // fmin, min value
-	float mean;         // av, average value
-	float sigma;            // sig, std dev, -1=unknown
-	float ihist;        // obsolete, no longer used
-	float nsam;         // nsam, number of pixels per row
-	float headrec;          // labrec, number of records in header
-	float angvalid;         // iangle, flag, 1 if tilt angles have been computed
-	float phi;          // tilt angle
-	float theta;        // tilt angle
-	float gamma;        // tilt angle  (also called psi).
-	float dx;           // xoff, x translation
-	float dy;           // yoff, y translation
-	float dz;                       // zoff, z translation
-	float scale;        // scale factor
-	float headlen;          // labbyt, header length in bytes
-	float reclen;       // lenbyt, record length in bytes
+	float mmvalid;          /*  imami, max/min flag. */
+	float max;          /*  fmax, max value */
+	float min;          /*  fmin, min value */
+	float mean;         /*  av, average value */
+	float sigma;            /*  sig, std dev, -1=unknown */
+	float ihist;        /*  obsolete, no longer used */
+	float nsam;         /*  nsam, number of pixels per row */
+	float headrec;          /*  labrec, number of records in header */
+	float angvalid;         /*  iangle, flag, 1 if tilt angles have been computed */
+	float phi;          /*  tilt angle */
+	float theta;        /*  tilt angle */
+	float gamma;        /*  tilt angle  (also called psi). */
+	float dx;           /*  xoff, x translation */
+	float dy;           /*  yoff, y translation */
+	float dz;                       /*  zoff, z translation */
+	float scale;        /*  scale factor */
+	float headlen;          /*  labbyt, header length in bytes */
+	float reclen;       /*  lenbyt, record length in bytes */
 
 	float istack;
-	float inuse;        // not used
+	float inuse;        /*  not used */
 	float maxim;
 	float imgnum;
 
 	float lastindx;    
 
-	float u6;          // unused
-	float u7;          // unused
+	float u6;          /*  unused */
+	float u7;          /*  unused */
 
 	float Kangle;   
 	float phi1;
@@ -219,11 +216,11 @@ typedef struct SpiderHeaderStruct {
 	float phi2;
 	float theta2;
 	float psi2;
-	char  u8[48];       //unused
-	float xf[27];       // reserved for Jose Maria's transforms
-	float u9[135];      // unused
-	char date[11];      // creation date e.g. 27-MAY-1999 
-	char time[8];       // creation time e.g. 09:43:19 
+	char  u8[48];       /* unused */
+	float xf[27];       /*  reserved for Jose Maria's transforms */
+	float u9[135];      /*  unused */
+	char date[11];      /*  creation date e.g. 27-MAY-1999  */
+	char time[8];       /*  creation time e.g. 09:43:19  */
 	char title[160];    
 } SpiderHeader;
 

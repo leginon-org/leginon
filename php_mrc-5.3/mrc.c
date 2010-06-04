@@ -195,7 +195,7 @@ int loadMRC(char *pszFilename, MRC *pMRC) {
     	pMRC->pbyData = malloc(uElements*uElementSize);
 
 	if (uElements>maxElement) {
-		// --- split writing in two --- // 
+		/*  --- split writing in two ---  */
 		if(byteswapread(pFMRC, &(pMRC->pbyData[0]), uElements-maxElement, uElementSize, fuByteOrder) == -1) {
 			free(pMRC->pbyData);
 			fclose(pFMRC);
@@ -268,7 +268,7 @@ int writeMRC(FILE *pFMRC, MRC *pMRC) {
 	unsigned int fuByteOrder = LITTLE_ENDIAN_DATA;
 	unsigned int maxElement=500000000;
 
-	uElements = pMRC->header.nx * pMRC->header.ny; //  * pMRC->header.nz;
+	uElements = pMRC->header.nx * pMRC->header.ny; /*   * pMRC->header.nz; */
 	switch(pMRC->header.mode) {
 		case MRC_MODE_BYTE:
 			uElementSize = sizeof(char);
@@ -295,7 +295,7 @@ int writeMRC(FILE *pFMRC, MRC *pMRC) {
 		return -1;
 
 	if (uElements>maxElement) {
-		// --- split writing in two --- // 
+		/*  --- split writing in two ---  */
 		if(byteswapwrite(pFMRC, &(pMRC->pbyData[0]), uElements-maxElement, uElementSize, fuByteOrder) == -1)
 			return -1;
 		if(byteswapwrite(pFMRC, &(pMRC->pbyData[uElements-maxElement]), maxElement, uElementSize, fuByteOrder) == -1)
@@ -530,7 +530,7 @@ void *readImagic5ImagesAt(FILE *pFImage, int img_num, Imagic5one *pImagic5) {
 	if(pData == NULL)
 		return NULL;
 
-	// --- position pointer file where copy should start: (srcX, srcY);
+	/*  --- position pointer file where copy should start: (srcX, srcY); */
 	if (img_num!=0) {
 		fseek(pFImage, img_num*size*uElements, SEEK_CUR);
 	}
