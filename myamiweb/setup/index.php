@@ -8,6 +8,22 @@ require_once('setupUtils.inc');
 	$template = new template;
 	$template->wizardHeader("Welcome : Start configuration of your system", SETUP_CONFIG);
 	
+	$extensions = get_loaded_extensions();
+	
+	$required_exts = array('gd' => '\'gd\' module is required for the php mrc module.', 
+						   'mrc' => '\'mrc\' module is required for displaying mrc images.', 
+						   'mysql' => '\'mysql\' module is required for connecting to the mysql database.', 
+						   'mysqli' => '\'mysqli\' module is required for connecting to the mysql database.', 
+						   'ssh2' => '\'ssh2\' module is required for connecting to the processing host or cluster.');
+	
+	$phpModulesMessages = array();
+	
+	foreach($required_exts as $ext => $desc){
+		
+		if(!in_array($ext, $extensions))
+			$phpModulesMessages[] = $desc;
+	}
+
 	$fileExist = setupUtils::checkFile(CONFIG_FILE);
 	
 	if($_POST){
@@ -67,11 +83,22 @@ require_once('setupUtils.inc');
 	}
 	else{
 		
-		echo"<p>This wizard will take you step by step through the process of 
-		        setting up the Appion web tools config file.<br /><br />";
-		echo"Please use alphanumeric characters in your entries. Special characters may not be used. For security reasons, there is a 30 minute time limit for each page. If you exceed this limit, you will be returned to this page.<br />";
-		echo"When you are ready to start please click on the \"NEXT\" button.</p><br />";
-		echo"<input type='hidden' name='newSetup' value=true />";
+		echo "<p>This wizard will take you step by step through the process of 
+		         setting up the Appion web tools config file.<br /><br />";
+		echo "Please use <font color='red'>alphanumeric characters</font> in your entries. 
+				Special characters may not be used. For security reasons, there is a 30 minute time limit for each page. 
+				If you exceed this limit, you will be returned to this page.<br /><br />";
+		
+		if(!empty($phpModulesMessages)){
+			echo "There are some php module(s) missing. Please install the missing module(s) before you start.<br />
+				  For more information please check <a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Download_additional_Software_(CentOS_Specific)'>
+				  Install Complete list of additional packages</a>.<br /><br />";
+			foreach($phpModulesMessages as $message)
+				echo $message . '<br />';
+		}
+		echo "<br />";
+		echo "When you are ready to start please click on the \"NEXT\" button.</p><br />";
+		echo "<input type='hidden' name='newSetup' value=true />";
  		
 	}
 ?>
