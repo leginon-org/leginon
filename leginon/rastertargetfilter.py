@@ -168,9 +168,8 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 			else:
 				break
 		if fromtarget:
-			print "Ancestor From Target:", fromtarget.dbid
+			self.logger.info("Ancestor From Target: %d " % fromtarget.dbid)
 		else:
-			print "No Ancestor From Target:"
 			fromtarget = targetdata
 		self.fromtarget = fromtarget
 		return fromtarget

@@ -324,7 +324,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.logger.warning("Could not find parent image (ID: %d) timestamp,use targetinstead" % parentdata.dbid)
 				newtargettime = newtargetdata.timestamp
 		declaredtime = transformsdeclared[0].timestamp
-		print newtargettime,declaredtime
 		if newtargettime > declaredtime:
 			return newtargetdata
 
@@ -415,7 +414,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagequery['scope'] = leginondata.ScopeEMData()
 		imagequery['camera'] = leginondata.CameraEMData()
 		imagequery['session'] = leginondata.SessionData()
-		print 'check alreadyacquired',targetdata.dbid,presetname
 		datalist = self.research(datainstance=imagequery)
 		if datalist:
 			## no need to acquire again, but need to republish
@@ -736,7 +734,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
 		self.imagedata = imagedata
-		if self.settings['correct image shift coma']:
+		if debug and self.settings['correct image shift coma']:
 			print "beam tilt for image acquired",self.instrument.tem.BeamTilt
 			self.instrument.tem.BeamTilt = self.beamtilt0
 			print "resetted beam tilt",self.instrument.tem.BeamTilt
