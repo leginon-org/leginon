@@ -141,7 +141,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		targetlist = self.newTargetList(queue=self.settings['queue'])
 
 		if self.settings['allow append']:
-			print "will find targets"
+			self.logger.info("will append targets")
 			for imagedata in images:
 				self.findTargets(imagedata, targetlist)
 		self.makeTargetListEvent(targetlist)
@@ -180,18 +180,15 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if len(targetlist) < 3:
 			self.logger.info("skipping sort targets")
 			return targetlist
-		#print "targets=",targetlist
 		bestorder, bestscore, messages = shortpath.sortPoints(targetlist, numiter=3, maxeval=70000)
 		for msg in messages:
 			self.logger.info(msg)
-		#print "bestorder=",bestorder
 		if bestorder is None or len(bestorder) < 3:
 			self.logger.info("skipping sort targets")
 			return targetlist
 		sortedtargetlist = []
 		for i in bestorder:
 			sortedtargetlist.append(targetlist[i])
-		#print "sortedtargets=",sortedtargets
 		self.logger.info("returning sorted targets")
 		return sortedtargetlist
 		

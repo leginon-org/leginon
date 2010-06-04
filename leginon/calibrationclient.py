@@ -63,6 +63,7 @@ class CalibrationClient(object):
 		self.stagetiltcorrector = tiltcorrector.VirtualStageTilter(node)
 		self.rpixelsize = None
 		self.powerbinning = 2
+		self.debug = False
 
 	def checkAbort(self):
 		if self.abortevent.isSet():
@@ -997,7 +998,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		'''repeat measuremnet to increase precision'''
 		tilts = {'x':[],'y':[]}
 		self.measured_defocii = []
-		print "==================="
+		self.node.logger.debug("===================")
 		for i in range(0,repeat):
 			try:
 				cftilt = self.measureComaFree(tilt_value, settle)
@@ -1010,13 +1011,13 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				tilts['x'].append(cftilt[(0,0)])
 				tilts['y'].append(cftilt[(1,1)])
 				comatilt = {'x':cftilt[(0,0)],'y':cftilt[(1,1)]}
-				print "    %5.2f,  %5.2f" % (cftilt[(0,0)]*1000,cftilt[(1,1)]*1000)
+				self.node.logger.debug("    %5.2f,  %5.2f" % (cftilt[(0,0)]*1000,cftilt[(1,1)]*1000))
 		if len(tilts['x']):
 			xarray = numpy.array(tilts['x'])
 			yarray = numpy.array(tilts['y'])
-			print "--------------------"
-			print "m   %5.2f,  %5.2f" %(xarray.mean()*1000,yarray.mean()*1000)
-			print "std %5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000)
+			self.node.logger.debug("--------------------")
+			self.node.logger.debug("m   %5.2f,  %5.2f" %(xarray.mean()*1000,yarray.mean()*1000))
+			self.node.logger.debug("std %5.2f,  %5.2f" %(xarray.std()*1000,yarray.std()*1000))
 			return xarray,yarray
 
 	def transformImageShiftToBeamTilt(self, imageshift, tem, cam, ht, zerobeamtilt, mag):
@@ -1027,13 +1028,13 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			matrix = self.retrieveMatrix(tem, cam, 'image-shift coma', ht, None)
 		except NoMatrixCalibrationError:
 			raise RuntimeError('missing %s calibration matrix' % par)
-		print "Image Shift ( %5.2f, %5.2f)" % (imageshift['x']*1e6,imageshift['y']*1e6)
+		self.node.logger.debug("Image Shift ( %5.2f, %5.2f)" % (imageshift['x']*1e6,imageshift['y']*1e6))
 		shiftvect = numpy.array((imageshift['x'], imageshift['y']))
 		change = numpy.dot(matrix, shiftvect)
 		newbeamtilt['x'] = zerobeamtilt['x'] + change[0]
 		newbeamtilt['y'] = zerobeamtilt['y'] + change[1]
-		print "Beam Tilt Correction ( %5.2f, %5.2f)" % (change[0]*1e3,change[1]*1e3)
-		print "Beam Tilt ( %5.2f, %5.2f)" % (newbeamtilt['x']*1e3,newbeamtilt['y']*1e3)
+		self.node.logger.debug("Beam Tilt Correction ( %5.2f, %5.2f)" % (change[0]*1e3,change[1]*1e3))
+		self.node.logger.debug("Beam Tilt ( %5.2f, %5.2f)" % (newbeamtilt['x']*1e3,newbeamtilt['y']*1e3))
 		return newbeamtilt
 
 	def correctImageShiftComa(self):

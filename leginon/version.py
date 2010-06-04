@@ -56,7 +56,7 @@ def OLDgetVersion():
 	return version
 
 def getVersion():
-	return '1.5b1'
+	return '2.0'
 
 def getInstalledLocation():
 	'''where is this module located'''
