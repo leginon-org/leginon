@@ -7,6 +7,7 @@
 */
 
 #include "php.h"
+#include "gd_unbundled.h"
 #include "gd.h"
 #include "filter.h"
 

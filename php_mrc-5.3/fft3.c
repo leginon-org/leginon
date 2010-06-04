@@ -8,6 +8,7 @@
 
 #include "php.h"
 #include "mrc.h"
+#include "gd_unbundled.h"
 #include "gd.h"
 #include "gd_mrc.h"
 #include "filter.h"
