@@ -185,6 +185,17 @@ if __name__ == "__main__":
 	 	
 		leginondb.executeCustomSQL(updateq)
 
+
+
+		#===================	
+		#
+		# add GroupData privilege column
+		#
+		#===================	
+		if leginondb.tableExists('GroupData'):
+			if not leginondb.columnExists('GroupData','REF|projectdata|privileges|privilege'):
+				leginondb.addColumn('GroupData', 'REF|projectdata|privileges|privilege', leginondb.int)
+
 		#===================	
 		#
 		# set administrators group privileges to highest privilege for groups
