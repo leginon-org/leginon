@@ -412,19 +412,6 @@ def fourByteToFloat(fourbyte):
 	return floatnum[0]
 
 #===============	
-def writeImagicData(array):
-	shape = (headerdict['nimg'], headerdict['rows'], headerdict['lines'])
-	images = numpy.fromfile(file=datafilename, dtype=numpy.float32)
-	try:
-		images = images.reshape(headerdict['nimg'], headerdict['rows'], headerdict['lines'])
-		images = numpy.fliplr(images)
-	except:
-		mult = headerdict['nimg']*headerdict['rows']*headerdict['lines']
-		print mult, images.shape, headerdict['nimg'], headerdict['rows'], headerdict['lines']
-		apDisplay.printError("could not read image stack")
-	return images
-
-#===============	
 def writeVarianceImage(imagicfile, varmrcfile):
 	imgdict = readImagic(imagicfile)
 	if imgdict is None:
