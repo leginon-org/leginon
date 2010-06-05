@@ -62,7 +62,8 @@ class subStackScript(appionScript.AppionScript):
 		elif self.params['first'] is None and self.params['last'] is not None:
 			if self.params['random'] is not None:
 				apDisplay.printError("Random function can't combine with range of the stack")
-			self.params['first'] = 0
+			# This is spider-style (1-....)
+			self.params['first'] = 1
 
 		if self.params['last'] is None:
 			self.params['last'] = numpart
