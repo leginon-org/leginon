@@ -40,11 +40,11 @@ class correctStackBeamTiltPhaseShift(apImagicFile.processStack):
 		correction = fftfun.getBeamTiltPhaseShiftCorrection(fft.shape,beamtilt,self.Cs,self.wavelength,self.stackpix)
 		cfft = fft * correction
 		b = fftpack.ifft2(cfft)
-		pi = imagefun.power(partarray)
-		po = imagefun.power(b)
+		# need to flip upside down in order to get the same input EMAN stack orientation.
+		b = numpy.flipud(b)
 		self.writeToStack(b)
-		mrc.write(pi,os.path.join(path,'in.mrc'))
-		mrc.write(po,os.path.join(path,'out.mrc'))
+		#mrc.write(partarray,os.path.join(path,'in.mrc'))
+		#mrc.write(partarray,os.path.join(path,'out.mrc'))
 
 	def getInstrumentParams(self):
 		self.stackpix = apStack.getStackPixelSizeFromStackId(self.stackid, True) * 1e-10
