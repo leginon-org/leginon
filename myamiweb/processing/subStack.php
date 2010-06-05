@@ -272,7 +272,6 @@ function runSubStack() {
 
 	$expId = $_GET['expId'];
 	$mean = $_GET['mean'];
-
 	$runname=$_POST['runname'];
 	$stackId=$_POST['stackId'];
 	$exclude=$_POST['exclude'];
@@ -334,9 +333,12 @@ function runSubStack() {
 	$command.="--projectid=".getProjectId()." ";
 	$command.="--old-stack-id=$stackId ";
 	$command.="--runname=$runname ";
+	$command.="--rundir=$procdir ";
 	$command.="--description=\"$description\" ";
 	if (!$exclude and !$mean) {
-		if ($firstp!='' && $lastp) $command.="--first=".($firstp-1)." --last=".($lastp-1)." ";
+		# subStack.py will subtract one from the particle number listed here to generate
+		# EMAN-styled particle number.  So don't substract one here
+		if ($firstp!='' && $lastp) $command.="--first=".($firstp)." --last=".($lastp)." ";
 		elseif ($split) $command.="--split=$split ";
 		elseif ($numOfParticles) $command.="--random=$numOfParticles ";
 	} elseif ($exclude) {
