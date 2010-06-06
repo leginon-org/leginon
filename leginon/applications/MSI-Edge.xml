@@ -102,7 +102,7 @@
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)</key>
   </sqltable>
-  <sqltable name="bindingspecdata" >
+  <sqltable name="BindingSpecData" >
     <field 
       name="DEF_id" 
       type="int(16)" 
@@ -134,36 +134,7 @@
     <key>KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
   </sqltable>
-  <sqltable name="launchedapplicationdata" >
-    <field 
-      name="DEF_id" 
-      type="int(16)" 
-      null="NOT NULL" 
-      extra="auto_increment" 
-    />
-    <field 
-      name="DEF_timestamp" 
-      type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
-    />
-    <field 
-      name="REF|ApplicationData|application" 
-      type="int(20)" 
-    />
-    <field 
-      name="SEQ|launchers" 
-      type="text" 
-    />
-    <field 
-      name="REF|SessionData|session" 
-      type="int(20)" 
-    />
-    <key>PRIMARY KEY (`DEF_id`)</key>
-    <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
-    <key>KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)</key>
-    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
-  </sqltable>
-  <sqltable name="nodespecdata" >
+  <sqltable name="NodeSpecData" >
     <field 
       name="DEF_id" 
       type="int(16)" 
@@ -1016,9 +987,8 @@
         <field name="SEQ|dependencies" >[]</field>
         <field name="REF|ApplicationData|application" >662</field>
     </sqltable>
-  <!-- bindingspecdata -->
-  <!-- launchedapplicationdata -->
-  <!-- nodespecdata -->
+  <!-- BindingSpecData -->
+  <!-- NodeSpecData -->
 
  </data>
 </applicationdump>
