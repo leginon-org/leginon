@@ -105,6 +105,58 @@
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
     <key>KEY `REF|CameraSettingsData|camera settings` (`REF|CameraSettingsData|camera settings`)</key>
 	</sqltable>
+	<sqltable name="BeamTiltImagerSettingsData">
+		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
+		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
+		<field name="correct image" type="tinyint(1)" />
+		<field name="SEQ|preset order" type="text" />
+		<field name="wait for rejects" type="tinyint(1)" />
+		<field name="move type" type="text" />
+		<field name="save image" type="tinyint(1)" />
+		<field name="pause time" type="double" />
+		<field name="display image" type="tinyint(1)" />
+		<field name="duplicate targets" type="tinyint(1)" />
+		<field name="wait for process" type="tinyint(1)" />
+		<field name="duplicate target type" type="text" />
+		<field name="REF|SessionData|session" type="int(20)" />
+		<field name="name" type="text" />
+		<field name="wait time" type="double" />
+		<field name="iterations" type="int(20)" />
+		<field name="adjust for drift" type="tinyint(1)" />
+		<field name="isdefault" type="tinyint(1)" />
+		<field name="mover" type="text" />
+		<field name="move precision" type="double" />
+		<field name="process target type" type="text" />
+		<field name="save integer" type="int(20)" />
+		<field name="drift between" type="int(20)" />
+		<field name="final image shift" type="int(20)" />
+		<field name="accept precision" type="double" />
+		<field name="wait for reference" type="int(20)" />
+		<field name="wait for transform" type="tinyint(1)" />
+		<field name="adjust for transform" type="text" />
+		<field name="background" type="tinyint(1)" />
+		<field name="use parent tilt" type="tinyint(1)" />
+		<field name="adjust time by tilt" type="tinyint(1)" Default="0" />
+		<field name="reset tilt" type="tinyint(1)" Default="0" />
+		<field name="bad stats response" type="text" />
+		<field name="high mean" type="double" />
+		<field name="low mean" type="double" />
+		<field name="emission off" type="tinyint(1)" Default="0" />
+		<field name="target offset row" type="int(20)" />
+		<field name="target offset col" type="int(20)" />
+		<field name="correct image shift coma" type="tinyint(1)" Default="0" />
+		<field name="beam tilt" type="double" />
+		<field name="beam tilt count" type="int(20)" />
+		<field name="sites" type="int(20)" />
+		<field name="startangle" type="double" />
+		<field name="tableau type" type="text" />
+		<field name="tableau binning" type="int(20)" />
+		<field name="tableau split" type="int(20)" />
+		<field name="correlation type" type="text" />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
+	</sqltable>
 	<sqltable name="BindingSpecData">
 		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
 		<field name="DEF_timestamp" type="timestamp" null="NOT NULL" Default="CURRENT_TIMESTAMP" />
