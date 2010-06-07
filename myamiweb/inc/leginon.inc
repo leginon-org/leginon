@@ -1631,7 +1631,7 @@ class leginondata {
 
 			$ref_tables=array();
 			foreach($tables as $table) {
-		if ($table=="LaunchedApplicationData")
+		if ($table=="LaunchedApplicationData" || $table=="launchedapplicationdata")
 			continue;
 				$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
 				while($row = mysql_fetch_array($result))
