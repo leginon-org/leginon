@@ -23,10 +23,12 @@ hsvalue = 0.5
 #=========================================
 #=========================================
 def getSnapPath():
-	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimSnapshot.py")
+	chimsnappath = os.path.join(apParam.getAppionDirectory(), "appionlib", "apChimSnapshot.py")
 	if not os.path.isfile(chimsnappath):
 		libdir = os.path.dirname(__file__)
 		chimsnappath = os.path.join(libdir, "apChimSnapshot.py")
+	if not os.path.isfile(chimsnappath):
+		chimsnappath = apParam.getExecPath("apChimSnapshot.py")
 	if not os.path.isfile(chimsnappath):
 		apDisplay.printError("Could not find file: apChimSnapshot.py")
 	return chimsnappath
