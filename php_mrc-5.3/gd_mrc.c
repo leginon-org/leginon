@@ -74,7 +74,7 @@ void mrc_convert_to_float(MRC *mrc_src, MRC *mrc_dst) {
 	mrc_dst->header.ny = h_src;
 	mrc_dst->header.mode = MRC_MODE_FLOAT;
 
-	mrc_dst->pbyData = malloc(sizeof(float)*n_src);
+	mrc_dst->pbyData = emalloc(sizeof(float)*n_src);
 	data_array_dst = (float *)mrc_dst->pbyData;
 	
 	mrc_to_float(mrc_src, data_array_dst);
@@ -94,7 +94,7 @@ MRCPtr mrc_create(int x_size, int y_size) {
 	char *pmap;
 	MRCPtr pmrc;
 
-	pmrc = (MRC *) malloc (sizeof (MRC));
+	pmrc = (MRC *) emalloc (sizeof (MRC));
 	memset (pmrc, 0, sizeof (MRC));
 	pmrc->header.nx = x_size;
 	pmrc->header.ny = y_size;
@@ -102,7 +102,7 @@ MRCPtr mrc_create(int x_size, int y_size) {
 	pmrc->header.mode = MRC_MODE_FLOAT;
 	pmap = pmrc->header.map;
 	memcpy(pmap, map, 4);
-	pmrc->pbyData = malloc(sizeof(float)*n);
+	pmrc->pbyData = emalloc(sizeof(float)*n);
 	memset (pmrc->pbyData, 0, sizeof(float)*n);
 
 	return pmrc;
@@ -179,8 +179,8 @@ void mrc_filter(MRC *mrc, int binning, int kernel, float sigma) {
 		n_h = h/binning;
 
 		data_array_src = (float *)mrc->pbyData;
-		maskData = malloc(sizeof(double)*masksize);
-		maskindexes = malloc(sizeof(int)*masksize);
+		maskData = emalloc(sizeof(double)*masksize);
+		maskindexes = emalloc(sizeof(int)*masksize);
 
 		gaussianfiltermask(maskData, kernel, sigma);
 
@@ -199,8 +199,8 @@ void mrc_filter(MRC *mrc, int binning, int kernel, float sigma) {
 
 		mrc->header.nx=n_w;
 		mrc->header.ny=n_h;
-		free(maskData);
-		free(maskindexes);
+		efree(maskData);
+		efree(maskindexes);
 	}
 
 }
@@ -226,7 +226,7 @@ void mrc_binning(MRC *mrc, int binning, int skip_avg) {
 	if (binning>1) {
 		
  		binningsize = binning*binning;
-		indexes = malloc(sizeof(int)*binningsize);
+		indexes = emalloc(sizeof(int)*binningsize);
 		data_array_src = (float *)mrc->pbyData;
 		w = mrc->header.nx;
 		h = mrc->header.ny;
@@ -250,7 +250,7 @@ void mrc_binning(MRC *mrc, int binning, int skip_avg) {
 		}
 		mrc->header.nx=n_w;
 		mrc->header.ny=n_h;
-		free(indexes);
+		efree(indexes);
 	}
 }
 
@@ -582,8 +582,8 @@ void mrc_normalize(MRCPtr pmrc_raw, MRCPtr pmrc_norm, MRCPtr pmrc_dark)
  * void mrc_destroy(MRCPtr pmrc)
  */
 void mrc_destroy(MRCPtr pmrc) {
-	free(pmrc->pbyData);
-	free(pmrc);
+	efree(pmrc->pbyData);
+	efree(pmrc);
 }
 
 
@@ -759,8 +759,8 @@ int gdloadMRC(gdIOCtx *io_ctx, int in_length, MRC *pMRC) {
 		return -1;
 	
 
-	if((pMRC->pbyData = malloc(uElements*uElementSize)) == NULL)
-		pMRC->pbyData = malloc(uElements*uElementSize);
+	if((pMRC->pbyData = emalloc(uElements*uElementSize)) == NULL)
+		pMRC->pbyData = emalloc(uElements*uElementSize);
 
 	if(!gdGetBuf(pMRC->pbyData, (uElements*uElementSize), io_ctx))
 	return -1;
