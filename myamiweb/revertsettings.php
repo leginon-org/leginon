@@ -43,6 +43,7 @@ if ($_POST['userId'] && !$_POST['orig']) {
 if ($_POST['orig']) {
 	$title = "";
 	if ($_POST['adminId']) {
+		$leginondata->importTables('xml/leginonDBSchema.xml');
 		require_once("inc/setdefault.php");
 	} else {
 		$error_html = "Error: No administrator found";
