@@ -2014,7 +2014,7 @@ $gid4=$dbc->SQLInsert($table, $data);
 
 $table = "BeamTiltImagerSettingsData";
 $data=array();
-$data["name"] = "Beam TIlt Image";
+$data["name"] = "Beam Tilt Image";
 $data["isdefault"] = "1";
 $data["process target type"] = "acquisition";
 $data["pause time"] = "2.5";
