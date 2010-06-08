@@ -153,6 +153,7 @@ $nodenames = array(
 	'CorrectorSettingsData'=>array('Correction'),
 	'BeamFixerSettingsData'=>array('Fix Beam'),
 	'GonModelerSettingsData'=>array('GonioModeling'),
+	'BeamTiltImagerSettingsData'=>array('Beam Tilt Image'),
 );
 $show_tables = false;
 $filename = 'test.php';
