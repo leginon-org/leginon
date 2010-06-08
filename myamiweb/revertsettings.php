@@ -109,7 +109,7 @@ if ($_POST) {
 		if (privilege('users') > 3) {
 ?>
 			<h3>            OR
-			<h3>Revert the administrator's Node Settings to that come with the installation</h3>
+			<h3>Revert the administrator's Node Settings to the original installation values.</h3>
 			<input type="hidden" name="adminId" value= "<? echo $admin_user['userId'] ?>" >
 			<input type="submit" name="orig" value="Revert to Original" >
 		
