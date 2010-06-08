@@ -28,13 +28,25 @@ function revertToDefaults($user_id) {
 	global $leginondata;
 	$array = defaultsettings_fileheader($user_id,$admin_init=false);
 	addToGlobalString($array);
-	makeSettingsCode($user_id);
+	$error_html = makeSettingsCode($user_id);
+	#echo $code_string;
 	eval($code_string);
+	return $error_html;
 }
 
 admin_header('onload="init()"');
-if ($_POST['userId']) {
-	revertToDefaults($_POST['userId']);
+$title = "Revert to administrator's Node Settings";
+if ($_POST['userId'] && !$_POST['orig']) {
+	$title = "";
+	$error_html = revertToDefaults($_POST['userId']);
+}
+if ($_POST['orig']) {
+	$title = "";
+	if ($_POST['adminId']) {
+		require_once("inc/setdefault.php");
+	} else {
+		$error_html = "Error: No administrator found";
+	}
 }
 ?>
 <script>
@@ -43,24 +55,27 @@ if ($_POST['userId']) {
 function init() {
 }
 </script>
-<h3>Revert to administrator's Node Settings</h3>
+<h3><? echo $title ?></h3>
 <div align="center">
 <?php
 $code_string = '';
 if ($_POST) {
-	echo "<h4> default settings restored </h4>";
+	if (!$error_html) {
+		echo "<h4> default settings restored </h4>";
+	} else {
+		echo "<h4> ".$error_html." </h4>";
+	}
 } else {
 ?>
 <form method="POST" action="<?php $_SERVER['PHP_SELF']?>" >
 <?
 	$q = "select u.`DEF_id` as userId, u.* "
+			.",u.username "
 			.",concat(u.firstname,' ',u.lastname) as `full name` "
 			."from UserData u "
 			."where "
 			."u.password<>'' ";
-	if (privilege('users') >3) {
-		$q .= "and u.username not like 'administrator' ";
-	} elseif (privilege('users') <= 3) {
+	if (privilege('users') <= 3) {
 		$q .=	"and u.`DEF_id` = ".getLoginUserId()." ";
 	}
 	$q .=	"order by u.`lastname`";
@@ -72,6 +87,10 @@ if ($_POST) {
 		<?
 			echo "<option value='default' > -- select user -- </option>";
 			foreach($users as $user) {
+				if ($user['username'] == 'administrator') {
+					$admin_user = $user;
+					continue;
+				}
 				$s = ($user['userId']==$_POST['userId']) ? "selected" : "";
 				$firstname = $user['firstname'];
 				$lastname = $user['lastname'];
@@ -86,7 +105,17 @@ if ($_POST) {
 <br/>
 <br/>
 	<input type="submit" name="def" value="Revert" >
-<? } else {
+<?
+		if (privilege('users') > 3) {
+?>
+			<h3>            OR
+			<h3>Revert the administrator's Node Settings to that come with the installation</h3>
+			<input type="hidden" name="adminId" value= "<? echo $admin_user['userId'] ?>" >
+			<input type="submit" name="orig" value="Revert to Original" >
+		
+<?
+		}
+	} else {
 		echo "No valid user for this operation";
 	} ?>
 </form>
