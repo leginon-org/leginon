@@ -232,10 +232,12 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 		echo "<b>Select Random Subset (less than $nump)</b><br />\n";
 		echo docpop('numOfParticlePop', '<b>Number of Particles:</b> ');
      	echo "<input type='text' name='numOfParticles' size='5' value='$numOfParticles' $randomdisable><br />\n";
-		echo "</td></tr>";
-		echo "<tr><td COLSPAN=2>";
-		echo "<input type='checkbox' name='correctbt' $correctbtcheck>\n";
-		echo "<b>Correct Beam Tilt Phase Shift According to Leginon Calibrations</b><br />\n";
+		if (!HIDE_FEATURE) {
+			echo "</td></tr>";
+			echo "<tr><td COLSPAN=2>";
+			echo "<input type='checkbox' name='correctbt' $correctbtcheck>\n";
+			echo "<b>Correct Beam Tilt Phase Shift According to Leginon Calibrations</b><br />\n";
+		}
 		echo "</td></tr></table>\n";
 		
 		echo closeRoundBorder();
@@ -272,6 +274,7 @@ function runSubStack() {
 
 	$expId = $_GET['expId'];
 	$mean = $_GET['mean'];
+
 	$runname=$_POST['runname'];
 	$stackId=$_POST['stackId'];
 	$exclude=$_POST['exclude'];
