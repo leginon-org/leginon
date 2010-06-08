@@ -5,10 +5,10 @@ if ($user_id < 1) {
 	exit();
 }
 $dbc=$leginondata->mysql;
-$q = "insert into `SessionData` (`name`,`REF|UserData|user` ) "
+$q = "insert into `SessionData` (`name`,`REF|UserData|user`,`comment` ) "
       . " VALUES "
       . " ( concat('importsettings', DATE_FORMAT(now(), '%Y%m%d%H%i%s')), "
-			. " ".$user_id." ) ";
+			. " ".$user_id." ,'import default') ";
 $sessionId = $dbc->SQLQuery($q, true);
 
 $table = "AcquisitionSettingsData";
