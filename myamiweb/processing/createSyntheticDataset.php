@@ -403,7 +403,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	echo docpop('correctiontype','Correction Type: ');
 	echo "<select name='correction' onchange='checkcorrection()' $correctiondisable>";
 	echo "<option value='applied'>Applied CTF</option>";
-	echo "<option value='ace2estimate'>Use ACE2 Estimate</option>"; 
+#	echo "<option value='ace2estimate'>Use ACE2 Estimate</option>"; 
 	echo "<option value='perturb'>Perturb Applied CTF</option>";
 	echo "</select><br>";
  
@@ -551,10 +551,10 @@ function createSyntheticDataset() {
 	if ($correction=="applied") {
 		$command.="--ace2correct ";
 	}
-	elseif ($correction=="ace2estimate") {
-		$command.="--ace2correct ";
-		$command.="--ace2estimate ";
-	}
+#	elseif ($correction=="ace2estimate") {
+#		$command.="--ace2correct ";
+#		$command.="--ace2estimate ";
+#	}
 	elseif ($correction=="perturb") {
 		$command.="--ace2correct-rand ";
 		if ($randcor_std) $command.="--ace2correct-std=$randcor_std ";
