@@ -98,7 +98,7 @@ ZEND_FUNCTION(imagicinfo);
 ZEND_FUNCTION(imagicread);
 
 static void _mrc_header_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRCHeader *pmrch);
-static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc);
+static void _mrc_image_create_from(char *filename, MRC *pmrc);
 static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc);
 static void _mrc_header_data(INTERNAL_FUNCTION_PARAMETERS,  MRC *pmrc);
 static void _imagic_(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRCHeader *pmrch);

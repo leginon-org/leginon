@@ -131,13 +131,18 @@ static void php_free_imagic(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 	freeImagic5((Imagic5Ptr)rsrc->ptr);
 }
 
+static void php_free_gd(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+{
+	gdImageDestroy((gdImagePtr)rsrc->ptr);
+}
 
 
 /* PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(mrc)
 {
-	le_gd = zend_fetch_list_dtor_id("gd"); 
+	le_gd = zend_fetch_list_dtor_id("gd");
+	//le_gd = zend_register_list_destructors_ex(php_free_gd, NULL, "gd", module_number);
 	le_mrc = zend_register_list_destructors_ex(php_free_mrc, NULL, "mrc", module_number);
 	/* If you have INI entries, uncomment these lines 
 	ZEND_INIT_MODULE_GLOBALS(mrc, php_mrc_init_globals, NULL);
@@ -316,12 +321,12 @@ ZEND_FUNCTION(imagehistogram)
                 array_init(return_value);
                 M = im_src->sx;
                 N = im_src->sy;
-                data_array = malloc(sizeof(unsigned char)*M*N);
+                data_array = emalloc(sizeof(unsigned char)*M*N);
                 for (i = 0; i < M; i++) {
                         for (j = 0; j < N; j++) {
                                 ij = i*N + j;
                                 pixel = gdImageGetPixel(im_src,i,j);
-                                // Y = 0.3RED + 0.59GREEN +0.11Blue
+                                /* Y = 0.3RED + 0.59GREEN +0.11Blue */
                                 data = (unsigned char)(.3*(pixel & 0xff) + .59*((pixel >> 8) & 0xff) + .11*((pixel >> 16) & 0xff));
                                 data_array[ij] = data;
                                 fmax = MAX(fmax, data_array[ij]);
@@ -340,7 +345,7 @@ ZEND_FUNCTION(imagehistogram)
                         }
                         add_index_long(return_value, (fmin + i*interval), nb);
                 }
-                free(data_array);
+                efree(data_array);
         } else {
                 RETURN_FALSE;
         }
@@ -388,7 +393,7 @@ ZEND_FUNCTION(imagegradient)
 								 get_active_function_name(TSRMLS_C), nb_val);
 	}
 
-	gradient_array = malloc(sizeof(int)*nb_val);
+	gradient_array = emalloc(sizeof(int)*nb_val);
 
 	for(i=0,zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); zend_hash_get_current_data_ex(arr_hash, (void**) &entry, &pointer) == SUCCESS, i<nb_val; zend_hash_move_forward_ex(arr_hash, &pointer), i++) {
 
@@ -406,15 +411,15 @@ ZEND_FUNCTION(imagegradient)
 		for (i = 0; i < M; i++) {
 			for (j = 0; j < N; j++) {
 				pixel = gdImageGetPixel(im,i,j);
-				// --- Y = 0.3RED + 0.59GREEN +0.11Blue --- //
+				/* --- Y = 0.3RED + 0.59GREEN +0.11Blue --- */
 				val = (unsigned char)(.3*(pixel & 0xff) + .59*((pixel >> 8) & 0xff) + .11*((pixel >> 16) & 0xff));
-				// val = (unsigned char)(pixel & 0xff);
+				/* val = (unsigned char)(pixel & 0xff); */
 				gdImageSetPixel(im,i,j, gradient_array[val]);
 			}
 		}
 	}
 	
-	free(gradient_array);
+	efree(gradient_array);
 	RETURN_TRUE;
 }
 
@@ -475,7 +480,7 @@ ZEND_FUNCTION(mrcinfo)
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
-	pmrc = (MRC *) malloc (sizeof (MRC));
+	pmrc = (MRC *) emalloc (sizeof (MRC));
 	_mrc_header_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, &(pmrc->header));
 	_mrc_header_data(INTERNAL_FUNCTION_PARAM_PASSTHRU, pmrc);
 
@@ -508,14 +513,12 @@ ZEND_FUNCTION(mrcgetinfo)
  */
 ZEND_FUNCTION(mrcsx)
 {
-	zval **MRCD;
+	zval *MRCD;
 	MRCPtr pmrc;
 	int val;
 
-	if (ZEND_NUM_ARGS() != 1 || zend_parse_parameters(1, "z", &MRCD) == FAILURE) {
-		ZEND_WRONG_PARAM_COUNT();
-	}
-	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+	zend_parse_parameters(1, "r", &MRCD);
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, &MRCD, -1, "MRCdata", le_mrc);
 	val = pmrc->header.nx;
 	RETURN_LONG(val);
 
@@ -530,14 +533,12 @@ ZEND_FUNCTION(mrcsx)
  */
 ZEND_FUNCTION(mrcsy)
 {
-	zval **MRCD;
+	zval *MRCD;
 	MRCPtr pmrc;
 	int val;
 
-	if (ZEND_NUM_ARGS() != 1 || zend_parse_parameters(1, "z", &MRCD) == FAILURE) {
-		ZEND_WRONG_PARAM_COUNT();
-	}
-	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+	zend_parse_parameters(1, "r", &MRCD);
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, &MRCD, -1, "MRCdata", le_mrc);
 	val = pmrc->header.ny;
 	RETURN_LONG(val);
 
@@ -553,19 +554,20 @@ ZEND_FUNCTION(mrcsy)
 ZEND_FUNCTION(mrcread)
 {
 
-	zval **data;
 	MRC *pmrc;
 	int argc = ZEND_NUM_ARGS();
+	char *filename;
+	int lenfilename;
 
 	if (argc != 1)
 	{
 		WRONG_PARAM_COUNT;
 	} 
 
-	zend_parse_parameters(argc TSRMLS_CC, "z", &data);
+	zend_parse_parameters(argc TSRMLS_CC, "s", &filename, &lenfilename);
 
-	pmrc = (MRC *) malloc (sizeof (MRC));
-	_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
+	pmrc = (MRC *) emalloc (sizeof (MRC));
+	_mrc_image_create_from(filename, pmrc);
 
 	ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
 
@@ -592,7 +594,7 @@ ZEND_FUNCTION(mrcreadfromstring)
 
 	zend_parse_parameters(argc TSRMLS_CC, "z", &data);
 
-	pmrc = (MRC *) malloc (sizeof (MRC));
+	pmrc = (MRC *) emalloc (sizeof (MRC));
 	_mrc_image_create_from_string(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
 
 	ZEND_REGISTER_RESOURCE(return_value, pmrc, le_mrc);
@@ -704,31 +706,22 @@ ZEND_FUNCTION(mrctoimage)
 	MRCPtr	pmrc;
 	gdImagePtr im;
 	float	*data_array;
-	int	minPix = DENSITY_MIN,
+	long	minPix = DENSITY_MIN,
 		maxPix = -1,
 		argc = ZEND_NUM_ARGS();
 
-
 	int nWidth = 0;
 	int nHeight = 0;
+	zval	*mrc_res;
 
 	if (argc < 1 || argc > 3) 
 	{
 		WRONG_PARAM_COUNT;
 	} 
 
-	zend_parse_parameters(argc TSRMLS_CC, "zzz", &MRCD, &PMIN, &PMAX);
+	zend_parse_parameters(argc TSRMLS_CC, "r|ll", &mrc_res, &minPix, &maxPix);
 
-	if (argc>1) {
-		convert_to_long_ex(PMIN);
-		minPix = Z_LVAL_PP(PMIN);
-	}
-	if (argc>2) {
-		convert_to_long_ex(PMAX);
-		maxPix = Z_LVAL_PP(PMAX);
-	}
-
-	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, &mrc_res, -1, "MRCdata", le_mrc);
 	if (minPix<0)
 		minPix = DENSITY_MIN;
 
@@ -743,7 +736,6 @@ ZEND_FUNCTION(mrctoimage)
 	ZEND_REGISTER_RESOURCE(return_value, im, le_gd);
 
 }
-
 
 /** 
  * Copy part of an mrc
@@ -994,26 +986,31 @@ ZEND_FUNCTION(mrcstdevscale)
 		zval	**MRCD, **N_STDEV;
 		MRCPtr	pmrc;
 		MRCHeader	mrch;
+		zval	*mrc_res;
 
 		int argc = ZEND_NUM_ARGS();
 
-		int n_stdev=3;
+		long n_stdev=3;
 		
 		float pmin, pmax, pmean, rms, scale;
 		float smin, smax;
 
+		/*
 		if (argc < 2 || argc > 2) {
 			ZEND_WRONG_PARAM_COUNT();
 		}
+		*/
 
-		zend_parse_parameters(argc TSRMLS_CC, "zz", &MRCD, &N_STDEV);
+		zend_parse_parameters(argc TSRMLS_CC, "rl", &mrc_res, &n_stdev);
 
+		/*
 		if (argc>1) {
 			convert_to_long_ex(N_STDEV);
 			n_stdev=Z_LVAL_PP(N_STDEV);
 		}
+		*/
 
-		ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+		ZEND_FETCH_RESOURCE(pmrc, MRCPtr, &mrc_res, -1, "MRCdata", le_mrc);
 
 		mrch = pmrc->header;
 		pmean = mrch.amean;
@@ -1231,7 +1228,8 @@ ZEND_FUNCTION(mrcset)
  */
 ZEND_FUNCTION(mrchistogram)
 {
-	zval **data, **NBBARS;
+	char *filename;
+	zval **NBBARS;
 	MRCPtr pmrc;
 	int	argc = ZEND_NUM_ARGS();
 	int	nb_bars=50;
@@ -1243,8 +1241,7 @@ ZEND_FUNCTION(mrchistogram)
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
-	zend_parse_parameters(argc TSRMLS_CC, "zz", &data, &NBBARS);
-	convert_to_string_ex(data);
+	zend_parse_parameters(argc TSRMLS_CC, "sz", &filename, &NBBARS);
 
 	if (argc == 2)
 	{
@@ -1252,11 +1249,11 @@ ZEND_FUNCTION(mrchistogram)
 		nb_bars = Z_LVAL_PP(NBBARS);
 	}
 
-	frequency = malloc(sizeof(int)*nb_bars);
-	classes = malloc(sizeof(float)*nb_bars);
+	frequency = emalloc(sizeof(int)*nb_bars);
+	classes = emalloc(sizeof(float)*nb_bars);
 
-	pmrc = (MRC *) malloc (sizeof (MRC));
-	_mrc_image_create_from(INTERNAL_FUNCTION_PARAM_PASSTHRU, data, pmrc);
+	pmrc = (MRC *) emalloc (sizeof (MRC));
+	_mrc_image_create_from(filename, pmrc);
 
 	mrc_to_histogram(pmrc, frequency, classes, nb_bars);
 
@@ -1265,8 +1262,8 @@ ZEND_FUNCTION(mrchistogram)
 		add_index_long(return_value, classes[j], frequency[j]);
 	}
 
-	free(frequency);
-	free(classes);
+	efree(frequency);
+	efree(classes);
 	mrc_destroy(pmrc);
 }
 
@@ -1325,7 +1322,7 @@ ZEND_FUNCTION(mrccdfscale)
 		zend_error(E_ERROR, "%s(): Wrong (min, max) pixel", get_active_function_name(TSRMLS_C));
 	}
 
-	frequency = calloc(interval, sizeof(int));
+	frequency = ecalloc(interval, sizeof(int));
 	mrc_to_frequence(pmrc, frequency);
 
 	for (j = 0; j < interval; j++) {
@@ -1347,7 +1344,7 @@ ZEND_FUNCTION(mrccdfscale)
 	add_next_index_double(return_value, maxval);
 
 
-	free(frequency);
+	efree(frequency);
 }
 
 
@@ -1361,16 +1358,16 @@ ZEND_FUNCTION(mrccdfscale)
  */
 ZEND_FUNCTION(mrcdestroy)
 {
-	zval **MRCD;
+	zval *mrc_res;
 	MRCPtr pmrc;
 
-	if (ZEND_NUM_ARGS() != 1 || zend_parse_parameters(1, "z", &MRCD) == FAILURE) {
+	if (ZEND_NUM_ARGS() != 1 || zend_parse_parameters(1, "r", &mrc_res) == FAILURE) {
 		ZEND_WRONG_PARAM_COUNT();
 	}
 
-	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, MRCD, -1, "MRCdata", le_mrc);
+	ZEND_FETCH_RESOURCE(pmrc, MRCPtr, &mrc_res, -1, "MRCdata", le_mrc);
 
-	zend_list_delete(Z_LVAL_PP(MRCD));
+	zend_list_delete(Z_LVAL_PP(&mrc_res));
 
 	RETURN_TRUE;
 }
@@ -1680,17 +1677,14 @@ static void _mrc_header_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, M
 /**
  * static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc)
  */
-static void _mrc_image_create_from(INTERNAL_FUNCTION_PARAMETERS, zval **data, MRC *pmrc) {
+static void _mrc_image_create_from(char *filename, MRC *pmrc) {
 
 	MRC *pmrc_src;
-	char *ptfile;
 
-	convert_to_string_ex(data);
-	pmrc_src = (MRC *) malloc (sizeof (MRC));
-	ptfile = (char *)((*data)->value.str.val);
-	if(loadMRC(ptfile, pmrc_src )==-1) {
+	pmrc_src = (MRC *) emalloc (sizeof (MRC));
+	if(loadMRC(filename, pmrc_src )==-1) {
 				zend_error(E_ERROR, "%s(): %s : No such file or directory ", 
-				get_active_function_name(TSRMLS_C),ptfile);
+				get_active_function_name(TSRMLS_C),filename);
 	}
 	
 	/**
@@ -1716,7 +1710,7 @@ static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **d
 		RETURN_FALSE;
 	}
 
-	pmrc_src = (MRC *) malloc (sizeof (MRC));
+	pmrc_src = (MRC *) emalloc (sizeof (MRC));
 	in_length = (int)((*data)->value.str.len);
 	if (gdloadMRC(io_ctx, in_length, pmrc_src)==-1) {
 				zend_error(E_ERROR, "%s():  Input is not a MRC string ", 
@@ -1728,7 +1722,7 @@ static void _mrc_image_create_from_string(INTERNAL_FUNCTION_PARAMETERS, zval **d
 	**/
 	mrc_convert_to_float(pmrc_src, pmrc);
 	mrc_destroy(pmrc_src);
-	free(io_ctx);
+	efree(io_ctx);
 	
 }
 
