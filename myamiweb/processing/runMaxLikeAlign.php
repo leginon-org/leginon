@@ -131,6 +131,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$maxiter = ($_POST['maxiter']) ? $_POST['maxiter'] : '15';
 	$mirror = ($_POST['mirror']=='on' || !$_POST['mirror']) ? 'checked' : '';
 	$savemem = ($_POST['savemem']=='on' || !$_POST['savemem']) ? 'checked' : '';
+	$distributionval = ($_POST['distribution']) ? $_POST['distribution'] : 'gauss';
 	$fast = ($_POST['fast']=='on' || !$_POST['fast']) ? 'checked' : '';
 
 	echo "<table border='0' class='tableborder'>\n<tr><td valign='top'>\n";
@@ -270,6 +271,15 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "</select>\n";
 	echo "<br/>\n";
 
+	echo docpop('noisedistribution','Noise distribution type:');
+	echo "<br/>\n";
+	echo "<input type='radio' name='distribution' value='gauss' ";
+	echo ($distributionval == 'gauss') ? 'checked' : '';
+	echo ">Gaussian\n";	
+	echo "<input type='radio' name='distribution' value='student' ";
+	echo ($distributionval == 'student') ? 'checked' : '';
+	echo ">Student's T\n";	
+
 	echo "<br/>\n";
 
 	echo "  </td>\n";
@@ -323,6 +333,7 @@ function runMaxLikeAlign() {
 	$savemem = ($_POST['savemem']=="on") ? true : false;
 	$commit = ($_POST['commit']=="on") ? true : false;
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
+	$distribution = $_POST['distribution'];
 
 	// get stack id, apix, & box size from input
 	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
@@ -412,6 +423,8 @@ function runMaxLikeAlign() {
 		$command.="--savemem ";
 	else
 		$command.="--no-savemem ";
+	if ($distribution == "student")
+		$command.="--student ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 	$command.="--converge=$converge ";
