@@ -586,6 +586,7 @@ class ApMaxLikeRunData(Data):
 		return Data.typemap() + (
 			('runname', str),
 			('mirror', bool),
+			('student', bool),
 			('mask_diam', int),
 			('init_method', str),
 			('fast', bool),

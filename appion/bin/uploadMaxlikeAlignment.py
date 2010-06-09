@@ -272,6 +272,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		maxlikeq['fast'] = runparams['fast']
 		maxlikeq['fastmode'] = runparams['fastmode']
 		maxlikeq['mirror'] = runparams['mirror']
+		maxlikeq['student'] = runparams['student']
 		maxlikeq['init_method'] = "xmipp default"
 		maxlikeq['job'] = self.getMaxLikeJob(runparams)
 
