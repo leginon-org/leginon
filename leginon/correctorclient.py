@@ -342,6 +342,9 @@ class CorrectorClient(cameraclient.CameraClient):
 
 		return refdata
 
+	def getCameraSettings(self):
+		return self.settings['camera settings']
+
 	def storeCorrectorPlan(self, plan):
 		camsettings = self.settings['camera settings']
 		ccdname = self.settings['instruments']['ccdcamera']

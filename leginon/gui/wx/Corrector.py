@@ -288,7 +288,51 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
         def onPlayTool(self, evt):
                 self.node.onAddPoints()
-                
+
+	def validatePlan(self, plan):
+		camsettings = self.node.getCameraSettings()
+		dimx = camsettings['dimension']['x']
+		dimy = camsettings['dimension']['y']
+
+		if 'pixels' in plan and plan['pixels']:
+			ok_pixels = []
+			not_ok_pixels = []
+			for x,y in plan['pixels']:
+				if (0 <= x < dimx) and (0 <= y < dimy):
+					ok_pixels.append((x,y))
+				else:
+					not_ok_pixels.append((x,y))
+			n_bad = len(not_ok_pixels)
+			if n_bad:
+				self.node.logger.warning("%d bad pixels out of bounds: %s" % (n_bad, not_ok_pixels))
+			plan['pixels'] = ok_pixels
+
+		if 'rows' in plan and plan['rows']:
+			ok_rows = []
+			not_ok_rows = []
+			for row in plan['rows']:
+				if 0 <= row < dimy:
+					ok_rows.append(row)
+				else:
+					not_ok_rows.append(row)
+			n_bad = len(not_ok_rows)
+			if n_bad:
+				self.node.logger.warning("%d bad rows out of bounds: %s" % (n_bad, not_ok_rows))
+			plan['rows'] = ok_rows
+
+		if 'columns' in plan and plan['columns']:
+			ok_columns = []
+			not_ok_columns = []
+			for col in plan['columns']:
+				if 0 <= col < dimx:
+					ok_columns.append(col)
+				else:
+					not_ok_columns.append(col)
+			n_bad = len(not_ok_columns)
+			if n_bad:
+				self.node.logger.warning("%d bad columns out of bounds: %s" % (n_bad, not_ok_columns))
+			plan['columns'] = ok_columns
+
 	def setPlan(self, plan):
 		if not hasattr(self, 'plan'):
 			self.plan = {}
@@ -299,6 +343,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 			self.stbadpixelscount.SetLabel('0')
 			self.stdespike.SetLabel('Despike: Off')
 		else:
+			self.validatePlan(plan)
 			self.plan.update(plan)
 			self.imagepanel.setTargets('Bad_Pixels', self.plan['pixels'])
 			self.stbadrowscount.SetLabel(str(len(self.plan['rows']))+' Bad rows')
