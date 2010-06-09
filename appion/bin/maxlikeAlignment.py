@@ -83,6 +83,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("--cluster", dest="cluster", default=False,
 			action="store_true", help="Write a cluster job file and quit, needs work")
 
+		self.parser.add_option( "--student", dest="student", default=False,
+			action="store_true", help="Use student's T-distribution instead of Gaussian")
+
 		### choices
 		self.fastmodes = ( "normal", "narrow", "wide" )
 		self.parser.add_option("--fast-mode", dest="fastmode",
@@ -260,6 +263,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### normalization
 		if self.params['norm'] is True:
 			xmippopts += " -norm "
+		### use student's T distribution
+		if self.params['student'] is True:
+			xmippopts += " -student "
 
 		### memory needed
 		numbytes = apFile.stackSize(self.stack['file'])
@@ -411,6 +417,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### normalization
 		if self.params['norm'] is True:
 			xmippopts += " -norm "
+		### use student's T distribution
+		if self.params['student'] is True:
+			xmippopts += " -student "
 
 		### write cluster job file
 		if self.params['cluster'] is True:
