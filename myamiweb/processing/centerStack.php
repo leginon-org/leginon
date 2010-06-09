@@ -63,7 +63,6 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
   
 	echo "<form name='viewerform' method='post' action='$formAction'>\n";
 	
-	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	//query the database for parameters
 	$particle = new particledata();
 	
@@ -102,6 +101,11 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 
 	echo docpop('runname','<b>Run Name:</b> ');
 	echo "<input type='text' name='runname' value='$runname'><br />\n";
+	echo "<br/>\n";
+
+	echo docpop('outdir','<b>Output directory:</b> ');
+	echo "<input type='text' name='outdir' value='$outdir' size='50'>\n";
+	echo "<br/>\n";
 	echo "<br/>\n";
 
 	echo "<b>Description:</b><br />\n";
