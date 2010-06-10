@@ -27,6 +27,7 @@ require_once('setupUtils.inc');
 	$fileExist = setupUtils::checkFile(CONFIG_FILE);
 	
 	if($_POST){
+		
 		session_start();
 
 		$_SESSION['time'] = time();
@@ -35,7 +36,7 @@ require_once('setupUtils.inc');
 				// setup session for new config file setup.
 			$_SESSION['newSetup'] = true;
 
-			header("Location: setupBase.php");			
+			setupUtils::redirect('setupBase.php');		
 			exit;
 		}
 		else{
@@ -48,7 +49,8 @@ require_once('setupUtils.inc');
 
 				$_SESSION['loginCheck'] = true;
 				// redirect to setupBase.
-				header("Location: setupBase.php");
+				
+				setupUtils::redirect('setupBase.php');
 				exit;
 			} else {
 				$errorMessage = "The username and password you provided are incorrect. Enter again...";
