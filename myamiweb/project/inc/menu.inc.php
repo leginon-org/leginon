@@ -1,4 +1,4 @@
-<?
+<?php
 class menu {
 
 	var $blankimg = 'blank.gif';
