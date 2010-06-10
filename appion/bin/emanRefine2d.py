@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import time
 import math
 import glob
@@ -255,7 +256,7 @@ class Refine2dScript(appionScript.AppionScript):
 		if self.params['bin'] is not None and self.params['bin'] > 1:
 			## determine a multiple of the bin that is divisible by 2 and less than the boxsize
 			clipsize = int(math.floor(boxsize/float(self.params['bin']*2)))*2*self.params['bin']
-			emancmd += " shrink=%d clipsize=%d,%d "%(self.params['bin'], clipsize, clipsize)		
+			emancmd += " shrink=%d clip=%d,%d "%(self.params['bin'], clipsize, clipsize)		
 		emancmd += " last=%d "%(self.params['numpart']-1)
 		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
 
