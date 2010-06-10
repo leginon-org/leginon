@@ -36,7 +36,7 @@ require_once("../inc/mysql.inc");
 				}
 				
 				if($settable){
-					header ('Location: updateDataReport.php');
+					setupUtils::redirect('updateDataReport.php');
 					exit();
 				} 
 			}			

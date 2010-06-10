@@ -68,6 +68,18 @@ class setupUtils{
 		$result = @copy($file1, $file2);
 		return $result;
 	}
+	
+	/*
+	 * Create 
+	 * 
+	 */
+	static function redirect($distPage){
+		
+		$host  = $_SERVER['HTTP_HOST'];
+		$uri   = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
+		
+		return header("Location: http://$host$uri/$distPage");
+	}
 
 	/*
 	 * The static function is going to check if the
