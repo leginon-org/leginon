@@ -2,6 +2,8 @@
 
 require "inc/admin.inc";
 
+$login_check = $dbemauth->is_logged();
+
 $f_sel_name=$_POST['f_sel_name'];
 $f_name=$_POST['f_name'];
 $f_description=$_POST['f_description'];
@@ -147,11 +149,22 @@ privilege:<font color="red">*</font>
 </tr>
 <tr>
 <td>
+<?
+if (privilege('groups') > 3) {
+echo ' 
 	<input type="hidden" name="bt_action" value = "" >
 	<input type="button" name="save" value = "Save" onClick="confirm_update();" >
 </td>
 <td>
 	<input type="button" name="save" value = "Remove" onClick="confirm_delete();" >
+';
+} elseif (privilege('groups') > 2) {
+echo '
+	<input type="hidden" name="bt_action" value = "" >
+';
+}
+?>
+</td>
 </td>
 </tr>
 
