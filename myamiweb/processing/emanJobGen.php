@@ -279,6 +279,9 @@ function jobForm($extra=false) {
 	$rprocs = ($_POST['rprocs'] && $clusterdefaults) ? $_POST['rprocs'] : C_RPROCS_DEF;
 	$walltime = ($_POST['walltime'] && $clusterdefaults) ? $_POST['walltime'] : C_WALLTIME_DEF;
 	$cput = ($_POST['cput'] && $clusterdefaults) ? $_POST['cput'] : C_CPUTIME_DEF;
+	$calcmemcheck = ($_POST['memlimit'] == 'calcmem' || !($_POST['memlimit'])) ? "CHECKED" : "";
+	$fixedmemcheck = ($_POST['memlimit'] == 'fixedmem') ? "CHECKED" : "";
+	$memmax = ($_POST['memmax'] && $clusterdefaults) ? $_POST['memmax'] : C_MEMORY_MAX;
 
 	$numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
 	if ($_POST['duplicate']) {
@@ -358,6 +361,14 @@ function jobForm($extra=false) {
 		echo "<input type='text' NAME='cput' VALUE='$cput' SIZE='4'>";
 	echo "</td></tr><tr><td colspan='4'>";
 		echo "Recon procs per node:<input type='text' NAME='rprocs' VALUE='$rprocs' SIZE='3'>";
+	echo "</td></tr><tr><td colspan='4'>";
+	echo "&nbsp;<input type='radio'onClick=submit() name='memlimit' value='calcmem' $calcmemcheck>\n";
+	echo "Limit memory usage using calculated value based on boxsize, angular increment etc.<font size=-2><i>(default)</i></font><br/>\n";
+	if (C_MEMORY_MAX) {
+		echo "<p>           OR</p>";
+		echo "&nbsp;<input type='radio' onClick=submit() name='memlimit' value='fixedmem' $fixedmemcheck>\n";
+			echo "Limit memory usage per node to :<input type='text' NAME='memmax' VALUE='$memmax' SIZE='4'>";
+	}
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo $clusterdata->cluster_parameters();
@@ -895,6 +906,7 @@ function writeJobFile ($extra=False) {
 	$header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
 	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
 	$memneed = getPBSMemoryNeeded();
+	if ($_POST['memlimit'] == 'fixedmem' && (int) $_POST['memmax']) $memneed = $_POST['memmax'].'gb';
 	$header.= "#PBS -l mem=$memneed\n";
 	$header.= "#PBS -m e\n";
 	$header.= "#PBS -r n\n";
