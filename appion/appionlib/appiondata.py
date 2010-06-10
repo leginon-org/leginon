@@ -664,6 +664,16 @@ class ApSpiderNoRefRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApEMANRefine2dRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('num_iters', int),
+			('num_classes', int),
+			('run_seconds', int),
+		)
+	typemap = classmethod(typemap)
+
 class ApMultiRefAlignRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -695,6 +705,7 @@ class ApAlignRunData(Data):
 			('norefrun', ApSpiderNoRefRunData),
 			('refbasedrun', ApRefBasedRunData),
 			('maxlikerun', ApMaxLikeRunData),
+			('refine2drun', ApEMANRefine2dRunData),
 			('imagicMRA', ApMultiRefAlignRunData),
 			('editerrun', ApEdIterRunData),
 			('topreprun', ApTopolRepRunData),

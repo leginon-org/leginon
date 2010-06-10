@@ -1,212 +1,236 @@
 #!/usr/bin/env python
 
-"""
-This is a template on how to construct a new Appion Script from scratch
-
-At the top you have the '#!/usr/bin/env python'
-
-this tells the computer that this is a python program and it tells it
-to run the env program in the /usr/bin directory to find the location
-of the python interpreter
-"""
-
 import os
+import time
+import math
+import glob
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apStack
-from appionlib import apModel
-
-"""
-Next, you have the import commands
-
-You may not know which module you will need, so start with a couple
-and add more as you need them. For an Appion Script you will at least
-need the 'appionScript' module (or file) and the 'os' module is also
-very handy. 'apDisplay' is used to print messages, wanrings and errors.
-apStack will be used to get information about a stack.
-
-For Appion libraries we use the system 'from appionlib import X'. This
-tells python to go into the appionlib directory and read the file 'X.py'.
-"""
-
-"""
-Now we need to create a class for our program that will inherit all the
-properties of appionScript.
-
-In this case I gave my program the name 'ExampleScript' and then put
-appionScript.AppionScript in parentheses. The latter part tells python
-that my new class called ExampleScript will inherit all properties from
-AppionScript located in the appionScript module (or file). The
-appionScript.AppionScript is required for an Appion Script.
-
-Within a new Appion Script class there are four required functions:
-setupParserOptions(), checkConflicts(), setRunDir(), and start(). Beyond
-this you can create any new function that you would like and there are two
-other special functions that you can override, OnInit() and OnClose(). These
-function are described in more detail below.
-
-Typically, I like to keep setupParserOptions(), checkConflicts(), setRunDir()
-at the top of the class and start() as the last function in the class. This
-makes it easy to find them when reading another person's code.
-"""
+from appionlib import apParam
+from appionlib import apFile
+from appionlib import apEMAN
+from appionlib import appiondata
 
 #=====================
 #=====================
-class ExampleScript(appionScript.AppionScript):
+class Refine2dScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		"""
-		This function is used to define any command line arguments.
-		Things like stackid, modelid, templateid, or shuffle files.
+		### refine2d options
+		self.parser.add_option("--num-iter", dest="numiter", type="int", default=8,
+			help="Number of iterations to perform", metavar="#")
+		self.parser.add_option("--num-classes", dest="numclasses", type="int", default=50,
+			help="Number of classes to create", metavar="#")
+		self.parser.add_option("--stackid", dest="stackid", type="int",
+			help="Stack id to align", metavar="#")
 
-		As part of Appion Script, several global variables are already defined:
-		runname, description, projectid, rundir, and commit. Of these only
-		runname is required
-
-		The commandline is parsed using the OptParse library in python,
-		see http://docs.python.org/library/optparse.html for documentation.
-
-		There are three major types of options: (1) strings, floats, and ints,
-		(2) true/false, and (3) choosing from a list.
-
-		The first type of option is obtaining a string, float, or int from the user.
-		It has the following format:
-		"""
-		self.parser.add_option("--username", dest="username",
-			help="Your user name", metavar="NAME")
-		self.parser.add_option("--file", dest="filename",
-			help="Some file", metavar="FILE")
-		self.parser.add_option("-s", "--id", "--stackid", dest="stackid", type="int",
-			help="A stack id ", metavar="#")
-		self.parser.add_option("-m", "--modelid", dest="modelid", type="int",
-			help="An initial model id ", metavar="#")
-		self.parser.add_option("--p", "--pi", dest="pi", type="float", default=3.1415926,
-			help="The value of pi", metavar="#")
-		"""
-		When defining a new commandline option, the first to do is define how you will
-		set this option. Valid options are a single hyphen and a single letter or two
-		hyphens and any number of letter. You can alos specify as many different ways
-		to set you option as you want. The next flag is the destination or 'dest', this
-		defines what your value will be call in self.params. For example, the username
-		will be stored in self.params['username'].
-
-		Next,note that the flag 'type' is used to define the type, by default it is string.
-		So, this is left out in the first case. In the third option, the flag
-		'default' is used to set a default value, is general the default is the python
-		reserved value of 'None'. The flags 'help' and 'metavar' are used when printing
-		the help message to the command line.
-
-		The second type of option is true/false:
-		"""
-		self.parser.add_option("-D", "--do-it", dest="doit", default=True,
-			action="store_true", help="Do it")
-		self.parser.add_option("--do-not-do-it", dest="doit", default=True,
-			action="store_false", help="Do not do it")
-		"""
-		In this case we have two options going to the same dest, one sets the
-		value to true the other to false through the 'action' flag. In this
-		case, by default the value is True. Note 'metavar' is not defined.
-
-		The third type of option is a choice:
-		"""
-		self.fruittypes = ('orange', 'apple', 'banana')
-		self.parser.add_option("--fruit", dest="fruit", default="orange",
-			type="choice", choices=self.fruittypes,
-			help="Favorite type of fruit", metavar="..")
-		"""
-		Here you provide a list of acceptable option for the user to choose from
-		"""
+		### stack preparation options
+		self.parser.add_option("--lp", "--lowpass", dest="lowpass", type="float",
+			help="Low pass filter to apply to stack before processing in Angstroms",
+			metavar="#.#")		
+		self.parser.add_option("--hp", "--highpass", dest="highpass", type="float",
+			help="High pass filter to apply to stack before processing in Angstroms",
+			metavar="#.#")		
+		self.parser.add_option("--bin", dest="bin", type="int", default=1,
+			help="Binning to apply to stack before processing", metavar="#")
+		self.parser.add_option("--num-part", dest="numpart", type="int",
+			help="Number of particles to align from stack", metavar="#")
 
 	#=====================
 	def checkConflicts(self):
-		"""
-		After you have set the options you want to have, you need to check to make sure
-		they are valid and if they are required.
-
-		For this script, we'll say that the stackid is required
-		"""
 		if self.params['stackid'] is None:
-			apDisplay.printError("Please provide a user id, e.g. --stackid=15")
-		"""
-		Here we check is the stackid is not defined, i.e., it is equal to 'None'
-		If it is None the program will print an Error and automatically exit
-
-		Next, I want to check the username does not contain a space
-		"""
-		if self.params['username'] is not None and ' ' in self.params['username']:
-			apDisplay.printError("User names cannot contains spaces, '%s'"
-				%(self.params['username']))
-		"""
-		If there is a space it exit the program
-
-		Next we can look up the user id to make sure it is valid
-		"""
-		if not self.isStackId(self.params['stackid']):
-			apDisplay.printError("Invaid user id")
-		apDisplay.printMsg("User id is valid")
-		"""
-		We print a general message, if the stackid is valid
-
-		Next we can look up the see if a file exists
-		"""
-		if self.params['filename'] is not None and not os.path.isfile(self.params['filename']):
-			apDisplay.printWarning("File does not exist")
-		"""
-		In this case, the program does not exit, it just prints a warning and continues on
-		"""
-
-	#=====================
-	def isStackId(self, stackid):
-		"""
-		Arbitrary requirements for a stackid
-		"""
-		if stackid < 1:
-			return False
-		elif stackid > 99999:
-			return False
-		return True
+			apDisplay.printError("Please provide a stack id, e.g. --stackid=15")
+		if self.params['runname'] is None:
+			apDisplay.printError("Please provide a run name id, e.g. --runname=refine1")
+		if self.params['description'] is None:
+			apDisplay.printError("Please provide a description, e.g. --description='something'")
+		### get number of particles in stack
+		numpart = apStack.getNumberStackParticlesFromId(self.params['stackid'])
+		if self.params['numpart'] is None:
+			self.params['numpart'] = numpart
+		elif self.params['numpart'] > numpart:
+			apDisplay.printError("Requested number of particles (%d) is greater than the number of particles in the stack (%d)"%(self.params['numpart'], numpart))
 
 	#=====================
 	def setRunDir(self):
 		"""
 		This function is only run, if --rundir is not defined on the commandline
-
-		This function decides when the results will be stored. You can do some complicated
-		things to set a directory.
-
-		Here I will use information about the stack to set the directory
 		"""
 		### get the path to input stack
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		### good idea to set absolute path,
 		stackpath = os.path.abspath(stackdata['path']['path'])
-		### go down two directories
-		uponepath = os.path.join(stackpath, "..")
-		uptwopath = os.path.join(uponepath, "..")
-		### add path strings; always add runname to end!!!
-		rundir = os.path.join(uptwopath, "example", self.params['runname'])
 		### same thing in one step
-		rundir = os.path.join(stackpath, "../../example", self.params['runname'])
+		rundir = os.path.join(stackpath, "../../align", self.params['runname'])
 		### good idea to set absolute path,
 		### cleans up 'path/stack/stack1/../../example/ex1' -> 'path/example/ex1'
 		self.params['rundir'] = os.path.abspath(rundir)
-		"""
-		In all cases, we set the value for self.params['rundir']
-		"""
 
 	#=====================
-	def onInit(self):
+	def determineClassOwnership(self):
 		"""
-		Advanced function that runs things before other things are initialized.
-		For example, open a log file or connect to the database.
+		reads ptcl2orig.lst and cls000#.lst 
+		to determine which particles belong to which class
 		"""
-		return
+		ptclf = open('ptcl2orig.lst', 'r')
+		count = 0
+		### mapping original location -> final location
+		orig2finalmap = {}
+		### mapping final location -> original location
+		final2origmap = {}
+		for line in ptclf:
+			sline = line.strip()
+			if sline[0] == "#":
+				continue
+			pieces = sline.split()
+			num = int(pieces[0])
+			orig2finalmap[num] = count
+			final2origmap[count] = num
+			count += 1
+		ptclf.close()
+
+		### determine ownership
+		clsfiles = glob.glob("cls*.lst")
+		clsfiles.sort()
+		classnum = 1
+		classmapping = {}
+		particlemapping = {}
+		for clsfile in clsfiles:
+			classf = open(clsfile, "r")
+			classlist = []
+			for line in classf:
+				sline = line.strip()
+				if sline[0] == "#":
+					continue
+				pieces = sline.split()
+				partnum = int(pieces[0])
+				origpartnum = final2origmap[partnum]
+				classlist.append(origpartnum)
+				particlemapping[origpartnum] = classnum
+			### filled class list
+			classmapping[classnum] = classlist
+			classnum += 1
+
+		### return class ownership
+		return particlemapping
 
 	#=====================
-	def onClose(self):
+	def commitToDatabase(self):
 		"""
-		Advanced function that runs things after all other things are finished.
-		For example, close a log file.
+		insert the results into the database
 		"""
+		### expected result for an alignment run:
+		### 1. aligned particle stack in IMAGIC
+		### 2. rotation, shift, and quality parameters for each particle
+		### 3. which particles belongs to which class
+		### 4. stack file with the class averages
+		
+		alignedstack = os.path.join(self.params['rundir'], "ptcl.hed")
+		refstack = os.path.join(self.params['rundir'], "iter.final.hed")
+		averagemrc = os.path.join(self.params['rundir'], "average.mrc")
+		apStack.averageStack(alignedstack, averagemrc)
+		particlemapping = self.determineClassOwnership()
+
+		### setup alignment run
+		alignrunq = appiondata.ApAlignRunData()
+		alignrunq['runname'] = self.params['runname']
+		alignrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		uniquerun = alignrunq.query(results=1)
+		if uniquerun:
+			apDisplay.printError("Run name '"+runparams['runname']
+				+"' and path already exisclassmappingt in database")
+
+		### setup eman refine2d run
+		emanrefinetwodq = appiondata.ApEMANRefine2dRunData()
+		emanrefinetwodq['runname'] = self.params['runname']
+		emanrefinetwodq['run_seconds'] = time.time() - self.t0
+		emanrefinetwodq['num_iters'] = self.params['numiter']
+		emanrefinetwodq['num_classes'] = self.params['numclasses']
+
+		### finish alignment run
+		alignrunq['refine2drun'] = emanrefinetwodq
+		alignrunq['hidden'] = False
+		alignrunq['runname'] = self.params['runname']
+		alignrunq['description'] = self.params['description']
+		alignrunq['lp_filt'] = self.params['lowpass']
+		alignrunq['hp_filt'] = self.params['highpass']
+		alignrunq['bin'] = self.params['bin']
+
+		### setup alignment stackalignimagicfile
+		alignstackq = appiondata.ApAlignStackData()
+		alignstackq['imagicfile'] = os.path.basename(alignedstack)
+		alignstackq['avgmrcfile'] = os.path.basename(averagemrc)
+		alignstackq['refstackfile'] = os.path.basename(refstack)
+		alignstackq['iteration'] = self.params['numiter']
+		alignstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		alignstackq['alignrun'] = alignrunq
+
+		### check to make sure files exist
+		alignimagicfilepath = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
+		if not os.path.isfile(alignimagicfilepath):
+			apDisplay.printError("could not find stack file: "+alignimagicfilepath)
+		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile'])
+		if not os.path.isfile(avgmrcfile):
+			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
+		refstackfile = os.path.join(self.params['rundir'], alignstackq['refstackfile'])
+		if not os.path.isfile(refstackfile):
+			apDisplay.printErrrefqor("could not find reference stack file: "+refstackfile)
+
+		### continue setting values
+		alignstackq['stack'] = apStack.getOnlyStackData(self.params['stackid'])
+		alignstackq['boxsize'] = apFile.getBoxSize(alignimagicfilepath)[0]
+		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])*self.params['bin']
+		alignstackq['description'] = self.params['description']
+		alignstackq['hidden'] =  False
+		alignstackq['num_particles'] = apFile.numImagesInStack(alignimagicfilepath)
+
+		### inserting particles and references
+		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
+		for emanpartnum in range(self.params['numpart']):
+			partnum = emanpartnum+1
+			if partnum % 100 == 0:
+				sys.stderr.write(".")
+
+			### setup reference
+			refq = appiondata.ApAlignReferenceData()
+			refnum = particlemapping[emanpartnum]
+			refq['refnum'] = refnum
+			refq['iteration'] = self.params['numiter']
+			refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+			refq['alignrun'] = alignrunq
+
+			### TODO: create mrc file
+			#refq['mrcfile'] = refbase+".mrc"
+			#reffile = os.path.join(self.params['rundir'], refq['mrcfile'])
+			#if not os.path.isfile(reffile):
+			#	emancmd = "proc2d "+refstack+".xmp "+refstack+".mrc"
+			#	apEMAN.executeEmanCmd(emancmd, verbose=False)
+			#if not os.path.isfile(reffile):
+			#	apDisplay.printError("could not find reference file: "+reffile)
+
+			### TODO: get resolution
+			#refq['ssnr_resolution'] = TODO
+
+			### setup particle
+			alignpartq = appiondata.ApAlignParticleData()
+			alignpartq['partnum'] = partnum
+			alignpartq['alignstack'] = alignstackq
+			stackpartdata = apStack.getStackParticle(self.params['stackid'], partnum)
+			alignpartq['stackpart'] = stackpartdata
+			### TODO: get the alignment parameters
+			#alignpartq['xshift'] = partdict['xshift']
+			#alignpartq['yshift'] = partdict['yshift']
+			#alignpartq['rotation'] = partdict['inplane']
+			#alignpartq['mirror'] = partdict['mirror']
+			alignpartq['ref'] = refq
+			### TODO: get the score
+			#alignpartq['score'] = partdict['score']
+
+			### insert
+			if self.params['commit'] is True:
+				alignpartq.insert()
+
 		return
 
 	#=====================
@@ -215,39 +239,45 @@ class ExampleScript(appionScript.AppionScript):
 		This is the core of your function.
 		You decide what happens here!
 		"""
-		apDisplay.printMsg("\n\n")
-		### get info about the stack
-		apDisplay.printMsg("Information about stack id %d"%(self.params['stackid']))
-		apDisplay.printMsg("\tboxsize %d pixels"%(apStack.getStackBoxsize(self.params['stackid'], msg=False)))
-		apDisplay.printMsg("\tpixelsize %.3f Angstroms"%(apStack.getStackPixelSizeFromStackId(self.params['stackid'], msg=False)))
-		apDisplay.printMsg("\tsize %d particles"%(apStack.getNumberStackParticlesFromId(self.params['stackid'], msg=False)))
+				
+		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		original_stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
+		filtered_stackfile = os.path.join(self.params['rundir'], self.timestamp+".hed")
+		apFile.removeStack(filtered_stackfile, warn=False)
+		apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+		boxsize = apStack.getStackBoxsize(self.params['stackid'])
 
-		### get info about the model
-		if self.params['modelid'] is not None:
-			apDisplay.printMsg("Information about model id %d"%(self.params['modelid']))
-			modeldata = apModel.getModelFromId(self.params['modelid'])
-			apDisplay.printMsg("\tboxsize %d pixels"%(modeldata['boxsize']))
-			apDisplay.printMsg("\tpixelsize %.3f Angstroms"%(modeldata['pixelsize']))
-		apDisplay.printMsg("\n\n")
+		emancmd = "proc2d %s %s apix=%.3f "%(original_stackfile, filtered_stackfile, apix)
+		if self.params['lowpass'] is not None:
+			emancmd += " lp=%.3f "%(self.params['lowpass'])
+		if self.params['highpass'] is not None:
+			emancmd += " hp=%.3f "%(self.params['highpass'])
+		if self.params['bin'] is not None and self.params['bin'] > 1:
+			## determine a multiple of the bin that is divisible by 2 and less than the boxsize
+			clipsize = int(math.floor(boxsize/float(self.params['bin']*2)))*2*self.params['bin']
+			emancmd += " shrink=%d clipsize=%d,%d "%(self.params['bin'], clipsize, clipsize)		
+		emancmd += " last=%d "%(self.params['numpart']-1)
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
 
-"""
-Last we need to tell python how to run your function
+		### confirm that it worked
+		if self.params['numpart'] != apFile.numImagesInStack(filtered_stackfile):
+			apDisplay.printError("Missing particles in stack")
 
-The line "if __name__ == '__main__':" makes sure that the function
-will only run from the commandline, if someone were to import
-this file nothing would happen.
+		nproc = apParam.getNumProcessors()
 
-The first line creates an instance of the class defined above.
-This reads the commandline, runs checkConflicts, and set the rundir.
-Next the start function is run that does all the stuff you defined. And
-finally the function is closed.
-"""
-
+		### run the refine2d.py
+		emancmd = ("refine2d.py --iter=%d --ninitcls=%d --proc=%d %s"
+				%(self.params['numiter'], self.params['numclasses'],
+				nproc, filtered_stackfile,)
+			)
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+		
+		self.commitToDatabase()
 
 #=====================
 #=====================
 if __name__ == '__main__':
-	examplescript = ExampleScript()
-	examplescript.start()
-	examplescript.close()
+	refscript = Refine2dScript()
+	refscript.start()
+	refscript.close()
 
