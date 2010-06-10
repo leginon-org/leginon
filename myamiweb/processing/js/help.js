@@ -91,6 +91,8 @@ var help = {
 		'numfactor' : 'Number of eigenvectors to calculate, certain traits of the particles should be presented by each eigenvector.  Choosing an image below will use its eigenvectors as a basis for averaging the particles.',
 		'dendrogram' : 'Graphical representation of the clusters produced by the clustering algorithm.',
 		'numclass' : 'Particle stack will be aligned according to the selected eigen images and averaged into this number of classes.',
+		'refine2dnumclass' : 'Number of classes to generate (though some may be discarded). Typically less than the number of particles divided by 10 or the square root of the number of particles',
+		'refine2dnumiter' : 'Number of iterations. 10 is almost always sufficient. For less noisy data 3-4 may be enough.',
 		'apix' : 'Pixel size of the acquired image in &Aring;ngstr&ouml;ms.  Conversion: (1 nm = 10 &Aring;ngstr&ouml;ms)',
 		'tiltseries': 'Select the tilt series number in the current session that corresponds to the tomogram to be processed.',
 		'tiltseries_upload': 'Select the tilt series number in the current session that corresponds to the tomogram to be uploaded.',
