@@ -151,7 +151,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 		alignedstackname = re.sub("\.", "_", self.alignstackdata['imagicfile'])+".spi"
 		alignedstack = os.path.join(self.params['rundir'], alignedstackname)
 		apFile.removeFile(alignedstack)
-		emancmd = ("proc2d %s %s spiderswap shrink=%d clip=%d,%d"
+		emancmd = ("proc2d %s %s spiderswap shrink=%d clip=%d,%d edgenorm"
 			%(oldalignedstack,alignedstack,self.params['bin'],clippixdiam,clippixdiam))
 		if self.params['numpart'] is not None:
 			emancmd += " last=%d"%(self.params['numpart']-1)
