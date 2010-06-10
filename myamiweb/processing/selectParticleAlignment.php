@@ -172,6 +172,23 @@ if (!HIDE_FEATURE)
 	echo "</td></tr>\n";
 }
 
+
+if (!HIDE_FEATURE)
+{
+	/*
+	** Topology representing network alignment
+	*/
+	echo "<tr><td width='100' align='center'>\n";
+	echo "  <img src='img/eman_logo.png' width='64'>\n";
+	echo "</td><td>\n";
+	echo "  <h3><a href='runEmanRefine2d.php?expId=$expId'>EMAN Refine 2d Reference-free Alignment</a></h3>\n";
+	echo "<p>Fast and easy 2D ref-free alignment using EMAN's "
+		."<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/refine2d.py.html'>"
+		."refine2d.py</a> program"
+		."</p>\n";
+	echo "</td></tr>\n";
+}
+
 echo "</table>\n";
 processing_footer();
 exit;
