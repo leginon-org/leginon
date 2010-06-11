@@ -400,7 +400,7 @@ class mysql {
 				$changes .= "CREATE $table <br>";
 			}
 		}
-		if ($q)
+		if (!empty($q))
 			$this->SQLQueries($q);
 		if ($changes)
 			return $changes;

@@ -76,7 +76,7 @@ project_header("Grid Tray", "init()");
 	}
 
 </script>
-<form method="POST" name="dataform" action="<?php echo $PHP_SELF ?>">
+<form method="POST" name="dataform" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 
 <?=divtitle('Upload Grids')?>
 <p>

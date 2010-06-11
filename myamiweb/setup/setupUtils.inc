@@ -1,10 +1,8 @@
 <?php
-define('PROJECT_NAME', "myamiweb");		//session variable.
 define('SETUP_BASE', "setupBase.php");	//define the step1 filename
 define('CONFIG_FILE', "../config.php");	//define config.php location
 define('CONFIG_TEMPLATE', "../config.php.template");
 
-//require_once("../lib/PEAR/MDB2.php");
 require_once("../inc/mysql.inc");
 
 if(file_exists(CONFIG_FILE)){
@@ -77,7 +75,7 @@ class setupUtils{
 		
 		$host  = $_SERVER['HTTP_HOST'];
 		$uri   = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
-		
+
 		return header("Location: http://$host$uri/$distPage");
 	}
 
