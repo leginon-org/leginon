@@ -1,6 +1,7 @@
 <?php
 
 require "inc/admin.inc";
+$login_check = $dbemauth->is_logged();
 
 $hostkeys = array_keys($SQL_HOSTS);
 $hostId = ($_POST[hostId]) ? $_POST[hostId] : current($hostkeys);
@@ -94,57 +95,65 @@ function init() {
 	document.data.f_sel_name.focus();
 }
 </script>
-<h3>Table: <?php echo $maintable; ?></h3>
-<table  border=0>
-<form method="POST" name="dataimport" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-<tr valign=top >
-<td>
-From Host:
-	<select name="hostId" onChange="javascript:document.dataimport.submit();">
-		<?php
-		foreach($hostkeys as $host) {
-			$selected = ($host==$hostId) ? "selected" : "";
-			echo "<option value='$host' $selected >$host\n";
-		}
-		?>
+
+<?php
+if (privilege('groups')) {
+?>
+	<h3>Table: <?php echo $maintable; ?></h3>
+	<table  border=0>
+	<form method="POST" name="dataimport" enctype="multipart/form-data" action="';
+	echo $_SERVER['PHP_SELF']; ?>">
+	<tr valign=top >
+	<td>
+	From Host:
+		<select name="hostId" onChange="javascript:document.dataimport.submit();">
+			<?php
+			foreach($hostkeys as $host) {
+				$selected = ($host==$hostId) ? "selected" : "";
+				echo "<option value='$host' $selected >$host\n";
+			}
+			?>
+		</select>
+	</td>
+	<td>
+	Instrument host:
+		<select name="importinstrumenthost" onChange="javascript:document.dataimport.submit();">
+	<?php
+	foreach($importinstrumenthosts as $h) {
+		$selected = ($h==$importinstrumenthost) ? "selected" : "";
+		echo "<option $selected >".$h."</option>";
+	}
+	?>
 	</select>
-</td>
-<td>
-Instrument host:
-	<select name="importinstrumenthost" onChange="javascript:document.dataimport.submit();">
+	Scope
+	<select name='importscopeId' >
+	<?php
+	foreach($importscopes as $s) {
+		echo "<option value='".$s['id']."' >".$s['name']."</option>";
+	}
+	?>
+	</select>
+	Camera
+	<select name='importcameraId' >
+	<?php
+	foreach($importcameras as $c) {
+		echo "<option value='".$c['id']."' >".$c['name']."</option>";
+	}
+	?>
+	</select>
+	</td>
+	</tr>
+	<tr>
+	<td>
+	<input type="submit" name="import" value = "Import" >
+	</td>
+	</tr>
+	</form>
+	</table>
+	<hr>
 <?php
-foreach($importinstrumenthosts as $h) {
-	$selected = ($h==$importinstrumenthost) ? "selected" : "";
-	echo "<option $selected >".$h."</option>";
-}
+ }
 ?>
-</select>
-Scope
-<select name='importscopeId' >
-<?php
-foreach($importscopes as $s) {
-	echo "<option value='".$s['id']."' >".$s['name']."</option>";
-}
-?>
-</select>
-Camera
-<select name='importcameraId' >
-<?php
-foreach($importcameras as $c) {
-	echo "<option value='".$c['id']."' >".$c['name']."</option>";
-}
-?>
-</select>
-</td>
-</tr>
-<tr>
-<td>
-<input type="submit" name="import" value = "Import" >
-</td>
-</tr>
-</form>
-</table>
-<hr>
 <table  border=0 cellspacing=1>
 <form method="POST" name="data" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <tr valign="top">
@@ -220,16 +229,20 @@ foreach ($intrument_types as $intrument_type) {
 </select>
 </td>
 </tr>
-
 <tr>
 <td colspan="2">
 	<input type="hidden" name="bt_action" value = "" >
+<?php
+if (privilege('groups') > 3) {
+?>
 	<input type="button" name="save" value = "Add" onClick="confirm_add();" >
 	<input type="button" name="save" value = "Save" onClick="confirm_update();" >
 	<input type="button" name="save" value = "Remove" onClick="confirm_delete();" >
+<?php
+}
+?>
 </td>
 </tr>
-
 
 </table>
 </td>

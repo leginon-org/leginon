@@ -27,6 +27,8 @@ if (privilege('groups') >= 2 )
 	$link->addlink('admin.php','Administration','', 'admin');
 if (privilege('projects') >= 2 ) 
 	$link->addlink('project','Project DB','', 'project');
+if (privilege('users') == 2 )
+	$link->addlink('goniometer.php','Miscellaneous','', 'admin');
 
 login_header(PROJECT_TITLE);
 
