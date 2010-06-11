@@ -282,12 +282,12 @@ class setupUtils{
 
 		session_start();
 		if(empty($_SESSION)){
-			header("Location: index.php");
+			setupUtils::redirect('index.php');
 			exit();
 		}
 
 		// if session has been create more than 30 min. destroy it.
-		if(time() - $_SESSION['time'] > 1800){
+		if(time() - $_SESSION['time'] > 1800){	
 			session_destroy();
 			setupUtils::checkSession();
 		}
