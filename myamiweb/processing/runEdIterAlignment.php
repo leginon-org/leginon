@@ -181,7 +181,7 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	// alignment params
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $initparts;
 	$iters = ($_POST['iters']) ? $_POST['iters'] : 10;
-	$freealigns = ($_POST['freealigns']) ? $_POST['freealigns'] : 1;
+	// $freealigns = ($_POST['freealigns']) ? $_POST['freealigns'] : 1;
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : 10;
 	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 2000;
 	$orientref = $_POST['orientref'];
@@ -312,9 +312,9 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	echo"
 		<INPUT TYPE='text' NAME='iters' VALUE='$iters' SIZE='4'>
 		Classification/Alignment Iterations<br>";
-	echo"
-		<INPUT TYPE='text' NAME='freealigns' VALUE='$freealigns' SIZE='4'>
-		Free-alignments within each iteration<br>";
+	// echo"
+		// <INPUT TYPE='text' NAME='freealigns' VALUE='$freealigns' SIZE='4'>
+		// Free-alignments within each iteration<br>";
 	echo"
 		<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>
 		Number of Particles to Use<br>";
@@ -367,7 +367,7 @@ function runAlignment() {
 	$templates=$_POST['refid'];
 	$orientref=$_POST['orientref'];
 	$iters=$_POST['iters'];
-	$freealigns=$_POST['freealigns'];
+	// $freealigns=$_POST['freealigns'];
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$inverttempl = ($_POST['inverttempl']=="on") ? 'inverttempl' : '';
 
@@ -410,7 +410,7 @@ function runAlignment() {
 	$command.="--lowpass=$lowpass ";
 	$command.="--highpass=$highpass ";
 	$command.="--iterations=$iters ";
-	$command.="--freealigns=$freealigns ";
+	// $command.="--freealigns=$freealigns ";
 
 	if ($inverttempl) $command.="--invert-templates ";
 	if ($commit) $command.="--commit ";
@@ -451,10 +451,10 @@ function runAlignment() {
 		<TR><td>low pass</TD><td>$lowpass</TD></tr>
 		<TR><td>high pass</TD><td>$highpass</TD></tr>
 		<TR><td>iterations</TD><td>$iters</TD></tr>
-		<TR><td>freealigns</TD><td>$freealigns</TD></tr>
 		<TR><td>inverttmpl</TD><td>$inverttmpl</TD></tr>
 		<TR><td>commit</TD><td>$commit</TD></tr>";
 		echo"	</table>\n";
+		// 		<TR><td>freealigns</TD><td>$freealigns</TD></tr>
 		processing_footer();
 	}
 }
