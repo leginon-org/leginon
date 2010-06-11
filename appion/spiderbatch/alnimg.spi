@@ -1,0 +1,467 @@
+; Syntax: @alnimg
+; Description: Aligns images by one of four options.
+;   Alignment method (and optional reference image)
+;     Method 1: Align images without a reference
+;       a. Align images to self (orientation is arbitrary) (APSR)
+;     Method 2: Free-align images, then orient with reference
+;       a. Align images to self (APSR)
+;       b. Orient average to reference image (APSH)
+;       c. Combine alignment parameters (SAP)
+;     Method 3: Ref-align to oriented average
+;       a. Align images to self (APSR)
+;       b. Orient average to reference (APSH)
+;       c. Use oriented average as reference to realign images (APSH)
+;     Method 4: Align images to reference (checks mirror) (APSH)
+;     Method 5: Align helical images (PW-RM-CC)
+; Some advice:
+;   Method 1 is for alignment of images without reference bias
+;         if you don't care about the orientation of the final average.
+;   Method 2 is for alignment of images avoiding reference-bias (images never see a reference)
+;         The reference image is only used to orient the average.
+;   Method 3 is reference alignment of images to the oriented average.
+;         Images are ref-aligned to their oriented average.
+;   Method 4 is standard reference alignment of images
+; Output:
+;   1) parameters to align images (<prefix>doc) 
+;         Paramter format is PRXYM: pclnum,rt,xsh,ysh,mr
+;   2) stack containing the rotated averages (<prefix>@******)
+;   3) average of aligned averages (<prefix>av and <prefix>va)
+
+FR
+?IN.Images template (dir/avg***)?<imgtmpl>
+
+FR
+?IN.Images list (dir/avglist)?<imglist>
+
+RR x25
+?IN.Particle radius (# pixels)?
+
+RR x90
+?IN.Alignment method (1=free,2=orientfree,3=orientfree+ref,4=ref)?
+
+IF(x90.gt.1)THEN
+  FR
+  ?IN.Reference image (dir/img)?<refimg>
+ENDIF
+
+FR
+?OUT.Prefix (dir/prefix for doc,av,va,@******)?<outpfx>
+
+; ~~~~~ start ~~~~~
+
+x23=x25*2 ;particle diameter
+;x24=1     ;one
+;[step]=1     ;translation step size
+x80=0     ;zero
+
+UD N x21 ;how many averages
+<imglist>
+UD E
+
+VM
+echo -n Aligning {%F9.1%x21} images..
+
+DOC SORT
+<imglist>      ;input doc
+<imglist>sort  ;output doc
+(1)            ;sort by first column
+Y              ;renumber keys
+
+UD x21,x39     ;number of last average
+<imglist>sort
+UD E
+DE
+<imglist>sort
+
+FS
+<imgtmpl>x39
+FI x27      ;size of images
+<imgtmpl>x39
+(2)
+
+;---calculate search range---
+x26=(int(x27/2)-x25-3)  ;search range = image radius - particle radius - 3
+IF(x26.lt.0)THEN
+  VM
+  echo ERROR: Radius {%F7.1%x25} pixels exceeds image size {%F7.1%x27}
+  EN
+ENDIF
+
+;---calculate inner radius---
+x28=int(x25/10)
+IF(x28.gt.5)x28=5 ;max inner radius is 5pix
+
+IF(x90.lt.5)THEN ;not filament
+  ;---option 1, 2 and 3 start with apsr---
+  IF(x90.lt.4)THEN
+    VM
+    echo -n APSR..
+    
+    AP SR
+    <imgtmpl>          ;Image series template
+    <imglist>          ;Image list
+    x23                ;Diameter
+    x28,x25            ;Inner, Outer radii
+    *                  ;Shape for centering
+    <outpfx>tempi**    ;Output images template
+    <outpfx>tempd**    ;Output transformation template
+
+    ;find last apsr iteration
+    VM
+    ls <outpfx>tempi* | wc -w | nl -s ' 1  ' > <outpfx>tempd.$DATEXT
+    
+    UD 1,x22
+    <outpfx>tempd
+    UD E
+    
+    VM
+    cp <outpfx>tempd{**x22}.$DATEXT <outpfx>apsrtemp.$DATEXT
+
+    CP
+    <outpfx>tempi{**x22}
+    _2     ;apsrav
+
+    VM
+    rm -f <outpfx>temp*
+  ENDIF ;--option 1,2,or 3 ;_2 is apsrav and apsrtemp is doc
+
+  ;---option 2, 3, and 4 require apsh---
+  IF(x90.gt.1)THEN ;free+ref,freeav=ref or ref-only
+    CP
+    <refimg>
+    _1
+    
+    FS
+    _1
+    FI x89
+    _1
+    (2) ;nrow
+
+    IF(x89.ne.x27)THEN
+      VM
+      echo "ERROR: Reference and particles have different ImageSize."
+      EN
+    ENDIF
+
+    SD 1,x80,x80,x80 ;psi,theta,phi=0
+    <outpfx>angles_tmp
+    SD E
+    <outpfx>angles_tmp
+
+    IF(x90.lt.4)THEN ;option 2 or 3 (apsr+ref or apsr=ref)
+      VM
+      echo -n orient avg..
+
+      AP SH    ;align apsrav _2 to ref _1
+      _*          ;reference template
+      (1)         ;reference number
+      x26,(1)     ;search range, step size
+      x28,x25     ;inner, outer radii
+      <outpfx>angles_tmp  ;reference eulers
+      _*          ;images template
+      (2)         ;images
+      *           ;no image angles
+      (0.0)       ;no angular restriction or threshold
+      (0)         ;no mirror
+      <outpfx>pre
+      
+      DOC REN
+      <outpfx>pre
+      <outpfx>tmp
+      
+      DE
+      <outpfx>pre
+
+      ;    psi,tht,phi,ref,img,srt, sx, sy,prj,ang, cc,rt,x,y,mr
+      UD 1,x91,x92,x93,x94,x95,x33,x34,x35
+      <outpfx>tmp
+      UD E
+      
+      DE
+      <outpfx>tmp
+      
+      IF(x90.eq.3)THEN ;oriented apsrav becomes new reference _1
+        RT SQ ;orient apsr-averge
+        _2 ;apsr average
+        _1 ;overwrite reference
+        x33,(1)
+        x34,x35
+
+        ;AP SH ;align images to oriented apsr-average
+        ;_*    ;ref template
+        ;(1)   ;refs
+        ;x26,(1)     ;search range, step size
+        ;x28,x25     ;first,last radius
+        ;<outpfx>angles_tmp  ;ref angles
+        ;<imgtmpl>   ;images template
+        ;<imglist>   ;images
+        ;*     ;experimental angles
+        ;(0.0) ;no angular restriction
+        ;(0)   ;no mirror
+        ;<outpfx>pre
+        ;
+        ;DOC REN
+        ;<outpfx>pre
+        ;<outpfx>tmp
+        ;
+        ;DE
+        ;<outpfx>pre
+        ;
+        ;VM
+        ;echo -n Images aligned to avg..
+      ENDIF ;option3 (freeav=ref)
+    ENDIF ;option 2 or 3 - apsr+ref
+
+    IF(x90.ge.3)THEN ;option 3 or 4 ;apsrav=ref or ref-only
+      VM
+      echo -n align to ref..
+      
+      AP SH
+      _*             ;reference template
+      (1)            ;references
+      x26,(1)        ;search range, step size
+      x28,x25        ;inner, outer radii
+      <outpfx>angles_tmp  ;reference eulers
+      <imgtmpl>      ;images template
+      <imglist>      ;images
+      *              ;no image angles
+      (0.0)          ;no angular restriction or threshold
+      (1)            ;check mirror
+      <outpfx>pre    ;output
+
+      DOC REN
+      <outpfx>pre
+      <outpfx>tmp
+      
+      DE
+      <outpfx>pre
+    ENDIF ;option 3 or 4
+
+    DE
+    _1
+    DE
+    _2 ;apsrav
+    DE
+    <outpfx>angles_tmp
+
+  ENDIF ;option 2,3,4 - all required apsh
+ELSE  ;x90.ge.5 = filament module (Reza Khayat)
+  ; --- start the alignment procedure for each average
+  [rad]=5
+  DO LB1 [loop1]=1,x21 ; foreach image
+    UD IC [loop1],[k]
+    <imglist>
+    
+    PW 2     ; calculate power spectrum
+    <imgtmpl>[k]      ; Input image
+    _1                ; Output power spectrum
+
+    RM 2DN   ; calculate Radon transform
+    _1                ; Input
+    ([rad])           ; Rotational Increments
+    _2                ; Output
+    (40)              ; X-Dimention of output
+    (20)              ; Radius of circular mask
+    (0,0)             ; Center offset
+    A                 ; Average
+
+    FI X [nrow_rad],[nsam_rad]      ; Extract number of rows and pixels/row from image
+    _2                      ;   output from radon transform
+    (2,12)                  ;   nrow,nsam = header locations 2,12
+    
+    ; calculate center of radon image
+    [center_y] = int([nsam_rad]/2) + 1
+    [center_x] = int([nrow_rad]/2) + 1
+    
+    MA       ; mask the radon to a range.  Sometimes mupltiple peaks are found in radon
+    _2                ; Input
+    _3                ; output
+    ([rad],0)         ; radius of 3*[rad]
+    G                 ; Gaussian mask
+    A                 ; Average background
+    ([center_y],[center_x])
+    (3.5)             ; Halfwidth for gaussian mask
+    
+    ; Disable the masking above cause it messes things up.  Reference-free alignment rotates things a lot.
+    ; STOP
+    PK M [x],[y],[xo],[yo] ; Peak search
+    _2
+    CR
+    
+    ; Calculate inplane rotation to make particle vertical
+    [turn] = [yo] * [rad]
+    
+    RT SQ    ; apply the in-plane rotation to calculated the translation
+    <imgtmpl>[k]       ; Original stack
+    _4                 ; Output
+    ([turn],0)         ; inplane rotation and scale
+    (0,0)              ; Shift x, and y
+    
+    CC       ; Calculate cross correlation image between rotated image of avg. and reference
+    _4                 ; rotated image of avg.
+    <refimg>           ; reference image.
+    _5                 ; output image
+    
+    ; calculate center of <average_stack> image
+    [center_y] = int([nrow]/2) + 1
+    [center_x] = int([nrow]/2) + 1
+    
+    MA       ; Mask the CC to a range. Sometimes multiple peaks are found, but average shouldn't be off by so much!
+    _5                ; Input
+    _6                ; output
+    (10,0)            ; radius of mask.  Allows for this many pixel shifts
+    G                 ; Gaussian mask
+    A                 ; Average background
+    ([center_y],[center_x])
+    3.5               ; Halfwidth for gaussian mask
+    
+    ; Disabling the mask again! STOP
+    PK M [x],[x],[xo],[yo]   ; Identify the peak for x and y translation
+    _5                       ; map of cross correlation
+    ([center_x],[center_y])  ; center of image
+    
+    [shift_x] = -1 * [xo]  ; calculate necessary shift
+    [shift_y] = -1 * [yo]  ; calculate necessary shift
+    
+    SD [loop1],[k],[turn],[shift_x],[shift_y] ; save parameters
+    <outpfx>pwrd_tmp
+
+    ; clean up files
+    DE
+    _1
+    DE
+    _2
+    DE
+    _3
+    DE
+    _4
+    DE
+    _5
+    DE
+    _6
+
+  LB1 ; goto next average
+
+  SD E ; close the document. File has 10 in-plane rotation and 10 translations.
+  <outpfx>pwrd_tmp
+ENDIF ;filament or particle
+
+;--- write final alignment doc in prxym format ---
+SD IC NEW   ;make incore output doc
+alndoc_ic
+(5),x21
+
+;MS I        ;make indexed stack for aligned images
+;_1@
+;x27,x27,(1) ;assumes square image
+;x21         ;how many images
+;x39         ;max image number
+
+DO LB2 x12=1,x21 ;for each image
+  UD IC x12,x40
+  <imglist>
+
+  x37=1 ;assume not mirrored
+  IF(x90.lt.5)THEN ;not a filament
+    IF(x90.lt.3)THEN ;option 1 or 2
+      UD IC x12,x41,x42,x43
+      <outpfx>apsrtemp
+
+      IF(x90.eq.2)THEN ;free+ref
+        SA P x41,x42,x43
+        x41,x42,x43  ;from apsrtemp
+        x33,x34,x35  ;from apshtemp
+      ENDIF
+    ENDIF
+
+    IF(x90.ge.3)THEN ;option 3 or 4 (apsh to orient-avg or ref)
+      ;         psi,tht,phi,ref,img,srt, sx, sy,nrf,ang, cc,rt ,x  ,y  ,mr
+      UD IC x12,x91,x92,x93,x94,x95,x41,x42,x43,x81,x82,x83,x84,x85,x86,x37
+      <outpfx>tmp
+    ENDIF
+  ELSE ;x90.ge.5 is a filament
+    UD IC x12,x40,x41,x42,x43
+    <outpfx>pwrd_tmp
+  ENDIF
+
+  IF(x37.lt.0)THEN ;image is mirrored
+    RT SQ
+    <imgtmpl>x40  ;input image
+    _2 ;1@{******x40}
+    x41      ;angle
+    x42,x43  ;xshift,yshift
+
+    MR
+    _2
+    <outpfx>@{******x40} ;_1@{******x40}
+    Y ;axis
+    
+    x44=-1 ;make refnumber negative
+  ELSE ;image is not mirrored
+    RT SQ
+    <imgtmpl>x40  ;input image
+    <outpfx>@{******x40} ;1@{******x40}
+    x41      ;angle
+    x42,x43  ;xshift,yshift
+
+    x44=1 ;refnumber positive
+  ENDIF
+
+  SD IC x12,x40,x41,x42,x43,x44
+  alndoc_ic
+LB2 ;next average x12
+UD ICE
+<imglist>
+
+DE
+_2 ;rotated image
+
+SD IC COPY
+alndoc_ic
+<outpfx>doc
+SD IC END
+alndoc_ic
+
+;CP I
+;_1@        ;input index-stack of rotated images
+;<outpfx>@  ;output index-stack of rotated images
+;x39        ;max image number
+
+;DE
+;_1 ;stack of rotated/mirrored images
+
+AS R
+<outpfx>@******
+<outpfx>doc
+A
+<outpfx>av
+<outpfx>va
+
+IF(x90.lt.3)THEN
+  UD ICE
+  <outpfx>apsrtemp
+ENDIF
+
+IF(x90.lt.5)THEN ;not a filament
+IF(x90.le.3)THEN
+  DE
+  <outpfx>apsrtemp
+ENDIF
+
+IF(x90.ge.3)THEN
+  UD ICE
+  <outpfx>tmp
+  DE
+  <outpfx>tmp
+ENDIF
+ELSE ;x90.ge.5 is a filament
+  UD ICE
+  <outpfx>pwrd_tmp
+  DE
+  <outpfx>pwrd_tmp
+ENDIF
+
+VM
+echo done.
+
+RE

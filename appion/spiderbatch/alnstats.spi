@@ -1,0 +1,267 @@
+; Syntax: @alnstats
+; Description:
+;    1. Combine alignment parameters for particle and its average
+;    2. Determine residuals in each particle's aligment and in each free-alignment round
+; Output:
+;    alndoc**
+;    alnrnderr = rotation and shift variance for each free-alignment round
+;    alnpclerr = rotational and shift variance for each particle
+
+FR
+?IN.PRXYM parameters for alignment of averages (dir/alnavgdoc)?<alnlist>
+
+FR
+?IN.Template for particle alignment parameters (dir/doc**)?<alntmpl>
+
+FR
+?IN.List of aligned particles (dir/pcllist)?<pcllist>
+
+FR
+?OUT.Existing directory for output (./alndir)?<dir>
+
+; ~~~~~ start ~~~~~
+MD
+vb off
+
+x99=0
+IQ FI x99
+<alnlist>
+IF(x99.eq.0)THEN
+  VM
+  echo 'ERROR:'<alnlist> not found.
+  EN
+ENDIF
+
+x99=0
+IQ FI x99
+<pcllist>
+IF(x99.eq.0)THEN
+  VM
+  echo 'ERROR:'<pcllist> not found.
+  EN
+ENDIF
+
+UD N [nrnds] ;number of rounds
+<alnlist>
+
+UD N [npcls] ;number of particles
+<pcllist>
+
+; --- module 1: combine alignment parameters ---
+VM
+echo -n Combining particle and average alignments.
+
+DO LB3 x13=1,[nrnds] ;for each apsr round
+  UD IC x13,[rnd],[rav],[xav],[yav],[mav] ;get parameters for alignment of average
+  <alnlist>
+  
+  VM
+  echo -n {**[rnd]}.
+
+  SD IC NEW ;make incore particle alignment doc
+  alndoc_ic
+  (5),[npcls]
+
+  DO LB4 x14=1,[npcls] ;for each particle
+    UD IC x14,[pclnum]
+    <pcllist>
+    UD IC x14,[rpl],[xpl],[ypl] ;apsr format
+    <alntmpl>[rnd]
+
+    SA P [rot],[xsh],[ysh] ;add alignment parameters
+    [rpl],[xpl],[ypl]  ;apsr
+    [rav],[xav],[yav]  ;aln
+    
+    SD IC x14,[pclnum],[rot],[xsh],[ysh],[mav] ;prxym format
+    alndoc_ic
+  LB4 ;next particle x14
+  UD ICE
+  <alntmpl>[rnd]
+  
+  SD IC COPY ;write incore particle params to disk
+  alndoc_ic
+  <dir>/alndoc{**[rnd]}
+  SD IC END  ;close incore particle alignment params
+  alndoc_ic
+LB3 ;next round x13
+UD ICE
+<alnlist>
+UD ICE
+<pcllist>
+
+VM
+echo .done.
+
+; --- module 2: determine error between alignment rounds ---
+SD IC NEW
+pclerr_ic
+(3),[npcls]  ;pclnum,rterr,sherr
+
+BL ;track round errors in image
+_1
+[nrnds],(2)
+N
+(0)
+
+DOC COMBINE  ;combine docs so that only requires one incore file
+<dir>/alndoc**
+<alnlist>
+<dir>/alndall_tmp
+
+VM
+echo Calculating variation between {%F7.1%[nrnds]} rounds of alignment on {%F7.1%[npcls]} particles...
+
+DO LB1 x11=1,[npcls] ;for each particle
+  ;---calculate mean alignment for this particle---
+  x50=0 ;sum of rotation vector x component
+  x51=0 ;sum of rotation vector y component
+  x52=0 ;sum of shift x
+  x53=0 ;sum of shift y
+  
+  x54=x11 ;pclkey
+  DO LB8 x18=1,[nrnds] ;for each alignment param
+    UD IC x54,x30,x31,x32,x33,x34 ; pclnum,rt,x,y,mr
+    <dir>/alndall_tmp
+
+    x50=x50+COS(x31)  ;rtx
+    x51=x51+SIN(x31)  ;rty
+    x52=x52+x32  ;shx
+    x53=x53+x33  ;shy
+
+    x54=x54+[npcls] ;key number for next alignment parameter
+  LB8 ;next alignment param
+
+  ;---calculate mean rotation for this particle---
+  x64=x50/[nrnds] ;mean(rtx)=sum(rtx)/rounds
+  x65=x51/[nrnds] ;mean(rty)=sum(rty)/rounds
+  ;keep all angles positive 0 to 360
+  IF(x64.eq.0)THEN ;avoid division by zero
+    IF(x65.lt.0)x67=270
+    IF(x65.ge.0)x67=90
+   ;IF(x65.eq.0)x67=NaN ;rotation vectors cancel implies symmetry
+  ENDIF
+  IF(x64.gt.0)THEN ;quadrants 1 or 4 (0+/-90)
+    IF(x65.lt.0)x67=ata(x65/x64)+360 ;quadrant4
+    IF(x65.ge.0)x67=ata(x65/x64) ; quadrant1
+  ENDIF
+  IF(x64.lt.0)x67=ata(x65/x64)+180 ;quadrants 2 or 3 (180+/-90)
+  x61=COS(x67) ;mean(rtx)
+  x62=SIN(x67) ;mean(rty)
+
+  ;---calculate mean shift for this particle---
+  x68=x52/[nrnds]  ;mean(shx)
+  x69=x53/[nrnds]  ;mean(shy)
+
+  ;---calculate deviation of each alignment parameter from mean---
+  x55=0  ;pclrterr
+  x56=0  ;pclsherr
+  x54=x11
+  DO LB9 x19=1,[nrnds]  ;for each alignment round of this particle
+    UD IC x54,x30,x31,x32,x33 ; pclnum,rt,x,y
+    <dir>/alndall_tmp
+    
+    ;---calculate rotational deviation---
+    ;angle=aco(v1.v2/|v1|x|v2|) or angle=2*asi((sqr(dx^2+dy^2))/2)
+    x20=(SQR((COS(x31)-x61)**2+(SIN(x31)-x62)**2))/2
+    IF(x20.gt.1)x20=1  ;fixes floating point error
+    x20=2*(ASI(x20)) ;angle error
+    
+    x20=x20**2 ;squared error
+    x55=x55+x20 ;sum of squared rterr for particle
+    
+    ;track cumulative rotational error for each round
+    GP x57
+    _1
+    x19,(1)
+    
+    x57=x57+x20  ;cumulative squared rterr for round
+    
+    RP
+    _1
+    x19,(1)
+    x57
+
+    ;---calculate translation deviation---
+    x70=((x32-x68)**2+(x33-x69)**2)**0.5 ;distance from mean position
+    
+    x70=x70**2 ;squared error
+    x56=x56+x70 ;cumulative squred sherr for particle
+    
+    ;track cumulative translational error for each round
+    GP x58
+    _1
+    x19,(2)
+    
+    x58=x58+x70  ;cumulative squared sherr for round
+    
+    RP
+    _1
+    x19,(2)
+    x58
+
+    x54=x54+[npcls] ;key number for next alignment parameter
+  LB9 ;next alignment param
+  x66=sqr(x55/[nrnds]) ;root mean squared error of rotation
+  x79=sqr(x56/[nrnds]) ;root mean squared error of shift
+
+  ;         pcl,rtv,shv
+  SD IC x11,x30,x66,x79
+  pclerr_ic
+LB1 ; next particle x11
+UD ICE
+<dir>/alndall_tmp
+
+DE
+<dir>/alndall_tmp
+
+SD IC COPY
+pclerr_ic
+<dir>/alnpclerr
+SD IC E
+pclerr_ic
+
+;---divide cumulative error by number of particles---
+SD /     ROUND      RT-ERR      SH-ERR
+<dir>/alnrnderr
+x23=0 ;average rotation deviation for all rounds
+x24=0 ;average shift deviation for all rounds
+x59=0 ;bestround
+x91=360 ;bestrotation
+DO LB2 x12=1,[nrnds] ;for each round of apsr
+  GP x57
+  _1
+  x12,(1)
+  GP x58
+  _1
+  x12,(2)
+
+  x90=sqr(x57/[npcls]) ;rmsd_rt/numpcls
+  x80=sqr(x58/[npcls]) ;rmsd_sh/numpcls
+
+  ;VM
+  ;echo '   'Round {**x12} deviates by {%F7.1%x90} degrees and {%F7.1%x80} pixels. 
+  IF(x90.lt.x91)THEN
+    x91=x90 ;bestrotation
+    x59=x12 ;bestround
+  ENDIF
+
+  SD x12,x12,x90,x80
+  <dir>/alnrnderr
+
+  x23=x23+x90
+  x24=x24+x80
+LB2 ;next round
+SD E
+<dir>/alnrnderr
+
+DE
+_1
+
+x23=x23/[nrnds] ; average rotation deviation = sum rotation deviation / number rounds
+x24=x24/[nrnds] ; average translation deviation
+
+VM
+echo '   'Particle alignment deviates by {%F7.1%x23} degrees. Best round was {**x59}.
+; rotation and {%F7.1%x24} pixels shift
+
+RE

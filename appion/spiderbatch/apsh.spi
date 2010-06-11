@@ -1,0 +1,87 @@
+FR L
+<priordoc>*
+
+FR L
+<currentdoc>apshdoc01
+
+FR L
+<pjstack>refs
+
+x33=140 ;number of projections
+
+FR L
+<imgstack>start
+
+x32=100 ;number of images
+
+FR L
+<outstack>aligned
+
+x34=5 ;search range
+x35=1 ;search step
+x36=3 ;inner radius
+x37=25 ;outer radius
+x38=0 ;angle change (delta)
+x99=0 ;number of processors
+
+; ----------- END BATCH HEADER ----------
+
+MD
+set mp
+(x99)
+
+SD IC NEW
+pjangles_incore
+(3,x33)
+
+DO LB1 x11=1,x33 ;for each projection
+  FS
+  <pjstack>@{******x11}
+  FI x20,x21,x22 ;phi,theta,psi
+  <pjstack>@{******x11}
+  (15,16,17)
+
+  ;write psi,theta,phi
+  SD IC x11,x22,x21,x20
+  pjangles_incore
+
+LB1
+SD IC COPY
+pjangles_incore
+pjangles
+SD IC END
+pjangles_incore
+
+AP SH
+<pjstack>@*******
+(1-x33)   ;list of projections
+(x34,x35) ;search,step
+(x36,x37) ;inner,outer
+pjangles  ;projection eulers
+<imgstack>@******
+(1-x32)   ;list of images
+<priordoc>
+(x38,0)  ;delta
+(0)      ;no check mirror
+<currentdoc>
+
+DE ;delete refprj_angles doc
+pjangles
+
+DO LB2 x12=1,x32 ;for image in imgstack
+  ;         psi,tta,phi,ref,img,rt , x , y 
+  UD IC x12,x41,x42,x43,x44,x45,x46,x47,x48
+  <currentdoc>
+
+  RT SQ ;rotate/shift image
+  start@{******x12}
+  <outstack>@{******x12}
+  x46
+  x47,x48
+
+LB2
+UD ICE ;close incore file
+<currentdoc>
+
+EN D
+

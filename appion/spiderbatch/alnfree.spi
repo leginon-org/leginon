@@ -1,0 +1,118 @@
+;(x62,x21) ; radius,#rounds
+; Syntax: @alnfree([rad],[nrnds])
+; Description: 
+;    Runs specified number of rounds of reference-free alignment  
+; Output:
+;    doc**  = alignment parameters for each round
+;    avg**  = average for each round
+;    alignlist = list of alignment rounds and number of iterations per round
+
+FR
+?IN.List of images (dir/file)?<pcllist>
+
+FR
+?IN.Images template (dir/ser*****)?<pcltmpl>
+
+RR x62
+?IN.Radius for particle alignment (#, pixels))?
+
+RR x21
+?IN.Number of independent rounds (#)?
+
+FR
+?IN.Shape to center particle (*)?<shape>
+
+FR
+?OUT.Directory to make (dir/outdir)?<outdir>
+
+; ~~~~~ start ~~~~~
+ 
+x61=5  ;inner ring
+x63=x62*2  ;particle diameter
+;particle diameter must be less than image size
+
+IF(x21.ge.100)THEN
+  VM
+  echo ERROR: Requested {%F7.1%x21} apsr rounds. Maximum is 99.
+  EN
+ENDIF
+
+x99=0
+IQ FI x99
+<outdir>/alignlist
+IF(x99.gt.0.5)THEN
+  VM
+  echo ERROR: Previous alignment already exists in <outdir>
+  EN
+ENDIF
+
+VM
+mkdir -p <outdir>
+
+SD IC NEW
+iterdoc_ic
+(2),x21
+
+VM
+echo -n Reference-free alignment with radius {%F7.1%x62}..<outdir>.."Round: "
+
+DO LB1 x11=1,x21 ;foreach round
+  VM
+  echo -n {**x11}'.'
+
+  AP SR
+  <pcltmpl>             ; template
+  <pcllist>             ; list
+  x63                   ; PARTICLE DIAMETER
+  x61,x62               ; FIRST AND LAST RING
+  <shape>               ; shape to center particle
+  <outdir>/tmpi**       ; averages
+  <outdir>/tmpd**       ; alignment doc
+
+  ;--- Find number of iterations ---
+  DO LB2 x12=1,99
+    x99=0
+    IQ FI x99
+    <outdir>/tmpi{**x12}
+    IF(x99.eq.0)THEN
+      x24=x12-1
+      GOTO LB21
+    ENDIF
+  LB2
+  LB21
+
+  ;IF(x23.ne.x24)THEN
+  ;  VM
+  ;  echo ERROR counting the correct number of apsr iterations..continue with {**x24}.
+  ;ENDIF
+
+  SD IC x11,x11,x24
+  iterdoc_ic
+
+  ;--- Remove temporary/intermediate results and save params and avg for iteration
+  CP ;save last average into stack
+  <outdir>/tmpi{**x24}
+  <outdir>/avgs@{**x11}
+  VM ;save last param
+  mv <outdir>/tmpd{**x24}.$DATEXT <outdir>/doc{**x11}.$DATEXT
+
+  VM
+  rm -f <outdir>/tmpd*
+  VM
+  rm -f <outdir>/tmpi*
+  ;DE A
+  ;<outdir>/tmpd01
+  ;DE A
+  ;<outdir>/tmpi01
+LB1 ; next round of alignment
+
+SD IC COPY
+iterdoc_ic
+<outdir>/alignlist
+SD IC END
+iterdoc_ic
+
+VM
+echo .done.
+
+RE

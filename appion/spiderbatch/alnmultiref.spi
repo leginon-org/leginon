@@ -1,0 +1,127 @@
+; Syntax: @alnmultiref
+; Description:
+;   multi-reference alignment with mirrors using AP SH
+; Output: 
+;   apshdoc: alignment parameters
+; Tips:
+;   Use @refgrp to make class averages and class membership lists
+
+FR
+?IN.List of particles to align (dir/file)?<pcllist>
+
+FR
+?IN.Particles template (dir/ser*****)?<pcltmpl>
+
+FR
+?IN.List of reference images (dir/file)?<reflist>
+
+FR
+?IN.References template (dir/tmp***)?<reftmpl>
+
+RR x80
+?IN.Radius for particle alignment (#, pixels)?
+
+FR
+?OUT.Existing directory (dir)?<outdir>
+
+; ~~~~~ start ~~~~~
+; HOW MANY PARTICLES
+UD N x81
+<pcllist>
+
+VM
+echo -n Aligning {%F7.1%x81} particles' '
+
+UD N x85
+<reflist>
+
+VM
+echo -n to {%F7.1%x85} references..
+
+; CHECK DIMENSIONS OF FIRST PARTICLE AND REFERENCE
+UD 1,x84
+<pcllist>
+FS
+<pcltmpl>x84
+FI x82,x83
+<pcltmpl>x84
+12,2
+
+UD 1,x86
+<reflist>
+FS
+<reftmpl>x86
+FI x87,x88
+<reftmpl>x86
+12,2
+
+IF(x87.ne.x82)THEN
+  VM
+  echo 'ERROR: Particles are' {%F7.1%x87} NROW but References are {%F7.1%x82} NROW
+  RE
+ENDIF
+IF(x88.ne.x83)THEN
+  VM
+  echo 'ERROR: Particles are' {%F7.1%x88} NSAM but References are {%F7.1%x83} NSAM
+  RE
+ENDIF
+
+; CHECK RADIUS
+IF(x80.le.5)THEN
+ VM
+ echo 'WARNING: Radius' {%F7.1%x80} is too small...using half image instead.
+ x80=(x82/3)  ; extend radius to 1/3 image size
+ IF(x80.le.5)THEN
+  VM
+  echo 'ERROR: Your images are too small = '{%F7.1%x82} pixels.
+  RE
+ ENDIF
+ENDIF
+
+; set inner radius ; resize outer if necessary
+x79=int(0.5+x80/10) ;inner radius
+IF(x79.gt.5)x79=5
+
+; set translation
+x84=int((x82/2)-x80-3)   ; search range = image radius - particle radius - 2
+IF(x84.lt.0)x84=0     ; search range must be nonnegative
+
+; ALIGN PROJECTIONS AND PARTICLES
+VM
+echo -n Radius {%F7.1%x79} to {%F7.1%x80}, Translation {%F7.1%x84}..
+
+x89=0
+;SD IC NEW
+;refangles_ic
+;3,x85
+DO LB2 x12=1,x85
+  UD IC x12,x13
+  <reflist>
+  SD x13,x89,x89,x89 ; phi theta psi are zero
+  <outdir>/refangles_tmp
+LB2
+UD IC END
+<reflist>
+SD E
+<outdir>/refangles_tmp
+
+AP SH
+<reftmpl>      ; REFERENCE PROJECTIONS TEMPLATE
+<reflist>      ; SELECTION OF REFERENCE PROJECTIONS OR DOC
+x84,1          ; TRANSLATION RANGE AND STEP SIZE
+x79,x80        ; FIRST AND LAST RING
+<outdir>/refangles_tmp   ; EULER ANGLES OF REFIMG
+<pcltmpl>      ; PARTICLES TEMPLATE
+<pcllist>      ; SELECTION OF PARTICLES OR DOC
+*          ; prior alignment doc
+(0,0)      ; no angle range and threshold
+(1)        ; mirror
+<outdir>/apshdoc ; ALIGNMENT OUTPUT DOC
+
+DE
+<outdir>/refangles_tmp
+
+VM
+echo .done.
+
+RE
