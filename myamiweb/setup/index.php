@@ -66,7 +66,7 @@ require_once('setupUtils.inc');
 	<h3>Start here to setup and configure the web tools configuration file.</h3>
 	<p>Please follow each step.</p>
 	
-	<form name='wizard_form' method='POST' action='<?php echo $PHP_SELF; ?>'>
+	<form name='wizard_form' method='POST' action='<?php echo $_SERVER['PHP_SELF']; ?>'>
 <?php 
 	if($fileExist){
 ?>
@@ -74,7 +74,7 @@ require_once('setupUtils.inc');
 		Please enter the <b>"Database Username and Password"</b> for verification.<br />
 		If you forgot your username and password, it can be found in config.php in the myamiweb folder.</p>
 
-		<form name='wizard_form' method='POST' action='<?php echo $PHP_SELF; ?>'>
+		<form name='wizard_form' method='POST' action='<?php echo $_SERVER['PHP_SELF']; ?>'>
 		<?php if(!empty($errorMessage)) echo"<font color='red'><p>$errorMessage</p></font>"; ?>
 		<h3>Enter the Database username:</h3>
 		<input type="text" size=20 name="username" value="" /><br /><br />

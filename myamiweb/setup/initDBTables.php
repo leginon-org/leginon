@@ -80,7 +80,7 @@ require_once("../inc/mysql.inc");
 		
 		<h3>Start initial variables setup :</h3>
 		<p>Web tools requires default tables and variables.</p>
-		<p><font color="red">This is required for new and upgrade databases Only. </font><?php echo $msg; ?></p>
+		<p><font color="red">This is required for new and upgrade databases Only. </font><?php if(!empty($msg)) echo $msg; ?></p>
 		
 	<?php if(empty($has_errors) && (empty($msg))){ ?>
 		<p>The system has checked your connection to both databases<br /><br />
@@ -93,7 +93,7 @@ require_once("../inc/mysql.inc");
 		<h3><font color="red">Error(s) have occured !</font></h3>
 		<p>Please solve the following problem then click "Try Again":</p>
 		<form>
-			<input type="button" value="Try Again" onClick="location.href='<?php echo $PHP_SELF; ?>'">
+			<input type="button" value="Try Again" onClick="location.href='<?php echo $_SERVER['PHP_SELF']; ?>'">
 		</form>
 		<br />
 	<?php 

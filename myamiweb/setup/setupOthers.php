@@ -5,7 +5,7 @@ require_once('setupUtils.inc');
 
 	setupUtils::checkSession();
 	$update = false;	
-	if($_SESSION['loginCheck']){
+	if(!empty($_SESSION['loginCheck'])){
 		require_once(CONFIG_FILE);
 		$update = true;
 	}

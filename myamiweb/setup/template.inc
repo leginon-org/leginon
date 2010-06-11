@@ -24,7 +24,7 @@ class template{
 	}
 	
 	function wizardFooter(){
-		$html .= "</div>\n";
+		$html = "</div>\n";
 		$html .= "<div id='footer'>\n";
 		$html .= "<p>The Scripps Research Institute. National Resource for "; 
 		$html .= "Automated Molecular Microscopy (<a href='http://nramm.scripps.edu'>NRAMM</a>)</p>\n";
