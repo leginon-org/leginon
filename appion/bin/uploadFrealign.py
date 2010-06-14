@@ -321,7 +321,7 @@ class UploadFrealign(appionScript.AppionScript):
 		### mask values are in pixels
 		iterq['mask'] = iterparams['mask']/self.apix
 		iterq['imask'] = iterparams['imask']/self.apix
-		iterq['volumeDensity'] = volumeDensity
+		iterq['volumeDensity'] = os.path.basename(volumeDensity)
 
 		### Frealign does not produce class averages :(
 		iterq['refineClassAverages'] = None
