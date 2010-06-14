@@ -141,7 +141,11 @@ define('FLASHPLAYER_URL', "/flashplayer/");
 // to download images as TIFF or JPEG
 // $pythonpath="/your/site-packages";
 // putenv("PYTHONPATH=$pythonpath");
-// define('MRC2ANY', "/usr/local/bin/mrc2any");
+
+// To use mrc2any, you need to install the pyami package which is part
+// of myami.  See installation documentation for help.
+// --- define('MRC2ANY', "/usr/bin/mrc2any" --- //
+define('MRC2ANY', "");
 
 // --- Check if IMAGIC is installed and running, otherwise hide all functions --- //
 define('HIDE_IMAGIC', false);
