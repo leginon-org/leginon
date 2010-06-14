@@ -10,6 +10,7 @@ modulepath = os.path.dirname(__file__)
 configfilename = 'sinedon.cfg'
 
 config_locations = [
+	os.path.join('/etc', configfilename),
 	os.path.join(modulepath, configfilename),
 	os.path.join(HOME, configfilename),
 ]
