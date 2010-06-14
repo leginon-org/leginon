@@ -5,7 +5,6 @@ require_once('setupUtils.inc');
 require_once("../inc/mysql.inc");
 
 	$template = new template;
-	$template->wizardHeader("Step 4 : Data Insertion Report", DB_INITIALIZATION);
 	
 	if(file_exists(CONFIG_FILE)){
 
@@ -36,6 +35,8 @@ require_once("../inc/mysql.inc");
 	else{
 		$has_error[] = "The configuration file does not exist. Please create it first.";
 	}
+
+	$template->wizardHeader("Step 4 : Data Insertion Report", DB_INITIALIZATION);
 
 ?>
 		

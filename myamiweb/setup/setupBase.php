@@ -12,10 +12,11 @@ require_once('setupUtils.inc');
 
 	
 	$template = new template;
-	$template->wizardHeader("Step 1: Define web tools base variables", SETUP_CONFIG);
 	
 	$utils = new setupUtils();
 	$utils->setBasePath($_SERVER['PHP_SELF']);
+	
+	$template->wizardHeader("Step 1: Define web tools base variables", SETUP_CONFIG);
 	
 ?>
 
