@@ -109,7 +109,7 @@ $link_off = "<a class='header' href='$url&amp;ld=0'>[o]</a> ";
 $ld = ($_GET['ld']==0) ? $link_on : $link_off;
 $cat  = ($_GET['cat']==0) ? $link_on : $link_off;
 ?>
-<form method="POST" name="projectform" action="<?php echo $_SERVER['PHP_SELF'];."?projectId=".$selectedprojectId ?>">
+<form method="POST" name="projectform" action="<?php echo $_SERVER['PHP_SELF'];"?projectId=".$selectedprojectId ?>">
 <input type="hidden" name="v" value="<?=$_REQUEST['v']?>">
 <table border="0" >
 <tr>
