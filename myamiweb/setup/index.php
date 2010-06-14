@@ -6,7 +6,6 @@ require_once('setupUtils.inc');
 	session_destroy();
 	
 	$template = new template;
-	$template->wizardHeader("Welcome : Start configuration of your system", SETUP_CONFIG);
 	
 	$extensions = get_loaded_extensions();
 	
@@ -37,7 +36,7 @@ require_once('setupUtils.inc');
 			$_SESSION['newSetup'] = true;
 
 			setupUtils::redirect('setupBase.php');		
-			exit;
+			exit();
 		}
 		else{
 			require_once(CONFIG_FILE);
@@ -51,7 +50,7 @@ require_once('setupUtils.inc');
 				// redirect to setupBase.
 				
 				setupUtils::redirect('setupBase.php');
-				exit;
+				exit();
 			} else {
 				$errorMessage = "The username and password you provided are incorrect. Enter again...";
 			
@@ -59,8 +58,9 @@ require_once('setupUtils.inc');
 				session_destroy();
 			}
 		}
-		
 	}
+	
+	$template->wizardHeader("Welcome : Start configuration of your system", SETUP_CONFIG);
 
 ?>
 	<h3>Start here to setup and configure the web tools configuration file.</h3>
@@ -108,5 +108,6 @@ require_once('setupUtils.inc');
 	</form>
 
 <?php 
+
 	$template->wizardFooter();
 ?>

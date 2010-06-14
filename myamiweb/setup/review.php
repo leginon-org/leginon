@@ -13,7 +13,6 @@ require_once('setupUtils.inc');
 	}
 
 	$template = new template;
-	$template->wizardHeader("Step 6 : Review your setup", SETUP_CONFIG);
 
 	$setupUtils = new SetupUtils();
 	
@@ -41,6 +40,8 @@ require_once('setupUtils.inc');
 				you can use the code below and create a config.php under the myamiweb folder.";
 
         }
+        
+	$template->wizardHeader("Step 6 : Review your setup", SETUP_CONFIG);
 
 ?>
 

@@ -35,7 +35,6 @@ require_once("../inc/mysql.inc");
 							 Please go to the <a href='index.php'>setup wizard</a> to create config.php file.<br />";
 	
 	$template = new template;
-	$template->wizardHeader("Step 1 : Database Tables Creation", DB_INITIALIZATION);
 	
 	$has_errors = array();
 	
@@ -74,6 +73,8 @@ require_once("../inc/mysql.inc");
 	else{
 		$has_errors[] = "config.php file does not exist.<br /><br />".$confNotExistSolution;
 	}
+	
+	$template->wizardHeader("Step 1 : Database Tables Creation", DB_INITIALIZATION);
 
 ?>
 	<form name='wizard_form' method='POST' action='initTablesReport.php'>

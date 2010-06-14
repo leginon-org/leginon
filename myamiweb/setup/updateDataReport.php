@@ -5,7 +5,7 @@ require_once('setupUtils.inc');
 require_once("../inc/mysql.inc");
 
 	$template = new template;
-	$template->wizardHeader("Database Upgrade to v1.7", DB_INITIALIZATION);
+
 	
 	if(file_exists(CONFIG_FILE)){
 
@@ -21,6 +21,8 @@ require_once("../inc/mysql.inc");
 	else{
 		$has_error[] = "Config file does not exist. Please create it first.";
 	}
+
+	$template->wizardHeader("Database Upgrade to v1.7", DB_INITIALIZATION);
 
 ?>
 		
