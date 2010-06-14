@@ -1,0 +1,417 @@
+(x39,x77,x78) ;radius,xshift,yshift(output)
+; Syntax: @centerfindradius(rad,xsh,ysh)
+; Description:
+;   determines particle dimensions from class averages
+;   object does not need to be well centered and can be oblong
+; Warning: radius,xshift,yshift will be overwritten with returned value
+
+FR
+?IN.Image (dir/img)?<img>
+
+; ~~~~~ start ~~~~~
+
+VM
+echo -n Finding center and radius of <img>..
+
+x90=0
+IQ FI x90
+<img>
+IF(x90.eq.0)THEN
+  VM
+  echo ''; echo '   ERROR: '<img> does not exist.
+  EN
+ENDIF
+
+;---threshold image to downweight brightest/darkest densities
+FS ;calculate image statistics
+<img>
+;  col,row
+FI x42,x41
+<img>
+(12,2)
+
+x40=int((x41*10/24)+0.5) ;radius halfway between particle (1/3) and edge (1/2)
+MO ;mask corners
+_5
+(x42,x41)
+C
+(x40)
+
+;    max,min,avg,std ;inside circle
+FS M x43,x44,x45,x46
+<img>
+_5 ;mask
+
+NEG
+_5 ;mask
+_4 ;negmask
+
+;    max,min,avg,std ;background
+FS M x53,x54,x55,x56
+<img>
+_4 ;negmask
+
+;example
+;  total: FMIN = -32.7      FMAX =  47.8      AV =  0.82      SIG =  15.41
+; signal: FMIN = -32.7      FMAX =  47.8      AV =  1.81      SIG =  20.51
+;  noise: FMIN = -7.87      FMAX =  3.76      AV =-0.431      SIG =  2.058
+
+x48=x55+1.0*x46 ;upper threshold = 1std above background mean
+IF(x48.ge.x43)x48=(x45+x43)/2 ;halfway between max and avg
+
+x47=x45-0.5*x46 ;lower threshold = mean - 1/2std
+IF(x47.le.x44)x47=(x45+x44)/2 ;halfway between min and avg
+
+IF(x47.ge.x48)THEN
+  VM
+  echo '   WARNING: 'Std_bg={%F7.1%x47} greater than Std_fg={%F7.1%x48}
+ENDIF
+
+GOTO LB95 ;---calculate radius from rotational average
+;
+;  TH ;threshold
+;  <img>
+;  _2
+;  c ;(a)bove,(b)elow,c=both
+;  x48,x47 ;upper,lower
+;
+;  ;CP
+;  ;<img>
+;  ;_2
+;
+;  RO ;rotational average
+;  _2 ;input image
+;  _1 ;output 1D vaverage
+;
+;  FS ;calculate image statistics
+;  _1
+;  ;  col,max,min,avg,std
+;  FI x22,x23,x24,x25,x26
+;  _1
+;  (12,7,8,9,10) ;ncol,max,min,avg,std
+;
+;  ;--- find first radius below lower threshold after crossing upper
+;  ;lower threshold x27 (radius is found when below this)
+;  x27=x25-0.5*x26 ;mean - 1/2std
+;  IF(x27.le.x24)THEN
+;    VM
+;    echo -n 'Thresh=Mean(Avg+Min)'..
+;    x27=(x23+x24)/2 ;(mean+min)/2
+;  ENDIF
+;
+;  ;upper threshold x28 (must cross above this before searching for min)
+;  x28=x25+1.0*x26 ;mean + 1std ,typically these densities are found immediately at center
+;  x29=(x25+x23)/2 ;(mean+max)/2
+;  IF(x28.gt.x29)x28=x29 ;x28 is the lesser of x29 and x28
+;
+;  x36=-1 ;indicator for radius crossing upper threshold
+;  x30=x22-1 ;lastradius to check
+;
+;  DO LB1 x11=3,x30 ;for each pixel
+;    x37=x11-1 ;prior radius
+;    x38=x11   ;current radius
+;    x39=x11+1 ;next radius
+;    
+;    GP x32
+;    _1
+;    x37,(1)
+;    GP x33
+;    _1
+;    x38,(1)
+;    GP x34
+;    _1
+;    x39,(1)
+;
+;    x35=(x32+x33+x34)/3 ;mean density at current radius
+;    IF(x35.gt.x28)x36=x38 ;radius above upper threshold
+;
+;    IF(x36.lt.0.0)GOTO LB21 ;has intensity crossed upper threshold
+;    IF(x35.gt.x27)GOTO LB21 ;is intensity above lower threshold
+;
+;    ;find true minimum at radius +/- 1
+;    IF(x32.lt.x33)THEN
+;      x33=x32 ;x33 becomes min of x32 and x33
+;      x38=x37 ;x38 becomes min of x37 and x38
+;    ENDIF
+;    IF(x33.lt.x34)THEN
+;      x34=x33 ;x34 becomes min of x33 and x34
+;      x39=x38 ;x39 becomes min of x38 and x39
+;    ENDIF
+;    GOTO LB22 ;escape because criteria satisfied (radius=x39)
+;
+;    LB21 ;try again
+;  LB1  ;for each pixel
+;  LB22 ;escape x34 is value, and x39 is radius
+;
+;  IF(x11.eq.x30)x39=0 ;min at last radius - 0=failed to find decent radius
+;
+;  VM
+;  echo Radius={%F7.1%x39} pixels
+;
+LB95 ;skip rotational average search
+
+;---1D average in X and Y to calculate feature dimensions and position---
+;threshold image and mask periphery
+x66=x55+1.0*x56 ;mean(bg)+std(bg) ;lower threshold
+x67=x45+1.0*x46 ;mean(pcl)+std(pcl) ;upper threshold
+
+x60=x67-x66 ;maximum pixel=upperthresh-lowerthresh
+IF(x56.gt.x60)THEN ;lower threshold is greater than maximum pixel
+  VM
+  echo WARNING: Insufficient contrast to distinguish particle from background.
+  x39=0 ;set radius
+  x77=0 ;set xshift
+  x78=0 ;set yshift
+  GOTO LB96
+ENDIF
+
+GOTO LB94
+  ;    imx,imy,orx,ory,max,num,rad
+  PK M x91,x92,x93,x94,x95,x96,x97 ;peaksearch-max
+  <img>
+   ;preserve space for default center
+
+  SE ;seedfill
+  <img>
+  _6
+  (x91,x92) ;seed location
+  (x66,1.0) ;threshold,location
+LB94
+
+TH ;threshold
+<img>
+_2
+C ;(a)bove,(b)elow,c=both
+(x67,x66)
+
+AR
+_2 ;input image
+_6 ;add image
+(P1-x66) ;all values positive
+
+MM ;applymask
+_5 ;mask
+_6 ;img (overwritten!)
+(0.0) ;value to replace
+
+FS
+_6
+FI x99
+_6
+(10) ;std
+IF(x99.eq.0)THEN
+  VM
+  echo '   ERROR: Threshold set incorrectly - Masked image has no variation'
+  EN
+ENDIF
+
+;make x and y summed images
+;x41=ydim(#rows) x42=xdim(#cols)
+DC S ;average each column into one row
+_6 ;masked image
+_3 ;average(cols)
+(1),x41 ;binfactor => xdim,1row
+
+DC S ;average each row into one column
+_6 ;masked image
+_4 ;average(rows)
+x42,(1) ;binfactor => 1col,ydim
+
+;BL ;blank
+;_3 ;row-avg
+;x42,(1)
+;N
+;(0)
+;
+;BL ;blank
+;_4 ;col-avg 
+;(1),x41
+;N
+;(0)
+;
+;;average rows into single row (one column at a time)
+;DO LB15 x15=1,x42 ;for each column
+;  PT
+;  _7 ;columnmask
+;  x42,x41
+;  L
+;  x15,(1)
+;  x15,x41
+;  N ;discontinue
+;  
+;  FS M x81,x82,x83,x84
+;  _6 ;masked image
+;  _7 ;columnmask
+;  
+;  RP
+;  _3 ;rows averaged to single row
+;  (x15,1)
+;  (x83)
+;  
+;  DE
+;  _7
+;LB15 ;next column in row average
+;
+;;average columns into single column (one row at a time)
+;DO LB16 x16=1,x41 ;for each row
+;  PT
+;  _7 ;rowmask
+;  x42,x41
+;  L
+;  (1),x16
+;  x42,x16
+;  N ;discontinue
+;
+;  FS M x61,x62,x63,x64
+;  _6 ;masked image
+;  _7 ;rowmask
+;  
+;  RP
+;  _4 ;cols averaged to single column
+;  (1,x16)
+;  (x63)
+;  
+;  DE
+;  _7
+;LB16 ;next row in column average
+
+FS
+_3 ;1row average
+FI x81,x82,x83,x84
+_3
+(7,8,9,10) ;max,min,avg,std
+
+IF(x84.eq.0)THEN
+  VM
+  echo '   ERROR: Row-average has no variation'
+  EN
+ENDIF
+
+FS
+_4 ;1column average
+FI x61,x62,x63,x64
+_4
+(7,8,9,10) ;max,min,avg,std
+
+IF(x64.eq.0)THEN
+  VM
+  echo '   ERROR: Column-average has no variation'
+  EN
+ENDIF
+
+;---search for edge of feature from center-outward
+;set row threshold
+x85=x56*10/100 ;10% of pixels averaged are more than 1std above image lower threshold
+x80=x60*10/100 ;10% of pixels averaged are above image upper threshold
+
+;set column threshold
+x65=x56*10/100 ;10% of pixels averaged are more than 1std above image lower threshold
+x79=x60*10/100 ;10% of pixels averaged are above image upper threshold
+
+;indicators are negative till radius is found
+x71=-1 ;x-downward
+x72=-1 ;x-upward
+x73=-1 ;y-downward
+x74=-1 ;y-upward
+
+x49=int(x42/2+0.5) ;center pix
+x50=int(x42/2-0.5) ;pix to check
+DO LB17 x17=2,x50
+  x86=x49-x17 ;search downward
+  x87=x49+x17 ;search upward
+  
+  ;upward
+  GP x88
+  _3 ;rows averaged to single row
+  (x86,1)
+  
+  GP x68
+  _4 ;columns averaged to single column
+  (1,x86)
+  
+  ;downward
+  GP x89
+  _3
+  (x87,1)
+  
+  GP x69
+  _4
+  (1,x87)
+  
+  ;record radius at first crossing below threshold
+  IF(x71.le.0)THEN  
+    IF(x88.lt.x85)x71=x17
+  ENDIF
+  IF(x72.le.0)THEN  
+    IF(x89.lt.x85)x72=x17
+  ENDIF
+  IF(x73.le.0)THEN  
+    IF(x68.lt.x65)x73=x17
+  ENDIF
+  IF(x74.le.0)THEN  
+    IF(x69.lt.x65)x74=x17
+  ENDIF
+
+  ;if above threshold then keep searching
+  IF(x88.gt.x80)x71=-1
+  IF(x89.gt.x80)x72=-1
+  IF(x68.gt.x79)x73=-1
+  IF(x69.gt.x79)x74=-1
+LB17
+
+x75=(x71+x72+1) ;x-size
+x76=(x73+x74+1) ;y-size
+
+VM
+echo -n Size={%F7.1%x75} x{%F7.1%x76}..
+
+x75=int((x71+x72+1)/2+0.5) ;half size in x
+x76=int((x73+x74+1)/2+0.5) ;half size in y
+
+;set radius to largest dimension
+x39=x75
+IF(x76.gt.x75)x39=x76
+;x39=int((x75*x75+x76*x76)**0.5) ;set radius to diagonal
+
+VM
+echo -n Radius={%F7.1%x39}..
+
+x77=int((x71-x72)/2+0.5) ;row => xshift
+x78=int((x73-x74)/2+0.5) ;col => yshift
+
+VM
+echo Shift={%F7.1%x77} x{%F7.1%x78}
+
+;CP
+;_3
+;rowtmp
+
+;CP
+;_4
+;coltmp
+
+;CP
+;_6
+;imgtmp
+
+DE
+_3 ;1row
+
+DE
+_4 ;1col
+
+DE
+_6 ;masked image
+;---end section
+
+DE
+_1
+
+DE
+_2
+
+DE
+_5
+
+LB96
+RE

@@ -1,0 +1,530 @@
+; Iterative Multi-reference classification and Reference-free alignment
+; Version: 2010.01.10 Ed Brignole
+; Description:
+;   1. Does a specified number of iterations of:
+;     a. multi-reference classification (with mirrors)
+;     b. reference-free alignment (multiple rounds, averaging the outcome)
+;   2. At the end does reference-based alignment of particles within each group
+;   *Uses specified radius for classification but independent radii for alignments within each group
+; Output:
+;   iter**/ = directory of alignment results for each iteration
+;         apshdoc = alignment/classification parameters for each particle
+;           TO DO: update particle alignment params to reflect alignment of class average
+;         grplist = list of groups and number of particles
+;         grp*** = list of particles and alignment params for each group
+;         alnavgdoc = parameters for orienting avg@*** to ref-image
+;         freeav*** = particles realigned (ref-free) in each group
+;   apshdoc = final alignment parameters (ref-based) independently in each group
+;   avg@*** = final averages
+;   var@*** = final variances
+
+; --------------- Input files ----------------
+FR L    ;Particles to align
+<pcltmpl>pcl/mfnseru@******
+
+FR L    ;List of particles
+<pcllist>pcl/serulist
+
+FR L    ;References
+<reftmpl>cl1/favgcl1/alnavgav***
+
+FR L    ;List of references
+<reflist>cl1/favgcl1/c_mrglist
+
+FR L    ;Reference for orientation of reference-free averages
+<ref>cl1/alnfreeavgav
+
+; ---------------- Parameters ----------------
+RR x20  ;Radius for multi-ref classification
+23  ;pixels
+
+RR x23  ;Number of reference classification - free alignment iterations
+10  ;iterations
+
+RR x29  ;Number of processors (#, 0=all, -1=unspecified)
+0   ;processors
+
+; --------------- Output files ---------------
+FR L    ;Output directory to create
+<dir>ica1
+
+; --------------- END BATCH HEADER ---------------
+
+;x20=[radius]
+;x23=[iter]
+;x25=[alnrnds]
+;x29=[mp]
+
+; --- settings typically not needed ---
+RR x25  ;Number of independent reference-free rounds per class
+1   ;free-align rounds
+
+RR [mode]  ;Method for orienting averages
+0   ;0=single particles, 1=helical particles
+
+IF(x29.ge.0)THEN
+  MD
+  set mp
+  (x29)
+ENDIF
+
+UD N x21 ;number of references
+<reflist>
+UD x21,x22
+<reflist>
+UD E
+
+FS
+<reftmpl>x22
+FI x36
+<reftmpl>x22
+(12) ;nsam
+
+VM
+mkdir -p <dir>
+VM
+mkdir -p <dir>/iter00
+
+x99=0
+IQ FI x99
+<dir>/iter00/grplist
+IF(x99.eq.0)THEN
+  ; VM
+  ;echo '____ Orienting '{%F7.1%x21}' reference images to <ref> ____'
+  ; 
+  ;@alnimg
+  ;<reftmpl>
+  ;<reflist>
+  ;(x20)  ;radius
+  ;(4)    ;method
+  ;<ref>
+  ;<dir>/iter00/free
+  ; 
+  ;@unstack
+  ;<dir>/iter00/freedoc
+  ;<dir>/iter00/free@
+  ;<dir>/iter00/freeav***
+  ;  
+  ;DE
+  ;<dir>/iter00/freeav
+  ;DE
+  ;<dir>/iter00/freeva
+  ;DE
+  ;<dir>/iter00/free
+  ;
+  ;VM
+  ;mv <dir>/iter00/freedoc.$DATEXT <dir>/iter00/grplist.$DATEXT
+  
+  VM
+  echo '____ Centering '{%F7.1%x21}' reference images ____'
+ 
+  DO LB3 x13=1,x21
+    UD IC x13,x22
+    <reflist>
+    
+    @centerfindradius(x30,x31,x32) ;must be centered for refalignment
+    <reftmpl>x22
+    
+    SH
+    <reftmpl>x22
+    <dir>/iter00/freeav{***x22}
+    (x31,x32)
+  LB3
+  UD ICE
+  <reflist>
+  
+  VM
+  cp <reflist>.$DATEXT <dir>/iter00/grplist.$DATEXT
+ELSE
+  VM
+  echo '____ Already initialized '{%F7.1%x21}' reference images ____'
+ENDIF
+
+SD IC NEW
+jumpsum_ic
+(2),x23
+
+DO LB4 x14=1,x23 ;for each iteration of multi-reference classification/free-alignment
+  VM
+  echo '     ____ Iteration '{**x14}' ____'
+  
+  VM
+  mkdir -p <dir>/iter{**x14}
+  
+  x24=x14-1 ;previous round
+
+  x99=0
+  IQ FI x99
+  <dir>/iter{**x14}/alnavgdoc
+  IF(x99.eq.1)THEN
+    VM
+    echo '____ Ref-Classification was already completed ____'
+  ELSE
+    VM
+    echo '____ Classify particles according to ' {%F7.1%x21} ' reference images ____'
+    
+    @alnmultiref ;(x20)
+    <pcllist>
+    <pcltmpl>
+    <dir>/iter{**x24}/grplist
+    <dir>/iter{**x24}/freeav***
+    (x20) ;radius
+    <dir>/iter{**x14}
+
+    @refgrp
+    <dir>/iter{**x14}/apshdoc
+    <pcltmpl>
+    <dir>/iter{**x14}
+    
+    VM
+    rm -f <dir>/iter{**x14}/var*.$DATEXT
+    
+    [mcode]=4
+    IF([mode].eq.1)[mcode]=5
+
+    @alnimg ;orient averages to reference
+    <dir>/iter{**x14}/avg@***
+    <dir>/iter{**x14}/grplist
+    (x20) ;radius
+    ([mcode])   ;refalign (checks mirrors) 
+    <ref>
+    <dir>/iter{**x14}/alnavg   ;prefix for av va @*** and doc
+    
+    DE
+    <dir>/iter{**x14}/alnavgva
+    DE
+    <dir>/iter{**x14}/alnavgav
+  ENDIF
+
+  IF(x14.gt.1)THEN
+    @jumpers
+    <dir>/iter{**x24}/grplist ;list of prior round groups
+    <dir>/iter{**x24}/grp***  ;template for prior group filenames
+    <dir>/iter{**x14}/grp***  ;template for current group filenames
+    <dir>/iter{**x14}/jumplist  ;output
+
+    UD N x89
+    <dir>/iter{**x14}/jumplist
+    UD E
+    
+    SD IC x24,x14,x89
+    jumpsum_ic
+    
+    ;IF(x89.eq.0)THEN
+    ;  VM
+    ;  echo 'Particles stopped jumping between reference groups. Stop iterating.'
+    ;  ;GOTO LB89 ;skip to final alignment
+    ;ENDIF
+  ENDIF
+
+  UD N x21
+  <dir>/iter{**x14}/grplist
+  
+  VM
+  echo '____ Free-align '{%F7.1%x25}' times within '{%F7.1%x21}' reference groups ____'
+  
+  SD IC NEW
+  classerr_ic
+  (3),x21
+  
+  DO LB1 x11=1,x21 ;for each reference group
+    UD IC x11,x22
+    <dir>/iter{**x14}/grplist
+
+    x99=0
+    IQ FI x99
+    <dir>/iter{**x14}/freeav{***x22}
+    IF(x99.eq.1)THEN
+      VM
+      echo '   Alignment of grp'{***x22}' already completed'
+      GOTO LB90
+    ENDIF
+    
+    @centerfindradius(x30,x31,x32)
+    <dir>/iter{**x14}/alnavg@{***x22}
+    
+    IF(x30.lt.5)THEN
+      x30=x20
+      VM
+      echo WARNING: Suitable radius not found. Using input radius: {%F7.1%x30} pixels
+    ENDIF
+    
+    SH
+    <dir>/iter{**x14}/alnavg@{***x22}
+    _19
+    (x31,x32)
+    
+    CP ;overwrite with centered
+    _19
+    <dir>/iter{**x14}/alnavg@{***x22}
+    
+    DE
+    _19
+    
+    ;should update alnavgdoc with centering params
+
+    VM ; remove prior free directory if it exists
+    rm -fr <dir>/iter{**x14}/alnfree/
+    
+    IF(x29.ge.0)THEN
+      MD
+      set mp
+      (1)
+    ENDIF
+    
+    ;---make incore stack with mirrored particles - since reffree doesn't do mirrors
+    DOC SORT
+    <dir>/iter{**x14}/grp{***x22}
+    <dir>/iter{**x14}/grpsort{***x22}
+    (1) ;sort by pclnum
+    Y ;renumber
+
+    UD N x35
+    <dir>/iter{**x14}/grpsort{***x22}
+    UD x35,x41,x42,x43,x44,x45
+    <dir>/iter{**x14}/grpsort{***x22}
+    UD E
+    ;UD ICE
+    ;<dir>/iter{**x14}/grpsort{***x22}
+
+    MS I ;make indexed stack for particles
+    _11@
+    x36,x36,(1)
+    x35 ;numimgs
+    x41 ;maxnum
+
+    DE
+    <dir>/iter{**x14}/grpsort{***x22}
+    
+    @rtmr ;rotate and mirror particles
+    <dir>/iter{**x14}/grp{***x22}
+    <pcltmpl>
+    _11@******
+    
+    ;---reffree alignment of particles in group
+    @alnfree(x30,x25) ;(radius,numrounds)
+    <dir>/iter{**x14}/grp{***x22}  ;list of particles
+    _11@******                     ;particle template
+    (x30)   ;radius
+    (x25)   ;rounds
+    *       ;center with default blob
+    <dir>/iter{**x14}/alnfree      ;output directory
+    
+    DE
+    _11
+    
+    ;@alnfreeavgs(x20)
+    ;<dir>/iter{**x14}/alnfree           ;alignment directory
+    ;<dir>/iter{**x14}/grp{***x22}    ;list of aligned particles
+    ;(3)                              ;orient avg to reference, align imgs to alnavg
+    ;<dir>/iter{**x14}/alnavg@{***x22}  ;reference image (for each class)
+
+    [mcode]=4
+    IF([mode].eq.1)[mcode]=5
+    
+    @alnimg
+    <dir>/iter{**x14}/alnfree/avgs@**
+    <dir>/iter{**x14}/alnfree/alignlist
+    (x20)     ;radius
+    ([mcode]) ;method
+    <dir>/iter{**x14}/alnavg@{***x22} ;reference image
+    <dir>/iter{**x14}/alnfree/alnavg     ;output prefix
+    
+    IF(x29.ge.0)THEN
+      MD
+      set mp
+      (x29)
+    ENDIF
+    
+    @alnstats
+    <dir>/iter{**x14}/alnfree/alnavgdoc
+    <dir>/iter{**x14}/alnfree/doc**
+    <dir>/iter{**x14}/grp{***x22}
+    <dir>/iter{**x14}/alnfree
+      
+    VM
+    mv <dir>/iter{**x14}/alnfree/alnrnderr.$DATEXT <dir>/iter{**x14}/alnerr{***x22}.$DATEXT
+
+    x33=0 ; rotation error
+    x34=0 ; shift error
+    DO LB2 x12=1,x25 ;for each apsr round
+      UD IC x12,x10,x46,x47
+      <dir>/iter{**x14}/alnerr{***x22}
+
+      x33=x33+x46 ;rt-err
+      x34=x34+x47 ;sh-err
+    LB2 ;next apsr round
+    UD ICE
+    <dir>/iter{**x14}/alnerr{***x22}
+
+    x33=x33/x25 ;avg rt-errr
+    x34=x34/x25 ;avg sh-err
+
+    SD IC x11,x11,x33,x34
+    classerr_ic
+
+    AS R  ;average of freeav
+    <dir>/iter{**x14}/alnfree/alnavg@**
+    (1-x25)
+    A
+    <dir>/iter{**x14}/freeav{***x22}
+    _18 ;freeva{***x22}
+
+    DE
+    _18 ;freeva{***x22}
+    
+    VM
+    echo '  Alignment of grp'{***x22}' completed'
+
+    LB90 ;free-alignment already completed
+
+    VM ;remove intermediate alignment results just keep freeav*** and alnerr***
+    rm -fr <dir>/iter{**x14}/alnfree/
+    
+    DE ;remove old averages - only need centered freeavgs for next round
+    <dir>/iter{**x14}/avg ;{***x22}
+
+  LB1 ;next reference group
+
+  UD ICE
+  <dir>/iter{**x14}/grplist
+  
+  SD IC COPY
+  classerr_ic
+  <dir>/iter{**x14}/alnerr
+  SD IC END
+  classerr_ic
+
+  DE ;remove aligned averages - only need centered freeavgs for next round
+  <dir>/iter{**x14}/alnavg
+ 
+LB4 ;next iteration x14
+
+LB89 ;no more iterations
+
+VM ;remove initial 
+rm -fr <dir>/iter00/
+
+SD IC COPY
+jumpsum_ic
+<dir>/jumpsum
+SD IC END
+jumpsum_ic
+
+VM
+echo '     ____ Final reference-alignment within' {%F7.1%x21} 'groups ____'
+
+;apsh each group to its freeav using appropriate radius
+DO LB5 x15=1,x21 ;for each reference class
+  UD IC x15,x22
+  <dir>/iter{**x14}/grplist
+
+  x40=0
+  SD x22,x40,x40,x40
+  <dir>/apshangles_tmp
+  SD E
+  <dir>/apshangles_tmp
+
+  @centerfindradius(x30,x31,x32)
+  <dir>/iter{**x14}/freeav{***x22}
+  
+  IF(x30.le.5)THEN
+    VM
+    echo WARNING: Radius {%F7.1%x30} is too small - Using input radius {%F7.1%x20}
+    x30=x20
+  ENDIF
+
+  x37=x36/2-x30-3 ;translation range
+  IF(x37.lt.0)THEN
+    x37=0
+    x30=x36/2-3
+  ENDIF
+  
+  VM
+  echo -n Aligning particles in group {%F7.1%x22} using radius {%F7.1%x30} pixels..
+
+  AP SH
+  <dir>/iter{**x14}/freeav*** ;reftmpl
+  x22 ;refselect
+  x37,(1) ;trans,step
+  (1),x30 ;inner,outer
+  <dir>/apshangles_tmp ;refangles
+  <pcltmpl>    ;pcltmpl
+  <dir>/iter{**x14}/grp{***x22} ;pcllist
+  * ;pclangles
+  (0.0) ;angular restriction
+  (1) ;mirror
+  <dir>/apshtmp{***x22}
+
+  DOC SORT
+  <dir>/apshtmp{***x22}
+  <dir>/apshsrt{***x22}
+  (5) ;sort by pclnum
+  Y ;renumber
+
+  DE
+  <dir>/apshtmp{***x22}
+  
+  VM
+  echo .done.
+
+  UD N x35
+  <dir>/apshsrt{***x22}
+  UD IC x35,x41,x42,x43,x44,x45
+  <dir>/apshsrt{***x22}
+  UD ICE
+  <dir>/apshsrt{***x22}
+
+  MS I ;make indexed stack for particles
+  _11@
+  x36,x36,(1)
+  x35 ;numimgs
+  x45 ;maxnum
+
+  @rtmr
+  <dir>/apshsrt{***x22}
+  <pcltmpl>
+  _11@******
+
+  AS R
+  _11@******
+  <dir>/iter{**x14}/grp{***x22} ;pcllist
+  A
+  <dir>/avg@{***x22}
+  <dir>/var@{***x22}
+  
+  ;MO ;model
+  ;_12
+  ;x36,x36,(1)
+  ;C   ;circle
+  ;x30 ;radius
+  
+  ;RF SN
+  ;_11@******
+  ;<dir>/iter{**x14}/grp{***x22}
+  ;_12
+  ;(0.5) ;frequency width
+  ;<dir>/grp{***x22}_snr
+  
+  ;convert ssnr to frc and calculate resolution at 0.5 cutoff
+  ;frc = ssnr/(ssnr+1)
+
+  DE
+  _11
+  ;DE
+  ;_12
+LB5
+UD ICE
+<dir>/iter{**x14}/grplist
+DE
+<dir>/apshangles_tmp
+
+DOC COMBINE ;keys are renumbered - no longer correspond with particle number
+<dir>/apshsrt***
+<dir>/iter{**x14}/grplist
+<dir>/apshdoc
+
+VM
+rm -f <dir>/apshsrt*.$DATEXT
+
+EN D
