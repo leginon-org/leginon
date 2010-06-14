@@ -300,6 +300,8 @@ class AppionScript(basicScript.BasicScript):
 		"""
 		if self.successful_run is False:
 			clustdata = self.getClusterJobData()
+			if clustdata is None:
+				return
 			from appionlib import apWebScript
 			apWebScript.setJobToError(clustdata.dbid)
 
