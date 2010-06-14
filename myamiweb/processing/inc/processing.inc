@@ -778,7 +778,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	}*/
 
 	// create job file
-	//$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
+	$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
 	$jobtext .= "#PBS -l walltime=$walltime:00:00\n";
 	$jobtext .= "#PBS -l cput=$cputime:00:00\n";
 	$jobtext .= "#PBS -j oe\n";
