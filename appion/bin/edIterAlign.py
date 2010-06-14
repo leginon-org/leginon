@@ -52,9 +52,9 @@ class EdIterAlignScript(appionScript.AppionScript):
 			help="Radius of particle for alignment (in Angstroms)", metavar="#")
 		self.parser.add_option("-i", "--iterations", dest="numiter", type="int", default=20,
 			help="Number of ref-based classification iterations", metavar="#")
-		self.parser.add_option("-f", "--freealigns", dest="freealigns",
-			type="int", default=3, help="Number of ref-free alignment rounds per class",
-			metavar="#")
+		#self.parser.add_option("-f", "--freealigns", dest="freealigns",
+			#type="int", default=1, help="Number of ref-free alignment rounds per class",
+			#metavar="#")
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="Number of processor to use", metavar="ID#")
 
@@ -130,7 +130,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		editrunq['runname'] = self.params['runname']
 		editrunq['radius'] = self.params['partrad']
 		editrunq['num_iter'] = self.params['numiter']
-		editrunq['freealigns'] = self.params['freealigns']
+		#editrunq['freealigns'] = self.params['freealigns']  ### no longer an option
 		editrunq['invert_templs'] = self.params['inverttemplates']
 		editrunq['num_templs'] = self.params['numtemplate']
 		#editrunq['csym', int),
@@ -298,7 +298,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		emancmd += "clip="+str(self.clipsize)+","+str(self.clipsize)+" "
 		emancmd += "spiderswap"
 		starttime = time.time()
-		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
+		apDisplay.printColor("Converting stack to spider format", "cyan")
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
 		return spiderstack
@@ -409,44 +409,48 @@ class EdIterAlignScript(appionScript.AppionScript):
 		f.close()
 
 		### read / write batch file
-		globalbatch = os.path.join(apParam.getAppionDirectory(), "spiderbatch/bat/IterativeClassifyAlign.spi")
+		globalbatch = os.path.join(apParam.getAppionDirectory(), "spiderbatch/IterativeClassifyAlign.spi")
 		localbatch =  os.path.join(self.params['rundir'], "IterativeClassifyAlign.spi")
 		gf = open(globalbatch, "r")
 		lf = open(localbatch, "w")
 		modify = True
 		for line in gf:
-			if modify is True:
+			if modify is True: #flag for line is in header
+				### Input files ###
 				if re.match("\<pcltmpl\>", line):
-					### spider stack of particles
+					### template for spider particle names
 					lf.write("<pcltmpl>"+spyder.fileFilter(spiderstack)+"@****** \n")
 				elif re.match("\<pcllist\>", line):
-					### sequential list of particle numbers
+					### list of particle numbers
 					lf.write("<pcllist>"+spyder.fileFilter(partsel)+"\n")
-				elif re.match("\[radius\]", line):
-					### particle radius in pixels
-					pixrad = int(self.params['partrad']/self.stack['apix']/self.params['bin'])
-					lf.write("[radius]%d\n"%(pixrad))
 				elif re.match("\<reftmpl\>", line):
-					### spider stack of templates
+					### template for reference image names
 					lf.write("<reftmpl>"+spyder.fileFilter(templatestack)+"@*** \n")
 				elif re.match("\<reflist\>", line):
-					### sequential list of reference numbers
+					### list of reference numbers
 					lf.write("<reflist>"+spyder.fileFilter(refsel)+"\n")
 				elif re.match("\<ref\>", line):
 					### orientation reference
 					lf.write("<ref>"+spyder.fileFilter(orientref)+"\n")
+				### Parameters ###
+				elif re.match("23  ;pixels", line):
+					### particle radius in pixels
+					pixrad = int(self.params['partrad']/self.stack['apix']/self.params['bin'])
+					lf.write("%d  ;pixels\n"%(pixrad))
+				elif re.match("10  ;iterations", line):
+					### number of ref-based iterations
+					lf.write("%d  ;iterations\n"%(self.params['numiter']))
+				#elif re.match("1   ;free-align rounds", line):
+					### number of ref-free alignments per class
+					#lf.write("%d   ;free-align rounds\n"%(self.params['freealigns']))
+				elif re.match("0   ;processors", line):
+					### number of processors
+					lf.write("%d   ;processors\n"%(self.params['nproc']))
 				elif re.match("\<dir\>", line):
 					### sub-directory, we use "."
 					lf.write("<dir>.\n")
-				elif re.match("\[iter\]", line):
-					### number of ref-based iterations
-					lf.write("[iter]%d\n"%(self.params['numiter']))
-				elif re.match("\[alnrnds\]", line):
-					### number of ref-free subroutine iterations
-					lf.write("[alnrnds]%d\n"%(self.params['freealigns']))
-				elif re.match("\[mp\]", line):
-					### number of processors
-					lf.write("[mp]%d\n"%(self.params['nproc']))
+				elif re.search("- END BATCH HEADER -", line):
+					### reached last line of batch header ###
 					modify = False
 				else:
 					lf.write(line)
@@ -460,16 +464,19 @@ class EdIterAlignScript(appionScript.AppionScript):
 	def runSpiderBatch(self, localbatch, spiderstack):
 		### set SPPROC_DIR environment variable
 		spiprocdir = os.path.join(apParam.getAppionDirectory(), "spiderbatch/")
+		
+		### strip localbatch extension
+		batchheadname = os.path.splitext(localbatch)[0] ###batchheadname = localbatch.split('.')[0]
 
 		### run Iterative Classification and Alignment
 		mySpider = spyder.SpiderSession(logo=True, spiderprocdir=spiprocdir, projext=".spi", term=True, verbose=True)
-		batchheadname = localbatch.split('.')[0]
 		mySpider.toSpider("@%s" % batchheadname)
 		mySpider.close()
+
 		###output is class averages, variances, particle lists, and alignment parameters
 		### write aligned stack
 		if not os.path.isfile("apshdoc.spi"):
-			apDisplay.printError("Doc file, apshdoc.spi does not exist.")
+			apDisplay.printError("Output alignment parameters file apshdoc.spi does not exist.")
 		else:
 			mySpider = spyder.SpiderSession(logo=True, spiderprocdir=spiprocdir, projext=".spi", term=True, verbose=True)
 			mySpider.toSpider("@rtmr",				#spider script for rotate,shift,mirror
