@@ -1895,8 +1895,10 @@ class leginondata {
 		$q="SELECT `DEF_id`, concat(date_format(DEF_timestamp,'%d-%b-%Y'), label, axis) as label from StageModelCalibrationData order by `DEF_timestamp` DESC";
 		$q="SELECT `DEF_id`, concat(label,' ',axis) as label  from StageModelCalibrationData order by `DEF_timestamp` DESC";
 		$result = $this->mysql->SQLQuery($q);
-		while ($row= mysql_fetch_array($result, MYSQL_ASSOC))
-			$models[] = $row;
+		if($result != false){
+			while ($row= mysql_fetch_array($result, MYSQL_ASSOC))
+				$models[] = $row;
+		}
 		return $models;
 	}
 
@@ -1910,8 +1912,10 @@ class leginondata {
 		." where t.`hostname` = '$hostname' and c.`hostname` = '$hostname'"
 		." order by s.`DEF_timestamp` DESC";
 		$result = $this->mysql->SQLQuery($q);
-		while ($row= mysql_fetch_array($result, MYSQL_ASSOC))
-			$models[] = $row;
+		if($result != false){
+			while ($row= mysql_fetch_array($result, MYSQL_ASSOC))
+				$models[] = $row;
+		}
 		return $models;
 	}
 
