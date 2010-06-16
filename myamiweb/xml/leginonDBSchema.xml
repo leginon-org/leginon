@@ -608,6 +608,7 @@
     <field 
       name="DEF_timestamp" 
       type="timestamp" 
+			null="NOT NULL"
       default="DEFAULT 'CURRENT_TIMESTAMP'" 
     />
     <field 
