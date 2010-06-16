@@ -49,7 +49,7 @@ require_once('setupUtils.inc');
 
 		<h3>Initialize database tables</h3>
 		<p>The Appion and Leginon Web Tools require default tables to be created in both databases.<br />
-		   If this is your first time setting up these web tools, please click the following button:</p>
+		   Please click the following button for first-time setup or upgrade from older versions only:</p>
 		&nbsp;&nbsp;<input type="submit" value="DB Initialization" />
 		<br /><br />
 		<h3>This is what your config file looks like based on the settings you provided: </h3>
