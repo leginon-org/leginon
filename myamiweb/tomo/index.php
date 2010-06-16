@@ -103,7 +103,7 @@ if($tiltSeriesId != NULL) {
 	echo '<table><tr><td colspan=2>';
 	thumbnails($tiltSeriesId, $tomography);
 	echo '</td></tr><tr><td>';
-	echo $tiltSeriesName; 
+	echo "$tiltSeriesName &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>tiltSeriesId =</b> $tiltSeriesId";
 	echo '</td><td>';
 	if ($deletestatus == 'deleted') {
 		echo "<b> --- Images in this series are deleted ---</b>";
