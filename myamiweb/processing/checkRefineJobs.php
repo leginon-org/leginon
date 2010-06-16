@@ -556,7 +556,6 @@ function checkCoranTarGz($jobinfo) {
 	$cluster = $jobinfo['cluster'];
 	$coranfile = $jobinfo['dmfpath'].'/coran.tar.gz';
 	$cmd = "dmf ls $coranfile";
-	echo $cmd;
 	$lscoran = exec_over_ssh($cluster, $user, $pass, $cmd, True);
 	$has_coran = ($lscoran) ? 1:0;
 	return $has_coran;
