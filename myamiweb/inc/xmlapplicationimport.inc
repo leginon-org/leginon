@@ -59,7 +59,7 @@ class XMLImport {
 				$fname = $v['attributes']['name'];
 				$ftype = $v['attributes']['type'];
 				$fnull = empty($v['attributes']['null']) ? 'null' : $v['attributes']['null'];
-				$fextra = empty($v['attributes']['extra']) ? 'null' : $v['attributes']['extra'];
+				$fextra = empty($v['attributes']['extra']) ? '' : $v['attributes']['extra'];
 				$fields[] = "`$fname` $ftype $fnull $fextra";
 				$fieldtypes[$fname] = $ftype;
 			}
