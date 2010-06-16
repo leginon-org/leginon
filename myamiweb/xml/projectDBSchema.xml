@@ -40,7 +40,8 @@
     <field 
       name="timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
+      default="default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
     />
     <field 
       name="label" 
@@ -70,7 +71,8 @@
     <field 
       name="timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
+      default="default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
     />
     <field 
       name="label" 
@@ -151,7 +153,8 @@
     <field 
       name="timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
+      default="default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
     />
     <field 
       name="label" 
@@ -376,7 +379,8 @@
     <field 
       name="date" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
+      default="default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP" 
     />
   </sqltable>  
   <sqltable name="projectexperiments" >
