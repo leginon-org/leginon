@@ -1,213 +1,407 @@
 #!/usr/bin/env python
 
-"""
-This is a template on how to construct a new Appion Script from scratch
-
-At the top you have the '#!/usr/bin/env python'
-
-this tells the computer that this is a python program and it tells it
-to run the env program in the /usr/bin directory to find the location
-of the python interpreter
-"""
-
 import os
+import time
+import glob
+import numpy
+import string
+import shutil
+import leginon.leginondata
+import leginon.projectdata
+from pyami import mrc
 from appionlib import appionScript
 from appionlib import apDisplay
-from appionlib import apStack
-from appionlib import apModel
-
-"""
-Next, you have the import commands
-
-You may not know which module you will need, so start with a couple
-and add more as you need them. For an Appion Script you will at least
-need the 'appionScript' module (or file) and the 'os' module is also
-very handy. 'apDisplay' is used to print messages, wanrings and errors.
-apStack will be used to get information about a stack.
-
-For Appion libraries we use the system 'from appionlib import X'. This
-tells python to go into the appionlib directory and read the file 'X.py'.
-"""
-
-"""
-Now we need to create a class for our program that will inherit all the
-properties of appionScript.
-
-In this case I gave my program the name 'ExampleScript' and then put
-appionScript.AppionScript in parentheses. The latter part tells python
-that my new class called ExampleScript will inherit all properties from
-AppionScript located in the appionScript module (or file). The
-appionScript.AppionScript is required for an Appion Script.
-
-Within a new Appion Script class there are four required functions:
-setupParserOptions(), checkConflicts(), setRunDir(), and start(). Beyond
-this you can create any new function that you would like and there are two
-other special functions that you can override, OnInit() and OnClose(). These
-function are described in more detail below.
-
-Typically, I like to keep setupParserOptions(), checkConflicts(), setRunDir()
-at the top of the class and start() as the last function in the class. This
-makes it easy to find them when reading another person's code.
-"""
+from appionlib import apParam
+from appionlib import apFile
 
 #=====================
 #=====================
-class ExampleScript(appionScript.AppionScript):
+class UploadImages(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		"""
-		This function is used to define any command line arguments.
-		Things like stackid, modelid, templateid, or shuffle files.
+		self.parser.add_option("--mpix", "--pixel-size", dest="mpix", type="float",
+			help="Pixel size of the images in meters", metavar="#.#")
+		self.parser.add_option("--mag", dest="magnification", type="int", metavar="MAG",
+			help="nominal magnification, e.g., --mag=50000 for 50kX")
+		self.parser.add_option("--kv", dest="kv", type="int", metavar="INT",
+			help="high tension (in kilovolts), e.g., --kv=120")
 
-		As part of Appion Script, several global variables are already defined:
-		runname, description, projectid, rundir, and commit. Of these only
-		runname is required
+		self.parser.add_option("--image-dir", dest="imagedir",
+			help="Directory that contains MRC files to upload", metavar="DIR")
 
-		The commandline is parsed using the OptParse library in python,
-		see http://docs.python.org/library/optparse.html for documentation.
+		self.parser.add_option("--leginon-output-dir", dest="leginondir",
+			help="Leginon output directory, e.g., --leginon-output-dir=/data/leginon",
+			metavar="DIR")
 
-		There are three major types of options: (1) strings, floats, and ints,
-		(2) true/false, and (3) choosing from a list.
+		self.parser.add_option("--images-per-series", dest="seriessize", type="int", default=1,
+			help="Number of images in tilt series", metavar="#")
 
-		The first type of option is obtaining a string, float, or int from the user.
-		It has the following format:
-		"""
-		self.parser.add_option("--username", dest="username",
-			help="Your user name", metavar="NAME")
-		self.parser.add_option("--file", dest="filename",
-			help="Some file", metavar="FILE")
-		self.parser.add_option("-s", "--id", "--stackid", dest="stackid", type="int",
-			help="A stack id ", metavar="#")
-		self.parser.add_option("-m", "--modelid", dest="modelid", type="int",
-			help="An initial model id ", metavar="#")
-		self.parser.add_option("--p", "--pi", dest="pi", type="float", default=3.1415926,
-			help="The value of pi", metavar="#")
-		"""
-		When defining a new commandline option, the first to do is define how you will
-		set this option. Valid options are a single hyphen and a single letter or two
-		hyphens and any number of letter. You can alos specify as many different ways
-		to set you option as you want. The next flag is the destination or 'dest', this
-		defines what your value will be call in self.params. For example, the username
-		will be stored in self.params['username'].
+		self.parser.add_option("--angle-list", dest="angleliststr",
+			help="List of angles to apply to tilt series", metavar="#,#,#")
+		self.parser.add_option("--defocus-list", dest="defocusliststr",
+			help="List of defoci to apply to defocal series", metavar="#,#,#")
+		self.parser.add_option("--defocus", dest="defocus", type="float",
+			help="Defocus to apply to all images", metavar="#.#e#")
 
-		Next,note that the flag 'type' is used to define the type, by default it is string.
-		So, this is left out in the first case. In the third option, the flag
-		'default' is used to set a default value, is general the default is the python
-		reserved value of 'None'. The flags 'help' and 'metavar' are used when printing
-		the help message to the command line.
-
-		The second type of option is true/false:
-		"""
-		self.parser.add_option("-D", "--do-it", dest="doit", default=True,
-			action="store_true", help="Do it")
-		self.parser.add_option("--do-not-do-it", dest="doit", default=True,
-			action="store_false", help="Do not do it")
-		"""
-		In this case we have two options going to the same dest, one sets the
-		value to true the other to false through the 'action' flag. In this
-		case, by default the value is True. Note 'metavar' is not defined.
-
-		The third type of option is a choice:
-		"""
-		self.fruittypes = ('orange', 'apple', 'banana')
-		self.parser.add_option("--fruit", dest="fruit", default="orange",
-			type="choice", choices=self.fruittypes,
-			help="Favorite type of fruit", metavar="..")
-		"""
-		Here you provide a list of acceptable option for the user to choose from
-		"""
+		self.uploadtypes = ('tiltseries', 'defocalseries', 'normal')
+		self.parser.add_option("--type", dest="uploadtype", default="normal",
+			type="choice", choices=self.uploadtypes,
+			help="Type of upload to perform: "+str(self.uploadtypes), metavar="..")
 
 	#=====================
 	def checkConflicts(self):
-		"""
-		After you have set the options you want to have, you need to check to make sure
-		they are valid and if they are required.
+		if self.params['description'] is None:
+			apDisplay.printError("Please provide a description, e.g., --description='test'")
+		if self.params['imagedir'] is None:
+			apDisplay.printError("Please provide a image directory, e.g., --imagedir=/path/to/files/")
+			if not os.path.isdir(self.params['imagedir']):
+				apDisplay.printError("Image directory '%s' does not exist"%(self.params['imagedir']))
+		if self.params['kv'] is None:
+			apDisplay.printError("Please provide a high tension (in kV), e.g., --kv=120")
+			if self.params['kv'] > 1000:
+				apDisplay.printError("High tension must be in kilovolts (e.g., --kv=120)")
+		if self.params['magnification'] is None:
+			apDisplay.printError("Please provide a magnification, e.g., --mag=50000")		
+		if self.params['mpix'] is None:
+			apDisplay.printError("Please provide a pixel size (in meters), e.g., --pixelsize=1.3e-10")
 
-		For this script, we'll say that the stackid is required
-		"""
-		if self.params['stackid'] is None:
-			apDisplay.printError("Please provide a user id, e.g. --stackid=15")
-		"""
-		Here we check is the stackid is not defined, i.e., it is equal to 'None'
-		If it is None the program will print an Error and automatically exit
+		if self.params['defocus'] is not None and self.params['defocusliststr'] is not None:
+			apDisplay.printError("Please provide only one of --defocus or --defocus-list")
+		if self.params['defocus'] is None and self.params['defocusliststr'] is None:
+			apDisplay.printError("Please provide either --defocus or --defocus-list")
 
-		Next, I want to check the username does not contain a space
-		"""
-		if self.params['username'] is not None and ' ' in self.params['username']:
-			apDisplay.printError("User names cannot contains spaces, '%s'"
-				%(self.params['username']))
-		"""
-		If there is a space it exit the program
+		### TODO: double check these
+		if self.params['angleliststr'] is not None and self.params['uploadtype'] == "tiltseries":
+			apDisplay.printError("If using --angle-list, please provide --images-per-series")
+		if self.params['uploadtype'] == "tiltseries" and self.params['angleliststr'] is None:
+			apDisplay.printError("If using --images-per-tilt-series, please provide --angle-list")
+		if self.params['angleliststr'] is not None:
+			self.anglelist = self.convertStringToList(self.params['angleliststr'])
+			if len(self.anglelist) != self.params['seriessize']:
+				apDisplay.printError("'images-per-tilt-series' and 'angle-list' have different lengths")
+		if self.params['defocusliststr'] is not None:
+			self.defocuslist = self.convertStringToList(self.params['defocusliststr'])
 
-		Next we can look up the user id to make sure it is valid
-		"""
-		if not self.isStackId(self.params['stackid']):
-			apDisplay.printError("Invaid user id")
-		apDisplay.printMsg("User id is valid")
-		"""
-		We print a general message, if the stackid is valid
+		### check for negative defoci
+		if self.params['defocus'] is not None and self.params['defocus'] > 0:
+			apDisplay.printWarning("defocus is being switched to negative, %.3f"
+				%(self.params['defocus']))
+			self.params['defocus'] *= -1.0
+			if self.params['defocus'] > -0.1:
+				apDisplay.printError("defocus must be in microns, %.3f"
+					%(self.params['defocus']))
+		elif self.params['defocus'] is None:
+			newlist = []
+			for defocus in self.defocuslist:
+				if defocus > 0:
+					apDisplay.printWarning("defocus is being switched to negative, %.3f"
+						%(defocus))
+					defocus *= -1.0
+					if defocus > -0.1:
+						apDisplay.printError("defocus must be in microns, %.3f"%(defocus))
+				newlist.append(defocus)
+			self.defocuslist = newlist
 
-		Next we can look up the see if a file exists
-		"""
-		if self.params['filename'] is not None and not os.path.isfile(self.params['filename']):
-			apDisplay.printWarning("File does not exist")
-		"""
-		In this case, the program does not exit, it just prints a warning and continues on
-		"""
+		### set session name if undefined
+		if not 'sessionname' is self.params or self.params['sessionname'] is None:
+			self.params['sessionname'] = self.getUnusedSessionName()
+
+		### set leginon dir if undefined
+		if self.params['leginondir'] is None:
+			try:
+				self.params['leginondir'] = leginon.leginonconfig.IMAGE_PATH
+			except AttributeError:
+				apDisplay.printError("Please provide a leginon output directory, "
+					+"e.g., --leginon-output-dir=/data/leginon")
+		self.leginonimagedir = os.path.join(self.params['leginondir'], self.params['sessionname'], 'rawdata')
 
 	#=====================
-	def isStackId(self, stackid):
+	def convertStringToList(self, string):
 		"""
-		Arbitrary requirements for a stackid
+		convert a string containing commas to a list
 		"""
-		if stackid < 1:
-			return False
-		elif stackid > 99999:
-			return False
-		return True
+		if not "," in string:
+			apDisplay.printError("Unable to parse string"%(string))
+		stripped = string.strip()
+		rawlist = stripped.split(",")
+		parsedlist = []
+		for item in rawlist:
+			if not item:
+				continue
+			num = float(item)
+			parsedlist.append(num)
+		return parsedlist
+
+	#=====================
+	def getUserData(self):
+		username = apParam.getUsername()
+		userq = leginon.leginondata.UserData()
+		userq['username'] = username
+		userdatas = userq.query(results=1)
+		if not userdatas:
+			return None
+		return userdatas[0]
+
+	#=====================
+	def getUnusedSessionName(self):
+		### get standard appion time stamp, e.g., 10jun30
+		sessionq = leginon.leginondata.SessionData()
+		sessionq['name'] = self.timestamp
+		sessiondatas = sessionq.query(results=1)
+		if not sessiondatas:
+			return self.timestamp
+
+		for char in string.lowercase:
+			sessionname = self.timestamp+char
+			sessionq = leginon.leginondata.SessionData()
+			sessionq['name'] = sessionname
+			sessiondatas = sessionq.query(results=1)
+			if not sessiondatas:
+				break
+		return sessionname
+
+	#=====================
+	def createNewSession(self):
+		apDisplay.printColor("Creating a new session", "cyan")
+
+		### get user data
+		userdata = self.getUserData()
+
+		sessionq = leginon.leginondata.SessionData()
+		sessionq['name'] = self.params['sessionname']
+		sessionq['image path'] = self.leginonimagedir
+		sessionq['comment'] = self.params['description']
+		sessionq['user'] = userdata
+
+		projectdata = leginon.projectdata.projects.direct_query(self.params['projectid'])
+
+		projectexpq = leginon.projectdata.projectexperiments()
+		projectexpq['project'] = projectdata
+		projectexpq['session'] = sessionq
+		if self.params['commit'] is True:
+			projectexpq.insert()
+
+		self.sessiondata = sessionq
+		apDisplay.printColor("Created new session %s"%(self.params['sessionname']), "cyan")
+		return
 
 	#=====================
 	def setRunDir(self):
 		"""
 		This function is only run, if --rundir is not defined on the commandline
-
-		This function decides when the results will be stored. You can do some complicated
-		things to set a directory.
-
-		Here I will use information about the stack to set the directory
 		"""
-		### get the path to input stack
-		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-		stackpath = os.path.abspath(stackdata['path']['path'])
-		### go down two directories
-		uponepath = os.path.join(stackpath, "..")
-		uptwopath = os.path.join(uponepath, "..")
-		### add path strings; always add runname to end!!!
-		rundir = os.path.join(uptwopath, "example", self.params['runname'])
-		### same thing in one step
-		rundir = os.path.join(stackpath, "../../example", self.params['runname'])
-		### good idea to set absolute path,
-		### cleans up 'path/stack/stack1/../../example/ex1' -> 'path/example/ex1'
-		self.params['rundir'] = os.path.abspath(rundir)
-		"""
-		In all cases, we set the value for self.params['rundir']
-		"""
+		### set the rundir to the leginon image directory
+		self.params['rundir'] = self.leginonimagedir
 
 	#=====================
-	def onInit(self):
-		"""
-		Advanced function that runs things before other things are initialized.
-		For example, open a log file or connect to the database.
-		"""
+	def getAppionInstruments(self):
+		instrumentq = leginon.leginondata.InstrumentData()
+		instrumentq['hostname'] = "appion"
+		instrumentq['name'] = "AppionTEM"
+		instrumentdatas = instrumentq.query(results=1)
+		if not instrumentdatas:
+			apDisplay.printError("Could not find the default Appion TEM in Leginon")
+		self.temdata = instrumentdatas[0]
+		
+		instrumentq = leginon.leginondata.InstrumentData()
+		instrumentq['hostname'] = "appion"
+		instrumentq['name'] = "AppionCamera"
+		instrumentdatas = instrumentq.query(results=1)
+		if not instrumentdatas:
+			apDisplay.printError("Could not find the default Appion Camera in Leginon")
+		self.camdata = instrumentdatas[0]
 		return
 
 	#=====================
-	def onClose(self):
+	def getImagesInDirectory(self, directory):
+		searchstring = os.path.join(directory, "*.mrc")
+		mrclist = glob.glob(searchstring)
+		if len(mrclist) == 0:
+			apDisplay.printError("Did not find any images to upload")
+		mrclist.sort()
+		return mrclist
+
+	#=====================
+	def setDefocalTargetData(self, seriescount):
+		if self.params['uploadtype'] != "defocalseries":
+			return None
+
+		### setup preset data
+		targetpresetdata = leginon.leginondata.PresetData()
+		targetpresetdata['session'] = self.sessiondata
+		targetpresetdata['tem'] = self.temdata
+		targetpresetdata['ccdcamera'] = self.camdata
+		targetpresetdata['magnification'] = self.params['magnification']
+		targetpresetdata['name'] = 'target'
+
+		### setup camera data
+		targetcameradata = leginon.leginondata.CameraEMData()
+		targetcameradata['session'] = self.sessiondata
+		targetcameradata['ccdcamera'] = self.camdata
+		targetcameradata['dimension'] = {'x': 1, 'y': 1}
+		targetcameradata['binning'] = {'x': 1, 'y': 1}
+
+		### setup scope data
+		targetscopedata = leginon.leginondata.ScopeEMData()
+		targetscopedata['session'] = self.sessiondata
+		targetscopedata['tem'] = self.temdata
+		targetscopedata['magnification'] = self.params['magnification']
+		targetscopedata['high tension'] = self.params['kv']*1000
+		targetscopedata['defocus'] = 0.0
+		targetscopedata['stage position'] = { 'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0, }
+
+		### setup image data
+		targetimgdata = leginon.leginondata.AcquisitionImageData()
+		targetimgdata['session'] = self.sessiondata
+		targetimgdata['scope'] = targetscopedata
+		targetimgdata['camera'] = targetcameradata
+		targetimgdata['preset'] = targetpresetdata
+		targetimgdata['label'] = 'UploadTarget'
+		targetimgdata['image'] = numpy.ones((1,1))
+
+		### required
+		targetimgdata['filename'] = "null"
+
+		### setup target data
+		targetdata = leginon.leginondata.AcquisitionImageTargetData()
+		targetdata['session'] = self.sessiondata
+		targetdata['image'] = targetimgdata
+		targetdata['scope'] = targetscopedata
+		targetdata['camera'] = targetcameradata
+		targetdata['preset'] = targetpresetdata
+		targetdata['type'] = "upload"
+		targetdata['version'] = 0
+		targetdata['number'] = seriescount
+		targetdata['status'] = "done"
+
+		return targetdata
+
+	#=====================
+	def getTiltSeries(self, seriescount):
+		if self.params['uploadtype'] != "tiltseries":
+			return None
+
+		tiltq = leginon.leginondata.TiltSeriesData()
+		tiltq['session'] = self.sessiondata
+		tiltq['number'] = seriescount
+
+		return tiltq
+
+	#=====================
+	def getTiltAngle(self, numinseries):
+		### TODO: fix this
+		return 0
+
+	#=====================
+	def getImageDefocus(self, numinseries):
+		### TODO: fix this
+		return -2.0e-6
+
+	#=====================
+	def uploadImageInformation(self, newimagepath, dims, seriescount, numinseries):
+		### setup scope data
+		scopedata = leginon.leginondata.ScopeEMData()
+		scopedata['session'] = self.sessiondata
+		scopedata['tem'] = self.temdata
+		scopedata['magnification'] = self.params['magnification']
+		scopedata['high tension'] = self.params['kv']*1000
+
+		### these are dynamic variables
+		scopedata['defocus'] = self.getImageDefocus(numinseries)
+		scopedata['stage position'] = {
+			'x': 0.0,
+			'y': 0.0,
+			'z': 0.0,
+			'a': self.getTiltAngle(numinseries),
+		}
+
+		### setup camera data
+		cameradata = leginon.leginondata.CameraEMData()
+		cameradata['session'] = self.sessiondata
+		cameradata['ccdcamera'] = self.camdata
+		cameradata['dimension'] = dims
+		cameradata['binning'] = {'x': 1, 'y': 1}
+
+		### setup camera data
+		presetdata = leginon.leginondata.PresetData()
+		presetdata['session'] = self.sessiondata
+		presetdata['tem'] = self.temdata
+		presetdata['ccdcamera'] = self.camdata
+		presetdata['magnification'] = self.params['magnification']
+		presetdata['name'] = 'upload%d'%(numinseries)
+
+		### setup image data
+		imgdata = leginon.leginondata.AcquisitionImageData()
+		imgdata['session'] = self.sessiondata
+		imgdata['scope'] = scopedata
+		imgdata['camera'] = cameradata
+		imgdata['preset'] = presetdata
+		basename = os.path.basename(newimagepath)
+		if basename.endswith(".mrc"):
+			basename = os.path.splitext(basename)[0]
+		imgdata['filename'] = basename
+		imgdata['label'] = 'UploadImage'
+
+		### fake small image array to avoid overloading memory
+		imgdata['image'] = numpy.ones((1,1))
+
+		### use this for defocal group data
+		imgdata['target'] = self.setDefocalTargetData(seriescount)
+
+		### use this for tilt series data
+		imgdata['tilt series'] = self.getTiltSeries(seriescount)
+
+		if self.params['commit'] is True:
+			imgdata.insert()
+
+	#=====================
+	def updatePixelSizeCalibration(self):
 		"""
-		Advanced function that runs things after all other things are finished.
-		For example, close a log file.
+		This updates the pixel size for the magnification on the
+		instruments before the image is published.  Later query will look up the
+		pixelsize calibration closest and before the published image 
 		"""
-		return
+		pixelcalibrationq = leginon.leginondata.PixelSizeCalibrationData()
+		pixelcalibrationq['magnification'] = self.params['magnification']
+		pixelcalibrationq['tem'] = self.temdata
+		pixelcalibrationq['ccdcamera'] = self.camdata
+		pixelcalibrationdatas = pixelcalibrationq.query(results=1)
+		if pixelcalibrationdatas:
+			lastpixelsize = pixelcalibrationdatas[0]['pixelsize']
+			if self.params['mpix'] == lastpixelsize:
+				if pixelcalibrationq['session'] is not None:
+					lastsession = pixelcalibrationq['session']['name']
+					if lastsession == self.params['sessionname']:
+						### values have been set correctly already
+						return False
+
+		pixelcalibrationq['pixelsize'] = self.params['mpix']
+		pixelcalibrationq['comment'] = 'based on uploaded pixel size'
+		pixelcalibrationq['session'] = self.sessiondata
+
+		if self.params['commit'] is True:
+			pixelcalibrationq.insert()
+
+	#=====================
+	def newImagePath(self, mrcfile, numinseries):
+		extension = os.path.splitext(mrcfile)[1]
+		rootname = os.path.splitext(os.path.basename(mrcfile))[0]
+		newname = self.params['sessionname']+"_"+rootname+"_"+str(numinseries)+extension
+		newimagepath = os.path.join(self.leginonimagedir, newname)
+		return newimagepath
+
+	#=====================
+	def copyfile(self, oldmrcfile, newmrcfile):
+		shutil.copy(oldmrcfile, newmrcfile)
+		if apFile.fileSize(oldmrcfile) != apFile.fileSize(newmrcfile):
+			apDisplay.printError("File sizes are different")
+
+	#=====================
+	def getImageDimensions(self, mrcfile):
+		mrcheader = mrc.readHeaderFromFile(mrcfile)
+		x = int(mrcheader['nx'].astype(numpy.uint16))
+		y = int(mrcheader['ny'].astype(numpy.uint16))
+		return {'x': x, 'y': y}
 
 	#=====================
 	def start(self):
@@ -215,39 +409,57 @@ class ExampleScript(appionScript.AppionScript):
 		This is the core of your function.
 		You decide what happens here!
 		"""
-		apDisplay.printMsg("\n\n")
-		### get info about the stack
-		apDisplay.printMsg("Information about stack id %d"%(self.params['stackid']))
-		apDisplay.printMsg("\tboxsize %d pixels"%(apStack.getStackBoxsize(self.params['stackid'], msg=False)))
-		apDisplay.printMsg("\tpixelsize %.3f Angstroms"%(apStack.getStackPixelSizeFromStackId(self.params['stackid'], msg=False)))
-		apDisplay.printMsg("\tsize %d particles"%(apStack.getNumberStackParticlesFromId(self.params['stackid'], msg=False)))
+		### try and get the appion instruments
+		self.getAppionInstruments()
 
-		### get info about the model
-		if self.params['modelid'] is not None:
-			apDisplay.printMsg("Information about model id %d"%(self.params['modelid']))
-			modeldata = apModel.getModelFromId(self.params['modelid'])
-			apDisplay.printMsg("\tboxsize %d pixels"%(modeldata['boxsize']))
-			apDisplay.printMsg("\tpixelsize %.3f Angstroms"%(modeldata['pixelsize']))
-		apDisplay.printMsg("\n\n")
+		### create new session, so we have a place to store the log file
+		self.createNewSession()
 
-"""
-Last we need to tell python how to run your function
+		mrclist = self.getImagesInDirectory(self.params['imagedir'])
 
-The line "if __name__ == '__main__':" makes sure that the function
-will only run from the commandline, if someone were to import
-this file nothing would happen.
+		for i in range(6):
+			print mrclist[i]
 
-The first line creates an instance of the class defined above.
-This reads the commandline, runs checkConflicts, and set the rundir.
-Next the start function is run that does all the stuff you defined. And
-finally the function is closed.
-"""
+		numinseries = 1
+		seriescount = 1
+		count = 1
+		t0 = time.time()
+		for mrcfile in mrclist:
+			### rename image
+			newimagepath = self.newImagePath(mrcfile, numinseries)
 
+			### get image dimensions
+			dims = self.getImageDimensions(mrcfile)
+
+			### set pixel size in database
+			self.updatePixelSizeCalibration()
+
+			### upload image
+			self.uploadImageInformation(newimagepath, dims, seriescount, numinseries)
+
+			## copy the file
+			self.copyfile(mrcfile, newimagepath)
+
+			### counting
+			count += 1
+			numinseries += 1
+			if numinseries % (self.params['seriessize']+1) == 0:
+				### reset series counter
+				seriescount += 1
+				numinseries = 1
+
+			#print count, seriescount, numinseries
+			timeperimage = (time.time()-t0)/float(count)
+			apDisplay.printMsg("time per image: %s"
+				%(apDisplay.timeString(timeperimage)))
+			esttime = timeperimage*(len(mrclist) - count)
+			apDisplay.printMsg("estimated time remaining for %d of %d images: %s"
+				%(len(mrclist)-count, len(mrclist), apDisplay.timeString(esttime)))
 
 #=====================
 #=====================
 if __name__ == '__main__':
-	examplescript = ExampleScript()
-	examplescript.start()
-	examplescript.close()
+	upimages = UploadImages()
+	upimages.start()
+	upimages.close()
 
