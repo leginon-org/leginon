@@ -34,6 +34,7 @@ class AppionScript(basicScript.BasicScript):
 		### setup some expected values
 		self.successful_run = False
 		self.clusterjobdata = None
+		self.params = {}
 		sys.stdout.write("\n\n")
 		self.quiet = False
 		self.startmem = mem.active()
@@ -167,7 +168,7 @@ class AppionScript(basicScript.BasicScript):
 	def getClusterJobData(self):
 		if self.clusterjobdata is not None:
 			return self.clusterjobdata
-		if self.params['commit'] is False:
+		if not 'commit' in self.params or self.params['commit'] is False:
 			return None
 		pathq = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clustq = appiondata.ApAppionJobData()
