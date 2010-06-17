@@ -1196,6 +1196,7 @@ ACE2: /home/vossman/appion/bin/ace2correct.exe -img /ami/data00/appion/09aug06a/
 		stackq['description'] = self.params['description']
 		stackq['hidden'] = 0
 		stackq['pixelsize'] = self.params['apix'] * 1e-10
+		stackq['boxsize'] = self.params['box']
 		self.stackdata = stackq
 
 		### finish stackRun object
