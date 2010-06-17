@@ -122,10 +122,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		boxsize = apStack.getStackBoxsize(self.params['stackid'])
 		self.clipsize = int(math.floor(boxsize/float(self.params['bin']*2)))*2
+		print self.clipsize, self.params['clipsize']
 		if self.params['clipsize'] is not None:
-			if self.params['clipsize'] > self.clipsize:
-				apDisplay.printError("requested clipsize is too big %d > %d"
-					%(self.params['clipsize'],self.clipsize))
+#			if self.params['clipsize'] > self.clipsize:
+#				apDisplay.printError("requested clipsize is too big %d > %d"
+#					%(self.params['clipsize'],self.clipsize))
 			self.clipsize = self.params['clipsize']
 		if self.params['numpart'] is None:
 			self.params['numpart'] = apFile.numImagesInStack(stackfile)
@@ -371,6 +372,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
 		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
 			clipsize = int(self.clipsize)*self.params['bin']
+			if clipsize % 2 == 1:
+				clipsize += 1 ### making sure that clipped boxsize is even
 			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
 		proccmd += " last="+str(self.params['numpart']-1)
 		if self.params['highpass'] is not None and self.params['highpass'] > 1:
