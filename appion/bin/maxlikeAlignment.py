@@ -122,11 +122,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		boxsize = apStack.getStackBoxsize(self.params['stackid'])
 		self.clipsize = int(math.floor(boxsize/float(self.params['bin']*2)))*2
-		print self.clipsize, self.params['clipsize']
 		if self.params['clipsize'] is not None:
-#			if self.params['clipsize'] > self.clipsize:
-#				apDisplay.printError("requested clipsize is too big %d > %d"
-#					%(self.params['clipsize'],self.clipsize))
+			if self.params['clipsize'] > self.clipsize:
+				apDisplay.printError("requested clipsize is too big %d > %d"
+					%(self.params['clipsize'],self.clipsize))
 			self.clipsize = self.params['clipsize']
 		if self.params['numpart'] is None:
 			self.params['numpart'] = apFile.numImagesInStack(stackfile)
