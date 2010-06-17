@@ -522,7 +522,7 @@ class UploadReconScript(appionScript.AppionScript):
 		projfile=os.path.join(self.params['rundir'], projfile)
 		#print "reading file, "+projfile
 		if not os.path.exists:
-			apDisplay.printError("no projection file found for iteration "+iter)
+			apDisplay.printError("no projection file found for iteration "+iternum)
 		f = open(projfile,'r')
 		for line in f:
 			line=line[:-1] # remove newline at end
