@@ -737,6 +737,7 @@ class frealignJob(appionScript.AppionScript):
 		#package data for transfer to cluster
 		apFile.removeFile(self.params['runname']+".tar")
 		cmd = "tar --exclude=*.tar -cf %s.tar *"%(self.params['runname'])
+		print cmd
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
 
