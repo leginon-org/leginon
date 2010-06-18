@@ -534,7 +534,6 @@ if (is_numeric($expId)) {
 		$emanreconresults[] = ($emanreconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$emanreconruns complete</a>" : "";
 		$emanreconresults[] = ($ejrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=removeJumpers'>$ejrun reclassifying</a>";
 
-
 		// check for how many FREALIGN reconstructions are upload / ready to upload / ready to run / running / queued
 		$frealigndone = count($particle->getReconIdsFromSession($sessionId, false, 'frealign'));
 
@@ -628,6 +627,9 @@ if (is_numeric($expId)) {
 				'result'=> "<i>(incomplete)</i>", //$imreconresults,
 			);
 		}
+		$nruns[] = array(
+			'name'=>"<a href='evilClusterUsers.php?expId=$sessionId'>Evil Cluster Users</a>",
+		);
 		$data[] = array(
 			'action' => array($action, $celloption),
 			'result' => array($totresult),
