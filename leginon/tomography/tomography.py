@@ -349,7 +349,6 @@ class Tomography(leginon.acquisition.Acquisition):
 				presetdata = self.presetsclient.getPresetFromDB(preset_name)
 				self.moveAndPreset(presetdata, emtarget)
 			else:
-				isoffset = self.getImageShiftOffset()
 				self.presetsclient.toScope(preset_name)
 				self.setImageShiftOffset(isoffset)
 
