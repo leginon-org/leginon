@@ -303,9 +303,13 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
 
-	echo referenceBox("Maximum-likelihood multi-reference refinement for electron microscopy images.", 2005, "Scheres SH, Valle M, Nuñez R, Sorzano CO, Marabini R, Herman GT, Carazo JM.", "J Mol Biol.", 348, 1, 15808859, false, false, "img/xmipp_logo.png");
+	echo referenceBox("Maximum-likelihood multi-reference refinement for electron microscopy images.", 2005, 
+		"Scheres SH, Valle M, Nuñez R, Sorzano CO, Marabini R, Herman GT, Carazo JM.", 
+		"J Mol Biol.", 348, 1, 15808859, false, false, "img/xmipp_logo.png");
 
-	echo referenceBox("Fast maximum-likelihood refinement of electron microscopy images.", 2005, "Scheres SH, Valle M, Carazo JM.", "Bioinformatics.", 21, "Suppl 2", 16204112, false, false, "img/xmipp_logo.png");
+	echo referenceBox("Fast maximum-likelihood refinement of electron microscopy images.", 2005, 
+		"Scheres SH, Valle M, Carazo JM.", "Bioinformatics.", 21, 
+		"Suppl 2", 16204112, false, false, "img/xmipp_logo.png");
 
 	processing_footer();
 	exit;
@@ -389,16 +393,9 @@ function runMaxLikeAlign() {
 		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 30 minutes without fast mode<br/>"
 			."<b>Estimated calc time:</b> ".round($calctime/60.0,2)." minutes\n");
 
-	// make sure outdir ends with '/' and append run name
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$rundir = $outdir.$runname;
-
 	// setup command
 	$command ="maxlikeAlignment.py ";
-	$command.="--projectid=".getProjectId()." ";
-	$command.="--rundir=$rundir ";
 	$command.="--description=\"$description\" ";
-	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";
 	if ($binclipdiam != '') $command.="--clip=$binclipdiam ";
 	if ($lowpass != '') $command.="--lowpass=$lowpass ";
@@ -427,62 +424,37 @@ function runMaxLikeAlign() {
 		$command.="--student ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
-	$command.="--converge=$converge ";
-	// submit job to cluster
-	if ($_POST['process']=="Run Max Like Alignment") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	$command .= "--converge=$converge ";
 
-		if (!($user && $password)) createMaxLikeAlignForm("<B>ERROR:</B> Enter a user name and password");
+	// setup header information
+	$headinfo = "";
+	$headinfo .= referenceBox("Maximum-likelihood multi-reference refinement for electron microscopy images.", 2005, 
+		"Scheres SH, Valle M, Nuñez R, Sorzano CO, Marabini R, Herman GT, Carazo JM.", 
+		"J Mol Biol.", 348, 1, 15808859, false, false, "img/xmipp_logo.png");
+	$headinfo .= referenceBox("Fast maximum-likelihood refinement of electron microscopy images.", 2005, 
+		"Scheres SH, Valle M, Carazo JM.", "Bioinformatics.", 21, 
+		"Suppl 2", 16204112, false, false, "img/xmipp_logo.png");
+	$headinfo .= "<table width='600' class='tableborder' border='1'>";
+	$headinfo .= "<tr><td colspan='2'><br/>\n";
+	if ($calctime < 60)
+		$headinfo .= "<span style='font-size: larger; color:#999933;'>\n<b>Estimated calc time:</b> "
+			.round($calctime,2)." seconds\n";
+	elseif ($calctime < 3600)
+		$headinfo .= "<span style='font-size: larger; color:#33bb33;'>\n<b>Estimated calc time:</b> "
+			.round($calctime/60.0,2)." minutes\n";
+	else
+		$headinfo .= "<span style='font-size: larger; color:#bb3333;'>\n<b>Estimated calc time:</b> "
+			.round($calctime/3600.0,2)." hours\n";
+	$headinfo .= "for the first iteration</span><br/>"
+		."<i>it gets much faster after the first iteration with the fast mode</i><br/><br/></td></tr></table><br/>\n";
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign',False,False,False,$nproc);
-		// if errors:
-		if ($sub) createMaxLikeAlignForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	else {
-		processing_header("Max Like Align Run Params","Max Like Align Params");
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
 
-		echo referenceBox("Maximum-likelihood multi-reference refinement for electron microscopy images.", 2005, "Scheres SH, Valle M, Nuñez R, Sorzano CO, Marabini R, Herman GT, Carazo JM.", "J Mol Biol.", 348, 1, 15808859, false, false, "img/xmipp_logo.png");
+	// if error display them
+	if ($errors)
+		createMaxLikeAlignForm($errors);
+	exit;
 
-		echo referenceBox("Fast maximum-likelihood refinement of electron microscopy images.", 2005, "Scheres SH, Valle M, Carazo JM.", "Bioinformatics.", 21, "Suppl 2", 16204112, false, false, "img/xmipp_logo.png");
-
-		echo "<table width='600' class='tableborder' border='1'>";
-		echo "<tr><td colspan='2'><br/>\n";
-		if ($calctime < 60)
-			echo "<span style='font-size: larger; color:#999933;'>\n<b>Estimated calc time:</b> "
-				.round($calctime,2)." seconds\n";
-		elseif ($calctime < 3600)
-			echo "<span style='font-size: larger; color:#33bb33;'>\n<b>Estimated calc time:</b> "
-				.round($calctime/60.0,2)." minutes\n";
-		else
-			echo "<span style='font-size: larger; color:#bb3333;'>\n<b>Estimated calc time:</b> "
-				.round($calctime/3600.0,2)." hours\n";
-		echo "for the first iteration</span><br/>"
-			."<i>it gets much faster after the first iteration with the fast mode</i><br/><br/></td></tr>\n";
-		echo "
-			<tr><td colspan='2'>
-			<b>MaxLike Alignment Command:</b><br />
-			$command
-			</td></tr>
-			<tr><td>run id</td><td>$runname</td></tr>
-			<tr><td>stack id</td><td>$stackid</td></tr>
-			<tr><td>low pass</td><td>$lowpass</td></tr>
-			<tr><td>high pass</td><td>$highpass</td></tr>
-			<tr><td>num part</td><td>$numpart</td></tr>
-			<tr><td>num ref</td><td>$numref</td></tr>
-			<tr><td>angle increment</td><td>$angle</td></tr>
-			<tr><td>maximum iterations</td><td>$maxiter</td></tr>
-			<tr><td>binning</td><td>$bin</td></tr>
-			<tr><td>fast</td><td>$fast</td></tr>
-			<tr><td>fast mode</td><td>$fastmode</td></tr>
-			<tr><td>converge</td><td>$converge</td></tr>
-			<tr><td>mirror</td><td>$mirror</td></tr>
-			<tr><td>save mem</td><td>$savemem</td></tr>
-			<tr><td>run dir</td><td>$rundir</td></tr>
-			<tr><td>commit</td><td>$commit</td></tr>
-			</table>\n";
-		processing_footer();
-	}
 }
 ?>
