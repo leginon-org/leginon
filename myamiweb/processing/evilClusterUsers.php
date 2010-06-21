@@ -8,7 +8,6 @@ require "inc/project.inc";
 require "inc/summarytables.inc";
 
 $CLUSTER_HOSTNAME = "garibaldi.scripps.edu";
-
 main();
 
 /* ***********************************
