@@ -201,7 +201,7 @@ function createAffinityPropForm($extra=false, $title='affPropCluster.py Launcher
 	echo ">\n";
 	echo " <option value='median'>Median value, normal number of classes</option>\n";
 	echo " <option value='minimum'>Minimum value, fewer number of classes</option>\n";
-	echo " <option value='minlessrange'>Minimum minus the range, fewest number of classes</option>\n";
+	echo " <option value='minlessrange' selected>Minimum minus the range, fewest number of classes</option>\n";
 	echo "</select>\n";
 	echo "<br/>\n";
 	echo "<br/>\n";
