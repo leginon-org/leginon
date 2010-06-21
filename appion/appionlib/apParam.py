@@ -356,9 +356,8 @@ def getXversion():
 			m = re.search("\s([0-9\.]+)", sline)
 			if m:
 				version = m.groups()[0]
-				return versionToNumber(version)	
+				return versionToNumber(version)
 	return None
-
 
 #=====================
 def versionToNumber(version):
@@ -470,14 +469,13 @@ def getRgbFile(msg=True):
 	This file comes with xorg-x11-server-Xorg in Fedora 7,8
 	missing in Fedora 9
 	"""
-	#return " "
 	filelist = [
 		"/usr/share/X11/rgb",
 		"/usr/X11R6/lib64/X11/rgb",
 		"/usr/X11R6/lib/X11/rgb",
 	]
 	xversion = getXversion()
-	if xversion > 1.02:
+	if xversion > 1.0109:
 		return " "
 	for rgbfile in filelist:
 		if os.path.isfile(rgbfile+".txt"):
