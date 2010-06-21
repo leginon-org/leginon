@@ -339,6 +339,12 @@ class AppionScript(basicScript.BasicScript):
 		self.parser.add_option("--no-commit", dest="commit", default=True,
 			action="store_false", help="Do not commit processing run to database")
 
+		self.parser.add_option("--expid", "--expId", dest="expid", type="int",
+			help="Session id associated with processing run, e.g. --expId=7159", metavar="#")
+		self.parser.add_option("--jobtype", dest="jobtype",
+			help="Job Type of processing run, e.g., partalign", metavar="X")
+
+
 	#=====================
 	def checkGlobalConflicts(self):
 		"""
