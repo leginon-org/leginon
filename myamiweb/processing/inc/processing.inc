@@ -658,6 +658,129 @@ function getNumberOfRequiredNodes($nproc, $ppn) {
 	return array($nodes, $ppn);
 }
 
+/**************************************/
+function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) {
+	/*
+		If user clicked run button it launches job on appion cluster
+		Otherwise displays command to copy and paste into terminal
+
+		Requirements:
+			$_GET['expId']
+			$_POST['runname']
+			$_POST['outdir'] 
+		need to be defined and correct
+	*/
+
+	// get required inputs
+	$expId=$_GET['expId'];
+	if (empty($expId))
+		return "<B>ERROR:</B> undefined expId";
+	$runname=$_POST['runname'];
+	if (empty($runname))
+		return "<B>ERROR:</B> undefined runname";
+	$outdir=$_POST['outdir'];
+	if (empty($outdir))
+		return "<B>ERROR:</B> undefined outdir";
+	$projectid = getProjectId();
+
+	// set rundir from runname and outdir
+	if (substr($outdir,-1,1)!='/')
+		$outdir.='/';
+	$rundir = $outdir.$runname;
+
+	// in the future maybe remove if statements
+	if (!preg_match("/--rundir=/", $command))
+		$command .= "--rundir=$rundir ";
+	if (!preg_match("/--runname=/", $command))
+		$command .= "--runname=$runname ";
+	if (!preg_match("/--projectid=/", $command))
+		$command .= "--projectid=$projectid ";
+	if (!preg_match("/--expid=/", $command))
+		$command .= "--expId=$expId ";
+	if (!preg_match("/--jobtype=/", $command))
+		$command .= "--jobtype=$jobtype ";
+
+	if ($_POST['process'] != "Just Show Command") {
+		// Option 1: selected the run button
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+
+		if (!($user && $password))
+			return "<B>ERROR:</B> Enter a user name and password";
+
+		$errors = submitAppionJob($command, $outdir, $runname, $expId, $jobtype, False, False, False, $nproc);
+
+		// if errors:
+		if ($errors)
+			return "<B>ERROR:</B> $errors";
+
+		exit;
+	} else {
+		// Option 2: just show command
+		$bits = split(" ", $command);
+		$function = $bits[0];
+
+		processing_header("Just Show $function Command", "Just Show $function Command");
+		echo $headinfo;
+		echo justShowCommandTable($command);
+		processing_footer();
+		exit;
+	}
+};
+
+/**************************************/
+function justShowCommandTable($command) {
+	global $USE_APPION_WRAPPER, $APPION_WRAPPER_PATH;
+
+	if ($USE_APPION_WRAPPER) {
+		$command = $APPION_WRAPPER_PATH." ".$command;
+	}
+
+	$command = trim($command);
+	$bits = split(" ", $command);
+	$function = array_shift($bits);
+
+	$commandtable = "<table class='tablebubble' border='0' width='800'>\n";
+	$commandtable .= "<tr><td colspan='2'>\n";
+	$commandtable .= "	Copy and paste this $function command into a terminal:<hr/>\n";
+	$commandtable .= "</td></tr><tr><td colspan='2' style='padding-left:0.3in;text-indent:-0.3in'>\n";
+	$commandtable .= "	<p>\n";
+	$commandtable .= "		<font size='+1'>$command</font>\n";
+	$commandtable .= "	</p>\n";
+	$commandtable .= "</td></tr><tr><td colspan='2'><hr/>\n";
+	sort($bits);
+	foreach ($bits as $bit) {
+		if (substr($bit, 0, 2) == "--") {
+			if (preg_match("/^--([^=]*)=(.*)$/", $bit, $matches)) {
+				// type 1: --param=value
+				if (empty($matches[1]))
+					continue;
+				$commandtable .= "</td></tr><tr><td>\n";
+				$commandtable .= "<b>".$matches[1]."</b>\n";
+				$commandtable .= "</td><td>\n";
+				$commandtable .= $matches[2]."\n";
+			} elseif (preg_match("/^--([^=]*)$/", $bit, $matches)) {
+				// type 2: --param, e.g., --no-commit
+				if (empty($matches[1]))
+					continue;
+				$commandtable .= "</td></tr><tr><td>\n";
+				$commandtable .= "--<b>".$matches[1]."</b>\n";
+				$commandtable .= "</td><td>\n";
+				$commandtable .= "<font color='#339933'><i>flag enabled</i></font>\n";
+			}
+		} elseif(!empty($bit)) {
+			$commandtable .= "</td></tr><tr><td>\n";
+			$commandtable .= "<font color='#cc3333'>Unknown flag:</font>\n";
+			$commandtable .= "</td><td>\n";
+			$commandtable .= "$bit\n";
+		}
+	}
+	$commandtable .= "</td></tr>\n";
+	$commandtable .= "</table>\n";
+	return $commandtable;
+};
+
+/**************************************/
 function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg=False,
 		 $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime="240") {
 	global $DATA_DIRS;
@@ -770,6 +893,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	// insert cluster job data and set job as queued
 	$jobid=$particle->insertClusterJobData($processhost,$rundir,'',$rundir,$jobfile,$expId,$jobtype,$user);
 
+	$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
 	// AMI guppy specific to get small jobs to run on 4 proc nodes
 	/*if ($nproc < 5) {
 		$jobtext .= "#PBS -l nodes=1:ppn=4:fourProc\n";
@@ -778,7 +902,6 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	}*/
 
 	// create job file
-	$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
 	$jobtext .= "#PBS -l walltime=$walltime:00:00\n";
 	$jobtext .= "#PBS -l cput=$cputime:00:00\n";
 	$jobtext .= "#PBS -j oe\n";
@@ -856,6 +979,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	exit;
 }
 
+/**************************************/
 function writeTestResults($jpg,$ccclist,$bin){
 	if (!file_exists($jpg)) {
 		$base = basename($jpg);
@@ -875,6 +999,7 @@ function writeTestResults($jpg,$ccclist,$bin){
 	return $html;
 }
 
+/**************************************/
 function randomString($length) {
 	$s = md5(time());
 	$i = 32-$length;
@@ -882,6 +1007,7 @@ function randomString($length) {
 	return $randstring;
 }
 
+/**************************************/
 function getTimestring() {
 	$today = getdate();
 	$timestring = substr($today['year'],2,2)
@@ -892,6 +1018,7 @@ function getTimestring() {
 	return $timestring;
 }
 
+/**************************************/
 function bashcolor2html($str) {
 	$chr27=chr(27);
 	$str=trim($str);
@@ -911,6 +1038,7 @@ function bashcolor2html($str) {
 	return $html;
 }
 
+/**************************************/
 function editTextJava() {
 	// javascript for hiding/showing edit text & form
 	$javascript = "<script language='javascript' type='text/javascript'>\n";
@@ -925,6 +1053,7 @@ function editTextJava() {
 	return $javascript;
 }
 
+/**************************************/
 function eulerImgJava() {
 	// javascript to switch the euler image
 	$javascript = "<script language='javascript' type='text/javascript'>\n";
@@ -939,6 +1068,7 @@ function eulerImgJava() {
 	return $javascript;
 }
 
+/**************************************/
 function editButton($editid,$text) {
 	$len=(strlen($text)==0) ? 15 : strlen($text);
 	$cols = ($len > 50) ? 50 : $len;
@@ -960,6 +1090,7 @@ function editButton($editid,$text) {
 	return $editButton;
 }
 
+/**************************************/
 function updateDescription($table, $editid, $text) {
 	$particle=new particledata();
 
@@ -969,6 +1100,7 @@ function updateDescription($table, $editid, $text) {
 	$particle->updateDescription($table, $editid, $desc);
 }
 
+/**************************************/
 function pleaseWaitJava() {
 	$java = "<script type=\"text/javascript\" >\n";
 	$java.= "function pleasewait() {\n";
@@ -979,6 +1111,7 @@ function pleaseWaitJava() {
 	return $java;
 }
 
+/**************************************/
 function getHtmlStyle($code) {
 	$codes['e[1m']='font-weight:bold';
 	$codes['e[0m']='';
@@ -1003,6 +1136,7 @@ function getHtmlStyle($code) {
 	return $codes[$code];
 }
 
+/**************************************/
 function writeJavaPopupFunctions ($help) {
 	$javafunc = "
   <style type='text/css'>
@@ -1060,6 +1194,7 @@ function writeJavaPopupFunctions ($help) {
 	return $javafunc;
 };
 
+/**************************************/
 function openRoundBorder() {
 	$text = "<div id='roundbox'>\n";
 	$text .= "<b class='xtop'><b class='xb1'></b><b class='xb2'></b><b class='xb3'></b><b class='xb4'></b></b>\n";
@@ -1068,6 +1203,7 @@ function openRoundBorder() {
 	return ($text);
 }
 
+/**************************************/
 function closeRoundBorder() {
 	$text = "</p>\n";
 	$text .= "</div><!--/roundboxcontent-->\n";
@@ -1076,6 +1212,7 @@ function closeRoundBorder() {
 	return ($text);
 }
 
+/**************************************/
 function getPngList($dir) {
 	$pngimages=array();
 	$pngimages['pngfiles']=array();
@@ -1105,26 +1242,32 @@ function getPngList($dir) {
 	return $pngimages;
 }
 
+/**************************************/
 function emanRef() {
 	return referenceBox("EMAN: semiautomated software for high-resolution single-particle reconstructions.", 1999, "Ludtke SJ, Baldwin PR, Chiu W.", "J Struct Biol.", 128, 1, 10600563, false, false, "img/eman_logo.png");
 }
 
+/**************************************/
 function spiderRef() {
 	return referenceBox("SPIDER and WEB: processing and visualization of images in 3D electron microscopy and related fields.", 1996, "Frank J, Radermacher M, Penczek P, Zhu J, Li Y, Ladjadj M, Leith A.", "J Struct Biol.", 116, 1, 8742743, false, false, "img/spider_logo.png");
 };
 
+/**************************************/
 function appionRef() {
 	return referenceBox("Appion: an integrated, database-driven pipeline to facilitate EM image processing.", 2009, "Lander GC, Stagg SM, Voss NR, <i>et&nbsp;al.</i>", "J Struct Biol.", 166, 1, 19263523, 2775544, "10.1016/j.jsb.2009.01.002", "img/topbarbackgrnd.jpg");
 }
 
+/**************************************/
 function frealignRef() {
 	return referenceBox("FREALIGN: high-resolution refinement of single particle structures.", 2007, "Grigorieff, N.", "J Struct Biol.", 157, 1, 16828314, false, "10.1016/j.jsb.2006.05.004", "img/grigorieff_lab.png");
 }
 
+/**************************************/
 function initModelRef() {
 	return referenceBox("A toolbox for ab initio 3-D reconstructions in single-particle electron microscopy.", 2010, "Voss NR, Lyumkis D, Cheng A, <i>et&nbsp;al.</i>", "J Struct Biol.", 169, 3, 20018246, false, false, "img/topbarbackgrnd.jpg");
 }
 
+/**************************************/
 function referenceBox($title, $year, $authorlist, $journal, $volume=false, $issue=false, $pmid=false, $pmcid=false, $doi=false, $logo=false) {
 	$refbox = "<br/>";
 	$refbox .= "<table class='tablebubble' border='0'><tr><td>\n";
