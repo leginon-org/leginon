@@ -11,7 +11,8 @@ from appionlib import appiondata
 from appionlib import apImage
 from appionlib import apDisplay
 
-
+##===================
+##===================
 def getShiftFromImage(imgdata, params):
 	if imgdata['preset'] is not None and imgdata['preset']['name'] != 'upload':
 		sibling = getDefocusPair(imgdata)
@@ -25,17 +26,19 @@ def getShiftFromImage(imgdata, params):
 		shiftpeak=None
 	return sibling, shiftpeak
 
+##===================
+##===================
 def getDefocusPair(imgdata):
-	target=imgdata['target']
+	target = imgdata['target']
 	if target is None:
 		return None
-	qtarget=leginon.leginondata.AcquisitionImageTargetData()
+	qtarget = leginon.leginondata.AcquisitionImageTargetData()
 	qtarget['image'] = target['image']
 	qtarget['number'] = target['number']
-	qsibling=leginon.leginondata.AcquisitionImageData(target=qtarget)
-	origid=imgdata.dbid
+	qsibling = leginon.leginondata.AcquisitionImageData(target=qtarget)
+	origid = imgdata.dbid
 	allsiblings = qsibling.query(readimages=False)
-	defocpair=None
+	defocpair = None
 	if len(allsiblings) > 1:
 		#could be multiple siblings but we are taking only the most recent
 		for sib in allsiblings:
@@ -44,6 +47,8 @@ def getDefocusPair(imgdata):
 				break
 	return defocpair
 
+##===================
+##===================
 def getManualDefocusPair(imgdata):
   # This is only for manual defocus pair
 	filename = imgdata['filename']
@@ -57,6 +62,8 @@ def getManualDefocusPair(imgdata):
 		return
 	return allimages[0]
 
+##===================
+##===================
 def getShift(imgdata1 ,imgdata2):
 	#assumes images are square
 	print "Finding shift between", apDisplay.short(imgdata1['filename']), "and", apDisplay.short(imgdata2['filename'])
@@ -91,6 +98,8 @@ def getShift(imgdata1 ,imgdata2):
 		peak['shift']= numpy.array((shift[0]*shrinkfactor1, shift[1]*shrinkfactor1))
 	return peak
 
+##===================
+##===================
 def recordShift(params,img,sibling,peak):
 	filename=params['sessionname']+'.shift.txt'
 	f=open(filename,'a')
@@ -98,6 +107,8 @@ def recordShift(params,img,sibling,peak):
 	f.close()
 	return()
 
+##===================
+##===================
 def insertShift(imgdata,siblingdata,peak):
 	if not siblingdata or not peak:
 		apDisplay.printWarning("No sibling or peak found. No database insert")
@@ -121,6 +132,8 @@ def insertShift(imgdata,siblingdata,peak):
 	shiftq.insert()
 	return True
 
+##===================
+##===================
 def getTransformedDefocPair(imgdata, direction):
 	simgq=appiondata.ApImageTransformationData()
 	base = 'image'
