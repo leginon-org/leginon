@@ -4,7 +4,7 @@ require "inc/leginon.inc";
 require "inc/utilpj.inc.php";
 $SHARE =  (@require "inc/share.inc.php") ? true : false;
 $SHARE =  (privilege('shareexperiments') >=1) ? $SHARE : false;
-$SHARE =  (ENABLE_LOGIN) ? $SHARE : false;
+//$SHARE =  (ENABLE_LOGIN) ? $SHARE : false;
 
 if ($_GET['projectId']) {
 	$selectedprojectId=$_GET['projectId'];
@@ -202,12 +202,31 @@ $projectId = $projectinfo['projectId'];
 		//projectdata.projectexperiments.experimentId is not a referenced index of leginon.SessionData DEF_id, in general, and therefore can not be used for getting sessioninfo. Use name instead)
 		$sessionname = $exp['name'];
 		$info = $leginondata->getSessionInfo($sessionname);
+
+		if (empty($info['SessionId']))
+			continue;
+		$numimg = $leginondata->getNumImages($info['SessionId']);
+		$totalsecs = $leginondata->getSessionDuration($info['SessionId']);
+
 		$sessions[trim($info['SessionId'])]=$info['Name'];
 		$sessionlink="<a class='header' target='viewer' href='".VIEWER_URL.$info['SessionId']."'>".$info['Name']."</a>";
 		$experiments[$k]['name']=$sessionlink;
-		$experiments[$k]['purpose']=$info['Purpose'];
-		$experiments[$k]['totalimg']=$info['Total images'];
-		$experiments[$k]['totaltime']=$info['Total Duration'];
+		$experiments[$k]['sessionid']=$info['SessionId'];
+		$experiments[$k]['description']=$info['Purpose'];
+
+		if ($numimg > 0)
+			$experiments[$k]['totalimg']=$numimg;
+
+		if ($numimg < 3 || $totalsecs < 60) {
+			// these sessions have no image and link is broken
+			$experiments[$k]['name'] = "<font color='#bbbbbb'>".$info['Name']."</font>";
+			$experiments[$k]['description'] = "<font color='#bbbbbb'>".$experiments[$k]['description']."</font>";
+			continue;
+		}
+
+		$experiments[$k]['totalimg']=$numimg;
+		$experiments[$k]['totaltime']=$leginondata->formatDurationColumn($totalsecs);
+
 		if ($SHARE) {
 			$share_admin = checkExptAdminPrivilege($info['SessionId'],'shareexperiments');
 			$sharingstatus = ($shareExpDb->is_shared($info['SessionId'])) ? "Yes" : "No";
@@ -225,7 +244,8 @@ $projectId = $projectinfo['projectId'];
 
 $columns=array(
 	'name'=>'Name',
-	'purpose'=>'Purpose',
+	'sessionid'=>'Session Id',
+	'description'=>'Description',
 	'totalimg'=>'Total images',
 	'totaltime'=>'Total Duration'
 	);

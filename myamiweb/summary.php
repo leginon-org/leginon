@@ -24,7 +24,8 @@ checkExptAccessPrivilege($expId,'data');
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 if($projectdb) {
-	$currentproject = $projectdata->getProjectFromSession($sessioninfo['Name']);
+	$currentproject = $projectdata->getProjectFromSession($sessioninfo
+['Name']);
 	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?projectId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
 }
 
@@ -134,9 +135,12 @@ if (!empty($summary)) {
 		$tot_imgs += $s['nb'];
 	}
 	echo "</table>\n";
-	echo "<p>Total images:<b>$tot_imgs</b>";
-	if ($tot_time)
-		echo " time:<b>".sec2time($tot_time)."</b>";
+	echo "<p><b>Total images:</b> $tot_imgs ";
+
+	$totalsecs = $leginondata->getSessionDuration($expId);
+	$totaltime = $leginondata->formatDuration($totalsecs);
+
+	echo " <b>Duration:</b> $totaltime";
 	echo divtitle("Timing");
 	echo "<a href='timing.php?Id=$expId'>Timing report &raquo;</a>";
 	echo "</td>";

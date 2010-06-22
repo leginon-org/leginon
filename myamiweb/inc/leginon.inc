@@ -202,6 +202,57 @@ class leginondata {
 		return $sessioninfo[0];
 	}
 
+	function getNumImages($sessionid) {
+		$q="SELECT "
+			."COUNT(img.`DEF_id`) AS count "
+			."FROM `AcquisitionImageData` AS img "
+			."WHERE img.`REF|SessionData|session` = '$sessionid' ";
+		//echo $q."<br/>\n";
+		$countinfo = $this->mysql->getSQLResult($q);
+		return $countinfo[0]['count'];
+	}
+
+	function getSessionDuration($sessionid) {
+		$q="SELECT "
+			."UNIX_TIMESTAMP(img.`DEF_timestamp`) AS `start` "
+			."FROM `AcquisitionImageData` AS img "
+			."WHERE `REF|SessionData|session` = '$sessionid' "
+			."ORDER BY img.`DEF_timestamp` ASC LIMIT 1";
+		$startinfo = $this->mysql->getSQLResult($q);
+		$q="SELECT "
+			."UNIX_TIMESTAMP(img.`DEF_timestamp`) AS `end` "
+			."FROM `AcquisitionImageData` AS img "
+			."WHERE `REF|SessionData|session` = '$sessionid' "
+			."ORDER BY img.`DEF_timestamp` DESC LIMIT 1";
+		$endinfo = $this->mysql->getSQLResult($q);
+		$totalsecs = $endinfo[0]['end'] - $startinfo[0]['start'];
+		return $totalsecs;
+	}
+	
+	function formatDurationColumn($totalsecs) {
+		$days = floor($totalsecs/86400.);
+		$hours = floor(($totalsecs%86400)/3600.);
+		$mins = floor(($totalsecs%3600)/60.);
+		$secs = floor($totalsecs%60);
+		if ($days > 0)
+			return sprintf("%dd : %02dh : %02dm", $days, $hours, $mins);
+		elseif ($hours > 0)
+			return sprintf("&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; %02dh : %02dm", $hours, $mins);
+		return sprintf("&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; %02dm", $mins);
+	}
+
+	function formatDuration($totalsecs) {
+		$days = floor($totalsecs/86400.);
+		$hours = floor(($totalsecs%86400)/3600.);
+		$mins = floor(($totalsecs%3600)/60.);
+		$secs = floor($totalsecs%60);
+		if ($days > 0)
+			return sprintf("%d days, %02d hrs, %02d min", $days, $hours, $mins);
+		elseif ($hours > 0)
+			return sprintf("%d hrs, %02d min", $hours, $mins);
+		return sprintf("%d min", $mins);
+	}
+
 	function getInstrumentInfo($id) {
 		return $this->getDataInfo('InstrumentData', $id);
 	}

@@ -430,6 +430,7 @@ class project {
 			." ON projexp.`REF|leginondata|SessionData|session` = session.`DEF_id` ";
 		if ($projectId)
 		   $q .= "WHERE projexp.`REF|projects|project`=".$projectId." ";
+		  $q .= "ORDER BY projexp.`REF|leginondata|SessionData|session` DESC ";
 		$experimentIds = $this->mysql->getSQLResult($q);
 		return $experimentIds;
 	}
