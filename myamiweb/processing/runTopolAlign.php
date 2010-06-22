@@ -240,7 +240,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo docpop('mramethod','<b>MRA package:</b>');
 	echo "<br/>\n";
 
-	if (!$HIDE_IMAGIC)
+	if (!HIDE_IMAGIC)
 		$mramethods=array('EMAN', 'IMAGIC');
 	else
 		$mramethods=array('EMAN',);
