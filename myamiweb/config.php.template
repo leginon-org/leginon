@@ -150,6 +150,9 @@ define('MRC2ANY', "");
 // --- Check if IMAGIC is installed and running, otherwise hide all functions --- //
 define('HIDE_IMAGIC', false);
 
+// --- Check if MATLAB is installed and running, otherwise hide all functions --- //
+define('HIDE_MATLAB', false);
+
 // --- hide processing tools still under development. --- //
 define('HIDE_FEATURE', true);
 
