@@ -24,6 +24,8 @@ require_once('setupUtils.inc');
 				wizard_form.def_processing_prefix.readOnly = false;
 				wizard_form.hide_imagic[0].disabled = false;
 				wizard_form.hide_imagic[1].disabled = false;
+				wizard_form.hide_matlab[0].disabled = false;
+				wizard_form.hide_matlab[1].disabled = false;
 				wizard_form.hide_feature[0].disabled = false
 				wizard_form.hide_feature[1].disabled = false;
 				wizard_form.temp_images_dir.style.backgroundColor = "#ffffff";
@@ -41,6 +43,8 @@ require_once('setupUtils.inc');
 				wizard_form.def_processing_prefix.readOnly = true;
 				wizard_form.hide_imagic[0].disabled = true;
 				wizard_form.hide_imagic[1].disabled = true;
+				wizard_form.hide_matlab[0].disabled = true;
+				wizard_form.hide_matlab[1].disabled = true;
 				wizard_form.hide_feature[0].disabled = true;
 				wizard_form.hide_feature[1].disabled = true;
 				wizard_form.temp_images_dir.style.backgroundColor = "#eeeeee";
@@ -193,21 +197,29 @@ require_once('setupUtils.inc');
 		
 		<h3>Do you wish to use the IMAGIC image processing package</h3>
 		<p>Note: IMAGIC software installation required.</p>
-		<input type="radio" name="hide_imagic" value="true" <?php ($update) ? (defined("HIDE_IMAGIC") && HIDE_IMAGIC)? print("checked='yes'") : print("") : print("disabled checked='yes'"); ?> />
-		&nbsp;&nbsp;NO<br />
 		<input type="radio" name="hide_imagic" value="false" <?php ($update) ? (defined("HIDE_IMAGIC") && HIDE_IMAGIC)? print("") : print("checked='yes'") : print("disabled"); ?> />
 		&nbsp;&nbsp;YES<br />
+		<input type="radio" name="hide_imagic" value="true" <?php ($update) ? (defined("HIDE_IMAGIC") && HIDE_IMAGIC)? print("checked='yes'") : print("") : print("disabled checked='yes'"); ?> />
+		&nbsp;&nbsp;NO<br />
+		<br />
+
+		<h3>Do you wish to use programs that require MATLAB?</h3>
+		<input type="radio" name="hide_matlab" value="false" <?php ($update) ? (defined("HIDE_MATLAB") && HIDE_MATLAB)? print("") : print("checked='yes'") : print("disabled checked='yes'"); ?> />
+		&nbsp;&nbsp;YES<br />
+		<input type="radio" name="hide_matlab" value="true" <?php ($update) ? (defined("HIDE_MATLAB") && HIDE_MATLAB)? print("checked='yes'") : print("") : print("disabled"); ?> />
+		&nbsp;&nbsp;NO<br />
 		<br />
 
 		<h3>Do you want to use image processing tools that are still under development?</h3>
 		<p>Note: Tools still under development are not fully functioning. We suggest hiding these features.</p>
-		<input type="radio" name="hide_feature" value="true" <?php ($update) ? (defined("HIDE_FEATURE") && HIDE_FEATURE)? print("checked='yes'") : print("") : print("disabled"); ?> />
+		<input type="radio" name="hide_feature" value="false" <?php ($update) ? (defined("HIDE_FEATURE") && HIDE_FEATURE)? print("") : print("checked='yes'") : print("disabled"); ?> />
+		&nbsp;&nbsp;YES<br />	
+		<input type="radio" name="hide_feature" value="true" <?php ($update) ? (defined("HIDE_FEATURE") && HIDE_FEATURE)? print("checked='yes'") : print("") : print("disabled checked='yes'"); ?> />
 		&nbsp;&nbsp;NO<br />
-		<input type="radio" name="hide_feature" value="false" <?php ($update) ? (defined("HIDE_FEATURE") && HIDE_FEATURE)? print("") : print("checked='yes'") : print("disabled checked='yes'"); ?> />
-		&nbsp;&nbsp;YES<br />		
+
 		<br />
 
-		<h3>Enter the spherical aberration (Cs) constant for the microscope (in millimeters). See also <a href='http://en.wikipedia.org/wiki/Spherical_aberration'>wikipedia</a>.</h3>
+		<h3>Enter the spherical aberration (Cs) constant for the microscope (in millimeters). <a href='http://en.wikipedia.org/wiki/Spherical_aberration'>Wikipedia</a> description.</h3>
 		<p>Example : 2.0  </p>
 		<input type="text" size=5 name="defaultcs" <?php ($update && PROCESSING === true) ? print("value='".DEFAULTCS."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
 		<br />
