@@ -258,10 +258,12 @@ if (is_numeric($expId)) {
 	$totresult = ($totruns==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$totruns</a>";
 
 	$nruns = array();
-	$nruns[] = array(
-		'name'=>"<a href='runPyAce.php?expId=$sessionId'>ACE Estimation</a>",
-		'result'=>$ctfresults,
-	);
+	if (!HIDE_MATLAB) {
+		$nruns[] = array(
+			'name'=>"<a href='runPyAce.php?expId=$sessionId'>ACE Estimation</a>",
+			'result'=>$ctfresults,
+		);
+	}
 	$nruns[] = array(
 		'name'=>"<a href='runAce2.php?expId=$sessionId'>ACE 2 Estimation</a>",
 		'result'=>$ace2results,
