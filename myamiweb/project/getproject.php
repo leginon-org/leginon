@@ -202,6 +202,7 @@ $projectId = $projectinfo['projectId'];
 		//projectdata.projectexperiments.experimentId is not a referenced index of leginon.SessionData DEF_id, in general, and therefore can not be used for getting sessioninfo. Use name instead)
 		$sessionname = $exp['name'];
 		$info = $leginondata->getSessionInfo($sessionname);
+		//print_r($info);
 
 		if (empty($info['SessionId']))
 			continue;
@@ -212,6 +213,7 @@ $projectId = $projectinfo['projectId'];
 		$sessionlink="<a class='header' target='viewer' href='".VIEWER_URL.$info['SessionId']."'>".$info['Name']."</a>";
 		$experiments[$k]['name']=$sessionlink;
 		$experiments[$k]['sessionid']=$info['SessionId'];
+		$experiments[$k]['user']=$info['User'];
 		$experiments[$k]['description']=$info['Purpose'];
 
 		if ($numimg > 0)
@@ -245,6 +247,7 @@ $projectId = $projectinfo['projectId'];
 $columns=array(
 	'name'=>'Name',
 	'sessionid'=>'Session Id',
+	'user'=>'User',
 	'description'=>'Description',
 	'totalimg'=>'Total images',
 	'totaltime'=>'Total Duration'
