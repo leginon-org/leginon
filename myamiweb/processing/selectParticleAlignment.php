@@ -74,7 +74,7 @@ echo " <p> first you select template and then this method uses the "
 //echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
 echo "</td></tr>\n";
 
-if (!$HIDE_IMAGIC && !HIDE_FEATURE) {
+if (!HIDE_IMAGIC && !HIDE_FEATURE) {
 	/*
 	** IMAGIC Reference Based Alignment
 	*/
