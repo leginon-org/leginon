@@ -129,8 +129,8 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$angle = ($_POST['angle']) ? $_POST['angle'] : '5';
 	$clipdiam = ($_POST['clipdiam']) ? $_POST['clipdiam'] : '';
 	$maxiter = ($_POST['maxiter']) ? $_POST['maxiter'] : '15';
-	$mirror = ($_POST['mirror']=='on' || !$_POST['mirror']) ? 'checked' : '';
-	$savemem = ($_POST['savemem']=='on' || !$_POST['savemem']) ? 'checked' : '';
+	$mirror = ($_POST['mirror']=='on' || !$_POST['process']) ? 'checked' : '';
+	$savemem = ($_POST['savemem']=='on' || !$_POST['process']) ? 'checked' : '';
 	$distributionval = ($_POST['distribution']) ? $_POST['distribution'] : 'gauss';
 	$fast = ($_POST['fast']=='on' || !$_POST['fast']) ? 'checked' : '';
 
@@ -252,22 +252,26 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 
 	echo "Search space reduction criteria";
 	echo "<br/>\n";
-	echo "&nbsp;&nbsp;<select name='fastmode' ";
+	echo "&nbsp;&nbsp;<select name='fastmode' $fastmode";
 	if (!$fast) echo " disabled";
 	echo ">\n";
-	echo " <option value='normal'>Normal search</option>\n";
-	echo " <option value='narrow'>Faster, narrower search</option>\n";
-	echo " <option value='wide'>Slower, wider search</option>\n";
+	$values = array('normal'=>'Normal search', 'narrow'=>'Faster, narrower search', 'wide'=>'Slower, longer search');
+	foreach ($values as $val => $desc) {
+		$checkselection = ($_POST['fastmode']==$val) ? 'selected' : '';
+		echo " <option value=$val $checkselection>$desc</option>\n";
+	}
 	echo "</select>\n";
 	echo "<br/>\n";
 	echo "<br/>\n";
 
 	echo "Convergence stopping criteria";
 	echo "<br/>\n";
-	echo "&nbsp;&nbsp;<select name='converge'>\n";
-	echo " <option value='normal'>Normal search</option>\n";
-	echo " <option value='fast'>Faster, shorter search</option>\n";
-	echo " <option value='slow'>Slower, longer search</option>\n";
+	echo "&nbsp;&nbsp;<select name='converge' $converge >\n";
+	$values = array('normal'=>'Normal search', 'fast'=>'Faster, shorter search', 'slow'=>'Slower, longer search');
+	foreach ($values as $val => $desc) {
+		$checkselection = ($_POST['converge']==$val) ? 'selected' : '';
+		echo " <option value='$val' $checkselection>$desc</option>\n";
+	}
 	echo "</select>\n";
 	echo "<br/>\n";
 
