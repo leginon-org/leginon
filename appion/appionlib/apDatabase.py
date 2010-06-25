@@ -220,17 +220,30 @@ def getPixelSize(imgdata):
 	multiplies by binning and also by 1e10 to return image pixel size in angstroms
 	shouldn't have to lookup db already should exist in imgdict
 	"""
-	pixelsizeq=leginon.leginondata.PixelSizeCalibrationData()
+	pixelsizeq = leginon.leginondata.PixelSizeCalibrationData()
 	pixelsizeq['magnification'] = imgdata['scope']['magnification']
 	pixelsizeq['tem'] = imgdata['scope']['tem']
 	pixelsizeq['ccdcamera'] = imgdata['camera']['ccdcamera']
 	pixelsizedatas = pixelsizeq.query()
+
+	if len(pixelsizedatas) == 0:
+		apDisplay.printError("No pixelsize information was found image %s\n\twith mag %d, tem id %d, ccdcamera id %d"
+			%(imgdata['filename'], imgdata['scope']['magnification'],
+			imgdata['scope']['tem'].dbid, imgdata['camera']['ccdcamera'].dbid)
+		)
+
 	### check to get one before image was taken
 	i = 0
 	pixelsizedata = pixelsizedatas[i]
-	while pixelsizedata.timestamp > imgdata.timestamp:
+	oldestpixelsizedata = pixelsizedata
+	while pixelsizedata.timestamp > imgdata.timestamp and i < len(pixelsizedatas):
 		i += 1
 		pixelsizedata = pixelsizedatas[i]
+		if pixelsizedata.timestamp < oldestpixelsizedata.timestamp:
+			oldestpixelsizedata = pixelsizedata
+	if pixelsizedata.timestamp > imgdata.timestamp:
+		apDisplay.printWarning("There is no pixel size calibration data for this image, using oldest value")
+		pixelsizedata = oldestpixelsizedata
 	binning = imgdata['camera']['binning']['x']
 	pixelsize = pixelsizedata['pixelsize'] * binning
 	return(pixelsize*1e10)
