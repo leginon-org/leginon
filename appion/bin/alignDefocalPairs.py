@@ -21,7 +21,7 @@ class AlignDefocLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def processImage(self, imgdata):
-		self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
+		self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params['sessionname'])
 
 	#======================
 	def setProcessingDirName(self):

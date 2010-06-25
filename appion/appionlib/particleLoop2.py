@@ -130,7 +130,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 			apDisplay.printWarning("Skipping JPEG creation")
 
 		if self.params['defocpair'] is True:
-			self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
+			self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params['sessionname'])
 		return
 
 	#=====================

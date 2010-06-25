@@ -13,14 +13,14 @@ from appionlib import apDisplay
 
 ##===================
 ##===================
-def getShiftFromImage(imgdata, params):
+def getShiftFromImage(imgdata, sessionname):
 	if imgdata['preset'] is not None and imgdata['preset']['name'] != 'upload':
 		sibling = getDefocusPair(imgdata)
 	else:
 		sibling = getManualDefocusPair(imgdata)
 	if sibling:
 		shiftpeak = getShift(imgdata, sibling)
-		recordShift(params, imgdata, sibling, shiftpeak)
+		recordShift(sessionname, imgdata, sibling, shiftpeak)
 	else:
 		apDisplay.printWarning("No sibling found")
 		shiftpeak=None
@@ -100,8 +100,8 @@ def getShift(imgdata1 ,imgdata2):
 
 ##===================
 ##===================
-def recordShift(params,img,sibling,peak):
-	filename=params['sessionname']+'.shift.txt'
+def recordShift(sessionname,img,sibling,peak):
+	filename=sessionname+'.shift.txt'
 	f=open(filename,'a')
 	f.write('%s\t%s\t%f\t%f\t%f\t%f\n' % (img['filename'],sibling['filename'],peak['shift'][1],peak['shift'][0],peak['scalefactor'],peak['subpixel peak value']))
 	f.close()
