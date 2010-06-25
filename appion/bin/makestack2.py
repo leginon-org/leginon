@@ -148,8 +148,20 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 	#=======================
 	def getParticlesFromStack(self, imgdata):
+		"""
+		For image (or defocal pair), imgdata get particles in corresponding stack
+		"""
+		if self.params['defocpair'] is True:
+			sibling, shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params['sessionname'])
+			if shiftpeak is None:
+				return []
+			searchimgdata = sibling
+		else:
+			searchimgdata = imgdata
+			shiftpeak = {'shiftx':0, 'shifty':0, 'scale':1}
+
 		partq = appiondata.ApParticleData()
-		partq['image'] = imgdata
+		partq['image'] = searchimgdata
 
 		stackpartq = appiondata.ApStackParticleData()
 		stackpartq['stack'] = appiondata.ApStackData.direct_query(self.params['fromstackid'])
@@ -162,7 +174,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			partdata = stackpartdata['particle']
 			partdatas.append(partdata)
 		partdatas.reverse()
-		return partdatas
+		return partdatas, shiftpeak
 
 	#=======================
 	def boxParticlesFromImage(self, imgdata):
@@ -175,8 +187,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			partdatas, shiftdata = apParticle.getDefocPairParticles(imgdata, self.params['selectionid'], self.params['particlelabel'])
 		elif self.params['fromstackid'] is not None:
 			# using previous stack to make a new stack
-			partdatas = self.getParticlesFromStack(imgdata)
-			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}
+			partdatas, shiftdata = self.getParticlesFromStack(imgdata)
 		else:
 			# using particle picks
 			partdatas = apParticle.getParticles(imgdata, self.params['selectionid'], self.params['particlelabel'])
