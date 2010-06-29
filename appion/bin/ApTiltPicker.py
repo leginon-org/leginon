@@ -1604,13 +1604,14 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onQuit(self, evt):
-		dialog = wx.MessageDialog(self.frame,
-			"Are you sure you want to Quit?", 
-			'Quit?', wx.NO|wx.YES|wx.ICON_QUESTION)
-		if dialog.ShowModal() == wx.ID_NO:
+		if not self.appionloop:
+			dialog = wx.MessageDialog(self.frame,
+				"Are you sure you want to Quit?", 
+				'Quit?', wx.NO|wx.YES|wx.ICON_QUESTION)
+			if dialog.ShowModal() == wx.ID_NO:
+				dialog.Destroy()
+				return
 			dialog.Destroy()
-			return
-		dialog.Destroy()
 
 		a1 = self.getArray1()
 		a2 = self.getArray2()
