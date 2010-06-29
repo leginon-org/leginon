@@ -1412,8 +1412,6 @@ class PickerApp(wx.App):
 		self.panel2.setTargets('Worst', [] )
 		self.panel2.setTargets('Polygon', [] )
 		self.statbar.PushStatusText("Cleared all particle picks", 0)
-		if msg is True:
-			self.onUpdate(evt)
 
 	#---------------------------------------
 	def onInitParams(self, evt, msg=True):
@@ -1498,8 +1496,6 @@ class PickerApp(wx.App):
 			pass
 		self.onClearPicks(None, False)
 		self.statbar.PushStatusText("Reset all picks and parameters", 0)
-		if msg is True:
-			self.onUpdate(evt)
 
 	#---------------------------------------
 	def onFileSave(self, evt):
