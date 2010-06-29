@@ -14,6 +14,7 @@ require_once('setupUtils.inc');
 	$template->wizardHeader("Step 2 : Login System and Administrator Email Address", SETUP_CONFIG);
 	
 ?>
+
 	<script language="javascript">
 	<!-- //
 
@@ -103,9 +104,35 @@ require_once('setupUtils.inc');
 				
 			}
 		}
+
+		function alphaNumericCheck(alphane, alerttxt){
+			var regex=/^[0-9a-zA-Z\s]+$/;
+
+			if(regex.test(alphane)){
+
+				return true;
+			}else{
+				alert(alerttxt)
+				return false;
+			}
+		}
+
+		
+		function validate_form(thisform){
+
+			if(thisform.enable_login[0].checked)
+				return true;
+			
+			if (alphaNumericCheck(wizard_form.email_title.value, "Email title can only contain alpha numeric characters.")==false){
+				wizard_form.email_title.focus();
+				return false;
+			}
+		}
+
 	// -->
 	</script>
-	<form name='wizard_form' method='POST' action='setupDatabase.php'>
+	
+	<form name='wizard_form' method='POST' action='setupDatabase.php' onsubmit="return validate_form(this)">
 
 	<?php 
 		foreach ($_POST as $key => $value){
@@ -115,6 +142,7 @@ require_once('setupUtils.inc');
 		
 	?>
 		<h3>Enable Login System:</h3>		
+		
 		<p>You may enable the login feature to restrict access to Leginon and Appion projects.</p>
 		 
 		<input type="radio" name="enable_login" value="false" <?php ($update) ? (ENABLE_LOGIN)? print("") : print("checked='yes'") : print("checked='yes'"); ?> 
@@ -123,7 +151,7 @@ require_once('setupUtils.inc');
 			onclick="setLogin(this)" />&nbsp;&nbsp;YES<br />
 		<br />
 		<h3>Enter outgoing email subject line:</h3>
-		<p>example: AMI - The Scripps Research Institute</p>
+		<p>example: The Scripps Research Institute</p>
 		<input type="text" size=50 name="email_title" <?php ($update && ENABLE_LOGIN === true)? print("value='".EMAIL_TITLE."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); ?> /><br /><br />
 		<br />
 		<h3>Enter administrator email address:</h3>
@@ -160,8 +188,9 @@ require_once('setupUtils.inc');
 		<br />
 		
 		<input type="submit" value="NEXT" />
+
 	</form>
-	
+	 
 <?php 
 		
 	$template->wizardFooter();
