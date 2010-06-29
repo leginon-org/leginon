@@ -219,7 +219,14 @@ require_once('setupUtils.inc');
 
 		<br />
 
-		<h3>Enter the spherical aberration (Cs) constant for the microscope (in millimeters). <a href='http://en.wikipedia.org/wiki/Spherical_aberration'>Wikipedia</a> description.</h3>
+		<h3>Enable download images as TIFF or JPEG</h3>
+		<p>To use 'mrc2any', you need to install the pyami package which is part of myami.  
+			See <a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Install_the_Web_Interface'>installation documentation</a> for help. <br />
+			Example : /usr/bin/mrc2any  </p>
+		<input type="text" size=15 name="mrc2any" <?php ($update && PROCESSING === true) ? print("value='".MRC2ANY."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
+		<br />
+
+		<h3>Enter the spherical aberration (Cs) constant for the microscope (in millimeters). <a target='_blank' href='http://en.wikipedia.org/wiki/Spherical_aberration'>Wikipedia</a> description.</h3>
 		<p>Example : 2.0  </p>
 		<input type="text" size=5 name="defaultcs" <?php ($update && PROCESSING === true) ? print("value='".DEFAULTCS."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
 		<br />
