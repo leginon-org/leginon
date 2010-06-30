@@ -17,6 +17,18 @@ require_once('setupUtils.inc');
 	<script language="javascript">
 	<!-- //
 
+		function enableCache(obj){
+
+			if(obj.value == "true"){
+				wizard_form.cache_path.style.backgroundColor = "#ffffff";
+				wizard_form.cache_path.readOnly = false;
+			}else{
+				wizard_form.cache_path.style.backgroundColor = "#eeeeee";
+				wizard_form.cache_path.readOnly = true;
+				wizard_form.cache_path.value = "";
+			}
+		}
+	
 		function setAppion(obj){
 
 			if(obj.value == "true"){
@@ -38,7 +50,7 @@ require_once('setupUtils.inc');
 				wizard_form.removeCluster.disabled = false;
 				
 			}else{
-
+				
 				wizard_form.def_processing_prefix.style.backgroundColor = "#eeeeee";
 				wizard_form.def_processing_prefix.readOnly = true;
 				wizard_form.hide_imagic[0].disabled = true;
@@ -160,7 +172,25 @@ require_once('setupUtils.inc');
 		}
 	?>
 	
+		<h3>Do you want to enable image caching for faster image viewing?</h3>
+		<p>Note: To use image caching, you need to setup the caching location.</p>
+		<input type="radio" name="enable_cache" value="true" <?php ($update) ? (defined("ENABLE_CACHE") && ENABLE_CACHE)? print("checked='yes'") : print("") : print(""); ?>
+			onclick="enableCache(this)" />&nbsp;&nbsp;YES<br />
+		<input type="radio" name="enable_cache" value="false" <?php ($update) ? (defined("ENABLE_CACHE") && ENABLE_CACHE)? print("") : print("checked='yes'") : print("checked='yes'"); ?>
+			onclick="enableCache(this)" />&nbsp;&nbsp;NO<br />
 		
+		<p>Example : /srv/www/cache/  </p>
+		<input type="text" size=15 name="cache_path" <?php ($update && ENABLE_CACHE) ? print("value='".CACHE_PATH."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
+		Please make sure the apache user has write access to this folder. (example: chown 'your_apache_user' /srv/www/cache/)  <br />
+		<br />
+
+		<h3>Enable download images as TIFF or JPEG</h3>
+		<p>Please provide the path to the mrc2any python module. The path may be found by typing "which mrc2any" at a command prompt.   
+			See <a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Install_the_Web_Interface'>installation documentation</a> for help. <br /><br />
+			Example : /usr/bin/mrc2any  </p>
+		<input type="text" size=15 name="mrc2any" <?php ($update) ? print("value='".MRC2ANY."'") : print("value=''"); ?> /><br /><br />
+		<br />
+				
 		<h3>Do you want to enable the Appion image processing pipeline</h3>
 		<p>Select "YES" if you want to use Appion image processing.</p>
 		<p>Note: Other processing software installation required.</p>
@@ -217,13 +247,6 @@ require_once('setupUtils.inc');
 		<input type="radio" name="hide_feature" value="true" <?php ($update) ? (defined("HIDE_FEATURE") && HIDE_FEATURE)? print("checked='yes'") : print("") : print("disabled checked='yes'"); ?> />
 		&nbsp;&nbsp;NO<br />
 
-		<br />
-
-		<h3>Enable download images as TIFF or JPEG</h3>
-		<p>To use 'mrc2any', you need to install the pyami package which is part of myami.  
-			See <a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Install_the_Web_Interface'>installation documentation</a> for help. <br />
-			Example : /usr/bin/mrc2any  </p>
-		<input type="text" size=15 name="mrc2any" <?php ($update && PROCESSING === true) ? print("value='".MRC2ANY."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
 		<br />
 
 		<h3>Enter the spherical aberration (Cs) constant for the microscope (in millimeters). <a target='_blank' href='http://en.wikipedia.org/wiki/Spherical_aberration'>Wikipedia</a> description.</h3>
