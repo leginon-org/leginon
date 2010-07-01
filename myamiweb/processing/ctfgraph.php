@@ -72,14 +72,14 @@ if ($viewdata) {
 	exit;
 }
 
-$width = $_GET['w'];
-$height = $_GET['h'];
+$width = $_GET['w'] ? $_GET['w'] : 640;
+$height = $_GET['h'] ? $_GET['h'] : 480;
 if (!$data) {
 	$width = 12;
 	$height = 12;
 	$source = blankimage($width,$height);
 } else {
-	$graph = new Graph(600,400,"auto");    
+	$graph = new Graph($width,$height,"auto");    
 	if ($histogram) {
 		$graph->img->SetMargin(60,30,40,50);
 		$histogram = new histogram($data);
