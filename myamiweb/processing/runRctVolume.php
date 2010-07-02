@@ -204,7 +204,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 		 ($stackparams['tiltangle'] != "notilt" && $stackparams['tiltangle'] != "all")) {
 			$descript  = substr($stackparams['description'],0,40);
 			#print_r($stackparams);
-			$box  = $stackparams['boxSize'];
+			$box  = $stackparams['boxsize'];
 			$numparts = commafy($particle->getNumStackParticles($stackid));
 			//handle multiple runs in stack
 			$stackname = $stackparams['shownstackname'];
