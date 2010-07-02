@@ -19,6 +19,7 @@ from appionlib import apDatabase
 from appionlib import appiondata
 from appionlib import apSymmetry
 from appionlib import apRecon
+from appionlib import apFrealign
 
 class UploadFrealign(appionScript.AppionScript):
 	#=====================
@@ -62,46 +63,6 @@ class UploadFrealign(appionScript.AppionScript):
 		self.params['stackid'] = prepdata['stack'].dbid
 		self.params['modelid'] = prepdata['model'].dbid
 		self.params['rundir'] = prepdata['path']['path']
-
-	#=====================
-	def parseFrealignParamFile(self, iternum):
-		"""
-		parse a typical FREALIGN parameter file from v8.08
-		"""
-		paramfile = "params.iter%03d.par"%(iternum)
-
-		if not os.path.isfile(paramfile):
-			apDisplay.printError("Parameter file does not exist: %s"%(paramfile))
-
-		### cannot assume spaces will separate columns.
-		#0000000001111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000
-		#1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
-		#     24  219.73   84.00  299.39   15.33  -17.51  10000.     1  27923.7  27923.7  -11.41   0.00    0.00
-		f = open(paramfile, "r")
-		parttree = []
-		apDisplay.printMsg("Processing parameter file: %s"%(paramfile))
-		for line in f:
-			sline = line.strip()
-			if sline[0] == "C":
-				### comment line
-				continue
-			partdict = {
-				'partnum': int(line[0:7].strip()),
-				'euler1': float(line[8:15]),
-				'euler2': float(line[16:23]),
-				'euler3': float(line[24:31]),
-				'shiftx': float(line[32:39]),
-				'shifty': float(line[40:47]),
-				'phase_residual': float(line[88:94]),
-			}
-			parttree.append(partdict)
-		f.close()
-		if len(parttree) < 2:
-			apDisplay.printError("No particles found in parameter file %s"%(paramfile))
-
-
-		apDisplay.printMsg("Processed %d particles"%(len(parttree)))
-		return parttree
 
 	#=====================
 	def checkResults(self):
@@ -381,7 +342,8 @@ class UploadFrealign(appionScript.AppionScript):
 		iterparams = self.readParamsFromCombineFile(iternum)
 
 		### read particle info
-		parttree = self.parseFrealignParamFile(iternum)
+		paramfile = os.path.join(self.params['rundir'], "params.iter%03d.par"%(iternum))
+		parttree = apFrealign.parseFrealignParamFile(paramfile)
 
 		### get volume info
 		volumeMrcFile = self.processFrealignVolume(iternum, symname=iterparams['symmdata']['eman_name'])
