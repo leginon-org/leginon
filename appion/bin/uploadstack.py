@@ -207,6 +207,7 @@ class UploadStack(appionScript.AppionScript):
 		stackq['description'] = self.params['description']
 		stackq['hidden'] = False
 		stackq['pixelsize'] = self.params['apix']*1e-10
+		stackq['boxsize'] = self.boxsize
 		stackq['centered'] = False
 
 		stackparamq = appiondata.ApStackParamsData()
