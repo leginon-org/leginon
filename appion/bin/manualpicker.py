@@ -4,6 +4,8 @@ import os
 import sys
 import wx
 import time
+import math
+import numpy
 from appionlib import particleLoop2
 from appionlib import apImage
 #import subprocess
@@ -19,8 +21,8 @@ from appionlib import apParam
 #Leginon
 import leginon.polygon
 from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
-import pyami
-import numpy
+import pyami.mrc
+
 
 class ManualPickerPanel(TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True):
@@ -112,6 +114,11 @@ class PickerApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onRevert, self.revert)
 		self.buttonrow.Add(self.revert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		self.helicalinsert = wx.Button(self.frame, -1, '&Helical insert')
+		self.helicalinsert.SetMinSize((120,40))
+		self.Bind(wx.EVT_BUTTON, self.onHelicalInsert, self.helicalinsert)
+		self.buttonrow.Add(self.helicalinsert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+
 		label = wx.StaticText(self.frame, -1, "Image Assessment:  ", style=wx.ALIGN_RIGHT)
 		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
@@ -128,7 +135,7 @@ class PickerApp(wx.App):
 		self.assesskeep.SetMinSize((100,40))
 		self.buttonrow.Add(self.assesskeep, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
-		self.assessreject = wx.ToggleButton(self.frame, -1, "&Reject")
+		self.assessreject = wx.ToggleButton(self.frame, -1, "Re&ject")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleReject, self.assessreject)
 		self.assessreject.SetValue(0)
 		self.assessreject.SetMinSize((100,40))
@@ -239,6 +246,57 @@ class PickerApp(wx.App):
 		if self.panel.originaltargets is not None:
 			self.panel.setTargets('Select Particles', self.panel.originaltargets)
 
+	def targetsToArray(self, targets):
+		a = []
+		for t in targets:
+			if t.x and t.y:
+				a.append([ int(t.x), int(t.y) ])
+		na = numpy.array(a, dtype=numpy.int32)
+		return na
+
+	def onHelicalInsert(self, evt):
+		"""
+		connect the last two targets by filling inbetween
+		copied from EMAN1 boxer
+		"""
+		### get last two targets
+		targets = self.panel.getTargets('Select Particles')
+		if len(targets) < 2:
+			apDisplay.printWarning("not enough targets")
+			return
+		array = self.targetsToArray(targets)
+		### get pixelsize
+		apix = self.appionloop.params['apix']
+		if not apix:
+			apDisplay.printWarning("unknown pixel size")
+			return
+		### get helicalstep
+		helicalstep = self.appionloop.params['helicalstep']
+		if not helicalstep:
+			apDisplay.printWarning("unknown helical step size")
+			return
+
+		first = array[-2]
+		last = array[-1]
+		pixeldistance = math.hypot(first[0] - last[0], first[1] - last[1])
+		stepsize = helicalstep/pixeldistance*apix
+		#x = (1 - t)x1 + tx2,
+		#y = (1 - t)y1 + ty2,
+		# t { 0,1
+		points = list(array)
+		t = 0.0
+		while t < 1.0:
+			x = int(round( (1.0 - t)*first[0] + t*last[0], 0))
+			y = int(round( (1.0 - t)*first[1] + t*last[1], 0))
+			points.append((x,y))
+			t += stepsize
+
+		self.panel.setTargets('Select Particles', points)
+		
+		
+		
+		
+
 
 ##################################
 ##################################
@@ -305,6 +363,8 @@ class manualPicker(particleLoop2.ParticleLoop):
 			help="pick shape")
 		self.parser.add_option("--shapesize", dest="shapesize", type="int", default=16,
 			help="shape size")
+		self.parser.add_option("--helicalstep", dest="helicalstep", type="float",
+			help="helical step size (in Angstroms)")
 		self.parser.add_option("--mask", dest="checkMask", default=False,
 			action="store_true", help="check mask")
 
