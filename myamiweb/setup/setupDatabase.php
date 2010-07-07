@@ -20,15 +20,23 @@ require_once('../inc/formValidator.php');
 		$validator->addValidation("db_leginon", $_POST['db_leginon'], "req");
 		$validator->addValidation("db_project", $_POST['db_project'], "req");
 		
+		$validator->addValidation("db_validate", array( 'host' => $_POST['db_host'], 
+														  'username' => $_POST['db_user'],
+														  'password' => $_POST['db_pass'],
+														  'leginondb' => $_POST['db_leginon'],
+														  'projectdb' => $_POST['db_project']), "database");
+		
 		$validator->runValidation();
 		$errMsg = $validator->getErrorMessage();
+
 		
 		if(empty($errMsg)){
 			
 			$_SESSION['post'] = $_POST;
 			setupUtils::redirect('setupOthers.php');
 			exit();
-		}		
+		}
+				
 	}	
 	
 	$template = new template;
@@ -49,6 +57,8 @@ require_once('../inc/formValidator.php');
 		Appion requires all three types of database, but Leginon does not require an Appion database<br />
 		Please visit <a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Setup_MySQL_database" target="_blank">
 		Database setup</a> for more detailed information before you fill in this form.</font><br /><br />
+		
+		<div id="error"><?php if($errMsg['db_validate']) echo $errMsg['db_validate']."<br /><br />"; ?></div>
 		<h3>Enter the Database Host Name:</h3>
 		<p>example: localhost, or IP</p>
 		<div id="error"><?php if($errMsg['db_host']) echo $errMsg['db_host']; ?></div>

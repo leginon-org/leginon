@@ -184,8 +184,8 @@ class formValidator{
 				break;
 			}
 			
-			case 'db_connect':{
-				
+			case 'database':{
+				$result = $this->validateDB($validateObj);
 				break;
 			}
 			
@@ -266,6 +266,13 @@ class formValidator{
 		return false;
 	}
 	
+	/*
+	 * Validate the SMTP server connection.
+	 * If there have any error, get the error message for display.
+	 * otherwise, this function will send an testing email via smtp server
+	 * to the email account user provided.
+	 * 
+	 */
 	function validateSMTP(&$validateObj){
 		
 		set_include_path(dirname(__FILE__)."/../lib/PEAR");
@@ -297,6 +304,44 @@ class formValidator{
 		return true;
 	}
 	
+	/*
+	 * Validate database connection and existence of the Leginon database and Project database.
+	 */
+	function validateDB(&$validateObj){
+		require_once("../inc/mysql.inc");
+		
+		$inputValues = $validateObj->getVariableValue();
+		
+		$mysqld = new mysql($inputValues['host'], $inputValues['username'], $inputValues['password']);
+		$dbLink = $mysqld->connect_db();
+		
+		if($dbLink == false) {
+			
+			$validateObj->setErrorOutputMessage("Cannot connect to the database server with the following 'hostname', 'username' and 'password'.");
+			$mysqld->close_db($dbLink);
+			return false;
+		}
+		
+		$dbSelectResult = $mysqld->select_db($inputValues['leginondb'], $dbLink);
+		
+		if($dbSelectResult == false) {
+			$validateObj->setErrorOutputMessage("Leginon database does not exist or you have inputed the wrong database name.");
+			$mysqld->close_db($dbLink);
+			return false;
+		}
+		
+		$dbSelectResult = $mysqld->select_db($inputValues['projectdb'], $dbLink);
+		
+		if($dbSelectResult == false) {
+			$validateObj->setErrorOutputMessage("Project database does not exist or you have inputed the wrong database name.");
+			$mysqld->close_db($dbLink);
+			return false;
+		}
+		
+		$mysqld->close_db($dbLink);
+		return true;
+	}
+	
 }
 
 /**
@@ -319,7 +364,7 @@ define("ALNUM_S_CHECK_FAILED", "Input can only contain alpha-numeric and space c
 define("FLOAT_CHECK_FAILED", "Input can only be integer or float.");
 define("FLOAT_D_CHECK_FAILED", "Float input can only with exactly %d decimal places.");
 define("SMTP_CHECK_FAILED", "SMTP Server checking failed. Please contact your system administrator.");
-
+define("DATABASE_CHECK_FAILED", "Database checking failed. Please contact your system administrator.");
 
 // This is an inner class for formValidator.
 class validatorObj{
@@ -394,6 +439,8 @@ class validatorObj{
 				case 'float_d':	{ $this->errorOutputMessage = sprintf(FLOAT_D_CHECK_FAILED, $this->getTypeOption()); break;	}
 				
 				case 'smtp':	{ $this->errorOutputMessage = SMTP_CHECK_FAILED; break;	}
+				
+				case 'database':	{ $this->errorOutputMessage = DATABASE_CHECK_FAILED; break;	}
 		
 			} //end switch			
 		}
@@ -407,5 +454,6 @@ class validatorObj{
 	}
 
 }
+
 
 ?>
