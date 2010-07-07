@@ -19,12 +19,12 @@
  * else
  * 		print_r($errMsg);
  *
- * For regular-Expression tester, you can go to : http://www.regular-expressions.info/javascriptexample.html
+ * For regular-Expression tester, you can go to : http://www.spaweditor.com/scripts/regex/index.php
  * 
  */
 
 class formValidator{
-	
+
 	var $validateObjs;
 	var $errorMessages;
 	
@@ -66,6 +66,21 @@ class formValidator{
 	 * Alpha-numeric and spaces: 
 	 * 				addValidation("variableName", "variableValue", "alnum_s");
 	 * 				addValidation("variableName", "variableValue", "alnum_s", "Your own error message");
+	 * 
+	 * Float:
+	 * 				addValidation("variableName", "variableValue", "float");
+	 * 				addValidation("variableName", "variableValue", "float", "Your own error message");
+	 * 
+	 * Float with fixed number of decimal:
+	 * 				addValidation("variableName", "variableValue", "float_d=2");
+	 * 				addValidation("variableName", "variableValue", "float_d=2", "Your own error message");
+	 * 
+	 * SMTP server validation:
+	 * 				addValidation("smtp_server", array( 'host' => 'hostname', 
+	 *													'email' => 'email address',
+	 *													'auth' => true/false, 
+	 *													'username' => 'username',
+	 *													'password' => 'password'), "smtp");
 	 * 
 	 */
 	function addValidation($variableName, $variableValue, $validatorType, $errorOutputMessage=NULL){
@@ -137,24 +152,48 @@ class formValidator{
 			}
 			
 			case 'num':{
-				$result = $this->validateRegExp($validateObj->getVariableValue(),"/[^0-9]/");
+				$result = $this->validateRegExp($validateObj->getVariableValue(),"/^[0-9]*$/");
 				break;							
             }
 
-			case 'alpha':{
-				$result = $this->validateRegExp($validateObj->getVariableValue(),"/[^A-Za-z]/");
+			case 'alpha':{														
+				$result = $this->validateRegExp($validateObj->getVariableValue(),"/^[A-Za-z]*$/");
 				break;
 			}
 			
 			case 'alpha_s':{
-				$result = $this->validateRegExp($validateObj->getVariableValue(),"/[^A-Za-z ]/");
+				$result = $this->validateRegExp($validateObj->getVariableValue(),"/^[A-Za-z ]*$/");
 				break;
 			}
 			
 			case 'alnum_s':{
-				$result = $this->validateRegExp($validateObj->getVariableValue(), "/[^A-Za-z0-9 ]/");
+				$result = $this->validateRegExp($validateObj->getVariableValue(), "/^[A-Za-z0-9 ]*$/");
 				break;
 			}
+			
+			case 'float':{
+				$result = $this->validateRegExp($validateObj->getVariableValue(), "/^\d*\.?\d*$/");
+				break;
+			}
+			
+			case 'float_d':{
+				$numberOfDecimal = $validateObj->getTypeOption();
+				
+				$floatRegExp = "/^\d*\.\d{". $numberOfDecimal ."}$/";
+				$result = $this->validateRegExp($validateObj->getVariableValue(), $floatRegExp);
+				break;
+			}
+			
+			case 'db_connect':{
+				
+				break;
+			}
+			
+			case 'smtp':{
+				$result = $this->validateSMTP($validateObj);
+				break;
+			}
+			
 		
 		} //end switch
 
@@ -220,10 +259,41 @@ class formValidator{
 	 * Validate input by given regular exp..
 	 */
 	function validateRegExp($inputValue,$regExp){
+		if(preg_match($regExp, $inputValue)){
+			return true;
+		}	
 		
-		if(preg_match($regExp, $inputValue))
+		return false;
+	}
+	
+	function validateSMTP(&$validateObj){
+		
+		set_include_path(dirname(__FILE__)."/../lib/PEAR");
+        require_once "Mail.php";
+        
+        $inputValues = $validateObj->getVariableValue();
+
+		// build the email headers
+		$headers = array('From' => $inputValues['email'],
+						 'To' => $inputValues['email'],
+						 'Subject' =>"Web Tool SMTP Validation Testing Email.");
+		
+		$authParams = array('host' => $inputValues['host'],
+							'auth' => $inputValues['auth'],
+                       	  	'username' => $inputValues['username'],
+                       	  	'password' => $inputValues['password']);
+		
+		$mailing = Mail::factory('smtp', $authParams);
+		$message = "Dear User!\n\n"
+					."If you received this email, your smtp server setup is successful.\n\n"
+					."Thanks";
+		
+		$mail = $mailing->send($inputValues['email'], $headers, $message);
+		
+		if(PEAR::isError($mail)){
+			$validateObj->setErrorOutputMessage($mail->getMessage());
 			return false;
-			
+		}
 		return true;
 	}
 	
@@ -238,14 +308,18 @@ class formValidator{
  */
 
 /** Default error messages*/
-define("REQUIRED_VALUE","Field can not be empty.");
-define("MAXLEN_EXCEEDED","Please enter an input with length less than %d.");
-define("MINLEN_CHECK_FAILED","Please enter an input with length more than %d.");
-define("EMAIL_CHECK_FAILED","Please provide a valid email address.");
-define("NUM_CHECK_FAILED","Please provide a numeric input.");
-define("ALPHA_CHECK_FAILED","Please provide a alphabetic input.");
-define("ALPHA_S_CHECK_FAILED","Input can only contain alphabetic and space characters.");
-define("ALNUM_S_CHECK_FAILED","Input can only contain alpha-numeric and space characters.");
+define("REQUIRED_VALUE", "Field can not be empty.");
+define("MAXLEN_EXCEEDED", "Please enter an input with length less than %d.");
+define("MINLEN_CHECK_FAILED", "Please enter an input with length more than %d.");
+define("EMAIL_CHECK_FAILED", "Please provide a valid email address.");
+define("NUM_CHECK_FAILED", "Please provide a numeric input.");
+define("ALPHA_CHECK_FAILED", "Please provide a alphabetic input.");
+define("ALPHA_S_CHECK_FAILED", "Input can only contain alphabetic and space characters.");
+define("ALNUM_S_CHECK_FAILED", "Input can only contain alpha-numeric and space characters.");
+define("FLOAT_CHECK_FAILED", "Input can only be integer or float.");
+define("FLOAT_D_CHECK_FAILED", "Float input can only with exactly %d decimal places.");
+define("SMTP_CHECK_FAILED", "SMTP Server checking failed. Please contact your system administrator.");
+
 
 // This is an inner class for formValidator.
 class validatorObj{
@@ -301,9 +375,9 @@ class validatorObj{
 				
 				case 'req':		{ $this->errorOutputMessage = REQUIRED_VALUE; break;	}
 			
-				case 'maxlen':	{ $this->errorOutputMessage = sprintf(MAXLEN_EXCEEDED, $this->getTypeOption());; break;	}
+				case 'maxlen':	{ $this->errorOutputMessage = sprintf(MAXLEN_EXCEEDED, $this->getTypeOption()); break;	}
 			
-				case 'minlen':	{ $this->errorOutputMessage = sprintf(MINLEN_CHECK_FAILED, $this->getTypeOption());; break;	}
+				case 'minlen':	{ $this->errorOutputMessage = sprintf(MINLEN_CHECK_FAILED, $this->getTypeOption()); break;	}
 			
 				case 'email':	{ $this->errorOutputMessage = EMAIL_CHECK_FAILED; break;	}
 			
@@ -314,6 +388,12 @@ class validatorObj{
 				case 'alpha_s':	{ $this->errorOutputMessage = ALPHA_S_CHECK_FAILED; break;	}
 			
 				case 'alnum_s':	{ $this->errorOutputMessage = ALNUM_S_CHECK_FAILED; break;	}
+				
+				case 'float':	{ $this->errorOutputMessage = FLOAT_CHECK_FAILED; break;	}
+				
+				case 'float_d':	{ $this->errorOutputMessage = sprintf(FLOAT_D_CHECK_FAILED, $this->getTypeOption()); break;	}
+				
+				case 'smtp':	{ $this->errorOutputMessage = SMTP_CHECK_FAILED; break;	}
 		
 			} //end switch			
 		}
@@ -327,8 +407,5 @@ class validatorObj{
 	}
 
 }
-
-
-
 
 ?>

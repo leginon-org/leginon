@@ -22,12 +22,19 @@ require_once('../inc/formValidator.php');
 		}
 		
 		if($_POST['enable_smtp'] == 'true'){
+			$smtpAuth = ($_POST['smtp_auth'] == 'true') ? true : false;
+			
 			$validator->addValidation("smtp_host", $_POST['smtp_host'], "req");
+			$validator->addValidation("smtp_server", array( 'host' => $_POST['smtp_host'], 
+															'email' => $_POST['admin_email'],
+															'auth' => $smtpAuth, 
+															'username' => $_POST['smtp_username'],
+															'password' => $_POST['smtp_password']), "smtp");
 		}
 		
 		if($_POST['smtp_auth'] == 'true'){
-			$validator->addValidation("smtp_username", $_POST['email_title'], "req");
-			$validator->addValidation("smtp_password", $_POST['email_title'], "req");
+			$validator->addValidation("smtp_username", $_POST['smtp_username'], "req");
+			$validator->addValidation("smtp_password", $_POST['smtp_password'], "req");
 		}
 		$validator->runValidation();
 		$errMsg = $validator->getErrorMessage();
@@ -205,6 +212,7 @@ require_once('../inc/formValidator.php');
 				}
 			?> /><br /><br />
 		<br />
+		<div id="error"><?php if($errMsg['smtp_server']) echo $errMsg['smtp_server']."<br /><br />"; ?></div>
 		<h3>Determine a mail server to send outgoing email:</h3>
 		<p>Select "SMTP server" to enter your SMTP host information.<br />
 		If your institution does not provide an SMTP server, please select "Use regular PHP mail" to use the local computer.</p>
@@ -227,6 +235,7 @@ require_once('../inc/formValidator.php');
 		?> 
 			onclick="setReadOnly_SMTP(this)" />&nbsp;&nbsp;I want to use our SMTP server.<br /><br />
 		<br />
+		
 		<h3>Enter your SMTP host name:</h3>
 		<p>example: mail.school.edu</p>
 		<div id="error"><?php if($errMsg['smtp_host']) echo $errMsg['smtp_host']; ?></div>
