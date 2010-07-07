@@ -166,7 +166,7 @@ require_once('setupUtils.inc');
 	
 	<form name='wizard_form' method='POST' action='confirmConfig.php'>
 	<?php
-		foreach ($_POST as $key => $value){
+		foreach ($_SESSION['post'] as $key => $value){
 			$value = trim($value);
 			echo "<input type='hidden' name='".$key."' value='".$value."' />";
 		}
