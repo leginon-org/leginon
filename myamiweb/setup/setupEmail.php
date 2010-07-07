@@ -2,6 +2,7 @@
 
 require_once('template.inc');
 require_once('setupUtils.inc');
+require_once('../inc/formValidator.php');
 
 	setupUtils::checkSession();
 	$update = false;	
@@ -9,7 +10,37 @@ require_once('setupUtils.inc');
 		require_once(CONFIG_FILE);
 		$update = true;
 	}
+	
+	if($_POST){
 
+		$validator = new formValidator();
+		
+		if($_POST['enable_login'] == 'true'){
+			$validator->addValidation("email_title", $_POST['email_title'], "req");
+			$validator->addValidation("email_title", $_POST['email_title'], "alpha_s");
+			$validator->addValidation("admin_email", $_POST['admin_email'], "email");
+		}
+		
+		if($_POST['enable_smtp'] == 'true'){
+			$validator->addValidation("smtp_host", $_POST['smtp_host'], "req");
+		}
+		
+		if($_POST['smtp_auth'] == 'true'){
+			$validator->addValidation("smtp_username", $_POST['email_title'], "req");
+			$validator->addValidation("smtp_password", $_POST['email_title'], "req");
+		}
+		$validator->runValidation();
+		$errMsg = $validator->getErrorMessage();
+		
+		if(empty($errMsg)){
+			
+			$_SESSION['post'] = $_POST;
+			setupUtils::redirect('setupDatabase.php');
+			
+			exit();
+		}		
+	}
+	
 	$template = new template;
 	$template->wizardHeader("Step 2 : Login System and Administrator Email Address", SETUP_CONFIG);
 	
@@ -105,86 +136,166 @@ require_once('setupUtils.inc');
 			}
 		}
 
-		function alphaNumericCheck(alphane, alerttxt){
-			var regex=/^[0-9a-zA-Z\s]+$/;
-
-			if(regex.test(alphane)){
-
-				return true;
-			}else{
-				alert(alerttxt)
-				return false;
-			}
-		}
-
-		
-		function validate_form(thisform){
-
-			if(thisform.enable_login[0].checked)
-				return true;
-			
-			if (alphaNumericCheck(wizard_form.email_title.value, "Email title can only contain alpha numeric characters.")==false){
-				wizard_form.email_title.focus();
-				return false;
-			}
-		}
-
 	// -->
 	</script>
 	
-	<form name='wizard_form' method='POST' action='setupDatabase.php' onsubmit="return validate_form(this)">
-
+	<form name='wizard_form' method='POST' action='<?php echo $_SERVER['PHP_SELF']; ?>'>
+	
 	<?php 
-		foreach ($_POST as $key => $value){
+		foreach ($_SESSION['post'] as $key => $value){
 			$value = trim($value);
 			echo "<input type='hidden' name='".$key."' value='".$value."' />";
 		}
 		
 	?>
+	
 		<h3>Enable Login System:</h3>		
 		
 		<p>You may enable the login feature to restrict access to Leginon and Appion projects.</p>
 		 
-		<input type="radio" name="enable_login" value="false" <?php ($update) ? (ENABLE_LOGIN)? print("") : print("checked='yes'") : print("checked='yes'"); ?> 
+		<input type="radio" name="enable_login" value="false" 
+		<?php  
+			if($_POST){
+				($_POST['enable_login'] == 'false') ? print("checked='yes'") : print("");
+			}else{
+				($update) ? (ENABLE_LOGIN)? print("") : print("checked='yes'") : print("checked='yes'");
+			}
+		?> 
 			onclick="setLogin(this)" />&nbsp;&nbsp;NO<br />
-		<input type="radio" name="enable_login" value="true" <?php ($update) ? (ENABLE_LOGIN)? print("checked='yes'") : print("") : print(""); ?> 
+		<input type="radio" name="enable_login" value="true" 
+		<?php 
+			if($_POST){
+				($_POST['enable_login'] == 'true') ? print("checked='yes'") : print("");
+			}else{
+				($update) ? (ENABLE_LOGIN)? print("checked='yes'") : print("") : print(""); 
+			}
+		
+		
+		?> 
 			onclick="setLogin(this)" />&nbsp;&nbsp;YES<br />
 		<br />
 		<h3>Enter outgoing email subject line:</h3>
 		<p>example: The Scripps Research Institute</p>
-		<input type="text" size=50 name="email_title" <?php ($update && ENABLE_LOGIN === true)? print("value='".EMAIL_TITLE."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); ?> /><br /><br />
+		<div id="error"><?php if($errMsg['email_title']) echo $errMsg['email_title']; ?></div>
+		<input type="text" size=50 name="email_title" 
+			<?php 
+				if($_POST){
+					print("value='".$_POST['email_title']."'");
+				}else{			
+					if($update && ENABLE_LOGIN === true) 
+						print("value='".EMAIL_TITLE."'"); 
+					else 
+						print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); 
+				}
+			?> /><br /><br />
 		<br />
 		<h3>Enter administrator email address:</h3>
 		<p>The web tools will use this email address to 
 		send email to the web tools users.</p>
-		<input type="text" size=35 name="admin_email" <?php ($update && ENABLE_LOGIN === true)? print("value='".ADMIN_EMAIL."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); ?> /><br /><br />
+		<div id="error"><?php if($errMsg['admin_email']) echo $errMsg['admin_email']; ?></div>
+		<input type="text" size=35 name="admin_email" 
+			<?php
+				if($_POST){
+					print("value='".$_POST['admin_email']."'");
+				}else{
+					if($update && ENABLE_LOGIN === true)
+						print("value='".ADMIN_EMAIL."'");
+					else 
+						print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); 
+				}
+			?> /><br /><br />
 		<br />
 		<h3>Determine a mail server to send outgoing email:</h3>
 		<p>Select "SMTP server" to enter your SMTP host information.<br />
 		If your institution does not provide an SMTP server, please select "Use regular PHP mail" to use the local computer.</p>
-		&nbsp;<input type="radio" name="enable_smtp" value="false" <?php ($update && ENABLE_LOGIN === true) ? (ENABLE_SMTP)? print("") : print("checked='yes'") : print("disabled"); ?> 
+		&nbsp;<input type="radio" name="enable_smtp" value="false" 
+		<?php 
+			if($_POST){
+				($_POST['enable_login'] == 'false') ? print("disabled ") : (($_POST['enable_smtp'] == 'false') ? print("checked='yes'") : print(""));
+			}else{
+				($update && ENABLE_LOGIN === true) ? (ENABLE_SMTP)? print("") : print("checked='yes'") : print("disabled"); 
+			}
+		?> 
 			onclick="setReadOnly_SMTP(this)" />&nbsp;&nbsp;I want to use regular PHP mail.<br />
-		&nbsp;<input type="radio" name="enable_smtp" value="true" <?php ($update && ENABLE_LOGIN === true) ? (ENABLE_SMTP)? print("checked='yes'") : print("") : print("disabled"); ?> 
+		&nbsp;<input type="radio" name="enable_smtp" value="true" 
+		<?php 
+			if($_POST){
+				($_POST['enable_login'] == 'false') ? print("disabled ") : (($_POST['enable_smtp'] == 'true') ? print("checked='yes'") : print(""));
+			}else{
+				($update && ENABLE_LOGIN === true) ? (ENABLE_SMTP)? print("checked='yes'") : print("") : print("disabled"); 
+			}
+		?> 
 			onclick="setReadOnly_SMTP(this)" />&nbsp;&nbsp;I want to use our SMTP server.<br /><br />
 		<br />
 		<h3>Enter your SMTP host name:</h3>
 		<p>example: mail.school.edu</p>
-		<input type="text" size=35 name="smtp_host" <?php ($update && ENABLE_SMTP === true)? print("value='".SMTP_HOST."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); ?> /><br /><br />
+		<div id="error"><?php if($errMsg['smtp_host']) echo $errMsg['smtp_host']; ?></div>
+		<input type="text" size=35 name="smtp_host" 
+			<?php 
+				if($_POST){
+					($_POST['enable_smtp'] == 'true') ? print("value='".$_POST['smtp_host']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); 
+				}else{
+					($update && ENABLE_SMTP === true) ? print("value='".SMTP_HOST."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); 
+				}
+			?> /><br /><br />
 		<br />
 		<h3>Does your SMTP server require authentication?</h3>
 		<p>Check with your email administrator.<br />
 		Select "Yes" if using authentication. "No" if authentication is not required.</p>
-		&nbsp;<input type="radio" name="smtp_auth" value="false" <?php ($update && ENABLE_SMTP === true) ? (SMTP_AUTH)? print("") : print("checked='yes'") : print("disabled"); ?> 
+		&nbsp;<input type="radio" name="smtp_auth" value="false" 
+		<?php 
+			if($_POST){
+				(($_POST['enable_smtp'] == 'false') || empty($_POST['enable_smtp'])) ? print("disabled ") : (($_POST['smtp_auth'] == 'false') ? print("checked='yes'") : print(""));
+			}else{
+				($update && ENABLE_SMTP === true) ? (SMTP_AUTH)? print("") : print("checked='yes'") : print("disabled"); 
+			}
+		?> 
 			onclick="setReadOnly_AUTH(this)" />&nbsp;&nbsp;No.<br />
-		&nbsp;<input type="radio" name="smtp_auth" value="true" <?php ($update && ENABLE_SMTP === true) ? (SMTP_AUTH)? print("checked='yes'") : print("") : print("disabled"); ?> 
+		&nbsp;<input type="radio" name="smtp_auth" value="true" 
+		<?php 
+			if($_POST){
+				(($_POST['enable_smtp'] == 'false') || empty($_POST['enable_smtp'])) ? print("disabled ") : (($_POST['smtp_auth'] == 'false') ? print("") : print("checked='yes'"));
+			}else{
+				($update && ENABLE_SMTP === true) ? (SMTP_AUTH)? print("checked='yes'") : print("") : print("disabled"); 
+			}
+		?> 
 			onclick="setReadOnly_AUTH(this)" />&nbsp;&nbsp;Yes.<br /><br />
 		<br />
 		<h3>Enter your SMTP Authentication Username and Password:</h3>
 		<p>If your SMTP server requires authentication, You need to enter the username and password.</p>
+		<div id="error"><?php if($errMsg['smtp_username']) echo $errMsg['smtp_username']; ?></div>
+		
 		&nbsp;Username: &nbsp;
-		<input type="text" size=20 name="smtp_username" <?php ($update && SMTP_AUTH === true) ? print("value='".SMTP_USERNAME."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); ?> /><br /><br />
+		<input type="text" size=20 name="smtp_username" 
+		<?php 
+			if($_POST){
+				if($_POST['smtp_auth'] == 'true') 
+					print("value='".$_POST['smtp_username']."'");
+				else
+					print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); 
+			}else{
+				if($update && SMTP_AUTH === true) 
+					print("value='".SMTP_USERNAME."'"); 
+				else
+					print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); 
+			}
+		?> /><br /><br />
+		<div id="error"><?php if($errMsg['smtp_password']) echo $errMsg['smtp_password']; ?></div>
 		&nbsp;Password: &nbsp;
-		<input type="text" size=20 name="smtp_password" <?php ($update && SMTP_AUTH === true) ? print("value='".SMTP_PASSWORD."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); ?> /><br /><br />
+		<input type="text" size=20 name="smtp_password" 
+		<?php 
+			if($_POST){
+				if($_POST['smtp_auth'] == 'true') 
+					print("value='".$_POST['smtp_password']."'");
+				else
+					print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); 
+			}else{		
+				if($update && SMTP_AUTH === true)
+					print("value='".SMTP_PASSWORD."'");
+				else
+					print("readOnly=\"true\" style=\"background:#eeeeee\" value=\"\""); 
+			}
+		?> /><br /><br />
 		<br />
 		
 		<input type="submit" value="NEXT" />
