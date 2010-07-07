@@ -34,6 +34,7 @@ a:hover{
 	color: rgb( 0, 180, 210 );
 	text-decoration: none;
 }
+
 #pageWrapper {
 	width: 66em;
 	margin: 1em auto;
@@ -64,6 +65,10 @@ a:hover{
 	min-height: 30em;
 	margin: 0 0 .5em 0;
 	padding: 2em;
+}
+
+#error	{
+	color: rgb( 255, 0, 0 );
 }
 
 #footer {
