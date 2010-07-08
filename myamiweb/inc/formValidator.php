@@ -71,6 +71,18 @@ class formValidator{
 	 * 				addValidation("variableName", "variableValue", "float");
 	 * 				addValidation("variableName", "variableValue", "float", "Your own error message");
 	 * 
+	 * absolute path: path_exit
+	 * 				addValidation("variableName", "Path Location", "abs_path");
+	 * 				addValidation("variableName", "Path Location", "abs_path", "Your own error message");
+	 * 
+	 * path existence
+	 * 				addValidation("variableName", "Path Location", "path_exit");
+	 * 				addValidation("variableName", "Path Location", "path_exit", "Your own error message");
+	 * 
+	 * folder permission
+	 * 				addValidation("variableName", "Folder Location", "forder_permission");
+	 * 				addValidation("variableName", "Folder Location", "forder_permission", "Your own error message");
+	 * 
 	 * Float with fixed number of decimal:
 	 * 				addValidation("variableName", "variableValue", "float_d=2");
 	 * 				addValidation("variableName", "variableValue", "float_d=2", "Your own error message");
@@ -181,6 +193,16 @@ class formValidator{
 				break;
 			}
 			
+			case 'path_exit':{
+				$result = $this->validatePathIsExist($validateObj->getVariableValue());
+				break;
+			}
+			
+			case 'folder_permission':{
+				$result = $this->validateForderPermission($validateObj->getVariableValue());
+				break;
+			}
+			
 			case 'float_d':{
 				$numberOfDecimal = $validateObj->getTypeOption();
 				
@@ -268,6 +290,34 @@ class formValidator{
 			return true;
 		}	
 		
+		return false;
+	}
+	
+	/*
+	 * Check if the input path is exist
+	 * return true if exist
+	 * otherwise return false
+	 */
+	function validatePathIsExist($path){
+		if(is_dir($path))
+			return true;
+			
+		return false;
+	}
+	
+	/*
+	 * Check if the apache user has write permission to the input folder
+	 * return true if apache has write access to the folder
+	 * otherwise return false
+	 */
+	function validateForderPermission($folderLocation){
+		
+		$result = mkdir($folderLocation."/validationTesting", 777);
+		
+		if($result){
+			rmdir($folderLocation."/validationTesting");
+			return true;
+		}
 		return false;
 	}
 	
@@ -369,6 +419,8 @@ define("ALNUM_S_CHECK_FAILED", "Input can only contain alpha-numeric and space c
 define("FLOAT_CHECK_FAILED", "Input can only be integer or float.");
 define("FLOAT_D_CHECK_FAILED", "Float input can only with exactly %d decimal places.");
 define("ABS_PATH_CHECK_FAILED", "Input has to be an absolute path.");
+define("PATH_EXIST_CHECK_FAILED", "The input path does not exist on the machine.");
+define("FOLDER_PERMISSION_CHECK_FAILED", "Apache user does not have write permission on the following path.");
 define("SMTP_CHECK_FAILED", "SMTP Server checking failed. Please contact your system administrator.");
 define("DATABASE_CHECK_FAILED", "Database checking failed. Please contact your system administrator.");
 
@@ -445,6 +497,10 @@ class validatorObj{
 				case 'float_d':		{ $this->errorOutputMessage = sprintf(FLOAT_D_CHECK_FAILED, $this->getTypeOption()); break;	}
 				
 				case 'abs_path':	{ $this->errorOutputMessage = ABS_PATH_CHECK_FAILED; break;	}
+				
+				case 'path_exit':	{ $this->errorOutputMessage = PATH_EXIST_CHECK_FAILED; break;	}
+				
+				case 'folder_permission':{ $this->errorOutputMessage = FOLDER_PERMISSION_CHECK_FAILED; break;}
 			
 				case 'smtp':		{ $this->errorOutputMessage = SMTP_CHECK_FAILED; break;	}
 				
@@ -462,5 +518,6 @@ class validatorObj{
 	}
 
 }
+
 
 ?>
