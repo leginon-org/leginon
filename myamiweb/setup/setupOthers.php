@@ -28,9 +28,21 @@ require_once('setupUtils.inc');
 				wizard_form.cache_path.value = "";
 			}
 		}
+
+		function useWrapper(obj){
+	
+			if(obj.value == "true"){
+				wizard_form.appion_wrapper_path.style.backgroundColor = "#ffffff";
+				wizard_form.appion_wrapper_path.readOnly = false;
+			}else{
+				wizard_form.appion_wrapper_path.style.backgroundColor = "#eeeeee";
+				wizard_form.appion_wrapper_path.readOnly = true;
+				wizard_form.appion_wrapper_path.value = "";
+			}
+		}
 	
 		function setAppion(obj){
-
+			
 			if(obj.value == "true"){
 				wizard_form.def_processing_prefix.style.backgroundColor = "#ffffff";
 				wizard_form.def_processing_prefix.readOnly = false;
@@ -40,6 +52,8 @@ require_once('setupUtils.inc');
 				wizard_form.hide_matlab[1].disabled = false;
 				wizard_form.hide_feature[0].disabled = false
 				wizard_form.hide_feature[1].disabled = false;
+				wizard_form.use_appion_wrapper[0].disabled = false
+				wizard_form.use_appion_wrapper[1].disabled = false;
 				wizard_form.temp_images_dir.style.backgroundColor = "#ffffff";
 				wizard_form.temp_images_dir.readOnly = false;
 				wizard_form.defaultcs.style.backgroundColor = "#ffffff";
@@ -59,6 +73,12 @@ require_once('setupUtils.inc');
 				wizard_form.hide_matlab[1].disabled = true;
 				wizard_form.hide_feature[0].disabled = true;
 				wizard_form.hide_feature[1].disabled = true;
+				wizard_form.use_appion_wrapper[0].disabled = true
+				wizard_form.use_appion_wrapper[1].disabled = true;
+				wizard_form.use_appion_wrapper[1].checked = true;
+				wizard_form.appion_wrapper_path.style.backgroundColor = "#eeeeee";
+				wizard_form.appion_wrapper_path.readOnly = true;
+				wizard_form.appion_wrapper_path.value = "";
 				wizard_form.temp_images_dir.style.backgroundColor = "#eeeeee";
 				wizard_form.temp_images_dir.readOnly = true;
 				wizard_form.temp_images_dir.value = "";
@@ -258,6 +278,17 @@ require_once('setupUtils.inc');
 		<p>This is a temporary directory that is accessible to both the web server and the processing servers for uploading images, templates, or models.</p>
 		<input type="text" size=20 name="temp_images_dir" <?php ($update && PROCESSING === true) ? print("value='".TEMP_IMAGES_DIR."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
 		<br />
+		
+		<h3>Do you want to use Appion wrapper?</h3>
+		<p>Note: Need more discription.</p>
+		<input type="radio" name="use_appion_wrapper" value="true" <?php ($update) ? (defined("USE_APPION_WRAPPER") && USE_APPION_WRAPPER)? print("checked='yes'") : print("") : print("disabled"); ?>
+			onclick="useWrapper(this)" />&nbsp;&nbsp;YES<br />
+		<input type="radio" name="use_appion_wrapper" value="false" <?php ($update) ? (defined("USE_APPION_WRAPPER") && USE_APPION_WRAPPER)? print("") : print("checked='yes'") : print("disabled checked='yes'"); ?>
+			onclick="useWrapper(this)" />&nbsp;&nbsp;NO<br />
+		
+		<p>Example : /sw/bin/appion  </p>
+		<input type="text" size=15 name="appion_wrapper_path" <?php ($update && USE_APPION_WRAPPER) ? print("value='".APPION_WRAPPER_PATH."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
+				
 		<input type="submit" value="NEXT" />
 	</form>
 	
