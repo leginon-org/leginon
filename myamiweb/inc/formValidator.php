@@ -83,6 +83,10 @@ class formValidator{
 	 * 				addValidation("variableName", "Folder Location", "forder_permission");
 	 * 				addValidation("variableName", "Folder Location", "forder_permission", "Your own error message");
 	 * 
+	 * file existence
+	 * 				addValidation("variableName", "File location", "file_exit");
+	 * 				addValidation("variableName", "File Location", "file_exit", "Your own error message");
+	 * 
 	 * Float with fixed number of decimal:
 	 * 				addValidation("variableName", "variableValue", "float_d=2");
 	 * 				addValidation("variableName", "variableValue", "float_d=2", "Your own error message");
@@ -200,6 +204,11 @@ class formValidator{
 			
 			case 'folder_permission':{
 				$result = $this->validateForderPermission($validateObj->getVariableValue());
+				break;
+			}
+			
+			case 'file_exit':{
+				$result = $this->validatefileExist($validateObj->getVariableValue());
 				break;
 			}
 			
@@ -322,6 +331,18 @@ class formValidator{
 	}
 	
 	/*
+	 * Check if the file is exist in the given location
+	 * return true if exist
+	 * otherwise return false.
+	 */
+	function validatefileExist($fileLocation){
+		if(file_exists($fileLocation))
+			return true;
+			
+		return false;
+	}
+	
+	/*
 	 * Validate the SMTP server connection.
 	 * If there have any error, get the error message for display.
 	 * otherwise, this function will send an testing email via smtp server
@@ -420,6 +441,7 @@ define("FLOAT_CHECK_FAILED", "Input can only be integer or float.");
 define("FLOAT_D_CHECK_FAILED", "Float input can only with exactly %d decimal places.");
 define("ABS_PATH_CHECK_FAILED", "Input has to be an absolute path.");
 define("PATH_EXIST_CHECK_FAILED", "The input path does not exist on the machine.");
+define("FILE_EXIST_CHECK_FAILED", "The file does not exist by the giving location.");
 define("FOLDER_PERMISSION_CHECK_FAILED", "Apache user does not have write permission on the following path.");
 define("SMTP_CHECK_FAILED", "SMTP Server checking failed. Please contact your system administrator.");
 define("DATABASE_CHECK_FAILED", "Database checking failed. Please contact your system administrator.");
@@ -501,6 +523,8 @@ class validatorObj{
 				case 'path_exit':	{ $this->errorOutputMessage = PATH_EXIST_CHECK_FAILED; break;	}
 				
 				case 'folder_permission':{ $this->errorOutputMessage = FOLDER_PERMISSION_CHECK_FAILED; break;}
+				
+				case 'file_exit':	{ $this->errorOutputMessage = FILE_EXIST_CHECK_FAILED; break;	}
 			
 				case 'smtp':		{ $this->errorOutputMessage = SMTP_CHECK_FAILED; break;	}
 				
@@ -518,6 +542,5 @@ class validatorObj{
 	}
 
 }
-
 
 ?>
