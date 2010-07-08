@@ -176,6 +176,11 @@ class formValidator{
 				break;
 			}
 			
+			case 'abs_path':{
+				$result = $this->validateRegExp($validateObj->getVariableValue(), "#^/[\w/\-]*$#");
+				break;
+			}
+			
 			case 'float_d':{
 				$numberOfDecimal = $validateObj->getTypeOption();
 				
@@ -363,6 +368,7 @@ define("ALPHA_S_CHECK_FAILED", "Input can only contain alphabetic and space char
 define("ALNUM_S_CHECK_FAILED", "Input can only contain alpha-numeric and space characters.");
 define("FLOAT_CHECK_FAILED", "Input can only be integer or float.");
 define("FLOAT_D_CHECK_FAILED", "Float input can only with exactly %d decimal places.");
+define("ABS_PATH_CHECK_FAILED", "Input has to be an absolute path.");
 define("SMTP_CHECK_FAILED", "SMTP Server checking failed. Please contact your system administrator.");
 define("DATABASE_CHECK_FAILED", "Database checking failed. Please contact your system administrator.");
 
@@ -418,27 +424,29 @@ class validatorObj{
 		if(empty($errmsg)){
 			switch($this->getValidatorType()){
 				
-				case 'req':		{ $this->errorOutputMessage = REQUIRED_VALUE; break;	}
+				case 'req':			{ $this->errorOutputMessage = REQUIRED_VALUE; break;	}
 			
-				case 'maxlen':	{ $this->errorOutputMessage = sprintf(MAXLEN_EXCEEDED, $this->getTypeOption()); break;	}
+				case 'maxlen':		{ $this->errorOutputMessage = sprintf(MAXLEN_EXCEEDED, $this->getTypeOption()); break;	}
 			
-				case 'minlen':	{ $this->errorOutputMessage = sprintf(MINLEN_CHECK_FAILED, $this->getTypeOption()); break;	}
+				case 'minlen':		{ $this->errorOutputMessage = sprintf(MINLEN_CHECK_FAILED, $this->getTypeOption()); break;	}
 			
-				case 'email':	{ $this->errorOutputMessage = EMAIL_CHECK_FAILED; break;	}
+				case 'email':		{ $this->errorOutputMessage = EMAIL_CHECK_FAILED; break;	}
 			
-				case 'num':		{ $this->errorOutputMessage = NUM_CHECK_FAILED; break;	}
+				case 'num':			{ $this->errorOutputMessage = NUM_CHECK_FAILED; break;	}
 
-				case 'alpha':	{ $this->errorOutputMessage = ALPHA_CHECK_FAILED; break;	}
+				case 'alpha':		{ $this->errorOutputMessage = ALPHA_CHECK_FAILED; break;	}
 			
-				case 'alpha_s':	{ $this->errorOutputMessage = ALPHA_S_CHECK_FAILED; break;	}
+				case 'alpha_s':		{ $this->errorOutputMessage = ALPHA_S_CHECK_FAILED; break;	}
 			
-				case 'alnum_s':	{ $this->errorOutputMessage = ALNUM_S_CHECK_FAILED; break;	}
+				case 'alnum_s':		{ $this->errorOutputMessage = ALNUM_S_CHECK_FAILED; break;	}
 				
-				case 'float':	{ $this->errorOutputMessage = FLOAT_CHECK_FAILED; break;	}
+				case 'float':		{ $this->errorOutputMessage = FLOAT_CHECK_FAILED; break;	}
 				
-				case 'float_d':	{ $this->errorOutputMessage = sprintf(FLOAT_D_CHECK_FAILED, $this->getTypeOption()); break;	}
+				case 'float_d':		{ $this->errorOutputMessage = sprintf(FLOAT_D_CHECK_FAILED, $this->getTypeOption()); break;	}
 				
-				case 'smtp':	{ $this->errorOutputMessage = SMTP_CHECK_FAILED; break;	}
+				case 'abs_path':	{ $this->errorOutputMessage = ABS_PATH_CHECK_FAILED; break;	}
+			
+				case 'smtp':		{ $this->errorOutputMessage = SMTP_CHECK_FAILED; break;	}
 				
 				case 'database':	{ $this->errorOutputMessage = DATABASE_CHECK_FAILED; break;	}
 		
@@ -454,6 +462,5 @@ class validatorObj{
 	}
 
 }
-
 
 ?>
