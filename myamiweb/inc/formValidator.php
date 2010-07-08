@@ -172,7 +172,7 @@ class formValidator{
 			}
 			
 			case 'float':{
-				$result = $this->validateRegExp($validateObj->getVariableValue(), "/^\d*\.?\d*$/");
+				$result = $this->validateRegExp($validateObj->getVariableValue(), "/^\d+\.?\d*$/");
 				break;
 			}
 			
