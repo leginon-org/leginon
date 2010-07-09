@@ -2,12 +2,72 @@
 
 require_once('template.inc');
 require_once('setupUtils.inc');
+require_once('../inc/formValidator.php');
 
 	setupUtils::checkSession();
 	$update = false;	
 	if(!empty($_SESSION['loginCheck'])){
 		require_once(CONFIG_FILE);
 		$update = true;
+	}
+	
+	if($_POST){
+
+		$validator = new formValidator();
+		
+		if($_POST['enable_cache'] == 'true'){
+			$validator->addValidation("cache_path", $_POST['cache_path'], "abs_path");
+			$validator->addValidation("cache_path", $_POST['cache_path'], "path_exit");
+			$validator->addValidation("cache_path", $_POST['cache_path'], "forder_permission");
+		}
+		
+		$validator->addValidation("mrc2any", $_POST['mrc2any'], "abs_path");
+		
+		if($_POST['processing'] == 'true'){
+						
+			$validator->addValidation("def_processing_prefix", $_POST['def_processing_prefix'], "minlen=1");
+			$validator->addValidation("def_processing_prefix", $_POST['def_processing_prefix'], "maxlen=10");
+			$validator->addValidation("def_processing_prefix", $_POST['def_processing_prefix'], "alpha");
+			
+			$validator->addValidation("defaultcs", $_POST['defaultcs'], "float");
+			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "abs_path");
+			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "path_exit");
+			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "forder_permission");
+			
+			if(!empty($_POST['processing_hosts'])){
+
+				foreach ($_POST['processing_hosts'] as $processingHost){
+					$validator->addValidation("host", $processingHost['host'], "req", "Cluster host name can not be empty.");
+					$validator->addValidation("host", $processingHost['host'], "remoteServer", "Local cluster does not exist. Please make sure the cluster exist.");
+					$validator->addValidation("nproc", $processingHost['nproc'], "req", "Max number of processors per node can not be empty.");
+					$validator->addValidation("nproc", $processingHost['nproc'], "num", "Please privide a numeric input for maximum number of processors per node.");
+				}
+			}
+
+			if(!empty($_POST['cluster_configs'])){
+
+				foreach ($_POST['cluster_configs'] as $clusterConfig){
+					$fileLocation = "../processing/".$clusterConfig.".php";
+					$validator->addValidation("cluster_configs", $fileLocation, "file_exit", "Remote cluster configuration file does not exist. Please create it first.");
+				}
+			}
+			
+			if($_POST['use_appion_wrapper'] == 'true'){
+				$validator->addValidation("appion_wrapper_path", $_POST['appion_wrapper_path'], "abs_path");
+			}
+		}
+		
+		$validator->runValidation();
+		$errMsg = $validator->getErrorMessage();
+
+		
+		if(empty($errMsg)){
+			
+			$_SESSION['post'] = $_POST;
+			setupUtils::redirect('confirmConfig.php');
+			exit();
+		}
+		
 	}
 
 	$template = new template;
@@ -169,7 +229,7 @@ require_once('setupUtils.inc');
 		  	el.type = 'text';
 		  	el.name = 'cluster_configs['+lastRow+']';
 		  	el.value = cluster;
-		  	el.size = 10;
+		  	el.size = 15;
 		  
 		  	cellRight.appendChild(el);
 	
@@ -184,7 +244,7 @@ require_once('setupUtils.inc');
 	// -->
 	</script>
 	
-	<form name='wizard_form' method='POST' action='confirmConfig.php'>
+	<form name='wizard_form' method='POST' action='<?php echo $_SERVER['PHP_SELF']; ?>'>
 	<?php
 		foreach ($_SESSION['post'] as $key => $value){
 			$value = trim($value);
@@ -194,13 +254,35 @@ require_once('setupUtils.inc');
 	
 		<h3>Do you want to enable image caching for faster image viewing?</h3>
 		<p>Note: To use image caching, you need to setup the caching location.</p>
-		<input type="radio" name="enable_cache" value="true" <?php ($update) ? (defined("ENABLE_CACHE") && ENABLE_CACHE)? print("checked='yes'") : print("") : print(""); ?>
+		<input type="radio" name="enable_cache" value="true" 
+		<?php 
+			if($_POST){
+				($_POST['enable_cache'] == 'true') ? print("checked='yes'") : print("");
+			}else{
+				($update) ? (defined("ENABLE_CACHE") && ENABLE_CACHE)? print("checked='yes'") : print("") : print(""); 
+			}
+		?>
 			onclick="enableCache(this)" />&nbsp;&nbsp;YES<br />
-		<input type="radio" name="enable_cache" value="false" <?php ($update) ? (defined("ENABLE_CACHE") && ENABLE_CACHE)? print("") : print("checked='yes'") : print("checked='yes'"); ?>
+		<input type="radio" name="enable_cache" value="false" 
+		<?php 
+			if($_POST){
+				($_POST['enable_cache'] == 'false') ? print("checked='yes'") : print("");
+			}else{
+				($update) ? (defined("ENABLE_CACHE") && ENABLE_CACHE)? print("") : print("checked='yes'") : print("checked='yes'"); 
+			}
+		?>
 			onclick="enableCache(this)" />&nbsp;&nbsp;NO<br />
 		
 		<p>Example : /srv/www/cache/  </p>
-		<input type="text" size=15 name="cache_path" <?php ($update && ENABLE_CACHE) ? print("value='".CACHE_PATH."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
+		<div id="error"><?php if($errMsg['cache_path']) echo $errMsg['cache_path']; ?></div>
+		<input type="text" size=35 name="cache_path" 
+		<?php 
+			if($_POST){
+				($_POST['enable_cache'] == 'true') ? print("value='".$_POST['cache_path']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
+			}else{
+				($update && ENABLE_CACHE) ? print("value='".CACHE_PATH."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
+			}
+		?> /><br /><br />
 		Please make sure the apache user has write access to this folder. (example: chown 'your_apache_user' /srv/www/cache/)  <br />
 		<br />
 
@@ -208,15 +290,38 @@ require_once('setupUtils.inc');
 		<p>Please provide the path to the mrc2any python module. The path may be found by typing "which mrc2any" at a command prompt.   
 			See <a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Install_the_Web_Interface'>installation documentation</a> for help. <br /><br />
 			Example : /usr/bin/mrc2any  </p>
-		<input type="text" size=15 name="mrc2any" <?php ($update) ? print("value='".MRC2ANY."'") : print("value=''"); ?> /><br /><br />
+		<div id="error"><?php if($errMsg['mrc2any']) echo $errMsg['mrc2any']; ?></div>
+		<input type="text" size=25 name="mrc2any" 
+		<?php 
+			if($_POST){
+				print("value='".$_POST['mrc2any']."'");
+			}else{
+				($update) ? print("value='".MRC2ANY."'") : print("value=''"); 
+			}
+		
+		?> /><br /><br />
 		<br />
 				
 		<h3>Do you want to enable the Appion image processing pipeline</h3>
 		<p>Select "YES" if you want to use Appion image processing.</p>
 		<p>Note: Other processing software installation required.</p>
-		<input type="radio" name="processing" value="true" <?php ($update) ? (defined("PROCESSING") && PROCESSING)? print("checked='yes'") : print("") : print(""); ?>
+		<input type="radio" name="processing" value="true" 
+		<?php 
+			if($_POST){
+				($_POST['processing'] == 'true') ? print("checked='yes'") : print("");
+			}else{		
+				($update) ? (defined("PROCESSING") && PROCESSING)? print("checked='yes'") : print("") : print(""); 
+			}
+		?>
 			onclick="setAppion(this)" />&nbsp;&nbsp;YES<br />
-		<input type="radio" name="processing" value="false" <?php ($update) ? (defined("PROCESSING") && PROCESSING)? print("") : print("checked='yes'") : print("checked='yes'"); ?>
+		<input type="radio" name="processing" value="false" 
+		<?php 
+			if($_POST){
+				($_POST['processing'] == 'false') ? print("checked='yes'") : print("");
+			}else{			
+				($update) ? (defined("PROCESSING") && PROCESSING)? print("") : print("checked='yes'") : print("checked='yes'"); 
+			}
+		?>
 			onclick="setAppion(this)" />&nbsp;&nbsp;NO<br />
 		<br />
 
@@ -224,7 +329,15 @@ require_once('setupUtils.inc');
 		<p>We recommend using 'ap' as the Appion database prefix.<br /> 
 		   This prefix must match the prefix used during step number 11 of the 
 		   <a href="http://ami.scripps.edu/redmine/projects/appion/wiki/Database_Server_Installation">Database Server Setup</a>. </p>
-		<input type="text" size=5 name="def_processing_prefix" <?php ($update && PROCESSING === true) ? print("value='".DEF_PROCESSING_PREFIX."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value='ap'"); ?> /><br /><br />
+		<div id="error"><?php if($errMsg['def_processing_prefix']) echo $errMsg['def_processing_prefix']; ?></div>
+		<input type="text" size=10 name="def_processing_prefix" 
+		<?php 
+			if($_POST){
+				($_POST['processing'] == 'true') ? print("value='".$_POST['def_processing_prefix']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value='ap'");
+			}else{
+				($update && PROCESSING === true) ? print("value='".DEF_PROCESSING_PREFIX."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value='ap'"); 
+			}
+		?> /><br /><br />
 		<br />
 
 		<h3>Enter Image Processing Host(s) information:</h3>
@@ -232,18 +345,25 @@ require_once('setupUtils.inc');
 		<input name="addHost" type="button" value="Add" <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="addRowToTable('', '');" />
 		<input name="removeHost" type="button" value="Remove"  <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="removeRowFormTable('hosts');" />
 		Please Click the "Add" Button to start. If you don't have a processing host, leave it empty.<br />
-		<table border=0 cellspacing=8 style="font-size: 12px" id="hosts"></table><br />
+		
+		<table border=0 cellspacing=8 style="font-size: 12px" id="hosts">
+		<div id="error"><?php if($errMsg['host']) echo $errMsg['host']; ?></div>
+		<div id="error"><?php if($errMsg['nproc']) echo $errMsg['nproc']; ?></div>
+		</table><br />
 
 		<h3>Register your cluster configuration file(s)</h3>
 		<p>You can find a default cluster configuration file (default_cluster.php) in the myamiweb/processing folder.<br />
 		   Create a new configuration file for each cluster with a different name base on the default_cluster.php.<br />
 		   Please make sure you <font color="red">do not include (.php) in the input box</font>.<br />
-		   Example: If your cluster configuration file name is cluster1.php, just enter cluster1 below.<br />	   
+		   Example: If your cluster configuration file name is "cluster.php", just enter "cluster" below.<br />	   
 		</p>
 		<input name="addCluster" type="button" value="Add" <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="addClusterRow('');" />
 		<input name="removeCluster" type="button" value="Remove" <?php ($update && PROCESSING === true) ? print("") : print("disabled"); ?> onclick="removeRowFormTable('clusters');" />
 		Please Click the "Add" Button to start. If you don't know the cluster configure file name, leave it empty.<br />
-		<table border=0 cellspacing=8 style="font-size: 12px" id="clusters"></table><br />	
+		
+		<table border=0 cellspacing=8 style="font-size: 12px" id="clusters">
+		<div id="error"><?php if($errMsg['cluster_configs']) echo $errMsg['cluster_configs']; ?></div>
+		</table><br />	
 		
 		<h3>Do you wish to use the IMAGIC image processing package</h3>
 		<p>Note: IMAGIC software installation required.</p>
@@ -271,28 +391,72 @@ require_once('setupUtils.inc');
 
 		<h3>Enter the spherical aberration (Cs) constant for the microscope (in millimeters). <a target='_blank' href='http://en.wikipedia.org/wiki/Spherical_aberration'>Wikipedia</a> description.</h3>
 		<p>Example : 2.0  </p>
-		<input type="text" size=5 name="defaultcs" <?php ($update && PROCESSING === true) ? print("value='".DEFAULTCS."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
+		<div id="error"><?php if($errMsg['defaultcs']) echo $errMsg['defaultcs']; ?></div>
+		<input type="text" size=5 name="defaultcs" 
+		<?php 
+			if($_POST){
+				($_POST['processing'] == 'true') ? print("value='".$_POST['defaultcs']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\"");
+			}else{
+				($update && PROCESSING === true) ? print("value='".DEFAULTCS."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
+			}
+		?> /><br /><br />
 		<br />
 		
-		<h3>Enter a temporary upload directory location (Optional).</h3>
+		<h3>Enter a temporary upload directory location.</h3>
 		<p>This is a temporary directory that is accessible to both the web server and the processing servers for uploading images, templates, or models.</p>
-		<input type="text" size=20 name="temp_images_dir" <?php ($update && PROCESSING === true) ? print("value='".TEMP_IMAGES_DIR."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
+		<div id="error"><?php if($errMsg['temp_images_dir']) echo $errMsg['temp_images_dir']; ?></div>
+		<input type="text" size=25 name="temp_images_dir" 
+		<?php 
+			if($_POST){
+				($_POST['processing'] == 'true') ? print("value='".$_POST['temp_images_dir']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\"");
+			}else{
+				($update && PROCESSING === true) ? print("value='".TEMP_IMAGES_DIR."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
+			}
+		?> /><br /><br />
 		<br />
 		
 		<h3>Do you want to use Appion wrapper?</h3>
 		<p>Note: Need more discription.</p>
-		<input type="radio" name="use_appion_wrapper" value="true" <?php ($update) ? (defined("USE_APPION_WRAPPER") && USE_APPION_WRAPPER)? print("checked='yes'") : print("") : print("disabled"); ?>
+		<input type="radio" name="use_appion_wrapper" value="true" 
+		<?php 
+			if($_POST){
+				($_POST['processing'] == 'true') ? ($_POST['use_appion_wrapper'] == 'true')? print("checked='yes'") : print("") : print("disabled");
+			}else{
+				($update) ? (defined("USE_APPION_WRAPPER") && USE_APPION_WRAPPER)? print("checked='yes'") : print("") : print("disabled"); 
+			}
+		?>
 			onclick="useWrapper(this)" />&nbsp;&nbsp;YES<br />
-		<input type="radio" name="use_appion_wrapper" value="false" <?php ($update) ? (defined("USE_APPION_WRAPPER") && USE_APPION_WRAPPER)? print("") : print("checked='yes'") : print("disabled checked='yes'"); ?>
+		<input type="radio" name="use_appion_wrapper" value="false" 
+		<?php 
+			if($_POST){
+				($_POST['processing'] == 'true') ? ($_POST['use_appion_wrapper'] == 'true')? print("") : print("checked='yes'") : print("checked='yes' disabled");
+			}else{
+				($update) ? (defined("USE_APPION_WRAPPER") && USE_APPION_WRAPPER)? print("") : print("checked='yes'") : print("disabled checked='yes'"); 
+			}
+		?>
 			onclick="useWrapper(this)" />&nbsp;&nbsp;NO<br />
 		
 		<p>Example : /sw/bin/appion  </p>
-		<input type="text" size=15 name="appion_wrapper_path" <?php ($update && USE_APPION_WRAPPER) ? print("value='".APPION_WRAPPER_PATH."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); ?> /><br /><br />
+		<div id="error"><?php if($errMsg['appion_wrapper_path']) echo $errMsg['appion_wrapper_path']; ?></div>
+		<input type="text" size=25 name="appion_wrapper_path" 
+		<?php 
+			if($_POST){
+				($_POST['processing'] == 'true') ? print("value='".$_POST['appion_wrapper_path']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
+			}else{
+				($update && USE_APPION_WRAPPER) ? print("value='".APPION_WRAPPER_PATH."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
+			}
+		?> /><br /><br />
 				
 		<input type="submit" value="NEXT" />
 	</form>
 	
 <?php 
+
+	if($_POST){
+		$PROCESSING_HOSTS = $_POST['processing_hosts'];
+		$CLUSTER_CONFIGS = $_POST['cluster_configs'];
+	}
+	
 	if(!empty($PROCESSING_HOSTS)){
 		foreach($PROCESSING_HOSTS as $processingHost)
 			echo "<script language=javascript>addRowToTable('".$processingHost['host']."', '".$processingHost['nproc']."')</script>";
@@ -301,6 +465,7 @@ require_once('setupUtils.inc');
 		foreach($CLUSTER_CONFIGS as $clusterConfig)
 			echo "<script language=javascript>addClusterRow('".$clusterConfig."')</script>";
 	}
+	
 	$template->wizardFooter();
 ?>
 

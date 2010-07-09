@@ -13,7 +13,7 @@ require_once('setupUtils.inc');
 	<form name='wizard_form' method='POST' action='review.php'>
 	
 	<?php 
-		foreach ($_POST as $name => $value){
+		foreach ($_SESSION['post'] as $name => $value){
 			if($name == 'processing_hosts' && is_array($value)){
 
 				$count = 0;
@@ -40,7 +40,7 @@ require_once('setupUtils.inc');
 		<h3>Please review the settings you have entered.</h3>
 		
 	<?php 
-		foreach ($_POST as $name => $value){
+		foreach ($_SESSION['post'] as $name => $value){
 			if($name == 'processing_hosts' && is_array($value)){
 				echo "<p>" . strtoupper($name) . " :<br />";
 				
