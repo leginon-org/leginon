@@ -198,8 +198,8 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		if ($stackdata['correlationMax']) $display_keys['correlation max']=$stackdata['correlationMax'];
 		if ($stackdata['minDefocus']) $display_keys['min defocus']=$stackdata['minDefocus'];
 		if ($stackdata['maxDefocus']) $display_keys['max defocus']=$stackdata['maxDefocus'];
-		$display_keys['density']=($stackdata['inverted']==1) ? 'inverted' : 'not inverted';
-		$display_keys['normalization']=($stackdata['normalized']==1) ? 'no' : 'yes';
+		#$display_keys['density']=($stackdata['inverted']==1) ? 'inverted' : 'not inverted';
+		#$display_keys['normalization']=($stackdata['normalized']==1) ? 'no' : 'yes';
 		if ($stackdata['tiltangle'] && $stackdata['tiltangle']!='all') $display_keys['tilt angle'] = $stackdata['tiltangle'];
 		//$partruns = $particle->getParticleRunsFromStack($stackid);
 		//print_r($partruns);
