@@ -225,6 +225,11 @@ class formValidator{
 				break;
 			}
 			
+			case 'remoteServer':{
+				$result = $this->validateRemoteServer($validateObj);
+				break;
+			}
+			
 			case 'smtp':{
 				$result = $this->validateSMTP($validateObj);
 				break;
@@ -342,6 +347,25 @@ class formValidator{
 		return false;
 	}
 	
+	function validateRemoteServer(&$validateObj){
+		
+		$extensions = get_loaded_extensions();
+		
+		if(in_array('ssh2', $extensions)){
+		
+			$defaultPort = 22;
+		
+			$result = ssh2_connect($validateObj->getVariableValue(), $defaultPort);
+		
+			if($result)
+				return true;
+			
+		}
+		
+		$validateObj->setErrorOutputMessage("PHP 'ssh2' module is required for setup local cluster.");
+		return false;
+	}
+	
 	/*
 	 * Validate the SMTP server connection.
 	 * If there have any error, get the error message for display.
@@ -444,6 +468,7 @@ define("PATH_EXIST_CHECK_FAILED", "The input path does not exist on the machine.
 define("FILE_EXIST_CHECK_FAILED", "The file does not exist by the giving location.");
 define("FOLDER_PERMISSION_CHECK_FAILED", "Apache user does not have write permission on the following path.");
 define("SMTP_CHECK_FAILED", "SMTP Server checking failed. Please contact your system administrator.");
+define("REMOTE_SERVER_CHECK_FAILED", "REMOTE Server checking failed. Please contact your system administrator.");
 define("DATABASE_CHECK_FAILED", "Database checking failed. Please contact your system administrator.");
 
 // This is an inner class for formValidator.
@@ -528,6 +553,8 @@ class validatorObj{
 			
 				case 'smtp':		{ $this->errorOutputMessage = SMTP_CHECK_FAILED; break;	}
 				
+				case 'remoteServer': { $this->errorOutputMessage = REMOTE_SERVER_CHECK_FAILED; break; }
+				
 				case 'database':	{ $this->errorOutputMessage = DATABASE_CHECK_FAILED; break;	}
 		
 			} //end switch			
@@ -542,5 +569,6 @@ class validatorObj{
 	}
 
 }
+	
 
 ?>
