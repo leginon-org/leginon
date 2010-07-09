@@ -267,7 +267,7 @@ class PickerApp(wx.App):
 		array = self.targetsToArray(targets)
 		### get pixelsize
 		apix = self.appionloop.params['apix']
-		if not apix:
+		if not apix or apix == 0.0:
 			apDisplay.printWarning("unknown pixel size")
 			return
 		### get helicalstep
@@ -279,10 +279,15 @@ class PickerApp(wx.App):
 		first = array[-2]
 		last = array[-1]
 		pixeldistance = math.hypot(first[0] - last[0], first[1] - last[1])
+		if pixeldistance == 0:
+			### this will probably never happen since mouse does not let you click same point twice
+			apDisplay.printWarning("points have zero distance")
+			return
 		stepsize = helicalstep/pixeldistance*apix
-		#x = (1 - t)x1 + tx2,
-		#y = (1 - t)y1 + ty2,
-		# t { 0,1
+		### parameterization of a line btw points (x1,y1) and (x2,y2):
+		# x = (1 - t)*x1 + t*x2,
+		# y = (1 - t)*y1 + t*y2,
+		# t { [0,1] ; t is a real number btw 0 and 1
 		points = list(array)
 		t = 0.0
 		while t < 1.0:
