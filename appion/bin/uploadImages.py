@@ -65,22 +65,33 @@ class UploadImages(appionScript.AppionScript):
 		if self.params['mpix'] is None:
 			apDisplay.printError("Please provide a pixel size (in meters), e.g., --pixelsize=1.3e-10")
 
-		if self.params['defocus'] is not None and self.params['defocusliststr'] is not None:
-			apDisplay.printError("Please provide only one of --defocus or --defocus-list")
-		if self.params['defocus'] is None and self.params['defocusliststr'] is None:
-			apDisplay.printError("Please provide either --defocus or --defocus-list")
+		### series only valid with non-normal uplaods
+		if self.params['seriessize'] is None and self.params['uploadtype'] != "normal":
+			apDisplay.printError("If using tilt or defocal series, please provide --images-per-series")
+		if self.params['seriessize'] is not None and self.params['uploadtype'] == "normal":
+			apDisplay.printError("If using normal mode, do NOT provide --images-per-series")
 
-		### TODO: double check these
-		if self.params['angleliststr'] is not None and self.params['uploadtype'] == "tiltseries":
-			apDisplay.printError("If using --angle-list, please provide --images-per-series")
-		if self.params['uploadtype'] == "tiltseries" and self.params['angleliststr'] is None:
-			apDisplay.printError("If using --images-per-tilt-series, please provide --angle-list")
+		### angleliststr only valid with tiltseries uplaods
+		if self.params['angleliststr'] is None and self.params['uploadtype'] == "tiltseries":
+			apDisplay.printError("If using tilt series, please provide --angle-list")
+		if self.params['angleliststr'] is not None and self.params['uploadtype'] != "tiltseries":
+			apDisplay.printError("If not using tilt series, do NOT provide --angle-list")
 		if self.params['angleliststr'] is not None:
 			self.anglelist = self.convertStringToList(self.params['angleliststr'])
 			if len(self.anglelist) != self.params['seriessize']:
 				apDisplay.printError("'images-per-tilt-series' and 'angle-list' have different lengths")
+
+		### defocusliststr only valid with non-normal uplaods
+		if self.params['defocus'] is not None and self.params['defocusliststr'] is not None:
+			apDisplay.printError("Please provide only one of --defocus or --defocus-list")
+		if self.params['defocus'] is None and self.params['defocusliststr'] is None:
+			apDisplay.printError("Please provide either --defocus or --defocus-list")
+		if self.params['defocusliststr'] is not None and self.params['uploadtype'] == "normal":
+			apDisplay.printError("If using normal mode, do NOT provide --defocus-list")
 		if self.params['defocusliststr'] is not None:
 			self.defocuslist = self.convertStringToList(self.params['defocusliststr'])
+			if len(self.defocuslist) != self.params['seriessize']:
+				apDisplay.printError("'images-per-tilt-series' and 'defocus-list' have different lengths")
 
 		### check for negative defoci
 		if self.params['defocus'] is not None and self.params['defocus'] > 0:
@@ -289,13 +300,25 @@ class UploadImages(appionScript.AppionScript):
 
 	#=====================
 	def getTiltAngle(self, numinseries):
-		### TODO: fix this
-		return 0
+		"""
+		get tilt angle from list, if no list return 0.0
+
+		Note: numinseries starts at 1
+		"""
+		if self.params['angleliststr'] is not None:
+			return self.anglelist[numinseries-1]
+		return 0.0
 
 	#=====================
 	def getImageDefocus(self, numinseries):
-		### TODO: fix this
-		return -2.0e-6
+		"""
+		get defocus from list, if no list return 'defocus' variable
+
+		Note: numinseries starts at 1
+		"""
+		if self.params['defocus'] is None:
+			return self.defocuslist[numinseries-1]
+		return self.params['defocus']
 
 	#=====================
 	def uploadImageInformation(self, newimagepath, dims, seriescount, numinseries):
