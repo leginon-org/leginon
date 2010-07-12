@@ -476,6 +476,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		list returned by getmembers().
 		"""
 		import copy
+		import operator
 		
 		directories = []
 		members = tarobj.getmembers()
@@ -486,7 +487,7 @@ class TopologyRepScript(appionScript.AppionScript):
 				directories.append(tarinfo)
 				tarinfo = copy.copy(tarinfo)
 				tarinfo.mode = 0700
-			tarobj.extract(tarinfo, path)
+			tarobj.extract(tarinfo, ".")
 
 		# Reverse sort directories.
 		directories.sort(key=operator.attrgetter('name'))
@@ -507,8 +508,11 @@ class TopologyRepScript(appionScript.AppionScript):
 		if not os.path.isfile(clstarf):
 			apDisplay.printError("no EMAN cls tar file found")
 		clstar = tarfile.open(clstarf)
+
+		## revert when using python 2.5+
 		self.TarExtractall(clstar)
 		#clstar.extractall()
+
 		clstar.close()
 		clsfiles = glob.glob("cls*.lst")
 		if not clsfiles:
@@ -570,7 +574,11 @@ class TopologyRepScript(appionScript.AppionScript):
 		if not os.path.isfile(spitarf):
 			apDisplay.printError("no SPIDER cls tar file found")
 		spitar = tarfile.open(spitarf)
-		spitar.extractall()
+
+		## revert when using python 2.5+
+		self.TarExtractall(spitar)
+		#spitar.extractall()
+
 		spitar.close()
 		spifiles = glob.glob("classes_class_*.spi")
 		if not spifiles:
