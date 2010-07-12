@@ -475,10 +475,10 @@ class TopologyRepScript(appionScript.AppionScript):
 		to extract to. `members' is optional and must be a subset of the
 		list returned by getmembers().
 		"""
+		import copy
+		
 		directories = []
-
-		if members is None:
-			members = tarobj.getmembers()
+		members = tarobj.getmembers()
 
 		for tarinfo in members:
 			if tarinfo.isdir():
