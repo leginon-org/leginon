@@ -463,6 +463,43 @@ class TopologyRepScript(appionScript.AppionScript):
 		self.params['alignedstack']=os.path.abspath(outfile)
 
 	#=====================
+	def TarExtractall(self, tarobj):
+		"""
+		Function introduced in python 2.5 and is not available in python 2.4
+		Copied and modified from python 2.6 code 
+		Delete this when we move to python 2.5 code - Neil
+
+		Extract all members from the archive to the current working
+		directory and set owner, modification time and permissions on
+		directories afterwards. `path' specifies a different directory
+		to extract to. `members' is optional and must be a subset of the
+		list returned by getmembers().
+		"""
+		directories = []
+
+		if members is None:
+			members = tarobj.getmembers()
+
+		for tarinfo in members:
+			if tarinfo.isdir():
+				# Extract directories with a safe mode.
+				directories.append(tarinfo)
+				tarinfo = copy.copy(tarinfo)
+				tarinfo.mode = 0700
+			tarobj.extract(tarinfo, path)
+
+		# Reverse sort directories.
+		directories.sort(key=operator.attrgetter('name'))
+		directories.reverse()
+
+		# Set correct owner, mtime and filemode on directories.
+		for tarinfo in directories:
+			dirpath = os.path.join(".", tarinfo.name)
+			tarobj.chown(tarinfo, dirpath)
+			tarobj.utime(tarinfo, dirpath)
+			tarobj.chmod(tarinfo, dirpath)
+
+	#=====================
 	def readPartEMANFile(self):
 		# get particle information from lst file
 		# first untar the cls file
@@ -470,7 +507,8 @@ class TopologyRepScript(appionScript.AppionScript):
 		if not os.path.isfile(clstarf):
 			apDisplay.printError("no EMAN cls tar file found")
 		clstar = tarfile.open(clstarf)
-		clstar.extractall()
+		self.TarExtractall(clstar)
+		#clstar.extractall()
 		clstar.close()
 		clsfiles = glob.glob("cls*.lst")
 		if not clsfiles:
