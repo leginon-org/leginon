@@ -20,11 +20,12 @@ if ($_POST['process']) {
 	if (!$_POST['alignid']) jobform("error: no aligned stack specified");
 	if (!is_numeric($_POST['numiters'])) jobform("error: number of MSA iterations not specified");
 	if (!is_numeric($_POST['overcorrection'])) jobform("error: MSA overcorrection factor not specified");
+	if (!is_numeric($_POST['mask_radius'])) jobform("error: mask radius not specified");
+	if (!is_numeric($_POST['mask_dropoff'])) jobform("error: mask dropoff not specified");
 	if (!$_POST['MSAdistance']) jobform("error: method of calculating MSA distance not specified");
 	runImagicMSA();
 }
 else jobform();
-
 
 
 function jobform($extra=false)	{
@@ -62,17 +63,17 @@ function jobform($extra=false)	{
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
-        $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+        $sessionpathval = ($_POST['rundir']) ? $_POST['rundir'] : $sessionpath;
 	while ((file_exists($sessionpathval.'coran'.($analysisruns+1))) || (file_exists($sessionpathval.'imagicmsa'.($analysisruns+1))))
                 $analysisruns += 1;
 	$runid = ($_POST['runid']) ? $_POST['runid'] : 'imagicmsa'.($analysisruns+1);
-	$description = $_POST['description'];
+	$description = ($_POST['description']) ? $_POST['description'] : '';
 //	$alignidval = $_POST['alignid'];
-	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$rundir = ($_POST['rundir']) ? $_POST['rundir'] : $sessionpath;
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
-	$lpfilt = ($_POST['lowpass']) ? $_POST['lowpass'] : '5';
-	$hpfilt = ($_POST['highpass']) ? $_POST['highpass'] : '600';
+	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '5';
+	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : '600';
 	$mask_radius = ($_POST['mask_radius']) ? $_POST['mask_radius'] : '0.9';	
 	$mask_dropoff = ($_POST['mask_dropoff']) ? $_POST['mask_dropoff'] : '0.1';
 	$MSAdistance = ($_POST['MSAdistance']) ? $_POST['MSAdistance'] : 'modulation';
@@ -90,9 +91,9 @@ function jobform($extra=false)	{
 	echo "<input type='text' name='runid' value='$runid'>\n";
 	echo "<br>\n";
 	echo "<br>\n";
-	echo docpop('outdir','<b>Output Directory:</b>');
+	echo docpop('rundir','<b>Output Directory:</b>');
 	echo "<br>\n";
-	echo "<input type='text' name='outdir' value='$outdir' size='38'>\n";
+	echo "<input type='text' name='rundir' value='$rundir' size='38'>\n";
 	echo "<br>\n";
 	echo "<br>\n";
 	echo docpop('descr','<b>Description of IMAGIC MSA run:</b>');
@@ -101,74 +102,42 @@ function jobform($extra=false)	{
 	echo closeRoundBorder();
 	echo "</TD></tr><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
-/*	if (!$stackIds) {
-		echo"
-		<FONT COLOR='RED'><B>No Stacks for this Session</B></FONT>\n";
-	}
-	else {
+
+	if ($alignId) {
+		echo "<input type='hidden' name='alignid' value='$alignId'>\n";
+		echo alignstacksummarytable($alignId, true);
+		$alignstack = $particle->getAlignStackParams($alignId);
+		$defaultmaskrad = (int) ($alignstack['boxsize']/2-2)*$alignstack['pixelsize'];
+	} elseif ($alignIds) {
 		echo "
-		<select name='alignid'>\n";
-		foreach ($stackIds as $stack) {
-			$stackparams=$particle->getStackParams($stack[alignid]);
+		Aligned Stack:<br>
+		<select name='alignid' onchange='switchDefaults(this.value)'>\n";
+		foreach ($alignIds as $alignarray) {
+			$alignid = $alignarray['alignstackid'];
+			$alignstack = $particle->getAlignStackParams($alignid);
 
 			// get pixel size and box size
-			$mpix=$particle->getStackPixelSizeFromStackId($stack['alignid']);
-			if ($mpix) {
-				$apix = $mpix*1E10;
+			$apix = $alignstack['pixelsize'];
+			if ($apix) {
+				$mpix = $apix/1E10;
 				$apixtxt=format_angstrom_number($mpix)."/pixel";
 			}
-			$boxsize=$stackparams['boxsize'];
-
+			$boxsz = $alignstack['boxsize'];
 			//handle multiple runs in stack
-			$runname=$stackparams[shownstackname];
-			$totprtls=commafy($particle->getNumStackParticles($stack[alignid]));
-			$alignid = $stack['alignid'];
-			echo "<OPTION VALUE='$alignid|--|$apix|--|$boxsize|--|$totprtls'";
+			$runname=$alignstack['runname'];
+			$totprtls=commafy($particle->getNumAlignStackParticles($alignid));
+			echo "<OPTION VALUE='$alignid|~~|$apix|~~|$boxsz|~~|$totprtls'";
 			// select previously set prtl on resubmit
 			if ($alignidval==$alignid) echo " SELECTED";
-			echo ">$runname ($totprtls prtls,";
+			echo ">$alignid: $runname ($totprtls prtls,";
 			if ($mpix) echo " $apixtxt,";
-			echo " $boxsize pixels)</OPTION>\n";
+			echo " $boxsz pixels)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
+	} else {
+		echo"
+		<FONT COLOR='RED'><B>No Aligned Stacks for this Session</B></FONT>\n";
 	}
-*/	
-
-        if ($alignId) {
-                echo "<input type='hidden' name='alignid' value='$alignId'>\n";
-                echo alignstacksummarytable($alignId, true);
-                $alignstack = $particle->getAlignStackParams($alignId);
-                $defaultmaskrad = (int) ($alignstack['boxsize']/2-2)*$alignstack['pixelsize'];
-        } elseif ($alignIds) {
-                echo "
-                Aligned Stack:<br>
-                <select name='alignid' onchange='switchDefaults(this.value)'>\n";
-                foreach ($alignIds as $alignarray) {
-                        $alignid = $alignarray['alignstackid'];
-                        $alignstack = $particle->getAlignStackParams($alignid);
-
-                        // get pixel size and box size
-                        $apix = $alignstack['pixelsize'];
-                        if ($apix) {
-                                $mpix = $apix/1E10;
-                                $apixtxt=format_angstrom_number($mpix)."/pixel";
-                        }
-                        $boxsz = $alignstack['boxsize'];
-                        //handle multiple runs in stack
-                        $runname=$alignstack['runname'];
-                        $totprtls=commafy($particle->getNumAlignStackParticles($alignid));
-                        echo "<OPTION VALUE='$alignid|~~|$apix|~~|$boxsz|~~|$totprtls'";
-                        // select previously set prtl on resubmit
-                        if ($alignidval==$alignid) echo " SELECTED";
-                        echo ">$alignid: $runname ($totprtls prtls,";
-                        if ($mpix) echo " $apixtxt,";
-                        echo " $boxsz pixels)</OPTION>\n";
-                }
-                echo "</SELECT>\n";
-        } else {
-                echo"
-                <FONT COLOR='RED'><B>No Aligned Stacks for this Session</B></FONT>\n";
-        }
 
 
 	echo "</TD></tr><TR>\n";
@@ -176,16 +145,15 @@ function jobform($extra=false)	{
 
 	echo "</TD></tr>\n";
 	
-	// number of processors defaulted to 8
-	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
-	echo "<INPUT TYPE='hidden' NAME='nproc' VALUE=$nproc>";
-	
 	// rest of the params
 	echo "<TR>";
 	echo "    <TD VALIGN='TOP'>\n";
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
-	echo "";
+	echo "<br>";
+	// number of processors defaulted to 8
+	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
+	echo "<INPUT TYPE='text' SIZE='5' NAME='nproc' VALUE=$nproc> Number of Processors";
 	echo "<br></TD></tr>\n</table>\n";
 	echo "</TD>\n";
 	echo "<TD CLASS='tablebg'>\n";
@@ -197,14 +165,14 @@ function jobform($extra=false)	{
         	echo "<font color='#DD3333' size='-2'>WARNING: These values will not be checked!<br />\n";
 		echo "Make sure you are within the limitations of the box size</font><br />\n";
 	}
-	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lpfilt'>\n";
+	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lowpass'>\n";
 	echo docpop('lpval','Low Pass Filter Radius');
-	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
+	echo "<font size='-2'>(&Aring;ngstroms, 0=off)</font>\n";
 	echo "<br>\n";
 
-	echo "<INPUT TYPE='text' NAME='highpass' SIZE='4' VALUE='$hpfilt'>\n";
+	echo "<INPUT TYPE='text' NAME='highpass' SIZE='4' VALUE='$highpass'>\n";
 	echo docpop('hpval','High Pass Filter Radius');
-	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
+	echo "<font size='-2'>(&Aring;ngstroms, 0=off)</font>\n";
 	echo "<br>\n";
 
 	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>\n";
@@ -215,10 +183,10 @@ function jobform($extra=false)	{
 	echo docpop('mask_radius', 'Mask Radius');
 	echo "<br>\n";
 
-        echo "<INPUT TYPE='text' NAME='mask_dropoff' VALUE='$mask_dropoff' SIZE='4'>\n";
-        echo docpop('mask_dropoff', 'Mask Drop-off');
-        echo "<br>\n";
-        echo "<br>\n";
+	echo "<INPUT TYPE='text' NAME='mask_dropoff' VALUE='$mask_dropoff' SIZE='4'>\n";
+	echo docpop('mask_dropoff', 'Mask Drop-off');
+	echo "<br>\n";
+	echo "<br>\n";
 	
 	echo "<b>Multivariate Statistical Analysis Parameters</b>\n";
 	echo "<br>\n";
@@ -269,7 +237,7 @@ function runImagicMSA($extra=false)	{
 	$expId=$_GET['expId'];
 	$projectId=getProjectId();
 	$runid=$_POST['runid'];
-	$outdir=$_POST['outdir'];
+	$rundir=$_POST['rundir'];
 	$stackvalues=$_POST['alignid'];
 	$highpass=$_POST['highpass'];
 	$lowpass=$_POST['lowpass'];
@@ -291,13 +259,17 @@ function runImagicMSA($extra=false)	{
 	// create python command for executing imagic job file	
 	$command = "imagicMSA.py";
 	$command.= " --projectid=".getProjectId();
-	$command.= " --alignid=$alignid --runname=$runid --rundir=$outdir$runid";
-	if ($lowpass) $command.= " --lpfilt=$lowpass";
-	if ($highpass) $command.= " --hpfilt=$highpass";
+	$command.= " --alignid=$alignid";
+	$command.= " --runname=$runid";
+	$command.= " --rundir=$rundir$runid";
+	if ($lowpass && $lowpass!=0) $command.= " --lpfilt=$lowpass";
+	if ($highpass && $highpass!=0) $command.= " --hpfilt=$highpass";
 	if ($mask_radius) $command.= " --mask_radius=$mask_radius";
 	if ($mask_dropoff) $command.= " --mask_dropoff=$mask_dropoff";
 	if ($bin) $command.= " --bin=$bin";
-	$command.= " --numiters=$numiters --MSAdistance=$MSAdistance --overcorrection=$overcorrection";
+	$command.= " --numiters=$numiters";
+	$command.= " --MSAdistance=$MSAdistance";
+	$command.= " --overcorrection=$overcorrection";
 	$command.= " --description=\"$description\"";
 	$command.=" --nproc=$nproc";
 	if ($commit) $command.= " --commit";
@@ -306,20 +278,42 @@ function runImagicMSA($extra=false)	{
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'alignanalysis',False,False,False,$nproc,8,1);
+		$sub = submitAppionJob($command,$rundir,$runid,$expId,'alignanalysis',False,False,False,$nproc,8,1);
 		// if errors:
-		if ($sub) jobform("<b>ERROR:</b> $sub");
+		if ($sub) 
+			jobform("<b>ERROR:</b> $sub");
+		exit;
+	} 
+	else {
+		processing_header("IMAGIC Classification (MSA)","IMAGIC Classification (MSA) Params");
+		echo"
+			<TABLE WIDTH='600' BORDER='1'>
+			<TR><TD COLSPAN='2'>
+				<B>Classification Command:</B><br>
+				$command
+			</TD></tr>
+			<TR><td>runname</TD><td>$rundir$runid</TD></tr>
+			<TR><td>alignstackid</TD><td>$alignid</TD></tr>
+			<TR><td>rundir</TD><td>$rundir</TD></tr>";
+			if ($lowpass & $lowpass!=0) {
+				echo "<TR><td>low pass filter</TD><td>$lowpass</TD></tr>";
+			} else {
+				echo "<TR><td>low pass filter</TD><td>OFF</TD></tr>";
+			}
+			if ($highpass & $highpass!=0) {
+				echo "<TR><td>high pass filter</TD><td>$highpass</TD></tr>";
+			} else {
+				echo "<TR><td>high pass filter</TD><td>OFF</TD></tr>";
+			}
+		echo "
+			<TR><td>bin</TD><td>$bin</TD></tr>
+			<TR><td>mask radius</TD><td>$mask_radius</TD></tr>
+			<TR><td>mask dropoff</TD><td>$mask_dropoff</TD></tr>
+			<TR><td>distance criteria</TD><td>$MSAdistance</TD></tr>
+			<TR><td>overcorrection factor</TD><td>$overcorrection</TD></tr>
+			<TR><td>number of iterations</TD><td>$numiters</TD></tr>
+			</table>\n";
+		processing_footer();
 	}
-
-	processing_header("IMAGIC Classification (MSA)","IMAGIC Classification (MSA)",$javafunc);
-
-	echo "<pre>";
-	echo htmlspecialchars($command);
-	echo "</pre>";
-
-	processing_footer();
 	exit;
-	
-
-
 }
