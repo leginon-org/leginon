@@ -10,6 +10,7 @@ import numpy
 import quietscipy
 import scipy.ndimage
 import fftengine
+import sys
 try:
 	import numextension
 except:
@@ -36,7 +37,10 @@ def despike(image, size=11, sigma=3.5, debug=0):
 	dev. then the pixel will be set to the mean value.
 	'''
 	# last argument is debug flag
-	numextension.despike(image, size, sigma, debug)
+	if sys.platform != 'darwin':
+		numextension.despike(image, size, sigma, debug)
+	else:
+		print "fake despike on Mac OS"
 
 def medianSeries(series):
 	try:

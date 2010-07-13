@@ -8,6 +8,7 @@ import logging
 import threading
 import wx
 import wx.lib.scrolledpanel
+import sys
 
 import leginon.launcher
 import leginon.gui.wx.Logging
@@ -129,7 +130,10 @@ class ListCtrlPanel(wx.Panel):
 		self.swselect.SetOrientation(wx.LAYOUT_VERTICAL)
 		self.swselect.SetAlignment(wx.LAYOUT_LEFT)
 		self.swselect.SetSashVisible(wx.SASH_RIGHT, True)
-		self.swselect.SetExtraBorderSize(5)
+		bordersize=5
+		if sys.platform == 'darwin':
+			bordersize=20
+		self.swselect.SetExtraBorderSize(bordersize)
 
 		self.swmessage = wx.SashLayoutWindow(self, -1, style=wx.NO_BORDER)
 		self.swmessage.SetDefaultSize((-1, 100))
