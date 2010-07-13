@@ -17,17 +17,22 @@ def isSameStack(partlist1, partlist2):
 	if len(partlist1) != len(partlist2):
 		print "failed length %d vs. %d"%(len(partlist1),len(partlist2))
 		return False
+	mincc = 1.1
 	for i in range(len(partlist1)):
 		part1 = partlist1[i]
 		part2 = partlist2[i]
-		print part1[0:2,0:2]
-		print part2[0:2,0:2]
+		#print part1[0:2,0:2]
+		#print part2[0:2,0:2]
 		cc = getCCValue(part1, part2)
-		### cross-correlation must be better than 0.99
-		print "CC %.3f"%(cc)
-		if cc < 0.99:
-			print "failed CC %.3f"%(cc)
+		#print "CC %.8f"%(cc)
+		### cross-correlation must be better than 0.999, i.e., 0.001%
+		### typically is it better than 0.999999
+		if cc < mincc:
+			mincc = cc
+		if cc < 0.999:
+			print "failed CC %.6f"%(cc)
 			#return False
+	print "minimum CC %.10f"%(mincc)
 	return True
 
 def emanMrcToStack(partlist):
@@ -52,27 +57,36 @@ if __name__ == "__main__":
 	### generate random image data
 	shape = (128,128)
 	partlist = []
-	for i in range(8):
+	for i in range(16):
 		part = numpy.random.random(shape)
 		part = ndimage.gaussian_filter(part, sigma=shape[0]/16)
 		partlist.append(part)
 
 	### save original data
 	apFile.removeStack("original.hed", warn=False)
-	apImagicFile.writeImagic(partlist, "original.hed")
+	apImagicFile.writeImagic(partlist, "original.hed", msg=False)
 
 	### read and write with Appion
 	apFile.removeStack("resave.hed", warn=False)
-	imagic = apImagicFile.readImagic("original.hed")
+	imagic = apImagicFile.readImagic("original.hed", msg=False)
 	partlist2 = imagic['images']
-	apImagicFile.writeImagic(partlist2, "resave.hed")
+	apImagicFile.writeImagic(partlist2, "resave.hed", msg=False)
 	if not isSameStack(partlist, partlist2):
 		print "Stacks are different"
-		sys.exit(1)
+		#sys.exit(1)
 	
 	### read and write with EMAN mrc
 	emanMrcToStack(partlist)
+	imagic = apImagicFile.readImagic("emanmrc.hed", msg=False)
+	partlist3 = imagic['images']
+	if not isSameStack(partlist, partlist3):
+		print "Stacks are different"
+		#sys.exit(1)
 
-	### read and write with EMAN mrc
+	### read and write with EMAN spider
 	emanSpiderToStack(partlist)
+	imagic = apImagicFile.readImagic("emanspi.hed", msg=False)
+	partlist4 = imagic['images']
+	if not isSameStack(partlist, partlist4):
+		print "Stacks are different"
 
