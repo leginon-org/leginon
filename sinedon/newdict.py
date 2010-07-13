@@ -35,6 +35,11 @@ class FileReference(object):
 	def setPath(self, path):
 		self.path = path
 
+	def __str__(self):
+		return 'FileReference(path=%s,filename=%s)' % (self.path, self.filename)
+
+	def __repr__(self):
+		return 'FileReference(path=%s,filename=%s)' % (self.path, self.filename)
 
 ### types used in TypedDict must have valicators
 ### Two ways to register a validator for a given type:
