@@ -240,8 +240,26 @@ function jobForm($extra=false) {
 	$sessiondata = $leginondata->getSessionInfo($expId);
 	$sessionpath = $sessiondata['Image path'];
 	ereg("(.*)leginon(.*)rawdata", $sessionpath, $reg_match);
-	$rootpath = "appion".$reg_match[2]."recon/";
-	$sessionpath=$reg_match[1].$rootpath;
+	if (!is_null($reg_match)) {
+		$rootpath = "appion".$reg_match[2]."recon/";
+		$sessionpath=$reg_match[1].$rootpath;
+	} else {
+		// get stack data for output if the sessionpath is not regular.  This may happen when the rawdata is archived
+		$stackinfo = explode('|--|',$_POST['stackval']);
+		$stackpath = $stackinfo[4];
+		ereg("(.*)appion(.*)stacks(.*)", $stackpath, $reg_match);
+		if (!is_null($reg_match)) {
+			$rootpath = "appion".$reg_match[2]."recon/";
+			$sessionpath=$reg_match[1].$rootpath;
+		} else {
+			if (is_null($_POST['outdir'])) {
+				$rootpath = '';
+				$sessionpath = '';
+				$extra="ERROR: could not determine output, cluster, and dmf directory automatically. Please enter manually";
+			}
+		}
+	}
+		
 
 	$clusterdata->set_rootpath($rootpath);
 	$clusterdata->post_data();
@@ -264,7 +282,6 @@ function jobForm($extra=false) {
 	$modelid = $modelinfo[0];
 
 	$clusterdefaults = ($selectedcluster==$_POST['clustermemo']) ? true : false;
-
 
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$reconruns = count($particle->getReconIdsFromSession($expId));
