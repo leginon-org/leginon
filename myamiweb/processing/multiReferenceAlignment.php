@@ -47,22 +47,6 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	$alignruns = ($alignrunsarray) ? count($alignrunsarray) : 0;
 	$firststack = $particle->getStackParams($stackIds[0]['stackid']);
 	$initparts = $particle->getNumStackParticles($stackIds[0]['stackid']);
-
-	$javascript = "<script src='../js/viewer.js'></script>\n";
-	$javascript .= "<script>\n";
-	$javascript .= "function switchDefaults(stackval) {\n";
-	$javascript .= "	var stackArray = stackval.split('|--|');\n";
-	// remove commas from number
-	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
-	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
-	// set max last ring radius
-	$javascript .= "	var bestbin = Math.floor(stackArray[2]/100);\n";
-//	$javascript .= "	var lastring = Math.floor(stackArray[2]/3/bestbin);\n";
-	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
-//	$javascript .= "	document.viewerform.lastring.value = lastring;\n";
-	// set particle & mask radius and lp
-	$javascript .= "}\n";
-	$javascript .= "</script>\n";	
 	
 	$javascript .= "<script type='text/javascript'>
 	function checkalignment() {
