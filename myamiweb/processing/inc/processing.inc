@@ -1250,7 +1250,13 @@ function emanRef() {
 /**************************************/
 function spiderRef() {
 	return referenceBox("SPIDER and WEB: processing and visualization of images in 3D electron microscopy and related fields.", 1996, "Frank J, Radermacher M, Penczek P, Zhu J, Li Y, Ladjadj M, Leith A.", "J Struct Biol.", 116, 1, 8742743, false, false, "img/spider_logo.png");
-};
+}
+
+/**************************************/
+function imagicRef() {
+	return referenceBox("A New Generation of the IMAGIC Image Processing System.", 1996, 
+		"van Heel M., Harauz G., Orlova E. V., Schmidt R. & Schatz M", "J Struct Biol", 116, 1, 8742718, false, false, "img/imagic_logo.png");
+}
 
 /**************************************/
 function appionRef() {
