@@ -154,7 +154,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['background'] = wx.CheckBox(self, -1, 'Acquire in the background')
 		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
 		self.widgets['adjust time by tilt'] = wx.CheckBox(self, -1, 'Adjust exposure time by tilt')
-		self.widgets['reset tilt'] = wx.CheckBox(self, -1, 'Untilt stage when queue is done')
+		self.widgets['reset tilt'] = wx.CheckBox(self, -1, 'Reset stage when queue is done')
 		self.widgets['correct image shift coma'] = wx.CheckBox(self, -1, 'Correct image shift coma effect')
 		self.widgets['target offset row'] = IntEntry(self, -1, chars=6)
 		self.widgets['target offset col'] = IntEntry(self, -1, chars=6)
