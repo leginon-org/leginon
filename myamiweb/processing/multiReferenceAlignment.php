@@ -51,16 +51,33 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	$javascript .= "<script type='text/javascript'>
 	function checkalignment() {
 		if (o=document.viewerform.alignment_type) {
+			aligntype=o.options[o.selectedIndex].value
 			if (o_a=document.viewerform.first_alignment) {
-				aligntype=o.options[o.selectedIndex].value
 				if (aligntype=='all') {
 					o_a.disabled=false
 				} else {
 					o_a.disabled=true
 				}
 			}
+			if (o_no=document.viewerform.num_orientations) {
+				if (aligntype=='brute_force') {
+					o_no.disabled=false
+				} else {
+					o_no.disabled=true
+				}
+			}
 		}
 	}
+
+	function disable_brute_force_orientations() {
+		if (o=document.viewerform.num_orientations) {
+			o.disabled=true
+		}
+		else {
+			o.disabled=false
+		}
+	}
+
 	</script>\n";
 	
 	$javascript .= writeJavaPopupFunctions('appion');
@@ -81,7 +98,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	}
   
   // Set any existing parameters in form
-	$sessionpathval = ($_POST['rundir']) ? $_POST['rundir'] : $sessionpath;
+	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while (file_exists($sessionpathval.'multiRefAlign'.($alignruns+1)))
 		$alignruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'multiRefAlign'.($alignruns+1);
@@ -109,10 +126,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	$center = ($_POST['center']=="on" || !$_POST['process']) ? 'checked' : '';
 	$alignment_type = ($_POST['alignment_type']) ? $_POST['alignment_type'] : 'all';
 	$first_alignment = ($_POST['first_alignment']) ? $_POST['first_alignment'] : 'rotation_first';
-
-	// number of processors defaulted to 8
-	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
-	echo "<INPUT TYPE='hidden' NAME='nproc' VALUE=$nproc>";
+	$num_orientations = ($_POST['num_orientations']) ? $_POST['num_orientations'] : '17';
 
   echo"
 	<TABLE BORDER=0 CLASS=tableborder>
@@ -137,7 +151,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 			<TD VALIGN='TOP'>";
 		echo 	docpop('outdir','<b>Output Directory:</b>');	
 		echo "  <br>	 
-			<INPUT TYPE='text' NAME='rundir' VALUE='$sessionpathval' SIZE='38'>
+			<INPUT TYPE='text' NAME='outdir' VALUE='$sessionpathval' SIZE='38'>
 			</TD>
 		</tr>
 		<TR>
@@ -185,6 +199,9 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 		<TD VALIGN='TOP'>
 		<INPUT TYPE='checkbox' NAME='commit' $commitcheck>";
 	echo 	docpop('commit', " <B>Commit to Database</B><br>");
+	// number of processors defaulted to 8
+	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
+	echo "<INPUT TYPE='text' SIZE='5' NAME='nproc' VALUE=$nproc> Number of Processors";
 	echo"
 		</TD>
 	</tr>";
@@ -233,6 +250,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	echo "<OPTION VALUE='translational'>translational</OPTION>";
 	echo "<OPTION VALUE='horizontal'>horizontal</OPTION>";
 	echo "<OPTION VALUE='vertical'>vertical</OPTION>";
+	echo "<OPTION VALUE='brute_force'>brute force</OPTION>";
 	echo "</SELECT>\t";
 	
 	echo "<SELECT name='first_alignment'>";
@@ -240,6 +258,9 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	echo "<OPTION VALUE='translation_first'>translation_first</OPTION>";
 	echo "</SELECT><br>";
 	
+	echo"
+		<INPUT TYPE='text' NAME='num_orientations' VALUE='$num_orientations' SIZE='4'>";
+	echo 	docpop('num_orientations', " Number of Orientations <font size='-1'>(brute force only)</font><br>");
 	echo"
 		<INPUT TYPE='text' NAME='iters' VALUE='$iters' SIZE='4'>";
 	echo 	docpop('numiter_mra', " Iterations<br>");
@@ -295,7 +316,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 //***************************************
 function runAlignment() {
 	$expId = $_GET['expId'];
-	$rundir = $_POST['rundir'];
+	$outdir = $_POST['outdir'];
 	$runname = $_POST['runname'];
 	$nproc = $_POST['nproc'];
 
@@ -327,6 +348,7 @@ function runAlignment() {
 	$center = ($_POST['center']=="on" || !$_POST['process']) ? 'checked' : '';
 	$alignment_type = $_POST['alignment_type'];
 	$first_alignment = $_POST['first_alignment'];
+	$num_orientations = $_POST['num_orientations'];
 
 	//make sure a session was selected
 	$description=$_POST['description'];
@@ -338,10 +360,10 @@ function runAlignment() {
 	// make sure template stack was selected
 	if (!$templatestackid) createAlignmentForm("<B>ERROR:</B> No template stack selected");
 
-	// make sure rundir ends with '/' and append run name
-	if (substr($rundir,-1,1)!='/') $rundir.='/';
-	$outdir = $rundir;
-	$rundir = $rundir.$runname;
+	// make sure outdir ends with '/' and append run name
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$outdir = $outdir;
+	$outdir = $outdir.$runname;
 
 	// alignment
 	$numpart=$_POST['numpart'];
@@ -354,13 +376,11 @@ function runAlignment() {
 	}
 
 	$command="imagicMultiReferenceAlignment.py ";
-	$command.="--projectid=".getProjectId()." ";
-	$command.="--runname=$runname ";
 	$command.="--stackId=$stackid ";
 	$command.="--templateStackId=$templatestackid ";
-	$command.="--rundir=".$rundir." ";
 	$command.="--alignment_type=$alignment_type ";
 	if ($first_alignment) $command.="--first_alignment=$first_alignment ";
+	if ($num_orientations) $command.="--num_orientations=$num_orientations ";
 	$command.="--description=\"$description\" ";
 
 	if ($lowpass) $command.="--lowpass=$lowpass ";
@@ -389,6 +409,19 @@ function runAlignment() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
+	// Add reference to top of the page
+	$headinfo .= imagicRef();
+
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
+
+	// if error display them
+	if ($errors)
+		createAlignmentForm($errors);
+	exit;
+
+
+/*
 	// submit job to cluster
 	if ($_POST['process']=="Run Multi Reference Alignment") {
 		$user = $_SESSION['username'];
@@ -397,7 +430,7 @@ function runAlignment() {
 		if (!($user && $password))
 			createAlignmentForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,"partalign",False,False,False,$nproc,8,1);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,"partalign",False,False,False,$nproc);
 		// if errors:
 		if ($sub)
 			createAlignmentForm("<b>ERROR:</b> $sub");
@@ -414,7 +447,7 @@ function runAlignment() {
 		<TR><td>runname</TD><td>$runname</TD></tr>
 		<TR><td>stackid</TD><td>$stackid</TD></tr>
 		<TR><td>Template Stack ID</TD><td>$templatestackid</TD></tr>
-		<TR><td>rundir</TD><td>$rundir</TD></tr>
+		<TR><td>outdir</TD><td>$outdir</TD></tr>
 		
 		<TR><td>high pass</TD><td>$highpass</TD></tr>
 		<TR><td>low pass</TD><td>$lowpass</TD></tr>
@@ -427,6 +460,7 @@ function runAlignment() {
 		echo "
 		<TR><td>Alignment Type</TD><td>$alignment_type</TD></tr>";
 		if ($alignment_type == "all") echo "<TR><td>First Alignment</TD><td>$first_alignment</TD></tr>";
+		if ($alignment_type == "brute_force") echo "<TR><td>brute force orientations</TD><TD<>$num_orientations</TD></TR>";
 		echo "
 		<TR><td>Max translational shift</TD><td>$max_shift_orig</TD></tr>
 		<TR><td>sampling parameter</TD><td>$samp_param</TD></tr>
@@ -437,8 +471,8 @@ function runAlignment() {
 		echo"	</table>\n";
 		processing_footer();
 	}
+*/
 }
-
 
 
 ?>
