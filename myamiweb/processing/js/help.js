@@ -272,6 +272,7 @@ var help = {
 		'minrad' : 'Specify which radial parts of the images are to be included in the rotational alignment. The suggested value of 0 means that the starting point is the center of the image',
 		'maxrad' : 'Specify which radial parts of the images are to be included in the rotational alignment. The suggested value of 0.7 means that all radii up to 70% of the image will be included in the search',
 		'center' : 'perform a translational centering operation against the total particle sum prior to multi-reference alignment (NOTE: in the IMAGIC 3-D refinement, this is ONLY done for the first iteration. Subsequent iterations perform multi-reference rotational and translational alignment)',
+		'num_orientations' : 'This parameter drives BRUTE_FORCE alignment option. CPU usage will be proportional to the number of different rotation directions you desire. Reasonable values are 5-360',
 
 		/*** Synthetic Dataset Creation ***/
 		'projcount' : 'number of projections to be made from the input model. If an even distribution is chosen, this value will be approximate, and the number of projections will be rounded up to the closest number giving an even, equivalent distribution of all angular views',
