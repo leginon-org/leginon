@@ -63,13 +63,13 @@ function jobform($extra=false)	{
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
-        $sessionpathval = ($_POST['rundir']) ? $_POST['rundir'] : $sessionpath;
+        $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while ((file_exists($sessionpathval.'coran'.($analysisruns+1))) || (file_exists($sessionpathval.'imagicmsa'.($analysisruns+1))))
                 $analysisruns += 1;
-	$runid = ($_POST['runid']) ? $_POST['runid'] : 'imagicmsa'.($analysisruns+1);
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'imagicmsa'.($analysisruns+1);
 	$description = ($_POST['description']) ? $_POST['description'] : '';
 //	$alignidval = $_POST['alignid'];
-	$rundir = ($_POST['rundir']) ? $_POST['rundir'] : $sessionpath;
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '5';
@@ -87,13 +87,13 @@ function jobform($extra=false)	{
 	echo "<table border='0' cellpadding='5'>\n";
 	echo "<TR><td>\n";
 	echo openRoundBorder();
-	echo docpop('runid','<b>MSA Run Name:</b>');
-	echo "<input type='text' name='runid' value='$runid'>\n";
+	echo docpop('runname','<b>MSA Run Name:</b>');
+	echo "<input type='text' name='runname' value='$runname'>\n";
 	echo "<br>\n";
 	echo "<br>\n";
-	echo docpop('rundir','<b>Output Directory:</b>');
+	echo docpop('outdir','<b>Output Directory:</b>');
 	echo "<br>\n";
-	echo "<input type='text' name='rundir' value='$rundir' size='38'>\n";
+	echo "<input type='text' name='outdir' value='$outdir' size='38'>\n";
 	echo "<br>\n";
 	echo "<br>\n";
 	echo docpop('descr','<b>Description of IMAGIC MSA run:</b>');
@@ -236,8 +236,8 @@ function jobform($extra=false)	{
 function runImagicMSA($extra=false)	{
 	$expId=$_GET['expId'];
 	$projectId=getProjectId();
-	$runid=$_POST['runid'];
-	$rundir=$_POST['rundir'];
+	$runname=$_POST['runname'];
+	$outdir=$_POST['outdir'];
 	$stackvalues=$_POST['alignid'];
 	$highpass=$_POST['highpass'];
 	$lowpass=$_POST['lowpass'];
@@ -260,8 +260,8 @@ function runImagicMSA($extra=false)	{
 	$command = "imagicMSA.py";
 	$command.= " --projectid=".getProjectId();
 	$command.= " --alignid=$alignid";
-	$command.= " --runname=$runid";
-	$command.= " --rundir=$rundir$runid";
+	$command.= " --runname=$runname";
+	$command.= " --outdir=$outdir$runname";
 	if ($lowpass && $lowpass!=0) $command.= " --lpfilt=$lowpass";
 	if ($highpass && $highpass!=0) $command.= " --hpfilt=$highpass";
 	if ($mask_radius) $command.= " --mask_radius=$mask_radius";
@@ -275,10 +275,22 @@ function runImagicMSA($extra=false)	{
 	if ($commit) $command.= " --commit";
 	else $command.=" --no-commit";
 
+	// Add reference to top of the page
+	$headinfo .= imagicRef();
+
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'alignanalysis', $nproc);
+
+	// if error display them
+	if ($errors)
+		jobform($errors);
+	exit;
+
+	/*
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$rundir,$runid,$expId,'alignanalysis',False,False,False,$nproc,8,1);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'alignanalysis',False,False,False,$nproc,8,1);
 		// if errors:
 		if ($sub) 
 			jobform("<b>ERROR:</b> $sub");
@@ -292,9 +304,9 @@ function runImagicMSA($extra=false)	{
 				<B>Classification Command:</B><br>
 				$command
 			</TD></tr>
-			<TR><td>runname</TD><td>$rundir$runid</TD></tr>
+			<TR><td>runname</TD><td>$outdir$runname</TD></tr>
 			<TR><td>alignstackid</TD><td>$alignid</TD></tr>
-			<TR><td>rundir</TD><td>$rundir</TD></tr>";
+			<TR><td>outdir</TD><td>$outdir</TD></tr>";
 			if ($lowpass & $lowpass!=0) {
 				echo "<TR><td>low pass filter</TD><td>$lowpass</TD></tr>";
 			} else {
@@ -316,4 +328,6 @@ function runImagicMSA($extra=false)	{
 		processing_footer();
 	}
 	exit;
+	*/
 }
+?>
