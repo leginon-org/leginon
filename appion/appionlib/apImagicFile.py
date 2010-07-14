@@ -243,6 +243,7 @@ def writeImagic(array, filename, msg=True):
 			return
 		try:
 			array = numpy.asarray(array, dtype=numpy.float32)
+			array = numpy.fliplr(array)
 		except:
 			boxsizes = []
 			for part in array:

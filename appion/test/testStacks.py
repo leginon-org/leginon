@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import numpy
 from appionlib import apFile
@@ -30,9 +31,12 @@ def isSameStack(partlist1, partlist2):
 		if cc < mincc:
 			mincc = cc
 		if cc < 0.999:
-			print "failed CC %.6f"%(cc)
+			#print "failed CC %.6f"%(cc)
 			#return False
+			pass
 	print "minimum CC %.10f"%(mincc)
+	if mincc < 0.999:
+		return False
 	return True
 
 def emanMrcToStack(partlist):
@@ -53,6 +57,44 @@ def emanSpiderToStack(partlist):
 		apFile.removeFile("temp.spi")
 	return
 
+def stackToEmanMrc(stackfile):
+	numpart = apFile.numImagesInStack(stackfile)
+	partlist = []
+	for i in range(numpart):
+		mrcfile = "eman%02d.mrc"%(i)
+		emancmd = "proc2d %s %s first=%d last=%d"%(stackfile, mrcfile, i, i)
+		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
+		if not os.path.isfile(mrcfile):
+			print "Failed to create MRC"
+			sys.exit(1)
+		part = mrc.read(mrcfile)
+		apFile.removeFile(mrcfile)
+		partlist.append(part)
+	return partlist
+
+def stackToEmanSpi(stackfile, swap=False):
+	numpart = apFile.numImagesInStack(stackfile)
+	partlist = []
+	for i in range(numpart):
+		spifile = "eman%d.spi"%(i)
+		emanspifile = spifile
+		if i > 0:
+			### hack for eman auto-naming
+			emanspifile = "eman"
+		emancmd = "proc2d %s %s first=%d last=%d"%(stackfile, emanspifile, i, i)
+		if swap is True:
+			emancmd += " spiderswap-single"
+		else:
+			emancmd += " spider-single"
+		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
+		if not os.path.isfile(spifile):
+			print "Failed to create SPIDER file"
+			sys.exit(1)
+		part = spider.read(spifile)
+		apFile.removeFile(spifile)
+		partlist.append(part)
+	return partlist
+
 if __name__ == "__main__":
 	### generate random image data
 	shape = (128,128)
@@ -71,6 +113,7 @@ if __name__ == "__main__":
 	imagic = apImagicFile.readImagic("original.hed", msg=False)
 	partlist2 = imagic['images']
 	apImagicFile.writeImagic(partlist2, "resave.hed", msg=False)
+	print "============\nCompare APPION IMAGIC"
 	if not isSameStack(partlist, partlist2):
 		print "Stacks are different"
 		#sys.exit(1)
@@ -79,6 +122,7 @@ if __name__ == "__main__":
 	emanMrcToStack(partlist)
 	imagic = apImagicFile.readImagic("emanmrc.hed", msg=False)
 	partlist3 = imagic['images']
+	print "============\nCompare EMAN MRC"
 	if not isSameStack(partlist, partlist3):
 		print "Stacks are different"
 		#sys.exit(1)
@@ -87,6 +131,25 @@ if __name__ == "__main__":
 	emanSpiderToStack(partlist)
 	imagic = apImagicFile.readImagic("emanspi.hed", msg=False)
 	partlist4 = imagic['images']
+	print "============\nCompare EMAN SPIDER"
 	if not isSameStack(partlist, partlist4):
+		print "Stacks are different"
+
+	### convert imagic to MRC with EMAN and read
+	partlist5 = stackToEmanMrc("original.hed")
+	print "============\nCompare IMAGIC to EMAN MRC"
+	if not isSameStack(partlist, partlist5):
+		print "Stacks are different"
+
+	### convert imagic to SPIDER with EMAN and read
+	partlist6 = stackToEmanSpi("original.hed")
+	print "============\nCompare IMAGIC to EMAN SPIDER"
+	if not isSameStack(partlist, partlist6):
+		print "Stacks are different"
+
+	### convert imagic to SPIDER SWAP with EMAN and read
+	partlist7 = stackToEmanSpi("original.hed")
+	print "============\nCompare IMAGIC to EMAN SPIDER SWAP"
+	if not isSameStack(partlist, partlist7):
 		print "Stacks are different"
 

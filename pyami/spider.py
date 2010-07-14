@@ -216,7 +216,7 @@ def getSpiderHeader(filename, n=27):
 	t = struct.unpack(bigformat,f)	 # try big-endian first
 	hdr = isSpiderHeader(t)
 	if hdr == 0:
-		print "reading small endian"
+		#print "reading small endian"
 		bigendian = 0
 		littleformat = '<%df' % n
 		t = struct.unpack(littleformat,f)  # little-endian
