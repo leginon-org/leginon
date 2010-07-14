@@ -11,7 +11,7 @@ The TargetFilter node takes a list of targets and produces a new list of targets
 It would typically be placed between a TargetFinder and an Acquisition node.
 Subclasses need to implement the filterTargets method.
 '''
-
+import math
 import node
 import leginondata
 import event
@@ -110,8 +110,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 					self.markTargetsDone(alltargets)
 					self.abort = False
 					return targetlistdata
-				newtargets = self.onTest()
-				newtargets = self.appendOtherTargets(alltargets,newtargets)
+				newtargets = self.removeDeletedTargetsOnImage(newtargets)
 			self.newtargets = newtargets
 			self.targetlistdata = targetlistdata
 			newtargetlistdata = self.submitTargets()
@@ -216,4 +215,43 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		newtargets = self.filterTargets(goodoldtargets)
 		self.logger.info('Filter output: %d' % (len(newtargets),))
 		self.displayTargets(newtargets,{'image':None})
+		return newtargets
+
+	def distance(self,position1,position2):
+		return abs(math.hypot(position1[0]-position2[0],position1[1]-position2[1]))
+
+	def removeDeletedTargetsOnImage(self,oldtargets):
+		'''
+			This removes targets that user removed by right-click on the image panel.
+			It will ignore all new targets added by the user.  By modifying the old targets,
+			this function retains the parentage of the targets from filterTarget function.
+		'''
+		if len(oldtargets) == 0:
+			return
+		newtargets = []
+		parentimage = oldtargets[0]['image']
+		dimension = parentimage['camera']['dimension']
+		imgcenter = {'x':dimension['x']/2, 'y':dimension['y']/2}
+		binning = parentimage['camera']['binning']
+		targettypes = ['acquisition','focus','preview']
+		positions = {}
+		for typename in targettypes:
+			positions[typename] = []
+			imagetargets = self.panel.getTargetPositions(typename)
+			for imgtarget in imagetargets:
+				delta_row = (imgtarget[1] - imgcenter['y'])
+				delta_col = (imgtarget[0] - imgcenter['x'])
+				positions[typename].append((delta_col,delta_row))
+		for target in oldtargets:
+			targetdelta = (target['delta column'],target['delta row']) 
+			for i,position in enumerate(positions[target['type']]):
+				# check distance with larger tolerance on larger image because it might
+				# give truncation error when display on to image panel
+				if self.distance(targetdelta,position) <= dimension['x']/512.0:
+					newtargets.append(target)
+					del positions[target['type']][i]
+					break
+		for typename in targettypes:
+			if len(positions[typename]) > 0:
+				self.logger.warning('%s targets added manually will not be processed' % typename)
 		return newtargets

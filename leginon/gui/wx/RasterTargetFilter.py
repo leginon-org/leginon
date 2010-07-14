@@ -40,9 +40,9 @@ class Panel(leginon.gui.wx.TargetFilter.Panel):
 		self.toolbar.Realize()
 
 		self.imagepanel = leginon.gui.wx.TargetPanel.EllipseTargetImagePanel(self, -1)
-		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255))
+		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255), target=True)
 		self.imagepanel.selectiontool.setDisplayed('preview', True)
-		self.imagepanel.addTargetTool('acquisition', wx.GREEN, numbers=True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, numbers=True, target=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, numbers=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)

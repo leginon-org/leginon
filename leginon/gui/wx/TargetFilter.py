@@ -33,9 +33,9 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255))
 		self.imagepanel.selectiontool.setDisplayed('preview', True)
-		self.imagepanel.addTargetTool('acquisition', wx.GREEN, numbers=True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, numbers=True, target=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
-		self.imagepanel.addTargetTool('focus', wx.BLUE, numbers=True)
+		self.imagepanel.addTargetTool('focus', wx.BLUE, numbers=True, target=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
@@ -56,6 +56,9 @@ class Panel(leginon.gui.wx.Node.Panel):
 
 	def getTargets(self, typename):
 		return self.imagepanel.getTargets(typename)
+
+	def getTargetPositions(self, typename):
+		return self.imagepanel.getTargetPositions(typename)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
