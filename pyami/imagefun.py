@@ -115,6 +115,26 @@ def clip_power(pow,thresh=3):
 
 	return pow
 
+def filled_sphere(shape, radius, center=None):
+	"""
+	creates a spherical mask of defined radius and center 
+	in an array of the provided shape
+	with value of 0 inside the sphere and 1 outside the sphere
+	"""
+	r2 = radius*radius
+	if center is None:
+		### set to center of array
+		center = (shape[0]-1)/2.0,(shape[1]-1)/2.0,(shape[2]-1)/2.0
+	def func(i0, i1, i2):
+		ii0 = i0 - center[0]
+		ii1 = i1 - center[1]
+		ii2 = i2 - center[2]
+		rr2 = ii0**2 + ii1**2 + ii2**2
+		c = numpy.where(rr2<r2, 0.0, 1.0)
+		return c
+	return numpy.fromfunction(func, shape)
+
+
 def filled_circle(shape, radius, center=None):
 	"""
 	creates a circle mask of defined radius and center 
