@@ -31,7 +31,7 @@ function getProjectFromExpId($expId) {
   $projectdb = $projectdata->checkDBConnection();
  
   if($projectdb) $projectinfo = $projectdata->getProjectfromSessionId($expId);
-  $projectId=$projectinfo['projectId'];
+  $projectId=(int) $projectinfo['projectId'];
   return $projectId;
 }
 
@@ -59,6 +59,8 @@ function getProjectId() {
 	}
 
 	if ($projectid)
+		$projectid = (int) $projectid;
+	if (is_int($projectid))
 		$_SESSION['projectId'] = $projectid;
 
 	return $projectid;
@@ -893,12 +895,12 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	// insert cluster job data and set job as queued
 	$jobid=$particle->insertClusterJobData($processhost,$rundir,'',$rundir,$jobfile,$expId,$jobtype,$user);
 
-	$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
+	$jobtext = "#PBS -l nodes=$nodes:ppn=$ppn\n";
 	// AMI guppy specific to get small jobs to run on 4 proc nodes
 	/*if ($nproc < 5) {
-		$jobtext .= "#PBS -l nodes=1:ppn=4:fourProc\n";
+		$jobtext = "#PBS -l nodes=1:ppn=4:fourProc\n";
 	} else {
-		$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
+		$jobtext = "#PBS -l nodes=$nodes:ppn=$ppn\n";
 	}*/
 
 	// create job file
