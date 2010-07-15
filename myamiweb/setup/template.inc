@@ -9,7 +9,24 @@ class template{
 		$html = "<html><head>\n";
 		$html .= "<title>$header</title>\n";
 		$html .= "<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />\n";
+		$html .= "<script type='text/javascript' src='../js/lib/prototype/prototype.js'></script>";
+		$html .= "<script type='text/javascript' src='../js/lib/scriptaculous/scriptaculous.js'></script>";
+		$html .= "<script type='text/javascript' src='../js/HelpBalloon.js'></script>";
 		$html .= "<link href='$cssfile' media='all' rel='stylesheet' type='text/css' />\n";
+		$html .= "<script type='text/javascript'> \n";
+		$html .= "<!-- \n";
+		$html .= "// \n";
+		$html .= "// Override the default settings to point to the parent directory \n";
+		$html .= "// \n";
+		$html .= "HelpBalloon.Options.prototype = Object.extend(HelpBalloon.Options.prototype, { \n";
+		$html .= "	icon: '../img/icon.gif', \n";
+		$html .= "	button: '../img/button.png', \n";
+		$html .= "	balloonPrefix: '../img/balloon-' \n";
+		$html .= "}); \n";
+		
+		$html .= "//--> \n";
+		$html .= "</script> \n";
+		
 		$html .= "</head><body>\n";
 		$html .= "<div id='pageWrapper'>\n";
 		$html .= "<div>\n";
