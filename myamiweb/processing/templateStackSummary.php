@@ -26,12 +26,11 @@ if ($expId && is_int($expId)){
 	$projectId = getProjectId();
 }
 
-if (is_int($projectId)) {
+if ($projectId && is_int($projectId)) {
 	$particle=new particleData;
 	if ($_GET['type'] == 'forward') $templateStackData=$particle->getTemplateStacksFromProject($projectId,True,"forward");
 	elseif ($_GET['type'] == 'clsavg') $templateStackData=$particle->getTemplateStacksFromProject($projectId,True,"clsavg");
 }
-
 
 // first give the option of uploading a new template stack
 echo "<a href='uploadTemplateStack.php?expId=$expId'><P><B>Upload a New Template Stack</B></P></a><br>\n";
