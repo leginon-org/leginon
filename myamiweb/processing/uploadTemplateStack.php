@@ -32,6 +32,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	$expId=$_GET['expId'];
 	$clusterId = $_GET['clusterId'];
 	$alignId = $_GET['alignId'];
+	$refs = $_GET['refs'];
 	$exclude = $_GET['exclude'];
 	$include = $_GET['include'];
 
@@ -63,6 +64,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	echo"<INPUT TYPE='hidden' NAME='projectId' VALUE='$projectId'>\n";
 	if ($clusterId) echo "<INPUT TYPE='hidden' NAME='clusterId' VALUE='$clusterId'>\n";
 	elseif ($alignId) echo "<INPUT TYPE='hidden' NAME='alignId' VALUE='$alignId'>\n";
+	if ($refs) echo "<INPUT TYPE='hidden' NAME='refs' VALUE='$refs'>\n";
 
 	//query the database for parameters
 	$particle = new particledata();
@@ -151,6 +153,7 @@ function runUploadTemplateStack() {
 	$projectId = getProjectId();
 	$clusterId = $_POST['clusterId'];
 	$alignId = $_POST['alignId'];
+	$refs = $_POST['refs'];
 	$exclude = $_POST['exclude'];
 	$include = $_POST['include'];
 	$template_stack = $_POST['template_stack'];
@@ -202,8 +205,10 @@ function runUploadTemplateStack() {
 	elseif ($clusterId || $alignId) {
 		if ($clusterId)
 			$command.="--clusterId=$clusterId ";
-		else
-			$command.="--alignId=$alignId ";
+		else {
+			if ($refs) $command.="--alignId=$alignId --references ";
+			else $command.="--alignId=$alignId ";
+		}
 		$command.="--templatetype=clsavg ";
 		if ($exclude) {
 			$command.="--exclude=$exclude ";
