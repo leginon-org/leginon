@@ -31,6 +31,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
         // check if coming directly from a session
 	$expId=$_GET['expId'];
 	$clusterId = $_GET['clusterId'];
+	$alignId = $_GET['alignId'];
 	$exclude = $_GET['exclude'];
 	$include = $_GET['include'];
 
@@ -61,6 +62,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	
 	echo"<INPUT TYPE='hidden' NAME='projectId' VALUE='$projectId'>\n";
 	if ($clusterId) echo "<INPUT TYPE='hidden' NAME='clusterId' VALUE='$clusterId'>\n";
+	elseif ($alignId) echo "<INPUT TYPE='hidden' NAME='alignId' VALUE='$alignId'>\n";
 
 	//query the database for parameters
 	$particle = new particledata();
@@ -94,7 +96,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	echo "</TD></tr><TR><TD VALIGN='TOP'>";
 
 	//if uploading a new template stack that does not yet exist in the database 
-	if (!$clusterId) {
+	if (!$clusterId && !$alignId) {
 		echo "<br>\n";
 		echo docpop('oldtemplatename', "<b>Template Stack Name with path: </b><br> \n");
 		echo "<INPUT TYPE='text' NAME='template_stack' VALUE='$template_stack' SIZE='55'/>\n";
@@ -102,9 +104,8 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 		echo docpop('apix', "<b>&Aring;ngstroms per pixel </b><br>\n");
 		echo "<INPUT TYPE='text' NAME='apix' VALUE='$apix' SIZE='5'/>\n";
 		echo "<br><br>";			
-	}
-	
-	elseif ($clusterId) {
+	}	
+	elseif ($clusterId || $alignId) {
 		echo "<br>";
 		if ($exclude) {
 			echo docpop('excludeClassum', '<b>Excluded Class Averages: </b><br>');
@@ -119,7 +120,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	}
 	
 	// give option of choosing the type of images if not coming directly from clustering stack
-	if (!$clusterId) {
+	if (!$clusterId && !$alignId) {
 		echo "<INPUT TYPE='radio' NAME='stack_type' VALUE='clsavg'/>";
 		echo docpop('templatetype', '<b> Class Averages </b>');
 		echo "<br/>";
@@ -149,6 +150,7 @@ function runUploadTemplateStack() {
 	$rundir = $_POST['rundir'];
 	$projectId = getProjectId();
 	$clusterId = $_POST['clusterId'];
+	$alignId = $_POST['alignId'];
 	$exclude = $_POST['exclude'];
 	$include = $_POST['include'];
 	$template_stack = $_POST['template_stack'];
@@ -166,22 +168,25 @@ function runUploadTemplateStack() {
 	}
 
 	//make sure a description is provided
-	if (!$description) createUploadTemplateStackForm("<B>ERROR:</B> Enter a brief description of the template");
+	if (!$description) 
+		createUploadTemplateStackForm("<B>ERROR:</B> Enter a brief description of the template");
 
 	//make sure angstroms per pixel is specified, or is retrieved from the database
-	if (!$apix && !$clusterId) createUploadTemplateStackForm("<B>ERROR:</B> Enter a value for angstroms per pixel");
+	if ((!$apix && !$clusterId) && (!$apix && !$alignId)) 
+		createUploadTemplateStackForm("<B>ERROR:</B> Enter a value for angstroms per pixel");
 
-        //make sure template type is specified
-        if (!$stacktype && !$clusterId) createUploadTemplateStackForm("<B>ERROR:</B> Enter the type of stack (i.e. class averages or forward projections)");
+	//make sure template type is specified
+	if ((!$stacktype && !$clusterId) && (!$stacktype && !$alignId)) 
+		createUploadTemplateStackForm("<B>ERROR:</B> Enter the type of stack (i.e. class averages or forward projections)");
 
 	//make sure a session was selected
 	if (!$session) createUploadTemplateStackForm("<B>ERROR:</B> Select an experiment session");
 
 	//check if the template is an existing file 
-	if ($clusterId == False && !file_exists($template_stack)) {
+	if ($clusterId == False && !file_exists($template_stack))
 		$template_warning="File ".$template_stack." does not exist. "; 
-	}
-	elseif (!$clusterId) $template_warning="File ".$template_stack." exists. Make sure that this is the file that you want!";
+
+	elseif (!$clusterId && !$alignId) $template_warning="File ".$template_stack." exists. Make sure that this is the file that you want!";
 	
 
 	// set runname as time
@@ -194,8 +199,11 @@ function runUploadTemplateStack() {
 		$command.="--templatetype=$stacktype ";
 		$command.="--apix=$apix ";
 	}
-	elseif ($clusterId) {
-		$command.="--clusterId=$clusterId ";
+	elseif ($clusterId || $alignId) {
+		if ($clusterId)
+			$command.="--clusterId=$clusterId ";
+		else
+			$command.="--alignId=$alignId ";
 		$command.="--templatetype=clsavg ";
 		if ($exclude) {
 			$command.="--exclude=$exclude ";
@@ -220,7 +228,7 @@ function runUploadTemplateStack() {
 
 		if (!($user && $password)) createUploadTemplateStackForm("<B>ERROR:</B> You must be logged in to submit");
 
-		if (!file_exists($template_stack) && $clusterId == False) {
+		if (!file_exists($template_stack) && $clusterId == False && $alignId == False) {
         		createUploadTemplateStackForm("File ".$template_stack." does not exist. ");
 		 }
 
