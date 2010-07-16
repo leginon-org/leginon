@@ -685,6 +685,7 @@ class ApMultiRefAlignRunData(Data):
 			('center', bool),
 			('alignment_type', str),
 			('first_alignment', str),
+			('num_orientations', int),
 			('max_shift_orig', float),
 			('max_shift_this', float),
 			('samp_param', float),
