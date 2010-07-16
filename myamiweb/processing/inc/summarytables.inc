@@ -334,7 +334,7 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	$refstack = $stackdata['path']."/".$stackdata['refstackfile'];
 	if ($stackdata['refstackfile'] && file_exists($refstack))
 		$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
-			."file=$refstack&expId=$expId&ps=$mpix&alignId=$alignstackid'>".$stackdata['refstackfile']."</a>\n";
+			."file=$refstack&expId=$expId&ps=$mpix&alignId=$alignstackid&refs=1'>".$stackdata['refstackfile']."</a>\n";
 	// if toplogy run, show links to last node file
 	if ($stackdata['REF|ApTopolRepRunData|topreprun']) {
 		$nodefiles = glob($stackdata['path']."/classes*.hed");
