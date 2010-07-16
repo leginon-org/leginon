@@ -140,7 +140,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.tiltnumber = i
 
 			## only make new targets if tilt is different than tilt0
-			if abs(tilt - tilt0) < 0.5:
+			if degrees(abs(tilt - tilt0)) < 0.5:
 				tiltedtargetlist = tilt0targetlist
 			else:
 				tiltedtargetlist = self.tiltTargets(tilt0, tilt, tilt0targetlist)
