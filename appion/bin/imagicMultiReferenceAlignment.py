@@ -421,7 +421,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		alignstackq = appiondata.ApAlignStackData()
 		alignstackq['imagicfile'] = "alignstack.hed"
 		alignstackq['avgmrcfile'] = "average.mrc"
-		alignstackq['refstackfile'] = os.path.join(self.params['rundir'], "references.hed") 
+		alignstackq['refstackfile'] = "references.hed"
 		alignstackq['iteration'] = self.params['numiter']
 		alignstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		alignstackq['alignrun'] = alignrunq	
