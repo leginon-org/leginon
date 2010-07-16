@@ -304,12 +304,20 @@ function createSubStack() {
 
 function createTemplateStackExcluded() {
 	var index = $('excludedIndex').value
-	window.open("uploadTemplateStack.php?expId="+expId+"&clusterId="+clusterId+"&exclude="+index+"",'height=250,width=400');
+	if (clusterId!="") {
+		window.open("uploadTemplateStack.php?expId="+expId+"&clusterId="+clusterId+"&exclude="+index+"",'height=250,width=400');
+	} else if (alignId!="") {
+		window.open("uploadTemplateStack.php?expId="+expId+"&alignId="+alignId+"&exclude="+index+"",'height=250,width=400');
+	}
 }
 
 function createTemplateStackIncluded() {
 	var index = $('selectedIndex').value
-	window.open("uploadTemplateStack.php?expId="+expId+"&clusterId="+clusterId+"&include="+index+"",'height=250,width=400');
+	if (clusterId!="") {
+		window.open("uploadTemplateStack.php?expId="+expId+"&clusterId="+clusterId+"&include="+index+"",'height=250,width=400');
+	} else if (alignId!="") {
+		window.open("uploadTemplateStack.php?expId="+expId+"&alignId="+alignId+"&include="+index+"",'height=250,width=400');
+	}
 }
 
 function viewSubstack() {
