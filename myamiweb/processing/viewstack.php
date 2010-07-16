@@ -377,12 +377,12 @@ if ($junksort)
 	$includebuttons .= "<input type='button' value='Apply junk cutoff' onClick='applyJunkCutoff()'>\n";
 if ($stackId || $clusterId || $alignId)
 	$includebuttons .= "<input type='button' value='Create Templates' onClick='uploadTemplate();' id='uploadbutton' >\n";
-if ($clusterId) {
+if ($clusterId || $alignId) {
 	$includebuttons .= "<input type='button' value='Create Template Stack' onClick='createTemplateStackIncluded()'>\n";
 	$includebuttons .= "<input type='button' value='Run Common Lines' onClick='runCommonLines()'>\n";
 }
-if ($clusterId || $templateStackId)
-	$includebuttons .= "<input type='button' value='Run Imagic 3d0' onClick='create3d0();' id='3d0button'>\n";
+//if ($clusterId || $templateStackId)
+//	$includebuttons .= "<input type='button' value='Run Imagic 3d0' onClick='create3d0();' id='3d0button'>\n";
 //END buttons for inclusion
 
 
