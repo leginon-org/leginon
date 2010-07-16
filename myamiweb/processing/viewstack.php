@@ -18,6 +18,7 @@ $expId =$_GET['expId'];
 $clusterId=$_GET['clusterId'];
 $templateStackId=$_GET['templateStackId'];
 $alignId=$_GET['alignId'];
+$refs=$_GET['refs'];
 $stackId=$_GET['stackId'];
 $substack=$_GET['substack'];
 $refineIter=$_GET['refineIter'];
@@ -172,6 +173,7 @@ var stackId="<?=$stackId?>"
 var clusterId="<?=$clusterId?>"
 var templateStackId="<?=$templateStackId?>"
 var alignId="<?=$alignId?>"
+var refs="<?=$refs?>"
 
 <?php
 if ($alignId || $clusterId) {
@@ -306,7 +308,9 @@ function createTemplateStackExcluded() {
 	var index = $('excludedIndex').value
 	if (clusterId!="") {
 		window.open("uploadTemplateStack.php?expId="+expId+"&clusterId="+clusterId+"&exclude="+index+"",'height=250,width=400');
-	} else if (alignId!="") {
+	} else if ((alignId!="") && (refs==1)) {
+		window.open("uploadTemplateStack.php?expId="+expId+"&alignId="+alignId+"&refs=1"+"&exclude="+index+"",'height=250,width=400');
+	} else if ((alignId!="") && (refs!=1)) {
 		window.open("uploadTemplateStack.php?expId="+expId+"&alignId="+alignId+"&exclude="+index+"",'height=250,width=400');
 	}
 }
@@ -315,7 +319,9 @@ function createTemplateStackIncluded() {
 	var index = $('selectedIndex').value
 	if (clusterId!="") {
 		window.open("uploadTemplateStack.php?expId="+expId+"&clusterId="+clusterId+"&include="+index+"",'height=250,width=400');
-	} else if (alignId!="") {
+	} else if ((alignId!="") && (refs==1)) {
+		window.open("uploadTemplateStack.php?expId="+expId+"&alignId="+alignId+"&refs=1"+"&include="+index+"",'height=250,width=400');
+	} else if ((alignId!="") && (refs!=1)) {
 		window.open("uploadTemplateStack.php?expId="+expId+"&alignId="+alignId+"&include="+index+"",'height=250,width=400');
 	}
 }
