@@ -690,6 +690,9 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) {
 		$outdir.='/';
 	$rundir = $outdir.$runname;
 
+	// add space to end, if necessary
+	if (substr($command,-1,1)!=' ')
+		$command.=' ';
 	// in the future maybe remove if statements
 	if (!preg_match("/--rundir=/", $command))
 		$command .= "--rundir=$rundir ";
