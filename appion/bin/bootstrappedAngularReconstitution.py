@@ -838,7 +838,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		apDisplay.printMsg("running Affinity Propagation on aligned 3-D models")
 
 		### run Affinity Propagation
-		apclusterexe = os.path.join(apParam.getAppionDirectory(), "bin/apcluster.exe")
+		apclusterexe = "apcluster.exe"
 		outfile = os.path.join(self.params['rundir'], "cluster_affiliation.dat")
 		apFile.removeFile(outfile)
 		clustercmd = apclusterexe+" "+simfile+" "+preffile+" "+outfile
