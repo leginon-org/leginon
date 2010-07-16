@@ -45,7 +45,11 @@ class uploadTemplateScript(appionScript.AppionScript):
 
 		### if modifying a previous stack
 		self.parser.add_option("--clusterId", dest="clusterId", type="int",
-			help="ID for particle clustering (optional)", metavar="INT")
+			help="ID from particle clustering (optional)", metavar="INT")
+		self.parser.add_option("--alignId", dest="alignId", type="int",
+			help="ID from particle alignment, (optional, e.g. maximum-likelihood references)", metavar="INT")
+		self.parser.add_option("--references", dest="references", default=False,
+			action="store_true", help="specify if the included/excluded images are references from the alignment run, NOT the actual raw particles")
 		self.parser.add_option("-k", "--keep-file", dest="keepfile",
 			help="File listing which particles to keep, EMAN style 0,1,...", metavar="FILE")
 		self.parser.add_option("--first", dest="first", type="int",
@@ -63,8 +67,8 @@ class uploadTemplateScript(appionScript.AppionScript):
 		### make sure the necessary parameters are set
 		if self.params['description'] is None:
 			apDisplay.printError("enter a template description")
-		if self.params['templatestack'] is None and self.params['clusterId'] is None:
-			apDisplay.printError("enter a template stack file or a clusterId")
+		if self.params['templatestack'] is None and self.params['clusterId'] is None and self.params['alignId'] is None:
+			apDisplay.printError("enter a template stack file or a clusterId or an alignId")
 		if self.params['templatetype'] is None and self.params['templatetype'] is not "clsavg" and self.params['templatetype'] is not "forward_proj":
 			apDisplay.printError("enter the template type (i.e. class averages / forward projections)")
 		if self.params['runname'] is None:
@@ -75,11 +79,15 @@ class uploadTemplateScript(appionScript.AppionScript):
 			self.params['runname'] = "templatestack"+str(new_num)+"_"+str(self.params['session'])
 
 		### get apix value
-		if (self.params['apix'] is None and self.params['clusterId'] is None):
+		if (self.params['apix'] is None and self.params['clusterId'] is None and self.params['alignId'] is None):
 			apDisplay.printError("Enter value for angstroms per pixel")
-		elif (self.params['apix'] is None and self.params['clusterId'] is not None):
-			clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
-			self.params['apix'] = clusterdata['clusterrun']['pixelsize']
+		elif (self.params['apix'] is None and self.params['clusterId'] is not None and self.params['alignId'] is not None):
+			if self.params['clusterId'] is not None:
+				clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
+				self.params['apix'] = clusterdata['clusterrun']['pixelsize']
+			else:
+				aligndata = appiondata.ApAlignStackData.direct_query(self.params['alignId'])
+				self.params['apix'] = aligndata['pixelsize']
 		print self.params['apix']
 
 		### get boxsize if not specified
@@ -95,9 +103,13 @@ class uploadTemplateScript(appionScript.AppionScript):
 					num2 = int(res.groups()[1])
 					if num1 == num2:
 						self.params['boxsize'] = num1
-		elif self.params['boxsize'] is None and self.params['clusterId'] is not None:
-			clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
-			self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
+		elif self.params['boxsize'] is None and self.params['clusterId'] is not None and self.params['alignId'] is not None:
+			if self.params['clusterId'] is not None:
+				clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
+				self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
+			else:
+				aligndata = appiondata.ApAlignStackData.direct_query(self.params['alignId'])
+				self.params['boxsize'] = aligndata['boxsize']
 
 		### check for session
 		if self.params['session'] is None:
@@ -105,15 +117,20 @@ class uploadTemplateScript(appionScript.AppionScript):
 				clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 				stackid = clusterdata['clusterrun']['alignstack']['stack'].dbid
 				sessiondata = apStack.getSessionDataFromStackId(stackid)
-				self.params['session'] = sessiondata['name']
-		if self.params['session'] is None:
-			apDisplay.printError("Could not find session")
+				self.params['session'] = sessiondata['name']	
+			elif self.params['alignId'] is not None:
+				aligndata = appiondata.ApAlignStackData.direct_query(self.params['alignId'])
+				stackid = aligndata['stack'].dbid	
+				sessiondata = apStack.getSessionDataFromStackId(stackid)
+				self.params['session'] = sessiondata['name']		
+			else:
+				apDisplay.printError("Could not find session")
 
 		if self.params['templatestack'] is not None:
 			self.params['templatestack'] = os.path.abspath(self.params['templatestack'])
 
 		### exclusions and inclusions, if modifying previous stack
-		if self.params['clusterId'] is not None:
+		if self.params['clusterId'] is not None or self.params['alignId'] is not None:
 			if self.params['first'] is None and self.params['last'] is None:
 				if self.params['keepfile'] is None and self.params['exclude'] is None and self.params['include'] is None:
 					apDisplay.printError("Please define either keepfile, exclude or include")
@@ -179,7 +196,13 @@ class uploadTemplateScript(appionScript.AppionScript):
 
 
 		newclusterstack = os.path.join(self.params['rundir'], str(self.params['runname'])+".img")
-		oldclusterstack = os.path.join(self.clusterdata['path']['path'], self.clusterdata['avg_imagicfile'])
+		if self.params['clusterId'] is not None:
+			oldclusterstack = os.path.join(self.clusterdata['path']['path'], self.clusterdata['avg_imagicfile'])
+		elif self.params['alignId'] is not None:
+			if self.params['references'] is True:
+				oldclusterstack = os.path.join(self.aligndata['path']['path'], self.aligndata['refstackfile'])
+			else:
+				oldclusterstack = os.path.join(self.aligndata['path']['path'], self.aligndata['imagicfile'])
 
 		#if include or exclude list is given...
 		if self.params['include'] is not None or self.params['exclude'] is not None:
@@ -209,12 +232,24 @@ class uploadTemplateScript(appionScript.AppionScript):
 
 			#get number of particles
 			numparticles = len(includeParticle)
-			if excludelist:
+			if (excludelist and self.params['clusterId'] is not None):
 				self.params['description'] += ( " ... %d particle subcluster of clusterid %d"
 				% (numparticles, self.params['clusterId']))
-			elif includelist:
+			elif (excludelist and self.params['alignId'] is not None):
+				self.params['description'] += ( " ... %d particle subcluster of references for alignid %d"
+				% (numparticles, self.params['alignId']))
+			elif (excludelist and self.params['alignId'] is not None and self.params['references'] is True):
+				self.params['description'] += ( " ... %d particle subcluster of raw particles for alignid %d"
+				% (numparticles, self.params['alignId']))
+			elif (includelist and self.params['clusterId'] is not None):
 				self.params['description'] += ( " ... %d particle subcluster of clusterid %d"
 				% (numparticles, self.params['clusterId']))
+			elif (includelist and self.params['alignId'] is not None):
+				self.params['description'] += ( " ... %d particle subcluster of references for alignid %d"
+				% (numparticles, self.params['alignId']))				
+			elif (includelist and self.params['alignId'] is not None and self.params['references'] is True):
+				self.params['description'] += ( " ... %d particle subcluster of raw particles for alignid %d"
+				% (numparticles, self.params['alignId']))
 
 		ogdescr = self.params['description']
 #		for i in range(self.params['split']):
@@ -261,6 +296,8 @@ class uploadTemplateScript(appionScript.AppionScript):
 		uploadq['REF|projectdata|projects|project'] = self.params['projectid']
 		if self.params['clusterId'] is not None:
 			uploadq['clusterstack'] = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
+		elif self.params['alignId'] is not None:
+			uploadq['alignstack'] = appiondata.ApAlignStackData.direct_query(self.params['alignId'])
 		elif self.params['templatestack'] is not None:
 			uploadq['origfile'] = self.params['templatestack']+".hed"
 		uploadq['templatename'] = self.params['runname']+".hed"
@@ -282,6 +319,9 @@ class uploadTemplateScript(appionScript.AppionScript):
 		print self.params
 		if self.params['clusterId'] is not None:
 			self.clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
+			self.useClusterForTemplateStack()
+		elif self.params['alignId'] is not None:
+			self.aligndata = appiondata.ApAlignStackData.direct_query(self.params['alignId'])
 			self.useClusterForTemplateStack()
 		else:
 			apDisplay.printMsg("Using local file: '"+str(self.params['templatestack'])+"' to upload template")
