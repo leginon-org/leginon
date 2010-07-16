@@ -63,12 +63,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			action="store_false", help="DO NOT use mirrors in alignment to capture different particle orientations")
 		self.parser.add_option("--center", dest="center", default=False,
 			action="store_true", help="center particles with respect to the total sum prior to multi-reference alignment")
-		self.parser.add_option("--alignment_type", dest="alignment_type", type="str", default="ALL",
-			help="you can specify what kind of alignment to do. Currently the options are 'all', 'rotational', \
-				'translational', 'horizontal', or 'vertical'. If 'all' is specified, you also need to note which alignment \
-				(rotational or translational) to perform first", metavar="STR")
-		self.parser.add_option("--first_alignment", dest="first_alignment", type="str", default="rotation_first",
-			help="which alignment routine is performed first? specify 'rotation_first' or 'translation_first'", metavar="STR")
+		self.parser.add_option("--num_orientations", dest="num_orientations", type="int", default="17",
+			help="number of different rotation directions desired", metavar="INT")
 		self.parser.add_option("--max_shift_orig", dest="max_shift_orig", type="float", default="0.2",
 			help="maximum radial shift during MRA", metavar="float")
 #		self.parser.add_option("--max_shift_this", dest="max_shift_this", type="float",
@@ -81,6 +77,17 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			help="maximum inner radius of the image to be included in rotational alignment", metavar="float")
 		self.parser.add_option("--numiter", dest="numiter", type="int", default="5",
 			help="number of alignment iterations to perform", metavar="int")
+
+		### choices
+		self.aligntypes = ('rotational', 'translational', 'horizontal', 'vertical', 'all', 'brute_force')
+		self.parser.add_option("--alignment_type", dest="alignment_type", type="choice", choices=self.aligntypes, default="all",
+			help="you can specify what kind of alignment to do. Currently the options are 'all', 'rotational', \
+				'translational', 'horizontal', 'vertical', or 'brute_force'. If 'all' is specified, you also need to note which \
+				alignment (rotational or translational) to perform first", metavar="CHOICE")	
+		self.first_alignment = ('rotation_first', 'translation_first')	
+		self.parser.add_option("--first_alignment", dest="first_alignment", type="choice", choices=self.first_alignment, 
+			default="rotation_first", help="which alignment routine is performed first? \
+				specify 'rotation_first' or 'translation_first'", metavar="CHOICE")
 
 		self.parser.add_option("--nproc", dest="nproc", type="int", default="8",
 			help="number of processors to use", metavar="int")
@@ -176,7 +183,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		if self.params['center'] is True:
 			if self.params['nproc'] > 1:
 				f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
-					" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/alimass.e_mpi <<EOF")
+					" -x IMAGIC_BATCH "+str(self.imagicroot)+"/align/alimass.e_mpi <<EOF")
 				if append_log is True:
 					f.write(" >> multiReferenceAlignment.log\n")
 				else:
@@ -207,7 +214,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		### multi-reference alignment		
 		if self.params['nproc'] > 1:
 			f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
-				" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/mralign.e_mpi <<EOF")
+				" -x IMAGIC_BATCH "+str(self.imagicroot)+"/align/mralign.e_mpi <<EOF")
 			if append_log is True:
 				f.write(" >> multiReferenceAlignment.log\n")
 			else:
@@ -223,10 +230,13 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("NO\n")
 			
 		f.write("FRESH\n")
+		f.write("ALL_REFERENCES\n")
 		f.write("ALIGNMENT\n")
 		f.write("%s\n" % (self.params['alignment_type']))
 		if self.params['alignment_type'].lower() == "all":
 			f.write("%s\n" % (self.params['first_alignment']))
+		if self.params['alignment_type'].lower() == "brute_force":
+			f.write("%d\n" % (self.params['num_orientations']))
 		f.write("CCF\n")
 		f.write("start\n")
 		f.write("alignstack\n")
@@ -250,10 +260,12 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		
 		### write out alignment parameters to file
 		f.write(str(self.imagicroot)+"/stand/headers.e <<EOF >> multiReferenceAlignment.log\n")
-		f.write("alignstack\n")
 		f.write("PLT\n")
 		f.write("INDEX\n")
+		f.write("NUMBER_OF_INDEX\n")
 		f.write("100;112;113;104;107\n") ### rotation, shiftx, shifty, ccc, reference num
+#		f.write("NO\n")
+		f.write("alignstack\n")
 		f.write("outparams.plt\n")
 		f.write("EOF\n")
 
@@ -388,6 +400,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		MRAq['alignment_type'] = self.params['alignment_type']
 		if self.params['alignment_type'].lower() == "all":
 			MRAq['first_alignment'] = self.params['first_alignment']
+		if self.params['alignment_type'].lower() == "brute_force":
+			MRAq['num_orientations'] = self.params['num_orientations']
 		MRAq['max_shift_orig'] = self.params['max_shift_orig']
 #		MRAq['max_shift_this'] = self.params['max_shift_this']
 		MRAq['samp_param'] = self.params['samp_param']
