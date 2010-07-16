@@ -131,6 +131,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		## parent image and tilt of parent image
 		image0 = tilt0targetlist['image']
 		tilt0 = image0['scope']['stage position']['a']
+		self.logger.info('image0 tilt = %s degrees' % (degrees(tilt0),))
 
 		## loop through each tilt
 		focused = False
@@ -140,15 +141,12 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.tiltnumber = i
 
 			## only make new targets if tilt is different than tilt0
-			if degrees(abs(tilt - tilt0)) < 0.5:
-				tiltedtargetlist = tilt0targetlist
-			else:
-				tiltedtargetlist = self.tiltTargets(tilt0, tilt, tilt0targetlist)
+			tiltedtargetlist = self.tiltTargets(tilt0, tilt, tilt0targetlist)
 			if tiltedtargetlist is None:
 				self.reportTargetListDone(tilt0targetlist, 'failure')
 				return
 
-			self.logger.info('doing tilt %d = %s degrees' % (i, degrees(tilt),))
+			self.logger.info('doing tilt %d = %s degrees' % (i+1, degrees(tilt),))
 			self.instrument.tem.StagePosition = {'a': tilt}
 
 			## drift check
@@ -237,6 +235,7 @@ class RCTAcquisition(acquisition.Acquisition):
 
 	#====================
 	def tiltTargets(self, tilt0, tilt, tilt0targetlist):
+		self.logger.info('Running tiltTargets')
 		# find matrix
 		image0 = tilt0targetlist['image']
 		tilt0targets = self.researchTargets(list=tilt0targetlist, status='new')
@@ -264,6 +263,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		#import pprint
 		#print "SETTINGS:"
 		#pprint.pprint(self.settings)
+		self.logger.info('Running trackStage')
 
 		self.logger.info('Returning to state of image0')
 		presetname = image0['preset']['name']
