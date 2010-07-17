@@ -97,8 +97,10 @@ if (!$qtypes) {
 		} else {
 			$avgtime = "unknown";
 		}
-		$estminute= (int)($esttime / 60);
-		$estsecond= (int)($esttime - $estminute * 60);
+		$estday = (int) floor($esttime / 86400);
+		$esthour = (int) floor(($esttime%86400) / 3600);
+		$estminute = (int) floor(($esttime%3600) / 60);
+		$estsecond = (int) floor($esttime%60);
 
 	?>
 	<td>
@@ -106,7 +108,15 @@ if (!$qtypes) {
 	<p> total acquisition targets in queue= <? echo $totalNew ?> </p>
 	<p> <h4> unprocessed queue= <? echo $totalActive  ?></h4></p>
 	<p> avg time so far = <? echo (int)($avgtime) ?> s</p>
-	<p> <h4> estimated time for the remaining targets  = <? echo $estminute ?> min <? echo $estsecond ?> s <h4></p>
+	<p> <h4> estimated time for the remaining targets  = 
+	<? 
+	if ($estday > 0)
+		echo "$estday days, $esthour hours\n";
+	elseif ($esthour > 0)
+		echo "$esthour hours, $estminute minutes\n";
+	else
+		echo "$estminute minutes, $estsecond seconds\n";
+	?> <h4></p>
 	</td>
 	</tr><tr>
 <?
