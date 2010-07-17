@@ -81,14 +81,13 @@ class uploadTemplateScript(appionScript.AppionScript):
 		### get apix value
 		if (self.params['apix'] is None and self.params['clusterId'] is None and self.params['alignId'] is None):
 			apDisplay.printError("Enter value for angstroms per pixel")
-		elif (self.params['apix'] is None and self.params['clusterId'] is not None and self.params['alignId'] is not None):
+		elif (self.params['apix'] is None and self.params['clusterId'] is not None or self.params['alignId'] is not None):
 			if self.params['clusterId'] is not None:
 				clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 				self.params['apix'] = clusterdata['clusterrun']['pixelsize']
 			else:
 				aligndata = appiondata.ApAlignStackData.direct_query(self.params['alignId'])
 				self.params['apix'] = aligndata['pixelsize']
-		print self.params['apix']
 
 		### get boxsize if not specified
 		if self.params['boxsize'] is None and self.params['templatestack'] is not None:
@@ -103,7 +102,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 					num2 = int(res.groups()[1])
 					if num1 == num2:
 						self.params['boxsize'] = num1
-		elif self.params['boxsize'] is None and self.params['clusterId'] is not None and self.params['alignId'] is not None:
+		elif self.params['boxsize'] is None and self.params['clusterId'] is not None or self.params['alignId'] is not None:
 			if self.params['clusterId'] is not None:
 				clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 				self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
