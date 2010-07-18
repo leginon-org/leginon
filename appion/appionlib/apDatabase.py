@@ -445,20 +445,21 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 		print "skipping set viewer status"
 		return
 
-	status = getImgViewerStatus(imgdata)
+	currentstatus = getImgViewerStatus(imgdata)
 
-	if status is None:
+	if currentstatus is None:
 		#insert new
 		statusq = leginon.leginondata.ViewerImageStatus()
 		statusq['image'] = imgdata
+		statusq['status'] = statusVal
 		statusq.insert()
-	elif result['status'] != statusVal:
+	elif currentstatus != status:
 		#update column
 		dbconf=sinedon.getConfig('leginondata')
 		db=sinedon.sqldb.sqlDB(**dbconf)
 		q= ( "UPDATE "+dbconf['db']+".`ViewerImageStatus` "
 			+"SET status = '"+statusVal
-			+ ("' WHERE `REF|AcquisitionImageData|image=%d" % (imageId,)))
+			+ ("' WHERE `REF|AcquisitionImageData|image`=%d" % (imgdata.dbid,)))
 		db.execute(q)
 
 	#check assessment
