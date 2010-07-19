@@ -155,7 +155,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			sibling, shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params['sessionname'])
 			if shiftpeak is None:
 				return []
-			shiftdata = {'shiftx':peakdata['shift'][0], 'shifty':peakdata['shift'][1], 'scale':peakdata['scalefactor']}
+			shiftdata = {'shiftx':shiftpeak['shift'][0], 'shifty':shiftpeak['shift'][1], 'scale':shiftpeak['scalefactor']}
 			searchimgdata = sibling
 		else:
 			searchimgdata = imgdata
@@ -185,8 +185,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### get the particle before image filtering
 		if self.params['defocpair'] is True and self.params['selectionid'] is not None:
 			# using defocal pairs and particle picks
-			partdatas, peakdata = apParticle.getDefocPairParticles(imgdata, self.params['selectionid'], self.params['particlelabel'])
-			shiftdata = {'shiftx':peakdata['shift'][0], 'shifty':peakdata['shift'][1], 'scale':peakdata['scalefactor']}
+			partdatas, shiftpeak = apParticle.getDefocPairParticles(imgdata, self.params['selectionid'], self.params['particlelabel'])
+			shiftdata = {'shiftx':shiftpeak['shift'][0], 'shifty':shiftpeak['shift'][1], 'scale':shiftpeak['scalefactor']}
 		elif self.params['fromstackid'] is not None:
 			# using previous stack to make a new stack
 			partdatas, shiftdata = self.getParticlesFromStack(imgdata)
@@ -339,7 +339,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		boxfile=open(emanboxfile, 'w')
 		for i in range(len(partdatas)):
 			partdata = partdatas[i]
-			print shiftdata
 			xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
 			ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))
 
