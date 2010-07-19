@@ -1,9 +1,11 @@
 #Defocus pair functions
 
+import sys
 import numpy
 #pyami
 import pyami.peakfinder as peakfinder
 import pyami.correlator as correlator
+from pyami import mrc
 #leginon
 import leginon.leginondata
 #appion
@@ -72,30 +74,44 @@ def getShift(imgdata1 ,imgdata2):
 	dimension2 = imgdata2['camera']['dimension']['x']
 	binning2   = imgdata2['camera']['binning']['x']
 	finalsize=512
+
 	#test to make sure images are at same mag
 	if imgdata1['scope']['magnification'] != imgdata2['scope']['magnification']:
 		apDisplay.printWarning("Defocus pairs are at different magnifications, so shift can't be calculated.")
-		peak=None
+		return None
+
 	#test to see if images capture the same area
-	elif (dimension1 * binning1) != (dimension2 * binning2):
+	if (dimension1 * binning1) != (dimension2 * binning2):
 		apDisplay.printWarning("Defocus pairs do not capture the same imaging area, so shift can't be calculated.")
-		peak=None
+		return None
+
 	#images must not be less than finalsize (currently 512) pixels. This is arbitrary but for good reason
-	elif dimension1 < finalsize or dimension2 < finalsize:
+	if dimension1 < finalsize or dimension2 < finalsize:
 		apDisplay.printWarning("Images must be greater than "+finalsize+" pixels to calculate shift.")
-		peak=None
-	else:
-		shrinkfactor1=dimension1/finalsize
-		shrinkfactor2=dimension2/finalsize
-		binned1 = apImage.binImg(imgdata1['image'], shrinkfactor1)
-		binned2 = apImage.binImg(imgdata2['image'], shrinkfactor2)
-		pc=correlator.phase_correlate(binned1,binned2,zero=True)
-		#apImage.arrayToMrc(pc,imgdata1['filename']+'.corr.mrc')
-		peak = peakfinder.findSubpixelPeak(pc, lpf=1.5) # this is a temp fix.
-		subpixpeak = peak['subpixel peak']
-		shift=correlator.wrap_coord(subpixpeak,pc.shape)
-		peak['scalefactor']=dimension2/float(dimension1)
-		peak['shift']= numpy.array((shift[0]*shrinkfactor1, shift[1]*shrinkfactor1))
+		return None
+
+	shrinkfactor1=dimension1/finalsize
+	shrinkfactor2=dimension2/finalsize
+	binned1 = apImage.binImg(imgdata1['image'], shrinkfactor1)
+	binned2 = apImage.binImg(imgdata2['image'], shrinkfactor2)
+
+	### fix for non-square images, correlation fails on non-square images
+	mindim = min(binned1.shape)
+	binned1 = binned1[:mindim,:mindim]
+	binned2 = binned2[:mindim,:mindim]
+
+	pc=correlator.cross_correlate(binned1,binned2)
+
+	peak = peakfinder.findSubpixelPeak(pc, lpf=0.0)
+	subpixpeak = peak['subpixel peak']
+	shift=correlator.wrap_coord(subpixpeak, pc.shape)
+	peak['scalefactor'] = dimension2/float(dimension1)
+	#print shift[0]*shrinkfactor1, shift[1]*shrinkfactor1
+	xshift = int(round(shift[0]*shrinkfactor1))
+	yshift = int(round(shift[1]*shrinkfactor1))
+	peak['shift'] = numpy.array((xshift, yshift))
+	#print peak['shift']
+	#sys.exit(1)
 	return peak
 
 ##===================
