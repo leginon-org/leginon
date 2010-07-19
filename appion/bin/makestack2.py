@@ -155,10 +155,11 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			sibling, shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params['sessionname'])
 			if shiftpeak is None:
 				return []
+			shiftdata = {'shiftx':peakdata['shift'][0], 'shifty':peakdata['shift'][1], 'scale':peakdata['scalefactor']}
 			searchimgdata = sibling
 		else:
 			searchimgdata = imgdata
-			shiftpeak = {'shiftx':0, 'shifty':0, 'scale':1}
+			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}
 
 		partq = appiondata.ApParticleData()
 		partq['image'] = searchimgdata
@@ -174,7 +175,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			partdata = stackpartdata['particle']
 			partdatas.append(partdata)
 		partdatas.reverse()
-		return partdatas, shiftpeak
+		return partdatas, shiftdata
 
 	#=======================
 	def boxParticlesFromImage(self, imgdata):
@@ -338,6 +339,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		boxfile=open(emanboxfile, 'w')
 		for i in range(len(partdatas)):
 			partdata = partdatas[i]
+			print shiftdata
 			xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
 			ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))
 
