@@ -240,6 +240,7 @@ class ApTemplateStackData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('clusterstack', ApClusteringStackData),
+			('alignstack', ApAlignStackData),
 			('templatename', str),
 			('cls_avgs', bool),
 			('forward_proj', bool),
