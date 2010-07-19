@@ -46,7 +46,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	$alignrunsarray = $particle->getAlignStackIds($sessionId);
 	$alignruns = ($alignrunsarray) ? count($alignrunsarray) : 0;
 	$firststack = $particle->getStackParams($stackIds[0]['stackid']);
-	$initparts = $particle->getNumStackParticles($stackIds[0]['stackid']);
+//	$initparts = $particle->getNumStackParticles($stackIds[0]['stackid']);
 	
 	$javascript .= "<script type='text/javascript'>
 	function checkalignment() {
@@ -78,6 +78,12 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 		}
 	}
 
+	function switch_defaults(stackval) {
+		var stackArray = stackval.split('|--|');
+		stackArray[3] = stackArray[3].replace(/\,/g,'');
+		document.viewerform.numpart.value = stackArray[3];
+	}
+
 	</script>\n";
 	
 	$javascript .= writeJavaPopupFunctions('appion');
@@ -107,7 +113,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	$stackidval=$stackinfo[0];
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// alignment params
-	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $initparts;
+	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : "";
 	$iters = ($_POST['iters']) ? $_POST['iters'] : 5;
 	if ($iters > 5) $iters = 5; // maximum number allowed by imagic
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : 10;
@@ -165,7 +171,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	else {
 		echo docpop('stack', "<B>Particles:</B>");
 		echo "<br/>";
-		$particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
+		$particle->getStackSelector($stackIds,$stackidval,'switch_defaults(this.value)');
 	}
 	echo "<br><br>\n";
 	// select template stack
@@ -305,6 +311,11 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	</table>
 	</FORM>
 	</CENTER>\n";
+
+	// first time loading page, set defaults:
+	if (!$_POST['process']) {
+		echo "<script>switch_defaults(document.viewerform.stackval.options[0].value);</script>\n";
+	}
 
 	processing_footer();
 	exit;
