@@ -436,7 +436,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<b>Defocal pairs:</b>\n";
 	echo "<br/>\n";
 	echo "<input type='checkbox' name='defocpair' $defocpair>\n";
-	echo docpop('stackdfpair','Calculate shifts for defocal pairs');
+	echo docpop('stackdfpair','Use defocal pairs');
 	echo "<br/>\n";
 	echo "<br/>\n";
 
