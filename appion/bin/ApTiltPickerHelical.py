@@ -515,7 +515,7 @@ class PickerApp(wx.App):
 		if self.helicalstep is None:
 			helicaldialog = HelicalStepDialog(self)
 			helicaldialog.ShowModal()
-		helicaldialog.Destroy()
+			helicaldialog.Destroy()
 
 		helicalstep  = self.helicalstep
 		first = array[-2]
