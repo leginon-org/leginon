@@ -318,8 +318,8 @@ if (is_numeric($expId)) {
 		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$srun running</a>";
 		$sresults[] = ($sq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$sq queued</a>";
 
-		$totresult = ($totstack==0) ? "" :
-			"<a href='stackhierarchy.php?expId=$sessionId'>$totstack</a>";
+		$totresult = ($stackruns==0) ? "" :
+			"<a href='stackhierarchy.php?expId=$sessionId'>$stackruns</a>";
 
 		$nruns=array();
 		$nruns[] = array(
