@@ -69,15 +69,16 @@ class autoTilt(object):
 		na1 = numpy.array(self.currentpicks1, dtype=numpy.int32)
 		na2 = numpy.array(self.currentpicks2, dtype=numpy.int32)
 		fittheta = radermacher.tiltang(na1, na2)
-		if fittheta and 'wtheta' in fittheta:
-			theta = fittheta['wtheta']
-			thetadev = fittheta['wthetadev']
-			if msg is True:
-				thetastr = ("%3.3f +/- %2.2f" % (theta, thetadev))
-				tristr = apDisplay.orderOfMag(fittheta['numtri'])+" of "+apDisplay.orderOfMag(fittheta['tottri'])
-				tristr = (" (%3.1f " % (100.0 * fittheta['numtri'] / float(fittheta['tottri'])))+"%) "
-				apDisplay.printMsg("Tilt angle "+thetastr+tristr)
-			self.data['theta'] = fittheta['wtheta']
+		if not fittheta or not 'wtheta' in fittheta:
+			return
+		theta = fittheta['wtheta']
+		thetadev = fittheta['wthetadev']
+		if msg is True:
+			thetastr = ("%3.3f +/- %2.2f" % (theta, thetadev))
+			tristr = apDisplay.orderOfMag(fittheta['numtri'])+" of "+apDisplay.orderOfMag(fittheta['tottri'])
+			tristr = (" (%3.1f " % (100.0 * fittheta['numtri'] / float(fittheta['tottri'])))+"%) "
+			apDisplay.printMsg("Tilt angle "+thetastr+tristr)
+		self.data['theta'] = fittheta['wtheta']
 		### run optimize angles
 		lastiter = [80,80,80]
 		count = 0

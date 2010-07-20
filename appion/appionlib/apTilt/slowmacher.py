@@ -67,7 +67,7 @@ def tiltang(picks1, picks2, arealim=1000.0, maxtri=10000, speed=30.0):
 
 	if datadict['numtri'] < 1:
 		apDisplay.printWarning("No triangles could be made from the picks")
-		return datadict
+		return None
 
 	#time stats
 	#print choo
