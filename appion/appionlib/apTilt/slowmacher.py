@@ -14,7 +14,7 @@ def getArea(i, j, k):
 	return float(area)
 
 
-def tiltang(picks1, picks2, arealim=5000.0, maxtri=10000, speed=30.0):
+def tiltang(picks1, picks2, arealim=1000.0, maxtri=10000, speed=30.0):
 	leng = picks1.shape[0]
 	choo = leng*(leng-1)*(leng-2)/6
 	arealimsq = float(arealim**2)
@@ -64,6 +64,11 @@ def tiltang(picks1, picks2, arealim=5000.0, maxtri=10000, speed=30.0):
 				datadict['wsumsq'] += theta**2*weight
 				if datadict['numtri'] > maxtri:
 					break
+
+	if datadict['numtri'] < 1:
+		apDisplay.printWarning("No triangles could be made from the picks")
+		return datadict
+
 	#time stats
 	#print choo
 	datadict['time'] = time.time()-t0
