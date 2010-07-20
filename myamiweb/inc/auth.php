@@ -437,11 +437,13 @@ class authlib{
 
 	function login ($username, $password) {
 
-		if (empty($username) || empty($password)) {
-
+		if (empty($username))	
 			return $this->error['fields_empty'];
-
-		} else {
+		
+		if (empty($password) && $username!='Anonmynous')
+			return $this->error['fields_empty'];
+		
+		if($username != 'Anonmynous'){
 			$this->filter_username($username);
 
 			$this->filter_password($password);
@@ -454,24 +456,21 @@ class authlib{
 			}
 			$password = md5($password);
 			$q="select DEF_id from UserData where username = '$username' and password = '$password'";
-			
+		
 			$query=$dbc->SQLQuery($q);
 			$result = @mysql_num_rows($query);
-			
+		
 			if ($result != 1) {
 				return false;
 			}
-
-			else {
-				$hash = md5($username);
-				$expire = (COOKIE_TIME) ? time()+COOKIE_TIME : 0;
-
-				setcookie(PROJECT_NAME, "$username:$hash", COOKIE_TIME);
-				return 2;
-
-			}
-
 		}
+		
+		$hash = md5($username);
+		$expire = (COOKIE_TIME) ? time()+COOKIE_TIME : 0;
+
+		setcookie(PROJECT_NAME, "$username:$hash", COOKIE_TIME);
+		return 2;		
+		
 	}
 
 	function is_logged () {

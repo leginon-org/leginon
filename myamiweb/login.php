@@ -6,6 +6,10 @@ $redirect = $_REQUEST['ln'];
 $username=trim($_POST['username']);
 $passwd=trim($_POST['password']);
 
+if(!empty($_POST['anonmynous'])){
+	$username = 'Anonmynous';
+}
+
 $login = $dbemauth->login($username, $passwd);
 if ($login!=2) {
 	login_header("Login");
@@ -19,22 +23,28 @@ if ($login!=2) {
 	<center><h1><?php echo PROJECT_TITLE; ?></h1></center>
 	<hr/>
 	<form method="post" action="<?=$_SERVER['REQUEST_URI']?>" name="">
-		<div>
-			<ul>
-			<li>
+		<table cellspacing=20>
+			<tr>
+			<td>
 				<label for="username">Username : </label>
 				<input class="field" type="text" value="" name="username" id="username" size="15" >
 				<label for="password">Password : </label>
 				<input class="field" type="password" name="password" size="15">
 				<a class="header" href="lostpass.php" target="_blank">[Lost Password]</a>
-			</li>
-			<li>
+			</td>
+			</tr>
+			<tr>
+			<td>
+				<input type="checkbox" name="anonmynous">Login as "Anonmynous" for viewing public data sets (Does not required a username and password).</input>
+			</td>
+			</tr>
+			<tr>
+			<td>
 				<input class="bt1" type="submit" value="Login" name="submit">
 				<font size="2">
-			</li>
-			</ul>
-		</div>
-
+			</td>
+			</tr>
+		</table>
 	</form>
 <?php
 	if ($displayerror)
