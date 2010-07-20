@@ -71,21 +71,21 @@ class formValidator{
 	 * 				addValidation("variableName", "variableValue", "float");
 	 * 				addValidation("variableName", "variableValue", "float", "Your own error message");
 	 * 
-	 * absolute path: path_exit
+	 * absolute path: path_exist
 	 * 				addValidation("variableName", "Path Location", "abs_path");
 	 * 				addValidation("variableName", "Path Location", "abs_path", "Your own error message");
 	 * 
 	 * path existence
-	 * 				addValidation("variableName", "Path Location", "path_exit");
-	 * 				addValidation("variableName", "Path Location", "path_exit", "Your own error message");
+	 * 				addValidation("variableName", "Path Location", "path_exist");
+	 * 				addValidation("variableName", "Path Location", "path_exist", "Your own error message");
 	 * 
 	 * folder permission
-	 * 				addValidation("variableName", "Folder Location", "forder_permission");
-	 * 				addValidation("variableName", "Folder Location", "forder_permission", "Your own error message");
+	 * 				addValidation("variableName", "Folder Location", "folder_permission");
+	 * 				addValidation("variableName", "Folder Location", "folder_permission", "Your own error message");
 	 * 
 	 * file existence
-	 * 				addValidation("variableName", "File location", "file_exit");
-	 * 				addValidation("variableName", "File Location", "file_exit", "Your own error message");
+	 * 				addValidation("variableName", "File location", "file_exist");
+	 * 				addValidation("variableName", "File Location", "file_exist", "Your own error message");
 	 * 
 	 * Float with fixed number of decimal:
 	 * 				addValidation("variableName", "variableValue", "float_d=2");
@@ -197,17 +197,17 @@ class formValidator{
 				break;
 			}
 			
-			case 'path_exit':{
+			case 'path_exist':{
 				$result = $this->validatePathIsExist($validateObj->getVariableValue());
 				break;
 			}
 			
 			case 'folder_permission':{
-				$result = $this->validateForderPermission($validateObj->getVariableValue());
+				$result = $this->validateFolderPermission($validateObj->getVariableValue());
 				break;
 			}
 			
-			case 'file_exit':{
+			case 'file_exist':{
 				$result = $this->validatefileExist($validateObj->getVariableValue());
 				break;
 			}
@@ -324,9 +324,9 @@ class formValidator{
 	 * return true if apache has write access to the folder
 	 * otherwise return false
 	 */
-	function validateForderPermission($folderLocation){
+	function validateFolderPermission($folderLocation){
 		
-		$result = mkdir($folderLocation."/validationTesting", 777);
+		$result = @mkdir($folderLocation."/validationTesting", 777);
 		
 		if($result){
 			rmdir($folderLocation."/validationTesting");
@@ -362,7 +362,7 @@ class formValidator{
 			
 		}
 		
-		$validateObj->setErrorOutputMessage("PHP 'ssh2' module is required for setup local cluster.");
+		$validateObj->setErrorOutputMessage("PHP 'ssh2' module is required to setup local cluster.");
 		return false;
 	}
 	
@@ -392,7 +392,7 @@ class formValidator{
 		
 		$mailing = Mail::factory('smtp', $authParams);
 		$message = "Dear User!\n\n"
-					."If you received this email, your smtp server setup is successful.\n\n"
+					."If you received this email, your smtp server setup for Appion and/or Leginon is successful.\n\n"
 					."Thanks";
 		
 		$mail = $mailing->send($inputValues['email'], $headers, $message);
@@ -418,14 +418,13 @@ class formValidator{
 		if($dbLink == false) {
 			
 			$validateObj->setErrorOutputMessage("Cannot connect to the database server with the following 'hostname', 'username' and 'password'.");
-			$mysqld->close_db($dbLink);
 			return false;
 		}
 		
 		$dbSelectResult = $mysqld->select_db($inputValues['leginondb'], $dbLink);
 		
 		if($dbSelectResult == false) {
-			$validateObj->setErrorOutputMessage("Leginon database does not exist or you have inputed the wrong database name.");
+			$validateObj->setErrorOutputMessage("Leginon database does not exist or you have entered the wrong database name.");
 			$mysqld->close_db($dbLink);
 			return false;
 		}
@@ -433,7 +432,7 @@ class formValidator{
 		$dbSelectResult = $mysqld->select_db($inputValues['projectdb'], $dbLink);
 		
 		if($dbSelectResult == false) {
-			$validateObj->setErrorOutputMessage("Project database does not exist or you have inputed the wrong database name.");
+			$validateObj->setErrorOutputMessage("Project database does not exist or you have entered the wrong database name.");
 			$mysqld->close_db($dbLink);
 			return false;
 		}
@@ -458,14 +457,14 @@ define("MAXLEN_EXCEEDED", "Please enter an input with length less than %d.");
 define("MINLEN_CHECK_FAILED", "Please enter an input with length more than %d.");
 define("EMAIL_CHECK_FAILED", "Please provide a valid email address.");
 define("NUM_CHECK_FAILED", "Please provide a numeric input.");
-define("ALPHA_CHECK_FAILED", "Please provide a alphabetic input.");
+define("ALPHA_CHECK_FAILED", "Please provide an alphabetic input.");
 define("ALPHA_S_CHECK_FAILED", "Input can only contain alphabetic and space characters.");
 define("ALNUM_S_CHECK_FAILED", "Input can only contain alpha-numeric and space characters.");
-define("FLOAT_CHECK_FAILED", "Input can only be integer or float.");
-define("FLOAT_D_CHECK_FAILED", "Float input can only with exactly %d decimal places.");
+define("FLOAT_CHECK_FAILED", "Input can only be an integer or float.");
+define("FLOAT_D_CHECK_FAILED", "Float input must have exactly %d decimal places.");
 define("ABS_PATH_CHECK_FAILED", "Input has to be an absolute path.");
 define("PATH_EXIST_CHECK_FAILED", "The input path does not exist on the machine.");
-define("FILE_EXIST_CHECK_FAILED", "The file does not exist by the giving location.");
+define("FILE_EXIST_CHECK_FAILED", "The file does not exist at the given location.");
 define("FOLDER_PERMISSION_CHECK_FAILED", "Apache user does not have write permission on the following path.");
 define("SMTP_CHECK_FAILED", "SMTP Server checking failed. Please contact your system administrator.");
 define("REMOTE_SERVER_CHECK_FAILED", "REMOTE Server checking failed. Please contact your system administrator.");
@@ -545,11 +544,11 @@ class validatorObj{
 				
 				case 'abs_path':	{ $this->errorOutputMessage = ABS_PATH_CHECK_FAILED; break;	}
 				
-				case 'path_exit':	{ $this->errorOutputMessage = PATH_EXIST_CHECK_FAILED; break;	}
+				case 'path_exist':	{ $this->errorOutputMessage = PATH_EXIST_CHECK_FAILED; break;	}
 				
 				case 'folder_permission':{ $this->errorOutputMessage = FOLDER_PERMISSION_CHECK_FAILED; break;}
 				
-				case 'file_exit':	{ $this->errorOutputMessage = FILE_EXIST_CHECK_FAILED; break;	}
+				case 'file_exist':	{ $this->errorOutputMessage = FILE_EXIST_CHECK_FAILED; break;	}
 			
 				case 'smtp':		{ $this->errorOutputMessage = SMTP_CHECK_FAILED; break;	}
 				

@@ -17,8 +17,8 @@ require_once('../inc/formValidator.php');
 		
 		if($_POST['enable_cache'] == 'true'){
 			$validator->addValidation("cache_path", $_POST['cache_path'], "abs_path");
-			$validator->addValidation("cache_path", $_POST['cache_path'], "path_exit");
-			$validator->addValidation("cache_path", $_POST['cache_path'], "forder_permission");
+			$validator->addValidation("cache_path", $_POST['cache_path'], "path_exist");
+			$validator->addValidation("cache_path", $_POST['cache_path'], "folder_permission");
 		}
 		
 		$validator->addValidation("mrc2any", $_POST['mrc2any'], "abs_path");
@@ -31,16 +31,16 @@ require_once('../inc/formValidator.php');
 			
 			$validator->addValidation("defaultcs", $_POST['defaultcs'], "float");
 			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "abs_path");
-			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "path_exit");
-			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "forder_permission");
+			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "path_exist");
+			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "folder_permission");
 			
 			if(!empty($_POST['processing_hosts'])){
 
 				foreach ($_POST['processing_hosts'] as $processingHost){
 					$validator->addValidation("host", $processingHost['host'], "req", "Cluster host name can not be empty.");
-					$validator->addValidation("host", $processingHost['host'], "remoteServer", "Local cluster does not exist. Please make sure the cluster exist.");
+					$validator->addValidation("host", $processingHost['host'], "remoteServer", "Local cluster does not exist. Please make sure the cluster exists.");
 					$validator->addValidation("nproc", $processingHost['nproc'], "req", "Max number of processors per node can not be empty.");
-					$validator->addValidation("nproc", $processingHost['nproc'], "num", "Please privide a numeric input for maximum number of processors per node.");
+					$validator->addValidation("nproc", $processingHost['nproc'], "num", "Please provide a numeric input for maximum number of processors per node.");
 				}
 			}
 
@@ -48,7 +48,7 @@ require_once('../inc/formValidator.php');
 
 				foreach ($_POST['cluster_configs'] as $clusterConfig){
 					$fileLocation = "../processing/".$clusterConfig.".php";
-					$validator->addValidation("cluster_configs", $fileLocation, "file_exit", "Remote cluster configuration file does not exist. Please create it first.");
+					$validator->addValidation("cluster_configs", $fileLocation, "file_exist", "Remote cluster configuration file does not exist. Please create it first.");
 				}
 			}
 			
@@ -292,7 +292,7 @@ require_once('../inc/formValidator.php');
 			Example : /usr/bin/mrc2any  </p>
 		<div id="error"><?php if($errMsg['mrc2any']) echo $errMsg['mrc2any']; ?></div>
 		<input type="text" size=25 name="mrc2any" 
-		<?php 
+		<?php 			
 			if($_POST){
 				print("value='".$_POST['mrc2any']."'");
 			}else{
