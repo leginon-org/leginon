@@ -153,7 +153,12 @@ function login_header($title="", $javascript="", $onload="") {
 	global $_SERVER;
 	if (ENABLE_LOGIN) {
 	global $dbemauth;
-	$redirect=$_SERVER['PHP_SELF'];
+	
+	
+	$redirect=$_SERVER['PHP_SELF']."?";
+	
+	foreach($_GET as $key => $value)
+		$redirect .= $key.'='.$value.'&';
 	
 	$authorized_files=array(BASE_URL.'login.php', 'lostpass.php', 'register.php', 'confirm.php');
 
@@ -214,20 +219,6 @@ echo '
 	</body>
 </html>
 ';
-}
-
-function insertlog($username, $ip, $info) {
-  global $DB_HOST, $DB_USER, $DB_PASS, $DB;
-  $data['username']=$username;
-  $data['ip']=$ip;
-  $data['info']=$info;
-  $dbc=new mysql($DB_HOST, $DB_USER, $DB_PASS, $DB);
-  $dbc->SQLInsert('viewer_log', $data);
-  return true;
-}
-
-function lostpwd(){
-	
 }
 
 ?>

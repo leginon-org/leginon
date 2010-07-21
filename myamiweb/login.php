@@ -52,8 +52,7 @@ if ($login!=2) {
 	login_footer();
 	exit;
 } else {
-	if ($usern)
-    insertlog($usern, $_SERVER['REMOTE_ADDR'], implode(", ",$_SERVER));
+
 	if (!$redirect) $redirect = BASE_URL;
 	redirect($redirect);
 }
