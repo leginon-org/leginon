@@ -93,7 +93,7 @@ if ($ctfrundatas) {
 
 	$ctfdownlink .= "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$sessionId'>\n";
-	$ctfdownlink .= "  <img src='img/download_arrow.png' border='0' width='16' height='17' alt='download ctf data'>&nbsp;download ctf data\n";
+	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download ctf data'>&nbsp;download ctf data\n";
 	$ctfdownlink .= "</a></h3>\n";
 	echo $ctfdownlink;
 

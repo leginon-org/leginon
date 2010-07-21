@@ -332,11 +332,12 @@ function showReport () {
 
 		$mrcfile = $refinerun['path']."/".$iteration['volumeDensity'];
 		$html .= "<a href='download.php?file=$mrcfile'>\n";
-		$html .= "  <img src='img/download_arrow' border='0' width='16' height='17' alt='download mrc'>\n";
-		$html .= "</a>\n";
+		$html .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download mrc'>\n";
+		$html .= "$iteration[volumeDensity]\n";
+		$html .= "</a><br/>\n";
 
 		// name of density
-		$html .= "$iteration[volumeDensity]<br/>\n";
+
 		
 		// buttons
 		$html .= "<input class='edit' type='button' onClick=\"parent.location='postproc.php?expId=$expId&refineIter=$refineIterId'\" value='Post Processing'><br />\n";
@@ -374,7 +375,7 @@ function showReport () {
 
 				$postprocfile = $p['path']."/".$p['name'];
 				$modellink .= "<font size='-2'><a href='download.php?file=$postprocfile'>\n";
-				$modellink .= "  <img src='img/download_arrow' border='0' width='16' height='17' alt='download model'>\n";
+				$modellink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download model'>\n";
 				$modellink .= "</a></font>\n";
 				$html .= "<tr><td><b>name: </b></td><td>".$p['name']." $modellink</td></td>\n";
 

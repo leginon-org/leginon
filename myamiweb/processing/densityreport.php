@@ -51,7 +51,7 @@ $densitytable.= "<b>symmetry:</b> $sym[symmetry]<br />\n";
 $densitytable.= "<b>resolution:</b> $density[resolution]<br />\n";
 $modelfile = $density['path']."/".$density['name'];
 $modellink .= "<font size='-2'><a href='download.php?file=$modelfile'>\n";
-$modellink .= "  <img src='img/download_arrow.png' border='0' width='16' height='17' alt='download model'>\n";
+$modellink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download model'>\n";
 $modellink .= "</a></font>\n";
 $densitytable.= "<b>Filename:</b><br />$modelfile $modellink<br />\n";
 $densitytable.= "<b>Description:</b><br />$descDiv<br />\n";

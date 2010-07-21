@@ -88,7 +88,7 @@ if ($densityRuns) {
 		$modelfile = $densityrun['path']."/".$densityrun['name'];
 		$html .= "<td><A HREF='densityreport.php?expId=$expId&densityId=$densityid'>$densityrun[name]</A>\n";
 		$modellink = "<font size='-2'><a href='download.php?file=$modelfile'>\n";
-		$modellink .= "  <img src='img/download_arrow.png' border='0' width='16' height='17' alt='download model'>\n";
+		$modellink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download model'>\n";
 		$modellink .= "</a></font>\n";
 		$html .= $modellink."</td>\n";
 
