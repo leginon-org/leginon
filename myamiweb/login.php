@@ -35,7 +35,7 @@ if ($login!=2) {
 			</tr>
 			<tr>
 			<td>
-				<input type="checkbox" name="anonymous">Login as "Anonmynous" for viewing public data sets (Does not required a username and password).</input>
+				<input type="checkbox" name="anonymous">Login as "Anonymous" for viewing public data sets (Does not required a username and password).</input>
 			</td>
 			</tr>
 			<tr>
