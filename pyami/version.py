@@ -2,12 +2,14 @@
 
 import os
 import re
+import inspect
 import subprocess
 
 def getInstalledLocation():
 	'''where is this module located'''
 	# full path of this module
-	fullmod = os.path.abspath(__file__)
+	this_file = inspect.currentframe().f_code.co_filename
+	fullmod = os.path.abspath(this_file)
 	# just the directory
 	dirname = os.path.dirname(fullmod)
 	return dirname

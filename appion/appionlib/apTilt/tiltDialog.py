@@ -6,6 +6,7 @@ import math
 import glob
 import numpy
 import pprint
+import inspect
 from leginon.gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 try:
 	import radermacher
@@ -22,9 +23,10 @@ from appionlib.apTilt import apTiltTransform
 
 version = "2.0b11"
 releasedate = "April 15, 2010"
-logoimage = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/tplogo.png"))
+this_file = inspect.currentframe().f_code.co_filename
+logoimage = os.path.abspath(os.path.join(os.path.dirname(this_file), "../../data/tplogo.png"))
 if not os.path.isfile(logoimage):
-	logoimage = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/tplogo.png"))
+	logoimage = os.path.abspath(os.path.join(os.path.dirname(this_file), "../data/tplogo.png"))
 if not os.path.isfile(logoimage):
 	logoimage = os.path.join(apParam.getAppionDirectory(), "appionlib/data/tplogo.png")
 citation = """

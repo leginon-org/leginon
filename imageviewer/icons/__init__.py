@@ -1,5 +1,6 @@
 import os.path
 import wx
+import inspect
 
 wx.InitAllImageHandlers()
 
@@ -11,7 +12,8 @@ def icon(name):
 	return bitmaps[name]
 
 def _icon(name):
-	path = os.path.join(os.path.dirname(__file__), '%s.png' % name)
+	this_file = inspect.currentframe().f_code.co_filename
+	path = os.path.join(os.path.dirname(this_file), '%s.png' % name)
 	return wx.Bitmap(path)
 
 

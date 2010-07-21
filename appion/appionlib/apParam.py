@@ -8,6 +8,7 @@ import time
 import random
 import socket
 import string
+import inspect
 import subprocess
 
 ## appion
@@ -25,8 +26,8 @@ def getAppionDirectory():
 	Used by appionLoop
 	"""
 	appiondir = None
-
-	libdir = os.path.dirname(__file__)
+	this_file = inspect.currentframe().f_code.co_filename
+	libdir = os.path.dirname(this_file)
 	libdir = os.path.abspath(libdir)
 	trypath = os.path.dirname(libdir)
 	if os.path.isdir(trypath):

@@ -14,6 +14,7 @@
 # $Locker:  $
 
 import os.path
+import inspect
 
 def OLDgetVersion():
 	name = cvsname[7:-2]
@@ -61,7 +62,8 @@ def getVersion():
 def getInstalledLocation():
 	'''where is this module located'''
 	# full path of this module
-	fullmod = os.path.abspath(__file__)
+	this_file = inspect.currentframe().f_code.co_filename
+	fullmod = os.path.abspath(this_file)
 	# just the directory
 	dirname = os.path.dirname(fullmod)
 	return dirname

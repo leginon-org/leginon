@@ -10,6 +10,7 @@ import errno
 import os
 import ConfigParser
 import sys
+import inspect
 
 logevents = False
 
@@ -57,7 +58,8 @@ class LeginonConfigError(Exception):
 
 HOME = os.path.expanduser('~')
 CURRENT = os.getcwd()
-MODULE = os.path.dirname(__file__)
+this_file = inspect.currentframe().f_code.co_filename
+MODULE = os.path.dirname(this_file)
 
 configparser = ConfigParser.SafeConfigParser()
 # look in the same directory as this module
