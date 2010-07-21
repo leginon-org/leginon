@@ -199,7 +199,7 @@ function login_header($title="", $javascript="", $onload="") {
 if (ENABLE_LOGIN) {
 	if ($username) {
 		echo '<a class="header" href="'.BASE_URL.'logout.php">[Logout '.$username.']</a>';
-		if($username != 'Anonmynous')
+		if($username != 'Anonymous')
 			echo '<a class="header" href="'.BASE_URL.'prefs.php">['.$username.' Profile]</a>';
 	} else {
 		if (!ereg(BASE_URL.'login.php', $_SERVER['PHP_SELF']))

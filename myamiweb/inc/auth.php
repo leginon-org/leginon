@@ -440,10 +440,10 @@ class authlib{
 		if (empty($username))	
 			return $this->error['fields_empty'];
 		
-		if (empty($password) && $username!='Anonmynous')
+		if (empty($password) && $username!='Anonymous')
 			return $this->error['fields_empty'];
 		
-		if($username != 'Anonmynous'){
+		if($username != 'Anonymous'){
 			$this->filter_username($username);
 
 			$this->filter_password($password);

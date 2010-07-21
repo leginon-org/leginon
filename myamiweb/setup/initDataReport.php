@@ -24,10 +24,10 @@ require_once("../inc/mysql.inc");
 					  'email' => $_POST['email'], 
 					  'REF|GroupData|group' => 1);
 		
-		$anonmyAccount = array('username' => 'Anonmynous', 
-					  'password' => md5('anonmynous'), 
-					  'firstname' => 'Anonmynous',
-					  'lastname' => 'Anonmynous',
+		$anonymousAccount = array('username' => 'Anonymous', 
+					  'password' => md5('anonymous'), 
+					  'firstname' => 'Anonymous',
+					  'lastname' => 'Anonymous',
 					  'email' => $_POST['email'], 
 					  'REF|GroupData|group' => 4);
 		
@@ -37,7 +37,7 @@ require_once("../inc/mysql.inc");
 		$mysqld->select_db(DB_LEGINON, $dbLink);	
 		
 		$mysqld->SQLInsert('UserData', $adminAccount);
-		$mysqld->SQLInsert('UserData', $anonmyAccount);
+		$mysqld->SQLInsert('UserData', $anonymousAccount);
 		# insert leginon settings default
 		require_once("../inc/setdefault.php");
 	}

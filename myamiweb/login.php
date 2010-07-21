@@ -6,8 +6,8 @@ $redirect = $_REQUEST['ln'];
 $username=trim($_POST['username']);
 $passwd=trim($_POST['password']);
 
-if(!empty($_POST['anonmynous'])){
-	$username = 'Anonmynous';
+if(!empty($_POST['anonymous'])){
+	$username = 'Anonymous';
 }
 
 $login = $dbemauth->login($username, $passwd);
@@ -35,7 +35,7 @@ if ($login!=2) {
 			</tr>
 			<tr>
 			<td>
-				<input type="checkbox" name="anonmynous">Login as "Anonmynous" for viewing public data sets (Does not required a username and password).</input>
+				<input type="checkbox" name="anonymous">Login as "Anonmynous" for viewing public data sets (Does not required a username and password).</input>
 			</td>
 			</tr>
 			<tr>
