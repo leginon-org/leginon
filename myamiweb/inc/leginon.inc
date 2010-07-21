@@ -340,6 +340,7 @@ class leginondata {
 
 	function getFilenames($sessionId, $name="", $table="AcquisitionImageData") {
 		$has_ImageStatusData = $this->mysql->isTable('ImageStatusData'); 
+		$has_PresetData = $this->mysql->isTable('PresetData');
 		$sessionwhere = "a.`REF|SessionData|session`='$sessionId' ";
 		if (!is_numeric($sessionId)) {
 			$sessionwhere = "s.`Name` like '$sessionId' ";
@@ -350,23 +351,29 @@ class leginondata {
 			$name="";
 		}
 			$hiddenjoin = "left join `ViewerImageStatus` r on (r.`REF|AcquisitionImageData|image`=a.DEF_id) ";
-			if ($has_ImageStatus)
+			if ($has_ImageStatusData)
 				$hiddenjoin .= "left join `ImageStatusData` ir on (ir.`REF|AcquisitionImageData|image`=a.DEF_id) ";
 		if ($defaultname=="hidden" || $defaultname=="exemplar") {
 			$hiddenwhere = "and ((r.DEF_id is not null and r.status='$defaultname') ";
-			if ($has_ImageStatus)
+			if ($has_ImageStatusData)
 				$hiddenwhere .= "or (ir.`DEF_id` is not null and ir.status='$defaultname')";
 			$hiddenwhere .=")";
 		} else {
 			$hiddenwhere = "and ((r.DEF_id is NULL or r.status <>'hidden') ";
-			if ($has_ImageStatus)
+			if ($has_ImageStatusData)
 				$hiddenwhere .= "and (ir.`DEF_id` is NULL or ir.status <>'hidden')";
 			$hiddenwhere .=") ";
 		}
+
+		$joinPreset="";
+		if ($has_PresetData){
+			$joinPreset = " left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) ";
+		}
+
 		if (in_array($name, $this->ffttypes)) {
 		$q = "select a.`DEF_id` as `id`, f.`MRC|Image` as `name` "
 				." from `$table` a "
-				." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
+				.$joinPreset
 				." left join AcquisitionFFTData f on (f.`REF|AcquisitionImageData|source`=a.`DEF_id`) "
 				.$sessionjoin
 				.$hiddenjoin
@@ -378,7 +385,7 @@ class leginondata {
 		} else {
 		$q = "select a.`DEF_id` as `id`, a.`MRC|Image` as `name` "
 			." from `$table` a "
-			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
+			.$joinPreset
 			.$sessionjoin
 			.$hiddenjoin
 			." where "
