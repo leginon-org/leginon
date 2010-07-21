@@ -18,6 +18,83 @@ $jmol = false;
 
 /****************************************
 ****************************************/
+function pickingsummarytable($selectionid, $mini=false) {
+	$expId = $_GET['expId'];
+	$particle = new particledata();
+	$selectiontype = $particle->getSelectionParams($selectionid, true);
+	$selectiondatas = $particle->getSelectionParams($selectionid);
+	$selectiondata = $selectiondatas[0];
+	$selectionstats = $particle->getStats($selectionid);
+	//echo print_r($selectionstats)."<br/>\n";
+	//echo print_r($selectiondata)."<br/>\n";
+
+	if ($_POST['hideItem'.$selectionid] == 'hide') {
+		$particle->updateHide('ApSelectionRunData', $selectionid, '1');
+		$selectiondata['hidden'] = 1;
+	} elseif ($_POST['unhideItem'.$selectionid] == 'unhide') {
+		$particle->updateHide('ApSelectionRunData', $selectionid, '0');
+		$selectiondata['hidden'] = 0;
+	}
+
+	$j = "Particle Selection Info: <span class='aptitle' >"
+		.$selectiondata['name']."</span> (ID: $selectionid)\n";
+	if ($selectiondata['hidden'] == 1) {
+		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
+		$j.= " <input class='edit' type='submit' name='unhideItem".$selectionid."' value='unhide'>\n";
+		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>\n";
+	} else $j.= " <input class='edit' type='submit' name='hideItem".$selectionid."' value='hide'>\n";
+
+	$selectiontable.= apdivtitle($j);
+	//echo $j."<br/>\n";
+
+	$selectiontable.= "<table border='0'>\n";
+
+	$display_keys['date time'] = $selectiondata['DEF_timestamp'];
+
+	// may be different than $expId
+	$selectsessionid = $selectiondata['REF|leginondata|SessionData|session'];
+	if($selectsessionid != $expId) {
+		$selectsessiondata = $particle->getSessionData($selectsessionid);
+		//echo print_r($selectsessiondata)."<br/>\n";
+		$display_keys['session'] = $selectsessiondata['name']." (id: $selectsessionid)";
+	}
+	$display_keys['method'] = $selectiontype;
+	if ($selectionstats['preset'])
+		$display_keys['preset'] = $selectionstats['preset'];
+	if ($selectiondata['path'])
+		$display_keys['path'] = $selectiondata['path'];
+
+	// Show number of particles
+	$dlink = "<a href='downloadparticledata.php?expId=$expId&selectionId=$selectionid'>"
+		."<img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download img'>&nbsp;"
+		."download coordinates</a>";
+	$display_keys['# particles'] = commafy($selectionstats['totparticles'])." ($dlink)";
+	$display_keys['# images'] = commafy($selectionstats['num'])." ("
+		.round($selectionstats['totparticles']/$selectionstats['num'],1)." part/img)";
+	if (!$mini) {
+		$display_keys['particle diam'] = $selectiondata['diam'];
+		$display_keys['binning'] = $selectiondata['bin'];
+		$display_keys['threshold'] = $selectiondata['manual_thresh'];
+		if ($selectiondata['max_threshold'])
+			$display_keys['threshold'] .= " (".$selectiondata['max_threshold'].")";
+		$display_keys['filters'] = $selectiondata['lp_filt']." &Aring; &ndash; ".$selectiondata['hp_filt']." &Aring;";
+		if ($selectiondata['median'])
+			$display_keys['filters'] .= " (".$selectiondata['median']." median)";
+		$display_keys['thresh range'] = sprintf("%.4f &ndash; %.4f", $selectionstats['min'], $selectionstats['max']);
+		$display_keys['thresh mean'] = sprintf("%.4f &plusmn; %.4f", $selectionstats['avg'], $selectionstats['stddev']);
+	}
+
+	foreach($display_keys as $k=>$v) {
+	        $selectiontable.= formatHtmlRow($k,$v);
+	}
+	$selectiontable.= "</table>\n";
+	$selectiontable.= "<p>\n";
+	return $selectiontable;
+}
+
+
+/****************************************
+****************************************/
 function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	$particle = new particledata();
 	$selectdata = $particle->getStackSelectionRun($stackid);
