@@ -9,6 +9,7 @@
 #
 
 import application
+import applications
 import leginondata
 import databinder
 import datatransport
@@ -688,9 +689,14 @@ class Manager(node.Node):
 
 	# application methods
 
+	def getBuiltinApplications(self):
+		apps = [appdict['application'] for appdict in applications.builtin.values()]
+		return apps
+
 	def getApplicationNames(self):
 		names = []
-		appdatalist = self.research(leginondata.ApplicationData())
+		appdatalist = self.getBuiltinApplications()
+		appdatalist.extend(self.research(leginondata.ApplicationData()))
 		for appdata in appdatalist:
 			if appdata['name'] not in names:
 				names.append(appdata['name'])
@@ -698,7 +704,8 @@ class Manager(node.Node):
 
 	def getApplications(self):
 		apps = {}
-		appdatalist = self.research(leginondata.ApplicationData())
+		appdatalist = self.getBuiltinApplications()
+		appdatalist.extend(self.research(leginondata.ApplicationData()))
 		for appdata in appdatalist:
 			appname = appdata['name']
 			if appname not in apps:

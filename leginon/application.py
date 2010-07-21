@@ -5,6 +5,7 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
+import applications
 import leginondata
 import event
 
@@ -98,8 +99,6 @@ class Application(object):
 		except KeyError:
 			raise ValueError('unmapped launcher alias')
 		dependencies = []
-		for dependency in ns['dependencies']:
-			dependencies.append(dependency)
 		return (launchername, ns['class string'], ns['alias'], dependencies)
 
 	def bindingSpec2Args(self, bs):
@@ -175,6 +174,18 @@ class Application(object):
 	def load(self, name=None):
 		if name is None:
 			name = self.getName()
+		if name in applications.builtin:
+			self.load_built_in(name)
+		else:
+			self.load_from_db(name)
+
+	def load_built_in(self, name):
+		appdict = applications.builtin[name]
+		self.applicationdata = self.data = appdict['application']
+		self.nodespecs = appdict['nodes']
+		self.bindingspecs = appdict['bindings']
+
+	def load_from_db(self, name):
 		instance = leginondata.ApplicationData(name=name)
 		applicationdatalist = instance.query()
 		try:
