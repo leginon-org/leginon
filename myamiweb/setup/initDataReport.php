@@ -17,18 +17,27 @@ require_once("../inc/mysql.inc");
 
 		$leginondata->importTables('../xml/leginonDefaultValues.xml');		
 		
-		$data = array('username' => $_POST['username'], 
+		$adminAccount = array('username' => $_POST['username'], 
 					  'password' => md5($_POST['password']), 
 					  'firstname' => 'Appion-Leginon',
 					  'lastname' => 'Administrator',
 					  'email' => $_POST['email'], 
 					  'REF|GroupData|group' => 1);
+		
+		$anonmyAccount = array('username' => 'Anonmynous', 
+					  'password' => md5('anonmynous'), 
+					  'firstname' => 'Anonmynous',
+					  'lastname' => 'Anonmynous',
+					  'email' => $_POST['email'], 
+					  'REF|GroupData|group' => 4);
+		
 		$mysqld = new mysql(DB_HOST, DB_USER, DB_PASS);
 		$dbLink = $mysqld->connect_db();
 		
 		$mysqld->select_db(DB_LEGINON, $dbLink);	
 		
-		$mysqld->SQLInsert('UserData', $data);
+		$mysqld->SQLInsert('UserData', $adminAccount);
+		$mysqld->SQLInsert('UserData', $anonmyAccount);
 		# insert leginon settings default
 		require_once("../inc/setdefault.php");
 	}
