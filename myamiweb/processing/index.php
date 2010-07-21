@@ -269,11 +269,11 @@ foreach ($reconRuns as $recon) {
 
 	$m = "<h4>Data Collection</h4>\n";
 	$m .= "<table class='tableborder' border='1' width='600'><tr><td>\n";
-	$m .= "Data were acquired using a $scope transmission electron microscope operating at $kvolt kV, \n";
-	$m .= "using a dose of ~".$dose." e-/&Aring;&sup2; and a nominal underfocus ranging from $maxNomDF to $minNomDF &micro;m.\n";
+	$m .= "Data were acquired using a $scope transmission electron microscope operating at $kvolt&nbsp;kV, \n";
+	$m .= "using a dose of ~".$dose."&nbsp;e-/&Aring;&sup2; and a nominal underfocus ranging from $maxNomDF to $minNomDF&nbsp;&micro;m.\n";
 	//	$m .= "A Gatan side-entry cryostage/room temp stage was used for data collection.\n";
-	$m .= "$totimgs images were automatically collected at a nominal magnification of ".$mag."X at a pixel size of $pix nm at the specimen level.\n";
-	$m .= "All images were recorded with a $cam $camsize pixel CCD camera ($campix &micro;m pixel)\n";
+	$m .= "$totimgs&nbsp;images were automatically collected at a nominal magnification of ".$mag."X at a pixel size of $pix&nbsp;nm at the specimen level.\n";
+	$m .= "All images were recorded with a $cam $camsize pixel CCD camera ($campix&nbsp;&micro;m pixel)\n";
 	$m .= "utilizing the Leginon data collection software (Suloway <i>et al.</i>, 2005).\n";
 	$m .= "Experimental data were processed by the Appion software package (Lander <i>et al.</i>, 2009), which interfaces with the Leginon database infrastructure.\n";
 	// CTF
@@ -286,7 +286,7 @@ foreach ($reconRuns as $recon) {
 	elseif ($pickertype=='Template Correlator')
 		$m .= "automatically selected from the micrographs using a template-based particle picker (Roseman, 2003) \n";
 	else $m .= "manually selected from the micrographs \n";
-	$m .= "and extracted at a box size of ".$stackparams['boxSize']." pixels. \n";
+	$m .= "and extracted at a box size of ".$stackparams['boxSize']."&nbsp;pixels. \n";
 	if ($hasCTF) {
 		$acecutoff=($stackparams['aceCutoff']) ? $stackparams['aceCutoff']*100 : '' ;
 		if ($acecutoff)
@@ -295,7 +295,7 @@ foreach ($reconRuns as $recon) {
 			$m .= "Phase correction of the single particles was carried out by ".$stackparams['fliptype']." during creation of the particle stack. \n";
 	}
 	if ($stackparams['bin']) $m .= "Stacked particles were binned by a factor of ".$stackparams['bin']." for the final reconstruction. \n";
-	$m .= "The final stack contained ".commafy($stackparticles)." particles. \n";
+	$m .= "The final stack contained ".commafy($stackparticles)."&nbsp;particles. \n";
 	if ($clsavgs['SpiCoran']) {
 	  $m .= "The 3D reconstruction was carried out using a combination of both the SPIDER and EMAN reconstruction packages ";
 	  $m .= "(Frank <i>et al.</i>, 1996; Ludtke <i>et al.</i>, 1999). \n";
@@ -306,8 +306,8 @@ foreach ($reconRuns as $recon) {
 	}
 	else $m .= "The 3D reconstruction was carried out using the EMAN reconstruction package (Ludtke <i>et al.</i>, 1999). \n";
 	$m .= "Resolution was assessed by calculating the Fourier Shell Correlation (FSC) at a cutoff of 0.5, \n";
-	$m .= "which provided a value of $halfres &Aring; resolution.\n";
-	$m .= "Calculation of the resolution by Rmeasure (Sousa & Gridgorieff, 2007) at a 0.5 cutoff yielded a resolution of $rmeasureres &Aring;. \n";
+	$m .= "which provided a value of $halfres&nbsp;&Aring; resolution.\n";
+	$m .= "Calculation of the resolution by Rmeasure (Sousa & Gridgorieff, 2007) at a 0.5 cutoff yielded a resolution of $rmeasureres&nbsp;&Aring;. \n";
 
 
 	$m .= "</td></tr><tr><td>\n";
