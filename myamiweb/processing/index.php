@@ -249,8 +249,17 @@ foreach ($reconRuns as $recon) {
 	$phtml .= "</tr></table>\n";
 	
 	$modhtml = "<table class='tableborder' border='1'>\n";
-	$modhtml .= "<tr><td>volume: ".$recon['volumeDensity']."</td></tr><tr><td>\n";
-	$pngfiles = glob($recon['path'].'/'.$recon['volumeDensity']."*png");
+	
+	$densityfile = $recon['path'].'/'.$recon['volumeDensity'];
+
+	$modhtml .= "<tr><td>";
+	$modhtml .= "download density <a href='download.php?file=$densityfile'>\n";
+	$modhtml .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download density'>\n";
+	$modhtml .= $recon['volumeDensity']."\n";
+	$modhtml .= "</a><br/>\n";
+	$modhtml .= "</td></tr><tr><td>\n";
+
+	$pngfiles = glob($densityfile."*png");
 	//foreach ($pngimages['pngfiles'] as $snapshot) {
 	foreach ($pngfiles as $snapshot) {
 		if (eregi($recon['volumeDensity'],$snapshot)) {
