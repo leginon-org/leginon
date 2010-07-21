@@ -48,7 +48,7 @@ if ($templateparams) {
 }
 
 $partdownlink .= "<font size='+1'><a href='downloadparticledata.php?expId=$expId&selectionId=$runId'>\n";
-$partdownlink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download stack'>&nbsp;download particle data\n";
+$partdownlink .= "  <img src='img/download_arrow.png' border='0' width='16' height='17' alt='download stack'>&nbsp;download particle data\n";
 $partdownlink .= "</a></font><br/>\n";
 echo $partdownlink;
 

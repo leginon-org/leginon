@@ -332,7 +332,7 @@ function showReport () {
 
 		$mrcfile = $refinerun['path']."/".$iteration['volumeDensity'];
 		$html .= "<a href='download.php?file=$mrcfile'>\n";
-		$html .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download mrc'>\n";
+		$html .= "  <img src='img/download_arrow' border='0' width='16' height='17' alt='download mrc'>\n";
 		$html .= "</a>\n";
 
 		// name of density
@@ -374,7 +374,7 @@ function showReport () {
 
 				$postprocfile = $p['path']."/".$p['name'];
 				$modellink .= "<font size='-2'><a href='download.php?file=$postprocfile'>\n";
-				$modellink .= "  <img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download model'>\n";
+				$modellink .= "  <img src='img/download_arrow' border='0' width='16' height='17' alt='download model'>\n";
 				$modellink .= "</a></font>\n";
 				$html .= "<tr><td><b>name: </b></td><td>".$p['name']." $modellink</td></td>\n";
 
