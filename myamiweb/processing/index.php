@@ -103,13 +103,25 @@ foreach ($reconRuns as $recon) {
 		echo "<br/><p><hr/>\n";
 		echo "<h4>CTF info</h4>\n";
 		echo "<hr/></p>\n";
-		echo "<a href='processing/ctfreport.php?expId=$sessionId'>report &raquo;</a>\n";
+		echo "<h3>Summary of confidence values from all runs</h3>\n";
+		echo "<a href='ctfgraph.php?hg=1&expId=$sessionId&s=1&f=confidence'>\n";
+		echo "<img border='0' width='512' height='256' src='ctfgraph.php?w=512&h=256&hg=1&expId=$sessionId&s=1&f=confidence'></a>\n";
+		echo "<br/>\n";
+		echo "<a href='processing/ctfreport.php?expId=$sessionId'>see full report &raquo;</a><br/>\n";
+
 		$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev');
 		$fields = array('defocus1', 'confidence', 'confidence_d','difference');
 		$bestctf = $particle->getBestStats($fields, $sessionId);
 		$dfstats = array_merge($dfstats,$bestctf);
 		$display_keys = array ( 'name', 'nb', 'min', 'max', 'avg', 'stddev');
 		echo displayCTFstats($dfstats, $display_keys);
+
+		$ctfdownlink = "<a href='downloadctfdata.php?expId=$sessionId'>\n";
+		$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download ctf data'>";
+		$ctfdownlink .= "  &nbsp;download ctf data\n";
+		$ctfdownlink .= "</a><br/>\n";
+		echo $ctfdownlink;
+
 	}
 
 	/*
