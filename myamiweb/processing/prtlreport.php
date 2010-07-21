@@ -12,6 +12,7 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
+require "inc/summarytables.inc";
 
 // --- Set  experimentId
 $expId = $_GET['expId'];
@@ -25,10 +26,14 @@ $particle = new particledata();
 if ($particle->hasParticleData($expId)) {
 	//$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev', 'img');
 	$display_keys = array ( 'preset','totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev');
-	$particleruns=$particle->getParticleRunIds($expId);
-	echo $particle->displayParticleStats($particleruns, $display_keys, $inspectcheck, $mselexval);
+	$selectionruns=$particle->getParticleRunIds($expId);
+	foreach ($selectionruns as $selectionrun) {
+		//print_r($selectionrun);
+		$selectionid = $selectionrun['DEF_id'];
+		echo pickingsummarytable($selectionid, true);
+	}
 } else {
-	echo "no Particle information available";
+	echo "<font color='#cc3333' size='+2'>No particle information available</font>\n<hr/>\n";
 }
 
 processing_footer();

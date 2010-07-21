@@ -37,7 +37,8 @@ function pickingsummarytable($selectionid, $mini=false) {
 	}
 
 	$j = "Particle Selection Info: <span class='aptitle' >"
-		.$selectiondata['name']."</span> (ID: $selectionid)\n";
+		."<a href='particlerunreport.php?expId=$expId&rId=$selectionid'>"
+		.$selectiondata['name']."</a></span> (ID: $selectionid)\n";
 	if ($selectiondata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
 		$j.= " <input class='edit' type='submit' name='unhideItem".$selectionid."' value='unhide'>\n";
@@ -65,21 +66,31 @@ function pickingsummarytable($selectionid, $mini=false) {
 		$display_keys['path'] = $selectiondata['path'];
 
 	// Show number of particles
-	$dlink = "<a href='downloadparticledata.php?expId=$expId&selectionId=$selectionid'>"
-		."<img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download img'>&nbsp;"
-		."download coordinates</a>";
-	$display_keys['# particles'] = commafy($selectionstats['totparticles'])." ($dlink)";
-	$display_keys['# images'] = commafy($selectionstats['num'])." ("
-		.round($selectionstats['totparticles']/$selectionstats['num'],1)." part/img)";
+	if ($selectionstats['totparticles'] > 0) {
+		$dlink = "(<a href='downloadparticledata.php?expId=$expId&selectionId=$selectionid'>"
+			."<img src='../img/dwd_bt_off.gif' border='0' width='15' height='15' alt='download img'>&nbsp;"
+			."download coordinates</a>)";
+	}
+	$display_keys['# particles'] = commafy($selectionstats['totparticles'])." $dlink";
+	if ($selectionstats['totparticles'] > 0) {
+		$display_keys['# images'] = commafy($selectionstats['num'])." ("
+			.round($selectionstats['totparticles']/$selectionstats['num'],1)." part/img)";
+	}
 	if (!$mini) {
-		$display_keys['particle diam'] = $selectiondata['diam'];
-		$display_keys['binning'] = $selectiondata['bin'];
-		$display_keys['threshold'] = $selectiondata['manual_thresh'];
-		if ($selectiondata['max_threshold'])
-			$display_keys['threshold'] .= " (".$selectiondata['max_threshold'].")";
-		$display_keys['filters'] = $selectiondata['lp_filt']." &Aring; &ndash; ".$selectiondata['hp_filt']." &Aring;";
-		if ($selectiondata['median'])
-			$display_keys['filters'] .= " (".$selectiondata['median']." median)";
+		if ($selectiondata['diam'])
+			$display_keys['particle diam'] = $selectiondata['diam'];
+		if ($selectiondata['bin'])
+			$display_keys['binning'] = $selectiondata['bin'];
+		if ($selectiondata['threshold']) {
+			$display_keys['threshold'] = $selectiondata['manual_thresh'];
+			if ($selectiondata['max_threshold'])
+				$display_keys['threshold'] .= " (".$selectiondata['max_threshold'].")";
+		}
+		if ($selectiondata['lp_filt']) {
+			$display_keys['filters'] = $selectiondata['lp_filt']." &Aring; &ndash; ".$selectiondata['hp_filt']." &Aring;";
+			if ($selectiondata['median'])
+				$display_keys['filters'] .= " (".$selectiondata['median']." median)";
+		}
 		$display_keys['thresh range'] = sprintf("%.4f &ndash; %.4f", $selectionstats['min'], $selectionstats['max']);
 		$display_keys['thresh mean'] = sprintf("%.4f &plusmn; %.4f", $selectionstats['avg'], $selectionstats['stddev']);
 	}
