@@ -332,7 +332,7 @@ function showReport () {
 
 		$mrcfile = $refinerun['path']."/".$iteration['volumeDensity'];
 		$html .= "<a href='download.php?file=$mrcfile'>\n";
-		$html .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download mrc'>\n";
+		$html .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download density'>\n";
 		$html .= "$iteration[volumeDensity]\n";
 		$html .= "</a><br/>\n";
 

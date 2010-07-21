@@ -719,7 +719,7 @@ function modelsummarytable($modelid, $mini=false) {
 	$modelfile = $modeldata['path']."/".$modelname;
 	$modellink .= "&nbsp;(<font size='-2'><a href='download.php?file=$modelfile'>\n";
 	$modellink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download model'>";
-	$modellink .= "  &nbsp;download density\n";
+	$modellink .= "  &nbsp;download model\n";
 	$modellink .= "</a></font>)\n";
 	$display_keys['path'] = $modeldata['path'];
 	$display_keys['filename'] = $modelname.$modellink;
