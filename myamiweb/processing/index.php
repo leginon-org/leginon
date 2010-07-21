@@ -95,10 +95,14 @@ foreach ($reconRuns as $recon) {
 	$maxNomDF = sprintf("%.1f", $cstats['max']*-1e6);
 	$dfstats['nominal'][]=$cstats;
 
-	# get ACE results
+	/*
+	** get ACE results
+	*/
 	$hasCTF = $particle->hasCtfData($sessionId);
 	if ($hasCTF) {
+		echo "<br/><p><hr/>\n";
 		echo "<h4>CTF info</h4>\n";
+		echo "<hr/></p>\n";
 		echo "<a href='processing/ctfreport.php?expId=$sessionId'>report &raquo;</a>\n";
 		$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev');
 		$fields = array('defocus1', 'confidence', 'confidence_d','difference');
@@ -108,34 +112,57 @@ foreach ($reconRuns as $recon) {
 		echo displayCTFstats($dfstats, $display_keys);
 	}
 
-
-	# get particle runs contributing to the stack
+	/*
+	** get particle runs contributing to the stack
+	*/
+	echo "<br/><p><hr/>\n";
+	echo "<h4>Particle selection info</h4>\n";
+	echo "<hr/></p>\n";
 	$selectionRuns = $particle->getParticleRunsFromStack($stackid);
-	echo "<h4>Particle Selection info</h4>\n";
+	$numinspected=$particle->getNumAssessedImages($sessionId);
+	if ($numinspected) 
+		echo"Inpected images: $numinspected, ";
+	if ($numinspected>0) {
+		echo'<a href="assesssummary.php?Id='.$sessionId.'">[assessment summary]</a>'."\n";
+		//echo'<a href="showinspectdata.php?Id='.$sessionId.'&vd=1">[inspected data]</a>'."\n"; // this is broken
+	}
 	foreach ($selectionRuns as $srun){
-		$numinspected=$particle->getNumAssessedImages($sessionId);
-		if ($numinspected) 
-			echo"Inpected images: $numinspected, ";
-		if ($numinspected>0) 
-			echo'<a href="showinspectdata.php?Id='.$sessionId.'&vd=1">[inspected data]</a>'."\n";
-		$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev');
-		echo $particle->displayParticleStats($srun, $display_keys, False, False, False);
-		$pickertype = $particle->getSelectionParams($srun[0]['DEF_id'],True);
-		$particlestats = $particle->getStats($srun[0]['DEF_id']);
-	}	
+		$selectId = $srun[0]['DEF_id'];
+		echo pickingsummarytable($selectId, true);
+		// used for methods paragraph
+		$pickertype = $particle->getSelectionParams($selectId, True);
+		$particlestats = $particle->getStats($selectId);
+	}
 
-	// stack information
+	/*
+	** stack information
+	*/
+	echo "<br/><p><hr/>\n";
+	echo "<h4>Particle stack info</h4>\n";
+	echo "<hr/></p>\n";
 	// get pixel size
 	$apix=($particle->getStackPixelSizeFromStackId($stackid))*1e10;
 	$boxsz=$stackparams['boxsize'];
-
 	// stack info
 	$stackparticles = $particle->getNumStackParticles($stackid);
 	echo ministacksummarytable($stackid);
-	// initial model info
+
+
+	/*
+	** initial model info
+	*/
+	echo "<br/><p><hr/>\n";
+	echo "<h4>Initial model info</h4>\n";
+	echo "<hr/></p>\n";
 	echo modelsummarytable($recon['REF|ApInitialModelData|initialModel']);
 
-	// reconstruction info
+
+	/*
+	** reconstruction info
+	*/
+	echo "<br/><p><hr/>\n";
+	echo "<h4>Reconstruction info</h4>\n";
+	echo "<hr/></p>\n";
 	$syminfo = $particle->getSymInfo($recon['REF|ApSymmetryData|symmetry']);
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
@@ -235,22 +262,21 @@ foreach ($reconRuns as $recon) {
 	$modhtml .= "</tr>\n";
 	$modhtml .= "</table>\n";
 
-	$title = "recon info\n";
 	$reconinfo = array(
-	'id'=>"<A HREF='reconsummary.php?expId=$expId'>$reconrunid</A>",
-	'iteration'=>"<a class='aptitle' href='iterationreport.php?expId=$expId&rId=".$reconrunid."&itr=".$recon['iteration']."')\">$recon[iteration]</a>",
-	'ang incr'=> $recon['ang']."&deg;",
-	'name'=>$recon['name'],
-	'description'=>$recon['description'],
-	'path'=>$recon['path'],
-	'refine package'=>$recon['package'],
-	'symmetry'=>$syminfo['symmetry'].", ".$syminfo['description'],
-	'median euler jump'=>$avgmedjumpstr,
-	'resolution'=>$reshtml,
-	'classes'=>$classhtml,
-	'eulers'=>$eulerhtml,
-	'particles'=>$phtml,
-);
+		'id'=>"<A HREF='reconsummary.php?expId=$expId'>$reconrunid</A>",
+		'iteration'=>"<a class='aptitle' href='iterationreport.php?expId=$expId&rId=".$reconrunid."&itr=".$recon['iteration']."')\">$recon[iteration]</a>",
+		'ang incr'=> $recon['ang']."&deg;",
+		'name'=>$recon['name'],
+		'description'=>$recon['description'],
+		'path'=>$recon['path'],
+		'refine package'=>$recon['package'],
+		'symmetry'=>$syminfo['symmetry'].", ".$syminfo['description'],
+		'median euler jump'=>$avgmedjumpstr,
+		'resolution'=>$reshtml,
+		'classes'=>$classhtml,
+		'eulers'=>$eulerhtml,
+		'particles'=>$phtml,
+	);
 	$particle->displayParameters($title,$reconinfo,array(),$expId);
 	echo $modhtml;
 
@@ -267,7 +293,13 @@ foreach ($reconRuns as $recon) {
 	$dose = round($presetinfo['dose']/1e20);
 	$kvolt = $presetinfo['hightension']/1e3;
 
-	$m = "<h4>Data Collection</h4>\n";
+	/*
+	** Data Collection
+	*/
+	echo "<br/><p><hr/>\n";
+	echo "<h4>Data collection info</h4>\n";
+	echo "<hr/></p>\n";
+
 	$m .= "<table class='tableborder' border='1' width='600'><tr><td>\n";
 	$m .= "Data were acquired using a $scope transmission electron microscope operating at $kvolt&nbsp;kV, \n";
 	$m .= "using a dose of ~".$dose."&nbsp;e-/&Aring;&sup2; and a nominal underfocus ranging from $maxNomDF to $minNomDF&nbsp;&micro;m.\n";
