@@ -382,7 +382,7 @@ class TransformManager(node.Node, TargetTransformer):
 	def reacquire(self, targetdata):
 		oldimage = None
 		targetlist = targetdata['list']
-		tquery = leginondata.AcquisitionImageTargetData(list=targetlist,number=targetdata['number'])
+		tquery = leginondata.AcquisitionImageTargetData(session=self.session, list=targetlist, number=targetdata['number'], type=targetdata['type'])
 		aquery = leginondata.AcquisitionImageData(target=tquery)
 		results = aquery.query(readimages=False, results=1)
 		if len(results) > 0:
