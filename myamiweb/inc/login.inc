@@ -60,6 +60,7 @@ function getLoginUserId() {
 
 function checkProjectAccessPrivilege($projectId) {
 	$userId = getLoginUserId();
+	
 	if ($userId === true || privilege('projects')>=3) return true;
 	if ($userId) {
 		global $dbemauth;
@@ -96,6 +97,17 @@ function checkProjectAdminPrivilege($projectId) {
 
 function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 	$userId = getLoginUserId();
+	
+	if(!$userId){
+		$redirect=$_SERVER['PHP_SELF']."?";
+		
+		foreach($_GET as $key => $value)
+			$redirect .= $key.'='.$value.'&';	
+
+		redirect(BASE_URL.'login.php?ln='.$redirect);
+	    exit;
+	}
+	
 	if ($userId === true || privilege($privilege_type)>=3) return true;
 	if ($userId === true) return true;
 	$pvivilege_level = privilege($privilege_type);
@@ -118,10 +130,13 @@ function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 			."on o.`REF|projects|project` = pe.`projectId` "
 			."where s.`DEF_id` = ".$sessionId." "
 			."and o.`REF|leginondata|UserData|user` = ".$userId;
-				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
-				$r = $dbc->getSQLResult($q);
-		if ((array)$r) return true;
+		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+		$r = $dbc->getSQLResult($q);
+		
+		if ((array)$r) 
+			return true;
 	}
+	
 	redirect(BASE_URL.'accessdeny.php');
 	return false;
 }
@@ -152,31 +167,31 @@ function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
 function login_header($title="", $javascript="", $onload="") {
 	global $_SERVER;
 	if (ENABLE_LOGIN) {
-	global $dbemauth;
+		global $dbemauth;
+		
+		
+		$redirect=$_SERVER['PHP_SELF']."?";
+		
+		foreach($_GET as $key => $value)
+			$redirect .= $key.'='.$value.'&';
+		
+		$authorized_files=array(BASE_URL.'login.php', 'lostpass.php', 'register.php', 'confirm.php');
 	
-	
-	$redirect=$_SERVER['PHP_SELF']."?";
-	
-	foreach($_GET as $key => $value)
-		$redirect .= $key.'='.$value.'&';
-	
-	$authorized_files=array(BASE_URL.'login.php', 'lostpass.php', 'register.php', 'confirm.php');
+		if (!ereg(implode("|", $authorized_files), $_SERVER['PHP_SELF'])) {
+	    	if (!$login_check = $dbemauth->is_logged()) {
+	      		redirect(BASE_URL.'login.php?ln='.$redirect);
+	      		exit;     
+			}
+	  	}else{
+	  		if($login_check = $dbemauth->is_logged()){
+	  			redirect(BASE_URL);
+	  			exit;	
+	  		}  		
+  		}
 
-	if (!ereg(implode("|", $authorized_files), $_SERVER['PHP_SELF'])) {
-    	if (!$login_check = $dbemauth->is_logged()) {
-      		redirect(BASE_URL.'login.php?ln='.$redirect);
-      		exit;     
-		}
-  	}else{
-  		if($login_check = $dbemauth->is_logged()){
-  			redirect(BASE_URL);
-  			exit;	
-  		}  		
-  	}
-
-	$login_check = $dbemauth->is_logged();
-	$username = $login_check[0];
-	$privilege = $login_check[2];
+		$login_check = $dbemauth->is_logged();
+		$username = $login_check[0];
+		$privilege = $login_check[2];
 	}
 	$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
 	$path = getPathFromString($_SERVER['SCRIPT_NAME']);
@@ -201,7 +216,7 @@ function login_header($title="", $javascript="", $onload="") {
 	</head>
 	<body '.$onload.' >
 ';
-echo '<a class="header" href="'.BASE_URL.'index.php">[Home]</a>';	
+echo '<a class="header" href="'.BASE_URL.'index.php">[HOME]</a>';	
 if (ENABLE_LOGIN) {
 	if ($username) {
 		echo '<a class="header" href="'.BASE_URL.'logout.php">[Logout '.$username.']</a>';
