@@ -525,7 +525,7 @@ class PickerApp(wx.App):
 			### this will probably never happen since mouse does not let you click same point twice
 			apDisplay.printWarning("points have zero distance")
 			return
-		stepsize = helicalstep/pixeldistance*apix
+		stepsize = helicalstep/(pixeldistance*apix)
 		### parameterization of a line btw points (x1,y1) and (x2,y2):
 		# x = (1 - t)*x1 + t*x2,
 		# y = (1 - t)*y1 + t*y2,
