@@ -537,13 +537,14 @@ if (is_numeric($expId)) {
 		$emanreconresults[] = ($ejrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=removeJumpers'>$ejrun reclassifying</a>";
 
 		// check for how many FREALIGN reconstructions are upload / ready to upload / ready to run / running / queued
-		$frealigndone = count($particle->getReconIdsFromSession($sessionId, false, 'frealign'));
+		$frealignruns = $particle->getReconIdsFromSession($sessionId, false, 'frealign');
+		$frealigndone = ($frealignruns) ? count($frealignruns) : 0;
 
 		$prepfrealignqueue = count($subclusterjobs['prepfrealign']['queued']);
 		$prepfrealignrun = count($subclusterjobs['prepfrealign']['running']);
 		//$prepfrealigndone = count($subclusterjobs['prepfrealign']['done']);
 		$prepfrealignruns = $particle->getPreparedFrealignJobs(false, false, false);
-		$prepfrealigndone = count($prepfrealignruns);
+		$prepfrealigndone = ($prepfrealignruns) ? count($prepfrealignruns) : 0;
 		$runfrealignqueue = count($subclusterjobs['runfrealign']['queued']);
 		$runfrealignrun = count($subclusterjobs['runfrealign']['running']);
 		$runfrealigndone = count($subclusterjobs['runfrealign']['done']);
