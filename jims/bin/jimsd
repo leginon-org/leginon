@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+
+import jims.server
+
+host = ''
+port = 55123
+jims.server.start_server(host, port)
