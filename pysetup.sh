@@ -34,14 +34,14 @@ logfile=$myamidir/pysetup.log
 # clutter up /usr/bin/
 #
 packages=(
-	appion/radermacher
 	imageviewer
 	leginon
-	libcv
-	numextension
 	pyami
 	pyscope
 	sinedon
+	modules/radermacher
+	modules/libcv
+	modules/numextension
 )
 
 #
