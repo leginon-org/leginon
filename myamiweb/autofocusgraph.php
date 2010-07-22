@@ -21,6 +21,9 @@ $data3 = $leginondata->getFocusResultData($sessionId, 'both','all','bad');
 $data2 = $leginondata->getFocusResultData($sessionId, 'Stage Z','all','ok');
 $data1 = $leginondata->getFocusResultData($sessionId, 'both','all','ok');
 
+if(empty($data3) || empty($data2) || empty($data1))
+	exit();
+
 if ($viewsql) {
 	$sql = $leginondata->mysql->getSQLQuery();
 	echo $sql;
@@ -137,5 +140,7 @@ if (!$data1x && !$data1y) {
 	}
 	$source = $graph->Stroke(_IMG_HANDLER);
 }
+
 resample($source, $width, $height);
+
 ?>
