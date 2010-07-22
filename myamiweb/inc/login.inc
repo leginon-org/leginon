@@ -201,6 +201,7 @@ function login_header($title="", $javascript="", $onload="") {
 	</head>
 	<body '.$onload.' >
 ';
+echo '<a class="header" href="'.BASE_URL.'index.php">[Home]</a>';	
 if (ENABLE_LOGIN) {
 	if ($username) {
 		echo '<a class="header" href="'.BASE_URL.'logout.php">[Logout '.$username.']</a>';

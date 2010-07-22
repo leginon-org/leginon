@@ -9,6 +9,9 @@
 
 require "inc/leginon.inc";
 require "inc/project.inc";
+
+login_header(PROJECT_TITLE);
+
 if (defined('PROCESSING')) {
 	$ptcl = (@require "inc/particledata.inc") ? true : false;
 }
@@ -31,10 +34,6 @@ if($projectdb) {
 
 
 ?>
-<html>
-<head>
-<title><?=$title; ?> summary</title>
-<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <STYLE type="text/css">
 DIV.comment_section { text-align: justify; 
 		margin-top: 5px;
@@ -446,5 +445,6 @@ else {
 </td>
 </tr>
 </table>
-</body>
-</html>
+<?php
+login_footer();
+?>
