@@ -559,7 +559,7 @@ function runMakestack() {
 				break;
 			elseif ($box > $binnedbox) {
 				$bigbox = $box*$bin;
-				createMakestackForm("<b>ERROR:</b> Bad prime number in boxsize, try using $smallbox or $bigbox instead");
+				createMakestackForm("<b>ERROR:</b> Bad prime number in boxsize, try using $smallbox or $bigbox instead or check 'override box size' to force");
 				exit;
 			}
 			$smallbox = $box*$bin;
