@@ -354,6 +354,7 @@ def getXversion():
 	for line in proc.stderr:
 		if re.match("Build ID:", line):
 			sline = re.sub("Build ID:", "", line).strip()
+			sline = re.sub("xorg-x11-server", "", sline).strip()
 			m = re.search("\s*([0-9\.]+)", sline)
 			if m:
 				version = m.groups()[0]
@@ -482,6 +483,7 @@ def getRgbFile(msg=True):
 		"/usr/X11R6/lib/X11/rgb",
 	]
 	xversion = getXversion()
+	print "X version", xversion
 	if xversion is None or xversion > 1.0109:
 		return " "
 	for rgbfile in filelist:
