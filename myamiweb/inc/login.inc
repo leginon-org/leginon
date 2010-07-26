@@ -11,9 +11,7 @@ require_once "config.php";
 require_once "inc/util.inc";
 require_once "inc/mysql.inc";
 
-if (ENABLE_LOGIN) {
-	require_once "inc/dbemauth.php";
-}
+require_once "inc/dbemauth.php";
 
 function privilege($type='') {
 	global $dbemauth;
