@@ -9,6 +9,10 @@
 
 require "inc/admin.inc";
 
+$is_admin = (privilege('groups')>3);
+if (privilege('groups') < 2)
+	redirect(BASE_URL.'accessdeny.php?text=You do not have the privilege to view this');
+
 $sqlhosts = $SQL_HOSTS;
 $hostkeys = array_keys($sqlhosts);
 $applicationId = $_POST[applicationId];
@@ -46,8 +50,13 @@ if ($_POST[bt_import]) {
 }
 
 admin_header();
+if ($is_admin) {
+	$title = "Import/Export";
+} else {
+	$title = "Export";
+}
 ?>
-<h3>Applications Import/Export</h3>
+<h3>Applications <?php echo $title?></h3>
 <form name="data" method="POST" enctype="multipart/form-data" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 <table border=0 class=tableborder>
 <tr valign=top >
@@ -121,6 +130,7 @@ From Host:
   </td>
   <td class=tablebg width=1>
   </td>
+<?php if ($is_admin) { ?>
   <td>
    <table border=0>
     <tr>
@@ -158,6 +168,7 @@ From Host:
     </tr>
    </table>
   </td>
+<?php } ?>
  </tr>
 </table>
 

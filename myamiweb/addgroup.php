@@ -3,6 +3,9 @@
 require "inc/admin.inc";
 
 $login_check = $dbemauth->is_logged();
+$is_admin = (privilege('groups')>3);
+if (!$is_admin)
+	redirect(BASE_URL.'accessdeny.php?text=You do not have administrator privilege');
 
 $f_sel_name=$_POST['f_sel_name'];
 $f_name=$_POST['f_name'];
@@ -150,7 +153,7 @@ privilege:<font color="red">*</font>
 <tr>
 <td>
 <?
-if (privilege('groups') > 3) {
+if ($is_admin) {
 echo ' 
 	<input type="hidden" name="bt_action" value = "" >
 	<input type="button" name="save" value = "Save" onClick="confirm_update();" >

@@ -8,6 +8,8 @@ admin_header('onload="init()"');
 
 $login_check = $dbemauth->is_logged();
 $is_admin = (privilege('users')>3);
+if (!$is_admin)
+	redirect(BASE_URL.'accessdeny.php?text=You do not have administrator privilege');
 
 $userId = $_GET['userId'];
 $groups = $leginondata->getGroups('name');

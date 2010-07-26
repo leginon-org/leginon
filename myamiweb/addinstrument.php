@@ -2,6 +2,9 @@
 
 require "inc/admin.inc";
 $login_check = $dbemauth->is_logged();
+$is_admin = (privilege('groups')>3);
+if (privilege('groups') < 2)
+	redirect(BASE_URL.'accessdeny.php?text=You do not have the privilege to view this');
 
 $hostkeys = array_keys($SQL_HOSTS);
 $hostId = ($_POST[hostId]) ? $_POST[hostId] : current($hostkeys);
