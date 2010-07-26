@@ -322,6 +322,12 @@ class CorrectorClient(cameraclient.CameraClient):
 						image[:,bad] = image[:,good]
 
 	def storeCorrectorImageData(self, imarray, type, scopedata, cameradata, channel):
+		# check for bad shape
+		shape = imarray.shape
+		dim = cameradata['dimension']
+		if dim['x'] != shape[1] or dim['y'] != shape[0]:
+			raise RuntimeError('%s: bad array shape: %s' % (type, shape,))
+
 		## store in database
 		if type == 'dark':
 			refdata = leginondata.DarkImageData()
