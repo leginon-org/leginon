@@ -174,26 +174,12 @@ def center_mask(a, mask_radius):
 	circ = filled_circle(cs_shape,mask_radius)
 	center_square[:] = center_square * circ.astype(center_square.dtype)
 
-def swap_row_halves(a):
-	rows,cols = a.shape
-	b = numpy.zeros(a.shape, a.dtype)
-	b[:rows/2] = a[-(rows/2):]
-	b[rows/2:] = a[:-(rows/2)]
-	return b
-
-swap = swap_row_halves
-
-def swap_col_halves(a):
-	rows,cols = a.shape
-	b = numpy.zeros(a.shape, a.dtype)
-	b[:,:cols/2] = a[:,-(cols/2):]
-	b[:,cols/2:] = a[:,:-(cols/2)]
-	return b
-
 def swap_quadrants(a):
-	b = swap_row_halves(a)
-	b = swap_col_halves(b)
-	return b
+	shift0 = a.shape[0]/2
+	shift1 = a.shape[1]/2
+	a = numpy.roll(a, shift0, 0)
+	a = numpy.roll(a, shift1, 1)
+	return a
 
 def pad(im, value=None):
 	# maybe use numpy.concatenate instead?
