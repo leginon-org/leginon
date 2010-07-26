@@ -7,7 +7,7 @@
 #
 import calibrator
 import event, leginondata
-from pyami import fftengine, correlator, peakfinder
+from pyami import correlator, peakfinder
 import sys
 import time
 import calibrationclient
