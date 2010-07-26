@@ -9,6 +9,8 @@
 
 require "inc/admin.inc";
 
+$login_check = $dbemauth->is_logged();
+
 $instrumenthosts = $leginondata->getInstrumentHosts();
 $validhosts = array();
 foreach($instrumenthosts as $host) {
