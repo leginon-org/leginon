@@ -73,7 +73,9 @@ if __name__ == "__main__":
 	projectdb = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 	for projectid in projectids:
 		appiondbname = apProject.getAppionDBFromProjectId(projectid, die=False)
-		if not projectdb.databaseExists(appiondbname):
+		if appiondbname is None:
+			continue
+		elif projectdb.databaseExists(appiondbname):
 			print "\033[31merror database %s does not exist\033[0m"%(appiondbname)
 			time.sleep(1)
 			continue
