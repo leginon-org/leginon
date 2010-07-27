@@ -393,14 +393,28 @@ def upgradeLeginonDB(leginondb, backup=True):
 	#===================
 	# leginon table
 	#===================
-	leginondb.renameTable('viewer_pref_image', 'ViewerImageStatus', updaterefs=False)
-	leginondb.renameColumn('ViewerImageStatus', 'id', 'DEF_id', projectdb.defid)
-	leginondb.renameColumn('ViewerImageStatus', 'timestamp', 'DEF_timestamp', projectdb.timestamp)
-	leginondb.renameColumn('ViewerImageStatus', 'sessionId', 'REF|SessionData|session', projectdb.link)
-	leginondb.renameColumn('ViewerImageStatus', 'imageId', 'REF|AcquisitionImageData|image', projectdb.link)
-
+	if leginondb.tableExists('viewer_pref_image'):
+		leginondb.renameTable('viewer_pref_image', 'ViewerImageStatus', updaterefs=False)
+		leginondb.renameColumn('ViewerImageStatus', 'id', 'DEF_id', projectdb.defid)
+		leginondb.renameColumn('ViewerImageStatus', 'timestamp', 'DEF_timestamp', projectdb.timestamp)
+		leginondb.renameColumn('ViewerImageStatus', 'sessionId', 'REF|SessionData|session', projectdb.link)
+		leginondb.renameColumn('ViewerImageStatus', 'imageId', 'REF|AcquisitionImageData|image', projectdb.link)
+	else: 
+		updateq = """CREATE TABLE IF NOT EXISTS ViewerImageStatus(
+`DEF_id` INT( 11 ) NOT NULL AUTO_INCREMENT ,
+`DEF_timestamp` TIMESTAMP NOT NULL ,
+`REF|SessionData|session` INT( 11 ) NULL ,
+`REF|AcquisitionImageData|image` INT( 11 ) NULL ,
+`status` ENUM( 'hidden', 'visible', 'exemplar' ) NULL ,
+PRIMARY KEY ( `DEF_id` ) ,
+KEY `DEF_timestamp` ( `DEF_timestamp` ) ,
+KEY `REF|SessionData|session` ( `REF|SessionData|session` ) ,
+KEY `REF|AcquisitionImageData|image` ( `REF|AcquisitionImageData|image` ) ,
+KEY `status` ( `status` )
+);
+"""
+		leginondb.executeCustomSQL(updateq)
 	leginondb.changeColumnDefinition('PresetData', 'exposure time', leginondb.float)
-
 #===================
 #===================
 # MAIN PROGRAM
@@ -415,8 +429,8 @@ if __name__ == "__main__":
 		backup = False
 	else:
 		backup = True
-	upgradeProjectDB(projectdb,backup=backup)
 	upgradeLeginonDB(leginondb,backup=backup)
+	upgradeProjectDB(projectdb,backup=backup)
 
 	appiondblist = getAppionDatabases(projectdb)
 	for appiondbname in appiondblist:
