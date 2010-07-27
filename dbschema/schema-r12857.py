@@ -206,7 +206,19 @@ if __name__ == "__main__":
 		adminprivid = adminpriv[0].dbid
 		q = leginondata.UserData(username='administrator')
 		adminuser = q.query(results=1)
-		admingroupid = adminuser[0]['group'].dbid
+		adminuser = adminuser[0]
+		# some old databases have no group assigned to users
+		if adminuser['group'] is not None:
+			admingroupid = adminuser['group'].dbid
+		else:
+			qgroup = leginondata.GroupData()
+			admingroup = qgroup.query()
+			if len(admingroup) > 0:
+				admingroupid = admingroup[-1].dbid
+			else:
+				qgroup['name'] = 'administrators'
+				qgroup.insert()
+				admingroupid = qgroup.dbid
 		if adminprivid and admingroupid:	
 			updateq = (" UPDATE GroupData "
 					+" SET GroupData.`REF|projectdata|privileges|privilege`= %d"
@@ -252,6 +264,7 @@ if __name__ == "__main__":
 				updateq = (" UPDATE UserData "
 					+" SET UserData.`REF|GroupData|group`= %d" %(usergroupid,)
 					+" WHERE UserData.`REF|GroupData|group` IS NULL "
+					+" OR UserData.`REF|GroupData|group`=0 "
 					)
 	
 				leginondb.executeCustomSQL(updateq)
