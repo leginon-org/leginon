@@ -24,15 +24,17 @@ def equallySloped(n):
 	return angles
 
 def cosineSloped(max,n):
+	if n < 2 or max < math.radians(0.02):
+		raise ValueError
 	bestscale = 1
-	for step in (0.1,0.01,0.001,0.0001):
+	for step in (0.1,0.01,0.001,0.0001,0.00001):
 		scales = map((lambda x: bestscale - 10*step + x*step), range(0,10))
 		for scale in scales:
 			tilts=[0.0]
 			for i in range(1,n):
 				tilt = tilts[i-1]+scale*math.cos(tilts[i-1])
 				tilts.append(tilt)
-			if tilts[-1] >= max:
+			if tilts[-1] > max:
 				break
 		bestscale = scale
 	negatives = map((lambda x: -x),tilts)
@@ -105,19 +107,19 @@ class Tilts(object):
 				raise ValueError('start angle out of range')
 	
 			tilts = cosineSloped(max(abs(self.max),abs(self.min)),self.n)
-			#tilts = equallySloped(self.n)
 			tilts.sort()
-	
-			while tilts[0] < self.min:
+
+			tolerance = math.radians(0.01)
+			while tilts[0] < self.min-tolerance:
 				if not tilts:
 					raise ValueError('no angles from parameters specified')
 				tilts.pop(0)
 	
-			while tilts[-1] > self.max:
+			while tilts[-1] > self.max+tolerance:
 				if not tilts:
 					raise ValueError('no angles from parameters specified')
 				tilts.pop(-1)
-	
+
 			d = [abs(tilt - self.start) for tilt in tilts]
 			index = d.index(min(d))
 	
@@ -175,7 +177,7 @@ if __name__ == '__main__':
 	for ts in tilts.getTilts():
 		print ' '
 		for t in ts:
-			print math.degrees(t)
+			print '%.1f' % math.degrees(t)
 	#tilts.update(equally_sloped=True)
 	#print sum([len(t) for t in tilts.getTilts()])
 	#print tilts.getTilts()
