@@ -1,18 +1,28 @@
 #!/usr/bin/env python
 
 '''
-This module defines FFT and inverse FFT functions for 2-D numpy arrays.
-It will use fftw3 if available, otherwise it will use scipy.fftpack.
-
 The two public functions are "transform" and "itransform", with the following
 usage:
 	fft_array = transform(image_array, full=False, centered=False)
 	image_array = itransform(fft_array)
+
+This module defines FFT and inverse FFT functions for 2-D numpy arrays.
+It will use fftw3 if available, otherwise it will use scipy.fftpack.
+
+The fftw3 python wrapper is available here:
+	https://launchpad.net/pyfftw
+Installation note for CentOS:  the python fftw3 wrapper requires the
+following packages:  fftw3, fftw3-devel, python-ctypes
+I had problems when getting these packages from rpmforge, but the ones from
+epel worked fine.
 '''
 
 import numpy
 import os
 import platform
+
+import pyami.quietscipy
+import pyami.version
 
 debug = True
 #force_package = 'fftpack'
@@ -50,7 +60,17 @@ if debug:
 
 if using == 'fftw3':
 	plan_flags = ['measure']
-	plan_threads = 1
+	plan_threads = 4  # 4 seems best on both dual core and quad core systems
+
+	def local_wisdom_filename():
+		path = pyami.version.getInstalledLocation()
+		hostname = platform.node()
+		filename = os.path.join(path, 'wisdom', hostname)
+		return filename
+
+	def export_local_wisdom():
+		filename = local_wisdom_filename()
+		fftw3.export_wisdom_to_file(filename)
 
 	#### Try to import wisdom from various locations
 	wisdom_found = []
@@ -61,18 +81,19 @@ if using == 'fftw3':
 	except:
 		pass
 	## We also look for our own wisdom locally
-	path = pyami.version.getInstalledLocation()
-	hostname = platform.node()
-	local_wisdom_file = os.path.join(path, 'wisdom', hostname)
+	local_wisdom_file = local_wisdom_filename()
 	try:
 		fftw3.import_wisdom_from_file(local_wisdom_file)
 		wisdom_found.append(local_wisdom_file)
 	except:
 		pass
-	if debug and wisdom_found:
-		print 'fftw wisdom found:'
-		for name in wisdom_found:
-			print '  %s' % (name,)
+	if debug:
+		if wisdom_found:
+			print 'fftw wisdom found:'
+			for name in wisdom_found:
+				print '  %s' % (name,)
+		else:
+			print 'no wisdom found'
 
 	def make_full(fft_array):
 		fftheight, fftwidth = fft_array.shape
@@ -94,7 +115,6 @@ if using == 'fftw3':
 		input_array = numpy.zeros(image_array.shape, numpy.float)
 		fftshape = image_array.shape[0], image_array.shape[1]/2+1
 		fft_array = numpy.zeros(fftshape, dtype=complex)
-		#plan = fftw3.Plan(input_array, fft_array, direction='forward', flags=['measure'], nthreads=4)
 		plan = fftw3.Plan(input_array, fft_array, direction='forward', flags=plan_flags, nthreads=plan_threads)
 		input_array[:] = image_array
 		plan()
@@ -150,11 +170,27 @@ def power(image_array):
 	pow = make_full(pow)
 	return pow
 
-if __name__ == '__main__':
+def test1():
 	import mrc
 	import time
 	a = mrc.read('4k.mrc')
+	print 'DTYPE', a.dtype
 	for i in range(5):
 		t0 = time.time()
 		transform(a)
 		print 'time', time.time()-t0
+
+def test2():
+	import fftw3
+	import numpy
+	input = numpy.zeros((4,4), dtype=float)
+	output = numpy.zeros((4,3), dtype=complex)
+	#plan = fftw3.Plan(input, output, direction='forward', flags=['measure'])
+	plan = fftw3.Plan(output, input, direction='forward', flags=['measure'])
+
+	a = numpy.random.normal(100, 10, (4,4))
+
+if __name__ == '__main__':
+	test1()
+	#test2()
+	export_local_wisdom()
