@@ -23,7 +23,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		leginon.gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = SettingsDialog
 
-		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.EllipseTargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTypeTool('templateA', display=True, settings=True)
@@ -34,6 +34,8 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True, numbers=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
+
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(1)
@@ -69,6 +71,8 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
+	def onEllipseFound(self, evt):
+		threading.Thread(target=self.node.autoEllipseCenter, args=(evt.params,)).start()
 
 class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
