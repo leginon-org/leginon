@@ -1,13 +1,23 @@
 import inspect
 import os
 
-def getInstalledLocation():
-	'''where is this module located'''
-	# full path of this module
-	this_file = inspect.currentframe().f_code.co_filename
-	fullmod = os.path.abspath(this_file)
-	# just the directory
-	dirname = os.path.dirname(fullmod)
+def getMyFilename(up=1):
+	'''
+	return the filename of the caller or the caller's caller, etc depending
+	on the "up" argument.  up=1 (default) means the caller.  up=2 means the
+	caller's caller, etc.
+	'''
+	frame_record = inspect.stack()[up]
+	calling_filename = frame_record[1]  # second item of tuple is filename
+	fullname = os.path.abspath(calling_filename)
+	return fullname
+
+def getMyDir(up=1):
+	'''
+	similar to getMyfilename, but get the directory containing the calling file
+	'''
+	myfile = getMyFilename(up=up+1)
+	dirname = os.path.dirname(myfile)
 	return dirname
 
 # Here is a replacement for os.mkdirs that won't complain if dir
