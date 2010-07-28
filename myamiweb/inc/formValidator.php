@@ -355,10 +355,11 @@ class formValidator{
 		
 			$defaultPort = 22;
 		
-			$result = ssh2_connect($validateObj->getVariableValue(), $defaultPort);
+			$result = @ssh2_connect($validateObj->getVariableValue(), $defaultPort);
 		
 			if($result)
 				return true;
+			return false;
 			
 		}
 		
