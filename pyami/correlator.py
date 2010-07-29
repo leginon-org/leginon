@@ -165,7 +165,7 @@ def cross_correlate(im1, im2, pad=False):
 	cor.setImage(1, im1)
 	return cor.crossCorrelate()
 
-def phase_correlate(im1, im2, zero, pad=False, wiener=False):
+def phase_correlate(im1, im2, zero=True, pad=False, wiener=False):
 	cor = Correlator(pad=pad)
 	cor.setImage(0, im2)
 	cor.setImage(1, im1)
