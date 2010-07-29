@@ -271,8 +271,6 @@ class tiltAligner(particleLoop2.ParticleLoop):
 								os.remove(outfile2)
 							os.symlink(os.path.basename(outfile1), outfile2)
 					sys.stderr.write("%")
-				elif self.params['importalign'] is True:
-					self.importPreviousTiltParams(imgdata)
 		apDisplay.printMsg("done")
 		return
 
@@ -287,7 +285,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		return None
 
 	#=======================================
-	def importPreviousTiltParams(self, imgdata, tiltdata):
+	def importPreviousTiltParams(self, imgdata):
 		transformdata = apTiltPair.getBestTiltTransform(imgdata)
 		if transformdata is None:
 			return
