@@ -7,6 +7,8 @@ Subclasses must define:
 	make_half - takes output of _forward and returns half fft
 '''
 
+import numpy
+
 import pyami.weakattr
 
 class Calculator(object):
@@ -20,41 +22,43 @@ class Calculator(object):
 		# should we delete all stashed ffts?
 		self.stashing_on = False
 
-	def stash(self, image_array, fft_array):
-		## prevent modification to both image and fft to ensure
-		## that stashed fft corresponds to image forever
-		image_array.setflags(write=False)
-		fft_array.setflags(write=False)
-		pyami.weakattr.set(image_array, 'fft', fft_array)
+	def stash(self, main, name, associate):
+		## prevent modification to both main and associate to ensure
+		## that they correspond to each other forever
+		if not self.stashing_on:
+			return
+		main.setflags(write=False)
+		associate.setflags(write=False)
+		pyami.weakattr.set(main, name, associate)
 
-	def getStashedFFT(self, image_array):
+	def getStashed(self, main, name):
 		try:
-			f = pyami.weakattr.get(image_array, 'fft')
+			f = pyami.weakattr.get(main, name)
 		except AttributeError:
 			f = None
 		return f
 
-	def unstash(self, image_array):
-		fft_array = self.getStashedFFT(image_array)
-		if fft_array is None:
+	def unstash(self, main, name):
+		associate = self.getStashed(main, name)
+		if associate is None:
 			# already unstashed
 			return
 		## no longer associated with each other, so make them writable
-		image_array.setflags(write=True)
-		fft_array.setflags(write=True)
-		pyami.weakattr.set(image_array, 'fft', None)
+		main.setflags(write=True)
+		associate.setflags(write=True)
+		pyami.weakattr.set(main, 'fft', None)
 
-	def forward_if_necessary(self, image_array):
+	def forward_raw(self, image_array):
 		## check if fft already associated with this image array
-		f = self.getStashedFFT(image_array)
+		f = self.getStashed(image_array, 'fft')
 		if f is None:
+			print 'REALLY DOING IT'
 			f = self._forward(image_array)
-			if self.stashing_on:
-				self.stash(image_array, f)
+			self.stash(image_array, 'fft', f)
 		return f
 
 	def forward(self, image_array, full=False, centered=False):
-		fft_array = self.forward_if_necessary(image_array)
+		fft_array = self.forward_raw(image_array)
 		fft_array = self.post_fft(fft_array, full, centered)
 		return fft_array
 
@@ -71,7 +75,7 @@ class Calculator(object):
 			fft_array = self.make_half(fft_array)
 		return fft_array
 
-	def _calc_power(self, fft_array):
+	def OLD_calc_power(self, fft_array):
 		pow = numpy.absolute(fft_array)
 		try:
 			pow = numpy.log(pow)
@@ -79,9 +83,16 @@ class Calculator(object):
 			pow = numpy.log(pow+1e-20)
 		return pow
 
+	def _calc_power(self, fft_array):
+		pow = numpy.absolute(fft_array)
+		return pow
+
 	def power(self, image_array, full=False, centered=False):
-		fft_array = self.forward_if_necessary(image_array)
-		pow = self._calc_power(fft_array)
+		fft_array = self.forward_raw(image_array)
+		pow = self.getStashed(fft_array, 'power')
+		if pow is None:
+			pow = self._calc_power(fft_array)
+			self.stash(fft_array, 'power', pow)
 		pow = self.post_fft(pow, full, centered)
 		return pow
 
