@@ -22,6 +22,14 @@ def getMyDir(up=1):
 	dirname = os.path.dirname(myfile)
 	return dirname
 
+def getMyLineno(up=1):
+	'''
+	similar to getMyfilename, but get the line number the calling file
+	'''
+	frame_record = inspect.stack()[up]
+	calling_lineno = frame_record[2]  # third item of tuple is lineno
+	return calling_lineno
+
 # Here is a replacement for os.mkdirs that won't complain if dir
 # already exists (from Python Cookbook, Recipe 4.17)
 def mkdirs(newdir):
