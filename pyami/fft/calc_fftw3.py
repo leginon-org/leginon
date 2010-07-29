@@ -7,8 +7,14 @@ import platform
 import fftw3
 import numpy
 
-import pyami.fileutil
 import calc_base
+
+import pyami.fileutil
+
+## set up where to find local wisdom.  Under this directory, there will
+## be a wisdom file named after the host.
+mydir = pyami.fileutil.getMyDir()
+local_wisdom_path = os.path.join(mydir, 'wisdom')
 
 class FFTW3Calculator(calc_base.Calculator):
 	def __init__(self):
@@ -18,37 +24,41 @@ class FFTW3Calculator(calc_base.Calculator):
 		self.import_wisdom()
 
 	def local_wisdom_filename(self):
-		path = pyami.fileutil.getMyDir()
 		hostname = platform.node()
-		filename = os.path.join(path, 'wisdom', hostname)
+		filename = os.path.join(local_wisdom_path, hostname)
 		return filename
 
 	def export_local_wisdom(self):
 		filename = self.local_wisdom_filename()
+		if os.path.exists(filename):
+			os.remove(filename)
 		dir = os.path.dirname(filename)
 		pyami.fileutil.mkdirs(dir)
 		fftw3.export_wisdom_to_file(filename)
 
-	def import_wisdom(self):
-		#### Try to import wisdom from various locations
-		wisdom_found = []
-		## system wisdom is normally kept in /etc/fftw/wisdom
-		try:
-			fftw3.import_system_wisdom()
-			wisdom_found.append('system')
-		except:
-			pass
-		## We also look for our own wisdom locally
+	def import_local_wisdom(self):
 		local_wisdom_file = self.local_wisdom_filename()
 		try:
 			fftw3.import_wisdom_from_file(local_wisdom_file)
-			wisdom_found.append(local_wisdom_file)
+			self.wisdom_found.append(local_wisdom_file)
 		except:
 			pass
+
+	def import_wisdom(self):
+		self.wisdom_found = []
+		#### Try to import wisdom from various locations
+		## system wisdom is normally kept in /etc/fftw/wisdom
+		try:
+			fftw3.import_system_wisdom()
+			self.wisdom_found.append('system')
+		except:
+			pass
+		## We also look for our own wisdom locally
+		self.import_local_wisdom()
 		if debug:
-			if wisdom_found:
+			if self.wisdom_found:
 				print 'fftw wisdom found:'
-				for name in wisdom_found:
+				for name in self.wisdom_found:
 					print '  %s' % (name,)
 			else:
 				print 'no wisdom found'
@@ -69,11 +79,20 @@ class FFTW3Calculator(calc_base.Calculator):
 	def make_half(self, fft_array):
 		return fft_array
 
+	def plan(self, *args, **kwargs):
+		'''wrapper around fftw3.Plan, so we can track changes in wisdom'''
+		wisdom_before = fftw3.export_wisdom_to_string()
+		plan = fftw3.Plan(*args, **kwargs)
+		wisdom_after = fftw3.export_wisdom_to_string()
+		if len(wisdom_before) != len(wisdom_after):
+			self.export_local_wisdom()
+		return plan
+
 	def _forward(self, image_array):
 		input_array = numpy.zeros(image_array.shape, numpy.float)
 		fftshape = image_array.shape[0], image_array.shape[1]/2+1
 		fft_array = numpy.zeros(fftshape, dtype=complex)
-		plan = fftw3.Plan(input_array, fft_array, direction='forward', flags=self.plan_flags, nthreads=self.plan_threads)
+		plan = self.plan(input_array, fft_array, direction='forward', flags=self.plan_flags, nthreads=self.plan_threads)
 		input_array[:] = image_array
 		plan()
 		return fft_array
@@ -82,7 +101,7 @@ class FFTW3Calculator(calc_base.Calculator):
 		imageshape = fft_array.shape[0], 2*(fft_array.shape[1]-1)
 		image_array = numpy.zeros(imageshape, dtype=float32)
 		input_array = numpy.zeros(fft_array.shape, dtype=complex)
-		plan = fftw3.Plan(input_array, image_array, direction='backward', flags=self.plan_flags, nthreads=self.plan_threads)
+		plan = self.plan(input_array, image_array, direction='backward', flags=self.plan_flags, nthreads=self.plan_threads)
 		input_array[:] = fft_array
 		plan()
 		return image_array
