@@ -749,7 +749,7 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 
-		if self.data['optimrun'] is False:
+		if False and self.data['optimrun'] is False:
 			self.statbar.PushStatusText("ERROR: Cannot mask images. No alignment parameters.", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot mask images.\nNo alignment parameters.",\
 				'Error', wx.OK|wx.ICON_ERROR)
@@ -876,7 +876,7 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
-		if self.data['optimrun'] is False:
+		if False and self.data['optimrun'] is False:
 			self.statbar.PushStatusText("ERROR: Cannot transfer picks. No alignment parameters.", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot transfer picks.\nNo alignment parameters.",\
 				'Error', wx.OK|wx.ICON_ERROR)
