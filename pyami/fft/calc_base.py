@@ -51,8 +51,7 @@ class Calculator(object):
 			f = self._forward(image_array)
 			if self.stashing_on:
 				self.stash(image_array, f)
-		else:
-			return f
+		return f
 
 	def forward(self, image_array, full=False, centered=False):
 		fft_array = self.forward_if_necessary(image_array)
