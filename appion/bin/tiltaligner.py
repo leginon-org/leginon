@@ -60,6 +60,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 			help="selection run ids for previous automated picking run", metavar="#,#,#")
 		self.parser.add_option("--no-autopick", dest="autopick", default=True,
 			action="store_false", help="Do NOT auto pick images")
+		self.parser.add_option("--import-align", dest="importalign", default=False,
+			action="store_true", help="Import previous tiltpicker alignment parameters")
 
 	#=======================================
 	def checkConflicts(self):
@@ -259,15 +261,18 @@ class tiltAligner(particleLoop2.ParticleLoop):
 				tiltdiff = abs(tilt2) - abs(tilt1)
 				tiltaxis = -7.2
 				### run tilt automation
-				if len(picks1) > 0 and len(picks2) > 0 and self.params['autopick'] is True:
-					autotilter = autotilt.autoTilt()
-					result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2,
-						tiltdiff, outfile1, pixdiam, tiltaxis, msg=False)
-					if os.path.isfile(outfile1):
-						if os.path.exists(outfile2):
-							os.remove(outfile2)
-						os.symlink(os.path.basename(outfile1), outfile2)
-				sys.stderr.write("%")
+				if self.params['autopick'] is True and self.params['importalign'] is False:
+					if len(picks1) > 0 and len(picks2) > 0:
+						autotilter = autotilt.autoTilt()
+						result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2,
+							tiltdiff, outfile1, pixdiam, tiltaxis, msg=False)
+						if os.path.isfile(outfile1):
+							if os.path.exists(outfile2):
+								os.remove(outfile2)
+							os.symlink(os.path.basename(outfile1), outfile2)
+					sys.stderr.write("%")
+				elif self.params['importalign'] is True:
+					self.importPreviousTiltParams(imgdata)
 		apDisplay.printMsg("done")
 		return
 
@@ -280,6 +285,30 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		if ass1 is True and ass2 is True:
 			return True
 		return None
+
+	#=======================================
+	def importPreviousTiltParams(self, imgdata, tiltdata):
+		transformdata = apTiltPair.getBestTiltTransform(imgdata)
+		if transformdata is None:
+			return
+		if transformdata['scale_factor'] <= 0:
+			return
+		if imgdata.dbid == transformdata['image1'].dbid:
+			### case 1: old image1 is on the left
+			self.app.data['theta'] = transformdata['tilt_angle']
+			self.app.data['gamma'] = transformdata['image1_rotation']
+			self.app.data['phi'] = transformdata['image2_rotation']
+			self.app.data['scale'] = transformdata['scale_factor']
+			self.app.data['point1'] = (transformdata['image1_x'], transformdata['image1_y'])
+			self.app.data['point2'] = (transformdata['image2_x'], transformdata['image2_y'])
+		else:
+			### case 2: old image1 is on the right (everything flips)
+			self.app.data['theta'] = -1.0*transformdata['tilt_angle']
+			self.app.data['gamma'] = transformdata['image2_rotation']
+			self.app.data['phi'] = transformdata['image1_rotation']
+			self.app.data['scale'] = 1.0/transformdata['scale_factor']
+			self.app.data['point1'] = (transformdata['image2_x'], transformdata['image2_y'])
+			self.app.data['point2'] = (transformdata['image1_x'], transformdata['image1_y'])
 
 	#=======================================
 	def runTiltAligner(self, imgdata, tiltdata):
@@ -325,9 +354,12 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		#guess the shift
 		outfile = self.app.data['outfile']
 		if not os.path.exists(outfile):
-			apDisplay.printMsg("Autopicking image")
-			if len(self.app.picks1) > 0 and len(self.app.picks2) > 0 and self.params['autopick'] is True:
-				self.app.onGuessShift(None)
+			if self.params['autopick'] is True and self.params['importalign'] is False:
+				if len(self.app.picks1) > 0 and len(self.app.picks2) > 0:
+					apDisplay.printMsg("Autopicking image")
+					self.app.onGuessShift(None)
+			elif self.params['importalign'] is True:
+				self.importPreviousTiltParams(imgdata)
 		else:
 			self.app.readData(outfile)
 			self.app.onAutoOptim(None)

@@ -16,6 +16,12 @@ from appionlib.apTilt import apTiltTransform
 import sinedon
 import MySQLdb
 
+####
+# This is a database connections file with no file functions
+# Please keep it this way
+####
+
+
 """
 Denis's query
 $q="select "
@@ -92,6 +98,47 @@ def tiltPickerToDbNames(tiltparams):
 	if 'overlap' in tiltparams:
 		newdict['overlap'] = tiltparams['overlap']
 	return newdict
+
+#===============================
+def getBestTiltTransform(imgdata):
+	"""
+	For a given image get the best tilt transform 
+	parameters in the database
+	"""
+	transdatas = []
+	## case 1: check if imgdata is image1
+	transq = appiondata.ApImageTiltTransformData()
+	transq['image1'] = imgdata
+	transdatas1 = transq.query()
+	if transdatas1:
+		transdatas.extend(transdatas1)
+	## case 2: check if imgdata is image2
+	transq = appiondata.ApImageTiltTransformData()
+	transq['image2'] = imgdata
+	transdatas2 = transq.query()
+	if transdatas2:
+		transdatas.extend(transdatas2)
+
+	### case 1: no transformation
+	if len(transdatas) == 0:
+		apDisplay.printWarning("no transformation found for image %s"
+			%(apDisplay.short(imgdata['filename'])))
+		return None
+	### case 2: single transformation, no sorting required
+	if len(transdatas) == 1:
+		apDisplay.printMsg("single transformation found with rmsd %.2f for image %s"
+			%(transdatas[0]['rmsd'], apDisplay.short(imgdata['filename'])))
+		return transdatas[0]
+	### case 3: more than one transformation, get one with lowest rmsd
+	besttransdata = transdatas[0]
+	bestrmsd = transdatas[0]['rmsd']
+	for transdata in transdatas:
+		if transdata['rmsd'] > 0 and transdata['rmsd'] < bestrmsd:
+			besttransdata = transdata
+			bestrmsd = transdata['rmsd']
+	apDisplay.printMsg("returning best transformation with rmsd %.2f for image %s"
+		%(bestrmsd, apDisplay.short(imgdata['filename'])))
+	return besttransdata
 
 #===============================
 def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
@@ -327,5 +374,9 @@ def getTransformImageIds(transformdata):
 		apDisplay.printMsg("long image query "+apDisplay.timeString(time.time()-t0))
 	return img1, img2
 
+####
+# This is a database connections file with no file functions
+# Please keep it this way
+####
 
 
