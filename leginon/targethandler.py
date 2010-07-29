@@ -344,6 +344,7 @@ class TargetHandler(object):
 		tquery = leginondata.AcquisitionImageTargetData()
 		tquery['list'] = target['list']
 		tquery['number'] = target['number']
+		tquery['type'] = target['type']
 		mostrecent = tquery.query(results=1)
 		if mostrecent:
 			mostrecent = mostrecent[0]
