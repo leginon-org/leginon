@@ -29,11 +29,27 @@ def test1():
 	import numpy
 	filename = sys.argv[1]
 	a = pyami.mrc.read(filename)
-	a = numpy.asarray(a, numpy.float64)
 	for i in range(5):
 		t0 = time.time()
 		calculator.forward(a)
 		print 'time', time.time()-t0
+	return a
+
+def test2():
+	import pyami.mrc
+	import time
+	import sys
+	import numpy
+	filename = sys.argv[1]
+	a = pyami.mrc.read(filename)
+	for i in range(5):
+		t0 = time.time()
+		calculator.power(a)
+		print 'time', time.time()-t0
+
+
+
 
 if __name__ == '__main__':
-	test1()
+	a = test1()
+	test2()
