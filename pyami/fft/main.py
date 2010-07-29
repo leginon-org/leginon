@@ -29,7 +29,6 @@ def test1():
 	import numpy
 	filename = sys.argv[1]
 	a = pyami.mrc.read(filename)
-	print 'DTYPE', a.dtype
 	a = numpy.asarray(a, numpy.float64)
 	for i in range(5):
 		t0 = time.time()
