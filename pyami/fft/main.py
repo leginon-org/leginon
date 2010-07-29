@@ -35,16 +35,5 @@ def test1():
 		calculator.forward(a)
 		print 'time', time.time()-t0
 
-def test2():
-	import fftw3
-	import numpy
-	input = numpy.zeros((4,4), dtype=float)
-	output = numpy.zeros((4,3), dtype=complex)
-	#plan = fftw3.Plan(input, output, direction='forward', flags=['measure'])
-	plan = fftw3.Plan(output, input, direction='forward', flags=['measure'])
-
-	a = numpy.random.normal(100, 10, (4,4))
-
 if __name__ == '__main__':
 	test1()
-	#test2()
