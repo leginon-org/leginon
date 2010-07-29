@@ -1,5 +1,7 @@
+#!/usr/bin/env python
 import inspect
 import os
+import errno
 
 def getMyFilename(up=1):
 	'''
@@ -31,3 +33,6 @@ def mkdirs(newdir):
 		if err.errno != errno.EEXIST or not os.path.isdir(newdir) and os.path.splitdrive(newdir)[1]:
 			raise
 	os.umask(originalumask)
+
+if __name__ == '__main__':
+	print getMyFilename()
