@@ -97,11 +97,11 @@ class satEulerScript(appionScript.AppionScript):
 				+"  stpart1.particleNumber AS partnum1, \n"
 				+"  stpart1.`DEF_id` AS dbid1, \n"
 				+"  partclass1.`euler1` AS alt1, partclass1.`euler2` AS az1, partclass1.`euler3` AS phi1, \n"
-				+"  partclass1.`mirror` AS mirror1, partclass1.`thrown_out` AS reject1, \n"
+				+"  partclass1.`mirror` AS mirror1, partclass1.`refine_keep` AS reject1, \n"
 				+"  stpart2.particleNumber AS partnum2, \n"
 				+"  stpart2.`DEF_id` AS dbid2, \n"
 				+"  partclass2.`euler1` AS alt2, partclass2.`euler2` AS az2, partclass2.`euler3` AS phi2, \n"
-				+"  partclass2.`mirror` AS mirror2, partclass2.`thrown_out` AS reject2 \n"
+				+"  partclass2.`mirror` AS mirror2, partclass2.`refine_keep` AS reject2 \n"
 				+"FROM `ApTiltParticlePairData` AS tiltd \n"
 				+"LEFT JOIN `ApImageTiltTransformData` as transform \n"
 				+"  ON tiltd.`REF|ApImageTiltTransformData|transform`=transform.`DEF_id` \n"
@@ -168,7 +168,7 @@ class satEulerScript(appionScript.AppionScript):
 				eulerpair['part1']['euler2'] = float(row[3])
 				eulerpair['part1']['euler3'] = float(row[4])
 				eulerpair['part1']['mirror'] = self.nullOrValue(row[5])
-				eulerpair['part1']['reject'] = self.nullOrValue(row[6])
+				eulerpair['part1']['reject'] = not self.nullOrValue(row[6])
 				eulerpair['part1']['tilt']   = apStack.getStackParticleTilt(eulerpair['part1']['dbid'])
 
 				eulerpair['part2']['partid'] = int(row[7])
@@ -177,7 +177,7 @@ class satEulerScript(appionScript.AppionScript):
 				eulerpair['part2']['euler2'] = float(row[10])
 				eulerpair['part2']['euler3'] = float(row[11])
 				eulerpair['part2']['mirror'] = self.nullOrValue(row[12])
-				eulerpair['part2']['reject'] = self.nullOrValue(row[13])
+				eulerpair['part2']['reject'] = not self.nullOrValue(row[13])
 				eulerpair['part2']['tilt']   = apStack.getStackParticleTilt(eulerpair['part2']['dbid'])
 				eulertree.append(eulerpair)
 			except:
@@ -250,7 +250,7 @@ class satEulerScript(appionScript.AppionScript):
 					+"  stpart.`particleNumber` AS partnum, \n"
 					+"  stpart.`DEF_id` AS dbid, \n"
 					+"  partclass.`euler1` AS alt, partclass.`euler2` AS az, partclass.`euler3` AS phi, \n"
-					+"  partclass.`mirror` AS mirror, partclass.`thrown_out` AS reject \n"
+					+"  partclass.`mirror` AS mirror, partclass.`refine_keep` AS reject \n"
 					+"FROM `ApStackParticleData` AS stpart \n"
 					+"LEFT JOIN `ApRefineParticleData` AS partclass \n"
 					+"  ON partclass.`REF|ApStackParticleData|particle` = stpart.`DEF_id` \n"
@@ -275,14 +275,14 @@ class satEulerScript(appionScript.AppionScript):
 			eulerpair['part1']['euler2'] = float(row[3])
 			eulerpair['part1']['euler3'] = float(row[4])
 			eulerpair['part1']['mirror'] = self.nullOrValue(row[5])
-			eulerpair['part1']['reject'] = self.nullOrValue(row[6])
+			eulerpair['part1']['reject'] = not self.nullOrValue(row[6])
 			eulerpair['part1']['tilt']   = apStack.getStackParticleTilt(eulerpair['part1']['dbid'])
 			query = (
 				"SELECT \n"
 					+"  stpart.`particleNumber` AS partnum, \n"
 					+"  stpart.`DEF_id` AS dbid, \n"
 					+"  partclass.`euler1` AS alt, partclass.`euler2` AS az, partclass.`euler3` AS phi, \n"
-					+"  partclass.`mirror` AS mirror, partclass.`thrown_out` AS reject \n"
+					+"  partclass.`mirror` AS mirror, partclass.`refine_keep` AS reject \n"
 					+"FROM `ApStackParticleData` AS stpart \n"
 					+"LEFT JOIN `ApRefineParticleData` AS partclass \n"
 					+"  ON partclass.`REF|ApStackParticleData|particle` = stpart.`DEF_id` \n"
@@ -307,7 +307,7 @@ class satEulerScript(appionScript.AppionScript):
 			eulerpair['part2']['euler2'] = float(row[3])
 			eulerpair['part2']['euler3'] = float(row[4])
 			eulerpair['part2']['mirror'] = self.nullOrValue(row[5])
-			eulerpair['part2']['reject'] = self.nullOrValue(row[6])
+			eulerpair['part2']['reject'] = not self.nullOrValue(row[6])
 			eulerpair['part2']['tilt']   = apStack.getStackParticleTilt(eulerpair['part2']['dbid'])
 			eulertree.append(eulerpair)
 			#end loop
@@ -628,8 +628,9 @@ class satEulerScript(appionScript.AppionScript):
 			+" \n" )
 		print "New satAverage.py Command:"
 		apDisplay.printColor(cmd, "purple")
-		proc = subprocess.Popen(cmd, shell=True)
-		proc.wait()
+		if self.params['sataverage'] is True:
+			proc = subprocess.Popen(cmd, shell=True)
+			proc.communicate()
 		return
 
 	#=====================
@@ -699,6 +700,8 @@ class satEulerScript(appionScript.AppionScript):
 			help="Keep list cut range, default=5.0 ==> 15 +- 5 ==> 10 -- 20", metavar="FLOAT")
 		self.parser.add_option("-a", "--angle", dest="angle", type='float', default=15.0,
 			help="Ideal angle in degrees, default=15.0", metavar="FLOAT")
+		self.parser.add_option("--no-volumes", dest="sataverage", default=True,
+			action="store_false", help="Do NOT generate sat average volumes")
 
 	#=====================
 	def checkConflicts(self):
