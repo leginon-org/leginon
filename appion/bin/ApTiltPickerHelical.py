@@ -1299,7 +1299,7 @@ class PickerApp(wx.App):
 		This function removes all particles worse than a set cutoff value
 		"""
 		### check to see if this request is valid
-		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
+		if (len(self.getArray1()) < 5 or len(self.getArray2()) < 5):
 			dialog = wx.MessageDialog(self.frame,
 				"You should pick at least 5 particle pairs first", 'Error',
 				 wx.OK|wx.ICON_ERROR)
@@ -1325,7 +1325,7 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onFitTheta(self, evt):
-		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
+		if (len(self.getArray1()) < 5 or len(self.getArray2()) < 5):
 			dialog = wx.MessageDialog(self.frame,
 				"You should pick at least 5 particle pairs first", 'Error',
 				 wx.OK|wx.ICON_ERROR)
@@ -1337,8 +1337,8 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onFitAll(self, evt):
-		self.onUpdate(None)
-		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
+		#self.onUpdate(None)
+		if False and (len(self.getArray1()) < 5 or len(self.getArray2()) < 5):
 			dialog = wx.MessageDialog(self.frame,
 				"You should pick at least 5 particle pairs first", 'Error',
 				 wx.OK|wx.ICON_ERROR)
@@ -1350,6 +1350,7 @@ class PickerApp(wx.App):
 				"You should run 'Find Theta' first", 'Error', wx.OK|wx.ICON_WARNING)
 			dialog.ShowModal()
 			dialog.Destroy()
+			return
 
 		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
 		self.fitall_dialog.gammavalue.SetValue(round(self.data['gamma'],4))
@@ -1391,7 +1392,7 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onAutoOptim(self, evt):
-		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
+		if (len(self.getArray1()) < 5 or len(self.getArray2()) < 5):
 			dialog = wx.MessageDialog(self.frame,
 				"You should pick at least 5 particle pairs first", 'Error',
 				 wx.OK|wx.ICON_ERROR)
