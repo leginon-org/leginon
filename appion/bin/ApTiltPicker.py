@@ -648,7 +648,7 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 
-		if self.data['optimrun'] is False:
+		if self.data[''] is False:
 			self.statbar.PushStatusText("ERROR: Cannot mask images. No alignment parameters.", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot mask images.\nNo alignment parameters.",\
 				'Error', wx.OK|wx.ICON_ERROR)
@@ -707,7 +707,7 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 
-		if self.data['optimrun'] is False:
+		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
 			self.statbar.PushStatusText("ERROR: Cannot get overlap. No alignment parameters.", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot get overlap.\nNo alignment parameters.",\
 				'Error', wx.OK|wx.ICON_ERROR)
@@ -735,8 +735,8 @@ class PickerApp(wx.App):
 		a2 = self.getArray2()
 		#CHECK TO SEE IF IT OKAY TO PROCEED
 		if len(a1) == 0 or len(a2) == 0:
-			self.statbar.PushStatusText("ERROR: Cannot transfer picks. There are no picks.", 0)
-			dialog = wx.MessageDialog(self.frame, "Cannot transfer picks.\nThere are no picks.",\
+			self.statbar.PushStatusText("ERROR: Cannot update picks. There are no picks.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot update picks.\nThere are no picks.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -775,7 +775,7 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
-		if self.data['optimrun'] is False:
+		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
 			self.statbar.PushStatusText("ERROR: Cannot transfer picks. No alignment parameters.", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot transfer picks.\nNo alignment parameters.",\
 				'Error', wx.OK|wx.ICON_ERROR)
@@ -1120,7 +1120,7 @@ class PickerApp(wx.App):
 			return False
 
 		### make sure we have alignment
-		if self.data['optimrun'] is False:
+		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
 			self.statbar.PushStatusText("ERROR: Cannot import picks. No alignment parameters.", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot import picks.\nNo alignment parameters.",\
 				'Error', wx.OK|wx.ICON_ERROR)
@@ -1198,7 +1198,7 @@ class PickerApp(wx.App):
 		This function removes all particles worse than a set cutoff value
 		"""
 		### check to see if this request is valid
-		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
+		if (len(self.getArray1()) < 5 or len(self.getArray2()) < 5):
 			dialog = wx.MessageDialog(self.frame,
 				"You should pick at least 5 particle pairs first", 'Error',
 				 wx.OK|wx.ICON_ERROR)
@@ -1224,7 +1224,7 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onFitTheta(self, evt):
-		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
+		if (len(self.getArray1()) < 5 or len(self.getArray2()) < 5):
 			dialog = wx.MessageDialog(self.frame,
 				"You should pick at least 5 particle pairs first", 'Error',
 				 wx.OK|wx.ICON_ERROR)
@@ -1236,8 +1236,8 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onFitAll(self, evt):
-		self.onUpdate(None)
-		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
+		#self.onUpdate(None)
+		if False and (len(self.getArray1()) < 5 or len(self.getArray2()) < 5):
 			dialog = wx.MessageDialog(self.frame,
 				"You should pick at least 5 particle pairs first", 'Error',
 				 wx.OK|wx.ICON_ERROR)
@@ -1249,6 +1249,7 @@ class PickerApp(wx.App):
 				"You should run 'Find Theta' first", 'Error', wx.OK|wx.ICON_WARNING)
 			dialog.ShowModal()
 			dialog.Destroy()
+			return
 
 		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
 		self.fitall_dialog.gammavalue.SetValue(round(self.data['gamma'],4))
@@ -1290,7 +1291,7 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onAutoOptim(self, evt):
-		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
+		if (len(self.getArray1()) < 5 or len(self.getArray2()) < 5):
 			dialog = wx.MessageDialog(self.frame,
 				"You should pick at least 5 particle pairs first", 'Error',
 				 wx.OK|wx.ICON_ERROR)
