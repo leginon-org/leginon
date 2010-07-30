@@ -16,12 +16,6 @@ MRC I/O functions:
     to read data if you only need to access part of a large MRC file.
     Only the parts you actually access are read from the disk into memory.
 			filename - the MRC filename
-
-  numarray_read(filename)
-    convenience function if you want your array returned as numarray instead.
-  numarray_write(a, filename, header=None)
-    convenience function if you want to write a numarray array instead.
-
 '''
 
 import numpy
@@ -42,20 +36,6 @@ def getCache(filename):
 def putCache(filename, image_array):
 	image_array.setflags(write=False)
 	read_cache[filename] = image_array
-
-#### for numarray compatibility
-try:
-	import numarray
-except:
-	numarray = None
-if numarray is not None:
-	def numarray_read(filename):
-		a1 = read(filename)
-		a2 = numarray.array(a1)
-		return a1
-	def numarray_write(a, filename, header=None):
-		a2 = numpy.asarray(a)
-		write(a2, filename, header)
 
 ## mapping of MRC mode to numpy type
 mrc2numpy = {
