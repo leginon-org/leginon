@@ -18,6 +18,8 @@ MRC I/O functions:
 			filename - the MRC filename
 '''
 
+cache_enabled = False
+
 import numpy
 import sys
 import arraystats
@@ -620,7 +622,8 @@ Read the MRC file given by filename, return numpy ndarray object
 		## store keep header with image
 		setHeader(a, headerdict)
 		## cache
-		#putCache(filename, a)
+		if cache_enabled:
+			putCache(filename, a)
 	return a
 
 def setHeader(a, headerdict):
