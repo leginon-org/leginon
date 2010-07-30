@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Functions for calculating statistics on arrays (either numpy or numarray)
+Functions for calculating statistics on numpy arrays.
 A statistic is only calculated once on an array.  Future attempts to
 calculate the statistic will return the previously calculated value.
 This assumes that the values in the array are constant.  If the
@@ -9,11 +9,6 @@ then you must specify force=True.
 '''
 
 import weakattr
-try:
-	import numarray
-	import numarray.nd_image
-except:
-	numarray = None
 
 import numpy
 if not hasattr(numpy, 'min'):
@@ -42,45 +37,12 @@ def std(a, force=False):
 def all(a, force=False):
 	return calc_stat(a, 'all', force)
 
-
-if numarray is None:
-	def notimplemented(inputarray):
-		raise NotImplementedError('numarray not available')
-	numarray_min = numarray_max = numarray_mean = numarray_std = notimplemented
-else:
-	numarray_mean = numarray.nd_image.mean
-	numarray_std = numarray.nd_image.standard_deviation
-	def numarray_min(inputarray):
-		'''
-		faster than numarray.nd_image.min
-		'''
-		f = numarray.ravel(inputarray)
-		i = numarray.argmin(f)
-		return float(f[i])
-
-	def numarray_max(inputarray):
-		'''
-		faster than numarray.nd_image.max
-		'''
-		f = numarray.ravel(inputarray)
-		i = numarray.argmax(f)
-		return float(f[i])
-
 statnames = ('min','max','mean','std')
 stat_functions = {
-	'numpy': {
-		'min': numpy.min,
-		'max': numpy.max,
-		'mean': numpy.mean,
-		'std': numpy.std,
-	},
-
-	'numarray': {
-		'min': numarray_min,
-		'max': numarray_max,
-		'mean': numarray_mean,
-		'std': numarray_std,
-	}
+	'min': numpy.min,
+	'max': numpy.max,
+	'mean': numpy.mean,
+	'std': numpy.std,
 }
 
 def calc_stat(a, stat, force=False):
@@ -106,13 +68,8 @@ def calc_stat(a, stat, force=False):
 	dprint('calculating: %s' % (need,))
 
 	## calculate the rest
-	if numarray and isinstance(a, numarray.ArrayType):
-		module = 'numarray'
-	else:
-		## numpy.ndarray and other sequences
-		module = 'numpy'
 	for statname in need:
-		value = stat_functions[module][statname](a)
+		value = stat_functions[statname](a)
 		results[statname] = value
 		try:
 			setCachedStat(a, statname, value)
@@ -147,5 +104,10 @@ def setCachedStat(a, stat, value):
 		setCachedStats(a, stats)
 	stats[stat] = value
 
+def test():
+	a = numpy.array((1,2,3,4))
+	print all(a)
+
 if __name__ == '__main__':
 	debug = True
+	test()
