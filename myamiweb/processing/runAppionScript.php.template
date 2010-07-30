@@ -275,8 +275,8 @@ function runAppionScript() {
 	/* *******************
 	PART 5: Show or Run Command
 	******************** */
-
-	// submit command
+	
+	// show or submit command, auto sets up 
 	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
 	// if error display them
 	if ($errors)
