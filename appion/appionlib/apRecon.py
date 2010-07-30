@@ -56,8 +56,10 @@ def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
 				res = boxsize * apix
 			f.close()
 			return res
+	# fsc did not fall below 0.5
 	apDisplay.printWarning("Failed to determine resolution")
-	return 0.0
+	res = boxsize * apix / (lastx + 1)
+	return res
 
 #==================
 #==================
