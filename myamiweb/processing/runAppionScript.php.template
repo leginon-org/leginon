@@ -266,6 +266,8 @@ function runAppionScript() {
 
 	// Add reference to top of the page
 	$headinfo .= appionRef(); // main appion ref
+	$headinfo .= initModelRef(); // main init model ref
+	$headinfo .= emanRef(); // main eman ref
 	$headinfo .= referenceBox("Clustering by Passing Messages Between Data Points.", 2007, 
 		"Brendan J. Frey and Delbert Dueck", "Science", 315, 5814, 
 		17218491, false, false, "img/affinityprop.png"); //custom ref
@@ -276,7 +278,6 @@ function runAppionScript() {
 
 	// submit command
 	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
-
 	// if error display them
 	if ($errors)
 		createAppionForm($errors);
