@@ -156,11 +156,11 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	</td>
 	</tr> 
 	</table>\n";
-	?>
+	echo "
 
 	</center>
 	</form>
-	<?
+	";
 
 	echo appionRef();
 	processing_footer();

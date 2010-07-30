@@ -211,11 +211,11 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	</td>
 	</tr>
 	</table>\n";
-	?>
+	echo "
 
 	</CENTER>
 	</FORM>
-	<?
+	";
 
 	echo appionRef();
 

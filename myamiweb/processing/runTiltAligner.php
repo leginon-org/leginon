@@ -162,11 +162,11 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
 	echo referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
 
 	processing_footer();
-	?>
+	echo "
 
 	</CENTER>
 	</FORM>
-	<?
+	";
 }
 
 function runTiltAligner() {
