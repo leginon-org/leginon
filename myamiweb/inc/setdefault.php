@@ -11,6 +11,22 @@ $q = "insert into `SessionData` (`name`,`REF|UserData|user`,`comment` ) "
 			. " ".$user_id." ,'import default') ";
 $sessionId = $dbc->SQLQuery($q, true);
 
+$table = "PresetsManagerSettingsData";
+$data=array();
+$data["stage always"] = "1";
+$data["name"] = "Presets Manager";
+$data["xy only"] = "1";
+$data["pause time"] = "1";
+$data["optimize cycle"] = "1";
+$data["mag only"] = "0";
+$data["cycle"] = "1";
+$data["isdefault"] = "1";
+$data["apply offset"] = "0";
+$data["smallsize"] = "512";
+$data["blank"] = "0";
+$data["REF|SessionData|session"]= $sessionId;
+$pid2174=$dbc->SQLInsert($table, $data);
+
 $table = "AcquisitionSettingsData";
 $data=array();
 $data["correct image"] = "1";
