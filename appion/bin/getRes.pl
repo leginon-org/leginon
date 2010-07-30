@@ -43,3 +43,7 @@ foreach $point(@plot) {
 	exit;
     }
 }
+#FSC does not go below 0.5
+$res=$box*$apix/$lastx;
+print "iteration $iter: $res\n";
+
