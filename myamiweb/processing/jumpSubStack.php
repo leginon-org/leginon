@@ -152,67 +152,47 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 }
 
 function runSubStack() {
-	$expId = $_GET['expId'];
-	$runname=$_POST['runname'];
-	$outdir=$_POST['outdir'];
-
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$reconId=$_POST['reconId'];
 	$maxjump=$_POST['maxjump'];
 	$commit=$_POST['commit'];
-
-	$command.="jumperSubStack.py ";
-
-	//make sure a description is provided
 	$description=$_POST['description'];
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$runname) createSubStackForm("<b>ERROR:</b> Specify a runname");
 	if (!$description) createSubStackForm("<B>ERROR:</B> Enter a brief description");
 	if (!$maxjump) createSubStackForm("<B>ERROR:</B> You must specify a maximum jump cutoff");
 	if (!$reconId) createSubStackForm("<B>ERROR:</B> You must specify a reconId");
 
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$rundir = $outdir.$runname;
-
-	//putting together command
-	$command.="--projectid=".getProjectId()." ";
-	$command.="--rundir=$rundir ";
-	$command.="--runname=$runname ";
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command ="jumperSubStack.py ";
 	$command.="--description=\"$description\" ";
 	$command.="--max-jump=$maxjump ";
 	$command.="--refinerunid=$reconId ";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Create SubStack") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= initModelRef(); // main init model ref
 
-		if (!($user && $password)) createSubStackForm("<B>ERROR:</B> You must be logged in to submit");
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
-		// if errors:
-		if ($sub) createSubStackForm("<b>ERROR:</b> $sub");
-		exit();
-	}
-
-	processing_header("Creating a SubStack", "Creating a SubStack");
-
-	echo appionRef();
-
-	//rest of the page
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>jumperSubStack.py command:</b><br />
-	$command
-	</td></tr>\n";
-	echo "<tr><td>run id</td><td>$runname</td></tr>\n";
-	echo "<tr><td>cluster id</td><td>$clusterId</td></tr>\n";
-	echo "<tr><td>align id</td><td>$alignId</td></tr>\n";
-	echo "<tr><td>excluded classes</td><td>$exclude</td></tr>\n";
-	echo "<tr><td>description</td><td>$description</td></tr>\n";
-	echo "<tr><td>commit</td><td>$commit</td></tr>\n";
-	echo"</table>\n";
-	processing_footer();
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'makestack', $nproc);
+	// if error display them
+	if ($errors)
+		createSubStackForm($errors);
+	exit;
 }
 
 ?>

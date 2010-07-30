@@ -231,9 +231,9 @@ function createAlignSubStackForm($extra=false, $title='subStack.py Launcher', $h
 }
 
 function runSubStack() {
-	$expId = $_GET['expId'];
-	$runname=$_POST['runname'];
-	$outdir=$_POST['outdir'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
 
 	$clusterId=$_POST['clusterId'];
 	$alignId=$_POST['alignId'];
@@ -242,23 +242,26 @@ function runSubStack() {
 	$include=$_POST['include'];
 	$maxshift=$_POST['maxshift'];
 	$minscore=$_POST['minscore'];
+	$description=$_POST['description'];
 
-	$command.="alignSubStack.py ";
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
 	//make sure a description is provided
-	$description=$_POST['description'];
-	if (!$runname) createAlignSubStackForm("<b>ERROR:</b> Specify a runname");
-	if (!$description) createAlignSubStackForm("<B>ERROR:</B> Enter a brief description");
-	if ($include && $exclude) createAlignSubStackForm("<B>ERROR:</B> You cannot have both included and excluded classes");
-	if (!$include && !$exclude && !is_numeric($include) && !is_numeric($exclude)) createAlignSubStackForm("<B>ERROR:</B> You must specify one of either included and excluded classes");
+	if (!$description)
+		createAlignSubStackForm("<B>ERROR:</B> Enter a brief description");
+	if ($include && $exclude)
+		createAlignSubStackForm("<B>ERROR:</B> You cannot have both included and excluded classes");
+	if (!$include && !$exclude && !is_numeric($include) && !is_numeric($exclude))
+		createAlignSubStackForm("<B>ERROR:</B> You must specify one of either included and excluded classes");
 
-	// make sure outdir ends with '/' and append run name
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$rundir = $outdir.$runname;
+	/* *******************
+	PART 3: Create program command
+	******************** */
+
 	//putting together command
-	$command.="--projectid=".getProjectId()." ";
-	$command.="--rundir=$rundir ";
-	$command.="--runname=$runname ";
+	$command.="alignSubStack.py ";
 	$command.="--description=\"$description\" ";
 	if ($exclude || is_numeric($exclude))
 		$command.="--class-list-drop=$exclude ";
@@ -279,36 +282,24 @@ function runSubStack() {
 
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Create SubStack") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-		if (!($user && $password)) createAlignSubStackForm("<B>ERROR:</B> You must be logged in to submit");
+	// Add reference to top of the page
+	$headinfo .= initModelRef(); // main init model ref
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
-		// if errors:
-		if ($sub) createAlignSubStackForm("<b>ERROR:</b> $sub");
-		exit();
-	}
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-	processing_header("Creating a SubStack", "Creating a SubStack");
-	echo initModelRef();
-	//rest of the page
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>alignSubStack.py command:</b><br />
-	$command
-	</td></tr>\n";
-	echo "<tr><td>run id</td><td>$runname</td></tr>\n";
-	echo "<tr><td>cluster id</td><td>$clusterId</td></tr>\n";
-	echo "<tr><td>align id</td><td>$alignId</td></tr>\n";
-	echo "<tr><td>excluded classes</td><td>$exclude</td></tr>\n";
-	echo "<tr><td>description</td><td>$description</td></tr>\n";
-	echo "<tr><td>commit</td><td>$commit</td></tr>\n";
-	echo"</table>\n";
-	processing_footer();
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'makestack', $nproc);
+
+	// if error display them
+	if ($errors)
+		createAlignSubStackForm($errors);
+	exit;
 }
 
 ?>

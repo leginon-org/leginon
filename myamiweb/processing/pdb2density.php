@@ -161,50 +161,45 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 }
 
 function runDownloadModel() {
-	$particle = new particledata();
-	$expId = $_GET['expId'];
-	$outdir = $_POST['outdir'];
-
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$session=$_POST['sessionname'];
 	$box=$_POST['box'];
 	$method=$_POST['method'];
-
-	//make sure a pdb id was entered
 	$pdbid=$_POST['pdbid'];
+	$apix=$_POST['apix'];
+	$symm=$_POST['symm'];
+	$lowpass=$_POST['lowpass'];
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	//make sure a pdb id was entered
   	if (!$pdbid)
 		createForm("<B>ERROR:</B> Enter a PDB ID");
-
 	//make sure a apix was provided
-	$apix=$_POST['apix'];
 	if (!$apix)
 		createForm("<B>ERROR:</B> Enter the pixel size");
-
 	//make sure a symmetry group was provided
-	$symm=$_POST['symm'];
 	if (!$symm)
 		createForm("<B>ERROR:</B> Enter a symmetry group");
-
 	//make sure a resolution was provided
-	$lowpass=$_POST['lowpass'];
 	if (!$lowpass)
 		createForm("<B>ERROR:</B> Enter the low pass filter radius");
-
 	// check if downloading the biological unit
-
 	if (!is_float($lowpass))
 		$lowpass = $lowpass.".0";
 
 	// pdb id will be the runname
 	$runtime = $_POST['runtime'];
 	$filename = "pdb".$pdbid."-".$runtime;
-	$runname = $filename;
-	if (substr($outdir,-1,1)!='/')
-		$outdir.='/';
-	$rundir = $outdir.$runname;
+	$_POST['runname'] = $filename;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command = "modelFromPDB.py ";
-	$command.="--projectid=".getProjectId()." ";
-	$command.="--runname=$runname ";
 	$command.="--pdbid=$pdbid ";
 	$command.="--session=$session ";
 	$command.="--apix=$apix ";
@@ -216,36 +211,22 @@ function runDownloadModel() {
 		$command.="--biolunit " ;
 	if ($_POST['viper2eman']=='on')
 		$command.="--viper2eman " ;
+	$command.="--method=$method " ;
 
-		$command.="--method=$method " ;
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= initModelRef(); // main init model ref
 
-	// submit job to cluster
-	if ($_POST['process']=="Create Model") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-
-		if (!($user && $password)) createForm("<B>ERROR:</B> You must be logged in to submit");
-
-		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'uploadmodel', false);
-
-		// if errors:
-		if ($sub) createForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-
-	processing_header("PDB to EM Density", "PDB to EM Density");
-
-	echo initModelRef();
-
-	// rest of the page
-	echo"<table class='tableborder' width='600' border='1'>\n";
-	echo "<tr><td>\n";
-	if ($status) echo "$status<hr />\n";
-	echo "<b>DownloadModel Command:</b><br />\n";
-	echo "$command\n";
-	echo "<p>\n";
-	echo "</td></tr>\n";
-	echo "</table>\n";
-	processing_footer();
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'uploadmodel', $nproc);
+	// if error display them
+	if ($errors)
+		createForm($errors);
+	exit;
 }
 ?>

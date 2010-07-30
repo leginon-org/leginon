@@ -456,14 +456,10 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 }
 
 function createSyntheticDataset() {
-	// get any passed parameters
-	$projectId = getProjectId();
-	$expId = $_GET['expId'];
-	$rundir = $_POST['rundir'];
-	$runname = $_POST['runname'];
-
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
-
 	$modelId = $_POST['modelId'];
 	$pixelsize = $_POST['pixelsize'];
 	$boxsize = $_POST['boxsize'];
@@ -481,7 +477,7 @@ function createSyntheticDataset() {
 	$lpfilt = $_POST['lpfilt'];
 	$hpfilt = $_POST['hpfilt'];
 	$norm = $_POST['norm'];
-
+	$description=$_POST['description'];
 	// default params for javascript
 	$randomdef = ($_POST['randomdef']=='on') ? 'randomdef' : '';
 	$defstd = $_POST['defstd'];
@@ -490,8 +486,9 @@ function createSyntheticDataset() {
 	$projection = $_POST['projection'];
 	$correction = $_POST['correction'];
 
-	//make sure default variables are selected
-	$description=$_POST['description'];
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$description) syntheticDatasetForm("<B>ERROR:</B> Enter a Description", $title, $heading, $modelId);
 	if (!$runname) syntheticDatasetForm("<B>ERROR:</B> Enter run name", $title, $heading, $modelId);
 	if (!$rundir) syntheticDatasetForm("<B>ERROR:</B> Enter output directory", $title, $heading, $modelId);
@@ -502,8 +499,7 @@ function createSyntheticDataset() {
 
 	// make sure defocus values are positive
 	if ($df1 > 0 || $df2 > 0) syntheticDatasetForm("<B>ERROR:</B> Make sure that the applied defocus values are negative", $title, $heading, $modelId);
-	
-	
+
 	// other stuff
 	if ($rotang > 360 || $rotang < 0) syntheticDatasetForm("<B>ERROR:</B> Enter rotation angle between 0 and 360", $title, $heading, $modelId);
 	if ($defstd > ($df1 / -1.5) || $defstd > ($df2 / -1.5)) {
@@ -522,12 +518,10 @@ function createSyntheticDataset() {
 		syntheticDatasetForm("<B>ERROR:</B> Please enter a standard deviation which will be used to perturb CTF correction values", $title, $heading, $modelId);
 	}
 		
-
-	// create actual command that will run python script
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command ="createSyntheticDataset.py ";
-	$command.="--projectid=$projectId ";
-	$command.="--rundir=$rundir ";
-	$command.="--runname=$runname ";
 	$command.="--description=\"$description\" ";
 	$command.="--modelid=$modelId ";
 	if ($pixelsize) $command.="--apix=$pixelsize ";
@@ -565,67 +559,21 @@ function createSyntheticDataset() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= initModelRef(); // main init model ref
 
-
-	// submit job to cluster
-	if ($_POST['process']=="Create Synthetic Dataset") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-
-		if (!($user && $password))
-			syntheticDatasetForm("<B>ERROR:</B> Enter a user name and password", $title, $heading, $modelId);
-
-		$sub = submitAppionJob($command,$rundir,$runname,$expId,"syntheticData");
-		// if errors:
-		if ($sub)
-			syntheticDatasetForm("<b>ERROR:</b> $sub", $title, $heading, $modelId);
-		exit;
-	} else {
-		processing_header("Synthetic Dataset Run","Selected Params");
-
-		echo"
-			<TABLE WIDTH='600' BORDER='1'>
-			<TR><TD COLSPAN='2'>
-			<B>Alignment Command:</B><br>
-			$command
-			</TD></tr>
-			<TR><td>rundir</TD><td>$rundir</TD></tr>
-			<TR><td>runname</TD><td>$runname</TD></tr>
-			<TR><td>model Id</TD><td>$modelId</TD></tr>
-			<TR><td>Pixelsize</TD><td>$pixelsize</TD></tr>
-			<TR><td>Boxsize</TD><td>$boxsize</TD></tr>
-			<TR><td># of Particles</TD><td>$projcount</TD></tr>";
-		if ($projection == "even") echo "<TR><td>Angular increment of projections</TD><td>$projinc</TD></tr>";
-		elseif ($projection == "preferred") echo "<TR><td>STD about projection axis</TD><td>$projstdev</TD></tr>";
-		echo"
-			<TR><td>Radius of random shift</TD><td>$shiftrad</TD></tr>
-			<TR><td>Angle of random rotation</TD><td>$rotang</TD></tr>";
-		if ($flip) echo "<TR><td>Randomly Flip</TD><td>YES</TD></tr>";
-		else echo "<TR><td>Randomly Flip</TD><td><b>NO</b></TD></tr>";
-		echo "
-			<TR><td>1st Signal to Noise Ratio</TD><td>$snr1</TD></tr>
-			<TR><td>Final Signal to Noise Ratio</TD><td>$snrtot</TD></tr>
-			<TR><td>Defocus (x)</TD><td>$df1</TD></tr>
-			<TR><td>Defocus (y)</TD><td>$df2</TD></tr>
-			<TR><td>Angle of Astigmatism</TD><td>$astigmatism</TD></tr>";
-		if ($randomdef) echo "<TR><td>Randomly Apply Defoci</TD><td>YES</TD></tr>
-				<TR><td>With a Standard Deviation</TD><td>$defstd</TD></tr>";
-		else echo "<TR><td>Randomly Apply Defoci</TD><td><b>NO</b></TD></tr>";
-		if ($ace2correct) {
-			echo "<TR><td>Correct Applied Defoci</TD><td>YES</TD></tr>
-			      <TR><td>With this Method</TD><td>$correction</TD></tr>";
-			if ($correction=='perturb') {
-				echo "<TR><td>With this Standard Deviation</TD><td>$randcor_std</TD></tr>";
-			}
-		}
-		else echo "<TR><td>Correct Applied Defoci</TD><td><b>NO</b></TD></tr>";
-		echo "
-			<TR><td>Low-Pass filter (&Aring;ngstroms)</TD><td>$lpfilt</TD></tr>
-			<TR><td>High-Pass filter (&Aring;ngstroms)</TD><td>$hpfilt</TD></tr>
-
-		</table>\n";
-		processing_footer();
-	}
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'syntheticdata', $nproc);
+	// if error display them
+	if ($errors)
+		syntheticDatasetForm($errors);
+	exit;
 }
 
 

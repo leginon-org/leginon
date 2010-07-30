@@ -326,14 +326,12 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 //***************************************
 //***************************************
 function runAlignment() {
-	$expId = $_GET['expId'];
-	$outdir = $_POST['outdir'];
-	$runname = $_POST['runname'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$nproc = $_POST['nproc'];
-
 	$stackval = $_POST['stackval'];
 	list($stackid,$apix_s,$boxsz_s,$totprtls_s) = split('\|--\|', $stackval);
-
 	$templatestackval=$_POST['templatestackid'];
 	list($templatestackid,$apix_t,$boxsz_t,$totprtls_t,$type) = split('\|--\|',$templatestackval);
 	
@@ -360,24 +358,19 @@ function runAlignment() {
 	$alignment_type = $_POST['alignment_type'];
 	$first_alignment = $_POST['first_alignment'];
 	$num_orientations = $_POST['num_orientations'];
-
-	//make sure a session was selected
 	$description=$_POST['description'];
-	if (!$description) createAlignmentForm("<B>ERROR:</B> Enter a brief description of the alignment run");
+	$numpart=$_POST['numpart'];
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	if (!$description) createAlignmentForm("<B>ERROR:</B> Enter a brief description of the alignment run");
 	//make sure a stack was selected
 	if (!$stackid) createAlignmentForm("<B>ERROR:</B> No stack selected");
-
 	// make sure template stack was selected
 	if (!$templatestackid) createAlignmentForm("<B>ERROR:</B> No template stack selected");
 
-	// make sure outdir ends with '/' and append run name
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$outdir = $outdir;
-	$outdir = $outdir.$runname;
-
 	// alignment
-	$numpart=$_POST['numpart'];
 	if ($numpart < 1) 
 		createAlignmentForm("<B>ERROR:</B> Number of particles must be at least 1");
 	$particle = new particledata();
@@ -386,6 +379,9 @@ function runAlignment() {
 		createAlignmentForm("<B>ERROR:</B> Number of particles to align ($numpart) must be less than the number of particles in the stack ($totprtls_s)");
 	}
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command="imagicMultiReferenceAlignment.py ";
 	$command.="--stackId=$stackid ";
 	$command.="--templateStackId=$templatestackid ";
@@ -420,69 +416,21 @@ function runAlignment() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 	// Add reference to top of the page
 	$headinfo .= imagicRef();
 
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 	// submit command
 	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
-
 	// if error display them
 	if ($errors)
 		createAlignmentForm($errors);
 	exit;
-
-
-/*
-	// submit job to cluster
-	if ($_POST['process']=="Run Multi Reference Alignment") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-
-		if (!($user && $password))
-			createAlignmentForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,"partalign",False,False,False,$nproc);
-		// if errors:
-		if ($sub)
-			createAlignmentForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Alignment Run","Alignment Params");
-
-		echo"
-		<TABLE WIDTH='600' BORDER='1'>
-		<TR><TD COLSPAN='2'>
-		<B>Alignment Command:</B><br>
-		$command
-		</TD></tr>
-		<TR><td>runname</TD><td>$runname</TD></tr>
-		<TR><td>stackid</TD><td>$stackid</TD></tr>
-		<TR><td>Template Stack ID</TD><td>$templatestackid</TD></tr>
-		<TR><td>outdir</TD><td>$outdir</TD></tr>
-		
-		<TR><td>high pass</TD><td>$highpass</TD></tr>
-		<TR><td>low pass</TD><td>$lowpass</TD></tr>
-		<TR><td>bin</TD><td>$bin</TD></tr>";
-		if ($thresh_refs && $maskrad_refs) {
-		echo "
-			<TR><td>Threshold Reference Densities</TD><td>$thresh_refs</TD></tr>
-			<TR><td>Reference mask radius</TD><td>$maskrad_refs</TD></tr>";
-		}
-		echo "
-		<TR><td>Alignment Type</TD><td>$alignment_type</TD></tr>";
-		if ($alignment_type == "all") echo "<TR><td>First Alignment</TD><td>$first_alignment</TD></tr>";
-		if ($alignment_type == "brute_force") echo "<TR><td>brute force orientations</TD><TD<>$num_orientations</TD></TR>";
-		echo "
-		<TR><td>Max translational shift</TD><td>$max_shift_orig</TD></tr>
-		<TR><td>sampling parameter</TD><td>$samp_param</TD></tr>
-		<TR><td>minimum radial search</TD><td>$minrad</TD></tr>
-		<TR><td>maximum radial search</TD><td>$maxrad</TD></tr>
-		<TR><td>iter</TD><td>$iters</TD></tr>
-		<TR><td>numpart</TD><td>$numpart</TD></tr>";
-		echo"	</table>\n";
-		processing_footer();
-	}
-*/
 }
 
 

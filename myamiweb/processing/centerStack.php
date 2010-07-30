@@ -144,73 +144,58 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 }
 
 function runCenterParticles() {
-	$expId = $_GET['expId'];
-
-	$runname=$_POST['runname'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$stackId=$_POST['stackId'];
-	$outdir=$_POST['outdir'];
 	$commit=$_POST['commit'];
 	$mask = $_POST['mask'];
 	$maxshift = $_POST['maxshift'];
 	$box = $_POST['box'];
+	$description=$_POST['description'];
 
-	$command.="centerParticleStack.py ";
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
 	//make sure a description is provided
-	$description=$_POST['description'];
-	if (!$runname) createCenterForm("<b>ERROR:</b> Specify a runname");
 	if (!$description) createCenterForm("<B>ERROR:</B> Enter a brief description");
 
 	// make sure diameter & max shifts are within box size
 	if ($mask > $box/2) createCenterForm("<b>ERROR:</b> Mask radius too large, must be smaller than ".round($box/2)." pixels");
 	if ($maxshift > $box/2) createCenterForm("<b>ERROR:</b> Shift too large, must be smaller than ".round($box/2)." pixels");
-
 	if ($mask) $runname.='_'.$mask;
 	if ($maxshift) $runname.='_'.$maxshift;
-	// make sure outdir ends with '/' and append run name
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$rundir = $outdir.$runname;
 
-	//putting together command
-	$command.="--projectid=".getProjectId()." ";
-	$command.="--runname=$runname ";
-	$command.="--rundir=$rundir ";
+	/* *******************
+	PART 3: Create program command
+	******************** */
+
+	$command ="centerParticleStack.py ";
 	$command.="--stack-id=$stackId ";
 	if ($mask) $command.="--mask=$mask ";
 	if ($maxshift) $command.="--maxshift=$maxshift ";
 	$command.="--description=\"$description\" ";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Center Particles") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-		if (!($user && $password)) createCenterForm("<B>ERROR:</B> You must be logged in to submit");
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main appion ref
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
-		// if errors:
-		if ($sub) createCenterForm("<b>ERROR:</b> $sub");
-		exit();
-	}
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-	processing_header("Center Particles in Stack", "Center Particles in Stack");
-	echo emanRef();
-	//rest of the page
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>centerParticleStack.py command:</b><br />
-	$command
-	</td></tr>\n";
-	echo "<tr><td>run name</td><td>$runname</td></tr>\n";
-	echo "<tr><td>stack id</td><td>$stackId</td></tr>\n";
-	echo "<tr><td>description</td><td>$description</td></tr>\n";
-	echo "<tr><td>rundir</td><td>$rundir</td></tr>\n";
-	echo "<tr><td>mask</td><td>$mask</td></tr>\n";
-	echo "<tr><td>maxshift</td><td>$maxshift</td></tr>\n";
-	echo"</table>\n";
-	processing_footer();
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'makestack', 1);
+
+	// if error display them
+	if ($errors)
+		createCenterForm($errors);
+	exit;
 }
 
 ?>

@@ -252,9 +252,9 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 }
 	
 function runAngularReconstitution() {
-	$expId = $_GET['expId'];
-	$runname = $_POST['runname'];
-	$rundir = $_POST['rundir'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$description = $_POST['description'];
 	$clustervals = $_POST['clustervals'];
 	$tsvals = $_POST['tsvals'];
@@ -272,13 +272,16 @@ function runAngularReconstitution() {
 	$numeigens = $_POST['numeigens'];
 	$recalc = ($_POST['recalc']=="on") ? true : false;
 	$preftype = $_POST['preftype'];
-	
 	// get selected stack parameters
 	if ($clustervals != 'select') 
 		list($clusterid,$apix,$boxsz,$num_classes,$totprtls) = split('\|--\|', $clustervals);
 	if ($tsvals != 'select') 
 		list($tsid,$apix,$boxsz,$totprtls,$type) = split('\|--\|', $tsvals);
-	
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+
 	// make sure a clustering stack or template stack was selected
 	if (!$clusterid && !$tsid)
 		createAngularReconstitutionForm("<B>ERROR:</B> No stack selected");
@@ -296,16 +299,14 @@ function runAngularReconstitution() {
 		createAngularReconstitutionForm("<B>ERROR:</B> Enter the number of volumes that you wish to create using Angular Reconstitution");
 	if ($nproc > 8)
 		createMaxLikeAlignForm("<B>ERROR:</B> Cannot currently use more than 8 processors with Imagic parallelization");
-	
-	// make sure outdir ends with '/' and append run name
-	if (substr($rundir,-1,1)!='/') $rundir.='/';
+
+	/* *******************
+	PART 3: Create program command
+	******************** */
 
 	// setup command
 	$command ="bootstrappedAngularReconstitution.py ";
-	$command.="--projectid=".getProjectId()." ";
-	$command.="--rundir=".$rundir.$runname." ";
 	$command.="--description=\"$description\" ";
-	$command.="--runname=$runname ";
 	if ($clusterid) $command.="--clusterid=$clusterid ";
 	elseif ($tsid) $command.="--templatestackid=$tsid ";
 	$command.="--num_volumes=$nvol ";
@@ -324,71 +325,24 @@ function runAngularReconstitution() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Run Bootstrapped Angular Reconstitution") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-		
-		if (!($user && $password)) createAngularReconstitutionForm("<B>ERROR:</B> Enter a user name and password");
-		
-		$nodes=1;		// currently cannot run on more than one node
-		if ($nproc > 1 && $nproc <=8) $ppn=$nproc;		// hardcoded for now
-		else $ppn=1;
-		$sub = submitAppionJob($command,$rundir,$runname,$expId,'angrecon',False,False,False,$nproc,$ppn,$nodes);
-		// if errors:
-		if ($sub) createAngularReconstitutionForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	else {
-		processing_header("Bootstrapped Angular Reconstitution Run Params","Bootstrapped Angular Reconstitution Params");
-		echo "<table width='600' class='tableborder' border='1'>";
-			echo "<tr><td colspan='2'><br/>\n";
-				echo "	<tr><td colspan='2'><b>Angular Reconstitution Command:</b><br />$command</td></tr>
-						<tr><td>run name</td><td>$runname</td></tr>
-						<tr><td>run directory</td><td>$rundir</td></tr> ";
-				if ($clusterid) echo "	<tr><td>clustering stack id</td><td>$clusterid</td></tr>";
-				elseif ($tsid) echo "	<tr><td>template stack id</td><td>$tsid</td></tr>";
-				echo "	<tr><td>number of volumes</td><td>$nvol</td></tr>";
-				if ($scale) {
-					echo "	<tr><td>scale averages</td><td>YES</td></tr>";
-				}
-				else {
-					echo "	<tr><td>scale averages</td><td>NO</td></tr>";
-				}
-				if ($prealign) {
-					echo "	<tr><td>align averages</td><td>YES</td></tr>";
-				}
-				else {
-					echo "	<tr><td>align averages</td><td>NO</td></tr>";
-				}
-				if ($weight) {
-					echo "	<tr><td>weight sequence randomization</td><td>YES</td></tr>";
-				}
-				else {
-					echo "	<tr><td>weight sequence randomization</td><td>NO</td></tr>";
-				}
-				echo "	<tr><td>angular search increment</td><td>$anginc</td></tr>
-						<tr><td>keep % ordered images</td><td>$keep_ordered</td></tr>
-						<tr><td>lowpass filter volumes</td><td>$filt3d &Aring;ngstroms</td></tr>
-						<tr><td>num 3D references for alignment</td><td>$nref</td></tr>";
-				if ($usePCA) {
-					echo "	<tr><td>PCA</td><td>YES</td></tr>
-							<tr><td>number Eigenimages</td><td>$numeigens</td></tr>";
-					if ($recalc) {
-						echo "	<tr><td>recalculate after PCA</td><td>YES</td></tr>";
-					}
-					else {
-						echo "	<tr><td>recalculate after PCA</td><td>NO</td></tr>";
-					}
-				}
-				else {
-					echo "	<tr><td>PCA</td><td>NO</td></tr>";
-				}
-				echo "	<tr><td>Preference type</td><td>$preftype</td></tr>
-						<tr><td>commit</td><td>$commit</td></tr>
-			</table>\n";
-		processing_footer();
-	}
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+
+	// Add reference to top of the page
+	$headinfo .= initModelRef(); // main init model ref
+
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'angrecon', $nproc);
+
+	// if error display them
+	if ($errors)
+		createAngularReconstitutionForm($errors);
+	exit;
 }
 	
 	

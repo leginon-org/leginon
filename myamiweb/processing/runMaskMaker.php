@@ -97,26 +97,6 @@ function parseMaskMakerParams () {
 	return $command;
 }
 
-
-function maskMakerSummaryTable () {
-	$minthresh = $_POST[minthresh];
-	$maxthresh = $_POST[maxthresh];
-	$blur = $_POST[blur];
-	$bin = $_POST[bin];
-	$masktype = ($_POST[masktype]);
-	$crudstd = $_POST[crudstd];
-	$convolve = $_POST[convolve];
-
-	echo "<tr><td>mask type</td><td>$masktype</td></tr>\n";
-	echo "<tr><td>minthresh</td><td>$minthresh</td></tr>\n";
-	echo "<tr><td>maxthresh</td><td>$maxthresh</td></tr>\n";
-	echo "<tr><td>bin</td><td>$bin</td></tr>\n";
-	echo "<tr><td>blur</td><td>$blur</td></tr>\n";
-	echo "<tr><td>crudstd</td><td>$crudstd</td></tr>\n";
-	echo "<tr><td>convolve</td><td>$convolve</td></tr>\n";
-}
-
-
 function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Automated Mask Region Finding with Maskmaker') {
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
@@ -241,28 +221,39 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 
 	processing_footer();
 }
+
 function runMaskMaker() {
-	$expId   = $_GET['expId'];
-	$outdir  = $_POST['outdir'];
-	$runname = $_POST['runname'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
+
 	$process = $_POST['process'];
 	$masktype = $_POST['masktype'];
+	$diam = $_POST['diam'];
+	$convolve = $_POST['convolve'];
+	$cdiam = $_POST['cdiam'];
 
-	$diam = $_POST[diam];
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+
 	if (!$diam and $masktype !='crud') {
 		createMMForm("<B>ERROR:</B> Specify a particle diameter");
 		exit;
 	}
-	$convolve = $_POST[convolve];
 	if (!$convolve && $_POST[masktype] == "aggr") {
 		createMMForm("<B>ERROR:</B> Specify a convolution map threshold");
 		exit;
 	}
-	$cdiam = $_POST[cdiam];
 	if (!is_numeric($cdiam) && !is_numeric($diam)) {
 		createMMForm("<B>ERROR:</B> Specify a mask region diameter");
 		exit;
 	}
+
+
+	/* *******************
+	PART 3: Create program command
+	******************** */
 
 	$command="maskmaker.py ";
 	$apcommand = parseAppionLoopParams($_POST);
@@ -274,8 +265,13 @@ function runMaskMaker() {
 	$command .= parseMaskMakerParams($_POST);
 	if ($_POST['testimage']=="on") {
 		$command .= " --test";
-		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+		if ($_POST['testfilename'])
+			$testimage=$_POST['testfilename'];
 	}
+
+	/* *******************
+	PART 4: Do test image
+	******************** */
 
 	if ($testimage && $_POST['process']=="Run MaskMaker") {
 		$user = $_SESSION['username'];
@@ -285,11 +281,7 @@ function runMaskMaker() {
 		// if errors:
 		if ($sub) createMMForm("<b>ERROR:</b> $sub");
 		exit;
-	}
-
-	#processing_header("Bad Region Detection Results","Bad Region Detection Results",$javascript);
-
-	if ($testimage) {
+	} elseif ($testimage) {
 		$outdir=$_POST[outdir];
 		// make sure outdir ends with '/'
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -297,9 +289,9 @@ function runMaskMaker() {
 		echo  " <B>MaskMaker Command:</B><br>$command<HR>";
 		$testjpg=ereg_replace(".mrc","",$testimage);
 		$testdir=$outdir.$runname."/tests/";
-    if (file_exists($testdir)) {
+		if (file_exists($testdir)) {
      	// open image directory
-     	$pathdir=opendir($testdir);
+     		$pathdir=opendir($testdir);
 			// get all files in directory
 			$ext='jpg';
 			while ($filename=readdir($pathdir)) {
@@ -318,40 +310,26 @@ function runMaskMaker() {
 
 		createMMForm($images,'Particle Selection Results','');
 		exit;
-	} else {
-		processing_header("Create Mask","Create Reusable Image Mask",$javafunctions,True);
 	}
-	echo appionRef();
 
-	echo"
-		<TABLE WIDTH='600'>
-			<tr>
-				<td COLSPAN='2'>
-					<B>Mask Maker Command:</B><br>
-					$command<HR>
-				</td>
-			</tr>
-			<tr>
-				<td>outdir</td>
-				<td>$outdir</td>
-			</tr>";
-	echo"
-			<tr>
-				<td>runname</td>
-				<td>$runname</td>
-			</tr>
-			<tr>
-				<td>dbimages</td>
-				<td>$dbimages</td>
-			</tr>
-			<tr>
-				<td>diameter</td>
-				<td>$diam</td>
-			</tr>";
-	appionLoopSummaryTable();
-	maskMakerSummaryTable();
-	echo"</table>\n";
-	processing_footer();
+	/* *******************
+	PART 5: Create header info, i.e., references
+	******************** */
+
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main appion ref
+
+	/* *******************
+	PART 6: Show or Run Command
+	******************** */
+
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'maskmaker', 1);
+
+	// if error display them
+	if ($errors)
+		createMMForm($errors);
+	exit;
 }
 
 

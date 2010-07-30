@@ -121,61 +121,43 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 }
 
 function runSubStack() {
-	$expId = $_GET['expId'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$refId = $_GET['refId'];
-	$runname=$_POST['runname'];
-	$outdir=$_POST['outdir'];
-
 	$commit=$_POST['commit'];
-
-	$command.="coranSubStack.py ";
-
-	//make sure a description is provided
 	$description=$_POST['description'];
-	if (!$runname) createSubStackForm("<b>ERROR:</b> Specify a runname");
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$description) createSubStackForm("<B>ERROR:</B> Enter a brief description");
 	if (!$refId) createSubStackForm("<B>ERROR:</B> You must specify an iterId");
 
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$rundir = $outdir.$runname;
-
-	//putting together command
-	$command.="--projectid=".getProjectId()." ";
-	$command.="--rundir=$rundir ";
-	$command.="--runname=$runname ";
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command ="coranSubStack.py ";
 	$command.="--description=\"$description\" ";
 	$command.="--iterid=$refId ";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Create SubStack") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main appion ref
+	$headinfo .= spiderRef(); // main init model ref
 
-		if (!($user && $password)) createSubStackForm("<B>ERROR:</B> You must be logged in to submit");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
-		// if errors:
-		if ($sub) createSubStackForm("<b>ERROR:</b> $sub");
-		exit();
-	}
-
-	processing_header("Creating a SubStack", "Creating a SubStack");
-	echo spiderRef();
-	echo appionRef();
-	//rest of the page
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>coranSubStack.py command:</b><br />
-	$command
-	</td></tr>\n";
-	echo "<tr><td>run id</td><td>$runname</td></tr>\n";
-	echo "<tr><td>iteration id</td><td>$refId</td></tr>\n";
-	echo "<tr><td>description</td><td>$description</td></tr>\n";
-	echo "<tr><td>commit</td><td>$commit</td></tr>\n";
-	echo"</table>\n";
-	processing_footer();
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'makestack', 2);
+	// if error display them
+	if ($errors)
+		createSubStackForm($errors);
+	exit;
 }
 
 ?>

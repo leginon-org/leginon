@@ -120,15 +120,22 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 }
 
 function runUploadModel() {
-	$particle = new particledata();
-	$expId = $_GET['expId'];
-	$outdir = $_POST['outdir'];
-
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$session=$_POST['sessionname'];
 	$lowpass=$_POST['lowpass'];
-
-	//make sure a emdb id was entered
 	$emdbid=$_POST['emdbid'];
+	$symm=$_POST['symm'];
+	// emdb id will be the runname
+	$runtime = $_POST['runtime'];
+	$filename = "emdb".$emdbid."-".$runtime;
+	$_POST['runname'] = $filename;
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	//make sure a emdb id was entered
   	if (!$emdbid)
 		createForm("<B>ERROR:</B> Enter a EMDB ID");
   	if (!is_numeric($emdbid) && strlen($emdbid) == 4)
@@ -137,22 +144,15 @@ function runUploadModel() {
 		createForm("<B>ERROR:</B> Enter a valid EMDB ID, which is an integer");
 
 	//make sure a symmetry group was provided
-	$symm=$_POST['symm'];
 	if (!$symm)
 		createForm("<B>ERROR:</B> Enter a symmetry group");
+	if (!is_float($apix))
+		$apix = sprintf("%.2f", $apix);
 
-	if (!is_float($apix)) $apix = sprintf("%.2f", $apix);
-
-	// emdb id will be the runname
-	$runtime = $_POST['runtime'];
-	$filename = "emdb".$emdbid."-".$runtime;
-	$runname = $filename;
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$rundir = $outdir.$runname;
-
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command = "modelFromEMDB.py ";
-	$command.="--projectid=".getProjectId()." ";
-	$command.="--runname=$runname ";
 	$command.="--emdbid=$emdbid ";
 	$command.="--session=$session ";
 	if ($lowpass)
@@ -161,33 +161,20 @@ function runUploadModel() {
 	if ($_POST['viper2eman']=='on')
 		$command.="--viper2eman " ;
 
-	// submit job to cluster
-	if ($_POST['process']=="Create Model") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= initModelRef(); // main init model ref
 
-		if (!($user && $password)) createForm("<B>ERROR:</B> You must be logged in to submit");
-
-		$sub = submitAppionJob($command, $outdir, $runname, $expId,'modelfromemdb', false);
-
-		// if errors:
-		if ($sub) createForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-
-	processing_header("EMDB to EM Density", "EMDB to EM Density");
-
-	echo initModelRef();
-
-	// rest of the page
-	echo"<table class='tableborder' width='600' border='1'>\n";
-	echo "<tr><td>\n";
-	if ($status) echo "$status<hr />\n";
-	echo "<b>DownloadModel Command:</b><br />\n";
-	echo "$command\n";
-	echo "<p>\n";
-	echo "</td></tr>\n";
-	echo "</table>\n";
-	processing_footer();
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'modelfromemdb', 1);
+	// if error display them
+	if ($errors)
+		createForm($errors);
+	exit;
 }
 ?>

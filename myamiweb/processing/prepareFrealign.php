@@ -513,28 +513,14 @@ GENERATE COMMAND
 ****************************************** */
 
 function prepareFrealign ($extra=False) {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId = $_GET['expId'];
-	$projectId = getProjectId();
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-
-	$runname = $_POST['runname'];
-
 	$nodes = $_POST['nodes'];
 	$ppn = $_POST['ppn'];
 	$rpn = $_POST['rpn'];
-	$outdir = $_POST['outdir'];
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$rundir = $outdir.$runname;
-
-	if ($_POST['ppn'] > C_PPN_MAX )
-		jobForm("ERROR: Max processors per node is ".C_PPN_MAX);
-	if ($_POST['nodes'] > C_NODES_MAX )
-		jobForm("ERROR: Max nodes on ".C_NAME." is ".C_NODES_MAX);
-
-	if ($_POST['initmethod']=='projmatch' && !$_POST['dang'])
-		jobForm("<b>ERROR:</b> Enter an angular increment");
-	if (!$_POST['mask'])
-		jobForm("<b>ERROR:</b> Enter an outer mask radius");
 
 	// get the stack info (pixel size, box size)
 	$stackinfo=explode('|--|',$_POST['stackval']);
@@ -575,10 +561,23 @@ function prepareFrealign ($extra=False) {
 	$importiter=$_POST['importiter'];
 	$ctffindonly=($_POST['ctffindonly']=='on') ? True:'';
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	if ($_POST['ppn'] > C_PPN_MAX )
+		jobForm("ERROR: Max processors per node is ".C_PPN_MAX);
+	if ($_POST['nodes'] > C_NODES_MAX )
+		jobForm("ERROR: Max nodes on ".C_NAME." is ".C_NODES_MAX);
+
+	if ($_POST['initmethod']=='projmatch' && !$_POST['dang'])
+		jobForm("<b>ERROR:</b> Enter an angular increment");
+	if (!$_POST['mask'])
+		jobForm("<b>ERROR:</b> Enter an outer mask radius");
+
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$cmd = "prepFrealign.py ";
-	$cmd.= "--runname=$runname ";
-	$cmd.= "--rundir=$rundir ";
-	$cmd.= "--project=$projectId ";
 	$cmd.= "--stackid=$stackid ";
 	if ($reconstackid)
 		$cmd.= "--reconstackid=$reconstackid ";
@@ -608,30 +607,21 @@ function prepareFrealign ($extra=False) {
 	if ($ctffindonly) $cmd.= "--ctfmethod=ctffind ";
 	if ($last) $cmd.= "--last=$last ";
 
-	// submit job to cluster
-	if ($_POST['process'] == "Prepare Frealign") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
 
-		if (!($user && $password)) jobForm("<b>ERROR:</b> Enter a user name and password");
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= frealignRef(); // main appion ref
 
-		$sub = submitAppionJob($cmd,$outdir,$runname,$expId,'prepfrealign',False,False);
-		// if errors:
-		if ($sub) jobForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Frealign Job Generator","Frealign Job Generator", $javafunc);
-		echo frealignRef();
-		echo"
-		<TABLE WIDTH='600'>
-		<TR><TD COLSPAN='2'>
-		<B>Frealign Command:</B><br/>
-		$cmd<HR>
-		</TD></tr>";
-
-		echo "</table>\n";
-		processing_footer(True, True);
-	}
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'prepfrealign', $nproc);
+	// if error display them
+	if ($errors)
+		jobForm($errors);
 	exit;
 };
 

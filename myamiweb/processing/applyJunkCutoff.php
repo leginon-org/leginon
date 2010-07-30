@@ -109,29 +109,28 @@ function createApplyJunkCutoffForm($extra=false, $title='sortJunkStack.py Launch
 }
 
 function runApplyJunkCutoff() {
-	$expId = $_GET['expId'];
-
-	$runname=$_POST['runname'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$partnum=$_POST['partnum'];
 	$stackId=$_POST['stackId'];
-	$outdir=$_POST['outdir'];
 	$commit=$_POST['commit'];
+	$description=$_POST['description'];
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+
+	if (!$partnum)
+		createApplyJunkCutoffForm("<b>ERROR:</b> Specify a particle number");
+	if (!$description)
+		createApplyJunkCutoffForm("<B>ERROR:</B> Enter a brief description");
+
+	/* *******************
+	PART 3: Create program command
+	******************** */
 
 	$command.="subStack.py ";
-
-	//make sure a description is provided
-	$description=$_POST['description'];
-	if (!$runname) createApplyJunkCutoffForm("<b>ERROR:</b> Specify a runname");
-	if (!$partnum) createApplyJunkCutoffForm("<b>ERROR:</b> Specify a particle number");
-	if (!$description) createApplyJunkCutoffForm("<B>ERROR:</B> Enter a brief description");
-
-	// make sure outdir ends with '/' and append run name
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$procdir = $outdir.$runname;
-
-	//putting together command
-	$command.="--projectid=".getProjectId()." ";
-	$command.="--runname=$runname ";
 	$command.="--no-meanplot ";
 	$command.="--sorted ";
 	$command.="--last $partnum ";
@@ -139,34 +138,26 @@ function runApplyJunkCutoff() {
 	$command.="--description=\"$description\" ";
 	$command.= ($commit=='on') ? "-C " : "--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Apply Junk Cutoff") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-		if (!($user && $password)) createApplyJunkCutoffForm("<B>ERROR:</B> You must be logged in to submit");
+	// Add reference to top of the page
+	$headinfo .= referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 
+		2004, "C.O.S. Sorzano, R. Marabini, J. Velazquez-Muriel, J.R. Bilbao-Castro, S.H.W. Scheres, J.M. Carazo, A. Pascual-Montano.", 
+		"J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
-		// if errors:
-		if ($sub) createApplyJunkCutoffForm("<b>ERROR:</b> $sub");
-		exit();
-	}
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-	processing_header("Apply Junk Cutoff", "Apply Junk Cutoff");
-	echo referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "C.O.S. Sorzano, R. Marabini, J. Velazquez-Muriel, J.R. Bilbao-Castro, S.H.W. Scheres, J.M. Carazo, A. Pascual-Montano.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
-	//rest of the page
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>subStack.py command:</b><br />
-	$command
-	</td></tr>\n";
-	echo "<tr><td>run id</td><td>$runname</td></tr>\n";
-	echo "<tr><td>stack id</td><td>$stackId</td></tr>\n";
-	echo "<tr><td>description</td><td>$description</td></tr>\n";
-	echo "<tr><td>outdir</td><td>$procdir</td></tr>\n";
-	echo"</table>\n";
-	processing_footer();
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'makestack', $nproc);
+
+	// if error display them
+	if ($errors)
+		createApplyJunkCutoffForm($errors);
+	exit;
 }
 
 ?>

@@ -132,61 +132,43 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 }
 
 function runSortJunk() {
-	$expId = $_GET['expId'];
-
-	$runname=$_POST['runname'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$stackId=$_POST['stackId'];
-	$outdir=$_POST['outdir'];
 	$commit=$_POST['commit'];
-
-	$command.="sortJunkStack.py ";
-
-	//make sure a description is provided
 	$description=$_POST['description'];
-	if (!$runname) createSortJunkForm("<b>ERROR:</b> Specify a runname");
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$description) createSortJunkForm("<B>ERROR:</B> Enter a brief description");
 
-	// make sure outdir ends with '/' and append run name
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$rundir = $outdir.$runname;
-
-	//putting together command
-	$command.="--projectid=".getProjectId()." ";
-	$command.="--runname=$runname ";
-	$command.="--rundir=$rundir ";
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command ="sortJunkStack.py ";
 	$command.="--stack-id=$stackId ";
 	$command.="--description=\"$description\" ";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Sort Junk") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 
+		2004, "C.O.S. Sorzano, R. Marabini, J. Velazquez-Muriel, J.R. Bilbao-Castro, S.H.W. Scheres, J.M. Carazo, A. Pascual-Montano.", 
+		"J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
 
-		if (!($user && $password)) createSortJunkForm("<B>ERROR:</B> You must be logged in to submit");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
-		// if errors:
-		if ($sub) createSortJunkForm("<b>ERROR:</b> $sub");
-		exit();
-	}
-
-	processing_header("Sort Junk in Stack", "Sort Junk in Stack");
-	echo referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "C.O.S. Sorzano, R. Marabini, J. Velazquez-Muriel, J.R. Bilbao-Castro, S.H.W. Scheres, J.M. Carazo, A. Pascual-Montano.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
-	//rest of the page
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>sortJunkStack.py command:</b><br />
-	$command
-	</td></tr>\n";
-	echo "<tr><td>run id</td><td>$runname</td></tr>\n";
-	echo "<tr><td>stack id</td><td>$stackId</td></tr>\n";
-	echo "<tr><td>rundir</td><td>$rundir</td></tr>\n";
-	echo "<tr><td>description</td><td>$description</td></tr>\n";
-	echo "<tr><td>outdir</td><td>$procdir</td></tr>\n";
-	echo"</table>\n";
-	processing_footer();
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
+	// if error display them
+	if ($errors)
+		createSortJunkForm($errors);
+	exit;
 }
 
 ?>

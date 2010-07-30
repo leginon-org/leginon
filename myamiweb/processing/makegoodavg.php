@@ -17,7 +17,9 @@ require "inc/processing.inc";
 // --- check if reconstruction is specified
 
 if ($_POST['process']) {
-	$expId = $_GET['expId'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$reconId=$_GET['reconId'];
 	$refId=$_GET['refId'];
 	$iter=$_GET['iter'];
@@ -27,12 +29,12 @@ if ($_POST['process']) {
 	$avgjump=$_POST['avgjump'];
 	$stackname=$_POST['avgname'];
 	$bpname=$_POST['bpname'];
-	$runname=$_POST['runname'];
-	$outdir=$_POST['outdir'];
-	$rundir=$outdir."/".$runname;
 	$zoom=$_POST['zoom'];
 	$mass=$_POST['mass'];
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$stackname) createform('<b>ERROR:</b> Enter a name for new class average stack file');
 	if (!$bpname) createform('<b>ERROR:</b> Enter a name for new 3d density file');
 	if (!$mask) createform('<b>ERROR:</b> Enter a mask radius');
@@ -41,16 +43,16 @@ if ($_POST['process']) {
 	if (!$zoom) createform('<b>ERROR:</b> Enter a zoom value for snapshot');
 	if (!$mass) createform('<b>ERROR:</b> Enter the estimated mass for the density');
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command = "makegoodaverages.py ";
-	$command.= "--projectid=".getProjectId()." ";
 	$command.= "--reconid=$reconId ";
 	$command.= "--iter=$iter ";
 	$command.= "--mask=$mask ";
 	$command.= "--hard=$hard ";
 	$command.= "--stackname=$stackname ";
 	$command.= "--make3d=$bpname ";
-	$command.= "--runname=$runname ";
-	$command.= "--rundir=$rundir ";
 	$command.= "--zoom=$zoom ";
 	$command.= "--mass=$mass ";
 	if ($avgjump != '') $command.= "--avgjump=$avgjump ";
@@ -58,36 +60,20 @@ if ($_POST['process']) {
 	if ($_POST['commit']!='on') $command.= "--no-commit ";
 	$command.= "--eotest ";
 
-	// submit job to cluster
-	if ($_POST['process']=='Create new class averages'){
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main appion ref
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'removeJumpers',False,False);
-		// if errors:
-		if ($sub) createform("<b>ERROR:</b> $sub");
-		exit;
-	}
-
-	processing_header("Remove Jumpers","Remove Jumpers");
-	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<tr><td colspan='2'>
-	<B>Create Class Averages Command:</B><br>
-	$command
-	</td></tr>
-	<tr><td>file</td><td>$stackname</td></tr>
-	<tr><td>mask</td><td>$mask</td></tr>
-	<tr><td>hard</td><td>$hard</td></tr>
-	<tr><td>avgjump</td><td>$avgjump</td></tr>
-	<tr><td>iter</td><td>$iter</td></tr>
-	<tr><td>reconId</td><td>$reconId</td></tr>
-	<tr><td>sigma</td><td>$sigma</td></tr>
-	</table>\n";
-
-	echo appionRef();
-
-	processing_footer();
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'makegoodavg', $nproc);
+	// if error display them
+	if ($errors)
+		createform($errors);
 	exit;
 }
 

@@ -415,10 +415,9 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 #######################################################################################
 
 function runCreateModel() {
-	$expId   = $_GET['expId'];
-	$runname = $_POST['runname'];
-	$outdir  = $_POST['outdir'];
-
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$clusterid  = $_POST['clusterid'];
 	$commit     = $_POST['commit'];
 	$exclude    = $_POST['exclude'];
@@ -426,9 +425,6 @@ function runCreateModel() {
 	$method     = $_POST['method'];
 	$symmetryid = $_POST['symmetryid'];
 	$descript   = $_POST['descript'];
-
-	$command.="createModel.py ";
-
 	if ($method == 'csym') {
 		$partnum=$_POST['partnum'];
 		$imask=$_POST['imask'];
@@ -441,26 +437,24 @@ function runCreateModel() {
 		$mask=$_POST['mask'];
 		$rounds=$_POST['rounds'];
 	}
+	$_POST['runname'] = getTimestamp();
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	//make sure a description is provided
 	if (!$descript)
 		createSelectParameterForm("<B>ERROR:</B> Enter a brief description");
-
 	if (!$symmetryid)
 		createSelectParameterForm("<B>ERROR:</B> Symmetry ID was not selected");
 
-	if (!$outdir)
-		createSelectParameterForm("<B>ERROR:</B> Output directory was not defined");
 
-	// make sure outdir ends with '/' and append run name
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$rundir = $outdir.$runname;
-
-	//putting together command
-	$command.="--projectid=".getProjectId()." ";
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command ="createModel.py ";
 	$command.="--method=$method ";
 	$command.="--cluster-id=$clusterid ";
-
 	$command.="--symm=$symmetryid ";
 	if ($exclude != "") {
 		$exclude=ereg_replace(" ","",$exclude);
@@ -474,50 +468,23 @@ function runCreateModel() {
 	if ($imask) $command.="--imask=$imask ";
 	if ($rounds) $command.="--rounds=$rounds ";
 	$command.="--description=\"$descript\" ";
-
-	$command.="--rundir=$rundir ";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process'] == "Create Model") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= emanRef(); // main eman ref
 
-		if (!($user && $password))
-			createSelectParameterForm("<B>ERROR:</B> You must be logged in to submit");
-
-		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'createModel');
-		// if errors:
-		if ($sub)
-			createSelectParameterForm("<b>ERROR:</b> $sub");
-		exit();
-	} else {
-		processing_header("Creating an Initial Model", "Creating an Initial Model");
-		//rest of the page
-		echo emanRef();
-
-		echo"
-		<table width='600' border='1'>
-		<tr><td colspan='2'>
-		<b>createModel.py command:</b><br />
-		$command
-		</td></tr>\n";
-		echo "<tr><td>outdir</td><td>$outdir</td></tr>\n";
-		echo "<tr><td>runname</td><td>$runname</td></tr>\n";
-		echo "<tr><td>EMAN method</td><td>$method</td></tr>\n";
-		echo "<tr><td>cluster id</td><td>$clusterid</td></tr>\n";
-		echo "<tr><td>description</td><td>$descript</td></tr>\n";
-
-		if ($exclude) echo "<tr><td>Excluded classes</td><td>$exclude</td></tr>\n";
-		if ($include) echo "<tr><td>Included classes</td><td>$include</td></tr>\n";
-		if ($symmetryid) echo "<tr><td>Symmetry ID</td><td>$symmetryid</td></tr>\n";
-		if ($partnum) echo "<tr><td>Particle Number</td><td>$partnum</td></tr>\n";
-		if ($mask) echo "<tr><td>Mask</td><td>$mask</td></tr>\n";
-		if ($imask) echo "<tr><td>Internal mask</td><td>$imask</td></tr>\n";
-		if ($rounds) echo "<tr><td>Rounds</td><td>$rounds</td></tr>\n";
-		echo"</table>\n";
-		processing_footer();
-	}
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'createmodel', $nproc);
+	// if error display them
+	if ($errors)
+		createSelectParameterForm($errors);
+	exit;
 }
 
 ?>

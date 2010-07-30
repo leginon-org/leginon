@@ -231,10 +231,9 @@ function createform($extra=False) {
 }
 
 function runPostProc() {
-	$leginondata = new leginondata();
-
-	$runname=$_POST['runname'];
-	$expId = $_GET['expId'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$refIterId = $_GET['refineIter'];
 	$ampcor=$_POST['ampcor'];
 	$lp=$_POST['lp'];
@@ -258,7 +257,15 @@ function runPostProc() {
 	$outdir=$path."/postproc";
 	$densityname = $_POST['densityname'];
 
-	// make sure that an amplitude curve was selected
+	// get session name from expId
+	$expId = $_GET['expId'];
+	$leginondata = new leginondata();
+	$sessioninfo = $leginondata->getSessionInfo($expId);
+	$sessname = $sessioninfo['Name'];
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if ($ampcor && $bfactor)
 		createform('<B>ERROR:</B> Select only one of amplitude or b-factor correction');
 	if (!$ampcor && !$bfactor)
@@ -266,15 +273,12 @@ function runPostProc() {
 	if ($ampcor)
 		list($ampfile, $maxfilt) = explode('|~~|',$ampcor);
 
-	// get session name from expId
-	$sessioninfo = $leginondata->getSessionInfo($expId);
-	$sessname = $sessioninfo['Name'];
-
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command = "postProc.py ";
-	$command.= "--projectid=".getProjectId()." ";
 	$command.= "--reconiterid=$refIterId ";
 	$command.= "-s $sessname ";
-	$command.= "--runname $runname ";
 	$command.= "-f $densitypath ";
 	if ($ampcor) {
 		$command.= "--amp=$ampfile ";
@@ -299,44 +303,20 @@ function runPostProc() {
 	if ($invert=='on') $command.="--invert ";
 	if ($viper=='on') $command.="--viper ";
 
-	// submit job to cluster
-	if ($_POST['process']=='Post Process') {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= initModelRef(); // main init model ref
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'postproc');
-		// if errors:
-		if ($sub)
-			createform("<b>ERROR:</b> $sub");
-		exit();
-	}
-
-	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density");
-	echo spiderRef();
-	echo referenceBox("Sharpening high resolution information in single particle electron cryomicroscopy", 2008, "J.J. Fernandez, D. Luque, J.R. Caston, J.L. Carrascosa", "J Struct Biol.", 164, 1, 18614378, false, false, false);
-
-	echo $status;
-	echo "<br/>\n";
-	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<tr><td colspan='2'>
-	<B>PostProc Command:</B><br>
-	$command
-	</td></tr>
-        <tr><td>runname</td><td>$runname</td></tr>
-        <tr><td>file</td><td>$densitypath</td></tr>
-        <tr><td>ampcor curve</td><td>$ampfile</td></tr>
-        <tr><td>max filt</td><td>$maxfilt</td></tr>
-        <tr><td>mask</td><td>$mask</td></tr>
-        <tr><td>imask</td><td>$imask</td></tr>
-        <tr><td>norm</td><td>$norm</td></tr>
-        <tr><td>apix</td><td>$apix</td></tr>
-        <tr><td>lp</td><td>$lp</td></tr>
-        <tr><td>yflip</td><td>$yflip</td></tr>
-        <tr><td>invert</td><td>$invert</td></tr>
-        <tr><td>viper</td><td>$viper</td></tr>
-        </table>\n";
-	processing_footer();
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'postproc', $nproc);
+	// if error display them
+	if ($errors)
+		createform($errors);
 	exit;
 }
 

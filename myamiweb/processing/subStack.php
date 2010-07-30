@@ -271,14 +271,12 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 // *************************************
 // *************************************
 function runSubStack() {
-
-	$expId = $_GET['expId'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$mean = $_GET['mean'];
-
-	$runname=$_POST['runname'];
 	$stackId=$_POST['stackId'];
 	$exclude=$_POST['exclude'];
-	$outdir=$_POST['outdir'];
 	$commit=$_POST['commit'];
 	$subsplit = $_POST['subsplit'];
 	$firstp = $_POST['firstp'];
@@ -287,30 +285,21 @@ function runSubStack() {
 	$correctbt=$_POST['correctbt'];
 	$stackId = $_POST['stackId'];
 	$numOfParticles = $_POST['numOfParticles'];
-	
 	$minx = (is_numeric($_POST['minx'])) ? $_POST['minx'] : '';	
 	$maxx = (is_numeric($_POST['maxx'])) ? $_POST['maxx'] : '';
 	$miny = (is_numeric($_POST['miny'])) ? $_POST['miny'] : '';
 	$maxy = (is_numeric($_POST['maxy'])) ? $_POST['maxy'] : '';
-
-
-	if ($mean) {
-		$command.="stackFilter.py ";
-	} else {
-		$command.="subStack.py ";
-	}
-	
-	//make sure a description is provided
 	$description=$_POST['description'];
+
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	$particle = new particledata();
 	$totalNumOfParticles = $particle->getNumStackParticles($stackId);
 	if (!$runname) createSubStackForm("<b>ERROR:</b> Specify a run name");
 	if (!$description) createSubStackForm("<B>ERROR:</B> Enter a brief description");
 	if ($numOfParticles > $totalNumOfParticles) createSubStackForm("<b>ERROR:</b> Number of Particles can not greater than ". $totalNumOfParticles);
-
-	// make sure outdir ends with '/' and append run name
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$procdir = $outdir.$runname;
 
 	// check sub stack particle numbers
 	if (!$mean) {
@@ -332,11 +321,15 @@ function runSubStack() {
 		}
 	}
 
-	//putting together command
-	$command.="--projectid=".getProjectId()." ";
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	if ($mean) {
+		$command ="stackFilter.py ";
+	} else {
+		$command ="subStack.py ";
+	}
 	$command.="--old-stack-id=$stackId ";
-	$command.="--runname=$runname ";
-	$command.="--rundir=$procdir ";
 	$command.="--description=\"$description\" ";
 	if (!$exclude and !$mean) {
 		# subStack.py will subtract one from the particle number listed here to generate
@@ -349,50 +342,26 @@ function runSubStack() {
 	} else {
 		$command.="--minx=".$minx." --maxx=".$maxx." --miny=".$miny." --maxy=".$maxy." ";
 	}
-	
-	
 	$command.= ($correctbt=='on') ? "--correct-beamtilt " : "";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main init model ref
+	$headinfo .= initModelRef(); // main init model ref
 
-	// submit job to cluster
-	if ($_POST['process']=="Create SubStack") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-		if (!($user && $password)) createSubStackForm("<B>ERROR:</B> You must be logged in to submit");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
-		// if errors:
-		if ($sub) createSubStackForm("<b>ERROR:</b> $sub");
-		exit();
-	}
-
-	processing_header("Creating a SubStack", "Creating a SubStack");
-	echo appionRef();
-	//rest of the page
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>";
-	if ($mean) {
-		echo "<b>stackFilter.py command:</b><br />";
-	} else {
-		echo "<b>subStack.py command:</b><br />";
-	}
-	echo "$command
-	</td></tr>\n";
-	echo "<tr><td>runname</td><td>$runname</td></tr>\n";
-	echo "<tr><td>stack id</td><td>$stackId</td></tr>\n";
-	echo "<tr><td>description</td><td>$description</td></tr>\n";
-	echo "<tr><td>outdir</td><td>$procdir</td></tr>\n";
-	if ($mean) {
-		echo "<tr><td>minX</td><td>$minx</td></tr>\n";
-		echo "<tr><td>maxX</td><td>$maxx</td></tr>\n";
-		echo "<tr><td>minY</td><td>$miny</td></tr>\n";
-		echo "<tr><td>maxY</td><td>$maxy</td></tr>\n";
-	}
-	echo"</table>\n";
-	processing_footer();
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'makestack', $nproc);
+	// if error display them
+	if ($errors)
+		createSubStackForm($errors);
+	exit;
 }
 
 ?>
