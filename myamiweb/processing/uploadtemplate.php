@@ -176,9 +176,9 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 }
 
 function runUploadTemplate() {
-	$expId = $_GET['expId'];
-	$outdir = $_POST['outdir'];
-	$projectId = getProjectId();
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$templateIds=$_POST['templateIds'];
 	$stackId=$_POST['stackId'];
 	$alignId=$_POST['alignId'];
@@ -190,6 +190,12 @@ function runUploadTemplate() {
 	$apix=$_POST['apix'];
 	$template=$_POST['template'];
 	$commit=$_POST['commit'];
+	// set runname as time
+	$_POST['runname'] = "template".getTimestring();
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
 	//make sure a description is provided
 	if (!$description) createUploadTemplateForm("<B>ERROR:</B> Enter a brief description of the template");
@@ -212,10 +218,9 @@ function runUploadTemplate() {
 		}
 	}
 
-
-
-	// set runname as time
-	$runname = "template".getTimestring();
+	/* *******************
+	PART 3: Create program command
+	******************** */
 
 	//putting together command
 	$command = "uploadTemplate.py ";
@@ -227,77 +232,34 @@ function runUploadTemplate() {
 		$command.="--clusterid=$clusterId ";
 	else 
 		$command.="--template=\"$template\" ";
-
-	$command.="--projectid=$projectId ";
 	$command.="--session=$session ";
 	if ($apix)
 		$command.="--apix=$apix ";
 	$command.="--diam=$diam ";
 	$command.="--description=\"$description\" ";
-	$command.="--runname=$runname ";
 	if ($templateIds!="") $command.="--imgnums=$templateIds ";
 	if ($avgstack) $command.="--avgstack ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-	// submit job to cluster
-	if ($_POST['process']=="Upload Template") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main appion ref
 
-		if (!($user && $password)) createUploadTemplateForm("<B>ERROR:</B> You must be logged in to submit");
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploadtemplate',True);
-		// if errors:
-		if ($sub) createUploadTemplateForm("<b>ERROR:</b> $sub");
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'uploadtemplate', 1);
 
-		// check that upload finished properly
-		$jobf = $outdir.'/'.$runname.'/'.$runname.'.appionsub.log';
-		$status = "Template was uploaded";
-		if (file_exists($jobf)) {
-			$jf = file($jobf);
-			$jfnum = count($jf);
-			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
-			  // if anything is red, it's not good
-				if (preg_match("/red/",$jf[$i])) {
-					$status = "<font class='apcomment'>Error while uploading, check the log file:<br />$jobf</font>";
-					continue;
-				}
-			}
-		}
-		else $status = "Job did not run, contact the appion team";
-		processing_header("Template Upload", "Template Upload");
-		echo "$status\n";
-	}
-
-	else {
-		processing_header("UploadTemplate Command", "UploadTemplate Command");
-		if ($template_warning) echo"$template_warning<br />";
-	}
-
-	echo appionRef();
-
-	//rest of the page
-	echo"
-	<table class='tableborder' width='600' border='1'>
-	<tr><td colspan='2'>
-	$template_command 
-	<B>UploadTemplate Command:</B><br>
-	$command
-	</TD></tr>
-	<TR><td>template name</TD><td>$template</TD></tr>
-	<TR><td>apix</TD><td>$apix</TD></tr>
-	<TR><td>diam</TD><td>$diam</TD></tr>
-	<TR><td>session</TD><td>$session</TD></tr>
-	<tr><td>commit</td><td>$commit</td></tr>
-	<TR><td>description</TD><td>$description</TD></tr>";
-
-	if ($templateIds!="") echo"<TR><td>image numbers</TD><td>$templateIds</TD></tr>";
-	if ($stackId) echo"<TR><td>stack id</TD><td>$stackId</TD></tr>";
-	echo"
-	</table>\n";
-	processing_footer();
+	// if error display them
+	if ($errors)
+		createUploadTemplateForm($errors);
+	exit;
 }
 
 ?>

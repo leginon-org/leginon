@@ -153,10 +153,9 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 }
 
 function runUploadStack() {
-	$expId = $_GET['expId'];
-	$outdir = $_POST['outdir'];
-	$runname = $_POST['runname'];
-
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$diam=$_POST['diam'];
 	$session=$_POST['sessionname'];
 	$description=$_POST['description'];
@@ -165,6 +164,10 @@ function runUploadStack() {
 	$commit=$_POST['commit'];
 	$normalize=$_POST['normalize'];
 	$ctfcorrect=$_POST['ctfcorrect'];
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
 	//make sure a description is provided
 	if (!$description)
@@ -188,63 +191,42 @@ function runUploadStack() {
 	if (!file_exists($stackfile))
 		createUploadStackForm("<B>ERROR:</B> File ".$stackfile." does not exist");
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
+
 	//putting together command
 	$command = "uploadstack.py ";
-	$command.="--projectid=".getProjectId()." ";
 	$command.="--session=$session ";
 	$command.="--file=$stackfile ";
 	$command.="--apix=$apix ";
 	$command.="--diam=$diam ";
 	$command.="--description=\"$description\" ";
-	$command.="--runname=$runname ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 	if ($normalize) $command.="--normalize ";
 	else $command.="--no-normalize ";
 	if ($ctfcorrect) $command.="--ctf-corrected ";
 	else $command.="--not-ctf-corrected ";
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$rundir = $outdir.$runname;
-	$command.="--rundir=$rundir ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Upload Stack") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-		if (!($user && $password)) createUploadStackForm("<B>ERROR:</B> Enter a user name and password");
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main appion ref
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploadstack',False,False,False);
-		// if errors:
-		if ($sub) createMaxLikeAlignForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	else {
-		processing_header("Upload Stack Command", "Upload Stack Command");
-		//rest of the page
-		echo appionRef();
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-		echo"
-		<table class='tableborder' width='600' border='1'>
-			<tr><td colspan='2'>
-					<b>Upload Stack Command:</b><br/>
-					$command
-			</td></tr>
-			<tr><td>project</td><td>".getProjectId()."</td></tr>
-			<tr><td>session</td><td>$session</td></tr>
-			<tr><td>rundir</td><td>$rundir</td></tr>
-			<tr><td>runname</td><td>$runname</td></tr>
-			<tr><td>stack name</td><td>$stackfile</td></tr>
-			<tr><td>description</td><td>$description</td></tr>
-			<tr><td>apix</td><td>$apix</td></tr>
-			<tr><td>diam</td><td>$diam</td></tr>
-			<tr><td>commit</td><td>$commit</td></tr>
-			<tr><td>ctf correct</td><td>$ctfcorrect</td></tr>
-			<tr><td>normalize</td><td>$normalize</td></tr>
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'uploadstack', 1);
 
-		</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createUploadStackForm($errors);
+	exit;
 }
 
 ?>

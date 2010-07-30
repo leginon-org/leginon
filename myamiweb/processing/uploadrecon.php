@@ -90,7 +90,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	$mass = ($_POST['mass']) ? $_POST['mass'] : '';
 	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.0';
 	$filter = ($_POST['filter']) ? $_POST['filter'] : '';
-	$reconname = ($_POST['reconname']) ? $_POST['reconname'] : '';
+	$runname = ($_POST['runname']) ? $_POST['runname'] : '';
 	$description = $_POST['description'];
 	$oneiteration = ($_POST['oneiteration']=="on") ? "CHECKED" : "";
 	$iteration = $_POST['iteration'];
@@ -109,9 +109,9 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 		echo "<b>Recon Name:</b>\n";
 	echo "</td><td>\n";
 	if ($jobId)
-		echo "$jobrunid<input type='hidden' name='reconname' value='$jobrunid'>";
+		echo "$jobrunid<input type='hidden' name='runname' value='$jobrunid'>";
 	else
-		echo "<input type='text' name='reconname' value='$reconname' size='50'>";
+		echo "<input type='text' name='runname' value='$runname' size='50'>";
 	echo "</td></tr>\n";
 
 	echo "<tr><td>\n";
@@ -236,13 +236,9 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 }
 
 function runUploadRecon() {
-	$expId = $_GET['expId'];
-	$outdir = $_POST['outdir'];
- 
-	$command.="uploadRecon.py ";
-
-	$particle = new particledata();
-
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	// parse params
 	$jobId=$_GET['jobId'];
 	$description=$_POST['description'];
@@ -254,11 +250,18 @@ function runUploadRecon() {
 	$iteration=$_POST['iteration'];
 	$contiteration=$_POST['contiteration'];
 	$startiteration=$_POST['startiteration'];
+	$runname=$_POST['runname'];
+	$description=$_POST['description'];
+	$package=$_POST['package'];
+	$modelid = $_POST['modelid'];
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
 	//make sure a recon run name was entered
-	$runid=$_POST['reconname'];
-	if ($_POST['reconname']) $runid=$_POST['reconname'];
-	if (!$runid) createUploadReconForm("<B>ERROR:</B> Enter a name of the recon run");
+	if (!$runname)
+		createUploadReconForm("<B>ERROR:</B> Enter a name of the recon run");
 	
 	//make sure a stack was chosen
 	if ($_POST['stackid'])
@@ -268,32 +271,31 @@ function runUploadRecon() {
 	else
 		createUploadReconForm("<B>ERROR:</B> Select the image stack used");
 
-
 	//make sure a model was chosen
-	$modelid = $_POST['modelid'];
 	if (!$modelid)
 		createUploadReconForm("<B>ERROR:</B> Select the initial model used");
 	
 	//make sure a package was chosen
-	$package=$_POST['package'];
 	if (!$package)
 		createUploadReconForm("<B>ERROR:</B> Enter the reconstruction process used");
 
 	//make sure a description was entered
-	$description=$_POST['description'];
-	if (!$description) createUploadReconForm("<B>ERROR:</B> Enter a description of the reconstruction");
+	if (!$description)
+		createUploadReconForm("<B>ERROR:</B> Enter a description of the reconstruction");
 
 	//make sure a package was chosen
 	if ($_POST['reconpath'] && $_POST['reconpath']!="./") {
 		$reconpath = $_POST['reconpath'];
 		if (substr($reconpath,-1,1)!='/') $reconpath.='/';
-		$runpath = $reconpath.$runid;
+		$runpath = $reconpath.$runname;
 		if (!file_exists($runpath)) createUploadReconForm("<B>ERROR:</B> Could not find recon run directory: ".$runpath);
 	}
 	else {
 		$runpath = "./";
 	}
 	
+
+	$particle = new particledata();
 	//make sure specific result file is present
 	if ($jobId) {
 		$jobinfo = $particle->getJobInfoFromId($jobId);
@@ -319,8 +321,12 @@ function runUploadRecon() {
 		if ($contiteration) createUploadReconForm("<B>ERROR:</B> Enter the iteration number if you really don't want to start at the beginning");
 	}
 
-	$command.="--projectid=".getProjectId()." ";
-	$command.="--runname=$runid ";
+	/* *******************
+	PART 3: Create program command
+	******************** */
+
+	$command ="uploadRecon.py ";
+	$command.="--runname=$runname ";
 	$command.="--stackid=$stackid ";
 	$command.="--modelid=$modelid ";
 	$command.="--package=$package ";
@@ -333,37 +339,24 @@ function runUploadRecon() {
 	if ($oneiteration=='on' && $iteration) $command.="--oneiter=$iteration ";
 	if ($contiteration=='on' && $startiteration) $command.="--startiter=$startiteration ";
 	$command.="--description=\"$description\"";
-	
-	// submit job to cluster
-	if ($_POST['process']=="Upload Recon") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createUploadReconForm("<b>ERROR:</b> Enter a user name and password");
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploadrecon');
-		// if errors:
-		if ($sub) createUploadReconForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	processing_header("UploadRecon Run","UploadRecon Params");
-	echo emanRef();
-	echo "
-	<table class='tableborder' width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>UploadRecon Command:</b><br>
-	$command
-	</td></tr>
-	<tr><td>run name</td><td>$runid</td></tr>
-	<tr><td>stack ID</td><td>$stackid</td></tr>
-	<tr><td>model ID</td><td>$modelid</td></tr>
-	<tr><td>path</td><td>$reconpath</td></tr>
-	<tr><td>jobid</td><td>$jobId</td></tr>
-	<tr><td>snapshot contour</td><td>$contour</td></tr>
-	<tr><td>snapshot mass</td><td>$mass</td></tr>
-	<tr><td>snapshot zoom</td><td>$zoom</td></tr>
-	<tr><td>snapshot filter</td><td>$filter</td></tr>
-	<tr><td>description</td><td>$description</td></tr>
-	</table>\n";
-	processing_footer();
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+
+	// Add reference to top of the page
+	$headinfo .= emanRef(); // main eman ref
+
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'uploadrecon', 1);
+
+	// if error display them
+	if ($errors)
+		createUploadReconForm($errors);
+	exit;
 }
 ?>

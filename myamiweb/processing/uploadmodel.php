@@ -197,51 +197,63 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 }
 
 function runUploadModel() {
-	$expId = $_GET['expId'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$modelid = $_GET['modelid'];
 	$densityid = $_GET['densityId'];
-	
-	$outdir = $_POST['outdir'];
-
-	$command = "uploadModel.py ";
-	$command.="--projectid=".getProjectId()." ";
-
 	$boxsize=$_POST['boxsize'];
 	$contour=$_POST['contour'];
 	$mass=$_POST['mass'];
 	$zoom=$_POST['zoom'];
 	$session=$_POST['sessionname'];
-
-	$model=$_POST['model'];
-	if ($_POST['modelname']) $model=$_POST['modelname'];
-	//make sure a model root was entered if upload an independent file
-	if (!$modelid && !$densityid && !$model) createUploadModelForm("<B>ERROR:</B> Enter a root name of the model");
-
-	//make sure a apix was provided
 	$apix=$_POST['apix'];
-	if (!$apix) createUploadModelForm("<B>ERROR:</B> Enter the pixel size");
-  
+	$model=$_POST['model'];
+	if ($_POST['modelname'])
+		$model=$_POST['modelname'];
+	$description=$_POST['description'];
+	$res=$_POST['res'];
+	$sym = $_POST['sym'];
+	$runname = getTimestring();
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	//make sure a model root was entered if upload an independent file
+	if (!$modelid && !$densityid && !$model)
+		createUploadModelForm("<B>ERROR:</B> Enter a root name of the model");
+
 	// if rescaling, make sure there is a boxsize
 	if ($_POST['newmodel']) {
 		$model=$_POST['newmodel'];
 		$origapix=$_POST['origapix'];
-		if (!$boxsize) createUploadModelForm("<B>ERROR:</B> Enter the final box size of the model");
+		if (!$boxsize)
+			createUploadModelForm("<B>ERROR:</B> Enter the final box size of the model");
 	}
 
+	//make sure a apix was provided
+	if (!$apix)
+		createUploadModelForm("<B>ERROR:</B> Enter the pixel size");
+
 	//make sure a description was provided
-	$description=$_POST['description'];
-	if (!$description) createUploadModelForm("<B>ERROR:</B> Enter a brief description of the model");
+	if (!$description)
+		createUploadModelForm("<B>ERROR:</B> Enter a brief description of the model");
 
 	//make sure a resolution was provided
-	$res=$_POST['res'];
-	if (!$res) createUploadModelForm("<B>ERROR:</B> Enter the model resolution");
+	if (!$res)
+		createUploadModelForm("<B>ERROR:</B> Enter the model resolution");
 
 	// make sure a symmetry was selected
-	$sym = $_POST['sym'];
-	if (!$sym) createUploadModelForm("<B>ERROR:</B> Select a symmetry");
+	if (!$sym)
+		createUploadModelForm("<B>ERROR:</B> Select a symmetry");
+
+	/* *******************
+	PART 3: Create program command
+	******************** */
+
+	$command = "uploadModel.py ";
 
 	// set runname according to upload type
-	$runname = getTimestring();
 	if ($densityid) {
 		$command.="--densityid=$densityid ";
 		$runname = density.$densityid."_".$runname;
@@ -260,53 +272,41 @@ function runUploadModel() {
 			}
 		}
 	}
-
-	$command.="--session=$session ";
+	$_POST['runname'] = $runname;
 	$command.="--runname=$runname ";
+	$command.="--session=$session ";
 	$command.="--apix=$apix ";
 	$command.="--res=$res ";
 	$command.="--symmetry=$sym ";
-	if ($boxsize) $command.="--boxsize=$boxsize ";
-	if ($contour) $command.="--contour=$contour ";
-	if ($mass) $command.="--mass=$mass ";
-	if ($zoom) $command.="--zoom=$zoom ";
+	if ($boxsize)
+		$command.="--boxsize=$boxsize ";
+	if ($contour)
+		$command.="--contour=$contour ";
+	if ($mass)
+		$command.="--mass=$mass ";
+	if ($zoom)
+		$command.="--zoom=$zoom ";
 	$command.="--description=\"$description\" ";
 	if ($_POST['viper2eman']=='on')
 		$command.="--viper2eman " ;
 
-	// submit job to cluster
-	if ($_POST['process']=="Upload Model") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-		if (!($user && $password)) createUploadModelForm("<B>ERROR:</B> You must be logged in to submit");
+	// Add reference to top of the page
+	$headinfo .= initModelRef(); // main initModelRef ref
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploadmodel',False);
-		// if errors:
-		if ($sub) createUploadModelForm("<b>ERROR:</b> $sub");
-		exit;
-	}
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-	else processing_header("UploadModel Command","UploadModel Command");
-	echo initModelRef();
-	// rest of the page
-	echo"
-	<table class='tableborder' width='600' border='1'>
-	<tr><td colspan='2'>
-	<B>UploadModel Command:</B><br>
-	$command
-	</td></tr>
-	<tr><td>old model id</td><td>$modelid</td></tr>
-	<tr><td>3dDensity id</td><td>$densityid</td></tr>
-	<tr><td>model name</td><td>$model</td></tr>
-	<tr><td>symmetry ID</td><td>$sym</td></tr>
-	<tr><td>apix</td><td>$apix</td></tr>
-	<tr><td>res</td><td>$res</td></tr>
-	<tr><td>contour</td><td>$contour</td></tr>
-	<tr><td>zoom</td><td>$contour</td></tr>
-	<tr><td>session</td><td>$session</td></tr>
-	<tr><td>description</td><td>$description</td></tr>
-	</table>\n";
-	processing_footer();
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'uploadmodel', $nproc);
+
+	// if error display them
+	if ($errors)
+		createAppionForm($errors);
+	exit;
 }
 ?>

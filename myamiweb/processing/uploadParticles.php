@@ -110,86 +110,56 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 }
 
 function runUploadParticles() {
-	$expId = $_GET['expId'];
-	$outdir = $_POST['outdir'];
-	$projectId = getProjectId();
-	$runname = $_POST['runname'];
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$particles = $_POST['particles'];
 	$diam=$_POST['diam'];
 	$scale=$_POST['scale'];
 	$sessionname = $_POST['sessionname'];
 
-	// make sure box files are entered
-	if (!$particles) createUploadParticlesForm("<b>Error:</b> Specify particle files for uploading");
-	//make sure a diam was provided
-	if (!$diam) createUploadParticlesForm("<B>ERROR:</B> Enter the particle diameter");
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
-	if ($outdir) {
-		// make sure outdir ends with '/' and append run name
-		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		$rundir = $outdir.$runname;
-	}
+	// make sure box files are entered
+	if (!$particles)
+		createUploadParticlesForm("<b>Error:</b> Specify particle files for uploading");
+	//make sure a diam was provided
+	if (!$diam)
+		createUploadParticlesForm("<B>ERROR:</B> Enter the particle diameter");
+
+	/* *******************
+	PART 3: Create program command
+	******************** */
 
 	//putting together command
 	$command = "uploadParticles.py ";
-	$command.="--projectid=$projectId ";
 	$command.="--session=$sessionname ";
-	$command.="--runname=$runname ";
 	$command.="--files=\"$particles\" ";
 	$command.="--diam=$diam ";
-	$command.="--rundir=$rundir ";
-	if ($scale) $command.="--bin=$scale ";
+	if ($scale)
+		$command.="--bin=$scale ";
 	$command.="--commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Upload Particles") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-		if (!($user && $password)) createUploadParticlesForm("<B>ERROR:</B> You must be logged in to submit");
+	// Add reference to top of the page
+	$headinfo .= initModelRef(); // main appion ref
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploadparticles',True);
-		// if errors:
-		if ($sub) createUploadParticlesForm("<b>ERROR:</b> $sub");
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-		// check that upload finished properly
-		$jobf = $outdir.'/'.$runname.'/'.$runname.'.appionsub.log';
-		$status = "Particles were uploaded";
-		if (file_exists($jobf)) {
-			$jf = file($jobf);
-			$jfnum = count($jf);
-			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
-			  // if anything is red, it's not good
-				if (preg_match("/red/",$jf[$i])) {
-					$status = "<font class='apcomment'>Error while uploading, check the log file:<br />$jobf</font>";
-					continue;
-				}
-			}
-		}
-		else $status = "Job did not run, contact the appion team";
-		processing_header("Particle Upload", "Particle Upload");
-		echo "$status\n";
-	}
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'uploadparticles', $nproc);
 
-	else {
-		processing_header("UploadParticles Command", "UploadParticles Command");
-		if ($particle_warning) echo"$particle_warning<br />";
-	}
-	echo appionRef();
-
-	//rest of the page
-	echo"
-	<table class='tableborder' width='600' border='1'>
-	<tr><td colspan='2'>
-	<B>UploadParticles Command:</B><br>
-	$command
-	</TD></tr>
-	<TR><td>diam</TD><td>$diam</TD></tr>
-	<TR><td>session</TD><td>$session</TD></tr>";
-
-	echo"
-	</table>\n";
-	processing_footer();
+	// if error display them
+	if ($errors)
+		createAppionForm($errors);
+	exit;
 }
 
 ?>

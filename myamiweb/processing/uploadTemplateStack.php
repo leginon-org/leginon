@@ -148,9 +148,9 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 }
 
 function runUploadTemplateStack() {
-	$expId = $_GET['expId'];
-	$rundir = $_POST['rundir'];
-	$projectId = getProjectId();
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$clusterId = $_POST['clusterId'];
 	$alignId = $_POST['alignId'];
 	$refs = $_POST['refs'];
@@ -159,10 +159,13 @@ function runUploadTemplateStack() {
 	$template_stack = $_POST['template_stack'];
 	$stacktype = $_POST['stack_type'];
 	$apix = $_POST['apix'];
-	$runname = $_POST['runname'];
 	$description = $_POST['description'];
 	$session = $_POST['sessionname'];
 	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
 	//make sure new name does not have spaces
 	if (!$runname) createUploadTemplateStackForm("<B>ERROR:</B> Enter a new name for the template stack, as it will be stored in templatestacks directory");
@@ -192,8 +195,9 @@ function runUploadTemplateStack() {
 	elseif (!$clusterId && !$alignId) $template_warning="File ".$template_stack." exists. Make sure that this is the file that you want!";
 	
 
-	// set runname as time
-//	$runname = "templatestack".getTimestring();
+	/* *******************
+	PART 3: Create program command
+	******************** */
 
 	//putting together command
 	$command = "uploadTemplateStack.py ";
@@ -217,69 +221,29 @@ function runUploadTemplateStack() {
 			$command.="--include=$include ";
 		}
 	}
-	
-	$command.="--projectid=$projectId ";
 	$command.="--session=$session ";
-	$command.="--runname=$runname ";
 	$command.="--description=\"$description\" ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-	// submit job to cluster
-	if ($_POST['process']=="Upload Template Stack") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	// Add reference to top of the page
+	$headinfo .= initModelRef(); // main init model ref
 
-		if (!($user && $password)) createUploadTemplateStackForm("<B>ERROR:</B> You must be logged in to submit");
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-		if (!file_exists($template_stack) && $clusterId == False && $alignId == False) {
-        		createUploadTemplateStackForm("File ".$template_stack." does not exist. ");
-		 }
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'templatestack', 1);
 
-		$sub = submitAppionJob($command,$rundir,$runname,$expId,'templatestack',True);
-		// if errors:
-		if ($sub) createUploadTemplateStackForm("<b>ERROR:</b> $sub");
-
-		$status = "template stack uploaded to the database";
-		// check that upload finished properly
-		$jobf = $rundir.'/'.$runname.'/'.$runname.'.appionsub.log';
-		if (file_exists($jobf)) {
-			$jf = file($jobf);
-			$jfnum = count($jf);
-			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
-			  // if anything is red, it's not good
-				if (preg_match("/red/",$jf[$i]) || ereg("command not found",$jf[$i])) {
-					$status = "<font class='apcomment'>Error while uploading, check the log file:<br />$jobf</font>";
-					continue;
-				}
-			}
-		}
-		else $status = "Job did not run, contact the appion team";
-		processing_header("Template Stack Upload", "Template Stack Upload");
-		echo "$status\n";
-	}
-	else {
-		processing_header("Upload Template Stack Command", "Upload Template Stack Command");
-		if ($template_warning) echo"$template_warning<br />";
-	}
-	echo appionRef();
-	//rest of the page
-	echo"
-	<br/>
-	<table class='tableborder' width='600' border='1'>
-	<tr><td colspan='2'>
-	$command
-	<br/><br/>
-	</TD></tr>
-	<TR><td>template stack name</TD><td>$template_stack</TD></tr>
-	<TR><td>session</TD><td>$session</TD></tr>
-	<tr><td>commit</td><td>$commit</td></tr>
-	<TR><td>description</TD><td>$description</TD></tr>";
-
-	echo"
-	</table>\n";
-	processing_footer();
+	// if error display them
+	if ($errors)
+		createUploadTemplateStackForm($errors);
+	exit;
 }
 
 ?>

@@ -172,12 +172,9 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 }
 
 function runUploadTomogram() {
-
-	$projectId=getProjectId();
-	$expId = $_GET['expId'];
-	$outdir = $_POST['outdir'];
-
-	$command = "uploadTomo.py ";
+	/* *******************
+	PART 1: Get variables
+	******************** */
 
 	$tomofilename=$_POST['tomofilename'];
 	$xffilename=$_POST['xffilename'];
@@ -188,6 +185,10 @@ function runUploadTomogram() {
 	$extrabin=$_POST['extrabin'];
 	$snapshot=$_POST['snapshot'];
 	$orientation=$_POST['orientation'];
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
 	//make sure a tilt series was provided
 	if (!$tiltseriesId) createUploadTomogramForm("<B>ERROR:</B> Select the tilt series");
@@ -225,71 +226,42 @@ function runUploadTomogram() {
 	$apix = $tiltseriesinfos[0]['ccdpixelsize'] * $tiltseriesinfos[0]['imgbin'] * $extrabin * 1e10;
 	$tiltseriesnumber = $tiltseriesinfos[0]['number'];
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
+
+	$command = "uploadTomo.py ";
 	$command.="--file=$tomofilename ";
 	$command.="--session=$sessionname ";
 	$command.="--bin=$extrabin ";
 	$command.="--tiltseries=$tiltseriesnumber ";
-	$command.="--projectid=$projectId ";
-	$command.="--runname=$runname ";
 	if ($transform) $command.="--transform=\"$transform\" ";
 	if ($order) $command.="--order=$order ";
 	if ($volume) $command.="--volume=$volume ";
 	if ($xffilename) $command.="--xffile=$xffilename ";
 	$command.="--description=\"$description\" ";
-  if ($snapshot) 
+	if ($snapshot) 
 		$command.="--image=$snapshot ";
 
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main appion ref
+
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
+
+	// if error display them
+	if ($errors)
+		createUploadTomogramForm($errors);
+	exit;
 	
-	// submit job to cluster
-	if ($_POST['process']=="Upload Tomogram") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-
-		if (!($user && $password)) createUploadTomogramForm("<B>ERROR:</B> You must be logged in to submit");
-		$uploaddir = $outdir.'/'.$runname;
-		$sub = submitAppionJob($command,$uploaddir,$volume,$expId,'uploadtomo',True,True);
-		// if errors:
-		if ($sub) createUploadTomogramForm("<b>ERROR:</b> $sub");
-
-		// check that upload finished properly
-		$jobf = $uploaddir.'/'.$volume.'/'.$volume.'.appionsub.log';
-		$status = "Tomogram was uploaded";
-		if (file_exists($jobf)) {
-			$jf = file($jobf);
-			$jfnum = count($jf);
-			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
-			  // if anything is red, it's not good
-				if (preg_match("/red/",$jf[$i])) {
-					$status = "<font class='apcomment'>Error while uploading, check the log file:<br />$jobf</font>";
-					continue;
-				}
-			}
-		}
-		else $status = "Job did not run, contact the appion team";
-		processing_header("Tomogram Upload", "Tomogram Upload");
-		echo "$status\n";
-	}
-
-	else processing_header("UploadTomogram Command","UploadTomogram Command");
-	
-	// rest of the page
-	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
-	<B>UploadTomogram Command:</B><br>
-	$command
-	</TD></tr>
-	<TR><td>tomo name</TD><td>$tomofilename</TD></tr>
-	<TR><td>transform file</TD><td>$xffilename</TD></tr>
-	<TR><td>snapshot file</TD><td>$snapshot</TD></tr>
-	<TR><td>apix</TD><td>$apix</TD></tr>
-	<TR><td>tiltseries number</TD><td>$tiltseriesnumber</TD></tr>
-	<TR><td>runname</TD><td>$runname</TD></tr>
-	<TR><td>volume</TD><td>$volume</TD></tr>
-	<TR><td>session</TD><td>$sessionname</TD></tr>
-	<TR><td>description</TD><td>$description</TD></tr>
-	</table>\n";
-	processing_footer();
 }
 
 

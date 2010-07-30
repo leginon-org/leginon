@@ -221,15 +221,18 @@ function createUploadFrealignForm($extra=False) {
 */
 
 function runUploadFrealign() {
-	$expId=$_GET['expId'];
-	$projectid = getProjectId();
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$prepid=$_GET['prepId'];
 
 	$zoom=$_POST['zoom'];
 	$mass=$_POST['mass'];
 	$description=$_POST['description'];
-	$rundir = $_POST['rundir'];
-	$runname = $_POST['runname'];
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
 	if (!$description)
 		createUploadFrealignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
@@ -237,9 +240,9 @@ function runUploadFrealign() {
 	if (!$mass)
 		createUploadFrealignForm("<B>ERROR:</B> Please provide an approximate mass of the particle");
 
-	// make sure outdir ends with '/' and append run name
-	$outdir = preg_replace("/".$runname."$/", '', $rundir);
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	/* *******************
+	PART 3: Create program command
+	******************** */
 
 	// setup command
 	$command ="uploadFrealign.py ";
@@ -251,41 +254,22 @@ function runUploadFrealign() {
 	$command.="--mass=$mass ";
 	if ($zoom) $command.="--zoom=$zoom ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Upload Frealign Recon") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= frealignRef();
 
-		if (!($user && $password)) createUploadFrealignForm("<B>ERROR:</B> Enter a user name and password");
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploadfrealign', False, False, False);
-		// if errors:
-		if ($sub) createUploadFrealignForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	else {
-		processing_header("Upload Frealign Params","Upload Frealign Params");
-		echo frealignRef();
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'uploadfrealign', 1);
 
-		echo "<table width='600' class='tableborder' border='1'>";
-		echo "
-			<tr><td colspan='2'>
-			<b>Upload Frealign Command:</b><br />
-			$command
-			</td></tr>
-			<tr><td>run name</td><td>$runname</td></tr>
-			<tr><td>project id</td><td>$projectid</td></tr>
-			<tr><td>run dir</td><td>$rundir</td></tr>
-			<tr><td>out dir</td><td>$outdir</td></tr>
-			<tr><td>prep frealign id</td><td>$prepid</td></tr>
-			<tr><td>description</td><td>$description</td></tr>
-
-			<tr><td>mass</td><td>$mass</td></tr>
-			<tr><td>zoom</td><td>$zoom</td></tr>
-
-			</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createUploadFrealignForm($errors);
+	exit;
 }
 
 ?>
