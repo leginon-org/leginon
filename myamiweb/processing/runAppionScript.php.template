@@ -276,7 +276,7 @@ function runAppionScript() {
 	PART 5: Show or Run Command
 	******************** */
 	
-	// show or submit command, auto sets up 
+	// show or submit command, auto sets up runname, projectid, and rundir (from outdir)
 	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
 	// if error display them
 	if ($errors)
