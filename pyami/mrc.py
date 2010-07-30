@@ -28,6 +28,20 @@ import numpy
 import sys
 import arraystats
 import weakattr
+import weakref
+
+read_cache = weakref.WeakValueDictionary()
+
+def getCache(filename):
+	try:
+		image_array = read_cache[filename]
+	except:
+		image_array = None
+	return image_array
+
+def putCache(filename, image_array):
+	image_array.setflags(write=False)
+	read_cache[filename] = image_array
 
 #### for numarray compatibility
 try:
@@ -616,14 +630,17 @@ def read(filename):
 	'''
 Read the MRC file given by filename, return numpy ndarray object
 	'''
-	f = open(filename, 'rb')
-	headerbytes = f.read(1024)
-	headerdict = parseHeader(headerbytes)
-	a = readDataFromFile(f, headerdict)
+	a = getCache(filename)
+	if a is None:
+		f = open(filename, 'rb')
+		headerbytes = f.read(1024)
+		headerdict = parseHeader(headerbytes)
+		a = readDataFromFile(f, headerdict)
 
-	## store keep header with image
-	setHeader(a, headerdict)
-
+		## store keep header with image
+		setHeader(a, headerdict)
+		## cache
+		#putCache(filename, a)
 	return a
 
 def setHeader(a, headerdict):
