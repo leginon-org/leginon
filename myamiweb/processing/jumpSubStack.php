@@ -158,6 +158,7 @@ function runSubStack() {
 	$reconId=$_POST['reconId'];
 	$maxjump=$_POST['maxjump'];
 	$commit=$_POST['commit'];
+	$runname=$_POST['runname'];
 	$description=$_POST['description'];
 
 	/* *******************
