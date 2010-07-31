@@ -86,7 +86,7 @@ class subStackScript(appionScript.AppionScript):
 			### get euler jump data
 			jumpq = appiondata.ApEulerJumpData()
 			jumpq['particle'] = part
-			jumpq['refRun'] = self.recondata
+			jumpq['refineRun'] = self.recondata
 			jumpdatas = jumpq.query(results=1)
 			if not jumpdatas or len(jumpdatas) < 1:
 				### no data
