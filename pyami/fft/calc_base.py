@@ -52,7 +52,6 @@ class Calculator(object):
 		## check if fft already associated with this image array
 		f = self.getStashed(image_array, 'fft')
 		if f is None:
-			print 'REALLY DOING IT'
 			f = self._forward(image_array)
 			self.stash(image_array, 'fft', f)
 		return f
