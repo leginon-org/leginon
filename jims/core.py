@@ -11,6 +11,7 @@ import scipy.ndimage
 import pyami.mrc
 import pyami.numpil
 import pyami.imagefun
+import pyami.fft
 
 def read_mrc(filename, region=None):
 	image_array = pyami.mrc.mmap(filename)
@@ -55,7 +56,7 @@ def process(filename, **kwargs):
 
 	### fft
 	if 'fft' in kwargs and int(kwargs['fft']):
-		image_array = pyami.imagefun.power(image_array)
+		image_array = pyami.fft.power(image_array, full=True, centered=True)
 
 	### simple binning
 	if 'bin' in kwargs:
