@@ -9,6 +9,7 @@ import scipy.ndimage
 
 # myami
 import pyami.mrc
+pyami.mrc.cache_enabled = True
 import pyami.numpil
 import pyami.imagefun
 import pyami.fft
