@@ -18,26 +18,17 @@ MRC I/O functions:
 			filename - the MRC filename
 '''
 
-cache_enabled = False
-
 import numpy
 import sys
 import arraystats
 import weakattr
 import weakref
+import arraycache
 
-read_cache = weakref.WeakValueDictionary()
-
-def getCache(filename):
-	try:
-		image_array = read_cache[filename]
-	except:
-		image_array = None
-	return image_array
-
-def putCache(filename, image_array):
-	image_array.setflags(write=False)
-	read_cache[filename] = image_array
+cache_enabled = False
+# 10 * 4kx4k float images = 640 MB
+cache_size = 10 * 64 * 1024 * 1024
+read_cache = arraycache.ArrayCache(cache_size)
 
 ## mapping of MRC mode to numpy type
 mrc2numpy = {
@@ -612,7 +603,7 @@ def read(filename):
 	'''
 Read the MRC file given by filename, return numpy ndarray object
 	'''
-	a = getCache(filename)
+	a = read_cache.get(filename)
 	if a is None:
 		f = open(filename, 'rb')
 		headerbytes = f.read(1024)
@@ -623,7 +614,7 @@ Read the MRC file given by filename, return numpy ndarray object
 		setHeader(a, headerdict)
 		## cache
 		if cache_enabled:
-			putCache(filename, a)
+			read_cache.put(filename, a)
 	return a
 
 def setHeader(a, headerdict):
