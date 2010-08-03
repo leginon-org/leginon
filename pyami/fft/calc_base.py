@@ -64,12 +64,18 @@ class Calculator(object):
 	def reverse(fft_array):
 		return self._reverse(fft_array)
 
-	def post_fft(self, fft_array, full=False, centered=False):
+	def post_fft(self, fft_array, full=False, centered=False, mask=None):
 		'''handle conversion between full<->half, and centered or not'''
 		if full:
 			fft_array = self.make_full(fft_array)
 			if centered:
 				fft_array = pyami.imagefun.swap_quadrants(fft_array)
+				if mask is not None:
+					if mask < 1.0:
+						mask = int(mask * min(*fft_array.shape))
+					else:
+						mask = int(mask)
+					pyami.imagefun.center_mask(fft_array, mask)
 		else:
 			fft_array = self.make_half(fft_array)
 		return fft_array
@@ -86,12 +92,12 @@ class Calculator(object):
 		pow = numpy.absolute(fft_array)
 		return pow
 
-	def power(self, image_array, full=False, centered=False):
+	def power(self, image_array, full=False, centered=False, mask=None):
 		fft_array = self.forward_raw(image_array)
 		pow = self.getStashed(fft_array, 'power')
 		if pow is None:
 			pow = self._calc_power(fft_array)
 			self.stash(fft_array, 'power', pow)
-		pow = self.post_fft(pow, full, centered)
+		pow = self.post_fft(pow, full, centered, mask)
 		return pow
 
