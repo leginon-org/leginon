@@ -4,6 +4,7 @@
 import cStringIO
 
 # third party
+import numpy
 import scipy.misc
 import scipy.ndimage
 
@@ -22,8 +23,8 @@ def read_pil(filename, region=None):
 	image_array = pyami.numpil.read(filename)
 	return image_array
 
-def array_to_pil(image_array):
-	pil_image = scipy.misc.toimage(image_array)
+def array_to_pil(image_array, min=None, max=None):
+	pil_image = scipy.misc.toimage(image_array, cmin=min, cmax=max)
 	return pil_image
 
 def output_to_string(pil_image, output_format):
@@ -57,12 +58,36 @@ def process(filename, **kwargs):
 
 	### fft
 	if 'fft' in kwargs and int(kwargs['fft']):
-		image_array = pyami.fft.power(image_array, full=True, centered=True)
+		if 'fftmask' in kwargs:
+			try:
+				fftmask = float(kwargs['fftmask'])
+			except:
+				fftmask = None
+		else:
+			fftmask = None
+		image_array = pyami.fft.calculator.power(image_array, full=True, centered=True, mask=fftmask)
 
 	### simple binning
 	if 'bin' in kwargs:
 		bin = int(kwargs['bin'])
 		image_array = pyami.imagefun.bin(image_array, bin)
+
+	if 'scaletype' in kwargs:
+		scaletype = kwargs['scaletype']
+		scalemin = float(kwargs['scalemin'])
+		scalemax = float(kwargs['scalemax'])
+		if scaletype == 'minmax':
+			pass
+		elif scaletype == 'stdev':
+			mean = pyami.arraystats.mean(image_array)
+			std = pyami.arraystats.std(image_array)
+			scalemin = mean + scalemin * std
+			scalemax = mean + scalemax * std
+		elif scaletype == 'cdf':
+			pass
+
+	image_array = pyami.imagefun.linearscale(image_array, (scalemin, scalemax), (0,255))
+	image_array = numpy.clip(image_array, 0, 255)
 
 	### convert array to PIL image
 	pil_image = array_to_pil(image_array)
@@ -79,6 +104,12 @@ def process(filename, **kwargs):
 	else:
 		s = output_to_string(pil_image, output_format)
 		return s
+
+def autoscale(image_array, arg):
+	args = arg.split(';')
+	if args[0] == '':
+		pass
+	return image_array
 
 def test_defaults(filename):
 	'''test processing with defaults.  should output jpeg'''
