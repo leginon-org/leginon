@@ -7,6 +7,7 @@ import cStringIO
 import numpy
 import scipy.misc
 import scipy.ndimage
+import scipy.stats
 
 # myami
 import pyami.mrc
@@ -74,8 +75,15 @@ def process(filename, **kwargs):
 
 	if 'scaletype' in kwargs:
 		scaletype = kwargs['scaletype']
-		scalemin = float(kwargs['scalemin'])
-		scalemax = float(kwargs['scalemax'])
+		if 'scalemin' in kwargs:
+			scalemin = float(kwargs['scalemin'])
+		else:
+			scalemin = None
+		if 'scalemax' in kwargs:
+			scalemax = float(kwargs['scalemax'])
+		else:
+			scalemax = None
+		## now convert scalemin,scalemax to values to pass to linearscale
 		if scaletype == 'minmax':
 			pass
 		elif scaletype == 'stdev':
@@ -84,10 +92,26 @@ def process(filename, **kwargs):
 			scalemin = mean + scalemin * std
 			scalemax = mean + scalemax * std
 		elif scaletype == 'cdf':
-			pass
+			fmin = pyami.arraystats.min(image_array)
+			fmax = pyami.arraystats.max(image_array)
+			n = image_array.size
+			bins = int(fmax-fmin+1)
+			bins = bins/10
+			cumfreq, lower, width, x = scipy.stats.cumfreq(image_array, bins)
+			cumfreq /= n
+			pmin = True
+			for j in range(bins):
+				if pmin and cumfreq[j] >= scalemin:
+					pmin = False
+					minval = j
+				elif cumfreq[j] >= scalemax:
+					maxval = j
+					break
+			scalemin = lower + (minval+0.5) * width
+			scalemax = lower + (maxval+0.5) * width
 
-	image_array = pyami.imagefun.linearscale(image_array, (scalemin, scalemax), (0,255))
-	image_array = numpy.clip(image_array, 0, 255)
+		image_array = pyami.imagefun.linearscale(image_array, (scalemin, scalemax), (0,255))
+		image_array = numpy.clip(image_array, 0, 255)
 
 	### convert array to PIL image
 	pil_image = array_to_pil(image_array)
