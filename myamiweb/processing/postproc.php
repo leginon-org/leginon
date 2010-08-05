@@ -212,6 +212,7 @@ function createform($extra=False) {
 	echo "<INPUT TYPE='hidden' name='apix' value='$apix'>\n";
 	echo "<INPUT TYPE='hidden' name='file' value='$info[volumeDensity]'>\n";
 	echo "<INPUT TYPE='hidden' name='path' value='$info[path]'>\n";
+	echo "<INPUT TYPE='hidden' name='outdir' value=$info[path].'/postproc'>\n";
 	echo "<center>\n";
 	echo getSubmitForm("Post Process");
 	echo "</center>\n";
@@ -254,7 +255,7 @@ function runPostProc() {
 	$median = $_POST['median'];
 	$contour = $_POST['contour'];
 	$densitypath=$path."/".$file;
-	$outdir=$path."/postproc";
+	$outdir=$_POST['outdir'];
 	$densityname = $_POST['densityname'];
 
 	// get session name from expId
