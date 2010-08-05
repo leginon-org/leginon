@@ -212,7 +212,7 @@ function createform($extra=False) {
 	echo "<INPUT TYPE='hidden' name='apix' value='$apix'>\n";
 	echo "<INPUT TYPE='hidden' name='file' value='$info[volumeDensity]'>\n";
 	echo "<INPUT TYPE='hidden' name='path' value='$info[path]'>\n";
-	echo "<INPUT TYPE='hidden' name='outdir' value=$info[path].'/postproc'>\n";
+	echo "<INPUT TYPE='hidden' name='outdir' value=$info[path]/postproc>\n";
 	echo "<center>\n";
 	echo getSubmitForm("Post Process");
 	echo "</center>\n";
