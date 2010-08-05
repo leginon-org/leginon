@@ -51,14 +51,14 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission
-	$rundir=$sessioninfo['Image path'];
-	$rundir=ereg_replace("leginon","appion",$rundir);
-	$rundir=ereg_replace("rawdata","templatestacks",$rundir);
+	$outdir=$sessioninfo['Image path'];
+	$outdir=ereg_replace("leginon","appion",$outdir);
+	$outdir=ereg_replace("rawdata","templatestacks",$outdir);
 
 	if (!empty($sessioninfo)) {
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' VALUE='$sessionname'>\n";
-		echo "<input type='hidden' name='rundir' value='$rundir'>\n";
+		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
 	
 	echo"<INPUT TYPE='hidden' NAME='projectId' VALUE='$projectId'>\n";
@@ -74,7 +74,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	$template_stack = ($_POST['template_stack']) ? $_POST['template_stack'] : '';
 	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
 	$description = ($_POST['description']) ? $_POST['description'] : '';
-	while (file_exists($rundir."/templatestack".($templateruns)))
+	while (file_exists($outdir."/templatestack".($templateruns)))
 		$templateruns += 1;
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'templatestack'.$templateruns;
 	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
@@ -89,7 +89,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	echo "<br>\n";
 
 	echo "<br>";
-	echo "<i>Output Directory: </i>".$rundir;
+	echo "<i>Output Directory: </i>".$outdir;
 	echo "<br>";
 
 	echo "<br/>\n";
@@ -159,6 +159,8 @@ function runUploadTemplateStack() {
 	$template_stack = $_POST['template_stack'];
 	$stacktype = $_POST['stack_type'];
 	$apix = $_POST['apix'];
+	$outdir = $_POST['outdir'];
+	$runname = $_POST['runname'];
 	$description = $_POST['description'];
 	$session = $_POST['sessionname'];
 	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
