@@ -13,6 +13,14 @@
  *	
  */
 
+
+$fileHandle = @fopen('config.php', 'r');
+if($fileHandle === false){
+	header('location:setup/index.php');
+	fclose($fileHandle);
+	exit();
+}
+
 require_once "config.php";
 require_once "inc/login.inc";
 require_once "inc/util.inc";
