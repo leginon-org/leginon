@@ -23,12 +23,12 @@ import sys
 import arraystats
 import weakattr
 import weakref
-import arraycache
+import resultcache
 
 cache_enabled = False
 # 10 * 4kx4k float images = 640 MB
 cache_size = 10 * 64 * 1024 * 1024
-read_cache = arraycache.ArrayCache(cache_size)
+read_cache = resultcache.ResultCache(cache_size)
 
 ## mapping of MRC mode to numpy type
 mrc2numpy = {

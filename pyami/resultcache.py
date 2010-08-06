@@ -1,40 +1,52 @@
 #!/usr/bin/env python
 
 import weakref
+import numpy
+import Image
+import sys
 
-class CachedArray(object):
-	def __init__(self, filename, array):
-		self.filename = filename
-		self.array = array
-		self.size = array.size * array.itemsize
+class CachedResult(object):
+	def __init__(self, key, result):
+		self.key = key
+		self.result = result
+		if isinstance(result, numpy.ndarray):
+			self.size = result.size * result.itemsize
+			self.result.setflags(write=False)
+		else:
+			self.size = sys.getsizeof(result)
 		self.refcount = 0
-		self.array.setflags(write=False)
 
-class ArrayCache(object):
+class ResultCache(object):
 	def __init__(self, size_max):
 		self.weakdict = weakref.WeakValueDictionary()
 		self.strong_list = []
 		self.strong_size_max = size_max
 		self.strong_size = 0
 
-	def put(self, filename, array):
-		if filename in self.weakdict:
-			cached = self.weakdict[filename]
+	def getsize(self):
+		return self.strong_size, len(self.strong_list)
+
+	def getkeys(self):
+		return self.weakdict.keys()
+
+	def put(self, key, result):
+		if key in self.weakdict:
+			cached = self.weakdict[key]
 		else:
-			cached = CachedArray(filename, array)
-			self.weakdict[filename] = cached
+			cached = CachedResult(key, result)
+			self.weakdict[key] = cached
 			self.strong_size += cached.size
 			self.clean_strong()
 		self.insert_strong(cached)
 
-	def get(self, filename):
+	def get(self, key):
 		try:
-			cached = self.weakdict[filename]
+			cached = self.weakdict[key]
 		except:
 			return None
 		## this bumps it to the head of the strong list
 		self.insert_strong(cached)
-		return cached.array
+		return cached.result
 
 	def insert_strong(self, cached):
 		self.strong_list.insert(0, cached)
@@ -52,26 +64,26 @@ class ArrayCache(object):
 
 def test():
 	import numpy
-	cache = ArrayCache(100)
+	cache = ResultCache(100)
 	print 'KEYS', cache.weakdict.keys()
 
 	for f in ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'f', 'e', 'a'):
 		a = numpy.arange(20, dtype=numpy.uint8)
 		print 'PUT', f
 		cache.put(f, a)
-		print 'KEYS', [x.filename for x in cache.strong_list]
+		print 'KEYS', [x.key for x in cache.strong_list]
 	print ''
 
 	for f in ('d', 'd', 'b'):
 		print 'GET', f, cache.get(f)
-		print 'KEYS', [x.filename for x in cache.strong_list]
+		print 'KEYS', [x.key for x in cache.strong_list]
 	print ''
 
 	for f in ('b', 'b',):
 		a = numpy.arange(20, dtype=numpy.uint8)
 		print 'PUT', f
 		cache.put(f, a)
-		print 'KEYS', [x.filename for x in cache.strong_list]
+		print 'KEYS', [x.key for x in cache.strong_list]
 	print ''
 
 
