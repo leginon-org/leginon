@@ -397,7 +397,9 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		}
 
 	} else {
-		$img = blankimage();
+		//$img = blankimage();
+		//instead to create a blankimge(). We need to return false.
+		return false;
 	}
 	return $img;
 

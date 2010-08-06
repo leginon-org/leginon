@@ -129,16 +129,20 @@ foreach ($imageIds as $i=>$id) {
 	}
 
 	$img = getImage($sessionId, $id, "", $params);
-
+	
+	// when there is no image. skip it....
+	if($img == false)
+		continue;
+		
 	# write filename
 	if ($t=='png') {
-					imagepng($img, $filename);
+		imagepng($img, $filename);
 	} else {
-					imagejpeg($img,$filename,$quality);
+		imagejpeg($img,$filename,$quality);
 	}
 
 	imagedestroy($img);
-
+	
 }
 echo "\n";
 
