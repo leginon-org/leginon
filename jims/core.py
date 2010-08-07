@@ -11,133 +11,210 @@ import scipy.stats
 
 # myami
 import pyami.mrc
-pyami.mrc.cache_enabled = True
+#pyami.mrc.cache_enabled = True
 import pyami.numpil
 import pyami.imagefun
 import pyami.fft
+import pyami.resultcache
+import pyami.weakattr
 
-def read_mrc(filename, region=None):
-	image_array = pyami.mrc.mmap(filename)
-	return image_array
+import pyami.mem
 
-def read_pil(filename, region=None):
-	image_array = pyami.numpil.read(filename)
-	return image_array
+cache_size = 400*1024*1024  # 400 MB
+results = pyami.resultcache.ResultCache(cache_size)
 
-def array_to_pil(image_array, min=None, max=None):
-	pil_image = scipy.misc.toimage(image_array, cmin=min, cmax=max)
-	return pil_image
+class Pipe(object):
+	'''
+	Base class for one step of a pipeline.
+	These objects should be initialized with keyword arguments.
+	The objects can then be called with the input as the only argument.
+	'''
+	required_args = {}
+	optional_args = {}
+	def __init__(self, **kwargs):
+		self.ready = False
+		self.parse_args(**kwargs)
+		self.make_hash()
 
-def output_to_string(pil_image, output_format):
-	file_object = cStringIO.StringIO()
-	output_to_file(pil_image, output_format, file_object)
-	image_string = file_object.getvalue()
-	file_object.close()
-	return image_string
+	def make_hash(self):
+		items = self.kwargs.items()
+		items.sort()
+		self.signature = (self.__class__, tuple(items))
+		self._hash = hash(self.signature)
 
-def output_to_file(pil_image, output_format, file_object):
-	pil_image.save(file_object, output_format)
+	def __hash__(self):
+		return self._hash
 
-def process(filename, **kwargs):
-	### determine input format
-	if 'input_format' in kwargs:
-		input_format = kwargs['in_format']
-	elif filename.endswith('mrc') or filename.endswith('MRC'):
-		## use MRC module to read
-		input_format = 'mrc'
-	else:
-		## use PIL to read
-		input_format = 'PIL'
+	def __eq__(self, other):
+		return self.signature == other.signature
 
-	### Read image file
-	if input_format == 'mrc':
-		# use mrc
-		image_array = read_mrc(filename)
-	elif input_format == 'PIL':
-		# use PIL
-		image_array = read_pil(filename)
+	def __ne__(self, other):
+		return self.signature != other.signature
 
-	### fft
-	if 'fft' in kwargs and int(kwargs['fft']):
-		if 'fftmask' in kwargs:
-			try:
-				fftmask = float(kwargs['fftmask'])
-			except:
-				fftmask = None
+	def __str__(self):
+		parts = ['%s=%s' % (name,value) for (name,value) in self.signature[1]]
+		allparts = ','.join(parts)
+		return '%s(%s,%s)' % (self.__class__.__name__, id(self), allparts)
+
+	def __repr__(self):
+		return self.__str__()
+
+	def parse_args(self, **kwargs):
+		self.kwargs = {}
+		for name,type in self.required_args.items():
+			if name in kwargs:
+				self.kwargs[name] = type(kwargs[name])
+			else:
+				return
+		self.ready = True
+		for name, type in self.optional_args.items():
+			if name in kwargs:
+				self.kwargs[name] = type(kwargs[name])
+
+	def __call__(self, input):
+		return self.run(input, **self.kwargs)
+
+	def run(self, input):
+		raise NotImplementedError('define run')
+
+class Read(Pipe):
+	required_args = {'filename': str}
+
+	def run(self, input, filename):
+		## input ignored
+		### determine input format
+		if filename.endswith('mrc') or filename.endswith('MRC'):
+			## use MRC module to read
+			input_format = 'mrc'
 		else:
-			fftmask = None
-		image_array = pyami.fft.calculator.power(image_array, full=True, centered=True, mask=fftmask)
+			## use PIL to read
+			input_format = 'PIL'
 
-	### simple binning
-	if 'bin' in kwargs:
-		bin = int(kwargs['bin'])
-		image_array = pyami.imagefun.bin(image_array, bin)
+		### Read image file
+		if input_format == 'mrc':
+			# use mrc
+			image_array = pyami.mrc.read(filename)
+		elif input_format == 'PIL':
+			# use PIL
+			image_array = pyami.numpil.read(filename)
+		return image_array
 
-	if 'scaletype' in kwargs:
-		scaletype = kwargs['scaletype']
-		if 'scalemin' in kwargs:
-			scalemin = float(kwargs['scalemin'])
-		else:
-			scalemin = None
-		if 'scalemax' in kwargs:
-			scalemax = float(kwargs['scalemax'])
-		else:
-			scalemax = None
-		## now convert scalemin,scalemax to values to pass to linearscale
+class Power(Pipe):
+	required_args = {'power': int}
+	optional_args = {'mask': int}
+	def run(self, input, power, mask=None):
+		output = pyami.fft.calculator.power(input, full=True, centered=True, mask=mask)
+		return output
+
+class Bin(Pipe):
+	required_args = {'bin': int}
+	def run(self, input, bin):
+		output = pyami.imagefun.bin(input, bin)
+		return output
+
+class Scale(Pipe):
+	required_args = {'scaletype': str, 'scalemin': float, 'scalemax': float}
+	def run(self, input, scaletype, scalemin, scalemax):
 		if scaletype == 'minmax':
-			pass
+			result = self.scale_minmax(input, scalemin, scalemax)
 		elif scaletype == 'stdev':
-			mean = pyami.arraystats.mean(image_array)
-			std = pyami.arraystats.std(image_array)
-			scalemin = mean + scalemin * std
-			scalemax = mean + scalemax * std
+			result = self.scale_stdev(input, scalemin, scalemax)
 		elif scaletype == 'cdf':
-			fmin = pyami.arraystats.min(image_array)
-			fmax = pyami.arraystats.max(image_array)
-			n = image_array.size
-			bins = int(fmax-fmin+1)
-			bins = bins/10
-			cumfreq, lower, width, x = scipy.stats.cumfreq(image_array, bins)
-			cumfreq /= n
-			pmin = True
-			for j in range(bins):
-				if pmin and cumfreq[j] >= scalemin:
-					pmin = False
-					minval = j
-				elif cumfreq[j] >= scalemax:
-					maxval = j
-					break
-			scalemin = lower + (minval+0.5) * width
-			scalemax = lower + (maxval+0.5) * width
+			result = self.scale_cdf(input, scalemin, scalemax)
+		else:
+			raise ValueError('bad scaletype: %s' % (scaletype,))
+		return result
 
-		image_array = pyami.imagefun.linearscale(image_array, (scalemin, scalemax), (0,255))
+	def linearscale(self, input, min, max):
+		image_array = pyami.imagefun.linearscale(input, (min, max), (0,255))
 		image_array = numpy.clip(image_array, 0, 255)
+		return image_array
 
-	### convert array to PIL image
-	pil_image = array_to_pil(image_array)
+	def scale_minmax(self, input, min, max):
+		return self.linearscale(input, min, max)
 
-	### generate desired output format
-	if 'output_format' in kwargs:
-		output_format = kwargs['output_format']
-	else:
-		output_format = 'JPEG'
+	def scale_stdev(self, input, min, max):
+		mean = pyami.arraystats.mean(input)
+		std = pyami.arraystats.std(input)
+		scalemin = mean + min * std
+		scalemax = mean + max * std
+		return self.linearscale(input, scalemin, scalemax)
 
-	if 'output_file' in kwargs:
-		output_to_file(pil_image, output_format, kwargs['output_file'])
-		return None
-	else:
-		s = output_to_string(pil_image, output_format)
+	def scale_cdf(self, input, min, max):
+		bins = 1000
+		try:
+			cumfreq, lower, width, x = pyami.weakattr.get(input, 'cumfreq')
+		except:
+			cumfreq, lower, width, x = scipy.stats.cumfreq(input, bins)
+			pyami.weakattr.set(input, 'cumfreq', (cumfreq, lower, width, x))
+		cumfreq = cumfreq / input.size
+		pmin = True
+		for j in range(bins):
+			if pmin and cumfreq[j] >= min:
+				pmin = False
+				minval = j
+			elif cumfreq[j] >= max:
+				maxval = j
+				break
+		scalemin = lower + (minval+0.5) * width
+		scalemax = lower + (maxval+0.5) * width
+		return self.linearscale(input, scalemin, scalemax)
+
+class Generate(Pipe):
+	optional_args = {'output_format': str}
+	def run(self, input, output_format='JPEG'):
+		### convert array to PIL image
+		pil_image = scipy.misc.toimage(input)
+		### generate desired output format
+		s = self.output_to_string(pil_image, output_format)
 		return s
 
-def autoscale(image_array, arg):
-	args = arg.split(';')
-	if args[0] == '':
-		pass
-	return image_array
+	def output_to_string(self, pil_image, output_format):
+		file_object = cStringIO.StringIO()
+		self.output_to_file(pil_image, output_format, file_object)
+		image_string = file_object.getvalue()
+		file_object.close()
+		return image_string
 
-def test_defaults(filename):
-	'''test processing with defaults.  should output jpeg'''
-	output = process(test_filename)
-	f = open('test.jpg', 'w')
-	f.write(output)
-	f.close()
+	def output_to_file(self, pil_image, output_format, file_object):
+		pil_image.save(file_object, output_format)
+
+pipe_order = [
+	Read,
+	Power,
+	Bin,
+	Scale,
+	Generate,
+]
+
+def kwargs_to_pipeline(**kwargs):
+	pipeline = []
+	for pipe_class in pipe_order:
+		pipe = pipe_class(**kwargs)
+		if pipe.ready:
+			pipeline.append(pipe)
+	return tuple(pipeline)
+
+def process(**kwargs):
+	pipeline = kwargs_to_pipeline(**kwargs)
+
+	### find all or part of the pipeline result in the cache
+	n = len(pipeline)
+	for i in range(n+1):
+		done = pipeline[:n-i]
+		remain = pipeline[n-i:]
+		result = results.get(done)
+		if result is not None:
+			break
+
+	### finish the remainder of the pipeline
+	for pipe in remain:
+		print 'RUNNING', pipe
+		result = pipe(result)
+		done = done + (pipe,)
+		results.put(done, result)
+	import pyami.mem
+
+	return result
+
+
