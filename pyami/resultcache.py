@@ -16,6 +16,12 @@ class CachedResult(object):
 			self.size = sys.getsizeof(result)
 		self.refcount = 0
 
+	def __str__(self):
+		return 'CachedResult(%s:%s)' % (self.key, type(self.result))
+
+	def __repr__(self):
+		return 'CachedResult(%s:%s)' % (self.key, type(self.result))
+
 class ResultCache(object):
 	def __init__(self, size_max):
 		self.weakdict = weakref.WeakValueDictionary()
