@@ -21,10 +21,12 @@ class RequestHandler(SocketServer.StreamRequestHandler):
 
 	def run_process(self, request):
 		kwargs = utility.request_to_kwargs(request)
-		core.process(output_file=self.wfile, **kwargs)
+		result = core.process(**kwargs)
+		self.wfile.write(result)
 		self.wfile.flush()
 
-class Server(SocketServer.ForkingMixIn, SocketServer.TCPServer):
+#class Server(SocketServer.ForkingMixIn, SocketServer.TCPServer):
+class Server(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 	allow_reuse_address = True
 	pass
 
