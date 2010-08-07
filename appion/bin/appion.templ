@@ -1,25 +1,46 @@
 #!/usr/bin/env python
 
-#
-Env_Override = True
+#Env_Override: 
+#Indicates that you want user defined environment variables to override the
+#values set in this file.
+Env_Override = False
 
-#Set the path to the appion root directory.
-Appion_Dir = ''
+#Appion_Bin_Dir:  Appion scripts directory
+#Set the path to the directory containing the appion scripts.  By defaut
+#this is either /usr/local/bin or /usr/bin.
+Appion_Bin_Dir = '/usr/local/bin'
 
-#If you have EMAN installed and would like to use it with appion set this
-#configuration parameter to the directory where you installed it.
-Eman_Dir = ''
+#Appion_Lib_Dir: Appion Python libraries location
+# Usually these are installed in the Python site-packages directory. If you
+#installed them someplace else set this variable to the directory cotaining 
+#the appionlib directory 
+Appion_Lib_DIR = ''
 
-#Set Xmipp's root installation directory. 
-Xmipp_Dir = ''
+#Appion_Ace_Dir: Ace 1 .m file location
+#If you installed the ACE 1 matlab files in a different directory than the 
+#directory which cotains the appion scripts (Appion_Bin_Dir) set this variable.
+Appion_Ace_Dir = ''
 
+#Matlab_Dir: Matab installation directory
 #To use ACE you must indicate the MatLab installation directory.  This is
 #only needed for ACE 1, it does not need to be set if you're only using ACE2.
 Matlab_Dir = ''
 
 
-#Set Spider's root installation directory.
+#This next session sets the installation directories for the tools used by
+#Appion.  For any these tools you would like to use it with appion set this
+#configuration parameter to the directory where you installed it.
+
+Eman_Dir: Eman root installation directory
+Eman_Dir = ''
+
+#Xmipp_Dir: Xmipp's root installation directory. 
+Xmipp_Dir = ''
+
+
+#Spider_Dir: Spider's root installation directory.
 Spider_Dir = ''
+
 
 #If you wish to have python search additional directories for module files,
 #specify the full path to the directory here.  Separate multiple directories
@@ -79,7 +100,10 @@ if (Env_Override):
 
     if (os.environ.has_key('APPION')):
          Appion_Dir = os.environ['APPION']
-
+         Appion_Bin_Dir = os.path.join (Appion_Dir,'bin')
+         Appion_Lib_Dir = Appion_Dir
+         Appion_Ace_Dir = os.path.join (Appion_Dir, 'ace')
+         
     if (os.environ.has_key('EMANDIR')):
         Eman_Dir = os.environ['EMANDIR']
 
@@ -87,38 +111,23 @@ if (Env_Override):
         Spider_Dir = os.environ['SPIDER']
 
 
-else:
-    #clear any evironment variables we don't want set if
-    #not using Env_Override
-    if (os.environ.has_key('PYTHONHOME')):
-        del (os.environ['PYTHONHOME'])
-
         
 #Appion_Dir needs to been defined otherwise nothing will work.  So if 
 #it hasn't been set somewhere above, try to determine it.
-if (Appion_Dir == '' or (not os.path.exists(os.path.join (Appion_Dir, 'bin')))):
+if (Appion_Dir == '' or (not os.path.exists(Appion_Bin_Dir))):
     #find the real absolute path to this wrapper even if it was started via a sim link
-    #of using a relative path.
-    appionBinDir = os.path.dirname(os.path.realpath(sys.argv[0]))
-
-    #At this point we'll assume the directory directly above the one  
-    #where this script resides is a valid appion directory.
-    Appion_Dir = os.path.dirname(appionBinDir)    
-
-Appion_Bin_Dir = os.path.join(Appion_Dir, 'bin')
-Appion_Lib_Dir = os.path.join(Appion_Dir, 'appionlib')
-
-
-#If we still can't seem to find a valid Appion installation directory,
-#bail out.
-if (not os.path.exists(Appion_Bin_Dir) or not os.path.exists (Appion_Lib_Dir)):
-    sys.stderr.write("Error:  Can't determine Appion directory\n")
-    sys.exit(1)
-
+    #or using a relative path.
+    Appion_Bin_Dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
 prependToEnv('PATH', Appion_Bin_Dir)
-prependToEnv('PYTHONPATH', Appion_Dir)
-appendToEnv('MATLABPATH', os.path.join(Appion_Dir, 'ace'))
+
+if (Appion_Lib_Dir != ''):
+    prependToEnv('PYTHONPATH', Appion_Dir)
+
+if (Appion_Ace_Dir != ''):
+    appendToEnv('MATLABPATH', Appion_Ace_Dir)
+else:
+    appendToEnv('MATLABPATH', Appion_Bin_Dir)
 
 if (Matlab_Dir != ''):
     prependToEnv('PATH', os.path.join(Matlab_Dir, 'bin'))
@@ -162,8 +171,6 @@ if ('py' == sys.argv[1].split('.').pop()):
 else:
     command = sys.argv[1].lower() + '.py'
 
-#Variable to hold the name of appion program to run
-AppionProg = ''
 
 
 for func in functionList:
@@ -171,10 +178,7 @@ for func in functionList:
     if (command == f.lower()):
         AppionProg = func
         break
-    
-if (AppionProg == ''):
-    sys.stderr.write("Error: Unknown Command %s.\n" % sys.argv[1])
-    sys.exit(1)
+
 
 try:
     commandLine = [AppionProg] + sys.argv[2:]
@@ -185,7 +189,7 @@ except OSError:
     sys.stderr.write("Could not run command %s\n" % sys.argv[1])
     sys.exit(2)
 
-#
-#except NameError:
-#    sys.stderr.write("Error: Unknown Command %s.\n" % sys.argv[1])
-#    sys.exit(1)
+
+except NameError:
+    sys.stderr.write("Error: Unknown Command %s.\n" % sys.argv[1])
+    sys.exit(1)
