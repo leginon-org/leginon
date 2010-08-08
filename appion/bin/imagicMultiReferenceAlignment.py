@@ -560,7 +560,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		preptime = time.time()
 		subprocess.Popen("chmod 775 "+str(scalingbatchfile), shell=True)
 		os.chdir(self.params['rundir'])
-		apIMAGIC.executeImagicBatchFile(scalingbatchfile)
+#		apIMAGIC.executeImagicBatchFile(scalingbatchfile)
+		apParam.runCmd(scalingbatchfile, "IMAGIC")
 		logfile = open(os.path.join(self.params['rundir'], "prepareStack.log"))
 		loglines = logfile.readlines()
 		for line in loglines:
@@ -592,7 +593,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		proc = subprocess.Popen("chmod 775 "+str(batchfile), shell=True)
 		proc.wait()
 		os.chdir(self.params['rundir'])
-		apIMAGIC.executeImagicBatchFile(batchfile)
+#		apIMAGIC.executeImagicBatchFile(batchfile)
+		apParam.runCmd(batchfile)
 		logfile = open(os.path.join(self.params['rundir'], "multiReferenceAlignment.log"))
 		loglines = logfile.readlines()
 		for line in loglines:
