@@ -12,7 +12,7 @@ from appionlib import appiondata
 from appionlib import apImagicFile
 from appionlib import apTemplate
 from appionlib import apDisplay
-from appionlib import apEMAN
+from appionlib import apParam
 from appionlib import apIMAGIC
 from appionlib import apFile
 from appionlib import apStack
@@ -345,7 +345,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			while os.path.isfile(reffile+".new.img"):
 				apFile.removeStack(reffile+".new.img")
 			emancmd = "proc2d "+reffile+" "+reffile+".new.hed clip="+str(stbox)+" edgenorm"
-			apEMAN.executeEmanCmd(emancmd)
+			apParam.runCmd(emancmd, "EMAN")
 			os.rename(reffile+".new.hed", reffile)
 			os.rename(reffile+".new.img", reffile[:-4]+".img")
 			
@@ -522,7 +522,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 				apFile.removeStack(os.path.join(self.params['rundir'], "start.img"))
 			emancmd = "proc2d "+strippedfile+".hed "+os.path.join(self.params['rundir'], "start.hed ")+\
 				"first=0 last="+str(self.params['numpart']-1)
-			apEMAN.executeEmanCmd(emancmd)	
+			apParam.runCmd(emancmd, "EMAN")
 		else:
 			apDisplay.printError("stack not found in database")
 	
@@ -545,7 +545,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			else:
 				strippedfile = self.templatestack['file']
 			emancmd = "proc2d "+strippedfile+".img "+ts
-			apEMAN.executeEmanCmd(emancmd)
+			apParam.runCmd(emancmd, "EMAN")
 		else:
 			apDisplay.printError("template stack not found in database")
 
@@ -560,7 +560,6 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		preptime = time.time()
 		subprocess.Popen("chmod 775 "+str(scalingbatchfile), shell=True)
 		os.chdir(self.params['rundir'])
-#		apIMAGIC.executeImagicBatchFile(scalingbatchfile)
 		apParam.runCmd(scalingbatchfile, "IMAGIC")
 		logfile = open(os.path.join(self.params['rundir'], "prepareStack.log"))
 		loglines = logfile.readlines()
@@ -593,7 +592,6 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		proc = subprocess.Popen("chmod 775 "+str(batchfile), shell=True)
 		proc.wait()
 		os.chdir(self.params['rundir'])
-#		apIMAGIC.executeImagicBatchFile(batchfile)
 		apParam.runCmd(batchfile, "IMAGIC")
 		logfile = open(os.path.join(self.params['rundir'], "multiReferenceAlignment.log"))
 		loglines = logfile.readlines()
@@ -613,7 +611,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		emancmd = "proc2d "+alignstack+" "+alignstack+".norm.hed norm"
 		while os.path.isfile(alignstack+".norm.img"):
 			apFile.removeStack(alignstack+".norm.img")
-		apEMAN.executeEmanCmd(emancmd)
+		apParam.runCmd(emancmd, "EMAN")
 		os.rename(alignstack+".norm.hed", alignstack)
 		os.rename(alignstack+".norm.img", alignstack[:-4]+".img")
 
