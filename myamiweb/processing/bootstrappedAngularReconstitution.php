@@ -68,7 +68,7 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';	
 	
 	// Set any existing parameters in form
-	$sessionpathval = ($_POST['rundir']) ? $_POST['rundir'] : $sessionpath;
+	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while (file_exists($sessionpathval.'bar'.($barruns+1)))
 		$barruns += 1;
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'bar'.($barruns+1);
@@ -100,9 +100,9 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 				echo "<input type='text' name='runname' value='$runname'>\n";
 				echo "<br />\n";
 				echo "<br />\n";
-				echo docpop('rundir','<b>Output Directory:</b>');
+				echo docpop('outdir','<b>Output Directory:</b>');
 				echo "<br />\n";
-				echo "<input type='text' name='rundir' value='$sessionpathval' size='38'>\n";
+				echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
 				echo "<br />\n";
 				echo "<br />\n";
 				echo docpop('descr','<b>Description of Angular Reconstitution Run:</b>');
@@ -255,6 +255,8 @@ function runAngularReconstitution() {
 	/* *******************
 	PART 1: Get variables
 	******************** */
+	$outdir = $_POST['outdir'];
+	$runname = $_POST['runname'];
 	$description = $_POST['description'];
 	$clustervals = $_POST['clustervals'];
 	$tsvals = $_POST['tsvals'];
@@ -291,7 +293,7 @@ function runAngularReconstitution() {
 	// check for other parameters that need to be specified
 	if (!$description)
 		createAngularReconstitutionForm("<B>ERROR:</B> Enter a brief description of the run");
-	if (!$rundir)
+	if (!$outdir)
 		createAngularReconstitutionForm("<B>ERROR:</B> Enter an output directory");
 	if (!$runname)
 		createAngularReconstitutionForm("<B>ERROR:</B> Enter a run name");
