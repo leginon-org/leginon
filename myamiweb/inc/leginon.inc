@@ -13,16 +13,19 @@
  *	
  */
 
-/*
-$fileHandle = @fopen('config.php', 'r');
-if($fileHandle === false){
-	header('location:setup/index.php');
-	fclose($fileHandle);
-	exit();
+
+while($noConfigFile = !file_exists(getcwd()."/config.php")){
+	
+	if(!preg_match("/myamiweb/", getcwd()))
+		break;
+	chdir('..');
 }
-fclose($fileHandle);
-*/
+
+if($noConfigFile)
+	header('location:setup/index.php');
+
 require_once "config.php";
+
 require_once "inc/login.inc";
 require_once "inc/util.inc";
 require_once "inc/xmlapplicationimport.inc";
