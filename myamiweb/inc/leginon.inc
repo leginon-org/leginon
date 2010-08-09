@@ -20,6 +20,7 @@ if($fileHandle === false){
 	fclose($fileHandle);
 	exit();
 }
+fclose($fileHandle);
 
 require_once "config.php";
 require_once "inc/login.inc";
