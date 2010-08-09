@@ -181,9 +181,9 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		f.write("FRESH_MSA\n")
 		f.write(str(self.params['MSAdistance'])+"\n")
 		f.write("start\n")
-#		if self.params['nproc'] > 1:
-#			f.write("NO\n")
-		f.write("NO\n")
+		if self.params['nproc'] > 1:
+			f.write("NO\n")
+#		f.write("NO\n")
 		f.write("msamask\n")
 		f.write("eigenimages\n")
 		f.write("pixcoos\n")
