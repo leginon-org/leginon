@@ -65,7 +65,7 @@ for package in ${packages[@]}; do
 	echo "########################" >> $logfile
 	cd $myamidir/$package
 	echo "python setup.py $@" >> $logfile
-	if python setup.py $@ &>>$logfile;
+	if python setup.py $@ >>$logfile 2>&1;
 		then echo " ok.";
 		else echo " ************FAILED!!! (see log for details)";
 	fi
