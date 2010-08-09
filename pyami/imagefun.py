@@ -168,7 +168,6 @@ def center_mask(a, mask_radius):
 	shape = a.shape
 	center = shape[0]/2, shape[1]/2
 	center_square = a[center[0]-mask_radius:center[0]+mask_radius, center[1]-mask_radius:center[1]+mask_radius]
-	m = arraystats.mean(a)
 	cs_shape = center_square.shape
 	cs_center = cs_shape[0]/2, cs_shape[1]/2
 	circ = filled_circle(cs_shape,mask_radius)
