@@ -476,7 +476,11 @@ class Data(newdict.TypedDict):
 		if isinstance(value, DataReference):
 			value = value.getData(**kwargs)
 		if isinstance(value, newdict.FileReference):
-			value = value.read()
+			try:
+				value = value.read()
+			except:
+				print 'Could not read file: %s' % (value,)
+				value = None
 			# This gives the option of keeping the FileReference rather
 			# than the image data, for memory vs. speed tradeoff
 			if datamanager.holdimages:

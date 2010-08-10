@@ -55,12 +55,17 @@ class CorrectorClient(cameraclient.CameraClient):
 
 		if ref:
 			ref = ref[0]
-			shape = ref['image'].shape
-			dim = ref['camera']['dimension']
-			if dim['x'] != shape[1] or dim['y'] != shape[0]:
-				raise RuntimeError('%s: bad shape: %s' % (ref['filename'], shape,))
 		else:
-			ref = None
+			return None
+
+		if ref['image'] is None:
+			return None
+
+		shape = ref['image'].shape
+		dim = ref['camera']['dimension']
+		if dim['x'] != shape[1] or dim['y'] != shape[0]:
+			self.logger.error('%s: bad shape: %s' % (ref['filename'], shape,))
+			return None
 		return ref
 
 	def formatCorrectorKey(self, key):
