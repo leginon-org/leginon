@@ -261,7 +261,6 @@ function runImagicMSA($extra=false)	{
 	$command.= " --projectid=".getProjectId();
 	$command.= " --alignid=$alignid";
 	$command.= " --runname=$runname";
-	$command.= " --outdir=$outdir$runname";
 	if ($lowpass && $lowpass!=0) $command.= " --lpfilt=$lowpass";
 	if ($highpass && $highpass!=0) $command.= " --hpfilt=$highpass";
 	if ($mask_radius) $command.= " --mask_radius=$mask_radius";
