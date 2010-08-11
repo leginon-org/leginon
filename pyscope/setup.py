@@ -22,7 +22,7 @@ setup(
 	package_dir={'pyscope': ''},
 	scripts=scripts,
 	data_files=[
-		('pyscope', ['instruments.cfg']),
+		('pyscope', ['instruments.cfg.template']),
 	]
 )
 
