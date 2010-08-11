@@ -75,7 +75,6 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 		$outdir=$outdir."/accepted";
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
-		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
   
 	// Set any existing parameters in form
@@ -88,6 +87,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	$model = ($_POST['model']) ? $_POST['model'] : '';
 	$modelname = ($_POST['modelname']) ? $_POST['modelname'] : '';
 	$description = ($_POST['description']) ? $_POST['description']: $description;
+	$outdir = ($_POST['outdir']) ? $_POST['outdir']: $outdir;
 	$newmodel = ($_POST['newmodel']) ? $_POST['newmodel'] : $outdir.'/rescale.mrc';
   
 	$syms = $particle->getSymmetries();
@@ -114,7 +114,9 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	echo"
       <P>
       <B>Model Description:</B><br>
-      <TEXTAREA NAME='description' ROWS='3' COLS='65'>$description</TEXTAREA>
+      <TEXTAREA NAME='description' ROWS='3' COLS='65'>$description</TEXTAREA><br><br>
+		<B>Output Directory:</B><br>
+		<input type='text' name='outdir' value='$outdir' size='50'>
       </TD>
     </tr>
     <TR>
