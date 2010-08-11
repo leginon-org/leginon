@@ -14,7 +14,7 @@ Appion_Bin_Dir = '/usr/local/bin'
 # Usually these are installed in the Python site-packages directory. If you
 #installed them someplace else set this variable to the directory cotaining 
 #the appionlib directory 
-Appion_Lib_DIR = ''
+Appion_Lib_Dir = ''
 
 #Appion_Ace_Dir: Ace 1 .m file location
 #If you installed the ACE 1 matlab files in a different directory than the 
@@ -31,7 +31,7 @@ Matlab_Dir = ''
 #Appion.  For any these tools you would like to use it with appion set this
 #configuration parameter to the directory where you installed it.
 
-Eman_Dir: Eman root installation directory
+#Eman_Dir: Eman root installation directory
 Eman_Dir = ''
 
 #Xmipp_Dir: Xmipp's root installation directory. 
@@ -111,10 +111,12 @@ if (Env_Override):
         Spider_Dir = os.environ['SPIDER']
 
 
+if (Python_Path != ''):
+    prependToEnv('PYTHONPATH', Python_Path)
         
 #Appion_Dir needs to been defined otherwise nothing will work.  So if 
 #it hasn't been set somewhere above, try to determine it.
-if (Appion_Dir == '' or (not os.path.exists(Appion_Bin_Dir))):
+if (Appion_Bin_Dir == '' or (not os.path.exists(Appion_Bin_Dir))):
     #find the real absolute path to this wrapper even if it was started via a sim link
     #or using a relative path.
     Appion_Bin_Dir = os.path.dirname(os.path.realpath(sys.argv[0]))
@@ -122,7 +124,7 @@ if (Appion_Dir == '' or (not os.path.exists(Appion_Bin_Dir))):
 prependToEnv('PATH', Appion_Bin_Dir)
 
 if (Appion_Lib_Dir != ''):
-    prependToEnv('PYTHONPATH', Appion_Dir)
+    prependToEnv('PYTHONPATH', Appion_Lib_Dir)
 
 if (Appion_Ace_Dir != ''):
     appendToEnv('MATLABPATH', Appion_Ace_Dir)
@@ -146,9 +148,6 @@ if (Spider_Dir != ''):
     os.environ['SPPROC_DIR'] = os.path.join(Spider_Dir, 'proc')
     os.environ['SPRGB_DIR'] =  os.path.join(Spider_Dir,'rgb')
     os.environ['SPMAN_DIR'] =  os.path.join(Spider_Dir,'man')
-
-if (Python_Path != ''):
-    prependToEnv('PYTHONPATH', Python_Path)
 
 if (Path != ''):
     prependToEnv('PATH', Path)
