@@ -158,13 +158,11 @@ function runSubStack() {
 	$reconId=$_POST['reconId'];
 	$maxjump=$_POST['maxjump'];
 	$commit=$_POST['commit'];
-	$runname=$_POST['runname'];
 	$description=$_POST['description'];
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
-	if (!$runname) createSubStackForm("<b>ERROR:</b> Specify a runname");
 	if (!$description) createSubStackForm("<B>ERROR:</B> Enter a brief description");
 	if (!$maxjump) createSubStackForm("<B>ERROR:</B> You must specify a maximum jump cutoff");
 	if (!$reconId) createSubStackForm("<B>ERROR:</B> You must specify a reconId");
