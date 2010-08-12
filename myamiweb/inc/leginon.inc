@@ -13,6 +13,11 @@
  *	
  */
 
+// find the initial location.
+$initCwd = preg_replace( '~(\w)$~' , '$1' . DIRECTORY_SEPARATOR , realpath( getcwd() ) );
+
+// loop through each parents folder until found the config.php file.
+// stop the loop if outside the myamiweb main folder.
 
 while($noConfigFile = !file_exists(getcwd()."/config.php")){
 	
@@ -21,8 +26,14 @@ while($noConfigFile = !file_exists(getcwd()."/config.php")){
 	chdir('..');
 }
 
-if($noConfigFile)
+// if can't find the config.php file, redirect to setup wizard.
+if($noConfigFile){
 	header('location:setup/index.php');
+	exit();
+}
+
+// found the config.php file, reset the initial location back to original.
+chdir($initCwd);
 
 require_once "config.php";
 
