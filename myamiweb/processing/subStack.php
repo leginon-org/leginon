@@ -297,7 +297,6 @@ function runSubStack() {
 	******************** */
 	$particle = new particledata();
 	$totalNumOfParticles = $particle->getNumStackParticles($stackId);
-	if (!$runname) createSubStackForm("<b>ERROR:</b> Specify a run name");
 	if (!$description) createSubStackForm("<B>ERROR:</B> Enter a brief description");
 	if ($numOfParticles > $totalNumOfParticles) createSubStackForm("<b>ERROR:</b> Number of Particles can not greater than ". $totalNumOfParticles);
 
