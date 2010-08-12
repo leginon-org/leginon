@@ -236,8 +236,6 @@ function jobform($extra=false)	{
 function runImagicMSA($extra=false)	{
 	$expId=$_GET['expId'];
 	$projectId=getProjectId();
-	$runname=$_POST['runname'];
-	$outdir=$_POST['outdir'];
 	$stackvalues=$_POST['alignid'];
 	$highpass=$_POST['highpass'];
 	$lowpass=$_POST['lowpass'];
@@ -260,7 +258,6 @@ function runImagicMSA($extra=false)	{
 	$command = "imagicMSA.py";
 	$command.= " --projectid=".getProjectId();
 	$command.= " --alignid=$alignid";
-	$command.= " --runname=$runname";
 	if ($lowpass && $lowpass!=0) $command.= " --lpfilt=$lowpass";
 	if ($highpass && $highpass!=0) $command.= " --hpfilt=$highpass";
 	if ($mask_radius) $command.= " --mask_radius=$mask_radius";
@@ -285,48 +282,5 @@ function runImagicMSA($extra=false)	{
 		jobform($errors);
 	exit;
 
-	/*
-	if ($_POST['process']=="run imagic") {
-		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'alignanalysis',False,False,False,$nproc,8,1);
-		// if errors:
-		if ($sub) 
-			jobform("<b>ERROR:</b> $sub");
-		exit;
-	} 
-	else {
-		processing_header("IMAGIC Classification (MSA)","IMAGIC Classification (MSA) Params");
-		echo"
-			<TABLE WIDTH='600' BORDER='1'>
-			<TR><TD COLSPAN='2'>
-				<B>Classification Command:</B><br>
-				$command
-			</TD></tr>
-			<TR><td>runname</TD><td>$outdir$runname</TD></tr>
-			<TR><td>alignstackid</TD><td>$alignid</TD></tr>
-			<TR><td>outdir</TD><td>$outdir</TD></tr>";
-			if ($lowpass & $lowpass!=0) {
-				echo "<TR><td>low pass filter</TD><td>$lowpass</TD></tr>";
-			} else {
-				echo "<TR><td>low pass filter</TD><td>OFF</TD></tr>";
-			}
-			if ($highpass & $highpass!=0) {
-				echo "<TR><td>high pass filter</TD><td>$highpass</TD></tr>";
-			} else {
-				echo "<TR><td>high pass filter</TD><td>OFF</TD></tr>";
-			}
-		echo "
-			<TR><td>bin</TD><td>$bin</TD></tr>
-			<TR><td>mask radius</TD><td>$mask_radius</TD></tr>
-			<TR><td>mask dropoff</TD><td>$mask_dropoff</TD></tr>
-			<TR><td>distance criteria</TD><td>$MSAdistance</TD></tr>
-			<TR><td>overcorrection factor</TD><td>$overcorrection</TD></tr>
-			<TR><td>number of iterations</TD><td>$numiters</TD></tr>
-			</table>\n";
-		processing_footer();
-	}
-	exit;
-	*/
 }
 ?>
