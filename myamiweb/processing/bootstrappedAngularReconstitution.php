@@ -255,8 +255,6 @@ function runAngularReconstitution() {
 	/* *******************
 	PART 1: Get variables
 	******************** */
-	$outdir = $_POST['outdir'];
-	$runname = $_POST['runname'];
 	$description = $_POST['description'];
 	$clustervals = $_POST['clustervals'];
 	$tsvals = $_POST['tsvals'];
@@ -293,10 +291,6 @@ function runAngularReconstitution() {
 	// check for other parameters that need to be specified
 	if (!$description)
 		createAngularReconstitutionForm("<B>ERROR:</B> Enter a brief description of the run");
-	if (!$outdir)
-		createAngularReconstitutionForm("<B>ERROR:</B> Enter an output directory");
-	if (!$runname)
-		createAngularReconstitutionForm("<B>ERROR:</B> Enter a run name");
 	if (!$nvol)
 		createAngularReconstitutionForm("<B>ERROR:</B> Enter the number of volumes that you wish to create using Angular Reconstitution");
 	if ($nproc > 8)
