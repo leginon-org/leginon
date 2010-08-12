@@ -115,7 +115,8 @@ class project {
 	var $error = array (
 				 "projectname_exists"=>"Project Name already exists.",
 				 "projectname_empty"=>"Project Name can't be empty",
-				 "short_description_empty"=>"Short Description can't be empty."
+				 "short_description_empty"=>"Short Description can't be empty.",
+				 "db_error"=>"Databases does not exist. Project did not get updated."
 				);
 				 
 	function project($mysql="") {
@@ -144,6 +145,9 @@ class project {
 
 	function updateProject($projectId, $name, $short_description, $long_description, $category, $funding){
 
+		if (!$this->mysql->checkDBConnection())
+			return $this->error['db_error'];
+		
 		if (!$name) 
 			return $this->error['projectname_empty'];
 			
@@ -183,6 +187,9 @@ class project {
 	 */
 	function addProject($name, $short_description, $long_description, $category, $funding){
 
+		if (!$this->mysql->checkDBConnection())
+			return $this->error['db_error'];
+			
 		if (!$name) 
 			return $this->error['projectname_empty'];
 			
