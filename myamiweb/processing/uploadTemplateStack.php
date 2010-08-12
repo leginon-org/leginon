@@ -159,8 +159,6 @@ function runUploadTemplateStack() {
 	$template_stack = $_POST['template_stack'];
 	$stacktype = $_POST['stack_type'];
 	$apix = $_POST['apix'];
-	$outdir = $_POST['outdir'];
-	$runname = $_POST['runname'];
 	$description = $_POST['description'];
 	$session = $_POST['sessionname'];
 	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
@@ -168,12 +166,6 @@ function runUploadTemplateStack() {
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
-
-	//make sure new name does not have spaces
-	if (!$runname) createUploadTemplateStackForm("<B>ERROR:</B> Enter a new name for the template stack, as it will be stored in templatestacks directory");
-	if (ereg(" ", $runname)) {
-		$runname = ereg_replace(" ", "_", $runname);
-	}
 
 	//make sure a description is provided
 	if (!$description) 
