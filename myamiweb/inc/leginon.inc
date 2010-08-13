@@ -1160,7 +1160,7 @@ class leginondata {
 	}
 
 	function getImageRelation($imgId, $preset='', $matchtargetnb=true) {
-		if (!$this->mysql->isTable('PresetData') ||!$this->mysql->isTable('AcquisitionTargetData')) return array();
+		if (!$this->mysql->isTable('PresetData') ||!$this->mysql->isTable('AcquisitionImageTargetData')) return array();
 		if ($matchtargetnb) {
 			$targetnbwhere = "siblingtarget.`number`= parenttarget.`number` and ";
 		}
