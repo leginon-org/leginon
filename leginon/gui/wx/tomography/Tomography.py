@@ -146,7 +146,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 	def addTomoSettings(self):
 		tiltsb = wx.StaticBox(self, -1, 'Tilt')
 		tiltsbsz = wx.StaticBoxSizer(tiltsb, wx.VERTICAL)
-		equalslopesb = wx.StaticBox(self, -1, 'Equally Slopped')
+		equalslopesb = wx.StaticBox(self, -1, 'Cosine Rule Tilting')
 		equalslopesbsz = wx.StaticBoxSizer(equalslopesb, wx.VERTICAL)
 		expsb = wx.StaticBox(self, -1, 'Exposure')
 		expsbsz = wx.StaticBoxSizer(expsb, wx.VERTICAL)
@@ -175,8 +175,8 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 												allownone=False,
 												chars=7,
 												value='0.0')
-		self.widgets['equally sloped'] = wx.CheckBox(self, -1, 'Use Equal Slope')
-		self.widgets['equally sloped n'] = IntEntry(self, -1, min=2, allownone=False, chars=5, value='8')
+		self.widgets['equally sloped'] = wx.CheckBox(self, -1, 'Use cosine rule')
+		self.widgets['equally sloped n'] = IntEntry(self, -1, min=1, allownone=False, chars=5, value='30')
 
 		tiltsz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min.')
@@ -202,7 +202,7 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
 		equalslopesz.Add(self.widgets['equally sloped n'], (1, 0), (1, 1),
 					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'tilts in 180 degree range (power of 2)')
+		label = wx.StaticText(self, -1, 'Number of tilts in the maximal tilting direction')
 		equalslopesz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		equalslopesbsz.Add(equalslopesz, 0, wx.EXPAND|wx.ALL, 5)
 		tiltsz.Add(equalslopesbsz, (0, 9), (1, 2), wx.EXPAND|wx.ALL, 5)
