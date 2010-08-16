@@ -32,11 +32,12 @@ function display_data_table($data, $columns=array(), $display_header=false) {
 	return $html;
 }
 
-function data2table($data, $columns=array(), $display_header=false) {
+function data2table($data, $columns=array(), $display_header=false, $tableoption="class='tableborder' border='1' cellpadding='5'") {
 	$fields = ($columns) ? $columns : array_keys((array)$data[0]);
-	$html = '<table class="tableborder" border="1" >';
+	$html = "<table $tableoption >";
 	if ($display_header) {
 		$html .= "<tr bgcolor='#cccccc'>\n";
+		$option="";
 		foreach ($fields as $field=>$label) {
 			$l = (is_string($label)) ? $label : $field;
 			$html .= "<td><a href='$PHP_SELF?sort=$field'><b>".$l."</b></a></td>";
@@ -47,14 +48,43 @@ function data2table($data, $columns=array(), $display_header=false) {
 		$html .= "<tr>\n";
 		foreach ($fields as $k=>$v) {
 			$field = is_numeric($k) ? $v : $k;
+			if (is_array($row[$field])) {
+				$l=$row[$field][0];
+				$option=" ".$row[$field][1]." ";
+			} else {
+				$l=$row[$field];
+				$option="";
+			}
 			$html .= "<td>"
-			.$row[$field]
+			.$l
 			."</td>";
 		}
 		$html .= "</tr>\n";
 	}
 	$html .= "</table>";
 	return $html;
+}
+
+function data2str($data, $columns=array()) {
+	$fields = ($columns) ? $columns : array_keys((array)$data[0]);
+	$str = "";
+	if ($display_header) {
+	}
+	foreach ((array)$data as $n=>$row) {
+		foreach ($fields as $k=>$v) {
+			$field = is_numeric($k) ? $v : $k;
+			if (is_array($row[$field])) {
+				$l=$row[$field][0];
+				$option=" ".$row[$field][1]." ";
+			} else {
+				$l=$row[$field];
+				$option="";
+			}
+			$str .= $l ."\n";
+		}
+		$str.= "\n";
+	}
+	return $str;
 }
 
 function edit_menu($links=array(), $display_label=true, $display_icon=true) {
@@ -95,6 +125,16 @@ function display_data_rows($data) {
 	}
 	$html .= "</table>\n";
 	return $html;
+}
+
+function from_POST_values($args=array()) {
+	$r = array();
+	$keys=array_keys($_POST);
+	foreach($args as $arg) {
+		if (in_array($arg,$keys))
+			$r[$arg]=$_POST[$arg];
+	}
+	return $r;
 }
 
 ?>
