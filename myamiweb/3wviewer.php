@@ -53,10 +53,18 @@ $datatypes = $leginondata->getAllDatatypes($sessionId);
 
 $viewer = new viewer();
 if($projectdb) {
-	foreach((array)$sessions as $s) {
+	foreach($sessions as $k=>$s) {
+		if (SAMPLE_TRACK) {
+			$tag=$projectdata->getSample(array('Id'=>$s['id'], 'Purpose'=>$s['comment']));
+			$tag = ($tag)? " - $tag" : "";
+			$sessions[$k]['name'].=$tag;
+		}
 		if ($s['id']==$sessionId) {
 			$sessionname = $s['name_org'];
-			break;
+			// if name need to be modified by sample tag, it should not break
+			// breaking is only to save query time
+			if (!SAMPLE_TRACK)
+				break;
 		}
 	}
 	$currentproject = $projectdata->getProjectFromSession($sessionname);

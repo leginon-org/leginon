@@ -47,9 +47,11 @@ $datatypes = $leginondata->getAllDatatypes($sessionId);
 $viewer = new viewer();
 if($projectdb) {
 	foreach((array)$sessions as $k=>$s) {
-		$tag=$projectdata->getSample(array('Name'=>$s['name_org'], 'Purpose'=>$s['Purpose']));
-		$tag = ($tag)? " - $tag" : "";
-		$sessions[$k]['name'].=$tag;
+		if (SAMPLE_TRACK) {
+			$tag=$projectdata->getSample(array('Id'=>$s['id'], 'Purpose'=>$s['comment']));
+			$tag = ($tag)? " - $tag" : "";
+			$sessions[$k]['name'].=$tag;
+		}
 		if ($s['id']==$sessionId) {
 			$sessionname = $s['name_org'];
 		}
@@ -58,6 +60,7 @@ if($projectdb) {
 	$viewer->setProjectId($projectId);
 	$viewer->addProjectSelector($projects, $currentproject);
 }
+
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
