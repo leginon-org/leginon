@@ -66,7 +66,6 @@ class Focuser(acquisition.Acquisition):
 			'drift threshold': 3e-10,
 			'reset defocus': None,
 		}
-		self.samecorrection = False
 		self.manualchecklock = threading.Lock()
 		self.maskradius = 1.0
 		self.increment = 5e-7
@@ -542,17 +541,14 @@ class Focuser(acquisition.Acquisition):
 		evt = gui.wx.Focuser.ManualCheckDoneEvent(self.panel)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
-	def initSameCorrection(self):
-		self.resetRepeatConfig()
-
 	def acquireManualFocusImage(self):
 		t0 = time.time()
 		correction = self.settings['correct image']
 		self.manualchecklock.acquire()
 		if correction:
-			imdata = self.acquireCorrectedCameraImageData(repeatconfig=True)
+			imdata = self.acquireCorrectedCameraImageData()
 		else:
-			imdata = self.acquireCameraImageData(repeatconfig=True)
+			imdata = self.acquireCameraImageData()
 		imarray = imdata['image']
 		self.manualchecklock.release()
 		pow = imagefun.power(imarray, self.maskradius)
@@ -578,7 +574,6 @@ class Focuser(acquisition.Acquisition):
 		self.beep()
 		self.manualplayer.play()
 		self.onManualCheck()
-		self.initSameCorrection()
 		while True:
 			state = self.manualplayer.state()
 			if state == 'stop':

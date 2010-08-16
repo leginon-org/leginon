@@ -3,7 +3,6 @@ import threading
 
 class CameraClient(object):
 	def __init__(self):
-		self.resetRepeatConfig()
 		self.exposure_start_event = threading.Event()
 		self.exposure_done_event = threading.Event()
 		self.readout_done_event = threading.Event()
@@ -34,12 +33,7 @@ class CameraClient(object):
 		self.exposure_start_event.set()
 		t.start()
 
-	def resetRepeatConfig(self):
-		self.repeatparams = {}
-		self.repeatparams['scope'] = None
-		self.repeatparams['camera'] = None
-
-	def acquireCameraImageData(self, repeatconfig=False, scopeclass=leginondata.ScopeEMData, allow_retracted=False):
+	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False):
 		'''Acquire a raw image from the currently configured CCD camera'''
 		if not allow_retracted:
 			try:
@@ -52,20 +46,11 @@ class CameraClient(object):
 
 		imagedata = leginondata.CameraImageData()
 		imagedata['session'] = self.session
-		if repeatconfig and None not in self.repeatparams.values():
-			## acquire image, use previous scope/camera params, except system time
-			for key in ('scope','camera'):
-				newparams = self.repeatparams[key].copy()
-				newparams['system time'] = self.instrument.tem.SystemTime
-				imagedata[key] = newparams
-		else:
-			## acquire image, get new scope/camera params
-			scopedata = self.instrument.getData(scopeclass)
-			cameradata = self.instrument.getData(leginondata.CameraEMData)
-			imagedata['scope'] = scopedata
-			imagedata['camera'] = cameradata
-			self.repeatparams['scope'] = imagedata['scope']
-			self.repeatparams['camera'] = imagedata['camera']
+		## acquire image, get new scope/camera params
+		scopedata = self.instrument.getData(scopeclass)
+		cameradata = self.instrument.getData(leginondata.CameraEMData)
+		imagedata['scope'] = scopedata
+		imagedata['camera'] = cameradata
 		self.startExposureTimer()
 		imagedata['image'] = self.instrument.ccdcamera.Image
 		self.readout_done_event.set()

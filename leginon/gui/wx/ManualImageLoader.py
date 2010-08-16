@@ -94,8 +94,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self._acquisitionEnable(True)
 
 	def onSettingsTool(self, evt):
-		if self.settingsdialog.ShowModal() == wx.ID_OK:
-			self.node.initSameCorrection()
+		self.settingsdialog.ShowModal()
 
 	def onAcquireTool(self, evt):
 		self._acquisitionEnable(False)

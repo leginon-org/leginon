@@ -148,8 +148,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self,show_basic=True)
-		if dialog.ShowModal() == wx.ID_OK:
-			self.node.initSameCorrection()
+		dialog.ShowModal()
 		dialog.Destroy()
 
 	def onGridTool(self, evt):

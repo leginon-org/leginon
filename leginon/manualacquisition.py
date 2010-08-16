@@ -103,9 +103,6 @@ class ManualAcquisition(node.Node):
 		stats['stdev'] = stats['std']
 		return stats
 
-	def initSameCorrection(self):
-		self.resetRepeatConfig()
-
 	def acquire(self):
 		correct = self.settings['correct image']
 		if correct:
@@ -126,9 +123,9 @@ class ManualAcquisition(node.Node):
 			scopeclass = leginondata.ScopeEMData
 
 		if correct:
-			imagedata = self.acquireCorrectedCameraImageData(repeatconfig=True, scopeclass=scopeclass)
+			imagedata = self.acquireCorrectedCameraImageData(scopeclass=scopeclass)
 		else:
-			imagedata = self.acquireCameraImageData(repeatconfig=True, scopeclass=scopeclass)
+			imagedata = self.acquireCameraImageData(scopeclass=scopeclass)
 
 		image = imagedata['image']
 

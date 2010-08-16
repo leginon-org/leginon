@@ -309,13 +309,6 @@ class BeamTiltImager(acquisition.Acquisition):
 		except:
 			pass
 
-	def initSameCorrection(self):
-		self.samecorrection = True
-		self.correctargs = None
-
-	def endSameCorrection(self):
-		self.samecorrection = False
-
 	def navigate(self, xy):
 		clickrow = xy[1]
 		clickcol = xy[0]
