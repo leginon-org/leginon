@@ -3020,7 +3020,6 @@ class leginondata {
 	}
 
 	function getUserFocusSettingDataByName($user_id,$nodename,$focusname) {
-		global $leginondata;
 		$sql = 'SELECT a.* from `FocusSettingData` a'
 					. ' left join `SessionData` s on a.`REF|SessionData|session`=s.`DEF_id`'
 					. ' where s.`REF|UserData|user`='.$user_id.' and a.`node name`=\''.$nodename.'\' and a.`name`=\''.$focusname.'\''
@@ -3028,6 +3027,16 @@ class leginondata {
 					. ' LIMIT 0,1';
 		$results = $this->mysql->getSQLResult($sql);
 		return $results;
+	}
+
+	function getBeamTiltMeasurements($session) {
+		$sql = 'SELECT `SUBD|beam tilt|x` as btiltx '
+					.', `SUBD|beam tilt|y` as btilty '
+					.', `mean defocus` '
+					.', unix_timestamp(`DEF_timestamp`) as unix_timestamp '
+					.'from BeamTiltMeasurementData '
+					.'where `REF|SessionData|session` = '.$session;
+		return $this->mysql->getSQLResult($sql);
 	}
 
 }
