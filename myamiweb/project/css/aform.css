@@ -1,0 +1,110 @@
+/**
+ *
+ * aform stylesheet
+ *
+ * D. Fellmann
+ *
+ */
+
+
+#aform ul.aform
+{
+	list-style-type: none;
+	font-family: Arial,Helvetica,sans-serif;
+	font-size:15px;	
+}
+
+#aform li.aform
+{
+	padding-bottom: 10px;
+}
+
+#aformerror
+{
+	position: relative;
+	border: 1px;
+	border-style: solid;
+	margin: 0 auto;
+	text-align: left;
+	width: 70%;
+}
+
+#formFields
+{
+	position: relative;
+	width: 100%;
+	background-color: #FFFFFF;
+	margin:0 0 0 0;
+}
+
+.aformerror
+{
+	background-color: #EDDEDE;
+}
+
+
+#aform input.bt1{
+	border: 1px solid #3366aa;
+}
+
+input.aform
+{
+	padding: 3px 4px;
+	border: 1px solid #3366aa;
+}
+
+textarea.aform
+{
+	padding: 3px 4px;
+	border: 1px solid #3366aa;
+	font-family: Arial,Helvetica,sans-serif; font-size: 10pt
+}
+
+select.aform
+{
+	border: 1px solid #3366aa;
+}
+
+label.fieldlabel
+{
+	line-height:125%;
+	padding:0 4px 1px 0;
+	border:none;	
+	display:block;
+	font-size:0.9em;
+	font-weight:bold;
+}
+
+a.info {
+	font-family: Arial,Helvetica,sans-serif;
+	text-decoration:none; 
+	position: relative;
+}
+
+a.info span {
+	position: relative;
+	display:none;
+}
+
+a.info:hover {
+	position: relative;
+	cursor:default;
+}
+
+a.info:hover .infobox {
+	font-weight: normal; 
+	display:block; 
+	position:absolute; 
+	top:20px;;
+	left:25px;
+	width:205px; 
+	height:70px; 
+	border: 1px solid #CCCCCC; 
+	color:#000; 
+	text-align:left; 
+	font-family: Arial,Helvetica,sans-serif;
+	font-size:0.8em; 
+	padding-left:10px; 
+	padding-top:10px;
+	background-color: #FFFFFF;
+}

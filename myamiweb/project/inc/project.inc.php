@@ -428,16 +428,17 @@ class project {
 		return $sessionIds[0]['DEF_id'];
 	}
 
-	function getExperiments($projectId="") {
+	function getExperiments($projectId="",$sort='DESC') {
 		$experimentIds = array();
 		$q = "SELECT "
-		   ."projexp.DEF_id AS projectexperimentId, session.name AS name "
+		   ."projexp.DEF_id AS projectexperimentId, session.name AS name, "
+		   ."session.DEF_id AS leginonId "
 		   ."FROM projectexperiments projexp "
 		   ."LEFT JOIN ".DB_LEGINON.".SessionData session "
 			." ON projexp.`REF|leginondata|SessionData|session` = session.`DEF_id` ";
 		if ($projectId)
 		   $q .= "WHERE projexp.`REF|projects|project`=".$projectId." ";
-		  $q .= "ORDER BY projexp.`REF|leginondata|SessionData|session` DESC ";
+		  $q .= "ORDER BY projexp.`REF|leginondata|SessionData|session` ".$sort." ";
 		$experimentIds = $this->mysql->getSQLResult($q);
 		return $experimentIds;
 	}
