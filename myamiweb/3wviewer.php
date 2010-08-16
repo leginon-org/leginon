@@ -7,10 +7,8 @@ if (defined('PROCESSING')) {
 	$ptcl = (@require "inc/particledata.inc") ? true : false;
 }
 
-$sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
-$projectId = ($_POST['projectId']) ? $_POST['projectId'] : 'all';
-$imageId = ($_POST['imageId']) ? $_POST['imageId'] : $_GET['imageId'];
-$preset = $_POST[$_POST['controlpre']];
+// --- get Predefined Variables form GET or POST method --- //
+list($projectId, $sessionId, $imageId, $preset, $runId) = getPredefinedVars();
 
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();

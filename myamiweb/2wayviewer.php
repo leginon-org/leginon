@@ -6,10 +6,10 @@ if (defined('PROCESSING')) {
 	$ptcl = (@require "inc/particledata.inc") ? true : false;
 }
 
-$sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
-$projectId = ($_POST['projectId']) ? $_POST['projectId'] : 'all';
-$imageId = ($_POST['imageId']) ? $_POST['imageId'] : $_GET['imageId'];
-$preset = ($_POST) ? $_POST[$_POST['controlpre']] : $_GET['pre'];
+// --- get Predefined Variables form GET or POST method --- //
+list($projectId, $sessionId, $imageId, $preset, $runId) = getPredefinedVars();
+
+// --- set 2nd view's preset
 $presetv1 = ($_POST) ? $_POST['v1pre'] : $_GET['v1pre'];
 
 // --- Set sessionId

@@ -1357,4 +1357,18 @@ function viewer_menu($sessionId) {
 	echo $str;
 }
 
+function getPredefinedVars() {
+	### used in xxviewer.php redirected from ,for example, project/report.php
+	$projectId = ($_POST['projectId']) ? $_POST['projectId'] : $_GET['projectId'];
+	$sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
+	$imageId = $_GET['imageId'];
+	$preset = ($_POST) ? $_POST[$_POST['controlpre']] : $_GET['pre'];
+	$runId = '';
+	if ($sessionId == $_POST['sessionIdmemo']) {
+		$imageId = ($_POST['imageId']) ? $_POST['imageId'] : $imageId;
+		$runId = $_POST[$_POST['controlview'].'ptclrun'];
+	}
+	return array($projectId, $sessionId, $imageId, $preset, $runId);
+}
+
 ?>
