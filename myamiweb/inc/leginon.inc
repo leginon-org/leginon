@@ -149,7 +149,8 @@ class leginondata {
 
 		$userId = getLoginUserId();
 		$privilege_level = privilege('data');
-		$q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.name as `name_org`, s.`DEF_timestamp` as `stimestamp` "
+		$q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.comment as `comment`, "
+			."s.name as `name_org`, s.`DEF_timestamp` as `stimestamp` "
 			."from ".DB_LEGINON.".AcquisitionImageData a "
 			."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) ";
 		$where = "where a.`REF|SessionData|Session` IS NOT NULL ";
@@ -306,7 +307,7 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getSummary($expId, $presetname=False) {
+	function getSummary($expId, $presetname=false, $hidden=false) {
 	/*
 		$q="select if (isnull(p.name), '"
 			.$this->manualtype."', p.name) as name, count(a.`DEF_id`) as nb from AcquisitionImageData a "
@@ -314,10 +315,20 @@ class leginondata {
 			." where a.`REF|SessionData|session` = '$expId' "
 			." group by p.name ";
 	*/
+		$hiddenjoin = "";
+		$hiddenwhere = "";
+		if ($hidden) {
+			$hiddenjoin = "left join `ViewerImageStatus` r on (r.`REF|AcquisitionImageData|image`=a.DEF_id) ";
+			$hiddenwhere = "and (r.DEF_id is NULL or r.status <>'hidden') ";
+		}
 		$q="SELECT p.name, count(a.`DEF_id`) as nb, p.magnification "
+			.",p.dose, min(p.defocus) as defocusmin, max(p.defocus) as defocusmax"
 			." FROM AcquisitionImageData a "
+			.$hiddenjoin
 			." LEFT JOIN PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
-			." WHERE a.`REF|SessionData|session` = '$expId' ";
+			." WHERE a.`REF|SessionData|session` = '$expId' "
+			.$hiddenwhere
+			." ";
 		if ($presetname) $q .= "AND p.name = '$presetname' ";
 		$q.=" GROUP BY p.name "
 			." ORDER BY p.magnification ";
@@ -475,7 +486,6 @@ class leginondata {
 				$q .=" order by a.`DEF_id` DESC ";
 		}
 		$filenames = $this->mysql->getSQLResult($q);
-
 		return $filenames;
 	}
 
@@ -1278,7 +1288,6 @@ class leginondata {
 				#$q .= "and sp.`name`='".$preset."' ";
 			$q .="and "
 			."a.`DEF_id` ='".$imgId."' "; 
-
 		$parents = array();
 		$Rparent = $this->mysql->SQLQuery($q);
 		while ($parent = mysql_fetch_array($Rparent, MYSQL_ASSOC))

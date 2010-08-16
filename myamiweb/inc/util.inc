@@ -453,6 +453,12 @@ function format_nano_number($data) {
 function format_angstrom_number($data) {
 	return number_format(($data/1e-10), 2,'.','').' &Aring;';
 }
+
+function formatnumber2decimal($number) {
+	$number=number_format($number,2,'.','');
+	return $number;
+}
+
 function sec2time($second) {
 	$h=floor($second/3600);
 	$m=floor(($second-$h*3600)/60);
@@ -596,6 +602,42 @@ function array2table($data, $columns=array(), $display_header=false, $tableoptio
 	}
 	$html .= "</table>";
 	return $html;
+}
+
+function array2json($array, $jsonobj="jsonobj") {
+/*
+// --- convert php array into json object --- //
+Array (
+    "id1" => Array (
+            "key1" => "val1",
+            "key2" => "val2"
+        )
+    "id2" => Array (
+            "key1" => "val1",
+            "key2" => "val2"
+        )
+)
+
+returns:
+
+var jsonarray={
+	'id1': {'key1': 'val1', 'key2': 'val2'},
+	'id2': {'key1': 'val1', 'key2': 'val2'}
+}
+*/
+	$js="var $jsonobj={\n";
+	$jsdata=array();
+	foreach ((array)$array as $key=>$data) {
+		$json=array();
+		foreach ($data as $k=>$v) {
+			$json[]="'$k': '$v'";
+		}
+		$jsdata[]="'$key': {".join(',', $json).'}';
+	}
+	$js .= join(",\n", $jsdata);
+	$js .="}\n";
+
+	return $js;
 }
 
 function getPathFromString($str) {
