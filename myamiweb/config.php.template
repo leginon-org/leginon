@@ -164,4 +164,6 @@ define('TEMP_IMAGES_DIR', "");
 define('USE_APPION_WRAPPER', false);
 define('APPION_WRAPPER_PATH', "");
 
+// --- sample tracking ---//
+define('SAMPLE_TRACK', false);
 ?>

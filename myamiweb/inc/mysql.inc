@@ -226,6 +226,15 @@ class mysql {
 		return $this->sqlquery;
 	}
 
+	function getSQLNumRows($query) {
+		if (!$result = $this->SQLQuery($query))
+			return False;
+		if (!is_resource($result))
+			return $result;
+		$numrows = mysql_num_rows($result);
+		return $numrows;
+	}
+
 	function SQLQuery($query, $insert=false) {
 		$this->sqlquery = $query;
 		if (!$this->connect_db($this->db_host)) {
@@ -295,12 +304,18 @@ class mysql {
 		return $sql;
 	}
 	
-	function array_to_select($data) {
+	function array_to_select($data, $prefix="") {
 		if (!$data || !is_array($data))
 			return False;
 		$sqlformat=array();
-		foreach ($data as $field) {
-			$sqlformat[] = "`$field`";
+		if ($prefix) {
+			$prefix.=".";
+		}
+		foreach ($data as $key=>$field) {
+			if (!is_numeric($key))
+				$sqlformat[] = "$field";
+			else
+				$sqlformat[] = $prefix."`$field`";
 		}
 		$sql .= join(', ', $sqlformat);
 		return $sql;
@@ -499,7 +514,7 @@ class mysql {
 			return $ids;
 	}
 
-	function getData($parameters) {
+	function getData($parameters, $numrows=false) {
 		if (!$table = $parameters['table'])
 			return false;
 		if (!$select = $this->array_to_select($parameters['field']))
@@ -517,7 +532,22 @@ class mysql {
 			.$sql_where
 			.$sql_order
 			.$sql_limit;
+		if ($numrows)
+			return $this->getSQLNumRows($q);
+
 		return $this->getSQLResult($q);
+	}
+
+	function format_date($str, $in="mdy", $out="ymd", $sep="/" ) {
+		// --- Month/Day/Year => Year/Month/Day
+		$in=array_flip(str_split($in));
+		$out=str_split($out);
+		$date=explode($sep, $str);
+		$ndate=array();
+		foreach ($out as $k) { 
+			$ndate[]=$date[$in[$k]];
+		}
+		return implode("/", $ndate);
 	}
 
 	function dbError() {

@@ -186,10 +186,43 @@ class project {
 		return $projects;
 	}
 
-	function getSample($sessionId="") {
+	function getSample($sessioninfo="") {
 		# get sample name from project database
-		$sample="";
-		return $sample;
+		if (SAMPLE_TRACK) {
+			$sessionId=$sessioninfo['Id'];
+			list($proj, $packagenb, $samplenb) = explode(".", $sessioninfo['Purpose']);
+			$packagenb = (int) ereg_replace("P", "", $packagenb);
+			$samplenb = (int) ereg_replace("S", "", $samplenb);
+			/* if package number is 0, then don't join package table in this query */
+			if ($packagenb == 0) {
+				$q='select s.packageId, s.`number`, s.label from '.DB_PROJECT.'.nsample s
+					left join '.DB_PROJECT.'.projects pr on (pr.`DEF_id`=s.projectId)
+					left join '.DB_PROJECT.'.projectexperiments pe on (pe.`REF|projects|project`=pr.`DEF_id`)
+					where
+					pe.`REF|leginondata|SessionData|session`='.$sessionId.'
+					and s.`number`="'.$samplenb.'"
+					and s.packageId IS NULL
+					';
+			} else {
+				$q='select s.packageId, p.`number` as packageNumber, s.`number` as sampleNumber, s.label from '.DB_PROJECT.'.nsample s
+					left join '.DB_PROJECT.'.npackage p on (p.packageId=s.packageId)
+					left join '.DB_PROJECT.'.projects pr on (pr.`DEF_id`=s.projectId)
+					left join '.DB_PROJECT.'.projectexperiments pe on (pe.`REF|projects|project`=pr.`DEF_id`)
+					where
+					pe.`REF|leginondata|SessionData|session`='.$sessionId.'
+					and p.`number`="'.$packagenb.'"
+					and s.`number`="'.$samplenb.'"
+					';
+			}
+			list($res)=$this->mysql->getSQLResult($q);
+			$tag="";
+			if ($res['label']) {
+				$tag=$res['label'];
+			}
+			return $tag;
+		} else {
+			return "";
+		}
 	}
 
 	function getProjectInfo($projectId) {
