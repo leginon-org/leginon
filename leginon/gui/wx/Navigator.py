@@ -50,6 +50,15 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE,
 													'ruler',
 													shortHelpString='Test stage reproducibility')
+
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_XY, 'xy',
+													shortHelpString='Reset stage X,Y to 0,0')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_Z, 'z',
+													shortHelpString='Reset stage Z to 0')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_RESET_ALPHA, 'alpha',
+													shortHelpString='Reset stage alpha tilt to 0')
+
 		# image
 		self.imagepanel = leginon.gui.wx.TargetPanel.ClickAndTargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Image', display=True)

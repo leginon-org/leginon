@@ -71,6 +71,9 @@ ID_MEASURE_COMAFREE = 10054
 ID_BEGIN = 10055
 ID_END = 10056
 ID_COMMENT = 10057
+ID_RESET_XY = 10058
+ID_RESET_Z = 10059
+ID_RESET_ALPHA = 10060
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
