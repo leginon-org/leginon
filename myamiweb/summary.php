@@ -293,7 +293,7 @@ if (!empty($imageshiftpresets)) {
 $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 	echo "<tr>";
 	echo "<td colspan='2'>";
-	echo divtitle("Autofocus Results");
+	echo divtitle("Autofocus Results - No graph display when not enough data.");
 	if (!empty($defocusresults)) {
 		echo "<table border='0'>\n";
 		echo "<tr>";
