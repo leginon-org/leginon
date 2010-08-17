@@ -296,8 +296,12 @@ class mysql {
 			return False;
 		$sqlformat=array();
 		foreach ($data as $k=>$v) {
-			if (!is_numeric($v))
+			if (is_null($v)) {
+				$sqlformat[] = "`$k` IS NULL";
+				continue;
+			} elseif (!is_numeric($v)) {
 				$v = "'".addslashes($v)."'";
+			}
 			$sqlformat[] = "`$k`=".$v;
 		} 
 			$sql .= join(' AND ', $sqlformat);
