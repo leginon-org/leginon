@@ -8,6 +8,7 @@ import wx
 import leginon.gui.wx.Node
 import leginon.gui.wx.Settings
 import leginon.gui.wx.ToolBar
+import leginon.gui.wx.TargetRepeater
 from leginon.gui.wx.Entry import Entry
 
 class Panel(leginon.gui.wx.Node.Panel):
@@ -64,19 +65,14 @@ class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
 
-class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
+class ScrolledSettings(leginon.gui.wx.TargetRepeater.ScrolledSettings):
 	def initialize(self):
-		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Tilt Rotate Target Repeater')
+		sizers = leginon.gui.wx.TargetRepeater.ScrolledSettings.initialize(self)
+
+		sb = wx.StaticBox(self, -1, 'Tilts')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
-		self.widgets['bypass'] = wx.CheckBox(self, -1, 'Bypass Repeater')
-		sz = wx.GridBagSizer(5, 10)
-		sz.Add(self.widgets['bypass'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.widgets['tilts'] = Entry(self, -1, chars=15, style=wx.ALIGN_RIGHT)
-		sz.Add(self.widgets['tilts'], (1, 0), (1, 1), wx.EXPAND)
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-		
+		sbsz.Add(self.widgets['tilts'], wx.EXPAND)
 
-		return [sbsz]
+		return sizers + [sbsz]
 

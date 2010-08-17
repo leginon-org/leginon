@@ -22,6 +22,9 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 	settingsclass = leginondata.TargetRepeaterSettingsData
 	defaultsettings = {
 		'bypass':True,
+		'reset a': False,
+		'reset z': False,
+		'reset xy': False,
 	}
 	eventinputs = node.Node.eventinputs + targethandler.TargetWaitHandler.eventinputs + [event.ImageTargetListPublishEvent]
 	eventoutputs = node.Node.eventoutputs + targethandler.TargetWaitHandler.eventoutputs + [event.TargetListDoneEvent]
@@ -97,7 +100,19 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 			if state in ('stop'):
 				self.logger.info('Aborting')
 				break
+		self.resetStage()
 		self.setStatus('idle')
+
+	def resetStage(self):
+		axes = {'a': {'a': 0}, 'z': {'z':0}, 'xy': {'x': 0, 'y': 0}}
+		for axis, position in axes.items():
+			setting = 'reset ' + axis
+			if self.settings[setting]:
+				self.logger.info('resetting stage %s' % (axis,))
+				try:
+					self.instrument.tem.StagePosition = position
+				except:
+					self.logger.error('reset stage %s failed' % (axis,))
 
 	def markAllTargetsDone(self, targetlistdata):
 			alltargets = self.researchTargets(list=targetlistdata)

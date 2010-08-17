@@ -48,9 +48,23 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'Target Repeater')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		self.widgets['bypass'] = wx.CheckBox(self, -1, 'Bypass Filter')
-		sz = wx.GridBagSizer(5, 10)
-		sz.Add(self.widgets['bypass'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		sz = wx.BoxSizer(wx.VERTICAL)
+
+		self.widgets['bypass'] = wx.CheckBox(self, -1, 'Bypass')
+		sz.Add(self.widgets['bypass'])
+		
+		resetsz = wx.BoxSizer(wx.VERTICAL)
+		label = wx.StaticText(self, -1, 'Zero stage position when done: ')
+		resetsz.Add(label)
+		self.widgets['reset a'] = wx.CheckBox(self, -1, 'Alpha Tilt')
+		resetsz.Add(self.widgets['reset a'])
+		self.widgets['reset z'] = wx.CheckBox(self, -1, 'Z')
+		resetsz.Add(self.widgets['reset z'])
+		self.widgets['reset xy'] = wx.CheckBox(self, -1, 'X,Y')
+		resetsz.Add(self.widgets['reset xy'])
+
+		sz.Add(resetsz)
+
+		sbsz.Add(sz, wx.ALIGN_CENTER|wx.ALL)
 
 		return [sbsz]

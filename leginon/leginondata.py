@@ -1918,6 +1918,9 @@ class TargetRepeaterSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('bypass', bool),
+			('reset a', bool),
+			('reset z', bool),
+			('reset xy', bool),
 		)
 	typemap = classmethod(typemap)
 
