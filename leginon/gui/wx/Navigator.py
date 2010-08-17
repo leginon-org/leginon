@@ -98,11 +98,26 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 											id=leginon.gui.wx.ToolBar.ID_STAGE_LOCATIONS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onReproTest,
 											id=leginon.gui.wx.ToolBar.ID_MEASURE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onResetXY,
+											id=leginon.gui.wx.ToolBar.ID_RESET_XY)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onResetZ,
+											id=leginon.gui.wx.ToolBar.ID_RESET_Z)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onResetAlpha,
+											id=leginon.gui.wx.ToolBar.ID_RESET_ALPHA)
 		self.cmovetype.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice)
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
 							self.imagepanel)
 		self.test_dialog = ReproTestDialog(self)
 		self.Bind(EVT_TEST, self.onReproTest, self)
+
+	def onResetXY(self, evt):
+		self.node.onResetXY()
+
+	def onResetZ(self, evt):
+		self.node.onResetZ()
+
+	def onResetAlpha(self, evt):
+		self.node.onResetAlpha()
 
 	def onReproTest(self, evt):
 		self.test_dialog.Show()

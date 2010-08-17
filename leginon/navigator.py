@@ -594,13 +594,27 @@ class Navigator(node.Node):
 		if not locdata['xy only']:
 			stagedict['z'] = locdata['z']
 			stagedict['a'] = locdata['a']
+		self._toScope(name,stagedict)
+
+	def _toScope(self,name, stagedict):
 		try:
 			self.instrument.tem.StagePosition = stagedict
 		except:
 			self.logger.exception(errstr % 'unable to set instrument')
 		else:
-			self.currentlocation = locdata
 			self.logger.info('Moved to location %s' % (name,))
+
+	def onResetXY(self):
+		loc = {'x':0.0,'y':0.0}
+		self._toScope('reset xy',loc)
+
+	def onResetZ(self):
+		loc = {'z':0.0}
+		self._toScope('reset z',loc)
+
+	def onResetAlpha(self):
+		loc = {'a':0.0}
+		self._toScope('reset alpha',loc)
 
 if __name__ == '__main__':
 	id = ('navigator',)
