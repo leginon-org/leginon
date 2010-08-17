@@ -50,7 +50,7 @@ $filenames = $leginondata->getFilenames($sessionId, $preset);
 $datatypes = $leginondata->getAllDatatypes($sessionId);
 
 $viewer = new viewer();
-if($projectdb) {
+if($projectdb && !empty($sessions)) {
 	foreach($sessions as $k=>$s) {
 		if (SAMPLE_TRACK) {
 			$tag=$projectdata->getSample(array('Id'=>$s['id'], 'Purpose'=>$s['comment']));
