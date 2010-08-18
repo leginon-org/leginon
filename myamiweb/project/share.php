@@ -1,9 +1,7 @@
 <?
 require("inc/project.inc.php");
 require("inc/leginon.inc");
-#require("inc/user.inc.php");
 require("inc/share.inc.php");
-#require_once("inc/mysql.php");
 
 if ($_GET[cp])
 	$selectedprojectId=$_GET[cp];
