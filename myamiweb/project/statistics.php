@@ -2,6 +2,13 @@
 require('inc/project.inc.php');
 require('inc/experiment.inc.php');
 
+if (privilege('projects') > 2) {
+	$title = "Projects";
+	login_header($title);
+} else {
+	redirect(BASE_URL.'accessdeny.php?text=Only superusers and administrators can view this');
+}
+
 $useBgcolorOne = TRUE;
 $cfg['BgcolorOne']          = '#CCCCCC'; 
 $cfg['BgcolorTwo']          = '#DDDDDD';

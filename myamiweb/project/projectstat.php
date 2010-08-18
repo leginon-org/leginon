@@ -2,12 +2,19 @@
 require("inc/project.inc.php");
 require("inc/getleginondata.php");
 
+if (privilege('projects')) {
+	$title = "Projects";
+	login_header($title);
+} else {
+	redirect(BASE_URL.'accessdeny.php');
+}
+
 if ($_GET[cp])
 	$selectedprojectId=$_GET[cp];
 if ($_POST[currentproject])
 	$selectedprojectId=$_POST[currentproject];
 $project = new project();
-$projects = $project->getProjects("order");
+$projects = $project->getProjects("order",privilege('projects'));
 $selectedprojectId = empty($selectedprojectId) ? $projects[0][projectId] : $selectedprojectId;
 project_header("Projects", $selectedprojectId, $selectedspecimenId, $selectedgridId, $selectedgridboxId);
 $enableimage=($_POST['enableimage']) ? true : false;
