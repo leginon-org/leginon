@@ -48,7 +48,6 @@ if ($enableimage) {
 echo "</tr>";
 $tot_exp=0;
 $excludedprojectIds = explode(',',EXCLUDED_PROJECTS);
-var_dump($excludedprojectIds);
 $tot_exp_exclusif=0;
 $tot_exp_img_exclusif=0;
 foreach ($projects as $p) {
