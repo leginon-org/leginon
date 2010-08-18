@@ -1,13 +1,12 @@
 <?php
 require("inc/project.inc.php");
-require("inc/user.inc.php");
+require("inc/getleginondata.php");
 
 if ($_GET[cp])
 	$selectedprojectId=$_GET[cp];
 if ($_POST[currentproject])
 	$selectedprojectId=$_POST[currentproject];
 $project = new project();
-$user = new user();
 $projects = $project->getProjects("order");
 $selectedprojectId = empty($selectedprojectId) ? $projects[0][projectId] : $selectedprojectId;
 project_header("Projects", $selectedprojectId, $selectedspecimenId, $selectedgridId, $selectedgridboxId);
@@ -15,24 +14,6 @@ $enableimage=($_POST['enableimage']) ? true : false;
 ?>
 <br>
 <p>
-<script>
-	function onChangeProject(){
-		var cId = document.projectform.currentproject.options[document.projectform.currentproject.selectedIndex].value;
-		window.document.projectform.projectId.value=cId;
-		var projif = document.getElementById('projectframeId');
-		projif.src="getproject.php?projId="+cId;
-		var menuif = document.getElementById('menuframeId');
-		menuif.src="getmenu.php?pid="+cId;
-	}
-
-	function showprojectmanager() {
-		var cId = document.projectform.currentproject.options[document.projectform.currentproject.selectedIndex].value;
-		var URL = "projectmanager.php?cp="+cId;
-		var managerwindow =window.open(URL, 'managerwindow', 'left=10,top=400,height=200,width=190,toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes');
-		managerwindow.focus();
-	}
-
-</script>
 <form method="POST" name="projectform" action="<?php echo $PHP_SELF ?>">
 <input type="hidden" name="projectId" value="">
 <input type="submit" name="enableimage" value=" enable image count ">
@@ -55,7 +36,8 @@ foreach ($projects as $p) {
 	if ($enableimage) {
 		$tot_images = 0;
 		foreach($experimentIds as $name) {
-			$expinfo = $project->getExperimentInfo($name);
+			//getExperimentInfo is in inc/getleginondata.inc
+			$expinfo = getExperimentInfo($name);
 			$tot_images += $expinfo['Total images'];
 		}
 	}
