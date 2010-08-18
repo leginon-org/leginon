@@ -179,6 +179,10 @@ function runUploadTemplateStack() {
 	if ((!$stacktype && !$clusterId) && (!$stacktype && !$alignId)) 
 		createUploadTemplateStackForm("<B>ERROR:</B> Enter the type of stack (i.e. class averages or forward projections)");
 
+	// make sure that a template stack is specified, if there is no $clusterId or $alignId
+	if ((!$clusterId && !$alignId) && (!$template_stack))
+		createUploadTemplateStackForm("<B>ERROR:</B> Make sure the path to the template stack was specified");
+
 	//make sure a session was selected
 	if (!$session) createUploadTemplateStackForm("<B>ERROR:</B> Select an experiment session");
 
