@@ -58,25 +58,27 @@ function getLoginUserId() {
 
 function checkProjectAccessPrivilege($projectId) {
 	$userId = getLoginUserId();
-	
-	if ($userId === true || privilege('projects')>=3) return true;
-	if ($userId) {
-		global $dbemauth;
-		$q = "select o.`DEF_id` as ownerId "
-			."from projectowners o "
-			."where o.`REF|projects|project` = ".$projectId." "
-			."and o.`REF|leginondata|UserData|user` = ".$userId." "
-			;
-		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
-		$r = $dbc->getSQLResult($q);
-		if ((array)$r) return true;
+	if ($projectId) {	
+		if ($userId === true || privilege('projects')>=3) return true;
+		if ($userId) {
+			global $dbemauth;
+			$q = "select o.`DEF_id` as ownerId "
+				."from projectowners o "
+				."where o.`REF|projects|project` = ".$projectId." "
+				."and o.`REF|leginondata|UserData|user` = ".$userId." "
+				;
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+			$r = $dbc->getSQLResult($q);
+			if (is_array($r) && !empty($r)) 
+				return true;
+		}
 	}
 	redirect(BASE_URL.'accessdeny.php');
 	return false;
 }
 
 function checkProjectAdminPrivilege($projectId) {
-	if (privilege('projects') < 2) return false;
+	if (privilege('projects') < 2 || !$projectId) return false;
 	$userId = getLoginUserId();
 	if ($userId === true || privilege('projects')>=4) return true;
 	if ($userId) {
@@ -88,7 +90,8 @@ function checkProjectAdminPrivilege($projectId) {
 			;
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 		$r = $dbc->getSQLResult($q);
-		if ((array)$r) return true;
+		if (is_array($r) && !empty($r)) 
+			return true;
 	}
 	return false;
 }
@@ -96,7 +99,7 @@ function checkProjectAdminPrivilege($projectId) {
 function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 	$userId = getLoginUserId();
 	
-	if(!$userId){
+	if(!$userId || !$sessionId){
 		$redirect=$_SERVER['PHP_SELF']."?";
 		
 		foreach($_GET as $key => $value)
@@ -121,17 +124,16 @@ function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 		if ((array)$r) return true;
 		if ($r != false && (array)$r) return true;
 		$q = "select o.`DEF_id` as ownerId "
-			."from ".DB_LEGINON.".`SessionData` s "
-			."left join projectexperiments pe "
-			."on s.`name` = pe.`name` "
+			."from projectexperiments pe "
+			."left join ".DB_LEGINON.".`SessionData` s "
+			."on s.`DEF_id` = pe.`REF|leginondata|SessionData|session` "
 			."left join projectowners o "
-			."on o.`REF|projects|project` = pe.`projectId` "
+			."on o.`REF|projects|project` = pe.`REF|projects|project` "
 			."where s.`DEF_id` = ".$sessionId." "
 			."and o.`REF|leginondata|UserData|user` = ".$userId;
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 		$r = $dbc->getSQLResult($q);
-		
-		if ((array)$r) 
+		if (is_array($r) && !empty($r)) 
 			return true;
 	}
 	
@@ -140,7 +142,7 @@ function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 }
 
 function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
-	if (privilege($privilege_type) < 2) return false;
+	if (privilege($privilege_type) < 2 || !$sessionId) return false;
 	$userId = getLoginUserId();
 	if ($userId === true || privilege($privilege_type)>=4) return true;
 	if ($userId === true) return true;
@@ -150,14 +152,15 @@ function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
 		$q = "select o.`DEF_id` as ownerId "
 			."from ".DB_LEGINON.".`SessionData` s "
 			."left join projectexperiments pe "
-			."on s.`name` = pe.`name` "
+			."on s.`DEF_id` = pe.`REF|leginondata|SessionData|session` "
 			."left join projectowners o "
-			."on o.`REF|projects|project` = pe.`projectId` "
+			."on o.`REF|projects|project` = pe.`REF|projects|project` "
 			."where s.`DEF_id` = ".$sessionId." "
 			."and o.`REF|leginondata|UserData|user` = ".$userId;
 				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 				$r = $dbc->getSQLResult($q);
-		if ((array)$r) return true;
+		if (is_array($r) && !empty($r)) 
+			return true;
 	}
 	return false;
 }
