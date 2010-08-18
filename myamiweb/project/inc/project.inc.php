@@ -14,7 +14,8 @@ function menu($privilege=1) {
 	$link->offimg = "_off.png";
 	$link->setImagePath('img/');
 	$link->addlink('project.php','View Projects','', 'folder', '');
-	$link->addlink('gridtray.php','Grid Tray','', 'preparation', '');
+	if (!TRACK_SAMPLE)
+		$link->addlink('gridtray.php','Grid Tray','', 'preparation', '');
 	$link->addlink('projectstat.php','Project Status','', '', '');
 	$link->addlink('statistics.php','DB statistics','', '', '');
 	$link->Display();
