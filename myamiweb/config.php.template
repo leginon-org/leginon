@@ -166,4 +166,8 @@ define('APPION_WRAPPER_PATH', "");
 
 // --- sample tracking ---//
 define('SAMPLE_TRACK', false);
+
+// --- exclude projects in statistics. give a string with numbers separated by ',' ---//
+// --- for example, "1,2" ---//
+define('EXCLUDED_PROJECTS',"");
 ?>

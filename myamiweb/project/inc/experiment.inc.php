@@ -29,7 +29,6 @@ class experimentdata {
 		$sqld = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 		$qarray = array();
 		$qarray[] = "select count(*) from AcquisitionImageData";
-		$qarray[] = "select count(*) from AcquisitionFFTData";
 		foreach ($qarray as $q) {
 			$res = $sqld->SQLQuery($q);
 			echo $sqld->getError();

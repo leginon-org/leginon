@@ -47,7 +47,8 @@ if ($enableimage) {
 }
 echo "</tr>";
 $tot_exp=0;
-$excludedprojectIds = array(1,2,4,12,13,14,15,16,18);
+$excludedprojectIds = explode(',',EXCLUDED_PROJECTS);
+var_dump($excludedprojectIds);
 $tot_exp_exclusif=0;
 $tot_exp_img_exclusif=0;
 foreach ($projects as $p) {
@@ -84,10 +85,14 @@ if ($enableimage) {
 }
 ?>
 <br>
+<?php
+if (count($excludedprojects)) {
+?>
 <p>
 Excluded projects: <?=implode(', ',$excludedprojects);?><br>
 Total Projects: <b><?=(count($projects)-count($excludedprojectIds))?></b> Total Exp: <b><?=$tot_exp_exclusif?></b>
 <?php
+}
 if ($enableimage) {
 	echo "Total Images: <b>$tot_exp_img_exclusif</b>";
 }
