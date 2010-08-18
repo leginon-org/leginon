@@ -211,7 +211,8 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	else {
 		$expId=$_GET['expId'];
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-		$html.=displayLogin($formAction);
+		if (privilege('data') > 1)
+			$html.=displayLogin($formAction);
 		if(!empty($errors)){
 			$html.= "<font color='#EE82EE'>".$errors."</font>";
 		}
