@@ -275,7 +275,9 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 			C Symmetry
 		************************** */
 		// Select symmetry
-		echo "<tr><td>Model symmetry:</td>\n";
+		echo "<tr><td>";
+		echo docpop('csym','<b>Model symmetry:</b>');
+		echo "</td>\n";
 		echo "<td><select name='symmetryid'>\n";
 		foreach ($syms as $sym) {
 			$symid = $sym['DEF_id'];
