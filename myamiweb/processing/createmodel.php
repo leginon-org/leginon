@@ -282,13 +282,13 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 		foreach ($syms as $sym) {
 			$symid = $sym['DEF_id'];
 			if (strtoupper($sym['eman_name'][0]) == 'C') {
-				echo "<option value='$symid'";
-				if ($symid == $_POST['symmetryid'])
-					echo " SELECTED";
-				echo ">".$sym['symmetry'];
-				if ($sym['symmetry']=='C1')
-					echo " (no symmetry)";
-				echo "</option>\n";
+				if ($sym['symmetry']!='C1') {
+					echo "<option value='$symid'";
+					if ($symid == $_POST['symmetryid'])
+						echo " SELECTED";
+					echo ">".$sym['symmetry'];
+					echo "</option>\n";
+				}
 			}
 		}
     	echo" </select>";
@@ -439,7 +439,7 @@ function runCreateModel() {
 		$mask=$_POST['mask'];
 		$rounds=$_POST['rounds'];
 	}
-	$_POST['runname'] = getTimestring();
+//	$_POST['runname'] = getTimestring();
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
