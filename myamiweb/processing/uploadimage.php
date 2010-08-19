@@ -411,7 +411,8 @@ function runUploadImage() {
 
 		if (!($user && $password)) createUploadImageForm("<B>ERROR:</B> You must be logged in to submit");
 		$fakerunname = 'imageloader';
-		$sub = submitAppionJob($command,$outdir,$fakerunname,$expId,'uploadimage',True);
+		$fakeexpId = 000;
+		$sub = submitAppionJob($command,$outdir,$fakerunname,$fakeexpId,'uploadimage',True);
 		// if errors:
 		if ($sub) createUploadImageForm("<b>ERROR:</b> $sub");
 
