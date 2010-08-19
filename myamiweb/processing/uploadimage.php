@@ -294,24 +294,22 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 }
 
 function runUploadImage() {
-	/* *******************
-	PART 1: Get variables
-	******************** */
+	$projectId = getProjectId();
+	$expId = $_POST['expId'];
 	// trim removes any white space from start and end of strings
 	$sessionname = trim($_POST['sessionname']);
-	$projectId = getProjectId();
 	$batch = trim($_POST['batch']);
 	$batch_check = trim($_POST['batchcheck']);
 	$invert_check = trim($_POST['invert_check']);
 	$tiltgroup = $_POST['tiltgroup']+0;
 	$tem = $_POST['tem'];
 	$cam = $_POST['cam'];
-	$description=$_POST['description'];
-	$_POST['runname'] = "imageloader";
 
-	/* *******************
-	PART 2: Check for conflicts, if there is an error display the form again
-	******************** */
+	$outdir = $_POST['outdir'];
+
+	// start setting up the imageloader command
+	$command = "imageloader.py ";
+	$command.="--projectid=".$projectId." ";
 
 	//make sure a session name was entered if upload an independent file
 	if (!$sessionname) createUploadImageForm("<B>ERROR:</B> Enter a session name of the image");
@@ -325,18 +323,12 @@ function runUploadImage() {
 	if ($session_in_project)
 		$warning = ("<B>Warning:</B>  Will append to an existing session with the original description");
 	// add session to the command
+	$command.="--session=$sessionname ";
 
 	//make sure a description was provided
+	$description=$_POST['description'];
 	if (!$description && !$session_in_project)
 		createUploadImageForm("<B>ERROR:</B> Enter a brief description of the session");
-
-	/* *******************
-	PART 3: Create program command
-	******************** */
-
-	// start setting up the imageloader command
-	$command = "imageloader.py ";
-	$command.="--session=$sessionname ";
 
 	// for inverting density
 	if ($invert_check=='on') $command.="--invert ";
@@ -378,6 +370,8 @@ function runUploadImage() {
 		$command.="--mag=$mag ";
 		$command.="--df=$df ";
 		$command.="--kv=$kv ";
+
+
 	} elseif ($batch) {
 		if ($batch_check && !file_exists($batch))
 			createUploadImageForm("<B>ERROR:</B> Batch file does not exist");
@@ -407,22 +401,57 @@ function runUploadImage() {
 	$command.="--description=\"$description\" ";
 	if ($tiltgroup >= 2)
 		$command.="--tiltgroup=$tiltgroup ";
+	// submit job to cluster
+	if ($_POST['process']=="Upload Image") {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
 
-	/* *******************
-	PART 4: Create header info, i.e., references
-	******************** */
-	$headinfo .= appionRef(); // main appion ref
+		//if (!$outdir)
+		//	createUploadImageForm("<b>Error:</b> $outdir is not provided, required for web launch, use 'just show command'");
 
-	/* *******************
-	PART 5: Show or Run Command
-	******************** */
+		if (!($user && $password)) createUploadImageForm("<B>ERROR:</B> You must be logged in to submit");
+		$fakerunname = 'imageloader';
+		$sub = submitAppionJob($command,$outdir,$fakerunname,$expId,'uploadimage',True);
+		// if errors:
+		if ($sub) createUploadImageForm("<b>ERROR:</b> $sub");
 
-	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'uploadimage', 1);
+		// check that upload finished properly
+		$jobf = $outdir.$fakerunname.'/'.$fakerunname.'.appionsub.log';
+		$status = "Images were uploaded";
+		if ($warning)
+			$warning=ereg_replace("Will append","Appended",$warning);
+		if (file_exists($jobf)) {
+			$jf = file($jobf);
+			$jfnum = count($jf);
+			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
+				// if anything is red, it's not good
+				if (preg_match("/red/",$jf[$i])) {
+					$status = "<font class='apcomment'>Error while uploading, check the log file:<br />$jobf</font>";
+					continue;
+				}
+			}
+		}
+		else $status = "Job did not run, contact the appion team";
+		processing_header("Image Upload", "Image Upload");
+		echo "<p>$status</p>";
+	}
 
-	// if error display them
-	if ($errors)
-		createUploadImageForm($errors);
-	exit;
+	else processing_header("UploadImage Command","UploadImage Command");
+	echo appionRef();
+	// rest of the page
+	echo"<font class='apcomment'>".$warning."</font>";
+	echo"
+	<table width='600' border='1'>
+	<tr><td colspan='2'>
+	<b>UploadImage Command:</b><br/>
+	$command
+	</td></tr>
+	<tr><td>batch file</td><td>$batch</td></tr>
+	<tr><td>tem id</td><td>$tem</td></tr>
+	<tr><td>camera id</td><td>$cam</td></tr>
+	<tr><td>session</td><td>$sessionname</td></tr>
+	<tr><td>description</td><td>$description</td></tr>
+	</table>\n";
+	processing_footer();
 }
 ?>
