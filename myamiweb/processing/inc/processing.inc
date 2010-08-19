@@ -1,14 +1,14 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2006 
+ *	The Leginon software is Copyright 2006
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
  */
 /**
- *	Query definition to access all leginon data 
- *	
+ *	Query definition to access all leginon data
+ *
  */
 require_once "inc/login.inc";
 require_once "inc/ssh.inc";
@@ -27,12 +27,12 @@ setsession();
 
 function getProjectFromExpId($expId) {
 	// Determine projectId from the expId
-  $projectdata = new project();
-  $projectdb = $projectdata->checkDBConnection();
- 
-  if($projectdb) $projectinfo = $projectdata->getProjectfromSessionId($expId);
-  $projectId=(int) $projectinfo['projectId'];
-  return $projectId;
+	$projectdata = new project();
+	$projectdb = $projectdata->checkDBConnection();
+
+	if($projectdb) $projectinfo = $projectdata->getProjectfromSessionId($expId);
+	$projectId=(int) $projectinfo['projectId'];
+	return $projectId;
 }
 
 function getProjectId() {
@@ -59,27 +59,27 @@ function getProjectId() {
 	}
 
 	if ($projectid)
-		$projectid = (int) $projectid;
+	$projectid = (int) $projectid;
 	if (is_int($projectid))
-		$_SESSION['projectId'] = $projectid;
+	$_SESSION['projectId'] = $projectid;
 
 	return $projectid;
 };
 
 function commafy($input) {
 	// add commas to an integer
-   if(strlen($input)<=3) { 
-     return $input;
-   }
-   $length=substr($input,0,strlen($input)-3);
-   $formatted_input = commafy($length).",".substr($input,-3);
-   return $formatted_input;
+	if(strlen($input)<=3) {
+		return $input;
+	}
+	$length=substr($input,0,strlen($input)-3);
+	$formatted_input = commafy($length).",".substr($input,-3);
+	return $formatted_input;
 }
 
 function getHosts(){
 	global $PROCESSING_HOSTS;
-  if (is_array($PROCESSING_HOSTS))
-		return $PROCESSING_HOSTS;
+	if (is_array($PROCESSING_HOSTS))
+	return $PROCESSING_HOSTS;
 	return array();
 }
 
@@ -93,7 +93,7 @@ function getHostForm() {
 		foreach ($proc_list as $host) {
 			$s = ($host['host'] == $_POST['processinghost']) ? "selected" : "";
 			$h[]="<option value='".$host['host']."' ".$s." >".$host['host']."</option>\n";
-  		}
+		}
 		$html="<select name=\"processinghost\">\n";
 		$html.=join("\n",$h);
 		$html.="</select>";
@@ -123,15 +123,15 @@ function docpop($key,$text) {
 
 function getStackSize($stackdata) {
 	if (substr($stackdata['name'], -4) == ".hed")
-		$stackimgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
+	$stackimgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
 	else
-		$stackimgfile = $stackdata['path']."/".$stackdata['name'];
+	$stackimgfile = $stackdata['path']."/".$stackdata['name'];
 	if (file_exists($stackimgfile)) {
 		$fsize = (int) filesize($stackimgfile);
 		if ($fsize > 1073741824)
-		  	$size = sprintf("%.2f GB", $fsize/1073741824);
+		$size = sprintf("%.2f GB", $fsize/1073741824);
 		else
-			$size = sprintf("%.1f MB", $fsize/1048576);
+		$size = sprintf("%.1f MB", $fsize/1048576);
 	}
 	return $size;
 }
@@ -178,9 +178,9 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 		$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	}
 	$proj_link= '<a class="header" target="project" href="'.PROJECT_URL."getproject.php?projectId=".$projectId.'">'
-		.$currentproject['name'].' ('.$projectId.')</a>';
+	.$currentproject['name'].' ('.$projectId.')</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
-	$proj_link.=($misc) ? "<a href='viewmisc.php?projectId=$projectId'>[Related Images, Movies, etc]</a>" : ""; 
+	$proj_link.=($misc) ? "<a href='viewmisc.php?projectId=$projectId'>[Related Images, Movies, etc]</a>" : "";
 	if ($expId) $expinfo = $leginondata->getSessionInfo($expId);
 
 	$html="<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN'  'http://www.w3.org/TR/html4/strict.dtd'>
@@ -202,7 +202,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$html.= "<hr />\n";
 	$html.= "<div class='middlebar'>\n"; // open middlebar div
 	$html.= "<div style='float: right; padding:10px'>\n"; // open
-							      // login div
+	// login div
 	if ($_SESSION['username']) {
 		$html.='<i>logged in as <b>'.$_SESSION['username'].'</b></i>'."\n";
 		$html.='<a class="header" href="endsession.php?expId='.$_GET['expId'].'">[Log Out]</a>'."\n";
@@ -227,7 +227,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$html.= "<hr />\n";
 	$html.= "<div class='apbottombar'>\n";  // open bottombar div
 	$html.= "<div class='apbottomcontent'>\n"; // open
-						   // bottomcontent div
+	// bottomcontent div
 	$html.= "<ul>\n";
 	$html.= "<div style='float: right; padding-right:10px;'>\n";
 	$html.= "<a href='procsummary.php?expId=$expId'>[Appion Stats]</a>\n";
@@ -306,11 +306,11 @@ Password: <input type="password" name="password">
 function checkLogin() {
 	// if everything is cool, then return nothing
 	if (!$_SESSION['username']) {
-		if (!$_POST['username'] || !$_POST['password']) 
-			return("Please enter your username and password to server " . $_SERVER['SERVER_ADDR']);
+		if (!$_POST['username'] || !$_POST['password'])
+		return("Please enter your username and password to server " . $_SERVER['SERVER_ADDR']);
 		// authenticate username & password
-		if (!check_ssh($_SERVER['SERVER_ADDR'],$_POST['username'],$_POST['password'])) 
-			return("Authentication failed to server " . $_SERVER['SERVER_ADDR']);
+		if (!check_ssh($_SERVER['SERVER_ADDR'],$_POST['username'],$_POST['password']))
+		return("Authentication failed to server " . $_SERVER['SERVER_ADDR']);
 		## save username and password to the session
 		$_SESSION['username']=$_POST['username'];
 		$_SESSION['password']=$_POST['password'];
@@ -324,7 +324,7 @@ function getProjectList() {
 	$projectdata = new project();
 	$projectdb = $projectdata->checkDBConnection();
 	if($projectdb)
-		$projects = $projectdata->getProjects('all');
+	$projects = $projectdata->getProjects('all');
 	return($projects);
 }
 
@@ -367,12 +367,12 @@ function streamToArray($stream) {
 	$lines=explode("\n", $stream);
 	foreach($lines as $line) {
 		if (!$line=trim($line))
-			continue;
+		continue;
 		$fields=explode(" ",$line);
 		$row=array();
 		foreach($fields as $f) {
 			if (!trim($f))
-				continue;
+			continue;
 			$row[]=$f;
 		}
 		$rows[]=$row;
@@ -592,8 +592,8 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 		}
 		force=1
 		displaystack(\n";
-		if (is_array($plist)) $javascript.="imgArray, ";
-		$javascript.="startImg, endImg, force) 
+	if (is_array($plist)) $javascript.="imgArray, ";
+	$javascript.="startImg, endImg, force)
 	}
 
 	function clean() {
@@ -638,7 +638,7 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 	}
 
 	</script>\n";
-	return $javascript; 
+	return $javascript;
 }
 
 function getNumberOfProcsPerNode($processingHost) {
@@ -655,10 +655,23 @@ function getNumberOfProcsPerNode($processingHost) {
 
 function getNumberOfRequiredNodes($nproc, $ppn) {
 	if ($nproc < $ppn)
-		return array(1, $nproc);
+	return array(1, $nproc);
 	$nodes = (int) ceil($nproc/$ppn);
 	$ppn = (int) ceil($nproc/$nodes);
 	return array($nodes, $ppn);
+}
+
+//*****************************************************************************
+//
+// Add the Appion wrapper to a command to allow multiple installations of
+// Appion on a single machine.
+//
+//*****************************************************************************
+function addAppionWrapper($command) {
+	if (USE_APPION_WRAPPER) {
+		$command = APPION_WRAPPER_PATH." ".$command;
+	}
+	return $command;
 }
 
 /**************************************/
@@ -668,43 +681,44 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) {
 		Otherwise displays command to copy and paste into terminal
 
 		Requirements:
-			$_GET['expId']
-			$_POST['runname']
-			$_POST['outdir'] 
+		$_GET['expId']
+		$_POST['runname']
+		$_POST['outdir']
 		need to be defined and correct
-	*/
+		*/
+
 
 	// get required inputs
 	$expId=$_GET['expId'];
 	if (empty($expId))
-		return "<B>ERROR:</B> undefined expId";
+	return "<B>ERROR:</B> undefined expId";
 	$runname=$_POST['runname'];
 	if (empty($runname))
-		return "<B>ERROR:</B> undefined runname";
+	return "<B>ERROR:</B> undefined runname";
 	$outdir=$_POST['outdir'];
 	if (empty($outdir))
-		return "<B>ERROR:</B> undefined outdir";
+	return "<B>ERROR:</B> undefined outdir";
 	$projectid = getProjectId();
 
 	// set rundir from runname and outdir
 	if (substr($outdir,-1,1)!='/')
-		$outdir.='/';
+	$outdir.='/';
 	$rundir = $outdir.$runname;
 
 	// add space to end, if necessary
 	if (substr($command,-1,1)!=' ')
-		$command.=' ';
+	$command.=' ';
 	// in the future maybe remove if statements
 	if (!preg_match("/--rundir=/", $command))
-		$command .= "--rundir=$rundir ";
+	$command .= "--rundir=$rundir ";
 	if (!preg_match("/--runname=/", $command))
-		$command .= "--runname=$runname ";
+	$command .= "--runname=$runname ";
 	if (!preg_match("/--projectid=/", $command))
-		$command .= "--projectid=$projectid ";
+	$command .= "--projectid=$projectid ";
 	if (!preg_match("/--expid=/", $command))
-		$command .= "--expId=$expId ";
+	$command .= "--expId=$expId ";
 	if (!preg_match("/--jobtype=/", $command))
-		$command .= "--jobtype=$jobtype ";
+	$command .= "--jobtype=$jobtype ";
 
 	if ($_POST['process'] != "Just Show Command") {
 		// Option 1: selected the run button
@@ -712,13 +726,13 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) {
 		$password = $_SESSION['password'];
 
 		if (!($user && $password))
-			return "<B>ERROR:</B> Enter a user name and password";
-
+		return "<B>ERROR:</B> Enter a user name and password";
+			
 		$errors = submitAppionJob($command, $outdir, $runname, $expId, $jobtype, False, False, False, $nproc);
 
 		// if errors:
 		if ($errors)
-			return "<B>ERROR:</B> $errors";
+		return "<B>ERROR:</B> $errors";
 
 		exit;
 	} else {
@@ -736,15 +750,18 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) {
 
 /**************************************/
 function justShowCommandTable($command) {
-	global $USE_APPION_WRAPPER, $APPION_WRAPPER_PATH;
 
-	if ($USE_APPION_WRAPPER) {
-		$command = $APPION_WRAPPER_PATH." ".$command;
-	}
-
+	// Keep this section before adding the wrapper
+	// to get the proper values. Trim the whitespace from the ends,
+	// split the components into an array, and pop the first element
+	// which should be the function.
 	$command = trim($command);
 	$bits = split(" ", $command);
 	$function = array_shift($bits);
+
+	// Add the Appion wrapper to support muliple installations of Appion
+	$command =  addAppionWrapper($command);
+
 
 	$commandtable = "<table class='tablebubble' border='0' width='800'>\n";
 	$commandtable .= "<tr><td colspan='2'>\n";
@@ -760,7 +777,7 @@ function justShowCommandTable($command) {
 			if (preg_match("/^--([^=]*)=(.*)$/", $bit, $matches)) {
 				// type 1: --param=value
 				if (empty($matches[1]))
-					continue;
+				continue;
 				$commandtable .= "</td></tr><tr><td>\n";
 				$commandtable .= "<b>".$matches[1]."</b>\n";
 				$commandtable .= "</td><td>\n";
@@ -768,7 +785,7 @@ function justShowCommandTable($command) {
 			} elseif (preg_match("/^--([^=]*)$/", $bit, $matches)) {
 				// type 2: --param, e.g., --no-commit
 				if (empty($matches[1]))
-					continue;
+				continue;
 				$commandtable .= "</td></tr><tr><td>\n";
 				$commandtable .= "--<b>".$matches[1]."</b>\n";
 				$commandtable .= "</td><td>\n";
@@ -788,8 +805,11 @@ function justShowCommandTable($command) {
 
 /**************************************/
 function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg=False,
-		 $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime="240") {
+$xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime="240") {
 	global $DATA_DIRS;
+
+	// Add the Appion wrapper to support muliple installations of Appion
+	$command =  addAppionWrapper($command);
 	
 	$particle=new particleData();
 
@@ -818,7 +838,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	$fsbits = split(" ", trim($fscheck));
 	foreach ($fsbits as $fsbit) {
 		if (preg_match("/^[0-9]+%$/", $fsbit))
-			$percent = (float) preg_replace("/%/", "", $fsbit);
+		$percent = (float) preg_replace("/%/", "", $fsbit);
 	}
 	if ($percent && $percent >= 98) {
 		$error = "Filesystem is $percent% full, please change output directory<br/>\n";
@@ -834,13 +854,13 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	if ($DATA_DIRS) {
 		$ingood = False;
 		foreach ( $DATA_DIRS as $gooddisk)
-			if (!$gooddisk) {
-				$ingood = True;
-			} else { 
-				$ingood = (ereg($gooddisk,$rundir))? True: $ingood;
-			}
-		if (!$ingood) 
-			return 'could not create directory '.$rundir.'<br/> try using '.implode(' or ',$DATA_DIRS);
+		if (!$gooddisk) {
+			$ingood = True;
+		} else {
+			$ingood = (ereg($gooddisk,$rundir))? True: $ingood;
+		}
+		if (!$ingood)
+		return 'could not create directory '.$rundir.'<br/> try using '.implode(' or ',$DATA_DIRS);
 	}
 
 	// if more than one job running in the directory (like
@@ -876,7 +896,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 		$checkcount++;
 	}
 	if (!file_exists($rundir))
-		return "could not create directory '$rundir'<br/>check folder permissions";
+	return "could not create directory '$rundir'<br/>check folder permissions";
 
 	if ($testimg) {
 		//submit directly to head node on cluster if testing 1 image
@@ -887,11 +907,11 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 
 	// get proper node numbers
 	if ($ppn < 1)
-		$ppn = getNumberOfProcsPerNode($processhost);
+	$ppn = getNumberOfProcsPerNode($processhost);
 	if ($nodes < 1)
-		list($nodes, $ppn) = getNumberOfRequiredNodes($nproc, $ppn);
+	list($nodes, $ppn) = getNumberOfRequiredNodes($nproc, $ppn);
 	if ($ppn < 1)
-		$ppn = 1;
+	$ppn = 1;
 	// Torque PBS: the cput needs to be nproc*walltime
 	// PBS Pro: cput = walltime
 	$cput = $walltime*$nproc;
@@ -902,9 +922,9 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	$jobtext = "#PBS -l nodes=$nodes:ppn=$ppn\n";
 	// AMI guppy specific to get small jobs to run on 4 proc nodes
 	/*if ($nproc < 5) {
-		$jobtext = "#PBS -l nodes=1:ppn=4:fourProc\n";
+	$jobtext = "#PBS -l nodes=1:ppn=4:fourProc\n";
 	} else {
-		$jobtext = "#PBS -l nodes=$nodes:ppn=$ppn\n";
+	$jobtext = "#PBS -l nodes=$nodes:ppn=$ppn\n";
 	}*/
 
 	// create job file
@@ -922,12 +942,12 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 			$jobtext .= "$iteration\n";
 		}
 	} else
-		$jobtext .= "$apcmd\n";
+	$jobtext .= "$apcmd\n";
 
 	// we should get rid of this and let python do it
 	$jobtext .= "\nupdateAppionDB.py $jobid D $projectid\n\n";
 
-	$jobtext .= "exit\n"; 
+	$jobtext .= "exit\n";
 
 	// this next part is why users have to be able to login to web server
 	// write jobfile to tmp dir on cronus3
@@ -951,6 +971,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 	echo "<tr><td>Project Id</td><td>$projectid</td></tr>\n";
 	$cmd = "cd $rundir; qsub $jobfile;\n";
 
+	
 	// submit job to cluster
 	$jobdata = exec_over_ssh($processhost, $user, $pass, $cmd, True);
 
@@ -996,7 +1017,7 @@ function writeTestResults($jpg,$ccclist,$bin){
 	$html.= "<a href='loadimg.php?filename=$jpg' target='blank'>\n";
 	$html.= "<img src='loadimg.php?filename=$jpg&h=256'></a>\n";
 	if (count($ccclist)>1)
-		$html.= "<br />\n";
+	$html.= "<br />\n";
 	foreach ($ccclist as $ccc) {
 		$html.= "<a href='loadimg.php?filename=$ccc' target='blank'>\n";
 		$html.= "<img src='loadimg.php?filename=$ccc&h=256'></a>\n";
@@ -1017,10 +1038,10 @@ function randomString($length) {
 function getTimestring() {
 	$today = getdate();
 	$timestring = substr($today['year'],2,2)
-		.strtolower(substr($today['month'],0,3))
-		.sprintf("%02u", $today['mday'])
-		.sprintf("%c", $today['hours']+97)
-		.sprintf("%02u", $today['minutes']);
+	.strtolower(substr($today['month'],0,3))
+	.sprintf("%02u", $today['mday'])
+	.sprintf("%c", $today['hours']+97)
+	.sprintf("%02u", $today['minutes']);
 	return $timestring;
 }
 
@@ -1029,7 +1050,7 @@ function bashcolor2html($str) {
 	$chr27=chr(27);
 	$str=trim($str);
 	$str=preg_replace("/$chr27/", 'e',$str);
-#	$str=preg_replace('/;/', 'me[',$str);
+	#	$str=preg_replace('/;/', 'me[',$str);
 	preg_match_all('/(e\[[0-9]{1,2}m)/', $str, $matches);
 	$htmlstyles=array();
 	foreach ((array)$matches[1] as $code) {
@@ -1053,7 +1074,7 @@ function editTextJava() {
 	$javascript.= "  var textarea=\"<textarea name='newdescription\"+stackid+\"' cols='\"+cols+\"' rows='\"+rows+\"'>\"+text+\"</textarea><input class='edit' type='submit' name='updateDesc\"+stackid+\"' value='Update'>\";\n";
 	$javascript.= "  if (document.getElementById) { // DOM3 = IE5, NS6\n";
 	$javascript.= "    document.getElementById(descText).innerHTML=textarea;\n";
-	$javascript.= "  }\n"; 
+	$javascript.= "  }\n";
 	$javascript.= "}\n";
 	$javascript.= "</script>\n";
 	return $javascript;
@@ -1112,7 +1133,7 @@ function pleaseWaitJava() {
 	$java.= "function pleasewait() {\n";
 	$java.= "	pleasewaitScreen=$('pleasewaitScreen');\n";
 	$java.= "	pleasewaitScreen.style.visibility='visible';\n";
-	$java.= "}\n"; 
+	$java.= "}\n";
 	$java.= "</script>\n";
 	return $java;
 }
@@ -1232,15 +1253,15 @@ function getPngList($dir) {
 	$pngfiles = array_merge($pngfiles1, $pngfiles2, $pngfiles3);
 	//print_r($pngfiles)."<br/>";
 	if (count($pngfiles) < 2)
-		return $pngimages;
+	return $pngimages;
 
 	//sort pngs
 	$eulerstr = 'euler.*\.png$';
 	foreach ($pngfiles as $pngfile) {
 		if (eregi($eulerstr, $pngfile))
-			$pngimages['eulerfiles'][] = $pngfile;
+		$pngimages['eulerfiles'][] = $pngfile;
 		else
-			$pngimages['pngfiles'][] = $pngfile;
+		$pngimages['pngfiles'][] = $pngfile;
 	}
 	sort($pngimages['pngfiles']);
 	sort($pngimages['eulerfiles']);
@@ -1260,7 +1281,7 @@ function spiderRef() {
 
 /**************************************/
 function imagicRef() {
-	return referenceBox("A New Generation of the IMAGIC Image Processing System.", 1996, 
+	return referenceBox("A New Generation of the IMAGIC Image Processing System.", 1996,
 		"van Heel M., Harauz G., Orlova E. V., Schmidt R. & Schatz M", "J Struct Biol", 116, 1, 8742718, false, false, "img/imagic_logo.png");
 }
 
@@ -1284,32 +1305,32 @@ function referenceBox($title, $year, $authorlist, $journal, $volume=false, $issu
 	$refbox = "<br/>";
 	$refbox .= "<table class='tablebubble' border='0'><tr><td>\n";
 	if ($logo)
-		$refbox .= "<img height='80' src='$logo'>";
+	$refbox .= "<img height='80' src='$logo'>";
 	$refbox .= "</td><td width='480'>\n";
 	$refbox .= "<h4>If you find this software useful please cite:</h4>\n";
 	$refbox .= "\n";
 	// add period at end of certain fields
 	if (substr($title,-1,1)!='.')
-		$title.='.';
+	$title.='.';
 	if (substr($authorlist,-1,1)!='.')
-		$authorlist.='.';
+	$authorlist.='.';
 	if (substr($journal,-1,1)!='.')
-		$journal.='.';
+	$journal.='.';
 
 	$refbox .= "<i>\"$title\"</i>&nbsp;($year)\n";
 	$refbox .= "$authorlist\n";
 	$refbox .= "$journal";
 	if ($volume)
-		$refbox .= " v$volume";
+	$refbox .= " v$volume";
 	if ($issue)
-		$refbox .= "<i>($issue)</i>";
+	$refbox .= "<i>($issue)</i>";
 	$refbox .= ".&nbsp;\n";
 	if ($pmid)
-		$refbox .= "PMID:&nbsp;<a href='http://www.ncbi.nlm.nih.gov/pubmed/$pmid'>$pmid</a>&nbsp;\n";
+	$refbox .= "PMID:&nbsp;<a href='http://www.ncbi.nlm.nih.gov/pubmed/$pmid'>$pmid</a>&nbsp;\n";
 	if ($pmcid)
-		$refbox .= "Free text:&nbsp;<a href='http://www.ncbi.nlm.nih.gov/pmc/articles/PMC$pmcid'>PMC$pmcid</a>&nbsp;\n";
+	$refbox .= "Free text:&nbsp;<a href='http://www.ncbi.nlm.nih.gov/pmc/articles/PMC$pmcid'>PMC$pmcid</a>&nbsp;\n";
 	if ($doi)
-		$refbox .= "DOI:&nbsp;<a href='http://dx.doi.org/$doi'>$doi</a>&nbsp;\n";
+	$refbox .= "DOI:&nbsp;<a href='http://dx.doi.org/$doi'>$doi</a>&nbsp;\n";
 	$refbox .= "\n";
 	$refbox .= "</td></tr></table><br/>\n";
 	return ($refbox);
