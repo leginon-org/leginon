@@ -577,35 +577,35 @@ function prepareFrealign ($extra=False) {
 	/* *******************
 	PART 3: Create program command
 	******************** */
-	$cmd = "prepFrealign.py ";
-	$cmd.= "--stackid=$stackid ";
+	$command = "prepFrealign.py ";
+	$command.= "--stackid=$stackid ";
 	if ($reconstackid)
-		$cmd.= "--reconstackid=$reconstackid ";
-	$cmd.= "--modelid=$modelid ";
-	if ($importiter) $cmd.= "--reconiterid=$importiter ";
-	if ($dang) $cmd.= "--dang=$dang ";
+		$command.= "--reconstackid=$reconstackid ";
+	$command.= "--modelid=$modelid ";
+	if ($importiter) $command.= "--reconiterid=$importiter ";
+	if ($dang) $command.= "--dang=$dang ";
 
-	$cmd.= "--mask=$mask ";
-	$cmd.= "--imask=$imask ";
-	$cmd.= "--wgh=$wgh ";
-	$cmd.= "--xstd=$xstd ";
-	$cmd.= "--pbc=$pbc ";
-	$cmd.= "--boff=$boff ";
-	$cmd.= "--itmax=$itmax ";
-	$cmd.= "--ipmax=$ipmax ";
-	$cmd.= "--sym=$sym ";
-	$cmd.= "--target=$target ";
-	$cmd.= "--thresh=$thresh ";
-	$cmd.= "--cs=$cs --kv=$kv ";
-	$cmd.= "--rrec=$rrec --hp=$hp --lp=$lp --rbfact=$rbfact ";
-	$cmd.= "--numiter=$numiter ";
+	$command.= "--mask=$mask ";
+	$command.= "--imask=$imask ";
+	$command.= "--wgh=$wgh ";
+	$command.= "--xstd=$xstd ";
+	$command.= "--pbc=$pbc ";
+	$command.= "--boff=$boff ";
+	$command.= "--itmax=$itmax ";
+	$command.= "--ipmax=$ipmax ";
+	$command.= "--sym=$sym ";
+	$command.= "--target=$target ";
+	$command.= "--thresh=$thresh ";
+	$command.= "--cs=$cs --kv=$kv ";
+	$command.= "--rrec=$rrec --hp=$hp --lp=$lp --rbfact=$rbfact ";
+	$command.= "--numiter=$numiter ";
 	#enforce cluster mode, for now
-	$cmd.= "--cluster ";
-	$cmd.= "--ppn=$ppn ";
-	$cmd.= "--rpn=$rpn ";
-	$cmd.= "--nodes=$nodes ";
-	if ($ctffindonly) $cmd.= "--ctfmethod=ctffind ";
-	if ($last) $cmd.= "--last=$last ";
+	$command.= "--cluster ";
+	$command.= "--ppn=$ppn ";
+	$command.= "--rpn=$rpn ";
+	$command.= "--nodes=$nodes ";
+	if ($ctffindonly) $command.= "--ctfmethod=ctffind ";
+	if ($last) $command.= "--last=$last ";
 
 
 	/* *******************
