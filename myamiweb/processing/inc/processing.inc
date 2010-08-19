@@ -828,10 +828,13 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"leginondata\")'";
 	$dbcheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
 	if (trim($dbcheck)=='') return "sinedon is not configured for leginondata, check your sinedon.cfg file";
-	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"appiondata\")'";
-	$dbcheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
-	if (trim($dbcheck)=='') return "sinedon is not configured for appiondata, check your sinedon.cfg file";
-
+	
+	if($expId != 000){
+		$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"appiondata\")'";
+		$dbcheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
+		if (trim($dbcheck) == '') return "sinedon is not configured for appiondata, check your sinedon.cfg file";
+	}
+	
 	//Check if filesystem is full
 	$cmd = "df $outdir";
 	$fscheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
