@@ -58,7 +58,7 @@ function getLoginUserId() {
 
 function checkProjectAccessPrivilege($projectId) {
 	$userId = getLoginUserId();
-	if ($projectId) {	
+	if (is_numeric($projectId)) {	
 		if ($userId === true || privilege('projects')>=3) return true;
 		if ($userId) {
 			global $dbemauth;
@@ -78,7 +78,7 @@ function checkProjectAccessPrivilege($projectId) {
 }
 
 function checkProjectAdminPrivilege($projectId) {
-	if (privilege('projects') < 2 || !$projectId) return false;
+	if (privilege('projects') < 2 || empty($projectId)) return false;
 	$userId = getLoginUserId();
 	if ($userId === true || privilege('projects')>=4) return true;
 	if ($userId) {
