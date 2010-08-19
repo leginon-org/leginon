@@ -292,7 +292,7 @@ class mysql {
 	}
 
 	function array_to_sql($data) {
-		if (!$data || !is_array($data))
+		if (!is_array($data) || empty($data))
 			return False;
 		$sqlformat=array();
 		foreach ($data as $k=>$v) {
