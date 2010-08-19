@@ -204,6 +204,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("CCF\n")
 			f.write(str(self.params['max_shift_orig'])+"\n")
 			f.write("3\n")
+			f.write("NO_FILTER\n")
 			f.write("EOF\n")
 			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> multiReferenceAlignment.log\n")
 			f.write("start_cent\n")
