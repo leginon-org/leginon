@@ -10,6 +10,9 @@
 require "inc/admin.inc";
 
 $login_check = $dbemauth->is_logged();
+if (privilege('data') < 2)
+	redirect(BASE_URL.'accessdeny.php?text=You do not have the privilege to view this page');
+
 
 $instrumenthosts = $leginondata->getInstrumentHosts();
 $validhosts = array();

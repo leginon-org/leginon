@@ -30,6 +30,7 @@ if (privilege('users')>1)
 #$link->addlink('addcal.php','Calibrations','', 'calibration', '');
 if (privilege('groups')>2)
 	$link->addlink('addapp.php','Applications','', 'application', '');
+if (privilege('data')>1)
 $link->addlink('goniometer.php','Goniometer','', 'goniometer', '');
 
 

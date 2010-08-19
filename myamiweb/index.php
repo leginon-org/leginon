@@ -23,12 +23,12 @@ $link->addlink('tomo/','Tomography','', 'tomo_icon_3');
 $link->addlink('dualview.php','Dual Viewer','', 'dual_view');
 $link->addlink('template.php', 'Hole Template viewer','', 'template');
 
-if (privilege('groups') >= 2 ) 
+if (privilege('groups') > 3 ) 
 	$link->addlink('admin.php','Administration','', 'admin');
 if (privilege('projects') >= 2 ) 
 	$link->addlink('project','Project DB','', 'project');
-if (privilege('users') == 2 )
-	$link->addlink('goniometer.php','Miscellaneous','', 'admin');
+if (privilege('users') >= 2 && privilege('groups') <= 3) 
+	$link->addlink('admin.php','Miscellaneous','', 'admin');
 
 login_header(PROJECT_TITLE);
 
