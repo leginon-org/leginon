@@ -136,6 +136,7 @@ var help = {
 		'imask' : 'Inside mask used to exclude inside regions',
 		'lp' : 'Lowpass filter radius in Fourier pixels',
 		'partnum' : 'Number of particles to use for each view.  This number should be at least 10-20, and at most ~10% of the total particle data set.  50-100 is good for typical data sets of 2000 or more particles. Leave BLANK for auto-fill',
+		'csym' : 'imposes C-fold symmetry on the model, use C1 if creating an asymmetric model',
 		'rounds' : 'Rounds of Euler angle determination to use (2-5)',
 		'pdbid' : 'ID for an experimentally determined biological molecule from the RCSB Protein Data Bank (www.rcsb.org)',
 		'emdbid' : 'ID for an experimentally determined electron density map from the EM Data Bank',
