@@ -437,7 +437,7 @@ function runCreateModel() {
 		$mask=$_POST['mask'];
 		$rounds=$_POST['rounds'];
 	}
-	$_POST['runname'] = getTimestamp();
+	$_POST['runname'] = getTimestring();
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
