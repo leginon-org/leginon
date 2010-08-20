@@ -20,8 +20,20 @@ if ($login!=2) {
    		list-style: none; padding:2px;
 	}
 	</style>
-	<center><h1><?php echo PROJECT_TITLE; ?></h1></center>
-	<hr/>
+<?
+	if (!file_exists("img/logo.jpg")) {
+?>
+		<center><h1><?php echo PROJECT_TITLE; ?></h1></center>
+		<hr/>
+<?php
+	} else {
+?>
+		<div align="center">
+		<img src="img/logo.jpg" width="610" height="110">
+		</div>
+<?php
+	}
+?>
 	<form method="post" action="<?=$_SERVER['REQUEST_URI']?>" name="">
 		<table cellspacing=20>
 			<tr>
