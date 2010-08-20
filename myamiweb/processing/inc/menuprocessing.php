@@ -907,7 +907,7 @@ $menuprocessing="";
 		$result=$action;
 		if ($menu['result'][0]) $result .= ' : '.$menu['result'][0];
 		$menuprocesing.=addMenu($result);
-		$menuprocesing.=addSubmenu($menu['newrun'][0]);
+		$menuprocesing.=addSubmenu($menu['newrun'][0], $expId);
 	}
 
 	function addMenu($title) {
@@ -917,8 +917,8 @@ $menuprocessing="";
 		return $html;
 	}
 
-	function addSubmenu($data) {
-		global $expId;
+	function addSubmenu($data, $expId) {
+		
 		$allow_process = checkExptAdminPrivilege($expId,'data');
 		$text="<ul>";
 		// print out the title of the subfunction
