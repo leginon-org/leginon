@@ -1,0 +1,45 @@
+<!--
+-
+- Default Table XML-Dump
+- http://ami.scripps.edu/ 
+-
+- Tables: 
+-	install
+-	userdetails
+-	confirmauth
+-	shareexperiments
+-	projectowners
+-	privileges
+-	processingdb
+-->
+
+<defaulttables>
+ <definition>
+<sqltable name="processingdb" >
+    <field 
+      name="DEF_id" 
+      type="int(20)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="DEF_timestamp" 
+      type="timestamp" 
+      default="default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP"
+      null="NOT NULL" 
+    />
+    <field
+      name="REF|projects|project" 
+      type="int(20)" 
+    />
+    <field 
+      name="appiondb" 
+      type="varchar(50)" 
+    />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|projects|project` (`REF|projects|project`)</key>
+    <key>KEY `appiondb` (`appiondb`)</key>
+  </sqltable>
+ </definition>
+</defaulttables>

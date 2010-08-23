@@ -24,8 +24,11 @@ require_once("../inc/mysql.inc");
 
 		if(($results != false) && mysql_num_rows($results) > 0){				
 			// for upgrade			
-
+			$results = $mysqld->SQLQuery('describe processingdb');
 			$project->install('../xml/projectUpdateSchema.xml');	
+			if (($results == false) || mysql_num_rows($results) == 0) {
+				$project->install('../xml/projectProcessingAddonSchema.xml');	
+			}
 		}
 		else{
 			// for new install
