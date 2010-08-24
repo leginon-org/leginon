@@ -57,6 +57,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.stopTimer('processTargetList')
 			self.player.play()
 			self.setStatus('idle')
+			if self.settings['reset tilt']:
+				self.resetTiltStage()
 		if isinstance(newdata, leginondata.QueueData):
 			self.processTargetListQueue(newdata)
 

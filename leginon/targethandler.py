@@ -191,12 +191,15 @@ class TargetHandler(object):
 				self.publish(donetargetlist, database=True)
 			self.player.play()
 			if self.settings['reset tilt']:
-				zerostage = {'a':0.0}
-				self.instrument.tem.setStagePosition(zerostage)
-				zerostage = {'x':0.0,'y':0.0}
-				self.instrument.tem.setStagePosition(zerostage)
-				stageposition = self.instrument.tem.getStagePosition()
-				self.logger.info('return x,y, and alhpa tilt to %.1f um,%.1f um,%.1f deg' % (stageposition['x']*1e6,stageposition['y'],stageposition['a']))
+				self.resetTiltStage()
+
+	def resetTiltStage(self):
+		zerostage = {'a':0.0}
+		self.instrument.tem.setStagePosition(zerostage)
+		zerostage = {'x':0.0,'y':0.0}
+		self.instrument.tem.setStagePosition(zerostage)
+		stageposition = self.instrument.tem.getStagePosition()
+		self.logger.info('return x,y, and alhpa tilt to %.1f um,%.1f um,%.1f deg' % (stageposition['x']*1e6,stageposition['y'],stageposition['a']))
 
 	def queueStatus(self, queuedata):
 		active = self.getListsInQueue(queuedata)
