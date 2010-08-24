@@ -11,12 +11,10 @@ import math
 import gonmodel
 import numpy
 
-db = leginondata.db
-
 def querymodel(axis, hostname, label=None):
 	tem = leginondata.InstrumentData(hostname=hostname)
 	sm = leginondata.StageModelCalibrationData(axis=axis, tem=tem, label=label)
-	model = db.query(sm, results=1)
+	model = sm.query(results=1)
 	if not model:
 		return None
 	model = model[0]
@@ -31,7 +29,7 @@ def querymodel(axis, hostname, label=None):
 def querymodelmag(axis, label, hostname):
 	tem = leginondata.InstrumentData(hostname=hostname)
 	sm = leginondata.StageModelMagCalibrationData(axis=axis, label=label, tem=tem)
-	magcal = db.query(sm, results=1)
+	magcal = sm.query(results=1)
 	magcal = magcal[0]
 	print 'MAGCAL', magcal.timestamp
 	print magcal
@@ -47,7 +45,7 @@ def normalizemodel(points, a0):
 def querypoints(axis, label, hostname):
 	tem = leginondata.InstrumentData(hostname=hostname)
 	sm = leginondata.StageMeasurementData(label=label, axis=axis, tem=tem)
-	points = db.query(sm)
+	points = sm.query()
 	xy = []
 	for point in points:
 		x = point[axis]
