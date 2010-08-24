@@ -208,7 +208,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	// Set any existing parameters in form
 	$particle=new particleData;
 	$datasetruns = 0;
-	$sessionpathval = ($_POST['rundir']) ? $_POST['rundir'] : $sessionpath;
+	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while (file_exists($sessionpathval.'dataset'.($datasetruns+1))) {
 		$datasetruns += 1;
 	}
@@ -275,7 +275,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	echo "<br>\n";
 	echo docpop('outdir','<b>Output Directory:</b>');
 	echo "<br>\n";
-	echo "<input type='text' name='rundir' value='$sessionpathval' size='38'>\n";
+	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
 	echo "<br>\n";
 	echo "<br>\n";
 	echo docpop('descr','<b>Description:</b>');
@@ -490,8 +490,6 @@ function createSyntheticDataset() {
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
 	if (!$description) syntheticDatasetForm("<B>ERROR:</B> Enter a Description", $title, $heading, $modelId);
-	if (!$runname) syntheticDatasetForm("<B>ERROR:</B> Enter run name", $title, $heading, $modelId);
-	if (!$rundir) syntheticDatasetForm("<B>ERROR:</B> Enter output directory", $title, $heading, $modelId);
 	if (!$modelId) chooseModel("<B>ERROR:</B> Please Choose a Model");
 	if (!$projcount) syntheticDatasetForm("<B>ERROR:</B> Specify the number of projections (particles)", $title, $heading, $modelId);
 	if (!$pixelsize) syntheticDatasetForm("<B>ERROR:</B> model does not have an associated pixelsize", $title, $heading, $modelId);
