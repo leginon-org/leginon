@@ -823,13 +823,13 @@ if (is_numeric($expId)) {
 	$action = "Synthetic Data";
 	if ($models != 0) {
 		$synresults=array();
-		$syndone = count($subclusterjobs['syntheticData']['done']);
-		$synrun = count($subclusterjobs['syntheticData']['running']);
-		$synq = count($subclusterjobs['syntheticData']['queued']);
+		$syndone = count($subclusterjobs['syntheticdata']['done']);
+		$synrun = count($subclusterjobs['syntheticdata']['running']);
+		$synq = count($subclusterjobs['syntheticdata']['queued']);
 
 		$synresults[] = ($syndone==0) ? "" : "<a href='stacksummary.php?expId=$sessionId&syntheticOnly=True'>$syndone complete</a>";
-		$synresults[] = ($synrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=syntheticData'>$synrun running</a>";
-		$synresults[] = ($synq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=syntheticData'>$synq queued</a>";
+		$synresults[] = ($synrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=syntheticdata'>$synrun running</a>";
+		$synresults[] = ($synq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=syntheticdata'>$synq queued</a>";
 
 		// synthetic stacks being created and stacks completed
 		$totsynstack = $syndone+$synrun+$synq;
