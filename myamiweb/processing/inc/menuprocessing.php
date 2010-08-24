@@ -827,7 +827,7 @@ if (is_numeric($expId)) {
 		$synrun = count($subclusterjobs['syntheticdata']['running']);
 		$synq = count($subclusterjobs['syntheticdata']['queued']);
 
-		$synresults[] = ($syndone==0) ? "" : "<a href='stacksummary.php?expId=$sessionId&syntheticOnly=True'>$syndone complete</a>";
+		$synresults[] = ($syndone==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId&syntheticOnly=True'>$syndone complete</a>";
 		$synresults[] = ($synrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=syntheticdata'>$synrun running</a>";
 		$synresults[] = ($synq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=syntheticdata'>$synq queued</a>";
 
@@ -835,7 +835,7 @@ if (is_numeric($expId)) {
 		$totsynstack = $syndone+$synrun+$synq;
 
 		$totsynresult = ($totsynstack==0) ? "" :
-			"<a href='stacksummary.php?expId=$sessionId&syntheticOnly=True'>$totsynstack</a>";
+			"<a href='stackhierarchy.php?expId=$sessionId&syntheticOnly=True'>$totsynstack</a>";
 
 		$nruns=array();
 		$nruns[] = array(
