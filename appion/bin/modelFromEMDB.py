@@ -51,10 +51,10 @@ class modelFromEMDB(appionScript.AppionScript):
 			#apSymmetry.printSymmetries()
 			apDisplay.printError("Enter a symmetry group, e.g. --symm=c1")
 		self.params['symdata'] = apSymmetry.findSymmetry(self.params['symmetry'])
+		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 
 	#=====================
 	def setRunDir(self):
-		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		path = os.path.abspath(self.sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
@@ -105,17 +105,20 @@ class modelFromEMDB(appionScript.AppionScript):
 
 		### parse clunky XML
 		samplenode = emdnode.getElementsByTagName("sample")[0]
-		massnode = emdnode.getElementsByTagName("molWtTheo")[0]
-		## parse data
-		massunits = massnode.getAttribute("units")
-		rawmass = float(massnode.firstChild.data)
-		### get mass
-		if massunits.lower() == "mda":
-			rawmass *= 1000
-		elif massunits.lower() == "da":
-			rawmass /= 1000
-		self.mass = rawmass
-		apDisplay.printMsg("structure has a mass of %.1f kDa"%(self.mass))
+		if len(emdnode.getElementsByTagName("molWtTheo")) != 0:
+			massnode = emdnode.getElementsByTagName("molWtTheo")[0]
+			## parse data
+			massunits = massnode.getAttribute("units")
+			rawmass = float(massnode.firstChild.data)
+			### get mass
+			if massunits.lower() == "mda":
+				rawmass *= 1000
+			elif massunits.lower() == "da":
+				rawmass /= 1000
+			self.mass = rawmass
+			apDisplay.printMsg("structure has a mass of %.1f kDa"%(self.mass))
+		else: 
+			apDisplay.printWarning("could not get mass of emdb file, missing in XML form")
 
 		return
 
