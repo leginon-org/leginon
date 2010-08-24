@@ -188,9 +188,11 @@ class modelFromEMDB(appionScript.AppionScript):
 
 		### lowpass filter, do both atan2 and Gaussian filter to sum up to requested lowpass
 		### total lowpass = sqrt( lp1^2 + lp2^2 )
-		lp = self.params['lowpass']/math.sqrt(2.0)
-		emancmd = ("proc3d "+mrcname+" "+mrcname+
-			(" apix=%.3f tlp=%.2f lp=%.2f origin=0,0,0 norm=0,1 "%(self.apix, lp, lp)))
+		if self.params['lowpass'] is not None:
+			lp = self.params['lowpass']/math.sqrt(2.0)
+		emancmd = "proc3d %s %s apix=%.3f origin=0,0,0 norm=0,1 " %(mrcname, mrcname, self.apix)
+		if self.params['lowpass'] is not None:
+			emancmd += "tlp=%.2f lp=%.2f" % (lp, lp)
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
 		if self.mass is not None:
