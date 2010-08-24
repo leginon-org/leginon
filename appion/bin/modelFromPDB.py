@@ -87,10 +87,10 @@ class modelFromPDB(appionScript.AppionScript):
 			apDisplay.printWarning("No symmetry specified using 'c1'")
 			self.params['symmetry'] = 'c1'
 		self.params['symdata'] = apSymmetry.findSymmetry(self.params['symmetry'])
-
+		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		
 	#=====================
 	def setRunDir(self):
-		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		path = os.path.abspath(self.sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
