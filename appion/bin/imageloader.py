@@ -138,6 +138,16 @@ class ImageLoader(appionLoop2.AppionLoop):
 			if self.params['rundir'] is not None and self.params['rundir'] != sessiondata['image path']:
 				apDisplay.printError("Specified Rundir is different from current session path\n%s\n%s"
 					%( self.params['rundir'], sessiondata['image path']))
+			### only allows uploading more images if all images are uploaded through appion host.
+			instrumentq = leginon.leginondata.InstrumentData(hostname='appion',name='AppionTEM')
+			appiontems = instrumentq.query()
+			scopeemq = leginon.leginondata.ScopeEMData(session=sessiondatas[0],tem=appiontems[0])
+			appionscopeems = scopeemq.query()
+			scopeemq = leginon.leginondata.ScopeEMData(session=sessiondatas[0])
+			allscopeems = scopeemq.query()
+			if len(allscopeems) > len(appionscopeems):
+
+				apDisplay.printError("You can only add more images to an existing session that contains only appion uploads")
 		else:
 			### METHOD 2 : create new session
 			apDisplay.printColor("Creating a new session", "cyan")
