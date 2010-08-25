@@ -614,20 +614,20 @@ if (is_numeric($expId)) {
 		{
 			$nruns[] = array(
 				'name'=>"<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>",
-				'result'=> "<i>(incomplete)</i>", //$spiderreconresults,
+				'result'=> "<i>(may be buggy)</i>", //$spiderreconresults,
 			);
 		}
 		if (!HIDE_FEATURE)
 		{
 			$nruns[] = array(
 				'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
-				'result'=> "<i>(incomplete)</i>", //$xmippreconresults,
+				'result'=> "<i>(may be buggy)</i>", //$xmippreconresults,
 			);
 		}
 		if (!HIDE_IMAGIC && !HIDE_FEATURE) {
 			$nruns[] = array(
 				'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
-				'result'=> "<i>(incomplete)</i>", //$imreconresults,
+				'result'=> "<i>(may be buggy)</i>", //$imreconresults,
 			);
 		}
 		$nruns[] = array(
