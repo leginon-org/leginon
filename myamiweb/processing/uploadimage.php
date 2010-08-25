@@ -295,7 +295,6 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 
 function runUploadImage() {
 	$projectId = getProjectId();
-	$expId = $_POST['expId'];
 	// trim removes any white space from start and end of strings
 	$sessionname = trim($_POST['sessionname']);
 	$batch = trim($_POST['batch']);
@@ -317,6 +316,11 @@ function runUploadImage() {
 	$has_session = $leginon->getSessions('',false,$sessionname);
 	$session_in_project = $leginon->getSessions('',$projectId,$sessionname);
 
+	if ($has_session) {
+		if (!$leginon->onlyUploadedImagesInSession($has_session[0]['id'])) {
+			createUploadImageForm($errormsg."Session contains images not from  'appion' Host is not available for uploading more images");
+		}
+	}
 	if ($has_session && !$session_in_project)
 		createUploadImageForm("<B>ERROR:</B> You have entered an existing session not belonging to this project");
 

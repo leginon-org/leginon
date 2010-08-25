@@ -762,9 +762,11 @@ if (is_numeric($expId)) {
 		'result'=>$result,
 	);
 
-	$nruns[] = array(
-		'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
-	);
+	if ($leginondata->onlyUploadedImagesInSession($sessionId)) {
+		$nruns[] = array(
+			'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
+		);
+	}
 
 	$nruns[] = array(
 		'name'=>"<a href='uploadstack.php?expId=$sessionId'>Upload stack</a>",
