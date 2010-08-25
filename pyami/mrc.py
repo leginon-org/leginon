@@ -24,6 +24,7 @@ import arraystats
 import weakattr
 import weakref
 import resultcache
+import types
 
 cache_enabled = False
 # 10 * 4kx4k float images = 640 MB
@@ -477,11 +478,11 @@ def readDataFromFile(fobj, headerdict):
 	a.shape = shape
 	return a
 
-def write(a, filename, header=None):
+def write(a, f, header=None):
 	'''
 Write ndarray to a file
 a = numpy ndarray to be written
-filename = filename of MRC
+f = MRC filename or already opened file object
 header (optional) = dictionary of header parameters
 Always saves in the native byte order.
 	'''
@@ -494,12 +495,18 @@ Always saves in the native byte order.
 		h.update(header)
 
 	headerbytes = makeHeaderData(h)
-	f = open(filename, 'wb')
-	f.write(headerbytes)
-
-	appendArray(a, f)
-
-	f.close()
+	if isinstance(f, types.StringTypes):
+		fobj = open(f, 'wb')
+		close = True
+	elif hasattr(f, 'write'):
+		fobj = f
+		close = False
+	else:
+		raise ValueError('must supply either filename or open file-like object')
+	fobj.write(headerbytes)
+	appendArray(a, fobj)
+	if close:
+		fobj.close()
 
 def mainStackHeader(oneheader, z):
 	newheader = newHeader(header_fields=header_fields_stack)
