@@ -147,8 +147,14 @@ function apdivtitle($title) {
 
 function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false,$showmenu=true) {
 	$expId = $_GET['expId'];
-	$projectId = getProjectId();
-
+	if (!is_numeric($expId) || $expId == 0) {
+		// special case for uploading images to a new session coming from a known project
+		$projectId = $_GET['projectId'];
+		checkProjectAccessPrivilege($projectId); 
+	} else {
+		checkExptAccessPrivilege($expId,'data');
+		$projectId = getProjectId();
+	}
 	// check if logged in
 	if ($_POST['login']) {
 		$errors = checkLogin();
@@ -163,7 +169,6 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$leginondata = new leginondata();
 	$particle = new particledata();
 	$projectdata = new project();
-	checkExptAccessPrivilege($expId,'data');
 	$_SESSION['projectId'] = $projectId;
 
 	// Collect session info from database
