@@ -3048,6 +3048,21 @@ class leginondata {
 		return $this->mysql->getSQLResult($sql);
 	}
 
+	function onlyUploadedImagesInSession($sessionId) {
+		$sql = 'SELECT count(i.`hostname`) as nonappion '
+					.' from '
+					.'`ScopeEMData` s '
+					.'left join `InstrumentData` i '
+					.'on i.`DEF_id` = s.`REF|InstrumentData|tem` '
+					.'where s.`REF|SessionData|session` = '.$sessionId.' '
+					.'and i.`hostname` NOT LIKE "appion" ';
+		$results = $this->mysql->getSQLResult($sql);
+		if (is_array($results) && $results[0]['nonappion'] == 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 }
 
 function rsum($v, $w) {
