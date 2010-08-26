@@ -10,7 +10,7 @@
 <info>
 	<name>08mar13e</name>
 	<purpose>Test dataset</purpose>
-	<imagepath>./test</imagepath>
+	<imagepath>./test/img</imagepath>
 	<instrument>Tecnai - Tietz PXL</instrument>
 </info>
 <data>
