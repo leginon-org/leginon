@@ -321,6 +321,10 @@ function showEMANJobInfo($jobinfo) {
 				}
 			}
 		}
+		// format the last iteration if it is finished with resolution output
+		if ($iternum == $current) {
+			$previters[$current]="<B>Iteration ".($current)." finished </B>".$previters[$current];
+		}
 
 		foreach ($previters as $previter) echo "$previter <br />\n";
 		$numtot=count($stat['allref']);
