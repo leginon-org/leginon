@@ -1,5 +1,8 @@
 <?php
 
+/**
+ *	This script requires pdflib Lite 1.2.7 or newer and pdf wrapper from pear
+*/
 require "inc/project.inc.php";
 require "inc/gridlib.php";
 require "inc/packagelib.php";
