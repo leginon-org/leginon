@@ -11,6 +11,7 @@ require_once("../inc/mysql.inc");
 		require_once(CONFIG_FILE);
 		require_once("../inc/leginon.inc");
 		require_once("../project/inc/project.inc.php");
+		require_once("../inc/setLeginonDefaultValues.inc");
 
 		$project = new project();
 		$project->install('../xml/projectDefaultValues.xml');	
@@ -39,7 +40,7 @@ require_once("../inc/mysql.inc");
 		$mysqld->SQLInsert('UserData', $adminAccount);
 		$mysqld->SQLInsert('UserData', $anonymousAccount);
 		# insert leginon settings default
-		require_once("../inc/setdefault.php");
+		$setLeginonDefaultValues = new setLeginonDefaultValues($mysqld);
 	}
 	else{
 		$has_error[] = "The configuration file does not exist. Please create it first.";
