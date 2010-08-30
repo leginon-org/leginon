@@ -45,7 +45,7 @@ if ($_POST['orig']) {
 	if ($_POST['adminId']) {
 		$leginondata->importTables('xml/leginonDBSchema.xml');
 		require_once("inc/setLeginonDefaultValues.inc");
-		$setLeginonDefaultValues = new setLeginonDefaultValues($leginondata->mysql);
+		new setLeginonDefaultValues($leginondata->mysql);
 	} else {
 		$error_html = "Error: No administrator found";
 	}

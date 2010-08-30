@@ -40,7 +40,7 @@ require_once("../inc/mysql.inc");
 		$mysqld->SQLInsert('UserData', $adminAccount);
 		$mysqld->SQLInsert('UserData', $anonymousAccount);
 		# insert leginon settings default
-		$setLeginonDefaultValues = new setLeginonDefaultValues($mysqld);
+		new setLeginonDefaultValues($mysqld);
 	}
 	else{
 		$has_error[] = "The configuration file does not exist. Please create it first.";

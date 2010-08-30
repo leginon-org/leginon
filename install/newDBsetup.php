@@ -6,11 +6,12 @@
  * default values. 
  * 
  * example to run this script in:
- * php initialDBsetup.php -L leginondb -P projectdb -H localhost -U root -S password -E erichou@scripps.edu
+ * php newDBsetup.php -L leginondb -P projectdb -H localhost -U root -S password -E erichou@scripps.edu
  */
 
 
 require_once("../myamiweb/inc/mysql.inc");
+require_once("../myamiweb/inc/setLeginonDefaultValues.inc");
 require_once("../myamiweb/inc/xmlapplicationimport.inc");
 
 // get required arguments
@@ -101,6 +102,10 @@ class leginonDBImport{
 	function leginonDBinsert($table, $keyValuePairs){
 		$this->mysql->SQLInsert($table, $keyValuePairs);
 	}
+	
+	function setLeginonDefaultValues(){
+		new setLeginonDefaultValues($this->mysql);
+	}
 }
 
 $link = mysql_connect(DB_HOST, DB_USER, DB_PASS);
@@ -135,6 +140,7 @@ $anonymousAccount = array('username' => 'Anonymous',
 
 $leginonDBImport->leginonDBinsert('UserData', $adminAccount);
 $leginonDBImport->leginonDBinsert('UserData', $anonymousAccount);
+$leginonDBImport->setLeginonDefaultValues();
 
 print "Databases setup successfully ! \n";
 
