@@ -56,6 +56,9 @@ class SelectionTool(wx.Panel):
 		if 'numbers' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['numbers'], (n, 3), (1, 1), wx.ALIGN_CENTER)
 			typetool.togglebuttons['numbers'].Bind(leginon.gui.wx.TargetPanelTools.EVT_SHOWNUMBERS, self.onNumber)
+		elif 'area' in typetool.togglebuttons:
+			self.sz.Add(typetool.togglebuttons['area'], (n, 3), (1, 1), wx.ALIGN_CENTER)
+			typetool.togglebuttons['area'].Bind(leginon.gui.wx.TargetPanelTools.EVT_SHOWAREA, self.onImageArea)
 		else:
 			#add spacer
 			self.sz.Add((1,1), (n, 3), (1, 1), wx.ALIGN_CENTER)
@@ -97,32 +100,42 @@ class SelectionTool(wx.Panel):
 			raise ValueError('No type \'%s\' added' % name)
 
 	#--------------------
-	def isDisplayed(self, name):
+	def isDisplayed(self, name, typename='display',default=True):
 		tool = self._getTypeTool(name)
 		try:
-			return tool.togglebuttons['display'].GetValue()
+			return tool.togglebuttons[typename].GetValue()
 		except KeyError:
-			return True
+			return default
 
 	#--------------------
-	def setDisplayed(self, name, value):
+	def setDisplayed(self, name, value, typename='display'):
 		tool = self._getTypeTool(name)
+		if typename != 'display' and value == []:
+			value = tool.togglebuttons[typename].GetValue()
 		try:
-			tool.togglebuttons['display'].SetValue(value)
+			tool.togglebuttons[typename].SetValue(value)
 		except KeyError:
 			raise AttributeError
-		self._setDisplayed(name, value)
+		self._setDisplayed(name, value, typename)
 
 	#--------------------
-	def _setDisplayed(self, name, value):
+	def _setDisplayed(self, name, value, typename='display'):
 		tool = self._getTypeTool(name)
 		if isinstance(tool, leginon.gui.wx.TargetPanelTools.TargetTypeTool):
 			if value:
 				targets = self.getTargets(name)
 			else:
 				targets = None
-			self.parent.setDisplayedTargets(tool.targettype, targets)
-			if not value and self.isTargeting(name):
+			if typename == 'display':
+				typetool = tool.targettype
+			else:
+				if typename == 'area':
+					typetool = tool.areatype
+				elif typename == 'numbers':
+					typetool = tool.numberstype
+				typetool.setTargets(tool.targettype.getTargets())
+			self.parent.setDisplayedTargets(typetool, targets)
+			if not value and typename == 'display' and self.isTargeting(name):
 				self.setTargeting(name, False)
 		else:
 			for n in self.images:
@@ -163,22 +176,28 @@ class SelectionTool(wx.Panel):
 		return self._getTypeTool(name).targettype.getTargets()
 
 	#--------------------
+	def setDependantTypeTools(self, name, targets):
+		for typename in ('numbers','area'):
+			if self.isDisplayed(name,typename,False):
+				self.setDisplayed(name, targets, typename)
+
+	#--------------------
 	def addTarget(self, name, x, y):
 		tool = self._getTypeTool(name)
 		tool.targettype.addTarget(x, y)
+		targets = tool.targettype.getTargets()
 		if self.isDisplayed(name):
-			# ...
-			targets = tool.targettype.getTargets()
 			self.parent.setDisplayedTargets(tool.targettype, targets)
+		self.setDependantTypeTools(name, targets)
 
 	#--------------------
 	def insertTarget(self, name, pos, x, y):
 		tool = self._getTypeTool(name)
 		tool.targettype.insertTarget(pos, x, y)
+		targets = tool.targettype.getTargets()
 		if self.isDisplayed(name):
-			# ...
-			targets = tool.targettype.getTargets()
 			self.parent.setDisplayedTargets(tool.targettype, targets)
+		self.setDependantTypeTools(name, targets)
 
 	#--------------------
 	def clearAllTargetTypes(self):
@@ -197,10 +216,10 @@ class SelectionTool(wx.Panel):
 		name = target.type.name
 		tool = self._getTypeTool(name)
 		tool.targettype.deleteTarget(target)
+		targets = tool.targettype.getTargets()
 		if self.isDisplayed(name):
-			# ...
-			targets = tool.targettype.getTargets()
 			self.parent.setDisplayedTargets(tool.targettype, targets)
+		self.setDependantTypeTools(name, targets)
 
 	#--------------------
 	def setTargets(self, name, targets):
@@ -211,9 +230,8 @@ class SelectionTool(wx.Panel):
 		tool.targettype.setTargets(targets)
 		if self.isDisplayed(name):
 			self.parent.setDisplayedTargets(tool.targettype, tool.targettype.targets)
+		self.setDependantTypeTools(name, targets)
 		if targets is None:
-			#if self.isTargeting(name):
-			#	self.setTargeting(name, False)
 			if 'target' in tool.togglebuttons:
 				tool.enableToggleButton('target', False)
 			tool.SetBitmap('red')
@@ -286,54 +304,10 @@ class SelectionTool(wx.Panel):
 			pass
 		self._setTargeting(name, value)
 
-	##########################################################
-	##########################################################
-	##########################################################
-
-	#--------------------
-	def isNumbered(self, name):
-		tool = self._getTypeTool(name)
-		try:
-			return tool.togglebuttons['numbers'].GetValue()
-		except KeyError:
-			return True
-
-	#--------------------
-	def setNumbered(self, name, value):
-		tool = self._getTypeTool(name)
-		try:
-			tool.togglebuttons['numbers'].SetValue(value)
-		except KeyError:
-			raise AttributeError
-		self._setNumbered(name, value)
-
-	#--------------------
-	def _setNumbered(self, name, value):
-		tool = self._getTypeTool(name)
-		if isinstance(tool, leginon.gui.wx.TargetPanelTools.TargetTypeTool):
-			if value:
-				targets = self.getTargets(name)
-			else:
-				targets = None
-			tool.numberstype.setTargets(tool.targettype.getTargets())
-			self.parent.setDisplayedNumbers(tool.numberstype, targets)
-		else:
-			for n in self.images:
-				if n == name:
-					continue
-				tool = self._getTypeTool(n)
-				try:
-					tool.togglebuttons['numbers'].SetValue(False)
-				except KeyError:
-					pass
-			if value:
-				image = self.images[name]
-				self.parent.setImage(image)
-			else:
-				self.parent.setImage(None)
-
 	#--------------------
 	def onNumber(self, evt):
-		self._setNumbered(evt.name, evt.value)
+		self._setDisplayed(evt.name, evt.value, 'numbers')
 
+	def onImageArea(self, evt):
+		self._setDisplayed(evt.name, evt.value, 'area')
 

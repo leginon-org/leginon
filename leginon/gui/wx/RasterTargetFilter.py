@@ -42,7 +42,7 @@ class Panel(leginon.gui.wx.TargetFilter.Panel):
 		self.imagepanel = leginon.gui.wx.TargetPanel.EllipseTargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255), target=True)
 		self.imagepanel.selectiontool.setDisplayed('preview', True)
-		self.imagepanel.addTargetTool('acquisition', wx.GREEN, numbers=True, target=True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, area=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, numbers=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
@@ -211,8 +211,9 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 	def onAutoButton(self, evt):
 		self.dialog.setNodeSettings()
-		s,a = self.node.autoSpacingAngle()
+		s,a, p2 = self.node.autoSpacingAngle()
 		self.widgets['raster spacing'].SetValue(s)
 		self.widgets['raster angle'].SetValue(a)
+		self.panel.imagepanel.imagevector = p2
 		self.dialog.setNodeSettings()
 

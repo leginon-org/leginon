@@ -44,6 +44,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		self.selectedtype = None
 		self.selectedtarget = None
 		self.box = 0
+		self.imagevector = (0,0)
 
 	#--------------------
 	def _getSelectionTool(self):
@@ -113,21 +114,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 
 	#--------------------
 	def setDisplayedNumbers(self, type, targets):
-		if targets is None:
-			if type in self.targets:
-				del self.targets[type]
-				self.order.remove(type)
-		else:
-			targets = list(targets)
-			for t in targets:
-				if not isinstance(t, leginon.gui.wx.TargetPanelTools.Target):
-					raise TypeError
-			self.targets[type] = targets
-			if type not in self.order:
-				self.order.append(type)
-		self.reverseorder = list(self.order)
-		self.reverseorder.reverse()
-		self.UpdateDrawing()
+		self.setDisplayedTargets(type, targets)
 
 	#--------------------
 	def _drawTargets(self, dc, bitmap, targets, scale):
@@ -172,11 +159,13 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 				else:
 					if type.shape == 'numbers':
 						self.drawNumbers(dc, type.color, targets)
+					elif type.shape == 'area':
+						self.drawImageArea(dc, type.color, targets)
 					else:
 						self._drawTargets(dc, type.bitmaps['default'], targets, scale)
 
 		if self.selectedtarget is not None:
-			if self.selectedtarget.type in self.targets and type.shape != 'polygon' and type.shape != 'numbers':
+			if self.selectedtarget.type in self.targets and type.shape != 'polygon' and type.shape != 'numbers' and type.shape != 'area':
 				try:
 					bitmap = self.selectedtarget.type.bitmaps['selected']
 					self._drawTargets(dc, bitmap, [self.selectedtarget], scale)
@@ -227,6 +216,21 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		for i,p1 in enumerate(scaledpoints):
 			p1 = self.image2view(p1)
 			dc.DrawText(str(i+1), p1[0], p1[1])
+
+	#--------------------
+	def drawImageArea(self, dc, color, targets):
+		scale = self.getScale()
+		dc.SetPen(wx.Pen(color, 1))
+		dc.SetBrush(wx.Brush(color, 1))
+		scaledpoints = [(target.x,target.y) for target in targets]
+		imagevector = self.imagevector
+		dia = (scale[0]*(imagevector[0]/2+imagevector[1]/2), scale[1]*(imagevector[0]/2-imagevector[1]/2))
+		for p1 in scaledpoints:
+			p1 = self.image2view(p1)
+			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]+dia[1], p1[1]-dia[0])
+			dc.DrawLine(p1[0]-dia[0], p1[1]-dia[1], p1[0]-dia[1], p1[1]+dia[0])
+			dc.DrawLine(p1[0]-dia[1], p1[1]+dia[0], p1[0]+dia[0], p1[1]+dia[1])
+			dc.DrawLine(p1[0]+dia[1], p1[1]-dia[0], p1[0]+dia[0], p1[1]+dia[1])
 
 	#--------------------
 	def Draw(self, dc):
@@ -386,7 +390,7 @@ class TargetOutputPanel(TargetImagePanel):
 if __name__ == '__main__':
 	import sys
 	import numpy
-	from pyami import mrc
+	from pyami import mrc 
 
 	try:
 		filename = sys.argv[1]

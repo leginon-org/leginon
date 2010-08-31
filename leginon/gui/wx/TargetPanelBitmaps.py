@@ -73,6 +73,8 @@ def targetIcon(color, shape):
 			dc.DrawCircle(7, 7, 7)
 		elif shape == 'numbers':
 			dc.DrawText("#", 0, 0)
+		elif shape == 'area':
+			dc.DrawRectangle(1, 1, 14, 14)
 		elif shape == 'polygon':
 			dc.DrawLine(3, 1, 13, 1)
 			dc.DrawLine(13, 1, 13, 13)
@@ -104,6 +106,8 @@ def getTargetBitmap(color, shape='+', size=global_width):
 			bitmap = targetBitmap_star(color, width=size)
 		elif shape == 'o':
 			bitmap = targetBitmap_circle(color, width=size)
+		elif shape == 'area':
+			bitmap = targetBitmap_square(color, width=size)
 		else:
 			raise RuntimeError('invalid target shape: '+shape)
 		targetbitmaps[color,shape,size] = bitmap

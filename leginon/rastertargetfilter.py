@@ -86,12 +86,12 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		# overlap
 		overlap = self.settings['raster overlap']
 		overlapscale = 1.0 - overlap/100.0
-		p2 = overlapscale*p2[0], overlapscale*p2[1]
+		p2_final = overlapscale*p2[0], overlapscale*p2[1]
 		
-		spacing = numpy.hypot(*p2)
-		angle = numpy.arctan2(*p2)
+		spacing = numpy.hypot(*p2_final)
+		angle = numpy.arctan2(*p2_final)
 		angle = math.degrees(angle)
-		return spacing,angle
+		return spacing,angle, p2
 
 	def autoRasterEllipse(self,params):
 		spacing = self.settings['raster spacing']
@@ -202,7 +202,6 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		if result:
 			self.is_odd = bool(result[0]['pattern'])
 			self.setOffsetToolBar()
-		print "Pattern: section-",self.is_odd," tilt-",tiltoffset[0]==0.0
 		return tiltoffset
 
 	def savePattern(self,targetdata):

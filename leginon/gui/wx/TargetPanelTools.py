@@ -32,6 +32,9 @@ EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
 ShowNumbersEventType = wx.NewEventType()
 EVT_SHOWNUMBERS = wx.PyEventBinder(ShowNumbersEventType)
 
+ShowAreaEventType = wx.NewEventType()
+EVT_SHOWAREA = wx.PyEventBinder(ShowAreaEventType)
+
 ##################################
 ##
 ##################################
@@ -50,12 +53,19 @@ class ShowNumbersEvent(wx.PyCommandEvent):
 		self.name = name
 		self.value = value
 
+class ShowAreaEvent(wx.PyCommandEvent):
+	def __init__(self, source, name, value):
+		wx.PyCommandEvent.__init__(self, ShowAreaEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
+		self.value = value
+
 ##################################
 ##
 ##################################
 
 class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
-	def __init__(self, parent, name, display=None, settings=None, target=None, shape='+', unique=False, numbers=None, size=16):
+	def __init__(self, parent, name, display=None, settings=None, target=None, shape='+', unique=False, numbers=None, area=None, size=16):
 		self.color = display
 		self.shape = shape 
 		self.size = size 
@@ -63,6 +73,7 @@ class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
 
 		self.targettype = TargetType(self.name, self.color, self.shape, self.size, unique)
 		self.numberstype = TargetType(self.name, self.color, 'numbers', self.size, unique)
+		self.areatype = TargetType(self.name, self.color, 'area', self.size, unique)
 
 		self.togglebuttons['display'].SetBitmapDisabled(self.bitmaps['display'])
 
@@ -73,6 +84,12 @@ class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
 				togglebutton.Bind(wx.EVT_BUTTON, self.onToggleNumbers)
 				self.usenumbers = True
 
+			if area is not None:
+				togglebutton = self.addToggleButton('area', 'Show Image Area')
+				self.enableToggleButton('area', True)
+				togglebutton.Bind(wx.EVT_BUTTON, self.onToggleArea)
+				self.usearea = True
+
 			togglebutton = self.addToggleButton('target', 'Add Targets')
 			self.enableToggleButton('target', False)
 			togglebutton.Bind(wx.EVT_BUTTON, self.onToggleTarget)
@@ -82,6 +99,7 @@ class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
 		bitmaps = leginon.gui.wx.ImagePanelTools.TypeTool.getBitmaps(self)
 		bitmaps['display'] = leginon.gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, self.shape)
 		bitmaps['numbers'] = leginon.gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, 'numbers')
+		bitmaps['area'] = leginon.gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, 'area')
 		bitmaps['target'] = leginon.gui.wx.ImagePanelTools.getBitmap('arrow.png')
 		return bitmaps
 
@@ -124,6 +142,14 @@ class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
 		self.numberstype.setTargets(self.targettype.getTargets())
 		evt = ShowNumbersEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
 		self.togglebuttons['numbers'].GetEventHandler().AddPendingEvent(evt)
+
+	def onToggleArea(self, evt):
+		if not self.togglebuttons['area'].IsEnabled():
+			self.togglebuttons['area'].SetValue(False)
+			return
+		self.areatype.setTargets(self.targettype.getTargets())
+		evt = ShowAreaEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
+		self.togglebuttons['area'].GetEventHandler().AddPendingEvent(evt)
 
 ##################################
 ##
@@ -194,6 +220,8 @@ class TargetType(object):
 	def setTargets(self, targets):
 		if self.unique and len(targets) > 1:
 			raise ValueError
+		if targets is None:
+			return
 		self.targets = []
 		for target in targets:
 			if isinstance(target, dict):
