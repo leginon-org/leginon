@@ -34,6 +34,8 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True, numbers=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
+		self.imagepanel.addTargetTool('reference', wx.Color(128, 0, 128), target=True, unique=True)
+		self.imagepanel.selectiontool.setDisplayed('reference', True)
 
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
 

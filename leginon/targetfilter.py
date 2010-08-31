@@ -233,7 +233,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		dimension = parentimage['camera']['dimension']
 		imgcenter = {'x':dimension['x']/2, 'y':dimension['y']/2}
 		binning = parentimage['camera']['binning']
-		targettypes = ['acquisition','focus','preview']
+		targettypes = ['acquisition','focus','preview','reference']
 		positions = {}
 		for typename in targettypes:
 			positions[typename] = []

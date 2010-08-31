@@ -245,6 +245,7 @@ class DTFinder(targetfinder.TargetFinder):
 	def bypass(self):
 		self.setTargets([], 'acquisition', block=True)
 		self.setTargets([], 'focus', block=True)
+		self.setTargets([], 'reference', block=True)
 
 	def everything(self):
 		templateA = self.makeTemplateA()
@@ -298,6 +299,7 @@ class DTFinder(targetfinder.TargetFinder):
 		self.logger.info('Publishing targets...')
 		self.publishTargets(imdata, 'acquisition', targetlist)
 		self.publishTargets(imdata, 'focus', targetlist)
+		self.publishTargets(imdata, 'reference', targetlist)
 		self.setStatus('idle')
 
 	def autoEllipseCenter(self,params):
