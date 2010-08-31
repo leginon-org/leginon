@@ -30,6 +30,19 @@ import leginon.gui.wx.ImagePanel
 import leginon.gui.wx.ImagePanelTools
 import leginon.gui.wx.TargetPanelTools
 
+### colors that should be used globally
+targettype_colors = {
+	'acquisition': wx.GREEN,
+	'focus': wx.BLUE,
+	'done': wx.RED,
+	'reference': wx.Color(128, 0, 128),
+	'position': wx.Color(218, 165, 32),
+	'preview': wx.Color(255, 128, 255),
+	'meter': wx.Color(255, 255, 0),
+	'original': wx.Color(255, 128, 128),
+	'peak': wx.Color(255, 128, 0),
+}
+
 ##################################
 ##
 ##################################
@@ -53,7 +66,12 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		return self.selectiontool
 
 	#--------------------
-	def addTargetTool(self, name, color, **kwargs):
+	def addTargetTool(self, name, color=None, **kwargs):
+		if color is None:
+			if name in targettype_colors:
+				color = targettype_colors[name]
+			else:
+				raise ValueError('Target color must be specified.  No default color for "%s"' % (name,))
 		kwargs['display'] = color
 		kwargs['toolclass'] = leginon.gui.wx.TargetPanelTools.TargetTypeTool
 		self.addTypeTool(name, **kwargs)

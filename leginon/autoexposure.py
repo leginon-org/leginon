@@ -21,7 +21,7 @@ class AutoExposure(acquisition.Acquisition):
 	settingsclass = leginondata.AutoExposureSettingsData
 	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
-		'process target type': 'reference',
+		'process target type': 'meter',
 		'mean intensity': 50000,
 		'mean intensity tolerance': 5.0,
 	})
@@ -46,7 +46,7 @@ class AutoExposure(acquisition.Acquisition):
 
 		## check if image is close enough to target mean value
 		mean_acquired = arraystats.mean(self.imagedata['image'])
-		self.logger.info('Target Mean: %s += %s%%,  Acquired Mean: %s' % (mean_target, tolerance, mean_acquired,))
+		self.logger.info('Target Mean: %.1f += %s%%,  Acquired Mean: %.1f' % (mean_target, tolerance, mean_acquired,))
 		scale = float(mean_target) / mean_acquired
 		percent_error = abs(scale - 1.0) * 100
 		self.logger.info('Error relative to target: %.1f%%' % (percent_error,))
@@ -63,7 +63,7 @@ class AutoExposure(acquisition.Acquisition):
 		presetname = imagedata['preset']['name']
 		new_exposure_time = old_exposure_time * scale
 		params = {'exposure time': new_exposure_time}
-		self.logger.info('Adjusting exposure time from %s s to %s s' % (old_exposure_time, new_exposure_time))
+		self.logger.info('Adjusting exposure time from %.1f ms to %.1f ms' % (old_exposure_time, new_exposure_time))
 		self.presetsclient.updatePreset(presetname, params)
 
 	def alreadyAcquired(self, targetdata, presetname):

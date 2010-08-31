@@ -29,6 +29,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 	}
 	eventinputs = node.Node.eventinputs + targethandler.TargetWaitHandler.eventinputs + [event.ImageTargetListPublishEvent]
 	eventoutputs = node.Node.eventoutputs + targethandler.TargetWaitHandler.eventoutputs + [event.TargetListDoneEvent]
+	displaytypes = ('acquisition', 'focus', 'preview', 'meter')
 										
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
@@ -154,11 +155,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		return newtargets
 		
 	def displayTargets(self,targets,oldtargetlistdata):
-		done = []
-		acq = []
-		foc = []
-		preview = []
-		original = []
+		targets_by_type = dict([(displaytype,[]) for displaytype in self.displaytypes])
 		if oldtargetlistdata['image'] is not None:
 			halfrows = oldtargetlistdata['image']['camera']['dimension']['y'] / 2
 			halfcols = oldtargetlistdata['image']['camera']['dimension']['x'] / 2
@@ -177,16 +174,13 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			y = drow + halfrows
 			disptarget = x,y
 			if target['status'] in ('done', 'aborted'):
-				done.append(disptarget)
-			elif target['type'] == 'acquisition':
-				acq.append(disptarget)
-			elif target['type'] == 'preview':
-				preview.append(disptarget)
-			elif target['type'] == 'focus':
-				foc.append(disptarget)
-		self.setTargets(acq, 'acquisition', block=True)
-		self.setTargets(foc, 'focus', block=True)
-		self.setTargets(preview, 'preview', block=True)
+				continue
+			elif target['type'] in self.displaytypes:
+				targets_by_type[target['type']].append(disptarget)
+		for targettype in self.displaytypes:
+			self.setTargets(targets_by_type[targettype], targettype, block=True)
+
+		original = []
 		for oldtarget in self.goodoldtargets:
 			drow = oldtarget['delta row']
 			dcol = oldtarget['delta column']
@@ -238,9 +232,8 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		dimension = parentimage['camera']['dimension']
 		imgcenter = {'x':dimension['x']/2, 'y':dimension['y']/2}
 		binning = parentimage['camera']['binning']
-		targettypes = ['acquisition','focus','preview','reference']
 		positions = {}
-		for typename in targettypes:
+		for typename in self.displaytypes:
 			positions[typename] = []
 			imagetargets = self.panel.getTargetPositions(typename)
 			for imgtarget in imagetargets:
@@ -256,7 +249,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 					newtargets.append(target)
 					del positions[target['type']][i]
 					break
-		for typename in targettypes:
+		for typename in self.displaytypes:
 			if len(positions[typename]) > 0:
 				self.logger.warning('%s targets added manually will not be processed' % typename)
 		return newtargets

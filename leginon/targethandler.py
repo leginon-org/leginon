@@ -5,7 +5,7 @@ import threading
 from pyami import ordereddict
 import sys
 
-target_types = ('acquisition', 'focus', 'preview')
+target_types = ('acquisition', 'focus', 'preview', 'meter')
 
 class TargetHandler(object):
 	'''

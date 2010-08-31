@@ -54,7 +54,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 									+ targethandler.TargetWaitHandler.eventinputs
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs \
 									+ targethandler.TargetWaitHandler.eventoutputs
-	targetnames = ['acquisition','focus','preview','reference','done']
+	targetnames = ['acquisition','focus','preview','reference','done', 'meter']
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation,
 																				**kwargs)
