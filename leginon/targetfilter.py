@@ -86,6 +86,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			alltargets = self.researchTargets(list=targetlistdata)
 			self.alltargets = alltargets
 			goodoldtargets = []
+			self.newtesttargets = False
 			for oldtarget in oldtargets:
 				if oldtarget['status'] not in ('done', 'aborted'):
 					goodoldtargets.append(oldtarget)
@@ -105,6 +106,8 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 				self.panel.enableSubmitTargets()
 				self.userpause.clear()
 				self.userpause.wait()
+				if self.newtesttargets:
+					newtargets = self.appendOtherTargets(alltargets,self.newtesttargets)
 				self.setStatus('processing')
 				if self.abort:
 					self.markTargetsDone(alltargets)
@@ -113,6 +116,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 				newtargets = self.removeDeletedTargetsOnImage(newtargets)
 			self.newtargets = newtargets
 			self.targetlistdata = targetlistdata
+			self.displayTargets(newtargets,targetlistdata)
 			newtargetlistdata = self.submitTargets()
 			return newtargetlistdata
 
@@ -215,6 +219,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		newtargets = self.filterTargets(goodoldtargets)
 		self.logger.info('Filter output: %d' % (len(newtargets),))
 		self.displayTargets(newtargets,{'image':None})
+		self.newtesttargets = newtargets
 		return newtargets
 
 	def distance(self,position1,position2):
