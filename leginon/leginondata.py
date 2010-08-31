@@ -1626,6 +1626,14 @@ class FocuserSettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class AutoExposureSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('mean intensity', float),
+			('mean intensity tolerance', float),
+		)
+	typemap = classmethod(typemap)
+
 class CalibratorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

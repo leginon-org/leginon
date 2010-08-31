@@ -119,6 +119,9 @@ noderegistry.registerNodeClass(FFTMaker,classtype)
 from alignmentmanager import AlignmentManager
 noderegistry.registerNodeClass(AlignmentManager,classtype)
 
+from autoexposure import AutoExposure
+noderegistry.registerNodeClass(AutoExposure,classtype)
+
 ##############################
 # Calibrations
 ##############################
