@@ -108,7 +108,9 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 				self.userpause.clear()
 				self.userpause.wait()
 				if self.newtesttargets:
-					newtargets = self.appendOtherTargets(alltargets,self.newtesttargets)
+					# newtargets need to be reset to the results of the new testing
+					newtargets = self.newtesttargets
+					self.newtesttargets = False
 				self.setStatus('processing')
 				if self.abort:
 					self.markTargetsDone(alltargets)
@@ -151,7 +153,8 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 				newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 				newtarget['delta row'] = target['delta row']
 				newtarget['delta column'] = target['delta column']
-				newtargets.append(newtarget)
+				if newtarget not in newtargets:
+					newtargets.append(newtarget)
 		return newtargets
 		
 	def displayTargets(self,targets,oldtargetlistdata):
@@ -212,6 +215,8 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		self.logger.info('Filter input: %d' % (len(goodoldtargets),))
 		newtargets = self.filterTargets(goodoldtargets)
 		self.logger.info('Filter output: %d' % (len(newtargets),))
+		# append other targets here so that they don't get lost on the display
+		newtargets = self.appendOtherTargets(self.alltargets, newtargets)
 		self.displayTargets(newtargets,{'image':None})
 		self.newtesttargets = newtargets
 		return newtargets
