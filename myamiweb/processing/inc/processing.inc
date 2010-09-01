@@ -761,8 +761,19 @@ function justShowCommandTable($command) {
 	// split the components into an array, and pop the first element
 	// which should be the function.
 	$command = trim($command);
-	$bits = split(" ", $command);
+	// beginning and end of description value is indicated by "
+	$description_position = strpos($command,'--description=');
+	if (is_numeric($description_position)) {
+		$quote_start = strpos($command,'"',$description_position);
+		$quote_end = strpos($command,'"',$quote_start+1);
+		$description_bit = substr($command,$description_position,($quote_end-$description_position+1));
+		$short_command = substr_replace($command,'',$description_position, ($quote_end-$description_position+2));
+	} else {
+		$short_command = $command;
+	}
+	$bits = split(" ", $short_command);
 	$function = array_shift($bits);
+	if (is_numeric($description_position)) $bits[] = $description_bit;
 
 	// Add the Appion wrapper to support muliple installations of Appion
 	$command =  addAppionWrapper($command);
