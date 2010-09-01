@@ -59,6 +59,7 @@ class SelectionTool(wx.Panel):
 		elif 'area' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['area'], (n, 3), (1, 1), wx.ALIGN_CENTER)
 			typetool.togglebuttons['area'].Bind(leginon.gui.wx.TargetPanelTools.EVT_SHOWAREA, self.onImageArea)
+			typetool.togglebuttons['area'].SetValue(True)
 		else:
 			#add spacer
 			self.sz.Add((1,1), (n, 3), (1, 1), wx.ALIGN_CENTER)
