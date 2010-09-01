@@ -60,6 +60,15 @@ class Panel(leginon.gui.wx.TargetFilter.Panel):
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
+	def onNodeInitialized(self):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=leginon.gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
+											id=leginon.gui.wx.ToolBar.ID_PLAY)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
+											id=leginon.gui.wx.ToolBar.ID_STOP)
+		self.imagepanel.imagevector = self.node.getDefaultImageVector()
+		
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()

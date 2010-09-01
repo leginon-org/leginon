@@ -46,6 +46,19 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		if self.__class__ == RasterTargetFilter:
 			self.start()
 
+	def getDefaultImageVector(self):
+		spacing = self.settings['raster spacing']
+		angledeg = self.settings['raster angle']
+		overlap = self.settings['raster overlap']
+
+		overlapscale = 1.0 - overlap/100.0
+		if overlapscale == 0:
+			overlapscale = 1
+		angle = math.radians(angledeg)
+		spacing_original = spacing / overlapscale
+		p2 = spacing_original * math.sin(angle), spacing_original * math.cos(angle)
+		return p2
+		
 	def autoSpacingAngle(self, targetdata=None):
 		if targetdata is None:
 			if self.targetdata is None:
