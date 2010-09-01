@@ -5,14 +5,17 @@
  * Then create all the required tables and insert all the 
  * default values. 
  * 
+ * THIS SCRIPT ONLY WORKS WITH centosAutoInstall.py now
+ * 
  * example to run this script in:
  * php newDBsetup.php -L leginondb -P projectdb -H localhost -U root -S password -E erichou@scripps.edu
  */
 
+$location = str_replace('/newDBsetup.php', '', $_SERVER['SCRIPT_FILENAME']);
 
-require_once("../myamiweb/inc/mysql.inc");
-require_once("../myamiweb/inc/setLeginonDefaultValues.inc");
-require_once("../myamiweb/inc/xmlapplicationimport.inc");
+require_once($location . DIRECTORY_SEPARATOR . "../myamiweb/inc/mysql.inc");
+require_once($location . DIRECTORY_SEPARATOR . "../myamiweb/inc/setLeginonDefaultValues.inc");
+require_once($location . DIRECTORY_SEPARATOR . "../myamiweb/inc/xmlapplicationimport.inc");
 
 // get required arguments
 /*
@@ -38,10 +41,10 @@ define('DB_USER', $options['U']);
 define('DB_PASS', $options['S']);
 define('DB_PROJECT', $options['P']);
 define('DB_LEGINON', $options['L']);
-define('PROJECT_DB_SCHEMA', '../myamiweb/xml/projectDBSchema.xml');
-define('PROJECT_DEFAULT_VALUE', '../myamiweb/xml/projectDefaultValues.xml');
-define('LEGINON_DB_SCHEMA', '../myamiweb/xml/leginonDBSchema.xml');
-define('LEGINON_DEFAULT_VALUE', '../myamiweb/xml/leginonDefaultValues.xml');
+define('PROJECT_DB_SCHEMA', $location . DIRECTORY_SEPARATOR . '../myamiweb/xml/projectDBSchema.xml');
+define('PROJECT_DEFAULT_VALUE', $location . DIRECTORY_SEPARATOR . '../myamiweb/xml/projectDefaultValues.xml');
+define('LEGINON_DB_SCHEMA', $location . DIRECTORY_SEPARATOR . '../myamiweb/xml/leginonDBSchema.xml');
+define('LEGINON_DEFAULT_VALUE', $location . DIRECTORY_SEPARATOR . '../myamiweb/xml/leginonDefaultValues.xml');
 
 class projectDBImport{
 	
@@ -114,7 +117,6 @@ if(!$link) {
 }	
 mysql_query('create database '. DB_PROJECT, $link);
 mysql_query('create database '. DB_LEGINON, $link);
-mysql_close($$link);
 	
 $projectDBImport = new projectDBImport(DB_PROJECT);	
 $projectDBImport->install(PROJECT_DB_SCHEMA);
