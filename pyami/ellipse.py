@@ -33,7 +33,6 @@ def ellipseKeyPoints(center, a, b, alpha):
 		while angle < 0:
 			angle += 2*numpy.pi
 		keypoints[points[i]] = {'axis': axis, 'angle': angle}
-	print 'KEYPOINTs', keypoints
 	return keypoints
 
 def drawEllipse(shape, angleinc, center, a, b, alpha):
