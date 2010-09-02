@@ -16,22 +16,22 @@
 //   pbsnodes -a | tr ',' '\n' | egrep "(physmem|np)\s*=" | sort | uniq -c
 // to get a summary
 
-define('C_NAME', "localhost"); // name of cluster, must be single name, e.g., HOST.INSTITUTE.EDU -> HOST
+define('C_NAME', "default_cluster"); // name of cluster, must be single name, e.g., HOST.INSTITUTE.EDU -> HOST
 
-define('C_NODES_DEF', "1");// default number of requested nodes
-define('C_NODES_MAX', "1"); // maximum number of requested nodes
+define('C_NODES_DEF', "2");// default number of requested nodes
+define('C_NODES_MAX', "8"); // maximum number of requested nodes
 
-define('C_PPN_DEF', "1"); // default processors per node
-define('C_PPN_MAX', "1"); // maximum processors per node
-define('C_RPROCS_DEF', "1"); // default reconstructions per node, a memory saving option
+define('C_PPN_DEF', "8"); // default processors per node
+define('C_PPN_MAX', "8"); // maximum processors per node
+define('C_RPROCS_DEF', "8"); // default reconstructions per node, a memory saving option
 
-define('C_WALLTIME_DEF', "24"); // default Wall time in hours
-define('C_WALLTIME_MAX', "24"); // maximum Wall time in hours
-define('C_CPUTIME_DEF', "24"); // default CPU time in hours
-define('C_CPUTIME_MAX', "24"); // maximum CPU time in hours
-define('C_MEMORY_MAX', "15"); // maximum memory available per node in gigabytes
+define('C_WALLTIME_DEF', "240"); // default Wall time in hours
+define('C_WALLTIME_MAX', "240"); // maximum Wall time in hours
+define('C_CPUTIME_DEF', "240"); // default CPU time in hours
+define('C_CPUTIME_MAX', "240"); // maximum CPU time in hours
+define('C_MEMORY_MAX', "30"); // maximum memory available per node in gigabytes
 
-define('C_APPION_BIN', "/usr/local/bin"); // location of appion scripts on cluster, must end in slash, e.g., /usr/local/appion/bin/
+define('C_APPION_BIN', ""); // location of appion scripts on cluster, must end in slash, e.g., /usr/local/appion/bin/
 
 class Cluster {
 
