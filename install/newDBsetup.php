@@ -130,14 +130,14 @@ $adminAccount = array('username' => 'administrator',
 			  'password' => md5('administrator'), 
 			  'firstname' => 'Appion-Leginon',
 			  'lastname' => 'Administrator',
-			  'email' => $option['E'], 
+			  'email' => $options['E'], 
 			  'REF|GroupData|group' => 1);
 
 $anonymousAccount = array('username' => 'Anonymous', 
 			  'password' => md5('anonymous'), 
 			  'firstname' => 'Anonymous',
 			  'lastname' => 'Anonymous',
-			  'email' => $option['E'], 
+			  'email' => $options['E'], 
 			  'REF|GroupData|group' => 4);
 
 $leginonDBImport->leginonDBinsert('UserData', $adminAccount);
