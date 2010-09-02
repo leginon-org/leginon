@@ -76,7 +76,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 		if ($p['loadjpg'] && !$p['fft']) {
 			$sessioninfo=$leginondata->getSessionInfo($sessionId);
-      $session=$sessioninfo['Name'];
+			$session=$sessioninfo['Name'];
 			$jpgfilename = ereg_replace('mrc$', 'jpg', $filename);
 			$jpgpath = CACHE_PATH.$session."/";
 			$jpgpic = $jpgpath.$jpgfilename;
@@ -85,60 +85,60 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			$img = imagecreatefromjpeg($jpgpic);
 			$binning=$dimx/imagesx($img);
 		} else {
-		if ($p['autoscale']) {
-			list($type,$arg1, $arg2)=explode(";", $p['autoscale']);
+			if ($p['autoscale']) {
+				list($type,$arg1, $arg2)=explode(";", $p['autoscale']);
 			
-			$densitymax = MAX_PIXEL_VAL;
-			if ($type=="c") {
-				$mrcimg = mrcread($pic);
-				mrcupdateheader($mrcimg);
-				list($p['minpix'], $p['maxpix'])=mrccdfscale($mrcimg, $arg1, $arg2);
-				mrcdestroy($mrcimg);
+				$densitymax = MAX_PIXEL_VAL;
+				if ($type=="c") {
+					$mrcimg = mrcread($pic);
+					mrcupdateheader($mrcimg);
+					list($p['minpix'], $p['maxpix'])=mrccdfscale($mrcimg, $arg1, $arg2);
+					mrcdestroy($mrcimg);
 				
-			} else {
+				} else {
 			
-			list($info) = $leginondata->getImageStat($id);
-			if ($info) {
-				$minval = $info['min'];
-				$maxval = $info['max'];
-				$meanval = $info['mean'];
-				$stdev = $info['stdev'];
-			} else {
-				$mrcimg = mrcread($pic);
-				mrcupdateheader($mrcimg);
-				$info = mrcgetinfo($mrcimg);
-				mrcdestroy($mrcimg);
-				$minval = $info['amin'];
-				$minval = $info['amin'];
-				$maxval = $info['amax'];
-				$meanval = $info['amean'];
-				$stdev = $info['rms'];
+					list($info) = $leginondata->getImageStat($id);
+					if ($info) {
+						$minval = $info['min'];
+						$maxval = $info['max'];
+						$meanval = $info['mean'];
+						$stdev = $info['stdev'];
+					} else {
+						$mrcimg = mrcread($pic);
+						mrcupdateheader($mrcimg);
+						$info = mrcgetinfo($mrcimg);
+						mrcdestroy($mrcimg);
+						$minval = $info['amin'];
+						$minval = $info['amin'];
+						$maxval = $info['amax'];
+						$meanval = $info['amean'];
+						$stdev = $info['rms'];
+					}
+					if ($meanval && $stdev && $maxval-$minval) {
+						$nstdev=($arg1>=1) ? $arg1 : 3;
+						$p['minpix'] = (($meanval - $nstdev*$stdev)-$minval)*$densitymax/($maxval-$minval);
+						$p['maxpix'] = (($meanval + $nstdev*$stdev)-$minval)*$densitymax/($maxval-$minval);
+					}
+				}
 			}
-			if ($meanval && $stdev && $maxval-$minval) {
-				$nstdev=($arg1>=1) ? $arg1 : 3;
-				$p['minpix'] = (($meanval - $nstdev*$stdev)-$minval)*$densitymax/($maxval-$minval);
-				$p['maxpix'] = (($meanval + $nstdev*$stdev)-$minval)*$densitymax/($maxval-$minval);
-			}
-			}
-		}
 				
-		if ($p['loadtime'])
-			$begin=getmicrotime();
+			if ($p['loadtime'])
+				$begin=getmicrotime();
 
-		if ($p['mrc']) {
-			$imgmrc = mrcread($pic);
-			mrcbinning($imgmrc, $binning);
-			return $imgmrc;
-		}
-		if ($p['fft']) {
-			$img = getfft($pic, $p['minpix'], $p['maxpix'], $binning, $p['autoscale']);
-		}
+			if ($p['mrc']) {
+				$imgmrc = mrcread($pic);
+				mrcbinning($imgmrc, $binning);
+				return $imgmrc;
+			}
+			if ($p['fft']) {
+				$img = getfft($pic, $p['minpix'], $p['maxpix'], $binning, $p['autoscale']);
+			}
 
-		else if (function_exists($p['filter']))
-			$img = $p['filter']($pic, $p['minpix'], $p['maxpix'], $binning);
+			else if (function_exists($p['filter']))
+				$img = $p['filter']($pic, $p['minpix'], $p['maxpix'], $binning);
 
-		else
-			$img = getdefault($pic, $p['minpix'], $p['maxpix'], $binning);
+			else
+				$img = getdefault($pic, $p['minpix'], $p['maxpix'], $binning);
 
 		}
 
@@ -161,82 +161,84 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		$blue = imagecolorallocate($img, 0, 255, 255);
 		$yellow= imagecolorallocate($img, 255, 255, 0);
 		if ($p['displaytargets']) {
-		    $targets = $leginondata->getImageTargets($imageId);
-		    if ($targets = $leginondata->matchVersionTargets($targets))
-		    foreach ($targets as $target) {
-			$tId=$target['childId'];
-			$targetinfo = $leginondata->getImageInfo($tId);
-			// --- use "stage position" or "image shift" based on magnification
-			$type = "image shift" ;
-			$type = "stage position";
-			$type = ($targetinfo['magnification']>2500 && $imginfo['magnification']>2500) ? "image shift" : "stage position";
+			$targets = $leginondata->getImageTargets($imageId);
+			if ($targets = $leginondata->matchVersionTargets($targets)) {
+				foreach ($targets as $target) {
+					$tId=$target['childId'];
+					$targetinfo = $leginondata->getImageInfo($tId);
+					// --- use "stage position" or "image shift" based on magnification
+					$type = "image shift" ;
+					$type = "stage position";
+					$type = ($targetinfo['magnification']>2500 && $imginfo['magnification']>2500) ? "image shift" : "stage position";
 
-			$targetcal = $leginondata->getImageMatrixCalibration($tId, $type);
-			$parentcal = $leginondata->getImageMatrixCalibration($imageId, $type);
+					$targetcal = $leginondata->getImageMatrixCalibration($tId, $type);
+					$parentcal = $leginondata->getImageMatrixCalibration($imageId, $type);
 
-			$truediam=$targetinfo['targetdiam'];
-			$truedim=$targetinfo['targetdim'];
-			if (abs($target[x]-$parent['targetx'])<5
-				&& abs($target[y]-$parent['targety'])<5 ){
-				$col = $blue;
-				$crosscol = $yellow;
-			} else {
-				$col = $white;
-				$crosscol = $white;
-			}
-//			if (!$target['x'] || !$target['y'] || !$target['dimx'] || !$target['dimy'] )
-//				continue;
-			$tn = $target['tnumber'];
-			$ratioX = ($size) ? $size/$target['dimx'] : (($binning) ? 1/$binning : 1);
-			$ratioY = ($size) ? $size/$target['dimy'] : (($binning) ? 1/$binning : 1);
-			$cx = $target['x']*$ratioX;
-			$cy = $target['y']*$ratioY;
+					$truediam=$targetinfo['targetdiam'];
+					$truedim=$targetinfo['targetdim'];
+					if (abs($target[x]-$parent['targetx'])<5
+						&& abs($target[y]-$parent['targety'])<5 ){
+						$col = $blue;
+						$crosscol = $yellow;
+					} else {
+						$col = $white;
+						$crosscol = $white;
+					}
+//				if (!$target['x'] || !$target['y'] || !$target['dimx'] || !$target['dimy'] )
+//					continue;
+					$tn = $target['tnumber'];
+					$ratioX = ($size) ? $size/$target['dimx'] : (($binning) ? 1/$binning : 1);
+					$ratioY = ($size) ? $size/$target['dimy'] : (($binning) ? 1/$binning : 1);
+					$cx = $target['x']*$ratioX;
+					$cy = $target['y']*$ratioY;
 
-			if ($tId) {
-				if ($p['targettype']) {
-					$crosscol = imagecolorallocate($img, 255,0,0);
-					$crosssize=20;
-					drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol, false);
-				} else {
-					$angle = $targetcal['angle']-$parentcal['angle'];
-					$squarepoints = getsquarepoints($cx, $cy, $angle, $truedim*$ratioX);
-					drawsquare($img, $squarepoints, $crosscol);
-				}
-				$ctx = $squarepoints[0]+1;
-				$cty = $squarepoints[1]+1;
-			} else {
-				$crosssize=20;
-				$ctx = $cx+$crosssize/2;
-				$cty = $cy;
-				// drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol);
-				//drawcircle($img, $cx, $cy, 2, $crosscol);
-			}
-			// imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
+					if ($tId) {
+						if ($p['targettype']) {
+							$crosscol = imagecolorallocate($img, 255,0,0);
+							$crosssize=20;
+							drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol, false);
+						} else {
+							$angle = $targetcal['angle']-$parentcal['angle'];
+							$squarepoints = getsquarepoints($cx, $cy, $angle, $truedim*$ratioX);
+							drawsquare($img, $squarepoints, $crosscol);
+						}
+						$ctx = $squarepoints[0]+1;
+						$cty = $squarepoints[1]+1;
+					} else {
+						$crosssize=20;
+						$ctx = $cx+$crosssize/2;
+						$cty = $cy;
+						// drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol);
+						//drawcircle($img, $cx, $cy, 2, $crosscol);
+					}
+					// imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
 			
-		    }
-		    if ($targets = $leginondata->getImageFocusTargets($imageId)) 
-		    foreach ($targets as $target) {
-			$tgn=$target['tversion'];
-			$tn='focus';
-			if (abs($target['x']-$parent['targetx'])<5
-				&& abs($target['y']-$parent['targety'])<5 ){
-				$col = $blue;
-				$crosscol = $yellow;
-			} else {
-				$col = $white;
-				$crosscol = $white;
+				}
 			}
-			$ratioX = ($size) ? $size/$target['dimx'] : (($binning) ? 1/$binning : 1);
-			$ratioY = ($size) ? $size/$target['dimy'] : (($binning) ? 1/$binning : 1);
-			$cx = $target['x']*$ratioX;
-			$cy = $target['y']*$ratioY;
+			if ($targets = $leginondata->getImageFocusTargets($imageId)) {
+				foreach ($targets as $target) {
+					$tgn=$target['tversion'];
+					$tn='focus';
+					if (abs($target['x']-$parent['targetx'])<5
+						&& abs($target['y']-$parent['targety'])<5 ){
+						$col = $blue;
+						$crosscol = $yellow;
+					} else {
+						$col = $white;
+						$crosscol = $white;
+					}
+					$ratioX = ($size) ? $size/$target['dimx'] : (($binning) ? 1/$binning : 1);
+					$ratioY = ($size) ? $size/$target['dimy'] : (($binning) ? 1/$binning : 1);
+					$cx = $target['x']*$ratioX;
+					$cy = $target['y']*$ratioY;
 
-			$crosssize=20;
-			$ctx = $cx+$crosssize/2;
-			$cty = $cy;
-			drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol);
-			imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
-		    }
+					$crosssize=20;
+					$ctx = $cx+$crosssize/2;
+					$cty = $cy;
+					drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol);
+					imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
+				}
+			}
 		}
 		if ($p['displayicethicktarget']) {
 			$r = $leginondata->getIceThicknessFromImage($imageId);
@@ -259,44 +261,42 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			}
 		}
 		if ($driftdirection=0) {
-		    if ($targets = $leginondata->getImageFocusTargets($imageId, true)) {
+			if ($targets = $leginondata->getImageFocusTargets($imageId, true)) {
 
-			$ratioX = ($size) ? $size/$target['dimx'] : (($binning) ? 1/$binning : 1);
-			$ratioY = ($size) ? $size/$target['dimy'] : (($binning) ? 1/$binning : 1);
-			$vert = imagecolorallocate($img, 0, 255,0);
-			$rouge= imagecolorallocate($img, 255,0,0);
+				$ratioX = ($size) ? $size/$target['dimx'] : (($binning) ? 1/$binning : 1);
+				$ratioY = ($size) ? $size/$target['dimy'] : (($binning) ? 1/$binning : 1);
+				$vert = imagecolorallocate($img, 0, 255,0);
+				$rouge= imagecolorallocate($img, 255,0,0);
 
-		    foreach ($targets as $target) {
-			$tgn=$target['tversion'];
-			$cx = $target['x']*$ratioX;
-			$cy = $target['y']*$ratioY;
-			$d[$tgn][] = array('x'=>$cx,'y'=>$cy);
-		}
-			foreach($d as $point) {
-			/*
-				$li = count($d[$n])-1;
-				$cx1 = $d[$n][0]['x'];
-				$cy1 = $d[$n][0]['y'];
-				$cx = $d[$n][$li]['x'];
-				$cy = $d[$n][$li]['y'];
-			*/
-				$li = count($point)-1;
-				$cx1 = $point[0]['x'];
-				$cy1 = $point[0]['y'];
-				$cx = $point[$li]['x'];
-				$cy = $point[$li]['y'];
-				$arrow = new arrow ($img, $cx1,$cy1, $cx, $cy, $vert);
-				$arrow->draw();
-			}
-
-			if (is_Array($d))
-				foreach($d as $k=>$point) {
-					foreach ($point as $p) 
-						imageline ( $img, $p['x'], $p['y'], $p['x'], $p['y'], $rouge);
+				foreach ($targets as $target) {
+					$tgn=$target['tversion'];
+					$cx = $target['x']*$ratioX;
+					$cy = $target['y']*$ratioY;
+					$d[$tgn][] = array('x'=>$cx,'y'=>$cy);
+				}
+				foreach($d as $point) {
+					/*
+					$li = count($d[$n])-1;
+					$cx1 = $d[$n][0]['x'];
+					$cy1 = $d[$n][0]['y'];
+					$cx = $d[$n][$li]['x'];
+					$cy = $d[$n][$li]['y'];
+					*/
+					$li = count($point)-1;
+					$cx1 = $point[0]['x'];
+					$cy1 = $point[0]['y'];
+					$cx = $point[$li]['x'];
+					$cy = $point[$li]['y'];
+					$arrow = new arrow ($img, $cx1,$cy1, $cx, $cy, $vert);
+					$arrow->draw();
 				}
 
-
-
+				if (is_Array($d)) {
+					foreach($d as $k=>$point) {
+						foreach ($point as $p) 
+							imageline ( $img, $p['x'], $p['y'], $p['x'], $p['y'], $rouge);
+					}
+				}
 			}
 		}
 
@@ -306,15 +306,15 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 		/* display scale bar */
 		if ($p['scalebar']) {
-		    if ($imginfo) {
-			$size = ($size) ? $size : (($binning) ? $imginfo['dimx']/$binning : $imginfo['dimx']);
-			if (!$size)
-				$size=1;
-			$ratio = $imginfo['dimx']/$size ;
-			$value = $imginfo['pixelsize']*$imginfo['binning']*$ratio;
-			$scalebar = new ScaleBar($img, $size, $value);
-			$scalebar->display();
-		    }
+			if ($imginfo) {
+				$size = ($size) ? $size : (($binning) ? $imginfo['dimx']/$binning : $imginfo['dimx']);
+				if (!$size)
+					$size=1;
+				$ratio = $imginfo['dimx']/$size ;
+				$value = $imginfo['pixelsize']*$imginfo['binning']*$ratio;
+				$scalebar = new ScaleBar($img, $size, $value);
+				$scalebar->display();
+			}
 		}
 		/* display particles */
 		if ($p['ptcl']) {
@@ -343,57 +343,57 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 						drawcross ($img, $cx, $cy, $tsize, $col, false, 0, true);
 					if ($seltarget=='box1') {
 						drawbox ($img, $cx, $cy, $boxsize, $col, 0, true);
-				}
+					}
 
 				}
 			}
 		
 		}
 		if ($p['newptcl'] && defined('PROCESSING')) {
-				list($pon, $diam)=explode(";", $p['newptcl']['info']);
-				require "inc/particledata.inc";
-				require "inc/histogram.inc";
-				$particle = new particledata();
-				$particlerun=$particle->getLastParticleRun($sessionId);
-				if ($p['ptclsel']) {
-					$particleruns=$particle->getParticleRunIds($sessionId);
-					foreach ($particleruns as $prun) {
-							$particlerun=$prun['DEF_id'];
-							if($p['ptclsel']==$particlerun)
-								break;
-					}
+			list($pon, $diam)=explode(";", $p['newptcl']['info']);
+			require "inc/particledata.inc";
+			require "inc/histogram.inc";
+			$particle = new particledata();
+			$particlerun=$particle->getLastParticleRun($sessionId);
+			if ($p['ptclsel']) {
+				$particleruns=$particle->getParticleRunIds($sessionId);
+				foreach ($particleruns as $prun) {
+					$particlerun=$prun['DEF_id'];
+					if($p['ptclsel']==$particlerun)
+						break;
 				}
-				$particledata=$particle->getParticlesFromImageId($particlerun, $imageId);
-				list($selectionparams)=$particle->getSelectionParams($particlerun);
-				if (!$diam) {
-					$diam = $selectionparams['diam'];
+			}
+			$particledata=$particle->getParticlesFromImageId($particlerun, $imageId);
+			list($selectionparams)=$particle->getSelectionParams($particlerun);
+			if (!$diam) {
+				$diam = $selectionparams['diam'];
+			}
+			$d=array_map('getdiam', $particledata);
+			$d=array_unique($d);
+			$groupcolors=array();
+			$index=0;
+			foreach ((array)$d as $val) {
+				$groupcolors[(int)$val]=getParticleColor($img, $index);
+				$index++;
+			}
+			$col = imagecolorallocate($img, 255,255,255);
+			$apix = $imginfo['pixelsize']*1e10;
+			$diam = $diam*$scalefactor/$binning/$apix/$imginfo['binning'];
+			$correlationmin=$p['newptcl']['cm'];
+			$correlationmax=$p['newptcl']['cx'];
+			$tresh = (is_numeric($correlationmin) && is_numeric($correlationmax)) ? true : false;
+			foreach ((array)$particledata as $particle) {
+				if ($tresh && ($particle['correlation']<$correlationmin || $particle['correlation']>$correlationmax)) {
+					continue;
 				}
-				$d=array_map('getdiam', $particledata);
-				$d=array_unique($d);
-				$groupcolors=array();
-				$index=0;
-				foreach ((array)$d as $val) {
-					$groupcolors[(int)$val]=getParticleColor($img, $index);
-					$index++;
+				$cx = $particle['xcoord']/$binning*$scalefactor;
+				$cy = $particle['ycoord']/$binning*$scalefactor;
+				$col=$groupcolors[(int)$particle['diameter']];
+				if (!$col) {
+					$col = imagecolorallocate($img, 255,255,255);
 				}
-				$col = imagecolorallocate($img, 255,255,255);
-				$apix = $imginfo['pixelsize']*1e10;
-				$diam = $diam*$scalefactor/$binning/$apix/$imginfo['binning'];
-				$correlationmin=$p['newptcl']['cm'];
-				$correlationmax=$p['newptcl']['cx'];
-				$tresh = (is_numeric($correlationmin) && is_numeric($correlationmax)) ? true : false;
-				foreach ((array)$particledata as $particle) {
-					if ($tresh && ($particle['correlation']<$correlationmin || $particle['correlation']>$correlationmax)) {
-						continue;
-					}
-					$cx = $particle['xcoord']/$binning*$scalefactor;
-					$cy = $particle['ycoord']/$binning*$scalefactor;
-					$col=$groupcolors[(int)$particle['diameter']];
-					if (!$col) {
-						$col = imagecolorallocate($img, 255,255,255);
-					}
-					drawcircle($img, $cx, $cy, $diam, $col, true);
-				}
+				drawcircle($img, $cx, $cy, $diam, $col, true);
+			}
 		}
 
 	} else {
@@ -512,15 +512,15 @@ function getImageXML($xmlfile, $imageId, $preset, $params = array()) {
 
 		/* display scale bar */
 		if ($p['scalebar']) {
-		    if ($imginfo) {
-			$size = ($size) ? $size : (($binning) ? $imginfo['dimx']/$binning : $imginfo['dimx']);
-			if (!$size)
-				$size=1;
-			$ratio = $imginfo['dimx']/$size ;
-			$value = $imginfo['pixelsize']*$imginfo['binning']*$ratio;
-			$scalebar = new ScaleBar($img, $size, $value);
-			$scalebar->display();
-		    }
+			if ($imginfo) {
+				$size = ($size) ? $size : (($binning) ? $imginfo['dimx']/$binning : $imginfo['dimx']);
+				if (!$size)
+					$size=1;
+				$ratio = $imginfo['dimx']/$size ;
+				$value = $imginfo['pixelsize']*$imginfo['binning']*$ratio;
+				$scalebar = new ScaleBar($img, $size, $value);
+				$scalebar->display();
+			}
 		}
 	} else {
 		$img = blankimage();
@@ -572,7 +572,7 @@ function resample($source, $new_width="", $new_height="") {
 class Mosaic {
 
 	var $imageIds = array();
-	var $ratio  = 4;
+	var $ratio = 4;
 	var $margin = 50;
 	var $displayframe = true;
 	var $displayscalebar = true;
@@ -690,35 +690,35 @@ class Mosaic {
 		if ($fromImg)
 			$img = $fromImg;
 		else {
-		    foreach ($imageinfo as $k=>$r) {
-			$cx = ($margin + $dcols[$k] - $min_col)/$ratio; 
-			$cy = ($margin + $drows[$k] + $max_row)/$ratio;
-			$squarepoints = getsquarepoints($cx, $cy, $angle, $squaresize);
-			$dst_x = $squarepoints[0];
-			$dst_y = $squarepoints[1];
-			if($dst_x<0)
-				$dst_x=0;
-			if($dst_y<0)
-				$dst_y=0;
-			$gimg = getImage($sessionId, $r['imageId'], $preset, $this->params);
-			$src_w = mrcsx($gimg);
-			$src_h = mrcsy($gimg);
-			mrccopy($mrcimg, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);
-			mrcdestroy($gimg);
-		//	$gimg = getImage($sessionId, $r['imageId'], $preset, $this->params);
-		//	$src_w = imagesx($gimg);
-		//	$src_h = imagesy($gimg);
-	//		imagecopy($img, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);
-	//		imagedestroy($gimg);
-			if ($this->displayframe) {
-				if ($this->cId==$r['imageId']) {
-					$crossquare = $squarepoints;
-					$cdx = $dst_x+1;
-					$cdy = $dst_y;
-					$cnb =$k+1;
+			foreach ($imageinfo as $k=>$r) {
+				$cx = ($margin + $dcols[$k] - $min_col)/$ratio; 
+				$cy = ($margin + $drows[$k] + $max_row)/$ratio;
+				$squarepoints = getsquarepoints($cx, $cy, $angle, $squaresize);
+				$dst_x = $squarepoints[0];
+				$dst_y = $squarepoints[1];
+				if($dst_x<0)
+					$dst_x=0;
+				if($dst_y<0)
+					$dst_y=0;
+				$gimg = getImage($sessionId, $r['imageId'], $preset, $this->params);
+				$src_w = mrcsx($gimg);
+				$src_h = mrcsy($gimg);
+				mrccopy($mrcimg, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);
+				mrcdestroy($gimg);
+				//	$gimg = getImage($sessionId, $r['imageId'], $preset, $this->params);
+				//	$src_w = imagesx($gimg);
+				//	$src_h = imagesy($gimg);
+				//		imagecopy($img, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);
+				//		imagedestroy($gimg);
+				if ($this->displayframe) {
+					if ($this->cId==$r['imageId']) {
+						$crossquare = $squarepoints;
+						$cdx = $dst_x+1;
+						$cdy = $dst_y;
+						$cnb =$k+1;
+					}
 				}
 			}
-		    }
 		}
 		mrcupdateheader($mrcimg);
 		$img = mrctoimage($mrcimg);
@@ -765,19 +765,19 @@ function getdiam($a) {
 }
 
 function getParticleColor($img, $index) {
-$colors = array ( 
+	$colors = array ( 
 		"#ff4040","#3df23d","#3d3df2", 
 		"#f2f23d","#3df2f2","#f23df2", 
 		"#f2973d","#3df297","#973df2", 
 		"#97f23d","#3d97f2","#f23d97" );
-$n=sizeof($colors);
-$index=$index%$n;
-$hexstr=$colors[$index];
-$int = hexdec($hexstr);
-  return ImageColorAllocate ($img,
-         0xFF & ($int >> 0x10),
-         0xFF & ($int >> 0x8),
-         0xFF & $int);
+	$n=sizeof($colors);
+	$index=$index%$n;
+	$hexstr=$colors[$index];
+	$int = hexdec($hexstr);
+	return ImageColorAllocate ($img,
+				0xFF & ($int >> 0x10),
+				0xFF & ($int >> 0x8),
+				0xFF & $int);
 }
 	
 ?>
