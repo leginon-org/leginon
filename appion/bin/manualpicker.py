@@ -477,7 +477,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 					label = 'particle_w/o_label'
 			else:
 				if label not in self.params['labels']:
-					print "ERROR: It is too late to add old labels to the gui".
+					print "ERROR: It is too late to add old labels to the gui"
 			if label not in targets:
 				targets[label] = []
 			targets[label].append( (p['xcoord']/self.params['bin'], p['ycoord']/self.params['bin']) )
