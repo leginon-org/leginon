@@ -40,7 +40,7 @@ class CentosInstallation(object):
     def yumUpdate(self):
         print "Updating system files...."
 
-        self.runCommand("rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/`uname -i`/epel-release-5-3.noarch.rpm")
+        self.runCommand("rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/`uname -i`/epel-release-5-4.noarch.rpm")
 
         self.runCommand("yum -y update yum*")
 
@@ -95,6 +95,7 @@ class CentosInstallation(object):
         self.runCommand("/sbin/service httpd start")
         self.runCommand("/sbin/chkconfig httpd on")
         self.openFirewallPort(80)
+        sleep(1)
 
     def setupDBServer(self):
         self.mysqlYumInstall()
@@ -110,6 +111,7 @@ class CentosInstallation(object):
         cmd = os.path.join(self.svnMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s'%(self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
         cmd = 'php ' + cmd
         self.runCommand(cmd)
+        sleep(1)
         return
 
     def setupProcessServer(self):
@@ -118,6 +120,7 @@ class CentosInstallation(object):
         #TODO: missing the appion installation and setup.
         #TODO: Leginon config & sinedon config
         self.enableTorqueComputeNode()
+        sleep(1)
         return
 
     def processServerYumInstall(self):
@@ -157,6 +160,7 @@ class CentosInstallation(object):
         self.runCommand("/sbin/service network restart")
         self.runCommand("/sbin/service pbs_server start")
         self.runCommand("/sbin/service pbs_sched start")
+        sleep(1)
         return
 
     def mysqlYumInstall(self):
@@ -438,7 +442,7 @@ class CentosInstallation(object):
             self.setupWebServer()
         
         print ""
-        print "Installation Successful"
+        print "Installation Successful."
         print ""
         
         webbrowser.open_new("http://localhost/myamiweb")
