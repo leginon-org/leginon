@@ -15,9 +15,31 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/appionloop.inc";
   
+/**
+ * Handle Particle pick Label
+ **/
+if ($_POST['addpicklabel']) {
+	// --- check id label exists --- //
+	$picklabel = trim($_POST['picklabel']);
+	$picklabels = $_SESSION['picklabels'];
+	if (!in_array($picklabel, $picklabels) && count($picklabels)<8) {
+		$_SESSION['picklabels'][]=$picklabel;
+	}
+}
+if ($_POST['delpicklabel']) {
+	foreach ((array)$_POST as $k=>$v) {
+		if (ereg('^[0-9]{1,}i', $k)) {
+			$index = (int)$k;
+			unset($_SESSION['picklabels'][$index]);
+		}
+	}
+}
+
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
   runManualPicker();
+	// --- clear labels when data submitted --- //
+	unset($_SESSION['picklabels']);
 }
 // CREATE FORM PAGE
 else {
@@ -85,6 +107,28 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
     <TD VALIGN='TOP'>";
 
   createAppionLoopTable($sessiondata, $defrunname, "extract");
+	?>
+	<font style="font-weight: bold"><?=docpop("picklabel", "Particle Labels");?></font>
+	<p>
+	Label: <input type="text" name="picklabel" value="particle">
+	<input type="submit" name="addpicklabel" value="Add">
+	</p>
+<?php
+	$picklabels = (array)$_SESSION['picklabels'];
+	if ($picklabels) {
+		echo '<input type="hidden" name="delpicklabel" value="1">';
+	}
+	$labeldata=array();
+	$pick_color_index=0;
+	foreach((array)$picklabels as $k=>$picklabel) {
+		$labelrow = array();
+		$labelrow[] = $picklabel;
+		$labelrow[] = '<img alt="cross" src="../getimgtarget.php?target=cross2&c='.$pick_color_index++.'">';
+		$labelrow[] = '<input style="font-size:9px" type="submit" name="'.$k.'i" value="Del">';
+		$labeldata[] = $labelrow;
+	}
+	echo array2table($labeldata);
+	echo "<hr>";
 
   if (!$prtlrunIds) {
     echo"<font COLOR='RED'><B>No Particles for this Session</B></font>\n";
@@ -190,6 +234,10 @@ function runManualPicker() {
   if($shapesize && is_int($shapesize)) {
     $command .= " --shapesize=$shapesize";
   } 
+
+	foreach ((array)$_SESSION['picklabels'] as $picklabel) {
+    $command .= " --label=$picklabel";
+	}
 
   if ($_POST['testimage']=="on") {
     if ($_POST['testfilename']) $testimage=$_POST['testfilename'];

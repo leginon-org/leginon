@@ -12,8 +12,13 @@ $size = 15;
 $angle = 45;
 $shadow=false;
 $arc = 0;
-
-switch ($_GET['target']) {
+$target = trim($_GET['target']);
+$c=$_GET['c'];
+if (is_numeric($c)) {
+	$hexc = $pick_colors[$c];
+	$col = imagecolorallocatehex($img, $hexc);
+}
+switch ($target) {
 
 	case "cir1":
 		drawcircle($img, $cx, $cy, $size, $col, $shadow);
