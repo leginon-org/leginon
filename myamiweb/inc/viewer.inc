@@ -111,6 +111,7 @@ class viewer {
 					.$session[name].'</option>'.$this->crlf; 
 		}
 		$selector .= '</select>';
+		$selector .= '<input type="hidden" name="sessionIdmemo" value="'.$this->sessionId.'">';
 		$this->addsessionsel = $selector;
 	}
 
@@ -300,6 +301,7 @@ class viewer {
 			$str .= 'var jsCommentId = '.$this->commentId.";".$this->crlf;
 		if ($this->username)
 			$str .= 'var jsUsername = "'.$this->username.'";'.$this->crlf;
+		$str .= js_vars_from_post();
 		$jsimgId = ($this->imageId) ? ' = '.$this->imageId.';' : ';';
 		$str .= 'var jsimgId'.$jsimgId.$this->crlf;
 		$str .= 'var key_up_unicode = 38;'.$this->crlf;
@@ -363,6 +365,7 @@ class viewer {
 		foreach ($this->views as $v) {
 			$name = $v->getName();
 			$init .= 'getParticleStat("'.$name.'");'.$this->crlf;
+			$init .= 'setPtclParam("'.$name.'");'.$this->crlf;
 		}
 		if (!empty($initbuttons))
 			$init .= $initbuttons.$this->crlf;
@@ -878,8 +881,12 @@ class view {
 			.'var jstagparam1'.$this->name.'="'.$this->jstagpar1.'";'.$this->crlf
 			.'var jstagparam2'.$this->name.'="'.$this->jstagpar2.'";'.$this->crlf
 			.'var jsptclpick'.$this->name.'="'.$this->jsptclpick.'";'.$this->crlf
+			.'var jsptclparam'.$this->name.'="";'.$this->crlf
+			.'var jsptclcolor'.$this->name.'="";'.$this->crlf
+			.'var jsptcllabel'.$this->name.'=false;'.$this->crlf
 			.'var '.$this->name.'adjw=false;'.$this->crlf
 			.'var js'.$this->name.'done=false;'.$this->crlf
+			.'var jslabelgroup'.$this->name.' = document.createElement("optgroup");'.$this->crlf
 			.$this->crlf;
 		return $javascript;
 	}
@@ -887,11 +894,11 @@ class view {
 	function getJavascriptButton() {
 		$name = $this->name;
 		$javascript = ''.$this->crlf
-			.$this->btparticle->getJavascript()
 			.$this->btinfo->getJavascript()
 			.$this->btdownload->getJavascript()
 			.$this->btscale->getJavascript()
 			.$this->bttarget->getJavascript()
+			.$this->btparticle->getJavascript()
 			.$this->bttag->getJavascript()
 			.$this->btnptcl->getJavascript()
 			.$this->btfft->getJavascript()
@@ -1137,23 +1144,34 @@ class view {
 			$ptclmenu->closeval=$closedownimg;
 			$ptclmenu->height="";
 			$ptclmenu->width="";
-			$ptclform='Picks:<br /><select name="'.$name.'ptclrun" id="'.$name.'ptclparam" onchange="getParticleStat(\''.$name.'\')" >';
-			$correcheck = ($_POST[$name.'treshon']=="on") ? "checked" : "";
+			$ptclform='Picks:<br /><select name="'.$name.'ptclrun" id="'.$name.'ptclparam" onchange="getParticleStat(\''.$name.'\');setPtclParam(\''.$name.'\');setPtclLabels(\''.$name.'\');newfile(\''.$name.'\')" >';
+			$runIndex = 0;
 			if (is_array($this->params['ptclparams'])) {
-				foreach ($this->params['ptclparams'] as $v) {
-					$sel = ($_POST[$name.'ptclrun']==$v['DEF_id']) ? "selected" : "";
+				foreach ($this->params['ptclparams'] as $index=>$v) {
+					if ($_POST[$name.'ptclrun']==$v['DEF_id']) {
+						$sel = "selected";
+						$runIndex = $index;
+					} else {
+						$sel = "";
+					}
 					$ptclform.= "<option value=\"".$v['DEF_id']."\" $sel >".$v['name']."</option>\n"; 
 				}
 			}
 			$ptclform.='</select><br />';
-// --- select threshold option --- //
-/**
-			$ptclform.='<p>diam:<input class="bt1" type="text" name="'.$name.'psize" size="3" value="'.$this->params['diam'].'">&Aring;<br />';
-			$ptclform.='<p>Treshold:<input type="checkbox" id="'.$name.'treshon" name="'.$name.'treshon" '.$correcheck.' ><br />';
-			$ptclform.='min:<input class="bt1" type="text" name="'.$name.'tresh1" size="3" value="'.$this->params['ptclthresh1'].'" >';
-			$ptclform.='max:<input class="bt1" type="text" name="'.$name.'tresh2" size="3" value="'.$this->params['ptclthresh2'].'" ></p>';
-**/
-			$ptclform.='<input class="bt1" type="button" value="update" onclick=setPtclParam(\''.$name.'\') />';
+			// Bug: ptclrun is never posted so that $runIndex is always 0
+			if (is_array($this->params['ptclparams'][$runIndex]['labels'])) {
+				$labels=$this->params['ptclparams'][$runIndex]['labels'];
+				$ptclform.='Color by:<br /><select name="'.$name.'ptclcolor" id="'.$name.'ptclcolor" onchange="setPtclParam(\''.$name.'\');newfile(\''.$name.'\')" >';
+				foreach (array('d'=>'diameter', 'l'=>'label') as $k=>$paramcolor) {
+					$sel = ($_POST[$name.'ptclcolor']==$k) ? "selected" : "";
+					$ptclform.= "<option value=\"".$k."\" $sel >".$paramcolor."</option>\n"; 
+				}
+				$ptclform.='</select><br />';
+			}
+			$ptclform.='<div id="'.$name.'ptclparamlabels" >';
+			$ptclform.='</div>';
+###		disable update, validation done by javascript 
+###			$ptclform.='<input class="bt1" type="button" value="update" onclick=setPtclParam(\''.$name.'\') />';
 			$ptclmenu->setContent($ptclform);
 			$htmlframe.=$ptclmenu->display();
 		}
@@ -1162,25 +1180,26 @@ class view {
 			$htmlframe .= '
 				<td width="15">';
 			$htmlframe .= $this->bttag->display();
-			$htmlframe .= '</td><td width="9">';
-			$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
-			$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
-			$tagmenu = new dropdown($downimg, $name."tag");
-			$tagmenu->closeval=$closedownimg;
-			$tagmenu->height="";
-			$tagmenu->width="";
-			$tag1check = ($this->jstagpar1=="1") ? "checked" : "";
-			$tag2check = ($this->jstagpar2=="1") ? "checked" : "";
+			if (SAMPLE_TRACK) {
+				$htmlframe .= '</td><td width="9">';
+				$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
+				$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
+				$tagmenu = new dropdown($downimg, $name."tag");
+				$tagmenu->closeval=$closedownimg;
+				$tagmenu->height="";
+				$tagmenu->width="";
+				$tag1check = ($this->jstagpar1=="1") ? "checked" : "";
+				$tag2check = ($this->jstagpar2=="1") ? "checked" : "";
 
-			$tagform='image:<input type="checkbox" name="'.$name.'tagp1" id="'.$name.'tagparam1" '.$tag1check.' >';
-			$tagform.='<br />';
-			$tagform.='sample:<input type="checkbox" name="'.$name.'tagp2" id="'.$name.'tagparam2" '.$tag2check.' >';
-			$tagform.='<br />';
-			$tagform.='<input type="button" value="update" onclick=setTagParam(\''.$name.'\') />';
-			$tagmenu->setContent($tagform);
-			$htmlframe.=$tagmenu->display();
-			$htmlframe .= '
-			</td>';
+				$tagform='image:<input type="checkbox" name="'.$name.'tagp1" id="'.$name.'tagparam1" '.$tag1check.' >';
+				$tagform.='<br />';
+				$tagform.='sample:<input type="checkbox" name="'.$name.'tagp2" id="'.$name.'tagparam2" '.$tag2check.' >';
+				$tagform.='<br />';
+				$tagform.='<input type="button" value="update" onclick=setTagParam(\''.$name.'\') />';
+				$tagmenu->setContent($tagform);
+				$htmlframe.=$tagmenu->display();
+			}
+			$htmlframe .= '</td>';
 		}
 
 		if ($this->displaytargeticon) {
@@ -1355,6 +1374,35 @@ function viewer_menu($sessionId) {
 	}
 	$str.='<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId='.$sessionId.'">[make jpgs]</a>';
 	echo $str;
+}
+
+function getParticleInfo($sessionId) {
+	### used in viewers redirected from project/report.php
+	$particle = new particledata();
+	$particleruns=$particle->getParticleRunIds($sessionId);
+	$data = array();
+	$datalabels = array();
+	if (!$particleruns) return;
+	foreach ($particleruns as $k=>$p) {
+		$runId=$p['DEF_id'];
+		$particlelabels = $particle->getParticleLabels($runId);
+		$labels=array();
+		foreach ($particlelabels as $label) {
+			$labels[]=$label['label'];
+		}
+		list($selectionparams)=$particle->getSelectionParams($runId);
+		$diam = $selectionparams['diam'];
+		$correlationstats=$particle->getStats($runId);
+		$correlationstats=array_map('formatnumber2decimal', $correlationstats);
+		$correlationstats['diam']=$diam;
+		$particleruns[$k]['diam']=$diam;
+		$particleruns[$k]['labels']=$labels;
+		$data[$runId]=$correlationstats;
+		$datalabels[$runId]=$labels;
+	}
+	$jsdata = array2json($data, "particlestats");
+	$jsdata .= array2json($datalabels, "particlelabels");
+	return array($jsdata, $particleruns);
 }
 
 function getPredefinedVars() {

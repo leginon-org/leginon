@@ -41,7 +41,6 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	if (is_array($params))
 		foreach ($params as $k=>$v)
 			$p[$k] = $v;
-
 	$size = $p['size'];
 	$binning = $p['binning'];
 	$loadjpg = $p['loadjpg'];
@@ -316,41 +315,14 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$scalebar->display();
 			}
 		}
-		/* display particles */
-		if ($p['ptcl']) {
-			$selectioninfo = string2selections($p['ptcl']);
-			foreach ($selectioninfo as $sel) {
-				$selectionId = $sel[0];
-				if (!$selectionId)
-					continue;
-				$selcolor = $sel[1];
-				$seltarget = $sel[2];
-				$col = imagecolorallocatehex($img,$selcolor);
-				$dbp = new particledata();
-				$particles = $dbp->getParticlesFromSelectionId($selectionId, $filename);
-				foreach ($particles as $particle) {
-					$tsize = 100*$scalefactor/$binning;
-					$cx = $particle['Xcoord']/$binning*$scalefactor;
-					$cy = $particle['Ycoord']/$binning*$scalefactor;
-					if (!$boxsize = $particle['Boxsize']/$binning*$scalefactor)
-						$boxsize = $tsize;
-				
-					if ($seltarget=='cir1')
-						drawcircle($img, $cx, $cy, $tsize, $col, true);
-					if ($seltarget=='cross1')
-						drawcross ($img, $cx, $cy, $tsize, $col, false, 45, true);
-					if ($seltarget=='cross2')
-						drawcross ($img, $cx, $cy, $tsize, $col, false, 0, true);
-					if ($seltarget=='box1') {
-						drawbox ($img, $cx, $cy, $boxsize, $col, 0, true);
-					}
 
-				}
-			}
-		
-		}
 		if ($p['newptcl'] && defined('PROCESSING')) {
-			list($pon, $diam)=explode(";", $p['newptcl']['info']);
+			// --- extract particle info --- //
+			$parts=explode(";", $p['newptcl']['info']);
+			$displaylabel = $p['newptcl']['displaylabel'];
+			$colorby = $p['newptcl']['colorby'];
+			// --- Color by: l => label; d => diameter --- //
+			$colorby = ($colorby=='l') ? 'label' : 'diameter';
 			require "inc/particledata.inc";
 			require "inc/histogram.inc";
 			$particle = new particledata();
@@ -368,6 +340,64 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			if (!$diam) {
 				$diam = $selectionparams['diam'];
 			}
+			// --- pixelsize in angstrom --- //
+			$apix = $imginfo['pixelsize']*1e10;
+			$labeldata=array();
+			$particlelabels =$particle->getParticleLabels($particlerun);
+			// --- parse particle params
+			$threshold = false;
+			$diam_scalefactor = $scalefactor/$binning/$apix/$imginfo['binning'];
+			// $parts only have one item (1) the first time particles are display. 
+			// diameter scale need to be done at another place
+			foreach ($parts as $k=>$part) {
+				if ($k) {
+					if ($particlelabels) {
+						list($labelid, $diam, $thres1, $thres2) = explode(":", $part);
+					} else {
+						list($diam, $thres1, $thres2) = explode(":", $part);
+					}
+					$threshold = (is_numeric($thres1) && is_numeric($thres2)) ? true : false;
+					$diam = $diam*$diam_scalefactor;
+					if (is_numeric($labelid)) {
+						$labeldata[$labelid]=array('diam'=>$diam);
+						if ($threshold) {
+							$labeldata[$labelid]['thres1']=$thres1;
+							$labeldata[$labelid]['thres2']=$thres2;
+						}
+					}
+				}
+			}
+
+			$cx = 10;
+			$cy = 30;
+			$lsize = 10;
+			$particlelabelcolor=array();
+			$particlelabeldiam=array();
+			$particlelabelthres1=array();
+			$particlelabelthres2=array();
+			foreach ((array)$particlelabels as $index=>$particlelabel) {
+				if (!in_array($index, array_keys($labeldata))) {
+					continue;
+				}
+				$text = $particlelabel['label'];
+				$col = getParticleLabelColor($img, $index);
+				$particlelabelcolor[$text]=$col;
+				$particlelabeldiam[$text]=$labeldata[$index]['diam'];
+				$particlelabelthres1[$text]=$labeldata[$index]['thres1'];
+				$particlelabelthres2[$text]=$labeldata[$index]['thres2'];
+				/* don't display label on the image it self 
+				$cy += $lsize+4;
+				if ($displaylabel && $colorby=='label') {
+					imagestringshadow($img, $lsize, $cx, $cy, $text, $col, 1);
+				}
+				*/
+			}
+			$particledata=$particle->getParticlesFromImageId($particlerun, $imageId);
+			list($selectionparams)=$particle->getSelectionParams($particlerun);
+			if (!$diam || $diam = $selectionparams['diam']) {
+				// apply scaling if not applied before
+				$diam = $selectionparams['diam'] * $diam_scalefactor;
+			}
 			$d=array_map('getdiam', $particledata);
 			$d=array_unique($d);
 			$groupcolors=array();
@@ -376,27 +406,35 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$groupcolors[(int)$val]=getParticleColor($img, $index);
 				$index++;
 			}
-			$col = imagecolorallocate($img, 255,255,255);
-			$apix = $imginfo['pixelsize']*1e10;
-			$diam = $diam*$scalefactor/$binning/$apix/$imginfo['binning'];
-			$correlationmin=$p['newptcl']['cm'];
-			$correlationmax=$p['newptcl']['cx'];
-			$tresh = (is_numeric($correlationmin) && is_numeric($correlationmax)) ? true : false;
+
 			foreach ((array)$particledata as $particle) {
-				if ($tresh && ($particle['correlation']<$correlationmin || $particle['correlation']>$correlationmax)) {
-					continue;
-				}
 				$cx = $particle['xcoord']/$binning*$scalefactor;
 				$cy = $particle['ycoord']/$binning*$scalefactor;
+
 				$col=$groupcolors[(int)$particle['diameter']];
+				if ($labeldata) {
+					if ($colorby=='label') {
+						$col=$particlelabelcolor[$particle['label']];
+					}
+					$diam=$particlelabeldiam[$particle['label']];
+					$thres1=$particlelabelthres1[$particle['label']];
+					$thres2=$particlelabelthres2[$particle['label']];
+				}
+
+				if ($threshold && ($particle['correlation']<$thres1 || $particle['correlation']>$thres2)) {
+					continue;
+				}
 				if (!$col) {
 					$col = imagecolorallocate($img, 255,255,255);
 				}
 				drawcircle($img, $cx, $cy, $diam, $col, true);
 			}
+		// This is a good place to add debug message as a string on the image
+		imagestring($img, 2, 10, 20, $debug_message, imagecolorallocate($img,255,255,255));
 		}
 
 	} else {
+		//image file not found
 		//$img = blankimage();
 		//instead to create a blankimge(). We need to return false.
 		return false;
@@ -705,11 +743,6 @@ class Mosaic {
 				$src_h = mrcsy($gimg);
 				mrccopy($mrcimg, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);
 				mrcdestroy($gimg);
-				//	$gimg = getImage($sessionId, $r['imageId'], $preset, $this->params);
-				//	$src_w = imagesx($gimg);
-				//	$src_h = imagesy($gimg);
-				//		imagecopy($img, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);
-				//		imagedestroy($gimg);
 				if ($this->displayframe) {
 					if ($this->cId==$r['imageId']) {
 						$crossquare = $squarepoints;
@@ -762,6 +795,31 @@ function myimagescale(&$img, $percent) {
 
 function getdiam($a) {
 	return $a['diameter'];
+}
+
+function particleLabelsColors() {
+	return array (
+		'ff0000',
+		'00ff00',
+		'0000ff',
+		'ffff00',
+		'ff00ff',
+		'00ffff',
+		'ff8f00',
+		'008f08'
+	);
+}
+
+function getParticleLabelColor($img, $index) {
+	$colors = particleLabelsColors();
+	$n=sizeof($colors);
+	$index=$index%$n;
+	$hexstr=$colors[$index];
+	$int = hexdec($hexstr);
+	return ImageColorAllocate ($img,
+				0xFF & ($int >> 0x10),
+				0xFF & ($int >> 0x8),
+				0xFF & $int);
 }
 
 function getParticleColor($img, $index) {

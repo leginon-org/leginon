@@ -65,6 +65,19 @@ class particledata {
 		return $r[0];
 	}
 
+	function getFilenamesFromLabel($runId, $label) {
+		$q = "select "
+			."distinct p.`REF|leginondata|AcquisitionImageData|image` as `id`, i.`MRC|Image` as `name` "
+			."from ApParticleData p "
+			."left join ".DB_LEGINON.".AcquisitionImageData i "
+			."on (i.DEF_id = p.`REF|leginondata|AcquisitionImageData|image`) "
+			."where "
+			."p.`REF|ApSelectionRunData|selectionrun`=".$runId." and "
+			."p.label='".$label."'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	//------ -------------------- ---------//
 	//------ General DB summary functions ---------//
 	//------ -------------------- ---------//
@@ -1456,7 +1469,10 @@ class particledata {
 	}
 
 	function getParticlesFromImageId ($runId, $imageId){
+		$fields = $this->mysql->getFields('ApParticleData');
+		$labelselect = (in_array('label',$fields)) ? "p.label, ":" ";
 		$q = "select p.DEF_id as id, "
+			.$labelselect
 			."p.xcoord, p.ycoord, p.correlation, "
 			."p.`REF|ApTemplateImageData|template` as templateId, "
 			."p.diameter "

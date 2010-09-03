@@ -1,5 +1,17 @@
 <?php
 
+// --- Manual Picker color --- //
+$pick_colors = array (
+	'ff0000',
+	'00ff00',
+	'0000ff',
+	'ffff00',
+	'ff00ff',
+	'00ffff',
+	'808000',
+	'ff8080'
+);
+
 class colorpick {
 
 	var $color = "#FFFFFF";

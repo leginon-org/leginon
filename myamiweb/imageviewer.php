@@ -33,9 +33,11 @@ if($projectdb) {
 	}
 }
 
+$jsdata='';
 if ($ptcl) {
+	list ($jsdata, $particleruns) = getParticleInfo($sessionId);
 	$particle = new particledata();
-	$particleruns=$particle->getParticleRunIds($sessionId);
+	$filenames = $particle->getFilenamesFromLabel($runId, $preset);
 }
 
 // --- update SessionId while a project is selected
@@ -44,7 +46,9 @@ if (!$sessionId_exists) {
 	$sessionId=$sessions[0]['id'];
 }
 
-$filenames = $leginondata->getFilenames($sessionId, $preset);
+if (!$filenames) {
+	$filenames = $leginondata->getFilenames($sessionId, $preset);
+}
 
 // --- Get data type list
 $datatypes = $leginondata->getAllDatatypes($sessionId);
@@ -75,6 +79,7 @@ $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
 $viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('1');
+$viewer->addjs($jsdata);
 $pl_refresh_time=".5";
 $viewer->addPlaybackControl($pl_refresh_time);
 $playbackcontrol=$viewer->getPlaybackControl();

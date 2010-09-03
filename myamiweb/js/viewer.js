@@ -223,16 +223,145 @@ function getParticleStat(view) {
 		if (param.selectedIndex<0) {
 			return
 		}
-/*
+
 		if (jsrunId = param.options[param.selectedIndex].value) {
 			minval=particlestats[jsrunId].min
 			maxval=particlestats[jsrunId].max
 			psizeval=particlestats[jsrunId].diam
-			setcorrelation(view, minval, maxval)
 			setparticlesize(view, psizeval)
 		}
-*/
+	setPtclLabels(view)
 	}
+}
+
+function removeLabelOption(view) {
+	if (list = eval("document.viewerform."+view+"pre")) {
+		if (list.length > 0) {
+			index = list.length-1
+			group = list.options[index].parentNode.label
+			while (group == "Labels") {
+				list.remove(index);
+				index = list.length-1
+				group = list.options[index].parentNode.label
+			}
+		}
+	}
+}
+
+function setPtclLabels(view) {
+	if (labeldiv = document.getElementById(view+"ptclparamlabels")) {
+	htmlstr=''
+	ismaster = (view==getMainView()) ? true : false
+
+	if (param = document.getElementById(view+"ptclparam")) {
+		if (param.selectedIndex<0) {
+			return
+		}
+
+
+
+		removeLabelOption(view) 
+
+		if ((list = eval("document.viewerform."+view+"pre")) && ismaster) {
+			labelgroup=eval("jslabelgroup"+view)
+			labelgroup.label = "Labels";
+			list.appendChild(labelgroup);
+		}
+		if (jsrunId = param.options[param.selectedIndex].value) {
+			labels=particlelabels[jsrunId]
+			params=particlestats[jsrunId]
+			empty=true
+			colorby='d'
+			for (var i in labels) {
+				if ((list = eval("document.viewerform."+view+"pre")) && ismaster) {
+					addLabelOption(labelgroup, labels[i])
+				}
+				empty=false
+				colorby='l'
+				htmlstr += getPtclForm(view, labels[i], i, params)
+			}
+			selpreset = eval("window.js_post_"+view+'pre')
+			if ((list = eval("document.viewerform."+view+"pre")) && ismaster) {
+				if (list.selectedIndex == 0 ) {
+					for (var i in list.options) {
+						if (opt = list.options[i]) {
+							if (opt.value == selpreset) {
+								opt.selected=true
+								break
+							}
+						}
+					}
+				}
+			}
+			//if (empty) {
+			//	htmlstr += getPtclForm(view, '', 0, params)
+			//}
+		}
+	}
+	labeldiv.innerHTML=htmlstr
+	}
+}
+
+function addLabelOption(labelgroup, label) {
+  var option = new Option();
+  option.value = label
+  option.appendChild( document.createTextNode( label ));
+  labelgroup.appendChild( option );
+}
+
+function getPtclFormData(view, label, labelid, params) {
+			lblid=view
+			str=''
+			if (label!='') {
+				lblid=view+'lbl'+labelid
+				if (labelcb = document.getElementById(lblid+'lblon')) {
+					if (!labelcb.checked) {
+						return str
+					}
+					str += labelid+':'
+				}
+			}
+			if (psize = eval("document.viewerform."+lblid+"psize")) {
+				str += psize.value
+			}
+			if (treshcb = document.getElementById(lblid+'treshon')) {
+				if (treshcb.checked) {
+					if (tresh1 = eval("document.viewerform."+lblid+"tresh1")) {
+						str += ':'+tresh1.value
+					}
+					if (tresh2 = eval("document.viewerform."+lblid+"tresh2")) {
+						str += ':'+tresh2.value
+					}
+				}
+			}
+	return str
+}
+
+function getPtclForm(view, label, labelid, params) {
+			lblid=view
+			ptclform='<p>'
+			if (label!='') {
+				lblid=view+'lbl'+labelid
+				lblchecked=''
+				if (eval("window.js_post_"+lblid+'lblon')) {
+					lblchecked= 'checked'
+				}
+				ptclform='<p>'+label+' ' 
+				ptclform+='<input type="checkbox" id="'+lblid+'lblon" '+lblchecked+' name="'+lblid+'lblon" onchange="setPtclParam(\''+view+'\'); newfile(\''+view+'\')" ><br />';
+			}
+			tchecked= (eval("window.js_post_"+lblid+'treshon')) ?  'checked' : ''
+			psize=params.diam
+			tresh1=params.min
+			tresh2=params.max
+			if (cpsize = eval("window.js_post_"+lblid+'psize')) psize=cpsize;
+			if (ctresh1 = eval("window.js_post_"+lblid+'tresh1')) tresh1=ctresh1;
+			if (ctresh2 = eval("window.js_post_"+lblid+'tresh2')) tresh2=ctresh2;
+
+			ptclform+='diam:<input class="bt1" type="text" name="'+lblid+'psize" size="3" value="'+psize+'" onchange="setPtclParam(\''+view+'\'); newfile(\''+view+'\')"  >&Aring;<br />';
+			ptclform+='Threshold:<input type="checkbox" id="'+lblid+'treshon" '+tchecked+' name="'+lblid+'treshon" onchange="setPtclParam(\''+view+'\'); newfile(\''+view+'\')" >';
+			ptclform+='min:<input class="bt1" type="text" name="'+lblid+'tresh1" size="3" value="'+tresh1+'" onchange="setPtclParam(\''+view+'\');setPtclThreshold(\''+lblid+'\', 1); newfile(\''+view+'\')" >';
+			ptclform+='max:<input class="bt1" type="text" name="'+lblid+'tresh2" size="3" value="'+tresh2+'" onchange="setPtclParam(\''+view+'\');setPtclThreshold(\''+lblid+'\', 1); newfile(\''+view+'\')" ></p>';
+	return ptclform
 }
 
 function startInterval()
@@ -417,6 +546,8 @@ function newfile(view){
 	if (list = eval("document.viewerform."+view+"pre"))
 		selpreset=list.options[list.selectedIndex].value
 
+	selpreset = isLabel(view, selpreset)
+
 	if (prem = eval("document.viewerform."+view+"prem"))
 		if (list)
 			prem.value = selpreset
@@ -442,17 +573,12 @@ function newfile(view){
 	t1=(eval("jstagparam1"+view)==1) ? 1 : 0
 	t1+=(eval("jstagparam2"+view)==1) ? 2 : 0
 	displayfilename = (eval(view+"tag_bt_st")) ? "&df="+t1 : ""
+	dlbl = (eval("jsptcllabel"+view)) ? "&dlbl=1" : ""
+	pcb = (colorby = eval("jsptclcolor"+view)) ? "&pcb="+colorby : ""
 	nptcl = (eval(view+"nptcl_bt_st")) ? "&nptcl=1" : ""
 	if (nptcl) {
-		if (eval("jspsize"+view)) {
-			psize=eval("jspsize"+view)
-			nptcl+=";"+psize
-		}
-		if (eval("jscorrelation"+view)) {
-			cm=eval("jscorrelationmin"+view)
-			cx=eval("jscorrelationmax"+view)
-			nptcl+="&cm="+cm+"&cx="+cx
-		}
+		ptclparam=eval("jsptclparam"+view)
+		nptcl += ptclparam
 	}
 	np = (cmin = eval("jsmin"+view)) ? "&np="+cmin : ""
 	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp=""
@@ -469,7 +595,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+ag+ao+gradient
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+ag+ao+gradient
 
 	if (options == lastoptions[vid])
 		return
@@ -500,7 +626,7 @@ function newfile(view){
 		exportlink.href = nexportlink
 
 	if (cif=eval("this."+view+"if")) {
-		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset
+		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset+pselp+nptcl
 		// --- for ctffind presets instead of ace2
 		if (eval("jsaceparam"+view)==3)
 			iflink = iflink+"&ctf=ctffind"
@@ -572,18 +698,72 @@ function setFormat(view, format) {
 	setDownloadlink(view)
 }
 
-function setPtclParam(view) {
+function isLabel(view, preset) {
 	if (param = document.getElementById(view+"ptclparam")) {
-		getcorrelation(view)
-		getparticlesize(view)
-		vf = param.options[param.selectedIndex].value
-		eval("jsptclpick"+view+"="+vf)
-		if (treshon = document.getElementById(view+"treshon")) {
-			cutoff=(treshon.checked) ? true : false
-			eval("jscorrelation"+view+"="+cutoff)
+		if (param.selectedIndex<0) {
+			return preset
 		}
-		newfile(view)
+		if (jsrunId = param.options[param.selectedIndex].value) {
+			labels=particlelabels[jsrunId]
+			islabel=false
+			for (var i in labels) {
+				if (labels[i] == preset) {
+					islabel=true
+					break
+				}
+			}
+			return (islabel) ? 'all' : preset
+		}
 	}
+	return preset
+}
+
+function setPtclParam(view) {
+	strptclparam=''
+	if (param = document.getElementById(view+"ptclparam")) {
+		if (param.selectedIndex<0) {
+			return
+		}
+		if (jsrunId = param.options[param.selectedIndex].value) {
+			getcorrelation(view)
+			getparticlesize(view)
+			eval("jsptclpick"+view+"="+jsrunId)
+			if (treshon = document.getElementById(view+"treshon")) {
+				cutoff=(treshon.checked) ? true : false
+				eval("jscorrelation"+view+"="+cutoff)
+			}
+			if (labeldiv = document.getElementById(view+"ptclparamlabels")) {
+				labels=particlelabels[jsrunId]
+				params=particlestats[jsrunId]
+				empty = true
+				for (var i in labels) {
+					empty = false
+					if (sdata=getPtclFormData(view, labels[i], i, params)) {
+						strptclparam += ';'+sdata
+					}
+				}
+				if (empty) {
+						strptclparam += ';'+getPtclFormData(view, '', 0, params)
+				}
+			eval("jsptclparam"+view+"='"+strptclparam+"'")
+			}
+		}
+		if (colorobj = document.getElementById(view+"ptclcolor")) {
+			if (colorby = colorobj.options[colorobj.selectedIndex].value) {
+				eval("jsptclcolor"+view+"='"+colorby+"'")
+				displaylabel = (colorby=="l") ? true : false
+				eval("jsptcllabel"+view+"="+displaylabel)
+			}
+		}
+	newfile(view);
+	}
+}
+
+function setPtclThreshold(view, val) {
+		tstate = (val) ? true : false
+		if (treshon = document.getElementById(view+"treshon")) {
+			treshon.checked = tstate
+		}
 }
 
 function toggleButton(imagename, name) {
@@ -664,6 +844,13 @@ function setcorrelation(viewname, min, max) {
 	}
 	if (x = eval("document.viewerform."+viewname+"tresh2")) {
 		x.value=cmax
+	}
+}
+
+function setparticlesize(viewname, psizeval) {
+	eval("jspsize"+viewname+"='"+psizeval+"'")
+	if (s = eval("document.viewerform."+viewname+"psize")) {
+		s.value=psizeval
 	}
 }
 

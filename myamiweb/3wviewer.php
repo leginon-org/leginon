@@ -4,7 +4,7 @@ require "inc/viewer.inc";
 require "inc/project.inc";
 require "inc/cachedb.inc";
 if (defined('PROCESSING')) {
-	$ptcl = (@require "inc/particledata.inc") ? true : false;
+	$ptcl = (@require_once "inc/particledata.inc") ? true : false;
 }
 
 // --- get Predefined Variables form GET or POST method --- //
@@ -33,9 +33,11 @@ if($projectdb) {
 	}
 }
 
+$jsdata='';
 if ($ptcl) {
+	list ($jsdata, $particleruns) = getParticleInfo($sessionId);
 	$particle = new particledata();
-	$particleruns=$particle->getParticleRunIds($sessionId);
+	$filenames = $particle->getFilenamesFromLabel($runId, $preset);
 }
 
 // --- update SessionId while a project is selected
@@ -44,7 +46,9 @@ if (!$sessionId_exists) {
 	$sessionId=$sessions[0]['id'];
 }
 
-$filenames = $leginondata->getFilenames($sessionId, $preset);
+if (!$filenames) {
+	$filenames = $leginondata->getFilenames($sessionId, $preset);
+}
 
 // --- Get data type list
 $datatypes = $leginondata->getAllDatatypes($sessionId);
@@ -75,6 +79,7 @@ $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
 $viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('2');
+$viewer->addjs($jsdata);
 $javascript = $viewer->getJavascript();
 
 $view1 = new view('View 1', 'v1');

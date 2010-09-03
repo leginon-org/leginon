@@ -7,6 +7,17 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+$pick_colors = array (
+	'ff0000',
+	'00ff00',
+	'0000ff',
+	'ffff00',
+	'ff00ff',
+	'00ffff',
+	'808000',
+	'ff8080'
+);
+
 function imagecolorallocatehex($img, $c) {
 	/* return a color from hex string: 
 		FFFFF

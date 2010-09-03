@@ -640,6 +640,19 @@ var jsonarray={
 	return $js;
 }
 
+function js_vars_from_post() {
+	$str='';
+	foreach ($_POST as $k=>$v) {
+		$k=trim($k);
+		$v=trim($v);
+		if (!is_bool($v)) {
+			$v = '"'.addslashes($v).'"';
+		}
+		$str .= 'var js_post_'.$k.'= '.$v.";\n";
+	}
+	return $str;
+}
+
 function getPathFromString($str) {
 	//--- return path from a string
 	$parts = explode('/',$str);

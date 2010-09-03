@@ -52,9 +52,9 @@ $displayfilename = ($_GET['df']&1) ? true : false;
 $displaysample= ($_GET['df']&2) ? true : false;
 $loadjpg= ($_GET['lj']==1) ? true : false;
 $displaynptcl = ($_GET['nptcl']) ? true : false;
-$correlationmin=($_GET['cm']) ? $_GET['cm'] : false;
-$correlationmax=($_GET['cx']) ? $_GET['cx'] : false;
-$ptclparams= ($displaynptcl) ? array('cm'=>$correlationmin, 'cx'=>$correlationmax, 'info'=>trim($_GET['nptcl'])) : false;
+$displaylabel = ($_GET['dlbl']) ? true : false;
+$colorby = ($_GET['pcb']) ? $_GET['pcb'] : false;
+$ptclparams= ($displaynptcl) ? array('colorby'=>$colorby, 'displaylabel'=>$displaylabel, 'info'=>trim($_GET['nptcl'])) : false;
 
 if ($g) {
 
@@ -132,6 +132,16 @@ if ($g) {
 		if ($wx<$strlength) {
 			// --- display sample 12 pix under, if filename is too long
 			$ypos+=12;
+			// --- check if filename string fits in imagewidth --- //
+			$pixperchar=6;
+			$filenamepixlen = $filenamelen * $pixperchar;
+			if ($filenamepixlen>$wx) {
+			// --- display rest of filename --- //
+			$strlen = -(int)(($filenamepixlen-$wx)/$pixperchar+2);
+			$subfilename=substr($filename, $strlen);
+			imagestringshadow($img, 2, 10, $ypos, $subfilename, imagecolorallocate($img,255,255,255));
+			$ypos+=12;
+			}
 		}
 		imagestringshadow($img, 2, $xpos, $ypos, $tag, imagecolorallocate($img,255,255,255));
 	}
@@ -145,6 +155,7 @@ if ($g) {
         else
                 imagejpeg($img,'',$quality);
 	imagedestroy($img);
+
 } else {
 	header("Content-type: image/x-png");
 	$blkimg = blankimage();

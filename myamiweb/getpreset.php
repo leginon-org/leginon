@@ -11,6 +11,18 @@
 <?php
 require "inc/leginon.inc";
 require "inc/viewer.inc";
+
+// Do these first to set processing database for particle labeling
+$imgId=$_GET['id'];
+$preset=$_GET['preset'];
+$newimage = $leginondata->findImage($imgId, $preset);
+$imgId = $newimage['id'];
+$imageinfo = $leginondata->getImageInfo($imgId);
+$sessionId = $imageinfo['sessionId'];
+
+$newexpId = $sessionId; // --- variable use by setdatabase() in inc/project.inc
+// These require statements need to be here after $newexpId is defined
+// in order to set processing database properly
 require "inc/project.inc";
 ?>
 <html>
@@ -31,16 +43,11 @@ $p[]='dose';
 $p[]='exposure time';
 $p[]='tilt';
 $str_tilt="";
-$id=$_GET['id'];
-$preset=$_GET['preset'];
 $viewfilename=$_GET['vf'];
 $showtilt=$_GET['tl'];
-if ($id) {
+if ($imgId) {
 	echo "<font style='font-size: 12px;'>";
-	$newimage = $leginondata->findImage($id, $preset);
-	$id = $newimage[id];
-	$imageinfo = $leginondata->getImageInfo($id);
-	$gridId	= $leginondata->getGridId($id);
+	$gridId	= $leginondata->getGridId($imgId);
 	$projectdata = new project();
 	if($projectdata->checkDBConnection()) {
 		$gridinfo = $projectdata->getGridInfo($gridId);
@@ -48,8 +55,8 @@ if ($id) {
 			echo '<a class="header" target="gridinfo" href="'.PROJECT_URL.'getgrid.php?gridId='
 				.$gridId.'">grid#'.$gridinfo[number].' info&raquo;</a>';
 	}
-	list($filename) = $leginondata->getFilename($id);
-	$presets = $leginondata->getPresets($id, $p);
+	list($filename) = $leginondata->getFilename($imgId);
+	$presets = $leginondata->getPresets($imgId, $p);
 	if (is_array($presets))
 		foreach($presets as $k=>$v)
 
@@ -81,8 +88,44 @@ if ($id) {
 		echo $str_tilt;
 		echo "&nbsp;<img src='imgangle.php?a=".$angle."'>";
 	}
+	echo " <font size='-2'>";
 	if ($viewfilename)
-		echo " <br/><font size='-2'>".$filename['filename']."</font>";
+		echo " <br/>".$filename['filename'];
+
+	// --- Display Particle Labels --- //
+	$sessionId = $imageinfo['sessionId'];
+
+	$nptclsel = ($_GET['psel']) ? $_GET['psel'] : 0;
+	$displaynptcl = ($_GET['nptcl']) ? true : false;
+	$ptclparams= ($displaynptcl) ? trim($_GET['nptcl']) : false;
+	if ($ptclparams) { 
+			require "inc/image.inc";
+			require "inc/particledata.inc";
+
+			$colors = particleLabelsColors();
+			$particle = new particledata();
+			$particlerun=$particle->getLastParticleRun($sessionId);
+			if ($nptclsel) {
+				$particleruns=$particle->getParticleRunIds($sessionId);
+				foreach ($particleruns as $prun) {
+					$particlerun=$prun['DEF_id'];
+					if($nptclsel==$particlerun)
+						break;
+				}
+			}
+
+			$particlelabels =$particle->getParticleLabels($particlerun);
+
+			$formatlabels = array();
+			foreach ((array)$particlelabels as $index=>$particlelabel) {
+				$color = $colors[$index];
+				$label = $particlelabel['label'];
+				$formatlabels[] = '<span style="color:#'.$color.'">'.$label.'</span>';
+			}
+		echo "<br /><b>particle labels:</b> ".join(', ', $formatlabels);
+
+	}
+	echo "</font>";
 }
 ?>
 </td>
