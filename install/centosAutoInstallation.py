@@ -6,6 +6,7 @@ import sys
 import shutil
 import subprocess
 import platform
+import webbrowser
 
 class CentosInstallation(object):
 
@@ -435,6 +436,12 @@ class CentosInstallation(object):
 
         if self.webServer is True:
             self.setupWebServer()
+        
+        print ""
+        print "Installation Successful"
+        print ""
+        
+        webbrowser.open_new("http://localhost/myamiweb")
 
 if __name__ == "__main__":
     a = CentosInstallation()
