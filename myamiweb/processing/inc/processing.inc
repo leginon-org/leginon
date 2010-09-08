@@ -842,6 +842,9 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg
 $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime="240") {
 	global $DATA_DIRS;
 
+	$allow_processing = checkExptAdminPrivilege($expId,'data');
+	if (!$allow_processing) return "processing not allowed by this user";
+
 	// Add the Appion wrapper to support muliple installations of Appion
 	$command =  addAppionWrapper($command);
 	
