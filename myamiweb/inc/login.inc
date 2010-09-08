@@ -165,6 +165,26 @@ function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
 	return false;
 }
 
+function checkProjectExptAdminPrivilege($projectId,$privilege_type='data') {
+	if (privilege($privilege_type) < 2 || !$projectId) return false;
+	$userId = getLoginUserId();
+	if ($userId === true || privilege($privilege_type)>=4) return true;
+	if ($userId === true) return true;
+	$pvivilege_level = privilege($privilege_type);
+	if ($userId) {
+		global $dbemauth;
+		$q = "select o.`DEF_id` as ownerId "
+			."from projectowners o "
+			."where o.`REF|projects|project` = ".$projectId." "
+			."and o.`REF|leginondata|UserData|user` = ".$userId;
+				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
+				$r = $dbc->getSQLResult($q);
+		if (is_array($r) && !empty($r)) 
+			return true;
+	}
+	return false;
+}
+
 function login_header($title="", $javascript="", $onload="") {
 	global $_SERVER;
 	if (ENABLE_LOGIN) {

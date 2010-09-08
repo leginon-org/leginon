@@ -210,12 +210,18 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	// login div
 	if ($_SESSION['username']) {
 		$html.='<i>logged in as <b>'.$_SESSION['username'].'</b></i>'."\n";
-		$html.='<a class="header" href="endsession.php?expId='.$_GET['expId'].'">[Log Out]</a>'."\n";
+		if (!empty($_GET['expId']))
+			$html.='<a class="header" href="endsession.php?expId='.$_GET['expId'].'">[Log Out]</a>'."\n";
+		else
+			$html.='<a class="header" href="endsession.php?projectId='.$_GET['projectId'].'">[Log Out]</a>'."\n";
 		$_SESSION['loggedin']=true;
 	}
 	else {
 		$expId=$_GET['expId'];
-		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+		$projectId=getProjectId();
+		// retain the original formAction if expId is not specified as in the case of uploadimage
+		if (!empty($expId))
+			$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 		if (privilege('data') > 1)
 			$html.=displayLogin($formAction);
 		if(!empty($errors)){
@@ -691,48 +697,60 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) {
 		$_POST['outdir']
 		need to be defined and correct
 		*/
-
-
-	// get required inputs
 	$expId=$_GET['expId'];
-	if (empty($expId))
-	return "<B>ERROR:</B> undefined expId";
-	$runname=$_POST['runname'];
-	if (empty($runname))
-	return "<B>ERROR:</B> undefined runname";
-	$outdir=$_POST['outdir'];
-	if (empty($outdir))
-	return "<B>ERROR:</B> undefined outdir";
+	// uploadimage jobtype need to be handled differently since it has none of these
+	if ($jobtype != 'uploadimage') {
+		// get required inputs
+		if (!is_numeric($expId) || $expId == 0) 
+			return "<B>ERROR:</B> undefined expId";
+		$allow_processing = checkExptAdminPrivilege($expId,'data');
+		$runname=$_POST['runname'];
+		if (empty($runname))
+			return "<B>ERROR:</B> undefined runname";
+		$outdir=$_POST['outdir'];
+		if (empty($outdir))
+			return "<B>ERROR:</B> undefined outdir";
+		// set rundir from runname and outdir
+		if (substr($outdir,-1,1)!='/')
+			$outdir.='/';
+		$rundir = $outdir.$runname;
+	} else {
+		if (!is_numeric($expId) || $expId == 0) {
+			// special case for uploading images to a new session coming from a known project
+			$projectId = $_GET['projectId'];
+			$allow_processing = checkProjectExptAdminPrivilege($projectId);
+		} else {
+			$allow_processing = checkExptAdminPrivilege($expId,'data');
+		}
+	}
+	if (!$allow_processing)
+		redirect(BASE_URL.'accessdeny.php?text=You are not allow to process this data set');
 	$projectid = getProjectId();
-
-	// set rundir from runname and outdir
-	if (substr($outdir,-1,1)!='/')
-	$outdir.='/';
-	$rundir = $outdir.$runname;
 
 	// add space to end, if necessary
 	if (substr($command,-1,1)!=' ')
 	$command.=' ';
 	// in the future maybe remove if statements
-	if (!preg_match("/--rundir=/", $command))
+	if (!preg_match("/--rundir=/", $command) && !empty($rundir))
 	$command .= "--rundir=$rundir ";
-	if (!preg_match("/--runname=/", $command))
+	if (!preg_match("/--runname=/", $command) && !empty($runname))
 	$command .= "--runname=$runname ";
 	if (!preg_match("/--projectid=/", $command))
 	$command .= "--projectid=$projectid ";
-	if (!preg_match("/--expid=/", $command))
+	if (!preg_match("/--expid=/", $command) && !empty($expId))
 	$command .= "--expId=$expId ";
 	if (!preg_match("/--jobtype=/", $command))
 	$command .= "--jobtype=$jobtype ";
 
-	if ($_POST['process'] != "Just Show Command") {
+	// until uploadimage works with appionJob submission, it is not allowed to do so
+	if ($_POST['process'] != "Just Show Command" && $jobtype != 'uploadimage') {
 		// Option 1: selected the run button
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
 		if (!($user && $password))
 		return "<B>ERROR:</B> Enter a user name and password";
-			
+
 		$errors = submitAppionJob($command, $outdir, $runname, $expId, $jobtype, False, False, False, $nproc);
 
 		// if errors:
@@ -961,7 +979,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 			$jobtext .= "$iteration\n";
 		}
 	} else
-	$jobtext .= "$apcmd\n";
+		$jobtext .= "$apcmd\n";
 
 	// we should get rid of this and let python do it
 	$jobtext .= "\nupdateAppionDB.py $jobid D $projectid\n\n";
