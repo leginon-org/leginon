@@ -909,7 +909,7 @@ $menuprocessing="";
 		$result=$action;
 		if ($menu['result'][0]) $result .= ' : '.$menu['result'][0];
 		$menuprocesing.=addMenu($result);
-		$menuprocesing.=addSubmenu($menu['newrun'][0], $expId);
+		$menuprocesing.=addSubmenu($menu['newrun'][0], $expId, $projectId);
 	}
 
 	function addMenu($title) {
@@ -919,9 +919,13 @@ $menuprocessing="";
 		return $html;
 	}
 
-	function addSubmenu($data, $expId) {
-		
-		$allow_process = checkExptAdminPrivilege($expId,'data');
+	function addSubmenu($data, $expId, $projectId) {
+		if ($expId)
+			$allow_process = checkExptAdminPrivilege($expId,'data');
+		elseif ($projectId)
+			$allow_process = checkProjectExptAdminPrivilege($projectId,'data');
+		else
+			$allow_process = false;
 		$text="<ul>";
 		// print out the title of the subfunction
 		foreach((array)$data as $submenu) {
