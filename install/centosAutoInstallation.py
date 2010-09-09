@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import platform
 import webbrowser
+import stat
 
 class CentosInstallation(object):
 
@@ -15,6 +16,7 @@ class CentosInstallation(object):
         flavfile = "/etc/redhat-release"
         if not os.path.exists(flavfile):        
             print "This is not CentOS. Exiting installation..."
+            self.writeToLog("ERROR: not CentOS ---")
             return False
 
         f = open(flavfile, "r")
@@ -23,18 +25,22 @@ class CentosInstallation(object):
 
         if not flavor.startswith("CentOS"):
             print "This is not CentOS. Exiting installation..."
+            self.writeToLog("ERROR: not CentOS ---")
             return False
 
         print "Current OS Information: " + flavor
+        self.writeToLog("CentOS info: " + flavor)
 
     def checkRoot(self):
 
         uid = os.getuid()
         if uid != 0:
             print "You must run this program as root. Exiting installation..."
+            self.writeToLog("ERROR: root access checked deny ---")
             return False
 
         print "\"root\" access checked success..."
+        self.writeToLog("root access checked success")
 
 
     def yumUpdate(self):
@@ -49,14 +55,25 @@ class CentosInstallation(object):
         self.runCommand("yum -y update")
 
         self.runCommand("updatedb")
+        self.writeToLog("yum update finished..")
 
     def runCommand(self, cmd):
-        print "#==================================================="
-        print cmd
-        print "#==================================================="
+        
+        self.writeToLog("#===================================================")
+        self.writeToLog("Run the following Command:")
+        self.writeToLog("%s"%(cmd,))
 
-        proc = subprocess.Popen(cmd, shell=True)
-        proc.wait()
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdoutResult = proc.stdout.read()
+        stderrResult = proc.stderr.read()
+        print stdoutResult
+        sys.stderr.write(stderrResult)
+        returncode = proc.wait()
+        if (stderrResult != ""):
+            self.writeToLog("--- Run Command Error ---")
+            self.writeToLog(stderrResult)
+        self.writeToLog("#===================================================\n")
+        return stdoutResult
 
     def yumInstall(self, packagelist):
         
@@ -77,8 +94,10 @@ class CentosInstallation(object):
         self.runCommand("/sbin/iptables --insert RH-Firewall-1-INPUT --proto tcp --dport %d --jump ACCEPT"%(port))
         self.runCommand("/sbin/iptables-save > /etc/sysconfig/iptables")
         self.runCommand("/etc/init.d/iptables restart")
+        self.writeToLog("firewall port %d opened"%(port))
 
     def setupWebServer(self):
+        self.writeToLog("--- Start install Web Server")
         
         packagelist = ['fftw3-devel', 'gcc', 'httpd', 'libssh2-devel', 'php', 'php-mysql', 'phpMyAdmin.noarch', 'php-devel', 'php-gd',]
         self.yumInstall(packagelist)
@@ -95,50 +114,63 @@ class CentosInstallation(object):
         self.runCommand("/sbin/service httpd start")
         self.runCommand("/sbin/chkconfig httpd on")
         self.openFirewallPort(80)
-        sleep(1)
+        return True
 
     def setupDBServer(self):
-        self.mysqlYumInstall()
+        self.writeToLog("--- Start install Database Server")
 
+        self.mysqlYumInstall()
         # turn on auto mysql start
+
         self.runCommand("/sbin/chkconfig mysqld on")
+        
         # start (restart) mysql server
         self.runCommand("/sbin/service mysqld restart")
-
-        self.openFirewallPort(3306)
         
         # run database setup script.
         cmd = os.path.join(self.svnMyamiDir, 'install/newDBsetup.php -L %s -P %s -H %s -U %s -E %s'%(self.leginonDB, self.projectDB, self.dbHost, self.dbUser, self.adminEmail))
         cmd = 'php ' + cmd
+
         self.runCommand(cmd)
-        sleep(1)
-        return
+
+        self.openFirewallPort(3306)
+        return True
 
     def setupProcessServer(self):
+        self.writeToLog("--- Start install Processing Server")
 
         self.processServerYumInstall()
-        #TODO: missing the appion installation and setup.
-        #TODO: Leginon config & sinedon config
-        self.enableTorqueComputeNode()
-        sleep(1)
-        return
-
-    def processServerYumInstall(self):
-
-        packagelist = ['ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb',]
-        self.yumInstall(packagelist)
-
-    def enableTorqueComputeNode(self):
-        packagelist = ['torque-mom', 'torque-client',]
-        self.yumInstall(packagelist)
-        self.runCommand("/sbin/chkconfig pbs_mom on")
         
-        f = open('/var/torque/mom_priv/config', 'w')
-        f.write("$pbsserver localhost # running pbs_server on this host")
-        f.close()
+        # install all the myami python packages except appion.
+        os.chdir(self.svnMyamiDir)
+        self.runCommand('./pysetup.sh install')
+
+        # install the appion python packages
+        os.chdir(self.svnMyamiDir + 'appion')
+        self.runCommand('python setup.py install')
+        
+        # setup Leginon configure file
+        self.writeToLog("setup Leginon configure file")
+        leginonDir = self.runCommand('python -c "import leginon; print leginon.__path__[0]"')        
+        leginonDir = leginonDir.strip()
+        #import leginon
+        #leginonDir = leginon.__path__[0]                
+        self.setupLeginonCfg(leginonDir + '/config')
+
+        # setup Sinedon configure file
+        self.writeToLog("setup Sinedon configure file")
+        sinedonDir = self.runCommand('python -c "import sinedon; print sinedon.__path__[0]"')
+        sinedonDir = sinedonDir.strip()
+
+        self.setupSinedonCfg(sinedonDir)
+
+        os.chdir(self.currentDir)        
+        self.enableTorqueComputeNode()
+        return True
 
     def setupJobServer(self):
-        
+        self.writeToLog("--- Start install Job Server")
+
         packagelist = ['torque-server', 'torque-scheduler',]
         self.yumInstall(packagelist)
 
@@ -160,13 +192,50 @@ class CentosInstallation(object):
         self.runCommand("/sbin/service network restart")
         self.runCommand("/sbin/service pbs_server start")
         self.runCommand("/sbin/service pbs_sched start")
-        sleep(1)
-        return
+        return True
+
+    def processServerYumInstall(self):
+
+        packagelist = ['ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb',]
+        self.yumInstall(packagelist)
+
+    def enableTorqueComputeNode(self):
+        packagelist = ['torque-mom', 'torque-client',]
+        self.yumInstall(packagelist)
+        self.runCommand("/sbin/chkconfig pbs_mom on")
+        
+        f = open('/var/torque/mom_priv/config', 'w')
+        f.write("$pbsserver localhost # running pbs_server on this host")
+        f.close()
 
     def mysqlYumInstall(self):
-        packagelist = ['mysql-server',]
+        packagelist = ['mysql-server', 'php', 'php-mysql',]
         self.yumInstall(packagelist)
     
+    def setupLeginonCfg(self, leginonCfgDir):
+        inf = open(leginonCfgDir + '/default.cfg', 'r')
+        outf = open(leginonCfgDir + '/leginon.cfg', 'w')
+
+        for line in inf:
+            if line.startswith('path:'):
+                outf.write('path: %s\n'%(self.imagesDir))
+            else:
+                outf.write(line)
+        inf.close()
+        outf.close()
+
+    def setupSinedonCfg(self, sinedonDir):
+        inf = open(self.svnMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
+        outf = open(sinedonDir + '/siendon.cfg', 'w')
+
+        for line in inf:
+            if line.startswith('user: usr_object'):
+                outf.write('user: root\n')
+            else:
+                outf.write(line)
+        inf.close()
+        outf.close()        
+
     def editHosts(self):
 
         # make a back up file
@@ -255,7 +324,6 @@ class CentosInstallation(object):
         if os.path.isfile('/etc/php.d/mrc.ini'):
             return
 
-        cwd = os.getcwd()
         phpmrcdir = os.path.join(self.svnMyamiDir, "programs/php_mrc")
         os.chdir(phpmrcdir)
         self.runCommand("phpize")
@@ -264,7 +332,7 @@ class CentosInstallation(object):
         module = os.path.join(phpmrcdir, "modules/mrc.so")
 
         if not os.path.isfile(module):
-            print"ERROR: mrc.so failed"
+            self.writeToLog("ERROR: mrc.so failed")
             sys.exit(1)
 
         self.runCommand("make install")
@@ -272,12 +340,12 @@ class CentosInstallation(object):
         f.write("; Enable mrc extension module\n")
         f.write("extension=mrc.so\n")
         f.close()
-        os.chdir(cwd)
+        os.chdir(self.currentDir)
 
     def installPhpSsh2(self):
         if os.path.isfile("/etc/php.d/ssh2.ini"):
             return
-
+        
         cwd = os.getcwd()
         self.runCommand("wget -c http://pecl.php.net/get/ssh2-0.11.0.tgz")
         self.runCommand("tar zxvf ssh2-0.11.0.tgz")
@@ -289,7 +357,7 @@ class CentosInstallation(object):
 
         module = "modules/ssh2.so"
         if not os.path.isfile(module):
-            print "ERROR ssh2.so failed"
+            self.writeToLog("ERROR ssh2.so failed")
             sys.exit(1)
 
         self.runCommand("make install")
@@ -298,7 +366,7 @@ class CentosInstallation(object):
         f.write('; Enable ssh2 extension module\n')
         f.write('extension=ssh2.so\n')
         f.close()
-        os.chdir(cwd)
+        os.chdir(self.currentDir)
 
     def getServerName(self):
         return platform.node()
@@ -362,6 +430,11 @@ class CentosInstallation(object):
         inf.close()
         outf.close()
 
+    def writeToLog(self, message):
+        logfile = open(self.currentDir + "/" + self.logFilename, 'a')
+        logfile.write(message + '\n')
+        logfile.close()
+            
     def getMyami(self):
         # need to change to branch when release
         #cmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-2.0 /tmp/myami-2.0/"
@@ -370,31 +443,13 @@ class CentosInstallation(object):
 
         self.runCommand(cmd)
 
-    def selectInstallType(self):
-
-        self.webServer = True
-        self.databaseServer = True
-        self.processingServer = True
-        self.jobServer = True
-        self.svnMyamiDir = '/tmp/myami/'
-        self.enableLogin = 'false'
-        self.dbHost = 'localhost'
-        self.dbUser = 'root'
-        self.dbPass = ''
-        self.leginonDB = 'leginondb'
-        self.projectDB = 'projectdb'
-        self.adminEmail = ''
-        self.csValue = ''
-        self.mrc2any = '/usr/bin/mrc2any' # TODO: need to find this path..... 
-
-        self.hostname = self.getServerName()
-        self.nproc = self.getNumProcessors()
+    def getDefaultValues(self):
 
         print "===================================="
-        print "1. Installing job submission server"
-        print "2. Installing processing server"
-        print "3. Installing database server"
-        print "4. Installing web server"
+        print "Installing job submission server"
+        print "Installing processing server"
+        print "Installing database server"
+        print "Installing web server"
         print "===================================="
         print ""
         value = raw_input("Please enter an email address: ")
@@ -413,15 +468,42 @@ class CentosInstallation(object):
     
     def run(self):
 
+        self.currentDir = os.getcwd()
+        self.logFilename = 'installation.log'
+        self.svnMyamiDir = '/tmp/myami/'
+        self.enableLogin = 'false'
+        self.dbHost = 'localhost'
+        self.dbUser = 'root'
+        self.dbPass = ''
+        self.leginonDB = 'leginondb'
+        self.projectDB = 'projectdb'
+        self.adminEmail = ''
+        self.csValue = ''
+        self.mrc2any = '/usr/bin/mrc2any'
+        self.imagesDir = '/myamiImages'
+
+        self.hostname = self.getServerName()
+        self.nproc = self.getNumProcessors()
+        
+        if os.path.isfile(self.logFilename):
+            self.writeToLog("remove old log file")
+            os.remove(self.logFilename)
+        
+        if not os.path.exists(self.imagesDir):
+            self.writeToLog("create images folder - /myamiImages")
+            os.makedirs(self.imagesDir)
+
+        os.chmod(self.imagesDir, 0777)
+
         result = self.checkDistro()
         if result is False:
             sys.exit(1)
-
+        
         result = self.checkRoot()
         if result is False:
             sys.exit(1)
 
-        result = self.selectInstallType()
+        result = self.getDefaultValues()
         if result is False:
             sys.exit(1)
 
@@ -429,22 +511,28 @@ class CentosInstallation(object):
         self.yumInstall(['subversion'])
         self.getMyami()
         
-        if self.jobServer is True:
-            self.setupJobServer()
-
-        if self.processingServer is True:
-            self.setupProcessServer()
-
-        if self.databaseServer is True:
-            self.setupDBServer()
-
-        if self.webServer is True:
-            self.setupWebServer()
+        result = self.setupJobServer()
+        if result is False:
+            sys.exit(1)
         
-        print ""
-        print "Installation Successful."
-        print ""
-        
+        result = self.setupProcessServer()
+        if result is False:
+            sys.exit(1)
+
+        result = self.setupDBServer()
+        if result is False:
+            sys.exit(1)
+
+        result = self.setupWebServer()
+        if result is False:
+            sys.exit(1)
+
+        self.writeToLog("Installation Finish.")
+
+        print("========================")
+        print("Installation Finish.")
+        print("========================")
+
         webbrowser.open_new("http://localhost/myamiweb")
 
 if __name__ == "__main__":
