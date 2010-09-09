@@ -99,6 +99,11 @@ class Panel(leginon.gui.wx.TargetFilter.Panel):
 		idcevt = leginon.gui.wx.ImagePanelTools.EllipseNewCenterEvent(self.imagepanel, centers)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
+	def setEllipseShape(self):
+		params = self.node.getEllipseParams()
+		idcevt = leginon.gui.wx.ImagePanelTools.EllipseNewShapeEvent(self.imagepanel, params)
+		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
+
 class SettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return ScrolledSettings(self,self.scrsize,False)
@@ -219,6 +224,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def onTestButton(self, evt):
 		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.onTest).start()
+		self.panel.setEllipseShape()
 
 	def onAutoButton(self, evt):
 		self.dialog.setNodeSettings()

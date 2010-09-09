@@ -19,6 +19,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
+import numpy
 import math
 import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
@@ -46,6 +47,9 @@ EVT_ELLIPSE_FOUND = wx.PyEventBinder(EllipseFoundEventType)
 
 EllipseNewCenterEventType = wx.NewEventType()
 EVT_ELLIPSE_NEW_CENTER = wx.PyEventBinder(EllipseNewCenterEventType)
+
+EllipseNewShapeEventType = wx.NewEventType()
+EVT_ELLIPSE_NEW_SHAPE = wx.PyEventBinder(EllipseNewShapeEventType)
 
 ImageNewPixelSizeEventType = wx.NewEventType()
 EVT_IMAGE_NEW_PIXELSIZE = wx.PyEventBinder(ImageNewPixelSizeEventType)
@@ -94,6 +98,12 @@ class EllipseNewCenterEvent(wx.PyCommandEvent):
 		wx.PyCommandEvent.__init__(self, EllipseNewCenterEventType, source.GetId())
 		self.SetEventObject(source)
 		self.centers = centers
+
+class EllipseNewShapeEvent(wx.PyCommandEvent):
+	def __init__(self, source, params):
+		wx.PyCommandEvent.__init__(self, EllipseNewShapeEventType, source.GetId())
+		self.SetEventObject(source)
+		self.params = params
 
 class ImageNewPixelSizeEvent(wx.PyCommandEvent):
 	def __init__(self, source, pixelsize,center,hightension):
@@ -377,6 +387,7 @@ class RecordMotionTool(ImageTool):
 		self.lastx = 0
 		self.lasty = 0
 		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_ELLIPSE_NEW_CENTER, self.onNewEllipseCenter, self.imagepanel)
+		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_ELLIPSE_NEW_SHAPE, self.onNewEllipseShape, self.imagepanel)
 
 	def OnLeftDown(self, evt):
 		if self.button.GetToggle():
@@ -440,6 +451,8 @@ class RecordMotionTool(ImageTool):
 		return self.drawEllipse()
 
 	def drawEllipse(self):
+		if len(set.difference(set(['a','b','alpha','center']),set(self.ellipse_params.keys()))) > 0:
+			return
 		angleinc = 5 * 3.14159 / 180.0
 		ellipsepoints = pyami.ellipse.ellipsePoints(angleinc,  **self.ellipse_params)
 		idcevt = EllipseFoundEvent(self.imagepanel, self.ellipse_params)
@@ -447,7 +460,7 @@ class RecordMotionTool(ImageTool):
 		return ellipsepoints
 
 	def updateEllipse(self, deltaparams):
-		for key in ('a','b','angle'):
+		for key in ('a','b','alpha'):
 			if key in deltaparams:
 				self.ellipse_params[key] += deltaparams[key]
 		if 'center' in deltaprams:
@@ -457,8 +470,20 @@ class RecordMotionTool(ImageTool):
 			self.ellipse_params['center'] = newcenter
 		self.drawEllipse()
 
+	def onNewEllipseShape(self, evt):
+		if self.ellipse_params is None:
+			return
+		for key in ('a','b','alpha'):
+			if key in evt.params:
+				self.ellipse_params[key] = evt.params[key]
+		self.ellipse = self.drawEllipse()
+		self.xypath = []
+		self.imagepanel.UpdateDrawing()
+
 	def onNewEllipseCenter(self,evt):
 		if self.ellipse_params is None:
+			if evt.centers:
+				self.ellipse_params = {'center': numpy.array(evt.centers[0])}
 			return
 		oldcenter = self.ellipse_params['center']
 		centers = []
@@ -467,6 +492,8 @@ class RecordMotionTool(ImageTool):
 			centers.append(center)
 			distances.append(self.distance(oldcenter,center))
 		closest_center = centers[distances.index(min(distances))]
+		# draw ellipse at the input center closest to the ellipse 
+		# made from the ellipse fit tool
 		if self.ellipse_params and list(oldcenter) != list(closest_center):
 			self.ellipse_params['center'][0] = closest_center[0]
 			self.ellipse_params['center'][1] = closest_center[1]

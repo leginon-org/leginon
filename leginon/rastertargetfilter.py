@@ -119,6 +119,14 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		self.onTest()
 		return a2, b2, angledeg
 
+	def getEllipseParams(self):
+		params = {}
+		spacing = self.settings['raster spacing']
+		params['a'] = self.settings['ellipse a'] * spacing / 2.0
+		params['b'] = self.settings['ellipse b'] * spacing / 2.0
+		params['alpha'] = math.radians(self.settings['ellipse angle'])
+		return params
+
 	def makeRaster(self):
 		spacing = self.settings['raster spacing']
 		angledeg = self.settings['raster angle']
