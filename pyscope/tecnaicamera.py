@@ -24,7 +24,10 @@ class TecnaiCamera(ccdcamera.CCDCamera):
 
 		self.ccd.AcqParams.ImageCorrection = self.temscripting_module.AcqImageCorrection_Unprocessed
 		self.ccd.AcqParams.ExposureMode = self.temscripting_module.AcqExposureMode_None
-		self.ccd.Info.ShutterMode = self.temscripting_module.AcqShutterMode_PreSpecimen
+		try:
+			self.ccd.Info.ShutterMode = self.temscripting_module.AcqShutterMode_PreSpecimen
+		except:
+			self.ccd.Info.ShutterMode = self.ccd.Info.ShutterModes[0]
 
 		self.exposuretype = 'none'
 		self.geometry = self.geometryFromAcqParams()
