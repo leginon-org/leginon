@@ -233,17 +233,16 @@ def PngAlphaToBinarryArray(filename):
 	print RGBAarray.shape
 	alphaarray = RGBAarray[:,:,3]
 	masked_alphaarray = ma.masked_greater_equal(alphaarray,50)
-	bmask = masked_alphaarray.filled(1)
-	return alphaarray
+	bmask = masked_alphaarray.mask
+	return bmask
 
 #=========================
 def PngToBinarryArray(filename):
 	RGBAarray = readPNG(filename)
-	print RGBAarray.shape
 	alphaarray = RGBAarray[:,:]
 	masked_alphaarray = ma.masked_greater_equal(alphaarray,50)
-	bmask = masked_alphaarray.filled(1)
-	return alphaarray
+	bmask = masked_alphaarray.mask
+	return bmask
 
 #=========================
 def arrayToJpegPlusPeak(numer, outfile, peak=None, normalize=True):
