@@ -39,9 +39,9 @@ class UploadImages(appionScript.AppionScript):
 		self.parser.add_option("--angle-list", dest="angleliststr",
 			help="List of angles to apply to tilt series", metavar="#,#,#")
 		self.parser.add_option("--defocus-list", dest="defocusliststr",
-			help="List of defoci to apply to defocal series", metavar="#,#,#")
+			help="List of defoci in meters to apply to defocal series", metavar="#,#,#")
 		self.parser.add_option("--defocus", dest="defocus", type="float",
-			help="Defocus to apply to all images", metavar="#.#e#")
+			help="Defocus in meters to apply to all images", metavar="#.#e#")
 
 		self.uploadtypes = ('tiltseries', 'defocalseries', 'normal')
 		self.parser.add_option("--type", dest="uploadtype", default="normal",
@@ -68,7 +68,7 @@ class UploadImages(appionScript.AppionScript):
 		### series only valid with non-normal uplaods
 		if self.params['seriessize'] is None and self.params['uploadtype'] != "normal":
 			apDisplay.printError("If using tilt or defocal series, please provide --images-per-series")
-		if self.params['seriessize'] is not None and self.params['uploadtype'] == "normal":
+		if self.params['seriessize'] > 1 and self.params['uploadtype'] == "normal":
 			apDisplay.printError("If using normal mode, do NOT provide --images-per-series")
 
 		### angleliststr only valid with tiltseries uplaods
@@ -440,7 +440,7 @@ class UploadImages(appionScript.AppionScript):
 
 		mrclist = self.getImagesInDirectory(self.params['imagedir'])
 
-		for i in range(6):
+		for i in range(min(len(mrclist),6)):
 			print mrclist[i]
 
 		numinseries = 1
@@ -464,7 +464,6 @@ class UploadImages(appionScript.AppionScript):
 			self.copyfile(mrcfile, newimagepath)
 
 			### counting
-			count += 1
 			numinseries += 1
 			if numinseries % (self.params['seriessize']+1) == 0:
 				### reset series counter
@@ -478,6 +477,8 @@ class UploadImages(appionScript.AppionScript):
 			esttime = timeperimage*(len(mrclist) - count)
 			apDisplay.printMsg("estimated time remaining for %d of %d images: %s"
 				%(len(mrclist)-count, len(mrclist), apDisplay.timeString(esttime)))
+			### counting
+			count += 1
 
 #=====================
 #=====================
