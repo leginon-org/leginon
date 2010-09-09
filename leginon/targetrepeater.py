@@ -74,7 +74,7 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 
 	def repeatTargetList(self, targetlistdata):
 		states = self.makeStates()
-		print 'repeating target at %d states' % (len(states),)
+		self.logger.info('repeating target at %d states' % (len(states),))
 		for scopedata in states:
 			self.setStatus('idle')
 			self.setStatus('user input')
@@ -94,6 +94,7 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 			self.declareTransform(self.transformtype)
 
 			tid = self.makeTargetListEvent(newtargetlistdata)
+			self.setStatus('waiting')
 			self.publish(newtargetlistdata, pubevent=True)
 			status = self.waitForTargetListDone(tid)
 			state = self.player.wait()
