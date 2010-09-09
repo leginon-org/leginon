@@ -10,6 +10,7 @@ info = [
 	('adaExp Library', 'Tecnai Exposure Adaptor'),
 	('TecnaiCCD 1.0 Type Library', 'Gatan CCD Camera'),
 	('CAMC4 1.0 Type Library', 'Tietz CCD Camera'),
+	('ES Vision 3.0 Type Library', 'TIA CCD Camera'),
 ]
 items = selecttlb.EnumTlbs()
 
