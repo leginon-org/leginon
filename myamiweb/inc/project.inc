@@ -189,7 +189,7 @@ class project {
 	function getSample($sessioninfo="") {
 		# get sample name from project database
 		if (SAMPLE_TRACK) {
-			$sessionId=$sessioninfo['Id'];
+			$sessionId = ($sessioninfo['SessionId'])? $sessioninfo['SessionId'] : $sessioninfo['Id'];
 			list($proj, $packagenb, $samplenb) = explode(".", $sessioninfo['Purpose']);
 			$packagenb = (int) ereg_replace("P", "", $packagenb);
 			$samplenb = (int) ereg_replace("S", "", $samplenb);

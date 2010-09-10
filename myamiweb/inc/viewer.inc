@@ -611,9 +611,9 @@ class view {
 		$this->jsacepar= "1";
 		$this->jsaceopt= "2";
 		$this->jstagpar1 = "1";
-		$this->jstagpar2 = "0";
+		$this->jstagpar2 = "1";
 		if ($_POST) {
-			$this->jstagpar1 = ($_REQUEST[$this->name.'tagp1']) ? "1" : "0";
+			$this->jstagpar1 = ($_REQUEST[$this->name.'tagp1']) ? "1" : $_POST[$this->name.'tagp1'];
 			$this->jstagpar2 = ($_REQUEST[$this->name.'tagp2']) ? "1" : "0";
 		}
 		$this->jsprtlpick= "1";
@@ -1180,6 +1180,7 @@ class view {
 			$htmlframe .= '
 				<td width="15">';
 			$htmlframe .= $this->bttag->display();
+			$tag1check = ($this->jstagpar1=="1") ? "checked" : "";
 			if (SAMPLE_TRACK) {
 				$htmlframe .= '</td><td width="9">';
 				$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
@@ -1188,7 +1189,6 @@ class view {
 				$tagmenu->closeval=$closedownimg;
 				$tagmenu->height="";
 				$tagmenu->width="";
-				$tag1check = ($this->jstagpar1=="1") ? "checked" : "";
 				$tag2check = ($this->jstagpar2=="1") ? "checked" : "";
 
 				$tagform='image:<input type="checkbox" name="'.$name.'tagp1" id="'.$name.'tagparam1" '.$tag1check.' >';
@@ -1198,6 +1198,9 @@ class view {
 				$tagform.='<input type="button" value="update" onclick=setTagParam(\''.$name.'\') />';
 				$tagmenu->setContent($tagform);
 				$htmlframe.=$tagmenu->display();
+			} else {
+				// always on so that it is controled by $this->displaytagicon
+				$htmlframe .= '<input type="hidden" name="'.$name.'tagp1" id="'.$name.'tagparam1" value="1" >';
 			}
 			$htmlframe .= '</td>';
 		}
