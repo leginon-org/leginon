@@ -165,6 +165,10 @@ function createData() {
 	$parentimageId = $newimage[id];
 	
 	$sessionId = getSessionByImage($parentimageId);
+	if (!checkExptAdminPrivilege($sessionId)) {
+		echo 'Operation not allowed';
+		exit;
+	}
 	$_POST['image']=$parentimageId;
 	$sessioninfo = $leginondata->getSessionInfo($sessionId);
 
