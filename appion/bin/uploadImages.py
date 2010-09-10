@@ -37,11 +37,13 @@ class UploadImages(appionScript.AppionScript):
 			help="Number of images in tilt series", metavar="#")
 
 		self.parser.add_option("--angle-list", dest="angleliststr",
-			help="List of angles to apply to tilt series", metavar="#,#,#")
+			help="List of angles in radians to apply to tilt series", metavar="#,#,#")
 		self.parser.add_option("--defocus-list", dest="defocusliststr",
 			help="List of defoci in meters to apply to defocal series", metavar="#,#,#")
 		self.parser.add_option("--defocus", dest="defocus", type="float",
 			help="Defocus in meters to apply to all images", metavar="#.#e#")
+		self.parser.add_option("--invert", dest="invert", default=False,
+			action="store_true", help="Invert image density")
 
 		self.uploadtypes = ('tiltseries', 'defocalseries', 'normal')
 		self.parser.add_option("--type", dest="uploadtype", default="normal",
@@ -415,7 +417,13 @@ class UploadImages(appionScript.AppionScript):
 
 	#=====================
 	def copyfile(self, oldmrcfile, newmrcfile):
-		shutil.copy(oldmrcfile, newmrcfile)
+		# invert image density
+		if self.params['invert'] is False:
+			shutil.copy(oldmrcfile, newmrcfile)
+		else:
+			tmpimage = mrc.read(oldmrcfile)
+			tmpimage *= -1.0
+			mrc.write(tmpimage,newmrcfile)
 		if apFile.fileSize(oldmrcfile) != apFile.fileSize(newmrcfile):
 			apDisplay.printError("File sizes are different")
 
