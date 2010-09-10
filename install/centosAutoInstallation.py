@@ -54,7 +54,7 @@ class CentosInstallation(object):
 
         self.runCommand("yum -y update")
 
-        self.runCommand("updatedb")
+        #self.runCommand("updatedb")
         self.writeToLog("yum update finished..")
 
     def runCommand(self, cmd):
@@ -62,6 +62,8 @@ class CentosInstallation(object):
         self.writeToLog("#===================================================")
         self.writeToLog("Run the following Command:")
         self.writeToLog("%s"%(cmd,))
+        print cmd + '\n'
+        print 'Please wait......\n'
 
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdoutResult = proc.stdout.read()
@@ -77,7 +79,6 @@ class CentosInstallation(object):
 
     def yumInstall(self, packagelist):
         
-        #arch = self.getMachineArch()
         if not packagelist:
             return
     
@@ -87,7 +88,7 @@ class CentosInstallation(object):
 
         cmd = "yum -y install" + packagestr
         self.runCommand(cmd)
-        self.runCommand("updatedb")
+        #self.runCommand("updatedb")
 
     def openFirewallPort(self, port):
             
@@ -153,16 +154,19 @@ class CentosInstallation(object):
         self.writeToLog("setup Leginon configure file")
         leginonDir = self.runCommand('python -c "import leginon; print leginon.__path__[0]"')        
         leginonDir = leginonDir.strip()
-        #import leginon
-        #leginonDir = leginon.__path__[0]                
         self.setupLeginonCfg(leginonDir + '/config')
 
         # setup Sinedon configure file
         self.writeToLog("setup Sinedon configure file")
         sinedonDir = self.runCommand('python -c "import sinedon; print sinedon.__path__[0]"')
         sinedonDir = sinedonDir.strip()
-
         self.setupSinedonCfg(sinedonDir)
+
+        # setup instruments configuration
+        pyscopeDir = self.runCommand('python -c "import pyscope; print pyscope.__path__[0]"')
+        pyscopeDir = pyscopeDir.strip()
+
+        self.setupPyscopeCfg(pyscopeDir)
 
         os.chdir(self.currentDir)        
         self.enableTorqueComputeNode()
@@ -218,15 +222,19 @@ class CentosInstallation(object):
 
         for line in inf:
             if line.startswith('path:'):
-                outf.write('path: %s\n'%(self.imagesDir))
+                outf.write('path: %s/leginon\n'%(self.imagesDir))
             else:
                 outf.write(line)
         inf.close()
         outf.close()
 
+    def setupPyscopeCfg(self, pyscopeCfgDir):
+        shutil.copy(pyscopeCfgDir +'/instruments.cfg.template', pyscopeCfgDir +'/instruments.cfg')
+
+
     def setupSinedonCfg(self, sinedonDir):
         inf = open(self.svnMyamiDir + 'sinedon/examples/sinedon.cfg', 'r')
-        outf = open(sinedonDir + '/siendon.cfg', 'w')
+        outf = open(sinedonDir + '/sinedon.cfg', 'w')
 
         for line in inf:
             if line.startswith('user: usr_object'):
@@ -533,8 +541,12 @@ class CentosInstallation(object):
         print("Installation Finish.")
         print("========================")
 
-        webbrowser.open_new("http://localhost/myamiweb")
+        webbrowser.open_new("http://localhost/myamiweb/setup/autoinstallSetup.php")
+        self.writeToLog("Myamiweb Started.")
 
+        subprocess.Popen("start-leginon.py")
+        self.writeToLog("Leginon Started")
+        
 if __name__ == "__main__":
     a = CentosInstallation()
     a.run()
