@@ -582,6 +582,7 @@ class view {
 		$this->displayadjustlink = true;
 		$this->displayexportlink = true;
 		$this->displayhidebt = true;
+		$this->displayhideallbt = true;
 		$this->displaynextbt = true;
 		$this->displayexemplarbt = true;
 		$this->framecolor = ' class="bgcolor1" ';
@@ -740,6 +741,12 @@ class view {
 
 	function displayHideBt($state) {
 		$this->displayhidebt = $state;
+		$this->displayhideallbt = $state;
+
+	}
+
+	function displayHideAllBt($state) {
+		$this->displayhideallbt = $state;
 	}
 
 	function displayNextBt($state) {
@@ -1297,6 +1304,9 @@ class view {
 				$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
 								.' onclick=\'hide_image()\' ><u><b>h</b></u>ide</button>';
 				$htmlframe .= '</li> ';
+			}
+			if ($this->displayhideallbt) {
+				$htmlframe .= ' all<input type="checkbox" id="chk_hide_all"></li>';
 			}
 			if ($this->displaynextbt) {
 				$htmlframe .= '<li class="list1"><button type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '

@@ -92,6 +92,7 @@ $view1->displayParticleIcon(false);
 $view1->displayComment(true); 
 $view1->addMenuItems($playbackcontrol);
 $view1->setDataTypes($datatypes);
+$view1->displayHideAllBt(false);
 $view1->displayPTCL(false);
 $view1->setSize(512);
 $viewer->add($view1);
