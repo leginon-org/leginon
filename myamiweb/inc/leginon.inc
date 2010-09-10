@@ -399,6 +399,7 @@ class leginondata {
 
 	function getAllDatatypes($sessionId) {
 		$defaulttypes = $this->defaulttypes;
+		if (privilege('data') < 2) $defaulttypes = array_diff($defaulttypes,array('hidden'));
 		$types = $this->getDatatypes($sessionId);
 		return array_merge($defaulttypes, $types);
 	}

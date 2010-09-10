@@ -388,6 +388,7 @@ class viewer {
 	}
 
 	function add($view) {
+		$view->setRestriction();
 		$this->views[] = $view;
 		$this->nbview++;
 	}
@@ -979,6 +980,15 @@ class view {
 
 	function setMenuColor($color) {
 		$this->menucolor = ' bgcolor="'.$color.'" ';
+	}
+
+	function setRestriction() {
+		if (privilege('data') < 2) {
+			$this->displayHideBt(false);
+			$this->displayExemplarBt(false);
+			#$this->displayACEIcon(false);
+			$this->displayDeqIcon(false);
+		}
 	}
 
 	function setPresetScript($scriptname) {
