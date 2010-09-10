@@ -8,7 +8,7 @@
 
 import errno
 import os
-import ConfigParser
+import configparser
 import sys
 import inspect
 
@@ -56,30 +56,7 @@ def mkdirs(newdir):
 class LeginonConfigError(Exception):
 	pass
 
-HOME = os.path.expanduser('~')
-CURRENT = os.getcwd()
-this_file = inspect.currentframe().f_code.co_filename
-MODULE = os.path.dirname(this_file)
-
-configparser = ConfigParser.SafeConfigParser()
-# look in the same directory as this module
-defaultfilename = os.path.join(MODULE, 'config', 'default.cfg')
-try:
-	configparser.readfp(open(defaultfilename), defaultfilename)
-except IOError:
-	raise LeginonConfigError('cannot find configuration file default.cfg')
-## process configs in this order (later ones overwrite earlier ones)
-config_locations = [
-	'leginon.cfg',
-	os.path.join(MODULE, 'config', 'leginon.cfg'),
-	os.path.join(HOME, 'leginon.cfg'),
-]
-configfiles = configparser.read(config_locations)
-
-#sys.stderr.write("Leginon config files used: ")
-#for configfile in configfiles:
-	#sys.stderr.write(str(configfile)+" ")
-#sys.stderr.write("\n")
+configparser = configparser.configparser
 
 # drive mapping
 drives = configparser.options('Drive Mapping')
