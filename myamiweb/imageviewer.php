@@ -88,7 +88,6 @@ $javascript = $viewer->getJavascript();
 $view1 = new view('Main View', 'v1');
 $view1->setControl();
 $view1->setParam('ptclparams',$particleruns);
-$view1->displayParticleIcon(false); 
 $view1->displayComment(true); 
 $view1->addMenuItems($playbackcontrol);
 $view1->setDataTypes($datatypes);

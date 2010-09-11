@@ -562,11 +562,6 @@ class view {
 		$this->btace->onToggle($name.'btaceaction'); 
 		$this->btdeq = new button('deq'.$this->name, 'deq');
 
-		$param = "left=0,top=".($this->viewnb*180+20).",height=170,width=370";
-		$url = "ptclsel.php?name=$name&displayname=$this->title";
-		$pli =	"javascript:popUpPtcl('".$url."','".$name."','".$param."');";
-		$this->btparticle = new button('ptcl'.$this->name, 'ptcl');
-		$this->btparticle->setLink($pli);
 		$this->displayscaleicon = true;
 		$this->displayscaleicon = true;
 		$this->displaytargeticon = true;
@@ -777,10 +772,6 @@ class view {
 		$this->displayinfoicon = $state;
 	}
 
-	function displayParticleIcon($state) {
-		$this->displayparticleicon = $state;
-	}
-
 	function displayFFTIcon($state) {
 		$this->displayffticon = $state;
 	}
@@ -906,7 +897,6 @@ class view {
 			.$this->btdownload->getJavascript()
 			.$this->btscale->getJavascript()
 			.$this->bttarget->getJavascript()
-			.$this->btparticle->getJavascript()
 			.$this->bttag->getJavascript()
 			.$this->btnptcl->getJavascript()
 			.$this->btfft->getJavascript()
@@ -1111,13 +1101,6 @@ class view {
 			$dwdmenu->setContent($dwdform);
 			$htmlframe.=$dwdmenu->display();
 		}
-		if ($this->displayparticleicon)
-		$htmlframe .= '
-			<td width="15">ICI'
-			.$this->btparticle->display().$this->crlf
-			.'
-	</td>
-		';
 		if ($this->displayinfoicon) {
 		$htmlframe .= '
 			<td width="15">'

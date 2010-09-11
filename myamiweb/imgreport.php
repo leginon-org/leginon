@@ -55,7 +55,6 @@ $view1->displayScaleIcon(true);
 $view1->displayTargetIcon(true);
 $view1->displayAdjustLink(false);
 $view1->displayPresets(false);
-$view1->displayParticleIcon(false);
 $view1->displayAceIcon(false);
 $view1->setFrameColor('#000000');
 $view1->setMenuColor('#ccccff');
