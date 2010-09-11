@@ -134,7 +134,7 @@ class Gatan(ccdcamera.CCDCamera):
                 return image
         try:
             image = comarray.call(self.camera, 'AcquireRawImage')
-            return image
+            return image.astype(numpy.uint16)
         except pywintypes.com_error, e:
             raise ValueError('invalid image dimensions')
 
