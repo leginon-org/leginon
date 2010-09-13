@@ -235,7 +235,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 					'cross_correlation':	float(bits[numvals-3]),
 					'nominal':	defocus*1e-10,
 					'defocusinit':	-bestdef*1e-10,
-					'confidence_d':	round(math.sqrt(float(bits[numvals-3])), 5)
+					'confidence_d':	round(math.sqrt(abs(float(bits[numvals-3]))), 5)
 				}
 				if self.params['ctftilt'] is True:
 					self.ctfvalues['tilt_axis_angle']=float(bits[3])
