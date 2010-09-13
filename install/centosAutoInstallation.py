@@ -541,7 +541,7 @@ class CentosInstallation(object):
         print("Installation Finish.")
         print("========================")
 
-        webbrowser.open_new("http://localhost/myamiweb/setup/autoinstallSetup.php")
+        webbrowser.open_new("http://localhost/myamiweb/setup/autoInstallSetup.php")
         self.writeToLog("Myamiweb Started.")
 
         subprocess.Popen("start-leginon.py")
