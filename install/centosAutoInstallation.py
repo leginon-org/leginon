@@ -473,7 +473,18 @@ class CentosInstallation(object):
         value = float (value.strip())
 
         self.csValue = value
-    
+        
+    def getSampleImages(selfs):
+        
+        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc")
+        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc")
+        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc")
+        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc")
+        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc")
+        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc")
+        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc")
+        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc")
+            
     def run(self):
 
         self.currentDir = os.getcwd()
@@ -534,6 +545,8 @@ class CentosInstallation(object):
         result = self.setupWebServer()
         if result is False:
             sys.exit(1)
+            
+        self.getSampleImages()
 
         self.writeToLog("Installation Finish.")
 
