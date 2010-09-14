@@ -89,6 +89,16 @@ class Cluster {
 	function cluster_cmd($host, $user, $pass) {
 	}
 
+	function cluster_cp_job_file() {
+		# copy the jobfile that is running to the recon directory 
+		# together with the putting *.job back to $outdir ensures
+		# that it the jobfile ran is put back to $outdir
+		# even if it is modified at the remote cluster
+		$path = formatEndPath($this->get_path());
+		$cpstr = "cp ".$path."\$PBS_JOBNAME .\n";
+		return $cpstr;
+	}
+
 	function cluster_send_data() {
 		$movestr = "";
 		$filelist = explode('|--|',$_POST['sendfilelist']);
@@ -107,6 +117,7 @@ class Cluster {
 		foreach ($filelist as $filepath) {
 			$movestr.= "mv -v $filepath ".formatEndPath($outfullpath)."\n";
 		}
+		$movestr.= "mv -v \$PBS_JOBNAME ".formatEndPath($dmffullpath)."\n";
 		return $movestr;
 	}
 
@@ -143,6 +154,8 @@ class Cluster {
 		$clusterjob.= "rm -rf $clusterfullpath/recon\n";
 		$clusterjob.= "mkdir -p $clusterfullpath/recon\n";
 		$clusterjob.= "cd $clusterfullpath/recon\n\n";
+		$clusterjob.= "#copy job file here for update purpose later\n";
+		$clusterjob.= $this->cluster_cp_job_file();
 		$clusterjob.= "#download files from main filesystem\n";
 		$clusterjob.= $this->cluster_send_data();
 		$clusterjob.= "setenv RUNPAR_RSH 'ssh'\n\n";

@@ -23,6 +23,7 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 	$javafunc.="  newwindow.document.write('<html><body>')\n";
 	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/model.tar.gz '+outdir+'/.<br />')\n";
 	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.<br />')\n";
+	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/*.job '+outdir+'/.<br />')\n";
 	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar.gz -C '+outdir+'<br />')\n";
 	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar.gz -C '+outdir+'<br />')\n";
 	$javafunc.="  if (has_coran > 0) { \n";
