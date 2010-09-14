@@ -51,6 +51,7 @@ $project->addProject('Demo', 'Demo Project', 'Demo Project: Created by installat
  * Now we need to create a processing database for this demo project
  */
 $dbname = 'ap1';
+$selectedprojectId = '1';
 $q='create database `'.$dbname.'`';
 $r=$project->mysql->SQLQuery($q);
 
