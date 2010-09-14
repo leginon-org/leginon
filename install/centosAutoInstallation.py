@@ -194,8 +194,8 @@ class CentosInstallation(object):
         self.runCommand("/usr/share/doc/torque-2.3.10/torque.setup root")
     
         self.runCommand("/sbin/service network restart")
-        self.runCommand("/sbin/service pbs_server start")
-        self.runCommand("/sbin/service pbs_sched start")
+        self.runCommand("/sbin/service pbs_server restart")
+        self.runCommand("/sbin/service pbs_sched restart")
         return True
 
     def processServerYumInstall(self):
@@ -474,17 +474,14 @@ class CentosInstallation(object):
 
         self.csValue = value
         
-    def getSampleImages(selfs):
-        
-        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc")
-        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc")
-        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc")
-        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc")
-        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc")
-        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc")
-        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc")
-        self.runCommand("wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc")
-            
+    def getSampleImages(self):
+       
+        getImageCmd = "wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc http://ami.scripps.edu/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc http://ami.scripps.edu/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc http://ami.scripps.edu/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc http://ami.scripps.edu/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
+
+        print getImageCmd
+        proc = subprocess.Popen(getImageCmd, shell=True)
+        proc.wait()
+                 
     def run(self):
 
         self.currentDir = os.getcwd()
