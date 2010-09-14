@@ -48,6 +48,34 @@ $project = new project();
 $project->addProject('Demo', 'Demo Project', 'Demo Project: Created by installation', 'None', 'This is a free project.');
 
 /*
+ * Now we need to create a processing database for this demo project
+ */
+$dbname = 'ap1';
+$q='create database `'.$dbname.'`';
+$r=$project->mysql->SQLQuery($q);
+
+// --- created default tables --- //
+$filename = DEF_PROCESSING_TABLES_FILE;
+$leginondata->mysql->setSQLHost( array('db'=>$dbname) );
+$leginondata->importTables($filename);
+
+/* appion_extra.xml is created by sinedon/maketables.py
+ * based on a database without importing the existing appion_extra.xml 
+ * Since sinedon/maketables.py does not create table definition if
+ * the table exists in the designated database,
+ * DEF_PROCESSING_TABLES_FILE set type
+ * varchar is retained that makes it indexable and faster */
+$filename = "../xml/appion_extra.xml";
+$leginondata->mysql->setSQLHost( array('db'=>$dbname) );
+$leginondata->importTables($filename);
+
+$data=array();
+$data['REF|projects|project']=$selectedprojectId;
+$data['appiondb']=$dbname;
+$project->mysql->SQLInsertIfNotExists('processingdb', $data);
+
+
+/*
  * Redirect to the myamiweb homepage.
  */
 $host  = $_SERVER['HTTP_HOST'];
