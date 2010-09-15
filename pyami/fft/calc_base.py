@@ -72,7 +72,7 @@ class Calculator(object):
 				fft_array = pyami.imagefun.swap_quadrants(fft_array)
 				if mask is not None:
 					if mask < 1.0:
-						mask = int(mask * min(*fft_array.shape))
+						mask = int(mask * min(*fft_array.shape)/2.0)
 					else:
 						mask = int(mask)
 					pyami.imagefun.center_mask(fft_array, mask)
