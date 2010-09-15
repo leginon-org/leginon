@@ -164,7 +164,9 @@ def fromRadialFunction(funcrad, shape, **kwargs):
 	result = numpy.fromfunction(funcrc, shape, **kwargs)
 	return result
 
-def center_mask(a, mask_radius):
+def center_mask(a, mask_radius, copy=False):
+	if copy:
+		a = numpy.array(a)
 	shape = a.shape
 	center = shape[0]/2, shape[1]/2
 	center_square = a[center[0]-mask_radius:center[0]+mask_radius, center[1]-mask_radius:center[1]+mask_radius]
@@ -172,6 +174,8 @@ def center_mask(a, mask_radius):
 	cs_center = cs_shape[0]/2, cs_shape[1]/2
 	circ = filled_circle(cs_shape,mask_radius)
 	center_square[:] = center_square * circ.astype(center_square.dtype)
+	if copy:
+		return a
 
 def swap_quadrants(a):
 	shift0 = a.shape[0]/2
