@@ -1,6 +1,14 @@
 <?php
 require "inc/project.inc.php";
 require "inc/leginon.inc";
+if (SAMPLE_TRACK) {
+	require "inc/confirmlib.php";
+	require "inc/packagelib.php";
+	require "inc/samplelib.php";
+	require "inc/gridlib.php";
+	require "inc/statusreport.inc.php";
+	require "inc/note.inc.php";
+}
 require "inc/utilpj.inc.php";
 
 $share =  (@require "inc/share.inc.php") ? true : false;
@@ -30,6 +38,7 @@ if ($share)
 	$shareExpDb = new share();
 	
 $project = new project();
+
 $projects = $project->getProjects("order");
 $projectinfo = $project->getProjectInfo($selectedprojectId);
 $projectowners = $project->getProjectOwners($selectedprojectId);
@@ -194,7 +203,174 @@ $projectId = $selectedprojectId;
 <?php
 $ln=urlencode($url);
 $projectId = $projectinfo['projectId'];
+if (SAMPLE_TRACK && $is_admin) {
+	$cfmlink=" <a href='updateconfirm.php?pid=".$projectId."&ln=".$ln."'>[add]</a>";
+	$pkglink=" <a href='updatepackage.php?pid=".$projectId."&ln=".$ln."'>[add]</a>";
+	$smplink=" <a href='updatesample.php?pid=".$projectId."&ln=".$ln."'>[add]</a>";
+	$glink=" <a href='updatengrid.php?pid=".$projectId."&ln=".$ln."'>[add]</a>";
+}
+if (SAMPLE_TRACK) {
+	// --- Confirm section --- //
+	$confirm=new Confirm();
+	$where=array("projectId"=>$projectId);
+	$confirms=$confirm->getConfirms($where);
+	$columns=array();
+	if ($is_admin) {
+		$columns['edit']='';
+	}
+	if ($confirms !== false) {
+		echo divtitle('Confirm'.$cfmlink);
+		foreach ((array)$confirms as $k=>$c) {
+			$sId = $c['confirmId'];
+			$confirms[$k]['confirmnum'] = $confirm->format_number($c['confirmnum']);
+			if ($is_admin) {
+				$confirms[$k]['edit']="<a href='updateconfirm.php?pid=".$projectId."&id=$sId&ln=$ln'><img alt='edit' border='0' src='img/edit.png'></a>";
+			}
+			$infolink="<a href=\"javascript:popUp('infotrack.php?cid=".$sId."', 'info')\">View</a>";
+			$confirms[$k]['view']=$infolink;
+		}
 
+		$display_header=true;
+		$columns['view']='';
+		$columns['confirmnum']='Confirmation Number';
+		$columns['duedate']='Project Due Date';
+		echo data2table($confirms, $columns, $display_header);
+	}
+
+	// --- Get Sample --- //
+	$sample=new Sample();
+	$where=array("projectId"=>$projectId);
+	$samples=$sample->getSamples($where);
+
+	// --- check in sample is internal P000 --- //
+	$hasinternalpackage = ($sample->hasInternalPackage($projectId)) ? true : false;
+
+	// --- Package section --- //
+	$package=new Package();
+	$where=array("projectId"=>$projectId);
+	$packages=$package->getPackages($where);
+	$columns=array();
+	if ($is_admin) {
+		$columns['edit']='';
+	}
+	$bgcolor="bbd0bb";
+	$infolinkstr="<a href=\"javascript:popUp('infotrack.php?pkid=%d', 'info')\">View</a>";
+	$reportlinkstr="<a href='report.php?pid=%d&id=%d&ln=%s'>report</a>";
+	if ($packages || $hasinternalpackage) {
+		echo divtitle('Package'.$pkglink);
+		foreach ((array)$packages as $k=>$package) {
+			$sId = $package['packageId'];
+			$packagenumbers[$sId] = $package['number'];
+			if ($is_admin) {
+				$packages[$k]['edit']="<a href='updatepackage.php?pid=".$projectId."&id=$sId&ln=$ln'><img alt='edit' border='0' src='img/edit.png'></a>";
+			}
+			$infolink=sprintf($infolinkstr,$sId);
+			$reportlink=sprintf($reportlinkstr, $projectId, $sId, $ln);
+			$packages[$k]['view']=$infolink;
+			$packages[$k]['report']=$reportlink;
+			$bgcolor = ($package['arrivedate']) ? "#d8f8c4" : "#ff5050" ;
+			$celloption="bgcolor='$bgcolor'";
+			$packages[$k]['number']=array($package['number'], $celloption);
+		}
+
+		$display_header=true;
+		$columns['view']='';
+		$columns['report']='';
+		$columns['number']='Package Number';
+		$columns['label']='Label';
+		if ($hasinternalpackage) {
+			$sId='';
+			$reportlink=sprintf($reportlinkstr, $projectId, $sId, $ln);
+			$internalpackage['view']='';
+			$internalpackage['report']=$reportlink;
+			$internalpackage['number']='P000';
+			$internalpackage['label']='Internal';
+			$packages = array_merge(array($internalpackage), $packages);
+		}
+		echo data2table($packages, $columns, $display_header);
+	}
+
+	// --- Sample section --- //
+	$columns=array();
+	if ($is_admin) {
+		$columns['edit']='';
+	}
+		$columns['view']='';
+	$columns['packagenumber']='packagenumber';
+	if ($samples !== false) {
+		echo divtitle('Sample'.$smplink);
+		foreach ((array)$samples as $k=>$sample) {
+			$sId = $sample['sampleId'];
+			$samplenumbers[$sId] = $sample['number'];
+			$packageId=$samples[$k]['packageId'];
+			$infolinkpackage="<a href=\"javascript:popUp('infotrack.php?pkid=".$packageId."', 'info')\">".$packagenumbers[$packageId]."</a>";
+			$samples[$k]['packagenumber']=$infolinkpackage;
+			$samplepackages[$sId] = $packageId;
+			if (!$packageId)
+				$samples[$k]['packagenumber']="P000";
+			if ($is_admin) {
+				$samples[$k]['edit']="<a href='updatesample.php?pid=".$projectId."&id=$sId&ln=$ln'><img alt='edit' border='0' src='img/edit.png'></a>";
+			}
+			$infolink="<a href=\"javascript:popUp('infotrack.php?sid=".$sId."', 'info')\">View</a>";
+			$samples[$k]['view']=$infolink;
+		}
+
+		$display_header=true;
+		$columns['packagenumber']='Package Number';
+		$columns['number']='Sample Number';
+		$columns['label']='Label';
+		echo '<div style="height: 150px; overflow:auto">';
+		echo data2table(array_reverse($samples), $columns, $display_header);
+		echo '</div>';
+	}
+	// --- Package grid --- //
+	$grid=new Grid();
+	$where=array("projectId"=>$projectId);
+	$grids=$grid->getGrids($where);
+
+	$columns=array();
+	if ($is_admin) {
+		$columns['edit']='';
+	}
+	$columns['view']='';
+	$columns['packagenumber']='packagenumber';
+	$columns['samplenumber']='samplenumber';
+	if ($grids !== false) {
+		echo divtitle('Grid'.$glink);
+		foreach ((array)$grids as $k=>$grid) {
+			$sId = $grid['gridId'];
+			$sampleId=$grids[$k]['sampleId'];
+			$packageId=$samplepackages[$sampleId];
+			$infolinkpackage="<a href=\"javascript:popUp('infotrack.php?pkid=".$packageId."', 'info')\">".$packagenumbers[$packageId]."</a>";
+			$infolinksample="<a href=\"javascript:popUp('infotrack.php?sid=".$sampleId."', 'info')\">".$samplenumbers[$sampleId]."</a>";
+			$grids[$k]['samplenumber']=$infolinksample;
+			$grids[$k]['packagenumber']=$infolinkpackage;
+			if (!$packageId)
+				$grids[$k]['packagenumber']="P000";
+			if ($is_admin) {
+				$grids[$k]['edit']="<a href='updatengrid.php?pid=".$projectId."&id=$sId&ln=$ln'><img alt='edit' border='0' src='img/edit.png'></a>";
+			}
+			$infolink="<a href=\"javascript:popUp('infotrack.php?gid=".$sId."', 'info')\">View</a>";
+			$grids[$k]['view']=$infolink;
+			$pkgn=$packagenumbers[$packageId];
+			$smpn=$samplenumbers[$sampleId];
+			$gbn=$grids[$k]['grbox'];
+			$gn=$grids[$k]['number'];
+			$gn=ereg_replace("0","",$gn);
+			$gridinfos[$projectinfo['Name'].'.'.$pkgn.'.'.$smpn.'.'.$gbn.'.'.$gn]=$sId;
+		}
+
+		$display_header=true;
+		$columns['packagenumber']='Package Number';
+		$columns['samplenumber']='Sample Number';
+		$columns['grbox']='Gridbox';
+		$columns['number']='Grid Number';
+		#echo data2table(array(end($grids)), $columns, $display_header);
+		echo '<div style="height: 150px; overflow:auto">';
+		echo data2table(array_reverse($grids), $columns, $display_header);
+		echo '</div>';
+	}
+}
 
 // Experiments 
 	$experimentIds = $project->getExperiments($projectId);
@@ -225,7 +401,7 @@ $projectId = $projectinfo['projectId'];
 		if ($numimg > 0)
 			$experiments[$k]['totalimg']=$numimg;
 
-		if ($numimg < 3 && $totalsecs < 60) {
+		if ($numimg < 3 || $totalsecs < 60) {
 			// these sessions have no image and link is broken
 			$experiments[$k]['name'] = "<font color='#bbbbbb'>".$info['Name']."</font>";
 			$experiments[$k]['description'] = "<font color='#bbbbbb'>".$experiments[$k]['description']."</font>";
@@ -261,12 +437,11 @@ $columns=array(
 if ($share) {
 	$columns['share']="Sharing";
 }
-	$columns['summary']="Summary";
+	$columns['summary']="";
 
 $display_header=true;
-
 echo data2table($experiments, $columns, $display_header);
-
+	
 if ($view=='d') {
 	echo divtitle('Share :: Users');
 		if ($share) {
