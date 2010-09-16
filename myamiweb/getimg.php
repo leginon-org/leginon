@@ -121,6 +121,7 @@ if ($g) {
 		$projectdata = new project();
 		$info=$leginondata->getSessionInfo($sessionId);
 		$tag=$projectdata->getSample($info);
+$tag = "123-c test tewwsdetgdga sdfasdfdadf test# testd";
 		$margin=10;
 		$ypos=10;
 		$wx = imagesx($img);
@@ -128,12 +129,12 @@ if ($g) {
 		$filenamelen = strlen($filename);
 		$tagoffset = $taglen*6+$margin;
 		$xpos = $wx - $tagoffset;
+		$pixperchar=6;
 		$strlength = ($taglen + $filenamelen ) * 6 + 2 * $margin + 5;
 		if ($wx<$strlength) {
 			// --- display sample 12 pix under, if filename is too long
 			$ypos+=12;
 			// --- check if filename string fits in imagewidth --- //
-			$pixperchar=6;
 			$filenamepixlen = $filenamelen * $pixperchar;
 			if ($filenamepixlen>$wx) {
 			// --- display rest of filename --- //
@@ -141,6 +142,25 @@ if ($g) {
 			$subfilename=substr($filename, $strlen);
 			imagestringshadow($img, 2, 10, $ypos, $subfilename, imagecolorallocate($img,255,255,255));
 			$ypos+=12;
+			}
+		}
+		$tagstrlen = $taglen*$pixperchar + 2 * margin + 5;
+		while ($tagstrlen > $wx) {
+			$tagbits = explode(' ',$tag);
+			$tagbitscopy = $tagbits;
+			$tagbitlens = array();
+			$tagrunninglength = array();
+			foreach ($tagbits as $ti=>$t) {
+				$tagbitlens[] = strlen($t);
+				$tagrunninglength[] = (array_sum($tagbitlens)+$ti)*$pixperchar + 2 * margin + 5;
+				if ($tagrunninglength[$ti] > $wx) {
+					$tagline = implode(' ',array_slice($tagbitscopy,0,$ti-1));
+					imagestringshadow($img, 2, $xpos, $ypos, $tagline, imagecolorallocate($img,255,255,255));
+					$tag = substr($tag,strlen($tagline));
+					$taglen = strlen($tag);
+					$tagstrlen = $taglen*$pixperchar + 2 * margin + 5;
+					$ypos+=12;
+				}
 			}
 		}
 		imagestringshadow($img, 2, $xpos, $ypos, $tag, imagecolorallocate($img,255,255,255));
