@@ -68,7 +68,16 @@ def parse_argv():
 	add_option(parser, 'server_port', 'jims server port (if not given, will use default port)')
 
 	(options, args) = parser.parse_args()
-	return options.__dict__
+
+
+	kwargs = {}
+	for key,value in options.__dict__.items():
+		if value is not None:
+			kwargs[key] = value
+	if not kwargs:
+		parser.print_help(sys.stderr)
+		sys.exit(0)
+	return kwargs
 
 def run():
 	kwargs = parse_argv()
