@@ -121,7 +121,6 @@ if ($g) {
 		$projectdata = new project();
 		$info=$leginondata->getSessionInfo($sessionId);
 		$tag=$projectdata->getSample($info);
-$tag = "123-c test tewwsdetgdga sdfasdfdadf test# testd";
 		$margin=10;
 		$ypos=10;
 		$wx = imagesx($img);
@@ -144,7 +143,7 @@ $tag = "123-c test tewwsdetgdga sdfasdfdadf test# testd";
 			$ypos+=12;
 			}
 		}
-		$tagstrlen = $taglen*$pixperchar + 2 * margin + 5;
+		$tagstrlen = $taglen*$pixperchar + 2 * $margin + 5;
 		$xpos = 5;
 		while ($tagstrlen > $wx) {
 			$tagbits = explode(' ',$tag);
@@ -153,16 +152,15 @@ $tag = "123-c test tewwsdetgdga sdfasdfdadf test# testd";
 			$tagrunninglength = array();
 			foreach ($tagbits as $ti=>$t) {
 				$tagbitlens[] = strlen($t);
-				$tagrunninglength[] = (array_sum($tagbitlens)+$ti)*$pixperchar + 2 * margin + 5;
-				if ($tagrunninglength[$ti] > $wx) {
-					$tagline = implode(' ',array_slice($tagbitscopy,0,$ti-1));
-					imagestringshadow($img, 2, $xpos, $ypos, $tagline, imagecolorallocate($img,255,255,255));
-					$tag = substr($tag,strlen($tagline));
-					$taglen = strlen($tag);
-					$tagstrlen = $taglen*$pixperchar + 2 * margin + 5;
-					$ypos+=12;
-				}
+				$tagrunninglength[] = (array_sum($tagbitlens)+$ti)*$pixperchar + 2 * $margin + 5;
+				if ($tagrunninglength[$ti] > $wx) break;
 			}
+				$tagline = implode(' ',array_slice($tagbitscopy,0,$ti));
+				imagestringshadow($img, 2, $xpos, $ypos, $tagline, imagecolorallocate($img,255,255,255));
+				$tag = substr($tag,strlen($tagline));
+				$taglen = strlen($tag);
+				$tagstrlen = $taglen*$pixperchar + 2 * $margin + 5;
+				$ypos+=12;
 		}
 		imagestringshadow($img, 2, $xpos, $ypos, $tag, imagecolorallocate($img,255,255,255));
 	}
