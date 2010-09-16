@@ -145,6 +145,7 @@ $tag = "123-c test tewwsdetgdga sdfasdfdadf test# testd";
 			}
 		}
 		$tagstrlen = $taglen*$pixperchar + 2 * margin + 5;
+		$xpos = 5;
 		while ($tagstrlen > $wx) {
 			$tagbits = explode(' ',$tag);
 			$tagbitscopy = $tagbits;
