@@ -3,6 +3,7 @@ debug = True
 
 import os
 import platform
+import sys
 
 import fftw3
 import numpy
@@ -10,6 +11,10 @@ import numpy
 import calc_base
 
 import pyami.fileutil
+
+def log(msg):
+	sys.stderr.write(msg)
+	sys.stderr.write('\n')
 
 ## args that are always passed to plan creation
 global_plan_kwargs = {
@@ -61,11 +66,11 @@ class FFTW3Calculator(calc_base.Calculator):
 		self.import_local_wisdom()
 		if debug:
 			if self.wisdom_found:
-				print 'fftw wisdom found:'
+				log('fftw wisdom found:')
 				for name in self.wisdom_found:
-					print '  %s' % (name,)
+					log('  %s' % (name,))
 			else:
-				print 'no wisdom found'
+				log('no wisdom found')
 
 	def make_full(self, fft_array):
 		fftheight, fftwidth = fft_array.shape
@@ -93,7 +98,7 @@ class FFTW3Calculator(calc_base.Calculator):
 		wisdom_after = fftw3.export_wisdom_to_string()
 		if len(wisdom_before) != len(wisdom_after):
 			if debug:
-				print 'wisdom updated, saving new local wisdom file'
+				log('wisdom updated, saving new local wisdom file')
 			self.export_local_wisdom()
 		return plan
 
