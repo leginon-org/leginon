@@ -447,12 +447,14 @@ if ($view=='d') {
 		if ($share) {
 			$sessionIds = array_keys($sessions);
 			$r = $shareExpDb->get_share_info($sessionIds);
-			foreach($r as $row) {
-				$name=($row['name']) ? $row['name'] : $row['username'];
-				$session="<a class='header' target='viewer' href='".VIEWER_URL.$row['experimentId']."'>";
-				$session.=$sessions[$row['experimentId']];
-				$session.="</a>";
-				$sharedexperiments[$name][]=$session;
+			if(is_array($r)){
+				foreach($r as $row) {
+					$name=($row['name']) ? $row['name'] : $row['username'];
+					$session="<a class='header' target='viewer' href='".VIEWER_URL.$row['experimentId']."'>";
+					$session.=$sessions[$row['experimentId']];
+					$session.="</a>";
+					$sharedexperiments[$name][]=$session;
+				}
 			}
 			echo "<table border='1' class='tableborder' width='500'>";
 			echo "<tr><th>Name</th><th>Experiments</th></tr>";
