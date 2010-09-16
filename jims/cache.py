@@ -1,7 +1,14 @@
 
 import os
+import sys
 import pyami.resultcache
 import pyami.fileutil
+
+debug = True
+def debug(s):
+	if debug:
+		sys.stderr.write(s)
+		sys.stderr.write('\n')
 
 class Cache(pyami.resultcache.ResultCache):
 	def put(self, pipeline, result):
@@ -14,13 +21,17 @@ class Cache(pyami.resultcache.ResultCache):
 		result = pyami.resultcache.ResultCache.get(self, pipeline)
 
 		if result is None:
+			debug('NOT IN MEMORY: %s' %(pipeline[-1],))
 			## try disk cache
 			result = self.file_get(pipeline)
 			if result is not None:
+				debug('IN FILE: %s' %(pipeline[-1],))
 				pyami.resultcache.ResultCache.put(self, pipeline, result)
 		else:
+			debug('IN MEMORY: %s' % (pipeline[-1],))
 			## found in memory cache, but need to touch or rewrite disk cache
 			if not self.file_touch(pipeline):
+				debug('NOT IN FILE: %s' % (pipeline[-1],))
 				self.file_put(pipeline, result)
 
 		return result

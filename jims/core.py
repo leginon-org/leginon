@@ -6,6 +6,7 @@ import operator
 import os
 import cPickle
 import types
+import sys
 
 # third party
 import numpy
@@ -27,6 +28,10 @@ import cache
 
 cache_size = 400*1024*1024  # 400 MB
 results = cache.Cache(cache_size)
+
+def log(msg):
+	sys.stderr.write(msg)
+	sys.stderr.write('\n')
 
 # mapping of some string representations to bool value
 bool_strings = {}
@@ -82,6 +87,7 @@ class Pipe(object):
 	switch_arg = None
 	required_args = {}
 	optional_args = {}
+	optional_defaults = {}
 	cache_file = True
 	def __init__(self, **kwargs):
 		self.parse_args(**kwargs)
@@ -149,13 +155,13 @@ class Pipe(object):
 
 		self.kwargs = {}
 		for name,converter in self.required_args.items():
-			if name in kwargs:
+			if name in kwargs and kwargs[name] is not None:
 				args_present.append(name)
 				self.kwargs[name] = converter(kwargs[name])
 			else:
 				args_missing.append(name)
 		for name, converter in self.optional_args.items():
-			if name in kwargs:
+			if name in kwargs and kwargs[name] is not None:
 				args_present.append(name)
 				self.kwargs[name] = converter(kwargs[name])
 
@@ -320,28 +326,30 @@ class Scale(Pipe):
 		return self.linearscale(input, scalemin, scalemax)
 
 class Format(Pipe):
-	optional_args = {'output_format': str}
-	optional_defaults = {'output_format': 'JPEG'}
-	file_formats = {'JPEG': '.jpg', 'GIF': '.gif', 'TIFF': '.tif', 'MRC': '.mrc'}
-	def run(self, input, output_format='JPEG'):
-		if output_format not in self.file_formats:
-			raise ValueError('output_format: %s' % (output_format,))
+	required_args = {'oformat': str}
+	file_formats = {'JPEG': '.jpg', 'GIF': '.gif', 'TIFF': '.tif', 'PNG': '.png', 'MRC': '.mrc'}
+	def run(self, input, oformat):
+		if oformat not in self.file_formats:
+			raise ValueError('oformat: %s' % (oformat,))
 
-		if output_format == 'MRC':
+		if oformat == 'MRC':
 			s = self.run_mrc(input)
 		else:
-			s = self.run_pil(input, output_format)
+			s = self.run_pil(input, oformat)
 
 		return s
 
 	def run_mrc(self, input):
 		file_object = cStringIO.StringIO()
-		mrc.write(input, file_object)
+		pyami.mrc.write(input, file_object)
+		image_string = file_object.getvalue()
+		file_object.close()
+		return image_string
 
-	def run_pil(self, input, output_format):
+	def run_pil(self, input, oformat):
 		pil_image = scipy.misc.toimage(input)
 		file_object = cStringIO.StringIO()
-		pil_image.save(file_object, output_format)
+		pil_image.save(file_object, oformat)
 		image_string = file_object.getvalue()
 		file_object.close()
 		return image_string
@@ -350,10 +358,7 @@ class Format(Pipe):
 		self._dirname = None
 
 	def make_resultname(self):
-		if 'output_format' in self.kwargs:
-			format = self.kwargs['output_format']
-		else:
-			format = self.optional_defaults['output_format']
+		format = self.kwargs['oformat']
 		self._resultname = 'result' + self.file_formats[format]
 
 	def put_result(self, f, result):
@@ -377,19 +382,37 @@ def kwargs_to_pipeline(**kwargs):
 		try:
 			pipe = pipe_class(**kwargs)
 		except PipeDisabled:
-			print 'Pipe skipped: %s' % (pipe_class,)
 			continue
 		pipeline.append(pipe)
 	return tuple(pipeline)
 
+def help_string():
+	'''generate a help string to describe the available pipes'''
+	f = cStringIO.StringIO()
+	for pipe_class in pipe_order:
+		f.write('%s\n' % (pipe_class.__name__,))
+		if pipe_class.switch_arg:
+			f.write('  %s\n' % (pipe_class.switch_arg,))
+		if pipe_class.required_args:
+			for arg in pipe_class.required_args:
+				f.write('  %s\n' % (arg,))
+		if pipe_class.optional_args:
+			for arg in pipe_class.optional_args:
+				f.write('  %s (optional)\n' % (arg,))
+	result = f.getvalue()
+	f.close()
+	return result
+
 def process(**kwargs):
+	if 'help' in kwargs and kwargs['help']:
+		return help_string()
+
 	pipeline = kwargs_to_pipeline(**kwargs)
 
 	### find all or part of the pipeline result in the cache
 	n = len(pipeline)
 	for i in range(n):
 		done = pipeline[:n-i]
-		print 'Trying Get:', done
 		result = results.get(done)
 		if result is not None:
 			remain = pipeline[n-i:]
@@ -399,15 +422,11 @@ def process(**kwargs):
 		done = ()
 		remain = pipeline
 
-	print 'Done:', done
-
 	### finish the remainder of the pipeline
 	for pipe in remain:
-		print 'Running', pipe
+		log('Running %s' % (pipe,))
 		result = pipe(result)
 		done = done + (pipe,)
 		results.put(done, result)
 
 	return result
-
-
