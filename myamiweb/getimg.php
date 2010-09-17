@@ -114,53 +114,64 @@ if ($g) {
 	$nimgId = $leginondata->findImage($id, $preset);
 	list($res) = $leginondata->getFilename($nimgId['id']);
 	$filename = $res['filename'];
+	$filenamelen = strlen($filename);
+	$wx = imagesx($img);
+	$ypos=10;
+	$pixperchar=6;
+	$margin=10;
 	if ($displayfilename) {
-		imagestringshadow($img, 2, 10, 10, $filename, imagecolorallocate($img,255,255,255));
-	}
-	if ($displaysample) {
-		$projectdata = new project();
-		$info=$leginondata->getSessionInfo($sessionId);
-		$tag=$projectdata->getSample($info);
-		$margin=10;
-		$ypos=10;
-		$wx = imagesx($img);
-		$taglen = strlen($tag);
-		$filenamelen = strlen($filename);
-		$tagoffset = $taglen*6+$margin;
-		$xpos = $wx - $tagoffset;
-		$pixperchar=6;
-		$strlength = ($taglen + $filenamelen ) * 6 + 2 * $margin + 5;
-		if ($wx<$strlength) {
-			// --- display sample 12 pix under, if filename is too long
+		$filenamepixlen = $filenamelen * $pixperchar;
+		imagestringshadow($img, 2, 10, $ypos, $filename, imagecolorallocate($img,255,255,255));
+		// --- check if filename string fits in imagewidth --- //
+		if ($filenamepixlen>$wx) {
 			$ypos+=12;
-			// --- check if filename string fits in imagewidth --- //
-			$filenamepixlen = $filenamelen * $pixperchar;
-			if ($filenamepixlen>$wx) {
 			// --- display rest of filename --- //
 			$strlen = -(int)(($filenamepixlen-$wx)/$pixperchar+2);
 			$subfilename=substr($filename, $strlen);
 			imagestringshadow($img, 2, 10, $ypos, $subfilename, imagecolorallocate($img,255,255,255));
-			$ypos+=12;
-			}
+			// --- display sample 12 pix under, if filename is too long
 		}
-		$tagstrlen = $taglen*$pixperchar + 2 * $margin + 5;
-		$xpos = 5;
+	} else {
+		$filenamelen = 0;
+	}
+	if ($displaysample & SAMPLE_TRACK) {
+		$projectdata = new project();
+		$info=$leginondata->getSessionInfo($sessionId);
+		$tag=$projectdata->getSample($info);
+		$taglen = strlen($tag);
+		$strlength = ($taglen + $filenamelen ) * 6 + 2 * $margin;
+		if ($filenamelen*$pixperchar < $wx && $strlength < $wx) {
+			$tagoffset = $taglen*$pixperchar+$margin;
+			$xpos = $wx - $tagoffset;
+		} else {
+			$ypos+=12;
+			$xpos = $margin / 2;
+		}
+		// Wrap sample tag string by syntext
+		$tagstrlen = $taglen*$pixperchar + 2 * $margin;
+		$tagparsers = array(' ','-',',','_','#','+','%','(');
 		while ($tagstrlen > $wx) {
-			$tagbits = explode(' ',$tag);
+			foreach ($tagparsers as $parser) {
+				$tagbits = explode($parser,$tag);
+				if (count($tagbits) > 1 && strlen($tagbits[0])*$pixperchar+2*$margin <= $wx) break;
+			}
 			$tagbitscopy = $tagbits;
 			$tagbitlens = array();
 			$tagrunninglength = array();
 			foreach ($tagbits as $ti=>$t) {
 				$tagbitlens[] = strlen($t);
-				$tagrunninglength[] = (array_sum($tagbitlens)+$ti)*$pixperchar + 2 * $margin + 5;
+				$tagrunninglength[] = (array_sum($tagbitlens)+$ti)*$pixperchar + 2 * $margin;
 				if ($tagrunninglength[$ti] > $wx) break;
 			}
-				$tagline = implode(' ',array_slice($tagbitscopy,0,$ti));
-				imagestringshadow($img, 2, $xpos, $ypos, $tagline, imagecolorallocate($img,255,255,255));
-				$tag = substr($tag,strlen($tagline));
-				$taglen = strlen($tag);
-				$tagstrlen = $taglen*$pixperchar + 2 * $margin + 5;
-				$ypos+=12;
+			$tagline = implode($parser,array_slice($tagbitscopy,0,$ti));
+			if (strlen($tagline) * $pixperchar + 2 * $margin > $wx) continue;
+			// append parser if not the last item
+			$tagline = $tagline.$parser;
+			imagestringshadow($img, 2, $xpos, $ypos, $tagline, imagecolorallocate($img,255,255,255));
+			$tag = substr($tag,strlen($tagline));
+			$taglen = strlen($tag);
+			$tagstrlen = $taglen*$pixperchar + 2 * $margin;
+			$ypos+=12;
 		}
 		imagestringshadow($img, 2, $xpos, $ypos, $tag, imagecolorallocate($img,255,255,255));
 	}
