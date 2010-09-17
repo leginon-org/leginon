@@ -142,19 +142,18 @@ class WebServerTester {
 	
 		// read the contents of the file into an array
 		$i = 0;
-		while(!feof($fileHandle)){
-			$fileContent[$i] = fgets($fileHandle);
+		while($fileContent[$i] = fgets($fileHandle)){
 			$i++;
 		}
 		fclose($fileHandle);
-	
+			
 		//Check the last entry to make sure it is not blank
 		$lastLine = $fileContent[$i-1];
 
 		// The last line should be the php close tag, anything else is unacceptable.
-		if ($lastLine != "?>")
+		if ($lastLine != "?>" && $lastLine != "?>\n")
 		{
-			throw new Exception("!!! WARNING !!! The final line of your config.php file ($lastLine) may cause images to not be displayed properly. Please remove any blank lines that occur after the final  tag.");
+			throw new Exception("!!! WARNING !!! The final line of your config.php file ($lastLine) may cause images to not be displayed properly. Please remove any blank lines that occur after the final tag.");
 		}
 		
 		return true;
