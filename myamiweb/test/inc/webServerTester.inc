@@ -151,7 +151,8 @@ class WebServerTester {
 		$lastLine = $fileContent[$i-1];
 
 		// The last line should be the php close tag, anything else is unacceptable.
-		if ($lastLine != "?>" && $lastLine != "?>\n")
+		$lastLine = trim($lastLine);
+		if ($lastLine != "?>")
 		{
 			throw new Exception("!!! WARNING !!! The final line of your config.php file ($lastLine) may cause images to not be displayed properly. Please remove any blank lines that occur after the final tag.");
 		}
