@@ -81,14 +81,14 @@ def parse_argv():
 
 def run():
 	kwargs = parse_argv()
-	if kwargs['server_host'] is None:
-		client = SimpleClient()
-	else:
-		if kwargs['server_port'] is None:
-			port = utility.REDUX_PORT
-		else:
+	if 'server_host' in kwargs and kwargs['server_host']:
+		if 'server_port' in kwargs and kwargs['server_port']:
 			port = int(kwargs['server_port'])
+		else:
+			port = utility.REDUX_PORT
 		client = NetworkClient(kwargs['server_host'], port)
+	else:
+		client = SimpleClient()
 
 	if 'request' in kwargs and kwargs['request']:
 		result = client.process_request(kwargs['request'])
