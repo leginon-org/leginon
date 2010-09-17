@@ -633,7 +633,7 @@ class CheckPackages(object):
         # TODO: use the current working dir (os.getcwd()) to find the path to myami
         # so this file does not need to live in myami/install forever. 
         os.chdir("../appion/")
-        output = self.runCommand('check.sh')
+        output = self.runCommand('./check.sh')
         os.chdir("../install/")
 
         stdoutdata = output[0]
