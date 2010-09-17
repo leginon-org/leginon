@@ -1,9 +1,9 @@
 from distutils.core import setup
 
 setup(
-	name='JImS',
-	packages=['jims'],
-	package_dir={'jims': ''},
-	scripts=['bin/jimsd'],
+	name='redux',
+	packages=['redux'],
+	package_dir={'redux': ''},
+	scripts=['bin/reduxd'],
 )
 

@@ -1,5 +1,5 @@
-For now, this is called JImS (Jim's Image Server)
-That's dumb, so I'll rename it later.
+
+redux
 
 The idea is to have a server that will read raw MRC files and feed them
 to clients who are requesting various operations be done on them:

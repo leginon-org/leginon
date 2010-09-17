@@ -6,7 +6,7 @@ import utility
 import logging
 
 ### set up logging
-logger = logging.getLogger('jims')
+logger = logging.getLogger('redux')
 logger.setLevel(logging.DEBUG)
 stderr_handler = logging.StreamHandler()
 logger.addHandler(stderr_handler)
@@ -47,4 +47,4 @@ def test_request():
 	print result
 
 if __name__ == '__main__':
-	start_server('', utility.JIMS_PORT)
+	start_server('', utility.REDUX_PORT)

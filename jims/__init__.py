@@ -1,1 +1,1 @@
-# this is __init__.py for jims package
+# this is __init__.py for redux package

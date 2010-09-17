@@ -4,7 +4,7 @@ import sys
 import socket
 import utility
 from optparse import OptionParser
-import jims.core
+import redux.core
 
 class Client(object):
 	def process_request(self, request):
@@ -13,7 +13,7 @@ class Client(object):
 		raise NotImplementedError()
 
 class NetworkClient(Client):
-	def __init__(self, host, port=utility.JIMS_PORT):
+	def __init__(self, host, port=utility.REDUX_PORT):
 		self.host = host
 		self.port = port
 
@@ -39,7 +39,7 @@ class SimpleClient(Client):
 		return self.process_kwargs(**kwargs)
 
 	def process_kwargs(self, **kwargs):
-		return jims.core.process(**kwargs)
+		return redux.core.process(**kwargs)
 
 
 def add_option(parser, optname, help):
@@ -49,7 +49,7 @@ def add_option(parser, optname, help):
 
 def parse_argv():
 	parser = OptionParser()
-	for pipe in jims.core.pipe_order:
+	for pipe in redux.core.pipe_order:
 		pipe_name = pipe.__name__
 		if pipe.switch_arg:
 			help = '%s: boolean switch to turn it on' % (pipe_name,)
@@ -64,8 +64,8 @@ def parse_argv():
 				add_option(parser, arg, help)
 
 	add_option(parser, 'request', 'full request as a single URL option string')
-	add_option(parser, 'server_host', 'jims server host name (if not given, will start built-in jims processor)')
-	add_option(parser, 'server_port', 'jims server port (if not given, will use default port)')
+	add_option(parser, 'server_host', 'redux server host name (if not given, will start built-in redux processor)')
+	add_option(parser, 'server_port', 'redux server port (if not given, will use default port)')
 
 	(options, args) = parser.parse_args()
 
@@ -85,7 +85,7 @@ def run():
 		client = SimpleClient()
 	else:
 		if kwargs['server_port'] is None:
-			port = utility.JIMS_PORT
+			port = utility.REDUX_PORT
 		else:
 			port = kwargs['server_port']
 		client = NetworkClient(kwargs['server_host'], port)

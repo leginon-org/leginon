@@ -77,7 +77,7 @@ class Cache(pyami.resultcache.ResultCache):
 		return path
 
 	def cache_path(self):
-		return '/tmp/jims'
+		return '/tmp/redux'
 
 	def pipeline_path(self, pipeline):
 		parts = [pipe.dirname() for pipe in pipeline]

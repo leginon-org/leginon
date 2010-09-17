@@ -5,7 +5,7 @@ functions useful to either client or server
 import itertools
 
 ## Server accepts connections on this port
-JIMS_PORT = 55123
+REDUX_PORT = 55123
 
 def request_to_kwargs(request):
 	'''convert request string into keyword args'''
