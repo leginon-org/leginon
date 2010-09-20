@@ -50,6 +50,9 @@ noderegistry.registerNodeClass(RaptorProcessor,classtype)
 from matlabtargetfinder import MatlabTargetFinder
 noderegistry.registerNodeClass(MatlabTargetFinder,classtype)
 
+from testtargetfinder import TestTargetFinder
+noderegistry.registerNodeClass(TestTargetFinder,classtype)
+
 from dtfinder import DTFinder
 noderegistry.registerNodeClass(DTFinder,classtype)
 

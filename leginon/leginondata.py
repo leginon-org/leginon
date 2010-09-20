@@ -1255,7 +1255,15 @@ class ClickTargetFinderSettingsData(TargetFinderSettingsData):
 class MatlabTargetFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
+			('test image', str),
 			('module path', str),
+		)
+	typemap = classmethod(typemap)
+
+class TestTargetFinderSettingsData(TargetFinderSettingsData):
+	def typemap(cls):
+		return TargetFinderSettingsData.typemap() + (
+			('test image', str),
 		)
 	typemap = classmethod(typemap)
 
