@@ -18,12 +18,18 @@ require "inc/appionloop.inc";
 /**
  * Handle Particle pick Label
  **/
+if (count($_POST) == 0) unset($_SESSION['picklabels']);
 if ($_POST['addpicklabel']) {
 	// --- check id label exists --- //
 	$picklabel = trim($_POST['picklabel']);
 	$picklabels = $_SESSION['picklabels'];
-	if (!in_array($picklabel, $picklabels) && count($picklabels)<8) {
-		$_SESSION['picklabels'][]=$picklabel;
+	$editrunname = $_POST['editrunname'];
+	if (empty($_POST['editrunlabels']) && ($picklabel==$editrunname))
+		createManualPickerForm('Unlabeled Old Particle Pick is automatically labeled by its runname');
+	else {
+		if (!in_array($picklabel, $picklabels) && count($picklabels)<8) {
+			$_SESSION['picklabels'][]=$picklabel;
+		}
 	}
 }
 if ($_POST['delpicklabel']) {
@@ -96,7 +102,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 	$lastrunnumber = $particle->getLastRunNumberForType($sessionId,'ApSelectionRunData','name'); 
   $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'manrun'.($lastrunnumber+1);
   $presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
-  $prtlrunval = ($_POST['pickrunid']) ? $_POST['pickrunid'] : '';
+  $prtlrunval = ($_POST['editrunid']) ? $_POST['editrunid'] : '';
   $testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
   $testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
   $testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
@@ -115,16 +121,46 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 	</p>
 <?php
 	$picklabels = (array)$_SESSION['picklabels'];
+		
 	if ($picklabels) {
 		echo '<input type="hidden" name="delpicklabel" value="1">';
 	}
 	$labeldata=array();
 	$pick_color_index=0;
+	$editrunlabels = array();
+	if (is_numeric($prtlrunval) && $prtlrunval > 0) {
+		$editrunparams = $particle->getSelectionParams($prtlrunval);
+		
+		$editrunlabelinfos = $particle->getParticleLabels($prtlrunval); 
+		if (is_array($editrunlabelinfos)) {
+			// old run without labels will be automatically assigned
+			// therefore better not to use it.
+			$editrunname = $editrunparams[0]['name'];
+			if (empty($editrunlabelinfos) && in_array($editrunname,(array) $picklabels)) {
+				$picklabels = array_diff($picklabels,array($editrunname));
+				$_SESSION['picklabels'] = array_diff($_SESSION['picklabels'],array($editrunname));
+				echo "<font color=red> Label identical to unlabeled editing pick runname removed </font>";
+			}
+			foreach ($editrunlabelinfos as $info)
+				$editrunlabels[] = $info['label'];
+			$oldlabels = implode('|--|',$editrunlabels);
+			echo '<input type="hidden" name="editrunpicklabels" value="'.$oldlabels.'">';
+			$picklabels = array_unique(array_merge($picklabels,$editrunlabels));
+		}
+	}
+	// Show available labels in different colors
 	foreach((array)$picklabels as $k=>$picklabel) {
 		$labelrow = array();
 		$labelrow[] = $picklabel;
-		$labelrow[] = '<img alt="cross" src="../getimgtarget.php?target=cross2&c='.$pick_color_index++.'">';
-		$labelrow[] = '<input style="font-size:9px" type="submit" name="'.$k.'i" value="Del">';
+		$labelrow[] = '<img alt="cross" src="../getimgtarget.php?target=cross2&c='
+			.$pick_color_index++.'">';
+		if (!in_array($picklabel,$editrunlabels))
+			$labelrow[] = '<input style="font-size:9px" type="submit" 
+				name="'.$k.'i" value="Del">';
+		else {
+			// Don't allow deletion of labels from pick run to be edited
+			$labelrow[] = '(from old picks)';
+		}
 		$labeldata[] = $labelrow;
 	}
 	echo array2table($labeldata);
@@ -132,11 +168,11 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 
   if (!$prtlrunIds) {
     echo"<font COLOR='RED'><B>No Particles for this Session</B></font>\n";
-    echo"<input type='HIDDEN' NAME='pickrunid' VALUE='None'>\n";
+    echo"<input type='HIDDEN' NAME='editrunid' VALUE='None'>\n";
   }
   else {
     echo "<br />Edit Particle Picks:
-    <SELECT NAME='pickrunid'>\n";
+    <SELECT NAME='editrunid' onchange=submit()>\n";
     echo "<OPTION VALUE='None'>None</OPTION>";
     foreach ($prtlrunIds as $prtlrun){
       $prtlrunId=$prtlrun['DEF_id'];
@@ -145,11 +181,16 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
       $totprtls=commafy($prtlstats['totparticles']);
       echo "<OPTION VALUE='$prtlrunId'";
       // select previously set prtl on resubmit
-      if ($prtlrunval==$prtlrunId) echo " SELECTED";
+      if ($prtlrunval==$prtlrunId) {
+				$editrunname = $runname;
+				echo " SELECTED";
+			}
       echo">$runname ($totprtls prtls)</OPTION>\n";
     }
     echo "</SELECT>\n";
+    echo"<input type='HIDDEN' NAME='editrunname' VALUE='".$editrunname."'>\n";
   }
+	// pick and image parameters
   $diam = ($_POST['diam']) ? $_POST['diam'] : "";
   echo "<TD CLASS='tablebg'>\n";
   echo "<b>Particle Diameter:</b><br />\n";
@@ -174,26 +215,17 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
     <br /><br />";    
   createParticleLoopTable(-1, -1);
   echo "
-    </TD>
-  </tr>
-  <TR>
-    <TD COLSPAN='2' ALIGN='CENTER'><hr>";
-  /*  <input type='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
-    Test these settings on image:
-    <input type='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
-    <HR>
-    </TD>
-  </tr>
-  <TR>
-    <TD COLSPAN='2' ALIGN='CENTER'>";
-	*/
+		</TD>
+		</tr>
+		<TR>
+		<TD COLSPAN='2' ALIGN='CENTER'><hr>";
 	echo getSubmitForm("Run ManualPicker", false, true);
   echo "</TD>
-  </tr>
-  </table>
-  </CENTER>
-  </FORM>
-";
+		</tr>
+		</table>
+		</CENTER>
+		</FORM>
+	";
 
 	echo appionRef();
 
@@ -220,9 +252,9 @@ function runManualPicker() {
     exit;
   }
   $command .= $partcommand;
-  $pickrunid=$_POST['pickrunid'];
-  if ($pickrunid != 'None') {
-    $command .= " --pickrunid=$pickrunid";
+  $editrunid=$_POST['editrunid'];
+  if ($editrunid != 'None') {
+    $command .= " --pickrunid=$editrunid";
   }
 
   $shape=$_POST['shape'];
@@ -235,38 +267,14 @@ function runManualPicker() {
     $command .= " --shapesize=$shapesize";
   } 
 
-	foreach ((array)$_SESSION['picklabels'] as $picklabel) {
-    $command .= " --label=$picklabel";
+	$oldlabels = explode('|--|',$_POST['editrunpicklabels']);
+	$picklabels = array_unique(array_merge((array)$_SESSION['picklabels'],$oldlabels));
+	foreach ((array)$picklabels as $picklabel) {
+		if (strlen($picklabel))
+			$command .= " --label=$picklabel";
 	}
 
-  if ($_POST['testimage']=="on") {
-    if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
-  }
-
-  if ($testimage && $_POST['process']=="Run ManualPicker") {
-    $prefix =  "source /ami/sw/ami.csh;";
-    $prefix .= "source /ami/sw/share/python/usepython.csh cvs32;";
-    $cmd = "$prefix $command > manualpickerlog.txt";
-    $result=exec_over_ssh($host, $user, $password, $cmd, True);
-  }
-
-  if ($testimage) {
-  	$runname = $_POST['runname'];
-    	$outdir = $_POST[outdir];
-    	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$images = "<table width='600' border='0'>\n";
-	$images.= "<tr><td>\n";
-    	$images.= "<b>ManualPicker Command:</b><br />$command";
-	$results.= "</td></tr></table>\n";
-	$results.= "<br />\n";
-    	$testjpg=ereg_replace(".mrc","",$testimage);
-	$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
-	$ccclist=array();
-	$images.= writeTestResults($jpgimg,$ccclist);
-	createManualPickerForm(false,'Particle Selection Test Results','Particle Selection Test Results',$images);
-  }
-
-  else processing_header("Particle Selection Results","Particle Selection Results");
+	processing_header("Particle Selection Results","Particle Selection Results");
 
 	echo appionRef();
 
