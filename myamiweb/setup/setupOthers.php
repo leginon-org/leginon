@@ -415,38 +415,6 @@ require_once('../inc/formValidator.php');
 		?> /><br /><br />
 		<br />
 		
-		<h3>Do you want to use Appion wrapper?</h3>
-		<p>Note: Need more discription.</p>
-		<input type="radio" name="use_appion_wrapper" value="true" 
-		<?php 
-			if($_POST){
-				($_POST['processing'] == 'true') ? ($_POST['use_appion_wrapper'] == 'true')? print("checked='yes'") : print("") : print("disabled");
-			}else{
-				($update) ? (defined("USE_APPION_WRAPPER") && USE_APPION_WRAPPER)? print("checked='yes'") : print("") : print("disabled"); 
-			}
-		?>
-			onclick="useWrapper(this)" />&nbsp;&nbsp;YES<br />
-		<input type="radio" name="use_appion_wrapper" value="false" 
-		<?php 
-			if($_POST){
-				($_POST['processing'] == 'true') ? ($_POST['use_appion_wrapper'] == 'true')? print("") : print("checked='yes'") : print("checked='yes' disabled");
-			}else{
-				($update) ? (defined("USE_APPION_WRAPPER") && USE_APPION_WRAPPER)? print("") : print("checked='yes'") : print("disabled checked='yes'"); 
-			}
-		?>
-			onclick="useWrapper(this)" />&nbsp;&nbsp;NO<br />
-		
-		<p>Example : /sw/bin/appion  </p>
-		<div id="error"><?php if($errMsg['appion_wrapper_path']) echo $errMsg['appion_wrapper_path']; ?></div>
-		<input type="text" size=25 name="appion_wrapper_path" 
-		<?php 
-			if($_POST){
-				($_POST['processing'] == 'true') ? print("value='".$_POST['appion_wrapper_path']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
-			}else{
-				($update && USE_APPION_WRAPPER) ? print("value='".APPION_WRAPPER_PATH."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
-			}
-		?> /><br /><br />
-				
 		<input type="submit" value="NEXT" />
 	</form>
 	
