@@ -122,21 +122,26 @@ foreach ($axes as $axis) {
 	$flvfile = $tomogram['path']."/minitomo".$axes[0].".flv";
 	if (file_exists($flvfile)) {
 		echo "<table><tr><td>Projection</td><td>Slicing Through</td></tr>";
-			$flvfile = $tomogram['path']."/minitomo".$axis.".flv";
-			$projfile = $tomogram['path']."/projection".$axis.".jpg";
-			if (file_exists($flvfile)) {
-				if ($size=getflvsize($flvfile)) {
-					list($flvwidth, $flvheight)=$size;
-				}
-				$maxcolwidth = 400;
-				echo "<tr><td>";
+		$flvfile = $tomogram['path']."/minitomo".$axis.".flv";
+		$projfile = $tomogram['path']."/projection".$axis.".jpg";
+		if (file_exists($flvfile)) {
+			if ($size=getflvsize($flvfile)) {
+				list($flvwidth, $flvheight)=$size;
+			}
+			$maxcolwidth = 400;
+			echo "<tr><td>";
+			if ($flvwidth && $flvheight) {
 				$imagesizes = getimagesize($projfile);
 				$colwidth = ($maxcolwidth < $flvwidth) ? $maxcolwidth : $flvwidth;
 				$rowheight = $colwidth * $flvheight / $flvwidth;
-				echo "<img src='loadimg.php?filename=$projfile&width=".$colwidth."' width='".$colwidth."'>";
-				echo "</td><td>";
-				echo '<object type="application/x-shockwave-flash" data="'
-					.$swfstyle.'" width="'.$colwidth.'" height="'.$rowheight.'" >
+			} else {
+				$colwidth = 100;
+				$rowheight = 100;
+			}
+			echo "<img src='loadimg.php?filename=$projfile&width=".$colwidth."' width='".$colwidth."'>";
+			echo "</td><td>";
+			echo '<object type="application/x-shockwave-flash" data="'
+				.$swfstyle.'" width="'.$colwidth.'" height="'.$rowheight.'" >
 				<param name="allowScriptAccess" value="sameDomain" />
 				<param name="movie" value="'.$swfstyle.'" />
 				<param name="quality" value="high" />
@@ -153,7 +158,7 @@ foreach ($axes as $axis) {
 					showPlayListButtons: false,
 					}" />
 				</object>';
-				echo "</td></tr>";	
+			echo "</td></tr>";
 		}
 	}
 	echo "</table>";
