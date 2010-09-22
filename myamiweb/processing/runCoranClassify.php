@@ -240,7 +240,7 @@ function runSpiderCoranClassify() {
 	$stackparams=$particle->getAlignStackParams($stackid);
 	$boxrad = $stackparams['pixelsize'] * $stackparams['boxsize'];
 	if ($maskrad > $boxrad)
-		createSpiderCoranClassifyForm("<b>ERROR:</b> Mask radius too large! $maskrad > $boxrad ".print_r($stackparams));
+		createSpiderCoranClassifyForm("<b>ERROR:</b> Mask radius too large! $maskrad > $boxrad ");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
