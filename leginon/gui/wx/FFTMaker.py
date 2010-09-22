@@ -52,7 +52,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
 											id=leginon.gui.wx.ToolBar.ID_STOP)
 		self.addImagePanel()
-		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SHAPE_FOUND, self.onShapeFound, self.imagepanel)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -74,9 +74,9 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		self.center = center
 
-	def onEllipseFound(self, evt):
+	def onShapeFound(self, evt):
 		centers = [(self.center['y'],self.center['x']),]
-		idcevt = leginon.gui.wx.ImagePanelTools.EllipseNewCenterEvent(self.imagepanel, centers)
+		idcevt = leginon.gui.wx.ImagePanelTools.ShapeNewCenterEvent(self.imagepanel, centers)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		threading.Thread(target=self.node.estimateAstigmation, args=(evt.params,)).start()
 

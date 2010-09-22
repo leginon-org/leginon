@@ -23,7 +23,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		leginon.gui.wx.TargetFinder.Panel.initialize(self)
 		self.SettingsDialog = SettingsDialog
 
-		self.imagepanel = leginon.gui.wx.TargetPanel.EllipseTargetImagePanel(self, -1)
+		self.imagepanel = leginon.gui.wx.TargetPanel.ShapeTargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTypeTool('templateA', display=True, settings=True)
@@ -38,7 +38,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTargetTool('meter', target=True)
 		self.imagepanel.selectiontool.setDisplayed('meter', True)
 
-		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
+		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_SHAPE_FOUND, self.onShapeFound, self.imagepanel)
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(1)
@@ -74,8 +74,8 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onEllipseFound(self, evt):
-		threading.Thread(target=self.node.autoEllipseCenter, args=(evt.params,)).start()
+	def onShapeFound(self, evt):
+		threading.Thread(target=self.node.autoShapeCenter, args=(evt.params,)).start()
 
 class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
