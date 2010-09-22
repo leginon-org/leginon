@@ -1976,6 +1976,7 @@ class RasterTargetFilterSettingsData(TargetFilterSettingsData):
 			('ellipse angle', float),
 			('ellipse a', float),
 			('ellipse b', float),
+			('limiting shape', str),
 		)
 	typemap = classmethod(typemap)
 

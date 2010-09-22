@@ -302,7 +302,7 @@ class DTFinder(targetfinder.TargetFinder):
 			self.publishTargets(imdata, targettype, targetlist)
 		self.setStatus('idle')
 
-	def autoEllipseCenter(self,params):
+	def autoShapeCenter(self,params):
 		centers = []
 		disptarget = params['center'][0],params['center'][1]
 		centers.append(disptarget)

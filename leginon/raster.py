@@ -60,9 +60,9 @@ def createIndices(shape):
 	indices = zip(ind[0].flat, ind[1].flat)
 	return indices
 
-def createIndices2(a,b,angle,offset=False,odd=False,tiltoffset=(0,0)):
+def createIndices2(a,b,angle,limiting_shape='ellipse',offset=False,odd=False,tiltoffset=(0,0)):
 	'''
-  indices enclosed by an ellipse
+  indices enclosed by an ellipse or rotated rectangle
 	'''
 	offsetvalues = (0.5,0.25)
 	cos = math.cos(angle)
@@ -103,10 +103,18 @@ def createIndices2(a,b,angle,offset=False,odd=False,tiltoffset=(0,0)):
 					testcol = col - deltacol
 				else:
 					testcol = col
-				if (testcol/a)**2+(testrow/b)**2 <= 1:
-					goodindices.append(index)
-					good = True
-					break
+				if limiting_shape == 'ellipse':
+					# ellipse shape
+					if (testcol/a)**2+(testrow/b)**2 <= 1:
+						goodindices.append(index)
+						good = True
+						break
+				elif limiting_shape == 'rectangle':
+					# rectangular shape
+					if abs(testcol) <= a and abs(testrow) <= b:
+						goodindices.append(index)
+						good = True
+						break
 			if good:
 					break
 	return goodindices

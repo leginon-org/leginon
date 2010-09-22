@@ -22,6 +22,7 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		'raster overlap': 0.0,
 		'raster preset': None,
 		'raster offset': False,
+		'limiting shape': 'ellipse',
 		'ellipse angle': 0.0,
 		'ellipse a': 1.0,
 		'ellipse b': 1.0,
@@ -106,12 +107,15 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		angle = math.degrees(angle)
 		return spacing,angle, p2
 
-	def autoRasterEllipse(self,params):
+	def autoRasterShape(self,params):
 		spacing = self.settings['raster spacing']
 		a2 = params['a'] * 2 / spacing
 		b2 = params['b'] * 2 / spacing
 		angledeg = int(round(params['alpha'] * 180 / 3.14159))
 		self.logger.info('a2 %.1f, b2 %.1f, angle %d' % (a2,b2,angledeg))
+		self.settings['limiting shape'] = params['shape']
+		## these settings are still called ellipse for historical reason although
+		## they can be half width/height of a rectangle
 		self.settings['ellipse a'] = a2
 		self.settings['ellipse b'] = b2
 		self.settings['ellipse angle'] = angledeg
@@ -119,9 +123,10 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		self.onTest()
 		return a2, b2, angledeg
 
-	def getEllipseParams(self):
+	def getShapeParams(self):
 		params = {}
 		spacing = self.settings['raster spacing']
+		params['shape'] = self.settings['limiting shape']
 		params['a'] = self.settings['ellipse a'] * spacing / 2.0
 		params['b'] = self.settings['ellipse b'] * spacing / 2.0
 		params['alpha'] = math.radians(self.settings['ellipse angle'])
@@ -148,7 +153,7 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		# create raster
 		for target in targetlist:
 			tiltoffset = self.researchPattern(target)
-			self.goodindices = raster.createIndices2(limita,limitb,limitanglerad-anglerad,self.settings['raster offset'],self.is_odd,tiltoffset)
+			self.goodindices = raster.createIndices2(limita,limitb,limitanglerad-anglerad,self.settings['limiting shape'],self.settings['raster offset'],self.is_odd,tiltoffset)
 			self.savePattern(target)
 			oldtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 			self.targetdata = oldtarget
