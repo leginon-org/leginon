@@ -42,14 +42,14 @@ EVT_MEASUREMENT = wx.PyEventBinder(MeasurementEventType)
 ImageClickedEventType = wx.NewEventType()
 EVT_IMAGE_CLICKED = wx.PyEventBinder(ImageClickedEventType)
 
-EllipseFoundEventType = wx.NewEventType()
-EVT_ELLIPSE_FOUND = wx.PyEventBinder(EllipseFoundEventType)
+ShapeFoundEventType = wx.NewEventType()
+EVT_SHAPE_FOUND = wx.PyEventBinder(ShapeFoundEventType)
 
-EllipseNewCenterEventType = wx.NewEventType()
-EVT_ELLIPSE_NEW_CENTER = wx.PyEventBinder(EllipseNewCenterEventType)
+ShapeNewCenterEventType = wx.NewEventType()
+EVT_SHAPE_NEW_CENTER = wx.PyEventBinder(ShapeNewCenterEventType)
 
-EllipseNewShapeEventType = wx.NewEventType()
-EVT_ELLIPSE_NEW_SHAPE = wx.PyEventBinder(EllipseNewShapeEventType)
+ShapeNewParamsEventType = wx.NewEventType()
+EVT_SHAPE_NEW_PARAMS = wx.PyEventBinder(ShapeNewParamsEventType)
 
 ImageNewPixelSizeEventType = wx.NewEventType()
 EVT_IMAGE_NEW_PIXELSIZE = wx.PyEventBinder(ImageNewPixelSizeEventType)
@@ -86,22 +86,22 @@ class ImageClickedEvent(wx.PyCommandEvent):
 		self.xy = xy
 
 #--------------------
-class EllipseFoundEvent(wx.PyCommandEvent):
+class ShapeFoundEvent(wx.PyCommandEvent):
 	def __init__(self, source, params):
-		wx.PyCommandEvent.__init__(self, EllipseFoundEventType, source.GetId())
+		wx.PyCommandEvent.__init__(self, ShapeFoundEventType, source.GetId())
 		self.SetEventObject(source)
 		self.params = params
 
 #--------------------
-class EllipseNewCenterEvent(wx.PyCommandEvent):
+class ShapeNewCenterEvent(wx.PyCommandEvent):
 	def __init__(self, source, centers):
-		wx.PyCommandEvent.__init__(self, EllipseNewCenterEventType, source.GetId())
+		wx.PyCommandEvent.__init__(self, ShapeNewCenterEventType, source.GetId())
 		self.SetEventObject(source)
 		self.centers = centers
 
-class EllipseNewShapeEvent(wx.PyCommandEvent):
+class ShapeNewParamsEvent(wx.PyCommandEvent):
 	def __init__(self, source, params):
-		wx.PyCommandEvent.__init__(self, EllipseNewShapeEventType, source.GetId())
+		wx.PyCommandEvent.__init__(self, ShapeNewParamsEventType, source.GetId())
 		self.SetEventObject(source)
 		self.params = params
 
@@ -342,6 +342,10 @@ class ImageTool(object):
 		pass
 
 	#--------------------
+	def OnShiftLeftClick(self, evt):
+		pass
+
+	#--------------------
 	def OnRightClick(self, evt):
 		pass
 
@@ -369,31 +373,32 @@ class ImageTool(object):
 ##
 ##################################
 
-class RecordMotionTool(ImageTool):
+class FitShapeTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
 		bitmap = getBitmap('ellipse.png')
-		tooltip = 'Toggle Fit Ellipse'
+		tooltip = 'Toggle Fit Shape'
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip)
 		self.button.SetToggle(False)
 		self.start = None
 		self.xypath = []
-		self.ellipse = []
-		self.left_or_right = None
-		self.ellipse_params = None
-		self.ellipsepoint = None
-		self.ellipsepointaxis = None
-		self.ellipsepointangle = None
-		self.start_ellipse_params = None
+		self.shiftxypath = []
+		self.fitted_shape_points = []
+		self.leftisdown = False
+		self.shape_params = None
+		self.shapepoint = None
+		self.shapepointaxis = None
+		self.shapepointangle = None
+		self.start_shape_params = None
 		self.lastx = 0
 		self.lasty = 0
-		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_ELLIPSE_NEW_CENTER, self.onNewEllipseCenter, self.imagepanel)
-		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_ELLIPSE_NEW_SHAPE, self.onNewEllipseShape, self.imagepanel)
+		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_SHAPE_NEW_CENTER, self.onNewShapeCenter, self.imagepanel)
+		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_SHAPE_NEW_PARAMS, self.onNewShapeParams, self.imagepanel)
 
 	def OnLeftDown(self, evt):
 		if self.button.GetToggle():
-			self.left_or_right = 'left'
+			self.leftisdown = True
 			self.xypath = []
-			self.ellipse = []
+			self.fitted_shape_points = []
 			if self.start is not None:
 				x = evt.m_x #- self.imagepanel.offset[0]
 				y = evt.m_y #- self.imagepanel.offset[1]
@@ -403,39 +408,31 @@ class RecordMotionTool(ImageTool):
 
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
-			self.left_or_right = None
+			self.leftisdown = False
 			self.start = None
-			self.ellipse = self.ellipsePoints(self.xypath)
+			self.fitted_shape_points = self.ellipsePoints(self.xypath)
+			self.imagepanel.UpdateDrawing()
+
+	def OnShiftLeftClick(self, evt):
+		if not self.button.GetToggle():
+			return
+		self.leftisdown = False
+		self.shape_params['shape'] = 'rectangle'
+		x,y = self.imagepanel.view2image((evt.m_x, evt.m_y))
+		if len(self.shiftxypath) > 1:
+			self.shiftxypath = []
+		self.shiftxypath.append((x,y))
+		if len(self.shiftxypath) == 2:
+			self.rectanglePoints(self.shiftxypath)
+			self.fitted_shape_points = self.drawShape()
 			self.imagepanel.UpdateDrawing()
 
 	def distance(self, p1, p2):
 		return math.hypot(p2[0]-p1[0], p2[1]-p1[1])
 
-	def OnRightDown(self, evt):
-		if self.button.GetToggle():
-			if not self.ellipse_params:
-				return
-			self.left_or_right = 'right'
-			self.start = self.imagepanel.view2image((evt.m_x, evt.m_y))
-			self.start_ellipse_params = dict(self.ellipse_params)
-
-			# Find nearest key point of ellipse 
-			keypointaxes = pyami.ellipse.ellipseKeyPoints(**self.ellipse_params)
-			keypoints = keypointaxes.keys()
-			closestdist = self.distance(keypoints[0], self.start)
-			closestpoint = keypoints[0]
-			for point in keypoints[1:]:
-				dist = self.distance(self.start, point)
-				if dist < closestdist:
-					closestdist = dist
-					closestpoint = point
-			self.ellipsepoint = closestpoint
-			self.ellipsepointaxis = keypointaxes[closestpoint]['axis']
-			self.ellipsepointangle = keypointaxes[closestpoint]['angle']
-
 	def OnRightClick(self, evt):
 		if self.button.GetToggle():
-			self.left_or_right = None
+			self.leftisdown = Truee
 			self.start = None
 
 	def ellipsePoints(self, points):
@@ -447,97 +444,112 @@ class RecordMotionTool(ImageTool):
 		if params is None:
 			## ellipse not fit
 			return []
-		self.ellipse_params = params
-		return self.drawEllipse()
+		params['shape'] = 'ellipse'
+		self.shape_params = params
+		return self.drawShape()
 
-	def drawEllipse(self):
-		if len(set.difference(set(['a','b','alpha','center']),set(self.ellipse_params.keys()))) > 0:
+	def rectanglePoints(self,points):
+		if self.shape_params['center'] is None:
 			return
-		angleinc = 5 * 3.14159 / 180.0
-		ellipsepoints = pyami.ellipse.ellipsePoints(angleinc,  **self.ellipse_params)
-		idcevt = EllipseFoundEvent(self.imagepanel, self.ellipse_params)
-		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
-		return ellipsepoints
+		dx = []
+		dy = []
+		dx.append(points[0][0] - self.shape_params['center'][0])
+		dy.append(points[0][1] - self.shape_params['center'][1])
+		dx.append(points[1][0] - self.shape_params['center'][0])
+		dy.append(points[1][1] - self.shape_params['center'][1])
+		axy = (dx[0]+dx[1]) / 2 ,(dy[0]+dy[1]) / 2
+		bxy = (dx[0]-dx[1]) / 2 ,(dy[0]-dy[1]) / 2
+		self.shape_params['alpha'] = math.atan2(axy[1],axy[0])
+		self.shape_params['a'] = math.hypot(axy[0],axy[1])
+		self.shape_params['b'] = math.hypot(bxy[0],bxy[1])
+		return self.drawShape()
 
-	def updateEllipse(self, deltaparams):
+	def drawShape(self):
+		if len(set.difference(set(['a','b','alpha','center','shape']),set(self.shape_params.keys()))) > 0:
+			return
+		if self.shape_params['shape'] == 'ellipse':
+			angleinc = 5 * 3.14159 / 180.0
+			ellipse_params = self.shape_params.copy()
+			ellipse_params.pop('shape')
+			ellipsepoints = pyami.ellipse.ellipsePoints(angleinc,  **ellipse_params)
+			idcevt = ShapeFoundEvent(self.imagepanel, self.shape_params)
+			self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
+			return ellipsepoints
+		else:
+			if self.shape_params['shape'] == 'rectangle':
+				idcevt = ShapeFoundEvent(self.imagepanel, self.shape_params)
+				self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
+				x0, y0 = self.shape_params['center']
+				alpha = self.shape_params['alpha']
+				a = self.shape_params['a']
+				b = self.shape_params['b']
+				magnitude = math.hypot(a,b)
+				angle = math.atan2(a,b)
+				xa,ya = a * math.cos(alpha), a * math.sin(alpha)
+				xb,yb = b * math.cos(alpha - math.pi/2), b * math.sin(alpha - math.pi/2)
+				dx,dy = xa+xb, ya+yb 
+				x1 = x0 + dx
+				y1 = y0 + dy
+				x2 = x0 + dx * math.cos(2*angle) + dy * math.sin(2*angle) 
+				y2 = y0 + dy * math.cos(2*angle) - dx * math.sin(2*angle)
+				x3,y3 = x0-dx, y0-dy
+				x4,y4 = x0-(x2-x0), y0-(y2-y0)
+				polypoints = [(x1,y1),(x2,y2),(x3,y3),(x4,y4)]
+				return polypoints
+
+	def updateShape(self, deltaparams):
 		for key in ('a','b','alpha'):
 			if key in deltaparams:
-				self.ellipse_params[key] += deltaparams[key]
-		if 'center' in deltaprams:
-			oldcenter = self.ellipse_params['center']
+				self.shape_params[key] += deltaparams[key]
+		if 'shape' in deltaparams:
+				self.shape_params['shape'] = deltaparams['shape']
+		if 'center' in deltaparams:
+			oldcenter = self.shape_params['center']
 			dcenter = deltaparams['center']
 			newcenter = oldcenter[0] + dcenter[0], oldcenter[1] + dcenter[1]
-			self.ellipse_params['center'] = newcenter
-		self.drawEllipse()
+			self.shape_params['center'] = newcenter
+		self.drawShape()
 
-	def onNewEllipseShape(self, evt):
-		if self.ellipse_params is None:
+	def onNewShapeParams(self, evt):
+		if self.shape_params is None:
 			return
-		for key in ('a','b','alpha'):
+		for key in ('a','b','alpha','shape'):
 			if key in evt.params:
-				self.ellipse_params[key] = evt.params[key]
-		self.ellipse = self.drawEllipse()
+				self.shape_params[key] = evt.params[key]
+		self.fitted_shape_points = self.drawShape()
 		self.xypath = []
+		self.shiftxypath = []
 		self.imagepanel.UpdateDrawing()
 
-	def onNewEllipseCenter(self,evt):
-		if self.ellipse_params is None:
+	def onNewShapeCenter(self,evt):
+		if self.shape_params is None:
 			if evt.centers:
-				self.ellipse_params = {'center': numpy.array(evt.centers[0])}
+				self.shape_params = {'center': numpy.array(evt.centers[0])}
 			return
-		oldcenter = self.ellipse_params['center']
+		oldcenter = self.shape_params['center']
 		centers = []
 		distances = []
 		for center in evt.centers:
 			centers.append(center)
 			distances.append(self.distance(oldcenter,center))
 		closest_center = centers[distances.index(min(distances))]
-		# draw ellipse at the input center closest to the ellipse 
-		# made from the ellipse fit tool
-		if self.ellipse_params and list(oldcenter) != list(closest_center):
-			self.ellipse_params['center'][0] = closest_center[0]
-			self.ellipse_params['center'][1] = closest_center[1]
-			self.ellipse = self.drawEllipse()
+		# draw shape at the input center closest to the shape 
+		# made from the shape fit tool
+		if self.shape_params and list(oldcenter) != list(closest_center):
+			self.shape_params['center'][0] = closest_center[0]
+			self.shape_params['center'][1] = closest_center[1]
+			self.fitted_shape_points = self.drawShape()
 			self.xypath = []
+			self.shiftxypath = []
 			self.imagepanel.UpdateDrawing()
 
 	#--------------------
 	def OnMotion(self, evt, dc):
 		if self.button.GetToggle():
-			if self.left_or_right == 'left':
+			if self.leftisdown:
 				x,y = self.imagepanel.view2image((evt.m_x, evt.m_y))
 				self.xypath.append((x,y))
 				return True
-			elif self.left_or_right == 'right':
-				if not self.ellipse_params:
-					return False
-				# calculate distance dragged
-				x,y = self.imagepanel.view2image((evt.m_x, evt.m_y))
-				dx = x - self.start[0]
-				dy = y - self.start[1]
-				print ' XY', dx,dy
-				# calculate new key point
-				newellipseparams = dict(self.start_ellipse_params)
-				print 'AXIS', self.ellipsepointaxis
-				newx = self.ellipsepoint[0]+dx
-				newy = self.ellipsepoint[1]+dy
-				if self.ellipsepointaxis == 'center':
-					newellipseparams['center'] = newx,newy
-				else:
-					newvect = newx-newellipseparams['center'][0], newy-newellipseparams['center'][1]
-					newdist = math.hypot(*newvect)
-					newellipseparams[self.ellipsepointaxis] = newdist
-					newangle = math.atan2(*newvect)
-					while newangle < 0:
-						newangle += 2*math.pi
-					print 'pointangle', self.ellipsepointangle
-					print 'newangle', newangle
-					dangle = newangle - self.ellipsepointangle
-					print 'dangle', dangle
-					#newellipseparams['alpha'] += dangle
-				self.ellipse_params = newellipseparams
-				self.ellipse = self.drawEllipse()
-				self.imagepanel.UpdateDrawing()
 		return False
 
 	#--------------------
@@ -545,7 +557,8 @@ class RecordMotionTool(ImageTool):
 		if not value:
 			self.start = None
 			self.xypath = []
-			self.ellipse = []
+			self.shiftxypath = []
+			self.fitted_shape_points = []
 			self.imagepanel.UpdateDrawing()
 
 	def Draw(self, dc):
@@ -555,15 +568,16 @@ class RecordMotionTool(ImageTool):
 			scaledpoints = map(self.imagepanel.image2view, self.xypath)
 			if len(scaledpoints) > 1:
 				dc.DrawLines(scaledpoints)
-		if self.ellipse:
+		if self.shiftxypath:
+			dc.SetPen(wx.Pen(wx.RED, 3))
+			dc.SetBrush(wx.TRANSPARENT_BRUSH)
+			scaledpoints = map(self.imagepanel.image2view, self.shiftxypath)
+			dc.DrawPointList(scaledpoints)
+		if self.fitted_shape_points:
 			dc.SetPen(wx.Pen(wx.GREEN, 3))
 			dc.SetBrush(wx.TRANSPARENT_BRUSH)
-			polypoints = map(self.imagepanel.image2view, self.ellipse)
+			polypoints = map(self.imagepanel.image2view, self.fitted_shape_points)
 			dc.DrawPolygon(polypoints)
-
-##################################
-##
-##################################
 
 class ValueTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
