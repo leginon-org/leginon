@@ -104,7 +104,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		apDisplay.printMsg("rm -f *.hed *.img *.doc *.vol *.mrc *.spi *.log *~ *.pickle *.hist *.proj *.xmp *.sel *.basis *.original; rm -fr volume*")
+		apDisplay.printMsg("/bin/rm -f *.hed *.img *.doc *.vol *.mrc *.spi *.log *~ *.pickle *.hist *.proj *.xmp *.sel *.basis *.original; rm -fr volume*")
 		### check for missing and duplicate entries
 		#if self.params['alignid'] is None and self.params['clusterid'] is None:
 		#	apDisplay.printError("Please provide either --cluster-id or --align-id")

@@ -96,7 +96,7 @@ function submitJob($extra=False) {
 
 	// create appion directory & copy job file
 	$cmd = "mkdir -p $outdir;\n";
-	$cmd.= "cp $tmpjobfile $outdir/$jobfile;\n";
+	$cmd.= "/bin/cp $tmpjobfile $outdir/$jobfile;\n";
 	exec_over_ssh($_SERVER['SERVER_ADDR'], $user, $pass, $cmd, True);
 
 	$clusterdata->cluster_cmd($host, $user, $pass);
@@ -1015,9 +1015,9 @@ function writeJobFile ($extra=False) {
 		if ($euler2) $line.=" euler2=$euler2";
 		#if ($goodbad=='on') $line.=" goodbad";
 		$line.=" > refine".$i.".txt\n";
-		$line.="mv -v classes.".$i.".hed classes_eman.".$i.".hed\n";
+		$line.="/bin/mv -v classes.".$i.".hed classes_eman.".$i.".hed\n";
 		$line.="ln -s classes_eman.".$i.".hed classes.".$i.".hed\n";
-		$line.="mv -v classes.".$i.".img classes_eman.".$i.".img\n";
+		$line.="/bin/mv -v classes.".$i.".img classes_eman.".$i.".img\n";
 		$line.="ln -s classes_eman.".$i.".img classes.".$i.".img\n";
 		$line.="getProjEulers.py proj.img proj.$i.txt\n";
 		// if ref-free correllation analysis
@@ -1039,7 +1039,7 @@ function writeJobFile ($extra=False) {
 			}
 			if ($amask1) {
 				$line .= "volume threed.".$i."a.mrc $apix set=$xfiles\n";
-				$line .= "mv threed.".$i."a.mrc threed.".$i."a.coran.mrc\n";
+				$line .= "/bin/mv threed.".$i."a.mrc threed.".$i."a.coran.mrc\n";
 				$line .= "proc3d threed.".$i."a.coran.mrc threed.".$i."a.mrc automask2=$amask1,$amask2,$amask3\n";
 			}
 		}
@@ -1055,7 +1055,7 @@ function writeJobFile ($extra=False) {
 			if ($median=='on') $line.=" median";
 			if ($refine=='on') $line.=" refine";
 			$line.=" > eotest".$i.".txt\n";
-			$line.="mv -v fsc.eotest fsc.eotest.".$i."\n";
+			$line.="/bin/mv -v fsc.eotest fsc.eotest.".$i."\n";
 			if ($resfile_init) { 
 				$line.= C_APPION_BIN."getRes.pl $i $box $apix >> resolution.txt\n";
 			} else {
@@ -1071,7 +1071,7 @@ function writeJobFile ($extra=False) {
 			if ($affpropMP) $line .= " --minpart=$affpropMP";
 			$line .= "\n";
 		}
-		$line.="rm -fv cls*.lst\n";
+		$line.="/bin/rm -fv cls*.lst\n";
 		$ejob.= $line;
 	}
 

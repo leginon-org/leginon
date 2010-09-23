@@ -566,8 +566,8 @@ class frealignJob(appionScript.AppionScript):
 		f.write('cd %s\n' % iterdir)
 		f.write(cmd+"\n\n")
 		f.write("wc -l %s \n"%(combineparamfile))
-		f.write("rm -fv iter%03d.???\n"%(iternum))
-		f.write("rm -fv threed.%03da.???\n"%(iternum))
+		f.write("/bin/rm -fv iter%03d.???\n"%(iternum))
+		f.write("/bin/rm -fv threed.%03da.???\n"%(iternum))
 		time.sleep(0.05)
 		f.close()
 
@@ -581,9 +581,9 @@ class frealignJob(appionScript.AppionScript):
 		f.write('getRes.pl %d %d %.3f >> ../resolution.txt\n'%(iternum, self.boxsize, self.apix))
 
 		### move file down directory
-		f.write('cp -v threed.%03da.hed ..\n'%(iternum))
-		f.write('cp -v threed.%03da.img ..\n'%(iternum))
-		f.write('cp -v %s ..\n'%(combineparamfile))
+		f.write('/bin/cp -v threed.%03da.hed ..\n'%(iternum))
+		f.write('/bin/cp -v threed.%03da.img ..\n'%(iternum))
+		f.write('/bin/cp -v %s ..\n'%(combineparamfile))
 		time.sleep(0.05)
 		f.close()
 

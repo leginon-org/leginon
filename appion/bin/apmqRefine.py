@@ -282,10 +282,10 @@ class apmqRefineScript(appionScript.AppionScript):
 				shifted=True,
 			)
 			# rename class averages & variacnes for iteration
-			cmd="mv classes.hed classes.%d.hed;" % iter
-			cmd+="mv classes.img classes.%d.img;" % iter
-			cmd+="mv variances.hed variances.%d.hed;" % iter
-			cmd+="mv variances.img variances.%d.img;" % iter
+			cmd="/bin/mv classes.hed classes.%d.hed;" % iter
+			cmd+="/bin/mv classes.img classes.%d.img;" % iter
+			cmd+="/bin/mv variances.hed variances.%d.hed;" % iter
+			cmd+="/bin/mv variances.img variances.%d.img;" % iter
 			proc = subprocess.Popen(cmd, shell=True)
 			proc.wait()
 

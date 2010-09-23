@@ -286,7 +286,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f.write("## rundir: "+self.params['rundir']+"\n")
 		f.write("\n")
 		f.write("cd "+rundir+"\n")
-		f.write("rm -fv pbstempdir "+results+"\n")
+		f.write("/bin/rm -fv pbstempdir "+results+"\n")
 		f.write("ln -s $PBSREMOTEDIR pbstempdir\n")
 		f.write("cd $PBSREMOTEDIR\n")
 		f.write("tar xf "+rundir+"/particles.tar\n")

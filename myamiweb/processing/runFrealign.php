@@ -498,7 +498,7 @@ function submitJob($extra=False) {
 
 	// create appion directory & copy job file
 	$cmd = "mkdir -p $outdir;\n";
-	$cmd.= "cp $tmpjobfile $outdir/$jobfile;\n";
+	$cmd.= "/bin/cp $tmpjobfile $outdir/$jobfile;\n";
 	exec_over_ssh($_SERVER['SERVER_ADDR'], $user, $pass, $cmd, True);
 
 	$clusterdata->cluster_cmd($host, $user, $pass);

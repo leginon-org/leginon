@@ -430,7 +430,7 @@ def killVirtualFrameBuffer(port=None):
 				proc = subprocess.Popen(xvfbcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 				proc.wait()
 				### delete this file can cause problems with user permissions
-				rmxfile = "rm -fv /tmp/.X11-unix/X%d"%(port)
+				rmxfile = "/bin/rm -fv /tmp/.X11-unix/X%d"%(port)
 				proc = subprocess.Popen(rmxfile, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 				proc.wait()
 				apDisplay.printMsg("Killed Xvfb on port %d"%(port))

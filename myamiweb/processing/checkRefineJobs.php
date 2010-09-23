@@ -29,10 +29,10 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 	$javafunc.="  if (has_coran > 0) { \n";
 	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/coran.tar.gz '+outdir+'/.<br />')\n";
 	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/coran.tar.gz -C '+outdir+'<br />')\n";
-	$javafunc.="    newwindow.document.write('rm -vf '+outdir+'/coran.tar*<br />')\n";
+	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/coran.tar*<br />')\n";
 	$javafunc.="  } \n";
-	$javafunc.="    newwindow.document.write('rm -vf '+outdir+'/model.tar*<br />')\n";
-	$javafunc.="    newwindow.document.write('rm -vf '+outdir+'/results.tar*<br />')\n";
+	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/model.tar*<br />')\n";
+	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/results.tar*<br />')\n";
 	$javafunc.="    newwindow.document.write('echo done<br />')\n";
 	$javafunc.="    newwindow.document.write('<p>&nbsp;<br /></body></html>')\n";
 	$javafunc.="    newwindow.document.close()\n";

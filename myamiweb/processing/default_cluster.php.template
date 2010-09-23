@@ -95,7 +95,7 @@ class Cluster {
 		# that it the jobfile ran is put back to $outdir
 		# even if it is modified at the remote cluster
 		$path = formatEndPath($this->get_path());
-		$cpstr = "cp ".$path."\$PBS_JOBNAME .\n";
+		$cpstr = "/bin/cp ".$path."\$PBS_JOBNAME .\n";
 		return $cpstr;
 	}
 
@@ -115,9 +115,9 @@ class Cluster {
 		$outfullpath = $this->outfullpath;
 		$filelist = explode('|--|',$_POST['receivefilelist']);
 		foreach ($filelist as $filepath) {
-			$movestr.= "mv -v $filepath ".formatEndPath($outfullpath)."\n";
+			$movestr.= "/bin/mv -v $filepath ".formatEndPath($outfullpath)."\n";
 		}
-		$movestr.= "mv -v \$PBS_JOBNAME ".formatEndPath($dmffullpath)."\n";
+		$movestr.= "/bin/mv -v \$PBS_JOBNAME ".formatEndPath($dmffullpath)."\n";
 		return $movestr;
 	}
 
@@ -151,7 +151,7 @@ class Cluster {
 		}
 		$clusterjob.= "\n";
 
-		$clusterjob.= "rm -rf $clusterfullpath/recon\n";
+		$clusterjob.= "/bin/rm -rf $clusterfullpath/recon\n";
 		$clusterjob.= "mkdir -p $clusterfullpath/recon\n";
 		$clusterjob.= "cd $clusterfullpath/recon\n\n";
 		$clusterjob.= "#copy job file here for update purpose later\n";

@@ -319,11 +319,11 @@ if __name__== '__main__':
 		pad=pad+1
 
 	# save previous model
-	mvcommand='mv ../threed.%d.mrc ../threed.%d.old.mrc' % (params['iter'],params['iter'])
+	mvcommand='/bin/mv ../threed.%d.mrc ../threed.%d.old.mrc' % (params['iter'],params['iter'])
 	proc = subprocess.Popen(mvcommand, shell=True)
 	proc.wait()
 
-	mvcommand='mv ../threed.%da.mrc ../threed.%da.old.mrc' % (params['iter'],params['iter'])
+	mvcommand='/bin/mv ../threed.%da.mrc ../threed.%da.old.mrc' % (params['iter'],params['iter'])
 	proc = subprocess.Popen(mvcommand, shell=True)
 	proc.wait()
 
@@ -362,13 +362,13 @@ if __name__== '__main__':
 		proc = subprocess.Popen(fsccommand, shell=True)
 		proc.wait()
 	
-	mvcommand='mv goodavgs.hed ../classes_coran.%d.hed' % params['iter']
+	mvcommand='/bin/mv goodavgs.hed ../classes_coran.%d.hed' % params['iter']
 	proc = subprocess.Popen(mvcommand, shell=True)
 	proc.wait()
-	mvcommand='mv goodavgs.img ../classes_coran.%d.img' % params['iter']
+	mvcommand='/bin/mv goodavgs.img ../classes_coran.%d.img' % params['iter']
 	proc = subprocess.Popen(mvcommand, shell=True)
 	proc.wait()
-	rmcommand='rm -f ../classes.%d.hed ../classes.%d.img' % (params['iter'], params['iter'])
+	rmcommand='/bin/rm -f ../classes.%d.hed ../classes.%d.img' % (params['iter'], params['iter'])
 	proc = subprocess.Popen(rmcommand, shell=True)
 	proc.wait()
 	lncommand='ln -s classes_coran.%d.hed ../classes.%d.hed' % (params['iter'], params['iter'])
@@ -381,7 +381,7 @@ if __name__== '__main__':
 	print "updating %s" % classfile
 	proc = subprocess.Popen(('tar -cvf %s cls*.lst' % classfile), shell=True)
 	proc.wait()
-	mvcommand='mv %s ../%s' % (classfile,classfile)
+	mvcommand='/bin/mv %s ../%s' % (classfile,classfile)
 	proc = subprocess.Popen(mvcommand, shell=True)
 	proc.wait()
 	

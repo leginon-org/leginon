@@ -47,7 +47,7 @@ if __name__ == "__main__":
 	reconsubdir = os.path.join(path,'recon')
 	if os.path.exists(reconsubdir):
 		print '* recon subdir is still present, moving contents to parent dir...'
-		cmd = 'mv %s/* %s/.* %s' % (reconsubdir, reconsubdir, path)
+		cmd = '/bin/mv %s/* %s/.* %s' % (reconsubdir, reconsubdir, path)
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
 		print '* removing recon subdir...'

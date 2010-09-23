@@ -997,7 +997,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	fwrite($f,$jobtext);
 	fclose($f);
 	// copy file to run directory on the web server
-	$cmd .= "cp $tmpfile $rundir/$jobfile;\n";
+	$cmd .= "/bin/cp $tmpfile $rundir/$jobfile;\n";
 	exec_over_ssh($webserver, $user, $pass, $cmd, True);
 
 	// write output page

@@ -624,7 +624,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		self.insertParticlesIntoDatabase(runparams['stackid'], partlist)
 
 		apFile.removeStack(runparams['localstack'], warn=False)
-		rmcmd = "rm -fr partfiles/*"
+		rmcmd = "/bin/rm -fr partfiles/*"
 		apEMAN.executeEmanCmd(rmcmd, verbose=False, showcmd=False)
 		apFile.removeFilePattern("partfiles/*")
 

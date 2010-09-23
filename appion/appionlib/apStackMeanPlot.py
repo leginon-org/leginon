@@ -87,7 +87,7 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 	apImagicFile.writeImagic(mystack, montagestack)
 	sys.stderr.write("\n")
 	assemblePngs(keys, str(stackid), montagestack)
-	apDisplay.printMsg("mv -v montage"+str(stackid)+".??? "+stackdata['path']['path'])
+	apDisplay.printMsg("/bin/mv -v montage"+str(stackid)+".??? "+stackdata['path']['path'])
 	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 
 #===============

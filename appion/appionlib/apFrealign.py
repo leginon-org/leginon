@@ -158,10 +158,10 @@ def createFrealignJob (params, jobname, nodenum=None, mode=None, inpar=None, inv
 	f.write('cd working\n')
 	if nodenum is not None:
 		workdir = "sub"+str(nodenum)
-		f.write('rm -rf %s\n' %workdir)
+		f.write('/bin/rm -rf %s\n' %workdir)
 		f.write('mkdir %s\n' %workdir)
 		f.write('cd %s\n' %workdir)
-	f.write('cp %s workingvol.mrc\n' % invol)
+	f.write('/bin/cp %s workingvol.mrc\n' % invol)
 	f.write('\n')
 	f.write('frealign << EOF > frealign.out\n')
 	f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s,%d\n' 

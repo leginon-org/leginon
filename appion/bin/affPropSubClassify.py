@@ -326,7 +326,7 @@ def start():
 
 		### Determine best averages
 
-		proc = subprocess.Popen('rm tempClsAvg.*', shell=True)
+		proc = subprocess.Popen('/bin/rm tempClsAvg.*', shell=True)
 		proc.wait()
 		proc = subprocess.Popen('proc2d %s/aligned.spi tempClsAvg.hed mask=%d average edgenorm' % (clsdir, params['mask']), shell=True)
 		proc.wait()
@@ -367,7 +367,7 @@ def start():
 			fw.writelines(Ptcls)
 			fw.close()
 
-			proc = subprocess.Popen('rm mergedClsAvg.spi', shell=True)
+			proc = subprocess.Popen('/bin/rm mergedClsAvg.spi', shell=True)
 			proc.wait()
 			proc = subprocess.Popen('proc2d %s/aligned.spi mergedClsAvg.spi list=mergeClasses.lst mask=%d average' % (clsdir, params['mask']), shell=True)
 			proc.wait()
@@ -403,14 +403,14 @@ def start():
 	proc.wait()
 	if params['eotest'] is False:
 		#copy the resulting class average images to the main recon directory
-		proc = subprocess.Popen('cp threed.%da.mrc ../.'%(params['iter']), shell=True)
+		proc = subprocess.Popen('/bin/cp threed.%da.mrc ../.'%(params['iter']), shell=True)
 		proc.wait()
-		proc = subprocess.Popen('cp goodavgs.hed ../classes_msgp.%d.hed' %(params['iter']), shell=True)
+		proc = subprocess.Popen('/bin/cp goodavgs.hed ../classes_msgp.%d.hed' %(params['iter']), shell=True)
 		proc.wait()
-		proc = subprocess.Popen('cp goodavgs.img ../classes_msgp.%d.img' %(params['iter']), shell=True)
+		proc = subprocess.Popen('/bin/cp goodavgs.img ../classes_msgp.%d.img' %(params['iter']), shell=True)
 		proc.wait()
 		#link msgp result as the final result for this iteration
-		rmcommand='rm -f ../classes.%d.hed ../classes.%d.img' % (params['iter'], params['iter'])
+		rmcommand='/bin/rm -f ../classes.%d.hed ../classes.%d.img' % (params['iter'], params['iter'])
 		proc = subprocess.Popen(rmcommand, shell=True)
 		proc.wait()
 		lncommand='ln -s classes_msgp.%d.hed ../classes.%d.hed' % (params['iter'], params['iter'])
@@ -420,10 +420,10 @@ def start():
 		proc = subprocess.Popen(lncommand, shell=True)
 		proc.wait()
 	elif params['eotest']=='odd':
-		proc = subprocess.Popen('cp threed.%da.mrc ../threed.%da.o.mrc' %(params['iter'], params['iter']), shell=True)
+		proc = subprocess.Popen('/bin/cp threed.%da.mrc ../threed.%da.o.mrc' %(params['iter'], params['iter']), shell=True)
 		proc.wait()
 	elif params['eotest']=='even':
-		proc = subprocess.Popen('cp threed.%da.mrc ../threed.%da.e.mrc' %(params['iter'], params['iter']), shell=True)
+		proc = subprocess.Popen('/bin/cp threed.%da.mrc ../threed.%da.e.mrc' %(params['iter'], params['iter']), shell=True)
 		proc.wait()
 		proc = subprocess.Popen('proc3d threed.%da.mrc ../threed.%da.o.mrc fsc=../corEO%d.fsc.dat' %(params['iter'], params['iter'], params['iter']), shell=True)
 		proc.wait()
@@ -431,7 +431,7 @@ def start():
 	#replace the old cls*.lst with the new extended one
 	proc = subprocess.Popen('tar cvzf %s %s' % (newclassfile,"cls*.lst.new"), shell=True)
 	proc.wait()
-	proc = subprocess.Popen('cp %s ../%s' %(newclassfile,classfile), shell=True)
+	proc = subprocess.Popen('/bin/cp %s ../%s' %(newclassfile,classfile), shell=True)
 	proc.wait()
 
 	apDisplay.printMsg("Done!")
