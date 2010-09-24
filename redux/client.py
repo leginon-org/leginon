@@ -4,7 +4,7 @@ import sys
 import socket
 import utility
 from optparse import OptionParser
-import redux.core
+from redux.pipelines import StandardPipeline
 
 class Client(object):
 	def process_request(self, request):
@@ -39,8 +39,7 @@ class SimpleClient(Client):
 		return self.process_kwargs(**kwargs)
 
 	def process_kwargs(self, **kwargs):
-		return redux.core.process(**kwargs)
-
+		return StandardPipeline().process(**kwargs)
 
 def add_option(parser, optname, help):
 			dest = optname
@@ -49,7 +48,7 @@ def add_option(parser, optname, help):
 
 def parse_argv():
 	parser = OptionParser()
-	for pipe in redux.core.pipe_order:
+	for pipe in StandardPipeline.pipeorder:
 		pipe_name = pipe.__name__
 		if pipe.switch_arg:
 			help = '%s: boolean switch to turn it on' % (pipe_name,)
