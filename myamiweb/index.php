@@ -30,7 +30,7 @@ if (privilege('projects') >= 2 )
 if (privilege('users') >= 2 && privilege('groups') <= 3) 
 	$link->addlink('admin.php','Miscellaneous','', 'admin');
 
-login_header(PROJECT_TITLE);
+login_header(PROJECT_TITLE,'','',true);
 
 ?>
 <style>

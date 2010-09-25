@@ -185,7 +185,7 @@ function checkProjectExptAdminPrivilege($projectId,$privilege_type='data') {
 	return false;
 }
 
-function login_header($title="", $javascript="", $onload="") {
+function login_header($title="", $javascript="", $onload="",$athome=false) {
 	global $_SERVER;
 	if (ENABLE_LOGIN) {
 		global $dbemauth;
@@ -237,18 +237,19 @@ function login_header($title="", $javascript="", $onload="") {
 	</head>
 	<body '.$onload.' >
 ';
-echo '<a class="header" href="'.BASE_URL.'index.php">[Home]</a>';	
-if (ENABLE_LOGIN) {
-	if ($username) {
-		echo '<a class="header" href="'.BASE_URL.'logout.php">[Logout '.$username.']</a>';
-		if($username != 'Anonymous')
-			echo '<a class="header" href="'.BASE_URL.'prefs.php">['.$username.' Profile]</a>';
-	} else {
-		if (!ereg(BASE_URL.'login.php', $_SERVER['PHP_SELF']))
-			echo '<a class="header" href="'.BASE_URL.'login.php?'.$url.'">[Login]</a>';
-		echo '<a class="header" href="register.php?'.$url.'">[register]</a>';
+	if (!$athome)
+		echo '<a class="header" href="'.BASE_URL.'index.php">[Home]</a>';	
+	if (ENABLE_LOGIN) {
+		if ($username) {
+			echo '<a class="header" href="'.BASE_URL.'logout.php">[Logout '.$username.']</a>';
+			if($username != 'Anonymous')
+				echo '<a class="header" href="'.BASE_URL.'prefs.php">['.$username.' Profile]</a>';
+		} else {
+			if (!ereg(BASE_URL.'login.php', $_SERVER['PHP_SELF']))
+				echo '<a class="header" href="'.BASE_URL.'login.php?'.$url.'">[Login]</a>';
+			echo '<a class="header" href="register.php?'.$url.'">[register]</a>';
+		}
 	}
-}
 }
 
 function login_footer() {

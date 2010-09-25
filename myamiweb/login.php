@@ -12,7 +12,7 @@ if(!empty($_POST['anonymous'])){
 
 $login = $dbemauth->login($username, $passwd);
 if ($login!=2) {
-	login_header("Login");
+	login_header("Login",'','',true);
 	$displayerror=($_POST) ? "Incorrect Login" : false;
 ?>
 	<style>
@@ -35,9 +35,9 @@ if ($login!=2) {
 	}
 ?>
 	<form method="post" action="<?=$_SERVER['REQUEST_URI']?>" name="">
-		<table cellspacing=20>
+		<center><table cellspacing=20>
 			<tr>
-			<td>
+			<td align="center">
 				<label for="username">Username : </label>
 				<input class="field" type="text" value="" name="username" id="username" size="15" >
 				<label for="password">Password : </label>
@@ -46,17 +46,18 @@ if ($login!=2) {
 			</td>
 			</tr>
 			<tr>
-			<td>
+			<td >
 				<input type="checkbox" name="anonymous">Login as "Anonymous" for viewing public data sets (Does not required a username and password).</input>
 			</td>
 			</tr>
 			<tr>
-			<td>
-				<input class="bt1" type="submit" value="Login" name="submit">
+			<td align="center">
+				<input type="submit" value="Login" name="submit">
 				<font size="2">
 			</td>
 			</tr>
 		</table>
+		</center>
 	</form>
 <?php
 	if ($displayerror)
