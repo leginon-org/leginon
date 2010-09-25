@@ -339,6 +339,16 @@ class Tomography {
 		$results = $this->mysql->getSQLResult($query);
 		return $results;
 	}
+
+	function error_image($message='no results to graph') {
+		header("Content-type: image/x-png");
+		$blkimg = imagecreatetruecolor(300,20);
+		$bgc = imagecolorallocate($blkimg, 255,255,255);
+		imagefilledrectangle($blkimg,0,0,300,20, $bgc);
+		imagestring($blkimg, 2, 2, 5, $message, imagecolorallocate($blkimg,0,0,0));
+		imagepng($blkimg);
+		imagedestroy($blkimg);
+	}
 }
 
 $mysql = &new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);

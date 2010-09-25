@@ -16,7 +16,8 @@ $results = $tomography->getDose($session_id, "Tomography");
 $times = array();
 $timesstamps = array();
 $rates = array();
-foreach($results as $result) {
+if (is_array($results) && count($results) ) {
+	foreach($results as $result) {
     if($result['exposure_time'] == 0)
         continue;
     if(is_null($result['dose']))
@@ -24,6 +25,7 @@ foreach($results as $result) {
     $times[] = $result['unix_timestamp'];
     $timestamps[] = $result['timestamp'];
     $rates[] = $result['dose']/$result['exposure_time'];
+	}
 }
 
 function callback($label) {
@@ -65,7 +67,9 @@ function graphDoseRate($times, $timestamps, $rates, $width, $height) {
     
     $graph->Stroke();
 }
-
-graphDoseRate($times, $timestamps, $rates, $width, $height);
-
+if (count($rates)) {
+	graphDoseRate($times, $timestamps, $rates, $width, $height);
+} else {
+	$tomography->error_image('no dose rate results');
+}
 ?>

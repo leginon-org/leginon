@@ -15,12 +15,14 @@ $results = $tomography->getEnergyShift($session_id);
 $times = array();
 $timesstamps = array();
 $shifts = array();
-foreach($results as $result) {
+if (is_array($results) && count($results) ) {
+	foreach($results as $result) {
     if(is_null($result['after']))
         continue;
     $times[] = $result['unix_timestamp'];
     $timestamps[] = $result['timestamp'];
     $shifts[] = $result['after'];
+	}
 }
 
 function callback($label) {
@@ -63,6 +65,10 @@ function graphEnergyShift($times, $timestamps, $shifts, $width, $height) {
     $graph->Stroke();
 }
 
-graphEnergyShift($times, $timestamps, $shifts, $width, $height);
+if (count($shifts)) {
+	graphEnergyShift($times, $timestamps, $shifts, $width, $height);
+} else {
+	$tomography->error_image('no energy shift results');
+}
 
 ?>

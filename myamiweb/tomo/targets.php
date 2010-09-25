@@ -414,7 +414,7 @@ $dequeued_query = 'SELECT'
         .' dequeued.`REF|SessionData|session`='.$session
         .';';
 
-$mysql = new mysql($DB_HOST, $DB_USER, $DB_PASS, $DB);
+$mysql = new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
 $query_results = $mysql->getSQLResult($target_query);
 $targets = array();
