@@ -5,7 +5,7 @@ require("config.php");
 $baseurl=BASE_URL;
 
 
-$db = &new mysql($DB_HOST, $DB_USER, $DB_PASS, $DB);
+$db = &new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
 
 //If no search string is passed, then we can't search
