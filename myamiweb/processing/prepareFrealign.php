@@ -65,6 +65,18 @@ function stackModelForm($extra=False) {
 	if ($extra)
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
+
+	// Begin warning code. See redmine issue number 399.
+	echo "<table cellpadding='10' class='tableborder' border='1'>\n";
+	echo "<tr><td>\n";
+	echo "<h3><font color='#cc3333'> Warning: Handedness of output volume will be flipped! </font></h3>";
+	echo "<p align='center'><a target='_blank' href='http://ami.scripps.edu/redmine/issues/399'>[see more info and workaround here]</a>";
+	echo "</td></tr>\n";
+	echo "</table>\n\n";
+	echo "<br />";
+	// End warning code
+		
+		
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
 	echo "<table class='tableborder' border='1'>\n";
