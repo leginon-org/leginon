@@ -103,8 +103,11 @@ class MatrixCalibrator(calibrator.Calibrator):
 		mag, mags = self.getMagnification()
 		pixsize = self.pixsizeclient.retrievePixelSize(None, None, mag)
 
+		cam = self.instrument.ccdcamera
+		shiftpixels = min(cam.Dimension['x']*cam.Binning['x'], cam.Dimension['y']*cam.Binning['y'])
+
 		percent = self.settings['%s shift fraction' % self.parameter]/100.0
-		delta = percent * self.instrument.ccdcamera.Dimension['x']*self.instrument.ccdcamera.Binning['x']*pixsize
+		delta = percent * shiftpixels * pixsize
 		self.logger.debug('Delta %s' % delta)
 
 		shifts = {}
