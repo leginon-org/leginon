@@ -5,9 +5,10 @@ import struct
 import types
 import numpy
 import time
+import pyami.imagefun
 
 class DirectElectronServer:	
-	debugPrint = True
+	debugPrint = False
 	connected = False
 	host = "localhost" #change to specific IP address if necessary	
 	readport, writeport = 48879, 48880	
@@ -88,6 +89,10 @@ class DirectElectronServer:
 		if(height==False):
 			return False
 		height = float(height)
+		exposure_time = self.getProperty("Exposure Time")
+		if(exposure_time==False):
+			exposure_time = 1.0;
+		exposure_time = float(exposure_time)
 		'''
 		binning_x = self.getProperty("Binning X")
 		if(binning_x==False):
@@ -102,15 +107,15 @@ class DirectElectronServer:
 		real_shape = [height/binning_y, width/binning_x]		
 		command = self.addSingleCommand(self.k_GetImage)
 		response = self.sendcommand(command)		
-		if(response.type != DEServer_pb2.DEPacket.P_ACKNOWLEDGE):
-			return False #expect a response
-		if(response.acknowledge[0].error == True):
+		if(response == False):
 			return False #expect no error
 		
-		#get the data header
+		#get the data header		
+		self.writesock.settimeout(None)
 		recvbyteSizeString = self.writesock.recv(4) # get the first 4 bytes
 		recvbyteSize = struct.unpack('L',recvbyteSizeString) # interpret as size
-		received_string = self.writesock.recv(recvbyteSize[0]) # get the rest		
+		received_string = self.writesock.recv(recvbyteSize[0]) # get the rest
+		self.writesock.settimeout(0.5) #change to default
 		data_header = DEServer_pb2.DEPacket()
 		data_header.ParseFromString(received_string)
 		bytesize = data_header.data_header.bytesize		
@@ -140,7 +145,7 @@ class DirectElectronServer:
 			while total_len < count:
 				line = ''
 				try:
-					line = sck.recv(4096)
+					line = sck.recv(1024)
 				except socket.timeout:
 					break
 				if line == '':
@@ -217,14 +222,18 @@ class DirectElectronServer:
 			return False
 		if(len(command.camera_name)==0):
 			command.camera_name = self.active_camera_name # append the active camera name if necessary
+		if (self.debugPrint): print command.__str__()
 		data = struct.pack('L',command.ByteSize())+command.SerializeToString()		
 		self.readsock.send(data)
 		
+		self.writesock.settimeout(None);
 		recvbyteSizeString = self.writesock.recv(4) # get the first 4 bytes
 		recvbyteSize = struct.unpack('L',recvbyteSizeString) # interpret as size
 		received_string = self.writesock.recv(recvbyteSize[0]) # get the rest		
+		self.writesock.settimeout(0.5);
 		Acknowledge_return = DEServer_pb2.DEPacket()
 		Acknowledge_return.ParseFromString(received_string)		
+		if (self.debugPrint): print Acknowledge_return.__str__()
 		if (Acknowledge_return.type != DEServer_pb2.DEPacket.P_ACKNOWLEDGE):
 			return False #has to be an acknowledge packet
 		if (len(command.command) != len(Acknowledge_return.acknowledge)):
@@ -232,8 +241,8 @@ class DirectElectronServer:
 		error = False;
 		for one_ack in Acknowledge_return.acknowledge:
 			error = error or one_ack.error
-		if (error):
-			return False #error occurred
+		#if (error):
+		#	return False #error occurred
 		return Acknowledge_return
 
 import ccdcamera
@@ -241,10 +250,12 @@ class DE12(ccdcamera.CCDCamera):
 	name = 'DE12'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
-		#self.camera_name = 'DE Controller 1'
-		self.camera_name = 'Software Sim'
+		self.camera_name = 'DE12'
 		self.server = DirectElectronServer()
+		self.connect()
 		self.offset = {'x': 0, 'y': 0}
+		self.dimension = {'x': 4096, 'y': 3072}
+		self.binning = {'x': 1, 'y': 1}
 
 	def __del__(self):
 		self.disconnect()
@@ -257,66 +268,60 @@ class DE12(ccdcamera.CCDCamera):
 		self.server.disconnect()
 
 	def getCameraSize(self):
-		#return {'x': 4096, 'y': 3072}
-		return {'x': 1024, 'y': 2048}
+		return self.getDictProp('Image Size')
 
 	def getCameras(self):
-		self.connect()
+		#self.connect()
 		return self.server.getAvailableCameras()
-		self.disconnect()
+		#self.disconnect()
 
 	def print_props(self):
-		self.connect()
+		#self.connect()
 		camera_properties = self.server.getActiveCameraProperties()
 		for one_property in camera_properties:
 			print one_property, self.server.getProperty(one_property)
-		self.disconnect()
+		#self.disconnect()
 
 	def getProperty(self, name):
-		self.connect()
+		#self.connect()
 		value = self.server.getProperty(name)
-		self.disconnect()
 		return value
 
 	def setProperty(self, name, value):
-		self.connect()
+		#self.connect()
 		value = self.server.setProperty(name, value)
-		self.disconnect()
 		return value
 
 	def getExposureTime(self):
-		seconds = self.getProperty('Integration Time')
+		seconds = self.getProperty('Exposure Time')
 		ms = int(seconds * 1000.0)
 		return ms
 
 	def setExposureTime(self, ms):
 		seconds = ms / 1000.0
-		self.setProperty('Integration Time', seconds)
+		self.setProperty('Exposure Time', seconds)
 
 	def getDictProp(self, name):
-		self.connect()
+		#self.connect()
 		x = int(self.server.getProperty(name + ' X'))
 		y = int(self.server.getProperty(name + ' Y'))
-		self.disconnect()
 		return {'x': x, 'y': y}
 
-	def setDictProp(self, name, xydict):
-		self.connect()
+	def setDictProp(self, name, xydict):		
 		self.server.setProperty(name + ' X', int(xydict['x']))
-		self.server.setProperty(name + ' Y', int(xydict['y']))
-		self.disconnect()
+		self.server.setProperty(name + ' Y', int(xydict['y']))		
 
 	def getDimension(self):
-		return self.getDictProp('Image Size')
+		return self.dimension
 
 	def setDimension(self, dimdict):
-		return self.setDictProp('Image Size', dimdict)
+		self.dimension = dimdict
 	
 	def getBinning(self):
-		return self.getDictProp('Binning')
+		return self.binning
 
 	def setBinning(self, bindict):
-		return self.setDictProp('Binning', bindict)
+		self.binning = bindict
 
 	def getOffset(self):
 		return self.offset
@@ -325,9 +330,10 @@ class DE12(ccdcamera.CCDCamera):
 		self.offset = offdict
 
 	def _getImage(self):
-		self.connect()
 		image = self.server.GetImage()
-		self.disconnect()
+		if not isinstance(image, numpy.ndarray):
+			raise ValueError('DE12 GetImage did not return array')
+		image = self.finalizeGeometry(image)
 		return image
 
 	def finalizeGeometry(self, image):
@@ -341,19 +347,33 @@ class DE12(ccdcamera.CCDCamera):
 		assert self.binning['x'] == self.binning['y']
 		binning = self.binning['x']
 		bin_image = pyami.imagefun.bin(nobin_image, binning)
+		bin_image = numpy.fliplr(bin_image)
 		return bin_image
 
 	def getPixelSize(self):
-		psize = 15e-6
+		psize = 6e-6
 		return {'x': psize, 'y': psize}
 
 	def getRetractable(self):
-		return False
+		return True
+		
+	def setInserted(self, value):
+		if value:
+			de12value = 'Extended'
+		else:
+			de12value = 'Retracted'
+		self.setProperty("Camera Position", de12value)
+		
+	def getInserted(self):
+		de12value = self.getProperty('Camera Position')
+		return de12value == 'Extended'
 
 	def getExposureTypes(self):
-		return ('normal',)
+		return ['normal','dark']
 
 	def getExposureType(self):
-		return 'normal'
+		exposure_type = self.getProperty('Exposure Mode')		
+		return exposure_type.lower()
+		
 	def setExposureType(self, value):
-		pass
+		self.setProperty('Exposure Mode', value.capitalize())
