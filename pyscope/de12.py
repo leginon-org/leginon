@@ -330,6 +330,19 @@ class DE12(ccdcamera.CCDCamera):
 		self.disconnect()
 		return image
 
+	def finalizeGeometry(self, image):
+		row_start = self.offset['y']
+		col_start = self.offset['x']
+		nobin_rows = self.dimension['y'] * self.binning['y']
+		nobin_cols = self.dimension['x'] * self.binning['x']
+		row_end = row_start + nobin_rows
+		col_end = col_start + nobin_cols
+		nobin_image = image[row_start:row_end, col_start:col_end]
+		assert self.binning['x'] == self.binning['y']
+		binning = self.binning['x']
+		bin_image = pyami.imagefun.bin(nobin_image, binning)
+		return bin_image
+
 	def getPixelSize(self):
 		psize = 15e-6
 		return {'x': psize, 'y': psize}
