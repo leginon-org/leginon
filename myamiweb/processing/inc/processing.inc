@@ -758,15 +758,23 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) {
 		return "<B>ERROR:</B> $errors";
 
 		exit;
-	} elseif ($_POST['process'] != "Just Show Command" && $jobtype -= 'uploadimage') {
-		
+	} elseif ($_POST['process'] != "Just Show Command" && $jobtype == 'uploadimage') {
+		if ($_POST['processinghost']) {
+			$_SESSION['processinghost'] = $_POST['processinghost'];
+		}
 		$processhost = $_SESSION['processinghost'];
 		$user = $_SESSION['username'];
 		$pass = $_SESSION['password'];
-		exec_over_ssh($processhost, $user, $pass, $command, TRUE);
+
+		// Add the Appion wrapper to support muliple installations of Appion
+		$wrappedcommand =  addAppionWrapper($command);
+		// uploadimage is run directly through ssh, not webcaller.py and qsub
+		exec_over_ssh($processhost, $user, $pass, $wrappedcommand, TRUE);
 		processing_header("Upload image to project", "Upload image to project");
 		echo $headinfo;
-		echo uploadimageTable($command);
+		echo "<B>uploadimage job submitted to ".$_SESSION['processinghost']." through ssh.</B>";
+		echo "<p></p>\n";
+		echo justShowCommandTable($command,true);
 		processing_footer();
 		exit;
 		
@@ -783,61 +791,8 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) {
 	}
 };
 
-function uploadimageTable($command) {
-
-	$command = trim($command);
-	// beginning and end of description value is indicated by "
-	$description_position = strpos($command,'--description=');
-	if (is_numeric($description_position)) {
-		$quote_start = strpos($command,'"',$description_position);
-		$quote_end = strpos($command,'"',$quote_start+1);
-		$description_bit = substr($command,$description_position,($quote_end-$description_position+1));
-		$short_command = substr_replace($command,'',$description_position, ($quote_end-$description_position+2));
-	} else {
-		$short_command = $command;
-	}
-	$bits = split(" ", $short_command);
-	$function = array_shift($bits);
-	if (is_numeric($description_position)) $bits[] = $description_bit;
-
-	$commandtable = "<table class='tablebubble' border='0' width='800'>\n";
-	$commandtable .= "<tr><td colspan='2'>\n";
-	$commandtable .= "	<b><center>Image(s) sucessfully upload</center></b><hr />\n";
-	$commandtable .= "</td></tr><tr><td colspan='2'>\n";
-	sort($bits);
-	foreach ($bits as $bit) {
-		if (substr($bit, 0, 2) == "--") {
-			if (preg_match("/^--([^=]*)=(.*)$/", $bit, $matches)) {
-				// type 1: --param=value
-				if (empty($matches[1]))
-				continue;
-				$commandtable .= "</td></tr><tr><td>\n";
-				$commandtable .= "<b>".$matches[1]."</b>\n";
-				$commandtable .= "</td><td>\n";
-				$commandtable .= $matches[2]."\n";
-			} elseif (preg_match("/^--([^=]*)$/", $bit, $matches)) {
-				// type 2: --param, e.g., --no-commit
-				if (empty($matches[1]))
-				continue;
-				$commandtable .= "</td></tr><tr><td>\n";
-				$commandtable .= "--<b>".$matches[1]."</b>\n";
-				$commandtable .= "</td><td>\n";
-				$commandtable .= "<font color='#339933'><i>flag enabled</i></font>\n";
-			}
-		} elseif(!empty($bit)) {
-			$commandtable .= "</td></tr><tr><td>\n";
-			$commandtable .= "<font color='#cc3333'>Unknown flag:</font>\n";
-			$commandtable .= "</td><td>\n";
-			$commandtable .= "$bit\n";
-		}
-	}
-	$commandtable .= "</td></tr>\n";
-	$commandtable .= "</table>\n";
-	return $commandtable;
-};
-
 /**************************************/
-function justShowCommandTable($command) {
+function justShowCommandTable($command,$skip_command=false) {
 
 	// Keep this section before adding the wrapper
 	// to get the proper values. Trim the whitespace from the ends,
@@ -863,12 +818,14 @@ function justShowCommandTable($command) {
 
 
 	$commandtable = "<table class='tablebubble' border='0' width='800'>\n";
-	$commandtable .= "<tr><td colspan='2'>\n";
-	$commandtable .= "	Copy and paste this $function command into a terminal:<hr/>\n";
-	$commandtable .= "</td></tr><tr><td colspan='2' style='padding-left:0.3in;text-indent:-0.3in'>\n";
-	$commandtable .= "	<p>\n";
-	$commandtable .= "		<font size='+1'>$command</font>\n";
-	$commandtable .= "	</p>\n";
+	if (!$skip_command) {
+		$commandtable .= "<tr><td colspan='2'>\n";
+		$commandtable .= "	Copy and paste this $function command into a terminal:<hr/>\n";
+		$commandtable .= "</td></tr><tr><td colspan='2' style='padding-left:0.3in;text-indent:-0.3in'>\n";
+		$commandtable .= "	<p>\n";
+		$commandtable .= "		<font size='+1'>$command</font>\n";
+		$commandtable .= "	</p>\n";
+	}
 	$commandtable .= "</td></tr><tr><td colspan='2'><hr/>\n";
 	sort($bits);
 	foreach ($bits as $bit) {
