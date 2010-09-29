@@ -17,7 +17,6 @@ import time
 import cameraclient
 
 ref_cache = {}
-ref_cache_id = {}
 
 class CorrectorClient(cameraclient.CameraClient):
 	def __init__(self):
@@ -106,16 +105,6 @@ class CorrectorClient(cameraclient.CameraClient):
 		cachedim = ref_cache[key]
 		return cachedim
 
-		### do not need this since all nodes share same cache, but
-		### need this again if node on another launcher need correction images
-		#newref = self.researchCorrectorImageData(type, scopedata, cameradata, channel)
-		#if newref.dbid != ref_cache_id[key]:
-		#	ref_cache[key] = newref
-		#	ref_cache_id[key] = newref.dbid
-		#	return newref
-		#else:
-		#	return cachedim
-
 	def correctorImageExists(self, type, scopedata, cameradata, channel):
 		ref = self.researchCorrectorImageData(type, scopedata, cameradata, channel)
 		if not ref:
@@ -141,10 +130,26 @@ class CorrectorClient(cameraclient.CameraClient):
 			## make it float to do float math later
 			## image = numpy.asarray(ref['image'], numpy.float32)
 			ref_cache[key] = ref
-			ref_cache_id[key] = ref.dbid
 			return ref
 		else:
 			return None
+
+	def prepareDark(self, dark, raw):
+		'''
+		For cameras that return a sum of n frames:
+		Rescale the dark image to be same number of frames as raw image.
+		Assuming exposure time of each frame (or frame rate) is constant.
+		'''
+		darkframes = dark['camera']['nframes']
+		rawframes = raw['camera']['nframes']
+		darkarray = dark['image']
+		print 'DARKFRAMES', darkframes
+		print 'RAWFRAMES', rawframes
+		if rawframes and darkframes:
+			multiplier = float(rawframes) / float(darkframes)
+			print 'MULTIPLIER', multiplier
+			darkarray = multiplier * darkarray
+		return darkarray
 
 	def normalizeCameraImageData(self, imagedata, channel):
 		cameradata = imagedata['camera']
@@ -155,7 +160,7 @@ class CorrectorClient(cameraclient.CameraClient):
 			self.logger.warning('Cannot find references, image will not be normalized')
 			return
 		rawarray = imagedata['image']
-		darkarray = dark['image']
+		darkarray = self.prepareDark(dark, imagedata)
 		normarray = norm['image']
 		diff = rawarray - darkarray
 		r = diff * normarray
@@ -353,7 +358,6 @@ class CorrectorClient(cameraclient.CameraClient):
 		## store in cache
 		key = self.makeCorrectorKey(type, scopedata, cameradata, channel)
 		ref_cache[key] = refdata
-		ref_cache_id[key] = refdata.dbid
 
 		return refdata
 
