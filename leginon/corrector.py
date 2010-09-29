@@ -188,6 +188,11 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.instrument.ccdcamera.ExposureType = 'normal'
 			return None
 
+		## doing this before acquireSeries because of a bug where
+		## something interrupts this method before it completes
+		scopedata = self.instrument.getData(leginondata.ScopeEMData)
+		cameradata = self.instrument.getData(leginondata.CameraEMData)
+
 		try:
 			series = self.acquireSeries(self.settings['n average'])
 		except Exception, e:
@@ -207,9 +212,6 @@ class Corrector(imagewatcher.ImageWatcher):
 
 		## make if float so we can do float math later
 		ref = numpy.asarray(ref, numpy.float32)
-
-		scopedata = self.instrument.getData(leginondata.ScopeEMData)
-		cameradata = self.instrument.getData(leginondata.CameraEMData)
 
 		refimagedata = self.storeCorrectorImageData(ref, typekey, scopedata, cameradata, channel)
 		if refimagedata is not None:
