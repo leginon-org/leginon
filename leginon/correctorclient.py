@@ -143,11 +143,8 @@ class CorrectorClient(cameraclient.CameraClient):
 		darkframes = dark['camera']['nframes']
 		rawframes = raw['camera']['nframes']
 		darkarray = dark['image']
-		print 'DARKFRAMES', darkframes
-		print 'RAWFRAMES', rawframes
-		if rawframes and darkframes:
+		if rawframes and darkframes and (rawframes != darkframes):
 			multiplier = float(rawframes) / float(darkframes)
-			print 'MULTIPLIER', multiplier
 			darkarray = multiplier * darkarray
 		return darkarray
 
