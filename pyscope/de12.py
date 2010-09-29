@@ -377,3 +377,6 @@ class DE12(ccdcamera.CCDCamera):
 		
 	def setExposureType(self, value):
 		self.setProperty('Exposure Mode', value.capitalize())
+
+	def getNumberOfFrames(self):
+		return self.getProperty('Total Number of Frames')
