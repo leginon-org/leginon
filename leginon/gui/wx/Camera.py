@@ -212,7 +212,11 @@ class CameraPanel(wx.Panel):
 		return geometry
 
 	def getFullGeometry(self,binning):
-		geometry = {'dimension': {'x': self.size['x'], 'y': self.size['y']},
+		if (self.size['x'] % binning) or (self.size['y'] % binning):
+			return None
+		dimx = self.size['x'] / binning
+		dimy = self.size['y'] / binning
+		geometry = {'dimension': {'x': dimx, 'y': dimy},
 								'offset': {'x': 0, 'y': 0},
 								'binning': {'x': binning, 'y': binning}}
 		return geometry
@@ -221,9 +225,14 @@ class CameraPanel(wx.Panel):
 		geometries = {}
 		keys = []
 		if self.size['x'] != self.size['y']:
-			key = '(%d x %d) x 1' % (self.size['x'],self.size['y'])
-			geometries[key] = self.getFullGeometry(1)
-			keys.append(key)
+			for binning in (1, 2, 3, 4, 5, 6, 7, 8):
+				dimx = self.size['x'] / binning
+				dimy = self.size['y'] / binning
+				key = '(%d x %d) x %d' % (dimx,dimy,binning)
+				geo = self.getFullGeometry(binning)
+				if geo is not None:
+					geometries[key] = self.getFullGeometry(1)
+					keys.append(key)
 		if self.binnings['x'] != self.binnings['y']:
 			return geometries
 		self.minsize = min(self.size['x'],self.size['y'])
