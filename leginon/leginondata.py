@@ -152,6 +152,7 @@ camera_params = (
 	('energy filtered', bool),
 	('energy filter', bool),
 	('energy filter width', float),
+	('nframes', int),
 )
 
 class ScopeEMData(EMData):
