@@ -133,16 +133,23 @@ $adminAccount = array('username' => 'administrator',
 			  'email' => $options['E'], 
 			  'REF|GroupData|group' => 1);
 
-$anonymousAccount = array('username' => 'Anonymous', 
+$anonymousAccount = array('username' => 'anonymous', 
 			  'password' => md5('anonymous'), 
-			  'firstname' => 'Anonymous',
-			  'lastname' => 'Anonymous',
+			  'firstname' => 'Public',
+			  'lastname' => 'User',
 			  'email' => $options['E'], 
 			  'REF|GroupData|group' => 4);
 
 $leginonDBImport->leginonDBinsert('UserData', $adminAccount);
 $leginonDBImport->leginonDBinsert('UserData', $anonymousAccount);
+
+// $project id = create a new project
+// $sessionid = $leginonDBImport->setLeginonDefaultValues();
+// put $sessionid in to the projectexperiments table.
+
+
 $leginonDBImport->setLeginonDefaultValues();
+
 
 print "Databases setup successfully ! \n";
 
