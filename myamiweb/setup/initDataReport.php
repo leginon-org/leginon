@@ -25,10 +25,10 @@ require_once("../inc/mysql.inc");
 					  'email' => $_POST['email'], 
 					  'REF|GroupData|group' => 1);
 		
-		$anonymousAccount = array('username' => 'Anonymous', 
+		$anonymousAccount = array('username' => 'anonymous', 
 					  'password' => md5('anonymous'), 
-					  'firstname' => 'Anonymous',
-					  'lastname' => 'Anonymous',
+					  'firstname' => 'Public',
+					  'lastname' => 'User',
 					  'email' => $_POST['email'], 
 					  'REF|GroupData|group' => 4);
 		
