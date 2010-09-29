@@ -234,7 +234,7 @@ class CameraPanel(wx.Panel):
 				key = '%d x %d bin %d' % (dimx,dimy,binning)
 				geo = self.getFullGeometry(binning)
 				if geo is not None:
-					geometries[key] = self.getFullGeometry(1)
+					geometries[key] = geo
 					keys.append(key)
 		if self.binnings['x'] != self.binnings['y']:
 			return geometries
