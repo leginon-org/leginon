@@ -42,8 +42,12 @@ $viewer->add($view1);
 
 $javascript .= $viewer->getJavascriptInit();
 login_header('image viewer', $javascript, 'initviewer()');
+
+echo '<a class="header" href="'.BASE_URL.'test/checkwebserver.php"> [Troubleshoot] </a>';
+
 ?>
 <a class="header" target="xmldata" href="test/viewerdata.xml">View XML data &raquo;</a>
-<?$viewer->display();
+<?
+$viewer->display();
 login_footer();
 ?>

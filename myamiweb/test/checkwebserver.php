@@ -1,3 +1,8 @@
+<html>
+<head>
+	<link href="../css/viewer.css" media="all" rel="stylesheet" type="text/css" />
+</head>
+<body>
 <?php
 #####################################################################
 #
@@ -13,6 +18,10 @@
 # 3. The php.ini recommended values
 #
 #####################################################################
+require_once('../config.php');
+require_once('../inc/login.inc');
+login_header();
+
 echo "<h2>Appion/Leginon Web Server Troubleshooting Tool</h2>";
 echo "<p>";
 
@@ -94,7 +103,9 @@ echo "</p>";
 #####################################################################
 echo "<h3>php.ini check:</h3>";
 echo "<p>";
-echo "Use the table below to ensure your php.ini settings are correct. <br />For more info: http://ami.scripps.edu/redmine/projects/appion/wiki/Configure_phpini<br /><br />";
+echo "Use the table below to ensure your php.ini settings are correct. <br />";
+echo "<a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Configure_phpini'>[More info about php.ini settings]</a> <br />";
+echo "<p>";
 
 // These are constant values based on what AMI recommends for the php.ini settings
 $errorReportingRec   = "2037";
@@ -249,7 +260,7 @@ echo "</p>";
 <h3>Display Images:</h3>
 <p><font color='red'>Please confirm that 2 images are visible below.</font> <br />
 Don't see them? For more info visit:
-http://ami.scripps.edu/redmine/projects/appion/wiki/Install_the_MRC_PHP_Extension.
+<a target='_blank' href='http://ami.scripps.edu/redmine/projects/appion/wiki/Install_the_MRC_PHP_Extension'>[Install the MRC PHP extension]</a>
 <br />
 <br />
 
@@ -267,3 +278,8 @@ http://ami.scripps.edu/redmine/projects/appion/wiki/Install_the_MRC_PHP_Extensio
 <p><pre>
 <?php print_r($modules->listModules()); // List all installed modules ?>
 </pre></p>
+
+<?php login_footer(); ?>
+
+</body>
+</html>
