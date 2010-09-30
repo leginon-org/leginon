@@ -8,6 +8,7 @@ import subprocess
 import platform
 import webbrowser
 import stat
+import time
 
 class CentosInstallation(object):
 
@@ -63,7 +64,7 @@ class CentosInstallation(object):
         self.writeToLog("Run the following Command:")
         self.writeToLog("%s"%(cmd,))
         print cmd + '\n'
-        print 'Please wait......\n'
+        print 'Please wait......(some commands might takes couple mintues to run)\n'
 
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdoutResult = proc.stdout.read()
@@ -474,13 +475,15 @@ class CentosInstallation(object):
 
         self.csValue = value
         
-    def setupSampleSession(self):
+    def downloadSampleImages(self):
        
         getImageCmd = "wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc http://ami.scripps.edu/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc http://ami.scripps.edu/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc http://ami.scripps.edu/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc http://ami.scripps.edu/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
 
         print getImageCmd
         proc = subprocess.Popen(getImageCmd, shell=True)
         proc.wait()
+        
+    def setupSampleSession(self):
         
         cmd = 'imageloader.py --projectid=1 --session=sample --dir=/tmp/images --filetype=mrc --apix=1 --binx=1 --biny=1 --df=-1.5 --mag=50000 --kv=120 --scopeid=1 --cameraid=2 --description="Sample Session" --jobtype=uploadimage'
         self.runCommand(cmd)
@@ -546,7 +549,7 @@ class CentosInstallation(object):
         if result is False:
             sys.exit(1)
             
-        self.setupSampleSession()
+        self.downloadSampleImages()
 
         self.writeToLog("Installation Finish.")
 
@@ -556,6 +559,11 @@ class CentosInstallation(object):
 
         webbrowser.open_new("http://localhost/myamiweb/setup/autoInstallSetup.php")
         self.writeToLog("Myamiweb Started.")
+        
+        #wait about 3 second to make sure the autoInstallSetup.php finished running.
+        time.sleep(3)
+        
+        self.setupSampleSession()
 
         subprocess.Popen("start-leginon.py")
         self.writeToLog("Leginon Started")
