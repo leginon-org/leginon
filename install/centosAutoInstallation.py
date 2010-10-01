@@ -483,11 +483,6 @@ class CentosInstallation(object):
         proc = subprocess.Popen(getImageCmd, shell=True)
         proc.wait()
         
-    def setupSampleSession(self):
-        
-        cmd = 'imageloader.py --projectid=1 --session=sample --dir=/tmp/images --filetype=mrc --apix=1 --binx=1 --biny=1 --df=-1.5 --mag=50000 --kv=120 --scopeid=1 --cameraid=2 --description="Sample Session" --jobtype=uploadimage'
-        self.runCommand(cmd)
-                 
     def run(self):
 
         self.currentDir = os.getcwd()
@@ -560,11 +555,6 @@ class CentosInstallation(object):
         webbrowser.open_new("http://localhost/myamiweb/setup/autoInstallSetup.php")
         self.writeToLog("Myamiweb Started.")
         
-        #wait about 3 second to make sure the autoInstallSetup.php finished running.
-        time.sleep(3)
-        
-        self.setupSampleSession()
-
         subprocess.Popen("start-leginon.py")
         self.writeToLog("Leginon Started")
         

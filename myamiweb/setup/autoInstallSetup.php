@@ -9,9 +9,22 @@
  * 
  */
 
+require_once('template.inc');
 require_once("../config.php");
 require_once("../inc/leginon.inc");
 require_once("../project/inc/project.inc.php");
+require_once("inc/ssh.inc");
+
+$template = new template;
+$template->wizardHeader("", SETUP_CONFIG);
+?>
+<center>
+<br /><br /><br /><br />
+<img src="../img/wait.gif" alt="Angry face" />
+<br /><br /><br /><br />
+<h3>System updating...</h3></center>
+<?php 
+$template->wizardFooter();
 
 /*
  * make sure the xml files are in the myami download location.
@@ -75,7 +88,13 @@ $data['REF|projects|project']=$selectedprojectId;
 $data['appiondb']=$dbname;
 $project->mysql->SQLInsertIfNotExists('processingdb', $data);
 
-
+/*
+ * Upload an sample session from downloaded images
+ * the images location from centoautoinstallation script 
+ * is in /tmp/images
+ */
+$command = 'imageloader.py --projectid=1 --session=sample --dir=/tmp/images --filetype=mrc --apix=1 --binx=1 --biny=1 --df=-1.5 --mag=50000 --kv=120 --scopeid=1 --cameraid=2 --description="Sample Session" --jobtype=uploadimage';
+exec_over_ssh($processhost, $user, $pass, $command, TRUE);
 /*
  * Redirect to the myamiweb homepage.
  */
