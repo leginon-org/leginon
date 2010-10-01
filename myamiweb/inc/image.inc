@@ -69,6 +69,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	if (@is_file($pic)) {
 		$imginfo = $leginondata->getImageInfo($imageId);
 		$dimx = $imginfo['dimx'];
+		// binning is determined in the x direction to preserve perspectives
 		if ($binning=='auto') {
 			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
 		}
@@ -187,9 +188,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 //					continue;
 					$tn = $target['tnumber'];
 					$ratioX = ($size) ? $size/$target['dimx'] : (($binning) ? 1/$binning : 1);
-					$ratioY = ($size) ? $size/$target['dimy'] : (($binning) ? 1/$binning : 1);
 					$cx = $target['x']*$ratioX;
-					$cy = $target['y']*$ratioY;
+					$cy = $target['y']*$ratioX;
 
 					if ($tId) {
 						if ($p['targettype']) {
@@ -227,9 +227,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 						$crosscol = $white;
 					}
 					$ratioX = ($size) ? $size/$target['dimx'] : (($binning) ? 1/$binning : 1);
-					$ratioY = ($size) ? $size/$target['dimy'] : (($binning) ? 1/$binning : 1);
 					$cx = $target['x']*$ratioX;
-					$cy = $target['y']*$ratioY;
+					$cy = $target['y']*$ratioX;
 
 					$crosssize=20;
 					$ctx = $cx+$crosssize/2;
@@ -243,15 +242,14 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			$r = $leginondata->getIceThicknessFromImage($imageId);
 			$imageinfo = $leginondata->getImageInfo($imageId);
 			$ratioX = ($size) ? $size/$imageinfo['dimx'] : (($binning) ? 1/$binning : 1);
-			$ratioY = ($size) ? $size/$imageinfo['dimy'] : (($binning) ? 1/$binning : 1);
 			$crosssize=20;
 			$crosscol = $yellow;
 			$col = $white;
 			foreach($r as $data) {
 				$cx = ($data['column']+$imageinfo['dimx']/2)*$ratioX;
-				$cy = ($data['row']+$imageinfo['dimy']/2)*$ratioY;
+				$cy = ($data['row']+$imageinfo['dimy']/2)*$ratioX;
 				$cx = ($data['column'])*$ratioX;
-				$cy = ($data['row'])*$ratioY;
+				$cy = ($data['row'])*$ratioX;
 				$tn = $data['column']." ".$data['row'];
 				$ctx = $cx+$crosssize/2;
 				$cty = $cy;
@@ -263,14 +261,13 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			if ($targets = $leginondata->getImageFocusTargets($imageId, true)) {
 
 				$ratioX = ($size) ? $size/$target['dimx'] : (($binning) ? 1/$binning : 1);
-				$ratioY = ($size) ? $size/$target['dimy'] : (($binning) ? 1/$binning : 1);
 				$vert = imagecolorallocate($img, 0, 255,0);
 				$rouge= imagecolorallocate($img, 255,0,0);
 
 				foreach ($targets as $target) {
 					$tgn=$target['tversion'];
 					$cx = $target['x']*$ratioX;
-					$cy = $target['y']*$ratioY;
+					$cy = $target['y']*$ratioX;
 					$d[$tgn][] = array('x'=>$cx,'y'=>$cy);
 				}
 				foreach($d as $point) {
