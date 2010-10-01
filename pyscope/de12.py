@@ -337,8 +337,8 @@ class DE12(ccdcamera.CCDCamera):
 		return image
 
 	def finalizeGeometry(self, image):
-		row_start = self.offset['y']
-		col_start = self.offset['x']
+		row_start = self.offset['y'] * self.binning['y']
+		col_start = self.offset['x'] * self.binning['x']
 		nobin_rows = self.dimension['y'] * self.binning['y']
 		nobin_cols = self.dimension['x'] * self.binning['x']
 		row_end = row_start + nobin_rows
