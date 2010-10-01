@@ -475,6 +475,13 @@ class CentosInstallation(object):
 
         self.csValue = value
         
+        print ""
+        print "Auto installtion required your system root password."
+        print ""        
+        password = raw_imput("Please enter the system root password : ")
+        password = password.strip()
+        self.serverRootPass = password
+        
     def downloadSampleImages(self):
        
         getImageCmd = "wget -P/tmp/images http://ami.scripps.edu/redmine/attachments/download/112/06jul12a_00015gr_00028sq_00004hl_00002en.mrc http://ami.scripps.edu/redmine/attachments/download/113/06jul12a_00015gr_00028sq_00023hl_00002en.mrc http://ami.scripps.edu/redmine/attachments/download/114/06jul12a_00015gr_00028sq_00023hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/115/06jul12a_00022gr_00013sq_00002hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/116/06jul12a_00022gr_00013sq_00003hl_00005en.mrc http://ami.scripps.edu/redmine/attachments/download/109/06jul12a_00022gr_00037sq_00025hl_00004en.mrc http://ami.scripps.edu/redmine/attachments/download/110/06jul12a_00022gr_00037sq_00025hl_00005en.mrc http://ami.scripps.edu/redmine/attachments/download/111/06jul12a_00035gr_00063sq_00012hl_00004en.mrc"
@@ -492,6 +499,7 @@ class CentosInstallation(object):
         self.dbHost = 'localhost'
         self.dbUser = 'root'
         self.dbPass = ''
+        self.serverRootPass = ''
         self.leginonDB = 'leginondb'
         self.projectDB = 'projectdb'
         self.adminEmail = ''
@@ -551,8 +559,9 @@ class CentosInstallation(object):
         print("========================")
         print("Installation Finish.")
         print("========================")
-
-        webbrowser.open_new("http://localhost/myamiweb/setup/autoInstallSetup.php")
+        
+        setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass
+        webbrowser.open_new(setupURL)
         self.writeToLog("Myamiweb Started.")
         
         subprocess.Popen("start-leginon.py")
