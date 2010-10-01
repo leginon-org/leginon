@@ -92,9 +92,11 @@ $project->mysql->SQLInsertIfNotExists('processingdb', $data);
  * Upload an sample session from downloaded images
  * the images location from centoautoinstallation script 
  * is in /tmp/images
+ * TODO: need to change the username and password for the release.
+ * Ask user instead of hard code
  */
 $command = 'imageloader.py --projectid=1 --session=sample --dir=/tmp/images --filetype=mrc --apix=1 --binx=1 --biny=1 --df=-1.5 --mag=50000 --kv=120 --scopeid=1 --cameraid=2 --description="Sample Session" --jobtype=uploadimage';
-exec_over_ssh($processhost, $user, $pass, $command, TRUE);
+exec_over_ssh("localhost", "root", "toAccessAmi", $command, TRUE);
 /*
  * Redirect to the myamiweb homepage.
  */
