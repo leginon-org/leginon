@@ -478,7 +478,7 @@ class CentosInstallation(object):
         print ""
         print "Auto installtion required your system root password."
         print ""        
-        password = raw_imput("Please enter the system root password : ")
+        password = raw_input("Please enter the system root password : ")
         password = password.strip()
         self.serverRootPass = password
         
