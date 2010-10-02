@@ -383,7 +383,7 @@ class CorrectorClient(cameraclient.CameraClient):
 
 	def makeCorrectorImageFilename(self, type, channel, shape):
 		sessionname = self.session['name']
-		timestamp = time.strftime('%d%H%m%S', time.localtime())
+		timestamp = time.strftime('%d%H%M%S', time.localtime())
 		nextid = idcounter.next()
 		shapestr = '%sx%s' % shape
 		f = '%s_%s_%02d_%s_%s_%s' % (sessionname, timestamp, nextid, shapestr, type, channel)
