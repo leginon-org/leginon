@@ -58,7 +58,7 @@ if(is_dir($dir)){
  */
 $project = new project();
 
-$project->addProject('Demo', 'Demo Project', 'Demo Project: Created by installation', 'None', 'This is a free project.');
+$project->addProject('GroEL Demo', 'GroEL Demo Project', 'GroEL Demo Project: Created by auto installation script.', 'None', 'This is a free project.');
 
 /*
  * Now we need to create a processing database for this demo project
