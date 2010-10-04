@@ -61,6 +61,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	// --- get filename
 	if ($p['fft']) {
 		$p['displaytargets']=false;
+		$p['newptcl']=false;
 		$fft = $leginondata->getImageFFT($imageId);
 		if (!$filename = $fft['fftimage']);
 			$filename = $leginondata->getFilenameFromId($imageId);
@@ -467,7 +468,7 @@ function getImageXML($xmlfile, $imageId, $preset, $params = array()) {
 		'scalebar' => true,
 		'displaytargets' => true,
 		'loadtime' => false,
-		'ptlc' => false,
+		'newptlc' => false,
 		'autoscale' => false,
 		'mrc' => false
 	);
@@ -486,6 +487,7 @@ function getImageXML($xmlfile, $imageId, $preset, $params = array()) {
 	// --- get filename
 	if ($p['fft']) {
 		$p['displaytargets']=false;
+		$p['newptcl']=false;
 	}
 	$filename = $xmldata->getFilenameFromId($imageId);
 
