@@ -600,6 +600,7 @@ class view {
 		$this->quality = "80";
 		$this->gradient = "";
 		$this->filter= "default";
+		$this->fftbin= "b";
 		$this->binning= "auto";
 		$this->autoscale = "s;3";
 		$this->displayfilename = "0";
@@ -617,6 +618,7 @@ class view {
 		$this->ptclselmemo = $this->name.'psel';
 		$this->qualitymemo = $this->name.'q';
 		$this->gradientmemo = $this->name.'gr';
+		$this->fftbinnmemo = $this->name.'fb';
 		$this->binningmemo = $this->name.'b';
 		$this->filtermemo = $this->name.'f';
 		$this->maxpixmemo = $this->name.'maxpix';
@@ -635,6 +637,8 @@ class view {
 			$this->quality = $quality;
 		if ($gradient=$_REQUEST[$this->gradientmemo])
 			$this->gradient = $gradient;
+		if ($fftbin=$_REQUEST[$this->fftbinnmemo])
+			$this->fftbin = $fftbin;
 		if ($binning=$_REQUEST[$this->binningmemo])
 			$this->binning = $binning;
 		if ($filter=$_REQUEST[$this->filtermemo])
@@ -867,6 +871,7 @@ class view {
 			.'var jscorrelationmin'.$this->name.'="";'.$this->crlf
 			.'var jscorrelationmax'.$this->name.'="";'.$this->crlf
 			.'var jsfilter'.$this->name.'="'.$this->filter.'";'.$this->crlf
+			.'var jsfftbin'.$this->name.'="'.$this->fftbin.'";'.$this->crlf
 			.'var jsbinning'.$this->name.'="'.$this->binning.'";'.$this->crlf
 			.'var jspreset'.$this->name.'="'.$this->preset.'";'.$this->crlf
 			.'var jsquality'.$this->name.'="'.$this->quality.'";'.$this->crlf
@@ -1030,6 +1035,7 @@ class view {
 		<input type="hidden" name="'.$prename.'m" value="'.$selpre.'"> 
 		<input type="hidden" name="'.$this->qualitymemo.'" value="'.$this->quality.'"> 
 		<input type="hidden" name="'.$this->gradientmemo.'" value="'.$this->gradient.'"> 
+		<input type="hidden" name="'.$this->fftbinmemo.'" value="'.$this->fftbin.'"> 
 		<input type="hidden" name="'.$this->binningmemo.'" value="'.$this->binning.'"> 
 		<input type="hidden" name="'.$this->filtermemo.'" value="'.$this->filter.'">
 		<input type="hidden" name="'.$this->autoscalememo.'" value="'.$this->autoscale.'">
@@ -1264,7 +1270,7 @@ class view {
 		$htmlframe .= '
 						<td valign="center">
 				';
-		$param = "left=0,top=".($this->viewnb*180).",height=340,width=300";
+		$param = "left=0,top=".($this->viewnb*180).",height=400,width=330";
 		$url = "adjust.php?name=$name&displayname=$this->title";
 		$htmlframe .= "<div id='".$this->name."imgstat'>";
 		$htmlframe .='

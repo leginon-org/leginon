@@ -46,6 +46,8 @@ if (!$filter=$_GET['flt'])
 	$filter = 'default';
 if (!$binning=$_GET['binning']) 
 	$binning = 'auto';
+if (!$fftbin=$_GET['fftbin']) 
+	$fftbin = 'b';
 
 $displayloadingtime = false;
 $displayfilename = ($_GET['df']&1) ? true : false;
@@ -64,6 +66,7 @@ if ($g) {
 		'maxpix' => $maxpix,
 		'filter' => $filter,
 		'fft' => $fft,
+		'fftbin' => $fftbin,
 		'gradient' => $gradient,
 		'binning' => $binning,
 		'scalebar' => $displayscalebar,
@@ -92,6 +95,7 @@ if ($g) {
 				'minpix' => $minpix,
 				'maxpix' => $maxpix,
 				'binning' => $binning,
+				'fftbin' => $fftbin,
 				'autoscale' => $autoscale,
 				'scalebar'=>false
 			);

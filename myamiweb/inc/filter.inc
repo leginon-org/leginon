@@ -20,6 +20,10 @@ class filter {
 				'smooth3' => 'Smooth 3'
 			);
 
+	var $fftbin_types = array (
+				'a'=> 'after',
+				'b'=> 'before'
+			);
 	var $binning_types = array (
 				'auto' => 'auto',
 				1 => 1,
@@ -33,17 +37,26 @@ class filter {
 		return $this->filter_types;
 	}
 
+	function getFFTBinTypes() {
+		return $this->fftbin_types;
+	}
+
 	function getBinningTypes() {
 		return $this->binning_types;
 	}
 
 }
 
-function getfft($filename="", $minpix="", $maxpix="", $binning=1, $autoscale=false) {
+function getfft($filename="", $minpix="", $maxpix="", $binning=1, $autoscale=false, $fftbin='b') {
 	list($type,$arg1, $arg2)=explode(";", $autoscale);
 	$mrcimg = mrcread($filename);
-	mrcfftw($mrcimg,10);
-	mrcbinning($mrcimg, $binning);
+	if ($fftbin == 'a') {
+		mrcfftw($mrcimg,10);
+		mrcbinning($mrcimg, $binning);
+	} else {
+		mrcbinning($mrcimg, $binning);
+		mrcfftw($mrcimg,10);
+	}
 	if ($autoscale) {
 		if ($type=="c") {
 			list($minpix, $maxpix)=mrccdfscale($mrcimg, $arg1, $arg2);

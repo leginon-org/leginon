@@ -35,6 +35,8 @@ $displayscalebar = ($_GET['sb']==1) ? true : false;
 $fft = ($_GET['fft']==1) ? true : false;
 if (!$filter=$_GET['flt']) 
 	$filter = 'default';
+if (!$fftbin=$_GET['fftbin']) 
+	$fftbin = 'b';
 if (!$binning=$_GET['binning']) 
 	$binning = 'auto';
 
@@ -47,6 +49,7 @@ if ($g) {
 		'maxpix' => $maxpix,
 		'filter' => $filter,
 		'fft' => $fft,
+		'fftbin' => $fftbin,
 		'binning' => $binning,
 		'scalebar' => $displayscalebar,
 		'displaytargets' => $displaytarget,
@@ -78,6 +81,7 @@ function getImageFile($filename, $params = array()) {
 		'maxpix' => 255,
 		'filter' => 'default',
 		'fft' => false,
+		'fftbin' => 'b',
 		'binning' => 'auto',
 		'scalebar' => true,
 		'loadtime' => false,
@@ -142,7 +146,7 @@ function getImageFile($filename, $params = array()) {
 			return $imgmrc;
 		}
 		if ($p['fft']) {
-			$img = getfft($pic, $p['minpix'], $p['maxpix'], $binning, $p['autoscale']);
+			$img = getfft($pic, $p['minpix'], $p['maxpix'], $binning, $p['autoscale'],$p['fftbin']);
 		}
 
 		else if (function_exists($p['filter']))

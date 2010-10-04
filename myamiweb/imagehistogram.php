@@ -29,6 +29,8 @@ $size = $_GET['s'];
 $fft = ($_GET['fft']==1) ? true : false;
 if (!$filter=$_GET['flt']) 
 	$filter = 'default';
+if (!$fftbin=$_GET['fftbin']) 
+	$fftbin = 'b';
 if (!$binning=$_GET['binning']) 
 	$binning = 'auto';
 
@@ -38,6 +40,7 @@ $params = array (
 	'maxpix' => $maxpix,
 	'filter' => $filter,
 	'fft' => $fft,
+	'fftbin' => $fftbin
 	'binning' => $binning
 );
 

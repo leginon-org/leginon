@@ -14,6 +14,8 @@ $maxpix = ($_GET['xp']) ? '&xp='.$_GET['xp'] : '';
 $fft = ($_GET['fft']) ? '&fft='.$_GET['fft'] : '';
 $fftflag = ($_GET['fft']) ? 1:0;
 $filter = ($_GET['flt']) ? '&flt='.$_GET['flt'] : '';
+$fftbin = ($_GET['fftbin']) ? '&fftbin='.$_GET['fftbin'] : '';
+$binorder = ($_GET['fftbin']) ? $_GET['fftbin'] : 'b';
 $binning = ($_GET['binning']) ? '&binning='.$_GET['binning'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
 $quality = ($_GET['t']) ? '&t='.$_GET['t']: '';
@@ -23,7 +25,7 @@ $acepar = ($_GET['g']) ? '&g='.($_GET['g']) : '';
 $gradient= ($_GET['gr']) ? '&gr='.$_GET['gr'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
 
-$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$autoscale.$psel.$acepar.$gradient.$autoscale.$nptcl;
+$options = $tg.$sb.$minpix.$maxpix.$fft.$fftbin.$filter.$autoscale.$psel.$acepar.$gradient.$autoscale.$nptcl;
 
 $nimgId = $leginondata->findImage($id, $preset);
 $imginfo = $leginondata->getImageInfo($nimgId['id']);
@@ -34,12 +36,17 @@ if (!$imgheight= $imginfo['dimy'])
 	$imgheight=1024;
 
 $imgbinning = $_GET['binning'];
-if ($_GET['binning']=='auto')
+if ($_GET['binning']=='auto') {
 	$imgbinning = ($imgwidth > 1024) ? (($imgwidth > 2048) ? 4 : 2 ) : 1;
+	if ($fftflag && $binorder=='b')
+		$imgbinning = ($imgwidth > 2048) ? 2 : 1;
+}
 
 // --- set image map size and binning
 $imgmapsize=128;
 $mapbinning = ($imgwidth> 1024) ? (($imgwidth> 2048) ? 16 : 8 ) : 4;
+if ($fftflag && $binorder=='b')
+	$mapbinning = $imgbinning;
 
 $ratio = $imgwidth/$imgbinning/$imgmapsize;
 
@@ -53,7 +60,11 @@ if (!$imgsize)
 $imgratio = $imgwidth/$imgsize ;
 $pixelsize = $imginfo['pixelsize']*$imginfo['binning']*$imgratio;
 # binning of the display is done with power spectrum image
-$fftpixelsize = $imgratio/($imgwidth*$imginfo['pixelsize']*$imginfo['binning']);
+if ($binorder == 'b') {
+	$fftpixelsize = $imgratio/($imgwidth*$imginfo['pixelsize']*$imgbinning*$imginfo['binning']);
+} else {
+	$fftpixelsize = $imgratio/($imgwidth*$imginfo['pixelsize']*$imginfo['binning']);
+}
 $filename = $imginfo['filename'];
 
 $imgmapsrc = $imgscript."?preset=".$preset."&session=".$session."&id=".$id."&t=75&s=$imgmapsize&binning=$mapbinning".$options;

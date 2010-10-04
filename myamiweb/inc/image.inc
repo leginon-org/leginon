@@ -26,6 +26,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'maxpix' => 255,
 		'filter' => 'default',
 		'fft' => false,
+		'fftbin' => 'b',
 		'gradient' => false,
 		'binning' => 'auto',
 		'scalebar' => true,
@@ -42,7 +43,9 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	if (is_array($params))
 		foreach ($params as $k=>$v)
 			$p[$k] = $v;
+	//size is the display size
 	$size = $p['size'];
+	// binning is the scaled and loaded image size before fitting into the display
 	$binning = $p['binning'];
 	$loadjpg = $p['loadjpg'];
 
@@ -72,6 +75,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		// binning is determined in the x direction to preserve perspectives
 		if ($binning=='auto') {
 			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
+			if ($p['fft'] && $p['fftbin']=='b')
+				$binning = ($dimx > 2048) ? (($dimx > 2048) ? 2 : 1 ) : 1;
 		}
 
 		if ($p['loadjpg'] && !$p['fft']) {
@@ -131,7 +136,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				return $imgmrc;
 			}
 			if ($p['fft']) {
-				$img = getfft($pic, $p['minpix'], $p['maxpix'], $binning, $p['autoscale']);
+				$img = getfft($pic, $p['minpix'], $p['maxpix'], $binning, $p['autoscale'],$p['fftbin']);
 			}
 
 			else if (function_exists($p['filter']))
@@ -144,8 +149,10 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 		$scalefactor=1;
 		if ($size) {
+			//scalefactor is the ratio before the display and loaded image
 			$scalefactor = (imagesx($img)) ? $size/imagesx($img) : 1;
 			myimagescale($img, $scalefactor);
+			//$img is now at the display size
 		}
 		if ($p['gradient']) {
 			require "inc/gradient.php";
@@ -525,7 +532,7 @@ function getImageXML($xmlfile, $imageId, $preset, $params = array()) {
 			return $imgmrc;
 		}
 		if ($p['fft']) {
-			$img = getfft($pic, $p['minpix'], $p['maxpix'], $binning, $p['autoscale']);
+			$img = getfft($pic, $p['minpix'], $p['maxpix'], $binning, $p['autoscale'], $p['fftbin']);
 		}
 
 		else if (function_exists($p['filter']))

@@ -22,6 +22,8 @@ if (!$currentfilter=$_GET['filter'])
 	$currentfilter='default';
 if (!$currentbinning=$_GET['binning'])
 	$currentbinning='auto';
+if (!$currentfftbin=$_GET['fftbin'])
+	$currentfftbin='b';
 if (!$currentquality=$_GET['t'])
 	$currentquality='80';
 if (!$currentgradient=$_GET['gr'])
@@ -84,6 +86,7 @@ require "inc/filter.inc";
 $filterdata = new filter();
 $filtertypes = $filterdata->getFilterTypes();
 $binningtypes = $filterdata->getBinningTypes();
+$fftbintypes = $filterdata->getFFTBinTypes();
 
 ?>
 
@@ -100,6 +103,7 @@ var jsmaxgradpix = $defaultmax
 var jsbaseurl = '$baseurl/'
 var jsviewname = '$name'
 var jsfilter = '$currentfilter'
+var jsfftbin = '$currentfftbin'
 var jsbinning = '$currentbinning'
 var jsquality = '$currentquality'
 var jsautoscale = '$autoscale'
@@ -250,6 +254,10 @@ function update() {
 	if (binninglist = document.adjustform.binning)
 		jsbinning=binninglist.options[binninglist.selectedIndex].value;
 	parentwindow.setbinning(jsviewname,jsbinning);
+
+	if (fftbinlist = document.adjustform.fftbin)
+		jsfftbin=fftbinlist.options[fftbinlist.selectedIndex].value;
+	parentwindow.setfftbin(jsviewname,jsfftbin);
 
 	if (filterlist = document.adjustform.filter)
 		jsfilter=filterlist.options[filterlist.selectedIndex].value;
@@ -533,6 +541,18 @@ displaygrad($options, $imgsrc);
 	?>
 	</select>
 </li>
+<li>
+		Bin image
+	<select name="fftbin"  <?=$state?> onchange="update()" >
+	<?php
+	foreach ($fftbintypes as $k=>$fftbin) {
+		$sel = ($k==$currentfftbin) ? 'selected' : '';
+		echo '<option value="'.$k.'" '.$sel.'>'.$fftbin.'</option>'."\n";
+	}
+	?>
+	</select>
+		calculating fft
+</li>		
 </ul>
 </div>
 </form>

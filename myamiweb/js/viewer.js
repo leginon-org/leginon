@@ -537,6 +537,7 @@ function newfile(view){
 	jssize = eval(view+"size")
 	jsvfile = eval("jsvfile"+view)
 	selpreset = eval("jspreset"+view)
+	if (cfftbin = eval("jsfftbin"+view)) fftbin="&fftbin="+cfftbin; else fftbin=""
 	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning=""
 	jsimagescriptcur = eval("jsimagescript"+view)
 	jspresetscriptcur = eval("jspresetscript"+view)
@@ -583,6 +584,7 @@ function newfile(view){
 	np = (cmin = eval("jsmin"+view)) ? "&np="+cmin : ""
 	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp=""
 	if (cfilter = eval("jsfilter"+view)) flt="&flt="+cfilter; else flt=""
+	if (cfftbin = eval("jsfftbin"+view)) fftbin="&fftbin="+cfftbin; else fftbin=""
 	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning=""
 	if (cquality = eval("jsquality"+view)) quality="&t="+cquality; else quality=""
 	if (cgradient = eval("jsgradient"+view)) gradient="&gr="+cgradient; else gradient=""
@@ -595,7 +597,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+ag+ao+gradient
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+ag+ao+gradient
 
 	if (options == lastoptions[vid])
 		return
@@ -799,10 +801,11 @@ function setImageStatus(viewname) {
 	if (img = document.images[eval("\"" +viewname+ "imgstatgrad\"")]) 
 		img.src = 'img/dfe/grad.php?h=10&w=100&dm=1'+options
 	filter = eval("jsfilter"+viewname)
+	fftbin = eval("jsfftbin"+viewname)
 	binning = eval("jsbinning"+viewname)
 	quality = eval("jsquality"+viewname)
 	quality = (isNaN(quality)) ? quality : "jpg"+quality
-	newstatus = " filter:"+filter+" bin:"+binning+" "+quality
+	newstatus = " filter:"+filter+" fftbin:"+fftbin+" bin:"+binning+" "+quality
 }
 
 function setImageHistogram(viewname) {
@@ -815,11 +818,12 @@ function setImageHistogram(viewname) {
 		if (cfilter = eval("jsfilter"+viewname)) flt="&flt="+cfilter; else flt=""
 		if (cmin = eval("jsmin"+viewname)) np="&np="+cmin; else np=""
 		if (cmax = eval("jsmax"+viewname)) xp="&xp="+cmax; else xp=""
+		if (cfftbin = eval("jsfftbin"+viewname)) fftbin="&fftbin="+cfftbin; else fftbin=""
 		if (cbinning = eval("jsbinning"+viewname)) binning="&binning="+cbinning; else binning=""
 
 		options = "preset="+selpreset+
 			"&id="+jsimgId+
-			"&s="+jssize+quality+np+xp+flt+binning+fft
+			"&s="+jssize+quality+np+xp+flt+fftbin+binning+fft
 
 		if (!w.closed) {
 			w.getImageInfo()
@@ -918,6 +922,13 @@ function setfilter(viewname, filter) {
 	}
 }
 
+function setfftbin(viewname, fftbin) {
+	eval("jsfftbin"+viewname+"='"+fftbin+"'")
+	if (fb = eval("document.viewerform."+viewname+"fb")) {
+		fb.value=fftbin
+	}
+}
+
 function setbinning(viewname, binning) {
 	eval("jsbinning"+viewname+"='"+binning+"'")
 	if (b = eval("document.viewerform."+viewname+"b")) {
@@ -959,6 +970,7 @@ function popUpAdjust(URL, view, param){
 	min = eval("jsmin"+view)
 	max = eval("jsmax"+view)
 	filter = eval("jsfilter"+view)
+	fftbin = eval("jsfftbin"+view)
 	binning = eval("jsbinning"+view)
 	quality = eval("jsquality"+view)
 	gradient = eval("jsgradient"+view)
@@ -968,6 +980,7 @@ function popUpAdjust(URL, view, param){
 	min = (min) ? "&pmin="+min : ""
 	max = (max) ? "&pmax="+max : ""
 	filter = (filter) ? "&filter="+filter : ""
+	fftbinn = (fftbin) ? "&fftbin="+fftbin : ""
 	binning = (binning) ? "&binning="+binning : ""
 	quality = (quality) ? "&t="+quality : ""
 	gradient = (gradient) ? "&gr="+gradient : ""
@@ -975,7 +988,7 @@ function popUpAdjust(URL, view, param){
 	displayfilename= (displayfilename) ? "&df="+displayfilename : ""
 	loadjpg= (loadjpg) ? "&lj="+loadjpg : ""
 	param = (param) ? param : "left=0,top=0,height=370,width=370"
-	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+gradient+autoscale+displayfilename+loadjpg+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
+	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+fftbin+binning+quality+gradient+autoscale+displayfilename+loadjpg+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
 }
 
 function popUpPtcl(URL, view, param) {
