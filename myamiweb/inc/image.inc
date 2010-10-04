@@ -13,6 +13,7 @@ require_once "inc/util.inc";
 require_once "inc/filter.inc";
 require_once "inc/graphutil.inc";
 require_once "inc/scalebar.inc";
+require_once "inc/scalering.inc";
 require_once "inc/cachedb.inc";
 
 
@@ -57,7 +58,6 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	// --- get filename
 	if ($p['fft']) {
 		$p['displaytargets']=false;
-		$p['scalebar']=false;
 		$fft = $leginondata->getImageFFT($imageId);
 		if (!$filename = $fft['fftimage']);
 			$filename = $leginondata->getFilenameFromId($imageId);
@@ -308,7 +308,15 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 					$size=1;
 				$ratio = $imginfo['dimx']/$size ;
 				$value = $imginfo['pixelsize']*$imginfo['binning']*$ratio;
-				$scalebar = new ScaleBar($img, $size, $value);
+				if (!$p['fft']) {
+					$scalebar = new ScaleBar($img, $size, $value);
+				} else {
+					//value is the resolution limit in Fourier space
+					$value = $imginfo['pixelsize']*$imginfo['binning']*$binning*2;
+					if ($p['fftbin'] == 'a')
+						$value = $imginfo['pixelsize']*$imginfo['binning']*2;
+					$scalebar = new ScaleRing($img, $size, $value);
+				}
 				$scalebar->display();
 			}
 		}
@@ -471,7 +479,6 @@ function getImageXML($xmlfile, $imageId, $preset, $params = array()) {
 	// --- get filename
 	if ($p['fft']) {
 		$p['displaytargets']=false;
-		$p['scalebar']=false;
 	}
 	$filename = $xmldata->getFilenameFromId($imageId);
 
@@ -553,7 +560,15 @@ function getImageXML($xmlfile, $imageId, $preset, $params = array()) {
 					$size=1;
 				$ratio = $imginfo['dimx']/$size ;
 				$value = $imginfo['pixelsize']*$imginfo['binning']*$ratio;
-				$scalebar = new ScaleBar($img, $size, $value);
+				if (!$p['fft']) {
+					$scalebar = new ScaleBar($img, $size, $value);
+				} else {
+					//value is the resolution limit in Fourier space
+					$value = $imginfo['pixelsize']*$imginfo['binning']*$binning*2;
+					if ($p['fftbin'] == 'a')
+						$value = $imginfo['pixelsize']*$imginfo['binning']*2;
+					$scalebar = new ScaleRing($img, $size, $value);
+				}
 				$scalebar->display();
 			}
 		}
