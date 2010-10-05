@@ -56,6 +56,10 @@ class FFTMaker(imagewatcher.ImageWatcher):
 	def calculatePowerImage(self, imagedata):
 			imarray = imagedata['image']
 			imageshape = imarray.shape
+			if imageshape[0] != imageshape[1]:
+				new_dim = min(imageshape)
+				imarray = imagefun.crop_at(imarray, (imageshape[0]/2,imageshape[1]/2), (new_dim,new_dim))
+				imageshape = imarray.shape
 			if self.settings['reduced']:
 				size = max(imageshape)
 				if size > 1024:
