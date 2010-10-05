@@ -204,7 +204,7 @@ class CameraPanel(wx.Panel):
 	def getCenteredGeometry(self, dimension, binning):
 		offset ={}
 		for axis in ['x','y']:
-			offset[axis] = (self.size[axis]/binning - dimension)/2
+			offset[axis] = int((self.size[axis]/binning - dimension)/2)
 
 		geometry = {'dimension': {'x': dimension, 'y': dimension},
 								'offset': {'x': offset['x'], 'y': offset['y']},

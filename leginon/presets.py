@@ -1239,11 +1239,11 @@ class PresetsManager(node.Node):
 					camdata1['binning'][axis] = binning[axis]
 					camdata1['exposure time'] = camdata1['exposure time']*camdata0['binning'][axis]/camdata1['binning'][axis]
 		if mode == 'bin':
-			## bin the as much camera as possible to at most imagelength x imagelength
+			## at maximum bin using as much camera as possible to at most imagelength x imagelength
 			## with exposure time adjustment
-			new_bin = min((fullcamdim['x']/imagelength,fullcamdim['y']/imagelength))
+			new_bin = max((fullcamdim['x']/imagelength,fullcamdim['y']/imagelength))
 			for axis in ('x','y'):
-				new_camdim = imagelength
+				new_camdim = int(math.floor( fullcamdim[axis] / new_bin ))
 				extrabin = float(new_bin) / camdata0['binning'][axis]
 				camdata1['offset'][axis] = (fullcamdim[axis] / new_bin - new_camdim) / 2
 				camdata1['dimension'][axis] = new_camdim
