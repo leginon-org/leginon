@@ -38,7 +38,7 @@ $link->addlink('goniometer.php','Goniometer','', 'goniometer', '');
 
 <html>
 <head>
-<title>Manage Groups</title>
+<title>Access Control Management</title>
 <link rel="stylesheet" href="css/viewer.css" type="text/css" /> 
 <script src="js/dataform.js"></script>
 </head>
