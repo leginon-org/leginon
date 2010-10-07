@@ -167,15 +167,21 @@ function runUploadTemplateStack() {
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
 
-	//make sure a description is provided
+	// make sure a description is provided
 	if (!$description) 
 		createUploadTemplateStackForm("<B>ERROR:</B> Enter a brief description of the template");
 
-	//make sure angstroms per pixel is specified, or is retrieved from the database
+	// make sure angstroms per pixel is specified, or is retrieved from the database
 	if ((!$apix && !$clusterId) && (!$apix && !$alignId)) 
 		createUploadTemplateStackForm("<B>ERROR:</B> Enter a value for angstroms per pixel");
 
-	//make sure template type is specified
+	// make sure that include or exclude are specified, if used
+	if ($clusterId)	{
+		if ((!$exclude) && (!$include))
+			createUploadTemplateStackForm("<B>ERROR:</B> if including or excluding, make sure those values are specified");
+	}
+	
+	// make sure template type is specified
 	if ((!$stacktype && !$clusterId) && (!$stacktype && !$alignId)) 
 		createUploadTemplateStackForm("<B>ERROR:</B> Enter the type of stack (i.e. class averages or forward projections)");
 
@@ -183,10 +189,10 @@ function runUploadTemplateStack() {
 	if ((!$clusterId && !$alignId) && (!$template_stack))
 		createUploadTemplateStackForm("<B>ERROR:</B> Make sure the path to the template stack was specified");
 
-	//make sure a session was selected
+	// make sure a session was selected
 	if (!$session) createUploadTemplateStackForm("<B>ERROR:</B> Select an experiment session");
 
-	//check if the template is an existing file 
+	// check if the template is an existing file 
 	if ($clusterId == False && !file_exists($template_stack))
 		$template_warning="File ".$template_stack." does not exist. "; 
 
