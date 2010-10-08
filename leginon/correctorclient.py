@@ -15,9 +15,11 @@ import instrument
 from pyami import arraystats, imagefun
 import time
 import cameraclient
+import itertools
 
 ref_cache = {}
 ref_cache_id = {}
+idcounter = itertools.cycle(range(100))
 
 class CorrectorClient(cameraclient.CameraClient):
 	def __init__(self):
@@ -341,7 +343,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		elif type == 'norm':
 			refdata = leginondata.NormImageData()
 		refdata['image'] = imarray
-		refdata['filename'] = self.makeCorrectorImageFilename(type, channel)
+		refdata['filename'] = self.makeCorrectorImageFilename(type, channel, imarray.shape)
 		refdata['session'] = self.session
 		refdata['scope'] = scopedata
 		refdata['camera'] = cameradata
@@ -378,9 +380,11 @@ class CorrectorClient(cameraclient.CameraClient):
 		plandata['despike threshold'] = plan['despike threshold']
 		plandata.insert(force=True)
 
-	def makeCorrectorImageFilename(self, type, channel):
+	def makeCorrectorImageFilename(self, type, channel, shape):
 		sessionname = self.session['name']
-		timestamp = time.strftime('%Y%m%d-%H%m%S', time.localtime())
-		f = '%s_%s_%s_%s' % (sessionname, timestamp, type, channel)
+		timestamp = time.strftime('%d%H%M%S', time.localtime())
+		nextid = idcounter.next()
+		shapestr = '%sx%s' % shape
+		f = '%s_%s_%02d_%s_%s_%s' % (sessionname, timestamp, nextid, shapestr, type, channel)
 		return f
 
