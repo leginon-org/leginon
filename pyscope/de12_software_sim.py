@@ -5,10 +5,9 @@ import struct
 import types
 import numpy
 import time
-import pyami.imagefun
 
 class DirectElectronServer:	
-	debugPrint = False
+	debugPrint = True
 	connected = False
 	host = "localhost" #change to specific IP address if necessary	
 	readport, writeport = 48879, 48880	
@@ -82,20 +81,13 @@ class DirectElectronServer:
 	
 	def GetImage(self):
 		width = self.getProperty("Image Size X")
-		assert width
-		#if(width==False):
-		#	return False
+		if(width==False):
+			return False
 		width = float(width)
 		height = self.getProperty("Image Size Y")
-		assert height
-		#if(height==False):
-		#	return False
+		if(height==False):
+			return False
 		height = float(height)
-		exposure_time = self.getProperty("Exposure Time")
-		assert exposure_time
-		#if(exposure_time==False):
-		#	exposure_time = 1.0;
-		exposure_time = float(exposure_time)
 		'''
 		binning_x = self.getProperty("Binning X")
 		if(binning_x==False):
@@ -110,33 +102,25 @@ class DirectElectronServer:
 		real_shape = [height/binning_y, width/binning_x]		
 		command = self.addSingleCommand(self.k_GetImage)
 		response = self.sendcommand(command)		
-		assert response
-		#if(response == False):
-		#	return False #expect no error
+		if(response == False):
+			return False #expect no error
 		
-		#get the data header		
-		self.writesock.settimeout(None)
+		#get the data header
 		recvbyteSizeString = self.writesock.recv(4) # get the first 4 bytes
 		recvbyteSize = struct.unpack('L',recvbyteSizeString) # interpret as size
-		received_string = self.writesock.recv(recvbyteSize[0]) # get the rest
-		self.writesock.settimeout(0.5) #change to default
+		received_string = self.writesock.recv(recvbyteSize[0]) # get the rest		
 		data_header = DEServer_pb2.DEPacket()
 		data_header.ParseFromString(received_string)
 		bytesize = data_header.data_header.bytesize		
-		assert bytesize > 0
-		#if(bytesize<=0):
-		#	return False #expect a byte count		
+		if(bytesize<=0):
+			return False #expect a byte count		
 		t1 = time.clock()
 		data = self.getCountBytesOfDataFromSocket(self.writesock, bytesize)
 		t2 = time.clock()
 		if (self.debugPrint): print "Image transfer time: ", t2 - t1, "second"		
 		if (self.debugPrint): print "Effective throughput: ", bytesize/(t2-t1)/1024/1024, "MB/sec"
-		print 'LEN', len(data)
-		print 'BYTESIZE', bytesize
-		assert len(data) == bytesize
 		if len(data) == bytesize:
 			image = numpy.fromstring(data, numpy.uint16)						
-			assert bytesize == height/binning_y * width/binning_x * 2
 			if (bytesize == height/binning_y * width/binning_x * 2):				
 				image.shape = real_shape
 				return image
@@ -229,17 +213,15 @@ class DirectElectronServer:
 	def sendcommand(self, command = None):
 		if command is None:			
 			return False
+		if (self.debugPrint): print command.__str__()
 		if(len(command.camera_name)==0):
 			command.camera_name = self.active_camera_name # append the active camera name if necessary
-		if (self.debugPrint): print command.__str__()
 		data = struct.pack('L',command.ByteSize())+command.SerializeToString()		
 		self.readsock.send(data)
 		
-		self.writesock.settimeout(None);
 		recvbyteSizeString = self.writesock.recv(4) # get the first 4 bytes
 		recvbyteSize = struct.unpack('L',recvbyteSizeString) # interpret as size
-		received_string = self.writesock.recv(recvbyteSize[0]) # get the rest		
-		self.writesock.settimeout(0.5);
+		received_string = self.writesock.recv(recvbyteSize[0]) # get the rest
 		Acknowledge_return = DEServer_pb2.DEPacket()
 		Acknowledge_return.ParseFromString(received_string)		
 		if (self.debugPrint): print Acknowledge_return.__str__()
@@ -259,12 +241,10 @@ class DE12(ccdcamera.CCDCamera):
 	name = 'DE12'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
-		self.camera_name = 'DE12'
+		self.camera_name = 'Software Sim'
 		self.server = DirectElectronServer()
 		self.connect()
 		self.offset = {'x': 0, 'y': 0}
-		self.dimension = {'x': 4096, 'y': 3072}
-		self.binning = {'x': 1, 'y': 1}
 
 	def __del__(self):
 		self.disconnect()
@@ -321,16 +301,16 @@ class DE12(ccdcamera.CCDCamera):
 		self.server.setProperty(name + ' Y', int(xydict['y']))		
 
 	def getDimension(self):
-		return self.dimension
+		return self.getDictProp('Image Size')
 
 	def setDimension(self, dimdict):
-		self.dimension = dimdict
+		return self.setDictProp('Image Size', dimdict)
 	
 	def getBinning(self):
-		return self.binning
+		return {'x': 1, 'y': 1}
 
 	def setBinning(self, bindict):
-		self.binning = bindict
+		assert bindict == {'x': 1, 'y': 1}
 
 	def getOffset(self):
 		return self.offset
@@ -342,22 +322,7 @@ class DE12(ccdcamera.CCDCamera):
 		image = self.server.GetImage()
 		if not isinstance(image, numpy.ndarray):
 			raise ValueError('DE12 GetImage did not return array')
-		image = self.finalizeGeometry(image)
 		return image
-
-	def finalizeGeometry(self, image):
-		row_start = self.offset['y'] * self.binning['y']
-		col_start = self.offset['x'] * self.binning['x']
-		nobin_rows = self.dimension['y'] * self.binning['y']
-		nobin_cols = self.dimension['x'] * self.binning['x']
-		row_end = row_start + nobin_rows
-		col_end = col_start + nobin_cols
-		nobin_image = image[row_start:row_end, col_start:col_end]
-		assert self.binning['x'] == self.binning['y']
-		binning = self.binning['x']
-		bin_image = pyami.imagefun.bin(nobin_image, binning)
-		bin_image = numpy.fliplr(bin_image)
-		return bin_image
 
 	def getPixelSize(self):
 		psize = 6e-6
@@ -386,6 +351,3 @@ class DE12(ccdcamera.CCDCamera):
 		
 	def setExposureType(self, value):
 		self.setProperty('Exposure Mode', value.capitalize())
-
-	def getNumberOfFrames(self):
-		return self.getProperty('Total Number of Frames')
