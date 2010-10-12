@@ -64,7 +64,7 @@ class CentosInstallation(object):
         self.writeToLog("Run the following Command:")
         self.writeToLog("%s"%(cmd,))
         print cmd + '\n'
-        print 'Please wait......(some commands might takes couple mintues to run)\n'
+        print 'Please wait......(This may take a few minutes.)\n'
 
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdoutResult = proc.stdout.read()
@@ -179,6 +179,7 @@ class CentosInstallation(object):
         packagelist = ['torque-server', 'torque-scheduler',]
         self.yumInstall(packagelist)
 
+        
         self.runCommand("/sbin/chkconfig pbs_server on")
         self.runCommand("/sbin/chkconfig pbs_sched on")
 
@@ -190,13 +191,21 @@ class CentosInstallation(object):
         f.write("%s"%(self.hostname))
         f.close()
 
+        self.runCommand("/sbin/service pbs_server start")
+        self.runCommand("/sbin/service pbs_sched start")
         # edit /var/hosts file
         self.editHosts()
-        self.runCommand("/usr/share/doc/torque-2.3.10/torque.setup root")
+        self.runCommand('qmgr -c "s s scheduling=true"')
+        self.runCommand('qmgr -c "c q batch queue_type=execution"')
+        self.runCommand('qmgr -c "s q batch started=true"')
+        self.runCommand('qmgr -c "s q enabled=true"')
+        self.runCommand('qmgr -c "s q resources_default.nodes=1"')
+        self.runCommand('qmgr -c "s q resources_default.walltime=3600"')
+        self.runCommand('qmgr -c "s s default_queue=batch"')
     
         self.runCommand("/sbin/service network restart")
-        self.runCommand("/sbin/service pbs_server restart")
-        self.runCommand("/sbin/service pbs_sched restart")
+
+
         return True
 
     def processServerYumInstall(self):
@@ -211,6 +220,9 @@ class CentosInstallation(object):
         
         f = open('/var/torque/mom_priv/config', 'w')
         f.write("$pbsserver localhost # running pbs_server on this host")
+        self.runCommand("/sbin/chkconfig pbs_mon on")
+        self.runCommand("/sbin/service pbs_mom start")
+        
         f.close()
 
     def mysqlYumInstall(self):
