@@ -4,6 +4,7 @@ import sys
 import time
 import glob
 import subprocess
+import shutil
 from appionlib import apDisplay
 
 ####
@@ -42,6 +43,20 @@ def removeFile(filename, warn=False):
 			return True
 		except:
 			apDisplay.printWarning('%s could not be removed' % f)
+	return False
+
+#===============
+def removeDir(dirname, warn=True):
+	dir = os.path.abspath(dirname)
+	if os.path.isdir(dir):
+		if warn is True:
+			apDisplay.printWarning("removing directory: "+dir)
+			time.sleep(1)
+		try:
+			shutil.rmtree(dir)
+			return True
+		except:
+			apDisplay.printWarning('%s could not be removed' % dir)
 	return False
 
 #===============
