@@ -625,9 +625,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 					eliminated += 1
 				else:
 					newparticles.append(prtl)
-			print eliminated,"particle(s) eliminated due to masking"
+			apDisplay.printMsg("%i particle(s) eliminated due to masking"%eliminated)
 		else:
-			print "no masking"
+			apDisplay.printMsg("no masking")
 			newparticles = particles
 		return newparticles
 
