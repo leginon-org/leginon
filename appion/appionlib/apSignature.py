@@ -98,8 +98,8 @@ def signatureString(templatename, dwnimgname, params):
 	#particle distance
 	feed += " -partdist %i"%(params['overlapmult']*params['diam'])
 
-	#resizing set to 1 always (binning done beforehand)
-	feed += " -resize 1"
+	#resizing set to 4 always (doesn't work otherwise)
+	feed += " -resize 4"
 
 	return feed
 
