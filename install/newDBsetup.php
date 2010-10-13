@@ -17,6 +17,20 @@ require_once($location . DIRECTORY_SEPARATOR . "../myamiweb/inc/mysql.inc");
 require_once($location . DIRECTORY_SEPARATOR . "../myamiweb/inc/setLeginonDefaultValues.inc");
 require_once($location . DIRECTORY_SEPARATOR . "../myamiweb/inc/xmlapplicationimport.inc");
 
+function getSubversionRevision($location){
+ 
+	//Because svn head revision number is on line 4
+	$line = 4;
+	$handle = @fopen($location . DIRECTORY_SEPARATOR . "../myamiweb/.svn/entries", 'r');
+	if($handle){
+		for($i=0 ; $i<$line ; $i++){
+			$content = fgets($handle, 4096);
+		}
+		fclose($handle);
+	}
+	return $content;
+}
+
 // get required arguments
 /*
  * L: - DB_LEGINON
@@ -150,6 +164,11 @@ $leginonDBImport->leginonDBinsert('UserData', $anonymousAccount);
 
 $leginonDBImport->setLeginonDefaultValues();
 
+// put svn revision number in the database
+$svnRevision = getSubversionRevision($location);
+mysql_select_db(DB_PROJECT, $link);
+mysql_query("insert into install (key, value) Values ('Revision', $svnRevision)");
+mysql_close($link);
 
 print "Databases setup successfully ! \n";
 
