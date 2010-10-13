@@ -77,7 +77,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		if ($binning=='auto') {
 			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
 			if ($p['fft'] && $p['fftbin']=='b')
-				$binning = ($dimx > 2048) ? (($dimx > 2048) ? 2 : 1 ) : 1;
+				$binning = ($dimx > 2048) ? 2 : 1;
 		}
 
 		if ($p['loadjpg'] && !$p['fft']) {
