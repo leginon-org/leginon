@@ -83,17 +83,30 @@ class Corrector(imagewatcher.ImageWatcher):
 		plan = self.retrieveCorrectorPlan(cameradata)
 		return plan
 
+	def changeScreenPosition(self,state):
+		try:
+			self.instrument.tem.MainScreenPosition = state
+			time.sleep(2)
+			self.logger.info('screen %s' % state)
+		except:
+			self.logger.info('screen %s failed (may be unsupported)' % state)
+
 	def acquireDark(self, channels):
+		cameraname = self.instrument.getCCDCameraName()
+		if cameraname == 'DE12':
+			self.changeScreenPosition('down')
 		for channel in channels:
 			try:
 				imagedata = self.acquireReference(type='dark', channel=channel)
 			except Exception, e:
 				raise
-				self.logger.exception('Cannot acquire dark reference: %s' % e)
+				self.logger.exception('Cannot acquire dark reference: %s' % (e,))
 			else:
 				self.displayImage(imagedata)
 				self.currentimage = imagedata
 				self.beep()
+		if cameraname == 'DE12':
+			self.changeScreenPosition('up')
 		self.panel.acquisitionDone()
 
 	def acquireBright(self, channels):
@@ -102,7 +115,7 @@ class Corrector(imagewatcher.ImageWatcher):
 				imagedata = self.acquireReference(type='bright', channel=channel)
 			except Exception, e:
 				raise
-				self.logger.exception('Cannot acquire bright reference: %s' % e)
+				self.logger.exception('Cannot acquire bright reference: %s' % (e,))
 			else:
 				self.displayImage(imagedata)
 				self.currentimage = imagedata
@@ -120,7 +133,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.stopTimer('get image')
 		except Exception, e:
                         raise
-			self.logger.exception('Raw acquisition failed: %s' % e)
+			self.logger.exception('Raw acquisition failed: %s' % (e,))
 		else:
 			self.displayImage(image)
 			self.currentimage = image
@@ -184,7 +197,7 @@ class Corrector(imagewatcher.ImageWatcher):
 				typekey = 'bright'
 				self.logger.info('Acquiring bright references...')
 		except Exception, e:
-			self.logger.error('Reference acquisition failed: %s' % e)
+			self.logger.error('Reference acquisition failed: %s' % (e,))
 			self.instrument.ccdcamera.ExposureType = 'normal'
 			return None
 
@@ -196,7 +209,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		try:
 			series = self.acquireSeries(self.settings['n average'])
 		except Exception, e:
-			self.logger.error('Reference acquisition failed: %s' % e)
+			self.logger.error('Reference acquisition failed: %s' % (e,))
 			self.instrument.ccdcamera.ExposureType = 'normal'
 			return None
 
@@ -221,7 +234,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		try:
 			self.instrument.ccdcamera.ExposureType = exposuretype
 		except Exception, e:
-			self.logger.error('Reference acquisition failed: %s' % e)
+			self.logger.error('Reference acquisition failed: %s' % (e,))
 			self.instrument.ccdcamera.ExposureType = 'normal'
 			return None
 
