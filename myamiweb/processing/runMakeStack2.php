@@ -80,6 +80,16 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		}
 	}
 
+	function enablexmipp(){
+		if (document.viewerform.xmippnormcheck.checked){
+			document.viewerform.xmippnormval.disabled=false;
+			document.viewerform.xmippnormval.value='4.5';
+		} else {
+			document.viewerform.xmippnormval.disabled=true;
+			document.viewerform.xmippnormval.value='4.5';
+		}
+	}
+
 	function enablectftype() {
 		if (document.viewerform.ctfcorrect.checked){
 			document.viewerform.ctfcorrecttype.disabled=false;
@@ -190,7 +200,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$invcheck = ($_POST['density']=='invert' || !$_POST['process']) ? 'CHECKED' : '';
 	// normalization check (checked by default)
 	$normcheck = ($_POST['normalize']=='on' || !$_POST['process']) ? 'CHECKED' : '';
+	$xmippnormcheck = ($_POST['xmippnormcheck']=='on' || !$_POST['process']) ? 'CHECKED' : '';
+	$xmippdisable = ($xmippnormcheck=='CHECKED') ? '' : 'DISABLED';
+	$xmippnormval = ($_POST['xmippnormval']) ? $_POST['xmippnormval'] : '4.5';
 	$overridecheck = ($_POST['override']=='on') ? 'CHECKED' : '';
+	
 	echo "<table border=0 class=tableborder>\n";
 	echo "<tr>\n";
 	echo "<td valign='TOP'>\n";
@@ -219,6 +233,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 	echo "<input type='checkbox' name='normalize' $normcheck>\n";
 	echo docpop('stacknorm','Normalize Stack Particles');
+	echo "<br/>\n";
+
+	echo "<input type='checkbox' name='xmippnormcheck' onclick='enablexmipp(this)' $xmippnormcheck>\n";
+	echo docpop('xmippstacknorm','XMIPP normalize to sigma:');
+	echo "<input type='text' name='xmippnormval' $xmippdisable value='$xmippnormval' size='4'>";
 	echo "<br/>\n";
 
 	if ($ctfdata) {
@@ -528,6 +547,13 @@ function runMakestack() {
 	$boxfiles = ($_POST['boxfiles']);
 	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
 
+	// xmipp normalization
+	// ace cutoff
+	if ($_POST['xmippnormcheck']=='on') {
+		$xmippnorm=$_POST['xmippnormval'];
+		if ($xmippnorm <= 0 || !$xmippnorm) createMakestackForm("<b>ERROR:</b> Xmipp sigma must be greater than 0" );
+	}
+
 	// set image inspection selection
 	$norejects=$inspected=0;
 	if ($_POST['checkimage']=="Non-rejected") {
@@ -624,6 +650,7 @@ function runMakestack() {
 	if ($invert == "yes") $command.="--invert ";
 	if ($invert == "no") $command.="--no-invert ";
 	if ($normalize == "yes") $command.="--normalized ";
+	if ($xmippnorm) $command.="--xmipp-normalize=$xmippnorm ";
 	if ($ctfcorrect) { 
 		$command.="--phaseflip --flip-type=$ctfcorrecttype ";
 	}
@@ -680,6 +707,7 @@ function runMakestack() {
 	<tr><td>particle label</td><td>$partlabel</td></tr>
 	<tr><td>invert</td><td>$invert</td></tr>
 	<tr><td>normalize</td><td>$normalize</td></tr>
+	<tr><td>xmipp-normalize</td><td>$xmippnormalize</td></tr>
 	<tr><td>ctf correct</td><td>$ctfcorrect</td></tr>
 	<tr><td>ctf correct type</td><td>$ctfcorrecttype</td></tr>
 	<tr><td>mask assessment</td><td>$massessname</td></tr>

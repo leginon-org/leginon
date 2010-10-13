@@ -150,6 +150,7 @@ var help = {
 		'fastmode' : 'fast mode is a setting in Xmipp that reduces the time for an iteration after the first round, if off all iterations take a long time, if on then if the the iteration time will drop 90% after the first round, e.g.  60 min after round 1 to 4 min for each iteration after',
 		'noisedistribution' : 'Determines which noise distribution model to use during alignment. Options are Gaussian and Student\'s  T distrubtions',
 		'xmippmaxiter' : 'Xmipp uses a convergence criteria to stop, but it also has a maximum number of iterations it will perform without converging before it gives up',
+		'xmippstacknorm' : 'Normalize particle images using Xmipp. Removes ramp density by subtracting a least-squares plane through the background pixels, and replaces pixels above and below the specified sigma threshold with random values within the threshold range.',
 		'stack' : 'Input particles to be classified',
 		'planereg' : 'Fit a 2D plane to the image and subtract, similar to a high pass filter',
 		'peaktype' : 'The determines how the center of the particle is found. Default for leginon hole finder is center of mass, but you may get better results with maximum. WARNING: Christopher needs to update pyami on cluster for maximum to work, so use center of mass',

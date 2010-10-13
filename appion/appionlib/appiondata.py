@@ -509,6 +509,7 @@ class ApStackParamsData(Data):
 			('fileType', str),
 			('inverted', bool),
 			('normalized', bool),
+			('xmipp-norm', float),
 			('defocpair', bool),
 			('lowpass', float),
 			('highpass', float),

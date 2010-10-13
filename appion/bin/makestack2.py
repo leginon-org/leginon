@@ -31,6 +31,7 @@ from appionlib import apFile
 from appionlib import apParam
 from appionlib import apImagicFile
 from appionlib import apMask
+from appionlib import apXmipp
 
 
 class Makestack2Loop(appionLoop2.AppionLoop):
@@ -430,7 +431,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			voltage = (imgdata['scope']['high tension'])/1000
 
 		apix = apDatabase.getPixelSize(imgdata)
-		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=True)
+		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=True, method=self.params['ctfmethod'])
 		defocus *= 1.0e6
 		self.checkDefocus(defocus, shortname)
 
@@ -454,7 +455,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			voltage = (imgdata['scope']['high tension'])/1000
 
 		apix = apDatabase.getPixelSize(imgdata)
-		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=True)
+		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=True, method=self.params['ctfmethod'])
 		defocus *= 1.0e6
 		self.checkDefocus(defocus, shortname)
 
@@ -690,7 +691,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		stparamq=appiondata.ApStackParamsData()
 		paramlist = ('boxSize','bin','aceCutoff','correlationMin','correlationMax',
-			'checkMask','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair',
+			'checkMask','minDefocus','maxDefocus','fileType','inverted','normalized', 'xmipp-norm', 'defocpair',
 			'lowpass','highpass','norejects', 'tiltangle')
 
 		### fill stack parameters
@@ -843,6 +844,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			help="Assessed mask run name")
 		self.parser.add_option("--label", dest="particlelabel", type="str", default=None,
 			help="select particles by label within the same run name")
+		self.parser.add_option("--xmipp-normalize", dest="xmipp-norm", type="float",
+			help="normalize the entire stack using xmipp")
 
 		### true/false
 		self.parser.add_option("--phaseflip", dest="phaseflipped", default=False,
@@ -915,6 +918,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if self.params['fliptype'] == 'ace2image' and self.params['ctfmethod'] is None:
 			apDisplay.printMsg("setting ctf method to ace2")
 			self.params['ctfmethod'] = 'ace2'
+		if self.params['xmipp-norm'] is not None:
+			self.xmippexe = apParam.getExecPath("xmipp_normalize", die=True)
+			
 
 	#=====================
 	def setRunDir(self):
@@ -1038,6 +1044,50 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			stackid = apStack.getStackIdFromPath(stackpath)
 			if stackid is not None:
 				apStackMeanPlot.makeStackMeanPlot(stackid)
+		### apply xmipp normalization
+		if self.params['xmipp-norm'] is not None:
+			### convert stack into single spider files
+			selfile = apXmipp.breakupStackIntoSingleFiles(stackpath)	
+
+			### setup Xmipp command
+			apDisplay.printMsg("Using Xmipp to normalize particle stack")
+			normtime = time.time()
+			xmippopts = ( " "
+				+" -i %s"%os.path.join(self.params['rundir'],selfile)
+				+" -method Ramp "
+				+" -background circle %i"%(int(self.params['boxsize']/self.params['bin']*0.4))
+				+" -thr_black_dust=-%.2f "%(self.params['xmipp-norm'])
+				+" -thr_white_dust=%.2f "%(self.params['xmipp-norm'])
+			)
+			xmippcmd = self.xmippexe+" "+xmippopts
+			apParam.runCmd(xmippcmd, package="Xmipp", verbose=True, showcmd=True)
+			normtime = time.time() - normtime
+			apDisplay.printMsg("Xmipp normalization time: "+apDisplay.timeString(normtime))
+
+			### recombine particles to a single imagic stack
+			pfile = open(selfile)
+			lstfile = "norm"+self.timestamp+".lst"
+			lstf = open(lstfile,'w')
+			lstf.write("#LST\n")
+			pnum=0
+			for line in pfile:
+				pinfo = line.split()
+				if len(pinfo)==2:
+					lstf.write("%i\t%s\n"%(pnum,pinfo[0]))
+					pnum+=1
+			pfile.close()
+			lstf.close()
+
+			### overwrite unnormalized stack
+			apDisplay.printMsg("Converting normalized Xmipp particles")
+			emancmd="proc2d %s %s inplace"%(lstfile,stackpath)
+			apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
+
+			### clean up directory
+			apFile.removeFile(lstfile)
+			apFile.removeFile(selfile)
+			apFile.removeDir("partfiles")
+			
 		apDisplay.printColor("Timing stats", "blue")
 		self.printTimeStats("Batch Boxer", self.batchboxertimes)
 		self.printTimeStats("Ctf Correction", self.ctftimes)
