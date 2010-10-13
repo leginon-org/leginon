@@ -250,6 +250,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		if (!$phasecheck) echo " disabled";
 		echo ">\n";
 		echo "<option value='ace2image'>Ace 2 WeinerFilter Whole Image (default)</option>\n";
+		echo "<option value='spiderimage'>SPIDER PhaseFlip</option>\n";
 		echo "<option value='emanpart'>EMAN PhaseFlip by Stack</option>\n";
 		echo "<option value='emanimage'>EMAN PhaseFlip Whole Image</option>\n";
 		echo "<option value='emantilt'>EMAN PhaseFlip by Tilt Location</option>\n";

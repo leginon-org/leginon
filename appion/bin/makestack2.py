@@ -32,6 +32,7 @@ from appionlib import apParam
 from appionlib import apImagicFile
 from appionlib import apMask
 from appionlib import apXmipp
+from appionlib.apSpider import filters
 
 
 class Makestack2Loop(appionLoop2.AppionLoop):
@@ -235,6 +236,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			if self.params['fliptype'] == 'emanimage':
 				### ctf correct whole image using EMAN
 				imgpath = self.phaseFlipWholeImage(imgpath, imgdata)
+				self.ctftimes.append(time.time()-t0)
+			elif self.params['fliptype'] == "spiderimage":
+				imgpath = self.phaseFlipSpider(imgpath,imgdata)
 				self.ctftimes.append(time.time()-t0)
 			elif self.params['fliptype'] == "ace2image":
 				### ctf correct whole image using Ace 2
@@ -582,6 +586,60 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		return outfile
 
+	#=======================
+	def phaseFlipSpider(self, inimgpath, imgdata):
+		"""
+		phaseflip whole image using spider
+		"""
+
+		bestctfvalue, bestconf = apCtf.getBestCtfValueForImage(imgdata,msg=True,method=self.params['ctfmethod'])
+
+		if bestctfvalue is None:
+			apDisplay.printWarning("No ctf estimation for current image")
+			self.badprocess = True
+			return None
+
+		imgname = imgdata['filename']
+		shortname = apDisplay.short(imgname)
+		spi_imgpath = os.path.join(self.params['rundir'], shortname+".spi")
+
+		
+		df1 = bestctfvalue['defocus1']
+		df2 = bestctfvalue['defocus2']
+		defocus = (df1+df2)/2*1.0e6
+
+		apix = apDatabase.getPixelSize(imgdata)
+		voltage = imgdata['scope']['high tension']
+		imgsize=imgdata['camera']['dimension']['y']
+		# find cs
+		if bestctfvalue['acerun']['ace2_params']:
+			cs=bestctfvalue['acerun']['ace2_params']['cs']
+		elif bestctfvalue['acerun']['ctftilt_params']:
+			cs=bestctfvalue['acerun']['ctftilt_params']['cs']
+		else:
+			apDisplay.printError("No cs value found in database")
+
+		# no astigmatism correction now
+		#angast = bestctfvalue['angle_astigmatism']*math.pi/180
+		#amp = bestctfvalue['amplitude_contrast']
+
+		# convert image to spider
+		emancmd="proc2d %s %s spidersingle"%(inimgpath,spi_imgpath)
+		apEMAN.executeEmanCmd(emancmd, showcmd=True)
+		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
+		# spider defocus is +, and in Angstroms
+		defocus *= -10000 
+		outimgpath = filters.phaseFlipImage(spi_imgpath,cs,defocus,voltage,imgsize,apix)
+
+		# convert image back to mrc
+		mrcname = os.path.join(self.params['rundir'], shortname+".mrc.corrected.mrc")
+		emancmd="proc2d %s %s"%(outimgpath,mrcname)
+		apEMAN.executeEmanCmd(emancmd, showcmd=True)
+		# remove original spider image
+		os.remove(spi_imgpath)
+
+		return mrcname
+		
 
 ############################################################
 ## General functions
@@ -806,7 +864,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 	#=======================
 	def setupParserOptions(self):
-		self.flipoptions = ('emanimage', 'emanpart', 'emantilt', 'ace2image')
+		self.flipoptions = ('emanimage', 'emanpart', 'emantilt', 'spiderimage', 'ace2image')
 		self.ctfestopts = ('ace2', 'ctffind')
 
 		### values
@@ -1034,6 +1092,12 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			### remove Ace2 images
 			pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*mrc.corrected.mrc')
 			apFile.removeFilePattern(pattern)
+			### remove Spider images
+			if self.params['fliptype'] == 'spiderimage':
+				pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*_out.spi')
+				apFile.removeFilePattern(pattern)
+				pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*_tf.spi')
+				apFile.removeFilePattern(pattern)
 		if self.noimages is True:
 			return
 		### Averaging completed stack
