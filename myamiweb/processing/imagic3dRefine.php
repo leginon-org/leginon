@@ -478,6 +478,8 @@ function jobform($extra=false) {
 	echo "</td></tr><tr><td>\n";
 	echo modelsummarytable($modelid, true);
 	echo "</td></tr></table>\n";
+
+	echo imagicRef();
 	
 	processing_footer();
 	exit;
