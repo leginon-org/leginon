@@ -52,7 +52,10 @@ class centerStackScript(appionScript.AppionScript):
 		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
 
 		#make sure that old stack is numbered
-		apEMAN.checkStackNumbering(oldstack)
+		if os.access(oldstack, os.W_OK) is True:
+			apEMAN.checkStackNumbering(oldstack)
+		else:
+			apDisplay.printWarning("old stack header is not numbered according to EMAN, and exists in a READ-only directory")
 
 		alignedstack = os.path.join(self.params['rundir'], 'ali.img')
 		badstack = os.path.join(self.params['rundir'], 'bad.img')
