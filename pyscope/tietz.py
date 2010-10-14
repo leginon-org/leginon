@@ -725,3 +725,19 @@ class TietzFC415(Tietz, ccdcamera.CCDCamera):
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
+
+class TietzF416(Tietz, ccdcamera.CCDCamera):
+	name = 'Tietz F416'
+	cameratypeattr = 'ctF416'
+	mmname = 'CAM_F416_DATA'
+	def __init__(self):
+		ccdcamera.CCDCamera.__init__(self)
+		Tietz.__init__(self)
+
+class TietzF816(Tietz, ccdcamera.CCDCamera):
+	name = 'Tietz F816'
+	cameratypeattr = 'ctF816'
+	mmname = 'CAM_F816_DATA'
+	def __init__(self):
+		ccdcamera.CCDCamera.__init__(self)
+		Tietz.__init__(self)
