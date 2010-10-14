@@ -166,10 +166,14 @@ $leginonDBImport->setLeginonDefaultValues();
 
 // put svn revision number in the database
 $svnRevision = getSubversionRevision($location);
-mysql_select_db(DB_PROJECT, $link);
-mysql_query("insert into install (key, value) Values ('Revision', $svnRevision)");
+$link = mysql_connect(DB_HOST, DB_USER, DB_PASS);
+if(!$link) {
+	die('Could not connect: ' . mysql_error());
+}
+$sqlCmd = "insert into " . DB_PROJECT . ".install (`key`, value) Values ('Revision', $svnRevision)";
+mysql_query($sqlCmd);
 mysql_close($link);
 
 print "Databases setup successfully ! \n";
-
+exit;
 ?>
