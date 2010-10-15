@@ -241,7 +241,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo "<br/>\n";
 
 	if (!HIDE_IMAGIC)
-		$mramethods=array('EMAN', 'IMAGIC');
+		$mramethods=array('IMAGIC', 'EMAN');
 	else
 		$mramethods=array('EMAN',);
 
