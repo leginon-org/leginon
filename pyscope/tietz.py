@@ -20,6 +20,12 @@ import pywintypes
 import win32com.client
 import win32com.server.register
 
+def intDict(d):
+	new_d = {}
+	for key,value in d.items():
+		new_d[key] = int(value)
+	return new_d
+
 def listCamcProcs():
 	procs = enumproc.EnumProcesses()
 	camcprocs = []
@@ -172,7 +178,6 @@ class Tietz(object):
 		killCamcProcs()
 		self.unsupported = []
 
-		#self.arraytypecode = 'H'
 		self.imagetype = numpy.uint16
 		self.bytesperpixel = 2
 
@@ -296,7 +301,7 @@ class Tietz(object):
 		#								'y':
 		#						{'type': int,
 		#							'range': [0, camerasize['y'] - dimension['y']*binning['y']]}}}
-		self.offset = dict(value)
+		self.offset = intDict(value)
 
 	def getDimension(self):
 		return dict(self.dimension)
@@ -309,7 +314,7 @@ class Tietz(object):
 		#								'y':
 		#						{'type': int,
 		#							'range': [0, (camerasize['y'] - offset['y'])/binning['y']]}}}
-		self.dimension = dict(value)
+		self.dimension = intDict(value)
 
 	def getBinning(self):
 		return dict(self.binning)
@@ -322,7 +327,7 @@ class Tietz(object):
 		#								'y':
 		#					{'type': int,
 		#						'range': [1, (camerasize['y'] - offset['y'])/dimension['y']]}}}
-		self.binning = dict(value)
+		self.binning = intDict(value)
 
 	def getExposureTime(self):
 		return float(self.exposuretime)
@@ -399,8 +404,6 @@ class Tietz(object):
 		imagesize = self.bytesperpixel*dimension['x']*dimension['y']
 
 		map = mmapfile.mmapfile('', self.mmname, imagesize)
-		#na = numpy.array(array.array(self.arraytypecode, map.read(imagesize)),
-		#										self.imagetype)
 		na = numpy.fromstring(map.read(imagesize), self.imagetype)
 		map.close()
 		na.shape = (dimension['y'], dimension['x'])
