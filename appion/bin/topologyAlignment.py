@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 #
-import os,sys
+import os,sys,re
 import time
 import math
 import shutil
 import glob
 import cPickle
 import tarfile
+import subprocess
 #appion
 from appionlib import appionScript
 from appionlib import apDisplay
@@ -35,8 +36,6 @@ class TopologyRepScript(appionScript.AppionScript):
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="Number of processor to use", metavar="ID#")
 
-		self.parser.add_option("--clip", dest="clipsize", type="int",
-			help="Clip size in pixels (reduced box size)", metavar="#")
 		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--highpass", "--hp", dest="highpass", type="int",
@@ -82,17 +81,13 @@ class TopologyRepScript(appionScript.AppionScript):
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
 
-		boxsize = apStack.getStackBoxsize(self.params['stackid'])
-		self.clipsize = int(math.floor(boxsize/float(self.params['bin']*2)))*2
-		if self.params['clipsize'] is not None:
-			if self.params['clipsize'] >= self.clipsize:
-				apDisplay.printError("requested clipsize is too big %d > %d"
-					%(self.params['clipsize'],self.clipsize))
-			self.clipsize = self.params['clipsize']
+		self.boxsize = apStack.getStackBoxsize(self.params['stackid'])
+		self.workingboxsize = math.floor(self.boxsize/self.params['bin'])
 		if self.params['numpart'] is None:
 			self.params['numpart'] = apFile.numImagesInStack(stackfile)
 		if not self.params['mask']:
-			self.params['mask'] = (self.clipsize/2)-2
+			self.params['mask'] = (self.boxsize/2)-2
+		self.workingmask = math.floor(self.params['mask']/self.params['bin'])
 		if self.params['mramethod'] == 'imagic':
 			self.imagicroot = apIMAGIC.checkImagicExecutablePath()
 			self.imagicversion = apIMAGIC.getImagicVersion(self.imagicroot)
@@ -187,8 +182,8 @@ class TopologyRepScript(appionScript.AppionScript):
 			apDisplay.printError("could not find reference stack file: "+refstackfile)
 
 		alignstackq['stack'] = apStack.getOnlyStackData(self.params['stackid'])
-		alignstackq['boxsize'] = math.floor(apStack.getStackBoxsize(self.params['stackid'])/self.params['bin'])
-		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])*self.params['bin']
+		alignstackq['boxsize'] = math.floor(self.workingboxsize)
+		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
 		alignstackq['description'] = self.params['description']
 		alignstackq['hidden'] =  False
 		alignstackq['num_particles'] =  self.params['numpart']
@@ -212,7 +207,7 @@ class TopologyRepScript(appionScript.AppionScript):
 			### set up reference
 			refq = appiondata.ApAlignReferenceData()
 			## get reference number from partrefdict
-			refq['refnum'] = partrefdict[int(partdict['partnum'])+1]
+			refq['refnum'] = partrefdict[int(partdict['partnum'])]
 			refq['iteration'] = self.params['currentiter']
 			refq['imagicfile'] = os.path.basename(self.params['currentcls'])+".img"
 			refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
@@ -224,9 +219,9 @@ class TopologyRepScript(appionScript.AppionScript):
 			### set up particle
 			alignpartq = appiondata.ApAlignParticleData()
 			## EMAN particles start with 0, database starts at 1
-			alignpartq['partnum'] = partdict['partnum'] + 1
+			alignpartq['partnum'] = partdict['partnum']
 			alignpartq['alignstack'] = self.alignstackdata
-			stackpartdata = apStack.getStackParticle(self.params['stackid'], partdict['partnum']+1)
+			stackpartdata = apStack.getStackParticle(self.params['stackid'], partdict['partnum'])
 			alignpartq['stackpart'] = stackpartdata
 			alignpartq['xshift'] = partdict['xshift']
 			alignpartq['yshift'] = partdict['yshift']
@@ -275,6 +270,8 @@ class TopologyRepScript(appionScript.AppionScript):
 			numClasses
 		)
 		cancmd = self.params['canexe']+canopts
+		self.params['currentnumclasses'] = numClasses
+
 		apDisplay.printMsg("running CAN:")
 		apDisplay.printMsg(cancmd+"\n")
 		self.writeTopolRepLog(cancmd)
@@ -301,28 +298,57 @@ class TopologyRepScript(appionScript.AppionScript):
 	def alignClasses(self):
 		classname = "classes"
 
-		# mask the averages
-		emancmd = "proc2d %s.hed %s_mask.hed mask=%i"%(classname,classname,(self.params['mask']/self.params['bin']))
-		apEMAN.executeEmanCmd(emancmd, verbose=False)
-		os.remove(classname+".hed")
-		os.remove(classname+".img")
-		classname = classname+"_mask"
-		
-		# don't align references for last iteration - classalign2 doesn't save rotations & shifts
-		if self.params['currentiter'] < self.params['iter']:
-			# align the references to each other
-			emancmd = "classalign2 %s.hed 10 keep=100 saveali"%classname
-			apEMAN.executeEmanCmd(emancmd, verbose=False)
-			os.remove(classname+".hed")
-			os.remove(classname+".img")
-			classname = "a"+classname
+		# using IMAGIC to align references
+		# center the particles
+		if self.params['mramethod'] == "imagic":
+			#imagic centering doesn't work as well as EMAN's unfortunately
+			#cenfile = apIMAGIC.alimass(classname+".hed", maxshift=0.15, ceniter=10, nproc=1, path=self.params['iterdir'])
+			aligntime0 = time.time()
 
-		# normalize references
-		emancmd = "proc2d %s.hed %s_norm.hed norm"%(classname,classname)
-		apEMAN.executeEmanCmd(emancmd, verbose=False)
-		os.remove(classname+".hed")
-		os.remove(classname+".img")
-		classname = classname+"_norm"
+			# convert mask to fraction for imagic
+			maskfrac = self.workingmask*2/self.workingboxsize
+
+			# don't align references for last iteration
+			if self.params['currentiter'] < self.params['iter']:
+				emancmd = "proc2d %s.hed %s_cen.hed center"%(classname,classname)
+				apEMAN.executeEmanCmd(emancmd, verbose=False)
+				apFile.removeStack(classname)
+				classname = classname+"_cen"
+
+				alifile = apIMAGIC.alirefs(classname, mask=0.99, maxshift=0.3, path=self.params['iterdir'])
+				apFile.removeStack(classname)
+				classname = alifile
+
+			# mask the classes
+			maskfile = apIMAGIC.softMask(classname, mask=maskfrac, falloff=0.1, path=self.params['iterdir'])
+			apFile.removeStack(classname)
+		
+			# normalize the classes
+			classname = apIMAGIC.normalize(maskfile, sigma=10.0, path=self.params['iterdir'])
+			apFile.removeStack(maskfile)
+
+			apDisplay.printColor("finished alignment in "+apDisplay.timeString(time.time()-aligntime0), "cyan")
+
+		else:
+			# for projection matching with EMAN:
+			# don't align references for last iteration
+			if self.params['currentiter'] < self.params['iter']:
+				emancmd = "classalign2 %s.hed 10 keep=100 saveali"%classname
+				apEMAN.executeEmanCmd(emancmd, verbose=False)
+				apFile.removeStack(classname)
+				classname = "a"+classname
+
+			# mask the averages
+			emancmd = "proc2d %s.hed %s_mask.hed mask=%i"%(classname,classname,(self.workingmask))
+			apEMAN.executeEmanCmd(emancmd, verbose=False)
+			apFile.removeStack(classname)
+			classname = classname+"_mask"
+
+			# normalize references
+			emancmd = "proc2d %s.hed %s_norm.hed norm"%(classname,classname)
+			apEMAN.executeEmanCmd(emancmd, verbose=False)
+			apFile.removeStack(classname)
+			classname = classname+"_norm"
 
 		outputcls = os.path.join(self.params['rundir'],"classes%02i" % self.params['currentiter'])
 		shutil.move(classname+".hed",outputcls+".hed")
@@ -339,7 +365,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		emancmd = "classesbymra %s %s.hed mask=%i split imask=-1 logit=1 sep=1 phase" %(
 			self.params['localstack'],
 			self.params['currentcls'],
-			self.params['mask']
+			self.workingmask
 		)
 		if self.params['nproc'] > 1:
 			apEMAN.executeRunpar(emancmd, self.params['nproc'])
@@ -384,8 +410,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		apEMAN.alignParticlesInLST("cls_all.lst","mrastack.hed")
 
 		if self.params['currentiter'] > 1:
-			os.remove(self.params['alignedstack']+".hed")
-			os.remove(self.params['alignedstack']+".img")
+			apFile.removeStack(self.params['alignedstack'])
 		self.params['alignedstack']=os.path.abspath("mrastack")
 
 		# remove cls file used for alignment
@@ -393,18 +418,21 @@ class TopologyRepScript(appionScript.AppionScript):
 
 	#=====================
 	def runIMAGICmra(self):
-		bfile = "mralign.csh"
+		bfile = "mralign.job"
 		outfile = "mrastack"
-		if os.path.exists(outfile+".hed"):
-			os.remove(outfile+".hed")
-		if os.path.exists(outfile+".img"):
-			os.remove(outfile+".img")
+		apFile.removeStack(outfile)
 
 		f = open(bfile,'w')
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
-		f.write("%s/align/mralign.e <<EOF\n" % self.imagicroot)
-		f.write("NO\n")
+		if self.params['nproc'] > 1:
+			f.write("%s/openmpi/bin/mpirun -np %i "%(self.imagicroot,self.params['nproc']))
+			f.write("-x IMAGIC_BATCH %s/align/mralign.e_mpi << EOF\n" %self.imagicroot)
+			f.write("YES\n")
+			f.write("%i\n"%self.params['nproc'])
+		else:
+			f.write("%s/align/mralign.e <<EOF\n" % self.imagicroot)
+			f.write("NO\n")
 		f.write("FRESH\n")
 		f.write("ALL\n")
 		# 091120 or higher version 4D options:
@@ -430,7 +458,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		if self.params['currentiter'] > 1:
 			f.write("-180,180\n")
 		f.write("MEDIUM\n")
-		f.write("0.0,0.8\n")
+		f.write("0.0,%.2f\n"%(self.workingmask*2/self.workingboxsize))
 		f.write("2\n")
 		f.write("NO\n")
 		f.write("EOF\n")
@@ -438,28 +466,37 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		### write out alignment parameters to file
 		f.write("%s/stand/headers.e <<EOF\n" % self.imagicroot)
-		f.write(outfile+"\n")
-		f.write("PLT\n")
-		f.write("INDEX\n")
-		f.write("116;117;118;104;107\n") ### rotation, shiftx, shifty, ccc, reference num
-		f.write("outparams.plt\n")
+		if int(self.imagicversion) < 91120:
+			f.write(outfile+"\n")
+			f.write("PLT\n")
+			f.write("SHIFT\n")
+			f.write("outparams.plt\n")
+			f.write("*\n")
+		else:
+			f.write("PLT\n")
+			f.write("SHIFT\n")
+			f.write(outfile+"\n")
+			f.write("outparams.plt\n")
 		f.write("EOF\n")
+		f.write("touch mra_done.txt\n")
+		f.write("exit\n")
 		f.close()
 
 		## execute the batch file
 		aligntime0 = time.time()
-		apEMAN.executeEmanCmd("chmod 775 "+bfile)
+		apEMAN.executeEmanCmd("chmod 755 "+bfile)
 
 		apDisplay.printColor("Running IMAGIC .batch file: %s"%(os.path.abspath(bfile)), "cyan")
 		apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
+
+		os.remove("mra_done.txt")
 
 		if not os.path.exists(outfile+".hed"):
 			apDisplay.printError("ERROR IN IMAGIC SUBROUTINE")
 		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-aligntime0), "cyan")
 
 		if self.params['currentiter'] > 1:
-			os.remove(self.params['alignedstack']+".hed")
-			os.remove(self.params['alignedstack']+".img")
+			apFile.removeStack(self.params['alignedstack'])
 		self.params['alignedstack']=os.path.abspath(outfile)
 
 	#=====================
@@ -531,6 +568,10 @@ class TopologyRepScript(appionScript.AppionScript):
 		# sort the array by particle number
 		pinfo.sort(key = lambda adict: adict['partnum'])
 
+		# increment partnum so it starts with 1
+		for p in pinfo:
+			p['partnum']+=1
+
 		return pinfo
 
 	#=====================
@@ -543,24 +584,22 @@ class TopologyRepScript(appionScript.AppionScript):
 		# store contents in array
 		f = open(alifile)
 		pinfo = []
-		pnum = 0
 		for line in f:
 			d = line.strip().split()
-			if len(d) < 5:
+			if len(d) < 4:
 				continue
 			pdata = {}
 			numlist = [eval(p) for p in d]
 
-			pdata['partnum'] = pnum
+			pdata['partnum'] = numlist[0]
 			# imagic rotation is opposite the db
-			pdata['inplane'] = -numlist[0]
+			pdata['inplane'] = -numlist[1]
 			# imagic's (y,-x )is db's (x,y)
-			pdata['xshift'] = numlist[2]
-			pdata['yshift'] = -numlist[1]
-			pdata['cc'] = numlist[3]
+			pdata['xshift'] = numlist[3]
+			pdata['yshift'] = -numlist[2]
+			pdata['cc'] = 0
 			pdata['mirror'] = 0
 			pinfo.append(pdata)
-			pnum += 1
 		f.close()	
 
 		return pinfo
@@ -612,7 +651,6 @@ class TopologyRepScript(appionScript.AppionScript):
 		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
-		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 		self.dumpParameters()
 
@@ -621,9 +659,8 @@ class TopologyRepScript(appionScript.AppionScript):
 		### process stack to local file
 		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
-		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
-			clipsize = int(self.clipsize)*self.params['bin']
-			proccmd += " shrink=%d clip=%d,%d edgenorm"%(self.params['bin'],clipsize,clipsize)
+		if self.params['bin'] > 1:
+			proccmd += " shrink=%d edgenorm"%(self.params['bin'])
 		proccmd += " last="+str(self.params['numpart']-1)
 		if self.params['highpass'] is not None and self.params['highpass'] > 1:
 			proccmd += " hp="+str(self.params['highpass'])
@@ -655,16 +692,16 @@ class TopologyRepScript(appionScript.AppionScript):
 
 			# if at first iteration, create initial class averages 
 			if i == 0:
+				# first rewrite localstack headers
+				apIMAGIC.takeoverHeaders(self.params['localstack'],self.params['numpart'],self.workingboxsize)
 				self.params['alignedstack'] = os.path.splitext(self.params['localstack'])[0]
 				self.runCAN()
 				continue
 
 			# using references from last iteration, run multi-ref alignment
 			if self.params['mramethod'] == "imagic":
-				# first check headers
-				apImagicFile.setImagic4DHeader(self.params['localstack'])
-				apImagicFile.setImagic4DHeader(self.params['alignedstack'])
-				apImagicFile.setImagic4DHeader(self.params['currentcls'])
+				# rewrite class headers
+				apIMAGIC.takeoverHeaders(self.params['currentcls'],self.params['currentnumclasses'],self.workingboxsize)
 				self.runIMAGICmra()
 			else:
 				self.runEMANmra()
@@ -685,9 +722,10 @@ class TopologyRepScript(appionScript.AppionScript):
 		# move back to starting directory
 		os.chdir(self.params['rundir'])
 
-		# move aligned stack to current directory
-		shutil.move(self.params['alignedstack']+".hed",".")
-		shutil.move(self.params['alignedstack']+".img",".")
+		# proc2d aligned stack to current directory for appionweb
+		emancmd="proc2d "+self.params['alignedstack']+".hed mrastack.hed"
+		apEMAN.executeEmanCmd(emancmd)
+		apFile.removeStack(self.params['alignedstack'])
 
 		### create an average mrc of final references 
 		apStack.averageStack(stack=self.params['currentcls']+".hed")
