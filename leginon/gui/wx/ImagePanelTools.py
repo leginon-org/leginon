@@ -432,7 +432,7 @@ class FitShapeTool(ImageTool):
 
 	def OnRightClick(self, evt):
 		if self.button.GetToggle():
-			self.leftisdown = Truee
+			self.leftisdown = True
 			self.start = None
 
 	def ellipsePoints(self, points):
