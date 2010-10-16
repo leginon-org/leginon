@@ -317,6 +317,8 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 		echo "<script>switch_defaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
 
+	echo imagicRef();
+
 	processing_footer();
 	exit;
 }

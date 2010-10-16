@@ -227,6 +227,9 @@ function jobform($extra=false)	{
 	if (!$_POST['process']) {
 		echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
 	}
+	
+	echo imagicRef();
+
 	processing_footer();
 	exit;
 	
