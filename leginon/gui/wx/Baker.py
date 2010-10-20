@@ -24,7 +24,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['preset'] = PresetChoice(self, -1)
 		presets = self.node.presetsclient.getPresetNames()
 		self.widgets['preset'].setChoices(presets)
-		self.widgets['total bake time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.0')
+		self.widgets['total bake time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='10.0')
 		self.widgets['manual aperture'] = wx.CheckBox(self, -1, 'Wait for user before continue to next task')
 		self.widgets['emission off'] = wx.CheckBox(self, -1, 'Turn emission off when done')
 		sz_bypass = wx.GridBagSizer(0, 0)
