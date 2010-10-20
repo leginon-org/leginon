@@ -1185,6 +1185,17 @@ class NavigatorSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class BakerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('bypass', bool),
+			('preset', str),
+			('total bake time', float),
+			('manual aperture', bool),
+			('emission off', bool),
+		)
+	typemap = classmethod(typemap)
+
 class DriftManagerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

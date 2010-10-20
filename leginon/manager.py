@@ -847,7 +847,7 @@ class Manager(node.Node):
 			for eventclass, fromnode in self.distmap.items():
 				for node in sortclasses['Pipeline']:
 					if issubclass(eventclass,
-								(event.ImageTargetListPublishEvent, event.ImagePublishEvent)):
+								(event.ImageTargetListPublishEvent, event.ImagePublishEvent, event.MakeTargetListEvent)):
 						if node in fromnode:
 							for tonode in sortclasses['Pipeline']:
 								if tonode in fromnode[node]:

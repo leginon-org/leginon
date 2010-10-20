@@ -125,6 +125,9 @@ noderegistry.registerNodeClass(AlignmentManager,classtype)
 from autoexposure import AutoExposure
 noderegistry.registerNodeClass(AutoExposure,classtype)
 
+from baker import Baker
+noderegistry.registerNodeClass(Baker,classtype)
+
 ##############################
 # Calibrations
 ##############################
