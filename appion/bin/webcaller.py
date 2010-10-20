@@ -19,7 +19,7 @@ if __name__ == '__main__':
 	time.sleep(0.5)
 	dirname = os.path.dirname(outf)
 	if not os.path.isdir(dirname):
-		os.mkdir(dirname)
+		os.makedirs(dirname)
 
 	## run command and write to log file
 	f = open(outf, "w")
