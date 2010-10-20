@@ -180,9 +180,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					state['image shift'][axis] = shift0[axis] + shift
 					self.instrument.setData(state)
 					newshift = self.instrument.tem.ImageShift
-					if debug:
-						print "==============================="
-						print 'Image Shift ( %5.2f, %5.2f)' % (newshift['x']*1e6,newshift['y']*1e6)
+					self.logger.info('Image Shift ( %5.2f, %5.2f)' % (newshift['x']*1e6,newshift['y']*1e6))
 					text = '%5.2f %5.2f ' % (newshift['x']*1e6,newshift['y']*1e6)
 					xarray,yarray = calibration_client.repeatMeasureComaFree(tilt_value,settle,repeat)
 					xmean = xarray.mean()
@@ -206,6 +204,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return matrix, coma0
 
 	def measureComaFree(self, tilt_value, correctshift=False):
+		tilt0 = self.instrument.tem.BeamTilt
 		calibration_client = self.calibration_clients['beam tilt']
 		if correctshift:
 			try:
@@ -220,6 +219,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.comameasurement = comatilt
 		except Exception, e:
 			self.logger.error('Measurement failed: %s' % e)
+		self.instrument.tem.BeamTilt = tilt0
 		self.panel.comaMeasurementDone(self.comameasurement)
 
 	def _correctComaTilt(self):
