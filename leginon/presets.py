@@ -1220,6 +1220,9 @@ class PresetsManager(node.Node):
 		return self._acquireSpecialImage(preset, acquirestr, mode=mode, imagelength=smallsize, binning=binning)
 
 	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None, binning=None):
+		pause_time = 2
+		self.logger.info('pausing for %s seconds before acquire' % (pause_time,))
+		time.sleep(pause_time)
 		errstr = 'Acquire %s image failed: ' %(acquirestr) +'%s'
 		self.logger.info('Acquiring %s image' %(acquirestr))
 		camdata0 = leginondata.CameraEMData()
