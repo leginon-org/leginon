@@ -185,8 +185,8 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >662</field>
         <field name="DEF_timestamp" >2009-03-09 12:33:16</field>
-        <field name="name" >MSI-Edge (1.6)</field>
-        <field name="version" >5</field>
+        <field name="name" >MSI-Edge (2.2)</field>
+        <field name="version" >1</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >
@@ -792,7 +792,7 @@
     <sqltable name="BindingSpecData" >
         <field name="DEF_id" >18091</field>
         <field name="DEF_timestamp" >2009-03-09 12:33:16</field>
-        <field name="event class string" >ImageTargetListPublishEvent</field>
+        <field name="event class string" >QueuePublishEvent</field>
         <field name="from node alias" >Grid Targeting</field>
         <field name="to node alias" >Grid</field>
         <field name="REF|ApplicationData|application" >662</field>

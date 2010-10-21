@@ -113,7 +113,7 @@
         <field name="DEF_id" >18</field>
         <field name="DEF_timestamp" >2010-10-19 19:01:56</field>
         <field name="name" >MSI-Section3step (2.2)</field>
-        <field name="version" >1</field>
+        <field name="version" >2</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >
@@ -503,7 +503,7 @@
     <sqltable name="BindingSpecData" >
         <field name="DEF_id" >898</field>
         <field name="DEF_timestamp" >2010-10-19 19:01:56</field>
-        <field name="event class string" >ImageTargetListPublishEvent</field>
+        <field name="event class string" >QueuePublishEvent</field>
         <field name="from node alias" >Grid Targeting</field>
         <field name="to node alias" >Grid</field>
         <field name="REF|ApplicationData|application" >18</field>

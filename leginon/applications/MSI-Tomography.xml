@@ -185,8 +185,8 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >644</field>
         <field name="DEF_timestamp" >2009-02-24 18:34:28</field>
-        <field name="name" >MSI-Tomography (1.6)</field>
-        <field name="version" >8</field>
+        <field name="name" >MSI-Tomography (2.2)</field>
+        <field name="version" >1</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >
@@ -256,7 +256,7 @@
     <sqltable name="BindingSpecData" >
         <field name="DEF_id" >16925</field>
         <field name="DEF_timestamp" >2009-02-24 18:34:28</field>
-        <field name="event class string" >ImageTargetListPublishEvent</field>
+        <field name="event class string" >QueuePublishEvent</field>
         <field name="from node alias" >Grid Targeting</field>
         <field name="to node alias" >Grid</field>
         <field name="REF|ApplicationData|application" >644</field>
