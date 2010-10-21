@@ -421,7 +421,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(self.widgets['instruments'], (0, 0), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.widgets['camera settings'], (1, 0), (2, 1), wx.ALIGN_CENTER)
+		sz.Add(self.widgets['camera settings'], (1, 0), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
 		sz.Add(sbszref, (0, 1), (1, 1), wx.EXPAND)
 		sz.Add(sbszclip, (1, 1), (1, 1), wx.EXPAND)
 

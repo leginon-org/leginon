@@ -58,7 +58,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz.Add(szcor, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['override preset'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['instruments'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['camera settings'], (0, 1), (3, 1), wx.ALIGN_BOTTOM|wx.ALIGN_RIGHT)
+		sz.Add(self.widgets['camera settings'], (0, 1), (3, 1), wx.ALIGN_CENTER|wx.EXPAND)
 
 		sz.AddGrowableRow(2)
 		sz.AddGrowableCol(0)
