@@ -51,7 +51,7 @@ class ScrolledSettings(leginon.gui.wx.Calibrator.ScrolledSettings):
 
 class Panel(leginon.gui.wx.Calibrator.Panel):
 	icon = 'beamtilt'
-	settingsclass = SettingsDialog
+	settingsdialogclass = SettingsDialog
 	def initialize(self):
 		# image
 		self.imagepanel = self.imageclass(self, -1)
@@ -82,8 +82,8 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_SET_BEAMTILT, 'beamtiltset', shortHelpString='Rotation Center To Scope')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'rotcenter', shortHelpString='Align Rotation Center')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EDIT, 'edit', shortHelpString='Edit current calibration')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MEASURE_COMAFREE, 'ruler', shortHelpString='Measure Coma-free beam tilt')
+		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_EDIT, 'edit', shortHelpString='Edit current calibration')
 
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_ABORT, False)
 

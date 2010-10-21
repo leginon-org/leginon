@@ -666,7 +666,7 @@ class CamConfigSizer(wx.StaticBoxSizer):
 			if isinstance(self.parameters[p], wx.CheckBox):
 				self.sz.Add(self.parameters[p], (i, 0), (1, 2), wx.ALIGN_CENTER)
 			elif isinstance(self.parameters[p], CameraPanel):
-				self.sz.Add(self.parameters[p], (i, 0), (1, 2), wx.ALIGN_CENTER|wx.ALL, 5)
+				self.sz.Add(self.parameters[p], (i, 0), (1, 2), wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
 			else:
 				st = wx.StaticText(self.parent, -1, p + ':')
 				self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)

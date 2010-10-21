@@ -83,9 +83,10 @@ class CameraPanel(wx.Panel):
 		sz.Add(self.feexposuretime, (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		sz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szmain.Add(sz, (4, 1), (1, 1), wx.ALIGN_CENTER)
+		self.szmain.Add(sz, (4, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND)
 
 		self.szmain.AddGrowableCol(1)
+		self.szmain.AddGrowableCol(2)
 
 		self.sbsz.Add(self.szmain, 0, wx.EXPAND|wx.ALL, 5)
 
