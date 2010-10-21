@@ -968,6 +968,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['apply offset'] = wx.CheckBox(self, -1, 'Apply stage tilt axis offset to all image shifts')
 
 		self.widgets['blank'] = wx.CheckBox(self, -1, 'Beam blank during preset change')
+		self.widgets['add pause in alignment'] = wx.CheckBox(self, -1, 'Apply pause time in the preset alignment tool')
 		szsmallsize = wx.BoxSizer(wx.HORIZONTAL)
 		smallsizelab = wx.StaticText(self, -1, 'Small image size (for dose image, etc.)')
 		self.widgets['smallsize'] = IntEntry(self, -1, chars=6)
@@ -982,18 +983,19 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'seconds between preset changes')
 		szpausetime.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		sz = wx.GridBagSizer(5, 10)
-		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(self.widgets['xy only'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(self.widgets['stage always'], (1, 0), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['cycle'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['optimize cycle'], (2, 0), (1, 1),
+		sz = wx.GridBagSizer(5, 10)
+		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['add pause in alignment'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['cycle'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['optimize cycle'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['mag only'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['apply offset'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['blank'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szsmallsize, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['mag only'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['apply offset'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['blank'], (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szsmallsize, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 

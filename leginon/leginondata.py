@@ -1143,6 +1143,7 @@ class PresetsManagerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('pause time', float),
+			('add pause in alignment', bool),
 			('xy only', bool),
 			('stage always', bool),
 			('cycle', bool),

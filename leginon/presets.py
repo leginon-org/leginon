@@ -224,6 +224,7 @@ class PresetsManager(node.Node):
 		'apply offset': False,
 		'blank': False,
 		'smallsize': 512,
+		'add pause in alignment': False,
 	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.MeasureDoseEvent, event.UpdatePresetEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent, event.DoseMeasuredEvent, event.MoveToTargetEvent]
@@ -1217,12 +1218,13 @@ class PresetsManager(node.Node):
 	def _acquireAlignImage(self, preset, mode='bin', binning=None):
 		acquirestr = 'align'
 		smallsize = self.settings['smallsize']
+		pause_time = self.settings['pause time']
+		if self.settings['add pause in alignment']:
+			self.logger.info('pausing for %s seconds before acquire' % (pause_time,))
+			time.sleep(pause_time)
 		return self._acquireSpecialImage(preset, acquirestr, mode=mode, imagelength=smallsize, binning=binning)
 
 	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None, binning=None):
-		pause_time = 2
-		self.logger.info('pausing for %s seconds before acquire' % (pause_time,))
-		time.sleep(pause_time)
 		errstr = 'Acquire %s image failed: ' %(acquirestr) +'%s'
 		self.logger.info('Acquiring %s image' %(acquirestr))
 		camdata0 = leginondata.CameraEMData()
