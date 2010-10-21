@@ -140,7 +140,10 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			newtargetlistdata = self.newTargetList()
 			newtargetlistdata.update(targetlistdata)
 			self.publish(newtargetlistdata, database=True, dbforce=True)
-			for i, newtarget in enumerate(newtargets):
+			for i, filteredtarget in enumerate(newtargets):
+				## original targets are getting through the filter somehow.
+				## need to make sure we are publishing copies of them.
+				newtarget = leginondata.AcquisitionImageTargetData(initializer=filteredtarget)
 				newtarget['list'] = newtargetlistdata
 				newtarget['number'] = i+1+totaloldtargetcount
 				self.publish(newtarget, database=True, dbforce=True)
