@@ -535,19 +535,34 @@ class Acquisition(targetwatcher.TargetWatcher):
 		else:
 			last_dbid = last_film.dbid
 		next_dbid = last_dbid + 1
-		self.instrument.tem.FilmText = 'DB key = %d' % (next_dbid,)
+		existing_filmtext = self.instrument.tem.FilmText
+		lines = existing_filmtext.split('\n')
+		leg_label = 'Leginon ID: %s' % (next_dbid,)
+		if lines[-1].startswith('Leginon') or len(lines) >= 4:
+			lines[-1] = leg_label
+		else:
+			lines.append(leg_label)
+		new_filmtext = '\n'.join(lines)
+		
+		self.instrument.tem.FilmText = new_filmtext
 		self.instrument.tem.FilmDateType = 'YY.MM.DD'
 
 		## get scope for database
 		scopebefore = self.instrument.getData(leginondata.ScopeEMData)
+		camerabefore = self.instrument.getData(leginondata.CameraEMData)
+		filmdata['camera'] = camerabefore
 		filmdata['scope'] = scopebefore
 		## insert film
 		self.instrument.tem.preFilmExposure(True)
+		# wait for shaking to stop
+		pause_time = self.instrument.tem.ExpWaitTime
+		self.logger.info('pausing for %s seconds' % (pause_time,))
+		time.sleep(pause_time)
 		# expose film
 		self.instrument.ccdcamera.getImage()
 		## take out film
 		self.instrument.tem.postFilmExposure(True)
-		return filedata
+		return filmdata
 
 	def exposeSpecimen(self, seconds):
 		## I want to expose the specimen, but not the camera.
@@ -761,7 +776,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.setImageFilename(imagedata)
 
 		## set pixel size so mrc file will have it in header
-		imagedata.attachPixelSize()
+		if imagedata.__class__ is leginondata.AcquisitionImageData:
+			imagedata.attachPixelSize()
 
 		self.reportStatus('output', 'Publishing image...')
 		self.startTimer('publish image')
@@ -784,10 +800,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.stopTimer('publish stats')
 		self.reportStatus('output', 'Stats published...')
 
-		if self.settings['display image']:
+		image_array = imagedata['image']
+		if self.settings['display image'] and isinstance(image_array, numpy.ndarray):
 			self.reportStatus('output', 'Displaying image...')
 			self.startTimer('display')
-			self.setImage(numpy.asarray(imagedata['image'], numpy.float32), 'Image')
+			self.setImage(numpy.asarray(image_array, numpy.float32), 'Image')
 			self.stopTimer('display')
 			self.reportStatus('output', 'Image displayed')
 
