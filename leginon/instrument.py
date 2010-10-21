@@ -350,6 +350,7 @@ parametermapping = (
 	('film user code', 'FilmUserCode'),
 	('film date type', 'FilmDateType'),
 	('objective current', 'ObjectiveCurrent'),
+	('exp wait time', 'ExpWaitTime'),
 	# not used
 	#('beam blank', 'BeamBlank'),
 	#('film exposure', 'filmExposure'),

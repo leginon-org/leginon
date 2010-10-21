@@ -139,6 +139,7 @@ scope_params = (
 	('film user code', str),
 	('film date type', str),
 	('objective current', float),
+	('exp wait time', float),
 )
 camera_params = (
 	('dimension', dict),
