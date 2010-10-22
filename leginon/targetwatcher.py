@@ -94,8 +94,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	def revertTargetListZ(self, targetlistdata):
 		'''use the z position of the target list parent image'''
 		imageref = targetlistdata.special_getitem('image', dereference=False)
-		if imageref is None:
-			return
 		imageid = imageref.dbid
 		imagedata = self.researchDBID(leginondata.AcquisitionImageData, imageid, readimages=False)
 

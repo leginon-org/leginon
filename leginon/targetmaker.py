@@ -95,7 +95,7 @@ class MosaicTargetMaker(TargetMaker):
 		self.panel.atlasPublished()
 
 	def checkLabel(self, label):
-		targetlist = self.newTargetList(mosaic=True, label=label, queue=True)
+		targetlist = self.newTargetList(mosaic=True, label=label)
 		targets = self.researchTargets(session=self.session, list=targetlist)
 		if targets:
 			raise AtlasError('label "%s" is already used, choose another' % (label,))
@@ -185,13 +185,13 @@ class MosaicTargetMaker(TargetMaker):
 		self.logger.debug('Creating target list...')
 		if evt is None:
 			# generated from user invoked method
-			targetlist = self.newTargetList(mosaic=True, label=self.settings['label'], queue=True)
+			targetlist = self.newTargetList(mosaic=True, label=self.settings['label'])
 			grid = None
 		else:
 			# generated from external event
 			grid = evt['grid']
 			label = gridlabeler.getGridLabel(grid)
-			targetlist = self.newTargetList(mosaic=True, label=label, queue=True)
+			targetlist = self.newTargetList(mosaic=True, label=label)
 		self.logger.debug('Target list created')
 		return targetlist, grid
 
@@ -240,8 +240,7 @@ class MosaicTargetMaker(TargetMaker):
 			self.publish(targetdata, database=True)
 
 		# publish the completed target list with event
-		queue = self.getQueue()
-		self.publish(queue, pubevent=True)
+		self.publish(targetlist, pubevent=True)
 		self.logger.info('Atlas targets published')
 
 	def makeCircle(self, radius, overlap, pixelsize, binning, imagesize):
