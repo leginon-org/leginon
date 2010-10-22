@@ -198,9 +198,9 @@ class CentosInstallation(object):
         self.runCommand('qmgr -c "s s scheduling=true"')
         self.runCommand('qmgr -c "c q batch queue_type=execution"')
         self.runCommand('qmgr -c "s q batch started=true"')
-        self.runCommand('qmgr -c "s q enabled=true"')
-        self.runCommand('qmgr -c "s q resources_default.nodes=1"')
-        self.runCommand('qmgr -c "s q resources_default.walltime=3600"')
+        self.runCommand('qmgr -c "s q batch enabled=true"')
+        self.runCommand('qmgr -c "s q batch resources_default.nodes=1"')
+        self.runCommand('qmgr -c "s q batch resources_default.walltime=3600"')
         self.runCommand('qmgr -c "s s default_queue=batch"')
     
         self.runCommand("/sbin/service network restart")
@@ -531,6 +531,8 @@ class CentosInstallation(object):
             os.makedirs(self.imagesDir)
 
         os.chmod(self.imagesDir, 0777)
+        os.path.join(self.ImageDir, "Leginon", 0777)
+        os.path.join(self.imageDir, "Appion", 0777)
 
         result = self.checkDistro()
         if result is False:
