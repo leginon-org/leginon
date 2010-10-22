@@ -41,6 +41,8 @@ Xmipp_Dir = ''
 #Spider_Dir: Spider's root installation directory.
 Spider_Dir = ''
 
+#Imod_Dir: Imod's root installation directory.
+Imod_Dir = ''
 
 #If you wish to have python search additional directories for module files,
 #specify the full path to the directory here.  Separate multiple directories
@@ -110,6 +112,8 @@ if (Env_Override):
     if (os.environ.has_key('SPIDER')):
         Spider_Dir = os.environ['SPIDER']
 
+    if (os.environ.has_key('IMOD')):
+        Imod_Dir = os.environ['IMOD']
 
 if (Python_Path != ''):
     prependToEnv('PYTHONPATH', Python_Path)
@@ -148,6 +152,13 @@ if (Spider_Dir != ''):
     os.environ['SPPROC_DIR'] = os.path.join(Spider_Dir, 'proc')
     os.environ['SPRGB_DIR'] =  os.path.join(Spider_Dir,'rgb')
     os.environ['SPMAN_DIR'] =  os.path.join(Spider_Dir,'man')
+
+if (Imod_Dir != ''):
+    os.environ['IMOD_DIR'] = os.path.join(Imod_Dir)
+    os.environ['IMOD_JAVADIR'] = os.environ['JAVA_HOME']
+    os.environ['IMOD_PLUGIN_DIR'] =  os.path.join(Imod_Dir,'lib','imodplug')
+    prependToEnv('LD_LIBRARY_PATH', os.path.join(Imod_Dir, 'lib')) 
+    prependToEnv('PATH', os.path.join(Imod_Dir, 'bin'))
 
 if (Path != ''):
     prependToEnv('PATH', Path)
