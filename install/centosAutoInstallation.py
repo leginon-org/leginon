@@ -531,8 +531,8 @@ class CentosInstallation(object):
             os.makedirs(self.imagesDir)
 
         os.chmod(self.imagesDir, 0777)
-        os.path.join(self.ImageDir, "Leginon", 0777)
-        os.path.join(self.imageDir, "Appion", 0777)
+        os.path.join(self.imagesDir, "Leginon", 0777)
+        os.path.join(self.imagesDir, "Appion", 0777)
 
         result = self.checkDistro()
         if result is False:
