@@ -532,15 +532,15 @@ class CentosInstallation(object):
         else:
             os.chmod(self.imagesDir, 0744)
 
-        if not os.path.exists(os.path.join(self.imagesDir, "Leginon")):
-            os.makedirs(os.path.join(self.imagesDir, "Leginon"), 0777)
+        if not os.path.exists(os.path.join(self.imagesDir, "leginon")):
+            os.makedirs(os.path.join(self.imagesDir, "leginon"), 0777)
         else:
-            os.chmod(os.path.join(self.imagesDir, "Leginon"), 0777)
+            os.chmod(os.path.join(self.imagesDir, "leginon"), 0777)
                 
-        if not os.path.exists(os.path.join(self.imagesDir, "Appion")):
-            os.makedirs(os.path.join(self.imagesDir, "Appion"), 0777)
+        if not os.path.exists(os.path.join(self.imagesDir, "appion")):
+            os.makedirs(os.path.join(self.imagesDir, "appion"), 0777)
         else:
-            os.chmod(os.path.join(self.imagesDir, "Appion"), 0777)
+            os.chmod(os.path.join(self.imagesDir, "appion"), 0777)
 
         result = self.checkDistro()
         if result is False:
