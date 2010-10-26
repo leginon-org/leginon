@@ -190,8 +190,8 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >681</field>
         <field name="DEF_timestamp" >2009-11-19 13:44:34</field>
-        <field name="name" >Robot MSI-Screen 1st Pass (2.2)</field>
-        <field name="version" >1</field>
+        <field name="name" >Robot MSI-Screen 1st Pass (1.6)</field>
+        <field name="version" >8</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >
@@ -541,7 +541,7 @@
     <sqltable name="BindingSpecData" >
         <field name="DEF_id" >18915</field>
         <field name="DEF_timestamp" >2009-11-19 13:44:34</field>
-        <field name="event class string" >QueuePublishEvent</field>
+        <field name="event class string" >ImageTargetListPublishEvent</field>
         <field name="from node alias" >Grid Survey Targeting</field>
         <field name="to node alias" >Grid Survey</field>
         <field name="REF|ApplicationData|application" >681</field>

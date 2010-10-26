@@ -185,8 +185,8 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >646</field>
         <field name="DEF_timestamp" >2009-02-24 18:38:28</field>
-        <field name="name" >MSI-RCT raster (2.2)</field>
-        <field name="version" >1</field>
+        <field name="name" >MSI-RCT raster (1.6)</field>
+        <field name="version" >2</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >
@@ -720,7 +720,7 @@
     <sqltable name="BindingSpecData" >
         <field name="DEF_id" >17137</field>
         <field name="DEF_timestamp" >2009-02-24 18:38:28</field>
-        <field name="event class string" >QueuePublishEvent</field>
+        <field name="event class string" >ImageTargetListPublishEvent</field>
         <field name="from node alias" >Grid Targeting</field>
         <field name="to node alias" >Grid</field>
         <field name="REF|ApplicationData|application" >646</field>

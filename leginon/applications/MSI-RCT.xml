@@ -185,14 +185,14 @@
     <sqltable name="ApplicationData" >
         <field name="DEF_id" >645</field>
         <field name="DEF_timestamp" >2009-02-24 18:35:36</field>
-        <field name="name" >MSI-RCT (2.2)</field>
-        <field name="version" >1</field>
+        <field name="name" >MSI-RCT (1.6)</field>
+        <field name="version" >4</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >
         <field name="DEF_id" >17004</field>
         <field name="DEF_timestamp" >2009-02-24 18:35:36</field>
-        <field name="event class string" >QueuePublishEvent</field>
+        <field name="event class string" >ImageTargetListPublishEvent</field>
         <field name="from node alias" >Grid Targeting</field>
         <field name="to node alias" >Grid</field>
         <field name="REF|ApplicationData|application" >645</field>
