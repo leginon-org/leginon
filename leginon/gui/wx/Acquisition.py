@@ -159,6 +159,8 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['target offset row'] = IntEntry(self, -1, chars=6)
 		self.widgets['target offset col'] = IntEntry(self, -1, chars=6)
 
+		self.widgets['park after list'] = wx.CheckBox(self, -1, 'Park after every target list')
+
 		# simulate loop settings
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['iterations'] = IntEntry(self, -1, min=0.0, chars=6)
@@ -264,23 +266,16 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_offset.Add(self.widgets['target offset col'])
 		sz_offset.Add(wx.StaticText(self, -1, 'y:'))
 		sz_offset.Add(self.widgets['target offset row'])
-		sz_misc = wx.GridBagSizer(0, 0)
-		sz_misc.Add(self.widgets['wait for process'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['wait for rejects'], (1, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['wait for reference'], (2, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(sz_transform, (3, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(sz_offset, (4, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['drift between'], (5, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['background'], (6, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(sbsz_evaluate, (7, 0), (4, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+		sz_misc = wx.BoxSizer(wx.VERTICAL)
+		sz_misc.Add(self.widgets['wait for process'])
+		sz_misc.Add(self.widgets['wait for rejects'])
+		sz_misc.Add(self.widgets['wait for reference'])
+		sz_misc.Add(sz_transform)
+		sz_misc.Add(sz_offset)
+		sz_misc.Add(self.widgets['drift between'])
+		sz_misc.Add(self.widgets['background'])
+		sz_misc.Add(self.widgets['park after list'])
+		sz_misc.Add(sbsz_evaluate)
 
 		szright = wx.GridBagSizer(3, 3)
 		szright.Add(self.widgets['preset order'], (0, 0), (4, 1), wx.ALIGN_CENTER)

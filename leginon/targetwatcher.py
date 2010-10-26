@@ -30,6 +30,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	settingsclass = leginondata.TargetWatcherSettingsData
 	defaultsettings = {
 		'process target type': 'acquisition',
+		'park after list': False,
 	}
 
 	eventinputs = watcher.Watcher.eventinputs + targethandler.TargetHandler.eventinputs + [event.TargetListDoneEvent,
@@ -284,7 +285,15 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				# end of target repeat loop
 
 		self.reportTargetListDone(newdata, targetliststatus)
+		if self.settings['park after list']:
+			self.park()
 		self.setStatus('idle')
+
+	def park(self):
+		self.logger.info('parking...')
+		self.instrument.tem.ColumnValvePosition = 'closed'
+		self.instrument.tem.StagePosition = {'x': 0, 'y': 0, 'z': 0, 'a': 0}
+		self.logger.warning('column valves closed and stage reset')
 
 	def waitForRejects(self):
 		# wait for other targets to complete

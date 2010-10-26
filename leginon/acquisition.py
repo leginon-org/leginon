@@ -113,7 +113,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 	panelclass = gui.wx.Acquisition.Panel
 	settingsclass = leginondata.AcquisitionSettingsData
 	# maybe not a class attribute
-	defaultsettings = {
+	defaultsettings = dict(targetwatcher.TargetWatcher.defaultsettings)
+	defaultsettings.update({
 		'pause time': 2.5,
 		'move type': 'image shift',
 		'preset order': [],
@@ -145,7 +146,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'target offset row': 0,
 		'target offset col': 0,
 		'correct image shift coma': False,
-	}
+	})
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
 										event.MakeTargetListEvent,

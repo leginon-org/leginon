@@ -1519,6 +1519,7 @@ class TargetWatcherSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('process target type', str),
+			('park after list', bool),
 		)
 	typemap = classmethod(typemap)
 
