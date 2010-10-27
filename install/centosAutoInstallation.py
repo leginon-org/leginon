@@ -198,14 +198,6 @@ class CentosInstallation(object):
         self.runCommand("/sbin/service pbs_server start")
         self.runCommand("/sbin/service pbs_sched start")
         
-        self.runCommand('qmgr -c "s s scheduling=true"')
-        self.runCommand('qmgr -c "c q batch queue_type=execution"')
-        self.runCommand('qmgr -c "s q batch started=true"')
-        self.runCommand('qmgr -c "s q batch enabled=true"')
-        self.runCommand('qmgr -c "s q batch resources_default.nodes=1"')
-        self.runCommand('qmgr -c "s q batch resources_default.walltime=3600"')
-        self.runCommand('qmgr -c "s s default_queue=batch"')
-    
         self.runCommand("/sbin/service network restart")
 
 
@@ -223,7 +215,15 @@ class CentosInstallation(object):
         
         f = open('/var/torque/mom_priv/config', 'w')
         f.write("$pbsserver localhost # running pbs_server on this host")
-        self.runCommand("/sbin/chkconfig pbs_mon on")
+        
+        self.runCommand('qmgr -c "s s scheduling=true"')
+        self.runCommand('qmgr -c "c q batch queue_type=execution"')
+        self.runCommand('qmgr -c "s q batch started=true"')
+        self.runCommand('qmgr -c "s q batch enabled=true"')
+        self.runCommand('qmgr -c "s q batch resources_default.nodes=1"')
+        self.runCommand('qmgr -c "s q batch resources_default.walltime=3600"')
+        self.runCommand('qmgr -c "s s default_queue=batch"')        
+        
         self.runCommand("/sbin/service pbs_mom start")
         
         f.close()
