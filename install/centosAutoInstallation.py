@@ -191,18 +191,13 @@ class CentosInstallation(object):
         f.write("%s"%(self.hostname))
         f.close()
 
-        self.runCommand("/sbin/service pbs_server start")
-        self.runCommand("/sbin/service pbs_sched start")
         # edit /var/hosts file
         self.editHosts()
-        self.runCommand('qmgr -c "s s scheduling=true"')
-        self.runCommand('qmgr -c "c q batch queue_type=execution"')
-        self.runCommand('qmgr -c "s q batch started=true"')
-        self.runCommand('qmgr -c "s q enabled=true"')
-        self.runCommand('qmgr -c "s q resources_default.nodes=1"')
-        self.runCommand('qmgr -c "s q resources_default.walltime=3600"')
-        self.runCommand('qmgr -c "s s default_queue=batch"')
-    
+
+        # start the Torque server, keep this after any config file editing.
+        self.runCommand("/sbin/service pbs_server start")
+        self.runCommand("/sbin/service pbs_sched start")
+        
         self.runCommand("/sbin/service network restart")
 
 
@@ -220,7 +215,15 @@ class CentosInstallation(object):
         
         f = open('/var/torque/mom_priv/config', 'w')
         f.write("$pbsserver localhost # running pbs_server on this host")
-        self.runCommand("/sbin/chkconfig pbs_mon on")
+        
+        self.runCommand('qmgr -c "s s scheduling=true"')
+        self.runCommand('qmgr -c "c q batch queue_type=execution"')
+        self.runCommand('qmgr -c "s q batch started=true"')
+        self.runCommand('qmgr -c "s q batch enabled=true"')
+        self.runCommand('qmgr -c "s q batch resources_default.nodes=1"')
+        self.runCommand('qmgr -c "s q batch resources_default.walltime=3600"')
+        self.runCommand('qmgr -c "s s default_queue=batch"')        
+        
         self.runCommand("/sbin/service pbs_mom start")
         
         f.close()
@@ -460,7 +463,7 @@ class CentosInstallation(object):
         # need to change to branch when release
         #cmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-2.0 /tmp/myami-2.0/"
         
-        cmd = "svn co http://ami.scripps.edu/svn/myami/trunk " + self.svnMyamiDir
+        cmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-2.1 " + self.svnMyamiDir
 
         self.runCommand(cmd)
 
@@ -525,12 +528,27 @@ class CentosInstallation(object):
         if os.path.isfile(self.logFilename):
             self.writeToLog("remove old log file")
             os.remove(self.logFilename)
+            
+        # Set umask to 0 so that we can set mode to 0777 later
+        originalUmask = os.umask(0)
         
         if not os.path.exists(self.imagesDir):
             self.writeToLog("create images folder - /myamiImages")
-            os.makedirs(self.imagesDir)
+            os.makedirs(self.imagesDir, 0777)
+        else:
+            os.chmod(self.imagesDir, 0777)
 
-        os.chmod(self.imagesDir, 0777)
+        if not os.path.exists(os.path.join(self.imagesDir, "leginon")):
+            os.makedirs(os.path.join(self.imagesDir, "leginon"), 0777)
+        else:
+            os.chmod(os.path.join(self.imagesDir, "leginon"), 0777)
+                
+        if not os.path.exists(os.path.join(self.imagesDir, "appion")):
+            os.makedirs(os.path.join(self.imagesDir, "appion"), 0777)
+        else:
+            os.chmod(os.path.join(self.imagesDir, "appion"), 0777)
+            
+        umask = os.umask(originalUmask)
 
         result = self.checkDistro()
         if result is False:
