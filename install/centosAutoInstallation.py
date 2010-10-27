@@ -528,6 +528,9 @@ class CentosInstallation(object):
         if os.path.isfile(self.logFilename):
             self.writeToLog("remove old log file")
             os.remove(self.logFilename)
+            
+        # Set umask to 0 so that we can set mode to 0777 later
+        originalUmask = os.umask(0)
         
         if not os.path.exists(self.imagesDir):
             self.writeToLog("create images folder - /myamiImages")
@@ -544,6 +547,8 @@ class CentosInstallation(object):
             os.makedirs(os.path.join(self.imagesDir, "appion"), 0777)
         else:
             os.chmod(os.path.join(self.imagesDir, "appion"), 0777)
+            
+        umask = os.umask(originalUmask)
 
         result = self.checkDistro()
         if result is False:
