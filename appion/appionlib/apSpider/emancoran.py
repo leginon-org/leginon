@@ -100,11 +100,12 @@ def makeSpiderCoranBatch(params,filename,clsdir):
 	f.write('x99=%d  ; number of particles in stack\n' % params['nptcls'])
 	f.write('x98=%d   ; box size\n' % params['boxsize'])
 	f.write('x94=%d    ; mask radius\n' % params['coranmask'])
+	haccut = params['haccut']
 	sp = spyder.SpiderSession()
 	if sp.version() >= 18.03:
-		params['haccut']*=100
+		haccut*=100
 	sp.close()
-	f.write('x93=%f  ; cutoff for hierarchical clustering\n' % params['haccut'])
+	f.write('x93=%f  ; cutoff for hierarchical clustering\n' % haccut)
 	f.write('x92=20    ; additive constant for hierarchical clustering\n')
 	f.write('\n')
 	alignstack='aligned'
