@@ -33,9 +33,7 @@ class TiltRotateRepeater(targetrepeater.TargetRepeater):
 		states = []
 		self.logger.info('tilt series =' + str(alphatilts))
 		for a in alphatilts:
-			print 'DEGREES', a
 			rad = a * 3.14159 / 180.0
-			print 'RADIAN', rad
 			scope = leginondata.ScopeEMData()
 			scope['stage position'] = {'a': rad}
 			states.append(scope)
