@@ -9,6 +9,10 @@
         <field name="key" >version</field>
         <field name="value" >2.1.0</field>
     </sqltable>
+    <sqltable name="install" >
+        <field name="key" >revision</field>
+        <field name="value" >14938</field>
+    </sqltable>    
   <!-- boxtypes -->
     <sqltable name="boxtypes" >
         <field name="boxtypeId" >1</field>
