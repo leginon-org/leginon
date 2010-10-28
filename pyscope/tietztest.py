@@ -7,6 +7,8 @@ tietzclasses = [
 	tietz.TietzPVCam,
 	tietz.TietzSCX,
 	tietz.TietzFC415,
+	tietz.TietzFC416,
+	tietz.TietzFC816,
 ]
 
 successful = []
