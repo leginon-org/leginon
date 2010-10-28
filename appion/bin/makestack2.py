@@ -391,9 +391,15 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		else:
 			voltage = (imgdata['scope']['high tension'])/1000
 
-		cs = ctfvalue['cs']
+		# find cs
+		if ctfvalue['cs']:
+			cs = ctfvalue['cs']
+		elif ctfvalue['acerun']['ace2_params']:
+			cs=ctfvalue['acerun']['ace2_params']['cs']
+		elif ctfvalue['acerun']['ctftilt_params']:
+			cs=ctfvalue['acerun']['ctftilt_params']['cs']
 		if cs is None:
-			### apply hard coded value, really old CTF entries may be missing this value
+			### apply hard coded value, in case of missing cs value
 			cs = 2.0
 
 		imagicdata = apImagicFile.readImagic(imgstackfile)
@@ -448,9 +454,15 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### get all CTF parameters, we also need to get the CS value from the database
 		ctfdata, score = apCtf.getBestCtfValueForImage(imgdata, msg=False, method=self.params['ctfmethod'])
 		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
-		cs = ctfdata['cs']
+		# find cs
+		if ctfdata['cs']:
+			cs = ctfdata['cs']
+		elif ctfdata['acerun']['ace2_params']:
+			cs=ctfdata['acerun']['ace2_params']['cs']
+		elif ctfdata['acerun']['ctftilt_params']:
+			cs=ctfdata['acerun']['ctftilt_params']['cs']
 		if cs is None:
-			### apply hard coded value, really old CTF entries may be missing this value
+			### apply hard coded value, in case of missing cs value
 			cs = 2.0
 
 		parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" %(defocus, ampconst, voltage, cs, apix))
@@ -479,9 +491,15 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### get all CTF parameters, we also need to get the CS value from the database
 		ctfdata, score = apCtf.getBestCtfValueForImage(imgdata, msg=False, method=self.params['ctfmethod'])
 		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
-		cs = ctfdata['cs']
+		# find cs
+		if ctfdata['cs']:
+			cs = ctfdata['cs']
+		elif ctfdata['acerun']['ace2_params']:
+			cs=ctfdata['acerun']['ace2_params']['cs']
+		elif ctfdata['acerun']['ctftilt_params']:
+			cs=ctfdata['acerun']['ctftilt_params']['cs']
 		if cs is None:
-			### apply hard coded value, really old CTF entries may be missing this value
+			### apply hard coded value, in case of missing cs value
 			cs = 2.0
 			
 		parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" %(defocus, ampconst, voltage, cs, apix))
@@ -517,6 +535,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			self.badprocess = True
 			return None
 
+		print bestctfvalue
+		sys.exit()
 		# method=ace2 requires a ctfvalues_file
 		if bestctfvalue['ctfvalues_file'] is None:
 			if self.params['ctfmethod']=="ace2":
@@ -633,7 +653,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		voltage = imgdata['scope']['high tension']
 		imgsize=imgdata['camera']['dimension']['y']
 		# find cs
-		if bestctfvalue['acerun']['ace2_params']:
+		if bestctfvalue['cs']:
+			cs = bestctfvalue['cs']
+		elif bestctfvalue['acerun']['ace2_params']:
 			cs=bestctfvalue['acerun']['ace2_params']['cs']
 		elif bestctfvalue['acerun']['ctftilt_params']:
 			cs=bestctfvalue['acerun']['ctftilt_params']['cs']
