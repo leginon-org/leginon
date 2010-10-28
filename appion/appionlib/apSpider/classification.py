@@ -506,7 +506,7 @@ def findThreshold(numclasses, dendrogramdocfile, rundir, dataext):
 
 	### changes for later versions of SPIDER:
 	sp = spyder.SpiderSession()
-	if sp.version >= 18.03:
+	if sp.version() >= 18.03:
 		maxthresh = 100.0
 		numclasses+= 1
 	sp.close()
