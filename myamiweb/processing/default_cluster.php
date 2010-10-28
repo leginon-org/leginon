@@ -31,7 +31,7 @@ define('C_CPUTIME_DEF', "24"); // default CPU time in hours
 define('C_CPUTIME_MAX', "24"); // maximum CPU time in hours
 define('C_MEMORY_MAX', "15"); // maximum memory available per node in gigabytes
 
-define('C_APPION_BIN', "/usr/local/bin"); // location of appion scripts on cluster, must end in slash, e.g., /usr/local/appion/bin/
+define('C_APPION_BIN', "/usr/bin"); // location of appion scripts on cluster, must end in slash, e.g., /usr/local/appion/bin/
 
 class Cluster {
 
