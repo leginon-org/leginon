@@ -22,11 +22,14 @@
 ##
 ## Tietz/TVIPS Camera using various drivers.  Chose only the driver
 ## that works with your camera.  Optionally, you may also select
-## the Simulation camera
+## the Simulation camera.  A test script is available to help you figure
+## out which ones are available to you.  Run the script:  tietztest.py
 ##   - tietz.TietzSCX
 ##   - tietz.TietzPXL
 ##   - tietz.TietzPVCam
 ##   - tietz.TietzFC415
+##   - tietz.TietzFC416
+##   - tietz.TietzFC816
 ##   - tietz.TietzFastScan
 ##   - tietz.TietzSimulation
 ##
@@ -34,7 +37,10 @@
 ##   - tia.TIA
 
 
-## normally you want the simulated instruments available
+## To avoid confusion, it is best not to configure simulation instruments
+## and real instruments at same time.  Replace the following with your real
+## instruments.
+
 [Sim TEM]
 class: simtem.SimTEM
 
