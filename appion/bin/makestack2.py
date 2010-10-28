@@ -391,6 +391,11 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		else:
 			voltage = (imgdata['scope']['high tension'])/1000
 
+		cs = ctfvalue['cs']
+		if cs is None:
+			### apply hard coded value, really old CTF entries may be missing this value
+			cs = 2.0
+
 		imagicdata = apImagicFile.readImagic(imgstackfile)
 		ctfpartstack = []
 		for i in range(len(partdatas)):
@@ -413,7 +418,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 			self.checkDefocus(defocus, shortname)
 
-			parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,2,%f" %(defocus, ampconst, voltage, apix))
+			parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" %(defocus, ampconst, voltage, cs, apix))
 			emancmd = ("applyctf %s %s %s setparm flipphase" % (prepartmrc, postpartmrc, parmstr))
 			apEMAN.executeEmanCmd(emancmd, showcmd=True)
 
@@ -435,11 +440,20 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			voltage = (imgdata['scope']['high tension'])/1000
 
 		apix = apDatabase.getPixelSize(imgdata)
+		### get the adjusted defocus value for no astigmatism
 		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=True, method=self.params['ctfmethod'])
 		defocus *= 1.0e6
+		### check to make sure defocus is a reasonable value for applyctf
 		self.checkDefocus(defocus, shortname)
+		### get all CTF parameters, we also need to get the CS value from the database
+		ctfdata, score = apCtf.getBestCtfValueForImage(imgdata, msg=False, method=self.params['ctfmethod'])
+		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
+		cs = ctfdata['cs']
+		if cs is None:
+			### apply hard coded value, really old CTF entries may be missing this value
+			cs = 2.0
 
-		parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,2,%f" %(defocus, ampconst, voltage, apix))
+		parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" %(defocus, ampconst, voltage, cs, apix))
 		emancmd = ("applyctf %s %s %s setparm flipphase" % (imgstackfile, ctfimgstackfile, parmstr))
 
 		apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
@@ -462,8 +476,15 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=True, method=self.params['ctfmethod'])
 		defocus *= 1.0e6
 		self.checkDefocus(defocus, shortname)
-
-		parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,2,%f" %(defocus, ampconst, voltage, apix))
+		### get all CTF parameters, we also need to get the CS value from the database
+		ctfdata, score = apCtf.getBestCtfValueForImage(imgdata, msg=False, method=self.params['ctfmethod'])
+		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
+		cs = ctfdata['cs']
+		if cs is None:
+			### apply hard coded value, really old CTF entries may be missing this value
+			cs = 2.0
+			
+		parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" %(defocus, ampconst, voltage, cs, apix))
 		emancmd = ("applyctf %s %s %s setparm flipphase" % (inimgpath, outimgpath, parmstr))
 
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
