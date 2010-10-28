@@ -199,7 +199,7 @@ class TargetHandler(object):
 		zerostage = {'x':0.0,'y':0.0}
 		self.instrument.tem.setStagePosition(zerostage)
 		stageposition = self.instrument.tem.getStagePosition()
-		self.logger.info('return x,y, and alhpa tilt to %.1f um,%.1f um,%.1f deg' % (stageposition['x']*1e6,stageposition['y'],stageposition['a']))
+		self.logger.info('return x,y, and alpha tilt to %.1f um,%.1f um,%.1f deg' % (stageposition['x']*1e6,stageposition['y'],stageposition['a']))
 
 	def queueStatus(self, queuedata):
 		active = self.getListsInQueue(queuedata)
