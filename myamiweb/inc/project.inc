@@ -144,10 +144,14 @@ class project {
 
 			// Build a query to find the projects that are owned by the user, then add on the query to find
 			// the projects that are shared with the user.
-			$ownedProjectsQuery = "projects.DEF_id IN ( "
-				."SELECT projectowners.`REF|projects|project` "
-				."FROM projectowners WHERE projectowners.`REF|leginondata|UserData|user` = ".$userId." ) " 
-				."OR projects.DEF_id IN ( ".$sharedProjectsQuery." )";
+			$ownedProjectsQuery = "SELECT projectowners.`REF|projects|project` "
+				."FROM projectowners WHERE projectowners.`REF|leginondata|UserData|user` = ".$userId." "; 
+		$q = "SELECT projects.`DEF_id` as id "
+				."FROM ".DB_PROJECT.".projects as projects "
+				."WHERE projects.`DEF_id` IN ($sharedProjectsQuery) "
+				."OR projects.`DEF_id` IN ($ownedProjectsQuery) "
+				."GROUP BY `DEF_id` ";
+		$myprojects = $this->mysql->getSQLResult($q);
 		}
 		
 		// The hidden field of the projects table apparently may not exist. 
@@ -155,7 +159,7 @@ class project {
 		// If it does exist, we do not want to show hidden projects
 		$projectdef = $this->mysql->getFieldTypes('projects');
 		
-		// Begin SQL to select the projects that the user may view
+		// SQL query to select the projects with experiment sessions assigned
 		$q = "SELECT projexp.`REF|projects|project` AS id, "
 			."   projects.`name` AS name, "
 			."   DATEDIFF(NOW(), MAX(projexp.`DEF_timestamp`)) AS age "
@@ -164,19 +168,23 @@ class project {
 			."   ON projects.`DEF_id` = projexp.`REF|projects|project` "
 			." WHERE projexp.`REF|projects|project` IS NOT NULL AND projects.`name` IS NOT NULL ";
 
-		// Build the query based on the combination of checking for the hidden flag
-		// and showing only projects owned by the user
-		if ($findOwnedProjects) {
-			$q .= " AND ( ".$ownedProjectsQuery." ) ";
-		}
-		
 		$q .= " GROUP BY projexp.`REF|projects|project` ";
-
 		// Make sure the projects appear in alphabetical order
 		$q .= ' ORDER by projects.`name`';
-		//echo $q."<br/><br/>\n";
-
 		$rprojects = $this->mysql->getSQLResult($q);
+
+		// Find from the results the projects owned by the user or have shared experiment
+		// This is done separately to speed up the query
+		if ($findOwnedProjects) {
+			$projectsbyid = array();
+			foreach ($rprojects as $project_w_experiments)
+				$projectsbyid[$project_w_experiments['id']] = $project_w_experiments;
+			$rprojects = array();
+			foreach ($myprojects as $project)
+				if (in_array($project['id'],array_keys($projectsbyid)))
+					$rprojects[] = $projectsbyid[$project['id']];
+		}
+		#echo $q."<br/><br/>\n";
 
 		$projects = array();
 		if ($type=="all") {
