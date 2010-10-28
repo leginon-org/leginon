@@ -1120,37 +1120,29 @@ class leginondata {
 	}
 
 	function getImageInfo($imgId) {
-		//manual and uploaded images have no parent
-		if (!$this->mysql->isTable('PresetData') ||!$this->mysql->isTable('AcquisitionImageTargetData')) {
-			$q = ""
-			."select a.`DEF_id` as imageId, "
-			."date_format(a.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
-			."a.`REF|SessionData|session` as `sessionId`,"
-			."a.`MRC|image` as filename "
-			."from AcquisitionImageData a "
-			."where "
-			."a.`DEF_id` ='".$imgId."' "; 
-			list($result) = $this->mysql->getSQLResult($q);
-			return $result;
+		// getParent function query will have error without these tables
+		if (!$this->mysql->isTable('PresetData') || !$this->mysql->isTable('AcquisitionImageTargetData')) {
+			$parentId = false;
+		} else {
+			// --- check if image as a parent
+			$parentinfo = $this->getParent($imgId);
+			$parentId = ($parentinfo['parentId']) ? $parentinfo['parentId'] : false;
+			$parentselect = "";
+			$parentjoin = "";
+			$parenttargetfields = $this->mysql->getFields('AcquisitionImageTargetData');
+			$parentcoords = "";
+			$parentcoords .= (in_array('delta column', $parenttargetfields)) ? 
+				"parenttarget.`delta column`, " : "";
+			$parentcoords .= (in_array('delta row', $parenttargetfields)) ? 
+				"parenttarget.`delta row`, " : "";
+			$parenttargetjoin = 
+				"left join AcquisitionImageTargetData parenttarget "
+				."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) ";
+			$parenttargetjoin .= (in_array('REF|CameraEMData|camera', $parenttargetfields)) ? 
+				"left join CameraEMData cp "
+				."on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) " : "";
 		}
-		// --- check if image as a parent
-		$parentinfo = $this->getParent($imgId);
-		$parentId = ($parentinfo['parentId']) ? $parentinfo['parentId'] : false;
-		$parentselect = "";
-		$parentjoin = "";
 		$gridtable = $this->mysql->isTable('GridData');
-		$parenttargetfields = $this->mysql->getFields('AcquisitionImageTargetData');
-		$parentcoords = "";
-		$parentcoords .= (in_array('delta column', $parenttargetfields)) ? 
-			"parenttarget.`delta column`, " : "";
-		$parentcoords .= (in_array('delta row', $parenttargetfields)) ? 
-			"parenttarget.`delta row`, " : "";
-		$parenttargetjoin = 
-			"left join AcquisitionImageTargetData parenttarget "
-			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) ";
-		$parenttargetjoin .= (in_array('REF|CameraEMData|camera', $parenttargetfields)) ? 
-			"left join CameraEMData cp "
-			."on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) " : "";
 		$gridselect = ($gridtable) ?
 			"grid.`grid ID` as gridId, grid.`insertion`, " : "";
 		$gridjoin = ($gridtable) ?
@@ -1187,6 +1179,7 @@ class leginondata {
 			."cp.`REF|InstrumentData|ccdcamera` = ppi.`REF|InstrumentData|ccdcamera` "
 			."and ppi.`DEF_timestamp` < parent.`DEF_timestamp` ) ";
 		}
+		// Main query
 		$q = "select "
 			.$gridselect
 			.$parentselect
