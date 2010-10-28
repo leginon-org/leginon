@@ -85,7 +85,9 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 			self.player.play()
 			self.setStatus('processing')
 
+			self.logger.info('go to state: %s' % (scopedata,))
 			self.instrument.setData(scopedata)
+			self.logger.info('arrived at next state')
 			newtargetlistdata = self.copyTargetList(targetlistdata)
 			if newtargetlistdata is None:
 				break
@@ -94,9 +96,10 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 			self.declareTransform(self.transformtype)
 
 			tid = self.makeTargetListEvent(newtargetlistdata)
-			self.setStatus('waiting')
+			self.logger.info('waiting for target list %s to be done' % (tid,))
 			self.publish(newtargetlistdata, pubevent=True)
 			status = self.waitForTargetListDone(tid)
+			self.logger.info('done waiting for target list %s' % (tid,))
 			state = self.player.wait()
 			if state in ('stop'):
 				self.logger.info('Aborting')
