@@ -535,8 +535,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			self.badprocess = True
 			return None
 
-		print bestctfvalue
-		sys.exit()
 		# method=ace2 requires a ctfvalues_file
 		if bestctfvalue['ctfvalues_file'] is None:
 			if self.params['ctfmethod']=="ace2":
