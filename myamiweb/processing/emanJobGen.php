@@ -485,6 +485,7 @@ function jobForm($extra=false) {
 		$coranmaskn="coranmask".$i;
 		$coranlpn="coranlp".$i;
 		$coranhpn="coranhp".$i;
+		$coranhccn="coranhcc".$i;
 		$affpropn="affprop".$i;
 		$affpropCCn="affpropCC".$i;
 		$affpropMPn="affpropMP".$i;
@@ -609,6 +610,7 @@ function jobForm($extra=false) {
 			$coranmask=($i>$j) ? $_POST["coranmask".($i-1)] : $_POST[$coranmaskn];
 			$coranlp=($i>$j) ? $_POST["coranlp".($i-1)] : $_POST[$coranlpn];
 			$coranhp=($i>$j) ? $_POST["coranhp".($i-1)] : $_POST[$coranhpn];
+			$coranhcc=($i>$j) ? $_POST["coranhcc".($i-1)] : $_POST[$coranhccn];
 			$affpropCC=($i>$j) ? $_POST["affpropCC".($i-1)] : $_POST[$affpropCCn];
 			$affpropMP=($i>$j) ? $_POST["affpropMP".($i-1)] : $_POST[$affpropMPn];
 			// use symmetry of model by default, but you can change it
@@ -678,6 +680,7 @@ function jobForm($extra=false) {
 	echo "    <td bgcolor='$rcol'><font size='-2'>".docpop('coranmask', 'Mask')."</font></td>\n";
 	echo "    <td bgcolor='$rcol'><font size='-2'>".docpop('coranlp', 'LP')."</font></td>\n";
 	echo "    <td bgcolor='$rcol'><font size='-2'>".docpop('coranhp', 'HP')."</font></td>\n";
+	echo "    <td bgcolor='$rcol'><font size='-2'>".docpop('coranhcc', 'HaCC')."</font></td>\n";
 	echo "  </tr>\n";
 	echo "  <tr>\n";
 	echo "    <td bgcolor='$rcol'><input type='checkbox' NAME='$corann' $coran></td>\n";
@@ -685,6 +688,7 @@ function jobForm($extra=false) {
 	echo "    <td bgcolor='$rcol'><input type='text' size='3' name='$coranmaskn' value='$coranmask'></td>\n";
 	echo "    <td bgcolor='$rcol'><input type='text' size='2' name='$coranlpn' value='$coranlp'></td>\n";
 	echo "    <td bgcolor='$rcol'><input type='text' size='2' name='$coranhpn' value='$coranhp'></td>\n";
+	echo "    <td bgcolor='$rcol'><input type='text' size='2' name='$coranhccn' value='$coranhcc'></td>\n";
 	echo "  </tr></table>\n";
 	echo "</td>\n";
 
@@ -991,6 +995,7 @@ function writeJobFile ($extra=False) {
 		$coranmask=$_POST["coranmask".$i];
 		$coranlp=$_POST["coranlp".$i];
 		$coranhp=$_POST["coranhp".$i];
+		$coranhcc=$_POST["coranhcc".$i];
 		$affprop=$_POST["affprop".$i];
 		$affpropCC=$_POST["affpropCC".$i];
 		$affpropMP=$_POST["affpropMP".$i];
@@ -1029,6 +1034,7 @@ function writeJobFile ($extra=False) {
 			if ($coranmask) $line .= " coranmask=$coranmask";
 			if ($coranlp) $line .= " lp=$coranlp";
 			if ($coranhp) $line .= " hp=$coranhp";
+			if ($coranhcc) $line .= " haccut=$coranhcc";
 			if ($eotest=='on') $line .= " eotest";
 			$line .= " > coran".$i.".txt\n";
 			if ($resfile_init) { 
