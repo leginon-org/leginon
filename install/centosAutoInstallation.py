@@ -598,14 +598,16 @@ class CentosInstallation(object):
 
         print("========================")
         print("Installation Finish.")
+        print("Appion will launch in your web browser momentarily.")
+        print("You may launch Leginon with the following command: start-leginon.py")
         print("========================")
         
         setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass
         webbrowser.open_new(setupURL)
         self.writeToLog("Myamiweb Started.")
         
-        subprocess.Popen("start-leginon.py")
-        self.writeToLog("Leginon Started")
+        #subprocess.Popen("start-leginon.py")
+        #self.writeToLog("Leginon Started")
         
 if __name__ == "__main__":
     a = CentosInstallation()
