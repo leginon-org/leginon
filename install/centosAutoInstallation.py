@@ -530,7 +530,8 @@ class CentosInstallation(object):
                
         if not returnValue:
             print("========================")
-            print("Please desable the SELinux before run this auto installation. Visit http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
+            print("ERROR: Please disable SELinux before running this auto installation. Visit http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
+            print("Exiting installation...")
             print("========================")
             sys.exit(1)
         
