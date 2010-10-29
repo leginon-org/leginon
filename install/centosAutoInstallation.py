@@ -524,6 +524,15 @@ class CentosInstallation(object):
 
         self.hostname = self.getServerName()
         self.nproc = self.getNumProcessors()
+
+        proc = subprocess.Popen("selinuxenabled")
+        returnValue = proc.wait()
+               
+        if not returnValue:
+            print("========================")
+            print("Please desable the SELinux before run this auto installation. Visit http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
+            print("========================")
+            sys.exit(1)
         
         if os.path.isfile(self.logFilename):
             self.writeToLog("remove old log file")
