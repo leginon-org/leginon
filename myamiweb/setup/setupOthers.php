@@ -112,8 +112,6 @@ require_once('../inc/formValidator.php');
 				wizard_form.hide_matlab[1].disabled = false;
 				wizard_form.hide_feature[0].disabled = false
 				wizard_form.hide_feature[1].disabled = false;
-				wizard_form.use_appion_wrapper[0].disabled = false
-				wizard_form.use_appion_wrapper[1].disabled = false;
 				wizard_form.temp_images_dir.style.backgroundColor = "#ffffff";
 				wizard_form.temp_images_dir.readOnly = false;
 				wizard_form.defaultcs.style.backgroundColor = "#ffffff";
@@ -133,12 +131,6 @@ require_once('../inc/formValidator.php');
 				wizard_form.hide_matlab[1].disabled = true;
 				wizard_form.hide_feature[0].disabled = true;
 				wizard_form.hide_feature[1].disabled = true;
-				wizard_form.use_appion_wrapper[0].disabled = true
-				wizard_form.use_appion_wrapper[1].disabled = true;
-				wizard_form.use_appion_wrapper[1].checked = true;
-				wizard_form.appion_wrapper_path.style.backgroundColor = "#eeeeee";
-				wizard_form.appion_wrapper_path.readOnly = true;
-				wizard_form.appion_wrapper_path.value = "";
 				wizard_form.temp_images_dir.style.backgroundColor = "#eeeeee";
 				wizard_form.temp_images_dir.readOnly = true;
 				wizard_form.temp_images_dir.value = "";
