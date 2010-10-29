@@ -781,6 +781,14 @@ class Setup(object):
 		except:
 			self.projectdata = None
 
+		# check if projects in database, otherwise raise exception
+		try:
+			projects = self.getProjects()
+		except:
+			projects = None
+		if not projects:
+			raise RuntimeError('Must define at least one project before running Leginon')
+
 	def getUsers(self):
 		userdata = leginon.leginondata.UserData(initializer={})
 		userdatalist = self.research(datainstance=userdata)
