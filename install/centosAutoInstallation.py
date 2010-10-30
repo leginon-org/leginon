@@ -463,7 +463,7 @@ class CentosInstallation(object):
         # need to change to branch when release
         #cmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-2.0 /tmp/myami-2.0/"
         
-        cmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-2.1 " + self.svnMyamiDir
+        cmd = "svn co http://ami.scripps.edu/svn/myami/trunk " + self.svnMyamiDir
 
         self.runCommand(cmd)
 
@@ -524,6 +524,16 @@ class CentosInstallation(object):
 
         self.hostname = self.getServerName()
         self.nproc = self.getNumProcessors()
+
+        proc = subprocess.Popen("selinuxenabled")
+        returnValue = proc.wait()
+               
+        if not returnValue:
+            print("========================")
+            print("ERROR: Please disable SELinux before running this auto installation. Visit http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
+            print("Exiting installation...")
+            print("========================")
+            sys.exit(1)
         
         if os.path.isfile(self.logFilename):
             self.writeToLog("remove old log file")
@@ -588,14 +598,16 @@ class CentosInstallation(object):
 
         print("========================")
         print("Installation Finish.")
+        print("Appion will launch in your web browser momentarily.")
+        print("You may launch Leginon with the following command: start-leginon.py")
         print("========================")
         
         setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass
         webbrowser.open_new(setupURL)
         self.writeToLog("Myamiweb Started.")
         
-        subprocess.Popen("start-leginon.py")
-        self.writeToLog("Leginon Started")
+        #subprocess.Popen("start-leginon.py")
+        #self.writeToLog("Leginon Started")
         
 if __name__ == "__main__":
     a = CentosInstallation()
