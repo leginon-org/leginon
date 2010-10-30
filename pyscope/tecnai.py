@@ -20,6 +20,11 @@ try:
 except ImportError:
 	pass
 
+# This scale convert beam tilt readout in radian to 
+# Tecnai or TEM Scripting Illumination.RotationCenter value
+# Depending on the version,  this may be 1.0 or closer to 6
+rotation_center_scale = 1.0
+
 # if a stage position movement is less than the following, then ignore it
 minimum_stage = {
 	'x': 5e-8,
@@ -370,19 +375,20 @@ class Tecnai(tem.TEM):
 	
 	def getBeamTilt(self):
 		value = {'x': None, 'y': None}
-		value['x'] = float(self.tecnai.Illumination.RotationCenter.X)
-		value['y'] = float(self.tecnai.Illumination.RotationCenter.Y)
+		value['x'] = float(self.tecnai.Illumination.RotationCenter.X) / rotation_center_scale
+		value['y'] = float(self.tecnai.Illumination.RotationCenter.Y) / rotation_center_scale 
 
 		return value
 	
 	def setBeamTilt(self, vector, relative = 'absolute'):
 		if relative == 'relative':
+			original_vector = self.getBeamTilt()
 			try:
-				vector['x'] += self.tecnai.Illumination.RotationCenter.X
+				vector['x'] += original_vector['x']
 			except KeyError:
 				pass
 			try:
-				vector['y'] += self.tecnai.Illumination.RotationCenter.Y
+				vector['y'] += original_vector['y']
 			except KeyError:
 				pass
 		elif relative == 'absolute':
@@ -392,15 +398,15 @@ class Tecnai(tem.TEM):
 		
 		vec = self.tecnai.Illumination.RotationCenter
 		try:
-			vec.X = vector['x']
+			vec.X = vector['x'] * rotation_center_scale
 		except KeyError:
 			pass
 		try:
-			vec.Y = vector['y']
+			vec.Y = vector['y'] * rotation_center_scale
 		except KeyError:
 			pass
 		self.tecnai.Illumination.RotationCenter = vec
-	
+
 	def getBeamShift(self):
 		value = {'x': None, 'y': None}
 		value['x'] = float(self.tom.Illumination.BeamShiftPhysical.X)
