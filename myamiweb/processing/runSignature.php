@@ -338,7 +338,7 @@ function createSigForm($extra=false, $title='Signature Launcher',
 		<td COLSPAN='2' ALIGN='CENTER'>
 		<HR>
 		<input type='checkbox' name='testimage' onclick='enabledtest(this)' $testcheck>
-		Test these setting on image:
+		Test these settings on image:
 		<input type='text' name='testfilename' $testdisabled value='$testvalue' SIZE='45'>
 		<hr />
 	";
@@ -427,7 +427,8 @@ function runSignaturePicker() {
 	// END MAKE COMMAND
 
 	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
+		// replace other spaces with commas
 		$testimage = ereg_replace(" ",",",$testimage);
 		$testimage = ereg_replace(",,",",",$testimage);
 	}
@@ -457,7 +458,7 @@ function runSignaturePicker() {
 		$results.= "<b>Signature Picker Command:</b><br />$command";
 		$results.= "</td></tr></table>\n";
 		$results.= "<br />\n";
-		$testjpg=ereg_replace(".mrc","",$_POST['testfilename']);
+		$testjpg=ereg_replace(".mrc","",$testimage);
 
 		$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");

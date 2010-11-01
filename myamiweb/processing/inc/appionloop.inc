@@ -29,7 +29,7 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	if ($_POST['preset']) $dbimages=$_POST['sessionname'].",".$_POST['preset'];
 	else $alldbimages = $_POST['sessionname'];
 	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
 	}
 
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunname;
@@ -194,7 +194,7 @@ function appionLoopSummaryTable () {
 	if ($_POST[preset]) $dbimages=$_POST[sessionname].",".$_POST[preset];
 	else $alldbimages = $_POST[sessionname];
 	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
 		$testimage = ereg_replace(" ",",,", $testimage);
 		$testimage = ereg_replace(",,",",",$testimage);
 	}
@@ -248,7 +248,7 @@ function parseAppionLoopParams () {
 	}
 
 	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
 		$testimage = ereg_replace(" ",",", $testimage);
 		$testimage = ereg_replace(",,",",", $testimage);
 		$apcontinue = false;
@@ -287,7 +287,7 @@ function checkAppionErrors () {
 		exit;
 	}
 	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
 		else {
 			return ("<B>ERROR:</B> Specify an mrc file to test these parameters");
 			exit;
