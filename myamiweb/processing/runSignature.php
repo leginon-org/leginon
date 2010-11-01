@@ -420,7 +420,7 @@ function runSignaturePicker() {
 	$command.="--template-list=$templateliststr ";
 
 	if ($_POST['keepall']=='on')
-		$command.="--keep-all ";
+		$command.="--keepall ";
 	if ($_POST['mirrors']=='on')
 		$command.="--use-mirrors ";
 

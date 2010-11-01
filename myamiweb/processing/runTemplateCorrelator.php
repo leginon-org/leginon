@@ -416,7 +416,7 @@ function runTemplateCorrelator() {
 	if ($_POST['threadfindem']=='on')
 		$command.="--thread-findem ";
 	if ($_POST['keepall']=='on')
-		$command.="--keep-all ";
+		$command.="--keepall ";
 	if ($_POST['mirrors']=='on')
 		$command.="--use-mirrors ";
 
