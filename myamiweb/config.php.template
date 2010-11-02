@@ -161,8 +161,8 @@ define('HIDE_FEATURE', true);
 define('TEMP_IMAGES_DIR', "");
 
 // --- use appion warpper --- //
-define('USE_APPION_WRAPPER', false);
-define('APPION_WRAPPER_PATH', "");
+// --- define('USE_APPION_WRAPPER', false); --- //
+// --- define('APPION_WRAPPER_PATH', ""); --- //
 
 // --- sample tracking ---//
 define('SAMPLE_TRACK', false);
