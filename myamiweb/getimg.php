@@ -115,7 +115,13 @@ if ($g) {
 		$img = getImage($sessionId, $id, $preset, $params);
 	}
 
-	if (!$img) return false;
+	if (!$img) {
+		header("Content-type: image/x-png");
+		$blkimg = blankimage();
+		imagepng($blkimg);
+		imagedestroy($blkimg);
+		exit();
+	}
 
 	$nimgId = $leginondata->findImage($id, $preset);
 	list($res) = $leginondata->getFilename($nimgId['id']);
@@ -140,10 +146,12 @@ if ($g) {
 	} else {
 		$filenamelen = 0;
 	}
+
 	if ($displaysample & SAMPLE_TRACK) {
 		$projectdata = new project();
 		$info=$leginondata->getSessionInfo($sessionId);
 		$tag=$projectdata->getSample($info);
+		$tag = '';
 		$taglen = strlen($tag);
 		$strlength = ($taglen + $filenamelen ) * 6 + 2 * $margin;
 		if ($filenamelen*$pixperchar < $wx && $strlength < $wx) {
