@@ -115,6 +115,8 @@ if ($g) {
 		$img = getImage($sessionId, $id, $preset, $params);
 	}
 
+	if (!$img) return false;
+
 	$nimgId = $leginondata->findImage($id, $preset);
 	list($res) = $leginondata->getFilename($nimgId['id']);
 	$filename = $res['filename'];
