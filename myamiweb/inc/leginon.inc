@@ -111,57 +111,38 @@ class leginondata {
 	}
 
 	function getSessions($comment="", $projectId=false, $like="") {
-	
 		if ($like)
 			$wherelike = "and s.`name` like '$like' ";
 		
 		$selectcomment = ($comment) ? 
 				"if (length(s.comment)>0, concat(s.name,' - ',s.comment), s.name)" : "s.name";
-		if (is_numeric($projectId)) {
-			// --- project database information
-			$project = &new project;
-			$db  = &$project->mysql;
-			$q = "SELECT session.`name` "
-				."FROM ".DB_PROJECT.".projectexperiments p "
-				."LEFT JOIN ".DB_LEGINON.".SessionData AS session "
-				."  ON session.`DEF_id` =  p.`REF|leginondata|SessionData|session` "
-				."WHERE p.`REF|projects|project`='$projectId'";
-			//echo $q;
-			$psessions = $db->getSQLResult($q);
-			$ps=array();
-			foreach ($psessions as $psession) {
-				$ps[$psession['name']] = $psession['name'];
-			}
-			$sessions = $this->getSessions($comment, false, $like);
-			if (!$sessions) return array();
-			foreach ($sessions as $session) {
-				$s[$session['name_org']] = $session;
-			}
-			// --- get common sessions 
-			$i = array_intersect(array_keys($s), array_keys($ps));
-			$ps = array();
-			foreach ($i as $d) {
-				$ps[] = $s[$d]; 
-			}
-			return $ps;
 
-		}
-
-		$userId = getLoginUserId();
+		$joinproject = "left join ".DB_PROJECT.".`projectexperiments` p "
+			."on s.`DEF_id` = p.`REF|leginondata|SessionData|session` ";
 		$privilege_level = privilege('data');
+		if ($privilege_level > 2 && !is_numeric($projectId)) {
+			// save time with one less join when it is not necessary
+			$joinproject = ' ';
+		}
+		if (is_numeric($projectId)) {
+			$whereproject = "and p.`REF|projects|project` = ".$projectId." ";
+		} else {
+			$whereproject = ' ';
+		}
+		// exclude ones without images saved
 		$q="select s.DEF_id as `id`, ".$selectcomment." as `name`, s.comment as `comment`, "
 			."s.name as `name_org`, s.`DEF_timestamp` as `stimestamp` "
 			."from ".DB_LEGINON.".AcquisitionImageData a "
 			."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) ";
-		$where = "where a.`REF|SessionData|Session` IS NOT NULL ";
+		$q .= $joinproject;
+		$where = "where a.`REF|SessionData|Session` IS NOT NULL ".$whereproject;
 		$grouporder = " "
 			."group by a.`REF|SessionData|session` "
 			."order by s.DEF_timestamp DESC ";
 		if ($privilege_level <=2) {
+			$userId = getLoginUserId();
 			//project owners
-			$q1 = "left join ".DB_PROJECT.".`projectexperiments` p "
-				."on (p.`REF|leginondata|SessionData|session` = s.`DEF_id`) "
-				."left join ".DB_PROJECT.".`projectowners` o "
+			$q1 = "left join ".DB_PROJECT.".`projectowners` o "
 				."on p.`REF|projects|project` = o.`REF|projects|project` ";
 			$where1 .= " "
 				."and o.`REF|leginondata|UserData|user` = ".$userId." "
@@ -172,7 +153,7 @@ class leginondata {
 			$q2 = "left join ".DB_PROJECT.".`shareexperiments` sh "
 				."on ( s.`DEF_id` = sh.`REF|leginondata|SessionData|experiment`) ";
 			$where2 = "and sh.`REF|leginondata|UserData|user` = ".$userId." "
-				."  ";
+				." ";
 			$where2 = $where.$where2.$wherelike;
 			$q2 = $q.$q2.$where2.$grouporder;
 			//combine
