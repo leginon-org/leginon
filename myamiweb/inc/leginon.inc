@@ -13,29 +13,19 @@
  *	
  */
 
-// find the initial location.
-$initCwd = preg_replace( '~(\w)$~' , '$1' . DIRECTORY_SEPARATOR , realpath( getcwd() ) );
-
-// loop through each parents folder until found the config.php file.
-// stop the loop if outside the myamiweb main folder.
-
-while($noConfigFile = !file_exists(getcwd()."/config.php")){
-	
-	if(!preg_match("/myamiweb/", getcwd()))
-		break;
-	chdir('..');
-}
-
-// if can't find the config.php file, redirect to setup wizard.
-if($noConfigFile){
-	header('location:setup/index.php');
+// replaced require_once "config.php"; with an include so that we can give the user a message if the config file is not found.
+// the require functions apparently don't return an error value and they don't seem to throw exceptions either.
+// rather than redirecting the user to the setup page here, I am checking if config.php exists from myamiweb/index.php and redirecting
+// from there to avoid issues of not knowing where this file is included from. refs #984
+if (!(@include "config.php")) {
+	echo "Your configuration file could not be found.<br /><br />";
+	echo "Please run the setup wizard found at <b>http://your_host/your_installation_directory/setup</b> to create a config file and complete your installation. <br />";
+	echo "( example: http://localhost/myamiweb/setup )<br /><br />";
+	echo "If you think you have reached this message in error, please ensure that config.php is located in the myamiweb installation directory under your web directory.<br />";
+	echo "( example: /var/www/html/myamiweb )";
 	exit();
 }
 
-// found the config.php file, reset the initial location back to original.
-chdir($initCwd);
-
-require_once "config.php";
 
 require_once "inc/login.inc";
 require_once "inc/util.inc";

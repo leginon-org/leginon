@@ -7,6 +7,13 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+// Ensure the config.php file has been created. If not, redirect the user to the setup wizard.refs #984
+if( !(file_exists("config.php")) ) 
+{
+	header('location:setup/index.php');
+}
+
+
 require "inc/leginon.inc";
 
 $baseurl = BASE_URL;
