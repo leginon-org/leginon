@@ -1073,6 +1073,9 @@ class leginondata {
 	}
 
 	function getParent($imgId) {
+		// Query will have error without these tables
+		if (!$this->mysql->isTable('PresetData') || !$this->mysql->isTable('AcquisitionImageTargetData'))
+			return NULL;
 		$q = " select "
 			."parent.`DEF_id` as parentId, "
 			."parent.`MRC|image` as parentimage, "
@@ -1101,13 +1104,18 @@ class leginondata {
 	}
 
 	function getImageInfo($imgId) {
-		// getParent function query will have error without these tables
-		if (!$this->mysql->isTable('PresetData') || !$this->mysql->isTable('AcquisitionImageTargetData')) {
-			$parentId = false;
-		} else {
-			// --- check if image as a parent
-			$parentinfo = $this->getParent($imgId);
-			$parentId = ($parentinfo['parentId']) ? $parentinfo['parentId'] : false;
+		// --- grid query
+		$gridtable = $this->mysql->isTable('GridData');
+		$gridselect = ($gridtable) ?
+			"grid.`grid ID` as gridId, grid.`insertion`, " : "";
+		$gridjoin = ($gridtable) ?
+			"left join GridData grid "
+			."on (grid.`DEF_id`=a.`REF|GridData|grid`) " : '';
+		// --- check if image has a parent
+		$parentinfo = $this->getParent($imgId);
+		$parentId = ($parentinfo['parentId']) ? $parentinfo['parentId'] : false;
+		if ($parentId) {
+			// --- get parent information and target relationship
 			$parentselect = "";
 			$parentjoin = "";
 			$parenttargetfields = $this->mysql->getFields('AcquisitionImageTargetData');
@@ -1122,14 +1130,6 @@ class leginondata {
 			$parenttargetjoin .= (in_array('REF|CameraEMData|camera', $parenttargetfields)) ? 
 				"left join CameraEMData cp "
 				."on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) " : "";
-		}
-		$gridtable = $this->mysql->isTable('GridData');
-		$gridselect = ($gridtable) ?
-			"grid.`grid ID` as gridId, grid.`insertion`, " : "";
-		$gridjoin = ($gridtable) ?
-			"left join GridData grid "
-			."on (grid.`DEF_id`=a.`REF|GridData|grid`) " : '';
-		if ($parentId) {
 			$parentselect = ""
 			."parent.`DEF_id` as parentId, "
 			."parent.`MRC|image` as parentimage, "
