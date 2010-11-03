@@ -1114,10 +1114,11 @@ class leginondata {
 		// --- check if image has a parent
 		$parentinfo = $this->getParent($imgId);
 		$parentId = ($parentinfo['parentId']) ? $parentinfo['parentId'] : false;
-		if ($parentId) {
-			// --- get parent information and target relationship
-			$parentselect = "";
-			$parentjoin = "";
+		$parentselect = "";
+		$parentjoin = "";
+		// get target location on parent, even if fake
+		if ($this->mysql->isTable('AcquisitionImageTargetData')) {
+			// This query needs to be done even if no parentId for grid atlas display
 			$parenttargetfields = $this->mysql->getFields('AcquisitionImageTargetData');
 			$parentcoords = "";
 			$parentcoords .= (in_array('delta column', $parenttargetfields)) ? 
@@ -1130,6 +1131,8 @@ class leginondata {
 			$parenttargetjoin .= (in_array('REF|CameraEMData|camera', $parenttargetfields)) ? 
 				"left join CameraEMData cp "
 				."on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) " : "";
+		}
+		if ($parentId) {
 			$parentselect = ""
 			."parent.`DEF_id` as parentId, "
 			."parent.`MRC|image` as parentimage, "
