@@ -6,9 +6,8 @@ import wx
 import time
 import math
 import numpy
-from appionlib import particleLoop2
-from appionlib import apImage
 #import subprocess
+from appionlib import particleLoop2
 from appionlib import apFindEM
 from appionlib import appiondata
 from appionlib import apParticle
