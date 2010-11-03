@@ -203,6 +203,29 @@ class ApTiltAlignParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApContour(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('image', leginon.leginondata.AcquisitionImageData),
+			('x', float),
+			('y', float),
+			('version', int),
+			('method', str),
+			('particleType', str),
+			('runID', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApContourPoint(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('contour', ApContour),
+			('x', float),
+			('y', float),
+		)
+	typemap = classmethod(typemap)
+
 ### END Particle selection tables ###
 ### START Template tables ###
 

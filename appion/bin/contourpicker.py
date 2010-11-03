@@ -8,36 +8,36 @@ import wx
 import Image
 from PIL import Image
 import time
-import particleLoop2
 import math
 import random
-import apImage
-#import subprocess
-import apFindEM
-import appionData
-import apParticle
-import apDatabase
-import apDisplay
-import apMask
-import apParam
-
-#Leginon
-import polygon
-from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools, SelectionTool
-import pyami
 import numpy
 import scipy
 from scipy import ndimage
-import apImage
-import contourdata
-import leginondata
-from pyami import arraystats
 import threading
-import apPeaks
+#import pyami
+from pyami import arraystats
+
+#import subprocess
+from appionlib import particleLoop2
+from appionlib import apFindEM
+from appionlib import appiondata
+from appionlib import apParticle
+from appionlib import apDatabase
+from appionlib import apDisplay
+from appionlib import apMask
+from appionlib import apImage
+from appionlib import apParam
+from appionlib import apPeaks
+
+#Leginon
+import leginon.polygon
+from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools, SelectionTool
+from leginon import leginondata
 
 class ManualPickerPanel(TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True):
 		TargetPanel.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
+
 	def addTypeTool(self, name, **kwargs):
 		if self.selectiontool is None:
 			self.selectiontool = SelectionTool.SelectionTool(self)
@@ -50,33 +50,39 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 		self.selectiontool.SetSize((300,175))
 		self.sizer.SetItemMinSize(self.selectiontool, self.selectiontool.GetSize())
 		self.sizer.Layout()
+
 	def addTarget(self, name, x, y):
 		super(ManualPickerPanel,self).addTarget(name,x,y)
 		if name == self.picker.s:
 			self.picker.addManualPoint()
+
 	def deleteTarget(self, target):
 		self.picker.deleteTarget(target)
 		super(ManualPickerPanel,self).deleteTarget(target)
+
 	def setPickerApp(self,app):
 		self.picker = app
+
 	def openImageFile(self, filename):
 		self.filename = filename
 		if filename is None:
 			self.setImage(None)
 		elif filename[-4:] == '.mrc':
-			image = pyami.mrc.read(filename)
+			image = mrc.read(filename)
 			self.setImage(image.astype(numpy.float32))
 		else:
 			self.setImage(Image.open(filename))
+
 	def getImage(self, filename):
 		if filename is None:
 			image = None;
 		elif filename[-4:] == '.mrc':
-			image = pyami.mrc.read(filename)
+			image = mrc.read(filename)
 			image = image.astype(numpy.float32)
 		else:
 			image = Image.open(filename)
 		return image
+
 	def _onMotion(self, evt, dc):
 		if len(self.selectiontool.getTargets('Tube'))>=2:
 			targets = []
@@ -89,10 +95,12 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 			self.selectiontool.setTargets('Tube',[])
 		self.picker.onMoved(evt)
 		super(ManualPickerPanel,self)._onMotion(evt,dc)
+
 	def _onRightClick(self, evt):
 		if self.selectedtarget is not None :
 			self.deleteTarget(self.selectedtarget)
 		super(ManualPickerPanel,self)._onRightClick(evt)
+
 	def _onLeftClick(self, evt):
 		if self.selectedtype is not None:
 			x, y = self.view2image((evt.m_x, evt.m_y))
@@ -103,11 +111,13 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 			self.picker.onEdgeFinding(evt)
 		#if self.selectedtype.name == self.picker.s:
 		#	self.picker.addManualPoint()
+
 	def Draw(self, dc):
 	#	now = time.time()
 		super(ManualPickerPanel,self).Draw(dc)
 		self.picker.doGraphics()
 	#	print 'Drawn', time.time() - now
+
 	def drawContour(self, color, targets, thickness=1):
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.buffer)
@@ -154,10 +164,13 @@ class PixelCurveMaker:
 		def _init_(self, i):
 			self.id = i
 			self.radiiToValues = {}
+
 		def addData(self,radius,value):
 			self.radiiToValues[radius] = value
+
 		def getData(self):
 			return self.radiiToValues
+
 		def smoothData(self):
 			for i in self.radiiToValues.keys():
 				index = self.radiiToValues.keys().index(i)
@@ -169,6 +182,7 @@ class PixelCurveMaker:
 					ni = 0
 				average = (self.radiiToValues[i]+self.radiiToValues[self.radiiToValues.keys()[pi]]+self.radiiToValues[self.radiiToValues.keys()[ni]])/3
 				self.radiiToValues[i] = average
+
 	class Contour:#stores all the info about one contour
 		def _init_(self,size,rangeSize,curveMaker,id):
 			self.id = id
@@ -190,45 +204,47 @@ class PixelCurveMaker:
 			self.average = 0;
 		
 		def sortedDictValues1(self,adict):
-    			items = adict.items()
-    			items.sort()
-    			return [value for key, value in items]
+			items = adict.items()
+			items.sort()
+			return [value for key, value in items]
+
 		def sortedDictValues2(self,adict):
-    			keys = adict.keys()
-    			keys.sort()
-    			return [dict[key] for key in keys]
+			keys = adict.keys()
+			keys.sort()
+			return [dict[key] for key in keys]
+
 		def makeCalculations(self):
 		#	for p in self.thetaToMap.values():
 		#		p.smoothData()
-                	self.average = 0;
-                	self.exactValues = {}
-                	self.goodValues = {}
-                	num = 0;
+			self.average = 0;
+			self.exactValues = {}
+			self.goodValues = {}
+			num = 0;
 			flag = True
 			self.thetalist = sorted(self.thetalist)
-                	for theta in self.thetalist:
+			for theta in self.thetalist:
 				if flag:
-                	        	self.average += self.maker.getRadiusOfMajorChange(theta,self,flag=False,id=self.id)
-                	        	self.exactValues[theta] = self.maker.getRadiusOfMajorChange(theta,self,flag=False,id=self.id)
+					self.average += self.maker.getRadiusOfMajorChange(theta,self,flag=False,id=self.id)
+					self.exactValues[theta] = self.maker.getRadiusOfMajorChange(theta,self,flag=False,id=self.id)
 				else:
-                	        	self.average += self.maker.getRadiusOfMajorChange(theta,self,flag=False)
-                	        	self.exactValues[theta] = self.maker.getRadiusOfMajorChange(theta,self,flag=True)
+					self.average += self.maker.getRadiusOfMajorChange(theta,self,flag=False)
+					self.exactValues[theta] = self.maker.getRadiusOfMajorChange(theta,self,flag=True)
 				flag = False
-                	        num+=1
-                	self.average /=num
+				num+=1
+			self.average /=num
 			self.goodValues = self.exactValues
-                	for i in range(0):
-                	        rrange =  range(len(self.thetalist))
-                	#       random.shuffle(rrange)
-                	        for j in rrange:
-                	                theta = self.thetalist[j]
-                	                self.goodValues[theta] = self.maker.getRadiusOfMajorChange(theta,self,flag=True)
-                #        self.smoothData()
-                #        self.smoothData()
+			for i in range(0):
+				rrange =  range(len(self.thetalist))
+			# random.shuffle(rrange)
+				for j in rrange:
+					theta = self.thetalist[j]
+					self.goodValues[theta] = self.maker.getRadiusOfMajorChange(theta,self,flag=True)
+		#	self.smoothData()
+		#	self.smoothData()
 ######need mathmatition's help#######################
 #		def circulize(self):
 #			def dist(target1,target2):
-#                        	return math.sqrt((target1[0]-target2[0])*(target1[0]-target2[0])+(target1[1]-target2[1])*(target1[1]-target2[1]))
+#				return math.sqrt((target1[0]-target2[0])*(target1[0]-target2[0])+(target1[1]-target2[1])*(target1[1]-target2[1]))
 #			cx = 0
 #			cy = 0
 #			num = len(self.goodValues)
@@ -252,11 +268,11 @@ class PixelCurveMaker:
 			for theta in self.thetalist:
 				f = self.getData(theta)
 				nextI = self.thetalist.index(theta) + 1
-        	                if nextI > len(self.thetalist)-1:
-        	                        nextI = 0
+				if nextI > len(self.thetalist)-1:
+					nextI = 0
 				prevI = self.thetalist.index(theta) - 1
-        	                if prevI < 0:
-        	                        prevI = len(self.thetalist)-1
+				if prevI < 0:
+					prevI = len(self.thetalist)-1
 				sum = (f+2*self.getData(self.thetalist[nextI])+2*self.getData(self.thetalist[prevI]))
 				num = 5
 				if math.fabs(f-sum/num)>5:
@@ -272,8 +288,10 @@ class PixelCurveMaker:
 	
 		def addData(self,theta,radius,value):
 			self.thetaToMap[theta].addData(radius,value)
+
 		def getData(self,theta):
 			return self.goodValues[theta]
+
 		def averageIntensity(self):
 			sum = 0
 			num = 0
@@ -282,8 +300,6 @@ class PixelCurveMaker:
 				#sum += self.goodValues[self.thetalist[i]]
 				num += 1
 			return sum/num
-
-
 	
 	def _init_(self, size, rangeSize):
 		self.thetaToMap = {}
@@ -303,16 +319,19 @@ class PixelCurveMaker:
 			c = self.Contour()
 			self.contours.append(c)
 			c._init_(size,rangeSize,self,i*1)
+
 	def addData(self,theta,radius,value):
 		self.thetaToMap[theta].addData(radius,value)
 		for c in self.contours:
 			c.thetaToMap = self.thetaToMap
+
 	def makeCalculations(self):
 		for c in self.contours:
 			c.makeCalculations()
 		self.theContour = self.choseContour()
 		self.theContour.smoothData()
 		self.theContour.smoothData()
+
 	def choseContour(self):
 		max = 0
 		contour = None
@@ -322,6 +341,7 @@ class PixelCurveMaker:
 				contour = c
 				max = c.averageIntensity()
 		return contour	
+
 	def getSMA(self, theta, iter):
 		average = 0
 		num = 0
@@ -332,10 +352,13 @@ class PixelCurveMaker:
 			average+=self.exactValues[self.thetalist[nextIndex]]
 			num+=1
 		return average/num
+
 	def getAllData(self):
 		return self.contours
+
 	def getData(self,theta):
 		return self.theContour.goodValues[theta]
+
 	def getRadiusOfMajorChange(self,theta,contour,flag = True,id = 0):
 		maxValue = 0
 		maxRadius = -1
@@ -378,11 +401,12 @@ class PixelCurveMaker:
 				for rad in self.thetaToMap[theta].getData():
 					if math.fabs(rad-value)<tolerance:
 						if self.thetaToMap[theta].getData()[rad] > maxValue:
-                                                    maxValue = self.thetaToMap[theta].getData()[rad]
-                                                    maxRadius = rad				
+							maxValue = self.thetaToMap[theta].getData()[rad]
+							maxRadius = rad				
 			self.imageedgehenrychange = maxRadius-value
 ######################################################################################################################################################
 		return maxRadius
+
 class PickerApp(wx.App):
 	def __init__(self, shape='+', size=100, mask=False):
 		self.shape = shape
@@ -479,6 +503,7 @@ class PickerApp(wx.App):
 		self.SetTopWindow(self.frame)
 		self.frame.Show(True)
 		return True
+
 	def doGraphics(self):
 		#for targets in self.oldPolyTargets:
 		#	self.panel.drawContour(wx.Color(220,20,20),targets)	
@@ -486,7 +511,8 @@ class PickerApp(wx.App):
 			self.panel.drawContour(wx.Color(220,20,20),targets)	
 		for targets in self.tubeTargets:
 			self.panel.drawContour(wx.Color(220,220,20), targets, thickness=2)
-        def deleteTarget(self, target):
+
+	def deleteTarget(self, target):
 		try:
 			if target is not None :
 				if target.type.name == self.s:
@@ -510,6 +536,7 @@ class PickerApp(wx.App):
 		except (ValueError,IndexError):
 			pass		
 		print 'ow'
+
 	def addManualPoint(self):
 		'''
 		def dist(target1,target2):
@@ -540,10 +567,12 @@ class PickerApp(wx.App):
 		self.panel.selectiontool.setTargets(self.s,targets)
 		'''
 		pass
+
 	def negative(self, ndarray):
 		for i in range(len(ndarray)):
 			for j in range(len(ndarray[i])):
 				ndarray[i][j] = 127-ndarray[i][j]
+
 	def onEdgeFinding(self,evt):	
 		if not self.panel.selectiontool.isTargeting('Auto Create Contours'):
 			return 
@@ -603,11 +632,12 @@ class PickerApp(wx.App):
 		targets = []
 		for c in contours:
 			for theta in range(size):
-                        	theta*=math.pi*2/size
-                        	targets.append((point[0]+(dilate+c.goodValues[theta])*math.cos(theta),point[1]+(dilate+c.goodValues[theta])*math.sin(theta)))
+				theta*=math.pi*2/size
+				targets.append((point[0]+(dilate+c.goodValues[theta])*math.cos(theta),point[1]+(dilate+c.goodValues[theta])*math.sin(theta)))
 			self.addPolyParticle(targets)
 			targets = []
 		'''
+
 	def loadOld(self, points, singlePoints):
 		self._onClear()
 		self.panel.setTargets(self.s2,points[0])
@@ -640,9 +670,10 @@ class PickerApp(wx.App):
 		
 		for target in self.tubeTargets:
 			tubemem = self.panel.selectiontool.getTargets('TubeMemory')
-                	tubemem.append(target[0])
-                	self.panel.selectiontool.setTargets('TubeMemory', tubemem)
+			tubemem.append(target[0])
+			self.panel.selectiontool.setTargets('TubeMemory', tubemem)
 		#self.oldPolyTargets = points[1]
+
 	def createPolyParticleGUI(self):#creates a main tool to select the points and adds a button to move onto the next particle
 		self.panel.setPickerApp(self)
 		self.polyTargets = []
@@ -655,11 +686,11 @@ class PickerApp(wx.App):
 		self.panel.selectiontool.setDisplayed(self.s, True)
 
 		self.s2 = 'Auto Create Contours'
-                self.panel.addTargetTool(self.s2, color=wx.Color(20,220,20),
-                        target=True, shape='.')
-                self.panel.setTargets(self.s2, [])
-                self.panel.selectiontool.setDisplayed(self.s2, True)
-                self.panel.selectiontool.setTargeting(self.s2, True)
+		self.panel.addTargetTool(self.s2, color=wx.Color(20,220,20),
+			target=True, shape='.')
+		self.panel.setTargets(self.s2, [])
+		self.panel.selectiontool.setDisplayed(self.s2, True)
+		self.panel.selectiontool.setTargeting(self.s2, True)
 
 		self.add = wx.Button(self.frame, wx.ID_ADD, '&Add Particle')
 		self.add.SetMinSize((200,40))
@@ -668,72 +699,77 @@ class PickerApp(wx.App):
 
 
 		self.removeLast = wx.Button(self.frame, wx.ID_REMOVE, 'Remove &Last Partice')
-                self.add.SetMinSize((200,40))
-                self.Bind(wx.EVT_BUTTON, self.onTakeBack, self.removeLast)
-                self.buttonrow.Add(self.removeLast, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.add.SetMinSize((200,40))
+		self.Bind(wx.EVT_BUTTON, self.onTakeBack, self.removeLast)
+		self.buttonrow.Add(self.removeLast, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 		
 
 		self.switch = wx.Button(self.frame, wx.ID_ANY, 'Switch Selection &Mode')
-                self.add.SetMinSize((200,40))
-                self.Bind(wx.EVT_BUTTON, self.onSwitch, self.switch)
-                self.buttonrow.Add(self.switch, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.add.SetMinSize((200,40))
+		self.Bind(wx.EVT_BUTTON, self.onSwitch, self.switch)
+		self.buttonrow.Add(self.switch, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.textFile = wx.Button(self.frame, wx.ID_ANY, 'Make &Text File')
-                self.add.SetMinSize((200,40))
-                self.Bind(wx.EVT_BUTTON, self.onMakeFile, self.textFile)
-                self.buttonrow.Add(self.textFile, 0,wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.add.SetMinSize((200,40))
+		self.Bind(wx.EVT_BUTTON, self.onMakeFile, self.textFile)
+		self.buttonrow.Add(self.textFile, 0,wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.tcTextFile = wx.Button(self.frame, wx.ID_ANY, 'Make TubeCircle &Text File')
-                self.add.SetMinSize((200,40))
-                self.Bind(wx.EVT_BUTTON, self.onMakeTCFile, self.tcTextFile)
-                self.buttonrow.Add(self.tcTextFile, 0,wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.add.SetMinSize((200,40))
+		self.Bind(wx.EVT_BUTTON, self.onMakeTCFile, self.tcTextFile)
+		self.buttonrow.Add(self.tcTextFile, 0,wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.filterSelectorChoices = ['Virus Like Particle','Latex Bead']
 		self.filterSelector = wx.ComboBox(self.frame,wx.CB_DROPDOWN,choices=self.filterSelectorChoices)
-                self.filterSelector.SetMinSize((200,40))
+		self.filterSelector.SetMinSize((200,40))
 		self.Bind(wx.EVT_TEXT, self.onSelectorTriggered, self.filterSelector)
 		self.buttonrow.Add(self.filterSelector, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3) 
 	
 		self.particleType = 'Blank'
 		self.typeSelectorChoices = ['Blank','Circle','Tube']
-                self.typeSelector = wx.ComboBox(self.frame,wx.CB_DROPDOWN,choices=self.typeSelectorChoices)
-                self.typeSelector.SetMinSize((200,40))
-                self.Bind(wx.EVT_COMBOBOX, self.onTypeChanged, self.typeSelector)
-                self.buttonrow.Add(self.typeSelector, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		self.typeSelector = wx.ComboBox(self.frame,wx.CB_DROPDOWN,choices=self.typeSelectorChoices)
+		self.typeSelector.SetMinSize((200,40))
+		self.Bind(wx.EVT_COMBOBOX, self.onTypeChanged, self.typeSelector)
+		self.buttonrow.Add(self.typeSelector, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 		
 		self.panel.addTargetTool('Circle', color=wx.Color(20,20,220),
-                        target=True, shape='o', size=self.size)
-                self.panel.setTargets('Circle', [])
+			target=True, shape='o', size=self.size)
+		self.panel.setTargets('Circle', [])
 		self.panel.selectiontool.setTargeting('Circle', True)
 
 		self.panel.addTargetTool('Tube', color=wx.Color(220,220,20),
-                        target=True, shape='polygon', size=self.size)
-                self.panel.setTargets('Tube', [])
+			target=True, shape='polygon', size=self.size)
+		self.panel.setTargets('Tube', [])
 		self.panel.selectiontool.setTargeting('Tube', True)
 
 		self.panel.addTargetTool('TubeMemory', color=wx.Color(20,20,220),
-                        target=True, shape='.', size=self.size)
-                self.panel.setTargets('TubeMemory', [])
+			target=True, shape='.', size=self.size)
+		self.panel.setTargets('TubeMemory', [])
 		self.panel.selectiontool.setTargeting('TubeMemory', True)
+
 	def onMakeTCFile(self,evt):
 		session = self.appionloop.params['sessionname']	
 		###change later
 		os.system('contourpickerTubeCircleTextFileGenerator.py ' + str(session) + ' ' + self.appionloop.params['runid'] + ' ' + self.appionloop.params['preset'])
+
 	def onMakeFile(self,evt):
 		session = self.appionloop.params['sessionname']	
 		###change later
 		os.system('contourpickerTextFileGenerator.py ' + str(session) + ' ' + self.appionloop.params['runname'] + ' ' + self.appionloop.params['preset'])
+
 	def onTypeChanged(self, evt):
 		self.particleType = self.typeSelectorChoices[self.typeSelector.GetSelection()]
+
 	def onSelectorTriggered(self, evt):
 		s = self.filterSelectorChoices[self.filterSelector.GetSelection()]	
 		if s == 'Virus Like Particle':
 			self.filters = False 
 		else:
 			self.filters = True
+
 	def onSwitch(self, evt):
 		s = 'Manually Create Contours'
-                s2 = 'Auto Create Contours'
+		s2 = 'Auto Create Contours'
 		
 
 		if self.panel.selectiontool.isTargeting(s):
@@ -742,9 +778,10 @@ class PickerApp(wx.App):
 		else:
 			self.panel.selectiontool.setTargeting(s2, False)
 			self.panel.selectiontool.setTargeting(s, True)
+
 	def onMoved(self, evt):
 		s = 'Manually Create Contours'
-                s2 = 'Auto Create Contours'
+		s2 = 'Auto Create Contours'
 		flag = False
 		if evt.RightIsDown():
 	#		if self.panel.selectiontool.isTargeting(s):
@@ -753,12 +790,14 @@ class PickerApp(wx.App):
 			self.panel._onRightClick(evt)
 	#		if flag:
 	#			self.onSwitch(evt)
+
 	def onTakeBack(self,evt):
 		s2 = 'Auto Create Contours'
 		self.polyTargets.pop()
 		savedTargets = self.panel.getTargets(s2)
 		savedTargets.pop()
 		self.panel.setTargets(s2, savedTargets)
+
 	def addSinglePoint(self, evt):
 		if self.panel.selectiontool.isTargeting('Circle'):
 			self.particleType = 'Circle'
@@ -769,10 +808,11 @@ class PickerApp(wx.App):
 		else:
 			self.particleType = 'Blank'
 		self.singleParticleTypeList.append(self.particleType)
+
 	def addPolyParticle(self, targets):#this function adds a tool for every particle that stores the points and handels the painting
 		
 		s = 'Manually Create Contours'
-                s2 = 'Auto Create Contours'
+		s2 = 'Auto Create Contours'
 		s3 = 'Select Particles'
 		if self.panel.selectiontool.isTargeting(s):
 			points = self.panel.selectiontool.getTargets(s2)
@@ -805,7 +845,7 @@ class PickerApp(wx.App):
 			return tuple(clist)
 		vertices = map(reversexy,vertices)
 		
-		maskimg = polygon.filledPolygon(self.panel.imagedata.shape,vertices)
+		maskimg = leginon.polygon.filledPolygon(self.panel.imagedata.shape,vertices)
 		type(maskimg)
 		targets = self.panel.getTargets('Select Particles')
 		eliminated = 0
@@ -883,7 +923,7 @@ class PickerApp(wx.App):
 		self.panel.setTargets('Region to Remove',[])
 		self.tubeTargets = []
 		self.panel.setTargets('Tube', [])
-                self.panel.setTargets('Circle', [])
+		self.panel.setTargets('Circle', [])
 		self.panel.setTargets('TubeMemory', [])
 		self.singleParticleTypeList = []
 		self.particleTypeList = []
@@ -894,6 +934,7 @@ class PickerApp(wx.App):
 		
 	def onClear(self, evt):
 		self._onClear()
+
 	def onRevert(self, evt):
 		self.panel.setTargets('Select Particles', self.panel.originaltargets)
 
@@ -1031,36 +1072,35 @@ class manualPicker(particleLoop2.ParticleLoop):
 		return targets
 
 	def processAndSaveAllImages(self):
-                sys.stderr.write("Pre-processing images before picking\n")
-                #print self.params
-                count = 0
-                total = len(self.imgtree)
+		sys.stderr.write("Pre-processing images before picking\n")
+		#print self.params
+		count = 0
+		total = len(self.imgtree)
 		if not self.params['norandom']==True:
 			random.shuffle(self.imgtree)
-                for imgdata in self.imgtree:
-                        count += 1
-                        imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
-                        if os.path.isfile(imgpath):
-                                sys.stderr.write(".")
-                                #print "already processed: ",apDisplay.short(imgdata['filename'])
-                        else:
-                                if os.path.isfile(imgpath):
-                                        os.remove(imgpath)
-                                sys.stderr.write("#")
-                                apFindEM.processAndSaveImage(imgdata, params=self.params)
+		for imgdata in self.imgtree:
+			count += 1
+			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
+			if os.path.isfile(imgpath):
+				sys.stderr.write(".")
+				#print "already processed: ",apDisplay.short(imgdata['filename'])
+			else:
+				if os.path.isfile(imgpath):
+					os.remove(imgpath)
+				sys.stderr.write("#")
+				apFindEM.processAndSaveImage(imgdata, params=self.params)
 
-                        if count % 60 == 0:
-                                sys.stderr.write(" %d left\n" % (total-count))
+			if count % 60 == 0:
+				sys.stderr.write(" %d left\n" % (total-count))
 		
 	def showAssessedMask(self,imgfile,imgdata):
 		self.filename = imgfile
-		image = pyami.mrc.read(imgfile)
+		image = mrc.read(imgfile)
 		sessiondata = self.params['session']
 		maskassessname = self.params['checkMask']
 		mask,maskbin = apMask.makeInspectedMask(sessiondata,maskassessname,imgdata)
 		overlay = apMask.overlayMask(image,mask)
 		self.app.panel.setImage(overlay.astype(numpy.float32))
-
 	
 	def runManualPicker(self, imgdata):
 		#reset targets
@@ -1069,9 +1109,8 @@ class manualPicker(particleLoop2.ParticleLoop):
 
 		#set the assessment and viewer status
 		self.assessold = apDatabase.checkInspectDB(imgdata)
-                self.assess = self.assessold
-                self.app.setAssessStatus()
-
+		self.assess = self.assessold
+		self.app.setAssessStatus()
 					
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
@@ -1116,36 +1155,37 @@ class manualPicker(particleLoop2.ParticleLoop):
 				singleTargets.append(tubes[index][0])
 				index-=1
 			if i=='Circle':
-                                singleTargets.append(circles.pop())
+				singleTargets.append(circles.pop())
 			if i=='Blank':
-                                singleTargets.append(blanks.pop())
+				singleTargets.append(blanks.pop())
 		counter = len(self.app.tubeTargets)-1
 		c = None
 		print 'length of list : ', str(len(self.app.singleParticleTypeList))
 		print self.app.singleParticleTypeList
 		for i in range(len(singleTargets)):
 			try:
-				c=contourdata.ApContour(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=singleTargets[i].x, y=singleTargets[i].y,version=self.maxVersion+1, method='single', particleType=self.app.singleParticleTypeList[i], runID = self.params['runname'])
+				c=appiondata.ApContour(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=singleTargets[i].x, y=singleTargets[i].y,version=self.maxVersion+1, method='single', particleType=self.app.singleParticleTypeList[i], runID = self.params['runname'])
 			except AttributeError:
-				c=contourdata.ApContour(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=singleTargets[i][0], y=singleTargets[i][1],version=self.maxVersion+1, method='single', particleType=self.app.singleParticleTypeList[i], runID=self.params['runname'])
+				c=appiondata.ApContour(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=singleTargets[i][0], y=singleTargets[i][1],version=self.maxVersion+1, method='single', particleType=self.app.singleParticleTypeList[i], runID=self.params['runname'])
 			c.insert()
 			if self.app.singleParticleTypeList[i]=='Tube':
-	                        for point in self.app.tubeTargets[counter]:
-        	                        point1=contourdata.ApContourPoint(x=point[0], y=point[1], contour=c)
-                	                point1.insert()
+				for point in self.app.tubeTargets[counter]:
+					point1=appiondata.ApContourPoint(x=point[0], y=point[1], contour=c)
+					point1.insert()
 				counter-=1
 		counter = 0
-                for i in range(len(targetsList)):
-                        c=contourdata.ApContour(name="contour"+str(int(self.startPoint)+i+len(singleTargets)), image=imgdata, x=contourTargets[counter].x, y=contourTargets[counter].y,version=self.maxVersion+1, method='auto', particleType=self.app.particleTypeList[counter], runID=self.params['runname'])
+		for i in range(len(targetsList)):
+			c=appiondata.ApContour(name="contour"+str(int(self.startPoint)+i+len(singleTargets)), image=imgdata, x=contourTargets[counter].x, y=contourTargets[counter].y,version=self.maxVersion+1, method='auto', particleType=self.app.particleTypeList[counter], runID=self.params['runname'])
 			c.insert()
 			counter += 1
-                        for point in targetsList[i]:
-                                point1=contourdata.ApContourPoint(x=point[0], y=point[1], contour=c)
-                                point1.insert()
+			for point in targetsList[i]:
+				point1=appiondata.ApContourPoint(x=point[0], y=point[1], contour=c)
+				point1.insert()
 
-                return peaktree
+		return peaktree
+
 	def loadOld(self,imgdata):
-		partq = contourdata.ApContour()
+		partq = appiondata.ApContour()
 		partq['image'] = imgdata
 		partd = partq.query()
 		try: 
@@ -1153,7 +1193,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 			self.startPoint = name.lstrip('contour')
 		except IndexError:
 			self.startPoint = 0		
-		points = contourdata.ApContourPoint()
+		points = appiondata.ApContourPoint()
 		oldPolyPoints = []
 		contourPoints = []
 		types = []
@@ -1180,18 +1220,20 @@ class manualPicker(particleLoop2.ParticleLoop):
 				singleTargets.append((i['x'],i['y']))
 				if i['particleType']=='Tube':
 					contour = i['name']
-                                	points['contour'] = i
-                                	point = points.query()
-                                	contourList = []
-                                	for j in point:
-                                	        contourList.append((j['x'], j['y']))
+					points['contour'] = i
+					point = points.query()
+					contourList = []
+					for j in point:
+						contourList.append((j['x'], j['y']))
 					tubePoints.append(contourList)
 		return self.app.loadOld((contourPoints,oldPolyPoints,types),(singleTargets,singleTypes,tubePoints))
-        def getPolyParticlePoints(self):#get all of the polyparticles into list of points form
-                targetsList = []
-                for particle in self.app.polyTargets:
-                                targetsList.append(particle)
-                return targetsList
+
+	def getPolyParticlePoints(self):#get all of the polyparticles into list of points form
+		targetsList = []
+		for particle in self.app.polyTargets:
+				targetsList.append(particle)
+		return targetsList
+
 	def XY2particle(self, binx, biny):
 		peak={}
 		peak['xcoord'] = binx*self.params['bin']
@@ -1231,10 +1273,10 @@ class manualPicker(particleLoop2.ParticleLoop):
 		if 'templatelist' in params:
 			count =   len(params['templatelist'])
 		else: count = 1
-		bin =     int(params["bin"])
-		diam =    float(params["diam"])
-		apix =    float(params["apix"])
-		binpixrad  = diam/apix/2.0/float(bin)
+		bin = int(params["bin"])
+		diam = float(params["diam"])
+		apix = float(params["apix"])
+		binpixrad = diam/apix/2.0/float(bin)
 		imgname = imgdata['filename']
 	
 		jpegdir = os.path.join(params['rundir'],"jpgs")
