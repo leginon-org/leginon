@@ -412,8 +412,6 @@ class ManualPicker(particleLoop2.ParticleLoop):
 		self.parser.add_option("--mask", dest="checkMask", default=False,
 			action="store_true", help="check mask")
 		self.parser.add_option("--label", dest="labels", action="append", help="Add a label. All labels will be availabe for picking.")
-		self.parser.add_option("--randomorder", dest="randomorder", default=False,
-			action="store_false", help="random processing order")
 
 	##=======================
 	def checkConflicts(self):
@@ -489,8 +487,6 @@ class ManualPicker(particleLoop2.ParticleLoop):
 		#print self.params
 		count = 0
 		total = len(self.imgtree)
-		if self.params['randomorder']==True:
-			random.shuffle(self.imgtree)
 		for imgdata in self.imgtree:
 			count += 1
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
