@@ -221,7 +221,11 @@ MRCHeaderP readMRCHeader( FILE *fp ) {
 	header->amin     	= [self minValue];
 	header->rms    		= [self standardDeviation];
 	header->mach		= time(NULL);
-	header->map			= 0;
+	// "MAP " from ascii to little-endian integer:  
+	//   ord('M')=77, ord('A')=65, ord('P')=80, ord(' ')=32
+	//   reverse order and powers of 256
+	//   32*(256**3) + 80*(256**2) + 65*(256) + 77
+	header->map			= 542130509;
 	header->xorigin		= header->x_length / 2;
 	header->yorigin		= header->y_length / 2;
 	header->zorigin		= header->z_length / 2;
