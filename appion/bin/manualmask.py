@@ -176,7 +176,7 @@ class MaskApp(manualpicker.PickerApp):
 ##################################
 ##################################
 
-class manualPicker(filterLoop.FilterLoop):
+class ManualPicker(filterLoop.FilterLoop):
 	def preLoopFunctions(self):
 		apParam.createDirectory(os.path.join(self.params['rundir'], "masks"),warning=False)
 		if self.params['sessionname'] is not None:
@@ -322,7 +322,7 @@ class manualPicker(filterLoop.FilterLoop):
 
 
 if __name__ == '__main__':
-	imgLoop = manualPicker()
+	imgLoop = ManualPicker()
 	imgLoop.run()
 
 

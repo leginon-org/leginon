@@ -263,7 +263,7 @@ class PickerApp(wx.App):
 ##################################
 ##################################
 
-class manualPicker(particleLoop2.ParticleLoop):
+class ManualPicker(particleLoop2.ParticleLoop):
 	##=======================
 	def preLoopFunctions(self):
 		apParam.createDirectory(os.path.join(self.params['rundir'], "pikfiles"),warning=False)
@@ -500,7 +500,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 		return
 
 if __name__ == '__main__':
-	imgLoop = manualPicker()
+	imgLoop = ManualPicker()
 	imgLoop.run()
 
 
