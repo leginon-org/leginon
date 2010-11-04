@@ -331,13 +331,8 @@ class AppionLoop(appionScript.AppionScript):
 
 	#=====================
 	def _shuffleTree(self, tree):
-		oldtree = tree
-		newtree = []
-		while len(oldtree) > 0:
-			j = int(len(oldtree)*random.random())
-			newtree.append(oldtree[j])
-			del oldtree[j]
-		return newtree
+		random.shuffle(tree)
+		return tree
 
 	#=====================
 	def _writeFunctionLog(self, args):
