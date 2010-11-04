@@ -338,6 +338,13 @@ class PickerApp(wx.App):
 ##################################
 
 class ManualPicker(particleLoop2.ParticleLoop):
+	def setApp(self):
+		self.app = PickerApp(
+			shape = self.canonicalShape(self.params['shape']),
+			size =  self.params['shapesize'],
+			labels = self.labels,
+		)
+
 	##=======================
 	def preLoopFunctions(self):
 		apParam.createDirectory(os.path.join(self.params['rundir'], "pikfiles"),warning=False)
@@ -355,11 +362,7 @@ class ManualPicker(particleLoop2.ParticleLoop):
 		if not (self.params['pickrunid'] or self.labels):
 			self.labels = ['particle_w/o_label']
 
-		self.app = PickerApp(
-			shape = self.canonicalShape(self.params['shape']),
-			size =  self.params['shapesize'],
-			labels = self.labels,
-		)
+		self.setApp()
 		self.app.appionloop = self
 		self.threadJpeg = True
 

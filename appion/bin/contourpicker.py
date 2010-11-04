@@ -18,6 +18,7 @@ import threading
 from pyami import arraystats
 
 #import subprocess
+import manualpicker
 from appionlib import particleLoop2
 from appionlib import apFindEM
 from appionlib import appiondata
@@ -34,7 +35,19 @@ import leginon.polygon
 from leginon.gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools, SelectionTool
 from leginon import leginondata
 
-class ManualPickerPanel(TargetPanel.TargetImagePanel):
+## need better way to generate a list of easy to distinguish colors
+pick_colors = [
+	(255,0,0),
+	(0,255,0),
+	(0,0,255),
+	(255,255,0),
+	(255,0,255),
+	(0,255,255),
+	(128,128,0),
+	(255,128,128),
+]
+
+class ContourPickerPanel(TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True):
 		TargetPanel.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
 
@@ -52,13 +65,13 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 		self.sizer.Layout()
 
 	def addTarget(self, name, x, y):
-		super(ManualPickerPanel,self).addTarget(name,x,y)
+		super(ContourPickerPanel,self).addTarget(name,x,y)
 		if name == self.picker.s:
 			self.picker.addManualPoint()
 
 	def deleteTarget(self, target):
 		self.picker.deleteTarget(target)
-		super(ManualPickerPanel,self).deleteTarget(target)
+		super(ContourPickerPanel,self).deleteTarget(target)
 
 	def setPickerApp(self,app):
 		self.picker = app
@@ -94,12 +107,12 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 			self.picker.tubeTargets.append(targets)
 			self.selectiontool.setTargets('Tube',[])
 		self.picker.onMoved(evt)
-		super(ManualPickerPanel,self)._onMotion(evt,dc)
+		super(ContourPickerPanel,self)._onMotion(evt,dc)
 
 	def _onRightClick(self, evt):
 		if self.selectedtarget is not None :
 			self.deleteTarget(self.selectedtarget)
-		super(ManualPickerPanel,self)._onRightClick(evt)
+		super(ContourPickerPanel,self)._onRightClick(evt)
 
 	def _onLeftClick(self, evt):
 		if self.selectedtype is not None:
@@ -114,7 +127,7 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 
 	def Draw(self, dc):
 	#	now = time.time()
-		super(ManualPickerPanel,self).Draw(dc)
+		super(ContourPickerPanel,self).Draw(dc)
 		self.picker.doGraphics()
 	#	print 'Drawn', time.time() - now
 
@@ -408,10 +421,12 @@ class PixelCurveMaker:
 		return maxRadius
 
 class PickerApp(wx.App):
-	def __init__(self, shape='+', size=100, mask=False):
+	def __init__(self, shape='+', size=16, mask=False, labels=[]):
 		self.shape = shape
 		self.size = size
 		self.mask = mask
+		self.labels = labels
+		self.pick_colors = iter(pick_colors)
 		wx.App.__init__(self)
 		self.filters = False
 		self.index = 0
@@ -430,7 +445,7 @@ class PickerApp(wx.App):
 		self.sizer.Add(self.vitalstats, 1, wx.EXPAND|wx.ALL, 3)
 
 		### BEGIN IMAGE PANEL
-		self.panel = ManualPickerPanel(self.frame, -1)
+		self.panel = ContourPickerPanel(self.frame, -1)
 
 		self.panel.addTargetTool('Select Particles', color=wx.Color(220,20,20), 
 			target=True, shape=self.shape, size=self.size)
@@ -947,86 +962,11 @@ class PickerApp(wx.App):
 ##################################
 ##################################
 
-class manualPicker(particleLoop2.ParticleLoop):
-	def preLoopFunctions(self):
-		apParam.createDirectory(os.path.join(self.params['rundir'], "pikfiles"),warning=False)
-		if self.params['sessionname'] is not None:
-			self.processAndSaveAllImages()
-
-		self.app = PickerApp(
-			shape = self.canonicalShape(self.params['shape']), 
-			size =  self.params['shapesize'], )
-		self.app.appionloop = self
-		self.threadJpeg = True
-
-	def postLoopFunctions(self):
-		self.app.frame.Destroy()
-		apDisplay.printMsg("Finishing up")
-		time.sleep(20)
-		apDisplay.printMsg("finished")
-		wx.Exit()
-
-	##=======================
-	def processImage(self, imgdata, filtarray):
-		print 'AAAAAAAA'
-		filtfile = os.path.join(self.params['rundir'], imgdata['filename']+".dwn.mrc")
-		if not os.path.isfile(filtfile):
-			apImage.arrayToMrc(filtarray, filtfile, msg=False)
-		peaktree = self.runManualPicker(imgdata)
-		return peaktree
-
-	def particleProcessImage(self, imgdata):
-		self.loadOld(imgdata)
-		if not self.params['dbimages'] and not self.params['alldbimages']:
-			apFindEM.processAndSaveImage(imgdata, params=self.params)
-		peaktree = self.runManualPicker(imgdata)
-		#peaktree = self.runManualPickerOld(imgdata)
-		return peaktree
-		
-	def getParticleParamsData(self):
-		manparamsq=appionData.ApManualParamsData()
-		if self.params['pickrunid'] is not None:
-			manparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
-		return manparamsq
-
-	def particleCommitToDatabase(self, imgdata):
-		if self.assess != self.assessold and self.assess is not None:
-			#imageaccessor run is always named run1
-			apDatabase.insertImgAssessmentStatus(imgdata, 'run1', self.assess)
-		return
-
-	def particleDefaultParams(self):
-		self.params['mapdir']="manualmaps"
-		self.params['pickrunname'] = None
-		self.params['pickrunid'] = None
-		self.params['shape'] = '+'
-		self.params['shapesize'] = 100
-
-	def particleCreateOutputDirs(self):
-		self._createDirectory(os.path.join(self.params['rundir'], "pikfiles"),warning=False)
-
-	def setupParserOptions(self):
-		### Input value options
-		self.outtypes = ['text','xml','spider','pickle']
-		self.parser.add_option("--outtype", dest="outtype", default="spider",
-			help="file output type: "+str(self.outtypes), metavar="TYPE")
-		self.parser.add_option("--pickrunid", dest="pickrunid", type="int",
-			help="selection run id for previous automated picking run", metavar="#")
-		self.parser.add_option("--pickrunname", dest="pickrunname", type="str",
-			help="previous selection run name, e.g. --pickrunname=dogrun1", metavar="NAME")
-		self.parser.add_option("--shape", dest="shape", default='+',
-			help="pick shape")	
-		self.parser.add_option("--shapesize", dest="shapesize", type="int", default=16,
-			help="shape size")
-		self.parser.add_option("--mask", dest="checkMask", default=False,
-			action="store_true", help="check mask")
-		self.parser.add_option("--norandom", dest="norandom", default=False,
-			action="store_false", help="no random")
-
+class ContourPicker(manualpicker.ManualPicker):
 	def checkConflicts(self):
-		"""
-		put in any additional conflicting parameters
-		"""
+		if self.params['shuffle'] != True:
+			apDisplay.printWarning("Shuffle is always set to True for contourpicker")
+			self.params['shuffle'] = True
 		for i,v in enumerate(self.outtypes):
 			if self.params['outtype'] == v:
 				self.params['outtypeindex'] = i
@@ -1034,79 +974,17 @@ class manualPicker(particleLoop2.ParticleLoop):
 			apDisplay.printError("outtype must be one of: "+str(self.outtypes)+"; NOT "+str(self.params['outtype']))
 		return
 
-	###################################################
-	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
-	###################################################
-	def canonicalShape(self, shape):
-		if shape == '.'    or shape == 'point':
-			return '.'
-		elif shape == '+'  or shape == 'plus':
-			return '+'
-		elif shape == '[]' or shape == 'square' or shape == 'box':
-			return '[]'
-		elif shape == '<>' or shape == 'diamond':
-			return '<>'
-		elif shape == 'x'  or shape == 'cross':
-			return 'x'
-		elif shape == '*'  or shape == 'star':
-			return '*'
-		elif shape == 'o'  or shape == 'circle':
-			return 'o'
-		else:
-			apDisplay.printError("Unknown pointer shape: "+shape)
+	def setApp(self):
+		self.app = PickerApp(
+			shape = self.canonicalShape(self.params['shape']),
+			size =  self.params['shapesize'],
+			labels = self.labels,
+		)
 
-	def getParticlePicks(self, imgdata):
-		if not self.params['pickrunid']:
-			if not self.params['pickrunname']:
-				return []
-			self.params['pickrunid'] = apParticle.getSelectionRun(imgdata, self.params['pickrunname'])
-			#particles = apParticle.getParticlesForImageFromRunName(imgdata, self.params['pickrunname'])
-		particles = apParticle.getParticles(imgdata, self.params['pickrunid'])
-		targets = self.particlesToTargets(particles)
-		return targets
-
-	def particlesToTargets(self, particles):
-		targets = []
-		for p in particles:
-			targets.append( (p['xcoord']/self.params['bin'], p['ycoord']/self.params['bin']) )
-		return targets
-
-	def processAndSaveAllImages(self):
-		sys.stderr.write("Pre-processing images before picking\n")
-		#print self.params
-		count = 0
-		total = len(self.imgtree)
-		if not self.params['norandom']==True:
-			random.shuffle(self.imgtree)
-		for imgdata in self.imgtree:
-			count += 1
-			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
-			if os.path.isfile(imgpath):
-				sys.stderr.write(".")
-				#print "already processed: ",apDisplay.short(imgdata['filename'])
-			else:
-				if os.path.isfile(imgpath):
-					os.remove(imgpath)
-				sys.stderr.write("#")
-				apFindEM.processAndSaveImage(imgdata, params=self.params)
-
-			if count % 60 == 0:
-				sys.stderr.write(" %d left\n" % (total-count))
-		
-	def showAssessedMask(self,imgfile,imgdata):
-		self.filename = imgfile
-		image = mrc.read(imgfile)
-		sessiondata = self.params['session']
-		maskassessname = self.params['checkMask']
-		mask,maskbin = apMask.makeInspectedMask(sessiondata,maskassessname,imgdata)
-		overlay = apMask.overlayMask(image,mask)
-		self.app.panel.setImage(overlay.astype(numpy.float32))
-	
 	def runManualPicker(self, imgdata):
 		#reset targets
 		self.app.panel.setTargets('Select Particles', [])
 		self.targets = []
-
 		#set the assessment and viewer status
 		self.assessold = apDatabase.checkInspectDB(imgdata)
 		self.assess = self.assessold
@@ -1234,98 +1112,8 @@ class manualPicker(particleLoop2.ParticleLoop):
 				targetsList.append(particle)
 		return targetsList
 
-	def XY2particle(self, binx, biny):
-		peak={}
-		peak['xcoord'] = binx*self.params['bin']
-		peak['ycoord'] = biny*self.params['bin']
-		peak['correlation'] = None
-		peak['peakmoment'] = None
-		peak['peakstddev'] = None
-		peak['peakarea'] = 1
-		peak['tmplnum'] = None
-		peak['template'] = None
-		return peak
-
-	def deleteOldPicks(self, imgdata):
-		particles=apParticle.getParticlesForImageFromRunName(imgdata, self.params['runname'])
-		count=0
-		if particles:
-			print "Deleting old picks"
-			for particle in particles:
-				#print particle
-				count+=1
-				#print count,
-				particle.remove()
-		return
-	'''
-	def subCreatePeakJpeg(self,imgarray, peaktree, pixrad, imgfile, bin=1, msg=True):
-		image = apImage.arrayToImage(imgarray)
-		image = image.convert("RGB")
-		image2 = image.copy()
-		draw = ImageDraw.Draw(image2)
-		if len(peaktree) > 0:
-			drawPeaks(peaktree, draw, bin, pixrad)
-		if msg is True:
-			apDisplay.printMsg("writing peak JPEG: "+imgfile)
-		image = Image.blend(image, image2, 0.9) 
-		image.save(imgfile, "JPEG", quality=95)
-	def createPeakJpeg(self,imgdata, peaktree, params, procimgarray=None):
-		if 'templatelist' in params:
-			count =   len(params['templatelist'])
-		else: count = 1
-		bin = int(params["bin"])
-		diam = float(params["diam"])
-		apix = float(params["apix"])
-		binpixrad = diam/apix/2.0/float(bin)
-		imgname = imgdata['filename']
-	
-		jpegdir = os.path.join(params['rundir'],"jpgs")
-		apParam.createDirectory(jpegdir, warning=False)
-	
-		if params['uncorrected']:
-			imgarray = apImage.correctImage(imgdata, params)
-		else:
-			imgarray = imgdata['image']
-	
-		if procimgarray is not None:
-			#instead of re-processing image use one that is already processed...
-			imgarray = procimgarray
-		else:
-			imgarray = apImage.preProcessImage(imgarray, bin=bin, planeReg=False, params=params)
-	
-		outfile = os.path.join(jpegdir, imgname+".prtl.jpg")
-		msg = not params['background']
-		subCreatePeakJpeg(imgarray, peaktree, binpixrad, outfile, bin, msg)
-	
-		return
-	def processImage(self, imgdata):
-		print 'HEREHEREHERE!!!!!!!!!!!'
-		#creates self.peaktree
-		self.procimgarray = None
-		self.peaktree = self.particleProcessImage(imgdata)
-		if self.params['background'] is False:
-			apDisplay.printMsg("Found "+str(len(self.peaktree))+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
-		self.stats['lastpeaks'] = len(self.peaktree)
-
-		#instead of re-processing image use one that is already processed...
-		procimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
-		if self.procimgarray is None and os.path.isfile(procimgpath):
-			apDisplay.printMsg("re-processing mrc")
-			self.procimgarray = apImage.mrcToArray(procimgpath, msg=False)
-
-		if self.params['nojpegs'] is False:
-			if self.threadJpeg is True:
-				threading.Thread(target=self.createPeakJpeg, args=(imgdata, self.peaktree, self.params, self.procimgarray)).start()
-			else:
-				apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params, self.procimgarray)
-		elif self.params['background'] is False:
-			apDisplay.printWarning("Skipping JPEG creation")
-		if self.params['defocpair'] is True:
-			self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
-	'''
-
 if __name__ == '__main__':
-	imgLoop = manualPicker()
+	imgLoop = ContourPicker()
 	imgLoop.run()
 
 
