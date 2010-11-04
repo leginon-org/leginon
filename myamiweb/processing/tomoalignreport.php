@@ -47,7 +47,8 @@ $runinfo = $particle->getTomoAlignmentInfo($alignId);
 $rundir = $runinfo['path'];
 if (!$runinfo['protomoid']) {
 	$aligners = $particle->getTomoAlignersFromAlignmentRun($alignId,False);
-	echo "<a href='protomoreport.php?expId=".$expId."&aId=".$aligners[0]['alignerid']."'><b>[Redirect to Aligner Report]</b></a>";
+	$alignerid = (empty($aligners)) ? $alignId : $alignId;
+	echo "<a href='protomoreport.php?expId=".$expId."&aId=".$alignerid."'><b>[Redirect to Aligner Report]</b></a>";
 } else {
 	$allcycles = $particle->getTomoAlignerInfoFromAlignmentRun($alignId,False);
 	if ($_POST && $allcycles) {
