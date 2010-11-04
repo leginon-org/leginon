@@ -24,6 +24,8 @@ class AutoExposure(acquisition.Acquisition):
 		'process target type': 'meter',
 		'mean intensity': 50000,
 		'mean intensity tolerance': 5.0,
+		'maximum exposure time': 2000,
+		'maximum attempts': 8,
 	})
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -31,12 +33,26 @@ class AutoExposure(acquisition.Acquisition):
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
+		self.aetarget = None
+		self.original_exptime = None
+		self.ae_attempt = None
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
 		this replaces Acquisition.acquire()
 		'''
-		status = acquisition.Acquisition.acquire(self, presetdata, emtarget)
+
+		# If first attempt at metering on this target, record original exposure
+		# time.  Use target list and number as the "key" to the target.
+		targetkey = (target['list'], target['number'])
+		if targetkey != self.aetarget:
+			self.aetarget = targetkey
+			self.original_exptime = presetdata['exposure time']
+			self.ae_attempt = 1
+		else:
+			self.ae_attempt += 1
+
+		status = acquisition.Acquisition.acquire(self, presetdata, emtarget, attempt=attempt, target=target)
 
 		## check settings for what we want intensity to be
 		mean_target = self.settings['mean intensity'] 
@@ -52,19 +68,41 @@ class AutoExposure(acquisition.Acquisition):
 		self.logger.info('Error relative to target: %.1f%%' % (percent_error,))
 
 		if percent_error > tolerance:
-			self.adjustExposureTime(self.imagedata, scale)
-			return 'repeat'
+			status = self.adjustExposureTime(self.imagedata, scale)
 		else:
-			return 'ok'
+			status = 'ok'
+
+		return status
 
 	def adjustExposureTime(self, imagedata, scale):
-		self.imagedata['preset']
-		old_exposure_time = imagedata['preset']['exposure time']
-		presetname = imagedata['preset']['name']
+		preset = self.imagedata['preset']
+		old_exposure_time = preset['exposure time']
 		new_exposure_time = old_exposure_time * scale
-		params = {'exposure time': new_exposure_time}
-		self.logger.info('Adjusting exposure time from %.1f ms to %.1f ms' % (old_exposure_time, new_exposure_time))
-		self.presetsclient.updatePreset(presetname, params)
+		max_exposure_time = self.settings['maximum exposure time']
+		max_attempts = self.settings['maximum attempts']
+		if self.ae_attempt > max_attempts:
+			self.logger.error('Exceded maximum %s attempts' % (max_attempts,))
+			new_exposure_time = self.original_exptime
+			# not really ok, but we don't want to repeat or abort
+			status = 'ok'
+		elif new_exposure_time > max_exposure_time:
+			self.logger.error('New exposure time (%s) excedes maximum (%s)' % (new_exposure_time, max_exposure_time))
+			new_exposure_time = self.original_exptime
+			# not really ok, but we don't want to repeat or abort
+			status = 'ok'
+		else:
+			# adjustment will be made, so need to repeat
+			status = 'repeat'
+
+		if new_exposure_time == old_exposure_time:
+			self.logger.info('Not adjusting exposure time.')
+		else:
+			self.logger.info('Adjusting exposure time from %.1f ms to %.1f ms' % (old_exposure_time, new_exposure_time))
+			presetname = preset['name']
+			params = {'exposure time': new_exposure_time}
+			self.presetsclient.updatePreset(presetname, params)
+
+		return status
 
 	def alreadyAcquired(self, targetdata, presetname):
 		## for now, always do acquire

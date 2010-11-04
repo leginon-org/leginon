@@ -1662,6 +1662,8 @@ class AutoExposureSettingsData(AcquisitionSettingsData):
 		return AcquisitionSettingsData.typemap() + (
 			('mean intensity', float),
 			('mean intensity tolerance', float),
+			('maximum exposure time', float),
+			('maximum attempts', int),
 		)
 	typemap = classmethod(typemap)
 

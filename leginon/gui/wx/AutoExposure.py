@@ -3,7 +3,7 @@
 import wx
 import leginon.gui.wx.TargetPanel
 import leginon.gui.wx.Acquisition
-from leginon.gui.wx.Entry import FloatEntry
+from leginon.gui.wx.Entry import FloatEntry, IntEntry
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
@@ -30,6 +30,22 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 		sz.Add(label1)
 		sz.Add(self.widgets['mean intensity tolerance'])
 		sz.Add(label2)
+		sbsz.Add(sz)
+
+		sz = wx.BoxSizer(wx.HORIZONTAL)
+		label1 = wx.StaticText(self, label='Maximum Exposure Time: ')
+		self.widgets['maximum exposure time'] = FloatEntry(self, -1)
+		label2 = wx.StaticText(self, label='ms')
+		sz.Add(label1)
+		sz.Add(self.widgets['maximum exposure time'])
+		sz.Add(label2)
+		sbsz.Add(sz)
+
+		sz = wx.BoxSizer(wx.HORIZONTAL)
+		label1 = wx.StaticText(self, label='Maximum Attempts: ')
+		self.widgets['maximum attempts'] = IntEntry(self, -1)
+		sz.Add(label1)
+		sz.Add(self.widgets['maximum attempts'])
 		sbsz.Add(sz)
 
 		return sizers + [sbsz]
