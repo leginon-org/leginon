@@ -337,7 +337,7 @@ class PickerApp(wx.App):
 ##################################
 ##################################
 
-class manualPicker(particleLoop2.ParticleLoop):
+class ManualPicker(particleLoop2.ParticleLoop):
 	##=======================
 	def preLoopFunctions(self):
 		apParam.createDirectory(os.path.join(self.params['rundir'], "pikfiles"),warning=False)
@@ -412,6 +412,8 @@ class manualPicker(particleLoop2.ParticleLoop):
 		self.parser.add_option("--mask", dest="checkMask", default=False,
 			action="store_true", help="check mask")
 		self.parser.add_option("--label", dest="labels", action="append", help="Add a label. All labels will be availabe for picking.")
+		self.parser.add_option("--randomorder", dest="randomorder", default=False,
+			action="store_false", help="random processing order")
 
 	##=======================
 	def checkConflicts(self):
@@ -487,6 +489,8 @@ class manualPicker(particleLoop2.ParticleLoop):
 		#print self.params
 		count = 0
 		total = len(self.imgtree)
+		if self.params['randomorder']==True:
+			random.shuffle(self.imgtree)
 		for imgdata in self.imgtree:
 			count += 1
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
@@ -564,25 +568,6 @@ class manualPicker(particleLoop2.ParticleLoop):
 				peaktree.append(self.XY2particle(target.x, target.y, label))
 		return peaktree
 
-	def runManualPickerOld(self, imgdata):
-		#use ImageViewer to pick particles
-		#this is a total hack but an idea that can be expanded on
-		imgname = imgdata['filename']+'.dwn.mrc'
-		imgpath = os.path.join(self.params['rundir'],imgname)
-		commandlst = ['ApImageViewer.py',imgpath]
-		manpicker = subprocess.Popen(commandlst,stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-		outstring = manpicker.stdout.read()
-		words = outstring.split()
-		peaktree=[]
-		#print outstring
-		#print words
-		for xy in range(0,len(words)/2):
-			binx = int(words[2*xy])
-			biny = int(words[2*xy+1])
-			peaktree.append(self.XY2particle(binx, biny))
-		#print peaktree
-		return peaktree
-
 	def XY2particle(self, binx, biny, label=None):
 		peak={}
 		peak['xcoord'] = binx*self.params['bin']
@@ -597,21 +582,8 @@ class manualPicker(particleLoop2.ParticleLoop):
 			peak['label'] = label
 		return peak
 
-	def deleteOldPicks(self, imgdata):
-		apDisplay.printError("This is a dead function")
-		particles=apParticle.getParticlesForImageFromRunName(imgdata, self.params['runname'])
-		count=0
-		if particles:
-			print "Deleting old picks"
-			for particle in particles:
-				#print particle
-				count+=1
-				#print count,
-				particle.remove()
-		return
-
 if __name__ == '__main__':
-	imgLoop = manualPicker()
+	imgLoop = ManualPicker()
 	imgLoop.run()
 
 
