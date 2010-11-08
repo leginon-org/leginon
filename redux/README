@@ -1,5 +1,14 @@
+INSTALL:
+	python setup.py install
 
-redux
+TRY IT:
+	You can either run client as a stand-alone script that will do all the
+processing, or start a server and client will ask server to do processing.
+In either case, the client will output the result to stand
+	network client/server test:
+		start the server with command:  reduxd
+		
+
 
 The idea is to have a server that will read raw MRC files and feed them
 to clients who are requesting various operations be done on them:

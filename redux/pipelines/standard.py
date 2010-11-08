@@ -1,6 +1,6 @@
 import redux.pipeline
 
-from redux.pipes import Read, Power, Mask, Shape, Scale, Format
+from redux.pipes import Read, Power, Mask, Shape, Scale, Format, LPF, Sqrt
 
 class StandardPipeline(redux.pipeline.Pipeline):
 	pipeorder = [
@@ -8,6 +8,8 @@ class StandardPipeline(redux.pipeline.Pipeline):
 		Power,
 		Mask,
 		Shape,
+		Sqrt,
+		LPF,
 		Scale,
 		Format,
 	]
