@@ -290,7 +290,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		aligntime = time.time()
 		proc = subprocess.Popen('chmod 775 '+filename, shell=True)
 		proc.wait()
-		apIMAGIC.executeImagicBatchFile(filename)
+		apParam.runCmd(filename, package="IMAGIC")
 		logfile = open(os.path.join(self.params['rundir'], "imagicMultivariateStatisticalAnalysis.log"))
 		apIMAGIC.checkLogFileForErrors(os.path.join(self.params['rundir'], "imagicMultivariateStatisticalAnalysis.log"))
 		if not os.path.isfile(os.path.join(self.params['rundir'], "eigenimages.hed")):
