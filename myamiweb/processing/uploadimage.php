@@ -317,7 +317,6 @@ function runUploadImage() {
 	$cam = $_POST['cam'];
 	$uploadtype = $_POST['uploadtype'];
 	$tiltlist = $_POST['tiltlist'];
-
 	$outdir = $_POST['outdir'];
 
 	// determine which upload script to use
@@ -458,6 +457,8 @@ function runUploadImage() {
 		}
 		// add batch file to command
 		$command.="--batchparams=$batch ";
+		if ($imagegroup >= 2)
+			$command.="--tiltgroup=$imagegroup ";
 	}
 	else {
 		$badbatch = false;
