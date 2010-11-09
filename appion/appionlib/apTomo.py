@@ -116,11 +116,15 @@ def orderImageList(imagelist):
 	mrc_files = []
 	imagepath = imagelist[0]['session']['image path']
 	tiltseries = imagelist[0]['tilt series']
+	start_tilt = tiltseries['tilt start']
+	if start_tilt is None:
+		start_tilt = math.degrees(imagelist[0]['scope']['stage position']['a'])
 	tiltangledict = {}
 	reftilts = []
 	for i,imagedata in enumerate(imagelist):
 		tilt = imagedata['scope']['stage position']['a']*180/3.14159
-		if tilt < tiltseries['tilt start']+0.02 and tilt > tiltseries['tilt start']-0.02:
+		
+		if tilt < start_tilt+0.02 and tilt > start_tilt-0.02:
 			qimage = leginon.leginondata.AcquisitionImageData()
 			nextimagedata = imagelist[i+1]
 			nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
@@ -279,7 +283,8 @@ def getPredictionPeakForImage(imagedata):
 	if len(results) > 0:
 		peak = results[0]['correlation']
 	else:
-		raise ValueError
+		# Fix me: Should create real peak not assume zero when there is no prediction result, i.e., the images are from an uploaded series
+		peak = {'x':0.0,'y':0.0}
 	# x (row) shift on image coordinate is of opposite sign
 	peak['x'] = - peak['x']
 	return peak
