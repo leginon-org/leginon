@@ -216,18 +216,26 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		if self.params['nproc'] > 1:
 			f.write(str(self.imagicroot)+"/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
 				" -x IMAGIC_BATCH "+str(self.imagicroot)+"/align/mralign.e_mpi <<EOF")
-			if append_log is True:
-				f.write(" >> multiReferenceAlignment.log\n")
-			else:
-				f.write(" > multiReferenceAlignment.log\n")
+			### there is a bug in IMAGIC that makes the logfile tremendously big
+#			if append_log is True:
+#				f.write(" >> multiReferenceAlignment.log\n")
+#			else:
+#				f.write(" > multiReferenceAlignment.log\n")
+
+			f.write("\n")
+
 			f.write("YES\n")
 			f.write(str(self.params['nproc'])+"\n")
 		else:
 			f.write(str(self.imagicroot)+"/align/mralign.e <<EOF")
-			if append_log is True:
-				f.write(" >> multiReferenceAlignment.log\n")
-			else:
-				f.write(" > multiReferenceAlignment.log\n")
+			### there is a bug in IMAGIC that makes the logfile tremendously big
+#			if append_log is True:
+#				f.write(" >> multiReferenceAlignment.log\n")
+#			else:
+#				f.write(" > multiReferenceAlignment.log\n")
+
+			f.write("\n")
+
 			f.write("NO\n")
 			
 		f.write("FRESH\n")
@@ -559,14 +567,11 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		### scale, low-pass, and high-pass filter stack ... do this with imagic, because it determines the appropriate boxsizes
 		scalingbatchfile = self.createImagicBatchFileScaling()
 		preptime = time.time()
-		subprocess.Popen("chmod 775 "+str(scalingbatchfile), shell=True)
+		proc = subprocess.Popen("chmod 775 "+str(scalingbatchfile), shell=True)
+		proc.wait()
 		os.chdir(self.params['rundir'])
 		apParam.runCmd(scalingbatchfile, "IMAGIC")
-		logfile = open(os.path.join(self.params['rundir'], "prepareStack.log"))
-		loglines = logfile.readlines()
-		for line in loglines:
-			if re.search("ERROR in program", line):
-				apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: prepareStack.log")
+		apIMAGIC.checkLogFileForErrors(os.path.join(self.params['rundir'], "prepareStack.log"))
                	apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-preptime), "cyan")
 
 		### set new boxsize, done only after scaling is complete
@@ -594,11 +599,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		proc.wait()
 		os.chdir(self.params['rundir'])
 		apParam.runCmd(batchfile, "IMAGIC")
-		logfile = open(os.path.join(self.params['rundir'], "multiReferenceAlignment.log"))
-		loglines = logfile.readlines()
-		for line in loglines:
-			if re.search("ERROR in program", line):
-				apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: multiReferenceAlignment.log")
+		apIMAGIC.checkLogFileForErrors(os.path.join(self.params['rundir'], "multiReferenceAlignment.log"))
                	apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-aligntime0), "cyan")
 
 		### get particle parameters (shift, rotate, refnum, mirror, ccc)
