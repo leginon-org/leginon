@@ -135,6 +135,12 @@ class Navigator(node.Node):
 			check=True
 		else:
 			check=False
+
+		## initial change to parent preset,
+		## otherwise presets manager may never know what happened
+		self.logger.info('change to parent preset: %s' % (preset['name'],))
+		self.presetsclient.toScope(preset['name'])
+
 		self.startTimer('move')
 		# Force cycle_after to True because PresetsManager does not know that preset
 		# has been changed by Navigator and will not cycle on the first target.  
