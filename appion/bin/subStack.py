@@ -21,6 +21,8 @@ class subStackScript(appionScript.AppionScript):
 		self.parser.add_option("-k", "--keep-file", dest="keepfile",
 			help="File listing which particles to keep, EMAN style 0,1,...", metavar="FILE")
 
+		self.parser.add_option("--exclude-from", dest="excludefile", default=False,
+			help="converts a keepfile into an exclude file", action="store_true")
 		self.parser.add_option("--first", dest="first", type="int",
 			help="First Particle to include")
 		self.parser.add_option("--last", dest="last", type="int",
@@ -94,6 +96,9 @@ class subStackScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
+		#old stack size
+		stacksize = apStack.getNumberStackParticlesFromId(self.params['stackid'])
+
 		# if exclude or include lists are not defined...
 		if self.params['exclude'] is None and self.params['include'] is None:
 			# if first and last are specified, create a file
@@ -125,16 +130,38 @@ class subStackScript(appionScript.AppionScript):
 				
 			# if splitting, create files containing the split values
 			elif self.params['split'] > 1:
-				num = apStack.getNumberStackParticlesFromId(self.params['stackid'])
 				for i in range(self.params['split']):
 					fname = 'sub'+str(self.params['stackid'])+'.'+str(i+1)+'.lst'
 					self.params['keepfile'] = os.path.join(self.params['rundir'],fname)
 					apDisplay.printMsg("Creating keep list: "+self.params['keepfile'])
 					f = open(self.params['keepfile'],'w')
-					for p in range(num):
+					for p in range(stacksize):
 						if (p % self.params['split'])-i==0:
 							f.write('%i\n' % p)
 					f.close()
+
+			# if exclude-from option is specified, convert particles to exclude
+			elif self.params['excludefile'] is True:
+				oldkf = open(self.params['keepfile'])
+				partlist = []
+				for line in oldkf:
+					particle=line.strip()
+					try:
+						particle = int(particle)
+					except:
+						continue
+					partlist.append(particle)
+				oldkf.close()
+				# create new list excluding the particles
+				apDisplay.printMsg("Converting keep file to exclude file")
+				newkeepfile = "tmpnewkeepfile.txt"
+				newkf = open(newkeepfile,'w')
+				for p in range(stacksize):
+					if p not in partlist:
+						newkf.write("%i\n"%p)
+				newkf.close()
+				self.params['keepfile'] = os.path.abspath(newkeepfile)
+
 			# otherwise, just copy the file
 			elif not os.path.isfile(os.path.basename(self.params['keepfile'])):
 				shutil.copy(self.params['keepfile'], os.path.basename(self.params['keepfile']))
@@ -168,9 +195,6 @@ class subStackScript(appionScript.AppionScript):
 		#if include or exclude list is given...			
 		if self.params['include'] is not None or self.params['exclude'] is not None:
 		
-			#old stack size
-			stacksize = apStack.getNumberStackParticlesFromId(self.params['stackid'])
-
 			includeParticle = []
 			excludeParticle = 0
 
