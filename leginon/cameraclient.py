@@ -35,13 +35,28 @@ class CameraClient(object):
 
 	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False):
 		'''Acquire a raw image from the currently configured CCD camera'''
+
+		## Retract the cameras that are above this one.
+		## We currently have no way to know the vertical order of the
+		## cameras, so just retract all others for now.
+		for name,cam in self.instrument.ccdcameras.items():
+			if cam is not self.instrument.ccdcamera:
+				try:
+					if cam.Inserted:
+						cam.Inserted = False
+						self.logger.info('retracted camera: %s' % (name,))
+				except:
+					pass
+
+		## insert the current camera, unless allow_retracted
 		if not allow_retracted:
 			try:
 				inserted = self.instrument.ccdcamera.Inserted
 			except:
 				inserted = True
 			if not inserted:
-				self.logger.info('inserting camera')
+				camname = self.instrument.getCCDCameraName()
+				self.logger.info('inserting camera: %s' % (camname,))
 				self.instrument.ccdcamera.Inserted = True
 
 		imagedata = leginondata.CameraImageData()
