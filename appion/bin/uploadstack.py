@@ -142,13 +142,13 @@ class UploadStack(appionScript.AppionScript):
 
 		### set final parameters
 		boxsize = apFile.getBoxSize(newstack)
-		print "Boxsize: ",boxsize
+		apDisplay.printMsg("Boxsize: %i"%boxsize[0])
 		if not boxsize or boxsize <= 0:
 			apDisplay.printError("Could not determine stack size")
 		else:
 			self.boxsize = boxsize[0]
 		self.numpart = apFile.numImagesInStack(newstack)
-		print "Num part: ",self.numpart
+		apDisplay.printMsg("Num part: %i"%self.numpart)
 		if not self.numpart or self.numpart <= 0:
 			apDisplay.printError("Could not determine number of particles")
 		if self.numpart <= 4:
