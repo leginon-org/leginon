@@ -55,6 +55,7 @@ def execSignature(feed):
 	logf = open("signature.log", "a")
 
 	sigcmd=signatureexe+feed
+	apDisplay.printColor(sigcmd,"cyan")
 	proc = subprocess.Popen(sigcmd, shell=True, stdout=logf, stderr=logf)
 	waittime = 2.0
 	while proc.poll() is None:
