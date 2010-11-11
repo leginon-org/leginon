@@ -372,6 +372,7 @@ class DE12(ccdcamera.CCDCamera):
 		else:
 			de12value = 'Retracted'
 		self.setProperty("Camera Position", de12value)
+		time.sleep(5)
 		
 	def getInserted(self):
 		de12value = self.getProperty('Camera Position')
