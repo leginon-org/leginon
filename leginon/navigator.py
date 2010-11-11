@@ -222,6 +222,11 @@ class Navigator(node.Node):
 			self.panel.navigateDone()
 			return True
 
+		scopeshift = {'movetype': movetype, 'x':None, 'y':None}
+		for axis in ('x','y'):
+			scopeshift[axis] = newstate[movetype][axis] - scope[movetype][axis]
+		self.logger.info('change in %(movetype)s: %(x).4e, %(y).4e' % scopeshift)
+		
 		self.oldstate = self.newstate
 		self.newstate = newstate
 		emdat = leginondata.NavigatorScopeEMData()
