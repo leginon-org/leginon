@@ -66,7 +66,19 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	$autorunname = ($alignruns) ? 'align'.($alignruns+1):'align1';
 	$runname = ($_POST['lasttiltseries']==$tiltseriesId) ? $_POST['runname']:$autorunname;
 	$description = $_POST['description'];
-	$protomocheck = ($_POST['alignmethod'] == 'protomo' || !($_POST['alignmethod'])) ? "CHECKED" : "";
+	$maxIteration = $_POST['maxIteration'];
+	$alignSample = $_POST['alignSample'];
+	$windowX = $_POST['windowX'];
+	$windowY = $_POST['windowY'];
+	$LdiameterX = $_POST['LdiameterX'];
+	$LdiameterY = $_POST['LdiameterY'];
+	$HdiameterX = $_POST['HdiameterX'];
+	$HdiameterY= $_POST['HdiameterY'];
+	$BProjectBodySize = $_POST['BProjectBodySize'];
+	$protomocheck = ($_POST['alignmethod'] == 'protomo') ? "CHECKED" : "";
+	$protomo2check = ($_POST['alignmethod'] == 'protomo2' || !($_POST['alignmethod'])) ? "CHECKED" : "";
+	$basicCheck = (($protomo2check == "CHECKED" && $_POST['setting'] != 'advance') || !($_POST['alignmethod'])) ? "CHECKED" : "";
+	$advanceCheck = ($protomo2check == "CHECKED" && $_POST['setting'] == 'advance') ? "CHECKED" : "";
 	$imodcheck = ($_POST['alignmethod'] == 'imod-shift') ? "CHECKED" : "";
 	echo"
   <table border=3 class=tableborder>
@@ -194,8 +206,10 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
       <textarea name='description' ROWS='2' COLS='40'>$description</textarea>
 			<p>\n";
 	echo docpop('tomoalignmethod', 'Method');
+	echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='protomo2' $protomo2check>\n";
+	echo "Protomo 2<font size=-2><i>(default)</i></font>\n";
 	echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='protomo' $protomocheck>\n";
-	echo "Protomo refinement<font size=-2><i>(default)</i></font>\n";
+	echo "Protomo refinement\n";
 	if (!$lastalignerId) {
 		echo "&nbsp;<input type='radio' onClick=submit() name='alignmethod' value='imod-shift' $imodcheck>\n";
 		echo "Imod shift-only alignment\n";
@@ -203,8 +217,76 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
   echo "</td>
     </tr>
     <tr>
-      <td Valign='TOP' class='tablebg'>";       
-	if ($protomocheck) {
+      <td Valign='TOP' class='tablebg'>";     
+
+	if ($protomo2check){
+
+		echo "<b> <center>Tilt Series Alignment Params: </center></b>
+      	<p>";
+		echo "<b>Basic Setting</b>";
+		echo "&nbsp;<input type='radio' onClick=submit() name='setting' value='basic' $basicCheck>\n";
+		echo "<br /><b>Advance Setting</b> &nbsp;<input type='radio' onClick=submit() name='setting' value='advance' $advanceCheck>\n";
+		echo "<p>
+      	<input type='text' name='maxIteration' size='3' value='$maxIteration'>\n";
+		echo docpop('Pro2maxIteration','Number of refinement iterations.');
+		echo "<font>(>= 1)</font>\n";
+		echo "<p>
+      	<input type='text' name='alignSample' size='4' value='$alignSample'>\n";
+		echo docpop('protomosample','Alignment Sampling');
+		echo "<font>(>=1.0)</font>\n";
+		echo "<p>
+      	<input type='text' name='windowX' size='4' value='$windowX'>\n";
+		echo docpop('windowSizeX','Number of Pixel in x-axis.');
+		echo "<font>(500)</font>\n";
+		echo "<p>
+	  	<input type='text' name='windowY' size='4' value='$windowY'>\n";
+		echo docpop('windowSizeY','Number of Pixel in y-axis.');
+		echo "<font>(500)</font>\n";
+		echo "<p><b>Lowpass</b><br />
+	  	<input type='text' name='LdiameterX' size='4' value='$LdiameterX'>\n";
+		echo docpop('lowDiameterX','Diameter X-axis.');
+		echo "<font>(0.40)</font>\n";
+		echo "<p>
+	  	<input type='text' name='LdiameterY' size='4' value='$LdiameterY'>\n";
+		echo docpop('lowDiameterY','Diameter Y-axis');
+		echo "<font>(0.40)</font>\n";
+		echo "<p>";
+		echo "<p><b>Highpass</b><br />
+	  	<input type='text' name='HdiameterX' size='4' value='$HdiameterX'>\n";
+		echo docpop('highDiameterX','Diameter X-axis.');
+		echo "<font>(0.04)</font>\n";
+		echo "<p>
+	  	<input type='text' name='HdiameterY' size='4' value='$HdiameterY'>\n";
+		echo docpop('highDiameterY','Diameter Y-axis');
+		echo "<font>(0.04)</font>\n";
+		echo "<p>";
+		echo "<p><b>Back Projection Body Size</b><br />
+	  	<input type='text' name='BProjectBodySize' size='4' value='$BProjectBodySize'>\n";
+		echo docpop('backProjectBodySize','Back Projection Body Size');
+		echo "<font>(>0 float number.)</font>\n";
+		echo "<p>";
+		
+		if($advanceCheck){
+			echo "<p><b>Binning</b><br />
+	  		<input type='text' name='protomoBinning' size='4' value='$BProjectBodySize'>\n";
+			echo docpop('protomoBinning','Binning');
+			echo "<font>Value should be true or false</font>\n";
+			echo "<p>"; 
+			echo "<p><b>Pre-processing</b><br />
+	  		<input type='text' name='preprocessing' size='4' value='$BProjectBodySize'>\n";
+			echo docpop('prepocessing','Preprocessing');
+			echo "<font>Value should be true or false</font>\n";
+			echo "<p>"; 
+			echo "<p><b>Title</b><br />
+	  		<input type='text' name='BProjectBodySize' size='4' value='$BProjectBodySize'>\n";
+			echo docpop('backProjectBodySize','example');
+			echo "<font>explain</font>\n";
+			echo "<p>"; 
+			
+		}
+		
+	}
+  	elseif ($protomocheck) {
 		if ($lastalignerId) {
 			$lastalignparams = $refinedata[0];
 			$defsample = 1;
@@ -293,12 +375,24 @@ function runTomoAligner() {
 
 	$command = "tomoaligner.py ";
 	$description=$_POST['description'];
+	
+	$maxIteration = $_POST['maxIteration'];
+	$alignSample = $_POST['alignSample'];
+	$windowX = $_POST['windowX'];
+	$windowY = $_POST['windowY'];
+	$LdiameterX = $_POST['LdiameterX'];
+	$LdiameterY = $_POST['LdiameterY'];
+	$HdiameterX = $_POST['HdiameterX'];
+	$HdiameterY= $_POST['HdiameterY'];
+	$BProjectBodySize = $_POST['BProjectBodySize'];
+	
 	$tiltseriesId=$_POST['tiltseriesId'];
 	$tiltseriesId2=$_POST['tiltseriesId2'];
 	$runname=$_POST['runname'];
 	$volume=$_POST['volume'];
 	$sessionname=$_POST['sessionname'];
 	$alignmethod = $_POST['alignmethod'];
+	$setting = $_POST['setting'];
 	$cycle=$_POST['cycle'];
 	if ($_GET['lastaId']) {
 		$lastalignerId = $_GET['lastaId'];
@@ -315,10 +409,36 @@ function runTomoAligner() {
 	//make sure the protomo sampling is valid
 	if ($sample < 1 && $alignmethod=='protomo') createTomoAlignerForm("<b>ERROR:</b> Sampling must >= 1");
 	if (!$lastalignerId) {
+		
 		//make sure a tilt series was provided
 		if (!$tiltseriesId) createTomoAlignerForm("<b>ERROR:</b> Select the tilt series");
 		//make sure a description was provided
 		if (!$description) createTomoAlignerForm("<b>ERROR:</b> Enter a brief description of the tomogram");
+		
+		if($alignmethod == 'protomo2'){
+			//make sure the number of alignment and geometry refinement iterations value is provided
+			if (!$maxIteration) createTomoAlignerForm("<b>ERROR:</b> Enter the value of number of iterations.");
+			//make sure the alignment sampling value is provided
+			if (!$alignSample) createTomoAlignerForm("<b>ERROR:</b> Enter the value of alignment sampling");
+			//make sure the value of the x-asix's window size is provided
+			if (!$windowX) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the x-asix's window size");
+			//make sure the value of the y-asix's window size is provided
+			if (!$windowY) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the y-asix's window size");
+			//make sure the value of the lowpass diameter (x-asix) is provided
+			if (!$LdiameterX) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the lowpass diameter (x-asix)");
+			//make sure the value of the lowpass diameter (y-asix) is provided
+			if (!$LdiameterY) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the lowpass diameter (y-asix)");
+			//make sure the value of the highpass diameter (x-asix) is provided
+			if (!$HdiameterX) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the highpass diameter (x-asix)");
+			//make sure the value of the highpass diameter (y-asix) is provided
+			if (!$HdiameterY) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the highpass diameter (y-asix)");
+			//make sure the vaule of the back projection body size is provided
+			if (!$BProjectBodySize) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the back projection body size");
+			
+			if($setting == 'advance'){
+				
+			}
+		}
 		$particle = new particledata();
 		$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
 		$tiltseriesnumber = $tiltseriesinfos[0]['number'];
@@ -347,8 +467,21 @@ function runTomoAligner() {
 		if (!empty($refnum))
 			$command.="--refimg=$refnum ";
 	}
+	if ($alignmethod == 'protomo2') {
+		$command .="--sample=$alignSample ";
+		$command .="--windowsize_x=$windowX ";
+		$command .="--windowsize_y=$windowY ";
+		$command .="--lowpass_diameter_x=$LdiameterX ";
+		$command .="--lowpass_diameter_y=$LdiameterY ";
+		$command .="--highpass_diameter_x=$HdiameterX ";
+		$command .="--highpass_diameter_y=$HdiameterY ";
+		$command .="--backprojection_bodysize=$BProjectBodySize ";
+		$command .="--max_iterations=$maxIterations ";
+
+	}
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
+
 	// submit job to cluster
 	if ($_POST['process']=="Align Tilt Series") {
 		$user = $_SESSION['username'];
@@ -397,5 +530,4 @@ function runTomoAligner() {
 }
 
 
-?> 
-
+?>
