@@ -16,6 +16,9 @@ from pyami import arraystats, imagefun
 import time
 import cameraclient
 import itertools
+import leginon.session
+import leginon.leginonconfig
+import os
 
 ref_cache = {}
 idcounter = itertools.cycle(range(100))
@@ -330,7 +333,50 @@ class CorrectorClient(cameraclient.CameraClient):
 					else:
 						image[:,bad] = image[:,good]
 
+	def createReferenceSession(self):
+		session_name = None
+		for suffix in 'abcdefghijklmnopqrstuvwxyz':
+			maybe_name = time.strftime('%y%b%d_ref_'+suffix).lower()
+			try:
+				leginon.session.makeReservation(maybe_name)
+			except leginon.session.ReservationFailed:
+				continue
+			else:
+				session_name = maybe_name
+				break
+		if session_name is None:
+			raise RuntimeError('not reference session name determined')
+
+		directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
+		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), session_name, 'rawdata').replace('\\', '/')
+
+		initializer = {
+			'name': session_name,
+			'comment': 'reference images',
+			'user': None,
+			'image path': imagedirectory,
+		}
+		session = leginondata.SessionData(initializer=initializer)
+		session.insert()
+		refsession = leginondata.ReferenceSessionData(session=session)
+		refsession.insert()
+		return session
+
+	def getReferenceSession(self):
+		refsession = leginondata.ReferenceSessionData()
+		try:
+			refsession = refsession.query(results=1)[0]
+		except:
+			refsession = None
+
+		if refsession is None:
+			session = self.createReferenceSession()
+		else:
+			session = refsession['session']
+		return session
+
 	def storeCorrectorImageData(self, imarray, type, scopedata, cameradata, channel):
+		
 		# check for bad shape
 		shape = imarray.shape
 		dim = cameradata['dimension']
@@ -346,9 +392,14 @@ class CorrectorClient(cameraclient.CameraClient):
 			refdata = leginondata.NormImageData()
 		refdata['image'] = imarray
 		refdata['filename'] = self.makeCorrectorImageFilename(type, channel, imarray.shape)
-		refdata['session'] = self.session
-		refdata['scope'] = scopedata
-		refdata['camera'] = cameradata
+		refsession = self.getReferenceSession()
+		newscope = leginondata.ScopeEMData(initializer=scopedata)
+		newscope['session'] = refsession
+		newcamera = leginondata.CameraEMData(initializer=cameradata)
+		newcamera['session'] = refsession
+		refdata['session'] = refsession
+		refdata['scope'] = newscope
+		refdata['camera'] = newcamera
 		refdata['channel'] = channel
 		self.logger.info('Saving new %s' % (type,))
 		refdata.insert(force=True)

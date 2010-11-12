@@ -20,6 +20,7 @@ import leginon.project
 import leginon.gui.wx.Dialog
 import leginon.gui.wx.ListBox
 import leginon.version
+import leginon.session
 
 class WizardPage(wx.wizard.PyWizardPage):
 	pass
@@ -345,7 +346,7 @@ class SessionNamePage(WizardPage):
 
 		sizer.Add(wx.StaticText(self, -1, 'Name:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
-		name = parent.setup.suggestSessionName()
+		name = leginon.session.suggestName()
 		self.nametextctrl = wx.TextCtrl(self, -1, name, style=wx.TE_PROCESS_ENTER)
 		self.Bind(wx.EVT_TEXT_ENTER, self.onValidateName, self.nametextctrl)
 		sizer.Add(self.nametextctrl, (1, 1), (1, 1), wx.EXPAND|wx.ALL)
@@ -377,8 +378,9 @@ class SessionNamePage(WizardPage):
 		safename = name.replace(' ','_')
 		if safename != name:
 			self.nameAutoChangeDialog()
-		ok = self.GetParent().setup.makeSessionReservation(safename)
-		if not ok:
+		try:
+			leginon.session.makeReservation(safename)
+		except leginon.session.ReservationFailed:
 			self.nameExistsDialog()
 
 	def nameAutoChangeDialog(self):
@@ -655,7 +657,7 @@ class SetupWizard(wx.wizard.Wizard):
 			self.setup.saveSettings(self.session, initializer)
 
 	def onCancel(self, evt):
-		self.setup.cancelSessionReservation()
+		leginon.session.cancelReservation()
 
 	def getUsers(self):
 		users = self.setup.getUsers()
@@ -679,8 +681,9 @@ class SetupWizard(wx.wizard.Wizard):
 			if safename != name:
 				self.namepage.nameAutoChangeDialog()
 				self.namepage.nametextctrl.SetValue(safename)
-			ok = self.setup.makeSessionReservation(safename)
-			if not ok:
+			try:
+				leginon.session.makeReservation(safename)
+			except leginon.session.ReservationFailed:
 				evt.Veto()
 				self.namepage.nameExistsDialog()
 		elif page is self.sessionselectpage:
@@ -780,7 +783,6 @@ def _indexBy(bys, datalist):
 
 class Setup(object):
 	def __init__(self, research, publish):
-		self.reserved_session = None
 		self.research = research
 		self.publish = publish
 		try:
@@ -862,56 +864,6 @@ class Setup(object):
 			return {}
 		projectdatalist = self.projectdata.getProjects()
 		return _indexBy('name', projectdatalist)
-
-	def suggestSessionName(self):
-		session_name = '<cannot suggest a name>'
-		for suffix in 'abcdefghijklmnopqrstuvwxyz':
-			maybe_name = time.strftime('%y%b%d'+suffix).lower()
-			ok = self.makeSessionReservation(maybe_name)
-			if not ok:
-				continue
-			else:
-				session_name = maybe_name
-				break
-		return session_name
-
-	def makeSessionReservation(self, name):
-		'''
-		Try to reserve a session name.
-		Return True if reservation is successful or we already have it reserved.
-		Return False if it is already used, or reserved by another process.
-		'''
-		## check if I have already reserved the name
-		if name == self.reserved_session:
-			return True
-
-		## fail reservation if name exists in SessionData
-		sessiondata = leginon.leginondata.SessionData(name=name)
-		sessions = sessiondata.query()
-		if sessions:
-			return False
-
-		## fail if reservation found in SessionReservationData
-		sessionres = leginon.leginondata.SessionReservationData(name=name)
-		sessionres = sessionres.query(results=1)
-		if sessionres and sessionres[0]['reserved']:
-			return False
-
-		## if there was a previous reservation, cancel it
-		self.cancelSessionReservation()
-
-		## make new reservation
-		sessionres = leginon.leginondata.SessionReservationData(name=name, reserved=True)
-		sessionres.insert(force=True)
-		self.reserved_session = name
-
-		return True
-
-	def cancelSessionReservation(self):
-		if self.reserved_session:
-			sessionres = leginon.leginondata.SessionReservationData(name=self.reserved_session, reserved=False)
-			sessionres.insert(force=True)
-			self.reserved_session = None
 
 	def createSession(self, user, name, description, directory):
 		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')

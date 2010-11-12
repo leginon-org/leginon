@@ -59,6 +59,13 @@ class MainScreenScaleData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ReferenceSessionData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', SessionData),
+		)
+	typemap = classmethod(typemap)
+
 class SessionData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
