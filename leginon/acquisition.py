@@ -628,6 +628,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				try:
 					beamtilt = beamtiltclient.transformImageShiftToBeamTilt(imageshift, tem, cam, ht, self.beamtilt0, mag)
 					self.instrument.tem.BeamTilt = beamtilt
+					self.logger.info("beam tilt for image acquired (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 				except Exception, e:
 					raise NoMoveCalibration(e)
 			if self.settings['adjust time by tilt'] and abs(stagea) > 10 * 3.14159 / 180:
@@ -750,10 +751,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
 		self.imagedata = imagedata
-		if debug and self.settings['correct image shift coma']:
-			print "beam tilt for image acquired",self.instrument.tem.BeamTilt
+		if self.settings['correct image shift coma']:
 			self.instrument.tem.BeamTilt = self.beamtilt0
-			print "resetted beam tilt",self.instrument.tem.BeamTilt
+			self.logger.info("reset beam tilt to (%.4f,%.4f)" % (self.instrument.tem.BeamTilt['x'],self.instrument.tem.BeamTilt['y']))
 		targetdata = emtarget['target']
 		if targetdata is not None and 'grid' in targetdata and targetdata['grid'] is not None:
 			imagedata['grid'] = targetdata['grid']
