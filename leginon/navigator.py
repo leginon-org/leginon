@@ -222,10 +222,16 @@ class Navigator(node.Node):
 			self.panel.navigateDone()
 			return True
 
-		scopeshift = {'movetype': movetype, 'x':None, 'y':None}
+		if movetype.endswith('stage position'):
+			moveparam = 'stage position'
+		elif movetype == 'image beam shift':
+			moveparam = 'image shift'
+		else:
+			moveparam = movetype
+		scopeshift = {'moveparam': moveparam, 'x':None, 'y':None}
 		for axis in ('x','y'):
-			scopeshift[axis] = newstate[movetype][axis] - scope[movetype][axis]
-		self.logger.info('change in %(movetype)s: %(x).4e, %(y).4e' % scopeshift)
+			scopeshift[axis] = newstate[moveparam][axis] - scope[moveparam][axis]
+		self.logger.info('change in %(moveparam)s: %(x).4e, %(y).4e' % scopeshift)
 		
 		self.oldstate = self.newstate
 		self.newstate = newstate
