@@ -155,13 +155,13 @@ class PresetsClient(object):
 		self.currentpreset = ievent['preset']
 		name = self.currentpreset['name']
 
-		# if waiting for this event, then set the threading event
-		if name in self.pchanged:
-			self.pchanged[name].set()
-
 		# update node's instruments to match new preset
 		self.node.instrument.setTEM(self.currentpreset['tem']['name'])
 		self.node.instrument.setCCDCamera(self.currentpreset['ccdcamera']['name'])
+
+		# if waiting for this event, then set the threading event
+		if name in self.pchanged:
+			self.pchanged[name].set()
 
 		self.node.confirmEvent(ievent)
 
