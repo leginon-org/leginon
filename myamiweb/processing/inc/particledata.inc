@@ -245,6 +245,7 @@ class particledata {
 	}
 
 	function getTomoAlignmentInfo($alignrunId){
+		// This gives the method and parameter-of-the-method id of an alignment run
 		$q =  "SELECT a.`DEF_id` as `alignrun id`, "
 			."a.name as `alignrun name`, "
 			."a.bin as bin, "
@@ -296,6 +297,7 @@ class particledata {
 	}
 
 	function getTomoAlignerInfoFromAlignmentRun($alignid,$showiHidden=false) {
+		// Protomo has more than one iteration(cycle)
 		$q = " SELECT a.`DEF_id` as alignerid, "
 			." a.`REF|ApTomoAlignmentRunData|alignrun` as `alignrunid`, "
 			." a.`REF|ApProtomoRefinementParamsData|refine_cycle` as `cycleid`, "
