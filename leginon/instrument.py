@@ -369,6 +369,7 @@ parametermapping = (
 	('offset', 'Offset'),
 	('exposure time', 'ExposureTime'),
 	('exposure type', 'ExposureType'),
+	('exposure timestamp', 'ExposureTimestamp'),
 	('inserted', 'Inserted'),
 	('pixel size', 'PixelSize'),
 	('energy filtered', 'EnergyFiltered'),

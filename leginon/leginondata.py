@@ -162,6 +162,7 @@ camera_params = (
 	('offset', dict),
 	('exposure time', float),
 	('exposure type', str),
+	('exposure timestamp', float),
 	('inserted', bool),
 	('dump', bool),
 	('pixel size', dict),

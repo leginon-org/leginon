@@ -63,10 +63,12 @@ class CameraClient(object):
 		imagedata['session'] = self.session
 		## acquire image, get new scope/camera params
 		scopedata = self.instrument.getData(scopeclass)
-		cameradata = self.instrument.getData(leginondata.CameraEMData)
+		#cameradata_before = self.instrument.getData(leginondata.CameraEMData)
 		imagedata['scope'] = scopedata
-		imagedata['camera'] = cameradata
 		self.startExposureTimer()
 		imagedata['image'] = self.instrument.ccdcamera.Image
+		cameradata_after = self.instrument.getData(leginondata.CameraEMData)
+		## only using cameradata_after, not cameradata_before
+		imagedata['camera'] = cameradata_after
 		self.readout_done_event.set()
 		return imagedata
