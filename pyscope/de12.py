@@ -140,3 +140,45 @@ class DE12(ccdcamera.CCDCamera):
 
 	def getNumberOfFrames(self):
 		return self.getProperty('Total Number of Frames')
+
+	def getSaveRawFrames(self):
+		'''Save or Discard'''
+		value = self.getProperty('Autosave Raw Frames')
+		if value == 'Save':
+			return True
+		elif value == 'Discard':
+			return False
+		else:
+			raise ValueError('unexpected value from Autosave Raw Frames: %s' % (value,))
+
+	def setSaveRawFrames(self, value):
+		'''True: save frames,  False: discard frames'''
+		if value:
+			value_string = 'Save'
+		else:
+			value_string = 'Discard'
+		self.setProperty('Autosave Raw Frames', value_string)
+
+	def setNextRawFramesName(self, value):
+		self.setProperty('Autosave Raw Frames - Next Dataset Name', value)
+
+	def getNextRawFramesName(self):
+		return self.getProperty('Autosave Raw Frames - Next Dataset Name')
+
+	def getPreviousRawFramesName(self):
+		return self.getProperty('Autosave Raw Frames - Previous Dataset Name')
+
+	def getNumberOfFramesSaved(self):
+		nframes = self.getProperty('Autosave Raw Frames - Frames Written in Last Exposure')
+		return int(nframes)
+
+	def getNumberOfFramesToSum(self):
+		nframes = self.getProperty('Number of Frames To Sum')
+		return int(nframes)
+
+	def getNumberOfFramesToSum(self):
+		nframes = self.getProperty('Number of Frames To Sum')
+		return int(nframes)
+
+	def setNumberOfFramesToSum(self, nframes):
+		self.setProperty('Number of Frames To Sum', nframes)
