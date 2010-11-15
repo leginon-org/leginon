@@ -188,8 +188,11 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 		shape = (rows, columns)
 
+		t0 = time.time()
 		## exposure time
 		time.sleep(self.exposure_time)
+		t1 = time.time()
+		self.exposure_timestamp = (t1 + t0) / 2.0
 
 		if self.frames_on:
 			nframes = self.getNumberOfFrames()

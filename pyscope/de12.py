@@ -89,7 +89,10 @@ class DE12(ccdcamera.CCDCamera):
 		self.offset = offdict
 
 	def _getImage(self):
+		t0 = time.time()
 		image = self.server.GetImage()
+		t1 = time.time()
+		self.exposure_timestamp = (t1 + t0) / 2.0
 		if not isinstance(image, numpy.ndarray):
 			raise ValueError('DE12 GetImage did not return array')
 		image = self.finalizeGeometry(image)

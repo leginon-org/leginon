@@ -107,7 +107,10 @@ class Gatan(ccdcamera.CCDCamera):
 		self.exposuretype = value
 
 	def acquireRaw(self):
+		t0 = time.time()
 		image = self.camera.AcquireRawImage()
+		t1 = time.time()
+		self.exposure_timestamp = (t1 + t0) / 2.0
 		image = image.astype(numpy.uint16)
 		image.shape = self.dimension['y'], self.dimension['x']
 		return image

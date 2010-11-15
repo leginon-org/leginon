@@ -107,6 +107,13 @@ class Gatan(ccdcamera.CCDCamera):
 			raise ValueError('invalid exposure type')
 		self.exposuretype = value
 
+	def acquireRaw(self):
+		t0 = time.time()
+		image = comarray.call(self.camera, 'AcquireRawImage')
+		t1 = time.time()
+		self.exposure_timestamp = (t1 + t0) / 2.0
+		return image
+
 	def _getImage(self):
 		try:
 			self.camera.Binning = self.binning['x']
@@ -122,18 +129,18 @@ class Gatan(ccdcamera.CCDCamera):
 				if self.getInserted():
 					self.setInserted(False)
 
-					image = comarray.call(self.camera, 'AcquireRawImage')
+					image = self.acquireRaw()
 
 					self.setInserted(True)
 					return image
 			else:
 				exposuretime = self.getExposureTime()
 				self.setExposureTime(0)
-				image = comarray.call(self.camera, 'AcquireRawImage')
+				image = self.acquireRaw()
 				self.setExposureTime(exposuretime)
 				return image
 		try:
-			image = comarray.call(self.camera, 'AcquireRawImage')
+			image = self.acquireRaw()
 			return image.astype(numpy.uint16)
 		except pywintypes.com_error, e:
 			raise ValueError('invalid image dimensions')

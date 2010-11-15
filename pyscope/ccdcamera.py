@@ -24,6 +24,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		{'name': 'ExposureTime', 'type': 'property'},
 		{'name': 'ExposureType', 'type': 'property'},
 		{'name': 'Offset', 'type': 'property'},
+		{'name': 'ExposureTimestamp', 'type': 'property'},
 		## optional:
 		{'name': 'EnergyFilter', 'type': 'property'},
 		{'name': 'EnergyFilterWidth', 'type': 'property'},
@@ -35,6 +36,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		self.bufferlock = threading.Lock()
 		self.readoutcallback = None
 		self.callbacks = {}
+		self.exposure_timestamp = None
 
 	def calculateCenteredGeometry(self, dimension, binning):
 		camerasize = self.getCameraSize()
@@ -119,6 +121,9 @@ class CCDCamera(baseinstrument.BaseInstrument):
 
 	def getCameraSize(self):
 		raise NotImplementedError
+
+	def getExposureTimestamp(self):
+		return self.exposure_timestamp
 
 	def registerCallback(self, name, callback):
 		print 'REGISTER', name, callback, time.time()

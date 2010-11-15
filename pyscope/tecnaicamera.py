@@ -1,6 +1,7 @@
 import ccdcamera
 import numpy
 import comtypes.client
+import time
 
 class TecnaiCamera(ccdcamera.CCDCamera):
 	name = 'TecnaiCamera'
@@ -148,7 +149,10 @@ class TecnaiCamera(ccdcamera.CCDCamera):
 	def _getImage(self):
 		self.geometryToAcqParams(self.geometry)
 		print 'ACQUIRE'
+		t0 = time.time()
 		images = self.acquisition.AcquireImages()
+		t1 = time.time()
+		self.exposure_timestamp = (t1 + t0) / 2.0
 		print 'IMAGE'
 		image = images[0]
 		print 'ASSAFEARRAY'

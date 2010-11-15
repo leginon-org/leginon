@@ -19,6 +19,7 @@ import pythoncom
 import pywintypes
 import win32com.client
 import win32com.server.register
+import time
 
 def intDict(d):
 	new_d = {}
@@ -388,6 +389,7 @@ class Tietz(object):
 														dimension['x'], dimension['y'],
 														binning['x'], binning['y'])
 		exposuretype = self.getExposureType()
+		t0 = time.time()
 		if exposuretype == 'normal':
 			hr = cameracontrol.camera.AcquireImage(self.getExposureTime(), 0)
 		elif exposuretype == 'dark':
@@ -399,6 +401,8 @@ class Tietz(object):
 		else:
 			cameracontrol.unlock()
 			raise ValueError('invalid exposure type for image acquisition')
+		t1 = time.time()
+		self.exposure_timestamp = (t1 + t0) / 2.0
 		cameracontrol.unlock()
 
 		imagesize = self.bytesperpixel*dimension['x']*dimension['y']

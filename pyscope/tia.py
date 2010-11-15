@@ -3,6 +3,7 @@ import comarray
 from win32com.client import Dispatch
 import pythoncom
 import numpy
+import time
 
 class TIA(ccdcamera.CCDCamera):
 	name = 'TIA'
@@ -170,7 +171,10 @@ acquisition.
 		try:
 			self.selectSetup()
 			self.finalizeSetup()
+			t0 = time.time()
 			self.acqman.Acquire()
+			t1 = time.time()
+			self.exposure_timestamp = (t1 + t0) / 2.0
 			arr = comarray.prop(self.im.Data, 'Array')
 			arr = numpy.flipud(arr)
 		except Exception, e:
