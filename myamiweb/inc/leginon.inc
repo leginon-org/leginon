@@ -1967,7 +1967,7 @@ class leginondata {
 		." from StageModelCalibrationData s "
 		." left join InstrumentData t on s.`REF|InstrumentData|tem` = t.`DEF_id` "
 		." left join InstrumentData c on s.`REF|InstrumentData|ccdcamera` = c.`DEF_id` "
-		." where t.`hostname` = '$hostname' and c.`hostname` = '$hostname'"
+		." where t.`hostname` = '$hostname' "
 		." order by s.`DEF_timestamp` DESC";
 		$result = $this->mysql->SQLQuery($q);
 		if($result != false){
