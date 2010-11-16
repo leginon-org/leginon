@@ -25,6 +25,7 @@ import types
 import numpy
 import leginondata
 import threading
+import cameraclient
 
 class NavigatorClient(object):
 	eventoutputs = [event.MoveToTargetEvent]
@@ -68,24 +69,7 @@ class Navigator(node.Node):
 		'cycle after': False,
 		'cycle each': False,
 		'final image shift': False,
-		'camera settings':
-			leginondata.CameraSettingsData(
-				initializer={
-					'dimension': {
-						'x': 1024,
-						'y': 1024,
-					},
-					'offset': {
-						'x': 0,
-						'y': 0,
-					},
-					'binning': {
-						'x': 1,
-						'y': 1,
-					},
-					'exposure time': 1000.0,
-				}
-			),
+		'camera settings': cameraclient.default_settings,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.MoveToTargetEvent]
 	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.CameraImagePublishEvent, event.MoveToTargetDoneEvent]

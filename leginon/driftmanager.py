@@ -22,6 +22,7 @@ import gui.wx.DriftManager
 import instrument
 import acquisition
 import rctacquisition
+import cameraclient
 
 class DriftManager(watcher.Watcher):
 	panelclass = gui.wx.DriftManager.Panel
@@ -30,24 +31,7 @@ class DriftManager(watcher.Watcher):
 		'threshold': 3e-10,
 		'pause time': 2.5,
 		'timeout': 30,
-		'camera settings':
-			leginondata.CameraSettingsData(
-				initializer={
-					'dimension': {
-						'x': 1024,
-						'y': 1024,
-					},
-					'offset': {
-						'x': 0,
-						'y': 0,
-					},
-					'binning': {
-						'x': 1,
-						'y': 1,
-					},
-					'exposure time': 1000.0,
-				}
-			),
+		'camera settings': cameraclient.default_settings,
 	}
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftMonitorRequestEvent, event.PresetChangedEvent]
 	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftMonitorResultEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.AcquisitionImagePublishEvent]

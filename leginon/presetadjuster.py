@@ -11,6 +11,7 @@ import leginondata
 import event
 import gui.wx.BeamFixer
 from pyami import arraystats
+import cameraclient
 
 class PresetAdjuster(reference.Reference):
 	# relay measure does events
@@ -22,24 +23,7 @@ class PresetAdjuster(reference.Reference):
 	defaultsettings.update({
 		'override preset': False,
 		'instruments': {'tem':None, 'ccdcamera':None},
-		'camera settings':
-			leginondata.CameraSettingsData(
-				initializer={
-					'dimension': {
-						'x': 1024,
-						'y': 1024,
-					},
-					'offset': {
-						'x': 0,
-						'y': 0,
-					},
-					'binning': {
-						'x': 1,
-						'y': 1,
-					},
-					'exposure time': 200.0,
-				}
-			),
+		'camera settings': cameraclient.default_settings,
 		'stage position': {
 			'x': 0.0,
 			'y': 0.0,

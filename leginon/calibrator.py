@@ -9,6 +9,7 @@ import node, event, leginondata
 import gui.wx.Calibrator
 import instrument
 import presets
+import cameraclient
 
 class Calibrator(node.Node):
 	'''
@@ -20,7 +21,7 @@ class Calibrator(node.Node):
 	defaultsettings = {
 		'instruments': {'tem': None, 'ccdcamera': None},
 		'override preset': False,
-		'camera settings': None,
+		'camera settings': cameraclient.default_settings,
 		'correlation type': 'cross',
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):

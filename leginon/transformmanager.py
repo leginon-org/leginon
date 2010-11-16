@@ -28,6 +28,7 @@ import libCVwrapper
 import align
 import targethandler
 import tiltcorrector
+import cameraclient
 
 class InvalidStagePosition(Exception):
 	pass
@@ -242,24 +243,7 @@ class TransformManager(node.Node, TargetTransformer):
 		'threshold': 3e-10,
 		'pause time': 2.5,
 		'min mag': 300,
-		'camera settings':
-			leginondata.CameraSettingsData(
-				initializer={
-					'dimension': {
-						'x': 1024,
-						'y': 1024,
-					},
-					'offset': {
-						'x': 0,
-						'y': 0,
-					},
-					'binning': {
-						'x': 1,
-						'y': 1,
-					},
-					'exposure time': 1000.0,
-				}
-			),
+		'camera settings': cameraclient.default_settings,
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.TransformTargetEvent]
 	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.TransformTargetDoneEvent]

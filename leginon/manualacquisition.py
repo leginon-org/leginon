@@ -23,6 +23,7 @@ from pyami import arraystats, imagefun, fftfun
 import math
 import numpy
 import gridlabeler
+import cameraclient
 
 class AcquireError(Exception):
 	pass
@@ -38,7 +39,7 @@ class ManualAcquisition(node.Node):
 		]
 	)
 	defaultsettings = {
-		'camera settings': None,
+		'camera settings': cameraclient.default_settings,
 		'screen up': False,
 		'screen down': False,
 		'beam blank': False,

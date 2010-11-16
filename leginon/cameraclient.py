@@ -1,6 +1,12 @@
 import leginondata
 import threading
 
+default_settings = leginondata.CameraSettingsData()
+default_settings['dimension'] = {'x': 1024, 'y': 1024}
+default_settings['offset'] = {'x': 0, 'y': 0}
+default_settings['binning'] = {'x': 1, 'y': 1}
+default_settings['exposure time'] = 200
+
 class CameraClient(object):
 	def __init__(self):
 		self.exposure_start_event = threading.Event()

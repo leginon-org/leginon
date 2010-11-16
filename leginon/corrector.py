@@ -20,6 +20,7 @@ from pyami import arraystats, imagefun, mrc
 import polygon
 import time
 import os
+import cameraclient
 
 class Corrector(imagewatcher.ImageWatcher):
 	'''
@@ -44,7 +45,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		'despike threshold': 3.5,
 		'clip min': 0,
 		'clip max': 2**16,
-		'camera settings': None,
+		'camera settings': cameraclient.default_settings,
 		'combine': 'average',
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs + [event.AcquisitionImagePublishEvent]

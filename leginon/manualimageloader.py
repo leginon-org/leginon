@@ -23,6 +23,7 @@ import copy
 from pyami import arraystats, imagefun, mrc
 import numpy
 import version
+import cameraclient
 
 default_batch = os.path.join(version.getInstalledLocation(),'upload_example.txt')
 class AcquireError(Exception):
@@ -37,7 +38,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		'save image': False,
 		'batch script': default_batch,
 		'tilt group': 1,
-		'camera settings': None,
+		'camera settings': cameraclient.default_settings,
 	}
 
 	def __init__(self, id, session, managerlocation, **kwargs):

@@ -12,6 +12,7 @@ from pyami import arraystats
 import time
 import threading
 import instrument
+import cameraclient
 
 class IntensityMonitor(node.Node):
 	'''
@@ -22,7 +23,7 @@ class IntensityMonitor(node.Node):
 	defaultsettings = {
 		'iterations': 10,
 		'wait time':  60,
-		'camera settings':  None,
+		'camera settings':  cameraclient.default_settings,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)

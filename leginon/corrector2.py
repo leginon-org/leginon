@@ -18,6 +18,7 @@ import instrument
 import sys
 from pyami import arraystats, imagefun, ccd
 import polygon
+import cameraclient
 
 # cache to hold corrector images in memory
 cache = {}
@@ -295,7 +296,7 @@ class Corrector(node.Node):
 		'despike threshold': 3.5,
 		'clip min': 0,
 		'clip max': 2**16,
-		'camera settings': None,
+		'camera settings': cameraclient.default_settings,
 		'combine': 'average',
 		'channels': 1,
 	}
