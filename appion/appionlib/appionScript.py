@@ -395,6 +395,8 @@ class AppionScript(basicScript.BasicScript):
 		this function only runs if no rundir is defined at the command line
 		"""
 		from appionlib import apStack
+		if 'sessionname' in self.params and self.params['sessionname'] is not None:
+			self.params['session'] = self.params['sessionname']
 		if ( self.params['rundir'] is None
 		and 'session' in self.params
 		and self.params['session'] is not None ):
