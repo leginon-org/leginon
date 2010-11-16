@@ -9,7 +9,7 @@
 
 // replaced require_once dirname(__FILE__)."/../../config.php"; with an include so that we can give the user a message if the config file is not found.
 // the require functions apparently don't return an error value and they don't seem to throw exceptions either. refs #984
-if (!(@include dirname(__FILE__)."/../../config.php")) {
+if (!(@include_once dirname(__FILE__)."/../../config.php")) {
 	echo "Your configuration file could not be found.<br /><br />";
 	echo "Please run the setup wizard found at <b>http://your_host/your_installation_directory/setup</b> to create a config file and complete your installation. <br />";
 	echo "( example: http://localhost/myamiweb/setup )<br /><br />";

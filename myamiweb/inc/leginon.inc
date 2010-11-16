@@ -17,7 +17,7 @@
 // the require functions apparently don't return an error value and they don't seem to throw exceptions either.
 // rather than redirecting the user to the setup page here, I am checking if config.php exists from myamiweb/index.php and redirecting
 // from there to avoid issues of not knowing where this file is included from. refs #984
-if (!(@include "config.php")) {
+if (!(@include_once "config.php")) {
 	echo "Your configuration file could not be found.<br /><br />";
 	echo "Please run the setup wizard found at <b>http://your_host/your_installation_directory/setup</b> to create a config file and complete your installation. <br />";
 	echo "( example: http://localhost/myamiweb/setup )<br /><br />";
