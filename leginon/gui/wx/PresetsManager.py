@@ -1466,6 +1466,7 @@ class Parameters(wx.StaticBoxSizer):
 			('offset', 'Offset:'),
 			('binning', 'Binning:'),
 			('exposure time', 'Exposure time (ms):'),
+			('save frames', 'Save raw frames:'),
 			('dose', 'Dose (e/A^2):'),
 			('pre exposure', 'Pre-Exposure (s):'),
 			('skip', 'Skip when cycling:'),
@@ -1516,6 +1517,8 @@ class Parameters(wx.StaticBoxSizer):
 		sz.Add(self.values['pre exposure'], (8, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.labels['dose'], (9, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.values['dose'], (9, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.labels['save frames'], (10, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.values['save frames'], (10, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		sz.AddGrowableCol(1)
 		sz.AddGrowableCol(5)
@@ -1564,7 +1567,7 @@ class Parameters(wx.StaticBoxSizer):
 				s = '(%g, %g)' % (parameters[key]['x'], parameters[key]['y'])
 				self.values[key].SetLabel(s)
 
-			for key in ['film', 'energy filter', 'skip']:
+			for key in ['film', 'energy filter', 'skip', 'save frames']:
 				if parameters[key]:
 					s = 'Yes'
 				else:

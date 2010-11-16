@@ -170,6 +170,8 @@ camera_params = (
 	('energy filter', bool),
 	('energy filter width', float),
 	('nframes', int),
+	('save frames', bool),
+	('frames name', str),
 )
 
 class ScopeEMData(EMData):
@@ -223,20 +225,6 @@ class DriftMonitorResultData(InSessionData):
 		return InSessionData.typemap() + (
 			('status', str),
 			('final', DriftData),
-		)
-	typemap = classmethod(typemap)
-
-class CameraConfigData(InSessionData):
-	def typemap(cls):
-		return InSessionData.typemap() + (
-			('dimension', dict),
-			('binning', dict),
-			('offset', dict),
-			('exposure time', float),
-			('exposure type', str),
-			('correct', int),
-			('auto square', int),
-			('auto offset', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -486,6 +474,7 @@ class PresetData(InSessionData):
 			('energy filter width', float),
 			('pre exposure', float),
 			('skip', bool),
+			('save frames', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1128,6 +1117,7 @@ class CameraSettingsData(Data):
 			('offset', dict),
 			('binning', dict),
 			('exposure time', float),
+			('save frames', bool),
 		)
 	typemap = classmethod(typemap)
 

@@ -6,6 +6,7 @@ default_settings['dimension'] = {'x': 1024, 'y': 1024}
 default_settings['offset'] = {'x': 0, 'y': 0}
 default_settings['binning'] = {'x': 1, 'y': 1}
 default_settings['exposure time'] = 200
+default_settings['save frames'] = False
 
 class CameraClient(object):
 	def __init__(self):
