@@ -203,7 +203,7 @@ class ApTiltAlignParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class ApContour(Data):
+class ApContourData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
@@ -213,14 +213,14 @@ class ApContour(Data):
 			('version', int),
 			('method', str),
 			('particleType', str),
-			('runID', str),
+			('runname', str),
 		)
 	typemap = classmethod(typemap)
 
-class ApContourPoint(Data):
+class ApContourPointData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('contour', ApContour),
+			('contour', ApContourData),
 			('x', float),
 			('y', float),
 		)

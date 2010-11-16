@@ -1,61 +1,89 @@
 #!/usr/bin/env python
+from appionlib import appionScript
 from appionlib import appiondata
 from leginon import leginondata
 import os
 import sys
 
-if len(sys.argv)<=1:
-	print 'Usage:\n %s [experimentname] [sessionid]' % (sys.argv[0],)
+class ContourFileGenerator(appionScript.AppionScript):
+	#=====================
+	def setupParserOptions(self):
+		### Set usage
+		self.parser.set_usage("Usage: %prog --projectid=## --runname=<runname> --session=<session> preset=<preset>"
+			+"--preset=<preset> --description='<text>' --commit [options]")
+		### Input value options
+		self.parser.add_option("-s", "--session", dest="sessionname",
+			help="Session name associated with processing run, e.g. --session=06mar12a", metavar="SESSION")
+#		self.parser.add_option("--runid", dest="contourrunid", type="int",
+#			help="contour run id", metavar="#")
+		self.parser.add_option("--preset", dest="preset", type="str",
+			help="preset name to be process, e.g. --preset=en", metavar="NAME")
+		pass
 
-session = sys.argv[1] 
-preset = sys.argv[3]
+	def checkConflicts(self):
+		pass
 
-sessionq = leginondata.SessionData(name=session)
-presetq=leginondata.PresetData(name=preset)
-imgquery = leginondata.AcquisitionImageData()
-imgquery['preset']  = presetq
-imgquery['session'] = sessionq
-imgtree = imgquery.query(readimages=False)
-partq = appiondata.ApContour()
-sessiond = sessionq.query()
+	def setProcessingDirName(self):
+		self.processdirname = 'extract'
 
-file = open('contourpickerData-' + session + '.txt','w')
-file.write('session_id ' + sys.argv[2] + '\n')
-file.write('usr_id ' + os.getlogin() + '\n')
-file.write('experiment_name ' + session + '\n')
-file.write('experiment_description ' + sessiond[0]['comment'] + '\n')
-file.write('nimages ' + str(len(imgtree)) + '\n')
+	#=====================
+	def start(self):
+		sessionname = self.params['sessionname']
+		runname = self.params['runname']
+		preset = self.params['preset']
 
-for imgdata in imgtree:
-	file.write('START_IMAGE' + '\n')
-	partq['image'] = imgdata
-	partd = partq.query()
-	if len(partd)>0:
-		file.write('image_refID ' + str(partd[0]['image'].dbid) + '\n') 
-	file.write('image_name ' + imgdata['filename'] + '\n') 
-	if len(partd)>0:
-		file.write('time_roi ' + str(partd[0].timestamp) + '\n') 
-	#file.write('time_roi ' + partd[0]['DEF_timestamp'] + '\n') 
-	file.write('dfac = 1\n')
-	maxversion = 0
-	numparticles = 0
-	for part in partd:
-		if int(part['version'])>maxversion and part['runID']==sys.argv[2]:
-			maxversion = int(part['version'])
-	for part in partd:
-		if int(part['version'])==maxversion and part['runID']==sys.argv[2]:
-			numparticles+=1
-	file.write('version_id ' + str(maxversion) + '\n')
-	file.write('ncontours ' + str(numparticles) + '\n')
-	pointq = appiondata.ApContourPoint()
-	for part in partd:
-		if int(part['version'])==maxversion and part['runID']==sys.argv[2]:
-	#		file.write('contour_number ' + )
-			file.write('method_used ' + part['method'] + ' ')
-			pointq['contour'] = part
-			pointd = pointq.query()
-			for point in pointd:
-				file.write(str(point['x']) + ',' + str(point['y']) + ';')
-			file.write('\n')
-	file.write('END_IMAGE' + '\n')
-	
+		sessionq = leginondata.SessionData(name=sessionname)
+		presetq=leginondata.PresetData(name=preset)
+		imgquery = leginondata.AcquisitionImageData()
+		imgquery['preset']  = presetq
+		imgquery['session'] = sessionq
+		imgtree = imgquery.query(readimages=False)
+		partq = appiondata.ApContourData()
+		sessiond = sessionq.query()
+
+		file = open('contourpickerData-' + sessionname + '.txt','w')
+		file.write('session_id ' + runname + '\n')
+		file.write('usr_id ' + os.getlogin() + '\n')
+		file.write('experiment_name ' + sessionname + '\n')
+		file.write('experiment_description ' + sessiond[0]['comment'] + '\n')
+		file.write('nimages ' + str(len(imgtree)) + '\n')
+
+		for imgdata in imgtree:
+			file.write('START_IMAGE' + '\n')
+			partq['image'] = imgdata
+			partd = partq.query()
+			if len(partd)>0:
+				file.write('image_refID ' + str(partd[0]['image'].dbid) + '\n') 
+			file.write('image_name ' + imgdata['filename'] + '\n') 
+			if len(partd)>0:
+				file.write('time_roi ' + str(partd[0].timestamp) + '\n') 
+			#file.write('time_roi ' + partd[0]['DEF_timestamp'] + '\n') 
+			file.write('dfac = 1\n')
+			maxversion = 0
+			numparticles = 0
+			for part in partd:
+				if int(part['version'])>maxversion and part['runname'] == runname:
+					maxversion = int(part['version'])
+			for part in partd:
+				if int(part['version'])==maxversion and part['runname'] == runname:
+					numparticles+=1
+			file.write('version_id ' + str(maxversion) + '\n')
+			file.write('ncontours ' + str(numparticles) + '\n')
+			pointq = appiondata.ApContourPointData()
+			for part in partd:
+				if int(part['version'])==maxversion and part['runname'] == runname:
+			#		file.write('contour_number ' + )
+					file.write('method_used ' + part['method'] + ' ')
+					pointq['contour'] = part
+					pointd = pointq.query()
+					for point in pointd:
+						file.write(str(point['x']) + ',' + str(point['y']) + ';')
+					file.write('\n')
+			file.write('END_IMAGE' + '\n')
+			
+#=====================
+#=====================
+if __name__ == '__main__':
+	s = ContourFileGenerator()
+	s.start()
+	s.close()

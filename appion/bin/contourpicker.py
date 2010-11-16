@@ -765,12 +765,13 @@ class PickerApp(wx.App):
 	def onMakeTCFile(self,evt):
 		session = self.appionloop.params['sessionname']	
 		###change later
-		os.system('contourpickerTubeCircleTextFileGenerator.py ' + str(session) + ' ' + self.appionloop.params['runid'] + ' ' + self.appionloop.params['preset'])
+		os.system('contourpickerTubeCircleTextFileGenerator.py ' + '--projectid=%d' % (self.appionloop.params['projectid']) + ' ' + '--session=' + str(session) + ' ' + '--runname='+self.appionloop.params['runname'] + ' ' + '--preset=' + self.appionloop.params['preset'])
 
 	def onMakeFile(self,evt):
 		session = self.appionloop.params['sessionname']	
 		###change later
-		os.system('contourpickerTextFileGenerator.py ' + str(session) + ' ' + self.appionloop.params['runname'] + ' ' + self.appionloop.params['preset'])
+		command = 'contourpickerTextFileGenerator.py ' + '--projectid=%d' % (self.appionloop.params['projectid']) + ' ' + '--session=' + str(session) + ' ' + '--runname='+self.appionloop.params['runname'] + ' ' + '--preset=' + self.appionloop.params['preset']
+		os.system(command)
 
 	def onTypeChanged(self, evt):
 		self.particleType = self.typeSelectorChoices[self.typeSelector.GetSelection()]
@@ -1042,28 +1043,28 @@ class ContourPicker(manualpicker.ManualPicker):
 		print self.app.singleParticleTypeList
 		for i in range(len(singleTargets)):
 			try:
-				c=appiondata.ApContour(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=singleTargets[i].x, y=singleTargets[i].y,version=self.maxVersion+1, method='single', particleType=self.app.singleParticleTypeList[i], runID = self.params['runname'])
+				c=appiondata.ApContourData(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=singleTargets[i].x, y=singleTargets[i].y,version=self.maxVersion+1, method='single', particleType=self.app.singleParticleTypeList[i], runname=self.params['runname'])
 			except AttributeError:
-				c=appiondata.ApContour(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=singleTargets[i][0], y=singleTargets[i][1],version=self.maxVersion+1, method='single', particleType=self.app.singleParticleTypeList[i], runID=self.params['runname'])
+				c=appiondata.ApContourData(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=singleTargets[i][0], y=singleTargets[i][1],version=self.maxVersion+1, method='single', particleType=self.app.singleParticleTypeList[i], runname=self.params['runname'])
 			c.insert()
 			if self.app.singleParticleTypeList[i]=='Tube':
 				for point in self.app.tubeTargets[counter]:
-					point1=appiondata.ApContourPoint(x=point[0], y=point[1], contour=c)
+					point1=appiondata.ApContourPointData(x=point[0], y=point[1], contour=c)
 					point1.insert()
 				counter-=1
 		counter = 0
 		for i in range(len(targetsList)):
-			c=appiondata.ApContour(name="contour"+str(int(self.startPoint)+i+len(singleTargets)), image=imgdata, x=contourTargets[counter].x, y=contourTargets[counter].y,version=self.maxVersion+1, method='auto', particleType=self.app.particleTypeList[counter], runID=self.params['runname'])
+			c=appiondata.ApContourData(name="contour"+str(int(self.startPoint)+i+len(singleTargets)), image=imgdata, x=contourTargets[counter].x, y=contourTargets[counter].y,version=self.maxVersion+1, method='auto', particleType=self.app.particleTypeList[counter], runname=self.params['runname'])
 			c.insert()
 			counter += 1
 			for point in targetsList[i]:
-				point1=appiondata.ApContourPoint(x=point[0], y=point[1], contour=c)
+				point1=appiondata.ApContourPointData(x=point[0], y=point[1], contour=c)
 				point1.insert()
 
 		return peaktree
 
 	def loadOld(self,imgdata):
-		partq = appiondata.ApContour()
+		partq = appiondata.ApContourData()
 		partq['image'] = imgdata
 		partd = partq.query()
 		try: 
@@ -1071,7 +1072,7 @@ class ContourPicker(manualpicker.ManualPicker):
 			self.startPoint = name.lstrip('contour')
 		except IndexError:
 			self.startPoint = 0		
-		points = appiondata.ApContourPoint()
+		points = appiondata.ApContourPointData()
 		oldPolyPoints = []
 		contourPoints = []
 		types = []
@@ -1080,10 +1081,10 @@ class ContourPicker(manualpicker.ManualPicker):
 		tubePoints = []
 		self.maxVersion = -1
 		for i in partd:
-			if not i['version']==None and int(i['version'])>self.maxVersion and i['runID']==self.params['runname']:
+			if not i['version']==None and int(i['version'])>self.maxVersion and i['runname']==self.params['runname']:
 				self.maxVersion = int(i['version'])
 		for i in partd:
-			if not i['version']==None and int(i['version'])==self.maxVersion and not i['method']=='single' and i['runID']==self.params['runname']:
+			if not i['version']==None and int(i['version'])==self.maxVersion and not i['method']=='single' and i['runname']==self.params['runname']:
 				contourPoints.append((i['x'],i['y']))
 				types.append(i['particleType'])
 				contour = i['name']
@@ -1093,7 +1094,7 @@ class ContourPicker(manualpicker.ManualPicker):
 				for j in point:
 					contourList.append((j['x'], j['y']))
 				oldPolyPoints.append(contourList)
-			if not i['version']==None and int(i['version'])==self.maxVersion and i['method']=='single' and i['runID']==self.params['runname']:
+			if not i['version']==None and int(i['version'])==self.maxVersion and i['method']=='single' and i['runname']==self.params['runname']:
 				singleTypes.append(i['particleType'])
 				singleTargets.append((i['x'],i['y']))
 				if i['particleType']=='Tube':
@@ -1115,6 +1116,3 @@ class ContourPicker(manualpicker.ManualPicker):
 if __name__ == '__main__':
 	imgLoop = ContourPicker()
 	imgLoop.run()
-
-
-
