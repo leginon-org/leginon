@@ -23,7 +23,9 @@ $expId = (empty($_GET['expId'])) ? $lastId : $_GET['expId'];
 $sessioninfo = $leginondata->getSessionInfo($expId);
 $title = $sessioninfo['Name'];
 
+//Block unauthorized user
 checkExptAccessPrivilege($expId,'data');
+
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 if($projectdb) {

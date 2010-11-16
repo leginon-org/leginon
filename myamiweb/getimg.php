@@ -16,6 +16,10 @@ $g=true;
 if (!$sessionId=stripslashes($_GET['session'])) {
 	$g=false;
 }
+
+//Block unauthorized user
+checkExptAccessPrivilege($ssesionId,'data');
+
 if (!$id=stripslashes($_GET['id'])) {
 	$g=false;
 }

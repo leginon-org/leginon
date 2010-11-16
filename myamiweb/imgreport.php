@@ -31,6 +31,10 @@ $imgId = $newimage['id'];
 
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo[sessionId];
+
+//Block unauthorized user
+checkExptAccessPrivilege($sessionId);
+
 $path = $leginondata->getImagePath($sessionId);
 $filename = $leginondata->getFilenameFromId($imgId);
 $filesize = getFileSize($path.$filename, 2 );

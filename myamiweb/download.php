@@ -10,6 +10,10 @@ $imgId = $newimage['id'];
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo['sessionId'];
 $path = $leginondata->getImagePath($sessionId);
+
+//Block unauthorized user
+checkExptAccessPrivilege($expId,'data');
+
 if ($fft) {
 	$fftimg = $leginondata->getImageFFT($imgId);
 	$filename = $fftimg['fftimage'];
