@@ -70,6 +70,14 @@ class SessionData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class SessionReservationData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('reserved', bool),
+		)
+	typemap = classmethod(typemap)
+
 class GridHolderData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
