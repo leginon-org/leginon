@@ -172,8 +172,10 @@ so be sure the clients are running before starting Leginon.
 		parent = self.GetParent()
 		n = self.sessiontyperadiobox.GetSelection()
 		if n == 0:
+			parent.namepage.suggestName()
 			return parent.namepage
 		else:
+			parent.setup.cancelSessionReservation()
 			return parent.sessionselectpage
 
 class SessionSelectPage(WizardPage):
@@ -345,8 +347,7 @@ class SessionNamePage(WizardPage):
 
 		sizer.Add(wx.StaticText(self, -1, 'Name:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
-		name = parent.setup.suggestSessionName()
-		self.nametextctrl = wx.TextCtrl(self, -1, name, style=wx.TE_PROCESS_ENTER)
+		self.nametextctrl = wx.TextCtrl(self, -1, '', style=wx.TE_PROCESS_ENTER)
 		self.Bind(wx.EVT_TEXT_ENTER, self.onValidateName, self.nametextctrl)
 		sizer.Add(self.nametextctrl, (1, 1), (1, 1), wx.EXPAND|wx.ALL)
 
@@ -371,6 +372,10 @@ class SessionNamePage(WizardPage):
 		pagesizer.AddGrowableCol(0)
 
 		self.SetSizerAndFit(pagesizer)
+
+	def suggestName(self):
+		name = self.GetParent().setup.suggestSessionName()
+		self.nametextctrl.SetValue(name)
 
 	def onValidateName(self, evt):
 		name = evt.GetString()
