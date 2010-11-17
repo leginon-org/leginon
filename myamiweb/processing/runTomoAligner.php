@@ -220,71 +220,205 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
       <td Valign='TOP' class='tablebg'>";     
 
 	if ($protomo2check){
-
-		echo "<b> <center>Tilt Series Alignment Params: </center></b>
-      	<p>";
-		echo "<b>Basic Setting</b>";
-		echo "&nbsp;<input type='radio' onClick=submit() name='setting' value='basic' $basicCheck>\n";
-		echo "<br /><b>Advance Setting</b> &nbsp;<input type='radio' onClick=submit() name='setting' value='advance' $advanceCheck>\n";
-		echo "<p>
-      	<input type='text' name='maxIteration' size='3' value='$maxIteration'>\n";
-		echo docpop('Pro2maxIteration','Number of refinement iterations.');
-		echo "<font>(>= 1)</font>\n";
-		echo "<p>
-      	<input type='text' name='alignSample' size='4' value='$alignSample'>\n";
-		echo docpop('protomosample','Alignment Sampling');
-		echo "<font>(>=1.0)</font>\n";
-		echo "<p>
-      	<input type='text' name='windowX' size='4' value='$windowX'>\n";
-		echo docpop('windowSizeX','Number of Pixel in x-axis.');
-		echo "<font>(500)</font>\n";
-		echo "<p>
-	  	<input type='text' name='windowY' size='4' value='$windowY'>\n";
-		echo docpop('windowSizeY','Number of Pixel in y-axis.');
-		echo "<font>(500)</font>\n";
-		echo "<p><b>Lowpass</b><br />
-	  	<input type='text' name='LdiameterX' size='4' value='$LdiameterX'>\n";
-		echo docpop('lowDiameterX','Diameter X-axis.');
-		echo "<font>(0.40)</font>\n";
-		echo "<p>
-	  	<input type='text' name='LdiameterY' size='4' value='$LdiameterY'>\n";
-		echo docpop('lowDiameterY','Diameter Y-axis');
-		echo "<font>(0.40)</font>\n";
-		echo "<p>";
-		echo "<p><b>Highpass</b><br />
-	  	<input type='text' name='HdiameterX' size='4' value='$HdiameterX'>\n";
-		echo docpop('highDiameterX','Diameter X-axis.');
-		echo "<font>(0.04)</font>\n";
-		echo "<p>
-	  	<input type='text' name='HdiameterY' size='4' value='$HdiameterY'>\n";
-		echo docpop('highDiameterY','Diameter Y-axis');
-		echo "<font>(0.04)</font>\n";
-		echo "<p>";
-		echo "<p><b>Back Projection Body Size</b><br />
-	  	<input type='text' name='BProjectBodySize' size='4' value='$BProjectBodySize'>\n";
-		echo docpop('backProjectBodySize','Back Projection Body Size');
-		echo "<font>(>0 float number.)</font>\n";
-		echo "<p>";
-		
-		if($advanceCheck){
-			echo "<p><b>Binning</b><br />
-	  		<input type='text' name='protomoBinning' size='4' value='$BProjectBodySize'>\n";
-			echo docpop('protomoBinning','Binning');
-			echo "<font>Value should be true or false</font>\n";
-			echo "<p>"; 
-			echo "<p><b>Pre-processing</b><br />
-	  		<input type='text' name='preprocessing' size='4' value='$BProjectBodySize'>\n";
-			echo docpop('prepocessing','Preprocessing');
-			echo "<font>Value should be true or false</font>\n";
-			echo "<p>"; 
-			echo "<p><b>Title</b><br />
-	  		<input type='text' name='BProjectBodySize' size='4' value='$BProjectBodySize'>\n";
-			echo docpop('backProjectBodySize','example');
-			echo "<font>explain</font>\n";
-			echo "<p>"; 
-			
-		}
-		
+?>	<table>
+		<tr><td>
+			<b><center>Tilt Series Alignment Params:</center></b>
+		</td></tr>
+		<tr><td>
+			<b>Basic Setting: </b>
+			<input type='radio' onClick=submit() name='setting' value='basic' <?php echo $basicCheck; ?>>
+		</td></tr>
+		<tr><td>
+			<b>Advance Setting: </b> 
+			<input type='radio' onClick=submit() name='setting' value='advance' <?php echo $advanceCheck; ?>><br /><br />
+		</td></tr>
+		<tr><td>
+			<input type='text' name='maxIteration' size='3' value='<?php echo $maxIteration; ?>'>
+			Number of <b>refinement iterations</b>. (>=1)
+		</td></tr>
+		<tr><td>
+			<input type='text' name='windowX' size='4' value='<?php echo $windowX; ?>'> x-axis, 
+			<input type='text' name='windowY' size='4' value='<?php echo $windowY; ?>'> y-axis: 
+			<b>Window Size</b>. (Number of Pixel)
+		</td></tr>
+		<tr><td>
+			<b>Back Projection Body Size</b> ( T / F )
+			<table style="padding-left: 20px;">
+				<tr><td>
+					<input type='text' name='sampleThickness' size='3' value='<?php echo $sampleThickness; ?>'>
+					<b>Thickness</b> at sampling. (T)
+				</td></tr>
+				<tr><td>
+					<input type='text' name='highestTitleAngle' size='4' value='<?php echo $highestTitleAngle; ?>'>
+					<b>cos( highest title angle )</b>. (F)
+				</td></tr>
+			</table>
+		</td></tr>
+		<tr><td>
+			<input type='text' name='alignSample' size='4' value='<?php echo $alignSample; ?>'>
+			<b>Alignment Sampling</b>. (S)
+		</td></tr>
+		<?php if($advanceCheck){ ?>
+		<tr><td>
+			<b>Binning: </b> 
+			<input type='radio' name='binning' value='true' checked> True
+			<input type='radio' name='binning' value='false'> False			
+		</td></tr>
+		<tr><td>
+			<b>Preprocessing: </b> 
+			<input type='radio' name='preprocessing' value='true' checked> True
+			<input type='radio' name='preprocessing' value='false'> False			
+		</td></tr>
+		<tr><td>
+			<b>Preprocess: </b>
+			<table style="padding-left: 20px;">
+				<tr><td>
+					<b>Logging: </b>
+					<input type='radio' name='logging' value='true'> True
+					<input type='radio' name='logging' value='false' checked> False
+				</td></tr>
+				<tr><td>
+					<input type='text' name='preprocessBorder' size='4' value='<?php if(empty($preprocessBorder))  echo "100"; else echo $preprocessBorder; ?>'>
+					<b>Border</b>.
+				</td></tr>
+				<tr><td>
+					<input type='text' name='preprocessClipLow' size='3' value='<?php if(empty($preprocessClipLow)) echo "3.5"; else echo $preprocessClipLow; ?>'> low, 
+					<input type='text' name='preprocessClipHigh' size='3' value='<?php if(empty($preprocessClipHigh)) echo "3.5"; else echo $preprocessClipHigh; ?>'> high: 
+					<b>Clip</b>. (Specified as a multiple of the standard deviation)
+				</td></tr>
+				<tr><td>
+					<b>Mask:</b>
+					<table style="padding-left: 20px;">
+						<tr><td>
+							<b>Gradient: </b>
+							<input type='radio' name='maskGradient' value='true' checked> True
+							<input type='radio' name='maskGradient' value='false'> False
+						</td></tr>
+						<tr><td>
+							<b>Iter: </b>
+							<input type='radio' name='maskIter' value='true' checked> True
+							<input type='radio' name='maskIter' value='false'> False
+						</td></tr>
+						<tr><td>
+							<b>Filter: </b>
+							<input type='radio' name='maskFilter' value='low'> Low
+							<input type='radio' name='maskFilter' value='median' checked> Median
+							<input type='radio' name='maskFilter' value='high'> High
+						</td></tr>
+						<tr><td>
+							<input type='text' name='maskKernelX' size='3' value='<?php if(empty($maskKernelX)) echo "5"; else echo $maskKernelX; ?>'> x-axis, 
+							<input type='text' name='maskKernelY' size='3' value='<?php if(empty($maskKernelY)) echo "5"; else echo $maskKernelY; ?>'> y-axis: 
+							<b>Kernel</b>. (Size of the window over which the median is computed)
+						</td></tr>
+						<tr><td>
+							<input type='text' name='maskClipLow' size='3' value='<?php if(empty($maskClipLow)) echo "3.0"; else echo $maskClipLow; ?>'> low, 
+							<input type='text' name='maksClipHigh' size='3' value='<?php if(empty($maksClipHigh)) echo "3.0"; else echo $maksClipHigh; ?>'> high: 
+							<b>Clip</b>. (Specified as a multiple of the standard deviation)
+						</td></tr>
+					</table>
+				</td></tr>
+			</table>
+		</td></tr>
+		<?php } ?>
+		<tr><td>
+			<b>Window: </b>
+			<table style="padding-left: 20px;">
+				<?php if($advanceCheck){ ?>
+				<tr><td>
+					<input type='text' name='windowMaskX' size='3' value='<?php if(empty($windowMaskX)) echo "10"; else echo $windowMaskX; ?>'> x-axis, 
+					<input type='text' name='windowMaskY' size='3' value='<?php if(empty($windowMaskY)) echo "10"; else echo $windowMaskY; ?>'> y-axis: 
+					<b>Mask Apodization</b>. ( 1 ~ 20 )
+				</td></tr>
+				<?php } ?>
+				<tr><td>
+					<input type='text' name='lowDiameterX' size='3' value='<?php echo $lowDiameterX; ?>'> x-axis, 
+					<input type='text' name='lowDiameterY' size='3' value='<?php echo $lowDiameterY; ?>'> y-axis: 
+					<b>Lowpass Diameter</b>.
+				</td></tr>
+				<?php if($advanceCheck){ ?>
+				<tr><td>
+					<input type='text' name='lowApodizationX' size='3' value='<?php if(empty($lowApodizationX)) echo "0.01"; else echo $lowApodizationX; ?>'> x-axis, 
+					<input type='text' name='lowApodizationY' size='3' value='<?php if(empty($lowApodizationY)) echo "0.01"; else echo $lowApodizationY; ?>'> y-axis: 
+					<b>Lowpass Apodization</b>. ( 1 / pixel )
+				</td></tr>
+				<?php } ?>
+				<tr><td>
+					<input type='text' name='highDiameterX' size='3' value='<?php echo $highDiameterX; ?>'> x-axis, 
+					<input type='text' name='highDiameterY' size='3' value='<?php echo $highDiameterY; ?>'> y-axis: 
+					<b>Highpass Diameter</b>.
+				</td></tr>
+				<?php if($advanceCheck){ ?>
+				<tr><td>
+					<input type='text' name='highApodizationX' size='3' value='<?php if(empty($highApodizationX)) echo "0.02"; else echo $highApodizationX; ?>'> x-axis, 
+					<input type='text' name='highApodizationY' size='3' value='<?php if(empty($highApodizationY)) echo "0.02"; else echo $highApodizationY; ?>'> y-axis: 
+					<b>Highpass Apodization</b>. ( 1 / pixel )
+				</td></tr>
+				<?php } ?>
+			</table>
+		</td></tr>
+		<tr><td>
+			<b>Map: </b>
+			<table style="padding-left: 20px;">
+				<tr><td>
+					<input type='text' name='mapSizeX' size='3' value='<?php echo $mapSizeX; ?>'> x-axis, 
+					<input type='text' name='mapSizeY' size='3' value='<?php echo $mapSizeY; ?>'> y-axis,  
+					<input type='text' name='mapSizeZ' size='3' value='<?php echo $mapSizeZ; ?>'> z-axis:
+					<b>Size</b>. ( Between 1 to image size )
+				</td></tr>
+				<?php if($advanceCheck){ ?>
+				<tr><td>
+					<input type='text' name='mapLowpassDiameterX' size='3' value='<?php if(empty($mapLowpassDiameterX)) echo "0.50"; else echo $mapLowpassDiameterX; ?>'> x-axis, 
+					<input type='text' name='mapLowpassDiameterY' size='3' value='<?php if(empty($mapLowpassDiameterY)) echo "0.50"; else echo $mapLowpassDiameterY; ?>'> y-axis:
+					<b>Lowpass Diameter</b>. ( Between 0 to 1 )
+				</td></tr>
+				<tr><td>
+					<input type='text' name='mapLowpassApodizationX' size='3' value='<?php if(empty($mapLowpassApodizationX)) echo "0.02"; else echo $mapLowpassApodizationX; ?>'> x-axis, 
+					<input type='text' name='mapLowpassApodizationX' size='3' value='<?php if(empty($mapLowpassApodizationX)) echo "0.02"; else echo $mapLowpassApodizationX; ?>'> y-axis:
+					<b>Lowpass Apodization</b>. ( Between 0 to 1 )
+				</td></tr>
+				<?php } ?>
+			</table>
+		</td></tr>
+		<?php if($advanceCheck){ ?>
+		<tr><td>
+			<b>Align: </b>
+			<table style="padding-left: 20px;">
+				<tr><td>
+					<b>Estimate: </b>
+					<input type='radio' name='alignEstimate' value='true' checked> True
+					<input type='radio' name='alignEstimate' value='false'> False
+				</td></tr>
+				<tr><td>
+					<input type='text' name='maxCorrection' size='4' value='<?php if(empty($maxCorrection)) echo "0.04"; else echo $maxCorrection; ?>'>
+					<b>Max-Correction</b>. ( Between 0 to 0.1 )
+				</td></tr>
+				<tr><td>
+					<input type='text' name='alignMaskX' size='3' value='<?php if(empty($alignMaskX)) echo "10"; else echo $alignMaskX; ?>'> x-axis, 
+					<input type='text' name='alignMaskY' size='3' value='<?php if(empty($alignMaskY)) echo "10"; else echo $alignMaskY; ?>'> y-axis: 
+					<b>Mask Apodization</b>. ( 1 ~ 20 )
+				</td></tr>
+				<tr><td>
+					<b>Correlation Mode: </b>
+					<input type='radio' name='correlationMode' value='mcf' checked> mcf, 
+					<input type='radio' name='correlationMode' value='xcf'> xcf, 
+					<input type='radio' name='correlationMode' value='pcf'> pcf, 
+					<input type='radio' name='correlationMode' value='dbl'> dbl
+				</td></tr>
+				<tr><td>
+					<input type='text' name='correlationX' size='3' value='<?php if(empty($correlationX)) echo "128"; else echo $correlationX; ?>'> x-axis, 
+					<input type='text' name='correlationY' size='3' value='<?php if(empty($correlationY)) echo "128"; else echo $correlationY; ?>'> y-axis: 
+					<b>Correlation Size</b> ( Between 1 to window size )
+				</td></tr>
+				<tr><td>
+					<input type='text' name='peakSearchRadiusX' size='3' value='<?php if(empty($peakSearchRadiusX)) echo "49"; else echo $peakSearchRadiusX; ?>'> x-axis, 
+					<input type='text' name='peakSearchRadiusY' size='3' value='<?php if(empty($peakSearchRadiusY)) echo "49"; else echo $peakSearchRadiusY; ?>'> y-axis: 
+					<b>Peak-search Radius</b> ( Between 1 to half of the window size )
+				</td></tr>
+			</table>
+		</td></tr>
+		<?php } ?>
+	</table>
+<?php 		
 	}
   	elseif ($protomocheck) {
 		if ($lastalignerId) {
