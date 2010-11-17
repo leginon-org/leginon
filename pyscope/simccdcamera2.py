@@ -5,6 +5,7 @@ import random
 random.seed()
 import time
 import remote
+import os
 
 class SimCCDCamera(ccdcamera.CCDCamera):
 	name = 'SimCCDCamera'
@@ -31,6 +32,8 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.frames_on = True
 		self.frame_rate = 0.05
 		self.inserted = True
+		self.saverawframes = False
+		self.rawframesname = 'frames'
 
 	def getRetractable(self):
 		return True
@@ -212,6 +215,14 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			else:
 				raise RuntimeError('unknown exposure type: %s' % (self.exposure_type,))
 			sum += frame
+
+		print 'SAVERAWFRAMES', self.saverawframes
+		if self.saverawframes:
+			try:
+				os.mkdir(self.rawframesname)
+			except:
+				pass
+
 		return sum
 
 	def getEnergyFiltered(self):
@@ -241,6 +252,23 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			return nframes
 		else:
 			return None
+
+	def getSaveRawFrames(self):
+		'''Save or Discard'''
+		return self.saverawframes
+
+	def setSaveRawFrames(self, value):
+		'''True: save frames,  False: discard frames'''
+		self.saverawframes = bool(value)
+
+	def setNextRawFramesName(self, value):
+		self.rawframesname = value
+
+	def getNextRawFramesName(self):
+		return self.rawframesname
+
+	def getPreviousRawFramesName(self):
+		return self.rawframesname
 
 class SimOtherCCDCamera(SimCCDCamera):
 	name = 'SimOtherCCDCamera'

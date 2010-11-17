@@ -77,11 +77,19 @@ class CCDCamera(baseinstrument.BaseInstrument):
 	def getSettings(self):
 		settings = self.getGeometry()
 		settings['exposure time'] = self.getExposureTime()
+		try:
+			settings['save frames'] = self.getSaveRawFrames()
+		except:
+			settings['save frames'] = None
 		return settings
 
 	def setSettings(self, settings):
 		self.setGeometry(settings)
 		self.setExposureTime(settings['exposure time'])
+		try:
+			self.setSaveRawFrames(settings['save frames'])
+		except:
+			pass
 
 	def getBinning(self):
 		raise NotImplementedError
