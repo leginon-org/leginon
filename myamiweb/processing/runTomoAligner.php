@@ -225,12 +225,9 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 			<b><center>Tilt Series Alignment Params:</center></b>
 		</td></tr>
 		<tr><td>
-			<b>Basic Setting: </b>
-			<input type='radio' onClick=submit() name='setting' value='basic' <?php echo $basicCheck; ?>>
-		</td></tr>
-		<tr><td>
-			<b>Advance Setting: </b> 
-			<input type='radio' onClick=submit() name='setting' value='advance' <?php echo $advanceCheck; ?>><br /><br />
+			<b>Setting: </b>
+			Basic <input type='radio' onClick=submit() name='setting' value='basic' <?php echo $basicCheck; ?>>
+			Advance	<input type='radio' onClick=submit() name='setting' value='advance' <?php echo $advanceCheck; ?>><br /><br />
 		</td></tr>
 		<tr><td>
 			<input type='text' name='maxIteration' size='3' value='<?php echo $maxIteration; ?>'>
@@ -240,6 +237,10 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 			<input type='text' name='windowX' size='4' value='<?php echo $windowX; ?>'> x-axis, 
 			<input type='text' name='windowY' size='4' value='<?php echo $windowY; ?>'> y-axis: 
 			<b>Window Size</b>. (Number of Pixel)
+		</td></tr>
+		<tr><td>
+			<input type='text' name='alignSample' size='4' value='<?php echo $alignSample; ?>'>
+			<b>Alignment Sampling</b>. (S)
 		</td></tr>
 		<tr><td>
 			<b>Back Projection Body Size</b> ( T / F )
@@ -254,10 +255,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 				</td></tr>
 			</table>
 		</td></tr>
-		<tr><td>
-			<input type='text' name='alignSample' size='4' value='<?php echo $alignSample; ?>'>
-			<b>Alignment Sampling</b>. (S)
-		</td></tr>
+
 		<?php if($advanceCheck){ ?>
 		<tr><td>
 			<b>Binning: </b> 
@@ -488,7 +486,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	</tr>
   </table>
 	";
-	if ($protomocheck) {
+	if ($protomocheck || $protomo2check) {
 		echo referenceBox("Accurate marker-free alignment with simultaneous geometry determination and reconstruction of tilt series in electron tomography.", 2006, "Winkler H, Taylor KA", "Ultramicroscopy.", 106, 3, 16137829, false, "doi:10.1016/j.ultramic.2005.07.007", false);
 	} else {
 		echo referenceBox("Computer visualization of three-dimensional image data using IMOD", 1996, "Kremer J.R., D.N. Mastronarde and J.R. McIntosh", "J. Struct. Biol.", 116, 1, 8742726, false, "doi:10.1006/jsbi.1996.0013", false);
