@@ -14,6 +14,7 @@ $minx = ($_GET['minx']);
 $miny = ($_GET['miny']);
 $maxx = ($_GET['maxx']);
 $maxy = ($_GET['maxy']);
+$rev = ($_GET['rev']);
 
 if (!is_null($minx)) {
 	$linex[] = $minx;
@@ -27,24 +28,27 @@ $stackparts = $particle->getStackMeanAndStdev($stackid);
 #print_r($stackparts[0])."<br/>\n";
 
 $minstdev = 100000;
+$maxstdev = 0;
 foreach ($stackparts as $part) {
 	$datax[] = $part['mean'];
 	if ($part['stdev'] < $minstdev)
 		$minstdev = $part['stdev'];
+	if ($part['stdev'] > $maxstdev)
+		$maxstdev = $part['stdev'];
 	$datay[] = $part['stdev'];
 }
 
 if (!is_null($minx)) {
 	$dlinex[] = $minx;
 	$dlinex[] = $minx;
-	$dliney[] = $minstdev*0.9;
+	$dliney[] = (!is_null($rev)) ? $maxstdev*1.02: $minstdev*0.9;
 	$dliney[] = $miny;
 }
 
 if (!is_null($maxx)) {
 	$ulinex[] = $maxx;
 	$ulinex[] = $maxx;
-	$uliney[] = $minstdev*0.9;
+	$uliney[] = (!is_null($rev)) ? $maxstdev*1.02: $minstdev*0.9;
 	$uliney[] = $maxy;
 }
 

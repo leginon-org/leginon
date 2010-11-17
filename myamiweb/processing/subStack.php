@@ -66,13 +66,12 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$numOfParticles = ($_POST['numOfParticles']) ? $_POST['numOfParticles'] : '';
 	$correctbtcheck = ($_POST['correctbt']=='on') ? 'checked' : '';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
-			
+	$reversecheck = ($_POST['reverse']=='on') ? 'checked' : '';
 
 	$minx = (is_numeric($_POST['minx'])) ? $_POST['minx'] : '';	
 	$maxx = (is_numeric($_POST['maxx'])) ? $_POST['maxx'] : '';
 	$miny = (is_numeric($_POST['miny'])) ? $_POST['miny'] : '';
 	$maxy = (is_numeric($_POST['maxy'])) ? $_POST['maxy'] : '';
-
 	// get outdir path
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
@@ -175,10 +174,13 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 		echo "<table class='tablebubble'>\n";
 		echo "<tr><td align='center' valign='top'>\n";
 
+		// add variable if keeping particles above line
+		$revtext = ($reversecheck) ? '&rev=True' : '';
+		
 		// Mean plot 
 		if (is_numeric($minx) and is_numeric($maxx) and is_numeric($miny) and is_numeric($maxy)) {
 			echo "<img border='0' width='512' height='384' src='stack_mean_stdev.php?w=512&sId=$stackId"
-				."&minx=$minx&maxx=$maxx&miny=$miny&maxy=$maxy&expId=$expId'><br/>\n";
+				."&minx=$minx&maxx=$maxx&miny=$miny&maxy=$maxy&expId=$expId".$revtext."'><br/>\n";
 		} else {
 			echo "<img border='0' width='512' height='384' src='stack_mean_stdev.php?w=512&sId=$stackId&expId=$expId'><br>\n";
 		}
@@ -202,6 +204,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 		echo "<td> <input type='text' name='maxx' value='$maxx' size='7'> maximum X<br />\n </td></tr>\n";
 		echo "<tr><td><input type='text' name='miny' value='$miny' size='7'> minimum Y<br />\n</td>";
 		echo "<td> <input type='text' name='maxy' value='$maxy' size='7'> maximum Y<br />\n </td></tr>";
+		echo "<tr><td align='center' colspan='2'><input type='checkbox' NAME='reverse' $reversecheck>Keep particles above line</td></tr>";
 		echo "<tr><td align='center' colspan='2'><input type='SUBMIT' NAME='testmean' VALUE='Test selected points'></td></tr>";
 		echo "<tr><td align='center' colspan='2'><font color='#CC3333'><b>Warning:</b></font> <i>limits do not create a box,"
 			." but rather a trapezoid, click test to visualize</i></td></tr>";
@@ -289,6 +292,7 @@ function runSubStack() {
 	$maxx = (is_numeric($_POST['maxx'])) ? $_POST['maxx'] : '';
 	$miny = (is_numeric($_POST['miny'])) ? $_POST['miny'] : '';
 	$maxy = (is_numeric($_POST['maxy'])) ? $_POST['maxy'] : '';
+	$reverse = ($_POST['reverse']=='on') ? '--keep-above ' : '';
 	$description=$_POST['description'];
 
 	
@@ -339,7 +343,7 @@ function runSubStack() {
 	} elseif ($exclude) {
 		$command.="--exclude=".$exclude." ";
 	} else {
-		$command.="--minx=".$minx." --maxx=".$maxx." --miny=".$miny." --maxy=".$maxy." ";
+		$command.="--minx=".$minx." --maxx=".$maxx." --miny=".$miny." --maxy=".$maxy." ".$reverse;
 	}
 	$command.= ($correctbt=='on') ? "--correct-beamtilt " : "";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";

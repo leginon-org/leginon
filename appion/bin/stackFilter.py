@@ -24,6 +24,8 @@ class subStackScript(appionScript.AppionScript):
 			help="minimum Y value")
 		self.parser.add_option("--maxy", dest="maxy", type="float",
 			help="maximum Y value")
+		self.parser.add_option("--keep-above", dest="keepabove", default=False,
+			action="store_true", help="keep particles above instead of below")
 		
 	#=====================
 	def checkConflicts(self):
@@ -70,7 +72,8 @@ class subStackScript(appionScript.AppionScript):
 			if stackpart['mean'] > self.params['minx'] and stackpart['mean'] < self.params['maxx']:
 				#print str(stackpart['particleNumber'])+","+ str(stackpart['mean'])+","+str(stackpart['stdev'])
 				calcY = slope*stackpart['mean']+intercept 
-				if calcY >= stackpart['stdev']:
+				if (calcY >= stackpart['stdev'] and self.params['keepabove'] is not True) or \
+					(calcY <= stackpart['stdev'] and self.params['keepabove'] is True):
 					emanpartnum = stackpart['particleNumber']-1
 					f.write('%i\n' % emanpartnum)
 					numparticles+=1
