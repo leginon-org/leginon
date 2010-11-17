@@ -49,7 +49,9 @@ class SignaturePickerLoop(particleLoop2.ParticleLoop):
 			templaterunq['selectionrun'] = rundata
 			templaterunq['template']     = appiondata.ApTemplateImageData.direct_query(templateid)
 			### this is wrong only check last template run not this run
-			templatedata = templaterunq.query(results=1)[0]
+			queryresult = templaterunq.query(results=1)
+			if queryresult:
+				templatedata=queryresult[0]
 		return True
 
 	##################################################
