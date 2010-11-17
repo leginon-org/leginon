@@ -9,6 +9,7 @@ import glob
 from appionlib import apDisplay
 from appionlib import apParam
 from appionlib import pymagic
+from appionlib import apImagicFile
 
 #======================
 def alirefs(infile, outfile=None, mask=0.99, maxshift=0.3, minrot=-180.0, maxrot=180.0, iter=5, minrad=0.0, maxrad=0.9):
@@ -88,7 +89,7 @@ def alimass(infile, outfile=None, maxshift=0.2, ceniter=10, nproc=1):
 
 
 #======================
-def mralign(alistack, origstack, refs, outfile=None, nproc=1):
+def mralign(alistack, origstack, refs, outfile=None, mask=0.8, imask=0, nproc=1):
 	"""
 	perform a multi-reference alignment
 	"""
@@ -101,7 +102,7 @@ def mralign(alistack, origstack, refs, outfile=None, nproc=1):
 	else:
 		outname = "mrastack"
 
-	if self.params['nproc'] > 1:
+	if nproc > 1:
 		myIm = pymagic.ImagicSession("align/mralign.e_mpi",nproc)
 		myIm.toImagicQuiet("YES")
 		myIm.toImagicQuiet(nproc)
@@ -130,15 +131,62 @@ def mralign(alistack, origstack, refs, outfile=None, nproc=1):
 	if imagicv < 91120:
 		myIm.toImagicQuiet("NO")
 	myIm.toImagicQuiet("0.31")
+	# check if there are any rotations stored in the header
+	equivRots = apImagicFile.readIndexFromHeader(aliname, 116)
+	hasRots = False
+	for value in equivRots:
+		if value != 0:
+			hasRots = True
+			break
+
 	# don't ask Max shift (during this alignment) for first iteration:
-	if self.params['currentiter'] > 1:
+	if hasRots is True:
 		myIm.toImagicQuiet("0.2")
 	myIm.toImagicQuiet("-180,180")
 	# don't ask rotation (during this alignment) for first iteration:
-	if self.params['currentiter'] > 1:
+	if hasRots is True:
 		myIm.toImagicQuiet("-180,180")
 	myIm.toImagicQuiet("MEDIUM")
-	myIm.toImagicQuiet("0.0,%.2f"%(self.workingmask*2/self.workingboxsize))
+	myIm.toImagicQuiet("%.2f,%.2f"%(imask,mask))
 	myIm.toImagicQuiet("2")
 	myIm.toImagicQuiet("NO")
 	myIm.close()
+
+	### check that it ran correctly
+	if not os.path.exists(outname+".hed"):
+		apDisplay.printError("mralign.e did not execute properly")
+		return None
+
+	return outname
+
+#======================
+def headersToFile(infile,outfile=None):
+	"""
+	writes out shift values to a file
+	"""
+
+	fname = pymagic.fileFilter(infile)
+	if not outfile:
+		outfile = "outparams.plt"
+
+	myIm = pymagic.ImagicSession("stand/headers.e")
+	if myIm.version() < 91120:
+		myIm.toImagicQuiet(fname)
+		myIm.toImagicQuiet("PLT")
+		myIm.toImagicQuiet("SHIFT")
+		myIm.toImagicQuiet(outfile)
+		myIm.toImagicQuiet("*")
+	else:
+		myIm.toImagicQuiet("PLT")
+		myIm.toImagicQuiet("SHIFT")
+		myIm.toImagicQuiet(fname)
+		myIm.toImagicQuiet(outfile)
+	myIm.close()
+
+	### check that it ran correctly
+	if not os.path.exists(outfile):
+		apDisplay.printError("headers.e did not execute properly")
+		return None
+
+	return outfile
+

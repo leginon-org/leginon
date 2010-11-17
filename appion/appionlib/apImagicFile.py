@@ -12,6 +12,7 @@ import shutil
 #appion
 from appionlib import apDisplay
 from appionlib import apFile
+from appionlib import pymagic
 import numpy
 from pyami import mrc, mem
 import pyami.quietscipy
@@ -191,6 +192,29 @@ def readImagicHeader(headerfilename):
 	header['min']=f[22]
 
 	return header
+
+#===============	
+def readIndexFromHeader(headerfilename, indexnum, numparts=100):
+	"""
+	returns the header values contained at the index
+	as an array of float values
+	Limited to the numparts if specified
+	"""
+	fname = pymagic.fileFilter(headerfilename)		
+	headfile=open(fname+".hed",'rb')
+
+	# get number or particles in stack
+	nump = int('%d' % (os.stat(fname+".hed")[6]/1024))
+	if numparts > nump:
+		numparts = nump
+
+	# create array of values
+	headervals=[]
+	for particle in range(numparts+1):
+		headerbytes = headfile.read(1024)
+		headervals.append(numpy.fromstring(headerbytes,dtype=numpy.float32)[indexnum])
+	headfile.close()
+	return headervals
 
 #===============	
 def readImagicData(datafilename, headerdict, firstpart=1, numpart=1):
