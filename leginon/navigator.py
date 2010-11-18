@@ -135,6 +135,12 @@ class Navigator(node.Node):
 			check=True
 		else:
 			check=False
+
+		## initial change to parent preset,
+		## otherwise presets manager may never know what happened
+		self.logger.info('change to parent preset: %s' % (preset['name'],))
+		self.presetsclient.toScope(preset['name'])
+
 		self.startTimer('move')
 		# Force cycle_after to True because PresetsManager does not know that preset
 		# has been changed by Navigator and will not cycle on the first target.  
@@ -216,6 +222,17 @@ class Navigator(node.Node):
 			self.panel.navigateDone()
 			return True
 
+		if movetype.endswith('stage position'):
+			moveparam = 'stage position'
+		elif movetype == 'image beam shift':
+			moveparam = 'image shift'
+		else:
+			moveparam = movetype
+		scopeshift = {'moveparam': moveparam, 'x':None, 'y':None}
+		for axis in ('x','y'):
+			scopeshift[axis] = newstate[moveparam][axis] - scope[moveparam][axis]
+		self.logger.info('change in %(moveparam)s: %(x).4e, %(y).4e' % scopeshift)
+		
 		self.oldstate = self.newstate
 		self.newstate = newstate
 		emdat = leginondata.NavigatorScopeEMData()

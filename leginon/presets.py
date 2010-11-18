@@ -706,7 +706,9 @@ class PresetsManager(node.Node):
 		return self.presetsclient.getPresetsFromDB(sessiondata)
 
 	def cycleToScope(self, presetname):
+		self.setStatus('processing')
 		self._cycleToScope(presetname)
+		self.setStatus('idle')
 		self.panel.presetsEvent()
 
 	def _cycleToScope(self, presetname, dofinal=True, keep_shift=False):
@@ -1201,6 +1203,11 @@ class PresetsManager(node.Node):
 				self.logger.error(errstr % e)
 				self.panel.presetsEvent()
 				return
+			temp_mag = self.instrument.tem.Magnification
+			while temp_mag != self.currentpreset['magnification']:
+				time.sleep(1)
+				temp_mag = self.instrument.tem.Magnification
+				self.logger.warning('Preset change not completed. Wait...')
 			if label == 'park':
 				self.logger.info('Parked at preset "%s"' % (presetname,))
 			else:
@@ -1208,6 +1215,7 @@ class PresetsManager(node.Node):
 						mode = acquiremode[label], binning = acquirebin[label])
 				self.alignimages[label] = imagedata
 				self.panel.setAlignImage(imagedata['image'], label)
+
  
 			self.panel.presetsEvent()
 			
@@ -1476,14 +1484,18 @@ class PresetsManager(node.Node):
 			movetype = 'stage position'
 		else:
 			movetype = 'image shift'
-		if self.currentpreset != p:
-			self.cycleToScope(p)
 		self.navclient.moveToTarget(target, movetype)
 		if label == 'right':
 		#	save preset from the current microscope state if the right image is clicked
+			# 
+			temp_mag = self.instrument.tem.Magnification
+			while temp_mag != self.currentpreset['magnification']:
+				time.sleep(1)
+				temp_mag = self.instrument.tem.Magnification
+				self.logger.warning('Preset change not completed. Wait...')
 			self.fromScope(p)
-		if self.panel.customalign == False:
-			self.updateSameMagPresets(p)
+			if self.panel.customalign == False:
+				self.updateSameMagPresets(p)
 		self.acquireAlignImages()
 
 	def unbinnedArea(self, presetname):
@@ -1620,7 +1632,7 @@ class PresetsManager(node.Node):
 			return
 		if preset != selectedpreset:
 			self.logger.info('Send the selected preset to scope')
-			self.cycleToScope(selectedpreset)
+			self._cycleToScope(selectedpreset)
 		self.getValidTempMag()
 
 	def getValidTempMag(self):
@@ -1755,7 +1767,7 @@ class PresetsManager(node.Node):
 
 		if cycle:
 			preset = self.currentpreset['name']
-			self.cycleToScope(preset)
+			self._cycleToScope(preset)
 			self.instrument.tem.BeamShift = self.new_beamshift
 
 		self.acquireBeamImage()
