@@ -80,7 +80,7 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		try:
 			settings['save frames'] = self.getSaveRawFrames()
 		except:
-			settings['save frames'] = None
+			settings['save frames'] = False
 		return settings
 
 	def setSettings(self, settings):
@@ -197,6 +197,9 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		return False
 
 	def getEnergyFiltered(self):
+		return False
+
+	def getSaveRawFrames(self):
 		return False
 
 class FastCCDCamera(CCDCamera):

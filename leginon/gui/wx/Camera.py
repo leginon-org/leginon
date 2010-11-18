@@ -198,6 +198,7 @@ class CameraPanel(wx.Panel):
 		return self.saveframes.GetValue()
 
 	def _setSaveFrames(self, value):
+		value = bool(value)
 		self.saveframes.SetValue(value)
 
 	def onCommonChoice(self, evt):
