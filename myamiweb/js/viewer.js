@@ -188,6 +188,9 @@ function getKey(e)
 		case 'H':
 			update_image_list()
 			break
+		case 'U':
+			update_image_list()
+			break
 		case 'E':
 			image_is_exemplar()
 			incIndex()
