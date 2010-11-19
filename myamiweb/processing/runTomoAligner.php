@@ -74,11 +74,10 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	$LdiameterY = $_POST['LdiameterY'];
 	$HdiameterX = $_POST['HdiameterX'];
 	$HdiameterY= $_POST['HdiameterY'];
-	$BProjectBodySize = $_POST['BProjectBodySize'];
+
 	$protomocheck = ($_POST['alignmethod'] == 'protomo') ? "CHECKED" : "";
 	$protomo2check = ($_POST['alignmethod'] == 'protomo2' || !($_POST['alignmethod'])) ? "CHECKED" : "";
-	$basicCheck = (($protomo2check == "CHECKED" && $_POST['setting'] != 'advance') || !($_POST['alignmethod'])) ? "CHECKED" : "";
-	$advanceCheck = ($protomo2check == "CHECKED" && $_POST['setting'] == 'advance') ? "CHECKED" : "";
+
 	$imodcheck = ($_POST['alignmethod'] == 'imod-shift') ? "CHECKED" : "";
 	echo"
   <table border=3 class=tableborder>
@@ -220,6 +219,62 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
       <td Valign='TOP' class='tablebg'>";     
 
 	if ($protomo2check){
+		if ($lastalignerId) {
+			$lastalignparams = $refinedata[0];
+			$defcycle = $lastalignparams['cycle'] + 1;
+		} else {
+			$defcycle = 1;
+		}
+		
+		$basicCheck = (($protomo2check == "CHECKED" && $_POST['setting'] != 'advance') || !($_POST['alignmethod'])) ? "checked" : "";
+		$advanceCheck = ($protomo2check == "CHECKED" && $_POST['setting'] == 'advance') ? "checked" : "";
+		$cycle = ($_POST['cycle']) ? $_POST['cycle'] : $defcycle;
+		$maxIteration = ($_POST['maxIteration']) ? $_POST['maxIteration'] : '1';
+		$windowX = ($_POST['windowX']) ? $_POST['windowX'] : '512';
+		$windowY = ($_POST['windowY']) ? $_POST['windowY'] : '512';
+		$alignSample = ($_POST['alignSample']) ? $_POST['alignSample'] : '4';
+		$sampleThickness = ($_POST['sampleThickness']) ? $_POST['sampleThickness'] : '40';
+		$highestTiltAngle = ($_POST['highestTiltAngle']) ? $_POST['highestTiltAngle'] : '0.4848';
+		$binning = (empty($_POST['binning']) && $advanceCheck=="checked") ? 'true' : $_POST['binning'];
+		$preprocessing = (empty($_POST['preprocessing']) && $advanceCheck=="checked") ? 'true' : $_POST['preprocessing'];
+		$logging = (empty($_POST['logging']) && $advanceCheck=="checked") ? 'false' : $_POST['logging'];
+		$preprocessBorder = ($_POST['preprocessBorder']) ? $_POST['preprocessBorder'] : '100';
+		$preprocessClipLow = ($_POST['preprocessClipLow']) ? $_POST['preprocessClipLow'] : '3.5';
+		$preprocessClipHigh = ($_POST['preprocessClipHigh']) ? $_POST['preprocessClipHigh'] : '3.5';
+		$maskGradient = (empty($_POST['maskGradient']) && $advanceCheck=="checked") ? 'true' : $_POST['maskGradient'];
+		$maskIter = (empty($_POST['maskIter']) && $advanceCheck=="checked") ? 'true' : $_POST['maskIter'];
+		$maskFilter = (empty($_POST['maskFilter']) && $advanceCheck=="checked") ? 'median' : $_POST['maskFilter'];		
+		$maskKernelX = ($_POST['maskKernelX']) ? $_POST['maskKernelX'] : '5';
+		$maskKernelY = ($_POST['maskKernelY']) ? $_POST['maskKernelY'] : '5';
+		$maskClipLow = ($_POST['maskClipLow']) ? $_POST['maskClipLow'] : '3.0';
+		$maksClipHigh = ($_POST['maksClipHigh']) ? $_POST['maksClipHigh'] : '3.0';
+		$windowMaskX = ($_POST['windowMaskX']) ? $_POST['windowMaskX'] : '10';
+		$windowMaskY = ($_POST['windowMaskY']) ? $_POST['windowMaskY'] : '10';
+		$lowDiameterX = ($_POST['lowDiameterX']) ? $_POST['lowDiameterX'] : '';
+		$lowDiameterY = ($_POST['lowDiameterY']) ? $_POST['lowDiameterY'] : '';
+		$lowApodizationX = ($_POST['lowApodizationX']) ? $_POST['lowApodizationX'] : '0.01';
+		$lowApodizationY = ($_POST['lowApodizationY']) ? $_POST['lowApodizationY'] : '0.01';
+		$highDiameterX = ($_POST['highDiameterX']) ? $_POST['highDiameterX'] : '';
+		$highDiameterY = ($_POST['highDiameterY']) ? $_POST['highDiameterY'] : '';
+		$highApodizationX = ($_POST['highApodizationX']) ? $_POST['highApodizationX'] : '0.02';
+		$highApodizationY = ($_POST['highApodizationY']) ? $_POST['highApodizationY'] : '0.02';	
+		$mapSizeX = ($_POST['mapSizeX']) ? $_POST['mapSizeX'] : '256';
+		$mapSizeY = ($_POST['mapSizeY']) ? $_POST['mapSizeY'] : '256';
+		$mapSizeZ = ($_POST['mapSizeZ']) ? $_POST['mapSizeZ'] : '128';
+		$mapLowpassDiameterX = ($_POST['mapLowpassDiameterX']) ? $_POST['mapLowpassDiameterX'] : '0.50';
+		$mapLowpassDiameterY = ($_POST['mapLowpassDiameterY']) ? $_POST['mapLowpassDiameterY'] : '0.50';
+		$mapLowpassApodizationX = ($_POST['mapLowpassApodizationX']) ? $_POST['mapLowpassApodizationX'] : '0.02';
+		$mapLowpassApodizationY = ($_POST['mapLowpassApodizationY']) ? $_POST['mapLowpassApodizationY'] : '0.02';
+		$alignEstimate = (empty($_POST['alignEstimate']) && $advanceCheck=="checked") ? 'true' : $_POST['alignEstimate'];
+		$alignMaskX = ($_POST['alignMaskX']) ? $_POST['alignMaskX'] : '10';
+		$alignMaskY = ($_POST['alignMaskY']) ? $_POST['alignMaskY'] : '10';
+		$maxCorrection = ($_POST['maxCorrection']) ? $_POST['maxCorrection'] : '0.04';
+		$correlationX = ($_POST['correlationX']) ? $_POST['correlationX'] : '128';
+		$correlationY = ($_POST['correlationY']) ? $_POST['correlationY'] : '128';
+		$peakSearchRadiusX = ($_POST['peakSearchRadiusX']) ? $_POST['peakSearchRadiusX'] : '49';
+		$peakSearchRadiusY = ($_POST['peakSearchRadiusY']) ? $_POST['peakSearchRadiusY'] : '49';
+		$corelationMode = (empty($_POST['corelationMode']) && $advanceCheck=="checked") ? 'mcf' : $_POST['corelationMode'];
+		
 ?>	<table>
 		<tr><td>
 			<b><center>Tilt Series Alignment Params:</center></b>
@@ -227,7 +282,12 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		<tr><td>
 			<b>Setting: </b>
 			Basic <input type='radio' onClick=submit() name='setting' value='basic' <?php echo $basicCheck; ?>>
-			Advance	<input type='radio' onClick=submit() name='setting' value='advance' <?php echo $advanceCheck; ?>><br /><br />
+			Advance	<input type='radio' onClick=submit() name='setting' value='advance' <?php echo $advanceCheck; ?>>
+		</td></tr>
+		<tr><td>
+			<b>Alignment Iteration: </b><?php echo $cycle; ?>
+			<input type='hidden' name='cycle' value='<?php echo $cycle; ?>'>
+			<hr />
 		</td></tr>
 		<tr><td>
 			<input type='text' name='maxIteration' size='3' value='<?php echo $maxIteration; ?>'>
@@ -250,8 +310,8 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 					<b>Thickness</b> at sampling. (T)
 				</td></tr>
 				<tr><td>
-					<input type='text' name='highestTitleAngle' size='4' value='<?php echo $highestTitleAngle; ?>'>
-					<b>cos( highest title angle )</b>. (F)
+					<input type='text' name='highestTiltAngle' size='4' value='<?php echo $highestTiltAngle; ?>'>
+					<b>cos( highest tilt angle )</b>. (F)
 				</td></tr>
 			</table>
 		</td></tr>
@@ -259,29 +319,29 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		<?php if($advanceCheck){ ?>
 		<tr><td>
 			<b>Binning: </b> 
-			<input type='radio' name='binning' value='true' checked> True
-			<input type='radio' name='binning' value='false'> False			
+			<input type='radio' name='binning' value='true' <?php if($binning=='true') echo 'checked'; ?>> True
+			<input type='radio' name='binning' value='false' <?php if($binning=='false') echo 'checked'; ?>> False			
 		</td></tr>
 		<tr><td>
 			<b>Preprocessing: </b> 
-			<input type='radio' name='preprocessing' value='true' checked> True
-			<input type='radio' name='preprocessing' value='false'> False			
+			<input type='radio' name='preprocessing' value='true' <?php if($preprocessing=='true') echo 'checked'; ?>> True
+			<input type='radio' name='preprocessing' value='false' <?php if($preprocessing=='false') echo 'checked'; ?>> False			
 		</td></tr>
 		<tr><td>
 			<b>Preprocess: </b>
 			<table style="padding-left: 20px;">
 				<tr><td>
 					<b>Logging: </b>
-					<input type='radio' name='logging' value='true'> True
-					<input type='radio' name='logging' value='false' checked> False
+					<input type='radio' name='logging' value='true' <?php if($logging=='true') echo 'checked'; ?>> True
+					<input type='radio' name='logging' value='false' <?php if($logging=='false') echo 'checked'; ?>> False
 				</td></tr>
 				<tr><td>
-					<input type='text' name='preprocessBorder' size='4' value='<?php if(empty($preprocessBorder))  echo "100"; else echo $preprocessBorder; ?>'>
+					<input type='text' name='preprocessBorder' size='4' value='<?php echo $preprocessBorder; ?>'>
 					<b>Border</b>.
 				</td></tr>
 				<tr><td>
-					<input type='text' name='preprocessClipLow' size='3' value='<?php if(empty($preprocessClipLow)) echo "3.5"; else echo $preprocessClipLow; ?>'> low, 
-					<input type='text' name='preprocessClipHigh' size='3' value='<?php if(empty($preprocessClipHigh)) echo "3.5"; else echo $preprocessClipHigh; ?>'> high: 
+					<input type='text' name='preprocessClipLow' size='3' value='<?php echo $preprocessClipLow; ?>'> low, 
+					<input type='text' name='preprocessClipHigh' size='3' value='<?php echo $preprocessClipHigh; ?>'> high: 
 					<b>Clip</b>. (Specified as a multiple of the standard deviation)
 				</td></tr>
 				<tr><td>
@@ -289,28 +349,28 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 					<table style="padding-left: 20px;">
 						<tr><td>
 							<b>Gradient: </b>
-							<input type='radio' name='maskGradient' value='true' checked> True
-							<input type='radio' name='maskGradient' value='false'> False
+							<input type='radio' name='maskGradient' value='true' <?php if($maskGradient=='true') echo 'checked'; ?>> True
+							<input type='radio' name='maskGradient' value='false' <?php if($maskGradient=='false') echo 'checked'; ?>> False
 						</td></tr>
 						<tr><td>
 							<b>Iter: </b>
-							<input type='radio' name='maskIter' value='true' checked> True
-							<input type='radio' name='maskIter' value='false'> False
+							<input type='radio' name='maskIter' value='true' <?php if($maskIter=='true') echo 'checked'; ?>> True
+							<input type='radio' name='maskIter' value='false' <?php if($maskIter=='false') echo 'checked'; ?>> False
 						</td></tr>
 						<tr><td>
 							<b>Filter: </b>
-							<input type='radio' name='maskFilter' value='low'> Low
-							<input type='radio' name='maskFilter' value='median' checked> Median
-							<input type='radio' name='maskFilter' value='high'> High
+							<input type='radio' name='maskFilter' value='low' <?php if($maskFilter=='low') echo 'checked'; ?>> Low
+							<input type='radio' name='maskFilter' value='median' <?php if($maskFilter=='median') echo 'checked'; ?>> Median
+							<input type='radio' name='maskFilter' value='high' <?php if($maskFilter=='high') echo 'checked'; ?>> High
 						</td></tr>
 						<tr><td>
-							<input type='text' name='maskKernelX' size='3' value='<?php if(empty($maskKernelX)) echo "5"; else echo $maskKernelX; ?>'> x-axis, 
-							<input type='text' name='maskKernelY' size='3' value='<?php if(empty($maskKernelY)) echo "5"; else echo $maskKernelY; ?>'> y-axis: 
+							<input type='text' name='maskKernelX' size='3' value='<?php echo $maskKernelX; ?>'> x-axis, 
+							<input type='text' name='maskKernelY' size='3' value='<?php echo $maskKernelY; ?>'> y-axis: 
 							<b>Kernel</b>. (Size of the window over which the median is computed)
 						</td></tr>
 						<tr><td>
-							<input type='text' name='maskClipLow' size='3' value='<?php if(empty($maskClipLow)) echo "3.0"; else echo $maskClipLow; ?>'> low, 
-							<input type='text' name='maksClipHigh' size='3' value='<?php if(empty($maksClipHigh)) echo "3.0"; else echo $maksClipHigh; ?>'> high: 
+							<input type='text' name='maskClipLow' size='3' value='<?php echo $maskClipLow; ?>'> low, 
+							<input type='text' name='maksClipHigh' size='3' value='<?php echo $maksClipHigh; ?>'> high: 
 							<b>Clip</b>. (Specified as a multiple of the standard deviation)
 						</td></tr>
 					</table>
@@ -323,8 +383,8 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 			<table style="padding-left: 20px;">
 				<?php if($advanceCheck){ ?>
 				<tr><td>
-					<input type='text' name='windowMaskX' size='3' value='<?php if(empty($windowMaskX)) echo "10"; else echo $windowMaskX; ?>'> x-axis, 
-					<input type='text' name='windowMaskY' size='3' value='<?php if(empty($windowMaskY)) echo "10"; else echo $windowMaskY; ?>'> y-axis: 
+					<input type='text' name='windowMaskX' size='3' value='<?php echo $windowMaskX; ?>'> x-axis, 
+					<input type='text' name='windowMaskY' size='3' value='<?php echo $windowMaskY; ?>'> y-axis: 
 					<b>Mask Apodization</b>. ( 1 ~ 20 )
 				</td></tr>
 				<?php } ?>
@@ -335,8 +395,8 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 				</td></tr>
 				<?php if($advanceCheck){ ?>
 				<tr><td>
-					<input type='text' name='lowApodizationX' size='3' value='<?php if(empty($lowApodizationX)) echo "0.01"; else echo $lowApodizationX; ?>'> x-axis, 
-					<input type='text' name='lowApodizationY' size='3' value='<?php if(empty($lowApodizationY)) echo "0.01"; else echo $lowApodizationY; ?>'> y-axis: 
+					<input type='text' name='lowApodizationX' size='3' value='<?php echo $lowApodizationX; ?>'> x-axis, 
+					<input type='text' name='lowApodizationY' size='3' value='<?php echo $lowApodizationY; ?>'> y-axis: 
 					<b>Lowpass Apodization</b>. ( 1 / pixel )
 				</td></tr>
 				<?php } ?>
@@ -347,8 +407,8 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 				</td></tr>
 				<?php if($advanceCheck){ ?>
 				<tr><td>
-					<input type='text' name='highApodizationX' size='3' value='<?php if(empty($highApodizationX)) echo "0.02"; else echo $highApodizationX; ?>'> x-axis, 
-					<input type='text' name='highApodizationY' size='3' value='<?php if(empty($highApodizationY)) echo "0.02"; else echo $highApodizationY; ?>'> y-axis: 
+					<input type='text' name='highApodizationX' size='3' value='<?php echo $highApodizationX; ?>'> x-axis, 
+					<input type='text' name='highApodizationY' size='3' value='<?php echo $highApodizationY; ?>'> y-axis: 
 					<b>Highpass Apodization</b>. ( 1 / pixel )
 				</td></tr>
 				<?php } ?>
@@ -365,13 +425,13 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 				</td></tr>
 				<?php if($advanceCheck){ ?>
 				<tr><td>
-					<input type='text' name='mapLowpassDiameterX' size='3' value='<?php if(empty($mapLowpassDiameterX)) echo "0.50"; else echo $mapLowpassDiameterX; ?>'> x-axis, 
-					<input type='text' name='mapLowpassDiameterY' size='3' value='<?php if(empty($mapLowpassDiameterY)) echo "0.50"; else echo $mapLowpassDiameterY; ?>'> y-axis:
+					<input type='text' name='mapLowpassDiameterX' size='3' value='<?php echo $mapLowpassDiameterX; ?>'> x-axis, 
+					<input type='text' name='mapLowpassDiameterY' size='3' value='<?php echo $mapLowpassDiameterY; ?>'> y-axis:
 					<b>Lowpass Diameter</b>. ( Between 0 to 1 )
 				</td></tr>
 				<tr><td>
-					<input type='text' name='mapLowpassApodizationX' size='3' value='<?php if(empty($mapLowpassApodizationX)) echo "0.02"; else echo $mapLowpassApodizationX; ?>'> x-axis, 
-					<input type='text' name='mapLowpassApodizationX' size='3' value='<?php if(empty($mapLowpassApodizationX)) echo "0.02"; else echo $mapLowpassApodizationX; ?>'> y-axis:
+					<input type='text' name='mapLowpassApodizationX' size='3' value='<?php echo $mapLowpassApodizationX; ?>'> x-axis, 
+					<input type='text' name='mapLowpassApodizationY' size='3' value='<?php echo $mapLowpassApodizationY; ?>'> y-axis:
 					<b>Lowpass Apodization</b>. ( Between 0 to 1 )
 				</td></tr>
 				<?php } ?>
@@ -383,33 +443,35 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 			<table style="padding-left: 20px;">
 				<tr><td>
 					<b>Estimate: </b>
-					<input type='radio' name='alignEstimate' value='true' checked> True
-					<input type='radio' name='alignEstimate' value='false'> False
+					<input type='radio' name='alignEstimate' value='true' <?php if($alignEstimate=='true') echo 'checked'; ?>> True
+					<input type='radio' name='alignEstimate' value='false' <?php if($alignEstimate=='false') echo 'checked'; ?>> False
 				</td></tr>
 				<tr><td>
-					<input type='text' name='maxCorrection' size='4' value='<?php if(empty($maxCorrection)) echo "0.04"; else echo $maxCorrection; ?>'>
+					<input type='text' name='maxCorrection' size='4' value='<?php echo $maxCorrection; ?>'>
 					<b>Max-Correction</b>. ( Between 0 to 0.1 )
 				</td></tr>
 				<tr><td>
-					<input type='text' name='alignMaskX' size='3' value='<?php if(empty($alignMaskX)) echo "10"; else echo $alignMaskX; ?>'> x-axis, 
-					<input type='text' name='alignMaskY' size='3' value='<?php if(empty($alignMaskY)) echo "10"; else echo $alignMaskY; ?>'> y-axis: 
+					<input type='text' name='alignMaskX' size='3' value='<?php echo $alignMaskX; ?>'> x-axis, 
+					<input type='text' name='alignMaskY' size='3' value='<?php echo $alignMaskY; ?>'> y-axis: 
 					<b>Mask Apodization</b>. ( 1 ~ 20 )
 				</td></tr>
 				<tr><td>
 					<b>Correlation Mode: </b>
-					<input type='radio' name='correlationMode' value='mcf' checked> mcf, 
-					<input type='radio' name='correlationMode' value='xcf'> xcf, 
-					<input type='radio' name='correlationMode' value='pcf'> pcf, 
-					<input type='radio' name='correlationMode' value='dbl'> dbl
+					<select name='corelationMode'>
+						<option value='mcf' <?php if($corelationMode=='mcf') echo 'selected="yes"'; ?>>mcf</option>
+						<option value='xcf' <?php if($corelationMode=='xcf') echo 'selected="yes"'; ?>>xcf</option>
+						<option value='pcf' <?php if($corelationMode=='pcf') echo 'selected="yes"'; ?>>pcf</option>
+						<option value='dbl' <?php if($corelationMode=='dbl') echo 'selected="yes"'; ?>>dbl</option>
+					</select>
 				</td></tr>
 				<tr><td>
-					<input type='text' name='correlationX' size='3' value='<?php if(empty($correlationX)) echo "128"; else echo $correlationX; ?>'> x-axis, 
-					<input type='text' name='correlationY' size='3' value='<?php if(empty($correlationY)) echo "128"; else echo $correlationY; ?>'> y-axis: 
+					<input type='text' name='correlationX' size='3' value='<?php echo $correlationX; ?>'> x-axis, 
+					<input type='text' name='correlationY' size='3' value='<?php echo $correlationY; ?>'> y-axis: 
 					<b>Correlation Size</b> ( Between 1 to window size )
 				</td></tr>
 				<tr><td>
-					<input type='text' name='peakSearchRadiusX' size='3' value='<?php if(empty($peakSearchRadiusX)) echo "49"; else echo $peakSearchRadiusX; ?>'> x-axis, 
-					<input type='text' name='peakSearchRadiusY' size='3' value='<?php if(empty($peakSearchRadiusY)) echo "49"; else echo $peakSearchRadiusY; ?>'> y-axis: 
+					<input type='text' name='peakSearchRadiusX' size='3' value='<?php echo $peakSearchRadiusX; ?>'> x-axis, 
+					<input type='text' name='peakSearchRadiusY' size='3' value='<?php echo $peakSearchRadiusY; ?>'> y-axis: 
 					<b>Peak-search Radius</b> ( Between 1 to half of the window size )
 				</td></tr>
 			</table>
@@ -508,15 +570,21 @@ function runTomoAligner() {
 	$command = "tomoaligner.py ";
 	$description=$_POST['description'];
 	
+	/** protomo 2 **/
 	$maxIteration = $_POST['maxIteration'];
 	$alignSample = $_POST['alignSample'];
+	$sampleThickness = $_POST['sampleThickness'];
+	$highestTiltAngle = $_POST['highestTiltAngle'];
 	$windowX = $_POST['windowX'];
 	$windowY = $_POST['windowY'];
-	$LdiameterX = $_POST['LdiameterX'];
-	$LdiameterY = $_POST['LdiameterY'];
-	$HdiameterX = $_POST['HdiameterX'];
-	$HdiameterY= $_POST['HdiameterY'];
-	$BProjectBodySize = $_POST['BProjectBodySize'];
+	$lowDiameterX = $_POST['lowDiameterX'];
+	$lowDiameterY = $_POST['lowDiameterY'];
+	$highDiameterX = $_POST['highDiameterX'];
+	$highDiameterY = $_POST['highDiameterY'];
+	$mapSizeX = $_POST['mapSizeX'];
+	$mapSizeY = $_POST['mapSizeY'];
+	$mapSizeZ = $_POST['mapSizeZ'];
+	/** end of protomo 2 **/
 	
 	$tiltseriesId=$_POST['tiltseriesId'];
 	$tiltseriesId2=$_POST['tiltseriesId2'];
@@ -552,23 +620,32 @@ function runTomoAligner() {
 			if (!$maxIteration) createTomoAlignerForm("<b>ERROR:</b> Enter the value of number of iterations.");
 			//make sure the alignment sampling value is provided
 			if (!$alignSample) createTomoAlignerForm("<b>ERROR:</b> Enter the value of alignment sampling");
+			//make sure the sample thickness value is provided.
+			if(!$sampleThickness) createTomoAlignerForm("<b>ERROR:</b> Enter the value of thickness at sampling.");
+			//make sure the tilt angle value is provided.
+			if(!$highestTiltAngle) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the tilt angle.");			
 			//make sure the value of the x-asix's window size is provided
 			if (!$windowX) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the x-asix's window size");
 			//make sure the value of the y-asix's window size is provided
 			if (!$windowY) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the y-asix's window size");
-			//make sure the value of the lowpass diameter (x-asix) is provided
-			if (!$LdiameterX) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the lowpass diameter (x-asix)");
-			//make sure the value of the lowpass diameter (y-asix) is provided
-			if (!$LdiameterY) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the lowpass diameter (y-asix)");
-			//make sure the value of the highpass diameter (x-asix) is provided
-			if (!$HdiameterX) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the highpass diameter (x-asix)");
-			//make sure the value of the highpass diameter (y-asix) is provided
-			if (!$HdiameterY) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the highpass diameter (y-asix)");
-			//make sure the vaule of the back projection body size is provided
-			if (!$BProjectBodySize) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the back projection body size");
+			//make sure the value of the lowpass diameter (x-axis) is provided
+			if (!$lowDiameterX) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the lowpass diameter (x-axis)");
+			//make sure the value of the lowpass diameter (y-axis) is provided
+			if (!$lowDiameterY) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the lowpass diameter (y-axis)");
+			//make sure the value of the highpass diameter (x-axis) is provided
+			if (!$highDiameterX) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the highpass diameter (x-axis)");
+			//make sure the value of the highpass diameter (y-axis) is provided
+			if (!$highDiameterY) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the highpass diameter (y-axis)");
+			//make sure the value of the map size (x-axis) is provided
+			if (!$mapSizeX) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the map size (x-axis)");
+			//make sure the value of the map size (y-axis) is provided
+			if (!$mapSizeY) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the map size (y-axis)");
+			//make sure the value of the map size (z-axis) is provided
+			if (!$mapSizeZ) createTomoAlignerForm("<b>ERROR:</b> Enter the value of the map size (z-axis)");
+	
 			
 			if($setting == 'advance'){
-				
+				//put the advance parameters here
 			}
 		}
 		$particle = new particledata();
@@ -601,15 +678,19 @@ function runTomoAligner() {
 	}
 	if ($alignmethod == 'protomo2') {
 		$command .="--sample=$alignSample ";
+		$command .="--sample_thickness=$sampleThickness ";
+		$command .="--highest_tilt_angle=$highestTiltAngle ";
 		$command .="--windowsize_x=$windowX ";
 		$command .="--windowsize_y=$windowY ";
-		$command .="--lowpass_diameter_x=$LdiameterX ";
-		$command .="--lowpass_diameter_y=$LdiameterY ";
-		$command .="--highpass_diameter_x=$HdiameterX ";
-		$command .="--highpass_diameter_y=$HdiameterY ";
-		$command .="--backprojection_bodysize=$BProjectBodySize ";
-		$command .="--max_iterations=$maxIterations ";
-
+		$command .="--lowpass_diameter_x=$lowDiameterX ";
+		$command .="--lowpass_diameter_y=$lowDiameterY ";
+		$command .="--highpass_diameter_x=$highDiameterX ";
+		$command .="--highpass_diameter_y=$highDiameterY ";
+		$command .="--map_size_x=$mapSizeX ";
+		$command .="--map_size_y=$mapSizeY ";
+		$command .="--map_size_z=$mapSizeZ ";
+		$command .="--max_iterations=$maxIteration ";
+		
 	}
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
