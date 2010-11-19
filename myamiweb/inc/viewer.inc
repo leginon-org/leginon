@@ -1296,11 +1296,13 @@ class view {
 		$htmlframe .= $imgstatus;
 		$htmlframe .='
 			</a></div></td>';
-		if ($this->ismaster) {
+		$thispreset = $_POST[$this->name.'pre'];
+		if ($this->ismaster && $thispreset != 'atlas') {
 			$htmlframe .= '<td><ul style="padding:0; margin:0">';
-			 if ($this->displayhidebt) {
+			if ($this->displayhidebt && $thispreset != 'exemplar') {
+				$displayhide = ($thispreset == 'hidden') ? '<u><b>u</b></u>nhide': '<u><b>h</b></u>ide';
 				$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
-								.' onclick=\'hide_image()\' ><u><b>h</b></u>ide</button>';
+								.' onclick=\'hide_image()\' >'.$displayhide.'</button>';
 				$htmlframe .= '</li> ';
 			}
 			if ($this->displayhideallbt) {
@@ -1311,8 +1313,14 @@ class view {
 							.' onclick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button></li>';
 			}
 			if ($this->displayexemplarbt) {
-				$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
-							.' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li></ul></td>';
+				if ($thispreset != 'exemplar') {
+					$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
+							.' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li>';
+				} else {
+					$htmlframe .= '<li class="list1"> <button id="bt_hide" type="button" style="border: 1px solid #bdcebb; font-size: 10px;" '
+								.' onclick=\'hide_image()\' ><u><b>u</u></b>ndo exemplar</button></li>';
+				}
+			$htmlframe .= '</ul></td>';
 			}
 		}
 
