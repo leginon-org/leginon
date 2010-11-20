@@ -12,7 +12,7 @@ $sessionId = $imageinfo['sessionId'];
 $path = $leginondata->getImagePath($sessionId);
 
 //Block unauthorized user
-checkExptAccessPrivilege($expId,'data');
+checkExptAccessPrivilege($sessionId,'data');
 
 if ($fft) {
 	$fftimg = $leginondata->getImageFFT($imgId);
