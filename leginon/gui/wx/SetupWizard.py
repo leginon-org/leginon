@@ -795,9 +795,13 @@ class Setup(object):
 		except:
 			self.projectdata = None
 
+	def isLeginonUser(self, userdata):
+		return not userdata['noleginon']
+
 	def getUsers(self):
-		userdata = leginon.leginondata.UserData(initializer={})
-		userdatalist = self.research(datainstance=userdata)
+		userdata = leginon.leginondata.UserData()
+		userdatalist = userdata.query()
+		userdatalist = filter(self.isLeginonUser, userdatalist)	
 		if not userdatalist:
 			raise RuntimeError('No users in the database.')
 		return _indexBy(('firstname','lastname'), userdatalist)

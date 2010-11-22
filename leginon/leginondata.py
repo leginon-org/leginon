@@ -28,7 +28,8 @@ class UserData(Data):
 			('username', str),
 			('firstname', str),
 			('lastname', str),
-			('group', GroupData)
+			('group', GroupData),
+			('noleginon', bool),
 		)
 	typemap = classmethod(typemap)
 
