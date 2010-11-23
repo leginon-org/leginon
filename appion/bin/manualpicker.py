@@ -285,8 +285,17 @@ class PickerApp(wx.App):
 		connect the last two targets by filling inbetween
 		copied from EMAN1 boxer
 		"""
+		### determine which particle label to operate on
+		targetlabel = None
+		for label in self.labels:
+			if self.panel.selectiontool.isTargeting(label):
+				targetlabel = label
+				break
+		if targetlabel is None:
+			apDisplay.printWarning("no particle type selected")
+			return
 		### get last two targets
-		targets = self.panel.getTargets('Select Particles')
+		targets = self.panel.getTargets(targetlabel)
 		if len(targets) < 2:
 			apDisplay.printWarning("not enough targets")
 			return
@@ -309,20 +318,26 @@ class PickerApp(wx.App):
 			### this will probably never happen since mouse does not let you click same point twice
 			apDisplay.printWarning("points have zero distance")
 			return
-		stepsize = helicalstep/pixeldistance*apix
+		stepsize = helicalstep/(pixeldistance*apix*self.appionloop.params['bin'])
 		### parameterization of a line btw points (x1,y1) and (x2,y2):
 		# x = (1 - t)*x1 + t*x2,
 		# y = (1 - t)*y1 + t*y2,
 		# t { [0,1] ; t is a real number btw 0 and 1
 		points = list(array)
+		# remove the original points to reduce duplicates
+		points.pop(-2)
+		points.pop(-1)
 		t = 0.0
 		while t < 1.0:
 			x = int(round( (1.0 - t)*first[0] + t*last[0], 0))
 			y = int(round( (1.0 - t)*first[1] + t*last[1], 0))
 			points.append((x,y))
 			t += stepsize
+		# the last point may be missing due to rounding
+		if (points[-1][0] != last[0] or points[-1][1] != last[1]):
+			points.append(last)
 
-		self.panel.setTargets('Select Particles', points)
+		self.panel.setTargets(targetlabel, points)
 		
 		
 		
