@@ -13,7 +13,7 @@ require_once "inc/mysql.inc";
 
 require_once "inc/dbemauth.php";
 
-function privilege($type='') {
+function privilege($type='data') {
 	global $dbemauth;
 	if (ENABLE_LOGIN) {
 		$login_check = $dbemauth->is_logged();
@@ -45,8 +45,8 @@ function getLoginUserId() {
 			$q = "select u.`DEF_id` as userId "
 						."from UserData as u "
 						."where u.`username` LIKE '".$username."'";
-				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
-				$r = $dbc->getSQLResult($q);
+			$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
+			$r = $dbc->getSQLResult($q);
 			return $r[0]['userId'];
 		} else {
 			return false;
@@ -110,9 +110,6 @@ function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 	}
 	
 	if ($userId === true || privilege($privilege_type)>=3) return true;
-	if ($userId === true) return true;
-	$pvivilege_level = privilege($privilege_type);
-	if ($privilege_level>=3) return $privilege_level;
 	if ($userId) {
 		global $dbemauth;
 		$q = "select sh.`DEF_id` as shareId "
@@ -145,7 +142,6 @@ function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
 	if (privilege($privilege_type) < 2 || !$sessionId) return false;
 	$userId = getLoginUserId();
 	if ($userId === true || privilege($privilege_type)>=4) return true;
-	if ($userId === true) return true;
 	$pvivilege_level = privilege($privilege_type);
 	if ($userId) {
 		global $dbemauth;
@@ -169,7 +165,6 @@ function checkProjectExptAdminPrivilege($projectId,$privilege_type='data') {
 	if (privilege($privilege_type) < 2 || !$projectId) return false;
 	$userId = getLoginUserId();
 	if ($userId === true || privilege($privilege_type)>=4) return true;
-	if ($userId === true) return true;
 	$pvivilege_level = privilege($privilege_type);
 	if ($userId) {
 		global $dbemauth;
@@ -199,16 +194,16 @@ function login_header($title="", $javascript="", $onload="",$athome=false) {
 		$authorized_files=array(BASE_URL.'login.php', 'lostpass.php', 'register.php', 'confirm.php');
 	
 		if (!ereg(implode("|", $authorized_files), $_SERVER['PHP_SELF'])) {
-	    	if (!$login_check = $dbemauth->is_logged()) {
-	      		redirect(BASE_URL.'login.php?ln='.$redirect);
-	      		exit;     
+	   	if (!$login_check = $dbemauth->is_logged()) {
+	   		redirect(BASE_URL.'login.php?ln='.$redirect);
+	   		exit;     
 			}
-	  	}else{
-	  		if($login_check = $dbemauth->is_logged()){
-	  			redirect(BASE_URL);
-	  			exit;	
-	  		}  		
-  		}
+	  }else{
+	  	if($login_check = $dbemauth->is_logged()){
+	  		redirect(BASE_URL);
+	  		exit;	
+	  	}  		
+  	}
 
 		$login_check = $dbemauth->is_logged();
 		$username = $login_check[0];
