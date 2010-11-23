@@ -44,7 +44,7 @@ class ManualPickerPanel(TargetPanel.TargetImagePanel):
 		### check for out of bounds particles
 		if x < 2 or y < 2:
 			return
-		if x > self.imagedata.shape[0] or y > self.imagedata.shape[1]:
+		if x > self.imagedata.shape[1] or y > self.imagedata.shape[0]:
 			return
 		### continue as normal
 		return self._getSelectionTool().addTarget(name, x, y)
