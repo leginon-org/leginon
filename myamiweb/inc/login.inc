@@ -24,9 +24,9 @@ function privilege($type='data') {
 						."where p.`DEF_id`=".$login_check[2];
 				$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_PROJECT);
 				$r = $dbc->getSQLResult($q);
-				return $r[0]['level'];
+				return $r[0]['level'] + 0;
 			} else {
-				return 1;
+				return 0;
 			}
 		} else {
 			return 0;
@@ -109,8 +109,10 @@ function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 	    exit;
 	}
 	
-	if ($userId === true || privilege($privilege_type)>=3) return true;
-	if ($userId) {
+	$privilege_level = privilege($privilege_type);
+	if ($userId === true || $privilege_level >=3) return true;
+	if ($userId && $privilege_level > 0) {
+		// check access privilege for users with owned/shared view privilege
 		global $dbemauth;
 		$q = "select sh.`DEF_id` as shareId "
 			."from shareexperiments sh "
@@ -134,6 +136,7 @@ function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 			return true;
 	}
 	
+	// arrives here if no view privilege
 	redirect(BASE_URL.'accessdeny.php');
 	return false;
 }
@@ -142,7 +145,6 @@ function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
 	if (privilege($privilege_type) < 2 || !$sessionId) return false;
 	$userId = getLoginUserId();
 	if ($userId === true || privilege($privilege_type)>=4) return true;
-	$pvivilege_level = privilege($privilege_type);
 	if ($userId) {
 		global $dbemauth;
 		$q = "select o.`DEF_id` as ownerId "
@@ -165,7 +167,6 @@ function checkProjectExptAdminPrivilege($projectId,$privilege_type='data') {
 	if (privilege($privilege_type) < 2 || !$projectId) return false;
 	$userId = getLoginUserId();
 	if ($userId === true || privilege($privilege_type)>=4) return true;
-	$pvivilege_level = privilege($privilege_type);
 	if ($userId) {
 		global $dbemauth;
 		$q = "select o.`DEF_id` as ownerId "
@@ -193,21 +194,34 @@ function login_header($title="", $javascript="", $onload="",$athome=false) {
 		
 		$authorized_files=array(BASE_URL.'login.php', 'lostpass.php', 'register.php', 'confirm.php');
 	
-		if (!ereg(implode("|", $authorized_files), $_SERVER['PHP_SELF'])) {
-	   	if (!$login_check = $dbemauth->is_logged()) {
-	   		redirect(BASE_URL.'login.php?ln='.$redirect);
-	   		exit;     
-			}
-	  }else{
-	  	if($login_check = $dbemauth->is_logged()){
-	  		redirect(BASE_URL);
-	  		exit;	
-	  	}  		
-  	}
-
 		$login_check = $dbemauth->is_logged();
+		if (!ereg(implode("|", $authorized_files), $_SERVER['PHP_SELF'])) {
+	   	if (!$login_check)  {
+				//  unautorized files can only be loaded if logged in
+				redirect(BASE_URL.'login.php?ln='.$redirect);
+				exit;
+			} else {
+				// not allow user with zero privilege to login
+				if (privilege('data') < 1) {
+					redirect(BASE_URL.'logout.php');
+					exit;
+				}
+			}
+		} else {
+			// authorized files
+  		if($login_check) {
+				if (privilege('data') > 0) {
+					redirect(BASE_URL);
+					exit;
+				} else {
+					// not allow user with zero privilege to login
+					redirect('logout.php');
+					exit;
+				}
+			}
+		}
+
 		$username = $login_check[0];
-		$privilege = $login_check[2];
 	}
 	$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
 	$path = getPathFromString($_SERVER['SCRIPT_NAME']);
