@@ -20,7 +20,7 @@ if ($login!=2) {
    		list-style: none; padding:2px;
 	}
 	</style>
-<?
+<?php
 	if (!file_exists("img/logo.jpg")) {
 ?>
 		<center><h1><?php echo PROJECT_TITLE; ?></h1></center>
