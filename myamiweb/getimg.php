@@ -155,7 +155,6 @@ if ($g) {
 		$projectdata = new project();
 		$info=$leginondata->getSessionInfo($sessionId);
 		$tag=$projectdata->getSample($info);
-		$tag = '';
 		$taglen = strlen($tag);
 		$strlength = ($taglen + $filenamelen ) * 6 + 2 * $margin;
 		if ($filenamelen*$pixperchar < $wx && $strlength < $wx) {
