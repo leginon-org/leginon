@@ -15,19 +15,27 @@
         <field name="description" >Power User Group - view, edit, all the projects.</field>
         <field name="REF|projectdata|privileges|privilege" >2</field>
     </sqltable>
-        <sqltable name="GroupData" >
+	<sqltable name="GroupData" >
         <field name="DEF_id" >3</field>
         <field name="DEF_timestamp" >NOW()</field>
         <field name="name" >users</field>
         <field name="description" >Normal User Group - view, edit all owned and shared projects.</field>
         <field name="REF|projectdata|privileges|privilege" >3</field>
     </sqltable>
-        <sqltable name="GroupData" >
+	<sqltable name="GroupData" >
         <field name="DEF_id" >4</field>
         <field name="DEF_timestamp" >NOW()</field>
         <field name="name" >guests</field>
         <field name="description" >Guest Group - view own and share projects</field>
         <field name="REF|projectdata|privileges|privilege" >4</field>
+    </sqltable>
+    <sqltable>
+        <sqltable name="GroupData" >
+        <field name="DEF_id" >5</field>
+        <field name="DEF_timestamp" >NOW()</field>
+        <field name="name" >disabled</field>
+        <field name="description" >Disable Group - locked users</field>
+        <field name="REF|projectdata|privileges|privilege" >5</field>
     </sqltable>
     <sqltable name="InstrumentData" >
 			<field name="name" >AppionTEM</field>

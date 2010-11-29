@@ -84,5 +84,17 @@
         <field name="data" >1</field>
         <field name="gridboxes" >1</field>
     </sqltable>
+    <sqltable name="privileges" >
+        <field name="DEF_id" >5</field>
+        <field name="DEF_timestamp" >NOW()</field>
+        <field name="description" >Disable User</field>
+        <field name="groups" >0</field>
+        <field name="users" >0</field>
+        <field name="projects" >0</field>
+        <field name="projectowners" >0</field>
+        <field name="shareexperiments" >0</field>
+        <field name="data" >0</field>
+        <field name="gridboxes" >0</field>
+    </sqltable>
  </data>
 </defaulttables>
