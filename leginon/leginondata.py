@@ -618,8 +618,6 @@ class CameraImageStatsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-## the camstate key is redundant (it's a subset of 'camera')
-## but for now it helps to query the same way we used to
 class CorrectorImageData(ImageData):
 	def typemap(cls):
 		return ImageData.typemap() + (
