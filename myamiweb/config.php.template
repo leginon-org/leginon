@@ -35,7 +35,8 @@ define('PROJECT_URL', BASE_URL."project/");
 // --- myamiweb login --- //
 // Browse to the administration tools in myamiweb prior to 
 // changing this to true to populate DB tables correctly.
-define('ENABLE_LOGIN', false);	
+define('ENABLE_LOGIN', false);
+define('ENABLE_ANONYMOUS', false);
 
 // --- Administrator email title and email address -- //
 define('EMAIL_TITLE', 'The name of your institute');

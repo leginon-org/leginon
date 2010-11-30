@@ -45,11 +45,13 @@ if ($login!=2) {
 				<a class="header" href="lostpass.php" target="_blank">[Lost Password]</a>
 			</td>
 			</tr>
+		<?php if(ENABLE_ANONYMOUS){ ?>
 			<tr>
 			<td >
 				<input type="checkbox" name="anonymous">Login as "Anonymous" for viewing public data sets (Does not required a username and password).</input>
 			</td>
 			</tr>
+		<?php } ?>
 			<tr>
 			<td align="center">
 				<input type="submit" value="Login" name="submit">

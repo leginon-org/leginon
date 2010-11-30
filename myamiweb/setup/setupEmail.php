@@ -59,7 +59,9 @@ require_once('../inc/formValidator.php');
 		function setLogin(obj){
 
 			if(obj.value == "true"){
-				
+				wizard_form.enable_anonymous[0].disabled = false;
+				wizard_form.enable_anonymous[1].checked = true;
+				wizard_form.enable_anonymous[1].disabled = false;
 				wizard_form.email_title.style.backgroundColor = "#ffffff";
 				wizard_form.email_title.readOnly = false;
 				wizard_form.admin_email.style.backgroundColor = "#ffffff";
@@ -69,7 +71,11 @@ require_once('../inc/formValidator.php');
 				wizard_form.enable_smtp[1].disabled = false;
 				
 			}else{
-				
+
+				wizard_form.enable_anonymous[0].disabled = true;
+				wizard_form.enable_anonymous[0].checked = false;
+				wizard_form.enable_anonymous[1].disabled = true;
+				wizard_form.enable_anonymous[1].checked = false;
 				wizard_form.email_title.style.backgroundColor = "#eeeeee";
 				wizard_form.email_title.readOnly = true;
 				wizard_form.email_title.value = "";
@@ -180,6 +186,32 @@ require_once('../inc/formValidator.php');
 		
 		?> 
 			onclick="setLogin(this)" />&nbsp;&nbsp;YES<br />
+		<br />
+		<h3>Enable "Anonymous" login option:</h3>
+		
+		<p>You may enable anonymous login feature</p>
+		
+		<input type="radio" name="enable_anonymous" value="false" 
+		<?php  
+			if($_POST){
+				($_POST['enable_anonymous'] == 'false') ? print("checked='yes'") : print("");
+			}else{
+				($update) ? (ENABLE_ANONYMOUS)? print("") : print("checked='yes'") : print("checked='yes'");
+			}
+		?> 
+			/>&nbsp;&nbsp;NO<br />
+		<input type="radio" name="enable_anonymous" value="true" 
+		<?php 
+			if($_POST){
+				($_POST['enable_anonymous'] == 'true') ? print("checked='yes'") : print("");
+			}else{
+				($update) ? (ENABLE_ANONYMOUS)? print("checked='yes'") : print("") : print(""); 
+			}
+		
+		
+		?> 
+			/>&nbsp;&nbsp;YES<br />
+		 
 		<br />
 		<h3>Enter outgoing email subject line:</h3>
 		<p>example: The Scripps Research Institute</p>
