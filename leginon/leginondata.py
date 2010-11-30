@@ -675,20 +675,10 @@ class StageLocationData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-class PresetImageData(CameraImageData):
-	'''
-	If an image was acquire using a certain preset, use this class
-	to include the preset with it.
-	'''
+class AcquisitionImageData(CameraImageData):
 	def typemap(cls):
 		return CameraImageData.typemap() + (
 			('preset', PresetData),
-		)
-	typemap = classmethod(typemap)
-
-class AcquisitionImageData(PresetImageData):
-	def typemap(cls):
-		return PresetImageData.typemap() + (
 			('target', AcquisitionImageTargetData),
 			('emtarget', EMTargetData),
 			('grid', GridData),
