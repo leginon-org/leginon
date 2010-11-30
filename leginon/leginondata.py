@@ -607,17 +607,6 @@ class CameraImageData(ImageData):
 		psizey = binningy * psize * 1e10
 		weakattr.set(self['image'], 'pixelsize', {'x':psizex,'y':psizey})
 
-class CameraImageStatsData(InSessionData):
-	def typemap(cls):
-		return InSessionData.typemap() + (
-			('image', CameraImageData),
-			('min', float),
-			('max', float),
-			('mean', float),
-			('stdev', float),
-		)
-	typemap = classmethod(typemap)
-
 class CorrectorImageData(ImageData):
 	def typemap(cls):
 		return ImageData.typemap() + (

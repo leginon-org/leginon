@@ -86,7 +86,7 @@ class IntensityMonitor(node.Node):
 		mean = stats['mean']
 		std = stats['std']
 
-		statsdata = leginondata.CameraImageStatsData()
+		statsdata = leginondata.AcquisitionImageStatsData()
 		statsdata['min'] = mn
 		statsdata['max'] = mx
 		statsdata['mean'] = mean
