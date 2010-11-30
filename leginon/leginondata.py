@@ -577,8 +577,6 @@ class CameraImageData(ImageData):
 			('scope', ScopeEMData),
 			('camera', CameraEMData),
 			('correction channel', int),
-			('dark', DarkImageData),
-			('norm', NormImageData),
 		)
 	typemap = classmethod(typemap)
 
@@ -674,6 +672,8 @@ class AcquisitionImageData(CameraImageData):
 			('tilt series', TiltSeriesData),
 			('version', int),
 			('tiltnumber', int),
+			('dark', DarkImageData),
+			('norm', NormImageData),
 		)
 	typemap = classmethod(typemap)
 
