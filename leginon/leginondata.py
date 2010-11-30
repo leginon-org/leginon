@@ -702,20 +702,8 @@ class AcquisitionImageStatsData(InSessionData):
 class FilmData(AcquisitionImageData):
 	pass
 
-class ProcessedAcquisitionImageData(ImageData):
-	'''image that results from processing an AcquisitionImageData'''
-	def typemap(cls):
-		return ImageData.typemap() + (
-			('source', AcquisitionImageData),
-		)
-	typemap = classmethod(typemap)
-
 class AcquisitionFFTData(ProcessedAcquisitionImageData):
 	'''Power Spectrum of AcquisitionImageData'''
-	pass
-
-class ScaledAcquisitionImageData(ImageData):
-	'''Small version of AcquisitionImageData'''
 	pass
 
 class ImageListData(InSessionData):
