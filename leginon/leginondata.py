@@ -686,12 +686,6 @@ class PresetImageData(CameraImageData):
 		)
 	typemap = classmethod(typemap)
 
-class PresetReferenceImageData(PresetImageData):
-	'''
-	This is a reference image for getting stats at different presets
-	'''
-	pass
-
 class AcquisitionImageData(PresetImageData):
 	def typemap(cls):
 		return PresetImageData.typemap() + (
