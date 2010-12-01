@@ -8,6 +8,8 @@ import remote
 import os
 from pyami import mrc
 
+rawtype = numpy.uint32
+
 class SimCCDCamera(ccdcamera.CCDCamera):
 	name = 'SimCCDCamera'
 	def __init__(self):
@@ -133,7 +135,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		bias = numpy.resize(bias, shape)
 		noise = numpy.random.normal(0.0, 2.0, shape)
 		bias = bias + noise
-		bias = numpy.asarray(bias, numpy.uint16)
+		bias = numpy.asarray(bias, rawtype)
 		#print 'BIAS', bias
 		return bias
 
@@ -144,7 +146,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		dark = exptime * darkrate
 		dark = numpy.resize(dark, shape)
 		dark = dark + self._simBias(shape)
-		dark = numpy.asarray(dark, numpy.uint16)
+		dark = numpy.asarray(dark, rawtype)
 		#print 'DARK', dark
 		return dark
 
@@ -157,14 +159,14 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		noise = numpy.random.normal(0.0, 50.0, shape)
 		exposure = exposure + noise
 		final = self._simDark(shape, exptime) + exposure
-		final = numpy.asarray(final, numpy.uint16)
+		final = numpy.asarray(final, rawtype)
 		#print 'EXP', final
 		return final
 
 	def _simNormal(self, shape, exptime):
 		# return image:  transparency * (dark + bias + exposure)
 		final = self._simExposure(shape, exptime) * self._simSample(shape)
-		final = numpy.asarray(final, numpy.uint16)
+		final = numpy.asarray(final, rawtype)
 		#print 'NORMAL', final
 		return final
 
