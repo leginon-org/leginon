@@ -211,6 +211,16 @@ class PresetsClient(object):
 		cam.friendly_update(preset)
 		return self.node.correctorImageExists(type, scope, cam, channel)
 
+	def getHighestMagPresetName(self):
+		session = self.node.session
+		presets = self.getPresetsFromDB(session)
+		names = presets.keys()
+		highest_mag_preset_name = names[0]
+		for name in names:
+			if presets[highest_mag_preset_name]['magnification'] < presets[name]['magnification']:
+				highest_mag_preset_name = name
+		return highest_mag_preset_name
+
 class PresetsManager(node.Node):
 	panelclass = gui.wx.PresetsManager.Panel
 	settingsclass = leginondata.PresetsManagerSettingsData

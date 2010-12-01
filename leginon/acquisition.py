@@ -146,6 +146,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'target offset row': 0,
 		'target offset col': 0,
 		'correct image shift coma': False,
+		'park after target': False,
 	})
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
@@ -779,6 +780,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## set pixel size so mrc file will have it in header
 		if imagedata.__class__ is leginondata.AcquisitionImageData:
 			imagedata.attachPixelSize()
+
+		if self.settings['park after target']:
+			time.sleep(self.settings['pause time'])
+			# send a preset at the highest magnification to keep the lens warm
+			park_presetname = self.presetsclient.getHighestMagPresetName()
+			self.logger.info('parking the scope to preset %s' % (park_presetname,))
+			self.presetsclient.toScope(park_presetname, None, False)
+			self.logger.info('scope parked at preset %s' % (park_presetname,))
 
 		self.reportStatus('output', 'Publishing image...')
 		self.startTimer('publish image')
