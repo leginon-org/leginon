@@ -65,6 +65,13 @@ foreach($models as $model) {
 ?>
 </select>
 <input type="submit" value="view">
+<?php if($selectedmodelId) {
+	$model = $leginondata->getGoniometerModel($selectedmodelId);
+	$camera =  $leginondata->getInstrumentInfo($model['REF|InstrumentData|ccdcamera']);
+	echo 'Camera: '.$camera[0]['name'];
+	if ($selectedhost != $camera[0]['hostname']) echo ' on '.$camera[0]['hostname'];
+}
+?>
 </form>
 <?php if($selectedmodelId) { ?>
 <img src="goniometergraph.php?Id=<?php echo $selectedmodelId?>">
