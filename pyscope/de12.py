@@ -122,10 +122,12 @@ class DE12(ccdcamera.CCDCamera):
 	def setInserted(self, value):
 		if value:
 			de12value = 'Extended'
+			sleeptime = 20
 		else:
 			de12value = 'Retracted'
+			sleeptime = 8
 		self.setProperty("Camera Position", de12value)
-		time.sleep(5)
+		time.sleep(sleeptime)
 		
 	def getInserted(self):
 		de12value = self.getProperty('Camera Position')
@@ -175,13 +177,9 @@ class DE12(ccdcamera.CCDCamera):
 		nframes = self.getProperty('Autosave Raw Frames - Frames Written in Last Exposure')
 		return int(nframes)
 
-	def getNumberOfFramesToSum(self):
+	def getUseFrames(self):
 		nframes = self.getProperty('Number of Frames To Sum')
 		return int(nframes)
 
-	def getNumberOfFramesToSum(self):
-		nframes = self.getProperty('Number of Frames To Sum')
-		return int(nframes)
-
-	def setNumberOfFramesToSum(self, nframes):
+	def setUseFrames(self, nframes):
 		self.setProperty('Number of Frames To Sum', nframes)
