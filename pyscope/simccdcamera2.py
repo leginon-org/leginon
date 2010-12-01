@@ -7,8 +7,10 @@ import time
 import remote
 import os
 from pyami import mrc
+import itertools
 
 rawtype = numpy.uint32
+idcounter = itertools.cycle(range(100))
 
 class SimCCDCamera(ccdcamera.CCDCamera):
 	name = 'SimCCDCamera'
@@ -220,7 +222,8 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 		print 'SAVERAWFRAMES', self.saverawframes
 		if self.saverawframes:
-			self.rawframesname = time.strftime('frames%Y%m%d%H%M%S')
+			self.rawframesname = time.strftime('frames_%Y%m%d_%H%M%S')
+			self.rawframesname += '_%02d' % (idcounter.next(),)
 			try:
 				os.mkdir(self.rawframesname)
 			except:
