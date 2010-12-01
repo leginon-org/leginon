@@ -378,5 +378,6 @@ parametermapping = (
 	('nframes', 'NumberOfFrames'),
 	('save frames', 'SaveRawFrames'),
 	('frames name', 'PreviousRawFramesName'),
+	('use frames', 'UseFrames'),
 )
 

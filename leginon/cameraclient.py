@@ -7,6 +7,7 @@ default_settings['offset'] = {'x': 0, 'y': 0}
 default_settings['binning'] = {'x': 1, 'y': 1}
 default_settings['exposure time'] = 200
 default_settings['save frames'] = False
+default_settings['use frames'] = ''
 
 class CameraClient(object):
 	def __init__(self):
@@ -77,5 +78,10 @@ class CameraClient(object):
 		cameradata_after = self.instrument.getData(leginondata.CameraEMData)
 		## only using cameradata_after, not cameradata_before
 		imagedata['camera'] = cameradata_after
+
+		## duplicating 'use frames' here because we may reuse same
+		## CameraEMData for multiple versions of AcquisitionImageData
+		imagedata['use frames'] = cameradata_after['use frames']
+
 		self.readout_done_event.set()
 		return imagedata

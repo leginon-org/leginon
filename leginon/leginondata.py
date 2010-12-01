@@ -173,6 +173,7 @@ camera_params = (
 	('nframes', int),
 	('save frames', bool),
 	('frames name', str),
+	('use frames', tuple),
 )
 
 class ScopeEMData(EMData):
@@ -476,6 +477,7 @@ class PresetData(InSessionData):
 			('pre exposure', float),
 			('skip', bool),
 			('save frames', bool),
+			('use frames', tuple),
 		)
 	typemap = classmethod(typemap)
 
@@ -577,6 +579,10 @@ class CameraImageData(ImageData):
 			('scope', ScopeEMData),
 			('camera', CameraEMData),
 			('correction channel', int),
+			('channel', int),
+			('dark', DarkImageData),
+			('norm', NormImageData),
+			('use frames', tuple),
 		)
 	typemap = classmethod(typemap)
 
@@ -605,14 +611,8 @@ class CameraImageData(ImageData):
 		psizey = binningy * psize * 1e10
 		weakattr.set(self['image'], 'pixelsize', {'x':psizex,'y':psizey})
 
-class CorrectorImageData(ImageData):
-	def typemap(cls):
-		return ImageData.typemap() + (
-			('scope', ScopeEMData),
-			('camera', CameraEMData),
-			('channel', int),
-		)
-	typemap = classmethod(typemap)
+class CorrectorImageData(CameraImageData):
+	pass
 
 class DarkImageData(CorrectorImageData):
 	pass
@@ -672,8 +672,6 @@ class AcquisitionImageData(CameraImageData):
 			('tilt series', TiltSeriesData),
 			('version', int),
 			('tiltnumber', int),
-			('dark', DarkImageData),
-			('norm', NormImageData),
 		)
 	typemap = classmethod(typemap)
 
@@ -701,6 +699,14 @@ class AcquisitionImageStatsData(InSessionData):
 ## but enough that it is easiest to inherit it
 class FilmData(AcquisitionImageData):
 	pass
+
+class ProcessedAcquisitionImageData(ImageData):
+	'''image that results from processing an AcquisitionImageData'''
+	def typemap(cls):
+		return ImageData.typemap() + (
+			('source', AcquisitionImageData),
+		)
+	typemap = classmethod(typemap)
 
 class AcquisitionFFTData(ProcessedAcquisitionImageData):
 	'''Power Spectrum of AcquisitionImageData'''
@@ -1078,6 +1084,7 @@ class CameraSettingsData(Data):
 			('binning', dict),
 			('exposure time', float),
 			('save frames', bool),
+			('use frames', tuple),
 		)
 	typemap = classmethod(typemap)
 
