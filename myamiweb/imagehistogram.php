@@ -40,7 +40,7 @@ $params = array (
 	'maxpix' => $maxpix,
 	'filter' => $filter,
 	'fft' => $fft,
-	'fftbin' => $fftbin
+	'fftbin' => $fftbin,
 	'binning' => $binning
 );
 
