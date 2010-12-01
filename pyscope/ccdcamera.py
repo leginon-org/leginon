@@ -81,6 +81,10 @@ class CCDCamera(baseinstrument.BaseInstrument):
 			settings['save frames'] = self.getSaveRawFrames()
 		except:
 			settings['save frames'] = False
+		try:
+			settings['use frames'] = self.getUseFrames()
+		except:
+			settings['use frames'] = ()
 		return settings
 
 	def setSettings(self, settings):
@@ -88,6 +92,10 @@ class CCDCamera(baseinstrument.BaseInstrument):
 		self.setExposureTime(settings['exposure time'])
 		try:
 			self.setSaveRawFrames(settings['save frames'])
+		except:
+			pass
+		try:
+			self.setUseFrames(settings['use frames'])
 		except:
 			pass
 
