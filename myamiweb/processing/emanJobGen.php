@@ -1098,12 +1098,13 @@ function writeJobFile ($extra=False) {
 	}
 	echo "<form name='emanjob' method='POST' action='$formAction'>\n";
 	echo "<input type='hidden' name='clustername' value='".C_NAME."'>\n";
-	echo "<input type='hidden' name='cluster' value='".C_NAME."'>\n";
 	echo "<input type='hidden' NAME='clusterpath' value='$clusterpath'>\n";
 	echo "<input type='hidden' NAME='dmfpath' value='$dmfpath'>\n";
 	echo "<input type='hidden' NAME='jobname' value='$jobname'>\n";
 	echo "<input type='hidden' NAME='outdir' value='$outdir'>\n";
 	echo "<input type='hidden' NAME='mem' value='$memneed'>\n";
+	// re-post 'cluster' which is the basename of the cluster config file
+	echo "<input type='hidden' name='cluster' value='".$_POST['cluster']."'>\n";
 
 	// convert \n to /\n's for script
 	$header_conv=preg_replace('/\n/','|--|',$header);
