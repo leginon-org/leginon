@@ -159,6 +159,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['target offset row'] = IntEntry(self, -1, chars=6)
 		self.widgets['target offset col'] = IntEntry(self, -1, chars=6)
 
+		self.widgets['park after target'] = wx.CheckBox(self, -1, 'Park after every target acquired')
 		self.widgets['park after list'] = wx.CheckBox(self, -1, 'Park after every target list')
 
 		# simulate loop settings
@@ -274,6 +275,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		sz_misc.Add(sz_offset)
 		sz_misc.Add(self.widgets['drift between'])
 		sz_misc.Add(self.widgets['background'])
+		sz_misc.Add(self.widgets['park after target'])
 		sz_misc.Add(self.widgets['park after list'])
 		sz_misc.Add(sbsz_evaluate)
 
