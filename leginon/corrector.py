@@ -16,7 +16,7 @@ import scipy.ndimage
 import gui.wx.Corrector
 import instrument
 import sys
-from pyami import arraystats, imagefun, mrc
+from pyami import arraystats, imagefun, mrc, ccd
 import polygon
 import time
 import os
@@ -47,6 +47,7 @@ class Corrector(imagewatcher.ImageWatcher):
 		'clip max': 2**16,
 		'camera settings': cameraclient.default_settings,
 		'combine': 'average',
+		'store series': False,
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs + [event.AcquisitionImagePublishEvent]
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent]
@@ -183,6 +184,51 @@ class Corrector(imagewatcher.ImageWatcher):
 			series.append(image)
 		return series
 
+	def acquireSeriesAverage(self, n, type, channel):
+		for i in range(n):
+			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
+			imagedata = self.acquireCameraImageData()
+			if self.settings['store series']:
+				self.storeCorrectorImageData(imagedata, type, channel)
+			imagearray = imagedata['image']
+			if i == 0:
+				avg = numpy.asarray(imagearray, numpy.float32)
+			else:
+				delta = imagearray - avg
+				avg = avg + delta / (i+1)
+		## final image based on contents of last image in series
+		finaldata = leginondata.CameraImageData(initializer=imagedata)
+		finaldata['image'] = avg
+		finaldata = self.storeCorrectorImageData(finaldata, type, channel)
+		return finaldata
+
+	def acquireSeriesMedian(self, n, type, channel):
+		series = []
+		for i in range(n):
+			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
+			imagedata = self.acquireCameraImageData()
+			if self.settings['store series']:
+				self.storeCorrectorImageData(imagedata, type, channel)
+			imagearray = imagedata['image']
+			series.append(imagearray)
+		## calc median
+		med = imagefun.medianSeries(series)
+		med = numpy.asarray(med, numpy.float32)
+
+		## final image based on contents of last image in series
+		finaldata = leginondata.CameraImageData(initializer=imagedata)
+		finaldata['image'] = med
+		finaldata = self.storeCorrectorImageData(finaldata, type, channel)
+		return finaldata
+
+	def insert(self, x):
+		self.__n += 1
+		if self.__n == 1:
+			self.__mean = numpy.asarray(x, numpy.float32)
+		else:
+			delta = x - self.__mean
+			self.__mean = self.__mean + delta / self.__n
+
 	def acquireReference(self, type, channel):
 		try:
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
@@ -202,6 +248,7 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.instrument.ccdcamera.ExposureType = 'normal'
 			return None
 
+		'''
 		## doing this before acquireSeries because of a bug where
 		## something interrupts this method before it completes
 		scopedata = self.instrument.getData(leginondata.ScopeEMData)
@@ -228,6 +275,16 @@ class Corrector(imagewatcher.ImageWatcher):
 		ref = numpy.asarray(ref, numpy.float32)
 
 		refimagedata = self.storeCorrectorImageData(ref, typekey, scopedata, cameradata, channel)
+		'''
+
+		combine = self.settings['combine']
+		n = self.settings['n average']
+		if combine == 'average':
+			refimagedata = self.acquireSeriesAverage(n, type, channel)
+		elif combine == 'median':
+			refimagedata = self.acquireSeriesMedian(n, type, channel)
+		refarray = refimagedata['image']
+
 		if refimagedata is not None:
 			self.logger.info('Got reference image, calculating normalization')
 			self.calc_norm(refimagedata)
@@ -239,8 +296,8 @@ class Corrector(imagewatcher.ImageWatcher):
 			self.instrument.ccdcamera.ExposureType = 'normal'
 			return None
 
-		self.maskimg = numpy.zeros(ref.shape)
-		return ref
+		self.maskimg = numpy.zeros(refarray.shape)
+		return refarray
 
 	def calc_norm(self, refdata):
 		scopedata = refdata['scope']
@@ -281,7 +338,9 @@ class Corrector(imagewatcher.ImageWatcher):
 		# so make sure there are no zeros in norm
 		normarray = numpy.clip(normarray, 0.001, sys.maxint)
 		normarray = normavg / normarray
-		self.storeCorrectorImageData(normarray, 'norm', scopedata, cameradata, channel)
+		normdata = leginondata.CameraImageData(initializer=refdata)
+		normdata['image'] = normarray
+		self.storeCorrectorImageData(normdata, 'norm', channel)
 
 	def uiAutoAcquireReferences(self):
 		binning = self.autobinning.get()

@@ -145,8 +145,8 @@ class CorrectorClient(cameraclient.CameraClient):
 		Rescale the dark image to be same number of frames as raw image.
 		Assuming exposure time of each frame (or frame rate) is constant.
 		'''
-		darkframes = dark['camera']['nframes']
-		rawframes = raw['camera']['nframes']
+		darkframes = len(dark['use frames'])
+		rawframes = len(raw['use frames'])
 		darkarray = dark['image']
 		if rawframes and darkframes and (rawframes != darkframes):
 			multiplier = float(rawframes) / float(darkframes)
@@ -375,24 +375,30 @@ class CorrectorClient(cameraclient.CameraClient):
 			session = refsession['session']
 		return session
 
-	def storeCorrectorImageData(self, imarray, type, scopedata, cameradata, channel):
-		
+	def storeCorrectorImageData(self, imagedata, type, channel):
+
 		# check for bad shape
+		imarray = imagedata['image']
 		shape = imarray.shape
+		cameradata = imagedata['camera']
 		dim = cameradata['dimension']
 		if dim['x'] != shape[1] or dim['y'] != shape[0]:
 			raise RuntimeError('%s: bad array shape: %s' % (type, shape,))
 
-		## store in database
 		if type == 'dark':
-			refdata = leginondata.DarkImageData()
+			refclass = leginondata.DarkImageData
 		elif type == 'bright':
-			refdata = leginondata.BrightImageData()
+			refclass = leginondata.BrightImageData
 		elif type == 'norm':
-			refdata = leginondata.NormImageData()
-		refdata['image'] = imarray
+			refclass = leginondata.NormImageData
+		refdata = refclass(initializer=imagedata)
+
 		refdata['filename'] = self.makeCorrectorImageFilename(type, channel, imarray.shape)
+
+		## replace session of scope, camera, refdata with ref session
 		refsession = self.getReferenceSession()
+		scopedata = refdata['scope']
+		cameradata = refdata['camera']
 		newscope = leginondata.ScopeEMData(initializer=scopedata)
 		newscope['session'] = refsession
 		newcamera = leginondata.CameraEMData(initializer=cameradata)
@@ -401,6 +407,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		refdata['scope'] = newscope
 		refdata['camera'] = newcamera
 		refdata['channel'] = channel
+
 		self.logger.info('Saving new %s' % (type,))
 		refdata.insert(force=True)
 		self.logger.info('Saved: %s' % (refdata['filename'],))
@@ -410,6 +417,10 @@ class CorrectorClient(cameraclient.CameraClient):
 		ref_cache[key] = refdata
 
 		return refdata
+
+	def getCameraSettings(self):
+		return self.settings['camera settings']
+
 
 	def getCameraSettings(self):
 		return self.settings['camera settings']

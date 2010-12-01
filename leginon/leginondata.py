@@ -1137,6 +1137,7 @@ class CorrectorSettingsData(SettingsData):
 			('combine', str),
 			('clip min', float),
 			('clip max', float),
+			('store series', bool),
 		)
 	typemap = classmethod(typemap)
 
