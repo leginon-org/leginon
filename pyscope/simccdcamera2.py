@@ -6,6 +6,7 @@ random.seed()
 import time
 import remote
 import os
+from pyami import mrc
 
 class SimCCDCamera(ccdcamera.CCDCamera):
 	name = 'SimCCDCamera'
@@ -34,6 +35,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 		self.inserted = True
 		self.saverawframes = False
 		self.rawframesname = 'frames'
+		self.useframes = ()
 
 	def getRetractable(self):
 		return True
@@ -204,7 +206,26 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 			nframes = 1
 			exptime = self.exposure_time
 
-		sum = numpy.zeros(shape, numpy.uint16)
+		if self.useframes:
+			useframes = []
+			for f in self.useframes:
+				if 0 <= f < nframes:
+					useframes.append(f)
+		else:
+			# use all frames in final image
+			useframes = range(nframes)
+		self.useframes = useframes
+
+		print 'SAVERAWFRAMES', self.saverawframes
+		if self.saverawframes:
+			self.rawframesname = time.strftime('frames%Y%m%d%H%M%S')
+			try:
+				os.mkdir(self.rawframesname)
+			except:
+				pass
+
+		sum = numpy.zeros(shape, numpy.float32)
+
 		for i in range(nframes):
 			if self.exposure_type == 'bias':
 				frame = self._simBias(shape)
@@ -214,14 +235,15 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 				frame = self._simNormal(shape, exptime)
 			else:
 				raise RuntimeError('unknown exposure type: %s' % (self.exposure_type,))
-			sum += frame
 
-		print 'SAVERAWFRAMES', self.saverawframes
-		if self.saverawframes:
-			try:
-				os.mkdir(self.rawframesname)
-			except:
-				pass
+			if self.saverawframes:
+				print 'SAVE', i
+				mrcname = '%03d.mrc' % (i,)
+				fname = os.path.join(self.rawframesname, mrcname)
+				mrc.write(frame, fname)
+			if i in self.useframes:
+				print 'SUM', i
+				sum += frame
 
 		return sum
 
@@ -269,6 +291,13 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 	def getPreviousRawFramesName(self):
 		return self.rawframesname
+
+	def setUseFrames(self, value):
+		print 'SET USE FRAMES', value
+		self.useframes = value
+
+	def getUseFrames(self):
+		return self.useframes
 
 class SimOtherCCDCamera(SimCCDCamera):
 	name = 'SimOtherCCDCamera'
