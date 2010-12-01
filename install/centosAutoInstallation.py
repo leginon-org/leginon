@@ -31,6 +31,8 @@ class CentosInstallation(object):
 
         print "Current OS Information: " + flavor
         self.writeToLog("CentOS info: " + flavor)
+        self.runCommand("chcon -t lib_t lib.so")
+        self.runCommand("chcon -t httpd_sys_content_t *.html")
 
     def checkRoot(self):
 
