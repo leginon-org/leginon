@@ -122,7 +122,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$uploadtypes = array('normal'=>'None','tiltseries'=>'Tilt Series');
 	if (!$expId)
 		$uploadtypes['defocalseries'] = 'Defocal Series';
-	echo docpop('uploadtype', 'Images grouped by :');
+	echo docpop('uploadtype', '<b>Images grouped by:</b>');
 	echo "<select name='uploadtype' onchange=submit()>";
 	foreach($uploadtypes as $utype=>$udisplay) {
 		$u = ($utypeval == $utype) ? 'selected' :'';
@@ -132,13 +132,21 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	echo "<br/><br/>\n";
 
 	// Setup Session Name
-	echo docpop('uploadsession', 'Session Name:');
+	echo docpop('uploadsession', '<b>Session Name:</b>');
 	echo "<br/>\n";
 	if ($utypeval != 'defocalseries' && !($utypeval == 'tiltseries' && $imgdir)) {
 		echo "<input type='text' name='sessionname' value='$sessionname' size='15'>\n";
 	} else {
 		echo "    Determined automatically";
 	}
+	echo "<br/><br/>\n";
+
+	// Setup Output Directory
+	echo "<b>Output directory:</b>";
+	echo "<br/>\n";
+	echo "<input type='text' name='outdir' value='$outdir' size='46'>\n";
+	echo "<input type='hidden' name='outdir' value='$outdir'/>\n";
+
 	echo "<br/><br/>\n";
 
 	// Setup Session Description
