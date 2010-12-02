@@ -206,6 +206,21 @@ var help = {
 		'magnification' : 'Nominal instrument magnification of images (i.e. 50000)',
 		'defocus' : 'Nominal defocus of images in microns (i.e. -1.5)',
 		'kev' : 'High tension of the microscope in kilovolts (i.e. 120)',
+		'helicalstep' : 'Distance between picks on helical filaments that will be automatically inserted with Helical Insert. Leave blank if you are not picking filaments.',
+		'stackfile' : 'The full path of stack, including filename. Stacks must be in IMAGIC format (i.e. filename ending in .img/.hed)',
+
+/******* Helical Image Processing ********/
+		'mandir' : 'The directory containing the mandatory input files for Phoelix.  These include llbo.sa, range.sa, strong.sa, cutfit1.dek, cutfit2.dek, cutfit3.dek, chop1.dek, chop2.dek, and template.  See HIP tutorial for more information on how to generate these files.',		
+		'replen' : 'The approximate 360 degree repeat distance along the filament, in &Aring;ngstr&ouml;ms',
+		'diam' : 'The approximate outer diameter of the filament, in &Aring;ngstr&ouml;ms',
+		'diaminner' : 'The approximate inner diameter of the filament, in &Aring;ngstr&ouml;ms',
+		'xlngth' : 'Desired length of the filament segments, usually a certain number of helical repeats, in pixels.  Should be the same as your stack box size.',
+		'ovrlp' : 'Percent overlap when cutting the filament into segments. Setting this to 0% will box out filaments with no overlap between them',
+		'yht' : 'Desired height for the filament box before alignments, usually the power of 2 value that is at least twice the diameter size, in pixels',
+		'yht2' : 'Height for the filament box after alignments, usually the power of 2 value greater than the filament diameter, in pixels',
+		'padval' : 'Value to pad the filament box to during alignments, usually the power of 2 value greater than the filament length',
+		'filval' : 'Lowpass filter value for filament segments used during alignments to find filament edges. 200 seems to work well, but should be tested before processing the full stack',
+		'conchg' : 'If the micrographs have negative density, the final reconstruction will need a contrast change',
 
 /******* Topology Alignment ********/
 		'startnumcls' : 'Number of classes to create in the first iteration. Each subsequent iteration will create fewer classes until the last iteration creates the ending number of classes',
