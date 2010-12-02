@@ -110,9 +110,12 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	echo docpop('runname','<b>Run Name:</b> ');
 	echo "<input type='text' name='runname' value='$runname' size='15'><br/><br/>\n";
 
-	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
-	echo "Output directory:<i>$outdir</i><br/>\n";
+	echo docpop('outdir','<b>Output directory:</b>');
 	echo "<br/>\n";
+	echo "<input type='text' name='outdir' value='$outdir' size='40'>\n";
+	echo "<input type='hidden' name='outdir' value='$outdir'/>\n";
+
+	echo "<br/><br/>\n";
 
 	// Maximum Median Euler Jump
 	echo '<b>Maximum Median Euler Jump value:</b> ';
