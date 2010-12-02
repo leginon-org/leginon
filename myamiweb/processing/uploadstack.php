@@ -37,9 +37,9 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 	// get path for submission
 	$sessiondata=getSessionList($projectId, $expId);
 	$sessioninfo=$sessiondata['info'];
-	$defoutdir = $sessioninfo['Image path'];
-	$defoutdir = ereg_replace("leginon", "appion",$defoutdir);
-	$defoutdir = ereg_replace("rawdata", "stacks",$defoutdir);
+	$outdir = $sessioninfo['Image path'];
+	$outdir = ereg_replace("leginon", "appion",$outdir);
+	$outdir = ereg_replace("rawdata", "stacks",$outdir);
 	$sessionname = $sessioninfo['Name'];
 
 	// Set default runname
@@ -52,7 +52,7 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 
 	// Set any existing parameters in form
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunname;
-	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $defoutdir;
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;
 	$description = $_POST['description'];
 
 	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
@@ -86,8 +86,7 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 
 	echo docpop('outdir','<b>Output directory:</b>');
 	echo "<br/>\n";
-	echo "<input type='text' name='disoutdir' value='$outdir' size='40'>\n";
-	echo "<input type='hidden' name='outdir' value='$outdir'/>\n";
+	echo "<input type='text' name='outdir' value='$outdir' size='40'>\n";
 
 	echo "<br/><br/>\n";
 	
