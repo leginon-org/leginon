@@ -256,8 +256,8 @@ if (SAMPLE_TRACK) {
 	$bgcolor="bbd0bb";
 	$infolinkstr="<a href=\"javascript:popUp('infotrack.php?pkid=%d', 'info')\">View</a>";
 	$reportlinkstr="<a href='report.php?pid=%d&id=%d&ln=%s'>report</a>";
+	echo divtitle('Package'.$pkglink);
 	if ($packages || $hasinternalpackage) {
-		echo divtitle('Package'.$pkglink);
 		foreach ((array)$packages as $k=>$package) {
 			$sId = $package['packageId'];
 			$packagenumbers[$sId] = $package['number'];
@@ -273,11 +273,6 @@ if (SAMPLE_TRACK) {
 			$packages[$k]['number']=array($package['number'], $celloption);
 		}
 
-		$display_header=true;
-		$columns['view']='';
-		$columns['report']='';
-		$columns['number']='Package Number';
-		$columns['label']='Label';
 		if ($hasinternalpackage) {
 			$sId='';
 			$reportlink=sprintf($reportlinkstr, $projectId, $sId, $ln);
@@ -287,8 +282,13 @@ if (SAMPLE_TRACK) {
 			$internalpackage['label']='Internal';
 			$packages = array_merge(array($internalpackage), $packages);
 		}
-		echo data2table($packages, $columns, $display_header);
 	}
+	$display_header=true;
+	$columns['view']='';
+	$columns['report']='';
+	$columns['number']='Package Number';
+	$columns['label']='Label';
+	echo data2table($packages, $columns, $display_header);
 
 	// --- Sample section --- //
 	$columns=array();
