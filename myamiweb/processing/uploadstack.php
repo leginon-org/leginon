@@ -86,7 +86,7 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 
 	echo docpop('outdir','<b>Output directory:</b>');
 	echo "<br/>\n";
-	echo "<input type='text' name='disoutdir' value='$outdir' size='40' disabled/>\n";
+	echo "<input type='text' name='disoutdir' value='$outdir' size='40'>\n";
 	echo "<input type='hidden' name='outdir' value='$outdir'/>\n";
 
 	echo "<br/><br/>\n";
@@ -97,7 +97,8 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 
 	echo "<br/><br/>\n";
 
-	echo "<b>Stack filename with path:</b><br/>\n";
+	echo docpop('stackfile', '<b>Stack filename with path:</b>');
+	echo "<br/>\n";
 	echo "<input type='text' name='stackfile' value='$stackfile' size='55'/>\n";
 
 	echo "<br/><br/>\n";
