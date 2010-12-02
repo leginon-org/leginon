@@ -138,8 +138,12 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 		echo "<br/>\n";
 	}
 
-	echo "<br/>\n";
+	echo "<br>\n";
+	echo "Output directory:<br> \n";
+	echo "<input type='text' name='outdir' value='$outdir' size='55'>\n";
+	echo "<br>\n";
 
+	echo "<br>\n";
 	echo "Template Description:<br>";
 	echo "<TEXTAREA NAME='description' ROWS='3' COLS='70'>$description</TEXTAREA>";
 
