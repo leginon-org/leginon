@@ -50,6 +50,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		if (!empty($sessioninfo)) {
 			$outdir=$sessioninfo['Image path'];
 			$outdir=ereg_replace("leginon*","leginon",$outdir);
+			$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;
 			$sessionname=$sessioninfo['Name'];
 			$description=$sessioninfo['description'];
 			$tem=$sessioninfo['InstrumentId'];
@@ -145,7 +146,6 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	echo "<b>Output directory:</b>";
 	echo "<br/>\n";
 	echo "<input type='text' name='outdir' value='$outdir' size='46'>\n";
-	echo "<input type='hidden' name='outdir' value='$outdir'/>\n";
 
 	echo "<br/><br/>\n";
 
