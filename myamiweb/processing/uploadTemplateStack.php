@@ -88,9 +88,10 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	echo "<input type='text' name='runname' value='$runname' SIZE='50'/>\n";
 	echo "<br>\n";
 
-	echo "<br>";
-	echo "<i>Output Directory: </i>".$outdir;
-	echo "<br>";
+	echo "<br>\n";
+	echo docpop('outdir','<b>Output directory:<br></b>');
+	echo "<input type='text' name='outdir' value='$outdir' size='40'>\n";
+	echo "<br>\n";
 
 	echo "<br/>\n";
 	echo docpop('descr', '<b>Template Stack Description:<br></b>');
