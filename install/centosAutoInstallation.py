@@ -43,6 +43,62 @@ class CentosInstallation(object):
         print "\"root\" access checked success..."
         self.writeToLog("root access checked success")
 
+    def removeLogFile(self):
+        if os.path.isfile(self.logFilename):
+            self.writeToLog("remove old log file")
+            os.remove(self.logFilename)
+
+    def disableSeLinux(self):
+        self.runCommand("/usr/sbin/setenforce 0")
+        seLinuxConfig = "/etc/selinux/config"
+        seLinuxConfigBackup = "/etc/selinux/config.bck"
+
+        if not os.path.exists(seLinuxConfig):
+            print "SeLinux configure file does not exist..."
+            self.writeToLog("ERROR: No SeLinux configure file ---")
+        return False 
+
+        # make a back up from original config file
+        shutil.move(seLinuxConfig, seLinuxConfigBackup)
+
+        inf = open(seLinuxConfigBackup, 'r')
+        outf = open(seLinuxConfig, 'w')
+
+        for line in inf:
+            line = line.rstrip()
+            if line.startswith('SELINUX=enforcing'):
+                outf.write("SELINUX=disabled\n")
+            elif line.startswith('SELINUX=permissive'):
+                outf.write("SELINUX=disabled\n")
+            else:
+                outf.write(line + '\n')
+
+        inf.close()
+        outf.close()
+        return True
+
+    def setupFilePermission(self):
+        # Set umask to 0 so that we can set mode to 0777 later
+        originalUmask = os.umask(0)
+        
+        if not os.path.exists(self.imagesDir):
+            self.writeToLog("create images folder - /myamiImages")
+            os.makedirs(self.imagesDir, 0777)
+        else:
+            os.chmod(self.imagesDir, 0777)
+
+        if not os.path.exists(os.path.join(self.imagesDir, "leginon")):
+            os.makedirs(os.path.join(self.imagesDir, "leginon"), 0777)
+        else:
+            os.chmod(os.path.join(self.imagesDir, "leginon"), 0777)
+                
+        if not os.path.exists(os.path.join(self.imagesDir, "appion")):
+            os.makedirs(os.path.join(self.imagesDir, "appion"), 0777)
+        else:
+            os.chmod(os.path.join(self.imagesDir, "appion"), 0777)
+            
+        umask = os.umask(originalUmask)
+
 
     def yumUpdate(self):
         print "Updating system files...."
@@ -525,46 +581,18 @@ class CentosInstallation(object):
         self.hostname = self.getServerName()
         self.nproc = self.getNumProcessors()
 
-        proc = subprocess.Popen("selinuxenabled")
-        returnValue = proc.wait()
-               
-        if not returnValue:
-            print("========================")
-            print("ERROR: Please disable SELinux before running this auto installation. Visit http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
-            print("Exiting installation...")
-            print("========================")
-            sys.exit(1)
         
-        if os.path.isfile(self.logFilename):
-            self.writeToLog("remove old log file")
-            os.remove(self.logFilename)
-            
-        # Set umask to 0 so that we can set mode to 0777 later
-        originalUmask = os.umask(0)
-        
-        if not os.path.exists(self.imagesDir):
-            self.writeToLog("create images folder - /myamiImages")
-            os.makedirs(self.imagesDir, 0777)
-        else:
-            os.chmod(self.imagesDir, 0777)
-
-        if not os.path.exists(os.path.join(self.imagesDir, "leginon")):
-            os.makedirs(os.path.join(self.imagesDir, "leginon"), 0777)
-        else:
-            os.chmod(os.path.join(self.imagesDir, "leginon"), 0777)
-                
-        if not os.path.exists(os.path.join(self.imagesDir, "appion")):
-            os.makedirs(os.path.join(self.imagesDir, "appion"), 0777)
-        else:
-            os.chmod(os.path.join(self.imagesDir, "appion"), 0777)
-            
-        umask = os.umask(originalUmask)
-
         result = self.checkDistro()
         if result is False:
             sys.exit(1)
         
         result = self.checkRoot()
+        if result is False:
+            sys.exit(1)
+
+        self.removeLogFile()
+        self.setupFilePermission()
+        result = self.disableSeLinux()
         if result is False:
             sys.exit(1)
 
