@@ -85,6 +85,8 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	$outdir=ereg_replace("leginon","appion",$outdir);
 	$outdir=ereg_replace("rawdata","templates",$outdir);
 
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;
+
 	if (!empty($sessioninfo)) {
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' VALUE='$sessionname'>\n";
