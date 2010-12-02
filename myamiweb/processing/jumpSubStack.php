@@ -60,6 +60,8 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$outdir=ereg_replace("leginon","appion",$outdir);
 	$outdir=ereg_replace("rawdata","stacks",$outdir);
 
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;
+
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
@@ -113,7 +115,6 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	echo docpop('outdir','<b>Output directory:</b>');
 	echo "<br/>\n";
 	echo "<input type='text' name='outdir' value='$outdir' size='40'>\n";
-	echo "<input type='hidden' name='outdir' value='$outdir'/>\n";
 
 	echo "<br/><br/>\n";
 
