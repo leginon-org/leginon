@@ -22,7 +22,7 @@ if (count($_POST) == 0) unset($_SESSION['picklabels']);
 if ($_POST['addpicklabel']) {
 	// --- check id label exists --- //
 	$picklabel = trim($_POST['picklabel']);
-	$picklabels = $_SESSION['picklabels'];
+	$picklabels = ($_SESSION['picklabels']) ? $_SESSION['picklabels'] : array();
 	$editrunname = $_POST['editrunname'];
 	if (empty($_POST['editrunlabels']) && ($picklabel==$editrunname))
 		createContourPickerForm('Unlabeled Old Particle Pick is automatically labeled by its runname');
@@ -242,6 +242,8 @@ function runContourPicker() {
 	$expId	 = $_GET['expId'];
 	$outdir	= $_POST['outdir'];
 	$runname = $_POST['runname'];
+	// If not planing to pick labeled single particle, give a fake diameter
+	if (!$_SESSION['picklabels'] && !$_POST['diam']) $_POST['diam'] = 1;
 
 	$command.="contourpicker.py ";
 	$apcommand = parseAppionLoopParams($_POST);
