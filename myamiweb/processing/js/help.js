@@ -41,6 +41,7 @@ var help = {
 		'sizerange' : 'Defines the range of sizes for separating particles of different size. Particles will be picked as <i>diameter +/- sizerange</i>, so the <i>sizerange</i> is like the standard deviation of the particle size, where the diameter is defined at the top',
 		'invert' : 'Mathematical pickers (e.g., DoG picker) always pick white particles. Also, if the density of your template is opposite the density of your micrographs, use this flag.',
 		'nojpegs' : 'Do NOT write out the summary jpegs for image assessor.',
+		'picklabel' : 'Give meaningful label to the particle selected.  This only works on particles defined by their center, not traced objects.',
 		'edgethresh' : 'The threshold set for edge detection.  ACE searches a range of values to determine a good threshold, but this value should be increased if there are more edges in the power spectrum than in the ring.  Decrease if no edges are detected.',
 		'pfact' : 'Location of the upper cutoff frequency.  If thon rings extend beyond the power spectrum cutoff frequency, increase this value.  In cases of low signal to noise ratio with few thon rings, decrease this value.',
 		'drange' : 'Use in cases where the signal to noise ratio is so high that the edge detection is incorrect.',
