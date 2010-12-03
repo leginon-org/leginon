@@ -617,6 +617,14 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		os.rename(alignstack+".norm.hed", alignstack)
 		os.rename(alignstack+".norm.img", alignstack[:-4]+".img")
 
+		### normalize references
+		emancmd = "proc2d "+ts+" "+ts+".norm.hed norm"
+		while os.path.isfile(ts+".norm.img"):
+			apFile.removeStack(ts+".norm.img")
+		apParam.runCmd(emancmd, "EMAN")
+		os.rename(ts+".norm.hed", ts)
+		os.rename(ts+".norm.img", ts[:-4]+".img")
+
 		### remove copied stack
 		while os.path.isfile(os.path.join(self.params['rundir'], "start.img")):
 			apFile.removeStack(os.path.join(self.params['rundir'], "start.img"))
