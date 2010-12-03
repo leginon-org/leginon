@@ -86,8 +86,10 @@ class CentosInstallation(object):
             line = line.rstrip()
             if line.startswith('SELINUX=enforcing'):
                 seLinusEnable = True
+                break
             elif line.startswith('SELINUX=permissive'):
                 seLinusEnable = True
+                break
             else:
                 seLinusEnable = False
         
