@@ -60,14 +60,13 @@ class ContourPickerPanel(TargetPanel.TargetImagePanel):
 			else:
 				self.statstypesizer.Add(self.selectiontool, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 		self.selectiontool.addTypeTool(name, **kwargs)
-		self.selectiontool.SetSize((300,175))
 		self.sizer.SetItemMinSize(self.selectiontool, self.selectiontool.GetSize())
 		self.sizer.Layout()
 
 	def addTarget(self, name, x, y):
 		super(ContourPickerPanel,self).addTarget(name,x,y)
-		if name == self.picker.s:
-			self.picker.addManualPoint()
+		#if name == self.picker.s:
+		#	self.picker.addManualPoint()
 
 	def deleteTarget(self, target):
 		self.picker.deleteTarget(target)
@@ -97,15 +96,6 @@ class ContourPickerPanel(TargetPanel.TargetImagePanel):
 		return image
 
 	def _onMotion(self, evt, dc):
-		if len(self.selectiontool.getTargets('Tube'))>=2:
-			targets = []
-			for p in self.selectiontool.getTargets('Tube'):
-				targets.append((p.x,p.y))
-			tubemem = self.selectiontool.getTargets('TubeMemory')
-			tubemem.append(targets[0])
-			self.selectiontool.setTargets('TubeMemory', tubemem)
-			self.picker.tubeTargets.append(targets)
-			self.selectiontool.setTargets('Tube',[])
 		self.picker.onMoved(evt)
 		super(ContourPickerPanel,self)._onMotion(evt,dc)
 
@@ -118,10 +108,7 @@ class ContourPickerPanel(TargetPanel.TargetImagePanel):
 		if self.selectedtype is not None:
 			x, y = self.view2image((evt.m_x, evt.m_y))
 			self.addTarget(self.selectedtype.name, x, y)
-		if self.selectiontool.isTargeting('Select Particles') or self.selectiontool.isTargeting('Circle') or self.selectiontool.isTargeting('Tube'):
-			self.picker.addSinglePoint(evt)
-		else:
-			self.picker.onEdgeFinding(evt)
+		self.picker.onEdgeFinding(evt)
 		#if self.selectedtype.name == self.picker.s:
 		#	self.picker.addManualPoint()
 
@@ -434,9 +421,11 @@ class PickerApp(wx.App):
 		self.contourTargetMap = {}
 
 	def OnInit(self):
+		# Redirect text output for debuging purpose
+		#self.RedirectStdio('out.log')
 		self.deselectcolor = wx.Color(40,40,40)
 
-		self.frame = wx.Frame(None, -1, 'Manual Particle Picker')
+		self.frame = wx.Frame(None, -1, 'Manual Object Tracer')
 		self.sizer = wx.FlexGridSizer(2,1)
 
 		### VITAL STATS
@@ -447,17 +436,8 @@ class PickerApp(wx.App):
 		### BEGIN IMAGE PANEL
 		self.panel = ContourPickerPanel(self.frame, -1)
 
-		self.panel.addTargetTool('Select Particles', color=wx.Color(220,20,20), 
-			target=True, shape=self.shape, size=self.size)
-		self.panel.setTargets('Select Particles', [])
-		self.panel.selectiontool.setTargeting('Select Particles', True)
-
-		self.panel.addTargetTool('Region to Remove', color=wx.Color(20,220,20),
-			target=True, shape='polygon')
-		self.panel.setTargets('Region to Remove', [])
-		self.panel.selectiontool.setDisplayed('Region to Remove', True)
-		
-		#make 'Select Particles' the initial targeting selection
+		for label in self.labels:
+			self.addLabelPicker(label)
 
 		#self.panel.SetMinSize((300,600))
 		self.sizer.Add(self.panel, 20, wx.EXPAND)
@@ -467,46 +447,14 @@ class PickerApp(wx.App):
 		self.buttonrow = wx.FlexGridSizer(1,9)
 
 		self.next = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
-		self.next.SetMinSize((200,40))
+		self.next.SetMinSize((150,40))
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.next)
 		self.buttonrow.Add(self.next, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		self.add = wx.Button(self.frame, wx.ID_REMOVE, '&Remove Region')
-		self.add.SetMinSize((150,40))
-		self.Bind(wx.EVT_BUTTON, self.onAdd, self.add)
-		self.buttonrow.Add(self.add, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear')
 		self.clear.SetMinSize((100,40))
 		self.Bind(wx.EVT_BUTTON, self.onClear, self.clear)
 		self.buttonrow.Add(self.clear, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		self.revert= wx.Button(self.frame, wx.ID_REVERT_TO_SAVED, 'Revert to Saved')
-		self.revert.SetMinSize((80,40))
-		self.Bind(wx.EVT_BUTTON, self.onRevert, self.revert)
-		self.buttonrow.Add(self.revert, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		label = wx.StaticText(self.frame, -1, "Image Assessment:  ", style=wx.ALIGN_RIGHT)
-		self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
-
-		self.assessnone = wx.ToggleButton(self.frame, -1, "&None")
-		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleNone, self.assessnone)
-		self.assessnone.SetValue(0)
-		#self.assessnone.SetBackgroundColour(self.selectcolor)
-		self.assessnone.SetMinSize((100,40))
-		self.buttonrow.Add(self.assessnone, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		self.assesskeep = wx.ToggleButton(self.frame, -1, "&Keep")
-		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleKeep, self.assesskeep)
-		self.assesskeep.SetValue(0)
-		self.assesskeep.SetMinSize((100,40))
-		self.buttonrow.Add(self.assesskeep, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		self.assessreject = wx.ToggleButton(self.frame, -1, "&Reject")
-		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleReject, self.assessreject)
-		self.assessreject.SetValue(0)
-		self.assessreject.SetMinSize((100,40))
-		self.buttonrow.Add(self.assessreject, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.createPolyParticleGUI()#add the buttons needed for the polygon manual picker
 		### END BUTTONS ROW
@@ -519,13 +467,18 @@ class PickerApp(wx.App):
 		self.frame.Show(True)
 		return True
 
+	def addLabelPicker(self, label):
+		rgb = self.pick_colors.next()
+		self.panel.addTargetTool(label, color=wx.Color(*rgb),
+			target=True, shape=self.shape, size=self.size)
+		self.panel.setTargets(label, [])
+		self.panel.selectiontool.setTargeting(label, True)
+
 	def doGraphics(self):
 		#for targets in self.oldPolyTargets:
 		#	self.panel.drawContour(wx.Color(220,20,20),targets)	
 		for targets in self.polyTargets:
 			self.panel.drawContour(wx.Color(220,20,20),targets)	
-		for targets in self.tubeTargets:
-			self.panel.drawContour(wx.Color(220,220,20), targets, thickness=2)
 
 	def deleteTarget(self, target):
 		try:
@@ -540,20 +493,11 @@ class PickerApp(wx.App):
 					del self.polyTargets[i]
 					#targets = self.contourTargetMap[target]
 					#del targets
-				if target.type.name == 'TubeMemory':
-					tubeMemTargets = self.panel.selectiontool.getTargets('TubeMemory')
-					i = tubeMemTargets.index(target)
-					del self.tubeTargets[i]
-					self.singleParticleTypeList.remove('Tube')
-				if target.type.name == 'Circle':
-					self.panel.selectiontool.getTargets('Circle').remove(target)
-					self.singleParticleTypeList.remove('Circle')
 		except (ValueError,IndexError):
 			pass		
 		print 'ow'
 
 	def addManualPoint(self):
-		'''
 		def dist(target1,target2):
 			return math.sqrt((target1.x-target2.x)*(target1.x-target2.x)+(target1.y-target2.y)*(target1.y-target2.y))
 		targets = self.panel.selectiontool.getTargets(self.s)
@@ -580,8 +524,6 @@ class PickerApp(wx.App):
 		else:
 			targets.insert(i,target)	
 		self.panel.selectiontool.setTargets(self.s,targets)
-		'''
-		pass
 
 	def negative(self, ndarray):
 		for i in range(len(ndarray)):
@@ -653,7 +595,7 @@ class PickerApp(wx.App):
 			targets = []
 		'''
 
-	def loadOld(self, points, singlePoints):
+	def loadOld(self, points):
 		self._onClear()
 		self.panel.setTargets(self.s2,points[0])
 		i = 0
@@ -662,38 +604,13 @@ class PickerApp(wx.App):
 			i+=1
 		for p in points[1]:
 			self.polyTargets.append(p)
+		self.original_polyTargets = points[1]
 		self.particleTypeList = points[2]
-		singleTargets = []
-		singleCircles = []
-		singleTubes = []
-		i = 0
-		for point in singlePoints[0]:
-			if singlePoints[1][i]=='Tube':
-				singleTubes.append(point)
-			elif singlePoints[1][i]=='Circle':
-				singleCircles.append(point)
-			else:
-				singleTargets.append(point)
-			i+=1
-		self.panel.setTargets(self.s3,singleTargets)
-		self.panel.setTargets('Tube', singleTubes)
-		self.panel.setTargets('Circle', singleCircles)
-		self.singleParticleTypeList = singlePoints[1]
-		self.tubeTargets = []
-		self.tubeTargets = singlePoints[2]
-		self.panel.selectiontool.setTargets('Tube',[])
-		
-		for target in self.tubeTargets:
-			tubemem = self.panel.selectiontool.getTargets('TubeMemory')
-			tubemem.append(target[0])
-			self.panel.selectiontool.setTargets('TubeMemory', tubemem)
-		#self.oldPolyTargets = points[1]
 
 	def createPolyParticleGUI(self):#creates a main tool to select the points and adds a button to move onto the next particle
 		self.panel.setPickerApp(self)
 		self.polyTargets = []
 		self.polyTargetsLabels = []
-		self.s3 = 'Select Particles'	
 		self.s = 'Manually Create Contours'
 		self.panel.addTargetTool(self.s, color=wx.Color(20,220,20),
 			target=True, shape='polygon')
@@ -702,86 +619,38 @@ class PickerApp(wx.App):
 
 		self.s2 = 'Auto Create Contours'
 		self.panel.addTargetTool(self.s2, color=wx.Color(20,220,20),
-			target=True, shape='.')
+			target=False, shape='.')
 		self.panel.setTargets(self.s2, [])
-		self.panel.selectiontool.setDisplayed(self.s2, True)
-		self.panel.selectiontool.setTargeting(self.s2, True)
+		self.panel.selectiontool.setDisplayed(self.s2, False)
+		self.panel.selectiontool.setTargeting(self.s, True)
 
-		self.add = wx.Button(self.frame, wx.ID_ADD, '&Add Particle')
+		self.add = wx.Button(self.frame, wx.ID_ADD, '&Add Traced Object')
 		self.add.SetMinSize((200,40))
 		self.Bind(wx.EVT_BUTTON, self.onSelected, self.add)
 		self.buttonrow.Add(self.add, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 
-		self.removeLast = wx.Button(self.frame, wx.ID_REMOVE, 'Remove &Last Partice')
+		self.removeLast = wx.Button(self.frame, wx.ID_REMOVE, 'Remove &Last Object')
 		self.add.SetMinSize((200,40))
 		self.Bind(wx.EVT_BUTTON, self.onTakeBack, self.removeLast)
 		self.buttonrow.Add(self.removeLast, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 		
 
-		self.switch = wx.Button(self.frame, wx.ID_ANY, 'Switch Selection &Mode')
-		self.add.SetMinSize((200,40))
-		self.Bind(wx.EVT_BUTTON, self.onSwitch, self.switch)
-		self.buttonrow.Add(self.switch, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
+		#self.switch = wx.Button(self.frame, wx.ID_ANY, 'Switch Selection &Mode')
+		#self.add.SetMinSize((200,40))
+		#self.Bind(wx.EVT_BUTTON, self.onSwitch, self.switch)
+		#self.buttonrow.Add(self.switch, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		self.textFile = wx.Button(self.frame, wx.ID_ANY, 'Make &Text File')
 		self.add.SetMinSize((200,40))
 		self.Bind(wx.EVT_BUTTON, self.onMakeFile, self.textFile)
 		self.buttonrow.Add(self.textFile, 0,wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		self.tcTextFile = wx.Button(self.frame, wx.ID_ANY, 'Make TubeCircle &Text File')
-		self.add.SetMinSize((200,40))
-		self.Bind(wx.EVT_BUTTON, self.onMakeTCFile, self.tcTextFile)
-		self.buttonrow.Add(self.tcTextFile, 0,wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
-
-		self.filterSelectorChoices = ['Virus Like Particle','Latex Bead']
-		self.filterSelector = wx.ComboBox(self.frame,wx.CB_DROPDOWN,choices=self.filterSelectorChoices)
-		self.filterSelector.SetMinSize((200,40))
-		self.Bind(wx.EVT_TEXT, self.onSelectorTriggered, self.filterSelector)
-		self.buttonrow.Add(self.filterSelector, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3) 
-	
-		self.particleType = 'Blank'
-		self.typeSelectorChoices = ['Blank','Circle','Tube']
-		self.typeSelector = wx.ComboBox(self.frame,wx.CB_DROPDOWN,choices=self.typeSelectorChoices)
-		self.typeSelector.SetMinSize((200,40))
-		self.Bind(wx.EVT_COMBOBOX, self.onTypeChanged, self.typeSelector)
-		self.buttonrow.Add(self.typeSelector, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 		
-		self.panel.addTargetTool('Circle', color=wx.Color(20,20,220),
-			target=True, shape='o', size=self.size)
-		self.panel.setTargets('Circle', [])
-		self.panel.selectiontool.setTargeting('Circle', True)
-
-		self.panel.addTargetTool('Tube', color=wx.Color(220,220,20),
-			target=True, shape='polygon', size=self.size)
-		self.panel.setTargets('Tube', [])
-		self.panel.selectiontool.setTargeting('Tube', True)
-
-		self.panel.addTargetTool('TubeMemory', color=wx.Color(20,20,220),
-			target=True, shape='.', size=self.size)
-		self.panel.setTargets('TubeMemory', [])
-		self.panel.selectiontool.setTargeting('TubeMemory', True)
-
-	def onMakeTCFile(self,evt):
-		session = self.appionloop.params['sessionname']	
-		###change later
-		os.system('contourpickerTubeCircleTextFileGenerator.py ' + '--projectid=%d' % (self.appionloop.params['projectid']) + ' ' + '--session=' + str(session) + ' ' + '--runname='+self.appionloop.params['runname'] + ' ' + '--preset=' + self.appionloop.params['preset'])
-
 	def onMakeFile(self,evt):
 		session = self.appionloop.params['sessionname']	
 		###change later
 		command = 'contourpickerTextFileGenerator.py ' + '--projectid=%d' % (self.appionloop.params['projectid']) + ' ' + '--session=' + str(session) + ' ' + '--runname='+self.appionloop.params['runname'] + ' ' + '--preset=' + self.appionloop.params['preset']
 		os.system(command)
-
-	def onTypeChanged(self, evt):
-		self.particleType = self.typeSelectorChoices[self.typeSelector.GetSelection()]
-
-	def onSelectorTriggered(self, evt):
-		s = self.filterSelectorChoices[self.filterSelector.GetSelection()]	
-		if s == 'Virus Like Particle':
-			self.filters = False 
-		else:
-			self.filters = True
 
 	def onSwitch(self, evt):
 		s = 'Manually Create Contours'
@@ -809,27 +678,15 @@ class PickerApp(wx.App):
 
 	def onTakeBack(self,evt):
 		s2 = 'Auto Create Contours'
-		self.polyTargets.pop()
-		savedTargets = self.panel.getTargets(s2)
-		savedTargets.pop()
-		self.panel.setTargets(s2, savedTargets)
-
-	def addSinglePoint(self, evt):
-		if self.panel.selectiontool.isTargeting('Circle'):
-			self.particleType = 'Circle'
-		elif self.panel.selectiontool.isTargeting('Tube'):
-			self.particleType = 'Tube'
-			if len(self.panel.selectiontool.getTargets('Tube'))==1:
-				return
-		else:
-			self.particleType = 'Blank'
-		self.singleParticleTypeList.append(self.particleType)
+		if len(self.polyTargets) > 0:
+			self.polyTargets.pop()
+			savedTargets = self.panel.getTargets(s2)
+			savedTargets.pop()
+			self.panel.setTargets(s2, savedTargets)
 
 	def addPolyParticle(self, targets):#this function adds a tool for every particle that stores the points and handels the painting
-		
 		s = 'Manually Create Contours'
 		s2 = 'Auto Create Contours'
-		s3 = 'Select Particles'
 		if self.panel.selectiontool.isTargeting(s):
 			points = self.panel.selectiontool.getTargets(s2)
 			points.append(targets[0])
@@ -838,11 +695,11 @@ class PickerApp(wx.App):
 		self.contourTargetMap[t[len(t)-1]] = targets
 		self.polyTargets.append(targets)
 		self.panel.selectiontool.setTargets(s2,self.panel.selectiontool.getTargets(s2))
+		#Multiple Particle Type is no longer used but might be useful again in the future
+		self.particleType = 'Blank'
 		self.particleTypeList.append(self.particleType)
+
 	def onQuit(self, evt):
-		targets = self.panel.getTargets('Select Particles')
-		for target in targets:
-			print '%s\t%s' % (target.x, target.y)
 		wx.Exit()
 
 	def onSelected(self, evt):#event for the add particle button - clears the main 'manually select particle' tool and calls 'addPolyParticle' to handel the data
@@ -852,96 +709,19 @@ class PickerApp(wx.App):
 			self.addPolyParticle(vertices);
 		self.panel.setTargets('Manually Create Contours', []);
 		
-	def onAdd(self, evt):
-		vertices = []
-		vertices = self.panel.getTargetPositions('Region to Remove')
-		def reversexy(coord):
-			clist=list(coord)
-			clist.reverse()
-			return tuple(clist)
-		vertices = map(reversexy,vertices)
-		
-		maskimg = leginon.polygon.filledPolygon(self.panel.imagedata.shape,vertices)
-		type(maskimg)
-		targets = self.panel.getTargets('Select Particles')
-		eliminated = 0
-		newparticles = []
-		for target in targets:
-			coord = (target.y,target.x)
-			if maskimg[coord] != 0:
-				eliminated += 1
-			else:
-				newparticles.append(target)
-		print eliminated,"particle(s) eliminated due to masking"
-		self.panel.setTargets('Select Particles',newparticles)
-		self.panel.setTargets('Region to Remove', [])
-		
 	def onNext(self, evt):
-		#targets = self.panel.getTargets('Select Particles')
-		#for target in targets:
-		#	print '%s\t%s' % (target.x, target.y)
-		self.appionloop.targets = self.panel.getTargets('Select Particles')
-		self.appionloop.assess = self.finalAssessment()
+		self.appionloop.targets = {}
+		for label in self.labels:
+			self.appionloop.targets[label] = self.panel.getTargets(label)
 		self.index+=1
 		if len(self.appionloop.imgtree)==self.index:
 			print "There Are No More Images"
 		self.Exit()
 
-	def finalAssessment(self):
-		if self.assessnone.GetValue() is True:
-			return None
-		elif self.assesskeep.GetValue() is True:
-			return True
-		elif self.assessreject.GetValue() is True:
-			return False
-		return None
-
-	def setAssessStatus(self):
-		if self.appionloop.assess is True:
-			self.onToggleKeep(None)
-		elif self.appionloop.assess is False:
-			self.onToggleReject(None)
-		else:
-			self.onToggleNone(None)
-
-	def onToggleNone(self, evt):
-		self.assessnone.SetValue(1)
-		self.assessnone.SetBackgroundColour(wx.Color(200,200,0))
-		self.assesskeep.SetValue(0)
-		self.assesskeep.SetBackgroundColour(self.deselectcolor)
-		self.assessreject.SetValue(0)
-		self.assessreject.SetBackgroundColour(self.deselectcolor)
-		self.assess = None
-
-	def onToggleKeep(self, evt):
-		self.assessnone.SetValue(0)
-		self.assessnone.SetBackgroundColour(self.deselectcolor)
-		self.assesskeep.SetValue(1)
-		self.assesskeep.SetBackgroundColour(wx.Color(0,200,0))
-		self.assessreject.SetValue(0)
-		self.assessreject.SetBackgroundColour(self.deselectcolor)
-		self.assess = True
-
-
-	def onToggleReject(self, evt):
-		self.assessnone.SetValue(0)
-		self.assessnone.SetBackgroundColour(self.deselectcolor)
-		self.assesskeep.SetValue(0)
-		self.assesskeep.SetBackgroundColour(self.deselectcolor)
-		self.assessreject.SetValue(1)
-		self.assessreject.SetBackgroundColour(wx.Color(200,0,0))
-		self.assess = False
 	def _onClear(self):
 		self.polyTargets = []
 		self.panel.setTargets('Auto Create Contours', [])
-		self.panel.setTargets('Select Particles', [])
 		self.panel.setTargets('Manually Create Contours', [])
-		self.panel.setTargets('Region to Remove',[])
-		self.tubeTargets = []
-		self.panel.setTargets('Tube', [])
-		self.panel.setTargets('Circle', [])
-		self.panel.setTargets('TubeMemory', [])
-		self.singleParticleTypeList = []
 		self.particleTypeList = []
 
 	#	for s in self.particles:
@@ -950,9 +730,6 @@ class PickerApp(wx.App):
 		
 	def onClear(self, evt):
 		self._onClear()
-
-	def onRevert(self, evt):
-		self.panel.setTargets('Select Particles', self.panel.originaltargets)
 
 
 ##################################
@@ -965,9 +742,6 @@ class PickerApp(wx.App):
 
 class ContourPicker(manualpicker.ManualPicker):
 	def checkConflicts(self):
-		if self.params['shuffle'] != True:
-			apDisplay.printWarning("Shuffle is always set to True for contourpicker")
-			self.params['shuffle'] = True
 		for i,v in enumerate(self.outtypes):
 			if self.params['outtype'] == v:
 				self.params['outtypeindex'] = i
@@ -976,6 +750,8 @@ class ContourPicker(manualpicker.ManualPicker):
 		return
 
 	def setApp(self):
+		if 'particle_w/o_label' in self.labels:
+			self.labels.pop(self.labels.index('particle_w/o_label'))
 		self.app = PickerApp(
 			shape = self.canonicalShape(self.params['shape']),
 			size =  self.params['shapesize'],
@@ -983,78 +759,47 @@ class ContourPicker(manualpicker.ManualPicker):
 		)
 
 	def runManualPicker(self, imgdata):
-		#reset targets
-		self.app.panel.setTargets('Select Particles', [])
-		self.targets = []
-		#set the assessment and viewer status
-		self.assessold = apDatabase.checkInspectDB(imgdata)
+		# Contourpicker does not do assessment.  Setting the current assessment to be
+		# the same as the old prevents committing it to the database
+		self.assessold = None
 		self.assess = self.assessold
-		self.app.setAssessStatus()
+		#reset targets
+		self.targets = {}
+		for label in self.labels:
+			self.app.panel.setTargets(label, [])
+			self.targets[label] = []
+
 					
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
 		imgpath = os.path.join(self.params['rundir'],imgname)
-		if not self.params['checkMask']:
-			self.app.panel.openImageFile(imgpath)
-		else:
-			self.showAssessedMask(imgpath,imgdata)
+		self.app.panel.openImageFile(imgpath)
 
-		targets = self.getParticlePicks(imgdata)
-		if targets:
-			print "inserting ",len(targets)," targets"
-			self.app.panel.setTargets('Select Particles', targets)
-			self.app.panel.originaltargets = targets
+		self.app.panel.originaltargets = {}
 
 		#set vital stats
 		self.app.vitalstats.SetLabel("Vital Stats: Image "+str(self.stats['count'])
-			+" of "+str(self.stats['imagecount'])+", inserted "+str(len(targets))+" picks, "
+			+" of "+str(self.stats['imagecount'])
 			+" image name: "+imgdata['filename'])
 		#run the picker
 		self.loadOld(imgdata)
 		self.app.MainLoop()
 
 		#targets are copied to self.targets by app
-		#assessment is copied to self.assess by app
 		#parse and return the targets in peaktree form
 		self.app.panel.openImageFile(None)
 		peaktree=[]
-		for target in self.targets:
-			peaktree.append(self.XY2particle(target.x, target.y))
+		for label,targets in self.targets.items():
+			for target in targets:
+				peaktree.append(self.XY2particle(target.x, target.y, label))
 		
 		targetsList = self.getPolyParticlePoints()
 		contourTargets = self.app.panel.getTargets('Auto Create Contours')
 
-		circles = self.app.panel.getTargets('Circle')
-		tubes = self.app.tubeTargets
-		index = len(tubes)-1
-		blanks = self.app.panel.getTargets(self.app.s3)
-		singleTargets = []
-		for i in self.app.singleParticleTypeList:
-			if i=='Tube':
-				singleTargets.append(tubes[index][0])
-				index-=1
-			if i=='Circle':
-				singleTargets.append(circles.pop())
-			if i=='Blank':
-				singleTargets.append(blanks.pop())
-		counter = len(self.app.tubeTargets)-1
 		c = None
-		print 'length of list : ', str(len(self.app.singleParticleTypeList))
-		print self.app.singleParticleTypeList
-		for i in range(len(singleTargets)):
-			try:
-				c=appiondata.ApContourData(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=singleTargets[i].x, y=singleTargets[i].y,version=self.maxVersion+1, method='single', particleType=self.app.singleParticleTypeList[i], runname=self.params['runname'])
-			except AttributeError:
-				c=appiondata.ApContourData(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=singleTargets[i][0], y=singleTargets[i][1],version=self.maxVersion+1, method='single', particleType=self.app.singleParticleTypeList[i], runname=self.params['runname'])
-			c.insert()
-			if self.app.singleParticleTypeList[i]=='Tube':
-				for point in self.app.tubeTargets[counter]:
-					point1=appiondata.ApContourPointData(x=point[0], y=point[1], contour=c)
-					point1.insert()
-				counter-=1
 		counter = 0
 		for i in range(len(targetsList)):
-			c=appiondata.ApContourData(name="contour"+str(int(self.startPoint)+i+len(singleTargets)), image=imgdata, x=contourTargets[counter].x, y=contourTargets[counter].y,version=self.maxVersion+1, method='auto', particleType=self.app.particleTypeList[counter], runname=self.params['runname'])
+			c=appiondata.ApContourData(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=contourTargets[counter].x, y=contourTargets[counter].y,version=self.maxVersion+1, method='auto', particleType=self.app.particleTypeList[counter], runname=self.params['runname'])
 			c.insert()
 			counter += 1
 			for point in targetsList[i]:
@@ -1094,18 +839,7 @@ class ContourPicker(manualpicker.ManualPicker):
 				for j in point:
 					contourList.append((j['x'], j['y']))
 				oldPolyPoints.append(contourList)
-			if not i['version']==None and int(i['version'])==self.maxVersion and i['method']=='single' and i['runname']==self.params['runname']:
-				singleTypes.append(i['particleType'])
-				singleTargets.append((i['x'],i['y']))
-				if i['particleType']=='Tube':
-					contour = i['name']
-					points['contour'] = i
-					point = points.query()
-					contourList = []
-					for j in point:
-						contourList.append((j['x'], j['y']))
-					tubePoints.append(contourList)
-		return self.app.loadOld((contourPoints,oldPolyPoints,types),(singleTargets,singleTypes,tubePoints))
+		return self.app.loadOld((contourPoints,oldPolyPoints,types))
 
 	def getPolyParticlePoints(self):#get all of the polyparticles into list of points form
 		targetsList = []

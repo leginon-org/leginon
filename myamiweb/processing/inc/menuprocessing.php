@@ -113,7 +113,7 @@ if (is_numeric($expId)) {
 		$avgtomoruns=count($avgtomograms);
 	}
 
-	$action = "Particle Selection";
+	$action = "Object Selection";
 
 	// get template picking stats:
 	$tresults=array();
@@ -136,6 +136,10 @@ if (is_numeric($expId)) {
 	$mrun = count($subclusterjobs['manualpicker']['running']);
 	$mq = count($subclusterjobs['manualpicker']['queued']);
 
+	$cdone = count($subclusterjobs['contourpicker']['done']);
+	$crun = count($subclusterjobs['contourpicker']['running']);
+	$cq = count($subclusterjobs['contourpicker']['queued']);
+
 	$tiltdone = count($subclusterjobs['tiltalign']['done']);
 	$tiltrun = count($subclusterjobs['tiltalign']['running']);
 	$tiltqueue = count($subclusterjobs['tiltalign']['queued']);
@@ -156,12 +160,16 @@ if (is_numeric($expId)) {
 	$mresults[] = ($mrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mrun running</a>";
 	$mresults[] = ($mq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mq queued</a>";
 
+	$cresults[] = ($cdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$cdone complete</a>";
+	$cresults[] = ($crun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=contourpicker'>$crun running</a>";
+	$cresults[] = ($cq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$cq queued</a>";
+
 	$tiltresults[] = ($tiltdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$tiltdone complete</a>";
 	$tiltresults[] = ($tiltrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tiltalign'>$tiltrun running</a>";
 	$tiltresults[] = ($tiltqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tiltalign'>$tiltqueue queued</a>";
 
 	// in case weren't submitted by web:
-	$totruns = $tdone+$trun+$tq+$ddone+$drun+$dq+$mdone+$mrun+$mq;
+	$totruns = $tdone+$trun+$tq+$ddone+$drun+$dq+$mdone+$mrun+$mq+$cdone+$crun+$cq;
 	if ($prtlruns > $totruns) $totruns = $prtlruns;
 	if ($looprundatas = $particle->getLoopProgramRuns()) {
 		$loopruns=count($looprundatas);
@@ -194,6 +202,13 @@ if (is_numeric($expId)) {
 		'name'=>"<a href='runManualPicker.php?expId=$sessionId'>Manual Picking</a>",
 		'result'=>$mresults,
 	);
+	if (!HIDE_FEATURE)
+	{
+		$nrun[] = array(
+			'name'=>"<a href='runContourPicker.php?expId=$sessionId'>Object Tracing</a>",
+			'result'=>$cresults,
+		);
+	}
 	if ($loopruns > 0) {
 		$nrun[] = array(
 			'name'=>"<a href='runLoopAgain.php?expId=$sessionId'>Repeat from other session</a>",
