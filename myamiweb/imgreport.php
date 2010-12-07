@@ -173,6 +173,7 @@ echo formatHtmlRow('Acquired', $imageinfo[timestamp]);
 echo formatHtmlRow('Path', $path);
 echo formatHtmlRow('Session', "$sessioninfo[Name] - $sessioninfo[Purpose]");
 echo formatHtmlRow('Instrument', $imageinfo['scope'].' - '.$imageinfo['camera']);
+echo formatHtmlRow('Scope Host', $sessioninfo['Scope Host']);
 echo "</table>";
 ?>
 	</td>
