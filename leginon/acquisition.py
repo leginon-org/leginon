@@ -562,6 +562,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.instrument.ccdcamera.getImage()
 		## take out film
 		self.instrument.tem.postFilmExposure(True)
+		filmleft = self.instrument.tem.FilmStock
+		self.logger.info('Films left: %d' % (filmleft,))
+		if filmleft < 1:
+			self.logger.error('No more film left, please change film box')
 		return filmdata
 
 	def exposeSpecimen(self, seconds):
