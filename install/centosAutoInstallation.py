@@ -78,22 +78,13 @@ class CentosInstallation(object):
         return True
     
     # if SeLinus is not disable, return false, otherwise good to go.
-    def checkSeLinus(self):
+    def checkSeLinux(self):
         
-        inf = open('/etc/selinux/config', 'r')
+        proc = subprocess.Popen("/usr/sbin/selinuxenabled")
+        returnValue = proc.wait()
+
         
-        for line in inf:
-            line = line.rstrip()
-            if line.startswith('SELINUX=enforcing'):
-                seLinusEnable = True
-                break
-            elif line.startswith('SELINUX=permissive'):
-                seLinusEnable = True
-                break
-            else:
-                seLinusEnable = False
-        
-        if seLinusEnable:
+        if not returnValue:
             print("========================")
             print("ERROR: Please disable SELinux before running this auto installation. Visit http://ami.scripps.edu/redmine/projects/appion/wiki/Install_Appion_and_Leginon_using_the_auto-installation_tool .")
             print("Exiting installation...")
@@ -617,7 +608,7 @@ class CentosInstallation(object):
         self.removeLogFile()
         self.setupFilePermission()
             
-        result = self.checkSeLinus()
+        result = self.checkSeLinux()
         if result is False:
             sys.exit(1)
 
