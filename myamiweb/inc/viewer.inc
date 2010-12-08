@@ -1416,8 +1416,10 @@ function getParticleInfo($sessionId) {
 		$runId=$p['DEF_id'];
 		$particlelabels = $particle->getParticleLabels($runId);
 		$labels=array();
-		foreach ($particlelabels as $label) {
-			$labels[]=$label['label'];
+		if (is_array($particlelabels) && count($particlelabels)) {
+			foreach ($particlelabels as $label) {
+				$labels[]=$label['label'];
+			}
 		}
 		list($selectionparams)=$particle->getSelectionParams($runId);
 		$diam = $selectionparams['diam'];
