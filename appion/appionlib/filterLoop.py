@@ -25,7 +25,8 @@ class FilterLoop(appionLoop2.AppionLoop):
 			#auto set the output directory
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 			path = os.path.abspath(sessiondata['image path'])
-			path = re.sub("leginon","appion",path)
+			pieces = path.split('leginon')
+			path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
 			path = re.sub("/rawdata","",path)
 			path = os.path.join(path, self.processdirname, self.params['runname'])
 			self.params['rundir'] = path

@@ -85,7 +85,8 @@ class UploadTomoScript(appionScript.AppionScript):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
 		path = os.path.abspath(sessiondata['image path'])
-		path = re.sub("/leginon/","/appion/",path)
+		pieces = path.split('leginon')
+		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
 		path = re.sub("/rawdata","/tomo",path)
 		tiltseriespath = "tiltseries%d" % self.params['tiltseriesnumber']
 		if self.params['full']:

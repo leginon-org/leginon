@@ -89,7 +89,8 @@ class tomoMaker(appionScript.AppionScript):
 		path = os.path.abspath(self.sessiondata['image path'])
 		if len(self.tiltdatalist) > 1:
 			self.params['other tiltseries'] = self.tiltdatalist[1]
-		path = re.sub("leginon","appion",path)
+		pieces = path.split('leginon')
+		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
 		path = re.sub("/rawdata","/tomo",path)
 		tiltseriespath = "tiltseries%d" %  self.params['tiltseriesnumber']
 		self.params['tiltseriesdir'] = os.path.join(path,tiltseriespath)
@@ -101,7 +102,8 @@ class tomoMaker(appionScript.AppionScript):
 		"""
 		self.setTiltSeries()
 		path = os.path.abspath(self.sessiondata['image path'])
-		path = re.sub("leginon","appion",path)
+		pieces = path.split('leginon')
+		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
 		path = re.sub("/rawdata","/tomo",path)
 		tiltseriespath = "tiltseries%d" %  self.params['tiltseriesnumber']
 		tomorunpath = self.params['runname']
