@@ -77,7 +77,7 @@ function createAce2Form($extra=false) {
 	$presets=$sessiondata['presets'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=getBaseAppionPath($sessionpath);
 		$sessionpath=ereg_replace("rawdata","ctf/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}

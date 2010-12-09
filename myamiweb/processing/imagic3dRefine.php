@@ -157,7 +157,7 @@ function jobform($extra=false) {
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=getBaseAppionPath($sessionpath);
 		$sessionpath=ereg_replace("rawdata","recon",$sessionpath);
 		$sessionpath=ereg_replace("data..","data00",$sessionpath);
 	}

@@ -42,7 +42,7 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 	$presets=$sessiondata['presets'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=getBaseAppionPath($sessionpath);
 		$sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}

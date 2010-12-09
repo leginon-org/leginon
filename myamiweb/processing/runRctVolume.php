@@ -60,7 +60,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=getBaseAppionPath($sessionpath);
 		$sessionpath=ereg_replace("rawdata","rctvolume/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}

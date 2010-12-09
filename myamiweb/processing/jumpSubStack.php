@@ -57,7 +57,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 
 	// get path for submission
 	$outdir=$sessioninfo['Image path'];
-	$outdir=ereg_replace("leginon","appion",$outdir);
+	$outdir=getBaseAppionPath($outdir);
 	$outdir=ereg_replace("rawdata","stacks",$outdir);
 
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;

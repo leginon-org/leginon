@@ -70,7 +70,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=getBaseAppionPath($sessionpath);
 		$sessionpath=ereg_replace("rawdata","imgreject/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}

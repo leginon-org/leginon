@@ -70,7 +70,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	
 	if (!empty($sessioninfo)) {
 		$outdir=$sessioninfo['Image path'];
-		$outdir=ereg_replace("leginon","appion",$outdir);
+		$outdir=getBaseAppionPath($outdir);
 		$outdir=ereg_replace("rawdata","models",$outdir);
 		$outdir=$outdir."/accepted";
 		$sessionname=$sessioninfo['Name'];

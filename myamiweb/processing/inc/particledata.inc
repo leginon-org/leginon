@@ -4422,4 +4422,12 @@ function displayCTFdata($data, $display_keys) {
 	return $html;
 }
 
+function getBaseAppionPath($leginon_imagepath,$new_base='appion') {
+	// use this in case that the word leginon is used in two parts of the path
+	$path_pieces = explode('leginon',$leginon_imagepath);
+	$pieces_count = count($path_pieces);
+	$appion_basepath = implode('leginon',array_slice($path_pieces,0,$pieces_count-1)).$new_base.$path_pieces[$pieces_count-1]; 
+	return $appion_basepath;
+}
+
 ?>

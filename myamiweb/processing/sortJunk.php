@@ -50,7 +50,7 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 
 	// get path for submission
 	$outdir=$sessioninfo['Image path'];
-	$outdir=ereg_replace("leginon","appion",$outdir);
+	$outdir=getBaseAppionPath($outdir);
 	$outdir=ereg_replace("rawdata","stacks",$outdir);
 
 	$javafunctions .= writeJavaPopupFunctions('appion');

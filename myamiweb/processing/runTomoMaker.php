@@ -72,7 +72,7 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 		$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
 		if (!empty($sessioninfo)) {
 			$outdir=$sessioninfo['Image path'];
-			$outdir=ereg_replace("leginon","appion",$outdir);
+			$outdir=getBaseAppionPath($outdir);
 			$outdir=ereg_replace("rawdata","tomo/tiltseries".$tiltseriesinfos[0]['number'],$outdir);
 			echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 		}

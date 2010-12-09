@@ -44,7 +44,7 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
 		if (!$leg_check) {
-			$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+			$sessionpath=getBaseAppionPath($sessionpath);
 			$sessionpath=ereg_replace("rawdata",$outdirname,$sessionpath);
 		}
 		

@@ -51,7 +51,7 @@ function jobform($extra=false) {
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$outdir=$sessioninfo['Image path'];
-		$outdir=ereg_replace("leginon","appion",$outdir);
+		$outdir=getBaseAppionPath($outdir);
 		$outdir=ereg_replace("rawdata","init_models",$outdir);
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='output_directory' value='$outdir'>\n";
@@ -79,7 +79,7 @@ function jobform($extra=false) {
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$outdir=$sessioninfo['Image path'];
-		$outdir=ereg_replace("leginon","appion",$outdir);
+		$outdir=getBaseAppionPath($outdir);
 		$outdir=ereg_replace("rawdata","init_models",$outdir);
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='output_directory' value='$outdir'>\n";

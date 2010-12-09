@@ -59,7 +59,7 @@ function createOtrVolumeForm($extra=false, $title='OtrVolume.py Launcher', $head
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=getBaseAppionPath($sessionpath);
 		$sessionpath=ereg_replace("rawdata","otrvolume/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
