@@ -648,7 +648,7 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 
-		if self.data[''] is False:
+		if self.data['optimrun'] is False:
 			self.statbar.PushStatusText("ERROR: Cannot mask images. No alignment parameters.", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot mask images.\nNo alignment parameters.",\
 				'Error', wx.OK|wx.ICON_ERROR)
