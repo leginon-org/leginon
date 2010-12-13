@@ -4,6 +4,7 @@
 import cPickle
 import cStringIO
 import types
+import re
 
 # mapping of some string representations to bool value
 bool_strings = {}
@@ -36,11 +37,10 @@ def int_converter(value):
 	return int(float(value))
 
 def shape_converter(value):
-	'''size must be either a bin factor integer or a shape of the form "AxB"'''
+	'''size must be a shape of the form "AxB"'''
 	# first convert value to sequence of numbers
 	if isinstance(value, types.StringTypes):
-		value = value.lower()
-		numbers = value.split('x')
+		numbers = re.findall('\d+', value)
 	else:
 		numbers = list(value)
 	# now convert numbers to integers
@@ -152,6 +152,8 @@ class Pipe(object):
 			if name in kwargs and kwargs[name] is not None:
 				args_present.append(name)
 				self.kwargs[name] = converter(kwargs[name])
+			elif name in self.optional_defaults:
+				self.kwargs[name] = converter(self.optional_defaults[name])
 
 		if args_missing:
 			if args_present:
