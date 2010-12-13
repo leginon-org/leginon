@@ -2,6 +2,7 @@
 require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
+require "inc/cachedb.inc";
 if (defined('PROCESSING')) {
 	$ptcl = (@require "inc/particledata.inc") ? true : false;
 }
@@ -14,6 +15,10 @@ $preset = $_POST[$_POST[controlpre]];
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
+
+$sessioninfo=$leginondata->getSessionInfo($sessionId);
+$session=$sessioninfo['Name'];
+startcache($session);
 
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
