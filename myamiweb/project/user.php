@@ -22,7 +22,7 @@ foreach ($users as $k=>$p) {
 	$email = $p['email'];
 	$userId = $p['userId'];
 	if ($is_admin) {
-		$users[$k]["edit"]="<a href='updateuser.php?userId=$userId'><img border='0' src='img/edit.png'></a>";
+		$users[$k]["edit"]="<a href='".BASE_URL.'adduser.php'."?userId=$userId'><img border='0' src='img/edit.png'></a>";
 		//$users[$k]["del"]="<a href='deleteuser.php?userId=$userId'><img border='0' src='img/del.png'></a>";
 	}
 	//$users[$k]["name"]=$p['lastname'].(($p['firstname'])? ', '.$p['firstname']:'');
@@ -49,7 +49,7 @@ if ($is_admin) {
 
 project_header("Users");
 if ($is_admin) {
-	echo "<a class='header' href='updateuser.php'>Add new user</a>"; 
+	echo "<a class='header' href='".BASE_URL.'adduser.php'."'>Add new user</a>"; 
 }
 echo " - currently ".count($users)." users";
 echo data2table($users, $columns, $display_header);
