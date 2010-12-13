@@ -7,3 +7,4 @@ from scale import Scale
 from format import Format
 from lpf import LPF
 from sqrt import Sqrt
+from pad import Pad
