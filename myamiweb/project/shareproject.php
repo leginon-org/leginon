@@ -47,7 +47,7 @@ if ($is_admin) {
 ?>
 <p>
 <img src="img/info.png"> Users with no password set won't be listed; go
-to <a class="header" href="user.php">[user]</a> to update user's profile.
+to <a class="header" href="<? echo BASE_URL.'user.php'; ?>">[user]</a> to update user's profile.
 </p>
 <?
 	};
