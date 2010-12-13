@@ -115,6 +115,14 @@ if ($g) {
 		$img = getImage($sessionId, $id, $preset, $params);
 	}
 
+	if (!$img) {
+		header("Content-type: image/x-png");
+		$blkimg = blankimage();
+		imagepng($blkimg);
+		imagedestroy($blkimg);
+		exit();
+	}
+
 	$nimgId = $leginondata->findImage($id, $preset);
 	list($res) = $leginondata->getFilename($nimgId['id']);
 	$filename = $res['filename'];
