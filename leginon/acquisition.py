@@ -518,6 +518,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		setImageFilename(imagedata)
 
 	def acquireFilm(self, presetdata, emtarget=None):
+		self.logger.info('acquiring film')
 		## get current film parameters
 		stock = self.instrument.tem.FilmStock
 		if stock < 1:
@@ -564,6 +565,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.instrument.ccdcamera.getImage()
 		## take out film
 		self.instrument.tem.postFilmExposure(True)
+		filmleft = self.instrument.tem.FilmStock
+		self.logger.info('Films left: %d' % (filmleft,))
+		if filmleft < 1:
+			self.logger.error('No more film left, please change film box and click continue')
+			self.player.pause()
+			self.declareDrift('film changed')
 		return filmdata
 
 	def exposeSpecimen(self, seconds):
@@ -688,7 +695,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return imagedata
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
-
+		reduce_pause = self.onTarget
 
 		if debug:
 			try:
@@ -710,9 +717,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 			return status
 
 		pausetime = self.settings['pause time']
+		if reduce_pause:
+			pausetime = min(pausetime, 2.5)
 
-		if debug:
-			print tnum, 'PAUSING FOR', pausetime
+		self.logger.info('pausing for %s s' % (pausetime,))
 
 		self.startTimer('pause')
 		time.sleep(pausetime)
