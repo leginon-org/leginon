@@ -30,6 +30,7 @@ var help = {
 		'binval' : 'Binning of the image.  This takes any integer value, but powers of 2 are recommended. Binning quickly shrinks the image to help make the processing faster.  Typically you want to use 4 or 8 for particle picking.',
 		'ace2bin' : 'Binning of the image.  This takes any integer value, but powers of 2 are recommended. Typical is 1 or 2 for ace2 estimation if the pixel size is ~1.0-2.0 &Aring;ngstr&ouml;ms. This binning in real space has an effect of zooming in on the power spectra. Bins of greater than 2 can cause clipping of outer Thon rings in close to focus images and errors in the CTF estimation, but this handled by the confidence value',
 		'partbin' : 'Binning of the particle images. This quickly shrinks the image to help make the processing faster.',
+		'clipdiam' : 'Rescale the unbinned boxsize.',
 		'stackbin' : 'Amount to bin the particles by after they are extracted from each image.  Note that this binning occurs AFTER boxing from the raw image, so that your box size must correspond to the UNBINNED micrograph.  Usually bin by 2.',
 		'coranbin' : 'Binning of the particle images. The speed of coran goes as the number of pixels cubed. So bin by 2 and it goes 64 times faster, bin by 3 and it goes 729 times faster.',
 		'defocpair' : 'Select this box if you are collecting defocal pairs.  This feature takes both of the en and ef images and aligns them, so you can use makestack later.',
