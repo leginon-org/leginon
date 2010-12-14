@@ -105,7 +105,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	//if neither a refId or stackId exist
 	if (!$stackId && !$alignId && !$clusterId) {
 		echo "<br>\n";
-		echo "Template Name with path <i>(wild cards are acceptable)</i>: <br> \n";
+		echo "Template Name with path <i>(mrc-file-format wild cards are acceptable)</i>: <br> \n";
 		echo "<INPUT TYPE='text' NAME='template' VALUE='$template' SIZE='55'/>\n";
 		echo "<br>\n";			
 	} 

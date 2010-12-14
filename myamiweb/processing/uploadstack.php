@@ -96,7 +96,7 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 
 	echo "<br/><br/>\n";
 
-	echo docpop('stackfile', '<b>Stack filename with path:</b>');
+	echo docpop('stackfile', '<b>Stack filename with path </b><i>(IMAGIC-file-format)</i>:');
 	echo "<br/>\n";
 	echo "<input type='text' name='stackfile' value='$stackfile' size='55'/>\n";
 

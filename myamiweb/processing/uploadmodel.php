@@ -107,7 +107,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 		if ($densityid) {
 			echo "<b> 3D density id: $densityid<b><br/>\n";
 		} else {
-			echo"<b>Model file name with path:</b><br />\n";
+			echo"<b>Model file name with path </b><i>(mrc-file-format)</i>:<br />\n";
 			echo "<INPUT TYPE='text' NAME='modelname' VALUE='$modelname' SIZE='50'><br />\n";
 		}
 	}
