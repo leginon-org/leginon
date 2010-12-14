@@ -94,8 +94,7 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 			//echo "</td></tr>\n";
 
 			$display_keys['date time'] = $maxlikejob['DEF_timestamp'];
-			$display_keys['path'] = $maxlikejob['path'];
-			echo "<input type='hidden' name='path".$jobid."' value='".$maxlikejob['path']."'>\n";
+			$display_keys['path'] = "<input type='text' name='path".$jobid."' value='".$maxlikejob['path']."' size='40'>\n";
 			$display_keys['file prefix'] = $maxlikejob['timestamp'];
 
 			$refstackname = "part".$maxlikejob['timestamp']."_average.hed";
