@@ -38,7 +38,6 @@ if ($_POST['submit']) {
 project_header("Projects $title");
 ?>
 
-<a href="<?=$_GET['ln'];?>">[ &laquo; back ]</a>
 
 <p>
 
