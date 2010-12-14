@@ -34,7 +34,7 @@
         <field name="DEF_id" >5</field>
         <field name="DEF_timestamp" >NOW()</field>
         <field name="name" >disabled</field>
-        <field name="description" >Disable Group - locked users</field>
+        <field name="description" >Disabled Group - locked users</field>
         <field name="REF|projectdata|privileges|privilege" >5</field>
     </sqltable>
     <sqltable name="InstrumentData" >
