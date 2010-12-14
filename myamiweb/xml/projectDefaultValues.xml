@@ -87,7 +87,7 @@
     <sqltable name="privileges" >
         <field name="DEF_id" >5</field>
         <field name="DEF_timestamp" >NOW()</field>
-        <field name="description" >Disable User</field>
+        <field name="description" >No privilege for anything</field>
         <field name="groups" >0</field>
         <field name="users" >0</field>
         <field name="projects" >0</field>
