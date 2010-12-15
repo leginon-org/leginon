@@ -53,6 +53,8 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 	$outdir=getBaseAppionPath($outdir);
 	$outdir=ereg_replace("rawdata","stacks",$outdir);
 
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;
+
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title,$heading,$javafunctions);
 	if (!$stackId) {
@@ -103,10 +105,14 @@ function createSortJunkForm($extra=false, $title='sortJunkStack.py Launcher', $h
 	echo "<hr/><br/>\n";
 	echo"<input type='hidden' name='stackId' value='$stackId'>\n";
 
-
+	echo docpop('outdir','<b>Output directory:</b>');
+	echo "<input type='text' name='outdir' value='$outdir' size='40'>\n";
+	echo "<br/><br/>\n";
 
 	echo docpop('runname','<b>Run Name:</b> ');
-	echo "<input type='text' name='runname' value='$runname'><br />\n";
+	echo "<input type='text' name='runname' value='$runname'>\n";
+	echo "<br/><br/>\n";
+
 	echo "<b>Description:</b><br />\n";
 	echo "<textarea name='description' rows='3'cols='70'>$description</textarea>\n";
 	echo "<br />\n";
