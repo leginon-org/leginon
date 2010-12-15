@@ -53,6 +53,8 @@ function createApplyJunkCutoffForm($extra=false, $title='sortJunkStack.py Launch
 	$outdir=getBaseAppionPath($outdir);
 	$outdir=ereg_replace("rawdata","stacks",$outdir);
 
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;
+
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
@@ -61,8 +63,7 @@ function createApplyJunkCutoffForm($extra=false, $title='sortJunkStack.py Launch
 	}
   
 	echo "<form name='viewerform' method='post' action='$formAction'>\n";
-	
-	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
+
 	//query the database for parameters
 	$particle = new particledata();
 	
@@ -82,10 +83,15 @@ function createApplyJunkCutoffForm($extra=false, $title='sortJunkStack.py Launch
 					ID: $stackId<br />
                                         <input type='hidden' name='stackId' value='$stackId'>
 					<br />\n";
+	echo docpop('outdir','<b>Output directory:</b>');
+	echo "<input type='text' name='outdir' value='$outdir' size='40'>\n";
+	echo "<br/><br/>\n";
 	echo docpop('runname','<b>Run Name:</b> ');
-	echo "<input type='text' name='runname' value='$runname'><br />\n";
-	echo "<b>Particle number:</b><br />\n";
-	echo "<input type='text' name='partnum' value='$partnum' width='5'><br />\n";
+	echo "<input type='text' name='runname' value='$runname'>\n";
+	echo "<br/><br/>\n";
+	echo "<b>Particle number:</b>\n";
+	echo "<input type='text' name='partnum' value='$partnum' width='5'>\n";
+	echo "<br/><br/>\n";
 	echo "<b>Description:</b><br />\n";
 	echo "<textarea name='description' rows='3'cols='70'>$description</textarea>\n";
 	echo "<br />\n";
