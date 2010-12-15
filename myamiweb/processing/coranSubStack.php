@@ -57,6 +57,8 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$outdir=getBaseAppionPath($outdir);
 	$outdir=ereg_replace("rawdata","stacks",$outdir);
 
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;
+
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
@@ -88,11 +90,17 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	echo docpop('runname','<b>Run Name:</b> ');
 	echo "<input type='text' name='runname' value='$runname' size='15'><br/><br/>\n";
 
-	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
-	echo "Output directory:<i>$outdir</i><br/>\n";
+	#echo "<input type='text' name='outdir' value='$outdir'>\n";
+	#echo "Output directory:<i>$outdir</i><br/>\n";
+	#echo "<br/>\n";
+
+	echo docpop('outdir','<b>Output directory:</b>');
+	echo "<input type='text' name='outdir' value='$outdir' size='40'>\n";
 	echo "<br/>\n";
-	
-	echo "<b>Description:</b><br />\n";
+	echo "<br/>\n";
+
+	echo docpop('descr','<b>Description:</b>');
+	echo "<br />\n";
 	echo "<textarea name='description' rows='2' cols='60'>$description</textarea>\n";
 	echo "<br/>\n";
 	echo "<br/>\n";
