@@ -57,7 +57,7 @@ function createform($extra=False) {
 	$rmeas = $particle->getRMeasureInfo($info['REF|ApRMeasureData|rMeasure']);
 	$rmeasureres = ($rmeas) ? sprintf("%.2f",$rmeas['rMeasure']) : "None" ;
 	$densityfile = $info['path']."/".$info['volumeDensity'];
-
+	$outdir = $info['path']."/postproc";
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId&refineIter=$refIterId";
 
 	$amplist = array();
@@ -68,6 +68,7 @@ function createform($extra=False) {
 	$runname = $timestr;
 	$runname = "refine".$refIterId."_".$runname;
 	
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;
 	$runname=($_POST['runname']) ? $_POST['runname'] : $runname;
 	$lpval=($_POST['lp']) ? $_POST['lp'] : round($halfres*0.5,2);
 	$maskval=($_POST['mask']) ? $_POST['mask'] : $defmask;
@@ -103,9 +104,17 @@ function createform($extra=False) {
 
 	echo "<table class='tableborder' border='1' cellpadding='5'>\n";
 	echo "<tr><td>\n";
+
 	echo docpop('runname','Run Name:');
 	echo "<br/>\n";
 	echo "  <input type='text' name='runname' size='25' value='$runname'>\n";
+	echo "<br/><br/>\n";
+
+	echo docpop('outdir','Output directory:');
+	echo "<br/>\n";
+	echo "<input type='text' name='outdir' value='$outdir' size='40'>\n";
+	echo "<br/><br/>\n";
+
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo "<br/>\n";
@@ -212,7 +221,7 @@ function createform($extra=False) {
 	echo "<INPUT TYPE='hidden' name='apix' value='$apix'>\n";
 	echo "<INPUT TYPE='hidden' name='file' value='$info[volumeDensity]'>\n";
 	echo "<INPUT TYPE='hidden' name='path' value='$info[path]'>\n";
-	echo "<INPUT TYPE='hidden' name='outdir' value=$info[path]/postproc>\n";
+	#echo "<INPUT TYPE='hidden' name='outdir' value=$info[path]/postproc>\n";
 	echo "<center>\n";
 	echo getSubmitForm("Post Process");
 	echo "</center>\n";
