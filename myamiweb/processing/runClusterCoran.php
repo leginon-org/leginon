@@ -38,7 +38,16 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 
 	// connect to particle and ctf databases
 	$particle = new particledata();
+	$analysisparams = $particle->getAnalysisParams($analysisid);
+	//echo print_r($analysisparams)."<br/><br/>\n";
+	$rundir = $analysisparams['path'];
+	$runname = $analysisparams['runname'];
+	$outdir = ereg_replace($runname,'',$rundir);
 
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;
+
+	// in case there are more than 1 '/' at the end
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$javascript = "<script src='../js/viewer.js'></script>";
 	$javascript .= writeJavaPopupFunctions('appion');	
 
@@ -87,7 +96,13 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	}
 
 	echo "<hr />\n";
-	echo docpop('numclass','List of Number of Classes');
+	echo docpop('outdir','Output directory:');
+	echo "<br/>\n";
+	echo "<input type='text' name='outdir' value='$outdir' size='40'>\n";
+
+	echo "<br/><br/>\n";
+
+	echo docpop('numclass','List of Number of Classes:');
 	echo "<br/>\n";
 	echo "<input type='text' name='numclass' size='20' value='$numclass'> ";
 
@@ -181,16 +196,6 @@ function runClusterCoran() {
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$classmethod=$_POST['classmethod'];
 	$outdir=$_POST['outdir'];
-
-	$particle = new particledata();
-	$analysisparams = $particle->getAnalysisParams($analysisid);
-	//echo print_r($analysisparams)."<br/><br/>\n";
-	$rundir = $analysisparams['path'];
-	$runname = $analysisparams['runname'];
-	$outdir = ereg_replace($runname,'',$rundir);
-
-	// in case there are more than 1 '/' at the end
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
 
 	// get selected eigenimgs
 	$factorlistAR=array();
