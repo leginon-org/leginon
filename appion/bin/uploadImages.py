@@ -116,7 +116,7 @@ class UploadImages(appionScript.AppionScript):
 			self.defocuslist = newlist
 
 		### set session name if undefined
-		if not 'sessionname' is self.params or self.params['sessionname'] is None:
+		if not 'sessionname' in self.params or self.params['sessionname'] is None:
 			self.params['sessionname'] = self.getUnusedSessionName()
 
 		### set leginon dir if undefined
