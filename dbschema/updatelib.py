@@ -5,7 +5,7 @@ from leginon import version
 
 def getUpdateRevisionSequence():
 	if version.getSVNBranch() == 'trunk':
-		schema_revisions = [12857,13713,14077,14891,15069,15600]
+		schema_revisions = [12857,13713,14077,14891,15069]
 	if version.getSVNBranch() == 'myami-2.1':
 		schema_revisions = [12857,13713,14077,14891]
 	return schema_revisions
@@ -15,7 +15,7 @@ def getCheckOutRevision():
 		return int(version.getVersion())
 	except:
 		print 'failed to get an integer revision'
-	return false
+	return False
 
 def getDatabaseRevision(projectdb):
 	### get revision from database
@@ -47,9 +47,10 @@ def needUpdate(projectdb,checkout_revision,selected_revision):
 	if checkout_revision >= selected_revision:
 		if revision_in_database < selected_revision:
 			if minimal_revision_in_database == 0 or revision_in_database >= minimal_revision_in_database:
-				return True
+				return 'now'
 			else:
 				print '\033[35mYou must successfully run schema-r%d.py first\033[0m' % (minimal_revision_in_database)
+				return 'later'
 		else:
 			print "\033[35mAlready Up to Date for schema r%d\033[0m" % (selected_revision)
 	else:

@@ -4,7 +4,7 @@ from sinedon import dbupgrade, dbconfig
 from leginon import version
 import updatelib
 
-class SchemaUpdate():
+class SchemaUpdate:
 	'''
 		Base Class for database schema upgrade.  Please name the supclass as
 		SchemaUpdatexxxxx where xxxxx is the svn revision number.  See
@@ -94,7 +94,7 @@ class SchemaUpdate():
 		checkout_revision = updatelib.getCheckOutRevision()
 		revision_in_database = updatelib.getDatabaseRevision(self.project_dbupgrade)
 		print checkout_revision, revision_in_database
-		if updatelib.needUpdate(self.project_dbupgrade,checkout_revision,self.selected_revision):
+		if updatelib.needUpdate(self.project_dbupgrade,checkout_revision,self.selected_revision) == 'now':
 			try:
 				if 'leginon' in self.required_upgrade:
 					# leginon part
