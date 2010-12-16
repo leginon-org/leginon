@@ -31,7 +31,7 @@ class modelFromPDB(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --pdbid=1ohg --lowpass=30 --apix=1.63 --box=300 [options]")
-		self.parser.add_option("-s", "--session", dest="session",
+		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--modelname", dest="name",
 			help="Model name", metavar="STR")
@@ -62,8 +62,8 @@ class modelFromPDB(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['session'] is None:
-			apDisplay.printError("Enter a session ID")
+		if self.params['sessionname'] is None:
+			apDisplay.printError("Enter a session name (e.g. --session=06mar12a)")
 		if self.params['pdbid'] is None and self.params['pdbfile'] is None:
 			apDisplay.printError("Specify a PDB id or PDB file")
 		if self.params['pdbid'] is not None and self.params['pdbfile'] is not None:
@@ -87,7 +87,7 @@ class modelFromPDB(appionScript.AppionScript):
 			apDisplay.printWarning("No symmetry specified using 'c1'")
 			self.params['symmetry'] = 'c1'
 		self.params['symdata'] = apSymmetry.findSymmetry(self.params['symmetry'])
-		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		
 	#=====================
 	def setRunDir(self):
