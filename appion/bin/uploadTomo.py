@@ -28,7 +28,7 @@ class UploadTomoScript(appionScript.AppionScript):
 			help="MRC file to upload", metavar="FILE")
 		self.parser.add_option("--xffile", dest="oldxffile",
 			help="global alignment file to upload", metavar="FILE")
-		self.parser.add_option("-s", "--session", dest="session",
+		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--name", dest="name",
 			help="File name for new tomogram, automatically set")
@@ -69,8 +69,8 @@ class UploadTomoScript(appionScript.AppionScript):
 			if self.params['order'] != 'XZY' and self.params['order'] != 'XYZ':
 				if self.params['transform']:
 					apDisplay.printError("Only transformations from XZY are implemented")
-		if self.params['session'] is None:
-			apDisplay.printError("Enter a session ID")
+		if self.params['sessionname'] is None:
+			apDisplay.printError("Enter a session name (e.g. --session=06jul12a)")
 		if self.params['description'] is None:
 			apDisplay.printError("Enter a description of the initial model")
 		elif self.params['file'] is not None:
@@ -82,7 +82,7 @@ class UploadTomoScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
 		path = os.path.abspath(sessiondata['image path'])
 		pieces = path.split('leginon')
@@ -100,7 +100,7 @@ class UploadTomoScript(appionScript.AppionScript):
 	#=====================
 	def setNewFileName(self, unique=False):
 		# set name to be like tomomaker
-		seriesname = "%s_%03d" % (self.params['session'],self.params['tiltseriesnumber'])
+		seriesname = "%s_%03d" % (self.params['sessionname'],self.params['tiltseriesnumber'])
 		if self.params['full']:
 			reconname = seriesname+"_full"
 		else:
@@ -120,7 +120,7 @@ class UploadTomoScript(appionScript.AppionScript):
 		self.origshape = self.origheader['shape']
 
 	def getImageShapeFromTiltSeries(self):
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
 		firstimagedata = apTomo.getFirstImage(tiltdata)
 		self.imageshape = apTomo.getTomoImageShape(firstimagedata)
@@ -221,7 +221,7 @@ class UploadTomoScript(appionScript.AppionScript):
 		tomoheader = mrc.readHeaderFromFile(newtomopath)
 		self.params['shape'] = tomoheader['shape']
 		if self.params['full']:
-			seriesname = "%s_%03d" % (self.params['session'],self.params['tiltseriesnumber'])
+			seriesname = "%s_%03d" % (self.params['sessionname'],self.params['tiltseriesnumber'])
 			self.params['zprojfile'] = apImod.projectFullZ(self.params['rundir'], self.params['runname'], seriesname,bin,True,False)
 		else:
 			apTomo.makeMovie(newtomopath)
