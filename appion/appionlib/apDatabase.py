@@ -277,17 +277,6 @@ def getImgSizeFromName(imgname):
 	return(size)
 
 #================
-def getSiblingImgAssessmentStatus(imgdata):
-	status = getImgAssessmentStatus(imgdata)
-	if status is not None:
-		return status
-	siblingimgdata = apDefocalPairs.getDefocusPair(imgdata)
-	if siblingimgdata:
-		status = getImgAssessmentStatus(siblingimgdata)
-
-	return status
-
-#================
 def insertImgAssessmentStatus(imgdata, runname="run1", assessment=None, msg=True):
 	"""
 	Insert the assessment status
@@ -362,6 +351,30 @@ def getImgAssessmentStatus(imgdata):
 		elif assessdata[0]['selectionkeep'] == 0:
 			return False
 	return None
+
+#================
+def getSiblingImgAssessmentStatus(imgdata):
+	status = getImgAssessmentStatus(imgdata)
+	if status is not None:
+		return status
+	siblingimgdata = apDefocalPairs.getDefocusPair(imgdata)
+	if siblingimgdata:
+		status = getImgAssessmentStatus(siblingimgdata)
+
+	return status
+
+#================
+def getSiblingImgCompleteStatus(imgdata):
+	'''
+	Get the assessment status for sibling. Uses getImgCompleteStatus method to include viewer_status assessment
+	'''
+	siblingimgdata = apDefocalPairs.getDefocusPair(imgdata)
+	if siblingimgdata:
+		status = getImgCompleteStatus(siblingimgdata)
+	else:
+		status = None
+
+	return status
 
 
 ### flatfield correction functions

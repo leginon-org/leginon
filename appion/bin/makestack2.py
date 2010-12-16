@@ -187,8 +187,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### get the particle before image filtering
 		if self.params['defocpair'] is True and self.params['selectionid'] is not None:
 			# using defocal pairs and particle picks
-			partdatas, shiftpeak = apParticle.getDefocPairParticles(imgdata, self.params['selectionid'], self.params['particlelabel'])
-			shiftdata = {'shiftx':shiftpeak['shift'][0], 'shifty':shiftpeak['shift'][1], 'scale':shiftpeak['scalefactor']}
+			partdatas, shiftdata = apParticle.getDefocPairParticles(imgdata, self.params['selectionid'], self.params['particlelabel'])
 		elif self.params['fromstackid'] is not None:
 			# using previous stack to make a new stack
 			partdatas, shiftdata = self.getParticlesFromStack(imgdata)

@@ -314,6 +314,8 @@ class AppionLoop(appionScript.AppionScript):
 			action="store_false", help="Do not wait for more images after completing loop")
 		self.parser.add_option("--no-rejects", dest="norejects", default=False,
 			action="store_true", help="Do not process hidden or rejected images")
+		self.parser.add_option("--sib-assess", dest="sibassess", default=False,
+			action="store_true", help="Use image assessment from sibling image")		
 		self.parser.add_option("--best-images", dest="bestimages", default=False,
 			action="store_true", help="Only process exemplar or keep images")
 		self.parser.add_option("--shuffle", dest="shuffle", default=False,
@@ -688,15 +690,25 @@ class AppionLoop(appionScript.AppionScript):
 				reproccount += 1
 				skip = True
 
-			elif self.params['norejects'] is True and apDatabase.getImgCompleteStatus(imgdata) is False:
-				self._writeDoneDict(imgname)
-				rejectcount += 1
-				skip = True
-
-			elif self.params['bestimages'] is True and apDatabase.getImgCompleteStatus(imgdata) is not True:
-				self._writeDoneDict(imgname)
-				rejectcount += 1
-				skip = True
+			elif self.params['norejects'] is True:
+				if self.params['sibassess'] is True:
+					status=apDatabase.getSiblingImgCompleteStatus(imgdata)
+				else:
+					status=apDatabase.getImgCompleteStatus(imgdata) 
+				if status is False:
+					self._writeDoneDict(imgname)
+					rejectcount += 1
+					skip = True
+			
+			elif self.params['bestimages'] is True:
+				if self.params['sibassess'] is True:
+					status=apDatabase.getSiblingImgCompleteStatus(imgdata)
+				else:
+					status=apDatabase.getImgCompleteStatus(imgdata)
+				if status is not True:
+					self._writeDoneDict(imgname)
+					rejectcount += 1
+					skip = True
 
 			elif ( self.params['tiltangle'] is not None or self.params['tiltangle'] != 'all' ):
 				tiltangle = apDatabase.getTiltAngleDeg(imgdata)
