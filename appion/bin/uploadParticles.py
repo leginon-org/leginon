@@ -23,7 +23,7 @@ def createDefaults():
 	self.params['bin']=None
 	self.params['description']=None
 	self.params['template']=None
-	self.params['session']=None
+	self.params['sessionname']=None
 	self.params['runname']=None
 	self.params['imgs']=None
 	self.params['abspath']=os.path.abspath('.')
