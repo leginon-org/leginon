@@ -44,7 +44,7 @@ class tomoMaker(appionScript.AppionScript):
 			+"[options]")
 
 		### strings
-		self.parser.add_option("-s", "--session", dest="session",
+		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--exclude", dest="exclude",
 			help="Tilt images to be excluded (0,5,8)", metavar="0,1,...")
@@ -74,7 +74,7 @@ class tomoMaker(appionScript.AppionScript):
 			apDisplay.printError("enter a run name")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description, e.g. --description='awesome data'")
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		self.sessiondata = sessiondata
 		if self.params['rundir']:
 			self.setTiltSeriesDir()
