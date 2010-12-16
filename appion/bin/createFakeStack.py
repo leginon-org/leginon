@@ -121,7 +121,7 @@ def generateProjections(parttree):
 class fakeStackScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage("Usage: %prog --stackid=<session> --commit [options]")
+		self.parser.set_usage("Usage: %prog --stackid=<stackid> --commit [options]")
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
 
