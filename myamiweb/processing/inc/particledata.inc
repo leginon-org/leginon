@@ -4219,8 +4219,12 @@ class particledata {
 			."FROM ApBootstrappedAngularReconstitutionRunData as ar "
 			."LEFT JOIN ApPathData AS path "
 			."  ON ar.`REF|ApPathData|path` = path.`DEF_id` "
+			### add a session entry to table
 			."LEFT JOIN ApTemplateStackData AS ts "
 			."  ON ar.`REF|ApTemplateStackData|templatestackid` = ts.`DEF_id` "
+			."LEFT JOIN SessionData AS sd "
+			."  ON ts.`REF|leginondata|SessionData|session` = sd.`DEF_id` "
+
 			."LEFT JOIN ApClusteringStackData AS clusterstack "
 			."  ON ar.`REF|ApClusteringStackData|clusterid` = clusterstack.`DEF_id` "
 			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
