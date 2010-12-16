@@ -25,7 +25,7 @@ class PostProcScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		#strings
-		self.parser.add_option("-s", "--session", dest="session",
+		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name associated with density (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--sym", "--symm", "--symmetry", dest="sym",
 			help="Symmetry id in the database", metavar="#")
@@ -82,8 +82,8 @@ class PostProcScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['session'] is None:
-			apDisplay.printError("Enter a sessionID")
+		if self.params['sessionname'] is None:
+			apDisplay.printError("Enter a session name (e.g. --session=06mar12a)")
 		if self.params['apix'] is None:
 			apDisplay.printError("enter a pixel size")
 		if self.params['sym'] is None:
@@ -123,7 +123,7 @@ class PostProcScript(appionScript.AppionScript):
 			apDisplay.printError("no symmetry associated with this id\n")
 		self.params['syminfo'] = symdata
 		modq=appiondata.Ap3dDensityData()
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		modq['session'] = sessiondata
 		modq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		modq['name'] = self.params['name']
