@@ -27,7 +27,7 @@ class modelFromEMDB(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --emdbid=1122 --lowpass=15 --sym=c1 [options]")
-		self.parser.add_option("-s", "--session", dest="session",
+		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--modelname", dest="name",
 			help="Model name", metavar="STR")
@@ -43,15 +43,15 @@ class modelFromEMDB(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['session'] is None:
-			apDisplay.printError("Enter a session ID")
+		if self.params['sessionname'] is None:
+			apDisplay.printError("Enter a session name (e.g. --session=06mar12a)")
 		if self.params['emdbid'] is None:
 			apDisplay.printError("specify a emdb id")
 		if self.params['symmetry'] is None:
 			#apSymmetry.printSymmetries()
 			apDisplay.printError("Enter a symmetry group, e.g. --symm=c1")
 		self.params['symdata'] = apSymmetry.findSymmetry(self.params['symmetry'])
-		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 
 	#=====================
 	def setRunDir(self):
