@@ -31,7 +31,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 			help="Template pixel size in Angstroms per pixel", metavar="FLOAT")
 		self.parser.add_option("--diam", dest="diam", type="int",
 			help="Approximate diameter of particle (in Angstroms)", metavar="INT")
-		self.parser.add_option("-s", "--session", dest="session",
+		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="INT")
 
 		### optional input methods
@@ -75,22 +75,22 @@ class uploadTemplateScript(appionScript.AppionScript):
 			apDisplay.printError("enter a pixel size")
 
 		### check for session
-		if self.params['session'] is None:
+		if self.params['sessionname'] is None:
 			if self.params['alignid'] is not None:
 				alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignid'])
 				stackid = alignstackdata['stack'].dbid
 				sessiondata = apStack.getSessionDataFromStackId(stackid)
-				self.params['session'] = sessiondata['name']
+				self.params['sessionname'] = sessiondata['name']
 			elif self.params['stackid'] is not None:
 				stackid = self.params['stackid']
 				sessiondata = apStack.getSessionDataFromStackId(stackid)
-				self.params['session'] = sessiondata['name']
+				self.params['sessionname'] = sessiondata['name']
 			elif self.params['alignid'] is not None:
 				clusterstackdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterid'])
 				stackid = clusterstackdata['clusterrun']['alignstack']['stack'].dbid
 				sessiondata = apStack.getSessionDataFromStackId(stackid)
-				self.params['session'] = sessiondata['name']
-		if self.params['session'] is  None:
+				self.params['sessionname'] = sessiondata['name']
+		if self.params['sessionname'] is  None:
 			apDisplay.printError("Could not find session")
 
 		if self.params['template'] is not None:
@@ -99,7 +99,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 	#=====================
 	def setRunDir(self):
 		#auto set the output directory
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		path = os.path.abspath(sessiondata['image path'])
 		pieces = path.split('leginon')
 		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
@@ -110,7 +110,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 	def useStackForTemplate(self):
 		apDisplay.printMsg("Using stack to make templates")
 		sessiondata = apStack.getSessionDataFromStackId(self.params['stackid'])
-		self.params['session'] = sessiondata['name']
+		self.params['sessionname'] = sessiondata['name']
 		self.params['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
@@ -158,7 +158,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		self.params['templatelist'] = []
 		stackid = alignstackdata['stack'].dbid
 		sessiondata = apStack.getSessionDataFromStackId(stackid)
-		self.params['session'] = sessiondata['name']
+		self.params['sessionname'] = sessiondata['name']
 
 		### check to see if stackimagenum is within the boundary of the stack
 		numpart = apFile.numImagesInStack(stackfile)
@@ -186,7 +186,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		self.params['templatelist'] = []
 		stackid = clusterstackdata['clusterrun']['alignstack']['stack'].dbid
 		sessiondata = apStack.getSessionDataFromStackId(stackid)
-		self.params['session'] = sessiondata['name']
+		self.params['sessionname'] = sessiondata['name']
 
 		### check to see if stackimagenum is within the boundary of the stack
 		numpart = apFile.numImagesInStack(stackfile)
@@ -229,7 +229,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		# copy templates to final location
 		apTemplate.copyTemplatesToOutdir(self.params, self.timestamp)
 
-		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
+		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['sessionname'])
 
 		# insert templates to database
 		apTemplate.insertTemplateImage(self.params)
