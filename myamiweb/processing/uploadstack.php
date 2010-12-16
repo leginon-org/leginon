@@ -38,6 +38,7 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 	$sessiondata=getSessionList($projectId, $expId);
 	$sessioninfo=$sessiondata['info'];
 	$defoutdir = $sessioninfo['Image path'];
+	$defoutdir=getBaseAppionPath($outdir);
 	$defoutdir = ereg_replace("leginon", "appion",$defoutdir);
 	$defoutdir = ereg_replace("rawdata", "stacks",$defoutdir);
 	$sessionname = $sessioninfo['Name'];

@@ -144,7 +144,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=getBaseAppionPath($sessionpath);
 		$sessionpath=ereg_replace("rawdata","stacks/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}

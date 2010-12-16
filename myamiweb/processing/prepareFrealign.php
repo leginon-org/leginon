@@ -148,7 +148,7 @@ function jobForm($extra=false) {
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
 	$sessionpath = $sessiondata['Image path'];
-	$sessionpath = ereg_replace("leginon","appion",$sessionpath);
+	$sessionpath=getBaseAppionPath($sessionpath);
 	$sessionpath = ereg_replace("rawdata","recon/",$sessionpath);
 
 	$particle = new particledata();

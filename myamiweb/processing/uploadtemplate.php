@@ -82,7 +82,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 
 	// get path for submission
 	$outdir=$sessioninfo['Image path'];
-	$outdir=ereg_replace("leginon","appion",$outdir);
+	$outdir=getBaseAppionPath($outdir);
 	$outdir=ereg_replace("rawdata","templates",$outdir);
 
 	if (!empty($sessioninfo)) {

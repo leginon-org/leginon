@@ -57,7 +57,7 @@ function createAverageTomogramForm($extra=false, $title='tomoaverage.py Launcher
 	
 	if (!empty($sessioninfo)) {
 		$outdir=$sessioninfo['Image path'];
-		$outdir=ereg_replace("leginon","appion",$outdir);
+		$outdir=getBaseAppionPath($outdir);
 		$outdir=ereg_replace("rawdata","tomo/average",$outdir);
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";

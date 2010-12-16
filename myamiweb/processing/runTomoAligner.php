@@ -26,7 +26,7 @@ else {
 
 function buildOutdir($leginonpath,$tiltseriesnumber) {
 	$outdir=$leginonpath;
-	$outdir=ereg_replace("leginon","appion",$outdir);
+	$outdir=getBaseAppionPath($outdir);
 	$outdir=ereg_replace("rawdata","tomo/tiltseries".$tiltseriesnumber,$outdir);
 	$outdir=$outdir.'/align';
 	return $outdir;	
@@ -397,5 +397,4 @@ function runTomoAligner() {
 }
 
 
-?> 
-
+?>

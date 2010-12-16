@@ -59,7 +59,7 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=getBaseAppionPath($sessionpath);
 		$sessionpath=ereg_replace("rawdata","angrecon/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}

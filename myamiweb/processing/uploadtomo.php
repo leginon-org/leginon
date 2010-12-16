@@ -47,7 +47,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	
 	if (!empty($sessioninfo)) {
 		$outdir=$sessioninfo['Image path'];
-		$outdir=ereg_replace("leginon","appion",$outdir);
+		$outdir=getBaseAppionPath($outdir);
 		$outdir=ereg_replace("rawdata","tomo",$outdir);
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
@@ -255,7 +255,7 @@ function runUploadTomogram() {
 	******************** */
 
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
+	$errors = showOrSubmitCommand($command, $headinfo, 'uploadtomo', $nproc);
 
 	// if error display them
 	if ($errors)

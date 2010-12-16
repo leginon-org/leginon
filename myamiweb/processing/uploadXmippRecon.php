@@ -71,7 +71,7 @@ function createUploadReconForm($extra=false, $title='UploadXmippRecon.py Launche
   
   if (!empty($sessioninfo) && !$jobId) {
 	$sessionpath=$sessioninfo['Image path'];
-	$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+	$sessionpath=getBaseAppionPath($sessionpath);
 	$sessionpath=ereg_replace("rawdata","recon/",$sessionpath);
 	$sessionname=$sessioninfo['Name'];
   }

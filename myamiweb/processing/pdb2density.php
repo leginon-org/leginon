@@ -46,7 +46,7 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	
 	if (!empty($sessioninfo)) {
 		$outdir=$sessioninfo['Image path'];
-		$outdir=ereg_replace("leginon","appion",$outdir);
+		$outdir=getBaseAppionPath($outdir);
 		$outdir=ereg_replace("rawdata","models",$outdir);
 		$outdir=$outdir."/pdb";
 		$sessionname=$sessioninfo['Name'];

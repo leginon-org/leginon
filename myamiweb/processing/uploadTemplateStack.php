@@ -52,7 +52,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 
 	// get path for submission
 	$outdir=$sessioninfo['Image path'];
-	$outdir=ereg_replace("leginon","appion",$outdir);
+	$outdir=getBaseAppionPath($outdir);
 	$outdir=ereg_replace("rawdata","templatestacks",$outdir);
 
 	if (!empty($sessioninfo)) {

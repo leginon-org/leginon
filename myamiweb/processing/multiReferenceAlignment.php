@@ -98,7 +98,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=getBaseAppionPath($sessionpath);
 		$sessionpath=ereg_replace("rawdata","align/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}

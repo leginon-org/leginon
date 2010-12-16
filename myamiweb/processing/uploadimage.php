@@ -49,7 +49,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		$sessioninfo = $sessiondata['info'];
 		if (!empty($sessioninfo)) {
 			$outdir=$sessioninfo['Image path'];
-			$outdir=ereg_replace("leginon*","leginon",$outdir);
+			$outdir=ereg_replace("/rawdata","",$outdir);
 			$sessionname=$sessioninfo['Name'];
 			$description=$sessioninfo['description'];
 			$tem=$sessioninfo['InstrumentId'];

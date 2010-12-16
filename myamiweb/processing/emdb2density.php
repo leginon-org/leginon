@@ -47,7 +47,7 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 	
 	if (!empty($sessioninfo)) {
 		$outdir=$sessioninfo['Image path'];
-		$outdir=ereg_replace("leginon","appion",$outdir);
+		$outdir=getBaseAppionPath($outdir);
 		$outdir=ereg_replace("rawdata","models",$outdir);
 		$outdir=$outdir."/emdb";
 		$sessionname=$sessioninfo['Name'];
