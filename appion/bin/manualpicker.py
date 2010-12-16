@@ -523,7 +523,7 @@ class ManualPicker(particleLoop2.ParticleLoop):
 	def showAssessedMask(self,imgfile,imgdata):
 		self.filename = imgfile
 		image = pyami.mrc.read(imgfile)
-		sessiondata = self.params['session']
+		sessiondata = self.params['sessionname']
 		maskassessname = self.params['checkMask']
 		mask,maskbin = apMask.makeInspectedMask(sessiondata,maskassessname,imgdata)
 		overlay = apMask.overlayMask(image,mask)
