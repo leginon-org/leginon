@@ -92,10 +92,14 @@ if __name__=='__main__':
 	aligndir=os.path.join(rootdir,'align')
 	outdir=os.path.join(rootdir,'out')
 	cleandir=os.path.join(rootdir,'clean')
-	apParam.createDirectory(aligndir,warning=False)
-	apParam.createDirectory(outdir,warning=False)
-	apParam.createDirectory(cleandir,warning=False)
-	apParam.createDirectory(rawdir,warning=False)
+	if os.path.exists(rawdir) or os.path.exists(aligndir) or os.path.exists(outdir) or os.path.exists(cleandir):
+		print "Warning, you must remove the raw, clean, align, and out directories before proceeding"
+		sys.exit()
+	else:
+		apParam.createDirectory(aligndir,warning=False)
+		apParam.createDirectory(outdir,warning=False)
+		apParam.createDirectory(cleandir,warning=False)
+		apParam.createDirectory(rawdir,warning=False)
 	
 	imgtree= getTiltSeriesFromId(inputparams['tiltid'])
 	tiltkeys,imgtree,mrcfiles,refindex = apTomo.orderImageList(imgtree)
