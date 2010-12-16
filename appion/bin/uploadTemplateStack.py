@@ -28,7 +28,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 			+"--description='<text>' [options]")
 
 		### required info
-		self.parser.add_option("-s", "--session", dest="session",
+		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="INT")
 
 		### template stack input
@@ -76,7 +76,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 			templatestacks = templatestacksq.query()
 			num_templatestacks = len(templatestacks)
 			new_num = num_templatestacks + 1
-			self.params['runname'] = "templatestack"+str(new_num)+"_"+str(self.params['session'])
+			self.params['runname'] = "templatestack"+str(new_num)+"_"+str(self.params['sessionname'])
 
 		### get apix value
 		if (self.params['apix'] is None and self.params['clusterId'] is None and self.params['alignId'] is None):
@@ -111,17 +111,17 @@ class uploadTemplateScript(appionScript.AppionScript):
 				self.params['boxsize'] = aligndata['boxsize']
 
 		### check for session
-		if self.params['session'] is None:
+		if self.params['sessionname'] is None:
 			if self.params['clusterId'] is not None:
 				clusterdata = appiondata.ApClusteringStackData.direct_query(self.params['clusterId'])
 				stackid = clusterdata['clusterrun']['alignstack']['stack'].dbid
 				sessiondata = apStack.getSessionDataFromStackId(stackid)
-				self.params['session'] = sessiondata['name']	
+				self.params['sessionname'] = sessiondata['name']	
 			elif self.params['alignId'] is not None:
 				aligndata = appiondata.ApAlignStackData.direct_query(self.params['alignId'])
 				stackid = aligndata['stack'].dbid	
 				sessiondata = apStack.getSessionDataFromStackId(stackid)
-				self.params['session'] = sessiondata['name']		
+				self.params['sessionname'] = sessiondata['name']		
 			else:
 				apDisplay.printError("Could not find session")
 
@@ -147,7 +147,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 	#=====================
 	def setRunDir(self):
 		#auto set the output directory
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		path = os.path.abspath(sessiondata['image path'])
 		pieces = path.split('leginon')
 		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
@@ -290,7 +290,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 
 	#=====================
 	def uploadTemplateStack(self, insert=False):
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 
 		uploadq = appiondata.ApTemplateStackData()
 		uploadq['REF|projectdata|projects|project'] = self.params['projectid']
