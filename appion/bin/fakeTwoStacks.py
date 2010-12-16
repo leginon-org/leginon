@@ -28,7 +28,7 @@ class fakeStackScript(appionScript.AppionScript):
 
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage("Usage: %prog --stackid=<session> --commit [options]")
+		self.parser.set_usage("Usage: %prog --stackid=<stackid> --commit [options]")
 		self.parser.add_option("--stack1", dest="stack1", type="int",
 			help="ID for untilted particle stack", metavar="INT")
 		self.parser.add_option("--stack2", dest="stack2", type="int",
