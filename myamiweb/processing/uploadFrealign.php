@@ -139,10 +139,14 @@ function createUploadFrealignForm($extra=False) {
 	$jobpath = $jobinfo['path'];
 	//print_r($jobinfo);
 
+	echo "<input type='hidden' name='outdir' value='$jobpath'>\n";
+
 	// Set any existing parameters in form
 	$mass = ($_POST['mass']) ? $_POST['mass'] : '';
 	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.0';
 	$description = $_POST['description'];
+	$runname = ($_POST['runname']) ? $_POST['runname'] : $jobname;
+	$rundir = ($_POST['rundir']) ? $_POST['rundir'] : $jobpath;
 
 	// main table
 	echo "<table border='3' class='tableborder'>\n";
@@ -155,15 +159,13 @@ function createUploadFrealignForm($extra=False) {
 	echo "<tr><td>\n";
 		echo "<b>Recon Name:</b>\n";
 	echo "</td><td>\n";
-		echo "$jobname\n";
-	echo "<input type='hidden' name='runname' value='$jobname'>\n";	
+		echo "<input type='text' name='runname' value='$runname' size='50'>\n";	
 	echo "</td></tr>\n";
 
 	echo "<tr><td>\n";
 		echo "<b>Recon Directory:</b>\n";
 	echo "</td><td>\n";
-		echo "$jobpath\n";
-	echo "<input type='hidden' name='rundir' value='$jobpath'>\n";	
+		echo "<input type='text' name='rundir' value='$rundir' size='50'>\n";	
 	echo "</td></tr>\n";
 
 	// Job Info
@@ -224,10 +226,13 @@ function runUploadFrealign() {
 	/* *******************
 	PART 1: Get variables
 	******************** */
+	$expId = $_GET['expId'];
+	$projectid = getProjectId();
 	$prepid=$_GET['prepId'];
-
 	$zoom=$_POST['zoom'];
 	$mass=$_POST['mass'];
+	$runname=$_POST['runname'];
+	$rundir=$_POST['rundir'];
 	$description=$_POST['description'];
 
 	/* *******************
