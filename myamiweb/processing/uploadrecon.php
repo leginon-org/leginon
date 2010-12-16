@@ -46,8 +46,8 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	// if uploading a specific recon, get recon info from database & job file
 	if ($jobId) {
 		$jobinfo = $particle->getJobInfoFromId($jobId);
-		$jobrunid = ereg_replace('\.job$','',$jobinfo['name']);
-		$sessionpath = ereg_replace($jobrunid,'',$jobinfo['appath']);
+		$runname = ereg_replace('\.job$','',$jobinfo['name']);
+		$sessionpath = ereg_replace($runname,'',$jobinfo['appath']);
 		$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
 		$f = file($jobfile);
 		$package='EMAN';
@@ -90,7 +90,8 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	$mass = ($_POST['mass']) ? $_POST['mass'] : '';
 	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.0';
 	$filter = ($_POST['filter']) ? $_POST['filter'] : '';
-	$runname = ($_POST['runname']) ? $_POST['runname'] : '';
+	$runname = ($_POST['runname']) ? $_POST['runname'] : $runname;
+	$reconpath = ($_POST['reconpath']) ? $_POST['reconpath'] : $sessionpath;
 	$description = $_POST['description'];
 	$oneiteration = ($_POST['oneiteration']=="on") ? "CHECKED" : "";
 	$iteration = $_POST['iteration'];
@@ -108,19 +109,13 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	echo "<tr><td>\n";
 		echo "<b>Recon Name:</b>\n";
 	echo "</td><td>\n";
-	if ($jobId)
-		echo "$jobrunid<input type='hidden' name='runname' value='$jobrunid'>";
-	else
 		echo "<input type='text' name='runname' value='$runname' size='50'>";
 	echo "</td></tr>\n";
 
 	echo "<tr><td>\n";
 		echo "<b>Recon Directory:</b>\n";
 	echo "</td><td>\n";
-	if ($jobId)
-		echo "$sessionpath\n";
-	else
-		echo "<input type='text' name='reconpath' value='$sessionpath' size='50'/>";
+		echo "<input type='text' name='reconpath' value='$reconpath' size='50'/>";
 
 	// Stack Info
 	echo "<tr><td colspan='2'>\n";

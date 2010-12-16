@@ -45,8 +45,8 @@ function createUploadReconForm($extra=false, $title='UploadXmippRecon.py Launche
   // if uploading a specific recon, get recon info from database & job file
   if ($jobId) {
     $jobinfo = $particle->getJobInfoFromId($jobId);
-    $jobrunid = ereg_replace('\.job$','',$jobinfo['name']);
-    $sessionpath = ereg_replace($jobrunid,'',$jobinfo['appath']);
+    $runname = ereg_replace('\.job$','',$jobinfo['name']);
+    $sessionpath = ereg_replace($runname,'',$jobinfo['appath']);
     $jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
     $f = file($jobfile);
     foreach ($f as $line) {
@@ -84,7 +84,8 @@ function createUploadReconForm($extra=false, $title='UploadXmippRecon.py Launche
   $zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.0';
   $filter = ($_POST['filter']) ? $_POST['filter'] : '';
   $model = ($_POST['model']) ? $_POST['model'] : '';
-  $runname = ($_POST['runname']) ? $_POST['runname'] : '';
+  $runname = ($_POST['runname']) ? $_POST['runname'] : $runname;
+  $reconpath = ($_POST['reconpath']) ? $_POST['reconpath'] : $sessionpath;
   $description = $_POST['description'];
   $oneiteration = ($_POST['oneiteration']=="on") ? "CHECKED" : "";
   $iteration = $_POST['iteration'];
@@ -97,13 +98,11 @@ function createUploadReconForm($extra=false, $title='UploadXmippRecon.py Launche
       <td valign='top'>
       <br>
       <b>Recon Name:</b> \n";
-  if ($jobId) echo "$jobrunid<input type='hidden' name='runname' value='$jobrunid'>";
-  else echo "<br><input type='text' name='runname' value='$runname' size='50'>";
+  echo "<br><input type='text' name='runname' value='$runname' size='50'>";
   echo "
       <br>
       <B>Recon Base Directory:</B>\n";
-  if ($jobId) echo "$sessionpath\n";
-  else echo "<br><input type='text' name='reconpath' value='$sessionpath' size='50'/>";
+  echo "<br><input type='text' name='reconpath' value='$reconpath' size='50'/>";
   echo "
       <br/>
       <p>
