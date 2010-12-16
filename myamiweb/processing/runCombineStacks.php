@@ -51,7 +51,7 @@ function createCombineStackForm($extra=false, $title='combinestack.py Launcher',
 
 	$stackruninfos = $particle->getStackIds($expId, True);
 	$stackruns = ($stackruninfos) ? count($stackruninfos) : 0;
-	while (file_exists($sessionpathval.'stack'.($stackruns+1)))
+	while (file_exists($sessionpath.'stack'.($stackruns+1)))
 		$stackruns += 1;
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'combine'.($stackruns+1);
 
@@ -125,7 +125,7 @@ function runCombineStack() {
 	$command.="combinestack.py ";
 	$command.="--projectid=".getProjectId()." ";
 	
-	//make sure a session was selected
+	//make sure a description is entered
 	$description=$_POST['description'];
 	if (!$description) createCombineStackForm("<B>ERROR:</B> Enter a brief description");
 
@@ -181,11 +181,10 @@ function runCombineStack() {
 		<b>Combine Stack Command:</b><br />
 		$command
 		</td></tr>
-		<tr><td>run id</td><td>$runname</td></tr>
-		<tr><td>run id</td><td>$description</td></tr>
-		<tr><td>stack ids</td><td>$stackids</td></tr>
-		<tr><td>out dir</td><td>$rundir</td></tr>
-		<tr><td>commit</td><td>$commit</td></tr>
+		<tr><td>run name</td><td>$runname</td></tr>
+		<tr><td>description</td><td>$description</td></tr>
+		<tr><td>stack ids</td><td>$stacklist</td></tr>
+		<tr><td>run dir</td><td>$rundir</td></tr>
 		</table>\n";
 		processing_footer();
 	}
