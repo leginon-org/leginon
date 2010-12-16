@@ -48,6 +48,8 @@ class DBDataKeeper(object):
 		self.dbd.close()
 
 	def direct_query(self, dataclass, id, readimages=False):
+		if id is None:
+			raise ValueError('id must be specified, not None')
 		dummy = dataclass()
 		dummy.isRoot = True
 		datainfo = self.datainfo(dummy, dbid=id)
