@@ -30,7 +30,7 @@ class UploadModelScript(appionScript.AppionScript):
 			+" [ --boxsize=<#>] ")
 		self.parser.add_option("-f", "--file", dest="file",
 			help="MRC file to upload", metavar="FILE")
-		self.parser.add_option("-s", "--session", dest="session",
+		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--sym", "--symm", "--symmetry", dest="symmetry",
 			help="Symmetry id in the database", metavar="INT")
@@ -61,10 +61,10 @@ class UploadModelScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['session'] is None:
-			apDisplay.printError("Enter a session ID")
+		if self.params['sessionname'] is None:
+			apDisplay.printError("Enter a session name (e.g. --session=06jul12a)")
 		if self.params['projectid'] is not None:
-			projid = apProject.getProjectIdFromSessionName(self.params['session'])
+			projid = apProject.getProjectIdFromSessionName(self.params['sessionname'])
 			if projid != self.params['projectid']:
 				apDisplay.printError("Project ID and Session name do not match")
 		if self.params['description'] is None:
@@ -111,7 +111,7 @@ class UploadModelScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		path = os.path.abspath(sessiondata['image path'])
 		pieces = path.split('leginon')
 		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
