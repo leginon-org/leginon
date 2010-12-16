@@ -46,7 +46,7 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 	$stackruninfos = $particle->getStackIds($expId, True);
 	$stackruns = ($stackruninfos) ? count($stackruninfos) : 0;
 	//echo "Stack Runs: $stackruns";
-	while (glob($defoutdir.'/stack'.($stackruns+1)."*"))
+	while (glob($outdir.'/stack'.($stackruns+1)."*"))
 		$stackruns += 1;
 	$defrunname = 'stack'.($stackruns+1);
 
