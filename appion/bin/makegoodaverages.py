@@ -282,7 +282,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		if self.params['iter'] is None:
 			apDisplay.printError("enter an iteration for the final Eulers")
 		self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'])
-		self.params['session'] = apStack.getSessionDataFromStackId(self.params['stackid'])
+		self.params['sessionname'] = apStack.getSessionDataFromStackId(self.params['stackid'])
 
 	#=====================
 	def setRunDir(self):
@@ -390,7 +390,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			if not symdata:
 				apDisplay.printError('no symmetry associated with this model')
 			modq=appiondata.Ap3dDensityData()
-			modq['session']=self.params['session']
+			modq['session']=self.params['sessionname']
 			modq['name']=self.params['make3d']
 			modq['path']=appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 			modq['boxsize']=box
