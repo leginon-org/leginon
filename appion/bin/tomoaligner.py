@@ -44,7 +44,7 @@ class protomoAligner(appionScript.AppionScript):
 			+"[options]")
 
 		### strings
-		self.parser.add_option("-s", "--session", dest="session",
+		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
 
 		### integers
@@ -76,7 +76,7 @@ class protomoAligner(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		self.sessiondata = sessiondata
 		if self.params['goodalignerid'] is None:
 			if self.params['tiltseriesnumber'] is None :
