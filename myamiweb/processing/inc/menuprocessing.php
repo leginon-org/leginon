@@ -493,7 +493,7 @@ if (is_numeric($expId)) {
 			$angrecondone = count($particle->getAngularReconstitutionRuns($sessionId));
 			$angreconqueue = count($subclusterjobs['angrecon']['queued']);
 			$angreconrun = count($subclusterjobs['angrecon']['running']);
-			$angreconresults[] = ($angrecondone > 0) ? "<a href='angreconsummary.php?expId=$sessionId'>$angrecondone complete</a>" : '';
+#			$angreconresults[] = ($angrecondone > 0) ? "<a href='angreconsummary.php?expId=$sessionId'>$angrecondone complete</a>" : '';
 			$angreconresults[] = ($angreconrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=angrecon'>$angreconrun running</a>";
 			$angreconresults[] = ($angreconqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=angrecon'>$angreconqueue queued</a>";
 			$nruns[] = array(
