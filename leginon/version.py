@@ -13,6 +13,7 @@
 # $State: Exp $
 # $Locker:  $
 
+import subprocess
 import os.path
 import inspect
 
@@ -56,8 +57,43 @@ def OLDgetVersion():
 
 	return version
 
-def getVersion():
+def getSVNInfo():
+	modulepath = getInstalledLocation()
+	currentpath = os.getcwd()
+	os.chdir(modulepath)
+	try:
+		svninfo = subprocess.Popen('svn info', shell=True, stdout=subprocess.PIPE).stdout.read()
+	except:
+		svninfo = ''
+	os.chdir(currentpath)
+	infolist = svninfo.split('\n')
+	infodict = {}
+	for line in infolist:
+		parts = line.split(': ')
+		infodict[parts[0]] = ': '.join(parts[1:])
+	return infodict
+
+def getTextVersion():
 	return 'pre2.2'
+
+def getVersion():
+	svninfo = getSVNInfo()
+	if 'Revision' in svninfo.keys():
+		version = svninfo['Revision']
+	else:
+		version = getTextVersion()
+	return version
+
+def getSVNBranch():
+	svninfo = getSVNInfo()
+	if 'URL' in svninfo.keys():
+		url = svninfo['URL']
+		root = svninfo['Repository Root']
+		parts = url.split(root)
+		branch = parts[-1].rstrip('/leginon')
+		branch = branch.strip('/branches')
+		branch = branch.strip('/')
+		return branch
 
 def getInstalledLocation():
 	'''where is this module located'''
@@ -70,4 +106,5 @@ def getInstalledLocation():
 
 if __name__ == '__main__':
 	print getVersion()
+	print getSVNBranch()
 	print getInstalledLocation()
