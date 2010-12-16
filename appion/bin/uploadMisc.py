@@ -23,7 +23,7 @@ class UploadMiscScript(appionScript.AppionScript):
 			+" --description='text' ")
 		self.parser.add_option("-f", "--file", dest="file",
 			help="File to upload", metavar="FILE")
-		self.parser.add_option("-s", "--session", dest="session",
+		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name associated with file (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("-r", "--reconid", dest="reconid", type='int',
 			help="ReconID associated with file (e.g. --reconid=311)", metavar="RECONID")
@@ -41,8 +41,8 @@ class UploadMiscScript(appionScript.AppionScript):
 		if self.params['description'] is None:
 			apDisplay.printError("enter a file description")
 		print self.params
-		if self.params['session'] is None and self.params['reconid'] is None and self.params['fulltomoid'] is None:
-			apDisplay.printError("please enter either session or reconID or fulltomoid")
+		if self.params['sessionname'] is None and self.params['reconid'] is None and self.params['fulltomoid'] is None:
+			apDisplay.printError("please enter either session name (e.g. 06mar12a) or reconID or fulltomoid")
 
 	#=====================
 	def setRunDir(self):
@@ -52,8 +52,8 @@ class UploadMiscScript(appionScript.AppionScript):
 		if self.params['fulltomoid'] is not None:
 			self.tomodata = apTomo.getFullTomoData(self.params['fulltomoid'])
 			path = self.tomodata['path']['path']
-		if self.params['session'] is not None:
-			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		if self.params['sessionname'] is not None:
+			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 			path = os.path.abspath(sessiondata['image path'])
 			pieces = path.split('leginon')
 			path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
@@ -80,9 +80,9 @@ class UploadMiscScript(appionScript.AppionScript):
 			miscq['session'] = sessiondata
 			projectid = apProject.getProjectIdFromSessionName(sessiondata['name'])
 			miscq['REF|projectdata|projects|project'] = projectid
-		elif self.params['session'] is not None:
+		elif self.params['sessionname'] is not None:
 			miscq['session'] = self.sessiondata
-			projectid = apProject.getProjectIdFromSessionName(self.params['session'])
+			projectid = apProject.getProjectIdFromSessionName(self.params['sessionname'])
 			miscq['REF|projectdata|projects|project'] = projectid
 		miscq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		miscq['name'] = self.filename
@@ -104,9 +104,9 @@ class UploadMiscScript(appionScript.AppionScript):
 		if self.params['fulltomoid'] is not None:
 			self.tomodata = apTomo.getFullTomoData(self.params['fulltomoid'])
 			print "Associated with",self.tomodata['name'],":",self.tomodata['path']['path']
-		if self.params['session'] is not None:
-			self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
-			self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
+		if self.params['sessionname'] is not None:
+			self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+			self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['sessionname'])
 
 		self.filename = os.path.basename(self.params['file'])
 		self.newfile = os.path.join(self.params['rundir'], self.filename)
