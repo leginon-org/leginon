@@ -35,7 +35,7 @@ class tomoMaker(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.set_usage( "Usage: %prog --file=<name> --rundir=<dir> "
 			+"[options]")
-		self.parser.add_option("-s", "--session", dest="session",
+		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--fulltomoId", dest="fulltomoId", type="int",
 			help="Full tomogram id for subvolume creation, e.g. --fulltomoId=2", metavar="int")
