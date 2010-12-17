@@ -330,26 +330,27 @@ if (!empty($ctfdata)) {
 				$display = format_sci_number($v,4,2);
 			elseif ($k=='path') {
 				$graphpath = strstr($v, 'ctffindrun') ? $v : $v.'/opimages';
+				$scale = strstr($v, 'ctffindrun') ? 1 : 0.4;
 				$display=$graphpath;
 			}
 			elseif ($k=='graph1')
 				$display=$graph1name=$v;
-			elseif ($k=='graph2')
-				$display=$graph2name=$v;
 			else
 				$display = $v;
 			if (!ereg('^graph',$k))
 				echo formatHtmlRow($k,$display);
 		}
 		$graph1=$graphpath."/".$graph1name;
-		$graph2=$graphpath."/".$graph2name;
+
 		echo "<tr>";
 		echo "<td align='left'>\n";
 		echo "<a href='processing/loadimg.php?filename=$graph1'>\n";
-		echo "<img src='processing/loadimg.php?filename=$graph1&scale=0.5'></a></td>\n";
+		echo "<img src='processing/loadimg.php?filename=$graph1&scale=$scale'></a></td>\n";
 	  	echo "<td align='left'>\n";
-		echo "<a href='processing/loadimg.php?filename=$graph2'>\n";
-		echo "<img src='processing/loadimg.php?filename=$graph2&scale=0.4'></a></td>\n";
+		if(!strstr($graphpath, 'ctffindrun')){
+	  		echo "<a href='getaceimg.php?preset=all&session=$sessionId&id=$imgId'>\n";
+	  		echo "<img src='getaceimg.php?preset=all&session=$sessionId&id=$imgId'></a></td>\n";
+		}
 		echo "</tr>\n";
 		echo "<tr><td colspan=2><hr></td></tr>";	
 	}
