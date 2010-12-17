@@ -50,10 +50,7 @@ $sessioninfo = $leginondata->getSessionInfo($sessionId);
 $presets = $leginondata->getTruePresets($sessionId);
 
 if (!empty($sessioninfo)) {
-	$sessionpath=$sessioninfo['Image path'];
-	$sessionpath=getBaseAppionPath($sessionpath);
-	$sessionpath=ereg_replace("rawdata","pyAce/",$sessionpath);
-	$sessionname=$sessioninfo['Name'];
+	$sessionpath=getBaseAppionPath($sessioninfo).'/ctf';
 }
 
 */
@@ -255,12 +252,8 @@ function createPyAceForm($extra=false) {
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	$presets=$sessiondata['presets'];
-	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=getBaseAppionPath($sessionpath);
-		$sessionpath=ereg_replace("rawdata","ctf",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
-	}
+	$sessionpath=getBaseAppionPath($sessioninfo).'/ctf';
+
 	$ctf = new particledata();
 	$ctfruns = count($ctf->getCtfRunIds($sessionId));
 	$lastrunnumber = $ctf->getLastRunNumberForType($sessionId,'ApAceRunData','name'); 

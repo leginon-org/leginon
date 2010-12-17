@@ -155,12 +155,7 @@ function jobform($extra=false) {
 	$projectId=getProjectId();
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
-	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=getBaseAppionPath($sessionpath);
-		$sessionpath=ereg_replace("rawdata","recon",$sessionpath);
-		$sessionpath=ereg_replace("data..","data00",$sessionpath);
-	}
+	$sessionpath=getBaseAppionPath($sessioninfo).'/recon';
 	
 	// get selected initial model data
 	$modelinfo = explode('|--|',$_POST['model']);

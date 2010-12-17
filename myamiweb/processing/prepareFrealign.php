@@ -147,9 +147,7 @@ function jobForm($extra=false) {
 	## get path data for this session for output
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
-	$sessionpath = $sessiondata['Image path'];
-	$sessionpath=getBaseAppionPath($sessionpath);
-	$sessionpath = ereg_replace("rawdata","recon/",$sessionpath);
+	$sessionpath=getBaseAppionPath($sessiondata).'/recon/';
 
 	$particle = new particledata();
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;

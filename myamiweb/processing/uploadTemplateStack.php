@@ -51,9 +51,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission
-	$outdir=$sessioninfo['Image path'];
-	$outdir=getBaseAppionPath($outdir);
-	$outdir=ereg_replace("rawdata","templatestacks",$outdir);
+	$outdir=getBaseAppionPath($sessioninfo).'/templatestacks';
 
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;
 

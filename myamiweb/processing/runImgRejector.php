@@ -69,9 +69,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=getBaseAppionPath($sessionpath);
-		$sessionpath=ereg_replace("rawdata","imgreject/",$sessionpath);
+		$sessionpath=getBaseAppionPath($sessioninfo).'/imgreject/';
 		$sessionname=$sessioninfo['Name'];
 	}
 

@@ -95,12 +95,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo "<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
-	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=getBaseAppionPath($sessionpath);
-		$sessionpath=ereg_replace("rawdata","align/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
-	}
+	$sessionpath=getBaseAppionPath($sessioninfo).'/align/';
 
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';

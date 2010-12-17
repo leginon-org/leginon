@@ -50,10 +50,7 @@ function jobform($extra=false) {
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
-		$outdir=$sessioninfo['Image path'];
-		$outdir=getBaseAppionPath($outdir);
-		$outdir=ereg_replace("rawdata","init_models",$outdir);
-		$sessionname=$sessioninfo['Name'];
+		$outdir=getBaseAppionPath($sessioninfo).'/init_models';
 		echo "<input type='hidden' name='output_directory' value='$outdir'>\n";
 	}
 
@@ -78,9 +75,7 @@ function jobform($extra=false) {
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
-		$outdir=$sessioninfo['Image path'];
-		$outdir=getBaseAppionPath($outdir);
-		$outdir=ereg_replace("rawdata","init_models",$outdir);
+		$outdir=getBaseAppionPath($sessioninfo).'/init_models';
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='output_directory' value='$outdir'>\n";
 	}

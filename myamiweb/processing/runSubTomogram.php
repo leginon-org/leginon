@@ -56,9 +56,7 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo)) {
-		$outdir=$sessioninfo['Image path'];
-		$outdir=getBaseAppionPath($outdir);
-		$outdir=ereg_replace("rawdata","tomo",$outdir);
+		$outdir=getBaseAppionPath($sessioninfo).'/tomo';
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 	}
@@ -304,6 +302,7 @@ function runSubTomogram() {
 	$command.="--projectid=$projectId ";
 	$command.="--fulltomoId=$fulltomoId ";
 	$command.="--runname=$runname ";
+	$command.="--rundir=".$outdir.'/'.$runname." ";
 	if ($prtlrunId) $command.="--selexonId=$prtlrunId ";
 	if ($stackidval) $command.="--stackId=$stackidval ";
 	$command.="--sizex=$sizex ";

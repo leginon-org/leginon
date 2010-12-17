@@ -37,9 +37,7 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 	// get path for submission
 	$sessiondata=getSessionList($projectId, $expId);
 	$sessioninfo=$sessiondata['info'];
-	$outdir = $sessioninfo['Image path'];
-	$outdir=getBaseAppionPath($outdir);
-	$outdir = ereg_replace("rawdata", "stacks",$outdir);
+	$outdir=getBaseAppionPath($sessioninfo).'/stacks';
 	$sessionname = $sessioninfo['Name'];
 
 	// Set default runname

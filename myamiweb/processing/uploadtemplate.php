@@ -81,9 +81,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission
-	$outdir=$sessioninfo['Image path'];
-	$outdir=getBaseAppionPath($outdir);
-	$outdir=ereg_replace("rawdata","templates",$outdir);
+	$outdir=getBaseAppionPath($sessioninfo).'/templates';
 
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;
 

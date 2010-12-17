@@ -46,12 +46,8 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo)) {
-		$outdir=$sessioninfo['Image path'];
-		$outdir=getBaseAppionPath($outdir);
-		$outdir=ereg_replace("rawdata","tomo",$outdir);
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
-		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
 
 	// Set any existing parameters in form
@@ -70,7 +66,6 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	$orientation = ($_POST['orientation']) ? $_POST['orientation'] : '';
 	$snapshot = ($_POST['snapshot']) ? $_POST['snapshot'] : '';
 	$description = $_POST['description'];
-	$outdir .= $tomofilename.'mrc';
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
 	$tiltSeriesSelector = $seriesselector_array[0];

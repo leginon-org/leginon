@@ -45,9 +45,7 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo)) {
-		$outdir=$sessioninfo['Image path'];
-		$outdir=getBaseAppionPath($outdir);
-		$outdir=ereg_replace("rawdata","models",$outdir);
+		$outdir=getBaseAppionPath($sessioninfo).'/models';
 		$outdir=$outdir."/pdb";
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";

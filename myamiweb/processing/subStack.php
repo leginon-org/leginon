@@ -77,9 +77,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission
-	$outdir=$sessioninfo['Image path'];
-	$outdir=getBaseAppionPath($outdir);
-	$outdir=ereg_replace("rawdata","stacks",$outdir);
+	$outdir=getBaseAppionPath($sessioninfo).'/stacks';
 
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	$javafunctions .="<script language='JavaScript'>\n";

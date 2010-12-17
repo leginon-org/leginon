@@ -75,9 +75,7 @@ function createAlignSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission
-	$outdir=$sessioninfo['Image path'];
-	$outdir=getBaseAppionPath($outdir);
-	$outdir=ereg_replace("rawdata","stacks",$outdir);
+	$outdir=getBaseAppionPath($sessioninfo).'/stacks';
 
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $outdir;
 

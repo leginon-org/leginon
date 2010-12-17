@@ -163,10 +163,7 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=getBaseAppionPath($sessionpath);
-		$sessionpath=ereg_replace("rawdata","align/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
+		$sessionpath=getBaseAppionPath($sessioninfo).'/align/';
 	}
   
   // Set any existing parameters in form

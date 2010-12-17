@@ -76,10 +76,7 @@ function createAce2Form($extra=false) {
 	$sessioninfo=$sessiondata['info'];
 	$presets=$sessiondata['presets'];
 	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=getBaseAppionPath($sessionpath);
-		$sessionpath=ereg_replace("rawdata","ctf/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
+		$sessionpath=getBaseAppionPath($sessioninfo).'/ctf/';
 	}
 	$ctf = new particledata();
 	$lastrunnumber = $ctf->getLastRunNumberForType($sessionId,'ApAceRunData','name'); 

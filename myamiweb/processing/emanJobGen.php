@@ -239,10 +239,10 @@ function jobForm($extra=false) {
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
 	$sessionpath = $sessiondata['Image path'];
-	ereg("(.*)leginon(.*)rawdata", $sessionpath, $reg_match);
+	$sessionpath=getBaseAppionPath($sessiondata).'/recon';
+	ereg("(.*)appion(.*)recon", $sessionpath, $reg_match);
 	if (!is_null($reg_match)) {
 		$rootpath = "appion".$reg_match[2]."recon/";
-		$sessionpath=$reg_match[1].$rootpath;
 	} else {
 		// get stack data for output if the sessionpath is not regular.  This may happen when the rawdata is archived
 		$stackinfo = explode('|--|',$_POST['stackval']);

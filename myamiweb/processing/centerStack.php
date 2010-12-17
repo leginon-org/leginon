@@ -50,9 +50,7 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission
-	$outdir=$sessioninfo['Image path'];
-	$outdir=getBaseAppionPath($outdir);
-	$outdir=ereg_replace("rawdata","stacks",$outdir);
+	$outdir=getBaseAppionPath($sessioninfo).'/stacks';
 
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title,$heading,$javafunctions);

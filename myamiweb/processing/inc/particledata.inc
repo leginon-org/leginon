@@ -4426,11 +4426,32 @@ function displayCTFdata($data, $display_keys) {
 	return $html;
 }
 
-function getBaseAppionPath($leginon_imagepath,$new_base='appion') {
-	// use this in case that the word leginon is used in two parts of the path
-	$path_pieces = explode('leginon',$leginon_imagepath);
-	$pieces_count = count($path_pieces);
-	$appion_basepath = implode('leginon',array_slice($path_pieces,0,$pieces_count-1)).$new_base.$path_pieces[$pieces_count-1]; 
+function getBaseAppionPath($sessioninfo,$new_base='appion') {
+	if (!is_array($sessioninfo)) {
+		if (!is_string($sessioninfo) && !empty($sessioninfo)) {
+			echo "ERROR: NO session information";
+		} else {
+			echo "ERROR: string input option not yet implemented";
+		}
+	}
+
+	if (defined(DEFAULT_APPION_PATH) && DEFAULT_APPION_PATH) {
+		return DEFAULT_APPION_PATH.'/'.$sessioninfo['Name'];
+	} else {
+		// get from leginon session image path
+		$leginon_imagepath = $sessioninfo['Image path'];
+		// use this in case that the word leginon is used in two parts of the path
+		ereg("(.*)leginon(.*)rawdata", $leginon_imagepath, $reg_match);
+		if (!is_null($reg_match)) {
+			$path_pieces = explode('leginon',$leginon_imagepath);
+			$pieces_count = count($path_pieces);
+			$appion_basepath = implode('leginon',array_slice($path_pieces,0,$pieces_count-1)).$new_base.$path_pieces[$pieces_count-1]; 
+			$appion_basepath=ereg_replace("/rawdata","",$appion_basepath);		
+		} else {
+			$extra="ERROR: could not determine Appion Path directory automatically. Please enter manually";
+			echo $extra;
+		}
+	}
 	return $appion_basepath;
 }
 

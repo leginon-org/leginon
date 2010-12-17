@@ -24,10 +24,10 @@ else {
 	createTomoAlignerForm();
 }
 
-function buildOutdir($leginonpath,$tiltseriesnumber) {
-	$outdir=$leginonpath;
-	$outdir=getBaseAppionPath($outdir);
-	$outdir=ereg_replace("rawdata","tomo/tiltseries".$tiltseriesnumber,$outdir);
+function buildOutdir($sessioninfo,$tiltseriesnumber) {
+	$outdir=$sessioninfo;
+	$outdir=getBaseAppionPath($sessioninfo);
+	$outdir .="tomo/tiltseries".$tiltseriesnumber;
 	$outdir=$outdir.'/align';
 	return $outdir;	
 }
@@ -186,7 +186,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		$imageinfo = $leginondata->getImageInfo($tiltseriesinfos[0]['imageid']);
 		$imagesize = ($_POST['imagesize']) ? $_POST['imagesize'] : $imageinfo['dimx'];
 	}
-	$outdir=buildOutdir($sessioninfo['Image path'],$tiltseriesinfos[0]['number']);
+	$outdir=buildOutdir($sessioninfo,$tiltseriesinfos[0]['number']);
 	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	echo "<input type='hidden' name='imagesize' value='$imagesize'>\n";
 	echo "</td></table>";
@@ -668,6 +668,7 @@ function runTomoAligner() {
 	}
 	$command.="--projectid=$projectId ";
 	$command.="--runname=$runname ";
+	$command.="--rundir=".$outdir.'/'.$runname." ";
 	$command.="--alignmethod=$alignmethod ";
 	if ($alignmethod == 'protomo') {
 		$command.="--cycle=$cycle ";

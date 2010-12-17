@@ -57,12 +57,7 @@ function createOtrVolumeForm($extra=false, $title='OtrVolume.py Launcher', $head
 
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
-	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=getBaseAppionPath($sessionpath);
-		$sessionpath=ereg_replace("rawdata","otrvolume/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
-	}
+	$sessionpath=getBaseAppionPath($sessioninfo).'/otrvolume/';
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 
 	$javascript  = "";

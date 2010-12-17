@@ -42,16 +42,15 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
+		$sessionname=$sessioninfo['Name'];
 		$sessionpath=$sessioninfo['Image path'];
 		if (!$leg_check) {
-			$sessionpath=getBaseAppionPath($sessionpath);
-			$sessionpath=ereg_replace("rawdata",$outdirname,$sessionpath);
+			$sessionpath=getBaseAppionPath($sessioninfo).'/'.$outdirname;
 		}
 		
 		if ($leg_check) {
 			$sessionpath=ereg_replace("rawdata","",$sessionpath);		
 		}
-		$sessionname=$sessioninfo['Name'];
 	}
 
 	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $sessionpath;

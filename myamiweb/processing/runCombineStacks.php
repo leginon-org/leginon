@@ -42,10 +42,7 @@ function createCombineStackForm($extra=false, $title='combinestack.py Launcher',
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=getBaseAppionPath($sessionpath);
-		$sessionpath=ereg_replace("rawdata","stacks/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
+		$sessionpath=getBaseAppionPath($sessioninfo).'/stacks/';
 	}
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 

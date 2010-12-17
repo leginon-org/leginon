@@ -228,10 +228,9 @@ function jobForm($extra=false) {
 	// get path data for this session for output
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
-	$sessionpath = $sessiondata['Image path'];
-	ereg("(.*)leginon(.*)rawdata", $sessionpath, $reg_match);
+	$sessionpath=getBaseAppionPath($sessiondata).'/recon/';
+	ereg("(.*)appion(.*)recon", $sessionpath, $reg_match);
 	$rootpath = "appion".$reg_match[2]."recon/";
-	$sessionpath=$reg_match[1].$rootpath;
 
 	$clusterdata->set_rootpath($rootpath);
 	$clusterdata->post_data();

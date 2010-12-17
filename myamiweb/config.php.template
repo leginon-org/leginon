@@ -165,6 +165,9 @@ define('TEMP_IMAGES_DIR', "");
 define('USE_APPION_WRAPPER', false);
 // --- define('APPION_WRAPPER_PATH', ""); --- //
 
+// --- default appion base directory parallel to leginon --- //
+define('DEFAULT_APPION_PATH',"");
+
 // --- sample tracking ---//
 define('SAMPLE_TRACK', false);
 

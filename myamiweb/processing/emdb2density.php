@@ -46,9 +46,7 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo)) {
-		$outdir=$sessioninfo['Image path'];
-		$outdir=getBaseAppionPath($outdir);
-		$outdir=ereg_replace("rawdata","models",$outdir);
+		$outdir=getBaseAppionPath($sessioninfo).'/models';
 		$outdir=$outdir."/emdb";
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";

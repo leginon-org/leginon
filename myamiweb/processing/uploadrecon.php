@@ -76,10 +76,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo) && !$jobId) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=getBaseAppionPath($sessionpath);
-		$sessionpath=ereg_replace("rawdata","recon/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
+		$sessionpath=getBaseAppionPath($sessioninfo).'/recon/';
 	}
 
 	echo "<input type='hidden' name='outdir' value='$sessionpath'>\n";

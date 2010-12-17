@@ -69,9 +69,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo)) {
-		$outdir=$sessioninfo['Image path'];
-		$outdir=getBaseAppionPath($outdir);
-		$outdir=ereg_replace("rawdata","models",$outdir);
+		$outdir=getBaseAppionPath($sessioninfo).'/models';
 		$outdir=$outdir."/accepted";
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";

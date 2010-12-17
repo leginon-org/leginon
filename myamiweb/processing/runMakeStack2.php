@@ -152,12 +152,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo"<FORM name='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
-	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=getBaseAppionPath($sessionpath);
-		$sessionpath=ereg_replace("rawdata","stacks/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
-	}
+	$sessionpath=getBaseAppionPath($sessioninfo).'/stacks';
 
 	// Set any existing parameters in form
 	$single = ($_POST['single']) ? $_POST['single'] : 'start.hed';

@@ -50,9 +50,7 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission
-	$sessionpath=$sessioninfo['Image path'];
-	$sessionpath=getBaseAppionPath($sessionpath);
-	$sessionpath=ereg_replace("rawdata","extract",$sessionpath);
+	$sessionpath=getBaseAppionPath($sessioninfo).'/extract';
 	$sessionname=$sessioninfo['Name'];
 
 	//query the database for parameters

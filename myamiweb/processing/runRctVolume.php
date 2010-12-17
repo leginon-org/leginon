@@ -58,12 +58,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
-	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=getBaseAppionPath($sessionpath);
-		$sessionpath=ereg_replace("rawdata","rctvolume/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
-	}
+	$sessionpath=getBaseAppionPath($sessioninfo).'/rctvolume/';
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 
 	$javascript  = "";

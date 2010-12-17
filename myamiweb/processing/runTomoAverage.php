@@ -56,9 +56,7 @@ function createAverageTomogramForm($extra=false, $title='tomoaverage.py Launcher
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo)) {
-		$outdir=$sessioninfo['Image path'];
-		$outdir=getBaseAppionPath($outdir);
-		$outdir=ereg_replace("rawdata","tomo/average",$outdir);
+		$outdir=getBaseAppionPath($sessioninfo).'/tomo/average';
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 	}
@@ -173,6 +171,7 @@ function runAverageTomogram() {
 	$command.="--projectid=$projectId ";
 	$command.="--subtomorunId=$subtomorunid ";
 	$command.="--runname=$runname ";
+	$command.="--rundir=".$outdir.'/'.$runname." ";
 	$command.="--stackId=$stackidval ";
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
@@ -184,7 +183,6 @@ function runAverageTomogram() {
 
 		if (!($user && $password)) createAverageTomogramForm("<B>ERROR:</B> You must be logged in to submit");
 		$rundir = $outdir.'/'.$runname;
-		echo $rundir;
 		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomoaverage',False,False,False);
 		// if errors:
 		if ($sub) createAverageTomogramForm("<b>ERROR:</b> $sub");

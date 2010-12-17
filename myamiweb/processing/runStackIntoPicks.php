@@ -41,10 +41,7 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 	$sessioninfo=$sessiondata['info'];
 	$presets=$sessiondata['presets'];
 	if (!empty($sessioninfo)) {
-		$sessionpath=$sessioninfo['Image path'];
-		$sessionpath=getBaseAppionPath($sessionpath);
-		$sessionpath=ereg_replace("rawdata","extract/",$sessionpath);
-		$sessionname=$sessioninfo['Name'];
+		$sessionpath=getBaseAppionPath($sessioninfo).'/extract/';
 	}
 	//$stackids = $particle->getStackIdsForProject($projectId, False);
 	$stackids = $particle->getStackIds($expId, False);

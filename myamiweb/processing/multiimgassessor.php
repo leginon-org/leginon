@@ -61,8 +61,8 @@ if ($presets) {
 }
 if (!empty($sessioninfo)) {
 	$sessionpath=$sessioninfo['Image path'];
-	$extractpath=ereg_replace("rawdata","extract/",$sessionpath);
-	$appionpath=getBaseAppionPath($extractpath);
+	$appionpath=getBaseAppionPath($sessioninfo);
+	$extractpath=$appionpath."/extract/";
 	$origjpgpath=ereg_replace("rawdata","jpgs/",$sessionpath);
 	$sessionname=$sessioninfo['Name'];
 }

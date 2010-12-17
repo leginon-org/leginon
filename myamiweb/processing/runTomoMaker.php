@@ -71,9 +71,8 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	if ($tiltseriesId) {
 		$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
 		if (!empty($sessioninfo)) {
-			$outdir=$sessioninfo['Image path'];
-			$outdir=getBaseAppionPath($outdir);
-			$outdir=ereg_replace("rawdata","tomo/tiltseries".$tiltseriesinfos[0]['number'],$outdir);
+			$outdir=getBaseAppionPath($sessioninfo);
+			$outdir .="/tomo/tiltseries".$tiltseriesinfos[0]['number'];
 			echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 		}
 		$alignruns = $particle ->getTomoAlignmentRuns($tiltseriesId);
@@ -208,6 +207,7 @@ function runTomoMaker() {
 	$command.="--alignerid=$alignerId ";
 	$command.="--projectid=$projectId ";
 	$command.="--runname=$runname ";
+	$command.="--rundir=".$outdir.'/'.$runname." ";
 	$command.="--thickness=$thickness ";
 	if (strlen($excludenumber)) $command.="--exclude=$excludenumber ";
 	$command.="--description=\"$description\" ";
