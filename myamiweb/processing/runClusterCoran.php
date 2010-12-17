@@ -197,6 +197,10 @@ function runClusterCoran() {
 	$classmethod=$_POST['classmethod'];
 	$outdir=$_POST['outdir'];
 
+	$particle = new particledata();
+	$analysisparams = $particle->getAnalysisParams($analysisid);
+	$runname = $analysisparams['runname'];
+
 	// get selected eigenimgs
 	$factorlistAR=array();
 	for ($i=1;$i<=$numeigenimgs;$i++) {
