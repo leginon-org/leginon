@@ -218,6 +218,7 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 			echo"<font class='apcomment' size='+2'><b>No Full Tomograms for this tilt series</b></font>\n";
 		}
 		else {
+			if (!$fulltomoval) $outdir .= '/'.$fulltomos[0]['runname'];
 			echo docpop('tomorunname', 'Full tomogram');
 			echo "<select name='fulltomoId'onchange=submit()>\n";
 			foreach ($fulltomos as $fulltomo){
