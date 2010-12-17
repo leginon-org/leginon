@@ -4435,7 +4435,9 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 		}
 	}
 
-	if (defined(DEFAULT_APPION_PATH) && DEFAULT_APPION_PATH) {
+	//variable appion_path is assigned to the constant to get around the broken defined() function
+	$appion_path = DEFAULT_APPION_PATH;
+	if (!empty($appion_path) && $appion_path != 'DEFAULT_APPION_PATH') {
 		return DEFAULT_APPION_PATH.'/'.$sessioninfo['Name'];
 	} else {
 		// get from leginon session image path
