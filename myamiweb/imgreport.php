@@ -8,6 +8,7 @@
  */
 
 require "inc/leginon.inc";
+
 require "inc/viewer.inc";
 if (defined('PROCESSING')) {
 	$ptcl = (@require "inc/particledata.inc") ? true : false;
@@ -30,7 +31,10 @@ $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
 
 $imageinfo = $leginondata->getImageInfo($imgId);
+
 $sessionId = $imageinfo[sessionId];
+$_GET['expId'] = $sessionId;
+require "inc/project.inc";
 
 //Block unauthorized user
 checkExptAccessPrivilege($sessionId);
@@ -76,7 +80,6 @@ $types = $leginondata->getMatrixCalibrationTypes();
 // --- getCTF Info, if any
 if ($ptcl) {
 	$ctf = new particledata;
-	$runId = $ctf->getLastCtfRun($sessionId);
 	$ctfdata  = $ctf->getCtfInfoFromImageId($imgId);
 }
 
@@ -314,41 +317,41 @@ createTree(Tree,0, new Array());
 	<td colspan="2">
 <?php
 echo divtitle("CTF");
-
+var_dump($ctfdata);
 if (!empty($ctfdata)) {
 	echo "<table border='0'>";
 	foreach($ctfdata as $r) {
-	foreach($r as $k=>$v) {
-		if (!in_array($k, $ctf_display_fields))
-			continue;	
-		if (eregi('defocus', $k))
-			$display = format_micro_number($v);
-		elseif ($v-floor($v)) 
-			$display = format_sci_number($v,4,2);
-		elseif ($k=='path') {
-			$graphpath=$v.'/opimages';
-			$display=$graphpath;
+		foreach($r as $k=>$v) {
+			if (!in_array($k, $ctf_display_fields))
+				continue;	
+			if (eregi('defocus', $k))
+				$display = format_micro_number($v);
+			elseif ($v-floor($v)) 
+				$display = format_sci_number($v,4,2);
+			elseif ($k=='path') {
+				$graphpath = strstr($v, 'ctffindrun') ? $v : $v.'/opimages';
+				$display=$graphpath;
+			}
+			elseif ($k=='graph1')
+				$display=$graph1name=$v;
+			elseif ($k=='graph2')
+				$display=$graph2name=$v;
+			else
+				$display = $v;
+			if (!ereg('^graph',$k))
+				echo formatHtmlRow($k,$display);
 		}
-		elseif ($k=='graph1')
-			$display=$graph1name=$v;
-		elseif ($k=='graph2')
-			$display=$graph2name=$v;
-		else
-			$display = $v;
-		if (!ereg('^graph',$k))
-			echo formatHtmlRow($k,$display);
-	}
-	$graph1=$graphpath."/".$graph1name;
-	$graph2=$graphpath."/".$graph2name;
-	echo "<tr>";
-	echo "<td align='left'>\n";
-	echo "<a href='processing/loadimg.php?filename=$graph1'>\n";
-	echo "<img src='processing/loadimg.php?filename=$graph1&scale=0.5'></a></td>\n";
-  echo "<td align='left'>\n";
-	echo "<a href='processing/loadimg.php?filename=$graph2'>\n";
-	echo "<img src='processing/loadimg.php?filename=$graph2&scale=0.4'></a></td>\n";
-	echo "</tr>\n";
-	echo "<tr><td colspan=2><hr></td></tr>";	
+		$graph1=$graphpath."/".$graph1name;
+		$graph2=$graphpath."/".$graph2name;
+		echo "<tr>";
+		echo "<td align='left'>\n";
+		echo "<a href='processing/loadimg.php?filename=$graph1'>\n";
+		echo "<img src='processing/loadimg.php?filename=$graph1&scale=0.5'></a></td>\n";
+	  	echo "<td align='left'>\n";
+		echo "<a href='processing/loadimg.php?filename=$graph2'>\n";
+		echo "<img src='processing/loadimg.php?filename=$graph2&scale=0.4'></a></td>\n";
+		echo "</tr>\n";
+		echo "<tr><td colspan=2><hr></td></tr>";	
 	}
 	echo "</table>";
 	
