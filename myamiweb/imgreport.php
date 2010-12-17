@@ -317,7 +317,7 @@ createTree(Tree,0, new Array());
 	<td colspan="2">
 <?php
 echo divtitle("CTF");
-var_dump($ctfdata);
+
 if (!empty($ctfdata)) {
 	echo "<table border='0'>";
 	foreach($ctfdata as $r) {
