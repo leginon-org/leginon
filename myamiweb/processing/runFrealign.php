@@ -526,9 +526,19 @@ function submitJob($extra=False) {
 		exit;
 	}
 
+	// We need to check the status of the job so that we do not overwrite it in the following updateClusterQueue refs #706
+	$jobinfo = $particle->getJobInfoFromId($jobid);
+	
+	// This could still overwrite the status if the job file is executed after the if and before updateClusterQueue below
+	if ( $jobinfo['status'] ) {
+		$status = $jobinfo['status'];
+	} else {
+		$status = 'Q';
+	}
+	
 	// insert cluster job id into row that was just created
-	$particle->updateClusterQueue($jobid,$jobnum,'Q');
-
+	$particle->updateClusterQueue($jobid, $jobnum, $status);
+	
 	echo "<tr><td>Cluster Directory</td><td>$clusterpath</td></tr>\n";
 	echo "<tr><td>Job number</td><td>$jobnum</td></tr>\n";
 	echo "</table>\n";
