@@ -348,8 +348,8 @@ if (!empty($ctfdata)) {
 		echo "<img src='processing/loadimg.php?filename=$graph1&scale=$scale'></a></td>\n";
 	  	echo "<td align='left'>\n";
 		if(!strstr($graphpath, 'ctffindrun')){
-	  		echo "<a href='getaceimg.php?preset=all&session=$sessionId&id=$imgId'>\n";
-	  		echo "<img src='getaceimg.php?preset=all&session=$sessionId&id=$imgId'></a></td>\n";
+	  		echo "<a href='getaceimg.php?preset=all&session=$sessionId&id=$imgId&g=2'>\n";
+	  		echo "<img src='getaceimg.php?preset=all&session=$sessionId&id=$imgId&g=2' width=400></a></td>\n";
 		}
 		echo "</tr>\n";
 		echo "<tr><td colspan=2><hr></td></tr>";	
