@@ -33,6 +33,9 @@ require_once('../inc/formValidator.php');
 			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "abs_path");
 			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "path_exist");
 			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "folder_permission");
+			$validator->addValidation("default_appion_path", $_POST['default_appion_path'], "abs_path");
+			$validator->addValidation("default_appion_path", $_POST['default_appion_path'], "path_exist");
+			$validator->addValidation("default_appion_path", $_POST['default_appion_path'], "folder_permission");
 			
 			if(!empty($_POST['processing_hosts'])){
 
@@ -114,6 +117,8 @@ require_once('../inc/formValidator.php');
 				wizard_form.hide_feature[1].disabled = false;
 				wizard_form.temp_images_dir.style.backgroundColor = "#ffffff";
 				wizard_form.temp_images_dir.readOnly = false;
+				wizard_form.default_appion_path.style.backgroundColor = "#ffffff";
+				wizard_form.default_appion_path.readOnly = false;
 				wizard_form.defaultcs.style.backgroundColor = "#ffffff";
 				wizard_form.defaultcs.readOnly = false;
 				wizard_form.addHost.disabled = false;
@@ -134,6 +139,9 @@ require_once('../inc/formValidator.php');
 				wizard_form.temp_images_dir.style.backgroundColor = "#eeeeee";
 				wizard_form.temp_images_dir.readOnly = true;
 				wizard_form.temp_images_dir.value = "";
+				wizard_form.default_appion_path.style.backgroundColor = "#eeeeee";
+				wizard_form.default_appion_path.readOnly = true;
+				wizard_form.default_appion_path.value = "";
 				wizard_form.defaultcs.style.backgroundColor = "#eeeeee";
 				wizard_form.defaultcs.readOnly = true;
 				wizard_form.defaultcs.value = "";
@@ -382,7 +390,7 @@ require_once('../inc/formValidator.php');
 		<br />
 
 		<h3>Enter the spherical aberration (Cs) constant for the microscope (in millimeters). <a target='_blank' href='http://en.wikipedia.org/wiki/Spherical_aberration'>Wikipedia</a> description.</h3>
-		<p>Example : 2.0  </p>
+		<p>Example: 2.0  </p>
 		<div id="error"><?php if($errMsg['defaultcs']) echo $errMsg['defaultcs']; ?></div>
 		<input type="text" size=5 name="defaultcs" 
 		<?php 
@@ -403,6 +411,20 @@ require_once('../inc/formValidator.php');
 				($_POST['processing'] == 'true') ? print("value='".$_POST['temp_images_dir']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\"");
 			}else{
 				($update && PROCESSING === true) ? print("value='".TEMP_IMAGES_DIR."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
+			}
+		?> /><br /><br />
+		<br />
+		
+		<h3>Enter a default Appion base directory location.</h3>
+		<p>Setup a default Appion directory that is accessible (read, write and execute) to all the Appion users and Apache user.</p>
+		<p>Example: /ami/data00/appion <br />'/ami/data00' - folder in your file server. <br />'appion' - folder for saving Appion image processing result.
+		<div id="error"><?php if($errMsg['default_appion_path']) echo $errMsg['default_appion_path']; ?></div>
+		<input type="text" size=25 name="default_appion_path" 
+		<?php 
+			if($_POST){
+				($_POST['processing'] == 'true') ? print("value='".$_POST['default_appion_path']."'") : print("readOnly=\"true\" style=\"background:#eeeeee\"");
+			}else{
+				($update && PROCESSING === true) ? print("value='".DEFAULT_APPION_PATH."'") : print("readOnly=\"true\" style=\"background:#eeeeee\" value=''"); 
 			}
 		?> /><br /><br />
 		<br />
