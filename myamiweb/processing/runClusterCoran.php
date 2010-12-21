@@ -38,7 +38,6 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 
 	// connect to particle and ctf databases
 	$particle = new particledata();
-	$particle = new particledata();
 	$analysisparams = $particle->getAnalysisParams($analysisid);
 	$rundir = $analysisparams['path'];
 	$runname = $analysisparams['runname'];
