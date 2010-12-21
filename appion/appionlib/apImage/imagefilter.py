@@ -135,15 +135,18 @@ def binImg(imgarray, bin=1, warn=True):
 	if bin <= 1:
 		return imgarray
 	oldshape = numpy.asarray(imgarray.shape)
-	remain = oldshape % bin
+	bin2 = bin * 2
+	remain = oldshape % bin2
 	if remain.any():
-		maxx = int(oldshape[0]/bin)*bin
-		maxy = int(oldshape[1]/bin)*bin
+		maxx = int(oldshape[0]/bin2)*bin2
+		maxy = int(oldshape[1]/bin2)*bin2
 		cutshape = numpy.asarray((maxx, maxy))
 		if warn is True:
 			apDisplay.printWarning("rescaling array to fit bin dimensions: "+str(oldshape)+" -> "+str(cutshape))
 		imgarray = frame_cut(imgarray, cutshape)
-	newshape = numpy.asarray(oldshape)/bin
+		newshape = numpy.asarray(cutshape)/bin
+	else:
+		newshape = numpy.asarray(oldshape)/bin
 	tmpshape = (newshape[0], bin, newshape[1], bin)
 	f = bin * bin
 	binned = numpy.sum(numpy.sum(numpy.reshape(imgarray, tmpshape), 1), 2) / f
