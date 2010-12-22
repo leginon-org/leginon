@@ -459,7 +459,10 @@ function runTemplateCorrelator() {
 		$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
 
-		$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);
+		if ($_POST['process']=="Run Correlator") {
+			$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);
+		}
+
 		createTCForm($false,'Particle Selection Results','Particle Selection Results',$results);
 		exit;
 	} else {
