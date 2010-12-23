@@ -522,7 +522,11 @@ def isTomoInDB(md5sum, full=False,recfile=''):
 	tomod = tomoq.query(results=1)
 	if tomod:
 		tomodata = tomod[0]
-		if tomodata['path']['path'] == rundir:
+		# old style
+		if tomodata['path'] is not None and tomodata['path']['path'] == rundir:
+			return True
+		# new style
+		if tomodata['reconrun']['path']['path'] == rundir:
 			return True
 	return False
 
