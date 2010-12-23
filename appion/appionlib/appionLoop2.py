@@ -690,45 +690,43 @@ class AppionLoop(appionScript.AppionScript):
 				reproccount += 1
 				skip = True
 
-			elif self.params['norejects'] is True:
+			# image not done or reprocessing allowed
+			if skip is False:
+				# check sibling status instead if wanted
 				if self.params['sibassess'] is True:
 					status=apDatabase.getSiblingImgCompleteStatus(imgdata)
 				else:
 					status=apDatabase.getImgCompleteStatus(imgdata) 
-				if status is False:
+
+				if self.params['norejects'] is True and status is False:
 					self._writeDoneDict(imgname)
 					rejectcount += 1
 					skip = True
 			
-			elif self.params['bestimages'] is True:
-				if self.params['sibassess'] is True:
-					status=apDatabase.getSiblingImgCompleteStatus(imgdata)
-				else:
-					status=apDatabase.getImgCompleteStatus(imgdata)
-				if status is not True:
+				elif self.params['bestimages'] is True and status is not True:
 					self._writeDoneDict(imgname)
 					rejectcount += 1
 					skip = True
 
-			elif ( self.params['tiltangle'] is not None or self.params['tiltangle'] != 'all' ):
-				tiltangle = apDatabase.getTiltAngleDeg(imgdata)
-				tiltskip = False
-				if (self.params['tiltangle'] == 'notilt' and abs(tiltangle) > 3.0 ):
-					tiltskip = True
-				elif (self.params['tiltangle'] == 'hightilt' and abs(tiltangle) < 30.0 ):
-					tiltskip = True
-				elif (self.params['tiltangle'] == 'lowtilt' and abs(tiltangle) > 25.0 ):
-					tiltskip = True
-				elif (self.params['tiltangle'] == 'minustilt' and tiltangle > 2.0 ):
-					tiltskip = True
-				elif (self.params['tiltangle'] == 'plustilt' and tiltangle < -2.0 ):
-					tiltskip = True
-				### skip this tilt?
-				if tiltskip is True:
-					#print "reject:", tiltangle
-					self._writeDoneDict(imgname)
-					tiltcount += 1
-					skip = True
+				elif ( self.params['tiltangle'] is not None or self.params['tiltangle'] != 'all' ):
+					tiltangle = apDatabase.getTiltAngleDeg(imgdata)
+					tiltskip = False
+					if (self.params['tiltangle'] == 'notilt' and abs(tiltangle) > 3.0 ):
+						tiltskip = True
+					elif (self.params['tiltangle'] == 'hightilt' and abs(tiltangle) < 30.0 ):
+						tiltskip = True
+					elif (self.params['tiltangle'] == 'lowtilt' and abs(tiltangle) > 25.0 ):
+						tiltskip = True
+					elif (self.params['tiltangle'] == 'minustilt' and tiltangle > 2.0 ):
+						tiltskip = True
+					elif (self.params['tiltangle'] == 'plustilt' and tiltangle < -2.0 ):
+						tiltskip = True
+					### skip this tilt?
+					if tiltskip is True:
+						#print "reject:", tiltangle
+						self._writeDoneDict(imgname)
+						tiltcount += 1
+						skip = True
 
 			if skip is True:
 				if self.stats['skipcount'] == 0:
