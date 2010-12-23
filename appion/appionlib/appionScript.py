@@ -151,8 +151,6 @@ class AppionScript(basicScript.BasicScript):
 		sessiondata = None
 		if 'sessionname' in self.params and self.params['sessionname'] is not None:
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		if not sessiondata and 'session' in self.params and isinstance(self.params['session'],str):
-			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		if not sessiondata and 'stackid' in self.params:
 			from appionlib import apStack
 			sessiondata = apStack.getSessionDataFromStackId(self.params['stackid'])
@@ -395,13 +393,11 @@ class AppionScript(basicScript.BasicScript):
 		this function only runs if no rundir is defined at the command line
 		"""
 		from appionlib import apStack
-		if 'sessionname' in self.params and self.params['sessionname'] is not None:
-			self.params['session'] = self.params['sessionname']
 		if ( self.params['rundir'] is None
 		and 'session' in self.params
-		and self.params['session'] is not None ):
+		and self.params['sessionname'] is not None ):
 			#auto set the run directory
-			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 			path = os.path.abspath(sessiondata['image path'])
 			pieces = path.split('leginon')
 			path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
