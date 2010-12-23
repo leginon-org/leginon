@@ -222,8 +222,9 @@ function parseAppionLoopParams () {
 	// CONVERT DATA
 	if ($_POST[checkimage]=="unrejected") {
 		$norejects = 1;
+		$bestimages = 0;
 	} elseif ($_POST[checkimage]=="best") {
-		$norejects = 1;
+		$norejects = 0;
 		$bestimages = 1;
 	} else {
 		$norejects = 0;
