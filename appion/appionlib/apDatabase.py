@@ -26,33 +26,6 @@ splitdb = True
 data.holdImages(False)
 
 #================
-def getAllImages(stats, params):
-	"""
-	This is a depricated function, use something else
-	"""
-	startt = time.time()
-	if 'sessionname' in params and params['preset'] is not None:
-		imgtree = getImagesFromDB(params['sessionname'],params['preset'])
-	elif 'mrcfileroot' in params and len(params['mrcfileroot']) > 0:
-		imgtree = getSpecificImagesFromDB(params["mrcfileroot"])
-		params['sessionname']=imgtree[0]['session']['name']
-	elif 'mrclist' in params and params['mrclist'] is not None:
-		mrcfileroot = self.params['mrcnames'].split(",")
-		imgtree = getSpecificImagesFromDB(mrcfileroot)
-		params['sessionname']=imgtree[0]['session']['name']
-	elif 'sessionname' in params and params['preset'] is None:
-		imgtree = getAllImagesFromDB(params['sessionname'])
-	else:
-		apDisplay.printError("no files specified")
-	if imgtree is None or len(imgtree) < 1:
-		apDisplay.printError("did not find any images")
-	params['session'] = imgtree[0]['session']
-	params['apix'] = getPixelSize(imgtree[0])
-	stats['imagecount']=len(imgtree)
-	print " ... found",stats['imagecount'],"in",apDisplay.timeString(time.time()-startt)
-	return imgtree
-
-#================
 def getSpecificImagesFromDB(imglist):
 	print "Querying database for "+str(len(imglist))+" specific images ... "
 	imgtree=[]
