@@ -197,12 +197,12 @@ def getBestDefocusForImage(imgdata, msg=False):
 	return bestdf
 
 #=====================
-def getBestDefocusAndAmpConstForImage(imgdata, msg=False):
+def getBestDefocusAndAmpConstForImage(imgdata, msg=False, method=None):
 	"""
 	takes an image and get the best defocus (in negative meters) for that image
 	"""
 
-	ctfvalue, conf = getBestCtfValueForImage(imgdata)
+	ctfvalue, conf = getBestCtfValueForImage(imgdata, method=method)
 	if ctfvalue is None:
 		bestdf = imgdata['scope']['defocus']
 		bestamp = 0.1
