@@ -54,10 +54,7 @@ class UploadMiscScript(appionScript.AppionScript):
 			path = self.tomodata['path']['path']
 		if self.params['sessionname'] is not None:
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-			path = os.path.abspath(sessiondata['image path'])
-			pieces = path.split('leginon')
-			path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
-			path = re.sub("/rawdata","",path)
+			path = self.getDefaultBaseAppionDir(self.sessiondata,[])
 		self.params['rundir'] = os.path.join(path,"misc")
 
 	#=====================

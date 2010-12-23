@@ -79,15 +79,15 @@ class UploadTomoScript(appionScript.AppionScript):
 			self.params['file'] = os.path.abspath(self.params['file'])
 		else:
 			apDisplay.printError("Please provide a tomogram .mrc to upload")
+		# append volume to existing rundir
+		if self.params['rundir'] is not None and self.params['volume']:
+			self.params['rundir'] = os.path.join(self.params['rundir'],self.params['volume'])
 
 	#=====================
 	def setRunDir(self):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
-		path = os.path.abspath(sessiondata['image path'])
-		pieces = path.split('leginon')
-		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
-		path = re.sub("/rawdata","/tomo",path)
+		path = self.getDefaultBaseAppionDir(sessiondata,['tomo'])
 		tiltseriespath = "tiltseries%d" % self.params['tiltseriesnumber']
 		if self.params['full']:
 			tomovolumepath = ""

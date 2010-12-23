@@ -148,11 +148,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 	def setRunDir(self):
 		#auto set the output directory
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		path = os.path.abspath(sessiondata['image path'])
-		pieces = path.split('leginon')
-		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
-		path = re.sub("/rawdata","",path)
-		self.params['rundir'] = os.path.join(path,"templatestacks", self.params['runname'])
+		self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,['templatestacks',self.params['runname']])
 
 	#=====================
 	def useClusterForTemplateStack(self):

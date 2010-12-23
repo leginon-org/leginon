@@ -119,12 +119,7 @@ class UploadStack(appionScript.AppionScript):
 		if not sessiondata:
 			apDisplay.printError("Could not find session "+self.params['sessionname'])
 		self.sessiondata = sessiondata
-		path = os.path.abspath(self.sessiondata['image path'])
-		pieces = path.split('leginon')
-		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
-		path = re.sub("/rawdata","",path)
-		path = os.path.join(path, self.processdirname, self.params['runname'])
-		self.params['rundir'] = path
+		self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdirname,self.params['runname']])
 
 	#=====================
 	def setProcessingDirName(self):

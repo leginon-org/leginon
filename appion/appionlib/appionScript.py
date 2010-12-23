@@ -19,6 +19,7 @@ from appionlib import apDatabase
 from appionlib import appiondata
 from appionlib import apWebScript
 #leginon
+import leginon.leginonconfig
 import sinedon
 from pyami import mem
 from pyami import version
@@ -387,6 +388,17 @@ class AppionScript(basicScript.BasicScript):
 	def setProcessingDirName(self):
 		self.processdirname = self.functionname
 
+	def getDefaultBaseAppionDir(self,sessiondata,subdirs=[]):
+		path = leginon.leginonconfig.IMAGE_PATH
+		if not path:
+			path = os.path.abspath(sessiondata['image path'])
+		pieces = path.split('leginon')
+		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
+		path = re.sub("/rawdata","",path)
+		for subdir in subdirs:
+			path = os.path.join(path, subdir)
+		return path
+
 	#=====================
 	def setRunDir(self):
 		"""
@@ -394,16 +406,9 @@ class AppionScript(basicScript.BasicScript):
 		"""
 		from appionlib import apStack
 		if ( self.params['rundir'] is None
-		and 'session' in self.params
+		and 'sessionname' in self.params
 		and self.params['sessionname'] is not None ):
-			#auto set the run directory
-			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-			path = os.path.abspath(sessiondata['image path'])
-			pieces = path.split('leginon')
-			path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
-			path = re.sub("/rawdata","",path)
-			path = os.path.join(path, self.processdirname, self.params['runname'])
-			self.params['rundir'] = path
+			self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdir,self.params['runname']])
 		if ( self.params['rundir'] is None
 		and 'reconid' in self.params
 		and self.params['reconid'] is not None ):
