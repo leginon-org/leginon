@@ -462,7 +462,7 @@ def uploadTomo(params):
 		apDisplay.printWarning("not commiting tomogram to database")
 		return
 	apDisplay.printMsg("Commiting tomogram to database")
-	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
+	sessiondata = apDatabase.getSessionDataFromSessionName(params['sessionname'])
 	tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(params['tiltseriesnumber'],sessiondata)
 	runname = params['runname']
 	name = params['name']
