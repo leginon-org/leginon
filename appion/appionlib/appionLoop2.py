@@ -287,6 +287,8 @@ class AppionLoop(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --projectid=## --runname=<runname> --session=<session> "
 			+"--preset=<preset> --description='<text>' --commit [options]")
 		### Input value options
+		self.parser.add_option("-s", "--session", dest="sessionname",
+			help="Session name associated with processing run, e.g. --session=06mar12a", metavar="SESSION")
 		self.parser.add_option("--preset", dest="preset",
 			help="Image preset associated with processing run, e.g. --preset=en", metavar="PRESET")
 		self.parser.add_option("-m", "--mrclist", dest="mrcnames",

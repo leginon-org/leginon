@@ -338,8 +338,6 @@ class AppionScript(basicScript.BasicScript):
 		self.parser.add_option("--no-commit", dest="commit", default=True,
 			action="store_false", help="Do not commit processing run to database")
 
-		self.parser.add_option("-s", "--session", dest="sessionname",
-			help="Session name associated with processing run, e.g. --session=06mar12a", metavar="SESSION")
 		self.parser.add_option("--expid", "--expId", dest="expid", type="int",
 			help="Session id associated with processing run, e.g. --expId=7159", metavar="#")
 		self.parser.add_option("--jobtype", dest="jobtype",
@@ -355,8 +353,6 @@ class AppionScript(basicScript.BasicScript):
 			apDisplay.printError("enter a runname, e.g. --runname=run1")
 		if self.params['projectid'] is None:
 			apDisplay.printError("enter a project id, e.g. --projectid=159")
-		if self.params['expid'] is not None:
-			apDisplay.printError("We are retiring expid, use --session to specify sessionname instead")
 
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
