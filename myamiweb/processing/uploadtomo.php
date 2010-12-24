@@ -44,6 +44,9 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
+
+	// get path for submission
+	$basedir=getBaseAppionPath($sessioninfo).'/tomo';
 	
 	if (!empty($sessioninfo)) {
 		$sessionname=$sessioninfo['Name'];
@@ -69,6 +72,8 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
 	$tiltSeriesSelector = $seriesselector_array[0];
+	$basedir = ($_POST['basedir']) ? $_POST['basedir'] : $basedir;
+
 	// Need these to notify that the values has changed in the next reload
 	echo "<input type='hidden' name='lasttiltseries' value='$tiltseriesId'>\n";
 	echo "<input type='hidden' name='lastrunname' value='$runname'>\n";
@@ -137,6 +142,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
       <INPUT TYPE='text' NAME='runname' VALUE='$runname' SIZE='10'>\n";
 		echo docpop('tomorunname', 'Runname');
    	echo "<FONT>(full tomogram reconstruction run name)</FONT>";     
+
 		echo "	  		
 		<p><br />
       <INPUT TYPE='text' NAME='volume' VALUE='$volume' SIZE='10'>\n";
@@ -149,6 +155,14 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
     </table>
   </TD>
   </tr>
+	<tr>
+	<td>
+	";
+		echo docpop('basedir','<b>Base Output directory:</b>');
+		echo "<br/>\n";
+		echo "<input type='text' name='basedir' value='$basedir'size=' 50'>\n";
+		echo "<br/>";
+		echo "
   <td
 
   <TR>
@@ -180,6 +194,7 @@ function runUploadTomogram() {
 	$extrabin=$_POST['extrabin'];
 	$snapshot=$_POST['snapshot'];
 	$orientation=$_POST['orientation'];
+	$basedir=$_POST['basedir'];
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
@@ -220,6 +235,8 @@ function runUploadTomogram() {
 	$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
 	$apix = $tiltseriesinfos[0]['ccdpixelsize'] * $tiltseriesinfos[0]['imgbin'] * $extrabin * 1e10;
 	$tiltseriesnumber = $tiltseriesinfos[0]['number'];
+	$outdir = $basedir.'/tiltseries'.$tiltseriesnumber;
+	$_POST['outdir'] = $outdir;
 
 	/* *******************
 	PART 3: Create program command
