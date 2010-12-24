@@ -394,11 +394,13 @@ class AppionScript(basicScript.BasicScript):
 
 	def getDefaultBaseAppionDir(self,sessiondata,subdirs=[]):
 		path = leginon.leginonconfig.IMAGE_PATH
-		if not path:
+		if path:
+			path = os.path.join(path,sessiondata['name'])
+		else:
 			path = os.path.abspath(sessiondata['image path'])
+			path = re.sub("/rawdata","",path)
 		pieces = path.split('leginon')
 		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
-		path = re.sub("/rawdata","",path)
 		for subdir in subdirs:
 			path = os.path.join(path, subdir)
 		return path
@@ -412,7 +414,8 @@ class AppionScript(basicScript.BasicScript):
 		if ( self.params['rundir'] is None
 		and 'sessionname' in self.params
 		and self.params['sessionname'] is not None ):
-			self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdir,self.params['runname']])
+			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+			self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdirname,self.params['runname']])
 		if ( self.params['rundir'] is None
 		and 'reconid' in self.params
 		and self.params['reconid'] is not None ):
