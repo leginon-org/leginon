@@ -19,31 +19,6 @@ from appionlib import apDefocalPairs
 ####
 
 #===========================
-def guessParticlesForSession(expid=None, sessionname=None):
-	if expid is None and sessionname is not None:
-		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
-	else:
-		if expid:
-			seesiondata = leginon.leginondata.SessionData.direct_query(expid)
-	if sessiondata is None:
-		apDisplay.printError("Unknown expId in guessParticlesForSession")
-	apDisplay.printMsg("getting most complete particle picking run from DB for session "+sessionname)
-
-	selectionq = appiondata.ApSelectionRunData()
-	selectionq['session'] = sessiondata
-	selectiondata = selectionq.query()
-	if len(selectiondata) == 1:
-		apDisplay.printMsg("automatically selected only particle run: '"+selectiondata[0]['name']+"'")
-		return selectiondata[0].dbid
-	elif len(selectiondata) == 0:
-		apDisplay.printError("Could not find any particle runs\nGo back and pick some particles")
-	else:
-		apDisplay.printMsg("found "+str(len(selectiondata))+" particle run(s) for this session")
-		for selectionrun in selectiondata:
-			apDisplay.printColor(selectionrun['name']+":\t prtlrunId="+str(selectionrun.dbid),"cyan")
-		apDisplay.printError("Please select one of the above runids")
-
-#===========================
 def getParticles(imgdata, selectionRunId, particlelabel=None):
 	"""
 	returns paticles (as a list of dicts) for a given image
