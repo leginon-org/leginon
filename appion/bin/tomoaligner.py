@@ -223,7 +223,7 @@ class protomoAligner(appionScript.AppionScript):
 			cycles=[0,1]
 		for cycle in cycles:
 			if alignmethod == 'protomo':
-				self.params['aligndir'],self.params['imagedir'] =	apProTomo.setProtomoDir(self.params['rundir'])
+				self.params['aligndir'],self.params['imagedir'] =	apProTomo.setProtomoDir(self.params['rundir'],cycle)
 				aligndir = self.params['aligndir']
 				# Link images into rundir/raw
 				rawimagenames = apProTomo.linkImageFiles(ordered_imagelist,self.params['imagedir'])

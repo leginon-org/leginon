@@ -3,6 +3,7 @@
 import math
 import numpy
 import os
+import shutil
 from appionlib import apParam
 from appionlib import apTomo
 from appionlib import apImod
@@ -198,16 +199,17 @@ def updateRefineParams(refinedict,imgshape,sample,region,refimg):
 	refinedict['imgref']= refimg
 	return refinedict
 
-def setProtomoDir(rootdir):
+def setProtomoDir(rootdir,cycle=0):
 	print "Setting up directories"
 	rawdir=os.path.join(rootdir, 'raw')
 	aligndir=os.path.join(rootdir,'align')
 	outdir=os.path.join(rootdir,'out')
 	cleandir=os.path.join(rootdir,'clean')
-	apParam.createDirectory(aligndir,warning=False)
-	apParam.createDirectory(outdir,warning=False)
-	apParam.createDirectory(cleandir,warning=False)
-	apParam.createDirectory(rawdir,warning=False)
+	for dir in (rawdir,aligndir,outdir,cleandir):
+		if os.path.exists(dir) and cycle==0:
+			apDisplay.printWarning('removing existing directory %s' % (dir,))
+			shutil.rmtree(dir)	
+		apParam.createDirectory(dir,warning=False)
 	return aligndir, rawdir
 
 def writeRefineParamFile(refinedict,paramfile):
