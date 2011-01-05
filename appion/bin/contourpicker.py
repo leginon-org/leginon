@@ -649,7 +649,7 @@ class PickerApp(wx.App):
 	def onMakeFile(self,evt):
 		session = self.appionloop.params['sessionname']	
 		###change later
-		command = 'contourpickerTextFileGenerator.py ' + '--projectid=%d' % (self.appionloop.params['projectid']) + ' ' + '--session=' + str(session) + ' ' + '--runname='+self.appionloop.params['runname'] + ' ' + '--preset=' + self.appionloop.params['preset']
+		command = 'contourpickerTextFileGenerator.py ' + '--projectid=%d' % (self.appionloop.params['projectid']) + ' ' + '--session=' + str(session) + ' ' + '--runname='+self.appionloop.params['runname'] + ' ' + '--preset=' + self.appionloop.params['preset'] + ' '+'--rundir=' + self.appionloop.params['rundir']
 		os.system(command)
 
 	def onSwitch(self, evt):
