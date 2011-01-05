@@ -196,6 +196,9 @@ if (is_array($imageinfo)) {
 			$v = $imageinfo[$k];
 			if ($k=='high tension')
 				$v = $leginondata->formatHighTension($v);
+			if ($k=='exposure time') 
+						$leginondata->formatExposuretime($v);
+
 			echo formatHtmlRow($k,$v);
 		}
 

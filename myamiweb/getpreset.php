@@ -35,12 +35,12 @@ require "inc/project.inc";
 <tr valign="top">
 <td>
 <?
+//----Define what to display in array $p
 $p[]='gridId';
 $p[]='mag';
 $p[]='defocus';
 $p[]='pixelsize';
 $p[]='dose';
-$p[]='exposure time';
 $p[]='tilt';
 $str_tilt="";
 $viewfilename=$_GET['vf'];
@@ -80,8 +80,12 @@ if ($imgId) {
 						$dose = $v;
 					echo " <b>$k:</b> ",($leginondata->formatDose($dose));
 			}
-			else if ($k=='exposure time')
-				continue;
+			else if ($k=='exposure time') {
+				if( empty($v) && !empty($imageinfo['exposure time']))
+					$v = $imageinfo['exposure time'];
+				if(!empty($v))
+					echo " <b>$k:</b> ",($leginondata->formatExposuretime($v));
+			}
 			else
 				echo " <b>$k:</b> $v";
 	if ($str_tilt) {

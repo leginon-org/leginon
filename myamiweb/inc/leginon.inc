@@ -2591,6 +2591,9 @@ class leginondata {
 					if (strstr($f,'dose')) 
 						$this->formatDose($row[$i]);
 
+					if (strstr($f,'exposure time')) 
+						$this->formatExposuretime($row[$i]);
+
 					$f .= '|'.ereg_replace("'","",$row[$i]);
 					if (eregi("\n", $f)) {
 						$f = ereg_replace("\n|\r", " ", $f);
@@ -2622,6 +2625,11 @@ class leginondata {
 	function formatDose(&$dose) {
 		$dose = ($dose) ? number_format(($dose/1e20), 1,'.','').' e<SUP>&ndash;</SUP>/&Aring;<SUP>2</SUP>' : 'none' ;
 		return $dose;
+	}
+
+	function formatExposuretime(&$time) {
+		$time = formatnumber2decimal($time).' ms';
+		return $time;
 	}
 
 	function formatHighTension(&$ht) {
