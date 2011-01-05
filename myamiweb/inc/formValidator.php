@@ -409,7 +409,8 @@ class formValidator{
 	 * Validate database connection and existence of the Leginon database and Project database.
 	 */
 	function validateDB(&$validateObj){
-		require_once("../inc/mysql.inc");
+
+		require_once(dirname(__FILE__)."/mysql.inc");
 		
 		$inputValues = $validateObj->getVariableValue();
 		

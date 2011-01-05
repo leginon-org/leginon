@@ -1,8 +1,27 @@
 <?php
 require_once "config.php";
 require_once "inc/login.inc";
+require_once "inc/formValidator.php";
 
+function dbValidation(){
+	// Validate the database connection.
+	$validator = new formValidator();
+	$validator->addValidation("db_validate", array( 'host' => DB_HOST, 
+											  'username' => DB_USER,
+											  'password' => DB_PASS,
+											  'leginondb' => DB_LEGINON,
+											  'projectdb' => DB_PROJECT), "database");
+		
+	$validator->runValidation();
+	return $validator->getErrorMessage();
+}
+
+$errMsg = dbValidation();
+if(!empty($errMsg)){
+	$displayerror = "Error occur from database connection, please click <a href='setup/index.php'>here</a> to fix the problem. ";
+}
 $redirect = $_REQUEST['ln'];
+
 $username=trim($_POST['username']);
 $passwd=trim($_POST['password']);
 
@@ -13,7 +32,8 @@ if(!empty($_POST['anonymous'])){
 $login = $dbemauth->login($username, $passwd);
 if ($login!=2) {
 	login_header("Login",'','',true);
-	$displayerror=($_POST) ? "Incorrect Login" : false;
+	$displayerror=($_POST) ? "Incorrect Login" : $displayerror;
+
 ?>
 	<style>
 	li {
