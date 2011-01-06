@@ -30,12 +30,9 @@ $selectedcluster=strtolower($selectedcluster);
 
 if ($_POST['submitjob'])
 	submitJob(); // submit job
-	//echo "11111111111";
 elseif ($_POST['showjob'])
 	writeJobFile(); // write job file
-	//echo "222222222222";
 elseif ($_POST['jobid'])
-	//echo "333333333333";
 	jobForm(); // fill out job form
 else
 	selectFrealignJob(); // select a prepared frealign job
