@@ -717,9 +717,10 @@ class AppionLoop(appionScript.AppionScript):
 						tiltskip = True
 					elif (self.params['tiltangle'] == 'lowtilt' and abs(tiltangle) > 25.0 ):
 						tiltskip = True
-					elif (self.params['tiltangle'] == 'minustilt' and tiltangle > 2.0 ):
+					### the reason why -2.0 and 2.0 are used is because the tilt angle is saved as 0 +/- a small amount
+					elif (self.params['tiltangle'] == 'minustilt' and tiltangle > -2.0 ):
 						tiltskip = True
-					elif (self.params['tiltangle'] == 'plustilt' and tiltangle < -2.0 ):
+					elif (self.params['tiltangle'] == 'plustilt' and tiltangle < 2.0 ):
 						tiltskip = True
 					### skip this tilt?
 					if tiltskip is True:
