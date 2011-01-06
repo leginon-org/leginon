@@ -191,13 +191,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
     echo"<input type='HIDDEN' NAME='editrunname' VALUE='".$editrunname."'>\n";
   }
 	// pick and image parameters
-  $helicalstep = ($_POST['helicalstep']) ? $_POST['helicalstep'] : "";
   echo "<TD CLASS='tablebg'>\n";
-  echo "<b>Helical Parameters:</b><br />\n";
-  echo "<input type='text' NAME='helicalstep' VALUE='$helicalstep' SIZE='4'>\n";
-  echo docpop('helicalstep','Stepsize for Helical Insert');
-  echo "<font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
-  echo "<br /><br />\n";
   echo "<b>Particle Diameter:</b><br />\n";
   echo "<input type='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
   $diam = ($_POST['diam']) ? $_POST['diam'] : "";
@@ -219,6 +213,12 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
     Picking icon diameter <font SIZE=-2><I>(in pixels; 0 = autosize)</I></font><br />
 		<I>16 pixels is best</I>
     <br /><br />";    
+  echo "<b>Helical Parameters:</b><br />\n";
+  echo "<input type='text' NAME='helicalstep' VALUE='$helicalstep' SIZE='4'>\n";
+  $helicalstep = ($_POST['helicalstep']) ? $_POST['helicalstep'] : "";
+  echo docpop('helicalstep','Stepsize for Helical Insert');
+  echo "<font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
+  echo "<br /><br />\n";
   createParticleLoopTable(-1, -1);
   echo "
 		</TD>
