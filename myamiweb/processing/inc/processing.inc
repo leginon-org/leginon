@@ -1079,11 +1079,15 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 }
 
 /**************************************/
-function writeTestResults($jpg,$ccclist,$bin){
+function writeTestResults($jpg,$ccclist,$bin,$process_str=''){
 	if (!file_exists($jpg)) {
 		$base = basename($jpg);
 		$dir = dirname($jpg);
-		return "<font color='#990000' size='+2'>An Error occurred - the image $base was not found in folder $dir</font><br />\n";
+		if (preg_match('/[Ss]how/',$process_str)) {
+			return "<font color='#990000'>The test results are not ready for display. Refresh the page after the command is run successfully. </font><br />\n";
+		} else {
+			return "<font color='#990000' size='+2'>An Error occurred - the image $base was not found in folder $dir</font><br />\n";
+		}
 	}
 	$html = "<center>\n";
 	$html.= "<a href='loadimg.php?filename=$jpg' target='blank'>\n";
