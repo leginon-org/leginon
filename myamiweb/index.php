@@ -64,11 +64,13 @@ login_header(PROJECT_TITLE,'','',true);
 <p>
 		<?php echo $link->Display(); ?>
 </p>
+		<?php if (HIDE_FEATURE === false) { ?>
 <label for="query"><strong>Session finder:</strong>&nbsp;
 <input style="border: 1px solid #bdcebb;" type="text" name="search" autocomplete="off" id="query" onKeyUp="preSearch()" />
 </label>
 <p>
 <div style="border: 1px solid #bdcebb; padding-left: 5px" id="result">&nbsp;</div>
-<?php
+</p>
+<?php }
 login_footer();
 ?>
