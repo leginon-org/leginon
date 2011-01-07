@@ -102,7 +102,6 @@ def getTemplateFromId(templateid):
 	return appiondata.ApTemplateImageData.direct_query(templateid)
 
 def scaleTemplate(templatearray, scalefactor=1.0, boxsize=None):
-
 	if(templatearray.shape[0] != templatearray.shape[1]):
 		apDisplay.printWarning("template shape is NOT square, this may cause errors")
 
@@ -115,7 +114,8 @@ def scaleTemplate(templatearray, scalefactor=1.0, boxsize=None):
 		edgeavg = apImage.meanEdgeValue(templatearray)
 		origsize = templatearray.shape[0]
 		if boxsize is None:
-			padsize  = int(math.floor(float(origsize)/16)*16)
+			# minimal padisize is 16
+			padsize  = max(int(math.floor(float(origsize)/16)*16),16)
 		else:
 			padsize = boxsize
 		padshape = numpy.array([padsize,padsize])
