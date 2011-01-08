@@ -28,7 +28,6 @@ $selectedcluster=strtolower($selectedcluster);
 ******************************************
 */
 
-
 if ($_POST['submitjob'])
 	submitJob(); // submit job
 elseif ($_POST['showjob'])
@@ -167,6 +166,7 @@ function jobForm($extra=false) {
 	$modelvals = "$modelid|--|$modeldata[path]|--|$modeldata[name]|--|$modeldata[boxsize]|--|$symdata[symmetry]";
 	// Hack: we must assign the POST values
 	$_POST['model'] = $modelvals;
+	$_POST['stackval'] = $refinestackvals;
 
 	// set remote path
 	$leginondata = new leginondata();
@@ -190,6 +190,7 @@ function jobForm($extra=false) {
 	echo "<input type='hidden' name='jobid' value='$jobid'>\n";
 	echo "<input type='hidden' NAME='model' value='$modelvals'>\n";
 	echo "<input type='hidden' NAME='refinestackvals' value='$refinestackvals'>\n";
+	echo "<input type='hidden' NAME='stackval' value='$refinestackvals'>\n";
 	echo "<input type='hidden' NAME='reconstackvals' value='$reconstackvals'>\n";
 
 	// SETUP FILELIST TO COPY OVER FILES
