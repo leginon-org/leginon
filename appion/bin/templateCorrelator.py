@@ -59,19 +59,6 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 	##################################################
 	### COMMON FUNCTIONS
 	##################################################
-
-	##=======================
-	def setRunDir(self):
-		#auto set the output directory
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		path = os.path.abspath(sessiondata['image path'])
-		pieces = path.split('leginon')
-		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
-		path = re.sub("/rawdata","",path)
-		path = os.path.join(path, self.processdirname, self.params['runname'])
-		self.params['rundir'] = path
-
-	##=======================
 	def setupParserOptions(self):
 		self.parser.add_option("--template-list", dest="templateliststr",
 			help="Template Ids", metavar="#,#" )
