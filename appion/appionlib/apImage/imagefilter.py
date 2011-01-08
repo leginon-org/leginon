@@ -352,6 +352,8 @@ def scaleImage(imgdata, scale):
 	"""
 	if scale == 1.0:
 		return imgdata
+	if min(imgdata.shape) * scale < 1:
+		apDisplay.printError("Image would be scaled to less than 1 pixel in length, aborted")
 	return ndimage.zoom(imgdata, scale, order=1)
 
 #=========================
