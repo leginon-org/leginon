@@ -59,8 +59,6 @@ class tomoMaker(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['rundir'] is not None:
-			apDisplay.printError("Directory requirement too complex for simple specification, better skip it")
 		if self.params['runname'] is None:
 			apDisplay.printError("enter a run name")
 		if self.params['description'] is None:
@@ -77,11 +75,18 @@ class tomoMaker(appionScript.AppionScript):
 			if int(self.params['bin']) < 1:
 				apDisplay.printError("binning must be larger or equal to 1")
 
-	def setRunDir(self):
+	def setProcessingDirName(self):
 		tomodata = apTomo.getFullTomoData(self.params['fulltomoId'])
 		path=tomodata['reconrun']['path']['path']
 		self.params['fulltomodir'] = path
-		self.params['rundir'] = os.path.join(path,self.params['runname'])
+		tiltseriesnumber = tomodata['tiltseries']['number']
+		tiltseriespath = "tiltseries%d" %  tiltseriesnumber
+		self.processdirname = "tomo/%s/%s" % (tiltseriespath,tomodata['reconrun']['runname'])
+
+	def setRunDir(self):
+		self.params['rundir'] = os.path.join(self.params['fulltomodir'],self.params['runname'])
+
+	def onInit(self):
 		self.params['subrunname'] = self.params['runname']
 		self.params['subdir'] = self.params['rundir']
 

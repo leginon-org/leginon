@@ -96,20 +96,15 @@ class tomoMaker(appionScript.AppionScript):
 		self.params['tiltseriesdir'] = os.path.join(path,tiltseriespath)
 
 	#=====================
-	def setRunDir(self):
-		"""
-		this function only runs if no rundir is defined at the command line
-		"""
+	def setProcessingDirName(self):
 		self.setTiltSeries()
-		path = os.path.abspath(self.sessiondata['image path'])
-		pieces = path.split('leginon')
-		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
-		path = re.sub("/rawdata","/tomo",path)
 		tiltseriespath = "tiltseries%d" %  self.params['tiltseriesnumber']
-		tomorunpath = self.params['runname']
-		intermediatepath = os.path.join(tiltseriespath,tomorunpath)
-		self.params['tiltseriesdir'] = os.path.join(path,tiltseriespath)
-		self.params['rundir'] = os.path.join(path,intermediatepath)
+		self.processdirname = "tomo/"+tiltseriespath
+
+	#=====================
+	def onInit(self):
+		pieces = self.params['rundir'].split('/')
+		self.params['tiltseriesdir'] = '/'.join(pieces[:-1])
 		self.params['fulltomodir'] = self.params['rundir']
 
 	#=====================

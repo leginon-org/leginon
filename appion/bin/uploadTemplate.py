@@ -97,10 +97,8 @@ class uploadTemplateScript(appionScript.AppionScript):
 			self.params['template'] = os.path.abspath(self.params['template'])
 
 	#=====================
-	def setRunDir(self):
-		#auto set the output directory
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,['templates',self.params['runname']])
+	def setProcessingDirName(self):
+		self.processdirname = "templates"
 
 	#=====================
 	def useStackForTemplate(self):

@@ -110,9 +110,8 @@ class UploadModelScript(appionScript.AppionScript):
 			self.params['oldapix'] = self.params['newapix']
 
 	#=====================
-	def setRunDir(self):
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,['models',"accepted",self.params['runname']])
+	def setProcessingDirName(self):
+		self.processdirname = "models/accepted"
 
 	#=====================
 	def setFileName(self):

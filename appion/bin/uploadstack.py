@@ -110,18 +110,6 @@ class UploadStack(appionScript.AppionScript):
 		return
 
 	#=====================
-	def setRunDir(self):
-		"""
-		standard appionScript
-		"""
-		#auto set the output directory
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		if not sessiondata:
-			apDisplay.printError("Could not find session "+self.params['sessionname'])
-		self.sessiondata = sessiondata
-		self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdirname,self.params['runname']])
-
-	#=====================
 	def setProcessingDirName(self):
 		self.processdirname = "stacks"
 

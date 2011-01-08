@@ -99,17 +99,15 @@ class protomoAligner(appionScript.AppionScript):
 						apDisplay.printError("Cannot specify reseting image range without knowing the cycle number to reset to")
 			elif self.params['goodcycle'] >= self.params['cycle']:
 				apDisplay.printError("Only older cycle can be used as the base to reset image origin to")
-			if self.params['rundir']:
-				self.setTiltSeriesDir()
 
-	#=====================
-	def setRunDir(self):
-		"""
-		this function only runs if no rundir is defined at the command line
-		"""
+	def setProcessingDirName(self):
 		self.setTiltSeriesDir()
-		alignrunpath = os.path.join('align',self.params['runname'])
-		self.params['rundir'] = os.path.join(self.params['tiltseriesdir'],alignrunpath)
+		tiltseriespath = "tiltseries%d" %  self.params['tiltseriesnumber']
+		self.processdirname = "tomo/"+tiltseriespath+'/align'
+
+	def onInit(self):
+		pieces = self.params['rundir'].split('/')
+		self.params['tiltseriesdir'] = '/'.join(pieces[:-2])
 
 	def createParamsFromGoodAligner(self,alignerid):
 		q = appiondata.ApTomoAlignerParamsData()

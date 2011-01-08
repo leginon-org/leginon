@@ -59,11 +59,10 @@ class UploadParticles(appionScript.AppionScript):
 		if self.params['sessionname'] is None:
 			apDisplay.printError("Please enter Name of session to upload to, e.g., --session=09dec07a")
 		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		self.processdirname = "extract"
 
 	#=====================
-	def setRunDir(self):
-		self.params['rundir'] = self.getDefaultBaseAppionDir(self.sessiondata,[self.processdirname,self.params['runname']])
+	def setProcessingDirName(self):
+		self.processdirname = "extract"
 
 	#===========================
 	def getBoxFiles(self):
