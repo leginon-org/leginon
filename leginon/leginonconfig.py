@@ -45,6 +45,10 @@ else:
 def mkdirs(newdir):
 	originalumask = os.umask(02)
 	try:
+		## makedirs sometimes raises permission exception before exists exception
+		## check for exists first
+		if os.path.exists(newdir):
+			return
 		os.makedirs(newdir)
 	except OSError, err:
 		os.umask(originalumask)
