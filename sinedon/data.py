@@ -343,6 +343,9 @@ class Data(newdict.TypedDict):
 		## been inserted into the database
 		self.dbid = None
 
+		## Set timestamp to None to have the DB automatically set it
+		self.timestamp = None
+
 		## DataManager ID
 		## this is None, then this data has not
 		## been inserted into the DataManager

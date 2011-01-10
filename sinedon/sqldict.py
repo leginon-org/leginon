@@ -1470,6 +1470,9 @@ def dataSQLColumns(data_instance, fail=True):
 			'Index': ['DEF_timestamp']
 	})
 
+	if data_instance.timestamp is not None:
+		row['DEF_timestamp'] = data_instance.timestamp
+
 	type_dict = dict(data_instance.typemap())
 
 	for key, value in data_instance.items(dereference=False):
