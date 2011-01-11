@@ -5,7 +5,7 @@ from leginon import version
 
 def getUpdateRevisionSequence():
 	if version.getSVNBranch() == 'trunk':
-		schema_revisions = [12857,13713,14077,14891,15069]
+		schema_revisions = [12857,13713,14077,14891,15069,15248]
 	if version.getSVNBranch() == 'myami-2.1':
 		schema_revisions = [12857,13713,14077,14891]
 	return schema_revisions
