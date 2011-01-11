@@ -796,10 +796,15 @@ class ContourPicker(manualpicker.ManualPicker):
 		targetsList = self.getPolyParticlePoints()
 		contourTargets = self.app.panel.getTargets('Auto Create Contours')
 
+		try:
+			rundata = apParticle.getSelectionRunDataFromName(imgdata,self.params['runname'])
+		except IndexError:
+			# the first image does not have rundata in the database, yet
+			rundata = self.commitRunToDatabase(imgdata['session'], True)
 		c = None
 		counter = 0
 		for i in range(len(targetsList)):
-			c=appiondata.ApContourData(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=contourTargets[counter].x, y=contourTargets[counter].y,version=self.maxVersion+1, method='auto', particleType=self.app.particleTypeList[counter], runname=self.params['runname'])
+			c=appiondata.ApContourData(name="contour"+str(int(self.startPoint)+i), image=imgdata, x=contourTargets[counter].x, y=contourTargets[counter].y,version=self.maxVersion+1, method='auto', particleType=self.app.particleTypeList[counter], selectionrun=rundata)
 			c.insert()
 			counter += 1
 			for point in targetsList[i]:

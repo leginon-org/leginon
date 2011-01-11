@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from appionlib import appionScript
 from appionlib import appiondata
+from appionlib import apParticle
 from leginon import leginondata
 import os
 import sys
@@ -40,6 +41,9 @@ class ContourFileGenerator(appionScript.AppionScript):
 		imgtree = imgquery.query(readimages=False)
 		partq = appiondata.ApContourData()
 		sessiond = sessionq.query()
+		selectionid = apParticle.getSelectionIdFromName(runname, sessionname)
+		selectionrundata = apParticle.getSelectionRunDataFromID(selectionid)
+
 
 		file = open('contourpickerData-' + sessionname + '.txt','w')
 		file.write('session_id ' + runname + '\n')
@@ -51,6 +55,7 @@ class ContourFileGenerator(appionScript.AppionScript):
 		for imgdata in imgtree:
 			file.write('START_IMAGE' + '\n')
 			partq['image'] = imgdata
+			partq['selectionrun'] = selectionrundata
 			partd = partq.query()
 			if len(partd)>0:
 				file.write('image_refID ' + str(partd[0]['image'].dbid) + '\n') 
@@ -62,16 +67,16 @@ class ContourFileGenerator(appionScript.AppionScript):
 			maxversion = 0
 			numparticles = 0
 			for part in partd:
-				if int(part['version'])>maxversion and part['runname'] == runname:
+				if int(part['version'])>maxversion:
 					maxversion = int(part['version'])
 			for part in partd:
-				if int(part['version'])==maxversion and part['runname'] == runname:
+				if int(part['version'])==maxversion:
 					numparticles+=1
 			file.write('version_id ' + str(maxversion) + '\n')
 			file.write('ncontours ' + str(numparticles) + '\n')
 			pointq = appiondata.ApContourPointData()
 			for part in partd:
-				if int(part['version'])==maxversion and part['runname'] == runname:
+				if int(part['version'])==maxversion:
 			#		file.write('contour_number ' + )
 					file.write('method_used ' + part['method'] + ' ')
 					pointq['contour'] = part

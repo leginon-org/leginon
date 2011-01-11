@@ -214,6 +214,7 @@ class ApContourData(Data):
 			('method', str),
 			('particleType', str),
 			('runname', str),
+			('selectionrun', ApSelectionRunData),
 		)
 	typemap = classmethod(typemap)
 
