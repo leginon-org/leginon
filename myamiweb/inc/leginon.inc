@@ -174,23 +174,70 @@ class leginondata {
 		."sec_to_time((Dayofyear(a.`DEF_timestamp`)-Dayofyear(s.`DEF_timestamp`))*86400-"
 		."time_to_sec(s.`DEF_timestamp`)+time_to_sec(a.`DEF_timestamp`)) as `Total Duration`, "
 		."s.`Image path`, "
-		."concat(i.name,' - ',ic.name) as Instrument, "
-		."i.hostname as `Scope Host`, "
-		."sc.`REF|InstrumentData|tem` as `InstrumentId`, "
-		."c.`REF|InstrumentData|ccdcamera` as `CameraId`, "
 		."u.`DEF_id` as userId, "
 		."concat(u.firstname,' ',u.`lastname`) as User "
 		."from `SessionData` s "
 		."left join UserData u on (u.`DEF_id`=s.`REF|UserData|user`) "
 		."left join AcquisitionImageData a on (a.`REF|SessionData|session`=s.`DEF_id`) "
-		."left join ScopeEMData sc on (sc.`DEF_id`=a.`REF|ScopeEMData|scope`)"
-		."left join CameraEMData c on (c.`DEF_id`=a.`REF|CameraEMData|camera`)"
-		."left join InstrumentData i on (i.`DEF_id`=sc.`REF|InstrumentData|tem`)"
-		."left join InstrumentData ic on (ic.`DEF_id`=c.`REF|InstrumentData|ccdcamera`)"
 		.$sqlwhere 
 		."order by a.`DEF_timestamp` DESC limit 1";
 		$sessioninfo = $this->mysql->getSQLResult($q);
-		return $sessioninfo[0];
+		$outputinfo = $this->getInstrument($sessioninfo[0],$sqlwhere);
+		return $outputinfo;
+	}
+
+	function getInstrument($sessioninfo,$sqlwhere) {
+		# get multiple scope and camera used in the session and combined to sessioninfo
+		# scope
+		$q="select "
+		."i.`DEF_id` as `InstrumentId`, "
+		."i.`name`, "
+		."i.`hostname` "
+		."from `SessionData` s "
+		."left join AcquisitionImageData a on (a.`REF|SessionData|session`=s.`DEF_id`) "
+		."left join ScopeEMData sc on (sc.`DEF_id`=a.`REF|ScopeEMData|scope`)"
+		."left join InstrumentData i on (i.`DEF_id`=sc.`REF|InstrumentData|tem`)"
+		.$sqlwhere
+		."group by i.`DEF_id`";
+		$scopeinfo = $this->mysql->getSQLResult($q);
+		# create strings
+		$names = array();
+		$ids = array();
+		foreach ($scopeinfo as $info) {
+			$names[] = $info['name'];
+			$ids[] = $info['InstrumentId'];
+			$hosts[] = $info['hostname'];
+		}
+		$name_str = implode(', ',$names);
+		$scopeid_str = implode(', ',$ids);
+		$scopehost_str = implode(', ',$hosts);
+		$name_str .= ' - ';
+		# camera
+		$q="select "
+		."i.`DEF_id` as `InstrumentId`, "
+		."i.`name`  "
+		."from `SessionData` s "
+		."left join AcquisitionImageData a on (a.`REF|SessionData|session`=s.`DEF_id`) "
+		."left join CameraEMData c on (c.`DEF_id`=a.`REF|CameraEMData|camera`)"
+		."left join InstrumentData i on (i.`DEF_id`=c.`REF|InstrumentData|ccdcamera`)"
+		.$sqlwhere
+		."group by i.`DEF_id`";
+		$camerainfo = $this->mysql->getSQLResult($q);
+		# create strings
+		$names = array();
+		$ids = array();
+		foreach ($camerainfo as $info) {
+			$names[] = $info['name'];
+			$ids[] = $info['InstrumentId'];
+		}
+		$name_str .= implode(', ',$names);
+		$cameraid_str = implode(', ',$ids);
+		# Add to sessioninfo
+		$sessioninfo['Scope Host'] = $scopehost_str;
+		$sessioninfo['Instrument'] = $name_str;
+		$sessioninfo['InstrumentId'] = $scopeid_str;
+		$sessioninfo['CameraId'] = $cameraid_str;
+		return $sessioninfo;
 	}
 
 	function getNumImages($sessionid) {
