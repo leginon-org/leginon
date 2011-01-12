@@ -741,6 +741,10 @@ class PickerApp(wx.App):
 ##################################
 
 class ContourPicker(manualpicker.ManualPicker):
+	def onInit(self):
+		super(ContourPicker,self).onInit()
+		self.trace = True
+		
 	def checkConflicts(self):
 		for i,v in enumerate(self.outtypes):
 			if self.params['outtype'] == v:

@@ -353,6 +353,10 @@ class PickerApp(wx.App):
 ##################################
 
 class ManualPicker(particleLoop2.ParticleLoop):
+	def onInit(self):
+		super(ManualPicker,self).onInit()
+		self.trace = False
+		
 	def setApp(self):
 		self.app = PickerApp(
 			shape = self.canonicalShape(self.params['shape']),
@@ -400,6 +404,7 @@ class ManualPicker(particleLoop2.ParticleLoop):
 	##=======================
 	def getParticleParamsData(self):
 		manparamsq=appiondata.ApManualParamsData()
+		manparamsq['trace'] = self.trace
 		if self.params['pickrunid'] is not None:
 			manparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
 		return manparamsq

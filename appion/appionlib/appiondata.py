@@ -185,6 +185,7 @@ class ApManualParamsData(Data):
 			('median', int),
 			('pixel_value_limit', float),
 			('oldselectionrun', ApSelectionRunData),
+			('trace', bool),
 		)
 	typemap = classmethod(typemap)
 

@@ -77,6 +77,7 @@ class StackIntoPicksScript(appionScript.AppionScript):
 		manualparamsq = appiondata.ApManualParamsData()
 		manualparamsq['diam'] = self.getDiamFromSelectionRun(oldselectrun)
 		manualparamsq['oldselectionrun'] = oldselectrun
+		manualparamsq['trace'] = False
 		selectrunq = appiondata.ApSelectionRunData()
 		selectrunq['name'] = self.params['runname']
 		selectrunq['hidden'] = False

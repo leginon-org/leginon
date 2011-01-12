@@ -177,6 +177,7 @@ class UploadStack(appionScript.AppionScript):
 
 		manq = appiondata.ApManualParamsData()
 		manq['diam'] = self.params['diameter']
+		manq['trace'] = False
 
 		selectq = appiondata.ApSelectionRunData()
 		selectq['name'] = 'fakestack_'+self.params['runname']
