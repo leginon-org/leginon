@@ -113,14 +113,15 @@ def rescaleVolume(infile, outfile, inapix, outapix=None, newbox=None, spider=Fal
 
 	if outapix is None:
 		outapix = inapix
-
+	
+	scalefactor = float(inapix/outapix)
+	
 	apDisplay.printMsg( ("rescaling %s with boxsize %d by a factor of %.3f\n"
 		+"\tand saving to %s with a boxsize %d")
 		%(infile, origbox, scalefactor, outfile, newbox))
 
 	emancmd = "proc3d %s %s " % (infile, outfile)
 
-	scalefactor = float(inapix/outapix)
 	# only do it if it is bigger than 10%
 	if abs(scalefactor-1.0) > 0.1:
 		emancmd += "scale=%.3f " % scalefactor
