@@ -708,7 +708,10 @@ class frealignJob(appionScript.AppionScript):
 
 		mainf = open(self.mainjobfile, 'a')
 		### use MPI to launch multiple jobs
-		mainf.write("echo 'starting particle refinement for iter %d' >> refine.log\n"%(iternum))
+		if iternum == 1:
+			mainf.write("echo 'starting particle refinement for iter %d' > refine.log\n"%(iternum))
+		else:
+			mainf.write("echo 'starting particle refinement for iter %d' >> refine.log\n"%(iternum))
 		mainf.write("mpirun --hostfile $PBS_NODEFILE -np %d --app %s\n"
 			%(self.params['nproc'], iterjobfile))
 		mainf.write("echo 'particle refinement complete for iter %d' >> refine.log\n"%(iternum))
