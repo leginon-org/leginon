@@ -66,7 +66,10 @@ class UploadParticles(appionScript.AppionScript):
 
 	#===========================
 	def getBoxFiles(self):
-		# first get all box files
+		# set the box type
+		self.params['coordtype'] = "eman"
+
+		# get all box files
 		filelist = glob.glob(self.params['files'])
 		if len(filelist) == 0:
 			apDisplay.printError("No images specified")
@@ -75,7 +78,9 @@ class UploadParticles(appionScript.AppionScript):
 			if not os.path.isfile(filename):	
 				apDisplay.printError("Could not find file: "+filename)
 				continue
-			if filename[-4:] != ".box":
+			if filename[-4:] == ".pos":
+				self.params['coordtype'] = "xmipp"
+			elif filename[-4:] != ".box":
 				apDisplay.printWarning("File is not a boxfile: "+filename)
 
 			boxfile = os.path.join(self.params['rundir'], os.path.basename(filename))
@@ -109,6 +114,8 @@ class UploadParticles(appionScript.AppionScript):
 	#===========================
 	def boxFileToPeakTree(self, imgdata):
 		boxfile = imgdata['filename']+".box"
+		if self.params['coordtype'] == "xmipp":
+			boxfile = imgdata['filename']+".pos"
 		if not os.path.isfile(boxfile):
 			apDisplay.printError("Could not find box file "+boxfile)
 		f = open(boxfile, "r")
@@ -116,8 +123,14 @@ class UploadParticles(appionScript.AppionScript):
 		for line in f:
 			sline = line.strip()
 			cols = sline.split()
-			xcoord = (float(cols[0]) + float(cols[2])/2.)* self.params['bin']
-			ycoord = (float(cols[1]) + float(cols[3])/2.)* self.params['bin']
+			if self.params['coordtype'] == "xmipp":
+				if len(cols)>2 or cols[0][0]=="#":
+					continue
+				xcoord = float(cols[0]) * self.params['bin']
+				ycoord = float(cols[1]) * self.params['bin']
+			else:
+				xcoord = (float(cols[0]) + float(cols[2])/2.)* self.params['bin']
+				ycoord = (float(cols[1]) + float(cols[3])/2.)* self.params['bin']
 			peakdict = {
 				'diameter': self.params['diam'],
 				'xcoord': xcoord,
