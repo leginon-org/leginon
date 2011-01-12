@@ -160,7 +160,7 @@ if (is_numeric($expId)) {
 	$mresults[] = ($mrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mrun running</a>";
 	$mresults[] = ($mq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mq queued</a>";
 
-	$cresults[] = ($cdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$cdone complete</a>";
+	$cresults[] = ($cdone==0) ? "" : "<a href='tracereport.php?expId=$sessionId'>$cdone complete</a>";
 	$cresults[] = ($crun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=contourpicker'>$crun running</a>";
 	$cresults[] = ($cq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$cq queued</a>";
 

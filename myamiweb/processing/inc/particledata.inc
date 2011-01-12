@@ -1595,6 +1595,21 @@ class particledata {
 		return $r;
 	}
 
+	function getObjectTracingRuns($sessionId) {
+		$q = "SELECT sr.*, count(*) as total_object_traced "
+				." FROM ApSelectionRunData AS sr "
+				." LEFT JOIN ApManualParamsData as p "
+				." ON sr.`REF|ApManualParamsData|manparams` = p.`DEF_id` "
+				." LEFT JOIN ApContourData as c "
+				." ON c.`REF|ApSelectionRunData|selectionrun` = sr.`DEF_id` "
+				." WHERE sr.`REF|leginondata|SessionData|session` = $sessionId "
+				." AND "
+				." p.`trace` = 1 "
+				." GROUP BY c.`REF|ApSelectionRunData|selectionrun` ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getParticleLabels($runId) {
 		$q = "select label, count(DEF_id) as `number particle` from ApParticleData where `REF|ApSelectionRunData|selectionrun`=".$runId." and label is not NULL group by `label`";
 		$r=$this->mysql->getSQLResult($q);
@@ -1676,6 +1691,8 @@ class particledata {
 			$q.="p.`correlation`>='$selexval' AND ";
 		$q.="p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		list($r) = $this->mysql->getSQLResult($q);
+		$tracestats = $this->getTraceStats($runId);
+		$r = array_merge($r,$tracestats);
 		$q = "select p.`name` "
 			." from ".DB_LEGINON.".AcquisitionImageData a"
 			." , ".DB_LEGINON.".PresetData p"
@@ -1689,6 +1706,22 @@ class particledata {
 		}
 		return $r;
 
+	}
+
+	function getTraceStats ($runId) {
+		$q = "SELECT count(*) as total_object_traced, "
+				."c.`REF|leginondata|AcquisitionImageData|image` as lastimage "
+				." FROM ApSelectionRunData AS sr "
+				." LEFT JOIN ApManualParamsData as p "
+				." ON sr.`REF|ApManualParamsData|manparams` = p.`DEF_id` "
+				." LEFT JOIN ApContourData as c "
+				." ON c.`REF|ApSelectionRunData|selectionrun` = sr.`DEF_id` "
+				." WHERE sr.`DEF_id` = $runId "
+				." AND "
+				." p.`trace` = 1 "
+				." GROUP BY c.`REF|ApSelectionRunData|selectionrun` ";
+		list($r)=$this->mysql->getSQLResult($q);
+		return $r;
 	}
 
 	function getNumImgs ($runId){
