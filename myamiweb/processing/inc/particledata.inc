@@ -1596,18 +1596,22 @@ class particledata {
 	}
 
 	function getObjectTracingRuns($sessionId) {
-		$q = "SELECT sr.*, count(*) as total_object_traced "
-				." FROM ApSelectionRunData AS sr "
-				." LEFT JOIN ApManualParamsData as p "
-				." ON sr.`REF|ApManualParamsData|manparams` = p.`DEF_id` "
-				." LEFT JOIN ApContourData as c "
-				." ON c.`REF|ApSelectionRunData|selectionrun` = sr.`DEF_id` "
-				." WHERE sr.`REF|leginondata|SessionData|session` = $sessionId "
-				." AND "
-				." p.`trace` = 1 "
-				." GROUP BY c.`REF|ApSelectionRunData|selectionrun` ";
-		$r=$this->mysql->getSQLResult($q);
-		return $r;
+		if ($this->mysql->SQLTableExists("ApContourData")) {
+			$q = "SELECT sr.*, count(*) as total_object_traced "
+					." FROM ApSelectionRunData AS sr "
+					." LEFT JOIN ApManualParamsData as p "
+					." ON sr.`REF|ApManualParamsData|manparams` = p.`DEF_id` "
+					." LEFT JOIN ApContourData as c "
+					." ON c.`REF|ApSelectionRunData|selectionrun` = sr.`DEF_id` "
+					." WHERE sr.`REF|leginondata|SessionData|session` = $sessionId "
+					." AND "
+					." p.`trace` = 1 "
+					." GROUP BY c.`REF|ApSelectionRunData|selectionrun` ";
+			$r=$this->mysql->getSQLResult($q);
+			return $r;
+		} else {
+			return array();
+		}
 	}
 
 	function getParticleLabels($runId) {
@@ -1692,6 +1696,8 @@ class particledata {
 		$q.="p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		list($r) = $this->mysql->getSQLResult($q);
 		$tracestats = $this->getTraceStats($runId);
+		# not to replace $r['lastimage'] if no real trace stats
+		if (!$tracestats['lastimage']) $tracestats['lastimge'] = $r['lastimage'];
 		$r = array_merge($r,$tracestats);
 		$q = "select p.`name` "
 			." from ".DB_LEGINON.".AcquisitionImageData a"
@@ -1709,6 +1715,8 @@ class particledata {
 	}
 
 	function getTraceStats ($runId) {
+		if (!$this->mysql->SQLTableExists("ApContourData"))
+			return array();
 		$q = "SELECT count(*) as total_object_traced, "
 				."c.`REF|leginondata|AcquisitionImageData|image` as lastimage "
 				." FROM ApSelectionRunData AS sr "
