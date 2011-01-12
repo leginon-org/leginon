@@ -7,7 +7,8 @@ import shutil
 import subprocess
 import optparse
 
-### Please do not make classes or import any appion libraries or pointlessly change variable names.
+### Please do not make classes or import any appion libraries.
+### This script is meant to run independently of appion so that it can run on a cluster without appion installed
 
 def setupParserOptions(parser):
 
