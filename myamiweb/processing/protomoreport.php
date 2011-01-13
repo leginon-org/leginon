@@ -44,44 +44,50 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 $particle = new particledata();
 $runinfo = $particle->getTomoAlignmentInfo($alignId);
 $refinedata = $particle->getProtomoAlignmentInfo($alignId);
+// All alignment run have aligner record except when the tomogram is uploaded
 $rundir = $runinfo['path'];
-$refnum = $refinedata[0]['imgref'];
-// I use this page for all aligner report so chances are there is no refinedata
-// Therefore the report can be either one cycle of an Protomo alignrun or the whole
-// imod align run depending on if reference number (unique to protomo) can be found
-if ( !is_null($refnum)) $is_protomo = true;
-$refnum = (int) ($refnum);
-echo"	<table border=3 class=tableborder>";
-echo"<tr><td valign='TOP'>\n";
-echo "<a href='tomoalignmovie.php?aId=$alignId&expId=$expId'>Alignment Movie</a>";
-echo"</td></tr><tr><td valign='TOP'>\n";
-echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$alignId&expId=$expId&ref=$refnum&type=rot'><br/>\n";
-echo"</td></tr><tr><td valign='TOP'>\n";
-echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$alignId&expId=$expId&ref=$refnum&type=shiftx'><br/>\n";
-echo"</td></tr><tr><td valign='TOP'>\n";
-echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$alignId&expId=$expId&ref=$refnum&type=shifty'><br/>\n";
+if ($refinedata) {
+	$refnum = $refinedata[0]['imgref'];
+	if ( !is_null($refnum)) $is_protomo = true;
+	// I use this page for all aligner report so chances are there is no refinedata
+	// Therefore the report can be either one cycle of an Protomo alignrun or the whole
+	// imod align run depending on if reference number (unique to protomo) can be found
+	$refnum = (int) ($refnum);
+	echo"	<table border=3 class=tableborder>";
+	echo"<tr><td valign='TOP'>\n";
+	echo "<a href='tomoalignmovie.php?aId=$alignId&expId=$expId'>Alignment Movie</a>";
+	echo"</td></tr><tr><td valign='TOP'>\n";
+	echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$alignId&expId=$expId&ref=$refnum&type=rot'><br/>\n";
+	echo"</td></tr><tr><td valign='TOP'>\n";
+	echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$alignId&expId=$expId&ref=$refnum&type=shiftx'><br/>\n";
+	echo"</td></tr><tr><td valign='TOP'>\n";
+	echo "<img border='0' src='tomoaligngraph.php?w=512&&h=256&aId=$alignId&expId=$expId&ref=$refnum&type=shifty'><br/>\n";
 
-echo"</td></tr>\n";
-echo "</table>\n";
-if ($_POST) {
-	foreach ($refinedata as $t)
-		$particle->updateTableDescriptionAndHiding($_POST,'ApTomoAlignerParamsData',$t['alignerid']);
-}
-echo $particle->displayHidingOption($expId,$refinedata,$refinedata,$showhidden);
-	//Report parameters
-	$s = $refinedata[0];
-if ($is_protomo) {
-	$title = "Protomo alignment cycle parameters";
+	echo"</td></tr>\n";
+	echo "</table>\n";
+	if ($_POST) {
+		foreach ($refinedata as $t)
+			$particle->updateTableDescriptionAndHiding($_POST,'ApTomoAlignerParamsData',$t['alignerid']);
+	}
+	echo $particle->displayHidingOption($expId,$refinedata,$refinedata,$showhidden);
+		//Report parameters
+		$s = $refinedata[0];
+	if ($is_protomo) {
+		$title = "Protomo alignment cycle parameters";
+	} else {
+		$title = "Alignment parameters";
+	}
+	$exclude_fields = array('DEF_id','DEF_timestamp','modelid','image','number','rotation','shift x','shift y');
+	for ($i=1;$i < $s[count]; $i++) $exclude_fields[]=$i;
+	$particle->displayParameters($title,$s,$exclude_fields,$expId);
+	$html .= "<br>\n";
+	echo $html;
+	echo $particle->displayHidingOption($expId,$allcycles,$showncycles,$showhidden);
+	// --- 
 } else {
-	$title = "Alignment parameters";
+	$html .= "<b>No Alignment Information</b><p>";
+	$html .= "<b>Probably an uploaded tomogram</b>";
+	echo $html;
 }
-$exclude_fields = array('DEF_id','DEF_timestamp','modelid','image','number','rotation','shift x','shift y');
-for ($i=1;$i < $s[count]; $i++) $exclude_fields[]=$i;
-$particle->displayParameters($title,$s,$exclude_fields,$expId);
-$html .= "<br>\n";
-echo $html;
-echo $particle->displayHidingOption($expId,$allcycles,$showncycles,$showhidden);
-// --- 
-
 processing_footer();
 ?>
