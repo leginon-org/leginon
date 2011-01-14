@@ -98,6 +98,18 @@ def getAllImagesFromDB(session):
 	return imgtree
 
 #================
+def getAllTiltSeriesFromSessionName(sessionname):
+	"""
+	returns list of image data based on session name
+	"""
+	apDisplay.printMsg("Querying database for all tilt series from session '"+sessionname+"' ... ")
+	sessionq= leginon.leginondata.SessionData(name=sessionname)
+	seriesquery = leginon.leginondata.TiltSeriesData()
+	seriesquery['session'] = sessionq
+	seriestree = seriesquery.query(readimages=False)
+	return seriestree
+
+#================
 def getExpIdFromSessionName(sessionname):
 	apDisplay.printMsg("Looking up session, "+sessionname)
 	sessionq = leginon.leginondata.SessionData(name=sessionname)
@@ -128,6 +140,21 @@ def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
 		return tiltseriesdata[0]
 	else:
 		apDisplay.printError("could not find tilt series, "+sessionname)
+
+#================
+def getImagesFromTiltSeries(tiltseriesdata,printMsg=True):
+	if printMsg:
+		apDisplay.printMsg("Looking up images for tilt series %d" % tiltseriesdata['number']);
+	q = leginon.leginondata.AcquisitionImageData()
+	q['tilt series'] = tiltseriesdata
+	results = q.query()
+	realist = []
+	for imagedata in results:
+		if imagedata['label'] != 'projection':
+			realist.append(imagedata)
+	if printMsg:
+		apDisplay.printMsg("found %d images" % len(realist))
+	return realist
 
 #================
 def getImageData(imgname):
@@ -349,6 +376,21 @@ def getSiblingImgCompleteStatus(imgdata):
 
 	return status
 
+#================
+def getTiltSeriesDoneStatus(tiltseriesdata):
+		imgtree = getImagesFromTiltSeries(tiltseriesdata)
+		if len(imgtree) == 0:
+			return False
+		target = imgtree[0]['target']
+		if target['type'] == 'simulated':
+			q = leginon.leginondata.AcquisitionImageTargetData(initializer=target)
+			q['status'] = 'done'
+		else:
+			q = leginon.leginondata.AcquisitionImageTargetData(fromtarget=imgtree[0]['target'],status='done')
+		results = q.query()
+		if results:
+			return True
+		return False
 
 ### flatfield correction functions
 

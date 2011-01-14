@@ -838,3 +838,21 @@ def insertTomoAvgParticle(avgrundata,subvolumedata,alignp,shiftz):
 	tomoaq['z_shift'] = shiftz
 	return publish(tomoaq)
 
+def getAlignersFromTiltSeries(tiltseriesdata,alignrunname=''):
+	q = appiondata.ApTiltsInAlignRunData(tiltseries=tiltseriesdata)
+	if alignrunname:
+		runq = appiondata.ApTomoAlignmentRunData(name=alignrunname)
+		q['alignrun'] = runq
+	results = q.query()
+	if results:
+		allaligners = []
+		allalignerids = []
+		for tilt_in_run in results:
+			alignerq = appiondata.ApTomoAlignerParamsData(alignrun=tilt_in_run['alignrun'])
+			aligners = alignerq.query()
+			for aligner in aligners:
+				if aligner.dbid not in allalignerids:
+					allaligners.append(aligner)
+					allalignerids.append(aligner.dbid)
+		return allaligners
+	return []
