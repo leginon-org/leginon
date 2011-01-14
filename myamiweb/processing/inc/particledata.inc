@@ -1201,7 +1201,7 @@ class particledata {
 		$links=array(
 			'stackId'=>"stackreport.php?expId=$expId&sId="
 			,'particleSelection'=>"particlerunreport.php?expId=$expId&rId="
-			,'aligner'=>"protomoreport.php?expId=$expId&aId="
+			,'aligner'=>"tomoalignercyclereport.php?expId=$expId&aId="
 		);
 		if (count($params) ==0) return;
 		echo "<h4>".$title."</h4>";
@@ -1297,9 +1297,9 @@ class particledata {
 			,'fulltomoid'=>"fulltomoreport.php?expId=$expId&tomoId="
 			,'avgid'=>"tomoavgreport.php?expId=$expId&avgId="
 			,'subtomo'=>"subtomosummary.php?expId=$expId&fullId="
-			,'alignrun id'=>"tomoalignreport.php?expId=$expId&alignId="
-			,'alignerid'=>"protomoreport.php?expId=$expId&aId="
-			,'refine cycle'=>"protomoreport.php?expId=$expId&aId="
+			,'alignrun id'=>"tomoalignercyclesummary.php?expId=$expId&alignId="
+			,'alignerid'=>"tomoalignercyclereport.php?expId=$expId&aId="
+			,'refine cycle'=>"tomoalignercyclereport.php?expId=$expId&aId="
 		);
 		$html  = '<tr>';
 		foreach($display_fields as $key) {

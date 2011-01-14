@@ -674,7 +674,7 @@ if (is_numeric($expId)) {
 		$adone = count($particle->getTomoAlignmentRunsFromSession($sessionId, False));
 		$arun = count($subclusterjobs['tomoaligner']['running']);
 		$aq = count($subclusterjobs['tomoaligner']['queued']);
-		$aresults[] = ($adone==0) ? "" : "<a href='tomoalignsummary.php?expId=$sessionId'>$adone complete</a>";
+		$aresults[] = ($adone==0) ? "" : "<a href='tomoalignrunsummary.php?expId=$sessionId'>$adone complete</a>";
 		$aresults[] = ($arun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoaligner'>$arun running</a>";
 		$aresults[] = ($aq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tomoaligner'>$aq queued</a>";
 		

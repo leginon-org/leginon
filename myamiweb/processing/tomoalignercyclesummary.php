@@ -49,7 +49,7 @@ if (!$runinfo['protomoid']) {
 	$aligners = $particle->getTomoAlignersFromAlignmentRun($alignId,False);
 	# old imod alignmentrun may not have aligner
 	$alignerid = (empty($aligners)) ? $alignId : $aligners[0]['alignerid'];
-	echo "<a href='protomoreport.php?expId=".$expId."&aId=".$alignerid."'><b>[Redirect to Aligner Report]</b></a>";
+	echo "<a href='tomoalignercyclereport.php?expId=".$expId."&aId=".$alignerid."'><b>[Redirect to Aligner Report]</b></a>";
 } else {
 	$allcycles = $particle->getTomoAlignerInfoFromAlignmentRun($alignId,False);
 	if ($_POST && $allcycles) {
