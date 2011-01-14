@@ -769,6 +769,12 @@
 		default="NULL" 
 	/> 
 	<field 
+		name="REF|ApEMANRefine2dRunData|refine2drun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
 		name="REF|ApMultiRefAlignRunData|imagicMRA" 
 		type="INT(20)" 
 		null="NULL" 
@@ -803,6 +809,7 @@
 	<key>KEY `REF|ApSpiderNoRefRunData|norefrun` (`REF|ApSpiderNoRefRunData|norefrun`)</key> 
 	<key>KEY `REF|ApRefBasedRunData|refbasedrun` (`REF|ApRefBasedRunData|refbasedrun`)</key> 
 	<key>KEY `REF|ApMaxLikeRunData|maxlikerun` (`REF|ApMaxLikeRunData|maxlikerun`)</key> 
+	<key>KEY `REF|ApEMANRefine2dRunData|refine2drun` (`REF|ApEMANRefine2dRunData|refine2drun`)</key> 
 	<key>KEY `REF|ApMultiRefAlignRunData|imagicMRA` (`REF|ApMultiRefAlignRunData|imagicMRA`)</key> 
 	<key>KEY `REF|ApEdIterRunData|editerrun` (`REF|ApEdIterRunData|editerrun`)</key> 
 	<key>KEY `REF|ApTopolRepRunData|topreprun` (`REF|ApTopolRepRunData|topreprun`)</key> 
@@ -1421,6 +1428,109 @@
 	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
 	<key>KEY `REF|ApClusteringRunData|clusterrun` (`REF|ApClusteringRunData|clusterrun`)</key> 
 </sqltable>
+<sqltable name="ApContourData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+	/> 
+	<field 
+		name="name" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|leginondata|AcquisitionImageData|image" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="x" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="y" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="version" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="method" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="particleType" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="runname" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="REF|ApSelectionRunData|selectionrun" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|leginondata|AcquisitionImageData|image` (`REF|leginondata|AcquisitionImageData|image`)</key> 
+	<key>KEY `REF|ApSelectionRunData|selectionrun` (`REF|ApSelectionRunData|selectionrun`)</key> 
+</sqltable>
+<sqltable name="ApContourPointData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+	/> 
+	<field 
+		name="REF|ApContourData|contour" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="x" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="y" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApContourData|contour` (`REF|ApContourData|contour`)</key> 
+</sqltable>
 <sqltable name="ApCoranEigenImageData" >
 	<field 
 		name="DEF_id" 
@@ -1865,6 +1975,45 @@
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `defocal_pairs` (`defocal_pairs`)</key> 
+</sqltable>
+<sqltable name="ApEMANRefine2dRunData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+	/> 
+	<field 
+		name="runname" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<field 
+		name="num_iters" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="num_classes" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="run_seconds" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 </sqltable>
 <sqltable name="ApEdIterRunData" >
 	<field 
@@ -2333,6 +2482,12 @@
 		default="NULL" 
 	/> 
 	<field 
+		name="REF|ApStackData|reconstack" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
 		name="REF|ApInitialModelData|model" 
 		type="INT(20)" 
 		null="NULL" 
@@ -2344,14 +2499,22 @@
 		null="NULL" 
 		default="NULL" 
 	/> 
+	<field 
+		name="REF|ApRefineIterData|refineIter" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `hidden` (`hidden`)</key> 
 	<key>KEY `REF|ApSymmetryData|symmetry` (`REF|ApSymmetryData|symmetry`)</key> 
 	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
 	<key>KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`)</key> 
+	<key>KEY `REF|ApStackData|reconstack` (`REF|ApStackData|reconstack`)</key> 
 	<key>KEY `REF|ApInitialModelData|model` (`REF|ApInitialModelData|model`)</key> 
 	<key>KEY `REF|ApAppionJobData|job` (`REF|ApAppionJobData|job`)</key> 
+	<key>KEY `REF|ApRefineIterData|refineIter` (`REF|ApRefineIterData|refineIter`)</key> 
 </sqltable>
 <sqltable name="ApFullTomogramData" >
 	<field 
@@ -3198,9 +3361,16 @@
 		null="NULL" 
 		default="NULL" 
 	/> 
+	<field 
+		name="trace" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApSelectionRunData|oldselectionrun` (`REF|ApSelectionRunData|oldselectionrun`)</key> 
+	<key>KEY `trace` (`trace`)</key> 
 </sqltable>
 <sqltable name="ApMaskAssessmentData" >
 	<field 
@@ -3548,6 +3718,12 @@
 		default="0" 
 	/> 
 	<field 
+		name="student" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
 		name="mask_diam" 
 		type="INT(20)" 
 		null="NULL" 
@@ -3584,6 +3760,7 @@
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `mirror` (`mirror`)</key> 
+	<key>KEY `student` (`student`)</key> 
 	<key>KEY `fast` (`fast`)</key> 
 	<key>KEY `REF|ApMaxLikeJobData|job` (`REF|ApMaxLikeJobData|job`)</key> 
 </sqltable>
@@ -3716,6 +3893,12 @@
 		name="first_alignment" 
 		type="TEXT" 
 		null="NULL" 
+	/> 
+	<field 
+		name="num_orientations" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
 	/> 
 	<field 
 		name="max_shift_orig" 
@@ -5342,6 +5525,12 @@
 		default="0" 
 	/> 
 	<field 
+		name="xmipp-norm" 
+		type="DOUBLE" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
 		name="defocpair" 
 		type="TINYINT(1)" 
 		null="NULL" 
@@ -5827,6 +6016,12 @@
 		default="NULL" 
 	/> 
 	<field 
+		name="REF|ApAlignStackData|alignstack" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
 		name="templatename" 
 		type="TEXT" 
 		null="NULL" 
@@ -5898,6 +6093,7 @@
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 	<key>KEY `REF|ApClusteringStackData|clusterstack` (`REF|ApClusteringStackData|clusterstack`)</key> 
+	<key>KEY `REF|ApAlignStackData|alignstack` (`REF|ApAlignStackData|alignstack`)</key> 
 	<key>KEY `cls_avgs` (`cls_avgs`)</key> 
 	<key>KEY `forward_proj` (`forward_proj`)</key> 
 	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
