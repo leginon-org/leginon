@@ -70,12 +70,19 @@ def getImagesFromDB(session, preset):
 	returns list of image names from DB
 	"""
 	apDisplay.printMsg("Querying database for preset '"+preset+"' images from session '"+session+"' ... ")
-	sessionq = leginon.leginondata.SessionData(name=session)
-	presetq=leginon.leginondata.PresetData(name=preset)
-	imgquery = leginon.leginondata.AcquisitionImageData()
-	imgquery['preset']  = presetq
-	imgquery['session'] = sessionq
-	imgtree = imgquery.query(readimages=False)
+	if preset != 'manual':
+		sessionq = leginon.leginondata.SessionData(name=session)
+		presetq=leginon.leginondata.PresetData(name=preset)
+		imgquery = leginon.leginondata.AcquisitionImageData()
+		imgquery['preset']  = presetq
+		imgquery['session'] = sessionq
+		imgtree = imgquery.query(readimages=False)
+	else:
+		allimgtree = getAllImagesFromDB(session)
+		imgtree = []
+		for imagedata in allimgtree:
+			if imagedata['preset'] is None:
+				imgtree.append(imagedata)
 	"""
 	loop through images and make data.holdimages false
 	this makes it so that data.py doesn't hold images in memory

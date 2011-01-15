@@ -348,6 +348,7 @@ function getSessionList($projectId,$sessionId){
 
 	$sessiondata['info']=$leginondata->getSessionInfo($sessionId);
 	$sessiondata['presets']=$leginondata->getTruePresets($sessionId);
+	if ($leginondata->hasManualImages($sessionId)) $sessiondata['presets'][] = 'manual';
 	$sessiondata['currentproject']=$projectdata->getProjectFromSession($sessiondata['info']['Name']);
 
 	return $sessiondata;

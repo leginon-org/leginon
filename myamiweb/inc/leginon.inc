@@ -418,6 +418,15 @@ class leginondata {
 		return array_merge($defaulttypes, $types);
 	}
 
+	function hasManualImages($sessionId) {
+		$q="select * from AcquisitionImageData "
+			."where `REF|SessionData|session` = '$sessionId' "
+			."and `REF|PresetData|preset` is null ";
+		$r = $this->mysql->getSQLResult($q);
+		$has_manual = (is_array($r) && count($r) > 0) ? true:false;
+		return $has_manual;
+	}
+
 	function getImageStat($name) {
 		if (!$name)
 			return false;
