@@ -258,7 +258,7 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 	if (!$_POST['process']) {
 		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
-	echo referenceBox("Computer visualization of three-dimensional image data using IMOD", 1996, "Kremer J.R., D.N. Mastronarde and J.R. McIntosh", "J. Struct. Biol.", 116, 1, 8742726, false, "doi:10.1006/jsbi.1996.0013", false);
+	echo imodRef();
 	processing_footer();
 	exit;
 }
@@ -332,7 +332,8 @@ function runSubTomogram() {
 	******************** */
 
 	// Add reference to top of the page
-	$headinfo .= appionRef(); // main appion ref
+	$headinfo .= imodRef();
+	if ($bin != 1) $headinfo .= emanRef();
 
 	/* *******************
 	PART 5: Show or Run Command

@@ -192,7 +192,7 @@ function runAverageTomogram() {
 	******************** */
 
 	// Add reference to top of the page
-	$headinfo .= imodRef();
+	$headinfo .= initModelRef();
 
 	/* *******************
 	PART 5: Show or Run Command
