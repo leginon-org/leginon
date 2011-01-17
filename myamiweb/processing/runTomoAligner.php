@@ -549,9 +549,9 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
   </table>
 	";
 	if ($protomocheck || $protomo2check) {
-		echo referenceBox("Accurate marker-free alignment with simultaneous geometry determination and reconstruction of tilt series in electron tomography.", 2006, "Winkler H, Taylor KA", "Ultramicroscopy.", 106, 3, 16137829, false, "doi:10.1016/j.ultramic.2005.07.007", false);
+		echo protomoRef();
 	} else {
-		echo referenceBox("Computer visualization of three-dimensional image data using IMOD", 1996, "Kremer J.R., D.N. Mastronarde and J.R. McIntosh", "J. Struct. Biol.", 116, 1, 8742726, false, "doi:10.1006/jsbi.1996.0013", false);
+		echo imodRef();
 	}
 	echo "
   </form>\n";
@@ -567,7 +567,6 @@ function runTomoAligner() {
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 
-	$command = "tomoaligner.py ";
 	$description=$_POST['description'];
 	
 	/** protomo 2 **/
@@ -605,11 +604,13 @@ function runTomoAligner() {
 	$maxregion=$_POST['maxregion'];
 	$refnum=$_POST['refnum'];
 
-	$command.="--session=$sessionname ";
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	//make sure the protomo sampling is valid
 	if ($sample < 1 && $alignmethod=='protomo') createTomoAlignerForm("<b>ERROR:</b> Sampling must >= 1");
 	if (!$lastalignerId) {
-		
+		//error check for first or only cycle of alignment
 		//make sure a tilt series was provided
 		if (!$tiltseriesId) createTomoAlignerForm("<b>ERROR:</b> Select the tilt series");
 		//make sure a description was provided
@@ -648,6 +649,20 @@ function runTomoAligner() {
 				//put the advance parameters here
 			}
 		}
+	} else {
+		//make sure the region is not too large
+		if ($maxregion < $region) 
+			createTomoAlignerForm("<b>ERROR:</b> The alignment region can not be larger than ".$maxregion." % of the image");
+	}
+
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command = "tomoaligner.py ";
+	$command.="--session=$sessionname ";
+	$command.="--projectid=$projectId ";
+	$command.="--runname=$runname ";
+	if (!$lastalignerId) {
 		$particle = new particledata();
 		$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
 		$tiltseriesnumber = $tiltseriesinfos[0]['number'];
@@ -658,16 +673,11 @@ function runTomoAligner() {
 			$command.="--othertilt=$tiltseriesnumber2 ";
 		}	
 	} else {
-		//make sure the region is not too large
-		if ($maxregion < $region) 
-			createTomoAlignerForm("<b>ERROR:</b> The alignment region can not be larger than ".$maxregion." % of the image");
 		$command.="--goodaligner=$lastalignerId ";
 		$command.="--goodcycle=$goodcycle ";
 		$command.="--goodstart=$goodstart ";
 		$command.="--goodend=$goodend ";
 	}
-	$command.="--projectid=$projectId ";
-	$command.="--runname=$runname ";
 	$command.="--rundir=".$outdir.'/'.$runname." ";
 	$command.="--alignmethod=$alignmethod ";
 	if ($alignmethod == 'protomo') {
@@ -696,52 +706,23 @@ function runTomoAligner() {
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Align Tilt Series") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-		if (!($user && $password)) createTomoAlignerForm("<b>ERROR:</b> You must be logged in to submit");
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomoaligner',False,False,False);
-		// if errors:
-		if ($sub) createTomoAlignerForm("<b>ERROR:</b> $sub");
+	// Add reference to top of the page
+	$headinfo .= ($alignmethod == 'protomo') ? protomoRef(): imodRef();
 
-		// check that upload finished properly
-		$jobf = $outdir.'/'.$runname.'/'.$runname.'.appionsub.log';
-		$status = "Alignment result was uploaded";
-		if (file_exists($jobf)) {
-			$jf = file($jobf);
-			$jfnum = count($jf);
-			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
-			  // if anything is red, it's not good
-				if (preg_match("/red/",$jf[$i])) {
-					$status = "<font class='apcomment'>Error while creating tomogram, check the log file:<br />$jobf</font>";
-					continue;
-				}
-			}
-		}
-		else $status = "Job did not run, contact the appion team";
-		processing_header("Align Tilt Series", "Align Tilt Series");
-		echo "$status\n";
-	}
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-	else processing_header("Tilt Series Aligning Command","Tilt Series Aligning Command");
-	
-	// rest of the page
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>Tilt Series Aligning Command:</b><br>
-	$command
-	</td></tr>
-	<tr><td>tiltseries number</td><td>$tiltseriesnumber</td></tr>
-	<tr><td>runname</td><td>$runname</td></tr>
-	<tr><td>region</td><td>$region</td></tr>
-	<tr><td>session</td><td>$sessionname</td></tr>
-	<tr><td>description</td><td>$description</td></tr>
-	</table>\n";
-	processing_footer();
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'tomoaligner', $nproc);
+
+	// if error display them
+	if ($errors)
+		createAppionForm($errors);
+	exit;
 }
-
-
 ?>
