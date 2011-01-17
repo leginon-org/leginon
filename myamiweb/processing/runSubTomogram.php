@@ -264,11 +264,13 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 }
 
 function runSubTomogram() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
+
 	$projectId=getProjectId();
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
-
-	$command = "subtomomaker.py ";
 
 	$xffilename=$_POST['xffilename'];
 	$tiltseriesId=$_POST['tiltseriesId'];
@@ -286,6 +288,10 @@ function runSubTomogram() {
 	$bin=$_POST['bin'];
 	$invertv = $_POST['invert'];
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+
 	//make sure a tilt series was provided
 	if (!$tiltseriesId) createSubTomogramForm("<B>ERROR:</B> Select the tilt series");
 //make sure a tomogram was entered
@@ -296,8 +302,13 @@ function runSubTomogram() {
 	$description=$_POST['description'];
 	if (!$description) createSubTomogramForm("<B>ERROR:</B> Enter a brief description of the tomogram");
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
+
 	$particle = new particledata();
 
+	$command = "subtomomaker.py ";
 	$command.="--session=$sessionname ";
 	$command.="--projectid=$projectId ";
 	$command.="--fulltomoId=$fulltomoId ";
@@ -316,57 +327,25 @@ function runSubTomogram() {
 		$command.="--invert ";
 	$command.="--commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Create SubTomogram") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-		if (!($user && $password)) createSubTomogramForm("<B>ERROR:</B> You must be logged in to submit");
-		$rundir = $outdir.'/'.$runname;
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'subtomomaker',False,False,False);
-		// if errors:
-		if ($sub) createSubTomogramForm("<b>ERROR:</b> $sub");
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main appion ref
 
-		// check that process finished properly
-		$jobf = $rundir.'/'.$runname.'.appionsub.log';
-		$status = "SubTomograms were created";
-		if (file_exists($jobf)) {
-			$jf = file($jobf);
-			$jfnum = count($jf);
-			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
-			  // if anything is red, it's not good
-				if (preg_match("/red/",$jf[$i])) {
-					$status = "<font class='apcomment'>Error while processing, check the log file:<br />$jobf</font>";
-					continue;
-				}
-			}
-		}
-		else $status = "Job did not run, contact the appion team";
-		processing_header("Creating SubTomogram", "Create SubTomogram");
-		echo "$status\n";
-	}
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-	else processing_header("SubTomogram Command","SubTomogram Command");
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'uploadtomo', $nproc);
+
+	// if error display them
+	if ($errors)
+		createSubTomogramForm($errors);
+	exit;
 	
-	// rest of the page
-	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
-	<B>SubTomogram Command:</B><br>
-	$command
-	</TD></tr>
-	<TR><td>subtomogram runname</TD><td>$runname</TD></tr>
-	";
-	if ($stackidval) echo "<TR><td>stack id</TD><td>$stackidval</TD></tr>";
-	if ($prtlrunId) echo "<TR><td>particle selection id</TD><td>$prtlrunId</TD></tr>";
-	echo"
-	<TR><td>tiltseries number</TD><td>$tiltseriesnumber</TD></tr>
-	<TR><td>fulltomogram id</TD><td>$fulltomoId</TD></tr>
-	<TR><td>session</TD><td>$sessionname</TD></tr>
-	<TR><td>description</TD><td>$description</TD></tr>
-	</table>\n";
-	processing_footer();
 }
 
-?> 
-
+?>

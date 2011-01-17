@@ -562,6 +562,9 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 }
 
 function runTomoAligner() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 
 	$projectId=getProjectId();
 	$expId = $_GET['expId'];
@@ -722,7 +725,7 @@ function runTomoAligner() {
 
 	// if error display them
 	if ($errors)
-		createAppionForm($errors);
+		createTomoAlignerForm($errors);
 	exit;
 }
 ?>

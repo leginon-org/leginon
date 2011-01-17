@@ -182,12 +182,12 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 }
 
 function runTomoMaker() {
-
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$projectId=getProjectId();
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
-
-	$command = "tomomaker.py ";
 
 	$alignerId=$_POST['alignerId'];
 	$runname=$_POST['runname'];
@@ -196,12 +196,20 @@ function runTomoMaker() {
 	$extrabin=$_POST['extrabin'];
 	$thickness=$_POST['thickness'];
 	$excludenumber=$_POST['exclude'];
+
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	//make sure a tilt series was provided
 	if (!$alignerId) createTomoMakerForm("<b>ERROR:</b> Select the alignment");
 	//make sure a description was provided
 	$description=$_POST['description'];
 	if (!$description) createTomoMakerForm("<b>ERROR:</b> Enter a brief description of the tomogram");
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command = "tomomaker.py ";
 	$command.="--session=$sessionname ";
 	$command.="--bin=$extrabin ";
 	$command.="--alignerid=$alignerId ";
@@ -212,53 +220,24 @@ function runTomoMaker() {
 	if (strlen($excludenumber)) $command.="--exclude=$excludenumber ";
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
-	// submit job to cluster
-	if ($_POST['process']=="Make Tomogram") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createTomoMakerForm("<b>ERROR:</b> You must be logged in to submit");
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomomaker',False,False,False);
-		// if errors:
-		if ($sub) createTomoMakerForm("<b>ERROR:</b> $sub");
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-		// check that upload finished properly
-		$jobf = $outdir.'/'.$runname.'/'.$runname.'.appionsub.log';
-		$status = "Tomogram was uploaded";
-		if (file_exists($jobf)) {
-			$jf = file($jobf);
-			$jfnum = count($jf);
-			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
-			  // if anything is red, it's not good
-				if (preg_match("/red/",$jf[$i])) {
-					$status = "<font class='apcomment'>Error while creating tomogram, check the log file:<br />$jobf</font>";
-					continue;
-				}
-			}
-		}
-		else $status = "Job did not run, contact the appion team";
-		processing_header("Make Tomogram", "Make Tomogram");
-		echo "$status\n";
-	}
+	// Add reference to top of the page
+	$headinfo .= imodWeightedBackProjRef(); // main initModelRef ref
 
-	else processing_header("Tomogram Making Command","Tomogram Making Command");
-	
-	// rest of the page
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>Full Tomogram Making Command:</b><br>
-	$command
-	</td></tr>
-	<tr><td>aligner</td><td>$alignerId</td></tr>
-	<tr><td>runname</td><td>$runname</td></tr>
-	<tr><td>thickness</td><td>$thickness</td></tr>
-	<tr><td>session</td><td>$sessionname</td></tr>
-	<tr><td>description</td><td>$description</td></tr>
-	</table>\n";
-	processing_footer();
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'tomomaker', $nproc);
+
+	// if error display them
+	if ($errors)
+		createTomoMakerForm($errors);
+	exit;
 }
-
-
-?> 
-
+?>

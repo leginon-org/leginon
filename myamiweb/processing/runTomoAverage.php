@@ -146,6 +146,10 @@ function createAverageTomogramForm($extra=false, $title='tomoaverage.py Launcher
 }
 
 function runAverageTomogram() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
+
 	$projectId=getProjectId();
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
@@ -157,8 +161,10 @@ function runAverageTomogram() {
 	$stackidval=$stackinfo[0];
 	$sessionname=$_POST['sessionname'];
 
-	$particle = new particledata();
-	$selectionruns = $particle->getParticleRunsFromStack($stackidval);
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+
 //make sure a tomogram was entered
 	if (!$runname) createAverageTomogramForm("<B>ERROR:</B> Select a full tomogram to be boxed");
 	//make sure a particle run or stack is chosen
@@ -167,6 +173,11 @@ function runAverageTomogram() {
 	$description=$_POST['description'];
 	if (!$description) createAverageTomogramForm("<B>ERROR:</B> Enter a brief description of the tomogram");
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
+
+	$particle = new particledata();
 	$subtomorunid = $particle->getSubTomoRunFromStack($stackidval);
 	$command.="--projectid=$projectId ";
 	$command.="--subtomorunId=$subtomorunid ";
@@ -176,54 +187,24 @@ function runAverageTomogram() {
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Average Tomograms") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-		if (!($user && $password)) createAverageTomogramForm("<B>ERROR:</B> You must be logged in to submit");
-		$rundir = $outdir.'/'.$runname;
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomoaverage',False,False,False);
-		// if errors:
-		if ($sub) createAverageTomogramForm("<b>ERROR:</b> $sub");
+	// Add reference to top of the page
+	$headinfo .= imodRef();
 
-		// check that process finished properly
-		$jobf = $rundir.'/'.$runname.'.appionsub.log';
-		$status = "Averaged Tomogram was created";
-		if (file_exists($jobf)) {
-			$jf = file($jobf);
-			$jfnum = count($jf);
-			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
-			  // if anything is red, it's not good
-				if (preg_match("/red/",$jf[$i])) {
-					$status = "<font class='apcomment'>Error while processing, check the log file:<br />$jobf</font>";
-					continue;
-				}
-			}
-		}
-		else $status = "Job did not run, contact the appion team";
-		processing_header("Tomogram Averaging", "Tomogram Averaging");
-		echo "$status\n";
-	}
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-	else processing_header("Tomogram Average Command","Tomogram Average Command");
-	
-	// rest of the page
-	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
-	<B>Tomogram Average Command:</B><br>
-	$command
-	</TD></tr>
-	<TR><td>average runname</TD><td>$runname</TD></tr>
-	";
-	echo"
-	<TR><td>stack id</TD><td>$stackidval</TD></tr>
-	<TR><td>subtomogram run id</TD><td>$subtomorunid</TD></tr>
-	<TR><td>description</TD><td>$description</TD></tr>
-	</table>\n";
-	processing_footer();
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'tomoaverage', $nproc);
+
+	// if error display them
+	if ($errors)
+		createAverageTomogramForm($errors);
+	exit;
 }
-
-?> 
+?>
 
