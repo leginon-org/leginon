@@ -208,6 +208,10 @@ function runUploadTomogram() {
 	$description=$_POST['description'];
 	if (!$description) createUploadTomogramForm("<B>ERROR:</B> Enter a brief description of the tomogram");
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
+
 	$transform = '';
 	if ($orientation) {
 		$splitorientation = explode(':',$orientation);
@@ -237,10 +241,6 @@ function runUploadTomogram() {
 	$tiltseriesnumber = $tiltseriesinfos[0]['number'];
 	$outdir = $basedir.'/tiltseries'.$tiltseriesnumber;
 	$_POST['outdir'] = $outdir;
-
-	/* *******************
-	PART 3: Create program command
-	******************** */
 
 	$command = "uploadTomo.py ";
 	$command.="--file=$tomofilename ";
