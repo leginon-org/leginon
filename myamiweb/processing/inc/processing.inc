@@ -1377,6 +1377,18 @@ function initModelRef() {
 	return referenceBox("A toolbox for ab initio 3-D reconstructions in single-particle electron microscopy.", 2010, "Voss NR, Lyumkis D, Cheng A, <i>et&nbsp;al.</i>", "J Struct Biol.", 169, 3, 20018246, false, false, "img/topbarbackgrnd.jpg");
 }
 
+function imodWeightedBackProjRef() {
+	return referenceBox("Dual-axis tomography: an approach with alignment methods that preserve resolution.", 1997, "D.N. Mastronarde", "J. Struct. Biol.", 120,3, 9441937, false, "doi:10.1006/jsbi.1997.3919", false);
+}
+
+function protomoRef() {
+	return referenceBox("Accurate marker-free alignment with simultaneous geometry determination and reconstruction of tilt series in electron tomography.", 2006, "Winkler H, Taylor KA", "Ultramicroscopy.", 106, 3, 16137829, false, "doi:10.1016/j.ultramic.2005.07.007", false);
+}
+
+function imodRef() {
+	return referenceBox("Computer visualization of three-dimensional image data using IMOD", 1996, "Kremer J.R., D.N. Mastronarde and J.R. McIntosh", "J. Struct. Biol.", 116, 1, 8742726, false, "doi:10.1006/jsbi.1996.0013", false);
+}
+
 /**************************************/
 function referenceBox($title, $year, $authorlist, $journal, $volume=false, $issue=false, $pmid=false, $pmcid=false, $doi=false, $logo=false) {
 	$refbox = "<br/>";
