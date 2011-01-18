@@ -368,7 +368,6 @@ class CameraPanel(wx.Panel):
 		c['exposure time'] = self._getExposureTime()
 		c['save frames'] = self._getSaveFrames()
 		c['use frames'] = self._getUseFrames()
-		print 'CCCCC', c
 		return c
 
 	def _setGeometry(self, geometry):
