@@ -32,6 +32,10 @@ class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 		self.alignmethods = ( "imod-shift", "protomo" )
 		self.parser.add_option("--alignmethod", dest="alignmethod",
 			type="choice", choices=self.alignmethods, default="protomo" )
+		self.parser.add_option("--alignsample", dest="alignsample", default=4.0, type="float",
+			help="Protomo only: Align sample rate, e.g. --alignsample=2.0", metavar="float")
+		self.parser.add_option("--alignregion", dest="alignregion", default=50, type="int",
+			help="Protomo only: Percentage of image length used in alignment, e.g. --alignregion=80", metavar="int")
 		self.parser.add_option("--reconthickness", dest="reconthickness", default=100, type="int",
 			help="Full tomo reconstruction thickness before binning, e.g. --thickness=200", metavar="int")
 		self.parser.add_option("--reconbin", dest="reconbin", default=1, type="int",
@@ -67,7 +71,7 @@ class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 		file.close()
 		if proc.returncode > 0:
 			pieces = cmd.split(' ')
-			apDisplay.printWarning('AppionScript %s had an error. Please check its log file: \n%s' % (pieces[0].upper(),outpath))
+			apDisplay.printWarning('AppionScript %s had an error. Please check its log file: \n%s' % (pieces[0].upper(),logfilepath))
 		else:
 			apDisplay.printMsg('AppionScript ran successfully')
 		apDisplay.printMsg('------------------------------------------------')
@@ -89,7 +93,7 @@ class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 		# align the tilt series
 		alignrundir = os.path.join(tiltseriespath,'align',self.params['runname'])
 		alignlogpath = os.path.join(alignrundir,self.params['runname']+'.appionsub.log')
-		command = 'tomoaligner.py' + ' ' + '--projectid=%d' % (self.params['projectid']) + ' ' + '--session=' + self.params['sessionname'] + ' ' + '--runname=' + self.params['runname'] + ' ' + '--rundir=' + alignrundir + ' ' + '--tiltseriesnumber=%d' % (seriesnumber) + ' ' + '--alignmethod=%s' % self.params['alignmethod'] + ' ' + '--description="%s"' % (self.params['description'],) + ' ' + commitstr
+		command = 'tomoaligner.py' + ' ' + '--projectid=%d' % (self.params['projectid']) + ' ' + '--session=' + self.params['sessionname'] + ' ' + '--runname=' + self.params['runname'] + ' ' + '--rundir=' + alignrundir + ' ' + '--tiltseriesnumber=%d' % (seriesnumber) + ' ' + '--alignmethod=%s' % self.params['alignmethod'] + ' ' + '--sample=%.3f' % (self.params['alignsample']) + ' ' + '--region=%d' % (self.params['alignregion']) + ' ' + '--description="%s"' % (self.params['description'],) + ' ' + commitstr
 		return_code = self.runAppionScriptInSubprocess(command,alignlogpath)
 
 		# reconstruct full tomogram with the alignments
