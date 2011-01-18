@@ -62,9 +62,9 @@ class protomoAligner(appionScript.AppionScript):
 			help="Protomo only: Align cycle, e.g. --cycle=1", metavar="int")
 		self.parser.add_option("--refimg", dest="refimg", type="int",
 			help="Protomo only: custom reference image number, e.g. --refimg=20", metavar="int")
-		self.parser.add_option("--sample", dest="sample", default=1.0, type="float",
+		self.parser.add_option("--sample", dest="sample", default=4.0, type="float",
 			help="Protomo only: Align sample rate, e.g. --sample=2.0", metavar="float")
-		self.parser.add_option("--region", dest="region", default=1, type="int",
+		self.parser.add_option("--region", dest="region", default=50, type="int",
 			help="Protomo only: Percentage of image used in alignment, e.g. --region=80", metavar="int")
 		self.parser.add_option("--goodcycle", dest="goodcycle", type="int",
 			help="Protomo only: Reset to image origin to that of this align cycle, e.g. --goodcycle=1", metavar="int")
