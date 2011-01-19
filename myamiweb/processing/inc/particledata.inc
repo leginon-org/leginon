@@ -403,6 +403,7 @@ class particledata {
 			."tilt.number as 'tiltseries number', "
 			." p.`path` as path, "
 			."t.`REF|ApTomoAlignerParamsData|aligner` as aligner, "
+			."t.`REF|leginondata|AcquisitionImageData|zprojection` as zproj_id, "
 			." t.`hidden` ";
 		if ($has_run)
 			$q .= ", r.`SEQ|excluded` as 'excluded imageIds' ";

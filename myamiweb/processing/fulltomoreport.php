@@ -64,11 +64,11 @@ echo "<tr>";
 if ($tomograminfo['zproj_id']) {
 	echo "<td>";
 	echo "Projection to xy plane:<br>";
-echo "
+	echo "
 <img src=../getimg.php?preset=all&session=".$expId."&id=".$tomograminfo['zproj_id']."&s=400&t=80&tg=1&sb=1&flt=default&fftbin=b&binning=auto&autoscale=s;3&df=3&lj=1&g=1&opt=2'>
 ";
-echo "</td></tr>";
-echo "<tr>";
+	echo "</td></tr>";
+	echo "<tr>";
 }
 
 // --- SnapShot --- //
