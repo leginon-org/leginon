@@ -61,28 +61,35 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	$autorunname = 'upload'.($alignruns+1);
 	$runname = ($_POST['lasttiltseries']==$tiltseriesId) ? $_POST['runname']:$autorunname;
 	// Volumename is determined by tiltseries amd runname if not manually set
-	$volumeruns = $particle->countTomogramsByAlignment($tiltseriesId,$runname);
-	$autovolumename = 'volume'.($volumeruns+1);
-	$volume = ($_POST['lastrunname']==$runname && $_POST['lasttiltseries']==$tiltseriesId) ? $_POST['volume']:$autovolumename;
 	$tomofilename = ($_POST['tomofilename']) ? $_POST['tomofilename'] : '';
 	$xffilename = ($_POST['xffilename']) ? $_POST['xffilename'] : '';
-	$orientation = ($_POST['orientation']) ? $_POST['orientation'] : '';
+	$fulltomocheck = ($_POST['tomogramtype'] == 'full' || !($_POST['tomogramtype'])) ? "CHECKED" : "";
+	$subtomocheck = ($_POST['tomogramtype'] == 'sub') ? "CHECKED" : "";
+	$default_orientation =  ($fulltomocheck) ? "XZY:left-handed" : "XYZ:left-handed";
+	$orientation = ($_POST['orientation'] && $last_subtomocheck===$subtomocheck) ? $_POST['orientation'] : $default_orientation;
 	$snapshot = ($_POST['snapshot']) ? $_POST['snapshot'] : '';
 	$description = $_POST['description'];
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
 	$tiltSeriesSelector = $seriesselector_array[0];
+	$volumeruns = $particle->countTomogramsByAlignment($tiltseriesId,$runname);
+	$autovolumename = 'volume'.($volumeruns+1);
+	if ($subtomocheck)
+		$volume = ($_POST['lastrunname']==$runname && $_POST['lasttiltseries']==$tiltseriesId && $_POST['lastsubtomocheck']===$subtomocheck) ? $_POST['volume']:$autovolumename;
 	$basedir = ($_POST['basedir']) ? $_POST['basedir'] : $basedir;
 
 	// Need these to notify that the values has changed in the next reload
 	echo "<input type='hidden' name='lasttiltseries' value='$tiltseriesId'>\n";
 	echo "<input type='hidden' name='lastrunname' value='$runname'>\n";
-  
+	echo "<input type='hidden' name='lastsubtomocheck' value='$subtomocheck'>\n";
+ 
+	// Create Input Table 
 	echo"
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
     <TD VALIGN='TOP'>\n";
 	
+	// Tomogram files input
   echo"
 	<B>Original Tomogram file name with path:</B><br>
       <INPUT TYPE='text' NAME='tomofilename' VALUE='$tomofilename' SIZE='50'><br />\n
@@ -92,6 +99,18 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	<B>(Optional) Original Snapshot file name with path:</B><br>
       <INPUT TYPE='text' NAME='snapshot' VALUE='$snapshot' SIZE='50'><br />\n";
 
+	// Tomogram type input
+	echo "<b>Tomogram type</b> <input type='radio'onClick=submit() name='tomogramtype' value='full' $fulltomocheck>\n";
+	echo "Full Tomogram<font size=-2><i>(default)</i></font>\n";
+	echo "&nbsp;<input type='radio'onClick=submit() name='tomogramtype' value='sub' $subtomocheck>\n";
+	echo "Sub-Tomogram<font size=-2></font>\n";
+	echo "
+      </TD>
+    </tr>
+    <TR>
+      <TD VALIGN='TOP' >";
+       
+	// Tomogram orientation input
 	$choices = array('XYZ:right-handed','XYZ:left-handed','XZY:right-handed','XZY:left-handed');	
 	$selector = '<select name="orientation" '
 				.'size=5 '
@@ -107,6 +126,8 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	$selector .= '</select>';
 	echo $selector;
 	echo docpop('tomoorientation', 'Tomogram Orientation');
+
+	// Description
 	echo"<P>
       <B>Tomogram Description:</B><br>
       <TEXTAREA NAME='description' ROWS='2' COLS='40'>$description</TEXTAREA>
@@ -116,6 +137,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
       <TD VALIGN='TOP' CLASS='tablebg'>";       
 
 
+	// Tomogram Parameters
 	echo "
 	
 		<B> <CENTER>Tomogram Params: </CENTER></B>
@@ -126,9 +148,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 		echo "<FONT>(additional binning in tomogram)</FONT>
 		<p><br />";
 		echo $seriesselector_array[0];
-  #    <INPUT TYPE='text' NAME='tiltseries' VALUE='$tiltseries' SIZE='5'>\n";
 		echo docpop('tiltseries_upload', 'Tilt Series');
-		#echo "<FONT>(tilt series)</FONT>";
    
 	if (!$sessionname) {
 		echo "
@@ -143,12 +163,16 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 		echo docpop('tomorunname', 'Runname');
    	echo "<FONT>(full tomogram reconstruction run name)</FONT>";     
 
-		echo "	  		
-		<p><br />
-      <INPUT TYPE='text' NAME='volume' VALUE='$volume' SIZE='10'>\n";
-		echo docpop('volume', 'Volume');
-   	echo "<FONT>(subvolume name)</FONT>     
-
+		if ($subtomocheck) {
+			echo "	  		
+			<p><br />
+				<INPUT TYPE='text' NAME='volume' VALUE='$volume' SIZE='10'>\n";
+			echo docpop('volume', 'Volume');
+			echo "<FONT>(subvolume name)</FONT>";
+		} else {
+			echo "<input type='hidden' name='volume' value=''>\n";
+		}
+		echo "
 		<P>
       </TD>
    </tr>
@@ -158,6 +182,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	<tr>
 	<td>
 	";
+		// Tomogram outdir contains also tiltseries number which can't be certain at this point
 		echo docpop('basedir','<b>Base Output directory:</b>');
 		echo "<br/>\n";
 		echo "<input type='text' name='basedir' value='$basedir'size=' 50'>\n";
@@ -185,16 +210,19 @@ function runUploadTomogram() {
 	PART 1: Get variables
 	******************** */
 
+	$basedir=$_POST['basedir'];
+	$runname=$_POST['runname'];
+	$sessionname=$_POST['sessionname'];
+	$description=$_POST['description'];
+
 	$tomofilename=$_POST['tomofilename'];
 	$xffilename=$_POST['xffilename'];
 	$tiltseriesId=$_POST['tiltseriesId'];
-	$runname=$_POST['runname'];
-	$volume=$_POST['volume'];
-	$sessionname=$_POST['sessionname'];
+	$tomogramtype=$_POST['tomogramtype'];
+	$volume =  ($tomogramtype == 'sub') ? $_POST['volume']: '';
 	$extrabin=$_POST['extrabin'];
 	$snapshot=$_POST['snapshot'];
 	$orientation=$_POST['orientation'];
-	$basedir=$_POST['basedir'];
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
@@ -205,8 +233,9 @@ function runUploadTomogram() {
 //make sure a tomogram was entered
 	if (!$tomofilename) createUploadTomogramForm("<B>ERROR:</B> Enter a tomogram to be uploaded");
 	//make sure a description was provided
-	$description=$_POST['description'];
 	if (!$description) createUploadTomogramForm("<B>ERROR:</B> Enter a brief description of the tomogram");
+	//make sure a volume name was provided for subtomogram
+	if ($tomogramtype == 'sub' && !$volume) createUploadTomogramForm("<B>ERROR:</B> Enter a short one-word subtomogram volume name");
 
 	/* *******************
 	PART 3: Create program command
