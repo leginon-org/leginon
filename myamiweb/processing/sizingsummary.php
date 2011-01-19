@@ -22,7 +22,6 @@ $javascript.= editTextJava();
 
 processing_header("Object Size/Shape Analysis Results", "Object Size/Shape Analysis Results", $javascript, False);
 
-	echo "<h3> *Firefox does not allow link to local file.  Right-click on the link and copy the link location and then paste on a different tab or window</h3>";
 $particle = new particledata();
 if ($particle->hasParticleData($expId)) {
 	//$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev', 'img');
