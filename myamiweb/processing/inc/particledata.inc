@@ -1201,7 +1201,9 @@ class particledata {
 		$links=array(
 			'stackId'=>"stackreport.php?expId=$expId&sId="
 			,'particleSelection'=>"particlerunreport.php?expId=$expId&rId="
+			,'objectTracing'=>"particlerunreport.php?expId=$expId&rId="
 			,'aligner'=>"tomoalignercyclereport.php?expId=$expId&aId="
+			,'sizingreport'=>""
 		);
 		if (count($params) ==0) return;
 		echo "<h4>".$title."</h4>";
@@ -4321,6 +4323,27 @@ class particledata {
 	//------ -------------------- ---------//
 	//------ Loop again functions ---------//
 	//------ -------------------- ---------//
+
+	function getJobProgramRunsInSession ($sessionid,$jobtype) {
+		$q = "SELECT DISTINCT "
+			."  progrun.`DEF_id` "
+			.", progrun.`runname` "
+			.", runpath.`path` AS rundir "
+			."FROM ApAppionJobData job "
+			."LEFT JOIN ScriptProgramRun as progrun "
+			."  ON job.`DEF_id` = progrun.`REF|ApAppionJobData|job` "
+			."LEFT JOIN ApPathData as runpath "
+			."  ON runpath.`DEF_id` = progrun.`REF|ApPathData|rundir` "
+			."WHERE "
+			."  job.`REF|leginondata|SessionData|session` = $sessionid "
+			."AND "
+			."  job.`jobtype` = '".$jobtype."' "
+			."; ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
 
 	function getLoopProgramRuns () {
 		$q = "SELECT DISTINCT "
