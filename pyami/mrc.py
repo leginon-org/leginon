@@ -344,8 +344,12 @@ def updateHeaderDefaults(header):
 	header['maps'] = 3
 	header['map'] = 'MAP '
 	header['byteorder'] = byteorderint[sys.byteorder]
+	header['amin'] = 0.0
+	header['amax'] = 0.0
+	header['amean'] = 0.0
+	header['rms'] = 0.0
 
-def updateHeaderUsingArray(header, a):
+def updateHeaderUsingArray(header, a, calc_stats=True):
 	'''
 	Fills in values of MRC header dictionary using the given array.
 	'''
@@ -378,11 +382,12 @@ def updateHeaderUsingArray(header, a):
 		header['ylen'] = ny * psize['y']
 		header['zlen'] = nz * psize['x']
 
-	stats = arraystats.all(a)
-	header['amin'] = stats['min']
-	header['amax'] = stats['max']
-	header['amean'] = stats['mean']
-	header['rms'] = stats['std']
+	if calc_stats:
+		stats = arraystats.all(a)
+		header['amin'] = stats['min']
+		header['amax'] = stats['max']
+		header['amean'] = stats['mean']
+		header['rms'] = stats['std']
 
 	### changed next lines to be equivalent to proc3d origin=0,0,0
 	header['xorigin'] = 0
@@ -478,7 +483,7 @@ def readDataFromFile(fobj, headerdict):
 	a.shape = shape
 	return a
 
-def write(a, f, header=None):
+def write(a, f, header=None, calc_stats=True):
 	'''
 Write ndarray to a file
 a = numpy ndarray to be written
@@ -489,7 +494,7 @@ Always saves in the native byte order.
 
 	h = newHeader()
 	updateHeaderDefaults(h)
-	updateHeaderUsingArray(h, a)
+	updateHeaderUsingArray(h, a, calc_stats=calc_stats)
 
 	if header is not None:
 		h.update(header)
@@ -575,7 +580,7 @@ def appendArray(a, f):
 		end = start + items_per_write
 		b[start:end].tofile(f)
 
-def append(a, filename):
+def append(a, filename, calc_stats=True):
 	# read existing header
 	f = open(filename, 'rb+')
 	f.seek(0)
@@ -584,7 +589,7 @@ def append(a, filename):
 
 	# make a header for new array
 	newheader = {}
-	updateHeaderUsingArray(newheader, a)
+	updateHeaderUsingArray(newheader, a, calc_stats=calc_stats)
 
 	## check that new array is compatible with old array
 	notmatch = []
