@@ -24,7 +24,6 @@ $formAction=$_SERVER['PHP_SELF']."?expId=$expId&tomoId=$tomoId";
 $javascript="<script src='../js/viewer.js'></script>\n";
 $javascript.= editTextJava();
 
-
 processing_header("Full Tomogram Report","Full Tomogram Report Page", $javascript);
 if (!$tomoId) {
 	processing_footer();
@@ -48,12 +47,30 @@ $tomograminfo['excluded imageIds'] = strtr($tomograminfo['excluded imageIds'],$s
 $tomograminfo['align method'] = $alignment['method'];
 $tomograminfo['tomogram path'] = $tomogram['path'];
 $tomograminfo['hidden'] = $tomogram['hidden'];
-$excluded_keys = array('path','tilt number');
+$tomograminfo['zprojection image'] = $tomogram['zproj_id'];
+$excluded_keys = array('path','tilt number','zproj_id');
 echo "<table><tr><td colspan=2>\n";
 $particle->displayParameters($title,$tomograminfo,$excluded_keys,$expId,'',True);
 echo "</form>";
 echo "</td></tr>";
 echo "<tr>";
+echo "<td>";
+echo "<h4> Full tomogram is too large to be manipulated through web browser. Please use off-line tools such as 3dmod </h4>";
+echo "<h5> You will find the tomogram in mrc format as:<br> \n";
+echo $tomogram['path'].'/'.$tomogram['tomofilename'].".rec </h5>";
+echo "</td></tr>";
+echo "<tr>";
+// ---Zprojection --- //
+if ($tomograminfo['zproj_id']) {
+	echo "<td>";
+	echo "Projection to xy plane:<br>";
+echo "
+<img src=../getimg.php?preset=all&session=".$expId."&id=".$tomograminfo['zproj_id']."&s=400&t=80&tg=1&sb=1&flt=default&fftbin=b&binning=auto&autoscale=s;3&df=3&lj=1&g=1&opt=2'>
+";
+echo "</td></tr>";
+echo "<tr>";
+}
+
 // --- SnapShot --- //
 $snapshotfile = $tomogram['path']."/snapshot.png";
 if (file_exists($snapshotfile)) {
@@ -63,6 +80,7 @@ if (file_exists($snapshotfile)) {
 	echo "</td>";
 }
 echo "<td>";
+
 // --- Display Flash Movie from flv --- //
 @require_once('getid3/getid3.php');
 function getflvsize($filename) {
