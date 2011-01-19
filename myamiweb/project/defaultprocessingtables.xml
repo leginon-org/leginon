@@ -23,7 +23,8 @@
     <field 
       name="DEF_timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
+      default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
     />
     <field 
       name="REF|ApPathData|path" 
@@ -84,7 +85,8 @@
     <field 
       name="DEF_timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
+      default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'"  
     />
     <field 
       name="REF|ApPathData|path" 
@@ -155,7 +157,8 @@
     <field 
       name="DEF_timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
+      default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
     />
     <field 
       name="path" 
@@ -175,7 +178,8 @@
     <field 
       name="DEF_timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
+      default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
     />
     <field 
       name="eman_name" 
@@ -208,7 +212,8 @@
     <field 
       name="DEF_timestamp" 
       type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
+      default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
     />
     <field 
       name="REF|ApPathData|path" 
