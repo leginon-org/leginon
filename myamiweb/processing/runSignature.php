@@ -462,8 +462,7 @@ function runSignaturePicker() {
 
 		$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
-
-		$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);
+		$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin'],$_POST['process']);
 		createSigForm($false,'Particle Selection Results','Particle Selection Results',$results);
 		exit;
 	} else {

@@ -220,7 +220,7 @@ function runDogPicker() {
 			$ccclist=array();
 			$cccimg=$outdir.$runname."/maps/".$testjpg.".dogmap1.jpg";
 			$ccclist[]=$cccimg;
-			$results.=writeTestResults($jpgimg,$ccclist,$_POST['bin']);
+			$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin'],$_POST['process']);
 			createDogPickerForm(false,'Particle Selection Test Results','Particle Selection Test Results',$results);
 		} else {
 			processing_header("Particle Selection Results","DogPicker Command");
