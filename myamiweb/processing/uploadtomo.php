@@ -99,16 +99,18 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	<B>(Optional) Original Snapshot file name with path:</B><br>
       <INPUT TYPE='text' NAME='snapshot' VALUE='$snapshot' SIZE='50'><br />\n";
 
-	// Tomogram type input
-	echo "<b>Tomogram type</b> <input type='radio'onClick=submit() name='tomogramtype' value='full' $fulltomocheck>\n";
-	echo "Full Tomogram<font size=-2><i>(default)</i></font>\n";
-	echo "&nbsp;<input type='radio'onClick=submit() name='tomogramtype' value='sub' $subtomocheck>\n";
-	echo "Sub-Tomogram<font size=-2></font>\n";
 	echo "
       </TD>
     </tr>
     <TR>
       <TD VALIGN='TOP' >";
+	// Tomogram type input
+	echo "<p>";
+	echo "<b>Tomogram type</b> <input type='radio'onClick=submit() name='tomogramtype' value='full' $fulltomocheck>\n";
+	echo "Full Tomogram<font size=-2><i>(default)</i></font>\n";
+	echo "&nbsp;<input type='radio'onClick=submit() name='tomogramtype' value='sub' $subtomocheck>\n";
+	echo "Sub-Tomogram<font size=-2></font>\n";
+	echo "</p>";
        
 	// Tomogram orientation input
 	$choices = array('XYZ:right-handed','XYZ:left-handed','XZY:right-handed','XZY:left-handed');	
