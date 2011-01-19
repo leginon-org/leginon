@@ -58,7 +58,7 @@ function createAppionScriptForm($extra=false, $title=FORM_TITLE, $heading=FORM_H
 	// Set any existing parameters in form
 	$canalysisruns = $particle->getJobIdsFromSession($expId,SCRIPT_NAME,false,false);
 	$canalysiscount = (is_array($canalysisruns)) ? count($canalysisruns) : 0;
-	$autorunname = ($autoreconruns) ? 'sizing'.($autoreconcount+1):'sizing1';
+	$autorunname = ($canalysisruns) ? 'sizing'.($canalysiscount+1):'sizing1';
 	$runname = ($_POST['runname']) ? $_POST['runname']:$autorunname;
 	$outdir = ($_POST['outdir']) ? $_POST['outdir']: $outdir;
 	$description = ($_POST['description']) ? $_POST['description']: $description;
