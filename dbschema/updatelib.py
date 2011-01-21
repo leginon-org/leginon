@@ -1,41 +1,70 @@
 #!/usr/bin/env python
 import time
-from sinedon import dbupgrade, dbconfig
 from leginon import version
 import xml.dom.minidom as dom
 
 def getUpdateRevisionSequence():
 	if version.getSVNBranch() == 'trunk':
-		schema_revisions = [12857,13713,14077,14891,15069,15248,15251]
-	if version.getSVNBranch() == 'myami-2.1':
-		schema_revisions = [12857,13713,14077,14891]
+		schema_revisions = [12857,13713,14077,14891,15069,15248,15251,15293]
+	elif version.getSVNBranch() == 'myami-2.1':
+		schema_revisions = [12857,13713,14077,14891,15293]
+	elif version.getSVNBranch() == 'myami-2.0':
+		schema_revisions = [12857,13713,14077,15293]
 	return schema_revisions
 
 def getCheckOutRevision():
 	try:
+		# Only svn checkout have integer revision number
 		return int(version.getVersion())
 	except:
-		print 'failed to get an integer revision'
-	return False
+		release_revision = getReleaseRevisionFromXML()
+		if release_revision:
+			return release_revision
+		else:
+			# For unknown releases, assume head revision
+			return 1000000000
 
-def getDatabaseRevision(projectdb):
+def getDatabaseRevision(project_dbupgrade):
 	### get revision from database
 	selectq = " SELECT value FROM `install` WHERE `key`='revision'"
-	values = projectdb.returnCustomSQL(selectq)
+	values = project_dbupgrade.returnCustomSQL(selectq)
 	if values:
 		return int(values[0][0])
 	else:
 		# myami-2.0 database has no revision record
 		return 14077
-	
-def needUpdate(projectdb,checkout_revision,selected_revision):
+
+def allowVerisionLog(project_dbupgrade,checkout_revision):
+	'''
+		Package version log is allowed only if the checkout_revision
+		ahead of the current revision_in_database less than one
+		required update ahead
+	'''
+	revision_in_database = getDatabaseRevision(project_dbupgrade)
+	if checkout_revision <= revision_in_database:
+		print '\033[35mDatabase version log up to date, Nothing to do\033[0m'
+		return False
+	schema_revisions = getUpdateRevisionSequence()
+	schema_revisions.sort()
+	schema_revisions.reverse()
+	for revision in schema_revisions:
+		if revision < checkout_revision:
+			minimal_revision_in_database = revision
+			break
+	if minimal_revision_in_database <= revision_in_database:
+		return True
+	else:
+		print '\033[35mYou must successfully run schema-r%d.py first\033[0m' % (minimal_revision_in_database)
+		return False
+
+def needUpdate(project_dbupgrade,checkout_revision,selected_revision):
 	''' 
 		database update of the schema at selected_revision is 
 		performed only if the checkout_revision
 		is newer than the selected_revision and that previous
 		update was made successfully as recorded in the database
 	'''
-	revision_in_database = getDatabaseRevision(projectdb)
+	revision_in_database = getDatabaseRevision(project_dbupgrade)
 	schema_revisions = getUpdateRevisionSequence()
 	try:
 		index = schema_revisions.index(selected_revision)
@@ -84,13 +113,13 @@ def getReleaseRevisionFromXML():
 	if 'revision' in installdata:
 		return int(installdata['revision'])
 
-def updateDatabaseRevision(projectdb,current_revision):
+def updateDatabaseRevision(project_dbupgrade,current_revision):
 	### set version of database
 	selectq = " SELECT * FROM `install` WHERE `key`='revision'"
-	values = projectdb.returnCustomSQL(selectq)
+	values = project_dbupgrade.returnCustomSQL(selectq)
 	if values:
-		projectdb.updateColumn("install", "value", "'%d'" % (current_revision), 
+		project_dbupgrade.updateColumn("install", "value", "'%d'" % (current_revision), 
 			"install.key = 'revision'",timestamp=False)
 	else:
 		insertq = "INSERT INTO `install` (`key`, `value`) VALUES ('revision', %d)"% (current_revision)
-		projectdb.executeCustomSQL(insertq)
+		project_dbupgrade.executeCustomSQL(insertq)

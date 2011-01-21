@@ -62,10 +62,14 @@ def getSVNInfo():
 	currentpath = os.getcwd()
 	os.chdir(modulepath)
 	try:
-		svninfo = subprocess.Popen('svn info', shell=True, stdout=subprocess.PIPE).stdout.read()
+		p = subprocess.Popen('svn info', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		svninfo,svnerror = p.communicate()
+		os.chdir(currentpath)
 	except:
-		svninfo = ''
-	os.chdir(currentpath)
+		raise
+	# releases have no svn info
+	if svnerror:
+		return {}
 	infolist = svninfo.split('\n')
 	infodict = {}
 	for line in infolist:
@@ -94,6 +98,9 @@ def getSVNBranch():
 		branch = branch.strip('/branches')
 		branch = branch.strip('/')
 		return branch
+	else:
+		release_branch = getTextVersion()
+		return 'myami-'+release_branch
 
 def getInstalledLocation():
 	'''where is this module located'''
