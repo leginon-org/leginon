@@ -208,8 +208,9 @@ class ManualAcquisition(node.Node):
 		d1 = self.settings['defocus1switch']
 		d2 = self.settings['defocus2switch']
 		thisd = self.defocus
-		if d1 and thisd == 1:
-			number +=1
+		if d1:
+			if thisd == 1:
+				number +=1
 		else:
 			number += 1
 
