@@ -9,7 +9,7 @@ def getUpdateRevisionSequence():
 	elif version.getSVNBranch() == 'myami-2.1':
 		schema_revisions = [12857,13713,14077,14891,15293]
 	elif version.getSVNBranch() == 'myami-2.0':
-		schema_revisions = [12857,13713,14077,15293]
+		schema_revisions = [12857,13713,14077,14380,15293]
 	return schema_revisions
 
 def getCheckOutRevision():
