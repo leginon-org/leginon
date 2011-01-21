@@ -201,8 +201,18 @@ class ManualAcquisition(node.Node):
 				n = int(filename[-digits - end:-end])
 				if n > number:
 					number = n
-		if self.defocus != 2:
+
+		# both off increment
+		# switch1 on increment when defocus = 1
+		# switch1 off and swithc2 on :  increment when defocus = 2
+		d1 = self.settings['defocus1switch']
+		d2 = self.settings['defocus2switch']
+		thisd = self.defocus
+		if d1 and thisd == 1:
+			number +=1
+		else:
 			number += 1
+
 		if number >= 10**digits:
 			raise node.PublishError('too many images, time to go home')
 		filename = ('%s_%0' + str(digits) + 'd%s' + '%s') % (prefix, number, suffix, defindex)
