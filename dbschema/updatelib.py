@@ -2,6 +2,7 @@
 import time
 from sinedon import dbupgrade, dbconfig
 from leginon import version
+import xml.dom.minidom as dom
 
 def getUpdateRevisionSequence():
 	if version.getSVNBranch() == 'trunk':
@@ -56,6 +57,32 @@ def needUpdate(projectdb,checkout_revision,selected_revision):
 	else:
 		print "\033[35mCode not yet at r%d\033[0m" % (selected_revision)
 	return False
+
+def getReleaseRevisionFromXML():
+	leginonpath = version.getInstalledLocation()
+	pieces = leginonpath.split('/')
+	xmlpathpieces = pieces[:-1]
+	xmlpathpieces.extend(['myamiweb','xml','projectDefaultValues.xml'])
+	xmlfilepath = '/'.join(xmlpathpieces)
+	curkey = None
+	installdata = {}
+	try:
+		xmlapp = dom.parse(xmlfilepath)
+	except:
+		raise ValueError('unable to parse XML file "%s"' % xmlfilepath)
+	defaulttables = xmlapp.getElementsByTagName('defaulttables')[0]
+	data = defaulttables.getElementsByTagName('data')[0]
+	sqltables = defaulttables.getElementsByTagName('sqltable')
+	for node in sqltables:
+		if node.attributes['name'].value == 'install':
+			for n in node.childNodes:
+				if n.nodeName == 'field':
+					if n.attributes['name'].value == 'key':
+						curkey = n.firstChild.data
+					if n.attributes['name'].value == 'value':
+						installdata[curkey] = n.firstChild.data
+	if 'revision' in installdata:
+		return int(installdata['revision'])
 
 def updateDatabaseRevision(projectdb,current_revision):
 	### set version of database
