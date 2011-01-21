@@ -24,6 +24,7 @@ messaging = {
 	'rename query': False,
 	'create query': True,
 	'update query': True,
+	'insert query': True,
 }
 
 class DBUpgradeTools(object):
