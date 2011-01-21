@@ -56,7 +56,6 @@ import sqldict
 import MySQLdb
 import newdict
 import cPickle
-import dbconfig
 
 def backquote(inputstr):
 		"""
@@ -730,17 +729,17 @@ def _likeQuote(s):
 def selectAllFormat(field):
 	return "SELECT %s.* " % backquote(field)
 
-def fromFormat(dataclass, alias=None):
-	dbname = dbconfig.getConfig(dataclass.__module__)['db']
+def fromFormat(dbconfig, dataclass, alias=None):
+	dbname = dbconfig['db']
 	tablename = dataclass.__name__
 	sqlfrom = "FROM %s.%s " % (backquote(dbname), backquote(tablename))
 	if alias is not None:
 		sqlfrom += "AS %s " % backquote(alias)
 	return sqlfrom
 
-def joinFormat(field, joinTable):
+def joinFormat(dbconfig, field, joinTable):
 	dataclass = joinTable['class']
-	dbname = dbconfig.getConfig(dataclass.__module__)['db']
+	dbname = dbconfig['db']
 	dbname = backquote(dbname)
 	tablename = backquote(joinTable['class'].__name__)
 	alias = backquote(joinTable['alias'])

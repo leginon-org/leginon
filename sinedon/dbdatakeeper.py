@@ -6,15 +6,12 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
-import sqldict
+import sinedon.data
+import sinedon.sqldict
 import threading
 import logging
 import _mysql_exceptions
 import MySQLdb.constants.CR
-import dbconfig
-
-columns_created = {}
 
 class DatabaseError(Exception):
 	pass
@@ -32,11 +29,14 @@ class DBDataKeeper(object):
 	def __init__(self, logger=None, **kwargs):
 		self.logger = logger
 		try:
-			self.dbd = sqldict.SQLDict(**kwargs)
+			print 'KWARGS', kwargs
+			self.dbd = sinedon.sqldict.SQLDict(**kwargs)
 		except _mysql_exceptions.OperationalError, e:
 			raise DatabaseError(e.args[-1])
 		#self.mysqldb = self.dbd.db
 		self.lock = threading.RLock()
+		self.columns_created = {}
+		self.imported_data = {}
 
 	def connect_kwargs(self):
 		return self.dbd.connect_kwargs()
@@ -63,13 +63,15 @@ class DBDataKeeper(object):
 		if len(myresult) == 0:
 			return None
 		elif len(myresult) == 1:
-			return myresult[0]
+			myresult = myresult[0]
+			myresult.dbconfig = self.connect_kwargs()
+			return myresult
 		else:
 			raise RuntimeError('direct_query should only return a single result')
 
 	def _reconnect(self):
 		try:
-			self.dbd = sqldict.SQLDict()
+			self.dbd = sinedon.sqldict.SQLDict()
 		except _mysql_exceptions.OperationalError, e:
 			raise DatabaseError(e.args[-1])
 
@@ -88,6 +90,8 @@ class DBDataKeeper(object):
 					self._reconnect()
 		finally:
 			self.lock.release()
+		for x in result:
+			x.dbconfig = self.connect_kwargs()
 		return result
 
 	def _query(self, idata, readimages=True, timelimit=None, limit=None):
@@ -126,18 +130,18 @@ class DBDataKeeper(object):
 	def qid(self, mydata):
 		### what are the chances that there will be a conflict
 		### because a dbid is the same as a python id?
-		if isinstance(mydata, data.DataReference):
+		if isinstance(mydata, sinedon.data.DataReference):
 			myclassname = mydata.dataclass.__name__
 			if mydata.dbid is not None:
 				myid = myclassname+str(mydata.dbid)
 			else:
 				mydata = mydata.getData()
 				myid = id(mydata)
-		elif isinstance(mydata, data.Data):
+		elif isinstance(mydata, sinedon.data.Data):
 			myid = id(mydata)
 			myclassname = mydata.__class__.__name__
 		else:
-			raise RuntimeError('need Data or DataReference')
+			raise RuntimeError('need Data or DataReference: %s' % (mydata.__class__,))
 		return {'id': myid, 'data': mydata}
 
 	def datainfo(self, mydata, dbid=None, timelimit=None, limit=None):
@@ -149,7 +153,7 @@ class DBDataKeeper(object):
 		myalias = classname + str(stuff['id'])
 		myid = stuff['id']
 		info = {}
-		if isinstance(mydata, data.DataReference):
+		if isinstance(mydata, sinedon.data.DataReference):
 			info['class'] = mydata.dataclass
 		else:
 			info['class'] = mydata.__class__
@@ -178,7 +182,7 @@ class DBDataKeeper(object):
 				if value is None:
 					pass
 
-				elif isinstance(value, (data.Data, data.DataReference)):
+				elif isinstance(value, (sinedon.data.Data, sinedon.data.DataReference)):
 					stuff = self.qid(value)
 					joindict[key] = stuff['id']
 				else:
@@ -197,6 +201,8 @@ class DBDataKeeper(object):
 
 		info['root'] = isroot
 
+		info['dbconfig'] = self.connect_kwargs()
+
 		finalinfo = {myid: info}
 		return [finalinfo]
 
@@ -210,9 +216,9 @@ class DBDataKeeper(object):
 
 		myresult = []
 
-		if isinstance(originaldata, data.Data):
+		if isinstance(originaldata, sinedon.data.Data):
 			for key,value in originaldata.items(dereference=False):
-				if isinstance(value, data.DataReference):
+				if isinstance(value, sinedon.data.DataReference):
 					if value.dbid is None:
 						value = value.getData()
 					childresult = self.accumulateData(value, memo=memo, timelimit=timelimit, limit=limit)
@@ -247,31 +253,97 @@ class DBDataKeeper(object):
 		finally:
 			self.lock.release()
 
+	def initImported(self, source_host, source_db):
+		confkey = source_host,source_db
+		self.imported_data[confkey] = {}
+		source_confdata = sinedon.importdata.ImportDBConfigData(host=source_host, db=source_db)
+		dest_config = self.connect_kwargs()
+		dest_host = dest_config['host']
+		dest_db = dest_config['db']
+		dest_confdata = sinedon.importdata.ImportDBConfigData(host=dest_host, db=dest_db)
+		mappingdata = sinedon.importdata.ImportMappingData(source_config=source_confdata, destination_config=dest_confdata)
+		mappingdata = self.query(mappingdata)
+		for m in mappingdata:
+			classname = m['class_name']
+			old_dbid = m['old_dbid']
+			if classname not in self.imported_data[confkey]:
+				self.imported_data[confkey][classname] = {}
+			self.imported_data[confkey][classname][old_dbid] = m['new_dbid']
+
+	def queryImported(self, source_host, source_db, dataclass, source_dbid):
+		import sinedon.importdata
+		confkey = source_host,source_db
+		if confkey not in self.imported_data:
+			self.initImported(source_host, source_db)
+
+		try:
+			return self.imported_data[confkey][dataclass][source_dbid]
+		except KeyError:
+			return None
+
+	def insertImported(self, source_host, source_db, dataclass, source_dbid, new_dbid):
+		import sinedon.importdata
+		confkey = source_host,source_db
+		if confkey not in self.imported_data:
+			self.initImported(source_host, source_db)
+		if dataclass in self.imported_data[confkey] and source_dbid in self.imported_data[confkey][dataclass]:
+			return
+		source_confdata = sinedon.importdata.ImportDBConfigData(host=source_host, db=source_db)
+		dest_config = self.connect_kwargs()
+		dest_host = dest_config['host']
+		dest_db = dest_config['db']
+		dest_confdata = sinedon.importdata.ImportDBConfigData(host=dest_host, db=dest_db)
+		mappingdata = sinedon.importdata.ImportMappingData(source_config=source_confdata, destination_config=dest_confdata, old_dbid=source_dbid, new_dbid=new_dbid, class_name=dataclass)
+		mappingdata.insert()
+		if dataclass not in self.imported_data[confkey]:
+			self.imported_data[confkey][dataclass] = {}
+		self.imported_data[confkey][dataclass][source_dbid] = new_dbid
+
 	def recursiveInsert(self, newdata, force=False):
 		'''
 		recursive insert will insert an objects children before
 		inserting an object
 		'''
-		### get out of here if already in database
-		if newdata.dbid is not None:
+		### get out of here if already mapped to this database
+		if self in newdata.mappings:
 			return
+		print 'RECURSIVE', newdata.__class__, newdata.dbid, newdata.dbconfig
+
+		### check for existing mappings, which indicates that we are
+		### copying data form other db to this db.
+		dataclass = newdata.__class__.__name__
+		dbinfo = self.connect_kwargs()
+		for other_db, other_dbid in newdata.mappings.items():
+			other_config = other_db.connect_kwargs()
+			new_id = self.queryImported(other_config['host'], other_config['db'], dataclass, other_dbid)
+			if new_id is None:
+				# Need to import
+				doimport = True
+				force = True
+				writeimages = False
+			else:
+				# Already imported
+				newdata.setPersistent(dbinfo, new_id)
+				return
 
 		## insert children if they are Data instances
-		## and have never been inserted
-		## Look at reference first to avoid unecessary getData()
 		for value in newdata.values(dereference=False):
-			if isinstance(value, data.DataReference):
-				if value.dbid is None:
+			if isinstance(value, sinedon.data.DataReference):
+				# is there a way to check if already done before getData()?
+				if True:
 					dat = value.getData()
-					self.recursiveInsert(dat)
+					dat.insert()
+					#self.recursiveInsert(dat)
 
 		## insert this object
 		dbinfo = self.connect_kwargs()
 		dbid = self.flatInsert(newdata, force=force)
-		newdata.setPersistent(dbid)
+		for other_db, other_dbid in newdata.mappings.items():
+			other_config = other_db.connect_kwargs()
+			self.insertImported(other_config['host'], other_config['db'], dataclass, other_dbid, dbid)
+		newdata.setPersistent(dbinfo, dbid)
 
 	def _insert(self, newdata, force=False):
-		#self.flatInsert(newdata)
 		self.dbd.ping()
 		try:
 			return self.recursiveInsert(newdata, force=force)
@@ -281,21 +353,22 @@ class DBDataKeeper(object):
 			raise InsertError(e.args[-1])
 
 	def flatInsert(self, newdata, force=False, skipinsert=False, fail=True):
-		dbname = dbconfig.getConfig(newdata.__module__)['db']
+		dbconf = self.connect_kwargs()
+		dbname = dbconf['db']
 		tablename = newdata.__class__.__name__
 		table = (dbname, tablename)
-		definition, formatedData = sqldict.dataSQLColumns(newdata, fail)
+		definition, formatedData = sinedon.sqldict.dataSQLColumns(newdata, fail)
 		## check for any new columns that have not been created
-		if table not in columns_created:
-			columns_created[table] = {}
+		if table not in self.columns_created:
+			self.columns_created[table] = {}
 		fields = [d['Field'] for d in definition]
 		for field in formatedData.keys():
 			if field not in fields:
 				del formatedData[field]
 		create_table = False
 		for field in fields:
-			if field not in columns_created[table]:
-				columns_created[table][field] = None
+			if field not in self.columns_created[table]:
+				self.columns_created[table][field] = None
 				create_table = True
 		if create_table:
 			self.dbd.createSQLTable(table, definition)
@@ -307,7 +380,7 @@ class DBDataKeeper(object):
 
 	def diffData(self, newdata):
 		table = newdata.__class__.__name__
-		definition, formated = sqldict.dataSQLColumns(newdata)
+		definition, formated = sinedon.sqldict.dataSQLColumns(newdata)
 		return self.dbd.diffSQLTable(table, definition)
 	
 

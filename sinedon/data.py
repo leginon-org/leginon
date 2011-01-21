@@ -5,16 +5,15 @@
 # see http://ami.scripps.edu/software/leginon-license
 
 import numpy
-import newdict
 import warnings
 import types
 import threading
-import dbdatakeeper
 import copy
 import tcptransport
 import weakref
 import os
-import connections
+import sinedon.connections
+import sinedon.newdict
 from pyami import weakattr
 import itertools
 
@@ -91,14 +90,18 @@ class DataManager(object):
 		## keep in the weak cache
 		self.weakcache[datainstance.dmid] = datainstance
 
-	def getDataFromDB(self, dataclass, dbid, **kwargs):
-		dbmodulename = dataclass.__module__
-		db = connections.getConnection(dbmodulename)
+	def makeDBCacheKey(self, dbconfig, dataclass, dbid):
+		key = (dbconfig['host'], dbconfig['db'], dataclass, dbid)
+		return key
 
+	def getDataFromDB(self, dataclass, dbconfig, dbid, **kwargs):
+		dbmodulename = dataclass.__module__
 		### try to get data from dbcache before doing query
 		try:
-			dat = self.dbcache[dataclass, dbid]
-		except KeyError:
+			key = self.makeDBCacheKey(dbconfig, dataclass, dbid)
+			dat = self.dbcache[key]
+		except:
+			db = sinedon.connections.getConnection(dbmodulename, dbconfig)
 			dat = db.direct_query(dataclass, dbid, **kwargs)
 		return dat
 
@@ -106,8 +109,10 @@ class DataManager(object):
 		if datainstance is None or datainstance.dbid is None:
 			return
 		dbid = datainstance.dbid
+		dbconfig = datainstance.dbconfig
 		dataclass = datainstance.__class__
-		self.dbcache[dataclass, dbid] = datainstance
+		key = self.makeDBCacheKey(dbconfig, dataclass, dbid)
+		self.dbcache[key] = datainstance
 
 	def getRemoteData(self, datareference):
 		dmid = datareference.dmid
@@ -131,6 +136,7 @@ class DataManager(object):
 		referent = None
 		dmid = datareference.dmid
 		dbid = datareference.dbid
+		dbconfig = datareference.dbconfig
 
 		#### try local weakrefs
 		try:
@@ -143,7 +149,7 @@ class DataManager(object):
 		if dbid is not None:
 			## in database
 			try:
-				referent = self.getDataFromDB(dataclass, dbid, **kwargs)
+				referent = self.getDataFromDB(dataclass, dbconfig, dbid, **kwargs)
 				return referent
 			except:
 				pass
@@ -171,7 +177,7 @@ class DataManager(object):
 			return self.cacheInsert(request)
 		elif isinstance(request, DataReference):
 			return self.query(request)
-		elif isinstance(request, newdict.FileReference):
+		elif isinstance(request, sinedon.newdict.FileReference):
 			return self.readFile(request)
 		else:
 			print 'bad request:', request
@@ -189,15 +195,20 @@ class DataReference(object):
 		dataclass (become a reference to a non-existing data instance)
 	if using dataclass, also specify either a dmid or a dbid
 	'''
-	def __init__(self, datareference=None, referent=None, dataclass=None, dmid=None, dbid=None):
+	def __init__(self, datareference=None, referent=None, dataclass=None, dmid=None, dbconfig=None, dbid=None, module=None):
 		self.dataclass = None
 		self.referent = None
 		self.dmid = None
+		self.dbconfig = None
+		self.dbconfig = None
 		self.dbid = None
+		self.mappings = {}
 		if datareference is not None:
 			self.dataclass = datareference.dataclass
 			self.dmid = datareference.dmid
+			self.dbconfig = datareference.dbconfig
 			self.dbid = datareference.dbid
+			self.mappings = datareference.mappings
 		elif referent is not None:
 			## Data
 			if isinstance(referent, Data):
@@ -210,7 +221,10 @@ class DataReference(object):
 				raise DataError('DataReference has neither a dmid nor a dbid')
 			self.dataclass = dataclass
 			self.dmid = dmid
+			self.dbconfig = dbconfig
 			self.dbid = dbid
+			db = sinedon.connections.getConnection(module, dbconfig)
+			self.mappings = {db: dbid}
 		elif dmid is not None:
 			self.dmid = dmid
 		else:
@@ -239,6 +253,8 @@ class DataReference(object):
 				self.referent = weakref.ref(o)
 			self.dmid = o.dmid
 			self.dbid = o.dbid
+			self.dbconfig = o.dbconfig
+			self.mappings = o.mappings
 			o.references[id(self)] = self
 
 	def getData(self, **kwargs):
@@ -267,7 +283,12 @@ class DataReference(object):
 			cls = 'unknown'
 		else:
 			cls = self.dataclass.__name__
-		s = 'DataReference[class: %s, dmid: %s, dbid: %s, referent: %s]' % (cls, self.dmid, self.dbid, ref)
+		if self.dbconfig is None:
+			dbhost = dbdb = None
+		else:
+			dbhost = self.dbconfig['host']
+			dbdb = self.dbconfig['db']
+		s = 'DataReference[class: %s, dmid: %s, host: %s, db: %s, dbid: %s, referent: %s]' % (cls, self.dmid, dbhost, dbdb, self.dbid, ref)
 		return s
 
 class UnknownData(object):
@@ -303,7 +324,7 @@ def dict2data(d, datatype):
 			pass
 	return instance
 
-class Data(newdict.TypedDict):
+class Data(sinedon.newdict.TypedDict):
 	'''
 	Combines DataDict and LeginonObject to create the base class
 	for all leginon data.  This can be initialized with keyword args
@@ -343,15 +364,21 @@ class Data(newdict.TypedDict):
 		## been inserted into the database
 		self.dbid = None
 
+		## db connection parameters used during query or insert of this data
+		self.dbconfig = None
+
 		## Set timestamp to None to have the DB automatically set it
 		self.timestamp = None
+
+		## record of dbconfig, dbid in the case of multiple DB connections
+		self.mappings = {}
 
 		## DataManager ID
 		## this is None, then this data has not
 		## been inserted into the DataManager
 		self.dmid = None
 
-		newdict.TypedDict.__init__(self)
+		sinedon.newdict.TypedDict.__init__(self)
 
 		self.references = weakref.WeakValueDictionary()
 
@@ -386,23 +413,23 @@ class Data(newdict.TypedDict):
 
 	def insert(self, **kwargs):
 		modulename = self.__module__
-		db = connections.getConnection(modulename)
+		db = sinedon.connections.getConnection(modulename)
 		db.insert(self, **kwargs)
 
 	def query(self, **kwargs):
 		modulename = self.__module__
-		db = connections.getConnection(modulename)
+		db = sinedon.connections.getConnection(modulename)
 		results = db.query(self, **kwargs)
 		return results
 
 	def close(self):
 		modulename = self.__module__
-		db = connections.getConnection(modulename)
+		db = sinedon.connections.getConnection(modulename)
 		db.close()
 
 	def direct_query(cls, dbid, **kwargs):
 		modulename = cls.__module__
-		db = connections.getConnection(modulename)
+		db = sinedon.connections.getConnection(modulename)
 		result = db.direct_query(cls, dbid, **kwargs)
 		return result
 	direct_query = classmethod(direct_query)
@@ -435,8 +462,11 @@ class Data(newdict.TypedDict):
 	def copy(self):
 		return self.__copy__()
 
-	def setPersistent(self, dbid):
+	def setPersistent(self, dbconfig, dbid):
+		self.dbconfig = dbconfig
 		self.dbid = dbid
+		db = sinedon.connections.getConnection(self.__module__, dbconfig)
+		self.mappings[db] = dbid
 		self.sync()
 		datamanager.setPersistent(self)
 
@@ -478,7 +508,7 @@ class Data(newdict.TypedDict):
 			return value
 		if isinstance(value, DataReference):
 			value = value.getData(**kwargs)
-		if isinstance(value, newdict.FileReference):
+		if isinstance(value, sinedon.newdict.FileReference):
 			try:
 				value = value.read()
 			except:
@@ -547,6 +577,7 @@ class Data(newdict.TypedDict):
 ## is specifically NULL in the database
 def NULL(dataclass):
 	d = dataclass()
-	d.setPersistent(0)
+	dbconf = {'host': None, 'db': None}
+	d.setPersistent(dbconf, 0)
 	return d
 

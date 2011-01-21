@@ -20,8 +20,16 @@ getConnection(modulename)
   Call this function to get a connection to the named database
 '''
 
-from data import Data
+from sinedon.data import Data
 from dbconfig import getConfig, setConfig
 from connections import getConnection
 import warnings
 warnings.filterwarnings('ignore', module='sinedon')
+
+# existing_file setting determines what to do if a sinedon object insert
+# will cause a file to be overwritten.  Possible values:
+#  'warning':  print warning to stderr, but overwrite file anyway
+#  'exception':  raise an exception without overwriting the file
+#  'skip':  skip writing the file and print warning to stderr
+#  None:  overwrite file without warning
+existing_file = 'warning'

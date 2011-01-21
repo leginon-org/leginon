@@ -196,7 +196,7 @@ class SQLDict(object):
 			self.db = sqldb.connect(**self.db.kwargs)
 
 	def connect_kwargs(self):
-		return self.db.kwargs
+		return dict(self.db.kwargs)
 
 	def isConnected(self):
 		return self.connected
@@ -706,7 +706,7 @@ class _multipleQueries:
 				root[key] = fileref.read()
 
 		## now the object is final, so we can safely set dbid
-		root.setPersistent(root.pending_dbid)
+		root.setPersistent(dbinfo, root.pending_dbid)
 		del root.pending_dbid
 
 class _createSQLTable:
@@ -987,7 +987,7 @@ def queryFormatOptimized(queryinfo,tableselect):
 		w = value['where']
 
 		if r:
-			sqlfrom = sqlexpr.fromFormat(tableclass, a)
+			sqlfrom = sqlexpr.fromFormat(value['dbconfig'], tableclass, a)
 			sqlorder = sqlexpr.orderFormat(a)
 			sqllimit = sqlexpr.limitFormat(value['limit'])
 
@@ -1005,7 +1005,7 @@ def queryFormatOptimized(queryinfo,tableselect):
 
 			fieldname = joinFieldName(a, joinfield)
 			joinonalias = joinTable['alias']
-			alljoinon[joinonalias] = sqlexpr.joinFormat(fieldname, joinTable)
+			alljoinon[joinonalias] = sqlexpr.joinFormat(value['dbconfig'], fieldname, joinTable)
 			joinon[joinonalias]=a
 			onjoin[a]=joinonalias
 			if not joinonalias in optimizedjoinlist:
@@ -1260,7 +1260,8 @@ def sql2data(in_dict, qikey=None, qinfo=None):
 	else:
 		join = qinfo[qikey]['join']
 		parentclass = qinfo[qikey]['class']
-	content = datatype(in_dict, join=join, parentclass=parentclass)
+		dbconfig = qinfo[qikey]['dbconfig']
+	content = datatype(in_dict, join=join, parentclass=parentclass, dbconfig=dbconfig)
 
 	return content
 
@@ -1289,7 +1290,7 @@ def findDataClass(modulename, classname):
 	cls = getattr(mod, classname)
 	return cls
 
-def datatype(in_dict, join=None, parentclass=None):
+def datatype(in_dict, join=None, parentclass=None, dbconfig=None):
 	"""
 	This function converts a specific string or a SQL type to 
 	a python type.
@@ -1338,6 +1339,7 @@ def datatype(in_dict, join=None, parentclass=None):
 			# An extra parameter can indicate a different database.
 			if len(a) == 4:
 				modulename = a[-3]
+				dbconfig = None
 			else:
 				modulename = parentclass.__module__
 			if value == 0 or value is None:
@@ -1354,7 +1356,7 @@ def datatype(in_dict, join=None, parentclass=None):
 				if dclass is None:
 					continue
 				# host and name should come from parent object
-				content[fieldname] = data.DataReference(dataclass=dclass, dbid=value)
+				content[fieldname] = data.DataReference(dataclass=dclass, dbconfig=dbconfig, dbid=value, module=modulename)
 		elif a0 == 'SUBD':
 			subditems[key] = value
 		else:
@@ -1427,8 +1429,21 @@ def saveMRC(object, name, path, filename, thumb=False):
 		## either there is no image data, or it is already saved
 		pass
 	else:
-		#print 'saving MRC', fullname
-		pyami.mrc.write(object, fullname)
+		if os.path.exists(fullname):
+			if sinedon.existing_file == 'exception':
+				raise ValueError('protect_files=True and you are trying to write to a file that already exists: %s' % (fullname,))
+			elif sinedon.existing_file == 'warning':
+				sys.stderr.write('warning: existing file will be overwritten: %s' % (fullname,))
+				write_file = True
+			elif sinedon.existing_file == 'skip':
+				sys.stderr.write('warning: skipping overwrite of existing file: %s' % (fullname,))
+				write_file = False
+			else:
+				write_file = True
+
+		if write_file:
+			#print 'saving MRC', fullname
+			pyami.mrc.write(object, fullname)
 
 	d[k] = filename
 	return d
