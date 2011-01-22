@@ -1440,6 +1440,8 @@ def saveMRC(object, name, path, filename, thumb=False):
 				write_file = False
 			else:
 				write_file = True
+		else:
+			write_file = True
 
 		if write_file:
 			#print 'saving MRC', fullname
