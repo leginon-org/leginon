@@ -183,8 +183,10 @@ function runAppionScript() {
 	$command.="--runname=$runname ";
 	$command.="--rundir=".$outdir.'/'.$runname." ";
 	$command.="--alignmethod=$alignmethod ";
-	$command.="--alignsample=$alignsample ";
-	$command.="--alignregion=$alignregion ";
+	if ($alignmethod != 'imod-shift') {
+		$command.="--alignsample=$alignsample ";
+		$command.="--alignregion=$alignregion ";
+	}
 	$command.="--reconbin=$reconbin ";
 	$command.="--reconthickness=$thickness ";
 	$command.="--description=\"$description\" ";
