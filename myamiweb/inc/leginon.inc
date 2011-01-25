@@ -203,6 +203,7 @@ class leginondata {
 		# create strings
 		$names = array();
 		$ids = array();
+		$hosts = array();
 		foreach ($scopeinfo as $info) {
 			$names[] = $info['name'];
 			$ids[] = $info['InstrumentId'];
