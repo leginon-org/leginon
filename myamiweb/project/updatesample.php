@@ -92,6 +92,8 @@ if (!$packageId) {
 if ($sampleId) {
 $cursample = $sample->getSampleInfo($sampleId);
 foreach($map as $k=>$v) {
+	# use posted package
+	if ($v == 'sa1'  && array_key_exists('sa1',$_POST)) continue;
 	$val=$cursample[$k];
 	if (ereg("date$", $k)) {
 			$val=mysql::format_date($val, "ymd", "mdy", "-" );
