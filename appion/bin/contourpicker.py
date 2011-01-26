@@ -621,7 +621,7 @@ class PickerApp(wx.App):
 		self.panel.addTargetTool(self.s2, color=wx.Color(20,220,20),
 			target=False, shape='.')
 		self.panel.setTargets(self.s2, [])
-		self.panel.selectiontool.setDisplayed(self.s2, False)
+		self.panel.selectiontool.setDisplayed(self.s2, True)
 		self.panel.selectiontool.setTargeting(self.s, True)
 
 		self.add = wx.Button(self.frame, wx.ID_ADD, '&Add Traced Object')
