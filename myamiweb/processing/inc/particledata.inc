@@ -1204,7 +1204,7 @@ class particledata {
 			,'particleSelection'=>"particlerunreport.php?expId=$expId&rId="
 			,'objectTracing'=>"particlerunreport.php?expId=$expId&rId="
 			,'aligner'=>"tomoalignercyclereport.php?expId=$expId&aId="
-			,'sizingreport'=>""
+			,'sizingreport'=>"sizingreport.php?expId=$expId&sizingId="
 		);
 		if (count($params) ==0) return;
 		echo "<h4>".$title."</h4>";
