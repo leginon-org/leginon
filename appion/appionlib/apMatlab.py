@@ -217,3 +217,27 @@ def makeMatlabCmd(header,footer,plist):
 	cmd += footer
 	return cmd
 
+def runMatlabScript(matlabscript):
+	waited = False
+	t0 = time.time()
+	cmd = "matlab -nodesktop < %s;" % (matlabscript)
+	matlabproc = subprocess.Popen(cmd, shell=True)
+	out, err = matlabproc.communicate()
+	### continuous check
+	waittime = 2.0
+	while matlabproc.poll() is None:
+		if waittime > 10:
+			waited = True
+			sys.stderr.write(".")
+			waittime *= 1.1
+			time.sleep(waittime)
+	
+	tdiff = time.time() - t0
+	if tdiff > 20:
+		apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
+	elif waited is True:
+		print ""
+	proc_code = matlabproc.returncode
+	if proc_code != 0:
+		apDisplay.printWarning("Matlab failed with subprocess error code %d" % proc_code)
+		
