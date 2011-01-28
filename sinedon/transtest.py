@@ -3,7 +3,6 @@
 import MySQLdb
 import sinedon.dbconfig
 import leginon.leginondata
-import sinedon.transfer
 import time
 import numpy
 import sinedon
@@ -158,5 +157,35 @@ def test3():
 	for a2 in a:
 		a2.insert()
 
+# test altering data before copy
+def test4():
+	import sinedon
+	import sinedon.data
+	import leginon.leginondata
+
+	resetTestDB()
+	initTestDB()
+
+	sinedon.setConfig('leginondata', db='transtest1')
+
+	ses = leginon.leginondata.SessionData(name='session2')
+	ses = ses.query()
+	ses = ses[0]
+
+	images = leginon.leginondata.AcquisitionImageData(session=ses)
+	images = images.query()
+	targets = leginon.leginondata.AcquisitionImageTargetData(session=ses)
+	targets = targets.query()
+
+	ses.__setitem__('name', 'session2b', force=True)
+
+	sinedon.setConfig('leginondata', db='transtest2')
+
+	for target in targets:
+		target.insert()
+	for image in images:
+		image.insert()
+
+
 if __name__ == '__main__':
-	test2()
+	test4()

@@ -307,7 +307,6 @@ class DBDataKeeper(object):
 		### get out of here if already mapped to this database
 		if self in newdata.mappings:
 			return
-		print 'RECURSIVE', newdata.__class__, newdata.dbid, newdata.dbconfig
 
 		### check for existing mappings, which indicates that we are
 		### copying data form other db to this db.
