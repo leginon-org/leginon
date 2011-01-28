@@ -397,6 +397,14 @@ def getTiltSeriesDoneStatus(tiltseriesdata):
 		results = q.query()
 		if results:
 			return True
+		else:
+			# If there is only one tilt group, target is never done 
+			# only its fromtarget will be done
+			if target['fromtarget']:
+				q = leginon.leginondata.AcquisitionImageTargetData(fromtarget=target['fromtarget'],status='done')
+				results = q.query()
+		if results:
+			return True
 		return False
 
 ### flatfield correction functions

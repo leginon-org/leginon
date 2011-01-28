@@ -478,9 +478,14 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 			apDisplay.printError("no files specified")
 		# Only use finished tilt series
 		if len(self.seriestree) > 0:
+			indices_to_pop = []
 			for tiltseriesdata in self.seriestree:
 				if not apDatabase.getTiltSeriesDoneStatus(tiltseriesdata):
-					self.seriestree.pop(self.seriestree.index(tiltseriesdata))
+					indices_to_pop.append(self.seriestree.index(tiltseriesdata))
+			indices_to_pop.sort()
+			indices_to_pop.reverse()
+			for index in indices_to_pop:	
+				self.seriestree.pop(index)
 		else:
 			for image in images:
 				tiltseriesdata = image['tilt series']
