@@ -2,7 +2,6 @@
 import time
 from sinedon import dbupgrade, dbconfig
 from leginon import projectdata, leginondata
-from leginon import version
 import updatelib
 import os
 
@@ -11,7 +10,7 @@ project_dbupgrade = dbupgrade.DBUpgradeTools('projectdata', drop=True)
 if __name__ == "__main__":
 	checkout_revision = updatelib.getCheckOutRevision()
 	schema_revisions = updatelib.getUpdateRevisionSequence()
-	revision_in_database = updatelib.getDatabaseRevision(project_dbupgrade)
+	revision_in_database = updatelib.getDatabaseRevision(project_dbupgrade,True)
 	update_list = []
 	# get a list of needed schema update
 	for selected_revision in schema_revisions:
