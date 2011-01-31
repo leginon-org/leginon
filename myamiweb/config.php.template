@@ -161,11 +161,11 @@ define('HIDE_FEATURE', true);
 // --- temporary images upload directory --- //
 define('TEMP_IMAGES_DIR', "");
 
-// --- use appion warpper --- //
+// --- use appion wrapper (prepends APPION_WRAPPER_PATH to all Appion commands) --- //
 define('USE_APPION_WRAPPER', false);
 // --- define('APPION_WRAPPER_PATH', ""); --- //
 
-// --- default appion base directory parallel to leginon --- //
+// --- default appion base directory to store processing results (parallel to leginon image directory defined in leginon/config/default.cfg) --- //
 define('DEFAULT_APPION_PATH',"");
 
 // --- sample tracking ---//
