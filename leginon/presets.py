@@ -1274,7 +1274,7 @@ class PresetsManager(node.Node):
 				camdata1['exposure time'] = camdata1['exposure time'] / extrabin
 				if camdata1['exposure time']< 5.0:
 					camdata1['exposure time'] = 5.0
-
+		
 		try:
 			self.instrument.setData(camdata1)
 		except:
@@ -1529,7 +1529,6 @@ class PresetsManager(node.Node):
 		presetnames.sort(self.unbinnedAreaGreater)
 
 	def initAlignPresets(self, refname):
-		self.aligndone = False
 		self.alignnext.clear()
 
 		self.logger.info('Aligning presets to reference: %s' % (refname,))
@@ -1597,7 +1596,8 @@ class PresetsManager(node.Node):
 
 	def loopAlignPresets(self, refname):
 		self.initAlignPresets(refname)
-		for maglist in [self.highmags, self.lowmags]:
+		self.alignclose = False
+		for i, maglist in enumerate([self.highmags, self.lowmags]):
 			presetleft = self.refpreset
 
 			while maglist:
@@ -1609,19 +1609,35 @@ class PresetsManager(node.Node):
 
 				self.acquireAlignImages(presetleft, presetright)
 
+				if len(maglist) == 1 and i == 1:
+					# activate Done button if it is the last alignment
+					self.doneLastAlignPresets()
 				self.alignnext.wait()
+				# self.alignnext is clear if Continue is click before last alignment
+				# or if window is forced to close
 				self.alignnext.clear()
-				if self.aligndone == True:
-					return
+				if len(maglist) == 1 or self.alignclose:
+					break
 				magleft = maglist.pop()
 				presetsleft = self.magpresets[magleft]
 				presetleft = presetsleft[0]
-		self.doneAlignPresets()
+			# If break from while loop is caused by closing the window.
+			# it should not continue to the next maglist
+			if self.alignclose:
+				break
+		self.doneAllAlignPresets()
 
-	def doneAlignPresets(self):
-			self.aligndone = True
-			self.alignnext.set()
-			self.panel.onDoneAlign()
+	def doneLastAlignPresets(self):
+		# This is called when last alignment Preset Labels
+		#are set and image acquired
+		self.panel.onDoneLastAlign()
+
+	def doneAllAlignPresets(self):
+		# THis is called when the dialog window is forced closed
+		# or when Done is clicked when all alignment is done
+		self.alignnext.set()
+		self.alignclose = True
+		self.panel.onDoneAllAlign()
 
 	def updateSameMagPresets(self, presetname):
 				newishift = {'image shift': self.presets[presetname]['image shift']}
