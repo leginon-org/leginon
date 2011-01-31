@@ -1,38 +1,48 @@
 #!/usr/bin/env python
 import time
-from leginon import version
+import os
 import xml.dom.minidom as dom
+from leginon import version
 
 def getUpdateRevisionSequence():
-	if version.getSVNBranch() == 'trunk':
+	svn_branch = version.getSVNBranch('.')
+	if svn_branch == 'trunk':
 		schema_revisions = [12857,13713,14077,14891,15069,15248,15251,15293]
-	elif version.getSVNBranch() == 'myami-2.1':
+	elif svn_branch == 'myami-2.1':
 		schema_revisions = [12857,13713,14077,14891,15293]
-	elif version.getSVNBranch() == 'myami-2.0':
+	elif svn_branch == 'myami-2.0':
 		schema_revisions = [12857,13713,14077,14380,15293]
+	else:
+		raise "Unknown svn branch"
 	return schema_revisions
 
-def getCheckOutRevision():
+def getCheckOutRevision(module_path='.'):
 	try:
 		# Only svn checkout have integer revision number
-		return int(version.getVersion())
+		svn_revision = int(version.getVersion(module_path))
+		print '\033[36mSVN checkout revision is %s\033[0m' % svn_revision
+		return svn_revision
 	except:
-		release_revision = getReleaseRevisionFromXML()
+		release_revision = getReleaseRevisionFromXML(module_path)
 		if release_revision:
+			print '\033[36mRelease revision is %s\033[0m' % release_revision
 			return release_revision
 		else:
 			# For unknown releases, assume head revision
 			return 1000000000
 
-def getDatabaseRevision(project_dbupgrade):
+def getDatabaseRevision(project_dbupgrade,printMsg=False):
 	### get revision from database
 	selectq = " SELECT value FROM `install` WHERE `key`='revision'"
 	values = project_dbupgrade.returnCustomSQL(selectq)
 	if values:
-		return int(values[0][0])
+		revision = int(values[0][0])
 	else:
 		# myami-2.0 database has no revision record
-		return 14077
+		revision = 14077
+	if printMsg:
+		print '\033[36mDatabase recorded revision is %s\033[0m' % revision
+	return revision
 
 def allowVerisionLog(project_dbupgrade,checkout_revision):
 	'''
@@ -87,12 +97,15 @@ def needUpdate(project_dbupgrade,checkout_revision,selected_revision):
 		print "\033[35mCode not yet at r%d\033[0m" % (selected_revision)
 	return False
 
-def getReleaseRevisionFromXML():
-	leginonpath = version.getInstalledLocation()
-	pieces = leginonpath.split('/')
+def getReleaseRevisionFromXML(module_path='.'):
+	if not module_path:
+		module_path = version.getInstalledLocation()
+	module_path = os.path.abspath(module_path)
+	pieces = module_path.split('/')
 	xmlpathpieces = pieces[:-1]
 	xmlpathpieces.extend(['myamiweb','xml','projectDefaultValues.xml'])
 	xmlfilepath = '/'.join(xmlpathpieces)
+	print '\033[35mGetting release revision from %s\033[0m' % xmlfilepath
 	curkey = None
 	installdata = {}
 	try:

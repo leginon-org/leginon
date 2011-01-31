@@ -57,10 +57,12 @@ def OLDgetVersion():
 
 	return version
 
-def getSVNInfo():
-	modulepath = getInstalledLocation()
+def getSVNInfo(module_path=''):
+	if not module_path:
+		module_path = getInstalledLocation()
+	module_path = os.path.abspath(module_path)
 	currentpath = os.getcwd()
-	os.chdir(modulepath)
+	os.chdir(module_path)
 	try:
 		p = subprocess.Popen('svn info', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		svninfo,svnerror = p.communicate()
@@ -80,23 +82,25 @@ def getSVNInfo():
 def getTextVersion():
 	return 'pre2.2'
 
-def getVersion():
-	svninfo = getSVNInfo()
+def getVersion(module_path=''):
+	svninfo = getSVNInfo(module_path)
 	if 'Revision' in svninfo.keys():
 		version = svninfo['Revision']
 	else:
 		version = getTextVersion()
 	return version
 
-def getSVNBranch():
-	svninfo = getSVNInfo()
+def getSVNBranch(module_path=''):
+	svninfo = getSVNInfo(module_path)
 	if 'URL' in svninfo.keys():
 		url = svninfo['URL']
 		root = svninfo['Repository Root']
 		parts = url.split(root)
-		branch = parts[-1].rstrip('/leginon')
-		branch = branch.strip('/branches')
-		branch = branch.strip('/')
+		pieces = parts[-1].split('/')
+		if pieces[1] =='trunk':
+			return 'trunk'
+		if 'branches' == pieces[1]:
+			branch = pieces[2]
 		return branch
 	else:
 		release_branch = getTextVersion()
