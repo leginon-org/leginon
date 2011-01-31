@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import time
 from sinedon import dbupgrade, dbconfig
-from leginon import version
 import updatelib
 
 class SchemaUpdate:
