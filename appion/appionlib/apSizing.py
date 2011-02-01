@@ -27,3 +27,21 @@ def getImagePixelSizeFromContourId(contourid):
 
 def analyzeArea(contourid):
 	return []
+
+def commitSizingRun(params, method=None):
+	q = appiondata.ApSelectionRunData()
+	tracerundata = q.direct_query(params['contourid'])
+	pathq = appiondata.ApPathData()
+	pathq['path'] = params['rundir']
+
+	q = q.direct_query(params['contourid'])
+	q = appiondata.ApSizingRunData()
+	q['name'] = params['runname']
+	q['tracerun'] = tracerundata
+	q['path'] = pathq
+	q['method'] = method
+	q.insert()
+	return q
+
+def commitSizingResults(rundata,areas):
+	return

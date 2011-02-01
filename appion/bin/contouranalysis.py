@@ -57,6 +57,10 @@ class ContourAnalysis(appionScript.AppionScript):
 		apix = apSizing.getImagePixelSizeFromContourId(contourid)
 		areas = apSizing.analyzeArea(contourid)
 
+		if self.params['commit']:
+			sizingrundata = apSizing.commitSizingRun(self.params)
+			apSizing.commitSizingResults(sizingrundata,areas)
+
 #=====================
 #=====================
 #=====================

@@ -228,6 +228,16 @@ class ApContourPointData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApSizingRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('path', ApPathData),
+			('method', str),
+			('tracerun', ApSelectionRunData),
+		)
+	typemap = classmethod(typemap)
+
 ### END Particle selection tables ###
 ### START Template tables ###
 
