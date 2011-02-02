@@ -90,6 +90,20 @@ function drawcircle($img, $cx, $cy, $size, $col, $shadow=false) {
 	imagearc($img, $cx, $cy, $size, $size, 0, 360, $col);
 }
 
+function shiftpoints($p) {
+	return $p+1;
+}
+
+function drawpolygon($img, $points, $col, $shadow=false) {
+	$point_count = count($points) / 2;
+	if ($shadow) {
+		$shadowp = array_map("shiftpoints",$points);
+		$shadowcol = imagecolorallocate($img, 0,0,0);
+		imagepolygon($img,$shadowp,$point_count,$shadowcol);
+	}
+	imagepolygon($img,$points,$point_count,$col);
+}
+			
 function getsquarepoints($cx, $cy, $angle, $size) {
 	$square = new square($cx, $cy, $size);
 	$squarepoints = $square->getRotatedPointCoords($angle);

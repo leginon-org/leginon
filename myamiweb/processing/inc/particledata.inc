@@ -1496,6 +1496,27 @@ class particledata {
 		return $r;
 	}
 
+	function getTracesFromImageId ($runId, $imageId){
+		$q = "select p.DEF_id as id, "
+			."p.name "
+			."from ApContourData p "
+			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' "
+			."and p.`REF|leginondata|AcquisitionImageData|image` = '$imageId' ";
+		$r=$this->mysql->getSQLResult($q);
+
+		$allpoints = array();
+		if (!empty($r)) {
+			foreach ($r as $contour) {
+				$q = "select p.x,p.y "
+					."from ApContourPointData p "
+					."where p.`REF|ApContourData|contour` = ".$contour['id']." ";
+				$r=$this->mysql->getSQLResult($q);
+				$allpoints[$contour['id']] = $r;
+			}
+		}
+		return $allpoints;
+	}
+
 	function getLastAssessmentRun ($sessionId){
 		$q = "select max(DEF_id) as runId "
 			." from ApAssessmentRunData where `REF|leginondata|SessionData|session` = '$sessionId'";

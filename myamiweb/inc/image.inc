@@ -338,25 +338,25 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			$colorby = ($colorby=='l') ? 'label' : 'diameter';
 			require "inc/particledata.inc";
 			require "inc/histogram.inc";
-			$particle = new particledata();
-			$particlerun=$particle->getLastParticleRun($sessionId);
+			$particledata = new particledata();
+			$particlerun=$particledata->getLastParticleRun($sessionId);
 			if ($p['ptclsel']) {
-				$particleruns=$particle->getParticleRunIds($sessionId);
+				$particleruns=$particledata->getParticleRunIds($sessionId);
 				foreach ($particleruns as $prun) {
 					$particlerun=$prun['DEF_id'];
 					if($p['ptclsel']==$particlerun)
 						break;
 				}
 			}
-			$particledata=$particle->getParticlesFromImageId($particlerun, $imageId);
-			list($selectionparams)=$particle->getSelectionParams($particlerun);
+			$particleinfo=$particledata->getParticlesFromImageId($particlerun, $imageId);
+			list($selectionparams)=$particledata->getSelectionParams($particlerun);
 			if (!$diam) {
 				$diam = $selectionparams['diam'];
 			}
 			// --- pixelsize in angstrom --- //
 			$apix = $imginfo['pixelsize']*1e10;
 			$labeldata=array();
-			$particlelabels =$particle->getParticleLabels($particlerun);
+			$particlelabels =$particledata->getParticleLabels($particlerun);
 			// --- parse particle params
 			$threshold = false;
 			$diam_scalefactor = $scalefactor/$binning/$apix/$imginfo['binning'];
@@ -405,13 +405,13 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				}
 				*/
 			}
-			$particledata=$particle->getParticlesFromImageId($particlerun, $imageId);
-			list($selectionparams)=$particle->getSelectionParams($particlerun);
+			$particleinfo=$particledata->getParticlesFromImageId($particlerun, $imageId);
+			list($selectionparams)=$particledata->getSelectionParams($particlerun);
 			if (!$diam || $diam = $selectionparams['diam']) {
 				// apply scaling if not applied before
 				$diam = $selectionparams['diam'] * $diam_scalefactor;
 			}
-			$d=array_map('getdiam', $particledata);
+			$d=array_map('getdiam', $particleinfo);
 			$d=array_unique($d);
 			$groupcolors=array();
 			$index=0;
@@ -420,7 +420,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$index++;
 			}
 
-			foreach ((array)$particledata as $particle) {
+			foreach ((array)$particleinfo as $particle) {
 				$cx = $particle['xcoord']/$binning*$scalefactor;
 				$cy = $particle['ycoord']/$binning*$scalefactor;
 
@@ -441,6 +441,22 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 					$col = imagecolorallocate($img, 255,255,255);
 				}
 				drawcircle($img, $cx, $cy, $diam, $col, true);
+			}
+			if ($selectionparams['trace']) {
+				$traces = $particledata->getTracesFromImageId($particlerun, $imageId);
+				if (!empty($traces)) {
+					$col = imagecolorallocate($img, 0,255,0);
+					foreach ($traces as $t) {
+						// draw each trace as a polygon
+						$linearpoints = array();
+						$pointcount = count($t);
+						foreach ($t as $point) {
+							$linearpoints[] = $point['x'] * $selectionparams['bin'] / $binning * $scalefactor ;
+							$linearpoints[] = $point['y'] * $selectionparams['bin'] / $binning * $scalefactor ;
+						}
+						drawpolygon($img,$linearpoints,$col,true);
+					}
+				}	
 			}
 		// This is a good place to add debug message as a string on the image
 		imagestring($img, 2, 10, 20, $debug_message, imagecolorallocate($img,255,255,255));
