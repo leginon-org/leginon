@@ -160,11 +160,15 @@ from types import *
 import newdict
 import data
 import sinedon
+import sinedon.dbdatakeeper
 import pyami.mrc
 import os
 import dbconfig
 import cPickle
 from pyami import weakattr
+
+def getDBDK(mod, conf):
+	return sinedon.getConnection(mod, conf)
 
 class SQLDict(object):
 
@@ -674,11 +678,11 @@ class _multipleQueries:
 		if root is None:
 			return
 
-		### already done
-		if root.dbid is not None:
-			return 
-
 		dbinfo = self.db.kwargs
+
+		### already done
+		if root.isPersistent(dbinfo):
+			return 
 
 		needpath = []
 		for key,value in root.items(dereference=False):
@@ -705,7 +709,7 @@ class _multipleQueries:
 				# replace reference with actual data
 				root[key] = fileref.read()
 
-		## now the object is final, so we can safely set dbid
+		## now the object is final, so we can safely set persistent
 		root.setPersistent(dbinfo, root.pending_dbid)
 		del root.pending_dbid
 
@@ -999,7 +1003,8 @@ def queryFormatOptimized(queryinfo,tableselect):
 			## if data to join is already known, then
 			## we need to convert the join into a where
 			if queryinfo[id]['known'] is not None:
-				defid = queryinfo[id]['known'].dbid
+				dbdk = queryinfo[id]['dbdk']
+				defid = queryinfo[id]['known'].mappings[dbdk]
 				w[joinfield] = defid
 				continue
 
@@ -1450,19 +1455,19 @@ def saveMRC(object, name, path, filename, thumb=False):
 	d[k] = filename
 	return d
 
-def subSQLColumns(value_dict, data_instance):
+def subSQLColumns(value_dict, data_instance, dbdk):
 	columns = []
 	row = {}
 	for key, value in value_dict.items():
 		value_type = type(value)
 
-		result = type2column(key, value, value_type, data_instance)
+		result = type2column(key, value, value_type, data_instance, dbdk)
 		if result is not None:
 			columns.append(result[0])
 			row.update(result[1])
 			continue
 
-		result = type2columns(key, value, value_type, data_instance)
+		result = type2columns(key, value, value_type, data_instance, dbdk)
 		if result is not None:
 			columns += result[0]
 			row.update(result[1])
@@ -1470,7 +1475,7 @@ def subSQLColumns(value_dict, data_instance):
 
 	return columns, row
 
-def dataSQLColumns(data_instance, fail=True):
+def dataSQLColumns(data_instance, dbdk, fail=True):
 	columns = []
 	row = {}
 	# default columns
@@ -1498,13 +1503,13 @@ def dataSQLColumns(data_instance, fail=True):
 		except KeyError:
 			raise ValueError, value_type.__name__
 
-		result = type2column(key, value, value_type, data_instance)
+		result = type2column(key, value, value_type, data_instance, dbdk)
 		if result is not None:
 			columns.append(result[0])
 			row.update(result[1])
 			continue
 
-		result = type2columns(key, value, value_type, data_instance)
+		result = type2columns(key, value, value_type, data_instance, dbdk)
 		if result is not None:
 			columns += result[0]
 			row.update(result[1])
@@ -1517,7 +1522,7 @@ def dataSQLColumns(data_instance, fail=True):
 
 	return columns, row
 
-def type2column(key, value, value_type, parentdata):
+def type2column(key, value, value_type, parentdata, dbdk):
 	column = {}
 	row = {}
 	sql_type = _sqltype(value_type)
@@ -1542,7 +1547,17 @@ def type2column(key, value, value_type, parentdata):
 				if value is None:
 					row[field] = None
 				else:
-					row[field] = value.dbid
+					if not isinstance(dbdk, sinedon.dbdatakeeper.DBDataKeeper):
+						if isinstance(value, sinedon.data.DataReference):
+							cls = value.dataclass
+						else:
+							cls = value.__class__
+						dbdk = getDBDK(cls.__module__, dbdk)
+					if dbdk in value.mappings:
+						dbid = value.mappings[dbdk]
+					else:
+						dbid = None
+					row[field] = dbid
 			elif issubclass(value_type, newdict.AnyObject):
 				field = object2sqlColumn(key)
 				column['Field'] = field
@@ -1560,7 +1575,7 @@ def type2column(key, value, value_type, parentdata):
 		column['Default'] = '0'
 	return column, row
 
-def type2columns(key, value, value_type, parentdata):
+def type2columns(key, value, value_type, parentdata, dbdk):
 	if value_type is newdict.DatabaseArrayType:
 		if value is None:
 			column_dict = value_dict = {}
@@ -1588,7 +1603,7 @@ def type2columns(key, value, value_type, parentdata):
 			column_dict = value_dict = {seq2sqlColumn(key): repr(value)}
 	else:
 		return None
-	columns, row = subSQLColumns(column_dict, parentdata)
+	columns, row = subSQLColumns(column_dict, parentdata, dbdk)
 	columns.sort()
 	row.update(value_dict)
 	return columns, row
@@ -1596,7 +1611,7 @@ def type2columns(key, value, value_type, parentdata):
 
 if __name__ == '__main__':
 	data_instance = data.AcquisitionImageData()
-	columns, row = dataSQLColumns(data_instance)
+	columns, row = dataSQLColumns(data_instance, None)
 	for column in columns:
 		field = column['Field']
 		print field

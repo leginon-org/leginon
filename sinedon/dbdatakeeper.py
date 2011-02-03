@@ -29,7 +29,6 @@ class DBDataKeeper(object):
 	def __init__(self, logger=None, **kwargs):
 		self.logger = logger
 		try:
-			print 'KWARGS', kwargs
 			self.dbd = sinedon.sqldict.SQLDict(**kwargs)
 		except _mysql_exceptions.OperationalError, e:
 			raise DatabaseError(e.args[-1])
@@ -128,12 +127,11 @@ class DBDataKeeper(object):
 		return alias
 
 	def qid(self, mydata):
-		### what are the chances that there will be a conflict
-		### because a dbid is the same as a python id?
 		if isinstance(mydata, sinedon.data.DataReference):
 			myclassname = mydata.dataclass.__name__
-			if mydata.dbid is not None:
-				myid = myclassname+str(mydata.dbid)
+			if self in mydata.mappings:
+				dbid = mydata.mappings[self]
+				myid = myclassname+str(dbid)
 			else:
 				mydata = mydata.getData()
 				myid = id(mydata)
@@ -165,9 +163,9 @@ class DBDataKeeper(object):
 			info['where'] = wheredict
 			info['known'] = None
 			info['join'] = {}
-		elif mydata.dbid is not None:
+		elif self in mydata.mappings:
 			## this instance is from the database
-			dbid = mydata.dbid
+			dbid = mydata.mappings[self]
 			## now I don't think we even need to set wheredict
 			## becuase it will not query if known
 			wheredict = {'DEF_id':dbid}
@@ -201,6 +199,7 @@ class DBDataKeeper(object):
 
 		info['root'] = isroot
 
+		info['dbdk'] = self
 		info['dbconfig'] = self.connect_kwargs()
 
 		finalinfo = {myid: info}
@@ -219,7 +218,7 @@ class DBDataKeeper(object):
 		if isinstance(originaldata, sinedon.data.Data):
 			for key,value in originaldata.items(dereference=False):
 				if isinstance(value, sinedon.data.DataReference):
-					if value.dbid is None:
+					if self not in value.mappings:
 						value = value.getData()
 					childresult = self.accumulateData(value, memo=memo, timelimit=timelimit, limit=limit)
 					if childresult is not None:
@@ -275,11 +274,34 @@ class DBDataKeeper(object):
 		confkey = source_host,source_db
 		if confkey not in self.imported_data:
 			self.initImported(source_host, source_db)
+		print 'IMPORTED'
+		for key,value in self.imported_data.items():
+			print '  ', key, value
 
 		try:
 			return self.imported_data[confkey][dataclass][source_dbid]
 		except KeyError:
 			return None
+
+	def copyImportMapping(self, obj1, obj2):
+		'''
+		Import obj2 into this db, but give it the same import mapping as
+		obj1.
+		'''
+		dataclass = obj1.__class__.__name__
+		new_dbid = obj1.mappings[self]
+		for source_dbdk, source_dbid in obj1.mappings.items():
+			if source_dbdk not in obj2.mappings:
+				continue
+			source_dbid = obj2.mappings[source_dbdk]
+			source_conf = source_dbdk.connect_kwargs()
+			source_host = source_conf['host']
+			source_db = source_conf['db']
+
+			## insert mapping into the importdata db
+			self.insertImported(source_host, source_db, dataclass, source_dbid, new_dbid)
+			## fake that obj2 was inserted into this db
+			obj2.setPersistent(self.connect_kwargs(), new_dbid)
 
 	def insertImported(self, source_host, source_db, dataclass, source_dbid, new_dbid):
 		import sinedon.importdata
@@ -356,7 +378,7 @@ class DBDataKeeper(object):
 		dbname = dbconf['db']
 		tablename = newdata.__class__.__name__
 		table = (dbname, tablename)
-		definition, formatedData = sinedon.sqldict.dataSQLColumns(newdata, fail)
+		definition, formatedData = sinedon.sqldict.dataSQLColumns(newdata, self, fail)
 		## check for any new columns that have not been created
 		if table not in self.columns_created:
 			self.columns_created[table] = {}
@@ -379,7 +401,7 @@ class DBDataKeeper(object):
 
 	def diffData(self, newdata):
 		table = newdata.__class__.__name__
-		definition, formated = sinedon.sqldict.dataSQLColumns(newdata)
+		definition, formated = sinedon.sqldict.dataSQLColumns(newdata, self)
 		return self.dbd.diffSQLTable(table, definition)
 	
 

@@ -230,6 +230,13 @@ class DataReference(object):
 		else:
 			raise DataError('DataReference needs more info for initialization')
 
+	def isPersistent(self, dbconfig):
+		db = sinedon.connections.getConnection(self.dataclass.__module__, dbconfig)
+		if db in self.mappings:
+			return self.mappings[db]
+		else:
+			return None
+
 	def __getstate__(self):
 		## for pickling, do not include referent
 		state = dict(self.__dict__)
@@ -422,6 +429,11 @@ class Data(sinedon.newdict.TypedDict):
 		results = db.query(self, **kwargs)
 		return results
 
+	def copyImportMapping(self, other):
+		modulename = self.__module__
+		db = sinedon.connections.getConnection(modulename)
+		db.copyImportMapping(other, self)
+
 	def close(self):
 		modulename = self.__module__
 		db = sinedon.connections.getConnection(modulename)
@@ -461,6 +473,13 @@ class Data(sinedon.newdict.TypedDict):
 
 	def copy(self):
 		return self.__copy__()
+
+	def isPersistent(self, dbconfig):
+		db = sinedon.connections.getConnection(self.__module__, dbconfig)
+		if db in self.mappings:
+			return self.mappings[db]
+		else:
+			return None
 
 	def setPersistent(self, dbconfig, dbid):
 		self.dbconfig = dbconfig

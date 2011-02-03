@@ -111,7 +111,7 @@ def makeTables(sinedonname,modulename,dbname=None,xmlfile=None,check_exist=False
 		tablename = func[0]
 		tableclass = func[1]()
 		table = (dbname, tablename)
-		definition, formatedData = sqldict.dataSQLColumns(tableclass, False)
+		definition, formatedData = sqldict.dataSQLColumns(tableclass, dbconf, False)
 		create_flag=False
 		if check_exist:
 			try:

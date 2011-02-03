@@ -6,6 +6,7 @@ import leginon.leginondata
 import time
 import numpy
 import sinedon
+import importdata
 
 sinedon.existing_file = 'skip'
 
@@ -82,7 +83,7 @@ def initTestDB():
 	### second database
 	sinedon.dbconfig.setConfig('leginondata', db='transtest2', **baseconfig)
 	# insert session1
-	session1 = leginon.leginondata.SessionData(name='session1')
+	session1 = leginon.leginondata.SessionData(name='session0')
 	session1.insert()
 	# insert 3 targets and images
 	for i in range(3):
@@ -157,35 +158,123 @@ def test3():
 	for a2 in a:
 		a2.insert()
 
-# test altering data before copy
+def makeMapping(db1, db2, dbid1, dbid2, classname):
+	sinedon.setConfig('importdata', db='importmapping')
+	dbconfig1 = db1.connect_kwargs()
+	dbconfig2 = db2.connect_kwargs()
+
+	conf1 = importdata.ImportDBConfigData(db=dbconfig1['db'], host=dbconfig1['host'])
+	conf2 = importdata.ImportDBConfigData(db=dbconfig2['db'], host=dbconfig2['host'])
+
+	mapping = importdata.ImportMappingData()
+	mapping['source_config'] = conf1
+	mapping['destination_config'] = conf2
+	mapping['class_name'] = classname
+	mapping['old_dbid'] = dbid1
+	mapping['new_dbid'] = dbid2
+	mapping.insert()
+
 def test4():
 	import sinedon
 	import sinedon.data
 	import leginon.leginondata
 
+	## set up test databases
 	resetTestDB()
 	initTestDB()
 
+	## query everything from first db
+
+	sinedon.setConfig('leginondata', db='transtest1')
+	db1 = sinedon.getConnection('leginondata')
+
+	ses = leginon.leginondata.SessionData()
+	ses = ses.query()
+
+	session1 = ses[1]
+	session2 = ses[0]
+
+	images = leginon.leginondata.AcquisitionImageData(session=session1)
+	images1 = images.query()
+	targets = leginon.leginondata.AcquisitionImageTargetData(session=session1)
+	targets1 = targets.query()
+	images = leginon.leginondata.AcquisitionImageData(session=session2)
+	images2 = images.query()
+	targets = leginon.leginondata.AcquisitionImageTargetData(session=session2)
+	targets2 = targets.query()
+
+	## insert everything into second db
+
+	sinedon.setConfig('leginondata', db='transtest2')
+	
+	session1.insert()
+	session2.copyImportMapping(session1)
+
+	for target in targets1:
+		target.insert()
+	for image in images1:
+		image.insert()
+	for target in targets2:
+		target.insert()
+	for image in images2:
+		image.insert()
+
+def test5():
+	import sinedon
+	import sinedon.data
+	import leginon.leginondata
+
+	## set up test databases
+	resetTestDB()
+	initTestDB()
+
+	## query sessions from first db
+
+	sinedon.setConfig('leginondata', db='transtest1')
+	db1 = sinedon.getConnection('leginondata')
+
+	ses = leginon.leginondata.SessionData()
+	ses = ses.query()
+
+	session1 = ses[1]
+	session2 = ses[0]
+
+	## insert sessions into second db
+
+	sinedon.setConfig('leginondata', db='transtest2')
+	
+	session1.insert()
+	session2.copyImportMapping(session1)
+
+	## query images/targets from first db
+
 	sinedon.setConfig('leginondata', db='transtest1')
 
-	ses = leginon.leginondata.SessionData(name='session2')
-	ses = ses.query()
-	ses = ses[0]
+	print 'SESSION1MAPPINGS', session1.mappings
+	images = leginon.leginondata.AcquisitionImageData(session=session1)
+	images1 = images.query()
+	print 'LENIMAGES', len(images1)
+	targets = leginon.leginondata.AcquisitionImageTargetData(session=session1)
+	targets1 = targets.query()
+	print 'LENTARGETS', len(targets1)
+	images = leginon.leginondata.AcquisitionImageData(session=session2)
+	images2 = images.query()
+	targets = leginon.leginondata.AcquisitionImageTargetData(session=session2)
+	targets2 = targets.query()
 
-	images = leginon.leginondata.AcquisitionImageData(session=ses)
-	images = images.query()
-	targets = leginon.leginondata.AcquisitionImageTargetData(session=ses)
-	targets = targets.query()
-
-	ses.__setitem__('name', 'session2b', force=True)
+	## insert images/targets to second db
 
 	sinedon.setConfig('leginondata', db='transtest2')
 
-	for target in targets:
+	for target in targets1:
 		target.insert()
-	for image in images:
+	for image in images1:
+		image.insert()
+	for target in targets2:
+		target.insert()
+	for image in images2:
 		image.insert()
 
 
 if __name__ == '__main__':
-	test4()
+	test5()
