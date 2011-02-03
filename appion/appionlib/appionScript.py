@@ -443,6 +443,34 @@ class AppionScript(basicScript.BasicScript):
 	def onClose(self):
 		return
 
+	def runAppionScriptInSubprocess(self,cmd,logfilepath):
+		# Running another AppionScript as a subprocess
+		apDisplay.printMsg('running AppionScript:')
+		apDisplay.printMsg('------------------------------------------------')
+		apDisplay.printMsg(cmd)
+		# stderr=subprocess.PIPE only works with shell=True with python 2.4.
+		# works on python 2.6.  Use shell=True now but shell=True does not
+		# work with path changed by appionwrapper.  It behaves as if the wrapper
+		# is not used
+		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+		stdout_value = proc.communicate()[0]
+		while proc.returncode is None:
+			time.wait(60)
+			stdout_value = proc.communicate()[0]
+		try:
+			file = open(logfilepath,'w')
+		except:
+			apDisplay.printError('Log file can not be created, process did not run.')
+		file.write(stdout_value)
+		file.close()
+		if proc.returncode > 0:
+			pieces = cmd.split(' ')
+			apDisplay.printWarning('AppionScript %s had an error. Please check its log file: \n%s' % (pieces[0].upper(),logfilepath))
+		else:
+			apDisplay.printMsg('AppionScript ran successfully')
+		apDisplay.printMsg('------------------------------------------------')
+		return proc.returncode
+
 class TestScript(AppionScript):
 	def setupParserOptions(self):
 		apDisplay.printMsg("Parser options")

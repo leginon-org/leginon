@@ -54,29 +54,6 @@ class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 		imgtree = apDatabase.getImagesFromTiltSeries(tiltseriesdata,False)
 		return len(imgtree) < 4
 
-	def runAppionScriptInSubprocess(self,cmd,logfilepath):
-		apDisplay.printMsg('running AppionScript:')
-		apDisplay.printMsg('------------------------------------------------')
-		apDisplay.printMsg(cmd)
-		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-		stdout_value = proc.communicate()[0]
-		while proc.returncode is None:
-			time.wait(60)
-			stdout_value = proc.communicate()[0]
-		try:
-			file = open(logfilepath,'w')
-		except:
-			apDisplay.printError('Log file can not be created, process did not run.')
-		file.write(stdout_value)
-		file.close()
-		if proc.returncode > 0:
-			pieces = cmd.split(' ')
-			apDisplay.printWarning('AppionScript %s had an error. Please check its log file: \n%s' % (pieces[0].upper(),logfilepath))
-		else:
-			apDisplay.printMsg('AppionScript ran successfully')
-		apDisplay.printMsg('------------------------------------------------')
-		return proc.returncode
-
 	def processTiltSeries(self, tiltseriesdata):
 		seriesnumber = tiltseriesdata['number']
 		pieces = self.params['rundir'].split('/')
