@@ -1423,10 +1423,11 @@ def refFieldName(tableclass, refclass, key):
 def keyMRC(name):
 	return sep.join(['MRC', name])
 
-def saveMRC(object, name, path, filename, thumb=False):
+def saveMRC(object, name, parentdata, filename, thumb=False):
 	"""
 	Save numpy array to MRC file and replace it with filename
 	"""
+	path = parentdata.getpath()
 	d={}
 	k = keyMRC(name)
 	fullname = dbconfig.mapPath(os.path.join(path,filename))
@@ -1450,6 +1451,7 @@ def saveMRC(object, name, path, filename, thumb=False):
 
 		if write_file:
 			#print 'saving MRC', fullname
+			parentdata.mkpath()
 			pyami.mrc.write(object, fullname)
 
 	d[k] = filename
@@ -1587,8 +1589,7 @@ def type2columns(key, value, value_type, parentdata, dbdk):
 			value_dict = {keyMRC(key): None}
 		else:
 			filename = parentdata.filename()
-			path = parentdata.mkpath()
-			column_dict = value_dict = saveMRC(value, key, path, filename)
+			column_dict = value_dict = saveMRC(value, key, parentdata, filename)
 	elif value_type is dict:
 		# python dict
 		if value is None:
