@@ -18,6 +18,15 @@ def getSubversionRevision():
 	f.close()
 	return revision
 
+# This version information is used to populate a table in the 
+# ap databases that stores the revision of the software being used
+# for processing. The revision number is available from the svn files
+# co-located with the code if the file was retrieved with svn. If this
+# is an actual installation that does not have svn files available b/c
+# it was installed from a tar file, the version.txt file needs to 
+# be located in the appionlib directory and needs to have the svn
+# revison number updated by hand prior to release. Ideally this process 
+# should be automated in the future. 
 def getVersion():
 	prettyversion = None
 	verfile = 'appionlib/version.txt'
