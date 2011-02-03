@@ -647,10 +647,7 @@ class PickerApp(wx.App):
 		self.buttonrow.Add(self.textFile, 0,wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 		
 	def onMakeFile(self,evt):
-		session = self.appionloop.params['sessionname']	
-		###change later
-		command = 'contourpickerTextFileGenerator.py ' + '--projectid=%d' % (self.appionloop.params['projectid']) + ' ' + '--session=' + str(session) + ' ' + '--runname='+self.appionloop.params['runname'] + ' ' + '--preset=' + self.appionloop.params['preset'] + ' '+'--rundir=' + self.appionloop.params['rundir']
-		os.system(command)
+		self.appionloop.makeTextFile()
 
 	def onSwitch(self, evt):
 		s = 'Manually Create Contours'
@@ -761,6 +758,16 @@ class ContourPicker(manualpicker.ManualPicker):
 			size =  self.params['shapesize'],
 			labels = self.labels,
 		)
+
+	def makeTextFile(self):
+		session = self.params['sessionname']	
+		###change later
+		command = 'contourpickerTextFileGenerator.py ' + '--projectid=%d' % (self.params['projectid']) + ' ' + '--session=' + str(session) + ' ' + '--runname='+self.params['runname'] + ' ' + '--preset=' + self.params['preset'] + ' '+'--rundir=' + self.params['rundir']
+		os.system(command)
+
+	def postLoopFunctions(self):
+		self.makeTextFile()
+		super(ContourPicker,self).postLoopFunctions()
 
 	def runManualPicker(self, imgdata):
 		# Contourpicker does not do assessment.  Setting the current assessment to be
