@@ -274,9 +274,6 @@ class DBDataKeeper(object):
 		confkey = source_host,source_db
 		if confkey not in self.imported_data:
 			self.initImported(source_host, source_db)
-		print 'IMPORTED'
-		for key,value in self.imported_data.items():
-			print '  ', key, value
 
 		try:
 			return self.imported_data[confkey][dataclass][source_dbid]
@@ -291,6 +288,8 @@ class DBDataKeeper(object):
 		dataclass = obj1.__class__.__name__
 		new_dbid = obj1.mappings[self]
 		for source_dbdk, source_dbid in obj1.mappings.items():
+			if source_dbdk is self:
+				continue
 			if source_dbdk not in obj2.mappings:
 				continue
 			source_dbid = obj2.mappings[source_dbdk]
@@ -335,6 +334,8 @@ class DBDataKeeper(object):
 		dataclass = newdata.__class__.__name__
 		dbinfo = self.connect_kwargs()
 		for other_db, other_dbid in newdata.mappings.items():
+			if other_db is self:
+				continue
 			other_config = other_db.connect_kwargs()
 			new_id = self.queryImported(other_config['host'], other_config['db'], dataclass, other_dbid)
 			if new_id is None:
@@ -360,6 +361,8 @@ class DBDataKeeper(object):
 		dbinfo = self.connect_kwargs()
 		dbid = self.flatInsert(newdata, force=force)
 		for other_db, other_dbid in newdata.mappings.items():
+			if other_db is self:
+				continue
 			other_config = other_db.connect_kwargs()
 			self.insertImported(other_config['host'], other_config['db'], dataclass, other_dbid, dbid)
 		newdata.setPersistent(dbinfo, dbid)
