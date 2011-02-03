@@ -28,27 +28,28 @@ def getSubversionRevision():
 # revison number updated by hand prior to release. Ideally this process 
 # should be automated in the future. 
 def getVersion():
-	prettyversion = None
 	verfile = 'appionlib/version.txt'
-	if os.path.isfile(verfile):
-		f = open(verfile, "r")
-		line = f.readline()
-		f.close()
-		prettyversion = line.strip()
-	revision = getSubversionRevision()
-	if prettyversion is not None and revision is not None:
-		version = "%s-%s"%(prettyversion, revision)
-	elif revision is not None:
-		version = revision
-		### write revision to file
+
+	# Get the revision from any available svn file first
+	version = getSubversionRevision()
+	if version is not None:
+		# write version to file
 		f = open(verfile, "w")
-		f.write("%s\n"%(revision))
+		f.write("%s\n"%(version))
 		f.close()
-	elif prettyversion is not None:
-		version = prettyversion
 	else:
-		raise VersionError, "cound not find appion version number"
+		# Check the version in version.txt
+		if os.path.isfile(verfile):
+			f = open(verfile, "r")
+			line = f.readline()
+			f.close()
+			version = line.strip()
+
+	if version is None:
+		raise VersionError, "Could not find Appion version number while checking svn info and appionlib/version.txt." 
+
 	return version
+
 
 version=getVersion()
 
