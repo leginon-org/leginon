@@ -68,6 +68,7 @@ var help = {
 		'crudstd' : 'Threshold to eliminate false positive regions that picks up the background<BR> The region will be removed from the final result if the intensity standard deviation in the region is below the specified number of standard deviation of the map<BR> Leave it blank or as 0.0 if not considered',
 		'convolve' : 'Aggregate finding uses this threshold in determining the cutoff of the particle size convoluted edge map<BR> This value is not applicatable if use other mask types<BR> Leave it blank or as 0.0 if not considered',
 		'masktype' : 'Crud: Selexon crudfinder.  Canny edge detector and Convex Hull is used<BR>  Edge: Hole Edge detection using region finder in libCV so that the region can be concave.<BR>  Aggr: Aggregate finding by convoluting Sobel edge with a disk of the particle size.',
+		'tracerun' : 'Object tracing run to be analyzed',
 		'stackname' : 'name of the output stack, usually start.*',
 		'stackdescr' : 'brief description attributed to this stack',
 		'stackparticles' : 'Particle selection run providing the coordinates that will be used for extracting the particles',

@@ -239,20 +239,22 @@ if (is_numeric($expId)) {
 		$caresults[] = ($cadone==0) ? "" : "<a href='sizingsummary.php?expId=$sessionId'>$cadone complete</a>";
 		$caresults[] = ($carun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=contouranalysis'>$carun running</a>";
 		$caresults[] = ($caq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=contouranalysis'>$caq queued</a>";
-
 		$result = ($cadone==0) ? "" :
 			"<a href='sizingsummary.php?expId=$sessionId'>$cadone</a>\n";
-		$action = "Shape/Size Analysis";
-		$nrun=array();
-		$nrun[] = array(
-			'name'=>"<a href='analyzeTracedObject.php?expId=$sessionId'>Size analysis</a>",
-			'result'=>$caresults,
-		);
-		$data[] = array(
-			'action' => array($action, $celloption),
-			'result' => array($result),
-			'newrun' => array($nrun, $celloption),
-		);
+
+		if ($cdone || $cadone) {
+			$action = "Shape/Size Analysis";
+			$nrun=array();
+			$nrun[] = array(
+				'name'=>"<a href='analyzeTracedObject.php?expId=$sessionId'>Size analysis</a>",
+				'result'=>$caresults,
+			);
+			$data[] = array(
+				'action' => array($action, $celloption),
+				'result' => array($result),
+				'newrun' => array($nrun, $celloption),
+			);
+		}
 	}
 
 	$action = "CTF Estimation";

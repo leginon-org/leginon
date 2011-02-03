@@ -87,7 +87,7 @@ function createAppionScriptForm($extra=false, $title=FORM_TITLE, $heading=FORM_H
 	if (!$partrunids) {
 		echo "<font class='apcomment'><b>No Particles for this Session</b></font>\n";
 	} else {
-		echo docpop('stackparticles','Tracing Runs:');
+		echo docpop('tracerun','Tracing Runs:');
 		echo "<select name='partrunid' onchange='fromstackToNone()'>\n";
 		echo "<option value='0'>None</option>\n";
 		foreach ($partrunids as $partrun){
