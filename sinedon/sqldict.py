@@ -167,7 +167,7 @@ import dbconfig
 import cPickle
 from pyami import weakattr
 
-def getDBDK(mod, conf):
+def getDBDK(mod, conf=None):
 	return sinedon.getConnection(mod, conf)
 
 class SQLDict(object):
@@ -1549,12 +1549,11 @@ def type2column(key, value, value_type, parentdata, dbdk):
 				if value is None:
 					row[field] = None
 				else:
-					if not isinstance(dbdk, sinedon.dbdatakeeper.DBDataKeeper):
-						if isinstance(value, sinedon.data.DataReference):
-							cls = value.dataclass
-						else:
-							cls = value.__class__
-						dbdk = getDBDK(cls.__module__, dbdk)
+					if isinstance(value, sinedon.data.DataReference):
+						cls = value.dataclass
+					else:
+						cls = value.__class__
+					dbdk = getDBDK(cls.__module__, None)
 					if dbdk in value.mappings:
 						dbid = value.mappings[dbdk]
 					else:
