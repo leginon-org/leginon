@@ -83,7 +83,7 @@ function createAppionScriptForm($extra=false, $title=FORM_TITLE, $heading=FORM_H
 	echo "<br>\n";
 	echo docpop('description','<b>Description:</b>');
 	echo "<br>\n";
-	echo "<textarea name='description' rows='2' cols='50'>$desc</textarea>\n";
+	echo "<textarea name='description' rows='2' cols='50'>$description</textarea>\n";
 	echo "<br>\n";
 	echo "<input type='checkbox' name='wait' $wait>\n";
 	echo docpop('nowait','Wait for more tilt series after finishing');
