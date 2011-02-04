@@ -35,7 +35,7 @@ require_once('../inc/formValidator.php');
 			$validator->addValidation("temp_images_dir", $_POST['temp_images_dir'], "folder_permission");
 			$validator->addValidation("default_appion_path", $_POST['default_appion_path'], "abs_path");
 			$validator->addValidation("default_appion_path", $_POST['default_appion_path'], "path_exist");
-			$validator->addValidation("default_appion_path", $_POST['default_appion_path'], "folder_permission");
+			//$validator->addValidation("default_appion_path", $_POST['default_appion_path'], "folder_permission");
 			
 			if(!empty($_POST['processing_hosts'])){
 
@@ -416,7 +416,7 @@ require_once('../inc/formValidator.php');
 		<br />
 		
 		<h3>Enter a default Appion base directory location.</h3>
-		<p>Setup a default Appion directory that is accessible (read, write and execute) to all the Appion users and Apache user.</p>
+		<p>Please setup a default Appion directory that is accessible (read, write and execute) to all the Appion users.</p>
 		<p>Example: /ami/data00/appion <br />'/ami/data00' - folder in your file server. <br />'appion' - folder for saving Appion image processing result.
 		<div id="error"><?php if($errMsg['default_appion_path']) echo $errMsg['default_appion_path']; ?></div>
 		<input type="text" size=25 name="default_appion_path" 
