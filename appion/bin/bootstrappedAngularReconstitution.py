@@ -133,6 +133,10 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			apDisplay.printError("please specify EITHER a template stack id OR a cluster id, not both")
 		if self.params['num_volumes'] is None:
 			apDisplay.printError("please specify the number of volumes that you wish to produce from the class averages")
+			
+		### check potential inappropriate specifications
+		if self.params['keep_ordered'] < 1.0: 											### probably specified as a fraction
+			self.params['keep_ordered'] = self.params['keep_ordered'] * 100	### convert to percentage
 		
 
 		return
@@ -504,7 +508,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		f.write("ordered"+str(iteration)+"_sort\n")
 		f.write("ANGULAR_ERROR\n")
 		f.write("UP\n")
-		f.write("%i\n" % (self.params['keep_ordered']))	
+		f.write("%i\n" % (self.params['keep_ordered_num']))	
 		f.write("EOF\n")
 		
 		### build a 3-D model
@@ -615,26 +619,34 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		rundir = os.path.join(self.params['rundir'], "max_like_alignment")
 		if not os.path.isdir(rundir):
 			os.mkdir(rundir)
-		xmippcmd1 = "xmipp_ml_tomo -i volumes.sel -o max_like_alignment/nref%d_15deg -nref %d -doc volumes.doc -iter 5 -ang 15 -dim 32 -perturb" \
+		xmippcmd1 = "xmipp_ml_tomo -i volumes.sel -o max_like_alignment/nref%d_15deg \
+					-nref %d -doc volumes.doc -iter 5 -ang 15 -dim 32 -perturb" \
 					% (self.params['nref'], self.params['nref'])
 		if self.params['nproc'] > 1:
 			xmippcmd1 += " -thr "+str(self.params['nproc'])
 		apParam.runCmd(xmippcmd1, package="Xmipp")
-		xmippcmd2 = "xmipp_ml_tomo -i volumes.sel -o max_like_alignment/nref%d_10deg -nref %d -doc max_like_alignment/nref%d_15deg_it000005.doc -keep_angles -iter 5 -ang 10 -ang_search 50 -maxres 0.35 -perturb" \
+		xmippcmd2 = "xmipp_ml_tomo -i volumes.sel -o max_like_alignment/nref%d_10deg \
+					-nref %d -doc max_like_alignment/nref%d_15deg_it000005.doc -keep_angles \
+					-iter 5 -ang 10 -ang_search 50 -maxres 0.35 -perturb" \
 					% (self.params['nref'], self.params['nref'], self.params['nref'])
 		if self.params['nproc'] > 1:
 			xmippcmd2 += " -thr "+str(self.params['nproc'])
-		apParam.runCmd(xmippcmd2, package="Xmipp")
-		xmippcmd3 = "xmipp_ml_tomo -i volumes.sel -o max_like_alignment/nref%d_5deg -nref %d -doc max_like_alignment/nref%d_10deg_it000005.doc -keep_angles -iter 5 -ang 5 -ang_search 25 -maxres 0.35 -perturb" \
+#		apParam.runCmd(xmippcmd2, package="Xmipp")
+		xmippcmd3 = "xmipp_ml_tomo -i volumes.sel -o max_like_alignment/nref%d_5deg \
+					-nref %d -doc max_like_alignment/nref%d_10deg_it000005.doc -keep_angles \
+					-iter 5 -ang 5 -ang_search 25 -maxres 0.35 -perturb" \
 					% (self.params['nref'], self.params['nref'], self.params['nref'])
 		if self.params['nproc'] > 1:
 			xmippcmd3 += " -thr "+str(self.params['nproc'])
-		apParam.runCmd(xmippcmd3, package="Xmipp")
+#		apParam.runCmd(xmippcmd3, package="Xmipp")
 
+#
+#		ANGULAR INCREMENT 15
+#
 		### check for all iterations, just in case Xmipp ended early, sometimes it converges before 5th iteration
 		i = 5
 		while i > 0:
-			vol_doc_file = os.path.join(rundir, "nref%d_5deg_it00000%d.doc") % (self.params['nref'], i)
+			vol_doc_file = os.path.join(rundir, "nref%d_15deg_it00000%d.doc") % (self.params['nref'], i)
 			if os.path.isfile(vol_doc_file):
 				return vol_doc_file
 			else:
@@ -1072,16 +1084,17 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 					psi2 = euler_array_transformed[str(classes[k])][str(i+1)][2]
 					t1 = self.EulersToTransformationMatrix(rot1, tilt1, psi1)
 					t2 = self.EulersToTransformationMatrix(rot2, tilt2, psi2)
+#					if apSymmetry.findSymmetry(self.params['presumed_sym'])['symmetry'].lower() == "c1":
 					d = apEulerCalc.computeDistance(t1,t2)
-#					d = self.distanceBetweenEulers(t1,t2)
-#					print "distance between average %d for volume %d and %d is %.3f" % (i+1, classes[j], classes[k], d)
+#					else:
+#					d = apEulerCalc.eulerCalculateDistanceSym(t1,t2,sym="c2")
 					l.append(d)
 		meanjump = numpy.asarray(l).mean()
 		
 		return meanjump
 						
 	#=============================															===============================
-	#=============================					3D CLASS ASSESSMENT						===============================
+	#=============================					3D CLASS ASSESSMENT				===============================
 	#=============================															===============================	
 			
 	def avgCCCBetweenProjectionsAndReprojections(self, classes):
@@ -1251,6 +1264,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		shutil.copyfile(os.path.join(stackdata['path']['path'], clsname[:-4]+".hed"), self.params['avgs'][:-4]+".hed")
 		shutil.copyfile(os.path.join(stackdata['path']['path'], clsname[:-4]+".img"), self.params['avgs'][:-4]+".img")
 		self.params['numpart'] = apFile.numImagesInStack(self.params['avgs'])
+		self.params['keep_ordered_num'] = self.params['numpart'] * self.params['keep_ordered'] / 100
 #		apIMAGIC.copyFile(self.params['rundir'], clsname, headers=True)
 		apIMAGIC.takeoverHeaders(self.params['avgs'], self.params['numpart'], self.params['boxsize'])
 	
@@ -1269,7 +1283,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			apParam.runCmd(emancmd, "EMAN")
 #			apIMAGIC.copyFile(self.params['rundir'], os.path.basename(self.params['avgs']), headers=True)
 			apIMAGIC.takeoverHeaders(self.params['avgs'], self.params['numpart'], self.params['boxsize'])
-			
+#		'''	
 		if self.params['prealign'] is True:
 			self.params['avgs'] = self.prealignClassAverages()
 			print self.params['avgs']
@@ -1323,16 +1337,16 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			shutil.move(volume1, volume2)
 			
 		##############################################			align 3-D models		##############################################
-							
+#									
 		### run Maximum Likelihood 3-D alignment & align resulting volumes
 		apDisplay.printColor("Running Xmipp maximum likelihood 3-D alignment", "cyan")
 		vol_doc_file = self.xmipp_max_like_3d_align()
 		alignparams = self.read_vol_doc_file(vol_doc_file)
 		apDisplay.printColor("Aligning volumes based on 3-D ML parameters", "cyan")
 		self.align_volumes(alignparams)
-		
+#		'''
 		##############################################    Principal Component Analysis   #############################################
-		
+#		vol_doc_file = "/ami/data00/appion/06dec19rct/angrecon/bar1/max_like_alignment/nref1_15deg_it000005.doc"
 		alignparams = self.read_vol_doc_file(vol_doc_file)
 		apDisplay.printColor("Calculating inter-volume similarity", "cyan")
 		if self.params['PCA'] is True:
