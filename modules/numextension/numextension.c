@@ -804,22 +804,6 @@ void initStats(stats *s) {
 	s->m2 = 0.0;
 }
 
-/*
-n = 0
-mean = 0
-M2 = 0
- 
-def calculate_online_variance(new_x, n, mean, M2):
-	n = n + 1
-	delta = new_x - mean
-	mean = mean + delta/n
-	M2 = M2 + delta*(new_x - mean)  # This expression uses the new value of mean
-
-	variance_n = M2/n
-	variance = M2/(n - 1) #note on the first pass with n=1 this will fail (should return Inf)
-	return variance
-*/
-
 void updateStats(stats *s, double new_value) {
 	double delta;
 	s->n += 1;
@@ -851,6 +835,7 @@ void allstats_byte(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 void allstats_ubyte(PyObject *inputarray, stats *result) {
@@ -864,6 +849,7 @@ void allstats_ubyte(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 void allstats_short(PyObject *inputarray, stats *result) {
@@ -877,6 +863,7 @@ void allstats_short(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 void allstats_ushort(PyObject *inputarray, stats *result) {
@@ -890,6 +877,7 @@ void allstats_ushort(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 void allstats_int(PyObject *inputarray, stats *result) {
@@ -903,6 +891,7 @@ void allstats_int(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 void allstats_uint(PyObject *inputarray, stats *result) {
@@ -916,6 +905,7 @@ void allstats_uint(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 void allstats_long(PyObject *inputarray, stats *result) {
@@ -929,6 +919,7 @@ void allstats_long(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 void allstats_ulong(PyObject *inputarray, stats *result) {
@@ -942,6 +933,7 @@ void allstats_ulong(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 void allstats_longlong(PyObject *inputarray, stats *result) {
@@ -955,6 +947,7 @@ void allstats_longlong(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 void allstats_ulonglong(PyObject *inputarray, stats *result) {
@@ -968,6 +961,7 @@ void allstats_ulonglong(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 void allstats_float(PyObject *inputarray, stats *result) {
@@ -981,6 +975,7 @@ void allstats_float(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 void allstats_double(PyObject *inputarray, stats *result) {
@@ -994,6 +989,7 @@ void allstats_double(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 void allstats_longdouble(PyObject *inputarray, stats *result) {
@@ -1007,6 +1003,7 @@ void allstats_longdouble(PyObject *inputarray, stats *result) {
 		updateStats(result, (double) (*ptr));
 		PyArray_ITER_NEXT(iter);
 	}
+	Py_XDECREF(iter);
 }
 
 static PyObject * allstats(PyObject *self, PyObject *args) {
@@ -1091,6 +1088,7 @@ static PyObject * allstats(PyObject *self, PyObject *args) {
 	value = PyFloat_FromDouble(result.std);
 	PyMapping_SetItemString(outputdict, "std", value);
 	Py_XDECREF(value);
+
 	return outputdict;
 }
 
