@@ -782,10 +782,323 @@ static PyObject *cannyedge(PyObject *self, PyObject *args) {
 
 }
 
+typedef struct stats_struct {
+	double n;
+	double min;
+	double max;
+	double mean;
+	double variance;
+	double variance_n;
+	double std;
+	double m2;
+} stats;
+
+void initStats(stats *s) {
+	s->n = 0.0;
+	s->min = INFINITY;
+	s->max = -INFINITY;
+	s->mean = 0.0;
+	s->variance = 0.0;
+	s->variance_n = 0.0;
+	s->std = 0.0;
+	s->m2 = 0.0;
+}
+
+/*
+n = 0
+mean = 0
+M2 = 0
+ 
+def calculate_online_variance(new_x, n, mean, M2):
+	n = n + 1
+	delta = new_x - mean
+	mean = mean + delta/n
+	M2 = M2 + delta*(new_x - mean)  # This expression uses the new value of mean
+
+	variance_n = M2/n
+	variance = M2/(n - 1) #note on the first pass with n=1 this will fail (should return Inf)
+	return variance
+*/
+
+void updateStats(stats *s, double new_value) {
+	double delta;
+	s->n += 1;
+	delta = new_value - s->mean;
+	s->mean = s->mean + delta / s->n;
+	s->m2 = s->m2 + delta * (new_value - s->mean);
+	s->variance_n = s->m2 / s->n;
+	if(s->n > 1) {
+		s->variance = s->m2 / (s->n - 1);
+	} else {
+		s->variance = INFINITY;
+	}
+	if (new_value > s->max) {
+		s->max = new_value;
+	}
+	if (new_value < s->min) {
+		s->min = new_value;
+	}
+}
+
+void allstats_byte(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_byte *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_byte *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+void allstats_ubyte(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_ubyte *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_ubyte *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+void allstats_short(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_short *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_short *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+void allstats_ushort(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_ushort *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_ushort *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+void allstats_int(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_int *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_int *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+void allstats_uint(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_uint *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_uint *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+void allstats_long(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_long *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_long *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+void allstats_ulong(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_ulong *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_ulong *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+void allstats_longlong(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_longlong *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_longlong *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+void allstats_ulonglong(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_ulonglong *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_ulonglong *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+void allstats_float(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_float *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_float *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+void allstats_double(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_double *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_double *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+void allstats_longdouble(PyObject *inputarray, stats *result) {
+	PyObject *iter;
+	npy_longdouble *ptr;
+
+	iter = PyArray_IterNew(inputarray);
+
+	while (PyArray_ITER_NOTDONE(iter)) {
+		ptr = (npy_longdouble *)PyArray_ITER_DATA(iter);
+		updateStats(result, (double) (*ptr));
+		PyArray_ITER_NEXT(iter);
+	}
+}
+
+static PyObject * allstats(PyObject *self, PyObject *args) {
+	PyObject *input, *inputarray, *outputdict, *value;
+	int input_typenum;
+	stats result;
+
+	if (!PyArg_ParseTuple(args, "O", &input))
+		return NULL;
+
+	/* create proper PyArrayObject from input source */
+	inputarray = PyArray_FromAny(input, NULL, 0, 0, 0, NULL);
+	if (inputarray == NULL) {
+		Py_XDECREF(inputarray);
+		return NULL;
+	}
+
+	input_typenum = PyArray_TYPE(inputarray);
+	initStats(&result);
+
+	switch (input_typenum) {
+		case NPY_BYTE:
+			allstats_byte(inputarray, &result);
+			break;
+		case NPY_UBYTE:
+			allstats_ubyte(inputarray, &result);
+			break;
+		case NPY_SHORT:
+			allstats_short(inputarray, &result);
+			break;
+		case NPY_USHORT:
+			allstats_ushort(inputarray, &result);
+			break;
+		case NPY_INT:
+			allstats_int(inputarray, &result);
+			break;
+		case NPY_UINT:
+			allstats_uint(inputarray, &result);
+			break;
+		case NPY_LONG:
+			allstats_long(inputarray, &result);
+			break;
+		case NPY_ULONG:
+			allstats_ulong(inputarray, &result);
+			break;
+		case NPY_LONGLONG:
+			allstats_longlong(inputarray, &result);
+			break;
+		case NPY_ULONGLONG:
+			allstats_ulonglong(inputarray, &result);
+			break;
+		case NPY_FLOAT:
+			allstats_float(inputarray, &result);
+			break;
+		case NPY_DOUBLE:
+			allstats_double(inputarray, &result);
+			break;
+		case NPY_LONGDOUBLE:
+			allstats_longdouble(inputarray, &result);
+			break;
+		case NPY_CFLOAT:
+		case NPY_CDOUBLE:
+		case NPY_CLONGDOUBLE:
+		default:
+			Py_XDECREF(inputarray);
+			return NULL;
+	}
+	Py_XDECREF(inputarray);
+
+	result.std = sqrt(result.variance_n);
+
+	outputdict = PyDict_New();
+	value = PyFloat_FromDouble(result.min);
+	PyMapping_SetItemString(outputdict, "min", value);
+	Py_XDECREF(value);
+	value = PyFloat_FromDouble(result.max);
+	PyMapping_SetItemString(outputdict, "max", value);
+	Py_XDECREF(value);
+	value = PyFloat_FromDouble(result.mean);
+	PyMapping_SetItemString(outputdict, "mean", value);
+	Py_XDECREF(value);
+	value = PyFloat_FromDouble(result.std);
+	PyMapping_SetItemString(outputdict, "std", value);
+	Py_XDECREF(value);
+	return outputdict;
+}
+
 static PyMethodDef numeric_methods[] = {
 
 /* used by align, ImageViewer2, */
 	{"minmax", minmax, METH_VARARGS, ""},
+	{"allstats", allstats, METH_VARARGS, ""},
 
 
 /* used by rctacquisition, maybe could use nd_image interpolation instead */
