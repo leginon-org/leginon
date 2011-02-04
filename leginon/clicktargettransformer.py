@@ -11,7 +11,6 @@ import presets
 import event
 import node
 import gui.wx.ClickTargetTransformer
-#import dbdatakeeper
 import threading
 import caltransformer
 import gui.wx.ClickTargetTransformer
@@ -81,7 +80,7 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		imageref = target.special_getitem('image',dereference = False)
 		# get parent image
 		try:
-			parentimagedata = self.dbdatakeeper.direct_query(leginondata.AcquisitionImageData,imageref.dbid, readimages = False)
+			parentimagedata = leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages = False)
 		except:
 			parentimagedata = None
 

@@ -57,7 +57,7 @@ class Node(correctorclient.CorrectorClient):
 
 	objectserviceclass = remotecall.NodeObjectService
 
-	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
+	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, tcpport=None, launcher=None, panel=None):
 		self.name = name
 		self.panel = panel
 		
@@ -78,10 +78,6 @@ class Node(correctorclient.CorrectorClient):
 			self.databinder = DataBinder(self, databinderlogger, tcpport=tcpport)
 		else:
 			self.databinder = otherdatabinder
-		if otherdbdatakeeper is None:
-			self.dbdatakeeper = sinedon.getConnection('leginondata')
-		else:
-			self.dbdatakeeper = otherdbdatakeeper
 
 		self.confirmationevents = {}
 		self.eventswaiting = {}
@@ -377,7 +373,7 @@ class Node(correctorclient.CorrectorClient):
 		'''
 		if database:
 			try:
-				self.dbdatakeeper.insert(idata, force=dbforce)
+				idata.insert(force=dbforce)
 			except (IOError, OSError), e:
 				raise PublishError(e)
 			except KeyError:
@@ -410,13 +406,13 @@ class Node(correctorclient.CorrectorClient):
 		given datainstance
 		'''
 		try:
-			resultlist = self.dbdatakeeper.query(datainstance, results, readimages=readimages, timelimit=timelimit)
+			resultlist = datainstance.query(results=results, readimages=readimages, timelimit=timelimit)
 		except (IOError, OSError), e:
 			raise ResearchError(e)
 		return resultlist
 
 	def researchDBID(self, dataclass, dbid, readimages=True):
-		return self.dbdatakeeper.direct_query(dataclass, dbid, readimages)
+		return dataclass.direct_query(dbid, readimages=readimages)
 
 	# methods for setting up the manager
 
