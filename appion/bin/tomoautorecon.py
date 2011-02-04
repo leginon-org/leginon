@@ -10,20 +10,12 @@
 
 
 import os
-import sys
-import shutil
-import re
-import subprocess
 import math
-#pyami
-from pyami import mrc
 #appion
 from appionlib import appionTiltSeriesLoop
 from appionlib import appiondata
 from appionlib import apTomo
-from appionlib import apParam
 from appionlib import apDisplay
-from appionlib import apDatabase
 
 #=====================
 #=====================
@@ -51,8 +43,22 @@ class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 
 	def isBadTiltSeries(self, tiltseriesdata):
 		# no need to process if only a small number of images are taken
-		imgtree = apDatabase.getImagesFromTiltSeries(tiltseriesdata,False)
-		return len(imgtree) < 4
+		imagelist = apTomo.getImageList([tiltseriesdata,])
+		tilts,ordered_imagelist,ordered_mrc_files,refimg = apTomo.orderImageList(imagelist)
+		imgshape = apTomo.getTomoImageShape(ordered_imagelist[refimg])
+		corr_bin = apTomo.getCorrelatorBinning(imgshape)
+		shifts = apTomo.getLeginonRelativeShift(ordered_imagelist, corr_bin, refimg)
+		distances =  []
+		for shift in shifts:
+			distance = math.hypot(shift['x'],shift['y'])
+			distances.append(distance)
+		if len(imagelist) < 5: 
+			apDisplay.printWarning("Less than 5 images in Series %d" % (tiltseriesdata['number']))
+			return True
+		if max(distances[2:-2]) > min(imgshape) / (corr_bin*3):
+			apDisplay.printWarning("Tracked feature in Series %d jumps over 1/3 of the image" % (tiltseriesdata['number']))
+			return True
+		return False
 
 	def processTiltSeries(self, tiltseriesdata):
 		seriesnumber = tiltseriesdata['number']

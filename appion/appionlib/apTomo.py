@@ -125,13 +125,16 @@ def orderImageList(imagelist):
 		tilt = imagedata['scope']['stage position']['a']*180/3.14159
 		
 		if tilt < start_tilt+0.02 and tilt > start_tilt-0.02:
-			qimage = leginon.leginondata.AcquisitionImageData()
-			nextimagedata = imagelist[i+1]
-			nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
-			direction = (nexttilt - tilt)
-			# switch group in getCorrelationPeak not here
-			tilt = tilt+0.02*direction
-			reftilts.append(tilt)
+			if len(imagelist) >= 2:
+				qimage = leginon.leginondata.AcquisitionImageData()
+				nextimagedata = imagelist[i+1]
+				nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
+				direction = (nexttilt - tilt)
+				# switch group in getCorrelationPeak not here
+				tilt = tilt+0.02*direction
+				reftilts.append(tilt)
+			else:
+				reftilts.append(tilt)
 		tiltangledict[tilt] = imagedata
 	tiltkeys = tiltangledict.keys()
 	tiltkeys.sort()
