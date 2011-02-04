@@ -1068,6 +1068,7 @@ static PyObject * allstats(PyObject *self, PyObject *args) {
 		case NPY_CDOUBLE:
 		case NPY_CLONGDOUBLE:
 		default:
+			PyErr_Format(PyExc_TypeError, "no allstats support for typenum %d", input_typenum);
 			Py_XDECREF(inputarray);
 			return NULL;
 	}
