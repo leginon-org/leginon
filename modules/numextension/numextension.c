@@ -811,11 +811,13 @@ void updateStats(stats *s, double new_value) {
 	s->mean = s->mean + delta / s->n;
 	s->m2 = s->m2 + delta * (new_value - s->mean);
 	s->variance_n = s->m2 / s->n;
+	/*  Not using this at the moment
 	if(s->n > 1) {
 		s->variance = s->m2 / (s->n - 1);
 	} else {
 		s->variance = INFINITY;
 	}
+	*/
 	if (new_value > s->max) {
 		s->max = new_value;
 	}
