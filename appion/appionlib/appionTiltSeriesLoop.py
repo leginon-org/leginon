@@ -555,18 +555,16 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		#calc series left
 		self.stats['seriesleft'] = self.stats['seriescount'] - self.stats['count']
 
+		if self.params['background'] is False:
+			apDisplay.printColor( "\nStarting series %d ( skip:%d, remain:%d ) id:%d"
+				%(tiltseriesdata['number'], self.stats['skipcount'], self.stats['seriesleft'], 
+				tiltseriesdata.dbid,),
+				"green")
 		#only if a series was processed last
 		if(self.stats['lastcount'] != self.stats['count']):
-			if self.params['background'] is False:
-				apDisplay.printColor( "\nStarting series %d ( skip:%d, remain:%d ) id:%d, series: %d"
-					%(self.stats['count'], self.stats['skipcount'], self.stats['seriesleft'], 
-					tiltseriesdata.dbid, tiltseriesdata['number'],),
-					"green")
-			elif self.stats['count'] % 80 == 0:
-				sys.stderr.write("\n")
+			sys.stderr.write("\n")
 			self.stats['lastcount'] = self.stats['count']
 			self._checkMemLeak()
-
 		# skip if last image belong to the series doesn't exist:
 		imgtree = apDatabase.getImagesFromTiltSeries(tiltseriesdata,False)
 		imgpath = os.path.join(tiltseriesdata['session']['image path'], imgtree[0]['filename']+'.mrc')
@@ -579,10 +577,12 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 			apDisplay.printWarning("Series %d is not good enough for processing, skipping" % (tiltseriesdata['number']))
 			seriesname = "series%3d" % (tiltseriesdata['number'])
 			self._writeDoneDict(seriesname)
+			self.stats['count'] += 1
 			return False
 
 		# check to see if series has already been processed
 		if self._alreadyProcessed(tiltseriesdata):
+			
 			return False
 
 		self.stats['waittime'] = 0
