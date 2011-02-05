@@ -1576,10 +1576,17 @@ class particledata {
 		return $r;
 	}
 
-	function getSelectionParams ($runId, $returntype=False) {
+	function getSelectionRunData($runId) {
 		$q = "select * from ApSelectionRunData "
 			." where `DEF_id` = '$runId' ";
-		list($r)=$this->mysql->getSQLResult($q);
+		list($r) = $this->mysql->getSQLResult($q);
+
+		return $r;
+	}
+		
+	
+	function getSelectionParams ($runId, $returntype=False) {
+		$r = $this->getSelectionRunData($runId);
 
 		//print_r ($r);
 		//echo $r['REF|ApSelectionParamsData|params'];

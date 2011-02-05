@@ -50,7 +50,9 @@ function pickingsummarytable($selectionid, $mini=false) {
 
 	$selectiontable.= "<table border='0'>\n";
 
-	$display_keys['date time'] = $selectiondata['DEF_timestamp'];
+	// Need to get the date/time from the SelectionRunDataTable rather than the params table. refs #1171
+	$selectionRunData = $particle->getSelectionRunData($selectionid);
+	$display_keys['date time'] = $selectionRunData['DEF_timestamp'];
 
 	// may be different than $expId
 	$selectsessionid = $selectiondata['REF|leginondata|SessionData|session'];
