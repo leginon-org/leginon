@@ -110,7 +110,7 @@ class UserPage(WizardPage):
 		if self.sessions:
 			return parent.sessiontypepage
 		else:
-			#parent.namepage.suggestName()
+			parent.namepage.suggestName()
 			return parent.namepage
 
 class SessionTypePage(WizardPage):
