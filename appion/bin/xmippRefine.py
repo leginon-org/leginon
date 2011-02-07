@@ -143,7 +143,7 @@ class xmippRefineScript(appionScript.AppionScript):
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['rundir'] = os.path.join(uppath, "recons/xmipp", self.params['runname'])
+		self.params['rundir'] = os.path.join(uppath, "recons", self.params['runname'])
 
 	#=====================
 	def start(self):
@@ -158,14 +158,14 @@ class xmippRefineScript(appionScript.AppionScript):
 			fnStack=os.path.join(stackData['path']['path'], stackData['name'])
 		apXmipp.breakupStackIntoSingleFiles(fnStack)
 		
-		# Convert input volume to Spider
-		modelData = apModel.getModelFromId(self.params['modelid'])
-		if os.path.exists("start.img"):
-			fnRefMrc="threed.0a.mrc"
-		if modelData['pixelsize'] != self.params['pixelSize']:
-			fnRef = apParam.randomString(8)+".spi"
-			apModel.rescaleModel(self.params['modelid'], fnRef, self.params['boxSize'], self.params['pixelSize'], spider=True)
+		# scale model
+		mrcvol = os.path.join(self.params['rundir'], "threed0.mrc")
+		apModel.rescaleModel(self.params['modelid'], mrcvol, self.params['boxSize'], self.params['pixelSize'], spider=True)
 
+	   # Convert starting model to Spider
+		spivol = os.path.join(self.params['rundir'], "threed0.spi")
+		emancmd = "proc3d %s %s spidersingle"%(mrcvol, spivol)
+		apEMAN.executeEmanCmd(emancmd, verbose=False)		
 		# Convert mask if it exists
 		fnMask=""
 		if not self.params['mask']=="":
@@ -176,7 +176,7 @@ class xmippRefineScript(appionScript.AppionScript):
 		protocolPrm={}
 		protocolPrm["SelFileName"]                  =   "partlist.doc"
 		protocolPrm["DocFileName"]                  =   ""
-		protocolPrm["ReferenceFileName"]            =   fnRef
+		protocolPrm["ReferenceFileName"]            =   spivol
 		protocolPrm["WorkingDir"]                   =   "ProjMatch"
 		protocolPrm["DoDeleteWorkingDir"]           =   True
 		protocolPrm["NumberofIterations"]           =   self.params['numberofiterations']
@@ -235,14 +235,14 @@ class xmippRefineScript(appionScript.AppionScript):
 		protocolPrm["ResolSam"]                     =   self.params['pixelSize']
 		protocolPrm["DisplayResolution"]            =   False
 		protocolPrm["DoLowPassFilter"]              =   self.params['dolowpassfilter']
-		protocolPrm["UseFscForFilter"]              =   self.params['usefscforfilter']
-		protocolPrm["ConstantToAddToFiltration"]    =   self.params['constanttoaddtofiltration']
+		protocolPrm["UseFscForFilter"]              =   self.params['usefscforfilter']		
 		protocolPrm["NumberOfThreads"]              =   self.params['numberofthreads']
 		protocolPrm["DoParallel"]                   =   self.params['numberofmpiprocesses']>1
 		protocolPrm["NumberOfMpiProcesses"]         =   self.params['numberofmpiprocesses']
 		protocolPrm["MpiJobSize"]                   =   '10'
 		protocolPrm["SystemFlavour"]                =   ''
 		protocolPrm["AnalysisScript"]               =   'visualize_projmatch.py'
+		protocolPrm["ConstantToAddToFiltration"]    =   '10x.1'
 
 		particularizeProtocol(protocol_projmatch,protocolPrm,
 			os.path.join(self.params['rundir'],"protocol_projmatch.py"))
@@ -257,7 +257,7 @@ class xmippRefineScript(appionScript.AppionScript):
 		# Pickup results
 		os.unlink("partlist.doc")
 		shutil.rmtree("partfiles")
-		os.unlink(fnRef)
+		os.unlink(spivol)
 		shutil.rmtree("ProjMatch/ReferenceLibrary")
 		shutil.rmtree("ProjMatch/ProjMatchClasses")
 		os.unlink("ProjMatch/protocol_projmatch_backup.py")
@@ -272,11 +272,12 @@ class xmippRefineScript(appionScript.AppionScript):
 		if fnStack=="start.img":
 			os.unlink("start.img")
 			os.unlink("start.hed")
-		if fnRefMrc=="threed.0a.mrc":
+		if mrcvol=="threed.0a.mrc":
 			os.unlink("threed.0a.mrc")
 
 		lastIteration=""
 		resfile=open("resolution.txt","w")
+		i=0
 		for iteration in glob.glob("ProjMatch/Iter_*"):
 			lastIteration=iteration
 			rootname=iteration[iteration.find("/")+1:]
@@ -316,8 +317,9 @@ class xmippRefineScript(appionScript.AppionScript):
 				os.path.join(iteration,"angles.doc"))
 
 			# Keep the volume
+			i+=1
 			SPItoMRC(os.path.join(iteration,rootname+"_reconstruction.vol"),
-				os.path.join(iteration,"reconstruction.mrc"))
+					os.path.join(self.params['rundir'],"threed.%03da.mrc"%(i)))
 			os.unlink(os.path.join(iteration,rootname+"_reconstruction.vol"))
 
 			# Keep the FSC
