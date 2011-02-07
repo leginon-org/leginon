@@ -21,6 +21,7 @@ from appionlib import apRecon
 from appionlib import apModel
 from appionlib import apSymmetry
 from appionlib import apEulerDraw
+from appionlib import apDatabase
 
 #======================
 #======================
@@ -33,6 +34,14 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			help="Stack database id", metavar="ID#")
 		self.parser.add_option("--mass", dest="mass", type="float",
 			help="Mass of the reconstructed volume in kDa")
+		self.parser.add_option("--zoom", dest="zoom", type="float",
+			help="Zoom factor")
+		self.parser.add_option("--sym", dest="sym", type="str",
+			help="Symmetry")
+		self.parser.add_option("--Niter", dest="Niter", type="int",
+			help="Number of iterations")
+	
+		
 
 	#=====================
 	def checkConflicts(self):
@@ -40,15 +49,22 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			apDisplay.printError("stack id was not defined")
 		if self.params['mass'] is None:
 			apDisplay.printError("mass was not defined")
+		if self.params['zoom'] is None:
+			apDisplay.printError("zoom was not defined")
 
 	#=====================
-	def setRunDir(self):
-		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-		path = self.stackdata['path']['path']
-		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['rundir'] = os.path.join(uppath, "recon/xmipp", self.params['runname'])
+#	def setRunDir(self):
+#		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+#		path = self.stackdata['path']['path']
+#		uppath = os.path.abspath(os.path.join(path, "../.."))
+#		self.params['rundir'] = os.path.join(uppath, "recon/xmipp", self.params['runname'])
 
 	#=====================
+
+	#==================
+	
+	
+	
 	def start(self):
 		# Add xmipp python files to the Python path
 		scriptdir=os.path.split(os.path.dirname(os.popen('which xmipp_protocols','r').read()))[0]+'/protocols'
@@ -66,7 +82,9 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 		total=apFile.numImagesInStack(self.stack['file'])
 
 		# Read the run parameters
-		protocolPrm = eval(open("runParameters.txt").read())
+		protocolPrm = open('runParameters.txt','r').read()
+		protocolPrm = eval(protocolPrm)
+		
 
 		# Insert the fixed parameters
 		fixedq = appiondata.ApXmippRefineFixedParamsData()
@@ -76,31 +94,31 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 		fixedq['innerRadius']     = protocolPrm["InnerRadius"]
 		fixedq['outerRadius']     = protocolPrm["OuterRadius"]
 		fixedq['symmetryGroup']   = apSymmetry.findSymmetry(protocolPrm["SymmetryGroup"])
-		fixedq['fourierMaxFrequencyOfInterest']=protocolPrm['FourierMaxFrequencyOfInterest']
+#		fixedq['fourierMaxFrequencyOfInterest']=protocolPrm['FourierMaxFrequencyOfInterest']
 		fixedq['computeResol']    = protocolPrm["DoComputeResolution"]
 		fixedq['dolowpassfilter'] = protocolPrm["DoLowPassFilter"]
 		fixedq['usefscforfilter'] = protocolPrm["UseFscForFilter"]
 		fixedq.insert()
 
 		# Insert this run in the table of runs
+		jobdata = apDatabase.getJobDataFromPathAndType(self.params['rundir'], "xmipprefine")
 		runq=appiondata.ApRefineRunData()
-		runq['name']=self.params['runname']
+#		runq['name']=self.params['runname']
 		runq['stack']=apStack.getOnlyStackData(self.params['stackid'])
 		earlyresult=runq.query(results=1)
 		if earlyresult:
 			apDisplay.printWarning("Run already exists in the database.\nIdentical data will not be reinserted")
-		runq['initialModel']=apModel.getModelFromId(protocolPrm['modelid'])
 		runq['package']="Xmipp"
 		runq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		runq['description']=self.params['description']
 		result=runq.query(results=1)
-		if earlyresult and not result:
-			apDisplay.printError("Refinement Run parameters have changed")
-		apDisplay.printMsg("inserting Refinement Run into database")
+#		if earlyresult and not result:
+#			apDisplay.printError("Refinement Run parameters have changed")
+#		apDisplay.printMsg("inserting Refinement Run into database")
 		runq.insert()
 
 		# Insert now the information for each iteration
-		for i in range(1,protocolPrm["NumberofIterations"]+1):
+		for i in range(1,self.params['Niter']+1):
 			apDisplay.printMsg("Processing iteration "+str(i))
 			iterDir="ProjMatch/Iter_"+str(i)
 
@@ -112,12 +130,15 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			apDisplay.printMsg("inserting FSC resolution data into database")
 			resolq.insert()
 
+
+
 			# Insert the R measure
 			rmeasure=appiondata.ApRMeasureData()
 			rmeasure['volume']=os.path.join(iterDir,"reconstruction.mrc")
 			rmeasure['rMeasure']=apRecon.runRMeasure(self.stack['apix'],
 				os.path.join(self.params['rundir'],rmeasure['volume']))
 			rmeasure.insert()
+
 
 			# Fill the iteration dependent parameters
 			iterparamq=appiondata.ApXmippRefineIterData()
@@ -151,7 +172,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			for line in fhFSC:
 				tokens=line.split()
 				point=appiondata.ApFSCData()
-				point['refinementData']=mainq
+#				point['refinementData']=mainq
 				point['pix']=int(tokens[0])
 				point['value']=float(tokens[1])
 				point.insert()
@@ -198,11 +219,12 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			#proc = subprocess.Popen("ln -s "+mainq['volumeDensity']+" tmp.mrc", shell=True)
 			#proc.wait()
 			#print os.getcwd()
-			densityfile = os.path.join(self.params['rundir'], mainq['volumeDensity'])
-			apChimera.filterAndChimera(density=densityfile,
-				res=resolq['half'], apix=self.stack['apix'],
-				chimtype='snapshot', sym=protocolPrm["SymmetryGroup"],
-				mass=self.params['mass'])
+			volumeMrcFile = os.path.join(self.params['rundir'], "threed.%03da.mrc"%(i))
+#			apChimera.filterAndChimera(density=densityfile,
+#				res=resolq['half'], apix=self.stack['apix'],
+#				chimtype='snapshot', sym=protocolPrm["SymmetryGroup"],
+#				mass=self.params['mass'])
+			apChimera.filterAndChimera(volumeMrcFile, res=30, apix=self.stack['apix'], box=self.stack['boxsize'], chimtype='snapshot', contour=1.0, zoom=self.params['zoom'], sym=self.params['sym'], silhouette=True, mass=self.params['mass'])
 			#os.unlink("tmp.mrc")
 
 #=====================
