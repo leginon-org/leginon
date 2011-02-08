@@ -279,10 +279,6 @@ class protomoAligner(appionScript.AppionScript):
 				# Correlation by Coarse correlation in IMOD
 				aligndir = processdir
 				imodxcorrdata = apImod.coarseAlignment(stackdir, processdir, imodseriesname, commit)
-				# just commit
-				#q = appiondata.ApImodXcorrParamsData()
-				#imodxcorrdata = q.direct_query(1)
-
 				# Global Transformation
 				gtransforms = apImod.convertToGlobalAlignment(processdir, imodseriesname)
 			# Create Aligned Stack for record
@@ -299,7 +295,7 @@ class protomoAligner(appionScript.AppionScript):
 				if alignmethod == 'protomo':
 					# parameters
 					protomodata = apProTomo.insertProtomoParams(seriesname)
-					alignrun = apTomo.insertTomoAlignmentRun(sessiondata,leginonxcorrlist[0],None,protomodata,1,self.params['runname'],self.params['rundir'],self.params['description'])
+					alignrun = apTomo.insertTomoAlignmentRun(sessiondata,leginonxcorrlist[0],None,protomodata,None,1,self.params['runname'],self.params['rundir'],self.params['description'])
 					self.cycle_description = self.params['description']
 					self.params['cycle'] = cycle
 					if cycle == 0:
@@ -315,7 +311,7 @@ class protomoAligner(appionScript.AppionScript):
 							apProTomo.insertTiltAlignment(alignerdata,imagedata,i,resulttltparams[0][i],center)
 					self.params['description'] = self.cycle_description
 				else:
-					alignrun = apTomo.insertTomoAlignmentRun(sessiondata,None,imodxcorrdata,None,1,self.params['runname'],self.params['rundir'],self.params['description'])
+					alignrun = apTomo.insertTomoAlignmentRun(sessiondata,None,imodxcorrdata,None,None,1,self.params['runname'],self.params['rundir'],self.params['description'])
 					alignerdata = apTomo.insertAlignerParams(alignrun,self.params)
 					#results
 					prexgfile = os.path.join(aligndir,imodseriesname+'.prexg')

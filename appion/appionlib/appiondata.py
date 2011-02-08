@@ -1483,6 +1483,12 @@ class ApImodXcorrParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApRaptorParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+		)
+	typemap = classmethod(typemap)
+
 class ApProtomoParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1571,6 +1577,7 @@ class ApTomoAlignmentRunData(Data):
 			('coarseLeginonParams', leginon.leginondata.TomographySettingsData),
 			('coarseImodParams', ApImodXcorrParamsData),
 			('fineProtomoParams', ApProtomoParamsData),
+			('raptorParams', ApRaptorParamsData),
 			('bin', int),
 			('name', str),
 			('path', ApPathData),

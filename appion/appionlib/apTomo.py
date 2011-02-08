@@ -379,16 +379,18 @@ def	insertTiltsInAlignRun(alignrundata,tiltdata,settingsdata,primary=True):
 	q['primary_tiltseries'] = primary
 	return publish(q)
 
-def insertTomoAlignmentRun(sessiondata,leginoncorrdata,imodxcorrdata,protomorundata,bin,name,path,description=None):
+def insertTomoAlignmentRun(sessiondata,leginontomosettingsdata,imodxcorrparamsdata,protomorunparamsdata,raptorparamsdata,bin,name,path,description=None):
 	pathq = appiondata.ApPathData(path=os.path.abspath(path))
 	qalign = appiondata.ApTomoAlignmentRunData(session=sessiondata,
 			bin=bin,name=name, path=pathq)
-	if leginoncorrdata:
-		qalign['coarseLeginonParams'] = leginoncorrdata
-	if imodxcorrdata:
-		qalign['coarseImodParams'] = imodxcorrdata
-	if protomorundata:
-		qalign['fineProtomoParams'] = protomorundata
+	if leginontomosettingsdata:
+		qalign['coarseLeginonParams'] = leginontomosettingsdata
+	if imodxcorrparamsdata:
+		qalign['coarseImodParams'] = imodxcorrparamsdata
+	if protomorunparamsdata:
+		qalign['fineProtomoParams'] = protomorunparamsdata
+	if raptorparamsdata:
+		qalign['raptorParams'] = raptorparamsdata
 	results = qalign.query()
 	if not results:
 		qalign['description'] = description
@@ -397,7 +399,7 @@ def insertTomoAlignmentRun(sessiondata,leginoncorrdata,imodxcorrdata,protomorund
 	return results[0]
 
 def insertAlignerParams(alignrundata,params,protomodata=None,refineparamsdata=None,goodrefineparamsdata=None,imagedata=None):
-	# protomoaligner parameters
+	# single use of aligner for a given alignment run
 	alignerq = appiondata.ApTomoAlignerParamsData()
 	alignerq['alignrun'] = alignrundata
 	alignerq['description'] = params['description']
@@ -474,7 +476,7 @@ def uploadTomo(params):
 	else:
 		fullbin = 1
 		subbin = params['bin']
-	alignrun = insertTomoAlignmentRun(sessiondata,None,None,None,fullbin,runname,params['aligndir'],'manual alignment from upload')
+	alignrun = insertTomoAlignmentRun(sessiondata,None,None,None,None,fullbin,runname,params['aligndir'],'manual alignment from upload')
 	# only tilt series in one alignrun for now
 	insertTiltsInAlignRun(alignrun, tiltdata,None,True)
 	alignerdata = insertAlignerParams(alignrun,params)
