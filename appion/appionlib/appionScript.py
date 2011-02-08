@@ -451,7 +451,7 @@ class AppionScript(basicScript.BasicScript):
 	def onClose(self):
 		return
 
-	def runAppionScriptInIndependentThread(self,cmd, logfilepath):
+	def runAppionScriptInIndependentThread(self,cmd):
 		self.process_launcher.launch(cmd, shell=True)
 
 	def runAppionScriptInSubprocess(self,cmd,logfilepath):
