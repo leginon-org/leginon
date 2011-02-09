@@ -1486,6 +1486,8 @@ class ApImodXcorrParamsData(Data):
 class ApRaptorParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('markersize', int),
+			('markernumber', int),
 		)
 	typemap = classmethod(typemap)
 
