@@ -21,7 +21,7 @@ from appionlib import apDisplay
 #=====================
 class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 	def setupParserOptions(self):
-		self.alignmethods = ( "imod-shift", "protomo" )
+		self.alignmethods = ( "imod-shift", "protomo","raptor" )
 		self.parser.add_option("--alignmethod", dest="alignmethod",
 			type="choice", choices=self.alignmethods, default="protomo" )
 		self.parser.add_option("--alignsample", dest="alignsample", default=4.0, type="float",
@@ -32,6 +32,10 @@ class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 			help="Full tomo reconstruction thickness before binning, e.g. --thickness=200", metavar="int")
 		self.parser.add_option("--reconbin", dest="reconbin", default=1, type="int",
 			help="Extra binning from original images, e.g. --bin=2", metavar="int")
+		self.parser.add_option("--markersize", dest="markersize", default=10, type="int",
+			help="Mark size in nanometer, e.g. --markersize=10", metavar="int")
+		self.parser.add_option("--markernumber", dest="markernumber", default=0, type="int",
+			help="number of markers, e.g. --markernumber=10", metavar="int")
 		return
 
 	def checkConflicts(self):
@@ -72,7 +76,13 @@ class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 			commitstr = '--no-commit'
 		if self.params['description'] is None:
 			self.params['description'] = 'auto recon '+self.params['runname']
-		
+
+		if self.params['alignmethod'] == 'raptor':
+			reconrundir = os.path.join(tiltseriespath,self.params['runname'])
+			command = 'tomoraptor.py' + ' ' + '--projectid=%d' % (self.params['projectid']) + ' ' + '--session=' + self.params['sessionname'] + ' ' + '--runname=' + self.params['runname'] + ' ' + '--rundir=' + reconrundir + ' ' + '--tiltseriesnumber=%d' % (seriesnumber) + ' ' + '--markersize=%d' % self.params['markersize'] + ' ' + '--markernumber=%d' % (self.params['markernumber']) + ' ' + '--reconbin=%d' % (self.params['reconbin']) + ' '+ '--thickness=%d' % (self.params['reconthickness']) + ' ' + '--description="%s"' % (self.params['description'],) + ' ' + commitstr
+			self.runAppionScriptInIndependentThread(command)
+			return		
+
 		# align the tilt series
 		alignrundir = os.path.join(tiltseriespath,'align',self.params['runname'])
 		alignlogpath = os.path.join(alignrundir,self.params['runname']+'.appionsub.log')
