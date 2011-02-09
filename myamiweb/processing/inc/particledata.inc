@@ -261,6 +261,7 @@ class particledata {
 		$q .= ""
 			."a.`REF|leginondata|TomographySettingsData|coarseLeginonParams` as xleginonid, "
 			."a.`REF|ApProtomoParamsData|fineProtomoParams` as protomoid, "
+			."a.`REF|ApRaptorParamsData|raptorParams` as raptorid, "
 			."a.`description`, "
 			."a.`hidden` "
 			."FROM `ApTomoAlignmentRunData` a "
@@ -279,6 +280,8 @@ class particledata {
 		list($r) = $this->mysql->getSQLResult($q);
 		if ($r['protomoid']) {
 			$r['method'] = 'protomo';
+		} elseif ($r['raptorid']) {
+			$r['method'] = 'raptor';
 		} else {
 			if ($r['imodid']) {
 				$r['method'] = 'imod';
@@ -345,7 +348,32 @@ class particledata {
 	}
 
 	function getAlignerInfo($alignerid) {
-		return $this->getProtomoAlignmentInfo($alignerid);
+		$q = " SELECT ar.`DEF_id` as alignerid, "
+			." FROM `ApTomoAlignerParamsData` ar "
+			."WHERE ar.`DEF_id`=".$alignerid." ";
+		$r = $this->mysql->getSQLResult($q);
+
+		if (!$r[0]['REF|ApProtomoParamsData|protomo']) {
+			$q = " SELECT ar.`DEF_id` as alignerid, "
+			." arun.`DEF_id` as alignrunid, "
+			." arun.`name` as runname, "
+			." arun.`bin` as bin, "
+			." path.`path`, "
+			." tilts.`REF|leginondata|TiltSeriesData|tiltseries` as `tiltseries` "
+			." FROM `ApTomoAlignerParamsData` ar "
+			."LEFT JOIN `ApTomoAlignmentRunData` arun "
+			."ON ar.`REF|ApTomoAlignmentRunData|alignrun` = arun.`DEF_id` "
+			."LEFT JOIN `ApTiltsInAlignRunData` tilts "
+			."ON tilts.`REF|ApTomoAlignmentRunData|alignrun` = arun.`DEF_id` "
+			."LEFT JOIN `ApPathData` path "
+			."ON arun.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE ar.`DEF_id`=".$alignerid." "
+			."AND tilts.`primary_tiltseries` = 1 ";
+			$r = $this->mysql->getSQLResult($q);
+			return $r;
+		} else {
+			return $this->getProtomoAlignmentInfo($alignerid);
+		}
 	}
 
 	function getProtomoAlignmentInfo($alignerid) {

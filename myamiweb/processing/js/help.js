@@ -103,6 +103,7 @@ var help = {
 		'session': 'Session name as created at leginon startup on the date of image capture.',
 		'extrabin': 'additional binning used to reconstruct the tomogram relative to that of the tilt series images.',
 		'tomorunname' : 'Specifies the name associated with the full tomogram processing results unique to the specified tilt series and parameters.',
+		'tomosamplethickness' : 'Estimated thickness of the sample in nanometer to be reconstructed into tomogram.',
 		'tomothickness' : 'Thickness of the tomogram to be reconstructed, count by pixelsof the tilt image before tomogram binning',
 		'tomoexclude' : 'tilt images to be excluded from full tomogram making, separated by commas.  Images are identified by sorted tilt number as in the alignment graph aboveand counting starts from 0.  For example: Entering 0,1 will exclude the two images of the most negative tilts',
 		'subtomorunname' : 'Specifies the name associated with the sub tomogram boxing. Default is "subtomo_pick"+pickrun Id or "subtomo_stack"+stack Id. New attempt to use the same run name from the same full tomogram will append to the old results.',
