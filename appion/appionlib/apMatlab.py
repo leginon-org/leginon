@@ -222,7 +222,7 @@ def makeMatlabCmd(header,footer,plist):
 def runMatlabScript(matlabscript):
 	waited = False
 	t0 = time.time()
-	cmd = "matlab -nodesktop < %s;" % (matlabscript)
+	cmd = "xvfb-run matlab -nodesktop < %s;" % (matlabscript)
 	matlabproc = subprocess.Popen(cmd, shell=True)
 	out, err = matlabproc.communicate()
 	### continuous check
