@@ -259,8 +259,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		else:
 			acq_points = centers
 		# need just one focus point
-		focpoint = self.focus_on_hole(focus_points,focus_points)
-		focus_points = [focpoint]
+		if len(focus_points) > 1 and self.settings['focus template thickness']:
+			focpoint = self.focus_on_hole(focus_points,focus_points)
+			focus_points = [focpoint]
 
 		self.setTargets(acq_points, 'acquisition', block=True)
 		self.setTargets(focus_points, 'focus', block=True)
