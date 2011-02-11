@@ -521,14 +521,14 @@ function createSyntheticDataset() {
 	$command.="--projcount=$projcount ";
 	if ($projection == "preferred") $command.="--preforient --projstdev=$projstdev ";
 	elseif ($projection == "even") $command.="--projinc=$projinc ";
-	if ($shiftrad) $command.="--shiftrad=$shiftrad ";
-	if ($rotang) $command.="--rotang=$rotang ";
+	if ($shiftrad || $shiftrad==0) $command.="--shiftrad=$shiftrad ";
+	if ($rotang || $rotang==0) $command.="--rotang=$rotang ";
 	if ($flip) $command.="--flip ";
 	else $command.="--no-flip ";
 	if ($snr1) $command.="--snr1=$snr1 ";
 	if ($snrtot) $command.="--snrtot=$snrtot ";
-	if ($df1) $command.="--df1=$df1 ";
-	if ($df2) $command.="--df2=$df2 ";
+	if ($df1 || $df1==0) $command.="--df1=$df1 ";
+	if ($df2 || $df2==0) $command.="--df2=$df2 ";
 	if ($astigmatism) $command.="--astigmatism=$astigmatism ";
 	if ($randomdef) {
 		$command.="--randomdef ";
