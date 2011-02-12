@@ -10,6 +10,7 @@
 PyObject* tiltang(PyObject *self, PyObject *args) {
 	/* Convert python variables */
 	PyObject *a1, *a2;
+	// minimum area of a triangle (in pixels) for it to be considered valid
 	float arealim = 100.0;
 
 	if (!PyArg_ParseTuple(args, "OO|f", &a1, &a2, &arealim))
