@@ -79,10 +79,12 @@ function pickingsummarytable($selectionid, $mini=false) {
 		$display_keys['# images'] = commafy($selectionstats['num'])." ("
 			.round($selectionstats['totparticles']/$selectionstats['num'],1)." part/img)";
 	}
-	if ($selectionstats['total_object_traced'] > 0) {
-		$dlink .= "<a href='analyzeTracedObject.php?expId=$expId&selectionId=$selectionid'>\n";
-		$dlink .= "  &nbsp;Analyze traced objects\n";
-		$dlink .= "</a>\n";
+	if ($selectiondata['trace']) {
+		if ($selectionstats['total_object_traced'] > 0) {
+			$dlink .= "<a href='analyzeTracedObject.php?expId=$expId&selectionId=$selectionid'>\n";
+			$dlink .= "  &nbsp;Analyze traced objects\n";
+			$dlink .= "</a>\n";
+		}
 		$display_keys['# traced objects'] = commafy($selectionstats['total_object_traced'])." $dlink";
 	}
 	if (!$mini) {

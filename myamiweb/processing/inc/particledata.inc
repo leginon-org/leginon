@@ -1665,7 +1665,8 @@ class particledata {
 					." WHERE sr.`REF|leginondata|SessionData|session` = $sessionId "
 					." AND "
 					." p.`trace` = 1 "
-					." GROUP BY c.`REF|ApSelectionRunData|selectionrun` ";
+					." GROUP BY sr.`DEF_id` "
+					." ";
 			$r=$this->mysql->getSQLResult($q);
 			return $r;
 		} else {
@@ -1786,8 +1787,11 @@ class particledata {
 				." WHERE sr.`DEF_id` = $runId "
 				." AND "
 				." p.`trace` = 1 "
-				." GROUP BY c.`REF|ApSelectionRunData|selectionrun` ";
+				." AND "
+				." c.`DEF_id` is not null "
+				." GROUP BY sr.`DEF_id` ";
 		list($r)=$this->mysql->getSQLResult($q);
+		if (!$r) $r=array('total_object_traced'=>0);
 		return $r;
 	}
 
