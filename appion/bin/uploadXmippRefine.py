@@ -40,7 +40,8 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			help="Symmetry")
 		self.parser.add_option("--Niter", dest="Niter", type="int",
 			help="Number of iterations")
-	
+		self.parser.add_option("--modelid", dest="modelid", type="int",
+			help="Model id")
 		
 
 	#=====================
