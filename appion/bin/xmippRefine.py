@@ -119,9 +119,9 @@ class xmippRefineScript(appionScript.AppionScript):
 		self.parser.add_option("--ConstantToAddToFiltration", dest="constanttoaddtofiltration", type="string",
 			help="Use the FSC=0.5+Constant frequency for the filtration", default="0.1")
 		self.parser.add_option("--NumberOfMPIProcesses", dest="numberofmpiprocesses", type="int",
-			help="Number of MPI Processes (needs mpirun installed)", default=1)
-		self.parser.add_option("--NumberOfThreads", dest="numberofthreads", type="int",
-			help="Number of threads for each process", default=1)
+			help="Number of nodes you are planning to use (needs mpirun installed)", default=1)
+#		self.parser.add_option("--NumberOfThreads", dest="numberofthreads", type="int",
+#			help="Number of threads for each process", default=1)
 
 	#=====================
 	def checkConflicts(self):
@@ -236,7 +236,7 @@ class xmippRefineScript(appionScript.AppionScript):
 		protocolPrm["DisplayResolution"]            =   False
 		protocolPrm["DoLowPassFilter"]              =   self.params['dolowpassfilter']
 		protocolPrm["UseFscForFilter"]              =   self.params['usefscforfilter']		
-		protocolPrm["NumberOfThreads"]              =   self.params['numberofthreads']
+		protocolPrm["NumberOfThreads"]              =   '1'
 		protocolPrm["DoParallel"]                   =   self.params['numberofmpiprocesses']>1
 		protocolPrm["NumberOfMpiProcesses"]         =   self.params['numberofmpiprocesses']
 		protocolPrm["MpiJobSize"]                   =   '10'
