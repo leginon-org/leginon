@@ -143,7 +143,7 @@ class xmippRefineScript(appionScript.AppionScript):
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['rundir'] = os.path.join(uppath, "recons", self.params['runname'])
+		self.params['rundir'] = os.path.join(uppath, "recon", self.params['runname'])
 
 	#=====================
 	def start(self):
