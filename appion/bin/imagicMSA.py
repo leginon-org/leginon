@@ -80,10 +80,10 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 	def setRunDir(self):
 		# get reference-free classification and reclassification parameters
 		if self.params['alignid'] is not None:
-                	self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignid'])
-                	path = self.alignstackdata['path']['path']
-                	uppath = os.path.abspath(os.path.join(path, "../.."))
-                	self.params['rundir'] = os.path.join(uppath, "imagicmsa", self.params['runname'])
+			self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignid'])
+			path = self.alignstackdata['path']['path']
+			uppath = os.path.abspath(os.path.join(path, "../.."))
+			self.params['rundir'] = os.path.join(uppath, "imagicmsa", self.params['runname'])
 
         #=====================
 	def checkAnalysisRun(self):
