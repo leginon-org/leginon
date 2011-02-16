@@ -38,6 +38,7 @@ if ($particle->hasParticleData($expId)) {
 				break;
 			}
 		}
+		$params['sizingreport'] = $script_runid;
 		echo $particle->displayParameters ('Sizing Analysis',$params,array(),$expId);
 	}
 } else {
