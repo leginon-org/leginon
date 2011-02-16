@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Python script to upload a template to the database, and prepare images for import
+# Python script to analyze an aligned stack using Multivariate Statistics, as implemented in the IMAGIC software suite
 
 
 
@@ -86,16 +86,16 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
                 	self.params['rundir'] = os.path.join(uppath, "imagicmsa", self.params['runname'])
 
         #=====================
-        def checkAnalysisRun(self):
-                # create a norefParam object
-                analysisrunq = appiondata.ApAlignAnalysisRunData()
-                analysisrunq['runname'] = self.params['runname']
-                analysisrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
-                # ... path makes the run unique:
-                uniquerun = analysisrunq.query(results=1)
-                if uniquerun:
-                        apDisplay.printError("Run name '"+self.params['runname']+"' for stackid="+\
-                                str(self.params['alignid'])+"\nis already in the database")
+	def checkAnalysisRun(self):
+		# create a norefParam object
+		analysisrunq = appiondata.ApAlignAnalysisRunData()
+		analysisrunq['runname'] = self.params['runname']
+		analysisrunq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		# ... path makes the run unique:
+		uniquerun = analysisrunq.query(results=1)
+		if uniquerun:
+			apDisplay.printError("Run name '"+self.params['runname']+"' for stackid="+\
+				str(self.params['alignid'])+"\nis already in the database")
 
 	#=====================
 	def createImagicBatchFile(self):
