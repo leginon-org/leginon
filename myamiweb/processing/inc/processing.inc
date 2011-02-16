@@ -145,7 +145,7 @@ function apdivtitle($title) {
 	return $htmlstr;
 }
 
-function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false,$showmenu=true) {
+function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false,$showmenu=true,$printDiv=false) {
 	$expId = $_GET['expId'];
 	if (!is_numeric($expId) || $expId == 0) {
 		// special case for uploading images to a new session coming from a known project
@@ -197,6 +197,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 <link rel='stylesheet' type='text/css' href='../css/lvmenu.css'>\n";
 	// javascript for please wait div to show up on submit
 	if ($pleaseWait) $html.= pleaseWaitJava();
+	if ($printDiv) $html.= printDivJava();
 	$html.= $headerstuff;
 	$html.= "<script src='../js/lvmenu.js'></script>\n";
 	$html.= "</head>\n";
@@ -1211,6 +1212,25 @@ function pleaseWaitJava() {
 	$java.= "	pleasewaitScreen=$('pleasewaitScreen');\n";
 	$java.= "	pleasewaitScreen.style.visibility='visible';\n";
 	$java.= "}\n";
+	$java.= "</script>\n";
+	return $java;
+}
+
+function printDivJava() {
+	# used for printing a sub division of the page
+	# put the desired content in a division with id 'divforprint'
+	# and use the following input in the form before the division
+	#		<input type="button" value=" Print " onclick="printdivision();return false;" />
+	$java = "<script language='javascript' type=\"text/javascript\" >\n";
+	$java.= "	function printdivision() {\n";
+	$java.= "		var head = \"<html><head></head><body>\";\n";
+	$java.= "		var body = document.getElementById('divforprint');\n";
+  $java.= "		var foot = \"</body></html>\";\n";
+  $java.= "		newwindow = window.open(\"\");\n";
+  $java.= "		newwindow.document.write(head + body.innerHTML + foot,'','');\n";
+  $java.= "		newwindow.print();\n";
+  $java.= "		newwindow.close();\n";
+	$java.= "	}\n";
 	$java.= "</script>\n";
 	return $java;
 }
