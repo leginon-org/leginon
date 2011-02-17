@@ -277,6 +277,7 @@ class xmippRefineScript(appionScript.AppionScript):
 
 		lastIteration=""
 		resfile=open("resolution.txt","w")
+		i=0
 		for iteration in glob.glob("ProjMatch/Iter_*"):
 			lastIteration=iteration
 			rootname=iteration[iteration.find("/")+1:]
