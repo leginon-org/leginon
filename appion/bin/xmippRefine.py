@@ -120,8 +120,8 @@ class xmippRefineScript(appionScript.AppionScript):
 			help="Use the FSC=0.5+Constant frequency for the filtration", default="0.1")
 		self.parser.add_option("--NumberOfMPIProcesses", dest="numberofmpiprocesses", type="int",
 			help="Number of nodes you are planning to use (needs mpirun installed)", default=1)
-#		self.parser.add_option("--NumberOfThreads", dest="numberofthreads", type="int",
-#			help="Number of threads for each process", default=1)
+		self.parser.add_option("--NumberOfThreads", dest="numberofthreads", type="int",
+			help="Number of threads for each process", default=1)
 
 	#=====================
 	def checkConflicts(self):
@@ -242,7 +242,7 @@ class xmippRefineScript(appionScript.AppionScript):
 		protocolPrm["MpiJobSize"]                   =   '10'
 		protocolPrm["SystemFlavour"]                =   ''
 		protocolPrm["AnalysisScript"]               =   'visualize_projmatch.py'
-		protocolPrm["ConstantToAddToFiltration"]    =   '10x.1'
+		protocolPrm["ConstantToAddToFiltration"]    =   self.params['constanttoaddtofiltration']
 
 		particularizeProtocol(protocol_projmatch,protocolPrm,
 			os.path.join(self.params['rundir'],"protocol_projmatch.py"))
