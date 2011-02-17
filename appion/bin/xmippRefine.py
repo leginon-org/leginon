@@ -315,9 +315,11 @@ class xmippRefineScript(appionScript.AppionScript):
 			os.rename(os.path.join(iteration,rootname+"_current_angles.doc"),
 				os.path.join(iteration,"angles.doc"))
 
+			
 			# Keep the volume
+			i+=1
 			SPItoMRC(os.path.join(iteration,rootname+"_reconstruction.vol"),
-				os.path.join(iteration,"reconstruction.mrc"))
+					os.path.join(self.params['rundir'],"threed.%03da.mrc"%(i)))
 			os.unlink(os.path.join(iteration,rootname+"_reconstruction.vol"))
 
 			# Keep the FSC
