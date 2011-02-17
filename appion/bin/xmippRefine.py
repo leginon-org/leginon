@@ -272,7 +272,7 @@ class xmippRefineScript(appionScript.AppionScript):
 		if fnStack=="start.img":
 			os.unlink("start.img")
 			os.unlink("start.hed")
-		if fnRefMrc=="threed.0a.mrc":
+		if mrcvol=="threed.0a.mrc":
 			os.unlink("threed.0a.mrc")
 
 		lastIteration=""
