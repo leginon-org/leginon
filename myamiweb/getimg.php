@@ -175,8 +175,8 @@ if ($g) {
 			$tagbitscopy = $tagbits;
 			$tagbitlens = array();
 			$tagrunninglength = array();
-			foreach ($tagbits as $ti=>$t) {
-				$tagbitlens[] = strlen($t);
+			foreach ($tagbits as $ti=>$ttt) {
+				$tagbitlens[] = strlen($ttt);
 				$tagrunninglength[] = (array_sum($tagbitlens)+$ti)*$pixperchar + 2 * $margin;
 				if ($tagrunninglength[$ti] > $wx) break;
 			}
