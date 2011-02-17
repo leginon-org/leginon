@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tarfile
 #appion
 from appionlib import appionScript
 from appionlib import apChimera
@@ -42,6 +43,8 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			help="Number of iterations")
 		self.parser.add_option("--modelid", dest="modelid", type="int",
 			help="Model id")
+		self.parser.add_option("--package", dest="package", type="str",
+			help="package")
 		
 
 	#=====================
@@ -54,12 +57,12 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			apDisplay.printError("zoom was not defined")
 
 	#=====================
-#	def setRunDir(self):
-#		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-#		path = self.stackdata['path']['path']
-#		uppath = os.path.abspath(os.path.join(path, "../.."))
-#		self.params['rundir'] = os.path.join(uppath, "recon/xmipp", self.params['runname'])
-
+	def setRunDir(self):
+		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		path = self.stackdata['path']['path']
+		uppath = os.path.abspath(os.path.join(path, "../.."))
+		self.params['rundir'] = os.path.join(uppath, "recon/xmipp", self.params['runname'])
+		
 	#=====================
 
 	#==================
@@ -81,7 +84,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 		total=apFile.numImagesInStack(self.stack['file'])
-
+		self.params['model'] = appiondata.ApInitialModelData.direct_query(self.params['modelid'])
 		# Read the run parameters
 		protocolPrm = open('runParameters.txt','r').read()
 		protocolPrm = eval(protocolPrm)
@@ -101,10 +104,13 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 		fixedq['usefscforfilter'] = protocolPrm["UseFscForFilter"]
 		fixedq.insert()
 
+		
 		# Insert this run in the table of runs
 		jobdata = apDatabase.getJobDataFromPathAndType(self.params['rundir'], "xmipprefine")
 		runq=appiondata.ApRefineRunData()
-#		runq['name']=self.params['runname']
+		runq['runname']=self.params['runname']
+		runq['initialModel']=self.params['model']
+		runq['package']=self.params['package']
 		runq['stack']=apStack.getOnlyStackData(self.params['stackid'])
 		earlyresult=runq.query(results=1)
 		if earlyresult:
@@ -135,7 +141,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 
 			# Insert the R measure
 			rmeasure=appiondata.ApRMeasureData()
-			rmeasure['volume']=os.path.join(iterDir,"reconstruction.mrc")
+			rmeasure['volume']=os.path.join(self.params['rundir'], "threed.%03da.mrc"%(i))
 			rmeasure['rMeasure']=apRecon.runRMeasure(self.stack['apix'],
 				os.path.join(self.params['rundir'],rmeasure['volume']))
 			rmeasure.insert()
@@ -173,7 +179,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			for line in fhFSC:
 				tokens=line.split()
 				point=appiondata.ApFSCData()
-#				point['refinementData']=mainq
+				point['refineIter']=mainq
 				point['pix']=int(tokens[0])
 				point['value']=float(tokens[1])
 				point.insert()
