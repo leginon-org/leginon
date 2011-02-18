@@ -12,7 +12,6 @@ import leginondata
 from databinder import DataBinder
 import datatransport
 import event
-import logging
 import threading
 import gui.wx.Events
 import gui.wx.Logging
