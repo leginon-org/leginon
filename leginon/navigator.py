@@ -11,21 +11,35 @@
 # $State: Exp $
 # $Locker:  $
 
+# leginon
 import node
 import event
 import leginondata
-import time
 import calibrationclient
-from pyami import correlator, peakfinder, imagefun, ordereddict
-import math
 import gui.wx.Navigator
 import instrument
 import presets
-import types
-import numpy
-import leginondata
-import threading
 import cameraclient
+
+# myami
+from pyami import correlator, peakfinder, imagefun, ordereddict
+import pyami.fileutil
+import pyami.mrc
+
+# python standard
+import threading
+import time
+import types
+import os.path
+import itertools
+import math
+import logging
+
+# 3rd party
+import numpy
+
+# used to create debug filenames
+idcounter = itertools.cycle(range(100))
 
 class NavigatorClient(object):
 	eventoutputs = [event.MoveToTargetEvent]
@@ -393,6 +407,16 @@ class Navigator(node.Node):
 		self.acquireImage()
 		self.panel.acquisitionDone()
 
+	def reacquiredFilename(self):
+		orig_id = self.origimagedata.dbid
+		if orig_id is None:
+			orig_id = 0
+		sessionname = self.session['name']
+		timestamp = time.strftime('%d%H%M%S', time.localtime())
+		nextid = idcounter.next()
+		f = '%08d_%s_%02d.mrc' % (orig_id, timestamp, nextid)
+		return f
+
 	def reacquireImage(self):
 		if self.origimagedata is None:
 			raise RuntimeError('no image to reacquire')
@@ -408,6 +432,15 @@ class Navigator(node.Node):
 		self.instrument.setCCDCamera(ccdcamera['name'])
 		self.instrument.setData(cameradata)
 		self._acquireImage(corchannel)
+
+		# save the reacquired image
+		if self.logger.isEnabledFor(logging.DEBUG):
+			debugpath = os.path.join(self.session['image path'], 'debug')
+			pyami.fileutil.mkdirs(debugpath)
+			filename = self.reacquiredFilename()
+			filename = os.path.join(debugpath, filename)
+			pyami.mrc.write(self.newimagedata['image'], filename)
+			self.logger.debug('saving reacquired mrc: %s' %(filename,))
 
 	def acquireImage(self):
 		if self.settings['override preset']:
