@@ -1,5 +1,8 @@
 #include <Python.h>
+
+#define PY_ARRAY_UNIQUE_SYMBOL numextension_ARRAY_API
 #include <numpy/arrayobject.h>
+
 #include "imgbase.h"
 #include "edge.h"
 #include "allstats.h"
@@ -783,12 +786,12 @@ static PyObject *cannyedge(PyObject *self, PyObject *args) {
 
 }
 
+
 static PyMethodDef numeric_methods[] = {
 
 /* used by align, ImageViewer2, */
 	{"minmax", minmax, METH_VARARGS, ""},
-	{"allstats", allstats, METH_VARARGS|METH_KEYWORDS, ""},
-
+	{"allstats", (PyCFunctionWithKeywords)allstats, METH_KEYWORDS, ""},
 
 /* used by rctacquisition, maybe could use nd_image interpolation instead */
 	{"bin", bin, METH_VARARGS, ""},

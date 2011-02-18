@@ -1,5 +1,9 @@
 #include <Python.h>
+
+#define PY_ARRAY_UNIQUE_SYMBOL numextension_ARRAY_API
+#define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
+
 #include "allstats.h"
 
 /*
@@ -267,8 +271,9 @@ PyObject * allstats(PyObject *self, PyObject *args, PyObject *kw) {
 	 * "switches":  optional list of strings that tells which stats to do.
 	 */
 	switch_min = switch_max = switch_mean = switch_std = NULL;
-	if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OOOO", kwlist, &input, &switch_min, &switch_max, &switch_mean, &switch_std));
+	if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OOOO", kwlist, &input, &switch_min, &switch_max, &switch_mean, &switch_std))
 		return NULL;
+
 	if (switch_min == NULL)
 		switch_min = Py_None;
 	if (switch_max == NULL)
