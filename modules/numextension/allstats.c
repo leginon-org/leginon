@@ -26,6 +26,8 @@ void initStats(stats *s) {
 
 /*
  * Calculate new stats values from a new input value.
+ * TODO: optimize min/max calculation by passing it two values at a
+ *  time like in the existing numextension.minmax function.
  */
 void updateStats(stats *s, double new_value) {
 	double delta;
@@ -268,20 +270,11 @@ PyObject * allstats(PyObject *self, PyObject *args, PyObject *kw) {
 
 	/* Parse input args.
 	 * "input":  a numpy array or a python object that converts to an array.
-	 * "switches":  optional list of strings that tells which stats to do.
+	 * Optionally:  "min", "max", "mean", "std" truth values, which default to False
 	 */
-	switch_min = switch_max = switch_mean = switch_std = NULL;
+	switch_min = switch_max = switch_mean = switch_std = Py_None;
 	if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OOOO", kwlist, &input, &switch_min, &switch_max, &switch_mean, &switch_std))
 		return NULL;
-
-	if (switch_min == NULL)
-		switch_min = Py_None;
-	if (switch_max == NULL)
-		switch_max = Py_None;
-	if (switch_mean == NULL)
-		switch_mean = Py_None;
-	if (switch_std == NULL)
-		switch_std = Py_None;
 
 	/*
 	 * Create proper PyArrayObject from input python object.
