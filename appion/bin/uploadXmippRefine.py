@@ -31,11 +31,11 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog [ options ]")
-		self.parser.add_option("-s", "--stackid", dest="stackid", type="int",
+		self.parser.add_option("-s", "--stackid", dest="stackid", type="int", 
 			help="Stack database id", metavar="ID#")
 		self.parser.add_option("--mass", dest="mass", type="float",
 			help="Mass of the reconstructed volume in kDa")
-		self.parser.add_option("--zoom", dest="zoom", type="float",
+		self.parser.add_option("--zoom", dest="zoom", type="float", default="1.0",
 			help="Zoom factor")
 		self.parser.add_option("--sym", dest="sym", type="str",
 			help="Symmetry")
@@ -53,8 +53,6 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			apDisplay.printError("stack id was not defined")
 		if self.params['mass'] is None:
 			apDisplay.printError("mass was not defined")
-		if self.params['zoom'] is None:
-			apDisplay.printError("zoom was not defined")
 
 	#=====================
 	def setRunDir(self):
