@@ -494,7 +494,7 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 			img.src = filename
 			img.setAttribute(\"id\", tileId)
 			img.setAttribute(\"class\", \"imgtile\")
-			img.setAttribute(\"onclick\", \"setSelection(\"+i+\",\"+tileId+\")\")
+			img.setAttribute(\"onclick\", \"setSelection(\"+i+\",'\"+tileId+\"')\")
 		wholemap.appendChild(img)
 	}
 
@@ -502,11 +502,12 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 	}
 
 	function setSelection(id, img) {
+		var imgelement = document.getElementById(img)
 		if (mode=='exclude') {
 			c=excludeImage(id)
 			if(c!=-1) { 
-				img.style.border='1px solid #f00'
-				img.style.opacity=0.5
+				imgelement.style.border='1px solid #f00'
+				imgelement.style.opacity=0.5
 			} else {
 				img.style.border=''
 				img.style.opacity=''
@@ -517,7 +518,7 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 		}
 		if (mode=='select') {
 			c=selectImage(id)
-			img.style.border=(c!=-1) ? '1px solid #0f0' : ''
+			imgelement.style.border=(c!=-1) ? '1px solid #0f0' : ''
 			if (typeof addselectfn== 'function') {
 				addselectfn()
 			}
