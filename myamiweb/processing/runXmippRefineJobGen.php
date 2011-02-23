@@ -108,14 +108,12 @@ elseif ($_POST['submitjob']) {
 	$clusterdata->cluster_cmd($host, $user, $pass);
 	// if on guppy, clusterpath is same as outdir
 	$path = formatEndPath($clusterdata->get_path()).$jobname;
-
 	echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
 	echo "<tr><td>Cluster Job File</td><td>$path.job</td></tr>\n";
 	echo "<tr><td>Job File Name</td><td>$jobname.job</td></tr>\n";
   
 	// submit job on host
 	$cmd = "cd $path; qsub $jobfile;\n";
-	
 	$jobnumstr = exec_over_ssh($host, $user, $pass, $cmd, True);
   
 	$jobnum = trim($jobnumstr);
@@ -577,8 +575,9 @@ function writeJobFile ($extra=False) {
 	$clusterjob.= "# modelId: $modelid\n\n";
 	
 	$procs=$_POST['nodes']*$_POST['rprocs'];
-
+	
     $ejob.='xmippRefine.py ';
+    $ejob=addAppionWrapper($ejob);
     $ejob.='--projectid='.$projectid.' ';
     $ejob.='--stackid='.$stackidval.' ';
     $ejob.='--modelid='.$modelid.' ';
