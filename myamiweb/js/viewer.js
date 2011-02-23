@@ -134,7 +134,7 @@ function update_image_list(view) {
 
 function setproject(id) {
 	if (obj=document.viewerform.projectId) {
-		for (var i in obj.options) {
+		for (var i=0;i<obj.options.length;i++) {
 			if (obj.options[i].value == id) {
 				obj.options[i].selected=true
 				break
