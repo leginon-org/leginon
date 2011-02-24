@@ -54,9 +54,10 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 	}
 
 	// change next line for different types of jobs
+	$xmipprefinejobs = $particle->getJobIdsFromSession($expId, 'xmipprecon');
 	$frealignjobs = $particle->getJobIdsFromSession($expId, 'runfrealign');
 	$emanjobs = $particle->getJobIdsFromSession($expId, 'emanrecon');
-	$jobs = array_merge($frealignjobs, $emanjobs);
+	$jobs = array_merge($frealignjobs, $emanjobs, $xmipprefinejobs);
 
 	// if clicked button, list jobs in queue
 	if ($showjobs && $_SESSION['loggedin'] == true) {
@@ -123,6 +124,9 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 				} elseif ($jobinfo['jobtype'] == 'runfrealign') {
 					// if recon is of type FREALIGN
 					showFrealignJobInfo($jobinfo);
+				} elseif ($jobinfo['jobtype'] == 'xmipprecon') {
+					// if recon is of type XMIPP
+					showXmippJobInfo($jobinfo);	
 				} else {
 					print_r($jobinfo);
 				}
@@ -225,6 +229,9 @@ function showStatus($jobinfo) {
 		} elseif ($jobinfo['jobtype'] == 'runfrealign') {
 			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
 				."uploadFrealign.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
+		} elseif ($jobinfo['jobtype'] == 'xmipprecon') {
+			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
+				."uploadXmippRecon.php?expId=$expId&jobId=$jobid')\" value='Upload Xmipp results'>&nbsp;\n";
 		}
 		if ($user == $job['user'] || is_null($job['user'])) {
 			$dlbuttons .= "&nbsp;<input type='BUTTON' onclick=\"parent.location="
@@ -520,6 +527,24 @@ function showEMANJobInfo($jobinfo) {
 					."for this job, you should resubmit</b></font><p>";
 		}
 	}
+};
+/******************************
+******************************/
+function showXmippJobInfo($jobinfo) {
+	$user = $_SESSION['username'];
+	$pass = $_SESSION['password'];
+	$particle = new particledata();
+	$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
+
+	// get stack id from job file: ugly, ugly, ugly
+	$f = file($jobfile);
+	foreach ($f as $line) {
+		if (preg_match('/^\#\sstackId:\s/',$line))
+			$stackid = ereg_replace('# stackId: ', '', trim($line));
+	}
+	// get num of particles in stack
+	$numinstack = $particle->getNumStackParticles($stackid);
+
 };
 
 /******************************
