@@ -15,14 +15,14 @@ def getModelFromId(modelid):
 	return appiondata.ApInitialModelData.direct_query(modelid)
 
 #================
-def rescaleModel(modelid, outfile, newbox=None, newapix=None, spider=False):
+def rescaleModel(modelid, outfile, newbox=None, newapix=None, spider=None):
 	"""
 	take an existing model id and rescale it
 	"""
 	modeldata = getModelFromId(modelid)
 	modelapix = modeldata['pixelsize']
 	modelfile = os.path.join(modeldata['path']['path'], modeldata['name'])
-	apVolume.rescaleVolume(modelfile, outfile, modelapix, newapix, newbox, spider=False)
+	apVolume.rescaleVolume(modelfile, outfile, modelapix, newapix, newbox, spider=None)
 	return
 
 #================
