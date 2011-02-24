@@ -237,7 +237,7 @@ class xmippRefineScript(appionScript.AppionScript):
 		protocolPrm["DoLowPassFilter"]              =   self.params['dolowpassfilter']
 		protocolPrm["UseFscForFilter"]              =   self.params['usefscforfilter']
 		protocolPrm["ConstantToAddToFiltration"]    =   self.params['constanttoaddtofiltration']
-		protocolPrm["NumberOfThreads"]              =   '1'
+		protocolPrm["NumberOfThreads"]              =   self.params['numberofthreads']
 		protocolPrm["DoParallel"]                   =   self.params['numberofmpiprocesses']>1
 		protocolPrm["NumberOfMpiProcesses"]         =   self.params['numberofmpiprocesses']
 		protocolPrm["MpiJobSize"]                   =   '10'
