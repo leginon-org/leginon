@@ -299,7 +299,12 @@ function applyJunkCutoff() {
 	}
 }
 
-function createSubStack() {
+function createSubStackIncluded() {
+	var index = $('selectedIndex').value
+	window.open("subStack.php?expId="+expId+"&sId="+stackId+"&include="+index+"",'height=250,width=400');
+}
+
+function createSubStackExcluded() {
 	var index = $('excludedIndex').value
 	window.open("subStack.php?expId="+expId+"&sId="+stackId+"&exclude="+index+"",'height=250,width=400');
 }
@@ -391,6 +396,7 @@ if ($junksort)
 	$includebuttons .= "<input type='button' value='Apply junk cutoff' onClick='applyJunkCutoff()'>\n";
 if ($stackId || $clusterId || $alignId)
 	$includebuttons .= "<input type='button' value='Create Templates' onClick='uploadTemplate();' id='uploadbutton' >\n";
+	$includebuttons .= "<input type='button' value='Include Particles' onClick='createSubStackIncluded()' >\n";
 if ($clusterId || $alignId) {
 	$includebuttons .= "<input type='button' value='Create Template Stack' onClick='createTemplateStackIncluded()'>\n";
 	$includebuttons .= "<input type='button' value='Run Common Lines' onClick='runCommonLines()'>\n";
@@ -403,7 +409,7 @@ if ($clusterId || $alignId) {
 //Buttons for exclusion
 $excludebuttons = "";
 if ($stackId)
-	$excludebuttons .= "<input type='button' value='Remove Particles' onClick='createSubStack()' >\n";
+	$excludebuttons .= "<input type='button' value='Remove Particles' onClick='createSubStackExcluded()' >\n";
 if ($clusterId || $alignId) 
 	$excludebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
 if ($clusterId) {

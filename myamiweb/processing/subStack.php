@@ -35,12 +35,14 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 
 	$projectId=getProjectId();
 	$stackId = $_GET['sId'];
+	$include = $_GET['include'];
 	$exclude = $_GET['exclude'];
 	$mean = $_GET['mean'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	// save other params to url formaction
 	$formAction.=($stackId) ? "&sId=$stackId" : "";
+	$formAction.=($include) ? "&include=$include" : "";
 	$formAction.=($exclude) ? "&exclude=$exclude" : "";
 	$formAction.=($mean) ? "&mean=$mean" : "";
 	
@@ -162,11 +164,14 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 
 	// *************************************
 	// Break into different type of substacks
-	if ($exclude) {
+	if ($include) {
+		// Include list
+		echo "Particles to be included: <font size='-1'>$include</font><br/>\n";
+		echo "<input type='hidden' name='include' value='$include'>\n";
+	} elseif ($exclude) {
 		// Exclude list
 		echo "Particles to be excluded: <font size='-1'>$exclude</font><br/>\n";
 		echo "<input type='hidden' name='exclude' value='$exclude'>\n";
-
 	} elseif ($mean) {
 		// Mean Stdev Filter
 		echo "<table class='tablebubble'>\n";
@@ -277,6 +282,7 @@ function runSubStack() {
 	******************** */
 	$mean = $_GET['mean'];
 	$stackId=$_POST['stackId'];
+	$include=$_POST['include'];
 	$exclude=$_POST['exclude'];
 	$commit=$_POST['commit'];
 	$subsplit = $_POST['subsplit'];
@@ -304,7 +310,7 @@ function runSubStack() {
 
 	// check sub stack particle numbers
 	if (!$mean) {
-		if (!$exclude) {
+		if (!$include and !$exclude) {
 			if ($subsplit == 'sub') {
 				if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter a starting particle");
 				if (!$lastp) createSubStackForm("<b>ERROR:</b> Enter an end particle");
@@ -332,12 +338,14 @@ function runSubStack() {
 	}
 	$command.="--old-stack-id=$stackId ";
 	$command.="--description=\"$description\" ";
-	if (!$exclude and !$mean) {
+	if (!$include and !$exclude and !$mean) {
 		# subStack.py will subtract one from the particle number listed here to generate
 		# EMAN-styled particle number.  So don't substract one here
 		if ($firstp!='' && $lastp) $command.="--first=".($firstp)." --last=".($lastp)." ";
 		elseif ($split) $command.="--split=$split ";
 		elseif ($numOfParticles) $command.="--random=$numOfParticles ";
+	} elseif ($include) {
+		$command.="--include=".$include." ";
 	} elseif ($exclude) {
 		$command.="--exclude=".$exclude." ";
 	} else {
