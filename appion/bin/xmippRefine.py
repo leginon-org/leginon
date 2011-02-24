@@ -172,7 +172,11 @@ class xmippRefineScript(appionScript.AppionScript):
 			modelData = apModel.getModelFromId(self.params['mask'])
 			fnMaskMrc = os.path.join(modelData['path']['path'],modelData['name'])
 			fnMask = apVolume.MRCtoSPI(fnMaskMrc, self.params['rundir'])
-
+		
+		#make threads and mpi processes compatible with the xmipprequirement
+		self.params['totalnumberofprocessors']=(self.params['numberofmpiprocesses']*2)
+		self.params['alwaysone']=1
+		
 		protocolPrm={}
 		protocolPrm["SelFileName"]                  =   "partlist.doc"
 		protocolPrm["DocFileName"]                  =   ""
@@ -237,9 +241,9 @@ class xmippRefineScript(appionScript.AppionScript):
 		protocolPrm["DoLowPassFilter"]              =   self.params['dolowpassfilter']
 		protocolPrm["UseFscForFilter"]              =   self.params['usefscforfilter']
 		protocolPrm["ConstantToAddToFiltration"]    =   self.params['constanttoaddtofiltration']
-		protocolPrm["NumberOfThreads"]              =   self.params['numberofthreads']
+		protocolPrm["NumberOfThreads"]              =   self.params['alwaysone']
 		protocolPrm["DoParallel"]                   =   self.params['numberofmpiprocesses']>1
-		protocolPrm["NumberOfMpiProcesses"]         =   self.params['numberofmpiprocesses']
+		protocolPrm["NumberOfMpiProcesses"]         =   self.params['totalnumberofprocessors']
 		protocolPrm["MpiJobSize"]                   =   '10'
 		protocolPrm["SystemFlavour"]                =   ''
 		protocolPrm["AnalysisScript"]               =   'visualize_projmatch.py'
