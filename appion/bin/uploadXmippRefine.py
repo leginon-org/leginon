@@ -37,7 +37,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			help="Mass of the reconstructed volume in kDa")
 		self.parser.add_option("--zoom", dest="zoom", type="float", default="1.0",
 			help="Zoom factor")
-		self.parser.add_option("--sym", dest="sym", type="str",
+		self.parser.add_option("--sym", dest="sym", type="str", default="c1",
 			help="Symmetry")
 		self.parser.add_option("--Niter", dest="Niter", type="int",
 			help="Number of iterations")
@@ -125,7 +125,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 		# Insert now the information for each iteration
 		for i in range(1,self.params['Niter']+1):
 			apDisplay.printMsg("Processing iteration "+str(i))
-			iterDir="ProjMatch/Iter_"+str(i)
+			iterDir="recon/ProjMatch/Iter_"+str(i)
 
 			# Insert the resolution
 			resolq=appiondata.ApResolutionData()
