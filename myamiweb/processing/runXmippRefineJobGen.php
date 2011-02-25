@@ -567,13 +567,12 @@ function writeJobFile ($extra=False) {
 	$header.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
 	$header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
 	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
-	$header.= "#PBS -m e\n";
-	$header.= "#PBS -r n\n";
-	$header.= "#PBS -j oe\n\n";
 	$clusterjob = "# stackId: $stackidval\n";
 	$clusterjob.= "# modelId: $modelid\n\n";
 	
-	$procs=$_POST['nodes']*$_POST['rprocs'];
+	$procs=$_POST['nodes']*$_POST['ppn'];
+
+	
 	
     $ejob.='xmippRefine.py ';
     $ejob=addAppionWrapper($ejob);
@@ -605,8 +604,8 @@ function writeJobFile ($extra=False) {
     if ($DontUseFscForFilter.checked)
         $ejob.='--DontUseFscForFilter ';
     $ejob.='--ConstantToAddToFiltration="'.$_POST["ConstantToAddToFiltration"].'" ';
-    $ejob.='--NumberOfMPIProcesses='.$_POST["nodes"].*.$_POST["rprocs"].' ';
-    $ejob.='--NumberOfThreads='1' ';
+    $ejob.='--NumberOfMPIProcesses='.$procs.' ';
+    $ejob.='--NumberOfThreads=1';
 
 	$clusterjob .= $clusterdata->cluster_job_file($ejob);
 	
