@@ -174,7 +174,7 @@ class xmippRefineScript(appionScript.AppionScript):
 			fnMask = apVolume.MRCtoSPI(fnMaskMrc, self.params['rundir'])
 		
 		#make threads and mpi processes compatible with the xmipprequirement
-		self.params['totalnumberofprocessors']=(self.params['numberofmpiprocesses']*2)
+		self.params['totalnumberofprocessors']=(self.params['numberofmpiprocesses']*self.params['numberofthreads'])
 		self.params['alwaysone']=1
 		
 		protocolPrm={}
