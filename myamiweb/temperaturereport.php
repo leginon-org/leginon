@@ -49,17 +49,6 @@ $mintemp= (is_numeric($_POST['minr'])) ? $_POST['minr']
 		: (is_numeric($_GET['minr']) ? $_GET['minr'] : false);
 
 
-if ($driftdata = $leginondata->getDriftDataFromSessionId($sessionId)) {
-foreach ($driftdata as $drift) {
-	$id = $drift['imageId'];
-	$data[$id] = $drift;
-}
-
-foreach ($data as $drift) {
-	$id = $drift['imageId'];
-	$t  = $drift['time'];
-}
-}
 // --- Set  experimentId
 // $lastId = $leginondata->getLastSessionId();
 // $sessionId = (empty($_GET[Id])) ? $lastId : $_GET[sessionId];
