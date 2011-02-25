@@ -404,7 +404,7 @@ function jobForm($extra=false) {
 	if ($_POST['import']=='asymm') {
       $SymmetryGroup = 'c1';
       $NumberOfIterations = '10';
-      $AngularSteps = '4x10 2x5 2x3 2x2';
+      $AngularSteps = '2x12 2x10 2x8 2x6 2x5 2x4 2x3 2x2';
       $MaxAngularChange = '4x1000 2x20 2x9 2x6';
 	} elseif ($_POST['import']=='low') {
       $SymmetryGroup = '*** Fill this ***';
@@ -567,7 +567,6 @@ function writeJobFile ($extra=False) {
 	$header.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
 	$header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
 	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
-	$header.= "#PBS -l mem=2gb\n";
 	$header.= "#PBS -m e\n";
 	$header.= "#PBS -r n\n";
 	$header.= "#PBS -j oe\n\n";
