@@ -261,6 +261,7 @@ function runUploadRecon() {
 	$command ="uploadXmippRefine.py ";
 	$command.="--stackid=$stack ";
 	$command.="--rundir=$runpath ";
+	$command.="--modelid=$model ";
 	if ($mass) $command.="--mass=$mass ";
   
 
