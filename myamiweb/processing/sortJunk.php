@@ -168,7 +168,7 @@ function runSortJunk() {
 	PART 5: Show or Run Command
 	******************** */
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
+	$errors = showOrSubmitCommand($command, $headinfo, 'sortjunkstack', $nproc);
 	// if error display them
 	if ($errors)
 		createSortJunkForm($errors);

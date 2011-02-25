@@ -482,7 +482,7 @@ function runCreateModel() {
 	PART 5: Show or Run Command
 	******************** */
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'createmodel', $nproc);
+	$errors = showOrSubmitCommand($command, $headinfo, 'createModel', $nproc);
 	// if error display them
 	if ($errors)
 		createSelectParameterForm($errors);

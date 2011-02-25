@@ -235,7 +235,6 @@ if (is_numeric($expId)) {
 		$cadone = count($subclusterjobs[$jobtype]['done']);
 		$carun = count($subclusterjobs[$jobtype]['running']);
 		$caq = count($subclusterjobs[$jobtype]['queued']);
-
 		$caresults[] = ($cadone==0) ? "" : "<a href='sizingsummary.php?expId=$sessionId'>$cadone complete</a>";
 		$caresults[] = ($carun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=contouranalysis'>$carun running</a>";
 		$caresults[] = ($caq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=contouranalysis'>$caq queued</a>";
@@ -345,7 +344,7 @@ if (is_numeric($expId)) {
 		// get stack stats:
 		$sresults=array();
 		$sdone = 0; $srun = 0; $sq = 0;
-		$stacktypes = array('makestack', 'makestack2', 'filterstack', 'substack', 'centerparticlestack', 'alignsubstack');
+		$stacktypes = array('makestack', 'makestack2', 'filterstack', 'substack', 'centerparticlestack', 'alignsubstack', 'sortjunkstack');
 		foreach ($stacktypes as $stacktype) {
 			$sdone += count($subclusterjobs[$stacktype]['done']);
 			$srun += count($subclusterjobs[$stacktype]['running']);
@@ -503,8 +502,10 @@ if (is_numeric($expId)) {
 
 	/* EMAN Common Lines */
 	if ($aligndone >= 1 ) {
+		$clinesdone = count($subclusterjobs['createModel']['done']);
 		$clinesqueue = count($subclusterjobs['createModel']['queued']);
 		$clinesrun = count($subclusterjobs['createModel']['running']);
+		$clinesresults[] = ($clinesdone==0) ? "" : "<a href='densitysummary.php?expId=$sessionId&jobtype=createModel'>$clinesdone complete</a>";
 		$clinesresults[] = ($clinesrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$clinesrun running</a>";
 		$clinesresults[] = ($clinesqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$clinesqueue queued</a>";
 		$nruns[] = array(
