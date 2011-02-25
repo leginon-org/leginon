@@ -1242,6 +1242,22 @@ class ApXmippRefineIterData(Data):
 			('constantToAddToFiltration', float),
 		)
 	typemap = classmethod(typemap)
+	
+### this one is for each iteration
+class ApXmippRefineFixedParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('Niter', float),
+			('maskFilename', str),
+			('maskRadius', float),
+			('innerRadius', float),
+			('outerRadius', float),
+			('computeResol', bool),
+			('symmetryGroup', str),
+			('dolowpassfilter', bool),
+			('usefscforfilter', bool),
+		)
+	typemap = classmethod(typemap)	
 
 ### this one is for each iteration
 class ApResolutionData(Data):
