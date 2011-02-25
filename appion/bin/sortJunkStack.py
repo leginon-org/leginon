@@ -106,6 +106,7 @@ class sortJunkStackScript(appionScript.AppionScript):
 		newstack['substackname'] = self.params['runname']
 		newstack['description'] = self.params['description']
 		newstack['pixelsize'] = oldstack['pixelsize']
+		newstack['boxsize'] = oldstack['boxsize']		
 		newstack['junksorted'] = True
 		newstack.insert()
 
