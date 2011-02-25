@@ -605,8 +605,8 @@ function writeJobFile ($extra=False) {
     if ($DontUseFscForFilter.checked)
         $ejob.='--DontUseFscForFilter ';
     $ejob.='--ConstantToAddToFiltration="'.$_POST["ConstantToAddToFiltration"].'" ';
-    $ejob.='--NumberOfMPIProcesses='.$_POST["nodes"].' ';
-    $ejob.='--NumberOfThreads='.$_POST["rprocs"].' ';
+    $ejob.='--NumberOfMPIProcesses='.$_POST["nodes"].*.$_POST["rprocs"].' ';
+    $ejob.='--NumberOfThreads='1' ';
 
 	$clusterjob .= $clusterdata->cluster_job_file($ejob);
 	
