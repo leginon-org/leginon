@@ -2077,7 +2077,20 @@ class leginondata {
 	}
 
 	function getDriftDataFromSessionId($id) {
-		return $this->getDriftData($id, 'session');
+		$binnedpixelsize = $this->getDriftMeasurementPixelSizeFromSession($id);
+		If (!$binnedpixelsize) $binnedpixelsize = 1.63e-10 * 4;
+		$driftdata = $this->getDriftData($id, 'session');
+		if (!is_array($driftdata) || empty($driftdata)) return $driftdata;
+
+		$scaleddriftdata = array();
+		foreach ($driftdata as $drift) {
+			$drift['driftx'] = $drift['driftx'] * $binnedpixelsize;
+			$drift['drifty'] = $drift['drifty'] * $binnedpixelsize;
+			$drift['driftvalue'] = $drift['driftvalue'] * $binnedpixelsize;
+			$drift['rate'] = $drift['rate'] * $binnedpixelsize;
+			$scaleddriftdata[] = $drift;
+		}
+		return $scaleddriftdata;
 	}
 
 	function getDriftDataFromImageId($id) {
@@ -2125,6 +2138,24 @@ class leginondata {
 //		."t.`type`='focus' "
 		.$sqlgroup;
 		return $this->mysql->getSQLResult($q);
+	}
+
+	function getDriftMeasurementPixelSizeFromSession($id) {
+		$q = 'select '
+			.' pi.pixelsize, p.`SUBD|binning|x` as binning '
+			.'from (DriftMonitorRequestData d , PixelSizeCalibrationData pi) '
+			.'left join PresetData p on d.`presetname` = p.`name` '
+			.'where (p.`REF|InstrumentData|tem`=pi.`REF|InstrumentData|tem` '
+			.'	and p.magnification = pi.magnification '
+			.'	and p.`REF|InstrumentData|ccdcamera`=pi.`REF|InstrumentData|ccdcamera` '
+			.'	and pi.`DEF_timestamp` < d.`DEF_timestamp` ) '
+			.'	and d.`REF|SessionData|session` = '.$id.' '
+			.'	and p.`REF|SessionData|session` = '.$id.' '
+			.'order by pi.`DEF_timestamp` desc limit 1 '
+			;
+		list($preset)=$this->mysql->getSQLResult($q);
+		
+		return $preset['pixelsize'] * $preset['binning'];
 	}
 
 	function getFocusResultData($id, $correction_type, $method, $status='ok') {

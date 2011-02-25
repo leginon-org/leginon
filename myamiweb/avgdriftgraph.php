@@ -41,10 +41,10 @@ function TimeCallback($aVal) {
 
 if ($data)
 foreach ($data as $drift) {
-	if ($maxrate && $drift['rate'] > $maxrate)
+	if ($maxrate && $drift['rate'] > ($maxrate * 1e-10))
 		continue;
 	$datax[] = $drift['unix_timestamp'];
-	$datay[] = $drift['rate']*1.63*4;
+	$datay[] = $drift['rate']*1e10;
 }
 $width = $_GET['w'];
 $height = $_GET['h'];
@@ -67,7 +67,7 @@ if (!$datax && !$datay) {
 		$bplot = new BarPlot($rdatay, $rdatax);
 		$graph->Add($bplot);
 		$graph->title->Set("Drift");
-		$graph->xaxis->title->Set("drift rate pix/s");
+		$graph->xaxis->title->Set("drift rate Angstrom/s");
 		$graph->yaxis->title->Set("Frequency");
 
 	} else {
@@ -80,7 +80,7 @@ if (!$datax && !$datay) {
 		$graph->xaxis->SetTitlemargin(30);
 		$graph->xaxis->title->Set("time");
 		$graph->yaxis->SetTitlemargin(35);
-		$graph->yaxis->title->Set("drift rate pix/s");
+		$graph->yaxis->title->Set("drift rate Angstrom/s");
 
 		$sp1 = new ScatterPlot($datay,$datax);
 		$sp1->mark->SetType(MARK_CIRCLE);
