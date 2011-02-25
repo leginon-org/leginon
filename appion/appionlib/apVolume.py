@@ -99,7 +99,7 @@ def isValidVolume(volfile):
 	return True
 
 #================
-def rescaleVolume(infile, outfile, inapix, outapix=None, newbox=None, spider=False):
+def rescaleVolume(infile, outfile, inapix, outapix=None, newbox=None, spider=None):
 	"""
 	scale an existing model - provide an input model & output (strings)
 	an input a/pix & output a/pix (floats)
@@ -127,10 +127,12 @@ def rescaleVolume(infile, outfile, inapix, outapix=None, newbox=None, spider=Fal
 		emancmd += "scale=%.3f " % scalefactor
 
 	emancmd += "clip=%i,%i,%i norm=0,1 " % (newbox, newbox, newbox)
-	apEMAN.executeEmanCmd(emancmd, verbose=True)
+	
 
 	if spider is True:
 		emancmd += "spidersingle "
+		
+	apEMAN.executeEmanCmd(emancmd, verbose=True)	
 	return
 
 #================
