@@ -39,8 +39,8 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 			help="Zoom factor")
 		self.parser.add_option("--sym", dest="sym", type="str", default="c1",
 			help="Symmetry")
-		self.parser.add_option("--Niter", dest="Niter", type="int",
-			help="Number of iterations")
+#		self.parser.add_option("--Niter", dest="Niter", type="int",
+#			help="Number of iterations")
 		self.parser.add_option("--modelid", dest="modelid", type="int",
 			help="Model id")
 		self.parser.add_option("--package", dest="package", type="str",
@@ -123,9 +123,9 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 		runq.insert()
 
 		# Insert now the information for each iteration
-		for i in range(1,self.params['Niter']+1):
+		for i in range(1,fixedq['Niter']+1):
 			apDisplay.printMsg("Processing iteration "+str(i))
-			iterDir="recon/ProjMatch/Iter_"+str(i)
+			iterDir="ProjMatch/Iter_"+str(i)
 
 			# Insert the resolution
 			resolq=appiondata.ApResolutionData()
