@@ -1368,15 +1368,17 @@ class PresetsManager(node.Node):
 			fakescope2.friendly_update(newpreset)
 			fakecam2 = leginondata.CameraEMData()
 			fakecam2.friendly_update(newpreset)
-			tem = newpreset['tem']
-			ccdcamera = newpreset['ccdcamera']
+			new_tem = newpreset['tem']
+			new_ccdcamera = newpreset['ccdcamera']
+			old_tem = oldpreset['tem']
+			old_ccdcamera = oldpreset['ccdcamera']
 			ht = self.instrument.tem.HighTension
 			try:
 				pixelshift1 = self.calclients['image'].itransform(myimage, fakescope1, fakecam1)
 				pixrow = pixelshift1['row'] * oldpreset['binning']['y']
 				pixcol = pixelshift1['col'] * oldpreset['binning']['x']
 				pixvect1 = numpy.array((pixrow, pixcol))
-				pixvect2 = self.calclients['image'].pixelToPixel(tem,ccdcamera,ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
+				pixvect2 = self.calclients['image'].pixelToPixel(old_tem,old_ccdcamera,new_tem, new_ccdcamera, ht,oldpreset['magnification'],newpreset['magnification'],pixvect1)
 				pixelshift2 = {'row':pixvect2[0] / newpreset['binning']['y'],'col':pixvect2[1] / newpreset['binning']['x']}
 				newscope = self.calclients['image'].transform(pixelshift2, fakescope2, fakecam2)
 				myimage = newscope['image shift']
