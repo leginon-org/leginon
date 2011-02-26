@@ -141,10 +141,33 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 }
 
 function runDogPicker() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
+	
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
+	$numslices = (int) $_POST[numslices];
+	$sizerange = $_POST[sizerange];
+	$kfactor = $_POST[kfactor];
+	
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	if ($numslices) {
+		if($numslices < 2) createDogPickerForm("<B>ERROR:</B> numslices must be more than 1");
+		if(!$sizerange) createDogPickerForm("<B>ERROR:</B> sizerange was not defined");
+		if($sizerange < 2.0) createDogPickerForm("<B>ERROR:</B> sizerange must be more than 2.0");
+	} elseif($kfactor) {
+		if ($kfactor < 1.00001 || $kfactor > 5.0) createDogPickerForm("<B>ERROR:</B> K-factor must between 1.00001 and 5.0");
+	}	
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	
 	$command ="dogPicker.py ";
 
 	$apcommand = parseAppionLoopParams($_POST);
@@ -161,85 +184,79 @@ function runDogPicker() {
 	}
 	$command .= $partcommand;
 
-	$numslices = (int) $_POST[numslices];
-	$sizerange = $_POST[sizerange];
-	$kfactor = $_POST[kfactor];
 	if ($numslices) {
-		if($numslices < 2) createDogPickerForm("<B>ERROR:</B> numslices must be more than 1");
-		if(!$sizerange) createDogPickerForm("<B>ERROR:</B> sizerange was not defined");
-		if($sizerange < 2.0) createDogPickerForm("<B>ERROR:</B> sizerange must be more than 2.0");
 		$command .= " --numslices=".$numslices;
 		$command .= " --sizerange=".$sizerange;
 	} elseif($kfactor) {
-		if ($kfactor < 1.00001 || $kfactor > 5.0) createDogPickerForm("<B>ERROR:</B> K-factor must between 1.00001 and 5.0");
 		$command .= " --kfactor=".$kfactor;
 	}
+		
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 		$testimage = ereg_replace(" ","\ ",$testimage);
 	}
 
-	// submit job to cluster
-	if ($_POST['process']=="Run DogPicker") {
-		$_SESSION['processinghost']=$_POST['processinghost'];
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	
+	/* *******************
+	PART 4: Do test image
+	******************** */
 
-		if (!($user && $password)) createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'dogpicker',$testimage);
-		// if errors:
-		if ($sub) createDogPickerForm("<b>ERROR:</b> $sub");
-
-		if ($testimage) {
-			if (substr($outdir,-1,1)!='/') $outdir.='/';
-			$results = "<table width='600' border='0'>\n";
-			$results.= "<tr><td>\n";
-			$results.= "<B>DogPicker Command:</B><br />$command";
-			$results.= "</td></tr></table>\n";
-			$results.= "<br />\n";
-			$testjpg = ereg_replace(".mrc","",$_POST['testfilename']);
-			$jpgimg = $outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
-			$dogmaplist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
-
-			$results .= writeTestResults($jpgimg, $dogmaplist, $_POST['bin']);
-			createDogPickerForm(false, 'Particle Selection Test Results', 'Particle Selection Test Results', $results);
+	if ($testimage) {
+		if ($_POST['process']=="Run DogPicker") { 		
+			$_SESSION['processinghost']=$_POST['processinghost'];
+			$user = $_SESSION['username'];
+			$password = $_SESSION['password'];
+			
+			if (!($user && $password)) createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
+			 
+			$sub = submitAppionJob($command,$outdir,$runname,$expId,'dogpicker',$testimage);
+			// if errors:
+			if ($sub) createDogPickerForm("<b>ERROR:</b> $sub");
 		}
-		exit;
-	} else {
-		// display test images even just show command
-		if ($testimage) {
-			if (substr($outdir,-1,1)!='/') $outdir.='/';
-			$results = "<table width='600' border='0'>\n";
-			$results.= "<tr><td>\n";
-			$results.= "<B>DogPicker Command:</B><br />$command";
-			$results.= "</td></tr></table>\n";
-			$results.= "<br />\n";
-			$testjpg=ereg_replace(".mrc","",$_POST['testfilename']);
-			$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
+			
+		if (substr($outdir,-1,1)!='/') $outdir.='/';
+		$results = "<table width='600' border='0'>\n";
+		$results.= "<tr><td>\n";
+		$results.= "<B>DogPicker Command:</B><br />$command";
+		$results.= "</td></tr></table>\n";
+		$results.= "<br />\n";
+		$testjpg = ereg_replace(".mrc","",$_POST['testfilename']);
+		$jpgimg = $outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
+		
+		if ($_POST['process']=="Run DogPicker") {
+			$dogmaplist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
+			$results .= writeTestResults($jpgimg, $dogmaplist, $_POST['bin']);
+		} else {
 			$ccclist=array();
 			$cccimg=$outdir.$runname."/maps/".$testjpg.".dogmap1.jpg";
 			$ccclist[]=$cccimg;
-			$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin'],$_POST['process']);
-			createDogPickerForm(false,'Particle Selection Test Results','Particle Selection Test Results',$results);
-		} else {
-			processing_header("Particle Selection Results","DogPicker Command");
-
-			echo referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
-
-			echo"
-				<TABLE WIDTH='600'>
-				<tr><td COLSPAN='2'>
-				<B>Dog Picker Command:</B><br />
-				$command<hr>
-				</td></tr>";
-			appionLoopSummaryTable();
-			particleLoopSummaryTable();
-			echo"</table>\n";
-			processing_footer(True, True);
-			exit;
+			$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin'],$_POST['process']);			
 		}
+
+		createDogPickerForm(false, 'Particle Selection Test Results', 'Particle Selection Test Results', $results);
+		
+		exit;
 	}
+	
+	/* *******************
+	PART 5: Create header info, i.e., references
+	******************** */
+
+	// Add reference to top of the page
+	$headinfo .= referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 
+	2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
+
+	/* *******************
+	PART 6: Show or Run Command
+	******************** */
+
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'dogpicker', $nproc);
+
+	// if error display them
+	if ($errors)
+		createDogPickerForm("<b>ERROR:</b> $errors");
+	exit;
 }
 
 
