@@ -184,7 +184,12 @@ function createform($extra=False) {
 	echo "Low-pass filter: \n";
 	echo "</td><td>\n";
 	echo "<input type='text' name='lp' size='3' value='$lpval'> &Aring;ngstroms<br/>\n";
-
+	
+	echo "</tr></td><tr><td>\n";
+	echo "High-pass filter: \n";
+	echo "</td><td>\n";
+	echo "<input type='text' name='hp' size='3' value='$hpval'> &Aring;ngstroms<br/>\n";
+	
 	echo "</tr></td><tr><td>\n";
 	echo "Median filter: \n";
 	echo "</td><td>\n";
@@ -247,6 +252,7 @@ function runPostProc() {
 	$refIterId = $_GET['refineIter'];
 	$ampcor=$_POST['ampcor'];
 	$lp=$_POST['lp'];
+	$hp=$_POST['hp'];
 	$yflip=$_POST['yflip'];
 	$invert=$_POST['invert'];
 	$viper=$_POST['viper'];
@@ -278,8 +284,8 @@ function runPostProc() {
 	******************** */
 	if ($ampcor && $bfactor)
 		createform('<B>ERROR:</B> Select only one of amplitude or b-factor correction');
-	if (!$ampcor && !$bfactor)
-		createform('<B>ERROR:</B> Select an amplitude adjustment curve or b-factor correction');
+	//if (!$ampcor && !$bfactor)
+	//	createform('<B>ERROR:</B> Select an amplitude adjustment curve or b-factor correction');
 	if ($ampcor)
 		list($ampfile, $maxfilt) = explode('|~~|',$ampcor);
 
@@ -295,9 +301,8 @@ function runPostProc() {
 		if ($maxfilt < $apix*2)
 			$maxfilt = $apix*2.1;
 		$command.= "--maxfilt=$maxfilt ";
-	} else {
-		$command.="--bfactor ";
-	}
+	} 
+	if ($bfactor) $command.="--bfactor ";
 	$command.= "--apix=$apix ";
 	$command.= "--res=$res ";
 	$command.= "--sym=$symname ";
@@ -308,6 +313,7 @@ function runPostProc() {
 	if ($mask) $command.="--mask=$mask ";
 	if ($imask) $command.="--imask=$imask ";
 	if ($lp) $command.="--lp=$lp ";
+	if ($hp) $command.="--hp=$hp ";
 	if ($norm=='on') $command.="--norm ";
 	if ($yflip=='on') $command.="--yflip ";
 	if ($invert=='on') $command.="--invert ";
