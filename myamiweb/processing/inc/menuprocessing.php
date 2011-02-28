@@ -640,9 +640,13 @@ if (is_numeric($expId)) {
 		$xmippreconupload = $xmipprecondone - $numxmipprecon;
 		$xmippreconresults[] = ($xmippreconqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$xmippreconqueue queued</a>" : "";
 		$xmippreconresults[] = ($xmippreconrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$xmippreconrun running</a>" : "";
-		$xmippreconresults[] = ($xmippreconupload>0) ? "<a href='uploadXmippRecon.php?expId=$sessionId'>$xmippreconupload ready for upload</a>" : "";
+		$xmippreconresults[] = ($xmippreconupload>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$xmippreconupload ready for upload</a>" : "";
 		$xmippreconresults[] = ($numxmipprecon>0) ? "<a href='reconsummary.php?expId=$sessionId'>$numxmipprecon complete</a>" : "";
 
+		$xmippreconqueue = count($subclusterjobs['xmipprefine']['queued']);
+		$xmippreconrun = count($subclusterjobs['xmipprefine']['running']);
+		$xmipprecondone = count($subclusterjobs['xmipprefine']['done']);
+		
 		// list out refinement jobs in the web menu
 		$nruns=array();
 		$nruns[] = array(
@@ -660,13 +664,13 @@ if (is_numeric($expId)) {
 				'result'=> "<i>(may be buggy)</i>", //$spiderreconresults,
 			);
 		}
-		if (!HIDE_FEATURE)
-		{
-			$nruns[] = array(
-				'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
-				'result'=> "<i>(may be buggy)</i>", //$xmippreconresults,
-			);
-		}
+	
+		
+		$nruns[] = array(
+			'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
+			'result'=> "<i>(may be buggy)</i>", //$xmippreconresults,
+		);
+		
 		if (!HIDE_IMAGIC && !HIDE_FEATURE) {
 			$nruns[] = array(
 				'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
