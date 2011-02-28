@@ -330,7 +330,7 @@ class xmippRefineScript(appionScript.AppionScript):
 			# Keep the FSC
 			FSCfromXmippToEMAN(os.path.join(iteration,rootname+"_resolution.fsc"),
 				os.path.join(iteration,"fsc.txt"))
-			os.unlink(os.path.join(iteration,rootname+"_resolution.fsc"))
+#			os.unlink(os.path.join(iteration,rootname+"_resolution.fsc"))
 			res=apRecon.calcRes(os.path.join(iteration,"fsc.txt"),
 				self.params['boxSize'],self.params['pixelSize'])
 			resfile.write("%s:\t%.3f\n" % (rootname,res))
