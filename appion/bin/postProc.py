@@ -239,6 +239,10 @@ class PostProcScript(appionScript.AppionScript):
 		if self.params['lp'] is not None:
 			fileroot += (".lp%d" % ( int(self.params['lp']), ))
 			emancmd += "lp=%d " %self.params['lp']
+			
+		if self.params['hp'] is not None:
+			fileroot += (".hp%d" % ( int(self.params['hp']), ))
+			emancmd += "hp=%d " %self.params['hp']
 
 		if self.params['yflip'] is True:
 			fileroot += ".yflip"
