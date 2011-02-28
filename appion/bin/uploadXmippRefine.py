@@ -125,7 +125,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 		# Insert now the information for each iteration
 		for i in range(1,fixedq['Niter']+1):
 			apDisplay.printMsg("Processing iteration "+str(i))
-			iterDir="recon/ProjMatch/Iter_"+str(i)
+			iterDir="ProjMatch/Iter_"+str(i)
 
 			# Insert the resolution
 			resolq=appiondata.ApResolutionData()
