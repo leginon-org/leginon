@@ -52,7 +52,7 @@ class AceTiltLoop(appionLoop2.AppionLoop):
 	def postLoopFunctions(self):
 		pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*.corrected.mrc')
 		apFile.removeFilePattern(pattern)
-		apCtf.printCtfSummary(self.params)
+		apCtf.printCtfSummary(self.params, self.imgtree)
 
 	#======================
 	def reprocessImage(self, imgdata):

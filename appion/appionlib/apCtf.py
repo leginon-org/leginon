@@ -320,13 +320,17 @@ def ctfValuesToParams(ctfvalue, params, msg=True):
 	return None
 
 #=====================
-def printCtfSummary(params):
+def printCtfSummary(params, imgtree):
 	"""
 	prints a histogram of the best ctfvalues for the session
 	"""
+	
+	# if there are no images in the imgtree, there was no new processing done, so exit this function early.
+	if not imgtree:
+		apDisplay.printWarning("There are no new results to summarize.")
+		return
+	
 	sys.stderr.write("processing CTF histogram...\n")
-	### get all images
-	imgtree = apDatabase.getAllImages({}, params)
 
 	### get best ctf values for each image
 	ctfhistconf = []

@@ -61,7 +61,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def postLoopFunctions(self):
-		apCtf.printCtfSummary(self.params)
+		apCtf.printCtfSummary(self.params, self.imgtree)
 
 	#======================
 	def reprocessImage(self, imgdata):
