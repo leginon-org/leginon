@@ -161,7 +161,7 @@ class uploadXmippRefineScript(appionScript.AppionScript):
 
 			# Insert the main information for this iteration
 			mainq=appiondata.ApRefineIterData()
-			mainq['volumeDensity']=rmeasure['volume']
+			mainq['volumeDensity']=("threed.%03da.mrc"%(i))
 			mainq['refineRun']=runq
 			mainq['xmippParams']=iterparamq
 			mainq['iteration']=i
