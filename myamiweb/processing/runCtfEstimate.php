@@ -28,22 +28,17 @@ else {
 
 // --- parse data and process on submit
 function runCtfEstimate() {
+
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
 	// ctffind or ctftilt
 	$ctftilt = $_GET['ctftilt'];
-
-	$command = "ctfestimate.py ";
-
-	$apcommand = parseAppionLoopParams($_POST);
-	if ($apcommand[0] == "<") {
-		createCtfEstimateForm($apcommand);
-		exit;
-	}
-	$command .= $apcommand;
-
+	
 	// parse params
 	$ampcarbon=$_POST['ampcarbon'];
 	$ampice=$_POST['ampice'];
@@ -56,17 +51,33 @@ function runCtfEstimate() {
 	$defstep=$_POST['defstep'];
 	//$nominal=$_POST['nominal'];
 	//$reprocess=$_POST['reprocess'];
-
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!is_numeric($cs)) {
 		createCtfEstimateForm("Invalid value for the Spherical Aberration");
 		exit;
 	}
-
+	
 	// Error checking:
 	if (!$fieldsize) createCtfEstimateForm("Enter a fieldsize");
 	if (!$defstep) createCtfEstimateForm("Enter a search step");
 	if ($resmin<50) createCtfEstimateForm("Minimum resolution is too high");
 	if (($resmax>50)||(!$resmax)) createCtfEstimateForm("Maximum resolution is too low");
+	
+	
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command = "ctfestimate.py ";
+
+	$apcommand = parseAppionLoopParams($_POST);
+	if ($apcommand[0] == "<") {
+		createCtfEstimateForm($apcommand);
+		exit;
+	}
+	$command .= $apcommand;
 
 	$command.="--ampcarbon=$ampcarbon ";
 	$command.="--ampice=$ampice ";
@@ -86,46 +97,22 @@ function runCtfEstimate() {
 	//if ($nominal) $command.=" nominal=$nominal";
 	//if ($reprocess) $command.=" reprocess=$reprocess";
 
-	// submit job to cluster
-	if ($_POST['process'] == "Run $progname") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("Accurate determination of local defocus and specimen tilt in electron microscopy.", 2003, "Mindell, JA, Grigorieff N.", "J Struct Biol.", 142, 3, 12781660, false, false, "img/grigorieff_lab.png");
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'ctfestimate', $nproc);
 
-		if (!($user && $password)) createCtfEstimateForm("<b>ERROR:</b> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'ctfestimate',False,True);
-		// if errors:
-		if ($sub) createCtfEstimateForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-
-	processing_header("$progname Results","$progname Results");
-
-	echo referenceBox("Accurate determination of local defocus and specimen tilt in electron microscopy.", 2003, "Mindell, JA, Grigorieff N.", "J Struct Biol.", 142, 3, 12781660, false, false, "img/grigorieff_lab.png");
-
-	echo"
-	<TABLE WIDTH='600'>
-	<TR><TD COLSPAN='2'>
-	<B>ACE Command:</B><br/>
-	$command<HR>
-	</TD></tr>";
-	appionLoopSummaryTable();
-	echo"
-	<TR><td>ampcarbon</TD><td>$ampcarbon</TD></tr>
-	<TR><td>ampice</TD><td>$ampice</TD></tr>
-	<TR><td>fieldsize</TD><td>$fieldsize</TD></tr>
-	<TR><td>medium</TD><td>$medium</TD></tr>
-	<TR><td>cs</TD><td>$cs</TD></tr>\n";
-	//if ($nominal=="db value" OR $nominal=="") echo "<TR><td>nominal</TD><td><I>NULL</I></TD></tr>\n";
-	//else echo "<TR><td>nominal</TD><td>$nominal</TD></tr>\n";
-	//if ($reprocess) echo "<TR><td>reprocess</TD><td>$reprocess</TD></tr>\n";
-	//else echo "<TR><td>reprocess</TD><td><I>NULL</I></TD></tr>\n";
-	echo "</table>\n";
-
-
-
-	processing_footer(True, True);
+	// if error display them
+	if ($errors)
+		createCtfEstimateForm("<b>ERROR:</b> $errors");
 }
+
 
 /*
 **
