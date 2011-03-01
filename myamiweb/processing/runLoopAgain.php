@@ -201,8 +201,10 @@ function createLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 	echo "</table>\n";
 	echo "<input type='hidden' name='count' value='$count' />\n";
 
+	echo "<br/><br/>\n";
 	echo getSubmitForm("Run Loop Program Again");
-
+	echo "<br/><br/>\n";
+	
 	echo appionRef();
 
 	processing_footer();
@@ -210,6 +212,9 @@ function createLoopAgainForm($extra=false, $title='Loop Again Launcher', $headin
 }
 
 function runLoopAgain() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId = $_GET['expId'];
 	$projectId = getProjectId();
 	$runname=$_POST['runname'];
@@ -222,6 +227,9 @@ function runLoopAgain() {
 	$sessioninfo = $sessiondata['info'];
 	$sessionname = $sessioninfo['Name'];
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$runname) 
 		createLoopAgainForm("<B>ERROR:</B> No runname selected");
 
@@ -232,6 +240,9 @@ function runLoopAgain() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	// --- Get Program Data --- //
 	$particle = new particledata();
 	$progrunparams = $particle->getProgramRunParams($progrunid);
@@ -252,35 +263,22 @@ function runLoopAgain() {
 		//echo "param$i: '$origarg' -> '$arg'<br/>\n";
 	}
 
-	// submit job to cluster
-	if ($_POST['process']=="Run Loop Program Again") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-		if (!($user && $password))
-			createLoopAgainForm("<B>ERROR:</B> Enter a user name and password");
-		$progname = strtolower($progrunparams['progname']);
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,$progname);
-		// if errors:
-		if ($sub)
-			createLoopAgainForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Loop Again Launcher","Loop Again Launcher");
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= appionRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$progname = strtolower($progrunparams['progname']);
+	$errors = showOrSubmitCommand($command, $headinfo, $progname, $nproc);
 
-		echo appionRef();
+	// if error display them
+	if ($errors)
+		createLoopAgainForm("<b>ERROR:</b> $errors");
 
-		echo"
-		<table width='600' class='tableborder' border='1'>
-		<tr><td colspan='2'>
-		<b>Loop Again Command:</b><br/>
-			$command
-		</td></tr>
-		<tr><td>run id</td><td>$runname</td></tr>
-		<tr><td>run dir</td><td>$rundir</td></tr>\n";
-		echo "</table>\n";
-		processing_footer();
-	}
-	exit;
 }
 
 
