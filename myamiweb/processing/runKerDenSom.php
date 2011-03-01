@@ -228,6 +228,9 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 }
 
 function runKerDenSOM() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
@@ -237,9 +240,13 @@ function runKerDenSOM() {
 	$xdim=$_POST['xdim'];
 	$ydim=$_POST['ydim'];
 	$numpart=$_POST['numpart'];
-
-	//make sure a session was selected
 	$description=$_POST['description'];
+	$commit = ($_POST['commit']=="on") ? '--commit' : '';
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	//make sure a session was selected
 	if (!$description)
 		createKerDenSOMForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
@@ -253,8 +260,6 @@ function runKerDenSOM() {
 	if ($xdim > 15 || $ydim > 15)
 		createKerDenSOMForm("<B>ERROR:</B> Dimensions must be less than 16");
 
-	$commit = ($_POST['commit']=="on") ? '--commit' : '';
-
 	// check particle radii
 	$particle = new particledata();
 	$stackparams=$particle->getAlignStackParams($stackid);
@@ -266,6 +271,9 @@ function runKerDenSOM() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command ="kerdenSOM.py ";
 	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=$rundir ";
@@ -279,38 +287,20 @@ function runKerDenSOM() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Run KerDen SOM") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("A Novel Neural Network Technique for Analysis and Classification of EM Single-Particle Images", 2001, "A. Pascual-Montano, L. E. Donate, M. Valle, M. Bárcena, R. D. Pascual-Marqui, J. M. Carazo", "J Struct Biol.", 133, '2/3', 11472094, false, false, "img/xmipp_logo.png");
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'alignanalysis', $nproc);
 
-		if (!($user && $password)) createKerDenSOMForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'alignanalysis');
-		// if errors:
-		if ($sub) createKerDenSOMForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	else {
-		processing_header("Kernel Probability Density Estimator Self-Organizing Map","Kernel Probability Density Estimator Self-Organizing Map");
-
-		echo referenceBox("A Novel Neural Network Technique for Analysis and Classification of EM Single-Particle Images", 2001, "A. Pascual-Montano, L. E. Donate, M. Valle, M. Bárcena, R. D. Pascual-Marqui, J. M. Carazo", "J Struct Biol.", 133, '2/3', 11472094, false, false, "img/xmipp_logo.png");
-
-		echo"
-		<table width='600' class='tableborder' border='1'>
-		<tr><td colspan='2'>
-		<b>KerDen SOM Command:</b><br />
-		$command
-		</td></tr>
-		<tr><td>run id</td><td>$runname</td></tr>
-		<tr><td>stack id</td><td>$stackid</td></tr>
-		<tr><td>x dimension</td><td>$xdim</td></tr>
-		<tr><td>y dimension</td><td>$xdim</td></tr>
-		<tr><td>num part</td><td>$numpart</td></tr>
-		<tr><td>run dir</td><td>$rundir</td></tr>
-		<tr><td>commit</td><td>$commit</td></tr>
-		</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createKerDenSOMForm("<b>ERROR:</b> $errors");
+	
 }
 ?>
