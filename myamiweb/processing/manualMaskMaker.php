@@ -264,26 +264,33 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 }
 
 function runMaskMaker() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$process = $_POST['process'];
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
-
 	$assess = $_POST[assess];
 	$newassess= $_POST[newassessname];
 	$oldassess= $_POST[oldassessname];
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if ($assess==2 && !$newassess) {
 		createMMMForm("<B>ERROR:</B> Specify a new assess run name");
 		exit;
 	}
-
 
 	if ($assess==1 && !$oldassess) {
 		createMMMForm("<B>ERROR:</B> No existing assessment run for merging");
 		exit;
 	}
 
-
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command="manualmask.py ";
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
@@ -292,19 +299,22 @@ function runMaskMaker() {
 	}
 	$command .= $apcommand;
 	$command .= parseManualMaskMakerParams($_POST);
+	
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= appionRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'manualmask', $nproc);
 
-	processing_header("Bad Region Detection Results","Bad Region Detection Results",$javascript);
-	echo"
-  <TABLE WIDTH='600'>
-  <TR><TD COLSPAN='2'>
-  <B>Mask Maker Command:</B><br>
-  $command<HR>
-  </TD></tr>
-	";
-	appionLoopSummaryTable();
-	maskMakerSummaryTable();
-	echo"</table>\n";
-	processing_footer();
+	// if error display them
+	if ($errors)
+		createMMMForm("<b>ERROR:</b> $errors");
+	
 }
 
 ?>

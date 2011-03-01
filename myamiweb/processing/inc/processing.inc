@@ -107,11 +107,11 @@ function getSubmitForm($name="Run", $displayhost=true, $warning=false) {
 	if ($displayhost && $_SESSION['username']) {
 		$html.=getHostForm();
 	}
-	if ($_SESSION['loggedin']) {
-		$html.="  <input type='submit' name='process' value='$name' onclick='pleasewait()'>\n";
-	}
 	if ($warning) {
 		$html.="<br/><font class='apcomment'>Submission will NOT run, only output a command that you can copy and paste into a unix shell</font>";
+	}
+	else if ($_SESSION['loggedin']) {
+		$html.="  <input type='submit' name='process' value='$name' onclick='pleasewait()'>\n";
 	}
 	return $html;
 }
