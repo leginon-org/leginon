@@ -8,6 +8,7 @@
 #
 ######################################################################
 require_once('moduleCheck.inc');
+require_once("../inc/mysql.inc");
 
 
 #####################################################################
@@ -159,5 +160,56 @@ class WebServerTester {
 		
 		return true;
 	}
+	
+	#####################################################################
+	#
+	# Get the version and revision numbers from the project database
+	#
+	# Takes parameter $fileLocation which is the path to the config file.
+	# Returns a message as a string with the version and revision. 
+	# TODO: This is a lame way to return the data but quick. Refactor me.
+	#
+	#####################################################################
+	function getDBVersion( $fileLocation ) {
+		if (file_exists($fileLocation)){
+			require_once($fileLocation);
+		} else {
+			throw new Exception("!!! WARNING !!!  Could not find your config.php file at $fileLocation. You may create a config file at http://YOUR_HOST/myamiweb/setup.");
+		}
+	
+		$mysqld = new mysql(DB_HOST, DB_USER, DB_PASS);
+		$dbLink = $mysqld->connect_db();
+
+		if ($dbLink == false) {	
+			throw new Exception("!!! WARNING !!!  Cannot connect to the database server with db_host: ".DB_HOST." db_usr : ".DB_USER);
+		}
+		
+		$result = $mysqld->select_db(DB_PROJECT, $dbLink);
+		if($result == false) {
+			throw new Exception("!!! WARNING !!!  \"".DB_PROJECT."\" database does not exist.");
+		}
+	
+		// find the current version and revision numbers 
+		$versionresults = $mysqld->getSQLResult('select `key`, value from install where `key` = \'version\'');
+		$revisionresults = $mysqld->getSQLResult('select `key`, value from install where `key` = \'revision\'');
+		
+		$message = "Unable to find the current Appion version and revision numbers in the \"".DB_PROJECT."\" database.";
+		if( (!empty($versionresults)) && (!empty($revisionresults)) ){					
+			foreach($versionresults as $result){
+				$currentDBVersion = $result['value'];
+			}
+			foreach($revisionresults as $result){
+				$currentDBRevision = $result['value'];
+			}
+			if(!empty($currentDBVersion) && !empty($currentDBRevision)) {
+				$message = 'Your current Appion version is '.$currentDBVersion.' and revision is '.$currentDBRevision;
+			}
+		}
+		
+		$mysqld->close_db($dbLink);
+		
+		return $message;
+	}
+	
 }
 ?>

@@ -13,7 +13,7 @@
 #       ones are required???
 #
 # There are several hard coded constants in this file that may need to be maintained:
-# 1. $fileLocation - the path to the config.php file
+# 1. $configFileLocation - the path to the config.php file
 # 2. $minPhpVersion - minimum version of PHP required for Appion/Leginon
 # 3. The php.ini recommended values
 #
@@ -40,6 +40,9 @@ $modules = new moduleCheck();
 require('./inc/webServerTester.inc');
 $tester = new WebServerTester();
 
+// The location of the config file
+$configFileLocation = "../config.php";
+
 
 #####################################################################
 #
@@ -49,11 +52,8 @@ $tester = new WebServerTester();
 echo "<h3>config.php file check:</h3>";
 echo "<p>";
 
-// The location of the config file
-$fileLocation = "../config.php";
-
 try {
-	$tester->verifyConfig($fileLocation);
+	$tester->verifyConfig($configFileLocation);
 	echo "Your config.php file is properly formatted.";
 } catch(Exception $e) {
 	echo "<font color='red'>".$e->getMessage()."</font>";
@@ -271,13 +271,57 @@ Don't see them? For more info visit:
 
 <!--  
 ##################################################################### 
-# Display all the loaded php extensions                         
+# Display other useful information                         
 ##################################################################### 
 -->
 <h3>The following PHP extensions are loaded:</h3>
 <p><pre>
 <?php print_r($modules->listModules()); // List all installed modules ?>
 </pre></p>
+
+
+
+<h3>Current Appion Version and Revision:</h3>
+<p>
+<?php
+try {
+	echo $tester->getDBVersion($configFileLocation);
+} catch(Exception $e) {
+	echo "<font color='red'>".$e->getMessage()."</font>";
+}
+?>
+</p>
+
+<!--  
+#####################################################################
+#
+# Display instructions for running other test scripts 
+#
+#####################################################################
+-->
+<h3>Instructions for testing availablity of 3rd party processing packages:</h3>
+<p>
+Running the following script on the processing server will check that 3rd party processing packages are installed and avaialable from your PATH.
+</p>
+
+<p>
+cd /your_download_area/myami/appion/test<br />
+python check3rdPartyPackages.py
+</p>
+<h3>Instructions for running database update scripts:</h3>
+
+<p>
+Running the following script will indicate if you need to run any database update scripts.<br />
+</p>
+<p>
+cd /your_download_area/myami/dbschema<br />
+python schema_update.py
+</p>
+
+<p>
+This will print out a list of commands to paste into a shell which will run database update scripts.<br />
+You can re-run schema_update.py at any time to update the list of which scripts still need to be run.<br />
+</p>
 
 <?php login_footer(); ?>
 
