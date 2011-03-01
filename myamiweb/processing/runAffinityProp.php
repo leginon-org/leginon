@@ -236,6 +236,9 @@ function createAffinityPropForm($extra=false, $title='affPropCluster.py Launcher
 }
 
 function runAffinityProp() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
@@ -245,9 +248,14 @@ function runAffinityProp() {
 	$bin=$_POST['bin'];
 	$numpart=$_POST['numpart'];
 	$preftype = $_POST['preftype'];
-
-	//make sure a session was selected
+	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	$description=$_POST['description'];
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	
+	//make sure a session was selected
 	if (!$description)
 		createAffinityPropForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
@@ -257,8 +265,6 @@ function runAffinityProp() {
 
 	if ($numpart < 4)
 		createAffinityPropForm("<B>ERROR:</B> Must have more than 4 particles");
-
-	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
 	// check particle radii
 	$particle = new particledata();
@@ -270,7 +276,10 @@ function runAffinityProp() {
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
-
+	
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command ="affinityPropCluster.py ";
 	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=$rundir ";
@@ -284,38 +293,20 @@ function runAffinityProp() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Run Affinity Propagation") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("Clustering by Passing Messages Between Data Points.", 2007, "Brendan J. Frey and Delbert Dueck", "Science", 315, 5814, 17218491, false, false, "img/affinityprop.png");
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'alignanalysis', $nproc);
 
-		if (!($user && $password)) createAffinityPropForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'alignanalysis');
-		// if errors:
-		if ($sub) createAffinityPropForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	else {
-		processing_header("Clustering by Affinity Propagation","Clustering by Affinity Propagation");
-
-		echo referenceBox("Clustering by Passing Messages Between Data Points.", 2007, "Brendan J. Frey and Delbert Dueck", "Science", 315, 5814, 17218491, false, false, "img/affinityprop.png");
-
-		echo"
-		<table width='600' class='tableborder' border='1'>
-		<tr><td colspan='2'>
-		<b>Affinity Propagation Command:</b><br />
-		$command
-		</td></tr>
-		<tr><td>run id</td><td>$runname</td></tr>
-		<tr><td>stack id</td><td>$stackid</td></tr>
-		<tr><td>num part</td><td>$numpart</td></tr>
-		<tr><td>run dir</td><td>$rundir</td></tr>
-		<tr><td>binning</td><td>$bin</td></tr>
-		<tr><td>preference type</td><td>$preftype</td></tr>
-		<tr><td>commit</td><td>$commit</td></tr>
-		</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createAffinityPropForm("<b>ERROR:</b> $errors");
+	
 }
 ?>
