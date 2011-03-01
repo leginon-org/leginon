@@ -57,12 +57,13 @@ if (!empty($sessioninfo)) {
 
 // --- parse data and process on submit
 function runPyAce() {
+	
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
-
-	$command.= "pyace.py ";
-
 	// parse params
 	$edgethcarbon=$_POST[edgethcarbon];
 	$edgethice=$_POST[edgethice];
@@ -82,11 +83,30 @@ function runPyAce() {
 	$continue = ($_POST[cont]=="on") ? "1" : '0';
 	$commit = ($_POST[commit]=="on") ? "1" : '0';
 	$proc = $_POST[processor];
-
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!is_numeric($cs)) {
 		createPyAceForm("Invalid value for the Spherical Aberration");
 		exit;
 	}
+	
+	// check the tilt situation
+	$particle = new particledata();
+	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
+	if ($maxang > 5) {
+		$tiltangle = $_POST['tiltangle'];
+		if ($tiltangle!='notilt') {
+			createPyAceForm("ACE 1 does not work on tilted images");
+			exit;
+		}
+	}
+	
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command.= "pyace.py ";
 
 	$command.="--edgethcarbon=$edgethcarbon ";
 	$command.="--edgethice=$edgethice ";
@@ -110,63 +130,25 @@ function runPyAce() {
 	}
 	$command .= $apcommand;
 
-	// check the tilt situation
-	$particle = new particledata();
-	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
-	if ($maxang > 5) {
-		$tiltangle = $_POST['tiltangle'];
-		if ($tiltangle!='notilt') {
-			createPyAceForm("ACE 1 does not work on tilted images");
-			exit;
-		}
+	
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("ACE: automated CTF estimation.", 2005, "Mallick SP, Carragher B, Potter CS, Kriegman DJ.", "Ultramicroscopy.", 104, 1, 15935913, false, false, false);
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'pyace', $nproc);
+
+	// if error display them
+	if ($errors) {
+		createPyAceForm("<b>ERROR:</b> $errors");
 	}
-
-	// submit job to cluster
-	if ($_POST['process']=="Run ACE") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-
-		if (!($user && $password)) createPyAceForm("<b>ERROR:</b> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'pyace',False,True);
-		// if errors:
-		if ($sub) createPyAceForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-
-	processing_header("PyACE Results","PyACE Results");
-
-	echo referenceBox("ACE: automated CTF estimation.", 2005, "Mallick SP, Carragher B, Potter CS, Kriegman DJ.", "Ultramicroscopy.", 104, 1, 15935913, false, false, false);
-
-	echo"
-	<TABLE WIDTH='600'>
-	<TR><TD COLSPAN='2'>
-	<B>ACE Command:</B><br/>
-	$command<HR>
-	</TD></tr>";
-	appionLoopSummaryTable();
-	echo"
-	<TR><td>edgethcarbon</TD><td>$edgethcarbon</TD></tr>
-	<TR><td>edgethice</TD><td>$edgethice</TD></tr>
-	<TR><td>pfcarbon</TD><td>$pfcarbon</TD></tr>
-	<TR><td>pfice</TD><td>$pfice</TD></tr>
-	<TR><td>overlap</TD><td>$overlap</TD></tr>
-	<TR><td>fieldsize</TD><td>$fieldsize</TD></tr>
-	<TR><td>resamplefr</TD><td>$resamplefr</TD></tr>
-	<TR><td>medium</TD><td>$medium</TD></tr>
-	<TR><td>cs</TD><td>$cs</TD></tr>
-	<TR><td>drange</TD><td>$drange</TD></tr>
-	<TR><td>display</TD><td>$display</TD></tr>
-	<TR><td>stig</TD><td>$stig</TD></tr>\n";
-
-	if ($nominal=="db value" OR $nominal=="") echo "<TR><td>nominal</TD><td><I>NULL</I></TD></tr>\n";
-	else echo "<TR><td>nominal</TD><td>$nominal</TD></tr>\n";
-	if ($reprocess) echo "<TR><td>reprocess</TD><td>$reprocess</TD></tr>\n";
-	else echo "<TR><td>reprocess</TD><td><I>NULL</I></TD></tr>\n";
-	echo "<TR><td>newnominal</TD><td>$newnominal</TD></tr>\n";
-	echo "</table>\n";
-	processing_footer(True, True);
 }
+
+
 
 /*
 **
