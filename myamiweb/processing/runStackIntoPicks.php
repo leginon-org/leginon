@@ -91,12 +91,18 @@ function createStackIntoPicksForm($extra=false, $title='Run Stack Into Picks', $
 }
 
 function runStackIntoPicks() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId = $_GET['expId'];
 	$projectId = getProjectId();
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackid=$_POST['stackid'];
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$stackid) 
 		createStackIntoPicksForm("<B>ERROR:</B> No stack selected");
 
@@ -104,6 +110,9 @@ function runStackIntoPicks() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command ="stackIntoPicks.py ";
 	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=$rundir ";
@@ -111,35 +120,21 @@ function runStackIntoPicks() {
 	$command.="--stackid=$stackid ";
 	$command.="--commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Run Stack Into Picks") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-		if (!($user && $password))
-			createStackIntoPicksForm("<B>ERROR:</B> Enter a user name and password");
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
-		// if errors:
-		if ($sub)
-			createStackIntoPicksForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Run Stack Into Picks","Run Stack Into Picks");
-		echo appionRef();
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= appionRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'makestack', $nproc);
 
-		echo"
-		<table width='600' class='tableborder' border='1'>
-		<tr><td colspan='2'>
-		<b>Run Stack Into Picks:</b><br />
-		$command
-		</td></tr>
-		<tr><td>run id</td><td>$runname</td></tr>
-		<tr><td>stack id</td><td>$stackid</td></tr>
-		<tr><td>out dir</td><td>$rundir</td></tr>
-		<tr><td>commit</td><td>$commit</td></tr>
-		</table>\n";
-		processing_footer();
-	}
-	exit;
+	// if error display them
+	if ($errors)
+		createStackIntoPicksForm("<b>ERROR:</b> $errors");
+	
 }
 
 
