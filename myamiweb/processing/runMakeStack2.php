@@ -509,14 +509,45 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	exit;
 }
 
+
 function runMakestack() {
+	
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
 	$single=$_POST['single'];
-	//make sure a session was selected
 	$description = $_POST['description'];
+	
+	$invert = ($_POST['density']=='invert') ? 'yes' : 'no';
+	$normalize = ($_POST['normalize']=='on') ? 'yes' : 'no';
+	$ctfcorrect = ($_POST['ctfcorrect']=='on') ? 'ctfcorrect' : '';
+	$ctfcorrecttype = $_POST['ctfcorrecttype'];
+	$stig = ($_POST['stig']=='on') ? 'stig' : '';
+	$commit = ($_POST['commit']=="on") ? 'commit' : '';
+	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
+	$boxfiles = ($_POST['boxfiles']);
+	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
+	
+	// set image inspection selection
+	$norejects=$inspected=0;
+	if ($_POST['checkimage']=="Non-rejected") {
+		$norejects=1;
+	} elseif ($_POST['checkimage']=="Best") {
+		$norejects=1;
+		$inspected=1;
+	}
+	
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	// Got a little sloppy here, left some get variable code below to keep some parts easier to read. 
+	
+	//make sure a session was selected
 	if (!$description)
 		createMakestackForm("<b>ERROR:</b> Enter a brief description of the stack");
 
@@ -533,15 +564,6 @@ function runMakestack() {
 	if ($partrunid && $fromstackid)
 		createMakestackForm("<b>ERROR:</b> Choose either a stack or particle run, but not both");
 
-	$invert = ($_POST['density']=='invert') ? 'yes' : 'no';
-	$normalize = ($_POST['normalize']=='on') ? 'yes' : 'no';
-	$ctfcorrect = ($_POST['ctfcorrect']=='on') ? 'ctfcorrect' : '';
-	$ctfcorrecttype = $_POST['ctfcorrecttype'];
-	$stig = ($_POST['stig']=='on') ? 'stig' : '';
-	$commit = ($_POST['commit']=="on") ? 'commit' : '';
-	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
-	$boxfiles = ($_POST['boxfiles']);
-	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
 
 	// xmipp normalization
 	// ace cutoff
@@ -550,14 +572,6 @@ function runMakestack() {
 		if ($xmippnorm <= 0 || !$xmippnorm) createMakestackForm("<b>ERROR:</b> Xmipp sigma must be greater than 0" );
 	}
 
-	// set image inspection selection
-	$norejects=$inspected=0;
-	if ($_POST['checkimage']=="Non-rejected") {
-		$norejects=1;
-	} elseif ($_POST['checkimage']=="Best") {
-		$norejects=1;
-		$inspected=1;
-	}
 	// binning amount
 	$bin=$_POST['bin'];
 	if ($bin) {
@@ -635,6 +649,10 @@ function runMakestack() {
 		if (!is_numeric($partlimit)) createMakestackForm("<b>ERROR:</b> Particle limit must be an integer");
 	} else $partlimit="none";
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	
 	$command = "makestack2.py"." ";
 	$command.="--single=$single ";
 	if ($partrunid)
@@ -673,51 +691,21 @@ function runMakestack() {
 	}
 	$command .= $apcommand;
 
-	// submit job to cluster
-	if ($_POST['process']=="Make Stack") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= appionRef();
+	
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'makestack2', $nproc);
 
-		if (!($user && $password)) createMakestackForm("<b>ERROR:</b> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack2',$testimage);
-		// if errors:
-		if ($sub) createMakestackForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-
-	processing_header("Makestack Run","Makestack Params");
-
-	echo appionRef();
-
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>Makestack Command:</b><br />
-	$command
-	</td></tr>";
-	echo appionLoopSummaryTable();
-	echo"
-	<tr><td>stack name</td><td>$single</td></tr>
-	<tr><td>selection Id</td><td>$partrunid</td></tr>
-	<tr><td>particle label</td><td>$partlabel</td></tr>
-	<tr><td>invert</td><td>$invert</td></tr>
-	<tr><td>normalize</td><td>$normalize</td></tr>
-	<tr><td>xmipp-normalize</td><td>$xmippnormalize</td></tr>
-	<tr><td>ctf correct</td><td>$ctfcorrect</td></tr>
-	<tr><td>ctf correct type</td><td>$ctfcorrecttype</td></tr>
-	<tr><td>mask assessment</td><td>$massessname</td></tr>
-	<tr><td>box size</td><td>$boxsize</td></tr>
-	<tr><td>binning</td><td>$bin</td></tr>
-	<tr><td>ace cutoff</td><td>$ace</td></tr>
-	<tr><td>correlationmin cutoff</td><td>$correlationmin</td></tr>
-	<tr><td>correlationmax cutoff</td><td>$correlationmax</td></tr>
-	<tr><td>minimum defocus</td><td>$dfmin</td></tr>
-	<tr><td>maximum defocus</td><td>$dfmax</td></tr>
-	<tr><td>particle limit</td><td>$partlimit</td></tr>
-	<tr><td>spider</td><td>$_POST[fileformat]</td></tr>";
-
-	echo "</table>\n";
-	processing_footer(True,True);
+	// if error display them
+	if ($errors)
+		createMakestackForm("<b>ERROR:</b> $errors");
 }
+	
 ?>
