@@ -351,6 +351,9 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 //***************************************
 //***************************************
 function runAlignment() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
@@ -367,9 +370,13 @@ function runAlignment() {
 	// $freealigns=$_POST['freealigns'];
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$inverttempl = ($_POST['inverttempl']=="on") ? 'inverttempl' : '';
-
-	//make sure a session was selected
 	$description=$_POST['description'];
+	$numpart=$_POST['numpart'];
+	
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	//make sure a session was selected
 	if (!$description) createAlignmentForm("<B>ERROR:</B> Enter a brief description of the alignment run");
 
 	//make sure a stack was selected
@@ -380,7 +387,6 @@ function runAlignment() {
 	$rundir = $outdir.$runname;
 
 	// alignment
-	$numpart=$_POST['numpart'];
 	if ($numpart < 1) 
 		createAlignmentForm("<B>ERROR:</B> Number of particles must be at least 1");
 	$particle = new particledata();
@@ -390,10 +396,10 @@ function runAlignment() {
 
 	$fileformat = ($_POST['fileformat']=='spider') ? 'spider' : '';
 
-//	$command ="source /ami/sw/ami.csh;";
-//	$command.="source /ami/sw/share/python/usepython.csh common32;";
-//	$command.="source /home/$user/pyappion/useappion.csh;";
-	$command="edIterAlign.py ";
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	$command ="edIterAlign.py ";
 	$command.="--projectid=".getProjectId()." ";
 	$command.="--rundir=".$rundir." ";
 	$command.="--runname=$runname ";
@@ -412,48 +418,22 @@ function runAlignment() {
 	if ($inverttempl) $command.="--invert-templates ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
+	
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("Conformational flexibility of metazoan fatty acid synthase enables catalysis.", 2009, "Brignole EJ, Smith S, Asturias FJ.", "Nat Struct Mol Biol.", 16, 2, 19151726, 2653270, false, "img/editer.jpg");
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
 
-	// submit job to cluster
-	if ($_POST['process']=="Run Ed-Iter Alignment") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-
-		if (!($user && $password))
-			createAlignmentForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign',False,False,False,8);
-		// if errors:
-		if ($sub)
-			createAlignmentForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Alignment Run","Alignment Params");
-
-		echo referenceBox("Conformational flexibility of metazoan fatty acid synthase enables catalysis.", 2009, "Brignole EJ, Smith S, Asturias FJ.", "Nat Struct Mol Biol.", 16, 2, 19151726, 2653270, false, "img/editer.jpg");
-
-		echo"
-		<TABLE WIDTH='600' BORDER='1'>
-		<TR><TD COLSPAN='2'>
-		<B>Alignment Command:</B><br>
-		$command
-		</TD></tr>
-		<TR><td>runname</TD><td>$runname</TD></tr>
-		<TR><td>rundir</TD><td>$rundir</TD></tr>
-		<TR><td>templates</TD><td>".templateIds()."</TD></tr>
-		<TR><td>orientref</TD><td>$orientref</TD></tr>
-		<TR><td>stackid</TD><td>$stackid</TD></tr>
-		<TR><td>numpart</TD><td>$numpart</TD></tr>
-		<TR><td>bin</TD><td>$bin</TD></tr>
-		<TR><td>radius</TD><td>$radius</TD></tr>
-		<TR><td>low pass</TD><td>$lowpass</TD></tr>
-		<TR><td>high pass</TD><td>$highpass</TD></tr>
-		<TR><td>iterations</TD><td>$iters</TD></tr>
-		<TR><td>inverttmpl</TD><td>$inverttmpl</TD></tr>
-		<TR><td>commit</TD><td>$commit</TD></tr>";
-		echo"	</table>\n";
-		// 		<TR><td>freealigns</TD><td>$freealigns</TD></tr>
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createAlignmentForm("<b>ERROR:</b> $errors");
+	
 }
 
 /*
