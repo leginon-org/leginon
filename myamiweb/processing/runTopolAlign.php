@@ -82,6 +82,13 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 				document.viewerform.timeestimate.value = time.toString()+' days';
 			}
 		}\n";
+	// check form values
+	$javascript .="function checkform() {\n";
+	$javascript .="  if (document.forms[\"viewerform\"][\"canproc\"].value > 8) {\n";
+	$javascript .="    alert('CAN cannot use more than 8 processors');\n";
+	$javascript .="    return false;\n";
+	$javascript .="  }\n";
+	$javascript .="}\n";
 	$javascript .= "</script>\n";
 
 	$javascript .= writeJavaPopupFunctions('appion');	
@@ -92,7 +99,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
   
-	echo "<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+	echo "<form name='viewerform' method='POST' action='$formAction' onsubmit='return checkform()'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
 	$sessionpath=getBaseAppionPath($sessioninfo).'/align/';
@@ -114,8 +121,12 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$startnumcls = ($_POST['startnumcls']) ? $_POST['startnumcls'] : $numpart/30;
 	$endnumcls = ($_POST['endnumcls']) ? $_POST['endnumcls'] : $numpart/50;
 	$mask = ($_POST['mask']) ? $_POST['mask'] : 100;
-	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '4';
-	$iter = ($_POST['iter']) ? $_POST['iter'] : '10';
+	$premaskcheck = ($_POST['premask']=='on') ? 'checked' : '';
+	$nocentercheck = ($_POST['nocenter']=='on') ? 'checked' : '';
+	$classitercheck = ($_POST['classiter']=='on') ? 'checked' : '';
+	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
+	$canproc = ($_POST['canproc']) ? $_POST['canproc'] : '1';
+	$iter = (isset($_POST['iter'])) ? $_POST['iter'] : '10';
 	// topology alignment parameters
 	$itermult = ($_POST['itermult']) ? $_POST['itermult'] : '10';
 	$learn = ($_POST['learn']) ? $_POST['learn'] : '0.01';
@@ -163,7 +174,10 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo "<br>";
 
 	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc' onChange='estimatetime()'>\n";
-	echo "Number of Processors";
+	echo "Number of Processors for MRA";
+	echo "<br/>\n";
+	echo "<INPUT TYPE='text' NAME='canproc' SIZE='4' VALUE='$canproc' onChange='estimatetime()'>\n";
+	echo "Number of Processors for CAN";
 	echo "<br/>\n";
 
 	echo "</TD></tr>\n</table>\n";
@@ -191,6 +205,9 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 
 	echo "<INPUT TYPE='text' NAME='mask' VALUE='$mask' SIZE='4'>\n";
 	echo docpop('mask','Mask (in pixels, unbinned)');
+	echo "<br/>\n";
+	echo "<INPUT TYPE='checkbox' name='premask' $premaskcheck>\n";
+	echo docpop('premask','Mask raw particles');	
 	echo "<br/>\n";
 	echo "<br/>\n";
 
@@ -230,6 +247,12 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 
 	echo "<input type='text' name='age' value='$age' size='4'>\n";
 	echo docpop('age','Edge age');
+	echo "<br/>\n";
+	echo "<INPUT TYPE='checkbox' name='nocenter' $nocentercheck>\n";
+	echo docpop('nocenter','Do not center the class averages');	
+	echo "<br/>\n";
+	echo "<INPUT TYPE='checkbox' name='classiter' $classitercheck>\n";
+	echo docpop('classiter','Perform iterative class averaging');	
 	echo "<br/>\n";
 	echo "<br/>\n";
 	echo docpop('mramethod','<b>MRA package:</b>');
@@ -296,7 +319,11 @@ function runTopolAlign() {
 	$age=$_POST['age'];
 	$description=$_POST['description'];
 	$commit = ($_POST['commit']=="on") ? true : false;
+	$premask = ($_POST['premask']=="on") ? true : false;
+	$nocenter = ($_POST['nocenter']=="on") ? true : false;
+	$classiter = ($_POST['classiter']=="on") ? true : false;
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
+	$canproc = ($_POST['canproc']) ? $_POST['canproc'] : 1;
 	$mramethod = strtolower($_POST['mramethod']);
 
 	// get stack id, apix, & box size from input
@@ -309,8 +336,10 @@ function runTopolAlign() {
 	if (!$description)
 		createTopolAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
-	if ($nproc > 16)
-		createTopolAlignForm("<B>ERROR:</B> Let's be reasonable with the nubmer of processors, less than 16 please");
+	if ($nproc > 24)
+		createTopolAlignForm("<B>ERROR:</B> Let's be reasonable with the number of processors, less than 24 please");
+	if ($canproc > 8)
+		createTopolAlignForm("<B>ERROR:</B> CAN cannot run on more than 8 processors");
 
 	//make sure a stack was selected
 	if (!$stackid)
@@ -333,9 +362,9 @@ function runTopolAlign() {
 	$secperiter = 0.0025;
 	$calctime = ($numpart/1000.0)*$startnumcls*($boxsize/$bin)*($boxsize/$bin)*$secperiter/$nproc;
 	// kill if longer than 10 hours
-	if ($calctime > 10.0*3600.0)
-		createTopolAlignForm("<b>ERROR:</b> Run time per iteration greater than 10 hours<br/>"
-			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
+//	if ($calctime > 10.0*3600.0)
+//		createTopolAlignForm("<b>ERROR:</b> Run time per iteration greater than 10 hours<br/>"
+//			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -367,6 +396,11 @@ function runTopolAlign() {
 
 	if ($nproc)
 		$command.="--nproc=$nproc ";
+	if ($canproc)
+		$command.="--canproc=$canproc ";
+	if ($premask) $command.="--premask ";
+	if ($nocenter) $command.="--no-center ";
+	if ($classiter) $command.="--classiter ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
