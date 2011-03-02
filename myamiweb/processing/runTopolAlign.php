@@ -275,6 +275,9 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 }
 
 function runTopolAlign() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
@@ -300,6 +303,9 @@ function runTopolAlign() {
 	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
 	//make sure a session was selected
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$description)
 		createTopolAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
@@ -335,6 +341,9 @@ function runTopolAlign() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	// setup command
 	$command ="topologyAlignment.py ";
 	$command.="--projectid=".getProjectId()." ";
@@ -360,52 +369,31 @@ function runTopolAlign() {
 		$command.="--nproc=$nproc ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
-	// submit job to cluster
-	if ($_POST['process']=="Run Topology Alignment") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createTopolAlignForm("<B>ERROR:</B> Enter a user name and password");
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("Topology representing network enables highly accurate classification of protein images taken by cryo electron-microscope without masking.", 2003, "Ogura T, Iwasaki K, Sato C.", "J Struct Biol.", 143, 3, 14572474, false, false, "img/canimg.png");
+	if ($calctime < 60)
+		$headinfo .= "<span style='font-size: larger; color:#999933;'>\n<b>Estimated calc time:</b> "
+			.round($calctime,2)." seconds\n";
+	elseif ($calctime < 3600)
+		$headinfo .= "<span style='font-size: larger; color:#33bb33;'>\n<b>Estimated calc time:</b> "
+			.round($calctime/60.0,2)." minutes\n";
+	else
+		$headinfo .= "<span style='font-size: larger; color:#bb3333;'>\n<b>Estimated calc time:</b> "
+			.round($calctime/3600.0,2)." hours\n";
+	$headinfo .= "</span><br/>";
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partalign', $nproc);
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign',False,False,False,$nproc);
-		// if errors:
-		if ($sub) createTopolAlignForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	else {
-		processing_header("Topology Align Run Params","Topology Align Params");
-
-		echo referenceBox("Topology representing network enables highly accurate classification of protein images taken by cryo electron-microscope without masking.", 2003, "Ogura T, Iwasaki K, Sato C.", "J Struct Biol.", 143, 3, 14572474, false, false, "img/canimg.png");
-
-		echo "<table width='600' class='tableborder' border='1'>";
-		echo "<tr><td colspan='2'><br/>\n";
-		if ($calctime < 60)
-			echo "<span style='font-size: larger; color:#999933;'>\n<b>Estimated calc time:</b> "
-				.round($calctime,2)." seconds\n";
-		elseif ($calctime < 3600)
-			echo "<span style='font-size: larger; color:#33bb33;'>\n<b>Estimated calc time:</b> "
-				.round($calctime/60.0,2)." minutes\n";
-		else
-			echo "<span style='font-size: larger; color:#bb3333;'>\n<b>Estimated calc time:</b> "
-				.round($calctime/3600.0,2)." hours\n";
-		echo "
-			<tr><td colspan='2'>
-			<b>Topology Alignment Command:</b><br />
-			$command
-			</td></tr>
-			<tr><td>run id</td><td>$runname</td></tr>
-			<tr><td>stack id</td><td>$stackid</td></tr>
-			<tr><td>low pass</td><td>$lowpass</td></tr>
-			<tr><td>high pass</td><td>$highpass</td></tr>
-			<tr><td>num part</td><td>$numpart</td></tr>
-			<tr><td>num start classes</td><td>$startnumcls</td></tr>
-			<tr><td>num end classes</td><td>$endnumcls</td></tr>
-			<tr><td>iterations</td><td>$iter</td></tr>
-			<tr><td>binning</td><td>$bin</td></tr>
-			<tr><td>run dir</td><td>$rundir</td></tr>
-			<tr><td>commit</td><td>$commit</td></tr>
-			</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createTopolAlignForm("<b>ERROR:</b> $errors");
+	
 }
 ?>
