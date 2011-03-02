@@ -52,7 +52,12 @@ if ($_POST ) {
 		$sampleId = $sample->addSample($projectId, $packageId, $newnumber, $label, $volume, $description, $concentration1, $concentration2, $stored, $notes);
 
 	} else if ($_POST['btsubmit']=='update') {
-		$sample->updateSample($sampleId, $packageId, $label, $volume, $description, $concentration1, $concentration2, $stored, $notes);
+		if ($packageId != $_POST['curpackageId']) {
+			$number = $sample->getNextNumber($packageId);
+		} else {
+			$number = $_POST['curnumber'];
+		}
+		$sample->updateSample($sampleId, $packageId, $newnumber, $label, $volume, $description, $concentration1, $concentration2, $stored, $notes);
 	}
 // --- redirect after submission --- //
 	if ($_POST['btsubmit']=='add' || $_POST['btsubmit']=='update') {
@@ -100,6 +105,8 @@ foreach($map as $k=>$v) {
 	}
 	$defaults[$v]=$val;
 }
+$curpackageId=$cursample['packageId'];
+$curnumber=$cursample['number'];
 $newnumberstr=$sample->format_number($cursample['number']);
 }
 
@@ -131,6 +138,8 @@ $form->addField("Concentration (mg/L)", 20, false);
 $form->addField("Concentration (pt/L)", 20, false);
 $form->addField("Stored", 20, true, "RT, 4C, -80C");
 $form->addTextArea("Notes", 5, 50, false);
+$form->addHiddenField('curpackageId', $curpackageId);
+$form->addHiddenField('curnumber', $curnumber);
 
 $form->addSubmit("btsubmit", $action);
 

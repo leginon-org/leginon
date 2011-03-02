@@ -53,9 +53,10 @@ class Sample {
 		return $id;
 	} 
 
-	function updateSample($sampleId, $packageId, $label, $volume, $description, $concentration1, $concentration2, $stored, $notes) { 
+	function updateSample($sampleId, $packageId, $number, $label, $volume, $description, $concentration1, $concentration2, $stored, $notes) { 
 		$table="nsample";
 		$data["packageId"]=$packageId;
+		$data["number"]=$number;
 		$data["label"]=$label;
 		$data["volume"]=$volume;
 		$data["description"]=$description;
