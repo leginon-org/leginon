@@ -605,7 +605,7 @@ function writeJobFile ($extra=False) {
         $ejob.='--DontUseFscForFilter ';
     $ejob.='--ConstantToAddToFiltration="'.$_POST["ConstantToAddToFiltration"].'" ';
     $ejob.='--NumberOfMPIProcesses='.$procs.' ';
-    $ejob.='--NumberOfThreads=1';
+    $ejob.='--NumberOfThreads=1 ';
 
 	$clusterjob .= $clusterdata->cluster_job_file($ejob);
 	
