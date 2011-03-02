@@ -43,10 +43,14 @@ packageDict.update({
                "rmeasure64.exe" : (package,"Also check for which rmeasure32.exe, rmeasure.exe, or rmeasure."),
                "signature64.exe" : (package,"For Signature Particle Picking. Also check which signature32.exe."),
 	})
+package = "IMOD"
+packageDict.update({
+               "imod" : (package,"For Tomography Alignment and Reconstruction"),
+	})
 package = "PROTOMO"
 packageDict.update({
-               "tomo-refine.sh" : (package,"For Tomography alignment"),
-               "tomo-fit.sh" : (package,"For Tomography alignment"),
+               "tomo-refine.sh" : (package,"For Tomography Alignment"),
+               "tomo-fit.sh" : (package,"For Tomography Alignment"),
 	})
 
 outString = "The following third party processing package could not be found...\n"
