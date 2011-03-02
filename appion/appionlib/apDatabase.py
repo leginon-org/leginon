@@ -30,7 +30,7 @@ def getSpecificImagesFromDB(imglist):
 	print "Querying database for "+str(len(imglist))+" specific images ... "
 	imgtree=[]
 	for imgname in imglist:
-		if imgname[-4:] == ".mrc" or imgname[-4:] == ".box":
+		if imgname[-4:] == ".mrc" or imgname[-4:] == ".box" or imgname[-4:] == ".pos":
 			imgname = imgname[:-4]
 		if '/' in imgname:
 			imgname = os.path.basename(imgname)
