@@ -2078,7 +2078,14 @@ class leginondata {
 
 	function getDriftDataFromSessionId($id) {
 		$binnedpixelsize = $this->getDriftMeasurementPixelSizeFromSession($id);
-		If (!$binnedpixelsize) $binnedpixelsize = 1.63e-10 * 4;
+		// return in pixels in case that the query fail (might happen to 
+		//very old data)
+		If (!$binnedpixelsize) {
+			$binnedpixelsize = 1;
+			$unit = 'Pixels';
+		} else {
+			$unit = 'Meters';
+		}
 		$driftdata = $this->getDriftData($id, 'session');
 		if (!is_array($driftdata) || empty($driftdata)) return $driftdata;
 
@@ -2090,7 +2097,7 @@ class leginondata {
 			$drift['rate'] = $drift['rate'] * $binnedpixelsize;
 			$scaleddriftdata[] = $drift;
 		}
-		return $scaleddriftdata;
+		return array($scaleddriftdata, $unit);
 	}
 
 	function getDriftDataFromImageId($id) {

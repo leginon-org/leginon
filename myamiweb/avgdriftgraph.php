@@ -16,7 +16,9 @@ $minrate = $_GET['minr'];
 $viewdata = $_GET['vd'];
 $viewsql = $_GET['vs'];
 
-$driftdata = $leginondata->getDriftDataFromSessionId($sessionId);
+$result = $leginondata->getDriftDataFromSessionId($sessionId);
+$driftdata = $result[0];
+$unit = $result[1];
 if ($viewsql) {
 	$sql = $leginondata->mysql->getSQLQuery();
 	echo $sql;
@@ -39,12 +41,17 @@ function TimeCallback($aVal) {
     return Date('H:i',$aVal);
 }
 
+$ratescalefactor = 1.0;
+if ($unit === 'Meters') {
+	$ratescalefactor = 1e10;
+	$unit = 'Angstrom';
+}
 if ($data)
 foreach ($data as $drift) {
-	if ($maxrate && $drift['rate'] > ($maxrate * 1e-10))
+	if ($maxrate && $drift['rate'] * $ratescalefactor > $maxrate)
 		continue;
 	$datax[] = $drift['unix_timestamp'];
-	$datay[] = $drift['rate']*1e10;
+	$datay[] = $drift['rate'] * $ratescalefactor;
 }
 $width = $_GET['w'];
 $height = $_GET['h'];
@@ -67,7 +74,7 @@ if (!$datax && !$datay) {
 		$bplot = new BarPlot($rdatay, $rdatax);
 		$graph->Add($bplot);
 		$graph->title->Set("Drift");
-		$graph->xaxis->title->Set("drift rate Angstrom/s");
+		$graph->xaxis->title->Set("drift rate ".$unit."/s");
 		$graph->yaxis->title->Set("Frequency");
 
 	} else {
@@ -80,7 +87,7 @@ if (!$datax && !$datay) {
 		$graph->xaxis->SetTitlemargin(30);
 		$graph->xaxis->title->Set("time");
 		$graph->yaxis->SetTitlemargin(35);
-		$graph->yaxis->title->Set("drift rate Angstrom/s");
+		$graph->yaxis->title->Set("drift rate ".$unit."/s");
 
 		$sp1 = new ScatterPlot($datay,$datax);
 		$sp1->mark->SetType(MARK_CIRCLE);
