@@ -99,8 +99,6 @@ if ($subStackClassesString != "") {
 		$filename=$stack['path'].'/'.$stack['imagicfile'];
 	} else {
 		
-		echo "yahoo";
-	
 		if ($clusterIdForSubstack) {
 			$stack=$particle->getRawStackFromCluster($clusterIdForSubstack);
 			$subprtls=$particle->getSubsetParticlesFromCluster($clusterIdForSubstack, $subStackClasses);
