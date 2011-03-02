@@ -368,9 +368,12 @@ class mysql {
 			$wherestr .= $where;
 		}
 		foreach ($data as $k=>$v) {
-			if (!is_numeric($v))
+			if (!is_numeric($v) && $v !== NULL)
 				$v = "'".addslashes($v)."'";
-			$kv[] = "`".$k."`=".$v;
+			if ($v === NULL) 
+				$kv[] = '`'.$k.'`= NULL';
+			else
+				$kv[] = "`".$k."`=".$v;
 		}
 		$dbselection = ($db) ? $db.'.':'';
 		$q = "UPDATE $dbselection`$table` SET ".implode(', ',$kv).$wherestr;
