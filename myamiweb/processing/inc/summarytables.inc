@@ -117,7 +117,7 @@ function pickingsummarytable($selectionid, $mini=false) {
 
 /****************************************
 ****************************************/
-function stacksummarytable($stackid, $mini=false, $tiny=false) {
+function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True) {
 	$particle = new particledata();
 	$selectdata = $particle->getStackSelectionRun($stackid);
 	$expId = $selectdata[0]['sessionId'];
@@ -144,10 +144,11 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		.$stackname."</a> (ID: $stackid)\n";
 	if ($stackdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
-		$j.= " <input class='edit' type='submit' name='unhideItem".$stackid."' value='unhide'>\n";
+		if ($showOptions) $j.= " <input class='edit' type='submit' name='unhideItem".$stackid."' value='unhide'>\n";
 		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>\n";
-	} else $j.= " <input class='edit' type='submit' name='hideItem".$stackid."' value='hide'>\n";
-
+	}
+	elseif ($showOptions) $j.= " <input class='edit' type='submit' name='hideItem".$stackid."' value='hide'>\n";
+	if ($showOptions) $j.="<input class='edit' type='button' onClick='parent.location=\"dropstack.php?expId=$expId&sId=$stackid\"' value='delete'>\n";
 	$stacktable.= apdivtitle($j);
 	if ($tiny)
 		return $stacktable;
@@ -172,11 +173,12 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		$stacktable.= "<td  align='left' rowspan='30' align='center' valign='top'>\n";
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=150' height='150'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i>\n";
-		if (!$centered) $stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
-		if (!$junksorted) $stacktable.= "<br /><a href='sortJunk.php?expId=$expId&sId=$stackid&junksort=1'>[Sort Junk]</a>\n";
-		if ($junksorted) $stacktable.= "<br /><a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&junksort=1'>[Apply Junk Cutoff]</a>\n";
-
-		$stacktable.= "<br /><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
+		if ($showOptions) {
+			if (!$centered) $stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
+			if (!$junksorted) $stacktable.= "<br /><a href='sortJunk.php?expId=$expId&sId=$stackid&junksort=1'>[Sort Junk]</a>\n";
+			if ($junksorted) $stacktable.= "<br /><a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&junksort=1'>[Apply Junk Cutoff]</a>\n";
+			$stacktable.= "<br /><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
+		}
 		$stacktable.= "</td>\n";
 		if ($centered && file_exists($badstackavg)) {
 			$stacktable.= "<td  align='left' rowspan='30' align='center' valign='top'>\n";
@@ -188,7 +190,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 			$stacktable.= "<a href='loadimg.php?filename=$montage'>\n";
 			$stacktable.= "<img border=0 src='loadimg.php?filename=$montage&s=150' height='150'></a><br/>\n";
 			$stacktable.= "<i>mean/stdev montage</i><br/>\n";
-			$stacktable.= "<a href='subStack.php?expId=$expId&sId=$stackid&mean=1'>[Filter by Mean/Stdev]</a>\n";
+			if ($showOptions) $stacktable.= "<a href='subStack.php?expId=$expId&sId=$stackid&mean=1'>[Filter by Mean/Stdev]</a>\n";
 			$stacktable.= "</td>\n";
 		}
 		$stacktable.= "</tr>\n\n";
@@ -198,10 +200,12 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		$stacktable.= "<td align='center' rowspan='30' align='center' valign='top'>\n";
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=80' height='80'><br/>\n";
 		$stacktable.= "<i>average</i>\n";
-		if (!$junksorted)
-			$stacktable.= "<br/><font size='-2'><a href='sortJunk.php?expId=$expId&sId=$stackid&junksort=1'>[Sort Junk]</a></font>\n";
-		if ($junksorted)
-			$stacktable.= "<br/><font size='-2'><a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&junksort=1'>[Apply Junk Cutoff]</a></font>\n";
+		if ($showOptions) {
+			if (!$junksorted)
+				$stacktable.= "<br/><font size='-2'><a href='sortJunk.php?expId=$expId&sId=$stackid&junksort=1'>[Sort Junk]</a></font>\n";
+			if ($junksorted)
+				$stacktable.= "<br/><font size='-2'><a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&junksort=1'>[Apply Junk Cutoff]</a></font>\n";
+		}
 		$stacktable.= "</td></tr>\n\n";
 	} #endif
 
@@ -221,7 +225,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 			.$sessiondata['name']."</a>&nbsp;\n";
 
 	// add edit button to description if logged in
-	$descDiv = ($_SESSION['username']) ? editButton($stackid,$stackdata['description']) : $stackdata['description'];
+	$descDiv = ($_SESSION['username'] && $showOptions) ? editButton($stackid,$stackdata['description']) : $stackdata['description'];
 	if (!$mini) 
 		$display_keys['description']=$descDiv;
 	else

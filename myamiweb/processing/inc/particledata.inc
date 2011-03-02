@@ -2432,6 +2432,61 @@ class particledata {
 		return count($r);
 	}
 
+	function removeStackById($stackId) {
+		// Now get the stack run(s) used for this stack
+		$q = "SELECT `REF|ApStackRunData|stackRun` as stackrun "
+			. "FROM `ApRunsInStackData` as rs "
+			. "WHERE `REF|ApStackData|stack` = $stackId ";
+		$r = $this->mysql->getSQLResult($q);
+
+		// delete entry in ApRunsInStackData
+		$q = "delete from `ApRunsInStackData` "
+			. "WHERE `REF|ApStackData|stack` = $stackId";
+		$this->mysql->getSQLResult($q);
+		$status = "Removed Stack ID $stackId from ApRunsInStackData table<br>\n";
+		// check if there are still runs for each stack run:
+		foreach ($r as $srun) {
+			$srunid=$srun['stackrun'];
+			$q = "SELECT count(*) as num from `ApRunsInStackData` "
+				. "WHERE `REF|ApStackRunData|stackRun` = $srunid";
+			$r = $this->mysql->getSQLResult($q);
+			// if no entries left, remove entry in ApStackRunData
+			if ($r[0]['num']==0 ) {
+				$q = "DELETE from `ApStackRunData` "
+					. "WHERE `DEF_id` = $srunid";
+				$this->mysql->getSQLResult($q);
+				$status.= "Removed Stack Run ID $srunid from ApStackRunData table<br/>\n";
+			}
+			else $status.= "Stack Run ID $srunid is used in other stacks, not removing it from the ApStackRunData table<br/>\n";
+		}
+		// get path the Stack entry in ApStackData
+		$q = "SELECT `REF|ApPathData|path` as path from ApStackData "
+			."WHERE DEF_id=$stackId";
+		$r = $this->mysql->getSQLResult($q);
+		$pathid = $r[0]['path'];
+		// this path is used to remove the corresponding
+		// entry from ApAppionJobData
+		$q = "DELETE from ApAppionJobData "
+			."WHERE `REF|ApPathData|path`=$pathid ";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed associated job from ApAppionJobData<br/>\n";
+		// remove stack from ApStackData
+		$q = "DELETE from ApStackData "
+			." WHERE DEF_id=$stackId ";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed Stack ID $stackId from ApStackData<br/>\n";
+		// count the number of particles in ApStackParticleData
+		$q = "SELECT count(DEF_id) as num "
+			."FROM `ApStackParticleData` "
+			."WHERE `REF|ApStackData|stack` = '$stackId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		$q = "DELETE from `ApStackParticleData` "
+			. "WHERE `REF|ApStackData|stack` = '$stackId'";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed ".$r['num']." particles from ApStackParticleData<br/>\n";
+		return $status;
+	}
+
 	//////// fix me ////////
 	function getStackIdFromReconId ($reconId) {
 		$q= "SELECT * "
@@ -4572,6 +4627,7 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 			$pieces_count = count($path_pieces);
 			$appion_basepath = implode('leginon',array_slice($path_pieces,0,$pieces_count-1)).$new_base.$path_pieces[$pieces_count-1]; 
 			$appion_basepath=ereg_replace("/rawdata","",$appion_basepath);		
+			$appion_basepath=ereg_replace("/appion2/","/appion/",$appion_basepath);		
 		} else {
 			$extra="ERROR: could not determine Appion Path directory automatically. Please enter manually";
 			echo $extra;
