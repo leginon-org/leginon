@@ -57,7 +57,7 @@ if ($_POST ) {
 		} else {
 			$number = $_POST['curnumber'];
 		}
-		$sample->updateSample($sampleId, $packageId, $newnumber, $label, $volume, $description, $concentration1, $concentration2, $stored, $notes);
+		$sample->updateSample($sampleId, $packageId, $number, $label, $volume, $description, $concentration1, $concentration2, $stored, $notes);
 	}
 // --- redirect after submission --- //
 	if ($_POST['btsubmit']=='add' || $_POST['btsubmit']=='update') {
