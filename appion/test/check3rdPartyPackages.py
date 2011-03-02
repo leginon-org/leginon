@@ -14,7 +14,7 @@ packageDict.update({
                "ace2correct.exe" : (package,"For CTF correction"),
                "ace2.exe" : (package,"For CTF estimation"),
                "acetilt.py" : (package,""),
-               "findem64.exe" : (package,"Also check for which findem32.exe."),
+               "findem64.exe" : (package,"Try 'which findem32.exe' at a command prompt."),
 	})
 package = "EMAN"
 packageDict.update({
@@ -36,12 +36,12 @@ packageDict.update({
                "xmipp_mpi_ml_refine3d" : (package,""),
                "xmipp_protocols" : (package,""),
 	})
-package = "Gregoriff Lab"
+package = "Grigorieff Lab"
 packageDict.update({
                "ctffind64.exe" : (package,""),
                "ctftilt64.exe" : (package,""),
-               "rmeasure64.exe" : (package,"Also check for which rmeasure32.exe, rmeasure.exe, or rmeasure."),
-               "signature64.exe" : (package,"For Signature Particle Picking. Also check which signature32.exe."),
+               "rmeasure64.exe" : (package,"Try 'which rmeasure32.exe'(or rmeasure.exe, or rmeasure) at a command promt."),
+               "signature64.exe" : (package,"For Signature Particle Picking. Try 'which signature32.exe' at a command prompt."),
 	})
 package = "IMOD"
 packageDict.update({
@@ -53,12 +53,13 @@ packageDict.update({
                "tomo-fit.sh" : (package,"For Tomography Alignment"),
 	})
 
-outString = "The following third party processing package could not be found...\n"
+outString = "The following third party processing packages could not be found...\n\n"
 
 for nameKey, desc in packageDict.iteritems():
     pathValue = apParam.getExecPath(nameKey, die=False)
     if pathValue is None:
-        outString += "%s - From %s - %s\n"%(nameKey, desc[0], desc[1])
-
+        outString += "|\tFrom %s, (%s) %s\n|\n"%(desc[0], nameKey,  desc[1])
+        
+outString += "For installation instructions visit:\n\t http://ami.scripps.edu/redmine/projects/appion/wiki/Processing_Server_Installation\n"
 apDisplay.printColor(outString,"cyan")
 
