@@ -1185,8 +1185,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 			### overwrite unnormalized stack
 			apDisplay.printMsg("Converting normalized Xmipp particles")
-			emancmd="proc2d %s %s inplace"%(lstfile,stackpath)
+			tmpstack = "tmp.xmippStack.hed"
+			emancmd="proc2d %s %s"%(lstfile,tmpstack)
 			apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
+			apFile.moveStack(tmpstack,stackpath)
 
 			### clean up directory
 			apFile.removeFile(lstfile)

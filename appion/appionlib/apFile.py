@@ -73,6 +73,23 @@ def removeStack(filename, warn=True):
 				apDisplay.printWarning('%s could not be removed' % f)
 
 #===============
+def moveStack(filename1, filename2, warn=True):
+	### replace one imagic stack with another
+	rootname1 = os.path.splitext(filename1)[0]
+	rootname2 = os.path.splitext(filename2)[0]
+	for ext in (".hed", ".img"):
+		inf = rootname1+ext
+		outf = rootname2+ext
+		if os.path.isfile(inf):
+			if warn is True:
+				apDisplay.printWarning("replacing stack file '%s' with '%s' "%(outf,inf))
+				time.sleep(1)
+			try:
+				shutil.move(inf,outf)
+			except:
+				apDisplay.printWarning('%s could not be replaced with %s' % (outf,inf))
+
+#===============
 def removeFilePattern(pattern, warn=True):
 	files = glob.glob(pattern)
 	if warn is True:
