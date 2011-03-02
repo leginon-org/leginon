@@ -56,8 +56,11 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	}
   
 	echo"<form name='viewerform' method='post' action='$formAction'>\n";
+	
+	// Post the runname for showOrSubmitCommand()
+	echo "<input type='hidden' name='runname' value='$runname'>\n";
+	
 	$sessiondata=getSessionList($projectId,$expId);
-
 	$alignparams = $particle->getAlignStackParams($alignid);
 	//echo print_r($alignparams)."<br/><br/>\n";
 	$analysisparams = $particle->getAnalysisParams($analysisid);
@@ -71,7 +74,7 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	$numclass = ($_POST['numclass']) ? $_POST['numclass'] : "4,16,64";
 
 	echo "<input type='hidden' name='alignid' value=$alignid>";
-
+	
 	echo "<table border='0' class='tableborder'>\n";
 	echo "<tr><td colspan='2' valign='top'>\n";
 
@@ -187,6 +190,9 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 }
 
 function runClusterCoran() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId = $_GET['expId'];
 	$alignid = $_GET['alignId'];
 	$analysisid=$_GET['analysisId'];
@@ -217,6 +223,9 @@ function runClusterCoran() {
 	//print_r($factorlistAR);
 	$factorlist=implode(',',$factorlistAR);
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	// make sure eigenimgs were selected
 	if (!$factorlist) 
 		createClusterCoranForm('<b>ERROR:</b> No eigenimages selected');
@@ -232,6 +241,9 @@ function runClusterCoran() {
 	//if ($numclass > 999 || $numclass < 2) 
 	//	createClusterCoranForm("<b>ERROR:</b> Number of classes must be between 2 and 999");
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command ="clusterCoran.py ";
 	$command.="--projectid=".getProjectId()." ";
 	$command.="--analysisid=$analysisid ";
@@ -243,40 +255,20 @@ function runClusterCoran() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
-	// submit job to cluster
-	if ($_POST['process']=="Run Cluster Coran") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= spiderRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partcluster', $nproc);
 
-		if (!($user && $password))
-			createClusterCoranForm("<B>ERROR:</B> Enter a user name and password");
-
-		// create unique id for the job, since multiple may be
-		// submitted - id is the factor list and num classes
-
-		$timestamp = getTimestring();
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partcluster',false,false,$timestamp);
-
-		// if errors:
-		if ($sub) createClusterCoranForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Cluster Coran Params","Cluster Coran Params");
-
-		echo spiderRef();
-
-		echo"
-		<table width='600' class='tableborder' border='1'>
-		<tr><td colspan='2'>
-		<b>Cluster Coran Command:</b><br />
-		$command
-		</td></tr>
-		<tr><td>num class list</td><td>$numclass</td></tr>
-		<tr><td>factorlist</td><td>$factorlist</td></tr>
-		<tr><td>commit</td><td>$commit</td></tr>
-		</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createClusterCoranForm("<b>ERROR:</b> $errors");
+	
 }
 ?>
