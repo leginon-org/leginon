@@ -10,7 +10,6 @@ from appionlib import apDisplay
 from appionlib import apParam
 from appionlib import pymagic
 
-
 #======================
 def takeoverHeaders(filename, numpart, boxsize):
 	### better workaround than copyFile ... still a workaround though
@@ -84,17 +83,13 @@ def softMask(infile, outfile=None, mask=0.8, falloff=0.1):
 
 
 #======================
-def mask2D(boxsz, mask, infile=False, maskfile="mask2Dimgfile", path=os.path.abspath('.'), keepfiles=False):
+def mask2D(boxsz, mask, infile=False, maskfile="mask2Dimgfile"):
 	"""
 	creates a 2d circular mask
 	if infile is specified, mask is applied to stack & then mask is deleted
 	boxsz is the box size in pixels
 	mask is the size of the mask to apply as a fraction
 	"""
-	imagicroot = checkImagicExecutablePath()
-
-	batchfile = os.path.join(path, 'maskimg.batch')
-	logf = os.path.join(path, 'maskimg.log')
 
 	### generate a 2D mask
 	f=open(batchfile,"w")
@@ -164,12 +159,15 @@ def normalize(infile, outfile=None, sigma=10.0, path=os.path.abspath('.'), keepf
 		outname=fname+"_norm"
 
 	myIm = pymagic.ImagicSession("stand/pretreat.e")
+	imagicv = myIm.version()
 	myIm.toImagicQuiet(fname) # input
 	myIm.toImagicQuiet(outname) # output
 	myIm.toImagicQuiet("NORM_VARIANCE") # mode
 	myIm.toImagicQuiet("WHOLE") # mask to be used
 	myIm.toImagicQuiet("%.2f"%sigma) # desired sigma
 	myIm.toImagicQuiet("NO") # remove dust outliers
+	if imagicv >= 110119:
+		myIm.toImagicQuiet("NO")
 	myIm.close()
 
 	# check proper execution
