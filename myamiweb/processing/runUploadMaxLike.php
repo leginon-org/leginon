@@ -55,7 +55,12 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 		foreach ($maxlikejobs as $maxlikejob) {
 			$jobid = $maxlikejob['DEF_id'];
 			echo "<form name='viewerform' method='POST' action='$formAction&jobid=$jobid'>\n";
-
+			
+			// Post values needed for showOrSubmitCommand()
+			echo "<input type='hidden' name='runname' value='$jobid'>\n";
+			$outdir = $maxlikejob['path'].$jobid;
+			echo "<input type='hidden' name='outdir' value='$outdir'>\n";
+			
 			if ($_POST['hideJob'.$jobid] == 'hide') {
 				$particle->updateHide('ApMaxLikeJobData', $jobid, '1');
 				$maxlikejob['hidden']='1';
@@ -139,6 +144,9 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 }
 
 function runMaxLikeAlign() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$jobid = $_GET['jobid'];
 	$timestamp=$_POST['timestamp'.$jobid];
@@ -153,7 +161,13 @@ function runMaxLikeAlign() {
 	$outdir = dirname($rundir);
 	$runname = basename($rundir);
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
-
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	// setup command
 	$command="uploadMaxlikeAlignment.py ";
 	$command.="--rundir=$rundir ";
@@ -162,39 +176,21 @@ function runMaxLikeAlign() {
 	else $command.="--no-commit ";
 	$command.="--projectid=".getProjectId()." ";
 
-	// submit job to cluster
-	if (substr($_POST['process'],0,11)=="Upload Job ") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("Maximum-likelihood multi-reference refinement for electron microscopy images.", 2005, "Scheres SH, Valle M, Nuñez R, Sorzano CO, Marabini R, Herman GT, Carazo JM.", "J Mol Biol.", 348, 1, 15808859, false, false, "img/xmipp_logo.png");
+	$headinfo .= referenceBox("Fast maximum-likelihood refinement of electron microscopy images.", 2005, "Scheres SH, Valle M, Carazo JM.", "Bioinformatics.", 21, "Suppl 2", 16204112, false, false, "img/xmipp_logo.png");
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'maxlikeali', $nproc);
 
-		if (!($user && $password)) createMaxLikeAlignForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'maxlikeali');
-		// if errors:
-		if ($sub) createMaxLikeAlignForm("<b>ERROR:</b> $sub");
-		exit;
-	}
-	else {
-		processing_header("Max Like Align Upload Params","Max Like Upload Params");
-
-		echo referenceBox("Maximum-likelihood multi-reference refinement for electron microscopy images.", 2005, "Scheres SH, Valle M, Nuñez R, Sorzano CO, Marabini R, Herman GT, Carazo JM.", "J Mol Biol.", 348, 1, 15808859, false, false, "img/xmipp_logo.png");
-
-		echo referenceBox("Fast maximum-likelihood refinement of electron microscopy images.", 2005, "Scheres SH, Valle M, Carazo JM.", "Bioinformatics.", 21, "Suppl 2", 16204112, false, false, "img/xmipp_logo.png");
-
-		echo "<table width='600' class='tableborder' border='1'>";
-		echo "
-			<tr><td colspan='2'>
-			<b>MaxLike Alignment Command:</b><br />
-			$command
-			</td></tr>
-			<tr><td>process</td><td>".substr($_POST['process'],0,11)."</td></tr>
-			<tr><td>jobid</td><td>$_GET[jobid]</td></tr>
-			<tr><td>timestamp</td><td>$timestamp</td></tr>
-			<tr><td>run name</td><td>$runname</td></tr>
-			<tr><td>run directory</td><td>$rundir</td></tr>
-			<tr><td>commit</td><td>$commit</td></tr>
-			</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createMaxLikeAlignForm("<b>ERROR:</b> $errors");
+	
 }
 ?>
