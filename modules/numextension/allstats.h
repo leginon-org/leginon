@@ -1,3 +1,9 @@
+/*
+ *  allstats is a function to replace the numpy functions:
+ *  	min(), max(), mean(), std()
+ *	See README.allstats to see why.
+ */
+
 #include <Python.h>
 
 typedef struct stats_struct {

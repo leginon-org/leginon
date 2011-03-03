@@ -1,3 +1,9 @@
+/*
+ *  allstats is a function to replace the numpy functions:
+ *  	min(), max(), mean(), std()
+ *	See README.allstats to see why.
+ */
+
 #include <Python.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL numextension_ARRAY_API

@@ -791,7 +791,6 @@ static PyMethodDef numeric_methods[] = {
 
 /* used by align, ImageViewer2, */
 	{"minmax", minmax, METH_VARARGS, ""},
-	{"allstats", (PyCFunctionWithKeywords)allstats, METH_KEYWORDS, ""},
 
 /* used by rctacquisition, maybe could use nd_image interpolation instead */
 	{"bin", bin, METH_VARARGS, ""},
@@ -817,6 +816,9 @@ static PyMethodDef numeric_methods[] = {
  {"componentlabeling", componentlabeling, METH_VARARGS}, 
 	{"fitcircle2edges", fitcircle2edges, METH_VARARGS}, 
 */
+
+/* see README.allstats */
+	{"allstats", (PyCFunction)allstats, METH_KEYWORDS, ""},
 
 	{NULL, NULL, 0, NULL}
 };
