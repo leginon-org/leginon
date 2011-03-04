@@ -2887,8 +2887,8 @@ class leginondata {
 		return $filearray;
 	}	
 
-	function getDeQueuedTargetListIds($sessionId,$qtype) {
-		$q="SELECT "
+	function getDeQueuedTargetListIds($sessionId,$qtype,$limit=100) {
+		$q="SELECT distinct "
 			."dqlist.`REF|ImageTargetListData|list` as doneid "
 			."FROM "
 			."`DequeuedImageTargetListData` AS `dqlist` "
@@ -2897,6 +2897,7 @@ class leginondata {
 			."`q`.`REF|SessionData|session`=".$sessionId." "
 			."AND "
 			."`q`.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE latin1_swedish_ci "
+			."order by doneid desc limit ".$limit." "
 			."";
 		return $this->mysql->getSQLResult($q);
 	}
@@ -2915,21 +2916,27 @@ class leginondata {
 		return $r;
 	}
 
-	function getTargetListIds($sessionId,$qtype) {
-		$q="SELECT "
+	function getTargetListIds($sessionId,$qtype,$limit=100) {
+		if ($qtype) 
+			$whereqtype = ""
+			."AND "
+			."`q`.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE latin1_swedish_ci ";
+		$q="SELECT distinct "
 			."itlist.`DEF_id` as itlid "
 			."FROM "
 			."`ImageTargetListData` AS `itlist` "
 			."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
 			."where "
 			."`q`.`REF|SessionData|session`=".$sessionId." "
+			.$whereqtype
 			."AND "
-			."`q`.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE latin1_swedish_ci "
+			."`itlist`.`REF|QueueData|queue` > 0 "
+			."order by itlid desc limit ".$limit." "
 			."";
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getCountFromTargetListId($targetlistId,$status) {
+	function getCountFromTargetListId($targetlistId,$status,$targettype='acquisition') {
 		$q="SELECT "
 			."count(`t`.`DEF_id`) as Count "
 			."FROM "
@@ -2937,7 +2944,7 @@ class leginondata {
 			."LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
 			."WHERE "
 			." t.`REF|ImageTargetListData|list` = ".$targetlistId." "
-			."AND t.`type` LIKE CONVERT(_utf8 'acquisition' USING latin1) COLLATE "."latin1_swedish_ci "
+			."AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
 			."AND t.`status` LIKE CONVERT(_utf8 '".$status."' USING latin1) COLLATE " ."latin1_swedish_ci "
 			."AND t.`version` = 0 "
 			."";
@@ -2949,10 +2956,10 @@ class leginondata {
 		}
 	}
 
-	function getCountsFromImageTargetLists($itls) {
+	function getCountsFromImageTargetLists($itls,$targettype='acquisition') {
 		$counts = array();
 		foreach ($itls as $itl) {
-			$count = $this->getCountFromTargetListId($itl,'new');
+			$count = $this->getCountFromTargetListId($itl,'new',$targettype);
 			array_push($counts, $count);
 		};
 		$result = array_reduce($counts,"rsum");
@@ -2960,44 +2967,47 @@ class leginondata {
 		return $result;
 	}
 
-	function getQueueTimeData($sessionId,$qtype) {
+	function getQueueTimeData($sessionId,$qtype,$targettype='acquisition',$limit=100) {
+		// This query does not include target adjustment time since it is a target 
+		// on the original not the reacquired image
 		$q="SELECT "
-			."proc.QueueOn as queue,"
-			."done.QueueCount as QueueCount, "
-			."(done.time-proc.time) as QueueTime "
+			."	proc.QueueOn as queue,"
+			."	done.QueueCount as QueueCount, "
+			."	(done.time-proc.time) as QueueTime "
 			."FROM "
-			."(SELECT "
-			."min(UNIX_timestamp(`t`.`DEF_timestamp`)) as time, "
-			."`t`.`REF|AcquisitionImageData|image` as QueueOn, "
-			."count(`t`.`REF|AcquisitionImageData|image`) as QueueCount "
-			."FROM "
-			."`AcquisitionImageTargetData` AS `t` "
-			."LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
-			."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
-			."WHERE "
-			." q.`REF|SessionData|session` = ".$sessionId." "
-			."AND t.`type` LIKE CONVERT(_utf8 'acquisition' USING latin1) COLLATE "."latin1_swedish_ci "
-			."AND t.`status` LIKE CONVERT(_utf8 'processing' USING latin1) COLLATE " ."latin1_swedish_ci "
-			."AND q.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE "
+			."	(SELECT "
+			."		min(UNIX_timestamp(`t`.`DEF_timestamp`)) as time, "
+			."		`t`.`REF|AcquisitionImageData|image` as QueueOn, "
+			."		count(`t`.`REF|AcquisitionImageData|image`) as QueueCount "
+			."	FROM "
+			."		`AcquisitionImageTargetData` AS `t` "
+			."		LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
+			."		LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
+			."	WHERE "
+			."		q.`REF|SessionData|session` = ".$sessionId." "
+			."		AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
+			."		AND t.`status` LIKE CONVERT(_utf8 'processing' USING latin1) COLLATE " ."latin1_swedish_ci "
+			."		AND q.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE "
+			."				latin1_swedish_ci "
+			."	group by t.`REF|AcquisitionImageData|image`) AS proc, "
+			."	(SELECT "
+			."		max(UNIX_timestamp(`t`.`DEF_timestamp`)) as time, "
+			."		`t`.`REF|AcquisitionImageData|image` as QueueOn, "
+			."		count(`t`.`REF|AcquisitionImageData|image`) as QueueCount "
+			."	FROM "
+			."		`AcquisitionImageTargetData` AS `t` "
+			."		LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
+			."		LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
+			."	WHERE "
+			."		q.`REF|SessionData|session` = ".$sessionId." "
+			."		AND t.`type` LIKE CONVERT(_utf8 '".$targettype."' USING latin1) COLLATE "."latin1_swedish_ci "
+			."		AND t.`status` LIKE CONVERT(_utf8 'done' USING latin1) COLLATE "."latin1_swedish_ci "
+			."		AND q.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE "
 			."latin1_swedish_ci "
-			."group by t.`REF|AcquisitionImageData|image`) AS proc, "
-			."(SELECT "
-			."max(UNIX_timestamp(`t`.`DEF_timestamp`)) as time, "
-			."`t`.`REF|AcquisitionImageData|image` as QueueOn, "
-			."count(`t`.`REF|AcquisitionImageData|image`) as QueueCount "
-			."FROM "
-			."`AcquisitionImageTargetData` AS `t` "
-			."LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
-			."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
+			."	group by t.`REF|AcquisitionImageData|image`) AS done "
 			."WHERE "
-			." q.`REF|SessionData|session` = ".$sessionId." "
-			."AND t.`type` LIKE CONVERT(_utf8 'acquisition' USING latin1) COLLATE "."latin1_swedish_ci "
-			."AND t.`status` LIKE CONVERT(_utf8 'done' USING latin1) COLLATE "."latin1_swedish_ci "
-			."AND q.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE "
-			."latin1_swedish_ci "
-			."group by t.`REF|AcquisitionImageData|image`) AS done "
-			."WHERE "
-			."proc.QueueOn=done.QueueOn "
+			."	proc.QueueOn=done.QueueOn "
+			."order by queue desc limit ".$limit." "
 			."";
 		return $this->mysql->getSQLResult($q);
 	}
@@ -3008,53 +3018,95 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getQueueCountResultByQueueType($sessionId,$qtype) {
+		// The while loop makes it faster if the total number of queue is large (long session)
+		// but most of the queue are done as it should be in normal situation.
+		$limit = 200;
+		while (true) {
+			$sqldataDqList = $this->getDeQueuedTargetListIds($sessionId,$qtype,$limit);
+			$sqldataTList = $this->getTargetListIds($sessionId,$qtype,$limit);
+
+			// Test to see if there are more than the limit number of queue targetlist
+			$oversqldataTList = $this->getTargetListIds($sessionId,$qtype,$limit+1);
+			$pretext = (count($oversqldataTList) > count($sqldataTList)) ? '> ':'= ';
+			if (empty($sqldataTList)) return false;
+
+			// Unprocessed/Active queue is the difference of the two lists
+			$doneitls = array();
+			$allitls = array();
+			foreach ($sqldataDqList as $d) {
+				array_push($doneitls,$d['doneid']);
+			};
+			foreach ($sqldataTList as $d) {
+				array_push($allitls,$d['itlid']);
+			};
+
+			$activeitls = array_diff($allitls,$doneitls);
+			if (count($activeitls) == $limit) {
+				$limit = (int)($limit * 1.5);
+			} else {
+				break;
+			}
+		}
+		foreach (array('acquisition','focus') as $ttype) {
+			$sqldataTime = $this->getQueueTimeData($sessionId,$qtype,$ttype,$limit);
+			$totalActive = $this->getCountsFromImageTargetLists($activeitls,$ttype);
+			$totalNew = $this->getCountsFromImageTargetLists($allitls,$ttype);
+			$totalDone = 0;
+			$totalTime = 0;
+			$totalDoneInActive = 0;
+			// Some targets in the active target list may have been processed
+			foreach ($activeitls as $d) {
+				$totalDoneInActive += $this->getCountFromTargetListId($d,'done',$ttype);
+				$totalDoneInActive += $this->getCountFromTargetListId($d,'aborted',$ttype);
+			}
+			$totalActive -= $totalDoneInActive;
+
+			// Total Done include only  non-aborted done targets
+			foreach ($sqldataTime as $d) {
+				$totalDone = $totalDone + $d['QueueCount'];
+				$totalTime = $totalTime + $d['QueueTime'];
+			}
+			if ($totalDone > 0) {
+				$avgtime = ($totalTime / $totalDone);
+				$esttime= ($totalActive) * $avgtime;
+			} else {
+				$avgtime = 0;
+			}
+			$qcount_by_targettype[$ttype] = array($pretext,$totalNew,$totalActive,(int)($avgtime));
+		}
+		return $qcount_by_targettype;
+	}
+
 	function getQueueCountResults($sessionId) {
 		$qcounts = array();
+		$qcountsall = array();
 		if (!$qtypes = $this->getQueueTypes($sessionId)) {
 			return array();
 		}
+		arsort($qtypes);
 		foreach ((array)$qtypes as $t) {
+			$qtype_active = 0;
+			$qtype_avgtime = 0;
+			$estminute = 0;
+			$estsecond = 0;
 			$qtype = $t['label'];
-			$sqldata_time = $this->getQueueTimeData($sessionId,$qtype);
-			$sqldata_dq_list = $this->getDeQueuedTargetListIds($sessionId,$qtype);
-			$sqldata_t_list = $this->getTargetListIds($sessionId,$qtype);
-			$doneitls = array();
-			$allitls = array();
-			foreach ($sqldata_dq_list as $d) {
-				array_push($doneitls,$d['doneid']);
-			};
-			foreach ($sqldata_t_list as $d) {
-				array_push($allitls,$d['itlid']);
-			};
-			$activeitls = array_diff($allitls,$doneitls);
-			$total_active = $this->getCountsFromImageTargetLists($activeitls);
-			$total_new = $this->getCountsFromImageTargetLists($allitls);
-			$total_done = 0;
-			$total_time = 0;
-			$total_done_in_active = 0;
-			// Some targets in the active target list may have been processed
-			foreach ($activeitls as $d) {
-				$total_done_in_active += $this->getCountFromTargetListId($d,'done');
-				$total_done_in_active += $this->getCountFromTargetListId($d,'aborted');
+			$qcounts[$qtype] = $this->getQueueCountResultByQueueType($sessionId,$qtype);
+			if ($qcounts[$qtype] === false) continue;
+			if ($qcounts[$qtype]['acquisition']) {
+				$pretext = $qcounts[$qtype]['acquisition'][0];
+				$qtype_total = $qcounts[$qtype]['acquisition'][1];
+				$qtype_active = $qcounts[$qtype]['acquisition'][2];
+				$qtype_avgtime = $qcounts[$qtype]['acquisition'][3];
+				if ($qcounts[$qtype]['focus']) {
+					$type_ratio = ($qtype_active > 0) ? $qcounts[$qtype]['focus'][2] / $qtype_active:1;
+					$qtype_avgtime += $type_ratio * $qcounts[$qtype]['focus'][3];
+				}
 			}
-			$total_active -= $total_done_in_active;
-			// Total Done include only  non-aborted done targets
-			foreach ($sqldata_time as $d) {
-				$total_done = $total_done + $d['QueueCount'];
-				$total_time = $total_time + $d['QueueTime'];
-			}
-			if ($total_done > 0) {
-				$avgtime = ($total_time / $total_done);
-				$esttime= ($total_active) * $avgtime;
-			} else {
-				$avgtime = "unknown";
-			}
-			$estminute= (int)($esttime / 60);
-			$estsecond= (int)($esttime - $estminute * 60);
-			if ($total_active)
-				$qcounts[] = array($qtype,$total_active,(int)($avgtime),$estminute,$estsecond);
+			$esttime= ($qtype_active) * $qtype_avgtime;
+			$qcountsall[$qtype] = array($pretext,$qtype_total,$qtype_active,(int)$qtype_avgtime,$esttime);
 		}
-		return $qcounts;
+		return $qcountsall;
 	}
 
 	function getTemplates() {
