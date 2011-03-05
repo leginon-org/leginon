@@ -27,7 +27,7 @@ else {
 function buildOutdir($sessioninfo,$tiltseriesnumber,$is_raptor) {
 	$outdir=$sessioninfo;
 	$outdir=getBaseAppionPath($sessioninfo);
-	$outdir .="tomo/tiltseries".$tiltseriesnumber;
+	$outdir .="/tomo/tiltseries".$tiltseriesnumber;
 	if (!$is_raptor)
 		$outdir=$outdir.'/align';
 	return $outdir;	
