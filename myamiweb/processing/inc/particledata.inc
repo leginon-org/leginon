@@ -300,6 +300,14 @@ class particledata {
 	}
 
 	function getTomoAlignerInfoFromAlignmentRun($alignid,$showiHidden=false) {
+		// Workaround the possibility of missing these fields in appion_extra.xml
+		// refs #1223
+		$refinefields = $this->mysql->getFields('ApProtomoRefinementParamsData');
+		$fselect =  (in_array('SUBD|alibox|x',$refinefields)) ? 
+			" f.`SUBD|alibox|x` as `align box x`, "
+			." f.`SUBD|alibox|y` as `align box y`, "
+			:'';
+			
 		// Protomo has more than one iteration(cycle)
 		$q = " SELECT a.`DEF_id` as alignerid, "
 			." a.`REF|ApTomoAlignmentRunData|alignrun` as `alignrunid`, "
@@ -309,8 +317,7 @@ class particledata {
 			." f.`cycle` as `refine cycle`, "
 			." g.`cycle` as `good cycle`, "
 			." f.`alismp` as `align sampling`, "
-			." f.`SUBD|alibox|x` as `align box x`, "
-			." f.`SUBD|alibox|y` as `align box y`, "
+			.$fselect
 			." f.`cormod`, "
 			." f.`imgref`as `refnum`, "
 			." f.`REF|leginondata|AcquisitionImageData|reference` as `refimg`, "
