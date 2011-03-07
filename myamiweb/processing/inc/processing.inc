@@ -509,8 +509,8 @@ function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
 				imgelement.style.border='1px solid #f00'
 				imgelement.style.opacity=0.5
 			} else {
-				img.style.border=''
-				img.style.opacity=''
+				imgelement.style.border=''
+				imgelement.style.opacity=''
 			}
 			if (typeof addexcludefn== 'function') {
 				addexcludefn()
