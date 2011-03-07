@@ -701,6 +701,7 @@ class SetupWizard(wx.wizard.Wizard):
 			user = self.userpage.getSelectedUser()
 			name = self.namepage.nametextctrl.GetValue()
 			description = self.namepage.descriptiontextctrl.GetValue()
+			description = description.strip()
 			holder = self.namepage.holderctrl.GetValue()
 			holderdata = leginon.leginondata.GridHolderData(name=holder)
 			directory = self.imagedirectorypage.directorytextctrl.GetValue()
