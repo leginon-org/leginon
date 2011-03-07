@@ -603,6 +603,16 @@ class ApStackParticleData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApStackFormatData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('stack', ApStackData),
+			('eman', ApPathData),
+			('spider', ApPathData),
+			('xmipp', ApPathData),
+			('frealign', ApPathData),
+		)
+	typemap = classmethod(typemap)
 ### END Stack tables ###
 ### START alignment tables  ###
 
