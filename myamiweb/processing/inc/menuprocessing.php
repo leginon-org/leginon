@@ -668,7 +668,7 @@ if (is_numeric($expId)) {
 		
 		$nruns[] = array(
 			'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
-			'result'=> "<i>(may be buggy)</i>", //$xmippreconresults,
+			'result'=> $xmippreconresults,
 		);
 		
 		if (!HIDE_IMAGIC && !HIDE_FEATURE) {
