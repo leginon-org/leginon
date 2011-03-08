@@ -13,6 +13,7 @@
 
 import copy
 import threading
+import time
 import wx
 from wx.lib.mixins.listctrl import ColumnSorterMixin
 
@@ -707,7 +708,6 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.importdialog = ImportDialog(self, self.node)
 		self.Bind(wx.EVT_BUTTON, self.onImport, self.presets.bimport)
 
-		self.aligndialog = AlignDialog(self, self.node)
 		self.Bind(wx.EVT_BUTTON, self.onAlign, self.presets.balign)
 
 		self.beamdialog = BeamDialog(self, self.node)
@@ -805,6 +805,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.alignacquiremode = self.aligndialog.choiceacquiremode.GetStringSelection()
 
 	def onAlign(self, evt):
+		self.aligndialog = AlignDialog(self, self.node)
 		preset_names = self.node.presets.keys()
 		self.aligndialog.choiceleft.setChoices(preset_names)
 		self.aligndialog.choiceright.setChoices(preset_names)
@@ -824,9 +825,12 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.beamdialog.ShowModal()
 		self.node.new_beamshift = None
 
-	def onDoneAlign(self):
-		self.aligndialog.disableContinue()
-		self.aligndialog.EndModal(0)
+	def onDoneLastAlign(self):
+		self.aligndialog.enableDone()
+
+	def onDoneAllAlign(self):
+		# Destroy used instead of EndModal so that Leginon can close properly.  Don't know why
+		self.aligndialog.Destroy()
 
 	def setAlignImage(self, image, typename, stats={}):
 		evt = leginon.gui.wx.Events.SetImageEvent(image, typename, stats)
@@ -1144,11 +1148,13 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		self.bstart = wx.Button(self, -1, 'Start')
 		self.bstart.Enable(True)
 		self.bcontinue = wx.Button(self, -1, 'Continue')
+		self.bdone = wx.Button(self, -1, 'Done')
 
 
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.bstart, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.bcontinue, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.bdone, (0, 2), (1, 1), wx.ALIGN_CENTER)
 		
 		
 		szimages = wx.BoxSizer(wx.HORIZONTAL)
@@ -1169,8 +1175,9 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.bcontinue)
 		self.Bind(wx.EVT_BUTTON, self.onStart, self.bstart)
 		self.Bind(leginon.gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
+		self.Bind(wx.EVT_BUTTON, self.onClose, self.bdone)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
-		self.disableContinue()
+		self.enableStart()
 
 	def onLeftImageClicked(self, evt):
 		self.node.onAlignImageClicked('left', evt.xy)
@@ -1179,7 +1186,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		self.node.onAlignImageClicked('right', evt.xy)
 
 	def onAcquireModeChoice(self, evt):
-		if not self.bstart.IsEnabled():
+		if not self.bstart.IsEnabled() or self.parent.customalign == True:
 			self.parent.alignacquiremode = self.choiceacquiremode.GetStringSelection()
 			self.node.acquireAlignImages(self)
 
@@ -1198,7 +1205,7 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 			self.enableContinue()
 			threading.Thread(target=self.node.loopAlignPresets, args=(refname,)).start()
 		else:
-			self.disableContinue()
+			self.enableStartDone()
 			if self.parent.customalign == True:
 				self.labref.SetLabel('Custom Alignment Mode: ')
 				self.presetlabelref.SetLabel('no same mag automatic adjustment')
@@ -1214,21 +1221,32 @@ class AlignDialog(leginon.gui.wx.Dialog.Dialog):
 		else:
 			self.imright.setImage(evt.image)
 
-	def disableContinue(self):
+	def enableStart(self):
 		self.choiceleft.Enable(True)
 		self.choiceright.Enable(True)
 		self.bstart.Enable(True)
 		self.bcontinue.Disable()
+		self.bdone.Disable()
 
 	def enableContinue(self):
 		self.choiceleft.Disable()
 		self.choiceright.Disable()
 		self.bstart.Disable()
 		self.bcontinue.Enable(True)
+		self.bdone.Disable()
+
+	def enableStartDone(self):
+		self.enableStart()
+		self.bdone.Enable(True)
+
+	def enableDone(self):
+		self.bstart.Disable()
+		self.bcontinue.Disable()
+		self.bdone.Enable(True)
 
 	def onClose(self, evt):
-		self.disableContinue()
-		self.node.doneAlignPresets()
+		self.enableStart()
+		self.node.doneAllAlignPresets()
 
 class BeamDialog(wx.Dialog):
 	def __init__(self, parent, node):
