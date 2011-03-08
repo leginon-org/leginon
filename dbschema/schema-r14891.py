@@ -9,7 +9,7 @@ class SchemaUpdate14891(schemabase.SchemaUpdate):
 # last launched application since a query for recent time fails.
 # see issue number 942 in redmine.
 	def upgradeLeginonDB(self):
-		if self.appion_dbupgrade.tableExists(LaunchedApplicationData):
+		if self.leginon_dbupgrade.tableExists('LaunchedApplicationData'):
 			alterSQL = (" Alter Table LaunchedApplicationData " + 
 					" Modify `DEF_timestamp` timestamp not null " + 
 					" default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP")

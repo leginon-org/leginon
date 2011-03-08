@@ -13,8 +13,8 @@ class SchemaUpdate15293(schemabase.SchemaUpdate):
 		for tablename in ('ApAppionJobData','ApInitialModelData','ApPathData','ApSymmetryData','ApTemplateImageData'):
 			if self.appion_dbupgrade.tableExists(tablename):
 				updateq = ("ALTER TABLE "+tablename+" "
-				+" MODIFY `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP "
-		)
+					+" MODIFY `DEF_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP "
+					)
 				self.appion_dbupgrade.executeCustomSQL(updateq)
 
 if __name__ == "__main__":
