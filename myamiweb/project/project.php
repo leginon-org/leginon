@@ -41,7 +41,7 @@ foreach ((array)$projects as $k=>$proj) {
 		$nb=count($experimentIds);
 		$last=current($experimentIds);
 	}
-	$info = $leginondata->getSessionInfo($last);
+	$info = $leginondata->getSessionInfo($last['leginonId']);
 	$expId = $info['SessionId'];
 	$last_str =  ($last) ? "last: <a class='header' href='".SUMMARY_URL.$expId."'>".$last['name']."</a>" : "";
 	$exp_str = "experiment";
