@@ -153,7 +153,7 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
 	<TR>
 		<TD COLSPAN='2' ALIGN='CENTER'>";
 	*/
-	echo getSubmitForm("Run Tilt Aligner");
+	echo getSubmitForm("Run Tilt Aligner", False, True);
 	echo "
 		</TD>
 	</tr>
@@ -170,10 +170,20 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
 }
 
 function runTiltAligner() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	$command="tiltaligner.py ";
 
 	$apcommand = parseAppionLoopParams($_POST);
@@ -213,37 +223,22 @@ function runTiltAligner() {
 	$ftype=$_POST['ftype'];
 	$command .= " --outtype=$ftype";
 
-	if (false && $_POST['process'] == "Run Tilt Aligner") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'tiltalign', $nproc);
 
-		if (!($user && $password))
-			createTiltAlignerForm("<b>ERROR:</b> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tiltalign',False,True);
-		// if errors:
-		if ($sub)
-			createTiltAlignerForm("<b>ERROR:</b> $sub");
-		exit;
-
-	} else {
-
-		processing_header("Tilt Aligner Command","Tilt Aligner Command");
-
-		echo referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
-
-		echo"
-			<TABLE WIDTH='600'>
-			<TR><TD COLSPAN='2'>
-			<B>Tilt Aligner Command:</B><br>
-			$command<HR>
-			</TD></tr>";
-
-		appionLoopSummaryTable();
-		particleLoopSummaryTable();
-		echo"</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createTiltAlignerForm("<b>ERROR:</b> $errors");
+	
 }
 
 ?>
