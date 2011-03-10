@@ -377,6 +377,9 @@ function createSigForm($extra=false, $title='Signature Launcher',
 */
 
 function runSignaturePicker() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
@@ -385,9 +388,14 @@ function runSignaturePicker() {
 	$mirrors = ($_POST['mirrors']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 
 	$numtemplatesused = $_POST['numtemplatesused'];
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
-	// START MAKE COMMAND
-
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	
 	$command ="signaturePicker.py ";
 
 	$apcommand = parseAppionLoopParams($_POST);
@@ -424,16 +432,18 @@ function runSignaturePicker() {
 	if ($_POST['mirrors']=='on')
 		$command.="--use-mirrors ";
 
-	// END MAKE COMMAND
-
+	/* *******************
+	PART 4: Do test image
+	******************** */
+		
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
 		// replace other spaces with commas
 		$testimage = ereg_replace(" ",",",$testimage);
 		$testimage = ereg_replace(",,",",",$testimage);
 	}
-
-	if ($_POST['process']=="Run Signature") {
+	
+	if ($_POST['process']=="Run Signature" && $testimage) {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
@@ -465,36 +475,23 @@ function runSignaturePicker() {
 		$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin'],$_POST['process']);
 		createSigForm($false,'Particle Selection Results','Particle Selection Results',$results);
 		exit;
-	} else {
-		processing_header("Particle Selection Results","Particle Selection Results");
+	} 
+	
+	/* *******************
+	PART 5: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("SIGNATURE: a single-particle selection system for molecular electron microscopy.", 2007, "Chen JZ, Grigorieff N.", "J Struct Biol.", 157, 1, 16870473, false, "img/signature.jpg");
+	
+	/* *******************
+	PART 6: Show or Run Command
+	******************** */
 
-		echo referenceBox("SIGNATURE: a single-particle selection system for molecular electron microscopy.", 2007, "Chen JZ, Grigorieff N.", "J Struct Biol.", 157, 1, 16870473, false, "img/signature.jpg");
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'signature', $nproc);
 
-		echo"
-			<table width='600'>
-			<tr><td colspan='2'>
-			<b>Signature Picker Command:</b><br>
-			$command
-			<hr>
-			</td></tr>";
-		$templatenum = 0;
-		foreach ( split(",", $templateliststr) as $templateid ) {
-			$templatenum++;
-			echo"<tr><td>template $templatenum id</td><td>$templateid</td></tr>";
-		}
-		echo"<tr><td>template list</td><td>$templateliststr</td></tr>";
-		echo"<tr><td>testimage</td><td>$testimage</td></tr>";
-		echo"<tr><td>keep all .dwn.mrc</td><td>$keepall</td></tr>";
-		echo"<tr><td>use mirrors</td><td>$mirrors</td></tr>";
-		appionLoopSummaryTable($_POST);
-		particleLoopSummaryTable($_POST);
-
-		echo"</table>\n";
-
-		processing_footer(True, True);
-	}
-
-	exit;
+	// if error display them
+	if ($errors)
+		createSigForm("<b>ERROR:</b> $errors");
 }
 
 ?>
