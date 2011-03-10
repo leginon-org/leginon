@@ -288,6 +288,9 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 */
 
 function runRctVolume() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
@@ -307,6 +310,9 @@ function runRctVolume() {
 	$mass=$_POST['mass'];
 	$zoom=$_POST['zoom'];
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$tiltstack)
 		createRctVolumeForm("<B>ERROR:</B> No tilted stack selected");
 
@@ -339,6 +345,9 @@ function runRctVolume() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	//putting together command
 	$command ="rctVolume.py ";
 	$command.="--projectid=".getProjectId()." ";
@@ -367,50 +376,23 @@ function runRctVolume() {
 		$command.="--min-score=$minscore ";
 	$command.="--commit ";
 
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= spiderRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	$nproc = 8; //I have no idea why this was set to 8...
 
-	// submit job to cluster
-	if (($_POST['process']=="Rct Volume")) {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'rctvolume', $nproc);
 
-		if (!($user && $password)) createRctVolumeForm("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'rctvolume',False,False,False,8);
-		// if errors:
-		if ($sub) createRctVolumeForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Rct Volume Command", "Rct Volume Command");
-
-		echo spiderRef();
-
-		echo"
-		<table width='600' border='1'>
-		<tr><td colspan='2'>
-		<font size='+1'>
-		<B>Rct Volume Command:</B><br>
-		$command
-		</font>
-		</td></tr>
-		<tr><td>run name</td><td>$runname</td></tr>
-		<tr><td>align id</td><td>$alignid</td></tr>
-		<tr><td>cluster id</td><td>$clusterid</td></tr>
-		<tr><td>class nums</td><td>$classnum</td></tr>
-		<tr><td>tilt stack</td><td>$tiltstack</td></tr>
-		<tr><td>num iter</td><td>$numiter</td></tr>
-		<tr><td>num particles</td><td>$numpart</td></tr>
-		<tr><td>volume lowpass</td><td>$lowpassvol</td></tr>
-		<tr><td>volume median</td><td>$median</td></tr>
-		<tr><td>particle highpass</td><td>$highpasspart</td></tr>
-		<tr><td>mask rad</td><td>$maskrad</td></tr>
-		<tr><td>Chimera contour</td><td>$contour</td></tr>
-		<tr><td>Chimera mass</td><td>$mass kDa</td></tr>
-		<tr><td>Chimera zoom</td><td>$zoom</td></tr>";
-
-
-		echo"</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createRctVolumeForm("<b>ERROR:</b> $errors");
 }
 
 ?>
