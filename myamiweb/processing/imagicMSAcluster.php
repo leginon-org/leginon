@@ -144,6 +144,9 @@ function jobform($extra=false)	{
 }
 
 function runImagicMSAcluster($extra=false)	{
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$projectId=getProjectId();
 	$analysisId=$_GET['analysisId'];
@@ -161,40 +164,44 @@ function runImagicMSAcluster($extra=false)	{
 	
 	// get stack id, apix, box size, and total particles from input
 	list($stackid,$apix,$boxsize,$totpartls) = split('\|--\|',$stackvalues);
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 
-	// create python command for executing imagic job file	
-	$cmd = "imagicMSAcluster.py";
-	$cmd.= " --projectid=$projectId";
-	$cmd.= " --imagicAnalysisId=$analysisId";
-	$cmd.= " --runname=$runname";
-	$cmd.= " --rundir=$outdir";
-	$cmd.= " --ignore_images=$ignore_images";
-	$cmd.= " --num_classes=$num_classes";
-	$cmd.= " --num_eigenimages=$num_factors";
-	$cmd.= " --ignore_members=$ignore_members";
-	$cmd.= " --description=\"$description\"";
-	if ($commit) $cmd.= " --commit";
-	else $cmd.=" --no-commit";
-
-	if ($_POST['process']=="run imagic") {
-		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
-
-		$sub = submitAppionJob($cmd,$outdir,$runname,$expId,'partcluster');
-		// if errors:
-		if ($sub) jobform("<b>ERROR:</b> $sub");
-	}
-
-	processing_header("IMAGIC Clustering","IMAGIC Clustering",$javafunc);
-
-	echo "<pre>";
-	echo htmlspecialchars($cmd);
-	echo "</pre>";
-
-	processing_footer();
-	exit;
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	
+	// create python command for executing imagic job file	
+	$command = "imagicMSAcluster.py";
+	$command.= " --projectid=$projectId";
+	$command.= " --imagicAnalysisId=$analysisId";
+	$command.= " --runname=$runname";
+	$command.= " --rundir=$outdir";
+	$command.= " --ignore_images=$ignore_images";
+	$command.= " --num_classes=$num_classes";
+	$command.= " --num_eigenimages=$num_factors";
+	$command.= " --ignore_members=$ignore_members";
+	$command.= " --description=\"$description\"";
+	if ($commit) $command.= " --commit";
+	else $command.=" --no-commit";
 
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= imagicRef();
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'partcluster', $nproc);
 
+	// if error display them
+	if ($errors)
+		jobform("<b>ERROR:</b> $errors");
+	
 }
 
 function random_letters($length = 2, $letters = 'abcdefghijklmnopqrstuvwxyz') {
