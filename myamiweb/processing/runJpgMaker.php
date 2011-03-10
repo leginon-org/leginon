@@ -168,6 +168,9 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 }
 
 function runjpgmaker() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
@@ -197,7 +200,14 @@ function runjpgmaker() {
 			$apcontinue=0;
 		}
 	}
-
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
+	
+	/* *******************
+	PART 3: Create program command
+	******************** */
+	
 	$command="jpgmaker.py ";
 
 	$apcommand = parseAppionLoopParams($_POST);
@@ -211,39 +221,48 @@ function runjpgmaker() {
 	if ($quality != 80) $command.=" --quality=".$quality;
 	if ($imgsize != 512) $command.=" --imgsize=".$imgsize;
 
-	if ($testimage && $_POST['process']=="Run JPEG Maker") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-		if (!($user && $password)) createJMForm("<b>ERROR:</b> Enter a user name and password"); 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'jpgmaker',False,True);
-		// if errors:
-		if ($sub) createJMForm("<b>ERROR:</b> $sub");
-		exit;
-	}
 
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 	if ($testimage) {
-		$images = "<center><table width='600' border='0'>\n";
+		$images = "<table width='600' border='0'>\n";
   		$images.= "<tr><td>";
-		$images.= "<b>JPEG Maker Command:</b><br />$command";
+  		$images.= "<span style='font-size: larger;'> ";
+		$images.= "<b>You have chosen to test an image.</b><br />";
+		$images.= "Run the following command to test the image. <br />Ignore file not found errors if this command has not yet been run.<br />"; 
+		$images.= "Return to this page after running the command to see the result.<br /></br>";
+		$images.= "</span>";
 		$images.= "</td></tr></table>\n";
 		$images.= "<br />\n";
 		$testjpg=ereg_replace(".mrc","",$testimage);
 		$jpgimg=$rundir.$testjpg.".jpg";
 		$images.= writeTestResults($jpgimg,array(),1);
-		createJMForm(false,'JPG File Maker Test Results','JPEG Maker Results',$images);
-	} else {
-		processing_header("JPEG Maker Results","JPEG Maker Results",$javascript);
-		echo appionRef();
-		echo"
-			<table width='600'>
-			<tr><td colspan='2'>
-			<b>JPEG Maker Command:</b><br>
-			$command
-			<hr>
-			</td></tr>";
-		appionLoopSummaryTable();
-		echo"</table>\n";
-		processing_footer();
 	}
+	
+	
+	// Add reference to top of the page
+	$headinfo .= $images;
+	$headinfo .= appionRef();
+	$headinfo .= "<table width='560' class='tableborder' border='1'>";
+	$headinfo .= "<tr><td colspan='2'><br/>\n";
+	$headinfo .= "<span style='font-size: larger;'> After running this command, jpg images will be available in:<br/>  $rundir <br/>";
+	$headinfo .= "</span><br/></td></tr></table><br/>\n";
+
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+	
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'jpgmaker', $nproc);
+	
+	
+	// if error display them
+	if ($errors) {
+		createJMForm("<b>ERROR:</b> $errors");
+		exit;
+	}
+	
 }
+
 ?>
