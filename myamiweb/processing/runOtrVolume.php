@@ -283,6 +283,9 @@ function createOtrVolumeForm($extra=false, $title='OtrVolume.py Launcher', $head
 */
 
 function runOtrVolume() {
+	/* *******************
+	PART 1: Get variables
+	******************** */
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
@@ -301,6 +304,9 @@ function runOtrVolume() {
 	$contour=$_POST['contour'];
 	$zoom=$_POST['zoom'];
 
+	/* *******************
+	PART 2: Check for conflicts, if there is an error display the form again
+	******************** */
 	if (!$tiltstack)
 		createOtrVolumeForm("<B>ERROR:</B> No tilted stack selected");
 
@@ -333,6 +339,9 @@ function runOtrVolume() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	/* *******************
+	PART 3: Create program command
+	******************** */
 	//putting together command
 	$command ="otrVolume.py ";
 	$command.="--projectid=".getProjectId()." ";
@@ -358,45 +367,23 @@ function runOtrVolume() {
 	$command.="--commit ";
 
 
-	// submit job to cluster
-	if (($_POST['process']=="Otr Volume")) {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	// Add reference to top of the page
+	$headinfo .= spiderRef();
+	
+	/* *******************
+	PART 6: Show or Run Command
+	******************** */
+	$nproc = 8; //I have no idea why this was set to 8...
 
-		if (!($user && $password)) createOtrVolumeForm("<B>ERROR:</B> Enter a user name and password");
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'otrvolume', $nproc);
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'otrvolume',False,False,False,8);
-		// if errors:
-		if ($sub) createOtrVolumeForm("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-		processing_header("Otr Volume Command", "Otr Volume Command");
-
-		echo spiderRef();
-
-		echo"
-		<table width='600' border='1'>
-		<tr><td colspan='2'>
-		<font size='+1'>
-		<B>Otr Volume Command:</B><br>
-		$command
-		</font>
-		</td></tr>
-		<tr><td>run name</td><td>$runname</td></tr>
-		<tr><td>align id</td><td>$alignid</td></tr>
-		<tr><td>cluster id</td><td>$clusterid</td></tr>
-		<tr><td>class nums</td><td>$classnum</td></tr>
-		<tr><td>tilt stack</td><td>$tiltstack</td></tr>
-		<tr><td>num iter</td><td>$numiter</td></tr>
-		<tr><td>euler iter</td><td>$euleriter</td></tr>
-		<tr><td>volume lowpass</td><td>$lowpassvol</td></tr>
-		<tr><td>volume median</td><td>$median</td></tr>
-		<tr><td>particle highpass</td><td>$highpasspart</td></tr>
-		<tr><td>mask rad</td><td>$maskrad</td></tr>";
-
-		echo"</table>\n";
-		processing_footer();
-	}
+	// if error display them
+	if ($errors)
+		createOtrVolumeForm("<b>ERROR:</b> $errors");
 }
 
 ?>
