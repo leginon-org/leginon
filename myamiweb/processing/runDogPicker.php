@@ -213,11 +213,12 @@ function runDogPicker() {
 			// if errors:
 			if ($sub) createDogPickerForm("<b>ERROR:</b> $sub");
 		}
+		$wrappedcmd = addAppionWrapper($command);
 			
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$results = "<table width='600' border='0'>\n";
 		$results.= "<tr><td>\n";
-		$results.= "<B>DogPicker Command:</B><br />$command";
+		$results.= "<B>DogPicker Command:</B><br />$wrappedcmd";
 		$results.= "</td></tr></table>\n";
 		$results.= "<br />\n";
 		$testjpg = ereg_replace(".mrc","",$_POST['testfilename']);

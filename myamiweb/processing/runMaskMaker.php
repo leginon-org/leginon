@@ -286,7 +286,11 @@ function runMaskMaker() {
 		// make sure outdir ends with '/'
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$runname=$_POST[runname];
-		echo  " <B>MaskMaker Command:</B><br>$command<HR>";
+		
+		// Add the appion wrapper path to the displayed command.
+		$wrappedcmd = addAppionWrapper($command);
+		
+		echo  " <B>MaskMaker Command:</B><br>$wrappedcmd<HR>";
 		$testjpg=ereg_replace(".mrc","",$testimage);
 		$testdir=$outdir.$runname."/tests/";
 		if (file_exists($testdir)) {

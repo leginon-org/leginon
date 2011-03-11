@@ -462,10 +462,11 @@ function runSignaturePicker() {
 	}
 
 	if ($testimage) {
+		$wrappedcmd = addAppionWrapper($command);
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$results = "<table width='600' border='0'>\n";
 		$results.= "<tr><td>\n";
-		$results.= "<b>Signature Picker Command:</b><br />$command";
+		$results.= "<b>Signature Picker Command:</b><br />$wrappedcmd";
 		$results.= "</td></tr></table>\n";
 		$results.= "<br />\n";
 		$testjpg=ereg_replace(".mrc","",$testimage);

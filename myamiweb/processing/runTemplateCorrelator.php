@@ -458,10 +458,11 @@ function runTemplateCorrelator() {
 			if (!$testimage) exit;
 		}
 	
+		$wrappedcmd = addAppionWrapper($command);
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$results = "<table width='600' border='0'>\n";
 		$results.= "<tr><td>\n";
-		$results.= "<b>Template Correlator Command:</b><br />$command";
+		$results.= "<b>Template Correlator Command:</b><br />$wrappedcmd";
 		$results.= "</td></tr></table>\n";
 		$results.= "<br />\n";
 		$testjpg=ereg_replace(".mrc","",$testimage);
