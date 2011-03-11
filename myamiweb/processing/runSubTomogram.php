@@ -340,7 +340,7 @@ function runSubTomogram() {
 	******************** */
 
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'uploadtomo', $nproc);
+	$errors = showOrSubmitCommand($command, $headinfo, 'subtomomaker', $nproc);
 
 	// if error display them
 	if ($errors)
