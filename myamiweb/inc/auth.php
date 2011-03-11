@@ -229,7 +229,7 @@ class authlib{
 	}
 	function updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, 
 						$address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, 
-						$password, $password2, $groupId=null) {
+						$password, $password2, $groupId=null, $noleginon=0) {
 
 		if (empty($firstname) || empty($lastname) || empty($email)) {
 
@@ -260,11 +260,11 @@ class authlib{
 				return $filterPassword;
 		}
 
-
 		$data=array();
 
 		$data['firstname']=$firstname;
 		$data['lastname']=$lastname;
+		$data['noleginon']= $noleginon;
 		$data['title']=$title;
 		$data['institution']=$institution;
 		$data['dept']=$dept;
@@ -292,9 +292,9 @@ class authlib{
 		
 		$q = "update UserData set 
 				firstname = '$firstname', 
-				lastname = '$lastname', email = '$email'
+				lastname = '$lastname', email = '$email',
+				noleginon = '$noleginon'
 			  where DEF_id = $userId";
-
 		if(!$dbc->SQLQuery($q)){
 
 			return $this->error['database_error'];		

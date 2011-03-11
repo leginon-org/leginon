@@ -170,7 +170,7 @@ class user {
 		$userId=trim($userId);
 		$sqlwhere = (is_numeric($userId)) ? "u.`DEF_id`=$userId" : "u.username='$userId'";
 		$q='select u.`DEF_id` as userId, u.*, u.`username` as username, '
-			.'g.`DEF_id` as groupId ,g.`name` as groupname '
+			.'g.`DEF_id` as groupId ,g.`name` as groupname, u.`noleginon` as noleginon '
 			.'from ' .DB_LEGINON.'.UserData u '
 			.'left join '.DB_LEGINON.'.GroupData g on '
 			.'u.`REF|GroupData|group` = g.`DEF_id` '

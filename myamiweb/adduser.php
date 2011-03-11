@@ -15,46 +15,48 @@ $userId = $_GET['userId'];
 $groups = $leginondata->getGroups('name');
 $userdata = new user();
 
-	// if userId is not null, setup variables for edit user.
-	// otherwise setup variable for add new user
-	if($userId){
-		$action="update";
-		$userinfo = $userdata->getUserInfo($userId);
+// if userId is not null, setup variables for edit user.
+// otherwise setup variable for add new user
+if($userId) {
+	$action="update";
+	$userinfo = $userdata->getUserInfo($userId);
 
-	}else
-		$action="add";
+} else {
+	$action="add";
+}
 	
-	$checkpass=true;
+$checkpass=true;
 
-	echo "<h3>Users Detail ($action user):</h3>";
+echo "<h3>Users Detail ($action user):</h3>";
 if($_POST){
-	
 	// setup variables
 	foreach($_POST as $k=>$v)
-		if ($k!='submit'){
+		if ($k!='submit' && $k!='noleginon'){
 			$v = trim($v);
 			$$k = addslashes($v);
 			$userinfo[$k] = addslashes($v);
 		}
+	//can not use addslashes on checkbox value
+	$noleginon = ($_POST['noleginon']=='on') ? 1:0;
+	$userinfo['noleginon'] = $noleginon;
 
 	if(!haspass)
 		$chpass=true;
-	
 	if($_POST['submit']=='update'){
-			
 		$updateProfile=$dbemauth->updateUser($userId, $username, $firstname, $lastname, $title, $institution, 
 											$dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, 
-											$url, $chpass, $mypass1, $mypass2, $groupId);
+											$url, $chpass, $mypass1, $mypass2, $groupId, $noleginon);
+		// username is not posted when updating user
+		$username = $userinfo['username'];
 	}else{
 		$updateProfile = $dbemauth->adminRegister($username, $firstname, $lastname, $title, $institution, 
 											$dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, 
-											$url, $mypass1, $mypass2, $groupId);
+											$url, $mypass1, $mypass2, $groupId, $noleginon);
 		
 	}
 	if ($updateProfile != 2) {
 		$submitResult = '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">'.$updateProfile.'</font></p>';
-	}
-	else{
+	} else {
 		$submitResult = '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">Your update has been submitted.</font></p>';
 		$userId = $userdata->getUserIdByUsername($username);
 		$userinfo = $userdata->getUserInfo($userId);
@@ -62,8 +64,11 @@ if($_POST){
 			
 	echo $submitResult;
 }
+//set checkbox value
+$noleginonval = ($userinfo['noleginon'] == 1) ? "CHECKED":"";
+
 ?>
-<form name="userform" action="<?=$_SERVER['PHP_SELF'] ?>?id=<?=$userId?>" method="POST">
+<form name="userform" action="<?=$_SERVER['PHP_SELF'] ?>?userId=<?=$userId?>" method="POST">
   <input type="hidden" name="userId" value="<?=$userId?>">
   <table border=0 cellspacing=0 cellpadding=2>
 	<tr>
@@ -72,6 +77,8 @@ if($_POST){
 		<label for="groupname">Group Name</label><br />
 	</td>
 	<td>
+		<input type="checkbox" name="noleginon" <?=$noleginonval?> >
+		<label for="NoLeginon"><font color="red">Hidden in Leginon </font></label><br />
 		<?php if($action=='update'){
 				 echo '<b>' . $userinfo['username'] . '</b><br />';
 			  }else{
