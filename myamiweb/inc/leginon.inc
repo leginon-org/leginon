@@ -204,6 +204,7 @@ class leginondata {
 		$names = array();
 		$ids = array();
 		$hosts = array();
+		if (!is_array($scopeinfo) || count($scopeinfo)==0) return $sessioninfo;
 		foreach ($scopeinfo as $info) {
 			$names[] = $info['name'];
 			$ids[] = $info['InstrumentId'];
@@ -227,6 +228,7 @@ class leginondata {
 		# create strings
 		$names = array();
 		$ids = array();
+		if (!is_array($camerainfo) || count($camerainfo)==0) return $sessioninfo;
 		foreach ($camerainfo as $info) {
 			$names[] = $info['name'];
 			$ids[] = $info['InstrumentId'];
@@ -303,7 +305,7 @@ class leginondata {
 	function getInstrumentHosts() {
 		$hosts = array();
 		$instruments = $this->getInstruments();
-		if ($instruments)
+		if (!is_array($instruments) || count($instruments)==0) return array();
 		foreach ($instruments as $instrument) {
 			$hosts[] = $instrument['hostname'];
 		}
