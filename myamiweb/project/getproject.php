@@ -69,6 +69,8 @@ if ($_POST['createprocessing'] || $linkprocessing) {
 			$filename = "../xml/appion_extra.xml";
 			$leginondata->mysql->setSQLHost( array('db'=>$dbname) );
 			$leginondata->importTables($filename);
+			//set host back in leginondata or later query would go wrong
+			$leginondata->mysql->setSQLHost( array('db'=>DB_LEGINON) );
 
 			$data=array();
 			$data['REF|projects|project']=$selectedprojectId;
