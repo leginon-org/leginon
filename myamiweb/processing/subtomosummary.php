@@ -116,7 +116,7 @@ if ($tomograms) {
 		$descDiv = ($_SESSION['username']) ? editButton($tomogramid,$tomogram['description']) : $tomogram['description'];
 
 		$html .= "<td>$descDiv</td>\n";
-#		$downloadDiv = "<a href=downloadtomo.php?tomogramId=$tomogramid>[Download Tomogram]</a><br>";
+#		$downloadDiv = "<a href=downloadtomo.php?expId=$expId&tomogramId=$tomogramid>[Download Tomogram]</a><br>";
 #		$html .= "<td>$downloadDiv</td>\n";
 		$html .= "</tr>\n";
 	}

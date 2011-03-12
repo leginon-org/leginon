@@ -265,7 +265,7 @@ foreach ($reconRuns as $recon) {
 	$densityfile = $recon['path'].'/'.$recon['volumeDensity'];
 
 	$modhtml .= "<tr><td>";
-	$modhtml .= "download density <a href='download.php?file=$densityfile'>\n";
+	$modhtml .= "download density <a href='download.php?expId=$expId&file=$densityfile'>\n";
 	$modhtml .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download density'>\n";
 	$modhtml .= $recon['volumeDensity']."\n";
 	$modhtml .= "</a><br/>\n";

@@ -9,6 +9,7 @@ require "inc/processing.inc";
 //This file dumps the best CTF parameters for all images in the session
 
 $expId = $_GET['expId'];
+checkExptAccessPrivilege($expId,'data');
 $selectionId = $_GET['selectionId'];
 $appiondb = new particledata();
 

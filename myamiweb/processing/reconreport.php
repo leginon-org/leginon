@@ -331,7 +331,7 @@ function showReport () {
 		$html .= "<td bgcolor='$bg'>\n";
 
 		$mrcfile = $refinerun['path']."/".$iteration['volumeDensity'];
-		$html .= "<a href='download.php?file=$mrcfile'>\n";
+		$html .= "<a href='download.php?expId=$expId&file=$mrcfile'>\n";
 		$html .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download density'>\n";
 		$html .= "$iteration[volumeDensity]\n";
 		$html .= "</a><br/>\n";
@@ -374,7 +374,7 @@ function showReport () {
 				$html .= "<tr><td><b>path: </b></td><td>".$p['path']."</td></td>\n";
 
 				$postprocfile = $p['path']."/".$p['name'];
-				$modellink .= "<font size='-2'><a href='download.php?file=$postprocfile'>\n";
+				$modellink .= "<font size='-2'><a href='download.php?expId=$expId&file=$postprocfile'>\n";
 				$modellink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download model'>\n";
 				$modellink .= "</a></font>\n";
 				$html .= "<tr><td><b>name: </b></td><td>".$p['name']." $modellink</td></td>\n";
