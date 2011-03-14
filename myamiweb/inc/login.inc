@@ -138,7 +138,7 @@ function checkExptAccessPrivilege($sessionId,$privilege_type='data') {
 	
 	// arrives here if no view privilege
 	redirect(BASE_URL.'accessdeny.php');
-	return false;
+	exit;
 }
 
 function checkExptAdminPrivilege($sessionId,$privilege_type='data') {
