@@ -1,7 +1,7 @@
 <?php
 $paths = array('.', '..', get_include_path());
 set_include_path(implode(PATH_SEPARATOR, $paths));
-require_once "../config.php";
+require_once dirname(__FILE__).'/../config.php';
 require_once "inc/leginon.inc";
 
 class Tomography {
@@ -192,12 +192,15 @@ class Tomography {
 			.'AcquisitionImageStatsData.mean AS mean, '
 			.'a.filename, '
 			.'a.DEF_id AS imageId, '
-			.'p1.pixelsize AS pixel_size '
+			.'p1.pixelsize AS pixel_size, '
+			.'t.number '
 			.'FROM AcquisitionImageData a '
 			.'LEFT JOIN ScopeEMData s '
 			.'ON s.DEF_id=a.`REF|ScopeEMData|scope` '
 			.'LEFT JOIN CameraEMData c '
 			.'ON c.DEF_id=a.`REF|CameraEMData|camera` '
+			.'LEFT JOIN TiltSeriesData t '
+			.'ON t.DEF_id=a.`REF|TiltSeriesData|tilt series` '
 			.'LEFT JOIN TomographyPredictionData '
 			.'ON TomographyPredictionData.`REF|AcquisitionImageData|image`=a.DEF_id '
 			.'LEFT JOIN AcquisitionImageStatsData '
@@ -217,7 +220,6 @@ class Tomography {
 			.'AND p1.`REF|InstrumentData|tem`=p2.`REF|InstrumentData|tem` '
 			.'AND p1.`REF|InstrumentData|ccdcamera`=p2.`REF|InstrumentData|ccdcamera`) '
 			.'ORDER BY s.`SUBD|stage position|a`;';
-
 		return $this->mysql->getSQLResult($query);
 	}
 
