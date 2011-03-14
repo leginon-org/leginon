@@ -53,7 +53,7 @@ class ContourFileGenerator(appionScript.AppionScript):
 		file.write('session_id ' + runname + '\n')
 		file.write('usr_id ' + os.getlogin() + '\n')
 		file.write('experiment_name ' + sessionname + '\n')
-		file.write('experiment_description ' + sessiond[0]['comment'] + '\n')
+		file.write('experiment_description ' + sessiond[0]['comment'].strip() + '\n')
 		file.write('nimages ' + str(len(imgtree)) + '\n')
 
 		for imgdata in imgtree:
