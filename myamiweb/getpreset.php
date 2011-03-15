@@ -40,11 +40,13 @@ $p[]='gridId';
 $p[]='mag';
 $p[]='defocus';
 $p[]='pixelsize';
+$p[]='exposure time';
 $p[]='dose';
 $p[]='tilt';
 $str_tilt="";
 $viewfilename=$_GET['vf'];
 $showtilt=$_GET['tl'];
+$showexptime=$_GET['xt'];
 if ($imgId) {
 	echo "<font style='font-size: 12px;'>";
 	$gridId	= $leginondata->getGridId($imgId);
@@ -83,7 +85,7 @@ if ($imgId) {
 			else if ($k=='exposure time') {
 				if( empty($v) && !empty($imageinfo['exposure time']))
 					$v = $imageinfo['exposure time'];
-				if(!empty($v))
+				if(!empty($v) && $showexptime)
 					echo " <b>$k:</b> ",($leginondata->formatExposuretime($v));
 			}
 			else
