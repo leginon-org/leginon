@@ -115,6 +115,10 @@ class formValidator{
 		return $this->errorMessages;
 	}
 	
+	function setErrorMessage($variableName, $errorMessage){
+		$this->errorMessages[$variableName] = $errorMessage;
+	}
+	
 	function getValidateObjes(){
 		return $this->validateObjs;
 	}
@@ -131,7 +135,7 @@ class formValidator{
 			if(!$this->validate($validateObj)){
 				$result = false;
 
-				$this->errorMessages[$validateObj->getVariableName()] = $validateObj->getErrorOutputMessage();
+				$this->setErrorMessage($validateObj->getVariableName(), $validateObj->getErrorOutputMessage());
 			}			
 		}
 		
