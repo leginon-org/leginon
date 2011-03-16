@@ -74,7 +74,11 @@ class redux{
 	function getScaleMax() 		{ return $this->scaleMax; }
 	function getScaleType() 	{ return $this->scaleType; }
 	function getOFormat() 		{ return $this->oFormat; }
-	function getErrMsg()		{ return $this->errMsg; }
+	
+	function getErrMsg(){ 
+		$this->validateInputs();
+		return $this->errMsg; 
+	}
 	
 	function setFilename($filename){
 		
