@@ -151,6 +151,7 @@ function runImagicMSAcluster($extra=false)	{
 	$projectId=getProjectId();
 	$analysisId=$_GET['analysisId'];
 	$runname=date("yMd").random_letters();
+	$_POST['runname'] = $runname;
 	$outdir=$_POST['outdir'];
 	$classvalues=$_POST['imagicAnalysisId'];
 	$ignore_images=$_POST['ignore_images'];
