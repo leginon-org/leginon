@@ -22,7 +22,7 @@ def rescaleModel(modelid, outfile, newbox=None, newapix=None, spider=None):
 	modeldata = getModelFromId(modelid)
 	modelapix = modeldata['pixelsize']
 	modelfile = os.path.join(modeldata['path']['path'], modeldata['name'])
-	apVolume.rescaleVolume(modelfile, outfile, modelapix, newapix, newbox, spider=None)
+	apVolume.rescaleVolume(modelfile, outfile, modelapix, newapix, newbox, spider=spider)
 	return
 
 #================
