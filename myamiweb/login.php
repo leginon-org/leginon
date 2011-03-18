@@ -20,7 +20,6 @@ $errMsg = dbValidation();
 if(!empty($errMsg)){
 	$displayerror = "Error occur from database connection, please click <a href='setup/index.php'>here</a> to fix the problem. ";
 }
-$redirect = $_REQUEST['ln'];
 
 $username=trim($_POST['username']);
 $passwd=trim($_POST['password']);
@@ -88,7 +87,14 @@ if ($login!=2) {
 	exit;
 } else {
 
+	if (array_key_exists('ln',$_GET)) {
+		$redirect_array = array();
+		foreach($_GET as $key => $value)
+			$redirect_array[] = ($key == 'ln') ? $value:$key.'='.$value;
+		$redirect = implode('&',$redirect_array);
+	}
 	if (!$redirect) $redirect = BASE_URL;
+
 	redirect($redirect);
 }
 ?>
