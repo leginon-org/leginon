@@ -15,6 +15,13 @@ def log(msg):
 	sys.stderr.write(msg)
 	sys.stderr.write('\n')
 
+'''
+pipe order specifier:
+"r|s|p|c|s|f"
+kwargs:
+	"r0.asdf=asdf&s1.asdf=asdf"
+'''
+
 ## you have to create subclass with pipeorder attribute
 class Pipeline(object):
 	def __init__(self):
