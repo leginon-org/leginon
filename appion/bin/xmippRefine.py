@@ -249,8 +249,8 @@ class xmippRefineScript(appionScript.AppionScript):
 		protocolPrm["AnalysisScript"]               =   'visualize_projmatch.py'
 
 		particularizeProtocol(protocol_projmatch,protocolPrm,
-			os.path.join(self.params['rundir'],"protocol_projmatch.py"))
-		subprocess.call("python protocol_projmatch.py",shell=True);
+			os.path.join(self.params['rundir'],"xmipp_protocol_projmatch.py"))
+		subprocess.call("python xmipp_protocol_projmatch.py",shell=True);
 
 		# Write the run parameters for the posterior uploading
 		protocolPrm["modelid"] = self.params['modelid']
