@@ -209,7 +209,7 @@ class UploadModelScript(appionScript.AppionScript):
 			shutil.copyfile(origmodel, mrcname)
 
 		if self.params['viper2eman'] is True:
-			apVolume.viper2eman(mrcname, mrcname, apix=self.params['apix'])
+			apVolume.viper2eman(mrcname, mrcname, apix=self.params['newapix'])
 
 		### render chimera images of model
 		contour = self.params['contour']
