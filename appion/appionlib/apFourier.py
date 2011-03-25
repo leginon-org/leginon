@@ -352,11 +352,14 @@ def getResolution(fscdata, apix=1.0, boxsize=None, filtradius=3):
 			distfsc = (0.5-y) / diffy
 			# get interpolated spatial freq
 			intfsc = x - distfsc * (x-lastx)
+#			m = (y-lasty) / (x-lastx)
+#			b = y-(m*x)
+#			intfsc = (0.5-b)/m
 			# convert to Angstroms
 			if intfsc > 0.0:
-				res = 2 * boxsize * apix / intfsc
+				res = boxsize * apix / intfsc
 			else:
-				res = 2 * boxsize * apix
+				res = boxsize * apix
 			return res
 	end = localfscdata.shape[0]
 	for value in localfscdata:
