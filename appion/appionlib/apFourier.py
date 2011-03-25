@@ -337,7 +337,7 @@ def getResolution(fscdata, apix=1.0, boxsize=None, filtradius=3):
 		apDisplay.printWarning("Resolution is at Nyquist")
 		return apix*2.0
 	for i in range(localfscdata.shape[0]):
-		x = float(i)
+		x = float(i+1)
 		y = localfscdata[i]
 		if x != 0.0 and x < 0.9:
 			apDisplay.printWarning("FSC is wrong data format")
@@ -354,9 +354,9 @@ def getResolution(fscdata, apix=1.0, boxsize=None, filtradius=3):
 			intfsc = x - distfsc * (x-lastx)
 			# convert to Angstroms
 			if intfsc > 0.0:
-				res = boxsize * apix / intfsc
+				res = 2 * boxsize * apix / intfsc
 			else:
-				res = boxsize * apix
+				res = 2 * boxsize * apix
 			return res
 	end = localfscdata.shape[0]
 	for value in localfscdata:
