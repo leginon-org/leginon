@@ -18,7 +18,7 @@ function menu($privilege=1) {
 		$link->addlink('gridtray.php','Grid Tray','', 'preparation', '');
 	$link->addlink('projectstat.php','Project Status','', '', '');
 	$link->addlink('statistics.php','DB statistics','', '', '');
-	$link->addlink('runStat.php', 'AP statistics', '', '', '');
+	$link->addlink('runStat.php', 'All Status', '', '', '');
 	$link->Display();
 }
 

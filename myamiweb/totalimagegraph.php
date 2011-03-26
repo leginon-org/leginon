@@ -17,6 +17,7 @@ $minrate = ($minrate=="NaN") ? null : $minrate;
 $maxrate = ($maxrate=="NaN") ? null : $maxrate;
 $viewdata = $_GET['vd'];
 $viewsql = $_GET['vs'];
+$cumulative = empty($_GET['cu']) ? false : true;
 
 $start = $_GET['st'];
 $points = $_GET['pt'];
@@ -76,8 +77,13 @@ function TimeCallback($aVal) {
 if ($nimagedata)
 foreach ($nimagedata as $d) {
 	$datax[] = $d['unix_timestamp'];
-	$datay[] = $d[$alias];
+	if(!$cumulative) $datay[] = $d[$alias];
+	else{
+		$index = count($datay)-1;
+		$datay[] = $datay[$index] + $d[$alias];
+	}
 }
+
 $width = $_GET['w'];
 $height = $_GET['h'];
 if (!$datax && !$datay) {

@@ -1,18 +1,165 @@
 <?php
 require('inc/project.inc.php');
+require "inc/jpgraph.php";
+require "inc/jpgraph_line.php";
+require "inc/jpgraph_scatter.php";
+require "inc/jpgraph_bar.php";
+require "inc/histogram.inc";
+require "inc/image.inc";
 
-project_header("Appion Run Statistics");
+function getStatistic($dbname) {
+	$stats = array(
+		'db_name' => $dbname,
+		'tot_cell' => 0,
+		'tbl_cnt' => 0,
+		'data_sz' => 0,
+		'idx_sz' => 0,
+		'tot_sz' => 0
+	);
+	$legdb = new mysql(DB_HOST, DB_USER, DB_PASS, $dbname);
+	$res = $legdb->SQLQuery('SHOW TABLE STATUS FROM `'.$dbname.'`'); 
+	while ($row = mysql_fetch_array($res, MYSQL_ASSOC)) {
+		$stats['tbl_cnt']++;
+		$stats['data_sz'] += $row['Data_length'];
+		$stats['idx_sz'] += $row['Index_length'];
+
+		$crn=count_tbl_rows($legdb, $row['Name']);
+		$cfn=count_tbl_fields($legdb, $row['Name']);
+		$ccn=$crn*$cfn;
+		$stats['tot_cell'] += $ccn;
+        }
+	$stats['tot_sz'] = $stats['data_sz'] + $stats['idx_sz'];
+
+	return $stats;
+}
+
+function count_tbl_rows($dbc, $table) {
+        $res = $dbc->SQLQuery("SELECT COUNT(*) FROM `$table`");
+        $row = mysql_fetch_row($res);
+	$num_rows = $row[0];
+	return $num_rows;
+}
+
+function count_tbl_fields($dbc, $table) {
+        $res = $dbc->SQLQuery("SHOW FIELDS FROM `$table`");
+	$num_rows = mysql_num_rows($res);
+	return $num_rows;
+}
+
+/* convert byte to readable format */
+function byteSize($bytes){
+    $size = $bytes / 1024;
+    if($size < 1024){
+        $size = number_format($size, 2);
+        $size .= ' KB';
+    }else{
+        if($size / 1024 < 1024){
+            $size = number_format($size / 1024, 2);
+            $size .= ' MB';
+        }else 
+        	if ($size / 1024 / 1024 < 1024){
+            	$size = number_format($size / 1024 / 1024, 2);
+            	$size .= ' GB';
+            }else
+            	if ($size / 1024 / 1024 / 1024 < 1024){
+            	$size = number_format($size / 1024 / 1024 / 1024, 2);
+            	$size .= ' TB';
+            	} 
+        }
+    return $size;
+} 
+
+
+$dbStats = getStatistic(DB_LEGINON);
+
+$sizeOfLeginonDB = byteSize($dbStats['tot_sz']);
+$numOfLeginonDBRecord = $dbStats['tot_cell'];
+
+$today = date("m/d/y");
+project_header("Statistics Report - " . $today);
 
 mysql_connect(DB_HOST, DB_USER, DB_PASS) or
     die("Could not connect: " . mysql_error());
+
+/* use leginon database */
+mysql_select_db(DB_LEGINON);
+
+/* get total number of images and total size of images */
+$q = "select count(DEF_id), sum(pixels) from AcquisitionImageData";
+$r = mysql_query($q) or die("Query error: " . mysql_error());
+$row = mysql_fetch_row($r);
+$numOfImages = (int)$row[0];
+$numOfImageSize = byteSize($row[1] * 4);
+
+/* get total number of sessions with at least 10 images */
+$q = "select distinct `REF|SessionData|session` as sessionID, 
+		count(DEF_id) as images from AcquisitionImageData group by sessionID";
+$r = mysql_query($q) or die("Query error: " . mysql_error());
+
+while ($row = mysql_fetch_array($r, MYSQL_ASSOC)) {
+	$numOfSessionsWithImages += (int)$row['images'] > 10 ? 1 : 0;
+}
+
+
+/* change to project database */
 mysql_select_db(DB_PROJECT);
 
+/* get total number of projects */
+$q = "select count(DEF_id) from projects";
+$r = mysql_query($q) or die("Query error: " . mysql_error());
+$row = mysql_fetch_row($r);
+$totalNumProjects = (int)$row[0];
+
+/* get total sessions tie with projects and total project contain sessions.*/
+$q = "select count(distinct `REF|leginondata|SessionData|session`), 
+		count(distinct `REF|projects|project`) from projectexperiments";
+$r = mysql_query($q) or die("Query error: " . mysql_error());
+$row = mysql_fetch_row($r);
+$totalNumSessionUnderProjects = (int)$row[0];
+$totalProjectWithSessions = (int)$row[1];
+
+$q = "select DATE_FORMAT(DEF_timestamp, '%Y-%m-%e'), `REF|leginondata|SessionData|session` 
+		from projectexperiments order by DEF_timestamp desc limit 1";
+$r = mysql_query($q) or die("Query error: " . mysql_error());
+$row = mysql_fetch_row($r);
+$lastSessionTime = $row[0];
+$lastSessionID = $row[1];
+
+/* get all the ap databases name */
 $result = mysql_query("select distinct appiondb from processingdb");
+/*
+ * select count(appiondb) from processingdb;  => 208 (total projects have ap database)
+ * select count(*) from projects; => 258 (total projects)
+ * 
+ */
 
 while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
 	//mysql_select_db('ap172');
-
+	//$counter++;
+	//if($counter > 3)	break;
+	
+	//if($row['appiondb'] == 'ap5') continue;
+	
 	mysql_select_db($row['appiondb']);
+	
+	/* get Total number of Projects with processed data: */
+	$q = "SELECT count(DEF_id) from ScriptProgramRun";
+	$r = mysql_query($q) or die("Query error: " . mysql_error());
+	$row = mysql_fetch_row($r);
+	$numOfApProjects += count((int)$row[0]) == 0 ? 0 : 1;
+	
+	/* get number of Sessions with processed data */
+	$q = "select count(distinct `REF|leginondata|SessionData|session`), 
+			count(DEF_id), max(DEF_timestamp) from ApAppionJobData";
+	$r = mysql_query($q) or die("Query error: " . mysql_error());
+	$row = mysql_fetch_row($r);
+	$numOfSessionsProcessed += (int)$row[0];
+	$numOfTotalProcessingRuns += (int)$row[1];
+	
+	$lastExptRunTime = ($row[2] > $lastExptRunTime) ? $row[2] : $lastExptRunTime;
+
+	
+	/* get Ace run number and total processed images */
 	$q = "SELECT count(DISTINCT `REF|ApAceRunData|acerun`) AS runs,
 			COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS img
 			FROM `ApCtfData`";	
@@ -21,6 +168,7 @@ while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
 	$aceRun += (int)$row[0];
 	$aceProcessedImages += (int)$row[1];
 
+	/* get particle picking run information */
 	$q = "SELECT count(*) AS runs, 
 			COUNT(DISTINCT `REF|ApDogParamsData|dogparams`) AS dog,
 			COUNT(DISTINCT `REF|ApManualParamsData|manparams`) AS manual,
@@ -33,16 +181,24 @@ while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
 	$dogPickerRuns += (int)$row[1];
 	$manualPickerRuns += (int)$row[2];
 	$tiltPickerRuns += (int)$row[3];
+	$templatePicker = $particleSelectionRuns-$dogPickerRuns-$manualPickerRuns-$tiltPickerRuns;
 	
+	/* get total number of particle picked */
 	$q = "SELECT count(`DEF_id`) AS p,
 			COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS i 
 			FROM `ApParticleData`";
 	
 	$r = mysql_query($q) or die("Query error: " . mysql_error());
 	$row = mysql_fetch_row($r);
-	$processedImages += (int)$row[1];
 	$selectedParticles += (int)$row[0];
 	
+	/* classification runs */
+	$q = "SELECT count(*) from ApClusteringStackData";
+	$r = mysql_query($q) or die("Query error: " . mysql_error());
+	$row = mysql_fetch_row($r);
+	$classificationRuns += (int)$row[0];
+	
+	/* Stack info */
 	$q = "SELECT count(*) AS particles,
 			COUNT(DISTINCT p.`REF|ApStackData|stack`) AS stacks
 			FROM `ApStackData` AS s
@@ -54,6 +210,7 @@ while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
 	$totalStacks += (int)$row[1];
 	$totalStacksParticles += (int)$row[0];
 	
+	/* get information about Reconstruction */
 	$q = "SELECT count(*) AS particles,
 		COUNT(DISTINCT p.`REF|ApRefineIterData|refineIter`) AS iter,
 		COUNT(DISTINCT i.`REF|ApRefineRunData|refineRun`) AS runs
@@ -67,6 +224,7 @@ while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
 	$totalReconIterations += (int)$row[1];
 	$totalClassifiedParticles += (int)$row[0];
 	
+	/* Total templates */
 	$q = "SELECT count(*) AS templates
 			FROM ApTemplateImageData";
 	
@@ -74,6 +232,7 @@ while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
 	$row = mysql_fetch_row($r);
 	$totalTemplates += (int)$row[0];
 
+	/* total initial models */
 	$q = "SELECT count(*) AS models
 			FROM ApInitialModelData";
 	
@@ -84,37 +243,137 @@ while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
    
 }
 
-$today = date("m/d/y");
-PRINT ("<h4>As ". $today. "</h4>");
-print("<table class='tableborder' cellpadding='0' cellspace='0'>");
-print("<b>ACE Run:</b><br />");
-print("&nbsp;&nbsp;Total Runs: ". number_format($aceRun) . '<br />');
-print("&nbsp;&nbsp;Total Processed Images: ". number_format($aceProcessedImages) . '<br /><br />');
-
-print("<b>Particle Selection:</b><br />");
-print("&nbsp;&nbsp;Total Runs: ". number_format($particleSelectionRuns) . '<br />');
-$templatePicker = $particleSelectionRuns-$dogPickerRuns-$manualPickerRuns-$tiltPickerRuns;
-print("&nbsp;&nbsp;&nbsp;&nbsp; - Template Picker Runs: ". number_format($templatePicker) . '<br />');
-print("&nbsp;&nbsp;&nbsp;&nbsp; - Dog Picker Runs: ". number_format($dogPickerRuns) . '<br />');
-print("&nbsp;&nbsp;&nbsp;&nbsp; - Manual Picker Runs: ". number_format($manualPickerRuns) . '<br />');
-print("&nbsp;&nbsp;&nbsp;&nbsp; - Tilt Picker Runs: ". number_format($tiltPickerRuns) . '<br />');
-print("&nbsp;&nbsp;Total Processed Images: ". number_format($processedImages) . '<br />');
-print("&nbsp;&nbsp;Total Selected Particles: ". number_format($selectedParticles) . '<br /><br />');
-
-print("<b>Stacks Creation:</b><br />");
-print("&nbsp;&nbsp;Total Stacks: ". number_format($totalStacks) . '<br />');
-print("&nbsp;&nbsp;Total Particles: ". number_format($totalStacksParticles) . '<br /><br />');
-
-print("<b>Reconstruction:</b><br />");
-print("&nbsp;&nbsp;Total Recons: ". number_format($totalReconRun) . '<br />');
-print("&nbsp;&nbsp;Total Iterations: ". number_format($totalReconIterations) . '<br />');
-print("&nbsp;&nbsp;Total Classified Particles: ". number_format($totalClassifiedParticles) . '<br /><br />');
-
-print("<b>Template Creation:</b><br />");
-print("&nbsp;&nbsp;Total Templates: ". number_format($totalTemplates) . '<br />');
-print("&nbsp;&nbsp;Total Initial Models: ". number_format($totalInitialModels) . '<br />');
-print("</table>");
-
-
+	
 
 ?>
+<table border="0" cellpadding="5" cellspacing="0">
+	<tr>
+		<td colspan=2><h3>Leginon Statistics:</h3></td>
+	</tr>
+	<tr>
+		<td><b>Projects</b> with sessions:</td><td><?php echo number_format($totalProjectWithSessions); ?></td>
+	</tr>
+	<tr> 
+		<td><b>Sessions</b> with images > 10:</td><td><?php echo number_format($numOfSessionsWithImages); ?></td>
+	</tr>
+	<tr>
+		<td><b>Total number of Images:</b></td><td><?php echo number_format($numOfImages); ?></td>
+	</tr>
+	<tr>
+		<td><b>Tomographic tilt series:</b></td><td></td>
+	</tr>
+	<tr> 
+		<td><b>Total size of images (i.e. disk space):</b></td><td><?php echo $numOfImageSize; ?></td>
+	</tr>
+	<tr> 
+		<td><b>Size of Leginon Database:</b></td><td><?php echo $sizeOfLeginonDB; ?></td>
+	</tr>
+	<tr>
+		<td><b>Number of DB records:</b></td><td><?php echo number_format($numOfLeginonDBRecord); ?></td>
+	</tr>
+	<tr>
+		<td colspan=2><hr></td>
+	</tr>
+
+	<tr>
+		<td colspan=2><h3>Appion Statistics:</h3></td>
+	</tr>
+	<tr>
+		<td><b>Projects</b> with processed data:</td><td><?php echo number_format($numOfApProjects); ?></td>
+	</tr>
+	<tr>
+		<td><b>Sessions</b> with processed data:</td><td><?php echo number_format($numOfSessionsProcessed); ?></td>
+	</tr>
+	<tr>
+		<td><b>Particle picking runs:</b></td><td><?php echo number_format($particleSelectionRuns); ?></td>
+	</tr>
+	<tr>
+		<td>&nbsp;&nbsp; - Template Picker runs:</td><td><?php echo number_format($templatePicker);?></td>
+	</tr>
+	<tr>
+		<td>&nbsp;&nbsp; - Dog Picker runs:</td><td><?php echo number_format($dogPickerRuns);?></td>
+	</tr>
+	<tr>
+		<td>&nbsp;&nbsp; - Manual Picker runs:</td><td><?php echo number_format($manualPickerRuns);?></td>
+	</tr>
+	<tr>
+		<td>&nbsp;&nbsp; - Tilt Picker runs:</td><td><?php echo number_format($tiltPickerRuns);?></td>
+	</tr>
+	<tr>
+		<td><b>Particle picked:</b></td><td><?php echo number_format($selectedParticles);?></td>
+	</tr>
+	<tr>
+		<td><b>Ace runs:</b></td><td><?php echo number_format($aceRun); ?></td>
+	</tr>
+	<tr>
+		<td>&nbsp;&nbsp; - Processed images:</td><td><?php echo number_format($aceProcessedImages);?></td>
+	</tr>
+	<tr>
+		<td><b>Particle stacks:</b></td><td><?php echo number_format($totalStacks); ?></td>
+	</tr>
+	<tr>
+		<td>&nbsp;&nbsp; - Stacks' particles:</td><td><?php echo number_format($totalStacksParticles);?></td>
+	</tr>	
+	<tr>
+		<td><b>Classification runs:</b></td><td><?php echo number_format($classificationRuns);?></td>
+	</tr>
+	<tr>
+		<td><b>Classes:</b></td><td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td><b>Classified particles:</b></td><td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td><b>RCT models:</b></td><td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td><b>Tomograms processed:</b></td><td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td colspan=2><b>3D Maps (Reconstruction)</b></td>
+	</tr>
+	<tr>
+		<td>&nbsp;&nbsp;Total Recons:</td><td><?php echo number_format($totalReconRun);?></td>
+	</tr>
+	<tr>
+		<td>&nbsp;&nbsp;Total Iterations:</td><td><?php echo number_format($totalReconIterations);?></td>
+	</tr>
+	<tr>
+		<td>&nbsp;&nbsp;Classified Particles:</td><td><?php echo number_format($totalClassifiedParticles);?></td>
+	</tr>
+	<tr>
+		<td colspan=2><b>Template Creation</b></td>
+	</tr>
+	<tr>
+		<td>&nbsp;&nbsp;Total Templates:</td><td><?php echo number_format($totalTemplates);?></td>
+	</tr>
+	<tr>
+		<td>&nbsp;&nbsp;Total Initial Models:</td><td><?php echo number_format($totalInitialModels);?></td>
+	</tr>
+	<tr>
+		<td colspan=2><hr></td>
+	</tr>
+</table>
+<table>
+	<tr>
+		<td><h3>General Data</h3></td>
+	</tr>
+	<tr>
+		<td><table border="1"  cellpadding="5" cellspacing="0" width="100%">
+			<tr><td><b>Total # Project</b></td><td><b># Experiments</b></td><td><b>Last experiment (Date)</b></td>
+			<td><b># Processing Runs</b></td><td><b>Last run (Date)</b></td></tr>
+			<tr align="center"><td><?php echo number_format($totalNumProjects); ?></td>
+			<td><?php echo number_format($totalNumSessionUnderProjects); ?></td>
+			<td><?php echo $lastSessionTime ?></td>
+			<td><?php echo number_format($numOfTotalProcessingRuns); ?></td>
+			<td><?php echo $lastExptRunTime ?></td></tr>
+		</table></td>
+	</tr>
+</table>
+<br />
+<img src="../totalimagegraph.php?cu=1">
+<br />
+<br />
+Number of Sessions with Images:<br />
+<img src="../totalimagegraph.php?type=s&cu=1">
+
