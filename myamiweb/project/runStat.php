@@ -125,124 +125,171 @@ $row = mysql_fetch_row($r);
 $lastSessionTime = $row[0];
 $lastSessionID = $row[1];
 
-/* get all the ap databases name */
-$result = mysql_query("select distinct appiondb from processingdb");
-/*
- * select count(appiondb) from processingdb;  => 208 (total projects have ap database)
- * select count(*) from projects; => 258 (total projects)
- * 
+/* found out when was the lastest data in the database
+ * if latest data not older than 7 days, just display the 
+ * latest data from dataStatusReport table. Otherwise, run
+ * through all the ap database and save the result in the
+ * dataStatusReport table.
  */
 
-while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
-	//mysql_select_db('ap172');
-	//$counter++;
-	//if($counter > 3)	break;
-	
-	//if($row['appiondb'] == 'ap5') continue;
-	
-	mysql_select_db($row['appiondb']);
-	
-	/* get Total number of Projects with processed data: */
-	$q = "SELECT count(DEF_id) from ScriptProgramRun";
-	$r = mysql_query($q) or die("Query error: " . mysql_error());
-	$row = mysql_fetch_row($r);
-	$numOfApProjects += count((int)$row[0]) == 0 ? 0 : 1;
-	
-	/* get number of Sessions with processed data */
-	$q = "select count(distinct `REF|leginondata|SessionData|session`), 
-			count(DEF_id), max(DEF_timestamp) from ApAppionJobData";
-	$r = mysql_query($q) or die("Query error: " . mysql_error());
-	$row = mysql_fetch_row($r);
-	$numOfSessionsProcessed += (int)$row[0];
-	$numOfTotalProcessingRuns += (int)$row[1];
-	
-	$lastExptRunTime = ($row[2] > $lastExptRunTime) ? $row[2] : $lastExptRunTime;
-
-	
-	/* get Ace run number and total processed images */
-	$q = "SELECT count(DISTINCT `REF|ApAceRunData|acerun`) AS runs,
-			COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS img
-			FROM `ApCtfData`";	
-	$r = mysql_query($q) or die("Query error: " . mysql_error());
-	$row = mysql_fetch_row($r);
-	$aceRun += (int)$row[0];
-	$aceProcessedImages += (int)$row[1];
-
-	/* get particle picking run information */
-	$q = "SELECT count(*) AS runs, 
-			COUNT(DISTINCT `REF|ApDogParamsData|dogparams`) AS dog,
-			COUNT(DISTINCT `REF|ApManualParamsData|manparams`) AS manual,
-			COUNT(DISTINCT `REF|ApTiltAlignParamsData|tiltparams`) AS tilt
-			FROM `ApSelectionRunData`";	
-	
-	$r = mysql_query($q) or die("Query error: " . mysql_error());
-	$row = mysql_fetch_row($r);
-	$particleSelectionRuns += (int)$row[0];
-	$dogPickerRuns += (int)$row[1];
-	$manualPickerRuns += (int)$row[2];
-	$tiltPickerRuns += (int)$row[3];
-	$templatePicker = $particleSelectionRuns-$dogPickerRuns-$manualPickerRuns-$tiltPickerRuns;
-	
-	/* get total number of particle picked */
-	$q = "SELECT count(`DEF_id`) AS p,
-			COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS i 
-			FROM `ApParticleData`";
-	
-	$r = mysql_query($q) or die("Query error: " . mysql_error());
-	$row = mysql_fetch_row($r);
-	$selectedParticles += (int)$row[0];
-	
-	/* classification runs */
-	$q = "SELECT count(*) from ApClusteringStackData";
-	$r = mysql_query($q) or die("Query error: " . mysql_error());
-	$row = mysql_fetch_row($r);
-	$classificationRuns += (int)$row[0];
-	
-	/* Stack info */
-	$q = "SELECT count(*) AS particles,
-			COUNT(DISTINCT p.`REF|ApStackData|stack`) AS stacks
-			FROM `ApStackData` AS s
-			LEFT JOIN `ApStackParticleData` AS p
-			ON s.`DEF_id` = p.`REF|ApStackData|stack`";
-	
-	$r = mysql_query($q) or die("Query error: " . mysql_error());
-	$row = mysql_fetch_row($r);
-	$totalStacks += (int)$row[1];
-	$totalStacksParticles += (int)$row[0];
-	
-	/* get information about Reconstruction */
-	$q = "SELECT count(*) AS particles,
-		COUNT(DISTINCT p.`REF|ApRefineIterData|refineIter`) AS iter,
-		COUNT(DISTINCT i.`REF|ApRefineRunData|refineRun`) AS runs
-		FROM `ApRefineIterData` AS i
-		LEFT JOIN `ApRefineParticleData` AS p
-		ON i.`DEF_id` = p.`REF|ApRefineIterData|refineIter`";
-	
-	$r = mysql_query($q) or die("Query error: " . mysql_error());
-	$row = mysql_fetch_row($r);
-	$totalReconRun += (int)$row[2];
-	$totalReconIterations += (int)$row[1];
-	$totalClassifiedParticles += (int)$row[0];
-	
-	/* Total templates */
-	$q = "SELECT count(*) AS templates
-			FROM ApTemplateImageData";
-	
-	$r = mysql_query($q) or die("Query error: " . mysql_error());
-	$row = mysql_fetch_row($r);
-	$totalTemplates += (int)$row[0];
-
-	/* total initial models */
-	$q = "SELECT count(*) AS models
-			FROM ApInitialModelData";
-	
-	$r = mysql_query($q) or die("Query error: " . mysql_error());
-	$row = mysql_fetch_row($r);
-	$totalInitialModels += (int)$row[0];
-	
-   
+$q = "select * from dataStatusReport order by `DEF_timestamp` desc limit 1";
+$r = mysql_query($q) or die("Query error: " . mysql_error());
+$row = mysql_fetch_row($r);
+if(!empty($row)){
+	$latestRunTimestamp = $row[1];
+	$numOfApProjects = $row[2];
+	$numOfSessionsProcessed = $row[3];
+	$numOfTotalProcessingRuns = $row[4];
+	$lastExptRunTime = $row[5];
+	$aceRun = $row[6];
+	$aceProcessedImages = $row[7];	
+	$particleSelectionRuns = $row[8];
+	$dogPickerRuns = $row[9];
+	$manualPickerRuns = $row[10];
+	$tiltPickerRuns = $row[11];
+	$templatePicker = $row[12];
+	$selectedParticles = $row[13];
+	$classificationRuns = $row[14];
+	$totalStacks = $row[15];
+	$totalStacksParticles = $row[16];
+	$totalReconIterations = $row[17];
+	$totalClassifiedParticles = $row[18];
+	$totalTemplates = $row[19];
+	$totalInitialModels = $row[20];
 }
 
+if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1 week")){ 
+	
+	/* get all the ap databases name */
+	$result = mysql_query("select distinct appiondb from processingdb");
+	/*
+	 * select count(appiondb) from processingdb;  => 208 (total projects have ap database)
+	 * select count(*) from projects; => 258 (total projects)
+	 * 
+	 */
+	
+	while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
+		//mysql_select_db('ap172');
+
+		if($row['appiondb'] == 'ap5') continue;
+		
+		mysql_select_db($row['appiondb']);
+		
+		/* get Total number of Projects with processed data: */
+		$q = "SELECT count(DEF_id) from ScriptProgramRun";
+		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$row = mysql_fetch_row($r);
+		$numOfApProjects += count((int)$row[0]) == 0 ? 0 : 1;
+		
+		/* get number of Sessions with processed data */
+		$q = "select count(distinct `REF|leginondata|SessionData|session`), 
+				count(DEF_id), max(DEF_timestamp) from ApAppionJobData";
+		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$row = mysql_fetch_row($r);
+		$numOfSessionsProcessed += (int)$row[0];
+		$numOfTotalProcessingRuns += (int)$row[1];
+		
+		$lastExptRunTime = ($row[2] > $lastExptRunTime) ? $row[2] : $lastExptRunTime;
+	
+		
+		/* get Ace run number and total processed images */
+		$q = "SELECT count(DISTINCT `REF|ApAceRunData|acerun`) AS runs,
+				COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS img
+				FROM `ApCtfData`";	
+		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$row = mysql_fetch_row($r);
+		$aceRun += (int)$row[0];
+		$aceProcessedImages += (int)$row[1];
+	
+		/* get particle picking run information */
+		$q = "SELECT count(*) AS runs, 
+				COUNT(DISTINCT `REF|ApDogParamsData|dogparams`) AS dog,
+				COUNT(DISTINCT `REF|ApManualParamsData|manparams`) AS manual,
+				COUNT(DISTINCT `REF|ApTiltAlignParamsData|tiltparams`) AS tilt
+				FROM `ApSelectionRunData`";	
+		
+		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$row = mysql_fetch_row($r);
+		$particleSelectionRuns += (int)$row[0];
+		$dogPickerRuns += (int)$row[1];
+		$manualPickerRuns += (int)$row[2];
+		$tiltPickerRuns += (int)$row[3];
+		$templatePicker = $particleSelectionRuns-$dogPickerRuns-$manualPickerRuns-$tiltPickerRuns;
+		
+		/* get total number of particle picked */
+		$q = "SELECT count(`DEF_id`) AS p,
+				COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS i 
+				FROM `ApParticleData`";
+		
+		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$row = mysql_fetch_row($r);
+		$selectedParticles += (int)$row[0];
+		
+		/* classification runs */
+		$q = "SELECT count(*) from ApClusteringStackData";
+		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$row = mysql_fetch_row($r);
+		$classificationRuns += (int)$row[0];
+		
+		/* Stack info */
+		$q = "SELECT count(*) AS particles,
+				COUNT(DISTINCT p.`REF|ApStackData|stack`) AS stacks
+				FROM `ApStackData` AS s
+				LEFT JOIN `ApStackParticleData` AS p
+				ON s.`DEF_id` = p.`REF|ApStackData|stack`";
+		
+		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$row = mysql_fetch_row($r);
+		$totalStacks += (int)$row[1];
+		$totalStacksParticles += (int)$row[0];
+		
+		/* get information about Reconstruction */
+		$q = "SELECT count(*) AS particles,
+			COUNT(DISTINCT p.`REF|ApRefineIterData|refineIter`) AS iter,
+			COUNT(DISTINCT i.`REF|ApRefineRunData|refineRun`) AS runs
+			FROM `ApRefineIterData` AS i
+			LEFT JOIN `ApRefineParticleData` AS p
+			ON i.`DEF_id` = p.`REF|ApRefineIterData|refineIter`";
+		
+		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$row = mysql_fetch_row($r);
+		$totalReconRun += (int)$row[2];
+		$totalReconIterations += (int)$row[1];
+		$totalClassifiedParticles += (int)$row[0];
+		
+		/* Total templates */
+		$q = "SELECT count(*) AS templates
+				FROM ApTemplateImageData";
+		
+		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$row = mysql_fetch_row($r);
+		$totalTemplates += (int)$row[0];
+	
+		/* total initial models */
+		$q = "SELECT count(*) AS models
+				FROM ApInitialModelData";
+		
+		$r = mysql_query($q) or die("Query error: " . mysql_error());
+		$row = mysql_fetch_row($r);
+		$totalInitialModels += (int)$row[0];
+		   
+	} // end while loop
+	
+	// save data in to the dataStatusReport table
+	mysql_select_db(DB_PROJECT);
+	$q = "insert into dataStatusReport 
+			(appion_project, processed_session, processed_run, last_exp_runtime, 
+			ace_run, ace_processed_image, particle_selection, dog_picker, 
+			manual_picker, tilt_picker, template_picker, selected_particle, 
+			classification, stack, stack_particle, recon_iteration, classified_particle, 
+			template, initial_model) values(".
+			$numOfApProjects.", ".$numOfSessionsProcessed.", ".$numOfTotalProcessingRuns.", '".$lastExptRunTime."', ".
+			$aceRun.", ".$aceProcessedImages.", ".$particleSelectionRuns.", ".$dogPickerRuns.", ".$manualPickerRuns.", ".
+			$tiltPickerRuns.", ".$templatePicker.", ".$selectedParticles.", ".$classificationRuns.", ".$totalStacks.", ".
+			$totalStacksParticles.", ".$totalReconIterations.", ".$totalClassifiedParticles.", ".
+			$totalTemplates.", ".$totalInitialModels.")";
+	$r = mysql_query($q) or die("Query error: " . mysql_error());
+}
 	
 
 ?>
