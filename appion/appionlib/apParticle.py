@@ -103,7 +103,7 @@ def getDefocPairParticles(imgdata, selectionid, particlelabel=None):
 
 	### get shift information
 	shiftq = appiondata.ApImageTransformationData()
-	shiftq['image1'] = defimgdata
+	shiftq['image2'] = defimgdata
 	shiftdatas = shiftq.query()
 	if shiftdatas:
 		shiftdata = shiftdatas[0]
