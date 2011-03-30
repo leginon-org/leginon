@@ -113,7 +113,7 @@ def getDefocPairParticles(imgdata, selectionid, particlelabel=None):
 				%(shiftdata['shiftx'], shiftdata['shifty'], shiftdata['scale']))
 			break
 		else:
-			if has_tried == True::
+			if has_tried == True:
 				apDisplay.printError("No shift inserted to database after one try")
 			apDisplay.printMsg("Calculating shift....")
 			shiftpeak = apDefocalPairs.getShift(defimgdata, imgdata)
