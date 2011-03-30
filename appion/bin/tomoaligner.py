@@ -22,6 +22,7 @@ from appionlib import appionScript
 from appionlib import appiondata
 from appionlib import apTomo
 from appionlib import apProTomo
+from appionlib import apProTomo2
 from appionlib import apImod
 from appionlib import apImage
 from appionlib import apParam
@@ -52,7 +53,7 @@ class protomoAligner(appionScript.AppionScript):
 			help="tilt series number in the session", metavar="int")
 		self.parser.add_option("--othertilt", dest="othertilt", type="int",
 			help="2nd tilt group series number if needed", metavar="int")
-		self.alignmethods = ( "imod-shift", "protomo" )
+		self.alignmethods = ( "imod-shift", "protomo", "protomo2" )
 		self.parser.add_option("--alignmethod", dest="alignmethod",
 			help="aligning method, e.g. --alignmethod=protomo or imod-shift", metavar="Method",
 			type="choice", choices=self.alignmethods, default="protomo" )
@@ -72,6 +73,100 @@ class protomoAligner(appionScript.AppionScript):
 			help="Protomo only: Reset beginning image origin and rotation before this image number, e.g. --goodstart=1", metavar="int")
 		self.parser.add_option("--goodend", dest="goodend",  type="int",
 			help="Protomo only: Reset ending image origin and rotation after this image number, e.g. --goodend=50", metavar="int")
+
+		# Read options related to protomo2
+		self.parser.add_option("--windowsize_x", dest="windowsize_x",  type="int",
+			help="Protomo2 only: Region of interest in the x dimension used for alignmnet (in pixels), e.g. --windowsize_x=1024", metavar="int")
+		
+		self.parser.add_option("--windowsize_y", dest="windowsize_y",  type="int",
+			help="Protomo2 only: Region of interest in the y dimension used for alignmnet (in pixels), e.g. --windowsize_y=1024", metavar="int")
+		
+		self.parser.add_option("--lowpass_diameter_x", dest="lowpass_diameter_x",  type="float",
+			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_x=0.4", metavar="float")
+		
+		self.parser.add_option("--lowpass_diameter_y", dest="lowpass_diameter_y",  type="float",
+			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_y=0.4", metavar="float")
+		
+		self.parser.add_option("--highpass_diameter_x", dest="highpass_diameter_x",  type="float",
+			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_x=0.02", metavar="float")
+		
+		self.parser.add_option("--highpass_diameter_y", dest="highpass_diameter_y",  type="float",
+			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_y=0.02", metavar="float")
+
+		self.parser.add_option("--backprojection_bodysize", dest="backprojection_bodysize",  type="float",
+			help="Protomo2 only: Back projection body size for the reconstruction (in pixels), e.g. --backprojection_bodysize=80.0", metavar="float")
+		
+		self.parser.add_option("--protomo2paramfile", dest="protomo2paramfile",
+			help="Protomo2 only: Path and filename of the protomo2 parameter file, e.g. --protomo2paramfile=/path/to/max.param", metavar="FILE")
+
+		self.parser.add_option("--max_iterations", dest="max_iterations",  type="int",
+			help="Protomo2 only: Number of alignment and geometry refinement iterations, e.g. --max_iterations=4", metavar="int")
+
+		self.parser.add_option("--do_binning", dest="do_binning",  default="True", action="store_true",
+			help="Protomo2 only: Binning of raw data if sampling factor is greater or equal to 2, e.g. --binning")
+		
+		self.parser.add_option("--do_preprocessing", dest="do_preprocessing",  default="True", action="store_true",
+			help="Protomo2 only: Remove density outliers from the images prior to processing, e.g. --do_preprocessing")
+		
+		self.parser.add_option("--border", dest="border",  type="int",
+			help="Protomo2 only: Width of area at the image edge to exclude from image statistics, e.g. --border=100", metavar="int")
+		
+		self.parser.add_option("--clip_low", dest="clip_low",  type="float",
+			help="Protomo2 only: Lower threshold specified as a multiple of the standard deviation, e.g. --clip_low=3.5", metavar="float")
+
+		self.parser.add_option("--clip_high", dest="clip_high",  type="float",
+			help="Protomo2 only: Upper threshold specified as a multiple of the standard deviation, e.g. --clip_high=3.5", metavar="float")
+
+		self.parser.add_option("--do_estimation", dest="do_estimation",  default="True", action="store_true",
+			help="Protomo2 only: Enables alignment parameter prediction, e.g. --do_estimation")
+
+		self.parser.add_option("--max_correction", dest="max_correction",  type="float",
+			help="Protomo2 only: TODO, e.g. --max_correction=0.04", metavar="float")
+
+		self.parser.add_option("--image_apodization_x", dest="image_apodization_x",  type="float",
+			help="Protomo2 only: TODO, e.g. --image_apodization_x=10.0", metavar="float")
+
+		self.parser.add_option("--image_apodization_y", dest="image_apodization_y",  type="float",
+			help="Protomo2 only: TODO, e.g. --image_apodization_y=10.0", metavar="float")
+
+		self.parser.add_option("--reference_apodization_x", dest="reference_apodization_x",  type="float",
+			help="Protomo2 only: TODO, e.g. --reference_apodization_x=10.0", metavar="float")
+
+		self.parser.add_option("--reference_apodization_y", dest="reference_apodization_y",  type="float",
+			help="Protomo2 only: TODO, e.g. --reference_apodization_y=10.0", metavar="float")
+
+		self.correlation_modes = ( "xcf", "mcf", "pcf", "dbl" )
+		self.parser.add_option("--correlation_mode", dest="correlation_mode",
+			help="Protomo2 only: Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
+			type="choice", choices=self.correlation_modes, default="mcf" )
+		
+		self.parser.add_option("--correlation_size_x", dest="correlation_size_x",  type="int",
+			help="Protomo2 only: X size of cross correlation peak image, e.g. --correlation_size_x=128", metavar="int")
+
+		self.parser.add_option("--correlation_size_y", dest="correlation_size_y",  type="int",
+			help="Protomo2 only: Y size of cross correlation peak image, e.g. --correlation_size_y=128", metavar="int")
+		
+		self.parser.add_option("--peak_search_radius_x", dest="peak_search_radius_x",  type="float",
+			help="Protomo2 only: TODO, e.g. --peak_search_radius_x=19.0", metavar="float")
+
+		self.parser.add_option("--peak_search_radius_y", dest="peak_search_radius_y",  type="float",
+			help="Protomo2 only: TODO, e.g. --peak_search_radius_y=19.0", metavar="float")
+
+		self.parser.add_option("--map_size_x", dest="map_size_x",  type="int",
+			help="Protomo2 only: Size of the reconstructed tomogram in the X direction, e.g. --map_size_x=256", metavar="int")
+
+		self.parser.add_option("--map_size_y", dest="map_size_y",  type="int",
+			help="Protomo2 only: Size of the reconstructed tomogram in the Y direction, e.g. --map_size_y=256", metavar="int")
+
+		self.parser.add_option("--map_size_z", dest="map_size_z",  type="int",
+			help="Protomo2 only: Size of the reconstructed tomogram in the Z direction, e.g. --map_size_z=128", metavar="int")
+		
+		self.parser.add_option("--map_lowpass_diameter_x", dest="map_lowpass_diameter_x",  type="float",
+			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --map_lowpass_diameter_x=0.5", metavar="float")
+		
+		self.parser.add_option("--map_lowpass_diameter_y", dest="map_lowpass_diameter_y",  type="float",
+			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --map_lowpass_diameter_y=0.5", metavar="float")
+		
 		return
 
 	#=====================
@@ -99,6 +194,11 @@ class protomoAligner(appionScript.AppionScript):
 						apDisplay.printError("Cannot specify reseting image range without knowing the cycle number to reset to")
 			elif self.params['goodcycle'] >= self.params['cycle']:
 				apDisplay.printError("Only older cycle can be used as the base to reset image origin to")
+
+		# Sampling is needed for protomo1 and 2, not imod
+		if self.params['sample'] is not None:
+			if self.params['sample'] < 1:
+				apDisplay.printError("Sampling factor (--sample) must be greater or equal to 1.")
 
 	def setProcessingDirName(self):
 		self.setTiltSeriesDir()
@@ -181,6 +281,31 @@ class protomoAligner(appionScript.AppionScript):
 			### stop when the transmation matrices are consistent, less than 1% difference
 
 	#=====================
+	def runProtomo2(self, sessiondata, processingDir,  seriesname, ordered_imagelist, refimg, center, corr_bin, commit):
+		"""
+		Uses Hanspeters' protomo2
+		takes individual MRC files or MRC stack, tiff, spider, imagic, suprim
+		"""
+		
+		# TODO: not sure the ordered_imagelist, and refimg were found correctly. May need to look into geometry file to get it.
+		# For refimg, look for tilt angle closest to 0, may be off by .1 degree.
+		
+		if not os.path.isdir( processingDir ):
+			apDisplay.printError("Protomo2 processing directory (%s) is not valid." % (processingDir, ))
+		
+		# Create an instance of the Protomo2 class 	
+		apProtomo2 = apProTomo2.ApProTomo2( sessiondata, seriesname, self.params, ordered_imagelist, refimg, center, corr_bin, processingDir )
+		
+		# Run protomo2
+		apProtomo2.run()
+
+		# Write input parameters and results to DB
+		if commit:
+			apProtomo2.commitResultsToDB()
+			
+		
+	
+	#=====================
 	def start(self):
 		commit = self.params['commit']
 		tiltdatalist = apTomo.getTiltdataList(self.params['tiltseries'],self.params['othertiltseries'])
@@ -192,28 +317,48 @@ class protomoAligner(appionScript.AppionScript):
 		apDisplay.printMsg("getting imagelist")
 		imagelist = apTomo.getImageList(tiltdatalist)
 		tilts,ordered_imagelist,ordered_mrc_files,refimg = apTomo.orderImageList(imagelist)
+		
+		# This parameter is needed for protomo, but not protomo2
 		if self.params['refimg']:
 			refimg = self.params['refimg']
-		for file in ordered_mrc_files:
-			# protomo can not function with a negative origin
-			apImage.shiftMRCStartToZero(file)
-		apDisplay.printMsg("getting pixelsize")
-		pixelsize = apTomo.getTomoPixelSize(ordered_imagelist[refimg])
+
+		if alignmethod != 'protomo2':
+			for file in ordered_mrc_files:
+				# protomo can not function with a negative origin
+				# protomo2 CAN function with negative origin
+				apImage.shiftMRCStartToZero(file)
+				
+			# TODO: This function hangs when using Protomo2
+			apDisplay.printMsg("getting pixelsize")
+			pixelsize = apTomo.getTomoPixelSize(ordered_imagelist[refimg])
+			
 		imgshape = apTomo.getTomoImageShape(ordered_imagelist[refimg])
 		corr_bin = apTomo.getCorrelatorBinning(imgshape)
 		center = {'x':imgshape[1]/2,'y':imgshape[0]/2}
 		processdir = os.path.abspath(self.params['rundir'])
 		imodseriesname = apTomo.getFilename(tiltdatalist)
+		
+		# protomo2 does not write out text files, intermediate info is in memory and the final result is binary
 		seriesname = 'tomo'+ imodseriesname
-		# Write tilt series stack images and tilt angles
-		stackdir = self.params['tiltseriesdir']
-		stackname = imodseriesname+".st"
-		apTomo.writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files)
-		apImod.writeRawtltFile(stackdir,imodseriesname,tilts)
+		# Write tilt series stack images and tilt angles, not needed for protomo2
+		if alignmethod != 'protomo2':
+			stackdir = self.params['tiltseriesdir']
+			stackname = imodseriesname+".st"
+			apTomo.writeTiltSeriesStack(stackdir,stackname,ordered_mrc_files)
+			apImod.writeRawtltFile(stackdir,imodseriesname,tilts)
+		
 		leginonxcorrlist = []
 		for tiltdata in tiltdatalist:
 			settingsdata = apTomo.getTomographySettings(sessiondata,tiltdata)
 			leginonxcorrlist.append(settingsdata)
+			
+		# Run protomo2 
+		if alignmethod == 'protomo2':
+			self.runProtomo2(sessiondata, processdir, seriesname, ordered_imagelist, refimg, center, corr_bin, commit)
+			
+			# protomo2 does not need anything beyond this point, so exit
+			return
+			
 		if cycle != 1 or alignmethod != 'protomo':
 			cycles=[cycle,]
 		else:
@@ -293,7 +438,7 @@ class protomoAligner(appionScript.AppionScript):
 			# commit to database
 			if commit:
 				if alignmethod == 'protomo':
-					# parameters
+					# -- Commit Parameters --
 					protomodata = apProTomo.insertProtomoParams(seriesname)
 					alignrun = apTomo.insertTomoAlignmentRun(sessiondata,leginonxcorrlist[0],None,protomodata,None,1,self.params['runname'],self.params['rundir'],self.params['description'])
 					self.cycle_description = self.params['description']
@@ -301,12 +446,15 @@ class protomoAligner(appionScript.AppionScript):
 					if cycle == 0:
 						# temporarily change aligner description on the initial 0 cycle
 						self.params['description'] = 'leginon correlation results'
+					# insert sample and window size and all the other user defined params into ApProtomoRefinementParamsData
 					alignerdata = apProTomo.insertAlignIteration(alignrun, protomodata, self.params, refineparamdict,ordered_imagelist[refimg])
-					#results
+					# -- Commit Results --
 					resulttltfile = os.path.join(aligndir,seriesname+'-%02d-fitted.tlt' % (cycle,))
 					resulttltparams = apProTomo.parseTilt(resulttltfile)
 					if resulttltparams:
+						# commit the geometry parameters (psi, theta, phi, azimuth)
 						modeldata = apProTomo.insertModel(alignerdata, resulttltparams)
+						# insert results into ApProtomoAlignmentData (also used by imod) for each image
 						for i,imagedata in enumerate(ordered_imagelist):
 							apProTomo.insertTiltAlignment(alignerdata,imagedata,i,resulttltparams[0][i],center)
 					self.params['description'] = self.cycle_description
