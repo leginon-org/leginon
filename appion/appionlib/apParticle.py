@@ -102,15 +102,23 @@ def getDefocPairParticles(imgdata, selectionid, particlelabel=None):
 		return ([], {'shiftx':0, 'shifty':0, 'scale':1})
 
 	### get shift information
-	shiftq = appiondata.ApImageTransformationData()
-	shiftq['image2'] = defimgdata
-	shiftdatas = shiftq.query()
-	if shiftdatas:
-		shiftdata = shiftdatas[0]
-		apDisplay.printMsg("Shifting particles by %.1f,%.1f (%d X)"
-			%(shiftdata['shiftx'], shiftdata['shifty'], shiftdata['scale']))
-	else:
-		apDisplay.printError("Could not find defocal shift data, please run alignDefocalPairs.py")
+	has_tried = False
+	while True:
+		shiftq = appiondata.ApImageTransformationData()
+		shiftq['image1'] = defimgdata
+		shiftdatas = shiftq.query()
+		if shiftdatas:
+			shiftdata = shiftdatas[0]
+			apDisplay.printMsg("Shifting particles by %.1f,%.1f (%d X)"
+				%(shiftdata['shiftx'], shiftdata['shifty'], shiftdata['scale']))
+			break
+		else:
+			if has_tried == True::
+				apDisplay.printError("No shift inserted to database after one try")
+			apDisplay.printMsg("Calculating shift....")
+			shiftpeak = apDefocalPairs.getShift(defimgdata, imgdata)
+			apDefocalPairs.insertShift(defimgdata, imgdata, shiftpeak)
+			has_tried = True
 	return (partdatas, shiftdata)
 
 #===========================
