@@ -143,7 +143,7 @@ class xmippRefineScript(appionScript.AppionScript):
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['rundir'] = os.path.join(uppath, "recons/xmipp", self.params['runname'])
+		self.params['rundir'] = os.path.join(uppath, "recon", self.params['runname'])
 
 	#=====================
 	def start(self):
@@ -267,9 +267,9 @@ class xmippRefineScript(appionScript.AppionScript):
 		os.unlink("ProjMatch/protocol_projmatch_backup.py")
 		os.unlink("ProjMatch/original_angles.doc")
 		os.unlink("ProjMatch/partlist.doc")
-		if os.path.exists("ProjMatch/Iter_1/ReferenceLibrary/ref000001.xmp"):
+		if os.path.exists("recon/ProjMatch/Iter_1/ReferenceLibrary/ref000001.xmp"):
 			# Create a blank image
-			subprocess.call("xmipp_operate -i ProjMatch/Iter_1/ReferenceLibrary/ref000001.xmp -mult 0 -o blank.xmp",
+			subprocess.call("xmipp_operate -i recon/ProjMatch/Iter_1/ReferenceLibrary/ref000001.xmp -mult 0 -o blank.xmp",
 				shell=True)
 		else:
 			apDisplay.printError("No iteration has been performed")
