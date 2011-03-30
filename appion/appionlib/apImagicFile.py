@@ -248,7 +248,7 @@ def readImagicData(datafilename, headerdict, firstpart=1, numpart=1):
 #===============
 def writeImagic(array, filename, msg=True):
 	"""
-	Rudimentary Imagic stack writer
+	Rudimentary Imagic stack writer: requires 2D images to be in list format
 	Could be improved with more sophisticated error testing and header parsing
 	Currently only reads image data as floats
 	Currently reads header information for only first image in stack
