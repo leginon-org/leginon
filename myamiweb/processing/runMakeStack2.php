@@ -173,7 +173,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 
-	$binval = ($_POST['bin']) ? $_POST['bin'] : '1';
+	$binval = ($_POST['bin']) ? $_POST['bin'] : '2';
 	$partlimit = $_POST['partlimit'];
 	$lpval = ($_POST['lp']) ? $_POST['lp'] : '';
 	$hpval = ($_POST['hp']) ? $_POST['hp'] : '';
