@@ -2652,6 +2652,11 @@ class particledata {
 
 	function getAlignStackIds ($sessionId, $showHidden=False) {
 		//$projectId = (int) getProjectFromExpId($expId);
+		// get session name, since original stack may be deleted
+		$q = "SELECT name from ".DB_LEGINON.".SessionData "
+			."WHERE DEF_id=$sessionId";
+		$r = $this->mysql->getSQLResult($q);
+		$sname = $r[0]['name'];
 		$q = "SELECT ast.`DEF_id` AS alignstackid "
 			."FROM ApAlignStackData AS ast "
 			."LEFT JOIN ApStackData AS st ON "
@@ -2660,8 +2665,12 @@ class particledata {
 			."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
 			."LEFT JOIN ApStackRunData as strun ON "
 			."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+			."LEFT JOIN ApPathData ON "
+			."  (ast.`REF|ApPathData|path`=ApPathData.`DEF_id`) "
 			."WHERE "
-			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+			."  (strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."OR "
+			."  ApPathData.`path` LIKE \"%$sname%\") ";
 		if (!$showHidden)
 			$q.= " AND ast.`hidden` != 1 ";
 		$q.= "ORDER BY alignstackid DESC";
@@ -2673,6 +2682,11 @@ class particledata {
 
 	function getAlignStackIdsWithAnalysis ($sessionId, $projectId) {
 		//$projectId = (int) getProjectFromExpId($expId);
+		// get session name, since original stack may be deleted
+		$q = "SELECT name from ".DB_LEGINON.".SessionData "
+			."WHERE DEF_id=$sessionId";
+		$r = $this->mysql->getSQLResult($q);
+		$sname = $r[0]['name'];
 		$q = "SELECT DISTINCT ast.`DEF_id` AS alignstackid "
 			."FROM ApAlignStackData AS ast "
 			."LEFT JOIN ApAlignAnalysisRunData AS analysis ON "
@@ -2683,8 +2697,12 @@ class particledata {
 			."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
 			."LEFT JOIN ApStackRunData as strun ON "
 			."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+			."LEFT JOIN ApPathData ON "
+			."  (ast.`REF|ApPathData|path`=ApPathData.`DEF_id`) "
 			."WHERE "
-			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."  (strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."OR "
+			."  ApPathData.`path` LIKE \"%$sname%\") "
 			."AND "
 			."  ast.`hidden` != 1 "
 			."AND "
@@ -2748,6 +2766,12 @@ class particledata {
 
 	function getAnalysisRuns ($sessionId, $projectId, $showHidden=False) {
 		// This query left join ApCoranRun probably for historical reason
+		// get session name, since original stack may be deleted
+		$q = "SELECT name from ".DB_LEGINON.".SessionData "
+			."WHERE DEF_id=$sessionId";
+		$r = $this->mysql->getSQLResult($q);
+		$sname = $r[0]['name'];
+
 		$q = "SELECT analysis.`DEF_id` AS analysisid, analysis.* ";
 		if ($this->mysql->SQLTableExists("ApCoranRunData")) {
 			$q .= ", coran.* ";
@@ -2765,8 +2789,12 @@ class particledata {
 			$q .= "LEFT JOIN ApCoranRunData as coran ON "
 			." (analysis.`REF|ApCoranRunData|coranrun` = coran.`DEF_id`) ";
 		}
-		$q .=	"WHERE "
-			." strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		$q .=	"LEFT JOIN ApPathData ON "
+			."  (ast.`REF|ApPathData|path`=ApPathData.`DEF_id`) "
+			."WHERE "
+			."  (strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."OR "
+			."  ApPathData.`path` LIKE \"%$sname%\") ";
 		if (!$showHidden)
 			$q.= " AND analysis.`hidden` != 1 AND ast.`hidden` != 1 ";
 		$q .= "ORDER BY analysisid DESC ";
@@ -2882,6 +2910,12 @@ class particledata {
 	}
 
 	function getClusteringStacks ($sessionId, $projectId, $showHidden=False) {
+		// get session name, since original stack may be deleted
+		$q = "SELECT name from ".DB_LEGINON.".SessionData "
+			."WHERE DEF_id=$sessionId";
+		$r = $this->mysql->getSQLResult($q);
+		$sname = $r[0]['name'];
+
 		$q = "SELECT cluster.`DEF_id` AS clusterid, clusterrun.*, cluster.*, pd.`path` "
 			."FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
@@ -2896,8 +2930,12 @@ class particledata {
 			." (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
 			."LEFT JOIN ApPathData AS pd ON "
 			."  (cluster.`REF|ApPathData|path` = pd.`DEF_id`) "
+			."LEFT JOIN ApPathData ON "
+			."  (ast.`REF|ApPathData|path`=ApPathData.`DEF_id`) "
 			."WHERE "
-			." strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+			."  (strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."OR "
+			."  ApPathData.`path` LIKE \"%$sname%\") ";
 		if (!$showHidden)
 			$q.= " AND cluster.`hidden` != 1 AND ast.`hidden` != 1 ";
 		$q .= "ORDER BY clusterid DESC ";
