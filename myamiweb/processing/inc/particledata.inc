@@ -2328,6 +2328,7 @@ class particledata {
 			$r['REF|ApStackData|oldstack'] = $stack_primary_array['REF|ApStackData|oldstack'];
 			//add needed parent stackrun parameters, but not all since they overwrites the primary values
 			$r['tiltangle'] = $params[0]['tiltangle'];
+			$r['phaseFlipped'] = $params[0]['phaseFlipped'];
 			$r['fliptype'] = $params[0]['fliptype'];
 			$r['inverted'] = $params[0]['inverted'];
 			return $r;
@@ -2343,6 +2344,7 @@ class particledata {
 		} else {
 			$r = $runarray;
 			$r['tiltangle'] = $params[0]['tiltangle'];
+			$r['phaseFlipped'] = $params[0]['phaseFlipped'];
 			$r['fliptype'] = $params[0]['fliptype'];
 			$r['inverted'] = $params[0]['inverted'];
 			$r['pixelsize'] = $params[0]['pixelsize'];
