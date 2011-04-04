@@ -6,6 +6,7 @@ import logging
 # local
 import redux.utility
 from redux.pipelines import StandardPipeline
+import redux.exceptions
 
 ### set up logging
 logger = logging.getLogger('redux')
@@ -22,8 +23,15 @@ class RequestHandler(SocketServer.StreamRequestHandler):
 		self.run_process(request)
 
 	def run_process(self, request):
-		kwargs = redux.utility.request_to_kwargs(request)
-		result = StandardPipeline().process(**kwargs)
+		try:
+			kwargs = redux.utility.request_to_kwargs(request)
+			result = StandardPipeline().process(**kwargs)
+		except redux.exceptions.ArgumentError, e:
+			result = e.error_detail()
+		except Exception, e:
+			raise
+			exc_str = str(e)
+			result = 'Unhandled exception:  %s' % (exc_str,)
 		self.wfile.write(result)
 		self.wfile.flush()
 

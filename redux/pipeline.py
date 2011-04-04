@@ -8,8 +8,11 @@ import sys
 import redux.cache
 import redux.pipe
 
-cache_size = 400*1024*1024  # 400 MB
-results = redux.cache.Cache(cache_size)
+CACHE_ON = False
+
+if CACHE_ON:
+	cache_size = 400*1024*1024  # 400 MB
+	results = redux.cache.Cache(cache_size)
 
 def log(msg):
 	sys.stderr.write(msg)
@@ -35,7 +38,7 @@ class Pipeline(object):
 		for pipe_class in self.pipeorder:
 			try:
 				pipe = pipe_class(**kwargs)
-			except redux.pipe.PipeDisabled:
+			except redux.exceptions.PipeDisabled:
 				continue
 			pipeline.append(pipe)
 		return tuple(pipeline)
@@ -59,7 +62,10 @@ class Pipeline(object):
 		n = len(pipeline)
 		for i in range(n):
 			done = pipeline[:n-i]
-			result = results.get(done)
+			if CACHE_ON:
+				result = results.get(done)
+			else:
+				result = None
 			if result is not None:
 				remain = pipeline[n-i:]
 				break
@@ -73,6 +79,7 @@ class Pipeline(object):
 			log('Running %s' % (pipe,))
 			result = pipe(result)
 			done = done + (pipe,)
-			results.put(done, result)
+			if CACHE_ON:
+				results.put(done, result)
 
 		return result
