@@ -9,7 +9,7 @@ import Image
 import time
 import threading
 
-from pyami import mrc, arraystats, arraystats
+from pyami import mrc, arraystats, arraystats, imagefun
 from leginon import icons
 import numextension
 from Entry import FloatEntry, EVT_ENTRY
@@ -339,10 +339,13 @@ class ContrastTool(object):
 		return (self.imagemax - self.imagemin)*scale + self.imagemin
 
 	def getSliderValue(self, value):
+		print 'VALUE', value, type(value)
+		print 'MINMAX', self.imagemin, self.imagemax, type(self.imagemin)
 		try:
 			scale = (value - self.imagemin)/(self.imagemax - self.imagemin)
-		except ZeroDivisionError:
+		except:
 			scale = 1.0
+		print 'SCALE', scale
 		return int(round((self.slidermax - self.slidermin)*scale + self.slidermin))
 
 	def setRange(self, range, value=None):
@@ -748,6 +751,13 @@ class ImagePanel(wx.Panel):
 
 	# image set functions
 
+	def rgbstring(self, image_array, clipmin, clipmax, colormap=None):
+		a = imagefun.linearscale(image_array, (clipmin, clipmax), (0,255))
+		a = numpy.clip(a, 0, 255)
+		a = numpy.asarray(a, numpy.uint8)
+		a = a.repeat(3)
+		return a.tostring()
+
 	def setBitmap(self):
 		'''
 		Set the internal wx.Bitmap to current Numeric image
@@ -756,10 +766,10 @@ class ImagePanel(wx.Panel):
 			clip = self.contrasttool.getRange()
 			wximage = wx.EmptyImage(self.imagedata.shape[1], self.imagedata.shape[0])
 			if self.colormap is None:
-				wximage.SetData(numextension.rgbstring(self.imagedata,
+				wximage.SetData(self.rgbstring(self.imagedata,
 																								clip[0], clip[1]))
 			else:
-				wximage.SetData(numextension.rgbstring(self.imagedata,
+				wximage.SetData(self.rgbstring(self.imagedata,
 																								clip[0], clip[1],
 																								self.colormap))
 		elif isinstance(self.imagedata, Image.Image):
