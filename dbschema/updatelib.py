@@ -38,8 +38,18 @@ def getDatabaseRevision(project_dbupgrade,printMsg=False):
 	if values:
 		revision = int(values[0][0])
 	else:
-		# myami-2.0 database has no revision record
-		revision = 14077
+		selectq = " SELECT value FROM `install` WHERE `key`='version'"
+		versionvalues = project_dbupgrade.returnCustomSQL(selectq)
+		if versionvalues:
+			dbversion = versionvalues[0][0]
+			if dbversion == '1.7':
+				# pre myami-2.0 database need more updates
+				revision = 12000
+			else:
+				# early myami-2.0 database has no revision record
+				revision = 14077
+		else:
+			raise "Unknown version log in database. Can not proceed"
 	if printMsg:
 		print '\033[36mDatabase recorded revision is %s\033[0m' % revision
 	return revision
