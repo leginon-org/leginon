@@ -182,9 +182,9 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 	 */
 	
 	while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
-		//mysql_select_db('ap172');
 
-		if($row['appiondb'] == 'ap5') continue;
+		//This is only special for our group.
+		//if($row['appiondb'] == 'ap5') continue;
 		
 		mysql_select_db($row['appiondb']);
 		
@@ -388,7 +388,7 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 		<td>Size of DB records:</td><td><?php echo $sizeOfLeginonDB; ?></td>
 	</tr>
 	<tr>
-		<td colspan=2><b>Notes</b> Only projects that have sessions sessions associated are counted.<br />
+		<td colspan=2><b>Notes:</b> Only projects that have sessions sessions associated are counted.<br />
 		Only sessions with more than 10 images are counted.</td>
 	</tr>
 
@@ -471,7 +471,7 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 		<td># Initial Models:</td><td><?php echo number_format($totalInitialModels);?></td>
 	</tr>
 	<tr>
-		<td colspan=2><b>Notes</b> Only projects that have processed data associated are counted.<br />
+		<td colspan=2><b>Notes:</b> Only projects that have processed data associated are counted.<br />
 		Only sessions with processed data associated are counted.</td>
 	</tr>
 	<tr>
