@@ -4,6 +4,17 @@ import os
 import xml.dom.minidom as dom
 from leginon import version
 
+def getPackageVersion():
+	# getSVNBranch gives branch name from either svn or text
+	svn_branch = version.getSVNBranch('.')
+	if svn_branch == 'trunk':
+		version_log = svn_branch
+	elif 'myami-' in svn_branch:
+		version_log = svn_branch.split('-')[-1]
+	else:
+		raise "Unknown svn branch"
+	return version_log
+
 def getUpdateRevisionSequence():
 	svn_branch = version.getSVNBranch('.')
 	if svn_branch == 'trunk':
@@ -62,7 +73,7 @@ def allowVerisionLog(project_dbupgrade,checkout_revision):
 	'''
 	revision_in_database = getDatabaseRevision(project_dbupgrade)
 	if checkout_revision <= revision_in_database:
-		print '\033[35mDatabase version log up to date, Nothing to do\033[0m'
+		print '\033[35mDatabase revision log up to date, Nothing to do\033[0m'
 		return False
 	schema_revisions = getUpdateRevisionSequence()
 	schema_revisions.sort()
@@ -146,3 +157,11 @@ def updateDatabaseRevision(project_dbupgrade,current_revision):
 	else:
 		insertq = "INSERT INTO `install` (`key`, `value`) VALUES ('revision', %d)"% (current_revision)
 		project_dbupgrade.executeCustomSQL(insertq)
+
+def updateDatabaseVersion(project_dbupgrade,current_version):
+	### set version of database
+	selectq = " SELECT * FROM `install` WHERE `key`='version'"
+	values = project_dbupgrade.returnCustomSQL(selectq)
+	if values:
+		project_dbupgrade.updateColumn("install", "value", "'%s'" % (current_version), 
+			"install.key = 'version'",timestamp=False)
