@@ -81,8 +81,9 @@ if (is_numeric($expId)) {
 	}
 
 	// --- Get Micrograph Assessment Data
-	$totimgs = $particle->getNumImgsFromSessionId($sessionId);
-	$assessedimgs = $particle->getNumTotalAssessImages($sessionId);
+	// TODO: getting $totimgs and $assessedimgs are very slow.
+	//$totimgs = $particle->getNumImgsFromSessionId($sessionId);
+	//$assessedimgs = $particle->getNumTotalAssessImages($sessionId);
 
 	// --- Get Stack Data
 	if ($stackIds = $particle->getStackIds($sessionId)) {
