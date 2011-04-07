@@ -28,6 +28,7 @@ $gheight=300;
 if ($_GET['type']=="s") {
 	$alias="nsession";
 	$gtitle="Number of Sessions";
+	$gtitle .= ($cumulative) ? " (cumulative)" : " (every three months)";
 	$yaxistitle="#sessions";
 
 	$sql="select "
@@ -46,6 +47,7 @@ if ($_GET['type']=="s") {
 } else {
 	$alias="nimage";
 	$gtitle="Number of Images";
+	$gtitle .= ($cumulative) ? " (cumulative)" : " (every three months)";
 	$yaxistitle="#images";
 	$sql="select "
 		."@QT:=concat(YEAR(DEF_timestamp),'-',LPAD(QUARTER(DEF_timestamp)*3-2,2,'0'),'-01') as `timestamp`, "
@@ -77,7 +79,9 @@ function TimeCallback($aVal) {
 if ($nimagedata)
 foreach ($nimagedata as $d) {
 	$datax[] = $d['unix_timestamp'];
-	if(!$cumulative) $datay[] = $d[$alias];
+	if(!$cumulative){
+		$datay[] = $d[$alias];
+	}
 	else{
 		$index = count($datay)-1;
 		$datay[] = $datay[$index] + $d[$alias];

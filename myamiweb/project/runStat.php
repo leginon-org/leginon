@@ -352,8 +352,8 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 	</tr>
 	<tr>
 		<td><table border="1"  cellpadding="5" cellspacing="0" width="100%">
-			<tr><td><b>Total # Project</b></td><td><b># Experiments</b></td><td><b>Last experiment (Date)</b></td>
-			<td><b># Processing Runs</b></td><td><b>Last run (Date)</b></td></tr>
+			<tr><td><b># Project</b></td><td><b># Experiments</b></td><td><b>Last Experiment (Date)</b></td>
+			<td><b># Processing Runs</b></td><td><b>Last Run (Date)</b></td></tr>
 			<tr align="center"><td><?php echo number_format($totalNumProjects); ?></td>
 			<td><?php echo number_format($totalNumSessionUnderProjects); ?></td>
 			<td><?php echo $lastSessionTime ?></td>
@@ -370,8 +370,9 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 		<td># Projects:</td><td><?php echo number_format($totalProjectWithSessions); ?></td>
 	</tr>
 	<tr> 
-		<td>#Sessions:</td><td><?php echo number_format($numOfSessionsWithImages); ?></td>
+		<td># Sessions:</td><td><?php echo number_format($numOfSessionsWithImages); ?></td>
 	</tr>
+	<tr height="15"></tr>
 	<tr>
 		<td># Images:</td><td><?php echo number_format($numOfImages); ?></td>
 	</tr>
@@ -381,6 +382,7 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 	<tr> 
 		<td>Size of images:</b></td><td><?php echo $numOfImageSize; ?></td>
 	</tr>
+	<tr height="15"></tr>
 	<tr>
 		<td># DB records:</td><td><?php echo number_format($numOfLeginonDBRecord); ?></td>
 	</tr>
@@ -401,9 +403,11 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 	<tr>
 		<td># Sessions:</td><td><?php echo number_format($numOfSessionsProcessed); ?></td>
 	</tr>
+	<tr height="15"></tr>
 	<tr>
 		<td># Processed images:</td><td><?php echo number_format($aceProcessedImages);?></td>
-	</tr>	
+	</tr>
+	<tr height="15"></tr>
 	<tr>
 		<td># Particle picking runs:</td><td><?php echo number_format($particleSelectionRuns); ?></td>
 	</tr>
@@ -420,8 +424,9 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Tilt Picker runs:</td><td><?php echo number_format($tiltPickerRuns);?></td>
 	</tr>
 	<tr>
-		<td># Particle picked:</td><td><?php echo number_format($selectedParticles);?></td>
+		<td># Particles picked:</td><td><?php echo number_format($selectedParticles);?></td>
 	</tr>
+	<tr height="15"></tr>
 	<tr>
 		<td># CTF runs:</td><td><?php echo number_format($totalCTF); ?></td>
 	</tr>
@@ -432,14 +437,16 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Ace 2 runs:</td><td><?php echo number_format($ace2Run); ?></td>
 	</tr>
 	<tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp; # CTFFind runs:</td><td><?php echo number_format($ctfindRun); ?></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp; # CtfFind runs:</td><td><?php echo number_format($ctfindRun); ?></td>
 	</tr>
+	<tr height="15"></tr>
 	<tr>
 		<td># Particle stacks:</td><td><?php echo number_format($totalStacks); ?></td>
 	</tr>
 	<tr>
 		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Particles in stacks:</td><td><?php echo number_format($totalStacksParticles);?></td>
 	</tr>	
+	<tr height="15"></tr>
 	<tr>
 		<td># Classification runs:</td><td><?php echo number_format($classificationRuns);?></td>
 	</tr>
@@ -455,6 +462,7 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 	<tr>
 		<td># Tomograms:</td><td><?php echo number_format($tomogramRun);?></td>
 	</tr>
+	<tr height="15"></tr>
 	<tr>
 		<td># 3D Maps:</td><td><?php echo number_format($totalReconRun);?></td>
 	</tr>
@@ -464,6 +472,7 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 	<tr>
 		<td>&nbsp;&nbsp;&nbsp;&nbsp; # Classified Particles:</td><td><?php echo number_format($totalClassifiedParticles);?></td>
 	</tr>
+	<tr height="15"></tr>
 	<tr>
 		<td># Templates:</td><td><?php echo number_format($totalTemplates);?></td>
 	</tr>
