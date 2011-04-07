@@ -1050,7 +1050,7 @@ class particledata {
 			."		c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, c.`amplitude_contrast`, "
 			."		c.`noise1`, c.`noise2`, c.`noise3`, c.`noise4`, "
 			."		c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
-			."		c.`confidence`,c.`confidence_d` , "
+			."		c.`confidence`,c.`confidence_d` , c.`cross_correlation`, "
 			."		(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 			."	from `ApCtfData` c "
 			."	left join ".DB_LEGINON.".`AcquisitionImageData` i on (i.`DEF_id` = c.`REF|leginondata|AcquisitionImageData|image`) "
@@ -1064,7 +1064,7 @@ class particledata {
 			."	AND  "
 			."  ABS(s.`SUBD|stage position|a`) < 0.9  "
 			."		)  "
-			."		order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
+			."		order by (greatest(confidence, confidence_d, cross_correlation)) desc  "
 			."	) ctfdata ";
 			// if $limit is specified, report only values with confidences > $limit
 			if ($limit) {
@@ -1173,7 +1173,7 @@ class particledata {
 				."			p.`name`, "
 				."			s.`defocus`, "
 				."			c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
-				."			c.`confidence`,c.`confidence_d` , "
+				."			c.`confidence`,c.`confidence_d` , c.`cross_correlation` , "
 				."			(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 				."		from `ApCtfData` c "
 				."		left join ".DB_LEGINON.".`AcquisitionImageData` i on (i.DEF_id=c.`REF|leginondata|AcquisitionImageData|image`) "

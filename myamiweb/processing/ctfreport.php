@@ -91,6 +91,11 @@ if ($ctfrundatas) {
 	echo "<img border='0' width='400' height='300' src='ctfgraph.php?w=400&h=300&hg=1&expId=$sessionId&s=1&f=confidence'></a>\n";
 	echo "<br/>\n";
 
+	echo "<h3>Confidence values during run</h3>\n";
+	echo "<a href='ctfgraph.php?hg=0&expId=$sessionId&s=1&f=confidence'>\n";
+	echo "<img border='0' width='400' height='300' src='ctfgraph.php?w=400&h=300&hg=0&expId=$sessionId&s=1&f=confidence'></a>\n";
+	echo "<br/>\n";
+
 	$ctfdownlink .= "<h3>";
 	$ctfdownlink .= "<a href='downloadctfdata.php?expId=$sessionId'>\n";
 	$ctfdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download ctf data'>&nbsp;download ctf data\n";

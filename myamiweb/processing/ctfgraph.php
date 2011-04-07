@@ -13,6 +13,8 @@ require "inc/project.inc";
 
 require "inc/jpgraph.php";
 require "inc/jpgraph_bar.php";
+require "inc/jpgraph_scatter.php";
+require "inc/jpgraph_line.php";
 require "inc/histogram.inc";
 require "inc/image.inc";
 
@@ -35,7 +37,6 @@ if ($summary) {
 	$runId= ($_GET[rId]);
 	$ctfinfo = $ctf->getCtfInfo($runId);
 }
-
 function scicallback($a) {
 	return format_sci_number($a,3,true);
 }
@@ -50,7 +51,12 @@ foreach($ctfinfo as $t) {
 	if ($preset && $p['name']!=$preset) {
 		continue;
 	}
-	$data[$id] = $t[$f];
+	// if looking for confidence, get highest of 3
+	if ($f=='confidence') 
+		$conf = max($t['confidence'],$t['confidence_d'],$t['cross_correlation']);
+	else $conf=$t[$f];
+
+	$data[$id] = $conf;
 	$where[] = "DEF_id=".$id;
 }
 $sqlwhere = "WHERE (".join(' OR ',$where).") and a.`REF|SessionData|session`=".$sessionId ;
@@ -62,10 +68,10 @@ $q = 	"select DEF_id, unix_timestamp(DEF_timestamp) as unix_timestamp, "
 		$e = $leginondata->getPresetFromImageId($row['DEF_id']);
 		$ndata[]=array("timestamp" => $row['timestamp'], "$f"=>$data[$row['DEF_id']]);
 		$datax[]=$row['unix_timestamp'];
-		$datay[]=$data[$row['DEF_id']];
+		$yval = $data[$row['DEF_id']];
+		if (!$yval) $yval='';
+		$datay[]=$yval;
 	}
-
-
 if ($viewdata) {
 	$keys = array("timestamp", "$f" );
 	echo dumpData($ndata, $keys);
@@ -83,9 +89,9 @@ if (!$data) {
 	if ($histogram) {
 		$graph->img->SetMargin(60,30,40,50);
 		$histogram = new histogram($data);
-		$histogram->maxval = 1.0;
 		$histogram->setBarsNumber(50);
 		$rdata = $histogram->getData();
+		$histogram->maxval = max($rdata['x']);
 
 		$rdatax = $rdata['x'];
 		$rdatay = $rdata['y'];
