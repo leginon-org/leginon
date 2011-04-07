@@ -22,7 +22,7 @@ function readACENormFile($filename) {
 
 function getAceViewerForm($name) {
 	global $ACE;
-	$aceform='ACE params';
+	$aceform='CTF params';
 	$aceform.='<ul style="margin:0; list-style-type:none">';
 	$aceform.='<select id="'.$name.'aceparam">';
 	$aceform.="<option value='1'>graph1</option>";
@@ -45,6 +45,10 @@ function getAceViewerForm($name) {
 	$aceform.='<input type="checkbox" id="'.$name.'aceparam5">';
 	$aceform.=$ACE['d4'];
 	$aceform.='</li>';
+	$aceform.='<br/>';
+	$aceform.='Graph Axis Scaling (0-1):<br>';
+	$aceform.='x:<input type="text" id="'.$name.'xscale" size=3> ';
+	$aceform.='y:<input type="text" id="'.$name.'yscale" size=3> ';
 	$aceform.='</ul>';
 	$aceform.='<input type="button" value="update" onclick=setAceParam(\''.$name.'\') />';
 	return $aceform;

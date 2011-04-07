@@ -580,6 +580,8 @@ function newfile(view){
 	dlbl = (eval("jsptcllabel"+view)) ? "&dlbl=1" : ""
 	pcb = (colorby = eval("jsptclcolor"+view)) ? "&pcb="+colorby : ""
 	nptcl = (eval(view+"nptcl_bt_st")) ? "&nptcl=1" : ""
+	scx = (acescx = eval("jsacescx"+view)) ? "&scx="+acescx : ""
+	scy = (acescy = eval("jsacescy"+view)) ? "&scy="+acescy : ""
 	if (nptcl) {
 		ptclparam=eval("jsptclparam"+view)
 		nptcl += ptclparam
@@ -600,7 +602,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+ag+ao+gradient
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+ag+ao+gradient+scx+scy
 
 	if (options == lastoptions[vid])
 		return
@@ -660,6 +662,14 @@ function setAceParam(view) {
 	if (param = document.getElementById(view+"aceparam")) {
 		vf = param.options[param.selectedIndex].value
 		eval("jsaceparam"+view+"="+vf)
+
+		scx = document.getElementById(view+"xscale").value
+		scy = document.getElementById(view+"yscale").value
+		if (!scx) scx = 1
+		if (!scy) scy = 1
+		eval("jsacescx"+view+"="+scx)
+		eval("jsacescy"+view+"="+scy)
+
 		aceopt=0
 		if (aceo = document.getElementById(view+"aceparam2")) {
 			if (aceo.checked) {

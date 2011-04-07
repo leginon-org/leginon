@@ -8,6 +8,10 @@ require "inc/ace.inc";
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];
 $imgsize=$_GET['s'];
+$graphsc_x=$_GET['scx'];
+$graphsc_y=$_GET['scy'];
+if (!is_numeric($graphsc_x)) $graphsc_x=1;
+if (!is_numeric($graphsc_y)) $graphsc_y=1;
 
 switch($_GET['g']){
 	case 1: $graph="graph1"; break;
@@ -39,7 +43,6 @@ if ($opt&8) {
 	$des['d4']['t']=$ACE['d4'];
 	$des['d4']['c']='green';
 }
-
 
 $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
@@ -87,8 +90,14 @@ if ($img=@$imagecreate($filename)) {
 		$d2= $acedata['d2'];
 		$d3= $acedata['d3'];
 		$d4= $acedata['d4'];
+		if ($graphsc_x<1 || $graphsc_y<1){
+			$d1=rescaleArray($d1,$graphsc_x,$graphsc_y);
+			$d2=rescaleArray($d2,$graphsc_x,$graphsc_y);
+			$d3=rescaleArray($d3,$graphsc_x,$graphsc_y);
+			$d4=rescaleArray($d4,$graphsc_x,$graphsc_y);
+		}
 		$inverse_distance= array();
-		for ($i = 0; $i < count($acedata['d1']);$i++) {
+		for ($i = 0; $i < count($d1);$i++) {
 			$inverse_distance[]=$i*$inverse_pixelsize;
 		}
 
@@ -130,5 +139,21 @@ if ($img=@$imagecreate($filename)) {
 		imagepng($blkimg);
 		imagedestroy($blkimg);
 	}
+}
+function rescaleArray($vals,$scx,$scy) {
+	// need to add a selection for scaling
+	$maxval = max($vals)*$scy;
+	$vlen = count($vals)*$scx;
+	$newvals=array();
+
+	$valcount = 0;
+	foreach ($vals as $val) {
+		if ($val > $maxval) $newvals[]=$maxval;
+		elseif (-$val > $maxval) $newvals[]=-$maxval;
+		else $newvals[]=$val;
+		$valcount++;
+		if ($valcount > $vlen) break;
+	}
+	return $newvals;
 }
 ?>

@@ -890,6 +890,8 @@ class view {
 			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf
 			.'var jsaceparam'.$this->name.'="'.$this->jsacepar.'";'.$this->crlf
 			.'var jsaceopt'.$this->name.'="'.$this->jsaceopt.'";'.$this->crlf
+			.'var jsacescx'.$this->name.'="'.$this->jsacescx.'";'.$this->crlf
+			.'var jsacescy'.$this->name.'="'.$this->jsacescy.'";'.$this->crlf
 			.'var jstagparam1'.$this->name.'="'.$this->jstagpar1.'";'.$this->crlf
 			.'var jstagparam2'.$this->name.'="'.$this->jstagpar2.'";'.$this->crlf
 			.'var jsptclpick'.$this->name.'="'.$this->jsptclpick.'";'.$this->crlf
