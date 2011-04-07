@@ -187,16 +187,17 @@ class leginondata {
 	}
 
 	function getInstrument($sessioninfo,$sqlwhere) {
-		# get multiple scope and camera used in the session and combined to sessioninfo
-		# scope
+		# get multiple scope, camera, and holders used in the session and combined to sessioninfo
+
+		# scope information
 		$q="select "
 		."i.`DEF_id` as `InstrumentId`, "
 		."i.`name`, "
 		."i.`hostname` "
 		."from `SessionData` s "
 		."left join AcquisitionImageData a on (a.`REF|SessionData|session`=s.`DEF_id`) "
-		."left join ScopeEMData sc on (sc.`DEF_id`=a.`REF|ScopeEMData|scope`)"
-		."left join InstrumentData i on (i.`DEF_id`=sc.`REF|InstrumentData|tem`)"
+		."left join ScopeEMData sc on (sc.`DEF_id`=a.`REF|ScopeEMData|scope`) "
+		."left join InstrumentData i on (i.`DEF_id`=sc.`REF|InstrumentData|tem`) "
 		.$sqlwhere
 		."group by i.`DEF_id`";
 		$scopeinfo = $this->mysql->getSQLResult($q);
@@ -214,7 +215,8 @@ class leginondata {
 		$scopeid_str = implode(', ',$ids);
 		$scopehost_str = implode(', ',$hosts);
 		$name_str .= ' - ';
-		# camera
+
+		# camera information
 		$q="select "
 		."i.`DEF_id` as `InstrumentId`, "
 		."i.`name`  "
@@ -235,11 +237,36 @@ class leginondata {
 		}
 		$name_str .= implode(', ',$names);
 		$cameraid_str = implode(', ',$ids);
+
+		# Holder information
+		$q = "SELECT "
+		."gh.`DEF_id` as `HolderId`, "
+		."gh.`name` "
+		."from `SessionData` s "
+		."left join `GridHolderData` gh on (gh.`DEF_id`=s.`REF|GridHolderData|holder`) "
+		.$sqlwhere
+		."group by gh.`DEF_id`";
+		$holderinfo = $this->mysql->getSQLResult($q);
+		# create strings
+		$names = array();
+		$ids = array();
+		if (is_array($holderinfo) && count($holderinfo)>0) {
+			foreach ($holderinfo as $info) {
+				$names[] = $info['name'];
+				$ids[] = $info['HolderId'];
+			}
+			$holder_str = implode(', ',$names);
+			$holderid_str = implode(', ',$ids);
+		}
 		# Add to sessioninfo
 		$sessioninfo['Scope Host'] = $scopehost_str;
 		$sessioninfo['Instrument'] = $name_str;
 		$sessioninfo['InstrumentId'] = $scopeid_str;
 		$sessioninfo['CameraId'] = $cameraid_str;
+		if ($holder_str) {
+			$sessioninfo['Holder'] = $holder_str;
+			$sessioninfo['HolderId'] = $holderid_str;
+		}
 		return $sessioninfo;
 	}
 
