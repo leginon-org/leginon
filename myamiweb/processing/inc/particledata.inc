@@ -1064,7 +1064,7 @@ class particledata {
 			."	AND  "
 			."  ABS(s.`SUBD|stage position|a`) < 0.9  "
 			."		)  "
-			."		order by (greatest(confidence, confidence_d, cross_correlation)) desc  "
+			."		order by (greatest(COALESCE(confidence,0),COALESCE(confidence_d,0),COALESCE(cross_correlation,0))) desc  "
 			."	) ctfdata ";
 			// if $limit is specified, report only values with confidences > $limit
 			if ($limit) {

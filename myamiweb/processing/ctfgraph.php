@@ -96,8 +96,8 @@ if (!$data) {
 		$rdatax = $rdata['x'];
 		$rdatay = $rdata['y'];
 
-		// Do not confidence values below 40%
-		$minx = max($histogram->idealminx, 0.4);
+		// Do not confidence values below 20%
+		$minx = max($histogram->idealminx, 0.2);
 
 		$graph->SetScale("linlin",0.0,$histogram->idealmaxy,$minx,$histogram->idealmaxx);
 
