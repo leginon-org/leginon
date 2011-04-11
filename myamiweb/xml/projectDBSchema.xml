@@ -337,7 +337,8 @@
     <field 
       name="hidden" 
       type="tinyint(1)" 
-      default="default 0"
+      default="0"
+      null="NOT NULL"
     />
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY (`hidden`)</key>

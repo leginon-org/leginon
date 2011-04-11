@@ -977,6 +977,7 @@
 		<field name="REF|UserData|user" type="int(20)" />
 		<field name="image path" type="text" />
 		<field name="comment" type="text" />
+		<field name="hidden" type="tinyint" default="0" null="NOT NULL" />
 		<field name="REF|InstrumentData|instrument" type="int(20)" />
 		<field name="REF|GridHolderData|holder" type="int(20)" />
     <key>PRIMARY KEY (`DEF_id`)</key>
