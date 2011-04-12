@@ -187,8 +187,8 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	.$currentproject['name'].' ('.$projectId.')</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
 	$proj_link.=($misc) ? "<a href='viewmisc.php?projectId=$projectId'>[Related Images, Movies, etc]</a>" : "";
-	if ($expId) $expinfo = $leginondata->getSessionInfo($expId);
-
+	//if ($expId) $expinfo = $leginondata->getSessionInfo($expId);
+	$expId = $sessioninfo;
 	$html="<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN'  'http://www.w3.org/TR/html4/strict.dtd'>
 <html>
 <head>
