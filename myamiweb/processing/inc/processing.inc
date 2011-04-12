@@ -13,6 +13,7 @@
 require_once "inc/login.inc";
 require_once "inc/ssh.inc";
 require_once "inc/session.inc";
+require_once "inc/project.inc";
 
 define('DONE_PIC','img/green_circle.gif');
 define('NONE_PIC','img/red_circle.gif');
@@ -345,7 +346,7 @@ function getSessionList($projectId,$sessionId){
 	$projectdata = new project();
 	$leginondata = new leginondata();
 
-	if(!$sessions) $sessiondata['sessions'] = $leginondata->getSessions('description', $projectId);
+	if(!$sessionId) $sessiondata['sessions'] = $leginondata->getSessions('description', $projectId);
 
 	$sessiondata['info']=$leginondata->getSessionInfo($sessionId);
 	$sessiondata['presets']=$leginondata->getTruePresets($sessionId);
