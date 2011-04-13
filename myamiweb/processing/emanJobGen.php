@@ -8,12 +8,12 @@
  *      Create an EMAN Job for submission to a cluster
  */
 
-require "inc/particledata.inc";
-require "inc/processing.inc";
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/processing.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
+require_once "inc/summarytables.inc";
 
 $selectedcluster=$CLUSTER_CONFIGS[0];
 if ($_POST['cluster']) {
