@@ -8,11 +8,11 @@
  *      Create an IMAGIC Reclassification Job initiating a 3d0 model generation
  */
 
-require "inc/particledata.inc";
-require "inc/processing.inc";
-require "inc/leginon.inc";
-require "inc/viewer.inc";
-require "inc/project.inc";
+require_once "inc/particledata.inc";
+require_once "inc/processing.inc";
+require_once "inc/leginon.inc";
+require_once "inc/viewer.inc";
+require_once "inc/project.inc";
 
 // check for errors in submission form
 if ($_POST['process']) {
