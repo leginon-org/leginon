@@ -34,6 +34,8 @@ define('C_MEMORY_MAX', "15"); // maximum memory available per node in gigabytes
 define('C_APPION_BIN', "/usr/bin"); // location of appion scripts on cluster, must end in slash, e.g., /usr/local/appion/bin/
 
 class Cluster {
+	
+	var $hostname;   //hostname of the cluster or its IP address
 
 	function set_rootpath($rootpath) {
 		$this->rootpath=$rootpath;
@@ -187,4 +189,6 @@ class Cluster {
 
 }
 $clusterdata = new Cluster();
+
+$clusterdata->hostname = C_NAME;
 ?>

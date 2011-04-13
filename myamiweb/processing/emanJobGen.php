@@ -56,7 +56,7 @@ function submitJob($extra=False) {
 
 	$expId = $_GET['expId'];
 	$projectId = getProjectId();
-	$host = $_POST['clustername'];
+	$host = $clusterdata->hostname;
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 	if (!($user && $pass))
@@ -92,17 +92,39 @@ function submitJob($extra=False) {
 	file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
 
 	processing_header("EMAN Job Submitted","EMAN Job Submitted",$javafunc);
-	echo "<table width='600'>\n";
+	
 
-	// create appion directory & copy job file
-	$cmd = "mkdir -p $outdir;\n";
-	$cmd.= "/bin/cp $tmpjobfile $outdir/$jobfile;\n";
-	exec_over_ssh($_SERVER['SERVER_ADDR'], $user, $pass, $cmd, True);
-
-	$clusterdata->cluster_cmd($host, $user, $pass);
+	// create appion directory
+	$cmd = "mkdir -p $clusterpath;\n";
+	$rvalue = exec_over_ssh($host, $user, $pass, $cmd, True);
+	if ($rvalue === false ){
+		$errMsg = "Error: Could not create run directory on $host: ";
+		$errMsg .= pconnError();
+		echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+		unlink ($tmpjobfile); //make sure to clean up after ourselves
+		exit;
+	}
+	
+	//copy jobfile to processing host
+	$remoteJobFile = "$clusterpath/$jobfile";
+	$rvalue = scp($host, $user, $pass, $tmpjobfile, $remoteJobFile);	
+	if (!$rvalue){
+		$errMsg = "Error: Copying jobfile to $clusterpath on $host failed: ";
+		$errMsg .= pconnError();
+		echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+		unlink($tmpjobfile);//make sure to clean up after ourselves
+		exit;
+	}
+	
+	//The preceding lines make the call to this function redundant as it
+	//is implimented in some cluster configs.
+	//$clusterdata->cluster_cmd($host, $user, $pass);
 	// if on local cluster, clusterpath is same as outdir
+	
+		
 	$path = formatEndPath($clusterdata->get_path()).$jobname;
-
+	
+	echo "<table width='600'>\n";
 	echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
 	echo "<tr><td>Cluster Job File</td><td>$path.job</td></tr>\n";
 	echo "<tr><td>Appion Job Id</td><td>$jobid</td></tr>\n";
@@ -112,18 +134,33 @@ function submitJob($extra=False) {
 	$cmd = "cd $path; qsub $jobfile;\n";
 
 	$jobnumstr = exec_over_ssh($host, $user, $pass, $cmd, True);
-
+  
+	//If exec_over_ssh returns false the job submition failed do to a connection
+	//error.
+	if ($jobnumstr === false){		
+		$errMsg = "Error: submitting job to $host failed:  ";
+		$errMsg .= pconnError();
+		echo "</table><p>\n";
+		echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+		unlink($tmpjobfile); //make sure to clean up after ourselves
+		exit;
+	}
+	
 	$jobnum = trim($jobnumstr);
+
 	echo "<tr><td>Cluster Job Id</td><td>$jobnum</td></tr>\n";
 	$jobnum = ereg_replace('\..*','',$jobnum);
+	
+	// Chech for non-connection related error in job submission.	
 	if (!is_numeric($jobnum)) {
 		echo "</table><p>\n";
 		echo "<hr>\n<font color='#CC3333' size='+1'>ERROR: job submission failed</font>\n";
 		echo "message: '$jobnum'<br/>";
 		processing_footer();
+		unlink($tmpjobfile);//make sure to clean up after ourselves
 		exit;
 	}
-	
+		
 	// We need to check the status of the job so that we do not overwrite it in the following updateClusterQueue refs #706
 	$jobinfo = $particle->getJobInfoFromId($jobid);
 	
@@ -150,6 +187,7 @@ function submitJob($extra=False) {
 	echo "<P><hr>\n<font color='#CC3333' size='+1'>Do not hit 'reload' - it will re-submit job</FONT><P>\n";
 
 	processing_footer(True, True);
+	unlink($tmpjobfile);//make sure to clean up after ourselves
 	exit;
 }
 

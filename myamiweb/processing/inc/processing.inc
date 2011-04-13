@@ -319,11 +319,14 @@ Password: <input type="password" name="password">
 function checkLogin() {
 	// if everything is cool, then return nothing
 	if (!$_SESSION['username']) {
-		if (!$_POST['username'] || !$_POST['password'])
-		return("Please enter your username and password to server " . $_SERVER['SERVER_ADDR']);
-		// authenticate username & password
-		if (!check_ssh($_SERVER['SERVER_ADDR'],$_POST['username'],$_POST['password']))
-		return("Authentication failed to server " . $_SERVER['SERVER_ADDR']);
+		if (!$_POST['username'] || !$_POST['password'])		
+		return("Please enter your username and password to server ");
+		// Do not authenticate username & password on webserver, this assumes
+		//the user has access to the webserver.  Until we fix this properly 
+		//just ensure that a username and password have been provided.
+		//if (!check_ssh($_SERVER['SERVER_ADDR'],$_POST['username'],$_POST['password']))
+		//return("Authentication failed to server " . $_SERVER['SERVER_ADDR']);
+		
 		## save username and password to the session
 		$_SESSION['username']=$_POST['username'];
 		$_SESSION['password']=$_POST['password'];
@@ -885,11 +888,15 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	$pass = $_SESSION['password'];
 
 	// check if database is configured on processing host
-	$cmd = "echo 'hello'";
-	$syscheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
-	if (trim($syscheck)=='') return "could not connect to processing host: $processhost";
-	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"leginondata\")'";
+	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"leginondata\")'";	
 	$dbcheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
+	if ($dbcheck === false){
+		//Return a more accurate error message		
+		$errMsg = "Could not connect to $processhost: ";
+		$errMsg .= pconnError();
+		return $errMsg;
+	}	
+
 	if (trim($dbcheck)=='') return "sinedon is not configured for leginondata, check your sinedon.cfg file";
 	
 	if($expId != 000){
@@ -951,19 +958,16 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 		$apcmd = "webcaller.py '".$filtcommand."' $rundir/$logfile";
 	}
 
-	// create run directory and wait a few seconds to make sure it happened
+	// create run directory on processing host only.  Do not do anything on
+	// the webserver, doing so requires making poor assumptions. 
 	$cmd = "mkdir -p $rundir;";
-	$temp = exec_over_ssh($webserver, $user, $pass, $cmd, True);
-	$temp = exec_over_ssh($processhost, $user, $pass, $cmd, True);
-	$checkcount = 0;
-	while (!file_exists($rundir) && $checkcount < 7) {
-		// sometime NFS cache is slow to update new changes
-		sleep(1);
-		$checkcount++;
+	$rvalue = exec_over_ssh($processhost, $user, $pass, $cmd, True);
+	if ($rvalue === false ){
+		$errMsg = "Could not create run directory on $host: ";
+		$errMsg .= pconnError();
+		return $errMsg;
 	}
-	if (!file_exists($rundir))
-	return "could not create directory '$rundir'<br/>check folder permissions";
-
+	
 	if ($testimg) {
 		//submit directly to head node on cluster if testing 1 image
 		$cmd .= "cd $rundir; $apcmd; exit;";
@@ -1015,17 +1019,21 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 
 	$jobtext .= "exit\n";
 
-	// this next part is why users have to be able to login to web server
-	// write jobfile to tmp dir on cronus3
+	// Create job file and copy it directly to the processing host via scp
 	$randstr = randomString(16);
 	$tmpfile = "/tmp/$randstr.txt";
 	$f = fopen($tmpfile,'w');
 	fwrite($f,$jobtext);
 	fclose($f);
-	// copy file to run directory on the web server
-	$cmd .= "/bin/cp $tmpfile $rundir/$jobfile;\n";
-	exec_over_ssh($webserver, $user, $pass, $cmd, True);
 
+	$rvalue = scp($processhost, $user, $pass, $tmpfile, "$rundir/$jobfile");	
+	if (!$rvalue){
+		$errMsg = "Copying jobfile to $rundir on $host failed: ";
+		$errMsg .= pconnError();
+		unlink($tmpfile);//make sure to clean up after ourselves
+		return $errMsg;
+	}
+	
 	// write output page
 	processing_header("Appion Job Submission","Appion Job Submission");
 	echo "<table width='600'>\n";
@@ -1040,7 +1048,14 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	
 	// submit job to cluster
 	$jobdata = exec_over_ssh($processhost, $user, $pass, $cmd, True);
-
+	if ($jobdata === false){		
+		$errMsg = "Error: submitting job to $host failed:  ";
+		$errMsg .= pconnError();
+		echo "</table><p>\n";
+		echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+		unlink($tmpfile); //make sure to clean up after ourselves
+		exit;
+	}
 	// retrieve job id
 	ereg("([0-9]{1,})", $jobdata, $regs);
 	$jobnum = $regs[1];
@@ -1079,6 +1094,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	echo "<p><a href='checkAppionJob.php?expId=$expId&jobId=$jobid'>[Check status of this job]</a><p>\n";
 	echo "<p><font color='#990000'>Do not hit 'reload' - it will re-submit job</font><p>\n";
 	processing_footer();
+	unlink($tmpfile); //make sure to clean up after ourselves
 	exit;
 }
 

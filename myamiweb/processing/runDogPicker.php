@@ -256,7 +256,8 @@ function runDogPicker() {
 
 	// if error display them
 	if ($errors)
-		createDogPickerForm("<b>ERROR:</b> $errors");
+		//the sting $error already contains the Error tag don't need to add it here.
+		createDogPickerForm($errors);
 	exit;
 }
 
