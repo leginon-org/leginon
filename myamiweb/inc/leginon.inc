@@ -3213,44 +3213,6 @@ class leginondata {
 	}
 }
 
-function rsum($v, $w) {
-	$v += $w;
-	return $v;
-}
-
-/*
-class MessageLog {
-
-	var $levels = array('ERROR', 'WARNING', 'INFO');
-	var $icons = array('ERROR'=>"error.png", 'WARNING'=>"warning.png", 'INFO'=>"info.png");
-	var $icon_path = "img/";
-
-	function MessageLog($data) {
-		$this->data = $data;
-		$content = '<table border="0" cellpadding="1" cellspacing="1">';
-		foreach ($data as $row) {
-			$content .= "<tr>\n";
-			foreach($row as $k=>$v) {
-				if ($k=='levelname')
-					$v = "<img src='{$this->icon_path}".$this->icons[$v]."'>";
-				$content .= "<td>$v</td>";	
-			}
-			$content .= "</tr>\n";
-		}
-			$content .= "</table>\n";
-		$this->content = $content;
-	}
-
-	function display() {
-		$html = display_table($title, $this->content);
-		return $html;
-	}
-
-
-	// level Time Message
-
-}
-*/
 $leginondata = new leginondata();
 
 ?>
