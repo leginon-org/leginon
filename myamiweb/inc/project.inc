@@ -12,6 +12,7 @@ if (ENABLE_LOGIN) {
 }
 
 require_once "inc/session.inc";
+require_once "inc/leginon.inc";
 
 define('DEFAULT_PROJECT', 'all'); 
 define('PROJECT_DB_HOST', $PROJECT_DB_HOST);
