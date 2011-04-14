@@ -20,12 +20,13 @@ if (!$appiondb->hasParticleData($expId)) {
 
 $partdatas = $appiondb->getParticles($selectionId);
 
-$data[] = "x_coord\ty_coord\timage_name\n";
+$data[] = "particle #\tx_coord\ty_coord\timage_name\n";
 //echo "</br>\n";
 
 foreach ($partdatas as $partdata) {
 	$filename = $appiondb->getImageNameFromId($partdata['REF|leginondata|AcquisitionImageData|image']);
-	$data[] = sprintf("%d\t%d\t%s\n",
+	$data[] = sprintf("%d\t%d\t%d\t%s\n",
+		$partdata['DEF_id'],
 		$partdata['xcoord'],
 		$partdata['ycoord'],
 		$filename);
@@ -35,8 +36,7 @@ $size = 0;
 foreach ($data as $line) {
 	$size += strlen($line);
 }
-//echo "filesize $size\n";
-
+//echo "filesize $size";
 
 header("Content-Type: application/text");
 header("Content-Type: application/force-download");
