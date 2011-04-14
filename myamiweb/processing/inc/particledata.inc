@@ -976,6 +976,7 @@ class particledata {
 	function getCtfInfo($runId) {
 		$q =	"select "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
+			."s.`defocus`, "
 			."c.`defocus1`, "
 			."c.`defocus2`, "
 			."c.`defocusinit`, "
@@ -996,8 +997,13 @@ class particledata {
 			."c.`snr` , "
 			."c.`graph1` , "
 			."c.`graph2` "
-			."from ApCtfData c where c.`REF|ApAceRunData|acerun`='$runId'";
+			."from ApCtfData c left join ApAceRunData r on (c. `REF|ApAceRunData|acerun` = r.`DEF_id`) "
+			."left join ".DB_LEGINON.".AcquisitionImageData i on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
+			."left join ".DB_LEGINON.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+			."where c.`REF|ApAceRunData|acerun`='$runId'";
+			
 		return $this->mysql->getSQLResult($q);
+		
 	}
 
 	function getCtfInfoFromImageId($imageId, $order=false, $ctffind=False) {

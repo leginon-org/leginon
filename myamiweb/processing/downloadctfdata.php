@@ -9,6 +9,8 @@ require "inc/processing.inc";
 //This file dumps the best CTF parameters for all images in the session
 
 $sessionId = $_GET['expId'];
+$runId = $_GET['runId'];
+
 checkExptAccessPrivilege($sessionId,'data');
 $appiondb = new particledata();
 
@@ -18,7 +20,10 @@ if (!$ctfrundatas) {
 	exit;
 }
 
-$ctfdatas = $appiondb->getBestCtfInfoForSessionId($sessionId);
+if(empty($runId))
+	$ctfdatas = $appiondb->getBestCtfInfoForSessionId($sessionId);
+else
+	$ctfdatas = $appiondb->getCtfInfo($runId);
 
 $data[] = "nominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\tconfidence_1\tconfidence_2\timage_name\n";
 //echo "</br>\n";
@@ -47,7 +52,7 @@ header("Content-Type: application/force-download");
 header("Content-Type: application/download");
 header("Content-Transfer-Encoding: binary");
 header("Content-Length: $size");
-$downname = sprintf("ctfdata-%04d.dat", $sessionId);
+$downname = (empty($runId)) ? sprintf("ctfdata-session%04d.dat", $sessionId) : sprintf("ctfdata-run%04d.dat", $runId);
 header("Content-Disposition: attachment; filename=$downname;");
 foreach ($data as $line) {
 	echo $line;
