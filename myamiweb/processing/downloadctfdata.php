@@ -25,12 +25,13 @@ if(empty($runId))
 else
 	$ctfdatas = $appiondb->getCtfInfo($runId);
 
-$data[] = "nominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\tconfidence_1\tconfidence_2\timage_name\n";
+$data[] = "image #\tnominal_def\tdefocus_1\tdefocus_2\tangle_astig\tamp_cont\tconfidence_1\tconfidence_2\timage_name\n";
 //echo "</br>\n";
 
 foreach ($ctfdatas as $ctfdata) {
 	$filename = $appiondb->getImageNameFromId($ctfdata['REF|leginondata|AcquisitionImageData|image']);
-	$data[] = sprintf("%.4e\t%.5e\t%.5e\t%.5e\t%.4f\t%.4f\t%.4f\t%s\n",
+	$data[] = sprintf("%d\t%.4e\t%.5e\t%.5e\t%.5e\t%.4f\t%.4f\t%.4f\t%s\n",
+		$ctfdata['REF|leginondata|AcquisitionImageData|image'],
 		$ctfdata['defocus'],
 		$ctfdata['defocus1'],
 		$ctfdata['defocus2'],
