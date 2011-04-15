@@ -25,6 +25,7 @@ function pickingsummarytable($selectionid, $mini=false) {
 	$selectiondatas = $particle->getSelectionParams($selectionid);
 	$selectiondata = $selectiondatas[0];
 	$selectionstats = $particle->getStats($selectionid);
+	$preset = $selectionstats['preset'];
 	//echo print_r($selectionstats)."<br/>\n";
 	//echo print_r($selectiondata)."<br/>\n";
 
@@ -62,14 +63,14 @@ function pickingsummarytable($selectionid, $mini=false) {
 		$display_keys['session'] = $selectsessiondata['name']." (id: $selectsessionid)";
 	}
 	$display_keys['method'] = $selectiontype;
-	if ($selectionstats['preset'])
-		$display_keys['preset'] = $selectionstats['preset'];
+	if ($preset)
+		$display_keys['preset'] = $preset;
 	if ($selectiondata['path'])
 		$display_keys['path'] = $selectiondata['path'];
 
 	// Show number of particles
 	if ($selectionstats['totparticles'] > 0) {
-		$dlink .= "(<font size='-2'><a href='downloadparticledata.php?expId=$expId&selectionId=$selectionid'>\n";
+		$dlink .= "(<font size='-2'><a href='downloadparticledata.php?expId=$expId&pSelectionId=$selectionid&preset=$preset'>\n";
 		$dlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download coordinates'>";
 		$dlink .= "  &nbsp;download coordinates\n";
 		$dlink .= "</a></font>)\n";

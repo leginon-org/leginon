@@ -1724,6 +1724,19 @@ class particledata {
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
+	
+	function getParticlesDataWithDeforcusPair($runId){
+		
+		$q="SELECT a.`DEF_id`,a.xcoord, a.ycoord, a.`REF|leginondata|acquisitionImageData|image` as imageNum, "
+			."t.`REF|leginondata|AcquisitionImageData|image2` as pImage, t.shiftx, t.shifty "
+			."FROM ApParticleData as a "
+			."LEFT JOIN ApImageTransformationData t "
+			."ON (a.`REF|leginondata|acquisitionImageData|image` = t.`REF|leginondata|AcquisitionImageData|image1`) "
+			."WHERE a.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;	
+		
+	}
 
 	function getImgIdFromSelectionRun ($runId) {
 		$q="SELECT "
