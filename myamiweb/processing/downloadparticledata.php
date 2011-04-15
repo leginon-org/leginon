@@ -20,16 +20,16 @@ if (!$appiondb->hasParticleData($expId)) {
 
 $partdatas = $appiondb->getParticles($selectionId);
 
-$data[] = "particle #\tx_coord\ty_coord\timage_name\n";
+$data[] = "particle #\tx_coord\ty_coord\timage_#\n";
 //echo "</br>\n";
 
 foreach ($partdatas as $partdata) {
-	$filename = $appiondb->getImageNameFromId($partdata['REF|leginondata|AcquisitionImageData|image']);
-	$data[] = sprintf("%d\t%d\t%d\t%s\n",
+	//$filename = $appiondb->getImageNameFromId($partdata['REF|leginondata|AcquisitionImageData|image']);
+	$data[] = sprintf("%d\t%d\t%d\t%d\n",
 		$partdata['DEF_id'],
 		$partdata['xcoord'],
 		$partdata['ycoord'],
-		$filename);
+		$partdata['REF|leginondata|AcquisitionImageData|image']);
 }
 
 $size = 0;
