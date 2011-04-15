@@ -2427,6 +2427,16 @@ class particledata {
 		//echo print_r($r[0])."<br/><br/>\n";
 		return $r;
 	}
+	
+	function getParticlesFromStack($stackId){
+		$q= "SELECT `REF|ApParticleData|particle` AS particleId, mean, stdev, skew, "
+			."kurtosis, edgemean, edgestdev, centermean, centerstdev, min, max "
+			."FROM `ApStackParticleData` "
+			."WHERE `REF|ApStackData|stack` = '$stackId'"; 
+			
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
 
 	function getNumStackParticles ($stackId) {
 		$q= "SELECT count(DEF_id) as num "

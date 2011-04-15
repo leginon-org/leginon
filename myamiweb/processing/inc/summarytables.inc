@@ -149,7 +149,14 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 	}
 	elseif ($showOptions) $j.= " <input class='edit' type='submit' name='hideItem".$stackid."' value='hide'>\n";
 	if ($showOptions) $j.="<input class='edit' type='button' onClick='parent.location=\"dropstack.php?expId=$expId&sId=$stackid\"' value='delete'>\n";
+	
+	$downloadLink = "(<font size='-2'><a href='downloadStackParticles.php?expId=$expId&stackId=$stackid'>\n";
+	$downloadLink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download coordinates'>";
+	$downloadLink .= "  &nbsp;download particles data\n";
+	$downloadLink .= "</a></font>)\n";
+	$j.= $downloadLink;	
 	$stacktable.= apdivtitle($j);
+	
 	if ($tiny)
 		return $stacktable;
 
