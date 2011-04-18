@@ -49,11 +49,6 @@ if ($templateparams) {
 
 # more display about the particles
 if ($particlestats['totparticles']) {
-	$partdownlink .= "<font size='+1'><a href='downloadparticledata.php?expId=$expId&selectionId=$runId'>\n";
-	$partdownlink .= "  <img style='vertical-align:middle' src='img/download_arrow.png' border='0' width='16' height='17' alt='download stack'>&nbsp;download particle data\n";
-	$partdownlink .= "</a></font><br/>\n";
-
-	echo $partdownlink;
 
 	echo "<h4>Particle Position Histograms</h4>\n";
 	echo "<table cellspacing='1' cellpadding='2'><tr><td>";
