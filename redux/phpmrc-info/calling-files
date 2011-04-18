@@ -1,0 +1,14 @@
+     28 myamiweb/inc/image.inc
+     26 myamiweb/inc/filter.inc
+      9 myamiweb/getimgfile.php
+      7 myamiweb/processing/getstackimg.php
+      6 myamiweb/imgreport.php
+      5 myamiweb/tomo/jpeg.php
+      4 myamiweb/processing/loadimg.php
+      4 myamiweb/getimagestat.php
+      3 myamiweb/imagehistogram.php
+      2 myamiweb/processing/viewstack.php
+      1 myamiweb/viewerxml.php
+      1 myamiweb/stackviewer.php
+      1 myamiweb/inc/viewer.inc
+      1 myamiweb/inc/mrc.inc
