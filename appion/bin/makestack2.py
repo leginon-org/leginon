@@ -1161,8 +1161,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				+" -i %s"%os.path.join(self.params['rundir'],selfile)
 				+" -method Ramp "
 				+" -background circle %i"%(int(self.params['boxsize']/self.params['bin']*0.4))
-				+" -thr_black_dust=-%.2f "%(self.params['xmipp-norm'])
-				+" -thr_white_dust=%.2f "%(self.params['xmipp-norm'])
+				+" -remove_black_dust"
+				+" -remove_white_dust"
+				+" -thr_black_dust -%.2f"%(self.params['xmipp-norm'])
+				+" -thr_white_dust %.2f"%(self.params['xmipp-norm'])
 			)
 			xmippcmd = self.xmippexe+" "+xmippopts
 			apParam.runCmd(xmippcmd, package="Xmipp", verbose=True, showcmd=True)
