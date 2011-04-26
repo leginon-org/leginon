@@ -118,7 +118,7 @@ if (is_numeric($expId)) {
 
 	// get template picking stats:
 	$tresults=array();
-	$drsults=array();
+	$dresults=array();
 	$mresults=array();
 
 	$tdone = count($subclusterjobs['templatecorrelator']['done']);
@@ -154,8 +154,8 @@ if (is_numeric($expId)) {
 	$dresults[] = ($dq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=dogpicker'>$dq queued</a>";
 
 	$sresults[] = ($sdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$sdone complete</a>";
-	$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=signaturepicker'>$srun running</a>";
-	$sresults[] = ($sq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=signaturepicker'>$sq queued</a>";
+	$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=signature'>$srun running</a>";
+	$sresults[] = ($sq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=signature'>$sq queued</a>";
 
 	$mresults[] = ($mdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$mdone complete</a>";
 	$mresults[] = ($mrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mrun running</a>";
@@ -911,6 +911,51 @@ if (is_numeric($expId)) {
 			'newrun' => array($nruns, $celloption),
 		);		
 	}
+	
+	// Automated Software Testing
+
+	// $TEST_SESSIONS is defined in config.php. It is an array containing the session name
+	// of each session that has a test file available. The test files should be named "test_sessionname.py",
+	// where sessionname is included in the $TEST_SESSIONS list.
+	global $TEST_SESSIONS;
+	if ( isset($TEST_SESSIONS) ) {
+		$bTestSession = in_array( $sessioninfo["Name"], $TEST_SESSIONS );
+	} else {
+		$bTestSession = False;
+	}
+	
+	if ( !HIDE_TEST_TOOLS && $bTestSession ){
+		// Add a menu header
+		$action = "Testing Tools";
+		
+		// Find number of complete, running and queued jobs
+		$results=array();
+	
+		$done = count($subclusterjobs['testsuite']['done']);
+		$running = count($subclusterjobs['testsuite']['running']);
+		$queued = count($subclusterjobs['testsuite']['queued']);
+		
+		$results[] = ($done==0) ? "" : "<a href='testsuitereport.php?expId=$sessionId'>$done complete</a>";
+		$results[] = ($running==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=testsuite'>$running running</a>";
+		$results[] = ($queued==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=testsuite'>$queued queued</a>";
+		
+		// Add a menu option
+		$nruns = array();
+		$nruns[] = array(
+			'name' => "<a href='runTestScript.php?expId=$sessionId'>Run Test Script</a>",
+			'result' => $results,
+		);
+		
+		$data[] = array(
+			'action' => array($action, $celloption),
+			'result' => array(),
+			'newrun' => array($nruns, $celloption),
+		);
+		
+	
+	}
+	
+	
 } elseif (is_numeric($projectId)) {
 	$action = "Upload images";
 	$nruns[] = array(

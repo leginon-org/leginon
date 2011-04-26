@@ -1341,6 +1341,7 @@ class ApTestRunData(Data):
 			('name', str),
 			#('path', str),
 			('path', ApPathData),
+			('append_timestamp', str),
 		)
 	typemap = classmethod(typemap)
 
