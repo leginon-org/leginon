@@ -178,6 +178,12 @@ define('EXCLUDED_PROJECTS',"");
 // --- hide testing tools related to specific data sets. --- //
 define('HIDE_TEST_TOOLS', true);
 
+// --- Redux server Host and Port information. --- //
+// --- define('SERVER_HOST', "redux.schools.edu"); --- //
+// --- define('SERVER_PORT', "55123"); --- //
+define('SERVER_HOST', "");
+define('SERVER_PORT', "55123");
+
 // --- list specifc datasets that have test scripts associated with them --- //
 // --- example:
 // --- $TEST_SESSIONS = array(

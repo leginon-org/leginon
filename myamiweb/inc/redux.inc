@@ -11,20 +11,17 @@
  */
 require_once 'formValidator.php';
 
-define("SERVER_HOST", "");
-define("SERVER_POST", "");
-
 $validator = new formValidator();
 
 class redux{
 	private $filename;		//input image filename with full location path.
-	private $padShape;		// need to be x, y array
-	private $padPos;		// need to be x, y array
+	private $padShape;		// need to be x, y array (need to be bigger than original file size)
+	private $padPos;		// need to be x, y array (start positions).
 	private $padValue;		// float
 	private $power;			// boolean
 	private $maskRadius;	// float 
-	private $shape;			// x, y array
-	private $lpf;			// low pass filter, float
+	private $shape;			// x, y array (output size)
+	private $lpf;			// low pass filter, float (the default is not use at all)
 	private $scaleMin;		// float
 	private $scaleMax;		// float
 	private $scaleType;		// image scale type [choices ("minmax", "stdev", "cdf")]
@@ -36,11 +33,13 @@ class redux{
 	 * default constructor requires at lease image input location
 	 * and output format
 	 */
-	function __construct($filename, $oFormat){
+	function __construct($filename, $oFormat=null){
 		
 		$this->setFilename($filename);	
-		$this->setOFormat($oFormat);	
-	
+		
+		// set default output format to JPEG
+		$oFormat = (empty($oFormat))? 'JPEG': $oFormat;
+		$this->setOFormat('JPEG');
 	}
 	
 	/*
@@ -66,7 +65,10 @@ class redux{
 	function getMaskRadius() 	{ return $this->maskRadius; }
 	
 	function getShape(){ 
-		return $this->shape[0]. 'x' . $this->shape[1]; 
+		return $this->shape[1]. 'x' . $this->shape[0]; 
+	}
+	function getShapeValue(){
+		return $this->shape;
 	}
 	
 	function getLpf() 			{ return $this->lpf; }
@@ -114,17 +116,27 @@ class redux{
 	function setPadValue($padValue){ 
 		
 		global $validator;
-		$validator->addValidation("padValue", $padValue, "num", "Pad value must be an integer.");
+		$validator->addValidation("padValue", $padValue, "float", "Pad value must be an float.");
 		$this->padValue = $padValue; 
 	}
-	
+
 	function setPower($power){ 
 		
 		global $validator;
 		if(!is_bool($power))
 			$validator->setErrorMessage("power", "The value of power must be boolean (true, flase).");
-		
+
+		/* Special note:
+		 * The if statement is to insure when the original image is not square. Need to convert 
+		 * to square image's shape for display FFT
+		 */
+		if($power){
+			$shape = $this->getShapeValue();
+			$dimMax = max((int)$shape[0], (int)$shape[1]);
+			$this->setShape(array($dimMax, $dimMax));			
+		}
 		$this->power = $power; 
+
 	}
 	
 	function setMaskRadius($maskRadius){ 
@@ -141,15 +153,15 @@ class redux{
 		if(!is_array($shape) || (count($shape) != 2)) 
 			$validator->setErrorMessage("shape", "Shape must be an array and contain two elements (x, y).");
 			
-		$validator->addValidation("shapeX", $shape[0], "num", "Shape X value must be a positive integer.");
-		$validator->addValidation("shapeX", $shape[1], "num", "Shape Y value must be a positive integer.");
+		$validator->addValidation("shapeX", $shape[1], "num", "Shape X value must be a positive integer.");
+		$validator->addValidation("shapeX", $shape[0], "num", "Shape Y value must be a positive integer.");
 		$this->shape = $shape; 
 	}
 	
 	function setLpf($lpf){ 
 		
 		global $validator;
-		$validator->addValidation("lpf", $lpf, "float", "lpf value must be a float.");
+		$validator->addValidation("lpf", $lpf, "float", "LPF value must be a float.");
 		$this->lpf = $lpf; 
 	}
 	
@@ -215,10 +227,11 @@ class redux{
 		$this->errMsg = $validator->getErrorMessage();
 	}
 	
-	function requestString(){
-
+	function constructRequestString(){
+		/* Comment out some functions because Redux server has not fully test yet */
+		
 		$str = 'filename=' . $this->getFilename();
-		$str .= empty($this->padShape) ? '' : '&padshape=' . $this->getPadShape();
+		//$str .= empty($this->padShape) ? '' : '&padshape=' . $this->getPadShape();
 		$str .= empty($this->power) ? '' : '&power=' . $this->getPower();
 		$str .= empty($this->maskRadius) ? '' : '&maskradius=' . $this->getMaskRadius();
 		$str .= empty($this->shape) ? '' : '&shape=' . $this->getShape();
@@ -226,11 +239,32 @@ class redux{
 		$str .= empty($this->scaleMin) ? '' : '&scalemin=' . $this->getScaleMin();
 		$str .= empty($this->scaleMax) ? '' : '&scalemax=' . $this->getScaleMax();
 		$str .= empty($this->oFormat) ? '' : '&oformat=' . $this->getOFormat();
-		$str .= empty($this->padPos) ? '' : '&padpos=' . $this->getPadPos();
-		$str .= empty($this->padValue) ? '' : '&padvalue=' . $this->getPadValue();	
+		//$str .= empty($this->padPos) ? '' : '&padpos=' . $this->getPadPos();
+		//$str .= empty($this->padValue) ? '' : '&padvalue=' . $this->getPadValue();	
 		$str .= empty($this->lpf) ? '' : '&lpf=' . $this->getLpf();	
-		
+
 		return $str;
+	}
+	
+	function requestImage(){
+
+		$msg = $this->constructRequestString() ."\n";
+
+		$reduxsock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+		socket_connect($reduxsock, SERVER_HOST, SERVER_PORT);
+		socket_write($reduxsock, $msg, strlen($msg));
+	
+		$reply = "";
+		do {
+				 $recv = "";
+				 $recv = socket_read($reduxsock, 8192);
+
+				 if($recv != "") {
+						 $reply .= $recv;
+				 }
+		} while($recv != ""); 
+	
+		return $reply;		
 	}
 }
 
