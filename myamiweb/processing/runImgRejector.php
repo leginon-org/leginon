@@ -235,7 +235,7 @@ function runImgRejector() {
 	if ($_POST['acecheck']=='on') {
 		$ctfcutoff = $_POST['ctfcutoff'];
 		if ($ctfcutoff > 1 || $ctfcutoff < 0 || !$ctfcutoff) 
-			createImgRejectorForm("<b>ERROR:</b> Ace cutoff must be between 0 & 1");
+			createImgRejectorForm("<b>ERROR:</b> CTF cutoff must be between 0 & 1");
 	}
 	
 	/* *******************

@@ -147,9 +147,9 @@ class ImageRejector(appionLoop2.AppionLoop):
 				#apDisplay.printWarning("skipping no ACE values for "+apDisplay.short(imgdata['filename']))
 				return True
 
-		### check that ACE estimation is above confidence threshold
+		### check that CTF estimation is above confidence threshold
 		if self.params['ctfcutoff'] and conf < self.params['ctfcutoff']:
-			apDisplay.printColor("\nrejecting below ACE cutoff: "+apDisplay.short(imgdata['filename'])+" conf="+str(round(conf,3)), "cyan")
+			apDisplay.printColor("\nrejecting below CTF cutoff: "+apDisplay.short(imgdata['filename'])+" conf="+str(round(conf,3)), "cyan")
 			return False
 
 

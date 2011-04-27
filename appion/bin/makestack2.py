@@ -106,15 +106,15 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### check if we have values and if we care
 		if ctfvalue is None:
 			if self.params['ctfcutoff'] or self.params['mindefocus'] or self.params['maxdefocus'] or self.params['phaseflipped']:
-				#apDisplay.printColor(shortname+" was rejected because it has no ACE values\n","cyan")
+				#apDisplay.printColor(shortname+" was rejected because it has no CTF values\n","cyan")
 				return False
 			else:
-				#apDisplay.printWarning(shortname+" has no ACE values")
+				#apDisplay.printWarning(shortname+" has no CTF values")
 				return True
 
-		### check that ACE estimation is above confidence threshold
+		### check that CTF estimation is above confidence threshold
 		if self.params['ctfcutoff'] and conf < self.params['ctfcutoff']:
-			#apDisplay.printColor(shortname+" is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
+			#apDisplay.printColor(shortname+" is below CTF threshold (conf="+str(round(conf,3))+")\n","cyan")
 			return False
 
 		### get best defocus value
@@ -913,7 +913,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		self.parser.add_option("--single", dest="single", default="start.hed",
 			help="create a single stack")
 		self.parser.add_option("--ctfcutoff", dest="ctfcutoff", type="float",
-			help="ACE cut off")
+			help="CTF cut off")
 		self.parser.add_option("--boxsize", dest="boxsize", type="int",
 			help="particle box size in pixel")
 		self.parser.add_option("--mincc", dest="correlationmin", type="float",
