@@ -237,7 +237,7 @@ class testScript(appionScript.AppionScript):
 		selectid = apParticle.getRecentSelectionIdFromSession(self.sessionname)
 
 		script = os.path.join(self.appiondir, "bin", "makestack2.py ")
-		params = ((" --runname=%s --projectid=%d --session=%s --no-wait --boxsize=%d --bin=%d --acecutoff=%.2f --invert --phaseflip --flip-type=ace2image --selectionid=%d --description='%s'")
+		params = ((" --runname=%s --projectid=%d --session=%s --no-wait --boxsize=%d --bin=%d --ctfcutoff=%.2f --invert --phaseflip --flip-type=ace2image --selectionid=%d --description='%s'")
 			%(stackname, self.params['projectid'], self.sessionname, 512, 2, 0.7, selectid, 'running test suite application'))
 		if self.params['commit'] is True:
 			params += " --commit "

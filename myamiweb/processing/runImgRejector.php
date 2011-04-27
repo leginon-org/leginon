@@ -47,12 +47,12 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	<script LANGUAGE='JavaScript'>
 	  function enableace(){
 	    if (document.viewerform.acecheck.checked){
-	      document.viewerform.acecutoff.disabled=false;
-	      document.viewerform.acecutoff.value='0.8';
+	      document.viewerform.ctfcutoff.disabled=false;
+	      document.viewerform.ctfcutoff.value='0.8';
 	    }
 	    else {
-	      document.viewerform.acecutoff.disabled=true;
-	      document.viewerform.acecutoff.value='0.8';
+	      document.viewerform.ctfcutoff.disabled=true;
+	      document.viewerform.ctfcutoff.value='0.8';
 	    }
 	  }
 	  </SCRIPT>\n";
@@ -84,7 +84,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	// ace check params
 	$acecheck = ($_POST['acecheck']=='on') ? 'CHECKED' : '';
 	$acedisable = ($_POST['acecheck']=='on') ? '' : 'DISABLED';
-	$acecutoff = ($_POST['acecheck']=='on') ? $_POST['acecutoff'] : '0.8';
+	$ctfcutoff = ($_POST['acecheck']=='on') ? $_POST['ctfcutoff'] : '0.8';
 	echo "<table border=0 class=tableborder>\n";
 	echo "<tr>\n";
 	echo "<td valign='TOP'>\n";
@@ -163,7 +163,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 		<input type='checkbox' name='acecheck' onclick='enableace(this)' $acecheck>
 		ACE Confidence Cutoff<br />
 		&nbsp;&nbsp;&nbsp;
-		Use Values Above: <input type='text' name='acecutoff' $acedisable value='$acecutoff' size='4'>
+		Use Values Above: <input type='text' name='ctfcutoff' $acedisable value='$ctfcutoff' size='4'>
 		<FONT SIZE=-2>(btw 0.0 - 1.0)</FONT>
 		</td></tr>\n";
 
@@ -231,10 +231,10 @@ function runImgRejector() {
 	//make sure a session was selected
 	if (!$outdir) createImgRejectorForm("<b>ERROR:</b> Select an experiment session");
 	
-	// ace cutoff
+	// ctf cutoff
 	if ($_POST['acecheck']=='on') {
-		$acecutoff = $_POST['acecutoff'];
-		if ($acecutoff > 1 || $acecutoff < 0 || !$acecutoff) 
+		$ctfcutoff = $_POST['ctfcutoff'];
+		if ($ctfcutoff > 1 || $ctfcutoff < 0 || !$ctfcutoff) 
 			createImgRejectorForm("<b>ERROR:</b> Ace cutoff must be between 0 & 1");
 	}
 	
@@ -251,7 +251,7 @@ function runImgRejector() {
 	if ($_POST['notiltpairs']=='on') $command.="--notiltpairs ";
 	if ($_POST['nopicks']=='on') $command.="--nopicks ";
 	if ($_POST['noace']=='on') $command.="--noace ";
-	if ($acecutoff) $command.="--acecutoff=$acecutoff ";
+	if ($ctfcutoff) $command.="--ctfcutoff=$ctfcutoff ";
 	if ($dfmin) $command.="--mindefocus=$dfmin ";
 	if ($dfmax) $command.="--maxdefocus=$dfmax ";
 	$command.="--no-wait ";

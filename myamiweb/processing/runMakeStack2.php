@@ -70,13 +70,13 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$javascript="<script src='../js/viewer.js'></script>
 	<script type='text/javascript'>
 
-	function enableace(){
-		if (document.viewerform.acecheck.checked){
-			document.viewerform.ace.disabled=false;
-			document.viewerform.ace.value='0.8';
+	function enablectf(){
+		if (document.viewerform.ctfcheck.checked){
+			document.viewerform.ctf.disabled=false;
+			document.viewerform.ctf.value='0.8';
 		} else {
-			document.viewerform.ace.disabled=true;
-			document.viewerform.ace.value='0.8';
+			document.viewerform.ctf.disabled=true;
+			document.viewerform.ctf.value='0.8';
 		}
 	}
 
@@ -181,11 +181,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$iceval = ($_POST['icecheck']=='on') ? $_POST['ice'] : '0.8';
 	$icecheck = ($_POST['icecheck']=='on') ? 'CHECKED' : '';
 	$icedisable = ($_POST['icecheck']=='on') ? '' : 'DISABLED';
-	// ace check params
-	$acecheck = ($_POST['acecheck']=='on') ? 'CHECKED' : '';
+	// ctf check params
+	$ctfcheck = ($_POST['ctfcheck']=='on') ? 'CHECKED' : '';
 	$ctffindcheck = ($_POST['ctffindonly'])=='on' ? 'CHECKED' : '';
-	$acedisable = ($_POST['acecheck']=='on') ? '' : 'DISABLED';
-	$aceval = ($_POST['acecheck']=='on') ? $_POST['ace'] : '0.8';
+	$ctfdisable = ($_POST['ctfcheck']=='on') ? '' : 'DISABLED';
+	$ctfval = ($_POST['ctfcheck']=='on') ? $_POST['ctf'] : '0.8';
 	// correlation check params
 	$selexminval = ($_POST['selexcheck']=='on') ? $_POST['correlationmin'] : '0.5';
 	$selexmaxval = ($_POST['selexcheck']=='on') ? $_POST['correlationmax'] : '1.0';
@@ -431,10 +431,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			echo docpop('ctffindonly','Only use CTFFIND values');
 			echo "<br/>\n";
 		}
-		echo"<input type='checkbox' name='acecheck' onclick='enableace(this)' $acecheck>\n";
+		echo"<input type='checkbox' name='ctfcheck' onclick='enablectf(this)' $ctfcheck>\n";
 		echo docpop('aceconf','CTF Confidence Cutoff');
 		echo "<br />\n";
-		echo "Use Values Above:<input type='text' name='ace' $acedisable value='$aceval' size='4'>
+		echo "Use Values Above:<input type='text' name='ctf' $ctfdisable value='$ctfval' size='4'>
 		(between 0.0 - 1.0)\n";
 		echo "<br/>\n";
 		echo "<br/>\n";
@@ -566,7 +566,6 @@ function runMakestack() {
 
 
 	// xmipp normalization
-	// ace cutoff
 	if ($_POST['xmippnormcheck']=='on') {
 		$xmippnorm=$_POST['xmippnormval'];
 		if ($xmippnorm <= 0 || !$xmippnorm) createMakestackForm("<b>ERROR:</b> Xmipp sigma must be greater than 0" );
@@ -610,10 +609,10 @@ function runMakestack() {
 	$hp = $_POST['hp'];
 	if ($hp && !is_numeric($hp)) createMakestackForm("<b>ERROR:</b> high pass filter must be a number");
 
-	// ace cutoff
-	if ($_POST['acecheck']=='on') {
-		$ace=$_POST['ace'];
-		if ($ace > 1 || $ace < 0 || !$ace) createMakestackForm("<b>ERROR:</b> Ace cutoff must be between 0 & 1");
+	// ctf cutoff
+	if ($_POST['ctfcheck']=='on') {
+		$ctf=$_POST['ctf'];
+		if ($ctf > 1 || $ctf < 0 || !$ctf) createMakestackForm("<b>ERROR:</b> CTF cutoff must be between 0 & 1");
 	}
 
 	// correlation cutoff
@@ -671,7 +670,7 @@ function runMakestack() {
 	if ($massessname) $command.="--maskassess=$massessname ";
 	$command.="--boxsize=$boxsize ";
 	if ($bin > 1) $command.="--bin=$bin ";
-	if ($ace) $command.="--acecutoff=$ace ";
+	if ($ctf) $command.="--ctfcutoff=$ctf ";
 	if ($defocpair) $command.="--defocpair ";
 	if ($correlationmin) $command.="--mincc=$correlationmin ";
 	if ($correlationmax) $command.="--maxcc=$correlationmax ";

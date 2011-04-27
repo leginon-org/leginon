@@ -310,15 +310,15 @@ class TestScript(appionScript.AppionScript):
 		self.runCommand(script+" "+params)
 
 	#=====================
-	def makeStack(self, boxsize=512, bin=2, acecutoff=0.7):
+	def makeStack(self, boxsize=512, bin=2, ctfcutoff=0.7):
 		runnum = apStack.getNumStacksFromSession(self.sessionname)
 		stackname = "stack%d-%s"%(runnum+1, self.timestamp)
 
 		selectid = apParticle.getRecentSelectionIdFromSession(self.sessionname)
 
 		script = os.path.join(self.appiondir, "bin", "makestack2.py ")
-		params = ((" --runname=%s --projectid=%d --session=%s --no-wait --boxsize=%d --bin=%d --acecutoff=%.2f --invert --phaseflip --flip-type=ace2image --selectionid=%d --description='%s'")
-			%(stackname, self.params['projectid'], self.sessionname, boxsize, bin, acecutoff, selectid, 'running test suite application'))
+		params = ((" --runname=%s --projectid=%d --session=%s --no-wait --boxsize=%d --bin=%d --ctfcutoff=%.2f --invert --phaseflip --flip-type=ace2image --selectionid=%d --description='%s'")
+			%(stackname, self.params['projectid'], self.sessionname, boxsize, bin, ctfcutoff, selectid, 'running test suite application'))
 		
 		# Add appion flags 
 		params += self.appionFlags

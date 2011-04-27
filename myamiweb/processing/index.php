@@ -341,9 +341,9 @@ foreach ($reconRuns as $recon) {
 	else $m .= "manually selected from the micrographs \n";
 	$m .= "and extracted at a box size of ".$stackparams['boxSize']."&nbsp;pixels. \n";
 	if ($hasCTF) {
-		$acecutoff=($stackparams['aceCutoff']) ? $stackparams['aceCutoff']*100 : '' ;
-		if ($acecutoff)
-			$m .= "Only particles whose CTF estimation had an confidence value of ".$acecutoff."% or better were extracted. \n";
+		$ctfcutoff=($stackparams['aceCutoff']) ? $stackparams['aceCutoff']*100 : '' ;
+		if ($ctfcutoff)
+			$m .= "Only particles whose CTF estimation had an confidence value of ".$ctfcutoff."% or better were extracted. \n";
 		if ($stackparams['phaseFlipped']==1)
 			$m .= "Phase correction of the single particles was carried out by ".$stackparams['fliptype']." during creation of the particle stack. \n";
 	}

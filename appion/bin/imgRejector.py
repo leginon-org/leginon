@@ -26,8 +26,8 @@ class ImageRejector(appionLoop2.AppionLoop):
 			help="mindefocus", metavar="#")
 		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float",
 			help="maxdefocus", metavar="#")
-		self.parser.add_option("--acecutoff", dest="acecutoff", type="float",
-			help="acecutoff", metavar="#")
+		self.parser.add_option("--ctfcutoff", dest="ctfcutoff", type="float",
+			help="ctfcutoff", metavar="#")
 		self.parser.add_option("--noace", dest="noace", default=False,
 			action="store_true", help="noace")
 		self.parser.add_option("--nopicks", dest="nopicks", default=False,
@@ -148,7 +148,7 @@ class ImageRejector(appionLoop2.AppionLoop):
 				return True
 
 		### check that ACE estimation is above confidence threshold
-		if self.params['acecutoff'] and conf < self.params['acecutoff']:
+		if self.params['ctfcutoff'] and conf < self.params['ctfcutoff']:
 			apDisplay.printColor("\nrejecting below ACE cutoff: "+apDisplay.short(imgdata['filename'])+" conf="+str(round(conf,3)), "cyan")
 			return False
 
