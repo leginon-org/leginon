@@ -56,7 +56,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			ctfprgmexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
 		if not os.path.isfile(ctfprgmexe):
 			apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
-		apDisplay.printColor("Running program %s"%(exename), "magenta")
+		apDisplay.printMsg("Running program %s"%(exename))
 		return ctfprgmexe
 
 	#======================
@@ -197,6 +197,11 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		ctfproglog = os.path.join(self.logdir, os.path.splitext(imgdata['filename'])[0]+"-ctfprog.log")
 		logf = open(ctfproglog, "w")
 		ctfprogproc = subprocess.Popen(self.ctfprgmexe, shell=True, stdin=subprocess.PIPE, stdout=logf)
+		apDisplay.printColor(self.ctfprgmexe, "magenta")
+		apDisplay.printColor(line1cmd.strip(),"magenta")
+		apDisplay.printColor(line2cmd.strip(),"magenta")
+		apDisplay.printColor(line3cmd.strip(),"magenta")
+		apDisplay.printColor(line4cmd.strip(),"magenta")
 		ctfprogproc.stdin.write(line1cmd)
 		ctfprogproc.stdin.write(line2cmd)
 		ctfprogproc.stdin.write(line3cmd)
