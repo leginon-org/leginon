@@ -87,7 +87,11 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	#<input type='HIDDEN' name='lastSessionId' value='$sessionId'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
+	$sessionpath=getBaseAppionPath($sessioninfo).'/jpgs';
 
+	// Set any existing parameters in form
+	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$fftcheck = ($_POST['fft']=='on') ? 'CHECKED' : '';
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
@@ -107,7 +111,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	<table border=0 class=tableborder cellpadding=15>
 	<tr>
 	  <td valign='top'>";
-	    createAppionLoopTable($sessiondata, 'jpgs', "", 1);
+	    createAppionLoopTable($sessiondata, 'jpgs', "", 0);
 	echo"
 	  </td>
 	  <td class='tablebg'>
@@ -131,6 +135,9 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	    <a href=\"javascript:infopopup('size')\">
 	      <b>Maximal Image Size: </b></a><br/>
 	        <input type='text' name='imgsize' value=$imgsize size='4'> pixels<br/>
+		<br/>
+		<input type='checkbox' name='fft' $fftcheck>
+		<b>Create Fourier Transform</b>
 
 	  </td>";
 	echo"
@@ -173,12 +180,9 @@ function runjpgmaker() {
 	******************** */
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
-	$runname = $_POST['runname'];
 
 	$process = $_POST['process'];
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$runname = $_POST['runname'];
-	$rundir=$outdir.$runname."/";
 	$alldbimages = $_POST['alldbimages'];
 	$dbimages = $_POST[sessionname].",".$_POST[preset];
 	$norejects = ($_POST[norejects]=="on") ? "0" : "1";
@@ -193,6 +197,8 @@ function runjpgmaker() {
 	$quality = $_POST[quality];
 	$imgsize = $_POST[imgsize];
 	
+	$fft = ($_POST[fft]=="on") ? "True" : "";
+
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) {
 			$testimage=$_POST['testfilename'];
@@ -220,7 +226,7 @@ function runjpgmaker() {
 	if ($scale == "fixed") $command.=" --min=".$min." --max=".$max;
 	if ($quality != 80) $command.=" --quality=".$quality;
 	if ($imgsize != 512) $command.=" --imgsize=".$imgsize;
-
+	if ($fft) $command.=" --fft";
 
 	/* *******************
 	PART 4: Create header info, i.e., references
@@ -236,7 +242,7 @@ function runjpgmaker() {
 		$images.= "</td></tr></table>\n";
 		$images.= "<br />\n";
 		$testjpg=ereg_replace(".mrc","",$testimage);
-		$jpgimg=$rundir.$testjpg.".jpg";
+		$jpgimg=$outdir.$testjpg.".jpg";
 		$images.= writeTestResults($jpgimg,array(),1);
 	}
 	
@@ -246,7 +252,7 @@ function runjpgmaker() {
 	$headinfo .= appionRef();
 	$headinfo .= "<table width='560' class='tableborder' border='1'>";
 	$headinfo .= "<tr><td colspan='2'><br/>\n";
-	$headinfo .= "<span style='font-size: larger;'> After running this command, jpg images will be available in:<br/>  $rundir <br/>";
+	$headinfo .= "<span style='font-size: larger;'> After running this command, jpg images will be available in:<br/> ".$outdir." <br/>";
 	$headinfo .= "</span><br/></td></tr></table><br/>\n";
 
 	/* *******************
