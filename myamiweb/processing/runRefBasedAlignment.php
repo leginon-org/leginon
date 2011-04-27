@@ -398,10 +398,10 @@ function runAlignment() {
 			."less than the number of particles in the stack ($totprtls)");
 
 	$boxsize = (int) floor($boxsz/$bin);
-	$maxbox = (int) floor($boxsize/2-2);
+	$maxbox = (int) floor($boxsize/2-3); // workaround, SPIDER still gives error without -3 value
 	if (($lastring+$xysearch) > $maxbox) {
 		createAlignmentForm("<B>ERROR:</B> last ring radius ($lastring pixels) plus xy-search ($xysearch pixels) "
-			."is too big for final boxsize ($boxsize pixels); must be less than $maxbox pixels");
+			."is too big for final boxsize ($boxsize pixels); must be less than or equal to $maxbox pixels");
 	}
 
 	//make sure a session was selected
