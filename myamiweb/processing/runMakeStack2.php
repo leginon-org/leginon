@@ -158,6 +158,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$single = ($_POST['single']) ? $_POST['single'] : 'start.hed';
 	$rundescrval = ($_POST['description']) ? $_POST['description'] : True;
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$sessionpathval = (substr($sessionpathval, -1) == '/')? $sessionpathval : $sessionpathval.'/';
 	while (file_exists($sessionpathval.'stack'.($stackruns+1)))
 		$stackruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'stack'.($stackruns+1);
