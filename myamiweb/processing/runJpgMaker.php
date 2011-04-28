@@ -154,7 +154,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	<tr>
 		<td colspan='2' align='center'>
 	";
-	echo getSubmitForm("Run JPEG Maker", true, true);
+	echo getSubmitForm("Run JPEG Maker", false, true);
 	echo "
 		<br />
 		</td>
