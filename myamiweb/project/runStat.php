@@ -7,6 +7,14 @@ require "inc/jpgraph_bar.php";
 require "inc/histogram.inc";
 require "inc/image.inc";
 
+if (privilege('projects')) {
+	$title = "Statistics Report";
+	login_header($title);
+} else {
+	$redirect=$_SERVER['PHP_SELF'];
+	redirect(BASE_URL.'login.php?ln='.$redirect);
+}
+
 function getStatistic($dbname) {
 	$stats = array(
 		'db_name' => $dbname,
