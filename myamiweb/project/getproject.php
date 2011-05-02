@@ -444,6 +444,14 @@ if (SAMPLE_TRACK) {
 		$summarylink="<a class='header' target='viewer' href='".SUMMARY_URL.$info['SessionId']."'>summary&raquo;</a>";
 		$experiments[$k]['summary']=$summarylink;
 	}
+	
+// sort the experiment array if needed
+$orderBy = $_GET['sort'];
+$orderByArray = array();		
+foreach ($experiments as $key => $exp) {
+	$orderByArray[$key] = $exp[$orderBy];
+}
+array_multisort( $orderByArray, SORT_DESC, $experiments );
 
 $columns=array(
 	'name'=>'Name',
@@ -458,8 +466,10 @@ if ($share) {
 }
 	$columns['summary']="";
 
+// display the Experiment Table
 $display_header=true;
-echo data2table($experiments, $columns, $display_header);
+$tableoption = "class='tableborder' border='1' cellpadding='5'";
+echo data2table($experiments, $columns, $display_header, $tableoption, $selectedprojectId);
 	
 if ($view=='d') {
 	echo divtitle('Share :: Users');
