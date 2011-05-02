@@ -186,6 +186,10 @@ if ($sessionId) {
     }
   }
 
+  // --- Get Helical Data
+  if ($hiprunIds = $particle->getHipRunIds($sessionId))
+		$hipruns=count($hiprunIds);
+
   echo"</form>";
 
   if ($prtlruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
@@ -367,6 +371,25 @@ if ($sessionId) {
 	$data[]=array(
     'action'=>array("<br /><b>Pipeline tools:</b>", $celloption)
 	);
+
+  //HELICAL PROCESSING
+  if ($hipruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
+  else {$bgcolor=$donecolor;$gifimg=$donepic;}
+
+	$celloption="bgcolor='$bgcolor'";
+
+	$action = formatAction($gifimg, "Helical Processing");
+
+  	$result = ($hipruns==0) ? "none" :
+			"<a href='hipsummary.php?expId=$sessionId'>$hipruns completed</a>\n";
+
+  	$nrun = "<a href='runHIP.php?expId=$sessionId'>Helical Image Processing (PHOELIX)</a>";
+
+ 	 $data[]=array(
+		'action'=>array($action, $celloption),
+		'result'=>array($result, $celloption),
+		'newrun'=>array($nrun, $celloption),
+  	);
 
   if ($templates==0) {$bgcolor=$nonecolor; $gifimg=$nonepic;}
   else {$bgcolor=$donecolor; $gifimg=$donepic;}

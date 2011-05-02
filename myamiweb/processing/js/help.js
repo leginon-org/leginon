@@ -214,8 +214,8 @@ var help = {
 		'stackfile' : 'The full path of stack, including filename. Stacks must be in IMAGIC format (i.e. filename ending in .img/.hed)',
 
 /******* Helical Image Processing ********/
-		'mandir' : 'The directory containing the mandatory input files for Phoelix.  These include llbo.sa, range.sa, strong.sa, cutfit1.dek, cutfit2.dek, cutfit3.dek, chop1.dek, chop2.dek, and template.  See HIP tutorial for more information on how to generate these files.',		
-		'replen' : 'The approximate 360 degree repeat distance along the filament, in &Aring;ngstr&ouml;ms',
+		'mandir' : 'The directory containing the mandatory input files for Phoelix.  These include llbo.sa, range.sa, strong.sa, cutfit1.dek, cutfit2.dek, cutfit3.dek, chop1.dek, chop2.dek, and template.  If you do not have these files, select "Run PreHIP" option and they will be generated in this directory. See HIP wikipages for more information.',		
+		'replen' : 'The 360 degree repeat distance along the filament, in &Aring;ngstr&ouml;ms. Calcuated by the distance to the first layer line.',
 		'diam' : 'The approximate outer diameter of the filament, in &Aring;ngstr&ouml;ms',
 		'diaminner' : 'The approximate inner diameter of the filament, in &Aring;ngstr&ouml;ms',
 		'xlngth' : 'Desired length of the filament segments, usually a certain number of helical repeats, in pixels.  Should be the same as your stack box size.',
@@ -224,7 +224,15 @@ var help = {
 		'yht2' : 'Height for the filament box after alignments, usually the power of 2 value greater than the filament diameter, in pixels',
 		'padval' : 'Value to pad the filament box to during alignments, usually the power of 2 value greater than the filament length',
 		'filval' : 'Lowpass filter value for filament segments used during alignments to find filament edges. 200 seems to work well, but should be tested before processing the full stack',
+		'rescut' : 'Maximum phase residual for post averaging.  Any files with phase residual above this cutoff will not be included in the final average, map, overplot, etc.',
+		'prehip' : 'If this is your first time running HIP on this data, select this option and run preHIP.py command line to set up mandatory input files',
 		'conchg' : 'If the micrographs have negative density, the final reconstruction will need a contrast change',
+		'risecheck' : 'Use the rise distance and twist angle between protein subunits to determine selection rule and generate llbo.sa file',
+		'llbocheck' : 'Use the layer line (l) and bessel order (n) for the (1,0) and (0,1) layer lines to determine selection rule and generate llbo.sa file. Use format [l,n]',
+		'nfold' : 'Order of the symmetry axis. Default is 1-fold for no symmetry.',
+		'maxll' : 'Maximum layer line to include in the llbo.sa file',
+		'maxbo' : 'Maximum bessel order to include in the computation for llbo.sa',
+		'helicalcheck' : 'If you used helical insert in Manual Picker, check this box to apply the estimated rotation angle and align your helical segments vertically',
 
 /******* Topology Alignment ********/
 		'startnumcls' : 'Number of classes to create in the first iteration. Each subsequent iteration will create fewer classes until the last iteration creates the ending number of classes',

@@ -4513,6 +4513,124 @@ class particledata {
 		return $r;
 	}
 
+	#------------HELICAL FUNCTIONS---------------#
+
+	function getHIPIdsFromSession ($sessionId, $showHidden=false, $package=false) {
+		$q = "SELECT DISTINCT (ApHipRunData.`DEF_id`) AS refid, ApHipRunData.*, path.path AS path "
+			." FROM `ApHipRunData` "
+			."LEFT JOIN ApRunsInStackData AS runs "
+			." ON ApHipRunData.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			." ON runs.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id` "
+			."LEFT JOIN ApPathData AS path "
+			." ON ApHipRunData.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		if (!$showHidden) $q.= " AND (ApHipRunData.`hidden` IS NULL OR ApHipRunData.`hidden` = 0) ";
+		$q.= " ORDER BY ApHipRunData.`DEF_id` DESC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getHipRunIds ($sessionId) {
+		$q = "SELECT r.*, p.path "
+			."FROM `ApHipRunData` AS r "
+			."LEFT JOIN ApPathData AS p "
+			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+			."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		//if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		$q.= "ORDER BY r.`DEF_id` DESC ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getHipRunInfo($hipId) {
+		$q="select r.*, p.path "
+			."FROM `ApHipRunData` AS r "
+			."LEFT JOIN ApPathData AS p ON "
+			."(r.`REF|ApPathData|path` = p.`DEF_id`) "
+			."WHERE r.`DEF_id` = '$hipId' ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getHipParamsInfo($hipId) {
+		$q = "SELECT * "
+				."FROM `ApHipParamsData` r "
+				."WHERE r.`REF|ApHipRunData|hipRun` = '$hipId' ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getStackIdFromHipId ($hipId) {
+		$q= "SELECT * "
+			."FROM `ApHipRunData` "
+			."WHERE `DEF_id` = '$hipId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['REF|ApStackData|stack'];
+	}
+
+	function getHipInfoFromRefinementId($refineid) {
+		$q="SELECT *"
+		."FROM "
+		."`ApHipIterData` AS `ApHipIterData` "
+		."LEFT JOIN `ApHipRunData` AS `ApHipRunData` "
+		."ON (`ApHipRunData`.`DEF_id`=`ApHipIterData`.`REF|ApHipRunData|hipRun`) "
+		."LEFT JOIN `ApPathData` AS `ApPathData` "
+		."ON (`ApPathData`.`DEF_id`=`ApHipRunData`.`REF|ApPathData|path`) "
+		."WHERE `ApHipIterData`.`DEF_id`=$refineid ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getHipRefinementData ($hipRunId, $iteration=False) {
+		$q = "SELECT * "
+			."FROM `ApHipIterData` "
+			."WHERE `REF|ApHipRunData|hipRun` = $hipRunId ";
+		if ($iteration) $q.="AND `iteration` = $iteration";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getHipIterInfo ($hipId,$iteration=0) {
+		$q = "SELECT * "
+				."FROM `ApHipIterData` r "
+				."WHERE r.`REF|ApHipRunData|hipRun` = '$hipId' "
+				."ORDER BY r.`iteration` ASC ";
+		$r = $this->mysql->getSQLResult($q);
+		if ($iteration >0) {
+			return $r[$iteration-1];
+		}
+		return $r;
+	}
+
+	function getHighestResForHip ($hipid) {
+		$q = "SELECT ref.iteration AS iter, res.half AS half, rmeas.rMeasure AS rmeas "
+				."FROM `ApHipIterData` AS ref "
+				."LEFT JOIN `ApResolutionData` AS res "
+				." ON (ref.`REF|ApResolutionData|resolution` = res.`DEF_id`) "
+				."LEFT JOIN `ApRMeasureData` AS rmeas "
+				." ON (ref.`REF|ApRMeasureData|rMeasure` = rmeas.`DEF_id`) "
+				."WHERE ref.`REF|ApHipRunData|hipRun` = '$hipid' "
+				//."ORDER by rmeas.rMeasure ";
+				."ORDER by res.half ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getPostProcsFromHipRefId($refid, $getHidden=False) {
+		$q = "SELECT d.*, "
+			."p.path as path , a.path as amppath "
+			."FROM `Ap3dDensityData` AS d "
+			."LEFT JOIN `ApPathData` AS p ON "
+			."(d.`REF|ApPathData|path` = p.`DEF_id`) "
+			."LEFT JOIN `ApPathData` AS a ON "
+			."(d.`REF|ApPathData|ampPath` = a.`DEF_id`) "
+			."WHERE d.`REF|ApHipIterData|hipIter` = $refid ";
+		if (!$getHidden) $q.= "AND (d.`hidden` IS NULL OR d.`hidden` = 0) ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	//------ -------------------- ---------//
 	//------ Loop again functions ---------//
 	//------ -------------------- ---------//

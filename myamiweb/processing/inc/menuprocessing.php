@@ -100,6 +100,12 @@ if (is_numeric($expId)) {
 		$alignruns=0;
 	}
 
+
+	// --- Get Helical Data
+	if ($hiprunIds = $particle->getHipRunIds($sessionId)) {
+		$hipruns=count($hiprunIds);
+	}
+
 	// --- Get TiltSeries Data
 	if ($tiltseries = $particle->getTiltSeries($sessionId)) {
 		$tiltruns=count($tiltseries);
@@ -687,6 +693,33 @@ if (is_numeric($expId)) {
 			'newrun' => array($nruns, $celloption),
 		);
 	}
+
+	//HELICAL PROCESSSING
+	$action = "Helical Processing";
+	$hipresults=array();
+	$hipdone = count($subclusterjobs['helical']['done']);
+	$hiprun = count($subclusterjobs['helical']['running']);
+	$hipq = count($subclusterjobs['helical']['queued']);
+
+	$hipresults[] = ($hipdone==0) ? "" : "<a href='hipsummary.php?expId=$sessionId'>$hipdone complete</a>";
+	$hipresults[] = ($hiprun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=Helical'>$hiprun running</a>";
+	$hipresults[] = ($hipq==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=Helical'>$hipq queued</a>";
+
+	$nrun=array();
+	$nrun[] = array(
+		'name'=>"<a href='runHIP.php?expId=$sessionId'>Helical Image Processing (PHOELIX)</a>",
+		'result'=>$hipresults,
+	);
+
+	$result = ($hipruns==0) ? "" :
+		"<a href='hipsummary.php?expId=$sessionId'>$hipruns</a>\n";
+
+	$data[]=array(
+		'action' => array($action, $celloption),
+		'result' => array($result),
+		'newrun' => array($nrun, $celloption),
+	);
+
 
 	// display the tomography menu only if there are tilt serieses
 	if ($tiltruns > 0) {
