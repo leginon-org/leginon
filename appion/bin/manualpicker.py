@@ -296,6 +296,8 @@ class PickerApp(wx.App):
 			return
 		### get last two targets
 		targets = self.panel.getTargets(targetlabel)
+		if len(targets) == 2:
+			self.angles = {}
 		if len(targets) < 2:
 			apDisplay.printWarning("not enough targets")
 			return
@@ -306,6 +308,8 @@ class PickerApp(wx.App):
 			apDisplay.printWarning("unknown pixel size")
 			return
 		### get helicalstep
+		### When adding overlap feature change equation here. i.e. ovrlp = 0.6
+		#helicalstep = self.appionloop.params['helicalstep']*self.appionloop.params['ovrlp']
 		helicalstep = self.appionloop.params['helicalstep']
 		if not helicalstep:
 			apDisplay.printWarning("unknown helical step size")
@@ -313,6 +317,8 @@ class PickerApp(wx.App):
 
 		first = array[-2]
 		last = array[-1]
+		angle = math.degrees(math.atan((((last[0]*1.0) - first[0])/(last[1] - first[1]))))
+		stats = {'angle': angle}	
 		pixeldistance = math.hypot(first[0] - last[0], first[1] - last[1])
 		if pixeldistance == 0:
 			### this will probably never happen since mouse does not let you click same point twice
@@ -331,13 +337,20 @@ class PickerApp(wx.App):
 		while t < 1.0:
 			x = int(round( (1.0 - t)*first[0] + t*last[0], 0))
 			y = int(round( (1.0 - t)*first[1] + t*last[1], 0))
-			points.append((x,y))
+			points.append((x,y))	
+			self.angles[x,y] = angle
 			t += stepsize
 		# the last point may be missing due to rounding
-		if (points[-1][0] != last[0] or points[-1][1] != last[1]):
-			points.append(last)
+		#if (points[-1][0] != last[0] or points[-1][1] != last[1]):
+		#	points.append(last)
+		anglepoints = []
+		for point in points:
+			x = point[0]
+			y = point[1]
+			stats = {'angle': self.angles[x,y]}
+			anglepoints.append({'x': x, 'y': y, 'stats': stats})
 
-		self.panel.setTargets(targetlabel, points)
+		self.panel.setTargets(targetlabel, anglepoints)
 		
 		
 		
@@ -583,14 +596,16 @@ class ManualPicker(particleLoop2.ParticleLoop):
 		self.app.panel.openImageFile(None)
 		peaktree=[]
 		for label,targets in self.targets.items():
-			for target in targets:
-				peaktree.append(self.XY2particle(target.x, target.y, label))
+			for target in targets:	
+				angle = target.stats['angle']
+				peaktree.append(self.XY2particle(target.x, target.y, angle, label))
 		return peaktree
 
-	def XY2particle(self, binx, biny, label=None):
+	def XY2particle(self, binx, biny, angle, label=None):
 		peak={}
 		peak['xcoord'] = binx*self.params['bin']
 		peak['ycoord'] = biny*self.params['bin']
+		peak['angle'] = angle
 		peak['correlation'] = None
 		peak['peakmoment'] = None
 		peak['peakstddev'] = None
