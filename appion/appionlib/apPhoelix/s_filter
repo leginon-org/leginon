@@ -1,0 +1,27 @@
+#!/bin/csh -f
+
+#####
+# s_filter - Low pass filtering filament 
+# Usage: s_filter input_file output_file radfil step
+# Input: .sss
+# Output: .but
+#####
+source phoelix_params
+
+set filein=$1
+set fileout=$2
+set radfil=$3
+set step=$4
+
+if ($s_verbose) echo `basename $0` $argv
+
+set ncols=`hdim -c < $filein`
+set nrows=`hdim -r < $filein`
+
+set frows=`po2 -f $nrows`
+set fcols=`po2 -f $ncols`
+
+set rad=`ee "$fcols x $step : $radfil"`
+
+pad -c $fcols -r $frows -p a < $filein | dft | radfil -butter -r $rad > temp.but
+dift <temp.but | pad -c $ncols -r $nrows > $fileout

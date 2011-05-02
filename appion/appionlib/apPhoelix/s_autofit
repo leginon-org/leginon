@@ -1,0 +1,59 @@
+#!/bin/csh -f
+
+# s_autofit: commands for running autofit70
+
+source phoelix_params
+if ($s_verbose) echo `basename $0` $argv
+
+set template = $1
+set comparison = $2
+set dekfile = $3
+
+
+rm -f fort.1
+rm -f fort.2
+rm -f fort.3
+rm -f fort.7
+
+cp $comparison fort.1
+cp $dekfile fort.2
+cp $template fort.3
+
+echo 'Template: '$template '			Comparison file: '$comparison
+
+set warnflag = 0
+set ampflag = `head -1 $template | grep "amps X" | wc -l`
+
+####if ($ampflag > 0) then
+####   echo "`basename $0`: Warning - Template file $template has been amplitude scaled"
+####   set warnflag = 1
+####endif
+
+set ampflag = `head -1 $comparison | grep "amps X" | wc -l`
+
+####if ($ampflag > 0) then
+####   echo "`basename $0`: Warning - Comparison file $comparison has been amplitude scaled"
+####   set warnflag = 1
+####endif
+####if ($warnflag == 1) then
+####   echo ""
+####   echo " ******* WARNING *******"
+####   echo "`basename $0`: One or more input files have been amplitude scaled."
+####   echo "You may encounter problems where autofit70 (and therefore this script)"
+####   echo "may hang.  If you do have this problem, try running this procedure"
+####   echo "again with unscaled amplitudes."
+####   echo " ***********************"
+####   echo ""
+####endif
+
+
+autofit70
+
+rm -f fort.1
+rm -f fort.2
+rm -f fort.3
+
+#asa fort.7 > fit.out
+sed 's/^0/NL /' < fort.7 | awk '{if ($1 == "NL") {$1 = "\n"}; print}' | sed 's/^ *//' > fit.out
+
+#rm -f fort.7

@@ -1,0 +1,59 @@
+#!/bin/csh -f
+
+#####
+#
+# s_bg: background subtraction and adjust to zero mean, modified for vertical filaments
+# Usage: s_bg file rowpad 
+# Input File: .s / .i / .j
+# Output file :
+# Created / Removed by script:	.r1
+#			       	.rn
+#				.subbg
+#				.tmp
+#
+#####
+
+source phoelix_params
+
+if ($s_verbose) echo `basename $0` $argv
+
+set file = $1
+set colpad = $2
+
+
+# extract the prefix of the file
+set filep = $file:r
+
+if ( $colpad != "" ) then
+        pad -r $colpad -p a < $file > $filep.tmp
+else
+	mv $file $filep.tmp
+endif
+
+# get the column size so that can excise last 10 rows
+set ncols = `hdim -c < $filep.mrc`
+set ncols10 = `ee $ncols - 10`
+
+# excise row 1 and row n 
+excise -c 1 < $filep.mrc > $filep.c1
+excise -c $ncols < $filep.mrc > $filep.cn
+#collapse -r <$filep.c1> $filep.c1c
+#collapse -r <$filep.cn> $filep.cnc
+
+# now do the subtraction
+subbg -r1 $filep.c1 -rn $filep.cn < $filep.tmp > $filep.subbg
+
+# get the standard deviation 
+set mstdev = `avsd -m -s < $filep.subbg`
+set mean = `echo $mstdev | awk '{print $1}'`
+set stdev = `echo $mstdev | awk '{print $2}'`
+
+# bring to 0 mean with current standard deviation 
+#echo "stdavsd -m $mean -s $stdev < $filep.subbg > $file"
+stdavsd -m 0 -s $stdev < $filep.subbg > $file 
+
+# and cleanup
+#rm $filep.r1
+#rm $filep.rn
+#rm $filep.subbg
+#rm $filep.tmp

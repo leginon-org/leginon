@@ -1,0 +1,146 @@
+#!/bin/csh -f
+
+# s_diffmap2 :  creates a difference map by subtracting a scaled 15A map from a full 8A map in fourier space
+#		the final map will have 15A features scaled to 30% and 8A features at 100%
+# 		individually pastes 8A information from the unscaled/original average into
+#		the scaled 15A avgerage file
+#
+# Usage: s_diffmap2 orig amp res
+#        if you want the 15A features scaled to 30% in the final map, amp = 0.3 
+#
+# LSF 6/2/09
+
+source phoelix_params
+source master_params
+
+set orig = $1
+set amp = $2
+set res = $3
+set filep = `prefix $orig`
+
+#write hlxavg.dek file
+set repk =  `ee 1:$xover`
+set llnum = `grep LL $orig | wc -l`
+set ampx = `ee "$amp x 100"`
+
+echo $filep"X"$ampx > hlxavg.dek
+echo $llnum "1" $repk $delbr "0" >> hlxavg.dek
+echo "0 0 0 0 1" >> hlxavg.dek
+echo $amp >> hlxavg.dek
+
+#scale to specified amplitude
+s_phoelixavg $orig $filep"_"$ampx.ner
+
+#cut scaled avg to specified resolution
+s_cuttores $filep"_"$ampx.ner $filep"_"$ampx"_cut"$res.ner $res $replen
+
+#cut out each LL in the original and cut files, then create list files of each LL 
+set lines = `grep LL $orig | wc -l`
+set last = `grep LL $orig | tail -1 | cut -dL -f3`
+set stop = `head -1 $orig | awk '{print $1}'`
+
+set i = 1
+while ($i <= $lines)
+
+set LL = `grep LL $orig | head -$i | tail -1 | cut -dL -f3`
+if ($LL <= 9) then 
+        sed -n "/LL  $LL/,/$stop/p" $orig > temp.out
+        set line = `wc -l temp.out | awk '{print $1}'`
+        set newl = `ee $line - 1`
+        head -$newl temp.out > $filep"LL00"$LL.out
+else if ($LL <= 99) then
+        sed -n "/LL $LL/,/$stop/p" $orig > temp.out
+        set line = `wc -l temp.out | awk '{print $1}'`
+        set newl = `ee $line - 1`
+        head -$newl temp.out > $filep"LL0"$LL.out
+else if ($LL == $last) then
+        sed -n "/LL$LL/,/$stop/p" $orig > $filep"LL"$LL.out
+else if ($LL <= $lines) then
+        sed -n "/LL$LL/,/$stop/p" $orig > temp.out
+        set line = `wc -l temp.out | awk '{print $1}'`
+        set newl = `ee $line - 1`
+        head -$newl temp.out > $filep"LL"$LL.out
+endif
+set i=`ee $i+1` 
+end
+
+set cut = $filep"_"$ampx"_cut"$res.ner
+set linex = `grep LL $cut | wc -l`
+set filex = `prefix $cut`
+set stop = `head -1 $cut | awk '{print $1}'`
+set last = `grep LL $cut | tail -1 | cut -dL -f3`
+
+set j = 1
+while ($j <= $linex)
+
+set LL = `grep LL $cut | head -$j | tail -1 | cut -dL -f3`
+if ($LL <= 9) then 
+        sed -n "/LL  $LL/,/$stop/p" $cut > temp.out
+        set line = `wc -l temp.out | awk '{print $1}'`
+        set newl = `ee $line - 1`
+        head -$newl temp.out > $filex"LL00"$LL.out
+else if ($LL == $last) then
+        sed -n "/LL $LL/,/$stop/p" $cut > $filex"LL0"$LL.out
+else if ($LL <= $linex) then
+        sed -n "/LL $LL/,/$stop/p" $cut > temp.out
+        set line = `wc -l temp.out | awk '{print $1}'`
+        set newl = `ee $line - 1`
+        head -$newl temp.out > $filex"LL0"$LL.out
+endif
+
+set j=`ee $j+1` 
+end
+
+ls -1 $filep"LL"*.out > $filep"LL_list"
+ls -1 $filex"LL"*.out > $filex"LL_list"
+
+#calculate the difference in number of LL in original file and cut file
+set infile1 = $filep"LL_list"
+set infile2 = $filex"LL_list"
+
+set k = 1
+while ($k <= $linex)
+
+set file1a = `head -$k $infile1 | tail -1`
+set file1b = `prefix $file1a`
+set file2a = `head -$k $infile2 | tail -1`
+set file2b = `prefix $file2a`
+
+set count1 = `wc -l $file1a | cut -c 1-3`
+set count2 = `wc -l $file2a | cut -c 1-3`
+set count3 = ` ee "$count2 - 1"`
+set diffx = `ee "$count1 - $count2"`
+echo $diffx
+set diff1 = `ee $diffx + 1`
+
+#cut the missing LL info from the original file and paste it onto the cut file
+tail -$diff1 $file1a > $file1b"_tail"
+head -$count3 $file2a > $file2b.avg
+
+cat $file2b.avg $file1b"_tail" >> $filep"_final".avg
+
+@ k++
+end
+
+set l = $linex
+while ($l <= $lines)
+
+if ( $l <= 9 ) then 
+sed -n "/LL  $l/,/0.000E+00 0.000E+00 0.000E+00/p" $orig >> $filep"_final".avg
+else if ( $l <= 99 ) then 
+sed -n "/LL $l/,/0.000E+00 0.000E+00 0.000E+00/p" $orig >> $filep"_final".avg
+else
+sed -n "/LL$l/,/0.000E+00 0.000E+00 0.000E+00/p" $orig >> $filep"_final".avg
+endif
+
+@ l++
+end
+
+#snip the noise out of the final average, do a contrast change, and make a map
+tkll -f $filep"_final".avg -d snip.dek -cut
+s_conchg $filep"_final".avg $filep"_final".opp
+s_llcut $filep"_final".opp $filep"_final".cut snip.dek
+s_newhlf $filep"_final".cut
+
+
+exit

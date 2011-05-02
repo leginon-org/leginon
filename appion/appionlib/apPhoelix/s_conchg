@@ -1,0 +1,12 @@
+#!/bin/csh -f
+
+# s_conchg
+
+source phoelix_params
+if ($s_verbose) echo `basename $0` $argv
+
+set filein = $1
+set fileout = $2
+
+rm -f $fileout
+conchg < $filein > $fileout

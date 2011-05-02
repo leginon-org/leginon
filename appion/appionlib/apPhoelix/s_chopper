@@ -1,0 +1,45 @@
+#!/bin/csh -f
+#
+## s_chopper: for quickly generating a chop.dek file for sniffing based on the strong portions of the layer lines strong portions are defined as the areas between the inner and outer radii of a helix
+#
+# Input: .avg
+# Output: chop.dek
+# Usage: s_chopper infile
+#
+# LSF 3/25/10
+
+source phoelix_params
+
+set infile = $1
+set lines = `grep LL $infile | wc -l`
+set filename = `prefix $infile`
+
+rm -f chop.dek
+
+## Set range for LL0 - commented out for s_sniffer, do not want LL 0
+#set high = `ee $rmax - 0.01`
+#echo 0.000000 $high > chop.dek
+echo 0.000000 0.000000 > chop.dek
+
+## Calculate range for each LL based on the equations R=n/(2*3.14*rmax) and R=n/(2*3.14*rmin) where n= bessel order, rmax= outer radii, and rmin= inner radii.
+set i = 2
+while ($i <= $lines)
+
+set bo = `grep 1.000 $infile | head -$i | tail -1 | awk '{print $2}'`
+if ($bo < 1 && $bo > -1) then
+	set low = 0.000000
+	set high = `ee $rmax - 0.01`
+	echo $low $high >> chop.dek
+else
+	set low = `ee "[abs[$bo] : [2 x 6.28 x $orad]]" | cut -c 0-8`
+	set high = `ee "[abs[$bo] : [2 x 6.28 x $irad]]" | cut -c 0-8`	
+	set highx = `ee $high x 1000000 | cut -d. -f1`
+	set rmaxx = `ee $rmax x 1000000 | cut -d. -f1`
+	if ( $highx >= $rmaxx) then
+		set high = `ee $rmax - 0.01`
+	endif
+	echo $low $high >> chop.dek
+endif
+
+set i=`ee $i+1` 
+end

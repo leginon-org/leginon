@@ -1,0 +1,187 @@
+#!/bin/csh -f
+#
+# Input: .mrc
+# Output: .avg
+#
+# Usage: s_hip2
+#
+# Make sure that apHelicalParams.py has been modified for your dataset.  
+# Things to check are step, ctf, batch, xlngth, yht, padval, yht2, and frowsize.
+#
+# Also make sure you have llbo.sa, range.sa, strong.sa, template, cutfit1.dek, cutfit2.dek, cutfit3.dek, chop1.dek, and chop2.dek files.
+# Template must have the same number of layer lines and same bessel orders as in llbo.sa. Use your best average or near/far file thus far. 
+# cutfit.dek files are for averaging. Select optimal layer lines for aligning.  In each file select a few more LLs. 
+# ex: cutfit1.dek=LL 5,6,11  cutfit2.dek=LL 5,6,10,11,17  cutfit3.dek=LL 1,5,6,10,11,17,28
+# chop.dek files are for sniffing.  chop1.dek should have broader ranges than chop2.dek. Select a range over the meaningful portions on every LL except LL0. 
+#
+# LSF 11/5/09, 4/29/11
+
+# Make sure description is in qoutes to avoid set: Variable and syntax errors
+set remset = "set description = "
+grep "set description" phoelix_params > desc.txt
+sed -i "s/$remset//" desc.txt
+set desc = `cat desc.txt`
+sed -i "s/$desc/'$desc'/" phoelix_params
+rm desc.txt
+
+source phoelix_params
+
+# Copy individual files from stack into run directory
+cp $rundir/partfiles/*/* $rundir
+
+## Get all required info files
+cp $mandir/* $rundir
+
+cd $rundir
+
+## Transpose filaments from vertical to horizontal
+ls -1 part*.mrc > transp.list
+s_transpose transp.list
+
+## Correct in-plane tilt 
+echo "Aligning and centering filaments... "
+ls -1 *.tmrc > rot.list
+s_testrot rot.list $padval
+
+## Recenter and box out the filament segments 
+ls -1 *.rot > box.list
+s_autobox box.list $xlngth $yht2 $filval
+
+## Correct tilt and shift using phoelix programs and create near and far files
+echo "Running Phoelix to correct tilt and shift..."
+ls -1 *.s > maxi.list
+
+touch selfile.list
+set lines = `wc -l maxi.list | awk '{print $1}'`
+set i = 1
+while ($i <= $lines)
+        set filex = `head -$i maxi.list | tail -1`
+        set filep = `prefix $filex`
+	pad -n $xlngth -p a <$filex | tomrc > $filep.smrc
+	echo $rundir"/"$filep".smrc 1" >> selfile.list
+@ i++
+end
+
+s_maxinotilt maxi.list
+rm old*
+
+## Average the near and far files 
+# Do three round of averaging and two rounds of sniffing. 
+mkdir avgsnif1
+cp *.ner *.far *params cutfit* chop* template avgsnif1
+cd avgsnif1
+
+## Round 1 of Averaging 
+ls -1 *.ner *.far > avg.list
+set filno = `wc -l avg.list | awk '{print $1}'`
+echo "Round 1 of Averaging..."
+echo "$filno filaments in avg.list" 
+s_fautoavg avg.list 3 avg1 template
+cp template avglist3p.avg
+cp template template.orig
+
+# Generate overplots and map
+s_fpost avg.list 3 $rescut postavg$rescut map overplot
+
+# Split average lists into two lists and generate maps for estimating resolution using FSC
+s_splitlist avglist3_$rescut"p".list
+
+# Prepare png files for report pages
+set mrcpad = `ee $diameter : $step`
+set mrcpad2 = `po2 -f $mrcpad`
+pad -n $mrcpad2 <avglist3_$rescut"p".map> avglist3_$rescut"p".pad
+tomrc <avglist3_$rescut"p".pad> avglist3_$rescut"p".mrc
+
+gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16 -dGraphicsAlphaBits=4 -sOutputFile=avglist3_$rescut"pll"-%02d.png avglist3_$rescut"pll".ps
+ls -1 *pll-* > pll.list
+
+gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16 -dGraphicsAlphaBits=4 -sOutputFile=avglist3_$rescut"pop"-%02d.png avglist3_$rescut"pop".ps
+ls -1 *pop-* > pop.list
+
+cp avglist3_$rescut"p".avg template
+
+# Prepare directory for Sniffing (s_presnif)
+s_llcut template snif_template.cut chop1.dek
+cp ../*.fft .
+cp ../*hlxdump* .
+cp ../*hlxavg_dek .
+ls -1 *.fft > snif.list
+set filno = `wc -l snif.list | awk '{print $1}'`
+
+## Round 1 of Sniffing
+echo "Round 1 of sniffing..." 
+echo "$filno filaments in snif.list" 
+s_sniffer snif.list
+mkdir avgsnif2
+cp *_snif.ner *_snif.far *params* cutfit* chop* avgsnif2
+cp avglist3_$rescut"p".avg avgsnif2/template
+cd avgsnif2
+
+## Round 2 of Averaging
+ls -1 *.ner *.far > avg.list
+set filno = `wc -l avg.list | awk '{print $1}'`
+echo "Round 2 of Averaging..."
+echo "$filno filaments in avg.list" 
+s_fautoavg avg.list 3 avg2 template
+cp template avglist3p.avg
+
+# Generate overplots and map
+s_fpost avg.list 3 $rescut postavg$rescut map overplot
+
+# Split average lists into two lists and generate maps for estimating resolution using FSC
+s_splitlist avglist3_$rescut"p".list
+
+# Prepare png files for report pages
+pad -n $mrcpad2 <avglist3_$rescut"p".map> avglist3_$rescut"p".pad
+tomrc <avglist3_$rescut"p".pad> avglist3_$rescut"p".mrc
+
+gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16 -dGraphicsAlphaBits=4 -sOutputFile=avglist3_$rescut"pll"-%02d.png avglist3_$rescut"pll".ps
+ls -1 *pll-* > pll.list
+
+gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16 -dGraphicsAlphaBits=4 -sOutputFile=avglist3_$rescut"pop"-%02d.png avglist3_$rescut"pop".ps
+ls -1 *pop-* > pop.list
+
+cp avglist3_$rescut"p".avg template
+
+# Prepare directory for Sniffing (s_presnif)
+s_llcut template snif_template.cut chop2.dek
+cp ../*.fft .
+cp ../*hlxdump* .
+cp ../*hlxavg_dek .
+ls -1 *.fft > snif.list
+set filno = `wc -l snif.list | awk '{print $1}'`
+
+## Round 2 of Sniffing
+echo "Round 2 of Sniffing..." 
+echo "$filno filaments in snif.list" 
+s_sniffer snif.list
+mkdir avg3
+cp *_snif.ner *_snif.far *params* cutfit* chop* avg3
+cp avglist3_$rescut"p".avg avg3/template
+cd avg3
+
+## Round 3 of Averaging
+ls -1 *.ner *.far > avg.list
+set filno = `wc -l avg.list | awk '{print $1}'`
+echo "Round 3 of Averaging..."
+echo "$filno filaments in avg.list" 
+s_fautoavg avg.list 3 avg3 template
+
+# Generate overplots and map
+s_fpost avg.list 3 $rescut postavg$rescut map overplot
+
+# Split average lists into two lists and generate maps for estimating resolution using FSC
+s_splitlist avglist3_$rescut"p".list
+
+# Prepare png files for report pages
+pad -n $mrcpad2 <avglist3_$rescut"p".map> avglist3_$rescut"p".pad
+tomrc <avglist3_$rescut"p".pad> avglist3_$rescut"p".mrc
+
+gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16 -dGraphicsAlphaBits=4 -sOutputFile=avglist3_$rescut"pll"-%02d.png avglist3_$rescut"pll".ps
+ls -1 *pll-* > pll.list
+
+gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16 -dGraphicsAlphaBits=4 -sOutputFile=avglist3_$rescut"pop"-%02d.png avglist3_$rescut"pop".ps
+ls -1 *pop-* > pop.list
+
+echo "Processing Complete"
+exit

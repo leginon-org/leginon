@@ -1,0 +1,6 @@
+#!/bin/csh -f
+#
+set infile = $1
+set dekfile = $2
+
+tkll -f $infile -d $dekfile -cut

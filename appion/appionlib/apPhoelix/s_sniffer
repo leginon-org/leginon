@@ -1,0 +1,24 @@
+#!/bin/csh -fx
+
+
+set infile = $1
+set lines = `wc -l $infile | awk '{print $1}'`
+set i = 1
+
+
+
+while ($i <= $lines)
+	set file = `head -$i $infile | tail -1`
+	set filep = $file:r
+	
+	#runs snifprep on all *.fft files in a list
+	s_snifprep $filep.fft snif_template.cut |& tee snif1.OUTPUT
+	
+
+	echo "$filep completed"
+	@ i++
+	
+end
+
+
+echo "done sniffing"

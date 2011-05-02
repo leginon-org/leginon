@@ -1,0 +1,30 @@
+#!/bin/csh -f
+#
+# Modified to use new (Apr 2004) MRC2000 version of hlxfour.  Note that 
+# hlxfour was slightly modified to read our LLfile correctly, and array
+# sizes were vastly increased - maximum map size is now 601x601 in X & Y.
+# This modified code is compiled as "superhlf", allowing users to keep the
+# older "hlxfour" and "bighlf" for backward compatability if necessary.
+#
+# BGS 09/13/2004
+#
+
+set myname = `basename $0`
+
+if ($#argv != 1) then
+   echo "USAGE: $myname LLfile"
+   exit 1
+endif
+
+set filein = $1
+set filep = $filein:r
+
+rm -f GOUT OUT1 OUT2 hlf.out
+setenv LLIN $filein
+setenv OUT1 $filep.map
+echo "superhlf < hlf.dek > hlf.out"
+superhlf < hlf.dek > hlf.out
+if (-f fort.10) then
+	mv fort.10 ctfdat.dat
+endif
+rm -f GOUT OUT2 

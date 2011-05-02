@@ -1,0 +1,189 @@
+#!/bin/csh -f
+
+# s_fautoavg : Bridget's version of the s_autoavg adjusted by Lauren for s_hip. A quick and dirty automatic averaging script.
+#
+# Note: In master_params set batch=1
+#
+# Input: .ner .far
+# Output: .avg .map .ps
+# Usage: s_fautoavg infile number 'title' template (amps)
+#	(parenthesis indicate an optional field)	
+# Where:
+#	infile = list of .ner and .far files to be averaged
+#	If these are a set then must be called as "*.suffix.suffix" (note the double quotes which are required for wildcarding!
+#	number = number of iterations across averaging steps
+#	'title' = whatever title you want on your final output
+#	template = template file
+#	(amps) = turns on amplitude scaling by x1000
+#
+# Edited by LSF 5/19/09
+
+source phoelix_params
+
+if ($s_verbose) echo `basename $0` $argv
+
+#if (! -f master_params || ! -f phoelix_params) then
+#    echo "You may need to re-run s_setup since you are missing a params file"
+#    exit 1
+#endif
+
+## Check for required arguments
+if ($#argv < 3 || $#argv > 7) goto usage:
+
+set avglist = $argv[1]
+set n        = $argv[2]
+set title    = "$argv[3]"
+set initialfile = $argv[4]
+
+## Check Near and Far files for LL# and content
+# Move bad files to rejects directory
+s_rejector $avglist $initialfile
+
+# Need to create a large avg.list file from a set of others if necessary
+cat $avglist > avgset.list
+set filelist = avgset.list
+
+if ((! -f $filelist) || (! -r $filelist)) then
+    echo "${filelist}: file not available"
+    exit 1
+endif
+
+if ((! -f $initialfile) || (! -r $initialfile)) then
+    echo "${initialfile}: file not available"
+    exit 1
+endif
+
+
+if ($n < 1) then
+   echo "You must request at least 1 iteration"
+   exit 1
+endif
+
+## Check for optional flags
+set ampflag = 0
+set flagcount = 4
+while ($#argv >= $flagcount)
+	if ($argv[$flagcount] == "amps") set ampflag = 1
+	@ flagcount++
+end
+
+## Write some starting info
+# Grab the filename
+set filebase = $filelist:r
+set filelog = $filebase.log
+
+echo "Averaging started at `date`..." >> $filelog
+echo `basename $0` $argv >> $filelog
+echo "File list : $filelist" >> $filelog
+echo "Iterations: $n"  >> $filelog
+echo "Title     : $title" >> $filelog
+
+## Boosting amplitudes
+if ($ampflag == 1) then
+	s_amplify $initialfile $filelist
+#	mv $filelist $filelist.ORIG
+#	ls x1000*.ner x1000*.far > $filelist
+endif
+
+## Averaging loop
+set i = 1
+set maxresidlen = `echo $maxresidset | wc -w`
+if ($maxresidlen < $n) then
+	echo "Maxresidset does not support more than 10 iterations"
+	exit 1
+endif
+
+while ($i <= $n)
+    echo "********************************"
+    echo "****** Averaging round $i ******"
+    echo "********************************"
+    ## Generate a cutfit.dek file
+    if (!($batch) && ! -f .phoelixtest) then
+		tkll -o -f $initialfile -d cutfit$i.dek -cut
+    endif
+    if (!(-f cutfit$i.dek)) then
+	echo cutfit$i.dek "file does not exist; exiting without further action"
+	exit 1
+    endif
+    rm -f cutfit.dek
+    ln -s cutfit$i.dek cutfit.dek
+    set maxresid = $maxresidset[$i]
+    #ln -s $filelist avglist"$i"
+    cp $filelist avglist"$i"
+    if ($i == 1) then
+        set llcut_input = $initialfile
+    else
+        set j = $i
+        @ j--
+        set llcut_input = avglist$j.avg
+    endif
+    s_llcut $llcut_input temp$i.cut cutfit.dek
+    s_makeavg avglist$i temp$i.cut $maxresid |& tee avg$i.OUTPUT
+    @ i++
+end
+
+## Plot the averaged LLs
+s_llplot avglist$n.avg
+mv plot.int avglist$n"ll".ps
+
+## Invert contrast if necessary.  Flag set in master_params
+if ($cont == yes) then
+	s_conchg avglist$n.avg avglist$n.opp
+
+	## Generate hlf.dek file
+        if (!(-f hlf.dek)) then
+                set numll       = `grep LL avglist$n.avg | wc -l`
+                s_hlfdek avglist$n $numll hlf.dek
+        endif
+
+	## Generate the map file (requires hlf.dek file we just wrote)
+	s_newhlf avglist$n.opp
+
+else if ($cont == no) then
+	## Generate hlf.dek file
+        if (!(-f hlf.dek)) then
+                set numll       = `grep LL avglist$n.avg | wc -l`
+                s_hlfdek avglist$n $numll hlf.dek
+        endif
+
+	## Generate the map file (requires hlf.dek file we just wrote)
+	s_newhlf avglist$n.avg
+endif
+
+## From the mapfile, determine the Z-axis size for s_mrccont
+# The maps axes are changed with mmc (part of s_mrccont), so we need to 
+# find the size of the X dimension of the unrotated map.
+#set z = `hdim -x < avglist$n.map`
+#set z = `header < avglist$n.map | grep "^Number of col" | awk '{print $(NF-2)}'`
+set z = 10
+
+## Generate Postscript output
+s_autocont 0 avglist$n.map 0 10 1  5 5 5 $title 0 $z
+mv plot.out avglist$n.ps
+
+# For overplots and sniffing see s_autopost
+
+echo " "
+echo "MRC Map: avglist$n.map (avglist$n.map.rot)" >> $filelog
+echo "Postscript file: avglist$n.ps" >> $filelog
+echo "Layer Lines: avglist$n.avg" >> $filelog
+echo "Layer Lines Postscript file: avglist$n"ll".ps" >> $filelog
+echo "Averaging ($n iterations) completed at `date`..." >> $filelog
+if ($ampflag == 1) echo "All amplitudes were scaled by a factor of x1000" >> $filelog
+
+cat $filelog
+
+
+exit 0
+
+## Print useful hint and quit
+usage::
+    echo "USAGE: s_autoavg file_list number 'title' template amps overplot snif"
+    echo "         file_list = list of .ner and .far files to be averaged."
+    echo "         number    = number of iterations across averaging steps."
+    echo "         'title'   = whatever title you want on your final output."
+    echo "         template  = template file."
+    echo "         amps = optional amplitude scaling flag"
+    exit 1
+
+

@@ -1,0 +1,18 @@
+#!/bin/csh -f
+#####
+# s_srch 
+# Output: _ems.out  emspk.dek  .outfile
+#####
+
+source phoelix_params
+if ($s_verbose) echo `basename $0` $argv
+
+set dekfile=$1
+set outfile=$2
+
+rm -f fort.2
+ln $dekfile fort.2
+srchrange > $outfile
+rm -f fort.2
+
+tail -1 $outfile

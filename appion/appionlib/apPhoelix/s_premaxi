@@ -1,0 +1,195 @@
+#!/bin/csh -f
+
+# s_maxi: an edited version of phoelix for helical processing, 
+# s_maxi is different from s_maxiorig in that the boxing step and a few others have been commented out for automation purposes, a pad command is used instead of s_pow2, a couple steps have been added to filter out bad files so automation runs smoothly, and there is a cleanup line at the end. 
+#
+# Input:  .s
+# Output: .pow .info .colb .llboint .fft .rangedek .log .ner .far 
+# Usage:  s_maxi infile
+# Where:
+#	infile = list of .s files
+#
+# You must run s_boxer/s_autobox to create the .s files before running this script.
+# You must have llbo.sa, strong.sa, range.sa, and standard.pctf files in current directory.
+#
+# LSF 5/19/09, 10/23/09
+
+source phoelix_params
+
+mkdir -p rejects
+
+set infile = $1
+set lines = `wc -l $infile | awk '{print $1}'`
+set i = 1
+
+if (!(-f strong.sa)) then
+	while ($i <= $lines)
+	set j = `ee $i +1`
+	set h = `ee $i -1`
+	set file1 = `head -$i $infile | tail -1`
+	set file1p = `prefix $file1`
+	set file2 = `head -$j $infile | tail -1`
+	set file2p = `prefix $file2`
+	if ($i == 1) then 
+		pad -n $padval -p a <$file1 | dft | dftpow > $file1p.pow
+		pad -n $padval -p a <$file2 | dft | dftpow > $file2p.pow
+		add -f $file1p.pow < $file2p.pow > add$i.pow
+	else	
+		pad -n $padval -p a <$file2 | dft | dftpow > $file2p.pow
+		add -f add$h.pow < $file2p.pow > add$i.pow
+	endif
+	set i=`ee $i + 1`
+	end
+
+	set h = `ee $i -1`
+	cp add$h.pow finaladd.pow
+	rm add*.pow
+
+	set fcol=`hdim -c < finaladd.pow`
+	set fcolh=`ee "[$fcol : 2]"`
+
+	pad -c $fcolh -lft < finaladd.pow | collapse -c > finaladd.cols
+	median -s 15 < finaladd.cols > temp.col
+	sub -f temp.col < finaladd.cols > finaladd.sub
+	vtoxg <finaladd.sub> finaladd.txt
+
+	awk '{print $1, $2 * 1000000}' finaladd.txt > finaladdx.txt
+
+	s_findpks finaladdx.txt
+	loop:
+	echo "LL BO INT(A)"
+	cat strong.sa
+	set strongll = `wc -l strong.sa | awk '{print $1}'`
+	printf "\033[1 ; 34mFound $strongll strong layer lines. Is the strong.sa file correct? yes or no: "
+	printf "\033[0m"
+	set yn = $<
+	if ($yn == "no" || $yn == "n") then
+		printf "\033[1 ; 34mThere are $strongll lines, Which line would you like to change? "
+		printf "\033[0m"
+		set lineno = $<
+		set chgline = `head -$lineno strong.sa | tail -1`
+		printf "\033[1 ; 34mPlease enter the LL number(i.e. 5): "
+		printf "\033[0m"
+		set newll = $<
+		printf "\033[1 ; 34mPlease enter the bessel order(i.e. -13): "
+		printf "\033[0m"
+		set newbo = $<
+		printf "\033[1 ; 34mPlease enter the intercept, in angstroms(i.e. 115): "
+		printf "\033[0m"
+		set newint = $<
+		set newline = `echo $newll $newbo $newint`
+		sed -i "s/$chgline/$newline/" strong.sa
+		goto loop
+	endif
+else
+	printf "\033[1 ; 34mstrong.sa already exists.\n"
+	printf "\033[0m"
+endif
+
+set llbofile = ./llbo.sa
+set rangefile = ./range.sa
+set clipems = ./range.sa
+set strongfile = ./strong.sa
+
+set i = 1
+while ($i <= $lines)
+set filex = `head -$i $infile | tail -1`
+set filep = `prefix $filex`
+
+## Pad the image. make sure padval/frowsize is correct for your images. 
+pad -c $padval -p a < $filex > $filep.ss
+
+## Calculate power spectrum of unstraightened filament
+# Subtract background and adjust to zero mean
+s_bg $filep.ss $padrow
+# Pad to large power 2 - used to find intercepts
+#s_pow2 $filep.ss $filep.u
+# Make power spectrum
+dft < $filep.ss | dftpow > $filep.pow
+
+## Extract peaks as a collapsed vector
+s_peakex $filep.pow
+## Search for peaks in this vector
+s_finddell $filep.pow $filep.colb $filep.info $strongfile
+
+## If no peaks were found in finddell, terminate processing on this filament
+set x = `ls -1 $filep.colb | wc -l`
+if ($x < 1) then  
+	echo "$filep* moved to rejects. stop processing on this filament."
+	set i=`ee $i + 1`
+else
+	## If peaks were found in finddell, continue search for peaks 
+	s_findll $filep.colb $filep.info $llbofile
+
+	## Copy the *.s file to a *.b file, subtract background and adjust to zero mean
+	cp $filex $filep.b
+	s_bg $filep.b $padrow
+
+	## Float and transpose the image for mrc stage
+        set ncolu = `hdim -c < $filep.pow`
+        s_float $filep.b $filep.j $frowsize $ncolu
+        s_float $filep.b $filep.ts $frowsize
+	transpose < $filep.j | tomrc > $filep.t
+
+	set nrows = `hdim -r < $filep.j`
+	set ncols = `hdim -c < $filep.j`
+	set exclusion = `ee "[2 : [$ncols x $step]]"`
+
+	## Calculate the fft
+	s_fftrans $filep.t
+
+	## Write out hlxdump.dek for MRC routines
+	# standard.pctf is a placeholder. ctf is turned off in masterparams but must have a pctf file for phoelixdek to run
+	#s_phoelixdek $filep.t standard.pctf $filep.llboint $filep.hlxdump.dek $exclusion
+	s_phoelixdek $filep.t $filep.llboint $filep.hlxdump.dek $exclusion
+	s_phoelixdump $filep.fft $filep.hlxdump.dek
+        mv $filep.raw $filep.raw_uncor
+
+	set rows=`header < $filep.fft | head -6 | tail -1 | awk '{print $4}'`
+	set cols=`header < $filep.fft | head -6 | tail -1 | awk '{print $5}'`
+
+	## Display phases and select best layer lines
+	printf "\033[1 ; 34mSelect/adjust the peak ranges on 3-4 strong layer lines. Then click File > Save Data > OK and close Tkll window.\n"
+	printf "\033[1 ; 34mReplace file if you made adjustments. Do nothing and close Tkll window if no adjustments are needed.\n"
+	printf "\033[1 ; 34mEvaluate each LL file and decide which one has the best signal to be set as the template in the next step.\n"
+	printf "\033[0m"
+	printf "\033[1 ; 32mDisplaying: tkll -o -range -f $filep.raw_uncor -d range.sa\n"
+	printf "\033[0m"
+	tkll -o -range -f $filep.raw_uncor -d range.sa
+	
+	emsrange_new -f $filep.raw_uncor -l $filep.llboint -r range.sa -x $cols -y $rows -t0 $starttilt -dt $increment1 -nt $numtilts -s0 $startshift -ds $increment1 -ns $numshifts -dek $filep.rangedek -din $diaminner -dout $diamouter
+
+	## If phoelixdump has a segmentation fault, terminate processing on this filament
+	set y = `wc -l $filep.rangedek | awk '{print $1}'`
+	if ($y < 1) then  
+		echo "$filep* moved to rejects. stop processing on this filament."
+		s_move $filex
+		set i=`ee $i + 1`
+	else
+		## Find best tilt and shift
+		s_srchrange $filep.rangedek $filep.ems.out
+		set parms = `tail -1 $filep.ems.out`
+		echo "Tilt = " $parms[1] " Shift = " $parms[2] "Residual = " $parms[3] >> $filep.log
+		echo "Tilt = " $parms[1] " Shift = " $parms[2] "Residual = " $parms[3]
+		
+		## Write final hlxdump.dek, corrected for tilt and shift, and dump layer lines
+		s_fixhlxdek $filep.ems.out $filep.hlxdump.dek $exclusion
+		s_phoelixdump $filep.fft $filep.hlxdump.dek
+
+		## Make sure pixel spacing in hlxdump.dek file is ok, if it runs off the transform, chuck the file
+		set pix = `tail -2 $filep.hlxdump.dek | head -1 | awk '{print $3}'`
+		set pix = `ee "int[$pix]"`
+		echo $pix
+		set halfrow = `ee $padval : 2`
+		if ($pix >= $halfrow ) then
+			echo "$filep* moved to rejects. Stop processing on this filament."
+			s_move $filex
+		endif
+
+		#rm -f $filep.ss $filep.b $filep.tmp $filep.subbg $filep.rn $filep.r1 $filep.j $filep.raw_uncor $filep.sub old_$filep.hlxdump.dek
+		set i=`ee $i + 1`      
+	endif
+endif
+end
+
+exit::

@@ -1,0 +1,65 @@
+#!/bin/csh -f
+
+#####
+#
+# s_fixhlxdek:	
+#	gets tilt and xshift from srch and rewrites hlxdump.dek
+# 	moves the old hlxdump.dek to old_hlxdump.dek in case you
+# 	need it again. If $use_ems = "no", the tilt and shift
+# 	found during the ems search are not used, but rather the
+# 	parameters final_tilt and final_shift.
+# Usage: s_fixhlxdek outfile dekfile exclusion
+# Input file: .ems.out hlxdump.dek .pctf
+#
+#####
+
+source phoelix_params
+if ($s_verbose) echo `basename $0` $argv
+
+set emsout = $1
+set hlxdek = $2
+set exclusion = $3
+
+set filep = $emsout:r
+set tag="old_"
+cp $hlxdek $tag$hlxdek
+
+set llnum=`head -2 $tag$hlxdek | tail -1 | awk '{print $1}'`
+set sampling=`head -2 $tag$hlxdek | tail -1 | awk '{print $2}'`
+set yshift=`head -2 $tag$hlxdek | tail -1 | awk '{print $4}'`
+set delbr=`head -2 $tag$hlxdek | tail -1 | awk '{print $5}'`
+set rotation=`head -2 $tag$hlxdek | tail -1 | awk '{print $6}'`
+set shear=`head -2 $tag$hlxdek | tail -1 | awk '{print $7}'`
+if ( $use_tilt != "no" ) then
+	set tilt=`tail -1 $emsout | awk '{print $1}'`
+	echo $tilt "tilt"
+else
+	echo "Not using tilt from ems. Including tilt = "$final_tilt" ..."
+	set tilt=$final_tilt
+endif
+if ( $use_shift != "no" ) then
+	set xshift=`tail -1 $emsout | awk '{print $2}'`
+	echo $xshift "xshift"
+else
+	echo "Not using shift from ems. Including shift = "$final_shift" ..."
+	set xshift=$final_shift
+endif
+
+head -1 $tag$hlxdek > $hlxdek
+echo $llnum $sampling $xshift $yshift $delbr $rotation $shear $tilt >> $hlxdek
+echo $llnum $sampling $xshift $yshift $delbr $rotation $shear $tilt
+
+head -3 $tag$hlxdek | tail -1 >> $hlxdek
+#set pctfl = `more $filep.pctf | wc -l`
+#if ( -f $filep.pctf && $pctfl != 0) then
+#        set flipnum=`wc -l $filep.pctf | awk  '{print $1}'`
+#        set flipnum=`ee $flipnum - 1`
+#        set res_lim=`cat $filep.pctf | awk '{print $7}'`
+#else
+        set exclusion=0
+        set flipnum=0
+        set res_lim=0
+endif
+echo $exclusion $flipnum >> $hlxdek
+echo $res_lim >> $hlxdek
+tail -`ee $llnum x 2` $tag$hlxdek >> $hlxdek

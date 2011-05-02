@@ -1,0 +1,44 @@
+#!/bin/csh -f
+
+#####
+#
+# s_cuttores:	Cuts a layer line data set to some given resolution.
+# Usage: s_cuttores infile outfile resolution (A) repeat (A)
+# Input file: .cutems
+# Output files: .cutems.res cuttores.dek
+#
+#####
+
+source phoelix_params
+if ($s_verbose) echo `basename $0` $argv
+
+set infile = $1
+set outfile = $2
+set reslim = $3
+set repk = $4
+
+set reslim=`ee "1 : $reslim"`
+set lls=`grep LL $infile | awk -FL '{print $(NF)}' | awk '{print $1}'`
+set numlls=`echo $lls | wc -w`
+
+if (-f cuttores.dek) rm cuttores.dek
+touch cuttores.dek
+
+set i=1
+while ( $i <= $numlls )
+	set llnum=$lls[$i]
+	set bound=`ee "[ pow[ $reslim , 2 ] - pow[ 1 : [ $repk : $llnum ] , 2 ] ]"`
+        greater 0.0001 $bound
+        if ( $status == 0 ) then
+                set bound=0
+        else
+                set bound=`ee "sqrt [ $bound ]"`
+        endif
+	echo "0" `ee "[ int[ 10000 x $bound + 0.5 ] ] : 10000"` >> cuttores.dek
+	@ i++
+end 
+
+rm -f fort.8
+ln cuttores.dek fort.8
+llcut < $infile > $outfile
+rm -f fort.8

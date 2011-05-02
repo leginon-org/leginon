@@ -1,0 +1,128 @@
+#!/bin/csh -f
+
+# s_autorot: the automated version of s_dataman.  It is designed to rotate the filament through a range of different angles using rota4 and then select the best one based on the peak height of layer line 0.  When the filament is straightened, it is padded, diffracted, and collapsed. The dft can then be ctf corrected with s_datacor.  
+#
+# Input: .mrc 
+# Output: .rot .dft .colb
+# Usage: s_autorot infile padval
+# Where:
+#	infile = list of .mrc files
+#	padval = value to pad the image to, must be power of 2
+#
+# LSF/ABW 9/1/09
+
+set infile = $1
+set padval = $2
+set line = `wc -l $infile | awk '{print $1}'`
+
+rm -f autorot.out
+
+set x = 1
+while ($x <= $line)
+
+set filex = `head -$x $infile | tail -1`
+set filep = `prefix $filex`
+rm -f $filep.dat $filep.all
+
+## Bin the original file by 2
+itp -f 0.5 <$filex> $filep"bin2".mrc
+set pad2 = `ee $padval : 2`
+
+## Write the rota4_param files
+echo "0 0 90" > rota4_param
+set cols = `hdim -c < $filex`
+set rows = `hdim -r < $filex`
+set x1 = `ee $cols : 2`
+set y1 = `ee $rows : 2`
+echo "$x1 $y1 0" >> rota4_param
+
+echo "0 0 90" > rota4_param2
+set col2 = `hdim -c < $filep"bin2".mrc`
+set row2 = `hdim -r < $filep"bin2".mrc`
+set x2 = `ee $col2 : 2`
+set y2 = `ee $row2 : 2`
+echo "$x2 $y2 0" >> rota4_param2
+
+echo 0 > max.temp
+
+## Do a rough search on the binned filament for the best rotation angle
+set deg = -10
+
+set i = 1
+while ($i <= 41)
+
+# Rotate filament, create power spectrum, and collapse layer lines
+rota4 -f rota4_param2 -a $deg -p a < $filep"bin2".mrc > $filep"bin2".rot
+pad -n $pad2 -p a < $filep"bin2".rot | dft | dftpow > $filep"bin2".pow
+collapse -c <$filep"bin2".pow> $filep"bin2".col 
+median -s 15 < $filep"bin2".col > temp.col
+sub -f temp.col < $filep"bin2".col > $filep"bin2".sub
+vtoxg <$filep"bin2".sub> $filep"bin2".txt
+
+# Find the amplitude at the median
+set linex = `wc -l $filep"bin2".txt | awk '{print $1}'`
+set mid = `ee [$linex : 2] + 1`
+set max = `head -$mid $filep"bin2".txt |tail -1 | awk '{print $2}'`
+set diffx = `ee $max x 100000 | cut -d. -f1`
+set diffy = `cat max.temp`
+echo $deg $diffx >> $filep.all
+
+if ($diffx > $diffy) then
+	echo $diffx > max.temp
+	echo $deg $diffx >> $filep.dat
+endif
+
+set deg = `ee $deg + 0.5`
+set i=`ee $i+1` 
+end
+
+## Do a fine search for the best rotation angle
+set lines = `wc -l $filep.dat | awk '{print $1}'`
+set best = `head -$lines $filep.dat | tail -1 | awk '{print $1}'`
+set low = `ee $best - 1`
+set high = `ee $best + 1`
+
+set j = 1
+while ($j < 22)
+
+rota4 -f rota4_param2 -a $low -p a < $filep"bin2".mrc > $filep"bin2".rot
+pad -n $pad2 -p a < $filep"bin2".rot | dft | dftpow > $filep"bin2".pow
+collapse -c <$filep"bin2".pow> $filep"bin2".col 
+median -s 15 < $filep"bin2".col > temp.col
+sub -f temp.col < $filep"bin2".col > $filep"bin2".sub
+vtoxg <$filep"bin2".sub> $filep"bin2".txt
+
+set max = `head -$mid $filep"bin2".txt |tail -1 | awk '{print $2}'`
+set diffx = `ee $max x 100000 | cut -d. -f1`
+set diffy = `cat max.temp`
+echo $low $diffx >> $filep.all
+
+if ($diffx > $diffy) then
+	echo $diffx > max.temp
+	echo $low $diffx >> $filep.dat
+endif
+
+set low = `ee $low + 0.1`
+set j=`ee $j+1` 
+end
+
+## Finally, apply the best rotation angle to the unbinned filament
+set lines = `wc -l $filep.dat | awk '{print $1}'`
+set best = `head -$lines $filep.dat | tail -1 | awk '{print $1}'`
+
+rota4 -f rota4_param -a $best -p a < $filex > $filep.rot
+pad -n $padval -p a < $filep.rot | dft > $filep.dft
+dftpow <$filep.dft> $filep.pow
+#tkir -f $filep.pow
+s_peakex $filep.pow 
+#vtoxg <$filep.colb | xgraph
+
+echo $filex 'rotated' $best 'and diffracted' >> autorot.out
+echo $filex 'rotated' $best 'and diffracted'
+
+rm $filep"bin2".txt $filep"bin2".col $filep"bin2".mrc $filep"bin2".rot $filep"bin2".pow $filep"bin2".sub
+
+set x=`ee $x+1`
+end
+
+exit

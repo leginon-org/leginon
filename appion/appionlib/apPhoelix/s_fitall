@@ -1,0 +1,140 @@
+#!/bin/csh -f
+
+# s_fitall	fits input file to template file with both ipoles, selects
+#		the best ipole. Assumes the template is already cut to the 
+#		dimensions you require, and that cut.dek contains the
+#		dimensions to cut the comparison file. 
+#
+#	Usage:	s_fitall template_file comparison_file num_lls delbr xover
+# echo " "
+# echo "*in s_fitall"
+# echo "fitting data to template..."
+
+source phoelix_params
+if ($s_verbose) echo `basename $0` $argv
+
+set template=$1
+set infile=$2
+set num_lls=$3
+set delbr=$4
+set xover=$5
+set maxresid=$6
+set logfile=$7
+
+set filep = $infile:r
+set files = $infile:e
+
+set neartag='n'
+set fartag='f'
+set llfile=$filep.llfile
+set i=1
+
+set repk=`ee "1 : $xover"`
+
+if (-f noshift.dat) rm noshift.dat
+
+# check the side
+if ( $files == "ner" ) then
+	set tag=$neartag
+	set iside=0
+else if ( $files == "far" ) then
+	set tag=$fartag
+	set iside=1
+endif
+
+# cut the layer lines down for fitting
+s_llcut $infile $filep$tag.cut cutfit.dek
+set lls_to_fit=`grep -c LL $filep$tag.cut`
+
+set tailnum = 3
+
+# fit them over both ipoles
+set j=0
+while ( $j <= 1 )
+	set ipole=$j
+	# write fit.dek
+	echo $lls_to_fit $repk $delbr "0" > fit.dek
+	set i=1
+	while ( $i < $lls_to_fit )
+		echo -n "1 " >> fit.dek
+		set i=`ee $i + 1`
+	end
+	echo "1" >> fit.dek
+	echo "REF =" $template >> fit.dek
+	echo $iside $ipole >> fit.dek
+
+# do the fitting
+	echo "iside =" $iside "ipole =" $ipole
+	s_autofit $template $filep$tag.cut fit.dek
+
+	if ( $j == 0 ) then
+		set phimin0=`tail -$tailnum fit.out | head -1 | awk '{print $3}'`
+		set phi0=`tail -$tailnum fit.out | head -1 | awk '{print $6}'`
+		set z0=`tail -$tailnum fit.out | head -1 | awk '{print $8}'`
+		set rscale0=`tail -$tailnum fit.out | head -1 | awk '{print $11}'`
+		set ampscale0=`tail -1 fit.out | awk '{print $4}'`
+#		echo "minimum phase residual" $phimin0 " at phi " $phi0 " Z " $z0
+#		echo "rscale " $rscale0 " mean ampscale " $ampscale0
+		echo $filep $tag "Min phase resid" $phimin0 " at phi" $phi0 " Z" $z0 " rsc" $rscale0 " ampsc" $ampscale0
+	else
+		set phimin1=`tail -$tailnum fit.out | head -1 | awk '{print $3}'`
+		set phi1=`tail -$tailnum fit.out | head -1 | awk '{print $6}'`
+		set z1=`tail -$tailnum fit.out | head -1 | awk '{print $8}'`
+		set rscale1=`tail -$tailnum fit.out | head -1 | awk '{print $11}'`
+		set ampscale1=`tail -1 fit.out | awk '{print $4}'`
+#		echo "minimum phase residual" $phimin1 " at phi " $phi1 " Z " $z1
+#		echo "rscale " $rscale1 " mean ampscale " $ampscale1
+		echo $filep $tag "min phase resid" $phimin1 " at phi" $phi1 " Z" $z1 " rsc" $rscale1 " ampsc" $ampscale1
+	endif
+	set j=`ee $j + 1`
+end
+
+# write hlxavg.dek
+# echo " "
+#echo "writing hlxavg.dek..."
+echo " "$filep$tag.shi > hlxavg.dek
+echo $num_lls "1" $repk $delbr "0" >> hlxavg.dek
+
+# Check to find the proper ipole.
+# If the rscale is greater than $maxrscale, or if phimin is greater than
+# $maxresid, create noshift.dat in order to notify the calling program. 
+# I put this in specifically for s_makeavg.
+greater $phimin1 $phimin0
+if ( $status == 0 ) then
+	set phidiff = `ee $phimin1 - $phimin0`
+	#echo $iside "0" $phi0 $z0 "1" >> hlxavg.dek
+	echo $iside "0" $phi0 $z0 $rscale0 >> hlxavg.dek
+	echo $filep$tag.shi $iside "0" $phimin0 $phi0 $z0 $rscale0 $phidiff >> $logfile
+	echo $ampscale0 >> hlxavg.dek
+	greater $rscale0 $maxrscale
+	if ( $status == 0 ) then
+		echo ">> Radial scaling factor is "$rscale0"." >> noshift.dat
+	endif
+	greater $phimin0 $maxresid
+	if ( $status == 0 ) then
+		echo ">> Minimum phase residual is "$phimin0"." >> noshift.dat
+	endif
+	greater $minupdown $phidiff
+	if ( $status == 0 ) then
+                echo ">> Up/down phase difference is "$phidiff"." >> noshift.dat
+        endif
+else
+	set phidiff = `ee $phimin0 - $phimin1`
+#	echo $iside "1" $phi1 $z1 "1" >> hlxavg.dek
+	echo $iside "1" $phi1 $z1 $rscale1 >> hlxavg.dek
+	echo $filep$tag.shi $iside "1" $phimin1 $phi1 $z1 $rscale1 $phidiff >> $logfile
+	echo $ampscale1 >> hlxavg.dek
+	greater $rscale1 $maxrscale
+	if ( $status == 0 ) then
+		echo ">> Radial scaling factor is "$rscale1"." >> noshift.dat
+	endif
+	greater $phimin1 $maxresid
+	if ( $status == 0 ) then
+		echo ">> Minimum phase residual is "$phimin1"." >> noshift.dat
+	endif
+	greater $minupdown $phidiff
+	if ( $status == 0 ) then
+                echo ">> Up/down phase difference is "$phidiff"." >> noshift.dat
+        endif
+
+endif

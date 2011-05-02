@@ -1,0 +1,36 @@
+#!/bin/csh -f
+#####
+# s_hlfdek : 
+#	Writes a dek file in a format suitable for hlf.
+# Usage: s_hlfdek $filep $num_lls $dekfile
+# Output file: .dek
+#####
+source phoelix_params
+if ($s_verbose) echo `basename $0` $argv
+
+set filep=$1
+set num_lls=$2
+if ($#argv == 3) then
+    set dekfile=$3
+else 
+    set dekfile = "hlf.dek"
+endif
+
+if ( -f $dekfile ) rm $dekfile
+touch $dekfile
+
+echo "$filep" > $dekfile
+set radius = `ee "[$diameter : 1.3]"`
+echo  $replen $delbr $radius $step >> $dekfile
+echo $num_lls "0 2" >> $dekfile
+
+set i = 0
+while ($i < $num_lls)
+   echo -n "1 " >> $dekfile
+   @ i++
+end
+echo "" >> $dekfile
+
+echo "1 0 0 0 0 0 1 0">>  $dekfile
+echo "0 360">> $dekfile
+echo "0" $xover $step >> $dekfile

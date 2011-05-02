@@ -1,0 +1,49 @@
+#!/bin/sh
+#
+
+file=$1
+choice=b
+rho=100
+height=0.84
+#delbr=0.0007422
+delbr_1=`head -4 $1  | tail -1 | awk '{printf "%.8f",$1}'`
+delbr_2=`head -5 $1  | tail -1 | awk '{printf "%.8f",$1}'`
+delbr=`ee "$delbr_2 - $delbr_1"`
+
+ticks=0.02
+
+rm -f out.out maxllamps.zzz
+echo $file > maxllamps.zzz
+echo "out.out" >> maxllamps.zzz
+maxllamps < maxllamps.zzz
+
+
+maxamp=`head -4 out.out | tail -1 | awk '{print $7}'`
+if [ -z "$maxamp" ];
+then
+   echo "Fatal error: \$maxamp not initialized.  Report this error and include"
+   echo "the contents of 'out.out' and 'maxllamps.zzz'"
+   exit 1
+fi
+
+rm -f out.out maxllamps.zzz
+
+
+# Insert a leading space to any line where it might be missing (bug #314)
+rm -f _llplot_$file
+sed 's/^\([^[:space:]]\)/ \1/g' $file > _llplot_$file
+
+echo _llplot_$file > plot.zzz
+echo $choice >> plot.zzz
+echo $rho >> plot.zzz
+echo `ee $maxamp : 2` >> plot.zzz
+echo $height >> plot.zzz
+echo $delbr >> plot.zzz
+echo $ticks >> plot.zzz
+
+rm -f plot.int
+psllplot < plot.zzz
+#asa < plot.int > plot.asa
+sed 's/^0//;s/^ //' < plot.int > plot.asa
+mv plot.asa plot.int
+rm -f _llplot_$file plot.zzz 

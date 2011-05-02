@@ -1,0 +1,56 @@
+#!/bin/csh -f
+#
+# s_splitlist: divides final average list into two files, generates new averages and mrc volumes for determining FSC
+#
+# Input: .list
+# Output: .avg .map .mrc
+# Usage: s_splitlist infile	
+# Where:
+#	infile = list of .ner and .far files to be averaged
+# LSF 2/6/11
+source phoelix_params
+
+set infile = $1
+set filep = `prefix $infile`
+
+set i = 1
+set lines = `wc -l $infile | awk '{print $1}'`
+while ($i <= $lines)
+
+set eotest = `ee $i % 2`
+touch $filep"1".list
+touch $filep"2".list
+
+if $eotest == 0 then
+	head -$i $infile | tail -1 >> $filep"1".list
+
+else if $eotest == 1 then
+	head -$i $infile | tail -1 >> $filep"2".list
+endif
+
+@ i++
+end
+
+s_makeavg $filep"1".list
+s_makeavg $filep"2".list
+
+## Invert contrast if necessary.  Flag set in master_params
+if ($cont == yes) then
+	s_conchg $filep"1".avg $filep"1".opp
+	s_conchg $filep"2".avg $filep"2".opp
+
+	## Generate the map file (requires hlf.dek file)
+	s_newhlf $filep"1".opp
+	s_newhlf $filep"2".opp
+
+else if ($cont == no) then
+	## Generate the map file (requires hlf.dek file)
+	s_newhlf $filep"1".avg
+	s_newhlf $filep"2".avg
+endif
+
+pad -n $yht2 < $filep"1".map > $filep"1".pad
+pad -n $yht2 < $filep"2".map > $filep"2".pad
+tomrc < $filep"1".pad > $filep"1".mrc
+tomrc < $filep"2".pad > $filep"2".mrc
+

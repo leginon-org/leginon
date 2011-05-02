@@ -1,0 +1,40 @@
+#!/bin/csh -f
+
+#####
+#
+# s_peakexnew 
+# generates the collapsed and background subtracted vector of layer lines
+# Usage: s_peakex filename rowrange filfact filfactbg
+# 	rowrange: range of rows to be included when collapsing layer 
+#		  lines onto meridion for peak search
+# Input file: .pow 
+# Output file : .sub  .colb
+# Created / Removed by script: .cols  .coll temp.colb
+#
+#####
+
+source phoelix_params
+
+if ($s_verbose) echo `basename $0` $argv
+
+set file=$1
+
+set filep=$file:r
+
+# get row and col size of image
+set fcol=`hdim -c < $file`
+set fcolh=`ee "[$fcol : 2]"`
+set frow=`hdim -r < $file`
+
+set rowrange = `ee "[[$step x $frow] : $fres]"`
+pad -r $rowrange -c $fcolh -lft < $file | collapse -c | \
+	pad -c `ee $fcolh - 2` -lft | pad -c $fcolh -lft > $filep.cols
+
+set radfil = `ee "[[$step x $fcol ] : [$Aradfil]]"`
+
+median -s 15 < $filep.cols > temp.colb
+sub -f temp.colb < $filep.cols > $filep.sub
+lft < $filep.sub | lbutter -r $radfil | lift > $filep.colb
+
+rm $filep.cols temp.colb 
+

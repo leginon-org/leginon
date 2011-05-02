@@ -1,0 +1,57 @@
+#!/usr/bin/perl -w
+#
+# ASCII-encoded grab program to retrieve a value from a specific register 
+# from an "info" file.  Requirements for a tagline containing an integer have 
+# been removed.  Also filenames with multiple extensions (e.g. image.test.001.f)
+# are now perfectly acceptable.
+#
+# USAGE: grab {info_file_name} {image_id} ={n}
+#
+#              {info_file_name}: Name of registry file.  No restriction on name.#              {image_id}:       Unique filename to allow multiple data entries
+#                                (i.e. filenames) to share a common registry
+#                                file.  
+#              {n}:              Register number
+#
+
+if ($#ARGV < 0) {
+   die << "USAGE";
+USAGE: grab {info_file_name} {image_id} ={n}
+
+             {info_file_name}: Name of registry file.  No restriction on name.
+             {image_id}:       Unique filename to allow multiple data entries
+                               (i.e. filenames) to share a common registry
+                               file.
+             {n}:              Register number
+USAGE
+}
+
+$infofile = $ARGV[0];
+$tagline  = $ARGV[1];
+#$tagline  =~ s/\..*//;
+
+open(INFO,"<$infofile") || die "Can't open $infofile\n";
+while (<INFO>) {
+   chomp;
+   @entry = split;
+   $tag = $entry[0];
+   $reg = $entry[1];
+   $val = $entry[2];
+   $info{"$tag $reg"} = $val;
+}
+close INFO;
+
+while ($#ARGV > 1) {
+   $reg = $ARGV[2];
+   shift @ARGV;
+   if (defined $info{"$tagline $reg"}) {
+      if ($info{"$tagline $reg"} == "-1") {
+         print "-1 ";
+      } else {
+         print "$info{\"$tagline $reg\"} ";
+      }
+   } else {
+      print "0 ";
+   }
+}
+print "\n";
+

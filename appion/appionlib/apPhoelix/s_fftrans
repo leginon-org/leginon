@@ -1,0 +1,22 @@
+#!/bin/csh -f
+
+#####
+#
+# s_fftrans : do fft on mrc file
+# Usage s_fftrans .mrc
+# Input file:  .mrc
+# Output file: .fft
+#
+#####
+
+source phoelix_params
+if ($s_verbose) echo `basename $0` $argv
+
+set file = $1
+set filep = $file:r
+
+rm -f IN $filep.fft
+setenv IN $file
+setenv OUT $filep.fft 
+fftrans > /dev/null
+chmod +r $filep.fft

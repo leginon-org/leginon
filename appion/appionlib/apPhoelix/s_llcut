@@ -1,0 +1,23 @@
+#!/bin/csh -f
+#####
+# s_llcut
+# Usage:  s_llcut .raw_uncor .cutems .ems.dek
+#		  	     .clipems .clipems.dek
+# INput file: .raw_uncor  .dek
+# Output file: clipems / cutems
+#####
+
+source phoelix_params
+
+if ($s_verbose) echo `basename $0` $argv
+
+set filein=$1
+set fileout=$2
+set filedek=$3
+
+rm -f fort.8
+ln -s $filedek fort.8
+
+llcut < $filein > $fileout
+
+rm -f fort.8

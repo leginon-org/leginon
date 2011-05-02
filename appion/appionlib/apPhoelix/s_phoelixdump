@@ -1,0 +1,55 @@
+#!/bin/csh -f
+#####
+# s_phoelixdump
+# phoelixdump looks for the data file in file: IN
+# and the control dek in: hlxdump.dek
+# Gets the phases off a single line, while getting amps off whatever width
+# you give it. It will ignore a region around the zeros in the contrast
+# transfer function, setting the amps in this region to -999.
+# USAGE: s_phoelixdump .fft .hlxdumpdek
+# Input file: .fft  emscut.dek
+# Output file: .ner  .far  .raw
+#####
+source phoelix_params
+
+if ($s_verbose) echo `basename $0` $argv
+
+set file = $1
+set dekfile = $2
+
+# MRC explicitely needs "hlxdump.dek" as input
+cp $dekfile hlxdump.dek
+set filep = $file:r
+
+# Either save the near.dat and far.dat explicitly or default to *.ner, far
+if ($3 !="") then
+        set nerfile = $3
+else    
+        set nerfile = $filep.ner
+endif
+if ($4 !="") then
+        set farfile = $4
+else 
+        set farfile = $filep.far
+endif
+
+set rawfilep = $nerfile:r
+
+if ($calling_method == mt || $calling_method == tmv || \
+    $calling_method == pfo) then
+	rm -f fort.5
+	cp $dekfile fort.5
+endif
+
+rm -f near.dat far.dat IN
+setenv IN $file
+
+phoelixdump > /dev/null
+
+cat near.dat far.dat > $rawfilep.raw
+mv near.dat $nerfile
+mv far.dat $farfile
+if ($calling_method == mt || $calling_method == tmv || \
+    $calling_method == pfo) then
+	rm -f fort.5
+endif

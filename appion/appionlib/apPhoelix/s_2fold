@@ -1,0 +1,86 @@
+#!/bin/csh -f
+#
+# s_2fold: creates a 2-fold average and map of a near file by averaging it against a template
+#
+# Input: .ner 
+# Output: $filep2f.avg
+# Usage: s_2fold infile template
+# Where: 
+#	infile = avgerage you want to 2fold, copied to $filep.ner. must have .ner extension in order for s_lautoavg to run.
+#	template = avgerage you want to align to.  must have same number of LL and have the same phase origin at infile.
+#	 
+# LSF 6/3/09
+
+source phoelix_params	
+source master_params
+
+set infile = $1
+set template = $2
+set filep = `prefix $infile`
+
+ls -1 $infile > $filep.list
+
+## Create a cutfit.dek file and make an average
+echo 'select strong layer lines for the cutfit.dek file and save'
+tkll -f $infile -d cutfit1.dek -cut 
+s_lautoavg $filep.list 1 avg1 $template
+
+mv avglist1.avg $filep"2f".avg
+mv avg1.OUTPUT $filep"avg1".OUTPUT
+mv avglist1.ps $filep"2f".ps
+mv avglist1.opp $filep"2f".ps
+mv avglist1ll.ps $filep"2fll".ps
+mv avglist1.deks $filep"avg1".deks
+
+## Editing hlxavg.dek file to include second set of params from s_makeavg output
+set line1 = `head -1 hlxavg.dek`
+set line2 = `head -2 hlxavg.dek | tail -1`
+set phi = `grep Min $filep"avg1".OUTPUT | awk '{print $9}'`
+set Z = `grep Min $filep"avg1".OUTPUT | awk '{print $11}'`
+set rsc = `grep Min $filep"avg1".OUTPUT | awk '{print $13}'`
+set ampsc = `grep Min $filep"avg1".OUTPUT | awk '{print $15}'`
+set phi2 = `grep min $filep"avg1".OUTPUT | awk '{print $9}'`
+set Z2 = `grep min $filep"avg1".OUTPUT | awk '{print $11}'`
+set rsc2 = `grep min $filep"avg1".OUTPUT | awk '{print $13}'`
+set ampsc2 = `grep min $filep"avg1".OUTPUT | awk '{print $15}'`
+
+if ($rsc == $rsc2)then
+	mv hlxavg.dek hlxavgorig.dek
+	echo $line1 > hlxavg.dek
+	echo $line2 >> hlxavg.dek
+	echo 0 0 $phi $Z $rsc >> hlxavg.dek
+	echo $ampsc >> hlxavg.dek
+	echo 0 1 $phi2 $Z2 $rsc2 >> hlxavg.dek
+	echo $ampsc2 >> hlxavg.dek
+else 
+	echo "rscale values are not equal, modifying rsc2"	
+	mv hlxavg.dek hlxavgorig.dek
+	echo $line1 > hlxavg.dek
+	echo $line2 >> hlxavg.dek
+	echo 0 0 $phi $Z $rsc >> hlxavg.dek
+	echo $ampsc >> hlxavg.dek
+	echo 0 1 $phi2 $Z2 $rsc >> hlxavg.dek
+	echo $ampsc2 >> hlxavg.dek
+endif 
+
+set llnum = `head -2 $filep"avg1".deks | tail -1 | awk '{print $1}'`
+sed -i "s/$llnum 1/$llnum 2/g" hlxavg.dek
+
+## Create 2fold average
+cat $filep"2f".avg $filep"2f".avg > $filep"cat".avg
+mv $filep"cat".avg $filep"cat".raw
+rm $filep"2f".avg
+s_phoelixavg $filep"cat".raw $filep"2f".avg
+
+## View average to make sure phases are corrected (Comment out for complete automation)
+tkll -f $filep"2f".avg
+
+## Do a contrast change if necessary (flag set in master_params) and make a map
+if ($cont == yes) then
+	s_conchg $filep"2f".avg $filep"2f".opp
+	s_newhlf $filep"2f".opp
+else if ($cont == no) then
+	s_newhlf $filep"2f".avg
+endif
+
+exit
