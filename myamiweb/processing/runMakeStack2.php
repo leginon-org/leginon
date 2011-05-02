@@ -171,6 +171,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// set phaseflip on by default
 	$phasecheck = ($_POST['ctfcorrect']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 	$boxfilescheck = ($_POST['boxfiles']=='on') ? 'CHECKED' : '';
+	$helicalcheck = ($_POST['helicalcheck']=='on') ? 'CHECKED' : '';
 	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 
@@ -490,6 +491,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<input type='checkbox' name='boxfiles' $boxfilescheck>\n";
 	echo docpop('boxfiles','Only create EMAN boxfiles');
 	echo "<br />\n";
+	echo "<br />\n";
+	echo "<input type='checkbox' name='helicalcheck' $helicalcheck>\n";
+	echo docpop('helicalcheck','Apply helical rotation angles');
+	echo "<br />\n";
 	echo "</td>\n";
 	echo "</tr>\n";
 	echo "<tr>\n";
@@ -531,6 +536,7 @@ function runMakestack() {
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
 	$boxfiles = ($_POST['boxfiles']);
+	$helicalcheck = ($_POST['helicalcheck']);
 	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
 	
 	// set image inspection selection
@@ -653,7 +659,10 @@ function runMakestack() {
 	PART 3: Create program command
 	******************** */
 	
-	$command = "makestack2.py"." ";
+	if ($helicalcheck == 'on')
+		$command ="makehelicalstack.py"." ";
+	else
+		$command = "makestack2.py"." ";
 	$command.="--single=$single ";
 	if ($partrunid)
 		$command.="--selectionid=$partrunid ";
