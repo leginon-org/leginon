@@ -44,6 +44,7 @@ $projectinfo = $project->getProjectInfo($selectedprojectId);
 $projectowners = $project->getProjectOwners($selectedprojectId);
 $projectname = ": ".$projectinfo['Name'];
 
+// unlink the Processing DB from this project if user selected "unlink" button
 if ($_POST['updateprocessing']) {
 	$q="delete from processingdb where `REF|projects|project`='$selectedprojectId'";
 	$r=$project->mysql->SQLQuery($q);
@@ -375,8 +376,17 @@ if (SAMPLE_TRACK) {
 }
 
 // Experiments 
+	// toggle showing projects with few images if user selected the "show" or "hide" projects button
+	if ($_POST['showHidden']) {
+		$toggleHidden = '<input type="submit" name="hideHidden" value="hide experiments with too few images">';
+		$showHidden = True;
+	} else {
+		$toggleHidden = '<input type="submit" name="showHidden" value="show all">';
+		$showHidden = False;
+	}
+	
 	$experimentIds = $project->getExperiments($projectId);
-	echo divtitle(count($experimentIds).' Experiments');
+	echo divtitle(count($experimentIds).' Experiments '.$toggleHidden);
 	if ($is_admin)
 		echo '<a alt="upload" target="_blank" class="header" href="'.UPLOAD_URL.'?projectId='.$selectedprojectId.'">upload images to new session</a>';
 
@@ -392,7 +402,13 @@ if (SAMPLE_TRACK) {
 			continue;
 		$numimg = $leginondata->getNumImages($info['SessionId']);
 		$totalsecs = $leginondata->getSessionDuration($info['SessionId']);
-
+		
+		// If there is not much data in the experiment, mark it as one to hide
+		$hide = ($numimg < 3 || $totalsecs < 60) ? True : False;
+		if ( $hide && !$showHidden ) {
+			continue;
+		}
+		
 		$sessions[trim($info['SessionId'])]=$info['Name'];
 		$sessionlink="<a class='header' target='viewer' href='".VIEWER_URL.$info['SessionId']."'>".$info['Name']."</a>";
 		$experiments[$k]['name']=$sessionlink;
@@ -403,7 +419,8 @@ if (SAMPLE_TRACK) {
 		if ($numimg > 0)
 			$experiments[$k]['totalimg']=$numimg;
 
-		if ($numimg < 3 || $totalsecs < 60) {
+		// if there is not much data in this experiment, grey out the name and description
+		if ($hide) {
 			// these sessions have no image and link is broken
 			$experiments[$k]['name'] = "<font color='#bbbbbb'>".$info['Name']."</font>";
 			$experiments[$k]['description'] = "<font color='#bbbbbb'>".$experiments[$k]['description']."</font>";
