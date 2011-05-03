@@ -94,10 +94,9 @@ if (!$p_prefix = trim(DEF_PROCESSING_PREFIX)) {
 	$p_prefix = false;
 }
 
-$q="select appiondb from processingdb where `REF|projects|project`='$selectedprojectId'";
-list($r)=$project->mysql->getSQLResult($q);
+// Get the name of the processing database for this project
+$processingdb = $project->getProcessingDB( $selectedprojectId );
 
-$processingdb=$r['appiondb'];
 $title = "Project".$projectname;
 login_header($title);
 project_header($title, 'init()');
@@ -443,6 +442,14 @@ if (SAMPLE_TRACK) {
 		}
 		$summarylink="<a class='header' target='viewer' href='".SUMMARY_URL.$info['SessionId']."'>summary&raquo;</a>";
 		$experiments[$k]['summary']=$summarylink;
+		
+		// Add the number of Processing Runs
+		$numProcessingRuns = $project->getExperimentProcessingRunCount( $processingdb, $info['SessionId'] );
+		$experiments[$k]['numruns'] = $numProcessingRuns;
+
+		// Add the number of Reconstructions
+		$numRecons = $project->getExperimentReconCount( $processingdb, $info['SessionId'] );
+		$experiments[$k]['numrecons'] = $numRecons;
 	}
 	
 // sort the experiment array if needed
@@ -459,7 +466,9 @@ $columns=array(
 	'user'=>'User',
 	'description'=>'Description',
 	'totalimg'=>'Total images',
-	'totaltime'=>'Total Duration'
+	'totaltime'=>'Total Duration',
+	'numruns'=>'Processing Runs',
+	'numrecons'=>'Reconstructions'
 	);
 if ($share) {
 	$columns['share']="Sharing";
