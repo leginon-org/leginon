@@ -206,8 +206,11 @@ class HipScript(appionScript.AppionScript):
 			turns = math.ceil((twist * subs)/360)
 		print "subunits=", subs, "turns=", turns
 
-		i = 0
-		while i < maxll:
+		print>>f, 0, 0
+		print>>f2, "ll= ", 0, "bo= ", 0
+		i = 1
+		stop = maxll + 1
+		while i <= stop:
 			j = -1*maxbo
 			while j <= maxbo:
 				test = ((nfold * i) + (turns * j))
@@ -216,10 +219,10 @@ class HipScript(appionScript.AppionScript):
 					ll = i
 					print>>f, ll, bo
 					print>>f2, "ll= ", ll, "bo= ", bo
-					i  = i+1
+					j = j+1
 				else:	
 					j = j+1
-
+			i = i +1
 
 	#=====================
 	def writeLLBO2(self):
@@ -232,35 +235,48 @@ class HipScript(appionScript.AppionScript):
 		bo1 = self.params['bo1']
 		ll2 = self.params['ll2']
 		bo2 = self.params['bo2']
+
+		print>>f, 0, 0
+		print>>f2, "ll= ", 0, "bo= ", 0
+
 		i = 0
 		startll = ll1 - (ll2 * 5)
 		startbo = bo1 - (bo2 * 5)
-		ll = startll
-		bo = startbo
-		print>>f, 0, 0
-		print>>f2, "ll= ", 0, "bo= ", 0
-		while ll < 2*self.params['maxll']:
-			ll = startll + (ll2 * i)
-			bo = startbo + (bo2 * i)
+		lla = startll
+		boa = startbo
+		while lla <= self.params['maxll']:
+			lla = startll + (ll2 * i)
+			boa = startbo + (bo2 * i)
+			ll = lla
+			bo = boa
+			j = 0
 			while bo < 2*self.params['maxbo'] and bo > -2*self.params['maxbo']:
-				if ll >= 0 and ll <= self.params['maxll'] and bo >= -1*self.params['maxbo'] and bo <= self.params['maxbo']:
+				ll = lla + (ll1 * j)
+				bo = boa + (bo1 * j)
+				if ll > 0 and ll <= self.params['maxll'] and bo >= -1*self.params['maxbo'] and bo <= self.params['maxbo']:
 					print>>f, ll, bo
 					print>>f2, "ll= ", ll, "bo= ", bo
-				ll = ll + ll1
-				bo = bo + bo1
+				j = j+1
 			i = i+1
 
 		i = 0
-		ll = 0
-		while ll < 2*self.params['maxll'] and ll >= 0:
-			ll = ll2 - (ll1 * i)
-			bo = bo2 - (bo1 * i)
+		startll = 0
+		startbo = 0
+		lla = startll
+		boa = startbo
+		while lla <= self.params['maxll'] and lla >= -1*ll1:
+			lla = startll - (ll1 * i)
+			boa = startbo - (bo1 * i)
+			ll = lla
+			bo = boa
+			j = 0
 			while bo < 2*self.params['maxbo'] and bo > -2*self.params['maxbo']:
-				if ll >= 0 and ll <= self.params['maxll'] and bo >= -1*self.params['maxbo'] and bo <= self.params['maxbo']:
+				ll = lla + (ll2 * j)
+				bo = boa + (bo2 * j)
+				if ll > 0 and ll <= self.params['maxll'] and bo >= -1*self.params['maxbo'] and bo <= self.params['maxbo']:
 					print>>f, ll, bo
 					print>>f2, "ll= ", ll, "bo= ", bo
-				ll = ll + ll2
-				bo = bo + bo2
+				j = j+1
 			i = i+1
 
 		f.close()

@@ -32,7 +32,7 @@ rm -f $filep.coord $filep.sort $filep.pk amps.out amps.sort val.out val.sort
 
 ## Apply a butterworth filter and collapse the image
 cp $filex $filep.temp
-s_bg $filep.temp $ncols
+s_bg2 $filep.temp $ncols
 s_filter $filep.temp $filep.but $filval $step
 collapse -r <$filep.but> $filep.col
 
@@ -100,12 +100,13 @@ echo 3 $xend $ymid >> $filep.coord
 chopstr -f $filex -d $filep.coord -x0 0 -xl $xlngth -y $yht2 -c $filep -x chop
 
 mv $filep.000.chop $filep.s
+s_filter $filep.s $filep.sbut $filval $step
 #if ($prehip == 'yes') then
 #	echo "Did the filament get centered properly? If not try adjusting filter value (filval)."
 #	tkir -f $filep.s
 #endif
 
-rm $filep.sort $filep.temp amps.out amps.sort val.out val.sort first.out last.out
+rm $filep.sort $filep.temp temp.but amps.out amps.sort val.out val.sort first.out last.out
 
 @ i++
 end

@@ -16,13 +16,10 @@
 #
 # LSF 11/5/09, 4/29/11
 
-# Make sure description is in qoutes to avoid set: Variable and syntax errors
-set remset = "set description = "
-grep "set description" phoelix_params > desc.txt
-sed -i "s/$remset//" desc.txt
-set desc = `cat desc.txt`
-sed -i "s/$desc/'$desc'/" phoelix_params
-rm desc.txt
+# Remove description from phoelix_params to avoid set: Variable and syntax errors
+cp phoelix_params temp_params
+grep -v "set description" temp_params > phoelix_params
+rm temp_params
 
 source phoelix_params
 

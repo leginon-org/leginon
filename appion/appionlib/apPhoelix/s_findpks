@@ -2,7 +2,7 @@
 
 source phoelix_params
 
-rm -f $mandir/strong.sa $mandir/range.sa
+rm -f $mandir/strong.sa
 
 set infile = $1
 set lines = `wc -l $infile | awk '{print $1}'`
@@ -79,30 +79,24 @@ while ($i < $lines)
 mv temp.txt finalpks.txt
 set lines = `wc -l finalpks.txt | awk '{print $1}'`
 set i = 1
-# Write strong.sa and range.sa
+# Write strong.sa 
 while ($i <= $lines)
 	set pix = `head -$i finalpks.txt | tail -1 | awk '{print $1}'`
 	set llspac = `ee [$padval x $step] : $replen`
 	set ll = `ee "int[$pix : $llspac]"`
 	if ($ll != 0) then
-		set bo = `grep "ll=  $ll " $rundir/llbo.txt | awk '{print $4}'`
-		set int = `ee "int[[$padval x $step] : $pix]"`
-		echo $ll $bo $int >> $mandir/strong.sa
-		set low = `ee "[abs[$bo] : 1000] - 0.003" | cut -c 0-8`
-		set lowx = `ee $low x 1000000 | cut -d. -f1`
-		if ($lowx <= 0) then	
-			set low = 0.0001
-		endif
-		set high = `ee "[abs[$bo] : 1000] + 0.005" | cut -c 0-8`
-		set highx = `ee $high x 1000000 | cut -d. -f1`
-		set rmaxx = `ee $rmax x 1000000 | cut -d. -f1`
-		if ($highx >= $rmaxx) then
-			set high = `ee $rmax - 0.01`
-		endif
-		echo $ll $bo $low $high >> $mandir/range.sa
+		set j = 1
+		set bonum = `grep "ll=  $ll " $rundir/llbo.txt | wc -l`
+		while ($j <= $bonum)
+			grep "ll=  $ll " $rundir/llbo.txt > strong.txt
+			set bo = `head -$j strong.txt | tail -1 | awk '{print $4}'`
+			set int = `ee "int[[$padval x $step] : $pix]"`
+			echo $ll $bo $int >> $mandir/strong.sa
+		set j = `ee $j +1`
+		end
 	endif
 	set i = `ee $i +1`
 	end
 
-rm tmp peaks.txt lines.txt
+rm -f tmp peaks.txt lines.txt strong.txt
 

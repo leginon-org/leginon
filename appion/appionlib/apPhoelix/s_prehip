@@ -20,19 +20,15 @@
 #
 # LSF 11/5/09
 
-# Make sure description is in qoutes to avoid set: Variable and syntax errors
-set remset = "set description = "
-grep "set description" phoelix_params > desc.txt
-sed -i "s/$remset//" desc.txt
-set desc = `cat desc.txt`
-sed -i "s/$desc/'$desc'/" phoelix_params
-rm desc.txt
+# Remove description from phoelix_params to avoid set: Variable and syntax errors
+cp phoelix_params temp_params
+grep -v "set description" temp_params > phoelix_params
+rm temp_params
 
 source phoelix_params
 
 # Copy individual files from stack into run directory
 cp $rundir/partfiles/*/* $mandir
-ls -1 part*.mrc > transp.list
 
 # Go to directory for mandatory files and put ll in order in llbo.sa
 cd $mandir
@@ -52,7 +48,7 @@ if ($yn == "no" || $yn == "n") then
 		printf "\033[0m"
 		set llbopath = $<
 		printf "\033[1 ; 32mCopying $llbopath to $mandir/llbo.sa\n"
-		printf "\033[0m\n"
+		printf "\033[0m"
 		cp $llbopath $mandir/llbo.sa
 	else if ($yn == "no" || $yn == "n") then
 		printf "\033[1 ; 34mTry adjusting indexing parameters and/or repeat length and rerun.\n"
@@ -64,12 +60,13 @@ else
 endif
 
 ## Transpose filaments from vertical to horizontal
+ls -1 part*.mrc > transp.list
 s_transpose transp.list
-ls -1 *.tmrc > rot.list
 
 ## Correct in-plane tilt
 printf "\033[1 ; 32mAligning and centering filaments... \n"
 printf "\033[0m" 
+ls -1 *.tmrc > rot.list
 s_testrot rot.list $padval
 
 ## Recenter and box out the filament segments 
@@ -78,7 +75,7 @@ loop:
 s_autobox box.list $xlngth $yht2 $filval
 printf "\033[1 ; 34mLook at the boxed out filaments, see if they are centered properly, then close Tkir window\n"
 printf "\033[0m"
-tkir -f *.s
+tkir -f *.s *.sbut
 printf "\033[1 ; 34mDid the filaments get boxed and centered properly? yes or no: "
 printf "\033[0m"
 set yn = $<
@@ -96,6 +93,7 @@ endif
 printf "\033[1 ; 32mRunning Phoelix to correct tilt and shift... \n"
 printf "\033[0m"
 ls -1 *.s > maxi.list
+
 touch selfile.list
 set lines = `wc -l maxi.list | awk '{print $1}'`
 set i = 1
@@ -133,7 +131,6 @@ cp *.ner *.far *params cutfit* chop* template avg.list avgsnif1
 cd avgsnif1
 
 ## Round 1 of Averaging 
-# First three steps can be commented out if you already have your cutfit.dek files. 
 printf "\033[1 ; 34mGenerate 3 cutfit.dek files for iterative rounds of averaging by selecting the peak area on the strong layer lines.\n"
 printf "\033[1 ; 34mFor the first round select 3-4 layer lines, then select 2-3 more for each additional round.\n"
 printf "\033[1 ; 34mThen click File > Save Data > OK and close Tkll window.\n"
@@ -322,11 +319,11 @@ s_fpost avg.list 3 $rescut postavg$rescut map overplot
 pad -n $mrcpad2 <avglist3_$rescut"p".map> avglist3_$rescut"p".pad
 tomrc <avglist3_$rescut"p".pad> avglist3_$rescut"p".mrc
 
-cp template $mandir
+cp template cutfit*.dek chop*.dek $mandir
 
 # Cleanup directory and leave only mandatory files
 cd ../../../
-rm -rf avgsnif1/* rejects/* part* avgsnif1 rejects autorot.out box.list max.temp hlxdump.dek llbo.sort llbo.tmp llbo.txt maxi.list rota4* rot.list selfile.list temp.col thread* final* avg.list greater.txt transp.list
+rm -rf avgsnif1/* rejects/* part* old* avgsnif1 rejects autorot.out box.list max.temp hlxdump.dek llbo.sort llbo.tmp llbo.txt maxi.list rota4* rot.list selfile.list temp.col thread* final* avg.list greater.txt transp.list
 
 printf "\033[1 ; 36mPreHIP Complete.  Mandatory files located in $mandir \n"
 printf "\033[0m\n"
