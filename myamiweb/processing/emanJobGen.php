@@ -63,7 +63,8 @@ function submitJob($extra=False) {
 		writeJobFile("<B>ERROR:</B> Enter a user name and password");
 
 	$jobname = $_POST['jobname'];
-	$outdir = $_POST['outdir'].$jobname;
+	$outdir = formatEndPath($_POST['outdir']);
+	$outdir .= $jobname;
 
 	$dmfpath=null;
 	if (!empty($_POST['dmfpath'])) {

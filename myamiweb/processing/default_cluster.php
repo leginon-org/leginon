@@ -82,7 +82,7 @@ class Cluster {
 		$this->modelpath = $modelpath;
 		$this->modelname = $modelname;
 		$this->outdir = $_POST['outdir'];
-		$this->outfullpath = $this->outdir.$jobname."/";
+		$this->outfullpath = formatEndPath($this->outdir).$jobname."/";
 	}
 
 	function cluster_parameters() {
