@@ -212,7 +212,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			return None, None, None
 
 		### save particle coordinates to box file
-		boxedpartdatas, emanboxfile = self.writeParticlesToBoxFile(partdatas, shiftdata, imgdata)
+		if self.params['rotate']:
+			boxedpartdatas, emanboxfile = self.writeParticlesToBoxFile(partdatas, shiftdata, imgdata, 1)
+		else:
+			boxedpartdatas, emanboxfile = self.writeParticlesToBoxFile(partdatas, shiftdata, imgdata, 3)
 
 		if self.params['boxfiles']:
 			return None, None, None
@@ -246,13 +249,53 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if imgpath is None:
 			return None, None, None
 
-		### run batchboxer command
-		imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
-		emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, emanboxfile, imgstackfile, self.params['boxsize'])
-		apDisplay.printMsg("boxing "+str(len(boxedpartdatas))+" particles into temp file: "+imgstackfile)
-		t0 = time.time()
-		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
-		self.batchboxertimes.append(time.time()-t0)
+		if self.params['rotate']:
+			### run batchboxer command to extract box 2*boxsize around each pick
+			tempimgstackfile = os.path.join(self.params['rundir'], shortname+"temp.hed")
+			imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
+			doublebox = self.params['boxsize']*2
+			emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, emanboxfile, tempimgstackfile, doublebox)
+			apDisplay.printMsg("boxing "+str(len(boxedpartdatas))+" particles into temp file: "+tempimgstackfile)
+			t0 = time.time()
+			apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
+			self.batchboxertimes.append(time.time()-t0)
+
+			### Break up stack and rotate each filament by rotation angle calculated in manual picker and rebox to original size
+			apXmipp.breakupStackIntoSingleFiles(tempimgstackfile, filetype="mrc")
+			partlist = os.path.join(self.params['rundir'], 'partlist.doc')
+			partfile = open(partlist, 'r')	
+			partlist = partfile.readlines()
+			partfile.close()
+			selfile = os.path.join(self.params['rundir'], 'partlist2.doc')
+			selfilew = open(selfile, 'w')	
+			i = 0
+			for partdata in boxedpartdatas:
+				if partdata['angle'] is not None:
+					angle = partdata['angle']
+					imgpath = partlist[i].split()[0]
+					rotimgpath = imgpath.replace('.mrc', 'r.mrc')
+					outimgpath = imgpath.replace('.mrc', 'o.mrc')
+					emancmd="proc2d %s %s rot=%d"%(imgpath,rotimgpath,angle)
+					apEMAN.executeEmanCmd(emancmd, showcmd=True)
+					blankpartdatas, emanboxfile = self.writeParticlesToBoxFile(partdatas, shiftdata, imgdata, 2)
+					emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(rotimgpath, emanboxfile, outimgpath, self.params['boxsize'])
+					t0 = time.time()
+					apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
+					self.batchboxertimes.append(time.time()-t0)
+					print>>selfilew, outimgpath, 1
+					i += 1
+				else:
+					apDisplay.printError("Rotation angle not found. Use helical insert in Manual Picker to find filament angles then try again.")
+			selfilew.close()
+			apXmipp.gatherSingleFilesIntoStack(selfile, imgstackfile, filetype="mrc")
+		else:
+			### run batchboxer command
+			imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
+			emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, emanboxfile, imgstackfile, self.params['boxsize'])
+			apDisplay.printMsg("boxing "+str(len(boxedpartdatas))+" particles into temp file: "+imgstackfile)
+			t0 = time.time()
+			apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
+			self.batchboxertimes.append(time.time()-t0)
 
 		### read mean and stdev
 		partmeantree = []
@@ -332,26 +375,50 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		return boxedpartdatas, imgstackfile, partmeantree
 
 	#=======================
-	def writeParticlesToBoxFile(self, partdatas, shiftdata, imgdata):
+	def writeParticlesToBoxFile(self, partdatas, shiftdata, imgdata, roundno):
 		imgdims = imgdata['camera']['dimension']
 		fullbox = self.params['boxsize']
 		halfbox = self.params['boxsize']/2
-		emanboxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
-
+		doublebox = self.params['boxsize']*2
+			
 		boxedpartdatas = []
 		eliminated = 0
-		boxfile=open(emanboxfile, 'w')
-		for i in range(len(partdatas)):
-			partdata = partdatas[i]
-			xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
-			ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))
 
-			if ( (xcoord > 0 and xcoord+fullbox <= imgdims['x'])
-			and  (ycoord > 0 and ycoord+fullbox <= imgdims['y']) ):
-				boxfile.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,fullbox,fullbox))
-				boxedpartdatas.append(partdata)
-			else:
-				eliminated += 1
+		if roundno == 1:
+			emanboxfile = os.path.join(self.params['rundir'], imgdata['filename']+"1.box")
+			boxfile=open(emanboxfile, 'w')
+			for i in range(len(partdatas)):
+				partdata = partdatas[i]
+				xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - fullbox ))
+				ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - fullbox ))
+
+				if ( (xcoord > 0 and xcoord+fullbox <= imgdims['x'])
+				and  (ycoord > 0 and ycoord+fullbox <= imgdims['y']) ):
+					boxfile.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,doublebox,doublebox))
+					boxedpartdatas.append(partdata)
+				else:
+					eliminated += 1
+		elif roundno == 2:
+			emanboxfile = os.path.join(self.params['rundir'], imgdata['filename']+"2.box")
+			boxfile=open(emanboxfile, 'w')
+			xcoord= int(round(halfbox))
+			ycoord= int(round(halfbox))	
+
+			boxfile.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,fullbox,fullbox))
+		else:
+			emanboxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
+			boxfile=open(emanboxfile, 'w')
+			for i in range(len(partdatas)):
+				partdata = partdatas[i]
+				xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
+				ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))	
+
+				if ( (xcoord > 0 and xcoord+fullbox <= imgdims['x'])
+				and  (ycoord > 0 and ycoord+fullbox <= imgdims['y']) ):
+					boxfile.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,fullbox,fullbox))
+					boxedpartdatas.append(partdata)
+				else:
+					eliminated += 1
 
 		if eliminated > 0:
 			apDisplay.printMsg(str(eliminated)+" particle(s) eliminated because they were out of bounds")
@@ -970,6 +1037,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			action="store_true", help="Do not delete CTF corrected MRC files when finishing")
 		self.parser.add_option("--verbose", dest="verbose", default=False,
 			action="store_true", help="Show extra ace2 information while running")
+		self.parser.add_option("--rotate", dest="rotate", default=False,
+			action="store_true", help="Apply helical rotation angles")
 
 		### option based
 		#self.parser.add_option("--whole-image", dest="wholeimage", default=False,

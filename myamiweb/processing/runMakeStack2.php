@@ -659,10 +659,7 @@ function runMakestack() {
 	PART 3: Create program command
 	******************** */
 	
-	if ($helicalcheck == 'on')
-		$command ="makehelicalstack.py"." ";
-	else
-		$command = "makestack2.py"." ";
+	$command = "makestack2.py"." ";
 	$command.="--single=$single ";
 	if ($partrunid)
 		$command.="--selectionid=$partrunid ";
@@ -692,6 +689,7 @@ function runMakestack() {
 	$command.="--description=\"$description\" ";
 	if (!empty($partlabel)) $command.="--label=\"$partlabel\" ";
 	if ($ctffindonly) $command.="--ctfmethod=ctffind ";
+	if ($helicalcheck == 'on') $command.="--rotate ";
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
