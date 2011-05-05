@@ -597,8 +597,11 @@ class ManualPicker(particleLoop2.ParticleLoop):
 		peaktree=[]
 		for label,targets in self.targets.items():
 			for target in targets:	
-				angle = target.stats['angle']
-				peaktree.append(self.XY2particle(target.x, target.y, angle, label))
+				if isinstance(target, dict):
+					angle = target.stats['angle']
+					peaktree.append(self.XY2particle(target.x, target.y, angle, label))
+				else:
+					peaktree.append(self.XY2particle(target.x, target.y, label))
 		return peaktree
 
 	def XY2particle(self, binx, biny, angle, label=None):

@@ -242,7 +242,10 @@ def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
 		particlesq['xcoord'] = int(round(peakdict['xcoord']))
 		particlesq['ycoord'] = int(round(peakdict['ycoord']))
 		if 'angle' in peakdict:
-			particlesq['angle'] = peakdict['angle']
+			if peakdict['angle'] == "particle_w/o_label":
+				apDisplay.printError("Particle found with no angle. Select 2 points for every filament then click Helical Insert to calculate angle.")
+			else:
+				particlesq['angle'] = peakdict['angle']
 		if 'diameter' in peakdict and peakdict['diameter'] is not None:
 				peakdict['diameter'] = round(peakdict['diameter'], 6)
 
