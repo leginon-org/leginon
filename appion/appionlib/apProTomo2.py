@@ -3,6 +3,7 @@
 import math
 import numpy
 import os
+import sys
 from appionlib import apParam
 from appionlib import apTomo
 from appionlib import apImod
@@ -24,7 +25,7 @@ This currently works with the protomo tutorial dataset only. See issue #1026 for
 
 class ApProTomo2:
 	
-	def __init__(self, sessiondata, seriesname, params, ordered_imagelist, refimg, center, corr_bin, processingDir):
+	def __init__(self, sessiondata, seriesname, params, ordered_imagelist, refimg, center, corr_bin, processingDir, tilts):
 		
 		# Make sure Protomo2 is installed and the processing directory is valid
 		if noProtomo2:
@@ -41,6 +42,7 @@ class ApProTomo2:
 		self.refimg            = refimg
 		self.center            = center
 		self.corr_bin          = corr_bin
+		self.tilts             = tilts
 		
 		# TODO: remove this when protomo is automatically creating a correctionFactors file name
 		self.correctionFactorFile = "/ami/data17/appion/10nov10z/rawdata/tiltseries1/align/align1/out/correctionFactors.dat"
@@ -49,8 +51,14 @@ class ApProTomo2:
 	#=====================
 	def run(self):
 		
+		# use the tilt angles to set the reference image, which is the image with tilt values closest to zero.
+		self.setRefImg(self.tilts)
+		apDisplay.printMsg("Setting Reference image to: %d" % (self.refimg, ))
+		
+		
 		# Write a default parameter file if it does not already exist
 		self.params['protomo2paramfile'] = self.writeDefaultParamFile()
+		apDisplay.printMsg("Setting Parameter file to: %s" % (self.params['protomo2paramfile'], ))
 		
 		# Create the parameter object
 		try:
@@ -59,12 +67,11 @@ class ApProTomo2:
 			msg = "The protomo2 config file (%s) has an error. Could not create the parameter object." % (self.params['protomo2paramfile'], )
 			apDisplay.printWarning(msg)
 			raise
-		
 				
+		
 		# Write a default tilt geometry file if it does not already exist 
 		geomParamFilePath = self.writeTiltGeomFile()
-		
-		# TODO: use the tilt geopmetry file to set the reference image here. Look for tilt angle closest to 0, may be off by .1 degree.
+		apDisplay.printMsg("Setting tilt geometry file to: %s" % (geomParamFilePath, ))
 		
 		# Create the protomo2 geometry object
 		try:
@@ -90,11 +97,27 @@ class ApProTomo2:
 		for i in range(0, self.params['max_iterations']):
 			protomo2series.align()
 			# correction factors, automatically generates a file name using the iteration number(? TODO: Hanspeter to implement)
-			protomo2series.corr( self.correctionFactorFile )
+			protomo2series.corr() #( self.correctionFactorFile )
 			protomo2series.fit()
 			protomo2series.update()
 			
 
+	#=====================
+	def setRefImg(self, tilts):
+		# use the tilt geometry to set the reference image. Look for tilt angle closest to 0, may be off by .1 degree.	
+		bestPosVal = 0.10
+		bestNegVal = -0.10
+				
+		for tilt in tilts:
+			if tilt <= bestPosVal and tilt > bestNegVal:
+				self.refimg = tilts.index(tilt)
+				if tilt >= 0:
+					bestPosVal = tilt
+				else:
+					bestNegVal = tilt
+					
+		# TODO: is there an error if we don't find a value between +-.1?
+					
 	
 	#=====================
 	def setUserModifiedParams(self, protomo2param):
@@ -106,6 +129,7 @@ class ApProTomo2:
 		if not os.path.isdir(cacheDir):
 			try:
 				os.makedirs(cacheDir)
+				apDisplay.printMsg("Creating Protomo2 cache directory:" + cacheDir )
 			except:
 				apDisplay.printWarning("Could not create the cache directory for Protomo2:," + cacheDir )
 				raise
@@ -113,6 +137,7 @@ class ApProTomo2:
 		if not os.path.isdir(outputDir):
 			try:
 				os.makedirs(outputDir)
+				apDisplay.printMsg("Creating Protomo2 output directory:" + outputDir )
 			except:
 				apDisplay.printWarning("Could not create the output directory for Protomo2:," + outputDir )
 				raise
@@ -121,10 +146,12 @@ class ApProTomo2:
 		inputImagePath = self.sessiondata['image path']			
 		if not os.path.isdir( inputImagePath ):
 			apDisplay.printError("Protomo2 input image path (%s) is not valid." % (inputImagePath, ))
+		apDisplay.printMsg("Protomo2 input image directory:" + inputImagePath )
 
 		# Set the parameters of the protomo2param object
+		# note that boolean strings "true" and "false" should not be set with surrounding quotes as other string params are
 		try:
-			# TODO: protomo does not suport strings yet, so we are hard coding the paths in max.param
+			# hardcode the image path in the config file until Protomo2 can handle image names that start with a number
 			#protomo2param.set("pathlist", '"%s"' % (inputImagePath,) )
 			#protomo2param.set("outdir", outputDir)
 			#protomo2param.set("cachedir", cacheDir)
@@ -132,11 +159,11 @@ class ApProTomo2:
 			if self.params['sample'] is not None:
 				protomo2param.set("sampling", " %g " % (self.params['sample'], ))
 			
-			#if self.params['do_binning'] is not None:
-				#protomo2param.set("binning", '"%s"' % (self.params['do_binning'],) )
+			if self.params['do_binning'] is not None:
+				protomo2param.set("binning", '%s' % (self.params['do_binning'],) )
 			
-			#if self.params['do_preprocessing'] is not None:
-				#protomo2param.set("preprocessing", '"%s"' % (self.params['do_preprocessing'],) )
+			if self.params['do_preprocessing'] is not None:
+				protomo2param.set("preprocessing", '%s' % (self.params['do_preprocessing'],) )
 			
 			### Preprocess parameters ###
 			if self.params['border'] is not None:
@@ -153,10 +180,10 @@ class ApProTomo2:
 				protomo2param.set("window.mask.apodization", "{ %g %g } " % (self.params['reference_apodization_x'], self.params['reference_apodization_y']))
 			
 			if self.params['lowpass_diameter_x'] is not None and self.params['lowpass_diameter_y'] is not None:
-				protomo2param.set("lowpass.diameter", "{ %d %d }" % (self.params['lowpass_diameter_x'], self.params['lowpass_diameter_y']))
+				protomo2param.set("window.lowpass.diameter", "{ %g %g }" % (self.params['lowpass_diameter_x'], self.params['lowpass_diameter_y']))
 			
 			if self.params['highpass_diameter_x'] is not None and self.params['highpass_diameter_y'] is not None:
-				protomo2param.set("highpass.diameter", "{ %d %d }" % (self.params['highpass_diameter_x'], self.params['highpass_diameter_y']))
+				protomo2param.set("window.highpass.diameter", "{ %g %g }" % (self.params['highpass_diameter_x'], self.params['highpass_diameter_y']))
 	
 			### Reference parameters ###
 			if self.params['backprojection_bodysize'] is not None:
@@ -164,8 +191,7 @@ class ApProTomo2:
 		
 			### Align parameters ###
 			if self.params['do_estimation'] is not None:
-				#protomo2param.set("align.estimate", '"%s"' % (self.params['do_estimation'],) )
-				pass
+				protomo2param.set("align.estimate", '%s' % (self.params['do_estimation'],) )
 	
 			if self.params['max_correction'] is not None:
 				protomo2param.set("align.maxcorrection", " %g " % (self.params['max_correction'], ))
@@ -174,8 +200,7 @@ class ApProTomo2:
 				protomo2param.set("align.mask.apodization", "{ %g %g } " % (self.params['image_apodization_x'], self.params['image_apodization_y']))
 			
 			if self.params['correlation_mode'] is not None:
-				#protomo2param.set("correlation.mode", '"%s"' % (self.params['correlation_mode'],) )
-				pass
+				protomo2param.set("align.correlation.mode", '"%s"' % (self.params['correlation_mode'],) )
 			
 			if self.params['correlation_size_x'] is not None and self.params['correlation_size_y'] is not None:
 				protomo2param.set("correlation.size", "{ %d %d }" % (self.params['correlation_size_x'], self.params['correlation_size_y']))
@@ -193,15 +218,21 @@ class ApProTomo2:
 			if self.params['map_lowpass_diameter_x'] is not None and self.params['map_lowpass_diameter_y'] is not None:
 				protomo2param.set("map.lowpass.diameter", "{ %g %g }" % (self.params['map_lowpass_diameter_x'], self.params['map_lowpass_diameter_y']))
 		
-		except:
+		except protomo.error as inst:
 			# TODO: figure out how to pass the exception instance to apDisplay.printError, maintaining the Traceback
-			apDisplay.printWarning("The protomo2 parameters are not correct. Could not set the parameter values.")
+			apDisplay.printWarning("%s. Could not set the protomo2 parameter values. The supplied values may not be correct. " % (inst, ))
 			raise
+		except:
+			apDisplay.printWarning("Unexpected error: %s %s " % ( sys.exc_info()[0], sys.exc_info()[1]) )
+			raise
+
 
 
 
 	#=====================
 	def commitResultsToDB(self):
+		
+		return
 	
 		# -- Commit Parameters --
 		protomodata = apProTomo.insertProtomoParams(self.seriesname)
@@ -223,7 +254,8 @@ class ApProTomo2:
 		correctionFactors = self.parseCorrectionFactors( self.correctionFactorFile )
 				
 		# commit the geometry parameters (psi, theta, phi, azimuth), not sure about this.
-		#self.insertModel(alignerdata, correctionFactors)
+		if correctionFactors is not None:
+			self.insertModel(alignerdata, correctionFactors)
 		
 		# insert results into ApProtomoAlignmentData for each image
 		for i,imagedata in enumerate(self.ordered_imagelist):
@@ -259,24 +291,23 @@ class ApProTomo2:
 			lines=f.readlines()
 		except:
 			apDisplay.printWarning("Failed to read the protomo2 Correction Factors file, %s" % (tiltfile, ))
-			raise		
-		finally:
+		else:
 			f.close()
 		
-		# Create a dictionary to store Correction Factor and rotation information for each image 
-		imagedict = {}
-		for n in lines:
-			words = n.split()
-			if len(words) is not 6:
-				apDisplay.printError("The protomo2 correction factors file, %s, is not properly formatted." % (tiltfile, ))
-	
-			image_number = int(words[0])
-			imagedict[image_number] = {}
-			imagedict[image_number]['rotation'] = float(words[1])
-			imagedict[image_number]['x'] = float(words[2])
-			imagedict[image_number]['y'] = float(words[3])
-	
-		return imagedict
+			# Create a dictionary to store Correction Factor and rotation information for each image 
+			imagedict = {}
+			for n in lines:
+				words = n.split()
+				if len(words) is not 6:
+					apDisplay.printError("The protomo2 correction factors file, %s, is not properly formatted." % (tiltfile, ))
+		
+				image_number = int(words[0])
+				imagedict[image_number] = {}
+				imagedict[image_number]['rotation'] = float(words[1])
+				imagedict[image_number]['x'] = float(words[2])
+				imagedict[image_number]['y'] = float(words[3])
+		
+			return imagedict
 		
 
 	#=====================
@@ -291,24 +322,29 @@ class ApProTomo2:
 		geomParamFile = "/home/amber/max.tlt"
 		# TODO: remove this when the rest of this function is working
 		return geomParamFile;
+		
+		geomParamFile = "/home/amber/maxTEST.tlt"
+		print "geomParamFile:"
+		print geomParamFile
 
 		# TODO: numextension is not being found
-		geomParamFile = os.path.join(self.processingDir,'protomo2.tlt') #"/home/amber/max.tlt"
+		#geomParamFile = os.path.join(self.processingDir,'protomo2.tlt') #"/home/amber/max.tlt"
 
 		try:
 			tiltGeometry = open(geomParamFile,'r')
 		except:
+			apDisplay.printWarning("Failed to open %s for reading the protomo2 tilt geometry parameter file. Reading Geometry from the Leginon database." % (geomParamFile, ))
 			try:
 				tiltGeometry = open(geomParamFile,'w')
 			except:
-				apDisplay.printWarning("Failed to create %s for writing the default protomo2 parameter file" % (geomParamFile, ))
+				apDisplay.printWarning("Failed to create %s for writing the protomo2 tilt geometry parameter file" % (geomParamFile, ))
 				raise
 
 			# magic to get the tilt geometry 
-			tltParams = self.getTiltGeom()
-
+			tltParams = self.getTiltGeom()		
+			
 			# this builds the tilt geometry file as a string
-			tiltText = self.buildTiltGeomFile(self.seriesname, self.refImage, tltParams[0], tltParams[1])
+			tiltText = self.buildTiltGeomFile(tltParams[0], tltParams[1])
 
 			# using print instead of .write so that message is converted to a string if needed 
 			print >> tiltGeometry, tiltText
@@ -325,38 +361,18 @@ class ApProTomo2:
 		self.params['aligndir'],self.params['imagedir'] =	apProTomo.setProtomoDir(self.params['rundir'])
 
 		# self.params['imagedir'] when not testing with renamed images
-		rawimagenames = apProTomo.linkImageFiles(self.ordered_imagelist,"/ami/data17/leginon/10nov10z/rawdatatest")
+		rawimagenames = apProTomo.linkImageFiles(self.ordered_imagelist, "/ami/data17/leginon/10nov10z/rawdatatest")
 		shifts = apTomo.getGlobalShift(self.ordered_imagelist, self.corr_bin, self.refimg)
 
-		# TODO: the next line does not work - numextension
-		tltparams = self.convertShiftsToParams(shifts, rawimagenames)
+		tltparams = apProTomo.convertShiftsToParams(self.tilts, shifts, self.center, rawimagenames)
 		return tltparams
 		
 
-	#=====================
-	# TODO: where to get tilts and center?
-	# def convertShiftsToParams(self, tilts,shifts,center,imagenames=None):
-	def convertShiftsToParams(self, shifts,imagenames=None):
-		imagedict={}
-		parameterdict={}
-		for i, shift in enumerate(shifts):
-			imagedict[i]={}
-			imagedict[i]['x']=shift['x']#+center['x']
-			imagedict[i]['y']=shift['y']#+center['y']
-			imagedict[i]['tilt']= 0.0 #tilts[i]
-			imagedict[i]['rotation']=0.0
-			if imagenames:
-				imagedict[i]['filename']=imagenames[i]
-			parameterdict['psi']=0.0
-			parameterdict['theta']=0.0
-			parameterdict['phi']=0.0
-			parameterdict['azimuth']=90.0
-		return imagedict,parameterdict,None	
 	
 	#=====================
-	def buildTiltGeomFile(self, seriesname, refImage, imagedict, parameterdict=False):
+	def buildTiltGeomFile(self, imagedict, parameterdict=False):
 		
-		tiltText = "TILT SERIES %s\n" % seriesname
+		tiltText = "TILT SERIES %s\n" % self.seriesname
 		tiltText += "\n" 
 		tiltText += "   AXIS\n"
 		tiltText += "\n"
@@ -371,7 +387,7 @@ class ApProTomo2:
 			tiltText += "   IMAGE %-5d     FILE %s       ORIGIN [ %8.3f %8.3f ]    TILT ANGLE    %8.3f    ROTATION     %8.3f\n" % (n, imagedict[n]['filename'], imagedict[n]['x'], imagedict[n]['y'], imagedict[n]['tilt'], imagedict[n]['rotation'])
 
 		tiltText += "\n"
-		tiltText += "   REFERENCE IMAGE %d\n" % refImage
+		tiltText += "   REFERENCE IMAGE %d\n" % self.refimg
 		tiltText += "\n"
 		tiltText += "\n"
 		tiltText += " END\n"

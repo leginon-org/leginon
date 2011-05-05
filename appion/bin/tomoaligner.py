@@ -102,10 +102,10 @@ class protomoAligner(appionScript.AppionScript):
 		self.parser.add_option("--max_iterations", dest="max_iterations",  type="int",
 			help="Protomo2 only: Number of alignment and geometry refinement iterations, e.g. --max_iterations=4", metavar="int")
 
-		self.parser.add_option("--do_binning", dest="do_binning",  default="True", action="store_true",
+		self.parser.add_option("--do_binning", dest="do_binning",  default="true", action="store_true",
 			help="Protomo2 only: Binning of raw data if sampling factor is greater or equal to 2, e.g. --binning")
 		
-		self.parser.add_option("--do_preprocessing", dest="do_preprocessing",  default="True", action="store_true",
+		self.parser.add_option("--do_preprocessing", dest="do_preprocessing",  default="true", action="store_true",
 			help="Protomo2 only: Remove density outliers from the images prior to processing, e.g. --do_preprocessing")
 		
 		self.parser.add_option("--border", dest="border",  type="int",
@@ -117,7 +117,7 @@ class protomoAligner(appionScript.AppionScript):
 		self.parser.add_option("--clip_high", dest="clip_high",  type="float",
 			help="Protomo2 only: Upper threshold specified as a multiple of the standard deviation, e.g. --clip_high=3.5", metavar="float")
 
-		self.parser.add_option("--do_estimation", dest="do_estimation",  default="True", action="store_true",
+		self.parser.add_option("--do_estimation", dest="do_estimation",  default="true", action="store_true",
 			help="Protomo2 only: Enables alignment parameter prediction, e.g. --do_estimation")
 
 		self.parser.add_option("--max_correction", dest="max_correction",  type="float",
@@ -281,20 +281,19 @@ class protomoAligner(appionScript.AppionScript):
 			### stop when the transmation matrices are consistent, less than 1% difference
 
 	#=====================
-	def runProtomo2(self, sessiondata, processingDir,  seriesname, ordered_imagelist, refimg, center, corr_bin, commit):
+	def runProtomo2(self, sessiondata, processingDir,  seriesname, ordered_imagelist, refimg, center, corr_bin, commit, tilts):
 		"""
 		Uses Hanspeters' protomo2
 		takes individual MRC files or MRC stack, tiff, spider, imagic, suprim
 		"""
 		
 		# TODO: not sure the ordered_imagelist, and refimg were found correctly. May need to look into geometry file to get it.
-		# For refimg, look for tilt angle closest to 0, may be off by .1 degree.
 		
 		if not os.path.isdir( processingDir ):
 			apDisplay.printError("Protomo2 processing directory (%s) is not valid." % (processingDir, ))
 		
 		# Create an instance of the Protomo2 class 	
-		apProtomo2 = apProTomo2.ApProTomo2( sessiondata, seriesname, self.params, ordered_imagelist, refimg, center, corr_bin, processingDir )
+		apProtomo2 = apProTomo2.ApProTomo2( sessiondata, seriesname, self.params, ordered_imagelist, refimg, center, corr_bin, processingDir, tilts )
 		
 		# Run protomo2
 		apProtomo2.run()
@@ -354,7 +353,7 @@ class protomoAligner(appionScript.AppionScript):
 			
 		# Run protomo2 
 		if alignmethod == 'protomo2':
-			self.runProtomo2(sessiondata, processdir, seriesname, ordered_imagelist, refimg, center, corr_bin, commit)
+			self.runProtomo2(sessiondata, processdir, seriesname, ordered_imagelist, refimg, center, corr_bin, commit, tilts)
 			
 			# protomo2 does not need anything beyond this point, so exit
 			return
