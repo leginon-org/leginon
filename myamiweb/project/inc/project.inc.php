@@ -475,6 +475,24 @@ class project {
 		return $runCount;
 	}
 	
+	function getLastExperimentProcessingRunDate( $processingdb, $sessionId ) {
+		// Save the current database settings for this connection
+		$originalDB = $this->mysql->getSQLHost();
+				
+		// Switch to the processing database
+		$this->mysql->setSQLHost( array('db'=>$processingdb) );
+		
+		// Count all apAppionJobData Entries for this session
+		$q = "select max(DEF_timestamp) from ApAppionJobData where `REF|leginondata|SessionData|session` = $sessionId";
+		list($r) = $this->mysql->getSQLResult($q);
+		$lastRunDate = $r['max(DEF_timestamp)'];
+		
+		// Switch the processing database back to the original
+		$this->mysql->setSQLHost( array('db'=>$originalDB) );
+		
+		return $lastRunDate;
+	}
+	
 	function getExperimentReconCount( $processingdb, $sessionId, $showHidden=false ) {
 		// Save the current database settings for this connection
 		$originalDB = $this->mysql->getSQLHost();

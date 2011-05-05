@@ -402,7 +402,10 @@ if (SAMPLE_TRACK) {
 		$numimg = $leginondata->getNumImages($info['SessionId']);
 		$totalsecs = $leginondata->getSessionDuration($info['SessionId']);
 		
-		// If there is not much data in the experiment, mark it as one to hide
+		// if there are no images, never show this experiment
+		if ( $numimg == 0 ) continue;
+		
+		// if there is not much data in the experiment, mark it as one to hide
 		$hide = ($numimg < 3 || $totalsecs < 60) ? True : False;
 		if ( $hide && !$showHidden ) {
 			continue;
@@ -447,6 +450,10 @@ if (SAMPLE_TRACK) {
 		$numProcessingRuns = $project->getExperimentProcessingRunCount( $processingdb, $info['SessionId'] );
 		$experiments[$k]['numruns'] = $numProcessingRuns;
 
+		// Add the date of the last Processing Run
+		$lastProcessingRunDate = $project->getLastExperimentProcessingRunDate( $processingdb, $info['SessionId'] );
+		$experiments[$k]['lastrundate'] = $lastProcessingRunDate;
+		
 		// Add the number of Reconstructions
 		$numRecons = $project->getExperimentReconCount( $processingdb, $info['SessionId'] );
 		$experiments[$k]['numrecons'] = $numRecons;
@@ -454,11 +461,13 @@ if (SAMPLE_TRACK) {
 	
 // sort the experiment array if needed
 $orderBy = $_GET['sort'];
-$orderByArray = array();		
-foreach ($experiments as $key => $exp) {
-	$orderByArray[$key] = $exp[$orderBy];
+if ( $orderBy ) {
+	$orderByArray = array();		
+	foreach ($experiments as $key => $exp) {
+		$orderByArray[$key] = $exp[$orderBy];
+	}
+	array_multisort( $orderByArray, SORT_DESC, $experiments );
 }
-array_multisort( $orderByArray, SORT_DESC, $experiments );
 
 $columns=array(
 	'name'=>'Name',
@@ -467,8 +476,9 @@ $columns=array(
 	'description'=>'Description',
 	'totalimg'=>'Total images',
 	'totaltime'=>'Total Duration',
+	'numrecons'=>'Reconstructions',
 	'numruns'=>'Processing Runs',
-	'numrecons'=>'Reconstructions'
+	'lastrundate'=>'Last Run'
 	);
 if ($share) {
 	$columns['share']="Sharing";
