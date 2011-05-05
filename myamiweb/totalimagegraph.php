@@ -76,15 +76,18 @@ function TimeCallback($aVal) {
     return Date('M Y',$aVal);
 }
 
-if ($nimagedata)
-foreach ($nimagedata as $d) {
-	$datax[] = $d['unix_timestamp'];
-	if(!$cumulative){
-		$datay[] = $d[$alias];
-	}
-	else{
-		$index = count($datay)-1;
-		$datay[] = $datay[$index] + $d[$alias];
+if ($nimagedata){
+	//suppress the last data, (not the whole 3 month data).
+	unset($nimagedata[count($nimagedata)-1]);
+	foreach ($nimagedata as $d) {
+		$datax[] = $d['unix_timestamp'];
+		if(!$cumulative){
+			$datay[] = $d[$alias];
+		}
+		else{
+			$index = count($datay)-1;
+			$datay[] = $datay[$index] + $d[$alias];
+		}
 	}
 }
 

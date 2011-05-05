@@ -138,6 +138,14 @@ $row = mysql_fetch_row($r);
 $lastSessionTime = $row[0];
 $lastSessionID = $row[1];
 
+$q = "select DATE_FORMAT(DEF_timestamp, '%Y-%m-%e'), `REF|leginondata|SessionData|session` 
+		from projectexperiments where `REF|leginondata|SessionData|session` <> 'NULL' 
+		order by DEF_timestamp ASC limit 1";
+$r = mysql_query($q) or die("Query error: " . mysql_error());
+$row = mysql_fetch_row($r);
+$firstSessionTime = $row[0];
+$firstSessionID = $row[1];
+
 /* found out when was the lastest data in the database
  * if latest data not older than 7 days, just display the 
  * latest data from dataStatusReport table. Otherwise, run
@@ -360,10 +368,11 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 	</tr>
 	<tr>
 		<td><table border="1"  cellpadding="5" cellspacing="0" width="100%">
-			<tr><td><b># Project</b></td><td><b># Experiments</b></td><td><b>Last Experiment (Date)</b></td>
+			<tr><td><b># Project</b></td><td><b># Experiments</b></td><td><b>First Experiment (Date)</b><td><b>Last Experiment (Date)</b></td>
 			<td><b># Processing Runs</b></td><td><b>Last Run (Date)</b></td></tr>
 			<tr align="center"><td><?php echo number_format($totalNumProjects); ?></td>
 			<td><?php echo number_format($totalNumSessionUnderProjects); ?></td>
+			<td><?php echo $firstSessionTime ?></td>
 			<td><?php echo $lastSessionTime ?></td>
 			<td><?php echo number_format($numOfTotalProcessingRuns); ?></td>
 			<td><?php echo substr($lastExptRunTime, 0, 10) ?></td></tr>
