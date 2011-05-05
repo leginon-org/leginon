@@ -116,7 +116,33 @@ function submitJob($extra=False) {
 		unlink($tmpjobfile);//make sure to clean up after ourselves
 		exit;
 	}
-	
+
+	//copy jobfile to local file system when remote cluster does not share the same one.
+	// This is needed in checkRefineJob
+	if (defined('C_REMOTE_SERVER') && C_REMOTE_SERVER !='') {
+		$cluster_remote_file_host = C_REMOTE_SERVER;
+		// create appion directory
+		$cmd = "mkdir -p $outdir;\n";
+		$rvalue = exec_over_ssh($cluster_remote_file_host, $user, $pass, $cmd, True);
+		if ($rvalue === false ){
+			$errMsg = "Error: Could not create run directory on $cluster_remote_file_host: ";
+			$errMsg .= pconnError();
+			echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+			unlink ($tmpjobfile); //make sure to clean up after ourselves
+			exit;
+		}
+		// save job file in appion directory
+		$remoteJobFile = "$outdir/$jobfile";
+		$rvalue = scp($cluster_remote_file_host, $user, $pass, $tmpjobfile, $remoteJobFile);	
+		if (!$rvalue){
+			$errMsg = "Error: Copying jobfile to $outdir on $cluster_remote_file_host failed: ";
+			$errMsg .= pconnError();
+			echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
+			unlink($tmpjobfile);//make sure to clean up after ourselves
+			exit;
+		}
+	}
+
 	//The preceding lines make the call to this function redundant as it
 	//is implimented in some cluster configs.
 	//$clusterdata->cluster_cmd($host, $user, $pass);
