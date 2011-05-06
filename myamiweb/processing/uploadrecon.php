@@ -90,10 +90,10 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $runname;
 	$reconpath = ($_POST['reconpath']) ? $_POST['reconpath'] : $sessionpath;
 	$description = $_POST['description'];
-	$oneiteration = ($_POST['oneiteration']=="on") ? "CHECKED" : "";
+	$itertype = ($_POST['itertype']) ? $_POST['itertype'] : "all";
 	$iteration = $_POST['iteration'];
-	$contiteration = ($_POST['contiteration']=="on") ? "CHECKED" : "";
 	$startiteration = $_POST['startiteration'];
+	$enditeration = $_POST['enditeration'];
 
 	// main table
 	echo "<table border='3' class='tableborder'>\n";
@@ -156,10 +156,24 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	echo "<br/>";
 	echo "<b>Recon Description:</b><br/>";
 	echo "<textarea name='description' rows='3' cols='80'>$description</textarea><br/>";
-	echo "<input type='checkbox' name='oneiteration' $oneiteration><B>Upload only iteration </b>";
+	echo "<b>Iterations to upload:</b><br/>";
+	echo "<input type='radio' name='itertype' value='all' ";
+	if ($_POST['itertype'] == 'all' || !$_POST['itertype']) echo "checked";
+	echo ">";
+	echo "Upload all iterations<br/>";
+	echo "\n";
+	echo "<input type='radio' name='itertype' value='one' ";
+	if ($_POST['itertype'] == 'one') echo "checked";
+	echo ">";
+	echo "Upload only iteration ";
 	echo "<input type='text' name='iteration' value='$iteration' size='4'/><br />";
-	echo "<input type='checkbox' name='contiteration' $contiteration><b>Begin with iteration </b>";
-	echo "<input type='text' name='startiteration' value='$startiteration' size='4'/><br/>";
+	echo "\n";
+	echo "<input type='radio' name='itertype' value='range' ";
+	if ($_POST['itertype'] == 'range') echo "checked";
+	echo ">";
+	echo "Start with iteration <input type='text' name='startiteration' value='$startiteration' size='4'/>";
+	echo "End early with iteration </b><input type='text' name='enditeration' value='$enditeration' size='4'/><br/>";
+	echo "\n";
 	echo "<br/>";
 
 	// Refinement Strategy
@@ -238,10 +252,10 @@ function runUploadRecon() {
 	$mass=$_POST['mass'];
 	$zoom=$_POST['zoom'];
 	$filter=$_POST['filter'];
-	$oneiteration=$_POST['oneiteration'];
+	$itertype=$_POST['itertype'];
 	$iteration=$_POST['iteration'];
-	$contiteration=$_POST['contiteration'];
 	$startiteration=$_POST['startiteration'];
+	$enditeration=$_POST['enditeration'];
 	$runname=$_POST['runname'];
 	$description=$_POST['description'];
 	$package=$_POST['package'];
@@ -298,19 +312,28 @@ function runUploadRecon() {
 	if ($fileerror) createUploadReconForm($fileerror);
 
 	//make sure the user only want one iteration to be uploaded
-	if ($iteration) {
-		if (!$oneiteration=='on') createUploadReconForm("<B>ERROR:</B> Select the check box if you really want to upload only one iteration");
+	if (is_numeric($iteration)) {
+		if ($itertype!='one') createUploadReconForm("<B>ERROR:</B> Select the radio button if you really want to upload only one iteration");
+		if ($iteration < 1) createUploadReconForm("<B>ERROR:</B> iteration number must be positive");
 	}
 	else {
-		if ($oneiteration) createUploadReconForm("<B>ERROR:</B> Enter the iteration number if you really want to upload only one iteration");
+		if ($itertype=='one') createUploadReconForm("<B>ERROR:</B> Enter the iteration number if you really want to upload only one iteration");
 	}
 
 	//make sure the user wants to start iteration from the middle
-	if ($startiteration) {
-		if (!$contiteration=='on') createUploadReconForm("<B>ERROR:</B> Select the check box if you really want to begin at iteration $startiteration");
+	if (is_numeric($startiteration)) {
+		if ($itertype!='range') createUploadReconForm("<B>ERROR:</B> Select the radio button if you really want to upload a limited range of iteration");
+		if ($startiteration < 1) createUploadReconForm("<B>ERROR:</B> Start iteration $startiteration must be positive integer");
 	}
-	else {
-		if ($contiteration) createUploadReconForm("<B>ERROR:</B> Enter the iteration number if you really don't want to start at the beginning");
+
+	//make sure the user wants to end iteration early
+	if (is_numeric($enditeration)) {
+		if ($itertype!='range') createUploadReconForm("<B>ERROR:</B> Select the radio button if you really want to upload a limited range of iteration");
+		if ($enditeration < 1) createUploadReconForm("<B>ERROR:</B> End iteration $enditeration must be positive integer");
+		if (is_numeric($startiteration) && $enditeration < $startiteration) createUploadReconForm("<B>ERROR:</B> Start Iteration must be smaller than or equal to End Iteration");
+	}
+	if ($itertype=='range' && !is_numeric($startiteration) && !is_numeric($enditeration)) {
+		createUploadReconForm("<B>ERROR: </B> Enter either or both start/end iteration number if you really want to upload a limited range of iteration ");
 	}
 
 	/* *******************
@@ -328,8 +351,9 @@ function runUploadRecon() {
 	if ($mass) $command.="--mass=$mass ";
 	if ($zoom) $command.="--zoom=$zoom ";
 	if ($filter) $command.="--filter=$filter ";
-	if ($oneiteration=='on' && $iteration) $command.="--oneiter=$iteration ";
-	if ($contiteration=='on' && $startiteration) $command.="--startiter=$startiteration ";
+	if ($itertype=='one' && $iteration) $command.="--oneiter=$iteration ";
+	if ($itertype=='range' && $startiteration > 0) $command.="--startiter=$startiteration ";
+	if ($itertype=='range' && $enditeration > 0) $command.="--enditer=$enditeration ";
 	$command.="--description=\"$description\"";
 
 	/* *******************

@@ -31,7 +31,7 @@ class UploadReconScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --runname=<name> --stackid=<int> --modelid=<int>\n\t "
-			+"--description='<quoted text>'\n\t [ --package=EMAN --jobid=<int> --oneiter=<iter> --startiter=<iter> --zoom=<float> "
+			+"--description='<quoted text>'\n\t [ --package=EMAN --jobid=<int> --oneiter=<iter> --startiter=<iter> --enditer=<iter> --zoom=<float> "
 			+"--contour=<contour> --rundir=/path/ --commit ]")
 
 		### integers
@@ -39,6 +39,8 @@ class UploadReconScript(appionScript.AppionScript):
 			help="Only upload one iteration", metavar="INT")
 		self.parser.add_option("--startiter", dest="startiter", type="int",
 			help="Begin upload from this iteration", metavar="INT")
+		self.parser.add_option("--enditer", dest="enditer", type="int",
+			help="End upload at this iteration", metavar="INT")
 		self.parser.add_option("-s", "--stackid", dest="stackid", type="int",
 			help="Stack id in the database", metavar="INT")
 		self.parser.add_option("-m", "--modelid", dest="modelid", type="int",
@@ -791,6 +793,9 @@ class UploadReconScript(appionScript.AppionScript):
 					continue
 				### if beginning at later iteration, skip to that one
 				if self.params['startiter'] and int(iteration['num']) < self.params['startiter']:
+					continue
+				### if beginning at later iteration, skip to that one
+				if self.params['enditer'] and int(iteration['num']) > self.params['enditer']:
 					continue
 				apDisplay.printColor("\nUploading iteration "+str(iteration['num'])+" of "
 					+str(len(self.iterationdatas))+"\n", "green")
