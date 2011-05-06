@@ -3212,6 +3212,10 @@ class leginondata {
 		}
 	}
 }
+function rsum($v, $w) {
+	$v += $w;
+	return $v;
+}
 
 $leginondata = new leginondata();
 
