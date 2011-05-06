@@ -1019,6 +1019,7 @@ class Ap3dDensityData(Data):
 			('ampPath', ApPathData),
 			('symmetry', ApSymmetryData),
 			('refineIter', ApRefineIterData),
+			('hipIter', ApHipIterData),
 			('rctrun', ApRctRunData),
 			('otrrun', ApOtrRunData),
 			('session', leginon.leginondata.SessionData),
@@ -1720,3 +1721,108 @@ class ApMiscData(Data):
 		)
 	typemap = classmethod(typemap)
 
+### Helical Image Processing Tables ###
+
+class ApHipRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('path', ApPathData),
+			('description', str),
+			('REF|projectdata|projects|project', int),
+			('session', leginon.leginondata.SessionData),
+			('apix', float),
+			('stack', ApStackData),
+			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApHipParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', leginon.leginondata.SessionData),
+			('hipRun', ApHipRunData),
+			('numpart', int),
+			('replen', int),
+			('diam', int),
+			('diaminner', int),
+			('subunits', int),
+			('xlngth', int),
+			('yht2', int),
+			('padval', int),
+			('rescut', int),
+			('filval', int),
+			('strong', str),
+			('range', str),
+			('llbo', str),
+			('final_stack', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApHipIterData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', leginon.leginondata.SessionData),
+			('hipRun', ApHipRunData),
+			('iteration', int),
+			('iterpath', str),
+			('volumeDensity', str),
+			('resolution', ApResolutionData),
+			('rMeasure', ApRMeasureData),
+			('cutfit1', str),
+			('cutfit2', str),
+			('cutfit3', str),	
+			('chop1', str),	
+			('chop2', str),	
+			('avglist_file', str),
+			('final_numpart', int),
+			('avg_file', str),
+			('map_file', str),
+			('mrc_file', str),
+			('ll_file', str),
+			('op_file', str),
+			('output_file', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApHipParticleData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', leginon.leginondata.SessionData),
+			('hipRun', ApHipRunData),
+			('particleNumber', int),
+			('filename', str),
+			('stack', ApStackData),
+			('stackRun', ApStackRunData),
+			('tilt', float),
+			('shift', float),
+			('resid', float),
+			('far_phi', float),
+			('far_z', float),
+			('far_rscale', float),
+			('far_ampscale', float),
+			('ner_phi', float),
+			('ner_z', float),
+			('ner_rscale', float),
+			('ner_ampscale', float),
+			('mrc_file', str),
+			('s_file', str),
+			('dft_file', str),
+			('colb_file', str),
+			('ner_file', str),
+			('far_file', str),
+			('fft_file', str),
+		)
+	typemap = classmethod(typemap)
+
+class ApHelicalCoordData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', leginon.leginondata.AcquisitionImageData),
+			('filno', float),
+			('xlngth', float),
+			('xcoord', float),
+			('ycoord', float),
+			('initialang', float),
+		)
+	typemap = classmethod(typemap)
