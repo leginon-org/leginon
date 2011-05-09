@@ -505,12 +505,19 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 	</tr>
 </table>
 
-<img src="../totalimagegraph.php">
+<img src="../totalimagegraph.php"><br />
+<a href="../totalimagegraph.php?vd=1">[data]</a>
+<a href="../totalimagegraph.php?vs=1">[sql]</a><br />
 <br />
-<img src="../totalimagegraph.php?cu=1">
+
+<img src="../totalimagegraph.php?cu=1"><br />
 <br />
+
+<img src="../totalimagegraph.php?type=s"><br />
+<a href="../totalimagegraph.php?type=s&vd=1">[data]</a>
+<a href="../totalimagegraph.php?type=s&vs=1">[sql]</a><br />
 <br />
-<img src="../totalimagegraph.php?type=s">
-<br />
-<img src="../totalimagegraph.php?type=s&cu=1">
+
+<img src="../totalimagegraph.php?type=s&cu=1"><br />
+
 
