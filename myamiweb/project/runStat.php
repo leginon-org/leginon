@@ -159,32 +159,36 @@ $row = mysql_fetch_row($r);
 
 if(!empty($row)){
 	$latestRunTimestamp = $row[1];
-	$numOfApProjects = $row[2];
-	$numOfSessionsProcessed = $row[3];
-	$numOfTotalProcessingRuns = $row[4];
-	$lastExptRunTime = $row[5];
-	$aceRun = $row[6];
-	$ace2Run = $row[7];
-	$ctfindRun = $row[8];
-	$aceProcessedImages = $row[9];	
-	$particleSelectionRuns = $row[10];
-	$dogPickerRuns = $row[11];
-	$manualPickerRuns = $row[12];
-	$tiltPickerRuns = $row[13];
-	$templatePicker = $row[14];
-	$selectedParticles = $row[15];
-	$classificationRuns = $row[16];
-	$numOfClasses = $row[17];
-	$classifiedParticles = $row[18];
-	$totalRCTModels = $row[19];
-	$tomogramRun = $row[20];
-	$totalStacks = $row[21];
-	$totalStacksParticles = $row[22];
-	$totalReconRun = $row[23];
-	$totalReconIterations = $row[24];
-	$totalClassifiedParticles = $row[25];
-	$totalTemplates = $row[26];
-	$totalInitialModels = $row[27];
+	// if the stats are older than 7 days, don't set them. we need to recalculate them in the while loop below
+	if (isset($latestRunTimestamp) && strtotime($latestRunTimestamp) >= strtotime("-1 week") ) {
+		$numOfApProjects = $row[2];
+		$numOfSessionsProcessed = $row[3];
+		$numOfTotalProcessingRuns = $row[4];
+		$lastExptRunTime = $row[5];
+		$aceRun = $row[6];
+		$ace2Run = $row[7];
+		$ctfindRun = $row[8];
+		$aceProcessedImages = $row[9];	
+		$particleSelectionRuns = $row[10];
+		$dogPickerRuns = $row[11];
+		$manualPickerRuns = $row[12];
+		$tiltPickerRuns = $row[13];
+		$templatePicker = $row[14];
+		$selectedParticles = $row[15];
+		$classificationRuns = $row[16];
+		$numOfClasses = $row[17];
+		$classifiedParticles = $row[18];
+		$totalRCTModels = $row[19];
+		$tomogramRun = $row[20];
+		$totalStacks = $row[21];
+		$totalStacksParticles = $row[22];
+		$totalReconRun = $row[23];
+		$totalReconIterations = $row[24];
+		$totalClassifiedParticles = $row[25];
+		$totalTemplates = $row[26];
+		$totalInitialModels = $row[27];
+		$firstExptRunTime = $row[28];
+	}
 }
 
 if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1 week")){ 
@@ -196,6 +200,10 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 	 * select count(*) from projects; => 258 (total projects)
 	 * 
 	 */
+	
+	/* use the current time to compare processing run times while looking for the earliest date */
+	$currentTime = time();
+	$firstExptRunTime = $currentTime;
 	
 	while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
 
@@ -212,14 +220,17 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 		
 		/* get number of Sessions with processed data */
 		$q = "select count(distinct `REF|leginondata|SessionData|session`), 
-				count(DEF_id), max(DEF_timestamp) from ApAppionJobData";
+				count(DEF_id), max(DEF_timestamp), min(DEF_timestamp) from ApAppionJobData";
 		$r = mysql_query($q) or die("Query error: " . mysql_error());
 		$row = mysql_fetch_row($r);
 		$numOfSessionsProcessed += (int)$row[0];
 		$numOfTotalProcessingRuns += (int)$row[1];
 		
+		/* set the first and last processing run dates */ 
 		$lastExptRunTime = ($row[2] > $lastExptRunTime) ? $row[2] : $lastExptRunTime;
-	
+		if (isset($row[3]) && $row[3] != "0000-00-00 00:00:00") {
+			$firstExptRunTime = ($row[3] < $firstExptRunTime) ? $row[3] : $firstExptRunTime;
+		}
 		
 		/* get total processed images */
 		$q = "SELECT COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS img
@@ -343,6 +354,9 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 		   
 	} // end while loop
 	
+	// make sure the first run time was set, if not, set it to default
+	if ( $firstExptRunTime == $currentTime ) $firstExptRunTime = "0000-00-00-00:00:00";
+	
 	// save data in to the dataStatusReport table
 	mysql_select_db(DB_PROJECT);
 	$q = "insert into dataStatusReport 
@@ -350,13 +364,13 @@ if (empty($latestRunTimestamp) || strtotime($latestRunTimestamp) < strtotime("-1
 			ace_run, ace2_run, ctfind_run,ace_processed_image, particle_selection, dog_picker, 
 			manual_picker, tilt_picker, template_picker, selected_particle, 
 			classification, classes, classified_particles, RCT_Models, tomogram, stack, stack_particle, 
-			3D_recon, recon_iteration, classified_particle, template, initial_model) values(".
+			3D_recon, recon_iteration, classified_particle, template, initial_model, first_exp_runtime) values(".
 			$numOfApProjects.", ".$numOfSessionsProcessed.", ".$numOfTotalProcessingRuns.", '".$lastExptRunTime."', ".
 			$aceRun.", ".$ace2Run.", ".$ctfindRun.", ".$aceProcessedImages.", ".$particleSelectionRuns.", ".$dogPickerRuns.", ".$manualPickerRuns.", ".
 			$tiltPickerRuns.", ".$templatePicker.", ".$selectedParticles.", ".$classificationRuns.", ".$numOfClasses.", ".
 			$classifiedParticles.", ".$totalRCTModels.", ".$tomogramRun.", ".$totalStacks.", ".
 			$totalStacksParticles.", ".$totalReconRun.", ".$totalReconIterations.", ".$totalClassifiedParticles.", ".
-			$totalTemplates.", ".$totalInitialModels.")";
+			$totalTemplates.", ".$totalInitialModels.", '".$firstExptRunTime."')";
 	$r = mysql_query($q) or die("Query error: " . mysql_error());
 }
 	
@@ -369,13 +383,14 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 	<tr>
 		<td><table border="1"  cellpadding="5" cellspacing="0" width="100%">
 			<tr><td><b># Project</b></td><td><b># Experiments</b></td><td><b>First Experiment (Date)</b><td><b>Last Experiment (Date)</b></td>
-			<td><b># Processing Runs</b></td><td><b>Last Run (Date)</b></td></tr>
+			<td><b># Processing Runs</b></td><td><b>First Run (Date)</b></td><td><b>Last Run (Date)</b></td></tr>
 			<tr align="center"><td><?php echo number_format($totalNumProjects); ?></td>
 			<td><?php echo number_format($totalNumSessionUnderProjects); ?></td>
 			<td><?php echo $firstSessionTime ?></td>
 			<td><?php echo $lastSessionTime ?></td>
 			<td><?php echo number_format($numOfTotalProcessingRuns); ?></td>
-			<td><?php echo substr($lastExptRunTime, 0, 10) ?></td></tr>
+			<td><?php echo substr($firstExptRunTime, 0, 10); ?></td>
+			<td><?php echo substr($lastExptRunTime, 0, 10); ?></td></tr>
 		</table></td>
 	</tr>
 </table>
@@ -519,5 +534,11 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 <br />
 
 <img src="../totalimagegraph.php?type=s&cu=1"><br />
+<br />
 
+<img src="../totalimagegraph.php?type=r"><br />
+<br />
+
+<img src="../totalimagegraph.php?type=r&cu=1"><br />
+<br />
 

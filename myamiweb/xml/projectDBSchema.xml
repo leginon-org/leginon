@@ -690,7 +690,14 @@
       type="int(11)" 
       null="NOT NULL"
       default="0" 
-    />    
+    />   
+    <field 
+      name="first_exp_runtime" 
+      type="timestamp" 
+      null="NOT NULL"
+      default="0000-00-00-00:00:00" 
+    />
+     
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
 	</sqltable>
