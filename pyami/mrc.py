@@ -349,7 +349,7 @@ def updateHeaderDefaults(header):
 	header['amean'] = 0.0
 	header['rms'] = 0.0
 
-def updateHeaderUsingArray(header, a, calc_stats=True):
+def updateHeaderUsingArray(header, a, calc_stats=True, reset_origin=True):
 	'''
 	Fills in values of MRC header dictionary using the given array.
 	'''
@@ -389,10 +389,11 @@ def updateHeaderUsingArray(header, a, calc_stats=True):
 		header['amean'] = stats['mean']
 		header['rms'] = stats['std']
 
-	### changed next lines to be equivalent to proc3d origin=0,0,0
-	header['xorigin'] = 0
-	header['yorigin'] = 0
-	header['zorigin'] = 0
+	if reset_origin is True:
+		### changed next lines to be equivalent to proc3d origin=0,0,0
+		header['xorigin'] = 0
+		header['yorigin'] = 0
+		header['zorigin'] = 0
 	if ndims < 3:
 		header['nxstart'] = 0
 		header['nystart'] = 0
@@ -610,6 +611,18 @@ def append(a, filename, calc_stats=True):
 	appendArray(a, f)
 
 	f.close()
+
+def readOriginFromFile(filename):
+	'''
+Read the X,Y,Z coordinates for the origin
+	'''
+	h = readHeaderFromFile(filename)
+	origin = {
+		'xorigin': h['xorigin'], 
+		'yorigin': h['yorigin'], 
+		'zorigin': h['zorigin'],
+	}
+	return origin
 
 def read(filename):
 	'''
