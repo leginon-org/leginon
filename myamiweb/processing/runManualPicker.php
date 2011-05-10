@@ -214,8 +214,8 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 		<I>16 pixels is best</I>
     <br /><br />";    
   echo "<b>Helical Parameters:</b><br />\n";
-  echo "<input type='text' NAME='helicalstep' VALUE='$helicalstep' SIZE='4'>\n";
   $helicalstep = ($_POST['helicalstep']) ? $_POST['helicalstep'] : "";
+  echo "<input type='text' NAME='helicalstep' VALUE='$helicalstep' SIZE='4'>\n";
   echo docpop('helicalstep','Stepsize for Helical Insert');
   echo "<font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
   echo "<br /><br />\n";
