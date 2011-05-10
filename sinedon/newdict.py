@@ -151,3 +151,10 @@ def validateCallable(obj):
 registerValidator(MRCArrayType, validateArrayType)
 registerValidator(DatabaseArrayType, validateArrayType)
 registerValidator(CallableType, validateCallable)
+
+import datetime
+def validateDatetime(obj):
+	if isinstance(obj, datetime.datetime):
+		return obj
+	raise TypeError(obj)
+registerValidator(datetime.datetime, validateDatetime)
