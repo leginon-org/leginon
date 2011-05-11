@@ -22,7 +22,8 @@ from appionlib import appionScript
 from appionlib import appiondata
 from appionlib import apTomo
 from appionlib import apProTomo
-from appionlib import apProTomo2
+# don't import protomo2 until we have moved to Python 2.6
+#from appionlib import apProTomo2
 from appionlib import apImod
 from appionlib import apImage
 from appionlib import apParam
