@@ -2,6 +2,7 @@
 
 import os
 import sys
+import operator
 import wx
 import time
 import math
@@ -597,18 +598,32 @@ class ManualPicker(particleLoop2.ParticleLoop):
 		peaktree=[]
 		for label,targets in self.targets.items():
 			for target in targets:	
-				if isinstance(target, dict):
+				if isinstance(target, leginon.gui.wx.TargetPanelTools.StatsTarget):
 					angle = target.stats['angle']
 					peaktree.append(self.XY2particle(target.x, target.y, angle, label))
 				else:
-					peaktree.append(self.XY2particle(target.x, target.y, label))
+					peaktree.append(self.XY2particle(target.x, target.y, None, label))
+
+		# if any peak has an angle, then remove all peaks that
+		# do not have an angle
+		def hasangle(x):
+			try:
+				return 'angle' in x
+			except:
+				return False
+		haveangles = map(hasangle, peaktree)
+		anyangles = reduce(operator.or_, haveangles)
+		if anyangles:		
+			peaktree = filter(hasangle, peaktree)
+			apDisplay.printWarning('removed particles with no angle')
 		return peaktree
 
 	def XY2particle(self, binx, biny, angle, label=None):
 		peak={}
 		peak['xcoord'] = binx*self.params['bin']
 		peak['ycoord'] = biny*self.params['bin']
-		peak['angle'] = angle
+		if angle is not None:
+			peak['angle'] = angle
 		peak['correlation'] = None
 		peak['peakmoment'] = None
 		peak['peakstddev'] = None
