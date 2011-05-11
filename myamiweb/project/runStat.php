@@ -537,6 +537,7 @@ $totalCTF = $aceRun + $ace2Run + $ctfindRun;
 <br />
 
 <img src="../totalimagegraph.php?type=r"><br />
+<a href="../totalimagegraph.php?type=r&vd=1">[data]</a><br />
 <br />
 
 <img src="../totalimagegraph.php?type=r&cu=1"><br />

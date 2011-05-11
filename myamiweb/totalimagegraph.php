@@ -45,7 +45,7 @@ if ($type=="r") {
 		."year (DEF_timestamp) year, quarter(DEF_timestamp) quarter "
 		."from ApAppionJobData "
 		."where DEF_timestamp<>'0000-00-00 00:00:00' group by year,quarter";
-				
+		
 	mysql_connect(DB_HOST, DB_USER, DB_PASS) or die("Could not connect: " . mysql_error());
 	
 	/* use the project database */
@@ -70,7 +70,7 @@ if ($type=="r") {
 		}
 	}
 
-	// Sort the data by the timestamp
+	// sort the data by the timestamp
 	ksort($keyedData);
 	
 	// remove the last data point as it represents an incomplete quarter.
@@ -86,6 +86,22 @@ if ($type=="r") {
 			$index = count($datay)-1;
 			$datay[] = $datay[$index] + $nruns;
 		}
+	}
+	
+	// if the user just wants to see the data, display it here
+	if ($viewdata) {
+		$displayData = array();
+		foreach ( $datax as $i=>$date ) {
+			if ( $date ){
+				$formattedDate = strftime("%Y-%m-%d", $date);
+			} else {
+				$formattedDate = "empty";
+			}
+			$displayData[] = array( "timestamp"=>$formattedDate, "$alias"=>$datay[$i] );
+		}
+		$keys = array("timestamp", "$alias");
+		echo dumpData($displayData, $keys);
+		exit;
 	}
 	
 	graphData($datax, $datay, $gwidth, $gheight, $histogram, $gtitle);
