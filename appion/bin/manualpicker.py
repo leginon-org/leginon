@@ -613,9 +613,12 @@ class ManualPicker(particleLoop2.ParticleLoop):
 				return False
 		haveangles = map(hasangle, peaktree)
 		anyangles = reduce(operator.or_, haveangles)
-		if anyangles:		
+		if anyangles:	
+			before = len(peaktree)	
 			peaktree = filter(hasangle, peaktree)
-			apDisplay.printWarning('removed particles with no angle')
+			after = len(peaktree)
+			diff = before - after
+			apDisplay.printWarning("Removed %d particles with no angle"%(diff))
 		return peaktree
 
 	def XY2particle(self, binx, biny, angle, label=None):
