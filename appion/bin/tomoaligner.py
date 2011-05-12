@@ -335,6 +335,8 @@ class protomoAligner(appionScript.AppionScript):
 		imgshape = apTomo.getTomoImageShape(ordered_imagelist[refimg])
 		corr_bin = apTomo.getCorrelatorBinning(imgshape)
 		center = {'x':imgshape[1]/2,'y':imgshape[0]/2}
+		default_azimuth = apTomo.getDefaultAzimuthFromLeginon(ordered_imagelist[refimg])
+
 		processdir = os.path.abspath(self.params['rundir'])
 		imodseriesname = apTomo.getFilename(tiltdatalist)
 		
@@ -375,7 +377,7 @@ class protomoAligner(appionScript.AppionScript):
 					# get initial shift alignment from leginon tiltcorrelator
 					# Assume all tiltdata have the same tomography settings
 					shifts = apTomo.getGlobalShift(ordered_imagelist, corr_bin, refimg)
-					tltparams = apProTomo.convertShiftsToParams(tilts,shifts,center,rawimagenames)
+					tltparams = apProTomo.convertShiftsToParams(tilts,shifts,center,default_azimuth,rawimagenames)
 					apProTomo.writeTiltFile(tltfile,seriesname, tltparams[0], tltparams[1])
 					refineparamdict=apProTomo.createRefineDefaults(len(tilts),
 							os.path.join(processdir,'raw'),os.path.join(processdir,'out'))
@@ -464,7 +466,7 @@ class protomoAligner(appionScript.AppionScript):
 					#results
 					prexgfile = os.path.join(aligndir,imodseriesname+'.prexg')
 					shifts = apImod.readShiftPrexgFile(aligndir, imodseriesname)
-					resulttltparams = apProTomo.convertShiftsToParams(tilts,shifts,center)
+					resulttltparams = apProTomo.convertShiftsToParams(tilts,shifts,center,default_azimuth)
 					if resulttltparams:
 						modeldata = apProTomo.insertModel(alignerdata, resulttltparams)
 						for i,imagedata in enumerate(ordered_imagelist):

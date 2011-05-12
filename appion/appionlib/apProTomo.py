@@ -51,7 +51,7 @@ def parseTilt(tiltfile):
 			imagedict[imagenum]['rotation']=rotation			
 	return imagedict, parameterdict, seriesname
 
-def convertShiftsToParams(tilts,shifts,center,imagenames=None):
+def convertShiftsToParams(tilts,shifts,center,default_azimuth=90.0,imagenames=None):
 	imagedict={}
 	parameterdict={}
 	for i, shift in enumerate(shifts):
@@ -65,7 +65,7 @@ def convertShiftsToParams(tilts,shifts,center,imagenames=None):
 		parameterdict['psi']=0.0
 		parameterdict['theta']=0.0
 		parameterdict['phi']=0.0
-		parameterdict['azimuth']=90.0
+		parameterdict['azimuth']=default_azimuth
 	return imagedict,parameterdict,None
 
 def linkImageFiles(imgtree,rawdir):

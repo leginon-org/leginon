@@ -363,6 +363,14 @@ def getTomoPixelSize(imagedata):
 def getTomoImageShape(imagedata):
 	return (imagedata['camera']['dimension']['y'],imagedata['camera']['dimension']['x'])
 
+def getDefaultAzimuthFromLeginon(imagedata):
+	qpredict = leginon.leginondata.TomographyPredictionData(image=imagedata)
+	results = qpredict.query(results=1)
+	if results:
+		return 90.0 - (results[0]['predicted position']['phi']) * 180.0 / 3.14159
+	else:
+		return 90.0
+
 def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
 	paramsq = appiondata.ApImodXcorrParamsData()
 	paramsq['RotationAngle'] = rotation
