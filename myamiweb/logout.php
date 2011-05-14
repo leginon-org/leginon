@@ -1,6 +1,6 @@
 <?
 require "config.php";
-require "inc/dbemauth.php";
+require "inc/dbemauth.inc";
 
 $dbemauth->logout();
 ?>

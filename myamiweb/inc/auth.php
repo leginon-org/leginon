@@ -455,7 +455,7 @@ class authlib{
 				$username=addslashes($username);
 			}
 			$password = md5($password);
-			$q="select DEF_id from UserData where username = '$username' and password = '$password'";
+			$q="select DEF_id, DEF_timestamp from UserData where username = '$username' and password = '$password'";
 		
 			$query=$dbc->SQLQuery($q);
 			$result = @mysql_num_rows($query);
@@ -464,11 +464,13 @@ class authlib{
 				return false;
 			}
 		}
-		
-		$hash = md5($username);
+		//The part from the database
+		list ($id,$timestamp) = mysql_fetch_row($query);
+		//The part from configuration
+		$hash = md5($this->secret.$timestamp);
 		$expire = (COOKIE_TIME) ? time()+COOKIE_TIME : 0;
 
-		setcookie(PROJECT_NAME, "$username:$hash", COOKIE_TIME);
+		setcookie(PROJECT_NAME, "$username:$hash:$id", COOKIE_TIME);
 		return 2;		
 		
 	}
@@ -477,38 +479,32 @@ class authlib{
 
 		global $_COOKIE;
 		$cookie = $_COOKIE[PROJECT_NAME];
-
 		$session_vars = explode(":", $cookie);
 		$username = $session_vars[0];
+		$id = $session_vars[2];
 
 		$dbc=new mysql(DB_HOST, DB_USER, DB_PASS, DB_LEGINON);
 
-		$q="select u.DEF_id, g.`REF|projectdata|privileges|privilege` as privilege from UserData as u "
+		$q="select u.DEF_id, u.DEF_timestamp, g.`REF|projectdata|privileges|privilege` as privilege from UserData as u "
 			."left join GroupData as g "
 			."on u.`REF|GroupData|group` = g.`DEF_id` "
-			."where u.username = '$username'";
+			."where u.username = '$username' ";
+
 		$query=$dbc->SQLQuery($q);
-		
 		$result = @mysql_num_rows($query);
 
 		if ($result < 1) {
-
 			return false;
-
 		}
+		//The part from the database
+		list ($id, $timestamp, $privilege) = mysql_fetch_row($query);
+		//The part from configuration
+		$hash = md5($this->secret.$timestamp);
 
-		list ($id, $privilege) = mysql_fetch_row($query);
-
-		$hash = md5($session_vars[0]);
-
-		if ($hash != $session_vars[1]) {
-
+		if ($hash != $session_vars[1] || $id != $session_vars[2]) {
 			return false;
-
 		} else {
-
 			return array($session_vars[0], $id, $privilege);
-
 		}
 
 	}

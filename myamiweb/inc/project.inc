@@ -8,7 +8,7 @@
  */
 
 if (ENABLE_LOGIN) {
-	require_once "inc/dbemauth.php";
+	require_once "inc/dbemauth.inc";
 }
 
 require_once "inc/session.inc";

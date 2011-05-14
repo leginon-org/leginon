@@ -22,7 +22,7 @@ require_once "inc/button.inc";
 require_once "inc/pref.inc";
 require_once "inc/ace.inc";
 if (ENABLE_LOGIN) {
-	require_once "inc/dbemauth.php";
+	require_once "inc/dbemauth.inc";
 }
 
 $VIEWNB=0;

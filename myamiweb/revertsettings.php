@@ -8,7 +8,7 @@
  */
 
 require_once ("inc/leginon.inc");
-require_once "inc/dbemauth.php";
+require_once "inc/dbemauth.inc";
 require('inc/admin.inc');
 
 $login_check = $dbemauth->is_logged();

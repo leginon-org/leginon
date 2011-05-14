@@ -1,7 +1,7 @@
 <?php
 require_once "../config.php";
 require_once "inc/login.inc";
-require_once "inc/dbemauth.php";
+require_once "inc/dbemauth.inc";
 require_once "inc/menu.inc.php";
 require_once "inc/util.inc";
 require_once "inc/xmlapplicationimport.inc";
