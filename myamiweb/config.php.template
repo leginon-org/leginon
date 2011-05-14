@@ -37,6 +37,7 @@ define('PROJECT_URL', BASE_URL."project/");
 // changing this to true to populate DB tables correctly.
 define('ENABLE_LOGIN', false);
 define('ENABLE_ANONYMOUS', false);
+define('COOKIE_PASSPHRASE', '');
 
 // --- Administrator email title and email address -- //
 define('EMAIL_TITLE', 'The name of your institute');
