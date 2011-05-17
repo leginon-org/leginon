@@ -218,6 +218,11 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   echo "<input type='text' NAME='helicalstep' VALUE='$helicalstep' SIZE='4'>\n";
   echo docpop('helicalstep','Stepsize for Helical Insert');
   echo "<font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
+  echo "<br />\n";
+  $ovrlp = ($_POST['ovrlp']) ? $_POST['ovrlp'] : "0";
+  echo "<input type='text' NAME='ovrlp' VALUE='$ovrlp' SIZE='4'>\n";
+  echo docpop('ovrlp','Percent overlap');
+  echo "<font SIZE=-2><I>(%)</I></font>\n";
   echo "<br /><br />\n";
   createParticleLoopTable(-1, -1);
   echo "
@@ -274,8 +279,10 @@ function runManualPicker() {
   } 
 
   $helicalstep=$_POST['helicalstep'];
+  $ovrlp=$_POST['ovrlp'];
   if($helicalstep) {
     $command .= " --helicalstep=$helicalstep";
+    $command .= " --ovrlp=$ovrlp";
   }
 
 	$oldlabels = explode('|--|',$_POST['editrunpicklabels']);

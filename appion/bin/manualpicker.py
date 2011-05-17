@@ -309,9 +309,11 @@ class PickerApp(wx.App):
 			apDisplay.printWarning("unknown pixel size")
 			return
 		### get helicalstep
-		### When adding overlap feature change equation here. i.e. ovrlp = 0.6
-		#helicalstep = self.appionloop.params['helicalstep']*self.appionloop.params['ovrlp']
-		helicalstep = self.appionloop.params['helicalstep']
+		ovrlp = self.appionloop.params['ovrlp']/100.00
+		if ovrlp == 0:
+			helicalstep = self.appionloop.params['helicalstep']
+		else:
+			helicalstep = int(self.appionloop.params['helicalstep']*ovrlp)
 		if not helicalstep:
 			apDisplay.printWarning("unknown helical step size")
 			return
@@ -446,6 +448,8 @@ class ManualPicker(particleLoop2.ParticleLoop):
 			help="shape size")
 		self.parser.add_option("--helicalstep", dest="helicalstep", type="float",
 			help="helical step size (in Angstroms)")
+		self.parser.add_option("--ovrlp", dest="ovrlp", type="int",
+			help="percent overlap")
 		self.parser.add_option("--mask", dest="checkMask", default=False,
 			action="store_true", help="check mask")
 		self.parser.add_option("--label", dest="labels", action="append", help="Add a label. All labels will be availabe for picking.")
