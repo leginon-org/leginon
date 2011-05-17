@@ -211,18 +211,12 @@ class UploadImages(appionScript.AppionScript):
 		instrumentq = leginon.leginondata.InstrumentData()
 		instrumentq['hostname'] = "appion"
 		instrumentq['name'] = "AppionTEM"
-		instrumentdatas = instrumentq.query(results=1)
-		if not instrumentdatas:
-			apDisplay.printError("Could not find the default Appion TEM in Leginon")
-		self.temdata = instrumentdatas[0]
+		self.temdata = instrumentq
 		
 		instrumentq = leginon.leginondata.InstrumentData()
 		instrumentq['hostname'] = "appion"
 		instrumentq['name'] = "AppionCamera"
-		instrumentdatas = instrumentq.query(results=1)
-		if not instrumentdatas:
-			apDisplay.printError("Could not find the default Appion Camera in Leginon")
-		self.camdata = instrumentdatas[0]
+		self.camdata = instrumentq
 		return
 
 	#=====================

@@ -464,18 +464,7 @@ function runUploadImage() {
 		$badbatch = false;
 	}
 	if ($badbatch) createUploadImageForm("<B>ERROR:</B> Invalid format in the batch file");
-	// make sure there are valid instrument
-	$scopes = $leginon->getScopes('appion');
-	$cameras = $leginon->getCameras('appion');
-	$tem = $scopes[0]['id'];
-	$cam = $cameras[0]['id'];
-	if (!$tem || !$cam) createUploadImageForm("<B>ERROR:</B> Database does not contain instruments for appion image upload");
 
-	// add rest of options to command
-	if ($uploadscript == 'imageloader') {
-		$command.="--scopeid=$tem ";
-		$command.="--cameraid=$cam ";
-	}
 	$command.="--description=\"$description\" ";
 	/* *******************
 	PART 4: Create header info, i.e., references

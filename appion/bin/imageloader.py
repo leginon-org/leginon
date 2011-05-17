@@ -37,10 +37,6 @@ class ImageLoader(appionLoop2.AppionLoop):
 		### id info
 		self.parser.add_option("--userid", dest="userid", type="int",
 			help="Leginon User database ID", metavar="INT")
-		self.parser.add_option("--scopeid", dest="scopeid", type="int",
-			help="Scope database ID", metavar="INT")
-		self.parser.add_option("--cameraid", dest="cameraid", type="int",
-			help="Camera database ID", metavar="INT")
 
 		self.parser.add_option("--dir", dest="imgdir", type="string", metavar="DIR",
 			help="directory containing MRC files for upload")
@@ -108,10 +104,6 @@ class ImageLoader(appionLoop2.AppionLoop):
 			#mode 2: batch script
 			apDisplay.printError("Could not find Batch parameter file: %s"%(self.params["batchscript"]))
 
-		if self.params['scopeid'] is None:
-			apDisplay.printError("Please provide a Scope database ID, e.g., --scopeid=12")
-		if self.params['cameraid'] is None:
-			apDisplay.printError("Please provide a Camera database ID, e.g., --cameraid=12")
 		if self.params['sessionname'] is None:
 			apDisplay.printError("Please provide a Session name, e.g., --session=09feb12b")
 		if self.params['projectid'] is None:
@@ -207,7 +199,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		"""
 		standard appionLoop
 		"""	
-		self.getInstruments()
+		self.getAppionInstruments()
 
 	#=====================
 	def run(self):
@@ -509,9 +501,17 @@ class ImageLoader(appionLoop2.AppionLoop):
 				return self.publish(tiltq)
 
 	#=====================
-	def getInstruments(self):
-		self.temdata = leginon.leginondata.InstrumentData.direct_query(self.params['scopeid'])
-		self.camdata = leginon.leginondata.InstrumentData.direct_query(self.params['cameraid'])
+	def getAppionInstruments(self):
+		instrumentq = leginon.leginondata.InstrumentData()
+		instrumentq['hostname'] = "appion"
+		instrumentq['name'] = "AppionTEM"
+		self.temdata = instrumentq
+		
+		instrumentq = leginon.leginondata.InstrumentData()
+		instrumentq['hostname'] = "appion"
+		instrumentq['name'] = "AppionCamera"
+		self.camdata = instrumentq
+		return
 
 	#=====================
 	def makeImageData(self,info):
