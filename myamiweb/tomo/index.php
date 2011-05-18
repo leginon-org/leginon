@@ -15,6 +15,12 @@ login_header('Tomography');
 <form name="tomography" method="POST" action="index.php">
 
 <?php
+if ($_GET['tid']) {
+	$tiltSeriesId = $_GET['tid'];
+	$sessionInfo = $tomography->getTiltSeriesSession($tiltSeriesId);
+	$sessionId = $sessionInfo['DEF_id'];
+}
+
 $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $sessionId;
 $tiltSeriesId = ($_POST['tiltSeriesId']) ? $_POST['tiltSeriesId'] : $tiltSeriesId;
 $showmodel = ($_POST['showmodel']== 'on') ? 'CHECKED' : '';
