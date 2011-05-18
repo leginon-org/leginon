@@ -320,7 +320,7 @@ class PickerApp(wx.App):
 
 		first = array[-2]
 		last = array[-1]
-		angle = math.degrees(math.atan((((last[0]*1.0) - first[0])/(last[1] - first[1]))))
+		angle = math.degrees(math.atan2((last[0]*1.0 - first[0]),(last[1] - first[1])))
 		stats = {'angle': angle}	
 		pixeldistance = math.hypot(first[0] - last[0], first[1] - last[1])
 		if pixeldistance == 0:
