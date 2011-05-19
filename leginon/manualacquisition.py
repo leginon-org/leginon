@@ -132,7 +132,7 @@ class ManualAcquisition(node.Node):
 			self.logger.error('Error acquiring image: %s' % e)
 			raise AcquireError
 
-			image = imagedata['image']
+		image = imagedata['image']
 		self.logger.info('Displaying image...')
 		self.getImageStats(image)
 		self.setImage(image)
