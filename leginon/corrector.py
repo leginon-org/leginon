@@ -187,7 +187,11 @@ class Corrector(imagewatcher.ImageWatcher):
 	def acquireSeriesAverage(self, n, type, channel):
 		for i in range(n):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
-			imagedata = self.acquireCameraImageData()
+			try:
+				imagedata = self.acquireCameraImageData()
+			except Exception, e:
+				self.logger.error('Error acquiring image: %s' % e)
+				raise
 			if self.settings['store series']:
 				self.storeCorrectorImageData(imagedata, type, channel)
 			imagearray = imagedata['image']
@@ -206,7 +210,11 @@ class Corrector(imagewatcher.ImageWatcher):
 		series = []
 		for i in range(n):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
-			imagedata = self.acquireCameraImageData()
+			try:
+				imagedata = self.acquireCameraImageData()
+			except Exception, e:
+				self.logger.error('Error acquiring image: %s' % e)
+				raise
 			if self.settings['store series']:
 				self.storeCorrectorImageData(imagedata, type, channel)
 			imagearray = imagedata['image']

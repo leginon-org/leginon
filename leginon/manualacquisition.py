@@ -123,13 +123,16 @@ class ManualAcquisition(node.Node):
 		else:
 			scopeclass = leginondata.ScopeEMData
 
-		if correct:
-			imagedata = self.acquireCorrectedCameraImageData(scopeclass=scopeclass)
-		else:
-			imagedata = self.acquireCameraImageData(scopeclass=scopeclass)
+		try:
+			if correct:
+				imagedata = self.acquireCorrectedCameraImageData(scopeclass=scopeclass)
+			else:
+				imagedata = self.acquireCameraImageData(scopeclass=scopeclass)
+		except Exception, e:
+			self.logger.error('Error acquiring image: %s' % e)
+			raise AcquireError
 
-		image = imagedata['image']
-
+			image = imagedata['image']
 		self.logger.info('Displaying image...')
 		self.getImageStats(image)
 		self.setImage(image)

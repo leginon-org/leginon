@@ -70,7 +70,10 @@ class CameraClient(object):
 		imagedata = leginondata.CameraImageData()
 		imagedata['session'] = self.session
 		## acquire image, get new scope/camera params
-		scopedata = self.instrument.getData(scopeclass)
+		try:
+			scopedata = self.instrument.getData(scopeclass)
+		except:
+			raise
 		#cameradata_before = self.instrument.getData(leginondata.CameraEMData)
 		imagedata['scope'] = scopedata
 		self.startExposureTimer()
