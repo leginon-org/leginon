@@ -610,19 +610,20 @@ class ManualPicker(particleLoop2.ParticleLoop):
 
 		# if any peak has an angle, then remove all peaks that
 		# do not have an angle
-		def hasangle(x):
-			try:
-				return 'angle' in x
-			except:
-				return False
-		haveangles = map(hasangle, peaktree)
-		anyangles = reduce(operator.or_, haveangles)
-		if anyangles:	
-			before = len(peaktree)	
-			peaktree = filter(hasangle, peaktree)
-			after = len(peaktree)
-			diff = before - after
-			apDisplay.printWarning("Removed %d particles with no angle"%(diff))
+		if peaktree:
+			def hasangle(x):
+				try:
+					return 'angle' in x
+				except:
+					return False
+			haveangles = map(hasangle, peaktree)
+			anyangles = reduce(operator.or_, haveangles)
+			if anyangles:	
+				before = len(peaktree)	
+				peaktree = filter(hasangle, peaktree)
+				after = len(peaktree)
+				diff = before - after
+				apDisplay.printWarning("Removed %d particles with no angle"%(diff))
 		return peaktree
 
 	def XY2particle(self, binx, biny, angle, label=None):
