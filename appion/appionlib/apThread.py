@@ -6,6 +6,7 @@ import time
 import threading
 import Queue
 import subprocess
+import os
 ## appion
 from appionlib import apDisplay
 from appionlib import apParam
@@ -57,13 +58,18 @@ class LauncherThread(threading.Thread):
 		self.log('thread done')
 
 class ProcessLauncher(object):
-	def __init__(self, nproc=1):
+	def __init__(self, nproc=1, rundir=None):
 		self.queue = Queue.Queue()
 		self.nproc = nproc
+		if rundir is None:
+			self.rundir = os.getcwd()
+		else:
+			self.rundir = rundir
 		self.threads = []
 		for i in range(self.nproc):
 			logfilename = 'thread%03d.log' % (i,)
-			newthread = LauncherThread(self.queue, logfilename)
+			logfilenamepath = os.path.join(self.rundir, logfilename)
+			newthread = LauncherThread(self.queue, logfilenamepath)
 			self.threads.append(newthread)
 			newthread.start()
 
