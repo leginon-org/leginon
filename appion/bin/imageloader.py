@@ -64,6 +64,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 			help="nominal magnification")
 		self.parser.add_option("--kv", dest="kv", type="int", metavar="INT",
 			help="high tension (in kilovolts)")
+		self.parser.add_option("--cs", dest="cs", type="float", metavar="#.#",
+			default=2.0, help="spherical aberration constant (in mm), e.g., --cs=2.0")
 		self.parser.add_option("--binx", dest="binx", type="int", metavar="INT",
 			default=1, help="binning in x (default=1)")
 		self.parser.add_option("--biny", dest="biny", type="int", metavar="INT",
@@ -96,6 +98,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 				apDisplay.printError("If not specifying a parameter file, supply a high tension")
 			if self.params['kv'] > 1000:
 				apDisplay.printError("High tension must be in kilovolts (e.g., 120)")
+			if self.params['cs'] < 0.1:
+				apDisplay.printError("Cs value must be in mm (e.g., 2.0)")
 			if self.params['imgdir'] is None:
 				apDisplay.printError("If not specifying a parameter file, specify directory containing images")
 			if not os.path.exists(self.params['imgdir']):
@@ -505,6 +509,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		instrumentq = leginon.leginondata.InstrumentData()
 		instrumentq['hostname'] = "appion"
 		instrumentq['name'] = "AppionTEM"
+		instrumentq['cs'] = self.params['cs'] * 1e-3
 		self.temdata = instrumentq
 		
 		instrumentq = leginon.leginondata.InstrumentData()

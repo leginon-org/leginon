@@ -91,6 +91,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$dflist = ($_POST['dflist']) ? $_POST['dflist'] : "";
 	$tiltlist = ($_POST['tiltlist']) ? $_POST['tiltlist'] : "";
 	$invert_check = ($_POST['invert_check']=='on') ? 'checked' : '';
+	$cs = ($_POST['cs']) ? $_POST['cs'] : '2.0';
 
 	// Start Tables
 	echo"<table class=tableborder>\n";
@@ -168,6 +169,10 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		echo "<br/>\n<input type='text' name='imagegroup' value='$imagegroup' size='5'>\n";
 		echo "<br/>\n";
 	}
+	// scope cs value
+	echo docpop('cs', 'Scope Cs value in mm:');
+	echo "<input type='text' name='cs' value='$cs' size='8' style='text-align:center'>\n";
+
 	// invert images on upload if needed
 	echo "<br/><input type='checkbox' name='invert_check' $invert_check>\n";
 	echo "Invert image density\n";
@@ -312,6 +317,7 @@ function runUploadImage() {
 	$batch = trim($_POST['batch']);
 	$batch_check = trim($_POST['batchcheck']);
 	$invert_check = trim($_POST['invert_check']);
+	$cs = $_POST['cs']+0;
 	$imagegroup = $_POST['imagegroup']+0;
 	$tem = $_POST['tem'];
 	$cam = $_POST['cam'];
@@ -359,6 +365,9 @@ function runUploadImage() {
 
 	// for inverting density
 	if ($invert_check=='on') $command.="--invert ";
+	if (!$cs)
+			createUploadImageForm($errormsg."Specify the Cs value");
+	else $command.="--cs=$cs ";
 
 	//determine if a information batch file was provided
 	if (!$batch) {
