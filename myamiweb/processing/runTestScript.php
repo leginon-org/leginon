@@ -66,11 +66,15 @@ function createForm($extra=false) {
 		$sessionpath=getBaseAppionPath($sessioninfo).'/testruns/';
 	}
 	
-	// Get the next run number for this type of run and set runname
+	// get the next run number for this type of run and set runname
+	$jobtype = "test_".$sessioninfo["Name"];
 	$particledata = new particledata();
-	$lastrunnumber = $particledata->getLastRunNumberForType($sessionId,'ApTestRunData','name'); 
+	$lastrunnumber = $particledata->getMaxRunNumber( $jobtype, $sessionId );
+	
+	// sanity check - make certain we are not going to overwrite data
 	while (file_exists($sessionpath.'testrun'.($lastrunnumber+1)))
 		$lastrunnumber += 1;
+		
 	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'testrun'.($lastrunnumber+1);
 
 	// Create the GUI to set Appion parameters

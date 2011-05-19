@@ -168,14 +168,6 @@ class BasicReport {
 	//--------------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------------
 	
-	// helper function to parse the runname into its components
-	static function getJobRunIdFromRunname( $runname ) {
-		list($programRun, $append_timestamp) = explode("-", $runname);
-		preg_match('/(\D+)(\d+)/', $programRun, $matches);
-		$program = $matches[1];
-		$runId = $matches[2];
-		return $runId;
-	}
 	
 	//--------------------------------------------------------------------------------------
 	// displaySummaryTable() is the primary function to be used from another php page.

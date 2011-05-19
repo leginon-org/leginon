@@ -201,7 +201,7 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
-
+	
 	//------ -------------------- ---------//
 	//------ Tomo functions ---------//
 	//------ -------------------- ---------//
@@ -1237,6 +1237,7 @@ class particledata {
 	//------ -------------------- ---------//
 	//-------particle functions --------//
 	//------ -------------------- ---------//
+	//TODO: the next 2 display functions do not belong in this file!!!
 	function displayParameters ($title,$params,$exclude_fields,$expId,$hide_button_field='',$inform=false) {
 		//standard parameter table display
 
@@ -2027,6 +2028,10 @@ class particledata {
 		return $r;
 	}
 
+	// Warning: this counts the number of runs, it does not return the 
+	// last run id number used. Since a user can modify the runname,
+	// this is not a safe number to use for a defualt run name. Try
+	// getMaxRunNumber() instead.
 	function getLastRunNumberForType ($sessionId, $table, $field='name') {
 		$q = "SELECT r.`".$field."` "
 			."FROM `".$table."` AS r "
@@ -3549,7 +3554,7 @@ class particledata {
 		return $r;
 	}
 
-	function getReconIdFromAppionJobId ($jobid) {
+	function getReconIdFromAppionJobId($jobid) {
 		$q="SELECT * "
 			."FROM `ApRefineRunData` "
 			."WHERE `REF|ApAppionJobData|job` = $jobid";
@@ -3557,7 +3562,84 @@ class particledata {
 		return $r[0];
 	}
 
-	function getReconIdsFromSession ($sessionId, $showHidden=false, $package=false) {
+	function getJobNamesFromJobType( $jobtype, $sessionId )
+	{
+		$q = "select name from `ApAppionJobData` "
+			."where `REF|leginondata|SessionData|session` = $sessionId "
+			."and jobtype = '$jobtype'";
+		$r = $this->mysql->getSQLResult($q);
+
+		if ( $r === False ) {
+			$dberror = $this->mysql->getError();
+			error_log("Error: database error in particledata.inc, getDefaultJobName(): $dberror /n");
+		}
+		return $r;
+	}
+	
+	// parse the runname into its components
+	static function getJobRunIdFromRunname( $runname ) 
+	{
+		// step 1: strip the jobtype and id from the runname
+		
+		// check if the runname has a timestamp appended seperated by '-'
+		// explode returns an empty array if the delimiter is not found and the limit is negative
+		list($baseRunName, $extension) = explode( "-", $runname, -1 );
+		
+		// check if the jobtype and id are followed by a '.' with other stuff 
+		if ( !$baseRunName ) {
+			list($baseRunName, $extension) = explode( ".", $runname, -1 );
+		}
+		if ( !$baseRunName ) {
+			error_log("Error: unable to parse the 'runname' in particledata.inc, getJobRunIdFromRunname./n");
+		}
+
+		// step 2: match the $baseRunName with letters in the front and id with numbers at the end of the string
+		preg_match('/(\D+)(\d+)/', $baseRunName, $matches);
+		$program = $matches[1];
+		$runId = $matches[2];
+		return $runId;
+	}
+	
+	function getMaxRunNumber( $jobtype, $sessionId )
+	{
+		// get job names corresponding to the desired type for this session
+		$names = $this->getJobNamesFromJobType( $jobtype, $sessionId );
+		
+		// find the name with the greatest incremental id ex. recon4 is greater than recon3
+		$maxRunNumber = 0;
+		foreach ( $names as $name ) {
+			$runNumber = $this->getJobRunIdFromRunname( $name['name'] );
+			$maxRunNumber = ( $runNumber > $maxRunNumber ) ? $runNumber : $maxRunNumber;
+		}
+		
+		return $maxRunNumber;
+	}
+	
+	function getDefaultJobName( $jobtype, $sessionId )
+	{
+		// check input values
+		if ( !$jobtype ) {
+			error_log("Error: 'jobtype' Parameter in particledata.inc, getDefaultJobName() is not set./n");
+			return False;
+		} 
+		
+		if ( !$sessionId ) {
+			error_log("Error: 'sessionId' Parameter in particledata.inc, getDefaultJobName() is not set./n");
+			return False;
+		}
+		
+		$lastRunNumber = $this->getMaxRunNumber( $jobtype, $sessionId );
+		
+		// increment the current run number and append it to the jobtype to create new jobname
+		$lastRunNumber++;
+		$jobName = $jobtype . $lastRunNumber;
+		
+		return $jobName;
+	}
+	
+	// Warning: do not use this function for counting the number of runs to create a new runname.
+	// try getMaxRunNumber instead.
+	function getReconIdsFromSession($sessionId, $showHidden=false, $package=false) {
 		$q = "SELECT DISTINCT(refrun.`DEF_id`) AS refid, refrun.*, path.path AS path  "
 			." FROM `ApRefineRunData` AS refrun "
 			."LEFT JOIN ApRunsInStackData AS runs "
@@ -3576,7 +3658,7 @@ class particledata {
 		return $r;
 	}
 
-	function getReconIterIdRelatedToStackid ($stackId, $showHidden=False) {
+	function getReconIterIdRelatedToStackid($stackId, $showHidden=False) {
 		// First get a three random particle ids from the stack id
 		$q = "SELECT `REF|ApParticleData|particle` AS partid "
 			." FROM ApStackParticleData AS stpart "
@@ -3612,7 +3694,7 @@ class particledata {
 		return $r2;
 	}
 
-	function getExemplarReconsFromSession ($sessionId, $showHidden=False) {
+	function getExemplarReconsFromSession($sessionId, $showHidden=False) {
 		$q = "SELECT refdata.`DEF_id` as refdataid, "
 			."refrun.`DEF_id` as refrunid, "
 			."refdata.*, refrun.*, stackrun.*, runs.*, p.*, params.* "
@@ -3637,7 +3719,7 @@ class particledata {
 		return $r;
 	}
 
-	function getReconIds ($stackId, $showHidden=False) {
+	function getReconIds($stackId, $showHidden=False) {
 		$q = "SELECT * "
 			."FROM `ApRefineRunData` AS r ";
 		if (!$showHidden)
@@ -4731,6 +4813,7 @@ function simplify($e) {
 	return $e['a'].','.$e['b'].','.$e['c'];
 }
 
+//TODO: the following functions should not be in this file!
 function displayCTFstats($stats, $display_keys) {
 	if (!is_array($stats) || !is_array($display_keys))
 		return ;

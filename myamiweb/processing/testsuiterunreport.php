@@ -16,9 +16,12 @@
 //--------------------------------------------------------------------------------------
 
 require_once "inc/basicreport.inc";
+require_once "inc/particledata.inc";
 
 $expId = $_GET['expId'];
 $runId = $_GET['rId'];
+
+$particle = new particledata();
 
 try {
 	// Create an instance of the BasicReport class and set the test suite database table name
@@ -36,7 +39,7 @@ try {
 	// ApAppionJobData DB table corresponding to the given entry in the ScriptProgramRun table.
 	foreach ($runDatas as $runData) {
 		$jobData = $testSuiteReport->getAppionJobData("ScriptProgramRun", $runData['DEF_id']);
-		$jobRunId = $testSuiteReport->getJobRunIdFromRunname( $jobData['name'] );
+		$jobRunId = $particle->getJobRunIdFromRunname( $jobData['name'] );
 		$jobReportPageLink = buildJobReportPageLink( $jobData['jobtype'], $expId, $jobRunId );
 		
 		$summaryTable .= $testSuiteReport->displaySummaryTable($jobData, $jobReportPageLink, False);

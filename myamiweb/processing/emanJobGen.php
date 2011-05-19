@@ -15,6 +15,8 @@ require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
 
+define('JOBTYPE','emanrecon');
+
 $selectedcluster=$CLUSTER_CONFIGS[0];
 if ($_POST['cluster']) {
 	$selectedcluster=$_POST['cluster'];
@@ -77,7 +79,7 @@ function submitJob($extra=False) {
 	if (!file_exists($tmpjobfile))
 		writeJobFile("<B>ERROR:</B> Could not find temp jobfile: $tmpjobfile");
 
-	$jobid=$particle->insertClusterJobData($host,$outdir,$dmfpath,$clusterpath,$jobfile,$expId,'emanrecon',$user);
+	$jobid=$particle->insertClusterJobData($host,$outdir,$dmfpath,$clusterpath,$jobfile,$expId, JOBTYPE,$user);
 
 	// add header & job id to the beginning of the script
 	// convert /\n's back to \n for the script
@@ -357,15 +359,17 @@ function jobForm($extra=false) {
 	$modelid = $modelinfo[0];
 
 	$clusterdefaults = ($selectedcluster==$_POST['clustermemo']) ? true : false;
-
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	$reconruns = count($particle->getReconIdsFromSession($expId));
-	while (glob($outdir.'*recon'.($reconruns+1))) {
+	
+	// the default job name is the jobtype followed by an ever incrementing number
+	$reconruns = $particle->getMaxRunNumber( JOBTYPE, $expId );
+	// sanity check - make certain we are not going to overwrite data
+	while (file_exists($outdir.'*recon'.($reconruns+1))) {
 		$reconruns += 1;
 	}
 	$defrunid = 'emanrecon'.($reconruns+1);
 	$jobname = ($_POST['jobname']) ? $_POST['jobname'] : $defrunid;
-
+		
 	$nodes = ($_POST['nodes'] && $clusterdefaults) ? $_POST['nodes'] : C_NODES_DEF;
 	$ppn = ($_POST['ppn'] && $clusterdefaults) ? $_POST['ppn'] : C_PPN_DEF;
 	$rprocs = ($_POST['rprocs'] && $clusterdefaults) ? $_POST['rprocs'] : C_RPROCS_DEF;
