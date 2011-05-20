@@ -18,7 +18,7 @@ def getPackageVersion():
 def getUpdateRevisionSequence():
 	svn_branch = version.getSVNBranch('.')
 	if svn_branch == 'trunk':
-		schema_revisions = [12857,13713,14077,14891,15069,15248,15251,15293,15526]
+		schema_revisions = [12857,13713,14077,14891,15069,15248,15251,15293,15526,15653]
 	elif svn_branch == 'myami-2.1':
 		schema_revisions = [12857,13713,14077,14891,15293]
 	elif svn_branch == 'myami-2.0':
