@@ -172,6 +172,10 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	// scope cs value
 	echo docpop('cs', 'Scope Cs value in mm:');
 	echo "<input type='text' name='cs' value='$cs' size='8' style='text-align:center'>\n";
+	echo "&nbsp;(<a href='http://en.wikipedia.org/wiki/Spherical_aberration'>wiki\n";
+	echo "<img border='0' src='img/external.png'></a>)\n";
+	echo "<br/><br/>\n";
+
 
 	// invert images on upload if needed
 	echo "<br/><input type='checkbox' name='invert_check' $invert_check>\n";
