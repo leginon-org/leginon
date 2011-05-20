@@ -18,6 +18,8 @@ from appionlib import apDatabase
 from appionlib import apCtf
 from appionlib import apParam
 from appionlib import apFile
+from appionlib import apInstrument
+# other myami
 from pyami import mrc
 
 class Ace2Loop(appionLoop2.AppionLoop):
@@ -327,8 +329,6 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		### values
 		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=1,
 			help="Binning of the image before FFT", metavar="#")
-		self.parser.add_option("-c", "--cs", dest="cs", type="float", default=2.0,
-			help="Spherical aberation of the microscope", metavar="#")
 		self.parser.add_option("--mindefocus", dest="mindefocus", type="float", default=-0.1e-6,
 			help="Minimal acceptable defocus (in meters)", metavar="#")
 		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float", default=-10e-6,
@@ -361,6 +361,8 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if (self.params['maxdefocus'] is not None and
 				(self.params['maxdefocus'] < -1e-3 or self.params['maxdefocus'] > -1e-9)):
 			apDisplay.printError("max defocus is not in an acceptable range, e.g. maxdefocus=-1.5e-6")
+		### set cs value
+		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
 
 		return
 

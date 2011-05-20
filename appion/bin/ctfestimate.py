@@ -18,6 +18,7 @@ from appionlib import apDatabase
 from appionlib import apCtf
 from appionlib import apParam
 from appionlib import apFile
+from appionlib import apInstrument
 
 class ctfEstimateLoop(appionLoop2.AppionLoop):
 	"""
@@ -361,8 +362,6 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			help="fieldsize, default=256", metavar="#")
 		self.parser.add_option("--medium", dest="medium", default="carbon",
 			help="sample medium, default=carbon", metavar="MEDIUM")
-		self.parser.add_option("--cs", dest="cs", type="float", default=2.0,
-			help="cs, default=2.0", metavar="#")
 		self.parser.add_option("--nominal", dest="nominal",
 			help="nominal")
 		self.parser.add_option("--newnominal", dest="newnominal", default=False,
@@ -386,6 +385,8 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 			apDisplay.printError("Please choose a higher resolution for resmax")
 		if self.params['defstep'] < 300.0 or self.params['defstep'] > 10000.0:
 			apDisplay.printError("Please keep the defstep between 300 & 10000 Angstroms")
+		### set cs value
+		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
 		return
 
 if __name__ == '__main__':

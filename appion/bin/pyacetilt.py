@@ -18,6 +18,7 @@ from appionlib import apDatabase
 from appionlib import apCtf
 from appionlib import apParam
 from appionlib import apFile
+from appionlib import apInstrument
 
 class AceTiltLoop(appionLoop2.AppionLoop):
 
@@ -209,8 +210,6 @@ class AceTiltLoop(appionLoop2.AppionLoop):
 	#======================
 	def setupParserOptions(self):
 		### values
-		self.parser.add_option("-c", "--cs", dest="cs", type="float", default=2.0,
-			help="Spherical aberation of the microscope", metavar="#")
 		self.parser.add_option("--split-size", dest="splitsize", type="int", default=768,
 			help="Size in pixels of areas to image", metavar="#")
 		self.parser.add_option( "--num-splits", dest="numsplits", type="int", default=6,
@@ -230,6 +229,8 @@ class AceTiltLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def checkConflicts(self):
+		### set cs value
+		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
 
 		return
 

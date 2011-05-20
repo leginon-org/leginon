@@ -301,7 +301,7 @@ class TestScript(appionScript.AppionScript):
 		acetwoname = "acetwo%d-%s"%(runnum+1, self.timestamp)
 
 		script = os.path.join(self.appiondir, "bin", "pyace2.py ")
-		params = (" --runname=%s --projectid=%d --session=%s --no-wait --bin=%d --edge1=%.1f --cs=2.0 "
+		params = (" --runname=%s --projectid=%d --session=%s --no-wait --bin=%d --edge1=%.1f"
 			%(acetwoname, self.params['projectid'], self.sessionname, bin, blur))
 
 		# Add appion flags 

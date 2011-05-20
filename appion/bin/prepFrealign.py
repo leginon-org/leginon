@@ -21,6 +21,8 @@ from appionlib import apFile
 from appionlib import apThread
 from appionlib import apImagicFile
 from appionlib import appiondata
+from appionlib import apInstrument
+#other myami
 from pyami import mrc
 
 #================
@@ -80,8 +82,6 @@ class frealignJob(appionScript.AppionScript):
 			help="target phase residual during refinement")
 		self.parser.add_option('--thresh', dest="thresh", default=90.0, type='float',
 			help="phase residual threshold cut-off")
-		self.parser.add_option('--cs', dest="cs", default=2.0, type='float',
-			help="spherical aberation")
 		self.parser.add_option('--kv', dest="kv", default=120.0, type='float',
 			help="accelerlating voltage")
 	
@@ -174,6 +174,8 @@ class frealignJob(appionScript.AppionScript):
 			self.params['symm_id'] = self.symmdata.dbid
 			self.params['symm_name'] = self.symmdata['eman_name']
 			apDisplay.printMsg("Selected symmetry %s with id %s"%(self.symmdata['eman_name'], self.symmdata.dbid))
+		### set cs value
+		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
 
 	#=====================
 	def setRunDir(self):

@@ -14,6 +14,7 @@ from appionlib import apDatabase
 from appionlib import apMatlab
 from appionlib import apCtf
 from appionlib import apParam
+from appionlib import apInstrument
 try:
 	import mlabraw as pymat
 except ImportError:
@@ -77,8 +78,6 @@ class aceLoop(appionLoop2.AppionLoop):
 			help="drange, default=0", metavar="#")
 		self.parser.add_option("--medium", dest="medium", default="carbon",
 			help="sample medium, default=carbon", metavar="MEDIUM")
-		self.parser.add_option("--cs", dest="cs", type="float", default=2.0,
-			help="cs, default=2.0", metavar="#")
 		self.parser.add_option("--display", dest="display", type="int", default=1,
 			help="display, default=1", metavar="#")
 		self.parser.add_option("--stig", dest="stig", type="int", default=0,
@@ -100,6 +99,8 @@ class aceLoop(appionLoop2.AppionLoop):
 			apDisplay.printError("display must be 0 or 1")
 		if not (self.params['stig'] == 0 or self.params['stig'] == 1):
 			apDisplay.printError("stig must be 0 or 1")		
+		### set cs value
+		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
 		return
 
 

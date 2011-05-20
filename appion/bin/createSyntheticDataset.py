@@ -9,6 +9,7 @@ import time
 import numpy
 import random
 import subprocess
+from scipy import fftpack, ndimage, arange
 
 ### appion imports
 from appionlib import appionScript
@@ -25,8 +26,9 @@ from appionlib import apXmipp
 from appionlib import apStackMeanPlot
 from appionlib import apThread
 from appionlib.apSpider import operations
+from appionlib import apInstrument
+### other myami
 from pyami import mrc, imagefun
-from scipy import fftpack, ndimage, arange
 
 class createSyntheticDatasetScript(appionScript.AppionScript):
 
@@ -74,8 +76,6 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			action="store_false", help="DO NOT randomly flip the projections along with shifts and rotations")
 		self.parser.add_option("--kv", dest="kv", type="float", default=120,
 			help="kV of the microscope, needed for envelope function", metavar="INT")
-		self.parser.add_option("--cs", dest="cs", type="float", default=2.0,
-			help="spherical aberration of the microscope (in mm)", metavar="FLOAT")
 		self.parser.add_option("--df1", dest="df1", type="float", default=-1.5,
 			help="defocus value 1 (represented as the mean if --randomdef & --randomdef-std specified)", metavar="FLOAT")
 		self.parser.add_option("--df2", dest="df2", type="float", default=-1.5,
@@ -159,6 +159,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		### make sure amplitude correction file exists
 		if self.params['envelopefile'] is None:
 			self.params['envelopefile'] = os.path.join(apParam.getAppionDirectory(), "appionlib/data/radial-envelope.spi")
+		### set cs value
+		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
 		return
 
 	#=====================
