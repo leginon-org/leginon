@@ -3211,7 +3211,26 @@ class leginondata {
 			return false;
 		}
 	}
+
+	function getCsValueFromSession($sessionId) {
+		// return Cs value in mm
+		$sql = 'SELECT i.cs '
+			.'from '
+			.'`InstrumentData` i '
+			.'left join `ScopeEMData` s '
+			.'on s.`REF|InstrumentData|tem` = i.`DEF_id` '
+			.'where s.`REF|SessionData|session` = '.$sessionId.' '
+			.'group by i.cs ';
+		$results = $this->mysql->getSQLResult($sql);
+		if (is_array($results) && count($results) == 1) {
+			return $results[0]['cs']*1e3;
+		} else {
+			// There should only be one Cs value per session
+			return false;
+		}
+	}
 }
+
 function rsum($v, $w) {
 	$v += $w;
 	return $v;

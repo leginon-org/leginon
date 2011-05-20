@@ -15,9 +15,6 @@ require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 require_once "inc/appionloop.inc";
 
-// Cs should come straight out of the DB somehow, instead it is in config
-$defaultcs=DEFAULTCS;
-
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
 	runPyAce();
@@ -73,7 +70,6 @@ function runPyAce() {
 	$fieldsize=$_POST[fieldsize];
 	$resamplefr=$_POST[resamplefr];
 	$medium=$_POST[medium];
-	$cs=$_POST[cs];
 	$nominal=$_POST[nominal];
 	$reprocess=$_POST[reprocess];
 	$display = ($_POST[display]=="on") ? "1" : '0';
@@ -87,11 +83,11 @@ function runPyAce() {
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
-	if (!is_numeric($cs)) {
-		createPyAceForm("Invalid value for the Spherical Aberration");
+	$leginondata = new leginondata();
+	if ($leginondata->getCsValueFromSession($expId) === false) {
+		createPyAceForm("Cs value of the images in this session is not unique or known, can't process");
 		exit;
 	}
-	
 	// check the tilt situation
 	$particle = new particledata();
 	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
@@ -116,7 +112,6 @@ function runPyAce() {
 	$command.="--fieldsize=$fieldsize ";
 	$command.="--resamplefr=$resamplefr ";
 	$command.="--medium=$medium ";
-	$command.="--cs=$cs ";
 	$command.="--drange=$drange ";
 	$command.="--display=$display ";
 	$command.="--stig=$stig";
@@ -160,7 +155,6 @@ function runPyAce() {
 
 // CREATE FORM PAGE
 function createPyAceForm($extra=false) {
-	global $defaultcs;
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
@@ -322,9 +316,6 @@ function createPyAceForm($extra=false) {
 	echo "<INPUT TYPE='text' NAME='fieldsize' VALUE='512' size='4'>\n";
 	echo docpop('field','Field Size');
 	echo "<br />\n";
-	echo "<INPUT TYPE='text' NAME='cs' VALUE='".$defaultcs."' SIZE='4'>\n";
-	echo docpop('cs','Spherical Aberration');
-	echo "&nbsp;(<a href='http://en.wikipedia.org/wiki/Spherical_aberration'>wiki\n";
 	echo "<img border='0' src='img/external.png'></a>)\n";
 	echo "<br/><br/>\n";
 

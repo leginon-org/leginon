@@ -156,6 +156,10 @@ function jobForm($extra=false) {
 	$sessiondata = $leginondata->getSessionInfo($expId);
 	$sessionpath=getBaseAppionPath($sessiondata).'/recon/';
 
+	if ($leginondata->getCsValueFromSession($expId) === false) {
+		stackModelForm("Cs value of the images in this session is not unique or known, can't process");
+		exit;
+	}
 	$particle = new particledata();
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$reconruns = count($particle->getReconIdsFromSession($expId));
@@ -205,7 +209,6 @@ function jobForm($extra=false) {
 	// preset information from stackid
 	$presetinfo = $particle->getPresetFromStackId($stackid);
 	$kv = $presetinfo['hightension']/1e3;
-	$cs = 2.0;
 
 	$javafunc .= writeJavaPopupFunctions('frealign');
 	processing_header("Frealign Job Generator","Frealign Job Generator",$javafunc);
@@ -459,9 +462,6 @@ function jobForm($extra=false) {
 		echo "<br/>\n";
 		echo " <input type='text' name='thresh' value='$thresh' size='4'>\n";
 		echo docpop('thresh','Worst phase residual for inclusion (THRESH)')." <font size='-2'></font>\n";
-		echo "<br/>\n";
-		echo " <input type='text' name='cs' value='$cs' size='4'>\n";
-		echo docpop('cs','Spherical abberation (CS)')." <font size='-2'></font>\n";
 
 	echo "</td></tr><tr><td>\n";
 		echo "<h4>Card #7</h4>\n";
@@ -500,7 +500,6 @@ function jobForm($extra=false) {
 	echo "</td></tr>\n";
 	echo "</table>\n";
 
-	echo "<input type='hidden' NAME='cs' value='$cs'>";
 	echo "<input type='hidden' NAME='kv' value='$kv'>";
 	echo "<input type='hidden' NAME='apix' value='$apix'>";
 
@@ -555,7 +554,6 @@ function prepareFrealign ($extra=False) {
 	$modelname = $modelinfo[2];
 
 	$last=$_POST['last'];
-	$cs=$_POST['cs'];
 	$kv=$_POST['kv'];
 	$mask=$_POST["mask"];
 	$imask=$_POST["imask"];
@@ -613,7 +611,6 @@ function prepareFrealign ($extra=False) {
 	$command.= "--sym=$sym ";
 	$command.= "--target=$target ";
 	$command.= "--thresh=$thresh ";
-	$command.= "--cs=$cs --kv=$kv ";
 	$command.= "--rrec=$rrec --hp=$hp --lp=$lp --rbfact=$rbfact ";
 	$command.= "--numiter=$numiter ";
 	#enforce cluster mode, for now

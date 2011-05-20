@@ -15,8 +15,6 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/appionloop.inc";
 
-$defaultcs=DEFAULTCS;
-
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
 	runCtfEstimate();
@@ -45,7 +43,6 @@ function runCtfEstimate() {
 	$fieldsize=$_POST['fieldsize'];
 	$medium=$_POST['medium'];
 	$binval=$_POST['binval'];
-	$cs=$_POST['cs'];
 	$resmin=$_POST['resmin'];
 	$resmax=$_POST['resmax'];
 	$defstep=$_POST['defstep'];
@@ -55,11 +52,11 @@ function runCtfEstimate() {
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
-	if (!is_numeric($cs)) {
-		createCtfEstimateForm("Invalid value for the Spherical Aberration");
+	$leginondata = new leginondata();
+	if ($leginondata->getCsValueFromSession($expId) === false) {
+		createCtfEstimateForm("Cs value of the images in this session is not unique or known, can't process");
 		exit;
 	}
-	
 	// Error checking:
 	if (!$fieldsize) createCtfEstimateForm("Enter a fieldsize");
 	if (!$defstep) createCtfEstimateForm("Enter a search step");
@@ -83,7 +80,6 @@ function runCtfEstimate() {
 	$command.="--ampice=$ampice ";
 	$command.="--fieldsize=$fieldsize ";
 	$command.="--medium=$medium ";
-	$command.="--cs=$cs ";
 	$command.="--bin=$binval ";
 	$command.="--resmin=$resmin ";
 	$command.="--resmax=$resmax ";
@@ -124,7 +120,6 @@ function runCtfEstimate() {
 
 // CREATE FORM PAGE
 function createCtfEstimateForm($extra=false) {
-	global $defaultcs;
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
@@ -174,7 +169,6 @@ function createCtfEstimateForm($extra=false) {
 	$defrunname = ($_POST['runname']) ? $_POST['runname'] : $runbase.'run'.($lastrunnumber+1);
 
 	// set defaults and check posted values
-	$form_cs = ($_POST['cs']) ? $_POST['cs'] : $defaultcs;
 	$form_fieldsz = ($_POST['fieldsize']) ? $_POST['fieldsize'] : 256;
 	$form_bin = ($_POST['binval']) ? $_POST['binval'] : 2;
 	$form_ampc = ($_POST['ampcarbon']) ? $_POST['ampcarbon'] : '0.15';
@@ -208,9 +202,6 @@ function createCtfEstimateForm($extra=false) {
 
 	echo "<INPUT TYPE='text' NAME='binval' VALUE='$form_bin' SIZE='4'>\n";
 	echo docpop('binval','Binning');
-	echo "<br/><br/>\n";
-	echo "<INPUT TYPE='text' NAME='cs' VALUE='$form_cs' SIZE='4'>\n";
-	echo docpop('cs','Spherical Aberration');
 	echo "<br/><br/>\n";
 
 	echo "<b>$progname Values</b><br/>\n";

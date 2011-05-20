@@ -15,9 +15,6 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/appionloop.inc";
 
-// Cs should come straight out of the DB somehow, instead it is in config
-$defaultcs=DEFAULTCS;
-
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
 	runAce2();
@@ -39,7 +36,6 @@ else {
 
 // CREATE FORM PAGE
 function createAce2Form($extra=false) {
-	global $defaultcs;
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
@@ -84,7 +80,6 @@ function createAce2Form($extra=false) {
 		$lastrunnumber += 1;
   $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'acetwo'.($lastrunnumber+1);
   $binval = ($_POST['binval']) ? $_POST['binval'] : 2;
-  $cs = ($_POST['cs']) ? $_POST['cs'] : $defaultcs;
   $confcheck = ($_POST['confcheck']== 'on') ? 'CHECKED' : '';
   $reprocess = ($_POST['reprocess']) ? $_POST['reprocess'] : 0.8;
   $hpzero = ($_POST['hpzero']) ? $_POST['hpzero'] : '';
@@ -108,12 +103,6 @@ function createAce2Form($extra=false) {
 
 	echo "<input type='text' name='binval' value=$binval size='4'>\n";
 	echo docpop('ace2bin','Binning');
-	echo "<br/><br/>\n";
-
-	echo "<input type='text' name='cs' value='".$cs."' size='4'>\n";
-	echo docpop('cs','Spherical Aberration');
-	echo "&nbsp;(<a href='http://en.wikipedia.org/wiki/Spherical_aberration'>wiki\n";
-	echo "<img border='0' src='img/external.png'></a>)\n";
 	echo "<br/><br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)' $confcheck >\n";
@@ -189,7 +178,6 @@ function runAce2() {
 	//$refine2d=$_POST['refine2d'];
 	$binval=$_POST['binval'];
 
-	$cs=$_POST['cs'];
 	$hpzero=trim($_POST['hpzero']);
 	$hpone=trim($_POST['hpone']);
 	$edge1=trim($_POST['edge1']);
@@ -200,11 +188,11 @@ function runAce2() {
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
-	if (!is_numeric($cs)) {
-		createAce2Form("Invalid value for the Spherical Aberration");
+	$leginondata = new leginondata();
+	if ($leginondata->getCsValueFromSession($expId) === false) {
+		createAce2Form("Cs value of the images in this session is not unique or known, can't process");
 		exit;
-	}		
-	
+	}
 	// check the tilt situation
 	$particle = new particledata();
 	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
@@ -244,7 +232,6 @@ function runAce2() {
 		$command.="--rotblur=$rotblur ";
 
 	//if($refine2d) $command.="--refine2d ";
-	$command.="--cs=$cs ";
 	$command.="--bin=$binval ";
 	
 	/* *******************
