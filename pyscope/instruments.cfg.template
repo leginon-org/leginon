@@ -36,6 +36,9 @@
 ## TIA.  This will use TIA to communicate with your camera
 ##   - tia.TIA
 
+## If the Spherical Aberration Constant (Cs) is known, it should be added
+## in the TEM module in unit of meters.  If cs is not specified, it 
+## is assumed to be 2.0e-3 m
 
 ## To avoid confusion, it is best not to configure simulation instruments
 ## and real instruments at same time.  Replace the following with your real
@@ -43,6 +46,7 @@
 
 [Sim TEM]
 class: simtem.SimTEM
+cs: 2.0e-3
 
 [Sim Cam]
 class: simccdcamera.SimCCDCamera

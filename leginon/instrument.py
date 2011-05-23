@@ -92,10 +92,13 @@ class Proxy(object):
 				return None
 			else:
 				name = self.tem._name
+				cs = self.tem.Cs
 				#dbtype = self.tem.DatabaseType
 		else:
 			if name not in self.tems:
 				raise RuntimeError('no TEM \'%s\' available' % name)
+			else:
+				cs = None
 		instrumentdata = leginondata.InstrumentData()
 		instrumentdata['name'] = name
 		#instrumentdata['type'] = dbtype
@@ -108,7 +111,14 @@ class Proxy(object):
 		## save in DB if not already there
 		if results:
 			dbinstrumentdata = results[0]
+			if dbinstrumentdata['cs'] is None:
+				raise RuntimeError('You must run db schema update script on existing TEMs before using this version of Leginon')
+			elif cs is not None and dbinstrumentdata['cs'] != cs:
+				raise RuntimeError('TEM Cs in instruments.cfg does not match database value. Correct either one to use it in Leginon')
 		else:
+			if cs is None:
+				cs = 2.0e-3
+			instrumentdata['cs'] = cs
 			dbinstrumentdata = instrumentdata
 			dbinstrumentdata.insert()
 		return dbinstrumentdata

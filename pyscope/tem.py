@@ -5,6 +5,7 @@
 #
 
 import baseinstrument
+import config
 
 class TEM(baseinstrument.BaseInstrument):
 	name = None
@@ -79,3 +80,10 @@ class TEM(baseinstrument.BaseInstrument):
 		{'name': 'resetDefocus', 'type': 'method'},
 		{'name': 'runBufferCycle', 'type': 'method'},
 	)
+	def __init__(self):
+		baseinstrument.BaseInstrument.__init__(self)
+		self.config_name = config.getNameByClass(self.__class__)
+		self.cs = config.getConfigured()[self.config_name]['cs']
+
+	def getCs(self):
+		return self.cs

@@ -255,7 +255,7 @@ class Instruments(dict):
 	'''This instantiates all configured instruments'''
 	def __init__(self):
 		dict.__init__(self)
-		for name,cls in config.configured.items():
+		for name,cls in config.getConfigured().items():
 			self[name] = cls()
 
 	def getCapabilities(self):

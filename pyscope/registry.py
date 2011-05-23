@@ -13,10 +13,10 @@ tems = {}
 ccdcameraorder = []
 ccdcameras = {}
 
-for c in config.temclasses:
+for c in config.getTEMClasses():
 	temorder.append((c.name, c))
 	tems[c.name] = c
-for c in config.cameraclasses:
+for c in config.getCameraClasses():
 	ccdcameraorder.append((c.name, c))
 	ccdcameras[c.name] = c
 
