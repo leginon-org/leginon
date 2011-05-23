@@ -1128,7 +1128,6 @@ class PresetsManager(node.Node):
 					self.updatePreset(sim['name'], {'dose': simdose}, updatedose=False)
 
 	def getSimilarLook(self,camname,magdict):
-		imagelength = self.settings['smallsize']
 		if len(magdict) != 2:
 			self.logger.warning('Error calculating similar look camera binning')
 			return None, None
@@ -1144,6 +1143,8 @@ class PresetsManager(node.Node):
 		# This restrict the image to imagelength in x only
 		# and works only for camera dimension at power of 2 
 		fullcamdim = min(self.instrument.camerasizes[camname]['x'],self.instrument.camerasizes[camname]['y'])
+		# smallsize may actually be too big for this camera
+		imagelength = min(self.settings['smallsize'], fullcamdim)
 
 		#assume highmag imag is binning of full camera to imagelength
 		maxbin = fullcamdim / imagelength

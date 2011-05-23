@@ -300,7 +300,7 @@ class CameraPanel(wx.Panel):
 		mask = [good(dim) for dim in dimensions]
 		dimensions = filtergood(dimensions, mask)
 		def minsize(size):
-			return size >= 512
+			return size >= self.minsize / 8
 		dimensions = filter(minsize, dimensions)
 		binnings = filtergood(self.binnings['x'], mask)
 
