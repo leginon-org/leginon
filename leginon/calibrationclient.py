@@ -639,7 +639,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			state2 = leginondata.ScopeEMData()
 			state2['beam tilt'] = bt2
 			try:
-				shiftinfo = self.measureScopeChange(image0, state2, settle=settle, correlation_type=correlation_type)
+				shiftinfo = self.measureScopeChange(image0, state2, settle=settle, correct_tilt=correct_tilt, correlation_type=correlation_type)
 			except Abort:
 				break
 
