@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 import schemabase
 import leginon.leginondata
 import leginon.projectdata
@@ -33,7 +34,7 @@ class SchemaUpdate15653(schemabase.SchemaUpdate):
 		print "you should get help."
 		answer = raw_input('Are you ready?(Y/N):')
 		if not answer.lower().startswith('y'):
-			raise RuntimeError
+			sys.exit()
 		# create column if not exist
 		if not self.leginon_dbupgrade.columnExists('InstrumentData', 'cs'):
 				self.leginon_dbupgrade.addColumn('InstrumentData', 'cs',self.leginon_dbupgrade.float)
