@@ -354,7 +354,12 @@ class ImageLoader(appionLoop2.AppionLoop):
 			'image path': imagedirectory,
 		}
 		sessionq = leginon.leginondata.SessionData(initializer=initializer)
-		return self.publish(sessionq)
+		sessiondata = self.publish(sessionq)
+		# session become unreserved if is committed
+		reservationq = leginon.leginondata.SessionReservationData(name=sessiondata['name'],reserved=False)
+		self.publish(reservationq,True)
+		return sessiondata
+		
 
 	#=====================
 	def linkSessionProject(self, sessiondata, projectid):

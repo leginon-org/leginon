@@ -13,6 +13,7 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 #require "inc/viewer.inc";
 require "inc/processing.inc";
+require "inc/html_elements.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -31,6 +32,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$expId = $_GET['expId'];
 	$projectId = getProjectId();
 
+	$html_elements = new html_elements();
 	$formAction=$_SERVER['PHP_SELF'];
 	if ($expId) $formAction.="?expId=$expId&projectId=$projectId";
 	elseif ($projectId) $formAction.="?projectId=$projectId";
@@ -38,23 +40,19 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	$leginondata = new leginondata();
 
-	processing_header($title,$heading,$javafunctions);
 	if ($extra) {
-		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
+		$extrainput = "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
-
-	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 	if ($expId) {
+		$from_existing_session = true;
 		$sessiondata = getSessionList($projectId, $expId);
 		$sessioninfo = $sessiondata['info'];
 		if (!empty($sessioninfo)) {
 			$outdir=$sessioninfo['Image path'];
 			$outdir=ereg_replace("/rawdata","",$outdir);
 			$sessionname=$sessioninfo['Name'];
-			$description=$sessioninfo['description'];
-			$tem=$sessioninfo['InstrumentId'];
-			$cam=$sessioninfo['CameraId'];
-			echo "<input type='hidden' name='outdir' value='$outdir'>\n";
+			$description=$sessioninfo['Purpose'];
+			$outdirinput = "<input type='hidden' name='outdir' value='".$outdir."'>\n";
 		}
 	}
 	// if no session name is set, set a default
@@ -63,18 +61,14 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		for ($i=90; $i>=65; $i--) {
 			$letter = strtolower(chr($i));
 			$sessionname = $prefix.$letter;
-			$testinfo = $leginondata->getSessionInfo($sessionname);
-			//echo "<font size='+3'>$i:</font>\n";
-			//print_r($testinfo);
-			//echo "<br/><br/>\n";
-			if (empty($testinfo))
+			$has_session = $leginondata->checkSessionNameExistance($sessionname,false);
+			$session_is_reserved = $leginondata->checkSessionReservation($sessionname);
+			if (!$has_session && !$session_is_reserved)
 				break;
 		}
 	}
 
 	// Set any existing parameters in form
-	$temval = ($_POST['tem']) ? $_POST['tem'] : $tem;
-	$camval = ($_POST['cam']) ? $_POST['cam'] : $cam;
 	$utypeval = ($_POST['uploadtype']) ? $_POST['uploadtype'] : 'normal';
 	$sessionname = ($_POST['sessionname']) ? $_POST['sessionname'] : $sessionname;
 	$batch = ($_POST['batch']) ? $_POST['batch'] : $batch;
@@ -82,7 +76,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$imagegroup = ($_POST['imagegroup']) ? $_POST['imagegroup'] : 1;
 	$description = ($_POST['description']) ? $_POST['description']: $description;
 	$imgdir = ($_POST['imgdir']);
-	$apix = ($_POST['apix']) ? $_POST['apix'] : "";;
+	$apix = ($_POST['apix']) ? $_POST['apix'] : "";
 	$binx = ($_POST['binx']) ? $_POST['binx'] : "1";
 	$biny = ($_POST['biny']) ? $_POST['biny'] : "1";
 	$kv = ($_POST['kv']) ? $_POST['kv'] : "";
@@ -91,223 +85,224 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$dflist = ($_POST['dflist']) ? $_POST['dflist'] : "";
 	$tiltlist = ($_POST['tiltlist']) ? $_POST['tiltlist'] : "";
 	$invert_check = ($_POST['invert_check']=='on') ? 'checked' : '';
-	$cs = ($_POST['cs']) ? $_POST['cs'] : '2.0';
+	$default_cs = ($from_existing_session) ? $leginondata->getCsValueFromSession($expId):'2.0';
+	$cs = ($_POST['cs']) ? $_POST['cs'] : $default_cs;
 
-	// Start Tables
-	echo"<table class=tableborder>\n";
-	echo"<tr><td valign='top'>\n";
-	echo"<table border='0' cellpading='15' cellspacing='5'>\n";
-	echo"<tr><td valign='top'>\n";
-	echo "<br/>\n";
 
 	// Setup Project
 	$projectdata = new project();
 	if (!$expId && !$projectId) {
-		echo "<b>Project:</b><br/>\n";
-		echo "<select name='projectId'>";
+		$projectinput = "<b>Project:</b><br/>\n";
+		$projectinput .= "<select name='projectId'>";
 		$projects=$projectdata->getProjects();
 		foreach ($projects as $project) {
 			$sel=($project['id']==$projectId) ? "selected" : "";
-			echo "<option value='".$project['id']."' $sel >".$project['name']."</option>\n";
+			$projectinput .= "<option value='".$project['id']."' $sel >".$project['name']."</option>\n";
 		}
-		echo "</select>\n";
+		$pojectinput .= "</select>\n";
 	} else {
 		$projectinfo = $projectdata->getProjectInfo($projectId);
-		echo "<font size='+1'><b>Project:</b>\n";
-		echo $projectinfo['name']." <i>($projectId)</i></font>\n";
+		$projectinput .= "<font size='+1'><b>Project:</b>\n";
+		$projectinput .=  $projectinfo['name']." <i>($projectId)</i></font>\n";
 	}
 
-	echo "<br/><br/>\n";
 
 	// Choose Upload Type
 	$uploadtypes = array('normal'=>'None','tiltseries'=>'Tilt Series');
 	if (!$expId)
 		$uploadtypes['defocalseries'] = 'Defocal Series';
-	echo docpop('uploadtype', '<b>Images grouped by:</b>');
-	echo "<select name='uploadtype' onchange=submit()>";
+	$uploadtypeinput = docpop('uploadtype', '<b>Images grouped by:</b>');
+	$uploadtypeinput .= "<select name='uploadtype' onchange=submit()>";
 	foreach($uploadtypes as $utype=>$udisplay) {
 		$u = ($utypeval == $utype) ? 'selected' :'';
-		echo "<option value='".$utype."' $u >".$udisplay."</option>";
+		$uploadtypeinput .= "<option value='".$utype."' $u >".$udisplay."</option>";
 	}
-	echo " </select>";
-	echo "<br/><br/>\n";
+	$uploadtypeinput .= " </select>";
 
 	// Setup Session Name
-	echo docpop('uploadsession', '<b>Session Name:</b>');
-	echo "<br/>\n";
-	if ($utypeval != 'defocalseries' && !($utypeval == 'tiltseries' && $imgdir)) {
-		echo "<input type='text' name='sessionname' value='$sessionname' size='15'>\n";
+	$sessioninput = docpop('uploadsession', '<b>Session Name:</b>');
+	$sessioninput .= "<br/>\n";
+
+	if ($from_existing_session) {
+		$sessioninput .= $sessionname."<input type='hidden' name='sessionname' value='$sessionname'>\n";
 	} else {
-		echo "    Determined automatically";
+		if ($utypeval != 'defocalseries' && !($utypeval == 'tiltseries' && $imgdir)) {
+			$sessioninput .= "<input type='text' name='sessionname' value='$sessionname' size='15'>\n";
+		} else {
+		$sessioninput .= "    Determined automatically";
+		}
 	}
-	echo "<br/><br/>\n";
 
 	// Setup Session Description
-	echo "<b>Session Description:</b><br/>";
-	echo "<input type='text' name='description' size='46' value='$description'>";
-
-
-
-	// Root directory
-	/*	echo "<br/><br/>\n";
-
-	echo "<b>Root directory to store images:</b>";
-	echo "<br/>\n";
-	echo "<input type='text' name='rootdir' size='55' value='$description'>";
-	echo "<br/>\n";
-	echo "<font size='-1'><i>(Session name will be appended to the end)</i></font>";*/
-
-	echo "<br/><br/>\n";
-
-	echo"</td></tr>\n";
-	echo"<tr><td valign='top' class='tablebg'>\n";
-	echo "<br/>\n";
+	$descriptioninput = "<b>Session Description:</b><br/>";
+	if ($from_existing_session) {
+		$descriptioninput .= $description."<input type='hidden' name='description' value='$description'>\n";
+	} else {
+		$descriptioninput .= "<input type='text' name='description' size='46' value='$description'>";
+	}
 
 	if ($utypeval != 'normal') {
 		// Setup Images in Group
-		echo docpop('images_in_group', 'Number of images in each tilt series:');
-		echo "<br/>\n<input type='text' name='imagegroup' value='$imagegroup' size='5'>\n";
-		echo "<br/>\n";
+		$imagegroupinput = docpop('images_in_group', 'Number of images in each tilt series:');
+		$imagegroupinput .= "<br/>\n<input type='text' name='imagegroup' value='$imagegroup' size='5'>\n";
+		$imagegroupinput .= "<br/>\n";
 	}
 	// scope cs value
-	echo docpop('cs', 'Scope Cs value in mm:');
-	echo "<input type='text' name='cs' value='$cs' size='8' style='text-align:center'>\n";
-	echo "&nbsp;(<a href='http://en.wikipedia.org/wiki/Spherical_aberration'>wiki\n";
-	echo "<img border='0' src='img/external.png'></a>)\n";
-	echo "<br/><br/>\n";
-
+	$csinput = docpop('cs', 'Scope Cs value:');
+	if ($from_existing_session) {
+		$csinput .= $cs."<input type='hidden' name='cs' value='$cs'>\n";
+	} else {
+		$csinput .= "<input type='text' name='cs' value='$cs' size='8' style='text-align:center'>\n";
+	}
+	$csinput .= " mm";
+	$csinput .=  "&nbsp;(<a href='http://en.wikipedia.org/wiki/Spherical_aberration'>wiki\n";
+	$csinput .=  "<img border='0' src='img/external.png'></a>)\n";
 
 	// invert images on upload if needed
-	echo "<br/><input type='checkbox' name='invert_check' $invert_check>\n";
-	echo "Invert image density\n";
+	$invertinput = "<input type='checkbox' name='invert_check' $invert_check>\n";
+	$invertinput .= "Invert image density\n";
 
-		echo "<br/><br/>\n";
-	echo "</td></tr>\n";
-	echo "<tr><td>\n";
-
-	echo "<hr/>\n";
 	// Upload parameter options are determined by the upload type and whether a choice has been made previously
 	// Currently defocal series can only be uploaded by uploadImages.py which could not be used 
 	// for adding more images, for example
 	$paramtypes = array(($utypeval != 'defocalseries' && !$imgdir),(!$batch && !($utypeval == 'tiltseries' && $expId)));
 	if ($paramtypes[0] && $paramtypes[1]) {
-		echo "<font size='+1'><b>Use one of two following options for upload:</b></font>\n";
-		echo "<br/><br/>\n";
+		$optiontitle = "<font size='+1'><b>Use one of two following options for upload:</b></font>\n";
 	}
 	if ($paramtypes[0]) {
 		// Setup batchfile
-		echo "<font size='+1'>1. Specify a parameter file:</font><br/>\n";
-		echo "&nbsp;\n";
-		echo openRoundBorder();
-		echo docpop('batchfile', 'Information file for the images (with full path):');
-		echo "<br/>\n<input type='text' name='batch' value='$batch' size='45'>\n";
-		echo "<br/>\n<input type='checkbox' NAME='batchcheck' $batch_check>\n";
-		echo docpop('batchcheck','<B>Confirm existence and format of the information file</B>');
+		$fileinput = "<font size='+1'>1. Specify a parameter file:</font><br/>\n";
+		$fileinput .= "&nbsp;\n";
+		$fileinput .= openRoundBorder();
+		$fileinput .= docpop('batchfile', 'Information file for the images (with full path):');
+		$fileinput .= "<br/>\n<input type='text' name='batch' value='$batch' size='45'>\n";
+		$fileinput .= "<br/>\n<input type='checkbox' NAME='batchcheck' $batch_check>\n";
+		$fileinput .= docpop('batchcheck','<B>Confirm existence and format of the information file</B>');
 
-		echo "<br/><br/>\n";
-		echo closeRoundBorder();
-		echo "<br/>\n";
+		$fileinput .= "<br/><br/>\n";
+		$fileinput .=  closeRoundBorder();
 	}
 	// Title choices
 	if ($paramtypes[0] && $paramtypes[1]) {
-			echo "<font size='+1'>2. Enter parameters manually:</font><br/>\n";
+		$paramtitle = "<font size='+1'>2. Enter parameters manually:</font><br/>\n";
 	} elseif ($paramtypes[1]) {
-		echo "<font size='+1'>Upload all images in the directory using these parameters:</font><br/>\n";
+		$paramtitle = "<font size='+1'>Upload all images in the directory using these parameters:</font><br/>\n";
 	}
 	if ($paramtypes[1]) {
 		// Enter parameters manually
-		echo "&nbsp;\n";
-		echo openRoundBorder();
-		echo "<table border='0'>\n";
+		$open_keyinput = "&nbsp;\n";
+		$open_keyinput .= openRoundBorder();
+		$open_keyinput .= "<table border='0'>\n";
 
-		echo "<tr><td colspan='2'>\n";
-		echo docpop('imgpath','Directory containing images');
-		echo "<br/>\n";
-		echo "<input type='text' name='imgdir' value='$imgdir' size='45'>\n";
-		echo "</td></tr>\n";
+		$keyinput_dir = "<tr><td colspan='2'>\n";
+		$keyinput_dir .= docpop('imgpath','Directory containing images');
+		$keyinput_dir .= "<br/>\n";
+		$keyinput_dir .= "<input type='text' name='imgdir' value='$imgdir' size='45'>\n";
+		$keyinput_dir .= "</td></tr>\n";
 
-		echo "<tr><td>\n";
-		echo docpop('fileformat', 'file format:');
-		echo "</td><td align='right'>\n";
-		echo " <select name='fileformat'>\n";
+		$keyinput_format = "<tr><td>\n";
+		$keyinput_format .=  docpop('fileformat', 'file format:');
+		$keyinput_format .= "</td><td align='right'>\n";
+		$keyinput_format .= " <select name='fileformat'>\n";
 		if ($utypeval == 'normal')
 			$filetypes = array("mrc","tif","dm3","dm2");
 		else
 			$filetypes = array("mrc");
 		foreach ($filetypes as $ftype) {
 			$s = ($ftype==$_POST[fileformat]) ? ' selected' : '';
-			echo "<option".$s.">$ftype</option>";
+			$keyinput_format .= "<option".$s.">$ftype</option>";
 		}
-		echo "</select>\n";
-		echo "</td></tr>\n";
+		$keyinput_format .= "</select>\n";
+		$keyinput_format .= "</td></tr>\n";
 
-		echo "<tr><td>\n";
-		echo docpop('apix','pixel size (A):');
-		echo "</td><td align='right'>\n";
-		echo "<input type='text' name='apix' value='$apix' size='5' style='text-align:center'>\n";
-		echo "</td></tr>\n";
-
-		echo "<tr><td>\n";
-		echo docpop('imgbin','binning in x:');
-		echo "</td><td align='right'>\n";
-		echo "<input type='text' name='binx' value='$binx' size='2' style='text-align:center'>\n";
-		echo "</td></tr>\n";
-
-		echo "<tr><td>\n";
-		echo docpop('imgbin','binning in y:');
-		echo "</td><td align='right'>\n";
-		echo "<input type='text' name='biny' value='$biny' size='2' style='text-align:center'>\n";
-		echo "</td></tr>\n";
-
-		echo "<tr><td>\n";
-		echo docpop('magnification', 'magnification:');
-		echo "</td><td align='right'>\n";
-		echo "<input type='text' name='mag' value='$mag' size='6' style='text-align:center'>\n";
-		echo "</td></tr>\n";
-
-		echo "<tr><td>\n";
-		echo docpop('kev','high tension (kV):');
-		echo "</td><td align='right'>\n";
-		echo "<input type='text' name='kv' value='$kv' size='3' style='text-align:center'>\n";
-		echo "</td></tr>\n";
-
+		$keyinput_apix = $html_elements->justifiedInputTableRow
+				('apix','pixel size (A):','apix',$apix,5);
+		$keyinput_binx = $html_elements->justifiedInputTableRow
+				('imgbin','binning in x:','binx',$binx,2);
+		$keyinput_biny = $html_elements->justifiedInputTableRow
+				('imgbin','binning in y:','biny',$biny,2);
+		$keyinput_mag = $html_elements->justifiedInputTableRow
+				('magnification','magnification:','mag',$mag,6);
+		$keyinput_ht = $html_elements->justifiedInputTableRow
+				('kev','high tension (kV):','kv',$kv,3);
 		if ($utypeval == 'defocalseries') {
-			echo "<tr><td>\n";
-			echo docpop('defociilist', 'defocii list (microns):');
-			echo "</td><td align='right'>\n";
-			echo "<input type='text' name='dflist' value='$dflist' size='30' style='text-align:center'>\n";
-			echo "</td></tr>\n";
+			$keyinput_def = $html_elements->justifiedInputTableRow
+					('defociilist','defocii list (microns):','dflist',$dflist,30);
 		} else {
-			echo "<tr><td>\n";
-			echo docpop('defocus', 'defocus (microns):');
-			echo "</td><td align='right'>\n";
-			echo "<input type='text' name='df' value='$df' size='4' style='text-align:center'>\n";
-			echo "</td></tr>\n";
+			$keyinput_def = $html_elements->justifiedInputTableRow
+					('defocus','defocus (microns):','df',$df,4);
 		}
-
 		if ($utypeval == 'tiltseries') {
-			echo "<tr><td>\n";
-			echo docpop('tiltlist', 'tilt angle list (degrees):');
-			echo "</td><td align='right'>\n";
-			echo "<input type='text' name='tiltlist' value='$tiltlist' size='30' style='text-align:center'>\n";
-			echo "</td></tr>\n";
+			$keyinput_tilt = $html_elements->justifiedInputTableRow
+					('tiltlist','tilt angle list (degrees):','tiltlist',$tiltlist,30);
 		}
 
-		echo "</table>\n";
-		echo closeRoundBorder();
+		$close_keyinput = "</table>\n";
+		$close_keyinput .= closeRoundBorder();
 	}
-	echo"<tr><td align='center'>\n";
+
+	// Presentation to the web page
+	processing_header($title,$heading,$javafunctions);
+	echo $extrainput;
+	echo "<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+	echo $outdirinput;
+	// Start Tables
+	echo "<table class=tableborder>\n";
+	echo "	<tr><td valign='top'>\n";
+	echo "		<table border='0' cellpading='15' cellspacing='5'>\n";
+	echo "			<tr><td valign='top'>\n";
+	echo "				<br/>\n";
+	echo $projectinput;
+	echo "				<br/><br/>\n";
+	echo $uploadtypeinput;
+	echo "				<br/><br/>\n";
+	echo $sessioninput;
+	echo "				<br/><br/>\n";
+	echo $descriptioninput;
+	echo "				<br/><br/>\n";
+	echo $imagegroupinput;
+	echo "			</td></tr>\n";
+	echo "			<tr><td valign='top' class='tablebg'>\n";
+	echo "				<br/>\n";
+	echo $csinput;
+	echo "				<br/><br/>\n";
+	echo "				<br/>";
+	echo $invertinput;
+	echo "				<br/><br/>\n";
+	echo "			</td></tr>\n";
+	echo "			<tr><td>\n";
+	echo "				<hr/>\n";
+	echo $optiontitle;
+	echo "				<br/><br/>\n";
+	echo $fileinput;
+	echo "				<br/>\n";
+	echo $paramtitle;
+	if ($paramtypes[1]) {
+		echo $open_keyinput;
+		echo $keyinput_dir;
+		echo $keyinput_format;
+		echo $keyinput_apix;
+		echo $keyinput_binx;
+		echo $keyinput_biny;
+		echo $keyinput_mag;
+		echo $keyinput_ht;
+		echo $keyinput_def;
+		echo $keyinput_tilt;
+		echo $close_keyinput;
+	}
+	echo "			</tr></td>\n";
 
 	// Launcher
-	echo "<hr/><br/>\n";
+	echo "			<tr><td align='center'>\n";
+	echo "				<hr/><br/>\n";
 	echo getSubmitForm("Upload Image");
 
 	// End table
-	echo"</td></tr>\n";
-	echo"</table>\n";
-	echo"</td></tr>\n";
-	echo"</table>\n";
-	echo"</form>\n";
+	echo "			</td></tr>\n";
+	echo "		</table>\n";
+	echo "	</td></tr>\n";
+	echo "</table>\n";
+	echo "</form>\n";
 
 	echo appionRef();
 	processing_footer();
@@ -323,8 +318,6 @@ function runUploadImage() {
 	$invert_check = trim($_POST['invert_check']);
 	$cs = $_POST['cs']+0;
 	$imagegroup = $_POST['imagegroup']+0;
-	$tem = $_POST['tem'];
-	$cam = $_POST['cam'];
 	$uploadtype = $_POST['uploadtype'];
 	$tiltlist = $_POST['tiltlist'];
 	$outdir = $_POST['outdir'];
@@ -341,25 +334,34 @@ function runUploadImage() {
 	$leginon = new leginondata();
 
 	if ($uploadscript == 'imageloader') {
+		//imageloader allows user to enter session name.  Therefore it is
+		//necessary to check to see it is valid.
 		//make sure a session name was entered if upload an independent file
 		if (!$sessionname) createUploadImageForm("<B>ERROR:</B> Enter a session name of the image");
-		$has_session = $leginon->getSessions('',false,$sessionname);
-		$session_in_project = $leginon->getSessions('',$projectId,$sessionname);
+		$has_session = $leginon->checkSessionNameExistance($sessionname,false);
+		$session_in_project = $leginon->checkSessionNameExistance($sessionname,$projectId);
+		$session_is_reserved = $leginon->checkSessionReservation($sessionname);
 
 		if ($has_session) {
-			if (!$leginon->onlyUploadedImagesInSession($has_session[0]['id'])) {
+			if (!$leginon->onlyUploadedImagesInSession($has_session[0]['DEF_id'])) {
 				createUploadImageForm($errormsg."Session contains images not from  'appion' Host is not available for uploading more images");
 			}
 			if ($uploadtype == 'defocalseries')
 				createUploadImageForm("<B>ERROR:</B> Defocal series can not be uploaded to an existing session");
+
+			if ($has_session && !$session_in_project)
+				createUploadImageForm("<B>ERROR:</B> You have entered an existing session not belonging to this project");
+		} else {
+			// reserved sessionname do not yet have session entry in SessionData
+			if ($session_is_reserved)
+				createUploadImageForm("<B>ERROR:</B>  You have entered a session already reserved by others");
 		}
-		if ($has_session && !$session_in_project)
-			createUploadImageForm("<B>ERROR:</B> You have entered an existing session not belonging to this project");
 
 		if ($session_in_project)
 			$warning = ("<B>Warning:</B>  Will append to an existing session with the original description");
 		// add session to the command
 		$command.="--session=$sessionname ";
+		$leginon->makeSessionReservation($sessionname);
 	}
 
 	//make sure a description was provided
@@ -369,10 +371,17 @@ function runUploadImage() {
 
 	// for inverting density
 	if ($invert_check=='on') $command.="--invert ";
-	if (!$cs)
+	if (!$cs) {
 			createUploadImageForm($errormsg."Specify the Cs value");
-	else $command.="--cs=$cs ";
-
+	} else {
+		if ($has_session) {
+			$session_cs = $leginon->getCsValueFromSession($has_session[0]['DEF_id']);
+			if ($session_cs != $cs) {
+				createUploadImageForm("<B>ERROR:</B> Existing session Cs can not be changed");
+			}
+		}
+		$command.="--cs=$cs ";
+	}
 	//determine if a information batch file was provided
 	if (!$batch) {
 		$errormsg = "<b>ERROR:</b> ";
