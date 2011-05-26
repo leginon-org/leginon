@@ -270,22 +270,19 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			selfilew = open(selfile, 'w')	
 			i = 0
 			for partdata in boxedpartdatas:
-				if partdata['angle'] is not None:
-					angle = partdata['angle']
-					imgpath = partlist[i].split()[0]
-					rotimgpath = imgpath.replace('.mrc', 'r.mrc')
-					outimgpath = imgpath.replace('.mrc', 'o.mrc')
-					emancmd="proc2d %s %s rot=%d"%(imgpath,rotimgpath,angle)
-					apEMAN.executeEmanCmd(emancmd, showcmd=True)
-					blankpartdatas, emanboxfile = self.writeParticlesToBoxFile(partdatas, shiftdata, imgdata, 2)
-					emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(rotimgpath, emanboxfile, outimgpath, self.params['boxsize'])
-					t0 = time.time()
-					apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
-					self.batchboxertimes.append(time.time()-t0)
-					print>>selfilew, outimgpath, 1
-					i += 1
-				else:
-					apDisplay.printError("Rotation angle not found. Use helical insert in Manual Picker to find filament angles then try again.")
+				angle = 90 - partdata['angle']
+				imgpath = partlist[i].split()[0]
+				rotimgpath = imgpath.replace('.mrc', 'r.mrc')
+				outimgpath = imgpath.replace('.mrc', 'o.mrc')
+				emancmd="proc2d %s %s rot=%d"%(imgpath,rotimgpath,angle)
+				apEMAN.executeEmanCmd(emancmd, showcmd=True)
+				blankpartdatas, emanboxfile = self.writeParticlesToBoxFile(partdatas, shiftdata, imgdata, 2)
+				emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(rotimgpath, emanboxfile, outimgpath, self.params['boxsize'])
+				t0 = time.time()
+				apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
+				self.batchboxertimes.append(time.time()-t0)
+				print>>selfilew, outimgpath, 1
+				i += 1
 			selfilew.close()
 			apXmipp.gatherSingleFilesIntoStack(selfile, imgstackfile, filetype="mrc")
 		else:
@@ -383,21 +380,28 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			
 		boxedpartdatas = []
 		eliminated = 0
+		user = 0
+		noangle = 0
 
 		if roundno == 1:
 			emanboxfile = os.path.join(self.params['rundir'], imgdata['filename']+"1.box")
 			boxfile=open(emanboxfile, 'w')
 			for i in range(len(partdatas)):
 				partdata = partdatas[i]
-				xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - fullbox ))
-				ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - fullbox ))
+				if partdata['label'] != "user" and partdata['angle'] is not None:
+					xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - fullbox ))
+					ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - fullbox ))
 
-				if ( (xcoord > 0 and xcoord+fullbox <= imgdims['x'])
-				and  (ycoord > 0 and ycoord+fullbox <= imgdims['y']) ):
-					boxfile.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,doublebox,doublebox))
-					boxedpartdatas.append(partdata)
-				else:
-					eliminated += 1
+					if ( (xcoord > 0 and xcoord+fullbox <= imgdims['x'])
+					and  (ycoord > 0 and ycoord+fullbox <= imgdims['y']) ):
+						boxfile.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,doublebox,doublebox))
+						boxedpartdatas.append(partdata)
+					else:
+						eliminated += 1
+				elif partdata['label'] == "user":
+					user += 1
+				elif partdata['angle'] is None:
+					noangle +=1
 		elif roundno == 2:
 			emanboxfile = os.path.join(self.params['rundir'], imgdata['filename']+"2.box")
 			boxfile=open(emanboxfile, 'w')
@@ -422,6 +426,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		if eliminated > 0:
 			apDisplay.printMsg(str(eliminated)+" particle(s) eliminated because they were out of bounds")
+		if user > 0:
+			apDisplay.printMsg(str(user)+" particle(s) eliminated because they were 'user' labeled targets")
+		if noangle > 0:
+			apDisplay.printMsg(str(noangle)+" particle(s) eliminated because they had no rotation angle")
 		boxfile.close()
 		return boxedpartdatas, emanboxfile
 
@@ -1087,6 +1095,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			self.params['ctfmethod'] = 'ace2'
 		if self.params['xmipp-norm'] is not None:
 			self.xmippexe = apParam.getExecPath("xmipp_normalize", die=True)
+		if self.params['particlelabel'] == 'user' and self.params['rotate'] is True:
+			apDisplay.printError("User selected targets do not have rotation angles")
+		if self.params['particlelabel'] == 'helical' and self.params['rotate'] is False:
+			apDisplay.printWarning("Rotate parameter is not set, helical filaments will not be aligned")
 			
 
 	#=====================

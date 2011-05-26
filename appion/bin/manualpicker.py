@@ -287,22 +287,21 @@ class PickerApp(wx.App):
 		copied from EMAN1 boxer
 		"""
 		### determine which particle label to operate on
-		targetlabel = None
-		for label in self.labels:
-			if self.panel.selectiontool.isTargeting(label):
-				targetlabel = label
-				break
-		if targetlabel is None:
-			apDisplay.printWarning("no particle type selected")
-			return
-		### get last two targets
-		targets = self.panel.getTargets(targetlabel)
-		if len(targets) == 2:
+		userlabel = 'user'
+		helicallabel = 'helical'
+		### get last two user targets
+		usertargets = self.panel.getTargets(userlabel)
+		helicaltargets = self.panel.getTargets(helicallabel)
+		if len(usertargets) == 2:
 			self.angles = {}
-		if len(targets) < 2:
+		if len(usertargets) < 2:
 			apDisplay.printWarning("not enough targets")
 			return
-		array = self.targetsToArray(targets)
+		if len(usertargets) > 2 and not helicaltargets:
+			apDisplay.printWarning("too many targets")
+			return
+		userarray = self.targetsToArray(usertargets)
+		helicalarray = self.targetsToArray(helicaltargets)
 		### get pixelsize
 		apix = self.appionloop.params['apix']
 		if not apix or apix == 0.0:
@@ -318,9 +317,10 @@ class PickerApp(wx.App):
 			apDisplay.printWarning("unknown helical step size")
 			return
 
-		first = array[-2]
-		last = array[-1]
-		angle = math.degrees(math.atan2((last[0]*1.0 - first[0]),(last[1] - first[1])))
+		first = userarray[-2]
+		last = userarray[-1]
+		### Do tan(y,x) to be consistend with ruler tool, convert to x,y in makestack
+		angle = math.degrees(math.atan2((last[1]*1.0 - first[1]),(last[0] - first[0])))
 		stats = {'angle': angle}	
 		pixeldistance = math.hypot(first[0] - last[0], first[1] - last[1])
 		if pixeldistance == 0:
@@ -332,28 +332,22 @@ class PickerApp(wx.App):
 		# x = (1 - t)*x1 + t*x2,
 		# y = (1 - t)*y1 + t*y2,
 		# t { [0,1] ; t is a real number btw 0 and 1
-		points = list(array)
-		# remove the original points to reduce duplicates
-		points.pop(-2)
-		points.pop(-1)
+		helicalpoints = list(helicalarray)
 		t = 0.0
 		while t < 1.0:
 			x = int(round( (1.0 - t)*first[0] + t*last[0], 0))
 			y = int(round( (1.0 - t)*first[1] + t*last[1], 0))
-			points.append((x,y))	
+			helicalpoints.append((x,y))
 			self.angles[x,y] = angle
 			t += stepsize
-		# the last point may be missing due to rounding
-		#if (points[-1][0] != last[0] or points[-1][1] != last[1]):
-		#	points.append(last)
-		anglepoints = []
-		for point in points:
+		newhelicalpoints = []
+		for point in helicalpoints:
 			x = point[0]
 			y = point[1]
 			stats = {'angle': self.angles[x,y]}
-			anglepoints.append({'x': x, 'y': y, 'stats': stats})
+			newhelicalpoints.append({'x': x, 'y': y, 'stats': stats})	
 
-		self.panel.setTargets(targetlabel, anglepoints)
+		self.panel.setTargets(helicallabel, newhelicalpoints)
 		
 		
 		
@@ -391,6 +385,9 @@ class ManualPicker(particleLoop2.ParticleLoop):
 			self.labels = self.params['labels']
 		else:
 			self.labels = []
+
+		if self.params['helicalstep']:
+			self.labels = ['user', 'helical']
 
 		## If no labels specified or previous picks to get labels from,
 		##   then use default label 'particle'.
@@ -608,22 +605,22 @@ class ManualPicker(particleLoop2.ParticleLoop):
 				else:
 					peaktree.append(self.XY2particle(target.x, target.y, None, label))
 
-		# if any peak has an angle, then remove all peaks that
-		# do not have an angle
-		if peaktree:
-			def hasangle(x):
-				try:
-					return 'angle' in x
-				except:
-					return False
-			haveangles = map(hasangle, peaktree)
-			anyangles = reduce(operator.or_, haveangles)
-			if anyangles:	
-				before = len(peaktree)	
-				peaktree = filter(hasangle, peaktree)
-				after = len(peaktree)
-				diff = before - after
-				apDisplay.printWarning("Removed %d particles with no angle"%(diff))
+		# if any peak has an angle, then remove all peaks that do not have an angle
+		#if peaktree:
+		#	def hasangle(x):
+		#		try:
+		#			return 'angle' in x
+		#		except:
+		#			return False
+		#	haveangles = map(hasangle, peaktree)
+		#	anyangles = reduce(operator.or_, haveangles)
+		#	if anyangles:	
+		#		before = len(peaktree)	
+		#		peaktree = filter(hasangle, peaktree)
+		#		after = len(peaktree)
+		#		diff = before - after
+		#		apDisplay.printWarning("Removed %d particles with no angle"%(diff))
+
 		return peaktree
 
 	def XY2particle(self, binx, biny, angle, label=None):
