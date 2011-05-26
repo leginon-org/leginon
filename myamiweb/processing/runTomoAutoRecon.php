@@ -64,7 +64,7 @@ function createAppionScriptForm($extra=false, $title=FORM_TITLE, $heading=FORM_H
 	$wait = ($_POST['wait']=="on") ? "CHECKED" : "";
 	$protomocheck = ($_POST['alignmethod'] == 'protomo' || !($_POST['alignmethod'])) ? "CHECKED" : "";
 	$imodcheck = ($_POST['alignmethod'] == 'imod-shift') ? "CHECKED" : "";
-	$sample = ($_POST['sample']) ? $_POST['sample'] : (($imodcheck)? 1:4);
+	$sample = ($_POST['sample']) ? $_POST['sample'] : 4;
 	$region = ($_POST['region']) ? $_POST['region'] : 50;
 	$extrabin = ($_POST['extrabin']) ? $_POST['extrabin'] : '1';
 	$thickness = ($_POST['thickness']) ? $_POST['thickness'] : '200';
@@ -96,7 +96,7 @@ function createAppionScriptForm($extra=false, $title=FORM_TITLE, $heading=FORM_H
 	echo "Protomo refinement\n";
 	echo "&nbsp;<input type='radio' onClick=submit() name='alignmethod' value='imod-shift' $imodcheck>\n";
 	echo "Imod shift-only alignment\n";
- if ($protomocheck) {
+	if ($protomocheck) {
 		echo "<p>
       <input type='text' name='sample' size='5' value='$sample'>\n";
 		echo docpop('protomosample','Alignment Sampling');
@@ -158,8 +158,13 @@ function runAppionScript() {
 	$runname=$_POST['runname'];
 	$wait=$_POST['wait'];
 	$alignmethod = $_POST['alignmethod'];
-	$alignsample=$_POST['sample'];
-	$alignregion=$_POST['region'];
+	if ($alignmethod == 'protomo') {
+		$alignsample=$_POST['sample'];
+		$alignregion=$_POST['region'];
+	} else {
+		$alignsample = 1;
+		$alignregion = 100;
+	}
 	$reconbin=$_POST['extrabin'];
 	$thickness=$_POST['thickness'];
 
@@ -183,10 +188,8 @@ function runAppionScript() {
 	$command.="--runname=$runname ";
 	$command.="--rundir=".$outdir.'/'.$runname." ";
 	$command.="--alignmethod=$alignmethod ";
-	if ($alignmethod != 'imod-shift') {
-		$command.="--alignsample=$alignsample ";
-		$command.="--alignregion=$alignregion ";
-	}
+	$command.="--alignsample=$alignsample ";
+	$command.="--alignregion=$alignregion ";
 	$command.="--reconbin=$reconbin ";
 	$command.="--reconthickness=$thickness ";
 	$command.="--description=\"$description\" ";
