@@ -64,7 +64,7 @@ function createAppionScriptForm($extra=false, $title=FORM_TITLE, $heading=FORM_H
 	$wait = ($_POST['wait']=="on") ? "CHECKED" : "";
 	$protomocheck = ($_POST['alignmethod'] == 'protomo' || !($_POST['alignmethod'])) ? "CHECKED" : "";
 	$imodcheck = ($_POST['alignmethod'] == 'imod-shift') ? "CHECKED" : "";
-	$sample = ($_POST['sample']) ? $_POST['sample'] : 4;
+	$sample = ($_POST['sample']) ? $_POST['sample'] : (($imodcheck)? 1:4);
 	$region = ($_POST['region']) ? $_POST['region'] : 50;
 	$extrabin = ($_POST['extrabin']) ? $_POST['extrabin'] : '1';
 	$thickness = ($_POST['thickness']) ? $_POST['thickness'] : '200';
