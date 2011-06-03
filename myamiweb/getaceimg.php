@@ -81,10 +81,10 @@ if ($img=@$imagecreate($filename)) {
 	$acedatafile =$ctfdata['path'].'/'.$normfile;
 	if (file_exists($acedatafile)) {
 		$acedata=readAceNormFile($acedatafile);
-		//ace2 image is always 1024 in size so the radial data go out to 512
-		$datasize = 512;
 		$imagepixelsize = $imageinfo['pixelsize']*$imageinfo['binning'];
 		$imagesize = min($imageinfo['dimx'],$imageinfo['dimy']);
+		//ace2 datasize is not a constant, so count from acedata
+		$datasize = count($acedata['d1']);
 		$acebin = ($aceparams['bin']) ? $aceparams['bin']:1;
 		$inverse_pixelsize = 1e-10 / (2*$acebin*$datasize*$imagepixelsize);
 
