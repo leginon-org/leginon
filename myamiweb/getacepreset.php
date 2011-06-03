@@ -38,10 +38,7 @@ require "inc/project.inc";
 <?php
 
 $ctf = new particledata();
-if ($ctftype=='ctffind')
-	list($ctfdata) = $ctf->getCtfInfoFromImageId($imgId,$order=False,$ctffind=True);
-else
-	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
+list($ctfdata) = $ctf->getCtfInfoFromImageId($imgId,$order=False,$ctftype);
 
 $keys[]='runname';
 $keys[]='defocus';
