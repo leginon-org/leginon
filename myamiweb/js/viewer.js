@@ -664,14 +664,15 @@ function setDownloadlink(view) {
 }
 
 function setAceParam(view) {
+	if (method = document.getElementById(view+"acemethod")) {
+		acem = method.options[method.selectedIndex].value
+		eval("jsacemethod"+view+"="+acem)
+		newfile(view)
+	}
 	if (param = document.getElementById(view+"aceparam")) {
 		vf = param.options[param.selectedIndex].value
 		eval("jsaceparam"+view+"="+vf)
 
-		if (method = document.getElementById(view+"acemethod")) {
-			acem = method.options[method.selectedIndex].value
-			eval("jsacemethod"+view+"="+acem)
-		}
 		scx = document.getElementById(view+"xscale").value
 		scy = document.getElementById(view+"yscale").value
 		if (!scx) scx = 1
