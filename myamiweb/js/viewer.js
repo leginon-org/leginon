@@ -571,6 +571,7 @@ function newfile(view){
 	jscommentscriptcur = "getcomment.php"
 	pselp = (cpselpar = eval("jsptclpick"+view)) ? "&psel="+cpselpar : ""
 	ag = (cacepar = eval("jsaceparam"+view)) ? "&g="+cacepar : ""
+	am = (cacemethod = eval("jsacemethod"+view)) ? "&m="+cacemethod : ""
 	ao = (caceopt = eval("jsaceopt"+view)) ? "&opt="+caceopt : ""
 	sb = (eval(view+"scale_bt_st")) ? "&sb=1" : ""
 	tg = (eval(view+"target_bt_st")) ? "&tg=1" : ""
@@ -602,7 +603,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+ag+ao+gradient+scx+scy
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+fftbin+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+pcb+dlbl+am+ag+ao+gradient+scx+scy
 
 	if (options == lastoptions[vid])
 		return
@@ -634,8 +635,12 @@ function newfile(view){
 
 	if (cif=eval("this."+view+"if")) {
 		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset+pselp+nptcl
-		// --- for ctffind presets instead of ace2
-		if (eval("jsaceparam"+view)==3)
+		// --- for specific estimation method presets
+		if (eval("jsacemethod"+view)==2)
+			iflink = iflink+"&ctf=ace1"
+		if (eval("jsacemethod"+view)==3)
+			iflink = iflink+"&ctf=ace2"
+		if (eval("jsacemethod"+view)==4)
 			iflink = iflink+"&ctf=ctffind"
 		cif.document.location.replace(iflink)
 	}
@@ -663,6 +668,10 @@ function setAceParam(view) {
 		vf = param.options[param.selectedIndex].value
 		eval("jsaceparam"+view+"="+vf)
 
+		if (method = document.getElementById(view+"acemethod")) {
+			acem = method.options[method.selectedIndex].value
+			eval("jsacemethod"+view+"="+acem)
+		}
 		scx = document.getElementById(view+"xscale").value
 		scy = document.getElementById(view+"yscale").value
 		if (!scx) scx = 1

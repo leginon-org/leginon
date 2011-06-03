@@ -16,10 +16,15 @@ if (!is_numeric($graphsc_y)) $graphsc_y=1;
 switch($_GET['g']){
 	case 1: $graph="graph1"; break;
 	case 2: $graph="graph2"; break;
-	// show ctffind image
-	case 3:
+}
+
+switch($_GET['m']){
+	case 1: $ctfmethod=""; break;
+	case 2: $ctfmethod="ace1"; break;
+	case 3: $ctfmethod="ace2"; break;
+	case 4:
+		$ctfmethod="ctffind"; 
 		$graph="graph1";
-		$ctffindvals=True;
 		break;
 }
 
@@ -51,12 +56,12 @@ $sessionId = $imageinfo['sessionId'];
 $filename = $leginondata->getFilenameFromId($imgId);
 $normfile = trim($filename).'.norm.txt';
 $ctf = new particledata();
-if ($ctffindvals) {
-	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId, $order=False, $ctffind=True);
+if ($ctfmethod==='ctffind') {
+	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId, $order=False, $method='ctffind');
 	$path=$ctfdata['path'].'/';
 }
 else {
-	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
+	list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId, $order=False, $ctfmethod);
 	$path=$ctfdata['path'].'/opimages/';
 	$aceparams = $ctf->getAceParams($ctfdata['acerunId']);
 }
@@ -133,7 +138,6 @@ if ($img=@$imagecreate($filename)) {
 		$graph->Stroke();
 
 	} else {
-
 		header('Content-type: '.$imagemime);
 		$blkimg = blankimage();
 		imagepng($blkimg);

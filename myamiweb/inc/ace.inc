@@ -22,13 +22,25 @@ function readACENormFile($filename) {
 
 function getAceViewerForm($name) {
 	global $ACE;
-	$aceform='CTF params';
+	$aceform='Best CTF estimation of ';
 	$aceform.='<ul style="margin:0; list-style-type:none">';
-	$aceform.='<select id="'.$name.'aceparam">';
-	$aceform.="<option value='1'>graph1</option>";
-	$aceform.="<option value='2'>graph2</option>";
-	$aceform.="<option value='3'>CtfFind</option>";
+	$aceform.='<select id="'.$name.'acemethod">';
+	$aceform.="<option value='1'>all</option>";
+	$aceform.="<option value='2'>ace1 only</option>";
+	$aceform.="<option value='3'>ace2 only</option>";
+	$aceform.="<option value='4'>ctffind only</option>";
 	$aceform.='</select>';
+	$aceform.=' method(s)';
+	$aceform.='</ul>';
+	$aceform.='<br/>';
+	$aceform.='Show ';
+	$aceform.='<select id="'.$name.'aceparam">';
+	$aceform.="<option value='1'>2D fft fit</option>";
+	$aceform.="<option value='2'>1D graph</option>";
+	$aceform.='</select>';
+	$aceform.='<hr>';
+	$aceform.='For ACE2 1D graph only ';
+	$aceform.='<ul style="margin:0; list-style-type:none">';
 	$aceform.='<li>';
 	$aceform.='<input type="checkbox" id="'.$name.'aceparam2">';
 	$aceform.=$ACE['d1'];
@@ -45,7 +57,6 @@ function getAceViewerForm($name) {
 	$aceform.='<input type="checkbox" id="'.$name.'aceparam5">';
 	$aceform.=$ACE['d4'];
 	$aceform.='</li>';
-	$aceform.='<br/>';
 	$aceform.='Graph Axis Scaling (0-1):<br>';
 	$aceform.='x:<input type="text" id="'.$name.'xscale" size=3> ';
 	$aceform.='y:<input type="text" id="'.$name.'yscale" size=3> ';

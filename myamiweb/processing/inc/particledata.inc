@@ -1006,7 +1006,7 @@ class particledata {
 		
 	}
 
-	function getCtfInfoFromImageId($imageId, $order=false, $ctffind=False) {
+	function getCtfInfoFromImageId($imageId, $order=false, $method='') {
 		$q =	"select "
 			."c.`DEF_id`, "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -1034,8 +1034,12 @@ class particledata {
 			."left join ".DB_LEGINON.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
 		$q .= " AND c.`graph1` IS NOT NULL ";
-		if ($ctffind) $q .= "AND r.`REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
-		if ($ctffind) $q .="ORDER BY (c.`cross_correlation`) DESC";
+
+		if ($method === 'ace1') $q .= "AND r.`REF|ApAceParamsData|aceparams` IS NOT NULL ";
+		elseif ($method === 'ace2') $q .= "AND r.`REF|ApAce2ParamsData|ace2_params` IS NOT NULL ";
+		elseif ($method === 'ctffind') $q .= "AND r.`REF|ApCtfTiltParamsData|ctftilt_params` IS NOT NULL ";
+
+		if ($method === 'ctffind') $q .="ORDER BY (c.`cross_correlation`) DESC";
 		else $q .= "ORDER BY (c.`confidence`*c.`confidence_d`) DESC";
 		if ($order) {
 			$fields = $order['fields'];

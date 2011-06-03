@@ -614,6 +614,7 @@ class view {
 		$this->displayfilename = "0";
 		$this->loadjpg= "1";
 		$this->ptclsel = "0";
+		$this->jsacemethod= "1";
 		$this->jsacepar= "1";
 		$this->jsaceopt= "2";
 		$this->jstagpar1 = "1";
@@ -888,6 +889,7 @@ class view {
 			.'var jsdisplayfilename'.$this->name.'="'.$this->displayfilename.'";'.$this->crlf
 			.'var jsloadjpg'.$this->name.'="'.$this->loadjpg.'";'.$this->crlf
 			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf
+			.'var jsacemethod'.$this->name.'="'.$this->jsacemethod.'";'.$this->crlf
 			.'var jsaceparam'.$this->name.'="'.$this->jsacepar.'";'.$this->crlf
 			.'var jsaceopt'.$this->name.'="'.$this->jsaceopt.'";'.$this->crlf
 			.'var jsacescx'.$this->name.'="'.$this->jsacescx.'";'.$this->crlf
