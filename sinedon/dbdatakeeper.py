@@ -6,6 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
+import sinedon
 import sinedon.data
 import sinedon.sqldict
 import threading
@@ -261,7 +262,7 @@ class DBDataKeeper(object):
 		dest_db = dest_config['db']
 		dest_confdata = sinedon.importdata.ImportDBConfigData(host=dest_host, db=dest_db)
 		mappingdata = sinedon.importdata.ImportMappingData(source_config=source_confdata, destination_config=dest_confdata)
-		mappingdata = self.query(mappingdata)
+		mappingdata = mappingdata.query()
 		for m in mappingdata:
 			classname = m['class_name']
 			old_dbid = m['old_dbid']
