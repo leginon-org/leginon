@@ -1386,6 +1386,21 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+# New node from William Nicholson:
+class RasterFCFinderSettingsData(RasterFinderSettingsData):
+	def typemap(cls):
+		return RasterFinderSettingsData.typemap() + (
+		('focus center x', float),
+		('focus center y', float),
+		('focus radius', float),
+		('focus box size', float),
+		('focus min mean', float),
+		('focus max mean', float),
+		('focus min std', float),
+		('focus max std', float),
+		)
+	typemap = classmethod(typemap)
+
 class PolyFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
