@@ -79,33 +79,34 @@ class NewElement(gst.Element):
 		print ''
 
 		dt = numpy.dtype(numpy.uint8)
-		n = width * height * bpp / 8
-
-		a = numpy.frombuffer(buf.data, dt)
-		a.shape = height, width, 3
+		input_array = numpy.frombuffer(buf.data, dt)
+		bytes_per_pixel = bpp / 8
+		input_shape = height, width, bytes_per_pixel
+		print 'INPUT SHAPE', input_shape
+		input_array.shape = input_shape
 		print 'ARRAY'
-		print a
+		print input_array
 
+		'''
 		newbuf = gst.Buffer()
-		output_array = numpy.frombuffer(newbuf, dt)
+		output_array = numpy.frombuffer(newbuf.data, dt)
 		self.process(input_array, output_array)
-
-
+		'''
 
 		return self.srcpad.push(buf)
+
+	def process(self, array):
+		pass
+
 
 #here we register our class with glib, the c-based object system used by
 #gstreamer
 gobject.type_register(NewElement)
 
-## this code creates the following pipeline, equivalent to 
-## gst-launch-0.10 videotestsrc ! videoscale ! ffmpegcolorspace !
-### NewElement ! autovideosink
-
 # first create individual gstreamer elements
 
 filesrc = gst.element_factory_make("filesrc")
-filesrc.set_property('location', 'test.png')
+filesrc.set_property('location', 'example.png')
 pngdec = gst.element_factory_make("pngdec")
 
 filt = NewElement()
@@ -122,7 +123,5 @@ gst.element_link_many(filesrc, pngdec, filt, jpegenc, filesink)
 # set pipeline to playback state
 
 p.set_state(gst.STATE_PLAYING)
-
-# start the main loop, pitivi does this already.
 
 gtk.main()
