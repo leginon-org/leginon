@@ -78,6 +78,7 @@ numpy2mrc = {
 ##  (name, type, default, length)
 ##    length is only necessary for strings
 ##    type can be one of: 'int32', 'float32', 'string'
+##  ** maybe look into something like http://construct.wikispaces.com/
 header_fields = (
 	('nx', 'int32'),
 	('ny', 'int32'),
@@ -293,6 +294,7 @@ Parse the 1024 byte MRC header into a header dictionary.
 	## to extract all the info.
 	## Only convert first 224 bytes into numbers because the
 	## remainder of data are text labels
+	## ** should use numpy.frombuffer or http://construct.wikispaces.com/
 	headerarray = {}
 	headerarray['float32'] = numpy.fromstring(headerbytes, dtype=ftype, count=224)
 	headerarray['int32'] = numpy.fromstring(headerbytes, dtype=itype, count=224)
