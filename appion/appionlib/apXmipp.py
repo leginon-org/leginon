@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 import os
+import re
 import sys
 import time
 import math
@@ -236,3 +237,50 @@ def createSubFolders(partdir, numpart, filesperdir):
 		i += filesperdir
 	return dirnum
 
+#======================
+#======================
+def locateXmippProtocol(protocolname):
+	### get Xmipp directory
+	proc = subprocess.Popen('which xmipp_protocols',
+		shell=True,stdout=subprocess.PIPE)
+	stdout_value = proc.communicate()[0]
+	i = stdout_value.find("bin/xmipp_protocols");
+	if (i==-1):
+		apDisplay.printError("Cannot locate Xmipp protocol %s" % (protocolname));
+	XmippDir=stdout_value[0:i]
+
+	### make sure protocolname is given correctly
+	if re.search(".py", protocolname):
+		protocolname = re.sub(".py", "", protocolname)
+	protocolname_new = protocolname+".py"
+	p = os.path.join(XmippDir, "protocols", protocolname_new)
+	if os.path.isfile(p):
+		return p
+	else:
+		apDisplay.printError("Cannot locate Xmipp protocol %s" % p)
+
+#======================
+#======================
+def particularizeProtocol(protocolIn, parameters, protocolOut):
+	'''
+	standard function to modify an Xmipp protocol (e.g. xmipp_protocols_projmatch.py or xmipp_protocols_ml3d.py).
+	Requires 3 inputs: (1) the full path to the protocol name in the Xmipp bin directory, (2) all parameters particular
+	the protocol in a dictionary format, with all keys filled in and matching all variables in the protocolIn file, (3)
+	the full path to the output protocol in the run directory.
+	'''
+	fileIn = open(protocolIn)
+	fileOut = open(protocolOut,'w')
+	endOfHeader=False
+	for line in fileIn:
+		if not line.find("{end-of-header}")==-1:
+			endOfHeader=True
+		if endOfHeader:
+			fileOut.write(line)
+		else:
+			for key in parameters.keys():
+				if not re.match('^'+key,line) is None:
+					line=key+'='+repr(parameters[key])+'\n'
+					break
+			fileOut.write(line)
+	fileIn.close()
+	fileOut.close()
