@@ -636,6 +636,7 @@ if (is_numeric($expId)) {
 			$imreconresults = array();
 			$imreconresults[] = ($imq>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imq queued</a>" : "";
 			$imreconresults[] = ($imrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imrun running</a>" : "";
+			// TODO: I'm not sure if this number means the recon has already been uploaded. If so, need to change where it is added to totals.
 			$imreconresults[] = ($imdone>0) ? "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$imdone complete</a>" : "";
 		}
 
@@ -650,10 +651,36 @@ if (is_numeric($expId)) {
 		$xmippreconresults[] = ($xmippreconupload>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$xmippreconupload ready for upload</a>" : "";
 		$xmippreconresults[] = ($numxmipprecon>0) ? "<a href='reconsummary.php?expId=$sessionId'>$numxmipprecon complete</a>" : "";
 
+		// TODO: this does not appear to be used
 		$xmippreconqueue = count($subclusterjobs['xmipprefine']['queued']);
 		$xmippreconrun = count($subclusterjobs['xmipprefine']['running']);
 		$xmipprecondone = count($subclusterjobs['xmipprefine']['done']);
 		
+		// prep recon stats
+		$totalPrepQueue 	= $prepfrealignqueue;
+		$totalPrepRun	 	= $prepfrealignrun;
+		$totalPrepared		= $frealignprepared;
+		$runRefineResults[] = ($totalPrepQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalPrepQueue preps queued</a>" : "";
+		$runRefineResults[] = ($totalPrepRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalPrepRun preps running</a>" : "";
+		$runRefineResults[] = ($totalPrepared>0) ? "<a href='runPreparedRecon.php?expId=$sessionId'>$totalPrepared jobs ready to run</a>" : "";
+		
+		// run recon stats
+		$totalJobQueue 		= $emanjobqueue + $runfrealignqueue + $imq + $xmippreconqueue;
+		$totalJobRun 		= $emanjobrun + $runfrealignrun + $imrun + $xmippreconrun;
+		$totalReadyUpload	= $emanjobincomp + $frealignran + $imdone + $xmippreconupload;
+		$runRefineResults[] = ($totalJobQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalJobQueue jobs queued</a>" : "";
+		$runRefineResults[] = ($totalJobRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalJobRun jobs running</a>" : "";
+		$runRefineResults[] = ($totalReadyUpload>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalReadyUpload ready for upload</a>" : "";
+		
+		// upload recon stats
+		$totalUploadQueue 	= $uploadfrealignqueue;
+		$totalUploadRun 	= $uploadfrealignrun;
+		$totalComplete 		= $emanreconruns + $frealigndone + $numxmipprecon;
+		$runRefineResults[] = ($totalUploadQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalUploadQueue uploads queued</a>" : "";
+		$runRefineResults[] = ($totalUploadRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalUploadRun uploads running</a>" : "";
+		$runRefineResults[] = ($totalComplete>0) ? "<a href='reconsummary.php?expId=$sessionId'>$totalComplete complete</a>" : "";
+		
+		// old recon menu
 		// list out refinement jobs in the web menu
 		$nruns=array();
 		$nruns[] = array(
@@ -684,6 +711,13 @@ if (is_numeric($expId)) {
 				'result'=> "<i>(may be buggy)</i>", //$imreconresults,
 			);
 		}
+		
+		// new recon menu
+		$nruns[] = array(
+			'name'=>"<a href='selectRefinementType.php?expId=$sessionId'>Run Refinement</a>",
+			'result'=> $runRefineResults,
+		);
+		
 		$nruns[] = array(
 			'name'=>"<a href='evilClusterUsers.php?expId=$sessionId'>Evil Cluster Users</a>",
 		);

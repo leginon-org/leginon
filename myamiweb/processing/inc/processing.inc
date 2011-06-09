@@ -1427,6 +1427,35 @@ function imodRef() {
 	return referenceBox("Computer visualization of three-dimensional image data using IMOD", 1996, "Kremer J.R., D.N. Mastronarde and J.R. McIntosh", "J. Struct. Biol.", 116, 1, 8742726, false, "doi:10.1006/jsbi.1996.0013", false);
 }
 
+function xmippRef() 
+{
+	return referenceBox("XMIPP: a new generation of an open-source image processing package for electron microscopy", 2004, "Sorzano CO, Marabini R, Velázquez-Muriel J, Bilbao-Castro JR, Scheres SH, Carazo JM, Pascual-Montano A.", "J Struct Biol.", 148, 2, 15477099, false, "10.1016/j.jsb.2004.06.006", "img/xmipp_logo.png");
+}
+
+// TODO: This should be revisited. 
+function showReference( $method )
+{
+	switch ( $method ){
+		case "eman":
+			return emanRef();
+			break;
+		case "xmipp":
+			return xmippRef();
+			break;
+		case "frealign":
+			return frealignRef();
+			break;
+		case "imagic":
+			return imagicRef();
+			break;
+		case "spider":
+			return spiderRef();
+			break;
+		default:
+			return appionRef();
+	}
+}
+
 /**************************************/
 function referenceBox($title, $year, $authorlist, $journal, $volume=false, $issue=false, $pmid=false, $pmcid=false, $doi=false, $logo=false) {
 	$refbox = "<br/>";
