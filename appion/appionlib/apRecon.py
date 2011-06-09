@@ -4,6 +4,7 @@ import os, re, sys, time
 import tempfile
 import cPickle
 import math
+import numpy
 import string
 import shutil
 import subprocess
@@ -17,6 +18,7 @@ from appionlib import apEulerDraw
 from appionlib import apChimera
 from appionlib import apStack
 from appionlib import apFile
+from appionlib import apFourier 
 from appionlib import apSymmetry
 
 #==================
@@ -60,6 +62,33 @@ def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
 	apDisplay.printWarning("Failed to determine resolution")
 	res = boxsize * apix / (lastx + 1)
 	return res
+
+def getResolutionFromGenericFSCFile(fscfile, boxsize, apix, filtradius=3, msg=False):
+	"""
+	parses standard 2-column FSC file with 1) spatial frequency and 2) FRC, returns resolution
+	"""
+	if not os.path.isfile(fscfile):
+		apDisplay.printError("fsc file does not exist")
+	if msg is True:
+		apDisplay.printMsg("box: %d, apix: %.3f, file: %s"%(boxsize, apix, fscfile))
+
+	f = open(fscfile, 'r')
+	fscfileinfo = f.readlines()
+	f.close()
+	fscdata = numpy.zeros((int(boxsize)/2), dtype=numpy.float32)
+	for i, info in enumerate(fscfileinfo):		# skip commented out lines
+		if info[0] == "#":
+			pass
+		else: 
+			fscfileinfo = fscfileinfo[i:]
+			break
+	for j, info in enumerate(fscfileinfo):      
+		frc = float(info.split()[1])
+		fscdata[j] = frc
+	res = apFourier.getResolution(fscdata, apix, boxsize, filtradius=filtradius)
+
+	return res
+
 
 #==================
 #==================
