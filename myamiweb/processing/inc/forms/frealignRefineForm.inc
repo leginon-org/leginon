@@ -21,7 +21,7 @@ class FrealignRefineForm extends BasicRefineForm
 	public function advancedParamForm()
 	{
 		// classes extended from BasicRefineForm should get the selected default values
-		$params = $this->getFormParams();
+		$paramSet = $this->getFormParams();
 		
 		// display form title
 		echo"
@@ -37,28 +37,28 @@ class FrealignRefineForm extends BasicRefineForm
 		$shortSize = 4;
 		$longSize = 20;
 		
-		echo $this->insertTextField( $params["wgh"]["name"], $params["wgh"]["label"], $params["wgh"]["value"], $longSize, $params["wgh"]["enable"] );
-		echo $this->insertTextField( $params["xstd"]["name"], $params["xstd"]["label"], $params["xstd"]["value"], $longSize, $params["xstd"]["enable"], "(0 = no filtering)" );
-		echo $this->insertTextField( $params["pbc"]["name"], $params["pbc"]["label"], $params["pbc"]["value"], $longSize, $params["pbc"]["enable"] );
-		echo $this->insertTextField( $params["boff"]["name"], $params["boff"]["label"], $params["boff"]["value"], $longSize, $params["boff"]["enable"] );
-		echo $this->insertTextField( $params["itmax"]["name"], $params["itmax"]["label"], $params["itmax"]["value"], $longSize, $params["itmax"]["enable"] );
-		echo $this->insertTextField( $params["ipmax"]["name"], $params["ipmax"]["label"], $params["ipmax"]["value"], $longSize, $params["ipmax"]["enable"] );
+		echo $paramSet->insertTextField( "wgh", $longSize );
+		echo $paramSet->insertTextField( "xstd", $longSize, "(0 = no filtering)" );
+		echo $paramSet->insertTextField( "pbc", $longSize );
+		echo $paramSet->insertTextField( "boff", $longSize );
+		echo $paramSet->insertTextField( "itmax", $longSize );
+		echo $paramSet->insertTextField( "ipmax", $longSize );
 				
 		echo "<br />\n";
 		echo "<b>Card #6</b>\n";
 		echo "<br />\n";
 	
-		echo $this->insertTextField( $params["target"]["name"], $params["target"]["label"], $params["target"]["value"], $longSize, $params["target"]["enable"] );
-		echo $this->insertTextField( $params["thresh"]["name"], $params["thresh"]["label"], $params["thresh"]["value"], $longSize, $params["thresh"]["enable"] );
+		echo $paramSet->insertTextField( "target", $longSize );
+		echo $paramSet->insertTextField( "thresh", $longSize );
 				
 		echo "<br />\n";
 		echo "<b>Card #7</b>\n";
 		echo "<br />\n";
 	
-		echo $this->insertTextField( $params["rrec"]["name"], $params["rrec"]["label"], $params["rrec"]["value"], $longSize, $params["rrec"]["enable"], "(in &Aring;ngstroms; default Nyquist)" );
-		echo $this->insertTextField( $params["hp"]["name"], $params["hp"]["label"], $params["hp"]["value"], $longSize, $params["hp"]["enable"], "(in &Aring;ngstroms)" );
-		echo $this->insertTextField( $params["lp"]["name"], $params["lp"]["label"], $params["lp"]["value"], $longSize, $params["lp"]["enable"], "(in &Aring;ngstroms; default 2*Nyquist)" );
-		echo $this->insertTextField( $params["rbfact"]["name"], $params["rbfact"]["label"], $params["rbfact"]["value"], $longSize, $params["rbfact"]["enable"], "(0 = off)" );
+		echo $paramSet->insertTextField( "rrec", $longSize, "(in &Aring;ngstroms; default Nyquist)" );
+		echo $paramSet->insertTextField( "hp", $longSize, "(in &Aring;ngstroms)" );
+		echo $paramSet->insertTextField( "lp", $longSize, "(in &Aring;ngstroms; default 2*Nyquist)" );
+		echo $paramSet->insertTextField( "rbfact", $longSize, "(0 = off)" );
 		
 		// find if there are ctffind runs (for frealign option)
 		$particle = new particledata();
@@ -67,7 +67,7 @@ class FrealignRefineForm extends BasicRefineForm
 		// give option of only using ctffind runs
 		if ( $showCTFFind ) {
 			echo "<br/>\n";
-			echo $this->insertCheckboxField($params["ctffindonly"]["name"], $params["ctffindonly"]["label"], $params["ctffindonly"]["value"], $params["ctffindonly"]["enable"] );
+			echo $paramSet->insertCheckboxField( "ctffindonly" );
 			echo "&nbsp;&nbsp;&nbsp;&nbsp;\n";
 		}
 	}
@@ -302,21 +302,10 @@ class FrealignParams extends RefineFormParameters
 		$this->disableParam("percentDiscard");
 		$this->disableParam("filterEstimated");
 		$this->disableParam("filterComputed");
-	}
-	
-	function validate() 
-	{
-		$parentMsg = parent::validate();
 		
-		$validator = new formValidator();
-		 
-		$validator->addValidation($this->params['outerMaskRadius']['name'], $this->params['outerMaskRadius']['value'], "req", "Enter an outer mask radius.");
+		// add parameter requirements
+		$this->addValidation( "outerMaskRadius", "req" );
 		
-		$validator->runValidation();
-		$msg = $validator->getErrorMessage();	
-		
-		$errMsg = array_merge( $parentMsg, $msg );
-		return $errMsg;
 	}
 }
 

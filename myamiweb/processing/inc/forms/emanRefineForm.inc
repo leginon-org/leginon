@@ -31,29 +31,29 @@ class EmanRefineForm extends BasicRefineForm
 
 		$shortSize = 4;
 		$longSize = 20;
-		echo $this->insertTextField( $params["imask"]["name"], $params["imask"]["label"], $params["imask"]["value"], $longSize, $params["imask"]["enable"] );
-		echo $this->insertTextField( $params["amask"]["name"], $params["amask"]["label"], $params["amask"]["value"], $longSize, $params["amask"]["enable"] );
-		echo $this->insertTextField( $params["maxshift"]["name"], $params["maxshift"]["label"], $params["maxshift"]["value"], $longSize, $params["maxshift"]["enable"] );
-		echo $this->insertTextField( $params["hard"]["name"], $params["hard"]["label"], $params["hard"]["value"], $longSize, $params["hard"]["enable"] );
-		echo $this->insertTextField( $params["clskeep"]["name"], $params["clskeep"]["label"], $params["clskeep"]["value"], $longSize, $params["clskeep"]["enable"] );
-		echo $this->insertTextField( $params["clsiter"]["name"], $params["clsiter"]["label"], $params["clsiter"]["value"], $longSize, $params["clsiter"]["enable"] );
-		echo $this->insertTextField( $params["xfiles"]["name"], $params["xfiles"]["label"], $params["xfiles"]["value"], $longSize, $params["xfiles"]["enable"] );
-		echo $this->insertTextField( $params["shrink"]["name"], $params["shrink"]["label"], $params["shrink"]["value"], $longSize, $params["shrink"]["enable"] );
-		echo $this->insertTextField( $params["euler2"]["name"], $params["euler2"]["label"], $params["euler2"]["value"], $longSize, $params["euler2"]["enable"] );
-		echo $this->insertTextField( $params["median"]["name"], $params["median"]["label"], $params["median"]["value"], $longSize, $params["median"]["enable"] );
-		echo $this->insertTextField( $params["phscls"]["name"], $params["phscls"]["label"], $params["phscls"]["value"], $longSize, $params["phscls"]["enable"] );
-		echo $this->insertTextField( $params["refine"]["name"], $params["refine"]["label"], $params["refine"]["value"], $longSize, $params["refine"]["enable"] );
-		echo $this->insertTextField( $params["tree"]["name"], $params["tree"]["label"], $params["tree"]["value"], $longSize, $params["tree"]["enable"] );
+		echo $params->insertTextField( "imask", $longSize );
+		echo $params->insertTextField( "amask", $longSize );
+		echo $params->insertTextField( "maxshift", $longSize );
+		echo $params->insertTextField( "hard", $longSize );
+		echo $params->insertTextField( "clskeep", $longSize );
+		echo $params->insertTextField( "clsiter", $longSize );
+		echo $params->insertTextField( "xfiles", $longSize );
+		echo $params->insertTextField( "shrink", $longSize );
+		echo $params->insertTextField( "euler2", $longSize );
+		echo $params->insertTextField( "median", $longSize );
+		echo $params->insertTextField( "phscls", $longSize );
+		echo $params->insertTextField( "refine", $longSize );
+		echo $params->insertTextField( "tree", $longSize );
 		
 		echo "<br />\n";
 		echo "<b>Coran parameters</b>\n";
 		echo "<br />\n";
 		
-		echo $this->insertTextField( $params["coranCC"]["name"], $params["coranCC"]["label"], $params["coranCC"]["value"], $longSize, $params["coranCC"]["enable"] );
-		echo $this->insertTextField( $params["coranmask"]["name"], $params["coranmask"]["label"], $params["coranmask"]["value"], $longSize, $params["coranmask"]["enable"] );
-		echo $this->insertTextField( $params["coranlp"]["name"], $params["coranlp"]["label"], $params["coranlp"]["value"], $longSize, $params["coranlp"]["enable"] );
-		echo $this->insertTextField( $params["coranhp"]["name"], $params["coranhp"]["label"], $params["coranhp"]["value"], $longSize, $params["coranhp"]["enable"] );
-		echo $this->insertTextField( $params["coranhcc"]["name"], $params["coranhcc"]["label"], $params["coranhcc"]["value"], $longSize, $params["coranhcc"]["enable"] );
+		echo $params->insertTextField( "coranCC", $longSize );
+		echo $params->insertTextField( "coranmask", $longSize );
+		echo $params->insertTextField( "coranlp", $longSize );
+		echo $params->insertTextField( "coranhp", $longSize );
+		echo $params->insertTextField( "coranhcc", $longSize );
 								
 		echo "<br/>\n";		
 	}
@@ -202,22 +202,17 @@ class EmanParams extends RefineFormParameters
 		$this->disableParam("outerAlignRadius");
 		$this->disableParam("innerAlignRadius");
 		$this->disableParam("filterComputed");
+
+		// add parameter requirements
+		$this->addValidation( "outerMaskRadius", "req" );
+		$this->addValidation( "symmetry", "req" );
+		$this->addValidation( "angSampRate", "req" );
 	}
 	
 	function validate() 
 	{
-		$parentMsg = parent::validate();
+		$msg = parent::validate();
 		
-		$validator = new formValidator();
-		 
-		$validator->addValidation($this->params["outerMaskRadius"]["name"], $this->params["outerMaskRadius"]["value"], "req", "Enter an outer mask radius.");
-		$validator->addValidation($this->params["symmetry"]["name"], $this->params["symmetry"]["value"], "req", "Enter symmetry.");
-		$validator->addValidation($this->params["angSampRate"]["name"], $this->params["angSampRate"]["value"], "req", "Enter angular sampling rate.");
-		
-		$validator->runValidation();
-		$msg = $validator->getErrorMessage();	
-		
-		$errMsg = array_merge( $parentMsg, $msg );
 		
 		// TODO: if amask is used, then xfiles must also be used
 //		if ($_POST['amask1'.$i] || $_POST['amask2'.$i] || $_POST['amask3'.$i]) {
@@ -228,7 +223,7 @@ class EmanParams extends RefineFormParameters
 //		}
 		
 		
-		return $errMsg;
+		return $msg;
 	}
 }
 

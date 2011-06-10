@@ -32,17 +32,16 @@ class XmippRefineForm extends BasicRefineForm
 		$shortSize = 4;
 		$longSize = 20;
 		
-		echo $this->insertTextField( $params["mask"]["name"], $params["mask"]["label"], $params["mask"]["value"], $longSize, $params["mask"]["enable"], "(if you use this field you cannot use Mask Radius)" );
-		echo $this->insertTextField( $params["maxAngularChange"]["name"], $params["maxAngularChange"]["label"], $params["maxAngularChange"]["value"], $longSize, $params["maxAngularChange"]["enable"] );
-		echo $this->insertTextField( $params["maxChangeOffset"]["name"], $params["maxChangeOffset"]["label"], $params["maxChangeOffset"]["value"], $longSize, $params["maxChangeOffset"]["enable"] );
-		echo $this->insertTextField( $params["search5DShift"]["name"], $params["search5DShift"]["label"], $params["search5DShift"]["value"], $longSize, $params["search5DShift"]["enable"] );
-		echo $this->insertTextField( $params["search5DStep"]["name"], $params["search5DStep"]["label"], $params["search5DStep"]["value"], $longSize, $params["search5DStep"]["enable"] );
-		echo $this->insertTextField( $params["reconMethod"]["name"], $params["reconMethod"]["label"], $params["reconMethod"]["value"], $longSize, $params["reconMethod"]["enable"] );
-		echo $this->insertTextField( $params["ARTLambda"]["name"], $params["ARTLambda"]["label"], $params["ARTLambda"]["value"], $longSize, $params["ARTLambda"]["enable"] );
-		echo $this->insertTextField( $params["fourierMaxFrequencyOfInterest"]["name"], $params["fourierMaxFrequencyOfInterest"]["label"], $params["fourierMaxFrequencyOfInterest"]["value"], $shortSize, $params["fourierMaxFrequencyOfInterest"]["enable"] );
-		echo $this->insertTextField( $params["wgh"]["name"], $params["wgh"]["label"], $params["wgh"]["value"], $longSize, $params["wgh"]["enable"] );
+		echo $params->insertTextField( "mask", $longSize, "(if you use this field you cannot use Mask Radius)" );
+		echo $params->insertTextField( "maxAngularChange", $longSize );
+		echo $params->insertTextField( "maxChangeOffset", $longSize );
+		echo $params->insertTextField( "search5DShift", $longSize );
+		echo $params->insertTextField( "search5DStep", $longSize );
+		echo $params->insertTextField( "reconMethod", $longSize );
+		echo $params->insertTextField( "ARTLambda", $longSize );
+		echo $params->insertTextField( "fourierMaxFrequencyOfInterest",  $shortSize );
 		
-		echo $this->insertCheckboxField($params["doComputeResolution"]["name"], $params["doComputeResolution"]["label"], $params["doComputeResolution"]["value"], $params["doComputeResolution"]["enable"] );
+		echo $params->insertCheckboxField( "doComputeResolution" );
 		echo "<br/>\n";	
 
 	}
@@ -175,7 +174,7 @@ class XmippParams extends RefineFormParameters
 		$msg = parent::validate();
 
 		if ( !empty($this->params["mask"]["value"]) && !empty($this->params["outerMaskRadius"]["value"]) )
-			$msg['mask'] = "You may not define both the outer mask raduis and a mask file.";
+			$msg .= "<b>Error:</b> You may not define both the outer mask raduis and a mask file.";
 				
 		return $msg;
 	}

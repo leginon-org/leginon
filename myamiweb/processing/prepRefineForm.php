@@ -20,7 +20,10 @@ require_once "inc/summarytables.inc";
 require_once "inc/forms/xmippRefineForm.inc";
 require_once "inc/forms/frealignRefineForm.inc";
 require_once "inc/forms/emanRefineForm.inc";
+require_once "inc/forms/stackPrepForm.inc";
+require_once "inc/forms/runParametersForm.inc";
 
+// TODO: should be able to remove this
 $selectedcluster=$CLUSTER_CONFIGS[0];
 if ($_POST['cluster']) {
 	$selectedcluster=$_POST['cluster'];
@@ -28,10 +31,36 @@ if ($_POST['cluster']) {
 $selectedcluster=strtolower($selectedcluster);
 @include_once $selectedcluster.".php";
 
-if ($_POST['process'])
-createCommand(); // generate command
-elseif ($_POST['stackval'] && $_POST['model'])
-jobForm(); // set parameters
+
+if ($_POST['process']) {
+	createCommand(); // generate command
+} else {
+	jobForm(); // set parameters
+}
+
+// based on the type of refinement the user has selected,
+// create the proper form type here. If a new type is added to
+// Appion, it's form class should be included in this file
+// and it should be added to this function. No other modifications
+// to this file should be necessary.
+function createSelectedRefineForm( $method )
+{
+	switch ( $method ) {
+		case eman:
+			$selectedRefineForm = new EmanRefineForm();
+			break;
+		case frealign:
+			$selectedRefineForm = new FrealignRefineForm();
+			break;
+		case xmipp:
+			$selectedRefineForm = new XmippRefineForm();
+			break;
+		default:
+			assert(false); //TODO: not yet implemented exception??
+	}		
+	
+	return $selectedRefineForm;
+}
 
 /* ******************************************
  *********************************************
@@ -47,31 +76,19 @@ function jobForm($extra=false) {
 		$extra = "ERROR: no initial model selected";
 	if (!$_POST['stackval'])
 		$extra = "ERROR: no stack selected";
-		
-	switch ($_POST['method']) {
-		case eman:
-			$selectedRefineForm = new EmanRefineForm();
-			break;
-		case frealign:
-			$selectedRefineForm = new FrealignRefineForm();
-			break;
-		case xmipp:
-			$selectedRefineForm = new XmippRefineForm();
-			break;
-		default:
-			assert(false);
-	}		
+
+	// Instantiate the class that defines the forms for the selected method of refinement.
+	$selectedRefineForm = createSelectedRefineForm( $_POST['method'] );
 	
 	## get path data for this session for output
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
-	$sessionpath=getBaseAppionPath($sessiondata).'/recon/';
+	$sessionpath = getBaseAppionPath($sessiondata).'/recon/';
 
-	// TODO: error handling
 	if ($leginondata->getCsValueFromSession($expId) === false) {
-		stackModelForm("Cs value of the images in this session is not unique or known, can't process");
-		exit;
+		$extra = "ERROR: Cs value of the images in this session is not unique or known, can't process.";
 	}
+	
 	$particle = new particledata();
 
 	// find if there are ctffind runs (for frealign option)
@@ -132,11 +149,14 @@ function jobForm($extra=false) {
 	$javafunc .= writeJavaPopupFunctions('frealign');
 	$javafunc .= writeJavaPopupFunctions('eman');
 	$javafunc .= showAdvancedParams();
+	
+	// add the appion processing header
 	processing_header("Appion: Recon Refinement","Prepare Recon Refinement",$javafunc);
+	
 	// write out errors, if any came up:
 	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
-	// Create main form
+	// create main form
 	echo "<form name='prepRefine' method='post' action='$formaction'><br/>\n";
 	
 	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
@@ -156,16 +176,12 @@ function jobForm($extra=false) {
 	
 	// add Processing Run Parameter fields
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunid;
-	runForm( $runname, $outdir );
-
+	$runParametersForm = new RunParametersForm( $runname, $outdir );
+	echo $runParametersForm->generateForm( $_POST );
 	
 	// add stack preparation parameters
-	$last = $_POST['last'];
-	$lowpass = $_POST['lowpass'];
-	$highpass = $_POST['highpass'];
-	$binning = $_POST['binning'];
-	
-	stackPrepForm($last, $lowpass, $highpass, $binning);
+	$stackPrepForm = new StackPrepForm();
+	echo $stackPrepForm->generateForm( $_POST );
 	
 	// add the parameters that apply to all methods of reconstruction
 	$selectedRefineForm->generalParamForm();
@@ -197,10 +213,10 @@ function jobForm($extra=false) {
 	echo modelsummarytable($modelid, true);
 	echo "</td></tr></table>\n";
 
-
 	// add reference for selected refinement method
 	echo showReference($_POST['method']);
 
+	// add appion processing footer
 	processing_footer();
 	exit;
 }
@@ -211,71 +227,22 @@ function jobForm($extra=false) {
  *********************************************
  ****************************************** */
 
-function createCommand ($extra=False) {
+function createCommand ($extra=False) 
+{
+	// collect processing run parameters
+	$runParametersForm = new RunParametersForm();
+	$commandAddOn .= $runParametersForm->buildCommand( $_POST );
 	
-	// TODO: make this reusable
-	switch ($_POST['method']) {
-		case eman:
-			$selectedRefineForm = new EmanRefineForm();
-			break;
-		case frealign:
-			$selectedRefineForm = new FrealignRefineForm();
-			break;
-		case xmipp:
-			$selectedRefineForm = new XmippRefineForm();
-			break;
-		default:
-			assert(false);
-	}	
-
-	$selectedRefineForm->createRunCommand();
+	// collect stack preparation parameters
+	$stackPrepForm = new StackPrepForm();
+	$commandAddOn .= $stackPrepForm->buildCommand( $_POST );
+	
+	// Instantiate the class the defines the forms for the selected method of refinement.
+	$selectedRefineForm = createSelectedRefineForm( $_POST['method'] );
+	$selectedRefineForm->createRunCommand( $_POST, "jobForm", $commandAddOn );
 };
 
-
-
-
-function runForm( $runname, $outdir )
-{
-	/* ******************************************
-	 Processing Run Parameters
-	 ****************************************** */
-	echo"
-    <H4 style='align=\'center\' >Processing Run Parameters</H4>
-    <hr />";
-
-	echo docpop('runname','Run Name')." <br/>\n";
-	echo " <input type='text' name='runname' value='$runname' size='20'>\n";
-	echo "<br/><br/>\n";
-
-	echo docpop('outdir','Output directory')." <br/>\n";
-	echo " <input type='text' name='outdir' value='$outdir' size='50'>\n";
-	echo "<br/>\n";
-}
-
-function stackPrepForm($last, $lowpass, $highpass, $binning)
-{
-	echo "
-    <br />
-    <H4 style='align=\'center\' >Stack Preparation Parameters</H4>
-    <hr />";
-
-	echo "<input type='text' name='last' value='$last' size='4'>\n";
-	echo docpop('last','last particle to use')." \n";
-	echo "<br/>\n";
-
-	echo "<input type='text' name='lowpass' value='$lowpass' size='4'>\n";
-	echo docpop('lp','low-pass filter')." \n";
-	echo "<font size='-2'>(angstroms)</font>\n";
-	echo "<br/>\n";
-
-	echo "<input type='text' name='highpass' value='$highpass' size='4'>\n";
-	echo docpop('lp','high-pass filter')." \n";
-	echo "<font size='-2'>(angstroms)</font>\n";
-	echo "<br/>\n";
-
-	echo "<br/>\n";
-}
-
+// javascript to show or hide the advanced parameters section
 function showAdvancedParams()
 {
 	$javafunc = "

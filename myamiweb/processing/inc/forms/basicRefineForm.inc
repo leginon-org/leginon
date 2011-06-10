@@ -17,6 +17,7 @@ require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
 require_once "../inc/formValidator.php";
+require_once "../inc/formParameters.inc";
 
 
 abstract class BasicRefineForm 
@@ -31,7 +32,7 @@ abstract class BasicRefineForm
 	// TUTORIAL: "abstract" means that extending classes MUST define this function
 	// ex: public getMethodType() { return "eman"; } 
 	abstract public function getMethodType(); 
-	abstract public function buildCommand($params); 
+	abstract public function buildCommand( $params ); 
 	
 	public function advancedParamForm() {}
 	public function setAdvancedDefaults() {}
@@ -76,7 +77,7 @@ abstract class BasicRefineForm
 	// returns an array of all form parameters
 	final protected function getFormParams()
 	{
-		return $this->selectedParams->params;
+		return $this->selectedParams;
 	}
 	
 	final private function defaultOptionsForm()
@@ -201,33 +202,7 @@ abstract class BasicRefineForm
 		}
 		
 	}
-	
-	static public function insertTextField( $name, $label='', $value='', $size=20, $enable='', $note='' )
-	{
-		$html = "<INPUT TYPE='text' NAME='$name' $enable SIZE='$size' VALUE='$value'>\n";
-		$html.=  docpop( $name, $label );
 		
-		if (!empty( $note )) {
-			$html.= "<font size='-2'>$note</font>\n";
-		}
-		$html.= "<br/>\n";
-		
-		return $html;
-	}
-	
-	static public function insertCheckboxField( $name, $label='', $value='', $enable='', $note='' )
-	{
-		$html = "<INPUT TYPE='checkbox' NAME='$name' $enable $value >\n";
-		$html.=  docpop( $name, $label );
-		
-		if (!empty( $note )) {
-			$html.= "<font size='-2'>$note</font>\n";
-		}
-		$html.= "<br/>\n";
-		
-		return $html;
-	}
-	
 	final public function generalParamForm( ) 
 	{
 		// display the heading
@@ -242,7 +217,6 @@ abstract class BasicRefineForm
 		// if the user selects to import parameters, get the values here
 		$defaultSetId = $_POST['import'];
 		$paramSet = $this->setFormParams( $defaultSetId );
-		$params = $paramSet->params;
 
 		// extending classes must define a method type
 		$method = $this->getMethodType();
@@ -255,58 +229,59 @@ abstract class BasicRefineForm
 		
 		$shortSize = 4;
 		$longSize = 20;
-		echo $this->insertTextField( $params["outerMaskRadius"]["name"], $params["outerMaskRadius"]["label"], $params["outerMaskRadius"]["value"], $shortSize, $params["outerMaskRadius"]["enable"], "(pixels)" );
-		echo $this->insertTextField( $params["innerMaskRadius"]["name"], $params["innerMaskRadius"]["label"], $params["innerMaskRadius"]["value"], $shortSize, $params["innerMaskRadius"]["enable"], "(pixels)" );
-		echo $this->insertTextField( $params["outerAlignRadius"]["name"], $params["outerAlignRadius"]["label"], $params["outerAlignRadius"]["value"], $shortSize, $params["outerAlignRadius"]["enable"], "(pixels)" );
-		echo $this->insertTextField( $params["innerAlignRadius"]["name"], $params["innerAlignRadius"]["label"], $params["innerAlignRadius"]["value"], $shortSize, $params["innerAlignRadius"]["enable"], "(pixels)" );
-		echo $this->insertTextField( $params["symmetry"]["name"], $params["symmetry"]["label"], $params["symmetry"]["value"], $shortSize, $params["symmetry"]["enable"] );
+		
+		echo $paramSet->insertTextField( "outerMaskRadius", $shortSize, "(pixels)" );
+		echo $paramSet->insertTextField( "innerMaskRadius", $shortSize, "(pixels)" );
+		echo $paramSet->insertTextField( "outerAlignRadius", $shortSize, "(pixels)" );
+		echo $paramSet->insertTextField( "innerAlignRadius", $shortSize, "(pixels)" );
+		echo $paramSet->insertTextField( "symmetry", $shortSize );
 			
 		echo "<br />\n";
 		echo "<br />\n";
 		echo "<b>Particle independent parameters</b>\n";
 		echo "<br />\n";
 		
-		echo $this->insertTextField( $params["numIters"]["name"], $params["numIters"]["label"], $params["numIters"]["value"], $shortSize, $params["numIters"]["enable"] );
-		echo $this->insertTextField( $params["angSampRate"]["name"], $params["angSampRate"]["label"], $params["angSampRate"]["value"], $longSize, $params["angSampRate"]["enable"] );
-		echo $this->insertTextField( $params["percentDiscard"]["name"], $params["percentDiscard"]["label"], $params["percentDiscard"]["value"], $longSize, $params["percentDiscard"]["enable"] );
+		echo $paramSet->insertTextField( "numIters", $shortSize );
+		echo $paramSet->insertTextField( "angSampRate", $longSize );
+		echo $paramSet->insertTextField( "percentDiscard", $longSize );
 		
 		echo "<br/>\n";
 	
-		echo $this->insertCheckboxField($params["filterEstimated"]["name"], $params["filterEstimated"]["label"], $params["filterEstimated"]["value"], $params["filterEstimated"]["enable"] );
+		echo $paramSet->insertCheckboxField( "filterEstimated" );
 		echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-		echo $this->insertTextField( $params["filterResolution"]["name"], $params["filterResolution"]["label"], $params["filterResolution"]["value"], $shortSize, $params["filterResolution"]["enable"], "(angstroms)" );
+		echo $paramSet->insertTextField( "filterResolution", $shortSize, "(angstroms)" );
 
 		echo "<br/>\n";
 
-		echo $this->insertCheckboxField($params["filterComputed"]["name"], $params["filterComputed"]["label"], $params["filterComputed"]["value"], $params["filterComputed"]["enable"] );
+		echo $paramSet->insertCheckboxField( "filterComputed" );
 		echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-		echo $this->insertTextField( $params["filterConstant"]["name"], $params["filterConstant"]["label"], $params["filterConstant"]["value"], $shortSize, $params["filterConstant"]["enable"], "(angstroms)" );
+		echo $paramSet->insertTextField( "filterConstant", $shortSize, "(angstroms)" );
 		
 		echo "<br/><br/>\n";
 	}
 		
-	final public function createRunCommand() 
+	final public function createRunCommand( $postArray, $errorCallbackFunc, $commandAddOn='' ) 
 	{
 		/* ***********************************
 		 PART 1: Get variables from POST array
 		 ************************************* */
 		$paramSet = $this->createFormParams();
-		$paramSet->getPostedValues($_POST);
+		$paramSet->getPostedValues( $postArray );
 		
 		/* *******************
 		 PART 2: Check for conflicts, if there is an error display the form again
 		 ******************** */
-		$errorArray = $paramSet->validate();
-		foreach ( $errorArray as $name => $error ) {
-			$errorMsg .= "<b>Error:</b> $error \n";
-		}
-		if ($errorMsg) jobForm($errorMsg);
+		$errorMsg = $paramSet->validate();
+		if ($errorMsg) $errorCallbackFunc($errorMsg);
 
 		/* *******************
 		 PART 3: Create program command
 		 ******************** */
 		$params = $paramSet->params;
-		$command = $this->buildCommand($params);								
+		$command = $this->buildCommand($params);		
+
+		// add parameters from other forms
+		$command .= $commandAddOn;
 	
 		/* *******************
 		 PART 4: Create header info, i.e., references
@@ -320,7 +295,7 @@ abstract class BasicRefineForm
 		// submit command
 		$errors = showOrSubmitCommand($command, $headinfo, 'prepfrealign', $nproc);
 		// if error display them
-		if ($errors) jobForm($errors);
+		if ($errors) $errorCallbackFunc($errors);
 		exit;
 	}
 	
@@ -352,12 +327,14 @@ abstract class BasicRefineForm
 
 // I would like this to ba a nested class, but apparently PHP does not 
 // yet support nested classes.
-class RefineFormParameters
+class RefineFormParameters extends FormParameters
 {
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
 							$innerAlignRadius='', $symmetry='', $numIters='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='' ) 
 	{
+		parent::__construct();
+		
 		$this->id = $id;
 		$this->label = $label;
 		
@@ -373,40 +350,10 @@ class RefineFormParameters
 		$this->addParam( "filterResolution", $filterResolution, "resolution" );
 		$this->addParam( "filterComputed", $filterComputed, "filter reconstructed volume to resolution computed by FSC" );
 		$this->addParam( "filterConstant", $filterConstant, "add constant to computed filter value" );
-	}
-	
-	final protected function addParam( $name, $defaultValue='', $label='', $enable='' )
-	{
-		if ( !empty( $name ) ) {
-			$this->params[$name] = array( "name"=>$name, "value"=>$defaultValue, "label"=>$label, "enable"=>$enable );
-		}
-	}
 		
-	// extending classes should use this disable function in the constructor
-	// to modify the params avaialable in the General Parameters section of the form.
-	final protected function disableParam( $name ) 
-	{
-		$this->params[$name]["enable"] = 'DISABLED';
-	}
-	
-	final public function getPostedValues($postArray)
-	{
-		foreach ( $this->params as $key=>$param ) {
-			$this->params[$key]["value"] = $postArray[ $param["name"] ];
-		}
-	}
-	
-	public function validate() 
-	{
-		$validator = new formValidator();
-		 
-		$validator->addValidation($this->params['numIters']['name'], $this->params['numIters']['value'], "req", "Enter the number of refine iterations desired.");
-		$validator->addValidation($this->params['numIters']['name'], $this->params['numIters']['value'], "num", "Enter the number of refine iterations desired as a number.");
-		
-		$validator->runValidation();
-		$errMsg = $validator->getErrorMessage();		
-		
-		return $errMsg;
+		// add parameter requirements
+		$this->addValidation( "numIters", "req" );
+		$this->addValidation( "numIters", "num" );
 	}
 }
 
