@@ -147,8 +147,9 @@ def getCPUVendor():
 
 #=====================
 def getGPUVendor():
-	cmd = "/sbin/lspci"
-	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	pciexe = getExecPath("lspci")	
+	if not pciexe: pciexe = getExecPath("/sbin/lspci")
+	proc = subprocess.Popen(pciexe, shell=True, stdout=subprocess.PIPE)
 	proc.wait()
 	lines = proc.stdout.readlines()
 	vendor = None
