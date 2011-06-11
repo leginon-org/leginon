@@ -5,7 +5,7 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  *
- *	Simple viewer to view a image using mrcmodule
+ *	refinement selection form
  */
 
 require "inc/particledata.inc";
@@ -41,24 +41,57 @@ echo "<table border='1' class='tableborder' width='640'>\n";
 
 
 /*
-** Xmipp Maximum Likelihood Reference Free Alignment
+** EMAN1 projection-matchign refinement protocol
+*/
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/eman_logo.png' width='64'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='selectStackForm.php?expId=$expId&method=eman'>EMAN1 projection-matching refinement</a></h3>\n";
+echo "<p>This is one of the original projection-matching refinement protocols, as implemented in "
+	."<a href='http://blake.bcm.tmc.edu/eman/eman1/'>EMAN.</a>&nbsp;<img src='img/external.png'> It has been successfully "
+	."tested on many different samples. Within each iteration, the raw particles are classified according to the angular "
+	."sampling of projection directions, then iteratively aligned within each class to reduce the model bias. "
+	."Further classification and particle 'filtering' has been incorporated using a SPIDER protocol that identifies "
+	."and removes the particles with the highest variance (and therefore least correspondence) in the class using the "
+	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/cas.html'>"
+	."CA S</a>&nbsp;<img src='img/external.png'> correspondence analysis operation in spider."
+	."</p>\n";
+echo "</td></tr>\n";
+
+/*
+** Xmipp projection-matching refinement protocol
 */
 
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/xmipp_logo.png' width='64'>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='selectStackForm.php?expId=$expId&method=xmipp'>Xmipp Refinement</a></h3>\n";
-echo " <p> this method is the most robust, but takes some time to complete."
-	." It uses the "
-	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/MLalign2D'>Xmipp ml_align2d</a>"
-	."&nbsp;<img src='img/external.png'>"
-	." program to perform alignments. "
-	."</p><p>\n"
-	."This method is unbiased and very thorough, but also the slowest of the methods (~days). "
-	."Maximum likelihood also does a course search, integer pixels shifts and ~5 degree angle increments, "
-	."so it is best to get templates with this method and use ref-based alignment to get better alignment parameters" 
+echo "  <h3><a href='selectStackForm.php?expId=$expId&method=xmipp'>Xmipp projection-matching refinement</a></h3>\n";
+echo " <p> This is the <a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/ProjectionMatchingRefinement'>
+	Xmipp projection-matching refinement protocol.</a>&nbsp;<img src='img/external.png'> The classification of "
+	."raw particles is done using the <a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Projection_matching'>
+	angular projection matching</a>&nbsp;<img src='img/external.png'>&nbsp;"
+	."operation in Xmipp. The user is given the option of employing an algebraic reconstruction technique "
+	."(ART), weighted back-projection (WBP) or Fourier interpolation method to recontruct the computed classes from "
+	."projection-matching. One big advantage to this protocol is speed. Because all Euler angle and alignment parameters "
+	."are saved for each iteration of angular projection-matching, the later iterations localize the search space "
+	."to an increasingly narrow region and, therefore, take significantly less cpu time to complete. "
 	."</p>\n";
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
+echo "</td></tr>\n";
+
+/*
+** Frealign projection-matching refinement protocol
+*/
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/grigorieff_lab.png' width='96'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='selectStackForm.php?expId=$expId&method=frealign'>Frealign projection-matching refinement</a></h3>\n";
+echo "<p>The <a href='http://emlab.rose2.brandeis.edu/frealign'>Frealign</a>&nbsp;<img src='img/external.png'> "
+	."(Fourier REconstruction and ALIGNment) projection-matching refinement protocol has been designed to refine a stack "
+	."of particles for which the alignment and classification parameters are approximately known. It therefore also "
+	."relies on a good initial model. The algorithms used in the Frealign package are designed to extract "
+	."as much high resolution information out of the data as possible."
+	."</p>\n";
 echo "</td></tr>\n";
 
 if (!HIDE_FEATURE)
@@ -97,36 +130,6 @@ if (!HIDE_IMAGIC && !HIDE_FEATURE) {
 	echo "</td></tr>\n";
 }
 
-
-
-	/*
-	** Topology representing network alignment
-	*/
-	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/canimg.png' width='64'>\n";
-	echo "</td><td>\n";
-	echo "  <h3><a href='selectStackForm.php?expId=$expId&method=frealign'>Frealign Refinement</a></h3>\n";
-	echo "<p>Fast & easy 2D ref-free alignment by iterative classification using "
-		."a topology-representing network, followed by multi-reference alignment. "
-		."The classification is performed by Vince Ramey's implementation of "
-		."<a target='blank' href='http://www.ncbi.nlm.nih.gov/pubmed/14572474'>"
-		."Ogura et al. JSB (2003)</a>"
-		."</p>\n";
-	echo "</td></tr>\n";
-
-
-	/*
-	** Topology representing network alignment
-	*/
-	echo "<tr><td width='100' align='center'>\n";
-	echo "  <img src='img/eman_logo.png' width='64'>\n";
-	echo "</td><td>\n";
-	echo "  <h3><a href='selectStackForm.php?expId=$expId&method=eman'>EMAN Refinement</a></h3>\n";
-	echo "<p>Fast and easy 2D ref-free alignment using EMAN's "
-		."<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/refine2d.py.html'>"
-		."refine2d.py</a> program"
-		."</p>\n";
-	echo "</td></tr>\n";
 
 echo "</table>\n";
 processing_footer();
