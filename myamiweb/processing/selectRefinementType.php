@@ -104,11 +104,7 @@ if (!HIDE_FEATURE)
 	echo "  <img src='img/spider_logo.png' width='64'>\n";
 	echo "</td><td>\n";
 	echo "  <h3><a href='selectStackForm.php?expId=$expId&method=spider'>Spider Refinement</a></h3>\n";
-	echo " <p> first you select template and then this method uses the "
-		."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apmq.html'>Spider AP MQ</a>"
-		."&nbsp;<img src='img/external.png'>"
-		." command to align your particles to the selected templates. Multiprocessing additions has made this extremely fast (~1 hour)."
-		."</p>\n";
+	echo " <p> </p>\n";
 	//echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
 	echo "</td></tr>\n";
 }
@@ -122,11 +118,7 @@ if (!HIDE_IMAGIC && !HIDE_FEATURE) {
 	echo "  <img src='img/imagic_logo.png' width='64'>\n";
 	echo "</td><td>\n";
 	echo "  <h3><a href='selectStackForm.php?expId=$expId&method=imagic'>IMAGIC Refinement</a></h3>\n";
-	echo " <p> this method uses the "
-		."<a href='http://www.imagescience.de/smi/index.htm'>IMAGIC m-r-a</a>"
-		."&nbsp;<img src='img/external.png'>"
-		." command to align your particles to the templates within a specified template stack"
-		."</p>\n";
+	echo " <p></p>\n";
 	echo "</td></tr>\n";
 }
 
