@@ -55,6 +55,9 @@ function createSelectedRefineForm( $method )
 		case xmipp:
 			$selectedRefineForm = new XmippRefineForm();
 			break;
+		case xmippml3d:
+			$selectedRefineForm = new XmippML3DRefineForm();
+			break;
 		default:
 			assert(false); //TODO: not yet implemented exception??
 	}		
@@ -72,7 +75,15 @@ function jobForm($extra=false) {
 	$expId = $_GET['expId'];
 	$projectId = getProjectId();
 
-	if (!$_POST['model'])
+	foreach( $_POST as $key=>$value ) {
+		if (strpos($key,"model_" ) !== False) {
+			$modelinfo = explode('|--|',$_POST['model']);
+			$modelid = $modelinfo[0];
+			$modelArray[] = array( 'name'=>$key, 'id'=>$modelid );
+		}
+	}
+	
+	if (!$modelArray)
 		$extra = "ERROR: no initial model selected";
 	if (!$_POST['stackval'])
 		$extra = "ERROR: no stack selected";
@@ -126,6 +137,8 @@ function jobForm($extra=false) {
 		stackModelForm("ERROR: refine stack particle count ($nump) is different from recon stack particle count ($reconnumpart)");
 	}
 
+	// TODO: parse POST for all selected models
+	//print_r($_POST);
 	## get model data
 	$modelinfo = explode('|--|',$_POST['model']);
 	$modelid = $modelinfo[0];
@@ -159,6 +172,9 @@ function jobForm($extra=false) {
 	// create main form
 	echo "<form name='prepRefine' method='post' action='$formaction'><br/>\n";
 	
+	foreach ( $modelArray as $model ) {
+		echo "<input type='hidden' name='".$model['name']."' value='".$_POST[$model['name']]."'>\n";
+	}
 	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
 	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
 	echo "<input type='hidden' name='method' value='".$_POST['method']."'>\n";
@@ -229,6 +245,18 @@ function jobForm($extra=false) {
 
 function createCommand ($extra=False) 
 {
+	// collect the user selected stack id
+	$commandAddOn.='--stackid='.$_POST['stackval'].' ';
+	
+	// collect the user selected model id(s)
+	foreach( $_POST as $key=>$value ) {
+		if (strpos($key,"model_" ) !== False) {
+			$modelids.= "$key:";
+		}
+	}
+	
+	$commandAddOn.='--modelid='.$modelids.' ';
+	
 	// collect processing run parameters
 	$runParametersForm = new RunParametersForm();
 	$commandAddOn .= $runParametersForm->buildCommand( $_POST );

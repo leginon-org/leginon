@@ -713,9 +713,14 @@ if (is_numeric($expId)) {
 		}
 		
 		// new recon menu
+		// Single-Model refinement
 		$nruns[] = array(
-			'name'=>"<a href='selectRefinementType.php?expId=$sessionId'>Run Refinement</a>",
+			'name'=>"<a href='selectRefinementType.php?expId=$sessionId'>Run Single-Model Refinement</a>",
 			'result'=> $runRefineResults,
+		);
+		// Multi-model refinement
+		$nruns[] = array(
+			'name'=>"<a href='selectMultiModelRefine.php?expId=$sessionId'>Run Multi-Model Refinement</a>",
 		);
 		
 		$nruns[] = array(

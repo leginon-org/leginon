@@ -25,21 +25,20 @@ $selectedcluster=strtolower($selectedcluster);
 
 
 // check if session provided
-$expId = $_GET['expId'];
-$method = $_POST['method'];
-$projectId = getProjectId();
-$stackval = $_POST['stackval'];
+$expId 		= $_GET['expId'];
+$method 	= $_POST['method'];
+$type 		= $_POST['type'];
+$projectId 	= getProjectId();
+$stackval 	= $_POST['stackval'];
 
 if (!$expId) {
 	exit;
 }
 
-
 $particle = new particledata();
 
 // get initial models associated with project
 $models = $particle->getModelsFromProject($projectId);
-
 
 // find each stack entry in database
 //$stackIds = $particle->getStackIds($expId);
@@ -47,7 +46,6 @@ $models = $particle->getModelsFromProject($projectId);
 //$stackidval = $stackinfo[0];
 //$apix = $stackinfo[1];
 //$box = $stackinfo[2];
-
 
 $minf = explode('|--|',$_POST['model']);
 
@@ -59,7 +57,10 @@ if (is_array($models) && count($models)>0) {
 		$symdata = $particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
 		$modelvals = "$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$symdata[eman_name]";
 
-		$modelTable .= "<input type='radio' NAME='model' value='$modelvals' ";
+		// if we want to be able to select multiple models, use checkboxes instead of radio buttons
+		$controlType = ( $type == "multi" ) ? "checkbox" : "radio";
+		
+		$modelTable .= "<input type='$controlType' NAME='model_$modelid' value='$modelvals' ";
 		// check if model was selected
 		if ($modelid == $minf[0]) $modelTable .= " CHECKED";
 		$modelTable .= ">\n";
@@ -77,8 +78,6 @@ if (is_array($models) && count($models)>0) {
 	$modelTable .=  "No initial models in database";
 }
 
-
-$formAction = "prepRefineForm.php?expId=$expId&method=$method";
 $javafunc="<script src='../js/viewer.js'></script>\n";
 ?>
 
@@ -87,13 +86,14 @@ $javafunc="<script src='../js/viewer.js'></script>\n";
 <form name='select_model_form' method='POST' action='prepRefineForm.php?expId=<?php echo $expId; ?>' >
 	<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=<?php $expId; ?> '>[Upload a new initial model]</A><br>
 	
-	<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this model'><br>
+	<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use selected model(s)'><br>
 	<?php echo $modelTable; ?>
 	
 	<input type='hidden' name='method' value='<?php echo $method; ?>'>
+	<input type='hidden' name='type' value='<?php echo $type; ?>'>
 	<input type='hidden' name='stackval' value='<?php echo $stackval; ?>'>
 	
-	<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this model'>
+	<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use selected model(s)'>
 </form>
 
 <?php echo showReference( $method ); ?>

@@ -32,25 +32,24 @@ $selectedcluster=strtolower($selectedcluster);
 
 
 	// check if session provided
-	$expId = $_GET['expId'];
+	$expId 	= $_GET['expId'];
 	$method = $_GET['method'];
+	$type	= $_GET['type'];
 	$projectId = getProjectId();
 
 
-	if ($expId) {
-		$formAction = "selectModelForm.php?expId=$expId&method=$method";
-	} else {
+	if (!$expId) {
 		exit;
 	}
 
 	$particle = new particledata();
 
 	// find each stack entry in database
-	$stackIds = $particle->getStackIds($expId);
-	$stackinfo = explode('|--|', $_POST['stackval']);
+	$stackIds 	= $particle->getStackIds($expId);
+	$stackinfo 	= explode('|--|', $_POST['stackval']);
 	$stackidval = $stackinfo[0];
-	$apix = $stackinfo[1];
-	$box = $stackinfo[2];
+	$apix 		= $stackinfo[1];
+	$box 		= $stackinfo[2];
 
 	// write out errors, if any came up:
 	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
@@ -63,6 +62,7 @@ $selectedcluster=strtolower($selectedcluster);
 <form name='viewerform' method='POST' ACTION='selectModelForm.php?expId=<?php echo $expId; ?>' >
 	<b>Select a stack:</b><br>
 	<input type='hidden' name='method' value='<?php echo $method; ?>'>
+	<input type='hidden' name='type' value='<?php echo $type; ?>'>
 	<P><input type='SUBMIT' NAME='submitstack' VALUE='Use selected stack'>
 
 	<br /><br />
