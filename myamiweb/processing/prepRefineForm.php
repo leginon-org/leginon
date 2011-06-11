@@ -22,6 +22,7 @@ require_once "inc/forms/frealignRefineForm.inc";
 require_once "inc/forms/emanRefineForm.inc";
 require_once "inc/forms/stackPrepForm.inc";
 require_once "inc/forms/runParametersForm.inc";
+require_once "inc/forms/xmippML3DRefineForm.inc";
 
 // TODO: should be able to remove this
 $selectedcluster=$CLUSTER_CONFIGS[0];
