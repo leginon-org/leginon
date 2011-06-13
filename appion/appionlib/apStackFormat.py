@@ -8,7 +8,7 @@ from appionlib import apXmipp
 
 formats = ['spider','xmipp','frealign','eman']
 appionbasepath = '/ami/data00/appion/'
-default_partlist = 'partlist.doc'
+default_partlist = 'partlist.sel'
 stack_exts = {'spider':('.spi',),'frealign':('.hed','.img'),'eman':('.hed','.img')}
 
 def getFormattedStackInfo(stackdata,format):
