@@ -50,7 +50,7 @@ class sortJunkStackScript(appionScript.AppionScript):
 		apXmipp.breakupStackIntoSingleFiles(fn_oldstack)
 
 		# Run sort junk
-		cmd = "xmipp_sort_by_statistics -i partlist.doc"
+		cmd = "xmipp_sort_by_statistics -i partlist.sel"
 		apDisplay.printColor(cmd, "cyan")
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
@@ -62,7 +62,7 @@ class sortJunkStackScript(appionScript.AppionScript):
 		apStack.averageStack("sorted.hed")
 
 		# Remove intermediate stuff
-		#os.unlink("partlist.doc")
+		#os.unlink("partlist.sel")
 		#shutil.rmtree("partfiles")
 
 		# Upload results
