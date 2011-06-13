@@ -262,11 +262,11 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 			### Break up stack and rotate each filament by rotation angle calculated in manual picker and rebox to original size
 			apXmipp.breakupStackIntoSingleFiles(tempimgstackfile, filetype="mrc")
-			partlist = os.path.join(self.params['rundir'], 'partlist.doc')
+			partlist = os.path.join(self.params['rundir'], 'partlist.sel')
 			partfile = open(partlist, 'r')	
 			partlist = partfile.readlines()
 			partfile.close()
-			selfile = os.path.join(self.params['rundir'], 'partlist2.doc')
+			selfile = os.path.join(self.params['rundir'], 'partlist2.sel')
 			selfilew = open(selfile, 'w')	
 			i = 0
 			for partdata in boxedpartdatas:
