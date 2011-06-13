@@ -112,7 +112,7 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None, fi
 	"""
 	apDisplay.printColor("Breaking up spider stack into single files, this can take a while", "cyan")
 	apParam.createDirectory(partdir)
-	partdocfile = "partlist.doc"
+	partdocfile = "partlist.sel"
 
 	### setup
 	breaker = breakUpStack()
