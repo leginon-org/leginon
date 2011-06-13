@@ -178,7 +178,7 @@ class xmippRefineScript(appionScript.AppionScript):
 		self.params['alwaysone']=1
 		
 		protocolPrm={}
-		protocolPrm["SelFileName"]                  =   "partlist.doc"
+		protocolPrm["SelFileName"]                  =   "partlist.sel"
 		protocolPrm["DocFileName"]                  =   ""
 		protocolPrm["ReferenceFileName"]            =   fnRef
 		protocolPrm["WorkingDir"]                   =   "ProjMatch"
@@ -259,14 +259,14 @@ class xmippRefineScript(appionScript.AppionScript):
 		f.close()
 
 		# Pickup results
-		os.unlink("partlist.doc")
+		os.unlink("partlist.sel")
 		shutil.rmtree("partfiles")
 		os.unlink(fnRef)
 		shutil.rmtree("ProjMatch/ReferenceLibrary")
 		shutil.rmtree("ProjMatch/ProjMatchClasses")
 		os.unlink("ProjMatch/protocol_projmatch_backup.py")
 		os.unlink("ProjMatch/original_angles.doc")
-		os.unlink("ProjMatch/partlist.doc")
+		os.unlink("ProjMatch/partlist.sel")
 		if os.path.exists("recon/ProjMatch/Iter_1/ReferenceLibrary/ref000001.xmp"):
 			# Create a blank image
 			subprocess.call("xmipp_operate -i recon/ProjMatch/Iter_1/ReferenceLibrary/ref000001.xmp -mult 0 -o blank.xmp",
