@@ -168,7 +168,17 @@ class TargetTransformer(targethandler.TargetHandler):
 		regtype = self.settings['registration']
 		reg = self.registrations[regtype]
 		self.logger.info('Calculating main transform. Registration: %s' % (regtype,))
-		matrix = reg.registerImageData(image1,image2)
+		# If registration fails, revert to identity matrix.
+		# In the future, maybe try loop through several registration
+		# types until one works with confidence.
+		try:
+			matrix = reg.registerImageData(image1,image2)
+		except Exception, exc:
+			self.logger.warning('Registration type "%s" failed: %s' % (regtype, exc))
+			reg = self.registrations['identity']
+			self.logger.warning('Targets will not be transformed.')
+			matrix = reg.registerImageData(image1,image2)
+
 		self.logger.info('Target transform matrix calculated')
 		matrixquery = leginondata.TransformMatrixData()
 		matrixquery['session'] = self.session
@@ -269,6 +279,7 @@ class TransformManager(node.Node, TargetTransformer):
 			'correlation': CorrelationRegistration(self),
 			'keypoints': KeyPointsRegistration(self),
 			'logpolar': LogPolarRegistration(self),
+			'identity': IdentityRegistration(self),
 		}
 
 		self.abortevent = threading.Event()
