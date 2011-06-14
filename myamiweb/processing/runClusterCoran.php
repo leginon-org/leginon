@@ -71,7 +71,12 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 
 	// classifier params
 	$factorlist = ($_POST['factorlist']) ? $_POST['factorlist'] : "1,2,3";
-	$numclass = ($_POST['numclass']) ? $_POST['numclass'] : "4,16,64";
+	// default number of classes based on number of particles 
+	$nump=$alignparams['num_particles'];
+	$defaultNumClasses = round(sqrt($nump));
+	$defaultNumClasses.= ",".round(sqrt(4*$nump));
+	$defaultNumClasses.= ",".round(sqrt(16*$nump));
+	$numclass = ($_POST['numclass']) ? $_POST['numclass'] : $defaultNumClasses;
 
 	echo "<input type='hidden' name='alignid' value=$alignid>";
 	
