@@ -30,17 +30,17 @@ class NewElement(gst.Element):
 		gst.PAD_SINK,
 		gst.PAD_ALWAYS,
 		gst.caps_new_any())
-	
+
 	#register our pad templates
 	__gsttemplates__ = (_srctemplate, _sinktemplate)
 
 	def __init__(self, *args, **kwargs):   
 		#initialise parent class
 		gst.Element.__init__(self, *args, **kwargs)
-		
+
 		#source pad, outgoing data
 		self.srcpad = gst.Pad(self._srctemplate)
-		
+
 		#sink pad, incoming data
 		self.sinkpad = gst.Pad(self._sinktemplate)
 		self.sinkpad.set_setcaps_function(self._sink_setcaps)
@@ -84,8 +84,6 @@ class NewElement(gst.Element):
 		input_shape = height, width, bytes_per_pixel
 		print 'INPUT SHAPE', input_shape
 		input_array.shape = input_shape
-		print 'ARRAY'
-		print input_array
 
 		'''
 		newbuf = gst.Buffer()
@@ -117,11 +115,27 @@ filesink.set_property('location', 'test.jpg')
 
 # create the pipeline
 
-p = gst.Pipeline()
-p.add(filesrc, pngdec, filt, jpegenc, filesink)
+pipeline = gst.Pipeline()
+pipeline.add(filesrc, pngdec, filt, jpegenc, filesink)
 gst.element_link_many(filesrc, pngdec, filt, jpegenc, filesink)
-# set pipeline to playback state
 
-p.set_state(gst.STATE_PLAYING)
+# get pipeline's bus
+bus = pipeline.get_bus()
+
+def quit():
+	pipeline.set_state(gst.STATE_NULL)
+	gtk.main_quit()
+
+# set up message handler
+def handle_message(bus, message, data):
+	# check for pipeline EOS
+	if message.src is pipeline and message.type is gst.MESSAGE_EOS:
+		quit()
+	return True
+
+bus.add_watch(handle_message, None)
+
+# set pipeline to playback state
+pipeline.set_state(gst.STATE_PLAYING)
 
 gtk.main()
