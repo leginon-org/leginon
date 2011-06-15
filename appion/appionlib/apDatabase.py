@@ -127,6 +127,13 @@ def getExpIdFromSessionName(sessionname):
 		apDisplay.printError("could not find session, "+sessionname)
 
 #================
+def getSessionDataFromSessionId(seeionid):
+	apDisplay.printMsg("Looking up session, "+sessionid)
+	sessionq = leginon.leginondata.SessionData()
+	sessioninfo = sessionq.direct_query(sessionid)
+	return sessioninfo
+
+#================
 def getSessionDataFromSessionName(sessionname):
 	apDisplay.printMsg("Looking up session, "+sessionname)
 	sessionq = leginon.leginondata.SessionData(name=sessionname)
