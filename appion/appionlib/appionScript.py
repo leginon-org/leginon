@@ -414,12 +414,18 @@ class AppionScript(basicScript.BasicScript):
 		"""
 		this function only runs if no rundir is defined at the command line
 		"""
+		if self.params['rundir'] is None:
+			if ('sessionname' in self.params and self.params['sessionname'] is not None ):
+				# command line users may use sessionname rather than expId
+				sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+				self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdirname,self.params['runname']])
+			else:
+				if ('expId' in self.params and self.params['expId']):
+					# expId should  always be included from appionwrapper derived appionscript
+					sessiondata = apDatabase.getSessionDataFromSessionId(self.params['expId'])
+					self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdirname,self.params['runname']])
+		# The rest should not be needed with appionwrapper format
 		from appionlib import apStack
-		if ( self.params['rundir'] is None
-		and 'sessionname' in self.params
-		and self.params['sessionname'] is not None ):
-			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-			self.params['rundir'] = self.getDefaultBaseAppionDir(sessiondata,[self.processdirname,self.params['runname']])
 		if ( self.params['rundir'] is None
 		and 'reconid' in self.params
 		and self.params['reconid'] is not None ):
