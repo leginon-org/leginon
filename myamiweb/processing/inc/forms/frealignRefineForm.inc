@@ -19,9 +19,8 @@ class FrealignRefineForm extends BasicRefineForm
 	// an extension of the FormParameters class.
 	public function createFormParams() { return new FrealignParams(); }
 	
-	// this is where a form for this recon methods specific parameters
-	// is defined. 
-	// outputs html. 
+	// This is where a form for this recon methods specific parameters is defined. 
+	// Outputs html. 
 	public function advancedParamForm()
 	{
 		// classes extended from BasicRefineForm should get the selected default values
@@ -164,23 +163,10 @@ class FrealignRefineForm extends BasicRefineForm
 	// display a selection box with any valid stacks. 
 	// compares stacks to the refine stack previously selected by the user
 	function reconStackSelector($stackIds, $stackidval) 
-	{		
+	{	
+		$refineStack = $this->getStackInfo();
 		$particle = new particledata();
 		
-		// get refine stack
-		$refineStackId = $this->getStackId();
-		$refineStackParams = $particle->getStackParams( $refineStackId );
-		
-		// get number of particles
-		$refineTotPart = $particle->getNumStackParticles( $refineStackId );
-		$refineNumPart = commafy($totalp);
-		
-		// get box size
-		$refineBox = $refineStackParams['boxsize'];
-		
-		// get pixel size of stack
-		$refineApix = ($particle->getStackPixelSizeFromStackId($refineStackId))*1e10;
-			
 		$html .=  "<SELECT NAME='reconstackid' >\n";
 		$html .=  "<OPTION VALUE='' style='color:green;' >Same as refinement</option>\n";
 		foreach ($stackIds as $stackid){
@@ -197,7 +183,7 @@ class FrealignRefineForm extends BasicRefineForm
 			$box = $s['boxsize'];
 
 			// if this is not a valid stack, don't add it to the list
-			if ( $nump != $refineNumPart || $apix != $refineApix || $box != $refineBox ) {
+			if ( $nump != $refineStack['numParticles'] || $apix != $refineStack['apix'] || $box != $refineStack['box'] ) {
 				continue;
 			}
 
@@ -215,33 +201,33 @@ class FrealignRefineForm extends BasicRefineForm
 	{
 		
 		$command = "prepFrealign.py ";
-		if ( $params->getParamValue("reconstackid") )
-			$command.= "--reconstackid=".$params->getParamValue("reconstackid")." ";
-		if ( $params->getParamValue("importiter") ) 
-			$command.= "--reconiterid=".$params->getParamValue("importiter")." ";
-		if ( ($params->getParamValue('initmethod') == 'projmatch') && $params->getParamValue("dang") ) 
-			$command.= "--dang=".$params->getParamValue("dang")." ";
-			    
-		$command.= "--mask=".$params->getParamValue("outerMaskRadius")." ";
-		$command.= "--imask=".$params->getParamValue("innerMaskRadius")." ";
-		$command.= "--wgh=".$params->getParamValue("wgh")." ";
-		$command.= "--xstd=".$params->getParamValue("xstd")." ";
-		$command.= "--pbc=".$params->getParamValue("pbc")." ";
-		$command.= "--boff=".$params->getParamValue("boff")." ";;
-		$command.= "--itmax=".$params->getParamValue("itmax")." ";
-		$command.= "--ipmax=".$params->getParamValue("ipmax")." ";
-		$command.= "--sym=".$params->getParamValue("symmetry")." ";
-		$command.= "--target=".$params->getParamValue("target")." ";
-		$command.= "--thresh=".$params->getParamValue("thresh")." ";
-		$command.= "--rrec=".$params->getParamValue("rrec")." ";
-		$command.= "--hp=".$params->getParamValue("hp")." ";
-		$command.= "--lp=".$params->getParamValue("lp")." ";
-		$command.= "--rbfact=".$params->getParamValue("rbfact")." ";
-		$command.= "--numiter=".$params->getParamValue("numIters")." ";
+					    
+		$command = $params->addCommandFlag( $command, "mask", "outerMaskRadius" );
+		$command = $params->addCommandFlag( $command, "imask", "innerMaskRadius" );
+		$command = $params->addCommandFlag( $command, "sym", "symmetry" );
+		$command = $params->addCommandFlag( $command, "numiter", "numIters" );
+		$command = $params->addCommandFlag( $command, "reconiterid", "importiter" );
+		$command = $params->addCommandFlag( $command, "reconstackid" );
+		$command = $params->addCommandFlag( $command, "wgh" );
+		$command = $params->addCommandFlag( $command, "xstd");
+		$command = $params->addCommandFlag( $command, "pbc" );
+		$command = $params->addCommandFlag( $command, "boff" );
+		$command = $params->addCommandFlag( $command, "itmax" );
+		$command = $params->addCommandFlag( $command, "ipmax" );
+		$command = $params->addCommandFlag( $command, "target" );
+		$command = $params->addCommandFlag( $command, "thresh" );
+		$command = $params->addCommandFlag( $command, "rrec" );
+		$command = $params->addCommandFlag( $command, "hp" );
+		$command = $params->addCommandFlag( $command, "lp" );
+		$command = $params->addCommandFlag( $command, "rbfact" );
 
+		// check which radio button was selected
+		if ( ($params->getParamValue('initmethod') == 'projmatch') ) 
+			$command = $params->addCommandFlag( $command, "dang" );
+		
+		// see if checkbox was selected
 		$ctffindonly = $params->getParamValue("ctffindonly");
-		if (!empty($ctffindonly)) $command.= "--ctfmethod=ctffind ";
-		if ($last) $command.= "--last=$last ";
+		if ( $ctffindonly == 'on' ) $command.= "--ctfmethod=ctffind ";
 		
 		return $command;
 	}
@@ -296,6 +282,7 @@ class FrealignRefineForm extends BasicRefineForm
 	// This will gather the parameter values and put them into our param 
 	// format ('iterations'x'value':)
 	// Returns a set of Form Parameters.
+	// TODO: modify this function for frealign params!!
 	protected function importParamsFromRefinement( $defaultSetId )
 	{
 		$paramSet = $this->createFormParams();
@@ -307,9 +294,12 @@ class FrealignRefineForm extends BasicRefineForm
 		$initmodel 	= $particle->getInitModelInfo($refinfo['REF|ApInitialModelData|initialModel']);
 		$stackinfo 	= $particle->getStackParams($refinfo['REF|ApStackData|stack']);
 		
+		// get our stack info
+		$currStack = $this->getStackInfo();
+		$box = $currStack['box'];
+		
 		// get scaling factor for box sizes
 		$prevboxsize	= $stackinfo['boxsize'];
-		// TODO: get $box from our stack id
 		$boxscale 		= $box / $prevboxsize;
 		$numIters 		= count($iterinfo);
 		
@@ -352,30 +342,39 @@ class FrealignRefineForm extends BasicRefineForm
 	// set the default values that are populated
 	// when the user selects the "Set Defaults" button.
 	// $box is the box size from the selected stack.
-	public function setDefaults( $box )
+	public function setDefaults()
 	{
-		$rad = ($box/2)-2;
+		// get the stack info for the stack selected by the user
+		$stack 	= $this->getStackInfo();
+		$box 	= $stack['box'];
+		$apix 	= $stack['apix'];
+		
+		// calculate default parameters
+		$outerMaskRadius 	= round($apix * $box / 3.0);
+		$rrec 				= (ceil($apix * 20)) / 10;
+		$lp 				= (ceil($apix * 40)) / 10;
+		
 		$javafunc = "
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {
-	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $rad;
-	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = $rad;
+	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $outerMaskRadius;
+	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
 	      if (obj.symmetry) obj.symmetry.value = 'c1';
 	      if (obj.numIters) obj.numIters.value = '10';
-	      if (obj.wgh) obj.wgh.value = '';
-	      if (obj.xstd) obj.xstd.value = '';
-	      if (obj.pbc) obj.pbc.value = '';
-	      if (obj.boff) obj.boff.value = '';
-	      if (obj.itmax) obj.itmax.value = '';
-	      if (obj.ipmax) obj.ipmax.value = '';
-	      if (obj.target) obj.target.value = '';
-	      if (obj.thresh) obj.thresh.value = '';
-	      if (obj.rrec) obj.rrec.value = '';
-	      if (obj.hp) obj.hp.value = '';
-	      if (obj.lp) obj.lp.value = '';
-	      if (obj.rbfact) obj.rbfact.value = '';
+	      if (obj.wgh) obj.wgh.value = '0.07';
+	      if (obj.xstd) obj.xstd.value = '0';
+	      if (obj.pbc) obj.pbc.value = '100';
+	      if (obj.boff) obj.boff.value = '70';
+	      if (obj.itmax) obj.itmax.value = '10';
+	      if (obj.ipmax) obj.ipmax.value = '0';
+	      if (obj.target) obj.target.value = '15';
+	      if (obj.thresh) obj.thresh.value = '85';
+	      if (obj.rrec) obj.rrec.value = $rrec;
+	      if (obj.hp) obj.hp.value = '50';
+	      if (obj.lp) obj.lp.value = $lp;
+	      if (obj.rbfact) obj.rbfact.value = '0';
 	      if (obj.ctffindonly) obj.ctffindonly.checked = '';
-	      if (obj.reconstackval) obj.reconstackval.value = '';
+	      if (obj.reconstackval) obj.reconstackid.value = '';
 	      if (obj.initmethod) obj.initmethod.value = '';
 	      if (obj.importrecon) obj.importrecon.value = '';
 	      if (obj.dang) obj.dang.value = '';
@@ -418,7 +417,7 @@ class FrealignParams extends RefineFormParameters
 		$this->addParam( "lp", $lp, "Higher resolution limit or low-pass filter (RMAX2)" );
 		$this->addParam( "rbfact", $rbfact, "B-factor correction (RBFACT)" );
 		$this->addParam( "ctffindonly", $ctffindonly, "Only use CTFFIND values" );
-		$this->addParam( "reconstackval", $reconstackid, "Reconstruction Stack" );
+		$this->addParam( "reconstackid", $reconstackid, "Reconstruction Stack" );
 		$this->addParam( "initmethod", $initmethod, "Initial orientation method");
 		$this->addParam( "importrecon", $importrecon, "Import from EMAN Reconstruction" );
 		$this->addParam( "dang", $dang, "Angular increment" );

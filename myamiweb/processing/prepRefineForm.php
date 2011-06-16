@@ -123,7 +123,7 @@ function jobForm($extra=false) {
 	$selectedRefineForm = createSelectedRefineForm( $reconMethod, $stackid, $modelArray, $kv );
 	
 	// add javascript functions
-	$javafunc .= $selectedRefineForm->setDefaults($box);
+	$javafunc .= $selectedRefineForm->setDefaults();
 	$javafunc .= $selectedRefineForm->additionalJavaScript();
 	$javafunc .= writeJavaPopupFunctions('appion');
 	$javafunc .= writeJavaPopupFunctions('frealign');
@@ -216,10 +216,6 @@ function createCommand ($extra=False)
 	}
 	
 	$commandAddOn.='--modelid='.$modelids.' ';
-	
-	// collect processing run parameters
-	$runParametersForm = new RunParametersForm();
-	$commandAddOn .= $runParametersForm->buildCommand( $_POST );
 	
 	// collect stack preparation parameters
 	$stackPrepForm = new StackPrepForm();

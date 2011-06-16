@@ -45,12 +45,16 @@ class StackPrepForm
 	public function buildCommand( $postArray )
 	{
 		$this->params->getPostedValues( $postArray );
-		$paramArray = $this->params->getParamArray();
+
+		$sp_lastParticle 	= $this->params->getParamValue( "lastParticle" ); 
+		$sp_lpFilter	 	= $this->params->getParamValue( "lpFilter" ); 
+		$sp_hpFilter 		= $this->params->getParamValue( "hpFilter" ); 
+		$sp_binning 		= $this->params->getParamValue( "binning" ); 
 		
-		$command = "--sp_lastParticle=".$paramArray["lastParticle"]["value"]." ";
-		$command.= "--sp_lpFilter=".$paramArray["lpFilter"]["value"]." ";
-		$command.= "--sp_hpFilter=".$paramArray["hpFilter"]["value"]." ";
-		$command.= "--sp_binning=".$paramArray["binning"]["value"]." ";
+		if ($sp_lastParticle != '') $command = "--sp_lastParticle=".$sp_lastParticle." ";
+		if ($sp_lpFilter != '') $command.= "--sp_lpFilter=".$sp_lpFilter." ";
+		if ($sp_hpFilter != '') $command.= "--sp_hpFilter=".$sp_hpFilter." ";
+		if ($sp_binning != '') $command.= "--sp_binning=".$sp_binning." ";
 		
 		return $command;
 	}

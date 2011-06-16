@@ -59,33 +59,34 @@ class EmanRefineForm extends BasicRefineForm
 		return $html;
 	}
 	
-	public function buildCommand( $paramSet )
+	public function buildCommand( $params )
 	{		
 		$command = 'prepEman.py ';
-		$command.= '--ang='.$paramSet->getParamValue("angSampRate").' ';
-		$command.= '--mask='.$paramSet->getParamValue("outerMaskRadius").' ';
-		$command.= '--sym='.$paramSet->getParamValue("symmetry").' ';
-		$command.= '--imask='.$paramSet->getParamValue("imask").' ';
-		$command.= '--amask='.$paramSet->getParamValue("amask").' ';		
-		$command.= '--maxshift='.$paramSet->getParamValue("maxshift").' ';
-		$command.= '--hard='.$paramSet->getParamValue("hard").' ';
-		$command.= '--clskeep='.$paramSet->getParamValue("clskeep").' ';
-		$command.= '--clsiter='.$paramSet->getParamValue("clsiter").' ';
-		$command.= '--xfiles='.$paramSet->getParamValue("xfiles").' ';
-		$command.= '--shrink='.$paramSet->getParamValue("shrink").' ';
-		$command.= '--euler2='.$paramSet->getParamValue("euler2").' ';
-		$command.= '--median='.$paramSet->getParamValue("median").' ';
-		$command.= '--phscls='.$paramSet->getParamValue("phscls").' ';
-		$command.= '--refine='.$paramSet->getParamValue("refine").' ';
-		$command.= '--tree='.$paramSet->getParamValue("tree").' ';
-		$command.= '--coranCC='.$paramSet->getParamValue("coranCC").' ';
-		$command.= '--coranmask='.$paramSet->getParamValue("coranmask").' ';
-		$command.= '--coranlp='.$paramSet->getParamValue("coranlp").' ';
-		$command.= '--coranhp='.$paramSet->getParamValue("coranhp").' ';
-		$command.= '--coranhcc='.$paramSet->getParamValue("coranhcc").' ';	
 		
-		if ($paramSet->getParamValue("filterEstimated") == 'on')
-			$command.= '--filt3d='.$paramSet->getParamValue("filterResolution").' ';
+		$command = $params->addCommandFlag( $command, "ang", "angSampRate" );
+		$command = $params->addCommandFlag( $command, "mask", "outerMaskRadius" );
+		$command = $params->addCommandFlag( $command, "sym", "symmetry" );
+		$command = $params->addCommandFlag( $command, "imask" );
+		$command = $params->addCommandFlag( $command, "amask" );
+		$command = $params->addCommandFlag( $command, "maxshift" );
+		$command = $params->addCommandFlag( $command, "hard" );
+		$command = $params->addCommandFlag( $command, "clskeep" );
+		$command = $params->addCommandFlag( $command, "clsiter" );
+		$command = $params->addCommandFlag( $command, "xfiles" );
+		$command = $params->addCommandFlag( $command, "shrink" );
+		$command = $params->addCommandFlag( $command, "euler2" );
+		$command = $params->addCommandFlag( $command, "median" );
+		$command = $params->addCommandFlag( $command, "phscls" );
+		$command = $params->addCommandFlag( $command, "refine" );
+		$command = $params->addCommandFlag( $command, "tree" );
+		$command = $params->addCommandFlag( $command, "coranCC" );
+		$command = $params->addCommandFlag( $command, "coranmask" );
+		$command = $params->addCommandFlag( $command, "coranlp" );
+		$command = $params->addCommandFlag( $command, "coranhp" );
+		$command = $params->addCommandFlag( $command, "coranhcc" );
+		
+		if ($params->getParamValue("filterEstimated") == 'on')
+			$command = $params->addCommandFlag( $command, "filt3d", "filterResolution" );
 		
 		return $command;
 	}
@@ -177,10 +178,13 @@ class EmanRefineForm extends BasicRefineForm
 		$refinfo 	= $particle->getRefinementRunInfo( $defaultSetId );
 		$initmodel 	= $particle->getInitModelInfo($refinfo['REF|ApInitialModelData|initialModel']);
 		$stackinfo 	= $particle->getStackParams($refinfo['REF|ApStackData|stack']);
+
+		// get our stack info
+		$currStack = $this->getStackInfo();
+		$box = $currStack['box'];
 		
 		// get scaling factor for box sizes
 		$prevboxsize	= $stackinfo['boxsize'];
-		// TODO: get $box from our stack id
 		$boxscale 		= $box / $prevboxsize;
 		$numIters 		= count($iterinfo);
 		
@@ -223,14 +227,17 @@ class EmanRefineForm extends BasicRefineForm
 	// set the default values that are populated
 	// when the user selects the "Set Defaults" button.
 	// $box is the box size from the selected stack.
-	public function setDefaults( $box )
+	public function setDefaults()
 	{
+		$stackInfo = $this->getStackInfo();
+		$box = $stackInfo['box'];
+		
 		$rad = ($box/2)-2;
 		$javafunc = "
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {
 	      obj.outerMaskRadius.value = $rad;
-	      obj.innerMaskRadius.value = $rad;
+	      obj.innerMaskRadius.value = 0;
 	      obj.angSampRate.value = '4x10:2x5:2x3:2x2';
 	      obj.symmetry.value = 'c1';
 	      obj.numIters.value = '10';

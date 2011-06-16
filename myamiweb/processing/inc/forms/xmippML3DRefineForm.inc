@@ -45,14 +45,15 @@ class XmippML3DRefineForm extends BasicRefineForm
 	public function buildCommand( $params )
 	{		
 		$command = 'prepXmippML3D.py ';
-		$command.= '--AngularSampling='.$params->getParamValue("angSampRate").' ';
-		$command.= '--symid='.$params->getParamValue("symmetry").' ';
-		$command.= '--DoMlf='.$params->getParamValue("DoMlf").' ';
-		$command.= '--HighResLimit='.$params->getParamValue("HighResLimit").' ';
-		$command.= '--DoCorrectGreyScale='.$params->getParamValue("DoCorrectGreyScale").' ';
-		$command.= '--ProjMatchSampling='.$params->getParamValue("ProjMatchSampling").' ';
-		$command.= '--LowPassFilterReference='.$params->getParamValue("LowPassFilterReference").' ';
-		$command.= '--NumberOfReferences='.$params->getParamValue("NumberOfReferences").' ';
+		
+		$command = $params->addCommandFlag( $command, "AngularSampling", "angSampRate" );
+		$command = $params->addCommandFlag( $command, "symid", "symmetry" );
+		$command = $params->addCommandFlag( $command, "DoMlf" );
+		$command = $params->addCommandFlag( $command, "HighResLimit" );
+		$command = $params->addCommandFlag( $command, "DoCorrectGreyScale" );
+		$command = $params->addCommandFlag( $command, "ProjMatchSampling" );
+		$command = $params->addCommandFlag( $command, "LowPassFilterReference" );
+		$command = $params->addCommandFlag( $command, "NumberOfReferences" );
 		
 		return $command;
 	}
@@ -94,9 +95,8 @@ class XmippML3DRefineForm extends BasicRefineForm
 	// set the default values that are populated
 	// when the user selects the "Set Defaults" button.
 	// $box is the box size from the selected stack.
-	public function setDefaults( $box )
+	public function setDefaults()
 	{
-		$rad = ($box/2)-2;
 		$javafunc = "
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {

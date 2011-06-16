@@ -24,6 +24,7 @@ abstract class BasicRefineForm
 {
 	private $defaultParamSets; 	// an array of parameter sets of type RefineFormParameters used for populating forms
 	private $selectedParams; 	// the current user selected or modified parameter set
+	private $stackInfo;
 	
 	function __construct( $method, $stackId, $modelArray, $kv ) 
 	{
@@ -31,6 +32,33 @@ abstract class BasicRefineForm
 		$this->stackId 		= $stackId;
 		$this->modelArray 	= $modelArray;
 		$this->kv 			= $kv;
+		
+		$this->setStackInfo( $stackId );
+	}
+	
+	// TODO: there is probably a better place for this so that it can be reused, or it 
+	// may already exist somewhere???
+	public function setStackInfo( $stackId ) 
+	{
+		$this->stackInfo['id'] = $stackId;
+		
+		$particle = new particledata();
+		$stackParams = $particle->getStackParams( $stackId );
+		
+		// get number of particles
+		$totalParticles = $particle->getNumStackParticles( $stackId );
+		$this->stackInfo['numParticles'] = commafy($totalParticles);
+		
+		// get box size
+		$this->stackInfo['box'] = $stackParams['boxsize'];
+		
+		// get pixel size of stack
+		$this->stackInfo['apix'] = ($particle->getStackPixelSizeFromStackId($stackId))*1e10;
+	}
+	
+	public function getStackInfo()
+	{
+		return $this->stackInfo;
 	}
 	
 	// getters
@@ -234,10 +262,10 @@ abstract class BasicRefineForm
 		$shortSize = 4;
 		$longSize = 20;
 		
-		$html .= $paramSet->insertTextField( "outerMaskRadius", $shortSize, "(pixels)" );
-		$html .= $paramSet->insertTextField( "innerMaskRadius", $shortSize, "(pixels)" );
-		$html .= $paramSet->insertTextField( "outerAlignRadius", $shortSize, "(pixels)" );
-		$html .= $paramSet->insertTextField( "innerAlignRadius", $shortSize, "(pixels)" );
+		$html .= $paramSet->insertTextField( "outerMaskRadius", $shortSize, "(&Aring;ngstroms)" );
+		$html .= $paramSet->insertTextField( "innerMaskRadius", $shortSize, "(&Aring;ngstroms)" );
+		$html .= $paramSet->insertTextField( "outerAlignRadius", $shortSize, "(&Aring;ngstroms)" );
+		$html .= $paramSet->insertTextField( "innerAlignRadius", $shortSize, "(&Aring;ngstroms)" );
 		$html .= $paramSet->insertTextField( "symmetry", $shortSize );
 			
 		$html .= "<br />\n";
@@ -253,13 +281,13 @@ abstract class BasicRefineForm
 	
 		$html .= $paramSet->insertCheckboxField( "filterEstimated" );
 		$html .= "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-		$html .= $paramSet->insertTextField( "filterResolution", $shortSize, "(angstroms)" );
+		$html .= $paramSet->insertTextField( "filterResolution", $shortSize, "(&Aring;ngstroms)" );
 
 		$html .= "<br/>\n";
 
 		$html .= $paramSet->insertCheckboxField( "filterComputed" );
 		$html .= "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-		$html .= $paramSet->insertTextField( "filterConstant", $shortSize, "(angstroms)" );
+		$html .= $paramSet->insertTextField( "filterConstant", $shortSize, "(&Aring;ngstroms)" );
 		
 		$html .= "<br/><br/>\n";
 		
@@ -267,6 +295,8 @@ abstract class BasicRefineForm
 	}
 		
 	// builds the run command and shows or submits the command
+	// $errorCallbackFunc is the functions that displays the form
+	// and calls this function....
 	final public function createRunCommand( $postArray, $errorCallbackFunc, $commandAddOn='' ) 
 	{
 		/* ***********************************
@@ -279,7 +309,7 @@ abstract class BasicRefineForm
 		 PART 2: Check for conflicts, if there is an error display the form again
 		 ******************** */
 		$errorMsg = $paramSet->validate();
-		if ($errorMsg) $errorCallbackFunc($errorMsg);
+		if ( $errorMsg ) $errorCallbackFunc( $errorMsg );
 
 		/* *******************
 		 PART 3: Create program command
@@ -293,7 +323,7 @@ abstract class BasicRefineForm
 		 PART 4: Create header info, i.e., references
 		 ******************** */
 		// Add reference to top of the page
-		$headinfo .= showReference($_POST['method']);
+		$headinfo .= showReference( $this->method );
 	
 		/* *******************
 		 PART 5: Show or Run Command
@@ -311,14 +341,17 @@ abstract class BasicRefineForm
 	// Extending classes should override this to set the 
 	// values to something that makes sense for the method
 	// and add method specific values.
-	public function setDefaults($box)
+	public function setDefaults()
 	{
+		$stack = $this->getStackInfo();
+		$box = $stack['box'];
+		
 		$rad = ($box/2)-2;
 		$javafunc = "
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {
 	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $rad;
-	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = $rad;
+	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
 	      if (obj.innerAlignRadius) obj.innerAlignRadius.value = '4';
 	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $rad;
 	      if (obj.symmetry) obj.symmetry.value = 'c1';
@@ -408,6 +441,27 @@ class RefineFormParameters extends FormParameters
 		$newValueString = trim( $newValueString, ":" );
 		
 		$this->setParamValue( $name, $newValueString );
+	}
+	
+	// Appends a new command flag to a command string
+	// If value is not passed, the param value is looked up.
+	// If $paramName is not passed, it is assumed to be the same 
+	// as the flag name.
+	// If the value is an empty string, it is not added to the command.
+	// Returns the new command string.
+	function addCommandFlag( $command, $flagName, $paramName='', $value='' )
+	{
+		if ( $paramName == '' ) {
+			$paramName = $flagName;
+		}
+		if ( $value == '' ) {
+			$value = $this->getParamValue( $paramName );
+		}
+		if ( $value != '' ) {
+			$command .= "--".$flagName."=".$value." ";
+		}
+		
+		return $command;
 	}
 }
 

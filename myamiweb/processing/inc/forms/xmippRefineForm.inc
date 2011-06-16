@@ -48,41 +48,35 @@ class XmippRefineForm extends BasicRefineForm
 	
 	public function buildCommand( $params )
 	{
-		
 		$command ='prepXmipp.py ';
-	    $command.='--projectid='.$projectid.' ';
-	    $command.='--stackid='.$stackidval.' ';
-	    $command.='--modelid='.$modelid.' ';
-	    $command.='--rundir=. ';
-	    $command.='--pixelSize='.$apix.' ';
-	    $command.='--boxSize='.$box.' ';
-	    $command.='--NumberOfIterations='.$params->getParamValue("numIters").' ';
-	    $command.='--MaskRadius='.$params->getParamValue("outerMaskRadius").' ';
-	    $command.='--Mask='.$params->getParamValue("mask").' ';
-	    $command.='--InnerRadius='.$params->getParamValue("innerAlignRadius").' ';
-	    $command.='--OuterRadius='.$params->getParamValue("outerAlignRadius").' ';
-	    $command.='--AngularSteps='.$params->getParamValue("angSampRate").' ';
-	    $command.='--MaxAngularChange='.$params->getParamValue("maxAngularChange").' ';
-	    $command.='--MaxChangeOffset='.$params->getParamValue("maxChangeOffset").' ';
-	    $command.='--Search5DShift='.$params->getParamValue("search5DShift").' ';
-	    $command.='--Search5DStep='.$params->getParamValue("search5DStep").' ';
-	    $command.='--SymmetryGroup='.$params->getParamValue("symmetry").' ';
-	    $command.='--DiscardPercentage='.$params->getParamValue("percentDiscard").' ';
-	    $command.='--ReconstructionMethod='.$params->getParamValue("reconMethod").' ';
-	    $command.='--ARTLambda='.$params->getParamValue("ARTLambda").' ';
-	    $command.='--FourierMaxFrequencyOfInterest='.$params->getParamValue("fourierMaxFrequencyOfInterest").' ';
-	    
+		
+		$command = $params->addCommandFlag( $command, "NumberOfIterations", "numIters" );
+		$command = $params->addCommandFlag( $command, "MaskRadius", "outerMaskRadius" );
+		$command = $params->addCommandFlag( $command, "Mask", "mask" );
+		$command = $params->addCommandFlag( $command, "InnerRadius", "innerAlignRadius" );
+		$command = $params->addCommandFlag( $command, "OuterRadius", "outerAlignRadius" );
+		$command = $params->addCommandFlag( $command, "AngularSteps", "angSampRate" );
+		$command = $params->addCommandFlag( $command, "maxAngularChange" );
+		$command = $params->addCommandFlag( $command, "maxChangeOffset" );
+		$command = $params->addCommandFlag( $command, "search5DShift" );
+		$command = $params->addCommandFlag( $command, "search5DStep" );
+		$command = $params->addCommandFlag( $command, "symmetry" );
+		$command = $params->addCommandFlag( $command, "percentDiscard" );
+		$command = $params->addCommandFlag( $command, "reconMethod" );
+		$command = $params->addCommandFlag( $command, "ARTLambda" );
+		$command = $params->addCommandFlag( $command, "fourierMaxFrequencyOfInterest" );
+		$command = $params->addCommandFlag( $command, "filterConstant" );
+		
 	    $doComputeResolution 	= $params->getParamValue("doComputeResolution");
 	    $filterComputed 		= $params->getParamValue("filterComputed");
 	    $filterEstimated 		= $params->getParamValue("filterEstimated");
 	    
-	    if ( !empty($doComputeResolution) )
+	    if ( $doComputeResolution == 'on' )
 	        $command.='--DoComputeResolution ';
-	    if ( !empty($filterComputed) || !empty($filterEstimated) ) 
+	    if ( $filterComputed == 'on' || $filterEstimated == 'on' ) 
 	        $command.='--DoLowPassFilter ';
-	    if ( !empty($filterEstimated) )
+	    if ( $filterEstimated == 'on' )
 	        $command.='--DontUseFscForFilter ';
-	    $command.='--ConstantToAddToFiltration='.$params->getParamValue("filterConstant").' ';	
 	    			
 		return $command;
 	}
@@ -146,14 +140,17 @@ class XmippRefineForm extends BasicRefineForm
 	// set the default values that are populated
 	// when the user selects the "Set Defaults" button.
 	// $box is the box size from the selected stack.
-	public function setDefaults($box)
+	public function setDefaults()
 	{
+		$stack = $this->getStackInfo();
+		$box = $stack['box'];
+		
 		$rad = ($box/2)-2;
 		$javafunc = "
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {
 	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $rad;
-	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = $rad;
+	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
 	      if (obj.innerAlignRadius) obj.innerAlignRadius.value = '4';
 	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $rad;
 	      if (obj.symmetry) obj.symmetry.value = 'c1';
