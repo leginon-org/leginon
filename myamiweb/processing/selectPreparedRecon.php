@@ -253,25 +253,21 @@ function jobForm($extra=false) {
 	echo "<tr><td>\n";
 		echo docpop('nodes',"Nodes: ");
 	echo "</td><td>\n";
-		echo "<b>$nodes</b>";
-	echo "<input type='hidden' name='nodes' value='$nodes'>\n";
+	echo "<input type='text' name='nodes' value='$nodes' SIZE='4'>\n";
 	// row 1 col 3-4
 	echo "</td><td>\n";
 		echo docpop('procpernode',"Proc/Node: ");
 	echo "</td><td>\n";
-		echo "<b>$ppn</b>";
-	echo "<input type='hidden' name='ppn' value='$ppn'>\n";
+	echo "<input type='text' name='ppn' value='$ppn' SIZE='4'>\n";
 	echo "</td><td>\n";
 		echo docpop('reconpernode',"Recons/Node: ");
 	echo "</td><td>\n";
-		echo "<b>$rpn</b>";
-	echo "<input type='hidden' name='rpn' value='$rpn'>\n";
+	echo "<input type='text' name='rpn' value='$rpn' SIZE='4'>\n";
 	// row 1 col 5-6
 	echo "</td><td>\n";
 		echo docpop('memory',"Memory: ");
 	echo "</td><td>\n";
-		echo "<b>$memory GB</b>";
-	echo "<input type='hidden' name='memory' value='$memory'>\n";
+		echo "<input type='text' name='memory' value='$memory' SIZE='4'>\n";
 	// row 2 col 1-3
 	echo "</td></tr><tr><td>&nbsp;\n";
 	echo "</td></tr><tr><td>\n";
