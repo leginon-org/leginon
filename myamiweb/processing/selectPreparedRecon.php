@@ -142,10 +142,10 @@ function jobForm($extra=false) {
 	$jobdata = $jobdatas[0];
 	$rundir = $jobdata['path'];
 	$name = $jobdata['name'];
-	$nodes = $jobdata['nodes'];
-	$ppn = $jobdata['ppn'];
-	$rpn = $jobdata['rpn'];
-	$memory = $jobdata['memory'];
+	$nodes = $_POST['nodes'] ? $_POST['nodes'] : '2'; //$jobdata['nodes'];
+	$ppn = $_POST['ppn'] ? $_POST['ppn'] : '8';//$jobdata['ppn'];
+	$rpn = $_POST['rpn'] ? $_POST['rpn'] : '8';//$jobdata['rpn'];
+	$memory = $_POST['memory'] ? $_POST['memory'] : '10gb';//$jobdata['memory'];
 
 	// prepare stack values
 	$refinestackid = $jobdata['REF|ApStackData|stack'];
@@ -383,10 +383,10 @@ function writeJobFile ($extra=False) {
 	$modelid = $modelinfo[0];
 	$initmodel = $particle->getInitModelInfo($modelid);
 
-	$header.= "#PBS -l nodes=".$jobdata['nodes'].":ppn=".$jobdata['ppn']."\n";
+	$header.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
 	$header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
 	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
-	$header.= "#PBS -l mem=".$jobdata['memory']."gb\n";
+	$header.= "#PBS -l mem=".$_POST['memory']."gb\n";
 	$header.= "#PBS -m e\n";
 	$header.= "#PBS -r n\n";
 	$header.= "#PBS -j oe\n\n";
@@ -395,7 +395,7 @@ function writeJobFile ($extra=False) {
 	$clusterjob.= "# reconStackId: $reconstackid\n";
 	$clusterjob.= "# modelId: $modelid\n\n";
 	
-	$procs=$jobdata['nodes']*$jobdata['rpn'];
+	$procs=$_POST['nodes']*$_POST['rpn'];
 
 	$runfile = formatEndPath($jobdata['path'])."frealign.run.job";
 	$runlines = file_get_contents($runfile);
