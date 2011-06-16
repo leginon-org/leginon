@@ -662,7 +662,7 @@ if (is_numeric($expId)) {
 		$totalPrepared		= $frealignprepared;
 		$runRefineResults[] = ($totalPrepQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalPrepQueue preps queued</a>" : "";
 		$runRefineResults[] = ($totalPrepRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalPrepRun preps running</a>" : "";
-		$runRefineResults[] = ($totalPrepared>0) ? "<a href='runPreparedRecon.php?expId=$sessionId'>$totalPrepared jobs ready to run</a>" : "";
+		$runRefineResults[] = ($totalPrepared>0) ? "<a href='selectPreparedRecon.php?expId=$sessionId'>$totalPrepared jobs ready to run</a>" : "";
 		
 		// run recon stats
 		$totalJobQueue 		= $emanjobqueue + $runfrealignqueue + $imq + $xmippreconqueue;

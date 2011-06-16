@@ -5,7 +5,7 @@
  *      For terms of the license agreement
  *      see  http://ami.scripps.edu/software/leginon-license
  *
- *      Create an EMAN Job for submission to a cluster
+ *      Selects a model for a reconstruction
  */
 
 require_once "inc/particledata.inc";
@@ -14,15 +14,6 @@ require_once "inc/leginon.inc";
 require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
-
-
-$selectedcluster=$CLUSTER_CONFIGS[0];
-if ($_POST['cluster']) {
-	$selectedcluster=$_POST['cluster'];
-}
-$selectedcluster=strtolower($selectedcluster);
-@include_once $selectedcluster.".php";
-
 
 // check if session provided
 $expId 		= $_GET['expId'];
@@ -40,15 +31,6 @@ $particle = new particledata();
 // get initial models associated with project
 $models = $particle->getModelsFromProject($projectId);
 
-// find each stack entry in database
-//$stackIds = $particle->getStackIds($expId);
-//$stackinfo = explode('|--|', $_POST['stackval']);
-//$stackidval = $stackinfo[0];
-//$apix = $stackinfo[1];
-//$box = $stackinfo[2];
-
-$minf = explode('|--|',$_POST['model']);
-
 if (is_array($models) && count($models)>0) {
 	$modelTable = "<table class='tableborder' border='1'>\n";
 	foreach ($models as $model) {
@@ -61,8 +43,6 @@ if (is_array($models) && count($models)>0) {
 		$controlType = ( $type == "multi" ) ? "checkbox" : "radio";
 		
 		$modelTable .= "<input type='$controlType' NAME='model_$modelid' value='$modelvals' ";
-		// check if model was selected
-		if ($modelid == $minf[0]) $modelTable .= " CHECKED";
 		$modelTable .= ">\n";
 		$modelTable .= "Use<br/>Model\n";
 

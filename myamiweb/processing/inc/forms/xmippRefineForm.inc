@@ -15,7 +15,6 @@ require_once "basicRefineForm.inc";
 
 class XmippRefineForm extends BasicRefineForm 
 {
-	public function getMethodType() { return "xmipp"; }
 	public function createFormParams() { return new XmippParams(); }
 	
 	public function advancedParamForm()
@@ -24,7 +23,7 @@ class XmippRefineForm extends BasicRefineForm
 		$params = $this->getFormParams();
 		
 		// display form title
-		echo"
+		$html .="
 	    <br />
 	    <H4>Xmipp Reconstruction Parameters</H4>
 	    <hr />";
@@ -32,18 +31,19 @@ class XmippRefineForm extends BasicRefineForm
 		$shortSize = 4;
 		$longSize = 20;
 		
-		echo $params->insertTextField( "mask", $longSize, "(if you use this field you cannot use Mask Radius)" );
-		echo $params->insertTextField( "maxAngularChange", $longSize );
-		echo $params->insertTextField( "maxChangeOffset", $longSize );
-		echo $params->insertTextField( "search5DShift", $longSize );
-		echo $params->insertTextField( "search5DStep", $longSize );
-		echo $params->insertTextField( "reconMethod", $longSize );
-		echo $params->insertTextField( "ARTLambda", $longSize );
-		echo $params->insertTextField( "fourierMaxFrequencyOfInterest",  $shortSize );
+		$html .= $params->insertTextField( "mask", $longSize, "(if you use this field you cannot use Mask Radius)" );
+		$html .= $params->insertTextField( "maxAngularChange", $longSize );
+		$html .= $params->insertTextField( "maxChangeOffset", $longSize );
+		$html .= $params->insertTextField( "search5DShift", $longSize );
+		$html .= $params->insertTextField( "search5DStep", $longSize );
+		$html .= $params->insertTextField( "reconMethod", $longSize );
+		$html .= $params->insertTextField( "ARTLambda", $longSize );
+		$html .= $params->insertTextField( "fourierMaxFrequencyOfInterest",  $shortSize );
 		
-		echo $params->insertCheckboxField( "doComputeResolution" );
-		echo "<br/>\n";	
-
+		$html .= $params->insertCheckboxField( "doComputeResolution" );
+		$html .= "<br/>\n";	
+		
+		return $html;
 	}
 	
 	public function buildCommand( $params )
@@ -56,29 +56,33 @@ class XmippRefineForm extends BasicRefineForm
 	    $command.='--rundir=. ';
 	    $command.='--pixelSize='.$apix.' ';
 	    $command.='--boxSize='.$box.' ';
-	    $command.='--NumberOfIterations='.$params["numIters"]["value"].' ';
-	    $command.='--MaskRadius='.$params["outerMaskRadius"]["value"].' ';
-	    $command.='--Mask='.$params["mask"]["value"].' ';
-	    $command.='--InnerRadius='.$params["innerAlignRadius"]["value"].' ';
-	    $command.='--OuterRadius='.$params["outerAlignRadius"]["value"].' ';
-	    $command.='--AngularSteps='.$params["angSampRate"]["value"].' ';
-	    $command.='--MaxAngularChange='.$params["maxAngularChange"]["value"].' ';
-	    $command.='--MaxChangeOffset='.$params["maxChangeOffset"]["value"].' ';
-	    $command.='--Search5DShift='.$params["search5DShift"]["value"].' ';
-	    $command.='--Search5DStep='.$params["search5DStep"]["value"].' ';
-	    $command.='--SymmetryGroup='.$params["symmetry"]["value"].' ';
-	    $command.='--DiscardPercentage='.$params["percentDiscard"]["value"].' ';
-	    $command.='--ReconstructionMethod='.$params["reconMethod"]["value"].' ';
-	    $command.='--ARTLambda='.$params["ARTLambda"]["value"].' ';
-	    $command.='--FourierMaxFrequencyOfInterest='.$params["fourierMaxFrequencyOfInterest"]["value"].' ';
+	    $command.='--NumberOfIterations='.$params->getParamValue("numIters").' ';
+	    $command.='--MaskRadius='.$params->getParamValue("outerMaskRadius").' ';
+	    $command.='--Mask='.$params->getParamValue("mask").' ';
+	    $command.='--InnerRadius='.$params->getParamValue("innerAlignRadius").' ';
+	    $command.='--OuterRadius='.$params->getParamValue("outerAlignRadius").' ';
+	    $command.='--AngularSteps='.$params->getParamValue("angSampRate").' ';
+	    $command.='--MaxAngularChange='.$params->getParamValue("maxAngularChange").' ';
+	    $command.='--MaxChangeOffset='.$params->getParamValue("maxChangeOffset").' ';
+	    $command.='--Search5DShift='.$params->getParamValue("search5DShift").' ';
+	    $command.='--Search5DStep='.$params->getParamValue("search5DStep").' ';
+	    $command.='--SymmetryGroup='.$params->getParamValue("symmetry").' ';
+	    $command.='--DiscardPercentage='.$params->getParamValue("percentDiscard").' ';
+	    $command.='--ReconstructionMethod='.$params->getParamValue("reconMethod").' ';
+	    $command.='--ARTLambda='.$params->getParamValue("ARTLambda").' ';
+	    $command.='--FourierMaxFrequencyOfInterest='.$params->getParamValue("fourierMaxFrequencyOfInterest").' ';
 	    
-	    if ( !empty($params["doComputeResolution"]["value"]) )
+	    $doComputeResolution 	= $params->getParamValue("doComputeResolution");
+	    $filterComputed 		= $params->getParamValue("filterComputed");
+	    $filterEstimated 		= $params->getParamValue("filterEstimated");
+	    
+	    if ( !empty($doComputeResolution) )
 	        $command.='--DoComputeResolution ';
-	    if ( !empty($params["filterComputed"]["value"]) || !empty($params["filterEstimated"]["value"]) ) 
+	    if ( !empty($filterComputed) || !empty($filterEstimated) ) 
 	        $command.='--DoLowPassFilter ';
-	    if ( !empty($params["filterEstimated"]["value"]) )
+	    if ( !empty($filterEstimated) )
 	        $command.='--DontUseFscForFilter ';
-	    $command.='--ConstantToAddToFiltration='.$params["filterConstant"]["value"].' ';	
+	    $command.='--ConstantToAddToFiltration='.$params->getParamValue("filterConstant").' ';	
 	    			
 		return $command;
 	}
@@ -139,6 +143,44 @@ class XmippRefineForm extends BasicRefineForm
 		$this->addDefaultParams( $icosSet );
 	}
 	
+	// set the default values that are populated
+	// when the user selects the "Set Defaults" button.
+	// $box is the box size from the selected stack.
+	public function setDefaults($box)
+	{
+		$rad = ($box/2)-2;
+		$javafunc = "
+	  <script type='text/javascript'>
+	    function setDefaults(obj) {
+	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $rad;
+	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = $rad;
+	      if (obj.innerAlignRadius) obj.innerAlignRadius.value = '4';
+	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $rad;
+	      if (obj.symmetry) obj.symmetry.value = 'c1';
+	      if (obj.numIters) obj.numIters.value = '10';
+	      if (obj.angSampRate) obj.angSampRate.value = '4x10:2x5:2x3:2x2';
+	      if (obj.percentDiscard) obj.percentDiscard.value = '10';
+	      if (obj.filterEstimated) obj.filterEstimated.checked = false;
+	      if (obj.filterResolution) obj.filterResolution.value = '';
+	      if (obj.filterComputed ) obj.filterComputed.checked = true;
+	      if (obj.filterConstant) obj.filterConstant.value = '0.1';
+	      if (obj.mask) obj.mask.value = '';
+	      if (obj.maxAngularChange) obj.maxAngularChange.value = '4x1000:2x20:2x9:2x6';
+	      if (obj.maxChangeOffset) obj.maxChangeOffset.value = '1000';
+	      if (obj.search5DShift) obj.search5DShift.value = '4x5:0';
+	      if (obj.search5DStep) obj.search5DStep.value = '2';
+	      if (obj.reconMethod) obj.reconMethod.value = 'fourier';
+	      if (obj.ARTLambda) obj.ARTLambda.value = '0.15';
+	      if (obj.doComputeResolution) obj.doComputeResolution.checked = true;
+	      if (obj.fourierMaxFrequencyOfInterest) obj.fourierMaxFrequencyOfInterest.value = '0.25';
+
+	      return;
+	    }
+	  </script>\n";
+		return $javafunc;
+	}
+	
+	
 }
 
 // extend the RefineFormParameters class to add the xmipp 
@@ -166,7 +208,7 @@ class XmippParams extends RefineFormParameters
 		$this->addParam( "fourierMaxFrequencyOfInterest", $fourierMaxFrequencyOfInterest, "Initial maximum frequency used by reconstruct fourier " );
 		
 		// disable any general params that do not apply to this method
-		$this->disableParam("innerMaskRadius");		
+		$this->hideParam("innerMaskRadius");		
 	}
 	
 	function validate() 

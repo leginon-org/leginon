@@ -17,11 +17,26 @@ class FormParameters
 	//
 	// params are a name indexed array of parameters, which are themselves arrays 
 	// containing fields for name, value, label, and enable.	
-	final public function addParam( $name, $defaultValue='', $label='', $enable='' )
+	final public function addParam( $name, $defaultValue='', $label='', $enable='', $hidden=false )
 	{
 		if ( !empty( $name ) ) {
-			$this->params[$name] = array( "name"=>$name, "value"=>$defaultValue, "label"=>$label, "enable"=>$enable );
+			$this->params[$name] = array( "name"=>$name, "value"=>$defaultValue, "label"=>$label, "enable"=>$enable, "hidden"=>$hidden );
 		}
+	}
+	
+	final public function setParamValue( $name, $value ) 
+	{
+		$this->params[$name]["value"] = $value;
+	}
+	
+	final public function getParamValue( $name ) 
+	{
+		return $this->params[$name]["value"];
+	}
+	
+	final public function setParamLabel( $name, $label ) 
+	{
+		$this->params[$name]["label"] = $label;
 	}
 	
 	// returns the parameter array
@@ -35,6 +50,13 @@ class FormParameters
 	final protected function disableParam( $name ) 
 	{
 		$this->params[$name]["enable"] = 'DISABLED';
+	}
+	
+	// extending classes should use this function in the constructor
+	// to completely hide the parameter.
+	final protected function hideParam( $name ) 
+	{
+		$this->params[$name]["hidden"] = true;
 	}
 	
 	// TODO: rename to updateParamValues ???
@@ -85,7 +107,7 @@ class FormParameters
 		$errorArray = $validator->getErrorMessage();
 		
 		foreach ( $errorArray as $name => $error ) {
-			$errorMsg .= "<b>Error: </b><i> ".$this->params[$name]['label']."</i> - $error \n";
+			$errorMsg .= "<b>Error: </b><i> ".$this->params[$name]['label']."</i> - $error <br />\n";
 		}
 		
 		return $errorMsg;
@@ -93,39 +115,71 @@ class FormParameters
 	
 	public function insertTextField( $name, $size=20, $note='' )
 	{
-		$html = $this->formLib->insertTextField( $this->params[$name]['name'], 
-												$this->params[$name]['label'], 
-												$this->params[$name]['value'], 
-												$size, 
-												$this->params[$name]['enable'], 
-												$note );
+		// if the parameter has been "hidden" just return an empty string.
+		if ( $this->params[$name]['hidden'] ) {
+			$html = "";
+		} else {
+			$html = $this->formLib->insertTextField( $this->params[$name]['name'], 
+													$this->params[$name]['label'], 
+													$this->params[$name]['value'], 
+													$size, 
+													$this->params[$name]['enable'], 
+													$note );
+		}
 		
 		return $html;
 	}
 	
 	public function insertStackedTextField( $name, $size=20, $note='' )
 	{
-		$html = $this->formLib->insertStackedTextField( $this->params[$name]['name'], 
-														$this->params[$name]['label'], 
-														$this->params[$name]['value'], 
-														$size, 
-														$this->params[$name]['enable'], 
-														$note );
-		
+		// if the parameter has been "hidden" just return an empty string.
+		if ( $this->params[$name]['hidden'] ) {
+			$html = "";
+		} else {
+			$html = $this->formLib->insertStackedTextField( $this->params[$name]['name'], 
+															$this->params[$name]['label'], 
+															$this->params[$name]['value'], 
+															$size, 
+															$this->params[$name]['enable'], 
+															$note );
+		}
+			
 		return $html;
 	}
 	
 	public function insertCheckboxField( $name, $note='' )
 	{
-		$html = $this->formLib->insertCheckboxField( $this->params[$name]['name'], 
-													$this->params[$name]['label'], 
-													$this->params[$name]['value'], 
-													$this->params[$name]['enable'], 
-													$note );
+		// if the parameter has been "hidden" just return an empty string.
+		if ( $this->params[$name]['hidden'] ) {
+			$html = "";
+		} else {
+			$html = $this->formLib->insertCheckboxField( $this->params[$name]['name'], 
+														$this->params[$name]['label'], 
+														$this->params[$name]['value'], 
+														$this->params[$name]['enable'], 
+														$note );
+		}
 
 		return $html;
-	}
-		
+	}		
+
+	public function insertRadioField( $name, $value, $label, $note='' )
+	{
+		// if the parameter has been "hidden" just return an empty string.
+		if ( $this->params[$name]['hidden'] ) {
+			$html = "";
+		} else {
+			$checked = ( $this->params[$name]['value'] == $value ) ? "CHECKED" : "";
+			$html = $this->formLib->insertRadioField( $this->params[$name]['name'], 
+														$label, 
+														$value,
+														$checked, 
+														$this->params[$name]['enable'], 
+														$note );
+		}
+
+		return $html;
+	}		
 }
 
 ?>

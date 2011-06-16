@@ -15,7 +15,6 @@ require_once "basicRefineForm.inc";
 
 class XmippML3DRefineForm extends BasicRefineForm 
 {
-	public function getMethodType() { return "xmippml3d"; }
 	public function createFormParams() { return new XmippML3DParams(); }
 	
 	public function advancedParamForm()
@@ -24,34 +23,36 @@ class XmippML3DRefineForm extends BasicRefineForm
 		$params = $this->getFormParams();
 		
 		// display form title
-		echo"
+		$html .="
 	    <br />
 	    <H4>Xmipp Reconstruction Parameters</H4>
 	    <hr />";
 
 		$shortSize = 4;
 		$longSize = 20;
-		echo $params->insertCheckboxField( "DoMlf", $longSize );
-		echo $params->insertTextField( "HighResLimit", $longSize );
-		echo $params->insertCheckboxField( "DoCorrectGreyScale", $longSize );
-		echo $params->insertTextField( "ProjMatchSampling", $longSize );
-		echo $params->insertTextField( "LowPassFilterReference", $longSize );
-		echo $params->insertTextField( "NumberOfReferences", $longSize );
+		$html .= $params->insertCheckboxField( "DoMlf" );
+		$html .= $params->insertTextField( "HighResLimit", $longSize );
+		$html .= $params->insertCheckboxField( "DoCorrectGreyScale" );
+		$html .= $params->insertTextField( "ProjMatchSampling", $longSize );
+		$html .= $params->insertTextField( "LowPassFilterReference", $longSize );
+		$html .= $params->insertTextField( "NumberOfReferences", $longSize );
 								
-		echo "<br/>\n";		
+		$html .= "<br/>\n";		
+		
+		return $html;
 	}
 	
 	public function buildCommand( $params )
 	{		
 		$command = 'prepXmippML3D.py ';
-		$command.= '--AngularSampling='.$params["angSampRate"]["value"].' ';
-		$command.= '--symid='.$params["symmetry"]["value"].' ';
-		$command.= '--DoMlf='.$params["DoMlf"]["value"].' ';
-		$command.= '--HighResLimit='.$params["HighResLimit"]["value"].' ';
-		$command.= '--DoCorrectGreyScale='.$params["DoCorrectGreyScale"]["value"].' ';
-		$command.= '--ProjMatchSampling='.$params["ProjMatchSampling"]["value"].' ';
-		$command.= '--LowPassFilterReference='.$params["LowPassFilterReference"]["value"].' ';
-		$command.= '--NumberOfReferences='.$params["NumberOfReferences"]["value"].' ';
+		$command.= '--AngularSampling='.$params->getParamValue("angSampRate").' ';
+		$command.= '--symid='.$params->getParamValue("symmetry").' ';
+		$command.= '--DoMlf='.$params->getParamValue("DoMlf").' ';
+		$command.= '--HighResLimit='.$params->getParamValue("HighResLimit").' ';
+		$command.= '--DoCorrectGreyScale='.$params->getParamValue("DoCorrectGreyScale").' ';
+		$command.= '--ProjMatchSampling='.$params->getParamValue("ProjMatchSampling").' ';
+		$command.= '--LowPassFilterReference='.$params->getParamValue("LowPassFilterReference").' ';
+		$command.= '--NumberOfReferences='.$params->getParamValue("NumberOfReferences").' ';
 		
 		return $command;
 	}
@@ -89,6 +90,32 @@ class XmippML3DRefineForm extends BasicRefineForm
 		$this->addDefaultParams( $asymmSet );
 
 	}
+	
+	// set the default values that are populated
+	// when the user selects the "Set Defaults" button.
+	// $box is the box size from the selected stack.
+	public function setDefaults( $box )
+	{
+		$rad = ($box/2)-2;
+		$javafunc = "
+	  <script type='text/javascript'>
+	    function setDefaults(obj) {
+	      if (obj.symmetry) obj.symmetry.value = 'c1';
+	      if (obj.numIters) obj.numIters.value = '10';
+	      if (obj.angSampRate) obj.angSampRate.value = '4x10:2x5:2x3:2x2';
+	      if (obj.DoMlf) obj.DoMlf.checked = '';
+	      if (obj.HighResLimit) obj.HighResLimit.value = '';
+	      if (obj.DoCorrectGreyScale) obj.DoCorrectGreyScale.checked = '';
+		  if (obj.ProjMatchSampling) obj.ProjMatchSampling.value = '';
+	      if (obj.LowPassFilterReference) obj.LowPassFilterReference.value = '';
+	      if (obj.NumberOfReferences) obj.NumberOfReferences.value = '';
+	      
+	      return;
+	    }
+	  </script>\n";
+		return $javafunc;
+	}
+	
 }
 
 
@@ -114,37 +141,20 @@ class XmippML3DParams extends RefineFormParameters
 		$this->addParam( "NumberOfReferences", $NumberOfReferences, "number of references" );
 		
 		// disable any general params that do not apply to this method
-		$this->disableParam("outerMaskRadius");
-		$this->disableParam("innerMaskRadius");
-		$this->disableParam("outerAlignRadius");
-		$this->disableParam("innerAlignRadius");
-		$this->disableParam("percentDiscard");
-		$this->disableParam("filterEstimated");
-		$this->disableParam("filterResolution");
-		$this->disableParam("filterComputed");
-		$this->disableParam("filterConstant");
+		$this->hideParam("outerMaskRadius");
+		$this->hideParam("innerMaskRadius");
+		$this->hideParam("outerAlignRadius");
+		$this->hideParam("innerAlignRadius");
+		$this->hideParam("percentDiscard");
+		$this->hideParam("filterEstimated");
+		$this->hideParam("filterResolution");
+		$this->hideParam("filterComputed");
+		$this->hideParam("filterConstant");
 
 		// add parameter requirements
 		$this->addValidation( "symmetry", "req" );
 		$this->addValidation( "angSampRate", "req" );
 		$this->addValidation( "NumberOfReferences", "req" );
-	}
-	
-	function validate() 
-	{
-		$msg = parent::validate();
-		
-		
-		// TODO: if amask is used, then xfiles must also be used
-//		if ($_POST['amask1'.$i] || $_POST['amask2'.$i] || $_POST['amask3'.$i]) {
-//			if (!($_POST['amask1'.$i] && $_POST['amask2'.$i] && $_POST['amask3'.$i]))
-//				jobForm("ERROR: All 3 amask values of amask must be entered for iteration $i");
-//			if (!$_POST['xfiles'.$i])
-//				jobForm("ERROR: amask requires the use of xfiles for iteration $i");
-//		}
-		
-		
-		return $msg;
 	}
 }
 

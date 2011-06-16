@@ -24,15 +24,6 @@ require_once "inc/forms/stackPrepForm.inc";
 require_once "inc/forms/runParametersForm.inc";
 require_once "inc/forms/xmippML3DRefineForm.inc";
 
-// TODO: should be able to remove this
-$selectedcluster=$CLUSTER_CONFIGS[0];
-if ($_POST['cluster']) {
-	$selectedcluster=$_POST['cluster'];
-}
-$selectedcluster=strtolower($selectedcluster);
-@include_once $selectedcluster.".php";
-
-
 if ($_POST['process']) {
 	createCommand(); // generate command
 } else {
@@ -44,20 +35,20 @@ if ($_POST['process']) {
 // Appion, it's form class should be included in this file
 // and it should be added to this function. No other modifications
 // to this file should be necessary.
-function createSelectedRefineForm( $method )
+function createSelectedRefineForm( $method, $stackId='', $modelArray='', $kv=''  )
 {
 	switch ( $method ) {
 		case eman:
-			$selectedRefineForm = new EmanRefineForm();
+			$selectedRefineForm = new EmanRefineForm( $method, $stackId, $modelArray, $kv );
 			break;
 		case frealign:
-			$selectedRefineForm = new FrealignRefineForm();
+			$selectedRefineForm = new FrealignRefineForm( $method, $stackId, $modelArray, $kv );
 			break;
 		case xmipp:
-			$selectedRefineForm = new XmippRefineForm();
+			$selectedRefineForm = new XmippRefineForm( $method, $stackId, $modelArray, $kv );
 			break;
 		case xmippml3d:
-			$selectedRefineForm = new XmippML3DRefineForm();
+			$selectedRefineForm = new XmippML3DRefineForm( $method, $stackId, $modelArray, $kv );
 			break;
 		default:
 			assert(false); //TODO: not yet implemented exception??
@@ -73,14 +64,17 @@ function createSelectedRefineForm( $method )
  ****************************************** */
 
 function jobForm($extra=false) {
-	$expId = $_GET['expId'];
-	$projectId = getProjectId();
-
+	$expId 			= $_GET['expId'];
+	$projectId 		= getProjectId();
+	$reconMethod 	= $_POST['method'];
+	
+	// find any selected models
 	foreach( $_POST as $key=>$value ) {
 		if (strpos($key,"model_" ) !== False) {
-			$modelinfo = explode('|--|',$_POST['model']);
-			$modelid = $modelinfo[0];
-			$modelArray[] = array( 'name'=>$key, 'id'=>$modelid );
+			preg_match('/(\D+)_(\d+)/', $key, $matches);
+			$id = $matches[2];
+			
+			$modelArray[] = array( 'name'=>$key, 'id'=>$id );
 		}
 	}
 	
@@ -89,76 +83,48 @@ function jobForm($extra=false) {
 	if (!$_POST['stackval'])
 		$extra = "ERROR: no stack selected";
 
-	// Instantiate the class that defines the forms for the selected method of refinement.
-	$selectedRefineForm = createSelectedRefineForm( $_POST['method'] );
-	
-	## get path data for this session for output
+	// get path data for this session for output
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
 	$sessionpath = getBaseAppionPath($sessiondata).'/recon/';
 
+	// ensure the cs value is set, or don't process
 	if ($leginondata->getCsValueFromSession($expId) === false) {
 		$extra = "ERROR: Cs value of the images in this session is not unique or known, can't process.";
 	}
 	
+	// set the runname
+	// the default run name is the jobtype followed by an ever incrementing number
+	$jobType = $reconMethod.'_recon';
 	$particle = new particledata();
-
-	// find if there are ctffind runs (for frealign option)
-	$ctffindruns = $particle->getCtfRunIds($expId, $showHidden=False, $ctffind=True);
+	$reconruns = $particle->getMaxRunNumber( $jobType, $expId );
 	
-	// create a default run name
-	// TODO: make sure changes to this in eman are carried over
+	// sanity check - make certain we are not going to overwrite data
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	$reconruns = count($particle->getReconIdsFromSession($expId));
-	while (glob($outdir.'*recon'.($reconruns+1))) {
+	
+	// TODO: should '*recon' be repaced with $jobType??
+	while (file_exists($outdir.'*recon'.($reconruns+1))) {
 		$reconruns += 1;
 	}
-	$reconMethod = $selectedRefineForm->getMethodType();
-	$defrunid = $reconMethod.'_recon'.($reconruns+1);
-
-	## get stack data
-	$stackinfo = explode('|--|',$_POST['stackval']);
-	$stackid=$stackinfo[0];
-	$nump=$particle->getNumStackParticles($stackid);
-	$apix=$stackinfo[1];
-	$box=$stackinfo[2];
-
-	// TODO: error handling
-	if ($_POST['reconstackval']) {
-		$reconstackinfo = explode('|--|',$_POST['reconstackval']);
-		$reconstackid=$reconstackinfo[0];
-		$reconapix=$reconstackinfo[1];
-		$reconbox=$reconstackinfo[2];
-		$reconnumpart=$particle->getNumStackParticles($reconstackid);
-		if ($reconbox != $box)
-		stackModelForm("ERROR: refine stack boxsize ($box) is different from recon stack boxsize ($reconbox)");
-		if ($reconapix != $apix)
-		stackModelForm("ERROR: refine stack apix ($apix) is different from recon stack apix ($reconapix)");
-		if ($reconnumpart != $nump)
-		stackModelForm("ERROR: refine stack particle count ($nump) is different from recon stack particle count ($reconnumpart)");
-	}
-
-	// TODO: parse POST for all selected models
-	//print_r($_POST);
-	## get model data
-	$modelinfo = explode('|--|',$_POST['model']);
-	$modelid = $modelinfo[0];
-	$modelpath = $modelinfo[1];
-	$modelname = $modelinfo[2];
-
-	$syminfo = explode(' ',$modelinfo[4]);
-	$modsym = $syminfo[0];
-	if ($modsym == 'Icosahedral') $modsym='icos';
-
-	$nodes = ($_POST['nodes']) ? $_POST['nodes'] : C_NODES_DEF;
-	$ppn = ($_POST['ppn']) ? $_POST['ppn'] : C_PPN_DEF;
-	$rpn = ($_POST['rpn']) ? $_POST['rpn'] : C_RPROCS_DEF;
+	$defrunid = $jobType.($reconruns+1);
+	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunid;
+	
+	// get stack data
+	$stackinfo 	= explode('|--|',$_POST['stackval']);
+	$stackid	= $stackinfo[0];
+	$apix		= $stackinfo[1];
+	$box		= $stackinfo[2];
 
 	// preset information from stackid
 	$presetinfo = $particle->getPresetFromStackId($stackid);
 	$kv = $presetinfo['hightension']/1e3;
 
-	$javafunc .= $selectedRefineForm->setGeneralDefaults($box);
+	// Instantiate the class that defines the forms for the selected method of refinement.
+	$selectedRefineForm = createSelectedRefineForm( $reconMethod, $stackid, $modelArray, $kv );
+	
+	// add javascript functions
+	$javafunc .= $selectedRefineForm->setDefaults($box);
+	$javafunc .= $selectedRefineForm->additionalJavaScript();
 	$javafunc .= writeJavaPopupFunctions('appion');
 	$javafunc .= writeJavaPopupFunctions('frealign');
 	$javafunc .= writeJavaPopupFunctions('eman');
@@ -173,10 +139,10 @@ function jobForm($extra=false) {
 	// create main form
 	echo "<form name='prepRefine' method='post' action='$formaction'><br/>\n";
 	
+	// post hidden values
 	foreach ( $modelArray as $model ) {
-		echo "<input type='hidden' name='".$model['name']."' value='".$_POST[$model['name']]."'>\n";
+		echo "<input type='hidden' name='".$model['name']."' value='".$model['id']."'>\n";
 	}
-	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
 	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
 	echo "<input type='hidden' name='method' value='".$_POST['method']."'>\n";
 	echo "<input type='hidden' NAME='kv' value='$kv'>";
@@ -184,15 +150,8 @@ function jobForm($extra=false) {
 	if ($_POST['reconstackval'] && $stackid != $reconstackid) {
 		echo "<input type='hidden' name='reconstackval' value='".$_POST['reconstackval']."'>\n";
 	}
-
-	$sym = ($_POST['sym']) ? $_POST['sym'] : $modsym;
-
-	// -----------------------------------------------
-	// add forms for all the needed parameters
-	// -----------------------------------------------
 	
 	// add Processing Run Parameter fields
-	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunid;
 	$runParametersForm = new RunParametersForm( $runname, $outdir );
 	echo $runParametersForm->generateForm( $_POST );
 	
@@ -201,13 +160,13 @@ function jobForm($extra=false) {
 	echo $stackPrepForm->generateForm( $_POST );
 	
 	// add the parameters that apply to all methods of reconstruction
-	$selectedRefineForm->generalParamForm();
+	echo $selectedRefineForm->generalParamForm();
 	
 	// add parameters specific to the refine method selected
 	echo "<INPUT TYPE='checkbox' NAME='showAdvanceParams' onChange='javascript:unhide();' VALUE='' >";
 	echo " Show Advanced Parameters <br />";
 	echo "<div align='left' id='div1' class='hidden' >";
-	$selectedRefineForm->advancedParamForm();
+	echo $selectedRefineForm->advancedParamForm();
 	echo "</div>";
 	
 	// add submit button
@@ -222,13 +181,13 @@ function jobForm($extra=false) {
 	echo "<br/>\n";
 	echo "<table class='tablebubble'><tr><td>\n";
 	echo stacksummarytable($stackid, true);
-	if ($_POST['reconstackval'] && $stackid != $reconstackid) {
-		echo "</td></tr><tr><td>\n";
-		echo stacksummarytable($reconstackid, true);
+	echo "</td></tr>";
+	foreach ( $modelArray as $model ) {
+		echo "<tr><td>\n";
+		echo modelsummarytable( $model['id'], true );
+		echo "</td></tr>";
 	}
-	echo "</td></tr><tr><td>\n";
-	echo modelsummarytable($modelid, true);
-	echo "</td></tr></table>\n";
+	echo "</table>\n";
 
 	// add reference for selected refinement method
 	echo showReference($_POST['method']);
@@ -252,7 +211,7 @@ function createCommand ($extra=False)
 	// collect the user selected model id(s)
 	foreach( $_POST as $key=>$value ) {
 		if (strpos($key,"model_" ) !== False) {
-			$modelids.= "$key:";
+			$modelids.= "$value,";
 		}
 	}
 	

@@ -15,7 +15,6 @@ require_once "basicRefineForm.inc";
 
 class EmanRefineForm extends BasicRefineForm 
 {
-	public function getMethodType() { return "eman"; }
 	public function createFormParams() { return new EmanParams(); }
 	
 	public function advancedParamForm()
@@ -24,67 +23,69 @@ class EmanRefineForm extends BasicRefineForm
 		$params = $this->getFormParams();
 		
 		// display form title
-		echo"
+		$html .="
 	    <br />
 	    <H4>EMAN Reconstruction Parameters</H4>
 	    <hr />";
 
 		$shortSize = 4;
 		$longSize = 20;
-		echo $params->insertTextField( "imask", $longSize );
-		echo $params->insertTextField( "amask", $longSize );
-		echo $params->insertTextField( "maxshift", $longSize );
-		echo $params->insertTextField( "hard", $longSize );
-		echo $params->insertTextField( "clskeep", $longSize );
-		echo $params->insertTextField( "clsiter", $longSize );
-		echo $params->insertTextField( "xfiles", $longSize );
-		echo $params->insertTextField( "shrink", $longSize );
-		echo $params->insertTextField( "euler2", $longSize );
-		echo $params->insertTextField( "median", $longSize );
-		echo $params->insertTextField( "phscls", $longSize );
-		echo $params->insertTextField( "refine", $longSize );
-		echo $params->insertTextField( "tree", $longSize );
+		$html .= $params->insertTextField( "imask", $longSize );
+		$html .= $params->insertTextField( "amask", $longSize );
+		$html .= $params->insertTextField( "maxshift", $longSize );
+		$html .= $params->insertTextField( "hard", $longSize );
+		$html .= $params->insertTextField( "clskeep", $longSize );
+		$html .= $params->insertTextField( "clsiter", $longSize );
+		$html .= $params->insertTextField( "xfiles", $longSize );
+		$html .= $params->insertTextField( "shrink", $longSize );
+		$html .= $params->insertTextField( "euler2", $longSize );
+		$html .= $params->insertTextField( "median", $longSize );
+		$html .= $params->insertTextField( "phscls", $longSize );
+		$html .= $params->insertTextField( "refine", $longSize );
+		$html .= $params->insertTextField( "tree", $longSize );
 		
-		echo "<br />\n";
-		echo "<b>Coran parameters</b>\n";
-		echo "<br />\n";
+		$html .= "<br />\n";
+		$html .= "<b>Coran parameters</b>\n";
+		$html .= "<br />\n";
 		
-		echo $params->insertTextField( "coranCC", $longSize );
-		echo $params->insertTextField( "coranmask", $longSize );
-		echo $params->insertTextField( "coranlp", $longSize );
-		echo $params->insertTextField( "coranhp", $longSize );
-		echo $params->insertTextField( "coranhcc", $longSize );
+		$html .= $params->insertTextField( "coranCC", $longSize );
+		$html .= $params->insertTextField( "coranmask", $longSize );
+		$html .= $params->insertTextField( "coranlp", $longSize );
+		$html .= $params->insertTextField( "coranhp", $longSize );
+		$html .= $params->insertTextField( "coranhcc", $longSize );
 								
-		echo "<br/>\n";		
+		$html .= "<br/>\n";		
+		
+		return $html;
 	}
 	
-	public function buildCommand( $params )
+	public function buildCommand( $paramSet )
 	{		
 		$command = 'prepEman.py ';
-		$command.= '--ang='.$params["angSampRate"]["value"].' ';
-		$command.= '--mask='.$params["outerMaskRadius"]["value"].' ';
-		$command.= '--sym='.$params["symmetry"]["value"].' ';
-		$command.= '--imask='.$params["imask"]["value"].' ';
-		$command.= '--amask='.$params["amask"]["value"].' ';		
-		$command.= '--maxshift='.$params["maxshift"]["value"].' ';
-		$command.= '--hard='.$params["hard"]["value"].' ';
-		$command.= '--clskeep='.$params["clskeep"]["value"].' ';
-		$command.= '--clsiter='.$params["clsiter"]["value"].' ';
-		$command.= '--xfiles='.$params["xfiles"]["value"].' ';
-		$command.= '--shrink='.$params["shrink"]["value"].' ';
-		$command.= '--euler2='.$params["euler2"]["value"].' ';
-		$command.= '--median='.$params["median"]["value"].' ';
-		$command.= '--phscls='.$params["phscls"]["value"].' ';
-		$command.= '--refine='.$params["refine"]["value"].' ';
-		$command.= '--tree='.$params["tree"]["value"].' ';
-		$command.= '--coranCC='.$params["coranCC"]["value"].' ';
-		$command.= '--coranmask='.$params["coranmask"]["value"].' ';
-		$command.= '--coranlp='.$params["coranlp"]["value"].' ';
-		$command.= '--coranhp='.$params["coranhp"]["value"].' ';
-		$command.= '--coranhcc='.$params["coranhcc"]["value"].' ';	
+		$command.= '--ang='.$paramSet->getParamValue("angSampRate").' ';
+		$command.= '--mask='.$paramSet->getParamValue("outerMaskRadius").' ';
+		$command.= '--sym='.$paramSet->getParamValue("symmetry").' ';
+		$command.= '--imask='.$paramSet->getParamValue("imask").' ';
+		$command.= '--amask='.$paramSet->getParamValue("amask").' ';		
+		$command.= '--maxshift='.$paramSet->getParamValue("maxshift").' ';
+		$command.= '--hard='.$paramSet->getParamValue("hard").' ';
+		$command.= '--clskeep='.$paramSet->getParamValue("clskeep").' ';
+		$command.= '--clsiter='.$paramSet->getParamValue("clsiter").' ';
+		$command.= '--xfiles='.$paramSet->getParamValue("xfiles").' ';
+		$command.= '--shrink='.$paramSet->getParamValue("shrink").' ';
+		$command.= '--euler2='.$paramSet->getParamValue("euler2").' ';
+		$command.= '--median='.$paramSet->getParamValue("median").' ';
+		$command.= '--phscls='.$paramSet->getParamValue("phscls").' ';
+		$command.= '--refine='.$paramSet->getParamValue("refine").' ';
+		$command.= '--tree='.$paramSet->getParamValue("tree").' ';
+		$command.= '--coranCC='.$paramSet->getParamValue("coranCC").' ';
+		$command.= '--coranmask='.$paramSet->getParamValue("coranmask").' ';
+		$command.= '--coranlp='.$paramSet->getParamValue("coranlp").' ';
+		$command.= '--coranhp='.$paramSet->getParamValue("coranhp").' ';
+		$command.= '--coranhcc='.$paramSet->getParamValue("coranhcc").' ';	
 		
-		if ($params["filterEstimated"]["value"]=='on')
-			$command.= '--filt3d='.$params["filterResolution"]["value"].' ';
+		if ($paramSet->getParamValue("filterEstimated") == 'on')
+			$command.= '--filt3d='.$paramSet->getParamValue("filterResolution").' ';
 		
 		return $command;
 	}
@@ -161,6 +162,105 @@ class EmanRefineForm extends BasicRefineForm
 							$tree, $coranCC, $coranmask, $coranlp, $coranhp, $coranhcc );
 		$this->addDefaultParams( $virusSet );
 	}
+	
+	// The user selected to import parameters from an existing refinement.
+	// This will gather the parameter values and put them into our param 
+	// format ('iterations'x'value':)
+	// Returns a set of Form Parameters.
+	protected function importParamsFromRefinement( $defaultSetId )
+	{
+		$paramSet = $this->createFormParams();
+		$particle = new particledata();
+		$iterinfo = $particle->getIterationInfo( $defaultSetId );
+		
+		// get initial model info
+		$refinfo 	= $particle->getRefinementRunInfo( $defaultSetId );
+		$initmodel 	= $particle->getInitModelInfo($refinfo['REF|ApInitialModelData|initialModel']);
+		$stackinfo 	= $particle->getStackParams($refinfo['REF|ApStackData|stack']);
+		
+		// get scaling factor for box sizes
+		$prevboxsize	= $stackinfo['boxsize'];
+		// TODO: get $box from our stack id
+		$boxscale 		= $box / $prevboxsize;
+		$numIters 		= count($iterinfo);
+		
+		$paramSet->setParamValue( "numIters", $numIters );
+				
+		for ( $i=1; $i<=$numIters; $i++ ) {
+			foreach ($iterinfo as $iter) {
+				if ($iter['iteration'] == $i) {
+					//var_dump($iter);
+					$paramSet->addIterationToValue( "angSampRate", $iter['ang'] );
+					$outerMaskRadius = ceil($iter['mask']*$boxscale);
+					if (floor($iter['imask']*$boxscale) > 0)
+						$paramSet->addIterationToValue( "imask", floor($iter['imask']*$boxscale) );
+					$paramSet->addIterationToValue( "amask1", $iter['EMAN_amask1'] );
+					$paramSet->addIterationToValue( "amask2", $iter['EMAN_amask2'] );
+					$paramSet->addIterationToValue( "amask3", $iter['EMAN_amask3'] );
+					$paramSet->addIterationToValue( "maxhsift", $iter['EMAN_maxshift'] );
+					$paramSet->addIterationToValue( "hard", $iter['EMAN_hard'] );
+					$paramSet->addIterationToValue( "clsiter", $iter['EMAN_classiter'] );
+					$paramSet->addIterationToValue( "clskeep", $iter['EMAN_classkeep'] );
+					$paramSet->addIterationToValue( "filterResolution", $iter['EMAN_filt3d'] );
+					$paramSet->addIterationToValue( "shrink", $iter['EMAN_shrink'] );
+					$paramSet->addIterationToValue( "euler2", $iter['EMAN_euler2'] );
+					$paramSet->addIterationToValue( "xfiles", $iter['EMAN_xfiles'] );
+					$paramSet->addIterationToValue( "median", ($iter['EMAN_median']) ? '1' : '0' );
+					$paramSet->addIterationToValue( "phscls", ($iter['EMAN_phasecls']) ? '1' : '0' );
+					$paramSet->addIterationToValue( "refine", ($iter['EMAN_refine']) ? '1' : '0' );
+					$paramSet->addIterationToValue( "coran", ($iter['postRefineClassAverages']) ? '1' : '0' );
+					$symmetry = $particle->getSymInfo($iter['REF|ApSymmetryData|symmetry']);
+					if (!is_array($symmetry)) $symmetry=$modsym;
+					else $symmetry = $symmetry['eman_name'];
+					continue;
+				}
+			}
+		}
+		
+		return $paramSet;
+	}
+	
+	// set the default values that are populated
+	// when the user selects the "Set Defaults" button.
+	// $box is the box size from the selected stack.
+	public function setDefaults( $box )
+	{
+		$rad = ($box/2)-2;
+		$javafunc = "
+	  <script type='text/javascript'>
+	    function setDefaults(obj) {
+	      obj.outerMaskRadius.value = $rad;
+	      obj.innerMaskRadius.value = $rad;
+	      obj.angSampRate.value = '4x10:2x5:2x3:2x2';
+	      obj.symmetry.value = 'c1';
+	      obj.numIters.value = '10';
+	      obj.percentDiscard.value = '10';
+	      obj.filterEstimated.checked = false;
+	      obj.filterResolution.value = '';
+	      obj.imask.value = '';
+	      obj.amask.value = '';		
+	      obj.maxshift.value = '';
+	      obj.hard.value = '25';
+	      obj.clskeep.value = '0.8';
+	      obj.clsiter.value = '8';
+	      obj.xfiles.value = '';
+	      obj.shrink.value = '';
+	      obj.euler2.value = '';
+	      obj.median.value = '';
+	      obj.phscls.value = '10x1';
+	      obj.refine.value = '';
+	      obj.tree.value = '';
+	      obj.coranCC.value = '';
+	      obj.coranmask.value = '';
+	      obj.coranlp.value = '';
+	      obj.coranhp.value = '';
+	      obj.coranhcc.value = '';	      
+	      return;
+	    }
+	  </SCRIPT>\n";
+		return $javafunc;
+	}
+	
 }
 
 
@@ -198,11 +298,12 @@ class EmanParams extends RefineFormParameters
 		$this->addParam( "coranhp", $coranhp, "HP" );
 		$this->addParam( "coranhcc", $coranhcc, "HaCC" );
 		
-		// disable any general params that do not apply to this method
-		$this->disableParam("outerAlignRadius");
-		$this->disableParam("innerAlignRadius");
-		$this->disableParam("filterComputed");
-
+		// hide any general params that do not apply to this method
+		$this->hideParam("outerAlignRadius");
+		$this->hideParam("innerAlignRadius");
+		$this->hideParam("filterComputed");
+		$this->hideParam("filterConstant");
+		
 		// add parameter requirements
 		$this->addValidation( "outerMaskRadius", "req" );
 		$this->addValidation( "symmetry", "req" );

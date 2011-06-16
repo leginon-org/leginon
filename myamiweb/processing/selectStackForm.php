@@ -15,20 +15,6 @@ require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
 
-define('JOBTYPE','emanrecon');
-
-$selectedcluster=$CLUSTER_CONFIGS[0];
-if ($_POST['cluster']) {
-	$selectedcluster=$_POST['cluster'];
-}
-$selectedcluster=strtolower($selectedcluster);
-@include_once $selectedcluster.".php";
-
-/*
-******************************************
-******************************************
-******************************************
-*/
 
 
 	// check if session provided

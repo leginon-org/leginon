@@ -50,6 +50,19 @@ class FormGeneratorLib
 		
 		return $html;
 	}
+
+	static public function insertRadioField( $name, $label='', $value='', $checked='', $enable='', $note='' )
+	{
+		$html = "<INPUT TYPE='radio' NAME='$name' $enable VALUE='$value' $checked >\n";
+		$html.=  docpop( $name, $label );
+		
+		if (!empty( $note )) {
+			$html.= "<font size='-2'>$note</font>\n";
+		}
+		$html.= "<br/>\n";
+		
+		return $html;
+	}
 }
 
 ?>
