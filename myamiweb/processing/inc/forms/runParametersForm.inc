@@ -17,6 +17,7 @@ class RunParametersForm
 		
 		$this->params->addParam( "runname", $runname, "Run name" );
 		$this->params->addParam( "outdir", $outdir, "Output directory" );
+		$this->params->addParam( "description", $description, "Description" );
 	}
 	
 	public function generateForm( $postArray )
@@ -28,10 +29,12 @@ class RunParametersForm
 	    <br />
 	    <H4>Processing Run Parameters</H4>
 	    <hr />";
-	
+		
 		$html.= $this->params->insertStackedTextField( "runname", 20 );
 		$html.= "<br/>\n";
-		$html.= $this->params->insertStackedTextField( "outdir", 50 );
+		$html.= $this->params->insertStackedTextField( "outdir", 56 );
+		$html.= "<br/>\n";
+		$html.= $this->params->insertTextArea( "description");
 			
 		$html.= "<br/>\n";
 
@@ -45,8 +48,11 @@ class RunParametersForm
 		$this->params->getPostedValues( $postArray );
 		$paramArray = $this->params->getParamArray();
 		
-		$command = "--rp_runname=".$paramArray["runname"]["value"]." ";
-		$command.= "--rp_outdir=".$paramArray["outdir"]["value"]." ";
+		// runname and outdir are currently handled in showOrSubmitCommand().
+		// TODO: Pull params out of showOrSubmitCommand and move to general form for all processing
+		//$command = "--rp_runname=".$paramArray["runname"]["value"]." ";
+		//$command.= "--rp_outdir=".$paramArray["outdir"]["value"]." ";
+		$command.= "--description=".$paramArray["description"]["value"]." ";
 		
 		return $command;
 	}

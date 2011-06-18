@@ -217,6 +217,10 @@ function createCommand ($extra=False)
 	
 	$commandAddOn.='--modelid='.$modelids.' ';
 	
+	// collect processing run parameters
+	$runParametersForm = new RunParametersForm();
+	$commandAddOn .= $runParametersForm->buildCommand( $_POST );
+	
 	// collect stack preparation parameters
 	$stackPrepForm = new StackPrepForm();
 	$commandAddOn .= $stackPrepForm->buildCommand( $_POST );

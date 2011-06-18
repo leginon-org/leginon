@@ -12,6 +12,20 @@ class FormGeneratorLib
 		return $html;
 	}
 	
+	static public function insertTextArea( $name, $label='', $value='', $rows=3, $cols=65, $enable='', $note='' )
+	{
+		$html .=  docpop( $name, $label )." <br/>\n";
+		$html .= "<TEXTAREA NAME='$name' ROWS='$rows' COLS='$cols' $enable >$value</TEXTAREA>\n";
+		//$html = "<INPUT TYPE='text' NAME='$name' $enable SIZE='$size' VALUE='$value'>\n";
+		
+		if (!empty( $note )) {
+			$html.= "<font size='-2'>$note</font>\n";
+		}
+		$html.= "<br/>\n";
+				
+		return $html;
+	}
+	
 	static public function insertTextField( $name, $label='', $value='', $size=20, $enable='', $note='' )
 	{
 		$html = "<INPUT TYPE='text' NAME='$name' $enable SIZE='$size' VALUE='$value'>\n";

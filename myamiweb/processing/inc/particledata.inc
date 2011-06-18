@@ -3857,6 +3857,13 @@ class particledata {
 					."ON (r.`REF|ApXmippRefineIterData|xmippParams` = p.`DEF_id`) "
 					."WHERE r.`REF|ApRefineRunData|refineRun` = '$reconId' "
 					."ORDER BY r.`iteration` ASC ";
+		} elseif ($r[0]['REF|ApFrealignIterData|frealignParams']) {
+			$q = "SELECT * "
+					."FROM `ApRefineIterData` r "
+					."LEFT JOIN `ApFrealignIterData` p "
+					."ON (r.`REF|ApFrealignIterData|frealignParams` = p.`DEF_id`) "
+					."WHERE r.`REF|ApRefineRunData|refineRun` = '$reconId' "
+					."ORDER BY r.`iteration` ASC ";
 		}
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);

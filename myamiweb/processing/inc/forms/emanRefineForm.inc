@@ -164,65 +164,25 @@ class EmanRefineForm extends BasicRefineForm
 		$this->addDefaultParams( $virusSet );
 	}
 	
-	// The user selected to import parameters from an existing refinement.
-	// This will gather the parameter values and put them into our param 
-	// format ('iterations'x'value':)
-	// Returns a set of Form Parameters.
-	protected function importParamsFromRefinement( $defaultSetId )
+	protected function addImportedRefineIter( $paramSet, $iter ) 
 	{
-		$paramSet = $this->createFormParams();
-		$particle = new particledata();
-		$iterinfo = $particle->getIterationInfo( $defaultSetId );
-		
-		// get initial model info
-		$refinfo 	= $particle->getRefinementRunInfo( $defaultSetId );
-		$initmodel 	= $particle->getInitModelInfo($refinfo['REF|ApInitialModelData|initialModel']);
-		$stackinfo 	= $particle->getStackParams($refinfo['REF|ApStackData|stack']);
-
-		// get our stack info
-		$currStack = $this->getStackInfo();
-		$box = $currStack['box'];
-		
-		// get scaling factor for box sizes
-		$prevboxsize	= $stackinfo['boxsize'];
-		$boxscale 		= $box / $prevboxsize;
-		$numIters 		= count($iterinfo);
-		
-		$paramSet->setParamValue( "numIters", $numIters );
-				
-		for ( $i=1; $i<=$numIters; $i++ ) {
-			foreach ($iterinfo as $iter) {
-				if ($iter['iteration'] == $i) {
-					//var_dump($iter);
-					$paramSet->addIterationToValue( "angSampRate", $iter['ang'] );
-					$outerMaskRadius = ceil($iter['mask']*$boxscale);
-					if (floor($iter['imask']*$boxscale) > 0)
-						$paramSet->addIterationToValue( "imask", floor($iter['imask']*$boxscale) );
-					$paramSet->addIterationToValue( "amask1", $iter['EMAN_amask1'] );
-					$paramSet->addIterationToValue( "amask2", $iter['EMAN_amask2'] );
-					$paramSet->addIterationToValue( "amask3", $iter['EMAN_amask3'] );
-					$paramSet->addIterationToValue( "maxhsift", $iter['EMAN_maxshift'] );
-					$paramSet->addIterationToValue( "hard", $iter['EMAN_hard'] );
-					$paramSet->addIterationToValue( "clsiter", $iter['EMAN_classiter'] );
-					$paramSet->addIterationToValue( "clskeep", $iter['EMAN_classkeep'] );
-					$paramSet->addIterationToValue( "filterResolution", $iter['EMAN_filt3d'] );
-					$paramSet->addIterationToValue( "shrink", $iter['EMAN_shrink'] );
-					$paramSet->addIterationToValue( "euler2", $iter['EMAN_euler2'] );
-					$paramSet->addIterationToValue( "xfiles", $iter['EMAN_xfiles'] );
-					$paramSet->addIterationToValue( "median", ($iter['EMAN_median']) ? '1' : '0' );
-					$paramSet->addIterationToValue( "phscls", ($iter['EMAN_phasecls']) ? '1' : '0' );
-					$paramSet->addIterationToValue( "refine", ($iter['EMAN_refine']) ? '1' : '0' );
-					$paramSet->addIterationToValue( "coran", ($iter['postRefineClassAverages']) ? '1' : '0' );
-					$symmetry = $particle->getSymInfo($iter['REF|ApSymmetryData|symmetry']);
-					if (!is_array($symmetry)) $symmetry=$modsym;
-					else $symmetry = $symmetry['eman_name'];
-					continue;
-				}
-			}
-		}
-		
-		return $paramSet;
-	}
+		$paramSet->addIterationToValue( "angSampRate", $iter['ang'] );
+		$paramSet->addIterationToValue( "amask1", $iter['EMAN_amask1'] );
+		$paramSet->addIterationToValue( "amask2", $iter['EMAN_amask2'] );
+		$paramSet->addIterationToValue( "amask3", $iter['EMAN_amask3'] );
+		$paramSet->addIterationToValue( "maxshift", $iter['EMAN_maxshift'] );
+		$paramSet->addIterationToValue( "hard", $iter['EMAN_hard'] );
+		$paramSet->addIterationToValue( "clsiter", $iter['EMAN_classiter'] );
+		$paramSet->addIterationToValue( "clskeep", $iter['EMAN_classkeep'] );
+		$paramSet->addIterationToValue( "filterResolution", $iter['EMAN_filt3d'] );
+		$paramSet->addIterationToValue( "shrink", $iter['EMAN_shrink'] );
+		$paramSet->addIterationToValue( "euler2", $iter['EMAN_euler2'] );
+		$paramSet->addIterationToValue( "xfiles", $iter['EMAN_xfiles'] );
+		$paramSet->addIterationToValue( "median", ($iter['EMAN_median']) ? 't' : 'f' );
+		$paramSet->addIterationToValue( "phscls", ($iter['EMAN_phasecls']) ? 't' : 'f' );
+		$paramSet->addIterationToValue( "refine", ($iter['EMAN_refine']) ? 't' : 'f' );
+		$paramSet->addIterationToValue( "coran", ($iter['postRefineClassAverages']) ? 't' : 'f' );
+	}	
 	
 	// set the default values that are populated
 	// when the user selects the "Set Defaults" button.

@@ -137,6 +137,19 @@ class XmippRefineForm extends BasicRefineForm
 		$this->addDefaultParams( $icosSet );
 	}
 	
+	protected function addImportedRefineIter( $paramSet, $iter ) 
+	{
+		$paramSet->addIterationToValue( "angSampRate", $iter['angularStep'] );
+		$paramSet->addIterationToValue( "maxAngularChange", $iter['maxChangeInAngles'] );
+		$paramSet->addIterationToValue( "maxChangeOffset", $iter['maxChangeOffset'] );
+		$paramSet->addIterationToValue( "search5DShift", $iter['search5dShift'] );
+		$paramSet->addIterationToValue( "search5DStep", $iter['search5dStep'] );
+		$paramSet->addIterationToValue( "percentDiscard", $iter['discardPercentage'] );
+		$paramSet->addIterationToValue( "reconMethod", $iter['reconstructionMethod'] );
+		$paramSet->addIterationToValue( "ARTLambda", $iter['ARTLambda'] );
+		$paramSet->addIterationToValue( "filterConstant", $iter['constantToAddToFiltration'] );
+	}	
+	
 	// set the default values that are populated
 	// when the user selects the "Set Defaults" button.
 	// $box is the box size from the selected stack.

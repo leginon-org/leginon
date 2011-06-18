@@ -200,13 +200,12 @@ class FrealignRefineForm extends BasicRefineForm
 	public function buildCommand( $params )
 	{
 		
-		$command = "prepFrealign.py ";
+		$command = "prepRefineFrealign.py ";
 					    
-		$command = $params->addCommandFlag( $command, "mask", "outerMaskRadius" );
-		$command = $params->addCommandFlag( $command, "imask", "innerMaskRadius" );
-		$command = $params->addCommandFlag( $command, "sym", "symmetry" );
-		$command = $params->addCommandFlag( $command, "numiter", "numIters" );
-		$command = $params->addCommandFlag( $command, "reconiterid", "importiter" );
+		$command = $params->addCommandFlag( $command, "outerMaskRadius" );
+		$command = $params->addCommandFlag( $command, "innerMaskRadius" );
+		$command = $params->addCommandFlag( $command, "numIters" );
+		$command = $params->addCommandFlag( $command, "symmetry" );
 		$command = $params->addCommandFlag( $command, "reconstackid" );
 		$command = $params->addCommandFlag( $command, "wgh" );
 		$command = $params->addCommandFlag( $command, "xstd");
@@ -220,10 +219,13 @@ class FrealignRefineForm extends BasicRefineForm
 		$command = $params->addCommandFlag( $command, "hp" );
 		$command = $params->addCommandFlag( $command, "lp" );
 		$command = $params->addCommandFlag( $command, "rbfact" );
-
+		$command = $params->addCommandFlag( $command, "importiter" );
+		
 		// check which radio button was selected
-		if ( ($params->getParamValue('initmethod') == 'projmatch') ) 
+		if ( ($params->getParamValue('initmethod') == 'projmatch') ) {
 			$command = $params->addCommandFlag( $command, "dang" );
+			$command = $params->addCommandFlag( $command, "initlp" );
+		} 
 		
 		// see if checkbox was selected
 		$ctffindonly = $params->getParamValue("ctffindonly");
@@ -234,10 +236,14 @@ class FrealignRefineForm extends BasicRefineForm
 	
 	protected function setImportParams()
 	{
+		$stackInfo 	= $this->getStackInfo();
+		$box 		= $stackInfo['box'];
+		$apix 		= $stackInfo['apix'];
+		
 		// add default value sets to populate the import parameters form 
 		$id 				= 'asymm';
 		$label 				= 'asymmetric particles';
-		$outerMaskRadius 	= ''; //round($apix*$box/3.0)
+		$outerMaskRadius 	= round($apix*$box/3.0);
 		$innerMaskRadius 	= '0';
 		$outerAlignRadius 	= '';	 
 		$innerAlignRadius 	= ''; 
@@ -257,9 +263,9 @@ class FrealignRefineForm extends BasicRefineForm
 		$ipmax				= '0';
 		$target				= '15';
 		$thresh				= '85';
-		$rrec 				= ''; //(ceil($apix*20))/10
+		$rrec 				= (ceil($apix*20))/10;
 		$hp 				= '50';
-		$lp 				= ''; //(ceil($apix*40))/10
+		$lp 				= (ceil($apix*40))/10;
 		$rbfact 			= '0';
 		$ctffindonly  		= 'CHECKED';
 		$reconstackid		= '';
@@ -278,66 +284,22 @@ class FrealignRefineForm extends BasicRefineForm
 		$this->addDefaultParams( $asymmSet );
 	}
 		
-	// The user selected to import parameters from an existing refinement.
-	// This will gather the parameter values and put them into our param 
-	// format ('iterations'x'value':)
-	// Returns a set of Form Parameters.
-	// TODO: modify this function for frealign params!!
-	protected function importParamsFromRefinement( $defaultSetId )
+	protected function addImportedRefineIter( $paramSet, $iter ) 
 	{
-		$paramSet = $this->createFormParams();
-		$particle = new particledata();
-		$iterinfo = $particle->getIterationInfo( $defaultSetId );
-		
-		// get initial model info
-		$refinfo 	= $particle->getRefinementRunInfo( $defaultSetId );
-		$initmodel 	= $particle->getInitModelInfo($refinfo['REF|ApInitialModelData|initialModel']);
-		$stackinfo 	= $particle->getStackParams($refinfo['REF|ApStackData|stack']);
-		
-		// get our stack info
-		$currStack = $this->getStackInfo();
-		$box = $currStack['box'];
-		
-		// get scaling factor for box sizes
-		$prevboxsize	= $stackinfo['boxsize'];
-		$boxscale 		= $box / $prevboxsize;
-		$numIters 		= count($iterinfo);
-		
-		$paramSet->setParamValue( "numIters", $numIters );
-				
-		for ( $i=1; $i<=$numIters; $i++ ) {
-			foreach ($iterinfo as $iter) {
-				if ($iter['iteration'] == $i) {
-					//var_dump($iter);
-					$paramSet->addIterationToValue( "angSampRate", $iter['ang'] );
-					$outerMaskRadius = ceil($iter['mask']*$boxscale);
-					if (floor($iter['imask']*$boxscale) > 0)
-						$paramSet->addIterationToValue( "imask", floor($iter['imask']*$boxscale) );
-					$paramSet->addIterationToValue( "amask1", $iter['EMAN_amask1'] );
-					$paramSet->addIterationToValue( "amask2", $iter['EMAN_amask2'] );
-					$paramSet->addIterationToValue( "amask3", $iter['EMAN_amask3'] );
-					$paramSet->addIterationToValue( "maxhsift", $iter['EMAN_maxshift'] );
-					$paramSet->addIterationToValue( "hard", $iter['EMAN_hard'] );
-					$paramSet->addIterationToValue( "clsiter", $iter['EMAN_classiter'] );
-					$paramSet->addIterationToValue( "clskeep", $iter['EMAN_classkeep'] );
-					$paramSet->addIterationToValue( "filterResolution", $iter['EMAN_filt3d'] );
-					$paramSet->addIterationToValue( "shrink", $iter['EMAN_shrink'] );
-					$paramSet->addIterationToValue( "euler2", $iter['EMAN_euler2'] );
-					$paramSet->addIterationToValue( "xfiles", $iter['EMAN_xfiles'] );
-					$paramSet->addIterationToValue( "median", ($iter['EMAN_median']) ? '1' : '0' );
-					$paramSet->addIterationToValue( "phscls", ($iter['EMAN_phasecls']) ? '1' : '0' );
-					$paramSet->addIterationToValue( "refine", ($iter['EMAN_refine']) ? '1' : '0' );
-					$paramSet->addIterationToValue( "coran", ($iter['postRefineClassAverages']) ? '1' : '0' );
-					$symmetry = $particle->getSymInfo($iter['REF|ApSymmetryData|symmetry']);
-					if (!is_array($symmetry)) $symmetry=$modsym;
-					else $symmetry = $symmetry['eman_name'];
-					continue;
-				}
-			}
-		}
-		
-		return $paramSet;
-	}
+		$paramSet->addIterationToValue( "wgh", $iter['wgh'] );
+		$paramSet->addIterationToValue( "xstd", $iter['xstd'] );
+		$paramSet->addIterationToValue( "pbc", $iter['pbc'] );
+		$paramSet->addIterationToValue( "boff", $iter['boff'] );
+		$paramSet->addIterationToValue( "itmax", $iter['itmax'] );
+		$paramSet->addIterationToValue( "ipmax", $iter['ipmax'] );
+		$paramSet->addIterationToValue( "target", $iter['target'] );
+		$paramSet->addIterationToValue( "thresh", $iter['thresh'] );
+		$paramSet->addIterationToValue( "cs", $iter['cs'] );
+		$paramSet->addIterationToValue( "rrec", $iter['rrec'] );
+		$paramSet->addIterationToValue( "hp", $iter['highpass'] );
+		$paramSet->addIterationToValue( "lp", $iter['lowpass'] );
+		$paramSet->addIterationToValue( "rbfact", $iter['rbfact'] );		
+	}	
 	
 	// set the default values that are populated
 	// when the user selects the "Set Defaults" button.

@@ -59,12 +59,24 @@ class FormParameters
 		$this->params[$name]["hidden"] = true;
 	}
 	
-	// TODO: rename to updateParamValues ???
+	// TODO: rename to updateParamValues for more general purpose???
 	final public function getPostedValues($postArray)
 	{
 		foreach ( $this->params as $key=>$param ) {
-			if ( !empty( $postArray[$param["name"]] ) ) {
-				$this->params[$key]["value"] = $postArray[$param["name"]];
+			
+			// TODO: fix this so we don't get NULL values but keep empty string and 0 and 0.0...
+			if ( !empty( $postArray[$param["name"]] ) || $postArray[$param["name"]] === '0' ) {
+				$value = $postArray[$param["name"]];
+	
+				// if the value has spaces and has not yet ben quoted, 
+				// put quotes around it to aid parsing later
+				if ( strpos($value, " ") ) {
+					if ( !preg_match('/"([^"]*)"/', $value) ) {
+						$value = '"'.$value.'"';
+					}
+				}
+	
+				$this->params[$key]["value"] = $value;
 			}
 		}
 	}
@@ -111,6 +123,24 @@ class FormParameters
 		}
 		
 		return $errorMsg;
+	}
+	
+	public function insertTextArea( $name, $label='', $value='', $rows=3, $cols=65, $enable='', $note='' )
+	{
+		// if the parameter has been "hidden" just return an empty string.
+		if ( $this->params[$name]['hidden'] ) {
+			$html = "";
+		} else {
+			$html = $this->formLib->insertTextArea( $this->params[$name]['name'], 
+													$this->params[$name]['label'], 
+													$this->params[$name]['value'], 
+													$rows=3, 
+													$cols=65, 
+													$this->params[$name]['enable'], 
+													$note );
+		}
+		
+		return $html;
 	}
 	
 	public function insertTextField( $name, $size=20, $note='' )

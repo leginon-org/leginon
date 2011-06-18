@@ -91,6 +91,14 @@ class XmippML3DRefineForm extends BasicRefineForm
 		$this->addDefaultParams( $asymmSet );
 
 	}
+
+	// TODO: when we know what the database looks like for this method, add the 
+	// column names that correspond to the form parameters here. This will 
+	// populate the form when parameters are imported from a prior recon.
+//	protected function addImportedRefineIter( $paramSet, $iter ) 
+//	{
+//		$paramSet->addIterationToValue( "angSampRate", $iter['angularStep'] );
+//	}	
 	
 	// set the default values that are populated
 	// when the user selects the "Set Defaults" button.

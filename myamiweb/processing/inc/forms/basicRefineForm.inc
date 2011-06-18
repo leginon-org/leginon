@@ -74,10 +74,7 @@ abstract class BasicRefineForm
 	// Extending classes MAY override this to add 
 	// package specific parameters to the refine form 
 	public function advancedParamForm() {}
-	
-	
-	public function setAdvancedDefaults() {}
-	
+		
 	// Extending classes should override this function to return the appropriate
 	// class of form parameters if it has also extended the RefineFormParams class.
 	// This createFormParams() function should always be used instead of 
@@ -95,6 +92,7 @@ abstract class BasicRefineForm
 	{
 		// if the derived class does not override this function,
 		// use general values associated with asymmetric particles for the general parameters in the form
+		// TODO: decide on default values for this
 		$asymmSet = new RefineFormParameters('asymm', 'asymmetric particles',1,1,1,1,1,1,1,1,'',1,'checked',1);
 		$this->addDefaultParams( $asymmSet );
 	}
@@ -180,52 +178,55 @@ abstract class BasicRefineForm
 	// This will gather the parameter values and put them into our param 
 	// format ('iterations'x'value':)
 	// Returns a set of Form Parameters.
+	// If you are adding a new type of refinement to the pipeline, you need to edit
+	// getIterationInfo() in particledata.inc to retrieve parameter data on the new method type
+	// for this function to work on method specific parameters.
 	protected function importParamsFromRefinement( $defaultSetId )
 	{
 		$paramSet = $this->createFormParams();
 		$particle = new particledata();
+		
+		// get model info to set the symmetry
+		$modelArray = $this->getModelArray();
+		// this method is single model, so grab the first element only
+		$modelId 	= $modelArray[0]['id'];
+		$modelInfo 	= $particle->getInitModelInfo( $modelId );
+		$symInfo 	= $particle->getSymInfo($modelInfo['REF|ApSymmetryData|symmetry']);
+		// TODO: would like to use "symmetry" instead of "eman_name" but can't handle spaces in
+		// showOrSubmitCommand().
+		$symmetry = $symInfo['symmetry'];
+		//$symmetry = '"'.$symmetry.'"';
+		$paramSet->setParamValue( "symmetry", $symmetry );
+		
+		// get import refine stack info
+		$refinfo 			= $particle->getRefinementRunInfo( $defaultSetId );
+		$importStackInfo 	= $particle->getStackParams($refinfo['REF|ApStackData|stack']);
+		
+		// get our stack info
+		$stackInfo 	= $this->getStackInfo();
+		$box 		= $stackInfo['box'];
+		
+		// use the two stacks to get scaling factor for box sizes
+		$importBox 	= $importStackInfo['boxsize'];
+		$boxscale 	= $box / $importBox;
+		
+		// set the number of iterations
 		$iterinfo = $particle->getIterationInfo( $defaultSetId );
-		
-		// get initial model info
-		$refinfo 	= $particle->getRefinementRunInfo( $defaultSetId );
-		$initmodel 	= $particle->getInitModelInfo($refinfo['REF|ApInitialModelData|initialModel']);
-		$stackinfo 	= $particle->getStackParams($refinfo['REF|ApStackData|stack']);
-		
-		// get scaling factor for box sizes
-		$prevboxsize	= $stackinfo['boxsize'];
-		// TODO: get $box from our stack id
-		$boxscale 		= $box / $prevboxsize;
-		$numIters 		= count($iterinfo);
-		
+		$numIters = count($iterinfo);
 		$paramSet->setParamValue( "numIters", $numIters );
 				
-		// TODO: what parameters are available for all refinements?
+		// add each iteration value to our forms parameters
 		for ( $i=1; $i<=$numIters; $i++ ) {
 			foreach ($iterinfo as $iter) {
-				if ($iter['iteration'] == $i) {
-					//var_dump($iter);
-					$paramSet->addIterationToValue( "angSampRate", $iter['ang'] );
+				if ($iter['iteration'] == $i) {					
 					$outerMaskRadius = ceil($iter['mask']*$boxscale);
+					$paramSet->addIterationToValue( "outerMaskRadius", $outerMaskRadius );
+					
 					if (floor($iter['imask']*$boxscale) > 0)
-						$paramSet->addIterationToValue( "imask", floor($iter['imask']*$boxscale) );
-					$paramSet->addIterationToValue( "amask1", $iter['EMAN_amask1'] );
-					$paramSet->addIterationToValue( "amask2", $iter['EMAN_amask2'] );
-					$paramSet->addIterationToValue( "amask3", $iter['EMAN_amask3'] );
-					$paramSet->addIterationToValue( "maxhsift", $iter['EMAN_maxshift'] );
-					$paramSet->addIterationToValue( "hard", $iter['EMAN_hard'] );
-					$paramSet->addIterationToValue( "clsiter", $iter['EMAN_classiter'] );
-					$paramSet->addIterationToValue( "clskeep", $iter['EMAN_classkeep'] );
-					$paramSet->addIterationToValue( "filterResolution", $iter['EMAN_filt3d'] );
-					$paramSet->addIterationToValue( "shrink", $iter['EMAN_shrink'] );
-					$paramSet->addIterationToValue( "euler2", $iter['EMAN_euler2'] );
-					$paramSet->addIterationToValue( "xfiles", $iter['EMAN_xfiles'] );
-					$paramSet->addIterationToValue( "median", ($iter['EMAN_median']) ? '1' : '0' );
-					$paramSet->addIterationToValue( "phscls", ($iter['EMAN_phasecls']) ? '1' : '0' );
-					$paramSet->addIterationToValue( "refine", ($iter['EMAN_refine']) ? '1' : '0' );
-					$paramSet->addIterationToValue( "coran", ($iter['postRefineClassAverages']) ? '1' : '0' );
-					$symmetry = $particle->getSymInfo($iter['REF|ApSymmetryData|symmetry']);
-					if (!is_array($symmetry)) $symmetry=$modsym;
-					else $symmetry = $symmetry['eman_name'];
+						$paramSet->addIterationToValue( "innerMaskRadius", floor($iter['imask']*$boxscale) );
+						
+					$this->addImportedRefineIter( $paramSet, $iter );
+						
 					continue;
 				}
 			}
@@ -233,7 +234,16 @@ abstract class BasicRefineForm
 		
 		return $paramSet;
 	}
-
+	
+	// Extending classes may override this to import parameters from
+	// a previous reconstruction to its method specific form parameters
+	// $iter holds the values entered into the database in the ApRefinIterData
+	// table and method specific tables specified by getIterationInfo() in 
+	// particledata.inc.
+	// use statement like this: $paramSet->addIterationToValue( "wgh", $iter['wgh'] );
+	// to map the database column name to the form parameter name.
+	protected function addImportedRefineIter( $paramSet, $iter ) {}
+	
 	// outputs the html required to display the general refine parameters
 	final public function generalParamForm( ) 
 	{
@@ -262,11 +272,11 @@ abstract class BasicRefineForm
 		$shortSize = 4;
 		$longSize = 20;
 		
-		$html .= $paramSet->insertTextField( "outerMaskRadius", $shortSize, "(&Aring;ngstroms)" );
-		$html .= $paramSet->insertTextField( "innerMaskRadius", $shortSize, "(&Aring;ngstroms)" );
-		$html .= $paramSet->insertTextField( "outerAlignRadius", $shortSize, "(&Aring;ngstroms)" );
-		$html .= $paramSet->insertTextField( "innerAlignRadius", $shortSize, "(&Aring;ngstroms)" );
-		$html .= $paramSet->insertTextField( "symmetry", $shortSize );
+		$html .= $paramSet->insertTextField( "outerMaskRadius", $longSize, "(&Aring;ngstroms)" );
+		$html .= $paramSet->insertTextField( "innerMaskRadius", $longSize, "(&Aring;ngstroms)" );
+		$html .= $paramSet->insertTextField( "outerAlignRadius", $longSize, "(&Aring;ngstroms)" );
+		$html .= $paramSet->insertTextField( "innerAlignRadius", $longSize, "(&Aring;ngstroms)" );
+		$html .= $paramSet->insertTextField( "symmetry", $longSize );
 			
 		$html .= "<br />\n";
 		$html .= "<br />\n";
@@ -413,6 +423,10 @@ class RefineFormParameters extends FormParameters
 	// a value of 4 followed by 6 iterations at a value of 2.
 	function addIterationToValue( $name, $newIterValue )
 	{
+		// NULL values should be added as empty, in case 
+		// early iterations are NULL and later ones are set.
+		//if ( $newIterValue == NULL ) return;
+		
 		$currValue = $this->getParamValue( $name );
 		
 		// separate the current value into its iterations
@@ -454,10 +468,10 @@ class RefineFormParameters extends FormParameters
 		if ( $paramName == '' ) {
 			$paramName = $flagName;
 		}
-		if ( $value == '' ) {
+		if ( $value === '' ) {
 			$value = $this->getParamValue( $paramName );
 		}
-		if ( $value != '' ) {
+		if ( $value !== '' ) {
 			$command .= "--".$flagName."=".$value." ";
 		}
 		
