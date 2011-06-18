@@ -13,10 +13,10 @@ class PrepParallelRefinement(object):
 		os.chdir(self.params['recondir'])
 
 	def setupParserOptions(self):
+		self.parser.add_option("--ppn", dest="ppn", type="int",
+			help="processers per node", default=1, metavar="###")
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="total number of processers to be used", default=1, metavar="###")
-		self.parser.add_option("--jobtype", dest="jobtype",
-			help="Type for parallel run, e.g. --jobtype=emanrecon", metavar="NAME")
 		self.parser.add_option("--recondir", dest="recondir", default='./',
 			help="Base path for the processing, e.g. --recondir=/home/you/rundir/recon", metavar="PATH")
 

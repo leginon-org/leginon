@@ -70,12 +70,11 @@ class frealignJob(apPrepRefine.Prep3DRefinement):
 			help="number of potential matches in a search that should be tested further in local refinement")
 		
 		####card 4
-		self.parser.add_option('--last', dest="last", type='int',
-			help="last particle to process")
+		''' last particle defined in the base class'''
 	
 		####card 5
-		self.parser.add_option('--sym', dest="sym", help="symmetry ")
-	
+		''' symmetry defined in the base class'''
+
 		####card 6
 		self.parser.add_option('--target', dest="target", default=10.0, type='float',
 			help="target phase residual during refinement")
@@ -104,8 +103,6 @@ class frealignJob(apPrepRefine.Prep3DRefinement):
 		self.parser.add_option("--no-cluster", dest="cluster", default=True,
 			action="store_false", help="Run script interactively on current machine")
 
-		self.parser.add_option('--numiter', dest='numiter', type='int', default=1,
-			help="number of refinement iterations to perform")
 		self.parser.add_option('--noctf', dest='noctf', default=False, action='store_true',
 			help="choose if frealign should not perform ctf correction")
 		self.parser.add_option('--ctfmethod', dest='ctfmethod',
@@ -113,8 +110,7 @@ class frealignJob(apPrepRefine.Prep3DRefinement):
 			type="choice", choices=self.ctfestopts)
 
 	#=====================
-	def checkConflicts(self):
-		super(frealignJob,self).checkConflicts()
+	def checkPackageConflicts(self):
 		if self.params['reconstackid'] is not None:	
 			reconboxsize = apStack.getStackBoxsize(self.params['reconstackid'], msg=False)
 			reconapix = apStack.getStackPixelSizeFromStackId(self.params['reconstackid'])
@@ -136,6 +132,23 @@ class frealignJob(apPrepRefine.Prep3DRefinement):
 		self.params['nproc']=1
 		self.params['rpn']=1
 		self.params['ppn']=1
+
+	def setIterationParamList(self):
+		self.iterparams = ['mask','imask', 'fmag','fdef','fastig','fpart','fcref','wgh', 'xstd', 'pbc', 'boff', 'dang', 'itmax', 'ipmax',  'target', 'thresh', 'rrec' ,'hp', 'lp', 'rbfact']
+	def convertSymmetryNameForPackage(self):
+		if not self.symmdata:
+			# This is to handle T, I1, I2, and N that is not defined in eman
+			return self.params['sym'].upper()
+		eman_symm_name = self.symmdata['eman_name']
+		if eman_symm_name[0] in ('c','d'):
+			symm_name = eman_symm_name.upper()
+		elif eman_symm_name == 'oct':
+			symm_name = 'O'
+		elif eman_symm_name == 'icos':
+			symm_name = 'I'
+		else:
+			apDisplay.printError("unknown symmetry name conversion")
+		return symm_name
 
 	#===============
 	def getStackParticleEulersForIteration(self, pnum):
@@ -260,8 +273,8 @@ class frealignJob(apPrepRefine.Prep3DRefinement):
 				particleparams['psi'] = frealigneulers['psi']
 				particleparams['theta'] = frealigneulers['theta']
 				particleparams['phi'] = frealigneulers['phi']
-				particleparams['shx'] = emaneuler['shiftx']*self.params['bin']
-				particleparams['shy'] = emaneuler['shifty']*self.params['bin']
+				particleparams['shx'] = emaneuler['shiftx']*self.params['sp_bin']
+				particleparams['shy'] = emaneuler['shifty']*self.params['sp_bin']
 				if emaneuler['mirror'] is True:
 					particleparams['shx'] *= -1
 			self.writeParticleParamLine(particleparams,f)
@@ -333,7 +346,7 @@ class frealignJob(apPrepRefine.Prep3DRefinement):
 		return "F"
 
 	#===============
-	def appendFrealignJobFile(self, jobfile, first=1, last=None, 
+	def appendFrealignJobFile(self, iternum,jobfile, first=1, last=None, 
 			recon=True, iflag=None, logfile=None):
 	
 		### hard coded parameters
@@ -375,19 +388,19 @@ class frealignJob(apPrepRefine.Prep3DRefinement):
 		f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%d,%s,%d\n' % (
 			self.defaults['cform'],
 			iflag, 
-			self.bc(self.params['fmag']), self.bc(self.params['fdef']), #T/F refinements
-			self.bc(self.params['fastig']), self.bc(self.params['fpart']), #T/F refinements
+			self.bc(self.params['fmag'][iternum-1]), self.bc(self.params['fdef'][iternum-1]), #T/F refinements
+			self.bc(self.params['fastig'][iternum-1]), self.bc(self.params['fpart'][iternum-1]), #T/F refinements
 			self.defaults['iewald'], 
-			self.bc(self.defaults['fbeaut']), self.bc(self.params['fcref']), self.bc(self.defaults['fmatch']), 
+			self.bc(self.defaults['fbeaut']), self.bc(self.params['fcref'][iternum-1]), self.bc(self.defaults['fmatch']), 
 			self.defaults['ifsc'],
 			self.bc(self.defaults['fstat']), self.iblow))
 
 		### CARD 2
 		f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (
-			self.params['mask'], self.params['imask'], ### mask radii are in Angstroms
-			self.apix, self.params['wgh'], 
-			self.params['xstd'], self.params['pbc'], 
-			self.params['boff'], self.params['dang'], self.params['itmax'], self.params['ipmax']))
+			self.params['mask'][iternum-1], self.params['imask'][iternum-1], ### mask radii are in Angstroms
+			self.apix, self.params['wgh'][iternum-1], 
+			self.params['xstd'][iternum-1], self.params['pbc'][iternum-1], 
+			self.params['boff'][iternum-1], self.params['dang'][iternum-1], self.params['itmax'][iternum-1], self.params['ipmax'][iternum-1]))
 
 		### CARD 3 fixing of an Euler angle or shift parameters, 1 = refine all
 		f.write('%d %d %d %d %d\n' % (1,1,1,1,1))
@@ -397,23 +410,20 @@ class frealignJob(apPrepRefine.Prep3DRefinement):
 		f.write('%d, %d\n' % (first, last))
 
 		### CARD 5
-		if self.params['sym'].lower() == 'icos':
-			f.write('I\n')
-		else:
-			f.write('%s\n' % (self.params['sym']))
+		f.write('%s\n' % (self.params['symm_name']))
 
 		### CARD 6
 		f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
 			1.0, self.apix, 
-			self.params['target'], self.params['thresh'], 
+			self.params['target'][iternum-1], self.params['thresh'][iternum-1], 
 			self.params['cs'], self.params['kv'], 
 			self.defaults['beamtiltx'], self.defaults['beamtilty']))
 
 		### CARD 7
 		### lp should be ~25 A for iflag 3 and ~12 A for iflag 1
 	 	f.write('%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
-			self.params['rrec'], self.params['hp'], 
-			self.params['lp'], self.defaults['dfstd'], self.params['rbfact']))
+			self.params['rrec'][iternum-1], self.params['hp'][iternum-1], 
+			self.params['lp'][iternum-1], self.defaults['dfstd'], self.params['rbfact'][iternum-1]))
 
 		### CARD 8
 		f.write('%s\n'%(self.stackfile))
@@ -487,7 +497,7 @@ class frealignJob(apPrepRefine.Prep3DRefinement):
 			self.currentvol = "../../"+os.path.basename(self.currentvol)
 			self.currentparam = "../../"+os.path.basename(self.currentparam)
 			logfile = "frealign.proc%03d.out"%(n+1)
-			self.appendFrealignJobFile(procjobfile, first=firstp, last=lastp, recon=False, logfile=logfile)
+			self.appendFrealignJobFile(iternum,procjobfile, first=firstp, last=lastp, recon=False, logfile=logfile)
 
 			### append to list
 			procjobfiles.append(procjobfile)
@@ -518,7 +528,7 @@ class frealignJob(apPrepRefine.Prep3DRefinement):
 
 		self.currentparam = combineparamfile
 		self.currentvol = combinevolfile
-		self.appendFrealignJobFile(combinejobfile, iflag=0, logfile="frealign.combine.out")
+		self.appendFrealignJobFile(iternum,combinejobfile, iflag=0, logfile="frealign.combine.out")
 
 		f = open(combinejobfile, 'a')
 		### calculate EMAN fsc curve
@@ -699,10 +709,10 @@ class frealignJob(apPrepRefine.Prep3DRefinement):
 		partq = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		jobq = appiondata.ApAppionJobData()
 		jobq['path'] = partq
-		jobq['jobtype'] = 'prepfrealign'
+		jobq['jobtype'] = 'preprefinefrealign'
 		jobdatas = jobq.query(results=1)
 		if not jobdatas:
-			apDisplay.printError("Could not find job data for prepFrealign")
+			apDisplay.printError("Could not find job data for prepRefineFrealign")
 		jobdata = jobdatas[0]
 
 		### create a frealign table
@@ -724,7 +734,8 @@ class frealignJob(apPrepRefine.Prep3DRefinement):
 
 	def proc2dFormatConversion(self):
 		extname = 'hed'
-		format = 'invert'
+		#format = 'invert'
+		format = ''
 		return extname, format
 
 	#===============

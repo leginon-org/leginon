@@ -23,22 +23,25 @@ class Prep3DRefinement(appionScript.AppionScript):
 		# Particle stack manipulation
 		self.parser.add_option("-s", "--stackid", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
-		self.parser.add_option("-N", "--num-part", dest="numpart", type="int", default=0,
+		self.parser.add_option("-N", "--sp_lastParticle", dest="last", type="int", default=None,
 			help="Number of particles to use", metavar="#")
-		self.parser.add_option("--lowpass", dest="lowpass", type="int", default=0,
+		self.parser.add_option("--sp_lpFilter", dest="sp_lowpass", type="int", default=0,
 			help="Low pass filter radius (in Angstroms) of the particles", metavar="#")
-		self.parser.add_option("--bin", dest="bin", type="int", default=1,
+		self.parser.add_option("--sp_binning", dest="sp_bin", type="int", default=1,
 			help="Binning of the particles", metavar="#")
-		self.parser.add_option("--highpass", dest="highpass", type="int", default=0,
+		self.parser.add_option("--sp_hpFilter", dest="sp_highpass", type="int", default=0,
 			help="High pass filter radius (in Angstroms) of the particles", metavar="#")
 		# Initial 3D model manipulation
 		self.parser.add_option("--modelid", dest="modelid", type="int",
 			help="Initial model id from database")
 		# Common refinement parameters
-		self.parser.add_option('--mask', dest="mask", type='float',
+		self.parser.add_option('--sym', dest="sym", help="symmetry ")
+		self.parser.add_option('--numiter', dest='numiter', type='int', default=1,
+			help="number of refinement iterations to perform")
+		self.parser.add_option('--mask', dest="mask", 
 			help="mask from center of particle to outer edge (in Angstroms)")
-		self.parser.add_option('--imask', dest="imask", default=0, type='float',
-			help="inner mask radius (in Angstroms")
+		self.parser.add_option('--imask', dest="imask", default='0',
+			help="inner mask radius (in Angstroms)")
 
 	#=====================
 	def checkConflicts(self):
@@ -48,31 +51,52 @@ class Prep3DRefinement(appionScript.AppionScript):
 			apDisplay.printError("model id was not defined")
 		if self.params['runname'] is None:
 			apDisplay.printError("new runname was not defined")
-		if self.params['last'] is None:
-			self.params['last'] = apStack.getNumberStackParticlesFromId(self.params['stackid'])
+		self.params['totalpart'] = apStack.getNumberStackParticlesFromId(self.params['stackid'])
+		if 'last' not in self.params.keys() or self.params['last'] is None:
+			self.params['last'] = self.params['totalpart']
 		self.boxsize = apStack.getStackBoxsize(self.params['stackid'], msg=False)
 		self.apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
-		self.refineboxsize = self.boxsize * self.params['bin']
+		self.refineboxsize = self.boxsize * self.params['sp_bin']
 		### get the symmetry data
 		if self.params['sym'] is None:
 			apDisplay.printError("Symmetry was not defined")
 		else:
 			self.symmdata = apSymmetry.findSymmetry(self.params['sym'])
 			self.params['symm_id'] = self.symmdata.dbid
-			self.params['symm_name'] = self.symmdata['eman_name']
-			apDisplay.printMsg("Selected symmetry %s with id %s"%(self.symmdata['eman_name'], self.symmdata.dbid))
+			eman_symm_name = self.symmdata['eman_name']
+			apDisplay.printMsg("Selected symmetry %s with id %s"%(eman_symm_name, self.symmdata.dbid))
+			self.params['symm_name'] = self.convertSymmetryNameForPackage()
 		### set cs value
 		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
-		# general refinement masking of model per iteration
+		self.checkPackageConflicts()
+		### convert iteration parameters first before its confict checking
+		self.convertIterationParams()
+		self.checkIterationConflicts()
+
+	def checkIterationConflicts(self):
+		''' 
+		Conflict checking of per-iteration parameters
+		'''
 		maxmask = math.floor(self.apix*(self.boxsize-10)/2.0)
-		if 'maskvol' not in self.params.keys():
-			#maskvol is only settable by xmipp
-			if self.params['mask'] is None:
-				apDisplay.printWarning("mask was not defined, setting to boxsize: %d"%(maxmask))
-				self.params['mask'] = maxmask
-			if self.params['mask'] > maxmask:
-				apDisplay.printWarning("mask was too big, setting to boxsize: %d"%(maxmask))
-				self.params['mask'] = maxmask
+		print "maxmask",maxmask
+		for iter in range(self.params['numiter']):
+			if 'maskvol' not in self.params.keys():
+				#maskvol is only settable by xmipp
+				if self.params['mask'][iter] is None:
+					apDisplay.printWarning("mask was not defined, setting to boxsize: %d"%(maxmask))
+					self.params['mask'][iter] = maxmask
+				if self.params['mask'][iter] > maxmask:
+					apDisplay.printWarning("mask was too big, setting to boxsize: %d"%(maxmask))
+					self.params['mask'][iter] = maxmask
+
+	def checkPackageConflicts(self):
+		'''
+		Conflict checking of the single parameters specific to the refinement package
+		'''
+		pass
+
+	def convertSymmetryNameForPackage(self):
+		return self.symmdata['eman_name']
 
 	def proc2dFormatConversion(self):
 		if self.spidersingle:
@@ -91,10 +115,10 @@ class Prep3DRefinement(appionScript.AppionScript):
 		return extname
 
 	def preprocessParticleStackWithProc2d(self):
-		"""
+		'''
 		takes the stack file and creates a stack file with binning and filtering
 		ready for processing
-		"""
+		'''
 		need_modify = False
 		emancmd  = "proc2d "
 		if not os.path.isfile(self.stack['file']):
@@ -114,21 +138,21 @@ class Prep3DRefinement(appionScript.AppionScript):
 			emancmd += addformat+" "
 
 		emancmd += "apix="+str(self.stack['apix'])+" "
-		if self.params['lowpass'] > 0:
+		if self.params['sp_lowpass'] > 0:
 			need_modify = True
-			emancmd += "lp="+str(self.params['lowpass'])+" "
-		if self.params['highpass'] > 0:
+			emancmd += "lp="+str(self.params['sp_lowpass'])+" "
+		if self.params['sp_highpass'] > 0:
 			need_modify = True
-			emancmd += "hp="+str(self.params['highpass'])+" "
-		if self.params['numpart'] > 0:
+			emancmd += "hp="+str(self.params['sp_highpass'])+" "
+		if self.params['last'] > 0 and self.params['last'] < self.params['totalpart']:
 			need_modify = True
-			emancmd += "last="+str(self.params['numpart']-1)+" "
-		if self.params['bin'] > 1:
+			emancmd += "last="+str(self.params['last']-1)+" "
+		if self.params['sp_bin'] > 1:
 			need_modify = True
-			emancmd += "shrink="+str(self.params['bin'])+" "
-			clipsize = int(math.floor(self.stack['boxsize']/self.params['bin']/2.0)*self.params['bin']*2)
+			emancmd += "shrink="+str(self.params['sp_bin'])+" "
+			clipsize = int(math.floor(self.stack['boxsize']/self.params['sp_bin']/2.0)*self.params['sp_bin']*2)
 			emancmd += "clip="+str(clipsize)+","+str(clipsize)+"  edgenorm"+" "
-			self.stack['boxsize'] = clipsize / self.params['bin']
+			self.stack['boxsize'] = clipsize / self.params['sp_bin']
 
 		if need_modify:
 			apFile.removeStack(outstack, warn=False)
@@ -140,7 +164,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 			# no need to execute EmanCmd if the stack is not modified
 			shutil.copy(self.stack['file'],outstack)
 		self.stack['file'] = outstack
-		self.stack['apix'] = self.stack['apix'] * self.params['bin']
+		self.stack['apix'] = self.stack['apix'] * self.params['sp_bin']
 		return outstack
 			
 	def preprocessInitialModelWithProc3d(self):
@@ -159,9 +183,49 @@ class Prep3DRefinement(appionScript.AppionScript):
 		that uses EMAN's proc2d and proc3d
 		Thus far, only SPIDER 3D refinement can use self.spidersingle=True
 		xmipp need to break the particles in folders even though it is also
-		in spider format
+		in spider format so that it can not use this option in these functions
 		'''
 		self.spidersingle = False
+
+	def setIterationParamList(self):
+		self.iterparams = ['mask','imask']
+
+	def tc(self,string):
+		try:
+			out = eval(string)
+		except:
+			string = string.strip()
+			if string.upper() == 'T':
+				out = True
+			elif string.upper() == 'F':
+				out = False
+			else:
+				out = string
+		return out
+
+	def convertIterationParams(self):
+		self.setIterationParamList()
+		for name in self.iterparams:
+			param_str = str(self.params[name]).strip()
+			param_upper = param_str.upper()
+			multiple_bits = param_upper.split('X')
+			if len(multiple_bits) <= 1:
+				self.params[name] = map((lambda x: self.tc(param_str)),range(self.params['numiter']))
+			else:
+				self.params[name] = []
+				set_bits = param_upper.split(':')
+				position = 0
+				total_repeat = 0
+				for set in set_bits:
+					m_index = set.find('X')
+					try:
+						repeat = int(set[:m_index])
+						self.params[name].extend(map((lambda x:self.tc(param_str[position+m_index+1:position+len(set)])),range(repeat)))	
+					except:
+						self.params[name] = map((lambda x: self.tc(param_str)),range(self.params['numiter']))
+					position += len(set)+1
+			if len(self.params[name]) != self.params['numiter']:
+				apDisplay.printError('Total number of parameter assignment must be equal to iteration number on parameter %s' % name)
 
 	def initializeStackModel(self):
 		self.stack = {}
