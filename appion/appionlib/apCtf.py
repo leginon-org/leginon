@@ -197,12 +197,16 @@ def getBestDefocusForImage(imgdata, msg=False):
 	return bestdf
 
 #=====================
-def getBestDefocusAndAmpConstForImage(imgdata, msg=False, method=None):
+def getDefocusAndAmpConstForImage(imgdata, ctf_estimation_runid=None, msg=False, method=None):
 	"""
-	takes an image and get the best defocus (in negative meters) for that image
+	takes an image and get the defocus (in negative meters) and amplitude contrast for that image
 	"""
+	
+	if ctf_estimation_runid is not None:
+		ctfvalue, conf = getCtfValueForImage(imgdata, ctf_estimation_runid, msg=False, method=method)
+	else:
+		ctfvalue, conf = getBestCtfValueForImage(imgdata, msg=False, method=method)
 
-	ctfvalue, conf = getBestCtfValueForImage(imgdata, method=method)
 	if ctfvalue is None:
 		bestdf = imgdata['scope']['defocus']
 		bestamp = 0.1
@@ -222,10 +226,64 @@ def getBestDefocusAndAmpConstForImage(imgdata, msg=False, method=None):
 
 	### print msg
 	if msg is True:
-		apDisplay.printMsg( "Best CTF run info: runname='%s', confidence=%.3f, defocus=%.3f um"
+		apDisplay.printMsg( "CTF run info: runname='%s', confidence=%.3f, defocus=%.3f um"
 			%(ctfvalue['acerun']['name'], conf, bestdf*1.0e6) )
 
 	return bestdf, bestamp
+
+#=====================
+def getBestDefocusAndAmpConstForImage(imgdata, msg=False, method=None):
+	''' takes an image and get the best defocus (in negative meters) for that image '''
+	return getDefocusAndAmpConstForImage(imgdata, msg=msg, method=method)
+
+#=====================
+def getCtfValueForImage(imgdata, ctf_estimation_runid, ctfavg=True, msg=True, method=False):
+	"""
+	takes an image and get the ctf value for that image for the specified ctf estimation run
+	specified methods can be: ace2 or ctffind
+	"""
+	### get all ctf values
+	ctfq = appiondata.ApCtfData()
+	ctfq['image'] = imgdata
+	ctfvalues = ctfq.query()
+
+	### check if it has values
+	if ctfvalues is None:
+		return None, None
+
+	### find the value
+	for ctfvalue in ctfvalues:
+		### limit to specific method if requested:
+		if method=='ctffind' and ctfvalue['acerun']['ctftilt_params'] is None:
+			continue
+		if method=='ace2' and ctfvalue['ctfvalues_file'] is None:
+			continue
+
+		### specify ID for CTF run
+		if ctfvalue['acerun'].dbid == ctf_estimation_runid:
+
+			### make sure that CTF values were estimated		
+			if ctfvalue['defocus1'] is None and ctfvalue['defocus2'] is None:
+				apDisplay.printWarning("CTF estimation using the specified parameters did not work")
+				return None, None
+			else:
+				# get ctf value
+				conf1 = max(ctfvalue['confidence'],ctfvalue['cross_correlation'])
+				conf2 = ctfvalue['confidence_d']
+
+				conf = max(conf1,conf2)
+				if ctfavg is True:
+					conf = math.sqrt(conf1*conf2)
+			break
+
+	if ctfvalue == None:
+		return None, None
+
+	if msg is True:
+		apDisplay.printMsg("CTF run info for runname='%s': confidence=%.3f, defocus=%.3f um"
+			%(ctfvalue['acerun']['name'], conf, ctfvalue['defocus1']*1.0e6) )
+
+	return ctfvalue, conf
 
 #=====================
 def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=False):
