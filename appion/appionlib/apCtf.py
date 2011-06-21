@@ -225,7 +225,7 @@ def getDefocusAndAmpConstForImage(imgdata, ctf_estimation_runid=None, msg=False,
 	bestdf = -1.0*abs(bestdf)
 
 	### print msg
-	if msg is True:
+	if msg is True and ctfvalue is not None:
 		apDisplay.printMsg( "CTF run info: runname='%s', confidence=%.3f, defocus=%.3f um"
 			%(ctfvalue['acerun']['name'], conf, bestdf*1.0e6) )
 
