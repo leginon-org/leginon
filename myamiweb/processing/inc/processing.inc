@@ -806,38 +806,43 @@ function justShowCommandTable($command,$skip_command=false) {
 	// split the components into an array, and pop the first element
 	// which should be the function.
 	$command = trim($command);
-	// beginning and end of description value is indicated by "
-	$description_position = strpos($command,'--description=');
-	if (is_numeric($description_position)) {
-		$quote_start = strpos($command,'"',$description_position);
-		$quote_end = strpos($command,'"',$quote_start+1);
-		$description_bit = substr($command,$description_position,($quote_end-$description_position+1));
-		$short_command = substr_replace($command,'',$description_position, ($quote_end-$description_position+2));
-	} else {
-		$short_command = $command;
-	}
-	$bits = split(" ", $short_command);
-	$function = array_shift($bits);
-	if (is_numeric($description_position)) $bits[] = $description_bit;
-
+	
+	// tokenize the command on spaces, without splitting quoted tokens
+	$token = strtok($command,' ');
+	while ($token) {
+		// find double quoted tokens
+		if ( preg_match('/([^"]*)"([^"]*)/', $token) ) { 
+			$token .= ' '.strtok('"').'"'; 
+		}
+		// find single quoted tokens
+		if ( preg_match("/([^']*)'([^']*)/", $token) ) { 
+			$token .= ' '.strtok("'")."'"; 
+		}
+		
+		$tokens[] = $token;
+		$token = strtok(' ');
+	} 
+	
+	// remove the first token, which should be the file name
+	$function = array_shift($tokens);	
+	
 	// Add the Appion wrapper to support muliple installations of Appion
 	$command =  addAppionWrapper($command);
-
 
 	$commandtable = "<table class='tablebubble' border='0' width='800'>\n";
 	if (!$skip_command) {
 		$commandtable .= "<tr><td colspan='2'>\n";
-		$commandtable .= "	Copy and paste this $function command into a terminal:<hr/>\n";
+		$commandtable .= "	Copy and paste this ".$function." command into a terminal:<hr/>\n";
 		$commandtable .= "</td></tr><tr><td colspan='2' style='padding-left:0.3in;text-indent:-0.3in'>\n";
 		$commandtable .= "	<p>\n";
 		$commandtable .= "		<font size='+1'>$command</font>\n";
 		$commandtable .= "	</p>\n";
 	}
 	$commandtable .= "</td></tr><tr><td colspan='2'><hr/>\n";
-	sort($bits);
-	foreach ($bits as $bit) {
-		if (substr($bit, 0, 2) == "--") {
-			if (preg_match("/^--([^=]*)=(.*)$/", $bit, $matches)) {
+	sort($tokens);
+	foreach ($tokens as $token) {
+		if (substr($token, 0, 2) == "--") {
+			if (preg_match("/^--([^=]*)=(.*)$/", $token, $matches)) {
 				// type 1: --param=value
 				if (empty($matches[1]))
 				continue;
@@ -845,7 +850,7 @@ function justShowCommandTable($command,$skip_command=false) {
 				$commandtable .= "<b>".$matches[1]."</b>\n";
 				$commandtable .= "</td><td>\n";
 				$commandtable .= $matches[2]."\n";
-			} elseif (preg_match("/^--([^=]*)$/", $bit, $matches)) {
+			} elseif (preg_match("/^--([^=]*)$/", $token, $matches)) {
 				// type 2: --param, e.g., --no-commit
 				if (empty($matches[1]))
 				continue;
@@ -854,11 +859,11 @@ function justShowCommandTable($command,$skip_command=false) {
 				$commandtable .= "</td><td>\n";
 				$commandtable .= "<font color='#339933'><i>flag enabled</i></font>\n";
 			}
-		} elseif(!empty($bit)) {
+		} elseif(!empty($token)) {
 			$commandtable .= "</td></tr><tr><td>\n";
 			$commandtable .= "<font color='#cc3333'>Unknown flag:</font>\n";
 			$commandtable .= "</td><td>\n";
-			$commandtable .= "$bit\n";
+			$commandtable .= "$token\n";
 		}
 	}
 	$commandtable .= "</td></tr>\n";
