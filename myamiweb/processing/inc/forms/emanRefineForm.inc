@@ -63,9 +63,9 @@ class EmanRefineForm extends BasicRefineForm
 	{		
 		$command = 'prepEman.py ';
 		
-		$command = $params->addCommandFlag( $command, "ang", "angSampRate" );
-		$command = $params->addCommandFlag( $command, "mask", "outerMaskRadius" );
-		$command = $params->addCommandFlag( $command, "sym", "symmetry" );
+		$command = $params->addCommandFlag( $command, "angSampRate" );
+		$command = $params->addCommandFlag( $command, "outerMaskRadius" );
+		$command = $params->addCommandFlag( $command, "symmetry" );
 		$command = $params->addCommandFlag( $command, "imask" );
 		$command = $params->addCommandFlag( $command, "amask" );
 		$command = $params->addCommandFlag( $command, "maxshift" );
@@ -100,7 +100,7 @@ class EmanRefineForm extends BasicRefineForm
 		$innerMaskRadius 	= '';
 		$outerAlignRadius 	= '';	 
 		$innerAlignRadius 	= ''; 
-		$symmetry 			= 'd7'; 
+		$symmetry 			= 'D7 (z)'; 
 		$numIters 			= '9'; 
 		$angSampRate 		= '3x10:3x8:3x6';
 		$percentDiscard 	= '';  
@@ -199,7 +199,7 @@ class EmanRefineForm extends BasicRefineForm
 	      obj.outerMaskRadius.value = $rad;
 	      obj.innerMaskRadius.value = 0;
 	      obj.angSampRate.value = '4x10:2x5:2x3:2x2';
-	      obj.symmetry.value = 'c1';
+	      obj.symmetry.value = 'C1 (no symmetry)';
 	      obj.numIters.value = '10';
 	      obj.percentDiscard.value = '10';
 	      obj.filterEstimated.checked = false;

@@ -15,6 +15,17 @@ require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
 
+// include each refinement type file
+// todo: autodiscovery
+require_once "inc/forms/xmippRefineForm.inc";
+require_once "inc/forms/frealignRefineForm.inc";
+require_once "inc/forms/emanRefineForm.inc";
+require_once "inc/forms/xmippML3DRefineForm.inc";
+require_once "inc/forms/runParametersReport.inc";
+require_once "inc/forms/clusterParamsForm.inc";
+
+
+
 $selectedcluster=$CLUSTER_CONFIGS[0];
 if ($_POST['cluster']) {
 	$selectedcluster=$_POST['cluster'];
@@ -28,8 +39,8 @@ $selectedcluster=strtolower($selectedcluster);
 ******************************************
 */
 
-if ($_POST['submitjob'])
-	submitJob(); // submit job
+if ($_POST['process'])
+	createCommand(); // submit job
 elseif ($_POST['showjob'])
 	writeJobFile(); // write job file
 elseif ($_POST['jobid'])
@@ -115,6 +126,32 @@ function selectFrealignJob($extra=False) {
 ******************************************
 ******************************************
 */
+// based on the type of refinement the user has selected,
+// create the proper form type here. If a new type is added to
+// Appion, it's form class should be included in this file
+// and it should be added to this function. No other modifications
+// to this file should be necessary.
+function createSelectedRefineForm( $method, $stackId='', $modelArray='', $parentFormName=''  )
+{
+	switch ( $method ) {
+		case eman:
+			$selectedRefineForm = new EmanRefineForm( $method, $stackId, $modelArray, $parentFormName );
+			break;
+		case frealign:
+			$selectedRefineForm = new FrealignRefineForm( $method, $stackId, $modelArray, $parentFormName );
+			break;
+		case xmipp:
+			$selectedRefineForm = new XmippRefineForm( $method, $stackId, $modelArray, $parentFormName );
+			break;
+		case xmippml3d:
+			$selectedRefineForm = new XmippML3DRefineForm( $method, $stackId, $modelArray, $parentFormName );
+			break;
+		default:
+			assert(false); //TODO: not yet implemented exception??
+	}		
+	
+	return $selectedRefineForm;
+}
 
 function jobForm($extra=false) {
 	global $clusterdata, $CLUSTER_CONFIGS, $selectedcluster;
@@ -129,19 +166,19 @@ function jobForm($extra=false) {
 
 	$jobid = $_POST['jobid'];
 
-	// write out errors, if any came up:
 	if (!$jobid)
 		selectFrealignJob("ERROR: No prepared refine job id was selected");
 	if (!($user && $pass))
 		selectFrealignJob("ERROR: You are not logged in");
-	if ($extra)
-		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
-
+	
 	$particle = new particledata();
 	$jobdatas = $particle->getPreparedFrealignJobs($jobid);
 	$jobdata = $jobdatas[0];
 	$rundir = $jobdata['path'];
-	$name = $jobdata['name'];
+	$runname = $jobdata['name'];
+	$outdir = ereg_replace($runname."$", "", $rundir);
+	// TODO: implement this
+	$description = "this is the description"/*$jobdata['description']*/;
 	$nodes = $_POST['nodes'] ? $_POST['nodes'] : '2'; //$jobdata['nodes'];
 	$ppn = $_POST['ppn'] ? $_POST['ppn'] : '8';//$jobdata['ppn'];
 	$rpn = $_POST['rpn'] ? $_POST['rpn'] : '8';//$jobdata['rpn'];
@@ -181,19 +218,39 @@ function jobForm($extra=false) {
 
 	$walltime = ($_POST['walltime'] && $clusterdefaults) ? $_POST['walltime'] : C_WALLTIME_DEF;
 	$cput = ($_POST['cput'] && $clusterdefaults) ? $_POST['cput'] : C_CPUTIME_DEF;
+	
+	// Instantiate the class that defines the forms for the selected method of refinement.
+	$modelArray[] = array( 'name'=>"model_1", 'id'=>$modelid );
+	$formName = "frealignjob";
+	$selectedRefineForm = createSelectedRefineForm( "frealign"/*$reconMethod*/, $refinestackid, $modelArray, $formName );
 
+	$javafunc .= $selectedRefineForm->setDefaults();
+	$javafunc .= $selectedRefineForm->additionalJavaScript();
+	// TODO: does the order of these make a difference??
+	$javafunc .= writeJavaPopupFunctions('appion');
+	$javafunc .= writeJavaPopupFunctions('frealign');
 	$javafunc .= writeJavaPopupFunctions('eman');
+	$javafunc .= showAdvancedParams();
+	
 	processing_header("Refinement Job Launcher","Refinement Job Launcher", $javafunc);
 
-	echo "<form name='frealignjob' method='post' action='$formaction'><br />\n";
+	// write out errors, if any came up:
+	if ($extra)
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
+		
+	// Begin Form
+	echo "<form name='$formName' method='post' action='$formaction'><br />\n";
+	
+	// Post hidden values
 	echo "<input type='hidden' name='clustermemo' value='$selectedcluster'>\n";
 	echo "<input type='hidden' name='jobid' value='$jobid'>\n";
 	echo "<input type='hidden' NAME='model' value='$modelvals'>\n";
 	echo "<input type='hidden' NAME='refinestackvals' value='$refinestackvals'>\n";
 	echo "<input type='hidden' NAME='stackval' value='$refinestackvals'>\n";
 	echo "<input type='hidden' NAME='reconstackvals' value='$reconstackvals'>\n";
-
+	
 	// SETUP FILELIST TO COPY OVER FILES
+	// TODO: move this to individual recon classes
 	$sendfilelist = "";
 	$ext=strrchr($refinestackdata['name'],'.');
 	$refinestackname=substr($refinestackdata['name'],0,-strlen($ext));
@@ -212,93 +269,38 @@ function jobForm($extra=false) {
 	echo "<input type='hidden' NAME='sendfilelist' value='$sendfilelist'>\n";
 	$receivefilelist = "results.tgz|--|models.tgz";
 	echo "<input type='hidden' NAME='receivefilelist' value='$receivefilelist'>\n";
+	
+	// Add processing run parameters
+	$runParamsReport = new RunParametersReport( $runname, $outdir, $description );
+	echo $runParamsReport->generateForm( $_POST );
 
-	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
-	echo "<tr><td>\n";
-	echo openRoundBorder();
-	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
-	echo "<tr>\n";
-	echo "<td><b>Cluster:</b></td>\n";
-	echo "<td><select name='cluster' onchange='frealignjob.submit()'>\n";
-	foreach ($CLUSTER_CONFIGS as $cluster) {
-		$s = ($cluster == $_POST['cluster']) ? 'selected' : '';
-		echo '<option value="'.$cluster.'" '.$s.' >'.$cluster.'</option>'."\n";
-	}
-	echo "</select></td></tr>\n";
-
-	echo "<tr><td><b>Run Name:</b></td><td>$name</td></tr>\n";
-	echo "<input type='hidden' name='jobname' value='$name'>\n";
-	echo "<tr><td><b>Run Directory:</b></td><td>$rundir</td></tr>\n";
-	$outdir = ereg_replace($name."$", "", $rundir);
-	echo "<input type='hidden' name='rundir' value='$rundir'>\n";
-	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
-	echo "</table>\n";
-	echo closeRoundBorder();
-	echo "</td></tr>\n";
-	echo "</table>\n";
-	echo "<p>\n";
-
-	//--- overall PBS tables
-	echo "<table border='0'><tr><td valign='top'>"; 
-
-	//--- Cluster Parameters
-	echo openRoundBorder();
-	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
-	echo "<tr>\n";
-	echo "<td colspan='4' align='center'>\n";
-	echo "<h4>PBS Cluster Parameters</h4>\n";
-	echo "</td>\n";
-	echo "</tr>\n";
-	// row 1 col 1-2
-	echo "<tr><td>\n";
-		echo docpop('nodes',"Nodes: ");
-	echo "</td><td>\n";
-	echo "<input type='text' name='nodes' value='$nodes' SIZE='4'>\n";
-	// row 1 col 3-4
-	echo "</td><td>\n";
-		echo docpop('procpernode',"Proc/Node: ");
-	echo "</td><td>\n";
-	echo "<input type='text' name='ppn' value='$ppn' SIZE='4'>\n";
-	echo "</td><td>\n";
-		echo docpop('reconpernode',"Recons/Node: ");
-	echo "</td><td>\n";
-	echo "<input type='text' name='rpn' value='$rpn' SIZE='4'>\n";
-	// row 1 col 5-6
-	echo "</td><td>\n";
-		echo docpop('memory',"Memory: ");
-	echo "</td><td>\n";
-		echo "<input type='text' name='memory' value='$memory' SIZE='4'>\n";
-	// row 2 col 1-3
-	echo "</td></tr><tr><td>&nbsp;\n";
-	echo "</td></tr><tr><td>\n";
-		echo docpop('walltime',"Wall Time: ");
-	echo "</td><td>\n";
-		echo "<input type='text' NAME='walltime' VALUE='$walltime' SIZE='4'>";
-	echo "</td><td>\n";
-		echo "hours";
-	// row 2 col 4-6
-	echo "</td><td>\n";
-		echo docpop('cputime',"CPU Time: ");
-	echo "</td><td>\n";
-		echo "<input type='text' NAME='cput' VALUE='$cput' SIZE='4'>";
-	echo "</td><td>\n";
-		echo "hours";
-	echo "</td></tr>\n";
-	echo "</table>\n";
-	// row 3
-	echo $clusterdata->cluster_parameters();
-	echo closeRoundBorder();
-	echo "<br/>\n";
-	echo "<br/>\n";
-
-	echo"</td></tr></table>"; //overall table
-
-	echo"<input type='SUBMIT' NAME='showjob' VALUE='Show Job File'><br/><hr/>\n";
+	// Add cluster parameter form
+	$clusterParamsForm = new ClusterParamsForm( $nodes, $ppn, $rpn, $memory, $walltime, $cput );
+	echo $clusterParamsForm->generateForm( $_POST );
+	
+	// Add recon refine parameters
+	// add the parameters that apply to all methods of reconstruction
+	echo $selectedRefineForm->generalParamForm();
+	
+	// Add parameters specific to the refine method selected
+	echo "<INPUT TYPE='checkbox' NAME='showAdvanceParams' onChange='javascript:unhide();' VALUE='' >";
+	echo " Show Advanced Parameters <br />";
+	echo "<div align='left' id='div1' class='hidden' >";
+	echo $selectedRefineForm->advancedParamForm();
+	echo "</div>";
+	
+	// Add submit button
+	echo "<br/><br/>\n";
+	echo getSubmitForm("Prepare Refinement");
+	
+	//echo"<input type='SUBMIT' NAME='showjob' VALUE='Show Job File'><br/><hr/>\n";
 
 	echo"</form><br/>\n";
 
-	echo frealignRef();
-
+	// Add reference for selected refinement method
+	echo showReference('frealign'/*$_POST['method']*/);
+	
+	// Add stack and model summary tables
 	//echo "StackID: $stackid -- ModelID: $modelid<br/>\n";
 	echo "<table class='tablebubble'><tr><td>\n";
 	echo stacksummarytable($refinestackid, true);
@@ -318,6 +320,33 @@ function jobForm($extra=false) {
 ******************************************
 ******************************************
 */
+function createCommand ($extra=False) 
+{
+	// TODO: send stack and model filenames
+	// collect the user selected stack id
+	//$commandAddOn.='--stackid='.$_POST['stackval'].' ';
+	
+	// collect the user selected model id(s)
+//	foreach( $_POST as $key=>$value ) {
+//		if (strpos($key,"model_" ) !== False) {
+//			$modelids.= "$value,";
+//		}
+//	}
+	
+	//$commandAddOn.='--modelid='.$modelids.' ';
+	
+	// add the stack filename to the command
+	$stackvals = $_POST['stackval'];
+	
+	// collect processing run parameters
+	$runParametersReport = new RunParametersReport();
+	$commandAddOn .= $runParametersReport->buildCommand( $_POST );
+		
+	// Instantiate the class that defines the forms for the selected method of refinement.
+	$selectedRefineForm = createSelectedRefineForm( "frealign" );
+	$selectedRefineForm->createRunCommand( $_POST, "jobForm", $commandAddOn );
+};
+
 
 function writeJobFile ($extra=False) {
 	global $clusterdata;
@@ -413,7 +442,7 @@ function writeJobFile ($extra=False) {
 	echo "<input type='hidden' name='cluster' value='".C_NAME."'>\n";
 	echo "<input type='hidden' NAME='clusterpath' value='$clusterpath'>\n";
 	echo "<input type='hidden' NAME='dmfpath' value='".$_POST['dmfpath']."'>\n";
-	echo "<input type='hidden' NAME='jobname' value='".$jobdata['name']."'>\n";
+	echo "<input type='hidden' NAME='runname' value='".$jobdata['name']."'>\n";
 	echo "<input type='hidden' NAME='outdir' value='".$_POST['outdir']."'>\n";
 	echo "<input type='hidden' NAME='mem' value='".$jobdata['memory']."gb'>\n";
 	echo "<input type='hidden' NAME='model' value='".$_POST['model']."'>\n";
@@ -463,16 +492,16 @@ function submitJob($extra=False) {
 	if (!($user && $pass))
 		jobForm("<B>ERROR:</B> Enter a user name and password");
 
-	$jobname = $_POST['jobname'];
-	$outdir = $_POST['outdir'].$jobname;
+	$runname = $_POST['runname'];
+	$outdir = $_POST['outdir'].$runname;
 
 	$dmfpath=null;
 	if (!empty($_POST['dmfpath'])) {
-		$dmfpath=$_POST['dmfpath'].$jobname;
+		$dmfpath=$_POST['dmfpath'].$runname;
 	}
 
-	$clusterpath=$_POST['clusterpath'].$jobname;
-	$jobfile="$jobname.job";
+	$clusterpath=$_POST['clusterpath'].$runname;
+	$jobfile="runname.job";
 	$tmpjobfile = "/tmp/$jobfile";
 	if (!file_exists($tmpjobfile))
 		writeJobFile("<B>ERROR:</B> Could not find temp jobfile: $tmpjobfile");	
@@ -482,7 +511,7 @@ function submitJob($extra=False) {
 	// add header & job id to the beginning of the script
 	// convert /\n's back to \n for the script
 	$header = explode('|--|',$_POST['header']);
-	$clusterjob = "## $jobname\n";
+	$clusterjob = "## $runname\n";
 	foreach ($header as $l) $clusterjob.="$l\n";
 
 	$clusterjob.= C_APPION_BIN."updateAppionDB.py $jobid R $projectId\n\n";
@@ -522,12 +551,12 @@ function submitJob($extra=False) {
 	//$clusterdata->cluster_cmd($host, $user, $pass);
 
 	// if on guppy, clusterpath is same as outdir
-	$path = formatEndPath($clusterdata->get_path()).$jobname;
+	$path = formatEndPath($clusterdata->get_path()).$runname;
 	echo "<table width='600'>\n";
 	echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
 	echo "<tr><td>Cluster Job File</td><td>$path.job</td></tr>\n";
 	echo "<tr><td>Appion Job Id</td><td>$jobid</td></tr>\n";
-	echo "<tr><td>Job File Name</td><td>$jobname.job</td></tr>\n";
+	echo "<tr><td>Job File Name</td><td>$runname.job</td></tr>\n";
 	
 	// submit job on host
 	$cmd = "cd $path; qsub $jobfile;\n";
@@ -597,6 +626,20 @@ function formatEndPath($path) {
 	if (substr($path,-1,1)!='/')
 		$path.='/';
 	return $path;
+}
+// javascript to show or hide the advanced parameters section
+function showAdvancedParams()
+{
+	$javafunc = "
+	<script type='text/javascript'>
+	 function unhide() {
+	 var item = document.getElementById('div1');
+	 if (item) {
+	 item.className=(item.className=='hidden')?'unhidden':'hidden';
+	 }
+	 }
+	 </script>\n";
+	return $javafunc;
 }
 
 ?>

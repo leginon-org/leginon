@@ -15,14 +15,8 @@ require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
 
-// include each refinement type file
-// todo: autodiscovery
-require_once "inc/forms/xmippRefineForm.inc";
-require_once "inc/forms/frealignRefineForm.inc";
-require_once "inc/forms/emanRefineForm.inc";
 require_once "inc/forms/stackPrepForm.inc";
 require_once "inc/forms/runParametersForm.inc";
-require_once "inc/forms/xmippML3DRefineForm.inc";
 
 if ($_POST['process']) {
 	createCommand(); // generate command
@@ -30,32 +24,6 @@ if ($_POST['process']) {
 	jobForm(); // set parameters
 }
 
-// based on the type of refinement the user has selected,
-// create the proper form type here. If a new type is added to
-// Appion, it's form class should be included in this file
-// and it should be added to this function. No other modifications
-// to this file should be necessary.
-function createSelectedRefineForm( $method, $stackId='', $modelArray='', $kv=''  )
-{
-	switch ( $method ) {
-		case eman:
-			$selectedRefineForm = new EmanRefineForm( $method, $stackId, $modelArray, $kv );
-			break;
-		case frealign:
-			$selectedRefineForm = new FrealignRefineForm( $method, $stackId, $modelArray, $kv );
-			break;
-		case xmipp:
-			$selectedRefineForm = new XmippRefineForm( $method, $stackId, $modelArray, $kv );
-			break;
-		case xmippml3d:
-			$selectedRefineForm = new XmippML3DRefineForm( $method, $stackId, $modelArray, $kv );
-			break;
-		default:
-			assert(false); //TODO: not yet implemented exception??
-	}		
-	
-	return $selectedRefineForm;
-}
 
 /* ******************************************
  *********************************************
@@ -116,19 +84,13 @@ function jobForm($extra=false) {
 	$box		= $stackinfo[2];
 
 	// preset information from stackid
-	$presetinfo = $particle->getPresetFromStackId($stackid);
-	$kv = $presetinfo['hightension']/1e3;
+	// TODO: make sure this is not needed and remove
+//	$presetinfo = $particle->getPresetFromStackId($stackid);
+//	$kv = $presetinfo['hightension']/1e3;
 
-	// Instantiate the class that defines the forms for the selected method of refinement.
-	$selectedRefineForm = createSelectedRefineForm( $reconMethod, $stackid, $modelArray, $kv );
 	
 	// add javascript functions
-	$javafunc .= $selectedRefineForm->setDefaults();
-	$javafunc .= $selectedRefineForm->additionalJavaScript();
 	$javafunc .= writeJavaPopupFunctions('appion');
-	$javafunc .= writeJavaPopupFunctions('frealign');
-	$javafunc .= writeJavaPopupFunctions('eman');
-	$javafunc .= showAdvancedParams();
 	
 	// add the appion processing header
 	processing_header("Appion: Recon Refinement","Prepare Recon Refinement",$javafunc);
@@ -158,17 +120,7 @@ function jobForm($extra=false) {
 	// add stack preparation parameters
 	$stackPrepForm = new StackPrepForm();
 	echo $stackPrepForm->generateForm( $_POST );
-	
-	// add the parameters that apply to all methods of reconstruction
-	echo $selectedRefineForm->generalParamForm();
-	
-	// add parameters specific to the refine method selected
-	echo "<INPUT TYPE='checkbox' NAME='showAdvanceParams' onChange='javascript:unhide();' VALUE='' >";
-	echo " Show Advanced Parameters <br />";
-	echo "<div align='left' id='div1' class='hidden' >";
-	echo $selectedRefineForm->advancedParamForm();
-	echo "</div>";
-	
+		
 	// add submit button
 	echo "<br/><br/>\n";
 	echo getSubmitForm("Prepare Refinement");
@@ -205,8 +157,33 @@ function jobForm($extra=false) {
 
 function createCommand ($extra=False) 
 {
+	/* ***********************************
+	 PART 1: Get variables from POST array and validate
+	 ************************************* */
+	// collect processing run parameters
+	$runParametersForm = new RunParametersForm();
+	$errorMsg = $runParametersForm->validate( $_POST );
+	
+	// collect stack preparation parameters
+	$stackPrepForm = new StackPrepForm();
+	$errorMsg .= $stackPrepForm->validate( $_POST );
+	
+	// reload the form with the error messages
+	if ( $errorMsg ) jobForm( $errorMsg );
+
+	/* *******************
+	 PART 3: Create program command
+	 ******************** */
+	$command = 'prepRefine.py ';
+	
+	// add run parameters
+	$command .= $runParametersForm->buildCommand( $_POST );
+	
+	// add stack prep parameters
+	$command .= $stackPrepForm->buildCommand( $_POST );
+	
 	// collect the user selected stack id
-	$commandAddOn.='--stackid='.$_POST['stackval'].' ';
+	$command.='--stackid='.$_POST['stackval'].' ';
 	
 	// collect the user selected model id(s)
 	foreach( $_POST as $key=>$value ) {
@@ -214,35 +191,22 @@ function createCommand ($extra=False)
 			$modelids.= "$value,";
 		}
 	}
+	$command.='--modelid='.$modelids.' ';
 	
-	$commandAddOn.='--modelid='.$modelids.' ';
-	
-	// collect processing run parameters
-	$runParametersForm = new RunParametersForm();
-	$commandAddOn .= $runParametersForm->buildCommand( $_POST );
-	
-	// collect stack preparation parameters
-	$stackPrepForm = new StackPrepForm();
-	$commandAddOn .= $stackPrepForm->buildCommand( $_POST );
-	
-	// Instantiate the class the defines the forms for the selected method of refinement.
-	$selectedRefineForm = createSelectedRefineForm( $_POST['method'] );
-	$selectedRefineForm->createRunCommand( $_POST, "jobForm", $commandAddOn );
+	/* *******************
+	 PART 4: Create header info, i.e., references
+	 ******************** */
+	// Add reference to top of the page
+	$headinfo .= showReference( $_POST['method'] );
+
+	/* *******************
+	 PART 5: Show or Run Command
+	 ******************** */
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'prepfrealign', $nproc);
+	// if error display them
+	if ($errors) jobForm($errors);
 };
 
-// javascript to show or hide the advanced parameters section
-function showAdvancedParams()
-{
-	$javafunc = "
-	<script type='text/javascript'>
-	 function unhide() {
-	 var item = document.getElementById('div1');
-	 if (item) {
-	 item.className=(item.className=='hidden')?'unhidden':'hidden';
-	 }
-	 }
-	 </script>\n";
-	return $javafunc;
-}
 ?>
 

@@ -11,13 +11,18 @@ require_once "../inc/formParameters.inc";
 
 class RunParametersForm
 {
-	function __construct( $runname='', $outdir='' ) 
+	function __construct( $runname='', $outdir='', $description='' ) 
 	{
 		$this->params = new FormParameters();
 		
 		$this->params->addParam( "runname", $runname, "Run name" );
 		$this->params->addParam( "outdir", $outdir, "Output directory" );
 		$this->params->addParam( "description", $description, "Description" );
+	}
+	
+	public function disableAllParams()
+	{
+		$this->params->disableAllParams();
 	}
 	
 	public function generateForm( $postArray )
@@ -39,6 +44,14 @@ class RunParametersForm
 		$html.= "<br/>\n";
 
 		return $html;
+	}
+	
+	public function validate( $postArray )
+	{
+		$this->params->getPostedValues( $postArray );
+		$msg = $this->params->validate();
+		
+		return $msg;
 	}
 	
 	// TODO: probably dont need this...as the rundir and runname are already added to the command. 

@@ -26,12 +26,12 @@ abstract class BasicRefineForm
 	private $selectedParams; 	// the current user selected or modified parameter set
 	private $stackInfo;
 	
-	function __construct( $method, $stackId, $modelArray, $kv ) 
+	function __construct( $method, $stackId, $modelArray, $parentFormName='' ) 
 	{
 		$this->method 		= $method;
 		$this->stackId 		= $stackId;
 		$this->modelArray 	= $modelArray;
-		$this->kv 			= $kv;
+		$this->parentFormName = $parentFormName;
 		
 		$this->setStackInfo( $stackId );
 	}
@@ -65,7 +65,6 @@ abstract class BasicRefineForm
 	public function getMethodType() { return $this->method; } 
 	public function getStackId() 	{ return $this->stackId; } 
 	public function getModelArray() { return $this->modelArray; } 
-	public function getKv() 		{ return $this->kv; } 
 	
 	// TUTORIAL: "abstract" means that extending classes MUST define this function
 	// ex: public getMethodType() { return "eman"; } 
@@ -159,8 +158,11 @@ abstract class BasicRefineForm
 			}
 		}
 	
+		// when the import box selection changes, reload the parent form
+		$onChange = $this->parentFormName.".submit()";
+		
 		$html .= "<input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults'>\n";
-		$html .= "<select name='import' onChange='prepRefine.submit()'>\n";
+		$html .= "<select name='import' onChange='$onChange'>\n";
 		$html .= "<option>Import parameters</option>\n";
 		foreach ($this->defaultParamSets as $defaultSet) {
 			$html .= "<option value='$defaultSet->id'>$defaultSet->label</option>\n";
@@ -276,7 +278,9 @@ abstract class BasicRefineForm
 		$html .= $paramSet->insertTextField( "innerMaskRadius", $longSize, "(&Aring;ngstroms)" );
 		$html .= $paramSet->insertTextField( "outerAlignRadius", $longSize, "(&Aring;ngstroms)" );
 		$html .= $paramSet->insertTextField( "innerAlignRadius", $longSize, "(&Aring;ngstroms)" );
-		$html .= $paramSet->insertTextField( "symmetry", $longSize );
+		$html .= $this->insertSymmetrySelectionBox( "symmetry", $paramSet->getParamValue("symmetry") );
+		$html .= "&nbsp;";
+		$html .=  docpop( "symmetry", $paramSet->getParamLabel("symmetry") );
 			
 		$html .= "<br />\n";
 		$html .= "<br />\n";
@@ -303,6 +307,47 @@ abstract class BasicRefineForm
 		
 		return $html;
 	}
+	
+	// returns the html to display a drop down selection box
+	// containing all the available symmetry values as defined
+	// in the apSymmetry table. 
+	// Name is the name of the form parameter
+	// Value is the currently selected symmetry id 
+	// TODO: this is awfully similar to the box in UploadModel.php...merge? 
+	function insertSymmetrySelectionBox( $name, $value ) 
+	{
+		// if there are quotes around $value, trim them
+		$value = str_replace('"','',$value); 
+		
+		$particle = new particledata();
+		$syms = $particle->getSymmetries();
+		$html .= "<select name='$name'>\n";
+	   	$html .= "<option value=''>select one...</option>\n";
+		
+	   	foreach ($syms as $sym) {
+	   		$id 		= $sym['DEF_id'];
+	   		$symmetry 	= $sym['symmetry'];
+	   		
+			$html .= "<option value='$symmetry'";
+			
+			if ( strcasecmp($symmetry, $value) == 0 ) {
+				$html .= " SELECTED";
+			}
+			
+			$html .= ">$symmetry";
+			
+			if ($symmetry == 'C1') {
+				$html .= " (no symmetry)";
+			}
+			
+			$html .= "</option>\n";
+		}
+		
+		$html .= "</select>\n";
+		
+		return $html;
+	}
+	
 		
 	// builds the run command and shows or submits the command
 	// $errorCallbackFunc is the functions that displays the form
@@ -364,7 +409,7 @@ abstract class BasicRefineForm
 	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
 	      if (obj.innerAlignRadius) obj.innerAlignRadius.value = '4';
 	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $rad;
-	      if (obj.symmetry) obj.symmetry.value = 'c1';
+	      if (obj.symmetry) obj.symmetry.value = 'C1 (no symmetry)';
 	      if (obj.numIters) obj.numIters.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10 2x5 2x3 2x2';
 	      if (obj.percentDiscard) obj.percentDiscard.value = '10';

@@ -39,6 +39,11 @@ class FormParameters
 		$this->params[$name]["label"] = $label;
 	}
 	
+	final public function getParamLabel( $name ) 
+	{
+		return $this->params[$name]["label"];
+	}
+	
 	// returns the parameter array
 	final public function getParamArray()
 	{
@@ -47,9 +52,16 @@ class FormParameters
 		
 	// extending classes should use this disable function in the constructor
 	// to disable (grey out) params.
-	final protected function disableParam( $name ) 
+	final public function disableParam( $name ) 
 	{
 		$this->params[$name]["enable"] = 'DISABLED';
+	}
+	
+	final public function disableAllParams()
+	{
+		foreach ( $this->params as $name=>$param ) {
+			$this->disableParam( $name );
+		}
 	}
 	
 	// extending classes should use this function in the constructor
@@ -106,6 +118,11 @@ class FormParameters
 	// override the validate function for error checking.
 	public function validate() 
 	{
+		// If no validations have been added, just return
+		if ( empty($this->validations) ) {
+			return;
+		}
+		
 		$validator = new formValidator();
 
 		foreach ( $this->validations as $validate ) {
@@ -150,6 +167,23 @@ class FormParameters
 			$html = "";
 		} else {
 			$html = $this->formLib->insertTextField( $this->params[$name]['name'], 
+													$this->params[$name]['label'], 
+													$this->params[$name]['value'], 
+													$size, 
+													$this->params[$name]['enable'], 
+													$note );
+		}
+		
+		return $html;
+	}
+	
+	public function insertTextFieldInRow( $name, $size=20, $note='' )
+	{
+		// if the parameter has been "hidden" just return an empty string.
+		if ( $this->params[$name]['hidden'] ) {
+			$html = "";
+		} else {
+			$html = $this->formLib->insertTextFieldInRow( $this->params[$name]['name'], 
 													$this->params[$name]['label'], 
 													$this->params[$name]['value'], 
 													$size, 

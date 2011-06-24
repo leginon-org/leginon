@@ -42,6 +42,14 @@ class StackPrepForm
 		return $html;
 	}
 	
+	public function validate( $postArray )
+	{
+		$this->params->getPostedValues( $postArray );
+		$msg = $this->params->validate();
+		
+		return $msg;
+	}
+	
 	public function buildCommand( $postArray )
 	{
 		$this->params->getPostedValues( $postArray );
