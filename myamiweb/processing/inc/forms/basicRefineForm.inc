@@ -384,7 +384,7 @@ abstract class BasicRefineForm
 		 PART 5: Show or Run Command
 		 ******************** */
 		// submit command
-		$errors = showOrSubmitCommand($command, $headinfo, 'prepfrealign', $nproc);
+		$errors = showOrSubmitCommand($command, $headinfo, 'preprefine', $nproc);
 		// if error display them
 		if ($errors) $errorCallbackFunc($errors);
 		exit;
