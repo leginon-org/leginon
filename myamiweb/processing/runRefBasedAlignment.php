@@ -400,8 +400,7 @@ function runAlignment() {
 	$boxsize = (int) floor($boxsz/$bin);
 	$maxbox = (int) floor($boxsize/2-3); // workaround, SPIDER still gives error without -3 value
 	if (($lastring+$xysearch) > $maxbox) {
-		createAlignmentForm("<B>ERROR:</B> last ring radius ($lastring pixels) plus xy-search ($xysearch pixels) "
-			."is too big for final boxsize ($boxsize pixels); must be less than or equal to $maxbox pixels");
+		createAlignmentForm("<B>ERROR:</B> alignment will not run: either decrease the last ring radius ($lastring pixels) or the xy-search ($xysearch pixels)");
 	}
 
 	//make sure a session was selected
