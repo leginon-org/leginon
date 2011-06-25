@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 import time
 import subprocess
@@ -11,7 +12,7 @@ from appionlib import apRefineJobFrealign
 
 class RefineRunner(object):
 	def __init__(self):
-		self.jobtype = 'frealignrecon'
+		self.jobtype = 'emanrecon'
 
 		self.setJob()
 		if self.job.setuponly:
