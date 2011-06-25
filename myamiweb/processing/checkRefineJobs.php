@@ -489,6 +489,9 @@ function showEMANJobInfo($jobinfo) {
 							$cls = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 							$cls = trim($cls);
 							// find number of times cycled
+							// At certain point of the refinement cycle cls returns zero. 
+							// This next line  avoids division error
+							if (!is_numeric($cls) or $cls==0) $cls=1;
 							$numt = floor($r/$cls);
 							$m = $r%$cls;
 							$tran = "transforming slice: $m/$cls";
