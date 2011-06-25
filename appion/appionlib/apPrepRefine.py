@@ -217,6 +217,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		prepq['job'] = self.clusterjobdata
 		prepq['session'] = leginondata.SessionData.direct_query(self.params['expid'])
 		prepq['method'] = self.refinemethod
+		prepq['description'] = self.params['description']
 		if 'reconiterid' in self.params.keys() and self.params['reconiterid'] is not None:
 			prepq['paramIter'] = appiondata.ApRefineIterData.direct_query(self.params['reconiterid'])
 		r = prepq.query()
