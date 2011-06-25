@@ -348,6 +348,37 @@ def convertParserToParams(parser):
 	return params
 
 #=====================
+def convertIterationParams(iterparams,params,numiter):
+	"""
+	Used by 3D refinement to specify iteration parameters
+	in format of xmipp i.e. 3x5:3x4:3:3
+	"""
+	for name in iterparams:
+		param_str = str(params[name]).strip()
+		param_upper = param_str.upper()
+		multiple_bits = param_upper.split('X')
+		if len(multiple_bits) <= 1:
+			params[name] = map((lambda x: tc(param_str)),range(numiter))
+		else:
+			params[name] = []
+			set_bits = param_upper.split(':')
+			position = 0
+			total_repeat = 0
+			for set in set_bits:
+				m_index = set.find('X')
+				try:
+					repeat = int(set[:m_index])
+					params[name].extend(map((lambda x:tc(param_str[position+m_index+1:position+len(set)])),range(repeat)))	
+				except:
+					self.params[name] = map((lambda x: tc(param_str)),range(numiter))
+				position += len(set)+1
+		if len(params[name]) < numiter:
+			params[name].extend(map((lambda x: params[len(params[name])-1]),range(numiter - len(params[name]))))
+		elif len(params[name]) > numiter:
+			params[name] = params[name][:numiter]
+	return params
+
+#=====================
 def getXversion():
 	xcmd = "X -version"
 	proc = subprocess.Popen(xcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -582,6 +613,23 @@ def randomString(length):
 	for i in range(length):
 		mystr += random.choice(chars)
 	return mystr
+
+#================
+def tc(string):
+	"""
+	return in python type from according to string format
+	"""
+	try:
+		out = eval(string)
+	except:
+		string = string.strip()
+		if string.upper() == 'T':
+			out = True
+		elif string.upper() == 'F':
+			out = False
+		else:
+			out = string
+	return out
 
 ####
 # This is a low-level file with NO database connections
