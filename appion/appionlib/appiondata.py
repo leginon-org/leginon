@@ -1180,6 +1180,50 @@ class ApEmanRefineIterData(Data):
 	typemap = classmethod(typemap)
 
 ### this one is for all iterations
+class ApRefineStackData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('preprefine', ApPrepRefineData),
+			('stackref', ApStackData),
+			('filename', str), 
+			('bin', int),
+			('lowpass', float),
+			('highpass', float),
+			('last_part', int),
+			('format', str),
+			('apix', float),
+			('boxsize', int),
+			('cs', float), 
+			('recon', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApRefineInitModelData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('preprefine', ApPrepRefineData),
+			('refmodel', ApInitialModelData),
+			('filename', str), 
+			('format', str),
+			('apix', float),
+		)
+	typemap = classmethod(typemap)
+
+class ApPrepRefineData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+		('name', str),
+		('hidden', bool),
+		('path', ApPathData),
+		('stack', ApStackData),
+		('job', ApAppionJobData),
+		('session', leginon.leginondata.SessionData),
+		('method', str),
+		('description', str),
+		('paramiter', ApRefineIterData),
+		)
+	typemap = classmethod(typemap)
+
 class ApFrealignPrepareData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
