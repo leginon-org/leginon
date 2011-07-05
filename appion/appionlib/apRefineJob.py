@@ -9,8 +9,8 @@ from appionlib import apParam
 from appionlib import apDisplay
 
 class RefineJob(basicScript.BasicScript):
-	def __init__(self):
-		super(RefineJob,self).__init__()
+	def __init__(self,optlist):
+		super(RefineJob,self).__init__(optlist)
 		self.tasks = {}
 		self.setAttributes()
 		self.start()

@@ -4,27 +4,26 @@ import time
 import subprocess
 import math
 
-from appionlib import basicScript
-from appionlib import apParam
-from appionlib import apRefineJob
-from appionlib import apRefineJobEman
-from appionlib import apRefineJobFrealign
 
 class RefineRunner(object):
 	def __init__(self):
 		self.jobtype = 'emanrecon'
+		optargs = sys.argv[1:]
 
-		self.setJob()
+		self.setJob(optargs)
 		if self.job.setuponly:
 			self.printCommands()
 
-	def setJob(self):
+	def setJob(self,optargs):
 		if self.jobtype is None:
-			self.job = apRefineJob.Tester()
+			from appionlib import apRefineJob
+			self.job = apRefineJob.Tester(optargs)
 		elif self.jobtype.lower() == 'emanrecon':
-			self.job = apRefineJobEman.EmanRefineJob()
+			from appionlib import apRefineJobEman
+			self.job = apRefineJobEman.EmanRefineJob(optargs)
 		elif self.jobtype.lower() == 'frealignrecon':
-			self.job = apRefineJobFrealign.FrealignRefineJob()
+			from appionlib import apRefineJobFrealign
+			self.job = apRefineJobFrealign.FrealignRefineJob(optargs)
 
 	def printCommands(self):
 		print ''

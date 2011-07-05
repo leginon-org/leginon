@@ -20,7 +20,7 @@ from appionlib import apDisplay
 #=====================
 class BasicScript(object):
 	#=====================
-	def __init__(self):
+	def __init__(self,optargs=sys.argv[1:]):
 		"""
 		Starts a new function and gets all the parameters
 		"""
@@ -45,7 +45,7 @@ class BasicScript(object):
 		self.parser = OptionParser()
 		self.setupParserOptions()
 		self.params = apParam.convertParserToParams(self.parser)
-		self.checkForDuplicateCommandLineInputs()
+		self.checkForDuplicateCommandLineInputs(optargs)
 
 		self.checkConflicts()
 
@@ -56,8 +56,8 @@ class BasicScript(object):
 		self.onInit()
 
 	#=====================
-	def checkForDuplicateCommandLineInputs(self):
-		args = sys.argv[1:]
+	def checkForDuplicateCommandLineInputs(self,optargs):
+		args = optargs
 		argmdict = {}
 		for arg in args:
 			elements=arg.split('=')

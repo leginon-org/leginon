@@ -332,9 +332,9 @@ def createDirectory(path, mode=0775, warning=True):
 	return True
 
 #=====================
-def convertParserToParams(parser):
+def convertParserToParams(parser,optargs=sys.argv[1:]):
 	parser.disable_interspersed_args()
-	(options, args) = parser.parse_args()
+	(options, args) = parser.parse_args(optargs)
 	if len(args) > 0:
 		apDisplay.printError("Unknown commandline options: "+str(args))
 	if len(sys.argv) < 2:
