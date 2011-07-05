@@ -56,7 +56,7 @@ class BasicScript(object):
 		self.onInit()
 
 	#=====================
-	def checkForDuplicateCommandLineInputs(self,optargs):
+	def checkForDuplicateCommandLineInputs(self,optargs=sys.argv[1:]):
 		args = optargs
 		argmdict = {}
 		for arg in args:
