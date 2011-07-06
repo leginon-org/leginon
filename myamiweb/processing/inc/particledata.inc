@@ -2480,6 +2480,56 @@ class particledata {
 		return count($r);
 	}
 
+	function removeAlignStackById($alignStackId) {
+		// Get alignment run for this stack
+		$q = "SELECT `REF|ApAlignRunData|alignrun` as alignrun "
+			. "FROM `ApAlignStackData` "
+			. "WHERE `DEF_id`=$alignStackId ";
+		$r = $this->mysql->getSQLResult($q);
+		$alignrun = $r[0]['alignrun'];
+
+		// delete entry in ApAlignRunData
+		$q = "DELETE from `ApAlignRunData` "
+			. "WHERE `DEF_id`=$alignrun ";
+		$r = $this->mysql->getSQLResult($q);
+		$status = "Removed Alignment ID $alignrun from ApAlignRunData table<br>\n";
+
+		// delete entry in ApAlignReferenceData
+		$q = "DELETE from `ApAlignReferenceData` "
+			. "WHERE `REF|ApAlignRunData|alignrun`=$alignrun ";
+		$r = $this->mysql->getSQLResult($q);
+		$status.= "Removed Aligned References from ApAlignReferenceData table<br>\n";
+
+		// get path the Stack entry in ApStackData
+		$q = "SELECT `REF|ApPathData|path` as path from ApAlignStackData "
+			."WHERE DEF_id=$alignStackId";
+		$r = $this->mysql->getSQLResult($q);
+		$pathid = $r[0]['path'];
+		// this path is used to remove the corresponding
+		// entry from ApAppionJobData
+		$q = "DELETE from ApAppionJobData "
+			."WHERE `REF|ApPathData|path`=$pathid ";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed associated job from ApAppionJobData<br/>\n";
+	
+		// remove stack from ApStackData
+		$q = "DELETE from `ApAlignStackData` "
+			. "WHERE `DEF_id`=$alignStackId ";
+		$r = $this->mysql->getSQLResult($q);
+		$status.= "Removed Aligned Stack ID $alignStackId from ApAlignStackData table<br>\n";
+		// count the number of particles in ApStackParticleData
+		$q = "SELECT count(DEF_id) as num "
+			."FROM `ApAlignParticleData` "
+			."WHERE `REF|ApAlignStackData|alignstack`=$alignStackId ";
+		list($r) = $this->mysql->getSQLResult($q);
+		$q = "DELETE FROM `ApAlignParticleData` "
+			."WHERE `REF|ApAlignStackData|alignstack`=$alignStackId ";
+		$this->mysql->getSQLResult($q);
+		$status.= "Removed ".$r['num']." particles from ApAlignParticleData<br/>\n";
+
+		return $status;		
+	}
+
 	function removeStackById($stackId) {
 		// Now get the stack run(s) used for this stack
 		$q = "SELECT `REF|ApStackRunData|stackRun` as stackrun "
