@@ -284,3 +284,19 @@ def particularizeProtocol(protocolIn, parameters, protocolOut):
 			fileOut.write(line)
 	fileIn.close()
 	fileOut.close()
+
+#======================
+#======================	
+def convertXmippEulersToEman(phi, theta, psi):
+	''' 
+	converts Xmipp / Spider Euler angles to EMAN, according to:
+	Baldwin, P.R., and Penczek, P.A. (2007). The Transform Class in SPARX and EMAN2. Journal of Structural Biology 157, 250-261.
+	also see for reference:
+	http://blake.bcm.edu/eman2/doxygen_html/transform_8cpp_source.html
+	http://blake.bcm.edu/emanwiki/Eman2TransformInPython
+	'''
+	az = math.fmod((phi+90),360.0)
+	alt = alt
+	phi = math.fmod((psi-90),360.0)
+
+	return alt, az, phi
