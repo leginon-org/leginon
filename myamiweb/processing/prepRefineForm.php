@@ -115,11 +115,11 @@ function jobForm($extra=false) {
 	
 	// add Processing Run Parameter fields
 	$runParametersForm = new RunParametersForm( $runname, $outdir );
-	echo $runParametersForm->generateForm( $_POST );
+	echo $runParametersForm->generateForm();
 	
 	// add stack preparation parameters
 	$stackPrepForm = new StackPrepForm();
-	echo $stackPrepForm->generateForm( $_POST );
+	echo $stackPrepForm->generateForm();
 		
 	// add submit button
 	echo "<br/><br/>\n";
@@ -160,11 +160,11 @@ function createCommand ($extra=False)
 	/* ***********************************
 	 PART 1: Get variables from POST array and validate
 	 ************************************* */
-	// collect processing run parameters
+	// validate processing run parameters
 	$runParametersForm = new RunParametersForm();
 	$errorMsg = $runParametersForm->validate( $_POST );
 	
-	// collect stack preparation parameters
+	// validate stack preparation parameters
 	$stackPrepForm = new StackPrepForm();
 	$errorMsg .= $stackPrepForm->validate( $_POST );
 	
@@ -172,9 +172,9 @@ function createCommand ($extra=False)
 	if ( $errorMsg ) jobForm( $errorMsg );
 
 	/* *******************
-	 PART 3: Create program command
+	 PART 2: Create program command
 	 ******************** */
-	$command = 'prepRefine.py ';
+	$command = 'prepRefineEman.py ';
 	
 	// add run parameters
 	$command .= $runParametersForm->buildCommand( $_POST );
@@ -191,6 +191,7 @@ function createCommand ($extra=False)
 			$modelids.= "$value,";
 		}
 	}
+	$modelids = trim($modelids, ",");
 	$command.='--modelid='.$modelids.' ';
 	
 	/* *******************
@@ -203,7 +204,7 @@ function createCommand ($extra=False)
 	 PART 5: Show or Run Command
 	 ******************** */
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'prepfrealign', $nproc);
+	$errors = showOrSubmitCommand($command, $headinfo, 'preprefine', $nproc);
 	// if error display them
 	if ($errors) jobForm($errors);
 };

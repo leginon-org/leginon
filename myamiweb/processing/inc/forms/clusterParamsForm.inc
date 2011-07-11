@@ -7,130 +7,154 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require_once "../inc/formParameters.inc";
+require_once "basicForm.inc";
 
 // include the required cluster configuration file
 $selectedcluster=$CLUSTER_CONFIGS[0];
-if ($_POST['cluster']) {
-	$selectedcluster=$_POST['cluster'];
+if ($_POST['changecluster']) {
+	$selectedcluster = $_POST['changecluster'];
+} elseif ( $_POST['cluster'] ) {
+	$selectedcluster = $_POST['cluster'];
 }
 $selectedcluster=strtolower($selectedcluster);
 @include_once $selectedcluster.".php";
 
 // TODO: docpop params need to change name: cputime, reconpernode, procpernode
-class clusterParamsForm
+class clusterParamsForm extends BasicForm
 {
 	function __construct( $nodes='', $ppn='', $rpn='', $memory='', $walltime='', $cput='', $cluster='' ) 
 	{
-		$this->params = new FormParameters();
+		parent::__construct();		
 		
-		// TODO: can I get default values from the cluster?
+		// Set default values based on the selected cluster
+		$nodes 		= ( $nodes == '') ? C_NODES_DEF : $nodes;
+		$ppn 		= ( $ppn == '') ? C_PPN_DEF : $ppn;
+		$rpn 		= ( $rpn == '') ? C_RPROCS_DEF : $rpn;
+		$memory 	= ( $memory == '') ? C_MEMORY_MAX : $memory;
+		$walltime 	= ( $walltime == '') ? C_WALLTIME_DEF : $walltime;
+		$cput 		= ( $cput == '') ? C_CPUTIME_DEF : $cput;
 		
-		$this->params->addParam( "nodes", $nodes, "Nodes" );
-		$this->params->addParam( "ppn", $ppn, "Proc/Node" );
-		$this->params->addParam( "rpn", $rpn, "Recons/Node" );
-		$this->params->addParam( "memory", $memory, "Memory" );
-		$this->params->addParam( "walltime", $walltime, "Wall Time" );
-		$this->params->addParam( "cput", $cput, "CPU Time" );
-		$this->params->addParam( "cluster", $cluster, "Select Host" );
+		$params = &$this->getFormParams();
+				
+		$params->addParam( "nodes", $nodes, "Nodes" );
+		$params->addParam( "ppn", $ppn, "Proc/Node" );
+		$params->addParam( "rpn", $rpn, "Recons/Node" );
+		$params->addParam( "memory", $memory, "Memory" );
+		$params->addParam( "walltime", $walltime, "Wall Time" );
+		$params->addParam( "cput", $cput, "CPU Time" );
+		$params->addParam( "cluster", $cluster, "Select Host" );
+
+		// add validations
+		$params->addValidation( "nodes", "req" );
+		$params->addValidation( "nodes", "num" );
+		$params->addValidation( "ppn", "req" );
+		$params->addValidation( "ppn", "num" );
+		$params->addValidation( "walltime", "req" );
+		$params->addValidation( "walltime", "num" );
+		$params->addValidation( "cput", "req" );
+		$params->addValidation( "cput", "num" );
+		
+		$valcheck = "maxval=".C_PPN_MAX;
+		$params->addValidation( "ppn", $valcheck );
+		$valcheck = "maxval=".C_NODES_MAX;
+		$params->addValidation( "nodes", $valcheck );
+		$valcheck = "maxval=".C_WALLTIME_MAX;
+		$params->addValidation( "walltime", $valcheck );
+		$valcheck = "maxval=".C_CPUTIME_MAX;
+		$params->addValidation( "cput", $valcheck );	
+
 	}
 	
-	public function generateForm( $postArray )
+	public function generateForm()
 	{
-		// if the form is being reloaded, make sure we keep anything the user already set.
-		$this->params->getPostedValues( $postArray );
+		global $selectedcluster;
+		// if the user selects a new cluster, get the default values here
+		$clusterSelection = $_POST['changecluster'];
+		$this->updateFormParams( $clusterSelection );
+		$params = $this->getFormParams();
+		$html.= "<input type='hidden' NAME='cluster' value='".$selectedcluster."'>\n";
 		
+		// set form field size
 		$size = 4;
 		
-		// overall table
-		$html.= "<table border='0'><tr><td valign='top'>"; 
-	
 		//--- Cluster Parameters
-		$html.= openRoundBorder();
 		$html.= "<table border='0' cellpadding='4' cellspacing='4'>\n";
-		$html.= "<tr>\n";
-		$html.= "<td colspan='4' align='center'>\n";
-		$html.= "<h4>Processing Host Parameters</h4>\n";
-		$html.= "</td>\n";
-		$html.= "</tr><tr>\n";
-		
+
 		// row 1
 		// add cluster selection box
-		$html.= "<td>\n";
+		$html.= "<tr><td>\n";
 		$html.= $this->instertHostSelectionBox( "cluster" );
-		$html.= "<b>Select Host</b>";
+		$html.= "</td>\n";
+		$html.= "<td>\n";
+		$html.= "<b>Selected Host:</b> ".$selectedcluster;
 		$html.= "</td></tr>\n";
 		
 		// row 2
 		$html.= "<tr><td>\n";
-		$html.= $this->params->insertTextFieldInRow( "nodes", $size );
+		$html.= $params->insertTextFieldInRow( "nodes", $size );
 		$html.= "</td><td>\n";
-		$html.= $this->params->insertTextFieldInRow( "ppn", $size );
+		$html.= $params->insertTextFieldInRow( "ppn", $size );
 		$html.= "</td><td>\n";
-		$html.= $this->params->insertTextFieldInRow( "rpn", $size );
-		$html.= "</td><td>\n";
-		$html.= $this->params->insertTextFieldInRow( "memory", $size );
+		$html.= $params->insertTextFieldInRow( "rpn", $size );
 
 		// row 3
 		$html.= "</td></tr><tr><td>\n";
-		$html.= $this->params->insertTextFieldInRow( "walltime", $size, "(hours)" );
+		$html.= $params->insertTextFieldInRow( "walltime", $size, "(hours)" );
 		$html.= "</td><td>\n";
-		$html.= $this->params->insertTextFieldInRow( "cput", $size, "(hours)" );
+		$html.= $params->insertTextFieldInRow( "cput", $size, "(hours)" );
+		$html.= "</td><td>\n";
+		$html.= $params->insertTextFieldInRow( "memory", $size );
 		$html.= "</td></tr>\n";
 		$html.= "</table>\n";
 		
-		//$html.= $clusterdata->cluster_parameters();
-		$html.= closeRoundBorder();
-		$html.= "<br/>\n";
-		$html.= "<br/>\n";
-	
-		$html.="</td></tr></table>"; //overall table		
-					
-		$html.= "<br/>\n";
-
 		return $html;
 	}
 	
-	private function instertHostSelectionBox( $name )
+	private function instertHostSelectionBox()
 	{
-		global $clusterdata, $CLUSTER_CONFIGS, $selectedcluster;
-		
-		$value = $this->params->getParamValue( $name );
+		global $CLUSTER_CONFIGS;
 		
 		// TODO: handle the onchange
-		$html.= "<select name='$name' onchange='frealignjob.submit()'>\n";
+		$html.= "<select name='changecluster' onchange='frealignjob.submit()'>\n";
+		$html.= '<option value=""> Change Host Selection </option>'."\n";
 		foreach ($CLUSTER_CONFIGS as $cluster) {
-			$s = ($cluster == $value) ? 'selected' : '';
-			$html.= '<option value="'.$cluster.'" '.$s.' >'.$cluster.'</option>'."\n";
+			$html.= '<option value="'.$cluster.'" >'.$cluster.'</option>'."\n";
 		}
 		$html.= "</select>\n";
 		
 		return $html;
-	}
+	}	
 	
-	public function validate( $postArray )
+	// points the form parameters to the correct set of default
+	// values based on the users selection.
+	// Takes the default set Id, which corresponds to a set available
+	// in the "Import Parameters" drop down list.
+	final protected function updateFormParams( $defaultSetId='' )
 	{
-		$this->params->getPostedValues( $postArray );
-		$msg = $this->params->validate();
+		global $CLUSTER_CONFIGS;
+		$params = &$this->getFormParams();
 		
-		return $msg;
+		if (in_array($defaultSetId, $CLUSTER_CONFIGS) ) {
+
+			$params->setParamValue( 'nodes', C_NODES_DEF );
+			$params->setParamValue( 'ppn', C_PPN_DEF );
+			$params->setParamValue( 'rpn', C_RPROCS_DEF );
+			$params->setParamValue( 'memory', C_MEMORY_MAX );
+			$params->setParamValue( 'walltime', C_WALLTIME_DEF );
+			$params->setParamValue( 'cput', C_CPUTIME_DEF );
+			
+			$valcheck = "maxval=".C_PPN_MAX;
+			$params->addValidation( "ppn", $valcheck );
+			$valcheck = "maxval=".C_NODES_MAX;
+			$params->addValidation( "nodes", $valcheck );
+			$valcheck = "maxval=".C_WALLTIME_MAX;
+			$params->addValidation( "walltime", $valcheck );
+			$valcheck = "maxval=".C_CPUTIME_MAX;
+			$params->addValidation( "cput", $valcheck );
+			
+		} else {
+			parent::updateFormParams( $defaultSetId );
+		}
 	}
-	
-	// TODO: probably dont need this...as the rundir and runname are already added to the command. 
-	// may need to change our "outdir" to "rundir" for it to work.
-	public function buildCommand( $postArray )
-	{
-		$this->params->getPostedValues( $postArray );
-		$paramArray = $this->params->getParamArray();
-		
-		// runname and outdir are currently handled in showOrSubmitCommand().
-		// TODO: Pull params out of showOrSubmitCommand and move to general form for all processing
-		//$command = "--rp_runname=".$paramArray["runname"]["value"]." ";
-		//$command.= "--rp_outdir=".$paramArray["outdir"]["value"]." ";
-		$command.= "--description=".$paramArray["description"]["value"]." ";
-		
-		return $command;
-	}
-	
 }
 ?>

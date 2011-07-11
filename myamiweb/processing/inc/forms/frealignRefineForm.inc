@@ -197,34 +197,36 @@ class FrealignRefineForm extends BasicRefineForm
 	}	
 	
 
-	public function buildCommand( $params )
+	public function buildCommand( $postArray )
 	{
+		$params = $this->getFormParams();
+		$params->getPostedValues( $postArray );
 		
-		$command = "prepRefineFrealign.py ";
-					    
-		$command = $params->addCommandFlag( $command, "outerMaskRadius" );
-		$command = $params->addCommandFlag( $command, "innerMaskRadius" );
-		$command = $params->addCommandFlag( $command, "numIters" );
-		$command = $params->addCommandFlag( $command, "symmetry" );
-		$command = $params->addCommandFlag( $command, "reconstackid" );
-		$command = $params->addCommandFlag( $command, "wgh" );
-		$command = $params->addCommandFlag( $command, "xstd");
-		$command = $params->addCommandFlag( $command, "pbc" );
-		$command = $params->addCommandFlag( $command, "boff" );
-		$command = $params->addCommandFlag( $command, "itmax" );
-		$command = $params->addCommandFlag( $command, "ipmax" );
-		$command = $params->addCommandFlag( $command, "target" );
-		$command = $params->addCommandFlag( $command, "thresh" );
-		$command = $params->addCommandFlag( $command, "rrec" );
-		$command = $params->addCommandFlag( $command, "hp" );
-		$command = $params->addCommandFlag( $command, "lp" );
-		$command = $params->addCommandFlag( $command, "rbfact" );
-		$command = $params->addCommandFlag( $command, "importiter" );
+		$command = '';
+		$command = $this->addCommandFlag( $command, "jobtype", "", "frealignrecon" );
+		$command = $this->addCommandFlag( $command, "outerMaskRadius" );
+		$command = $this->addCommandFlag( $command, "innerMaskRadius" );
+		$command = $this->addCommandFlag( $command, "numIters" );
+		$command = $this->addCommandFlag( $command, "symmetry" );
+		$command = $this->addCommandFlag( $command, "reconstackid" );
+		$command = $this->addCommandFlag( $command, "wgh" );
+		$command = $this->addCommandFlag( $command, "xstd");
+		$command = $this->addCommandFlag( $command, "pbc" );
+		$command = $this->addCommandFlag( $command, "boff" );
+		$command = $this->addCommandFlag( $command, "itmax" );
+		$command = $this->addCommandFlag( $command, "ipmax" );
+		$command = $this->addCommandFlag( $command, "target" );
+		$command = $this->addCommandFlag( $command, "thresh" );
+		$command = $this->addCommandFlag( $command, "rrec" );
+		$command = $this->addCommandFlag( $command, "hp" );
+		$command = $this->addCommandFlag( $command, "lp" );
+		$command = $this->addCommandFlag( $command, "rbfact" );
+		$command = $this->addCommandFlag( $command, "importiter" );
 		
 		// check which radio button was selected
 		if ( ($params->getParamValue('initmethod') == 'projmatch') ) {
-			$command = $params->addCommandFlag( $command, "dang" );
-			$command = $params->addCommandFlag( $command, "initlp" );
+			$command = $this->addCommandFlag( $command, "dang" );
+			$command = $this->addCommandFlag( $command, "initlp" );
 		} 
 		
 		// see if checkbox was selected

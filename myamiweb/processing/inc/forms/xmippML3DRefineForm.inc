@@ -42,18 +42,22 @@ class XmippML3DRefineForm extends BasicRefineForm
 		return $html;
 	}
 	
-	public function buildCommand( $params )
-	{		
-		$command = 'prepXmippML3D.py ';
+	public function buildCommand( $postArray )
+	{	
+		// make sure this forms params have been updated with the post array	
+		$params = $this->getFormParams();
+		$params->getPostedValues( $postArray );
 		
-		$command = $params->addCommandFlag( $command, "AngularSampling", "angSampRate" );
-		$command = $params->addCommandFlag( $command, "symid", "symmetry" );
-		$command = $params->addCommandFlag( $command, "DoMlf" );
-		$command = $params->addCommandFlag( $command, "HighResLimit" );
-		$command = $params->addCommandFlag( $command, "DoCorrectGreyScale" );
-		$command = $params->addCommandFlag( $command, "ProjMatchSampling" );
-		$command = $params->addCommandFlag( $command, "LowPassFilterReference" );
-		$command = $params->addCommandFlag( $command, "NumberOfReferences" );
+		$command = '';
+		$command = $this->addCommandFlag( $command, "jobtype", "", "xmippml3drecon" );
+		$command = $this->addCommandFlag( $command, "angSampRate" );
+		$command = $this->addCommandFlag( $command, "symmetry" );
+		$command = $this->addCommandFlag( $command, "DoMlf" );
+		$command = $this->addCommandFlag( $command, "HighResLimit" );
+		$command = $this->addCommandFlag( $command, "DoCorrectGreyScale" );
+		$command = $this->addCommandFlag( $command, "ProjMatchSampling" );
+		$command = $this->addCommandFlag( $command, "LowPassFilterReference" );
+		$command = $this->addCommandFlag( $command, "NumberOfReferences" );
 		
 		return $command;
 	}

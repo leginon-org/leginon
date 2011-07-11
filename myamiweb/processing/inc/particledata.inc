@@ -3398,6 +3398,20 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
+	
+	function getModelsFromRefineID( $refineID )
+	{
+		$q = "SELECT model.*  "
+			. " FROM `ApRefineInitModelData` AS refmodel, ApInitialModelData AS model "
+			. " WHERE refmodel.`REF|ApPrepRefineData|preprefine` = $refineID "
+			. " AND refmodel.`REF|ApInitialModelData|refmodel` = model.`DEF_id` ";
+
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;	
+	}
+	
 
 	function updateExemplar($table, $id, $value) {
 		$q = "SELECT exemplar "
@@ -4015,6 +4029,25 @@ class particledata {
 		return $r;
 	}
 
+	function getPreparedRefineJobs ($jobid=False, $path=False, $showHidden=true) {
+		$q = "SELECT ref.*, path.path, job.`DEF_id` AS jobid  "
+			. " FROM `ApPrepRefineData` AS ref "
+			. " LEFT JOIN ApPathData AS path ON ( ref.`REF|ApPathData|path` = path.`DEF_id` ) "
+			. " LEFT JOIN ApAppionJobData AS job ON ( ref.`REF|ApAppionJobData|job` = job.`DEF_id` ) ";
+		if ($jobid) {
+			$q .= " WHERE ref.`DEF_id` = '$jobid' ";
+		} elseif ($path) {
+			$q .= " WHERE path.`path` = '$path' ";
+		} elseif (!$showHidden) {
+			$q .= " WHERE ref.`hidden` != '1' AND job.`status` = 'D' ";
+		}
+		$q .=  "  ORDER BY ref.`DEF_id` DESC ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+	
 	function getUploadFrealignJobs ($jobid=False, $path=False, $showHidden=true) {
 		$q = "SELECT fre.*, path.path  "
 			. " FROM `ApFrealignPrepareData` AS fre "

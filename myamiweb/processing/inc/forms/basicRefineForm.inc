@@ -16,25 +16,32 @@ require_once "inc/processing.inc";
 require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
-require_once "../inc/formValidator.php";
+require_once "inc/forms/basicForm.inc";
 require_once "../inc/formParameters.inc";
 
 
-abstract class BasicRefineForm 
+abstract class BasicRefineForm extends BasicForm
 {
-	private $defaultParamSets; 	// an array of parameter sets of type RefineFormParameters used for populating forms
-	private $selectedParams; 	// the current user selected or modified parameter set
 	private $stackInfo;
 	
-	function __construct( $method, $stackId, $modelArray, $parentFormName='' ) 
+	function __construct( $method, $stackId, $modelArray, $parentFormName ) 
 	{
+		parent::__construct();
+		
 		$this->method 		= $method;
-		$this->stackId 		= $stackId;
 		$this->modelArray 	= $modelArray;
 		$this->parentFormName = $parentFormName;
 		
 		$this->setStackInfo( $stackId );
 	}
+	
+	// Extending classes should override this function to return the appropriate
+	// class of form parameters if it has also extended the RefineFormParams class.
+	// This createFormParams() function should always be used instead of 
+	// directly creating an instance of RefineFormParameters.
+	// GOOD: $params = $this->createFormParams();
+	// BAD:  $params = new RefineFormParameters();
+	public function createFormParams() { return new RefineFormParameters(); }
 	
 	// TODO: there is probably a better place for this so that it can be reused, or it 
 	// may already exist somewhere???
@@ -56,32 +63,15 @@ abstract class BasicRefineForm
 		$this->stackInfo['apix'] = ($particle->getStackPixelSizeFromStackId($stackId))*1e10;
 	}
 	
-	public function getStackInfo()
-	{
-		return $this->stackInfo;
-	}
-	
 	// getters
+	public function getStackInfo()  { return $this->stackInfo; }
 	public function getMethodType() { return $this->method; } 
-	public function getStackId() 	{ return $this->stackId; } 
 	public function getModelArray() { return $this->modelArray; } 
-	
-	// TUTORIAL: "abstract" means that extending classes MUST define this function
-	// ex: public getMethodType() { return "eman"; } 
-	abstract public function buildCommand( $params ); 
-	
+		
 	// Extending classes MAY override this to add 
 	// package specific parameters to the refine form 
 	public function advancedParamForm() {}
 		
-	// Extending classes should override this function to return the appropriate
-	// class of form parameters if it has also extended the RefineFormParams class.
-	// This createFormParams() function should always be used instead of 
-	// directly creating an instance of RefineFormParameters.
-	// GOOD: $params = $this->createFormParams();
-	// BAD:  $params = new RefineFormParameters();
-	public function createFormParams() { return new RefineFormParameters(); }
-	
 	// to add default value sets to the Import Parameters form,
 	// extending classes should override setImportParams() and
 	// use addDefaultParams() to include a set in the list 
@@ -96,52 +86,31 @@ abstract class BasicRefineForm
 		$this->addDefaultParams( $asymmSet );
 	}
 		
-	// adds a set of default values to the "Import Parameters"
-	// drop dowm list.
-	final protected function addDefaultParams( $newSet )
-	{
-		$this->defaultParamSets[$newSet->id] = $newSet;
-	}
-	
 	// points the form parameters to the correct set of default
 	// values based on the users selection.
 	// Takes the default set Id, which corresponds to a set available
 	// in the "Import Parameters" drop down list.
-	final private function setFormParams( $defaultSetId='' )
+	final protected function updateFormParams( $defaultSetId='' )
 	{
-		if ( isset( $this->defaultParamSets[$defaultSetId] ) ) {
-			// the user just selected an existing set of params to import
-			$this->selectedParams = $this->defaultParamSets[$defaultSetId];
-			
-		} elseif (is_numeric( $defaultSetId ) ) {
+		if (is_numeric( $defaultSetId ) ) {
 			// the user just selected an existing refine run to import params from
-			$this->selectedParams = $this->importParamsFromRefinement( $defaultSetId );
-			
+			$this->importParamsFromRefinement( $defaultSetId );
 		} else {
-			// the form may be refreshing after posting an error, make sure to get any previous values from the POST array
-			$this->selectedParams = $this->createFormParams(); //creates new form params object
-			$this->selectedParams->getPostedValues($_POST);
-		}
-		return $this->selectedParams;
+			parent::updateFormParams( $defaultSetId );
+		}				
 	}
 	
-	// returns an array of all form parameters
-	// with the currently set values
-	final protected function getFormParams()
-	{
-		return $this->selectedParams;
-	}
-	
-	// Add "Set Defaults" button and import parameters drop down selector.
+	// Add import parameters drop down selector.
 	final private function defaultOptionsForm()
 	{
 		$this->setImportParams();
+		$defaultParamSets = $this->getDefaultParamSets();
 		
 		$particle = new particledata();
 		$leginondata = new leginondata();
 	
 		// import values from previous uploaded reconstruction
-		$projectId=getProjectId();
+		$projectId = getProjectId();
 		$sessions = $leginondata->getSessions("",$projectId);
 		if (is_array($sessions)) {
 			$ropt = "";
@@ -149,9 +118,11 @@ abstract class BasicRefineForm
 				$recons = $particle->getReconIdsFromSession($s['id']);
 				if (is_array($recons)) {
 					foreach ($recons as $r) {
+						// limit the length of the description
+						$description = substr($r['description'], 0, 50);
 						$ropt.= "<option value='".$r['DEF_id']."'>";
 						$ropt.= $s['name']." : ";
-						$ropt.= $r['name']." - ".$r['description'];
+						$ropt.= $r['name']." - ".$description;
 						$ropt.= "</option>\n";
 					}
 				}
@@ -161,10 +132,9 @@ abstract class BasicRefineForm
 		// when the import box selection changes, reload the parent form
 		$onChange = $this->parentFormName.".submit()";
 		
-		$html .= "<input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults'>\n";
 		$html .= "<select name='import' onChange='$onChange'>\n";
 		$html .= "<option>Import parameters</option>\n";
-		foreach ($this->defaultParamSets as $defaultSet) {
+		foreach ($defaultParamSets as $defaultSet) {
 			$html .= "<option value='$defaultSet->id'>$defaultSet->label</option>\n";
 		}
 		$html .= "<option value=''>------------------------------</option>\n";
@@ -185,7 +155,7 @@ abstract class BasicRefineForm
 	// for this function to work on method specific parameters.
 	protected function importParamsFromRefinement( $defaultSetId )
 	{
-		$paramSet = $this->createFormParams();
+		$paramSet = $this->getFormParams();
 		$particle = new particledata();
 		
 		// get model info to set the symmetry
@@ -194,10 +164,7 @@ abstract class BasicRefineForm
 		$modelId 	= $modelArray[0]['id'];
 		$modelInfo 	= $particle->getInitModelInfo( $modelId );
 		$symInfo 	= $particle->getSymInfo($modelInfo['REF|ApSymmetryData|symmetry']);
-		// TODO: would like to use "symmetry" instead of "eman_name" but can't handle spaces in
-		// showOrSubmitCommand().
 		$symmetry = $symInfo['symmetry'];
-		//$symmetry = '"'.$symmetry.'"';
 		$paramSet->setParamValue( "symmetry", $symmetry );
 		
 		// get import refine stack info
@@ -218,7 +185,7 @@ abstract class BasicRefineForm
 		$paramSet->setParamValue( "numIters", $numIters );
 				
 		// add each iteration value to our forms parameters
-		for ( $i=1; $i<=$numIters; $i++ ) {
+		for ( $i = 1; $i <= $numIters; $i++ ) {
 			foreach ($iterinfo as $iter) {
 				if ($iter['iteration'] == $i) {					
 					$outerMaskRadius = ceil($iter['mask']*$boxscale);
@@ -232,9 +199,7 @@ abstract class BasicRefineForm
 					continue;
 				}
 			}
-		}
-		
-		return $paramSet;
+		}		
 	}
 	
 	// Extending classes may override this to import parameters from
@@ -250,17 +215,21 @@ abstract class BasicRefineForm
 	final public function generalParamForm( ) 
 	{
 		// display the heading
-		$html .= "
-	    <br />
-	    <H4 style='align=\'center\' >General Refinement Parameters</H4>
-	    <hr />";
+//		$html .= "
+//	    <br />
+//	    <H4 style='align=\'center\' >General Refinement Parameters</H4>
+//	    <hr />";
 	
+		// Add Set Defaults button
+		$html .= "<input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults'>\n";
+		
 		// display a form allowing users to fill in parameters with default or imported values
 		$html .= $this->defaultOptionsForm();
 
 		// if the user selects to import parameters, get the values here
 		$defaultSetId = $_POST['import'];
-		$paramSet = $this->setFormParams( $defaultSetId );
+		$this->updateFormParams( $defaultSetId );
+		$paramSet = $this->getFormParams();
 
 		// extending classes must define a method type
 		$method = $this->getMethodType();
@@ -347,49 +316,7 @@ abstract class BasicRefineForm
 		
 		return $html;
 	}
-	
 		
-	// builds the run command and shows or submits the command
-	// $errorCallbackFunc is the functions that displays the form
-	// and calls this function....
-	final public function createRunCommand( $postArray, $errorCallbackFunc, $commandAddOn='' ) 
-	{
-		/* ***********************************
-		 PART 1: Get variables from POST array
-		 ************************************* */
-		$paramSet = $this->createFormParams();
-		$paramSet->getPostedValues( $postArray );
-		
-		/* *******************
-		 PART 2: Check for conflicts, if there is an error display the form again
-		 ******************** */
-		$errorMsg = $paramSet->validate();
-		if ( $errorMsg ) $errorCallbackFunc( $errorMsg );
-
-		/* *******************
-		 PART 3: Create program command
-		 ******************** */
-		$command = $this->buildCommand( $paramSet );		
-
-		// add parameters from other forms
-		$command .= $commandAddOn;
-	
-		/* *******************
-		 PART 4: Create header info, i.e., references
-		 ******************** */
-		// Add reference to top of the page
-		$headinfo .= showReference( $this->method );
-	
-		/* *******************
-		 PART 5: Show or Run Command
-		 ******************** */
-		// submit command
-		$errors = showOrSubmitCommand($command, $headinfo, 'preprefine', $nproc);
-		// if error display them
-		if ($errors) $errorCallbackFunc($errors);
-		exit;
-	}
-	
 	// set the default values that are populated
 	// when the user selects the "Set Defaults" button.
 	// $box is the box size from the selected stack.
@@ -438,10 +365,7 @@ class RefineFormParameters extends FormParameters
 							$innerAlignRadius='', $symmetry='', $numIters='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='' ) 
 	{
-		parent::__construct();
-		
-		$this->id = $id;
-		$this->label = $label;
+		parent::__construct( $id, $label );
 		
 		$this->addParam( "outerMaskRadius", $outerMaskRadius, "outer mask radius" );
 		$this->addParam( "innerMaskRadius", $innerMaskRadius, "inner mask radius" );
@@ -501,28 +425,5 @@ class RefineFormParameters extends FormParameters
 		
 		$this->setParamValue( $name, $newValueString );
 	}
-	
-	// Appends a new command flag to a command string
-	// If value is not passed, the param value is looked up.
-	// If $paramName is not passed, it is assumed to be the same 
-	// as the flag name.
-	// If the value is an empty string, it is not added to the command.
-	// Returns the new command string.
-	function addCommandFlag( $command, $flagName, $paramName='', $value='' )
-	{
-		if ( $paramName == '' ) {
-			$paramName = $flagName;
-		}
-		if ( $value === '' ) {
-			$value = $this->getParamValue( $paramName );
-		}
-		if ( $value !== '' ) {
-			$command .= "--".$flagName."=".$value." ";
-		}
-		
-		return $command;
-	}
 }
-
-
 ?>

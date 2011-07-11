@@ -7,8 +7,13 @@ require_once "formGenerator.inc";
 
 class FormParameters
 {
-	function __construct() 
+	private $params; //array of parameters
+	
+	function __construct( $id='', $label='' ) 
 	{
+		$this->id = $id;
+		$this->label = $label;
+		
 		$this->formLib = new FormGeneratorLib();
 	}
 
@@ -70,6 +75,7 @@ class FormParameters
 	{
 		$this->params[$name]["hidden"] = true;
 	}
+	
 	
 	// TODO: rename to updateParamValues for more general purpose???
 	final public function getPostedValues($postArray)
@@ -141,6 +147,10 @@ class FormParameters
 		
 		return $errorMsg;
 	}
+	
+	// -----------------------------------------------
+	// Begin html element funtions
+	// -----------------------------------------------
 	
 	public function insertTextArea( $name, $label='', $value='', $rows=3, $cols=65, $enable='', $note='' )
 	{

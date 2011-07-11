@@ -7,65 +7,41 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require_once "../inc/formParameters.inc";
+require_once "basicForm.inc";
 
 
-class StackPrepForm
+class StackPrepForm extends BasicForm
 {
-	function __construct( $lastParticle='', $lpFilter='', $hpFilter='', $binning='' ) 
+	function __construct( $lastParticle='', $lowpass='', $highpass='', $bin='' ) 
 	{
-		$this->params = new FormParameters();
-		
-		$this->params->addParam( "lastParticle", $lastParticle, "last particle to use" );
-		$this->params->addParam( "lpFilter", $lpFilter, "low-pass filter" );
-		$this->params->addParam( "hpFilter", $hpFilter, "high-pass filter" );
-		$this->params->addParam( "binning", $binning, "binning" );
+		parent::__construct();
+		$params = $this->getFormParams();
+				
+		$params->addParam( "lastParticle", $lastParticle, "last particle to use" );
+		$params->addParam( "lowpass", $lowpass, "low-pass filter" );
+		$params->addParam( "highpass", $highpass, "high-pass filter" );
+		$params->addParam( "bin", $bin, "binning" );
 	}
 	
-	public function generateForm( $postArray )
+	public function generateForm()
 	{
 		// if the form is being reloaded, make sure we keep anything the user already set.
-		$this->params->getPostedValues( $postArray );
+		$this->updateFormParams();
+		$params = $this->getFormParams();
 
 		$html = "
 	    <br />
 	    <H4>Stack Preparation Parameters</H4>
 	    <hr />";
 	
-		$html.= $this->params->insertTextField( "lastParticle", 4 );
-		$html.= $this->params->insertTextField( "lpFilter", 4, "(angstroms)" );
-		$html.= $this->params->insertTextField( "hpFilter", 4, "(angstroms)" );
-		$html.= $this->params->insertTextField( "binning", 4 );
+		$html.= $params->insertTextField( "lastParticle", 4 );
+		$html.= $params->insertTextField( "lowpass", 4, "(angstroms)" );
+		$html.= $params->insertTextField( "highpass", 4, "(angstroms)" );
+		$html.= $params->insertTextField( "bin", 4 );
 			
 		$html.= "<br/>\n";
 
 		return $html;
 	}
-	
-	public function validate( $postArray )
-	{
-		$this->params->getPostedValues( $postArray );
-		$msg = $this->params->validate();
-		
-		return $msg;
-	}
-	
-	public function buildCommand( $postArray )
-	{
-		$this->params->getPostedValues( $postArray );
-
-		$sp_lastParticle 	= $this->params->getParamValue( "lastParticle" ); 
-		$sp_lpFilter	 	= $this->params->getParamValue( "lpFilter" ); 
-		$sp_hpFilter 		= $this->params->getParamValue( "hpFilter" ); 
-		$sp_binning 		= $this->params->getParamValue( "binning" ); 
-		
-		if ($sp_lastParticle != '') $command = "--sp_lastParticle=".$sp_lastParticle." ";
-		if ($sp_lpFilter != '') $command.= "--sp_lpFilter=".$sp_lpFilter." ";
-		if ($sp_hpFilter != '') $command.= "--sp_hpFilter=".$sp_hpFilter." ";
-		if ($sp_binning != '') $command.= "--sp_binning=".$sp_binning." ";
-		
-		return $command;
-	}
-	
 }
 ?>

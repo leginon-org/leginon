@@ -23,10 +23,10 @@ class EmanRefineForm extends BasicRefineForm
 		$params = $this->getFormParams();
 		
 		// display form title
-		$html .="
-	    <br />
-	    <H4>EMAN Reconstruction Parameters</H4>
-	    <hr />";
+//		$html .="
+//	    <br />
+//	    <H4>EMAN Reconstruction Parameters</H4>
+//	    <hr />";
 
 		$shortSize = 4;
 		$longSize = 20;
@@ -59,31 +59,35 @@ class EmanRefineForm extends BasicRefineForm
 		return $html;
 	}
 	
-	public function buildCommand( $params )
+	public function buildCommand( $postArray )
 	{		
-		$command = 'prepEman.py ';
+		$params = $this->getFormParams();
+		$params->getPostedValues( $postArray );
 		
-		$command = $params->addCommandFlag( $command, "angSampRate" );
-		$command = $params->addCommandFlag( $command, "outerMaskRadius" );
-		$command = $params->addCommandFlag( $command, "symmetry" );
-		$command = $params->addCommandFlag( $command, "imask" );
-		$command = $params->addCommandFlag( $command, "amask" );
-		$command = $params->addCommandFlag( $command, "maxshift" );
-		$command = $params->addCommandFlag( $command, "hard" );
-		$command = $params->addCommandFlag( $command, "clskeep" );
-		$command = $params->addCommandFlag( $command, "clsiter" );
-		$command = $params->addCommandFlag( $command, "xfiles" );
-		$command = $params->addCommandFlag( $command, "shrink" );
-		$command = $params->addCommandFlag( $command, "euler2" );
-		$command = $params->addCommandFlag( $command, "median" );
-		$command = $params->addCommandFlag( $command, "phscls" );
-		$command = $params->addCommandFlag( $command, "refine" );
-		$command = $params->addCommandFlag( $command, "tree" );
-		$command = $params->addCommandFlag( $command, "coranCC" );
-		$command = $params->addCommandFlag( $command, "coranmask" );
-		$command = $params->addCommandFlag( $command, "coranlp" );
-		$command = $params->addCommandFlag( $command, "coranhp" );
-		$command = $params->addCommandFlag( $command, "coranhcc" );
+		$command = '';
+		$command = $this->addCommandFlag( $command, "jobtype", "", "emanrecon" );
+		$command = $this->addCommandFlag( $command, "angSampRate" );
+		$command = $this->addCommandFlag( $command, "outerMaskRadius" );
+		$command = $this->addCommandFlag( $command, "innerMaskRadius" );
+		$command = $this->addCommandFlag( $command, "symmetry" );
+		$command = $this->addCommandFlag( $command, "imask" );
+		$command = $this->addCommandFlag( $command, "amask" );
+		$command = $this->addCommandFlag( $command, "maxshift" );
+		$command = $this->addCommandFlag( $command, "hard" );
+		$command = $this->addCommandFlag( $command, "clskeep" );
+		$command = $this->addCommandFlag( $command, "clsiter" );
+		$command = $this->addCommandFlag( $command, "xfiles" );
+		$command = $this->addCommandFlag( $command, "shrink" );
+		$command = $this->addCommandFlag( $command, "euler2" );
+		$command = $this->addCommandFlag( $command, "median" );
+		$command = $this->addCommandFlag( $command, "phscls" );
+		$command = $this->addCommandFlag( $command, "refine" );
+		$command = $this->addCommandFlag( $command, "tree" );
+		$command = $this->addCommandFlag( $command, "coranCC" );
+		$command = $this->addCommandFlag( $command, "coranmask" );
+		$command = $this->addCommandFlag( $command, "coranlp" );
+		$command = $this->addCommandFlag( $command, "coranhp" );
+		$command = $this->addCommandFlag( $command, "coranhcc" );
 		
 		if ($params->getParamValue("filterEstimated") == 'on')
 			$command = $params->addCommandFlag( $command, "filt3d", "filterResolution" );

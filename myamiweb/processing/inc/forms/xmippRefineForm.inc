@@ -46,10 +46,14 @@ class XmippRefineForm extends BasicRefineForm
 		return $html;
 	}
 	
-	public function buildCommand( $params )
+	public function buildCommand( $postArray )
 	{
-		$command ='prepXmipp.py ';
+		// make sure this forms params have been updated with the post array	
+		$params = $this->getFormParams();
+		$params->getPostedValues( $postArray );
 		
+		$command = '';
+		$command = $this->addCommandFlag( $command, "jobtype", "", "xmipprecon" );
 		$command = $params->addCommandFlag( $command, "NumberOfIterations", "numIters" );
 		$command = $params->addCommandFlag( $command, "MaskRadius", "outerMaskRadius" );
 		$command = $params->addCommandFlag( $command, "Mask", "mask" );

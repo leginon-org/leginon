@@ -47,6 +47,12 @@ class formValidator{
 	 * MinLengh : 
 	 * 				addValidation("variableName", "variableValue", "mixlen=3");
 	 * 				addValidation("variableName", "variableValue", "mixlen=3" , "Your own error message");
+	 * MaxValue : 
+	 * 				addValidation("variableName", "variableValue", "maxval=10");
+	 * 				addValidation("variableName", "variableValue", "maxval=10", "Your own error message");
+	 * MinValue : 
+	 * 				addValidation("variableName", "variableValue", "minval=3");
+	 * 				addValidation("variableName", "variableValue", "minval=3" , "Your own error message");
 	 * Email	: 
 	 * 				addValidation("variableName", "variableValue", "email");
 	 * 				addValidation("variableName", "variableValue", "email", "Your own error message");
@@ -163,6 +169,16 @@ class formValidator{
 			
 			case 'minlen':{
 				$result = $this->validateMinlen($validateObj->getVariableValue(), $validateObj->getTypeOption());
+				break;
+			}
+			
+			case 'maxval':{
+				$result = $this->validateMaxval($validateObj->getVariableValue(), $validateObj->getTypeOption());
+				break;
+			}
+			
+			case 'minval':{
+				$result = $this->validateMinval($validateObj->getVariableValue(), $validateObj->getTypeOption());
 				break;
 			}
 			
@@ -286,6 +302,35 @@ class formValidator{
 			$inputLength = strlen($inputValue);
 			
 			if($inputLength < $minLength)
+				$result=false;
+		}
+		return $result;
+	}
+	
+	/*
+	 * Validate Max value of input value
+	 */
+	function validateMaxval($inputValue, $maxval){
+		
+		$result = true;
+		
+		if ( isset($inputValue) ) {			
+			if ($inputValue > $maxval)				
+				$result=false;
+		}
+		return $result;
+	}
+	
+	/*
+	 * Validate Min value of input value
+	 */
+	function validateMinval($inputValue, $minval){
+		
+		$result = true;
+		
+		if ( isset($inputValue) ) {
+			
+			if ($inputValue < $minval)
 				$result=false;
 		}
 		return $result;
@@ -461,6 +506,8 @@ class formValidator{
 define("REQUIRED_VALUE", "Field can not be empty.");
 define("MAXLEN_EXCEEDED", "Please enter an input with length less than %d.");
 define("MINLEN_CHECK_FAILED", "Please enter an input with length more than %d.");
+define("MAXVAL_EXCEEDED", "Please enter a value no greater than %d.");
+define("MINVAL_CHECK_FAILED", "Please enter a value no less than %d.");
 define("EMAIL_CHECK_FAILED", "Please provide a valid email address.");
 define("NUM_CHECK_FAILED", "Please provide a numeric input.");
 define("ALPHA_CHECK_FAILED", "Please provide an alphabetic input.");
@@ -534,6 +581,10 @@ class validatorObj{
 			
 				case 'minlen':		{ $this->errorOutputMessage = sprintf(MINLEN_CHECK_FAILED, $this->getTypeOption()); break;	}
 			
+				case 'maxval':		{ $this->errorOutputMessage = sprintf(MAXVAL_EXCEEDED, $this->getTypeOption()); break;	}
+			
+				case 'minval':		{ $this->errorOutputMessage = sprintf(MINVAL_CHECK_FAILED, $this->getTypeOption()); break;	}
+				
 				case 'email':		{ $this->errorOutputMessage = EMAIL_CHECK_FAILED; break;	}
 			
 				case 'num':			{ $this->errorOutputMessage = NUM_CHECK_FAILED; break;	}
