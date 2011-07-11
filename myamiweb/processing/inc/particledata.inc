@@ -4048,6 +4048,16 @@ class particledata {
 		return $r;
 	}
 	
+	function getPreparedRefineStackData ( $refineid ) {
+		$q = "SELECT stack.*  "
+			. " FROM ApRefineStackData AS stack "
+			. " WHERE stack.`REF|ApPrepRefineData|preprefine` = $refineid ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+	
 	function getUploadFrealignJobs ($jobid=False, $path=False, $showHidden=true) {
 		$q = "SELECT fre.*, path.path  "
 			. " FROM `ApFrealignPrepareData` AS fre "

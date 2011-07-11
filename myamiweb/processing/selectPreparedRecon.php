@@ -192,6 +192,7 @@ function jobForm($extra=false) {
 		$reconstackdata = $particle->getStackParams($reconstackid);
 		$reconstackvals = "$reconstackid|--|$apix|--|$boxsize|--|$numpart|--|$reconstackdata[path]|--|$reconstackdata[name]";
 	}
+
 	
 	// prepare model values
 	$models = $particle->getModelsFromRefineID( $refineID );
@@ -316,8 +317,14 @@ function jobForm($extra=false) {
 	$html.= "<table class='tablebubble'><tr>\n";
 	// Add stack prep parameters
 	$html.= "<td class='tablebg'>";
-	// TODO: where are these parameters stored in the DB???
-	$stackPrepForm = new stackPrepForm( 1,2,3,4 );
+	// TODO: this may need to be modified if we have multiple stacks???
+	// Get stack preparation parameters
+	$stackdatas	= $particle->getPreparedRefineStackData($refineID);
+	$lastPart 	= $stackdatas[0][last_part];
+	$lp 		= $stackdatas[0][lowpass];
+	$hp 		= $stackdatas[0][highpass];
+	$bin 		= $stackdatas[0][bin];
+	$stackPrepForm = new stackPrepForm( $lastPart,$lp,$hp,$bin );
 	$html.= $stackPrepForm->generateReport( "Stack Prep Params", 544 );
 	$html.= "</td>";
 	
