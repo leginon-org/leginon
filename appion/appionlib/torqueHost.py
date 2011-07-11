@@ -1,16 +1,20 @@
 import processingHost
 
 class TorqueHost(processingHost.ProcessingHost):
-    def __init__ (self):
+    def __init__ (self, configDict=None):
         processingHost.ProcessingHost.__init__(self)  #initialize parent
         self.type="Torque"
         self.execCommand="qsub"
         self.statusCommand="qstat"
         self.scriptPrefix="#PBS"
-##generateHeaders (jobObject)
-#Takes a job object or no arguments. If jobObject is supplied it uses it to 
-#construct processing host specific resource directives.  If no argument is
-#supplied used the currentJob property set in the class instance.        
+        if configDict:
+            self.configure(configDict)
+	
+
+    ##generateHeaders (jobObject)
+    #Takes a job object or no arguments. If jobObject is supplied it uses it to 
+    #construct processing host specific resource directives.  If no argument is
+    #supplied used the currentJob property set in the class instance.        
     def generateHeaders(self, jobObject=None):
         if jobObject != None:
             currentJob=jobObject
@@ -55,18 +59,18 @@ class TorqueHost(processingHost.ProcessingHost):
         #add some white space     
         if self.preExecLines:    
             header += "\n\n"
-        #Add any coustom line that should be added to jobfile (Ex. module purge)
+        #Add any custom line that should be added to jobfile (Ex. module purge)
         for line in self.preExecLines:
             header += line + "\n"
         #add some white space  
         header += "\n\n"
         return header
     
-#translateOutput (outputString)
-#Takes the outputSring returned by executing a command (executeCommand()) and
-#Translates it into a Job ID which can be used to check job status.  This is 
-#fairly simple for Torque since the output of qsub should be a job id of the form
-# <id#.servername.domain>
+    #translateOutput (outputString)
+    #Takes the outputSring returned by executing a command (executeCommand()) and
+    #Translates it into a Job ID which can be used to check job status.  This is 
+    #fairly simple for Torque since the output of qsub should be a job id of the form
+    # <id#.servername.domain>
     def traslateOutput (self, outputString):
         outputList = outputString.split('.')
         try:
@@ -77,4 +81,17 @@ class TorqueHost(processingHost.ProcessingHost):
         
         
         
+    def configure (self, confDict):
+        options = {
+                   'Shell': self.setShell,
+                   'ScriptPrefix': self.setScriptPrefix,
+                   'ExecCommand': self.setExecCommand,
+                   'AdditionalHeaders':self.addAdditionalHeaders,
+                   'PreExecute': self.addPreExecutionLines,
+                   'StatusCommand': self.setStatusCommand
+                   }
+        for opt in confDict.keys():
+            if opt in options:
+                options[opt](confDict[opt])
+                
         
