@@ -9,6 +9,7 @@ class ProcessingHost (object):
         self.appionConfig=None
         self.shell="/bin/sh"
         self.execCommand="qsub"
+        self.statusCommand="qstat"
         self.scriptPrefix="#"
         self.currentJob=None
         self.additionalHeaders=[]
@@ -25,6 +26,9 @@ class ProcessingHost (object):
 #Translates it into a Job ID which can be used to check job status.  This is
 #an abstract method that needs to be implimented in the child class.  
     def traslateOutput (self, outputString):
+        pass
+    
+    def configure (self, confDict):
         pass
         
 ##executeCommand (command)    
@@ -63,11 +67,12 @@ class ProcessingHost (object):
             return False
         #Job file was successfully writen 
         return True
-
+    
+    
 ##launchJob (jobObject)
 #Takes a object representing the job to be ran, jobObject, creates the job   
 #script file and executes the job on the processing host.  Returns a 
-#numerical job ID or False if job execution failed.        
+#numerical job ID or False if job execution failed.      
     def launchJob(self, jobObject):
         self.currentJob = jobObject  #Set the current job 
         
@@ -116,52 +121,57 @@ class ProcessingHost (object):
         #return the translated output 
         return jobID
     
-        #Beginning of accessor methond definitions.
-        def getShell(self):
-            return self.shell
+    #Beginning of accessor methond definitions.
+    def getShell(self):
+        return self.shell
         
-        def setShell(self, newShell):
-            self.shell = newShell
+    def setShell(self, newShell):
+        self.shell = newShell
         
-        def getExecCommand(self):
-            return self.execCommand
+    def getExecCommand(self):
+        return self.execCommand
         
-        def setExecCommand(self, execCmd):
-            self.execCommand = execCmd
+    def setExecCommand(self, execCmd):
+        self.execCommand = execCmd
+    
+    def setStatusCommand (self, statusCmd):
+        self.statusCommand = statusCmd
         
+    def getStatusCommand (self):
+        return  self.statusCommand
                 
-        def getScriptPrefix(self):
-            return self.scriptPrefix
+    def getScriptPrefix(self):
+        return self.scriptPrefix
         
-        def setScriptPrefix(self, prefix):
-            self.scriptPrefix = prefix
+    def setScriptPrefix(self, prefix):
+        self.scriptPrefix = prefix
              
-        def getCurrentJob(self):
-            return self.currentJob
+    def getCurrentJob(self):
+        return self.currentJob
         
-        def setCurrentJob(self, jobObject):
-            self.currentJob = jobObject
+    def setCurrentJob(self, jobObject):
+        self.currentJob = jobObject
             
-        def getAdditionalHeaders(self):
-            return self.additionalHeaders
+    def getAdditionalHeaders(self):
+        return self.additionalHeaders
         
-        ## Used to add addition processing host specific directive headers to
-        #every job file that is created.  (Ex. ['-j oe', '-m oe'])
-        def addAdditionalHeaders(self, headers):
-            if not isinstance(headers, list):
-                raise TypeError ("Argument type should be a list")
-            else:
-                self.additionalHeaders += headers
+    ## Used to add addition processing host specific directive headers to
+    #every job file that is created.  (Ex. ['-j oe', '-m oe'])
+    def addAdditionalHeaders(self, headers):
+        if not isinstance(headers, list):
+            raise TypeError ("Argument type should be a list")
+        else:
+            self.additionalHeaders += headers
         
-        def getPreExecutionLines(self):
-            return self.preExecLines
+    def getPreExecutionLines(self):
+        return self.preExecLines
         
-        ##Used to added addition command lines to every job script.  The lines
-        #will be executed before the rest of the commands in the script.  
-        def addPreExecutionLines(self, lineList):
-            if not isinstance(lineList, list):
-                raise TypeError ("Argument type should be a list")
-            else:
-                self.preExecLines += lineList
+    ##Used to added addition command lines to every job script.  The lines
+    #will be executed before the rest of the commands in the script.  
+    def addPreExecutionLines(self, lineList):
+        if not isinstance(lineList, list):
+            raise TypeError ("Argument type should be a list")
+        else:
+            self.preExecLines += lineList
                 
        

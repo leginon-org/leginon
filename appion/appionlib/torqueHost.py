@@ -77,9 +77,7 @@ class TorqueHost(processingHost.ProcessingHost):
             jobID= int(outputList[0])
         except:
             return False
-        return JobID
-        
-        
+        return JobID      
         
     def configure (self, confDict):
         options = {
@@ -87,7 +85,7 @@ class TorqueHost(processingHost.ProcessingHost):
                    'ScriptPrefix': self.setScriptPrefix,
                    'ExecCommand': self.setExecCommand,
                    'AdditionalHeaders':self.addAdditionalHeaders,
-                   'PreExecute': self.addPreExecutionLines,
+                   'PreExecuteLines': self.addPreExecutionLines,
                    'StatusCommand': self.setStatusCommand
                    }
         for opt in confDict.keys():
