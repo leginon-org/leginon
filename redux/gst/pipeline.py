@@ -7,7 +7,10 @@ gobject.threads_init()
 import gst
 import gtk
 
+import numpygst
 import numpy
+
+import scipy.ndimage
 
 class NewElement(gst.Element):
 	""" A basic, buffer forwarding gstreamer element """
@@ -55,43 +58,47 @@ class NewElement(gst.Element):
 		#as autovideosink accepts anything, we just say yes we can handle the
 		#incoming data
 		return True
-	
+
 	def _sink_chain(self, pad, buf):
-		#this is where we do filtering
-		#and then push a buffer to the next element, returning a value saying
-		# it was either successful or not.
-		print ''
-		print 'DIR BUF'
-		print dir(buf)
-		print 'CAPS'
-		caps = buf.get_caps()[0]
-		print 'KEYS', caps.keys()
-		width = caps['width']
-		height = caps['height']
-		bpp = caps['bpp']
-		print 'depth', caps['depth']
-		print 'endianness', caps['endianness']
-		# keys:  ['width', 'height', 'bpp', 'framerate', 'depth', 'endianness', 'red_mask', 'green_mask', 'blue_mask']
-		print 'DATA'
-		print type(buf.data)
-		print dir(buf.data)
-		print 'LEN', len(buf.data)
-		print ''
 
-		dt = numpy.dtype(numpy.uint8)
-		input_array = numpy.frombuffer(buf.data, dt)
-		bytes_per_pixel = bpp / 8
-		input_shape = height, width, bytes_per_pixel
-		print 'INPUT SHAPE', input_shape
-		input_array.shape = input_shape
+		try:
+			a = numpygst.ndarray_from_gst_buffer(buf)
+		except Exception, e:
+			print e
+			raise
 
-		'''
-		newbuf = gst.Buffer()
-		output_array = numpy.frombuffer(newbuf.data, dt)
-		self.process(input_array, output_array)
-		'''
+		#b = a.copy()
+		## ndimage does not like fields
+		print 'AAA', a.dtype, len(a.data), a.strides
+		import numpy
+		av = a.view(numpy.uint8)
+		print 'BBB'
+		av.shape = a.shape + (-1,)
+		print 'CCC', av.shape
+		import scipy.misc
+		#b = scipy.ndimage.zoom(av, (0.5,0.5,1))
+		b = scipy.ndimage.zoom(av, (1,0.5,1))
+		scipy.misc.imsave('rgb.jpg', b)
+		print 'EEE', b.shape, b.dtype, b[25,3]
+		#b = numpy.asarray(b, a.dtype)
+		b = b.view(a.dtype)
+		b = numpy.array(b)
+		print 'FFF', b.shape, b[25,3], len(b.data), a.strides
+		#b[:,:,2] = 0
+		#b[:,:,0] = 0
+		try:
+			newbuf = numpygst.gst_buffer_from_ndarray(b)
+		except Exception, e:
+			print e
 
-		return self.srcpad.push(buf)
+		try:
+			ret = self.srcpad.push(newbuf)
+			print 'BUF', buf.get_caps()
+			print 'NEWBUF', newbuf.get_caps()
+			return ret
+		except Exception, e:
+			print e
+			raise
 
 	def process(self, array):
 		pass
@@ -110,24 +117,35 @@ pngdec = gst.element_factory_make("pngdec")
 filt = NewElement()
 
 jpegenc = gst.element_factory_make("jpegenc")
+
 filesink = gst.element_factory_make("filesink")
 filesink.set_property('location', 'test.jpg')
 
 # create the pipeline
 
 pipeline = gst.Pipeline()
-pipeline.add(filesrc, pngdec, filt, jpegenc, filesink)
-gst.element_link_many(filesrc, pngdec, filt, jpegenc, filesink)
+if False:
+	pipeline.add(filesrc, pngdec, filt, filesink)
+	gst.element_link_many(filesrc, pngdec, filt, filesink)
+if True:
+	pipeline.add(filesrc, pngdec, filt, jpegenc, filesink)
+	gst.element_link_many(filesrc, pngdec, filt, jpegenc, filesink)
+if False:
+	pipeline.add(filesrc, pngdec, jpegenc, filesink)
+	gst.element_link_many(filesrc, pngdec, jpegenc, filesink)
+
 
 # get pipeline's bus
 bus = pipeline.get_bus()
 
 def quit():
+	print 'QUIT'
 	pipeline.set_state(gst.STATE_NULL)
 	gtk.main_quit()
 
 # set up message handler
 def handle_message(bus, message, data):
+	#print 'HANDLEMESSAGE', message.src, pipeline, message.type
 	# check for pipeline EOS
 	if message.src is pipeline and message.type is gst.MESSAGE_EOS:
 		quit()
