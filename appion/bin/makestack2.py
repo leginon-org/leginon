@@ -1332,8 +1332,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		shortname = apDisplay.short(imgdata['filename'])
 		shortfileroot = os.path.join(self.params['rundir'], shortname)
 		rmfiles = glob.glob(shortfileroot+"*")
-		for rmfile in rmfiles:
-			apFile.removeFile(rmfile)
+		if not self.params['keepall']:
+			for rmfile in rmfiles:
+				apFile.removeFile(rmfile)
 		self.imgstackfile = None
 		self.boxedpartdatas = []
 
