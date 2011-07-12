@@ -22,23 +22,15 @@ class XmippML3DRefineForm extends BasicRefineForm
 		// classes extended from BasicRefineForm should get the selected default values
 		$params = $this->getFormParams();
 		
-		// display form title
-		$html .="
-	    <br />
-	    <H4>Xmipp Reconstruction Parameters</H4>
-	    <hr />";
-
 		$shortSize = 4;
 		$longSize = 20;
-		$html .= $params->insertCheckboxField( "DoMlf" );
 		$html .= $params->insertTextField( "HighResLimit", $longSize );
-		$html .= $params->insertCheckboxField( "DoCorrectGreyScale" );
 		$html .= $params->insertTextField( "ProjMatchSampling", $longSize );
 		$html .= $params->insertTextField( "LowPassFilterReference", $longSize );
 		$html .= $params->insertTextField( "NumberOfReferences", $longSize );
-								
-		$html .= "<br/>\n";		
-		
+		$html .= $params->insertCheckboxField( "DoMlf" );
+		$html .= $params->insertCheckboxField( "DoCorrectGreyScale" );
+				
 		return $html;
 	}
 	
