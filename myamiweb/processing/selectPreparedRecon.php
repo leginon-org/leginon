@@ -131,21 +131,26 @@ function selectRefineJob($extra=False) {
 // to this file should be necessary.
 function createSelectedRefineForm( $method, $stackId='', $modelArray='', $parentFormName=''  )
 {
+	// TODO: need to decide which naming convention to use.
 	switch ( $method ) {
 		case eman:
+		case emanrecon:
 			$selectedRefineForm = new EmanRefineForm( $method, $stackId, $modelArray, $parentFormName );
 			break;
 		case frealign:
+		case frealignrecon:
 			$selectedRefineForm = new FrealignRefineForm( $method, $stackId, $modelArray, $parentFormName );
 			break;
 		case xmipp:
+		case xmipprecon:
 			$selectedRefineForm = new XmippRefineForm( $method, $stackId, $modelArray, $parentFormName );
 			break;
 		case xmippml3d:
+		case xmippml3drecon:
 			$selectedRefineForm = new XmippML3DRefineForm( $method, $stackId, $modelArray, $parentFormName );
 			break;
 		default:
-			assert(false); //TODO: not yet implemented exception??
+			Throw new Exception("Error: Not Implemented - There is no RefineForm class avaialable for method: $method"); 
 	}		
 	
 	return $selectedRefineForm;
@@ -219,6 +224,7 @@ function jobForm($extra=false) {
 	ereg("(.*)leginon(.*)rawdata", $sessionpath, $reg_match);
 	$rootpath = "appion".$reg_match[2]."recon/";
 	$sessionpath = $reg_match[1].$rootpath;
+	// TODO: if error, check cluster config file name matches config.php
 	$clusterdata->set_rootpath($rootpath);
 	$clusterdata->post_data();
 	
