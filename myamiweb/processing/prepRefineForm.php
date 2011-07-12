@@ -40,7 +40,6 @@ function jobForm($extra=false) {
 	// for single model, we expct the format $key="model, $value="model_#"
 	// for multi model, we expect both the key and the value to be "model_#"
 	foreach( $_POST as $key=>$value ) {
-		echo "$key=>$value<br />";
 		if (strpos($value,"model_" ) !== False) {
 			preg_match('/(\D+)_(\d+)/', $value, $matches);
 			$id = $matches[2];
