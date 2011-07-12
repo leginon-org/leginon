@@ -19,8 +19,11 @@ from appionlib import apInstrument
 
 class Prep3DRefinement(appionScript.AppionScript):
 	def onInit(self):
-		self.refinemethod = None
+		self.setRefineMethod()
 		self.files_to_send = []
+
+	def setRefineMethod(self):
+		self.refinemethod = None
 
 	#=====================
 	def setupParserOptions(self):
@@ -36,9 +39,9 @@ class Prep3DRefinement(appionScript.AppionScript):
 			help="Binning of the particles", metavar="#")
 		self.parser.add_option("--highpass", dest="highpass", type="int", default=0,
 			help="High pass filter radius (in Angstroms) of the particles", metavar="#")
-		# Initial 3D model manipulation
-		self.parser.add_option("--modelid", dest="modelid", type="int",
-			help="Initial model id from database")
+		# Initial 3D model manipulation usually only one
+		self.parser.add_option("--modelid", dest="modelid", type="str", 	
+			help="input model(s) use commas to separate multiples. i.e. '--modelid=1' or '--modelid=1,3,17', etc.", metavar="ID#(s)")
 
 	#=====================
 	def checkConflicts(self):
@@ -56,6 +59,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.refineboxsize = self.boxsize * self.params['bin']
 		### set cs value
 		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
+		self.modelids = map((lambda x: int(x)),self.params['modelid'].split(','))
 		self.checkPackageConflicts()
 
 	def checkPackageConflicts(self):
@@ -65,7 +69,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		pass
 
 	def proc2dFormatConversion(self):
-		if self.spidersingle:
+		if self.stackspidersingle:
 			extname = 'spi'
 			format = 'spidersingle'
 		else:
@@ -74,7 +78,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		return extname, format
 
 	def proc3dFormatConversion(self):
-		if self.spidersingle:
+		if self.modelspidersingle:
 			extname = 'spi'
 		else:
 			extname = 'mrc'
@@ -139,9 +143,9 @@ class Prep3DRefinement(appionScript.AppionScript):
 			
 	def preprocessInitialModelWithProc3d(self):
 		extname = self.proc3dFormatConversion()
-		outmodelfile = os.path.join(self.params['rundir'], "initmodel.%s" % extname)
+		outmodelfile = os.path.join(self.params['rundir'], "initmodel%04d.%s" % (self.model['id'],extname))
 		apFile.removeStack(outmodelfile, warn=False)
-		apVolume.rescaleVolume(self.model['file'], outmodelfile, self.model['apix'], self.stack['apix'], self.stack['boxsize'], spider=self.spidersingle)
+		apVolume.rescaleVolume(self.model['file'], outmodelfile, self.model['apix'], self.stack['apix'], self.stack['boxsize'], spider=self.modelspidersingle)
 		self.model['file'] = outmodelfile
 		self.model['apix'] = self.stack['apix']
 		self.model['format'] = extname
@@ -152,21 +156,25 @@ class Prep3DRefinement(appionScript.AppionScript):
 		This is used in preprocessParticleStackWithProc2d
 		and preprocessInitialModelWithProc3d
 		that uses EMAN's proc2d and proc3d
-		Thus far, only SPIDER 3D refinement can use self.spidersingle=True
-		xmipp need to break the particles in folders even though it is also
-		in spider format so that it can not use this option in these functions
+		SPIDER 3D refinement use self.stackspidersingle=True and self.modelspidersingle=True
+		xmipp use self.stackspidersingle=False because it needs to be broken up into folders
+		xmipp use self.modelspidersingle=True
 		'''
-		self.spidersingle = False
+		self.stackspidersingle = False
+		self.modelspidersingle = False
 
-	def initializeStackModel(self):
+	def initializeStack(self):
 		self.stack = {}
 		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 		self.stack['format'] = 'imagic'
+
+	def initializeModel(self,modelid):
 		self.model = {}
-		self.model['data'] = apModel.getModelFromId(self.params['modelid'])
+		self.model['data'] = apModel.getModelFromId(modelid)
+		self.model['id'] = modelid
 		self.model['file'] = os.path.join(self.model['data']['path']['path'], self.model['data']['name'])
 		self.model['apix'] = self.model['data']['pixelsize']
 		self.model['format'] = self.model['data']['name'].split('.')[-1]
@@ -226,22 +234,34 @@ class Prep3DRefinement(appionScript.AppionScript):
 			prepdata = prepq
 		else:
 			prepdata = r[0]
-		
-		self.commitRefineStack(prepdata)
-		self.commitRefineInitModel(prepdata)
+		return prepdata
 
-	def setFilesToSend(self):
-		pass
+	def addToFilesToSend(self,filepath):
+		basename = os.path.basename(filepath)
+		self.files_to_send.append(basename)
+
+	def addStackToSend(self,filepath):
+		self.addToFilesToSend(filepath)
+
+	def addModelToSend(self,filepath):
+		self.addToFilesToSend(filepath)
 
 	#=====================
 	def start(self):
-		self.initializeStackModel()
+		prepdata = self.commitToDatabase()
+		# manipulate stack
+		self.initializeStack()
 		self.setFormat()
 		self.preprocessParticleStackWithProc2d()
-		self.preprocessInitialModelWithProc3d()
 		self.convertToRefineParticleStack()
-		self.commitToDatabase()
-		self.setFilesToSend()
+		self.addStackToSend(self.stack['file'])
+		self.commitRefineStack(prepdata)
+		#manipulate models
+		for modelid in self.modelids:
+			self.initializeModel(modelid)
+			self.preprocessInitialModelWithProc3d()
+			self.addModelToSend(self.model['file'])
+			self.commitRefineInitModel(prepdata)
 		self.saveFilesToSend()
 		
 #=====================
