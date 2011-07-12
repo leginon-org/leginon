@@ -37,12 +37,15 @@ function jobForm($extra=false) {
 	$reconMethod 	= $_POST['method'];
 	
 	// find any selected models
+	// for single model, we expct the format $key="model, $value="model_#"
+	// for multi model, we expect both the key and the value to be "model_#"
 	foreach( $_POST as $key=>$value ) {
-		if (strpos($key,"model_" ) !== False) {
-			preg_match('/(\D+)_(\d+)/', $key, $matches);
+		echo "$key=>$value<br />";
+		if (strpos($value,"model_" ) !== False) {
+			preg_match('/(\D+)_(\d+)/', $value, $matches);
 			$id = $matches[2];
 			
-			$modelArray[] = array( 'name'=>$key, 'id'=>$id );
+			$modelArray[] = array( 'name'=>$value, 'id'=>$id );
 		}
 	}
 	

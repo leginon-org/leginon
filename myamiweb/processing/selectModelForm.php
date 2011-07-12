@@ -40,10 +40,18 @@ if (is_array($models) && count($models)>0) {
 		$modelvals = "$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$symdata[eman_name]";
 
 		// if we want to be able to select multiple models, use checkboxes instead of radio buttons
-		$controlType = ( $type == "multi" ) ? "checkbox" : "radio";
+		// for single model, we expct the format $name="model, $value="model_#"
+		// for multi model, we expect both the name and the value to be "model_#"		
+		$value = "model_".$modelid;
+		if ( $type == "multi" ) {
+			$controlType = "checkbox";
+			$name = $value;
+		} else {
+			$controlType = "radio";
+			$name = "model";
+		}
 		
-		$modelTable .= "<input type='$controlType' NAME='model_$modelid' value='$modelvals' ";
-		$modelTable .= ">\n";
+		$modelTable .= "<input type='$controlType' NAME='$name' value='$value' >\n";
 		$modelTable .= "Use<br/>Model\n";
 
 		$modelTable .= "</td><td>\n";
@@ -64,16 +72,18 @@ $javafunc="<script src='../js/viewer.js'></script>\n";
 <?php processing_header("Appion: Recon Refinement","Select Initial Model for Refinement",$javafunc); ?>
 
 <form name='select_model_form' method='POST' action='prepRefineForm.php?expId=<?php echo $expId; ?>' >
-	<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=<?php $expId; ?> '>[Upload a new initial model]</A><br>
+	<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=<?php $expId; ?> '>[Upload a new initial model]</A><br /><br />
 	
-	<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use selected model(s)'><br>
+	<input type='SUBMIT' NAME='submitstackmodel' VALUE='Use selected model(s)'><br>
 	<?php echo $modelTable; ?>
 	
 	<input type='hidden' name='method' value='<?php echo $method; ?>'>
 	<input type='hidden' name='type' value='<?php echo $type; ?>'>
 	<input type='hidden' name='stackval' value='<?php echo $stackval; ?>'>
 	
-	<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use selected model(s)'>
+	<br />
+
+	<input type='SUBMIT' NAME='submitstackmodel' VALUE='Use selected model(s)'>
 </form>
 
 <?php echo showReference( $method ); ?>
