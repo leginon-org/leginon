@@ -953,7 +953,7 @@ function prepRefineTable($frealignprepid) {
 
 	// start table
 	$name = $data['name'];
-	$id = $data['DEF_id'];
+	$id = $data['DEF_id'];	
 
 	if ($_POST['hideItem'.$id] == 'hide') {
 		$particle->updateHide('ApFrealignPrepareData', $id, '1');
@@ -978,7 +978,19 @@ function prepRefineTable($frealignprepid) {
 	$display_keys['date time'] = $data['DEF_timestamp'];
 	$display_keys['path'] = $data['path'];
 	$display_keys['description'] = $data['description'];
-	$display_keys['model'] = modelsummarytable($data['REF|ApInitialModelData|model'], true);
+	
+	// Add each model to the table
+	$models = $particle->getModelsFromRefineID( $id );
+	
+	foreach( $models as $model ) {
+		$modelIds .= $model['DEF_id'].",";
+	}
+	$modelIds = trim($modelIds, ",");
+	$models = explode(",", $modelIds);
+	foreach ($models as $modelid) {
+		$display_keys['model'] .= modelsummarytable($modelid, true);
+	}
+	
 	$display_keys['stack'] = stacksummarytable($data['REF|ApStackData|stack'], true);
 
 	$table .= "<table border='0'>\n";
