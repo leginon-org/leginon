@@ -65,7 +65,7 @@ function jobForm($extra=false) {
 	
 	// set the runname
 	// the default run name is the jobtype followed by an ever incrementing number
-	$jobType = $reconMethod.'_recon';
+	$jobType = "preprefine".$reconMethod;
 	$particle = new particledata();
 	$reconruns = $particle->getMaxRunNumber( $jobType, $expId );
 	
@@ -76,7 +76,7 @@ function jobForm($extra=false) {
 	while (file_exists($outdir.'*recon'.($reconruns+1))) {
 		$reconruns += 1;
 	}
-	$defrunid = $jobType.($reconruns+1);
+	$defrunid = $reconMethod."_recon".($reconruns+1);
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunid;
 	
 	// get stack data
