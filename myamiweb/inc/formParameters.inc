@@ -88,6 +88,7 @@ class FormParameters
 	
 				// if the value has spaces and has not yet ben quoted, 
 				// put quotes around it to aid parsing later
+				$value = trim($value);
 				if ( strpos($value, " ") ) {
 					if ( !preg_match('/"([^"]*)"/', $value) ) {
 						$value = '"'.$value.'"';
@@ -161,8 +162,8 @@ class FormParameters
 			$html = $this->formLib->insertTextArea( $this->params[$name]['name'], 
 													$this->params[$name]['label'], 
 													$this->params[$name]['value'], 
-													$rows=3, 
-													$cols=65, 
+													$rows, 
+													$cols, 
 													$this->params[$name]['enable'], 
 													$note );
 		}

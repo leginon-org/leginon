@@ -24,13 +24,12 @@ abstract class BasicRefineForm extends BasicForm
 {
 	private $stackInfo;
 	
-	function __construct( $method, $stackId, $modelArray, $parentFormName ) 
+	function __construct( $method, $stackId, $modelArray ) 
 	{
 		parent::__construct();
 		
 		$this->method 		= $method;
 		$this->modelArray 	= $modelArray;
-		$this->parentFormName = $parentFormName;
 		
 		$this->setStackInfo( $stackId );
 	}
@@ -129,10 +128,8 @@ abstract class BasicRefineForm extends BasicForm
 			}
 		}
 	
-		// when the import box selection changes, reload the parent form
-		$onChange = $this->parentFormName.".submit()";
-		
-		$html .= "<select name='import' onChange='$onChange'>\n";
+		// when the import box selection changes, reload the form
+		$html .= "<select name='import' onChange='this.form.submit()'>\n";
 		$html .= "<option>Import parameters</option>\n";
 		foreach ($defaultParamSets as $defaultSet) {
 			$html .= "<option value='$defaultSet->id'>$defaultSet->label</option>\n";

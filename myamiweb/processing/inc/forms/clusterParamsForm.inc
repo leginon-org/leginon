@@ -22,7 +22,7 @@ $selectedcluster=strtolower($selectedcluster);
 // TODO: docpop params need to change name: cputime, reconpernode, procpernode
 class clusterParamsForm extends BasicForm
 {
-	function __construct( $nodes='', $ppn='', $rpn='', $memory='', $walltime='', $cput='', $cluster='' ) 
+	function __construct( $nodes='', $ppn='', $rpn='', $memory='', $walltime='', $cput='', $cluster='', $remoterundir='' ) 
 	{
 		parent::__construct();		
 		
@@ -33,6 +33,15 @@ class clusterParamsForm extends BasicForm
 		$memory 	= ( $memory == '') ? C_MEMORY_MAX : $memory;
 		$walltime 	= ( $walltime == '') ? C_WALLTIME_DEF : $walltime;
 		$cput 		= ( $cput == '') ? C_CPUTIME_DEF : $cput;
+
+		// TODO: known issue- the first time through, if a host is returning the path
+		// based on the $_POST var containing the outdir, the remoterundir will be blank
+		// because the outdir has not been posted.
+		if ( $remoterundir == '' ) {
+			global $clusterdata;
+			$clusterdata->post_data();
+			$remoterundir = $clusterdata->get_path();
+		}
 		
 		$params = &$this->getFormParams();
 				
@@ -43,7 +52,8 @@ class clusterParamsForm extends BasicForm
 		$params->addParam( "walltime", $walltime, "Wall Time" );
 		$params->addParam( "cput", $cput, "CPU Time" );
 		$params->addParam( "cluster", $cluster, "Select Host" );
-
+		$params->addParam( "remoterundir", $remoterundir, "Processing host run directory" );
+		
 		// add validations
 		$params->addValidation( "nodes", "req" );
 		$params->addValidation( "nodes", "num" );
@@ -96,15 +106,23 @@ class clusterParamsForm extends BasicForm
 		$html.= $params->insertTextFieldInRow( "ppn", $size );
 		$html.= "</td><td>\n";
 		$html.= $params->insertTextFieldInRow( "rpn", $size );
+		$html.= "</td></tr>";
 
 		// row 3
-		$html.= "</td></tr><tr><td>\n";
+		$html.= "<tr><td>\n";
 		$html.= $params->insertTextFieldInRow( "walltime", $size, "(hours)" );
 		$html.= "</td><td>\n";
 		$html.= $params->insertTextFieldInRow( "cput", $size, "(hours)" );
 		$html.= "</td><td>\n";
 		$html.= $params->insertTextFieldInRow( "memory", $size );
 		$html.= "</td></tr>\n";
+		
+		// row 4
+		$html.= "<tr><td colspan=3>\n";
+		$html.= $params->insertTextFieldInRow( "remoterundir", 50 );
+		$html.= "</td></tr>\n";
+		
+		// End table
 		$html.= "</table>\n";
 		
 		return $html;
@@ -114,8 +132,7 @@ class clusterParamsForm extends BasicForm
 	{
 		global $CLUSTER_CONFIGS;
 		
-		// TODO: handle the onchange
-		$html.= "<select name='changecluster' onchange='frealignjob.submit()'>\n";
+		$html.= "<select name='changecluster' onchange='this.form.submit()'>\n";
 		$html.= '<option value=""> Change Host Selection </option>'."\n";
 		foreach ($CLUSTER_CONFIGS as $cluster) {
 			$html.= '<option value="'.$cluster.'" >'.$cluster.'</option>'."\n";
@@ -136,13 +153,22 @@ class clusterParamsForm extends BasicForm
 		
 		if (in_array($defaultSetId, $CLUSTER_CONFIGS) ) {
 
+			// TODO: I don't think we need to include all this setting here,
+			// since when we select a new cluster, the form is reloaded and 
+			// the constructor is called. Are there other cases when we may want to call this?
 			$params->setParamValue( 'nodes', C_NODES_DEF );
 			$params->setParamValue( 'ppn', C_PPN_DEF );
 			$params->setParamValue( 'rpn', C_RPROCS_DEF );
 			$params->setParamValue( 'memory', C_MEMORY_MAX );
 			$params->setParamValue( 'walltime', C_WALLTIME_DEF );
 			$params->setParamValue( 'cput', C_CPUTIME_DEF );
+
+			global $clusterdata;
+			$clusterdata->post_data();
+			$remoterundir = $clusterdata->get_path();
+			$params->setParamValue( 'remoterundir', $remoterundir );
 			
+			// TODO: this might not work...may need to remove old validations first
 			$valcheck = "maxval=".C_PPN_MAX;
 			$params->addValidation( "ppn", $valcheck );
 			$valcheck = "maxval=".C_NODES_MAX;

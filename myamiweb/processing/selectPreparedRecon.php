@@ -129,25 +129,25 @@ function selectRefineJob($extra=False) {
 // Appion, it's form class should be included in this file
 // and it should be added to this function. No other modifications
 // to this file should be necessary.
-function createSelectedRefineForm( $method, $stackId='', $modelArray='', $parentFormName=''  )
+function createSelectedRefineForm( $method, $stackId='', $modelArray='' )
 {
 	// TODO: need to decide which naming convention to use.
 	switch ( $method ) {
 		case eman:
 		case emanrecon:
-			$selectedRefineForm = new EmanRefineForm( $method, $stackId, $modelArray, $parentFormName );
+			$selectedRefineForm = new EmanRefineForm( $method, $stackId, $modelArray );
 			break;
 		case frealign:
 		case frealignrecon:
-			$selectedRefineForm = new FrealignRefineForm( $method, $stackId, $modelArray, $parentFormName );
+			$selectedRefineForm = new FrealignRefineForm( $method, $stackId, $modelArray );
 			break;
 		case xmipp:
 		case xmipprecon:
-			$selectedRefineForm = new XmippRefineForm( $method, $stackId, $modelArray, $parentFormName );
+			$selectedRefineForm = new XmippRefineForm( $method, $stackId, $modelArray );
 			break;
 		case xmippml3d:
 		case xmippml3drecon:
-			$selectedRefineForm = new XmippML3DRefineForm( $method, $stackId, $modelArray, $parentFormName );
+			$selectedRefineForm = new XmippML3DRefineForm( $method, $stackId, $modelArray );
 			break;
 		default:
 			Throw new Exception("Error: Not Implemented - There is no RefineForm class avaialable for method: $method"); 
@@ -230,8 +230,7 @@ function jobForm($extra=false) {
 	
 	// Instantiate the class that defines the forms for the selected method of refinement.
 	$modelArray[] = array( 'name'=>"model_1", 'id'=>$modelid );
-	$formName = "frealignjob";
-	$selectedRefineForm = createSelectedRefineForm( $method, $refinestackid, $modelArray, $formName );
+	$selectedRefineForm = createSelectedRefineForm( $method, $refinestackid, $modelArray );
 
 	$javafunc .= $selectedRefineForm->setDefaults();
 	$javafunc .= $selectedRefineForm->additionalJavaScript();
@@ -247,7 +246,7 @@ function jobForm($extra=false) {
 		$html.= "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 		
 	// Begin Form
-	$html.= "<form name='$formName' method='post' action='$formaction'><br />\n";
+	$html.= "<form name='frealignjob' method='post' action='$formaction'><br />\n";
 	
 	// Post hidden values
 	$html.= "<input type='hidden' name='clustermemo' value='$selectedcluster'>\n";

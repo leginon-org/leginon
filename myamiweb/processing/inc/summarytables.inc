@@ -885,7 +885,7 @@ function templateStackEntry($stackInfo, $hidden=False, $mini=False){
 /*
 ******************************************
 */
-
+// TODO: this function may be removed when we complete the refine refactor #1324
 function frealigntable($frealignprepid) {
 	// initialization
 	$table = "";
@@ -971,7 +971,7 @@ function prepRefineTable($frealignprepid) {
 		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>\n";
 	} else $j.= " <input class='edit' type='submit' name='hideItem".$id."' value='hide'>\n";
 
-	$table .= apdivtitle("Frealign Job: <span class='aptitle'>$name</span> (ID: $id) $j\n");
+	$table .= apdivtitle("Refine Job: <span class='aptitle'>$name</span> (ID: $id) $j\n");
 	if ($data['hidden'] == 1)
 		return $table;
 
