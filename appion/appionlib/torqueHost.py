@@ -30,22 +30,22 @@ class TorqueHost(processingHost.ProcessingHost):
             header += self.scriptPrefix +" -N " + currentJob.getName() + "\n"
         
         if currentJob.getWalltime():
-            header += self.scriptPrefix +"  -l walltime=" + currentJob.getWalltime()+"\n"
+            header += self.scriptPrefix +" -l walltime=" + currentJob.getWalltime()+"\n"
         
         if currentJob.getNodes():
-            header += self.scriptPrefix +"  -l nodes=" + currentJob.getNodes()
+            header += self.scriptPrefix +" -l nodes=" + currentJob.getNodes()
             if currentJob.getPPN():
                 header += ":ppn=" + currentJob.getPPN()
             header += "\n"
         
         if currentJob.getCpuTime():
-            header += self.scriptPrefix +"  -l cput=" + currentJob.getCpuTime() + "\n"
+            header += self.scriptPrefix +" -l cput=" + currentJob.getCpuTime() + "\n"
             
         if currentJob.getMem():
-            header += self.scriptPrefix +"  -l mem=" + currentJob.getMem() + "\n"
+            header += self.scriptPrefix +" -l mem=" + currentJob.getMem() + "\n"
         
         if currentJob.getPmem():
-            header += self.scriptPrefix +"  -l pmem=" + currentJob.getMem() + "\n"
+            header += self.scriptPrefix +" -l pmem=" + currentJob.getPmem() + "\n"
             
         if currentJob.getQueue():
             header += self.scriptPrefix +" -q " + currentJob.getQueue() + "\n"
@@ -54,13 +54,13 @@ class TorqueHost(processingHost.ProcessingHost):
             header += self.scriptPrefix +" -A " + currentJob.getAccount()+ "\n"
             
         #Add any custom headers for this processing host.
-        for line in self.additionalHeaders:
-            header += self.scriptPrefix + line + "\n"            
+        for line in self.getAdditionalHeaders():
+            header += self.scriptPrefix + " " + line + "\n"            
         #add some white space     
         if self.preExecLines:    
             header += "\n\n"
         #Add any custom line that should be added to jobfile (Ex. module purge)
-        for line in self.preExecLines:
+        for line in self.getPreExecutionLines():
             header += line + "\n"
         #add some white space  
         header += "\n\n"
@@ -71,13 +71,13 @@ class TorqueHost(processingHost.ProcessingHost):
     #Translates it into a Job ID which can be used to check job status.  This is 
     #fairly simple for Torque since the output of qsub should be a job id of the form
     # <id#.servername.domain>
-    def traslateOutput (self, outputString):
+    def translateOutput (self, outputString):
         outputList = outputString.split('.')
         try:
             jobID= int(outputList[0])
-        except:
+        except Exception:
             return False
-        return JobID      
+        return jobID      
         
     def configure (self, confDict):
         options = {

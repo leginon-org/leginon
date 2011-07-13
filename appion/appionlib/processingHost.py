@@ -41,44 +41,50 @@ class ProcessingHost (object):
     def executeCommand (self, command):
         #run the command string in a subshell
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) 
-        #Wait for the process to return a set the exit code.
+        #Wait for the process to return and set the exit code.
         returnCode = process.wait()
         
         #if the command program did not execute normaly raise an exception and 
         #include the contents of stderr in the message.
         if returnCode > 0:
             errOutput = process.communicate()[1]
-            raise OSError ("Job execution command exited abnormally. Return Code" + returnCode)       
+            raise OSError ("Job execution command exited abnormally. " + errOutput)       
         
         #return what we get from stdout
         return process.communicate()[0]
                                  
-##createJobFile(header, commandList)
-#Takes a string, header,  which should be a cluster spacific job file header 
-#and a list of strings, commandList, which are the individual lines of the job
-#file.  Returns a  string which is the absolute path to the temporary job file created.
-    def createJobFile(self, header, commandList, jobFile):        
+##createJobFile(jobFile, jobObject)
+#Takes a file handle open for writing and optionaly a job object from which it will
+#generate the job headers and extract the list of commands.  The generated job file
+#is written to the supplied file.  
+    def createJobFile(self, jobFile, jobObject=None):
+        if jobObject:
+            currentJob=jobObject
+        elif self.currentJob:
+            currentJob=self.currentJob
+        else:
+            raise UnboundLocalError ("Current Job not set")     
+        
+        #Generate the processing host specific headers for the job file
+        header = self.generateHeaders(currentJob)
+        commandList = currentJob.getCommandList()       
         try:
             jobFile.write(header)          
             for line in commandList:
-                jobfile.write(line + '\n')
+                jobFile.write(line + '\n')
         except IOError, e:
-            sys.stderr.write("Could not write to job file" + jobFile.name + ": " + e)
+            sys.stderr.write("Could not write to job file" + jobFile.name + ": " + str(e))
             return False
         #Job file was successfully writen 
         return True
-    
-    
+       
 ##launchJob (jobObject)
 #Takes a object representing the job to be ran, jobObject, creates the job   
 #script file and executes the job on the processing host.  Returns a 
 #numerical job ID or False if job execution failed.      
     def launchJob(self, jobObject):
-        self.currentJob = jobObject  #Set the current job 
-        
-        #Generate the processing host specific headers for the job file
-        header = self.generateHeader()
-        
+        self.setCurrentJob(jobObject)  #Set the current job 
+                
         outputDir= self.currentJob.getOutputDir()
         #Expand ~ and ~user constructions in the output directory string
         if outputDir.startswith('~'):
@@ -92,32 +98,33 @@ class ProcessingHost (object):
             try:
                 os.makedirs(outputDir, 0775)
             except OSError, e:
-                sys.stderr.write("Couldn't create output directory " + outputDir + ": " + e)
+                sys.stderr.write("Couldn't create output directory " + outputDir + ": " + str(e))
                 return False
         
         #Set the absolute path name to the jobfile
-        jobfileName = OutputDir + "/" + self.currentJob.getName() + ".job"
+        jobfileName = outputDir + "/" + self.currentJob.getName() + ".job"
     
         try:
             #open the job file for writing
             jobFile = file(jobfileName, 'w')
         except IOError, e:
-            sys.stderr.write("Could not open file to create job file: " + e)
+            sys.stderr.write("Could not open file to create job file: " + str(e))
             return False
         
-        self.createJobFile(header, self.currentJob.getCommandList(), jobFile)
-        
+        self.createJobFile(jobFile)
+       
+        jobFile.close()
         #Construct the command string to execute the job.          
-        commandString = "cd " + jobObject.getOutputDir() + ";"  
+        commandString = "cd " + outputDir + ";"  
         commandString = commandString + self.execCommand + " " + jobfileName
         try:
             returnValue=self.executeCommand(commandString)
         except (OSError, ValueError), e:
-            sys.stderr.write("Failed to execute job " + jobObject.getName() + ": " + e)
+            sys.stderr.write("Failed to execute job " + jobObject.getName() + ": " + str(e))
             return False
     
         #trasnlate whatever is returned by executeCommand() to a JobID     
-        jobID = self.traslatedOutput(returnValue)
+        jobID = self.translatedOutput(returnValue)
         #return the translated output 
         return jobID
     
@@ -125,26 +132,38 @@ class ProcessingHost (object):
     def getShell(self):
         return self.shell
         
-    def setShell(self, newShell):
-        self.shell = newShell
+    def setShell(self, shell):
+        if not isinstance(shell, str):
+            raise TypeError ("Argument type should be a string") 
+        else:
+            self.shell = shell
         
     def getExecCommand(self):
         return self.execCommand
         
     def setExecCommand(self, execCmd):
-        self.execCommand = execCmd
+        if not isinstance(execCmd, str):
+            raise TypeError ("Argument type should be a string") 
+        else:
+            self.execCommand = execCmd
     
     def setStatusCommand (self, statusCmd):
-        self.statusCommand = statusCmd
+        if not isinstance(statusCmd, str):
+            raise TypeError ("Argument type should be a string") 
+        else:
+            self.statusCommand = statusCmd
         
-    def getStatusCommand (self):
+    def getStatusCommand (self): 
         return  self.statusCommand
                 
     def getScriptPrefix(self):
         return self.scriptPrefix
         
     def setScriptPrefix(self, prefix):
-        self.scriptPrefix = prefix
+        if not isinstance(prefix, str):
+            raise TypeError ("Argument type should be a string") 
+        else:
+            self.scriptPrefix = prefix
              
     def getCurrentJob(self):
         return self.currentJob
