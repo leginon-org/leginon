@@ -30,22 +30,22 @@ class TorqueHost(processingHost.ProcessingHost):
             header += self.scriptPrefix +" -N " + currentJob.getName() + "\n"
         
         if currentJob.getWalltime():
-            header += self.scriptPrefix +" -l walltime=" + currentJob.getWalltime()+"\n"
+            header += self.scriptPrefix +" -l walltime=" + str(currentJob.getWalltime())+":00:00\n"
         
         if currentJob.getNodes():
-            header += self.scriptPrefix +" -l nodes=" + currentJob.getNodes()
+            header += self.scriptPrefix +" -l nodes=" + str(currentJob.getNodes())
             if currentJob.getPPN():
-                header += ":ppn=" + currentJob.getPPN()
+                header += ":ppn=" + str(currentJob.getPPN())
             header += "\n"
         
         if currentJob.getCpuTime():
-            header += self.scriptPrefix +" -l cput=" + currentJob.getCpuTime() + "\n"
+            header += self.scriptPrefix +" -l cput=" + str(currentJob.getCpuTime()) + ":00:00\n"
             
         if currentJob.getMem():
-            header += self.scriptPrefix +" -l mem=" + currentJob.getMem() + "\n"
+            header += self.scriptPrefix +" -l mem=" + str(currentJob.getMem()) + 'mb\n'
         
         if currentJob.getPmem():
-            header += self.scriptPrefix +" -l pmem=" + currentJob.getPmem() + "\n"
+            header += self.scriptPrefix +" -l pmem=" + str(currentJob.getPmem()) + "mb\n"
             
         if currentJob.getQueue():
             header += self.scriptPrefix +" -q " + currentJob.getQueue() + "\n"

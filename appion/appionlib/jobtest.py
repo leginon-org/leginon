@@ -1,12 +1,12 @@
 class jobtestClass (object):
     def __init__ (self):
         self.name="testjob"
-        self.wallTime ="2:00:00"
-        self.nodes="4"
-        self.PPN="4"
-        self.cpuTime="32:00:00"
-        self.memory="32"
-        self.pMem = "2"
+        self.wallTime =2
+        self.nodes=4
+        self.PPN=4
+        self.cpuTime=32
+        self.memory=32
+        self.pMem = 2
         self.queue="batch"
         self.account="12cs"
         self.outputDir="~/workspace/scratch"

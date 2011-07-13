@@ -37,7 +37,7 @@ class Agent (object):
             sys.exit(1)
             
         sys.stdout.write(hostJobId)         
-        self.updateJobStatus(job, hostJobID)
+        self.updateJobStatus(self.currentJob, hostJobID)
         return 0
         
     def createProcessingHost(self):
@@ -126,7 +126,7 @@ class Agent (object):
                 
         return confDict
     
-    def updateJobStatus (self, ):
+    def updateJobStatus (self, jobObject, jobHostId ):
         pass
                 
                 

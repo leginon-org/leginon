@@ -56,9 +56,10 @@ class RefineJob(basicScript.BasicScript):
 		self.parser.add_option("--enditer", dest="enditer", type="int",
 			help="End refine at this iteration", metavar="INT")
 		self.parser.add_option('--setuponly', dest='setuponly', default=False, action='store_true',
-		help="setup without executing")
-
-		# Refinement Iteration parameters
+			help="setup without executing")
+		self.parser.add_option('--cput', dest='cput', type='int', default=None)
+		self.parser.add_option('--runname', dest='runname')
+			# Refinement Iteration parameters
 		self.setIterationParamList()
 		for param in self.iterparams:
 			example = ''
@@ -194,7 +195,10 @@ class RefineJob(basicScript.BasicScript):
 		self.command_list = []
 		self.min_mem_list = []
 		self.nproc_list = []
-
+		self.safedir = self.params['safedir']
+		self.runname = self.params['runname']
+		self.cpuTime = self.params['cput']
+		
 	def addParallelsToTasks(self,tasks,scripts,mem=2,nproc=1):
 		if len(tasks) == 0:
 			for key in ('scripts','mem','nproc','file'):
@@ -228,6 +232,31 @@ class RefineJob(basicScript.BasicScript):
 			self.addJobCommands(self.makeRefineScript(iter))
 		self.makePostIterationScript()
 
+	def getWalltime(self):
+		return self.wallTime
+	def getName(self):
+		return self.runname                   
+	def getNodes(self):
+		return self.nodes
+	def getPPN(self):
+		return self.ppn
+	def getCpuTime(self):
+		return self.cpuTime
+	def getMem(self):
+		return  self.mem
+	def getPmem(self):
+		return None
+	def getQueue(self):
+		return None
+	def getAccount(self):
+		return None
+	def getOutputDir(self):   	
+		return self.safedir
+	def getCommandList(self):
+		return self.command_list
+	def getJobId(self):
+		return self.jobid
+	
 class Tester(RefineJob):
 	def makeRefineScript(self,iter):
 			print 'make refine script in Tester'
@@ -242,6 +271,7 @@ class Tester(RefineJob):
 					'nproc':[[1,1,1,1],[self.ppn]],
 					}
 			return tasks
+       
 
 if __name__ == '__main__':
 	testscript = Tester()
