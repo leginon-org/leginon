@@ -348,3 +348,27 @@ class filePathModifier:
 			f.writelines(newlines)
 			f.close()
 		return
+		
+#=====================
+#=====================
+def checkSelOrDocFileRootDirectoryInDirectoryTree(directory, remote_basedir, local_basedir):
+	''' 
+	used to change all the root directories in Xmipp .sel and .doc files recursively, e.g:
+	from /ddn/people/dlyumkis/appion/11jan11a/recon to /ami/data00/appion/11jan11a/recon
+	'''
+	
+	if remote_basedir != local_basedir:
+		modifier = filePathModifier()
+		remote_root, local_root = modifier.findUncommonPathPrefix(remote_basedir, local_basedir)
+		print "remote cluster root path is: ", remote_root
+		print "local cluster root path is: ", local_root
+			
+		### modify all .sel and .doc files using old_rootdir (remote_root) and new_rootdir (local_root) arguments
+		matches = []
+		for root, dirs, files in os.walk(directory):
+			for file in files:
+				if file.endswith('.sel') or file.endswith('.doc'):
+					matches.append(os.path.join(root,file))
+		for match in matches: 
+			modifier.checkSelOrDocFileRootDirectory(match, remote_root, local_root)
+
