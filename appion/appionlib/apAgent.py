@@ -30,7 +30,7 @@ class Agent (object):
             sys.stderr.write("Error: Could not create job " + self.currentJob.getName() + ": " + str(e) + '\n')
             sys.exit(1)
             
-        hostJobId = self.processHost.launchJob(self.currentJob)
+        hostJobId = self.processingHost.launchJob(self.currentJob)
         #if the job launched successfuly print out the ID returned.
         if not hostJobId:
             sys.stderr.write("Error: Could not execute job " + self.currentJob.getName()+ "\n")
@@ -101,7 +101,9 @@ class Agent (object):
         except IOError, e:
             raise IOError ("Couldn't read configuration file " + configFile + ": " + str(e))
         
-        for line in cFile.readlines():          
+        #for line in cFile.readlines():          
+        line = cFile.readline()
+        while line:
             #get rid of an leadig and trailing white space
             #line = line.strip()
             #Only process lines of the correct format, quitly ignore all others"
@@ -111,7 +113,7 @@ class Agent (object):
                 (key, value) = matchedLine.groups()
                 #value strings can be spread across multiple lines if \n is escaped (\)
                 #process these lines.              
-                while '\\' == value[-1] and (len(value) == 1 or value[-2] != '\\'):
+                while '\\' == value[-1]:      
                     value = value[:-1]
                     line= cFile.readline()
                     value += line.rstrip('\n')
@@ -120,6 +122,7 @@ class Agent (object):
                     value = re.split(r'\s*,\s*', value)
                 #put the key/value pair in the configuration dictionary    
                 confDict[key]=value
+            line = cFile.readline()
                 
         return confDict
     
