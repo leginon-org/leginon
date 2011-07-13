@@ -168,22 +168,25 @@ def gst_buffer_from_ndarray(ndarray):
 		masks[channel+'_mask'] = mask
 
 	## make caps based on type of array
-	#caps = gst.Caps(mimetype, bpp=bpp, depth=rgb_depth, endianness=buffer_endianness, **masks)
+	if buffer_endianness == 'big':
+		endianness = 4321
+	elif buffer_endianness == 'little':
+		endianness = 1234
+	#caps = gst.caps_new_simple(mimetype, width=width, height=height, framerate=gst.Fraction(0), bpp=bpp, depth=rgb_depth, endianness=endianness, **masks)
 	caps = gst.Caps(mimetype)
 	cap = caps[0]
-	cap['width'] = width
-	cap['height'] = height
+	cap['width'] = 182
+	cap['height'] = 126
 	cap['framerate'] = gst.Fraction(0)
 	cap['bpp']=bpp
 	cap['depth']=rgb_depth
-	if buffer_endianness == 'big':
-		cap['endianness'] = 4321
-	elif buffer_endianness == 'little':
-		cap['endianness'] = 1234
+	cap['endianness'] = endianness
 	for key,value in masks.items():
 		cap[key] = value
 
+	print 'NEW BUFFER CAPS'
 	print_caps(caps)
+	print ''
 
 	# make buffer and attach array data and new caps
 	buf = gst.Buffer(ndarray.data)

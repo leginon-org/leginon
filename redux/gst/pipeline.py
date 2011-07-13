@@ -23,10 +23,21 @@ class NewElement(gst.Element):
 		"")
 	
 	#source pad (template): we send buffers forward through here
+	src_caps = gst.Caps('video/x-raw-rgb')
+	src_caps[0]['width'] = 182
+	src_caps[0]['height'] = 126
+	src_caps[0]['framerate'] = gst.Fraction(0)
+	src_caps[0]['bpp']=24
+	src_caps[0]['depth']=24
+	src_caps[0]['endianness'] = 4321
+	src_caps[0]['red_mask'] = 16711680
+	src_caps[0]['blue_mask'] = 255
+	src_caps[0]['green_mask'] = 65280
+	#src_caps = gst.caps_new_any()
 	_srctemplate = gst.PadTemplate ('src',
 		gst.PAD_SRC,
 		gst.PAD_ALWAYS,
-		gst.caps_new_any())
+		src_caps)
 
 	#sink pad (template): we recieve buffers from our sink pad
 	_sinktemplate = gst.PadTemplate ('sink',
@@ -76,7 +87,7 @@ class NewElement(gst.Element):
 		av.shape = a.shape + (-1,)
 		print 'CCC', av.shape
 		import scipy.misc
-		#b = scipy.ndimage.zoom(av, (0.5,0.5,1))
+		#b = scipy.ndimage.zoom(av, (0.5,1,1))
 		b = scipy.ndimage.zoom(av, (1,0.5,1))
 		scipy.misc.imsave('rgb.jpg', b)
 		print 'EEE', b.shape, b.dtype, b[25,3]
@@ -92,9 +103,30 @@ class NewElement(gst.Element):
 			print e
 
 		try:
+			# fixate caps
+			src_caps = self.srcpad.get_caps()
+			print 'SOURCE CAPS', src_caps
+			numpygst.print_caps(src_caps)
+			print ''
+			newcaps = newbuf.get_caps()
+			ret = self.srcpad.fixate_caps(newcaps)
+			print 'FIXATE', ret
+			ret = self.srcpad.set_caps(newcaps)
+			print 'SET', ret
+			print 'SOURCE CAPS', src_caps
+			numpygst.print_caps(src_caps)
+			print ''
+		except Exception, e:
+			print e
+
+		try:
+			print 'BUF LEN', len(newbuf.data)
 			ret = self.srcpad.push(newbuf)
+			print ''
 			print 'BUF', buf.get_caps()
+			print ''
 			print 'NEWBUF', newbuf.get_caps()
+			print ''
 			return ret
 		except Exception, e:
 			print e
@@ -134,11 +166,24 @@ if False:
 	pipeline.add(filesrc, pngdec, jpegenc, filesink)
 	gst.element_link_many(filesrc, pngdec, jpegenc, filesink)
 
-
 # get pipeline's bus
 bus = pipeline.get_bus()
 
+def debug1():
+	filt_src = filt.get_pad('src')
+	caps = filt_src.get_negotiated_caps()
+	print ''
+	print 'NEGOTIATED'
+	numpygst.print_caps(caps)
+	print ''
+	jpegsink = jpegenc.get_pad('sink')
+	caps = jpegsink.get_caps()
+	#print 'JPEG SINK CAPS'
+	#numpygst.print_caps(caps)
+	#print ''
+
 def quit():
+	debug1()
 	print 'QUIT'
 	pipeline.set_state(gst.STATE_NULL)
 	gtk.main_quit()
