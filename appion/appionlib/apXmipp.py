@@ -296,7 +296,55 @@ def convertXmippEulersToEman(phi, theta, psi):
 	http://blake.bcm.edu/emanwiki/Eman2TransformInPython
 	'''
 	az = math.fmod((phi+90),360.0)
-	alt = alt
+	alt = theta
 	phi = math.fmod((psi-90),360.0)
 
 	return alt, az, phi
+	
+#======================	
+#=====================
+
+class filePathModifier:
+	#=====================
+	def common_prefix(self, c1, c2):
+		if not c1 and c2: return
+		for i, c in enumerate(c1):
+			if c != c2[i]:
+				return c1[:i]
+		return c1
+
+	#=====================
+	def common_suffix(self, c1, c2):
+		return self.common_prefix(c1[::-1], c2[::-1])[::-1]
+
+	#=====================
+	def findUncommonPathPrefix(self, path1, path2):
+		''' usefule when transfering sel and doc files from one file system to another '''
+		prefix1 = re.sub(self.common_suffix(path1, path2), "", path1)
+		prefix2 = re.sub(self.common_suffix(path1, path2), "", path2)
+		return os.path.abspath(prefix1), os.path.abspath(prefix2)
+		
+	#=====================
+	def checkSelOrDocFileRootDirectory(self, sel_doc_file, old_rootdir, new_rootdir):
+		''' necessary when files are transferred from one file system to another, e.g., the root directory on Garibaldi is different from that on Guppy'''
+
+		f = open(sel_doc_file, "r")
+		lines = f.readlines()
+		newlines = []
+		f.close()
+			
+		### replace old root directory with new root directory	
+		count = 0
+		for line in lines:
+			if re.search(old_rootdir, line):
+				newline = re.sub(old_rootdir, new_rootdir, line)
+				count += 1
+			else: 
+				newline = line
+			newlines.append(newline)
+		if count > 0:
+			apDisplay.printMsg("changing root directory from %s to %s in %s" % (old_rootdir, new_rootdir, sel_doc_file))
+			f = open(sel_doc_file, "w")
+			f.writelines(newlines)
+			f.close()
+		return
