@@ -24,6 +24,12 @@ class RefineRunner(object):
 		elif self.jobtype.lower() == 'frealignrecon':
 			from appionlib import apRefineJobFrealign
 			self.job = apRefineJobFrealign.FrealignRefineJob(optargs)
+		elif self.jobtype.lower() == 'xmipprecon':
+			from appionlib import apRefineJobXmipp
+			self.job = apRefineJobXmipp.XmippSingleRefineJob(optargs)
+		elif self.jobtype.lower() == 'xmippml3d':
+			from appionlib import apRefineJobXmippML3d
+			self.job = apRefineJobXmippML3d.XmippML3dRefineJob(optargs)
 
 	def printCommands(self):
 		print ''
