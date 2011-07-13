@@ -22,12 +22,6 @@ class XmippRefineForm extends BasicRefineForm
 		// classes extended from BasicRefineForm should get the selected default values
 		$params = $this->getFormParams();
 		
-		// display form title
-		$html .="
-	    <br />
-	    <H4>Xmipp Reconstruction Parameters</H4>
-	    <hr />";
-		
 		$shortSize = 4;
 		$longSize = 20;
 		
@@ -54,33 +48,33 @@ class XmippRefineForm extends BasicRefineForm
 		
 		$command = '';
 		$command = $this->addCommandFlag( $command, "jobtype", "", "xmipprecon" );
-		$command = $params->addCommandFlag( $command, "NumberOfIterations", "numIters" );
-		$command = $params->addCommandFlag( $command, "MaskRadius", "outerMaskRadius" );
-		$command = $params->addCommandFlag( $command, "Mask", "mask" );
-		$command = $params->addCommandFlag( $command, "InnerRadius", "innerAlignRadius" );
-		$command = $params->addCommandFlag( $command, "OuterRadius", "outerAlignRadius" );
-		$command = $params->addCommandFlag( $command, "AngularSteps", "angSampRate" );
-		$command = $params->addCommandFlag( $command, "maxAngularChange" );
-		$command = $params->addCommandFlag( $command, "maxChangeOffset" );
-		$command = $params->addCommandFlag( $command, "search5DShift" );
-		$command = $params->addCommandFlag( $command, "search5DStep" );
-		$command = $params->addCommandFlag( $command, "symmetry" );
-		$command = $params->addCommandFlag( $command, "percentDiscard" );
-		$command = $params->addCommandFlag( $command, "reconMethod" );
-		$command = $params->addCommandFlag( $command, "ARTLambda" );
-		$command = $params->addCommandFlag( $command, "fourierMaxFrequencyOfInterest" );
-		$command = $params->addCommandFlag( $command, "filterConstant" );
+		$command = $this->addCommandFlag( $command, "numIters" );
+		$command = $this->addCommandFlag( $command, "outerMaskRadius" );
+		$command = $this->addCommandFlag( $command, "mask" );
+		$command = $this->addCommandFlag( $command, "innerAlignRadius" );
+		$command = $this->addCommandFlag( $command, "outerAlignRadius" );
+		$command = $this->addCommandFlag( $command, "angSampRate" );
+		$command = $this->addCommandFlag( $command, "maxAngularChange" );
+		$command = $this->addCommandFlag( $command, "maxChangeOffset" );
+		$command = $this->addCommandFlag( $command, "search5DShift" );
+		$command = $this->addCommandFlag( $command, "search5DStep" );
+		$command = $this->addCommandFlag( $command, "symmetry" );
+		$command = $this->addCommandFlag( $command, "percentDiscard" );
+		$command = $this->addCommandFlag( $command, "reconMethod" );
+		$command = $this->addCommandFlag( $command, "ARTLambda" );
+		$command = $this->addCommandFlag( $command, "fourierMaxFrequencyOfInterest" );
+		$command = $this->addCommandFlag( $command, "filterConstant" );
 		
 	    $doComputeResolution 	= $params->getParamValue("doComputeResolution");
 	    $filterComputed 		= $params->getParamValue("filterComputed");
 	    $filterEstimated 		= $params->getParamValue("filterEstimated");
 	    
 	    if ( $doComputeResolution == 'on' )
-	        $command.='--DoComputeResolution ';
+	        $command.=' --DoComputeResolution ';
 	    if ( $filterComputed == 'on' || $filterEstimated == 'on' ) 
-	        $command.='--DoLowPassFilter ';
+	        $command.=' --DoLowPassFilter ';
 	    if ( $filterEstimated == 'on' )
-	        $command.='--DontUseFscForFilter ';
+	        $command.=' --DontUseFscForFilter ';
 	    			
 		return $command;
 	}

@@ -90,7 +90,7 @@ class EmanRefineForm extends BasicRefineForm
 		$command = $this->addCommandFlag( $command, "coranhcc" );
 		
 		if ($params->getParamValue("filterEstimated") == 'on')
-			$command = $params->addCommandFlag( $command, "filt3d", "filterResolution" );
+			$command = $this->addCommandFlag( $command, "filt3d", "filterResolution" );
 		
 		return $command;
 	}
