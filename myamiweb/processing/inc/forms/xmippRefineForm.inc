@@ -82,6 +82,8 @@ class XmippRefineForm extends BasicRefineForm
 	// @override
 	protected function setImportParams()
 	{
+		$sym = $this->getSymmetry();
+		
 		// add default value sets to populate the import parameters form 
 		$id 				= 'asymm';
 		$label 				= 'asymmetric particles';
@@ -89,7 +91,7 @@ class XmippRefineForm extends BasicRefineForm
 		$innerMaskRadius 	= '';
 		$outerAlignRadius 	= '';	 
 		$innerAlignRadius 	= ''; 
-		$symmetry 			= 'c1'; 
+		$symmetry 			= $sym; 
 		$endIter 			= '10'; 
 		$angSampRate 		= '2x12:2x10:2x8:2x6:2x5:2x4:2x3:2x2';
 		$percentDiscard 	= '10';  
@@ -154,7 +156,8 @@ class XmippRefineForm extends BasicRefineForm
 	public function setDefaults()
 	{
 		$stack = $this->getStackInfo();
-		$box = $stack['box'];
+		$box = $stack['boxsize'];
+		$sym = $this->getSymmetry();
 		
 		$rad = ($box/2)-2;
 		$javafunc = "
@@ -164,7 +167,7 @@ class XmippRefineForm extends BasicRefineForm
 	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
 	      if (obj.innerAlignRadius) obj.innerAlignRadius.value = '4';
 	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $rad;
-	      if (obj.symmetry) obj.symmetry.value = 'c1';
+	      if (obj.symmetry) obj.symmetry.value = $sym;
 	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10:2x5:2x3:2x2';
 	      if (obj.percentDiscard) obj.percentDiscard.value = '10';

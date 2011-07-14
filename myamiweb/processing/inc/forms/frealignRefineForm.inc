@@ -183,7 +183,7 @@ class FrealignRefineForm extends BasicRefineForm
 			$box = $s['boxsize'];
 
 			// if this is not a valid stack, don't add it to the list
-			if ( $nump != $refineStack['numParticles'] || $apix != $refineStack['apix'] || $box != $refineStack['box'] ) {
+			if ( $nump != $refineStack['lastPart'] || $apix != $refineStack['apix'] || $box != $refineStack['boxsize'] ) {
 				continue;
 			}
 
@@ -239,8 +239,9 @@ class FrealignRefineForm extends BasicRefineForm
 	protected function setImportParams()
 	{
 		$stackInfo 	= $this->getStackInfo();
-		$box 		= $stackInfo['box'];
+		$box 		= $stackInfo['boxsize'];
 		$apix 		= $stackInfo['apix'];
+		$sym 		= $this->getSymmetry();
 		
 		// add default value sets to populate the import parameters form 
 		$id 				= 'asymm';
@@ -249,7 +250,7 @@ class FrealignRefineForm extends BasicRefineForm
 		$innerMaskRadius 	= '0';
 		$outerAlignRadius 	= '';	 
 		$innerAlignRadius 	= ''; 
-		$symmetry 			= 'c1'; 
+		$symmetry 			= $sym; 
 		$endIter 			= '10'; 
 		$angSampRate 		= '';
 		$percentDiscard 	= '';  
@@ -310,8 +311,9 @@ class FrealignRefineForm extends BasicRefineForm
 	{
 		// get the stack info for the stack selected by the user
 		$stack 	= $this->getStackInfo();
-		$box 	= $stack['box'];
+		$box 	= $stack['boxsize'];
 		$apix 	= $stack['apix'];
+		$sym = $this->getSymmetry();
 		
 		// calculate default parameters
 		$outerMaskRadius 	= round($apix * $box / 3.0);
@@ -323,7 +325,7 @@ class FrealignRefineForm extends BasicRefineForm
 	    function setDefaults(obj) {
 	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $outerMaskRadius;
 	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
-	      if (obj.symmetry) obj.symmetry.value = 'c1';
+	      if (obj.symmetry) obj.symmetry.value = $sym;
 	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.wgh) obj.wgh.value = '0.07';
 	      if (obj.xstd) obj.xstd.value = '0';

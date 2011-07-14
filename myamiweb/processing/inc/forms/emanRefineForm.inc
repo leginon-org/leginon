@@ -91,6 +91,8 @@ class EmanRefineForm extends BasicRefineForm
 	
 	protected function setImportParams()
 	{
+		$sym = $this->getSymmetry();
+		
 		// add default value sets to populate the import parameters form 
 		$id 				= 'asymm';
 		$label 				= 'Mostly asymmetric particle';
@@ -98,7 +100,7 @@ class EmanRefineForm extends BasicRefineForm
 		$innerMaskRadius 	= '';
 		$outerAlignRadius 	= '';	 
 		$innerAlignRadius 	= ''; 
-		$symmetry 			= 'D7 (z)'; 
+		$symmetry 			= $sym; 
 		$endIter 			= '9'; 
 		$angSampRate 		= '3x10:3x8:3x6';
 		$percentDiscard 	= '';  
@@ -188,7 +190,8 @@ class EmanRefineForm extends BasicRefineForm
 	public function setDefaults()
 	{
 		$stackInfo = $this->getStackInfo();
-		$box = $stackInfo['box'];
+		$box = $stackInfo['boxsize'];
+		$sym = $this->getSymmetry();
 		
 		$rad = ($box/2)-2;
 		$javafunc = "
@@ -197,7 +200,7 @@ class EmanRefineForm extends BasicRefineForm
 	      obj.outerMaskRadius.value = $rad;
 	      obj.innerMaskRadius.value = 0;
 	      obj.angSampRate.value = '4x10:2x5:2x3:2x2';
-	      obj.symmetry.value = 'C1 (no symmetry)';
+	      obj.symmetry.value = $sym;
 	      obj.endIter.value = '10';
 	      obj.percentDiscard.value = '10';
 	      obj.filterEstimated.checked = false;
@@ -244,6 +247,7 @@ class EmanParams extends RefineFormParameters
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant );
 		
+		// TODO: amask1-amask3
 		$this->addParam( "imask", $imask, "imask" );
 		$this->addParam( "amask", $amask, "amask" );		
 		$this->addParam( "maxshift", $maxshift, "maxshift " );

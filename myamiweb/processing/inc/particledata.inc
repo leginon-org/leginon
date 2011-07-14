@@ -3401,7 +3401,7 @@ class particledata {
 	
 	function getModelsFromRefineID( $refineID )
 	{
-		$q = "SELECT model.*  "
+		$q = "SELECT model.*, refmodel.filename  "
 			. " FROM `ApRefineInitModelData` AS refmodel, ApInitialModelData AS model "
 			. " WHERE refmodel.`REF|ApPrepRefineData|preprefine` = $refineID "
 			. " AND refmodel.`REF|ApInitialModelData|refmodel` = model.`DEF_id` ";

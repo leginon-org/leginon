@@ -129,25 +129,25 @@ function selectRefineJob($extra=False) {
 // Appion, it's form class should be included in this file
 // and it should be added to this function. No other modifications
 // to this file should be necessary.
-function createSelectedRefineForm( $method, $stackId='', $modelArray='' )
+function createSelectedRefineForm( $method, $stacks='', $models='' )
 {
 	// TODO: need to decide which naming convention to use.
 	switch ( $method ) {
 		case eman:
 		case emanrecon:
-			$selectedRefineForm = new EmanRefineForm( $method, $stackId, $modelArray );
+			$selectedRefineForm = new EmanRefineForm( $method, $stacks, $models );
 			break;
 		case frealign:
 		case frealignrecon:
-			$selectedRefineForm = new FrealignRefineForm( $method, $stackId, $modelArray );
+			$selectedRefineForm = new FrealignRefineForm( $method, $stacks, $models );
 			break;
 		case xmipp:
 		case xmipprecon:
-			$selectedRefineForm = new XmippRefineForm( $method, $stackId, $modelArray );
+			$selectedRefineForm = new XmippRefineForm( $method, $stacks, $models );
 			break;
 		case xmippml3d:
 		case xmippml3drecon:
-			$selectedRefineForm = new XmippML3DRefineForm( $method, $stackId, $modelArray );
+			$selectedRefineForm = new XmippML3DRefineForm( $method, $stacks, $models );
 			break;
 		default:
 			Throw new Exception("Error: Not Implemented - There is no RefineForm class avaialable for method: $method"); 
@@ -200,15 +200,15 @@ function jobForm($extra=false) {
 
 	// Get refine stack preparation parameters
 	// TODO: this may need to be modified if we have multiple stacks???
-	$stackdatas	= $particle->getPreparedRefineStackData($refineID);
-	$lastPart 	= $stackdatas[0][last_part];
-	$lp 		= $stackdatas[0][lowpass];
-	$hp 		= $stackdatas[0][highpass];
-	$bin 		= $stackdatas[0][bin];	
-	$apix 		= $stackdatas[0][apix];	
-	$cs 		= $stackdatas[0][cs];	
-	$boxsize 	= $stackdatas[0][boxsize];	
-	$stackfilename = $stackdatas[0][filename]; 
+	$stacks		= $particle->getPreparedRefineStackData($refineID);
+	$lastPart 	= $stacks[0][last_part];
+	$lp 		= $stacks[0][lowpass];
+	$hp 		= $stacks[0][highpass];
+	$bin 		= $stacks[0][bin];	
+	$apix 		= $stacks[0][apix];	
+	$cs 		= $stacks[0][cs];	
+	$boxsize 	= $stacks[0][boxsize];	
+	$stackfilename = $stacks[0][filename]; 
 	
 	// prepare model values
 	$models = $particle->getModelsFromRefineID( $refineID );
@@ -220,6 +220,7 @@ function jobForm($extra=false) {
 	$modelNames = trim($modelNames, ",");
 	$modelIds = trim($modelIds, ",");
 	
+	// TODO: don't think this block is needed
 	$modelid 	= $jobdata['REF|ApInitialModelData|model'];
 	$modeldata 	= $particle->getInitModelInfo($modelid);
 	$symdata 	= $particle->getSymInfo($modeldata['REF|ApSymmetryData|symmetry']);
@@ -240,8 +241,7 @@ function jobForm($extra=false) {
 	$clusterdata->post_data();
 	
 	// Instantiate the class that defines the forms for the selected method of refinement.
-	$modelArray[] = array( 'name'=>"model_1", 'id'=>$modelid );
-	$selectedRefineForm = createSelectedRefineForm( $method, $refinestackid, $modelArray );
+	$selectedRefineForm = createSelectedRefineForm( $method, $stacks, $models );
 
 	$javafunc .= $selectedRefineForm->setDefaults();
 	$javafunc .= $selectedRefineForm->additionalJavaScript();
@@ -427,7 +427,6 @@ function createCommand ($extra=False)
 		
 	// collect processing host parameters
 	$command .= $clusterParamForm->buildCommand( $_POST );
-	
 	
 	/* *******************
 	 PART 4: Create header info, i.e., references

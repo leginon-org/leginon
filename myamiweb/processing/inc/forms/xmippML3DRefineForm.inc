@@ -56,6 +56,8 @@ class XmippML3DRefineForm extends BasicRefineForm
 	
 	protected function setImportParams()
 	{
+		$sym = $this->getSymmetry();
+		
 		// add default value sets to populate the import parameters form 
 		$id 				= 'asymm';
 		$label 				= 'Mostly asymmetric particle';
@@ -63,7 +65,7 @@ class XmippML3DRefineForm extends BasicRefineForm
 		$innerMaskRadius 	= '';
 		$outerAlignRadius 	= '';	 
 		$innerAlignRadius 	= ''; 
-		$symmetry 			= 'c1'; 
+		$symmetry 			= $sym; 
 		$endIter 			= '25'; 
 		$angSampRate 		= '10';
 		$percentDiscard 	= '';  
@@ -101,10 +103,12 @@ class XmippML3DRefineForm extends BasicRefineForm
 	// $box is the box size from the selected stack.
 	public function setDefaults()
 	{
+		$sym = $this->getSymmetry();
+		
 		$javafunc = "
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {
-	      if (obj.symmetry) obj.symmetry.value = 'c1';
+	      if (obj.symmetry) obj.symmetry.value = $sym;
 	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10:2x5:2x3:2x2';
 	      if (obj.DoMlf) obj.DoMlf.checked = '';

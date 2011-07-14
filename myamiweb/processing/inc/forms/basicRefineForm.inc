@@ -23,15 +23,25 @@ require_once "../inc/formParameters.inc";
 abstract class BasicRefineForm extends BasicForm
 {
 	private $stackInfo;
+	private $defaultSym;
+	protected $particle;
 	
-	function __construct( $method, $stackId, $modelArray ) 
+	function __construct( $method, $stacks, $models ) 
 	{
 		parent::__construct();
 		
-		$this->method 		= $method;
-		$this->modelArray 	= $modelArray;
+		$this->particle = new particledata();
 		
-		$this->setStackInfo( $stackId );
+		$this->method = $method;
+		$this->models = $models;
+		$this->setStackInfo( $stacks );
+		$this->setParticleSymmetry( $models );
+		
+	}
+	
+	function __destruct() 
+	{
+		unset( $this->particle );
 	}
 	
 	// Extending classes should override this function to return the appropriate
@@ -42,31 +52,40 @@ abstract class BasicRefineForm extends BasicForm
 	// BAD:  $params = new RefineFormParameters();
 	public function createFormParams() { return new RefineFormParameters(); }
 	
-	// TODO: there is probably a better place for this so that it can be reused, or it 
-	// may already exist somewhere???
-	public function setStackInfo( $stackId ) 
+	private function setStackInfo( $stacks ) 
 	{
-		$this->stackInfo['id'] = $stackId;
-		
-		$particle = new particledata();
-		$stackParams = $particle->getStackParams( $stackId );
-		
-		// get number of particles
-		$totalParticles = $particle->getNumStackParticles( $stackId );
-		$this->stackInfo['numParticles'] = commafy($totalParticles);
-		
-		// get box size
-		$this->stackInfo['box'] = $stackParams['boxsize'];
-		
-		// get pixel size of stack
-		$this->stackInfo['apix'] = ($particle->getStackPixelSizeFromStackId($stackId))*1e10;
+		foreach ( $stacks as $stack ) {
+			$isReconStack = $stack[recon];
+
+			// make sure we are getting refine stack info rather than recon info
+			if ( !$isReconStack ) {
+				$this->stackInfo['lp'] 		= $stack[lowpass];
+				$this->stackInfo['hp'] 		= $stack[highpass];
+				$this->stackInfo['bin'] 	= $stack[bin];	
+				$this->stackInfo['apix'] 	= $stack[apix];	
+				$this->stackInfo['cs'] 		= $stack[cs];	
+				$this->stackInfo['boxsize'] = $stack[boxsize];	
+				$this->stackInfo['lastPart'] = $stack[last_part];
+				$this->stackInfo['stackfilename'] = $stack[filename];
+				
+				break;
+			}			
+		}		
+	}
+	
+	private function setParticleSymmetry( $models )
+	{
+		// For now, use the symmetry of the first available model
+		$symmetryId = $models[0]['REF|ApSymmetryData|symmetry'];
+		$symInfo 	= $this->particle->getSymInfo($symmetryId);
+		$this->defaultSym 	= $symInfo['symmetry'];
 	}
 	
 	// getters
 	public function getStackInfo()  { return $this->stackInfo; }
 	public function getMethodType() { return $this->method; } 
-	public function getModelArray() { return $this->modelArray; } 
-		
+	public function getSymmetry() { return $this->defaultSym; } 
+	
 	// Extending classes MAY override this to add 
 	// package specific parameters to the refine form 
 	public function advancedParamForm() {}
@@ -105,7 +124,6 @@ abstract class BasicRefineForm extends BasicForm
 		$this->setImportParams();
 		$defaultParamSets = $this->getDefaultParamSets();
 		
-		$particle = new particledata();
 		$leginondata = new leginondata();
 	
 		// import values from previous uploaded reconstruction
@@ -114,7 +132,7 @@ abstract class BasicRefineForm extends BasicForm
 		if (is_array($sessions)) {
 			$ropt = "";
 			foreach ($sessions as $s) {
-				$recons = $particle->getReconIdsFromSession($s['id']);
+				$recons = $this->particle->getReconIdsFromSession($s['id']);
 				if (is_array($recons)) {
 					foreach ($recons as $r) {
 						// limit the length of the description
@@ -153,31 +171,32 @@ abstract class BasicRefineForm extends BasicForm
 	protected function importParamsFromRefinement( $defaultSetId )
 	{
 		$paramSet = $this->getFormParams();
-		$particle = new particledata();
 		
 		// get model info to set the symmetry
-		$modelArray = $this->getModelArray();
-		// this method is single model, so grab the first element only
-		$modelId 	= $modelArray[0]['id'];
-		$modelInfo 	= $particle->getInitModelInfo( $modelId );
-		$symInfo 	= $particle->getSymInfo($modelInfo['REF|ApSymmetryData|symmetry']);
-		$symmetry = $symInfo['symmetry'];
+//		$modelArray = $this->getModelArray();
+//		// this method is single model, so grab the first element only
+//		$modelId 	= $modelArray[0]['id'];
+//		$modelInfo 	= $this->particle->getInitModelInfo( $modelId );
+//		$symInfo 	= $this->particle->getSymInfo($modelInfo['REF|ApSymmetryData|symmetry']);
+//		$symmetry = $symInfo['symmetry'];
+		
+		$symmetry = $this->getSymmetry();
 		$paramSet->setParamValue( "symmetry", $symmetry );
 		
 		// get import refine stack info
-		$refinfo 			= $particle->getRefinementRunInfo( $defaultSetId );
-		$importStackInfo 	= $particle->getStackParams($refinfo['REF|ApStackData|stack']);
+		$refinfo 			= $this->particle->getRefinementRunInfo( $defaultSetId );
+		$importStackInfo 	= $this->particle->getStackParams($refinfo['REF|ApStackData|stack']);
 		
 		// get our stack info
 		$stackInfo 	= $this->getStackInfo();
-		$box 		= $stackInfo['box'];
+		$box 		= $stackInfo['boxsize'];
 		
 		// use the two stacks to get scaling factor for box sizes
 		$importBox 	= $importStackInfo['boxsize'];
 		$boxscale 	= $box / $importBox;
 		
 		// set the number of iterations
-		$iterinfo = $particle->getIterationInfo( $defaultSetId );
+		$iterinfo = $this->particle->getIterationInfo( $defaultSetId );
 		$endIter = count($iterinfo);
 		$paramSet->setParamValue( "endIter", $endIter );
 				
@@ -285,8 +304,7 @@ abstract class BasicRefineForm extends BasicForm
 		// if there are quotes around $value, trim them
 		$value = str_replace('"','',$value); 
 		
-		$particle = new particledata();
-		$syms = $particle->getSymmetries();
+		$syms = $this->particle->getSymmetries();
 		$html .= "<select name='$name'>\n";
 	   	$html .= "<option value=''>select one...</option>\n";
 		
@@ -323,8 +341,10 @@ abstract class BasicRefineForm extends BasicForm
 	public function setDefaults()
 	{
 		$stack = $this->getStackInfo();
-		$box = $stack['box'];
+		$box = $stack['boxsize'];
+		$sym = $this->getSymmetry();
 		
+		// make sure radius is smaller than half of the box size
 		$rad = ($box/2)-2;
 		$javafunc = "
 	  <script type='text/javascript'>
@@ -333,7 +353,7 @@ abstract class BasicRefineForm extends BasicForm
 	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
 	      if (obj.innerAlignRadius) obj.innerAlignRadius.value = '4';
 	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $rad;
-	      if (obj.symmetry) obj.symmetry.value = 'C1 (no symmetry)';
+	      if (obj.symmetry) obj.symmetry.value = $sym;
 	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10 2x5 2x3 2x2';
 	      if (obj.percentDiscard) obj.percentDiscard.value = '10';
@@ -363,7 +383,7 @@ class RefineFormParameters extends FormParameters
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='' ) 
 	{
 		parent::__construct( $id, $label );
-		
+				
 		$this->addParam( "outerMaskRadius", $outerMaskRadius, "outer mask radius" );
 		$this->addParam( "innerMaskRadius", $innerMaskRadius, "inner mask radius" );
 		$this->addParam( "outerAlignRadius", $outerAlignRadius, "outer alignment radius" );
