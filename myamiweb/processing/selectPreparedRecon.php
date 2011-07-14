@@ -198,6 +198,17 @@ function jobForm($extra=false) {
 		$reconstackvals = "$reconstackid|--|$apix|--|$boxsize|--|$numpart|--|$reconstackdata[path]|--|$reconstackdata[name]";
 	}
 
+	// Get refine stack preparation parameters
+	// TODO: this may need to be modified if we have multiple stacks???
+	$stackdatas	= $particle->getPreparedRefineStackData($refineID);
+	$lastPart 	= $stackdatas[0][last_part];
+	$lp 		= $stackdatas[0][lowpass];
+	$hp 		= $stackdatas[0][highpass];
+	$bin 		= $stackdatas[0][bin];	
+	$apix 		= $stackdatas[0][apix];	
+	$cs 		= $stackdatas[0][cs];	
+	$boxsize 	= $stackdatas[0][boxsize];	
+	$stackfilename = $stackdatas[0][filename]; 
 	
 	// prepare model values
 	$models = $particle->getModelsFromRefineID( $refineID );
@@ -258,6 +269,10 @@ function jobForm($extra=false) {
 	$html.= "<input type='hidden' NAME='modelnames' value='$modelNames'>\n";
 	$html.= "<input type='hidden' NAME='modelids' value='$modelIds'>\n";
 	$html.= "<input type='hidden' NAME='method' value='$method'>\n";
+	$html.= "<input type='hidden' NAME='stackfilename' value='".$stackfilename."'>\n";
+	$html.= "<input type='hidden' NAME='apix' value='".$apix."'>\n";
+	$html.= "<input type='hidden' NAME='cs' value='".$cs."'>\n";
+	$html.= "<input type='hidden' NAME='boxsize' value='".$boxsize."'>\n";
 	
 	// Start Table
 	$html.= "<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>";	
@@ -318,22 +333,10 @@ function jobForm($extra=false) {
 	$html.= "<br />";
 	
 	// Add stack and model summary tables
-	//$html.= "StackID: $stackid -- ModelID: $modelid<br/>\n";
 	$html.= "<table class='tablebubble'><tr>\n";
 	// Add stack prep parameters
 	$html.= "<td class='tablebg'>";
 	// TODO: this may need to be modified if we have multiple stacks???
-	// Get stack preparation parameters
-	$stackdatas	= $particle->getPreparedRefineStackData($refineID);
-	$lastPart 	= $stackdatas[0][last_part];
-	$lp 		= $stackdatas[0][lowpass];
-	$hp 		= $stackdatas[0][highpass];
-	$bin 		= $stackdatas[0][bin];
-	
-	//need to post the stack file name for creating command
-	$stackfilename = $stackdatas[0][filename]; 
-	$html.= "<input type='hidden' NAME='stackfilename' value='".$stackfilename."'>\n";
-	
 	$stackPrepForm = new stackPrepForm( $lastPart,$lp,$hp,$bin );
 	$html.= $stackPrepForm->generateReport( "Stack Prep Params", 544 );
 	$html.= "</td>";
@@ -378,6 +381,11 @@ function createCommand ($extra=False)
 	/* ***********************************
 	 PART 1: Get variables from POST array and validate
 	 ************************************* */		
+	$stackName	= $_POST['stackfilename'];
+	$apix 		= $_POST['apix'];	
+	$cs 		= $_POST['cs'];	
+	$boxsize 	= $_POST['boxsize'];	
+	
 	// verify processing host parameters
 	$clusterParamForm = new ClusterParamsForm();
 	$errorMsg .= $clusterParamForm->validate( $_POST );
@@ -407,9 +415,11 @@ function createCommand ($extra=False)
 	// Add the model filenames to the command
 	$command .= "--modelnames=".$_POST['modelnames']." "; 
 	
-	// add the stack filename to the command
-	$stackName	= $_POST['stackfilename'];
+	// add the stack parameters to the command
 	$command .= "--stackname=".$stackName." ";
+	$command .= "--apix=".$apix." ";
+	$command .= "--boxsize=".$boxsize." ";
+	$command .= "--cs=".$cs." ";
 	
 	// collect processing run parameters
 	$runParametersForm = new RunParametersForm();
