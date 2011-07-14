@@ -85,8 +85,11 @@ if ($reconRuns) {
 		$res = $particle->getHighestResForRecon($reconid);
 		$avgmedjump = $particle->getAverageMedianJump($reconid);
 
+		$iterinfo = $particle->getIterationInfo($reconid);
+
 		//print_r($reconrun);
-		$bestimages = glob($reconrun['path'].'/threed.*'.$res['iter'].'a.mrc.1.png');
+//		$bestimages = glob($reconrun['path'].'/threed.*'.$res['iter'].'a.mrc.1.png');
+		$bestimages = glob($reconrun['path'].'/'.$iterinfo[0]['volumeDensity'].'.1.png');
 		if ($bestimages)
 			$bestimage = $bestimages[0];
 
