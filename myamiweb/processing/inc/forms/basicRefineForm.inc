@@ -26,7 +26,7 @@ abstract class BasicRefineForm extends BasicForm
 	private $defaultSym;
 	protected $particle;
 	
-	function __construct( $method, $stacks, $models ) 
+	function __construct( $method, $stacks='', $models='' ) 
 	{
 		parent::__construct();
 		
@@ -34,8 +34,13 @@ abstract class BasicRefineForm extends BasicForm
 		
 		$this->method = $method;
 		$this->models = $models;
-		$this->setStackInfo( $stacks );
-		$this->setParticleSymmetry( $models );
+		
+		if ( $stacks ) {
+			$this->setStackInfo( $stacks );
+		}
+		if ( $models ) {
+			$this->setParticleSymmetry( $models );
+		}
 		
 	}
 	

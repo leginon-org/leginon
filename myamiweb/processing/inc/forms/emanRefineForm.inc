@@ -25,7 +25,9 @@ class EmanRefineForm extends BasicRefineForm
 		$shortSize = 4;
 		$longSize = 20;
 		$html .= $params->insertTextField( "imask", $longSize );
-		$html .= $params->insertTextField( "amask", $longSize );
+		$html .= $params->insertTextField( "amask1", $longSize );
+		$html .= $params->insertTextField( "amask2", $longSize );
+		$html .= $params->insertTextField( "amask3", $longSize );
 		$html .= $params->insertTextField( "maxshift", $longSize );
 		$html .= $params->insertTextField( "hard", $longSize );
 		$html .= $params->insertTextField( "classkeep", $longSize );
@@ -65,7 +67,9 @@ class EmanRefineForm extends BasicRefineForm
 		$command = $this->addCommandFlag( $command, "innerMaskRadius" );
 		$command = $this->addCommandFlag( $command, "symmetry" );
 		$command = $this->addCommandFlag( $command, "imask" );
-		$command = $this->addCommandFlag( $command, "amask" );
+		$command = $this->addCommandFlag( $command, "amask1" );
+		$command = $this->addCommandFlag( $command, "amask2" );
+		$command = $this->addCommandFlag( $command, "amask3" );
 		$command = $this->addCommandFlag( $command, "maxshift" );
 		$command = $this->addCommandFlag( $command, "hard" );
 		$command = $this->addCommandFlag( $command, "classkeep" );
@@ -109,7 +113,9 @@ class EmanRefineForm extends BasicRefineForm
 		$filterComputed 	= ''; 
 		$filterConstant 	= '';
 		$imask				= ''; 
-		$amask				= '';
+		$amask1				= '';
+		$amask2				= '';
+		$amask3				= '';
 		$maxshift			= '';
 		$hard				= '25';
 		$classkeep			= '0.8';
@@ -130,7 +136,7 @@ class EmanRefineForm extends BasicRefineForm
 		$asymmSet = new EmanParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
-							$imask, $amask, $maxshift, $hard, $classkeep,
+							$imask, $amask1, $amask2, $amask3, $maxshift, $hard, $classkeep,
 							$classiter, $xfiles, $shrink, $euler2, $median, $phasecls, $refine, 
 							$tree, $coranCC, $coranmask, $coranlp, $coranhp, $coranhcc );
 		$this->addDefaultParams( $asymmSet );
@@ -144,7 +150,7 @@ class EmanRefineForm extends BasicRefineForm
 		$groelSet = new EmanParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
-							$imask, $amask, $maxshift, $hard, $classkeep,
+							$imask, $amask1, $amask2, $amask3, $maxshift, $hard, $classkeep,
 							$classiter, $xfiles, $shrink, $euler2, $median, $phasecls, $refine, 
 							$tree, $coranCC, $coranmask, $coranlp, $coranhp, $coranhcc );
 		$this->addDefaultParams( $groelSet );
@@ -158,7 +164,7 @@ class EmanRefineForm extends BasicRefineForm
 		$virusSet = new EmanParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
-							$imask, $amask, $maxshift, $hard, $classkeep,
+							$imask, $amask1, $amask2, $amask3, $maxshift, $hard, $classkeep,
 							$classiter, $xfiles, $shrink, $euler2, $median, $phasecls, $refine, 
 							$tree, $coranCC, $coranmask, $coranlp, $coranhp, $coranhcc );
 		$this->addDefaultParams( $virusSet );
@@ -206,7 +212,9 @@ class EmanRefineForm extends BasicRefineForm
 	      obj.filterEstimated.checked = false;
 	      obj.filterResolution.value = '';
 	      obj.imask.value = '';
-	      obj.amask.value = '';		
+	      obj.amask1.value = '';		
+	      obj.amask2.value = '';		
+	      obj.amask3.value = '';		
 	      obj.maxshift.value = '';
 	      obj.hard.value = '25';
 	      obj.classkeep.value = '0.8';
@@ -239,7 +247,7 @@ class EmanParams extends RefineFormParameters
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
 							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
-							$imask='', $amask='', $maxshift='', $hard='', $classkeep='',
+							$imask='', $amask1='', $amask2='', $amask3='', $maxshift='', $hard='', $classkeep='',
 							$classiter='', $xfiles='', $shrink='', $euler2='', $median='', $phasecls='', $refine='', 
 							$tree='', $coranCC='', $coranmask='', $coranlp='', $coranhp='', $coranhcc='' ) 
 	{
@@ -249,7 +257,9 @@ class EmanParams extends RefineFormParameters
 		
 		// TODO: amask1-amask3
 		$this->addParam( "imask", $imask, "imask" );
-		$this->addParam( "amask", $amask, "amask" );		
+		$this->addParam( "amask1", $amask1, "amask1" );		
+		$this->addParam( "amask2", $amask2, "amask2" );		
+		$this->addParam( "amask3", $amask3, "amask3" );		
 		$this->addParam( "maxshift", $maxshift, "maxshift " );
 		$this->addParam( "hard", $hard, "hard" );
 		$this->addParam( "classkeep", $classkeep, "classkeep" );

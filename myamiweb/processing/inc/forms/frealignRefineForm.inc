@@ -39,8 +39,7 @@ class FrealignRefineForm extends BasicRefineForm
 				
 		// find each stack entry in database
 		$reconstackid = $paramSet->getParamValue( 'reconstackid' );
-		$particle = new particledata();
-		$stackIds = $particle->getStackIds( $_GET['expId'] );
+		$stackIds = $this->particle->getStackIds( $_GET['expId'] );
 		if (count($stackIds) > 0) {
 			$html .=  "<br />\n";
 			$html .=  "<b>Select Reconstruction Stack:</b>\n";
@@ -97,8 +96,7 @@ class FrealignRefineForm extends BasicRefineForm
 		$html .=  $paramSet->insertTextField( "rbfact", $longSize, "(0 = off)" );
 		
 		// find if there are ctffind runs (for frealign option)
-		$particle = new particledata();
-		$showCTFFind = $particle->getCtfRunIds($_GET['expId'], $showHidden=False, $ctffind=True);
+		$showCTFFind = $this->particle->getCtfRunIds($_GET['expId'], $showHidden=False, $ctffind=True);
 		
 		// give option of only using ctffind runs
 		if ( $showCTFFind ) {
@@ -112,9 +110,7 @@ class FrealignRefineForm extends BasicRefineForm
 	
 	function addReconSelectBox()
 	{
-		$particle = new particledata();
-
-		$recons = $particle->getReconIterIdRelatedToStackid($stackid);
+		$recons = $this->particle->getReconIterIdRelatedToStackid($stackid);
 		$html .=  "&nbsp;&nbsp;&nbsp; Reconstruction:\n";
 		if (!empty($recons)) {
 			$html .=  "<select name='importrecon' onchange='prepRefine.submit()'>\n";
@@ -136,13 +132,13 @@ class FrealignRefineForm extends BasicRefineForm
 		// if a reconstruction has been selected, show iterations & resolutions
 		if ($_POST['importrecon'] && $_POST['importrecon']!='None') {
 			$html .=  "&nbsp;&nbsp;&nbsp; Iteration:\n";
-			$iterinfo = $particle->getRefinementData($_POST['importrecon']);
+			$iterinfo = $this->particle->getRefinementData($_POST['importrecon']);
 			$html .=  "<select name='importiter'>\n";
 			if (is_array($iterinfo)) {
 				foreach ($iterinfo as $iter){
-					$iterstuff = $particle->getIterationInfo($_POST['importrecon'],$iter['iteration']);
-					$rmeas = $particle->getRMeasureInfo($iter['REF|ApRMeasureData|rMeasure']);
-					$fsc = $particle->getResolutionInfo($iter['REF|ApResolutionData|resolution']);
+					$iterstuff = $this->particle->getIterationInfo($_POST['importrecon'],$iter['iteration']);
+					$rmeas = $this->particle->getRMeasureInfo($iter['REF|ApRMeasureData|rMeasure']);
+					$fsc = $this->particle->getResolutionInfo($iter['REF|ApResolutionData|resolution']);
 					$iopt.="<option value='".$iter['DEF_id']."' ";
 					$iopt.= ($_POST['importiter']==$iter['DEF_id']) ? 'selected':'';
 					$iopt.= ">Iter ".$iter['iteration'];
@@ -165,18 +161,17 @@ class FrealignRefineForm extends BasicRefineForm
 	function reconStackSelector($stackIds, $stackidval) 
 	{	
 		$refineStack = $this->getStackInfo();
-		$particle = new particledata();
 		
 		$html .=  "<SELECT NAME='reconstackid' >\n";
 		$html .=  "<OPTION VALUE='' style='color:green;' >Same as refinement</option>\n";
 		foreach ($stackIds as $stackid){
 			// get stack parameters from database
-			$s = $particle->getStackParams($stackid['stackid']);
+			$s = $this->particle->getStackParams($stackid['stackid']);
 			// get number of particles in each stack
-			$totalp = $particle->getNumStackParticles($stackid['stackid']);
+			$totalp = $this->particle->getNumStackParticles($stackid['stackid']);
 			$nump = commafy($totalp);
 			// get pixel size of stack
-			$apix = ($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
+			$apix = ($this->particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
 			// truncated pixel size
 			$showapix = sprintf("%.2f",$apix);
 			// get box size
