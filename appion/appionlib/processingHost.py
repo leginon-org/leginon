@@ -124,7 +124,7 @@ class ProcessingHost (object):
             return False
     
         #trasnlate whatever is returned by executeCommand() to a JobID     
-        jobID = self.translatedOutput(returnValue)
+        jobID = self.translateOutput(returnValue)
         #return the translated output 
         return jobID
     

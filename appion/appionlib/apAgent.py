@@ -36,8 +36,8 @@ class Agent (object):
             sys.stderr.write("Error: Could not execute job " + self.currentJob.getName()+ "\n")
             sys.exit(1)
             
-        sys.stdout.write(hostJobId)         
-        self.updateJobStatus(self.currentJob, hostJobID)
+        sys.stdout.write(str(hostJobId) + '\n')         
+        self.updateJobStatus(self.currentJob, hostJobId)
         return 0
         
     def createProcessingHost(self):
