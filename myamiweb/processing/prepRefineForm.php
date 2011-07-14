@@ -176,7 +176,10 @@ function createCommand ($extra=False)
 	/* *******************
 	 PART 2: Create program command
 	 ******************** */
-	$command = 'prepRefineEman.py ';
+	// make the first letter of the method upper case
+	$method = ucfirst($_POST['method']);
+	$refineScript = "prepRefine".$method.".py ";
+	$command = $refineScript;
 	
 	// add run parameters
 	$command .= $runParametersForm->buildCommand( $_POST );
