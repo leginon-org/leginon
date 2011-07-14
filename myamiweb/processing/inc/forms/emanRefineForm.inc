@@ -67,9 +67,6 @@ class EmanRefineForm extends BasicRefineForm
 		$command = $this->addCommandFlag( $command, "innerMaskRadius" );
 		$command = $this->addCommandFlag( $command, "symmetry" );
 		$command = $this->addCommandFlag( $command, "imask" );
-		$command = $this->addCommandFlag( $command, "amask1" );
-		$command = $this->addCommandFlag( $command, "amask2" );
-		$command = $this->addCommandFlag( $command, "amask3" );
 		$command = $this->addCommandFlag( $command, "maxshift" );
 		$command = $this->addCommandFlag( $command, "hard" );
 		$command = $this->addCommandFlag( $command, "classkeep" );
@@ -87,9 +84,20 @@ class EmanRefineForm extends BasicRefineForm
 		$command = $this->addCommandFlag( $command, "coranhp" );
 		$command = $this->addCommandFlag( $command, "coranhcc" );
 		
-		if ($params->getParamValue("filterEstimated") == 'on')
+		if ($params->getParamValue("filterEstimated") == 'on') {
 			$command = $this->addCommandFlag( $command, "filt3d", "filterResolution" );
+		}
 		
+		// add the amask values if they are set
+		$amask1 = $params->getParamValue("amask1");
+		$amask2 = $params->getParamValue("amask2");
+		$amask3 = $params->getParamValue("amask3");
+		if ( $amask1 && $amask2 && $amask3 ) {
+			$array = array($amask1, $amask2, $amask3);
+			$amaskvalue = implode(",", $array);			
+			$command = $this->addCommandFlag( $command, "amask", '', $amaskvalue );
+		}
+			
 		return $command;
 	}
 	
