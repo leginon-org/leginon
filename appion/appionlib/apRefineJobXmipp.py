@@ -20,7 +20,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 			help="Inner radius for alignment",default=2)
 		self.parser.add_option("--OuterRadius", dest="outerradius", type="int",
 			help="Outer radius for alignment")
-		self.parser.add_option("--FourierMaxFrequencyOfInterest",
+		self.parser.add_option("--fourierMaxFrequencyOfInterest",
 			dest="fouriermaxfrequencyofinterest", type="float",
 			help="Maximum frequency of interest for Fourier", default=0.25)
 		self.parser.add_option("--DoComputeResolution", dest="docomputeresolution", action="store_true",
@@ -35,23 +35,23 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		super(XmippSingleModelRefineJob,self).setIterationParamList()
 		self.iterparams.extend([
 				{'name':"AngularSteps",
-					'help':"Angular steps (e.g. 4x10:2x5:2x3:2x2)",'default':"6x5:2x3:2x2")
-				{'name':"MaxAngularChange",
-					'help':"Maximum angular change (e.g. 4x1000:2x20:2x9:2x6)", 'default':'4x1000:2x20:2x9:2x6')
-				{'name':"MaxChangeOffset",
-					'help':"Maximum shift in x and y", 'default':'1000')
-				{'name':"Search5DShift",
-					'help':"Search range for shift 5D searches (e.g. 3x5:2x3:0)", 'default':'4x5:0')
-				{'name':"Search5DStep",
-					'help':"Shift step for 5D searches", 'default':"2")
-				{'name':"DiscardPercentage",
-					'help':"Percentage of images discarded with a CCF below X", 'default':"10")
-				{'name':"ReconstructionMethod",
-					'help':"fourier, art, wbp", 'default':"fourier")
+					'help':"Angular steps (e.g. 4x10:2x5:2x3:2x2)",'default':"6x5:2x3:2x2"},
+				{'name':"maxAngularChange",
+					'help':"Maximum angular change (e.g. 4x1000:2x20:2x9:2x6)", 'default':'4x1000:2x20:2x9:2x6'},
+				{'name':"maxChangeOffset",
+					'help':"Maximum shift in x and y", 'default':'1000'},
+				{'name':"search5DShift",
+					'help':"Search range for shift 5D searches (e.g. 3x5:2x3:0)", 'default':'4x5:0'},
+				{'name':"search5DStep",
+					'help':"Shift step for 5D searches", 'default':"2"},
+				{'name':"percentDiscard",
+					'help':"Percentage of images discarded with a CCF below X", 'default':"10"},
+				{'name':"reconMethod",
+					'help':"fourier, art, wbp", 'default':"fourier"},
 				{'name':"ARTLambda",
-					'help':"Relaxation factor for ART", 'default':"0.2")
-				{'name':"ConstantToAddToFiltration",
-					'help':"Use the FSC=0.5+Constant frequency for the filtration", 'default':"0.1")
+					'help':"Relaxation factor for ART", 'default':"0.2"},
+				{'name':"filterConstant",
+					'help':"Use the FSC=0.5+Constant frequency for the filtration", 'default':"0.1"},
 				])
 
 	def checkIterationConflicts(self):
@@ -240,7 +240,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		os.unlink("ProjMatch/partlist.sel")
 
 
-		Link the results of the last iteration
+		#Link the results of the last iteration
 		proc = subprocess.Popen("ln -s "+os.path.join(lastIteration,"angles.doc")+" angles.doc", shell=True)
 		proc.wait()
 		proc = subprocess.Popen("ln -s "+os.path.join(lastIteration,"classAverages.hed")+" classAverages.hed", shell=True)
@@ -256,7 +256,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 
 	def makePreIterationScript(self):
 		super(XmippSingleModelRefineJob,self).makePreIterationScript()
-		self.addJobCommands(self.addToTasks({},'mv %s threed.0a.mrc' % self.params['modelfile'],2,1))
+		self.addJobCommands(self.addToTasks({},'mv %s threed.0a.mrc' % self.params['modelnames'][0],2,1))
 		protocolfile = self.setupXmippProtocol()
 		self.runXmippProtocol(protocolfile)
 		self.checkXmippSuccess(self.params['startiter'])
