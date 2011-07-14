@@ -48,7 +48,7 @@ class XmippRefineForm extends BasicRefineForm
 		
 		$command = '';
 		$command = $this->addCommandFlag( $command, "jobtype", "", "xmipprecon" );
-		$command = $this->addCommandFlag( $command, "numIters" );
+		$command = $this->addCommandFlag( $command, "endIter" );
 		$command = $this->addCommandFlag( $command, "outerMaskRadius" );
 		$command = $this->addCommandFlag( $command, "mask" );
 		$command = $this->addCommandFlag( $command, "innerAlignRadius" );
@@ -90,7 +90,7 @@ class XmippRefineForm extends BasicRefineForm
 		$outerAlignRadius 	= '';	 
 		$innerAlignRadius 	= ''; 
 		$symmetry 			= 'c1'; 
-		$numIters 			= '10'; 
+		$endIter 			= '10'; 
 		$angSampRate 		= '2x12:2x10:2x8:2x6:2x5:2x4:2x3:2x2';
 		$percentDiscard 	= '10';  
 		$filterEstimated 	= ''; 
@@ -108,7 +108,7 @@ class XmippRefineForm extends BasicRefineForm
 		$fourierMaxFrequencyOfInterest = '0.25';
 		
 		$asymmSet = new XmippParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
-							$innerAlignRadius, $symmetry, $numIters, $angSampRate, $percentDiscard,  
+							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
 							$mask, $maxAngularChange, $maxChangeOffset, $search5DShift, $search5DStep,
 							$reconMethod, $ARTLambda, $doComputeResolution, $fourierMaxFrequencyOfInterest );
@@ -118,7 +118,7 @@ class XmippRefineForm extends BasicRefineForm
 		$label 				= 'low symmetry particles';
 		$maxAngularChange 	= '4x1000:2x20:2x9:2x6:5x4';
 		$lowSet = new XmippParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
-							$innerAlignRadius, $symmetry, $numIters, $angSampRate, $percentDiscard,  
+							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
 							$mask, $maxAngularChange, $maxChangeOffset, $search5DShift, $search5DStep,
 							$reconMethod, $ARTLambda, $doComputeResolution, $fourierMaxFrequencyOfInterest );
@@ -128,7 +128,7 @@ class XmippRefineForm extends BasicRefineForm
 		$label 				= 'icosahedral particles';
 		$maxAngularChange 	= '4x1000:2x10:2x8:2x6:5x4';
 		$icosSet = new XmippParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
-							$innerAlignRadius, $symmetry, $numIters, $angSampRate, $percentDiscard,  
+							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
 							$mask, $maxAngularChange, $maxChangeOffset, $search5DShift, $search5DStep,
 							$reconMethod, $ARTLambda, $doComputeResolution, $fourierMaxFrequencyOfInterest );
@@ -165,7 +165,7 @@ class XmippRefineForm extends BasicRefineForm
 	      if (obj.innerAlignRadius) obj.innerAlignRadius.value = '4';
 	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $rad;
 	      if (obj.symmetry) obj.symmetry.value = 'c1';
-	      if (obj.numIters) obj.numIters.value = '10';
+	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10:2x5:2x3:2x2';
 	      if (obj.percentDiscard) obj.percentDiscard.value = '10';
 	      if (obj.filterEstimated) obj.filterEstimated.checked = false;
@@ -196,13 +196,13 @@ class XmippRefineForm extends BasicRefineForm
 class XmippParams extends RefineFormParameters
 {
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
-							$innerAlignRadius='', $symmetry='', $numIters='', $angSampRate='', $percentDiscard='',  
+							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
 							$mask='', $maxAngularChange='', $maxChangeOffset='', $search5DShift='', $search5DStep='',
 							$reconMethod='', $ARTLambda='', $doComputeResolution='', $fourierMaxFrequencyOfInterest='' ) 
 	{
 		parent::__construct($id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
-							$innerAlignRadius, $symmetry, $numIters, $angSampRate, $percentDiscard,  
+							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant );
 									
 		$this->addParam( "mask", $mask, "Mask filename" );

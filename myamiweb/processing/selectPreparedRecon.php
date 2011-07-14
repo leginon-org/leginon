@@ -203,7 +203,7 @@ function jobForm($extra=false) {
 	$models = $particle->getModelsFromRefineID( $refineID );
 	
 	foreach( $models as $model ) {
-		$modelNames .= $model['name'].",";
+		$modelNames .= $model['filename'].",";
 		$modelIds .= $model['DEF_id'].",";
 	}
 	$modelNames = trim($modelNames, ",");
@@ -329,6 +329,11 @@ function jobForm($extra=false) {
 	$lp 		= $stackdatas[0][lowpass];
 	$hp 		= $stackdatas[0][highpass];
 	$bin 		= $stackdatas[0][bin];
+	
+	//need to post the stack file name for creating command
+	$stackfilename = $stackdatas[0][filename]; 
+	$html.= "<input type='hidden' NAME='stackfilename' value='".$stackfilename."'>\n";
+	
 	$stackPrepForm = new stackPrepForm( $lastPart,$lp,$hp,$bin );
 	$html.= $stackPrepForm->generateReport( "Stack Prep Params", 544 );
 	$html.= "</td>";
@@ -351,7 +356,7 @@ function jobForm($extra=false) {
 	
 	// end stack/model summary table
 	$html.= "</table>\n";
-
+	
 	// Add reference for selected refinement method
 	$html.= showReference( $method );
 
@@ -403,8 +408,7 @@ function createCommand ($extra=False)
 	$command .= "--modelnames=".$_POST['modelnames']." "; 
 	
 	// add the stack filename to the command
-	$stackinfo 	= explode('|--|',$_POST['stackval']);
-	$stackName	= $stackinfo[5];
+	$stackName	= $_POST['stackfilename'];
 	$command .= "--stackname=".$stackName." ";
 	
 	// collect processing run parameters

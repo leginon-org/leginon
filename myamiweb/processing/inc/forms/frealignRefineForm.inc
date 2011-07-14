@@ -206,7 +206,7 @@ class FrealignRefineForm extends BasicRefineForm
 		$command = $this->addCommandFlag( $command, "jobtype", "", "frealignrecon" );
 		$command = $this->addCommandFlag( $command, "outerMaskRadius" );
 		$command = $this->addCommandFlag( $command, "innerMaskRadius" );
-		$command = $this->addCommandFlag( $command, "numIters" );
+		$command = $this->addCommandFlag( $command, "endIter" );
 		$command = $this->addCommandFlag( $command, "symmetry" );
 		$command = $this->addCommandFlag( $command, "reconstackid" );
 		$command = $this->addCommandFlag( $command, "wgh" );
@@ -250,7 +250,7 @@ class FrealignRefineForm extends BasicRefineForm
 		$outerAlignRadius 	= '';	 
 		$innerAlignRadius 	= ''; 
 		$symmetry 			= 'c1'; 
-		$numIters 			= '10'; 
+		$endIter 			= '10'; 
 		$angSampRate 		= '';
 		$percentDiscard 	= '';  
 		$filterEstimated 	= ''; 
@@ -278,7 +278,7 @@ class FrealignRefineForm extends BasicRefineForm
 		$importiter			= '';
 		
 		$asymmSet = new FrealignParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
-							$innerAlignRadius, $symmetry, $numIters, $angSampRate, $percentDiscard,  
+							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
 							$wgh, $xstd, $pbc, $boff, $itmax, $ipmax, $target,
 							$thresh, $rrec, $hp, $lp, $rbfact, $ctffindonly, $reconstackid,
@@ -324,7 +324,7 @@ class FrealignRefineForm extends BasicRefineForm
 	      if (obj.outerMaskRadius) obj.outerMaskRadius.value = $outerMaskRadius;
 	      if (obj.innerMaskRadius) obj.innerMaskRadius.value = 0;
 	      if (obj.symmetry) obj.symmetry.value = 'c1';
-	      if (obj.numIters) obj.numIters.value = '10';
+	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.wgh) obj.wgh.value = '0.07';
 	      if (obj.xstd) obj.xstd.value = '0';
 	      if (obj.pbc) obj.pbc.value = '100';
@@ -358,14 +358,14 @@ class FrealignRefineForm extends BasicRefineForm
 class FrealignParams extends RefineFormParameters
 {
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
-							$innerAlignRadius='', $symmetry='', $numIters='', $angSampRate='', $percentDiscard='',  
+							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
 							$wgh='', $xstd='', $pbc='', $boff='', $itmax='', $ipmax='', $target='', 
 							$thresh='', $rrec='', $hp='', $lp='', $rbfact='', $ctffindonly='', $reconstackid='', 
 							$initmethod='', $importrecon='', $dang='', $initlp='', $importiter='' ) 
 	{
 		parent::__construct($id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
-							$innerAlignRadius, $symmetry, $numIters, $angSampRate, $percentDiscard,  
+							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant );
 		
 		$this->addParam( "wgh", $wgh, "Amplitude contrast (WGH)" );

@@ -178,11 +178,11 @@ abstract class BasicRefineForm extends BasicForm
 		
 		// set the number of iterations
 		$iterinfo = $particle->getIterationInfo( $defaultSetId );
-		$numIters = count($iterinfo);
-		$paramSet->setParamValue( "numIters", $numIters );
+		$endIter = count($iterinfo);
+		$paramSet->setParamValue( "endIter", $endIter );
 				
 		// add each iteration value to our forms parameters
-		for ( $i = 1; $i <= $numIters; $i++ ) {
+		for ( $i = 1; $i <= $endIter; $i++ ) {
 			foreach ($iterinfo as $iter) {
 				if ($iter['iteration'] == $i) {					
 					$outerMaskRadius = ceil($iter['mask']*$boxscale);
@@ -253,7 +253,7 @@ abstract class BasicRefineForm extends BasicForm
 		$html .= "<b>Particle independent parameters</b>\n";
 		$html .= "<br />\n";
 		
-		$html .= $paramSet->insertTextField( "numIters", $shortSize );
+		$html .= $paramSet->insertTextField( "endIter", $shortSize );
 		$html .= $paramSet->insertTextField( "angSampRate", $longSize );
 		$html .= $paramSet->insertTextField( "percentDiscard", $longSize );
 		
@@ -334,7 +334,7 @@ abstract class BasicRefineForm extends BasicForm
 	      if (obj.innerAlignRadius) obj.innerAlignRadius.value = '4';
 	      if (obj.outerAlignRadius) obj.outerAlignRadius.value = $rad;
 	      if (obj.symmetry) obj.symmetry.value = 'C1 (no symmetry)';
-	      if (obj.numIters) obj.numIters.value = '10';
+	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10 2x5 2x3 2x2';
 	      if (obj.percentDiscard) obj.percentDiscard.value = '10';
 	      if (obj.filterEstimated) obj.filterEstimated.checked = false;
@@ -359,7 +359,7 @@ abstract class BasicRefineForm extends BasicForm
 class RefineFormParameters extends FormParameters
 {
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
-							$innerAlignRadius='', $symmetry='', $numIters='', $angSampRate='', $percentDiscard='',  
+							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='' ) 
 	{
 		parent::__construct( $id, $label );
@@ -369,7 +369,7 @@ class RefineFormParameters extends FormParameters
 		$this->addParam( "outerAlignRadius", $outerAlignRadius, "outer alignment radius" );
 		$this->addParam( "innerAlignRadius", $innerAlignRadius, "inner alignment radius" );
 		$this->addParam( "symmetry", $symmetry, "symmetry group" );
-		$this->addParam( "numIters", $numIters, "number of iterations" );
+		$this->addParam( "endIter", $endIter, "number of iterations" );
 		$this->addParam( "angSampRate", $angSampRate, "angular sampling rate" );
 		$this->addParam( "percentDiscard", $percentDiscard, "percentage of worst images to discard" );
 		$this->addParam( "filterEstimated", $filterEstimated, "filter reconstructed volume to estimated resolution" );
@@ -378,8 +378,8 @@ class RefineFormParameters extends FormParameters
 		$this->addParam( "filterConstant", $filterConstant, "add constant to computed filter value" );
 		
 		// add parameter requirements
-		$this->addValidation( "numIters", "req" );
-		$this->addValidation( "numIters", "num" );
+		$this->addValidation( "endIter", "req" );
+		$this->addValidation( "endIter", "num" );
 	}
 	
 	// update the value of a parameter to reflect an 
@@ -404,14 +404,14 @@ class RefineFormParameters extends FormParameters
 		$lastIterPos 	= $currIterCount-1;
 		$lastIter 		= $currIterations[$lastIterPos];
 		
-		list($numIters, $value) = explode( "x", $lastIter );
+		list($endIter, $value) = explode( "x", $lastIter );
 		if ( $newIterValue == $value ) {
 			// rebuild the value string, updating the last iteration  
 			for ( $i=0; $i < $lastIterPos; $i++ ) {
 				$newValueString .= ":".$currIterations[$i];
 			}
-			$numIters++;
-			$newValueString .= ":".$numIters."x".$value;
+			$endIter++;
+			$newValueString .= ":".$endIter."x".$value;
 		} else {
 			// add a new iter to current value
 			$newValueString = $currValue.":1x".$newIterValue;

@@ -64,7 +64,7 @@ class XmippML3DRefineForm extends BasicRefineForm
 		$outerAlignRadius 	= '';	 
 		$innerAlignRadius 	= ''; 
 		$symmetry 			= 'c1'; 
-		$numIters 			= '25'; 
+		$endIter 			= '25'; 
 		$angSampRate 		= '10';
 		$percentDiscard 	= '';  
 		$filterEstimated 	= ''; 
@@ -80,7 +80,7 @@ class XmippML3DRefineForm extends BasicRefineForm
 
 		
 		$asymmSet = new XmippML3DParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
-							$innerAlignRadius, $symmetry, $numIters, $angSampRate, $percentDiscard,  
+							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
 							$DoMlf, $HighResLimit, $DoCorrectGreyScale, $ProjMatchSampling,
 							$LowPassFilterReference, $NumberOfReferences);
@@ -105,7 +105,7 @@ class XmippML3DRefineForm extends BasicRefineForm
 	  <script type='text/javascript'>
 	    function setDefaults(obj) {
 	      if (obj.symmetry) obj.symmetry.value = 'c1';
-	      if (obj.numIters) obj.numIters.value = '10';
+	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10:2x5:2x3:2x2';
 	      if (obj.DoMlf) obj.DoMlf.checked = '';
 	      if (obj.HighResLimit) obj.HighResLimit.value = '';
@@ -128,13 +128,13 @@ class XmippML3DRefineForm extends BasicRefineForm
 class XmippML3DParams extends RefineFormParameters
 {
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
-							$innerAlignRadius='', $symmetry='', $numIters='', $angSampRate='', $percentDiscard='',  
+							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
 							$DoMlf='', $HighResLimit='', $DoCorrectGreyScale='', $ProjMatchSampling='',
 							$LowPassFilterReference='', $NumberOfReferences='') 
 	{
 		parent::__construct($id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
-							$innerAlignRadius, $symmetry, $numIters, $angSampRate, $percentDiscard,  
+							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant );
 		
 		$this->addParam( "DoMlf", $DoMlf, "DoMlf" );

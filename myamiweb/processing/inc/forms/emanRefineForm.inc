@@ -22,25 +22,19 @@ class EmanRefineForm extends BasicRefineForm
 		// classes extended from BasicRefineForm should get the selected default values
 		$params = $this->getFormParams();
 		
-		// display form title
-//		$html .="
-//	    <br />
-//	    <H4>EMAN Reconstruction Parameters</H4>
-//	    <hr />";
-
 		$shortSize = 4;
 		$longSize = 20;
 		$html .= $params->insertTextField( "imask", $longSize );
 		$html .= $params->insertTextField( "amask", $longSize );
 		$html .= $params->insertTextField( "maxshift", $longSize );
 		$html .= $params->insertTextField( "hard", $longSize );
-		$html .= $params->insertTextField( "clskeep", $longSize );
-		$html .= $params->insertTextField( "clsiter", $longSize );
+		$html .= $params->insertTextField( "classkeep", $longSize );
+		$html .= $params->insertTextField( "classiter", $longSize );
 		$html .= $params->insertTextField( "xfiles", $longSize );
 		$html .= $params->insertTextField( "shrink", $longSize );
 		$html .= $params->insertTextField( "euler2", $longSize );
 		$html .= $params->insertTextField( "median", $longSize );
-		$html .= $params->insertTextField( "phscls", $longSize );
+		$html .= $params->insertTextField( "phasecls", $longSize );
 		$html .= $params->insertTextField( "refine", $longSize );
 		$html .= $params->insertTextField( "tree", $longSize );
 		
@@ -74,13 +68,13 @@ class EmanRefineForm extends BasicRefineForm
 		$command = $this->addCommandFlag( $command, "amask" );
 		$command = $this->addCommandFlag( $command, "maxshift" );
 		$command = $this->addCommandFlag( $command, "hard" );
-		$command = $this->addCommandFlag( $command, "clskeep" );
-		$command = $this->addCommandFlag( $command, "clsiter" );
+		$command = $this->addCommandFlag( $command, "classkeep" );
+		$command = $this->addCommandFlag( $command, "classiter" );
 		$command = $this->addCommandFlag( $command, "xfiles" );
 		$command = $this->addCommandFlag( $command, "shrink" );
 		$command = $this->addCommandFlag( $command, "euler2" );
 		$command = $this->addCommandFlag( $command, "median" );
-		$command = $this->addCommandFlag( $command, "phscls" );
+		$command = $this->addCommandFlag( $command, "phasecls" );
 		$command = $this->addCommandFlag( $command, "refine" );
 		$command = $this->addCommandFlag( $command, "tree" );
 		$command = $this->addCommandFlag( $command, "coranCC" );
@@ -105,7 +99,7 @@ class EmanRefineForm extends BasicRefineForm
 		$outerAlignRadius 	= '';	 
 		$innerAlignRadius 	= ''; 
 		$symmetry 			= 'D7 (z)'; 
-		$numIters 			= '9'; 
+		$endIter 			= '9'; 
 		$angSampRate 		= '3x10:3x8:3x6';
 		$percentDiscard 	= '';  
 		$filterEstimated 	= ''; 
@@ -116,13 +110,13 @@ class EmanRefineForm extends BasicRefineForm
 		$amask				= '';
 		$maxshift			= '';
 		$hard				= '25';
-		$clskeep			= '0.8';
-		$clsiter			= '2x8:1x3:2x8:1x3:2x8:1x3'; 
+		$classkeep			= '0.8';
+		$classiter			= '2x8:1x3:2x8:1x3:2x8:1x3'; 
 		$xfiles				= '';
 		$shrink				= '';
 		$euler2				= '';
 		$median				= '';
-		$phscls				= '9x1';
+		$phasecls				= '9x1';
 		$refine				= '6x0:3x1';
 		$tree				= '';
 		$coranCC			= '';
@@ -132,38 +126,38 @@ class EmanRefineForm extends BasicRefineForm
 		$coranhcc			= '';
 		
 		$asymmSet = new EmanParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
-							$innerAlignRadius, $symmetry, $numIters, $angSampRate, $percentDiscard,  
+							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
-							$imask, $amask, $maxshift, $hard, $clskeep,
-							$clsiter, $xfiles, $shrink, $euler2, $median, $phscls, $refine, 
+							$imask, $amask, $maxshift, $hard, $classkeep,
+							$classiter, $xfiles, $shrink, $euler2, $median, $phasecls, $refine, 
 							$tree, $coranCC, $coranmask, $coranlp, $coranhp, $coranhcc );
 		$this->addDefaultParams( $asymmSet );
 
 		$id 				= 'groel1';
 		$label 				= 'GroEL with 10,000+ particles';
-		$numIters 			= '20'; 
+		$endIter 			= '20'; 
 		$angSampRate 		= '4x5:4x4:4x3:4x2:4x1';
-		$clsiter			= '2x8:2x3:2x8:2x3:2x8:2x3:2x8:2x3:2x8:2x3'; 
+		$classiter			= '2x8:2x3:2x8:2x3:2x8:2x3:2x8:2x3:2x8:2x3'; 
 		$refine				= '16x0:4x1';
 		$groelSet = new EmanParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
-							$innerAlignRadius, $symmetry, $numIters, $angSampRate, $percentDiscard,  
+							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
-							$imask, $amask, $maxshift, $hard, $clskeep,
-							$clsiter, $xfiles, $shrink, $euler2, $median, $phscls, $refine, 
+							$imask, $amask, $maxshift, $hard, $classkeep,
+							$classiter, $xfiles, $shrink, $euler2, $median, $phasecls, $refine, 
 							$tree, $coranCC, $coranmask, $coranlp, $coranhp, $coranhcc );
 		$this->addDefaultParams( $groelSet );
 		
 		$id 				= 'virusgood';
 		$label 				= 'Icos Virus with good starting model';
-		$numIters 			= '14'; 
+		$endIter 			= '14'; 
 		$angSampRate 		= '4x3:4x2:3x1:3x0.8';
-		$clsiter			= '2x8:2x3:2x8:8x3'; 
+		$classiter			= '2x8:2x3:2x8:8x3'; 
 		$refine				= '11x0:3x1';
 		$virusSet = new EmanParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
-							$innerAlignRadius, $symmetry, $numIters, $angSampRate, $percentDiscard,  
+							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
-							$imask, $amask, $maxshift, $hard, $clskeep,
-							$clsiter, $xfiles, $shrink, $euler2, $median, $phscls, $refine, 
+							$imask, $amask, $maxshift, $hard, $classkeep,
+							$classiter, $xfiles, $shrink, $euler2, $median, $phasecls, $refine, 
 							$tree, $coranCC, $coranmask, $coranlp, $coranhp, $coranhcc );
 		$this->addDefaultParams( $virusSet );
 	}
@@ -176,14 +170,14 @@ class EmanRefineForm extends BasicRefineForm
 		$paramSet->addIterationToValue( "amask3", $iter['EMAN_amask3'] );
 		$paramSet->addIterationToValue( "maxshift", $iter['EMAN_maxshift'] );
 		$paramSet->addIterationToValue( "hard", $iter['EMAN_hard'] );
-		$paramSet->addIterationToValue( "clsiter", $iter['EMAN_classiter'] );
-		$paramSet->addIterationToValue( "clskeep", $iter['EMAN_classkeep'] );
+		$paramSet->addIterationToValue( "classiter", $iter['EMAN_classiter'] );
+		$paramSet->addIterationToValue( "classkeep", $iter['EMAN_classkeep'] );
 		$paramSet->addIterationToValue( "filterResolution", $iter['EMAN_filt3d'] );
 		$paramSet->addIterationToValue( "shrink", $iter['EMAN_shrink'] );
 		$paramSet->addIterationToValue( "euler2", $iter['EMAN_euler2'] );
 		$paramSet->addIterationToValue( "xfiles", $iter['EMAN_xfiles'] );
 		$paramSet->addIterationToValue( "median", ($iter['EMAN_median']) ? 't' : 'f' );
-		$paramSet->addIterationToValue( "phscls", ($iter['EMAN_phasecls']) ? 't' : 'f' );
+		$paramSet->addIterationToValue( "phasecls", ($iter['EMAN_phasecls']) ? 't' : 'f' );
 		$paramSet->addIterationToValue( "refine", ($iter['EMAN_refine']) ? 't' : 'f' );
 		$paramSet->addIterationToValue( "coran", ($iter['postRefineClassAverages']) ? 't' : 'f' );
 	}	
@@ -204,7 +198,7 @@ class EmanRefineForm extends BasicRefineForm
 	      obj.innerMaskRadius.value = 0;
 	      obj.angSampRate.value = '4x10:2x5:2x3:2x2';
 	      obj.symmetry.value = 'C1 (no symmetry)';
-	      obj.numIters.value = '10';
+	      obj.endIter.value = '10';
 	      obj.percentDiscard.value = '10';
 	      obj.filterEstimated.checked = false;
 	      obj.filterResolution.value = '';
@@ -212,13 +206,13 @@ class EmanRefineForm extends BasicRefineForm
 	      obj.amask.value = '';		
 	      obj.maxshift.value = '';
 	      obj.hard.value = '25';
-	      obj.clskeep.value = '0.8';
-	      obj.clsiter.value = '8';
+	      obj.classkeep.value = '0.8';
+	      obj.classiter.value = '8';
 	      obj.xfiles.value = '';
 	      obj.shrink.value = '';
 	      obj.euler2.value = '';
 	      obj.median.value = '';
-	      obj.phscls.value = '10x1';
+	      obj.phasecls.value = '10x1';
 	      obj.refine.value = '';
 	      obj.tree.value = '';
 	      obj.coranCC.value = '';
@@ -240,27 +234,27 @@ class EmanRefineForm extends BasicRefineForm
 class EmanParams extends RefineFormParameters
 {
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
-							$innerAlignRadius='', $symmetry='', $numIters='', $angSampRate='', $percentDiscard='',  
+							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
-							$imask='', $amask='', $maxshift='', $hard='', $clskeep='',
-							$clsiter='', $xfiles='', $shrink='', $euler2='', $median='', $phscls='', $refine='', 
+							$imask='', $amask='', $maxshift='', $hard='', $classkeep='',
+							$classiter='', $xfiles='', $shrink='', $euler2='', $median='', $phasecls='', $refine='', 
 							$tree='', $coranCC='', $coranmask='', $coranlp='', $coranhp='', $coranhcc='' ) 
 	{
 		parent::__construct($id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
-							$innerAlignRadius, $symmetry, $numIters, $angSampRate, $percentDiscard,  
+							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant );
 		
 		$this->addParam( "imask", $imask, "imask" );
 		$this->addParam( "amask", $amask, "amask" );		
 		$this->addParam( "maxshift", $maxshift, "maxshift " );
 		$this->addParam( "hard", $hard, "hard" );
-		$this->addParam( "clskeep", $clskeep, "clskeep" );
-		$this->addParam( "clsiter", $clsiter, "clsiter" );
+		$this->addParam( "classkeep", $classkeep, "classkeep" );
+		$this->addParam( "classiter", $classiter, "classiter" );
 		$this->addParam( "xfiles", $xfiles, "xfiles" );
 		$this->addParam( "shrink", $shrink, "shrink" );
 		$this->addParam( "euler2", $euler2, "euler2" );
 		$this->addParam( "median", $median , "median " );
-		$this->addParam( "phscls", $phscls, "phscls" );
+		$this->addParam( "phasecls", $phasecls, "phasecls" );
 		$this->addParam( "refine", $refine, "refine" );
 		$this->addParam( "tree", $tree, "tree" );
 		$this->addParam( "coranCC", $coranCC, "CC cut" );
