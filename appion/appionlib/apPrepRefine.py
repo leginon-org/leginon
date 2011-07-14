@@ -143,7 +143,11 @@ class Prep3DRefinement(appionScript.AppionScript):
 			
 	def preprocessInitialModelWithProc3d(self):
 		extname = self.proc3dFormatConversion()
-		outmodelfile = os.path.join(self.params['rundir'], "initmodel%04d.%s" % (self.model['id'],extname))
+		if self.model['ismask'] is False:
+			modelname = "initmodel"
+		else:
+			modelname = "maskvol"
+		outmodelfile = os.path.join(self.params['rundir'], "%s%04d.%s" % (modelname,self.model['id'],extname))
 		apFile.removeStack(outmodelfile, warn=False)
 		apVolume.rescaleVolume(self.model['file'], outmodelfile, self.model['apix'], self.stack['apix'], self.stack['boxsize'], spider=self.modelspidersingle)
 		self.model['file'] = outmodelfile
@@ -171,13 +175,14 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 		self.stack['format'] = 'imagic'
 
-	def initializeModel(self,modelid):
+	def initializeModel(self,modelid,ismask=False):
 		self.model = {}
 		self.model['data'] = apModel.getModelFromId(modelid)
 		self.model['id'] = modelid
 		self.model['file'] = os.path.join(self.model['data']['path']['path'], self.model['data']['name'])
 		self.model['apix'] = self.model['data']['pixelsize']
 		self.model['format'] = self.model['data']['name'].split('.')[-1]
+		self.model['ismask'] = ismask
 
 	def setProcessingDirName(self):
 		self.processdirname = 'recon'
@@ -208,6 +213,15 @@ class Prep3DRefinement(appionScript.AppionScript):
 
 	def commitRefineInitModel(self,prepdata):
 		q = appiondata.ApRefineInitModelData()
+		q['preprefine'] = prepdata
+		q['refmodel'] = self.model['data']
+		q['filename'] = os.path.basename(self.model['file'])
+		q['format'] = self.model['format']
+		q['apix'] = self.model['apix']
+		q.insert()
+
+	def commitRefineMaskVol(self,prepdata):
+		q = appiondata.ApRefineMaskVolData()
 		q['preprefine'] = prepdata
 		q['refmodel'] = self.model['data']
 		q['filename'] = os.path.basename(self.model['file'])
@@ -246,6 +260,22 @@ class Prep3DRefinement(appionScript.AppionScript):
 	def addModelToSend(self,filepath):
 		self.addToFilesToSend(filepath)
 
+	def processModel(self,prepdata,modelid,ismask=False):
+		self.initializeModel(modelid,ismask)
+		self.preprocessInitialModelWithProc3d()
+		self.addModelToSend(self.model['file'])
+		if not ismask:
+			self.commitRefineInitModel(prepdata)
+		else:
+			self.commitRefineMaskVol(prepdata)
+
+	def processMaskVol(self,prepdata):
+		'''
+		Only xmipp allows maskvolume for now.  It would be nice to do this
+		for all refinement methods
+		'''
+		pass
+
 	#=====================
 	def start(self):
 		prepdata = self.commitToDatabase()
@@ -258,10 +288,8 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.commitRefineStack(prepdata)
 		#manipulate models
 		for modelid in self.modelids:
-			self.initializeModel(modelid)
-			self.preprocessInitialModelWithProc3d()
-			self.addModelToSend(self.model['file'])
-			self.commitRefineInitModel(prepdata)
+			self.processModel(prepdata,modelid,False)
+		self.processMaskVol(prepdata)
 		self.saveFilesToSend()
 		
 #=====================

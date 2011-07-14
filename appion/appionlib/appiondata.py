@@ -1237,6 +1237,17 @@ class ApRefineInitModelData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApRefineMaskVolData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('preprefine', ApPrepRefineData),
+			('refmodel', ApInitialModelData),
+			('filename', str), 
+			('format', str),
+			('apix', float),
+		)
+	typemap = classmethod(typemap)
+
 class ApPrepRefineData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
