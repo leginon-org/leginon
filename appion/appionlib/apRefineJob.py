@@ -24,8 +24,8 @@ class RefineJob(basicScript.BasicScript):
 		self.parser.add_option("--jobid", dest="jobid", type="int", default=1,
 			help="ApAppionJobId for updating job status", metavar="#")
 		# Job parameters that cluster node need
-		self.parser.add_option("--nproc", dest="nproc", type="int", default=4,
-			help="Number of processors requested for multi-node capable tasks", metavar="#")
+		self.parser.add_option("--rpn", dest="rpn", type="int", default=4,
+			help="Number of processors used per node", metavar="#")
 		self.parser.add_option("--nodes", dest="nodes", type="int", default=1,
 			help="Number of nodes requested for multi-node capable tasks", metavar="#")
 		self.parser.add_option("--ppn", dest="ppn", type="int", default=4,
@@ -35,15 +35,17 @@ class RefineJob(basicScript.BasicScript):
 		self.parser.add_option("--walltime", dest="walltime", type="int", default=24,
 			help="Maximum walltime in hours", metavar="#")
 		# ReconJob parameters
+		self.parser.add_option("--description", dest="description", type="str", default='',
+			help="Description of the run", metavar="text")
 		self.parser.add_option("--appionwrap", dest="appionwrapper", default='',
 			help="Path for Appion bin directory if needed e.g. --appionwrap=/home/you/appion/bin", metavar="PATH")
 		self.parser.add_option("--safedir", dest="safedir", default='./',
 			help="Path for the Safe directory that will not be erased at the beginning of the run, e.g. --recondir=/home/you/sessionname/rundir/", metavar="PATH")
 		self.parser.add_option("--recondir", dest="recondir", default='./',
 			help="Path of the Scratch directory for processing that will be erased if start from iteration 1, e.g. --recondir=/home/you/sessionname/rundir/recon", metavar="PATH")
-		self.parser.add_option("-s", "--stackfile", dest="stackfile",
+		self.parser.add_option("-s", "--stackname", dest="stackname",
 			help="Particle stack path", metavar="FILENAME")
-		self.parser.add_option("--modelfile", dest="modelfile",
+		self.parser.add_option("--modelnames", dest="modelnames",
 			help="Initial Model volume path", metavar="FILENAME")
 		self.parser.add_option("-N", "--totalpart", dest="totalpart", type="int", default=None,
 			help="Number of particles in the particle stack", metavar="#")
@@ -66,24 +68,25 @@ class RefineJob(basicScript.BasicScript):
 			if 'default' in param.keys() and param['default']:
 				example = ", e.g. --%s=%s" % (param['name'],param['default'])
 
-			self.parser.add_option('--%s' % param['name'], dest="%s" % param['name'].lower(), default= param['default'],
+			self.parser.add_option('--%s' % param['name'], dest="%s" % param['name'], default= param['default'],
 				type="str", help="iteration parameter: %s%s" % (param['help'],example), metavar="#x##")
 		
 	#=====================
 	def checkConflicts(self):
-		if self.params['modelfile'] is None:
-			apDisplay.printError("enter a 3D initial model volume file, e.g. --modelfile=initial.mrc")
-		if self.params['stackfile'] is None:
-			apDisplay.printError("enter a particle stack file, e.g. --stackfile=start.hed")
+		if self.params['modelnames'] is None:
+			apDisplay.printError("enter at least one 3D initial model volume file, e.g. --modelnames=initial.mrc")
+		if self.params['stackname'] is None:
+			apDisplay.printError("enter a particle stack file, e.g. --stackname=start.hed")
 		if self.params['boxsize'] is None:
 			apDisplay.printError("enter the stack boxsize, e.g. --boxsize=64")
-		if self.params['stackfile'] is None:
+		if self.params['stackname'] is None:
 			apDisplay.printError("enter the pixel size, e.g. --apix=1.5")
 		self.params['numiter'] = self.params['enditer'] - self.params['startiter'] + 1
 		self.params['safedir'] = os.path.abspath(self.params['safedir'])
 		if self.params['recondir'][0] != '/':
 			# assumes relative recondir is under safedir
 			self.params['recondir'] = os.path.join(self.params['safedir'],self.params['recondir'])
+		self.params['nproc'] = self.params['rpn'] * self.params['nodes']
 		self.checkPackageConflicts()
 		### convert iteration parameters first before its confict checking
 		self.convertIterationParams()
@@ -94,9 +97,10 @@ class RefineJob(basicScript.BasicScript):
 
 	def setIterationParamList(self):
 		self.iterparams = [
-				{'name':'sym','default':'','help':'symmetry name (i.e. c1 or C1)'},
-				{'name':'ang','default':'5.0','help':'angular increment (degrees)'},
-				{'name':'mask','default':'0','help':'mask radius (pixels) autoset if 0'},
+				{'name':'symmetry','default':'','help':'symmetry name (i.e. c1 or C1)'},
+				{'name':'angSampRate','default':'5.0','help':'angular increment (degrees)'},
+				{'name':'outerMaskRadius','default':'0','help':'mask radius (pixels) autoset if 0'},
+				{'name':'innerMaskRadius','default':'0','help':'mask radius (pixels) autoset if 0'},
 				]
 
 	def convertIterationParams(self):
@@ -120,19 +124,19 @@ class RefineJob(basicScript.BasicScript):
 		#
 		maxmask = int(math.floor((self.params['boxsize'])/2.0))-2
 		for iter in range(self.params['numiter']):
-			if 'sym' not in self.params.keys() or self.params['sym'][iter] == '':
+			if 'symmetry' not in self.params.keys() or self.params['symmetry'][iter] == '':
 				apDisplay.printError("Symmetry was not defined")
 
-			if self.params['mask'][iter] == 0:
+			if self.params['outerMaskRadius'][iter] == 0:
 				apDisplay.printWarning("mask was not defined, setting to boxsize: %d"%(maxmask))
-				self.params['mask'][iter] = maxmask
-			if self.params['mask'][iter] > maxmask:
+				self.params['outerMaskRadius'][iter] = maxmask
+			if self.params['outerMaskRadius'][iter] > maxmask:
 				apDisplay.printWarning("mask was too big, setting to boxsize: %d"%(maxmask))
-				self.params['mask'][iter] = maxmask
-			self.params['sym'][iter] = self.convertSymmetryNameForPackage(self.params['sym'][iter])
+				self.params['outerMaskRadius'][iter] = maxmask
+			self.params['symmetry'][iter] = self.convertSymmetryNameForPackage(self.params['symmetry'][iter])
 
 	def convertSymmetryNameForPackage(self,symm_name):
-		return symm_name
+		return symm_name.replace(' (z)','')
 
 	def setupMPIRun(self,iter,procscripts,nproc,iterpath):
 		mpi_script = 'mpirun -np %d ' % (nproc)

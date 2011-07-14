@@ -40,15 +40,20 @@ class EmanRefineJob(apRefineJob.RefineJob):
 
 	def checkIterationConflicts(self):
 		super(EmanRefineJob,self).checkIterationConflicts()
+		# determine padding automatically
 		pad = int(self.params['boxsize']*1.25/2.0)*2
 		self.params['pad'] = map((lambda x: pad),range(self.params['numiter']))
+		# copy to eman standard name for easier parameter settings
+		self.params['mask'] = self.params['outerMaskRadius']
+		self.params['imask'] = self.params['innerMaskRadius']
+		self.params['ang'] = self.params['angSampRate']
 
 	def convertSymmetryNameForPackage(self,inputname):
 		'''
 		hedral symmetry key is of possible name, value is that of this package
 		'''
-		eman_hedral_symm_names = {'O':'oct','I':'icos'}
-		inputname = inputname.lower()
+		eman_hedral_symm_names = {'O':'oct','Icos':'icos'}
+		inputname = inputname.lower().split(' ')[0]
 		if inputname[0] in ('c','d') or inputname in eman_hedral_symm_names.values():
 			symm_name = inputname.lower()
 		elif inputname in eman_hedral_symm_names.keys():
@@ -58,8 +63,8 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		return symm_name
 
 	def setEmanRefineParams(self,iter):
-		refineparams = ('ang','mask','sym','hard','pad', 'median', 'classiter', 'refine', 'amask', 'phasecls', 'shrink', 'euler2',  'classkeep', 'imask', 'maxshift', 'xfiles', 'tree', 'filt3d')
-		eotestparams = ('ang','mask','sym','hard','pad', 'median', 'classiter', 'refine', 'amask', 'euler2',  'classkeep', 'imask', 'xfiles')
+		refineparams = ('ang','mask','symmetry','hard','pad', 'median', 'classiter', 'refine', 'amask', 'phasecls', 'shrink', 'euler2',  'classkeep', 'imask', 'maxshift', 'xfiles', 'tree', 'filt3d')
+		eotestparams = ('ang','mask','symmetry','hard','pad', 'median', 'classiter', 'refine', 'amask', 'euler2',  'classkeep', 'imask', 'xfiles')
 		return refineparams,eotestparams	
 		
 	def combineEmanParams(self,iter_index,valid_paramkeys):
@@ -112,11 +117,11 @@ class EmanRefineJob(apRefineJob.RefineJob):
 
 	def makePreIterationScript(self):
 		super(EmanRefineJob,self).makePreIterationScript()
-		self.addJobCommands(self.addToTasks({},'mv %s threed.0a.mrc' % self.params['modelfile'],2,1))
+		self.addJobCommands(self.addToTasks({},'mv %s threed.0a.mrc' % self.params['modelnames'][0],2,1))
 
 	def makeRefineScript(self,iter):
 		iter_index = iter - self.params['startiter']
-		refine_mem = self.calcRefineMem(self.ppn,self.params['boxsize'],self.params['sym'][iter_index],self.params['ang'][iter_index])
+		refine_mem = self.calcRefineMem(self.ppn,self.params['boxsize'],self.params['symmetry'][iter_index],self.params['ang'][iter_index])
 		nproc = self.params['nproc']
 		refineparams,eotestparams = self.setEmanRefineParams(iter)
 		refinetask_list = ['refine','%d'%iter,'proc=%d' % nproc]
@@ -133,8 +138,9 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		tasks = self.addToTasks(tasks,'getProjEuler.py proj.img proj.%d.txt' % (iter))
 		tasks = self.addToTasks(tasks,' '.join(eotesttask_list)+' > eotest%d.txt' % (iter),refine_mem,nproc)
 		tasks = self.addToTasks(tasks,'/bin/mv -v fsc.eotest fsc.eotest.%d' % (iter))
-		tasks = self.addToTasks(tasks,os.path.join(self.params['appionwrapper'],'getRes.pl')+
-			' %d %d %.3f >> resolution.txt' % (iter,self.params['boxsize'], self.params['apix']))
+		wrapper_getres = os.path.join(self.params['appionwrapper'],'getRes.pl')
+		tasks = self.addToTasks(tasks,
+			'%s %d %d %.3f >> resolution.txt' % (wrapper_getres,iter,self.params['boxsize'], self.params['apix']))
 		tasks = self.addToTasks(tasks,'/bin/rm -fv cls*.lst')
 		tasks = self.addToTasks(tasks,'')
 		return tasks

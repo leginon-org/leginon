@@ -348,32 +348,45 @@ def convertParserToParams(parser,optargs=sys.argv[1:]):
 	return params
 
 #=====================
+def splitMultipleSets(param_str,numiter):
+	param_upper = param_str.upper()
+	fullparam = []
+	set_bits = param_upper.split(':')
+	position = 0
+	total_repeat = 0
+	for set in set_bits:
+		m_index = set.find('X')
+		if m_index == -1:
+			# no multiple
+			fullparam.append(tc(set))
+		else:
+			try:
+				repeat = int(set[:m_index])
+				fullparam.extend(map((lambda x:tc(param_str[position+m_index+1:position+len(set)])),range(repeat)))	
+			except:
+				raise
+				fullparam = map((lambda x: tc(param_str)),range(numiter))
+		position += len(set)+1
+	return fullparam
+
 def convertIterationParams(iterparams,params,numiter):
 	"""
 	Used by 3D refinement to specify iteration parameters
 	in format of xmipp i.e. 3x5:3x4:3:3
+	':','x','X' are used for splitting, not allowed in the values
 	"""
 	for name in iterparams:
 		param_str = str(params[name]).strip()
 		param_upper = param_str.upper()
 		multiple_bits = param_upper.split('X')
-		if len(multiple_bits) <= 1:
+		set_bits = param_upper.split(':')
+		if len(multiple_bits) <= 1 and len(set_bits) <= 1:
 			params[name] = map((lambda x: tc(param_str)),range(numiter))
 		else:
-			params[name] = []
-			set_bits = param_upper.split(':')
-			position = 0
-			total_repeat = 0
-			for set in set_bits:
-				m_index = set.find('X')
-				try:
-					repeat = int(set[:m_index])
-					params[name].extend(map((lambda x:tc(param_str[position+m_index+1:position+len(set)])),range(repeat)))	
-				except:
-					self.params[name] = map((lambda x: tc(param_str)),range(numiter))
-				position += len(set)+1
+			params[name] = splitMultipleSets(param_str,numiter)
 		if len(params[name]) < numiter:
-			params[name].extend(map((lambda x: params[len(params[name])-1]),range(numiter - len(params[name]))))
+			addons = map((lambda x: params[name][len(params[name])-1]),range(numiter - len(params[name])+1))
+			params[name].extend(addons)
 		elif len(params[name]) > numiter:
 			params[name] = params[name][:numiter]
 	return params
