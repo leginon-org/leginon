@@ -13,10 +13,14 @@
 
 import os.path
 import threading
+import numpy
 import leginondata
 from pyami import mrc
 import targetfinder
 import gui.wx.MatlabTargetFinder
+from Numeric import *
+import calibrationclient
+
 try:
 	import mlabraw as pymat
 except:
@@ -29,6 +33,7 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 	defaultsettings.update({
 		'module': '',
 		'test image': '',
+		'parametergui': '',
 	})
 	def __init__(self, *args, **kwargs):
 		self.userpause = threading.Event()
@@ -40,7 +45,10 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 		self.start()
 
 	def readImage(self, filename):
-		image = mrc.read(filename)
+		# convert to float
+		image2 = mrc.read(filename)
+		image = numpy.asarray(image2,dtype=numpy.float)
+		
 		if image:
 			self.setImage(image, 'Image')
 		else:
@@ -58,7 +66,7 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 		if not f[:-2]:
 			raise RuntimeError
 
-		pymat.eval(self.handle, '[acquisition, focus] = %s(image)' % f[:-2])
+		pymat.eval(self.handle, '[acquisition, focus] = %s(image,image_id)' % f[:-2])
 
 		focus = pymat.get(self.handle, 'focus')
 		acquisition = pymat.get(self.handle, 'acquisition')
@@ -72,13 +80,20 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 			self.panel.foundTargets()
 
 	def findTargets(self, imdata, targetlist):
-		image = imdata['image']
+		imdata_id = imdata.dbid
+		self.logger.info(imdata_id)
 
+		# convert to float
+		image2 = imdata['image']
+		image = numpy.asarray(image2,dtype=numpy.float)
+		
 		self.setImage(image, 'Image')
 
 		if self.handle is None:
 			self.handle = pymat.open()
+
 		pymat.put(self.handle, 'image', image)
+		pymat.put(self.handle, 'image_id',imdata_id)
 
 		self.matlabFindTargets()
 
@@ -104,8 +119,11 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 		usercheck = self.settings['user check']
 		self.settings['user check'] = False
 		filename = self.settings['test image']
+		
 		try:
-			image = mrc.read(filename)
+			image2 = mrc.read(filename)		
+			image = numpy.asarray(image2,dtype=numpy.float)
+			
 		except:
 			self.logger.error('Failed to load test image')
 			raise
@@ -116,6 +134,10 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 			self.handle = pymat.open()
 		pymat.put(self.handle, 'image', image)
 
+		imdata_id = 0
+
+		pymat.put(self.handle, 'image_id',imdata_id)
+	
 		self.matlabFindTargets()
 
 		self.settings['user check'] = usercheck
