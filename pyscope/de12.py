@@ -59,6 +59,7 @@ class DE12(ccdcamera.CCDCamera):
 
 	def setExposureTime(self, ms):
 		seconds = ms / 1000.0
+		print 'SETTING EXPTIME', time.time(), seconds
 		self.setProperty('Exposure Time', seconds)
 
 	def getDictProp(self, name):		
@@ -179,7 +180,17 @@ class DE12(ccdcamera.CCDCamera):
 
 	def getUseFrames(self):
 		nframes = self.getProperty('Number of Frames To Sum')
-		return int(nframes)
+		frames = range(nframes)
+		return tuple(frames)
 
-	def setUseFrames(self, nframes):
+	def setUseFrames(self, frames):
+		total_frames = self.getNumberOfFrames()
+		if frames:
+			nframes = len(frames)
+		else:
+			nframes = total_frames
+		if nframes > total_frames:
+			nframes = total_frames
+		nframes = int(nframes)
+		print 'SETTING SUM', time.time(), nframes
 		self.setProperty('Number of Frames To Sum', nframes)
