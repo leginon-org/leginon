@@ -1245,6 +1245,7 @@ class MatlabTargetFinderSettingsData(TargetFinderSettingsData):
 		return TargetFinderSettingsData.typemap() + (
 			('test image', str),
 			('module path', str),
+			('parametergui path', str),
 		)
 	typemap = classmethod(typemap)
 
