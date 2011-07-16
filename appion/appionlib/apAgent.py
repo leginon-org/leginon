@@ -27,7 +27,7 @@ class Agent (object):
         try:   
             self.currentJob = self.createJobInst(jobType, command)
         except Exception, e:
-            sys.stderr.write("Error: Could not create job " + self.currentJob.getName() + ": " + str(e) + '\n')
+            sys.stderr.write("Error: Could not create job "  +  str(command) + ": " + str(e) + '\n')
             sys.exit(1)
             
         hostJobId = self.processingHost.launchJob(self.currentJob)
