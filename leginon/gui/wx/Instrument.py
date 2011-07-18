@@ -318,6 +318,7 @@ class StageSizer(wx.StaticBoxSizer):
 		self.parameters = {
 			'Status': wx.StaticText(self.parent, -1, ''),
 			'Correction': wx.CheckBox(self.parent, -1, 'Correct stage movement'),
+			'speed': FloatEntry(self.parent, -1, chars=9, allownone=True),
 			'x': FloatEntry(self.parent, -1, chars=9, allownone=True),
 			'y': FloatEntry(self.parent, -1, chars=9, allownone=True),
 			'z': FloatEntry(self.parent, -1, chars=9, allownone=True),
@@ -353,6 +354,11 @@ class StageSizer(wx.StaticBoxSizer):
 
 		st = wx.StaticText(self.parent, -1, 'Angle:')
 		self.sz.Add(st, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		st = wx.StaticText(self.parent, -1, 'Speed:')
+		self.sz.Add(st, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.parameters['speed'], (6, 1), (1, 1),
+				wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 class HolderSizer(wx.StaticBoxSizer):
 	def __init__(self, parent, title='Holder'):
@@ -820,6 +826,7 @@ class TEMPanel(wx.Panel, ParameterMixin):
 				'a': self.szstage.parameters['a'],
 				'b': self.szstage.parameters['b'],
 			},
+			'StageSpeed': self.szstage.parameters['speed'],
 			'ImageShift': {
 				'x': self.szlenses.xy['Image']['Shift']['x'],
 				'y': self.szlenses.xy['Image']['Shift']['y'],
