@@ -49,7 +49,7 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 		image2 = mrc.read(filename)
 		image = numpy.asarray(image2,dtype=numpy.float)
 		
-		if image:
+		if image.any():
 			self.setImage(image, 'Image')
 		else:
 			self.logger.error('Can not load image')
