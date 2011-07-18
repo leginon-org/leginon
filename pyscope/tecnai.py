@@ -137,6 +137,12 @@ class Tecnai(tem.TEM):
 				self._setStagePosition(prevalue)
 		return self._setStagePosition(value)
 
+	def setStageSpeed(self, value):
+		self.tom.Stage.Speed = value
+
+	def getStageSpeed(self):
+		return self.tom.Stage.Speed
+
 	def normalizeLens(self, lens = 'all'):
 		if lens == 'all':
 			self.tecnai.NormalizeAll()
