@@ -131,6 +131,7 @@ scope_params = (
 	('beam tilt', dict),
 	('corrected stage position', int),
 	('stage position', dict),
+	('stage speed', float),
 	('holder type', str),
 	('holder status', str),
 	('stage status', str),

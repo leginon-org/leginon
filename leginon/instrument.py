@@ -343,6 +343,7 @@ parametermapping = (
 	('beam tilt', 'BeamTilt'),
 	('corrected stage position', 'CorrectedStagePosition'),
 	('stage position', 'StagePosition'),
+	('stage speed', 'StageSpeed'),
 	('column pressure', 'ColumnPressure'),
 	('high tension', 'HighTension'),
 	('main screen position', 'MainScreenPosition'),
