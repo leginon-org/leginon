@@ -28,6 +28,8 @@ class UserData(Data):
 			('username', str),
 			('firstname', str),
 			('lastname', str),
+			('password', str),
+			('email', str),
 			('group', GroupData),
 			('noleginon', bool),
 		)
