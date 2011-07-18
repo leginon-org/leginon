@@ -4,7 +4,9 @@ import os
 import re
 import sys
 import time
+import glob
 import math
+import string
 import subprocess
 #appion
 from appionlib import apDisplay
@@ -372,3 +374,105 @@ def checkSelOrDocFileRootDirectoryInDirectoryTree(directory, remote_basedir, loc
 		for match in matches: 
 			modifier.checkSelOrDocFileRootDirectory(match, remote_root, local_root)
 
+#=====================
+#=====================
+def compute_stack_of_class_averages_and_reprojections(dir, selfile, refvolume, docfile, boxsize, resultspath, timestamp, iteration, reference_number=1, extract=False):
+	''' takes Xmipp single files, doc and sel files in routine, creates a stack of class averages in the results directory '''
+	
+	workingdir = os.getcwd()
+	os.chdir(dir)
+	if dir.endswith("/"):
+		dir = dir[:-1]
+	head, tail = os.path.split(dir)
+	
+	### remove "lastdir" component from selfile (created by Xmipp program), then extract header information to docfile
+	f = open(selfile, "r")
+	lines = f.readlines()
+	newlines = [re.sub(str(tail)+"/", "", line) for line in lines]
+	f.close()
+	f = open(selfile[:-4]+"_new.sel", "w")
+	f.writelines(newlines)
+	f.close()
+	if extract is True:
+		extractcmd = "xmipp_header_extract -i %s.sel -o %s.doc" % (selfile[:-4], docfile[:-4])
+		apParam.runCmd(extractcmd, "Xmipp")
+
+	### create a projection params file and project the volume along identical Euler angles
+	f = open("paramfile.descr", "w")
+	f.write("%s\n" % refvolume)
+	f.write("tmpproj 1 xmp\n")
+	f.write("%d %d\n" % (boxsize, boxsize))
+	f.write("%s rot tilt psi\n" % docfile)
+	f.write("NULL\n")
+	f.write("0 0\n")
+	f.write("0 0\n")
+	f.write("0 0\n")
+	f.write("0 0\n")
+	f.write("0 0\n")
+	f.close()
+	projectcmd = "xmipp_project -i paramfile.descr"
+	apParam.runCmd(projectcmd, "Xmipp")
+	
+	### get order of projections in docfile
+	d = open(docfile, "r")
+	lines = d.readlines()[1:]
+	d.close()
+	projfile_sequence = []
+	for i, l in enumerate(lines):
+		if i % 2 == 0:
+			filename = os.path.basename(l.split()[1])
+			projfile_sequence.append(filename)
+		else: pass
+		
+	### create stack of projections and class averages
+	projections = glob.glob("tmpproj**xmp")
+	projections.sort()
+	if len(projections) != len(projfile_sequence):
+		apDisplay.printWarning("number of projections does not match number of classes")
+	stackarray = []
+	stackname = os.path.join(resultspath, "proj-avgs_%s_it%.3d_vol%.3d.hed" % (timestamp, iteration, reference_number))
+	for i in range(len(projections)):
+		stackarray.append(spider.read(projections[i]))
+		stackarray.append(spider.read(projfile_sequence[i]))
+	apImagicFile.writeImagic(stackarray, stackname, msg=False)
+	
+	### remove unnecessary files
+	for file in glob.glob("tmpproj*"):
+		apFile.removeFile(file)
+	os.chdir(workingdir)
+
+	return 
+
+#======================
+#======================
+
+def getComponentFromVector(vector, iteration):
+	''' NOTE: THIS IS COPIED FROM XMIPP'S ARG.PY LIBRARY IN THE XMIPP_PROTOCOLS DIRECTORY '''
+
+	listValues = getListFromVector(vector)
+	if iteration<0: iteration=0
+	if iteration<len(listValues): 
+		return listValues[iteration]
+	else:
+		return listValues[len(listValues)-1]
+
+#---------------------------------------------------------------------------
+# getListFromVector
+#---------------------------------------------------------------------------
+def getListFromVector(vector):
+	''' NOTE: THIS IS COPIED FROM XMIPP'S ARG.PY LIBRARY IN THE XMIPP_PROTOCOLS DIRECTORY '''	
+
+	intervalos = string.split(vector)
+	if len(intervalos) == 0:
+		raise RuntimeError,"Empty vector"
+	listValues = []
+	for i in range(len(intervalos)):
+		intervalo = intervalos[i]
+		listaIntervalo = string.split(intervalo,'x')
+		if len(listaIntervalo) == 1:
+			listValues += listaIntervalo
+		elif len(listaIntervalo) == 2:
+			listValues += [listaIntervalo[1]] * string.atoi(listaIntervalo[0])
+		else:
+			raise RuntimeError,"Unknown syntax: "+intervalos
+	return listValues
