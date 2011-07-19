@@ -315,6 +315,43 @@ def getParticleCount(refineid, cursor, name="refine_keep", isone=True):
 	return int(count)
 
 #==================
+def getComponentFromVector(vector, iteration):
+	''' NOTE: THIS IS MODIFIED FROM XMIPP ARG.PY LIBRARY IN THE XMIPP_PROTOCOLS DIRECTORY '''
+
+	listValues = getListFromVector(vector)
+	if listValues is None:
+		return None
+	if iteration<0: iteration=0
+	if iteration<len(listValues): 
+		return listValues[iteration]
+	else:
+		return listValues[len(listValues)-1]
+
+#---------------------------------------------------------------------------
+# getListFromVector
+#---------------------------------------------------------------------------
+def getListFromVector(vector):
+	''' NOTE: THIS IS MODIFIED FROM XMIPP ARG.PY LIBRARY IN THE XMIPP_PROTOCOLS DIRECTORY '''	
+
+	if vector is None:
+		return None
+	intervalos = string.split(vector)
+	if len(intervalos) == 0:
+#		raise RuntimeError,"Empty vector"
+		return None
+	listValues = []
+	for i in range(len(intervalos)):
+		intervalo = intervalos[i]
+		listaIntervalo = string.split(intervalo,'x')
+		if len(listaIntervalo) == 1:
+			listValues += listaIntervalo
+		elif len(listaIntervalo) == 2:
+			listValues += [listaIntervalo[1]] * string.atoi(listaIntervalo[0])
+		else:
+			raise RuntimeError,"Unknown syntax: "+intervalos
+	return listValues
+
+#==================
 #==================
 #==================
 #==================

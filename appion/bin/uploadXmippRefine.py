@@ -7,13 +7,11 @@ import glob, os, re, shutil
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apFile
-from appionlib import apImagicFile
 from appionlib import apParam
 from appionlib import appiondata
 from appionlib import apXmipp
 from appionlib import apSymmetry
 from appionlib import reconUploader
-from pyami import spider
 
 
 #======================
@@ -31,7 +29,6 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		''' find the last iteration that finished in ml3d job '''
 		
 		lastiter = 0
-		print self.projmatchpath
 		if os.path.isdir(self.projmatchpath) is False:
 			apDisplay.printError("projection matching did not run. Please double check and restart the job")
 		directories = glob.glob(os.path.join(self.projmatchpath, "Iter*"))
@@ -67,7 +64,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			### remove "lastdir" component from selfile (created by Xmipp program), then extract header information to docfile
 			f = open(selfile, "r")
 			lines = f.readlines()
-			newlines = [re.sub("ProjMatchClasses/", "", line) for line in lines]
+			newlines = [re.sub(str(tail)+"/", "", line) for line in lines]
 			f.close()
 			f = open(selfile[:-4]+"_new.sel", "w")
 			f.writelines(newlines)
@@ -115,7 +112,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			### remove unnecessary files
 			for file in glob.glob("tmpproj*"):
 				apFile.removeFile(file)
-			os.chdir(self.projmatchpath)
+			os.chdir(workingdir)
 		else:
 			apDisplay.printWarning("all projection-matching files were cleaned up ... NOT creating class-average / re-projection stack")
 
@@ -136,7 +133,19 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		
 		### write data in appion format to input file for uploading to the database
 		particledataf = open(os.path.join(self.resultspath, "particle_data_%s_it%.3d_vol001.txt" % (self.params['timestamp'], iteration)), "w")
-		particledataf.write("### column info: (1) particle number (2) phi (3) theta (4) omega (5) shiftx (6) shifty (7) mirror (8) reference # (9) class # (10) kept particle (11) quality factor \n")
+		particledataf.write("### column info: ")
+		particledataf.write("(1) particle number ")
+		particledataf.write("(2) phi ")
+		particledataf.write("(3) theta ")
+		particledataf.write("(4) omega ")
+		particledataf.write("(5) shiftx ")
+		particledataf.write("(6) shifty ")
+		particledataf.write("(7) mirror ")
+		particledataf.write("(8) 3D reference # ")
+		particledataf.write("(9) 2D class # ")
+		particledataf.write("(10) quality factor ")
+		particledataf.write("(11) kept particle ")
+		particledataf.write("(12) postRefine kept particle \n")		
 		for i in range(len(docsplitlines)/2):
 			particledataf.write("%.6d\t" % (int(docsplitlines[i*2][1][-10:-4])+1)) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!
 			particledataf.write("%.6f\t" % float(docsplitlines[i*2+1][2]))
@@ -147,7 +156,8 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			particledataf.write("%.6d\t" % int(float(docsplitlines[i*2+1][8])))
 			particledataf.write("%.6d\t" % 1)
 			particledataf.write("%.6d\t" % float(docsplitlines[i*2+1][7]))
-			particledataf.write("%.6d\t" % 1)
+			particledataf.write("%.6d\t" % 0)
+			particledataf.write("%.6f\t" % 1)
 			particledataf.write("%.6f\n" % 0)
 		particledataf.close()
 		
@@ -159,12 +169,20 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 	def parseFileForRunParameters(self):
 		''' PACKAGE-SPECIFIC FILE PARSER: if the parameters were not pickled, parse protocols script to determine projection-matching params '''
 
-		protocol_script = os.path.abspath(os.path.join(self.params['rundir'], "xmipp_protocol_projmatch.py"))
-		if not os.path.exists(protocol_script):
-			apDisplay.printError("could not find protocol file: %s ... try uploading as an external refinement" % protocol_script)
-			
 		os.chdir(self.params['rundir'])
-		import xmipp_protocol_projmatch
+		protocol_script = os.path.abspath(os.path.join(self.params['rundir'], "xmipp_protocol_projmatch.py"))
+		try:
+			sys.path.append(self.params['rundir'])
+			import xmipp_protocol_projmatch		
+		except ImportError, e:
+			print e, "cannot open projection-matching protocol script, trying to open backup file"
+			try:
+				sys.path.append(self.projmatchpath)
+				import xmipp_protocol_projmatch
+			except ImportError, e:
+				print e, "cannot open backup protocol file"
+				apDisplay.printError("could not find protocol file: %s ... try uploading as an external refinement" % protocol_script)
+			
 		packageparams = {}
 		packageparams['NumberofIterations']					= xmipp_protocol_projmatch.NumberofIterations
 		packageparams['MaskFileName']						= xmipp_protocol_projmatch.MaskFileName
@@ -258,19 +276,19 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		''' fill in database entry for ApXmippRefineIterData table '''
 	
 		### get all components that might have multiple values for iterations (these are the ones set in Xmipp Protocols)
-		AngSamplingRateDeg			= apXmipp.getComponentFromVector(self.runparams['package_params']['AngSamplingRateDeg'], iteration-1)
-		MaxChangeOffset				= apXmipp.getComponentFromVector(self.runparams['package_params']['MaxChangeOffset'], iteration-1)
-		MaxChangeInAngles			= apXmipp.getComponentFromVector(self.runparams['package_params']['MaxChangeInAngles'], iteration-1)
-		Search5DShift				= apXmipp.getComponentFromVector(self.runparams['package_params']['Search5DShift'], iteration-1)
-		Search5DStep				= apXmipp.getComponentFromVector(self.runparams['package_params']['Search5DStep'], iteration-1)
-		MinimumCrossCorrelation		= apXmipp.getComponentFromVector(self.runparams['package_params']['MinimumCrossCorrelation'], iteration-1)
-		DiscardPercentage			= apXmipp.getComponentFromVector(self.runparams['package_params']['DiscardPercentage'], iteration-1)
-		DoAlign2D					= apXmipp.getComponentFromVector(self.runparams['package_params']['DoAlign2D'], iteration-1)
-		Align2dMaxChangeOffset		= apXmipp.getComponentFromVector(self.runparams['package_params']['Align2dMaxChangeOffset'], iteration-1)
-		Align2dMaxChangeRot			= apXmipp.getComponentFromVector(self.runparams['package_params']['Align2dMaxChangeRot'], iteration-1)
-		ReconstructionMethod		= apXmipp.getComponentFromVector(self.runparams['package_params']['ReconstructionMethod'], iteration-1)
-		ARTLambda					= apXmipp.getComponentFromVector(self.runparams['package_params']['ARTLambda'], iteration-1)
-		ConstantToAddToFiltration	= apXmipp.getComponentFromVector(self.runparams['package_params']['ConstantToAddToFiltration'], iteration-1)
+		AngSamplingRateDeg			= apRecon.getComponentFromVector(self.runparams['package_params']['AngSamplingRateDeg'], iteration-1)
+		MaxChangeOffset				= apRecon.getComponentFromVector(self.runparams['package_params']['MaxChangeOffset'], iteration-1)
+		MaxChangeInAngles			= apRecon.getComponentFromVector(self.runparams['package_params']['MaxChangeInAngles'], iteration-1)
+		Search5DShift				= apRecon.getComponentFromVector(self.runparams['package_params']['Search5DShift'], iteration-1)
+		Search5DStep				= apRecon.getComponentFromVector(self.runparams['package_params']['Search5DStep'], iteration-1)
+		MinimumCrossCorrelation		= apRecon.getComponentFromVector(self.runparams['package_params']['MinimumCrossCorrelation'], iteration-1)
+		DiscardPercentage			= apRecon.getComponentFromVector(self.runparams['package_params']['DiscardPercentage'], iteration-1)
+		DoAlign2D					= apRecon.getComponentFromVector(self.runparams['package_params']['DoAlign2D'], iteration-1)
+		Align2dMaxChangeOffset		= apRecon.getComponentFromVector(self.runparams['package_params']['Align2dMaxChangeOffset'], iteration-1)
+		Align2dMaxChangeRot			= apRecon.getComponentFromVector(self.runparams['package_params']['Align2dMaxChangeRot'], iteration-1)
+		ReconstructionMethod		= apRecon.getComponentFromVector(self.runparams['package_params']['ReconstructionMethod'], iteration-1)
+		ARTLambda					= apRecon.getComponentFromVector(self.runparams['package_params']['ARTLambda'], iteration-1)
+		ConstantToAddToFiltration	= apRecon.getComponentFromVector(self.runparams['package_params']['ConstantToAddToFiltration'], iteration-1)
 
 		### setup database object using components for each iteration
 		refineProtocolParamsq = appiondata.ApXmippRefineIterData()
@@ -362,6 +380,8 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		### upload each iteration
 		for iteration in uploadIterations:
 		
+			apDisplay.printColor("uploading interation %d", "cyan")
+		
 			### set package parameters, as they will appear in database entries
 			package_database_object = self.instantiateProjMatchParamsData(iteration)
 			
@@ -391,7 +411,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			self.insertRefinementIterationData(package_table, package_database_object, iteration)
 				
 		### calculate Euler jumps
-		self.calculateEulerJumps(uploadIterations)		
+		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)		
 
 
 #=====================

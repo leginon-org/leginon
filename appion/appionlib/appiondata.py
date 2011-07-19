@@ -1174,6 +1174,8 @@ class ApRefineParticleData(Data):
 			('quality_factor', float),
 			('phase_residual', float),
 			('mirror', bool),
+			('3Dref_num', int),
+			('2Dclass_num', int),
 			('refine_keep',bool),
 			('postRefine_keep',bool),
 			('euler_convention', str),
@@ -1185,9 +1187,12 @@ class ApRefineParticleData(Data):
 class ApEmanRefineIterData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('package', str),
 			('ang', float),
 			('lpfilter', int),
 			('hpfilter', int),
+			('mask', int),
+			('imask', int),
 			('pad', int),
 			('EMAN_maxshift', int),
 			('EMAN_hard', int),
@@ -1197,6 +1202,9 @@ class ApEmanRefineIterData(Data):
 			('EMAN_shrink', int),
 			('EMAN_euler2', int),
 			('EMAN_xfiles', float),
+			('EMAN_amask1', float),
+			('EMAN_amask2', float),
+			('EMAN_amask3', float),
 			('EMAN_median', bool),
 			('EMAN_phasecls', bool),
 			('EMAN_fscls', bool),

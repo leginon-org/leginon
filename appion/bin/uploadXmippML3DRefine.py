@@ -282,8 +282,19 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 		
 		### write data in appion format to input file for uploading to the database
 		particledataf = open(os.path.join(self.resultspath, "particle_data_%s_it%.3d_vol%.3d.txt" % (self.params['timestamp'], iteration, reference_number)), "w")
-		particledataf.write("### column info: (1) particle number (2) phi (3) theta (4) omega (5) shiftx "\
-			"(6) shifty (7) mirror (8) reference # (9) class # (10) kept particle (11) quality factor \n")
+		particledataf.write("### column info: ")
+		particledataf.write("(1) particle number ")
+		particledataf.write("(2) phi ")
+		particledataf.write("(3) theta ")
+		particledataf.write("(4) omega ")
+		particledataf.write("(5) shiftx ")
+		particledataf.write("(6) shifty ")
+		particledataf.write("(7) mirror ")
+		particledataf.write("(8) 3D reference # ")
+		particledataf.write("(9) 2D class # ")
+		particledataf.write("(10) quality factor ")
+		particledataf.write("(11) kept particle ")
+		particledataf.write("(12) postRefine kept particle \n")
 		for i in range(len(ml3dsplitlines)/2):
 			if int(float(ml3dsplitlines[i*2+1][7])) % classes_per_volume == 0:
 				n = classes_per_volume
@@ -298,7 +309,8 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 			particledataf.write("%.6d\t" % int(float(ml3dsplitlines[i*2+1][8])))
 			particledataf.write("%.6d\t" % int(reference_number))
 			particledataf.write("%.6d\t" % n)
-			particledataf.write("%.6d\t" % 1)
+			particledataf.write("%.6d\t" % 0)
+			particledataf.write("%.6f\t" % 1)
 			particledataf.write("%.6f\n" % 0)
 		particledataf.close()
 		
@@ -313,6 +325,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 		os.chdir(self.params['rundir'])
 		protocol_script = os.path.abspath(os.path.join(self.params['rundir'], "xmipp_protocol_ml3d.py"))
 		try:
+			sys.path.append(self.params['rundir'])
 			import xmipp_protocol_ml3d		
 		except ImportError, e:
 			print e, "cannot open ml3d protocol script, trying to open backup file"
@@ -474,7 +487,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 				self.insertRefinementIterationData(package_table, package_database_object, iteration, j+1)
 				
 		### calculate Euler jumps
-		self.calculateEulerJumps(uploadIterations)		
+		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)		
 				
 		### remove unwanted files
 		apDisplay.printMsg("deleting unwanted files")

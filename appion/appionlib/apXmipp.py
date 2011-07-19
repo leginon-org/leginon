@@ -445,34 +445,3 @@ def compute_stack_of_class_averages_and_reprojections(dir, selfile, refvolume, d
 
 #======================
 #======================
-
-def getComponentFromVector(vector, iteration):
-	''' NOTE: THIS IS COPIED FROM XMIPP'S ARG.PY LIBRARY IN THE XMIPP_PROTOCOLS DIRECTORY '''
-
-	listValues = getListFromVector(vector)
-	if iteration<0: iteration=0
-	if iteration<len(listValues): 
-		return listValues[iteration]
-	else:
-		return listValues[len(listValues)-1]
-
-#---------------------------------------------------------------------------
-# getListFromVector
-#---------------------------------------------------------------------------
-def getListFromVector(vector):
-	''' NOTE: THIS IS COPIED FROM XMIPP'S ARG.PY LIBRARY IN THE XMIPP_PROTOCOLS DIRECTORY '''	
-
-	intervalos = string.split(vector)
-	if len(intervalos) == 0:
-		raise RuntimeError,"Empty vector"
-	listValues = []
-	for i in range(len(intervalos)):
-		intervalo = intervalos[i]
-		listaIntervalo = string.split(intervalo,'x')
-		if len(listaIntervalo) == 1:
-			listValues += listaIntervalo
-		elif len(listaIntervalo) == 2:
-			listValues += [listaIntervalo[1]] * string.atoi(listaIntervalo[0])
-		else:
-			raise RuntimeError,"Unknown syntax: "+intervalos
-	return listValues

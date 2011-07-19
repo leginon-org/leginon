@@ -132,10 +132,14 @@ class generalReconUploader(appionScript.AppionScript):
 			self.runparams['angularSamplingRate'] = None
 							
 		### parameters specified for upload
-		if self.params['jobid'] is None:
-			self.params['jobinfo'] = None
-		else:
+		if self.params['jobid'] is not None:
 			self.params['jobinfo'] = appiondata.ApAppionJobData.direct_query(self.params['jobid'])
+		else:
+			jobid = self.tryToGetJobID()
+			if jobid is not False:
+				self.params['jobinfo'] = appiondata.ApAppionJobData.direct_query(self.params['jobid'])
+			else:
+				self.params['jobinfo'] = None
 		if self.params['timestamp'] is None and self.params['jobid'] is None:
 			self.params['timestamp'] = apParam.makeTimestamp()
 		elif self.params['timestamp'] is None and self.params['jobid'] is not None:
@@ -147,6 +151,27 @@ class generalReconUploader(appionScript.AppionScript):
 		self.initializeRefinementUploadVariables()
 
 		return
+
+	#=====================
+	def tryToGetJobID(self):
+		jobname = self.params['runname'] + '.job'
+		jobtype = 'recon'
+		jobpath = self.params['rundir']
+		qpath = appiondata.ApPathData(path=os.path.abspath(jobpath))
+		q = appiondata.ApAppionJobData(name=jobname, jobtype=jobtype, path=qpath)
+		results = q.query()
+		if len(results) == 1:
+			### success, only one job id found
+			return results[0].dbid
+		elif len(results) > 1:
+			### fail because too many job ids
+			jobids = [result.dbid for result in results]
+			apDisplay.printWarning("Several job IDs found for this run %s: You should manually specify a jobid, if it exists" % jobids)
+			return False
+		else:
+			### no job found
+			apDisplay.printWarning("No job IDs found for this run, you should manually specify a jobid, if it exists")
+			return False
 				
 	#=====================	
 	def initializeRefinementUploadVariables(self):
@@ -233,22 +258,23 @@ class generalReconUploader(appionScript.AppionScript):
 				break
 		
 		apDisplay.printMsg("reading particle parameters in file: %s" % os.path.basename(pdataf))
-		particledata = []			
+		particledata = {}			
 		for j, info in enumerate(finfo):
+			alldata = {}			
 			data = info.strip().split()
-			partnum = int(float(data[0]))
-			phi = float(data[1])
-			theta = float(data[2])
-			omega = float(data[3])
-			shiftx = float(data[4])
-			shifty = float(data[5])
-			mirror = bool(data[6])
-			refnum = float(data[7])
-			clsnum = float(data[8])
-			bad = bool(data[9])
-			quality = float(data[10])
-			alldata = [partnum, phi, theta, omega, shiftx, shifty, mirror, refnum, clsnum, bad, quality]
-			particledata.append(alldata)
+			alldata['partnum'] = int(float(data[0]))
+			alldata['phi'] = float(data[1])
+			alldata['theta'] = float(data[2])
+			alldata['omega'] = float(data[3])
+			alldata['shiftx'] = float(data[4])
+			alldata['shifty'] = float(data[5])
+			alldata['mirror'] = bool(data[6])
+			alldata['refnum'] = float(data[7])
+			alldata['clsnum'] = float(data[8])
+			alldata['quality'] = float(data[9])
+			alldata['refine_keep'] = bool(float(data[10]))
+			alldata['postRefine_keep'] = bool(float(data[11]))
+			particledata[j] = alldata
 
 		return particledata
 	
@@ -325,7 +351,7 @@ class generalReconUploader(appionScript.AppionScript):
 	#=====================
 	def insertRefinementIterationData(self, package_table, package_database_object, iteration, reference_number=1):
 		''' fills in database entry for ApRefineIterData table '''
-		
+				
 		### get resolution
 		fscfile = os.path.join(self.resultspath, "recon_%s_it%.3d_vol%.3d.fsc" \
 			% (self.params['timestamp'], iteration, reference_number))
@@ -334,7 +360,7 @@ class generalReconUploader(appionScript.AppionScript):
 		resq = appiondata.ApResolutionData()
 		resq['half'] = fscRes
 		resq['fscfile'] = os.path.basename(fscfile)
-		
+
 		### fill in ApRefineIterData object
 		iterationParamsq = appiondata.ApRefineIterData()
 		iterationParamsq[str(package_table.split("|")[1])] = package_database_object
@@ -342,20 +368,24 @@ class generalReconUploader(appionScript.AppionScript):
 		iterationParamsq['iteration'] = iteration
 		iterationParamsq['resolution'] = resq
 		iterationParamsq['rMeasure'] = self.getRMeasureData(iteration, reference_number)
-		iterationParamsq['mask'] = self.runparams['mask']
-		iterationParamsq['imask'] = self.runparams['imask']
+		iterationParamsq['mask'] = apRecon.getComponentFromVector(self.runparams['mask'], iteration-1)
+		iterationParamsq['imask'] = apRecon.getComponentFromVector(self.runparams['imask'], iteration-1)
+		iterationParamsq['alignmentInnerRadius'] = apRecon.getComponentFromVector(self.runparams['alignmentInnerRadius'], iteration-1)
+		iterationParamsq['alignmentOuterRadius'] = apRecon.getComponentFromVector(self.runparams['alignmentOuterRadius'], iteration-1)
 		iterationParamsq['symmetry'] = self.runparams['symmetry']
 		iterationParamsq['exemplar'] = False
 		iterationParamsq['volumeDensity'] = "recon_%s_it%.3d_vol%.3d.mrc" % (self.params['timestamp'], iteration, reference_number)
-		iterationParamsq['refineClassAverages'] = "proj-avgs_%s_it%.3d_vol%.3d.img" \
+		projections_and_avgs = "proj-avgs_%s_it%.3d_vol%.3d.img" \
 			% (self.params['timestamp'], iteration, reference_number)
-		refined_projections_and_avgs = os.path.join(self.resultspath, "refined_proj-avgs_%s_it%.3d_vol%.3d.img" \
-			% (self.params['timestamp'], iteration, reference_number))
-		if os.path.exists(refined_projections_and_avgs):
+		if os.path.exists(os.path.join(self.resultspath, projections_and_avgs)):
+			iterationParamsq['refineClassAverages'] = projections_and_avgs
+		refined_projections_and_avgs = "refined_proj-avgs_%s_it%.3d_vol%.3d.img" \
+			% (self.params['timestamp'], iteration, reference_number)
+		if os.path.exists(os.path.join(self.resultspath, refined_projections_and_avgs)):
 			iterationParamsq['postRefineClassAverages'] = refined_projections_and_avgs
-		varianceAvgs = os.path.join(self.resultspath, "variance_avgs_%s_it%.3d_vol%.3d.img" \
-			% (self.params['timestamp'], iteration, reference_number))
-		if os.path.exists(varianceAvgs):
+		varianceAvgs = "variance_avgs_%s_it%.3d_vol%.3d.img" \
+			% (self.params['timestamp'], iteration, reference_number)
+		if os.path.exists(os.path.join(self.resultspath, varianceAvgs)):
 			iterationParamsq['classVariance'] = varianceAvgs
 		
 		### insert FSC data into database
@@ -387,7 +417,7 @@ class generalReconUploader(appionScript.AppionScript):
 				postrefine = True
 		else:
 				postrefine = False
-		apEulerDraw.createEulerImages(self.refinerunq.dbid, iteration, path=self.params['rundir'], postrefine=postrefine)
+#		apEulerDraw.createEulerImages(self.refinerunq.dbid, iteration, path=self.params['rundir'], postrefine=postrefine)
 		for f in glob.glob("euler**png"):
 			shutil.move(f, os.path.join(self.resultspath, f))
 		
@@ -403,15 +433,15 @@ class generalReconUploader(appionScript.AppionScript):
 			prtlq = appiondata.ApRefineParticleData()
 			
 			### map particle to stack
-#			prtlnum = particledata[i][0]+1 ### offset by 1
-			prtlnum = particledata[i][0]
+#			prtlnum = particledata[i]['partnum']+1 ### offset by 1
+			prtlnum = particledata[i]['partnum']
 			defid = self.stackmapping[prtlnum]
 			stackp = appiondata.ApStackParticleData.direct_query(defid)
 			if not stackp:
 				apDisplay.printError("particle "+str(prtlnum)+" not in stack id="+str(self.runparams['stackid']))
 			
 			### convert Euler angles to EMAN format (temporary fix)
-			alt, az, phi = apXmipp.convertXmippEulersToEman(particledata[i][1], particledata[i][2], particledata[i][3])
+			alt, az, phi = apXmipp.convertXmippEulersToEman(particledata[i]['phi'], particledata[i]['theta'], particledata[i]['omega'])
 
 			if self.multiModelRefinementRun is True:
 				prtlq['multiModelRefineRun'] = self.multimodelq
@@ -421,12 +451,14 @@ class generalReconUploader(appionScript.AppionScript):
 			prtlq['euler1'] = float(alt)
 			prtlq['euler2'] = float(az)
 			prtlq['euler3'] = float(phi)
-			prtlq['shiftx'] = particledata[i][4]
-			prtlq['shifty'] = particledata[i][5]
-			prtlq['mirror'] = particledata[i][6]
-			prtlq['refine_keep'] = particledata[i][9]
-			prtlq['quality_factor'] = particledata[i][10]
-			prtlq['postRefine_keep'] = None		### THIS NEEDS TO BE UPDATED
+			prtlq['shiftx'] = particledata[i]['shiftx']
+			prtlq['shifty'] = particledata[i]['shifty']
+			prtlq['mirror'] = particledata[i]['mirror']
+			prtlq['3Dref_num'] = particledata[i]['refnum']
+			prtlq['2Dclass_num'] = particledata[i]['clsnum']
+			prtlq['quality_factor'] = particledata[i]['quality']
+			prtlq['refine_keep'] = particledata[i]['refine_keep']
+			prtlq['postRefine_keep'] = particledata[i]['postRefine_keep']				
 			prtlq['euler_convention'] = euler_convention
 						
 			if self.params['commit'] is True:
@@ -506,20 +538,24 @@ class generalReconUploader(appionScript.AppionScript):
 			sym='c1', mass=self.params['mass'])	
 			
 	#=====================
-	def calculateEulerJumps(self, uploadIterations):
+	def calculateEulerJumpsAndGoodBadParticles(self, uploadIterations):
 		''' calculate euler jumps for entire recon, currently based on EMAN ZXZ convention '''
 		
-		### Euler jumpers calculated from ApMultiModelRefineRunData in multi-model case, looping over values in all single-model refinements			
-		if self.multiModelRefinementRun is True: 
-			print "NOT YET FINISHED"
+		if self.params['commit'] is True:
+			reconrunid = self.refinerunq.dbid
+					
+			### make table entries of good-bad particles
+			apRecon.setGoodBadParticlesFromReconId(reconrunid)
 			
-		### Euler jumpers calculated from ApRefineRunData in single-model case	
-		else:
-			if self.params['commit'] is True:
-				reconrunid = self.refinerunq.dbid
-				if len(uploadIterations) > 1:
-					apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
-					eulerjump = apEulerJump.ApEulerJump()
-					eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, self.runparams['stackid'])
+			### Euler jumpers calculated from ApMultiModelRefineRunData in multi-model case, looping over values in all single-model refinements			
+			if self.multiModelRefinementRun is True: 
+				print "NOT YET FINISHED"
+				
+			### Euler jumpers calculated from ApRefineRunData in single-model case	
+			else:
+					if len(uploadIterations) > 1:
+						apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
+						eulerjump = apEulerJump.ApEulerJump()
+						eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, self.runparams['stackid'])
 		
 		return
