@@ -18,7 +18,6 @@ import leginondata
 from pyami import mrc
 import targetfinder
 import gui.wx.MatlabTargetFinder
-from Numeric import *
 import calibrationclient
 
 try:
