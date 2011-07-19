@@ -9,6 +9,8 @@ import node, event, leginondata
 import gui.wx.Calibrator
 import instrument
 import presets
+import os
+import re
 import cameraclient
 
 class Calibrator(node.Node):
@@ -102,3 +104,34 @@ class Calibrator(node.Node):
 		self.panel.acquisitionDone()
 		return imagedata
 
+	def setImageFilename(self, imagedata):
+		prefix = self.session['name']
+		digits = 5
+		suffix = self.name.replace(' ','')
+		extension = 'mrc'
+		try:
+			path = imagedata.mkpath()
+		except Exception, e:
+			raise
+			raise node.PublishError(e)
+		filenames = os.listdir(path)
+		pattern = '^%s_[0-9]{%d}%s*.%s$' % (prefix, digits, suffix, extension)
+		number = 0
+		end = len('%s.%s' % (suffix, extension))
+		for filename in filenames:
+			if re.search(pattern, filename):
+				n = int(filename[-digits - end:-end])
+				if n > number:
+					number = n
+		number += 1
+		if number >= 10**digits:
+			raise node.PublishError('too many images, time to go home')
+		filename = ('%s_%0' + str(digits) + 'd%s') % (prefix, number, suffix)
+		imagedata['filename'] = filename
+
+	def insertAcquisitionImageData(self, imagedata):
+		acquisitionimagedata = leginondata.AcquisitionImageData(initializer=imagedata,version=0)
+		self.setImageFilename(acquisitionimagedata)
+		acquisitionimagedata.attachPixelSize()
+		acquisitionimagedata.insert(force=True)
+		return acquisitionimagedata
