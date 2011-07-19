@@ -241,11 +241,14 @@ class CalibrationClient(object):
 			if not self.rpixelsize:
 				self.rpixelsize = self.getImageReciprocalPixelSize(imagedata)
 			ctfdata = fftfun.fitFirstCTFNode(pow,self.rpixelsize['x'], None, self.ht)
+			self.node.logger.info('tabeau defocus: %.3f um, zast: %.3f um' % (ctfdata[0]*1e6,ctfdata[1]*1e6))
 			self.ctfdata.append(ctfdata)
 
+			# show defocus estimate on tableau
 			if ctfdata:
 				s = '%d' % int(ctfdata[0]*1e9)
 				eparams = ctfdata[4]
+				self.node.logger.info('eparams a:%.3f, b:%.3f, alpha:%.3f' % (eparams['a'],eparams['b'],eparams['alpha']))
 				center = numpy.divide(eparams['center'], binning)
 				a = eparams['a'] / binning
 				b = eparams['b'] / binning
@@ -461,7 +464,7 @@ class PixelSizeCalibrationClient(CalibrationClient):
 				mag = caldata['magnification']
 			except:
 				print 'CALDATA', caldata
-				raise
+				raise RuntimeError('Failed retrieving last pixelsize')
 			if mag not in last:
 				last[mag] = caldata
 		return last.values()
@@ -488,6 +491,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if caldatalist:
 			caldata = caldatalist[0]
+			self.node.logger.debug('matrix calibration dbid: %d' % caldata.dbid)
 			return caldata
 		else:
 			excstr = 'no matrix for %s, %s, %s, %seV, %sx' % (tem['name'], ccdcamera['name'], caltype, ht, mag)
@@ -928,8 +932,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 					tvect = [0, 0]
 					tvect[axisn] = t
 					diff = self.measureDefocusDifference(tvect, settle)
-					if diff is None or not self.confirmDefocusInRange():
-						raise
+					if diff is None:
+						raise RuntimeError('Defocus Difference is None')
+					if not self.confirmDefocusInRange():
+						raise RuntimeError('Deofucs Range confirmation failed')
 					diffs[axisname][msign] = diff
 		finally:
 			## return to original beam tilt
