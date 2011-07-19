@@ -2,6 +2,7 @@ import processingHost
 import torqueHost
 import apRefineJobFrealign
 import apRefineJobEman
+import apGenericJob
 import sys
 import re
 import jobtest
@@ -59,9 +60,9 @@ class Agent (object):
  
         return processingHost
        
-##getJobType (command)
-#Searches a list of command optons , 'command',  and attempts to extraqct the 
-#job type from it.  Returns the job type if successful otherwise returns None.
+    ##getJobType (command)
+    #Searches a list of command optons , 'command',  and attempts to extraqct the 
+    #job type from it.  Returns the job type if successful otherwise returns None.
     def getJobType(self, command):
         jobtype = None
     
@@ -90,7 +91,7 @@ class Agent (object):
         elif "jobtest" == jobType:
             jobInstance = jobtest.jobtestClass()
         else:
-            raise TypeError ("Unkown job type " + jobType)
+            jobInstance = apGenericJob.genericJob(command)
         
         return jobInstance
     

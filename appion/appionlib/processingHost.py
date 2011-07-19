@@ -15,29 +15,30 @@ class ProcessingHost (object):
         self.additionalHeaders=[]
         self.preExecLines=[]
  
-##generateHeaders (jobObject)
-#Takes a job object or no arguments. If jobObject is supplied it uses it to 
-#construct processing host specific resource directives.  If no argument is
-#supplied used the currentJob property set in the class instance. 
+    ##generateHeaders (jobObject)
+    #Takes a job object or no arguments. If jobObject is supplied it uses it to 
+    #construct processing host specific resource directives.  If no argument is
+    #supplied used the currentJob property set in the class instance. 
     def generateHeaders(self, jobObject=None):
         pass
-##translateOutput (outputString)
-#Takes the outputSring returned by executing a command (executeCommand()) and
-#Translates it into a Job ID which can be used to check job status.  This is
-#an abstract method that needs to be implimented in the child class.  
+
+    ##translateOutput (outputString)
+    #Takes the outputSring returned by executing a command (executeCommand()) and
+    #Translates it into a Job ID which can be used to check job status.  This is
+    #an abstract method that needs to be implimented in the child class.  
     def traslateOutput (self, outputString):
         pass
     
     def configure (self, confDict):
         pass
         
-##executeCommand (command)    
-#Takes a the command string, command, and runs it in a subshell.  Returns the
-#contents of whatever was written to standard out.
-#This implimentation as written in the base class should work for most job 
-#managers which provide a job submission executable which effectively returns 
-#imediately.  However it may need to be overridden in some child classes where the
-#command may not return right away.   
+    ##executeCommand (command)    
+    #Takes a the command string, command, and runs it in a subshell.  Returns the
+    #contents of whatever was written to standard out.
+    #This implimentation as written in the base class should work for most job 
+    #managers which provide a job submission executable which effectively returns 
+    #imediately.  However it may need to be overridden in some child classes where the
+    #command may not return right away.   
     def executeCommand (self, command):
         #run the command string in a subshell
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) 
@@ -53,10 +54,10 @@ class ProcessingHost (object):
         #return what we get from stdout
         return process.communicate()[0]
                                  
-##createJobFile(jobFile, jobObject)
-#Takes a file handle open for writing and optionaly a job object from which it will
-#generate the job headers and extract the list of commands.  The generated job file
-#is written to the supplied file.  
+    ##createJobFile(jobFile, jobObject)
+    #Takes a file handle open for writing and optionaly a job object from which it will
+    #generate the job headers and extract the list of commands.  The generated job file
+    #is written to the supplied file.  
     def createJobFile(self, jobFile, jobObject=None):
         if jobObject:
             currentJob=jobObject
@@ -78,10 +79,10 @@ class ProcessingHost (object):
         #Job file was successfully writen 
         return True
        
-##launchJob (jobObject)
-#Takes a object representing the job to be ran, jobObject, creates the job   
-#script file and executes the job on the processing host.  Returns a 
-#numerical job ID or False if job execution failed.      
+    ##launchJob (jobObject)
+    #Takes a object representing the job to be ran, jobObject, creates the job   
+    #script file and executes the job on the processing host.  Returns a 
+    #numerical job ID or False if job execution failed.      
     def launchJob(self, jobObject):
         self.setCurrentJob(jobObject)  #Set the current job 
                 
