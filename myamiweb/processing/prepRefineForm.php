@@ -49,9 +49,9 @@ function jobForm($extra=false) {
 	}
 	
 	if (!$modelArray)
-		$extra = "ERROR: no initial model selected";
+		$error = "ERROR: no initial model selected";
 	if (!$_POST['stackval'])
-		$extra = "ERROR: no stack selected";
+		$error = "ERROR: no stack selected";
 
 	// get path data for this session for output
 	$leginondata = new leginondata();
@@ -60,7 +60,7 @@ function jobForm($extra=false) {
 
 	// ensure the cs value is set, or don't process
 	if ($leginondata->getCsValueFromSession($expId) === false) {
-		$extra = "ERROR: Cs value of the images in this session is not unique or known, can't process.";
+		$error = "ERROR: Cs value of the images in this session is not unique or known, can't process.";
 	}
 	
 	// set the runname
@@ -98,8 +98,12 @@ function jobForm($extra=false) {
 	processing_header("Appion: Recon Refinement","Prepare Recon Refinement",$javafunc);
 	
 	// write out errors, if any came up:
-	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
-
+	if ($extra) {
+		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
+	} else if ($error) {
+		echo "<font color='#cc3333' size='+2'>$error</font>\n<hr/>\n";
+	}
+	
 	// create main form
 	echo "<form name='prepRefine' method='post' action='$formaction'><br/>\n";
 	

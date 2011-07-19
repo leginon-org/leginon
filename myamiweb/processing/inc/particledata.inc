@@ -3726,6 +3726,28 @@ class particledata {
 		return $r;
 	}
 
+	// Warning: do not use this function for counting the number of runs to create a new runname.
+	// try getMaxRunNumber instead.
+	function getMultiModelReconIdsFromSession($sessionId, $showHidden=false, $package=false) {
+		$q = "SELECT DISTINCT(refrun.`DEF_id`) AS refid, refrun.*, path.path AS path "
+			." FROM `ApRefineRunData` AS refrun "
+			."LEFT JOIN ApRunsInStackData AS runs "
+			." ON refrun.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			." ON runs.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id` "
+			."LEFT JOIN ApPathData AS path "
+			." ON refrun.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE stackrun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			." AND refrun.`REF|ApMultiModelRefineRunData|multiModelRefineRun` IS NOT NULL ";
+		if (!$showHidden) $q.= " AND (refrun.`hidden` IS NULL OR refrun.`hidden` = 0) ";
+		if ($package) $q.= " AND (refrun.`package` = '$package') ";
+		$q.= " ORDER BY refrun.`REF|ApMultiModelRefineRunData|multiModelRefineRun` DESC";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}
+	
 	function getReconIterIdRelatedToStackid($stackId, $showHidden=False) {
 		// First get a three random particle ids from the stack id
 		$q = "SELECT `REF|ApParticleData|particle` AS partid "
@@ -4009,6 +4031,17 @@ class particledata {
 		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
+	
+	function getNumParticlesFromRefineIter($refineIterId) 
+	{
+		$q = "SELECT COUNT(*) as num_parts ";
+		$q .= "FROM `ApRefineParticleData` AS refinepart "
+			."WHERE refinepart.`REF|ApRefineIterData|refineIter` = '$refineIterId' ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}	
 
 	function getPreparedFrealignJobs ($jobid=False, $path=False, $showHidden=true) {
 		$q = "SELECT fre.*, path.path, job.`DEF_id` AS jobid  "

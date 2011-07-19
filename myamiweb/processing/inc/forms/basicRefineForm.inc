@@ -34,14 +34,11 @@ abstract class BasicRefineForm extends BasicForm
 		
 		$this->method = $method;
 		$this->models = $models;
+		$this->setParticleSymmetry( $models );
 		
 		if ( $stacks ) {
 			$this->setStackInfo( $stacks );
 		}
-		if ( $models ) {
-			$this->setParticleSymmetry( $models );
-		}
-		
 	}
 	
 	function __destruct() 
@@ -80,16 +77,21 @@ abstract class BasicRefineForm extends BasicForm
 	
 	private function setParticleSymmetry( $models )
 	{
-		// For now, use the symmetry of the first available model
-		$symmetryId = $models[0]['REF|ApSymmetryData|symmetry'];
-		$symInfo 	= $this->particle->getSymInfo($symmetryId);
-		$this->defaultSym 	= $symInfo['symmetry'];
+		if ( $models ) {
+			// For now, use the symmetry of the first available model
+			$symmetryId = $models[0]['REF|ApSymmetryData|symmetry'];
+			$symInfo 	= $this->particle->getSymInfo($symmetryId);
+			$this->defaultSym = $symInfo['symmetry'];
+		} else {
+			$this->defaultSym = "C7 (z)";
+		}
+		
 	}
 	
 	// getters
 	public function getStackInfo()  { return $this->stackInfo; }
 	public function getMethodType() { return $this->method; } 
-	public function getSymmetry() { return $this->defaultSym; } 
+	public function getSymmetry()   { return $this->defaultSym; } 
 	
 	// Extending classes MAY override this to add 
 	// package specific parameters to the refine form 
@@ -177,14 +179,7 @@ abstract class BasicRefineForm extends BasicForm
 	{
 		$paramSet = $this->getFormParams();
 		
-		// get model info to set the symmetry
-//		$modelArray = $this->getModelArray();
-//		// this method is single model, so grab the first element only
-//		$modelId 	= $modelArray[0]['id'];
-//		$modelInfo 	= $this->particle->getInitModelInfo( $modelId );
-//		$symInfo 	= $this->particle->getSymInfo($modelInfo['REF|ApSymmetryData|symmetry']);
-//		$symmetry = $symInfo['symmetry'];
-		
+		// set the symmetry to our default value which is based on the initial model		
 		$symmetry = $this->getSymmetry();
 		$paramSet->setParamValue( "symmetry", $symmetry );
 		
@@ -235,12 +230,6 @@ abstract class BasicRefineForm extends BasicForm
 	// outputs the html required to display the general refine parameters
 	final public function generalParamForm( ) 
 	{
-		// display the heading
-//		$html .= "
-//	    <br />
-//	    <H4 style='align=\'center\' >General Refinement Parameters</H4>
-//	    <hr />";
-	
 		// Add Set Defaults button
 		$html .= "<input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults'>\n";
 		
@@ -255,7 +244,7 @@ abstract class BasicRefineForm extends BasicForm
 		// extending classes must define a method type
 		$method = $this->getMethodType();
 		$html .= "** Fields that may be specified per iteration should be entered in the format 'iterations'x'value'.<br />";
-		$html .= "** Disabled fields are not available for $method procedures. <br />";
+		$html .= "Example: 2x8:2x3:3x5 reads as 2 iters with value 8 followed by 2 iters at 3 then 3 iters at 5. <br />";
 	
 		$html .= "<br />\n";
 		$html .= "<b>Particle dependent parameters</b>\n";

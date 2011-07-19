@@ -156,18 +156,20 @@ function createSelectedRefineForm( $method, $stacks='', $models='' )
 	return $selectedRefineForm;
 }
 
-function jobForm($extra=false) {
+function jobForm($extra=false) 
+{
 	global $clusterdata, $CLUSTER_CONFIGS, $selectedcluster;
+	
 	$expId = $_GET['expId'];
 	if ($expId) {
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	} else {
 		exit;
 	}
-	$user = $_SESSION['username'];
-	$pass = $_SESSION['password'];
-
-	$jobid = $_POST['jobid'];
+	
+	$user 	= $_SESSION['username'];
+	$pass 	= $_SESSION['password'];
+	$jobid 	= $_POST['jobid'];
 
 	if (!$jobid)
 		selectRefineJob("ERROR: No prepared refine job id was selected");
@@ -175,7 +177,7 @@ function jobForm($extra=false) {
 		selectRefineJob("ERROR: You are not logged in");
 	
 	// Get the selected refinement job info from the database 
-	$particle 	= new particledata();
+	$particle 		= new particledata();
 	$jobdatas 		= $particle->getPreparedRefineJobs($jobid);
 	$jobdata 		= $jobdatas[0];
 	$refineID 		= $jobdata['DEF_id'];
@@ -184,19 +186,8 @@ function jobForm($extra=false) {
 	$runname 		= $jobdata['name'];
 	$outdir 		= ereg_replace($runname."$", "", $rundir);
 	$description 	= $jobdata['description'];
-
-	// prepare stack values
-	$refinestackid 		= $jobdata['REF|ApStackData|stack'];
-	$refinestackdata 	= $particle->getStackParams($refinestackid);
-	$numpart			= $particle->getNumStackParticles($refinestackid);
-	$apix 				= $particle->getStackPixelSizeFromStackId($refinestackid)*1e10;
-	$boxsize 			= $refinestackdata['boxsize'];
-	$refinestackvals 	= "$refinestackid|--|$apix|--|$boxsize|--|$numpart|--|$refinestackdata[path]|--|$refinestackdata[name]";
-	$reconstackid 		= $jobdata['REF|ApStackData|reconstack'];
-	if ($reconstackid) {
-		$reconstackdata = $particle->getStackParams($reconstackid);
-		$reconstackvals = "$reconstackid|--|$apix|--|$boxsize|--|$numpart|--|$reconstackdata[path]|--|$reconstackdata[name]";
-	}
+	$refinestackid 	= $jobdata['REF|ApStackData|stack'];
+	$reconstackid 	= $jobdata['REF|ApStackData|reconstack'];
 
 	// Get refine stack preparation parameters
 	// TODO: this may need to be modified if we have multiple stacks???
@@ -210,25 +201,17 @@ function jobForm($extra=false) {
 	$boxsize 	= $stacks[0][boxsize];	
 	$stackfilename = $stacks[0][filename]; 
 	
-	// prepare model values
+	// Get initial models
 	$models = $particle->getModelsFromRefineID( $refineID );
 	
+	// Create lists of model names and ids for the summary tables and command
 	foreach( $models as $model ) {
 		$modelNames .= $model['filename'].",";
-		$modelIds .= $model['DEF_id'].",";
+		$modelIds   .= $model['DEF_id'].",";
 	}
 	$modelNames = trim($modelNames, ",");
-	$modelIds = trim($modelIds, ",");
+	$modelIds   = trim($modelIds, ",");
 	
-	// TODO: don't think this block is needed
-	$modelid 	= $jobdata['REF|ApInitialModelData|model'];
-	$modeldata 	= $particle->getInitModelInfo($modelid);
-	$symdata 	= $particle->getSymInfo($modeldata['REF|ApSymmetryData|symmetry']);
-	$modelvals 	= "$modelid|--|$modeldata[path]|--|$modeldata[name]|--|$modeldata[boxsize]|--|$symdata[symmetry]";
-	// Hack: we must assign the POST values
-	$_POST['model'] = $modelvals;
-	$_POST['stackval'] = $refinestackvals;
-
 	// set remote path
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
@@ -247,8 +230,9 @@ function jobForm($extra=false) {
 	$javafunc .= $selectedRefineForm->additionalJavaScript();
 	// TODO: does the order of these make a difference??
 	$javafunc .= writeJavaPopupFunctions('appion');
-	$javafunc .= writeJavaPopupFunctions('frealign');
-	$javafunc .= writeJavaPopupFunctions('eman');
+	//$javafunc .= writeJavaPopupFunctions('frealign');
+	//$javafunc .= writeJavaPopupFunctions('eman');
+	//$javafunc .= writeJavaPopupFunctions();
 	
 	processing_header("Refinement Job Launcher","Refinement Job Launcher", $javafunc);
 
@@ -262,10 +246,6 @@ function jobForm($extra=false) {
 	// Post hidden values
 	$html.= "<input type='hidden' name='clustermemo' value='$selectedcluster'>\n";
 	$html.= "<input type='hidden' name='jobid' value='$jobid'>\n";
-	$html.= "<input type='hidden' NAME='model' value='$modelvals'>\n";
-	$html.= "<input type='hidden' NAME='refinestackvals' value='$refinestackvals'>\n";
-	$html.= "<input type='hidden' NAME='stackval' value='$refinestackvals'>\n";
-	$html.= "<input type='hidden' NAME='reconstackvals' value='$reconstackvals'>\n";
 	$html.= "<input type='hidden' NAME='modelnames' value='$modelNames'>\n";
 	$html.= "<input type='hidden' NAME='modelids' value='$modelIds'>\n";
 	$html.= "<input type='hidden' NAME='method' value='$method'>\n";
@@ -419,7 +399,7 @@ function createCommand ($extra=False)
 	$command .= "--stackname=".$stackName." ";
 	$command .= "--apix=".$apix." ";
 	$command .= "--boxsize=".$boxsize." ";
-	$command .= "--cs=".$cs." ";
+	//$command .= "--cs=".$cs." "; //TODO: add this in when it is parsed on the python side
 	
 	// collect processing run parameters
 	$runParametersForm = new RunParametersForm();

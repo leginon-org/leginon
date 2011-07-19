@@ -656,6 +656,8 @@ if (is_numeric($expId)) {
 		$xmippreconrun = count($subclusterjobs['xmipprefine']['running']);
 		$xmipprecondone = count($subclusterjobs['xmipprefine']['done']);
 		
+		// Single Model Refinement methods
+		
 		// prep recon stats
 		$totalPrepQueue 	= $prepfrealignqueue;
 		$totalPrepRun	 	= $prepfrealignrun;
@@ -718,9 +720,38 @@ if (is_numeric($expId)) {
 			'name'=>"<a href='selectRefinementType.php?expId=$sessionId'>Run Single-Model Refinement</a>",
 			'result'=> $runRefineResults,
 		);
+		
+		// Multi Model Refinement methods
+		// TODO: update all these for multi-model
+		
+		// prep recon stats
+		$totalPrepQueue 	= $prepfrealignqueue;
+		$totalPrepRun	 	= $prepfrealignrun;
+		$totalPrepared		= $frealignprepared;
+		$runMultiRefineResults[] = ($totalPrepQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalPrepQueue preps queued</a>" : "";
+		$runMultiRefineResults[] = ($totalPrepRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalPrepRun preps running</a>" : "";
+		$runMultiRefineResults[] = ($totalPrepared>0) ? "<a href='selectPreparedRecon.php?expId=$sessionId'>$totalPrepared jobs ready to run</a>" : "";
+		
+		// run recon stats
+		$totalJobQueue 		= $emanjobqueue + $runfrealignqueue + $imq + $xmippreconqueue;
+		$totalJobRun 		= $emanjobrun + $runfrealignrun + $imrun + $xmippreconrun;
+		$totalReadyUpload	= $emanjobincomp + $frealignran + $imdone + $xmippreconupload;
+		$runMultiRefineResults[] = ($totalJobQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalJobQueue jobs queued</a>" : "";
+		$runMultiRefineResults[] = ($totalJobRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalJobRun jobs running</a>" : "";
+		$runMultiRefineResults[] = ($totalReadyUpload>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalReadyUpload ready for upload</a>" : "";
+		
+		// upload recon stats
+		$totalUploadQueue 	= $uploadfrealignqueue;
+		$totalUploadRun 	= $uploadfrealignrun;
+		$totalComplete 		= $emanreconruns + $frealigndone + $numxmipprecon;
+		$runMultiRefineResults[] = ($totalUploadQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalUploadQueue uploads queued</a>" : "";
+		$runMultiRefineResults[] = ($totalUploadRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalUploadRun uploads running</a>" : "";
+		$runMultiRefineResults[] = ($totalComplete>0) ? "<a href='reconsummarymulti.php?expId=$sessionId'>$totalComplete complete</a>" : "";
+		
 		// Multi-model refinement
 		$nruns[] = array(
 			'name'=>"<a href='selectMultiModelRefine.php?expId=$sessionId'>Run Multi-Model Refinement</a>",
+			'result'=> $runMultiRefineResults,
 		);
 		
 		$nruns[] = array(

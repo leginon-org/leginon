@@ -22,7 +22,7 @@ $selectedcluster=strtolower($selectedcluster);
 // TODO: docpop params need to change name: cputime, reconpernode, procpernode
 class clusterParamsForm extends BasicForm
 {
-	function __construct( $nodes='', $ppn='', $rpn='', $memory='', $walltime='', $cput='', $cluster='', $remoterundir='' ) 
+	function __construct( $nodes='', $ppn='', $rpn='', $mem='', $walltime='', $cput='', $cluster='', $remoterundir='' ) 
 	{
 		parent::__construct();		
 		
@@ -30,7 +30,7 @@ class clusterParamsForm extends BasicForm
 		$nodes 		= ( $nodes == '') ? C_NODES_DEF : $nodes;
 		$ppn 		= ( $ppn == '') ? C_PPN_DEF : $ppn;
 		$rpn 		= ( $rpn == '') ? C_RPROCS_DEF : $rpn;
-		$memory 	= ( $memory == '') ? C_MEMORY_MAX : $memory;
+		$mem 		= ( $mem == '') ? C_MEMORY_MAX : $mem;
 		$walltime 	= ( $walltime == '') ? C_WALLTIME_DEF : $walltime;
 		$cput 		= ( $cput == '') ? C_CPUTIME_DEF : $cput;
 
@@ -48,7 +48,7 @@ class clusterParamsForm extends BasicForm
 		$params->addParam( "nodes", $nodes, "Nodes" );
 		$params->addParam( "ppn", $ppn, "Proc/Node" );
 		$params->addParam( "rpn", $rpn, "Recons/Node" );
-		$params->addParam( "memory", $memory, "Memory" );
+		$params->addParam( "mem", $mem, "Memory" );
 		$params->addParam( "walltime", $walltime, "Wall Time" );
 		$params->addParam( "cput", $cput, "CPU Time" );
 		$params->addParam( "cluster", $cluster, "Select Host" );
@@ -114,7 +114,7 @@ class clusterParamsForm extends BasicForm
 		$html.= "</td><td>\n";
 		$html.= $params->insertTextFieldInRow( "cput", $size, "(hours)" );
 		$html.= "</td><td>\n";
-		$html.= $params->insertTextFieldInRow( "memory", $size );
+		$html.= $params->insertTextFieldInRow( "mem", $size );
 		$html.= "</td></tr>\n";
 		
 		// row 4
@@ -159,7 +159,7 @@ class clusterParamsForm extends BasicForm
 			$params->setParamValue( 'nodes', C_NODES_DEF );
 			$params->setParamValue( 'ppn', C_PPN_DEF );
 			$params->setParamValue( 'rpn', C_RPROCS_DEF );
-			$params->setParamValue( 'memory', C_MEMORY_MAX );
+			$params->setParamValue( 'mem', C_MEMORY_MAX );
 			$params->setParamValue( 'walltime', C_WALLTIME_DEF );
 			$params->setParamValue( 'cput', C_CPUTIME_DEF );
 
