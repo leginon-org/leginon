@@ -30,7 +30,11 @@ class Agent (object):
         except Exception, e:
             sys.stderr.write("Error: Could not create job "  +  str(command) + ": " + str(e) + '\n')
             sys.exit(1)
-            
+        
+        if not self.currentJob:
+              sys.stderr.write("Error: Could not create job for: " + str(command))
+              sys.exit(1)
+              
         hostJobId = self.processingHost.launchJob(self.currentJob)
         #if the job launched successfuly print out the ID returned.
         if not hostJobId:
