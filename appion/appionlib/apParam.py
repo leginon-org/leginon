@@ -636,9 +636,9 @@ def tc(string):
 		out = eval(string)
 	except:
 		string = string.strip()
-		if string.upper() == 'T':
+		if string.upper() in ('T','TRUE'):
 			out = True
-		elif string.upper() == 'F':
+		elif string.upper() in ('F','FALSE'):
 			out = False
 		else:
 			out = string
