@@ -9,8 +9,7 @@ class TorqueHost(processingHost.ProcessingHost):
         self.scriptPrefix="#PBS"
         if configDict:
             self.configure(configDict)
-	
-
+            
     ##generateHeaders (jobObject)
     #Takes a job object or no arguments. If jobObject is supplied it uses it to 
     #construct processing host specific resource directives.  If no argument is
