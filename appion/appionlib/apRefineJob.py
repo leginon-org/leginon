@@ -220,7 +220,7 @@ class RefineJob(basicScript.BasicScript):
 		self.nproc_list = []
 		self.remoterundir = self.params['remoterundir']
 		self.runname = self.params['runname']
-		self.cpuTime = self.params['cput']
+		self.cputime = self.params['cput']
 		
 	def addParallelsToTasks(self,tasks,scripts,mem=2,nproc=1):
 		if len(tasks) == 0:
@@ -256,7 +256,7 @@ class RefineJob(basicScript.BasicScript):
 		self.makePostIterationScript()
 
 	def getWalltime(self):
-		return self.wallTime
+		return self.walltime
 	def getName(self):
 		return self.runname                   
 	def getNodes(self):
@@ -264,7 +264,7 @@ class RefineJob(basicScript.BasicScript):
 	def getPPN(self):
 		return self.ppn
 	def getCpuTime(self):
-		return self.cpuTime
+		return self.cputime
 	def getMem(self):
 		return  self.mem
 	def getPmem(self):
