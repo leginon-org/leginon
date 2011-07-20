@@ -9,7 +9,16 @@ from appionlib import apParam
 from appionlib import apDisplay
 
 class RefineJob(basicScript.BasicScript):
-	def __init__(self,optlist):
+	'''
+	Refine Job is run on a remotehost, normally a big cluster that does
+	not have access to local disk.  By the time this script is run, the
+  require data files should already reside on the remotehost in remoterundir.
+	If remotehost has the same access to local disk as localhost, then
+	remoterundir is identical to standard appion rundir.
+	At the last part of the job, the results are pushed to localhost using
+	rsync if remoterundir is not the same as rundir.
+	'''
+	def __init__(self,optlist=[]):
 		super(RefineJob,self).__init__(optlist)
 		self.tasks = {}
 		self.setAttributes()
@@ -23,7 +32,7 @@ class RefineJob(basicScript.BasicScript):
 		# Parameters that the agent need
 		self.parser.add_option("--jobid", dest="jobid", type="int", default=1,
 			help="ApAppionJobId for updating job status", metavar="#")
-		# Job parameters that cluster node need
+		# Job parameters that the remotehost need
 		self.parser.add_option("--rpn", dest="rpn", type="int", default=4,
 			help="Number of processors used per node", metavar="#")
 		self.parser.add_option("--nodes", dest="nodes", type="int", default=1,
@@ -34,13 +43,21 @@ class RefineJob(basicScript.BasicScript):
 			help="Maximum memory per node", metavar="#")
 		self.parser.add_option("--walltime", dest="walltime", type="int", default=24,
 			help="Maximum walltime in hours", metavar="#")
+		self.parser.add_option('--cput', dest='cput', type='int', default=None)
+		# Parameters used to bring results back from the remotehost
+		self.parser.add_option("--localhost", dest="localhost", type="str", default='',
+			help="Name of a localhost that the remotehost user can do rsync to transfer the result files", metavar="text")
+		self.parser.add_option("--rundir", dest="rundir", default='./',
+			help="Path for the local run directory that is accessable by localhost and general data files e.g. --rundir=/data/appion/sessionname/recon/runname", metavar="PATH")
+		self.parser.add_option("--remoterundir", dest="remoterundir", default='./',
+			help="Path for the remote run directory accessable by remotehost and will not be erased at the beginning of the run, e.g. --recondir=/home/you/sessionname/rundir/", metavar="PATH")
+		self.parser.add_option('--runname', dest='runname')
+
 		# ReconJob parameters
 		self.parser.add_option("--description", dest="description", type="str", default='',
 			help="Description of the run", metavar="text")
 		self.parser.add_option("--appionwrap", dest="appionwrapper", default='',
 			help="Path for Appion bin directory if needed e.g. --appionwrap=/home/you/appion/bin", metavar="PATH")
-		self.parser.add_option("--safedir", dest="safedir", default='./',
-			help="Path for the Safe directory that will not be erased at the beginning of the run, e.g. --recondir=/home/you/sessionname/rundir/", metavar="PATH")
 		self.parser.add_option("--recondir", dest="recondir", default='recon',
 			help="Path of the Scratch directory for processing that will be erased if start from iteration 1, e.g. --recondir=/home/you/sessionname/rundir/recon", metavar="PATH")
 		self.parser.add_option("-s", "--stackname", dest="stackname",
@@ -58,9 +75,7 @@ class RefineJob(basicScript.BasicScript):
 		self.parser.add_option("--enditer", dest="enditer", type="int",
 			help="End refine at this iteration", metavar="INT")
 		self.parser.add_option('--setuponly', dest='setuponly', default=False, action='store_true',
-			help="setup without executing")
-		self.parser.add_option('--cput', dest='cput', type='int', default=None)
-		self.parser.add_option('--runname', dest='runname')
+			help="setup without executing, for testing purpose")
 			# Refinement Iteration parameters
 		self.setIterationParamList()
 		for param in self.iterparams:
@@ -82,10 +97,10 @@ class RefineJob(basicScript.BasicScript):
 		if self.params['stackname'] is None:
 			apDisplay.printError("enter the pixel size, e.g. --apix=1.5")
 		self.params['numiter'] = self.params['enditer'] - self.params['startiter'] + 1
-		self.params['safedir'] = os.path.abspath(self.params['safedir'])
+		self.params['remotedir'] = os.path.abspath(self.params['remoterundir'])
 		if self.params['recondir'][0] != '/':
-			# assumes relative recondir is under safedir
-			self.params['recondir'] = os.path.join(self.params['safedir'],self.params['recondir'])
+			# assumes relative recondir is under the safe remotedir
+			self.params['recondir'] = os.path.join(self.params['remoterundir'],self.params['recondir'])
 		self.params['nproc'] = self.params['rpn'] * self.params['nodes']
 		self.checkPackageConflicts()
 		### convert iteration parameters first before its confict checking
@@ -165,12 +180,12 @@ class RefineJob(basicScript.BasicScript):
 		pretasks = self.addToTasks(pretasks,'cd %s' % self.params['recondir'])
 		pretasks = self.addToTasks(pretasks,'')
 		# link the required files to scratch dir
-		f = open(os.path.join(self.params['safedir'],'files_to_remote_host'))
+		f = open(os.path.join(self.params['remoterundir'],'files_to_remote_host'))
 		lines = f.readlines()
 		pretasks = self.addToTasks(pretasks,'# link needed files into recondir')
 		for line in lines:
 			filename = os.path.basename(line.replace('\n',''))
-			sourcepath = os.path.join(self.params['safedir'],filename)
+			sourcepath = os.path.join(self.params['remoterundir'],filename)
 			pretasks = self.addToTasks(pretasks,'ln -s  %s %s' % (sourcepath,filename))
 			pretasks = self.addToTasks(pretasks,'test -s  %s || ( echo %s not found && exit )' % (sourcepath,filename))
 		pretasks = self.addToTasks(pretasks,'/bin/rm -fv resolution.txt')
@@ -199,7 +214,7 @@ class RefineJob(basicScript.BasicScript):
 		self.command_list = []
 		self.min_mem_list = []
 		self.nproc_list = []
-		self.safedir = self.params['safedir']
+		self.remoterundir = self.params['remoterundir']
 		self.runname = self.params['runname']
 		self.cpuTime = self.params['cput']
 		
@@ -255,7 +270,7 @@ class RefineJob(basicScript.BasicScript):
 	def getAccount(self):
 		return None
 	def getOutputDir(self):   	
-		return self.safedir
+		return self.remoterundir
 	def getCommandList(self):
 		return self.command_list
 	def getJobId(self):
