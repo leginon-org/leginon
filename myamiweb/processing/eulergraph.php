@@ -18,6 +18,7 @@ require "inc/image.inc";
 define (PARTICLE_DB, $_SESSION['processingdb']);
 
 $reconRunId= $_GET['recon'];
+$multiModelReconRunId= $_GET['multimodelreconid'];
 $viewdata = ($_GET['vd']==1) ? true : false;
 $histogram = ($_GET['hg']==1) ? true : false;
 $width = $_GET['w'] ? (int) $_GET['w'] : 800 ;
@@ -26,7 +27,11 @@ $height = $_GET['h'] ? (int) $_GET['h'] : (int) $width*0.75 ;
 $particle = new particledata();
 
 //If summary is true, get only the data with the best confidence
-$eulerinfo = $particle->getEulerJumps($reconRunId);
+if ($multiModelReconRunId) {
+	$eulerinfo = $particle->getEulerJumpsMM($multiModelReconRunId);
+} else {
+	$eulerinfo = $particle->getEulerJumps($reconRunId);
+}
 
 foreach($eulerinfo as $e) {
 	$data[$e['DEF_id']] = $e['median'];

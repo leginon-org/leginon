@@ -4244,6 +4244,34 @@ class particledata {
 		return $r[0];
 	}
 
+	function getEulerJumpsMM ($multiModelRefineRunId) {
+		$q="SELECT "
+			."  e.`DEF_id`, "
+			."  e.`median` "
+			."FROM ApEulerJumpData AS e "
+			."WHERE "
+			."  e.`REF|ApMultiModelRefineRunData|multiModelRefineRun` = '$multiModelRefineRunId' ";
+			//."ORDER BY e.`median` ASC "
+			//."LIMIT 20 ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getAverageMedianJumpMM ($multiModelRefineRunId) {
+		$q = "SELECT "
+			."COUNT(e.`median`) AS count, "
+			."AVG(e.`median`) AS average, "
+			."STDDEV(e.`median`) AS stdev "
+			."FROM ApEulerJumpData AS e "
+			."WHERE "
+			."  e.`REF|ApMultiModelRefineRunData|multiModelRefineRun` = '$multiModelRefineRunId' "
+			."GROUP BY e.`REF|ApMultiModelRefineRunData|multiModelRefineRun` ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r[0];
+	}
+
 	function getEulerJumps ($refineRunId) {
 		$q="SELECT "
 			."  e.`DEF_id`, "
