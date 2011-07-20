@@ -54,6 +54,8 @@ class RefineJob(basicScript.BasicScript):
 		self.parser.add_option('--runname', dest='runname')
 		self.parser.add_option("--expId", dest="expid", type="int",
 			help="Experiment session id standard from web form.  Not used here", metavar="#")
+		self.parser.add_option("-p", "--projectid", dest="projectid", type="int",
+			help="Project id associated with processing run, e.g. --projectid=159", metavar="#")
 
 		# ReconJob parameters
 		self.parser.add_option("--description", dest="description", type="str", default='',
