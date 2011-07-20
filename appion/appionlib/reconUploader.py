@@ -547,15 +547,22 @@ class generalReconUploader(appionScript.AppionScript):
 			### make table entries of good-bad particles
 			apRecon.setGoodBadParticlesFromReconId(reconrunid)
 			
-			### Euler jumpers calculated from ApMultiModelRefineRunData in multi-model case, looping over values in all single-model refinements			
 			if self.multiModelRefinementRun is True: 
-				print "NOT YET FINISHED"
-				
-			### Euler jumpers calculated from ApRefineRunData in single-model case	
+				### Euler jumpers calculated from ApMultiModelRefineRunData in multi-model case, looping over values in all single-model refinements			
+				multimodelrunid = self.multimodelq.dbid
+				if len(uploadIterations) > 1:
+					apDisplay.printMsg("calculating euler jumpers for multi-model refinement="+str(multimodelrunid))
+					eulerjump = apEulerJump.ApEulerJump()
+					### TECHNICALLY, IT DOESN'T MAKE SENSE TO PASS THE RECONRUNID, SINCE PARTICLES CAN BE JUMPING,
+					### BUT AS FAR AS I CAN TELL, IT DOESN'T MAKE A DIFFERENCE IN THE RESULTING QUERY, SINCE THE VARIABLE
+					### IS ONLY USED TO QUERY FOR STACK PARTICLES, WHICH ARE IDENTICAL IN MULTI-MODEL AND SINGLE-MODEL REFINEMENT
+					### CASES. THEREFORE, THE LAST RECONRUNID IS PASSES ... * DMITRY
+					eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, self.runparams['stackid'], multimodelrunid=multimodelrunid)
 			else:
-					if len(uploadIterations) > 1:
-						apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
-						eulerjump = apEulerJump.ApEulerJump()
-						eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, self.runparams['stackid'])
+				### Euler jumpers calculated from ApRefineRunData in single-model case	
+				if len(uploadIterations) > 1:
+					apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
+					eulerjump = apEulerJump.ApEulerJump()
+					eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, self.runparams['stackid'])
 		
 		return

@@ -1440,6 +1440,7 @@ class ApEulerJumpData(Data):
 		return Data.typemap() + (
 			('particle', ApStackParticleData),
 			('refineRun', ApRefineRunData),
+			('multiModelRefineRun', ApMultiModelRefineRunData),
 			('median', float),
 			('mean', float),
 			('stdev', float),
