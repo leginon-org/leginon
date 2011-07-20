@@ -41,7 +41,7 @@ class RefineJob(basicScript.BasicScript):
 			help="Path for Appion bin directory if needed e.g. --appionwrap=/home/you/appion/bin", metavar="PATH")
 		self.parser.add_option("--safedir", dest="safedir", default='./',
 			help="Path for the Safe directory that will not be erased at the beginning of the run, e.g. --recondir=/home/you/sessionname/rundir/", metavar="PATH")
-		self.parser.add_option("--recondir", dest="recondir", default='./',
+		self.parser.add_option("--recondir", dest="recondir", default='recon',
 			help="Path of the Scratch directory for processing that will be erased if start from iteration 1, e.g. --recondir=/home/you/sessionname/rundir/recon", metavar="PATH")
 		self.parser.add_option("-s", "--stackname", dest="stackname",
 			help="Particle stack path", metavar="FILENAME")
