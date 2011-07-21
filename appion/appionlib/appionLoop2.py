@@ -80,6 +80,7 @@ class AppionLoop(appionScript.AppionScript):
 						apDisplay.printWarning("not committing results to database, all data will be lost")
 						apDisplay.printMsg("to preserve data start script over and add 'commit' flag")
 						self.writeResultsToFiles(imgdata, results)
+					self.loopCleanUp(imgdata)
 				else:
 					apDisplay.printWarning("IMAGE FAILED; nothing inserted into database")
 					self.badprocess = False
@@ -121,6 +122,9 @@ class AppionLoop(appionScript.AppionScript):
 		setup like this to override things
 		"""
 		return self.commitToDatabase(imgdata)
+
+	def loopCleanUp(self, imgdata):
+		pass
 
 	#######################################################
 	#### ITEMS BELOW SHOULD BE SPECIFIED IN A NEW PROGRAM ####

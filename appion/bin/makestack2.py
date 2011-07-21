@@ -1101,19 +1101,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apDisplay.printWarning("Rotate parameter is not set, helical filaments will not be aligned")
 			
 
-	#=====================
-	def setRunDir(self):
-		if self.params['sessionname'] is None:
-			apDisplay.printError("Please provide a sessionname or run directory")
-		#auto set the output directory
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		path = os.path.abspath(sessiondata['image path'])
-		pieces = path.split('leginon')
-		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
-		path = re.sub("/rawdata","",path)
-		path = os.path.join(path, self.processdirname, self.params['runname'])
-		self.params['rundir'] = path
-
 	#=======================
 	def preLoopFunctions(self):
 		self.batchboxertimes = []
@@ -1328,6 +1315,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				stpartq.insert()
 		self.insertdbtimes.append(time.time()-t0)
 
+	def loopCleanUp(self,imgdata):
 		### last remove any existing boxed files, reset global params
 		shortname = apDisplay.short(imgdata['filename'])
 		shortfileroot = os.path.join(self.params['rundir'], shortname)
@@ -1337,7 +1325,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				apFile.removeFile(rmfile)
 		self.imgstackfile = None
 		self.boxedpartdatas = []
-
 
 if __name__ == '__main__':
 	makeStack = Makestack2Loop()
