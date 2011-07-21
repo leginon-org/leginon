@@ -103,11 +103,13 @@ class RefineJob(basicScript.BasicScript):
 		if self.params['stackname'] is None:
 			apDisplay.printError("enter the pixel size, e.g. --apix=1.5")
 		self.params['numiter'] = self.params['enditer'] - self.params['startiter'] + 1
-		self.params['remotedir'] = os.path.abspath(self.params['remoterundir'])
+		self.params['remoterundir'] = os.path.abspath(self.params['remoterundir'])
 		if self.params['recondir'][0] != '/':
-			# assumes relative recondir is under the safe remotedir
+			# assumes relative recondir is under the safe remoterundir
 			self.params['recondir'] = os.path.join(self.params['remoterundir'],self.params['recondir'])
 		self.params['recondir'] = os.path.abspath(self.params['recondir'])
+		if self.params['rundir'] != self.params['remoterundir'] and not self.params['localhost']:
+			apDisplay.printError('local host not defined for result transfer')
 		self.params['nproc'] = self.params['rpn'] * self.params['nodes']
 		self.checkPackageConflicts()
 		### convert iteration parameters first before its confict checking
@@ -202,8 +204,18 @@ class RefineJob(basicScript.BasicScript):
 	def makePostIterationScript(self):
 		pass
 
-	def makeCopyResultsToLocalHostScript(self):
-		tasks = {}
+	def addCopyByFileListFromRemoteHostScript(self,tasks):
+		tasks = self.addToTasks(tasks,'# copy files back to localhost rundir')
+		f = open(os.path.join(self.params['remoterundir'],'files_from_remote_host'),'r')
+		lines = f.readlines()
+		f.close()
+		lines.append('files_from_remote_host\n')
+		for line in lines:
+			filename = os.path.basename(line.replace('\n',''))
+			tasks = self.addToTasks(tasks,'rsync -rotouv --partial %s %s:%s/%s' % (filename,self.params['localhost'],self.params['rundir'],filename))
+		return tasks
+
+	def addCleanUpReconDirTasks(self,tasks):
 		f = open(os.path.join(self.params['remoterundir'],'files_to_remote_host'),'r')
 		lines = f.readlines()
 		f.close()
@@ -213,14 +225,33 @@ class RefineJob(basicScript.BasicScript):
 		for line in lines:
 			filename = os.path.basename(line.replace('\n',''))
 			tasks = self.addToTasks(tasks,'/bin/rm -fv  %s' % filename)
+		return tasks
+
+	def saveFileListFromRemoteHost(self):
+		# record the filenames in a file
+		f = open(os.path.join(self.params['remoterundir'],'files_from_remote_host'),'w')
+		f.writelines(map((lambda x: x+'\n'),self.files_from_remote_host))
+		f.close()
+
+	def makeCopyResultsToLocalHostScript(self):
+		tasks = {}
+		tasks = self.addCleanUpReconDirTasks(tasks)
 		tasks = self.addToTasks(tasks,'cd %s' % self.params['remoterundir'])
 		result_tar = 'recon_results.tar.gz'
 		self.files_from_remote_host.append(result_tar)
 		tasks = self.addToTasks(tasks,'tar cvzf recon_results.tar.gz %s/*' % self.params['recondir'])
+
+		self.saveFileListFromRemoteHost()
+		tasks = self.addCopyByFileListFromRemoteHostScript(tasks)
 		self.addJobCommands(tasks)
-		f = open(os.path.join(self.params['remoterundir'],'files_from_remote_host'),'w')
-		f.writelines(map((lambda x: x+'\n'),self.files_from_remote_host))
-		f.close()
+
+	def makeMoveResultsToRundirScript(self):
+		tasks = {}
+		tasks = self.addCleanUpReconDirTasks(tasks)
+		tasks = self.addToTasks(tasks,'cd %s' % self.params['remoterundir'])
+		tasks = self.addToTasks(tasks,'/bin/mv %s/* %s' % (self.params['recondir'],self.params['rundir']))
+		self.saveFileListFromRemoteHost()
+		self.addJobCommands(tasks)
 
 	def makeRefineScript(self,iter):
 			print 'make refine script in RefineJob'
@@ -277,8 +308,12 @@ class RefineJob(basicScript.BasicScript):
 		for iter in range(self.params['startiter'],self.params['enditer']+1):
 			self.addJobCommands(self.makeRefineScript(iter))
 		self.makePostIterationScript()
-		if self.params['remotedir'] != self.params['rundir']:
+		print self.params['remoterundir']
+		print self.params['rundir']
+		if self.params['remoterundir'] != self.params['rundir']:
 			self.makeCopyResultsToLocalHostScript()
+		else:
+			self.makeMoveResultsToRundirScript()
 
 	def getWalltime(self):
 		return self.walltime
