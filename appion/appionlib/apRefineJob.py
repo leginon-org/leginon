@@ -254,11 +254,13 @@ class RefineJob(basicScript.BasicScript):
 		self.addJobCommands(tasks)
 
 	def makeRefineScript(self,iter):
-			print 'make refine script in RefineJob'
-			'''
-			Need to be implemented in the subclass
-			'''
-			return [[]]
+		tasks = {}
+		tasks = self.addToTasks(tasks,'')
+		return tasks
+		print 'make refine script in RefineJob'
+		'''
+		Need to be implemented in the subclass
+		'''
 
 	def setAttributes(self):
 		self.ppn = self.params['ppn']

@@ -87,7 +87,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 				self.params[name] = ' '.join(strings)
 
 	def setupXmippProtocol(self):
-		protocolname = 'protocol_projmatch'
+		protocolname = 'xmipp_protocol_projmatch'
 		# Locate protocol_projmatch
 		protocol_projmatch=apXmipp.locateXmippProtocol(protocolname)
 
@@ -116,28 +116,28 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["DataArePhaseFlipped"]          =   True
 		protocolPrm["ReferenceIsCtfCorrected"]      =   True
 		protocolPrm["DoMask"]                       =   self.params['maskvol']>0
-		protocolPrm["DoSphericalMask"]              =   self.params['mask']>0
-		protocolPrm["MaskRadius"]                   =   self.params['mask']
+		protocolPrm["DoSphericalMask"]              =   self.params['outerMaskRadius']>0
+		protocolPrm["MaskRadius"]                   =   self.params['outerMaskRadius']
 		protocolPrm["MaskFileName"]                 =   self.params['maskvol']
 		protocolPrm["DoProjectionMatching"]         =   True
 		protocolPrm["DisplayProjectionMatching"]    =   False
 		protocolPrm["InnerRadius"]                  =   self.params['innerradius']
 		protocolPrm["OuterRadius"]                  =   self.params['outerradius']
 		protocolPrm["AvailableMemory"]              =   '2'
-		protocolPrm["AngSamplingRateDeg"]           =   self.params['angularsteps']
-		protocolPrm["MaxChangeInAngles"]            =   self.params['maxchangeinangles']
+		protocolPrm["AngSamplingRateDeg"]           =   self.params['AngularSteps']
+		protocolPrm["MaxChangeInAngles"]            =   self.params['maxAngularChange']
 		protocolPrm["PerturbProjectionDirections"]  =   False
-		protocolPrm["MaxChangeOffset"]              =   self.params['maxchangeoffset']
-		protocolPrm["Search5DShift"]                =   self.params['search5dshift']
-		protocolPrm["Search5DStep"]                 =   self.params['search5dstep']
+		protocolPrm["MaxChangeOffset"]              =   self.params['maxChangeOffset']
+		protocolPrm["Search5DShift"]                =   self.params['search5DShift']
+		protocolPrm["Search5DStep"]                 =   self.params['search5DStep']
 		protocolPrm["DoRetricSearchbyTiltAngle"]    =   False
 		protocolPrm["Tilt0"]                        =   0
 		protocolPrm["TiltF"]                        =   0
-		protocolPrm["SymmetryGroup"]                =   self.params['symm']
+		protocolPrm["SymmetryGroup"]                =   self.params['symmetry']
 		protocolPrm["SymmetryGroupNeighbourhood"]   =   ''
 		protocolPrm["OnlyWinner"]                   =   False
 		protocolPrm["MinimumCrossCorrelation"]      =   '-1'
-		protocolPrm["DiscardPercentage"]            =   self.params['discardpercentage']
+		protocolPrm["DiscardPercentage"]            =   self.params['percentDiscard']
 		protocolPrm["ProjMatchingExtra"]            =   ''
 		protocolPrm["DoAlign2D"]                    =   '0'
 		protocolPrm["Align2DIterNr"]                =   4
@@ -145,8 +145,8 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["Align2dMaxChangeRot"]          =   '1000'
 		protocolPrm["DoReconstruction"]             =   True
 		protocolPrm["DisplayReconstruction"]        =   False
-		protocolPrm["ReconstructionMethod"]         =   self.params['reconstructionmethod']
-		protocolPrm["ARTLambda"]                    =   self.params['artlambda']
+		protocolPrm["ReconstructionMethod"]         =   self.params['reconMethod']
+		protocolPrm["ARTLambda"]                    =   self.params['ARTLambda']
 		protocolPrm["ARTReconstructionExtraCommand"]=   ''
 		protocolPrm["FourierMaxFrequencyOfInterest"]=   self.params['fouriermaxfrequencyofinterest']
 		protocolPrm["WBPReconstructionExtraCommand"]=''
@@ -157,15 +157,15 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["DisplayResolution"]            =   False
 		protocolPrm["DoLowPassFilter"]              =   self.params['dolowpassfilter']
 		protocolPrm["UseFscForFilter"]              =   self.params['usefscforfilter']
-		protocolPrm["ConstantToAddToFiltration"]    =   self.params['constanttoaddtofiltration']
+		protocolPrm["ConstantToAddToFiltration"]    =   self.params['filterConstant']
 		protocolPrm["NumberOfThreads"]              =   self.params['alwaysone']
-		protocolPrm["DoParallel"]                   =   self.params['numberofmpiprocesses']>1
+		protocolPrm["DoParallel"]                   =   self.params['nproc']>1
 		protocolPrm["NumberOfMpiProcesses"]         =   self.params['nproc']
 		protocolPrm["MpiJobSize"]                   =   '10'
 		protocolPrm["SystemFlavour"]                =   ''
 		protocolPrm["AnalysisScript"]               =   'visualize_projmatch.py'
 
-		protocolfile = os.path.join(self.params['recondir'],"xmipp_%s.py" % protocolname)
+		protocolfile = os.path.join(self.params['remoterundir'],"%s.py" % protocolname)
 		apXmipp.particularizeProtocol(protocol_projmatch,protocolPrm,protocolfile)
 		return protocolfile
 
@@ -175,7 +175,8 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		tasks = {}
 		tasks = self.addToTasks(tasks,'mv %s threed.0a.mrc' % self.params['modelnames'][0])
 		protocolfile = self.setupXmippProtocol()
-		tasks = self.addToTasks(tasks,'python %s') % protocolfile
+		tasks = self.addToTasks(tasks,'python %s' % protocolfile)
+		tasks = self.addToTasks(tasks,'mv %s %s' % (protocolfile,self.params['recondir']))
 		self.addJobCommands(tasks)
 
 if __name__ == '__main__':
