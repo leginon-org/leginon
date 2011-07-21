@@ -29,7 +29,7 @@ class genericJob(object):
         for opt in optList:
             lineToAdd += opt + " "
         
-        lineToAdd += "' " + logFileName
+        lineToAdd += "\' " + logFileName
         #Add the reconstructed line to the command list
         self.command_list.append(lineToAdd)
         
@@ -50,22 +50,23 @@ class genericJob(object):
         excludeList = ['jobid', 'walltime', 'cput', 'nodes', 'ppn', 'jobtype']
         optionKeys = options.keys()
         for opt in optList:
-            matchedLine = re.match(r'--(\S+)=(\S*)', opt)
+            matchedLine = re.match(r'--(\S+)=(.*)', opt)
             if matchedLine:
                 (key, value) = matchedLine.groups()
+                #if value is a string need to reconstruct opt value adding quotes
+                if re.match(r'\s', value):
+                    opt = '--' + key + '=' + '\"' + value + '\"'
+                    
                 #Only copy certain options to the new command line.  Those in the  
                 #exclude list are not understood by appion commands.
                 if not key in excludeList:
                     newCommandLine.append(opt)
+
                 if key in optionKeys:
-                    options[key](value)
-                   
-                    #We need to remove some command line options because they aren't understood by 
-                    #the appion command which will ultimately get called
+                    options[key](value)                
             else:
                 #Just pass along any options not in the format expected
-                newCommandLine.append(opt)
-                                              
+                newCommandLine.append(opt)                                
         return newCommandLine
     
                     
