@@ -53,8 +53,9 @@ class genericJob(object):
             matchedLine = re.match(r'--(\S+)=(.*)', opt)
             if matchedLine:
                 (key, value) = matchedLine.groups()
+
                 #if value is a string need to reconstruct opt value adding quotes
-                if re.match(r'\s', value):
+                if re.search(r'\s', value):
                     opt = '--' + key + '=' + '\"' + value + '\"'
                     
                 #Only copy certain options to the new command line.  Those in the  
@@ -78,7 +79,7 @@ class genericJob(object):
     def getName(self):
         return self.runname 
     def setName(self, newname):
-        self.runname = newname
+        self.runname = newname + ".appionsub"
                           
     def getNodes(self):
         return self.nodes
