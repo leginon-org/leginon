@@ -180,6 +180,7 @@ class AppionScript(basicScript.BasicScript):
 		pathq = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clustq = appiondata.ApAppionJobData()
 		clustq['path'] = pathq
+		clustq['jobtype'] = self.functionname.lower()
 		clustdatas = clustq.query()
 		if not clustdatas:
 			### insert a cluster job
@@ -191,6 +192,8 @@ class AppionScript(basicScript.BasicScript):
 			clustq['session'] = self.getSessionData()
 			### need a proper way to create a jobtype
 			clustq['jobtype'] = self.functionname.lower()
+			clustq.insert()
+			self.clusterjobdata = clustq
 			return clustq
 		elif len(clustdatas) == 1:
 			### we have an entry
@@ -210,6 +213,7 @@ class AppionScript(basicScript.BasicScript):
 		Using tables to track program run parameters in a generic fashion
 		inspired by Roberto Marabini and Carlos Oscar Sanchez Sorzano from the Xmipp team/Carazo lab
 		"""
+		apDisplay.printMsg("Uploading ScriptData....")
 		prognameq = appiondata.ScriptProgramName()
 		prognameq['name'] = self.functionname
 
