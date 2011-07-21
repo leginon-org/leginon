@@ -21,6 +21,7 @@ class RefineJob(basicScript.BasicScript):
 	def __init__(self,optlist=[]):
 		super(RefineJob,self).__init__(optlist)
 		self.tasks = {}
+		self.files_from_remote_host = []
 		self.setAttributes()
 		self.start()
 
@@ -51,11 +52,12 @@ class RefineJob(basicScript.BasicScript):
 			help="Path for the local run directory that is accessable by localhost and general data files e.g. --rundir=/data/appion/sessionname/recon/runname", metavar="PATH")
 		self.parser.add_option("--remoterundir", dest="remoterundir", default='./',
 			help="Path for the remote run directory accessable by remotehost and will not be erased at the beginning of the run, e.g. --recondir=/home/you/sessionname/rundir/", metavar="PATH")
+		# Standard Web Form Appion parameters
 		self.parser.add_option('--runname', dest='runname')
 		self.parser.add_option("--expId", dest="expid", type="int",
 			help="Experiment session id standard from web form.  Not used here", metavar="#")
 		self.parser.add_option("-p", "--projectid", dest="projectid", type="int",
-			help="Project id associated with processing run, e.g. --projectid=159", metavar="#")
+			help="Project id associated with processing run. Used for updating run status in the database", metavar="#")
 
 		# ReconJob parameters
 		self.parser.add_option("--description", dest="description", type="str", default='',
@@ -74,9 +76,9 @@ class RefineJob(basicScript.BasicScript):
 			help="Boxsize in the particle stack", metavar="#")
 		self.parser.add_option("--apix", dest="apix", type="float",
 			help="Pixel size (Angstrom per pixel/voxel)", metavar="#")
-		self.parser.add_option("--startiter", dest="startiter", type="int", default=1,
+		self.parser.add_option("--startIter", dest="startiter", type="int", default=1,
 			help="Begin refine from this iteration", metavar="INT")
-		self.parser.add_option("--enditer", dest="enditer", type="int",
+		self.parser.add_option("--endIter", dest="enditer", type="int",
 			help="End refine at this iteration", metavar="INT")
 		self.parser.add_option('--setuponly', dest='setuponly', default=False, action='store_true',
 			help="setup without executing, for testing purpose")
@@ -105,6 +107,7 @@ class RefineJob(basicScript.BasicScript):
 		if self.params['recondir'][0] != '/':
 			# assumes relative recondir is under the safe remotedir
 			self.params['recondir'] = os.path.join(self.params['remoterundir'],self.params['recondir'])
+		self.params['recondir'] = os.path.abspath(self.params['recondir'])
 		self.params['nproc'] = self.params['rpn'] * self.params['nodes']
 		self.checkPackageConflicts()
 		### convert iteration parameters first before its confict checking
@@ -199,6 +202,26 @@ class RefineJob(basicScript.BasicScript):
 	def makePostIterationScript(self):
 		pass
 
+	def makeCopyResultsToLocalHostScript(self):
+		tasks = {}
+		f = open(os.path.join(self.params['remoterundir'],'files_to_remote_host'),'r')
+		lines = f.readlines()
+		f.close()
+		tasks = self.addToTasks(tasks,'# pack up recondir')
+		tasks = self.addToTasks(tasks,'cd %s' % self.params['recondir'])
+		# clean up files that are already in localhost rundir
+		for line in lines:
+			filename = os.path.basename(line.replace('\n',''))
+			tasks = self.addToTasks(tasks,'/bin/rm -fv  %s' % filename)
+		tasks = self.addToTasks(tasks,'cd %s' % self.params['remoterundir'])
+		result_tar = 'recon_results.tar.gz'
+		self.files_from_remote_host.append(result_tar)
+		tasks = self.addToTasks(tasks,'tar cvzf recon_results.tar.gz %s/*' % self.params['recondir'])
+		self.addJobCommands(tasks)
+		f = open(os.path.join(self.params['remoterundir'],'files_from_remote_host'),'w')
+		f.writelines(map((lambda x: x+'\n'),self.files_from_remote_host))
+		f.close()
+
 	def makeRefineScript(self,iter):
 			print 'make refine script in RefineJob'
 			'''
@@ -254,6 +277,8 @@ class RefineJob(basicScript.BasicScript):
 		for iter in range(self.params['startiter'],self.params['enditer']+1):
 			self.addJobCommands(self.makeRefineScript(iter))
 		self.makePostIterationScript()
+		if self.params['remotedir'] != self.params['rundir']:
+			self.makeCopyResultsToLocalHostScript()
 
 	def getWalltime(self):
 		return self.walltime

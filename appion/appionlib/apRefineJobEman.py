@@ -145,17 +145,6 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		tasks = self.addToTasks(tasks,'')
 		return tasks
 
-	def makePostIterationScript(self):
-		tasks = {}
-		tasks = self.addToTasks(tasks,'# pack up the results and put back to remoterundir')
-		tasks = self.addToTasks(tasks,'tar -cvzf model.tar.gz threed.*a.mrc',self.mem,1)
-		tasks = self.addToTasks(tasks,'tar -cvzf results.tar.gz fsc* cls* refine.* particle.* classes_* classes_*.* proj.* sym.* .emanlog *txt *.job',self.mem,1)
-		tasks = self.addToTasks(tasks,'/bin/mv -v model.tar.gz %s' % (self.params['remoterundir']))
-		tasks = self.addToTasks(tasks,'/bin/mv -v results.tar.gz %s' % (self.params['remoterundir']))
-		tasks = self.addToTasks(tasks,'cd %s' % (self.params['remoterundir']))
-		self.addJobCommands(tasks)
-
-
 if __name__ == '__main__':
 	app = EmanRefineJob()
 	app.start()

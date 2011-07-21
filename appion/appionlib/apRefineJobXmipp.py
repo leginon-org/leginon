@@ -169,16 +169,14 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		apXmipp.particularizeProtocol(protocol_projmatch,protocolPrm,protocolfile)
 		return protocolfile
 
-	def runXmippProtocol(self,protocolfile):
-		tasks = {}
-		tasks = self.addToTasks(tasks,'python %s') % protocolfile
-
 	def makePreIterationScript(self):
 		super(XmippSingleModelRefineJob,self).makePreIterationScript()
-		self.addJobCommands(self.addToTasks({},'mv %s threed.0a.mrc' % self.params['modelnames'][0],2,1))
 		self.convertToXmippStyleIterParams()
+		tasks = {}
+		tasks = self.addToTasks(tasks,'mv %s threed.0a.mrc' % self.params['modelnames'][0])
 		protocolfile = self.setupXmippProtocol()
-		self.runXmippProtocol(protocolfile)
+		tasks = self.addToTasks(tasks,'python %s') % protocolfile
+		self.addJobCommands(tasks)
 
 if __name__ == '__main__':
 	app = XmippSingleModelRefineJob()
