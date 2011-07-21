@@ -21,6 +21,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 	def onInit(self):
 		self.setRefineMethod()
 		self.files_to_send = []
+		self.invert = False
 
 	def setRefineMethod(self):
 		self.refinemethod = None
@@ -84,6 +85,16 @@ class Prep3DRefinement(appionScript.AppionScript):
 			extname = 'mrc'
 		return extname
 
+	def calcClipSize(slef,oldboxsize,bin):
+		'''
+		This keeps the clipsize dividable by binning
+		'''
+		clipsize = int(math.floor(oldboxsize/bin/2.0)*bin*2)
+		if clipsize != oldboxsize:
+			apDisplay.printWarning('Stack needs clipping before binning. May Corrupt coordinates!!!')
+		return clipsize
+
+
 	def preprocessParticleStackWithProc2d(self):
 		'''
 		takes the stack file and creates a stack file with binning and filtering
@@ -120,9 +131,12 @@ class Prep3DRefinement(appionScript.AppionScript):
 		if self.params['bin'] > 1:
 			need_modify = True
 			emancmd += "shrink="+str(self.params['bin'])+" "
-			clipsize = int(math.floor(self.stack['boxsize']/self.params['bin']/2.0)*self.params['bin']*2)
+			clipsize = self.calcClipSize(self.stack['boxsize'],self.params['bin'])
 			emancmd += "clip="+str(clipsize)+","+str(clipsize)+"  edgenorm"+" "
 			self.stack['boxsize'] = clipsize / self.params['bin']
+		if self.invert:
+			need_modify = True
+			emancmd += 'invert'
 
 		if need_modify:
 			apFile.removeStack(outstack, warn=False)
@@ -134,7 +148,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 			# no need to execute EmanCmd if the stack is not modified
 			shutil.copy(self.stack['file'],outstack)
 			outstackimg = outstack.replace('hed','img')
-			if not os.path.isfile(imgstack):
+			if not os.path.isfile(outstackimg):
 				# only copy if not exist to save time
 				shutil.copy(self.stack['file'].replace('hed','img'),outstackimg)
 		self.stack['file'] = outstack
@@ -241,7 +255,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		prepq['method'] = self.refinemethod
 		prepq['description'] = self.params['description']
 		if 'reconiterid' in self.params.keys() and self.params['reconiterid'] is not None:
-			prepq['paramIter'] = appiondata.ApRefineIterData.direct_query(self.params['reconiterid'])
+			prepq['paramiter'] = appiondata.ApRefineIterData.direct_query(self.params['reconiterid'])
 		r = prepq.query()
 		if not r:
 			prepq.insert()
@@ -276,6 +290,14 @@ class Prep3DRefinement(appionScript.AppionScript):
 		'''
 		pass
 
+	def otherPreparations(self):
+		'''
+		Place holder for any other preparation needed.
+		Currently only Frealign may use this if initial euler angles
+		come from a committed refinement iteration
+		'''
+		pass
+
 	#=====================
 	def start(self):
 		prepdata = self.commitToDatabase()
@@ -290,6 +312,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		for modelid in self.modelids:
 			self.processModel(prepdata,modelid,False)
 		self.processMaskVol(prepdata)
+		self.otherPreparations()
 		self.saveFilesToSend()
 		
 #=====================
