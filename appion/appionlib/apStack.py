@@ -579,6 +579,10 @@ def getStackParticleDiameter(stackdata):
 		stackp = results[0]
 		return apParticle.getParticleDiameter(stackp['particle'])
 
+def getStackRunsFromStack(stackdata):
+	runsinstack = getRunsInStack(stackdata.dbid)
+	return map((lambda x: x['stackRun']),runsinstack)
+
 ####
 # This is a database connections file with no file functions
 # Please keep it this way

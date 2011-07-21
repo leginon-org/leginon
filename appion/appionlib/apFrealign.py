@@ -12,6 +12,7 @@ from appionlib import apStack
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apDefocalPairs
+from appionlib import apRecon
 
 #=====================
 def parseFrealignParamFile(paramfile):
@@ -54,17 +55,22 @@ def parseFrealignParamFile(paramfile):
 
 
 #===============
-def generateParticleParams(params):
-	params['inpar']=os.path.join(params['rundir'],'params.0.par')
+def generateParticleParams(params,initparfile='params.0.par'):
+	params['inpar']=os.path.join(params['rundir'],initparfile)
 	apDisplay.printMsg("Creating parameter file: "+params['inpar'])
 	params['mode']=3
 	stackdata=apStack.getStackParticlesFromId(params['stackid'])
-	apix=params['apix']
 	particleparams={}
 	f=open(params['inpar'],'w')
 	params['noClassification']=0
+	if params['reconiterid']:
+		iterdata = apRecon.getRefineIterDataFromIterationId(params['reconiterid'])
+		eman_sym_name = iterdata['symmetry']['eman_name']
+		
 	print "Writing out particle parameters"
-	for particle in stackdata:
+	if 'last' not in params:
+		params['last'] = len(stackdata)
+	for particle in stackdata[:params['last']]:
 		# defaults
 		particleparams['ptclnum']=particle['particleNumber']
 		particleparams['psi']=0
@@ -103,7 +109,7 @@ def generateParticleParams(params):
 			e2 = fr_eulers['theta']
 			e3 = fr_eulers['psi']
 			# if icos, rotate eulers to 3dem standard orientation
-			if params['sym']=='Icos':
+			if eman_sym_name.lower == 'icos':
 				newEulers = sumEulers([90,-31.7174744,0],[e1,e2,e3])
 				fr_eulers['phi']=newEulers[0]
 				fr_eulers['theta']=newEulers[1]
@@ -368,7 +374,8 @@ def getStackParticleEulersForIteration(params,pnum):
 	particleid = stackp['particle'].dbid
 
 	# find particle in reference stack
-	refstackp = apStack.getStackParticleFromParticleId(particleid,params['compStackId'], nodie=True)
+	refstackid = apStack.getStackIdFromIterationId(params['reconiterid'])
+	refstackp = apStack.getStackParticleFromParticleId(particleid,refstackid, nodie=True)
 	if not refstackp:
 		apDisplay.printWarning('No classification for stack particle %d in reconstruction iteration id: %d' % (pnum, params['reconiterid']))
 		params['noClassification']+=1

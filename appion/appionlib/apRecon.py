@@ -199,6 +199,8 @@ def getRefinementsFromRun(refinerundata):
 	refineitq['refineRun'] = refinerundata
 	return refineitq.query()
 
+def getRefineIterDataFromIterationId(iterid):
+	return appiondata.ApRefineIterData.direct_query(iterid)
 #==================
 #==================
 def getSessionDataFromReconId(reconid):
