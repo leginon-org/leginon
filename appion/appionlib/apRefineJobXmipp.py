@@ -6,6 +6,7 @@ import time
 #appion
 from appionlib import apDisplay
 from appionlib import apRefineJob
+from appionlib import apXmipp
 
 #================
 #================
@@ -64,73 +65,31 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		hedral symmetry key is of possible name, value is that of this package
 		'''
 		xmipp_hedral_symm_names = {'oct':'O','icos':'I'}
-		inputname = inputname.lower()
-		if inputname[0] in ('c','d') or inputname in eman_hedral_symm_names.values():
+		inputname = inputname.lower().split(' ')[0]
+		if inputname[0] in ('c','d') or inputname in xmipp_hedral_symm_names.values():
 			symm_name = inputname.lower()
-		elif inputname in eman_hedral_symm_names.keys():
+		elif inputname in xmipp_hedral_symm_names.keys():
 			symm_name = xmipp_hedral_symm_names[inputname]
 		else:
 			apDisplay.printWarning("unknown symmetry name conversion. Use it directly")
 			symm_name = inputname.upper()
 		return symm_name
 
-	def setXmippSingleModelRefineParams(self,iter):
-		refineparams = ('ang','mask','sym','hard','pad', 'median', 'classiter', 'refine', 'amask', 'phasecls', 'shrink', 'euler2',  'classkeep', 'imask', 'maxshift', 'xfiles', 'tree', 'filt3d')
-		eotestparams = ('ang','mask','sym','hard','pad', 'median', 'classiter', 'refine', 'amask', 'euler2',  'classkeep', 'imask', 'xfiles')
-		return refineparams,eotestparams	
-		
-	def combineEmanParams(self,iter_index,valid_paramkeys):
-		task_params = []
-		for key in valid_paramkeys:
-			if key in self.params.keys():
-				if type(self.params[key]) == type([]):
-					paramvalue = self.params[key][iter_index]
-				else:
-					paramvalue = self.params[key]
-				paramtype = type(paramvalue)
-				if paramtype == type(True):
-					if paramvalue is True:
-						task_params.append(key)
-				elif paramtype == type(0.5):
-					task_params.append('%s=%.3f' % (key,paramvalue))
-				elif paramtype == type(1):
-					task_params.append('%s=%d' % (key,paramvalue))
-				elif paramvalue == '':
-					continue
-				else:
-					task_params.append('%s=%s' % (key,paramvalue))
-		return task_params
-
-	def getSymmetryOrder(self,sym_name):
-		'''
-		This only covers chiral symmetry of 3d point group
-		'''
-		proper = sym_name[0]
-		if proper.lower() == 'c':
-			order = eval(sym_name[1:])
-		elif proper.lower() == 'd':
-			order = eval(sym_name[1:]) * 2
-		elif proper.lower() == 't':
-			order = 12
-		elif proper.lower() == 'o':
-			order = 24
-		elif proper.lower() == 'i':
-			order = 60
-		return order
-
 	def calcRefineMem(self,ppn,boxsize,sym,ang):
-		foldsym = self.getSymmetryOrder(sym)
-		endnumproj = 18000.0/(foldsym*ang*ang)
-		#need to open all projections and 1024 particles in memory
-		numpartinmem = endnumproj + 1024
-		memneed = numpartinmem*boxsize*boxsize*16.0*ppn
-		numgig = math.ceil(memneed/1073741824.0)
-		return int(numgig)
+		numgig = 2
+		return numgig
+
+	def convertToXmippStyleIterParams(self):
+		for iterparamdict in self.iterparams:
+			name = iterparamdict['name']
+			if self.params.keys():
+				strings = map((lambda x: str(x)),self.params[name])
+				self.params[name] = ' '.join(strings)
 
 	def setupXmippProtocol(self):
 		protocolname = 'protocol_projmatch'
 		# Locate protocol_projmatch
-		protocol_projmatch=locateXmippProtocol(protocolname)
+		protocol_projmatch=apXmipp.locateXmippProtocol(protocolname)
 
 		#make threads and mpi processes compatible with the xmipprequirement
 		self.params['alwaysone']=1
@@ -207,139 +166,19 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["AnalysisScript"]               =   'visualize_projmatch.py'
 
 		protocolfile = os.path.join(self.params['recondir'],"xmipp_%s.py" % protocolname)
-		particularizeProtocol(protocol_projmatch,protocolPrm,protocolfile)
+		apXmipp.particularizeProtocol(protocol_projmatch,protocolPrm,protocolfile)
 		return protocolfile
 
 	def runXmippProtocol(self,protocolfile):
-		subprocess.call("python %s" % protocolfilexm,shell=True);
-
-		# Write the run parameters for the posterior uploading
-		protocolPrm["modelid"] = self.params['modelid']
-		f = open("runParameters.txt","w")
-		print >>f,protocolPrm
-		f.close()
-
-	def checkXmippSuccess(self,startiter):
-		if os.path.exists("ProjMatch/Iter_%d/ReferenceLibrary/ref000001.xmp" % startiter):
-			# Create a blank image
-			subprocess.call("xmipp_operate -i recon/ProjMatch/Iter_%d/ReferenceLibrary/ref000001.xmp -mult 0 -o blank.xmp"% startuter,
-				shell=True)
-		else:
-			''' TO DO: would be nice to notify appion that there is an error '''
-			apDisplay.printError("No iteration has been performed")
-
-	def gatherXmippResults(self):
-		# Pickup results
-		os.unlink("partlist.sel")
-		shutil.rmtree("partfiles")
-		os.unlink(fnRef)
-		shutil.rmtree("ProjMatch/ReferenceLibrary")
-		shutil.rmtree("ProjMatch/ProjMatchClasses")
-		os.unlink("ProjMatch/xmipp_protocol_projmatch_backup.py")
-		os.unlink("ProjMatch/original_angles.doc")
-		os.unlink("ProjMatch/partlist.sel")
-
-
-		#Link the results of the last iteration
-		proc = subprocess.Popen("ln -s "+os.path.join(lastIteration,"angles.doc")+" angles.doc", shell=True)
-		proc.wait()
-		proc = subprocess.Popen("ln -s "+os.path.join(lastIteration,"classAverages.hed")+" classAverages.hed", shell=True)
-		proc.wait()
-		proc = subprocess.Popen("ln -s "+os.path.join(lastIteration,"classAverages.img")+" classAverages.img", shell=True)
-		proc.wait()
-		proc = subprocess.Popen("ln -s "+os.path.join(lastIteration,"reconstruction.mrc")+" reconstruction.mrc", shell=True)
-		proc.wait()
-		proc = subprocess.Popen("ln -s "+os.path.join(lastIteration,"ref_angles.doc")+" ref_angles.doc", shell=True)
-		proc.wait()
-		proc = subprocess.Popen("ln -s "+os.path.join(lastIteration,"fsc.txt")+" fsc.txt",shell=True)
-		proc.wait()
+		tasks = {}
+		tasks = self.addToTasks(tasks,'python %s') % protocolfile
 
 	def makePreIterationScript(self):
 		super(XmippSingleModelRefineJob,self).makePreIterationScript()
 		self.addJobCommands(self.addToTasks({},'mv %s threed.0a.mrc' % self.params['modelnames'][0],2,1))
+		self.convertToXmippStyleIterParams()
 		protocolfile = self.setupXmippProtocol()
 		self.runXmippProtocol(protocolfile)
-		self.checkXmippSuccess(self.params['startiter'])
-		self.resfile=open("resolution.txt","w")
-
-	def makeRefineScript(self,iter):
-		'''
-		Xmipp uses single protocol file to run all iteration.  This part is only for getting
-		per iteration results
-		'''
-		lastIteration=iter
-		i = iter
-		iteration = "ProjMatch/Iter_%d" % iter
-		if not os.path.exists(iteration):
-			return
-		rootname=iteration[iteration.find("/")+1:]
-
-		# Remove some files
-		os.unlink(os.path.join(iteration,rootname+"_filtered_reconstruction.vol"))
-		os.unlink(os.path.join(iteration,rootname+"_reference_volume.vol"))
-		os.unlink(os.path.join(iteration,"multi_align2d.sel"))
-		os.unlink(os.path.join(iteration,"reconstruction.sel"))
-		os.unlink(os.path.join(iteration,"reconstruction.doc"))
-		fnAux=os.path.join(iteration,"find_closest_experimental_point.txt")
-		if os.path.exists(fnAux):
-			os.unlink(fnAux)
-
-		# Keep the class averages
-		shutil.copyfile(os.path.join(iteration,"ReferenceLibrary/ref_angles.doc"),
-			os.path.join(iteration,"ref_angles.doc"))
-		fhsel=open("classprojaverages.sel","w")
-		for fileproj in glob.glob(iteration+"/ReferenceLibrary/ref*.xmp"):
-			fhsel.write(fileproj+" 1\n")
-			fileclass=fileproj.replace("ReferenceLibrary/ref",
-				"ProjMatchClasses/proj_match_class")
-			if os.path.exists(fileclass):
-				fhsel.write(fileclass+" 1\n")
-			else:
-				fhsel.write("blank.xmp 1\n")
-		fhsel.close()
-		apXmipp.gatherSingleFilesIntoStack(
-			"classprojaverages.sel",
-			os.path.join(iteration,"classAverages.hed"))
-		shutil.rmtree(iteration+"/ReferenceLibrary")
-		shutil.rmtree(iteration+"/ProjMatchClasses")
-		os.unlink("classprojaverages.sel")
-
-		# Keep the angles
-		os.rename(os.path.join(iteration,rootname+"_current_angles.doc"),
-			os.path.join(iteration,"angles.doc"))
-
-		
-		# Keep the volume
-		SPItoMRC(os.path.join(iteration,rootname+"_reconstruction.vol"),
-			os.path.join(self.params['recondir'],"threed.%03da.mrc"%(iter)))
-		os.unlink(os.path.join(iteration,rootname+"_reconstruction.vol"))
-
-		# Keep the FSC
-		FSCfromXmippToEMAN(os.path.join(iteration,rootname+"_resolution.fsc"),
-			os.path.join(iteration,"fsc.txt"))
-#		os.unlink(os.path.join(iteration,rootname+"_resolution.fsc"))
-		res=apRecon.calcRes(os.path.join(iteration,"fsc.txt"),
-			self.params['boxsize'],self.params['apix'])
-		self.resfile.write("%s:\t%.3f\n" % (rootname,res))
-
-	
-		tasks = {}
-		tasks = self.addToTasks(tasks,'')
-		return tasks
-
-	def makePostIterationScript(self):
-		os.unlink("blank.xmp")
-		self.resfile.close()
-		self.gatherXmippResults()
-
-		tasks = {}
-		tasks = self.addToTasks(tasks,'# pack up the results and put back to remoterundir')
-		tasks = self.addToTasks(tasks,'tar -cvzf model.tar.gz threed.*a.mrc',self.mem,1)
-		tasks = self.addToTasks(tasks,'tar -cvzf results.tar.gz fsc* cls* refine.* particle.* classes_* classes_*.* proj.* sym.* *txt *.job',self.mem,1)
-		tasks = self.addToTasks(tasks,'/bin/mv -v model.tar.gz %s' % (self.params['remoterundir']))
-		tasks = self.addToTasks(tasks,'/bin/mv -v results.tar.gz %s' % (self.params['remoterundir']))
-		tasks = self.addToTasks(tasks,'cd %s' % (self.params['remoterundir']))
-		self.addJobCommands(tasks)
 
 if __name__ == '__main__':
 	app = XmippSingleModelRefineJob()
