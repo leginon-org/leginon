@@ -445,3 +445,24 @@ def compute_stack_of_class_averages_and_reprojections(dir, selfile, refvolume, d
 
 #======================
 #======================
+
+def importProtocolPythonFile(protocolscript, rundir):
+	''' finds protocol python file in directory, protocolscript passed without .py extension, e.g. xmipp_protocol_ml3d '''
+
+	try:
+		if not rundir in sys.path:
+			sys.path.append(os.path.abspath(rundir))
+		p = __import__(protocolscript)		
+	except ImportError, e:
+		print e, "cannot open protocol script, trying to open backup file"
+		try:
+			for root, dirs, files in os.walk(rundir):
+				for name in files:
+					if re.match(str(protocolscript+"_backup.py"), name):
+						if not root in sys.path:
+							sys.path.append(root)				
+			p = __import__(protocolscript+"_backup")
+		except ImportError, e:
+			print e, "cannot open backup protocol file"
+			apDisplay.printError("could not find protocol file: %s ... try uploading as an external refinement" % protocolscript)
+	return p

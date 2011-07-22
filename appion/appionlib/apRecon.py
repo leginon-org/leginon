@@ -337,20 +337,20 @@ def getListFromVector(vector):
 
 	if vector is None:
 		return None
-	intervalos = string.split(vector)
-	if len(intervalos) == 0:
+	intervals = string.split(str(vector))
+	if len(intervals) == 0:
 #		raise RuntimeError,"Empty vector"
 		return None
 	listValues = []
-	for i in range(len(intervalos)):
-		intervalo = intervalos[i]
+	for i in range(len(intervals)):
+		intervalo = intervals[i]
 		listaIntervalo = string.split(intervalo,'x')
 		if len(listaIntervalo) == 1:
 			listValues += listaIntervalo
 		elif len(listaIntervalo) == 2:
 			listValues += [listaIntervalo[1]] * string.atoi(listaIntervalo[0])
 		else:
-			raise RuntimeError,"Unknown syntax: "+intervalos
+			raise RuntimeError,"Unknown syntax: "+intervals
 	return listValues
 
 #==================

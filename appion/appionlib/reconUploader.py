@@ -70,6 +70,10 @@ class generalReconUploader(appionScript.AppionScript):
 		self.parser.add_option("--mass", dest="mass", type="int",
 			help="Mass (in kDa) at which snapshot of density will be contoured", metavar="kDa")
 			
+		### cleanup files
+		self.parser.add_option("--cleanup_files", dest="cleanup_files", default=False, action="store_true",
+			help="cleanup all files associated with the external refinement package")
+						
 	#=====================
 	def checkConflicts(self):
 		''' These are required error checks, everything else should be possible to obtain from the timestamped pickle file '''
@@ -290,11 +294,11 @@ class generalReconUploader(appionScript.AppionScript):
 				apDisplay.printError("iteration %d has not been completed by %s. Please specify the exact iterations " \
 					"that you would like to upload, e.g. --uploadIterations=1,2,3,4,5,6,7,8" % (uploadIterations[-1], self.package))
 		else:
-			if self.params['numiter'] != lastiter:
+			if self.runparams['numiter'] != lastiter:
 				apDisplay.printError("%s job did not go to completion. The last completed iteration is %d, out of " \
 					"%d specified. Please specify the exact iterations that you would like to upload like so: " \
-					"--uploadIterations=1,2,3,4,5,6,7,8" % (self.package, lastiter, self.params['numiter']))
-			uploadIterations = [i for i in range(1,self.params['numiter']+1)]	
+					"--uploadIterations=1,2,3,4,5,6,7,8" % (self.package, lastiter, self.runparams['numiter']))
+			uploadIterations = [i for i in range(1,self.runparams['numiter']+1)]	
 			
 		return uploadIterations
 		
@@ -353,13 +357,18 @@ class generalReconUploader(appionScript.AppionScript):
 		''' fills in database entry for ApRefineIterData table '''
 				
 		### get resolution
-		fscfile = os.path.join(self.resultspath, "recon_%s_it%.3d_vol%.3d.fsc" \
-			% (self.params['timestamp'], iteration, reference_number))
-		fscRes = apRecon.getResolutionFromGenericFSCFile(fscfile, self.runparams['boxsize'], self.runparams['apix'])
-		apDisplay.printColor("FSC 0.5 Resolution: "+str(fscRes), "cyan")
-		resq = appiondata.ApResolutionData()
-		resq['half'] = fscRes
-		resq['fscfile'] = os.path.basename(fscfile)
+		try:
+			fscfile = os.path.join(self.resultspath, "recon_%s_it%.3d_vol%.3d.fsc" \
+				% (self.params['timestamp'], iteration, reference_number))
+			fscRes = apRecon.getResolutionFromGenericFSCFile(fscfile, self.runparams['boxsize'], self.runparams['apix'])
+			apDisplay.printColor("FSC 0.5 Resolution: "+str(fscRes), "cyan")
+			resq = appiondata.ApResolutionData()
+			resq['half'] = fscRes
+			resq['fscfile'] = os.path.basename(fscfile)
+		except Exception, e:
+			print e
+			apDisplay.printWarning("FSC file does not exist or is unreadable")
+			resq = None
 
 		### fill in ApRefineIterData object
 		iterationParamsq = appiondata.ApRefineIterData()
@@ -389,7 +398,11 @@ class generalReconUploader(appionScript.AppionScript):
 			iterationParamsq['classVariance'] = varianceAvgs
 		
 		### insert FSC data into database
-		self.insertFSCData(fscfile, iterationParamsq)
+		try:
+			self.insertFSCData(fscfile, iterationParamsq)
+		except Exception, e:
+			print e
+			apDisplay.printWarning("FSC file does not exist or is unreadable")			
 		
 		### fill in ApRefineReferenceData object
 		referenceParamsq = appiondata.ApRefineReferenceData()
@@ -417,7 +430,7 @@ class generalReconUploader(appionScript.AppionScript):
 				postrefine = True
 		else:
 				postrefine = False
-#		apEulerDraw.createEulerImages(self.refinerunq.dbid, iteration, path=self.params['rundir'], postrefine=postrefine)
+		apEulerDraw.createEulerImages(self.refinerunq.dbid, iteration, path=self.params['rundir'], postrefine=postrefine)
 		for f in glob.glob("euler**png"):
 			shutil.move(f, os.path.join(self.resultspath, f))
 		
@@ -532,7 +545,10 @@ class generalReconUploader(appionScript.AppionScript):
 		else:
 			newfscfile = os.path.join(self.resultspath, "recon_%s_it%.3d_vol%.3d.fsc" \
 				% (self.params['timestamp'], iteration, reference_number))
-			resolution = apRecon.getResolutionFromGenericFSCFile(newfscfile, self.runparams['boxsize'], self.runparams['apix'])
+			try:
+				resolution = apRecon.getResolutionFromGenericFSCFile(newfscfile, self.runparams['boxsize'], self.runparams['apix'])
+			except:
+				resolution = 30
 		apChimera.filterAndChimera(volume, resolution, self.runparams['apix'], 
 			self.runparams['boxsize'], 'snapshot', self.params['contour'], self.params['zoom'],
 			sym='c1', mass=self.params['mass'])	
@@ -566,3 +582,38 @@ class generalReconUploader(appionScript.AppionScript):
 					eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, self.runparams['stackid'])
 		
 		return
+		
+	#=====================
+	def verifyNumberOfCompletedRefinements(self, multiModelRefinementRun=False):
+		""" 
+		queries te database to determine how many iterations of individual refinements have been completed:
+		returns a list of completed iterations in a dictionary of completed refinements
+		"""
+
+		refine_complete = {}	
+		if multiModelRefinementRun is False:
+			iterdata = appiondata.ApRefineIterData()
+			iterdata['refineRun'] = self.refinerunq
+			itercompletedata = iterdata.query()
+			iter_complete = []
+			for iter in itercompletedata:
+				iter_complete.append(iter['iteration'])
+			iter_complete.sort()
+			refine_complete[self.refinerunq['reference_number']] = iter_complete
+		else:
+			refinedata = appiondata.ApRefineRunData()
+			refinedata['multiModelRefineRun'] = self.multimodelq
+			refinecompletedata = refinedata.query()
+			for i, refine in enumerate(refinecompletedata):
+				iterdata = appiondata.ApRefineIterData()
+				iterdata['refineRun'] = refine
+				itercompletedata = iterdata.query()
+				iter_complete = []
+				for iter in itercompletedata:
+					iter_complete.append(iter['iteration'])
+				iter_complete.sort()
+				refine_complete[refine['reference_number']] = iter_complete
+		return refine_complete
+		
+	
+

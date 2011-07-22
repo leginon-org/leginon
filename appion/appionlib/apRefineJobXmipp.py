@@ -17,9 +17,9 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		self.parser.add_option("--MaskVol", dest="maskvol", type="str",
 			help="Arbitrary mask volume file (0 outside protein, 1 inside). Arbitrary and spherical masks "
 			+"are mutually exclusive",default="")
-		self.parser.add_option("--InnerRadius", dest="innerradius", type="int",
+		self.parser.add_option("--innerAlignRadius", dest="innerAlignRadius", type="int",
 			help="Inner radius for alignment",default=2)
-		self.parser.add_option("--OuterRadius", dest="outerradius", type="int",
+		self.parser.add_option("--outerAlignRadius", dest="outerAlignRadius", type="int",
 			help="Outer radius for alignment")
 		self.parser.add_option("--fourierMaxFrequencyOfInterest",
 			dest="fouriermaxfrequencyofinterest", type="float",
@@ -121,8 +121,8 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["MaskFileName"]                 =   self.params['maskvol']
 		protocolPrm["DoProjectionMatching"]         =   True
 		protocolPrm["DisplayProjectionMatching"]    =   False
-		protocolPrm["InnerRadius"]                  =   self.params['innerradius']
-		protocolPrm["OuterRadius"]                  =   self.params['outerradius']
+		protocolPrm["InnerRadius"]                  =   self.params['innerAlignRadius']
+		protocolPrm["OuterRadius"]                  =   self.params['outerAlignRadius']
 		protocolPrm["AvailableMemory"]              =   '2'
 		protocolPrm["AngSamplingRateDeg"]           =   self.params['AngularSteps']
 		protocolPrm["MaxChangeInAngles"]            =   self.params['maxAngularChange']
