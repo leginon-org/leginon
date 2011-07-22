@@ -135,9 +135,9 @@ if (is_numeric($expId)) {
 	$drun = count($subclusterjobs['dogpicker']['running']);
 	$dq = count($subclusterjobs['dogpicker']['queued']);
 
-	$sdone = count($subclusterjobs['signaturepicker']['done']);
-	$srun = count($subclusterjobs['signaturepicker']['running']);
-	$sq = count($subclusterjobs['signaturepicker']['queued']);
+	$sdone = count($subclusterjobs['signature']['done']);
+	$srun = count($subclusterjobs['signature']['running']);
+	$sq = count($subclusterjobs['signature']['queued']);
 	
 	$mdone = count($subclusterjobs['manualpicker']['done']);
 	$mrun = count($subclusterjobs['manualpicker']['running']);
