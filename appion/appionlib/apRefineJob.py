@@ -275,7 +275,8 @@ class RefineJob(basicScript.BasicScript):
 		self.min_mem_list = []
 		self.nproc_list = []
 		self.remoterundir = self.params['remoterundir']
-		self.runname = self.params['runname']
+		#self.runname = self.params['runname']
+		self.setName(self.params['runname'])
 		self.cputime = self.params['cput']
 		
 	def addParallelsToTasks(self,tasks,scripts,mem=2,nproc=1):
@@ -320,7 +321,9 @@ class RefineJob(basicScript.BasicScript):
 	def getWalltime(self):
 		return self.walltime
 	def getName(self):
-		return self.runname                   
+		return self.runname    
+	def setName(self, newname):
+		self.runname = newname + ".appionsub"               
 	def getNodes(self):
 		return self.nodes
 	def getPPN(self):
