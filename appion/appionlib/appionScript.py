@@ -191,7 +191,9 @@ class AppionScript(basicScript.BasicScript):
 			clustq['status'] = "R"
 			clustq['session'] = self.getSessionData()
 			### need a proper way to create a jobtype
-			clustq['jobtype'] = self.functionname.lower()
+			clustq['jobtype']=self.params['jobtype']
+			if not clustq['jobtype']:
+				clustq['jobtype'] = self.functionname.lower()
 			clustq.insert()
 			self.clusterjobdata = clustq
 			return clustq
