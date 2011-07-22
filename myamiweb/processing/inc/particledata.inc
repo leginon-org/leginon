@@ -2480,6 +2480,14 @@ class particledata {
 		return count($r);
 	}
 
+	function getNumRefImages ($alignrun) {
+		$q = "SELECT count(DEF_id) as num "
+			."FROM `ApAlignReferenceData` "
+			."WHERE `REF|ApAlignRunData|alignrun` = '$alignrun'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['num'];
+	}
+
 	function removeAlignStackById($alignStackId) {
 		// Get alignment run for this stack
 		$q = "SELECT `REF|ApAlignRunData|alignrun` as alignrun "
