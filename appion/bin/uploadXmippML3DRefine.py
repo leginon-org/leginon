@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # python
-import os, re, glob, shutil, math
+import os, re, glob, shutil, math, sys
 
 # appion
 from appionlib import appiondata
@@ -182,7 +182,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 		for file in glob.glob("tmpproj*"):
 			apFile.removeFile(file)			
 		
-		os.chdir(self.basepath)
+		os.chdir(self.params['rundir'])
 
 		return
 		
@@ -254,7 +254,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 		for file in list:
 			apFile.removeFile(file)
 			
-		os.chdir(self.basepath)
+		os.chdir(self.params['rundir'])
 
 		return
 
@@ -314,7 +314,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 			particledataf.write("%.6f\n" % 0)
 		particledataf.close()
 		
-		os.chdir(self.basepath)
+		os.chdir(self.params['rundir'])
 				
 		return
 		
@@ -322,20 +322,9 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 	def parseFileForRunParameters(self):
 		''' PACKAGE-SPECIFIC FILE PARSER: if the parameters were not pickled, parse protocols script to determine ML3D params '''
 		
-		os.chdir(self.params['rundir'])
-		protocol_script = os.path.abspath(os.path.join(self.params['rundir'], "xmipp_protocol_ml3d.py"))
-		try:
-			sys.path.append(self.params['rundir'])
-			import xmipp_protocol_ml3d		
-		except ImportError, e:
-			print e, "cannot open ml3d protocol script, trying to open backup file"
-			try:
-				sys.path.append(os.path.abspath(os.path.join(self.params['rundir'], self.runparams['package_params']['WorkingDir'])))
-				import xmipp_protocol_ml3d_backup
-			except ImportError, e:
-				print e, "cannot open backup protocol file"
-				apDisplay.printError("could not find protocol file: %s ... try uploading as an external refinement" % protocol_script)
-
+		### parameters can be found in python protocols
+		xmipp_protocol_ml3d = apXmipp.importProtocolPythonFile("xmipp_protocol_ml3d", self.params['rundir'])
+		
 		packageparams = {}
 		packageparams['InSelFile']						= xmipp_protocol_ml3d.InSelFile
 		packageparams['InitialReference']				= xmipp_protocol_ml3d.InitialReference
@@ -438,6 +427,45 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 		return ML3DProtocolParamsq
 
 	#=====================
+	def cleanupFiles(complete_refinements):
+		''' deletes all intermediate files for which database entries exitst '''
+		
+		### cleanup directories (grey-scale correction and initial reference generation)
+		os.chdir(self.runparams['package_params']['WorkingDir'])
+		for i in range(self.runparams['package_params']['NumberOfReferences']):
+			if os.path.isdir("GenerateSeed_%d" % (i+1)):
+				apFile.removeDir("GenerateSeed_%d" % (i+1))
+		if os.path.isdir("CorrectGreyscale"):
+			apFile.removeDir("CorrectGreyscale")
+		
+		### cleanup temp files
+		for file in glob.glob(os.path.join(self.resultspath, "*tmp.mrc")):
+			apFile.removeFile(file)
+	
+		### cleanup ML3D files (.vol, .xmp, and .proj files for now ... I'm leaving the .basis, .sel, .doc, .hist, and .log files *** Dmitry)
+		apFile.removeFile("corrected_reference.vol")
+		apFile.removeFile("initial_reference.vol")
+		os.chdir(self.ml3dpath)
+		delete_projections = True
+		for reference_number, iters in complete_refinements.iteritems():
+			apFile.removeFile("ml3d_it000000_vol%.6d.vol" % reference_number)
+			for iteration in iters:
+				for file in glob.glob("ml3d_it%.6d*.xmp" % iteration):
+					apFile.removeFile(os.path.join(self.ml3dpath, file))
+				for file in glob.glob("ml3d_it%.6d_vol%.6d.vol" % (iteration, reference_number)):
+					apFile.removeFile(os.path.join(self.ml3dpath, file))
+			if self.runparams['numiter'] != iters[-1]:	### if one of the iterations did not completely upload
+				delete_projections = False
+		if delete_projections is True:
+			for file in glob.glob("ml3d_ref*.xmp"):
+				apFile.removeFile(file)
+			for file in glob.glob("ml3d_lib*.proj"):
+				apFile.removeFile(file)
+		os.chdir(self.params['rundir'])
+	
+		return
+
+	#=====================
 	def start(self):
 		
 		### database entry parameters
@@ -487,14 +515,13 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 				self.insertRefinementIterationData(package_table, package_database_object, iteration, j+1)
 				
 		### calculate Euler jumps
-		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)		
-				
-		### remove unwanted files
-		apDisplay.printMsg("deleting unwanted files")
-		# REMOVE PARTFILES DIRECTORY
-
-		for file in glob.glob(os.path.join(self.resultspath, "*tmp.mrc")):
-			apFile.removeFile(file)	
+		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)			
+			
+		### query the database for the completed refinements BEFORE deleting any files ... returns a dictionary of lists
+		### e.g. {1: [5, 4, 3, 2, 1], 2: [6, 5, 4, 3, 2, 1]} means 5 iters completed for refine 1 & 6 iters completed for refine 2
+		complete_refinements = self.verifyNumberOfCompletedRefinements(multiModelRefinementRun=True)
+		if self.params['cleanup_files'] is True:
+			self.cleanupFiles(complete_refinements)
 			
 		
 #=====================

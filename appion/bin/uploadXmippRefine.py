@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
 #python
-import glob, os, re, shutil
+import glob, os, re, shutil, sys
 
 #appion
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apFile
+from appionlib import apRecon
 from appionlib import apParam
 from appionlib import appiondata
 from appionlib import apXmipp
@@ -161,7 +162,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			particledataf.write("%.6f\n" % 0)
 		particledataf.close()
 		
-		os.chdir(self.basepath)
+		os.chdir(self.params['rundir'])
 				
 		return
 
@@ -169,19 +170,8 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 	def parseFileForRunParameters(self):
 		''' PACKAGE-SPECIFIC FILE PARSER: if the parameters were not pickled, parse protocols script to determine projection-matching params '''
 
-		os.chdir(self.params['rundir'])
-		protocol_script = os.path.abspath(os.path.join(self.params['rundir'], "xmipp_protocol_projmatch.py"))
-		try:
-			sys.path.append(self.params['rundir'])
-			import xmipp_protocol_projmatch		
-		except ImportError, e:
-			print e, "cannot open projection-matching protocol script, trying to open backup file"
-			try:
-				sys.path.append(self.projmatchpath)
-				import xmipp_protocol_projmatch
-			except ImportError, e:
-				print e, "cannot open backup protocol file"
-				apDisplay.printError("could not find protocol file: %s ... try uploading as an external refinement" % protocol_script)
+		### parameters can be found in python protocols
+		xmipp_protocol_projmatch = apXmipp.importProtocolPythonFile("xmipp_protocol_projmatch", self.params['rundir'])
 			
 		packageparams = {}
 		packageparams['NumberofIterations']					= xmipp_protocol_projmatch.NumberofIterations
@@ -362,6 +352,30 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		return refineProtocolParamsq
 	
 	#=====================
+	def cleanupFiles(complete_refinements):
+		''' deletes all intermediate files for which database entries exitst '''
+		
+ 		### cleanup directories (grey-scale correction and initial reference generation)
+		os.chdir(self.runparams['package_params']['WorkingDir'])
+		if os.path.isdir("ProjMatchClasses"):
+			apFile.removeDir("ProjMatchClasses")
+		if os.path.isdir("ReferenceLibrary"):
+			apFile.removeDir("ReferenceLibrary")
+			
+		### cleanup temp files
+		for file in glob.glob(os.path.join(self.resultspath, "*tmp.mrc")):
+			apFile.removeFile(file)
+		
+		### cleanup files (.vol only now ... I'm leaving the .fsc, .sel, and .doc files *** Dmitry)
+		for reference_number, iters in complete_refinements.iteritems():
+			for iteration in iters:
+				for file in glob.glob(os.path.join("Iter_%d" % iteration, "*.vol")): 
+					apFile.removeFile(file)
+		os.chdir(self.params['rundir'])
+		
+		return
+	
+	#=====================
 	def start(self):
 		
 		### database entry parameters
@@ -411,8 +425,13 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			self.insertRefinementIterationData(package_table, package_database_object, iteration)
 				
 		### calculate Euler jumps
-		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)		
-
+		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)	
+		
+		### query the database for the completed refinements BEFORE deleting any files ... returns a dictionary of lists
+		### e.g. {1: [5, 4, 3, 2, 1]} means 5 iters completed for refine 1
+		complete_refinements = self.verifyNumberOfCompletedRefinements(multiModelRefinementRun=False)
+		if self.params['cleanup_files'] is True:
+			self.cleanupFiles(complete_refinements)
 
 #=====================
 if __name__ == "__main__":
