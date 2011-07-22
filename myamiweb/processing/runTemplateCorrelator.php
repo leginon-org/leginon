@@ -203,7 +203,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher',
 			if ($defdiam == 0) {
 				$tempdiam = $templateinfo['diam'];
 				if ($tempdiam)
-					$defdiam = $tempdiam*1.3;
+					$defdiam = round($tempdiam*1.3);
 			}
 
 			$filename=$templateinfo[path]."/".$templateinfo[templatename];
