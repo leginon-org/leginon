@@ -22,7 +22,7 @@ $selectedcluster=strtolower($selectedcluster);
 // TODO: docpop params need to change name: cputime, reconpernode, procpernode
 class clusterParamsForm extends BasicForm
 {
-	function __construct( $nodes='', $ppn='', $rpn='', $mem='', $walltime='', $cput='', $cluster='', $remoterundir='' ) 
+	function __construct( $nodes='', $ppn='', $rpn='', $mem='', $walltime='', $cput='', $cluster='', $remoteoutdir='' ) 
 	{
 		parent::__construct();		
 		
@@ -35,15 +35,18 @@ class clusterParamsForm extends BasicForm
 		$cput 		= ( $cput == '') ? C_CPUTIME_DEF : $cput;
 
 		// TODO: known issue- the first time through, if a host is returning the path
-		// based on the $_POST var containing the outdir, the remoterundir will be blank
+		// based on the $_POST var containing the outdir, the remoteoutdir will be blank
 		// because the outdir has not been posted.
-		if ( $remoterundir == '' ) {
+		if ( $remoteoutdir == '' ) {
 			global $clusterdata;
 			$clusterdata->post_data();
-			$remoterundir = $clusterdata->get_path();
+			$remoteoutdir = $clusterdata->get_path();
 		}
 		
-		$params = &$this->getFormParams();
+		$params = $this->getFormParams();
+		
+		// The help section corresponds to the array key for these parameters found in help.js for popup help.
+		$params->setHelpSection( "cluster" );
 				
 		$params->addParam( "nodes", $nodes, "Nodes" );
 		$params->addParam( "ppn", $ppn, "Proc/Node" );
@@ -52,7 +55,7 @@ class clusterParamsForm extends BasicForm
 		$params->addParam( "walltime", $walltime, "Wall Time" );
 		$params->addParam( "cput", $cput, "CPU Time" );
 		$params->addParam( "cluster", $cluster, "Select Host" );
-		$params->addParam( "remoterundir", $remoterundir, "Processing host run directory" );
+		$params->addParam( "remoteoutdir", $remoteoutdir, "Processing host output directory" );
 		
 		// add validations
 		$params->addValidation( "nodes", "req" );
@@ -119,7 +122,7 @@ class clusterParamsForm extends BasicForm
 		
 		// row 4
 		$html.= "<tr><td colspan=3>\n";
-		$html.= $params->insertTextFieldInRow( "remoterundir", 50 );
+		$html.= $params->insertTextFieldInRow( "remoteoutdir", 50 );
 		$html.= "</td></tr>\n";
 		
 		// End table
@@ -165,8 +168,8 @@ class clusterParamsForm extends BasicForm
 
 			global $clusterdata;
 			$clusterdata->post_data();
-			$remoterundir = $clusterdata->get_path();
-			$params->setParamValue( 'remoterundir', $remoterundir );
+			$remoteoutdir = $clusterdata->get_path();
+			$params->setParamValue( 'remoteoutdir', $remoteoutdir );
 			
 			// TODO: this might not work...may need to remove old validations first
 			$valcheck = "maxval=".C_PPN_MAX;

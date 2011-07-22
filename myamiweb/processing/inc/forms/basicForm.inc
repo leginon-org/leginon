@@ -158,6 +158,23 @@ class BasicForm
 		return $command;
 	}
 	
+	// remove a specific flag from a command string
+	function removeCommandFlag( $command, $flagName, $paramName='', $value='' )
+	{
+		if ( $paramName == '' ) {
+			$paramName = $flagName;
+		}
+		if ( $value === '' ) {
+			$value = $this->formParams->getParamValue( $paramName );
+		}
+		if ( $value !== '' ) {
+			$flagString = "--".$flagName."=".$value." ";
+			$command = str_replace( $flagString,"", $command );
+		}
+		
+		return $command;
+	}
+	
 	public function validate( $postArray )
 	{
 		$this->formParams->getPostedValues( $postArray );

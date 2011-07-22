@@ -8,15 +8,27 @@ require_once "formGenerator.inc";
 class FormParameters
 {
 	private $params; //array of parameters
+	private $helpSection; // corresponds to array key in help.js associated with this form
 	
-	function __construct( $id='', $label='' ) 
+	function __construct( $id='', $label='', $helpSection='' ) 
 	{
-		$this->id = $id;
-		$this->label = $label;
+		$this->id 			= $id;
+		$this->label 		= $label;
+		$this->helpSection 	= $helpSection;
 		
 		$this->formLib = new FormGeneratorLib();
 	}
-
+	
+	public function setHelpSection( $helpSection ) 
+	{
+		$this->helpSection = $helpSection;
+	}
+	
+	public function getHelpSection() 
+	{
+		return $this->helpSection;
+	}
+	
 	// add a parameter to the list of parameters. This may be used in the constructor.
 	// example usage: 	$this->addParam( "numIters", 10, "number of iterations" );
 	//
@@ -152,105 +164,127 @@ class FormParameters
 	// -----------------------------------------------
 	// Begin html element funtions
 	// -----------------------------------------------
+	private function setHelpKey( $name, $helpkey='' ) 
+	{
+		// if the help key is empty, and the helpSection is set, prepend the help section 
+		// to the name of the parameter. If the helpSection is not set, just use the name.
+		if (empty( $helpkey )) {
+			$helpkey = ( !empty($this->helpSection) ) ? $this->helpSection.".".$name : $name;
+		}
+		
+		return $helpkey;
+	}
 	
-	public function insertTextArea( $name, $label='', $value='', $rows=3, $cols=65, $enable='', $note='' )
+	public function insertTextArea( $name, $rows=3, $cols=65, $note='', $helpkey='' )
 	{
 		// if the parameter has been "hidden" just return an empty string.
 		if ( $this->params[$name]['hidden'] ) {
 			$html = "";
 		} else {
+			$helpkey = $this->setHelpKey( $name, $helpkey );			
 			$html = $this->formLib->insertTextArea( $this->params[$name]['name'], 
 													$this->params[$name]['label'], 
 													$this->params[$name]['value'], 
 													$rows, 
 													$cols, 
 													$this->params[$name]['enable'], 
-													$note );
+													$note,
+													$helpkey );
 		}
 		
 		return $html;
 	}
 	
-	public function insertTextField( $name, $size=20, $note='' )
+	public function insertTextField( $name, $size=20, $note='', $helpkey='' )
 	{
 		// if the parameter has been "hidden" just return an empty string.
 		if ( $this->params[$name]['hidden'] ) {
 			$html = "";
 		} else {
+			$helpkey = $this->setHelpKey( $name, $helpkey );			
 			$html = $this->formLib->insertTextField( $this->params[$name]['name'], 
 													$this->params[$name]['label'], 
 													$this->params[$name]['value'], 
 													$size, 
 													$this->params[$name]['enable'], 
-													$note );
+													$note,
+													$helpkey );
 		}
 		
 		return $html;
 	}
 	
-	public function insertTextFieldInRow( $name, $size=20, $note='' )
+	public function insertTextFieldInRow( $name, $size=20, $note='', $helpkey='' )
 	{
 		// if the parameter has been "hidden" just return an empty string.
 		if ( $this->params[$name]['hidden'] ) {
 			$html = "";
 		} else {
+			$helpkey = $this->setHelpKey( $name, $helpkey );					
 			$html = $this->formLib->insertTextFieldInRow( $this->params[$name]['name'], 
 													$this->params[$name]['label'], 
 													$this->params[$name]['value'], 
 													$size, 
 													$this->params[$name]['enable'], 
-													$note );
+													$note,
+													$helpkey );
 		}
 		
 		return $html;
 	}
 	
-	public function insertStackedTextField( $name, $size=20, $note='' )
+	public function insertStackedTextField( $name, $size=20, $note='', $helpkey='' )
 	{
 		// if the parameter has been "hidden" just return an empty string.
 		if ( $this->params[$name]['hidden'] ) {
 			$html = "";
 		} else {
+			$helpkey = $this->setHelpKey( $name, $helpkey );			
 			$html = $this->formLib->insertStackedTextField( $this->params[$name]['name'], 
 															$this->params[$name]['label'], 
 															$this->params[$name]['value'], 
 															$size, 
 															$this->params[$name]['enable'], 
-															$note );
+															$note,
+															$helpkey );
 		}
 			
 		return $html;
 	}
 	
-	public function insertCheckboxField( $name, $note='' )
+	public function insertCheckboxField( $name, $note='', $helpkey='' )
 	{
 		// if the parameter has been "hidden" just return an empty string.
 		if ( $this->params[$name]['hidden'] ) {
 			$html = "";
 		} else {
+			$helpkey = $this->setHelpKey( $name, $helpkey );			
 			$html = $this->formLib->insertCheckboxField( $this->params[$name]['name'], 
 														$this->params[$name]['label'], 
 														$this->params[$name]['value'], 
 														$this->params[$name]['enable'], 
-														$note );
+														$note,
+														$helpkey );
 		}
 
 		return $html;
 	}		
 
-	public function insertRadioField( $name, $value, $label, $note='' )
+	public function insertRadioField( $name, $value, $label, $note='', $helpkey='' )
 	{
 		// if the parameter has been "hidden" just return an empty string.
 		if ( $this->params[$name]['hidden'] ) {
 			$html = "";
 		} else {
+			$helpkey = $this->setHelpKey( $name, $helpkey );			
 			$checked = ( $this->params[$name]['value'] == $value ) ? "CHECKED" : "";
 			$html = $this->formLib->insertRadioField( $this->params[$name]['name'], 
 														$label, 
 														$value,
 														$checked, 
 														$this->params[$name]['enable'], 
-														$note );
+														$note,
+														$helpkey );
 		}
 
 		return $html;

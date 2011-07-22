@@ -16,6 +16,9 @@ class RunParametersForm extends BasicForm
 	{
 		parent::__construct();
 		$params = $this->getFormParams();
+		
+		// The help section corresponds to the array key for these parameters found in help.js for popup help.
+		$params->setHelpSection( "runparams" );
 				
 		$params->addParam( "runname", $runname, "Run name" );
 		$params->addParam( "outdir", $outdir, "Output directory" );

@@ -323,15 +323,15 @@ var help = {
 		'randdefstd' : 'standard deviation (in microns) for the gaussian distribution of defoci randomizations about the mean',
 		'ace2correct' : 'correct images after applying CTF. Several options are given',
 		'correctiontype' : 'Three options are available: <br><br><b> 1) Applied CTF </b> This is the simplest method, which corrects the images by wiener filtering the particles using the same defocus values as those that were applied. <br><br><b> 2) Use ACE2 Estimate </b> This method uses ACE2 to estimate the applied defoci. These Estimated values are then used to correct each micrograph and particle, simulating reality. In test runs, ACE2 either gets the exact value or completely fails. The latter case is most likely due to the fact that too much noise has been added before estimating. If this is the case, you can try decreasing SNR1 to 1, while keeping SNR Total as is at 0.05 (which is what it should be for ice images). <br><br><b> 3) Perturb Applied CTF </b> The correction values will be perturbed according to a gaussian mean (the applied CTF) and standard deviation (specified below) of the applied defoci. If you want to introduce errors in the correction phase, use this option.',
-		'ace2correct_std' : 'used only in conjunction with the perturbation option above, if you want to introduce random errors in the CTF correction process',		
+		'ace2correct_std' : 'used only in conjunction with the perturbation option above, if you want to introduce random errors in the CTF correction process',
 	},
 
 	'eman' : {
 /**
 * these should be separate
 **/
-		'imask' : 'Radius of internal mask (in pixels)',
 		'nodes' : 'Nodes refers to the number of computer to process on simultaneously.  The more nodes you get the faster things will get process, but more nodes requires that you wait longer before being allowed to begin processing.',
+		'imask' : 'Radius of internal mask (in pixels)',
 		'walltime' : 'Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock.  (The reference to a wall clock is how the term originally got its name.)',
 		'cputime' : 'Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock.  (The reference to a wall clock is how the term originally got its name.)',
 		'memory' : 'Amount of memory needed per node (not per processor)',
@@ -473,5 +473,16 @@ var help = {
 		'outvol' : 'Name of output volume',
 
 		'setuponly' : 'If setuponly is specified, everything will be set up but frealign will not be run',
+	},
+	'cluster' : {
+		'nodes' : 'Nodes refers to the number of computer to process on simultaneously.  The more nodes you get the faster things will get process, but more nodes requires that you wait longer before being allowed to begin processing.',
+		'walltime' : 'Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock.  (The reference to a wall clock is how the term originally got its name.)',
+		'cput' : 'Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock.  (The reference to a wall clock is how the term originally got its name.)',
+		'mem' : 'Amount of memory needed per node (not per processor)',
+	},	
+	'runparams' : {
+		'runname' : 'Specifies the name associated with the processing results unique to the specified session and parameters.  An attempt to use the same run name for a session using different processing parameters will result in an error. The Default is automatically incremented',
+		'description' : 'brief description attributed with the processing results',
+		'outdir' : 'The base output directory to which files will be stored.  If you are testing, switch \"appion\" to \"temp\".  A subdirectory of the run name will be appended for actual output',
 	}	
 }

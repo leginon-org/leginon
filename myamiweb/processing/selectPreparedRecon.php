@@ -229,10 +229,10 @@ function jobForm($extra=false)
 	$javafunc .= $selectedRefineForm->setDefaults();
 	$javafunc .= $selectedRefineForm->additionalJavaScript();
 	// TODO: does the order of these make a difference??
-	$javafunc .= writeJavaPopupFunctions('appion');
+	//$javafunc .= writeJavaPopupFunctions('appion');
 	//$javafunc .= writeJavaPopupFunctions('frealign');
 	//$javafunc .= writeJavaPopupFunctions('eman');
-	//$javafunc .= writeJavaPopupFunctions();
+	$javafunc .= writeJavaPopupFunctions();
 	
 	processing_header("Refinement Job Launcher","Refinement Job Launcher", $javafunc);
 
@@ -387,7 +387,7 @@ function createCommand ($extra=False)
 	 PART 3: Create program command
 	 ******************** */
 	// All jobs are sent to the cluster agent
-	$command = "runjob.py ";
+	$command = "runJob.py ";
 	
 	// Instantiate the class that defines the forms for the selected method of refinement.
 	$command .= $selectedRefineForm->buildCommand( $_POST );
@@ -407,6 +407,12 @@ function createCommand ($extra=False)
 		
 	// collect processing host parameters
 	$command .= $clusterParamForm->buildCommand( $_POST );
+	$command = $clusterParamForm->removeCommandFlag( $command, "cluster" );
+	$command = $clusterParamForm->removeCommandFlag( $command, "remoteoutdir" );
+	
+	// Add the local host to the command
+	// TODO: this needs to grab the local host from config.php
+	$command .= "--localhost=amibox03 ";
 	
 	/* *******************
 	 PART 4: Create header info, i.e., references
@@ -420,7 +426,7 @@ function createCommand ($extra=False)
 	// submit command
 	$errors = showOrSubmitCommand($command, $headinfo, 'runrefine', $nproc);
 	// if error display them
-	if ($errors) $errorCallbackFunc($errors);
+	if ($errors) jobForm($errors);
 	
 };
 
@@ -428,7 +434,6 @@ function copyFilesToCluster()
 {
 	global $clusterdata;
 	$clusterdata->post_data();
-	//var_dump($clusterdata);
 
 	$host = $clusterdata->hostname;
 	$user = $_SESSION['username'];
@@ -441,9 +446,8 @@ function copyFilesToCluster()
 	$clusterpath = formatEndPath($clusterpath);
 	
 	$runname = $_POST['runname'];
-	$outdir = $_POST['outdir'].$runname;
+	$rundir = $_POST['outdir'].$runname;
 	$clusterpath = $clusterpath.$runname;
-	
 	
 	// create appion directory & copy list of files to copy
 	// TODO: where exactly should files be copied to?
@@ -462,7 +466,7 @@ function copyFilesToCluster()
 	}
 	
 	// Get list of files to copy
-	$files_to_remote_host = $outdir."/files_to_remote_host";
+	$files_to_remote_host = $rundir."/files_to_remote_host";
 	$files = file_get_contents($files_to_remote_host);
 	
 	// copy each listed file to the cluster	

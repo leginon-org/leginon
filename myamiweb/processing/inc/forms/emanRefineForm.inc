@@ -66,6 +66,7 @@ class EmanRefineForm extends BasicRefineForm
 		$command = $this->addCommandFlag( $command, "outerMaskRadius" );
 		$command = $this->addCommandFlag( $command, "innerMaskRadius" );
 		$command = $this->addCommandFlag( $command, "symmetry" );
+		$command = $this->addCommandFlag( $command, "endIter" );
 		$command = $this->addCommandFlag( $command, "imask" );
 		$command = $this->addCommandFlag( $command, "maxshift" );
 		$command = $this->addCommandFlag( $command, "hard" );

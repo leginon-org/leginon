@@ -65,14 +65,14 @@ function jobForm($extra=false) {
 	
 	// set the runname
 	// the default run name is the jobtype followed by an ever incrementing number
-	$jobType = "preprefine".$reconMethod;
+	$jobtype = "preprefine".$reconMethod;
 	$particle = new particledata();
-	$reconruns = $particle->getMaxRunNumber( $jobType, $expId );
+	$reconruns = $particle->getMaxRunNumber( $jobtype, $expId );
 	
 	// sanity check - make certain we are not going to overwrite data
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	
-	// TODO: should '*recon' be repaced with $jobType??
+	// TODO: should '*recon' be repaced with $jobtype??
 	while (file_exists($outdir.'*recon'.($reconruns+1))) {
 		$reconruns += 1;
 	}
@@ -92,7 +92,7 @@ function jobForm($extra=false) {
 
 	
 	// add javascript functions
-	$javafunc .= writeJavaPopupFunctions('appion');
+	$javafunc .= writeJavaPopupFunctions();
 	
 	// add the appion processing header
 	processing_header("Appion: Recon Refinement","Prepare Recon Refinement",$javafunc);
@@ -113,6 +113,7 @@ function jobForm($extra=false) {
 	}
 	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
 	echo "<input type='hidden' name='method' value='".$_POST['method']."'>\n";
+	echo "<input type='hidden' name='jobtype' value='".$jobtype."'>\n";
 	echo "<input type='hidden' NAME='kv' value='$kv'>";
 	echo "<input type='hidden' NAME='apix' value='$apix'>";
 	if ($_POST['reconstackval'] && $stackid != $reconstackid) {
@@ -166,6 +167,7 @@ function createCommand ($extra=False)
 	/* ***********************************
 	 PART 1: Get variables from POST array and validate
 	 ************************************* */
+
 	// validate processing run parameters
 	$runParametersForm = new RunParametersForm();
 	$errorMsg = $runParametersForm->validate( $_POST );
@@ -212,10 +214,12 @@ function createCommand ($extra=False)
 	/* *******************
 	 PART 5: Show or Run Command
 	 ******************** */
+	$jobtype = $_POST['jobtype'];
+	
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'preprefine', $nproc);
+	$errors = showOrSubmitCommand( $command, $headinfo, $jobtype, $nproc );
 	// if error display them
-	if ($errors) jobForm($errors);
+	if ( $errors ) jobForm( $errors );
 };
 
 ?>

@@ -956,11 +956,11 @@ function prepRefineTable($frealignprepid) {
 	$id = $data['DEF_id'];	
 
 	if ($_POST['hideItem'.$id] == 'hide') {
-		$particle->updateHide('ApFrealignPrepareData', $id, '1');
+		$particle->updateHide('ApPrepRefineData', $id, '1');
 		$particle->abortClusterJob($data['jobid']);
 		$data['hidden']=1;
 	} elseif ($_POST['unhideItem'.$id] == 'unhide') {
-		$particle->updateHide('ApFrealignPrepareData', $id, '0');
+		$particle->updateHide('ApPrepRefineData', $id, '0');
 		$particle->updateClusterJobStatus($data['jobid'], "D");
 		$data['hidden']='0';
 	}
