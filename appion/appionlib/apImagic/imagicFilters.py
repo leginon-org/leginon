@@ -92,56 +92,39 @@ def mask2D(boxsz, mask, infile=False, maskfile="mask2Dimgfile"):
 	"""
 
 	### generate a 2D mask
-	f=open(batchfile,"w")
-	f.write("#!/bin/csh -f\n")
-	f.write("setenv IMAGIC_BATCH 1\n")
-	f.write("%s/stand/testim.e <<EOF\n"%imagicroot)
-	f.write("%s\n"%maskfile)
-	f.write("%i,%i\n"%(boxsz,boxsz))
-	f.write("real\n")
-	f.write("disc\n")
-	f.write("%.3f\n"%mask)
-	f.write("EOF\n")
+#	f=open(batchfile,"w")
+#	f.write("#!/bin/csh -f\n")
+#	f.write("setenv IMAGIC_BATCH 1\n")
+	apDisplay.printMsg("creating 2D mask")
+	myIm = pymagic.ImagicSession("stand/testim.e")
+	myIm.toImagicQuiet("%s"%maskfile)
+	myIm.toImagicQuiet("%i,%i"%(boxsz,boxsz))
+	myIm.toImagicQuiet("real")
+	myIm.toImagicQuiet("disc")
+	myIm.toImagicQuiet("%.3f"%mask)
+	myIm.close()
 
 	if not infile:
-		f.close()
-		apDisplay.printMsg("creating 2D mask")
-		executeImagicBatchFile(batchfile, logfile=logf)
 		# check proper execution
 		if not os.path.exists(maskfile+".hed"):
 			apDisplay.printError("mask generation did not execute properly")
-		checkLogFileForErrors(logf)
-
-		if keepfiles is not True:
-			os.remove(batchfile)
-			os.remove(logf)
-		return maskfile+".hed"
+		return maskfile
 
 	### if infile is specified, apply mask to images
-	fname,ext=os.path.splitext(infile)
-	if not os.path.exists(fname+".hed"):
-		apDisplay.printError("input file: '%s' is not in imagic format"%infile)
-
+	fname = pymagic.fileFilter(infile)
 	file_ma=fname+"_ma"
 
-	f.write("%s/stand/twoimag.e <<EOF\n"%imagicroot)
-	f.write("mul\n")
-	f.write("%s\n"%fname)
-	f.write("%s\n"%maskfile)
-	f.write("%s\n"%file_ma)
-	f.write("EOF\n")
-	f.close()
-
 	apDisplay.printMsg("applying 2D mask")
-	executeImagicBatchFile(batchfile, logfile=logf)
+	myIm = pymagic.ImagicSession("stand/twoimag.e")
+	myIm.toImagicQuiet("mul")
+	myIm.toImagicQuiet("%s"%fname)
+	myIm.toImagicQuiet("%s"%maskfile)
+	myIm.toImagicQuiet("%s"%file_ma)
+	myIm.close()
+
 	# check proper execution
 	if not os.path.exists(file_ma+".hed"):
 		apDisplay.printError("masking did not execute properly")
-	checkLogFileForErrors(logf)
-
-	if keepfiles is not True:
-		os.remove(batchfile)
-		os.remove(logf)
 
 	return file_ma
 
