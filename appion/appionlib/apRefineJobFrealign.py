@@ -46,9 +46,9 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 					'help':"1,2, or 4. Padding factor for reference structure. iblow=4 requires the most memory but results in the fastest search & refinement."},
 
 				####card 2
-				#{'name':"mask", 
+				#{'name':"outerMaskRadius", 
 				#	'help':"mask from center of particle to outer edge"},
-				{'name':"imask", 'default':0, 
+				{'name':"innerMaskRadius", 'default':0, 
 					'help':"inner mask radius"},
 				{'name':"wgh", 'default':0.07, 
 					'help':"amplitude contrast"},
@@ -152,7 +152,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		card = ("cform", "mode" , "fmag", "fdef", "fastig", "fpart", "iewald","fbeaut", "fcref", "fmatch", "ifsc", "fstat", "iblow",)
 		frealign_inputparams.append(card)
 		####card 2
-		card = ("mask", "imask", "apix", "wgh", "xstd", "pbc", "boff", "ang", "itmax", "ipmax",)
+		card = ("outerMaskRadius", "innerMaskRadius", "apix", "wgh", "xstd", "pbc", "boff", "ang", "itmax", "ipmax",)
 		frealign_inputparams.append(card)
 		####card 5
 		card = ("sym",)

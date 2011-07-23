@@ -87,7 +87,7 @@ class Agent (object):
         if "emanrecon" == jobType:
             jobInstance = apRefineJobEman.EmanRefineJob(command)
         elif "frealignrecon" == jobType:
-            jobInstance = apRefineJobFrealignJob.FrealignRefineJob(command)
+            jobInstatnce = apRefineJobFrealign.FrealignRefineJob(command)
         elif "xmipprecon" == jobType:
             jobInstance = apRefineXmipp.XmippSingleModelRefineJob(command)
         elif "xmippml3drecon" == jobType:
