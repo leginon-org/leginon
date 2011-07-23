@@ -245,34 +245,25 @@ class RefineJob(basicScript.BasicScript):
 		f.writelines(map((lambda x: x+'\n'),self.files_from_remote_host))
 		f.close()
 
-	def makeCopyResultsToLocalHostScript(self):
+	def makePackResultsScript(self):
 		tasks = {}
 		tasks = self.addCleanUpReconDirTasks(tasks)
 		tasks = self.addToTasks(tasks,'cd %s' % self.params['remoterundir'])
 		result_tar = 'recon_results.tar.gz'
 		self.files_from_remote_host.append(result_tar)
 		tasks = self.addToTasks(tasks,'tar cvzf recon_results.tar.gz %s/*' % self.params['recondir'])
-
 		self.saveFileListFromRemoteHost()
-		tasks = self.addCopyByFileListFromRemoteHostScript(tasks)
-		self.addJobCommands(tasks)
-
-	def makeMoveResultsToRundirScript(self):
-		tasks = {}
-		tasks = self.addCleanUpReconDirTasks(tasks)
-		tasks = self.addToTasks(tasks,'cd %s' % self.params['remoterundir'])
-		tasks = self.addToTasks(tasks,'/bin/mv %s/* %s' % (self.params['recondir'],self.params['rundir']))
-		self.saveFileListFromRemoteHost()
+		if self.params['remoterundir'] != self.params['rundir']:
+			tasks = self.addCopyByFileListFromRemoteHostScript(tasks)
 		self.addJobCommands(tasks)
 
 	def makeRefineScript(self,iter):
 		tasks = {}
+		'''
+		Need to add what is needed in the subclass
+		'''
 		tasks = self.addToTasks(tasks,'')
 		return tasks
-		print 'make refine script in RefineJob'
-		'''
-		Need to be implemented in the subclass
-		'''
 
 	def setAttributes(self):
 		self.ppn = self.params['ppn']
@@ -324,11 +315,7 @@ class RefineJob(basicScript.BasicScript):
 			self.addJobCommands(self.makeRefineScript(iter))
 		self.makePostIterationScript()
 		print self.params['remoterundir']
-		print self.params['rundir']
-		if self.params['remoterundir'] != self.params['rundir']:
-			self.makeCopyResultsToLocalHostScript()
-		else:
-			self.makeMoveResultsToRundirScript()
+		self.makePackResultsScript()
 
 	def getWalltime(self):
 		return self.walltime
