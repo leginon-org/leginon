@@ -12,7 +12,9 @@ from appionlib import apParam
 from appionlib import appiondata
 from appionlib import apXmipp
 from appionlib import apSymmetry
+from appionlib import apImagicFile
 from appionlib import reconUploader
+from pyami import spider
 
 
 #======================
@@ -65,7 +67,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			### remove "lastdir" component from selfile (created by Xmipp program), then extract header information to docfile
 			f = open(selfile, "r")
 			lines = f.readlines()
-			newlines = [re.sub(str(tail)+"/", "", line) for line in lines]
+			newlines = [re.sub("ProjMatchClasses/", "", line) for line in lines]
 			f.close()
 			f = open(selfile[:-4]+"_new.sel", "w")
 			f.writelines(newlines)
@@ -113,7 +115,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			### remove unnecessary files
 			for file in glob.glob("tmpproj*"):
 				apFile.removeFile(file)
-			os.chdir(workingdir)
+			os.chdir(self.params['rundir'])
 		else:
 			apDisplay.printWarning("all projection-matching files were cleaned up ... NOT creating class-average / re-projection stack")
 
@@ -352,10 +354,10 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		return refineProtocolParamsq
 	
 	#=====================
-	def cleanupFiles(complete_refinements):
+	def cleanupFiles(self, complete_refinements):
 		''' deletes all intermediate files for which database entries exitst '''
 		
- 		### cleanup directories (grey-scale correction and initial reference generation)
+ 		### cleanup directories (projection-matching and reference libraries)
 		os.chdir(self.runparams['package_params']['WorkingDir'])
 		if os.path.isdir("ProjMatchClasses"):
 			apFile.removeDir("ProjMatchClasses")
@@ -394,7 +396,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		### upload each iteration
 		for iteration in uploadIterations:
 		
-			apDisplay.printColor("uploading interation %d", "cyan")
+			apDisplay.printColor("uploading iteration %d" % iteration, "cyan")
 		
 			### set package parameters, as they will appear in database entries
 			package_database_object = self.instantiateProjMatchParamsData(iteration)

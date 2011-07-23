@@ -562,6 +562,9 @@ class generalReconUploader(appionScript.AppionScript):
 					
 			### make table entries of good-bad particles
 			apRecon.setGoodBadParticlesFromReconId(reconrunid)
+
+			### verify completed refinements and iterations
+			refinecomplete = self.verifyNumberOfCompletedRefinements(multiModelRefinementRun=self.multiModelRefinementRun)
 			
 			if self.multiModelRefinementRun is True: 
 				### Euler jumpers calculated from ApMultiModelRefineRunData in multi-model case, looping over values in all single-model refinements			
@@ -575,8 +578,9 @@ class generalReconUploader(appionScript.AppionScript):
 					### CASES. THEREFORE, THE LAST RECONRUNID IS PASSES ... * DMITRY
 					eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, self.runparams['stackid'], multimodelrunid=multimodelrunid)
 			else:
-				### Euler jumpers calculated from ApRefineRunData in single-model case	
-				if len(uploadIterations) > 1:
+				### Euler jumpers calculated from ApRefineRunData in single-model case
+				if len(uploadIterations) > 1 or \
+				(refinecomplete.itervalues().next()[-1] == self.runparams['numiter'] and len(refinecomplete.itervalues().next())>1): 
 					apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
 					eulerjump = apEulerJump.ApEulerJump()
 					eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, self.runparams['stackid'])
