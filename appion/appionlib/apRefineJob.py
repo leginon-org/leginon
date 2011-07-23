@@ -249,9 +249,10 @@ class RefineJob(basicScript.BasicScript):
 		tasks = {}
 		tasks = self.addCleanUpReconDirTasks(tasks)
 		tasks = self.addToTasks(tasks,'cd %s' % self.params['remoterundir'])
-		result_tar = 'recon_results.tar.gz'
+		tasks = self.addToTasks(tasks,'cd %s' % self.params['recondir'])
+		result_tar = os.path.join(self.params['remoterundir'],'recon_results.tar.gz')
 		self.files_from_remote_host.append(result_tar)
-		tasks = self.addToTasks(tasks,'tar cvzf recon_results.tar.gz %s/*' % self.params['recondir'])
+		tasks = self.addToTasks(tasks,'tar cvzf %s *' % (result_tar))
 		self.saveFileListFromRemoteHost()
 		if self.params['remoterundir'] != self.params['rundir']:
 			tasks = self.addCopyByFileListFromRemoteHostScript(tasks)
