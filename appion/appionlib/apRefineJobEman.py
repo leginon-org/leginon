@@ -45,6 +45,7 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		self.params['pad'] = map((lambda x: pad),range(self.params['numiter']))
 		# copy to eman standard name for easier parameter settings
 		self.params['mask'] = self.params['outerMaskRadius']
+		self.params['sym'] = self.params['symmetry']
 		self.params['imask'] = self.params['innerMaskRadius']
 		self.params['ang'] = self.params['angSampRate']
 
@@ -63,8 +64,8 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		return symm_name
 
 	def setEmanRefineParams(self,iter):
-		refineparams = ('ang','mask','symmetry','hard','pad', 'median', 'classiter', 'refine', 'amask', 'phasecls', 'shrink', 'euler2',  'classkeep', 'imask', 'maxshift', 'xfiles', 'tree', 'filt3d')
-		eotestparams = ('ang','mask','symmetry','hard','pad', 'median', 'classiter', 'refine', 'amask', 'euler2',  'classkeep', 'imask', 'xfiles')
+		refineparams = ('ang','mask','sym','hard','pad', 'median', 'classiter', 'refine', 'amask', 'phasecls', 'shrink', 'euler2',  'classkeep', 'imask', 'maxshift', 'xfiles', 'tree', 'filt3d')
+		eotestparams = ('mask','sym','hard','pad', 'median', 'classiter', 'refine',  'classkeep', 'imask')
 		return refineparams,eotestparams	
 		
 	def combineEmanParams(self,iter_index,valid_paramkeys):
@@ -112,13 +113,12 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		#need to open all projections and 1024 particles in memory
 		numpartinmem = endnumproj + 1024
 		memneed = numpartinmem*boxsize*boxsize*16.0*ppn
-		numgig = math.ceil(memneed/1073741824.0)
-		return int(numgig)
+		numgiga = math.ceil(memneed/1073741824.0)
+		return int(numgiga)
 
 	def makePreIterationScript(self):
 		super(EmanRefineJob,self).makePreIterationScript()
-		initmodelfilepath = os.path.join(self.params['remoterundir'],self.params['modelnames'][0])
-		self.addJobCommands(self.addToTasks({},'ln -s  %s threed.0a.mrc' % initmodelfilepath))
+		self.addJobCommands(self.addToTasks({},'ln -s  %s threed.0a.mrc' % self.params['modelnames'][0]))
 
 	def makeRefineScript(self,iter):
 		iter_index = iter - self.params['startiter']
@@ -127,7 +127,7 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		refineparams,eotestparams = self.setEmanRefineParams(iter)
 		refinetask_list = ['refine','%d'%iter,'proc=%d' % nproc]
 		refinetask_list.extend(self.combineEmanParams(iter_index,refineparams))
-		eotesttask_list = ['eotest','%d'%iter,'proc=%d' % nproc]
+		eotesttask_list = ['eotest','proc=%d' % nproc]
 		eotesttask_list.extend(self.combineEmanParams(iter_index,eotestparams))
 
 		tasks = {}
@@ -136,7 +136,8 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		tasks = self.addToTasks(tasks,'ln -s classes_eman.%d.hed classes.%d.hed' % (iter,iter))
 		tasks = self.addToTasks(tasks,'/bin/mv -v classes.%d.img classes_eman.%d.img' % (iter,iter))
 		tasks = self.addToTasks(tasks,'ln -s classes_eman.%d.img classes.%d.img' % (iter,iter))
-		tasks = self.addToTasks(tasks,'getProjEuler.py proj.img proj.%d.txt' % (iter))
+		wrapper_getProjEulers = os.path.join(self.params['appionwrapper'],'getProjEulers.py')
+		tasks = self.addToTasks(tasks,'%s proj.img proj.%d.txt' % (wrapper_getProjEulers,iter))
 		tasks = self.addToTasks(tasks,' '.join(eotesttask_list)+' > eotest%d.txt' % (iter),refine_mem,nproc)
 		tasks = self.addToTasks(tasks,'/bin/mv -v fsc.eotest fsc.eotest.%d' % (iter))
 		wrapper_getres = os.path.join(self.params['appionwrapper'],'getRes.pl')

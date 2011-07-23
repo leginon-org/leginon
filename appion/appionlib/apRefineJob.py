@@ -343,7 +343,7 @@ class RefineJob(basicScript.BasicScript):
 	def getCpuTime(self):
 		return self.cputime
 	def getMem(self):
-		return  self.mem
+		return  max([self.mem,max(max(self.min_mem_list))])
 	def getPmem(self):
 		return None
 	def getQueue(self):

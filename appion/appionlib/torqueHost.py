@@ -41,7 +41,7 @@ class TorqueHost(processingHost.ProcessingHost):
             header += self.scriptPrefix +" -l cput=" + str(currentJob.getCpuTime()) + ":00:00\n"
             
         if currentJob.getMem():
-            header += self.scriptPrefix +" -l mem=" + str(currentJob.getMem()) + 'mb\n'
+            header += self.scriptPrefix +" -l mem=" + str(currentJob.getMem()) + 'gb\n'
         
         if currentJob.getPmem():
             header += self.scriptPrefix +" -l pmem=" + str(currentJob.getPmem()) + "mb\n"
