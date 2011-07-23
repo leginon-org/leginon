@@ -19,6 +19,7 @@ class RefineJob(basicScript.BasicScript):
 	rsync if remoterundir is not the same as rundir.
 	'''
 	def __init__(self,optlist=[]):
+		self.listparams = []
 		super(RefineJob,self).__init__(optlist)
 		self.tasks = {}
 		self.files_from_remote_host = []
@@ -82,6 +83,8 @@ class RefineJob(basicScript.BasicScript):
 			help="End refine at this iteration", metavar="INT")
 		self.parser.add_option('--setuponly', dest='setuponly', default=False, action='store_true',
 			help="setup without executing, for testing purpose")
+		# set non-iteration list parameters that are separated by ','
+		self.setListParams()
 			# Refinement Iteration parameters
 		self.setIterationParamList()
 		for param in self.iterparams:
@@ -112,9 +115,18 @@ class RefineJob(basicScript.BasicScript):
 			apDisplay.printError('local host not defined for result transfer')
 		self.params['nproc'] = self.params['rpn'] * self.params['nodes']
 		self.checkPackageConflicts()
+		self.convertListParams()
 		### convert iteration parameters first before its confict checking
 		self.convertIterationParams()
 		self.checkIterationConflicts()
+
+	def setListParams(self):
+		self.listparams.append('modelnames')
+
+	def convertListParams(self):
+		for paramkey in self.listparams:
+			if paramkey in self.params.keys():
+				self.params[paramkey] = self.params[paramkey].split(',')
 
 	def checkPackageConflicts(self):
 		pass

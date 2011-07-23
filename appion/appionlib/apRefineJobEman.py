@@ -117,7 +117,8 @@ class EmanRefineJob(apRefineJob.RefineJob):
 
 	def makePreIterationScript(self):
 		super(EmanRefineJob,self).makePreIterationScript()
-		self.addJobCommands(self.addToTasks({},'mv %s threed.0a.mrc' % self.params['modelnames'][0],2,1))
+		initmodelfilepath = os.path.join(self.params['remoterundir'],self.params['modelnames'][0])
+		self.addJobCommands(self.addToTasks({},'ln -s  %s threed.0a.mrc' % initmodelfilepath))
 
 	def makeRefineScript(self,iter):
 		iter_index = iter - self.params['startiter']
