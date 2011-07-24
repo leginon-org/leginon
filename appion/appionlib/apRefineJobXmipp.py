@@ -97,7 +97,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm={}
 		protocolPrm["SelFileName"]                  =   "partlist.sel"
 		protocolPrm["DocFileName"]                  =   ""
-		protocolPrm["ReferenceFileName"]            =   "./threed0.spi"
+		protocolPrm["ReferenceFileName"]            =   "./reference_volume.spi"
 		protocolPrm["WorkingDir"]                   =   "ProjMatch"
 		protocolPrm["DoDeleteWorkingDir"]           =   True
 		protocolPrm["NumberofIterations"]           =   self.params['enditer']
@@ -117,7 +117,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["ReferenceIsCtfCorrected"]      =   True
 		protocolPrm["DoMask"]                       =   self.params['maskvol']>0
 		protocolPrm["DoSphericalMask"]              =   self.params['outerMaskRadius']>0
-		protocolPrm["MaskRadius"]                   =   self.params['outerMaskRadius']
+		protocolPrm["MaskRadius"]                   =   self.params['outerMaskRadius'].split()[0]
 		protocolPrm["MaskFileName"]                 =   self.params['maskvol']
 		protocolPrm["DoProjectionMatching"]         =   True
 		protocolPrm["DisplayProjectionMatching"]    =   False
@@ -173,7 +173,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		super(XmippSingleModelRefineJob,self).makePreIterationScript()
 		self.convertToXmippStyleIterParams()
 		tasks = {}
-		tasks = self.addToTasks(tasks,'mv %s threed.0a.mrc' % self.params['modelnames'][0])
+		tasks = self.addToTasks(tasks,'ln %s reference_volume.spi' % self.params['modelnames'][0])
 		protocolfile = self.setupXmippProtocol()
 		tasks = self.addToTasks(tasks,'python %s' % protocolfile)
 		tasks = self.addToTasks(tasks,'mv %s %s' % (protocolfile,self.params['recondir']))
