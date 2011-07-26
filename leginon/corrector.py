@@ -355,7 +355,7 @@ class Corrector(imagewatcher.ImageWatcher):
 				yx = bad[1], bad[0]
 				if yx not in newbadpixels:
 					newbadpixels.append(yx)
-					self.logger.info("added bad pixel point at (%d,%d) at %d" % (bad[0], bad[1],int(currentvalue)))
+					self.logger.info("added bad pixel point at (%d,%d) at %.1f" % (bad[0], bad[1],1.0*currentvalue))
 					imageshown[yx]=imagemean
 		plan['pixels'] = newbadpixels
 		self.displayImage(imageshown)
