@@ -125,6 +125,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		choices = [
 			'Dark',
 			'Bright',
+			'Bright-Dark',
 			'Norm',
 			'Raw',
 			'Corrected'
@@ -269,6 +270,8 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 			reftype = 'bright'
 		elif acqtype == 'Norm':
 			reftype = 'norm'
+		elif acqtype == 'Bright-Dark':
+			reftype = 'dark-subtracted'
 		else:
 			return
 		chanstr = self.cchannel.GetStringSelection()
@@ -437,7 +440,7 @@ class EditPlanDialog(wx.Dialog):
 		
 		strows = wx.StaticText(self, -1, 'Bad rows:')
 		stcolumns = wx.StaticText(self, -1, 'Bad columns:')
-		stpixels = wx.StaticText(self, -1, 'Bad Pixels:')
+		stpixels = wx.StaticText(self, -1, 'Bad Pixel (x,y):')
 
 		pixels = ', '.join(map(str,self.plan['pixels']))
 		rows = ', '.join(map(str,self.plan['rows']))
