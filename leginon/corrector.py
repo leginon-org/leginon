@@ -137,6 +137,7 @@ class Corrector(imagewatcher.ImageWatcher):
                         raise
 			self.logger.exception('Raw acquisition failed: %s' % (e,))
 		else:
+			self.maskimg = numpy.zeros(image.shape)
 			self.displayImage(image)
 			self.currentimage = image
 		self.panel.acquisitionDone()
@@ -169,8 +170,13 @@ class Corrector(imagewatcher.ImageWatcher):
 		self.setStatus('processing')
 		self.logger.info('load channel %s %s image' % (channel, reftype))
 
-		imdata = self.retrieveCorrectorImageFromSettings(reftype, channel)
-		imarray = imdata['image']
+		if reftype != 'dark-subtracted':
+			imdata = self.retrieveCorrectorImageFromSettings(reftype, channel)
+			imarray = imdata['image']
+		else:
+			brightdata = self.retrieveCorrectorImageFromSettings('bright', channel)
+			darkdata = self.retrieveCorrectorImageFromSettings('dark', channel)
+			imarray = brightdata['image'] - darkdata['image']
 		self.displayImage(imarray)
 		self.currentimage = imarray
 		self.beep()
@@ -400,39 +406,42 @@ class Corrector(imagewatcher.ImageWatcher):
 		if i == tries-1:
 			self.logger.info('Failed to find target mean after %s tries' % (tries,))
 
-	def extrema_xy(self, a):
-		ext = scipy.ndimage.extrema(a)
-		newext = ext[0], ext[1], (ext[2][1], ext[2][0]), (ext[3][1], ext[3][0])
-		return newext 
-
 	def onAddPoints(self):
 		imageshown = self.currentimage
-		imagemean = imageshown.mean()
 		plan = self.retrieveCorrectorPlanFromSettings()
+		if plan is not None:
+			self.fixBadPixels(imageshown, plan)
+		imagemean = imageshown.mean()
 		badpixelcount = len(plan['pixels'])
 		newbadpixels = plan['pixels']
-		## remove all pixels that have the two most extreme values
-		while  len(newbadpixels) <= badpixelcount+2 :
-			extrema = self.extrema_xy(imageshown)
-			# add points only on max or min depending on how far they are from mean
-			usemax = extrema[1] - imagemean > imagemean - extrema[0]
-			if usemax:
-				i = 3
-			else:
-				i = 2
-			currentvalue = extrema[i-2]
-			newextrema = extrema
-
-			while newextrema[i-2] == currentvalue:
-				if newextrema[i] not in newbadpixels:
-					newbadpixels.append(newextrema[i])
-					self.logger.info("added bad pixel point at (%d,%d)" % (newextrema[i]))
-				yx = newextrema[i][1], newextrema[i][0]
-				imageshown[yx]=imagemean
-				newextrema=self.extrema_xy(imageshown)
+		# Note: Must use numpy min, max function here because arraystats remembers the
+		# old value.  If the latter is used, this function only work once per
+		# image displayed
+		extrema = imageshown.min(),imageshown.max()
+		# add points only on max or min depending on how far they are from mean
+		usemax = extrema[1] - imagemean > imagemean - extrema[0]
+		if usemax:
+			indices = [1]
+		else:
+			indices = [0]
+		# also remove values less than or equal to zero
+		if extrema[0] <= 0.0 and usemax:
+			indices.append(0)
+		for i in indices:
+			currentvalue = extrema[i]
+			coordinates = numpy.argwhere(imageshown == currentvalue)
+			coordinates = coordinates.tolist()
+			for bad in coordinates:
+				# convert to tuple to be consistent with plan
+				yx = bad[1], bad[0]
+				if yx not in newbadpixels:
+					newbadpixels.append(yx)
+					self.logger.info("added bad pixel point at (%d,%d) at %d" % (bad[0], bad[1],int(currentvalue)))
+					imageshown[yx]=imagemean
 
 		plan['pixels'] = newbadpixels
 		self.displayImage(imageshown)
+		self.currentimage = imageshown
 		self.storeCorrectorPlan(plan)
 		self.panel.setPlan(plan)
 
