@@ -3444,7 +3444,19 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
-
+	
+	function getJobTypesLike( $expId, $pattern )
+	{
+		$q="SELECT DISTINCT(j.`jobtype`) "
+			."FROM `ApAppionJobData` AS j "
+			."WHERE j.`REF|leginondata|SessionData|session` = $expId "
+			."AND j.`jobtype` LIKE '$pattern' ";
+		
+		$r = $this->mysql->getSQLResult($q);
+		
+		return $r;
+	}
+	
 	function getJobIdsFromSession($expId, $jobtype=False, $status=False, $ignore=True) {
 		$q="SELECT j.*, "
 			."p.path as appath "

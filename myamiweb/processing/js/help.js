@@ -478,11 +478,20 @@ var help = {
 		'nodes' : 'Nodes refers to the number of computer to process on simultaneously.  The more nodes you get the faster things will get process, but more nodes requires that you wait longer before being allowed to begin processing.',
 		'walltime' : 'Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock.  (The reference to a wall clock is how the term originally got its name.)',
 		'cput' : 'Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock.  (The reference to a wall clock is how the term originally got its name.)',
+		'ppn' : 'Processors per node.  If each computer (node) has 4 processors (procs), then proc/node=4.',
+		'rpn' : 'Reconstructions per node.  For some cases, you may want to use less processors on each node, leaving more memory and system resources for each process. If each computer (node) has 4 processors (procs), but you want to use 2, then ppn=4 and rpn=2.  ',
 		'mem' : 'Amount of memory needed per node (not per processor)',
+		'remoteoutdir' : 'The full path to a directory for processing output located on the selected processing host.',
 	},	
 	'runparams' : {
 		'runname' : 'Specifies the name associated with the processing results unique to the specified session and parameters.  An attempt to use the same run name for a session using different processing parameters will result in an error. The Default is automatically incremented',
 		'description' : 'brief description attributed with the processing results',
 		'outdir' : 'The base output directory to which files will be stored.  If you are testing, switch \"appion\" to \"temp\".  A subdirectory of the run name will be appended for actual output',
+	},	
+	'stackprep' : {
+		'lastParticle' : 'Specifies the the last particle number in the stack to use for this processing run.',
+		'lowpass' : 'please add a description in help.js',
+		'highpass' : 'please add a description in help.js',
+		'bin' : 'please add a description in help.js',
 	}	
 }

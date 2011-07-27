@@ -17,6 +17,9 @@ class StackPrepForm extends BasicForm
 		parent::__construct();
 		$params = $this->getFormParams();
 				
+		// The help section corresponds to the array key for these parameters found in help.js for popup help.
+		$params->setHelpSection( "stackprep" );
+		
 		$params->addParam( "lastParticle", $lastParticle, "last particle to use" );
 		$params->addParam( "lowpass", $lowpass, "low-pass filter" );
 		$params->addParam( "highpass", $highpass, "high-pass filter" );

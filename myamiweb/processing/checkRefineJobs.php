@@ -54,10 +54,18 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 	}
 
 	// change next line for different types of jobs
-	$xmipprefinejobs = $particle->getJobIdsFromSession($expId, 'xmipprecon');
+	// Get all the jobtypes that are like emanrecon. Basically <refine method>recon.
+	$pattern = '%recon';
+	$refineTypes = $particle->getJobTypesLike( $expId, $pattern );
+	foreach ( $refineTypes as $key=>$refineType ) {
+		$jobtype = $refineType[jobtype];
+		$refinejobs = $particle->getJobIdsFromSession($expId, $jobtype);
+	}
+
+	//$xmipprefinejobs = $particle->getJobIdsFromSession($expId, 'xmipprecon');
+	//$emanjobs = $particle->getJobIdsFromSession($expId, 'emanrecon');
 	$frealignjobs = $particle->getJobIdsFromSession($expId, 'runfrealign');
-	$emanjobs = $particle->getJobIdsFromSession($expId, 'emanrecon');
-	$jobs = array_merge($frealignjobs, $emanjobs, $xmipprefinejobs);
+	$jobs = array_merge($refinejobs, $frealignjobs);
 
 	// if clicked button, list jobs in queue
 	if ($showjobs && $_SESSION['loggedin'] == true) {
