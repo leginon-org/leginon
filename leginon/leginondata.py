@@ -583,6 +583,7 @@ class CameraImageData(ImageData):
 			('correction channel', int),
 			('channel', int),
 			('dark', DarkImageData),
+			('bright', BrightImageData),
 			('norm', NormImageData),
 			('use frames', tuple),
 		)

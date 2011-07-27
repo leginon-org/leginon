@@ -354,6 +354,8 @@ class Corrector(imagewatcher.ImageWatcher):
 		normarray = normavg / normarray
 		normdata = leginondata.CameraImageData(initializer=refdata)
 		normdata['image'] = normarray
+		normdata['dark'] = dark
+		normdata['bright'] = bright
 		self.storeCorrectorImageData(normdata, 'norm', channel)
 
 	def uiAutoAcquireReferences(self):

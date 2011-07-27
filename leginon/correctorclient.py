@@ -176,6 +176,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		r = numpy.where(numpy.isfinite(r), r, 0)
 		imagedata['image'] = r	
 		imagedata['dark'] = dark
+		imagedata['bright'] = norm['bright']
 		imagedata['norm'] = norm
 		imagedata['correction channel'] = channel
 
@@ -195,6 +196,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		raw = raw + darkarray
 		imagedata['image'] = raw
 		imagedata['dark'] = None
+		imagedata['bright'] = None
 		imagedata['norm'] = None
 		imagedata['correction channel'] = None
 
