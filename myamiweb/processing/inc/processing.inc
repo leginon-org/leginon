@@ -1034,16 +1034,15 @@ function writeJavaPopupFunctions($help='')
 		}
   </style>\n";
 
-	$javafunc .= "
-  <script type='text/javascript' src='js/help.js'></script>
+	$javafunc .= "<script type='text/javascript' src='js/help.js'></script>\n";
   //<script type='text/javascript' src='../js/prototype.js'></script>
-  <script type='text/javascript' src='../js/draglayer.js'></script>
+	$javafunc .= "<script type='text/javascript' src='../js/draglayer.js'></script>
   <script type='text/javascript'>
 
 	overdiv='0'
-	var ie = (document.all)? true:false
-
-// create the popups 
+	var ie = (document.all)? true:false\n";
+// create the popups
+	$javafunc .="
 	function popLayer(a, id) {
 		dhelp=$('dhelp')
 		helpstr=eval('$helpsection'+a)
