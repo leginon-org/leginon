@@ -122,6 +122,25 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		return
 
 	#=====================
+	def getBadParticlesForIteration(self, iteration):
+		''' 
+		currently parses the file kept_particles_during_classification.txt, this is in OUR version of Xmipp ONLY, 
+		and needs to be changed / updated at next Xmipp release
+		'''
+		
+		badpartlist = []
+		badpartfile = open(os.path.join(self.projmatchpath, "Iter_%d" % iteration, "kept_particles_during_classification.txt"))
+		lines = badpartfile.readlines()
+		split = [l.strip().split() for l in lines]
+		for i,line in enumerate(split):
+			if bool(float(line[1])) == False:
+				head, tail = os.path.split(line[0])
+				badpart = int(re.search("[0-9]+", tail).group(0))
+				badpartlist.append(badpart)
+			
+		return badpartlist
+
+	#=====================
 	def createParticleDataFile(self, iteration):
 		''' puts all relevant particle information into a single text file that can be read by the uploader '''
 		
@@ -133,6 +152,13 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		doclines = docf.readlines()[1:]
 		docsplitlines = [l.strip().split() for l in doclines]
 		docf.close()
+		
+		### get bad particles
+		try:
+			badpartlist = self.getBadParticlesForIteration(iteration)
+		except IOError, e:
+			apDisplay.printWarning("bad particle list not found, talk to Dmitry about using a modified version of Xmipp")
+			badpartlist = []
 		
 		### write data in appion format to input file for uploading to the database
 		particledataf = open(os.path.join(self.resultspath, "particle_data_%s_it%.3d_vol001.txt" % (self.params['timestamp'], iteration)), "w")
@@ -160,7 +186,10 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			particledataf.write("%.6d\t" % 1)
 			particledataf.write("%.6d\t" % float(docsplitlines[i*2+1][7]))
 			particledataf.write("%.6d\t" % 0)
-			particledataf.write("%.6f\t" % 1)
+			if i in badpartlist:
+				particledataf.write("%.6f\t" % 0)
+			else:
+				particledataf.write("%.6f\t" % 1)
 			particledataf.write("%.6f\n" % 0)
 		particledataf.close()
 		
