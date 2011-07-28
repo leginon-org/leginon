@@ -1020,8 +1020,6 @@ function getHtmlStyle($code) {
 /**************************************/
 function writeJavaPopupFunctions($help='') 
 {
-	// TODO: confirm that prototype.js is not needed for the help popups.
-	// it is a huge amount of javascript to include in every page.
 	$helpsection = ($help === '' ) ? "help." : "help.".$help.".";
 
 	$javafunc = "
@@ -1035,7 +1033,9 @@ function writeJavaPopupFunctions($help='')
   </style>\n";
 
 	$javafunc .= "<script type='text/javascript' src='js/help.js'></script>\n";
-  //<script type='text/javascript' src='../js/prototype.js'></script>
+	// TODO: prototype.js is a huge amount of javascript to include in every page. Can we reduce it?
+	// Not sure which portion is actually used, but not including it breaks help popups.
+	$javafunc .= "<script type='text/javascript' src='../js/prototype.js'></script>\n";
 	$javafunc .= "<script type='text/javascript' src='../js/draglayer.js'></script>
   <script type='text/javascript'>
 
