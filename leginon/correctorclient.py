@@ -72,6 +72,81 @@ class CorrectorClient(cameraclient.CameraClient):
 			return None
 		return ref
 
+	def getBrightImageFromNorm(self,normdata):
+		'''
+		Get bright image used to produce the norm image
+		This is made to be back compatible to early leginondata that
+		has no bright image association but would be the closest in time before
+		the norm was calculated
+		'''
+		if normdata is None:
+			return None
+		# newer leginon data will have bright image associated with norm image
+		if 'bright' in normdata.keys() and normdata['bright'] is not None:
+			return normdata['bright']
+		# bright image may have the same CameraEMData
+		q = leginondata.BrightImageData(camera=normdata['camera'])
+		brightresults = q.query(results=1)
+		if brightresults:
+			return brightresults[0]
+		# otherwise need to look up timestamp
+		timestamp = normdata.timestamp
+		normcam = normdata['camera']
+		qcam = leginondata.CameraEMData(dimension=normcam['dimension'],
+				offset=normcam['offset'], binning=normcam['binning'],
+				ccdcamera=normcam['ccdcamera'])
+		qcam['exposure type'] = 'normal'
+		qcam['energy filtered'] = normcam['energy filtered']
+
+		normscope = normdata['scope']
+		qscope = leginondata.ScopeEMData(tem=normscope['tem'])
+		qscope['high tension'] = normscope['high tension']
+		q = leginondata.BrightImageData(camera=qcam,scope=qscope,channel=normdata['channel'])
+		brightlist = q.query()
+		for brightdata in brightlist:
+			if brightdata.timestamp < timestamp:
+				break
+		return brightdata
+
+	def getAlternativeChannelNorm(self,normdata):
+		'''
+		Get norm image data of the other channel closest in time
+		'''
+		if normdata is None:
+			return None
+		timestamp = normdata.timestamp
+		normcam = normdata['camera']
+		qcam = leginondata.CameraEMData(dimension=normcam['dimension'],
+				offset=normcam['offset'], binning=normcam['binning'],
+				ccdcamera=normcam['ccdcamera'])
+		qcam['exposure time'] = normcam['exposure time']
+		qcam['energy filtered'] = normcam['energy filtered']
+
+		normscope = normdata['scope']
+		qscope = leginondata.ScopeEMData(tem=normscope['tem'])
+		qscope['high tension'] = normscope['high tension']
+		altchannel = int(normdata['channel'] == 0)
+		q = leginondata.NormImageData(camera=qcam,scope=qscope,channel=altchannel)
+		normlist = q.query()
+		if len(normlist) == 0:
+			# Not to query exposure time if none found
+			qcam['exposure time'] = None
+			q = leginondata.NormImageData(camera=qcam,scope=qscope,channel=altchannel)
+			normlist = q.query()
+		for newnormdata in normlist:
+			if newnormdata.timestamp < timestamp:
+				break
+		before_norm = newnormdata
+		normlist.reverse()
+		for newnormdata in normlist:
+			if newnormdata.timestamp > timestamp:
+				break
+		after_norm = newnormdata
+		if after_norm.timestamp - timestamp > timestamp - before_norm.timestamp:
+			return before_norm
+		else:
+			return after_norm
+
 	def formatCorrectorKey(self, key):
 		try:
 			if key[6] == 'dark':
