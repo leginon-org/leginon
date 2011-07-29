@@ -59,8 +59,7 @@ try {
 	echo "<font color='red'>".$e->getMessage()."</font>";
 }
 echo "<p>";
-
-
+echo "<a class='header' href='viewconfig.php' target='_blank'>[View Config File]</a>";
 
 #####################################################################
 #
