@@ -1,10 +1,13 @@
-import processingHost
 import torqueHost
 import apRefineJobFrealign
 import apRefineJobEman
+import apRefineJobXmipp
 import apGenericJob
 import sys
 import re
+import subprocess
+import time
+import os
 import jobtest
 
 class Agent (object):
@@ -114,7 +117,7 @@ class Agent (object):
             #Only process lines of the correct format, quitly ignore all others"
             matchedLine=re.match(r'\s*([A-Za-z]+)\s*=\s*(\S.*)\s*',line)
             if  matchedLine:
-                #split the two parts fo the line
+                #split the two parts of the line
                 (key, value) = matchedLine.groups()
                 #value strings can be spread across multiple lines if \n is escaped (\)
                 #process these lines.              
@@ -132,8 +135,32 @@ class Agent (object):
         return confDict
     
     def updateJobStatus (self, jobObject, jobHostId ):
-        pass
+        checkStatusInterval = 30 #check status ever 30 seconds
+        currentStatus = 'Q'
+        projectId = jobObject.getProjectId()
+        jobid = jobObject.getJobId()
+        updateCommand = "updateAppoinDB.py " + jobid  + " " + currentSatus + " " + projectId
+        
+        #Update before forking
+        process = subprocess.Popen(updateCommand, stdout=subprocess.PIPE, 
+                                                  stderr=subprocess.PIPE, sehll = True)
+        process.wait()
+        
+        try:
+            pid = os.fork()
+        except OSError:
+            sys.stderr.write("Warning: Unable to monitor status, could not fork child" )
+        if pid == 0:
+            while curentStatus != "D":
+                newStatus = self.processingHost.checkJobStatus(jobHostId)
+                if newstatus != currentStatus:
+                    currentStatus = newStatus
+                    updateCommand = "updateAppoinDB.py " + jobid  + " " + currentSatus + " " + projectId
+                    process = subprocess.Popen(updateCommand, stdout=subprocess.PIPE, 
+                                                  stderr=subprocess.PIPE, sehll = True)
+                    process.wait()
+                    
+                time.sleep(checkStatusInterval)
                 
+        return
                 
-
-    
