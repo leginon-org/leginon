@@ -24,7 +24,7 @@ class TorqueHost(processingHost.ProcessingHost):
         #Every Shell Script starts by indicating shell type
         header = "#!" + self.shell + "\n"
                
-        #add job attributre headers
+        #add job attribute headers
         if currentJob.getName():
             header += self.scriptPrefix +" -N " + currentJob.getName() + "\n"
         
@@ -78,17 +78,37 @@ class TorqueHost(processingHost.ProcessingHost):
             return False
         return jobID      
         
-    def configure (self, confDict):
-        options = {
-                   'Shell': self.setShell,
-                   'ScriptPrefix': self.setScriptPrefix,
-                   'ExecCommand': self.setExecCommand,
-                   'AdditionalHeaders':self.addAdditionalHeaders,
-                   'PreExecuteLines': self.addPreExecutionLines,
-                   'StatusCommand': self.setStatusCommand
-                   }
-        for opt in confDict.keys():
-            if opt in options:
-                options[opt](confDict[opt])
-                
+    
+    def checkJobStatus(self, procHostJobId):
+        statusCommand = self.getStatusCommand() + " " +  procHostJobId
         
+        try:
+            process = subproceess.Popen(statusCommand, 
+                                        stdout=subprocess.PIPE, 
+                                        stderr=subprocess.PIPE, 
+                                        shell=True)
+            returnCode =process.wait()
+            
+            if returnCode > 0:
+                #return unkown status if check resulted in a error
+                returnStatus = 'U'
+            else:
+                rstring = process.communicate()[0]
+                status =  rstring.split('\n')[2].split()[4]
+                #translate torque status codes to appion codes
+                if status == "C" or status == "E":
+                    #Job completed of is exiting
+                    returnStatus = 'D'
+                  
+                elif satus == "R":
+                    #Job is running
+                    returnStatus = 'R'
+                else:
+                    #Interpret everything else as queued
+                    returnStatus = 'Q'
+                
+        except Exception:
+            returnStatus = 'U'
+
+        return resturnStatus
+    
