@@ -283,16 +283,6 @@ class RefineJob(basicScript.BasicScript):
 		self.setName(self.params['runname'])
 		self.cputime = self.params['cput']
 		
-	def addParallelsToTasks(self,tasks,scripts,mem=2,nproc=1):
-		if len(tasks) == 0:
-			for key in ('scripts','mem','nproc','file'):
-				tasks[key] = []
-		length = len(scripts)
-		tasks['scripts'].append(scripts)
-		tasks['mem'].append(map((lambda x:mem),range(length)))
-		tasks['nproc'].append(map((lambda x:nproc),range(length)))
-		return tasks
-
 	def addToTasks(self,tasks,script,mem=2,nproc=1):
 		if len(tasks) == 0:
 			for key in ('scripts','mem','nproc','file'):
