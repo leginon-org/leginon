@@ -190,7 +190,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 				particledataf.write("%.6f\t" % 0)
 			else:
 				particledataf.write("%.6f\t" % 1)
-			particledataf.write("%.6f\n" % 0)
+			particledataf.write("%.6f\n" % 1)
 		particledataf.close()
 		
 		os.chdir(self.params['rundir'])

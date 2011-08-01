@@ -311,7 +311,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 			particledataf.write("%.6d\t" % n)
 			particledataf.write("%.6d\t" % 0)
 			particledataf.write("%.6f\t" % 1)
-			particledataf.write("%.6f\n" % 0)
+			particledataf.write("%.6f\n" % 1)
 		particledataf.close()
 		
 		os.chdir(self.params['rundir'])
