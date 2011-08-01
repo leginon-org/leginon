@@ -25,19 +25,36 @@ class ProcessingHost (object):
     ##translateOutput (outputString)
     #Takes the outputSring returned by executing a command (executeCommand()) and
     #Translates it into a Job ID which can be used to check job status.  This is
-    #an abstract method that needs to be implimented in the child class.  
+    #an abstract method that needs to be implemented in the child class.  
     def traslateOutput (self, outputString):
         pass
     
-    def configure (self, confDict):
+    ##checkJobStatus  
+    def checkJobStatus(self, procHostJobId):
         pass
-        
+               
+    ##configure (confDict)
+    #
+    def configure (self, confDict):
+        options = {
+                   'Shell': self.setShell,
+                   'ScriptPrefix': self.setScriptPrefix,
+                   'ExecCommand': self.setExecCommand,
+                   'AdditionalHeaders':self.addAdditionalHeaders,
+                   'PreExecuteLines': self.addPreExecutionLines,
+                   'StatusCommand': self.setStatusCommand
+                   }
+            
+        for opt in confDict.keys():
+            if opt in options:
+                options[opt](confDict[opt])
+                              
     ##executeCommand (command)    
     #Takes a the command string, command, and runs it in a subshell.  Returns the
     #contents of whatever was written to standard out.
-    #This implimentation as written in the base class should work for most job 
+    #This implementation as written in the base class should work for most job 
     #managers which provide a job submission executable which effectively returns 
-    #imediately.  However it may need to be overridden in some child classes where the
+    #immediately.  However it may need to be overridden in some child classes where the
     #command may not return right away.   
     def executeCommand (self, command):
         #run the command string in a subshell
@@ -45,7 +62,7 @@ class ProcessingHost (object):
         #Wait for the process to return and set the exit code.
         returnCode = process.wait()
         
-        #if the command program did not execute normaly raise an exception and 
+        #if the command program did not execute normally raise an exception and 
         #include the contents of stderr in the message.
         if returnCode > 0:
             errOutput = process.communicate()[1]
@@ -55,7 +72,7 @@ class ProcessingHost (object):
         return process.communicate()[0]
                                  
     ##createJobFile(jobFile, jobObject)
-    #Takes a file handle open for writing and optionaly a job object from which it will
+    #Takes a file handle open for writing and optionally a job object from which it will
     #generate the job headers and extract the list of commands.  The generated job file
     #is written to the supplied file.  
     def createJobFile(self, jobFile, jobObject=None):
@@ -76,7 +93,7 @@ class ProcessingHost (object):
         except IOError, e:
             sys.stderr.write("Could not write to job file" + jobFile.name + ": " + str(e))
             return False
-        #Job file was successfully writen 
+        #Job file was successfully written 
         return True
        
     ##launchJob (jobObject)
@@ -103,7 +120,7 @@ class ProcessingHost (object):
                 return False
         
         #Set the absolute path name to the jobfile
-        jobfileName = outputDir + "/" + self.currentJob.getName() + ".job"
+        jobfileName = os.path.join(outputDir, self.currentJob.getName() + ".job")
     
         try:
             #open the job file for writing
@@ -124,12 +141,12 @@ class ProcessingHost (object):
             sys.stderr.write("Failed to execute job " + jobObject.getName() + ": " + str(e))
             return False
     
-        #trasnlate whatever is returned by executeCommand() to a JobID     
+        #translate whatever is returned by executeCommand() to a JobID     
         jobID = self.translateOutput(returnValue)
         #return the translated output 
         return jobID
     
-    #Beginning of accessor methond definitions.
+    #Beginning of access methods definitions.
     def getShell(self):
         return self.shell
         
