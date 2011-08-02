@@ -5,6 +5,7 @@ import os
 
 # appion
 from appionlib import reconUploader
+from appionlib import apDisplay
 
 #======================
 #======================
@@ -21,13 +22,20 @@ class uploadExternalPackageScript(reconUploader.generalReconUploader):
 						
 		### determine which iterations to upload; last iter is defaulted to infinity
 		uploadIterations = self.verifyUploadIterations()				
-		
+					
 		### upload each iteration
 		for iteration in uploadIterations:
 			for j in range(self.runparams['numberOfReferences']):
 										
-				### make chimera snapshot of volume
+				### general error checking, these are the minimum files that are needed
 				vol = os.path.join(self.resultspath, "recon_%s_it%.3d_vol%.3d.mrc" % (self.params['timestamp'], iteration, j+1))
+				particledatafile = os.path.join(self.resultspath, "particle_data_%s_it%.3d_vol%.3d.txt" % (self.params['timestamp'], iteration, j+1))
+				if not os.path.isfile(vol):
+					apDisplay.printError("you must have an mrc volume file in the 'external_package_results' directory")
+				if not os.path.isfile(particledatafile):
+					apDisplay.printError("you must have a particle data file in the 'external_package_results' directory")										
+										
+				### make chimera snapshot of volume
 				self.createChimeraVolumeSnapshot(vol, iteration, j+1)
 				
 				### instantiate database objects
