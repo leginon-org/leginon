@@ -117,8 +117,8 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		return int(numgiga)
 
 	def makePreIterationScript(self):
-		super(EmanRefineJob,self).makePreIterationScript()
-		self.addJobCommands(self.addToTasks({},'ln -s  %s threed.0a.mrc' % self.params['modelnames'][0]))
+		if self.params['startiter'] == 1:
+			self.addJobCommands(self.addToTasks({},'ln -s  %s threed.0a.mrc' % self.params['modelnames'][0]))
 
 	def makeRefineScript(self,iter):
 		iter_index = iter - self.params['startiter']
@@ -131,18 +131,22 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		eotesttask_list.extend(self.combineEmanParams(iter_index,eotestparams))
 
 		tasks = {}
-		tasks = self.addToTasks(tasks,' '.join(refinetask_list)+' > refine%d.txt' % (iter),refine_mem,nproc)
+		refinelog = 'refine%d.txt' % (iter)
+		eotestlog = 'eotest%d.txt' % (iter)
+		tasks = self.addToTasks(tasks,' '.join(refinetask_list)+' > %s' % (refinelog),refine_mem,nproc)
+		tasks = self.logTaskStatus(tasks,'refine',refinelog)
 		tasks = self.addToTasks(tasks,'/bin/mv -v classes.%d.hed classes_eman.%d.hed' % (iter,iter))
 		tasks = self.addToTasks(tasks,'ln -s classes_eman.%d.hed classes.%d.hed' % (iter,iter))
 		tasks = self.addToTasks(tasks,'/bin/mv -v classes.%d.img classes_eman.%d.img' % (iter,iter))
 		tasks = self.addToTasks(tasks,'ln -s classes_eman.%d.img classes.%d.img' % (iter,iter))
 		wrapper_getProjEulers = os.path.join(self.params['appionwrapper'],'getProjEulers.py')
 		tasks = self.addToTasks(tasks,'%s proj.img proj.%d.txt' % (wrapper_getProjEulers,iter))
-		tasks = self.addToTasks(tasks,' '.join(eotesttask_list)+' > eotest%d.txt' % (iter),refine_mem,nproc)
+		tasks = self.addToTasks(tasks,' '.join(eotesttask_list)+' > %s' % (eotestlog),refine_mem,nproc)
 		tasks = self.addToTasks(tasks,'/bin/mv -v fsc.eotest fsc.eotest.%d' % (iter))
 		wrapper_getres = os.path.join(self.params['appionwrapper'],'getRes.pl')
 		tasks = self.addToTasks(tasks,
 			'%s %d %d %.3f >> resolution.txt' % (wrapper_getres,iter,self.params['boxsize'], self.params['apix']))
+		tasks = self.logTaskStatus(tasks,'eotest','resolution.txt',iter)
 		tasks = self.addToTasks(tasks,'/bin/rm -fv cls*.lst')
 		tasks = self.addToTasks(tasks,'')
 		return tasks

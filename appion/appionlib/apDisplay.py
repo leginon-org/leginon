@@ -42,7 +42,7 @@ def printMsg(text, colorstr=None):
 			print "write error"
 	sys.stderr.write(" ... "+colorString(text, colorstr)+"\n")
 	
-def printError(text):
+def printError(text,raised=True):
 	"""
 	standardized error message
 	"""
@@ -53,7 +53,10 @@ def printError(text):
 			f.close()
 		except:
 			print "write error"
-	raise Exception, colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red")
+	if raised:
+		raise Exception, colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red")
+	else:
+		sys.stderr.write(colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red"))
 
 def printColor(text, colorstr):
 	"""

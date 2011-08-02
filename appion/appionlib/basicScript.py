@@ -20,7 +20,7 @@ from appionlib import apDisplay
 #=====================
 class BasicScript(object):
 	#=====================
-	def __init__(self,optargs=sys.argv[1:]):
+	def __init__(self,optargs=sys.argv[1:],quiet=False):
 		"""
 		Starts a new function and gets all the parameters
 		"""
@@ -28,11 +28,13 @@ class BasicScript(object):
 		self.startmem = mem.active()
 		self.t0 = time.time()
 		self.createDefaultStats()
-		self.quiet = False
+		self.quiet = quiet
 		self.timestamp = apParam.makeTimestamp()
-		apDisplay.printMsg("Time stamp: "+self.timestamp)
+		if not self.quiet:
+			apDisplay.printMsg("Time stamp: "+self.timestamp)
 		self.functionname = apParam.getFunctionName(sys.argv[0])
-		apDisplay.printMsg("Function name: "+self.functionname)
+		if not self.quiet:
+			apDisplay.printMsg("Function name: "+self.functionname)
 
 		apParam.setUmask()
 		self.parsePythonPath()
