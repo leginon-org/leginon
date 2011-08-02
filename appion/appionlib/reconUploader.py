@@ -57,7 +57,7 @@ class generalReconUploader(appionScript.AppionScript):
 			help="pixelsize of the particles / map during refinement", metavar="FLOAT")		
 		self.parser.add_option("--boxsize", dest="boxsize", type="int",
 			help="boxsize of the particles / map during refinement", metavar="INT")
-		self.parser.add_option("--symid", dest="symid", type="int", default=25,
+		self.parser.add_option("--symid", dest="symid", type="int",
 			help="symmetry database id, enter 25 for C1", metavar="ID#")
 			
 		### chimera snapshots	
@@ -94,7 +94,7 @@ class generalReconUploader(appionScript.AppionScript):
 			else:
 				apDisplay.printError("model id must be specified for proper database insertion")
 		if not self.runparams.has_key('numberOfReferences'):
-			if self.params['modelid'] is not None:
+			if self.params['numberOfReferences'] is not None:
 				self.runparams['numberOfReferences'] = self.params['numberOfReferences']
 			else:
 				apDisplay.printError("number of references produced during the refinement needs to be specified")
@@ -113,17 +113,30 @@ class generalReconUploader(appionScript.AppionScript):
 				self.runparams['apix'] = self.params['apix']
 			else:
 				apDisplay.printError("pixelsize of the map / particles submitted for refinement needs to be specified")
-		if not self.runparams.has_key('numberOfReferences') and self.multiModelRefinementRun is True:
+		if not self.runparams.has_key('symmetry'):
+			if self.params['symid'] is not None:
+				self.runparams['symmetry'] = apSymmetry.getSymmetryDataFromID(self.params['symid'])
+			else:
+				apDisplay.printError("symmetry ID must be specified, you can input --symid=25 for an asymmetric reconstruction")
+		if 'multiModelRefinement' in vars(self):
+			if not self.runparams.has_key('numberOfReferences') and self.multiModelRefinementRun is True:
+				if self.params['numberOfReferences'] is not None:
+					self.runparams['numberOfReferences'] = self.params['numberOfReferences']
+				else:
+					apDisplay.printError("number of output models in refinement needs to be specified for multi-model run")		
+		else:
 			if self.params['numberOfReferences'] is not None:
 				self.runparams['numberOfReferences'] = self.params['numberOfReferences']
+				if self.runparams['numberOfReferences'] > 1:
+					self.multiModelRefinementRun = True
+				else:
+					self.multiModelRefinementRun = False
 			else:
-				apDisplay.printError("number of output models in refinement needs to be specified for multi-model run")				
+				apDisplay.printError("number of output models (references) in refinement needs to be specified for multi-model run")			
 		if not self.runparams.has_key('rundir'):
 			self.runparams['rundir'] = self.params['rundir']
 		if not self.runparams.has_key('reconstruction_working_dir'):
 			self.runparams['reconstruction_working_dir'] = str(self.package)+"_results"
-		if not self.runparams.has_key('symmetry'):
-			self.runparams['symmetry'] = apSymmetry.getSymmetryDataFromID(self.params['symid'])['symmetry']
 		if not self.runparams.has_key('mask'):
 			self.runparams['mask'] = None
 		if not self.runparams.has_key('imask'):
@@ -144,7 +157,11 @@ class generalReconUploader(appionScript.AppionScript):
 				self.params['jobinfo'] = appiondata.ApAppionJobData.direct_query(self.params['jobid'])
 			else:
 				self.params['jobinfo'] = None
-		if self.params['timestamp'] is None and self.params['jobid'] is None:
+		if self.params['timestamp'] is None and self.package == "external_package":
+			apDisplay.printError("a timestamp (or some identifier) must be specified with the files. For example, the 3D mrc file " \
+				"for iteration 1 should be named 'recon_YourIdentifier_it001_vol001.mrc, in which case the timestamp should be specified " \
+				"as --timestamp=YourIdentifier")			
+		elif self.params['timestamp'] is None and self.params['jobid'] is None and self.package != "external_package":
 			self.params['timestamp'] = apParam.makeTimestamp()
 		elif self.params['timestamp'] is None and self.params['jobid'] is not None:
 			timestamp = self.getTimestamp()
@@ -217,7 +234,9 @@ class generalReconUploader(appionScript.AppionScript):
 			paramfile = glob.glob("*"+self.params['timestamp']+"-params.pickle")
 		else:
 			paramfile = glob.glob("*-params.pickle")
-		if self.package != "external":
+		if self.package == "external_package":
+			return {}
+		else:
 			if len(paramfile) == 0 or not os.path.isfile(paramfile[0]):
 				apDisplay.printWarning("Could not find run parameters pickle file ... trying to get values from logfile")
 				try:
@@ -229,7 +248,7 @@ class generalReconUploader(appionScript.AppionScript):
 				runparams = cPickle.load(f)
 				f.close()
 		
-		return runparams
+			return runparams
 
 	#=====================
 	def getTimestamp(self):
@@ -247,9 +266,9 @@ class generalReconUploader(appionScript.AppionScript):
 		
 		pdataf = os.path.join(self.resultspath, "particle_data_%s_it%.3d_vol%.3d.txt" % (self.params['timestamp'], iteration, reference_number))
 		if not os.path.isfile(pdataf):
-			apDisplay.printError("no bad particle text file found; this is a requirement for the upload to insert \
-				Euler angles, shifts, etc. Make sure that you have a particle_data_%s_it%.3d_vol%.3d.txt file with \
-				all parameters" % (self.params['timestamp'], iteration, reference_number))
+			apDisplay.printError("no particle text file found; this is a requirement for the upload to insert " \
+				"Euler angles, shifts, etc. Make sure that you have a particle_data_%s_it%.3d_vol%.3d.txt file with" \
+				"all parameters" % (self.params['timestamp'], iteration, reference_number))
 		
 		f = open(pdataf,'r')
 		finfo = f.readlines()
@@ -283,7 +302,7 @@ class generalReconUploader(appionScript.AppionScript):
 		return particledata
 	
 	#=====================
-	def verifyUploadIterations(self, lastiter):
+	def verifyUploadIterations(self, lastiter=float("inf")):
 		''' verify number of completed / specified iterations '''
 
 		if self.params['uploadIterations'] is not None:
@@ -294,7 +313,7 @@ class generalReconUploader(appionScript.AppionScript):
 				apDisplay.printError("iteration %d has not been completed by %s. Please specify the exact iterations " \
 					"that you would like to upload, e.g. --uploadIterations=1,2,3,4,5,6,7,8" % (uploadIterations[-1], self.package))
 		else:
-			if self.runparams['numiter'] != lastiter:
+			if self.runparams['numiter'] != lastiter and lastiter != float("inf"):
 				apDisplay.printError("%s job did not go to completion. The last completed iteration is %d, out of " \
 					"%d specified. Please specify the exact iterations that you would like to upload like so: " \
 					"--uploadIterations=1,2,3,4,5,6,7,8" % (self.package, lastiter, self.runparams['numiter']))
@@ -353,7 +372,7 @@ class generalReconUploader(appionScript.AppionScript):
 		return 
 		
 	#=====================
-	def insertRefinementIterationData(self, package_table, package_database_object, iteration, reference_number=1):
+	def insertRefinementIterationData(self, iteration, package_table=None, package_database_object=None, reference_number=1):
 		''' fills in database entry for ApRefineIterData table '''
 				
 		### get resolution
@@ -372,7 +391,8 @@ class generalReconUploader(appionScript.AppionScript):
 
 		### fill in ApRefineIterData object
 		iterationParamsq = appiondata.ApRefineIterData()
-		iterationParamsq[str(package_table.split("|")[1])] = package_database_object
+		if package_table is not None and package_database_object is not None:
+			iterationParamsq[str(package_table.split("|")[1])] = package_database_object
 		iterationParamsq['refineRun'] = self.refinerunq
 		iterationParamsq['iteration'] = iteration
 		iterationParamsq['resolution'] = resq
@@ -425,14 +445,15 @@ class generalReconUploader(appionScript.AppionScript):
 		self.insertRefinementParticleData(particledata, iterationParamsq, referenceParamsq)
 		
 		### create euler freq map
-		apDisplay.printMsg("creating euler frequency map")
-		if self.package != 'EMAN':
-				postrefine = True
-		else:
-				postrefine = False
-		apEulerDraw.createEulerImages(self.refinerunq.dbid, iteration, path=self.params['rundir'], postrefine=postrefine)
-		for f in glob.glob("euler**png"):
-			shutil.move(f, os.path.join(self.resultspath, f))
+		if self.params['commit'] is True:
+			apDisplay.printMsg("creating euler frequency map")
+			if self.package != 'EMAN':
+					postrefine = True
+			else:
+					postrefine = False
+			apEulerDraw.createEulerImages(self.refinerunq.dbid, iteration, path=self.params['rundir'], postrefine=postrefine)
+			for f in glob.glob("euler**png"):
+				shutil.move(f, os.path.join(self.resultspath, f))
 		
 		return
 		

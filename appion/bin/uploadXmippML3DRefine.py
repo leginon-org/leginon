@@ -512,7 +512,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 				
 				### instantiate database objects
 				self.insertRefinementRunData(iteration, j+1)
-				self.insertRefinementIterationData(package_table, package_database_object, iteration, j+1)
+				self.insertRefinementIterationData(iteration, package_table, package_database_object, j+1)
 				
 		### calculate Euler jumps
 		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)			

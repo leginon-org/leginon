@@ -453,7 +453,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			
 			### instantiate database objects
 			self.insertRefinementRunData(iteration)
-			self.insertRefinementIterationData(package_table, package_database_object, iteration)
+			self.insertRefinementIterationData(iteration, package_table, package_database_object)
 				
 		### calculate Euler jumps
 		self.calculateEulerJumpsAndGoodBadParticles(uploadIterations)	
