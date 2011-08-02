@@ -1,4 +1,5 @@
 import processingHost
+import subprocess
 
 class TorqueHost(processingHost.ProcessingHost):
     def __init__ (self, configDict=None):
@@ -80,10 +81,10 @@ class TorqueHost(processingHost.ProcessingHost):
         
     
     def checkJobStatus(self, procHostJobId):
-        statusCommand = self.getStatusCommand() + " " +  procHostJobId
+        statusCommand = self.getStatusCommand() + " " +  str(procHostJobId)
         
         try:
-            process = subproceess.Popen(statusCommand, 
+            process = subprocess.Popen(statusCommand, 
                                         stdout=subprocess.PIPE, 
                                         stderr=subprocess.PIPE, 
                                         shell=True)
@@ -100,7 +101,7 @@ class TorqueHost(processingHost.ProcessingHost):
                     #Job completed of is exiting
                     returnStatus = 'D'
                   
-                elif satus == "R":
+                elif status == "R":
                     #Job is running
                     returnStatus = 'R'
                 else:
@@ -110,5 +111,5 @@ class TorqueHost(processingHost.ProcessingHost):
         except Exception:
             returnStatus = 'U'
 
-        return resturnStatus
+        return returnStatus
     
