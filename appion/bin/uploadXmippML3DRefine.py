@@ -490,7 +490,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 			### set package parameters, as they will appear in database entries
 			package_database_object = self.instantiateML3DParamsData(iteration)
 			
-			for j in range(self.runparams['package_params']['NumberOfReferences']):
+			for j in range(self.runparams['NumberOfReferences']):
 				
 				### calculate FSC for each iteration using split selfile (selfile requires root directory change)
 				self.calculateFSCforIteration(iteration, j+1)
