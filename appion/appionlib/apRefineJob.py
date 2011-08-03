@@ -62,7 +62,7 @@ class RefineJob(basicScript.BasicScript):
 		# ReconJob parameters
 		self.parser.add_option("--description", dest="description", type="str", default='',
 			help="Description of the run", metavar="text")
-		self.parser.add_option("--appionwrap", dest="appionwrapper", default='',
+		self.parser.add_option("--appionwrapper", dest="appionwrapper", default='',
 			help="Path for Appion bin directory if needed e.g. --appionwrap=/home/you/appion/bin", metavar="PATH")
 		self.parser.add_option("--recondir", dest="recondir", default='recon',
 			help="Path of the Scratch directory for processing that will be erased if start from iteration 1, e.g. --recondir=/home/you/sessionname/rundir/recon", metavar="PATH")
