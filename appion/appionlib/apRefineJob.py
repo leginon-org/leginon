@@ -276,7 +276,7 @@ class RefineJob(basicScript.BasicScript):
 		cmd = '--jobtype=%s --tasktype=%s --tasklogfile=%s' % (self.jobtype,tasktype,tasklogfile)
 		if iter:
 			cmd += ' --iter=%d' % (iter)
-		cmd = "%s '%s %s' %s" % (wrapper_webcaller,'taskStatusLogger.py',cmd,self.joblog)
+		cmd = "%s '%s %s' %s" % (wrapper_webcaller,'taskStatusLogger.py',cmd,self.logfile)
 		return self.addToTasks(existing_tasks,cmd)
 
 	def makeRefineScript(self,iter):

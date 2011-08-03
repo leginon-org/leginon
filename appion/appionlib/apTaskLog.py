@@ -40,7 +40,6 @@ class TaskLog(basicScript.BasicScript):
 	def setAttributes(self):
 		self.jobtype = self.params['jobtype']
 		self.tasktype = self.params['tasktype']
-		self.joblogfile = os.path.abspath(self.params['joblogfile'])
 		self.tasklogfile = os.path.abspath(self.params['tasklogfile'])
 		self.iter = self.params['iter']
 		self.failed = False
