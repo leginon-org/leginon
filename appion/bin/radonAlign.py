@@ -12,6 +12,7 @@ from appionlib import apFile
 from appionlib import apEMAN
 from appionlib import apImagicFile
 from appionlib import apRadon
+from scipy import ndimage
 
 
 #=====================
@@ -21,7 +22,7 @@ class RadonAlign(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.add_option("--stepsize", dest="stepsize", type="float", default=2,
 			help="Angular step size (in degrees) for Radon transform", metavar="#")
-		self.parser.add_option("--numrefs", dest="numrefs", type="int", default=10,
+		self.parser.add_option("--numrefs", dest="numrefs", type="int",
 			help="Number of references to create", metavar="#")
 		self.parser.add_option("--numiter", dest="numiter", type="int", default=20,
 			help="Number of iterations", metavar="#")
@@ -82,6 +83,9 @@ class RadonAlign(appionScript.AppionScript):
 		if self.params['numpart'] > numpart:
 			apDisplay.printError("Requested more particles than available in stack")
 		
+		if self.params['numrefs'] is None:
+			### num refs should go approx. as the sqrt of the number of particles
+			self.params['numrefs'] = int(math.ceil(math.sqrt(self.params['numpart'])))+1
 
 	#=====================
 	def setRunDir(self):
@@ -175,8 +179,55 @@ class RadonAlign(appionScript.AppionScript):
 		return radonimagelist
 
 	#=====================
-	def radonAlign(self, filtered_stackfile):
-		imageinfo = apImagicFile.readImagic(filtered_stackfile)
+	def getBestAlignForImage(self, image, radonimage, reflist, radonreflist, oldshift):
+		aligndata = {}
+		aligndata['bestcc'] = -1.0
+		for j in range(len(reflist)):
+			for shiftrad in range(0, self.params['shiftmax'], self.params['shiftstep']):
+				radonimage = radonimagelist[i]
+				radonref = radonreflist[j]
+				radoncc = radermacher.radonshift(radonimage, radonref, shiftrad)
+
+				value = radoncc.argmax()
+				col = value % radoncc.shape[1] #rotation angle
+				row = int(value/radoncc.shape[1]) #shift angle
+				cc = radoncc[row,col]
+				#print value, col, row, cc
+
+				anglelist = radermacher.getAngles(shiftrad)
+				shiftangle = anglelist[col]
+				xshift = shiftrad*math.sin(shiftangle)
+				yshift = shiftrad*math.cos(shiftangle)
+				rotangle = row*self.params['stepsize']
+
+				if cc > aligndata['bestcc']:
+					aligndata['bestcc'] = cc
+					aligndata['xshift'] = math.ceil(xshift)
+					aligndata['yshift'] = math.ceil(yshift)
+					aligndata['rotangle'] = rotangle
+					aligndata['refid'] = j
+		print ("ref %d - %.8f - x %d y %d ang %.1f"
+			%(aligndata['refid'],aligndata['bestcc'], aligndata['xshift'], 
+			aligndata['yshift'], aligndata['rotangle']))
+		if oldshift is not None:
+			aligndata['xshift'] += oldshift['xshift']
+			aligndata['yshift'] += oldshift['yshift']
+		return aligndata
+
+	#=====================
+	def transformImage(self, image):
+		ndimage.shift()
+		ndimage.rotate()
+		return
+
+	#=====================
+	def radonAlign(self, stackfile):
+		"""
+		performs the meat of the program aligning the particles and creating references
+		
+		assumes that all particles fit into memory -- need to fix
+		"""
+		imageinfo = apImagicFile.readImagic(stackfile)
 		imagelist = imageinfo['images']
 		reflist = self.createReferences(imagelist)
 		apImagicFile.writeImagic(reflist, "reflist00.hed")
@@ -184,41 +235,19 @@ class RadonAlign(appionScript.AppionScript):
 		radonreflist = self.getRadons(reflist)
 		radonimagelist = self.getRadons(imagelist)
 
-
-		radoncc = radermacher.radonshift(radonimagelist[0], radonreflist[0], 2)
+		### get alignment parameters
+		aligndatalist = []
 		for i in range(len(imagelist)):
-			bestcc = -1.0
-			bestxshift = None
-			bestyshift = None
-			bestrotangle = None
-			bestref = None
-			for j in range(len(reflist)):
-				for shiftrad in range(0, self.params['shiftmax'], self.params['shiftstep']):
-					radonimage = radonimagelist[i]
-					radonref = radonreflist[j]
-					radoncc = radermacher.radonshift(radonimage, radonref, shiftrad)
+			image = imagelist[i]
+			radonimage = radonimagelist[i]
+			aligndata = self.getBestAlignForImage(image, radonimage, reflist, radonreflist, None)
+			aligndatalist.append(aligndata)
 
-					value = radoncc.argmax()
-					col = value % radoncc.shape[1] #rotation angle
-					row = int(value/radoncc.shape[1]) #shift angle
-					cc = radoncc[row,col]
-					#print value, col, row, cc
+		### create new references
 
-					anglelist = radermacher.getAngles(shiftrad)
-					shiftangle = anglelist[col]
-					xshift = shiftrad*math.sin(shiftangle)
-					yshift = shiftrad*math.cos(shiftangle)
-					rotangle = row*self.params['stepsize']
+		### create new Radon transforms for images with shift values???
 
-					if cc > bestcc:
-						bestcc = cc
-						bestxshift = math.ceil(xshift)
-						bestyshift = math.ceil(yshift)
-						bestrotangle = rotangle
-						bestref = j			
-						print "%d %d - %.8f - %d %d %.1f"%(i+1,j+1,cc, math.ceil(xshift), math.ceil(yshift), rotangle)
-			if i > 2:
-				break
+		### create new Radon transforms for references
 
 		return
 
