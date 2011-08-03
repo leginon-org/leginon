@@ -359,6 +359,7 @@ function getSessionList($projectId,$sessionId){
 	return $sessiondata;
 }
 
+// TODO: what if the cluster does not use qstat? Moab uses mstat or some thing like that.
 function checkClusterJobs($processhost, $user, $pass) {
 	$cmd = "qstat -au ".$user." | egrep '^[0-9]'";
 	$subjobs = exec_over_ssh($processhost, $user, $pass, $cmd, true);
@@ -410,11 +411,20 @@ function getNumberOfProcsPerNode($processingHost) {
 	return $numOfNode;
 }
 
-function getNumberOfRequiredNodes($nproc, $ppn) {
-	if ($nproc < $ppn)
-	return array(1, $nproc);
-	$nodes = (int) ceil($nproc/$ppn);
-	$ppn = (int) ceil($nproc/$nodes);
+function getNumberOfRequiredNodes($nproc, $ppn) 
+{
+	if ($nproc < $ppn) {
+		return array(1, $nproc);
+	}
+	
+	if ( $ppn ) {
+		$nodes = (int) ceil($nproc/$ppn);
+	}
+	
+	if ( $nodes ) {
+		$ppn = (int) ceil($nproc/$nodes);
+	}
+	
 	return array($nodes, $ppn);
 }
 
@@ -623,10 +633,10 @@ function justShowCommandTable($command,$skip_command=false) {
 
 function addProcessingHostParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime )
 {
-	if ($ppn < 1) {
+	if ($ppn < 1 && !preg_match("/--ppn=/", $command) ) {
 		$ppn = getNumberOfProcsPerNode($processhost);
 	}
-	if ($nodes < 1) {
+	if ($nodes < 1 && !preg_match("/--nodes=/", $command) ) {
 		list($nodes, $ppn) = getNumberOfRequiredNodes($nproc, $ppn);
 	}
 	if ($ppn < 1) {
@@ -649,6 +659,46 @@ function addProcessingHostParams( $command, $processhost, $nproc, $ppn, $nodes, 
 	return $command;		
 }
 
+// Put the command into format:
+// <wrapper> runjob.py <wrapper> somejob.py --param1=x -- param2=y
+// for generic jobs or
+// <wrapper> runjob.py --appionwrapper=<wrapper> --param1=x -- param2=y
+// for jobs that need to create a type specific job file.
+function addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime )
+{
+	// Add the Appion wrapper to support muliple installations of Appion
+	$command = addAppionWrapper($command);
+	
+	// if there is no python file in the command, turn the wrapper into a flag
+	if (!preg_match("/.py /", $command)) {
+		$command = "--appionwrapper=".$command;
+	}
+	
+	// Funnel all jobs through the cluster agent, runjob.py.
+	// Jobs to be run on remote clusters are built by job specific classes.
+	// All others are built by apGenericJob.py.
+	if (!preg_match("/runJob.py/", $command)) {
+		$command = "runJob.py ".$command;
+
+		// Add the Appion wrapper to support muliple installations of Appion
+		// Makes sure we use the right version of runjob.py and subsequent scripts.
+		$command = addAppionWrapper($command);
+	}
+	
+	// Add processing host parameters to the command
+	// TODO: when is the command ever an array??? should it always be an array that sometimes has len=1??
+	// Commenting this out for now, if no problems it can be removed
+//	if (is_array($command)) {
+//		foreach ($command as $cmd) {
+//			$cmd = addProcessingHostParams($cmd, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime);
+//		}
+//	} else {
+		$command = addProcessingHostParams($command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime);
+//	}
+	
+	return $command;
+}
+
 /**************************************/
 function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg=False,
 $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime="240") {
@@ -665,47 +715,26 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
-	// Add the Appion wrapper to support muliple installations of Appion
-	$command = addAppionWrapper($command);
-	
-	// Funnel all jobs through the cluster agent, runjob.py.
-	// Jobs to be run on remote clusters are build by job specific files.
-	// All others are built by apGenericJob.py.
-	if (!preg_match("/runJob.py/", $command)) {
-		$command = "runJob.py ".$command;
-
-		// Add the Appion wrapper to support muliple installations of Appion
-		// Makes sure we use the right version of runjob.py and subsequent scripts.
-		$command = addAppionWrapper($command);
-	}
-	
-	// Add processing host parameters to the command
-	// TODO: when is the command ever an array??? should it always be an array that sometimes has len=1??
-	if (is_array($command)) {
-		foreach ($command as $cmd) {
-			$cmd = addProcessingHostParams($cmd, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime);
-		}
-	} else {
-		$command = addProcessingHostParams($command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime);
-	}
+	// Add parameters that are only needed if submitting the job from the web server
+	$command = addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime );
 	
 	// check if database is configured on processing host
-	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"leginondata\")'";	
-	$dbcheck = exec_over_ssh($processhost, $user, $pass, $cmd, True);
-	if ($dbcheck === false){
-		//Return a more accurate error message		
-		$errMsg = "Could not connect to $processhost: ";
-		$errMsg .= pconnError();
-		return $errMsg;
-	}	
-
-	if (trim($dbcheck)=='') return "sinedon is not configured for leginondata, check your sinedon.cfg file";
-	
-	if($expId != 000){
-		$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"appiondata\")'";
-		$dbcheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
-		if (trim($dbcheck) == '') return "sinedon is not configured for appiondata, check your sinedon.cfg file";
-	}
+//	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"leginondata\")'";	
+//	$dbcheck = exec_over_ssh($processhost, $user, $pass, $cmd, True);
+//	if ($dbcheck === false){
+//		//Return a more accurate error message		
+//		$errMsg = "Could not connect to $processhost: ";
+//		$errMsg .= pconnError();
+//		return $errMsg;
+//	}	
+//
+//	if (trim($dbcheck)=='') return "sinedon is not configured for leginondata, check your sinedon.cfg file";
+//	
+//	if($expId != 000){
+//		$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"appiondata\")'";
+//		$dbcheck = exec_over_ssh($processhost,$user,$pass,$cmd,True);
+//		if (trim($dbcheck) == '') return "sinedon is not configured for appiondata, check your sinedon.cfg file";
+//	}
 	
 	//Check if filesystem is full
 	$cmd = "df $outdir";
@@ -770,23 +799,24 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	$command .= "--jobid=$jobid ";
 		
 	$apcmd = $command;
+	//$cmd = "cd $rundir; $apcmd;\n";
+	$cmd = $apcmd;
 	
 	// write output page
 	processing_header("Appion Job Submission","Appion Job Submission");
-	echo "<table width='600'>\n";
+	echo "<table width='800'>\n";
 	echo "<tr><td>Appion Directory</td><td>$rundir</td></tr>\n";
 	echo "<tr><td>Job File Name</td><td>$jobfile</td></tr>\n";
 	echo "<tr><td>Hostname</td><td>$processhost</td></tr>\n";
 	echo "<tr><td>Username</td><td>$user</td></tr>\n";
 	echo "<tr><td>Local server ip</td><td>$webserver</td></tr>\n";
 	echo "<tr><td>Project Id</td><td>$projectid</td></tr>\n";
-
-	$cmd = "cd $rundir; $apcmd;\n";
+	echo "<tr><td>Command</td><td><font size='-2'>$cmd</font></td></tr>\n";
 	
 	// submit job to cluster
 	$jobdata = exec_over_ssh($processhost, $user, $pass, $cmd, True);
-	if ($jobdata === false){		
-		$errMsg = "Error: submitting job to $host failed:  ";
+	if ( empty($jobdata) ) {		
+		$errMsg = "Error: Job submission to $processhost failed:  ";
 		$errMsg .= pconnError();
 		echo "</table><p>\n";
 		echo "<hr>\n<font color='#CC3333' size='+1'>$errMsg</font>\n";
@@ -819,7 +849,6 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	$particle->updateClusterQueue($jobid, $jobnum, $status);
 
 	echo "<tr><td>Job number</td><td>$jobnum</td></tr>\n";
-	echo "<tr><td>Command</td><td><font size='-3'>$filtcommand</font></td></tr>\n";
 	echo "</table>\n";
 
 	// check jobs that are running on the cluster

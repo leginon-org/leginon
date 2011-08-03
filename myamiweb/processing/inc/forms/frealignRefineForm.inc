@@ -198,7 +198,6 @@ class FrealignRefineForm extends BasicRefineForm
 		$params->getPostedValues( $postArray );
 		
 		$command = '';
-		$command = $this->addCommandFlag( $command, "jobtype", "", "frealignrecon" );
 		$command = $this->addCommandFlag( $command, "outerMaskRadius" );
 		$command = $this->addCommandFlag( $command, "innerMaskRadius" );
 		$command = $this->addCommandFlag( $command, "endIter" );

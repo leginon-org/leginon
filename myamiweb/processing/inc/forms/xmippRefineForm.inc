@@ -47,7 +47,6 @@ class XmippRefineForm extends BasicRefineForm
 		$params->getPostedValues( $postArray );
 		
 		$command = '';
-		$command = $this->addCommandFlag( $command, "jobtype", "", "xmipprecon" );
 		$command = $this->addCommandFlag( $command, "endIter" );
 		$command = $this->addCommandFlag( $command, "outerMaskRadius" );
 		$command = $this->addCommandFlag( $command, "mask" );

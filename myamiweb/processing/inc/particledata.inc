@@ -3546,7 +3546,8 @@ class particledata {
 			."FROM `ApAppionJobData` "
 			."WHERE `REF|ApPathData|path` = $pathid AND "
 			."`name` = '$name' AND "
-			."`REF|leginondata|SessionData|session` = $expId";
+			."`REF|leginondata|SessionData|session` = $expId "
+			." AND `jobtype` = $jobtype ";
 		$r = $this->mysql->getSQLResult($q);
 		$jid=$r[0]['DEF_id'];
 		// if not in database, insert

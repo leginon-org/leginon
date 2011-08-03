@@ -41,7 +41,6 @@ class XmippML3DRefineForm extends BasicRefineForm
 		$params->getPostedValues( $postArray );
 		
 		$command = '';
-		$command = $this->addCommandFlag( $command, "jobtype", "", "xmippml3drecon" );
 		$command = $this->addCommandFlag( $command, "angSampRate" );
 		$command = $this->addCommandFlag( $command, "symmetry" );
 		$command = $this->addCommandFlag( $command, "DoMlf" );

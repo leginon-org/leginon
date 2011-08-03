@@ -10,7 +10,6 @@
 
 require_once "inc/particledata.inc";
 require_once "inc/processing.inc";
-require_once "inc/leginon.inc";
 require_once "inc/viewer.inc";
 require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
@@ -25,22 +24,6 @@ require_once "inc/forms/runParametersForm.inc";
 require_once "inc/forms/clusterParamsForm.inc";
 require_once "inc/forms/stackPrepForm.inc";
 
-
-
-$selectedcluster=$CLUSTER_CONFIGS[0];
-if ($_POST['changecluster']) {
-	$selectedcluster = $_POST['changecluster'];
-} elseif ( $_POST['cluster'] ) {
-	$selectedcluster = $_POST['cluster'];
-}
-$selectedcluster=strtolower($selectedcluster);
-@include_once $selectedcluster.".php";
-
-/*
-******************************************
-******************************************
-******************************************
-*/
 
 if ($_POST['process'])
 	createCommand(); // submit job
@@ -96,6 +79,8 @@ function selectRefineJob($extra=False) {
 		exit;
 	} 
 
+	echo "<P><input type='SUBMIT' NAME='submitprepared' VALUE='Use this prepared job'></FORM>\n";
+	
 	echo "<table class='tableborder' border='1'>\n";
 	foreach ($refinejobs as $refinejob) {
 		echo "<tr><td>\n";
@@ -211,27 +196,12 @@ function jobForm($extra=false)
 	}
 	$modelNames = trim($modelNames, ",");
 	$modelIds   = trim($modelIds, ",");
-	
-	// set remote path
-	$leginondata = new leginondata();
-	$sessiondata = $leginondata->getSessionInfo($expId);
-	$sessionpath = $sessiondata['Image path'];
-	ereg("(.*)leginon(.*)rawdata", $sessionpath, $reg_match);
-	$rootpath = "appion".$reg_match[2]."recon/";
-	$sessionpath = $reg_match[1].$rootpath;
-	// TODO: if error, check cluster config file name matches config.php
-	$clusterdata->set_rootpath($rootpath);
-	$clusterdata->post_data();
-	
+		
 	// Instantiate the class that defines the forms for the selected method of refinement.
 	$selectedRefineForm = createSelectedRefineForm( $method, $stacks, $models );
 
 	$javafunc .= $selectedRefineForm->setDefaults();
 	$javafunc .= $selectedRefineForm->additionalJavaScript();
-	// TODO: does the order of these make a difference??
-	//$javafunc .= writeJavaPopupFunctions('appion');
-	//$javafunc .= writeJavaPopupFunctions('frealign');
-	//$javafunc .= writeJavaPopupFunctions('eman');
 	$javafunc .= writeJavaPopupFunctions();
 	
 	processing_header("Refinement Job Launcher","Refinement Job Launcher", $javafunc);
@@ -244,7 +214,6 @@ function jobForm($extra=false)
 	$html.= "<form name='frealignjob' method='post' action='$formaction'><br />\n";
 	
 	// Post hidden values
-	$html.= "<input type='hidden' name='clustermemo' value='$selectedcluster'>\n";
 	$html.= "<input type='hidden' name='jobid' value='$jobid'>\n";
 	$html.= "<input type='hidden' NAME='modelnames' value='$modelNames'>\n";
 	$html.= "<input type='hidden' NAME='modelids' value='$modelIds'>\n";
@@ -303,7 +272,7 @@ function jobForm($extra=false)
 	$html.= "<tr>";
 	$html.= "<td COLSPAN='2' ALIGN='center'><hr>";
 	$html.= "<br/>\n";
-	$html.= getSubmitForm("Run Refinement");
+	$html.= getSubmitForm("Run Refinement", false );
 	$html.= "</td>";
 	$html.= "</tr>";
 	
@@ -365,6 +334,7 @@ function createCommand ($extra=False)
 	$apix 		= $_POST['apix'];	
 	$cs 		= $_POST['cs'];	
 	$boxsize 	= $_POST['boxsize'];	
+	$hostname   = $_POST['processinghost'];
 	
 	// verify processing host parameters
 	$clusterParamForm = new ClusterParamsForm();
@@ -381,13 +351,16 @@ function createCommand ($extra=False)
 	/* *******************
 	 PART 2: Copy any needed files to the cluster
 	 ******************** */
-	copyFilesToCluster();	
+	copyFilesToCluster( $hostname );	
 	
 	/* *******************
 	 PART 3: Create program command
 	 ******************** */
 	// All jobs are sent to the cluster agent
 	$command = "runJob.py ";
+	
+	// Add the jobtype to the command
+	$command = "--jobtype=".$method." ";
 	
 	// Instantiate the class that defines the forms for the selected method of refinement.
 	$command .= $selectedRefineForm->buildCommand( $_POST );
@@ -407,13 +380,9 @@ function createCommand ($extra=False)
 		
 	// collect processing host parameters
 	$command .= $clusterParamForm->buildCommand( $_POST );
-	$command = $clusterParamForm->removeCommandFlag( $command, "cluster" );
+	$command = $clusterParamForm->removeCommandFlag( $command, "processinghost" );
 	$command = $clusterParamForm->removeCommandFlag( $command, "remoteoutdir" );
-	
-	// Add the local host to the command
-	// TODO: this needs to grab the local host from config.php
-	$command .= "--localhost=amibox03 ";
-	
+		
 	/* *******************
 	 PART 4: Create header info, i.e., references
 	 ******************** */
@@ -424,26 +393,25 @@ function createCommand ($extra=False)
 	 PART 5: Show or Run Command
 	 ******************** */
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'runrefine', $nproc);
+	$errors = showOrSubmitCommand($command, $headinfo, $method, $nproc);
 	// if error display them
 	if ($errors) jobForm($errors);
 	
 };
 
-function copyFilesToCluster()
+// TODO: the guts of this stuff should be moved 
+function copyFilesToCluster( $host )
 {
-	global $clusterdata;
-	$clusterdata->post_data();
-
-	$host = $clusterdata->hostname;
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
-	if (!($user && $pass))
+	if (!($user && $pass)) {
 		jobForm("<B>ERROR:</B> Enter a user name and password");
+	}
 
-	$clusterpath = $clusterdata->get_path();
-	$clusterpath = formatEndPath($clusterpath);
+	$cluster 	 = new Cluster($host);
+	$clusterpath = $cluster->get_path();
+	$clusterpath = $cluster->formatEndPath($clusterpath);
 	
 	$runname = $_POST['runname'];
 	$rundir = $_POST['outdir'].$runname;
@@ -511,13 +479,6 @@ function copyFile( $host, $user, $pass, $filepath, $remoteFilePath )
 		// TODO: log this to a file
 		//echo "<hr>\n<font color='#CC3333' size='+1'>Copied $filepath to $remoteFilePath on $host.</font>\n";
 	}
-}
-
-// TODO: this is here and in the cluster config file. Yuk.
-function formatEndPath($path) {
-	if (substr($path,-1,1)!='/')
-		$path.='/';
-	return $path;
 }
 
 ?>

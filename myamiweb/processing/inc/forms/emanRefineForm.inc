@@ -61,7 +61,6 @@ class EmanRefineForm extends BasicRefineForm
 		$params->getPostedValues( $postArray );
 		
 		$command = '';
-		$command = $this->addCommandFlag( $command, "jobtype", "", "emanrecon" );
 		$command = $this->addCommandFlag( $command, "angSampRate" );
 		$command = $this->addCommandFlag( $command, "outerMaskRadius" );
 		$command = $this->addCommandFlag( $command, "innerMaskRadius" );

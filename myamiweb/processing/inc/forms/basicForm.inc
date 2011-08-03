@@ -125,6 +125,9 @@ class BasicForm
 	}
 	
 	
+	// A generic default implementation that will add
+	// a flag to a command string for every parameter 
+	// defined by the form in format --<name>=<value>
 	public function buildCommand( $postArray )
 	{
 		$this->formParams->getPostedValues( $postArray );

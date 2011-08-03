@@ -691,6 +691,7 @@ if (is_numeric($expId)) {
 		$pattern = '%recon';
 		$refineTypes = $particle->getJobTypesLike( $expId, $pattern );
 		
+		$refinejobs = array();
 		foreach ( $refineTypes as $key=>$refineType ) {
 			$jobtype	 = $refineType[jobtype];
 			if ( $jobtype == "uploadrecon" ) {

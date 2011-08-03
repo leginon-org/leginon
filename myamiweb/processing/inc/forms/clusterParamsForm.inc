@@ -8,56 +8,57 @@
  */
 
 require_once "basicForm.inc";
-
-// include the required cluster configuration file
-$selectedcluster=$CLUSTER_CONFIGS[0];
-if ($_POST['changecluster']) {
-	$selectedcluster = $_POST['changecluster'];
-} elseif ( $_POST['cluster'] ) {
-	$selectedcluster = $_POST['cluster'];
-}
-$selectedcluster=strtolower($selectedcluster);
-@include_once $selectedcluster.".php";
+require_once "inc/cluster.inc";
 
 // TODO: docpop params need to change name: cputime, reconpernode, procpernode
-class clusterParamsForm extends BasicForm
+class ClusterParamsForm extends BasicForm
 {
-	function __construct( $nodes='', $ppn='', $rpn='', $mem='', $walltime='', $cput='', $cluster='', $remoteoutdir='' ) 
+	private $cluster;
+	
+	function __construct( $processinghost='', $nodes='', $ppn='', $rpn='', $mem='', $walltime='', $cput='', $localhost='', $remoteoutdir='' ) 
 	{
 		parent::__construct();		
 		
-		// Set default values based on the selected cluster
-		$nodes 		= ( $nodes == '') ? C_NODES_DEF : $nodes;
-		$ppn 		= ( $ppn == '') ? C_PPN_DEF : $ppn;
-		$rpn 		= ( $rpn == '') ? C_RPROCS_DEF : $rpn;
-		$mem 		= ( $mem == '') ? C_MEMORY_MAX : $mem;
-		$walltime 	= ( $walltime == '') ? C_WALLTIME_DEF : $walltime;
-		$cput 		= ( $cput == '') ? C_CPUTIME_DEF : $cput;
-
-		// TODO: known issue- the first time through, if a host is returning the path
-		// based on the $_POST var containing the outdir, the remoteoutdir will be blank
-		// because the outdir has not been posted.
-		if ( $remoteoutdir == '' ) {
-			global $clusterdata;
-			$clusterdata->post_data();
-			$remoteoutdir = $clusterdata->get_path();
+		// create a new cluster object, use the first occurance of a processing host
+		// in the config.php file if needed.
+		if ($_POST['changehostname']) {
+			$processinghost = $_POST['changehostname'];
+		} else if ($_POST['processinghost']) {
+			$processinghost = $_POST['processinghost'];
+		} else {
+			global $PROCESSING_HOSTS;
+			$processinghost = ( $processinghost == '') ? $PROCESSING_HOSTS[0]['host'] : $processinghost;
 		}
+		
+		$this->cluster = new Cluster( $processinghost );
+		
+		// Set default values based on the selected cluster
+		$nodes 		= ( $nodes == '') ? $this->cluster->getNodesDef() : $nodes;
+		$ppn 		= ( $ppn == '') ? $this->cluster->getPpnDef() : $ppn;
+		$rpn 		= ( $rpn == '') ? $this->cluster->getRpnDef() : $rpn;
+		$mem 		= ( $mem == '') ? $this->cluster->getMemoryMax() : $mem;
+		$walltime 	= ( $walltime == '') ? $this->cluster->getWallTimeDef() : $walltime;
+		$cput 		= ( $cput == '') ? $this->cluster->getCpuTimeDef() : $cput;
+		$localhost 	= ( $localhost == '') ? $this->cluster->getLocalHelperHost() : $localhost;
+		$remoteoutdir = ( $remoteoutdir == '') ? $this->cluster->get_path() : $remoteoutdir;
 		
 		$params = $this->getFormParams();
 		
 		// The help section corresponds to the array key for these parameters found in help.js for popup help.
 		$params->setHelpSection( "cluster" );
 				
+		$params->addParam( "processinghost", $processinghost, "Selected Host" );
 		$params->addParam( "nodes", $nodes, "Nodes" );
 		$params->addParam( "ppn", $ppn, "Proc/Node" );
 		$params->addParam( "rpn", $rpn, "Recons/Node" );
 		$params->addParam( "mem", $mem, "Memory" );
 		$params->addParam( "walltime", $walltime, "Wall Time" );
 		$params->addParam( "cput", $cput, "CPU Time" );
-		$params->addParam( "cluster", $cluster, "Select Host" );
+		$params->addParam( "localhost", $localhost, "Local host for rsync from remote host" ); //local host the the remote host can use to rsync results to (not editable)
 		$params->addParam( "remoteoutdir", $remoteoutdir, "Processing host output directory" );
 		
 		// add validations
+		$params->addValidation( "processinghost", "req" );
 		$params->addValidation( "nodes", "req" );
 		$params->addValidation( "nodes", "num" );
 		$params->addValidation( "ppn", "req" );
@@ -67,25 +68,26 @@ class clusterParamsForm extends BasicForm
 		$params->addValidation( "cput", "req" );
 		$params->addValidation( "cput", "num" );
 		
-		$valcheck = "maxval=".C_PPN_MAX;
+		$valcheck = "maxval=".$this->cluster->getPpnMax();
 		$params->addValidation( "ppn", $valcheck );
-		$valcheck = "maxval=".C_NODES_MAX;
+		$valcheck = "maxval=".$this->cluster->getNodesMax();
 		$params->addValidation( "nodes", $valcheck );
-		$valcheck = "maxval=".C_WALLTIME_MAX;
+		$valcheck = "maxval=".$this->cluster->getWallTimeMax();
 		$params->addValidation( "walltime", $valcheck );
-		$valcheck = "maxval=".C_CPUTIME_MAX;
+		$valcheck = "maxval=".$this->cluster->getCpuTimeMax();
 		$params->addValidation( "cput", $valcheck );	
-
 	}
 	
 	public function generateForm()
 	{
-		global $selectedcluster;
-		// if the user selects a new cluster, get the default values here
-		$clusterSelection = $_POST['changecluster'];
-		$this->updateFormParams( $clusterSelection );
+		// if the user selects a new cluster, don't bother checking the previous values
+		// or it will overwrite the new ones.
+		$clusterSelection = $_POST['changehostname'];
+		if ( !$clusterSelection ) {
+			$this->updateFormParams();
+		}
+		
 		$params = $this->getFormParams();
-		$html.= "<input type='hidden' NAME='cluster' value='".$selectedcluster."'>\n";
 		
 		// set form field size
 		$size = 4;
@@ -96,10 +98,10 @@ class clusterParamsForm extends BasicForm
 		// row 1
 		// add cluster selection box
 		$html.= "<tr><td>\n";
-		$html.= $this->instertHostSelectionBox( "cluster" );
+		$html.= $this->instertHostSelectionBox();
 		$html.= "</td>\n";
 		$html.= "<td>\n";
-		$html.= "<b>Selected Host:</b> ".$selectedcluster;
+		$html.= $params->insertTextFieldInRow( "processinghost", 20 );
 		$html.= "</td></tr>\n";
 		
 		// row 2
@@ -133,57 +135,16 @@ class clusterParamsForm extends BasicForm
 	
 	private function instertHostSelectionBox()
 	{
-		global $CLUSTER_CONFIGS;
+		global $PROCESSING_HOSTS;
 		
-		$html.= "<select name='changecluster' onchange='this.form.submit()'>\n";
+		$html.= "<select name='changehostname' onchange='this.form.submit()'>\n";
 		$html.= '<option value=""> Change Host Selection </option>'."\n";
-		foreach ($CLUSTER_CONFIGS as $cluster) {
-			$html.= '<option value="'.$cluster.'" >'.$cluster.'</option>'."\n";
+		foreach ($PROCESSING_HOSTS as $cluster) {
+			$html.= '<option value="'.$cluster['host'].'" >'.$cluster['host'].'</option>'."\n";
 		}
 		$html.= "</select>\n";
-		
+				
 		return $html;
 	}	
-	
-	// points the form parameters to the correct set of default
-	// values based on the users selection.
-	// Takes the default set Id, which corresponds to a set available
-	// in the "Import Parameters" drop down list.
-	final protected function updateFormParams( $defaultSetId='' )
-	{
-		global $CLUSTER_CONFIGS;
-		$params = &$this->getFormParams();
-		
-		if (in_array($defaultSetId, $CLUSTER_CONFIGS) ) {
-
-			// TODO: I don't think we need to include all this setting here,
-			// since when we select a new cluster, the form is reloaded and 
-			// the constructor is called. Are there other cases when we may want to call this?
-			$params->setParamValue( 'nodes', C_NODES_DEF );
-			$params->setParamValue( 'ppn', C_PPN_DEF );
-			$params->setParamValue( 'rpn', C_RPROCS_DEF );
-			$params->setParamValue( 'mem', C_MEMORY_MAX );
-			$params->setParamValue( 'walltime', C_WALLTIME_DEF );
-			$params->setParamValue( 'cput', C_CPUTIME_DEF );
-
-			global $clusterdata;
-			$clusterdata->post_data();
-			$remoteoutdir = $clusterdata->get_path();
-			$params->setParamValue( 'remoteoutdir', $remoteoutdir );
-			
-			// TODO: this might not work...may need to remove old validations first
-			$valcheck = "maxval=".C_PPN_MAX;
-			$params->addValidation( "ppn", $valcheck );
-			$valcheck = "maxval=".C_NODES_MAX;
-			$params->addValidation( "nodes", $valcheck );
-			$valcheck = "maxval=".C_WALLTIME_MAX;
-			$params->addValidation( "walltime", $valcheck );
-			$valcheck = "maxval=".C_CPUTIME_MAX;
-			$params->addValidation( "cput", $valcheck );
-			
-		} else {
-			parent::updateFormParams( $defaultSetId );
-		}
-	}
 }
 ?>

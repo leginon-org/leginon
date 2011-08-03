@@ -51,6 +51,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 		$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
 		$f = file($jobfile);
 		$package='EMAN';
+		// TODO: get this info from the database
 		foreach ($f as $line) {
 			if (preg_match('/^\#\sstackId:\s/',$line)) $stackid=ereg_replace('# stackId: ','',trim($line));
 			elseif (preg_match('/^\#\smodelId:\s/',$line)) $modelid=ereg_replace('# modelId: ','',trim($line));
