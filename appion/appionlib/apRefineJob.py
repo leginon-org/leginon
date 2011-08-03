@@ -272,7 +272,8 @@ class RefineJob(basicScript.BasicScript):
 		self.addJobCommands(tasks)
 
 	def logTaskStatus(self,existing_tasks,tasktype,tasklogfile, iter=None):
-		wrapper_webcaller = os.path.join(self.params['appionwrapper'],'webcaller.py')
+		if self.params['appionwrapper']:
+			wrapper_webcaller = self.params['appionwrapper']+' webcaller.py'
 		cmd = '--jobtype=%s --tasktype=%s --tasklogfile=%s' % (self.jobtype,tasktype,tasklogfile)
 		if iter:
 			cmd += ' --iter=%d' % (iter)
@@ -308,6 +309,8 @@ class RefineJob(basicScript.BasicScript):
 		self.setName(self.params['runname'])
 		self.logfile = os.path.join(self.params['remoterundir'],self.getName()+'.log')
 		self.cputime = self.params['cput']
+		# TO Do: need to get appion bin dir from appionwrapper environment variable Appion_Bin_Dir
+		self.appion_bin_dir = ''
 
 	def __initializeLog(self):
 		'''
