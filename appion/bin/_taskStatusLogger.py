@@ -46,7 +46,7 @@ class taskStatusLogger(object):
 		else:
 			from appionlib import apTaskLog
 			jobInstance = apTaskLog.TaskLog(command)
-			return jobInstance
+		return jobInstance
 
 if __name__ == '__main__':
 	testscript = taskStatusLogger()
