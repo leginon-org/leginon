@@ -134,7 +134,7 @@ if __name__== '__main__':
 					pfile=('spider.%i.csh' %spnum)
 					procfile=os.path.join(os.path.abspath('.'),clsdir,pfile)
 					f=open(procfile, 'w')
-					f.write("#!/bin/csh\n\n")
+					f.write("#!/bin/csh -f\n\n")
 					f.write("cd "+os.path.abspath('.')+"\n");
 					f.write(spidercmd)
 					f.write("exit\n")
