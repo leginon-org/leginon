@@ -366,6 +366,9 @@ class RefineJob(basicScript.BasicScript):
 		print self.params['remoterundir']
 		self.__makePackResultsScript()
 
+	def onClose(self):
+		self.addToLog('Done!')
+
 	def getWalltime(self):
 		return self.walltime
 	def getName(self):
