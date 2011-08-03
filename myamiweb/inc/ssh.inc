@@ -47,7 +47,9 @@ function exec_over_ssh($host, $username, $password, $command, $result=false, $po
 		return true;
 	sleep(1.1);
 
-	stream_set_blocking($stream, true);
+	//stream_set_blocking($stream, true);
+	// testing to see if this allows ssh to return after spawning a thread...
+	stream_set_blocking($stream, false);
 	if (function_exists("stream_get_contents")) {
 		if($showDebug) { echo "ssh2_connect: stream_get_contents"; }
 		$result = stream_get_contents($stream);
@@ -65,7 +67,9 @@ function scp($host, $username, $password, $localfile, $remotefile, $mode=0644, $
 	global $connError;
 	
 	if (!@is_file($localfile)){
-		die("$file: No such file\n");
+		$msg = $localfile.": No such file\n";
+		// TODO: lets use exceptions here instead of die!
+		die($msg);
 	}
 	
 	$connection = ssh2_connect($host, $port);
