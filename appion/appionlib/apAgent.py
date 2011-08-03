@@ -44,7 +44,8 @@ class Agent (object):
             sys.stderr.write("Error: Could not execute job " + self.currentJob.getName()+ "\n")
             sys.exit(1)
             
-        sys.stdout.write(str(hostJobId) + '\n')         
+        sys.stdout.write(str(hostJobId) + '\n') 
+        sys.stdout.flush()
         self.updateJobStatus(self.currentJob, hostJobId)
         return 0
         
@@ -135,32 +136,45 @@ class Agent (object):
         return confDict
     
     def updateJobStatus (self, jobObject, jobHostId ):
-        checkStatusInterval = 30 #check status ever 30 seconds
+        checkStatusInterval = 30 #check status every 30 seconds
         currentStatus = 'Q'
         projectId = jobObject.getProjectId()
         jobid = jobObject.getJobId()
-        updateCommand = "updateAppoinDB.py " + jobid  + " " + currentSatus + " " + projectId
         
         #Update before forking
-        process = subprocess.Popen(updateCommand, stdout=subprocess.PIPE, 
-                                                  stderr=subprocess.PIPE, sehll = True)
-        process.wait()
+        self.__updateStatusInDB(jobid, currentStatus, projectId)
         
         try:
-            pid = os.fork()
-        except OSError:
-            sys.stderr.write("Warning: Unable to monitor status, could not fork child" )
-        if pid == 0:
-            while curentStatus != "D":
-                newStatus = self.processingHost.checkJobStatus(jobHostId)
-                if newstatus != currentStatus:
-                    currentStatus = newStatus
-                    updateCommand = "updateAppoinDB.py " + jobid  + " " + currentSatus + " " + projectId
-                    process = subprocess.Popen(updateCommand, stdout=subprocess.PIPE, 
-                                                  stderr=subprocess.PIPE, sehll = True)
-                    process.wait()
+            pid = os.fork()        
+            if pid == 0:
+                os.setsid()
+                while currentStatus != "D" and currentStatus != "U":
+                    time.sleep(checkStatusInterval)
+                    newStatus = self.processingHost.checkJobStatus(jobHostId)
+                    if newStatus != currentStatus:
+                        currentStatus = newStatus
+                        self.__updateStatusInDB(jobid, currentStatus, projectId)
+                        
                     
-                time.sleep(checkStatusInterval)
-                
+                    
+        except OSError, e:
+            sys.stderr.write("Warning: Unable to monitor status: " + str(e) )
+       
         return
-                
+    
+    def __updateStatusInDB (self, jobid, status, projectId):
+        retVal = True   #initialize return value to True
+        #command string to pass to subprocess
+        updateCommand = "updateAppionDB.py " + jobid  + " " + status + " " + projectId
+        
+        try:
+            process = subprocess.Popen(updateCommand, stdout=subprocess.PIPE, 
+                                                  stderr=subprocess.PIPE,  shell = True)
+            r = process.wait()
+            #Command failed if return value greater than zero
+            if r > 0:
+                retVal = False
+        except Exception:
+            retVal = False       
+        
+        return retVal
