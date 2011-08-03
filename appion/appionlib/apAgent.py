@@ -165,7 +165,7 @@ class Agent (object):
     def __updateStatusInDB (self, jobid, status, projectId):
         retVal = True   #initialize return value to True
         #command string to pass to subprocess
-        updateCommand = "updateAppionDB.py " + jobid  + " " + status + " " + projectId
+        updateCommand = "updateAppionDB.py %d %s %d" % (jobid,status,projectId)
         
         try:
             process = subprocess.Popen(updateCommand, stdout=subprocess.PIPE, 

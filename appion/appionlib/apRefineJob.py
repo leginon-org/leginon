@@ -395,6 +395,8 @@ class RefineJob(basicScript.BasicScript):
 		return self.command_list
 	def getJobId(self):
 		return self.jobid
+	def getProjectId(self):
+		return self.params['projectid']
 	
 class Tester(RefineJob):
 	def makeRefineScript(self,iter):
