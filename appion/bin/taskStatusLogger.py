@@ -1,39 +1,55 @@
 #!/usr/bin/env python
-import os
 import sys
+import time
 import subprocess
+import math
 
-class loggerPasser(object):
+'''
+taskStatusLogger examines an output file of a job task and output short status lines to sys.stdout
+'''
+class taskStatusLogger(object):
 	'''
-	loggerPasser is called to create subprocess of _taskStatusLogger.py command
-	so that the system stdout can be redirected to joblogfile
+	taskStatusLogger creates an instance of apTaskLog or its subclasses
+	according to the jobtype
 	'''
 	def __init__(self):
-		prog = sys.argv[0]
-		dirname = os.path.dirname(prog)
-		newprog = os.path.join(dirname,'_taskStatusLogger.py')
-		opts = sys.argv[1:]
-		cmd = '%s %s' % (newprog,' '.join(opts))
-		outf = self.__getJobLogFile(opts)
-		f = open(outf, "a")
-		proc = subprocess.Popen(cmd, shell=True, stdout=f, stderr=subprocess.STDOUT)
-		proc.wait()
+		command = sys.argv[1:]
+		jobtype = self.getJobType(command)
+		statuslog = self.createLoggerInst(jobtype,command)
+		statuslog.start()
+		statuslog.close()
 
-		f.close()
-
-	def __getJobLogFile(self, command):
-		joblogfile = None
+	def getJobType(self, command):
+		jobtype = None
 
 		#Search for the command option that specified the job type
 		for option in command:
-			if option.startswith(r'--joblogfile='):
+			if option.startswith(r'--jobtype='):
 				#We only need the part after the '='
-				joblogfile = option.split('=')[1]
+				jobtype = option.split('=')[1]
 				#Don't process anymore of the list then needed
 				break
-		joblogfile = os.path.abspath(joblogfile)
-		return joblogfile
-			
+
+		return jobtype
+
+	def createLoggerInst(self, jobType, command):
+		jobInstance = None
+		if "emanrecon" == jobType:
+			from appionlib import apTaskLogEman
+			jobInstance = apTaskLogEman.EmanTaskLog(command)
+		elif "frealignrecon" == jobType:
+			from appionlib import apTaskLog
+			jobInstance = apTaskLog.TaskLog(command)
+		elif "xmipprecon" == jobType:
+			from appionlib import apTaskLog
+			jobInstance = apTaskLog.TaskLog(command)
+		elif "xmippml3drecon" == jobType:
+			from appionlib import apTaskLog
+			jobInstance = apTaskLog.TaskLog(command)
+		else:
+			from appionlib import apTaskLog
+			jobInstance = apTaskLog.TaskLog(command)
+		return jobInstance
 
 if __name__ == '__main__':
-	script = loggerPasser()
+	testscript = taskStatusLogger()

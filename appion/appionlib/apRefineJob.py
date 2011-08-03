@@ -272,10 +272,11 @@ class RefineJob(basicScript.BasicScript):
 		self.addJobCommands(tasks)
 
 	def logTaskStatus(self,existing_tasks,tasktype,tasklogfile, iter=None):
-		wrapper_tasklogger = os.path.join(self.params['appionwrapper'],'taskStatusLogger.py')
-		cmd = '%s --jobtype=%s --tasktype=%s --tasklogfile=%s --joblogfile=%s' % (wrapper_tasklogger,self.jobtype,tasktype,tasklogfile,self.logfile)
+		wrapper_webcaller = os.path.join(self.params['appionwrapper'],'webcaller.py')
+		cmd = '--jobtype=%s --tasktype=%s --tasklogfile=%s' % (self.jobtype,tasktype,tasklogfile)
 		if iter:
 			cmd += ' --iter=%d' % (iter)
+		cmd = "%s '%s %s' %s" % (wrapper_webcaller,'taskStatusLogger.py',cmd,self.joblog)
 		return self.addToTasks(existing_tasks,cmd)
 
 	def makeRefineScript(self,iter):

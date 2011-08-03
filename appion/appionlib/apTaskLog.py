@@ -29,8 +29,6 @@ class TaskLog(basicScript.BasicScript):
 			help="Type of task the logfile come from specific to the jobtype, e.g., 'refine' for emanrecon", metavar="X")
 		self.parser.add_option("--iter", dest="iter", type="int", default=1,
 			help="current iteration if applicable", metavar="INT")
-		self.parser.add_option("--joblogfile", dest="joblogfile",
-			help="Path for the task logfile. if relative path is given, current directory is assumed e.g. --tasklogfile=/home/you/sessionname/recon/runname/recon/refine1.log", metavar="PATH")
 		self.parser.add_option("--tasklogfile", dest="tasklogfile",
 			help="Path for the task logfile. if relative path is given, current directory is assumed e.g. --tasklogfile=/home/you/sessionname/recon/runname/recon/refine1.log", metavar="PATH")
 		
