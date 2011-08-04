@@ -63,12 +63,18 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 		$jobtype = $refineType[jobtype];
 		$refinejobs[] = $particle->getJobIdsFromSession($expId, $jobtype);
 	}
-	var_dump($refinejobs);
+	
+	$jobs = array();
+	foreach ( $refinejobs as $jobtype ) {
+		foreach ( $jobtype as $job ) {
+			$jobs[] = $job;
+		}
+	}
 
 	//$xmipprefinejobs = $particle->getJobIdsFromSession($expId, 'xmipprecon');
 	//$emanjobs = $particle->getJobIdsFromSession($expId, 'emanrecon');
-	$frealignjobs = $particle->getJobIdsFromSession($expId, 'runfrealign');
-	$jobs = array_merge($refinejobs, $frealignjobs);
+	//$frealignjobs = $particle->getJobIdsFromSession($expId, 'runfrealign');
+	//$jobs = array_merge($refinejobs, $frealignjobs);
 
 	// if clicked button, list jobs in queue
 	if ($showjobs && $_SESSION['loggedin'] == true) {
@@ -76,76 +82,75 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 	}
 
 	// loop over jobs and show info
-	foreach ($jobs as $jobtypes) {
-		foreach ( $jobtypes as $job) {
-			$jobid = $job['DEF_id'];
-	
-			// check if job has been uploaded
-			if ($particle->getReconIdFromAppionJobId($jobid)) {
-				//echo "recon $jobid";
-				continue;
-			}
-	
-			$jobinfo = $particle->getJobInfoFromId($jobid);
-			// check if job has been aborted
-			if ($showall != True && $jobinfo['status'] == 'A') {
-				//echo "abort $jobid";
-				continue;
-			}
-	
-			// check if job has an associated jobfile
-			$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
-			if (!file_exists($jobfile)) {
-				echo divisionHeader($jobinfo);
-				echo "<i>missing job file: $jobfile</i><br/><br/>\n";
-				continue;
-			}
-	
-			// display relevant info
-	
-			$display_keys['job name'] = $jobinfo['name'];
-			$display_keys['local path'] = $jobinfo['appath'];
-			$display_keys['cluster name'] = $jobinfo['cluster'];
-			$display_keys['cluster path'] = $jobinfo['clusterpath'];
-			if ($jobinfo['dmfpath'])
-				$display_keys['dmf path'] = $jobinfo['dmfpath'];
-	
-			// get job status
-			list($status, $dlbuttons) = showStatus($jobinfo);
-			if ($status) $display_keys['status'] = $status;
-	
-			// print header
+	foreach ($jobs as $job) {
+		$jobid = $job['DEF_id'];
+
+		// check if job has been uploaded
+		if ($particle->getReconIdFromAppionJobId($jobid)) {
+			//echo "recon $jobid";
+			continue;
+		}
+
+		$jobinfo = $particle->getJobInfoFromId($jobid);
+		// check if job has been aborted
+		if ($showall != True && $jobinfo['status'] == 'A') {
+			//echo "abort $jobid";
+			continue;
+		}
+
+		// check if job has an associated jobfile
+		$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
+		if (!file_exists($jobfile)) {
 			echo divisionHeader($jobinfo);
-	
-			// any download buttons
-			if ($dlbuttons)
-				echo "$dlbuttons<br/>\n";
-	
-			// fill table
-			echo "<table border='0'>\n";
-			foreach($display_keys as $k=>$v) {
-				echo formatHtmlRow($k,$v);
-			}
-			echo "</table>\n";
-	
-			if ($_SESSION['loggedin'] == true && $showjobs) {
-				if ($jobinfo['status']=='R' || $jobinfo['status']=='D') {
-					if ($jobinfo['jobtype'] == 'emanrecon') {
-						// if recon is of type EMAN
-						showEMANJobInfo($jobinfo);
-					} elseif ($jobinfo['jobtype'] == 'runfrealign') {
-						// if recon is of type FREALIGN
-						showFrealignJobInfo($jobinfo);
-					} elseif ($jobinfo['jobtype'] == 'xmipprecon') {
-						// if recon is of type XMIPP
-						showXmippJobInfo($jobinfo);	
-					} else {
-						print_r($jobinfo);
-					}
+			echo "<i>missing job file: $jobfile</i><br/><br/>\n";
+			continue;
+		}
+
+		// display relevant info
+
+		$display_keys['job name'] = $jobinfo['name'];
+		$display_keys['local path'] = $jobinfo['appath'];
+		$display_keys['cluster name'] = $jobinfo['cluster'];
+		$display_keys['cluster path'] = $jobinfo['clusterpath'];
+		if ($jobinfo['dmfpath'])
+			$display_keys['dmf path'] = $jobinfo['dmfpath'];
+
+		// get job status
+		list($status, $dlbuttons) = showStatus($jobinfo);
+		if ($status) $display_keys['status'] = $status;
+
+		// print header
+		echo divisionHeader($jobinfo);
+
+		// any download buttons
+		if ($dlbuttons)
+			echo "$dlbuttons<br/>\n";
+
+		// fill table
+		echo "<table border='0'>\n";
+		foreach($display_keys as $k=>$v) {
+			echo formatHtmlRow($k,$v);
+		}
+		echo "</table>\n";
+
+		if ($_SESSION['loggedin'] == true && $showjobs) {
+			if ($jobinfo['status']=='R' || $jobinfo['status']=='D') {
+				if ($jobinfo['jobtype'] == 'emanrecon') {
+					// if recon is of type EMAN
+					showEMANJobInfo($jobinfo);
+				} elseif ($jobinfo['jobtype'] == 'runfrealign') {
+					// if recon is of type FREALIGN
+					showFrealignJobInfo($jobinfo);
+				} elseif ($jobinfo['jobtype'] == 'xmipprecon') {
+					// if recon is of type XMIPP
+					showXmippJobInfo($jobinfo);	
+				} else {
+					print_r($jobinfo);
 				}
 			}
-			echo "<br/><br/>\n\n";
 		}
+		echo "<br/><br/>\n\n";
+	
 	}
 	processing_footer();
 	exit;
