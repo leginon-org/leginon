@@ -558,11 +558,6 @@ function jobForm($extra=false) {
 	exit;
 }
 
-function formatEndPath($path) {
-	$path = ereg(DIRECTORY_SEPARATOR."$", $path) ? $path : $path.DIRECTORY_SEPARATOR;
-	return $path;
-}
-
 function writeJobFile ($extra=False) {
 	global $clusterdata;
 	$particle = new particledata();

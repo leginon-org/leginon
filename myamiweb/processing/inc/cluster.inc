@@ -92,7 +92,7 @@ class Cluster
 			 $this->baseoutdir = '~'.$_SESSION['username']."/appion/";
 		}
 
-		$remoteOutputPath = $this->baseoutdir.$rootpath;
+		$remoteOutputPath = formatEndPath($this->baseoutdir).$rootpath;
 		$this->remoteOutputPath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $remoteOutputPath;		
 	}
 
@@ -141,9 +141,5 @@ class Cluster
 		throw new Exception("The get_javascript function has been depricated, yet it was just called! Fix Me!!");
 	}
 
-	function formatEndPath($path) {
-		$path = ereg($this->dirSeparator."$", $path) ? $path : $path.$this->dirSeparator;
-		return $path;
-	}
 }
 ?>

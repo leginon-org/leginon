@@ -451,11 +451,6 @@ function jobForm($extra=false) {
 	exit;
 }
 
-function formatEndPath($path) {
-	$path = ereg(DIRECTORY_SEPARATOR."$", $path) ? $path : $path.DIRECTORY_SEPARATOR;
-	return $path;
-}
-
 function getPBSMemoryNeeded($boxsize) {
 	$particle = new particledata();
 	$angles=explode(',',$_POST['ang_inc']);

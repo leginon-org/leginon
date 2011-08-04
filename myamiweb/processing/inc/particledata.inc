@@ -5101,8 +5101,9 @@ function getBaseAppionPath($sessioninfo,$new_base='appion') {
 }
 
 function formatEndPath($path) {
-	if (substr($path,-1,1)!='/')
-		$path.='/';
+	$path = ereg(DIRECTORY_SEPARATOR."$", $path) ? $path : $path.DIRECTORY_SEPARATOR;
+	//if (substr($path,-1,1)!='/')
+	//	$path.='/';
 	return $path;
 }
 

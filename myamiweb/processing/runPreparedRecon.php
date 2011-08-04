@@ -597,10 +597,4 @@ function submitJob($extra=False) {
 ******************************************
 */
 
-function formatEndPath($path) {
-	if (substr($path,-1,1)!='/')
-		$path.='/';
-	return $path;
-}
-
 ?>
