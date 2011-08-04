@@ -142,9 +142,7 @@ function createSelectedRefineForm( $method, $stacks='', $models='' )
 }
 
 function jobForm($extra=false) 
-{
-	global $clusterdata, $CLUSTER_CONFIGS, $selectedcluster;
-	
+{	
 	$expId = $_GET['expId'];
 	if ($expId) {
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
@@ -411,7 +409,6 @@ function copyFilesToCluster( $host )
 
 	$cluster 	 = new Cluster($host);
 	$clusterpath = $cluster->get_path();
-	$clusterpath = $cluster->formatEndPath($clusterpath);
 	
 	$runname = $_POST['runname'];
 	$rundir = $_POST['outdir'].$runname;

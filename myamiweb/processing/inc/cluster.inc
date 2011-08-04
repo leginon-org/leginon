@@ -85,19 +85,21 @@ class Cluster
 		$sessionname = $sessiondata['Name'];
 		// TODO: need to pass in the folder name 
 		// TODO: we have an extra slash in our paths. Should we make everything seperator independent?
-		$rootpath = $sessionname."/recon/";
+		$rootpath = $sessionname.$this->dirSeparator."recon".$this->dirSeparator;
 		
 		// if no baseoutdir was provided, set it to the current user's home directory 
 		if ( $this->baseoutdir === "") {
-			 $this->baseoutdir = '~'.$_SESSION['username']."/appion/";
+			 $this->baseoutdir = '~'.$_SESSION['username'].$this->dirSeparator."appion".$this->dirSeparator;
 		}
 
-		$remoteOutputPath = formatEndPath($this->baseoutdir).$rootpath;
-		$this->remoteOutputPath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $remoteOutputPath;		
+		$remoteOutputPath = $this->formatEndPath($this->baseoutdir).$rootpath;
+		$remoteOutputPath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $remoteOutputPath;
+		$this->remoteOutputPath = $this->formatEndPath( $remoteOutputPath ); 		
 	}
 
 	function get_path() {
 		$path = $_POST['clusterpath'] ? $_POST['clusterpath'] : $this->remoteOutputPath;
+		$path = $this->formatEndPath($path);
 		return $path;
 	}
 
@@ -140,6 +142,13 @@ class Cluster
 	{
 		throw new Exception("The get_javascript function has been depricated, yet it was just called! Fix Me!!");
 	}
-
+	
+	// make sure a path ends with a single path separator.
+	// uses the separator defined in the config file specific to this cluster instance.
+	function formatEndPath($path) 
+	{
+		$path = ereg($this->dirSeparator."$", $path) ? $path : $path.$this->dirSeparator;
+		return $path;
+	}
 }
 ?>
