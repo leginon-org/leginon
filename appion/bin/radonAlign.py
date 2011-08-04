@@ -143,11 +143,11 @@ class RadonAlign(appionScript.AppionScript):
 
 	#=====================
 	def createReferences(self, imagelist):
+		shape = imagelist[0].shape
 		if self.params['initref'] == "noise":
 			### just fill the references with noise
 			reflist = []
 			for i in range(self.params['numrefs']):
-				shape = imagelist[0].shape
 				reflist.append(numpy.random.random(shape))
 			return reflist
 
@@ -155,7 +155,6 @@ class RadonAlign(appionScript.AppionScript):
 			### create empty references for addition
 			reflist = []
 			for i in range(self.params['numrefs']):
-				shape = imagelist[0].shape
 				reflist.append(numpy.zeros(shape))
 
 			### shuffle particles into group and average them
@@ -173,9 +172,11 @@ class RadonAlign(appionScript.AppionScript):
 	def getRadons(self, imagelist):
 		try:
 			### multiprocessing module is not available in python 2.4
-			radonimagelist = apRadon.radonlist(imagelist, stepsize=self.params['stepsize'], maskrad=self.params['pixelmaskrad'])
+			radonimagelist = apRadon.radonlist(imagelist, 
+				stepsize=self.params['stepsize'], maskrad=self.params['pixelmaskrad'])
 		except ImportError:
-			radonimagelist = apRadon.classicradonlist(imagelist, stepsize=self.params['stepsize'], maskrad=self.params['pixelmaskrad'])
+			radonimagelist = apRadon.classicradonlist(imagelist, 
+				stepsize=self.params['stepsize'], maskrad=self.params['pixelmaskrad'])
 		return radonimagelist
 
 	#=====================
@@ -189,18 +190,21 @@ class RadonAlign(appionScript.AppionScript):
 				radoncc = radermacher.radonshift(radonimage, radonref, shiftrad)
 
 				value = radoncc.argmax()
+				### FUTURE: use peakfinder to get subpixel peak
 				col = value % radoncc.shape[1] #rotation angle
 				row = int(value/radoncc.shape[1]) #shift angle
 				cc = radoncc[row,col]
 				#print value, col, row, cc
 
-				anglelist = radermacher.getAngles(shiftrad)
-				shiftangle = anglelist[col]
-				xshift = shiftrad*math.sin(shiftangle)
-				yshift = shiftrad*math.cos(shiftangle)
-				rotangle = row*self.params['stepsize']
-
 				if cc > aligndata['bestcc']:
+					### calculate parameters
+					anglelist = radermacher.getAngles(shiftrad)
+					shiftangle = anglelist[col]
+					xshift = shiftrad*math.sin(shiftangle)
+					yshift = shiftrad*math.cos(shiftangle)
+					rotangle = row*self.params['stepsize']
+
+					### save values
 					aligndata['bestcc'] = cc
 					aligndata['xshift'] = math.ceil(xshift)
 					aligndata['yshift'] = math.ceil(yshift)
@@ -215,41 +219,70 @@ class RadonAlign(appionScript.AppionScript):
 		return aligndata
 
 	#=====================
-	def transformImage(self, image):
-		ndimage.shift()
-		ndimage.rotate()
-		return
+	def transformImage(self, image, aligndata):
+		alignedimage = image
+		shift = (-aligndata['xshift'], -aligndata['yshift'])
+		alignedimage = ndimage.shift(alignedimage, shift=shift, mode='wrap', order=1)
+		alignedimage = ndimage.rotate(alignedimage, -aligndata['rotangle'], reshape=False, order=1)
+		return alignedimage
 
 	#=====================
 	def radonAlign(self, stackfile):
 		"""
 		performs the meat of the program aligning the particles and creating references
-		
-		assumes that all particles fit into memory -- need to fix
 		"""
+		### FUTURE: only read a few particles into memory at one time
 		imageinfo = apImagicFile.readImagic(stackfile)
 		imagelist = imageinfo['images']
 		reflist = self.createReferences(imagelist)
-		apImagicFile.writeImagic(reflist, "reflist00.hed")
-
-		radonreflist = self.getRadons(reflist)
 		radonimagelist = self.getRadons(imagelist)
+		
+		### a pre-normalization value so the reference pixels do not overflow
+		partperref = self.params['numpart'] / float(self.params['numrefs'])
+		
+		for iternum in range(self.params['numiter']):
+			### save references to a file
+			apImagicFile.writeImagic(reflist, "reflist%02d.hed"%(iternum))
+		
+			### create Radon transforms for references
+			radonreflist = self.getRadons(reflist)
+		
+			### create empty references
+			newreflist = []
+			newrefcount = []
+			shape = imagelist[0].shape
+			for i in range(self.params['numrefs']):
+				newrefcount.append(0)
+				newreflist.append(numpy.zeros(shape))
 
-		### get alignment parameters
-		aligndatalist = []
-		for i in range(len(imagelist)):
-			image = imagelist[i]
-			radonimage = radonimagelist[i]
-			aligndata = self.getBestAlignForImage(image, radonimage, reflist, radonreflist, None)
-			aligndatalist.append(aligndata)
+			### get alignment parameters
+			aligndatalist = []
+			for i in range(len(imagelist)):
+				image = imagelist[i]
+				radonimage = radonimagelist[i]
+				aligndata = self.getBestAlignForImage(image, radonimage, reflist, radonreflist, None)
+				aligndatalist.append(aligndata)
+	
+				### create new references
+				alignedimage = self.transformImage(image, aligndata)
+				newreflist[aligndata['refid']] += alignedimage/partperref
+				newrefcount[aligndata['refid']] += 1
 
-		### create new references
+			### FUTURE: re-calculate Radon transform for particles with large shift
 
-		### create new Radon transforms for images with shift values???
+			### new references are now the old references
+			shape = reflist[0].shape
+			reflist = []
+			for i in range(self.params['numrefs']):
+				if newrefcount[i] == 0:
+					### reference with no particles -- just add noise
+					apDisplay.printWarning("Reference %02d has no particles"%(i+1))
+					ref = numpy.random.random(shape)
+				else:
+					ref = (newreflist[i] / newrefcount[i]) * partperref
+				reflist.append(ref)
 
-		### create new Radon transforms for references
-
-		return
+		return aligndatalist
 
 #=====================
 #=====================
