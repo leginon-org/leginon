@@ -26,25 +26,34 @@ def classicradon(image, stepsize=2):
 		line = rotated.sum(axis=0)
 		radonlist.append(line/maskline)
 	radon = numpy.array(radonlist)
+	radon = radon/radon.std()
 	#radonlr = numpy.fliplr(radon)
 	#radon = numpy.vstack((radon, radonlr))
 	return radon
 
 #=========================
-def classicradonlist(imagelist, stepsize=2, maskrad=None):
+def classicradonlist(imagelist, stepsize=2, maskrad=None, msg=None):
 	"""
 	computes Radon transform of image list
 	"""
 	t0 = time.time()
+	if msg is None and len(imagelist) > 50:
+		msg = True
+	elif msg is None:
+		msg = False
 
 	radonimagelist = []
+	if msg is True:
+		apDisplay.printMsg("Performing Radon transforms with one processor")
 	for imageid in range(len(imagelist)):
-		sys.stderr.write(".")
+		if msg is True and imageid % 50 == 0:
+			sys.stderr.write(".")
 		image = imagelist[imageid]
 		radonimage = classicradon(image, stepsize)
 		radonimagelist.append(radonimage)
-	sys.stderr.write("\n")
-	print "Classic Radon images complete in %s"%(apDisplay.timeString(time.time()-t0))
+	if msg is True:
+		sys.stderr.write("\n")
+		print "Classic Radon images complete in %s"%(apDisplay.timeString(time.time()-t0))
 
 	return radonimagelist
 
@@ -106,7 +115,8 @@ def radon(image, stepsize=2, maskrad=None):
 #=========================
 def radonImage(image, imageid, stepsize, mask, queue):
 	"""
-	computes Radon transform of single image using multiprocessing
+	computes Radon transform of single image,
+	requires multiprocessing queue
 	"""
 	radonlist = []
 	nsteps = int(math.ceil(180/float(stepsize)))
@@ -121,23 +131,28 @@ def radonImage(image, imageid, stepsize, mask, queue):
 		radonlist.append(line/maskline)
 
 	radon = numpy.array(radonlist)
+	### normalize standard deviation
+	radon = radon/radon.std()
 	### this does not work with shifting
 	#radonlr = numpy.fliplr(radon)
 	#radon = numpy.vstack((radon, radonlr))
 
 	queue.put([imageid, radon])
-	sys.stderr.write(".")
 	return
 
 #=========================
-def radonlist(imagelist, stepsize=2, maskrad=None):
+def radonlist(imagelist, stepsize=2, maskrad=None, msg=None):
 	"""
 	computes Radon transform of image list
 	"""
+	if msg is None and len(imagelist) > 50:
+		msg = True
+	elif msg is None:
+		msg = False
+
 	### Note: multiprocessing version not compatible with python 2.4
 	from multiprocessing import Queue, Process
 	t0 = time.time()
-
 
 	### prepare mask
 	shape = imagelist[0].shape
@@ -148,7 +163,11 @@ def radonlist(imagelist, stepsize=2, maskrad=None):
 
 	### preform radon transform for each image
 	queuelist = []
+	if msg is True:
+		apDisplay.printMsg("Performing Radon transforms with multiprocessor")
 	for imageid in range(len(imagelist)):
+		if msg is True and imageid % 50 == 0:
+			sys.stderr.write(".")
 		image = imagelist[imageid]
 		queue = Queue()
 		queuelist.append(queue)
@@ -156,15 +175,15 @@ def radonlist(imagelist, stepsize=2, maskrad=None):
 		proc = Process(target=radonImage, args=(image, imageid, stepsize, mask, queue))
 		proc.start()
 	proc.join()
-	sys.stderr.write("\n")
 
 	### assemble radon image list
 	radonimagelist = range(len(imagelist))
 	for queue in queuelist:
 		imageid, radonimage = queue.get()
 		radonimagelist[imageid] = radonimage
-
-	print "Multi Radon images complete in %s"%(apDisplay.timeString(time.time()-t0))
+	if msg is True:
+		sys.stderr.write("\n")
+		print "Multi Radon images complete in %s"%(apDisplay.timeString(time.time()-t0))
 
 	return radonimagelist
 

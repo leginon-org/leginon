@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import os
+import sys
+import time
 import math
 import numpy
 import random
@@ -13,6 +15,7 @@ from appionlib import apEMAN
 from appionlib import apImagicFile
 from appionlib import apRadon
 from scipy import ndimage
+from scipy import stats
 
 
 #=====================
@@ -32,10 +35,13 @@ class RadonAlign(appionScript.AppionScript):
 			help="Maximum amount of x,y shift (in pixels)", metavar="#")
 		self.parser.add_option("--shiftstep", dest="shiftstep", type="int", default=2,
 			help="Step size of x,y shift (in pixels)", metavar="#")
+
+		### choices
 		self.initreftypes = ('noise', 'average',)
-		self.parser.add_option("--initref", dest="initref", default="noise",
+		self.parser.add_option("--initref", dest="initref", default="average",
 			type="choice", choices=self.initreftypes,
 			help="Method for reference initialization", metavar="..")
+
 		### default values set later
 		self.parser.add_option("--lowpass", dest="lowpass", type="float",
 			help="Low pass filter (in Angstroms)", metavar="#")
@@ -185,7 +191,7 @@ class RadonAlign(appionScript.AppionScript):
 		aligndata['bestcc'] = -1.0
 		for j in range(len(reflist)):
 			for shiftrad in range(0, self.params['shiftmax'], self.params['shiftstep']):
-				radonimage = radonimagelist[i]
+				radonimage
 				radonref = radonreflist[j]
 				radoncc = radermacher.radonshift(radonimage, radonref, shiftrad)
 
@@ -198,6 +204,7 @@ class RadonAlign(appionScript.AppionScript):
 
 				if cc > aligndata['bestcc']:
 					### calculate parameters
+					### FUTURE: get shift list rather than angle list
 					anglelist = radermacher.getAngles(shiftrad)
 					shiftangle = anglelist[col]
 					xshift = shiftrad*math.sin(shiftangle)
@@ -210,21 +217,34 @@ class RadonAlign(appionScript.AppionScript):
 					aligndata['yshift'] = math.ceil(yshift)
 					aligndata['rotangle'] = rotangle
 					aligndata['refid'] = j
-		print ("ref %d - %.8f - x %d y %d ang %.1f"
-			%(aligndata['refid'],aligndata['bestcc'], aligndata['xshift'], 
-			aligndata['yshift'], aligndata['rotangle']))
+		#print ("ref %02d | %.8f | x %2d y %2d ang %.1f"
+		#	%(aligndata['refid'],aligndata['bestcc'], aligndata['xshift'], 
+		#	aligndata['yshift'], aligndata['rotangle']))
 		if oldshift is not None:
 			aligndata['xshift'] += oldshift['xshift']
 			aligndata['yshift'] += oldshift['yshift']
 		return aligndata
 
 	#=====================
-	def transformImage(self, image, aligndata):
+	def transformImage(self, image, aligndata, refimage):
 		alignedimage = image
-		shift = (-aligndata['xshift'], -aligndata['yshift'])
+		shift = (aligndata['xshift'], aligndata['yshift'])
 		alignedimage = ndimage.shift(alignedimage, shift=shift, mode='wrap', order=1)
-		alignedimage = ndimage.rotate(alignedimage, -aligndata['rotangle'], reshape=False, order=1)
-		return alignedimage
+		### due to the nature of Radon shifts, it cannot tell the difference between 0 and 180 degrees
+		alignedimage1 = ndimage.rotate(alignedimage, -aligndata['rotangle'], reshape=False, order=1)
+		alignedimage2 = ndimage.rotate(alignedimage, -aligndata['rotangle']+180, reshape=False, order=1)
+		cc1 = self.getCCValue(alignedimage1, refimage)
+		cc2 = self.getCCValue(alignedimage2, refimage)
+		if cc1 > cc2:
+			return alignedimage1
+		else:
+			return alignedimage2
+
+	#=====================
+	def getCCValue(self, imgarray1, imgarray2):
+		### faster cc, thanks Jim
+		ccs = stats.pearsonr(numpy.ravel(imgarray1), numpy.ravel(imgarray2))
+		return ccs[0]
 
 	#=====================
 	def radonAlign(self, stackfile):
@@ -232,7 +252,7 @@ class RadonAlign(appionScript.AppionScript):
 		performs the meat of the program aligning the particles and creating references
 		"""
 		### FUTURE: only read a few particles into memory at one time
-		imageinfo = apImagicFile.readImagic(stackfile)
+		imageinfo = apImagicFile.readImagic(stackfile, msg=False)
 		imagelist = imageinfo['images']
 		reflist = self.createReferences(imagelist)
 		radonimagelist = self.getRadons(imagelist)
@@ -242,7 +262,7 @@ class RadonAlign(appionScript.AppionScript):
 		
 		for iternum in range(self.params['numiter']):
 			### save references to a file
-			apImagicFile.writeImagic(reflist, "reflist%02d.hed"%(iternum))
+			apImagicFile.writeImagic(reflist, "reflist%02d.hed"%(iternum), msg=False)
 		
 			### create Radon transforms for references
 			radonreflist = self.getRadons(reflist)
@@ -257,16 +277,30 @@ class RadonAlign(appionScript.AppionScript):
 
 			### get alignment parameters
 			aligndatalist = []
+			cclist = []
+			t0 = time.time()
 			for i in range(len(imagelist)):
+				if i % 50 == 0:
+					sys.stderr.write(".")
 				image = imagelist[i]
 				radonimage = radonimagelist[i]
 				aligndata = self.getBestAlignForImage(image, radonimage, reflist, radonreflist, None)
-				aligndatalist.append(aligndata)
-	
+				#aligndatalist.append(aligndata)
+				refid = aligndata['refid']
+				cclist.append(aligndata['bestcc'])
+
 				### create new references
-				alignedimage = self.transformImage(image, aligndata)
-				newreflist[aligndata['refid']] += alignedimage/partperref
-				newrefcount[aligndata['refid']] += 1
+				refimage = reflist[refid]
+				alignedimage = self.transformImage(image, aligndata, refimage)
+				newreflist[refid] += alignedimage/partperref
+				newrefcount[refid] += 1
+			sys.stderr.write("\n")
+			print "Alignment complete in %s"%(apDisplay.timeString(time.time()-t0))
+
+			### report median cross-correlation, it should get better each iter
+			mediancc = numpy.median(numpy.array(cclist))
+			apDisplay.printMsg("Iter %02d, Median CC: %.8f"%(iternum, mediancc))
+			print newrefcount
 
 			### FUTURE: re-calculate Radon transform for particles with large shift
 
