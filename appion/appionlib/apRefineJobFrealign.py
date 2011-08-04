@@ -48,8 +48,8 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				####card 2
 				#{'name':"outerMaskRadius", 
 				#	'help':"mask from center of particle to outer edge"},
-				{'name':"innerMaskRadius", 'default':0, 
-					'help':"inner mask radius"},
+				#{'name':"innerMaskRadius", 'default':0, 
+				#	'help':"inner mask radius"},
 				{'name':"wgh", 'default':0.07, 
 					'help':"amplitude contrast"},
 				{'name':"xstd", 'default':0.0, 
@@ -111,7 +111,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			if self.params['recononly'] or self.params['refineonly']:
 				apDisplay.printError("partial iteration only allowed if startiter==enditer.")
 		self.params['relmag'] = 1.0
-		pieces = self.params['stackfile'].split('.')
+		pieces = self.params['stackname'].split('.')
 		ext = pieces[-1]
 		if ext == 'mrc':
 			self.params['cform'] = 'M'
@@ -196,7 +196,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			constant_inputlines.append(','.join(self.combineFrealignParams(iter_index,cardkey)))
 		constant_inputlines.insert(2,'1,1,1,1,1')
 		constant_inputlines.insert(3,'1, %d' % self.params['totalpart'])
-		stackfile = os.path.basename(self.params['stackfile'])
+		stackfile = os.path.basename(self.params['stackname'])
 		pieces = stackfile.split('.')
 		stackfilehead = '.'.join(pieces[:len(pieces)-1])
 		appendcards = [
@@ -324,7 +324,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		return int(numgig),iblow
 
 	def makePreIterationScript(self):
-			self.addJobCommands(self.addToTasks({},'mv initial.mrc threed.000a.mrc',2,1))
+			self.addJobCommands(self.addToTasks({},'ln -s  %s threed.000a.mrc' % self.params['modelnames'][0]))
 
 	def makeRefineScript(self,iter):
 		tasks = {}
@@ -338,19 +338,18 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			# refine parallelizable to multiple nodes
 			refine_files = self.writeMultipleRefineShells(iter,inputlines_template,iterpath,self.nproc)
 			# use mpi to parallelize the processes
-			mpi_refine = self.setupMPIRun(iter,refine_files,self.nproc,iterpath)
+			masterfile_name = 'mpi.iter%03d.run.sh' % (iter)
+			mpi_refine = self.setupMPIRun(refine_files,self.nproc,iterpath,masterfile_name)
 			tasks = self.addToTasks(tasks,mpi_refine,self.mem,self.ppn)
 		if not self.params['refineonly']:
 			# combine and recon parallelized only on one node
 			recon_file = self.writeReconShell(iter,inputlines_template,iterpath,self.ppn)	
 			# use mpi to parallelize the processes
-			mpi_recon = self.setupMPIRun(iter,[recon_file],self.ppn,iterpath)
+			# there is only one process for this now
+			mpi_recon = self.setupMPIRun([recon_file],self.ppn,iterpath,'')
 			tasks = self.addToTasks(tasks,mpi_recon,self.recon_mem,self.ppn)
 		tasks = self.addToTasks(tasks,'getProjEuler.py',2,self.ppn)
 		return tasks
-
-	def makePostIterationScript(self):
-			self.addJobCommands(self.addToTasks({},'tar results',2,1))
 
 if __name__ == '__main__':
 	app = EmanRefineJob()
