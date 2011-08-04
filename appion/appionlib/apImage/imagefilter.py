@@ -371,6 +371,15 @@ def correctImage(imgdata, sessionname):
 
 #=========================
 def frame_cut(a, newshape):
+	"""
+	clips image, similar to EMAN1's proc2d clip=X,Y
+	
+	>>> a = num.arange(16, shape=(4,4))
+	>>> frame_cut(a, (2,2))
+	array(
+			[[5,  6],
+		   [9, 10]])
+	"""
 	mindimx = int( (a.shape[0] / 2.0) - (newshape[0] / 2.0) )
 	maxdimx = int( (a.shape[0] / 2.0) + (newshape[0] / 2.0) )
 	mindimy = int( (a.shape[1] / 2.0) - (newshape[1] / 2.0) )
