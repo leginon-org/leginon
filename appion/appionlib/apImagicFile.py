@@ -254,7 +254,7 @@ def writeImagic(array, filename, msg=True):
 	Currently reads header information for only first image in stack
 
 	Inputs:
-		3d numpy array (numimg x row x col)
+		3d numpy array (numimg x row x col) OR python list of 2d numpy arrays (row x col)
 		filename
 	Modifies:
 		overwrites files on disk
@@ -262,6 +262,7 @@ def writeImagic(array, filename, msg=True):
 		none
 	"""
 	if isinstance(array, list):
+		### python list of 2d numpy arrays (row x col)
 		if len(array) == 0:
 			apDisplay.printWarning("writeImagic: no particles to write")
 			return
