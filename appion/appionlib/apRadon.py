@@ -47,6 +47,7 @@ def classicradonlist(imagelist, stepsize=2, maskrad=None, msg=None):
 		apDisplay.printMsg("Performing Radon transforms with one processor")
 	for imageid in range(len(imagelist)):
 		if msg is True and imageid % 50 == 0:
+			### FUTURE: add time estimate
 			sys.stderr.write(".")
 		image = imagelist[imageid]
 		radonimage = classicradon(image, stepsize)
@@ -167,6 +168,7 @@ def radonlist(imagelist, stepsize=2, maskrad=None, msg=None):
 		apDisplay.printMsg("Performing Radon transforms with multiprocessor")
 	for imageid in range(len(imagelist)):
 		if msg is True and imageid % 50 == 0:
+			### FUTURE: add time estimate
 			sys.stderr.write(".")
 		image = imagelist[imageid]
 		queue = Queue()

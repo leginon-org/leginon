@@ -281,6 +281,7 @@ class RadonAlign(appionScript.AppionScript):
 			t0 = time.time()
 			for i in range(len(imagelist)):
 				if i % 50 == 0:
+					### FUTURE: add time estimate
 					sys.stderr.write(".")
 				image = imagelist[i]
 				radonimage = radonimagelist[i]
