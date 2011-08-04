@@ -32,7 +32,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 			help="choose if frealign should not perform ctf correction")
 
 	def setRefineMethod(self):
-		self.refinemethod = 'emanrecon'
+		self.refinemethod = 'frealignrecon'
 
 	def checkPackageConflicts(self):
 		if len(self.modelids) != 1:
