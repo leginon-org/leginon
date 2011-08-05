@@ -33,7 +33,11 @@ pick_colors = [
 	(255,0,255),
 	(0,255,255),
 	(128,128,0),
+	(128,0,128),
+	(0,128,128),
 	(255,128,128),
+	(128,255,128),
+	(128,128,255),
 ]
 
 class ManualPickerPanel(TargetPanel.TargetImagePanel):
