@@ -24,6 +24,9 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.invert = False
 
 	def setRefineMethod(self):
+		'''
+		Refine method will be used to classify the prepared run
+		'''
 		self.refinemethod = None
 
 	#=====================
@@ -70,6 +73,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		pass
 
 	def proc2dFormatConversion(self):
+		# default is Imagic
 		if self.stackspidersingle:
 			extname = 'spi'
 			format = 'spidersingle'
@@ -79,6 +83,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		return extname, format
 
 	def proc3dFormatConversion(self):
+		# default is mrc
 		if self.modelspidersingle:
 			extname = 'spi'
 		else:
@@ -95,10 +100,10 @@ class Prep3DRefinement(appionScript.AppionScript):
 		return clipsize
 
 
-	def preprocessParticleStackWithProc2d(self):
+	def preprocessStackWithProc2d(self):
 		'''
-		takes the stack file and creates a stack file with binning and filtering
-		ready for processing
+		Use database particle stack file to create a stack file with binning and filtering
+		ready for processing.
 		'''
 		need_modify = False
 		emancmd  = "proc2d "
@@ -155,7 +160,10 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.stack['apix'] = self.stack['apix'] * self.params['bin']
 		return outstack
 			
-	def preprocessInitialModelWithProc3d(self):
+	def preprocessModelWithProc3d(self):
+		'''
+		Use EMAN proc3d to scale initial or mask model to that of the refinestack and format
+		'''
 		extname = self.proc3dFormatConversion()
 		if self.model['ismask'] is False:
 			modelname = "initmodel"
@@ -171,17 +179,15 @@ class Prep3DRefinement(appionScript.AppionScript):
 
 	def setFormat(self):
 		'''
-		This is used in preprocessParticleStackWithProc2d
-		and preprocessInitialModelWithProc3d
-		that uses EMAN's proc2d and proc3d
-		SPIDER 3D refinement use self.stackspidersingle=True and self.modelspidersingle=True
-		xmipp use self.stackspidersingle=False because it needs to be broken up into folders
-		xmipp use self.modelspidersingle=True
+		This is used to set output format in preprocessing.
+		SPIDER 3D refinement use self.stackspidersingle=True and self.modelspidersingle=True.
+		xmipp use self.modelspidersingle=True but self.stackspidersingle=False
+		because it needs to be broken up into folders
 		'''
 		self.stackspidersingle = False
 		self.modelspidersingle = False
 
-	def initializeStack(self):
+	def __initializeStack(self):
 		self.stack = {}
 		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
@@ -189,7 +195,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 		self.stack['format'] = 'imagic'
 
-	def initializeModel(self,modelid,ismask=False):
+	def __initializeModel(self,modelid,ismask=False):
 		self.model = {}
 		self.model['data'] = apModel.getModelFromId(modelid)
 		self.model['id'] = modelid
@@ -201,15 +207,23 @@ class Prep3DRefinement(appionScript.AppionScript):
 	def setProcessingDirName(self):
 		self.processdirname = 'recon'
 
-	def convertToRefineParticleStack(self):
+	def convertToRefineStack(self):
+		'''
+		Stack conversions that can not be achieved by proc2d
+		'''
 		pass
 
-	def saveFilesToSend(self):
+	def __saveFilesToSend(self):
 		f = open(os.path.join(self.params['rundir'],'files_to_remote_host'), 'w')
 		f.writelines(map((lambda x: x+'\n'),self.files_to_send))
 		f.close()
 
-	def commitRefineStack(self,prepdata):
+	def __commitRefineStack(self,prepdata):
+		'''
+		Save parameters used to create refinestack in the database.
+		Unlike a regular stack, Individual particle-refinestack relationship 
+		is not committed to save time.
+		'''
 		q = appiondata.ApRefineStackData()
 		q['preprefine'] = prepdata
 		q['stackref'] = self.stack['data']
@@ -225,7 +239,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		q['recon'] = False
 		q.insert()
 
-	def commitRefineInitModel(self,prepdata):
+	def __commitRefineInitModel(self,prepdata):
 		q = appiondata.ApRefineInitModelData()
 		q['preprefine'] = prepdata
 		q['refmodel'] = self.model['data']
@@ -234,7 +248,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 		q['apix'] = self.model['apix']
 		q.insert()
 
-	def commitRefineMaskVol(self,prepdata):
+	def __commitRefineMaskVol(self,prepdata):
 		q = appiondata.ApRefineMaskVolData()
 		q['preprefine'] = prepdata
 		q['refmodel'] = self.model['data']
@@ -274,17 +288,32 @@ class Prep3DRefinement(appionScript.AppionScript):
 	def addModelToSend(self,filepath):
 		self.addToFilesToSend(filepath)
 
-	def processModel(self,prepdata,modelid,ismask=False):
-		self.initializeModel(modelid,ismask)
-		self.preprocessInitialModelWithProc3d()
+	def __processStack(self,prepdata):
+		'''
+		Convert stack in database to refinestack in the format the refine method needs
+		'''
+		self.__initializeStack()
+		self.preprocessStackWithProc2d()
+		self.convertToRefineStack()
+		self.addStackToSend(self.stack['file'])
+		self.__commitRefineStack(prepdata)
+
+	def __processModel(self,prepdata,modelid,ismask=False):
+		'''
+		Convert model in database to refinemodel in the format required by the refine method
+		and the scale it according to refinestack
+		'''
+		self.__initializeModel(modelid,ismask)
+		self.preprocessModelWithProc3d()
 		self.addModelToSend(self.model['file'])
 		if not ismask:
-			self.commitRefineInitModel(prepdata)
+			self.__commitRefineInitModel(prepdata)
 		else:
-			self.commitRefineMaskVol(prepdata)
+			self.__commitRefineMaskVol(prepdata)
 
 	def processMaskVol(self,prepdata):
 		'''
+		Additional process needed for the model used as mask volume.
 		Only xmipp allows maskvolume for now.  It would be nice to do this
 		for all refinement methods
 		'''
@@ -298,22 +327,19 @@ class Prep3DRefinement(appionScript.AppionScript):
 		'''
 		pass
 
+
 	#=====================
 	def start(self):
 		prepdata = self.commitToDatabase()
-		# manipulate stack
-		self.initializeStack()
 		self.setFormat()
-		self.preprocessParticleStackWithProc2d()
-		self.convertToRefineParticleStack()
-		self.addStackToSend(self.stack['file'])
-		self.commitRefineStack(prepdata)
+		# manipulate stack
+		self.__processStack(prepdata)
 		#manipulate models
 		for modelid in self.modelids:
-			self.processModel(prepdata,modelid,False)
+			self.__processModel(prepdata,modelid,False)
 		self.processMaskVol(prepdata)
 		self.otherPreparations()
-		self.saveFilesToSend()
+		self.__saveFilesToSend()
 		
 #=====================
 if __name__ == "__main__":

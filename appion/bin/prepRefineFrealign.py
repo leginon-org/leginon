@@ -43,6 +43,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		self.modelspidersingle = False
 
 	def proc3dFormatConversion(self):
+		#Imagic format used to be consistent with stack
 		extname = 'hed'
 		return extname
 
@@ -52,7 +53,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		self.stackparamdata = stackrun['stackParams']
 		self.stackrunlogparams = apScriptLog.getScriptParamValuesFromRunname(stackrun['stackRunName'],jobdata=None)
 
-	def preprocessParticleStackWithProc2d(self):
+	def preprocessStackWithProc2d(self):
 		self.getStackRunParams()
 		# use original stackrun log parameters to create preparation parameters
 		if 'defocpair' in self.stackrunlogparams.keys():
@@ -64,7 +65,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 			self.no_ctf_correction = True
 			if self.stackparamdata['inverted']:
 				self.invert = True
-			newstackfile = super(FrealignPrep3DRefinement,self).preprocessParticleStackWithProc2d()
+			newstackfile = super(FrealignPrep3DRefinement,self).preprocessStackWithProc2d()
 			return newstackfile
 		else:
 			# Need to recreate the ctf-uncorrected stack.  preprocess is not useful
@@ -84,7 +85,10 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 				text = '--%s=%.3f' % (key,value)
 		return text
 		
-	def convertToRefineParticleStack(self):
+	def convertToRefineStack(self):
+		'''
+		The stack is remaked without ctf correction and without invertion (ccd)
+		'''
 		if self.no_ctf_correction:
 			return
 		stackdata = self.stack['data']

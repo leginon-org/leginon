@@ -15,7 +15,7 @@ class XmippPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		self.stackspidersingle = False
 		self.modelspidersingle = True
 
-	def convertToRefineParticleStack(self):
+	def convertToRefineStack(self):
 		hedpath = self.stack['file']
 		selfile = apXmipp.breakupStackIntoSingleFiles(hedpath)
 		self.stack['file'] = os.path.join(self.params['rundir'],selfile)

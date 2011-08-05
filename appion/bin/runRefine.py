@@ -7,7 +7,7 @@ import math
 
 class RefineRunner(object):
 	def __init__(self):
-		self.jobtype = 'emanrecon'
+		self.jobtype = 'frealignrecon'
 		optargs = sys.argv[1:]
 
 		self.setJob(optargs)
