@@ -166,7 +166,8 @@ class generalReconUploader(appionScript.AppionScript):
 		elif self.params['timestamp'] is None and self.params['jobid'] is not None:
 			timestamp = self.getTimestamp()
 			if timestamp is None:
-				apDisplay.printError("please specify the timestamp associated with the refinement parameters, e.g. --timestamp=08nov25c07")
+				self.params['timestamp'] = apParam.makeTimestamp()
+#				apDisplay.printError("please specify the timestamp associated with the refinement parameters, e.g. --timestamp=08nov25c07")
 			
 		### basic refinement variables
 		self.initializeRefinementUploadVariables()
@@ -255,9 +256,12 @@ class generalReconUploader(appionScript.AppionScript):
 		''' find timestamp associated with job, e.g. 08nov02b35'''
 		
 		jobdata = appiondata.ApRefineRunData.direct_query(self.params["jobid"])
-		timestamp = jobdata['timestamp']
+		try:
+			timestamp = jobdata['timestamp']
+		except:
+			apDisplay.printWarning("timestamp could not be found from the jobdata")
+			return None
 		apDisplay.printMsg("Found timestamp = '"+timestamp+"'")
-
 		return timestamp
 					
 	#=====================
