@@ -40,7 +40,7 @@ class ClusterParamsForm extends BasicForm
 		$walltime 	= ( $walltime == '') ? $this->cluster->getWallTimeDef() : $walltime;
 		$cput 		= ( $cput == '') ? $this->cluster->getCpuTimeDef() : $cput;
 		$localhost 	= ( $localhost == '') ? $this->cluster->getLocalHelperHost() : $localhost;
-		$remoteoutdir = ( $remoteoutdir == '') ? $this->cluster->get_path() : $remoteoutdir;
+		$remoteoutdir = ( $remoteoutdir == '') ? $this->cluster->getPath() : $remoteoutdir;
 		
 		$params = $this->getFormParams();
 		

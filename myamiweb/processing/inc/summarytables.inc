@@ -938,14 +938,14 @@ function frealigntable($frealignprepid) {
 	return $table;
 };
 
-function prepRefineTable($frealignprepid) {
+function prepRefineTable($jobid) {
 	// initialization
 	$table = "";
 
 	$expId = $_GET['expId'];
 	$particle = new particledata();
 
-	$datas = $particle->getPreparedRefineJobs($frealignprepid);
+	$datas = $particle->getPreparedRefineJobs($jobid);
 	if (!$datas)
 		return;
 	$data = $datas[0];

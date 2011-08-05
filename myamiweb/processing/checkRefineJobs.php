@@ -17,27 +17,27 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 	$projectId=getProjectId();
 
 	// Create DMF commands, this should move the default_cluster.php
-	$javafunc="  <script language='JavaScript'>\n";
-	$javafunc.="  function displayDMF(dmfdir,outdir,has_coran) {\n";
-	$javafunc.="  newwindow=window.open('','name','height=150, width=900')\n";
-	$javafunc.="  newwindow.document.write('<html><body>')\n";
-	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/model.tar.gz '+outdir+'/.<br />')\n";
-	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.<br />')\n";
-	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/*.job '+outdir+'/.<br />')\n";
-	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar.gz -C '+outdir+'<br />')\n";
-	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar.gz -C '+outdir+'<br />')\n";
-	$javafunc.="  if (has_coran > 0) { \n";
-	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/coran.tar.gz '+outdir+'/.<br />')\n";
-	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/coran.tar.gz -C '+outdir+'<br />')\n";
-	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/coran.tar*<br />')\n";
-	$javafunc.="  } \n";
-	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/model.tar*<br />')\n";
-	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/results.tar*<br />')\n";
-	$javafunc.="    newwindow.document.write('echo done<br />')\n";
-	$javafunc.="    newwindow.document.write('<p>&nbsp;<br /></body></html>')\n";
-	$javafunc.="    newwindow.document.close()\n";
-	$javafunc.="  }\n";
-	$javafunc.="  </script>\n";
+//	$javafunc="  <script language='JavaScript'>\n";
+//	$javafunc.="  function displayDMF(dmfdir,outdir,has_coran) {\n";
+//	$javafunc.="  newwindow=window.open('','name','height=150, width=900')\n";
+//	$javafunc.="  newwindow.document.write('<html><body>')\n";
+//	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/model.tar.gz '+outdir+'/.<br />')\n";
+//	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.<br />')\n";
+//	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/*.job '+outdir+'/.<br />')\n";
+//	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar.gz -C '+outdir+'<br />')\n";
+//	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar.gz -C '+outdir+'<br />')\n";
+//	$javafunc.="  if (has_coran > 0) { \n";
+//	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/coran.tar.gz '+outdir+'/.<br />')\n";
+//	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/coran.tar.gz -C '+outdir+'<br />')\n";
+//	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/coran.tar*<br />')\n";
+//	$javafunc.="  } \n";
+//	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/model.tar*<br />')\n";
+//	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/results.tar*<br />')\n";
+//	$javafunc.="    newwindow.document.write('echo done<br />')\n";
+//	$javafunc.="    newwindow.document.write('<p>&nbsp;<br /></body></html>')\n";
+//	$javafunc.="    newwindow.document.close()\n";
+//	$javafunc.="  }\n";
+//	$javafunc.="  </script>\n";
 
 	processing_header("Cluster Jobs", "Cluster Job Status", $javafunc);
 	// write out errors, if any came up:
@@ -70,6 +70,7 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 			$jobs[] = $job;
 		}
 	}
+	//var_dump($jobs);
 
 	//$xmipprefinejobs = $particle->getJobIdsFromSession($expId, 'xmipprecon');
 	//$emanjobs = $particle->getJobIdsFromSession($expId, 'emanrecon');

@@ -84,7 +84,8 @@ function selectRefineJob($extra=False) {
 	echo "<table class='tableborder' border='1'>\n";
 	foreach ($refinejobs as $refinejob) {
 		echo "<tr><td>\n";
-		$id = $refinejob['DEF_id'];
+		//$id = $refinejob['DEF_id'];
+		$id = $refinejob['REF|ApAppionJobData|job'];
 		if ($refinejob['hidden'] != 1) {
 			echo "<input type='radio' NAME='jobid' value='$id' ";
 			echo "><br/>\n";
@@ -92,7 +93,7 @@ function selectRefineJob($extra=False) {
 		}
 		echo "</td><td>\n";
 
-		echo prepRefineTable($refinejob['DEF_id']);
+		echo prepRefineTable($id);
 
 		echo "</td></tr>\n";
 	}
@@ -408,7 +409,7 @@ function copyFilesToCluster( $host )
 	}
 
 	$cluster 	 = new Cluster($host);
-	$clusterpath = $cluster->get_path();
+	$clusterpath = $cluster->getPath();
 	
 	$runname = $_POST['runname'];
 	$rundir = $_POST['outdir'].$runname;

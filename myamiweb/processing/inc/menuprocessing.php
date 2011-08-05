@@ -666,8 +666,8 @@ if (is_numeric($expId)) {
 		$prepRefineTypes = $particle->getJobTypesLike( $expId, $pattern );
 		
 		foreach ( $prepRefineTypes as $key=>$prepType ) {
-			$prepRefineQueue 	= count($subclusterjobs[$prepType[jobtype]]['queued']);
-			$prepRefineRun 		= count($subclusterjobs[$prepType[jobtype]]['running']);
+			$prepRefineQueue 	+= count($subclusterjobs[$prepType[jobtype]]['queued']);
+			$prepRefineRun 		+= count($subclusterjobs[$prepType[jobtype]]['running']);
 		}
 		
 		// Get all preparred refines
@@ -693,13 +693,13 @@ if (is_numeric($expId)) {
 		
 		$refinejobs = array();
 		foreach ( $refineTypes as $key=>$refineType ) {
-			$jobtype	 = $refineType[jobtype];
+			$jobtype = $refineType[jobtype];
 			if ( $jobtype == "uploadrecon" ) {
 				continue;
 			}
-			$refineQueue = count($subclusterjobs[$jobtype]['queued']);
-			$refineRun 	 = count($subclusterjobs[$jobtype]['running']);
-			$refinejobs[]= $particle->getJobIdsFromSession($expId, $jobtype, $status=False, $ignore=True);
+			$refineQueue += count($subclusterjobs[$jobtype]['queued']);
+			$refineRun 	 += count($subclusterjobs[$jobtype]['running']);
+			$refinejobs[] = $particle->getJobIdsFromSession($expId, $jobtype, $status=False, $ignore=True);
 		}
 		
 		// Find refines ready to upload
@@ -716,7 +716,7 @@ if (is_numeric($expId)) {
 			$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
 			$hasJobFile = file_exists($jobfile);
 			
-			if ( $jobran && $hasJobFile ) {
+			if ( true /*$jobran && $hasJobFile*/ ) {
 				$refineReadyUpload++;
 			}
 		}	
@@ -752,26 +752,12 @@ if (is_numeric($expId)) {
 			'name'=>"<a href='prepareFrealign.php?expId=$sessionId'>Frealign Refinement</a>",
 			'result'=> $frealignresults,
 		);
-		if (!HIDE_FEATURE)
-		{
-			$nruns[] = array(
-				'name'=>"<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>",
-				'result'=> "<i>(may be buggy)</i>", //$spiderreconresults,
-			);
-		}
-	
 		
 		$nruns[] = array(
 			'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
 			'result'=> $xmippreconresults,
 		);
 		
-		if (!HIDE_IMAGIC && !HIDE_FEATURE) {
-			$nruns[] = array(
-				'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Refinement</a>",
-				'result'=> "<i>(may be buggy)</i>", //$imreconresults,
-			);
-		}
 		
 		// new recon menu
 		// Single-Model refinement

@@ -4083,15 +4083,17 @@ class particledata {
 		return $r;
 	}
 
-	function getPreparedRefineJobs ($jobid=False, $path=False, $showHidden=true) {
+	function getPreparedRefineJobs ($jobid=False, $path=False, $showHidden=true, $name=False) {
 		$q = "SELECT ref.*, path.path, job.`DEF_id` AS jobid  "
 			. " FROM `ApPrepRefineData` AS ref "
 			. " LEFT JOIN ApPathData AS path ON ( ref.`REF|ApPathData|path` = path.`DEF_id` ) "
 			. " LEFT JOIN ApAppionJobData AS job ON ( ref.`REF|ApAppionJobData|job` = job.`DEF_id` ) ";
 		if ($jobid) {
-			$q .= " WHERE ref.`DEF_id` = '$jobid' ";
+			$q .= " WHERE job.`DEF_id` = '$jobid' ";
 		} elseif ($path) {
-			$q .= " WHERE path.`path` = '$path' ";
+			$q .= " WHERE ref.`REF|ApPathData|path` = '$path' ";
+		} elseif ($name) {
+			$q .= " WHERE ref.`name` = '$name' ";
 		} elseif (!$showHidden) {
 			$q .= " WHERE ref.`hidden` != '1' AND job.`status` = 'D' ";
 		}
@@ -4995,6 +4997,7 @@ class particledata {
 
 }
 
+// For euler angles, takes alpha beta gamma and returns a,b,c, maybe?
 function simplify($e) {
 	return $e['a'].','.$e['b'].','.$e['c'];
 }

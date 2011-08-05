@@ -84,7 +84,6 @@ class Cluster
 		$sessiondata = $leginondata->getSessionInfo($_GET['expId']);
 		$sessionname = $sessiondata['Name'];
 		// TODO: need to pass in the folder name 
-		// TODO: we have an extra slash in our paths. Should we make everything seperator independent?
 		$rootpath = $sessionname.$this->dirSeparator."recon".$this->dirSeparator;
 		
 		// if no baseoutdir was provided, set it to the current user's home directory 
@@ -97,50 +96,10 @@ class Cluster
 		$this->remoteOutputPath = $this->formatEndPath( $remoteOutputPath ); 		
 	}
 
-	function get_path() {
+	function getPath() {
 		$path = $_POST['clusterpath'] ? $_POST['clusterpath'] : $this->remoteOutputPath;
 		$path = $this->formatEndPath($path);
 		return $path;
-	}
-
-	function post_data() 
-	{
-		throw new Exception("The post_data function has been depricated, yet it was just called! Fix Me!!");
-	}
-
-	function cluster_parameters() 
-	{
-		throw new Exception("The cluster_parameters function has been depricated, yet it was just called! Fix Me!!");
-	}
-
-	function cluster_cmd($host, $user, $pass) 
-	{
-		throw new Exception("The cluster_cmd function has been depricated, yet it was just called! Fix Me!!");
-	}
-
-	function cluster_send_data() 
-	{
-		throw new Exception("The cluster_send_data function has been depricated, yet it was just called! Fix Me!!");
-	}
-
-	function cluster_receive_data() 
-	{
-		throw new Exception("The cluster_receive_data function has been depricated, yet it was just called! Fix Me!!");
-	}
-
-	function cluster_job_file($job) 
-	{
-		throw new Exception("The cluster_job_file function has been depricated, yet it was just called! Fix Me!!");
-	}
-
-	function cluster_check_msg() 
-	{
-		throw new Exception("The cluster_check_msg function has been depricated, yet it was just called! Fix Me!!");
-	}
-
-	function get_javascript() 
-	{
-		throw new Exception("The get_javascript function has been depricated, yet it was just called! Fix Me!!");
 	}
 	
 	// make sure a path ends with a single path separator.
