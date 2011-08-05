@@ -434,7 +434,7 @@ function runUploadRecon() {
 	//if ($itertype=='range' && $startiteration > 0) $command.="--startiter=$startiteration ";
 	//if ($itertype=='range' && $enditeration > 0) 
 	$command.="--numiter=2 ";
-	$command.="--description=\"$description\"";
+	$command.="--description=\"$description\" ";
 	$command.="--box=$boxsize ";
 	$command.="--apix=$apix ";
 	
