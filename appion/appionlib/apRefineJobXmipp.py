@@ -75,7 +75,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 			symm_name = inputname.upper()
 		return symm_name
 
-	def calcRefineMem(self,ppn,boxsize,sym,ang):
+	def calcRefineMem(self):
 		numgig = 2
 		return numgig
 
@@ -123,7 +123,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["DisplayProjectionMatching"]    =   False
 		protocolPrm["InnerRadius"]                  =   self.params['innerAlignRadius']
 		protocolPrm["OuterRadius"]                  =   self.params['outerAlignRadius']
-		protocolPrm["AvailableMemory"]              =   '2'
+		protocolPrm["AvailableMemory"]              =   '%d' % self.calcRefineMem()
 		protocolPrm["AngSamplingRateDeg"]           =   self.params['AngularSteps']
 		protocolPrm["MaxChangeInAngles"]            =   self.params['maxAngularChange']
 		protocolPrm["PerturbProjectionDirections"]  =   False
@@ -167,16 +167,33 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 
 		protocolfile = os.path.join(self.params['remoterundir'],"%s.py" % protocolname)
 		apXmipp.particularizeProtocol(protocol_projmatch,protocolPrm,protocolfile)
-		return protocolfile
+		return protocolfile, protocolPrm
+
+	def makeNewTrialScript(self):
+		self.addSimpleCommand('ln -s %s reference_volume.spi' % self.params['modelnames'][0])
+		partar = os.path.join(self.params['remoterundir'],'partfiles.tar.gz')
+		partpath = os.path.join(self.params['remoterundir'],'partfiles')
+		if not os.path.isdir(partpath):
+			# partfiles need to be untared in its directory
+			self.addSimpleCommand('mkdir %s' % partpath)
+			self.addSimpleCommand('cd %s' % partpath)
+			self.addSimpleCommand('tar xvf %s' % partar)
+			# return to recondir
+			self.addSimpleCommand('cd %s' % self.params['recondir'])
 
 	def makePreIterationScript(self):
-		super(XmippSingleModelRefineJob,self).makePreIterationScript()
 		self.convertToXmippStyleIterParams()
 		tasks = {}
-		tasks = self.addToTasks(tasks,'ln %s reference_volume.spi' % self.params['modelnames'][0])
-		protocolfile = self.setupXmippProtocol()
-		tasks = self.addToTasks(tasks,'python %s' % protocolfile)
-		tasks = self.addToTasks(tasks,'mv %s %s' % (protocolfile,self.params['recondir']))
+		self.addToLog('....Setting up Xmipp Protocol....')
+		protocolfile, protocolPrm = self.setupXmippProtocol()
+		self.addToLog('....Start running Xmipp Protocol....')
+		tasks = self.addToTasks(tasks,'python %s' % protocolfile,self.calcRefineMem(),self.params['nproc'])
+		protocol_pyname = os.path.basename(protocolfile)
+		protocolname = protocol_pyname.split('.')[0]
+		tasklogfilename = protocolname+'_'+protocolPrm['WorkingDir']+'.log'
+		tasklogfile = os.path.join(self.params['recondir'],protocolPrm['LogDir'],tasklogfilename)
+		tasks = self.logTaskStatus(tasks,'protocol_run',tasklogfile)
+		tasks = self.addToTasks(tasks,'cp %s %s' % (protocolfile,self.params['recondir']))
 		self.addJobCommands(tasks)
 
 if __name__ == '__main__':

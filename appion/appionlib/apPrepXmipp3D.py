@@ -26,7 +26,9 @@ class XmippPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		apFile.removeFile(imgpath, warn=True)
 
 	def createTarFileFromDirectory(self,dir, tarfile):
-		cmd = 'tar -cvzf %s %s' % (tarfile, dir)
+		cwd = os.getcwd()
+		os.chdir(dir)
+		cmd = 'tar -cvzf %s *' % (tarfile)
 		logfilepath = os.path.join(self.params['rundir'],'tar.log')
 		returncode = self.runAppionScriptInSubprocess(cmd,logfilepath)
 		if returncode > 0:
@@ -41,7 +43,7 @@ class XmippPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		firstline = lines[0]
 		firstpartpath = firstline.split(' ')
 		partbasepath = '/'.join(firstpartpath[0].split('/')[:-2])
-		tarfile = 'partfiles.tar.gz'
+		tarfile = os.path.join(self.params['rundir'],'partfiles.tar.gz')
 		self.createTarFileFromDirectory(partbasepath,tarfile)
 		self.addToFilesToSend(tarfile)
 

@@ -116,11 +116,10 @@ class EmanRefineJob(apRefineJob.RefineJob):
 		numgiga = math.ceil(memneed/1073741824.0)
 		return int(numgiga)
 
-	def makePreIterationScript(self):
-		if self.params['startiter'] == 1:
-			self.addJobCommands(self.addToTasks({},'ln -s  %s threed.0a.mrc' % self.params['modelnames'][0]))
+	def makeNewTrialScript(self):
+		self.addSimpleCommand('ln -s  %s threed.0a.mrc' % self.params['modelnames'][0])
 
-	def makeRefineScript(self,iter):
+	def makeRefineTasks(self,iter):
 		iter_index = iter - self.params['startiter']
 		refine_mem = self.calcRefineMem(self.ppn,self.params['boxsize'],self.params['symmetry'][iter_index],self.params['ang'][iter_index])
 		nproc = self.params['nproc']
@@ -148,7 +147,6 @@ class EmanRefineJob(apRefineJob.RefineJob):
 			'%s %d %d %.3f >> resolution.txt' % (appion_getres,iter,self.params['boxsize'], self.params['apix']))
 		tasks = self.logTaskStatus(tasks,'eotest','resolution.txt',iter)
 		tasks = self.addToTasks(tasks,'/bin/rm -fv cls*.lst')
-		tasks = self.addToTasks(tasks,'')
 		return tasks
 
 if __name__ == '__main__':

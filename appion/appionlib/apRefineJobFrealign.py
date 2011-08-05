@@ -323,10 +323,10 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 				break
 		return int(numgig),iblow
 
-	def makePreIterationScript(self):
-			self.addJobCommands(self.addToTasks({},'ln -s  %s threed.000a.mrc' % self.params['modelnames'][0]))
+	def makeNewTrialScript(self):
+		self.addSimpleCommand('ln -s  %s threed.000a.mrc' % self.params['modelnames'][0])
 
-	def makeRefineScript(self,iter):
+	def makeRefineTasks(self,iter):
 		tasks = {}
 		nproc = self.params['nproc']
 		iterpath = 'iter%03d' % (iter)

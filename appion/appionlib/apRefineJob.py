@@ -21,10 +21,11 @@ class RefineJob(basicScript.BasicScript):
 	def __init__(self,optlist=[]):
 		self.listparams = []
 		super(RefineJob,self).__init__(optlist)
-		self.gotoRemoteRunDir()
+		self.__gotoRemoteRunDir()
 		self.setAttributes()
 		self.__initializeLog()
 		self.start()
+		self.close()
 
 	#=====================
 	def setupParserOptions(self):
@@ -115,15 +116,15 @@ class RefineJob(basicScript.BasicScript):
 			apDisplay.printError('local host not defined for result transfer')
 		self.params['nproc'] = self.params['rpn'] * self.params['nodes']
 		self.checkPackageConflicts()
-		self.convertListParams()
+		self.__convertListParams()
 		### convert iteration parameters first before its confict checking
-		self.convertIterationParams()
+		self.__convertIterationParams()
 		self.checkIterationConflicts()
 
 	def setListParams(self):
 		self.listparams.append('modelnames')
 
-	def convertListParams(self):
+	def __convertListParams(self):
 		for paramkey in self.listparams:
 			if paramkey in self.params.keys():
 				self.params[paramkey] = self.params[paramkey].split(',')
@@ -139,7 +140,7 @@ class RefineJob(basicScript.BasicScript):
 				{'name':'innerMaskRadius','default':'0','help':'mask radius (pixels) autoset if 0'},
 				]
 
-	def convertIterationParams(self):
+	def __convertIterationParams(self):
 		iterparam_names = map((lambda x: x['name']),self.iterparams)
 		self.params = apParam.convertIterationParams(iterparam_names,self.params,self.params['numiter'])
 
@@ -174,7 +175,7 @@ class RefineJob(basicScript.BasicScript):
 	def convertSymmetryNameForPackage(self,symm_name):
 		return symm_name.replace(' (z)','')
 
-	def gotoRemoteRunDir(self):
+	def __gotoRemoteRunDir(self):
 		os.chdir(self.params['remoterundir'])
 
 	def setupMPIRun(self,procscripts,nproc,masterfile_dir,masterfile_name):
@@ -184,7 +185,7 @@ class RefineJob(basicScript.BasicScript):
 		mpi_script = 'mpirun -np %d ' % (nproc)
 		if len(procscripts) > 1:
 			masterfile = os.path.join(masterfile_dir,masterfile_name)
-			self.makeMPIMasterScript(procscripts,masterfile)
+			self.__makeMPIMasterScript(procscripts,masterfile)
 			mpi_script += masterfile
 		elif len(procscripts) == 1:
 			mpi_script += procscripts[0]
@@ -192,7 +193,7 @@ class RefineJob(basicScript.BasicScript):
 			apDisplay.printError('no processes to make mpirun command line')
 		return mpi_script
 
-	def makeMPIMasterScript(self,shellscripts,masterfile):
+	def __makeMPIMasterScript(self,shellscripts,masterfile):
 		lines = map((lambda x:'-np 1 '+x),shellscripts)
 		f = open(masterfile,'w')
 		f.writelines(map((lambda x: x+'\n'),lines))
@@ -201,12 +202,40 @@ class RefineJob(basicScript.BasicScript):
 	
 	def makePreIterationScript(self):
 		'''
-		Function to make job script for setup tasks to do before performing iterated tasks
-		that is package specific
+		Package-specific function to make job script for setup tasks to do before
+		performing iterated tasks even if it is a continuation of a trial
 		'''
 		pass
 
-	def makeNewRefineTrialScript(self):
+	def __makePreIterationScript(self):
+		'''
+		Function to make job script for setup tasks to do before performing iterated tasks
+		even if it is a continuation of a trial
+		'''
+		self.addSimpleCommand('# work in the recondir')
+		self.addSimpleCommand('cd %s' % self.params['recondir'])
+		self.addSimpleCommand('')
+		pretasks = {}
+		# link the required files to scratch recondir in case they are removed in previous cleanup
+		f = open(os.path.join(self.params['remoterundir'],'files_to_remote_host'))
+		lines = f.readlines()
+		pretasks = self.addToTasks(pretasks,'# link needed files into recondir')
+		for line in lines:
+			filename = os.path.basename(line.replace('\n',''))
+			sourcepath = os.path.join(self.params['remoterundir'],filename)
+			pretasks = self.addToTasks(pretasks,'ln -s  %s %s' % (sourcepath,filename))
+			pretasks = self.addToTasks(pretasks,'test -s  %s || ( echo %s not found && exit )' % (sourcepath,filename))
+		self.addJobCommands(pretasks)
+		self.addSimpleCommand('')
+
+	def makeNewTrialScript(self):
+		'''
+		Package-specific function to make job script for tasks that set up files required to start a
+		clean refine/reconstruction trial, including removal of the old trial
+		'''
+		pass
+
+	def __makeNewTrialScript(self):
 		'''
 		Function to make job script for tasks that set up files required to start a
 		clean refine/reconstruction trial, including removal of the old trial
@@ -217,18 +246,10 @@ class RefineJob(basicScript.BasicScript):
 		pretasks = self.addToTasks(pretasks,'mkdir -p %s' % self.params['recondir'])
 		pretasks = self.addToTasks(pretasks,'cd %s' % self.params['recondir'])
 		pretasks = self.addToTasks(pretasks,'')
-		# link the required files to scratch dir
-		f = open(os.path.join(self.params['remoterundir'],'files_to_remote_host'))
-		lines = f.readlines()
-		pretasks = self.addToTasks(pretasks,'# link needed files into recondir')
-		for line in lines:
-			filename = os.path.basename(line.replace('\n',''))
-			sourcepath = os.path.join(self.params['remoterundir'],filename)
-			pretasks = self.addToTasks(pretasks,'ln -s  %s %s' % (sourcepath,filename))
-			pretasks = self.addToTasks(pretasks,'test -s  %s || ( echo %s not found && exit )' % (sourcepath,filename))
 		pretasks = self.addToTasks(pretasks,'/bin/rm -fv resolution.txt')
 		pretasks = self.addToTasks(pretasks,'touch resolution.txt')
 		self.addJobCommands(pretasks)
+		self.addSimpleCommand('')
 
 	def makePostIterationScript(self):
 		'''
@@ -236,7 +257,7 @@ class RefineJob(basicScript.BasicScript):
 		'''
 		pass
 
-	def __addCopyByFileListFromRemoteHostScript(self,tasks):
+	def __addCopyByFileListFromRemoteHostTasks(self,tasks):
 		'''
 		Performs rsync to copy the files listed in files_from_remote_host back to localhost.
 		'''
@@ -250,7 +271,12 @@ class RefineJob(basicScript.BasicScript):
 			tasks = self.addToTasks(tasks,'rsync -rotouv --partial %s %s:%s/%s' % (filename,self.params['localhost'],self.params['rundir'],filename))
 		return tasks
 
-	def addCleanUpReconDirTasks(self,tasks):
+	def __addCleanUpReconDirTasks(self,tasks):
+		'''
+		Clean up recondir before packing.  This makes sure that these files in
+		remoterundirs will not be over-written by those in the recondir since
+		the latters are normally just a soft link.
+		'''
 		f = open(os.path.join(self.params['remoterundir'],'files_to_remote_host'),'r')
 		lines = f.readlines()
 		f.close()
@@ -262,8 +288,10 @@ class RefineJob(basicScript.BasicScript):
 			tasks = self.addToTasks(tasks,'/bin/rm -fv  %s' % filename)
 		return tasks
 
-	def saveFileListFromRemoteHost(self):
-		# record the filenames in a file
+	def __saveFileListFromRemoteHost(self):
+		'''
+		Record the filenames in files_from_remote_host attribute in a file
+		'''
 		f = open(os.path.join(self.params['remoterundir'],'files_from_remote_host'),'w')
 		f.writelines(map((lambda x: x+'\n'),self.files_from_remote_host))
 		f.close()
@@ -274,30 +302,33 @@ class RefineJob(basicScript.BasicScript):
 		'''
 		self.addToLog('....Compressing refinement results for uploading....')
 		tasks = {}
-		tasks = self.addCleanUpReconDirTasks(tasks)
+		tasks = self.__addCleanUpReconDirTasks(tasks)
 		tasks = self.addToTasks(tasks,'cd %s' % self.params['remoterundir'])
 		tasks = self.addToTasks(tasks,'cd %s' % self.params['recondir'])
 		result_tar = os.path.join(self.params['remoterundir'],'recon_results.tar.gz')
 		self.files_from_remote_host.append(result_tar)
 		tasks = self.addToTasks(tasks,'tar cvzf %s *' % (result_tar))
-		self.saveFileListFromRemoteHost()
+		self.__saveFileListFromRemoteHost()
 		if self.params['remoterundir'] != self.params['rundir']:
-			tasks = self.__addCopyByFileListFromRemoteHostScript(tasks)
+			tasks = self.__addCopyByFileListFromRemoteHostTasks(tasks)
 		self.addJobCommands(tasks)
 
 	def logTaskStatus(self,existing_tasks,tasktype,tasklogfile, iter=None):
 		'''
 		Use taskStatusLogger.py to examine log or result file generated from a task
 		'''
-		if self.params['appionwrapper']:
+		if self.params['appionwrapper'] != '':
 			wrapper_webcaller = self.params['appionwrapper']+' webcaller.py'
+		else:
+			wrapper_webcaller = 'webcaller.py'
 		cmd = '--jobtype=%s --tasktype=%s --tasklogfile=%s' % (self.jobtype,tasktype,tasklogfile)
 		if iter:
 			cmd += ' --iter=%d' % (iter)
-		cmd = "%s '%s %s' %s" % (wrapper_webcaller,'taskStatusLogger.py',cmd,self.logfile)
+		# Use webcaller in append mode to send the sys.stdout to the log file
+		cmd = "%s '%s %s' %s a" % (wrapper_webcaller,'taskStatusLogger.py',cmd,self.logfile)
 		return self.addToTasks(existing_tasks,cmd)
 
-	def makeRefineScript(self,iter):
+	def makeRefineTasks(self,iter):
 		'''
 		Function to add a series of tasks to be performed at each iteration of refinement
 		'''
@@ -344,6 +375,9 @@ class RefineJob(basicScript.BasicScript):
 		mem = task memory requirement required by the task for determining the memory the job need to reserve.
 		nproc = the number of processors required by the task for determining the number of processors the job need to reserve.
 		'''
+		'''
+		This is in the form of list of list for future development
+		'''
 		if len(tasks) == 0:
 			for key in ('scripts','mem','nproc','file'):
 				tasks[key] = []
@@ -360,6 +394,13 @@ class RefineJob(basicScript.BasicScript):
 		self.min_mem_list.extend(tasks['mem'])
 		self.nproc_list.extend(tasks['nproc'])
 
+	def addSimpleCommand(self,cmd):
+		'''
+		Add the command directly to the global list.
+		It assumes default mem usage and single processor job
+		'''
+		self.addJobCommands(self.addToTasks({},cmd))
+
 	def addToLog(self,text):
 		'''
 		Function to add text to logfile.
@@ -374,14 +415,22 @@ class RefineJob(basicScript.BasicScript):
 		
 	def start(self):
 		if self.params['startiter'] == 1:
+			self.addSimpleCommand('')
 			self.addToLog('....Setting up new refinement job trial....')
-			self.makeNewRefineTrialScript()
+			self.__makeNewTrialScript()
+			self.makeNewTrialScript()
+		self.addSimpleCommand('')
+		self.__makePreIterationScript()
 		self.makePreIterationScript()
-		self.addJobCommands(self.addToTasks({},''))
-		self.addJobCommands(self.addToTasks({},''))
+		self.addSimpleCommand('')
+		self.addSimpleCommand('')
 		for iter in range(self.params['startiter'],self.params['enditer']+1):
-			self.addToLog('....Starting iteration %d....' % (iter))
-			self.addJobCommands(self.makeRefineScript(iter))
+			refinetasks = self.makeRefineTasks(iter)
+			if 'scripts' in refinetasks.keys() and len(refinetasks['scripts']) >=1 and refinetasks['scripts'][0][0] !='':
+				self.addToLog('....Starting iteration %d....' % (iter))
+				self.addJobCommands(refinetasks)
+				self.addToLog('Done with iteration %d' % (iter))
+				self.addSimpleCommand('')
 		self.addToLog('....Performing tasks after iterations....')
 		self.makePostIterationScript()
 		print self.params['remoterundir']
