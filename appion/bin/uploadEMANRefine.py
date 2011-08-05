@@ -61,9 +61,11 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 			if os.path.isfile(jobfile):
 				return jobfile
 		elif 'runname' in self.params:
-			jobfile = os.path.join(self.params['rundir'], self.params['runname']+".job")
+			jobfile = os.path.join(self.params['rundir'], self.params['runname']+".appionsub.job")
 			if os.path.isfile(jobfile):
 				return jobfile
+			else:
+				apDisplay.printError("no pickle file or jobfile found ... try uploading refinement as an external package")
 		else:
 			self.params['jobinfo'] = None
 			apDisplay.printError("no pickle file or jobfile found ... try uploading refinement as an external package")
