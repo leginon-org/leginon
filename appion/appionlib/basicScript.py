@@ -178,6 +178,46 @@ class BasicScript(object):
 # Please keep it this way
 ####
 
+class BasicScriptInstanceRun(object):
+	'''
+	Create an instance of a subclass of BasicScript
+	according to the jobtype and then run it
+	'''
+	def __init__(self):
+		command = sys.argv[1:]
+		self.jobtype = self.getJobType(command)
+		self.app = self.createInst(self.jobtype,command)
+		if self.app is None:
+			apDisplay.PrintError('not BasicScript subclass instance created')
+		else:
+			self.app.start()
+			self.run()
+			self.app.close()
+
+	def getJobType(self, command):
+		jobtype = None
+		#Search for the command option that specified the job type
+		for option in command:
+			if option.startswith(r'--jobtype='):
+				#We only need the part after the '='
+				jobtype = option.split('=')[1]
+				#Don't process anymore of the list then needed
+				break
+		return jobtype
+
+	def createInst(self, jobtype, command):
+		'''
+		Create Instance of BasicScript or its subclasses according to the jobtype.
+		'''
+		jobInstance = BasicScript()
+		return jobInstance
+
+	def run(self):
+		'''
+		Do something
+		'''
+		pass
+
 ####
 # Usage example
 ####
