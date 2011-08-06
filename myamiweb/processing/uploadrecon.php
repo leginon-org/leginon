@@ -433,7 +433,25 @@ function runUploadRecon() {
 	//if ($itertype=='one' && $iteration) $command.="--oneiter=$iteration ";
 	//if ($itertype=='range' && $startiteration > 0) $command.="--startiter=$startiteration ";
 	//if ($itertype=='range' && $enditeration > 0) 
-	$command.="--numiter=2 ";
+	if ($itertype == 'range') {
+		$numiter = ($enditeration-$startiteration)+1;
+		$command.="--numiter=$numiter ";
+		$iterlist = $startiteration;
+		$iter = $startiteration;
+		while ($iter < $enditeration) {
+			$iter = $iter+1;
+			$iterlist.=",$iter";
+		}
+		$command.="--uploadIterations=$iterlist ";
+	}
+	if ($itertype == 'one') {
+		$command.="--numiter=1 ";
+		$command.="--uploadIterations=$iteration ";
+	}
+	if ($itertype == 'all') {
+		$command.="--numiter=2 ";
+		$command.="--uploadIterations=1,2 ";
+	}
 	$command.="--description=\"$description\" ";
 	$command.="--box=$boxsize ";
 	$command.="--apix=$apix ";
