@@ -121,8 +121,8 @@ class genericJob(object):
     def getJobId(self):
         return self.jobid
     def setJobId(self, id):
-        self.jobid = id
+        self.jobid = int(id)
     def getProjectId(self):
         return self.projectId
     def setProjectId(self, id):
-        self.projectId = id
+        self.projectId = int(id)
