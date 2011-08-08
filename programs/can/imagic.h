@@ -31,10 +31,10 @@ float celly;
 float cellz;
 float cella1;
 float cella2;
-char label[80];	//30
-int SPACE[8];	//50
-float MRC1[4];	//58
-int MRC2;	//62
+char label[80];
+int SPACE[8];
+float MRC1[4];
+int MRC2;
 int SPACE2[7];
 int lbuf;		// effective buffer len = nx
 int inn;		// lines in buffer = 1

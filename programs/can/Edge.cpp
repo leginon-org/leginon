@@ -2,6 +2,7 @@
 #include "Edge.h"
 #include "Node.h"
 #include <iostream>
+#include <omp.h>
 
 using namespace std;
 

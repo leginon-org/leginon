@@ -11,6 +11,7 @@
 #include <ctime>
 #include <cmath>
 #include <fstream>
+#include <omp.h>
 
 using namespace std;
 
@@ -51,7 +52,7 @@ int main( int argc, char **argv )
 		cout<<"<max age> : number of iterations an edge connecting two units can be unused before it's discarded (paper suggests 30-40, experiment with this too!  I've found ~20 gives better sampling of all views)"<<endl<<endl;
 		cout<<"<total # of nodes in network> : should be on the order of 20 times less than particle number"<<endl<<endl;
 
-		cout<<"*********Implementation of 'Topology representing network enables highly accurate classification of protein images taken by cryo electron-microscope without masking' by Ogura, Iwasaki and Sato (2003) J. Struct. Bio."<<endl;
+		cout<<"*********Implimentation of 'Topology representing network enables highly accurate classification of protein images taken by cryo electron-microscope without masking' by Ogura, Iwasaki and Sato (2003) J. Struct. Bio."<<endl;
 		exit(1);
 		
 	}
@@ -116,9 +117,8 @@ int main( int argc, char **argv )
 	fread(iHeader,4,256,stack_hed);	//Fill header struct with data from first image
 	rewind(stack_hed);
 
-	iHeader->count++;
-
 	int imageCount = iHeader->count;
+	iHeader->pixels = iHeader->nx *iHeader->ny;
 
 	cout<<"DIAGNOSTIC FILE INFO"<<endl;
 	cout<<"pixels = "<<iHeader->pixels<<endl;
@@ -130,12 +130,6 @@ int main( int argc, char **argv )
 	cout<<"cellz = "<<iHeader->cellz<<endl;
 	cout<<"nx = "<<iHeader->nx<<endl;
 	cout<<"ny = "<<iHeader->ny<<endl;
-
-	if( iHeader->pixels == 0 )
-	{
-		cout<<"pixel count in header = 0!  Setting to nx * ny!"<<endl;
-		iHeader->pixels = iHeader->nx * iHeader->ny;
-	}
 
 	Node::setDim( iHeader->pixels ); // set dimensionality from file info
 	
@@ -500,7 +494,6 @@ int main( int argc, char **argv )
 
 		vector< int > * parts = nodeVec[i]->getParts();
 
-		classList<<" ;spi/spi"<<endl;
 		for( int j = 0; j < parts->size(); j++ )
 		{
 			classList<<"\t"<<j+1<<"\t1\t"<<(*parts)[j]<<endl;
