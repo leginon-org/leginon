@@ -1,14 +1,14 @@
-import torqueHost
-import apRefineJobFrealign
-import apRefineJobEman
-import apRefineJobXmipp
-import apGenericJob
+from appionlib import torqueHost
+from appionlib import apRefineJobFrealign
+from appionlib import apRefineJobEman
+from appionlib import apRefineJobXmipp
+from appionlib import apGenericJob
+from appionlib import jobtest
 import sys
 import re
 import subprocess
 import time
 import os
-import jobtest
 
 class Agent (object):
     def __init__(self, configFile=None):
@@ -93,9 +93,9 @@ class Agent (object):
         elif "frealignrecon" == jobType:
             jobInstatnce = apRefineJobFrealign.FrealignRefineJob(command)
         elif "xmipprecon" == jobType:
-            jobInstance = apRefineXmipp.XmippSingleModelRefineJob(command)
+            jobInstance = apRefineJobXmipp.XmippSingleModelRefineJob(command)
         elif "xmippml3drecon" == jobType:
-            jobInstance = apRefineXmippml3d.XmippMl3dRefineJob(command)
+            jobInstance = apRefineJobXmippml3d.XmippMl3dRefineJob(command)
         elif "jobtest" == jobType:
             jobInstance = jobtest.jobtestClass()
         else:
