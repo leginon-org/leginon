@@ -89,6 +89,33 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$javascript .="    return false;\n";
 	$javascript .="  }\n";
 	$javascript .="}\n";
+
+	// toggle MSA params
+	$javascript .="function chooseMSA(package) {\n";
+	$javascript .="  if (package == 'CAN') {\n";
+	$javascript .="    document.viewerform.msamethod.value='can';\n";
+	$javascript .="    document.getElementById('nprocdiv').innerHTML='Number of Processors for MRA';\n";
+	$javascript .="    document.getElementById('canbutton').style.border='1px solid #0F0';\n";
+	$javascript .="    document.getElementById('canbutton').style.backgroundColor='#CCFFCC';\n";
+	$javascript .="    document.getElementById('canparams').style.display = 'block';\n";
+	$javascript .="    document.getElementById('canprocdiv').style.display = 'block';\n";
+	$javascript .="    document.getElementById('imagicbutton').style.border='1px solid #F00';\n";
+	$javascript .="    document.getElementById('imagicbutton').style.backgroundColor='#C0C0C0';\n";
+	$javascript .="    document.getElementById('imagicparams').style.display = 'none';\n";
+	$javascript .="  }\n";
+	$javascript .="  if (package == 'IMAGIC') {\n";
+	$javascript .="    document.viewerform.msamethod.value='imagic';\n";
+	$javascript .="    document.getElementById('nprocdiv').innerHTML='Number of Processors for MRA/MSA';\n";
+	$javascript .="    document.getElementById('canbutton').style.border='1px solid #F00';\n";
+	$javascript .="    document.getElementById('canbutton').style.backgroundColor='#C0C0C0';\n";
+	$javascript .="    document.getElementById('canparams').style.display = 'none';\n";
+	$javascript .="    document.getElementById('canprocdiv').style.display = 'none';\n";
+	$javascript .="    document.getElementById('imagicbutton').style.border='1px solid #0F0';\n";
+	$javascript .="    document.getElementById('imagicbutton').style.backgroundColor='#CCFFCC';\n";
+	$javascript .="    document.getElementById('imagicparams').style.display = 'block';\n";
+	$javascript .="  }\n";
+	$javascript .="}\n";
+
 	$javascript .= "</script>\n";
 
 	$javascript .= writeJavaPopupFunctions('appion');	
@@ -98,7 +125,6 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	if ($extra) {
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
-  
 	echo "<form name='viewerform' method='POST' action='$formAction' onsubmit='return checkform()'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
@@ -132,6 +158,12 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$learn = ($_POST['learn']) ? $_POST['learn'] : '0.01';
 	$ilearn = ($_POST['ilearn']) ? $_POST['ilearn'] : '0.0005';
 	$age = ($_POST['age']) ? $_POST['age'] : '25';
+	// IMAGIC MSA parameters
+	$eigen = ($_POST['eigen']) ? $_POST['eigen'] : '69';
+	$msaiter = ($_POST['msaiter']) ? $_POST['msaiter'] : '50';
+	$overcor = ($_POST['overcor']) ? $_POST['overcor'] : '0.8';
+	$activeeigen = ($_POST['activeeigen']) ? $_POST['activeeigen'] : '10';
+	$msamethod = ($_POST['msamethod']) ? $_POST['msamethod'] : 'can';
 
 	echo "<table border='0' class='tableborder'>\n<tr><td valign='top'>\n";
 	echo "<table border='0' cellpadding='5'>\n";
@@ -174,11 +206,17 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo "<br>";
 
 	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc' onChange='estimatetime()'>\n";
-	echo "Number of Processors for MRA";
+	echo "<div id='nprocdiv' style='display:inline'>Number of Processors for MRA";
+	if ($msamethod=='imagic') echo "/MSA";
+	echo "</div>";
 	echo "<br/>\n";
+	echo "<div id='canprocdiv'";
+	if ($msamethod=='imagic') echo " style='display:none'";
+	echo ">\n";
 	echo "<INPUT TYPE='text' NAME='canproc' SIZE='4' VALUE='$canproc' onChange='estimatetime()'>\n";
 	echo "Number of Processors for CAN";
 	echo "<br/>\n";
+	echo "</div>\n";
 
 	echo "</TD></tr>\n</table>\n";
 	echo "</TD>\n";
@@ -231,8 +269,25 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 
 	echo "<br/>\n";
 
-	echo "<b>Alignment Parameters</b><br/>\n";
+	echo "<b>MSA Package:</b><br>\n";
+	$onstyle = "font-size: 12px; border: 1px solid #0F0; background-color: #CCFFCC";
+	$offstyle = "font-size: 12px; border: 1px solid #F00";
 
+	$canstyle = ($msamethod=='can') ? $onstyle : $offstyle;
+	$imgstyle = ($msamethod=='imagic') ? $onstyle : $offstyle;
+	echo "<input id='canbutton' style='$canstyle' type='button' value='CAN' onclick='chooseMSA(\"CAN\")'>\n";
+	echo "<input id='imagicbutton' style='$imgstyle' type='button' value='IMAGIC' onclick='chooseMSA(\"IMAGIC\")'>\n";
+	echo "<br>\n";
+	echo "<br>\n";
+
+	// hidden input for package
+	echo "<input type='hidden' name='msamethod' value='$msamethod'>\n";
+
+	// MSA parameters for CAN classification 
+	echo "<div id='canparams'";
+	if ($msamethod=='imagic') echo " style='display:none'";
+	echo ">\n";
+	echo "<b>CAN Parameters</b><br/>\n";
 	echo "<input type='text' name='itermult' value='$itermult' size='4'>\n";
 	echo docpop('itermult','Iteration multiplier');
 	echo "<br/>\n";
@@ -247,6 +302,29 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 
 	echo "<input type='text' name='age' value='$age' size='4'>\n";
 	echo docpop('age','Edge age');
+	echo "</div>\n";
+
+	// MSA parameters for IMAGIC MSA
+	echo "<div id='imagicparams'";
+	if ($msamethod=='can') echo " style='display:none'";
+	echo ">\n";
+	echo "<b>IMAGIC Parameters</b><br>\n";
+	echo "<input type='text' name='eigen' value='$eigen' size='4'>\n";
+	echo docpop('numfactor','Number of Eigenimages');
+	echo "<br/>\n";
+
+	echo "<input type='text' name='activeeigen' value='$activeeigen' size='4'>\n";
+	echo docpop('activeeigen', 'Num of Active Eigenimages');
+	echo "<br/>\n";
+
+	echo "<input type='text' name='msaiter' value='$msaiter' size='4'>\n";
+	echo docpop('msaiter','MSA iterations');
+	echo "<br/>\n";
+
+	echo "<input type='text' name='overcor' value='$overcor' size='4'>\n";
+	echo docpop('overcor', 'Overcorrection');
+	echo "</div>\n";
+	
 	echo "<br/>\n";
 	echo "<INPUT TYPE='checkbox' name='nocenter' $nocentercheck>\n";
 	echo docpop('nocenter','Do not center the class averages');	
@@ -254,6 +332,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo "<INPUT TYPE='checkbox' name='classiter' $classitercheck>\n";
 	echo docpop('classiter','Perform iterative class averaging');	
 	echo "<br/>\n";
+
 	echo "<br/>\n";
 	echo docpop('mramethod','<b>MRA package:</b>');
 	echo "<br/>\n";
@@ -313,10 +392,17 @@ function runTopolAlign() {
 	$iter=$_POST['iter'];
 	$bin=$_POST['bin'];
 	$mask=$_POST['mask'];
+	// CAN params
 	$itermult=$_POST['itermult'];
 	$learn=$_POST['learn'];
 	$ilearn=$_POST['ilearn'];
 	$age=$_POST['age'];
+	// IMAGIC params
+	$eigen = $_POST['eigen'];
+	$msaiter = $_POST['msaiter'];
+	$overcor = $_POST['overcor'];
+	$activeeigen = $_POST['activeeigen'];
+
 	$description=$_POST['description'];
 	$commit = ($_POST['commit']=="on") ? true : false;
 	$premask = ($_POST['premask']=="on") ? true : false;
@@ -325,6 +411,7 @@ function runTopolAlign() {
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
 	$canproc = ($_POST['canproc']) ? $_POST['canproc'] : 1;
 	$mramethod = strtolower($_POST['mramethod']);
+	$msamethod = ($_POST['msamethod']);
 
 	// get stack id, apix, & box size from input
 	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
@@ -338,7 +425,7 @@ function runTopolAlign() {
 
 	if ($nproc > 24)
 		createTopolAlignForm("<B>ERROR:</B> Let's be reasonable with the number of processors, less than 24 please");
-	if ($canproc > 8)
+	if ($canproc > 8 && $msamethod=='can')
 		createTopolAlignForm("<B>ERROR:</B> CAN cannot run on more than 8 processors");
 
 	//make sure a stack was selected
@@ -361,10 +448,6 @@ function runTopolAlign() {
 	$boxsize = $stackdata['boxsize'];
 	$secperiter = 0.0025;
 	$calctime = ($numpart/1000.0)*$startnumcls*($boxsize/$bin)*($boxsize/$bin)*$secperiter/$nproc;
-	// kill if longer than 10 hours
-//	if ($calctime > 10.0*3600.0)
-//		createTopolAlignForm("<b>ERROR:</b> Run time per iteration greater than 10 hours<br/>"
-//			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -388,15 +471,27 @@ function runTopolAlign() {
 	$command.="--bin=$bin ";
 	$command.="--mask=$mask ";
 	$command.="--iter=$iter ";
-	$command.="--itermul=$itermult ";
-	$command.="--learn=$learn ";
-	$command.="--ilearn=$ilearn ";
-	$command.="--age=$age ";
+
+	// IMAGIC MSA parameters
+	if ($msamethod == 'imagic') {
+		$command.="--numeigen=$eigen ";
+		$command.="--msaiter=$msaiter ";
+		$command.="--overcorrection=$overcor ";
+		$command.="--activeeigen=$activeeigen ";
+	}
+	// CAN parameters
+	else {
+		$command.="--itermul=$itermult ";
+		$command.="--learn=$learn ";
+		$command.="--ilearn=$ilearn ";
+		$command.="--age=$age ";
+	}
 	$command.="--mramethod=$mramethod ";
+	$command.="--msamethod=$msamethod ";
 
 	if ($nproc)
 		$command.="--nproc=$nproc ";
-	if ($canproc)
+	if ($canproc && $msamethod=='can')
 		$command.="--canproc=$canproc ";
 	if ($premask) $command.="--premask ";
 	if ($nocenter) $command.="--no-center ";
