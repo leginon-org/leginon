@@ -3,9 +3,11 @@ import os
 import sys
 import math
 import time
+import cPickle
 #appion
 from appionlib import apDisplay
 from appionlib import apRefineJob
+from appionlib import apSymmetry
 from appionlib import apXmipp
 
 #================
@@ -35,8 +37,8 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 	def setIterationParamList(self):
 		super(XmippSingleModelRefineJob,self).setIterationParamList()
 		self.iterparams.extend([
-				{'name':"AngularSteps",
-					'help':"Angular steps (e.g. 4x10:2x5:2x3:2x2)",'default':"6x5:2x3:2x2"},
+#				{'name':"AngularSteps",
+#					'help':"Angular steps (e.g. 4x10:2x5:2x3:2x2)",'default':"6x5:2x3:2x2"},
 				{'name':"maxAngularChange",
 					'help':"Maximum angular change (e.g. 4x1000:2x20:2x9:2x6)", 'default':'4x1000:2x20:2x9:2x6'},
 				{'name':"maxChangeOffset",
@@ -97,7 +99,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm={}
 		protocolPrm["SelFileName"]                  =   "partlist.sel"
 		protocolPrm["DocFileName"]                  =   ""
-		protocolPrm["ReferenceFileName"]            =   "./reference_volume.spi"
+		protocolPrm["ReferenceFileName"]            =   self.params['modelnames'][0]
 		protocolPrm["WorkingDir"]                   =   "ProjMatch"
 		protocolPrm["DoDeleteWorkingDir"]           =   True
 		protocolPrm["NumberofIterations"]           =   self.params['enditer']
@@ -124,7 +126,8 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["InnerRadius"]                  =   self.params['innerAlignRadius']
 		protocolPrm["OuterRadius"]                  =   self.params['outerAlignRadius']
 		protocolPrm["AvailableMemory"]              =   '%d' % self.calcRefineMem()
-		protocolPrm["AngSamplingRateDeg"]           =   self.params['AngularSteps']
+#		protocolPrm["AngSamplingRateDeg"]           =   self.params['AngularSteps']
+		protocolPrm["AngSamplingRateDeg"]           =   self.params['angSampRate']
 		protocolPrm["MaxChangeInAngles"]            =   self.params['maxAngularChange']
 		protocolPrm["PerturbProjectionDirections"]  =   False
 		protocolPrm["MaxChangeOffset"]              =   self.params['maxChangeOffset']
@@ -165,12 +168,43 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["SystemFlavour"]                =   ''
 		protocolPrm["AnalysisScript"]               =   'visualize_projmatch.py'
 
+		### write out python protocol into run directory
 		protocolfile = os.path.join(self.params['remoterundir'],"%s.py" % protocolname)
-		apXmipp.particularizeProtocol(protocol_projmatch,protocolPrm,protocolfile)
+		apXmipp.particularizeProtocol(protocol_projmatch, protocolPrm, protocolfile)
+		os.chmod(os.path.join(self.params['rundir'], protocolfile), 0775)
+				
+		### Write the parameters for posterior uploading, both generic and specific
+		self.runparams = {} ### these are generic params that includes a dictionary entry for package-specific params
+#		self.runparams['symmetry'] = apSymmetry.getSymmetryDataFromName(self.params['symmetry'])
+#		self.runparams['symmetry'] = apSymmetry.getSymmetryDataFromID(self.params['symid'])['symmetry']
+		self.runparams['mask'] = protocolPrm["MaskRadius"] 
+		self.runparams['imask'] = None
+		self.runparams['alignmentInnerRadius'] = protocolPrm["InnerRadius"] 
+		self.runparams['alignmentOuterRadius'] = protocolPrm["OuterRadius"]
+		self.runparams['reconstruction_package'] = "Xmipp"
+#		self.runparams['upload_root_path'] = self.params['rundir']
+#		self.runparams['cluster_root_path'] = self.params['cluster_root_path']
+		self.runparams['reconstruction_working_dir'] = protocolPrm["WorkingDir"] 
+		self.runparams['package_params'] = protocolPrm
+		self.dumpParameters(self.runparams)
+		
+		### finished setup of input files, now run xmipp_protocols_ml3d.py from jobfile
+		apDisplay.printMsg("finished setting up input files, now ready to run protocol")
+
 		return protocolfile, protocolPrm
 
+	def dumpParameters(self, parameters):
+		self.params['timestamp'] = self.timestamp
+		paramfile = os.path.join(self.params['rundir'], "xmipp_projection_matching_"+self.timestamp+"-params.pickle")
+		pf = open(paramfile, "w")
+		cPickle.dump(parameters, pf)
+		pf.close()
+		return
+
 	def makeNewTrialScript(self):
-		self.addSimpleCommand('ln -s %s reference_volume.spi' % self.params['modelnames'][0])
+		print self.params['modelnames'][0]
+		self.addSimpleCommand('ln -s %s %s' % (self.params['modelnames'][0], 
+			os.path.join(self.params['remoterundir'], self.params['modelnames'][0])))
 		partar = os.path.join(self.params['remoterundir'],'partfiles.tar.gz')
 		partpath = os.path.join(self.params['remoterundir'],'partfiles')
 		if not os.path.isdir(partpath):
