@@ -6,27 +6,68 @@ added features like helical boxing at an
 angle
 """
 
+from pyami import mrc
 from scipy import ndimage	#rotation function
 from appionlib import apImagicFile	#write imagic stacks
 from appionlib.apImage import imagefilter	#image clipping
 
-#emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, emanboxfile, tempimgstackfile, doublebox)
-
-def processParticleData(parttree, shiftdata):
+##=================
+def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile):
 	"""
 	for a list of partdicts from database, apply shift
 	to get a new list with x, y, angle information
+	
+	replaces writeParticlesToBoxfile()
 	"""
+	imgdims = imgdata['camera']['dimension']
+	halfbox = boxsize/2
+	
+	parttree = []
+	eliminated = 0
+	user = 0
+	noangle = 0
 
+	### normal single particle
+	f = open(boxfile, 'w')
+	for i in range(len(partdatas)):
+		partdata = partdatas[i]
+		### xcoord is the upper left area corner of the particle box
+		xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
+		ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))	
 
-def boxer(imgarray, parttree, outstack, boxsize):
+		if ( (xcoord > 0 and xcoord+boxsize <= imgdims['x'])
+		and  (ycoord > 0 and ycoord+boxsize <= imgdims['y']) ):
+			partdict = {
+				'x_coord': xcoord,
+				'y_coord': ycoord,
+				'angle': self.params['angle'],
+			}
+			parttree.append(partdict)
+			f.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,boxsize,boxsize))
+		else:
+			eliminated += 1
+	f.close()
+	
+	if eliminated > 0:
+		apDisplay.printMsg(str(eliminated)+" particle(s) eliminated because they were out of bounds")
+	if user > 0:
+		apDisplay.printMsg(str(user)+" particle(s) eliminated because they were 'user' labeled targets")
+	if noangle > 0:
+		apDisplay.printMsg(str(noangle)+" particle(s) eliminated because they had no rotation angle")
+
+	return parttree
+
+##=================
+def boxer(imgfile, parttree, outstack, boxsize):
 	"""
 	boxes the particles and saves them to a imagic file
 	"""
-	boxedparticles = boxerMemory(imgdict, parttree, boxsize)
+	imgarray = mrc.read(imgfile)
+	boxedparticles = boxerMemory(imgarray, parttree, boxsize)
 	apImagicFile.saveImagic(boxedparticles, outstack)
 	return True
 
+##=================
 def boxerMemory(imgarray, parttree, boxsize):
 	"""
 	boxes the particles and returns them as a list of numpy arrays
@@ -42,6 +83,7 @@ def boxerMemory(imgarray, parttree, boxsize):
 		boxedparticles.append(boxpart)
 	return boxedparticles
 
+##=================
 def boxerRotate(imgarray, parttree, outstack, boxsize):
 	"""
 	boxes the particles with expanded size,
@@ -60,7 +102,7 @@ def boxerRotate(imgarray, parttree, outstack, boxsize):
 		bigboxpart = bigboxedparticles[i]
 		partdict = parttree[i]
 		angle = partdict['angle']
-		rotatepart = ndimage.rotate(bigboxpart, angle=angle, reshape=False, order=2)
+		rotatepart = ndimage.rotate(bigboxpart, angle=angle, reshape=False, order=1)
 		boxpart = imagefilter.frame_cut(rotatepart, boxshape)
 		boxedparticles.append(boxpart)
 		
