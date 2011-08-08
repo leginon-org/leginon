@@ -20,6 +20,8 @@ from appionlib import apProject
 from appionlib.apSpider import operations
 from appionlib import apIMAGIC
 from appionlib import apImagicFile
+from appionlib.apImagic import imagicFilters
+from appionlib.apImagic import imagicAlignment
 
 #=====================
 #=====================
@@ -34,7 +36,9 @@ class TopologyRepScript(appionScript.AppionScript):
 			help="Stack database id", metavar="ID#")
 
 		self.parser.add_option("--nproc", dest="nproc", type="int",
-			help="Number of processor to use", metavar="ID#")
+			help="Number of processor to use", metavar="#")
+		self.parser.add_option("--canproc", dest="canproc", type="int", default=1,
+			help="Number of processor to use for CAN", metavar="#")
 
 		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
@@ -59,11 +63,37 @@ class TopologyRepScript(appionScript.AppionScript):
 		self.parser.add_option("--age", dest="maxage", type="int", metavar="INT", default=25,
 			help="number of iterations an edge connecting two units can be unused before it's discarded")
 
+		### IMAGIC MSA options
+		self.parser.add_option("--msaiter", dest="msaiter", type="int", default=50,
+			help="number of MSA iterations")
+		self.parser.add_option("--numeigen", dest="numeigen", type="int", default=20,
+			help="total number of eigen images to calculate")
+		self.parser.add_option("--overcorrection", dest="overcorrection", type="float", default=0.8,
+			help="overcorrection facter (0-1)")
+		self.parser.add_option("--activeeigen", dest="activeeigen", type="int", default=10,
+			help="number of active eigen images to use for classification")
+
+		### true/false
+		self.parser.add_option("--keep-all", dest="keepall", default=False,
+			action="store_true", help="Keep all intermediate node images")
+		self.parser.add_option("--premask", dest="premask", default=False,
+			action="store_true", help="Mask raw particles before processing")
+		self.parser.add_option("--no-center", dest="nocenter", default=False,
+			action="store_true", help="Do not center particles after each iteration")
+		self.parser.add_option("--classiter", dest="classiter", default=False,
+			action="store_true", help="Perform iterative averaging of class averages")
+		self.parser.add_option("--uploadonly", dest="uploadonly", default=False,
+			action="store_true", help="Just upload results of completed run")
+
 		### choices
 		self.mramethods = ("eman","imagic")
 		self.parser.add_option("--mramethod", dest="mramethod",
 			help="Method for multi-reference alignment", metavar="PACKAGE",
 			type="choice", choices=self.mramethods, default="eman")
+		self.msamethods = ("can","imagic")
+		self.parser.add_option("--msamethod", dest="msamethod",
+			help="Method for MSA", metavar="PACKAGE",
+			type="choice", choices=self.msamethods, default="can")
 
 	#=====================
 	def checkConflicts(self):
@@ -249,7 +279,7 @@ class TopologyRepScript(appionScript.AppionScript):
 	def getCANPath(self):
 		unames = os.uname()
 		if unames[-1].find('64') >= 0:
-			exename = 'can64.exe'
+			exename = 'can64_mp.exe'
 		else:
 			exename = 'can32.exe'
 		CANexe = apParam.getExecPath(exename, die=True)
@@ -258,7 +288,9 @@ class TopologyRepScript(appionScript.AppionScript):
 	#=====================
 	def runCAN(self):
 		numIters = int(self.params['numpart']*self.params['itermult'])
-		decrement = (self.params['start']-self.params['end'])/float(self.params['iter'])
+		decrement = self.params['start']-self.params['end']
+		if self.params['iter']>0:
+			decrement /= float(self.params['iter'])
 		numClasses = self.params['start']-(decrement*self.params['currentiter'])
 		stackfile = self.params['alignedstack']
 		canopts = " %s classes %i %.3f %.5f %i %i" % (
@@ -302,7 +334,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		# center the particles
 		if self.params['mramethod'] == "imagic":
 			#imagic centering doesn't work as well as EMAN's unfortunately
-			#cenfile = apIMAGIC.alimass(classname+".hed", maxshift=0.15, ceniter=10, nproc=1, path=self.params['iterdir'])
+			#cenfile = imagicAlignment.alimass(classname+".hed", maxshift=0.15, ceniter=10, nproc=1)
 			aligntime0 = time.time()
 
 			# convert mask to fraction for imagic
@@ -310,22 +342,42 @@ class TopologyRepScript(appionScript.AppionScript):
 
 			# don't align references for last iteration
 			if self.params['currentiter'] < self.params['iter']:
-				emancmd = "proc2d %s.hed %s_cen.hed center"%(classname,classname)
-				apEMAN.executeEmanCmd(emancmd, verbose=False)
-				apFile.removeStack(classname)
-				classname = classname+"_cen"
+				if self.params['classiter'] is True:
+					emancmd = "classalign2 %s.hed 10 keep=100 saveali"%classname
+					apEMAN.executeEmanCmd(emancmd, verbose=False)
+					apFile.removeStack(classname)
+					classname = "a"+classname
+				
+				else:
+					if  self.params['nocenter'] is False:
+						emancmd = "proc2d %s.hed %s_cen.hed center"%(classname,classname)
+						## try cenalignint
+						emancmd = "cenalignint %s.hed"%classname
+						apEMAN.executeEmanCmd(emancmd, verbose=False)
+						## cenalignint also makes a stack with badly centered avgs 
+						if os.path.isfile("bad.hed"):
+							emancmd = "proc2d bad.hed ali.hed"
+							apEMAN.executeEmanCmd(emancmd, verbose=False)
+							apFile.removeStack("bad")
+						if self.params['keepall'] is False:
+							apFile.removeStack(classname)
+						classname = classname+"_cen"
+						classname = "ali"
 
-				alifile = apIMAGIC.alirefs(classname, mask=0.99, maxshift=0.3, path=self.params['iterdir'])
-				apFile.removeStack(classname)
-				classname = alifile
+					alifile = imagicAlignment.alirefs(classname, mask=0.99, maxshift=0.1)
+					if self.params['keepall'] is False:
+						apFile.removeStack(classname)
+					classname = alifile
 
 			# mask the classes
-			maskfile = apIMAGIC.softMask(classname, mask=maskfrac, falloff=0.1, path=self.params['iterdir'])
-			apFile.removeStack(classname)
+			maskfile = imagicFilters.softMask(classname, mask=maskfrac, falloff=0.1)
+			if self.params['keepall'] is False:
+				apFile.removeStack(classname)
 		
 			# normalize the classes
-			classname = apIMAGIC.normalize(maskfile, sigma=10.0, path=self.params['iterdir'])
-			apFile.removeStack(maskfile)
+			classname = imagicFilters.normalize(maskfile, sigma=10.0)
+			if self.params['keepall'] is False:
+				apFile.removeStack(maskfile)
 
 			apDisplay.printColor("finished alignment in "+apDisplay.timeString(time.time()-aligntime0), "cyan")
 
@@ -351,8 +403,11 @@ class TopologyRepScript(appionScript.AppionScript):
 			classname = classname+"_norm"
 
 		outputcls = os.path.join(self.params['rundir'],"classes%02i" % self.params['currentiter'])
-		shutil.move(classname+".hed",outputcls+".hed")
-		shutil.move(classname+".img",outputcls+".img")
+		# copy normalized particles to run directory
+		emancmd = "proc2d %s.hed %s.hed"%(classname,outputcls)
+		apEMAN.executeEmanCmd(emancmd, verbose=False)
+		apFile.removeStack(classname)
+
 		self.params['currentcls'] = outputcls
 
 	#=====================
@@ -424,12 +479,15 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		f = open(bfile,'w')
 		f.write("#!/bin/csh -f\n")
+
 		f.write("setenv IMAGIC_BATCH 1\n")
 		if self.params['nproc'] > 1:
-			f.write("%s/openmpi/bin/mpirun -np %i "%(self.imagicroot,self.params['nproc']))
+			f.write("mpirun -np %i "%(self.params['nproc']))
+			## for barcelona queue:
 			f.write("-x IMAGIC_BATCH %s/align/mralign.e_mpi << EOF\n" %self.imagicroot)
-			f.write("YES\n")
-			f.write("%i\n"%self.params['nproc'])
+			if int(self.imagicversion) != 110119:
+				f.write("YES\n")
+				f.write("%i\n"%self.params['nproc'])
 		else:
 			f.write("%s/align/mralign.e <<EOF\n" % self.imagicroot)
 			f.write("NO\n")
@@ -450,12 +508,19 @@ class TopologyRepScript(appionScript.AppionScript):
 		if int(self.imagicversion) < 91120:
 			f.write("NO\n")
 		f.write("0.31\n")
-		# don't ask Max shift (during this alignment) for first iteration:
+
+		# check if there are any rotations stored in the header
+		#TEMPORARY HACK
+		hasRots=False
 		if self.params['currentiter'] > 1:
+			hasRots=True
+
+		# don't ask Max shift (during this alignment) for first iteration:
+		if hasRots is True:
 			f.write("0.2\n")
 		f.write("-180,180\n")
 		# don't ask rotation (during this alignment) for first iteration:
-		if self.params['currentiter'] > 1:
+		if hasRots is True:
 			f.write("-180,180\n")
 		f.write("MEDIUM\n")
 		f.write("0.0,%.2f\n"%(self.workingmask*2/self.workingboxsize))
@@ -498,6 +563,127 @@ class TopologyRepScript(appionScript.AppionScript):
 		if self.params['currentiter'] > 1:
 			apFile.removeStack(self.params['alignedstack'])
 		self.params['alignedstack']=os.path.abspath(outfile)
+
+	#=====================
+	def runIMAGICmsa(self):
+		bfile = "msa.job"
+		outfile = "msaout"
+		apFile.removeStack(outfile)
+		stackfile = self.params['alignedstack']
+
+		# convert mask to fraction for imagic
+		maskfrac = self.workingmask*2/self.workingboxsize
+
+		## make an msa mask file
+		imagicFilters.mask2D(self.workingboxsize, maskfrac, maskfile='msamask')
+
+		f = open(bfile,'w')
+		f.write("#!/bin/csh -f\n")
+
+		f.write("setenv IMAGIC_BATCH 1\n")
+		if self.params['nproc'] > 1:
+			f.write("mpirun -np %i "%(self.params['nproc']))
+			## for barcelona queue:
+			f.write("-x IMAGIC_BATCH %s/msa/msa.e_mpi << EOF\n" %self.imagicroot)
+			if int(self.imagicversion) != 110119:
+				f.write("YES\n")
+				f.write("%i\n"%self.params['nproc'])
+		else:
+			f.write("%s/msa/msa.e <<EOF\n" % self.imagicroot)
+			f.write("NO\n")
+		if int(self.imagicversion) != 110119:
+			f.write("NO\n")
+		f.write("FRESH_MSA\n")
+		f.write("MODULATION\n")
+		f.write("%s\n"%stackfile)
+		f.write("msamask\n")
+		f.write("eigenim\n")
+		f.write("my_pixcoos\n")
+		f.write("my_eigenpix\n")
+		f.write("%i\n"%self.params['msaiter'])
+		f.write("%i\n"%self.params['numeigen'])
+		f.write("%.02f\n"%self.params['overcorrection'])
+		f.write("%s\n"%outfile)
+		f.write("EOF\n")
+
+		f.write("touch msa_done.txt\n")
+		f.write("exit\n")
+		f.close()
+
+		## execute the batch file
+		aligntime0 = time.time()
+		apEMAN.executeEmanCmd("chmod 755 "+bfile)
+
+		apDisplay.printColor("Running IMAGIC .batch file: %s"%(os.path.abspath(bfile)), "cyan")
+		apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
+
+		os.remove("msa_done.txt")
+
+		if not os.path.exists(outfile+".plt"):
+			apDisplay.printError("ERROR IN IMAGIC SUBROUTINE")
+		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-aligntime0), "cyan")
+
+		## run classification & class averaging
+		self.runIMAGICclassify()
+
+		# align resulting classes
+		self.alignClasses()
+
+	#=====================
+	def runIMAGICclassify(self):
+		bfile = "msaclassify.job"
+		outfile = "classes"
+		apFile.removeStack(outfile)
+		numIters = int(self.params['numpart']*self.params['itermult'])
+		decrement = self.params['start']-self.params['end']
+		if self.params['iter']>0:
+			decrement /= float(self.params['iter'])
+		numClasses = self.params['start']-(decrement*self.params['currentiter'])
+		stackfile = self.params['alignedstack']
+		self.params['currentnumclasses'] = numClasses
+
+		f = open(bfile,'w')
+		f.write("#!/bin/csh -f\n")
+
+		f.write("setenv IMAGIC_BATCH 1\n")
+		f.write("%s/msa/classify.e <<EOF\n" % self.imagicroot)
+		f.write("IMAGES\n")
+		f.write("%s\n"%stackfile)
+		f.write("0\n")
+		f.write("%i\n"%self.params['activeeigen'])
+		f.write("YES\n")
+		f.write("%i\n"%numClasses)
+		f.write("classes_start\n")
+		f.write("EOF\n")
+
+		f.write("%s/msa/classum.e <<EOF\n" % self.imagicroot)
+		f.write("%s\n"%stackfile)
+		f.write("classes_start\n")
+		f.write("%s\n"%outfile)
+		f.write("YES\n")
+		f.write("NONE\n")
+		f.write("0\n")
+		f.write("EOF\n")
+
+		## make eigenimage stack appion-compatible
+		f.write("proc2d eigenim.hed eigenim.hed inplace\n")
+
+		f.write("touch msaclassify_done.txt\n")
+		f.write("exit\n")
+		f.close()
+
+		## execute the batch file
+		aligntime0 = time.time()
+		apEMAN.executeEmanCmd("chmod 755 "+bfile)
+
+		apDisplay.printColor("Running IMAGIC .batch file: %s"%(os.path.abspath(bfile)), "cyan")
+		apIMAGIC.executeImagicBatchFile(os.path.abspath(bfile))
+
+		os.remove("msaclassify_done.txt")
+
+		if not os.path.exists(outfile+".hed"):
+			apDisplay.printError("ERROR IN IMAGIC SUBROUTINE")
+		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-aligntime0), "cyan")
 
 	#=====================
 	def TarExtractall(self, tarobj):
@@ -576,14 +762,25 @@ class TopologyRepScript(appionScript.AppionScript):
 
 	#=====================
 	def readPartIMAGICFile(self):
+		## create an array of particle information
+		pinfo = []
 		# get particle information from imagic file
 		alifile = "outparams.plt"
 		if not os.path.isfile(alifile):
-			apDisplay.printError("no IMAGIC alignment file found")
+			apDisplay.printWarning("No IMAGIC alignment file found!  Setting alignment params to 0")
+			for pnum in range(1,self.params['numpart']+1):
+				pdata = {}
+				pdata['partnum'] = pnum
+				pdata['inplane'] = 0
+				pdata['xshift'] = 0
+				pdata['yshift'] = 0
+				pdata['cc'] = 0
+				pdata['mirror'] = 0
+				pinfo.append(pdata)
+			return pinfo
 
 		# store contents in array
 		f = open(alifile)
-		pinfo = []
 		for line in f:
 			d = line.strip().split()
 			if len(d) < 4:
@@ -645,6 +842,51 @@ class TopologyRepScript(appionScript.AppionScript):
 		return pclass
 
 	#=====================
+	def imagicClassificationToDict(self):
+		### read the particle classification from IMAGIC
+		### save as a dictionary
+		pclass = {}
+		clslist = "classes_start.cls"
+		if not os.path.isfile(clslist):
+			apDisplay.printError("no IMAGIC cls file found")
+
+		### cls file has file setup as such:
+		### class# #Particles FLOAT
+		### INT INT INT	INT INT INT
+		### logic is to search for a non-int in the 3rd column,
+		### and check that the # particles is correct
+		f = open(clslist)
+		numps=0
+		sofar=0
+		refn=0
+		for l in f:
+			vals = l.strip().split()
+			if len(vals) < 1:
+				continue
+			# check if at a new class
+			if len(vals)==3 and not vals[2].isdigit():
+				if sofar < numps:
+					apDisplay.printError("not enough particles in class %i"%refn)
+				refn+=1
+				if not int(vals[0])==refn:
+					apDisplay.printError("Error reading IMAGIC cls file")
+				numps = int(vals[1])
+				sofar = 0
+				continue
+			## now add particles to dictionary
+			for p in vals:
+				p=int(p)
+				if p not in pclass:
+					pclass[p]=refn
+					sofar+=1
+				else:
+					apDisplay.printError("particle %i has more than 1 classification,"
+						+" classified to reference %i and %i"%(p,pclass[p],refn))
+				if sofar > numps:
+					apDisplay.printError("too many particles in class %i"%refn)
+		return pclass		
+
+	#=====================
 	def start(self):
 		self.insertTopolRepJob()
 		self.stack = {}
@@ -666,77 +908,117 @@ class TopologyRepScript(appionScript.AppionScript):
 			proccmd += " hp="+str(self.params['highpass'])
 		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
 			proccmd += " lp="+str(self.params['lowpass'])
-		apEMAN.executeEmanCmd(proccmd, verbose=True)
-		if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
-			apDisplay.printError("Missing particles in stack")
+		if self.params['premask'] is True and self.params['mramethod'] != 'imagic':
+			proccmd += " mask=%i"%self.params['mask']
+		if self.params['uploadonly'] is not True:
+			apEMAN.executeEmanCmd(proccmd, verbose=True)
+			if self.params['numpart'] != apFile.numImagesInStack(self.params['localstack']):
+				apDisplay.printError("Missing particles in stack")
 
+			### IMAGIC mask particles before alignment
+			if self.params['premask'] is True and self.params['mramethod'] == 'imagic':
+				# convert mask to fraction for imagic
+				maskfrac = self.workingmask*2/self.workingboxsize
+				maskstack = imagicFilters.softMask(self.params['localstack'],mask=maskfrac)
+				shutil.move(maskstack+".hed",os.path.splitext(self.params['localstack'])[0]+".hed")
+				shutil.move(maskstack+".img",os.path.splitext(self.params['localstack'])[0]+".img")
+
+		origstack = self.params['localstack']
 		### find number of processors
 		if self.params['nproc'] is None:
 			self.params['nproc'] = apParam.getNumProcessors()
 
-		aligntime = time.time()
-		# run through iterations
-		for i in range(0,self.params['iter']+1):
-			# move back to starting directory
-			os.chdir(self.params['rundir'])
+		if self.params['uploadonly'] is not True:
+			aligntime = time.time()
+			# run through iterations
+			for i in range(0,self.params['iter']+1):
+				# move back to starting directory
+				os.chdir(self.params['rundir'])
 
-			# set up next iteration directory
-			self.params['currentiter'] = i
-			self.params['iterdir'] = os.path.abspath("iter%02i" % i)
-			if os.path.exists(self.params['iterdir']):
-				apDisplay.printError("Error: directory '%s' exists, aborting alignment" % self.params['iterdir'])
+				# set up next iteration directory
+				self.params['currentiter'] = i
+				self.params['iterdir'] = os.path.abspath("iter%02i" % i)
+				if os.path.exists(self.params['iterdir']):
+					apDisplay.printError("Error: directory '%s' exists, aborting alignment" % self.params['iterdir'])
 
-			# create directory for iteration
-			os.makedirs(self.params['iterdir'])	
-			os.chdir(self.params['iterdir'])
+				# create directory for iteration
+				os.makedirs(self.params['iterdir'])	
+				os.chdir(self.params['iterdir'])
 
-			# if at first iteration, create initial class averages 
-			if i == 0:
-				# first rewrite localstack headers
-				apIMAGIC.takeoverHeaders(self.params['localstack'],self.params['numpart'],self.workingboxsize)
-				self.params['alignedstack'] = os.path.splitext(self.params['localstack'])[0]
-				self.runCAN()
-				continue
+				# if at first iteration, create initial class averages 
+				if i == 0:
+					# first rewrite localstack headers if particles not pre-masked
+					if self.params['premask'] is False and self.params['mramethod'] == "imagic":
+						imagicFilters.takeoverHeaders(self.params['localstack'],self.params['numpart'],self.workingboxsize)
+					self.params['alignedstack'] = os.path.splitext(self.params['localstack'])[0]
+					if self.params['msamethod']=='imagic':
+						self.runIMAGICmsa()
+					else:
+						self.runCAN()
+					continue
 
-			# using references from last iteration, run multi-ref alignment
-			if self.params['mramethod'] == "imagic":
-				# rewrite class headers
-				apIMAGIC.takeoverHeaders(self.params['currentcls'],self.params['currentnumclasses'],self.workingboxsize)
-				self.runIMAGICmra()
-			else:
-				self.runEMANmra()
+				# using references from last iteration, run multi-ref alignment
+				if self.params['mramethod'] == "imagic":
+					# rewrite class headers
+					imagicFilters.takeoverHeaders(self.params['currentcls'],self.params['currentnumclasses'],self.workingboxsize)
+					self.runIMAGICmra()
+				else:
+					self.runEMANmra()
 
-			# create class averages from aligned stack
-			self.runCAN()
+				# create class averages from aligned stack
+				if self.params['msamethod']=='imagic':
+					self.runIMAGICmsa()
+				else:
+					self.runCAN()
 			
-		aligntime = time.time() - aligntime
-		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
+			aligntime = time.time() - aligntime
+			apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
+		## set upload information params:
+		else:
+			## get last iteration
+			alliters = glob.glob("iter*")
+			alliters.sort()
+			os.chdir(alliters[-1])
+			## get iteration number from iter dir
+			self.params['currentiter'] = int(alliters[-1][-2:])
+			self.params['alignedstack'] = os.path.abspath("mrastack")
+			self.params['currentcls'] = "classes%02i"%(self.params['currentiter'])
 		### get particle information from last iteration
 		if self.params['mramethod']=='imagic':
 			partlist = self.readPartIMAGICFile()
 		else:
 			partlist = self.readPartEMANFile()
-		partrefdict = self.canClassificationToDict()
+		if self.params['msamethod']=='imagic':
+			partrefdict = self.imagicClassificationToDict()
+		else:
+			partrefdict = self.canClassificationToDict()
 
 		# move back to starting directory
 		os.chdir(self.params['rundir'])
 
 		# proc2d aligned stack to current directory for appionweb
-		emancmd="proc2d "+self.params['alignedstack']+".hed mrastack.hed"
-		apEMAN.executeEmanCmd(emancmd)
-		apFile.removeStack(self.params['alignedstack'])
+		if not os.path.isfile("mrastack.hed"):
+			emancmd="proc2d "+self.params['alignedstack']+".hed mrastack.hed"
+			apEMAN.executeEmanCmd(emancmd)
+			apFile.removeStack(self.params['alignedstack'])
 
 		### create an average mrc of final references 
-		apStack.averageStack(stack=self.params['currentcls']+".hed")
-		self.dumpParameters()
+		if not os.path.isfile("average.mrc"):
+			apStack.averageStack(stack=self.params['currentcls']+".hed")
+			self.dumpParameters()
 
 		# move actual averages to current directory
-		shutil.move(os.path.join(self.params['iterdir'],"classes_avg.hed"),".")
-		shutil.move(os.path.join(self.params['iterdir'],"classes_avg.img"),".")
-		# save actual class averages as refs in database
-		self.params['currentcls']="classes_avg"
+		if self.params['msamethod']=='can':
+			if not os.path.isfile("classes_avg.hed"):
+				shutil.move(os.path.join(self.params['iterdir'],"classes_avg.hed"),".")
+				shutil.move(os.path.join(self.params['iterdir'],"classes_avg.img"),".")
+			# save actual class averages as refs in database
+			self.params['currentcls']="classes_avg"
 		
+		### remove the filtered stack
+		apFile.removeStack(origstack)
+
 		### save to database
 		self.insertRunIntoDatabase()
 		self.insertParticlesIntoDatabase(partlist, partrefdict)
