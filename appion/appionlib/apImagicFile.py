@@ -299,9 +299,7 @@ def writeImagic(array, filename, msg=True):
 		partnum = i+1
 		headerstr = makeHeaderStr(partnum, array.shape, avg1, stdev1, min1, max1)
 		headfile.write(headerstr)
-		### scale image to maximize range
-		scalepartimg = (partimg-min1)/(max1-min1)
-		datafile.write(scalepartimg.tostring())
+		datafile.write(partimg.tostring())
 		i += 1
 	headfile.close()
 	datafile.close()
