@@ -232,8 +232,10 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 		$display_keys['session id'].="<a href='index.php?expId=".$sessiondata['DEF_id']."'>"
 			.$sessiondata['name']."</a>&nbsp;\n";
 
+	// break up really long descriptions
+	$descBreaks = addSpaces($stackdata['description'],50);
 	// add edit button to description if logged in
-	$descDiv = ($_SESSION['username'] && $showOptions) ? editButton($stackid,$stackdata['description']) : $stackdata['description'];
+	$descDiv = ($_SESSION['username'] && $showOptions) ? editButton($stackid,$stackdata['description']) : $descBreaks;
 	if (!$mini) 
 		$display_keys['description']=$descDiv;
 	else
@@ -339,7 +341,7 @@ function ministacksummarytable($stackid) {
 
 /****************************************
 ****************************************/
-function alignstacksummarytable($alignstackid, $mini=false) {
+function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 	$expId = $_GET['expId'];
 	$particle = new particledata();
 	$stackdata = $particle->getAlignStackParams($alignstackid);
@@ -378,10 +380,12 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		.$stackdata['runname']."</span> (ID: $alignstackid)\n";
 	if ($stackdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
-		$j.= " <input class='edit' type='submit' name='unhideItem".$alignstackid."' value='unhide'>\n";
+		if ($showOptions) $j.= " <input class='edit' type='submit' name='unhideItem".$alignstackid."' value='unhide'>\n";
 		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>\n";
-	} else $j.= " <input class='edit' type='submit' name='hideItem".$alignstackid."' value='hide'>\n";
+	}
+	elseif ($showOptions) $j.= " <input class='edit' type='submit' name='hideItem".$alignstackid."' value='hide'>\n";
 
+	if ($showOptions) $j.="<input class='edit' type='button' onClick='parent.location=\"dropstack.php?expId=$expId&alignId=$alignstackid\"' value='delete'>\n";
 	$stacktable.= apdivtitle($j);
 	//echo $j."<br/>\n";
 
@@ -418,8 +422,10 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		$stacktable.= "</tr>\n\n";
 	} #endif
 
+	// break up really long descriptions
+	$descBreaks = addSpaces($stackdata['description'],50);
 	// add edit button to description if logged in
-	$descDiv = ($_SESSION['username']) ? editButton($alignstackid, $stackdata['description']) : $stackdata['description'];
+	$descDiv = ($_SESSION['username']) ? editButton($alignstackid, $stackdata['description']) : $descBreaks;
 
 	$display_keys['date time'] = $stackdata['DEF_timestamp'];
 	$display_keys['description']=$descDiv;
@@ -443,6 +449,8 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	$origstackid = $stackdata['REF|ApStackData|stack'];
 	$display_keys['original stack'] = "<a href='stackreport.php?expId=$expId&sId=$origstackid'>$origstackid</a>\n";
 	$refstack = $stackdata['path']."/".$stackdata['refstackfile'];
+	$numrefs = $particle->getNumAlignStackReferences($alignstackid);
+	$display_keys['# of classes']=$numrefs;
 	if ($stackdata['refstackfile'] && file_exists($refstack))
 		$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
 			."file=$refstack&expId=$expId&ps=$mpix&alignId=$alignstackid&refs=1'>".$stackdata['refstackfile']."</a>\n";
@@ -453,10 +461,20 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		// count # of node classes: 1 for each iteration
 		foreach ($nodefiles as $nodefile)
 			if (preg_match('/classes\d\d\.hed/',$nodefile)) $numiters++;
-		// create link to last node file
-		$lastnode=sprintf("classes%02d.hed",$numiters);
-		$display_keys['last node file'] = "<a target='stackview' href='viewstack.php?"
-			."file=".$stackdata['path']."/$lastnode&expId=$expId&ps=$mpix&alignId=$alignstackid'>$lastnode</a>\n";
+		// if reference stack is from imagic, show eigenimgs
+		if ($stackdata['refstackfile']=='classes_avg.hed') {
+			// create link to last node file
+			$lastnode=sprintf("classes%02d.hed",$numiters);
+			$display_keys['last node file'] = "<a target='stackview' href='viewstack.php?"
+				."file=".$stackdata['path']."/$lastnode&expId=$expId&ps=$mpix&alignId=$alignstackid'>$lastnode</a>\n";
+		}
+		else {
+			// otherwise show eigenimg
+			$iterdir = sprintf("iter%02d",$numiters);
+			$eigenfile = $stackdata['path']."/".$iterdir."/eigenim.hed";
+			$display_keys['eigen images'] = "<a target='stackview' href='viewstack.php?"
+				."file=$eigenfile&expId=$expId&ps=$mpix'>eigenim.hed</a>\n";
+		}
 	}
 	$stackfile = $stackdata['path']."/".$stackdata['imagicfile'];
 
@@ -565,8 +583,11 @@ function analysissummarytable($analysisid, $mini=false) {
 	// close table row
 	$analysistable.= "</tr>\n\n";
 
+	// break up really long descriptions
+	$descBreaks = addSpaces($analysisdata['description'],50);
+
 	// add edit button to description if logged in
-	$descDiv = ($_SESSION['username']) ? editButton($analysisid, $analysisdata['description']) : $analysisdata['description'];
+	$descDiv = ($_SESSION['username']) ? editButton($analysisid, $analysisdata['description']) : $descBreaks;
 
 	$display_keys['date time'] = $analysisdata['DEF_timestamp'];
 	$display_keys['description']=$descDiv;
@@ -937,6 +958,24 @@ function frealigntable($frealignprepid) {
 	$table .= "</table>\n";
 	return $table;
 };
+
+function addSpaces($text,$len=60) {
+	## take a long string and add spaces
+	## only after commas
+	$fragment = 1;
+	$newtext = '';
+	for ($i=0; $i < strlen($text); $i++) {
+		$fragment++;
+		$newtext.=$text[$i];
+		if ($fragment < $len) continue;
+		if ($text[$i]==' ') $fragment = 1;
+		elseif ($text[$i]==',') {
+			$newtext.=" ";
+			$fragment=1;
+		}
+	}
+	return $newtext;
+}
 
 function prepRefineTable($jobid) {
 	// initialization
