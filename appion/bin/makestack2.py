@@ -782,6 +782,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if self.params['phaseflipped'] is True:
 			stparamq['phaseFlipped'] = True
 			stparamq['fliptype'] = self.params['fliptype']
+		if self.params['rotate'] is True:
+			stparamq['rotate'] = True
 		paramslist = stparamq.query()
 
 		if not 'boxSize' in stparamq or stparamq['boxSize'] is None:

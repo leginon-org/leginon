@@ -550,6 +550,7 @@ class ApStackParamsData(Data):
 			('lowpass', float),
 			('highpass', float),
 			('tiltangle', str),
+			('rotate', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1915,6 +1916,7 @@ class ApHipIterData(Data):
 			('chop2', str),	
 			('avglist_file', str),
 			('final_numpart', int),
+			('asymsu', int),
 			('avg_file', str),
 			('map_file', str),
 			('mrc_file', str),
