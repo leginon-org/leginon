@@ -214,7 +214,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### convert database particle data to coordinates and write boxfile
 		boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
-		parttree = processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile)
+		parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.params['boxsize'], partdatas, shiftdata, boxfile)
 
 		if self.params['boxfiles']:
 			### quit and return, boxfile created, now process next image
@@ -255,7 +255,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		#	%(imgpath, emanboxfile, imgstackfile, self.params['boxsize']))
 		apDisplay.printMsg("boxing "+str(len(parttree))+" particles into temp file: "+imgstackfile)
 		t0 = time.time()
-		apBoxer.boxer(imgfile, parttree, outstack, boxsize)
+		if self.params['rotate'] is True:
+			apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.params['boxsize'])
+		else:
+			apBoxer.boxer(imgpath, parttree, imgstackfile, self.params['boxsize'])
 		self.batchboxertimes.append(time.time()-t0)
 
 		### read mean and stdev
@@ -330,7 +333,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		numpart = apFile.numImagesInStack(imgstackfile)
 		apDisplay.printMsg(str(numpart)+" particles were boxed out from "+shortname)
 
-		if len(boxedpartdatas) != numpart:
+		if len(parttree) != numpart:
 			apDisplay.printError("There is a mismatch in the number of particles expected and that were boxed")
 
 		return boxedpartdatas, imgstackfile, partmeantree
@@ -1217,6 +1220,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				stpartq.insert()
 		self.insertdbtimes.append(time.time()-t0)
 
+	#=======================
 	def loopCleanUp(self,imgdata):
 		### last remove any existing boxed files, reset global params
 		shortname = apDisplay.short(imgdata['filename'])

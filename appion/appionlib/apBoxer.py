@@ -9,6 +9,7 @@ angle
 from pyami import mrc
 from scipy import ndimage	#rotation function
 from appionlib import apImagicFile	#write imagic stacks
+from appionlib import apDisplay
 from appionlib.apImage import imagefilter	#image clipping
 
 ##=================
@@ -23,6 +24,7 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile):
 	halfbox = boxsize/2
 	
 	parttree = []
+	boxedpartdatas = []
 	eliminated = 0
 	user = 0
 	noangle = 0
@@ -40,9 +42,10 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile):
 			partdict = {
 				'x_coord': xcoord,
 				'y_coord': ycoord,
-				'angle': self.params['angle'],
+				'angle': partdata['angle'],
 			}
 			parttree.append(partdict)
+			boxedpartdatas.append(partdata)
 			f.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,boxsize,boxsize))
 		else:
 			eliminated += 1
@@ -55,7 +58,7 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile):
 	if noangle > 0:
 		apDisplay.printMsg(str(noangle)+" particle(s) eliminated because they had no rotation angle")
 
-	return parttree
+	return parttree, boxedpartdatas
 
 ##=================
 def boxer(imgfile, parttree, outstack, boxsize):
@@ -64,7 +67,7 @@ def boxer(imgfile, parttree, outstack, boxsize):
 	"""
 	imgarray = mrc.read(imgfile)
 	boxedparticles = boxerMemory(imgarray, parttree, boxsize)
-	apImagicFile.saveImagic(boxedparticles, outstack)
+	apImagicFile.writeImagic(boxedparticles, outstack)
 	return True
 
 ##=================
@@ -74,12 +77,13 @@ def boxerMemory(imgarray, parttree, boxsize):
 	"""
 	boxedparticles = []
 	for partdict in parttree:
-		x1 = int(partdict['x_coord']-boxsize/2.)
+		x1 = partdict['x_coord']
 		x2 = x1+boxsize
-		y1 = int(partdict['y_coord']-boxsize/2.)
+		y1 = partdict['y_coord']
 		y2 = y1+boxsize
 		#numpy arrays are rows,cols --> y,x not x,y
-		boxpart = imgdict['image'][y1:y2,x1:x2]
+		#print x1,x2,y1,y2, imgarray.shape
+		boxpart = imgarray[y1:y2,x1:x2]
 		boxedparticles.append(boxpart)
 	return boxedparticles
 
@@ -94,7 +98,7 @@ def boxerRotate(imgarray, parttree, outstack, boxsize):
 	# size needed is sqrt(2)*boxsize, using 1.5 to be extra safe
 	bigboxsize = int(math.ceil(1.5*boxsize))
 	
-	bigboxedparticles = boxerMemory(imgdict, parttree, bigboxsize)
+	bigboxedparticles = boxerMemory(imgarray, parttree, bigboxsize)
 	
 	boxedparticles = []
 	boxshape = (boxsize,boxsize)
@@ -106,5 +110,5 @@ def boxerRotate(imgarray, parttree, outstack, boxsize):
 		boxpart = imagefilter.frame_cut(rotatepart, boxshape)
 		boxedparticles.append(boxpart)
 		
-	apImagicFile.saveImagic(boxedparticles, outstack)
+	apImagicFile.writeImagic(boxedparticles, outstack)
 	return True
