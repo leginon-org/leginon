@@ -8,7 +8,7 @@
 
 (* ====================================================================*)
 (* comments that start with AP are replaced with user defined values   *)
-(* if these
+(* if these                                                            *)
 (* ====================================================================*) 
 
 tiltseries {
