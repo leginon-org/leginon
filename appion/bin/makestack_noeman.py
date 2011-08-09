@@ -124,7 +124,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			defocus = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 		else:
 			defocus = ctfvalue['defocus1']
-		defocus = -1.0*abs(defocus)
+		defocus = -1.0*abs(defocus)	
 
 		### assume defocus values are ALWAYS negative but mindefocus is greater than maxdefocus
 		if self.params['mindefocus']:
@@ -214,7 +214,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### convert database particle data to coordinates and write boxfile
 		boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
-		parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.params['boxsize'], partdatas, shiftdata, boxfile)
+		parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.params['boxsize'], 
+			partdatas, shiftdata, boxfile, rotate=self.params['rotate'])
 
 		if self.params['boxfiles']:
 			### quit and return, boxfile created, now process next image

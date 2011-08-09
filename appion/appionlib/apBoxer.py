@@ -14,7 +14,7 @@ from appionlib import apDisplay
 from appionlib.apImage import imagefilter	#image clipping
 
 ##=================
-def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile):
+def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=False):
 	"""
 	for a list of partdicts from database, apply shift
 	to get a new list with x, y, angle information
@@ -34,10 +34,15 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile):
 	f = open(boxfile, 'w')
 	for i in range(len(partdatas)):
 		partdata = partdatas[i]
+
+		### require particle with rotation
+		if rotate is True and partdata['angle'] is None:
+			noangle += 1
+			continue
+
 		### xcoord is the upper left area corner of the particle box
 		xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
 		ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))	
-
 		if ( (xcoord > 0 and xcoord+boxsize <= imgdims['x'])
 		and  (ycoord > 0 and ycoord+boxsize <= imgdims['y']) ):
 			partdict = {
