@@ -1,0 +1,143 @@
+(* Parameters for HIGH tilt series *)
+
+(* Units are pixels for real space quantities, or reciprocal pixels    *)
+(* for reciprocal space quantities, unless otherwise stated. The units *)
+(* refer to the sampled image. The spatial frequencies for filters are *)
+(* multiplied by the sampling factor and thus refer to the unsampled,  *)
+(* raw image.                                                          *)
+
+(* ====================================================================*)
+(* comments that start with AP are replaced with user defined values   *)
+(* if these
+(* ====================================================================*) 
+
+tiltseries {
+
+ W = { 1350, 1350 } (* AP orig window *)
+
+ O = 800 	(* AP orig thickness *)
+
+ S = 2             (* AP sampling *)
+
+ N = W/S (* window size at sampling S *)
+
+ T = O/S           (* thickness at sampling S *)
+
+ F = 0.4305         (* AP cos( highest tilt angle ) *)
+
+ sampling: S
+
+ binning: true
+
+ preprocessing: true
+
+ preprocess {
+
+   logging: true
+
+   border: 100
+
+   clip: { 3.5, 3.5 }   (* specified as a multiple of the standard deviation *)
+
+   mask {
+     gradient: true
+     iter: true
+     filter: "median"
+     kernel: { 5, 5 }
+     clip: { 3.0, 3.0 }
+   }
+
+ }
+
+ window {
+
+   size: N
+
+   mask {
+     apodization: { 10, 10 }
+     width: N - 2.5 * apodization
+   }
+
+   lowpass {
+     diameter:    { 0.25, 0.25 } * S (* AP lowpass diameter *)
+     apodization: { 0.05, 0.05 } * S (* AP lowpass apodization *)
+   }
+
+   highpass {
+     diameter:    { 0.001, 0.001 } * S (* AP lowpass diameter *)
+     apodization: { 0.002, 0.002 } * S (* AP lowpass apodization *)
+   }
+
+ }
+
+
+ reference {
+
+   body: T / F
+
+ }
+
+
+ align {
+
+   estimate: false
+
+   maxcorrection: 0.3
+
+   mask {
+     apodization: { 10, 10 }
+     width: N - 2.5 * apodization
+   }
+
+   correlation {
+     mode: "mcf"      (* AP corr mode *)
+     size: { 128, 128 } 
+   }
+
+   peaksearch {
+     radius: { 100, 100 }
+   }
+
+ }
+
+
+ fit {
+
+   orientation: true
+   azimuth: true
+   rotation: true
+
+   logging: true
+
+ }
+
+
+ map {
+
+   size: { 1024, 1024, 200 } 
+   body: T / F
+   sampling: S
+
+   lowpass {
+     diameter:    { 0.250, 0.250 } * S
+     apodization: { 0.02, 0.02 } * S
+   }
+
+   logging: true
+
+ }
+
+ suffix: ".img"
+
+ pathlist: 
+"/panfs/storage.local/imb/home/sstagg/scratch/11jul20a/s02/raw"  (* AP path to raw directory *)
+
+ cachedir: "cache"
+
+ outdir: "out"
+
+ logging: true
+
+ restart: false
+
+}

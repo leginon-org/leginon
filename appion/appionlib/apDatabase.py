@@ -147,14 +147,13 @@ def getSessionDataFromSessionName(sessionname):
 
 #================
 def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
-	apDisplay.printMsg("Looking up session, "+ str(sessiondata.dbid));
-	tiltq = leginon.leginondata.TiltSeriesData()
+	apDisplay.printMsg("Looking up session first, "+ str(sessiondata.dbid));
 	tiltseriesq = leginon.leginondata.TiltSeriesData(session=sessiondata,number=tiltseries)
 	tiltseriesdata = tiltseriesq.query(readimages=False,results=1)
 	if tiltseriesdata:
 		return tiltseriesdata[0]
 	else:
-		apDisplay.printError("could not find tilt series, "+sessionname)
+		apDisplay.printError("could not find tilt series, "+str(tiltseries))
 
 #================
 def getImagesFromTiltSeries(tiltseriesdata,printMsg=True):
