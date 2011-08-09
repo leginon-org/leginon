@@ -118,7 +118,7 @@ def boxerRotate(imgfile, parttree, outstack, boxsize):
 		### add 90 degrees because database angle is from x-axis not y-axis
 		angle = partdict['angle']+90.0
 		rotatepart = ndimage.rotate(bigboxpart, angle=angle, reshape=False, order=1)
-		boxpart = imagefilter.frame_cut(rotatepart, boxshape)
+		#boxpart = imagefilter.frame_cut(rotatepart, boxshape)
 		boxedparticles.append(boxpart)
 	sys.stderr.write("done\n")
 	apImagicFile.writeImagic(boxedparticles, outstack)
