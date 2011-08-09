@@ -62,6 +62,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 			action="store_false", help="Do NOT auto pick images")
 		self.parser.add_option("--import-align", dest="importalign", default=False,
 			action="store_true", help="Import previous tiltpicker alignment parameters")
+		self.parser.add_option("--init-tilt-axis", dest="inittiltaxis", default=0, type="float",
+			help="Initial Tilt Axis angle", metavar="#")
 
 	#=======================================
 	def checkConflicts(self):
@@ -259,7 +261,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 				tilt1 = apDatabase.getTiltAngleDeg(imgdata)
 				tilt2 = apDatabase.getTiltAngleDeg(tiltdata)
 				tiltdiff = abs(tilt2) - abs(tilt1)
-				tiltaxis = -7.2
+				tiltaxis = self.params['inittiltaxis']
 				### run tilt automation
 				if self.params['autopick'] is True and self.params['importalign'] is False:
 					if len(picks1) > 0 and len(picks2) > 0:
