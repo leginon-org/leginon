@@ -591,11 +591,13 @@ class TopologyRepScript(appionScript.AppionScript):
 		else:
 			f.write("%s/msa/msa.e <<EOF\n" % self.imagicroot)
 			f.write("NO\n")
-		if int(self.imagicversion) != 110119 or int(self.imagicversion) != 100312:
+		if int(self.imagicversion) != 110119 and int(self.imagicversion) != 100312:
 			f.write("NO\n")
 		f.write("FRESH_MSA\n")
 		f.write("MODULATION\n")
 		f.write("%s\n"%stackfile)
+		if int(self.imagicversion) <= 100312:
+			f.write("NO\n")
 		f.write("msamask\n")
 		f.write("eigenim\n")
 		f.write("my_pixcoos\n")
