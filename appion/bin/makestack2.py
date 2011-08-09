@@ -32,6 +32,7 @@ from appionlib import apParam
 from appionlib import apImagicFile
 from appionlib import apMask
 from appionlib import apXmipp
+from appionlib import apBoxer
 from appionlib.apSpider import filters
 
 
@@ -123,7 +124,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			defocus = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 		else:
 			defocus = ctfvalue['defocus1']
-		defocus = -1.0*abs(defocus)
+		defocus = -1.0*abs(defocus)	
 
 		### assume defocus values are ALWAYS negative but mindefocus is greater than maxdefocus
 		if self.params['mindefocus']:
@@ -211,17 +212,17 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apDisplay.printColor(shortname+" has no remaining particles and has been rejected\n","cyan")
 			return None, None, None
 
-		### save particle coordinates to box file
-		if self.params['rotate']:
-			boxedpartdatas, emanboxfile = self.writeParticlesToBoxFile(partdatas, shiftdata, imgdata, 1)
-		else:
-			boxedpartdatas, emanboxfile = self.writeParticlesToBoxFile(partdatas, shiftdata, imgdata, 3)
+		### convert database particle data to coordinates and write boxfile
+		boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
+		parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.params['boxsize'], 
+			partdatas, shiftdata, boxfile, rotate=self.params['rotate'])
 
 		if self.params['boxfiles']:
+			### quit and return, boxfile created, now process next image
 			return None, None, None
 
 		### check if we have particles again
-		if len(boxedpartdatas) == 0:
+		if len(partdatas) == 0:
 			apDisplay.printColor(shortname+" has no remaining particles and has been rejected\n","cyan")
 			return None, None, None
 
@@ -249,50 +250,17 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if imgpath is None:
 			return None, None, None
 
-		if self.params['rotate']:
-			### run batchboxer command to extract box 2*boxsize around each pick
-			tempimgstackfile = os.path.join(self.params['rundir'], shortname+"temp.hed")
-			imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
-			doublebox = self.params['boxsize']*2
-			emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, emanboxfile, tempimgstackfile, doublebox)
-			apDisplay.printMsg("boxing "+str(len(boxedpartdatas))+" particles into temp file: "+tempimgstackfile)
-			t0 = time.time()
-			apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
-			self.batchboxertimes.append(time.time()-t0)
-
-			### Break up stack and rotate each filament by rotation angle calculated in manual picker and rebox to original size
-			apXmipp.breakupStackIntoSingleFiles(tempimgstackfile, filetype="mrc")
-			partlist = os.path.join(self.params['rundir'], 'partlist.sel')
-			partfile = open(partlist, 'r')	
-			partlist = partfile.readlines()
-			partfile.close()
-			selfile = os.path.join(self.params['rundir'], 'partlist2.sel')
-			selfilew = open(selfile, 'w')	
-			i = 0
-			for partdata in boxedpartdatas:
-				angle = 90 - partdata['angle']
-				imgpath = partlist[i].split()[0]
-				rotimgpath = imgpath.replace('.mrc', 'r.mrc')
-				outimgpath = imgpath.replace('.mrc', 'o.mrc')
-				emancmd="proc2d %s %s rot=%d"%(imgpath,rotimgpath,angle)
-				apEMAN.executeEmanCmd(emancmd, showcmd=True)
-				blankpartdatas, emanboxfile = self.writeParticlesToBoxFile(partdatas, shiftdata, imgdata, 2)
-				emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(rotimgpath, emanboxfile, outimgpath, self.params['boxsize'])
-				t0 = time.time()
-				apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
-				self.batchboxertimes.append(time.time()-t0)
-				print>>selfilew, outimgpath, 1
-				i += 1
-			selfilew.close()
-			apXmipp.gatherSingleFilesIntoStack(selfile, imgstackfile, filetype="mrc")
+		### run batchboxer command
+		imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
+		#emancmd = ("batchboxer input=%s dbbox=%s output=%s newsize=%i" 
+		#	%(imgpath, emanboxfile, imgstackfile, self.params['boxsize']))
+		apDisplay.printMsg("boxing "+str(len(parttree))+" particles into temp file: "+imgstackfile)
+		t0 = time.time()
+		if self.params['rotate'] is True:
+			apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.params['boxsize'])
 		else:
-			### run batchboxer command
-			imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
-			emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, emanboxfile, imgstackfile, self.params['boxsize'])
-			apDisplay.printMsg("boxing "+str(len(boxedpartdatas))+" particles into temp file: "+imgstackfile)
-			t0 = time.time()
-			apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
-			self.batchboxertimes.append(time.time()-t0)
+			apBoxer.boxer(imgpath, parttree, imgstackfile, self.params['boxsize'])
+		self.batchboxertimes.append(time.time()-t0)
 
 		### read mean and stdev
 		partmeantree = []
@@ -366,72 +334,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		numpart = apFile.numImagesInStack(imgstackfile)
 		apDisplay.printMsg(str(numpart)+" particles were boxed out from "+shortname)
 
-		if len(boxedpartdatas) != numpart:
+		if len(parttree) != numpart:
 			apDisplay.printError("There is a mismatch in the number of particles expected and that were boxed")
 
 		return boxedpartdatas, imgstackfile, partmeantree
-
-	#=======================
-	def writeParticlesToBoxFile(self, partdatas, shiftdata, imgdata, roundno):
-		imgdims = imgdata['camera']['dimension']
-		fullbox = self.params['boxsize']
-		halfbox = self.params['boxsize']/2
-		doublebox = self.params['boxsize']*2
-			
-		boxedpartdatas = []
-		eliminated = 0
-		user = 0
-		noangle = 0
-
-		if roundno == 1:
-			emanboxfile = os.path.join(self.params['rundir'], imgdata['filename']+"1.box")
-			boxfile=open(emanboxfile, 'w')
-			for i in range(len(partdatas)):
-				partdata = partdatas[i]
-				if partdata['label'] != "user" and partdata['angle'] is not None:
-					xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - fullbox ))
-					ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - fullbox ))
-
-					if ( (xcoord > 0 and xcoord+fullbox <= imgdims['x'])
-					and  (ycoord > 0 and ycoord+fullbox <= imgdims['y']) ):
-						boxfile.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,doublebox,doublebox))
-						boxedpartdatas.append(partdata)
-					else:
-						eliminated += 1
-				elif partdata['label'] == "user":
-					user += 1
-				elif partdata['angle'] is None:
-					noangle +=1
-		elif roundno == 2:
-			emanboxfile = os.path.join(self.params['rundir'], imgdata['filename']+"2.box")
-			boxfile=open(emanboxfile, 'w')
-			xcoord= int(round(halfbox))
-			ycoord= int(round(halfbox))	
-
-			boxfile.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,fullbox,fullbox))
-		else:
-			emanboxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
-			boxfile=open(emanboxfile, 'w')
-			for i in range(len(partdatas)):
-				partdata = partdatas[i]
-				xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
-				ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))	
-
-				if ( (xcoord > 0 and xcoord+fullbox <= imgdims['x'])
-				and  (ycoord > 0 and ycoord+fullbox <= imgdims['y']) ):
-					boxfile.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,fullbox,fullbox))
-					boxedpartdatas.append(partdata)
-				else:
-					eliminated += 1
-
-		if eliminated > 0:
-			apDisplay.printMsg(str(eliminated)+" particle(s) eliminated because they were out of bounds")
-		if user > 0:
-			apDisplay.printMsg(str(user)+" particle(s) eliminated because they were 'user' labeled targets")
-		if noangle > 0:
-			apDisplay.printMsg(str(noangle)+" particle(s) eliminated because they had no rotation angle")
-		boxfile.close()
-		return boxedpartdatas, emanboxfile
 
 	############################################################
 	############################################################
@@ -1315,6 +1221,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				stpartq.insert()
 		self.insertdbtimes.append(time.time()-t0)
 
+	#=======================
 	def loopCleanUp(self,imgdata):
 		### last remove any existing boxed files, reset global params
 		shortname = apDisplay.short(imgdata['filename'])
