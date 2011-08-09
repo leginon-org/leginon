@@ -5,7 +5,7 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import leginondata
+from leginon import leginondata
 import node
 import gui.wx.IntensityMonitor
 from pyami import arraystats

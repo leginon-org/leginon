@@ -10,7 +10,7 @@
 
 import application
 import applications
-import leginondata
+from leginon import leginondata
 import databinder
 import datatransport
 import event

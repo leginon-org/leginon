@@ -13,7 +13,7 @@
 
 import os.path
 import threading
-import leginondata
+from leginon import leginondata
 from pyami import mrc
 import targetfinder
 import gui.wx.TestTargetFinder

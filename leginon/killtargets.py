@@ -6,7 +6,7 @@ if len(sys.argv) != 2:
 	print '%s %s' % (sys.argv[0], 'session_name')
 	sys.exit(1)
 
-import leginondata
+from leginon import leginondata
 db = leginondata.db
 
 # look up session with name given by user

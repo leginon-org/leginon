@@ -4,7 +4,7 @@ find classes in leginondata.py that have 'tem' and 'ccdcamera' as fields
 '''
 
 import inspect
-import leginondata
+from leginon import leginondata
 
 for attr in leginondata.__dict__.keys():
    ob = getattr(leginondata, attr)

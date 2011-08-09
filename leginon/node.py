@@ -8,7 +8,7 @@
 #
 
 import sinedon
-import leginondata
+from leginon import leginondata
 from databinder import DataBinder
 import datatransport
 import event

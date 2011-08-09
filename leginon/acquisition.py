@@ -12,7 +12,7 @@ ImageTargetData.
 '''
 import targetwatcher
 import time
-import leginondata
+from leginon import leginondata
 import event
 import calibrationclient
 import presets

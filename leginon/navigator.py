@@ -14,7 +14,7 @@
 # leginon
 import node
 import event
-import leginondata
+from leginon import leginondata
 import calibrationclient
 import gui.wx.Navigator
 import instrument

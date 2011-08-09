@@ -17,7 +17,7 @@ import pyami.quietscipy
 import scipy.ndimage
 from pyami import arraystats, convolver, affine
 import math
-import leginondata
+from leginon import leginondata
 
 ## defocus calibration matrix format:
 ##   x-row  y-row

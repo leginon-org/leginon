@@ -9,7 +9,7 @@ import Image
 import sys
 import threading
 import time
-import leginondata
+from leginon import leginondata
 import emailnotification
 import event
 import instrument

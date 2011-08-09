@@ -7,7 +7,7 @@
 #
 import acquisition
 import node
-import leginondata
+from leginon import leginondata
 import calibrationclient
 import threading
 import event

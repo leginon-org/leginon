@@ -1,5 +1,5 @@
 import targetfilter
-import leginondata
+from leginon import leginondata
 import gui.wx.CenterTargetFilter
 
 class CenterTargetFilter(targetfilter.TargetFilter):

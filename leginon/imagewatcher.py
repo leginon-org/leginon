@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import leginondata
+from leginon import leginondata
 import event
 import watcher
 

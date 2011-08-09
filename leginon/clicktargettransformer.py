@@ -15,7 +15,7 @@ import gui.wx.ClickTargetTransformer
 import threading
 import caltransformer
 import gui.wx.ClickTargetTransformer
-import leginondata
+from leginon import leginondata
 import time
 
 class ClickTargetTransformer(targetfinder.ClickTargetFinder):

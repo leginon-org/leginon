@@ -13,7 +13,7 @@
 
 import node
 import calibrationclient
-import leginondata
+from leginon import leginondata
 import event
 import copy
 import threading

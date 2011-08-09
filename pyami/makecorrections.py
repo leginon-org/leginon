@@ -3,7 +3,7 @@
 import ccd
 import mrc
 import sinedon
-import leginondata
+from leginon import leginondata
 import mem
 
 import sinedon.data

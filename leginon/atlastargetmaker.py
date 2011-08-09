@@ -8,7 +8,7 @@
 
 import math
 import calibrationclient
-import leginondata
+from leginon import leginondata
 import event
 import instrument
 import node

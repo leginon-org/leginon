@@ -8,7 +8,7 @@
 
 # defines the Event and EventHandler classes
 
-import leginondata
+from leginon import leginondata
 import sinedon.data
 import copy
 

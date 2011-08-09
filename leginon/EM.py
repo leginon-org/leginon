@@ -6,7 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import leginondata
+from leginon import leginondata
 import instrument
 import node
 import socket

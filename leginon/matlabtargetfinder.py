@@ -14,7 +14,7 @@
 import os.path
 import threading
 import numpy
-import leginondata
+from leginon import leginondata
 from pyami import mrc
 import targetfinder
 import gui.wx.MatlabTargetFinder

@@ -1,5 +1,5 @@
 
-import leginondata
+from leginon import leginondata
 import targetrepeater
 
 class TestRepeater(targetrepeater.TargetRepeater):

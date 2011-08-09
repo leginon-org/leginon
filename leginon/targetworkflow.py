@@ -47,7 +47,7 @@ def paramToDBName(step, paramname):
 def combinedParamName(step, param):
 	return step.name + ' ' + param['name']
 
-import leginondata
+from leginon import leginondata
 def makeSettingsClass(clsname, steps):
 	newtypemap = []
 	for step in steps.values():

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import dbdatakeeper
-import leginondata
+from leginon import leginondata
 import MySQLdb
 import sys
 import getpass

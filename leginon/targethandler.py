@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import leginondata
+from leginon import leginondata
 import event
 import threading
 from pyami import ordereddict

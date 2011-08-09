@@ -7,7 +7,7 @@
 # $Locker:  $
 import math
 import reference
-import leginondata
+from leginon import leginondata
 import event
 import gui.wx.BeamFixer
 from pyami import arraystats

@@ -10,7 +10,7 @@
 '''
 
 import node
-import leginondata
+from leginon import leginondata
 import event
 import gui.wx.Beeper
 import threading

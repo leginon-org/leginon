@@ -7,7 +7,7 @@
 # $Locker:  $
 import math
 import presetadjuster
-import leginondata
+from leginon import leginondata
 import event
 import gui.wx.ExposureFixer
 

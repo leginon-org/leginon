@@ -8,7 +8,7 @@
 import numpy
 from pyami import correlator, peakfinder, imagefun
 import math
-import leginondata
+from leginon import leginondata
 
 class Tile(object):
 	def __init__(self, image, position, imagedata):

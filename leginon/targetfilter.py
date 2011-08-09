@@ -13,7 +13,7 @@ Subclasses need to implement the filterTargets method.
 '''
 import math
 import node
-import leginondata
+from leginon import leginondata
 import event
 import threading
 import targethandler

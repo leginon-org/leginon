@@ -15,7 +15,7 @@ import os
 import Image
 import numpy
 from pyami import imagefun, mrc
-import leginondata
+from leginon import leginondata
 try:
 	from appionlib import apMask
 	from appionlib import apDatabase

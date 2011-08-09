@@ -5,7 +5,7 @@
 #	   For terms of the license agreement
 #	   see  http://ami.scripps.edu/software/leginon-license
 #
-import leginondata
+from leginon import leginondata
 import acquisition
 import gui.wx.RCTAcquisition
 import libCVwrapper

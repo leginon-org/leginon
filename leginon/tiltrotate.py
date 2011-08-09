@@ -1,5 +1,5 @@
 import gui.wx.TiltRotate
-import leginondata
+from leginon import leginondata
 import targetrepeater
 
 class TiltRotateRepeater(targetrepeater.TargetRepeater):

@@ -1,4 +1,4 @@
-import leginondata
+from leginon import leginondata
 import threading
 
 default_settings = leginondata.CameraSettingsData()

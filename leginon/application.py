@@ -6,7 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import applications
-import leginondata
+from leginon import leginondata
 import event
 
 class Application(object):

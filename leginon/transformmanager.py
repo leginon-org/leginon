@@ -10,7 +10,7 @@
 
 import node
 import event
-import leginondata
+from leginon import leginondata
 from pyami import correlator, peakfinder, ordereddict
 import calibrationclient
 import math

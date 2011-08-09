@@ -1,7 +1,7 @@
 import imageprocessor
 import os
 import gui.wx.RaptorProcessor
-import leginondata
+from leginon import leginondata
 #import runImod
 from pyami import mrc, imagefun, correlator, peakfinder
 import shutil

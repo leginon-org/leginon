@@ -11,7 +11,7 @@
 # $State: Exp $
 # $Locker:  $
 
-import leginondata
+from leginon import leginondata
 import remotecall
 import gui.wx.Events
 

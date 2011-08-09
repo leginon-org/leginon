@@ -8,7 +8,7 @@
 
 import threading
 import time
-import leginondata
+from leginon import leginondata
 import calibrationclient
 import event
 import instrument
