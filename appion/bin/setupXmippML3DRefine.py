@@ -126,7 +126,7 @@ class xmippML3DRefineScript(appionScript.AppionScript):
 		models = self.params['modelid'].split(",")
 		for i in range(len(models)):
 			modelid = models[i]
-			spidervol = os.path.join(self.params['rundir'], "volumes", "it%.3i_vol%.3i.vol" % (0, i))
+			spidervol = os.path.join(self.params['rundir'], "volumes", "it%.3i_vol%.3i.vol" % (0, i+1))
 			apModel.rescaleModel(modelid, spidervol, self.params['boxsize'], self.params['apix'], spider=True)
 			modelselfile.write(str(spidervol)+" 1\n")
 					
@@ -176,9 +176,13 @@ class xmippML3DRefineScript(appionScript.AppionScript):
 		apXmipp.particularizeProtocol(protocol_ml3d, protocolPrm, os.path.join(self.params['rundir'], "xmipp_protocol_ml3d.py"))
 		os.chmod(os.path.join(self.params['rundir'], "xmipp_protocol_ml3d.py"), 0775)
 				
-		### Write the parameters for posterior uploading
+		### Write the parameters for posterior uploading, both generic and specific
+		self.params['mask'] = None
+		self.params['imask'] = None
 		self.params['reconstruction_package'] = "xmipp_ml3d"
 		self.params['upload_root_path'] = self.params['rundir']
+		self.params['cluster_root_path'] = self.params['cluster_root_path']
+		self.params['reconstruction_working_dir'] = protocolPrm['WorkingDir']+"/RunML3D"
 		self.params['package_params'] = protocolPrm
 		self.dumpParameters(self.params)
 		
