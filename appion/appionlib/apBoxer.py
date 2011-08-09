@@ -78,9 +78,9 @@ def boxerMemory(imgarray, parttree, boxsize):
 	"""
 	boxedparticles = []
 	for partdict in parttree:
-		x1 = int(partdict['x_coord'])
+		x1 = partdict['x_coord']
 		x2 = x1+boxsize
-		y1 = int(partdict['y_coord'])
+		y1 = partdict['y_coord']
 		y2 = y1+boxsize
 		#numpy arrays are rows,cols --> y,x not x,y
 		#print x1,x2,y1,y2, imgarray.shape
