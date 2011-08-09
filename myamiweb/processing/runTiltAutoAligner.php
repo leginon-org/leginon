@@ -112,13 +112,21 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 		echo "</SELECT>\n";
 	}
 	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
-	echo"
-		<TD CLASS='tablebg'>
-		<B>Particle Diameter:</B><br />
-		<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
-	echo docpop('pdiam',' Particle diameter for result images');
+	$tiltaxis = ($_POST['tiltaxis']) ? $_POST['tiltaxis'] : "0.0";
+	echo"<TD CLASS='tablebg'>\n";
+	echo "<b>Parameters:</b><br/>\n";
+
+	echo docpop('pdiam',' Particle diameter');
+	echo "<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
+
 	echo "<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
+		<br>";
+
+	echo docpop('tiltaxis',' Initial Tilt Axis');
+	echo "<INPUT TYPE='text' NAME='tiltaxis' VALUE='$tiltaxis' SIZE='4'>\n";\
+	echo "<FONT SIZE=-2><I>(in degrees)</I></FONT>
 		<br><br>";
+
 	/*echo"
 		<B>Picking Icon:</B><br>
 		<SELECT NAME='shape'>\n";
@@ -211,6 +219,9 @@ function runTiltAutoAligner() {
 
 	$ftype=$_POST['ftype'];
 	$command .= " --outtype=$ftype";
+
+	$tiltaxis=$_POST['tiltaxis'];
+	$command .= " --init-tilt-axis=$tiltaxis";
 
 	/* *******************
 	PART 4: Create header info, i.e., references

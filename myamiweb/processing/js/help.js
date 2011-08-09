@@ -60,6 +60,7 @@ var help = {
 		'edge2': 'Canny edge parameters Edge Treshold (0.0-1.0). The lower the number, the more edges are found. Typical values are 0.001 to 0.1. If using rotational blur, increase this value to about 0.1.',
 		'rotblur': 'Rotational blur of power spectra before finding the edges. This is helpful for images with low constrast CTF. Typical value is 5-10 degrees. The larger the number, the slower the calculation. Increase Edge Treshold is using this feature',
 		'pdiam' : 'For template correlator this is used to mask out the particle from the image.  Otherwise, this will be the diameter used by the leginon image viewer for displaying picked particles -	it will NOT affect the size of the boxed particles later on, this is only for display purposes.  ',
+		'tiltaxis' : 'The initial tilt axis may need to be set if the program is failing to find the correct angle, e.g., when the tilt axis is horizontal rather than vertical',
 		'crudpdiam' : 'When finding aggregates or looking for carbon edge. particle diameter is used as template for convolution. Not required for crud mask type. ',
 		'crudmindiam' : 'Minimal mask region size. The partical diameter will be used if not specified',
 		'crudminthresh' : 'Lower limit in gradient amplitude for Canny edge detection.<BR>This should be between 0.0 to 1.0 and should be smaller than that of the high limit',
