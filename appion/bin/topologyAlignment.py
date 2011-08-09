@@ -591,7 +591,7 @@ class TopologyRepScript(appionScript.AppionScript):
 		else:
 			f.write("%s/msa/msa.e <<EOF\n" % self.imagicroot)
 			f.write("NO\n")
-		if int(self.imagicversion) != 110119:
+		if int(self.imagicversion) != 110119 or int(self.imagicversion) != 100312:
 			f.write("NO\n")
 		f.write("FRESH_MSA\n")
 		f.write("MODULATION\n")
