@@ -6,6 +6,7 @@ added features like helical boxing at an
 angle
 """
 
+import sys
 import math
 from pyami import mrc
 from scipy import ndimage	#rotation function
@@ -108,7 +109,10 @@ def boxerRotate(imgfile, parttree, outstack, boxsize):
 	
 	boxedparticles = []
 	boxshape = (boxsize,boxsize)
+	apDisplay.printMsg("Rotating particles...")
 	for i in range(len(bigboxedparticles)):
+		if i % 10 == 0:
+			sys.stderr.write(".")
 		bigboxpart = bigboxedparticles[i]
 		partdict = parttree[i]
 		### add 90 degrees because database angle is from x-axis not y-axis
@@ -116,6 +120,6 @@ def boxerRotate(imgfile, parttree, outstack, boxsize):
 		rotatepart = ndimage.rotate(bigboxpart, angle=angle, reshape=False, order=1)
 		boxpart = imagefilter.frame_cut(rotatepart, boxshape)
 		boxedparticles.append(boxpart)
-		
+	sys.stderr.write("done\n")
 	apImagicFile.writeImagic(boxedparticles, outstack)
 	return True
