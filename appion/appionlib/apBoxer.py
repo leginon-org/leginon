@@ -89,7 +89,7 @@ def boxerMemory(imgarray, parttree, boxsize):
 	return boxedparticles
 
 ##=================
-def boxerRotate(imgarray, parttree, outstack, boxsize):
+def boxerRotate(imgfile, parttree, outstack, boxsize):
 	"""
 	boxes the particles with expanded size,
 	applies a rotation to particle,
@@ -98,7 +98,7 @@ def boxerRotate(imgarray, parttree, outstack, boxsize):
 	"""
 	# size needed is sqrt(2)*boxsize, using 1.5 to be extra safe
 	bigboxsize = int(math.ceil(1.5*boxsize))
-	
+	imgarray = mrc.read(imgfile)
 	bigboxedparticles = boxerMemory(imgarray, parttree, bigboxsize)
 	
 	boxedparticles = []
