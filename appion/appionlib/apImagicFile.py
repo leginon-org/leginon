@@ -299,6 +299,7 @@ def writeImagic(array, filename, msg=True):
 		partnum = i+1
 		headerstr = makeHeaderStr(partnum, array.shape, avg1, stdev1, min1, max1)
 		headfile.write(headerstr)
+		# write to imagic file
 		datafile.write(partimg.tostring())
 		i += 1
 	headfile.close()
