@@ -26,7 +26,7 @@ splitdb = True
 data.holdImages(False)
 
 #================
-def getSpecificImagesFromDB(imglist):
+def getSpecificImagesFromDB(imglist, sessiondata=None):
 	print "Querying database for "+str(len(imglist))+" specific images ... "
 	imgtree=[]
 	for imgname in imglist:
@@ -34,7 +34,11 @@ def getSpecificImagesFromDB(imglist):
 			imgname = imgname[:-4]
 		if '/' in imgname:
 			imgname = os.path.basename(imgname)
-		imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname)
+		if sessiondata is not None:
+			### slightly faster query
+			imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname, session=sessiondata)
+		else:
+			imgquery = leginon.leginondata.AcquisitionImageData(filename=imgname)
 		imgres   = imgquery.query(readimages=False, results=1)
 		if len(imgres) >= 1:
 			imgtree.append(imgres[0])

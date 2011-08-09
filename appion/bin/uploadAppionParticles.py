@@ -13,23 +13,10 @@ from appionlib import apParticle
 from appionlib import appionScript
 from appionlib import appiondata
 
-
-
-#===========================
-def createDefaults():
-	params={}
-	self.params['apix']=None
-	self.params['diam']=None
-	self.params['bin']=None
-	self.params['description']=None
-	self.params['template']=None
-	self.params['sessionname']=None
-	self.params['runname']=None
-	self.params['imgs']=None
-	self.params['abspath']=os.path.abspath('.')
-	self.params['rescale']=False
-	self.params['newbox']=None
-	return params
+"""
+This file uploads particles to database that were
+downloaded using the myamiweb interface
+"""
 
 #===========================
 class UploadParticles(appionScript.AppionScript):
@@ -39,22 +26,20 @@ class UploadParticles(appionScript.AppionScript):
 		self.parser.set_usage("Usage:\nuploadParticles.py <boxfiles> --bin=<n> --session=09dec07a\n")
 		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name associated with processing run, e.g. --session=06mar12a", metavar="SESSION")
-		self.parser.add_option("--files", dest="files",
-			help="EMAN box files (wild cards ok), e.g., --files=/path/*.box", metavar="FILE")
-		self.parser.add_option("--bin", dest="bin", default=1,
-			help="If particles were picked on binned images, enter the binning factor", type='int')
+		self.parser.add_option("--filename", dest="filename",
+			help="Path to Appion particle file", metavar="FILE")
 		self.parser.add_option("--diam", dest="diam",
 			help="particle diameter in angstroms", type="int")
 
 	#===========================
 	def checkConflicts(self):
 		# check to make sure that incompatible parameters are not set
-		if self.params['diam'] is None or self.params['diam']==0:
+		if self.params['diam'] is None or self.params['diam']<=0:
 			apDisplay.printError("Please input the diameter of your particle (for display purposes only)")
 
 		# get list of input images, since wildcards are supported
-		if self.params['files'] is None:
-			apDisplay.printError("Please enter the image names with picked particle files")
+		if self.params['filename'] is None:
+			apDisplay.printError("Please enter the file name of Appion picked particle file")
 
 		if self.params['sessionname'] is None:
 			apDisplay.printError("Please enter Name of session to upload to, e.g., --session=09dec07a")
@@ -63,32 +48,6 @@ class UploadParticles(appionScript.AppionScript):
 	#=====================
 	def setProcessingDirName(self):
 		self.processdirname = "extract"
-
-	#===========================
-	def getBoxFiles(self):
-		# set the box type
-		self.params['coordtype'] = "eman"
-
-		# get all box files
-		filelist = glob.glob(self.params['files'])
-		if len(filelist) == 0:
-			apDisplay.printError("No images specified")
-		boxfiles=[]
-		for filename in filelist:
-			if not os.path.isfile(filename):	
-				apDisplay.printError("Could not find file: "+filename)
-				continue
-			if filename[-4:] == ".pos":
-				self.params['coordtype'] = "xmipp"
-			elif filename[-4:] != ".box":
-				apDisplay.printWarning("File is not a boxfile: "+filename)
-
-			boxfile = os.path.join(self.params['rundir'], os.path.basename(filename))
-			apDisplay.printMsg("Copying file to "+boxfile)
-			shutil.copy(filename, boxfile)
-			boxfiles.append(boxfile)
-
-		return boxfiles
 
 	#===========================
 	def insertManualParams(self):
@@ -112,41 +71,60 @@ class UploadParticles(appionScript.AppionScript):
 		return runq
 
 	#===========================
-	def boxFileToPeakTree(self, imgdata):
-		boxfile = imgdata['filename']+".box"
-		if self.params['coordtype'] == "xmipp":
-			boxfile = imgdata['filename']+".pos"
-		if not os.path.isfile(boxfile):
-			apDisplay.printError("Could not find box file "+boxfile)
-		f = open(boxfile, "r")
-		peaktree = []
+	def readFileToPeakTree(self):
+		apDisplay.printMsg("Reading file: "+self.params['filename'])
+
+		f = open(self.params['filename'], "r")
+		count = 0
+		imgfilename2peaklist = {}
+		apDisplay.printMsg("Reading input file")
 		for line in f:
+
+			### format: x <tab> y <tab> filename
 			sline = line.strip()
-			cols = sline.split()
-			if self.params['coordtype'] == "xmipp":
-				if len(cols)>2 or cols[0][0]=="#":
-					continue
-				xcoord = float(cols[0]) * self.params['bin']
-				ycoord = float(cols[1]) * self.params['bin']
-			else:
-				xcoord = (float(cols[0]) + float(cols[2])/2.)* self.params['bin']
-				ycoord = (float(cols[1]) + float(cols[3])/2.)* self.params['bin']
+			cols = sline.split('\t')
+
+			### must have 3 columns
+			if len(cols) != 3:
+				continue
+			xcoord, ycoord, filename = cols
+
+			### check to make sure our x,y are integers, if not skip to next line in file
+			try:
+				xcoord = int(xcoord)
+				ycoord = int(ycoord)
+			except:
+				continue
+
+			### create new list for new files
+			if not filename in imgfilename2peaklist.keys():
+				imgfilename2peaklist[filename] = []
+
 			peakdict = {
 				'diameter': self.params['diam'],
 				'xcoord': xcoord,
 				'ycoord': ycoord,
 				'peakarea': 10,
 			}
-			peaktree.append(peakdict)
-		return peaktree
+			count += 1
+			if count % 10 == 0:
+				sys.stderr.write(".")
+
+			imgfilename2peaklist[filename].append(peakdict)
+		sys.stderr.write("done\n")
+		f.close()
+		apDisplay.printColor("Found %d particles in %d images"%
+			(count, len(imgfilename2peaklist.keys())), "cyan")
+
+		return imgfilename2peaklist
 
 	#===========================
 	def start(self):
-		apDisplay.printMsg("Getting box files")
-		boxfiles = self.getBoxFiles()
+		imgfilename2peaklist = self.readFileToPeakTree()
+		imglist = imgfilename2peaklist.keys()
 
 		apDisplay.printMsg("Getting image data from database")
-		imgtree = apDatabase.getSpecificImagesFromDB(boxfiles)
+		imgtree = apDatabase.getSpecificImagesFromDB(imglist, self.sessiondata)
 		if imgtree[0]['session']['name'] != self.sessiondata['name']:
 			apDisplay.printError("Session and Image do not match "+imgtree[0]['filename'])	
 
@@ -159,8 +137,11 @@ class UploadParticles(appionScript.AppionScript):
 			if imgdata['session']['name'] != self.sessiondata['name']:
 				apDisplay.printError("Session and Image do not match "+imgdata['filename'])	
 
-			peaktree = self.boxFileToPeakTree(imgdata)
-			apParticle.insertParticlePeaks(peaktree, imgdata, self.params['runname'], msg=True)
+			peaktree = imgfilename2peaklist[imgdata['filename']]
+			apDisplay.printMsg("%d particles for image %s"
+				%(len(peaktree), apDisplay.short(imgdata['filename'])))
+			if self.params['commit'] is True:
+				apParticle.insertParticlePeaks(peaktree, imgdata, self.params['runname'], msg=True)
 
 if __name__ == '__main__':
 	uploadpart = UploadParticles()
