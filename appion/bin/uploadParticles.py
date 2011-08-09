@@ -13,8 +13,12 @@ from appionlib import apParticle
 from appionlib import appionScript
 from appionlib import appiondata
 
+"""
+This function reads a list of EMAN boxer files
+(one for each image) and uploads them to the database
+"""
 
-
+"""
 #===========================
 def createDefaults():
 	params={}
@@ -30,6 +34,7 @@ def createDefaults():
 	self.params['rescale']=False
 	self.params['newbox']=None
 	return params
+"""
 
 #===========================
 class UploadParticles(appionScript.AppionScript):
