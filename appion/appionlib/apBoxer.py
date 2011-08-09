@@ -23,7 +23,11 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 	replaces writeParticlesToBoxfile()
 	"""
 	imgdims = imgdata['camera']['dimension']
-	halfbox = boxsize/2
+	if rotate is True:
+		### with rotate we use a bigger boxsize
+		halfbox = int(1.5*boxsize/2)
+	else:
+		halfbox = boxsize/2
 	
 	parttree = []
 	boxedpartdatas = []
@@ -118,8 +122,7 @@ def boxerRotate(imgfile, parttree, outstack, boxsize):
 		### add 90 degrees because database angle is from x-axis not y-axis
 		angle = partdict['angle']+90.0
 		rotatepart = ndimage.rotate(bigboxpart, angle=angle, reshape=False, order=1)
-		#boxpart = imagefilter.frame_cut(rotatepart, boxshape)
-		boxpart = rotatepart
+		boxpart = imagefilter.frame_cut(rotatepart, boxshape)
 		boxedparticles.append(boxpart)
 	sys.stderr.write("done\n")
 	apImagicFile.writeImagic(boxedparticles, outstack)
