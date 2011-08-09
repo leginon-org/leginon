@@ -34,9 +34,26 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 
 	// Set any existing parameters in form
 	$diam = ($_POST['diam']) ? $_POST['diam'] : '';
+	$emanfilecheck = (!$_POST['filetype'] || $_POST['filetype'] == 'eman') ? 'CHECKED' : '';
+	$emanfiledisable = (!$_POST['filetype'] || $_POST['filetype'] == 'eman') ? '' : 'DISABLED';
+	$appionfilecheck = ($_POST['filetype'] != 'appion') ? '' : 'CHECKED';
+	$appionfiledisable = ($_POST['filetype'] != 'appion') ? 'DISABLED' : '';
 
 	$javafunctions="<script src='../js/viewer.js'></script>\n";
 	$javafunctions .= writeJavaPopupFunctions('appion');
+
+	$javafunctions .="<script language='JavaScript'>\n";
+	$javafunctions .="function emanappion(check){\n";
+	$javafunctions .="  if (check=='eman'){\n";
+	$javafunctions .="    document.viewerform.emanboxfiles.disabled=false;\n";
+	$javafunctions .="    document.viewerform.appionpartfile.disabled=true;\n";
+	$javafunctions .="  }\n";
+	$javafunctions .="  else if (check=='appion'){\n";
+	$javafunctions .="    document.viewerform.emanboxfiles.disabled=true;\n";
+	$javafunctions .="    document.viewerform.appionpartfile.disabled=false;\n";
+	$javafunctions .="  }\n";
+	$javafunctions .="}";
+	$javafunctions .="</script>\n";
 
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
@@ -60,7 +77,7 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 	$lastrunnumber = $particle->getLastRunNumberForType($sessionId,'ApSelectionRunData','name');
 	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'manual'.($lastrunnumber+1);
 	$particles = ($_POST['particles']) ? $_POST['particles'] : '';
-	$scale = ($_POST['scale']) ? $_POST['scale'] : '';
+	$scale = ($_POST['scale']) ? $_POST['scale'] : '1';
 
 	echo"<table border='3' class='tableborder'>";
 	echo"<tr><td valign='top'>\n";
@@ -79,10 +96,21 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 	echo "<input type='hidden' name='projectId' value='$projectId'>\n";
 	echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 	
-	echo docpop('particlefiles', "Particle file(s) with path <i>(wild cards are acceptable)</i>:");
+
+	echo "<INPUT TYPE='radio' NAME='filetype' onclick='emanappion(\"eman\")' $emanfilecheck value='eman'>\n";
+
+	echo docpop('emanboxfiles', "EMAN box file(s) with path");
+	echo " <i>(wild cards are acceptable)</i>:";
 	echo " <br> \n";
-	echo "<INPUT TYPE='text' NAME='particles' VALUE='$particles' SIZE='55'/>\n";
-	echo "<br>\n";			
+	echo "<INPUT TYPE='text' NAME='emanboxfiles' VALUE='$particles' SIZE='55' $emanfiledisable/>\n";
+	echo "<br>\n";
+
+	echo "<INPUT TYPE='radio' NAME='filetype' onclick='emanappion(\"appion\")' $appionfilecheck value='appion'>\n";
+
+	echo docpop('appionpartfile', "Appion particle list file:");
+	echo " <br> \n";
+	echo "<INPUT TYPE='text' NAME='appionpartfile' VALUE='$particles' SIZE='55' $appionfiledisable/>\n";
+	echo "<br>\n";
 
 	echo "</TD></tr><TR><TD VALIGN='TOP'>";
 
@@ -111,17 +139,19 @@ function runUploadParticles() {
 	/* *******************
 	PART 1: Get variables
 	******************** */
-	$particles = $_POST['particles'];
+	$emanboxfiles = $_POST['emanboxfiles'];
+	$appionpartfile = $_POST['appionpartfile'];
 	$diam=$_POST['diam'];
 	$scale=$_POST['scale'];
 	$sessionname = $_POST['sessionname'];
+	$filetype = $_POST['filetype'];
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
 
 	// make sure box files are entered
-	if (!$particles)
+	if (!$emanboxfiles && !$appionpartfile)
 		createUploadParticlesForm("<b>Error:</b> Specify particle files for uploading");
 	//make sure a diam was provided
 	if (!$diam)
@@ -132,12 +162,18 @@ function runUploadParticles() {
 	******************** */
 
 	//putting together command
-	$command = "uploadParticles.py ";
+	
+	if ($filetype=='eman') {
+		$command = "uploadEMANParticles.py ";
+		$command.="--files=\"$emanboxfiles\" ";
+		if ($scale && $scale != 1)
+			$command.="--bin=$scale ";
+	} else {
+		$command = "uploadAppionParticles.py ";
+		$command.="--filename=$appionpartfile ";
+	}
 	$command.="--session=$sessionname ";
-	$command.="--files=\"$particles\" ";
 	$command.="--diam=$diam ";
-	if ($scale)
-		$command.="--bin=$scale ";
 	$command.="--commit ";
 
 	/* *******************
