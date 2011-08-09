@@ -34,12 +34,14 @@ class boxMaskScript(appionScript.AppionScript):
 			help="length of mask along filament in Angstroms")
 		self.parser.add_option("--falloff", dest="falloff", type="int", default=90,
 			help="falloff for edges in Angstroms")
+		self.parser.add_option("--vertical", dest="vertical", action="store_true", default=False,
+			help="particles are already aligned vertically")
 
 	#=====================
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
 			apDisplay.printError("stackid was not defined")
-		if self.params['alignstackid'] is None:
+		if self.params['alignstackid'] is None and self.params['vertical'] is False:
 			apDisplay.printError("alignstackid was not defined")
 		if self.params['description'] is None:
 			apDisplay.printError("substack description was not defined")
@@ -48,11 +50,12 @@ class boxMaskScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.dirname(os.path.abspath(path))
 		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
+		if self.params['vertical'] is not True:
+			self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 
 	#=====================
 	def convertStackToSpider(self, stackfile):
@@ -155,10 +158,11 @@ class boxMaskScript(appionScript.AppionScript):
 		return "spirots.spi"
 
 	#=====================
-	def boxMask(self,spirots,infile,outfile):
+	def boxMask(self,infile,outfile,spirots=None):
 		# boxmask the particles
 		apDisplay.printMsg("masking the particles with a rectangular box")
 
+		nump = apStack.getNumberStackParticlesFromId(self.params['stackid'])
 		box = self.stackdata['boxsize']
 		apix = self.stackdata['pixelsize']*1e10
 		if self.params['mask'] is None:
@@ -205,23 +209,29 @@ class boxMaskScript(appionScript.AppionScript):
 			"0",
 			"%i,%i"%(box/2,box/2),
 			"%.2f"%falloff)
-		mySpi.toSpider("UD N x20",spyder.fileFilter(spirots))
-		mySpi.toSpider("do x10=1,x20",
-			"UD IC x10,x30",
-			spyder.fileFilter(spirots),
-			"x30 = -1*x30",
-			"RT B",
-			"_4",
-			"_9",
-			"(x30)",
-			"(0)",
-			"MU",
-			spyder.fileFilter(infile)+"@{******x10}",
-			"_9",
-			spyder.fileFilter(outfile)+"@{******x10}",
+		mySpi.toSpider("do x10=1,%i"%nump)
+		if self.params['vertical'] is not True:
+			mySpi.toSpider("UD IC x10,x30",
+				spyder.fileFilter(spirots),
+				"x30 = -1*x30",
+				"RT B",
+				"_4",
+				"_9",
+				"(x30)",
+				"(0)",
+				"MU",
+				spyder.fileFilter(infile)+"@{******x10}",
+				"_9")
+		else:
+			mySpi.toSpider("MU",
+				spyder.fileFilter(infile)+"@{******x10}",
+				"_4")
+	
+		mySpi.toSpider(spyder.fileFilter(outfile)+"@{******x10}",
 			"*",
 			"enddo")
-		mySpi.toSpider("UD ICE",spyder.fileFilter(spirots))
+		if self.params['vertical'] is not True:
+			mySpi.toSpider("UD ICE",spyder.fileFilter(spirots))
 		mySpi.close()
 
 		sys.exit()
@@ -231,25 +241,27 @@ class boxMaskScript(appionScript.AppionScript):
 		# Path of the stack
 		fn_oldstack = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
 
-		# get averaged image:
-		avgimg = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['avgmrcfile'])
+		rotfile = None
+		if self.params['vertical'] is not True:
+			# get averaged image:
+			avgimg = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['avgmrcfile'])
 
-		# Convert averaged aligned mrcfile to spider
-		spiavg = os.path.join(self.params['rundir'],"avg.spi")
-		emancmd = "proc2d %s %s spiderswap edgenorm"%(avgimg,spiavg)
-		apEMAN.executeEmanCmd(emancmd, verbose=True)
+			# Convert averaged aligned mrcfile to spider
+			spiavg = os.path.join(self.params['rundir'],"avg.spi")
+			emancmd = "proc2d %s %s spiderswap edgenorm"%(avgimg,spiavg)
+			apEMAN.executeEmanCmd(emancmd, verbose=True)
 
-		# find rotation for vertical alignment
-		rot = self.findRotation(spiavg)
-		apDisplay.printMsg("found average rotation: %.2f"%rot)
+			# find rotation for vertical alignment
+			rot = self.findRotation(spiavg)
+			apDisplay.printMsg("found average rotation: %.2f"%rot)
 
-		rotlist = self.getInplaneRotations()
-		rotfile = self.createRotationSpiList(rotlist,rot)
+			rotlist = self.getInplaneRotations()
+			rotfile = self.createRotationSpiList(rotlist,rot)
 
 		# Convert the original stack to spider
 		spistack = self.convertStackToSpider(fn_oldstack)
 		# boxmask the particles
-		self.boxMask(rotfile,spistack,"masked.spi")
+		self.boxMask(spistack,"masked.spi",rotfile)
 
 		# Create average MRC
 		apStack.averageStack("sorted.hed")
