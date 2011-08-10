@@ -142,7 +142,7 @@ function createBoxMask($extra=false, $title='BoxMask Launcher', $heading='Mask p
 	echo "</td></tr></table>\n";
 	echo "</td></tr>\n";
 	echo "<tr><td align='center'>";
-	echo getSubmitForm("Center Particles");
+	echo getSubmitForm("Mask Particles");
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo "</form>\n";
@@ -176,10 +176,10 @@ function runBoxMask() {
 	$command.="--stack-id=$stackid ";
 	if ($alignid) $command.="--align-id=$alignid ";
 	elseif ($vert) $command.="--vertical ";
-	$command.="-m $mask ";
-	if ($imask>0) $command.= "-i $imask ";
-	$command.="-l $len ";
-	$command.="--falloff $falloff ";
+	$command.="--mask=$mask ";
+	if ($imask>0) $command.= "--imask=$imask ";
+	$command.="--len=$len ";
+	$command.="--falloff=$falloff ";
 	$command.="--description=\"$description\" ";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 

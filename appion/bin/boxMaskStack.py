@@ -239,11 +239,13 @@ class boxMaskScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		# Path of the stack
+		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		fn_oldstack = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
 
 		rotfile = None
 		if self.params['vertical'] is not True:
 			# get averaged image:
+			self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 			avgimg = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['avgmrcfile'])
 
 			# Convert averaged aligned mrcfile to spider

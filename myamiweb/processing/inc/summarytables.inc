@@ -186,8 +186,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 			if (!$junksorted) $stacktable.= "<br /><a href='sortJunk.php?expId=$expId&sId=$stackid&junksort=1'>[Sort Junk]</a>\n";
 			if ($junksorted) $stacktable.= "<br /><a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&junksort=1'>[Apply Junk Cutoff]</a>\n";
 			$stacktable.= "<br/><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
-			if ($stackdata['rotate'])
-				echo $stacktable.="<br/><a href='boxmask.php?expId=$expId&sId=$stackid&vert=True'>[Mask Particles with Box]</a>\n";
+			if ($stackdata['rotate']) $stacktable.= "<br/><a href='boxmask.php?expId=$expId&sId=$stackid&vert=True'>[Mask Particles with Box]</a>\n";
 		}
 		$stacktable.= "</td>\n";
 		if ($centered && file_exists($badstackavg)) {
