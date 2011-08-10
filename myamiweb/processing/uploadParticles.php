@@ -25,7 +25,8 @@ else {
 	createUploadParticlesForm();
 }
 
-function createUploadParticlesForm($extra=false, $title='uploadParticles.py Launcher', $heading='Upload particle selection') {
+function createUploadParticlesForm($extra=false, 
+$title='uploadParticles.py Launcher', $heading='Upload particle selection') {
         // check if coming directly from a session
 	$expId=$_GET['expId'];
 
@@ -34,10 +35,7 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 
 	// Set any existing parameters in form
 	$diam = ($_POST['diam']) ? $_POST['diam'] : '';
-	$emanfilecheck = (!$_POST['filetype'] || $_POST['filetype'] == 'eman') ? 'CHECKED' : '';
-	$emanfiledisable = (!$_POST['filetype'] || $_POST['filetype'] == 'eman') ? '' : 'DISABLED';
-	$appionfilecheck = ($_POST['filetype'] != 'appion') ? '' : 'CHECKED';
-	$appionfiledisable = ($_POST['filetype'] != 'appion') ? 'DISABLED' : '';
+
 
 	$javafunctions="<script src='../js/viewer.js'></script>\n";
 	$javafunctions .= writeJavaPopupFunctions('appion');
@@ -47,10 +45,17 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 	$javafunctions .="  if (check=='eman'){\n";
 	$javafunctions .="    document.viewerform.emanboxfiles.disabled=false;\n";
 	$javafunctions .="    document.viewerform.appionpartfile.disabled=true;\n";
+	$javafunctions .="    document.viewerform.uploadfile.disabled=true;\n";
 	$javafunctions .="  }\n";
 	$javafunctions .="  else if (check=='appion'){\n";
 	$javafunctions .="    document.viewerform.emanboxfiles.disabled=true;\n";
 	$javafunctions .="    document.viewerform.appionpartfile.disabled=false;\n";
+	$javafunctions .="    document.viewerform.uploadfile.disabled=true;\n";
+	$javafunctions .="  }\n";
+	$javafunctions .="  else if (check=='upload'){\n";
+	$javafunctions .="    document.viewerform.emanboxfiles.disabled=true;\n";
+	$javafunctions .="    document.viewerform.appionpartfile.disabled=true;\n";
+	$javafunctions .="    document.viewerform.uploadfile.disabled=false;\n";
 	$javafunctions .="  }\n";
 	$javafunctions .="}";
 	$javafunctions .="</script>\n";
@@ -61,7 +66,7 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
   
-	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction' ENCTYPE='multipart/form-data'>\n";
 
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
@@ -76,7 +81,6 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $sessionpath;
 	$lastrunnumber = $particle->getLastRunNumberForType($sessionId,'ApSelectionRunData','name');
 	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'manual'.($lastrunnumber+1);
-	$particles = ($_POST['particles']) ? $_POST['particles'] : '';
 	$scale = ($_POST['scale']) ? $_POST['scale'] : '1';
 
 	echo"<table border='3' class='tableborder'>";
@@ -96,21 +100,46 @@ function createUploadParticlesForm($extra=false, $title='uploadParticles.py Laun
 	echo "<input type='hidden' name='projectId' value='$projectId'>\n";
 	echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 	
+	/*
+	**
+	** START FILE TYPES
+	**
+	*/
 
+	$emanfilecheck = (!$_POST['filetype'] || $_POST['filetype'] == 'eman') ? 'CHECKED' : '';
+	$emanfiledisable = (!$_POST['filetype'] || $_POST['filetype'] == 'eman') ? '' : 'DISABLED';
+	$emanboxfiles = ($_POST['emanboxfiles']) ? $_POST['emanboxfiles'] : '';
 	echo "<INPUT TYPE='radio' NAME='filetype' onclick='emanappion(\"eman\")' $emanfilecheck value='eman'>\n";
-
-	echo docpop('emanboxfiles', "EMAN box file(s) with path");
+	echo docpop('emanboxfiles', "EMAN box or Xmipp picking file(s) with path");
 	echo " <i>(wild cards are acceptable)</i>:";
 	echo " <br> \n";
-	echo "<INPUT TYPE='text' NAME='emanboxfiles' VALUE='$particles' SIZE='55' $emanfiledisable/>\n";
+	echo "<INPUT TYPE='text' NAME='emanboxfiles' VALUE='$emanboxfiles' SIZE='55' $emanfiledisable/>\n";
 	echo "<br>\n";
 
+	$appionfilecheck = ($_POST['filetype'] != 'appion') ? '' : 'CHECKED';
+	$appionfiledisable = ($_POST['filetype'] != 'appion') ? 'DISABLED' : '';
+	$appionpartfile = ($_POST['appionpartfile']) ? $_POST['appionpartfile'] : '';
 	echo "<INPUT TYPE='radio' NAME='filetype' onclick='emanappion(\"appion\")' $appionfilecheck value='appion'>\n";
-
 	echo docpop('appionpartfile', "Appion particle list file:");
 	echo " <br> \n";
-	echo "<INPUT TYPE='text' NAME='appionpartfile' VALUE='$particles' SIZE='55' $appionfiledisable/>\n";
+	echo "<INPUT TYPE='text' NAME='appionpartfile' VALUE='$appionpartfile' SIZE='55' $appionfiledisable/>\n";
 	echo "<br>\n";
+
+	$uploadfilecheck = ($_POST['filetype'] != 'upload') ? '' : 'CHECKED';
+	$uploadfiledisable = ($_POST['filetype'] != 'upload') ? 'DISABLED' : '';
+	$uploadfile = ($_FILES['uploadfile']['name']) ? $_FILES['uploadfile']['name'] : '';
+		echo "<input type='hidden' name='MAX_FILE_SIZE' value='300000' />\n";
+	echo "<INPUT TYPE='radio' NAME='filetype' onclick='emanappion(\"upload\")' $uploadfilecheck value='upload'>\n";
+	echo docpop('appionpartfile', "Upload Appion particle list file:");
+	echo " <br> \n";
+	echo "<INPUT TYPE='file' NAME='uploadfile' VALUE='$uploadfile' SIZE='44' MAXLENGTH='256' $uploadfiledisable/>\n";
+	echo "<br>\n";
+
+	/*
+	**
+	** END FILE TYPES
+	**
+	*/
 
 	echo "</TD></tr><TR><TD VALIGN='TOP'>";
 
@@ -141,18 +170,20 @@ function runUploadParticles() {
 	******************** */
 	$emanboxfiles = $_POST['emanboxfiles'];
 	$appionpartfile = $_POST['appionpartfile'];
+	$uploadfile = $_POST['uploadfile'];
 	$diam=$_POST['diam'];
 	$scale=$_POST['scale'];
 	$sessionname = $_POST['sessionname'];
 	$filetype = $_POST['filetype'];
+
 
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
 
 	// make sure box files are entered
-	if (!$emanboxfiles && !$appionpartfile)
-		createUploadParticlesForm("<b>Error:</b> Specify particle files for uploading");
+	//if (!$emanboxfiles && !$appionpartfile && !$_FILES['uploadpdb']['name'])
+	//	createUploadParticlesForm("<b>Error:</b> Specify particle files for uploading");
 	//make sure a diam was provided
 	if (!$diam)
 		createUploadParticlesForm("<B>ERROR:</B> Enter the particle diameter");
@@ -161,16 +192,37 @@ function runUploadParticles() {
 	PART 3: Create program command
 	******************** */
 
+	// get uploaded files
+	if ($_FILES['uploadfile']['tmp_name']) {
+		echo "UPLOAD NAME: '".$_FILES['uploadfile']['name']."'<br/>";
+		echo "UPLOAD TEMP NAME: '".$_FILES['uploadfile']['tmp_name']."'<br/>";
+		echo "UPLOAD SIZE: '".$_FILES['uploadfile']['size']."'<br/>";
+		echo "UPLOAD ERRORS: '".$_FILES['uploadfile']['error']."'<br/>";
+
+		$uploaddir = TEMP_IMAGES_DIR;
+		if (substr($uploaddir,-1,1)!='/')
+			$uploaddir.='/';
+		$uploadfile = $uploaddir.basename($_FILES['uploadfile']['name']);
+		echo "UPLOAD FILE: '".$uploadfile."'<br/>";
+		if (!move_uploaded_file($_FILES['uploadfile']['tmp_name'], $uploadfile)) {
+			print_r($_FILES['uploadfile']);
+			createUploadParticlesForm("<B>ERROR:</B> Possible file upload attack! ".$_FILES['uploadfile']['tmp_name']);
+			exit;
+		}
+	}
+
 	//putting together command
-	
 	if ($filetype=='eman') {
 		$command = "uploadEMANParticles.py ";
 		$command.="--files=\"$emanboxfiles\" ";
 		if ($scale && $scale != 1)
 			$command.="--bin=$scale ";
-	} else {
+	} elseif ($filetype=='appion') {
 		$command = "uploadAppionParticles.py ";
 		$command.="--filename=$appionpartfile ";
+	} elseif ($filetype=='upload') {
+		$command = "uploadAppionParticles.py ";
+		$command.="--filename=$uploadfile ";
 	}
 	$command.="--session=$sessionname ";
 	$command.="--diam=$diam ";
