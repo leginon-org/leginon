@@ -645,6 +645,26 @@ class ApMaxLikeRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApCL2DRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('fast', str),
+			('run_seconds', int),
+			('timestamp', str),
+			('REF|projectdata|projects|project', int),
+			('path', ApPathData),
+			('finished', bool),
+			('max-iter', int),
+			('num-ref', int),
+			('correlation', bool),
+			('correntropy', bool),
+			('classical_multiref', bool),
+			('intracluster_multiref', bool),
+		)
+	typemap = classmethod(typemap)
+
+
 class ApTopolRepJobData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -759,6 +779,7 @@ class ApAlignRunData(Data):
 			('imagicMRA', ApMultiRefAlignRunData),
 			('editerrun', ApEdIterRunData),
 			('topreprun', ApTopolRepRunData),
+			('cl2drun', ApCL2DRunData),
 			('hidden', bool),
 			('path', ApPathData),
 		)
@@ -928,6 +949,7 @@ class ApClusteringRunData(Data):
 			('kerdenparams', ApKerDenSOMParamsData),
 			('rotkerdenparams', ApRotKerDenSOMParamsData),
 			('affpropparams', ApAffinityPropagationClusterParamsData),
+			('cl2dparams', ApCL2DRunData),
 		)
 	typemap = classmethod(typemap)
 
