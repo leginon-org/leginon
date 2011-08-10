@@ -185,7 +185,9 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 			if (!$centered) $stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
 			if (!$junksorted) $stacktable.= "<br /><a href='sortJunk.php?expId=$expId&sId=$stackid&junksort=1'>[Sort Junk]</a>\n";
 			if ($junksorted) $stacktable.= "<br /><a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&junksort=1'>[Apply Junk Cutoff]</a>\n";
-			$stacktable.= "<br /><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
+			$stacktable.= "<br/><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
+			if ($stackdata['rotate'])
+				echo $stacktable.="<br/><a href='boxmask.php?expId=$expId&sId=$stackid&vert=True'>[Mask Particles with Box]</a>\n";
 		}
 		$stacktable.= "</td>\n";
 		if ($centered && file_exists($badstackavg)) {
@@ -392,9 +394,12 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 
 	$stacktable.= "<table border='0'>\n";
 	$stackavg = $stackdata['path']."/average.mrc";
+	$origstackid = $stackdata['REF|ApStackData|stack'];
 	if (file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
 		$stacktable.= "<td rowspan='30' align='center' valign='top'>\n";
+		$stacktable.= "<table border='0'>\n";
+		$stacktable.= "<tr><td>\n";
 		if ($mini) {
 			$stacktable.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'><br/>\n";
 			$stacktable.= "<i>avg image</i>\n";
@@ -405,7 +410,7 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 		$stacktable.= "</td>\n";
 
 		if ($type != "none") {
-			$stacktable.= "<td rowspan='30' align='center' valign='top'>\n";
+			$stacktable.= "<td>\n";
 			$stacktable.= "<a href='aligngraph.php?expId=$expId&alignid=$alignstackid&type=$type'>\n";
 			if ($mini && $numpart < 1000)
 				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId"
@@ -419,7 +424,14 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 			$stacktable.= "</td>\n";
 		}
 
-		$stacktable.= "</tr>\n\n";
+		if ($showOptions) {
+			$stacktable.= "</tr>\n";
+			$stacktable.= "<tr><td colspan='2'>\n";
+			$stacktable.="<br><a href='boxmask.php?expId=$expId&sId=$origstackid&aId=$alignstackid'>[mask particles with box]</a>\n";
+			$stacktable.= "</td>\n";
+		}
+		$stacktable.= "</tr></table>\n";
+		$stacktable.= "</td></tr>\n";
 	} #endif
 
 	// break up really long descriptions
@@ -436,8 +448,10 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 	// Get filesize
 	$stackdata['name'] = $stackdata['imagicfile'];
 	$filesize = getStackSize($stackdata);
-	if ($mini)
-		$display_keys['size']=commafy($numpart)." particles (".$filesize.")";
+	if ($mini) {
+		$display_keys['size']=commafy($numpart)." particles";
+		$display_keys['size'].= ($filesize) ? " (".$filesize.")" : "";
+	}
 	else {
 		$display_keys['# particles']=commafy($numpart);
 		$display_keys['file size'] = $filesize;
@@ -446,7 +460,6 @@ function alignstacksummarytable($alignstackid, $mini=false, $showOptions=True) {
 	// get pixel size
 	$apix = $stackdata['pixelsize']; // --- in Angstroms
 	$mpix = $apix * 1e-10; // --- in meters
-	$origstackid = $stackdata['REF|ApStackData|stack'];
 	$display_keys['original stack'] = "<a href='stackreport.php?expId=$expId&sId=$origstackid'>$origstackid</a>\n";
 	$refstack = $stackdata['path']."/".$stackdata['refstackfile'];
 	$numrefs = $particle->getNumAlignStackReferences($alignstackid);
