@@ -234,11 +234,11 @@ class UploadCL2DScript(appionScript.AppionScript):
 		return alignparts[0]			
 
 	#=====================
-	def insertClusterStackIntoDatabase(self, clusterstackfile, classnum, partlist):
+	def insertClusterStackIntoDatabase(self, clusterstackfile, classnum, partlist, num_classes):
 		clusterstackq = appiondata.ApClusteringStackData()
 		clusterstackq['avg_imagicfile'] = clusterstackfile
 		clusterstackq['var_imagicfile'] = None
-		clusterstackq['num_classes'] = self.runparams['numrefs']
+		clusterstackq['num_classes'] = num_classes
 		clusterstackq['clusterrun'] = self.clusterrun
 		clusterstackq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clusterstackq['hidden'] = False
@@ -300,7 +300,7 @@ class UploadCL2DScript(appionScript.AppionScript):
 			for classnum in partdict: 
 				self.insertClusterStackIntoDatabase(
 					"part"+self.params['timestamp']+"_level_%02d_.hed"%level,
-					classnum+1, partdict[classnum])
+					classnum+1, partdict[classnum], len(partdict))
 
 #=====================
 if __name__ == "__main__":
