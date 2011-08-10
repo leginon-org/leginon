@@ -278,10 +278,8 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 	## insert now before datamanager cleans up referenced data
 	stackq.insert()
 
-	partinserted = 0
 	#Insert particles
 	listfile = params['keepfile']
-
 
 	### read list and sort
 	f=open(listfile,'r')
@@ -322,6 +320,86 @@ def commitSubStack(params, newname=False, centered=False, oldstackparts=None, so
 		# Insert particle
 		newstackq = appiondata.ApStackParticleData()
 		newstackq.update(oldstackpartdata)
+		newstackq['particleNumber'] = newpartnum
+		newstackq['stack'] = stackq
+		if params['commit'] is True:
+			newstackq.insert()
+		newpartnum += 1
+	sys.stderr.write("\n")
+	if newpartnum == 0:
+		apDisplay.printError("No particles were inserted for the stack")
+
+	apDisplay.printMsg("Inserted "+str(newpartnum-1)+" stack particles into the database")
+
+	apDisplay.printMsg("Inserting Runs in Stack")
+	runsinstack = getRunsInStack(params['stackid'])
+	for run in runsinstack:
+		newrunsq = appiondata.ApRunsInStackData()
+		newrunsq['stack'] = stackq
+		newrunsq['stackRun'] = run['stackRun']
+		if params['commit'] is True:
+			newrunsq.insert()
+		else:
+			apDisplay.printWarning("Not commiting to the database")
+
+	apDisplay.printMsg("finished")
+	return
+
+#===============
+def commitMaskedStack(params, oldstackparts, newname=False):
+	"""
+	commit a substack to database
+
+	required params:
+		stackid
+		description
+		commit
+		rundir
+		mask
+	"""
+	oldstackdata = getOnlyStackData(params['stackid'], msg=False)
+
+	#create new stack data
+	stackq = appiondata.ApStackData()
+	stackq['path'] = appiondata.ApPathData(path=os.path.abspath(params['rundir']))
+	stackq['name'] = oldstackdata['name']
+
+	# use new stack name if provided
+	if newname:
+		stackq['name'] = newname
+
+	stackdata=stackq.query(results=1)
+
+	if stackdata:
+		apDisplay.printWarning("A stack with these parameters already exists")
+		return
+	stackq['oldstack'] = oldstackdata
+	stackq['hidden'] = False
+	stackq['substackname'] = params['runname']
+	stackq['description'] = params['description']
+	stackq['pixelsize'] = oldstackdata['pixelsize']
+	stackq['boxsize'] = oldstackdata['boxsize']
+	stackq['mask'] = params['mask']
+	if 'correctbeamtilt' in params.keys():
+		stackq['beamtilt_corrected'] = params['correctbeamtilt']
+
+	## insert now before datamanager cleans up referenced data
+	stackq.insert()
+
+	#Insert particles
+	apDisplay.printMsg("Inserting stack particles")
+	count = 0
+	newpartnum = 1
+	total = len(oldstackparts)
+	for part in oldstackparts:
+		count += 1
+		if count % 100 == 0:
+			sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
+			sys.stderr.write(str(count)+" of "+(str(total))+" complete")
+
+		# Insert particle
+		newstackq = appiondata.ApStackParticleData()
+		newstackq.update(part)
 		newstackq['particleNumber'] = newpartnum
 		newstackq['stack'] = stackq
 		if params['commit'] is True:

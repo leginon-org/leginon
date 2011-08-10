@@ -22,10 +22,8 @@ class boxMaskScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --stack-id=ID --align-id=ID [options]")
 		self.parser.add_option("-s", "--stack-id", dest="stackid", type="int",
 			help="Stack database id", metavar="ID")
-		self.parser.add_option("-a", "--align-stack-id", dest="alignstackid", type="int",
+		self.parser.add_option("-a", "--align-id", dest="alignstackid", type="int",
 			help="aligned stack database id", metavar="ID")
-		self.parser.add_option("--new-stack-name", dest="runname",
-			help="New stack name", metavar="STR")
 		self.parser.add_option("-m", "--mask", dest="mask", type="int",
 			help="outer mask radius in Angstroms")
 		self.parser.add_option("-i", "--imask", dest="imask", type="int", default=0,
@@ -54,8 +52,6 @@ class boxMaskScript(appionScript.AppionScript):
 		path = self.stackdata['path']['path']
 		uppath = os.path.dirname(os.path.abspath(path))
 		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
-		if self.params['vertical'] is not True:
-			self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
 
 	#=====================
 	def convertStackToSpider(self, stackfile):
@@ -67,7 +63,7 @@ class boxMaskScript(appionScript.AppionScript):
 
 		emancmd += "spiderswap edgenorm"
 		starttime = time.time()
-		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
+		apDisplay.printColor("Running spider stack conversion, this can take a while", "cyan")
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		time.sleep(1) # wait a sec, for things to finish
 		apDisplay.printColor("finished proc2d in "+apDisplay.timeString(time.time()-starttime), "cyan")
@@ -77,6 +73,25 @@ class boxMaskScript(appionScript.AppionScript):
 
 		return spiderstack
 	
+	#=====================
+	def convertStackToImagic(self, stackfile):
+		### convert spider stack to imagic
+		emancmd  = "proc2d %s "%stackfile
+		imagicstack = os.path.join(self.params['rundir'], "start.hed")
+		apFile.removeStack(imagicstack, warn=True)
+		emancmd += imagicstack+" "
+
+		starttime = time.time()
+		apDisplay.printColor("Running stack conversion, this can take a while", "cyan")
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		time.sleep(1) # wait a sec, for things to finish
+		apDisplay.printColor("finished proc2d in "+apDisplay.timeString(time.time()-starttime), "cyan")
+
+		if not os.path.isfile(imagicstack):
+			apDisplay.printError("Failed to create an imagic stack")
+
+		return imagicstack
+
 	#=====================
 	def findRotation(self,avgimg):
 		# use radon transform in SPIDER to find rotation to orient the average image vertical
@@ -234,10 +249,12 @@ class boxMaskScript(appionScript.AppionScript):
 			mySpi.toSpider("UD ICE",spyder.fileFilter(spirots))
 		mySpi.close()
 
-		sys.exit()
-
 	#=====================
 	def start(self):
+		self.stackdata = appiondata.ApStackData.direct_query(self.params['stackid'])
+		if self.params['vertical'] is not True:
+			self.alignstackdata = appiondata.ApAlignStackData.direct_query(self.params['alignstackid'])
+
 		# Path of the stack
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		fn_oldstack = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
@@ -263,98 +280,31 @@ class boxMaskScript(appionScript.AppionScript):
 		# Convert the original stack to spider
 		spistack = self.convertStackToSpider(fn_oldstack)
 		# boxmask the particles
-		self.boxMask(spistack,"masked.spi",rotfile)
+		spimaskfile = "masked"+self.timestamp+".spi"
+		self.boxMask(spistack,spimaskfile,rotfile)
+		# Convert the spider stack to imagic
+		imgstack = self.convertStackToImagic(spimaskfile)
 
 		# Create average MRC
-		apStack.averageStack("sorted.hed")
+		apStack.averageStack(imgstack)
+
+		# Clean up
+		apDisplay.printMsg("deleting temporary processing files")
+		os.remove(spistack)
+		os.remove(spimaskfile)
 
 		# Upload results
-		self.uploadResults()
+		if self.params['commit'] is True:
+			oldstackparts = apStack.getStackParticlesFromId(self.params['stackid'])
+			apStack.commitMaskedStack(self.params, oldstackparts)
 
 		time.sleep(1)
 		return
 
-	#=====================
-	def uploadResults(self):
-		if self.params['commit'] is False:
-			return
-
-		# Get the new file order
-		fh=open("sort_junk.sel",'r')
-		lines=fh.readlines()
-		i=0;
-		fileorder={};
-		for line in lines:
-			args=line.split()
-			if (len(args)>1):
-				match=re.match('[A-Za-z]+([0-9]+)\.[A-Za-z]+',
-				   (args[0].split('/'))[-1])
-				if (match):
-					filenumber=int(match.groups()[0])
-					fileorder[i]=filenumber
-					i+=1
-		fh.close()
-
-		# Produce a new stack
-		oldstack = apStack.getOnlyStackData(self.params['stackid'],msg=False)
-		newstack = appiondata.ApStackData()
-		newstack['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
-		newstack['name'] = "sorted.hed"
-		if newstack.query(results=1):
-			apDisplay.printError("A stack with these parameters already exists")
-
-		# Fill in data and submit
-		newstack['oldstack'] = oldstack
-		newstack['hidden'] = False
-		newstack['substackname'] = self.params['runname']
-		newstack['description'] = self.params['description']
-		newstack['pixelsize'] = oldstack['pixelsize']
-		newstack['boxsize'] = oldstack['boxsize']		
-		newstack['junksorted'] = True
-		newstack.insert()
-
-		# Insert stack images
-		apDisplay.printMsg("Inserting stack particles")
-		count=0
-		total=len(fileorder.keys())
-		if total==0:
-			apDisplay.printError("No particles can be inserted in the sorted stack")
-		for i in fileorder.keys():
-			count += 1
-			if count % 100 == 0:
-				sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
-				sys.stderr.write(str(count)+" of "+(str(total))+" complete")
-
-			# Get particle from the old stack
-			oldparticle = apStack.getStackParticle(self.params['stackid'], fileorder[i]+1)
-
-			# Insert particle
-			newparticle = appiondata.ApStackParticleData()
-			newparticle['particleNumber'] = i+1
-			newparticle['stack'] = newstack
-			newparticle['stackRun'] = oldparticle['stackRun']
-			newparticle['particle'] = oldparticle['particle']
-			newparticle['mean'] = oldparticle['mean']
-			newparticle['stdev'] = oldparticle['stdev']
-			newparticle.insert()
-		apDisplay.printMsg("\n"+str(total)+" particles have been inserted into the sorted stack")
-
-		# Insert runs in stack
-		apDisplay.printMsg("Inserting Runs in Stack")
-		runsinstack = apStack.getRunsInStack(self.params['stackid'])
-		for run in runsinstack:
-			newrunsq = appiondata.ApRunsInStackData()
-			newrunsq['stack'] = newstack
-			newrunsq['stackRun'] = run['stackRun']
-			newrunsq.insert()
-
-		apDisplay.printMsg("finished")
-		return
-
 #=====================
 if __name__ == "__main__":
-	sortJunk = boxMaskScript()
-	sortJunk.start()
-	sortJunk.close()
+	boxmask = boxMaskScript()
+	boxmask.start()
+	boxmask.close()
 
 
