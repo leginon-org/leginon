@@ -409,7 +409,7 @@ function runUploadImage() {
 			if ($df > 0) $df = $df*-1;
 			if ($df > -0.1)
 				createUploadImageForm("<b>Error:</b> defocus must be in microns (i.e. -1.5)");
-			$mdfarray[] = $df * 1e-10;
+			$mdfarray[] = $df * 1e-6;
 		}
 		$kv = $_POST['kv'];
 		if (!$kv)
