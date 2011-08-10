@@ -27,7 +27,8 @@ processing_header("Cluster Stack List","Cluster Stack List", $javascript, True);
 $particle = new particledata();
 
 // find each stack entry in database
-$stackdatas = $particle->getAlignStackIdsWithAnalysis($expId, $projectId);
+//$stackdatas = $particle->getAlignStackIdsWithAnalysis($expId, $projectId);
+$stackdatas = $particle->getAlignStackIdsWithClusterRun($expId, $projectId);
 
 if ($stackdatas) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";

@@ -2814,6 +2814,38 @@ class particledata {
 		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
+	
+	function getAlignStackIdsWithClusterRun ($sessionId, $projectId) {
+		$q = "SELECT name from ".DB_LEGINON.".SessionData "
+			."WHERE DEF_id=$sessionId";
+		$r = $this->mysql->getSQLResult($q);
+		$sname = $r[0]['name'];
+		$q = "SELECT DISTINCT ast.`DEF_id` AS alignstackid "
+			."FROM ApAlignStackData AS ast "
+			."LEFT JOIN ApClusteringRunData AS cluster ON "
+			."  (cluster.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`)"
+			."LEFT JOIN ApStackData AS st ON "
+			."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
+			."LEFT JOIN ApRunsInStackData as runsin ON "
+			."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
+			."LEFT JOIN ApStackRunData as strun ON "
+			."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+			."LEFT JOIN ApPathData ON "
+			."  (ast.`REF|ApPathData|path`=ApPathData.`DEF_id`) "
+			."WHERE "
+			."  (strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."OR "
+			."  ApPathData.`path` LIKE \"%$sname%\") "
+			."AND "
+			."  ast.`hidden` != 1 "
+			."AND "
+			."  cluster.`DEF_id` IS NOT NULL "
+			."ORDER BY alignstackid DESC";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
 
 	function getAlignStackParams ($alignstackid) {
 		$q = "SELECT ar.*, ast.*, "

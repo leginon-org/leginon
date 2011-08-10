@@ -658,6 +658,9 @@ function clustersummarytable($clusterrunid, $mini=false) {
 			$clustertable .= "<b>Method:</b> <i>".$clusterrun['method']."</i><br/>\n";
 			$clustertable .= "<b>Factor list:</b> <i>".$clusterrun['factor_list']."</i>\n";
 			$clustertable .= "<ul>\n";
+		} elseif ($clusterrun['REF|ApCL2DRunData|cl2dparams']) {
+			$clustertable .= "<b>Type:</b> <i>Xmipp CL2D</i><br/>\n";
+			$clustertable .= "<ul>\n";
 		} elseif ($clusterrun['REF|ApKerDenSOMParamsData|kerdenparams']) {
 			// KerDen only has one cluster data
 			$clusterdata = $clusterdatas[0];
@@ -714,6 +717,14 @@ function clustersummarytable($clusterrunid, $mini=false) {
 				$clustertable .= "<li><span>"
 					."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
 					.$clusterdata['num_classes']." Class Averages</a> (ID $clusterid)&nbsp;"
+					."</span></li>\n";
+			} elseif ($clusterdata['REF|ApCL2DRunData|cl2dparams']) {
+				if (preg_match("/level_[0-9][0-9]/i", $clusteravgfile, $matches)){
+					$level = substr($matches[0],-2,2);
+				}
+				$clustertable .= "<li><span>"
+					."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+					.$clusterdata['num_classes']." Class Averages, level ".$level.":</a> (ID $clusterid)&nbsp;"
 					."</span></li>\n";
 			} elseif ($clusterdata['REF|ApSpiderClusteringParamsData|spiderparams']) {
 				$clustertable .= "<li><span>"

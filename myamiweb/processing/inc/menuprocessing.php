@@ -429,22 +429,22 @@ if (is_numeric($expId)) {
 				'result'=>$analysisresults,
 			);
 
-			if ($analysisdone > 0) {
-				// particle clustering
-				$clusterresults=array();
-				if ($clusterstack=$particle->getClusteringStacks($expId, $projectId)) {
-					$clusterdone = count($clusterstack);
-				}
-				$clusterrun = count($subclusterjobs['partcluster']['running']);
-				$clusterqueue = count($subclusterjobs['partcluster']['queued']);
-				$clusterresults[] = ($clusterdone==0) ? "" : "<a href='clusterlist.php?expId=$sessionId'>$clusterdone complete</a>";
-				$clusterresults[] = ($clusterrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partcluster'>$clusterrun running</a>";
-				$clusterresults[] = ($clusterqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partcluster'>$clusterqueue queued</a>";
-				$nruns[] = array(
-					'name'=>"<a href='analysislist.php?expId=$sessionId'>Run Particle Clustering</a>",
-					'result'=>$clusterresults,
-				);
+//			if ($analysisdone > 0) {
+			// particle clustering
+			$clusterresults=array();
+			if ($clusterstack=$particle->getClusteringStacks($expId, $projectId)) {
+				$clusterdone = count($clusterstack);
 			}
+			$clusterrun = count($subclusterjobs['partcluster']['running']);
+			$clusterqueue = count($subclusterjobs['partcluster']['queued']);
+			$clusterresults[] = ($clusterdone==0) ? "" : "<a href='clusterlist.php?expId=$sessionId'>$clusterdone complete</a>";
+			$clusterresults[] = ($clusterrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partcluster'>$clusterrun running</a>";
+			$clusterresults[] = ($clusterqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partcluster'>$clusterqueue queued</a>";
+			$nruns[] = array(
+				'name'=>"<a href='analysislist.php?expId=$sessionId'>Run Particle Clustering</a>",
+				'result'=>$clusterresults,
+			);
+//			}
 		}
 		if (!HIDE_IMAGIC && !HIDE_FEATURE) {
 			// ===================================================================
