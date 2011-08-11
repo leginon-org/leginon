@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# a simple protomo2 control script
+# a simple protomo2 control script for reconstructing a volume after alignment refinement
 
 import protomo
 import optparse
