@@ -744,7 +744,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 	#=====================
 	def _waitForMoreSeries(self,timeout_min=180):
 		"""
-		pauses 10 mins and then checks for more series to process
+		pauses wait_time mins and then checks for more series to process
 		"""
 		### SKIP MESSAGE
 		if(self.stats['skipcount'] > 0):
@@ -771,14 +771,18 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 
 		### WAIT
 		timeout_sec = timeout_min * 60
-		if(self.stats['waittime'] > timeout_sec):
-			apDisplay.printWarning("waited longer than three hours for new series with no results, so I am quitting")
+		# self.stats['waittime'] is in minutes
+		if(self.stats['waittime'] > timeout_min):
+			timeout_hr = timeout_min / 60.0
+			apDisplay.printWarning("waited longer than %.1f hours for new series with no results, so I am quitting" % timeout_hr)
 			return False
 		apParam.closeFunctionLog(functionname=self.functionname, logfile=self.logfile, msg=False, stats=self.stats)
-		sys.stderr.write("\nAll Series processed. Waiting five minutes for new Series (waited "+str(self.stats['waittime'])+" min so far).")
 		twait0 = time.time()
+		# Wait at least 30 sec and at most 5 % of timeout before checking for new tilt series
 		dot_wait = 30
-		wait_step = int(math.floor(timeout_sec * 1.0 / dot_wait))
+		timecheck_sec = max(timeout_sec/20,dot_wait*2)
+		wait_step = max(1,int(round(timecheck_sec * 1.0 / dot_wait)))
+		sys.stderr.write("\nAll Series processed. Waiting %.1f minutes for new Series (waited %.1f min so far" % (timecheck_sec / 60.0, self.stats['waittime']))
 		for i in range(wait_step):
 			time.sleep(dot_wait)
 			#print a dot every 30 seconds
