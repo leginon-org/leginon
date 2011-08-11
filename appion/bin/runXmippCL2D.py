@@ -4,7 +4,6 @@ import os
 import time
 import sys
 import math
-import shutil
 import glob
 import cPickle
 import subprocess
@@ -14,12 +13,9 @@ import numpy
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apFile
-from appionlib import apImage
-from appionlib import apTemplate
 from appionlib import apStack
 from appionlib import apParam
 from appionlib import apXmipp
-from appionlib import apImage
 from appionlib import appiondata
 from appionlib import apImagicFile
 from appionlib import apProject
