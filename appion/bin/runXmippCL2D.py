@@ -338,7 +338,7 @@ class CL2D(appionScript.AppionScript):
 #			apDisplay.printError("Run name '"+self.runparams['runname']+"' and path already exist in database")
 
 		### finish alignment run
-		alignrunq['cl2drun'] = self.cl2dq
+		alignrunq['cl2drun'] = self.cl2dqdata
 		alignrunq['hidden'] = False
 		alignrunq['runname'] = self.runparams['runname']
 		alignrunq['description'] = self.runparams['description']
