@@ -3046,6 +3046,22 @@ class particledata {
 		return $r;
 	}
 
+	function getFinishedCL2DJobs ($projectId) {
+		$q = "SELECT cl2djob.*, path.path "
+			."FROM ApCL2DRunData AS cl2djob "
+			."LEFT JOIN ApPathData as path ON "
+			."  cl2djob.`REF|ApPathData|path` = path.`DEF_id` ";
+		$q .=	"WHERE "
+			."  cl2djob.`REF|projectdata|projects|project` = '$projectId' "
+			." AND "
+			."  cl2djob.`finished` = '1' ";
+			$q .=	" ORDER BY cl2djob.`DEF_id` DESC ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+
 	function getClusteringStacks ($sessionId, $projectId, $showHidden=False) {
 		// get session name, since original stack may be deleted
 		$q = "SELECT name from ".DB_LEGINON.".SessionData "

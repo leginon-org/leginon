@@ -399,12 +399,16 @@ if (is_numeric($expId)) {
 		if ($maxlikejobs=$particle->getFinishedMaxLikeJobs($projectId)) {
 			$nmaxlikejobs = count($maxlikejobs);
 		}
+		if ($cl2djobs=$particle->getFinishedCL2DJobs($projectId)) {
+			$ncl2djobs = count($cl2djobs);
+		}	
 		
 		$alignqueue = count($subclusterjobs['partalign']['queued']);
 
 		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignlist.php?expId=$sessionId'>$alignruns complete</a>";
 		$alignresults[] = ($alignrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignrun running</a>";
 		$alignresults[] = ($nmaxlikejobs==0) ? "" : "<a href='runUploadMaxLike.php?expId=$sessionId'>$nmaxlikejobs ready to upload</a>";
+		$alignresults[] = ($ncl2djobs==0) ? "" : "<a href='runUploadCL2D.php?expId=$sessionId'>$ncl2djobs ready to upload</a>";
 		$alignresults[] = ($alignqueue==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignqueue queued</a>";
 
 		$nruns=array();
