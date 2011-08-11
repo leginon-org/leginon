@@ -20,11 +20,11 @@ def getTiltSeriesFromId(tiltid):
 	imgtree=apTomo.getImageList([seriesdata])
 	return imgtree
 
-def getPredictionDataForImage(imagedata):
-	q=leginon.leginondata.TomographyPredictionData()
-	q['image']=imagedata
-	predictiondata=q.query()
-	return predictiondata
+#def getPredictionDataForImage(imagedata):
+#	q=leginon.leginondata.TomographyPredictionData()
+#	q['image']=imagedata
+#	predictiondata=q.query()
+#	return predictiondata
 
 def alignZeroShiftImages(imgtree,zerotilts):
 	"""Align 0 degree images for tilt series where data is collect in two halves"""
@@ -119,7 +119,7 @@ if __name__=='__main__':
 		imdict['rotation']=0
 		
 		#determine shifts for each image from correlation during data collection
-		predictdata=getPredictionDataForImage(imgtree[n])
+		predictdata=apDatabase.getPredictionDataForImage(imgtree[n])
 		neworigx=origx-predictdata[0]['correlation']['x']
 		neworigy=origy+predictdata[0]['correlation']['y']
 		imdict['x']=neworigx
@@ -143,15 +143,21 @@ if __name__=='__main__':
 		ptdict[imdictkey]=imdict
 	
 	refimg=zerotilts[-1]
+	predict1=apDatabase.getPredictionDataForImage(imgtree[0])
+	predict2=apDatabase.getPredictionDataForImage(imgtree[-1])
+	phi1=predict1[0]['predicted position']['phi']*180/math.pi
+	phi2=predict2[0]['predicted position']['phi']*180/math.pi
+	
+	###Azimuth is determined from phi. In protomo tilt axis is measured from x where phi is from y
+	###Note there is a mirror between how Leginon reads images vs how protomo does
+	azimuth=90-((phi1+phi2)/2)
+	print "Azimuth is", azimuth
 	
 	#shift first half of series with respect to second
-	print
 	shiftdict=alignZeroShiftImages(imgtree,zerotilts)
 	shiftHalfSeries(shiftdict,ptdict,zerotilts[0])
 
 	#write tilt file
-	#HACK 
-	azimuth=90
 	apProTomo2Prep.writeTiltFile(inputparams['tiltfile'],inputparams['seriesname'],ptdict, azimuth, refimg)
 	
 	#write parameter file
@@ -160,7 +166,7 @@ if __name__=='__main__':
 	
 	#if tar is specified, create big tarball
 	if inputparams['tar']:
-		files='raw clean out align *.tlt *.param'
+		files='raw out *.tlt *.param'
 		command='tar cvfh %s %s' % ((inputparams['seriesname']+'.tar'), files)
 		print command
 		os.system(command)

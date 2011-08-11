@@ -19,7 +19,7 @@ This currently works with the protomo tutorial dataset only. See issue #1026 for
 
 
 		
-	#=====================
+#=====================
 def setRefImg(self, tilts):
 	# use the tilt geometry to set the reference image. Look for tilt angle closest to 0, may be off by .1 degree.	
 	bestPosVal = 0.10
@@ -58,6 +58,17 @@ def parseCorrectionFactors(self, tiltfile):
 
 		return imagedict
 
+#=======================
+def convertShiftsToOrigin(shifts,imagesize_x, imagesize_y):
+	newshift=[]
+	origin_x=imagesize_x/2.0
+	origin_y=imagesize_y/2.0
+	for shift in shifts:
+		newx=origin_x+shift['x']
+		newy=origin_y+shift['y']
+		newshift.append({'x':newx,'y':newy})
+	return newshift
+		
 
 #=====================
 def writeTiltFile(tiltfile, seriesname, imagedict, azimuth, refimg ):
@@ -96,6 +107,69 @@ def writeTiltFile(tiltfile, seriesname, imagedict, azimuth, refimg ):
 	f.write (" END\n")
 	f.close()
 
+#====================
+# This function duplicates the one above. Should migrate to this one in the future. 
+def writeTileFile2(tiltfile, seriesname, imagelist, origins, tilts, azimuth, refimg):
+	
+	try:
+		f = open(tiltfile,'w')
+	except:
+		apDisplay.printWarning("Failed to create %s for writing the protomo2 tilt geometry parameter file" % (tiltfile, ))
+		raise
+	
+	f.write('\n')
+
+
+	f.write ("TILT SERIES %s\n" % seriesname)
+	f.write ("\n") 
+	f.write ("   AXIS\n")
+	f.write ("\n")
+	f.write ("     TILT AZIMUTH    %g\n" % azimuth)
+	f.write ("\n")
+	for n in range(len(imagelist)):
+		imagename=os.path.splitext(os.path.basename(imagelist[n]))[0] #strip off path and extension from mrc file
+		f.write ("   IMAGE %-5d     FILE %s       ORIGIN [ %8.3f %8.3f ]    TILT ANGLE    %8.3f    ROTATION     %8.3f\n" % (n, imagename, origins[n]['x'], origins[n]['y'], tilts[n], 0))
+
+	f.write ("\n")
+	f.write ("   REFERENCE IMAGE %d\n" % refimg)
+	f.write ("\n")
+	f.write ("\n")
+	f.write (" END\n")
+	f.close()
+
+#=====================
+def modifyParamFile(filein, fileout, paramdict):
+	f = open(filein, 'r')
+	filestring = f.read()
+	f.close()
+        
+	for key, value in paramdict.iteritems():
+		filestring = re.sub(key, value, filestring)
+        
+	f = open(fileout, 'w')
+	f.write(filestring)
+	f.close()
+            
+#=====================
+def createParamDict(params):
+	paramdict = { 'AP_windowsize_x':params['windowsize_x'],
+                'AP_windowsize_y':params['windowsize_y'],
+                'AP_sample': params['sample'],
+		'AP_thickness': params['thickness'],
+		'AP_cos_alpha': params['cos_alpha'],
+		'AP_lp_diam_x': params['lowpass_diameter_x'],
+		'AP_lp_diam_y': params['lowpass_diameter_y'],
+		'AP_lp_apod_x': params['lowpass_apod_x'],
+                'AP_lp_apod_y': params['lowpass_apod_y'],
+		'AP_hp_diam_x': params['highpass_diameter_x'],
+		'AP_hp_diam_y': params['highpass_diameter_y'],
+		'AP_hp_apod_x': params['highpass_apod_x'],
+		'AP_hp_apod_y': params['highpass_apod_y'], 
+		'AP_corr_mode': params['corr_mode'],
+		'AP_raw_path': params['raw_path'] }
+
+	return paramdict				
+	
 #=====================
 def getTiltGeom(ordered_imagelist, bin, refimg):
 	# get the tilt geometry parameters
@@ -170,7 +244,12 @@ def getPrototypeParamFile(outparamfile):
 	origparamfile=os.path.join(appiondir,'appionlib','data','protomo.param')
 	newparamfile=os.path.join(os.getcwd(),outparamfile)
 	shutil.copyfile(origparamfile,newparamfile)
-	
+
+def getPrototypeParamPath():
+	appiondir=apParam.getAppionDirectory()
+	origparamfile=os.path.join(appiondir,'appionlib','data','protomo.param')
+	return origparamfile
+		
 #=====================
 def buildParamFile(self):
 	"""This function may disappear in the future and be replaced by 

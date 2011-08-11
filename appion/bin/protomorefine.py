@@ -6,12 +6,15 @@ import protomo
 import optparse
 import sys
 import glob
+import os
 
 def parseOptions():
 	parser=optparse.OptionParser()
 	parser.add_option('--iters', dest='iters', type='int', help='number of refinement iterations')
 	parser.add_option('--i3t', dest='i3tfile', help='path to i3t file')
 	parser.add_option('--param', dest='param', help='path to param file')
+	parser.add_option('--tlt', dest='tlt', help='path to tlt file. Only needed for the first iteration')
+	
 	
 	options, args=parser.parse_args()
 
@@ -24,11 +27,16 @@ def parseOptions():
 	
 if __name__ == "__main__":
 	options=parseOptions()
+	
+	seriesparam=protomo.param(options.param)	
+	if options.i3tfile:
+		series=protomo.series( seriesparam )
+	else:
+		seriesgeom=protomo.geom( options.tlt )
+		options.i3tfile=options.tlt
+		series=protomo.series( seriesparam, seriesgeom )
 
-	seriesparam=protomo.param(options.param)
 	seriesname=options.i3tfile.split('.')[0]
-	series=protomo.series( seriesparam )
-
 	iters=options.iters
 	
 	#figure out starting number

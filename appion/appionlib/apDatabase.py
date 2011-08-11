@@ -159,6 +159,14 @@ def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
 	else:
 		apDisplay.printError("could not find tilt series, "+str(tiltseries))
 
+
+#================
+def getPredictionDataForImage(imagedata):
+	q=leginon.leginondata.TomographyPredictionData()
+	q['image']=imagedata
+	predictiondata=q.query()
+	return predictiondata
+
 #================
 def getImagesFromTiltSeries(tiltseriesdata,printMsg=True):
 	if printMsg:

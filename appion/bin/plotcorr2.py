@@ -8,6 +8,8 @@ import optparse
 def parseOptions():
 	parser=optparse.OptionParser()
 	parser.add_option('--corr', dest='corr', help='corr file to plot')
+	
+	#NOTE: should use type='choice' for the following option
 	parser.add_option('--plottype', dest='plottype', help='parameter to plot (cofx, cofy, coa, or rot)')
 
 	options, args=parser.parse_args()

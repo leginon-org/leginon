@@ -371,6 +371,20 @@ def getDefaultAzimuthFromLeginon(imagedata):
 	else:
 		return 90.0
 
+def getAverageAzimuthFromSeries(imgtree):
+	# this somewhat duplicates the getDefaultAzimuthFromLegionon but is slightly different
+	
+	predict1=apDatabase.getPredictionDataForImage(imgtree[0])
+	predict2=apDatabase.getPredictionDataForImage(imgtree[-1])
+	phi1=predict1[0]['predicted position']['phi']*180/math.pi
+	phi2=predict2[0]['predicted position']['phi']*180/math.pi
+	
+	###Azimuth is determined from phi. In protomo tilt axis is measured from x where phi is from y
+	###Note there is a mirror between how Leginon reads images vs how protomo does
+	azimuth=90-((phi1+phi2)/2)
+	apDisplay.printMsg(("Azimuth is %f" % azimuth))
+	return azimuth
+
 def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
 	paramsq = appiondata.ApImodXcorrParamsData()
 	paramsq['RotationAngle'] = rotation
