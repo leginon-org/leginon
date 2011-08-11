@@ -417,7 +417,7 @@ if (is_numeric($expId)) {
 			'name'=>"<a href='selectParticleAlignment.php?expId=$sessionId'>Run Alignment</a>",
 			'result'=>$alignresults,
 		);
-		if ($aligndone > 0) {
+		if ($aligndone > 0 || $ncl2djobs > 0) {  // an exception is made to CL2D, because it is treated as an alignment & clustering procedure
 			// alignment analysis
 			$analysisresults=array();
 			if ($analysisruns=$particle->getAnalysisRuns($expId, $projectId)) {

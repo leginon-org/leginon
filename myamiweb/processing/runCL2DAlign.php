@@ -106,7 +106,7 @@ function createCL2DAlignForm($extra=false, $title='runXmippCL2D.py Launcher', $h
 	$maxiter = ($_POST['maxiter']) ? $_POST['maxiter'] : '15';
 	$image2imagedistanceval = ($_POST['image2imagedistance']) ? $_POST['image2imagedistance'] : 'correlation';
 	$image2clusterdistanceval = ($_POST['image2clusterdistance']) ? $_POST['image2clusterdistance'] : 'minimum';
-	$dontAlign = ($_POST['dontAlign']=='on' || !$_POST['dontAlign']) ? 'unchecked' : '';
+//	$dontAlign = ($_POST['dontAlign']=='on' || !$_POST['dontAlign']) ? 'unchecked' : '';
 	
 	//$fast = ($_POST['fast']=='on' || !$_POST['fast']) ? 'checked' : '';
 	
@@ -233,9 +233,9 @@ function createCL2DAlignForm($extra=false, $title='runXmippCL2D.py Launcher', $h
 	echo ">Intracluster\n";
 	echo "<br/>\n";
 	
-	echo "<INPUT TYPE='checkbox' NAME='dontAlign' unchecked>\n";
-	echo docpop('dontAlign','Dont Align Image');
-	echo "<br/>\n";
+//	echo "<INPUT TYPE='checkbox' NAME='dontAlign' unchecked>\n";
+//	echo docpop('dontAlign','Dont Align Image');
+//	echo "<br/>\n";
 	
 	echo "<br/>\n";
 
@@ -281,22 +281,16 @@ function runCL2DAlign() {
 	$maxiter=$_POST['maxiter'];
 	$bin=$_POST['bin'];
 	$description=$_POST['description'];
-	//$fast = ($_POST['fast']=="on") ? true : false;
 	$fast = true;
-	//$fastmode = $_POST['fastmode'];
 	$converge = $_POST['converge'];
 	$image2imagedistanceval = $_POST['image2imagedistanceval'];
 	$image2clusterdistanceval = $_POST['image2clusterdistanceval'];
-	$dontAlign = ($_POST['dontAlign']=="on") ? true : false;
-	//$mirror = ($_POST['mirror']=="on") ? true : false;
-	//$savemem = ($_POST['savemem']=="on") ? true : false;
+//	$dontAlign = ($_POST['dontAlign']=="on") ? true : false;
 	$commit = ($_POST['commit']=="on") ? true : false;
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
-	//$distribution = $_POST['distribution'];
 
 	// get stack id, apix, & box size from input
 	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
-	//make sure a session was selected
 
 	if (!$description)
 		createCL2DAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
@@ -344,34 +338,18 @@ function runCL2DAlign() {
 	$command.="--num-part=$numpart ";
 	$command.="--num-ref=$numref ";
 	$command.="--bin=$bin ";
-	//$command.="--angle-interval=$angle ";
 	$command.="--max-iter=$maxiter ";
 	if ($nproc && $nproc>1)
 		$command.="--nproc=$nproc ";
-	if ($fast) //{
+	if ($fast) 
 		$command.="--fast ";
-		//$command.="--fast-mode=$fastmode ";
-	//} else
-		//$command.="--no-fast ";
 	
-	if ($dontAlign)
-		$command.="--dontAlignImages ";
+//	if ($dontAlign)
+//		$command.="--dontAlignImages ";
 	if ($distribution == "minimum")
 		$command.="--classical_multiref ";
 	if ($distribution == "correlation")
 		$command.="--correlation ";
-	
-	
-	//if ($mirror)
-		//$command.="--mirror ";
-	//else
-		//$command.="--no-mirror ";
-	//if ($savemem)
-		//$command.="--savemem ";
-	//else
-		//$command.="--no-savemem ";
-	//if ($distribution == "student")
-		//$command.="--student ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 	//$command .= "--converge=$converge ";
