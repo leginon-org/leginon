@@ -284,7 +284,6 @@ class UploadCL2DScript(appionScript.AppionScript):
 
 		### create average of aligned stacks & insert aligned stack info
 		lastLevelStack = "part"+self.params['timestamp']+"_level_%02d_.hed"%(self.Nlevels-1)
-		apStack.averageStack(lastLevelStack)
 		self.boxsize = apFile.getBoxSize(lastLevelStack)[0]
 		if self.runparams['align']:
 			self.insertAlignStackRunIntoDatabase("alignedStack.hed")

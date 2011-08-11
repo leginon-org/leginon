@@ -10,6 +10,7 @@ import socket
 import string
 import inspect
 import subprocess
+import cPickle
 
 ## appion
 from appionlib import apDisplay
@@ -228,6 +229,23 @@ def getLogHeader():
 	host = getHostname()
 	logheader = "[ "+user+"@"+host+": "+time.asctime()+" ]\n"
 	return logheader
+
+#=====================
+def dumpParameters(parameters, paramfile):
+	''' uses cPickle to dump parameters (as a dictionary) to file '''
+	pf = open(paramfile, "w")
+	cPickle.dump(parameters, pf)
+	pf.close()
+	return 
+
+#=====================
+def readRunParameters(paramfile):
+	if not os.path.isfile(paramfile):
+		apDisplay.printError("Could not find run parameters file: "+paramfile)
+	pf = open(paramfile, "r")
+	runparams = cPickle.load(pf)
+	pf.close()
+	return runparams
 
 #=====================
 def writeFunctionLog(cmdlist, logfile=None, msg=True):
