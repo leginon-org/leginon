@@ -387,7 +387,7 @@ def	insertTiltsInAlignRun(alignrundata,tiltdata,settingsdata,primary=True):
 	q['primary_tiltseries'] = primary
 	return publish(q)
 
-def insertTomoAlignmentRun(sessiondata,leginontomosettingsdata,imodxcorrparamsdata,protomorunparamsdata,raptorparamsdata,bin,name,path,description=None):
+def insertTomoAlignmentRun(sessiondata,leginontomosettingsdata,imodxcorrparamsdata,protomorunparamsdata,raptorparamsdata,bin,name,path,description=None,bad_alignment=False):
 	pathq = appiondata.ApPathData(path=os.path.abspath(path))
 	qalign = appiondata.ApTomoAlignmentRunData(session=sessiondata,
 			bin=bin,name=name, path=pathq)
@@ -401,6 +401,7 @@ def insertTomoAlignmentRun(sessiondata,leginontomosettingsdata,imodxcorrparamsda
 		qalign['raptorParams'] = raptorparamsdata
 	results = qalign.query()
 	if not results:
+		qalign['badAlign'] = bad_alignment
 		qalign['description'] = description
 		qalign.insert()
 		return qalign

@@ -56,8 +56,8 @@ class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 		for shift in shifts:
 			distance = math.hypot(shift['x'],shift['y'])
 			distances.append(distance)
-		if len(imagelist) < 5: 
-			apDisplay.printWarning("Less than 5 images in Series %d" % (tiltseriesdata['number']))
+		if len(imagelist) < self.params['imagelimit']: 
+			apDisplay.printWarning("Less than %d images in Series %d" % (self.params['imagelimit'],tiltseriesdata['number']))
 			return True
 		if max(distances[2:-2]) > min(imgshape) / (corr_bin*3):
 			apDisplay.printWarning("Tracked feature in Series %d jumps over 1/3 of the image" % (tiltseriesdata['number']))

@@ -56,12 +56,15 @@ if ($showntomoaligns) {
 	$html = "<h4>TiltSeries Alignment Runs</h4>";
 	$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'tilt number','alignrun id','alignrun name','method','description');
+	$display_keys = array ( 'tilt number','alignrun id','alignrun name','method','description','bad align');
 	foreach($display_keys as $key) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
 	$html .= "</TR>\n";
 	foreach ($showntomoaligns as $t) {
+		$aligninfo = $particle->getTomoAlignmentInfo($t['alignrun id']);
+		$t['bad align'] = $aligninfo['badAlign'];
+		$t['method'] = $aligninfo['method'];
 		$html .= $particle->displayParametersInSummary($t,$display_keys,$expId,$hide_button_field='alignrun id');
 	}
 	$html .= "</table>\n";

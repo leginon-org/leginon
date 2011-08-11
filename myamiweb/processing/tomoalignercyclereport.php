@@ -85,8 +85,8 @@ if ($refinedata) {
 	echo $particle->displayHidingOption($expId,$allcycles,$showncycles,$showhidden);
 	// --- 
 } else {
-	$html .= "<b>No Alignment Information</b><p>";
-	$html .= "<b>Probably an uploaded tomogram</b>";
+	$html .= "<p><a href='tomoalignmovie.php?aId=$alignId&expId=$expId'>Alignment Movie</a></p>";
+	$html .= "<b>No Other Alignment Information</b><p>";
 	echo $html;
 }
 processing_footer();

@@ -250,6 +250,7 @@ class particledata {
 		$q =  "SELECT a.`DEF_id` as `alignrun id`, "
 			."a.name as `alignrun name`, "
 			."a.bin as bin, "
+			."a.badAlign as badAlign, "
 			."path.`path`, "
 			."tilt.`number` as `tilt number`, "
 			."tia.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, ";
@@ -272,6 +273,11 @@ class particledata {
 			$q .= ""
 				."LEFT JOIN `ApImodXcorrParamsData` imod "
 				."ON a.`REF|ApImodXcorrParamsData|coarseImodParams` = imod.`DEF_id` ";
+		}
+		if ($this->mysql->SQLTableExists('ApRaptorParamsData')) {
+			$q .= ""
+				."LEFT JOIN `ApRaptorParamsData` raptor "
+				."ON a.`REF|ApRaptorParamsData|raptorParams` = raptor.`DEF_id` ";
 		}
 		$q .= ""
 			."LEFT JOIN `ApTiltsInAlignRunData` tia "

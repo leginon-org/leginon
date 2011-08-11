@@ -45,6 +45,7 @@ $tomograminfo = $tomogram;
 $stripstr = array('L'=>'','['=>'',']'=>'');
 $tomograminfo['excluded imageIds'] = strtr($tomograminfo['excluded imageIds'],$stripstr);
 $tomograminfo['align method'] = $alignment['method'];
+$tomograminfo['bad align'] = $alignment['badAlign'];
 $tomograminfo['tomogram path'] = $tomogram['path'];
 $tomograminfo['hidden'] = $tomogram['hidden'];
 $tomograminfo['zprojection image'] = $tomogram['zproj_id'];

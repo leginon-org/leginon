@@ -556,7 +556,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		echo docpop('extrabin','Reconstruction Binning');
 		echo "<P>";
 		echo " <input type='text' name='reconthickness' size='5' value='$reconthickness'>\n";
-		echo docpop('tomosamplethickness','Sample Thickness (nm)');
+		echo docpop('tomosamplethickness','Tomogram Thickness (pixels in tilt images)');
 	}
 
 	if (!$sessionname) {
@@ -573,7 +573,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
     </table>
   </td>
   </tr>
-  <td
+  <td>
 
   <tr>
     <td align='center'>

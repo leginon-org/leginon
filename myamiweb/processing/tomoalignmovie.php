@@ -22,6 +22,10 @@ $alignerid = ($_GET['aId']);
 $particle = new particledata();
 $refinedata = $particle->getProtomoAlignmentInfo($alignerid);
 $cycle = $refinedata[0]['cycle'];
+if (!$refinedata) {
+	$refinedata = $particle->getAlignerInfo($alignerid);
+	$alignment = $particle->getTomoAlignmentInfo($refinedata[0]['alignrunid']);
+}
 $javascript="<script src='../js/viewer.js'></script>\n";
 
 processing_header("Tomogram Report","Tomogram Report Page", $javascript);
@@ -50,8 +54,12 @@ $swfstyle=FLASHPLAYER_URL . 'FlowPlayer.swf';
 if (!is_null($cycle)) {
 	$flvfile = $refinedata[0]['path']."/align/minialign".sprintf('%02d',$cycle).".flv";
 } else {
-	$flvfile = $refinedata[0]['path']."/minialign.flv";
-}
+	if ($alignment['method'] == 'raptor'){
+		$flvfile = $refinedata[0]['path']."/align/minialign.flv";
+	} else {
+		$flvfile = $refinedata[0]['path']."/minialign.flv";
+	}
+}	
 if (file_exists($flvfile)) {
 	echo "<table><tr><td>Alignment Stack:</td></tr>\n";
 	echo "<tr><td>".$flvfile."</td></tr>\n";
@@ -83,6 +91,7 @@ if (file_exists($flvfile)) {
 	echo "</td></tr>";	
 	echo "</table>";
 }
+
 echo $html;
 
 processing_footer();

@@ -65,7 +65,11 @@ if ($shownfulltomos) {
 		$fulltomos = $particle->checkforFullTomogram($t['id'], $showhidden);
 		foreach ($fulltomos as $fulltomo) {
 			$fulltomoid = $fulltomo['DEF_id'];
+			$tomogram = $particle->getFullTomogramInfo($fulltomoid);
+			$refinedata = $particle->getAlignerInfo($tomogram['aligner']);
+			$alignment = $particle->getTomoAlignmentInfo($refinedata[0]['alignrunid']);
 			$a = array('tiltseries'=>$t['number'],'fulltomoid'=>$fulltomoid);
+			$a['bad align'] = $alignment['badAlign'];
 			$a = array_merge($a,$fulltomo);
 			$a['subtomo'] = ($a['subtomo'] > 0) ? array('display'=>$a['subtomo'],'link'=>$fulltomoid) : 0;
 			$html .= $particle->displayParametersInSummary($a,$selected_keys,$expId,'fulltomoid');

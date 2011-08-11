@@ -108,7 +108,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 
 				#END LOOP OVER IMAGES
 			if self.notdone is True:
-				self.notdone = self._waitForMoreSeries()
+				self.notdone = self._waitForMoreSeries(timeout_min=self.params['timeout'])
 			#END NOTDONE LOOP
 		self.postLoopFunctions()
 		self.close()
@@ -319,6 +319,10 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 			action="store_true", help="Run in background mode, i.e. reduce the number of messages printed")
 		self.parser.add_option("--no-wait", dest="wait", default=True,
 			action="store_false", help="Do not wait for more tilt series after completing loop")
+		self.parser.add_option("--timeout", dest="timeout", type="int", default=180,
+			help="Waiting time out in minutes")
+		self.parser.add_option("--imagelimit", dest="imagelimit", type="int", default=50,
+			help="Minimum number of images in tilt for processing")
 		self.parser.add_option("--no-rejects", dest="norejects", default=False,
 			action="store_true", help="Do not process hidden or rejected images")
 		self.parser.add_option("--best-series", dest="bestseries", default=False,
@@ -738,7 +742,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		sys.stderr.write("\t------------------------------------------\n")
 
 	#=====================
-	def _waitForMoreSeries(self):
+	def _waitForMoreSeries(self,timeout_min=180):
 		"""
 		pauses 10 mins and then checks for more series to process
 		"""
@@ -766,14 +770,17 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 			return True
 
 		### WAIT
-		if(self.stats['waittime'] > 180):
+		timeout_sec = timeout_min * 60
+		if(self.stats['waittime'] > timeout_sec):
 			apDisplay.printWarning("waited longer than three hours for new series with no results, so I am quitting")
 			return False
 		apParam.closeFunctionLog(functionname=self.functionname, logfile=self.logfile, msg=False, stats=self.stats)
 		sys.stderr.write("\nAll Series processed. Waiting five minutes for new Series (waited "+str(self.stats['waittime'])+" min so far).")
 		twait0 = time.time()
-		for i in range(15):
-			time.sleep(20)
+		dot_wait = 30
+		wait_step = int(math.floor(timeout_sec * 1.0 / dot_wait))
+		for i in range(wait_step):
+			time.sleep(dot_wait)
 			#print a dot every 30 seconds
 			sys.stderr.write(".")
 		self.stats['waittime'] += round((time.time()-twait0)/60.0,2)
@@ -825,7 +832,7 @@ class PrintLoop(AppionTiltSeriesLoop):
 		bad.
 		"""
 		imgtree = apDatabase.getImagesFromTiltSeries(tiltseriesdata,False)
-		return len(imgtree) < 4
+		return len(imgtree) < self.params["imagelimit"]
 
 	def processTiltSeries(self, tiltseriesdata):
 		"""

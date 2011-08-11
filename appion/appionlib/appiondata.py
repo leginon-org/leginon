@@ -1683,12 +1683,6 @@ class ApProtomoParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class ApRaptorParamsData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-		)
-	typemap = classmethod(typemap)
-
 class ApProtomoRefinementParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1776,6 +1770,7 @@ class ApTomoAlignmentRunData(Data):
 			('path', ApPathData),
 			('description', str),
 			('hidden', bool),
+			('badAlign', bool),
 		)
 	typemap = classmethod(typemap)
 

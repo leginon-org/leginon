@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # Python script to upload a template to the database, and prepare images for import
 
 
@@ -57,7 +57,7 @@ class tomoRaptor(appionScript.AppionScript):
 		self.parser.add_option("--reconbin", dest="reconbin", default=2, type="int",
 			help="binning factor for reconstruction", metavar="int")
 		self.parser.add_option("--thickness", dest="reconthickness", default=500, type="int",
-			help="estimated thickness of the specimen in nanometer", metavar="int")
+			help="estimated thickness of the specimen in pixels", metavar="int")
 		return
 
 	#=====================
@@ -107,7 +107,7 @@ class tomoRaptor(appionScript.AppionScript):
 		runname = self.params['runname']
 		alignmethod = self.params['alignmethod']
 		reconbin = int(self.params['reconbin'])
-		thickness_nm = int(self.params['reconthickness'])
+		thickness_pixel = int(self.params['reconthickness'])
 		markersize_nm = int(self.params['markersize'])
 		markernumber = int(self.params['markernumber'])
 
@@ -117,8 +117,7 @@ class tomoRaptor(appionScript.AppionScript):
 		apDisplay.printMsg("getting pixelsize")
 		pixelsize = apTomo.getTomoPixelSize(ordered_imagelist[refimg])
 		imgshape = apTomo.getTomoImageShape(ordered_imagelist[refimg])
-		thickness_pixel = int(thickness_nm * 1e-9 / pixelsize)
-		thickness_binnedpixel = int(thickness_nm * 1e-9 / (pixelsize * reconbin))
+		#thickness_binnedpixel = int(thickness_nm * 1e-9 / (pixelsize * reconbin))
 		markersize_pixel = int(markersize_nm * 1e-9 / pixelsize)
 		processdir = os.path.abspath(self.params['rundir'])
 		imodseriesname = apTomo.getFilename(tiltdatalist)
@@ -136,25 +135,24 @@ class tomoRaptor(appionScript.AppionScript):
 			leginontomosettingslist.append(settingsdata)
 		aligndir = processdir
 		# run the script and get alignment results when raptor can output alignment results in the future. raptoraligndata is None for now.
-		returncode, raptoraligndata = apRaptor.alignAndRecon(stackdir, stackname, processdir, markersize_pixel, reconbin, thickness_binnedpixel, markernumber, commit)
-		# Create Aligned Stack for record
-		if raptoraligndata:
-			example_bin = int(math.ceil(min(imgshape) / 512.0))
-			apImod.createAlignedStack(stackdir, aligndir, imodseriesname,example_bin)
+		returncode, raptoraligndata, raptorfailed = apRaptor.alignAndRecon(stackdir, stackname, processdir, markersize_pixel, reconbin, thickness_pixel, markernumber, commit)
+		# Create Aligned Stack for record, not done in apRaptor yet, currently raptoraligndata is None
+		if not raptorfailed:
 			alifilename = imodseriesname+'.ali'
-			alifilepath = os.path.join(aligndir,alifilename)
+			alifilepath = os.path.join(aligndir,'align',alifilename)
+			print alifilepath
 		# commit to database
 		if commit:
 			# parameters
 			raptorparamsdata = apRaptor.insertRaptorParams(markersize_nm,markernumber)
-			alignrun = apTomo.insertTomoAlignmentRun(sessiondata,None,None,None,raptorparamsdata,1,self.params['runname'],self.params['rundir'],self.params['description'])
+			alignrun = apTomo.insertTomoAlignmentRun(sessiondata,None,None,None,raptorparamsdata,1,self.params['runname'],self.params['rundir'],self.params['description'],raptorfailed)
 			# to accomodate iterative alignment, one alignmentrun may have 
 			# used the aligner several times, for this case a single 
 			# aligner params data is inserted as in the case of Imod xcorr
 			alignerdata = apTomo.insertAlignerParams(alignrun,self.params)
 			#results
 			if raptoraligndata:
-				# if raptor hase alignment result, it is converted to protomo
+				# if raptor has alignment result, it is converted to protomo
 				# format which is more parameterized and saved
 				prexgfile = os.path.join(aligndir,imodseriesname+'.prexg')
 				shifts = apImod.readShiftPrexgFile(aligndir, imodseriesname)
@@ -172,29 +170,41 @@ class tomoRaptor(appionScript.AppionScript):
 				# Record tilts in align run allows more than one tilt series to be
 				# used in one align run.
 				apTomo.insertTiltsInAlignRun(alignrun, tiltdatalist[i],leginontomosettingslist[i],primary)
-			if raptoraligndata:
+			if not raptorfailed:
 				apTomo.makeAlignStackMovie(alifilepath)
 			os.chdir(processdir)
 
-		# Full tomogram created with raptor is ???? handness?????
-		'''
-		voltransform = '????'
-		origtomopath = os.path.join(processdir, seriesname+"_full.rec")
-		currenttomopath = apImod.transformVolume(origtomopath,voltransform)
-		shutil.move(currenttomopath, origtomopath)
-		'''
-		zprojectfile = apImod.projectFullZ(processdir, runname, seriesname,reconbin,True,False)
-		if commit:
-			try:
-				zimagedata = apTomo.uploadZProjection(runname,imagelist[0],zprojectfile)
-			except:
-				zimagedata = None
-			fullrundata = apTomo.insertFullTomoRun(sessiondata,processdir,runname,'imod-wbp')
-			fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltdatalist[0],alignerdata,
+			# Full tomogram created with raptor is ???? handness?????
+			if not raptorfailed:
+				'''
+				voltransform = '????'
+				origtomopath = os.path.join(processdir, seriesname+"_full.rec")
+				currenttomopath = apImod.transformVolume(origtomopath,voltransform)
+				shutil.move(currenttomopath, origtomopath)
+				'''
+				zprojectfile = apImod.projectFullZ(processdir, runname, seriesname,reconbin,False,False)
+				try:
+					zimagedata = apTomo.uploadZProjection(runname,imagelist[0],zprojectfile)
+				except:
+					zimagedata = None
+				fullrundata = apTomo.insertFullTomoRun(sessiondata,processdir,runname,'imod-wbp')
+				fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltdatalist[0],alignerdata,
 						fullrundata,runname,description,zimagedata,thickness_pixel,reconbin)
 
+
+				# if raptor succeeded, upload data and parameters to database
+				session_time = sessiondata.timestamp
+				description = self.params['description']
+				raptordatabase = apRaptor.commitToJensenDatabase(session_time, fulltomodata, stackdir, processdir, stackname, description)
+				if raptordatabase == 0:
+					apDisplay.printMsg("RAPTOR and uploading to Jensen database done.")
+				else:
+					apDisplay.printWarning("Uploading to Jensen database failed.")
+				
+
+
 #=====================
-if __name__ == '__main__':
+if __name__ == '__main__':  
 	app = tomoRaptor()
 	app.start()
 	app.close()
