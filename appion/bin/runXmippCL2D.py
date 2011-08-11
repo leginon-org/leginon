@@ -271,6 +271,7 @@ class CL2D(appionScript.AppionScript):
 		for classref in D:
 			stack=[]
 			for partnum in D[classref]:
+				### NOTE: RESOLUTION WILL NOT BE CALCULATED IF ALIGNED STACK IS NOT CREATED
 				stack.append(apImagicFile.readSingleParticleFromStack("alignedStack.hed",int(partnum)+1,msg=False))
 			apImagicFile.writeImagic(stack,"tmp.hed")
 
@@ -294,6 +295,37 @@ class CL2D(appionScript.AppionScript):
 		return D	
 
 	#=====================
+	def insertCL2DParamsIntoDatabase(self):
+		### setup cl2d run
+		cl2dq = appiondata.ApCL2DRunData()
+		cl2dq['runname'] = self.runparams['runname']
+		cl2dq['run_seconds'] = self.runparams['runtime']
+		cl2dq['fast'] = self.runparams['fast']
+		cl2dq['REF|projectdata|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
+		cl2dq['timestamp'] = self.params['timestamp']
+		cl2dq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+		cl2dq['finished'] = True
+		cl2dq['max-iter'] = self.params['maxiter']
+		cl2dq['num-ref'] = self.params['numrefs']
+		if self.params['correlation'] is True:
+			cl2dq['correlation'] = True
+			cl2dq['correntropy'] = False
+		else:
+			cl2dq['correlation'] = False
+			cl2dq['correntropy'] = True
+		if self.params['classical'] is True:
+			cl2dq['classical_multiref'] = True
+			cl2dq['intracluster_multiref'] = False
+		else:
+			cl2dq['classical_multiref'] = False
+			cl2dq['intracluster_multiref'] = True
+	
+		### insert if commit is true
+		if self.params['commit'] is True:
+			cl2dq.insert()	
+		self.cl2dqdata=cl2dq
+
+	#=====================
 	def insertAlignStackRunIntoDatabase(self, alignimagicfile):
 		apDisplay.printMsg("Inserting CL2D Run into DB")
 
@@ -305,15 +337,8 @@ class CL2D(appionScript.AppionScript):
 #		if uniquerun:
 #			apDisplay.printError("Run name '"+self.runparams['runname']+"' and path already exist in database")
 
-		### setup cl2d run
-		cl2dq = appiondata.ApCL2DRunData()
-		cl2dq['runname'] = self.runparams['runname']
-		cl2dq['run_seconds'] = self.runparams['runtime']
-		cl2dq['fast'] = self.runparams['fast']
-		self.cl2dqdata=cl2dq
-
 		### finish alignment run
-		alignrunq['cl2drun'] = cl2dq
+		alignrunq['cl2drun'] = self.cl2dq
 		alignrunq['hidden'] = False
 		alignrunq['runname'] = self.runparams['runname']
 		alignrunq['description'] = self.runparams['description']
@@ -439,8 +464,9 @@ class CL2D(appionScript.AppionScript):
 		clusterrefq['clusterrun'] = self.clusterrun
 		clusterrefq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clusterrefq['num_particles'] = len(partlist)
-		if classnum in self.resdict:
-			clusterrefq['ssnr_resolution'] = self.resdict[classnum]
+		if self.params['align'] is True:
+			if classnum in self.resdict:
+				clusterrefq['ssnr_resolution'] = self.resdict[classnum]
 		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
 		for i,partnum in enumerate(partlist):
 			cpartq = appiondata.ApClusteringParticleData()
@@ -473,6 +499,8 @@ class CL2D(appionScript.AppionScript):
 			apDisplay.printMsg("creating timestamp")
 			self.params['timestamp'] = self.timestamp
 		self.params['localstack'] = os.path.join(self.params['rundir'], self.params['timestamp']+".hed")
+		if os.path.isfile(self.params['localstack']):
+			apFile.removeStack(self.params['localstack'])
 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
 		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
 			clipsize = int(self.clipsize)*self.params['bin']
@@ -540,6 +568,7 @@ class CL2D(appionScript.AppionScript):
 		lastLevelStack = "part"+self.params['timestamp']+"_level_%02d_.hed"%(self.Nlevels-1)
 		apStack.averageStack(lastLevelStack)
 		self.boxsize = apFile.getBoxSize(lastLevelStack)[0]
+		self.insertCL2DParamsIntoDatabase()
 		if self.runparams['align'] is True:
 			self.insertAlignStackRunIntoDatabase("alignedStack.hed")
 			self.calcResolution(self.Nlevels-1)
@@ -548,7 +577,8 @@ class CL2D(appionScript.AppionScript):
 		### loop over each class average stack & insert as clustering stacks
 		self.insertClusterRunIntoDatabase()
 		for level in range(self.Nlevels):
-			if self.runparams['align'] is True:
+			### NOTE: RESOLUTION CAN ONLY BE CALCULATED IF ALIGNED STACK EXISTS TO EXTRACT / READ THE PARTICLES
+			if self.params['align'] is True:
 				self.calcResolution(level)
 			partdict = self.getClassificationAtLevel(level)
 			for classnum in partdict: 
