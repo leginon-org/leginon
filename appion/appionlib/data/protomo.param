@@ -13,17 +13,17 @@
 
 tiltseries {
 
- W = { 1350, 1350 } (* AP orig window *)
+ W = { AP_windowsize_x, AP_windowsize_y } (* AP orig window *)
 
- O = 800 	(* AP orig thickness *)
+ O = AP_thickness 	(* AP orig thickness *)
 
- S = 2             (* AP sampling *)
+ S = AP_sampling             (* AP sampling *)
 
  N = W/S (* window size at sampling S *)
 
  T = O/S           (* thickness at sampling S *)
 
- F = 0.4305         (* AP cos( highest tilt angle ) *)
+ F = AP_cos_alpha         (* AP cos( highest tilt angle ) *)
 
  sampling: S
 
@@ -33,7 +33,7 @@ tiltseries {
 
  preprocess {
 
-   logging: true
+   logging: false
 
    border: 100
 
@@ -59,13 +59,13 @@ tiltseries {
    }
 
    lowpass {
-     diameter:    { 0.25, 0.25 } * S (* AP lowpass diameter *)
-     apodization: { 0.05, 0.05 } * S (* AP lowpass apodization *)
+     diameter:    { AP_lp_diam_x, AP_lp_diam_y } * S (* AP lowpass diameter *)
+     apodization: { AP_lp_apod_x, AP_lp_apod_y } * S (* AP lowpass apodization *)
    }
 
    highpass {
-     diameter:    { 0.001, 0.001 } * S (* AP lowpass diameter *)
-     apodization: { 0.002, 0.002 } * S (* AP lowpass apodization *)
+     diameter:    { AP_hp_diam_x, AP_hp_diam_y } * S (* AP highpass diameter *)
+     apodization: { AP_hp_apod_x, AP_hp_apod_y } * S (* AP highpass apodization *)
    }
 
  }
@@ -90,7 +90,7 @@ tiltseries {
    }
 
    correlation {
-     mode: "mcf"      (* AP corr mode *)
+     mode: "AP_corr_mode"      (* AP corr mode *)
      size: { 128, 128 } 
    }
 
@@ -127,10 +127,10 @@ tiltseries {
 
  }
 
- suffix: ".img"
+ suffix: ".mrc"
 
  pathlist: 
-"/panfs/storage.local/imb/home/sstagg/scratch/11jul20a/s02/raw"  (* AP path to raw directory *)
+"AP_raw_path"  (* AP path to raw directory *)
 
  cachedir: "cache"
 

@@ -2,18 +2,20 @@
 
 import os
 import sys
+import math
+import glob
 from appionlib import appionScript
 from appionlib import apDisplay
 from appionlib import apDatabase
 from appionlib import apProTomo2Prep
 from appionlib import apTomo
+from appionlib import apProTomo
+from appionlib import apParam
 
-""" #this is only commented out until protomo/python can get worked out
 try:
 	import protomo
 except:
 	print "protomo did not get imported"
-"""
 
 #=====================
 class ProTomo2Aligner(appionScript.AppionScript):
@@ -31,25 +33,34 @@ class ProTomo2Aligner(appionScript.AppionScript):
 		#self.parser.add_option("--refimg", dest="refimg", type="int",
 		#	help="Protomo only: custom reference image number, e.g. --refimg=20", metavar="int")
 		
-		self.parser.add_option("--sample", dest="sample", default=4.0, type="float",
-			help="Align sample rate, e.g. --sample=2.0", metavar="float")
-		
 		self.parser.add_option("--region_x", dest="region_x", default=512, type="int",
 			help="Pixels in x to use for region matching, e.g. --region=1024", metavar="int")
 		
 		self.parser.add_option("--region_y", dest="region_y", default=512, type="int",
 			help="Pixels in y to use for region matching, e.g. --region=1024", metavar="int")
 		
-		self.parser.add_option("--lowpass_diameter_x", dest="lowpass_diameter_x",  type="float",
-			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_x=0.4", metavar="float")
+		self.parser.add_option("--lowpass_diameter_x", dest="lowpass_diameter_x",  default=0.5, type="float",
+			help="in fractions of nyquist, e.g. --lowpass_diameter_x=0.4", metavar="float")
 		
-		self.parser.add_option("--lowpass_diameter_y", dest="lowpass_diameter_y",  type="float",
+		self.parser.add_option("--lowpass_diameter_y", dest="lowpass_diameter_y",  default=0.5, type="float",
 			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_y=0.4", metavar="float")
 		
-		self.parser.add_option("--highpass_diameter_x", dest="highpass_diameter_x",  type="float",
+		self.parser.add_option("--lowpass_apod_x", dest="lowpass_apod_x", default=0.05, type="float",
+			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_x=0.4", metavar="float")
+		
+		self.parser.add_option("--lowpass_apod_y", dest="lowpass_apod_y", default=0.05, type="float",
+			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --lowpass_diameter_y=0.4", metavar="float")
+		
+		self.parser.add_option("--highpass_diameter_x", dest="highpass_diameter_x", default=0.001, type="float",
 			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_x=0.02", metavar="float")
 		
-		self.parser.add_option("--highpass_diameter_y", dest="highpass_diameter_y",  type="float",
+		self.parser.add_option("--highpass_diameter_y", dest="highpass_diameter_y", default=0.001, type="float",
+			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_y=0.02", metavar="float")
+
+		self.parser.add_option("--highpass_apod_x", dest="highpass_apod_x", default=0.002, type="float",
+			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_x=0.02", metavar="float")
+		
+		self.parser.add_option("--highpass_apod_y", dest="highpass_apod_y", default=0.002, type="float",
 			help="Protomo2 only: TODO: To be determined (in reciprical pixels), e.g. --highpass_diameter_y=0.02", metavar="float")
 
 		self.parser.add_option("--thickness", dest="thickness",  default=100, type="float",
@@ -61,7 +72,7 @@ class ProTomo2Aligner(appionScript.AppionScript):
 		self.parser.add_option("--iters", dest="iters", default=1, type="int",
 			help="Number of alignment and geometry refinement iterations, e.g. --iter=4", metavar="int")
 
-		self.parser.add_option("--sampling", dest="sampling",  default="1", type="int",
+		self.parser.add_option("--sampling", dest="sampling",  default="4", type="int",
 			help="Sampling rate of raw data, e.g. --sampling=4")
 				
 		self.parser.add_option("--border", dest="border", default=100,  type="int",
@@ -92,7 +103,7 @@ class ProTomo2Aligner(appionScript.AppionScript):
 			help="Protomo2 only: TODO, e.g. --reference_apodization_y=10.0", metavar="float")
 
 		self.correlation_modes = ( "xcf", "mcf", "pcf", "dbl" )
-		self.parser.add_option("--correlation_mode", dest="correlation_mode",
+		self.parser.add_option("--corr_mode", dest="corr_mode",
 			help="Protomo2 only: Correlation mode, standard (xcf), mutual (mcf), phase only (pcf), phase doubled (dbl), e.g. --correlation_mode=xcf", metavar="CorrMode",
 			type="choice", choices=self.correlation_modes, default="mcf" )
 		
@@ -174,6 +185,9 @@ class ProTomo2Aligner(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
+	
+		### some of this should go in preloop functions
+	
 		###do queries
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		self.sessiondata = sessiondata
@@ -181,41 +195,78 @@ class ProTomo2Aligner(appionScript.AppionScript):
 		tiltdata=apTomo.getImageList([tiltseriesdata])
 		description = self.params['description']
 		sampling = self.params['sampling']
+		print sampling
 		iters = self.params['iters']
 		apDisplay.printMsg("getting imagelist")
 
 		tilts,ordered_imagelist,ordered_mrc_files,refimg = apTomo.orderImageList(tiltdata)
 		#tilts are tilt angles, ordered_imagelist are imagedata, ordered_mrc_files are paths to files, refimg is an int
-		
+				
 		###set up files
 		seriesname='series'+str(self.params['tiltseries'])
 		tiltfilename=seriesname+'.tlt'
-		paramname=seriesname+'.param'
-		
-		###create tilt file
-		
-		#get image size from the first image
-		imagesizex=tiltdata[0]['image'].shape[0]
-		imagesizey=tiltdata[0]['image'].shape[1]
-
-		#shift half tilt series relative to eachother
-		#SS I'm arbitrarily making the bin parameter here 1 because it's not necessary to sample at this point
-		shifts = apTomo.getGlobalShift(ordered_imagelist, 1, refimg)
-		origins=apProTomo2Prep.convertShiftsToOrigin(shifts, imagesizex, imagesizey)
-
-		#determine azimuth
-		azimuth=apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
-		apProTomo2Prep.writeTileFile2(tiltfilename, seriesname, ordered_mrc_files, origins, tilts, azimuth, refimg)
+		param_out=seriesname+'.param'
+		maxtilt=max([abs(tilts[0]),abs(tilts[-1])])
+		apDisplay.printMsg("highest tilt angle is %f" % maxtilt)
+		self.params['cos_alpha']=math.cos(maxtilt*math.pi/180)
+		self.params['raw_path']=os.path.join(self.params['rundir'],'raw')
 
 		###create param file
-		#should use Amber's code
-		apProTomo2Prep.getPrototypeParamFile(inputparams['seriesname']+'.param')
-		paramdict = createParamDict(params)
-		modifyParamFile('test.param', 'testout22.param', paramdict)
+		param_in=apProTomo2Prep.getPrototypeParamPath()
+		paramdict = apProTomo2Prep.createParamDict(self.params)
+		apProTomo2Prep.modifyParamFile(param_in, param_out, paramdict)
+		seriesparam=protomo.param(param_out)
+
+		apDisplay.printMsg('Starting protomo alignment')
+
+		###using presence of raw directory to determine if refine has been run once already
+		rawexists=apParam.createDirectory(self.params['raw_path'])
+		if rawexists is True:
+			apDisplay.printMsg("copying raw images")
+			newfilenames=apProTomo.getImageFiles(ordered_imagelist,self.params['raw_path'], link=False)
 		
-		#test to see if i3t file exists
-		#if i3t file does not exist, create it
-		#else go straight to refine
+			###create tilt file
+
+			#get image size from the first image
+			imagesizex=tiltdata[0]['image'].shape[0]
+			imagesizey=tiltdata[0]['image'].shape[1]
+
+			#shift half tilt series relative to eachother
+			#SS I'm arbitrarily making the bin parameter here 1 because it's not necessary to sample at this point
+			shifts = apTomo.getGlobalShift(ordered_imagelist, 1, refimg)
+			origins=apProTomo2Prep.convertShiftsToOrigin(shifts, imagesizex, imagesizey)
+
+			#determine azimuth
+			azimuth=apTomo.getAverageAzimuthFromSeries(ordered_imagelist)
+			apProTomo2Prep.writeTileFile2(tiltfilename, seriesname, newfilenames, origins, tilts, azimuth, refimg)
+			
+			#create series object
+			seriesgeom=protomo.geom(tiltfilename)
+			series=protomo.series(seriesparam,seriesgeom)
+		else:
+			series=protomo.series(seriesparam)
+
+		#figure out starting number
+		start=0
+		previters=glob.glob(seriesname+'*.corr')
+		if len(previters) > 0:
+			previters.sort()
+			lastiter=previters[-1]
+			start=int(lastiter.split(seriesname)[1].split('.')[0])+1
+		
+		for n in range(iters):
+			series.align()
+			basename='%s%02d' % (seriesname,(n+start))
+
+			corrfile=basename+'.corr'
+			series.corr(corrfile)
+			series.fit()
+			series.update()
+
+			#archive results
+			tiltfile=basename+'.tlt'
+			geom=series.geom()
+			geom.write(tiltfile)
 
 #=====================
 #=====================

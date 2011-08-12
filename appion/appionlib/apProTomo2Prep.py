@@ -5,6 +5,7 @@ import numpy
 import os
 import sys
 import shutil
+import re
 from appionlib import apParam
 from appionlib import apTomo
 from appionlib import apImod
@@ -128,7 +129,7 @@ def writeTileFile2(tiltfile, seriesname, imagelist, origins, tilts, azimuth, ref
 	f.write ("\n")
 	for n in range(len(imagelist)):
 		imagename=os.path.splitext(os.path.basename(imagelist[n]))[0] #strip off path and extension from mrc file
-		f.write ("   IMAGE %-5d     FILE %s       ORIGIN [ %8.3f %8.3f ]    TILT ANGLE    %8.3f    ROTATION     %8.3f\n" % (n, imagename, origins[n]['x'], origins[n]['y'], tilts[n], 0))
+		f.write ("   IMAGE %-5d     FILE %s       ORIGIN [ %8.3f %8.3f ]    TILT ANGLE    %8.3f    ROTATION     %8.3f\n" % (n+1, imagename, origins[n]['x'], origins[n]['y'], tilts[n], 0))
 
 	f.write ("\n")
 	f.write ("   REFERENCE IMAGE %d\n" % refimg)
@@ -144,7 +145,7 @@ def modifyParamFile(filein, fileout, paramdict):
 	f.close()
         
 	for key, value in paramdict.iteritems():
-		filestring = re.sub(key, value, filestring)
+		filestring = re.sub(key, str(value), filestring)
         
 	f = open(fileout, 'w')
 	f.write(filestring)
@@ -152,9 +153,9 @@ def modifyParamFile(filein, fileout, paramdict):
             
 #=====================
 def createParamDict(params):
-	paramdict = { 'AP_windowsize_x':params['windowsize_x'],
-                'AP_windowsize_y':params['windowsize_y'],
-                'AP_sample': params['sample'],
+	paramdict = { 'AP_windowsize_x':params['region_x'],
+                'AP_windowsize_y':params['region_y'],
+                'AP_sampling': params['sampling'],
 		'AP_thickness': params['thickness'],
 		'AP_cos_alpha': params['cos_alpha'],
 		'AP_lp_diam_x': params['lowpass_diameter_x'],
@@ -250,144 +251,4 @@ def getPrototypeParamPath():
 	origparamfile=os.path.join(appiondir,'appionlib','data','protomo.param')
 	return origparamfile
 		
-#=====================
-def buildParamFile(self):
-	"""This function may disappear in the future and be replaced by 
-	a prototypical param file that lives somewhere in myami"""
-	paramtext =  '(* Parameters for MAX tilt series *)\n'
-	paramtext +=  '\n'
-	paramtext +=  '(* Units are pixels for real space quantities, or reciprocal pixels    *)\n'
-	paramtext +=  '(* for reciprocal space quantities, unless otherwise stated. The units *)\n'
-	paramtext +=  '(* refer to the sampled image. The spatial frequencies for filters are *)\n'
-	paramtext +=  '(* multiplied by the sampling factor and thus refer to the unsampled,  *)\n'
-	paramtext +=  '(* raw image.                                                          *)\n'
-	paramtext +=  '\n'
-	paramtext +=  '\n'
-	paramtext +=  'tiltseries {\n'
-	paramtext +=  '\n'
-	paramtext +=  '  N = { 512, 512 }  (* window size at sampling S *)\n'
-	paramtext +=  '\n'
-	paramtext +=  '  T = 40            (* thickness at sampling S *)\n'
-	paramtext +=  '\n'
-	paramtext +=  '  S = 2             (* sampling *)\n'
-	paramtext +=  '\n'
-	paramtext +=  '  F = 0.4848        (* cos( highest tilt angle ) *)\n'
-	paramtext +=  '\n'
-	paramtext +=  '  sampling: S\n'
-	paramtext +=  '\n'
-	paramtext +=  '  binning: true\n'
-	paramtext +=  '\n'
-	paramtext +=  '  preprocessing: true\n'
-	paramtext +=  '\n'
-	paramtext +=  '  preprocess {\n'
-	paramtext +=  '\n'
-	paramtext +=  '    logging: false\n'
-	paramtext +=  '\n'
-	paramtext +=  '    border: 100\n'
-	paramtext +=  '\n'
-	paramtext +=  '    clip: { 3.5, 3.5 }   (* specified as a multiple of the standard deviation *)\n'
-	paramtext +=  '\n'
-	paramtext +=  '    mask {\n'
-	paramtext +=  '      gradient: true\n'
-	paramtext +=  '      iter: true\n'
-	paramtext +=  '      filter: "median"\n'
-	paramtext +=  '      kernel: { 5, 5 }\n'
-	paramtext +=  '      clip: { 3.0, 3.0 }\n'
-	paramtext +=  '    }\n'
-	paramtext +=  '\n'
-	paramtext +=  '  }\n'
-	paramtext +=  '\n'
-	paramtext +=  '  window {\n'
-	paramtext +=  '\n'
-	paramtext +=  '    size: N\n'
-	paramtext +=  '\n'
-	paramtext +=  '    mask {\n'
-	paramtext +=  '      apodization: { 10, 10 }\n'
-	paramtext +=  '      width: N - 2.5 * apodization\n'
-	paramtext +=  '    }\n'
-	paramtext +=  '\n'
-	paramtext +=  '    lowpass {\n'
-	paramtext +=  '      diameter:    { 0.40, 0.40 } * S\n'
-	paramtext +=  '      apodization: { 0.01, 0.01 } * S\n'
-	paramtext +=  '    }\n'
-	paramtext +=  '\n'
-	paramtext +=  '    highpass {\n'
-	paramtext +=  '      diameter:    { 0.04, 0.04 } * S\n'
-	paramtext +=  '      apodization: { 0.02, 0.02 } * S\n'
-	paramtext +=  '    }\n'
-	paramtext +=  '\n'
-	paramtext +=  '  }\n'
-	paramtext +=  '\n'
-	paramtext +=  '\n'
-	paramtext +=  '  reference {\n'
-	paramtext +=  '\n'
-	paramtext +=  '    body: T / F\n'
-	paramtext +=  '\n'
-	paramtext +=  '  }\n'
-	paramtext +=  '\n'
-	paramtext +=  '\n'
-	paramtext +=  '  align {\n'
-	paramtext +=  '\n'
-	paramtext +=  '    estimate: true\n'
-	paramtext +=  '\n'
-	paramtext +=  '    maxcorrection: 0.04\n'
-	paramtext +=  '\n'
-	paramtext +=  '    mask {\n'
-	paramtext +=  '      apodization: { 10, 10 }\n'
-	paramtext +=  '      width: N - 2.5 * apodization\n'
-	paramtext +=  '    }\n'
-	paramtext +=  '\n'
-	paramtext +=  '    correlation {\n'
-	paramtext +=  '      mode: "mcf"\n'
-	paramtext +=  '      size: { 128, 128 }\n'
-	paramtext +=  '    }\n'
-	paramtext +=  '\n'
-	paramtext +=  '    peaksearch {\n'
-	paramtext +=  '      radius: { 49, 49 }\n'
-	paramtext +=  '    }\n'
-	paramtext +=  '\n'
-	paramtext +=  '  }\n'
-	paramtext +=  '\n'
-	paramtext +=  '\n'
-	paramtext +=  '  fit {\n'
-	paramtext +=  '\n'
-	paramtext +=  '    orientation: true\n'
-	paramtext +=  '    azimuth: true\n'
-	paramtext +=  '    rotation: true\n'
-	paramtext +=  '\n'
-	paramtext +=  '    logging: true\n'
-	paramtext +=  '\n'
-	paramtext +=  '  }\n'
-	paramtext +=  '\n'
-	paramtext +=  '\n'
-	paramtext +=  '  map {\n'
-	paramtext +=  '\n'
-	paramtext +=  '    size: { 256, 256, 128 }\n' 
-	paramtext +=  '    body: T / F\n'
-	paramtext +=  '\n'
-	paramtext +=  '    lowpass {\n'
-	paramtext +=  '      diameter:    { 0.50, 0.50 } * S\n'
-	paramtext +=  '      apodization: { 0.02, 0.02 } * S\n'
-	paramtext +=  '    }\n'
-	paramtext +=  '\n'
-	paramtext +=  '    logging: true\n'
-	paramtext +=  '\n'
-	paramtext +=  '  }\n'
-	paramtext +=  '\n'
-	paramtext +=  '  suffix: ".mrc"\n'
-	paramtext +=  '\n'
-	paramtext +=  '  pathlist: "/ami/data17/leginon/10nov10z/rawdatatest"\n'
-	paramtext +=  '\n'
-	paramtext +=  '  cachedir: "/ami/data17/appion/10nov10z/rawdata/tiltseries1/align/align1/cache/"\n'
-	paramtext +=  '\n'
-	paramtext +=  '  outdir: "/ami/data17/appion/10nov10z/rawdata/tiltseries1/align/align1/out/"\n'
-	paramtext +=  '\n'
-	paramtext +=  '  logging: true\n'
-	paramtext +=  '\n'
-	paramtext +=  '  restart: false\n'
-	paramtext +=  '\n'
-	paramtext +=  '}\n'
-
-	return paramtext
-
 		

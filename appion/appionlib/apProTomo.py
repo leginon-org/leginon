@@ -86,6 +86,28 @@ def linkImageFiles(imgtree,rawdir):
 			os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),linkedpath)
 	return filenamelist
 
+def getImageFiles(imgtree,rawdir, link=True):
+	#This function should replace linkImageFiles in all calls (i.e. in tomoaligner.py and everywhere else)
+	filenamelist = []
+	for imagedata in imgtree:
+		#set up names
+		imgpath=imagedata['session']['image path']
+		presetname=imagedata['preset']['name']
+		imgprefix=presetname+imagedata['filename'].split(presetname)[-1]
+		imgname=imgprefix+'.mrc'
+		filenamelist.append(imgprefix)
+		
+		destpath = os.path.join(rawdir,imgname)
+		if link is True:
+			#create symlinks to files
+			if os.path.islink(destpath):
+				os.remove(destpath)
+			if not os.path.isfile(destpath):
+				os.symlink(os.path.join(imgpath,imagedata['filename']+'.mrc'),destpath)
+		else: 
+			shutil.copy(os.path.join(imgpath,imagedata['filename']+'.mrc'),destpath)
+	return filenamelist
+
 def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 	f=open(outfilename,'w')
 	f.write('\n')

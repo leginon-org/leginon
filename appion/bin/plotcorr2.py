@@ -10,7 +10,7 @@ def parseOptions():
 	parser.add_option('--corr', dest='corr', help='corr file to plot')
 	
 	#NOTE: should use type='choice' for the following option
-	parser.add_option('--plottype', dest='plottype', help='parameter to plot (cofx, cofy, coa, or rot)')
+	parser.add_option('--type', dest='type', help='parameter to plot (cofx, cofy, coa, or rot)')
 
 	options, args=parser.parse_args()
 	
@@ -25,7 +25,7 @@ if __name__=="__main__":
 		
 
 	corrfile=options.corr
-	param=options.plottype
+	param=options.type
 
 	f=open(corrfile,'r')
 	lines=f.readlines()
