@@ -24,18 +24,23 @@ class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 		self.alignmethods = ( "imod-shift", "protomo","raptor" )
 		self.parser.add_option("--alignmethod", dest="alignmethod",
 			type="choice", choices=self.alignmethods, default="protomo" )
-		self.parser.add_option("--alignsample", dest="alignsample", default=4.0, type="float",
-			help="Protomo only: Align sample rate, e.g. --alignsample=2.0", metavar="float")
-		self.parser.add_option("--alignregion", dest="alignregion", default=50, type="int",
-			help="Protomo only: Percentage of image length used in alignment, e.g. --alignregion=80", metavar="int")
+		# general parameters
 		self.parser.add_option("--reconthickness", dest="reconthickness", default=100, type="int",
 			help="Full tomo reconstruction thickness before binning, e.g. --thickness=200", metavar="int")
 		self.parser.add_option("--reconbin", dest="reconbin", default=1, type="int",
 			help="Extra binning from original images, e.g. --bin=2", metavar="int")
+		self.parser.add_option("--maxjump", dest="maxjump", default=40, type="int",
+			help="Maximum allowed movement of the feature of interest between tilt images, e.g. --maxjump=40", metavar="int")
+		# Protomo only
+		self.parser.add_option("--alignsample", dest="alignsample", default=4.0, type="float",
+			help="Protomo only: Align sample rate, e.g. --alignsample=2.0", metavar="float")
+		self.parser.add_option("--alignregion", dest="alignregion", default=50, type="int",
+			help="Protomo only: Percentage of image length used in alignment, e.g. --alignregion=80", metavar="int")
+		# Raptoe only
 		self.parser.add_option("--markersize", dest="markersize", default=10, type="int",
-			help="Mark size in nanometer, e.g. --markersize=10", metavar="int")
+			help="Raptor only: Mark size in nanometer, e.g. --markersize=10", metavar="int")
 		self.parser.add_option("--markernumber", dest="markernumber", default=0, type="int",
-			help="number of markers, e.g. --markernumber=10", metavar="int")
+			help="Raptor only: Number of markers, e.g. --markernumber=10", metavar="int")
 		return
 
 	def checkConflicts(self):
@@ -56,11 +61,9 @@ class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 		for shift in shifts:
 			distance = math.hypot(shift['x'],shift['y'])
 			distances.append(distance)
-		if len(imagelist) < self.params['imagelimit']: 
-			apDisplay.printWarning("Less than %d images in Series %d" % (self.params['imagelimit'],tiltseriesdata['number']))
-			return True
-		if max(distances[2:-2]) > min(imgshape) / (corr_bin*3):
-			apDisplay.printWarning("Tracked feature in Series %d jumps over 1/3 of the image" % (tiltseriesdata['number']))
+		max_jump_fraction = self.params['maxjump'] / 100.0
+		if max(distances[2:-2]) > (min(imgshape) / corr_bin) * max_jump_fraction:
+			apDisplay.printWarning('Tracked feature in Series %d jumps over %d %% of the image' % (tiltseriesdata['number'], self.params['maxjump']))
 			return True
 		return False
 

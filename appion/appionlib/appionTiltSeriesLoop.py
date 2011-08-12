@@ -185,6 +185,14 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 	#	return
 
 	#=====================
+	def __isShortTiltSeries(self, tiltseriesdata):
+		imgtree = apDatabase.getImagesFromTiltSeries(tiltseriesdata,False)
+		imagelimit = self.params['imagelimit']
+		is_short = len(imgtree) < imagelimit
+		if is_short:
+			apDisplay.printWarning("Tilt series has less than %d images" % imagelimit)
+		return is_short
+
 	def isBadTiltSeries(self, tiltseriesdata):
 		"""
 		use this function to skip bad tilt series before processing
@@ -577,7 +585,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 			return False
 
 		# skip if there are some problem with the series
-		if self.isBadTiltSeries(tiltseriesdata):
+		if self.__isShortTiltSeries(tiltseriesdata) or self.isBadTiltSeries(tiltseriesdata):
 			apDisplay.printWarning("Series %d is not good enough for processing, skipping" % (tiltseriesdata['number']))
 			seriesname = "series%3d" % (tiltseriesdata['number'])
 			self._writeDoneDict(seriesname)
@@ -832,11 +840,8 @@ class PrintLoop(AppionTiltSeriesLoop):
 		"""
 		You must define how you would like to reject bad tilt series.
 		a simple return will let everything pass.
-		Here we consider a tilt series with less than 4 image collected
-		bad.
 		"""
-		imgtree = apDatabase.getImagesFromTiltSeries(tiltseriesdata,False)
-		return len(imgtree) < self.params["imagelimit"]
+		return False
 
 	def processTiltSeries(self, tiltseriesdata):
 		"""
