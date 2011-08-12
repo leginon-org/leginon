@@ -49,8 +49,8 @@ echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/xmipp_logo.png' width='64'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='selectStackForm.php?expId=$expId&method=xmippml3d&type=multi'>Xmipp Maximum-Likelihood 3D Classification</a></h3>\n";
-echo " <p>. This is the <a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/MLrefine3D'>Xmipp ML3D protocol</a>&nbsp;<img src='img/external.png'>&nbsp"
-	."The classification technique is the key operation behind the all of the procedures in the "
+echo " <p>This is the <a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/MLrefine3D'>Xmipp ML3D protocol.&nbsp</a><img src='img/external.png'>"
+	." The classification technique is the key operation behind the all of the procedures in the "
 	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/MLrefine3D'>full maximum-likelihood refinement procedure</a>&nbsp;<img src='img/external.png'>&nbsp;"
 	."Through optimization of the log-likelihood function, it aims to find the most likely set of parameterers to construct a model describing the "
 	."structural heterogeneity present in the data. One of the biggest advantages of this approach is that distinct classes are identified in an usupervised manner. "
