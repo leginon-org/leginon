@@ -52,7 +52,8 @@ echo " <p> this method builds a hierarchical classification of particles"
 	." program to perform alignments. "
 	."It is a relatively fast method that aligns and classify the images at the same time. "
 	."The method starts by estimating a few classes that are further subdivided till the desired number of classes is reached. "
-	."Every time an image is compared to the class averages it is aligned before-hand."
+	."Every time an image is compared to the class averages it is aligned before-hand. <b> NOTE: in Xmipp 2.4 the alignment "
+	."parameters are not saved in the database, and therefore this method cannot be used for RCT / OTR reconstructions.</b>"
 	."</p>\n";
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
