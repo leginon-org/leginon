@@ -10,7 +10,7 @@ packageDict = {
 	}
 package = "Appion"
 packageDict.update({
-               "can64.exe" : (package,""),
+               "can64_mp.exe" : (package,""),
                "ace2correct.exe" : (package,"For CTF correction"),
                "ace2.exe" : (package,"For CTF estimation"),
                "acetilt.py" : (package,""),
