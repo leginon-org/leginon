@@ -393,6 +393,7 @@ class CL2D(appionScript.AppionScript):
 			refq['refnum'] = ref+1
 			refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 			refq['alignrun'] = self.alignstackdata['alignrun']
+			refq['iteration'] = self.params['maxiter']
 			if ref in self.resdict:
 				refq['ssnr_resolution'] = self.resdict[ref]
 
