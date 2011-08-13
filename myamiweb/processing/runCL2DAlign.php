@@ -283,8 +283,8 @@ function runCL2DAlign() {
 	$description=$_POST['description'];
 	$fast = true;
 	$converge = $_POST['converge'];
-	$image2imagedistanceval = $_POST['image2imagedistanceval'];
-	$image2clusterdistanceval = $_POST['image2clusterdistanceval'];
+	$image2imagedistanceval = $_POST['image2imagedistance'];
+	$image2clusterdistanceval = $_POST['image2clusterdistance'];
 //	$dontAlign = ($_POST['dontAlign']=="on") ? true : false;
 	$commit = ($_POST['commit']=="on") ? true : false;
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
@@ -346,9 +346,9 @@ function runCL2DAlign() {
 	
 //	if ($dontAlign)
 //		$command.="--dontAlignImages ";
-	if ($distribution == "minimum")
+	if ($image2clusterdistanceval == "minimum")
 		$command.="--classical_multiref ";
-	if ($distribution == "correlation")
+	if ($image2imagedistanceval == "correlation")
 		$command.="--correlation ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
