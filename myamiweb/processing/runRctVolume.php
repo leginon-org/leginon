@@ -217,11 +217,12 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 
 	echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
 
-	//Mask radius
+	//Mask radius & boxsize (for error checking)
 	echo docpop('mask','Mask Radius:<br/>');
 	echo "<INPUT TYPE='text' NAME='maskrad' SIZE='5' VALUE='$maskrad'>";
 	echo "<FONT SIZE='-2'>(in pixels)</FONT>\n";
 	echo "\n<br/>\n<br/>\n";
+	echo "<INPUT TYPE='hidden' NAME='box' VALUE='$box'>";
 
 	//Median filter of volume
 	echo docpop('medianval','Volume Median Filter:<br/>');
@@ -297,6 +298,7 @@ function runRctVolume() {
 
 	$tiltstack = $_POST['tiltstack'];
 	$maskrad = $_POST['maskrad'];
+	$box = $_POST['box'];
 	$lowpassvol = $_POST['lowpassvol'];
 	$highpasspart = $_POST['highpasspart'];
 	$median = $_POST['median'];
@@ -327,6 +329,8 @@ function runRctVolume() {
 
 	if (!$maskrad)
 		createRctVolumeForm("<B>ERROR:</B> Enter a mask radius");
+	if ((intval($box)/2-intval($maskrad))<2)
+		createRctVolumeForm("<B>ERROR:</B> Mask radius needs to be at least 2 pixels smaller than 1/2*boxsize; SPIDER error will result otherwise");
 
 	if (!$runname)
 		createRctVolumeForm("<B>ERROR:</B> Enter a unique run name");
