@@ -186,12 +186,13 @@ if (!HIDE_FEATURE)
 	echo "<tr><td width='100' align='center'>\n";
 	echo "  <img src='img/canimg.png' width='64'>\n";
 	echo "</td><td>\n";
-	echo "  <h3><a href='runTopolAlign.php?expId=$expId'>CAN Reference-free alignment</a></h3>\n";
-	echo "<p>Fast & easy 2D ref-free alignment by iterative classification using "
-		."a topology-representing network, followed by multi-reference alignment. "
-		."The classification is performed by Vince Ramey's implementation of "
-		."<a target='blank' href='http://www.ncbi.nlm.nih.gov/pubmed/14572474'>"
-		."Ogura et al. JSB (2003)</a>"
+	echo "  <h3><a href='runTopolAlign.php?expId=$expId'>Iterative MSA/MRA</a></h3>\n";
+	echo "<p>Fast & easy 2D ref-free alignment by iterative MSA/MRA.  Classification "
+		." can be performed using a topology-representing network or IMAGIC MSA."
+		." Multi-reference alignment can be performed using IMAGIC or EMAN. </a>" 
+#		."The classification is performed by Vince Ramey's implementation of "
+#		."<a target='blank' href='http://www.ncbi.nlm.nih.gov/pubmed/14572474'>"
+#		."Ogura et al. JSB (2003)</a>"
 		."</p>\n";
 	echo "</td></tr>\n";
 }
@@ -200,7 +201,7 @@ if (!HIDE_FEATURE)
 if (!HIDE_FEATURE)
 {
 	/*
-	** Topology representing network alignment
+	** EMAN reference-free alignment
 	*/
 	echo "<tr><td width='100' align='center'>\n";
 	echo "  <img src='img/eman_logo.png' width='64'>\n";
