@@ -234,6 +234,8 @@ class ProTomo2Aligner(appionScript.AppionScript):
 			#shift half tilt series relative to eachother
 			#SS I'm arbitrarily making the bin parameter here 1 because it's not necessary to sample at this point
 			shifts = apTomo.getGlobalShift(ordered_imagelist, 1, refimg)
+			
+			#OPTION: refinement might be more robust by doing one round of IMOD aligment to prealign images before doing protomo refine
 			origins=apProTomo2Prep.convertShiftsToOrigin(shifts, imagesizex, imagesizey)
 
 			#determine azimuth
@@ -267,6 +269,20 @@ class ProTomo2Aligner(appionScript.AppionScript):
 			tiltfile=basename+'.tlt'
 			geom=series.geom()
 			geom.write(tiltfile)
+		
+			###next I want to do some file conversions and upload metadata to the db. What I want to do is different from what tomoaligner does
+			
+			#convert correlation peak file to mrc
+			# outpath = os.path.join((self.params['rundir'],'out')
+			#'i3cut -fmt mrc %s %s' % (os.path.join(outpath,basename+'.img'), os.path.join(outpath,basename+'.mrc'))
+			
+			#read in correlation peak mrc
+			
+			#convert to animated gif
+			#I found some PIL code for this on the web and will put it on redmine
+			
+			#upload metadata to db 
+			
 
 #=====================
 #=====================
