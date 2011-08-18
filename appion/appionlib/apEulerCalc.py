@@ -10,6 +10,103 @@ from appionlib import apDisplay
 #==================
 #==================
 #==================
+def degreesToRadians(d):
+	return d*math.pi/180
+
+#==================	
+def radiansToDegrees(r):
+	return r*180/math.pi
+
+#==================	
+def EulersToRotationMatrix3DEM(phi, theta, omega):
+	'''
+	phi in degrees, theta in degrees, omega in degrees; takes Euler angles as rotation, tilt, and omega (in degrees) and 
+	converts to a 3x3 rotation matrix, according to ZYZ convention.
+	'''
+
+	phi = degreesToRadians(phi)
+	theta = degreesToRadians(theta)
+	omega = degreesToRadians(omega)
+
+	m = numpy.zeros((3,3), dtype=numpy.float32)
+	m[0][0] = math.cos(omega)*math.cos(theta)*math.cos(phi) - math.sin(omega)*math.sin(phi)
+	m[0][1] = math.cos(omega)*math.cos(theta)*math.sin(phi) + math.sin(omega)*math.cos(phi)
+	m[0][2] = -math.cos(omega)*math.sin(theta)
+	m[1][0] = -math.sin(omega)*math.cos(theta)*math.cos(phi) - math.cos(omega)*math.sin(phi)
+	m[1][1] = -math.sin(omega)*math.cos(theta)*math.sin(phi) + math.cos(omega)*math.cos(phi)
+	m[1][2] = math.sin(omega)*math.sin(theta)
+	m[2][0] = math.sin(theta)*math.cos(phi)
+	m[2][1] = math.sin(theta)*math.sin(phi)
+	m[2][2] = math.cos(theta)
+
+	### round off any values close to 0, default set to 0.001
+	default = 0.000001
+	m = numpy.where(abs(m) < default, 0, m)
+
+	return m
+
+#==================
+def EulersToRotationMatrixXmipp(phi, theta, psi):
+	return EulersToRotationMatrix3DEM(phi, theta, psi) 
+
+#==================
+def EulersToRotationMatrixSPIDER(phi, theta, psi):
+	return EulersToRotationMatrix3DEM(phi, theta, psi)
+
+#==================
+def rotationMatrixToEulers3DEM(m):
+	'''
+	matrix as a numpy array; recovers Euler angles in degrees from 3x3 rotation matrix or array. Procedure assumes that the tilt
+	Euler angle is < 180, i.e. pi. This follows the ZYZ convention of 3DEM with a standard coordinate system 
+	'''
+
+	if type(m) is not numpy.ndarray:
+		m = numpy.asarray(m)
+		
+	### round off any values close to 0, default set to 0.001
+	default = 0.000001
+	m = numpy.where(abs(m) < default, 0, m)
+
+	theta = math.acos(m[2][2])
+	if theta > 0 and theta < math.pi: 		
+		phi = math.atan2(m[2][1], m[2][0])
+		if m[0][2] == 0: ### atan2(0.0,-0.0) returns 180, but we need 0
+			omega = math.atan2(m[1][2], m[0][2])
+		else:
+			omega = math.atan2(m[1][2], -m[0][2])
+	elif round(theta,4) == round(0,4):
+		phi = 0
+		if m[1][0] == 0: ### atan2(0.0,-0.0) returns 180, but we need 0
+			omega = math.atan2(m[1][0], m[0][0])
+		else:
+			omega = math.atan2(-m[1][0], m[0][0])
+	elif round(theta,4) == round(math.pi,4):
+		phi = 0
+		if m[0][0] == 0: ### atan2(0.0,-0.0) returns 180, but we need 0
+			omega = math.atan2(m[1][0], m[0][0])
+		else:
+			omega = math.atan2(m[1][0], -m[0][0])
+	else:
+		phi = 0
+		if m[1][0] == 0: ### atan2(0.0,-0.0) returns 180, but we need 0
+			omega = math.atan2(m[1][0], m[0][0])
+		else:
+			omega = math.atan2(-m[1][0], m[0][0])
+	phi = radiansToDegrees(phi)
+	theta = radiansToDegrees(theta)
+	omega = radiansToDegrees(omega)
+
+	return phi, theta, omega
+
+#==================
+def rotationMatrixToEulersXmipp(m):
+	return rotationMatrixToEulers3DEM(m)
+
+#==================
+def rotationMatrixToEulersSPIDER(m):
+	return rotationMatrixToEulers3DEM(m)	
+
+#==================
 def eulerCalculateDistance(e1, e2, inplane=False):
 	"""
 	given two euler as dicts

@@ -6,11 +6,13 @@ import sys
 import time
 import glob
 import math
+import numpy
 import string
 import subprocess
 #appion
 from appionlib import apDisplay
 from appionlib import apEMAN
+from appionlib import apEulerCalc
 from appionlib import apFile
 from appionlib import apParam
 from appionlib import apImagicFile
@@ -466,3 +468,33 @@ def importProtocolPythonFile(protocolscript, rundir):
 			print e, "cannot open backup protocol file"
 			apDisplay.printError("could not find protocol file: %s ... try uploading as an external refinement" % protocolscript)
 	return p
+
+#======================
+#======================
+
+def convertSymmetryNameForPackage(inputname):
+	'''
+	hedral symmetry key is of possible name, value is that of this package
+	'''
+	xmipp_hedral_symm_names = {'oct':'O','icos':'I'}
+	inputname = inputname.lower().split(' ')[0]
+	if inputname[0] in ('c','d') or inputname in xmipp_hedral_symm_names.values():
+		symm_name = inputname.lower()
+	elif inputname in xmipp_hedral_symm_names.keys():
+		symm_name = xmipp_hedral_symm_names[inputname]
+	else:
+		apDisplay.printWarning("unknown symmetry name conversion. Use it directly")
+		symm_name = inputname.upper()
+	return symm_name
+	
+#=======================
+#=======================
+def calculate_equivalent_Eulers_without_flip(m):
+	''' takes transform matrix, multiplies by mirror_matrix, inverses sign of psi '''
+
+	mmirror = numpy.matrix([[-1,0,0],[0,-1,0],[0,0,-1]])
+	mnew = m * mmirror
+	newphi, newtheta, newpsi = apEulerCalc.rotationMatrixToEulersXmipp(mnew)
+	### this was assessed empirically, works on synthetic data projected with xmipp_project
+	newpsi = -newpsi
+	return newphi, newtheta, newpsi
