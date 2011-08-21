@@ -26,6 +26,15 @@ if (!is_null($minx)) {
 $particle = new particledata();
 $stackparts = $particle->getStackMeanAndStdev($stackid);
 #print_r($stackparts[0])."<br/>\n";
+$nump = count($stackparts);
+$skipval = intval($nump/100000);
+if ($skipval > 1) {
+	$newstackparts = array();
+	for($i = 0; $i<$nump; $i+=$skipval) {
+		$newstackparts[]=$stackparts[$i];
+	}
+	$stackparts=$newstackparts;
+}
 
 $minstdev = 100000;
 $maxstdev = 0;
