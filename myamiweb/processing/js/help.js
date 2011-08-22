@@ -317,6 +317,8 @@ var help = {
 		'shiftrad' : 'radius of of random shift for each particle. Should not be too much, otherwise the particles will not fit inside box', 
 		'rotang' : 'angle of random rotation for each particle; provide 0 if you do NOT want your 2D particles to be rotated after projecting', 
 		'flip' : 'randomly flip the projections along with shifts and rotations',
+		'pad' : 'pad 2D images before CTF application. This will reduce ringing artifacts caused by applying a CTF to boxed images rather than the entire micrograph.',
+		'padval_synthetic' : 'padding factor to apply to the 2D images. 2 is recommended. More than that will dramatically increase the computation ', 
 		'snr1' : 'first level of noise, simulating beam damage & structural noise. Estimated as 1.8 by Frank et. al.',
 		'snrtot' : 'signal-to-noise ratio of final particles, simulating beam damage, structural noise, & digitization. Estimated as 0.05 by Frank et. al.', 
 		'df1' : 'defocus value in x direction (represented as the mean, if randomization is checked)',
