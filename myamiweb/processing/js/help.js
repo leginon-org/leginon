@@ -315,7 +315,7 @@ var help = {
 		'projstdev' : 'standard deviation of gaussian distribution of euler angles about each axis. The model will be projected randomly in the the XY, XZ, and YZ coordinates with euler angles determined by a random gaussian distribution with the given standard deviation. A value of ~5 will give 3 preferred orientations.',
 		'projinc' : 'angular increment of projections, as used in EMAN project3d program. For reference, ang=90 gives 3 projections, 45->8, 30->20, 20->44, 10->180, 7->388, 5->711, 4->1179, 3->1969, 2->4442, 1->17817. For example, an angular increment of 5, with 10000 projections chosen will produce a stack of 10665 particles (i.e. 15 repetitions of all angular views).',
 		'shiftrad' : 'radius of of random shift for each particle. Should not be too much, otherwise the particles will not fit inside box', 
-		'rotang' : 'angle of random rotation for each particle', 
+		'rotang' : 'angle of random rotation for each particle; provide 0 if you do NOT want your 2D particles to be rotated after projecting', 
 		'flip' : 'randomly flip the projections along with shifts and rotations',
 		'snr1' : 'first level of noise, simulating beam damage & structural noise. Estimated as 1.8 by Frank et. al.',
 		'snrtot' : 'signal-to-noise ratio of final particles, simulating beam damage, structural noise, & digitization. Estimated as 0.05 by Frank et. al.', 
