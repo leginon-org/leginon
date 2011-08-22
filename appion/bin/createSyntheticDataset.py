@@ -4,6 +4,7 @@
 import os
 import re
 import sys
+import shutil
 import math
 import time
 import numpy
@@ -92,6 +93,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			help="total signal-to-noise ratio, simulating beam damage, structural noise, & digitization", metavar="FLOAT")
 		self.parser.add_option("--envelope", dest="envelopefile", type="string",
 			help="apply any envelope decay function from a 1d spider file ", metavar="STR")
+		self.parser.add_option("--padImages", dest="pad", default=False,
+			action="store_true", help="pad 2D images by 2 after projecting to reduce CTF artifacts")
+		self.parser.add_option("--paddingFactor", dest="padF", type="int", default=2,
+			help="factor by which to pad the 2D images if 'padImages' is specified")
+	
 
 		### optional parameters (ACE2 correct & filtering)
 		self.parser.add_option("--ace2correct", dest="ace2correct", default=False,
@@ -362,7 +368,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		return filename
 
 	#=====================
-	def createProjectionsEmanProp(self):
+	def createProjectionsEmanProp(self, pad=False):
 
 		### first get rid of projection artifacts from insufficient padding
 		if self.params['threedfile'] is not None:
@@ -419,6 +425,13 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		apDisplay.printMsg("Finished project3d in %s, %.3f ms per iteration"
 			%(apDisplay.timeString(time.time()-t0), 1.0e3 * (time.time()-t0)/float(self.params['projcount'])))
 
+		### pad out projections
+		if pad is True:
+			emancmd = "proc2d %s %s.pad.hed clip=%d" % (filename, filename, self.params['box']*self.params['padF'])
+			apParam.runCmd(emancmd, "EMAN")
+			shutil.move("%s.pad.hed" % filename, "%s.hed" % filename[:-4])
+			shutil.move("%s.pad.img" % filename, "%s.img" % filename[:-4])
+
 #		self.params['projcount'] = int(split[-1][0]) ### last row, first value is last projection
 #		self.params['projcount'] = self.numProj(ang=self.params['projinc'], sym='c1')  ### for some reasons did not work for prop=20
 #		numpart = apFile.numImagesInStack(stackfile)
@@ -436,20 +449,31 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		f = open(shiftfile, "a")
 		apDisplay.printMsg("Now randomly shifting and rotating particles")
 		for i in range(self.params['projcount']):
-			randrot = random.uniform(-1*self.params['rotang'], self.params['rotang'])
+			if self.params['rotang'] != 0:
+				randrot = random.uniform(-1*self.params['rotang'], self.params['rotang'])
 			randx = random.uniform(-1*self.params['shiftrad'], self.params['shiftrad'])
 			randy = random.uniform(-1*self.params['shiftrad'], self.params['shiftrad'])
 			if self.params['flip'] is not None:
 				flip = random.choice([0,1])
 			else:
 				flip = 0
-			emancmd = "proc2d "+filename+" "+shiftstackname+" first="+str(i)+" last="+str(i)+" rot="+str(randrot)+" trans="+str(randx)+","+str(randy)
-			if flip == 0:
-				emancmd = emancmd+" clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm"
+			if self.params['rotang'] != 0:
+				emancmd = "proc2d "+filename+" "+shiftstackname+" first="+str(i)+" last="+str(i)+" rot="+str(randrot)+" trans="+str(randx)+","+str(randy)
 			else:
-				emancmd = emancmd+" flip clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm"
+				emancmd = "proc2d "+filename+" "+shiftstackname+" first="+str(i)+" last="+str(i)+" trans="+str(randx)+","+str(randy)
+			if flip == 0:
+				if self.params['pad'] is False:
+					emancmd = emancmd+" clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm"
+				else:
+					emancmd = emancmd+" edgenorm"
+			else:
+				if self.params['pad'] is False:
+					emancmd = emancmd+" flip clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm"
+				else:
+					emancmd = emancmd+" flip edgenorm"
 			apEMAN.executeEmanCmd(emancmd, showcmd=False)
-			f.write("%.3f,"%(randrot))
+			if self.params['rotang'] != 0:
+				f.write("%.3f,"%(randrot))
 			f.write("%.3f,"%(randx))
 			f.write("%.3f,"%(randy))
 			f.write(str(flip)+"\n")
@@ -611,7 +635,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		outf = open(outdocfile, 'w')
 		cmdlist = []
 		partnum = 0
-		scaleFactor =  float(self.params['box']) / 4096.0
+		if self.params['pad'] is True:
+			scaleFactor =  float(self.params['box']*self.params['padF']) / 4096.0
+		else:
+			scaleFactor = float(self.params['box']) / 4096.0
 		t0 = time.time()
 		for line in inf:
 			### get filename
@@ -731,6 +758,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		### merge individual files into a common stack
 		ctfstack = os.path.join(self.params['rundir'], "ctfstack.hed")
 		apXmipp.gatherSingleFilesIntoStack(ctfpartlistfile, ctfstack, filetype="mrc")
+		if self.params['pad'] is True:
+			emancmd = "proc2d %s %s.clip.hed clip=%d,%d" % (ctfstack, ctfstack[:-4], self.params['box'], self.params['box'])
+			apParam.runCmd(emancmd, "EMAN")
+			shutil.move("%s.clip.hed" % ctfstack[:-4], "%s.hed" % ctfstack[:-4])
+			shutil.move("%s.clip.img" % ctfstack[:-4], "%s.img" % ctfstack[:-4])
 
 		return ctfstack, ctfpartlist
 
@@ -1050,7 +1082,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		if self.params['preforient'] is True:
 			filename = self.createProjections()
 		else:
-			filename = self.createProjectionsEmanProp()
+			filename = self.createProjectionsEmanProp(pad=self.params['pad'])
 
 		### shift & rotate randomly
 		shiftstackname = self.shiftAndRotate(filename)
