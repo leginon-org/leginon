@@ -164,6 +164,16 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 		}
 	}
 
+	function enablepad(){
+		if (document.viewerform.pad.checked){
+			document.viewerform.padval.disabled=false;
+			document.viewerform.padval='2';
+		} else {
+			document.viewerform.padval.disabled=true;
+			document.viewerform.padval='';
+		}
+	}
+
 	function checkprojection() {
 		if (o=document.viewerform.projection) {
 			if ((o_r1=document.viewerform.projinc) && (o_r2=document.viewerform.projstdev)) {
@@ -218,6 +228,8 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	$shiftrad = ($_POST['shiftrad']) ? $_POST['shiftrad'] : 5;
 	$rotang = ($_POST['rotang']) ? $_POST['rotang'] : 360;
 	$flip = ($_POST['flip']=='on' || !$_POST['process']) ? 'checked' : '';
+	$pad = ($_POST['pad']=='on' || !$_POST['process']) ? 'checked' : '';
+	$padval = ($_POST['padval']) ? $_POST['padval'] : 2;
 	$snr1 = ($_POST['snr1']) ? $_POST['snr1'] : 1.8;
 	$snrtot = ($_POST['snrtot']) ? $_POST['snrtot'] : 0.05;
 	$df1 = ($_POST['df1']) ? $_POST['df1'] : -1.5;
@@ -231,6 +243,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	$defstd = ($_POST['randomdef']=='on') ? $_POST['defstd'] : '';
 	$ace2correct = ($_POST['ace2correct']=='on') ? 'CHECKED' : '';
 	$randcor_std = ($_POST['randomdef']=='on') ? $_POST['randcor_std'] : '';
+	$paddisable = ($_POST['pad']=='on') ? '' : 'DISABLED';
 	$randomdefdisable = ($_POST['randomdef']=='on') ? '' : 'DISABLED';
 	$correctiondisable = ($_POST['correction']) ? $_POST['correction'] : "DISABLED";
 	$randcordisable = ($_POST['randcor_std']) ? $_POST['randcor_std'] : "DISABLED";
@@ -349,9 +362,18 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	echo "<br />\n";
 	
 	echo "<input type='checkbox' name='flip' $flip";
-	echo docpop('flip', 'Randomly flip particles');
-	echo "<br><br>\n";
+	echo docpop('flip', ' Randomly flip particles');
+	echo "<br>\n";
 	
+	echo "<input type='checkbox' name='pad' onclick='enablepad(this)' $pad>\n";
+	echo docpop('pad', 'Pad 2D projections before CTF application');
+	echo "<br>\n";
+
+	echo "<input type='text' name='padval' $paddisable value='$padval' size='4'>\n";
+	echo docpop('padval_synthetic',' padding factor ');
+	echo " <font size=-2><i>(factor)</i></font>\n";
+	echo "<br /><br />\n";
+
 	
 	echo "<b>Signal to Noise Ratio:</b><br />\n";
 	echo "<input type='text' name='snr1' value='$snr1' size='4'>\n";
@@ -363,7 +385,6 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	echo docpop('snrtot',' SNR Total (digitization) ');
 	echo " <font size=-2><i>(ratio)</i></font>\n";
 	echo "<br><br>\n";
-	
 	
 	echo "<b>CTF Application:</b><br />\n";
 	echo "<input type='text' name='df1' value='$df1' size='4'>\n";
@@ -463,6 +484,8 @@ function createSyntheticDataset() {
 	$shiftrad = $_POST['shiftrad'];
 	$rotang = $_POST['rotang'];
 	$flip = $_POST['flip'];
+	$pad = $_POST['pad'];
+	$padval = $_POST['padval'];
 	$snr1 = $_POST['snr1'];
 	$snrtot = $_POST['snrtot'];
 	$df1 = $_POST['df1'];
@@ -525,6 +548,8 @@ function createSyntheticDataset() {
 	if ($rotang || $rotang==0) $command.="--rotang=$rotang ";
 	if ($flip) $command.="--flip ";
 	else $command.="--no-flip ";
+	if ($pad) $command.="--padImages ";
+	if ($padval) $command.="--paddingFactor=$padval ";
 	if ($snr1) $command.="--snr1=$snr1 ";
 	if ($snrtot) $command.="--snrtot=$snrtot ";
 	if ($df1 || $df1==0) $command.="--df1=$df1 ";
