@@ -75,7 +75,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			action="store_true", help="randomly flip the projections along with shifts and rotations")
 		self.parser.add_option("--no-flip", dest="flip", default=True,
 			action="store_false", help="DO NOT randomly flip the projections along with shifts and rotations")
-		self.parser.add_option("--kv", dest="kv", type="float", default=120,
+		self.parser.add_option("--kv", dest="kv", type="float", default=200,
 			help="kV of the microscope, needed for envelope function", metavar="INT")
 		self.parser.add_option("--df1", dest="df1", type="float", default=-1.5,
 			help="defocus value 1 (represented as the mean if --randomdef & --randomdef-std specified)", metavar="FLOAT")
