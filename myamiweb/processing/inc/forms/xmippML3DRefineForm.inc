@@ -24,7 +24,8 @@ class XmippML3DRefineForm extends BasicRefineForm
 		
 		$shortSize = 4;
 		$longSize = 20;
-		$html .= $params->insertTextField( "HighResLimit", $longSize );
+		$html .= $params->insertCheckboxField( "ImagesArePhaseFlipped" );
+//		$html .= $params->insertTextField( "HighResLimit", $longSize );
 		$html .= $params->insertTextField( "ProjMatchSampling", $longSize );
 		$html .= $params->insertTextField( "LowPassFilterReference", $longSize );
 		$html .= $params->insertTextField( "NumberOfReferences", $longSize );
@@ -44,6 +45,7 @@ class XmippML3DRefineForm extends BasicRefineForm
 		$command = $this->addCommandFlag( $command, "angSampRate" );
 		$command = $this->addCommandFlag( $command, "symmetry" );
 		$command = $this->addCommandFlag( $command, "DoMlf" );
+		$command = $this->addCommandFlag( $command, "ImagesArePhaseFlipped" );
 		$command = $this->addCommandFlag( $command, "HighResLimit" );
 		$command = $this->addCommandFlag( $command, "DoCorrectGreyScale" );
 		$command = $this->addCommandFlag( $command, "ProjMatchSampling" );
@@ -75,6 +77,7 @@ class XmippML3DRefineForm extends BasicRefineForm
 		$DoMlf 					= 'checked';
 		$HighResLimit			= '15';
 		$DoCorrectGreyScale 	= 'checked';
+		$ImagesArePhaseFlipped  = 'checked';
 		$ProjMatchSampling	= '15';
 		$LowPassFilterReference		= '50';
 		$NumberOfReferences	= '3'; 
@@ -83,7 +86,7 @@ class XmippML3DRefineForm extends BasicRefineForm
 		$asymmSet = new XmippML3DParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
-							$DoMlf, $HighResLimit, $DoCorrectGreyScale, $ProjMatchSampling,
+							$DoMlf, $HighResLimit, $DoCorrectGreyScale, $ImagesArePhaseFlipped, $ProjMatchSampling,
 							$LowPassFilterReference, $NumberOfReferences);
 		$this->addDefaultParams( $asymmSet );
 
@@ -111,9 +114,10 @@ class XmippML3DRefineForm extends BasicRefineForm
 	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10:2x5:2x3:2x2';
 	      if (obj.DoMlf) obj.DoMlf.checked = '';
+		if (obj.ImagesArePhaseFlipped) obj.ImagesArePhaseFlipped.checked = '';
 	      if (obj.HighResLimit) obj.HighResLimit.value = '';
 	      if (obj.DoCorrectGreyScale) obj.DoCorrectGreyScale.checked = '';
-		  if (obj.ProjMatchSampling) obj.ProjMatchSampling.value = '';
+		if (obj.ProjMatchSampling) obj.ProjMatchSampling.value = '';
 	      if (obj.LowPassFilterReference) obj.LowPassFilterReference.value = '';
 	      if (obj.NumberOfReferences) obj.NumberOfReferences.value = '';
 	      
@@ -133,7 +137,7 @@ class XmippML3DParams extends RefineFormParameters
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
 							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
-							$DoMlf='', $HighResLimit='', $DoCorrectGreyScale='', $ProjMatchSampling='',
+							$DoMlf='', $HighResLimit='', $DoCorrectGreyScale='', $ImagesArePhaseFlipped, $ProjMatchSampling='',
 							$LowPassFilterReference='', $NumberOfReferences='') 
 	{
 		parent::__construct($id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
@@ -142,6 +146,7 @@ class XmippML3DParams extends RefineFormParameters
 		
 		$this->addParam( "DoMlf", $DoMlf, "DoMlf" );
 		$this->addParam( "HighResLimit", $HighResLimit, "high resolution limit" );
+		$this->addParam( "ImagesArePhaseFlipped", $ImagesArePhaseFlipped, "input images are phaseflipped" );
 		$this->addParam( "DoCorrectGreyScale", $DoCorrectGreyScale, "correct greyscale values" );
 		$this->addParam( "ProjMatchSampling", $ProjMatchSampling, "projection matching angular sampling" );
 		$this->addParam( "LowPassFilterReference", $LowPassFilterReference, "Low pass filter reference volume" );
