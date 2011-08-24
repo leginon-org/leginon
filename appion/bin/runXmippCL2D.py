@@ -183,7 +183,7 @@ class CL2D(appionScript.AppionScript):
 	def clearIntermediateFiles(self):
 		os.system("rm -rf partfiles *.xmp *.doc "+self.params['timestamp']+".* "+\
 		          "part"+self.params['timestamp']+"0*.sel part*_.sel partlist.sel "+\
-			  "part"+self.params['timestamp']+".sel xmipp.std")
+			  "part"+self.params['timestamp']+".sel")
 
 	#=====================
 	def createReferenceStack(self):
