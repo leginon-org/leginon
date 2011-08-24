@@ -357,7 +357,7 @@ class filePathModifier:
 #=====================
 def checkSelOrDocFileRootDirectoryInDirectoryTree(directory, remote_basedir, local_basedir):
 	''' 
-	used to change all the root directories in Xmipp .sel and .doc files recursively, e.g:
+	used to change all the root directories in Xmipp .sel, .doc, and .ctfdat files recursively, e.g:
 	from /ddn/people/dlyumkis/appion/11jan11a/recon to /ami/data00/appion/11jan11a/recon
 	'''
 	
@@ -371,7 +371,7 @@ def checkSelOrDocFileRootDirectoryInDirectoryTree(directory, remote_basedir, loc
 		matches = []
 		for root, dirs, files in os.walk(directory):
 			for file in files:
-				if file.endswith('.sel') or file.endswith('.doc'):
+				if file.endswith('.sel') or file.endswith('.doc') or file.endswith('.ctfdat'):
 					matches.append(os.path.join(root,file))
 		for match in matches: 
 			modifier.checkSelOrDocFileRootDirectory(match, remote_root, local_root)
