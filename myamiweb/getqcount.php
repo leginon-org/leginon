@@ -42,7 +42,7 @@ if (count($targetlistIds) == 500) {
 							.'<li>remaining time  = '. $estminute .' min '.$estsecond.' s</li>'
 							.'</ul>';
 		}
-		$disply .= '</div>';
+		$display .= '</div>';
 		echo $display;
 	}
 }
