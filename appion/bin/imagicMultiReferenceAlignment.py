@@ -67,8 +67,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			help="number of different rotation directions desired", metavar="INT")
 		self.parser.add_option("--max_shift_orig", dest="max_shift_orig", type="float", default="0.2",
 			help="maximum radial shift during MRA", metavar="float")
-#		self.parser.add_option("--max_shift_this", dest="max_shift_this", type="float",
-#			help="maximum radial shift during MRA for this iteration", metavar="float")
+		self.parser.add_option("--max_shift_this", dest="max_shift_this", type="float", default="0.2",
+			help="maximum radial shift during MRA for this iteration", metavar="float")
 		self.parser.add_option("--samp_param", dest="samp_param", type="int", default="12",
 			help="used to define precision of rotational alignment during MRA", metavar="int")
 		self.parser.add_option("--minrad", dest="minrad", type="float", default="0.0",
@@ -206,10 +206,10 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("3\n")
 			f.write("NO_FILTER\n")
 			f.write("EOF\n")
-			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> multiReferenceAlignment.log\n")
-			f.write("start_cent\n")
-			f.write("start\n")
-			f.write("EOF\n")
+#			f.write(str(self.imagicroot)+"/stand/im_rename.e <<EOF >> multiReferenceAlignment.log\n")
+#			f.write("start_cent\n")
+#			f.write("start\n")
+#			f.write("EOF\n")
 			append_log = True
 			
 		### multi-reference alignment		
@@ -247,7 +247,10 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		if self.params['alignment_type'].lower() == "brute_force":
 			f.write("%d\n" % (self.params['num_orientations']))
 		f.write("CCF\n")
-		f.write("start\n")
+		if self.params['center'] is True:
+			f.write("start_cent\n")
+		else:
+			f.write("start\n")
 		f.write("alignstack\n")
 		f.write("start\n")
 		f.write("references\n")
@@ -259,7 +262,11 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("NO\n")
 		f.write("NO\n")
 		f.write(str(self.params['max_shift_orig'])+"\n")
+		if self.params['center'] is True:
+			f.write(str(self.params['max_shift_this'])+"\n")
 		f.write("-180,180\n")
+		if self.params['center'] is True:
+			f.write("-180,180\n")
 		f.write("INTERACTIVE\n")
 		f.write(str(self.params['samp_param'])+"\n")
 		f.write(str(self.params['minrad'])+","+str(self.params['maxrad'])+"\n")
@@ -412,7 +419,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		if self.params['alignment_type'].lower() == "brute_force":
 			MRAq['num_orientations'] = self.params['num_orientations']
 		MRAq['max_shift_orig'] = self.params['max_shift_orig']
-#		MRAq['max_shift_this'] = self.params['max_shift_this']
+		if self.params['center'] is True:
+			MRAq['max_shift_this'] = self.params['max_shift_this']
 		MRAq['samp_param'] = self.params['samp_param']
 		MRAq['min_radius'] = self.params['minrad']
 		MRAq['max_radius'] = self.params['minrad']
