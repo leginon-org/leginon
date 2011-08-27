@@ -230,7 +230,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	$flip = ($_POST['flip']=='on' || !$_POST['process']) ? 'checked' : '';
 	$pad = ($_POST['pad']=='on' || !$_POST['process']) ? 'checked' : '';
 	$padval = ($_POST['padval']) ? $_POST['padval'] : 2;
-	$snr1 = ($_POST['snr1']) ? $_POST['snr1'] : 1.8;
+	$snr1 = ($_POST['snr1']) ? $_POST['snr1'] : 1.4;
 	$snrtot = ($_POST['snrtot']) ? $_POST['snrtot'] : 0.05;
 	$df1 = ($_POST['df1']) ? $_POST['df1'] : -1.5;
 	$df2 = ($_POST['df2']) ? $_POST['df2'] : -1.5;
@@ -377,12 +377,12 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	
 	echo "<b>Signal to Noise Ratio:</b><br />\n";
 	echo "<input type='text' name='snr1' value='$snr1' size='4'>\n";
-	echo docpop('snr1',' SNR1 (beam damage, shot noise, etc.) ');
+	echo docpop('snr1',' SNR1 (structural noise) ');
 	echo " <font size=-2><i>(ratio)</i></font>\n";
 	echo "<br />\n";
 	
 	echo "<input type='text' name='snrtot' value='$snrtot' size='4'>\n";
-	echo docpop('snrtot',' SNR Total (digitization) ');
+	echo docpop('snrtot',' SNR Total (shot, detector, digitization noise) ');
 	echo " <font size=-2><i>(ratio)</i></font>\n";
 	echo "<br><br>\n";
 	
