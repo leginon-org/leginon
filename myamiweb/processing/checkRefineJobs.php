@@ -11,33 +11,10 @@ if ($_POST['checkjobs']) {
 	checkJobs();
 }
 
-function checkJobs($showjobs=True, $showall=False, $extra=False) {
+function checkJobs($showjobs=False, $showall=False, $extra=False) {
 	$expId= $_GET['expId'];
 	$particle = new particledata();
 	$projectId=getProjectId();
-
-	// Create DMF commands, this should move the default_cluster.php
-//	$javafunc="  <script language='JavaScript'>\n";
-//	$javafunc.="  function displayDMF(dmfdir,outdir,has_coran) {\n";
-//	$javafunc.="  newwindow=window.open('','name','height=150, width=900')\n";
-//	$javafunc.="  newwindow.document.write('<html><body>')\n";
-//	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/model.tar.gz '+outdir+'/.<br />')\n";
-//	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.<br />')\n";
-//	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/*.job '+outdir+'/.<br />')\n";
-//	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar.gz -C '+outdir+'<br />')\n";
-//	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar.gz -C '+outdir+'<br />')\n";
-//	$javafunc.="  if (has_coran > 0) { \n";
-//	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/coran.tar.gz '+outdir+'/.<br />')\n";
-//	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/coran.tar.gz -C '+outdir+'<br />')\n";
-//	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/coran.tar*<br />')\n";
-//	$javafunc.="  } \n";
-//	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/model.tar*<br />')\n";
-//	$javafunc.="    newwindow.document.write('/bin/rm -vf '+outdir+'/results.tar*<br />')\n";
-//	$javafunc.="    newwindow.document.write('echo done<br />')\n";
-//	$javafunc.="    newwindow.document.write('<p>&nbsp;<br /></body></html>')\n";
-//	$javafunc.="    newwindow.document.close()\n";
-//	$javafunc.="  }\n";
-//	$javafunc.="  </script>\n";
 
 	processing_header("Cluster Jobs", "Cluster Job Status", $javafunc);
 	// write out errors, if any came up:
@@ -58,24 +35,22 @@ function checkJobs($showjobs=True, $showall=False, $extra=False) {
 	$pattern = '%recon';
 	$refineTypes = $particle->getJobTypesLike( $expId, $pattern );
 	
+	// Get jobs from ApAppionJobData that match any of the refine jobtypes
+	// This is an array of jobtypes, each with an array of jobs
 	$refinejobs = array();
 	foreach ( $refineTypes as $key=>$refineType ) {
 		$jobtype = $refineType[jobtype];
 		$refinejobs[] = $particle->getJobIdsFromSession($expId, $jobtype);
 	}
 	
+	// move all the jobs into a single dimentional array
+	// so all we have is an array of jobs, not separated by jobtype
 	$jobs = array();
 	foreach ( $refinejobs as $jobtype ) {
 		foreach ( $jobtype as $job ) {
 			$jobs[] = $job;
 		}
 	}
-	//var_dump($jobs);
-
-	//$xmipprefinejobs = $particle->getJobIdsFromSession($expId, 'xmipprecon');
-	//$emanjobs = $particle->getJobIdsFromSession($expId, 'emanrecon');
-	//$frealignjobs = $particle->getJobIdsFromSession($expId, 'runfrealign');
-	//$jobs = array_merge($refinejobs, $frealignjobs);
 
 	// if clicked button, list jobs in queue
 	if ($showjobs && $_SESSION['loggedin'] == true) {
@@ -238,6 +213,8 @@ function showStatus($jobinfo) {
 		$status='Running';
 	} elseif ($jobinfo['status']=='A') {
 		$status='Aborted';
+	} elseif ($jobinfo['status']=='E') {
+		$status='Error';
 	} elseif ($jobinfo['status']=='D') {
 		$has_coran = checkCoranTarGz($jobinfo);
 		$dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('"

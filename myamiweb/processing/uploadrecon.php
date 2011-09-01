@@ -68,16 +68,22 @@ function createUploadReconForm( $extra=false, $title='UploadRecon.py Launcher', 
 	// ------------Get Job info, model and stack info-------------
 	// Get the selected refinement job info from the database 
 	if ( $jobId ) {
-		// TODO: get name of job from apAppionJobData and lookup based on that
+		// get name of job from apAppionJobData and lookup ApPrepRefineData based on that
 		$jobdata		= $particle->getJobInfoFromId( $jobId );
-		$pathid 		= $jobdata['REF|ApPathData|path'];
-		$refinejobdatas = $particle->getPreparedRefineJobs(false, $pathid);
+		$runname 		= $jobdata['name'];
+		
+		// remove any extentions to the name like .job
+		$pos = strpos($runname, ".");
+		if ($pos !== false) {
+			$runname = substr($runname, 0, $pos);
+		}		
+		
+		$refinejobdatas = $particle->getPreparedRefineJobs(false, false, true, $runname );
 		$refjobdata 	= $refinejobdatas[0];
 		$refineID 		= $refjobdata['DEF_id'];
 		$method 		= $refjobdata['method'];
 		$rundir 		= $refjobdata['path'];
-		$runname 		= $refjobdata['name'];
-		$outdir 		= ereg_replace($runname."$", "", $rundir);
+		$outdir 		= ereg_replace($runname."$", "", $rundir); // TODO: ereg_replace deprecated
 		$description 	= $refjobdata['description'];
 		$refinestackid 	= $refjobdata['REF|ApStackData|stack'];
 		$reconstackid 	= $refjobdata['REF|ApStackData|reconstack'];
@@ -108,7 +114,7 @@ function createUploadReconForm( $extra=false, $title='UploadRecon.py Launcher', 
 		
 		if (file_exists($rundir.'/classes_coran.1.hed')) {
 			$method='EMAN/SpiCoran';
-		}
+		}		
 	}	
 
 	$projectId = getProjectId();
@@ -430,9 +436,6 @@ function runUploadRecon() {
 	if ($mass) $command.="--mass=$mass ";
 	if ($zoom) $command.="--zoom=$zoom ";
 	if ($filter) $command.="--snapfilter=$filter ";
-	//if ($itertype=='one' && $iteration) $command.="--oneiter=$iteration ";
-	//if ($itertype=='range' && $startiteration > 0) $command.="--startiter=$startiteration ";
-	//if ($itertype=='range' && $enditeration > 0) 
 	if ($itertype == 'range') {
 		$numiter = ($enditeration-$startiteration)+1;
 		$command.="--numiter=$numiter ";
@@ -447,10 +450,6 @@ function runUploadRecon() {
 	if ($itertype == 'one') {
 		$command.="--numiter=1 ";
 		$command.="--uploadIterations=$iteration ";
-	}
-	if ($itertype == 'all') {
-		$command.="--numiter=2 ";
-		$command.="--uploadIterations=1,2 ";
 	}
 	$command.="--description=\"$description\" ";
 	$command.="--box=$boxsize ";

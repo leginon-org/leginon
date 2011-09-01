@@ -433,8 +433,16 @@ function copyFilesToCluster( $host )
 	
 	// Get list of files to copy
 	$files_to_remote_host = $rundir."/files_to_remote_host";
-	$files = file_get_contents($files_to_remote_host);
+	if (!file_exists($files_to_remote_host)) {
+		jobForm("<B>ERROR:</B> Failed to locate file ".$files_to_remote_host);
+  	}
 	
+  	$files = file_get_contents($files_to_remote_host);
+  	
+  	if ( $files === false ) {
+		jobForm("<B>ERROR:</B> Failed to read file ".$files_to_remote_host);
+  	}
+  		
 	// copy each listed file to the cluster	
 	// files are separated by a new line charachter
 	$fileList = explode( "\n", $files );
