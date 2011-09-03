@@ -13,9 +13,12 @@ from appionlib import apDisplay
 from appionlib.apSpider import filters
 ## pyami
 from pyami import imagefun, fftengine
+## leginon
+from leginon import ddprocess
 
 ffteng = fftengine.fftEngine()
-
+dd = ddprocess.DirectDetectorProcessing()
+	
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way
@@ -357,17 +360,29 @@ def scaleImage(imgdata, scale):
 	return ndimage.zoom(imgdata, scale, order=1)
 
 #=========================
-def correctImage(imgdata, sessionname):
+def correctImage(imgdata, sessionname,start_frame=0,nframe=0):
 	"""
 	Correct an image using the old method:
 	- no bias correction
-	- dark correction is not time dependent
+	- dark correction is not time dependent in the normal mode
 	"""
-	rawimgarray = imgdata['image']
-	from appionlib import apDatabase
-	darkarray, normarray = apDatabase.getDarkNorm(sessionname, imgdata['camera'])
-	correctedimgarray = normarray * (rawimgarray - darkarray)
-	return correctedimgarray
+	digital_camera_name = imgdata['camera']['ccdcamera']['name']
+	if not digital_camera_name.upper().startswith('DE') and nframe > 0:
+		apDisplay.printWarning("Image not taken with direct detection camera, raw frame correction ignored")
+		normal_mode = True
+	elif nframe == 0:
+		normal_mode = True
+	else:
+		normal_mode = False
+	if normal_mode == True:
+		rawimgarray = imgdata['image']
+		from appionlib import apDatabase
+		darkarray, normarray = apDatabase.getDarkNorm(sessionname, imgdata['camera'])
+		correctedimgarray = normarray * (rawimgarray - darkarray)
+		return correctedimgarray
+	else:
+		dd.setImageData(imgdata)
+		return dd.correctFrameImage(start_frame,nframe)
 
 #=========================
 def frame_cut(a, newshape):

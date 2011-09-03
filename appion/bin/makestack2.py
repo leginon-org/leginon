@@ -35,7 +35,6 @@ from appionlib import apXmipp
 from appionlib import apBoxer
 from appionlib.apSpider import filters
 
-
 class Makestack2Loop(appionLoop2.AppionLoop):
 	############################################################
 	## Check pixel size
@@ -183,7 +182,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	#=======================
 	def boxParticlesFromImage(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
-		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
+		if self.params['nframe'] == 0:
+			imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
+		else:
+			self.params['uncorrected'] = True
 
 		### get the particle before image filtering
 		if self.params['defocpair'] is True and self.params['selectionid'] is not None:
@@ -229,7 +231,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if self.params['uncorrected']:
 			### dark/bright correct image
 			tmpname = shortname+"-darknorm.dwn.mrc"
-			imgarray = apImage.correctImage(imgdata, self.params['sessionname'])
+			imgarray = apImage.correctImage(imgdata, self.params['sessionname'],self.params['startframe'],self.params['nframe'])
 			imgpath = os.path.join(self.params['rundir'], tmpname)
 			apImage.arrayToMrc(imgarray,imgpath)
 			print "processing", imgpath
@@ -927,6 +929,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			help="select particles by label within the same run name")
 		self.parser.add_option("--xmipp-normalize", dest="xmipp-norm", type="float",
 			help="normalize the entire stack using xmipp")
+		self.parser.add_option("--ddstartframe", dest="startframe", type="int", default=1,
+			help="starting frame for direct detector raw frame processing")
+		self.parser.add_option("--ddnframe", dest="nframe", type="int", default=0,
+			help="total frames to sum up for direct detector raw frame processing")
 
 		### true/false
 		self.parser.add_option("--phaseflip", dest="phaseflipped", default=False,
