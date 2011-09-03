@@ -11,13 +11,12 @@ from numpy import linalg
 ## appion
 from appionlib import apDisplay
 from appionlib.apSpider import filters
+from appionlib import apDDprocess
 ## pyami
 from pyami import imagefun, fftengine
-## leginon
-from leginon import ddprocess
 
 ffteng = fftengine.fftEngine()
-dd = ddprocess.DirectDetectorProcessing()
+dd = apDDprocess.DirectDetectorProcessing()
 	
 ####
 # This is a low-level file with NO database connections

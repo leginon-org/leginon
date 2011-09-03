@@ -19,6 +19,7 @@ import itertools
 import leginon.session
 import leginon.leginonconfig
 import os
+import sys
 
 ref_cache = {}
 idcounter = itertools.cycle(range(100))
@@ -234,6 +235,20 @@ class CorrectorClient(cameraclient.CameraClient):
 			darkarray = multiplier * darkarray
 		return darkarray
 
+	def calculateNorm(self,brightarray,darkarray):
+		try:
+			normarray = brightarray - darkarray
+		except:
+			raise
+		normarray = numpy.asarray(normarray, numpy.float32)
+		normavg = arraystats.mean(normarray)
+
+		# division may result infinity or zero division
+		# so make sure there are no zeros in norm
+		normarray = numpy.clip(normarray, 0.001, sys.maxint)
+		normarray = normavg / normarray
+		return normarray
+
 	def normalizeCameraImageData(self, imagedata, channel):
 		cameradata = imagedata['camera']
 		scopedata = imagedata['scope']
@@ -377,7 +392,6 @@ class CorrectorClient(cameraclient.CameraClient):
 						neighbors.append(image[r,c])
 				if neighbors:
 					break
-
 			if not neighbors:
 				return
 
