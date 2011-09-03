@@ -676,12 +676,20 @@ if (is_numeric($expId)) {
 		
 		// Get all preparred refines
 		$prepRefineRuns 	= $particle->getPreparedRefineJobs(false, false, false);
-		$prepRefineDone 	= ($prepRefineRuns) ? count($prepRefineRuns) : 0;
+		
+		// Get the number of prepared refines that have not yet been run
+		$refinejobs = array();
+		foreach ($prepRefineRuns as $refinejob) {
+			$refinerun = $particle->getClusterJobByTypeAndPath($refinejob['method'], $refinejob['path']);
+			if (!$refinerun)
+				$refinejobs[] = $refinejob;
+		}		
+		$prepRefineDone 	= ($refinejobs) ? count($refinejobs) : 0;
 		
 		// summed fields
 		$runRefine	 		= $prepRefineQueue + $prepRefineRun + $prepRefineDone;
 		$refinePrepared 	= $prepRefineDone - $runRefine;
-		$prepRefineRan 		= $prepRefineDone - 0;//$uploadfrealign; //TODO
+		$prepRefineRan 		= $prepRefineDone;
 		
 		// prep recon stats
 		$totalPrepQueue 	= $prepRefineQueue; //$prepfrealignqueue;
@@ -708,20 +716,21 @@ if (is_numeric($expId)) {
 		
 		// Find refines ready to upload
 		$refineReadyUpload = 0;
-		foreach ($refinejobs as $job) {
-			$jobid = $job[0]['DEF_id'];
-			$jobinfo = $particle->getJobInfoFromId($jobid);
-			
-			// check if job has been run
-			//$jobran = $particle->getReconIdFromAppionJobId($jobid);
-			$jobran = ( $jobinfo['status'] == 'D' ) ? True : False;
-			
-			// check if job has an associated jobfile
-			$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
-			$hasJobFile = file_exists($jobfile);
-			
-			if ( true /*$jobran && $hasJobFile*/ ) {
-				$refineReadyUpload++;
+		foreach ($refinejobs as $joblist) {
+			foreach ($joblist as $job ) {
+				$jobid = $job['DEF_id'];
+				$jobinfo = $particle->getJobInfoFromId($jobid);
+				
+				// check if job has been run
+				$jobran = ( $jobinfo['status'] == 'D' ) ? True : False;
+				
+				// check if job has an associated jobfile
+				$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
+				$hasJobFile = file_exists($jobfile);
+				
+				if ( $jobran && $hasJobFile ) {
+					$refineReadyUpload++;
+				}
 			}
 		}	
 		

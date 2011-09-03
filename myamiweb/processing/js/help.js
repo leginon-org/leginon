@@ -330,7 +330,20 @@ var help = {
 		'correctiontype' : 'Three options are available: <br><br><b> 1) Applied CTF </b> This is the simplest method, which corrects the images by wiener filtering the particles using the same defocus values as those that were applied. <br><br><b> 2) Use ACE2 Estimate </b> This method uses ACE2 to estimate the applied defoci. These Estimated values are then used to correct each micrograph and particle, simulating reality. In test runs, ACE2 either gets the exact value or completely fails. The latter case is most likely due to the fact that too much noise has been added before estimating. If this is the case, you can try decreasing SNR1 to 1, while keeping SNR Total as is at 0.05 (which is what it should be for ice images). <br><br><b> 3) Perturb Applied CTF </b> The correction values will be perturbed according to a gaussian mean (the applied CTF) and standard deviation (specified below) of the applied defoci. If you want to introduce errors in the correction phase, use this option.',
 		'ace2correct_std' : 'used only in conjunction with the perturbation option above, if you want to introduce random errors in the CTF correction process',
 	},
-
+	'basicrefine' : {
+		'outerMaskRadius' : 'The radius of the mask to apply to the particle from the center to the outer edge.',
+		'innerMaskRadius' : 'The radius of the mask to apply to the particle from the center to the inner edge.',
+		'outerAlignRadius' : 'The outer particle radius taken into account during 2D alignment. (Should be about half the size of the longest particle dimension.)',
+		'innerAlignRadius' : 'The inner particle radius taken into account during 2D alignment. (This value can be greater than zero for hollow particles.)',
+		'symmetry' : 'Imposes symmetry on the model, omit this option for no/unknown symmetry<BR/>Examples: c1, c2, d7, etc.',
+		'endIter' : 'Total number of refinement iterations to perform.',
+		'angSampRate' : 'Angular step for projections in degrees.',
+		'percentDiscard' : 'Percentage of worst images to discard.',
+		'filterEstimated' : 'Filter reconstructed volume to the estimated resolution.',
+		'filterResolution' : 'The estimated resolution of the reconstruction.',
+		'filterComputed' : 'Filter the reconstructed volume to the resolution computed by FSC.',
+		'filterConstant' : 'Constant value to add to computed filter value.',		
+	},	
 	'eman' : {
 /**
 * these should be separate

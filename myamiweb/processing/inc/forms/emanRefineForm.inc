@@ -22,6 +22,9 @@ class EmanRefineForm extends BasicRefineForm
 		// classes extended from BasicRefineForm should get the selected default values
 		$params = $this->getFormParams();
 		
+		// The help section corresponds to the array key for these parameters found in help.js for popup help.
+		$params->setHelpSection( "eman" );		
+		
 		$shortSize = 4;
 		$longSize = 20;
 		$html .= $params->insertTextField( "imask", $longSize );

@@ -240,6 +240,9 @@ abstract class BasicRefineForm extends BasicForm
 		$defaultSetId = $_POST['import'];
 		$this->updateFormParams( $defaultSetId );
 		$paramSet = $this->getFormParams();
+		
+		// The help section corresponds to the array key for these parameters found in help.js for popup help.
+		$paramSet->setHelpSection( "basicrefine" );		
 
 		// extending classes must define a method type
 		$method = $this->getMethodType();
@@ -259,7 +262,7 @@ abstract class BasicRefineForm extends BasicForm
 		$html .= $paramSet->insertTextField( "outerAlignRadius", $longSize, "(&Aring;ngstroms)" );
 		$html .= $this->insertSymmetrySelectionBox( "symmetry", $paramSet->getParamValue("symmetry") );
 		$html .= "&nbsp;";
-		$html .=  docpop( "symmetry", $paramSet->getParamLabel("symmetry") );
+		$html .=  docpop( "basicrefine.symmetry", $paramSet->getParamLabel("symmetry") );
 			
 		$html .= "<br />\n";
 		$html .= "<br />\n";

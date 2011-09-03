@@ -57,7 +57,7 @@ function selectRefineJob($extra=False) {
 	echo "<form name='selectreconform' method='POST' ACTION='$formAction'>\n";
 
 	// get prepared refine jobs
-	$rawrefinejobs = $particle->getPreparedRefineJobs();
+	$rawrefinejobs = $particle->getPreparedRefineJobs(false, false, false);
 	
 	// print jobs with radio button
 	if (!$rawrefinejobs) {
@@ -65,10 +65,10 @@ function selectRefineJob($extra=False) {
 		exit;
 	} 
 
-	// check if jobs have associated cluster jobs
+	// check if jobs have associated cluster jobs	
 	$refinejobs = array();
 	foreach ($rawrefinejobs as $refinejob) {
-		$refinerun = $particle->getClusterJobByTypeAndPath('runrefine', $refinejob['path']);
+		$refinerun = $particle->getClusterJobByTypeAndPath($refinejob['method'], $refinejob['path']);
 		if (!$refinerun)
 			$refinejobs[] = $refinejob;
 	}
