@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import numpy
-import numextension
-from pyami import mrc,correlator,peakfinder,imagefun
+from pyami import mrc,imagefun
 try:
 	#The faster tifffile module only works with python 2.6 and above
 	from pyami import tifffile
@@ -14,6 +12,7 @@ except:
 	import Image
 from leginon import leginondata
 from leginon import correctorclient
+from appionlib import apDisplay
 
 class DirectDetectorProcessing(object):
 	def __init__(self):
@@ -27,8 +26,7 @@ class DirectDetectorProcessing(object):
 		if result:
 			self.setImageData(result)
 		else:
-			print "ERROR: image with ID of %d not found" % imageid
-			sys.exit(1)
+			apDisplay.printError("Image with ID of %d not found" % imageid)
 
 	def getImageId(self):
 		return self.image.dbid
@@ -40,12 +38,17 @@ class DirectDetectorProcessing(object):
 	def getImageData(self):
 		return self.image
 
+	def __getNumberOfFrameSaved(self,rawframedir):
+		return self.camerainfo['nframe']
+
 	def getRawFrameDirFromImage(self,imagedata):
 		# strip off DOS path in rawframe directory name 
 		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
 		# raw frames are saved in a subdirctory of image path
 		imagepath = imagedata['session']['image path']
 		rawframedir = os.path.join(imagepath,'rawframes',rawframename)
+		if not os.path.exists(rawframedir):
+			apDisplay.printError('Raw Frame Directory %s does not exist' % rawframedir)
 		return rawframedir
 
 	def __setRawFrameInfoFromImage(self):
@@ -54,7 +57,7 @@ class DirectDetectorProcessing(object):
 		'''
 		imagedata = self.image
 		if not imagedata:
-			print "ERROR: no image set"
+			apDisplay.printError('No image set.')
 		rawframeseq = imagedata['camera']['use frames']
 		rawframedir = self.getRawFrameDirFromImage(imagedata)
 		# set attribute values
@@ -107,7 +110,7 @@ class DirectDetectorProcessing(object):
 						return True
 		return False
 			
-	def loadOneRawFrame(self,rawframe_dir,frame_number):
+	def __loadOneRawFrame(self,rawframe_dir,frame_number):
 		'''
 		Load from rawframe_dir the chosen frame of the current image.
 		'''
@@ -132,7 +135,7 @@ class DirectDetectorProcessing(object):
 			if bin['x'] == bin['y']:
 				a = imagefun.bin(a,bin['x'])
 			else:
-				print "ERROR binnings in x,y are different"
+				apDisplay.printError("Binnings in x,y are different")
 		#a = a[:,::-1]
 		return numpy.fliplr(a)
 
@@ -143,12 +146,12 @@ class DirectDetectorProcessing(object):
 		nframe = total number of frames to sum up.
 		
 		'''
-		print 'Summing up Frames....'
+		apDisplay.printMsg( 'Summing up %d Frames starting from %d ....' % (nframe,start_frame))
 		for frame_number in range(start_frame,start_frame+nframe):
 			if frame_number == start_frame:
-				rawarray = self.loadOneRawFrame(rawframe_dir,frame_number)
+				rawarray = self.__loadOneRawFrame(rawframe_dir,frame_number)
 			else:
-				rawarray += self.loadOneRawFrame(rawframe_dir,frame_number)
+				rawarray += self.__loadOneRawFrame(rawframe_dir,frame_number)
 		return rawarray
 
 	def scaleRefImage(self,reftype,nframe):
@@ -167,27 +170,24 @@ class DirectDetectorProcessing(object):
 
 	def correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
 		'''
-		This returns correct numpy array of given start and total number
+		This returns corrected numpy array of given start and total number
 		of raw frames of the current image set for the class instance.  
 		Full raw frame area can be returned as an option.
 		'''
 		# check parameter
 		if not self.image:
-			print "Error: You must set an image for the operation"
-			sys.exit(1)
-		if start_frame not in self.rawframe_seq:
-			print "Error: Starting Frame not in raw frame sequence, can not be processed"
-			sys.exit(1)
+			apDisplay.printError("You must set an image for the operation")
+		if start_frame not in range(self.nframe):
+			apDisplay.printError("Starting Frame not in raw frame sequence, can not be processed")
 		if (start_frame + nframe) > self.nframe:
 			newnframe = self.nframe - start_frame
-			print "Warning: %d instead of %d frames will be used since not enough frames are saved." % (newnframe,nframe)
+			apDisplay.printWarning( "%d instead of %d frames will be used since not enough frames are saved." % (newnframe,nframe))
 			nframe = newnframe
 
 		get_new_refs = self.__conditionChanged(nframe,use_full_raw_area)
 		# o.k. to set attribute now that condition change is checked
 		self.use_full_raw_area = use_full_raw_area
 		if get_new_refs:
-			print 'Load new references'
 			# load dark and bright
 			self.__setCameraInfo(nframe,use_full_raw_area)
 			scaled_darkarray = self.scaleRefImage('dark',nframe)
@@ -196,7 +196,6 @@ class DirectDetectorProcessing(object):
 			self.normarray = normarray
 			self.scaled_darkarray = scaled_darkarray
 		else:
-			print 'Use cached references'
 			normarray = self.normarray
 			scaled_darkarray = self.scaled_darkarray
 
@@ -209,12 +208,26 @@ class DirectDetectorProcessing(object):
 		self.c_client.fixBadPixels(corrected,plan)
 		corrected = numpy.clip(corrected,0,10000)
 		return corrected
-		
+
+	def makeCorrectedRawFrameStack(self,rundir, use_full_raw_area=False):
+		rawframedir = self.getRawFrameDirFromImage(self.image)
+		framestackpath = os.path.join(rundir,self.image['filename']+'_st.mrc')
+		total_frames = self.__getNumberOfFrameSaved()
+		for start_frame in range(total_frames):
+			array = self.correctFrameImage(start_frame,1,use_full_raw_area)
+			if start_frame == 0:
+				# overwrite old stack mre file
+				mrc.write(array,framestackpath)
+			elif start_frame == total_frames-1:
+				mrc.append(array,framestackpath,True)
+			else:
+				# Only calculate stats if the last frame
+				mrc.append(array,framestackpath,False)
 
 if __name__ == '__main__':
 	dd = DirectDetectorProcessing()
 	dd.setImageId(1640790)
 	start_frame = 0
 	nframe = 5
-	corrected = dd.correctFrameImage(0,5)
+	corrected = dd.correctFrameImage(start_frame,nframe)
 	mrc.write(corrected,'corrected_frame%d_%d.mrc' % (start_frame,nframe))
