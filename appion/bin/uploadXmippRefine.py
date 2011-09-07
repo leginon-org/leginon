@@ -287,8 +287,8 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		runparams['angularSamplingRate'] = packageparams['AngSamplingRateDeg']
 		runparams['apix'] = packageparams['ResolSam']
 		runparams['package_params'] = packageparams
-		runparams['cluster_root_path'] = os.path.abspath(xmipp_protocol_projmatch.ProjectDir)
-		runparams['upload_root_path'] = self.params['rundir']
+		runparams['remoterundir'] = os.path.abspath(xmipp_protocol_projmatch.ProjectDir)
+		runparams['rundir'] = self.params['rundir']
 
 		return runparams
 
@@ -416,7 +416,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		self.projmatchpath = os.path.abspath(os.path.join(self.params['rundir'], self.runparams['package_params']['WorkingDir']))
 	
 		### check for variable root directories between file systems
-		apXmipp.checkSelOrDocFileRootDirectoryInDirectoryTree(self.params['rundir'], self.runparams['cluster_root_path'], self.runparams['upload_root_path'])
+		apXmipp.checkSelOrDocFileRootDirectoryInDirectoryTree(self.params['rundir'], self.runparams['remoterundir'], self.runparams['rundir'])
 
 		### determine which iterations to upload
 		lastiter = self.findLastCompletedIteration()

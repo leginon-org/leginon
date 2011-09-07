@@ -9,6 +9,7 @@ from appionlib import apDisplay
 from appionlib import apRefineJob
 from appionlib import apSymmetry
 from appionlib import apXmipp
+from appionlib import apParam
 
 #================
 #================
@@ -61,10 +62,12 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		super(XmippSingleModelRefineJob,self).checkIterationConflicts()
 		pad = int(self.params['boxsize']*1.25/2.0)*2
 		self.params['pad'] = map((lambda x: pad),range(self.params['numiter']))
-
+	
 	def convertSymmetryNameForPackage(self,inputname):
 		'''
 		hedral symmetry key is of possible name, value is that of this package
+		'''
+		return apXmipp.convertSymmetryNameForPackage(inputname)
 		'''
 		xmipp_hedral_symm_names = {'oct':'O','icos':'I'}
 		inputname = inputname.lower().split(' ')[0]
@@ -76,6 +79,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 			apDisplay.printWarning("unknown symmetry name conversion. Use it directly")
 			symm_name = inputname.upper()
 		return symm_name
+		'''
 
 	def calcRefineMem(self):
 		numgig = 2
@@ -182,24 +186,16 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		self.runparams['alignmentInnerRadius'] = protocolPrm["InnerRadius"] 
 		self.runparams['alignmentOuterRadius'] = protocolPrm["OuterRadius"]
 		self.runparams['reconstruction_package'] = "Xmipp"
-#		self.runparams['upload_root_path'] = self.params['rundir']
-#		self.runparams['cluster_root_path'] = self.params['cluster_root_path']
+		self.runparams['remoterundir'] = self.params['remoterundir']
 		self.runparams['reconstruction_working_dir'] = protocolPrm["WorkingDir"] 
 		self.runparams['package_params'] = protocolPrm
-		self.dumpParameters(self.runparams)
+		paramfile = os.path.join(self.params['rundir'], "xmipp_projection_matching_"+self.timestamp+"-params.pickle")
+		apParam.dumpParameters(self.runparams, paramfile)
 		
 		### finished setup of input files, now run xmipp_protocols_ml3d.py from jobfile
 		apDisplay.printMsg("finished setting up input files, now ready to run protocol")
 
 		return protocolfile, protocolPrm
-
-	def dumpParameters(self, parameters):
-		self.params['timestamp'] = self.timestamp
-		paramfile = os.path.join(self.params['rundir'], "xmipp_projection_matching_"+self.timestamp+"-params.pickle")
-		pf = open(paramfile, "w")
-		cPickle.dump(parameters, pf)
-		pf.close()
-		return
 
 	def makeNewTrialScript(self):
 		print self.params['modelnames'][0]
