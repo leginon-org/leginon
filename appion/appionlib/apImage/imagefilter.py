@@ -378,7 +378,7 @@ def correctImage(imgdata, sessionname,start_frame=0,nframe=0):
 		normal_mode = True
 	else:
 		normal_mode = False
-	if normal_mode == True or dd_imported=False:
+	if normal_mode == True or dd_imported==False:
 		rawimgarray = imgdata['image']
 		from appionlib import apDatabase
 		darkarray, normarray = apDatabase.getDarkNorm(sessionname, imgdata['camera'])
