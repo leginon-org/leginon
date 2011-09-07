@@ -11,12 +11,17 @@ from numpy import linalg
 ## appion
 from appionlib import apDisplay
 from appionlib.apSpider import filters
-from appionlib import apDDprocess
+try:
+	from appionlib import apDDprocess
+	dd_imported = True
+except:
+	dd_imported = False
 ## pyami
 from pyami import imagefun, fftengine
 
 ffteng = fftengine.fftEngine()
-dd = apDDprocess.DirectDetectorProcessing()
+if dd_imported:
+	dd = apDDprocess.DirectDetectorProcessing()
 	
 ####
 # This is a low-level file with NO database connections
@@ -373,7 +378,7 @@ def correctImage(imgdata, sessionname,start_frame=0,nframe=0):
 		normal_mode = True
 	else:
 		normal_mode = False
-	if normal_mode == True:
+	if normal_mode == True or dd_imported=False:
 		rawimgarray = imgdata['image']
 		from appionlib import apDatabase
 		darkarray, normarray = apDatabase.getDarkNorm(sessionname, imgdata['camera'])
