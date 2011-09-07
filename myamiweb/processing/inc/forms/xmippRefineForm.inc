@@ -92,7 +92,7 @@ class XmippRefineForm extends BasicRefineForm
 		$innerAlignRadius 	= ''; 
 		$symmetry 			= $sym; 
 		$endIter 			= '10'; 
-		$angSampRate 		= '2x12:2x10:2x8:2x6:2x5:2x4:2x3:2x2';
+		$angSampRate 		= '4x10:2x5:2x3:2x2';
 		$percentDiscard 	= '10';  
 		$filterEstimated 	= ''; 
 		$filterResolution	= ''; 
