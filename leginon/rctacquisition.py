@@ -322,6 +322,13 @@ class RCTAcquisition(acquisition.Acquisition):
 			minsize = self.settings['minsize']
 			maxsize = self.settings['maxsize']
 			libCVwrapper.checkArrayMinMax(self, arrayold, arraynew)
+
+			import pyami.mrc
+			pyami.mrc.write(arrayold, 'arrayold.mrc')
+			pyami.mrc.write(arraynew, 'arraynew.mrc')
+			print 'minsize', minsize
+			print 'maxsize', maxsize
+
 			result = libCVwrapper.MatchImages(arrayold, arraynew, minsize, maxsize)
 			#difftilt = degrees(abs(tilts[int(i)])-abs(tilts[int(i-1)]))
 			#result = self.apTiltShiftMethod(arrayold, arraynew, difftilt)

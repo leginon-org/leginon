@@ -85,7 +85,7 @@ class HoleFinder(object):
 			'correlation': None,
 			'threshold': None,
 			'blobs': None,
-			'vector': None,
+			#'vector': None,
 			'lattice': None,
 			'holes': None,
 			'markedholes': None,
@@ -102,9 +102,10 @@ class HoleFinder(object):
 			'edges': ('correlation',),
 			'template': ('correlation',),
 			'correlation': ('threshold','blobs'),
-			'threshold': ('blobs','vector'),
+			#'threshold': ('blobs','vector'),
+			'threshold': ('blobs',),
 			'blobs': ('lattice',),
-			'vector': ('lattice',),
+			#'vector': ('lattice',),
 			'lattice': ('holes',),
 			'holes': ('holes2','markedholes'),
 			'markedholes': (),
@@ -125,7 +126,8 @@ class HoleFinder(object):
 		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,)}
 		self.threshold = 3.0
 		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100}
-		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20}
+		#self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20}
+		self.lattice_config = {'tolerance': 0.1, 'spacing': 100.0, 'minspace': 20}
 		self.holestats_config = {'radius': 20}
 		self.ice_config = {'i0': None, 'min': 0.0, 'max': 0.1, 'std': 0.05}
 
