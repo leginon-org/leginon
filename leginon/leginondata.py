@@ -1520,6 +1520,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 	def typemap(cls):
 		return TargetWatcherSettingsData.typemap() + (
 			('pause time', float),
+			('pause between time', float),
 			('move type', str),
 			('preset order', list),
 			('correct image', bool),

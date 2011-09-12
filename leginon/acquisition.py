@@ -116,6 +116,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	defaultsettings = dict(targetwatcher.TargetWatcher.defaultsettings)
 	defaultsettings.update({
 		'pause time': 2.5,
+		'pause between time': 0,
 		'move type': 'image shift',
 		'preset order': [],
 		'correct image': True,
@@ -356,13 +357,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		presetnames = self.settings['preset order']
 		ret = 'ok'
 		self.onTarget = False
-		for newpresetname in presetnames:
+		for preset_index, newpresetname in enumerate(presetnames):
 			if self.alreadyAcquired(targetdata, newpresetname):
 				continue
 
 			if targetdata is not None and targetdata['type'] != 'simulated' and self.settings['adjust for transform'] != 'no':
 				if self.settings['drift between'] and self.goodnumber > 0:
-					self.declareDrift('between targets')
+						self.declareDrift('between targets')
 				targetonimage = targetdata['delta column'],targetdata['delta row']
 				targetdata = self.adjustTargetForTransform(targetdata)
 				self.logger.info('target adjusted by (%.1f,%.1f) (column, row)' % (targetdata['delta column']-targetonimage[0],targetdata['delta row']-targetonimage[1]))
@@ -377,6 +378,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 			presetdata = self.presetsclient.getPresetByName(newpresetname)
 
+			pause_between_time = self.settings['pause between time']
+			if preset_index > 0 and pause_between_time > 0.0:
+				self.logger.info('Pausing for extra %.1f before acquisition with %s' % (pause_between_time,newpresetname))
+				time.sleep(pause_between_time)
 			### acquire film or CCD
 			self.startTimer('acquire')
 			ret = self.acquire(presetdata, emtarget, attempt=attempt, target=targetdata)

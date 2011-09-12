@@ -137,6 +137,23 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['preset order'] = EditPresetOrder(self, -1)
 		self.widgets['preset order'].setChoices(presets)
 
+		# extra pause between presets
+		self.widgets['pause between time'] = FloatEntry(self, -1,
+																		min=0.0,
+																		allownone=False,
+																		chars=4,
+																		value='0.0')
+		szpausebtime = wx.GridBagSizer(5, 5)
+		szpausebtime.Add(wx.StaticText(self, -1, 'Wait'),
+								(0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		szpausebtime.Add(self.widgets['pause between time'],
+								(0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausebtime.Add(wx.StaticText(self, -1, 'extra seconds between presets'),
+								(0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+
 		# misc. checkboxes
 		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
 		self.widgets['save integer'] = wx.CheckBox(self, -1, 'Float->Integer')
@@ -281,9 +298,10 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		szright = wx.GridBagSizer(3, 3)
 		szright.Add(self.widgets['preset order'], (0, 0), (4, 1), wx.ALIGN_CENTER)
-		szright.Add(szmover, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		szright.Add(szmoveprec, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		szright.Add(sz_target_type, (6,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szright.Add(szpausebtime, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szright.Add(szmover, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szright.Add(szmoveprec, (6,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szright.Add(sz_target_type, (7,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_save, (2,0), (2,1), wx.ALIGN_CENTER_VERTICAL)
