@@ -18,10 +18,32 @@ import leginon.gui.wx.Icons
 import leginon.gui.wx.ImagePanel
 import leginon.gui.wx.TargetPanel
 import leginon.gui.wx.ToolBar
+import leginon.gui.wx.ManualFocus
 
+UpdateImagesEventType = wx.NewEventType()
+ManualCheckEventType = wx.NewEventType()
+ManualCheckDoneEventType = wx.NewEventType()
 AlignRotationCenterEventType = wx.NewEventType()
 
+EVT_UPDATE_IMAGES = wx.PyEventBinder(UpdateImagesEventType)
+EVT_MANUAL_CHECK = wx.PyEventBinder(ManualCheckEventType)
+EVT_MANUAL_CHECK_DONE = wx.PyEventBinder(ManualCheckDoneEventType)
 EVT_ALIGN = wx.PyEventBinder(AlignRotationCenterEventType)
+
+class UpdateImagesEvent(wx.PyCommandEvent):
+	def __init__(self, source):
+		wx.PyCommandEvent.__init__(self, UpdateImagesEventType, source.GetId())
+		self.SetEventObject(source)
+
+class ManualCheckEvent(wx.PyCommandEvent):
+	def __init__(self, source):
+		wx.PyCommandEvent.__init__(self, ManualCheckEventType, source.GetId())
+		self.SetEventObject(source)
+
+class ManualCheckDoneEvent(wx.PyCommandEvent):
+	def __init__(self, source):
+		wx.PyCommandEvent.__init__(self, ManualCheckDoneEventType, source.GetId())
+		self.SetEventObject(source)
 
 class Panel(leginon.gui.wx.Acquisition.Panel):
 	icon = 'focuser'
@@ -30,6 +52,10 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		leginon.gui.wx.Acquisition.Panel.__init__(self, *args, **kwargs)
 
 		self.toolbar.AddSeparator()
+		# Disable manual focus style coma-free alignment because it is not practical
+		# to use, yet.
+		#self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MANUAL_FOCUS, 'manualfocus',
+		#					 shortHelpString='Align beam tilt with wobbler')
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ALIGN, 'rotcenter',
 							 shortHelpString='Align rotation center')
 		# correlation image
@@ -42,11 +68,16 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 	def onNodeInitialized(self):
 		self.align_dialog = AlignRotationCenterDialog(self)
 		self.Bind(EVT_ALIGN, self.onAlignRotationCenter, self)
+		self.manualdialog = leginon.gui.wx.ManualFocus.ManualBeamTiltWobbleDialog(self, self.node)
+		self.Bind(EVT_MANUAL_CHECK, self.onManualCheck, self)
+		self.Bind(EVT_MANUAL_CHECK_DONE, self.onManualCheckDone, self)
 
 		leginon.gui.wx.Acquisition.Panel.onNodeInitialized(self)
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAlignRotationCenter,
 						  id=leginon.gui.wx.ToolBar.ID_ALIGN)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onManualFocusTool,
+						  id=leginon.gui.wx.ToolBar.ID_MANUAL_FOCUS)
 		self.Bind(leginon.gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
 							self.imagepanel)
 
@@ -56,11 +87,35 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
+	def onImageClicked(self, evt):
+		threading.Thread(target=self.node.navigate, args=(evt.xy,)).start()
+
 	def onAlignRotationCenter(self, evt):
 		self.align_dialog.Show()
 
-	def onImageClicked(self, evt):
-		threading.Thread(target=self.node.navigate, args=(evt.xy,)).start()
+	def onManualFocusTool(self, evt):
+		self.node.manualNow()
+
+	def onManualCheck(self, evt):
+		#self.manualdialog.MakeModal(True)
+		print "at onManualCheck"
+		self.manualdialog.Raise()
+		self.manualdialog.Show()
+
+	def onManualCheckDone(self, evt):
+		self.manualdialog.Show(False)
+		#self.manualdialog.MakeModal(False)
+
+	def setManualImage(self, image, typename, stats={}):
+		evt = leginon.gui.wx.Events.SetImageEvent(image, typename, stats)
+		self.manualdialog.GetEventHandler().AddPendingEvent(evt)
+
+	def manualUpdated(self):
+		self.manualdialog.manualUpdated()
+	
+	def onNewPixelSize(self, pixelsize,center,hightension):
+		self.manualdialog.center = center
+		self.manualdialog.onNewPixelSize(pixelsize,center,hightension)
 
 class SettingsDialog(leginon.gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):

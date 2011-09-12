@@ -5,7 +5,7 @@
 #	   For terms of the license agreement
 #	   see  http://ami.scripps.edu/software/leginon-license
 #
-import acquisition
+import manualfocuschecker
 import node
 from leginon import leginondata
 import calibrationclient
@@ -24,10 +24,10 @@ import subprocess
 import re
 import os
 
-class BeamTiltImager(acquisition.Acquisition):
+class BeamTiltImager(manualfocuschecker.ManualFocusChecker):
 	panelclass = gui.wx.BeamTiltImager.Panel
 	settingsclass = leginondata.BeamTiltImagerSettingsData
-	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings = manualfocuschecker.ManualFocusChecker.defaultsettings
 	defaultsettings.update({
 		'process target type': 'focus',
 		'beam tilt': 0.01,
@@ -40,18 +40,19 @@ class BeamTiltImager(acquisition.Acquisition):
 		'tableau split': 8,
 	})
 
-	eventinputs = acquisition.Acquisition.eventinputs
-	eventoutputs = acquisition.Acquisition.eventoutputs
+	eventinputs = manualfocuschecker.ManualFocusChecker.eventinputs
+	eventoutputs = manualfocuschecker.ManualFocusChecker.eventoutputs
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 
 		self.correlator = correlator.Correlator()
 		self.correlation_types = ['cross', 'phase']
 		self.tableau_types = ['beam tilt series-power', 'beam tilt series-image','split image-power']
-		self.maskradius = 1.0
-		self.increment = 5e-7
+		self.tiltdelta = 5e-3
 		self.tabscale = None
-		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
+		manualfocuschecker.ManualFocusChecker.__init__(self, id, session, managerlocation, **kwargs)
+		self.parameter_choice= 'Beam Tilt X'
+		self.increment = 5e-4
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
@@ -107,7 +108,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		image = imagedata['image']
 		split = self.settings['tableau split']
 		self.tabimage = tableau.splitTableau(image, split)
-		self.addCornerCTFlabels(imagedata, split)
+		#self.addCornerCTFlabels(imagedata, split)
 		self.tabscale = None
 		self.displayTableau()
 		self.saveTableau()
@@ -214,7 +215,7 @@ class BeamTiltImager(acquisition.Acquisition):
 			newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
 			self.instrument.tem.BeamTilt = newbt
 			self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
-			status = acquisition.Acquisition.acquire(self, presetdata, emtarget, channel= channel)
+			status = manualfocuschecker.ManualFocusChecker.acquire(self, presetdata, emtarget, channel= channel)
 			imagedata = self.imagedata
 			self.setImage(imagedata['image'], 'Image')
 			self.instrument.tem.BeamTilt = oldbt
@@ -225,17 +226,19 @@ class BeamTiltImager(acquisition.Acquisition):
 				self.splitTableau(imagedata)
 			elif 'beam tilt series' in self.settings['tableau type']:
 				self.insertTableau(imagedata, angle, rad)
-			try:
-				shiftinfo = self.correlateOriginal(i,imagedata)
-			except Exception, e:
-				self.logger.error('Failed correlation: %s' % e)
-				return 'error'
-			pixelshift = shiftinfo['pixel shift']
-			displace.append((pixelshift['row'],pixelshift['col']))
+			if self.settings['tableau type'] == 'beam tilt series-image':
+				try:
+					shiftinfo = self.correlateOriginal(i,imagedata)
+				except Exception, e:
+					self.logger.error('Failed correlation: %s' % e)
+					return 'error'
+				pixelshift = shiftinfo['pixel shift']
+				displace.append((pixelshift['row'],pixelshift['col']))
 		if 'beam tilt series' in self.settings['tableau type']:
 			self.renderTableau()
-			if 'power' in self.settings['tableau type']:
-				self.calculateAxialComa(self.ctfdata)
+			# not to calculate Axial Coma to save time for now
+			#if 'power' in self.settings['tableau type']:
+			#	self.calculateAxialComa(self.ctfdata)
 		return status
 
 	def alreadyAcquired(self, targetdata, presetname):
@@ -348,6 +351,8 @@ class BeamTiltImager(acquisition.Acquisition):
 		pow = imagefun.power(image)
 		binned = imagefun.bin(pow, binning)
 		s = None
+		ctfdata = None
+		'''
 		try:
 			ctfdata = fftfun.fitFirstCTFNode(pow,rpixelsize['x'], defocus, ht)
 		except Exception, e:
@@ -361,6 +366,7 @@ class BeamTiltImager(acquisition.Acquisition):
 			ctfdata = self.estimateCTF(imagedata)
 			z0 = (ctfdata['defocus1'] + ctfdata['defocus2']) / 2
 			s = '%d' % (int(z0*1e9),)
+		'''
 		if s:
 			t = numpil.textArray(s)
 			t = ndimage.zoom(t, (min(binned.shape)-40.0)*0.08/(t.shape)[0])
@@ -478,3 +484,118 @@ class BeamTiltImager(acquisition.Acquisition):
 			mcal = (6.4,-7.0)
 			tshape = self.tabimage.shape
 			self.logger.info('Axial Coma(pixels)= (%.2f,%.2f)' % (mcal[0]*b2[0]*1e6+tshape[0]/2,mcal[1]*b2[1]*1e6+tshape[1]/2))
+
+	def setParameterChoice(self,parameter):
+		if parameter == 'Beam Tilt X':
+				self.axis = 'x'
+		elif parameter == 'Beam Tilt Y':
+				self.axis = 'y'
+		self.parameter_choice = parameter
+
+	def onManualCheck(self):
+		self.tiltdirection = 1
+		self.coma_free_tilt = self.instrument.tem.BeamTilt
+		evt = gui.wx.BeamTiltImager.ManualCheckEvent(self.panel)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+
+	def onManualCheckDone(self):
+		evt = gui.wx.BeamTiltImager.ManualCheckDoneEvent(self.panel)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+		self.resetTEMState()
+
+	def getTilt(self):
+		newtilt = self.coma_free_tilt.copy()
+		new_tilt_direction = (-1) * self.tiltdirection
+		newtilt[self.axis] = self.coma_free_tilt[self.axis] + new_tilt_direction * self.tiltdelta
+		self.tiltdirection = new_tilt_direction
+		return newtilt
+
+	def changeFocus(self, parameter, direction):
+		'''use this function for beam tilt adjustment as well'''
+		delta = self.increment
+		self.manualchecklock.acquire()
+		self.logger.info('Changing %s %s %s' % (parameter, direction, delta))
+		try:
+			if parameter == 'Stage Z':
+				value = self.instrument.tem.StagePosition['z']
+			elif parameter == 'Defocus':
+				value = self.instrument.tem.Defocus
+			elif parameter == 'Beam Tilt X':
+				self.axis = 'x'
+				value = self.coma_free_tilt[self.axis]
+			elif parameter == 'Beam Tilt Y':
+				self.axis = 'y'
+				value = self.coma_free_tilt[self.axis]
+			if direction == 'up':
+				value += delta
+			elif direction == 'down':
+				value -= delta
+			
+			if parameter == 'Stage Z':
+				self.instrument.tem.StagePosition = {'z': value}
+			elif parameter == 'Defocus':
+				self.instrument.tem.Defocus = value
+			elif parameter in ('Beam Tilt X','Beam Tilt Y'):
+				self.coma_free_tilt[self.axis] = value
+		except Exception, e:
+			self.logger.exception('Change focus failed: %s' % e)
+			self.manualchecklock.release()
+			return
+
+		self.manualchecklock.release()
+
+	
+	def setTEMState(self):
+		if self.parameter_choice in ('Beam Tilt X','Beam Tilt Y'):
+			self.instrument.tem.BeamTilt = self.getTilt()
+		else:
+			self.resetTEMState()
+		print self.instrument.tem.BeamTilt
+
+	def resetTEMState(self):
+		print 'tilt back'
+		self.instrument.tem.BeamTilt = self.coma_free_tilt
+
+	def _rotationCenterToScope(self):
+		tem = self.instrument.getTEMData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		beam_tilt = self.btcalclient.retrieveRotationCenter(tem, ht, mag)
+		if not beam_tilt:
+			raise RuntimeError('no rotation center for %geV, %gX' % (ht, mag))
+		self.instrument.tem.BeamTilt = beam_tilt
+		self.coma_free_tilt = beam_tilt
+
+	def rotationCenterToScope(self):
+		self.manualchecklock.acquire()
+		try:
+			self._rotationCenterToScope()
+		except Exception, e:
+			self.logger.error('Unable to set rotation center: %s' % e)
+		else:
+			self.logger.info('Set instrument rotation center')
+		self.manualchecklock.release()
+		self.panel.manualUpdated()
+
+	def _rotationCenterFromScope(self):
+		tem = self.instrument.getTEMData()
+		ht = self.instrument.tem.HighTension
+		mag = self.instrument.tem.Magnification
+		if self.parameter_choice in ('Beam Tilt X','Beam Tilt Y'):
+			beam_tilt = self.coma_free_tilt
+		else:
+			beam_tilt = self.instrument.tem.BeamTilt
+		self.btcalclient.storeRotationCenter(tem, ht, mag, beam_tilt)
+
+	def rotationCenterFromScope(self):
+		self.manualchecklock.acquire()
+		try:
+			self._rotationCenterFromScope()
+		except Exception, e:
+			self.logger.error('Unable to get rotation center: %s' % e)
+		else:
+			self.logger.info('Saved instrument rotation center')
+		self.manualchecklock.release()
+		self.panel.manualUpdated()
+
+	
