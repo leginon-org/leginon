@@ -26,7 +26,7 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTargetTool('Perimeter', wx.RED,
 																	settings=True, target=True, shape='polygon')
-		self.imagepanel.addTargetTool('Raster', wx.Color(255,128,0),
+		self.imagepanel.addTargetTool('Raster', wx.Colour(255,128,0),
 																	settings=True, target=True)
 
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True,

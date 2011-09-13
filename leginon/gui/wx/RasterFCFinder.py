@@ -28,16 +28,16 @@ class Panel(gui.wx.RasterFinder.Panel):
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
-		self.imagepanel.addTargetTool('Raster', wx.Color(0, 255, 255),
+		self.imagepanel.addTargetTool('Raster', wx.Colour(0, 255, 255),
 																	settings=True)
 		# WVN 19/1/08 - change borrowed from Leginon v.1.4.1 RasterFinder
-		# self.imagepanel.addTargetTool('Polygon Vertices', wx.Color(255,0,0),
+		# self.imagepanel.addTargetTool('Polygon Vertices', wx.Colour(255,0,0),
 		#															settings=True, target=True)
-		self.imagepanel.addTargetTool('Polygon Vertices', wx.Color(255,255,0),
+		self.imagepanel.addTargetTool('Polygon Vertices', wx.Colour(255,255,0),
 																	settings=True, target=True)
 		self.imagepanel.selectiontool.setDisplayed('Polygon Vertices', True)
 		self.imagepanel.setTargets('Polygon Vertices', [])
-		self.imagepanel.addTargetTool('Polygon Raster', wx.Color(255,128,0),
+		self.imagepanel.addTargetTool('Polygon Raster', wx.Colour(255,128,0),
 																	settings=False)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True,
 																	settings=True)

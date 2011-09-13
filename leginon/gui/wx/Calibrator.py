@@ -105,7 +105,7 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTypeTool('Correlation', display=True)
 		if isinstance(self.imagepanel, leginon.gui.wx.TargetPanel.TargetImagePanel):
-			color = wx.Color(255, 128, 0)
+			color = wx.Colour(255, 128, 0)
 			self.imagepanel.addTargetTool('Peak', color)
 
 		self.szmain.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)

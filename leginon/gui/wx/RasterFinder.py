@@ -27,15 +27,15 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('Original', True)
-		self.imagepanel.addTargetTool('Raster', wx.Color(0, 255, 255), settings=True)
+		self.imagepanel.addTargetTool('Raster', wx.Colour(0, 255, 255), settings=True)
 		
-		self.imagepanel.addTargetTool('Polygon Vertices', wx.Color(255,255,0), settings=True, target=True, shape='polygon')
+		self.imagepanel.addTargetTool('Polygon Vertices', wx.Colour(255,255,0), settings=True, target=True, shape='polygon')
 		self.imagepanel.selectiontool.setDisplayed('Polygon Vertices', True)
 		self.imagepanel.setTargets('Polygon Vertices', [])
 	
 
 	
-		self.imagepanel.addTargetTool('Polygon Raster', wx.Color(255,128,0))
+		self.imagepanel.addTargetTool('Polygon Raster', wx.Colour(255,128,0))
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)

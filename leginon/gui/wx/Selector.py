@@ -82,14 +82,14 @@ class SelectorItem(object):
 		evt.Skip()
 
 	def setSelected(self, selected):
-		color = wx.Color(180,250,205)
+		color = wx.Colour(180,250,205)
 		if selected:
 			for item in self.items:
 				if item is None:
 					continue
 				item.SetBackgroundColour(color)
 			self.panel.SetBackgroundColour(color)
-			self.items[1].SetForegroundColour(wx.Color(200,0,0))
+			self.items[1].SetForegroundColour(wx.Colour(200,0,0))
 		else:
 			for item in self.items:
 				if item is None:

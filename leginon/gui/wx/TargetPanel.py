@@ -35,12 +35,12 @@ targettype_colors = {
 	'acquisition': wx.GREEN,
 	'focus': wx.BLUE,
 	'done': wx.RED,
-	'reference': wx.Color(128, 0, 128),
-	'position': wx.Color(218, 165, 32),
-	'preview': wx.Color(255, 128, 255),
-	'meter': wx.Color(255, 255, 0),
-	'original': wx.Color(255, 128, 128),
-	'peak': wx.Color(255, 128, 0),
+	'reference': wx.Colour(128, 0, 128),
+	'position': wx.Colour(218, 165, 32),
+	'preview': wx.Colour(255, 128, 255),
+	'meter': wx.Colour(255, 255, 0),
+	'original': wx.Colour(255, 128, 128),
+	'peak': wx.Colour(255, 128, 0),
 }
 
 ##################################

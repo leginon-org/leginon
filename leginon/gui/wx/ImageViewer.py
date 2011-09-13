@@ -257,7 +257,7 @@ def targetBitmap_circle(color):
 	return bitmap
 
 def getTargetBitmaps(color, shape='+'):
-	selectedcolor = wx.Color(color.Red()/2, color.Green()/2, color.Blue()/2)
+	selectedcolor = wx.Colour(color.Red()/2, color.Green()/2, color.Blue()/2)
 	return getTargetBitmap(color, shape), getTargetBitmap(selectedcolor, shape)
 
 # needs to adjust buffer/wximage instead of reseting from numeric image
@@ -487,7 +487,7 @@ class ValueTool(ImageTool):
 
 class CrosshairTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		self.color = wx.Color(0,150,150)
+		self.color = wx.Colour(0,150,150)
 		bitmap = getTargetIconBitmap(self.color, shape='+')
 		tooltip = 'Toggle Center Crosshair'
 		cursor = None

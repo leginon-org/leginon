@@ -36,7 +36,7 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTargetTool('New', wx.GREEN, target=True)
 		self.imagepanel.selectiontool.setDisplayed('New', True)
-		self.imagepanel.addTargetTool('Submitted', wx.Color(255, 128, 0))
+		self.imagepanel.addTargetTool('Submitted', wx.Colour(255, 128, 0))
 		self.imagepanel.selectiontool.setDisplayed('Submitted', True)
 		self.imagepanel.addTargetTool('Processed', wx.RED)
 		self.imagepanel.selectiontool.setDisplayed('Processed', True)

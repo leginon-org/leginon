@@ -37,12 +37,12 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTypeTool('Edge', display=True, settings=True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
-		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255), target=True,
+		self.imagepanel.addTargetTool('Blobs', wx.Colour(0, 255, 255), target=True,
 																settings=True)
 
 		self.imagepanel.selectiontool.setDisplayed('Blobs', True)
 		self.imagepanel.setTargets('Blobs', [])
-		self.imagepanel.addTargetTool('PickHoles', wx.Color(255, 0, 255), target=True,
+		self.imagepanel.addTargetTool('PickHoles', wx.Colour(255, 0, 255), target=True,
 																	settings=True)
 		self.imagepanel.selectiontool.setDisplayed('PickHoles', True)
 

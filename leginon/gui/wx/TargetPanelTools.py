@@ -109,7 +109,7 @@ class TargetTypeTool(leginon.gui.wx.ImagePanelTools.TypeTool):
 			self.togglebuttons['target'].SetValue(False)
 			return
 		#if self.togglebuttons['target'].GetValue() is True:
-		#	self.togglebuttons['target'].SetBackgroundColour(wx.Color(160,160,160))
+		#	self.togglebuttons['target'].SetBackgroundColour(wx.Colour(160,160,160))
 		#else:
 		#	self.togglebuttons['target'].SetBackgroundColour(wx.WHITE)
 		evt = TargetingEvent(evt.GetEventObject(), self.name, evt.GetIsDown())

@@ -240,7 +240,7 @@ def targetBitmap_circle(color, width=global_width):
 
 #--------------------
 def getTargetBitmaps(color, shape='+', size=global_width):
-	selectedcolor = wx.Color(color.Red()/2, color.Green()/2, color.Blue()/2,)
+	selectedcolor = wx.Colour(color.Red()/2, color.Green()/2, color.Blue()/2,)
 	return getTargetBitmap(color, shape, size), getTargetBitmap(selectedcolor, shape, size)
 
 

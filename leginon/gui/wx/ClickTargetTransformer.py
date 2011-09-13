@@ -78,7 +78,7 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('c_acquisition', True)
 		#self.imagepanel.addTargetTool('c_focus', wx.BLUE, target=True, shape='x', display=True)
 		#self.imagepanel.selectiontool.setDisplayed('c_focus', True)
-		self.imagepanel.addTargetTool('transformed', wx.Color(255, 0, 255),target=True, shape='x', display=True)
+		self.imagepanel.addTargetTool('transformed', wx.Colour(255, 0, 255),target=True, shape='x', display=True)
 		self.imagepanel.selectiontool.setDisplayed('transformed', True)
 		self.imagepanel.addTargetTool('done', wx.RED, display=True)
 		self.imagepanel.selectiontool.setDisplayed('done', False)

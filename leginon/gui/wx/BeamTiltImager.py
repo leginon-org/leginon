@@ -61,7 +61,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
 		self.imagepanel.addTypeTool('Tableau', display=True)
-		self.imagepanel.addTargetTool('Peak', wx.Color(255, 128, 0))
+		self.imagepanel.addTargetTool('Peak', wx.Colour(255, 128, 0))
 
 		self.szmain.Layout()
 

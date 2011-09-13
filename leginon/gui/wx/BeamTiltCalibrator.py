@@ -60,7 +60,7 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		self.imagepanel.addTypeTool('Correlation', display=True)
 		self.imagepanel.addTypeTool('Tableau', display=True)
 		if isinstance(self.imagepanel, leginon.gui.wx.TargetPanel.TargetImagePanel):
-			color = wx.Color(255, 128, 0)
+			color = wx.Colour(255, 128, 0)
 			self.imagepanel.addTargetTool('Peak', color)
 
 		self.szmain.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)

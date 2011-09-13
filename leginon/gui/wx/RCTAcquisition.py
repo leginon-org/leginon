@@ -30,7 +30,7 @@ class Panel(leginon.gui.wx.Acquisition.Panel):
 
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
-		self.imagepanel.addTargetTool('Peak', wx.Color(255, 128, 0))
+		self.imagepanel.addTargetTool('Peak', wx.Colour(255, 128, 0))
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool, id=leginon.gui.wx.ToolBar.ID_ACQUIRE)
 
 		self.szmain.Layout()

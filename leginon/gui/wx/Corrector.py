@@ -182,10 +182,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 		# image
 		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
-		self.imagepanel.addTargetTool('Bad_Pixels', wx.Color(255, 0, 0), target=True, shape='.')
+		self.imagepanel.addTargetTool('Bad_Pixels', wx.Colour(255, 0, 0), target=True, shape='.')
 		self.imagepanel.selectiontool.setDisplayed('Bad_Pixels', True)
 		self.imagepanel.setTargets('Bad_Pixels', [])
-		self.imagepanel.addTargetTool('Bad_Region', wx.Color(0, 255, 255), target=True, shape='polygon', display=True)
+		self.imagepanel.addTargetTool('Bad_Region', wx.Colour(0, 255, 255), target=True, shape='polygon', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Bad_Region', True)
 		self.imagepanel.setTargets('Bad_Region', [])
 

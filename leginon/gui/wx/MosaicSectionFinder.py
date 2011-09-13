@@ -23,7 +23,7 @@ class Panel(leginon.gui.wx.MosaicClickTargetFinder.Panel):
 
 	def addOtherTools(self):
 #		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
-		self.imagepanel.addTargetTool('region', wx.Color(64,128,255), target=True, settings=True, shape='polygon')
+		self.imagepanel.addTargetTool('region', wx.Colour(64,128,255), target=True, settings=True, shape='polygon')
 		self.imagepanel.selectiontool.setDisplayed('region', True)
 
 	def onNodeInitialized(self):

@@ -640,7 +640,7 @@ class ResolutionTool(ValueTool):
 
 class CrosshairTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		self.color = wx.Color(0,150,150) #dark teal green
+		self.color = wx.Colour(0,150,150) #dark teal green
 		bitmap = leginon.gui.wx.TargetPanelBitmaps.getTargetIconBitmap(self.color, shape='+')
 		tooltip = 'Toggle Center Crosshair'
 		cursor = None
@@ -909,7 +909,7 @@ class TypeTool(object):
 		togglebutton = self.togglebuttons[toolname]
 		if enable:
 			togglebutton.SetBezelWidth(3)
-			#togglebutton.SetBackgroundColour(wx.Color(160, 160, 160))
+			#togglebutton.SetBackgroundColour(wx.Colour(160, 160, 160))
 		else:
 			togglebutton.SetBezelWidth(0)
 			#togglebutton.SetBackgroundColour(wx.WHITE)
@@ -936,7 +936,7 @@ class TypeTool(object):
 	#--------------------
 	def onToggleDisplay(self, evt):
 		#if self.togglebuttons['display'].GetValue() is True:
-		#	self.togglebuttons['display'].SetBackgroundColour(wx.Color(160,160,160))
+		#	self.togglebuttons['display'].SetBackgroundColour(wx.Colour(160,160,160))
 		#else:
 		#	self.togglebuttons['display'].SetBackgroundColour(wx.WHITE)
 		evt = DisplayEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
