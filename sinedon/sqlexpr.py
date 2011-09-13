@@ -632,7 +632,7 @@ class Delete(SQLExpression):
 		if self.whereClause is None:
 			return "DELETE FROM %s" % self.table
 		return "DELETE FROM %s WHERE %s" \
-			   % (self.table, sqlRepr(self.whereClause))
+			   % (self.table, self.whereClause)
 
 class Replace(Update):
 	def sqlName(self):

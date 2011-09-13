@@ -244,6 +244,21 @@ class SQLDict(object):
 		"""
 		return _multipleQueries(self.db, queryinfo, readimages)
 
+	def delete(self, queryinfo):
+		# should be just a single object for now
+		info = queryinfo.popitem()[1]
+		print 'INFO', info
+		tablename = info['class'].__name__
+		print 'TABLENAME', tablename
+		where = info['where'].popitem()
+		where = '%s = %d' % where
+		print 'WHERE', where
+		query = str(sqlexpr.Delete(tablename, where))
+		print 'QUERY', query
+		self.db.ping()
+		cur = self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+		cur.execute(query)
+
 class _Table:
 
 	"""Table handler for a SQLDict object. These should not be created

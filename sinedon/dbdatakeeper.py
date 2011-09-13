@@ -67,6 +67,16 @@ class DBDataKeeper(object):
 		else:
 			raise RuntimeError('direct_query should only return a single result')
 
+	def delete(self, dataobject):
+		datainfo = self.datainfo(dataobject)
+		print 'DATAINFO', datainfo
+		queryinfo = datainfo[0]
+		self.lock.acquire()
+		try:
+			self.dbd.delete(queryinfo)
+		finally:
+			self.lock.release()
+
 	def _reconnect(self):
 		try:
 			self.dbd = sqldict.SQLDict()
