@@ -54,7 +54,7 @@ class MaskApp(manualpicker.PickerApp):
 		manualpicker.PickerApp.__init__(self, shape='+', size=16, mask=True)
 
 	def OnInit(self):
-		self.deselectcolor = wx.Color(240,240,240)
+		self.deselectcolor = wx.Colour(240,240,240)
 
 		self.frame = wx.Frame(None, -1, 'Manual Mask Maker')
 		self.sizer = wx.FlexGridSizer(3,1)
@@ -67,7 +67,7 @@ class MaskApp(manualpicker.PickerApp):
 		self.panel = ManualMaskMakerPanel(self.frame, -1)
 
 #		self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
-#			display=wx.Color(220,20,20), target=True, shape=self.shape, size=self.size)
+#			display=wx.Colour(220,20,20), target=True, shape=self.shape, size=self.size)
 
 #		self.panel.setTargets('Select Particles', [])
 #		self.panel.selectiontool.setTargeting('Select Particles', True)

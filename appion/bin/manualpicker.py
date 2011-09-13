@@ -78,7 +78,7 @@ class PickerApp(wx.App):
 		wx.App.__init__(self)
 
 	def OnInit(self):
-		self.deselectcolor = wx.Color(240,240,240)
+		self.deselectcolor = wx.Colour(240,240,240)
 
 		self.frame = wx.Frame(None, -1, 'Manual Particle Picker')
 		self.sizer = wx.FlexGridSizer(3,1)
@@ -92,7 +92,7 @@ class PickerApp(wx.App):
 		self.panel = ManualPickerPanel(self.frame, -1)
 		self.panel.originaltargets = {}
 
-		self.panel.addTargetTool('Region to Remove', color=wx.Color(20,220,20),
+		self.panel.addTargetTool('Region to Remove', color=wx.Colour(20,220,20),
 			target=True, shape='polygon')
 		self.panel.setTargets('Region to Remove', [])
 		self.panel.selectiontool.setDisplayed('Region to Remove', True)
@@ -169,7 +169,7 @@ class PickerApp(wx.App):
 
 	def addLabelPicker(self, label):
 		rgb = self.pick_colors.next()
-		self.panel.addTargetTool(label, color=wx.Color(*rgb),
+		self.panel.addTargetTool(label, color=wx.Colour(*rgb),
 			target=True, shape=self.shape, size=self.size)
 		self.panel.setTargets(label, [])
 		self.panel.selectiontool.setTargeting(label, True)
@@ -241,7 +241,7 @@ class PickerApp(wx.App):
 
 	def onToggleNone(self, evt):
 		self.assessnone.SetValue(1)
-		self.assessnone.SetBackgroundColour(wx.Color(200,200,0))
+		self.assessnone.SetBackgroundColour(wx.Colour(200,200,0))
 		self.assesskeep.SetValue(0)
 		self.assesskeep.SetBackgroundColour(self.deselectcolor)
 		self.assessreject.SetValue(0)
@@ -252,7 +252,7 @@ class PickerApp(wx.App):
 		self.assessnone.SetValue(0)
 		self.assessnone.SetBackgroundColour(self.deselectcolor)
 		self.assesskeep.SetValue(1)
-		self.assesskeep.SetBackgroundColour(wx.Color(0,200,0))
+		self.assesskeep.SetBackgroundColour(wx.Colour(0,200,0))
 		self.assessreject.SetValue(0)
 		self.assessreject.SetBackgroundColour(self.deselectcolor)
 		self.assess = True
@@ -264,7 +264,7 @@ class PickerApp(wx.App):
 		self.assesskeep.SetValue(0)
 		self.assesskeep.SetBackgroundColour(self.deselectcolor)
 		self.assessreject.SetValue(1)
-		self.assessreject.SetBackgroundColour(wx.Color(200,0,0))
+		self.assessreject.SetBackgroundColour(wx.Colour(200,0,0))
 		self.assess = False
 
 	def onClear(self, evt):

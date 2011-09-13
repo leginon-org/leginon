@@ -427,7 +427,7 @@ class PickerApp(wx.App):
 	def OnInit(self):
 		# Redirect text output for debuging purpose
 		#self.RedirectStdio('out.log')
-		self.deselectcolor = wx.Color(40,40,40)
+		self.deselectcolor = wx.Colour(40,40,40)
 
 		self.frame = wx.Frame(None, -1, 'Manual Object Tracer')
 		self.sizer = wx.FlexGridSizer(2,1)
@@ -473,16 +473,16 @@ class PickerApp(wx.App):
 
 	def addLabelPicker(self, label):
 		rgb = self.pick_colors.next()
-		self.panel.addTargetTool(label, color=wx.Color(*rgb),
+		self.panel.addTargetTool(label, color=wx.Colour(*rgb),
 			target=True, shape=self.shape, size=self.size)
 		self.panel.setTargets(label, [])
 		self.panel.selectiontool.setTargeting(label, True)
 
 	def doGraphics(self):
 		#for targets in self.oldPolyTargets:
-		#	self.panel.drawContour(wx.Color(220,20,20),targets)	
+		#	self.panel.drawContour(wx.Colour(220,20,20),targets)	
 		for targets in self.polyTargets:
-			self.panel.drawContour(wx.Color(220,20,20),targets)	
+			self.panel.drawContour(wx.Colour(220,20,20),targets)	
 
 	def deleteTarget(self, target):
 		try:
@@ -616,13 +616,13 @@ class PickerApp(wx.App):
 		self.polyTargets = []
 		self.polyTargetsLabels = []
 		self.s = 'Manually Create Contours'
-		self.panel.addTargetTool(self.s, color=wx.Color(20,220,20),
+		self.panel.addTargetTool(self.s, color=wx.Colour(20,220,20),
 			target=True, shape='polygon')
 		self.panel.setTargets(self.s, [])
 		self.panel.selectiontool.setDisplayed(self.s, True)
 
 		self.s2 = 'Auto Create Contours'
-		self.panel.addTargetTool(self.s2, color=wx.Color(20,220,20),
+		self.panel.addTargetTool(self.s2, color=wx.Colour(20,220,20),
 			target=False, shape='.')
 		self.panel.setTargets(self.s2, [])
 		self.panel.selectiontool.setDisplayed(self.s2, True)
