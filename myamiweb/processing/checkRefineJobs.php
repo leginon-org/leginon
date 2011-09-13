@@ -4,6 +4,9 @@ require "inc/util.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/processing.inc";
+require_once "inc/refineJobsSingleModel.inc";
+require_once "inc/refineJobsMultiModel.inc";
+
 
 if ($_POST['checkjobs']) {
 	checkJobs($showjobs=True);
@@ -30,58 +33,33 @@ function checkJobs($showjobs=False, $showall=False, $extra=False) {
 		echo "</form><br/>\n";
 	}
 
-	// change next line for different types of jobs
-	// Get all the jobtypes that are like emanrecon. Basically <refine method>recon.
-	$pattern = '%recon';
-	$refineTypes = $particle->getJobTypesLike( $expId, $pattern );
-	
-	// Get jobs from ApAppionJobData that match any of the refine jobtypes
-	// This is an array of jobtypes, each with an array of jobs
-	$refinejobs = array();
-	foreach ( $refineTypes as $key=>$refineType ) {
-		$jobtype = $refineType[jobtype];
-		$refinejobs[] = $particle->getJobIdsFromSession($expId, $jobtype);
+	$type = $_GET['type'];
+	if ( $type == "multi" ) 
+	{
+		$refineJobs = new RefineJobsMultiModel($expId);
+	} else {
+		$refineJobs = new RefineJobsSingleModel($expId);
 	}
-	
-	// move all the jobs into a single dimentional array
-	// so all we have is an array of jobs, not separated by jobtype
-	$jobs = array();
-	foreach ( $refinejobs as $jobtype ) {
-		foreach ( $jobtype as $job ) {
-			$jobs[] = $job;
-		}
-	}
+	$jobs = $refineJobs->getUnfinishedRefineJobs($showall);
 
 	// if clicked button, list jobs in queue
 	if ($showjobs && $_SESSION['loggedin'] == true) {
 		showClusterJobTables($jobs);
 	}
-
+	
 	// loop over jobs and show info
 	foreach ($jobs as $job) {
 		$jobid = $job['DEF_id'];
-
-		// check if job has been uploaded
-		if ($particle->getReconIdFromAppionJobId($jobid)) {
-			//echo "recon $jobid";
-			continue;
-		}
-
 		$jobinfo = $particle->getJobInfoFromId($jobid);
-		// check if job has been aborted
-		if ($showall != True && $jobinfo['status'] == 'A') {
-			//echo "abort $jobid";
-			continue;
-		}
-
+		
 		// check if job has an associated jobfile
-		$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
+		$jobfile = $job['appath'].'/'.$job['name'];
 		if (!file_exists($jobfile)) {
 			echo divisionHeader($jobinfo);
 			echo "<i>missing job file: $jobfile</i><br/><br/>\n";
 			continue;
 		}
-
+		
 		// display relevant info
 
 		$display_keys['job name'] = $jobinfo['name'];
@@ -228,6 +206,9 @@ function showStatus($jobinfo) {
 		} elseif ($jobinfo['jobtype'] == 'xmipprecon') {
 			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
 				."uploadXmippRecon.php?expId=$expId&jobId=$jobid')\" value='Upload Xmipp results'>&nbsp;\n";
+		} elseif ($jobinfo['jobtype'] == 'xmippml3d') {
+			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
+				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload Xmippml3d results'>&nbsp;\n";
 		}
 		if ($user == $job['user'] || is_null($job['user'])) {
 			$dlbuttons .= "&nbsp;<input type='BUTTON' onclick=\"parent.location="

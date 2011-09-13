@@ -50,7 +50,28 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 			apDisplay.printMsg("EMAN ran "+str(lastiter)+" iterations")
 
 		return lastiter
+
+	#======================
+	def findEmanCommandFile(self):
+		''' tries to find EMAN log file either through the jobinfo (retrieved through jobid) or runname '''
+	
+		### find the job file
+		if 'jobinfo' in self.params and self.params['jobinfo'] is not None:
+			jobfile = os.path.join(self.params['rundir'], self.params['jobinfo']['name'])
+		elif 'runname' in self.params:
+			jobfile = os.path.join(self.params['rundir'], self.params['runname']+".appionsub.job")
+		else:
+			self.params['jobinfo'] = None
+			apDisplay.printError("no command file or jobfile found ... try uploading refinement as an external package")
+
+		basename, extension = os.path.splitext(jobfile)
+		commandfile = basename + ".commands"
 		
+		if not os.path.isfile(commandfile):
+			apDisplay.printError("no command file found ... try uploading refinement as an external package")
+
+		return commandfile
+			
 	#======================
 	def findEmanJobFile(self):
 		''' tries to find EMAN log file either through the jobinfo (retrieved through jobid) or runname '''
@@ -58,17 +79,16 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 		### find the job file
 		if 'jobinfo' in self.params and self.params['jobinfo'] is not None:
 			jobfile = os.path.join(self.params['rundir'], self.params['jobinfo']['name'])
-			if os.path.isfile(jobfile):
-				return jobfile
 		elif 'runname' in self.params:
 			jobfile = os.path.join(self.params['rundir'], self.params['runname']+".appionsub.job")
-			if os.path.isfile(jobfile):
-				return jobfile
-			else:
-				apDisplay.printError("no pickle file or jobfile found ... try uploading refinement as an external package")
 		else:
 			self.params['jobinfo'] = None
 			apDisplay.printError("no pickle file or jobfile found ... try uploading refinement as an external package")
+
+		if not os.path.isfile(jobfile):
+			apDisplay.printError("no pickle file or jobfile found ... try uploading refinement as an external package")
+
+		return jobfile
 
 #		logfile = os.path.join(self.params['rundir'], 'eman.log')
 #		if os.path.isfile(logfile):
@@ -155,7 +175,8 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 		''' PACKAGE-SPECIFIC FILE PARSER: if the parameters were not pickled, parse protocols script to determine projection-matching params '''
 
 		### parse out the refine command from the .emanlog to get the parameters for each iteration
-		jobfile = self.findEmanJobFile()
+		#jobfile = self.findEmanJobFile()
+		jobfile = self.findEmanCommandFile()
 		apDisplay.printMsg("parsing eman log file: "+jobfile)
 		jobf = open(jobfile,'r')
 		lines = jobf.readlines()

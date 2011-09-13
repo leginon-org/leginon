@@ -23,6 +23,8 @@ require_once "inc/forms/xmippML3DRefineForm.inc";
 require_once "inc/forms/runParametersForm.inc";
 require_once "inc/forms/clusterParamsForm.inc";
 require_once "inc/forms/stackPrepForm.inc";
+require_once "inc/refineJobsSingleModel.inc";
+require_once "inc/refineJobsMultiModel.inc";
 
 
 if ($_POST['process'])
@@ -48,30 +50,22 @@ function selectRefineJob($extra=False) {
 	} else {
 		exit;
 	}
-	$particle = new particledata();
-
+	
+	// get prepared refine jobs
+	$type = $_GET['type'];
+	if ( $type == "single" ) 
+	{
+		$refinementJobs = new RefineJobsSingleModel($expId);
+	} else {
+		$refinementJobs = new RefineJobsMultiModel($expId);
+	}	
+	$refinejobs = $refinementJobs->getRefinesReadyToRun();
+	
 	// write out errors, if any came up:
 	if ($extra)
 		echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
 
 	echo "<form name='selectreconform' method='POST' ACTION='$formAction'>\n";
-
-	// get prepared refine jobs
-	$rawrefinejobs = $particle->getPreparedRefineJobs(false, false, false);
-	
-	// print jobs with radio button
-	if (!$rawrefinejobs) {
-		echo "<font color='#CC3333' size='+2'>No prepared refinement jobs found</font>\n";
-		exit;
-	} 
-
-	// check if jobs have associated cluster jobs	
-	$refinejobs = array();
-	foreach ($rawrefinejobs as $refinejob) {
-		$refinerun = $particle->getClusterJobByTypeAndPath($refinejob['method'], $refinejob['path']);
-		if (!$refinerun)
-			$refinejobs[] = $refinejob;
-	}
 
 	// print jobs with radio button
 	if (!$refinejobs) {
@@ -359,7 +353,7 @@ function createCommand ($extra=False)
 	$command = "runJob.py ";
 	
 	// Add the jobtype to the command
-	$command = "--jobtype=".$method." ";
+	$command .= "--jobtype=".$method." ";
 	
 	// Instantiate the class that defines the forms for the selected method of refinement.
 	$command .= $selectedRefineForm->buildCommand( $_POST );

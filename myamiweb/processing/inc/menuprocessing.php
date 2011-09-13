@@ -13,6 +13,8 @@ require_once "inc/leginon.inc";
 require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
+require_once "inc/refineJobsMultiModel.inc";
+require_once "inc/refineJobsSingleModel.inc";
 
 
 $expId=$_GET['expId'];
@@ -555,263 +557,75 @@ if (is_numeric($expId)) {
 
 	// display reconstructions only if there is a stack
 	if ($stackruns > 0) {
-		$reconruns = $particle->getReconIdsFromSession($sessionId, false);
-		$allreconruns = $particle->getReconIdsFromSession($sessionId, true);
-		$emanreconswithjob = 0;
-		if ($allreconruns) {
-			$emanreconruns = count($reconruns);
-			foreach ($allreconruns as $reconrun) {
-				if ($reconrun['REF|ApAppionJobData|job']) {
-					$emanreconswithjob++;
-				}
-			}
-		}
-
-		// get num of jubs queued, submitted or done
-		$emanjobqueue	= count($subclusterjobs['emanrecon']['queued']);
-		$emanjobrun		= count($subclusterjobs['emanrecon']['running']);
-		$emanjobdone	= count($subclusterjobs['emanrecon']['done']);
-
-		// for every uploaded job, subtract a submitted job
-		// if all submitted jobs are uploaded, it should be 0
-		$emanjobincomp = $emanjobdone - $emanreconswithjob; //incomplete
-
-		$action = "Refine Reconstruction";
-		$totresult = ($reconruns > 0) ? "<a href='reconsummary.php?expId=$sessionId'>$emanreconruns</a>" : "";
-
-		$emanreconresults = array();
-
-		// check for euler jumper filter jobs
-		$ejdone = count($subclusterjobs['removeJumpers']['done']);
-		$ejq 	= count($subclusterjobs['removeJumpers']['queued']);
-		$ejrun 	= count($subclusterjobs['removeJumpers']['running']);
-
-		// check for how many EMAN reconstructions have finished / running / queued
-		$emanreconresults[] = ($emanjobqueue > 0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$emanjobqueue queued</a>" : "";
-		$emanreconresults[] = ($emanjobrun > 0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$emanjobrun running</a>" : "";
-		$emanreconresults[] = ($emanjobincomp > 0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$emanjobincomp ready for upload</a>" : "";
-		$emanreconresults[] = ($emanreconruns > 0) ? "<a href='reconsummary.php?expId=$sessionId'>$emanreconruns complete</a>" : "";
-		$emanreconresults[] = ($ejrun == 0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=removeJumpers'>$ejrun reclassifying</a>";
-
-		// check for how many FREALIGN reconstructions are upload / ready to upload / ready to run / running / queued
-		$frealignruns = $particle->getReconIdsFromSession($sessionId, false, 'frealign');
-		$frealigndone = ($frealignruns) ? count($frealignruns) : 0;
-
-		$prepfrealignqueue 	= count($subclusterjobs['prepfrealign']['queued']);
-		$prepfrealignrun 	= count($subclusterjobs['prepfrealign']['running']);
-		//$prepfrealigndone = count($subclusterjobs['prepfrealign']['done']);
-		$prepfrealignruns 	= $particle->getPreparedFrealignJobs(false, false, false);
-		$prepfrealigndone 	= ($prepfrealignruns) ? count($prepfrealignruns) : 0;
-		$runfrealignqueue 	= count($subclusterjobs['runfrealign']['queued']);
-		$runfrealignrun 	= count($subclusterjobs['runfrealign']['running']);
-		$runfrealigndone 	= count($subclusterjobs['runfrealign']['done']);
-		$uploadfrealignqueue = count($subclusterjobs['uploadfrealign']['queued']);
-		$uploadfrealignrun 	= count($subclusterjobs['uploadfrealign']['running']);
-
-		// summed fields
-		$runfrealign 		= $runfrealignqueue + $runfrealignrun + $runfrealigndone;
-		$uploadfrealign 	= $uploadfrealignqueue + $uploadfrealignrun + $frealigndone;
-		$frealignprepared 	= $prepfrealigndone - $runfrealign;
-		$frealignran 		= $runfrealigndone - $uploadfrealign;
-
-		// QUEUED
-		$frealignresults[] = ($prepfrealignqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=prepfrealign'>$prepfrealignqueue preps queued</a>" : "";
-		$frealignresults[] = ($runfrealignqueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$runfrealignqueue jobs queued</a>" : "";
-		$frealignresults[] = ($uploadfrealignqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadfrealign'>$uploadfrealignqueue uploads queued</a>" : "";
-
-		// RUNNING
-		$frealignresults[] = ($prepfrealignrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=prepfrealign'>$prepfrealignrun preps running</a>" : "";
-		$frealignresults[] = ($runfrealignrun>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$runfrealignrun jobs running</a>" : "";
-		$frealignresults[] = ($uploadfrealignrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadfrealign'>$uploadfrealignrun uploads running</a>" : "";
-
-		// PREPARED
-		$frealignresults[] = ($frealignprepared>0) ? "<a href='runFrealign.php?expId=$sessionId'>$frealignprepared prepared</a>" : "";
-
-		// READY TO UPLOAD
-		$frealignresults[] = ($frealignran>0) ? "<a href='uploadFrealign.php?expId=$sessionId'>$frealignran ready to upload</a>" : "";
-
-		// COMPLETE
-		$frealignresults[] = ($frealigndone>0) ? "<a href='reconsummary.php?expId=$sessionId'>$frealigndone complete</a>" : "";
-
-
-		if (!HIDE_IMAGIC) {
-			// check for how many IMAGIC reconstructions have finished / running / queued
-			$imq = count($subclusterjobs['imagic3dRefine']['queued']);
-			$imrun = count($subclusterjobs['imagic3dRefine']['running']);
-			$imrefruns = $particle->getImagic3dRefinementRunsFromSessionId($sessionId);
-			$imdone = (!empty($imrefruns)) ? count($imrefruns) : 0;
-			$imreconresults = array();
-			$imreconresults[] = ($imq>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imq queued</a>" : "";
-			$imreconresults[] = ($imrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId&jobtype=imagic3dRefine'>$imrun running</a>" : "";
-			// TODO: I'm not sure if this number means the recon has already been uploaded. If so, need to change where it is added to totals.
-			$imreconresults[] = ($imdone>0) ? "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$imdone complete</a>" : "";
-		}
-
-		// check for how many Xmipp reconstructions have finished / running / queued
-		$xmippreconqueue 	= count($subclusterjobs['xmipprecon']['queued']);
-		$xmippreconrun 		= count($subclusterjobs['xmipprecon']['running']);
-		$xmipprecondone 	= count($subclusterjobs['xmipprecon']['done']);
-		$numxmipprecon 		= 0;
-		$xmippreconupload 	= $xmipprecondone - $numxmipprecon;
-		$xmippreconresults[] = ($xmippreconqueue>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$xmippreconqueue queued</a>" : "";
-		$xmippreconresults[] = ($xmippreconrun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$xmippreconrun running</a>" : "";
-		$xmippreconresults[] = ($xmippreconupload>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$xmippreconupload ready for upload</a>" : "";
-		$xmippreconresults[] = ($numxmipprecon>0) ? "<a href='reconsummary.php?expId=$sessionId'>$numxmipprecon complete</a>" : "";
-
-		// TODO: this does not appear to be used
-		$xmippreconqueue 	= count($subclusterjobs['xmipprefine']['queued']);
-		$xmippreconrun 		= count($subclusterjobs['xmipprefine']['running']);
-		$xmipprecondone 	= count($subclusterjobs['xmipprefine']['done']);
 		
-		// Single Model Refinement methods
+		// Single Model Refinement stats
 		
-		// Get all the jobtypes that are like preprefineeman. Basically preprefine<refine method>.
-		$pattern = 'preprefine%';
-		$prepRefineTypes = $particle->getJobTypesLike( $expId, $pattern );
-		
-		foreach ( $prepRefineTypes as $key=>$prepType ) {
-			$prepRefineQueue 	+= count($subclusterjobs[$prepType[jobtype]]['queued']);
-			$prepRefineRun 		+= count($subclusterjobs[$prepType[jobtype]]['running']);
-		}
-		
-		// Get all preparred refines
-		$prepRefineRuns 	= $particle->getPreparedRefineJobs(false, false, false);
-		
-		// Get the number of prepared refines that have not yet been run
-		$refinejobs = array();
-		foreach ($prepRefineRuns as $refinejob) {
-			$refinerun = $particle->getClusterJobByTypeAndPath($refinejob['method'], $refinejob['path']);
-			if (!$refinerun)
-				$refinejobs[] = $refinejob;
-		}		
-		$prepRefineDone 	= ($refinejobs) ? count($refinejobs) : 0;
-		
-		// summed fields
-		$runRefine	 		= $prepRefineQueue + $prepRefineRun + $prepRefineDone;
-		$refinePrepared 	= $prepRefineDone - $runRefine;
-		$prepRefineRan 		= $prepRefineDone;
+		$refineJobsSM 		= new RefineJobsSingleModel($expId);
 		
 		// prep recon stats
-		$totalPrepQueue 	= $prepRefineQueue; //$prepfrealignqueue;
-		$totalPrepRun	 	= $prepRefineRun; //$prepfrealignrun;
-		$totalPrepared		= $prepRefineRan;
-		$runRefineResults[] = ($totalPrepQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalPrepQueue preps queued</a>" : "";
-		$runRefineResults[] = ($totalPrepRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalPrepRun preps running</a>" : "";
-		$runRefineResults[] = ($totalPrepared>0) ? "<a href='selectPreparedRecon.php?expId=$sessionId'>$totalPrepared jobs ready to run</a>" : "";
-		
-		// Get all the jobtypes that are like emanrecon. Basically <refine method>recon.
-		$pattern = '%recon';
-		$refineTypes = $particle->getJobTypesLike( $expId, $pattern );
-		
-		$refinejobs = array();
-		foreach ( $refineTypes as $key=>$refineType ) {
-			$jobtype = $refineType[jobtype];
-			if ( $jobtype == "uploadrecon" ) {
-				continue;
-			}
-			$refineQueue += count($subclusterjobs[$jobtype]['queued']);
-			$refineRun 	 += count($subclusterjobs[$jobtype]['running']);
-			$refinejobs[] = $particle->getJobIdsFromSession($expId, $jobtype, $status=False, $ignore=True);
-		}
-		
-		// Find refines ready to upload
-		$refineReadyUpload = 0;
-		foreach ($refinejobs as $joblist) {
-			foreach ($joblist as $job ) {
-				$jobid = $job['DEF_id'];
-				$jobinfo = $particle->getJobInfoFromId($jobid);
-				
-				// check if job has been run
-				$jobran = ( $jobinfo['status'] == 'D' ) ? True : False;
-				
-				// check if job has an associated jobfile
-				$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
-				$hasJobFile = file_exists($jobfile);
-				
-				if ( $jobran && $hasJobFile ) {
-					$refineReadyUpload++;
-				}
-			}
-		}	
-		
-		// Find complete refines
-		$reconRuns = $particle->getReconIdsFromSession($sessionId);
-		$refinesComplete = count($reconRuns);
+		$prepRefineQueue	= $refineJobsSM->countPrepRefineQueue();
+		$prepRefineRun		= $refineJobsSM->countPrepRefineRun();
+		$prepRefineDone 	= $refineJobsSM->countRefinesReadyToRun();
+		$runRefineResults[] = ($prepRefineQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=single'>$prepRefineQueue preps queued</a>" : "";
+		$runRefineResults[] = ($prepRefineRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$prepRefineRun preps running</a>" : "";
+		$runRefineResults[] = ($prepRefineDone>0) ? "<a href='selectPreparedRecon.php?expId=$sessionId&type=single'>$prepRefineDone jobs ready to run</a>" : "";
 		
 		// run recon stats
-		$totalJobQueue 		= $refineQueue; //$emanjobqueue + $runfrealignqueue + $imq + $xmippreconqueue;
-		$totalJobRun 		= $refineRun; //$emanjobrun + $runfrealignrun + $imrun + $xmippreconrun;
-		$totalReadyUpload	= $refineReadyUpload; //$emanjobincomp + $frealignran + $imdone + $xmippreconupload; 
-		$runRefineResults[] = ($totalJobQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalJobQueue jobs queued</a>" : "";
-		$runRefineResults[] = ($totalJobRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalJobRun jobs running</a>" : "";
-		$runRefineResults[] = ($totalReadyUpload>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalReadyUpload ready for upload</a>" : "";
+		$refineQueue		= $refineJobsSM->countRunRefineQueue();
+		$refineRun			= $refineJobsSM->countRunRefineRun();
+		$refineReadyUpload  = $refineJobsSM->countRefinesReadyToUpload();
+		$runRefineResults[] = ($refineQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=single'>$refineQueue jobs queued</a>" : "";
+		$runRefineResults[] = ($refineRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$refineRun jobs running</a>" : "";
+		$runRefineResults[] = ($refineReadyUpload>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=single'>$refineReadyUpload ready for upload</a>" : "";
 		
 		// upload recon stats
-		$totalUploadQueue 	= $uploadfrealignqueue;
-		$totalUploadRun 	= $uploadfrealignrun;
-		$totalComplete 		= $refinesComplete; //$emanreconruns + $frealigndone + $numxmipprecon;
-		$runRefineResults[] = ($totalUploadQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalUploadQueue uploads queued</a>" : "";
-		$runRefineResults[] = ($totalUploadRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalUploadRun uploads running</a>" : "";
-		$runRefineResults[] = ($totalComplete>0) ? "<a href='reconsummary.php?expId=$sessionId'>$totalComplete complete</a>" : "";
+		$uploadQueue		= $refineJobsSM->countUploadRefineQueue();
+		$uploadRun			= $refineJobsSM->countUploadRefineRun();
+		$refinesComplete	= $refineJobsSM->countUploadRefineDone();
+		$runRefineResults[] = ($uploadQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=single'>$uploadQueue uploads queued</a>" : "";
+		$runRefineResults[] = ($uploadRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$uploadRun uploads running</a>" : "";
+		$runRefineResults[] = ($refinesComplete>0) ? "<a href='reconsummary.php?expId=$sessionId'>$refinesComplete complete</a>" : "";
 		
-		// old recon menu
-		// list out refinement jobs in the web menu
-		$nruns=array();
-		$nruns[] = array(
-			'name'=>"<a href='emanJobGen.php?expId=$sessionId'>EMAN Refinement</a>",
-			'result'=>$emanreconresults,
-		);
-		$nruns[] = array(
-			'name'=>"<a href='prepareFrealign.php?expId=$sessionId'>Frealign Refinement</a>",
-			'result'=> $frealignresults,
-		);
-		
-		$nruns[] = array(
-			'name'=>"<a href='runXmippRefineJobGen.php?expId=$sessionId'>Xmipp Refinement</a>",
-			'result'=> $xmippreconresults,
-		);
-		
-		
-		// new recon menu
-		// Single-Model refinement
+		// insert menu
 		$nruns[] = array(
 			'name'=>"<a href='selectRefinementType.php?expId=$sessionId'>Run Single-Model Refinement</a>",
 			'result'=> $runRefineResults,
 		);
 		
-		// Multi Model Refinement methods
-		// TODO: update all these for multi-model
+		// Multi Model Refinement stats
+		
+		$refineJobsMM 		= new RefineJobsMultiModel($expId);
 		
 		// prep recon stats
-		$totalPrepQueue 	= $prepfrealignqueue;
-		$totalPrepRun	 	= $prepfrealignrun;
-		$totalPrepared		= $frealignprepared;
-		$runMultiRefineResults[] = ($totalPrepQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalPrepQueue preps queued</a>" : "";
-		$runMultiRefineResults[] = ($totalPrepRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalPrepRun preps running</a>" : "";
-		$runMultiRefineResults[] = ($totalPrepared>0) ? "<a href='selectPreparedRecon.php?expId=$sessionId'>$totalPrepared jobs ready to run</a>" : "";
+		$prepRefineMMQueue		= $refineJobsMM->countPrepRefineQueue();
+		$prepRefineMMRun		= $refineJobsMM->countPrepRefineRun();
+		$prepRefineMMDone		= $refineJobsMM->countRefinesReadyToRun();
+		$runMultiRefineResults[] = ($prepRefineMMQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=multi'>$prepRefineMMQueue preps queued</a>" : "";
+		$runMultiRefineResults[] = ($prepRefineMMRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$prepRefineMMRun preps running</a>" : "";
+		$runMultiRefineResults[] = ($prepRefineMMDone>0) ? "<a href='selectPreparedRecon.php?expId=$sessionId&type=multi'>$prepRefineMMDone jobs ready to run</a>" : "";
 		
 		// run recon stats
-		$totalJobQueue 		= $emanjobqueue + $runfrealignqueue + $imq + $xmippreconqueue;
-		$totalJobRun 		= $emanjobrun + $runfrealignrun + $imrun + $xmippreconrun;
-		$totalReadyUpload	= $emanjobincomp + $frealignran + $imdone + $xmippreconupload;
-		$runMultiRefineResults[] = ($totalJobQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalJobQueue jobs queued</a>" : "";
-		$runMultiRefineResults[] = ($totalJobRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalJobRun jobs running</a>" : "";
-		$runMultiRefineResults[] = ($totalReadyUpload>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalReadyUpload ready for upload</a>" : "";
+		$refineMMQueue			= $refineJobsMM->countRunRefineQueue();
+		$refineMMRun			= $refineJobsMM->countRunRefineRun();
+		$refineReadyUploadMM 	= $refineJobsMM->countRefinesReadyToUpload();
+		$runMultiRefineResults[] = ($refineMMQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=multi'>$refineMMQueue jobs queued</a>" : "";
+		$runMultiRefineResults[] = ($refineMMRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$refineMMRun jobs running</a>" : "";
+		$runMultiRefineResults[] = ($refineReadyUploadMM>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=multi'>$refineReadyUploadMM ready for upload</a>" : "";
 		
 		// upload recon stats
-		$totalUploadQueue 	= $uploadfrealignqueue;
-		$totalUploadRun 	= $uploadfrealignrun;
-		$totalComplete 		= $emanreconruns + $frealigndone + $numxmipprecon;
-		$runMultiRefineResults[] = ($totalUploadQueue>0) ? "<a href='checkRefineJobs.php?expId=$sessionId'>$totalUploadQueue uploads queued</a>" : "";
-		$runMultiRefineResults[] = ($totalUploadRun>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$totalUploadRun uploads running</a>" : "";
-		$runMultiRefineResults[] = ($totalComplete>0) ? "<a href='reconsummarymulti.php?expId=$sessionId'>$totalComplete complete</a>" : "";
+		$uploadQueueMM			= $refineJobsMM->countUploadRefineQueue();
+		$uploadRunMM			= $refineJobsMM->countUploadRefineRun();
+		$refinesCompleteMM  	= $refineJobsMM->countUploadRefineDone();
+		$runMultiRefineResults[] = ($uploadQueueMM>0) ? "<a href='checkRefineJobs.php?expId=$sessionId&type=multi'>$uploadQueueMM uploads queued</a>" : "";
+		$runMultiRefineResults[] = ($uploadRunMM>0) ? "<a href='listAppionJobs.php?expId=$sessionId'>$uploadRunMM uploads running</a>" : "";
+		$runMultiRefineResults[] = ($refinesCompleteMM>0) ? "<a href='reconsummarymulti.php?expId=$sessionId'>$refinesCompleteMM complete</a>" : "";
 		
-		// Multi-model refinement
+		// Insert Menu
 		$nruns[] = array(
 			'name'=>"<a href='selectMultiModelRefine.php?expId=$sessionId'>Run Multi-Model Refinement</a>",
 			'result'=> $runMultiRefineResults,
 		);
-		
+				
 		$nruns[] = array(
 			'name'=>"<a href='evilClusterUsers.php?expId=$sessionId'>Evil Cluster Users</a>",
 		);

@@ -43,40 +43,21 @@ function createUploadReconForm( $extra=false, $title='UploadRecon.py Launcher', 
 	$javafunctions .= writeJavaPopupFunctions('appion');  
 
 	$particle = new particledata();
-
-	// if uploading a specific recon, get recon info from database & job file
-//	if ( $jobId ) {
-//		$jobinfo = $particle->getJobInfoFromId($jobId);
-//		
-//		$runname = ereg_replace('\.job$','',$jobinfo['name']);
-//		$outdir = ereg_replace($runname,'',$jobinfo['appath']);
-//		$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
-//		$f = file($jobfile);
-//		$method='EMAN';
-//		// TODO: get this info from the database
-//		foreach ($f as $line) {
-//			if (preg_match('/^\#\sstackId:\s/',$line)) $refinestackid=ereg_replace('# stackId: ','',trim($line));
-//			elseif (preg_match('/^\#\smodelId:\s/',$line)) $modelid=ereg_replace('# modelId: ','',trim($line));
-//			elseif (preg_match('/^coran_for_cls.py\s/',$line)) $method='EMAN/SpiCoran';
-//			elseif (preg_match('/^msgPassing_subClassification.py\s/',$line)) $method='EMAN/MsgP';
-//			if ($refinestackid && $modelid && $method) break;
-//		}
-//		if (file_exists($jobinfo['appath'].'/classes_coran.1.hed'))
-//			$method='EMAN/SpiCoran';
-//	}
 	
 	// ------------Get Job info, model and stack info-------------
 	// Get the selected refinement job info from the database 
 	if ( $jobId ) {
 		// get name of job from apAppionJobData and lookup ApPrepRefineData based on that
-		$jobdata		= $particle->getJobInfoFromId( $jobId );
-		$runname 		= $jobdata['name'];
+		$jobdata = $particle->getJobInfoFromId( $jobId );
+		$jobfile = $jobdata['name'];
 		
 		// remove any extentions to the name like .job
-		$pos = strpos($runname, ".");
+		$pos = strpos($jobfile, ".");
 		if ($pos !== false) {
-			$runname = substr($runname, 0, $pos);
-		}		
+			$runname = substr($jobfile, 0, $pos);
+		} else {
+			$runname = $jobfile;
+		}
 		
 		$refinejobdatas = $particle->getPreparedRefineJobs(false, false, true, $runname );
 		$refjobdata 	= $refinejobdatas[0];
@@ -399,7 +380,7 @@ function runUploadRecon() {
 	if ($itertype=='range' && !is_numeric($startiteration) && !is_numeric($enditeration)) {
 		createUploadReconForm("<B>ERROR: </B> Enter either or both start/end iteration number if you really want to upload a limited range of iteration ");
 	}
-
+	
 	/* *******************
 	PART 3: Create program command
 	******************** */
@@ -474,4 +455,5 @@ function runUploadRecon() {
 		createUploadReconForm($errors);
 	exit;
 }
+
 ?>

@@ -308,6 +308,7 @@ class RefineJob(basicScript.BasicScript):
 		result_tar = os.path.join(self.params['remoterundir'],'recon_results.tar.gz')
 		self.files_from_remote_host.append(result_tar)
 		tasks = self.addToTasks(tasks,'tar cvzf %s *' % (result_tar))
+		self.files_from_remote_host.append(self.commandfile)
 		self.__saveFileListFromRemoteHost()
 		if self.params['remoterundir'] != self.params['rundir']:
 			tasks = self.__addCopyByFileListFromRemoteHostTasks(tasks)
@@ -356,6 +357,7 @@ class RefineJob(basicScript.BasicScript):
 		self.remoterundir = self.params['remoterundir']
 		self.setName(self.params['runname'])
 		self.logfile = os.path.join(self.params['remoterundir'],self.getName()+'.log')
+		self.commandfile = os.path.join(self.params['remoterundir'],self.getName()+'.commands')
 		self.cputime = self.params['cput']
 		# TO Do: need to get appion bin dir from appionwrapper environment variable Appion_Bin_Dir
 		self.appion_bin_dir = ''
@@ -368,6 +370,19 @@ class RefineJob(basicScript.BasicScript):
 		f.write('Log for %s with runname %s (jobid= %d)\n' % (self.jobtype.upper(),self.params['runname'],self.jobid))
 		f.close()
 		
+	def __writeCommandListToFile(self):
+		'''
+		Write the command list to a file for later use during upload.  Will overwrite exisiting ones.
+		'''
+		f = open(self.commandfile,'w')
+		f.write('Command List for %s with runname %s (jobid= %d)\n' % (self.jobtype.upper(),self.params['runname'],self.jobid))
+		
+		for command in self.command_list:
+			f.write(command)
+			f.write('\n')	
+		
+		f.close()
+
 	def addToTasks(self,tasks,script,mem=2,nproc=1):
 		'''
 		Function to add one line of job command into existing tasks performed by the job.
@@ -431,6 +446,8 @@ class RefineJob(basicScript.BasicScript):
 				self.addJobCommands(refinetasks)
 				self.addToLog('Done with iteration %d' % (iter))
 				self.addSimpleCommand('')
+				
+		self.__writeCommandListToFile()
 		self.addToLog('....Performing tasks after iterations....')
 		self.makePostIterationScript()
 		print self.params['remoterundir']

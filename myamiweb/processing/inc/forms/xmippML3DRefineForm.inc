@@ -137,7 +137,7 @@ class XmippML3DParams extends RefineFormParameters
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
 							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
-							$DoMlf='', $HighResLimit='', $DoCorrectGreyScale='', $ImagesArePhaseFlipped, $ProjMatchSampling='',
+							$DoMlf='', $HighResLimit='', $DoCorrectGreyScale='', $ImagesArePhaseFlipped='', $ProjMatchSampling='',
 							$LowPassFilterReference='', $NumberOfReferences='') 
 	{
 		parent::__construct($id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 

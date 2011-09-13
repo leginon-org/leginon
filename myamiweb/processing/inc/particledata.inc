@@ -3737,7 +3737,7 @@ class particledata {
 		}
 
 		// step 2: match the $baseRunName with letters in the front and id with numbers at the end of the string
-		preg_match('/(\D+)(\d+)/', $baseRunName, $matches);
+		preg_match('/(\D+)(\d+)$/', $baseRunName, $matches);
 		$program = $matches[1];
 		$runId = $matches[2];
 		return $runId;
@@ -3816,9 +3816,34 @@ class particledata {
 			." AND refrun.`REF|ApMultiModelRefineRunData|multiModelRefineRun` IS NOT NULL ";
 		if (!$showHidden) $q.= " AND (refrun.`hidden` IS NULL OR refrun.`hidden` = 0) ";
 		if ($package) $q.= " AND (refrun.`package` = '$package') ";
-		$q.= " ORDER BY refrun.`REF|ApMultiModelRefineRunData|multiModelRefineRun` DESC";
+		$q.= " ORDER BY refrun.`DEF_id` DESC";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}
+	
+	// Warning: do not use this function for counting the number of runs to create a new runname.
+	// try getMaxRunNumber instead.
+	function getSingleModelReconIdsFromSession($sessionId, $showHidden=false, $package=false) {
+		$q = "SELECT DISTINCT(refrun.`DEF_id`) AS refid, refrun.*, path.path AS path "
+			." FROM `ApRefineRunData` AS refrun "
+			."LEFT JOIN ApRunsInStackData AS runs "
+			." ON refrun.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			." ON runs.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id` "
+			."LEFT JOIN ApPathData AS path "
+			." ON refrun.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE stackrun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			." AND refrun.`REF|ApMultiModelRefineRunData|multiModelRefineRun` IS NULL ";
+		if (!$showHidden) $q.= " AND (refrun.`hidden` IS NULL OR refrun.`hidden` = 0) ";
+		if ($package) $q.= " AND (refrun.`package` = '$package') ";
+		$q.= " ORDER BY refrun.`DEF_id` DESC";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//if ($e=$this->mysql->getError()) {
+			//echo "error -> $e \n";
+		//}
 		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
