@@ -25,6 +25,11 @@ from leginon.gui.wx import Logging
 from leginon.gui.wx import ToolBar
 from leginon.gui.wx import SetupWizard
 
+# inspection tool for wx
+wx_inspection = False
+if wx_inspection:
+	import wx.lib.inspection
+
 AddNodeEventType = wx.NewEventType()
 RemoveNodeEventType = wx.NewEventType()
 AddLauncherEventType = wx.NewEventType()
@@ -127,6 +132,8 @@ class App(wx.App):
 		self.SetTopWindow(self.manager.frame)
 
 		self.manager.frame.Show(True)
+		if wx_inspection:
+			wx.lib.inspection.InspectionTool().Show()
 
 		session = None
 		clients = ()
