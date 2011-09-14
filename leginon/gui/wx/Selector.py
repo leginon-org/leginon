@@ -119,7 +119,6 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 
 		self.sz = wx.GridBagSizer(1, 3)
 		self.sz.SetEmptyCellSize((16, 16))
-		#self.sz.AddGrowableCol(1)
 
 		self.SetSizer(self.sz)
 		self.SetAutoLayout(True)
@@ -170,7 +169,8 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 		name = self.order[row]
 		item = self.items[name]
 
-		selected = self.selectItem(item, not self.isSelected(item))
+		#selected = self.selectItem(item, not self.isSelected(item))
+		selected = self.selectItem(item, True)
 
 		evt = SelectEvent(self, item, selected)
 		self.GetEventHandler().AddPendingEvent(evt)
