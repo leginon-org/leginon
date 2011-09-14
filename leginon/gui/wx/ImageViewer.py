@@ -549,8 +549,8 @@ class RulerTool(ImageTool):
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
 			if self.start is not None:
-				x = evt.m_x #- self.imagepanel.offset[0]
-				y = evt.m_y #- self.imagepanel.offset[1]
+				x = evt.X #- self.imagepanel.offset[0]
+				y = evt.Y #- self.imagepanel.offset[1]
 				x0, y0 = self.start
 				dx, dy = x - x0, y - y0
 				self.measurement = {
@@ -561,7 +561,7 @@ class RulerTool(ImageTool):
 				}
 				mevt = MeasurementEvent(self.imagepanel, dict(self.measurement))
 				self.imagepanel.GetEventHandler().AddPendingEvent(mevt)
-			self.start = self.imagepanel.view2image((evt.m_x, evt.m_y))
+			self.start = self.imagepanel.view2image((evt.X, evt.Y))
 
 	def OnRightClick(self, evt):
 		if self.button.GetToggle():
@@ -583,8 +583,8 @@ class RulerTool(ImageTool):
 
 	def OnMotion(self, evt, dc):
 		if self.button.GetToggle() and self.start is not None:
-			x = evt.m_x #- self.imagepanel.offset[0]
-			y = evt.m_y #- self.imagepanel.offset[1]
+			x = evt.X #- self.imagepanel.offset[0]
+			y = evt.Y #- self.imagepanel.offset[1]
 			self.DrawRuler(dc, x, y)
 
 	def getToolTipStrings(self, x, y, value):
@@ -622,11 +622,11 @@ class ZoomTool(ImageTool):
 
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
-			self.zoomIn(evt.m_x, evt.m_y)
+			self.zoomIn(evt.X, evt.Y)
 
 	def OnRightClick(self, evt):
 		if self.button.GetToggle():
-			self.zoomOut(evt.m_x, evt.m_y)
+			self.zoomOut(evt.X, evt.Y)
 
 	def zoom(self, level, viewcenter):
 		self.zoomlevel = level
@@ -1067,10 +1067,10 @@ class ImagePanel(wx.Panel):
 		if self.scaleImage():
 			xoffset, yoffset = self.offset
 			width, height = self.virtualsize
-			if evt.m_x < xoffset or evt.m_x > xoffset + width: 
+			if evt.X < xoffset or evt.X > xoffset + width: 
 				self.UpdateDrawing()
 				return
-			if evt.m_y < yoffset or evt.m_y > yoffset + height: 
+			if evt.Y < yoffset or evt.Y > yoffset + height: 
 				self.UpdateDrawing()
 				return
 
@@ -1083,7 +1083,7 @@ class ImagePanel(wx.Panel):
 
 		self._onMotion(evt, dc)
 
-		x, y = self.view2image((evt.m_x, evt.m_y))
+		x, y = self.view2image((evt.X, evt.Y))
 		value = self.getValue(x, y)
 		strings = []
 		for tool in self.tools:
@@ -1256,7 +1256,7 @@ class ClickTool(ImageTool):
 			return
 		if self._disable:
 			self._disabled = True
-		xy = self.imagepanel.view2image((evt.m_x, evt.m_y))
+		xy = self.imagepanel.view2image((evt.X, evt.Y))
 		idcevt = ImageClickedEvent(self.imagepanel, xy)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
@@ -1783,7 +1783,7 @@ class TargetImagePanel(ImagePanel):
 
 	def _onLeftClick(self, evt):
 		if self.selectedtype is not None:
-			x, y = self.view2image((evt.m_x, evt.m_y))
+			x, y = self.view2image((evt.X, evt.Y))
 			self.addTarget(self.selectedtype.name, x, y)
 
 	def _onRightClick(self, evt):
@@ -1825,7 +1825,7 @@ class TargetImagePanel(ImagePanel):
 		ImagePanel._onMotion(self, evt, dc)
 #		if self.selectedtype is not None:
 		viewoffset = self.panel.GetViewStart()
-		x, y = self.view2image((evt.m_x, evt.m_y))
+		x, y = self.view2image((evt.X, evt.Y))
 		self.selectedtarget = self.closestTarget(self.selectedtype, x, y)
 #		else:
 #			self.selectedtarget = None

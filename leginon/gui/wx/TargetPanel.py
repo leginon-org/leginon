@@ -262,7 +262,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 	#--------------------
 	def _onLeftClick(self, evt):
 		if self.selectedtype is not None:
-			x, y = self.view2image((evt.m_x, evt.m_y))
+			x, y = self.view2image((evt.X, evt.Y))
 			self.addTarget(self.selectedtype.name, x, y)
 
 	#--------------------
@@ -317,7 +317,7 @@ class TargetImagePanel(leginon.gui.wx.ImagePanel.ImagePanel):
 		leginon.gui.wx.ImagePanel.ImagePanel._onMotion(self, evt, dc)
 #		if self.selectedtype is not None:
 		viewoffset = self.panel.GetViewStart()
-		x, y = self.view2image((evt.m_x, evt.m_y))
+		x, y = self.view2image((evt.X, evt.Y))
 		self.selectedtarget = self.closestTarget(self.selectedtype, x, y)
 #		else:
 #			self.selectedtarget = None

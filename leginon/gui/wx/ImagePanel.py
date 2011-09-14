@@ -522,14 +522,14 @@ class ImagePanel(wx.Panel):
 		if self.scaleImage():
 			xoffset, yoffset = self.offset
 			width, height = self.virtualsize
-			if evt.m_x < xoffset or evt.m_x > xoffset + width: 
+			if evt.X < xoffset or evt.X > xoffset + width: 
 				self.UpdateDrawing()
 				return
-			if evt.m_y < yoffset or evt.m_y > yoffset + height: 
+			if evt.Y < yoffset or evt.Y > yoffset + height: 
 				self.UpdateDrawing()
 				return
 
-		x, y = self.view2image((evt.m_x, evt.m_y))
+		x, y = self.view2image((evt.X, evt.Y))
 		value = self.getValue(x, y)
 		strings = []
 		for tool in self.tools:

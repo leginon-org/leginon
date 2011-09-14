@@ -153,7 +153,7 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 			y = 0
 			for i, height in enumerate(self.sz.GetRowHeights()):
 				height += self.sz.GetVGap()
-				if evt.m_y >= y and evt.m_y <= y + height:
+				if evt.Y >= y and evt.Y <= y + height:
 					row = i
 					break
 				y += height
