@@ -206,7 +206,7 @@ class MeasureTiltAxisDialog(wx.Dialog):
 
 		wx.Dialog.__init__(self, parent, -1, "Measure Stage Tilt Axis Location")
 		sb = wx.StaticBox(self, -1, 'Tilt Axis Params')
-		sbsz2 = wx.StaticBoxSizer(sb, wx.EXPAND|wx.VERTICAL)
+		sbsz2 = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		sbsz = wx.GridBagSizer(3,6)
 
