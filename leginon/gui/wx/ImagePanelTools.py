@@ -525,6 +525,9 @@ class FitShapeTool(ImageTool):
 			if evt.centers:
 				self.shape_params = {'center': numpy.array(evt.centers[0])}
 			return
+		else:
+			if not evt.centers:
+				return
 		oldcenter = self.shape_params['center']
 		centers = []
 		distances = []
