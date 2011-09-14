@@ -534,6 +534,7 @@ class ManualFocusDialog(wx.MiniFrame):
 													shortHelpString='Stop')
 
 		self.SetToolBar(self.toolbar)
+		self.toolbar.Realize()
 
 		self.imagepanel = leginon.gui.wx.TargetPanel.FFTTargetImagePanel(self, -1,imagesize=(512,512))
 
