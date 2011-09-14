@@ -653,7 +653,7 @@ function addProcessingHostParams( $command, $processhost, $nproc, $ppn, $nodes, 
 		$command .= "--nodes=$nodes ";
 	if (!preg_match("/--walltime=/", $command))
 		$command .= "--walltime=$walltime ";
-	if (!preg_match("/--cput=/", $command))
+	if (!preg_match("/--cput=/", $command) && $cputime)
 		$command .= "--cput=$cputime ";
 		
 	return $command;		
@@ -701,7 +701,7 @@ function addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $wall
 
 /**************************************/
 function submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg=False,
-$xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime="240") {
+$xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=False) {
 	global $DATA_DIRS;
 
 	$allow_processing = checkExptAdminPrivilege($expId,'data');
