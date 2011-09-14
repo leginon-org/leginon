@@ -588,9 +588,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		mag = self.instrument.tem.Magnification
 		try:
 			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
-		except NoMatrixCalibrationError:
-				raise RuntimeError('missing calibration matrix')
-
+		except (NoMatrixCalibrationError,RuntimeError), e:
+			self.node.logger.error('Measurement failed: %s' % e)
+			return {'x':0.0, 'y': 0.0}
 		state1 = leginondata.ScopeEMData()
 		state2 = leginondata.ScopeEMData()
 		state1['defocus'] = defocus1
@@ -610,10 +610,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		cam = self.instrument.getCCDCameraData()
 		ht = self.instrument.tem.HighTension
 		mag = self.instrument.tem.Magnification
-		try:
-			fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
-		except NoMatrixCalibrationError:
-				raise RuntimeError('missing calibration matrix')
+		# Can not handle the exception for retrieveMatrix here. 
+		# Focuser node that calls this need to know the type of error
+		fmatrix = self.retrieveMatrix(tem, cam, 'defocus', ht, mag)
 
 		## only do stig if stig matrices exist
 		amatrix = bmatrix = None
@@ -1096,7 +1095,12 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		par = self.parameter()
 		tem = scope['tem']
 		ccdcamera = camera['ccdcamera']
-		matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
+		try:
+			matrix = self.retrieveMatrix(tem, ccdcamera, par, ht, mag)
+		except NoMatrixCalibrationError, e:
+			self.node.logger.error(e)
+			return scope
+			
 
 		pixrow = pixelshift['row'] * biny
 		pixcol = pixelshift['col'] * binx
@@ -1128,12 +1132,16 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 			scope['high tension'],
 			scope['magnification'],
 		)
-		matrix = self.retrieveMatrix(*args)
-		inverse_matrix = numpy.linalg.inv(matrix)
-
 		shift = dict(position)
 		shift['x'] -= scope[parameter]['x']
 		shift['y'] -= scope[parameter]['y']
+
+		try:
+			matrix = self.retrieveMatrix(*args)
+		except NoMatrixCalibrationError, e:
+			self.node.logger.error(e)
+			return {'row':0.0,'col':0.0}
+		inverse_matrix = numpy.linalg.inv(matrix)
 
 		# take into account effect of stage alpha tilt on y stage position
 		if parameter == 'stage position':
@@ -1317,6 +1325,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 
 		## convert pixel shift into stage movement
 		newscope = self.transform(pixelshift, imagedata0['scope'], imagedata0['camera'])
+
 		## only want the y offset (distance from tilt axis)
 		deltay = newscope['stage position']['y'] - imagedata0['scope']['stage position']['y']
 		## scale correlation shift to the axis offset
@@ -1506,8 +1515,8 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 			self.displayImage(im0)
 		try:
 			defresult = self.node.btcalclient.measureDefocusStig(beam_tilt_value, False, False, correlation_type, 0.5, imagedata0)
-		except RuntimeError, e:
-			self.node.logger.error('Measurement failed: %s' % e)
+		except (NoMatrixCalibrationError,RuntimeError), e:
+			self.node.logger.error(e)
 			return imagedata0, None 
 		def0 = defresult['defocus']
 		print defresult
