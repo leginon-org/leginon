@@ -982,11 +982,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		self.rpixelsize = None
 		self.ht = ht
 		self.initTableau()
-		try:
-			par = 'beam-tilt coma'
-			cmatrix = self.retrieveMatrix(tem, cam, 'beam-tilt coma', ht, mag)
-		except NoMatrixCalibrationError:
-			raise RuntimeError('missing %s calibration matrix' % par)
+
+		par = 'beam-tilt coma'
+		cmatrix = self.retrieveMatrix(tem, cam, 'beam-tilt coma', ht, mag)
+
 		dc = [0,0]
 		for axisn, axisname in ((0,'x'),(1,'y')):
 			tvect = [0, 0]
