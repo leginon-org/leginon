@@ -54,8 +54,6 @@ class Panel(leginon.gui.wx.ClickTargetFinder.Panel):
 													'stop',
 													shortHelpString='Clear')
 
-		self.toolbar.Realize()
-
 		self.addImagePanel()
 
 		self.szmain.AddGrowableCol(0)

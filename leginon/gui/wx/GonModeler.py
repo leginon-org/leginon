@@ -141,7 +141,6 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 	settingsdialogclass = SettingsDialog
 	def initialize(self):
 		leginon.gui.wx.Calibrator.Panel.initialize(self)
-		self.toolbar.Realize()
 		ctb = self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_CALIBRATE)
 		atb = self.toolbar.RemoveTool(leginon.gui.wx.ToolBar.ID_ABORT)
 		self.toolbar.AddSeparator()

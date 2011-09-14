@@ -28,7 +28,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
 													shortHelpString='Refresh Grid List')
-		self.toolbar.Realize()
 
 		self.cgrid = wx.Choice(self, -1)
 		self.cgrid.Enable(False)

@@ -53,8 +53,6 @@ class Panel(leginon.gui.wx.ImageAssessor.Panel):
 													'stop',
 													shortHelpString='Clear')
 
-		self.toolbar.Realize()
-
 		self.addImagePanel()
 
 		self.szmain.AddGrowableRow(1)

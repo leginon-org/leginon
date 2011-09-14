@@ -28,7 +28,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 													shortHelpString='Stop')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, True)
-		self.toolbar.Realize()
 
 		self.imagepanel = leginon.gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('preview')

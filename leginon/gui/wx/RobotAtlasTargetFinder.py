@@ -25,7 +25,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort this grid insertion')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_REFRESH, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_SUBMIT, False)
-		self.toolbar.Realize()
 
 		self.atlaslist = []
 		self.listbox = wx.ListBox(self, -1, style=wx.LB_SINGLE)

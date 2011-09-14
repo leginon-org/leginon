@@ -90,8 +90,6 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 
 		self.initialize()
 
-		self.toolbar.Realize()
-
 		self.Bind(leginon.gui.wx.Events.EVT_CALIBRATION_DONE, self.onCalibrationDone)
 
 		self.SetSizer(self.szmain)

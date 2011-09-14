@@ -56,8 +56,6 @@ class Panel(leginon.gui.wx.ImageAssessor.Panel):
 
 		self.addImagePanel()
 
-		self.toolbar.Realize()
-
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
 		self.SetSizer(self.szmain)

@@ -37,7 +37,6 @@ class Panel(leginon.gui.wx.TargetFilter.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleAlternateOffset, id=leginon.gui.wx.ToolBar.ID_EXTRACT)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_PLAY, True)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, True)
-		self.toolbar.Realize()
 
 		self.imagepanel = leginon.gui.wx.TargetPanel.ShapeTargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('preview', target=True)

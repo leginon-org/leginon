@@ -88,7 +88,6 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 		self.node.settings['move type'] = self.cmovetype.GetStringSelection()
 		self.cmovetype.SetToolTip(wx.ToolTip('Navigion Parameter'))
 		self.toolbar.InsertControl(2, self.cmovetype)
-		self.toolbar.Realize()
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=leginon.gui.wx.ToolBar.ID_SETTINGS)

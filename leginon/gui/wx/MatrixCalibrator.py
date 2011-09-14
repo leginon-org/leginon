@@ -52,7 +52,6 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 											id=leginon.gui.wx.ToolBar.ID_EDIT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onCalcPixel,
 											id=leginon.gui.wx.ToolBar.ID_CALC_PIXEL)
-		self.toolbar.Realize()
 
 	def onParameterSettingsTool(self, evt):
 		parameter = self.cparameter.GetStringSelection()

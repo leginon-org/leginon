@@ -23,7 +23,6 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 													'stop',
 													shortHelpString='Stop')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
-		self.toolbar.Realize()
 
 		self.szmain.AddGrowableCol(0)
 		self.SetSizer(self.szmain)

@@ -33,7 +33,6 @@ class Panel(leginon.gui.wx.Calibrator.Panel):
 		#self.Bind(leginon.gui.wx.ImagePanelTools.EVT_MEASUREMENT, self.onMeasurement)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=leginon.gui.wx.ToolBar.ID_MEASURE)
 		self.toolbar.DeleteTool(leginon.gui.wx.ToolBar.ID_ABORT)
-		self.toolbar.Realize()
 
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)

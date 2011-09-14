@@ -956,7 +956,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_CALCULATE,
 													'calculate',
 													shortHelpString='Get Magnifications')
-		self.toolbar.Realize()
 
 		self.tems = {}
 		self.ccdcameras = {}

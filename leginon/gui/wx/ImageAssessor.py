@@ -49,8 +49,6 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 													'stop',
 													shortHelpString='Reject')
 
-		self.toolbar.Realize()
-
 		self.addImagePanel()
 
 		self.szmain.AddGrowableRow(1)

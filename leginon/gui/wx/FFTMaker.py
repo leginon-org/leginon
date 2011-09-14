@@ -29,7 +29,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 													'stop',
 													shortHelpString='Stop')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_STOP, False)
-		self.toolbar.Realize()
 
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableRow(1)

@@ -37,7 +37,6 @@ class Panel(leginon.gui.wx.Node.Panel):
 													shortHelpString='Refresh Trays')
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, False)
 		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_EXTRACT, False)
-		self.toolbar.Realize()
 
 		self.ctray = wx.Choice(self, -1)
 		self.ctray.Enable(False)
