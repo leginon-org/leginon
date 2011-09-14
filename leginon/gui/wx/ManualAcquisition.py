@@ -337,7 +337,7 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		szlowdose = wx.GridBagSizer(5, 5)
 		szlowdose.Add(self.widgets['low dose'], (0, 0), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL)
-		szlowdose.AddGrowableCol(1)
+		szlowdose.AddGrowableCol(0)
 		sbszlowdose.Add(szlowdose, 1, wx.EXPAND|wx.ALL, 5)
 
 		sz = wx.GridBagSizer(5, 5)
@@ -435,7 +435,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.widgets['dark'] = wx.CheckBox(self, -1, 'Dark Exposure')
 		sz.Add(self.widgets['dark'], (6,0), (1,1))
 
-		sz.AddGrowableCol(1)
 		self.widgets['force annotate'] = wx.CheckBox(self, -1, 'Always Annotate Saved Images')
 		sz.Add(self.widgets['force annotate'], (7,0), (1,1))
 
@@ -634,12 +633,12 @@ class ManualFocusDialog(wx.MiniFrame):
 class CommentDialog(leginon.gui.wx.Dialog.Dialog):
 	def onInitialize(self):
 
-		self.sz.AddGrowableCol(1)
 		self.viewstatus=None
 		self.comment = wx.TextCtrl(self, -1, '', style=wx.TE_MULTILINE)
 
 		self.sz.Add(self.comment, (0, 0), (2, 2),
 			wx.EXPAND|wx.ALL)
+		self.sz.AddGrowableCol(0)
 			
 		self.addButton('Save', wx.ID_OK)
 		#Temporary disable Hidden and Examplar buttons and leave the decision to web viewer

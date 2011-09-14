@@ -35,7 +35,6 @@ class SelectionTool(wx.Panel):
 		self.parent = parent
 
 		self.sz = wx.GridBagSizer(3, 6)
-		self.sz.AddGrowableCol(1)
 		self.sz.SetEmptyCellSize((0, 24))
 
 		self.order = []
@@ -50,6 +49,8 @@ class SelectionTool(wx.Panel):
 		n = len(self.tools)
 		self.sz.Add(typetool.bitmap, (n, 0), (1, 1), wx.ALIGN_CENTER)
 		self.sz.Add(typetool.label, (n, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
+		if n == 0:
+			self.sz.AddGrowableCol(1)
 		if 'display' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['display'], (n, 2), (1, 1), wx.ALIGN_CENTER)
 			typetool.togglebuttons['display'].Bind(leginon.gui.wx.ImagePanelTools.EVT_DISPLAY, self.onDisplay)

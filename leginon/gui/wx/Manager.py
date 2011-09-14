@@ -846,7 +846,6 @@ class RunApplicationDialog(wx.Dialog):
 				self.launcherchoices[launcheralias] = choice
 				self.launchersizer.AddGrowableRow(i)
 			self.sizer.Add(self.launchersizer, (1, 0), (1, 2), wx.ALIGN_CENTER)
-		self.sizer.AddGrowableRow(1)
 		self.dialogsizer.Layout()
 		self.Fit()
 
