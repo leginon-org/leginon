@@ -636,7 +636,7 @@ class CommentDialog(leginon.gui.wx.Dialog.Dialog):
 		self.viewstatus=None
 		self.comment = wx.TextCtrl(self, -1, '', style=wx.TE_MULTILINE)
 
-		self.sz.Add(self.comment, (0, 0), (2, 2),
+		self.sz.Add(self.comment, (0, 0), (3, 2),
 			wx.EXPAND|wx.ALL)
 		self.sz.AddGrowableCol(0)
 			
