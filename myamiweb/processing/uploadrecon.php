@@ -276,7 +276,7 @@ function createUploadReconForm( $extra=false, $title='UploadRecon.py Launcher', 
 	echo "</form>\n";
 	echo "</center>\n";
 
-	echo emanRef();
+	echo showReference( $method );
 
 	processing_footer();
 	exit;
@@ -353,8 +353,8 @@ function runUploadRecon() {
 //	} else {
 //		$fileerror = checkRequiredFileError($runpath,'resolution.txt'); 
 //	}
-	$fileerror = checkRequiredFileError($runpath,'resolution.txt');
-	if ($fileerror) createUploadReconForm($fileerror);
+//	$fileerror = checkRequiredFileError($runpath,'resolution.txt');
+//	if ($fileerror) createUploadReconForm($fileerror);
 
 	//make sure the user only want one iteration to be uploaded
 	if (is_numeric($iteration)) {
@@ -393,6 +393,8 @@ function runUploadRecon() {
 			break;
 		case "xmipprecon":
 			$command = "uploadXmippRefine.py ";
+			// TODO: get Dmitry to fix this, should not be hardcoded.
+			$command .= "--numberOfReferences=1 ";
 			break;
 		case "xmippml3drecon":
 			$command = "uploadXmippML3DRefine.py ";
