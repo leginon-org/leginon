@@ -180,7 +180,11 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		### Write the parameters for posterior uploading, both generic and specific
 		self.runparams = {} ### these are generic params that includes a dictionary entry for package-specific params
 #		self.runparams['symmetry'] = apSymmetry.getSymmetryDataFromName(self.params['symmetry'])
-#		self.runparams['symmetry'] = apSymmetry.getSymmetryDataFromID(self.params['symid'])['symmetry']
+
+		sym = apSymmetry.getSymmetryDataFromID(self.params['symid'])['symmetry']
+		sym2 = apXmipp.convertSymmetryNameForPackage(sym)
+		self.runparams['symmetry'] = sym2
+		self.runparams['numiter'] = protocolPrm['NumberofIterations']
 		self.runparams['mask'] = protocolPrm["MaskRadius"] 
 		self.runparams['imask'] = None
 		self.runparams['alignmentInnerRadius'] = protocolPrm["InnerRadius"] 
