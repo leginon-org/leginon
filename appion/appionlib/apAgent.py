@@ -2,6 +2,7 @@ from appionlib import torqueHost
 from appionlib import apRefineJobFrealign
 from appionlib import apRefineJobEman
 from appionlib import apRefineJobXmipp
+from appionlib import apRefineJobXmippML3D
 from appionlib import apGenericJob
 from appionlib import jobtest
 import sys
@@ -95,7 +96,7 @@ class Agent (object):
         elif "xmipprecon" == jobType:
             jobInstance = apRefineJobXmipp.XmippSingleModelRefineJob(command)
         elif "xmippml3d" == jobType:
-            jobInstance = apRefineJobXmippml3d.XmippMl3dRefineJob(command)
+            jobInstance = apRefineJobXmippML3D.XmippML3DRefineJob(command)
         elif "jobtest" == jobType:
             jobInstance = jobtest.jobtestClass()
         else:
