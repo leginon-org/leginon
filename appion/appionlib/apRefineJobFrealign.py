@@ -352,6 +352,6 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		return tasks
 
 if __name__ == '__main__':
-	app = EmanRefineJob()
+	app = FrealignRefineJob()
 	app.start()
 	app.close()
