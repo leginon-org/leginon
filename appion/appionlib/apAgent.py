@@ -94,7 +94,7 @@ class Agent (object):
             jobInstatnce = apRefineJobFrealign.FrealignRefineJob(command)
         elif "xmipprecon" == jobType:
             jobInstance = apRefineJobXmipp.XmippSingleModelRefineJob(command)
-        elif "xmippml3drecon" == jobType:
+        elif "xmippml3d" == jobType:
             jobInstance = apRefineJobXmippml3d.XmippMl3dRefineJob(command)
         elif "jobtest" == jobType:
             jobInstance = jobtest.jobtestClass()
