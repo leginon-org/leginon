@@ -557,7 +557,9 @@ if (is_numeric($expId)) {
 
 	// display reconstructions only if there is a stack
 	if ($stackruns > 0) {
-		
+		$action = "Refine Reconstruction";
+		$nruns=array();
+				
 		// Single Model Refinement stats
 		
 		$refineJobsSM 		= new RefineJobsSingleModel($expId);
