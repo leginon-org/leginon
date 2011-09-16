@@ -235,7 +235,7 @@ class DirectDetectorProcessing(object):
 
 	def makeCorrectedRawFrameStack(self,rundir, use_full_raw_area=False):
 		rawframedir = self.getRawFrameDirFromImage(self.image)
-		framestackpath = os.path.join(rundir,self.image['filename']+'_st2.mrc')
+		framestackpath = os.path.join(rundir,self.image['filename']+'_st.mrc')
 		total_frames = self.__getNumberOfFrameSaved()
 		for start_frame in range(total_frames):
 			array = self.__correctFrameImage(start_frame,1,use_full_raw_area)
