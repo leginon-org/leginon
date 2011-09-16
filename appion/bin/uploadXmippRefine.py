@@ -33,7 +33,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		
 		lastiter = 0
 		if os.path.isdir(self.projmatchpath) is False:
-			apDisplay.printError("projection matching did not run. Please double check and restart the job")
+			apDisplay.printError("Could not find %s. Projection matching did not run. Please double check and restart the job" % self.projmatchpath)
 		directories = glob.glob(os.path.join(self.projmatchpath, "Iter*"))
 		directories.sort()
 		for dir in directories:

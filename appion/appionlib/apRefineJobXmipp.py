@@ -181,9 +181,9 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		self.runparams = {} ### these are generic params that includes a dictionary entry for package-specific params
 #		self.runparams['symmetry'] = apSymmetry.getSymmetryDataFromName(self.params['symmetry'])
 
-		sym = apSymmetry.getSymmetryDataFromID(self.params['symid'])['symmetry']
-		sym2 = apXmipp.convertSymmetryNameForPackage(sym)
-		self.runparams['symmetry'] = sym2
+		#sym = apSymmetry.getSymmetryDataFromID(self.params['symmetry'])
+		#sym2 = self.convertSymmetryNameForPackage(sym)
+		self.runparams['symmetry'] = protocolPrm["SymmetryGroup"]
 		self.runparams['numiter'] = protocolPrm['NumberofIterations']
 		self.runparams['mask'] = protocolPrm["MaskRadius"] 
 		self.runparams['imask'] = None

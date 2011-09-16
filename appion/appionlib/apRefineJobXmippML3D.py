@@ -8,7 +8,7 @@ import os
 import time
 import cPickle
 #appion
-from appionlib import appionScript
+from appionlib import apRefineJob
 from appionlib import apDisplay
 from appionlib import appiondata
 from appionlib import apModel
@@ -21,7 +21,7 @@ from appionlib import apParam
 #======================
 #======================
 	
-class XmippML3DRefineJob(appionScript.AppionScript):
+class XmippML3DRefineJob(apRefineJob.RefineJob):
 
 	#=====================
 	def setupParserOptions(self):		

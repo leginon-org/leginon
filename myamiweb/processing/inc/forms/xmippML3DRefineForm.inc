@@ -35,26 +35,6 @@ class XmippML3DRefineForm extends BasicRefineForm
 		return $html;
 	}
 	
-	public function buildCommand( $postArray )
-	{	
-		// make sure this forms params have been updated with the post array	
-		$params = $this->getFormParams();
-		$params->getPostedValues( $postArray );
-		
-		$command = '';
-		$command = $this->addCommandFlag( $command, "angSampRate" );
-		$command = $this->addCommandFlag( $command, "symmetry" );
-		$command = $this->addCommandFlag( $command, "DoMlf" );
-		$command = $this->addCommandFlag( $command, "ImagesArePhaseFlipped" );
-		$command = $this->addCommandFlag( $command, "HighResLimit" );
-		$command = $this->addCommandFlag( $command, "DoCorrectGreyScale" );
-		$command = $this->addCommandFlag( $command, "ProjMatchSampling" );
-		$command = $this->addCommandFlag( $command, "LowPassFilterReference" );
-		$command = $this->addCommandFlag( $command, "NumberOfReferences" );
-		
-		return $command;
-	}
-	
 	protected function setImportParams()
 	{
 		$sym = $this->getSymmetry();

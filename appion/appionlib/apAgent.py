@@ -36,8 +36,8 @@ class Agent (object):
             sys.exit(1)
         
         if not self.currentJob:
-              sys.stderr.write("Error: Could not create job for: " + str(command))
-              sys.exit(1)
+            sys.stderr.write("Error: Could not create job for: " + str(command))
+            sys.exit(1)
               
         hostJobId = self.processingHost.launchJob(self.currentJob)
         #if the job launched successfuly print out the ID returned.
