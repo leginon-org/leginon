@@ -15,6 +15,7 @@ from appionlib import apModel
 from appionlib import apStack
 from appionlib import apSymmetry
 from appionlib import apXmipp
+from appionlib import apParam
 
 
 #======================
@@ -134,7 +135,7 @@ class XmippML3DRefineJob(appionScript.AppionScript):
 		
 		### write out python protocol into run directory
 		protocolfile = os.path.join(self.params['remoterundir'],"%s.py" % protocolname)
-		apXmipp.particularizeProtocol(protocol_ml3d, protocolPrm, protocolfile))
+		apXmipp.particularizeProtocol(protocol_ml3d, protocolPrm, protocolfile)
 		os.chmod(os.path.join(self.params['rundir'], protocolfile), 0775)
 				
 		### Write the parameters for posterior uploading, both generic and specific
