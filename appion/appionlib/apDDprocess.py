@@ -38,8 +38,8 @@ class DirectDetectorProcessing(object):
 	def getImageData(self):
 		return self.image
 
-	def __getNumberOfFrameSaved(self,rawframedir):
-		return self.camerainfo['nframe']
+	def __getNumberOfFrameSaved(self):
+		return self.image['camera']['nframes']
 
 	def getRawFrameDirFromImage(self,imagedata):
 		# strip off DOS path in rawframe directory name 
@@ -53,17 +53,18 @@ class DirectDetectorProcessing(object):
 
 	def __setRawFrameInfoFromImage(self):
 		'''
-		set rawframe_dir, rawframe_seq, and nframe of the current image
+		set rawframe_dir, nframe, and totalframe of the current image
 		'''
 		imagedata = self.image
 		if not imagedata:
 			apDisplay.printError('No image set.')
-		rawframeseq = imagedata['camera']['use frames']
 		rawframedir = self.getRawFrameDirFromImage(imagedata)
 		# set attribute values
 		self.rawframe_dir = rawframedir
-		self.rawframe_seq = rawframeseq
-		self.nframe = len(self.rawframe_seq)
+		# initialize self.nframe
+		self.nframe = self.image['camera']['nframes']
+		# total number of frames saved
+		self.totalframe = self.image['camera']['nframes']
 
 	def __setCameraInfo(self,nframe,use_full_raw_area):
 		'''
@@ -74,6 +75,7 @@ class DirectDetectorProcessing(object):
 	def __getCameraInfoFromImage(self,nframe,use_full_raw_area):
 		'''
 		returns dictionary of camerainfo obtained from the current image
+		and current instance values such as nframe and use_full_raw_area flag
 		'''
 		binning = self.image['camera']['binning']
 		offset = self.image['camera']['offset']
@@ -101,7 +103,7 @@ class DirectDetectorProcessing(object):
 		if self.camerainfo['ccdcamera'].dbid != self.image['camera']['ccdcamera'].dbid:
 			return True
 		if new_use_full_raw_area and self.use_full_raw_area == new_use_full_raw_area:
-			if self.camerainfo['nframe'] == new_nframe:
+			if self.camerainfo['nframe'] != new_nframe:
 				return True
 		else:
 			newcamerainfo = self.__getCameraInfoFromImage(new_nframe,new_use_full_raw_area)
@@ -119,11 +121,15 @@ class DirectDetectorProcessing(object):
 		dimension = self.camerainfo['dimension']
 		crop_end = {'x': offset['x']+dimension['x']*bin['x'], 'y':offset['y']+dimension['y']*bin['y']}
 
-		rawframe_path = os.path.join(rawframe_dir,'Image%d.tif'%frame_number)
+		rawframe_path = os.path.join(rawframe_dir,'RawImage_%d.tif'%frame_number)
+		print rawframe_path
+		if not os.path.exists(rawframe_path):
+			return False
 		if use_tifffile:
 			# Use Faster tiff conversion to numpy module.
 			tif = tifffile.TIFFfile(rawframe_path)
 			a = tif.asarray()
+			print a.dtype
 			a = numpy.asarray(a,dtype=numpy.float32)
 			a = a[offset['y']:crop_end['y'],offset['x']:crop_end['x']]
 		else:
@@ -131,6 +137,7 @@ class DirectDetectorProcessing(object):
 			pil_img = Image.open(rawframe_path)
 			pil_cropped_img = pil_img.crop((offset['x'],offset['y'],crop_end['x'],crop_end['y']))
 			a = numpy.array(pil_cropped_img.getdata()).reshape((pil_cropped_img.size))
+			a = numpy.swapaxes(a,1,0)
 		if bin['x'] > 1:
 			if bin['x'] == bin['y']:
 				a = imagefun.bin(a,bin['x'])
@@ -150,8 +157,12 @@ class DirectDetectorProcessing(object):
 		for frame_number in range(start_frame,start_frame+nframe):
 			if frame_number == start_frame:
 				rawarray = self.__loadOneRawFrame(rawframe_dir,frame_number)
+				if rawarray is False:
+					return False
 			else:
 				rawarray += self.__loadOneRawFrame(rawframe_dir,frame_number)
+				if rawarray is False:
+					return False
 		return rawarray
 
 	def scaleRefImage(self,reftype,nframe):
@@ -169,6 +180,13 @@ class DirectDetectorProcessing(object):
 		return scaled_refarray
 
 	def correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
+		corrected = self.__correctFrameImage(start_frame,nframe,use_full_raw_area)
+		if corrected is False:
+			apDisplay.printError('Failed to correct Image')
+		else:
+			return corrected
+
+	def __correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
 		'''
 		This returns corrected numpy array of given start and total number
 		of raw frames of the current image set for the class instance.  
@@ -177,10 +195,10 @@ class DirectDetectorProcessing(object):
 		# check parameter
 		if not self.image:
 			apDisplay.printError("You must set an image for the operation")
-		if start_frame not in range(self.nframe):
-			apDisplay.printError("Starting Frame not in raw frame sequence, can not be processed")
-		if (start_frame + nframe) > self.nframe:
-			newnframe = self.nframe - start_frame
+		if start_frame not in range(self.totalframe):
+			apDisplay.printError("Starting Frame not in saved raw frame range, can not be processed")
+		if (start_frame + nframe) > self.totalframe:
+			newnframe = self.totalframe - start_frame
 			apDisplay.printWarning( "%d instead of %d frames will be used since not enough frames are saved." % (newnframe,nframe))
 			nframe = newnframe
 
@@ -201,20 +219,30 @@ class DirectDetectorProcessing(object):
 
 		# load raw frames
 		rawarray = self.sumupFrames(self.rawframe_dir,start_frame,nframe)
+		if rawarray is False:
+			return False
+		print rawarray.shape
+		print normarray.shape
+		print scaled_darkarray.shape
 		# gain correction
 		corrected = (rawarray - scaled_darkarray) * normarray
 		# fix bad pixels
 		plan = self.c_client.retrieveCorrectorPlan(self.camerainfo)
 		self.c_client.fixBadPixels(corrected,plan)
 		corrected = numpy.clip(corrected,0,10000)
+		print 'corrected',corrected.min(),corrected.max()
 		return corrected
 
 	def makeCorrectedRawFrameStack(self,rundir, use_full_raw_area=False):
 		rawframedir = self.getRawFrameDirFromImage(self.image)
-		framestackpath = os.path.join(rundir,self.image['filename']+'_st.mrc')
+		framestackpath = os.path.join(rundir,self.image['filename']+'_st2.mrc')
 		total_frames = self.__getNumberOfFrameSaved()
 		for start_frame in range(total_frames):
-			array = self.correctFrameImage(start_frame,1,use_full_raw_area)
+			array = self.__correctFrameImage(start_frame,1,use_full_raw_area)
+			# if non-fatal error occurs, end here
+			if array is False:
+				break
+			array.max()
 			if start_frame == 0:
 				# overwrite old stack mre file
 				mrc.write(array,framestackpath)
