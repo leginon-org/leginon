@@ -246,8 +246,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "&nbsp;&nbsp;<select name='ctfcorrecttype' ";
 		if (!$phasecheck) echo " disabled";
 		echo ">\n";
-		echo "<option value='ace2image'>Ace 2 Wiener Filter Whole Image (default)</option>\n";
-		echo "<option value='spiderimage'>SPIDER PhaseFlip</option>\n";
+		echo "<option value='ace2image'>Ace 2 Wiener Filter Whole Image</option>\n";
+		echo "<option value='ace2imagephase'>Ace 2 PhaseFlip Whole Image</option>\n";
+		echo "<option value='spiderimage'>SPIDER PhaseFlip Whole Image</option>\n";
 		echo "<option value='emanpart'>EMAN PhaseFlip by Boxed Stack per Image</option>\n";
 		echo "<option value='emanimage'>EMAN PhaseFlip Whole Image</option>\n";
 		echo "<option value='emantilt'>EMAN PhaseFlip by Tilt Location</option>\n";

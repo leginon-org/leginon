@@ -245,7 +245,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			elif self.params['fliptype'] == "spiderimage":
 				imgpath = self.phaseFlipSpider(imgpath,imgdata)
 				self.ctftimes.append(time.time()-t0)
-			elif self.params['fliptype'] == "ace2image":
+			elif self.params['fliptype'][:9] == "ace2image":
 				### ctf correct whole image using Ace 2
 				imgpath = self.phaseFlipAceTwo(imgpath, imgdata)
 				self.ctftimes.append(time.time()-t0)
@@ -575,7 +575,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		ace2exe = self.getACE2Path()
 		outfile = os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
 
-		ace2cmd = (ace2exe+" -ctf %s -apix %.3f -img %s -wiener 0.1 -out %s" % (ctfvaluesfile, apix, inimgpath,outfile))
+		ace2cmd = (ace2exe+" -ctf %s -apix %.3f -img %s -out %s" % (ctfvaluesfile, apix, inimgpath,outfile))
+		if self.params['fliptype'] == "ace2image":
+			ace2cmd += " -wiener 0.1"
 		apDisplay.printMsg("ace2 command: "+ace2cmd)
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
 
@@ -889,7 +891,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 	#=======================
 	def setupParserOptions(self):
-		self.flipoptions = ('emanimage', 'emanpart', 'emantilt', 'spiderimage', 'ace2image')
+		self.flipoptions = ('emanimage', 'emanpart', 'emantilt', 'spiderimage', 'ace2image','ace2imagephase')
 		self.ctfestopts = ('ace2', 'ctffind')
 
 		### values
@@ -1028,9 +1030,11 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			self.noimages = True
 			return
 		self.checkPixelSize()
+		self.existingParticleNumber=0
 		if self.params['commit'] is True:
 			self.insertStackRun()
 			self.particleNumber = self.getExistingStackInfo()
+			self.existingParticleNumber=self.particleNumber
 		else:
 			self.particleNumber = 0
 			stackfile=os.path.join(self.params['rundir'], self.params['single'])
@@ -1098,7 +1102,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### create a stack average every so often
 		if self.stats['lastpeaks'] > 0:
-			logpeaks = math.log(self.stats['peaksum']+self.stats['lastpeaks'])
+			logpeaks = math.log(self.existingParticleNumber+self.stats['peaksum']+self.stats['lastpeaks'])
 			if logpeaks > self.logpeaks:
 				self.logpeaks = math.ceil(logpeaks)
 				numpeaks = math.ceil(math.exp(self.logpeaks))
@@ -1154,28 +1158,11 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apDisplay.printMsg("Xmipp normalization time: "+apDisplay.timeString(normtime))
 
 			### recombine particles to a single imagic stack
-			pfile = open(selfile)
-			lstfile = "norm"+self.timestamp+".lst"
-			lstf = open(lstfile,'w')
-			lstf.write("#LST\n")
-			pnum=0
-			for line in pfile:
-				pinfo = line.split()
-				if len(pinfo)==2:
-					lstf.write("%i\t%s\n"%(pnum,pinfo[0]))
-					pnum+=1
-			pfile.close()
-			lstf.close()
-
-			### overwrite unnormalized stack
-			apDisplay.printMsg("Converting normalized Xmipp particles")
 			tmpstack = "tmp.xmippStack.hed"
-			emancmd="proc2d %s %s"%(lstfile,tmpstack)
-			apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
+			apXmipp.gatherSingleFilesIntoStack(selfile,tmpstack)
 			apFile.moveStack(tmpstack,stackpath)
 
 			### clean up directory
-			apFile.removeFile(lstfile)
 			apFile.removeFile(selfile)
 			apFile.removeDir("partfiles")
 			
