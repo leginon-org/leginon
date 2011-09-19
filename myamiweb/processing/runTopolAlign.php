@@ -84,8 +84,8 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 		}\n";
 	// check form values
 	$javascript .="function checkform() {\n";
-	$javascript .="  if (document.forms[\"viewerform\"][\"canproc\"].value > 8) {\n";
-	$javascript .="    alert('CAN cannot use more than 8 processors');\n";
+	$javascript .="  if (document.forms[\"viewerform\"][\"msaproc\"].value > 8) {\n";
+	$javascript .="    alert('MSA cannot use more than 8 processors');\n";
 	$javascript .="    return false;\n";
 	$javascript .="  }\n";
 	$javascript .="}\n";
@@ -94,22 +94,18 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$javascript .="function chooseMSA(package) {\n";
 	$javascript .="  if (package == 'CAN') {\n";
 	$javascript .="    document.viewerform.msamethod.value='can';\n";
-	$javascript .="    document.getElementById('nprocdiv').innerHTML='Number of Processors for MRA';\n";
 	$javascript .="    document.getElementById('canbutton').style.border='1px solid #0F0';\n";
 	$javascript .="    document.getElementById('canbutton').style.backgroundColor='#CCFFCC';\n";
 	$javascript .="    document.getElementById('canparams').style.display = 'block';\n";
-	$javascript .="    document.getElementById('canprocdiv').style.display = 'block';\n";
 	$javascript .="    document.getElementById('imagicbutton').style.border='1px solid #F00';\n";
 	$javascript .="    document.getElementById('imagicbutton').style.backgroundColor='#C0C0C0';\n";
 	$javascript .="    document.getElementById('imagicparams').style.display = 'none';\n";
 	$javascript .="  }\n";
 	$javascript .="  if (package == 'IMAGIC') {\n";
 	$javascript .="    document.viewerform.msamethod.value='imagic';\n";
-	$javascript .="    document.getElementById('nprocdiv').innerHTML='Number of Processors for MRA/MSA';\n";
 	$javascript .="    document.getElementById('canbutton').style.border='1px solid #F00';\n";
 	$javascript .="    document.getElementById('canbutton').style.backgroundColor='#C0C0C0';\n";
 	$javascript .="    document.getElementById('canparams').style.display = 'none';\n";
-	$javascript .="    document.getElementById('canprocdiv').style.display = 'none';\n";
 	$javascript .="    document.getElementById('imagicbutton').style.border='1px solid #0F0';\n";
 	$javascript .="    document.getElementById('imagicbutton').style.backgroundColor='#CCFFCC';\n";
 	$javascript .="    document.getElementById('imagicparams').style.display = 'block';\n";
@@ -151,7 +147,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$nocentercheck = ($_POST['nocenter']=='on') ? 'checked' : '';
 	$classitercheck = ($_POST['classiter']=='on') ? 'checked' : '';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
-	$canproc = ($_POST['canproc']) ? $_POST['canproc'] : '1';
+	$msaproc = ($_POST['msaproc']) ? $_POST['msaproc'] : '8';
 	$iter = (isset($_POST['iter'])) ? $_POST['iter'] : '10';
 	// topology alignment parameters
 	$itermult = ($_POST['itermult']) ? $_POST['itermult'] : '10';
@@ -206,17 +202,11 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	echo "<br>";
 
 	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc' onChange='estimatetime()'>\n";
-	echo "<div id='nprocdiv' style='display:inline'>Number of Processors for MRA";
-	if ($msamethod=='imagic') echo "/MSA";
-	echo "</div>";
+	echo "Number of Processors for MRA";
 	echo "<br/>\n";
-	echo "<div id='canprocdiv'";
-	if ($msamethod=='imagic') echo " style='display:none'";
-	echo ">\n";
-	echo "<INPUT TYPE='text' NAME='canproc' SIZE='4' VALUE='$canproc' onChange='estimatetime()'>\n";
-	echo "Number of Processors for CAN";
+	echo "<INPUT TYPE='text' NAME='msaproc' SIZE='4' VALUE='$msaproc' onChange='estimatetime()'>\n";
+	echo "Number of Processors for MSA";
 	echo "<br/>\n";
-	echo "</div>\n";
 
 	echo "</TD></tr>\n</table>\n";
 	echo "</TD>\n";
@@ -408,8 +398,8 @@ function runTopolAlign() {
 	$premask = ($_POST['premask']=="on") ? true : false;
 	$nocenter = ($_POST['nocenter']=="on") ? true : false;
 	$classiter = ($_POST['classiter']=="on") ? true : false;
-	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
-	$canproc = ($_POST['canproc']) ? $_POST['canproc'] : 1;
+	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
+	$msaproc = ($_POST['msaproc']) ? $_POST['msaproc'] : 8;
 	$mramethod = strtolower($_POST['mramethod']);
 	$msamethod = ($_POST['msamethod']);
 
@@ -425,8 +415,8 @@ function runTopolAlign() {
 
 	if ($nproc > 24)
 		createTopolAlignForm("<B>ERROR:</B> Let's be reasonable with the number of processors, less than 24 please");
-	if ($canproc > 8 && $msamethod=='can')
-		createTopolAlignForm("<B>ERROR:</B> CAN cannot run on more than 8 processors");
+	if ($msaproc > 8 && $msamethod=='can')
+		createTopolAlignForm("<B>ERROR:</B> MSA cannot run on more than 8 processors");
 
 	//make sure a stack was selected
 	if (!$stackid)
@@ -491,8 +481,8 @@ function runTopolAlign() {
 
 	if ($nproc)
 		$command.="--nproc=$nproc ";
-	if ($canproc && $msamethod=='can')
-		$command.="--canproc=$canproc ";
+	if ($msaproc)
+		$command.="--msaproc=$msaproc ";
 	if ($premask) $command.="--premask ";
 	if ($nocenter) $command.="--no-center ";
 	if ($classiter) $command.="--classiter ";
