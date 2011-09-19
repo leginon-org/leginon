@@ -2992,6 +2992,7 @@ class leginondata {
 	}
 
 	function getTargetListIds($sessionId,$qtype,$limit=100) {
+		$whereqtype = "";
 		if ($qtype) 
 			$whereqtype = ""
 			."AND "
