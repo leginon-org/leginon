@@ -35,21 +35,23 @@ class XmippML3DRefineJob(apRefineJob.RefineJob):
 			action="store_true", help="Perform MLF3D instead of ML3D classification?")
 		self.parser.add_option("--HighResLimit", dest="HighResLimit", type="int", default=15,
 			help="No frequencies higher than this limit will be taken into account. If zero is given, no limit is imposed", metavar="INT")
-		self.parser.add_option("--ProjMatchSampling", dest="ProjMatchSampling", default=15,
+		self.parser.add_option("--ProjMatchSampling", dest="ProjMatchSampling", type=int, default=15,
 			help="Angular sampling for a quick projection matching to obtain right grey scale. As the resolution of the intial reference \
 				should be low, this sampling can be relatively crude, e.g. 15", metavar="INT")
-		self.parser.add_option("--DoLowPassFilterReference", dest="DoLowPassFilterReference", default=False,
-			action="store_true", help="Low-pass filter the initial reference. It is highly recommended to low-pass filter your initial \
-				reference volume as much as you can.")						
-		self.parser.add_option("--LowPassFilter", dest="LowPassFilter", default=50,
+#		self.parser.add_option("--DoLowPassFilterReference", dest="DoLowPassFilterReference", default=False,
+#			action="store_true", help="Low-pass filter the initial reference. It is highly recommended to low-pass filter your initial \
+#				reference volume as much as you can.")						
+		self.parser.add_option("--LowPassFilter", dest="LowPassFilter", type=float, default=50,
 			help="Resolution of the low-pass filter (in Angstroms)", metavar="INT")			
 		self.parser.add_option("--AngularSampling", dest="AngularSampling", default=10,
 			help="Angular sampling for ML(F)3D classification: Fine samplings take huge amounts of CPU and memory. Therefore, in general, \
 				don't use samplings finer than 10 degrees.", metavar="INT")	
-				
-#		### Xmipp path variables
-#		self.parser.add_option("--cluster_root_path", dest="cluster_root_path",
-#			help="path of the cluster where recon will be run, e.g. /ddn/people/dlyumkis/appion/11jan11a/recon/xmippML3Drecon2", metavar="PATH")
+		self.parser.add_option("--ImagesArePhaseFlipped", dest="ImagesArePhaseFlipped", default=False,
+			action="store_true", help="stack images have gone through a phase-flipping operation in, for example, EMAN, ACE2, or SPIDER")				
+		self.parser.add_option("--DoCorrectGreyScale", dest="DoCorrectGreyScale", default=False,
+			action="store_true", help="The probabilities are based on squared differences, so that the absolute grey scale is important. \
+				Often the greyscale values differ during package conversion, so this options should usually be used.")						
+
 	
 	'''
 	#=====================
@@ -87,48 +89,51 @@ class XmippML3DRefineJob(apRefineJob.RefineJob):
 		### setup protocol parameters
 		protocolPrm = {}
 		### check for n input model dependencies
+		protocolPrm["InitialReference"]                         	=       self.params['modelnames'][0]
 		if len(self.params['modelnames']) > 1:
 			selfile = "reference_volumes.sel"
 			sf = open(selfile, "w")
 			for model in self.params['modelnames']:	
-				sf.write(str(model)+"\t1\n")
+				sf.write("%s\t1\n" % os.path.join(self.params['rundir'], model))
 			sf.close()		
-			protocolPrm["InitialReference"]				=	""
-			protocolPrm["SeedsSelfile"]					=	os.path.join(self.params['rundir'], "initialmodels.sel")
+			protocolPrm["SeedsSelfile"]				=	os.path.join(self.params['rundir'], "reference_volumes.sel")
 			protocolPrm["DoGenerateSeeds"]				=	False			
 		else:
-			protocolPrm["InitialReference"]				=	self.params['modelnames'][0]
-			protocolPrm["SeedsSelfile"]					=	""
+			protocolPrm["SeedsSelfile"]				=	""
 			protocolPrm["DoGenerateSeeds"]				=	True
-		protocolPrm["InSelFile"]						=	"partlist.sel" ### this probably should not be hardcoded
-		protocolPrm["WorkingDir"]						=	"ml3d"
+		protocolPrm["InSelFile"]					=	"partlist.sel" ### this maybe should not be hardcoded
+		protocolPrm["WorkingDir"]					=	"ml3d"
 		protocolPrm["DoDeleteWorkingDir"]				=	False
-		protocolPrm["ProjectDir"]						=	self.params['recondir']
-		protocolPrm["LogDir"]							=	"Logs"
-		protocolPrm["DoMlf"]							=	self.params['DoMlf']
-		protocolPrm["DoCorrectAmplitudes"]				=	True
-		protocolPrm["InCtfDatFile"]						=	"all_images.ctfdat"
-		protocolPrm["HighResLimit"]						=	self.params['HighResLimit']
-		protocolPrm["ImagesArePhaseFlipped"]			=	True		### DEFAULTED TO TRUE FOR NOW, SHOULD QUERY DATABASE, BUT A BIT COMPLICATED DUE TO MULTIPLE POTENTIAL STACK RUNS
-		protocolPrm["InitialMapIsAmplitudeCorrected"]	=	False
-		protocolPrm["SeedsAreAmplitudeCorrected"]		=	False
-		protocolPrm["DoCorrectGreyScale"]				=	True
+		protocolPrm["ProjectDir"]					=	self.params['recondir']
+		protocolPrm["LogDir"]						=	"Logs"
+		protocolPrm["DoMlf"]						=	self.params['DoMlf']
+		protocolPrm["DoCorrectAmplitudes"]				=	False	
+		protocolPrm["InCtfDatFile"]					=	"all_images.ctfdat"
+		protocolPrm["HighResLimit"]					=	self.params['HighResLimit']
+		protocolPrm["ImagesArePhaseFlipped"]				=	self.params['ImagesArePhaseFlipped']
+		protocolPrm["InitialMapIsAmplitudeCorrected"]			=	False
+		protocolPrm["SeedsAreAmplitudeCorrected"]			=	False
+		protocolPrm["DoCorrectGreyScale"]				=	self.params['DoCorrectGreyScale']	
 		protocolPrm["ProjMatchSampling"]				=	self.params['ProjMatchSampling']
-		protocolPrm["DoLowPassFilterReference"]			=	self.params['DoLowPassFilterReference']
-		protocolPrm["LowPassFilter"]					=	self.params['LowPassFilter']
-		protocolPrm["PixelSize"]						=	"%.3f" % self.params['apix']
+		if (self.params['LowPassFilter']>1) is True:
+			protocolPrm["DoLowPassFilterReference"]			=	True	
+			protocolPrm["LowPassFilter"]				=	self.params['LowPassFilter']
+		else:
+			protocolPrm["DoLowPassFilterReference"]			= 	False
+			protocolPrm["LowPassFilter"]				=	self.params['LowPassFilter']
+		protocolPrm["PixelSize"]					=	self.params['apix']
 		protocolPrm["NumberOfReferences"]				=	self.params['NumberOfReferences']
-		protocolPrm["DoJustRefine"]						=	False
+		protocolPrm["DoJustRefine"]					=	False
 		protocolPrm["DoML3DClassification"]				=	True
 		protocolPrm["AngularSampling"]					=	self.params['AngularSampling']
 		protocolPrm["NumberOfIterations"]				=	self.params['numiter']
-		protocolPrm["Symmetry"]							=	self.params['symmetry']
-		protocolPrm["DoNorm"]							=	False
-		protocolPrm["DoFourier"]						=	False
-		protocolPrm["RestartIter"]						=	0
-		protocolPrm["ExtraParamsMLrefine3D"]			=	""
+		protocolPrm["Symmetry"]						=	self.params['symmetry'][0]
+		protocolPrm["DoNorm"]						=	False
+		protocolPrm["DoFourier"]					=	False
+		protocolPrm["RestartIter"]					=	0
+		protocolPrm["ExtraParamsMLrefine3D"]				=	""
 		protocolPrm["NumberOfThreads"]					=	1
-		protocolPrm["DoParallel"]						=	self.params['nproc']>1
+		protocolPrm["DoParallel"]					=	self.params['nproc']>1
 		protocolPrm["NumberOfMpiProcesses"]				=	self.params['nproc']
 		protocolPrm["SystemFlavour"]					=	""
 		protocolPrm["AnalysisScript"]					=	"visualize_ml3d.py"
@@ -139,9 +144,10 @@ class XmippML3DRefineJob(apRefineJob.RefineJob):
 		os.chmod(os.path.join(self.params['rundir'], protocolfile), 0775)
 				
 		### Write the parameters for posterior uploading, both generic and specific
+		self.runparams = {}
 		self.runparams['reconstruction_package'] = "xmipp_ml3d"
-#		self.runparams['upload_root_path'] = self.params['rundir']
-#		self.runparams['cluster_root_path'] = self.params['cluster_root_path']
+		self.runparams['remoterundir'] = self.params['remoterundir']
+#		self.runparams['reconstruction_working_dir'] = protocolPrm["WorkingDir"]		
 		self.runparams['reconstruction_working_dir'] = protocolPrm['WorkingDir']+"/RunML3D"
 		self.runparams['package_params'] = protocolPrm
 		paramfile = os.path.join(self.params['rundir'], "xmipp_ml3d_"+self.timestamp+"-params.pickle")
