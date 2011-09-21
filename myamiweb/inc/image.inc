@@ -85,7 +85,6 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$jpgpic = ereg_replace('mrc$', 'fft.jpg', $pic);
 				$jpgpic = ereg_replace('leginon', 'appion', $jpgpic);
 				$jpgpic = ereg_replace('rawdata', 'jpgs', $jpgpic);
-				$jpgpic = ereg_replace('appion2', 'appion', $jpgpic);
 			}
 			else {
 				$sessioninfo=$leginondata->getSessionInfo($sessionId);
