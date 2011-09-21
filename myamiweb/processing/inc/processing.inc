@@ -14,6 +14,7 @@ require_once "inc/login.inc";
 require_once "inc/ssh.inc";
 require_once "inc/session.inc";
 require_once "inc/project.inc";
+require_once "inc/cluster.inc";
 
 define('DONE_PIC','img/green_circle.gif');
 define('NONE_PIC','img/red_circle.gif');
@@ -434,15 +435,19 @@ function getNumberOfRequiredNodes($nproc, $ppn)
 // Appion on a single machine.
 //
 //*****************************************************************************
-function addAppionWrapper($command) {
-	if (USE_APPION_WRAPPER) {
-		$command = APPION_WRAPPER_PATH." ".$command;
+function addAppionWrapper($command, $processhost) 
+{
+	if ( USE_APPION_WRAPPER ) {
+		$cluster = new Cluster( $processhost );
+		$wrapper = $cluster->getWrapperPath();
+		$command = $wrapper." ".$command;
 	}
 	return $command;
 }
 
 /**************************************/
-function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) {
+function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) 
+{
 	/*
 		If user clicked run button it launches job on appion cluster
 		Otherwise displays command to copy and paste into terminal
@@ -508,6 +513,12 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) {
 	$command .= "--expId=$expId ";
 	if (!preg_match("/--jobtype=/", $command))
 	$command .= "--jobtype=$jobtype ";
+	
+	// Get the processing host
+	if ($_POST['processinghost']) {
+		$_SESSION['processinghost'] = $_POST['processinghost'];
+	}
+	$processhost = $_SESSION['processinghost'];
 
 	// until uploadimage works with appionJob submission, it is not allowed to do so
 	if ($_POST['process'] != "Just Show Command" && $jobtype != 'uploadimage') {
@@ -526,22 +537,18 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) {
 
 		exit;
 	} elseif ($_POST['process'] != "Just Show Command" && $jobtype == 'uploadimage') {
-		if ($_POST['processinghost']) {
-			$_SESSION['processinghost'] = $_POST['processinghost'];
-		}
-		$processhost = $_SESSION['processinghost'];
 		$user = $_SESSION['username'];
 		$pass = $_SESSION['password'];
 
 		// Add the Appion wrapper to support muliple installations of Appion
-		$wrappedcommand =  addAppionWrapper($command);
+		$wrappedcommand =  addAppionWrapper($command, $processhost);
 		// uploadimage is run directly through ssh, not webcaller.py and qsub
 		exec_over_ssh($processhost, $user, $pass, $wrappedcommand, TRUE);
 		processing_header("Upload image to project", "Upload image to project");
 		echo $headinfo;
 		echo "<B>uploadimage job submitted to ".$_SESSION['processinghost']." through ssh.</B>";
 		echo "<p></p>\n";
-		echo justShowCommandTable($command,true);
+		echo justShowCommandTable($command, $processhost, true);
 		processing_footer();
 		exit;
 		
@@ -552,14 +559,14 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) {
 
 		processing_header("Just Show $function Command", "Just Show $function Command");
 		echo $headinfo;
-		echo justShowCommandTable($command);
+		echo justShowCommandTable($command, $processhost);
 		processing_footer();
 		exit;
 	}
 };
 
 /**************************************/
-function justShowCommandTable($command,$skip_command=false) {
+function justShowCommandTable($command, $processhost, $skip_command=false) {
 
 	// Keep this section before adding the wrapper
 	// to get the proper values. Trim the whitespace from the ends,
@@ -587,7 +594,7 @@ function justShowCommandTable($command,$skip_command=false) {
 	$function = array_shift($tokens);	
 	
 	// Add the Appion wrapper to support muliple installations of Appion
-	$command =  addAppionWrapper($command);
+	$command =  addAppionWrapper($command, $processhost);
 
 	$commandtable = "<table class='tablebubble' border='0' width='800'>\n";
 	if (!$skip_command) {
@@ -667,7 +674,7 @@ function addProcessingHostParams( $command, $processhost, $nproc, $ppn, $nodes, 
 function addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $walltime, $cputime )
 {
 	// Add the Appion wrapper to support muliple installations of Appion
-	$command = addAppionWrapper($command);
+	$command = addAppionWrapper($command, $processhost);
 	
 	// if there is no python file in the command, turn the wrapper into a flag
 	if (!preg_match("/.py /", $command)) {
@@ -682,7 +689,7 @@ function addJobSubmitParams( $command, $processhost, $nproc, $ppn, $nodes, $wall
 
 		// Add the Appion wrapper to support muliple installations of Appion
 		// Makes sure we use the right version of runjob.py and subsequent scripts.
-		$command = addAppionWrapper($command);
+		$command = addAppionWrapper($command, $processhost);
 	}
 	
 	// Add processing host parameters to the command

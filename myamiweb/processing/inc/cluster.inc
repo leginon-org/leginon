@@ -59,7 +59,8 @@ class Cluster
 		$this->appionBin 		= $hostconfig['appionbin']; // location of appion scripts on cluster, must end in slash, e.g., /usr/local/appion/bin/
 		$this->baseoutdir		= $hostconfig['baseoutdir'];
 		$this->localHelperHost 	= $hostconfig['localhelperhost'];
-		$this->dirSeparator 	= $hostconfig['dirsep']; // eg. "/"		
+		$this->dirSeparator 	= $hostconfig['dirsep']; // eg. "/"	
+		$this->wrapperPath		= $hostconfig['wrapperpath'];	
 	}
 	
 	function getHostName() 		{ return $this->hostname; }
@@ -74,6 +75,7 @@ class Cluster
 	function getCpuTimeMax() 	{ return $this->cpuTimeMax; }
 	function getMemoryMax() 	{ return $this->memoryMax; }
 	function getAppionBinDir() 	{ return $this->appionBin; }
+	function getWrapperPath()   { return $this->wrapperPath; }
 	function getRemoteOutputPath() 	{ return $this->remoteOutputPath; }
 	function getLocalHelperHost()   { return $this->localHelperHost; }
 	

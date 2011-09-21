@@ -68,14 +68,23 @@ class ClusterParamsForm extends BasicForm
 		$params->addValidation( "cput", "req" );
 		$params->addValidation( "cput", "num" );
 		
-		$valcheck = "maxval=".$this->cluster->getPpnMax();
-		$params->addValidation( "ppn", $valcheck );
-		$valcheck = "maxval=".$this->cluster->getNodesMax();
-		$params->addValidation( "nodes", $valcheck );
-		$valcheck = "maxval=".$this->cluster->getWallTimeMax();
-		$params->addValidation( "walltime", $valcheck );
-		$valcheck = "maxval=".$this->cluster->getCpuTimeMax();
-		$params->addValidation( "cput", $valcheck );	
+		// Add check for max values only if they have been set in the config file
+		if ($this->cluster->getPpnMax() > 0) {
+			$valcheck = "maxval=".$this->cluster->getPpnMax();
+			$params->addValidation( "ppn", $valcheck );
+		}
+		if ( $this->cluster->getNodesMax() > 0 ) {
+			$valcheck = "maxval=".$this->cluster->getNodesMax();
+			$params->addValidation( "nodes", $valcheck );
+		}
+		if ( $this->cluster->getWallTimeMax() > 0 ) {
+			$valcheck = "maxval=".$this->cluster->getWallTimeMax();
+			$params->addValidation( "walltime", $valcheck );
+		}
+		if ( $this->cluster->getCpuTimeMax() > 0 ) {
+			$valcheck = "maxval=".$this->cluster->getCpuTimeMax();
+			$params->addValidation( "cput", $valcheck );
+		}	
 	}
 	
 	public function generateForm()
