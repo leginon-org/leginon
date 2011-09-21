@@ -52,6 +52,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	$leginondata = new leginondata();
 	// --- get image path
 	$path = $leginondata->getImagePathFromImageId($imageId);
+
 	// --- find image
 	$newimage = $leginondata->findImage($imageId, $preset);
 	$imageId = $newimage['id'];
@@ -69,7 +70,6 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	}
 
 	$pic = $path.$filename;
-
 	if (@is_file($pic)) {
 		$imginfo = $leginondata->getImageInfo($imageId);
 		$dimx = $imginfo['dimx'];
@@ -80,24 +80,16 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$binning = ($dimx > 2048) ? 2 : 1;
 		}
 
-		if ($p['loadjpg']) {
-			if ($p['fft']) {
-				$jpgpic = ereg_replace('mrc$', 'fft.jpg', $pic);
-				$jpgpic = ereg_replace('leginon', 'appion', $jpgpic);
-				$jpgpic = ereg_replace('rawdata', 'jpgs', $jpgpic);
-			}
-			else {
-				$sessioninfo=$leginondata->getSessionInfo($sessionId);
-				$session=$sessioninfo['Name'];
-				$jpgfilename = ereg_replace('mrc$', 'jpg', $filename);
-				$jpgpath = CACHE_PATH.$session."/";
-				$jpgpic = $jpgpath.$jpgfilename;
-			}
+		if ($p['loadjpg'] && !$p['fft']) {
+			$sessioninfo=$leginondata->getSessionInfo($sessionId);
+			$session=$sessioninfo['Name'];
+			$jpgfilename = ereg_replace('mrc$', 'jpg', $filename);
+			$jpgpath = CACHE_PATH.$session."/";
+			$jpgpic = $jpgpath.$jpgfilename;
 		}
 		if (@is_file($jpgpic)) {
 			$img = imagecreatefromjpeg($jpgpic);
 			$binning=$dimx/imagesx($img);
-			if ($p['fft']) $imginfo['binning']=$imginfo['binning']/4;
 		} else {
 			if ($p['autoscale']) {
 				list($type,$arg1, $arg2)=explode(";", $p['autoscale']);
