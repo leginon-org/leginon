@@ -141,7 +141,7 @@ void RegionToPatch( Region key, Image source, Image patch, float scale ) {
 	Ellipse e1 = NewEllipse(key->row,key->col,key->maj*scale,key->min*scale,key->phi);
 	Ellipse e2 = NewEllipse(rad,rad,rad,rad,key->phi);
 	ComputeEllipseTransform(e1,e2,TR,IT); free(e1); free(e2);
-	SeparableAffineTransform(source,patch,TR,IT);
+	AffineTransformImage(source,patch,TR,IT);
 	FreeDMatrix(IT,0,0);
 	FreeDMatrix(TR,0,0);
 	
