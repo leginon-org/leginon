@@ -26,7 +26,6 @@ require_once "inc/forms/stackPrepForm.inc";
 require_once "inc/refineJobsSingleModel.inc";
 require_once "inc/refineJobsMultiModel.inc";
 
-
 if ($_POST['process'])
 	createCommand(); // submit job
 elseif ($_POST['jobid'])
@@ -73,7 +72,7 @@ function selectRefineJob($extra=False) {
 		exit;
 	} 
 
-	echo "<P><input type='SUBMIT' NAME='submitprepared' VALUE='Use this prepared job'></FORM>\n";
+	echo "<P><input type='SUBMIT' NAME='submitprepared' VALUE='Use this prepared job'>\n";
 	
 	echo "<table class='tableborder' border='1'>\n";
 	foreach ($refinejobs as $refinejob) {
@@ -82,8 +81,8 @@ function selectRefineJob($extra=False) {
 		$id = $refinejob['REF|ApAppionJobData|job'];
 		if ($refinejob['hidden'] != 1) {
 			echo "<input type='radio' NAME='jobid' value='$id' ";
-			echo "><br/>\n";
-			echo"Launch<br/>Job\n";
+			echo "><br />\n";
+			echo"Launch<br />Job\n";
 		}
 		echo "</td><td>\n";
 
@@ -93,7 +92,7 @@ function selectRefineJob($extra=False) {
 	}
 	echo "</table>\n\n";
 
-	echo "<P><input type='SUBMIT' NAME='submitprepared' VALUE='Use this prepared job'></FORM>\n";
+	echo "<P><input type='SUBMIT' NAME='submitprepared' VALUE='Use this prepared job'></form>\n";
 
 	processing_footer();
 	exit;
