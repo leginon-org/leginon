@@ -2,7 +2,7 @@
 
 import os
 import numpy
-from pyami import mrc,imagefun
+from pyami import mrc,imagefun,arraystats
 try:
 	#The faster tifffile module only works with python 2.6 and above
 	from pyami import tifffile
@@ -19,6 +19,8 @@ class DirectDetectorProcessing(object):
 		self.image = None
 		self.camerainfo = {}
 		self.c_client = correctorclient.CorrectorClient()
+		# change this to True for loading bias image for correction
+		self.use_bias = False
 
 	def setImageId(self,imageid):
 		q = leginondata.AcquisitionImageData()
@@ -72,6 +74,13 @@ class DirectDetectorProcessing(object):
 		'''
 		self.camerainfo = self.__getCameraInfoFromImage(nframe,use_full_raw_area)
 
+	def __setBias(self):
+		if self.use_bias:
+			self.bias = mrc.read('bias.mrc') * 60 / 59
+		else:
+			# unknown, assume zero
+			self.bias = 0
+		
 	def __getCameraInfoFromImage(self,nframe,use_full_raw_area):
 		'''
 		returns dictionary of camerainfo obtained from the current image
@@ -80,6 +89,7 @@ class DirectDetectorProcessing(object):
 		binning = self.image['camera']['binning']
 		offset = self.image['camera']['offset']
 		dimension = self.image['camera']['dimension']
+		self.__setBias()
 		if use_full_raw_area:
 			for axis in ('x','y'):
 				dimension[axis] = binning[axis] * dimension[axis] + 2 * offset[axis]
@@ -129,7 +139,6 @@ class DirectDetectorProcessing(object):
 			# Use Faster tiff conversion to numpy module.
 			tif = tifffile.TIFFfile(rawframe_path)
 			a = tif.asarray()
-			print a.dtype
 			a = numpy.asarray(a,dtype=numpy.float32)
 			a = a[offset['y']:crop_end['y'],offset['x']:crop_end['x']]
 		else:
@@ -157,15 +166,19 @@ class DirectDetectorProcessing(object):
 		for frame_number in range(start_frame,start_frame+nframe):
 			if frame_number == start_frame:
 				rawarray = self.__loadOneRawFrame(rawframe_dir,frame_number)
+				print 'one', frame_number,arraystats.mean(rawarray),rawarray.min(),rawarray.max()
 				if rawarray is False:
 					return False
 			else:
-				rawarray += self.__loadOneRawFrame(rawframe_dir,frame_number)
+				oneframe = self.__loadOneRawFrame(rawframe_dir,frame_number)
+				print 'one',frame_number,arraystats.mean(oneframe),oneframe.min(),oneframe.max()
+				rawarray += oneframe
 				if rawarray is False:
 					return False
+		print 'rawsum',arraystats.mean(rawarray),rawarray.min(),rawarray.max()
 		return rawarray
 
-	def scaleRefImage(self,reftype,nframe):
+	def __getRefImageData(self,reftype):
 		if not self.use_full_raw_area:
 			refdata = self.image[reftype]
 		else:
@@ -174,9 +187,19 @@ class DirectDetectorProcessing(object):
 			scopedata = self.image['scope']
 			channel = self.image['channel']
 			refdata = self.c_client.researchCorrectorImageData(reftype, scopedata, self.camerainfo, channel)
+		return refdata
+
+	def scaleRefImage(self,reftype,nframe,bias=False):
+		refdata = self.__getRefImageData(reftype)
 		ref_nframe = len(refdata['camera']['use frames'])
 		refscale = float(nframe) / ref_nframe
+		print reftype,os.path.join(refdata['session']['image path'],refdata['filename']+'.mrc')
+		print 'before scale',reftype, arraystats.mean(refdata['image']),refdata['image'].min(),refdata['image'].max()
 		scaled_refarray = refdata['image'] * refscale
+		print 'after scale',reftype, arraystats.mean(scaled_refarray),scaled_refarray.min(),scaled_refarray.max()
+		if reftype == 'dark':
+			scaled_refarray = scaled_refarray - refscale * self.bias	
+		print 'after scale',reftype, arraystats.mean(scaled_refarray),scaled_refarray.min(),scaled_refarray.max()
 		return scaled_refarray
 
 	def correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
@@ -209,13 +232,16 @@ class DirectDetectorProcessing(object):
 			# load dark and bright
 			self.__setCameraInfo(nframe,use_full_raw_area)
 			scaled_darkarray = self.scaleRefImage('dark',nframe)
-			scaled_brightarray = self.scaleRefImage('bright',nframe)
-			normarray = self.c_client.calculateNorm(scaled_brightarray,scaled_darkarray)
+			unscaled_darkarray = self.__getRefImageData('dark')['image']
+			unscaled_brightarray = self.__getRefImageData('bright')['image']
+			normarray = self.c_client.calculateNorm(unscaled_brightarray,unscaled_darkarray)
 			self.normarray = normarray
 			self.scaled_darkarray = scaled_darkarray
+			self.unscaled_darkarray = unscaled_darkarray
 		else:
 			normarray = self.normarray
 			scaled_darkarray = self.scaled_darkarray
+			unscaled_darkarray = self.unscaled_darkarray
 
 		# load raw frames
 		rawarray = self.sumupFrames(self.rawframe_dir,start_frame,nframe)
@@ -223,27 +249,30 @@ class DirectDetectorProcessing(object):
 			return False
 		print rawarray.shape
 		print normarray.shape
-		print scaled_darkarray.shape
+		mrc.write(normarray,'norm.mrc')
+		mrc.write(scaled_darkarray,'dark.mrc')
 		# gain correction
-		corrected = (rawarray - scaled_darkarray) * normarray
+		#corrected = (rawarray - scaled_darkarray - self.bias) * normarray
+		corrected = (rawarray - scaled_darkarray - nframe * self.bias) * normarray
 		# fix bad pixels
 		plan = self.c_client.retrieveCorrectorPlan(self.camerainfo)
 		self.c_client.fixBadPixels(corrected,plan)
-		corrected = numpy.clip(corrected,0,10000)
-		print 'corrected',corrected.min(),corrected.max()
+		#corrected = numpy.clip(corrected,0,10000)
+		print 'corrected',arraystats.mean(corrected),corrected.min(),corrected.max()
 		return corrected
 
 	def makeCorrectedRawFrameStack(self,rundir, use_full_raw_area=False):
 		rawframedir = self.getRawFrameDirFromImage(self.image)
 		framestackpath = os.path.join(rundir,self.image['filename']+'_st.mrc')
 		total_frames = self.__getNumberOfFrameSaved()
-		for start_frame in range(total_frames):
+		first = 0 
+		for start_frame in range(first,first+total_frames):
 			array = self.__correctFrameImage(start_frame,1,use_full_raw_area)
 			# if non-fatal error occurs, end here
 			if array is False:
 				break
 			array.max()
-			if start_frame == 0:
+			if start_frame == first:
 				# overwrite old stack mre file
 				mrc.write(array,framestackpath)
 			elif start_frame == total_frames-1:
