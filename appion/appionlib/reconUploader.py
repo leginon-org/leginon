@@ -49,7 +49,7 @@ class generalReconUploader(appionScript.AppionScript):
 		self.parser.add_option("--modelid", dest="modelid", type="str", 	
 			help="input model(s) for multi-model refinement. You can start with one model or as many as you like. Just provide the \
 				database IDs, like so: '--modelid=1' or '--modelid=1,3,17', etc.", metavar="ID#(s)")
-		self.parser.add_option("--numberOfReferences", dest="numberOfReferences", type="int",
+		self.parser.add_option("--numberOfReferences", dest="NumberOfReferences", type="int",
 			help="number of references produced during refinement", metavar="INT")
 		self.parser.add_option("--numiter", dest="numiter", type="int",
 			help="number of iterations performed during refinement", metavar="INT")
@@ -93,9 +93,9 @@ class generalReconUploader(appionScript.AppionScript):
 				self.runparams['modelid'] = self.params['modelid']
 			else:
 				apDisplay.printError("model id must be specified for proper database insertion")
-		if not self.runparams.has_key('numberOfReferences'):
-			if self.params['numberOfReferences'] is not None:
-				self.runparams['numberOfReferences'] = self.params['numberOfReferences']
+		if not self.runparams.has_key('NumberOfReferences'):
+			if self.params['NumberOfReferences'] is not None:
+				self.runparams['NumberOfReferences'] = self.params['NumberOfReferences']
 			else:
 				apDisplay.printError("number of references produced during the refinement needs to be specified")
 		if not self.runparams.has_key('numiter'):
@@ -119,15 +119,15 @@ class generalReconUploader(appionScript.AppionScript):
 			else:
 				apDisplay.printError("symmetry ID must be specified, you can input --symid=25 for an asymmetric reconstruction")
 		if 'multiModelRefinement' in vars(self):
-			if not self.runparams.has_key('numberOfReferences') and self.multiModelRefinementRun is True:
-				if self.params['numberOfReferences'] is not None:
-					self.runparams['numberOfReferences'] = self.params['numberOfReferences']
+			if not self.runparams.has_key('NumberOfReferences') and self.multiModelRefinementRun is True:
+				if self.params['NumberOfReferences'] is not None:
+					self.runparams['NumberOfReferences'] = self.params['NumberOfReferences']
 				else:
 					apDisplay.printError("number of output models in refinement needs to be specified for multi-model run")		
 		else:
-			if self.params['numberOfReferences'] is not None:
-				self.runparams['numberOfReferences'] = self.params['numberOfReferences']
-				if self.runparams['numberOfReferences'] > 1:
+			if self.params['NumberOfReferences'] is not None:
+				self.runparams['NumberOfReferences'] = self.params['NumberOfReferences']
+				if self.runparams['NumberOfReferences'] > 1:
 					self.multiModelRefinementRun = True
 				else:
 					self.multiModelRefinementRun = False
@@ -335,7 +335,7 @@ class generalReconUploader(appionScript.AppionScript):
 			multimodelq['runname'] = self.params['runname']
 			multimodelq['REF|projectdata|projects|project'] = apProject.getProjectIdFromStackId(self.runparams['stackid'])
 			multimodelq['session'] = apStack.getSessionDataFromStackId(self.runparams['stackid'])
-			multimodelq['num_refinements'] = self.runparams['numberOfReferences']
+			multimodelq['num_refinements'] = self.runparams['NumberOfReferences']
 			self.multimodelq = multimodelq
 		
 		### fill in ApRefineRunData object
