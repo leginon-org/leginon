@@ -27,9 +27,8 @@ class XmippML3DRefineForm extends BasicRefineForm
 		$html .= $params->insertCheckboxField( "ImagesArePhaseFlipped" );
 //		$html .= $params->insertTextField( "HighResLimit", $longSize );
 		$html .= $params->insertTextField( "ProjMatchSampling", $longSize );
-		$html .= $params->insertTextField( "LowPassFilterReference", $longSize );
+		$html .= $params->insertTextField( "LowPassFilter", $longSize );
 		$html .= $params->insertTextField( "NumberOfReferences", $longSize );
-		$html .= $params->insertCheckboxField( "DoMlf" );
 		$html .= $params->insertCheckboxField( "DoCorrectGreyScale" );
 				
 		return $html;
@@ -54,20 +53,19 @@ class XmippML3DRefineForm extends BasicRefineForm
 		$filterResolution	= ''; 
 		$filterComputed 	= ''; 
 		$filterConstant 	= '';
-		$DoMlf 					= 'checked';
 		$HighResLimit			= '15';
 		$DoCorrectGreyScale 	= 'checked';
 		$ImagesArePhaseFlipped  = 'checked';
 		$ProjMatchSampling	= '15';
-		$LowPassFilterReference		= '50';
+		$LowPassFilter		= '50';
 		$NumberOfReferences	= '3'; 
 
 		
 		$asymmSet = new XmippML3DParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
-							$DoMlf, $HighResLimit, $DoCorrectGreyScale, $ImagesArePhaseFlipped, $ProjMatchSampling,
-							$LowPassFilterReference, $NumberOfReferences);
+					  		$HighResLimit, $DoCorrectGreyScale, $ImagesArePhaseFlipped, $ProjMatchSampling,
+							$LowPassFilter, $NumberOfReferences);
 		$this->addDefaultParams( $asymmSet );
 
 	}
@@ -93,12 +91,11 @@ class XmippML3DRefineForm extends BasicRefineForm
 	      if (obj.symmetry) obj.symmetry.value = $sym;
 	      if (obj.endIter) obj.endIter.value = '10';
 	      if (obj.angSampRate) obj.angSampRate.value = '4x10:2x5:2x3:2x2';
-	      if (obj.DoMlf) obj.DoMlf.checked = '';
 		if (obj.ImagesArePhaseFlipped) obj.ImagesArePhaseFlipped.checked = '';
 	      if (obj.HighResLimit) obj.HighResLimit.value = '';
 	      if (obj.DoCorrectGreyScale) obj.DoCorrectGreyScale.checked = '';
 		if (obj.ProjMatchSampling) obj.ProjMatchSampling.value = '';
-	      if (obj.LowPassFilterReference) obj.LowPassFilterReference.value = '';
+	      if (obj.LowPassFilter) obj.LowPassFilter.value = '';
 	      if (obj.NumberOfReferences) obj.NumberOfReferences.value = '';
 	      
 	      return;
@@ -117,19 +114,18 @@ class XmippML3DParams extends RefineFormParameters
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
 							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
-							$DoMlf='', $HighResLimit='', $DoCorrectGreyScale='', $ImagesArePhaseFlipped='', $ProjMatchSampling='',
-							$LowPassFilterReference='', $NumberOfReferences='') 
+							$HighResLimit='', $DoCorrectGreyScale='', $ImagesArePhaseFlipped='', $ProjMatchSampling='',
+							$LowPassFilter='', $NumberOfReferences='') 
 	{
 		parent::__construct($id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant );
 		
-		$this->addParam( "DoMlf", $DoMlf, "DoMlf" );
 		$this->addParam( "HighResLimit", $HighResLimit, "high resolution limit" );
 		$this->addParam( "ImagesArePhaseFlipped", $ImagesArePhaseFlipped, "input images are phaseflipped" );
 		$this->addParam( "DoCorrectGreyScale", $DoCorrectGreyScale, "correct greyscale values" );
 		$this->addParam( "ProjMatchSampling", $ProjMatchSampling, "projection matching angular sampling" );
-		$this->addParam( "LowPassFilterReference", $LowPassFilterReference, "Low pass filter reference volume" );
+		$this->addParam( "LowPassFilter", $LowPassFilter, "Low pass filter reference volume" );
 		$this->addParam( "NumberOfReferences", $NumberOfReferences, "number of references" );
 		
 		// disable any general params that do not apply to this method

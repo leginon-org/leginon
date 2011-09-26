@@ -396,7 +396,7 @@ function runUploadRecon() {
 			// TODO: get Dmitry to fix this, should not be hardcoded.
 			$command .= "--numberOfReferences=1 ";
 			break;
-		case "xmippml3drecon":
+		case "xmippml3d":
 			$command = "uploadXmippML3DRefine.py ";
 			break;
 		case "frealignrecon":

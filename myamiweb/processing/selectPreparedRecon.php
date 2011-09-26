@@ -215,6 +215,7 @@ function jobForm($extra=false)
 	$html.= "<input type='hidden' NAME='apix' value='".$apix."'>\n";
 	$html.= "<input type='hidden' NAME='cs' value='".$cs."'>\n";
 	$html.= "<input type='hidden' NAME='boxsize' value='".$boxsize."'>\n";
+	$html.= "<input type='hidden' NAME='lastpart' value='".$lastPart."'>\n";
 	
 	// Start Table
 	$html.= "<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>";	
@@ -328,6 +329,7 @@ function createCommand ($extra=False)
 	$cs 		= $_POST['cs'];	
 	$boxsize 	= $_POST['boxsize'];	
 	$hostname   = $_POST['processinghost'];
+	$totalPart  = $_POST['lastpart'];
 	
 	// verify processing host parameters
 	$clusterParamForm = new ClusterParamsForm();
@@ -365,6 +367,7 @@ function createCommand ($extra=False)
 	$command .= "--stackname=".$stackName." ";
 	$command .= "--apix=".$apix." ";
 	$command .= "--boxsize=".$boxsize." ";
+	$command .= "--totalpart=".$totalPart." ";
 	//$command .= "--cs=".$cs." "; //TODO: add this in when it is parsed on the python side
 	
 	// collect processing run parameters

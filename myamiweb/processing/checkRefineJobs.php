@@ -200,7 +200,7 @@ function showStatus($jobinfo) {
 		if ($jobinfo['jobtype'] == 'emanrecon') {
 			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
 				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload EMAN results'>&nbsp;\n";
-		} elseif ($jobinfo['jobtype'] == 'runfrealign') {
+		} elseif ($jobinfo['jobtype'] == 'frealignrecon') {
 			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
 				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
 //			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"

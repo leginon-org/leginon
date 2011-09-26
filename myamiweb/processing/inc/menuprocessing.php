@@ -596,7 +596,7 @@ if (is_numeric($expId)) {
 		
 		// Multi Model Refinement stats
 		
-		$refineJobsMM 		= new RefineJobsMultiModel($expId);
+		$refineJobsMM = new RefineJobsMultiModel($expId);
 		
 		// prep recon stats
 		$prepRefineMMQueue		= $refineJobsMM->countPrepRefineQueue();
@@ -627,10 +627,12 @@ if (is_numeric($expId)) {
 			'name'=>"<a href='selectMultiModelRefine.php?expId=$sessionId'>Run Multi-Model Refinement</a>",
 			'result'=> $runMultiRefineResults,
 		);
-				
-		$nruns[] = array(
-			'name'=>"<a href='evilClusterUsers.php?expId=$sessionId'>Evil Cluster Users</a>",
-		);
+
+		// This seems to cause terrible things to happen every now and then. Not sure why, but it is not really needed
+		// so it is commented out for now.
+//		$nruns[] = array(
+//			'name'=>"<a href='evilClusterUsers.php?expId=$sessionId'>Evil Cluster Users</a>",
+//		);
 		$data[] = array(
 			'action' => array($action, $celloption),
 			'result' => array($totresult),
