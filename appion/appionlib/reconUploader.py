@@ -392,7 +392,7 @@ class generalReconUploader(appionScript.AppionScript):
 			print e
 			apDisplay.printWarning("FSC file does not exist or is unreadable")
 			resq = None
-
+			
 		### fill in ApRefineIterData object
 		iterationParamsq = appiondata.ApRefineIterData()
 		if package_table is not None and package_database_object is not None:
@@ -405,7 +405,10 @@ class generalReconUploader(appionScript.AppionScript):
 		iterationParamsq['imask'] = apRecon.getComponentFromVector(self.runparams['imask'], iteration-1)
 		iterationParamsq['alignmentInnerRadius'] = apRecon.getComponentFromVector(self.runparams['alignmentInnerRadius'], iteration-1)
 		iterationParamsq['alignmentOuterRadius'] = apRecon.getComponentFromVector(self.runparams['alignmentOuterRadius'], iteration-1)
-		iterationParamsq['symmetry'] = self.runparams['symmetry']
+		try:
+			iterationParamsq['symmetry'] = self.runparams['symmetry']
+		except Exception, e:
+			iterationParamsq['symmetry'] = apSymmetry.findSymmetry(self.runparams['symmetry'])
 		iterationParamsq['exemplar'] = False
 		iterationParamsq['volumeDensity'] = "recon_%s_it%.3d_vol%.3d.mrc" % (self.params['timestamp'], iteration, reference_number)
 		projections_and_avgs = "proj-avgs_%s_it%.3d_vol%.3d.img" \

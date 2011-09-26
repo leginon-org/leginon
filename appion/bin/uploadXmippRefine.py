@@ -413,7 +413,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 		package_table = 'ApXmippRefineIterData|xmippParams'
 		
 		### set projection-matching path
-		self.projmatchpath = os.path.abspath(os.path.join(self.params['rundir'], self.runparams['package_params']['WorkingDir']))
+		self.projmatchpath = os.path.abspath(os.path.join(self.params['rundir'], "recon", self.runparams['package_params']['WorkingDir']))
 	
 		### check for variable root directories between file systems
 		apXmipp.checkSelOrDocFileRootDirectoryInDirectoryTree(self.params['rundir'], self.runparams['remoterundir'], self.runparams['rundir'])

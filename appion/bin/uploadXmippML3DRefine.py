@@ -372,7 +372,8 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 		runparams['symmetry'] = apSymmetry.findSymmetry(sym)
 		runparams['apix'] = packageparams['PixelSize']
 		runparams['angularSamplingRate'] = packageparams['AngularSampling']
-		runparams['numberOfReferences'] = packageparams['NumberOfReferences']
+		runparams['NumberOfReferences'] = packageparams['NumberOfReferences']
+		runparams['numiter'] = packageparams['NumberOfIterations']		
 		runparams['package_params'] = packageparams
 		runparams['cluster_root_path'] = os.path.abspath(xmipp_protocol_ml3d.ProjectDir)
 		runparams['upload_root_path'] = self.params['rundir']
@@ -427,7 +428,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 		return ML3DProtocolParamsq
 
 	#=====================
-	def cleanupFiles(complete_refinements):
+	def cleanupFiles(self, complete_refinements):
 		''' deletes all intermediate files for which database entries exitst '''
 		
 		### cleanup directories (grey-scale correction and initial reference generation)
@@ -490,7 +491,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 			### set package parameters, as they will appear in database entries
 			package_database_object = self.instantiateML3DParamsData(iteration)
 			
-			for j in range(self.runparams['numberOfReferences']):
+			for j in range(self.runparams['NumberOfReferences']):
 				
 				### calculate FSC for each iteration using split selfile (selfile requires root directory change)
 				self.calculateFSCforIteration(iteration, j+1)

@@ -25,7 +25,7 @@ class uploadExternalPackageScript(reconUploader.generalReconUploader):
 					
 		### upload each iteration
 		for iteration in uploadIterations:
-			for j in range(self.runparams['numberOfReferences']):
+			for j in range(self.runparams['NumberOfReferences']):
 										
 				### general error checking, these are the minimum files that are needed
 				vol = os.path.join(self.resultspath, "recon_%s_it%.3d_vol%.3d.mrc" % (self.params['timestamp'], iteration, j+1))
