@@ -150,6 +150,8 @@ def getCPUVendor():
 def getGPUVendor():
 	pciexe = getExecPath("lspci")	
 	if not pciexe: pciexe = getExecPath("/sbin/lspci")
+	if pciexe is None:
+		return None
 	proc = subprocess.Popen(pciexe, shell=True, stdout=subprocess.PIPE)
 	proc.wait()
 	lines = proc.stdout.readlines()
