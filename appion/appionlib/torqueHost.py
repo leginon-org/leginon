@@ -26,8 +26,9 @@ class TorqueHost(processingHost.ProcessingHost):
         header = "#!" + self.shell + "\n"
                
         #add job attribute headers
-        if currentJob.getName():
-            header += self.scriptPrefix +" -N " + currentJob.getName() + "\n"
+        # Garibaldi chokes on the -N flag
+        #if currentJob.getName():
+        #    header += self.scriptPrefix +" -N " + currentJob.getName() + "\n"
         
         if currentJob.getWalltime():
             header += self.scriptPrefix +" -l walltime=" + str(currentJob.getWalltime())+":00:00\n"
