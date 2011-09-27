@@ -455,7 +455,8 @@ function format_angstrom_number($data) {
 }
 
 function formatnumber2decimal($number) {
-	$number=number_format($number,2,'.','');
+	if (is_numeric($number))
+		$number=number_format($number,2,'.','');
 	return $number;
 }
 
