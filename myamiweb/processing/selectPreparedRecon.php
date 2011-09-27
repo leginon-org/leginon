@@ -428,15 +428,16 @@ function copyFilesToCluster( $host )
 	}
 	
 	// Get list of files to copy
-	$files_to_remote_host = $rundir."/files_to_remote_host";
-	if (!file_exists($files_to_remote_host)) {
-		jobForm("<B>ERROR:</B> Failed to locate file ".$files_to_remote_host);
+	$files_to_remote_host = "files_to_remote_host";
+	$files_to_remote_host_path = $rundir."/files_to_remote_host";
+	if (!file_exists($files_to_remote_host_path)) {
+		jobForm("<B>ERROR:</B> Failed to locate file ".$files_to_remote_host_path);
   	}
 	
-  	$files = file_get_contents($files_to_remote_host);
+  	$files = file_get_contents($files_to_remote_host_path);
   	
   	if ( $files === false ) {
-		jobForm("<B>ERROR:</B> Failed to read file ".$files_to_remote_host);
+		jobForm("<B>ERROR:</B> Failed to read file ".$files_to_remote_host_path);
   	}
   		
 	// copy each listed file to the cluster	
@@ -446,14 +447,18 @@ function copyFilesToCluster( $host )
 	// add the files_to_remote_host file to this list to be copied
 	$fileList[] = $files_to_remote_host;
 	
-	foreach ( $fileList as $filepath ) {
+	foreach ( $fileList as $filename ) {
 		
-		if ( !$filePath ) {
+		if ( !$filename ) {
+			//echo "<hr>\n<font color='#CC3333' size='+1'>$filename not valid.</font>\n";
 			continue;
 		}
 		
 		// get filename from path
-	    $filename = basename($filepath);
+	    //$filename = basename($filepath);
+	    
+		// add the path to the current location of the file
+		$filepath = $rundir."/".$filename;
 
 	    // set path to copy the file to
 	    $remoteFilePath = "$clusterpath/$filename";
