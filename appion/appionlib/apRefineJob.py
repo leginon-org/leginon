@@ -107,7 +107,7 @@ class RefineJob(basicScript.BasicScript):
 		if self.params['stackname'] is None:
 			apDisplay.printError("enter the pixel size, e.g. --apix=1.5")
 		self.params['numiter'] = self.params['enditer'] - self.params['startiter'] + 1
-		self.params['remoterundir'] = os.path.abspath(self.params['remoterundir'])
+		self.params['remoterundir'] = os.path.abspath( os.path.expanduser(self.params['remoterundir']) )
 		if self.params['recondir'][0] != '/':
 			# assumes relative recondir is under the safe remoterundir
 			self.params['recondir'] = os.path.join(self.params['remoterundir'],self.params['recondir'])
