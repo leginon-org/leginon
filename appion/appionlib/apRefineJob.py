@@ -303,11 +303,18 @@ class RefineJob(basicScript.BasicScript):
 		self.addToLog('....Compressing refinement results for uploading....')
 		tasks = {}
 		tasks = self.__addCleanUpReconDirTasks(tasks)
+		
+		# cd to the directory that holds the recon dir. For unpacking in to recon dir, we need to tar
+		# the entire recon directory.
 		tasks = self.addToTasks(tasks,'cd %s' % self.params['remoterundir'])
-		tasks = self.addToTasks(tasks,'cd %s' % self.params['recondir'])
-		result_tar = os.path.join(self.params['remoterundir'],'recon_results.tar.gz')
+		#tasks = self.addToTasks(tasks,'cd %s' % self.params['recondir'])
+		
+		# Garibaldi does not work with the absolute path in the tar command
+		#result_tar = os.path.join(self.params['remoterundir'],'recon_results.tar.gz')
+		result_tar = 'recon_results.tar.gz'
+
 		self.files_from_remote_host.append(result_tar)
-		tasks = self.addToTasks(tasks,'tar cvzf %s *' % (result_tar))
+		tasks = self.addToTasks(tasks,'tar cvzf %s recon/' % (result_tar))
 		self.files_from_remote_host.append(self.commandfile)
 		self.__saveFileListFromRemoteHost()
 		if self.params['remoterundir'] != self.params['rundir']:
