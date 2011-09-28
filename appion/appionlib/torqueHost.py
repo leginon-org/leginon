@@ -26,10 +26,6 @@ class TorqueHost(processingHost.ProcessingHost):
         header = "#!" + self.shell + "\n"
                
         #add job attribute headers
-        # Garibaldi chokes on the -N flag
-        #if currentJob.getName():
-        #    header += self.scriptPrefix +" -N " + currentJob.getName() + "\n"
-        
         if currentJob.getWalltime():
             header += self.scriptPrefix +" -l walltime=" + str(currentJob.getWalltime())+":00:00\n"
         
@@ -98,11 +94,11 @@ class TorqueHost(processingHost.ProcessingHost):
                 rstring = process.communicate()[0]
                 status =  rstring.split('\n')[2].split()[4]
                 #translate torque status codes to appion codes
-                if status == "C" or status == "E":
+                if status == 'C' or status == 'E':
                     #Job completed of is exiting
                     returnStatus = 'D'
                   
-                elif status == "R":
+                elif status == 'R':
                     #Job is running
                     returnStatus = 'R'
                 else:

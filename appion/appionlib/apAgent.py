@@ -32,17 +32,17 @@ class Agent (object):
         try:   
             self.currentJob = self.createJobInst(jobType, command)
         except Exception, e:
-            sys.stderr.write("Error: Could not create job "  +  str(command) + ": " + str(e) + '\n')
+            sys.stderr.write("Error: Could not create job  %s : %s\n" %(command, e))
             sys.exit(1)
         
         if not self.currentJob:
-            sys.stderr.write("Error: Could not create job for: " + str(command))
-            sys.exit(1)
+              sys.stderr.write("Error: Could not create job for: %s\n" % (command))
+              sys.exit(1)
               
         hostJobId = self.processingHost.launchJob(self.currentJob)
-        #if the job launched successfuly print out the ID returned.
+        #if the job launched successfully print out the ID returned.
         if not hostJobId:
-            sys.stderr.write("Error: Could not execute job " + self.currentJob.getName()+ "\n")
+            sys.stderr.write("Error: Could not execute job %s\n" % (self.currentJob.getName()))
             sys.exit(1)
             
         sys.stdout.write(str(hostJobId) + '\n') 
@@ -52,7 +52,7 @@ class Agent (object):
         
     def createProcessingHost(self):
         if not self.configFile:
-            raise ValueError ("Could not create processing host object, configureaton file not defined") 
+            raise ValueError ("Could not create processing host object, configuration file not defined") 
         
         configDict = self.parseConfigFile(self.configFile)
         try:
@@ -60,7 +60,7 @@ class Agent (object):
             if 'TORQUE' == processingHostType or 'PBS' == processingHostType:
                 processingHost = torqueHost.TorqueHost(configDict)
             else:
-                sys.stderr.write("Unkown processing host type, using defalut\n")
+                sys.stderr.write("Unknown processing host type, using default\n")
                 processingHost = torqueHost.TorqueHost(configDict)
             
         except (KeyError, AttributeError):
@@ -70,7 +70,7 @@ class Agent (object):
         return processingHost
        
     ##getJobType (command)
-    #Searches a list of command optons , 'command',  and attempts to extraqct the 
+    #Searches a list of command options , 'command',  and attempts to extract the 
     #job type from it.  Returns the job type if successful otherwise returns None.
     def getJobType(self, command):
         jobtype = None
@@ -114,9 +114,9 @@ class Agent (object):
         #for line in cFile.readlines():          
         line = cFile.readline()
         while line:
-            #get rid of an leadig and trailing white space
+            #get rid of an leading and trailing white space
             #line = line.strip()
-            #Only process lines of the correct format, quitly ignore all others"
+            #Only process lines of the correct format, quietly ignore all others"
             matchedLine=re.match(r'\s*([A-Za-z]+)\s*=\s*(\S.*)\s*',line)
             if  matchedLine:
                 #split the two parts of the line
@@ -127,7 +127,7 @@ class Agent (object):
                     value = value[:-1]
                     line= cFile.readline()
                     value += line.rstrip('\n')
-                #split comma seperated values into a list
+                #split comma separated values into a list
                 if ',' in value:   
                     value = re.split(r'\s*,\s*', value)
                 #put the key/value pair in the configuration dictionary    
@@ -159,7 +159,7 @@ class Agent (object):
                     
                     
         except OSError, e:
-            sys.stderr.write("Warning: Unable to monitor status: " + str(e) )
+            sys.stderr.write("Warning: Unable to monitor status: %s\n" % (e) )
        
         return
     
