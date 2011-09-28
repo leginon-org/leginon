@@ -583,6 +583,26 @@ def appendArray(a, f):
 		end = start + items_per_write
 		b[start:end].tofile(f)
 
+def update_file_header(filename, headerdict):
+	'''
+	open the MRC header, update the fields given by headerdict
+	'''
+	f = open(filename, 'rb+')
+	f.seek(0)
+	headerbytes = f.read(1024)
+	oldheader = parseHeader(headerbytes)
+	oldheader.update(headerdict)
+	headerbytes = makeHeaderData(oldheader)
+	f.seek(0)
+	f.write(headerbytes)
+
+def read_file_header(filename):
+	'''get MRC header from a file in the form of a dict'''
+	f = open(filename, 'r')
+	headerbytes = f.read(1024)
+	header = parseHeader(headerbytes)
+	return header
+
 def append(a, filename, calc_stats=True):
 	# read existing header
 	f = open(filename, 'rb+')
@@ -710,7 +730,35 @@ def testStack():
 	outputname = 'stack.mrc'
 	stack(files, tilts, outputname)
 
+def test_update_header():
+	## read image, recalculate mean value
+	a = read('test.mrc')
+	newmean = a.mean()
+	newheader = {'amean': newmean}
+	update_file_header('test.mrc', newheader)
+
+	## for a stack, you may not want to read the whole thing into memory
+	# read header only
+	h = read_file_header('test.mrc')
+
+	# read first frame only
+	a = mmap('test.mrc')
+	frame = a[0]
+	amin = frame.min()
+	a.close()
+	# read frames one at a time without using much memory
+	nz = h['nz']
+	for i in range(nz):
+		a = mmap('test.mrc')
+		frame_min = a[i].min()
+		a.close()
+		if frame_min < amin:
+			amin = frame_min
+	# update header with global min
+	update_file_header('test.mrc', {'amin':amin})
+
 if __name__ == '__main__':
 	#testHeader()
 	#testWrite()
-	testStack()
+	#testStack()
+	test_update_header()
