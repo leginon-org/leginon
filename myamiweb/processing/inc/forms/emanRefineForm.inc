@@ -135,8 +135,8 @@ class EmanRefineForm extends BasicRefineForm
 		$shrink				= '';
 		$euler2				= '';
 		$median				= '';
-		$phasecls				= '9x1';
-		$refine				= '6x0:3x1';
+		$phasecls			= '9xt';
+		$refine				= '6xf:3xt';
 		$tree				= '';
 		$coranCC			= '';
 		$coranmask			= '';
@@ -234,7 +234,7 @@ class EmanRefineForm extends BasicRefineForm
 	      obj.shrink.value = '';
 	      obj.euler2.value = '';
 	      obj.median.value = '';
-	      obj.phasecls.value = '10x1';
+	      obj.phasecls.value = '10xt';
 	      obj.refine.value = '';
 	      obj.tree.value = '';
 	      obj.coranCC.value = '';
