@@ -604,8 +604,11 @@ def append(a, filename, calc_stats=True):
 
 	## update old header for final MRC
 	oldheader['nz'] += newheader['nz']
-	## (could also update some other fields of header...)
-
+	## Use stats of new array.
+	## In the future, maybe recalculate global stats of entire stack.
+	for key in ('amin', 'amax', 'amean', 'rms'):
+		oldheader[key] = newheader[key]
+	
 	headerbytes = makeHeaderData(oldheader)
 	f.seek(0)
 	f.write(headerbytes)
