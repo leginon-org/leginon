@@ -2,6 +2,7 @@
 
 #python
 import glob, os, re, shutil, tarfile, math
+import subprocess
 
 #appion
 from appionlib import appionScript
@@ -538,7 +539,22 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 		
 		### set EMAN projection-matching path
 		self.projmatchpath = os.path.abspath(os.path.join(self.params['rundir'], "recon"))
-	
+		### if the path does not exist, we may need to unpack the tar results
+		if not os.path.isdir( self.projmatchpath ):
+			tarFileName = "recon_results.tar.gz"
+			resultTar = os.path.abspath(os.path.join( self.params['rundir'], tarFileName) )
+			if not os.path.isfile( resultTar ):
+				apDisplay.printError("Could not find %s directory or %s file." % self.projmatchpath, resultTar )
+			
+			### unpack the tar file
+			currDir = os.getcwd()
+			os.chdir(self.params['rundir'])
+			command = "tar -xf %s" % tarFileName
+			retcode = subprocess.call(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE,  shell = True)
+			os.chdir(currDir)
+			if not os.path.isdir( self.projmatchpath ):
+				apDisplay.printError("Failed to unpack %s to %s." % self.projmatchpath, resultTar )
+			
 		### determine which iterations to upload
 		lastiter = self.findLastCompletedIteration()
 		uploadIterations = self.verifyUploadIterations(lastiter)	
