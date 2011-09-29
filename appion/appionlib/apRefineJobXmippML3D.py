@@ -151,6 +151,7 @@ class XmippML3DRefineJob(apRefineJob.RefineJob):
 		self.runparams['reconstruction_working_dir'] = protocolPrm['WorkingDir']+"/RunML3D"
 		self.runparams['numiter'] = protocolPrm['NumberOfIterations']
 		self.runparams['NumberOfReferences'] = protocolPrm['NumberOfReferences']
+		self.runparams['symmetry'] = protocolPrm["Symmetry"]
 		self.runparams['package_params'] = protocolPrm
 		paramfile = os.path.join(self.params['rundir'], "xmipp_ml3d_"+self.timestamp+"-params.pickle")
 		apParam.dumpParameters(self.runparams, paramfile)
