@@ -618,23 +618,24 @@ def append(a, filename, calc_stats=True):
 	oldheader = parseHeader(headerbytes)
 
 	# make a header for new array
-	newheader = {}
-	updateHeaderUsingArray(newheader, a, calc_stats=calc_stats)
+	sliceheader = {}
+	updateHeaderUsingArray(sliceheader, a, calc_stats=calc_stats)
 
 	## check that new array is compatible with old array
 	notmatch = []
 	for key in ('nx', 'ny', 'mode'):
-		if newheader[key] != oldheader[key]:
+		if sliceheader[key] != oldheader[key]:
 			notmatch.append(key)
 	if notmatch:
 		raise RuntimeError('Array to append is not compatible with existing array: %s' % (notmatch,))
 
 	## update old header for final MRC
-	oldheader['nz'] += newheader['nz']
+	oldheader['nz'] += sliceheader['nz']
 	## Use stats of new array.
 	## In the future, maybe recalculate global stats of entire stack.
-	for key in ('amin', 'amax', 'amean', 'rms'):
-		oldheader[key] = newheader[key]
+	if calc_stats:
+		for key in ('amin', 'amax', 'amean', 'rms'):
+			oldheader[key] = sliceheader[key]
 	
 	headerbytes = makeHeaderData(oldheader)
 	f.seek(0)
