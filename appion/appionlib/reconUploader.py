@@ -408,7 +408,8 @@ class generalReconUploader(appionScript.AppionScript):
 		try:
 			iterationParamsq['symmetry'] = self.runparams['symmetry']
 		except Exception, e:
-			iterationParamsq['symmetry'] = apSymmetry.findSymmetry(self.runparams['symmetry'])
+			symmetry = self.runparams['symmetry'].split()[0]
+			iterationParamsq['symmetry'] = apSymmetry.findSymmetry( symmetry )
 		iterationParamsq['exemplar'] = False
 		iterationParamsq['volumeDensity'] = "recon_%s_it%.3d_vol%.3d.mrc" % (self.params['timestamp'], iteration, reference_number)
 		projections_and_avgs = "proj-avgs_%s_it%.3d_vol%.3d.img" \
