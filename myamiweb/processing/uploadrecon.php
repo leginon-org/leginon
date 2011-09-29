@@ -1,4 +1,6 @@
 <?php
+// compress this file if the browser accepts it.
+if (substr_count($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip')) ob_start("ob_gzhandler"); else ob_start();
 /**
  *      The Leginon software is Copyright 2003 
  *      The Scripps Research Institute, La Jolla, CA
@@ -338,7 +340,8 @@ function runUploadRecon() {
 		if (substr($reconpath,-1,1)!='/') $reconpath.='/';
 		//$runpath = $reconpath.$runname."";
 		$runpath = $reconpath."recon/";
-		if (!file_exists($runpath)) createUploadReconForm("<B>ERROR:</B> Could not find recon run directory: ".$runpath);
+		// If this ran remotely, the recon folder may not exist because the tar file still needs to be unpacked.
+		//if (!file_exists($runpath)) createUploadReconForm("<B>ERROR:</B> Could not find recon run directory: ".$runpath);
 	}
 	else {
 		$runpath = "./";
