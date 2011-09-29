@@ -547,7 +547,7 @@ function createSyntheticDataset() {
 	if ($shiftrad || $shiftrad==0) $command.="--shiftrad=$shiftrad ";
 	if ($rotang || $rotang==0) $command.="--rotang=$rotang ";
 	if ($flip) $command.="--flip ";
-	else $command.="--no-flip ";
+//	else $command.="--no-flip ";
 	if ($pad) $command.="--padImages ";
 	if ($padval) $command.="--paddingFactor=$padval ";
 	if ($snr1) $command.="--snr1=$snr1 ";
