@@ -473,15 +473,22 @@ with MRC.
 	narray = numpy.asarray(a, dtype=dtype)
 	return narray
 
-def readDataFromFile(fobj, headerdict):
+def readDataFromFile(fobj, headerdict, zslice=None):
 	'''
 	Read data portion of MRC file from the file object fobj.
 	Both mrcmode and shape have been determined from the MRC header.
-	fobj already points to beginning of data, not header.
 	Returns a new numpy ndarray object.
 	'''
-	shape = headerdict['shape']
+	bytes_per_pixel = headerdict['dtype'].itemsize
+	framesize = bytes_per_pixel * headerdict['nx'] * headerdict['ny']
+	if zslice is None:
+		start = 1024  # right after header
+		shape = headerdict['shape']
+	else:
+		start = 1024 + zslice * framesize
+		shape = headerdict['shape'][-2:]  # only a 2-D slice
 	datalen = reduce(numpy.multiply, shape)
+	fobj.seek(start)
 	a = numpy.fromfile(fobj, dtype=headerdict['dtype'], count=datalen)
 	a.shape = shape
 	return a
@@ -649,7 +656,7 @@ Read the X,Y,Z coordinates for the origin
 	}
 	return origin
 
-def read(filename):
+def read(filename, zslice=None):
 	'''
 Read the MRC file given by filename, return numpy ndarray object
 	'''
@@ -658,7 +665,7 @@ Read the MRC file given by filename, return numpy ndarray object
 		f = open(filename, 'rb')
 		headerbytes = f.read(1024)
 		headerdict = parseHeader(headerbytes)
-		a = readDataFromFile(f, headerdict)
+		a = readDataFromFile(f, headerdict, zslice)
 
 		## store keep header with image
 		setHeader(a, headerdict)
