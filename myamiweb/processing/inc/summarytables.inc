@@ -303,7 +303,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 		# use values from first of the combined run, if any for now	
 		$pflip = ($stackdata['phaseFlipped']==1) ? "yes" : "no";
 		if ($stackdata['fliptype']) $pflip.= ", ".$stackdata['fliptype'];
-		if ($stackdata['aceCutoff']) $pflip.=" (ACE > $stackdata[aceCutoff])";
+		if ($stackdata['aceCutoff']) $pflip.=" (CTF conf > $stackdata[aceCutoff])";
 		
 		$display_keys['ctf correct']=$pflip;
 		//$display_keys['raw data'] = print_r($stackdata);

@@ -224,7 +224,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			return None, None, None
 
 		### check if we have particles again
-		if len(partdatas) == 0:
+		if len(partdatas) == 0 or len(parttree) == 0:
 			apDisplay.printColor(shortname+" has no remaining particles and has been rejected\n","cyan")
 			return None, None, None
 
@@ -781,6 +781,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		for p in paramlist:
 			if p.lower() in self.params:
 				stparamq[p] = self.params[p.lower()]
+			elif p=='aceCutoff' and self.params['ctfcutoff']:
+				stparamq[p] = self.params['ctfcutoff']	
 			else:
 				print "missing", p.lower()
 		if self.params['phaseflipped'] is True:
