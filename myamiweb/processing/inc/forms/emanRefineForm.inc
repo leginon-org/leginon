@@ -157,7 +157,7 @@ class EmanRefineForm extends BasicRefineForm
 		$endIter 			= '20'; 
 		$angSampRate 		= '4x5:4x4:4x3:4x2:4x1';
 		$classiter			= '2x8:2x3:2x8:2x3:2x8:2x3:2x8:2x3:2x8:2x3'; 
-		$refine				= '16x0:4x1';
+		$refine				= '16xf:4xt';
 		$groelSet = new EmanParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
@@ -171,7 +171,7 @@ class EmanRefineForm extends BasicRefineForm
 		$endIter 			= '14'; 
 		$angSampRate 		= '4x3:4x2:3x1:3x0.8';
 		$classiter			= '2x8:2x3:2x8:8x3'; 
-		$refine				= '11x0:3x1';
+		$refine				= '11xf:3xt';
 		$virusSet = new EmanParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
