@@ -302,7 +302,8 @@ class RefineJob(basicScript.BasicScript):
 		'''
 		self.addToLog('....Compressing refinement results for uploading....')
 		tasks = {}
-		tasks = self.__addCleanUpReconDirTasks(tasks)
+		###  Removing this for now as it removes a needed file and may not be necessary 
+		#tasks = self.__addCleanUpReconDirTasks(tasks)
 		
 		# cd to the directory that holds the recon dir. For unpacking in to recon dir, we need to tar
 		# the entire recon directory.
