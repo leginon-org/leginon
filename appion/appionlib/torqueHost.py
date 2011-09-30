@@ -23,7 +23,7 @@ class TorqueHost(processingHost.ProcessingHost):
         else:
             raise UnboundLocalError ("Current Job not set")
         #Every Shell Script starts by indicating shell type
-        header = "#!" + self.shell + "\n"
+        header = "#!" + self.getShell() + "\n"
                
         #add job attribute headers
         if currentJob.getWalltime():
@@ -87,8 +87,8 @@ class TorqueHost(processingHost.ProcessingHost):
                                         shell=True)
             returnCode =process.wait()
             
-            if returnCode > 0:
-                #return unkown status if check resulted in a error
+            if returnCode != 0:
+                #return unknown status if check resulted in a error
                 returnStatus = 'U'
             else:
                 rstring = process.communicate()[0]

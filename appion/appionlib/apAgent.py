@@ -153,7 +153,13 @@ class Agent (object):
                     time.sleep(checkStatusInterval)
                     newStatus = self.processingHost.checkJobStatus(jobHostId)
                     if newStatus != currentStatus:
-                        currentStatus = newStatus
+                        #Assume status changed was missed if we go from R or Q to U (unknown) and mark
+                        #job as done.
+                        if newStatus == "U" and (currentStatus == "R" or currentStatus == "Q"):
+                            currentStatus = "D"
+                        else:        
+                            currentStatus = newStatus
+                        
                         self.__updateStatusInDB(jobid, currentStatus, projectId)
                         
                     
