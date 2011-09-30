@@ -228,7 +228,7 @@ class RefineJob(basicScript.BasicScript):
 		self.addJobCommands(pretasks)
 		self.addSimpleCommand('')
 
-	def __createReconDir():
+	def __createReconDir(self):
 		apParam.createDirectory(self.params['recondir'], warning=(not self.quiet))
 
 	def makeNewTrialScript(self):
