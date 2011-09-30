@@ -118,7 +118,8 @@ class generalReconUploader(appionScript.AppionScript):
 				self.runparams['symmetry'] = apSymmetry.getSymmetryDataFromID(self.params['symid'])
 			else:
 				apDisplay.printError("symmetry ID must be specified, you can input --symid=25 for an asymmetric reconstruction")
-		if 'multiModelRefinement' in vars(self):
+		# access multiModelRefinementRun this way in case it is not present
+		if 'multiModelRefinementRun' in vars(self):
 			if not self.runparams.has_key('NumberOfReferences') and self.multiModelRefinementRun is True:
 				if self.params['NumberOfReferences'] is not None:
 					self.runparams['NumberOfReferences'] = self.params['NumberOfReferences']
