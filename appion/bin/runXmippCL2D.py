@@ -282,6 +282,7 @@ class CL2D(appionScript.AppionScript):
 	#=====================
 	def getClassificationAtLevel(self,level):
 		D={}
+		xmipplist = []
 		for classSel in glob.glob("part"+self.params['timestamp']+"_level_%02d_[0-9]*.sel"%level):
 				fh=open(classSel)
 				listOfParticles=[]
@@ -289,9 +290,26 @@ class CL2D(appionScript.AppionScript):
 						fileName=line.split(" ")[0]
 						particleNumber=os.path.split(fileName)[1][4:10]
 						listOfParticles.append(particleNumber)
+						xmipplist.append(int(particleNumber))
 				classNumber=int(os.path.splitext(classSel.split("_")[-1])[0])
 				D[classNumber]=listOfParticles
 				fh.close()
+	
+		### I've noticed that some particles do not get aligned by CL2D, and are therefore not saved in the selfiles.  
+		### This is a workaround to make sure that all particles, aligned & not aligned, get saved to the database - Dmitry
+		self.badpartlist = []
+		partlist = []
+		for i in range(self.params['numpart']):
+			partlist.append(i)
+		missingcount = 0
+		for p in partlist:
+			if p not in xmipplist:
+				apDisplay.printWarning("particle %d was not aligned by CL2D at level %d, appending as bad particle" % (p, level))
+				self.badpartlist.append(p)
+				missingcount += 1
+		if missingcount > 0:
+			apDisplay.printWarning("total number of missing particles: %d" % missingcount)
+	
 		return D	
 
 	#=====================
@@ -410,7 +428,24 @@ class CL2D(appionScript.AppionScript):
 					inserted += 1
 					alignpartq.insert()
 
-		apDisplay.printColor("\ninserted "+str(inserted)+" of "+str(count)+" particles into the database in "
+		### insert bad particles
+		if len(self.badpartlist) > 0:
+			for p in self.badpartlist:
+				refq = appiondata.ApAlignReferenceData()
+				refq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
+				refq['alignrun'] = self.alignstackdata['alignrun']
+				refq['iteration'] = self.params['maxiter']
+				alignpartq = appiondata.ApAlignParticleData()
+				alignpartq['partnum'] = int(p)+1
+				alignpartq['alignstack'] = self.alignstackdata
+				stackpartdata = apStack.getStackParticle(self.runparams['stackid'], int(p)+1)
+				alignpartq['stackpart'] = stackpartdata
+				alignpartq['bad'] = 1
+				if self.params['commit'] is True:
+					inserted += 1
+					alignpartq.insert()
+
+		apDisplay.printColor("\ninserted "+str(inserted)+" of "+str(self.params['numpart'])+" particles into the database in "
 			+apDisplay.timeString(time.time()-t0), "cyan")
 
 		return
