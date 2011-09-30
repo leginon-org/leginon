@@ -222,7 +222,10 @@ class CorrectorClient(cameraclient.CameraClient):
 		Assuming exposure time of each frame (or frame rate) is constant.
 		'''
 		try:
-			darkframes = len(dark['use frames'])
+			## NEED TO FIX
+			## DE12 always gives averaged frames to one frame
+			#darkframes = len(dark['use frames'])
+			darkframes = 1
 		except:
 			darkframes = 1
 		try:
