@@ -97,33 +97,33 @@ class XmippML3DRefineJob(apRefineJob.RefineJob):
 				sf.write("%s\t1\n" % os.path.join(self.params['rundir'], model))
 			sf.close()		
 			protocolPrm["SeedsSelfile"]				=	os.path.join(self.params['rundir'], "reference_volumes.sel")
-			protocolPrm["DoGenerateSeeds"]				=	False			
+			protocolPrm["DoGenerateSeeds"]			=	False			
 		else:
 			protocolPrm["SeedsSelfile"]				=	""
-			protocolPrm["DoGenerateSeeds"]				=	True
+			protocolPrm["DoGenerateSeeds"]			=	True
 		protocolPrm["InSelFile"]					=	"partlist.sel" ### this maybe should not be hardcoded
 		protocolPrm["WorkingDir"]					=	"ml3d"
-		protocolPrm["DoDeleteWorkingDir"]				=	False
+		protocolPrm["DoDeleteWorkingDir"]			=	False
 		protocolPrm["ProjectDir"]					=	self.params['recondir']
 		protocolPrm["LogDir"]						=	"Logs"
 		protocolPrm["DoMlf"]						=	self.params['DoMlf']
-		protocolPrm["DoCorrectAmplitudes"]				=	False	
+		protocolPrm["DoCorrectAmplitudes"]			=	False	
 		protocolPrm["InCtfDatFile"]					=	"all_images.ctfdat"
 		protocolPrm["HighResLimit"]					=	self.params['HighResLimit']
-		protocolPrm["ImagesArePhaseFlipped"]				=	self.params['ImagesArePhaseFlipped']
-		protocolPrm["InitialMapIsAmplitudeCorrected"]			=	False
-		protocolPrm["SeedsAreAmplitudeCorrected"]			=	False
+		protocolPrm["ImagesArePhaseFlipped"]		=	self.params['ImagesArePhaseFlipped']
+		protocolPrm["InitialMapIsAmplitudeCorrected"]	=	False
+		protocolPrm["SeedsAreAmplitudeCorrected"]		=	False
 		protocolPrm["DoCorrectGreyScale"]				=	self.params['DoCorrectGreyScale']	
 		protocolPrm["ProjMatchSampling"]				=	self.params['ProjMatchSampling']
 		if (self.params['LowPassFilter']>1) is True:
-			protocolPrm["DoLowPassFilterReference"]			=	True	
+			protocolPrm["DoLowPassFilterReference"]		=	True	
 			protocolPrm["LowPassFilter"]				=	self.params['LowPassFilter']
 		else:
-			protocolPrm["DoLowPassFilterReference"]			= 	False
+			protocolPrm["DoLowPassFilterReference"]		= 	False
 			protocolPrm["LowPassFilter"]				=	self.params['LowPassFilter']
-		protocolPrm["PixelSize"]					=	self.params['apix']
+		protocolPrm["PixelSize"]				        =	self.params['apix']
 		protocolPrm["NumberOfReferences"]				=	self.params['NumberOfReferences']
-		protocolPrm["DoJustRefine"]					=	False
+		protocolPrm["DoJustRefine"]					    =	False
 		protocolPrm["DoML3DClassification"]				=	True
 		protocolPrm["AngularSampling"]					=	self.params['AngularSampling']
 		protocolPrm["NumberOfIterations"]				=	self.params['numiter']
