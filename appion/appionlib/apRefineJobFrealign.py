@@ -329,7 +329,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 	def makeRefineTasks(self,iter):
 		tasks = {}
 		nproc = self.params['nproc']
-		iterpath = 'iter%03d' % (iter)
+		iterpath = os.path.join(self.params['recondir'],'iter%03d' % (iter))
 		apParam.createDirectory(iterpath, warning=False)
 		# set frealign param keys
 		frealign_param_keys = self.setFrealignRefineParams()
