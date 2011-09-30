@@ -53,7 +53,7 @@ class RefineJob(basicScript.BasicScript):
 		self.parser.add_option("--rundir", dest="rundir", default='./',
 			help="Path for the local run directory that is accessable by localhost and general data files e.g. --rundir=/data/appion/sessionname/recon/runname", metavar="PATH")
 		self.parser.add_option("--remoterundir", dest="remoterundir", default='./',
-			help="Path for the remote run directory accessable by remotehost and will not be erased at the beginning of the run, e.g. --recondir=/home/you/sessionname/rundir/", metavar="PATH")
+			help="Path for the remote run directory accessable by remotehost and will not be erased at the beginning of the run, e.g. --remoterundir=/home/you/sessionname/rundir/", metavar="PATH")
 		# Standard Web Form Appion parameters
 		self.parser.add_option('--runname', dest='runname')
 		self.parser.add_option("--expId", dest="expid", type="int",
@@ -227,6 +227,9 @@ class RefineJob(basicScript.BasicScript):
 			pretasks = self.addToTasks(pretasks,'test -s  %s || ( echo %s not found && exit )' % (sourcepath,filename))
 		self.addJobCommands(pretasks)
 		self.addSimpleCommand('')
+
+	def __createReconDir():
+		apParam.createDirectory(self.params['recondir'], warning=(not self.quiet))
 
 	def makeNewTrialScript(self):
 		'''
@@ -441,6 +444,7 @@ class RefineJob(basicScript.BasicScript):
 			self.addSimpleCommand('')
 			self.addToLog('....Setting up new refinement job trial....')
 			self.__makeNewTrialScript()
+			self.__createReconDir()
 			self.makeNewTrialScript()
 		self.addSimpleCommand('')
 		self.__makePreIterationScript()
