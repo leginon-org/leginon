@@ -465,7 +465,8 @@ class CorrectorClient(cameraclient.CameraClient):
 	def getReferenceSession(self):
 		refsession = leginondata.ReferenceSessionData()
 		try:
-			refsession = refsession.query(results=1)[0]
+			# using timelimit of 30 days
+			refsession = refsession.query(results=1, timelimit='-30 0:0:0')[0]
 		except:
 			refsession = None
 
