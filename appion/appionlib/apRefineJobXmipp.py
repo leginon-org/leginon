@@ -193,7 +193,7 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		self.runparams['remoterundir'] = self.params['remoterundir']
 		self.runparams['reconstruction_working_dir'] = protocolPrm["WorkingDir"] 
 		self.runparams['package_params'] = protocolPrm
-		paramfile = os.path.join(self.params['rundir'], "xmipp_projection_matching_"+self.timestamp+"-params.pickle")
+		paramfile = os.path.join(self.params['remoterundir'], "xmipp_projection_matching_"+self.timestamp+"-params.pickle")
 		apParam.dumpParameters(self.runparams, paramfile)
 		
 		### finished setup of input files, now run xmipp_protocols_ml3d.py from jobfile
