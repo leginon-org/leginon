@@ -375,8 +375,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 		runparams['NumberOfReferences'] = packageparams['NumberOfReferences']
 		runparams['numiter'] = packageparams['NumberOfIterations']		
 		runparams['package_params'] = packageparams
-		runparams['cluster_root_path'] = os.path.abspath(xmipp_protocol_ml3d.ProjectDir)
-		runparams['upload_root_path'] = self.params['rundir']
+		runparams['remoterundir'] = os.path.abspath(xmipp_protocol_ml3d.ProjectDir)
 		
 		return runparams
 		
@@ -476,7 +475,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 		self.ml3dpath = os.path.abspath(os.path.join(self.params['rundir'], self.runparams['package_params']['WorkingDir'], "RunML3D"))
 			
 		### check for variable root directories between file systems
-		apXmipp.checkSelOrDocFileRootDirectoryInDirectoryTree(self.params['rundir'], self.runparams['cluster_root_path'], self.runparams['upload_root_path'])
+		apXmipp.checkSelOrDocFileRootDirectoryInDirectoryTree(self.params['rundir'], self.runparams['remoterundir'], self.params['rundir'])
 						
 		### determine which iterations to upload
 		lastiter = self.findLastCompletedIteration()
