@@ -42,7 +42,6 @@ def getEulersForIteration(reconid, iteration=1):
 			+"WHERE rd.`REF|ApRefineRunData|refineRun` = "+str(reconid)+" "
 			+"AND rd.`iteration` = "+str(iteration)+" "
 		)
-	print query
 	print "querying for euler values at "+time.asctime()
 	cursor.execute(query)
 	numrows = int(cursor.rowcount)
