@@ -817,6 +817,7 @@ class ApAlignParticleData(Data):
 			('correlation', float),
 			('score', float),
 			('ref', ApAlignReferenceData),
+			('bad', bool),
 		)
 	typemap = classmethod(typemap)
 
