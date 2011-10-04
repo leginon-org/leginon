@@ -71,10 +71,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			help="radius of of random shift for each particle", metavar="INT")
 		self.parser.add_option("--rotang", dest="rotang", type="int", default=360,
 			help="angle of random rotation for each particle", metavar="INT")
-		self.parser.add_option("--flip", dest="flip", default=True,
+		self.parser.add_option("--flip", dest="flip", default=False,
 			action="store_true", help="randomly flip the projections along with shifts and rotations")
-		self.parser.add_option("--no-flip", dest="flip", default=True,
-			action="store_false", help="DO NOT randomly flip the projections along with shifts and rotations")
+#		self.parser.add_option("--no-flip", dest="flip", default=True,
+#			action="store_false", help="DO NOT randomly flip the projections along with shifts and rotations")
 		self.parser.add_option("--kv", dest="kv", type="float", default=200,
 			help="kV of the microscope, needed for envelope function", metavar="INT")
 		self.parser.add_option("--df1", dest="df1", type="float", default=-1.5,
@@ -97,7 +97,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			action="store_true", help="pad 2D images by 2 after projecting to reduce CTF artifacts")
 		self.parser.add_option("--paddingFactor", dest="padF", type="int", default=2,
 			help="factor by which to pad the 2D images if 'padImages' is specified")
-	
+		self.parser.add_option("--radius", dest="radius", type="int",
+			help="radius of particle inside the box (in pixels, defaulted to 1/2*boxsize). This is necessary in order to calculate correct SNR values \
+				see W.T. Baxter et al. (2009). JSB 166 126-132. Correlations were calculated using a circular mask of 220 pixels from a 300-pixel \
+				box, effectively increasing the CCC and SNRs from what is calculated here. If your particle occupies 70% of the box \
+				then the calculated noise additions will be increased by a factor of 1/(0.35*0.35*pi) = ~2.46")	
 
 		### optional parameters (ACE2 correct & filtering)
 		self.parser.add_option("--ace2correct", dest="ace2correct", default=False,
@@ -136,6 +140,14 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			apDisplay.printError('boxsize of the output stack not specified')
 		if self.params['apix'] is None and self.params['modelid'] is None:
 			apDisplay.printError('angstroms per pixel of the input model not specified')
+		
+		### radius defaulted to 0.5
+		if self.params['radius'] is None:
+			self.params['radius'] = self.params['box'] / 2
+		if self.params['radius'] > self.params['box']/2:
+			apDisplay.printError('radius of particle (in pixels) must be smaller than 1/2*boxsize of model')
+		if self.params['radius'] > 0 and self.params['radius'] < 1:
+			apDisplay.printError('radius must be specified in pixels') 
 
 		### get session info
 		if self.params['sessionname'] is None:
@@ -391,6 +403,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		filename = os.path.join(self.params['rundir'], "proj.img")
 		temp = os.path.join(self.params['rundir'], "temp.img")
 
+		'''
 		emancmd = "project3d "+clipped+" out="+temp+" sym=c1 prop="+str(self.params['projinc'])+" > "+tempeulerfile
 		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
 
@@ -416,14 +429,40 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				f.write(str(split[3])+"\t\n")
 				n += 1
 		f.close()
+		'''
 
 		### create actual projections
 		apFile.removeStack(filename)
 		t0 = time.time()
-		emancmd = "project3d "+clipped+" out="+filename+" list="+eulerfile
+#		emancmd = "project3d "+clipped+" out="+filename+" list="+eulerfile
+		emancmd = "project3d "+clipped+" out="+filename+" sym=c1 prop="+str(self.params['projinc'])+" > "+tempeulerfile
 		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
 		apDisplay.printMsg("Finished project3d in %s, %.3f ms per iteration"
 			%(apDisplay.timeString(time.time()-t0), 1.0e3 * (time.time()-t0)/float(self.params['projcount'])))
+
+		### update projection count & write eulerlist file
+		f = open(tempeulerfile, "r")
+		lines = f.readlines()
+		f.close()
+		apFile.removeStack(temp)
+		apFile.removeFile(tempeulerfile)
+		strip = [line.strip() for line in lines[2:]]   ### first two lines are EMAN commands
+		iters = int(math.ceil(float(self.params['projcount']) / len(strip)))
+		self.params['projcount'] = iters * len(strip)
+		while os.path.isfile(eulerfile):
+			apFile.removeFile(eulerfile)
+		f = open(eulerfile, "a")
+		n = 1
+		for i in range(iters):
+			for j in range(len(strip)):
+				split = strip[j].split()
+				f.write(str(n)+"\t")
+				f.write(str(split[1])+"\t")
+				f.write(str(split[2])+"\t")
+				f.write(str(split[3])+"\t\n")
+				n += 1
+		f.close()
+
 
 		### pad out projections
 		if pad is True:
@@ -453,7 +492,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				randrot = random.uniform(-1*self.params['rotang'], self.params['rotang'])
 			randx = random.uniform(-1*self.params['shiftrad'], self.params['shiftrad'])
 			randy = random.uniform(-1*self.params['shiftrad'], self.params['shiftrad'])
-			if self.params['flip'] is not None:
+			if self.params['flip'] is True:
 				flip = random.choice([0,1])
 			else:
 				flip = 0
@@ -474,6 +513,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			apEMAN.executeEmanCmd(emancmd, showcmd=False)
 			if self.params['rotang'] != 0:
 				f.write("%.3f,"%(randrot))
+			else:
+				f.write(",")
 			f.write("%.3f,"%(randx))
 			f.write("%.3f,"%(randy))
 			f.write(str(flip)+"\n")
@@ -1090,8 +1131,14 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		### read MRC stats to figure out noise level addition
 		mean1, stdev1 = self.readFileStats(shiftstackname)
 
+		### determine noise multiplication factor to ensure that appropriate amount of noise gets added to particles inside circular mask
+		multfactor = 1.0/((float(self.params['radius'])/self.params['box'])*(float(self.params['radius'])/self.params['box'])*math.pi)
+
 		### calculate noiselevel additions and add noise to an initial ratio of 1.8, simulating beam and structural damage
-		noiselevel1 = float(stdev1) / float(self.params['snr1'])
+		### NOTE: THERE ARE DIFFERENT DEFINITIONS OF SNR, see below
+		noiselevel1 = math.sqrt((float(stdev1)*float(stdev1)) / float(self.params['snr1']))
+#		noiselevel1 = float(stdev1) / float(self.params['snr1'])
+		noiselevel1 = noiselevel1 * multfactor 
 		noisystack = self.addNoise(shiftstackname, noiselevel1, SNR=self.params['snr1'])
 
 		### get list of defocus values
@@ -1107,7 +1154,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		### cascading of noise processes according to Frank and Al-Ali (1975)
 		snr2 = 1 / ((1+1/float(self.params['snrtot'])) / (1/float(self.params['snr1']) + 1) - 1)
-		noiselevel2 = float(stdev2) / float(snr2)
+		### NOTE: THERE ARE DIFFERENT DEFINITIONS OF SNR, see below
+		noiselevel2 = math.sqrt((float(stdev2)*float(stdev2)) / float(snr2))
+#		noiselevel2 = float(stdev2) / float(snr2)
+		noiselevel2 = noiselevel2 * multfactor
 
 		### add a last layer of noise
 		noisystack2 = self.addNoise(ctfstack, noiselevel2, SNR=self.params['snrtot'])
