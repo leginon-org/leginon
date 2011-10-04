@@ -153,7 +153,7 @@ class XmippML3DRefineJob(apRefineJob.RefineJob):
 		self.runparams['NumberOfReferences'] = protocolPrm['NumberOfReferences']
 		self.runparams['symmetry'] = protocolPrm["Symmetry"]
 		self.runparams['package_params'] = protocolPrm
-		paramfile = os.path.join(self.params['rundir'], "xmipp_ml3d_"+self.timestamp+"-params.pickle")
+		paramfile = os.path.join(self.params['remoterundir'], "xmipp_ml3d_"+self.timestamp+"-params.pickle")
 		apParam.dumpParameters(self.runparams, paramfile)
 		
 		### finished setup of input files, now run xmipp_protocols_ml3d.py from jobfile
