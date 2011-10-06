@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import numpy
+import numextension
 from pyami import mrc,imagefun,arraystats
 try:
 	#The faster tifffile module only works with python 2.6 and above
@@ -21,6 +23,7 @@ class DirectDetectorProcessing(object):
 		self.c_client = correctorclient.CorrectorClient()
 		# change this to True for loading bias image for correction
 		self.use_bias = False
+		self.log = open('newref.log','w')
 
 	def setImageId(self,imageid):
 		q = leginondata.AcquisitionImageData()
@@ -46,6 +49,8 @@ class DirectDetectorProcessing(object):
 	def getRawFrameDirFromImage(self,imagedata):
 		# strip off DOS path in rawframe directory name 
 		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
+		if not rawframename:
+			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
 		# raw frames are saved in a subdirctory of image path
 		imagepath = imagedata['session']['image path']
 		rawframedir = os.path.join(imagepath,'rawframes',rawframename)
@@ -101,6 +106,9 @@ class DirectDetectorProcessing(object):
 		camerainfo['offset'] = offset
 		camerainfo['dimension'] = dimension
 		camerainfo['nframe'] = nframe
+		camerainfo['norm'] = self.image['norm']
+		# Really should check frame rate but it is not saved now, so use exposure time
+		camerainfo['exposure time'] = self.image['camera']['exposure time']
 		return camerainfo
 			
 	def __conditionChanged(self,new_nframe,new_use_full_raw_area):
@@ -109,16 +117,21 @@ class DirectDetectorProcessing(object):
 		references can be used if not changed.
 		'''
 		if len(self.camerainfo.keys()) == 0:
+			self.log.write( 'faile no camerainfo\n ')
 			return True
 		if self.camerainfo['ccdcamera'].dbid != self.image['camera']['ccdcamera'].dbid:
 			return True
-		if new_use_full_raw_area and self.use_full_raw_area == new_use_full_raw_area:
-			if self.camerainfo['nframe'] != new_nframe:
-				return True
+		if self.camerainfo['norm'].dbid != self.image['norm'].dbid:
+			self.log.write( 'fail norm %d vs %d test\n ' % (self.camerainfo['norm'].dbid,self.image['norm'].dbid))
+			return True
+		if self.use_full_raw_area != new_use_full_raw_area:
+			self.log.write('fail full raw_area %s test\n ' % (new_use_full_raw_area))
+			return True
 		else:
 			newcamerainfo = self.__getCameraInfoFromImage(new_nframe,new_use_full_raw_area)
 			for key in self.camerainfo.keys():
 				if key != 'ccdcamera' and self.camerainfo[key] != newcamerainfo[key]:
+						self.log.write('fail %s test\n ' % (key))
 						return True
 		return False
 			
@@ -166,15 +179,15 @@ class DirectDetectorProcessing(object):
 		for frame_number in range(start_frame,start_frame+nframe):
 			if frame_number == start_frame:
 				rawarray = self.__loadOneRawFrame(rawframe_dir,frame_number)
-				print 'one', frame_number,arraystats.mean(rawarray),rawarray.min(),rawarray.max()
 				if rawarray is False:
 					return False
+				print 'one', frame_number,arraystats.mean(rawarray),rawarray.min(),rawarray.max()
 			else:
 				oneframe = self.__loadOneRawFrame(rawframe_dir,frame_number)
+				if oneframe is False:
+					return False
 				print 'one',frame_number,arraystats.mean(oneframe),oneframe.min(),oneframe.max()
 				rawarray += oneframe
-				if rawarray is False:
-					return False
 		print 'rawsum',arraystats.mean(rawarray),rawarray.min(),rawarray.max()
 		return rawarray
 
@@ -209,6 +222,23 @@ class DirectDetectorProcessing(object):
 		else:
 			return corrected
 
+	def test__correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
+		# check parameter
+		if not self.image:
+			apDisplay.printError("You must set an image for the operation")
+		if start_frame not in range(self.totalframe):
+			apDisplay.printError("Starting Frame not in saved raw frame range, can not be processed")
+		if (start_frame + nframe) > self.totalframe:
+			newnframe = self.totalframe - start_frame
+			apDisplay.printWarning( "%d instead of %d frames will be used since not enough frames are saved." % (newnframe,nframe))
+			nframe = newnframe
+		self.use_full_raw_area = use_full_raw_area
+		get_new_refs = self.__conditionChanged(nframe,use_full_raw_area)
+		if get_new_refs:
+			self.__setCameraInfo(nframe,use_full_raw_area)
+		self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
+		return False
+
 	def __correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
 		'''
 		This returns corrected numpy array of given start and total number
@@ -226,21 +256,31 @@ class DirectDetectorProcessing(object):
 			nframe = newnframe
 
 		get_new_refs = self.__conditionChanged(nframe,use_full_raw_area)
+		self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
+		if not get_new_refs and start_frame ==0:
+			apDisplay.printWarning("Imaging condition unchanged. Reference in memory will be used.")
+
 		# o.k. to set attribute now that condition change is checked
 		self.use_full_raw_area = use_full_raw_area
 		if get_new_refs:
 			# load dark and bright
 			self.__setCameraInfo(nframe,use_full_raw_area)
-			scaled_darkarray = self.scaleRefImage('dark',nframe)
+			scaled_brightarray = self.scaleRefImage('bright',nframe)
 			unscaled_darkarray = self.__getRefImageData('dark')['image']
 			unscaled_brightarray = self.__getRefImageData('bright')['image']
-			normarray = self.c_client.calculateNorm(unscaled_brightarray,unscaled_darkarray)
+			normarray = self.c_client.calculateNorm(scaled_brightarray,unscaled_darkarray)
+			# clip norm to a smaller range to filter out very big values
+			clipmin = min(1/3.0,max(normarray.min(),1/normarray.max()))
+			clipmax = max(3.0,min(normarray.max(),1/normarray.min()))
+			normarray = numpy.clip(normarray, clipmin, clipmax)
+			stats = numextension.allstats(normarray, mean=True)
+			normavg = stats['mean']
+			print 'norm',normavg,normarray.min(),normarray.max()
+
 			self.normarray = normarray
-			self.scaled_darkarray = scaled_darkarray
 			self.unscaled_darkarray = unscaled_darkarray
 		else:
 			normarray = self.normarray
-			scaled_darkarray = self.scaled_darkarray
 			unscaled_darkarray = self.unscaled_darkarray
 
 		# load raw frames
@@ -250,10 +290,10 @@ class DirectDetectorProcessing(object):
 		print rawarray.shape
 		print normarray.shape
 		mrc.write(normarray,'norm.mrc')
-		mrc.write(scaled_darkarray,'dark.mrc')
+		mrc.write(unscaled_darkarray,'dark.mrc')
 		# gain correction
 		#corrected = (rawarray - scaled_darkarray - self.bias) * normarray
-		corrected = (rawarray - scaled_darkarray - nframe * self.bias) * normarray
+		corrected = (rawarray - nframe * unscaled_darkarray) * normarray
 		# fix bad pixels
 		plan = self.c_client.retrieveCorrectorPlan(self.camerainfo)
 		self.c_client.fixBadPixels(corrected,plan)
@@ -262,9 +302,12 @@ class DirectDetectorProcessing(object):
 		return corrected
 
 	def makeCorrectedRawFrameStack(self,rundir, use_full_raw_area=False):
+		sys.stdout.write('\a')
+		sys.stdout.flush()
 		rawframedir = self.getRawFrameDirFromImage(self.image)
 		framestackpath = os.path.join(rundir,self.image['filename']+'_st.mrc')
 		total_frames = self.__getNumberOfFrameSaved()
+		half_way_frame = int(total_frames // 2)
 		first = 0 
 		for start_frame in range(first,first+total_frames):
 			array = self.__correctFrameImage(start_frame,1,use_full_raw_area)
@@ -275,11 +318,12 @@ class DirectDetectorProcessing(object):
 			if start_frame == first:
 				# overwrite old stack mre file
 				mrc.write(array,framestackpath)
-			elif start_frame == total_frames-1:
+			elif start_frame == half_way_frame:
 				mrc.append(array,framestackpath,True)
 			else:
 				# Only calculate stats if the last frame
 				mrc.append(array,framestackpath,False)
+		return framestackpath
 
 if __name__ == '__main__':
 	dd = DirectDetectorProcessing()
