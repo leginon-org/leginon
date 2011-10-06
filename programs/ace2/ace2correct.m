@@ -124,17 +124,18 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 	}
 	
 	struct options opts[] = {
-		{ 1,	NULL,	"Path to CTF estimate file",	 			   "ctf",		1 },
-		{ 2,	NULL,	"Path to image file",	 					   "img",		1 },
+		{ 1,	NULL,	"Path to CTF estimate file",	 			"ctf",			1 },
+		{ 2,	NULL,	"Path to image file",	 					"img",			1 },
 		{ 3,	NULL,	"Microscope voltage in kilovolts",			"kv",			1 },
 		{ 4,	NULL,	"Microscope Spherical Aberration in mm",	"cs",			1 },
-		{ 5,	NULL,	"Angstroms per pixel",						  	"apix",		1 },
+		{ 5,	NULL,	"Angstroms per pixel",						"apix",			1 },
 		{ 6,	NULL,	"Defocus: x,y,angle in m,m,radians",		"df",			1 },
-		{ 7,	NULL,	"Correct only phase signs",	  		  		"phase",		0 },
-		{ 8,	NULL,	"Correct using wiener filter",		 	   "wiener",	1 },		
-		{ 9,	NULL,	"Apply the given CTF",							"apply", 	0 },
-		{ 10,	NULL, "Set output path",								"out",		1 },
-		{ 0,	NULL,	NULL,													NULL,			0 }
+		{ 7,	NULL,	"Correct only phase signs",	  				"phase",		0 },
+		{ 8,	NULL,	"Correct using wiener filter",				"wiener",		1 },
+		{ 9,	NULL,	"Apply the given CTF",						"apply", 		0 },
+		{ 10,	NULL,	"Set output path",							"out",			1 },
+		{ 11,   NULL,	"Override amplitude contrast",				"ampc",			1 },
+		{ 0,	NULL,	NULL,										NULL,			0 }
 	};
 	
 	int option = 0;
@@ -183,6 +184,9 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 				break;
 			case 10:
 				strcpy(ctfp->out_path,arg);
+				break;
+			case 11:
+				sscanf(arg,"%le",&(ctfp->amp_c));
 				break;
 			default:
 				break;
