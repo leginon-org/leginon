@@ -42,6 +42,8 @@ def imagic_to_mrc(imagic_name, mrc_name):
 	## append imagic data file to mrc file
 	fdat = open(dat_name)
 	shutil.copyfileobj(fdat, fmrc)
+	fmrc.close()
+	fdat.close()
 
 def run():
 	import sys
