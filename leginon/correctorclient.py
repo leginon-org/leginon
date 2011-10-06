@@ -20,6 +20,7 @@ import leginon.session
 import leginon.leginonconfig
 import os
 import sys
+import numextension
 
 ref_cache = {}
 idcounter = itertools.cycle(range(100))
@@ -244,11 +245,12 @@ class CorrectorClient(cameraclient.CameraClient):
 		except:
 			raise
 		normarray = numpy.asarray(normarray, numpy.float32)
-		normavg = arraystats.mean(normarray)
 
 		# division may result infinity or zero division
 		# so make sure there are no zeros in norm
 		normarray = numpy.clip(normarray, 0.001, sys.maxint)
+		stats = numextension.allstats(normarray, mean=True)
+		normavg = stats['mean']
 		normarray = normavg / normarray
 		return normarray
 
