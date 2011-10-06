@@ -78,15 +78,18 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		self.parser.add_option("--kv", dest="kv", type="float", default=200,
 			help="kV of the microscope, needed for envelope function", metavar="INT")
 		self.parser.add_option("--df1", dest="df1", type="float", default=-1.5,
-			help="defocus value 1 (represented as the mean if --randomdef & --randomdef-std specified)", metavar="FLOAT")
+			help="defocus value 1 in microns (represented as the mean if --randomdef & --randomdef-std specified)", metavar="FLOAT")
 		self.parser.add_option("--df2", dest="df2", type="float", default=-1.5,
-			help="defocus value 2 (represented as the mean if --randomdef & --randomdef-std specified", metavar="FLOAT")
+			help="defocus value 2 in microns (represented as the mean if --randomdef & --randomdef-std specified", metavar="FLOAT")
 		self.parser.add_option("--randomdef", dest="randomdef", default=False,
 			action="store_true", help="randomize defocus values when applying CTF (df1 and df2 would represent the mean)")
 		self.parser.add_option("--randomdef-std", dest="randomdef_std", type="float", default=0.4,
 			help="standard deviation (in microns) for the gaussian distribution of defoci randomizations about the mean", metavar="FLOAT")
 		self.parser.add_option("--astigmatism", dest="astigmatism", type="float", default=0,
 			help="only input if you want to apply an astigmatic ctf", metavar="FLOAT")
+		self.parser.add_option("--defocus_groups", dest="defocus_groups", type="str",
+			help="<min_defocus,max_defocus,interval> in microns; if this option is specified, then all defocus values will \
+				be randomly selected from an initial set of defocus groups, as per the options above", metavar="STR")
 		self.parser.add_option("--snr1", dest="snr1", type="float", default=1.8,
 			help="first level of noise, simulating beam damage & structural noise", metavar="FLOAT")
 		self.parser.add_option("--snrtot", dest="snrtot", type="float", default=0.06,
@@ -165,6 +168,14 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 #			apDisplay.printError('make sure defocus is in meters, i.e. for -2 microns, df=-2e-06!')
 #		if self.params['df2'] < -1e-05:
 #			apDisplay.printError('make sure defocus is in meters, i.e. for -2 microns, df=-2e-06!')
+
+		### check defocus group values
+		if self.params['defocus_groups'] is not None:
+			self.defmin = float(self.params['defocus_groups'].split(",")[0])
+			self.defmax = float(self.params['defocus_groups'].split(",")[1])
+			self.defint = float(self.params['defocus_groups'].split(",")[2])
+			if self.defmin is None or self.defmax is None or self.defint is None:
+				apDisplay.printError("all defocus group values must be specified, e.g. --defocus_groups=-1,-3,-0.1")
 
 		### make sure that only one type of ace2correction is specified
 		if self.params['ace2correct'] is True and self.params['ace2correct_rand'] is True:
@@ -403,7 +414,9 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		filename = os.path.join(self.params['rundir'], "proj.img")
 		temp = os.path.join(self.params['rundir'], "temp.img")
 
-		'''
+		emancmd = "project3d "+clipped+" out="+temp+" sym=c1 prop="+str(self.params['projinc'])+" > "+tempeulerfile
+		apParam.runCmd(emancmd, "EMAN", showcmd=True, verbose=True)
+
 		emancmd = "project3d "+clipped+" out="+temp+" sym=c1 prop="+str(self.params['projinc'])+" > "+tempeulerfile
 		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
 
@@ -429,17 +442,17 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				f.write(str(split[3])+"\t\n")
 				n += 1
 		f.close()
-		'''
 
 		### create actual projections
 		apFile.removeStack(filename)
 		t0 = time.time()
-#		emancmd = "project3d "+clipped+" out="+filename+" list="+eulerfile
-		emancmd = "project3d "+clipped+" out="+filename+" sym=c1 prop="+str(self.params['projinc'])+" > "+tempeulerfile
-		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
+		emancmd = "project3d "+clipped+" out="+filename+" list="+eulerfile
+#		emancmd = "project3d "+clipped+" out="+filename+" sym=c1 prop="+str(self.params['projinc'])+" > "+tempeulerfile
+		apParam.runCmd(emancmd, "EMAN", showcmd=True, verbose=True)
 		apDisplay.printMsg("Finished project3d in %s, %.3f ms per iteration"
 			%(apDisplay.timeString(time.time()-t0), 1.0e3 * (time.time()-t0)/float(self.params['projcount'])))
 
+		'''
 		### update projection count & write eulerlist file
 		f = open(tempeulerfile, "r")
 		lines = f.readlines()
@@ -462,7 +475,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				f.write(str(split[3])+"\t\n")
 				n += 1
 		f.close()
-
+		'''
 
 		### pad out projections
 		if pad is True:
@@ -571,10 +584,21 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		self.deflist1c = []
 		self.deflist2c = []
 
-		### loop over particles
+		### if defocus groups are specified, create defocus list here
+		if self.params['defocus_groups'] is not None:
+			defgrouplist = []
+			nbins = abs((abs(self.defmax) - abs(self.defmin)) / self.defint)
+			for i in range(int(nbins)):
+				defgrouplist.append(self.defmin+self.defint*i)
+
+		### loop over particles & set defocus values for application & correction
 		for partnum in range(numpart):
 			### run ace2 correction, set defocus parameters early, i.e. once for every micrograph
-			if self.params['randomdef'] is True:
+			if self.params['defocus_groups'] is not None:
+				randint = random.randint(0,len(defgrouplist)-1)
+				df1 = defgrouplist[randint] * 1e-06
+				df2 = defgrouplist[randint] * 1e-06
+			elif self.params['randomdef'] is True:
 				randomfloat = random.gauss(0,self.params['randomdef_std'])
 				df1 = self.params['df1'] + randomfloat * 1e-06
 				df2 = self.params['df2'] + randomfloat * 1e-06
@@ -588,8 +612,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				randomwiggle = random.gauss(0, self.params['ace2correct_std'])
 				df1w = df1 + randomwiggle * 1e-06
 				df2w = df2 + randomwiggle * 1e-06
-				self.deflist1c.append(df1)
-				self.deflist2c.append(df2)
+				self.deflist1c.append(df1w)
+				self.deflist2c.append(df2w)
 			elif self.params['ace2correct'] is True :
 				self.deflist1c.append(df1)
 				self.deflist2c.append(df2)
