@@ -67,9 +67,9 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			action="store_true", help="create projections with a preferred orientation at the 3 axes")
 		self.parser.add_option("--projstdev", dest="projstdev", type="float", default=5.0,
 			help="standard deviation of projection angle for each preferred orientation", metavar="FLOAT")
-		self.parser.add_option("--shiftrad", dest="shiftrad", type="int", default=5,
+		self.parser.add_option("--shiftrad", dest="shiftrad", type="int", default=0,
 			help="radius of of random shift for each particle", metavar="INT")
-		self.parser.add_option("--rotang", dest="rotang", type="int", default=360,
+		self.parser.add_option("--rotang", dest="rotang", type="int", default=0, 
 			help="angle of random rotation for each particle", metavar="INT")
 		self.parser.add_option("--flip", dest="flip", default=False,
 			action="store_true", help="randomly flip the projections along with shifts and rotations")
@@ -77,6 +77,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 #			action="store_false", help="DO NOT randomly flip the projections along with shifts and rotations")
 		self.parser.add_option("--kv", dest="kv", type="float", default=200,
 			help="kV of the microscope, needed for envelope function", metavar="INT")
+		self.parser.add_option("--cs", dest="cs", type="float",
+			help="override default cs value with the value here (in millimeters)", metavar="float")
+		self.parser.add_option("--amp", dest="amp", type="float", default=0.07,
+			help="amplitude contrast for the data (0.07 for ice, 0.15 for stain)", metavar="float")
 		self.parser.add_option("--df1", dest="df1", type="float", default=-1.5,
 			help="defocus value 1 in microns (represented as the mean if --randomdef & --randomdef-std specified)", metavar="FLOAT")
 		self.parser.add_option("--df2", dest="df2", type="float", default=-1.5,
@@ -188,8 +192,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		### make sure amplitude correction file exists
 		if self.params['envelopefile'] is None:
 			self.params['envelopefile'] = os.path.join(apParam.getAppionDirectory(), "appionlib/data/radial-envelope.spi")
-		### set cs value
-		self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
+		### set cs value & make sure that it's in millimeters
+		if self.params['cs'] is None:
+			self.params['cs'] = apInstrument.getCsValueFromSession(self.getSessionData())
+			self.params['cs'] = self.params['cs'] * 1e-03
+		apDisplay.printColor("cs value: %.3f" % self.params['cs'], "cyan")
 		return
 
 	#=====================
@@ -661,9 +668,9 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			filename = line.strip().split()[0]
 
 			### apply CTF using ACE2
-			ace2cmd = (self.ace2correct+" -img %s -kv %d -cs %.1f -apix %.3f -df %.9f,%.9f,%.3f -apply"
+			ace2cmd = (self.ace2correct+" -img %s -kv %d -cs %.1f -apix %.3f -df %.9f,%.9f,%.3f -apply -ampc %.3f"
 				%(filename, self.params['kv'], self.params['cs'], self.params['apix'],
-				self.deflist1[partnum-1], self.deflist2[partnum-1], self.params['astigmatism']))
+				self.deflist1[partnum-1], self.deflist2[partnum-1], self.params['astigmatism'], self.params['amp']))
 			cmdlist.append(ace2cmd)
 		numpart = partnum
 		inf.close()
@@ -728,7 +735,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 	#=====================
 	def correctCTFToDocFile(self, indocfile):
-		apDisplay.printMsg("Applying CTF to particles")
+		apDisplay.printMsg("Correcting CTF applied to particles")
 
 		inf = open(indocfile, 'r')
 		cmdlist = []
@@ -742,9 +749,9 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			filename = sline.split()[0]
 
 			### correct CTF using ACE2
-			ace2cmd = (self.ace2correct+" -img %s -kv %d -cs %.1f -apix %.3f -df %.9f,%.9f,%.3f -wiener 0.1"
+			ace2cmd = (self.ace2correct+" -img %s -kv %d -cs %.1f -apix %.3f -df %.9f,%.9f,%.3f -wiener 0.1 -ampc %.3f"
 				%(filename, self.params['kv'], self.params['cs'], self.params['apix'],
-				self.deflist1c[partnum-1], self.deflist2c[partnum-1], self.params['astigmatism']))
+				self.deflist1c[partnum-1], self.deflist2c[partnum-1], self.params['astigmatism'], self.params['amp']))
 			cmdlist.append(ace2cmd)
 
 		numpart = partnum
@@ -1150,7 +1157,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			filename = self.createProjectionsEmanProp(pad=self.params['pad'])
 
 		### shift & rotate randomly
-		shiftstackname = self.shiftAndRotate(filename)
+		if self.params['rotang']!=0 or self.params['shiftrad']!=0:
+			shiftstackname = self.shiftAndRotate(filename)
+		else:
+			shiftstackname = filename
 
 		### read MRC stats to figure out noise level addition
 		mean1, stdev1 = self.readFileStats(shiftstackname)
@@ -1189,7 +1199,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		### low-pass / high-pass filter resulting stack, if specified
 		if self.params['hpfilt'] is not None or self.params['lpfilt'] is not None or self.params['norm'] is True:
 			filtstack = noisystack2[:-4]
-			filtstack = filtstack+"_filt.hed"
+			if self.params['norm'] is True:
+				filtstack = filtstack+"_norm.hed"
+			else:
+				filtstack = filtstack+"_filt.hed"
 			apFile.removeStack(filtstack)
 			emancmd = "proc2d "+noisystack2+" "+filtstack+" apix="+str(self.params['apix'])+" "
 			if self.params['hpfilt'] is not None:
