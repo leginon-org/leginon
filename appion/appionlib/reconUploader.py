@@ -210,8 +210,8 @@ class generalReconUploader(appionScript.AppionScript):
 		self.reconpath = os.path.abspath(os.path.join(self.params['rundir'], self.runparams['reconstruction_working_dir']))
 			
 		### untar results, if this hasn't been done yet
-		if os.path.exists(os.path.join(self.params['rundir'], "results.tar.gz")):
-			apParam.runCmd("tar -xvzf results.tar.gz", "SHELL")
+		if os.path.exists(os.path.join(self.params['rundir'], "recon_results.tar.gz")):
+			apParam.runCmd("tar -xvzf recon_results.tar.gz", "SHELL")
 		if os.path.exists(os.path.join(self.params['rundir'], "volumes.tar.gz")):
 			apParam.runCmd("tar -xvzf volumes.tar.gz", "SHELL")
 			
