@@ -106,6 +106,52 @@ def rotationMatrixToEulersXmipp(m):
 def rotationMatrixToEulersSPIDER(m):
 	return rotationMatrixToEulers3DEM(m)	
 
+
+#======================================= 		Euler Angle Conversions			  =========================
+
+def convertXmippEulersToEman(phi, theta, psi):
+	''' 
+	converts Xmipp / Spider Euler angles to EMAN, according to:
+	Baldwin, P.R., and Penczek, P.A. (2007). The Transform Class in SPARX and EMAN2. Journal of Structural Biology 157, 250-261.
+	also see for reference:
+	http://blake.bcm.edu/eman2/doxygen_html/transform_8cpp_source.html
+	http://blake.bcm.edu/emanwiki/Eman2TransformInPython
+	'''
+	az = math.fmod((phi+90),360.0)
+	alt = math.fmod(theta,360.0)
+	phi = math.fmod((psi-90),360.0)
+
+	return alt, az, phi
+
+#===================
+def convertEmanEulersToXmipp(alt, az, psi):
+	''' reverse of convertXmippEulersToEman '''
+	phi = math.fmod((az-90), 360.0)
+	theta = math.fmod(alt,360.0)
+	psi = math.fmod((psi+90), 360.0)
+	return phi, theta, psi
+
+#==================
+def convertXmippEulersToFrealign(phi, theta, psi):
+	'''
+	verified empirically using a reconstruction from 100,000 particles generated using Frealign with the converted Eulers.
+	These angle conversions give identical volumes using Xmipp & Frealign 
+	'''
+	phi = math.fmod(phi,360.0)
+	theta = math.fmod((theta+180),360.0)
+	psi = math.fmod((-psi+180),360.0)
+	return phi, theta, psi
+
+#==================
+def convertFrealignEulersToXmipp(phi, theta, psi):
+	''' reverse of convertXmippEulersToFrealign '''
+	phi = math.fmod(phi,360.0)
+	theta = math.fmod((theta-180),360.0)
+	psi = math.fmod((-psi+180),360.0)
+	return phi, theta, psi
+
+#======================================			Rest of Functions			==========================
+
 #==================
 def eulerCalculateDistance(e1, e2, inplane=False):
 	"""

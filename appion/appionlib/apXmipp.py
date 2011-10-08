@@ -304,6 +304,13 @@ def convertXmippEulersToEman(phi, theta, psi):
 	phi = math.fmod((psi-90),360.0)
 
 	return alt, az, phi
+
+def convertEmanEulersToXmipp(alt, az, psi):
+	''' reverse of convertXmippEulersToEman '''
+	phi = math.fmod((az-90), 360.0)
+	theta = alt
+	psi = math.fmod((psi+90), 360.0)
+	return phi, theta, psi
 	
 #======================	
 #=====================
