@@ -88,9 +88,19 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 
 	def ImagicStackToFrealignMrcStack(self):
 		stackfile = self.stack['file']
-		stackbase = stackfile[:-4]
-		apDisplay.printMsg('converting %s from default IMAGIC stack format to MRC'% stackbase)
-		apIMAGIC.convertImagicStackToMrcStack(stackbase,stackbase+'.mrc')
+		stackroot = stackfile[:-4]
+		stackbaseroot = os.path.basename(stackfile).split('.')[0]
+		apDisplay.printMsg('converting %s from default IMAGIC stack format to MRC as %s.mrc'% (stackroot,stackbaseroot))
+		apIMAGIC.convertImagicStackToMrcStack(stackroot,stackbaseroot+'.mrc')
+		# clean up non-mrc stack in rundir which may be left from preprocessing such as binning
+		tmpstackdir = os.path.dirname(stackfile)
+		stackext = os.path.basename(stackfile).split('.')[-1]
+		if stackext != 'mrc' and tmpstackdir == self.params['rundir']:
+			os.remove(stackfile)
+			if stackext == 'hed':
+				imgfilepath = stackfile.replace('hed','img')
+				os.remove(imgfilepath)
+		
 
 	def convertToRefineStack(self):
 		'''
