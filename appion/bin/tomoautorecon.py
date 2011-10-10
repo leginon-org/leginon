@@ -51,6 +51,8 @@ class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 		return
 
 	def isBadTiltSeries(self, tiltseriesdata):
+		return False
+		'''
 		# no need to process if only a small number of images are taken
 		imagelist = apTomo.getImageList([tiltseriesdata,])
 		tilts,ordered_imagelist,ordered_mrc_files,refimg = apTomo.orderImageList(imagelist)
@@ -66,6 +68,7 @@ class TomoAlignReconLooper(appionTiltSeriesLoop.AppionTiltSeriesLoop):
 			apDisplay.printWarning('Tracked feature in Series %d jumps over %d %% of the image' % (tiltseriesdata['number'], self.params['maxjump']))
 			return True
 		return False
+		'''
 
 	def processTiltSeries(self, tiltseriesdata):
 		seriesnumber = tiltseriesdata['number']

@@ -138,7 +138,8 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		frealign_hedral_symm_names = {'oct':'O','icos':'I'}
 		inputname = inputname.lower()
 		if inputname[0] in ('c','d'):
-			symm_name = inputname.upper()
+			bits = inputname.split(' ')
+			symm_name = bits[0].upper()
 		elif inputname in frealign_hedral_symm_names.keys():
 			symm_name = frealign_hedral_symm_names[inputname]
 		else:
@@ -152,10 +153,10 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		card = ("cform", "mode" , "fmag", "fdef", "fastig", "fpart", "iewald","fbeaut", "fcref", "fmatch", "ifsc", "fstat", "iblow",)
 		frealign_inputparams.append(card)
 		####card 2
-		card = ("outerMaskRadius", "innerMaskRadius", "apix", "wgh", "xstd", "pbc", "boff", "ang", "itmax", "ipmax",)
+		card = ("outerMaskRadius", "innerMaskRadius", "apix", "wgh", "xstd", "pbc", "boff", "angSampRate", "itmax", "ipmax",)
 		frealign_inputparams.append(card)
 		####card 5
-		card = ("sym",)
+		card = ("symmetry",)
 		frealign_inputparams.append(card)
 		####card 6
 		card = ("relmag","apix","target", "thresh", "cs", "kv", "beamtiltx", "beamtilty",) 
@@ -167,6 +168,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		
 	def combineFrealignParams(self,iter_index,valid_paramkeys):
 		task_params = []
+		card = ("outerMaskRadius", "innerMaskRadius", "apix", "wgh", "xstd", "pbc", "boff", "angSampRate", "itmax", "ipmax",)
 		for key in valid_paramkeys:
 			if key in self.params.keys():
 				if type(self.params[key]) == type([]):
@@ -200,16 +202,16 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		pieces = stackfile.split('.')
 		stackfilehead = '.'.join(pieces[:len(pieces)-1])
 		appendcards = [
-				'../../%s' % stackfilehead,
+				'../../%s' % stackfile,
 				'match',
-				'../../params.iter%03d.par' % (iter-1),
+				'../../params.%03d.par' % (iter-1),
 				'outparams.par',
 				'shift.par',
 				'-100.0,0,0,0,0,0,0,0',
-				'../../threed.%03da' % (iter-1),
+				'../../threed.%03da.mrc' % (iter-1),
 				'weights',
-				'odd',
-				'even',
+				'odd.mrc',
+				'even.mrc',
 				'phasediffs',
 				'pointspread',
 				]
@@ -222,20 +224,24 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		inputlines[0] = (',').join(pieces)
 		pieces = inputlines[7].split('../')
 		inputlines[7] = ('../').join(pieces[1:])
-		inputlines[9] = 'params.iter%03d.par' % iter
+		inputlines[9] = 'params.%03d.par' % iter
 		inputlines[12] = '0.0,0,0,0,0,0,0,0'
-		inputlines[13] = 'threed.%03da' % iter
+		inputlines[13] = 'threed.%03da.mrc' % iter
 		lines_before_input = [
 			'#!/bin/sh',
 			'cd %s' % iterpath,
-			"cat proc*/outparams.par |grep -v '^C' | sort -n > params.iter%03d.par" % iter,
-			'wc -l params.iter%03d.par' % iter,
+			'env |grep SHELL',
+			'/bin/rm -fv params.%03d.par' % iter,
+			"cat proc*/outparams.par |grep -v '^C' | sort -n > params.%03d.par" % iter,
+			'wc -l params.%03d.par' % iter,
 			'/bin/rm -fv iter%03d.???' % iter,
 			'/bin/rm -fv threed.%03da.???' % iter,
+			'/bin/rm -fv frealign.recon.out',
 			'export NCPUS=%d' % nproc,
+			'hostname'
 			'',
 			'### START FREALIGN ###',
-			'frealign.exe << EOF > frealign.recon.out',
+			'frealign_mp << EOF > frealign.recon.out',
 			]
 		lines_after_input=[
 			'EOF',
@@ -244,10 +250,9 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			'### END FREALIGN ###',
 			'echo "END FREALIGN"',
 			'',
-			'proc3d odd.hed even.hed fsc=fsc.eotest.1',
-			'getRes.pl 1 160 1.630 >> ../resolution.txt',
-			'/bin/cp -v threed.%03da.hed ..' % iter,
-			'/bin/cp -v threed.%03da.img ..' % iter,
+			'proc3d odd.mrc even.mrc fsc=fsc.eotest.1',
+			'/bin/cp -v threed.%03da.mrc ..' % iter,
+			'/bin/cp -v params.%03d.par ..' % iter,
 			]
 		alllines = lines_before_input+inputlines+lines_after_input
 
@@ -275,12 +280,13 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			lines_before_input = [
 				'#!/bin/sh',
 				'# Proc %03d, Particles %d - %d' % (proc,proc_start_particle,proc_end_particle),
+				'rm -rf %s' % procpath,
 				'mkdir %s' % procpath,
 				'cd %s' % procpath,
 				'',
 				'',
 				'### START FREALIGN ###',
-				'frealign.exe << EOF > frealign.proc%03d.out' % proc,
+				'frealign_mp << EOF > frealign.proc%03d.out' % proc,
 				]
 			lines_after_input=[
 				'EOF',
@@ -344,11 +350,10 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 		if not self.params['refineonly']:
 			# combine and recon parallelized only on one node
 			recon_file = self.writeReconShell(iter,inputlines_template,iterpath,self.ppn)	
-			# use mpi to parallelize the processes
-			# there is only one process for this now
-			mpi_recon = self.setupMPIRun([recon_file],self.ppn,iterpath,'')
-			tasks = self.addToTasks(tasks,mpi_recon,self.recon_mem,self.ppn)
-		tasks = self.addToTasks(tasks,'getProjEuler.py',2,self.ppn)
+			tasks = self.addToTasks(tasks,recon_file,self.recon_mem,self.ppn)
+			tasks = self.addToTasks(tasks,'cd %s' % iterpath)
+			tasks = self.addToTasks(tasks,'getRes.pl 1 160 1.630 >> ../resolution.txt')
+			tasks = self.addToTasks(tasks,'cd %s' % self.params['recondir'])
 		return tasks
 
 if __name__ == '__main__':

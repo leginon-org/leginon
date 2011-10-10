@@ -186,6 +186,7 @@ class RefineJob(basicScript.BasicScript):
 		if len(procscripts) > 1:
 			masterfile = os.path.join(masterfile_dir,masterfile_name)
 			self.__makeMPIMasterScript(procscripts,masterfile)
+			mpi_script += '-app '
 			mpi_script += masterfile
 		elif len(procscripts) == 1:
 			mpi_script += procscripts[0]
@@ -231,6 +232,9 @@ class RefineJob(basicScript.BasicScript):
 	def __createReconDir(self):
 		apParam.createDirectory(self.params['recondir'], warning=(not self.quiet))
 
+	def __removeReconDir(self):
+		apParam.removeDirectory(self.params['recondir'], warning=(not self.quiet))
+
 	def makeNewTrialScript(self):
 		'''
 		Package-specific function to make job script for tasks that set up files required to start a
@@ -245,7 +249,7 @@ class RefineJob(basicScript.BasicScript):
 		'''
 		pretasks = {}
 		pretasks = self.addToTasks(pretasks,'# setup directory')
-		pretasks = self.addToTasks(pretasks,'/bin/rm -rf %s' % self.params['recondir'])
+		#pretasks = self.addToTasks(pretasks,'/bin/rm -rf %s' % self.params['recondir'])
 		pretasks = self.addToTasks(pretasks,'mkdir -p %s' % self.params['recondir'])
 		pretasks = self.addToTasks(pretasks,'cd %s' % self.params['recondir'])
 		pretasks = self.addToTasks(pretasks,'')
@@ -288,7 +292,7 @@ class RefineJob(basicScript.BasicScript):
 		# clean up files that are already in localhost rundir
 		for line in lines:
 			filename = os.path.basename(line.replace('\n',''))
-			tasks = self.addToTasks(tasks,'/bin/rm -fv  %s' % filename)
+			#tasks = self.addToTasks(tasks,'/bin/rm -fv  %s' % filename)
 		return tasks
 
 	def __saveFileListFromRemoteHost(self):
@@ -443,6 +447,7 @@ class RefineJob(basicScript.BasicScript):
 		if self.params['startiter'] == 1:
 			self.addSimpleCommand('')
 			self.addToLog('....Setting up new refinement job trial....')
+			self.__removeReconDir()
 			self.__makeNewTrialScript()
 			self.__createReconDir()
 			self.makeNewTrialScript()
@@ -458,7 +463,6 @@ class RefineJob(basicScript.BasicScript):
 				self.addJobCommands(refinetasks)
 				self.addToLog('Done with iteration %d' % (iter))
 				self.addSimpleCommand('')
-				
 		self.__writeCommandListToFile()
 		self.addToLog('....Performing tasks after iterations....')
 		self.makePostIterationScript()

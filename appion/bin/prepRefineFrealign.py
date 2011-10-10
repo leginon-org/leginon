@@ -11,6 +11,7 @@ from appionlib import apDatabase
 from appionlib import apDisplay
 from appionlib import apFile
 from appionlib import apScriptLog
+from appionlib import apIMAGIC
 
 def maxIfNotNone(numlist):
 	sortset = list(set(numlist))
@@ -44,7 +45,7 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 
 	def proc3dFormatConversion(self):
 		#Imagic format used to be consistent with stack
-		extname = 'hed'
+		extname = 'mrc'
 		return extname
 
 	def getStackRunParams(self):
@@ -84,13 +85,23 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 			else:
 				text = '--%s=%.3f' % (key,value)
 		return text
-		
+
+	def ImagicStackToFrealignMrcStack(self):
+		stackfile = self.stack['file']
+		stackbase = stackfile[:-4]
+		apDisplay.printMsg('converting %s from default IMAGIC stack format to MRC'% stackbase)
+		apIMAGIC.convertImagicStackToMrcStack(stackbase,stackbase+'.mrc')
+
 	def convertToRefineStack(self):
 		'''
 		The stack is remaked without ctf correction and without invertion (ccd)
 		'''
 		if self.no_ctf_correction:
+			self.ImagicStackToFrealignMrcStack()
+			self.setFrealignStack()
 			return
+		# stack need to be remade without ctf correction
+		apDisplay.printWarning('Frealign needs a stack without ctf correction. A new stack is being made....')
 		stackdata = self.stack['data']
 		stackid = stackdata.dbid
 		stackruns = apStack.getStackRunsFromStack(self.stack['data'])
@@ -136,6 +147,13 @@ makestack2.py --single=start.hed --fromstackid=%d %s %s %s %s %s --no-invert --n
 
 		if returncode > 0:
 			apDisplay.printError('Error in Frealign specific stack making')
+		self.setFrealignStack()
+		#clean up
+		rmfiles = glob.glob("*.box")
+		for rmfile in rmfiles:
+			apFile.removeFile(rmfile)
+
+	def setFrealignStack(self):
 		self.stack['file'] = os.path.join(self.params['rundir'],'start.hed')
 		self.stack['format'] = 'frealign'
 		self.stack['bin'] = self.params['bin']
@@ -144,15 +162,9 @@ makestack2.py --single=start.hed --fromstackid=%d %s %s %s %s %s --no-invert --n
 		self.stack['boxsize'] = clipsize / self.params['bin']
 		self.stack['apix'] = self.stack['apix'] * self.params['bin']
 
-		#clean up
-		rmfiles = glob.glob("*.box")
-		for rmfile in rmfiles:
-			apFile.removeFile(rmfile)
-
 	def addStackToSend(self,hedfilepath):
 		# Imagic Format stack has 'hed' and 'img' files
-		self.addToFilesToSend(hedfilepath)
-		imgfilepath = hedfilepath.replace('hed','img')
+		imgfilepath = hedfilepath.replace('hed','mrc')
 		self.addToFilesToSend(imgfilepath)
 
 	def addModelToSend(self,hedfilepath):
@@ -162,7 +174,7 @@ makestack2.py --single=start.hed --fromstackid=%d %s %s %s %s %s --no-invert --n
 	def otherPreparations(self):
 		if 'reconiterid' not in self.params.keys() or self.params['reconiterid'] == 0:
 			self.params['reconiterid'] = None
-		paramfile = 'params.0.par'
+		paramfile = 'params.000.par'
 		apFrealign.generateParticleParams(self.params,paramfile)
 		self.addToFilesToSend(paramfile)
 

@@ -18,6 +18,10 @@ def readImagicHeader(filename):
 	hed_dict['nx'] = hed_array_int[13]
 	hed_dict['nz'] = len(hed_array_int.data) / 1024
 	hed_dict['dtype'] = code_to_dtype[hed_array_int[14]]
+	hed_dict['amin'] = hed_array_float[22]
+	hed_dict['amax'] = hed_array_float[21]
+	hed_dict['amean'] = hed_array_float[17]
+	hed_dict['rms'] = hed_array_float[18]
 	return hed_dict
 
 def imagic_to_mrc(imagic_name, mrc_name):
@@ -30,7 +34,7 @@ def imagic_to_mrc(imagic_name, mrc_name):
 	mrc_header = mrc.newHeader()
 	mrc.updateHeaderDefaults(mrc_header)
 	## copy some values from imagic header to mrc header
-	for key in ('nx', 'ny', 'nz', 'dtype'):
+	for key in imagic_header.keys():
 		mrc_header[key] = imagic_header[key]
 	mrc_header['mode'] = mrc.numpy2mrc[mrc_header['dtype']]
 	mrc_header_data = mrc.makeHeaderData(mrc_header)

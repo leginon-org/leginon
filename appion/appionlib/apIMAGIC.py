@@ -8,6 +8,7 @@ import subprocess
 import glob
 from appionlib import apDisplay
 from appionlib import apParam
+from pyami import imagic2mrc
 
 #======================
 def checkImagicExecutablePath():
@@ -405,4 +406,5 @@ def classifyAndAvg(infile, numcls, path=os.path.abspath('.'), keepfiles=False):
 		os.remove(logf)
 	return classavgs
 
-
+def convertImagicStackToMrcStack(infile,outfile):
+	imagic2mrc.imagic_to_mrc(infile,outfile)

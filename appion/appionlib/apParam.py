@@ -1,5 +1,6 @@
 ## python
 import os
+import shutil
 import re
 import math
 import sys
@@ -349,6 +350,20 @@ def createDirectory(path, mode=0775, warning=True):
 		#makedirs(path, mode=mode)
 	except:
 		apDisplay.printError("Could not create directory, '"+path+"'\nCheck the folder write permissions")
+	return True
+
+#=====================
+def removeDirectory(path, warning=True):
+	"""
+	Used by appionLoop
+	"""
+	if os.path.isdir(path):
+		apDisplay.printWarning("directory \'"+path+"\' will be removed.")
+		try:
+			shutil.rmtree(path, ignore_errors=not warning)
+		except:
+			apDisplay.printError("Could not remove directory, '"+path+"'\nCheck the folder write permissions")
+			return False
 	return True
 
 #=====================
