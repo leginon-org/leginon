@@ -148,28 +148,26 @@ makestack2.py --single=start.hed --fromstackid=%d %s %s %s %s %s --no-invert --n
 		if returncode > 0:
 			apDisplay.printError('Error in Frealign specific stack making')
 		self.setFrealignStack()
+		# use the same complex equation as in eman clip
+		clipsize = self.calcClipSize(self.stack['boxsize'],self.params['bin'])
+		self.stack['boxsize'] = clipsize / self.params['bin']
+		self.stack['apix'] = self.stack['apix'] * self.params['bin']
 		#clean up
 		rmfiles = glob.glob("*.box")
 		for rmfile in rmfiles:
 			apFile.removeFile(rmfile)
 
 	def setFrealignStack(self):
-		self.stack['file'] = os.path.join(self.params['rundir'],'start.hed')
+		self.stack['file'] = os.path.join(self.params['rundir'],'start.mrc')
 		self.stack['format'] = 'frealign'
 		self.stack['bin'] = self.params['bin']
-		# use the same complex equation as in eman clip
-		clipsize = self.calcClipSize(self.stack['boxsize'],self.params['bin'])
-		self.stack['boxsize'] = clipsize / self.params['bin']
-		self.stack['apix'] = self.stack['apix'] * self.params['bin']
 
-	def addStackToSend(self,hedfilepath):
-		# Imagic Format stack has 'hed' and 'img' files
-		imgfilepath = hedfilepath.replace('hed','mrc')
-		self.addToFilesToSend(imgfilepath)
+	def addStackToSend(self,mrcfilepath):
+		# mrc Format
+		self.addToFilesToSend(mrcfilepath)
 
-	def addModelToSend(self,hedfilepath):
-		# Imagic Format stack has 'hed' and 'img' files
-		self.addStackToSend(hedfilepath)
+	def addModelToSend(self,mrcfilepath):
+		self.addStackToSend(mrcfilepath)
 
 	def otherPreparations(self):
 		if 'reconiterid' not in self.params.keys() or self.params['reconiterid'] == 0:
