@@ -33,7 +33,7 @@ class RefineJob(basicScript.BasicScript):
 		self.parser.add_option("--jobtype", dest="jobtype",
 			help="Job Type of processing run, e.g., emanrecon", metavar="X")
 		# Parameters that the agent need
-		self.parser.add_option("--jobid", dest="jobid", type="int", default=1,
+		self.parser.add_option("--jobid", dest="jobid", type="int", default=0,
 			help="ApAppionJobId for updating job status", metavar="#")
 		# Job parameters that the remotehost need
 		self.parser.add_option("--rpn", dest="rpn", type="int", default=4,
