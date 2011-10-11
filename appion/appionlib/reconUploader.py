@@ -80,6 +80,7 @@ class generalReconUploader(appionScript.AppionScript):
 
 		### unpickle results or parse logfile, set default parameters if missing
 		os.chdir(os.path.abspath(self.params['rundir']))
+		self.unpackResults()
 		self.runparams = self.readRunParameters()
 	
 		### parameters recovered from runparameter file(s)
@@ -174,6 +175,14 @@ class generalReconUploader(appionScript.AppionScript):
 		self.initializeRefinementUploadVariables()
 
 		return
+	
+	#=====================
+	def unpackResults(self):
+		''' untar results, if this hasn't been done yet '''
+		if os.path.exists(os.path.join(self.params['rundir'], "recon_results.tar.gz")):
+			apParam.runCmd("tar -xvzf recon_results.tar.gz", "SHELL")
+		if os.path.exists(os.path.join(self.params['rundir'], "volumes.tar.gz")):
+			apParam.runCmd("tar -xvzf volumes.tar.gz", "SHELL")
 
 	#=====================
 	def tryToGetJobID(self):
@@ -208,13 +217,7 @@ class generalReconUploader(appionScript.AppionScript):
 		if not os.path.isdir(self.resultspath):
 			os.mkdir(self.resultspath)		
 		self.reconpath = os.path.abspath(os.path.join(self.params['rundir'], self.runparams['reconstruction_working_dir']))
-			
-		### untar results, if this hasn't been done yet
-		if os.path.exists(os.path.join(self.params['rundir'], "recon_results.tar.gz")):
-			apParam.runCmd("tar -xvzf recon_results.tar.gz", "SHELL")
-		if os.path.exists(os.path.join(self.params['rundir'], "volumes.tar.gz")):
-			apParam.runCmd("tar -xvzf volumes.tar.gz", "SHELL")
-			
+						
 		### get all stack parameters, map particles in reconstruction to particles in stack, get all model data
 		self.stackdata = apStack.getOnlyStackData(self.runparams['stackid'])
 		self.stackmapping = apRecon.partnum2defid(self.runparams['stackid'])
@@ -243,8 +246,8 @@ class generalReconUploader(appionScript.AppionScript):
 				apDisplay.printWarning("Could not find run parameters pickle file ... trying to get values from logfile")
 				try:
 					runparams = self.parseFileForRunParameters()
-				except:
-					apDisplay.printError("Could not determine run parameters for refinement ... try uploading as an external package")
+				except Exception, e:
+					apDisplay.printError("Could not determine run parameters for refinement: %s ...you may try uploading as an external package." % e)
 			else:
 				f = open(paramfile[0], "r")
 				runparams = cPickle.load(f)
