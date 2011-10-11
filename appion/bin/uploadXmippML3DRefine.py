@@ -366,6 +366,7 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 			sym = "icos"
 		else:
 			sym = xmipp_protocol_ml3d.Symmetry
+			sym = sym.split()[0]
 		
 		### set global parameters
 		runparams = {}

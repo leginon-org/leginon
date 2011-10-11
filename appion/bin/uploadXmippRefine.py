@@ -276,6 +276,7 @@ class uploadXmippProjectionMatchingRefinementScript(reconUploader.generalReconUp
 			sym = "icos"
 		else:
 			sym = xmipp_protocol_projmatch.SymmetryGroup
+			sym = sym.split()[0]
 
 		### set global parameters
 		runparams = {}
