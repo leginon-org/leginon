@@ -202,7 +202,7 @@ function createCL2DAlignForm($extra=false, $title='runXmippCL2D.py Launcher', $h
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='numref' VALUE='$numref' SIZE='4'>\n";
-	echo docpop('numref','Number of References');
+	echo docpop('numrefcl2d','Number of References');
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='maxiter' VALUE='$maxiter' SIZE='4'>\n";
@@ -295,8 +295,8 @@ function runCL2DAlign() {
 	if (!$description)
 		createCL2DAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
-	if ($nproc > 16)
-		createCL2DAlignForm("<B>ERROR:</B> Let's be reasonable with the nubmer of processors, less than 16 please");
+#	if ($nproc > 16)
+#		createCL2DAlignForm("<B>ERROR:</B> Let's be reasonable with the nubmer of processors, less than 16 please");
 
 	//make sure a stack was selected
 	if (!$stackid)

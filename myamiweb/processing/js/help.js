@@ -84,6 +84,7 @@ var help = {
 		'maskrad' : 'Radius of external mask (in &Aring;ngstr&ouml;ms)',
 		'numpart' : 'Number of particles to use',
 		'numref' : 'Number of references to use',
+		'numrefcl2d' : 'Number of references to create in 2D alignment. CL2D performs a sequential binary separation of classes. For example, if you specify 100 classes, CL2D will produce 2, 4, 8, 16, 32, 64, and 100 classes.',
 		'image2imagedistance' : 'How to measure the distance between two images. Correlation is perfectly adapted to Gaussian noise while correntropy is better suited to non-gaussian distributions',
 		'image2clusterdistance' : 'Minimum distance assigns an image to the cluster with minimum distance as measured by image to image distance. Intracluster distance assigns an image to the cluster where the image is less rare.',
 		'dontAlign' : 'Dont produced an aligned stack',
