@@ -497,7 +497,9 @@ class RefineJob(basicScript.BasicScript):
 	def getCommandList(self):
 		return self.command_list
 	def getJobId(self):
-		return self.jobid
+		return self.jobid    
+	def setJobId(self, id):
+		self.jobid = int(id)
 	def getProjectId(self):
 		return self.params['projectid']
 	

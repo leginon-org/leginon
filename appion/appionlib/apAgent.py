@@ -7,10 +7,18 @@ from appionlib import apGenericJob
 from appionlib import jobtest
 import sys
 import re
-import subprocess
 import time
 import os
 
+try:
+    import MySQLdb
+    import dbconfig
+except ImportError, e:
+    sys.stderr.write("Warning: %s, status updates will be disabled\n" % (e))
+    statusUpdatesEnabled = False
+else:
+    statusUpdatesEnabled = True
+    
 class Agent (object):
     def __init__(self, configFile=None):
         if configFile:
@@ -18,26 +26,27 @@ class Agent (object):
         
         self.currentJob = None
         self.processingHost = None
-        
+        self.statusCkInterval = 30
     
     def Main(self,command):
         
         self.processingHost = self.createProcessingHost()
         
         jobType = self.getJobType(command)
-        if not jobType:
-            sys.stderr.write("Error: Could not determine job type\n")
-            sys.exit(1)
-         
+        
+        #Not sure if we want pedanticaly issue warning messages 
+        #if not jobType:
+        #    sys.stderr.write("Warning: Could not determine job type\n")
+                 
         try:   
             self.currentJob = self.createJobInst(jobType, command)
         except Exception, e:
             sys.stderr.write("Error: Could not create job  %s : %s\n" %(command, e))
             sys.exit(1)
-        
+            
         if not self.currentJob:
-              sys.stderr.write("Error: Could not create job for: %s\n" % (command))
-              sys.exit(1)
+            sys.stderr.write("Error: Could not create job for: %s\n" % (command))
+            sys.exit(1)
               
         hostJobId = self.processingHost.launchJob(self.currentJob)
         #if the job launched successfully print out the ID returned.
@@ -47,9 +56,14 @@ class Agent (object):
             
         sys.stdout.write(str(hostJobId) + '\n') 
         sys.stdout.flush()
-        self.updateJobStatus(self.currentJob, hostJobId)
+       
+        if statusUpdatesEnabled:
+            self.updateJobStatus(self.currentJob, hostJobId)
+       
         return 0
-        
+ 
+    ##
+    #    
     def createProcessingHost(self):
         if not self.configFile:
             raise ValueError ("Could not create processing host object, configuration file not defined") 
@@ -84,8 +98,9 @@ class Agent (object):
                 break
             
         return jobtype
-            
-    
+
+    ##       
+    #
     def createJobInst(self, jobType, command):
         jobInstance = None
             
@@ -103,7 +118,9 @@ class Agent (object):
             jobInstance = apGenericJob.genericJob(command)
         
         return jobInstance
-    
+
+    ##
+    #
     def parseConfigFile (self, configFile):
         confDict ={}
         try:
@@ -136,52 +153,101 @@ class Agent (object):
                 
         return confDict
     
-    def updateJobStatus (self, jobObject, jobHostId ):
-        checkStatusInterval = 30 #check status every 30 seconds
+    ##
+    #
+    def updateJobStatus (self, jobObject, hostJobId ):
+        checkStatusInterval =  self.statusCkInterval
         currentStatus = 'Q'
-        projectId = jobObject.getProjectId()
+                        
+        projDB = self.__initDB(jobObject, hostJobId)                
         jobid = jobObject.getJobId()
         
-        #Update before forking
-        self.__updateStatusInDB(jobid, currentStatus, projectId)
-        
-        try:
-            pid = os.fork()        
-            if pid == 0:
-                os.setsid()
-                while currentStatus != "D" and currentStatus != "U":
-                    time.sleep(checkStatusInterval)
-                    newStatus = self.processingHost.checkJobStatus(jobHostId)
-                    if newStatus != currentStatus:
-                        #Assume status changed was missed if we go from R or Q to U (unknown) and mark
-                        #job as done.
-                        if newStatus == "U" and (currentStatus == "R" or currentStatus == "Q"):
-                            currentStatus = "D"
-                        else:        
-                            currentStatus = newStatus
-                        
-                        self.__updateStatusInDB(jobid, currentStatus, projectId)
-                        
-                    
-                    
-        except OSError, e:
-            sys.stderr.write("Warning: Unable to monitor status: %s\n" % (e) )
-       
+        if projDB:
+            #Update before forking, indicating to insert new row if necessary.
+            self.__updateStatusInDB(jobid, currentStatus)
+            
+            try:
+                pid = os.fork()        
+                if pid == 0:
+                    os.setsid()
+                    while currentStatus != "D" and currentStatus != "U":
+                        time.sleep(checkStatusInterval)
+                        newStatus = self.processingHost.checkJobStatus(hostJobId)
+                        if newStatus != currentStatus:
+                            #Assume status changed was missed if we go from R or Q to U (unknown) and mark
+                            #job as done.
+                            if newStatus == "U" and (currentStatus == "R" or currentStatus == "Q"):
+                                currentStatus = "D"
+                            else:        
+                                currentStatus = newStatus
+                            
+                            self.__updateStatusInDB(jobid, currentStatus)
+                   
+            except OSError, e:
+                sys.stderr.write("Warning: Unable to monitor status: %s\n" % (e))
+        else:
+            sys.stderr.write("Warning: Unable to monitor job status.\n")                       
+
         return
     
-    def __updateStatusInDB (self, jobid, status, projectId):
+    ##
+    #
+    def __updateStatusInDB (self, jobid, status):
         retVal = True   #initialize return value to True
-        #command string to pass to subprocess
-        updateCommand = "updateAppionDB.py %d %s %d" % (jobid,status,projectId)
+        dbConfig = dbconfig.getConfig('appiondata')
+        dbConnection = MySQLdb.connect(**dbConfig)
+        cursor = dbConnection.cursor()
+           
+           
+        updateCommand = "UPDATE ApAppionJobData SET status= '%s' WHERE `DEF_id` = '%s'" % (status, jobid)
+        result = cursor.execute(updateCommand)
         
-        try:
-            process = subprocess.Popen(updateCommand, stdout=subprocess.PIPE, 
-                                                  stderr=subprocess.PIPE,  shell = True)
-            r = process.wait()
-            #Command failed if return value greater than zero
-            if r > 0:
-                retVal = False
-        except Exception:
-            retVal = False       
-        
+        if not result:
+            retVal = False
+              
         return retVal
+
+    ##
+    #
+    def __initDB (self, jobObject, job):
+        retValue = None
+            
+        try:
+            #Determine the appion project database name using the project id.
+            projDBConfig = dbconfig.getConfig('projectdata')
+            dbConnection = MySQLdb.connect(**projDBConfig)
+            cursor =  dbConnection.cursor()
+                                          
+            query = "SELECT appiondb from processingdb WHERE `REF|projects|project`=%d" % (jobObject.getProjectId())
+            queryResult=cursor.execute(query)
+            if queryResult:
+                projDB = cursor.fetchone()[0]
+                projDBConfig = dbconfig.setConfig('appiondata', db=projDB)
+                retValue = projDB
+                
+            cursor.close()
+            dbConnection.close()
+        except MySQLdb.DatabaseError, e:
+            sys.stderr.write("Warning: Failure determining project database: %s \n" % (e))
+        
+        #if jobId is not set, assume there is no entry in ApAppionJobData for this run
+        if not jobObject.getJobId():
+            jobname = jobObject.getName()
+            cluster = os.uname()[1]
+            user = os.getlogin()
+                          
+            dbconf = dbconfig.getConfig('appiondata')
+            dbConnection = MySQLdb.connect(**dbconf)          
+            cursor = dbConnection.cursor()
+           
+            insertQuery = "INSERT INTO ApAppionJobData (name, cluster, clusterjobid, status, user) \
+                     VALUES ('%s','%s','%s','%s','%s')" %(jobname, cluster, job, 'Q', user)    
+
+            if cursor.execute (insertQuery):
+                jobObject.setJobId(cursor.lastrowid)   
+
+            cursor.close()
+            dbConnection.close()
+            
+        return retValue
+            
