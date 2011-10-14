@@ -224,7 +224,7 @@ class RefineJob(basicScript.BasicScript):
 		for line in lines:
 			filename = os.path.basename(line.replace('\n',''))
 			sourcepath = os.path.join(self.params['remoterundir'],filename)
-			pretasks = self.addToTasks(pretasks,'ln -s  %s %s' % (sourcepath,filename))
+			pretasks = self.addToTasks(pretasks,'ln -s  ../%s %s' % (filename,filename))
 			pretasks = self.addToTasks(pretasks,'test -s  %s || ( echo %s not found && exit )' % (sourcepath,filename))
 		self.addJobCommands(pretasks)
 		self.addSimpleCommand('')
