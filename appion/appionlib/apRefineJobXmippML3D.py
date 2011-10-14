@@ -166,6 +166,10 @@ class XmippML3DRefineJob(apRefineJob.RefineJob):
 		tasks = {}
 		self.addToLog('....Setting up Xmipp ML3D Protocol....')
 		protocolfile, protocolPrm = self.setupXmippML3DProtocol()
+
+		### check for variable root directories between file systems
+		apXmipp.checkSelOrDocFileRootDirectoryInDirectoryTree(self.params['remoterundir'], self.params['rundir'], self.params['remoterundir'])
+		
 		self.addToLog('....Start running Xmipp Protocol....')
 		tasks = self.addToTasks(tasks,'python %s' % protocolfile,self.calcRefineMem(),self.params['nproc'])
 		protocol_pyname = os.path.basename(protocolfile)
