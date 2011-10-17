@@ -3,6 +3,8 @@
 import os
 import sys
 import numpy
+import scipy.stats
+import scipy.ndimage as ndimage
 import numextension
 from pyami import mrc,imagefun,arraystats
 try:
@@ -12,13 +14,13 @@ try:
 except:
 	use_tifffile = False
 	import Image
-from leginon import leginondata
 from leginon import correctorclient
 from appionlib import apDisplay
 
 class DirectDetectorProcessing(object):
 	def __init__(self):
 		self.image = None
+		self.stripenorm_imageid = None
 		self.camerainfo = {}
 		self.c_client = correctorclient.CorrectorClient()
 		# change this to True for loading bias image for correction
@@ -26,6 +28,7 @@ class DirectDetectorProcessing(object):
 		self.log = open('newref.log','w')
 
 	def setImageId(self,imageid):
+		from leginon import leginondata
 		q = leginondata.AcquisitionImageData()
 		result = q.direct_query(imageid)
 		if result:
@@ -43,8 +46,14 @@ class DirectDetectorProcessing(object):
 	def getImageData(self):
 		return self.image
 
-	def __getNumberOfFrameSaved(self):
+	def getNumberOfFrameSaved(self):
 		return self.image['camera']['nframes']
+
+	def getScaledBrightArray(self,nframe):
+		return self.scaleRefImage('bright',nframe)
+
+	def getSingleFrameDarkArray(self):
+		return self.__getRefImageData('dark')['image']
 
 	def getRawFrameDirFromImage(self,imagedata):
 		# strip off DOS path in rawframe directory name 
@@ -58,6 +67,25 @@ class DirectDetectorProcessing(object):
 			apDisplay.printError('Raw Frame Directory %s does not exist' % rawframedir)
 		return rawframedir
 
+	def __getRefImageData(self,reftype):
+		if not self.use_full_raw_area:
+			refdata = self.image[reftype]
+		else:
+			# use most recent CorrectorImageData
+			# TO DO: this should research only ones before the image is taken.
+			scopedata = self.image['scope']
+			channel = self.image['channel']
+			refdata = self.c_client.researchCorrectorImageData(reftype, scopedata, self.camerainfo, channel)
+		return refdata
+
+	def scaleRefImage(self,reftype,nframe,bias=False):
+		refdata = self.__getRefImageData(reftype)
+		ref_nframe = len(refdata['camera']['use frames'])
+		refscale = float(nframe) / ref_nframe
+		print reftype, ref_nframe, nframe, os.path.join(refdata['session']['image path'],refdata['filename']+'.mrc')
+		scaled_refarray = refdata['image'] * refscale
+		return scaled_refarray
+
 	def __setRawFrameInfoFromImage(self):
 		'''
 		set rawframe_dir, nframe, and totalframe of the current image
@@ -69,9 +97,9 @@ class DirectDetectorProcessing(object):
 		# set attribute values
 		self.rawframe_dir = rawframedir
 		# initialize self.nframe
-		self.nframe = self.image['camera']['nframes']
+		self.nframe = self.getNumberOfFrameSaved()
 		# total number of frames saved
-		self.totalframe = self.image['camera']['nframes']
+		self.totalframe = self.getNumberOfFrameSaved()
 
 	def __setCameraInfo(self,nframe,use_full_raw_area):
 		'''
@@ -79,13 +107,6 @@ class DirectDetectorProcessing(object):
 		'''
 		self.camerainfo = self.__getCameraInfoFromImage(nframe,use_full_raw_area)
 
-	def __setBias(self):
-		if self.use_bias:
-			self.bias = mrc.read('bias.mrc') * 60 / 59
-		else:
-			# unknown, assume zero
-			self.bias = 0
-		
 	def __getCameraInfoFromImage(self,nframe,use_full_raw_area):
 		'''
 		returns dictionary of camerainfo obtained from the current image
@@ -94,7 +115,6 @@ class DirectDetectorProcessing(object):
 		binning = self.image['camera']['binning']
 		offset = self.image['camera']['offset']
 		dimension = self.image['camera']['dimension']
-		self.__setBias()
 		if use_full_raw_area:
 			for axis in ('x','y'):
 				dimension[axis] = binning[axis] * dimension[axis] + 2 * offset[axis]
@@ -116,10 +136,10 @@ class DirectDetectorProcessing(object):
 		Checking changed camerainfo since last used so that cached 
 		references can be used if not changed.
 		'''
+		# return True all the time to use Gram-Schmidt process to calculate darkarray scale
+		return True
 		if len(self.camerainfo.keys()) == 0:
-			self.log.write( 'faile no camerainfo\n ')
-			return True
-		if self.camerainfo['ccdcamera'].dbid != self.image['camera']['ccdcamera'].dbid:
+			self.log.write( 'first frame image to be processed\n ')
 			return True
 		if self.camerainfo['norm'].dbid != self.image['norm'].dbid:
 			self.log.write( 'fail norm %d vs %d test\n ' % (self.camerainfo['norm'].dbid,self.image['norm'].dbid))
@@ -181,39 +201,13 @@ class DirectDetectorProcessing(object):
 				rawarray = self.__loadOneRawFrame(rawframe_dir,frame_number)
 				if rawarray is False:
 					return False
-				print 'one', frame_number,arraystats.mean(rawarray),rawarray.min(),rawarray.max()
 			else:
 				oneframe = self.__loadOneRawFrame(rawframe_dir,frame_number)
 				if oneframe is False:
 					return False
-				print 'one',frame_number,arraystats.mean(oneframe),oneframe.min(),oneframe.max()
 				rawarray += oneframe
 		print 'rawsum',arraystats.mean(rawarray),rawarray.min(),rawarray.max()
 		return rawarray
-
-	def __getRefImageData(self,reftype):
-		if not self.use_full_raw_area:
-			refdata = self.image[reftype]
-		else:
-			# use most recent CorrectorImageData
-			# TO DO: this should research only ones before the image is taken.
-			scopedata = self.image['scope']
-			channel = self.image['channel']
-			refdata = self.c_client.researchCorrectorImageData(reftype, scopedata, self.camerainfo, channel)
-		return refdata
-
-	def scaleRefImage(self,reftype,nframe,bias=False):
-		refdata = self.__getRefImageData(reftype)
-		ref_nframe = len(refdata['camera']['use frames'])
-		refscale = float(nframe) / ref_nframe
-		print reftype,os.path.join(refdata['session']['image path'],refdata['filename']+'.mrc')
-		print 'before scale',reftype, arraystats.mean(refdata['image']),refdata['image'].min(),refdata['image'].max()
-		scaled_refarray = refdata['image'] * refscale
-		print 'after scale',reftype, arraystats.mean(scaled_refarray),scaled_refarray.min(),scaled_refarray.max()
-		if reftype == 'dark':
-			scaled_refarray = scaled_refarray - refscale * self.bias	
-		print 'after scale',reftype, arraystats.mean(scaled_refarray),scaled_refarray.min(),scaled_refarray.max()
-		return scaled_refarray
 
 	def correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
 		corrected = self.__correctFrameImage(start_frame,nframe,use_full_raw_area)
@@ -239,7 +233,24 @@ class DirectDetectorProcessing(object):
 		self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
 		return False
 
-	def __correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
+	def darkCorrection(self,rawarray,darkarray):
+		onedshape = rawarray.shape[0] * rawarray.shape[1]
+		b = darkarray.reshape(onedshape)
+		dark_scale = self.c_client.calculateDarkScale(rawarray,darkarray)
+		corrected = (rawarray - dark_scale * darkarray)
+		print 'before norm cc',numpy.corrcoef(corrected.reshape(onedshape),b)[(0,1)]
+		return corrected,dark_scale
+
+	def makeNorm(self,brightarray,darkarray,dark_scale):
+		#calculate normarray
+		normarray = self.c_client.calculateNorm(brightarray,darkarray,dark_scale)
+		# clip norm to a smaller range to filter out very big values
+		clipmin = min(1/3.0,max(normarray.min(),1/normarray.max()))
+		clipmax = max(3.0,min(normarray.max(),1/normarray.min()))
+		normarray = numpy.clip(normarray, clipmin, clipmax)
+		return normarray
+
+	def __correctFrameImage(self,start_frame,nframe,use_full_raw_area=False,stripe_correction=False):
 		'''
 		This returns corrected numpy array of given start and total number
 		of raw frames of the current image set for the class instance.  
@@ -262,55 +273,83 @@ class DirectDetectorProcessing(object):
 
 		# o.k. to set attribute now that condition change is checked
 		self.use_full_raw_area = use_full_raw_area
-		if get_new_refs:
-			# load dark and bright
-			self.__setCameraInfo(nframe,use_full_raw_area)
-			scaled_brightarray = self.scaleRefImage('bright',nframe)
-			unscaled_darkarray = self.__getRefImageData('dark')['image']
-			unscaled_brightarray = self.__getRefImageData('bright')['image']
-			normarray = self.c_client.calculateNorm(scaled_brightarray,unscaled_darkarray)
-			# clip norm to a smaller range to filter out very big values
-			clipmin = min(1/3.0,max(normarray.min(),1/normarray.max()))
-			clipmax = max(3.0,min(normarray.max(),1/normarray.min()))
-			normarray = numpy.clip(normarray, clipmin, clipmax)
-			stats = numextension.allstats(normarray, mean=True)
-			normavg = stats['mean']
-			print 'norm',normavg,normarray.min(),normarray.max()
 
-			self.normarray = normarray
+		# DARK CORRECTION
+		if get_new_refs:
+			# load dark 
+			self.__setCameraInfo(nframe,use_full_raw_area)
+			unscaled_darkarray = self.getSingleFrameDarkArray()
 			self.unscaled_darkarray = unscaled_darkarray
 		else:
-			normarray = self.normarray
 			unscaled_darkarray = self.unscaled_darkarray
 
 		# load raw frames
 		rawarray = self.sumupFrames(self.rawframe_dir,start_frame,nframe)
 		if rawarray is False:
 			return False
-		print rawarray.shape
-		print normarray.shape
-		mrc.write(normarray,'norm.mrc')
-		mrc.write(unscaled_darkarray,'dark.mrc')
-		# gain correction
-		#corrected = (rawarray - scaled_darkarray - self.bias) * normarray
-		corrected = (rawarray - nframe * unscaled_darkarray) * normarray
-		# fix bad pixels
-		plan = self.c_client.retrieveCorrectorPlan(self.camerainfo)
-		self.c_client.fixBadPixels(corrected,plan)
+		#mrc.write(unscaled_darkarray,'dark.mrc')
+		#mrc.write(rawarray,'raw.mrc')
+		corrected, dark_scale = self.darkCorrection(rawarray,unscaled_darkarray)
+
+		# GAIN CORRECTION
+		if get_new_refs:
+			scaled_brightarray = self.getScaledBrightArray(nframe)
+			normarray = self.makeNorm(scaled_brightarray,unscaled_darkarray, dark_scale)
+			self.normarray = normarray
+		else:
+			normarray = self.normarray
+		#mrc.write(normarray,'norm.mrc')
+		#mrc.write(scaled_brightarray,'bright.mrc')
+		corrected = corrected * normarray
+
+		# BAD PIXEL FIXTING
+		# This is commented out because it interferes with Gram-Schmidt process
+		#plan = self.c_client.retrieveCorrectorPlan(self.camerainfo)
+		#self.c_client.fixBadPixels(corrected,plan)
 		#corrected = numpy.clip(corrected,0,10000)
 		print 'corrected',arraystats.mean(corrected),corrected.min(),corrected.max()
+
+		if stripe_correction:
+			stripenorm = self.getStripeNormArray(512,use_full_raw_area)
+			mrc.write(stripenorm,'stripenorm.mrc')
+			corrected = corrected * stripenorm
 		return corrected
+
+	def getStripeNormArray(self,length=256,use_full_raw_area=False):
+		'''
+		Experimental correction to remove horizontal stripe that is not removed from
+		the dark and gain corrections.  The convolution this function perform will
+		produce blurring if there is true signal in the image that is used as reference.
+		This is a flaw in the current code since it uses the data image to calculate
+		the stripenormarray.
+		'''
+		if self.stripenorm_imageid == self.image.dbid:
+			apDisplay.printWarning('Same Image, use existing stripe norm array to save time')
+			return self.stripenormarray
+		image_nframes = self.getNumberOfFrameSaved()
+		array = self.__correctFrameImage(0,image_nframes,use_full_raw_area,False)
+		shape = array.shape
+		if shape < length:
+			length = shape
+		length = int(length)
+		stripearray = numpy.ones(shape)
+		for weightshape in ((1,length),(length,1)):
+			weightarray = numpy.ones((1,length))
+			stripearray = stripearray * ndimage.filters.convolve(array,weightarray,mode='reflect')
+		self.stripenorm_imageid = self.image.dbid
+		self.stripenormarray = (stripearray.mean() / stripearray)**2
+		return self.stripenormarray
 
 	def makeCorrectedRawFrameStack(self,rundir, use_full_raw_area=False):
 		sys.stdout.write('\a')
 		sys.stdout.flush()
 		rawframedir = self.getRawFrameDirFromImage(self.image)
 		framestackpath = os.path.join(rundir,self.image['filename']+'_st.mrc')
-		total_frames = self.__getNumberOfFrameSaved()
+		total_frames = self.getNumberOfFrameSaved()
 		half_way_frame = int(total_frames // 2)
 		first = 0 
 		for start_frame in range(first,first+total_frames):
-			array = self.__correctFrameImage(start_frame,1,use_full_raw_area)
+			array = self.__correctFrameImage(start_frame,1,use_full_raw_area,False)
 			# if non-fatal error occurs, end here
 			if array is False:
 				break
