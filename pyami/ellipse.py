@@ -44,11 +44,10 @@ def drawEllipse(shape, angleinc, center, a, b, alpha):
 	points = ellipsePoints(angleinc, center, a, b, alpha)
 	for point in points:
 		point = map(int, point)
-		result[int(point[0]), int(point[1])] = 1
 		try:
 			result[int(point[0]), int(point[1])] = 1
 		except:
-			pass
+			continue
 	return result
 
 
