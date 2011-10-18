@@ -62,7 +62,7 @@ if ($showntomoaligns) {
 	}
 	$html .= "</TR>\n";
 	foreach ($showntomoaligns as $t) {
-		$aligninfo = $particle->getTomoAlignmentInfo($t['alignrun id']);
+		$aligninfo = $particle->getTomoAlignmentInfo($t['alignrunid']);
 		$t['bad align'] = $aligninfo['badAlign'];
 		$t['method'] = $aligninfo['method'];
 		$html .= $particle->displayParametersInSummary($t,$display_keys,$expId,$hide_button_field='alignrun id');

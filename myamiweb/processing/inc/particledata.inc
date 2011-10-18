@@ -260,10 +260,16 @@ class particledata {
 				."imod.`FilterSigma2` as sigma2, "
 				."imod.`FilterRadius2` as radius2, ";
 		}
+		if ($this->mysql->SQLTableExists('ApRaptorParamsData')) {
+			$q .= "a.`REF|ApRaptorParamsData|raptorParams` as raptorid, "
+				 ."";
+		}
+		if ($this->mysql->SQLTableExists('ApProtomoParamsData')) {
+			$q .= "a.`REF|ApProtomoParamsData|fineProtomoParams` as protomoid, "
+				 ."";
+		}
 		$q .= ""
 			."a.`REF|leginondata|TomographySettingsData|coarseLeginonParams` as xleginonid, "
-			."a.`REF|ApProtomoParamsData|fineProtomoParams` as protomoid, "
-			."a.`REF|ApRaptorParamsData|raptorParams` as raptorid, "
 			."a.`description`, "
 			."a.`hidden` "
 			."FROM `ApTomoAlignmentRunData` a "
