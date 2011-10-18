@@ -160,6 +160,20 @@ class XmippML3DRefineJob(apRefineJob.RefineJob):
 		apDisplay.printMsg("finished setting up input files, now running xmipp_protocols_ml3d.py")
 				
 		return protocolfile, protocolPrm
+	
+	def makeNewTrialScript(self):
+		print self.params['modelnames'][0]
+		self.addSimpleCommand('ln -s %s %s' % (self.params['modelnames'][0], 
+			os.path.join(self.params['remoterundir'], self.params['modelnames'][0])))
+		partar = os.path.join(self.params['remoterundir'],'partfiles.tar.gz')
+		partpath = os.path.join(self.params['remoterundir'],'partfiles')
+		if not os.path.isdir(partpath):
+			# partfiles need to be untared in its directory
+			self.addSimpleCommand('mkdir %s' % partpath)
+			self.addSimpleCommand('cd %s' % partpath)
+			self.addSimpleCommand('tar xvf %s' % partar)
+			# return to recondir
+			self.addSimpleCommand('cd %s' % self.params['recondir'])
 				
 	#=====================
 	def makePreIterationScript(self):
