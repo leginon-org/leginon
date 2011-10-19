@@ -476,6 +476,8 @@ class uploadXmippML3DScript(reconUploader.generalReconUploader):
 		self.ml3dpath = os.path.abspath(os.path.join(self.params['rundir'], "recon", self.runparams['package_params']['WorkingDir'], "RunML3D"))
 			
 		### check for variable root directories between file systems
+		if os.path.split(self.runparams['remoterundir'])[1] == "recon":
+			self.runparams['remoterundir'] = os.path.split(self.runparams['remoterundir'])[0]
 		apXmipp.checkSelOrDocFileRootDirectoryInDirectoryTree(self.params['rundir'], self.runparams['remoterundir'], self.params['rundir'])
 						
 		### determine which iterations to upload
