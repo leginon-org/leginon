@@ -8,12 +8,13 @@
  *	Display results for each iteration of a refinement
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
+require_once "inc/appionloop.inc";
 
 // --- check if reconstruction is specified
 
@@ -40,7 +41,12 @@ function createform($extra=False) {
 	$symid =$refineIterParams['REF|ApSymmetryData|symmetry'];
 	$defmask = $refineIterParams['mask'] ? floor($refineIterParams['mask']*$apix) : '';
 	$defimask = $refineIterParams['imask'] ? ceil($refineIterParams['imask']*$apix) : '';
-	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density");
+
+	$javascript="<script src='../js/viewer.js'></script>
+	</script>\n";
+	$javascript .= writeJavaPopupFunctions('appion');
+
+	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density", $javascript);
 
 	// write out errors, if any came up:
 	if ($extra) echo "<font color='#cc3333' size='+2'>$extra</font>\n<hr/>\n";
@@ -78,6 +84,7 @@ function createform($extra=False) {
 	$vipercheck=($_POST['viper']=='on') ? 'checked' : '';
 	$normcheck=($_POST['norm']=='on' || !$_POST['run']) ? 'checked' : '';
 	$bfactorcheck=($_POST['bfactor']=='on') ? 'checked' : '';
+	$lrdwcheck=($_POST['lrdw']=='on') ? 'checked' : '';
 
 	$res = ($_POST['res']) ? $_POST['res'] : round($halfres,2);
 	$maxfilt = ($_POST['maxfilt']) ? $_POST['maxfilt'] : '';
@@ -138,6 +145,23 @@ function createform($extra=False) {
 		."using automated b-factor determination from FSC curve\n";
 	echo "(<a href='http://www.ual.es/~jjfdez/SW/embfactor.html'>"
 		."description&nbsp;<img src='img/external.png' border='0'></a>)\n";
+	echo "</td></tr>\n";
+
+	// Low res down weighting
+	echo "<tr><td colspan='2'>\n";
+	echo "<h3>Low resolution down weighting (LRDW):</h3>\n";
+	echo "</td></tr>\n";
+	echo "<tr><td>&nbsp;</td><td>\n";
+	echo "<input type='checkbox' name='lrdw' $lrdwcheck>Down weight "
+		."low resolution layer lines to increase high resolution contributions "
+		."(for Helical Data only) \n";
+	echo "<br/>\n";
+	echo "<input type'text' name='resol' value='$resol' size='4'>\n";
+	echo docpop('resol','Resolution cutoff (&Aring)');
+	echo "<br/>\n";
+	echo "<input type'text' name='ampx' value='$ampx' size='4'>\n";
+	echo docpop('ampx','Amplitude scaling factor');
+	echo "<br/>\n";
 	echo "</td></tr>\n";
 
 	// Amplitude correction
@@ -265,6 +289,9 @@ function runPostProc() {
 	$contour = $_POST['contour'];
 	$outdir=$_POST['outdir'];
 	$densityname = $_POST['densityname'];
+	$lrdw = $_POST['lrdw'];
+	$resol = $_POST['resol'];
+	$ampx = $_POST['ampx'];
 
 	// get session name from expId
 	$expId = $_GET['expId'];
@@ -277,7 +304,11 @@ function runPostProc() {
 	******************** */
 	if ($ampcor && $bfactor)
 		createform('<B>ERROR:</B> Select only one of amplitude or b-factor correction');
-	if (!$ampcor && !$bfactor)
+	if ($ampcor && $lrdw)
+		createform('<B>ERROR:</B> Select only one of amplitude correction or LRDW');
+	if ($lrdw && $bfactor)
+		createform('<B>ERROR:</B> Select only one of LRDW or b-factor correction');
+	if (!$ampcor && !$bfactor && !$lrdw)
 		createform('<B>ERROR:</B> Select an amplitude adjustment curve or b-factor correction');
 	if ($ampcor)
 		list($ampfile, $maxfilt) = explode('|~~|',$ampcor);
@@ -294,6 +325,10 @@ function runPostProc() {
 		if ($maxfilt < $apix*2)
 			$maxfilt = $apix*2.1;
 		$command.= "--maxfilt=$maxfilt ";
+	} elseif ($lrdw) {
+		$command.="--lrdw ";
+		$command.="--resol=$resol ";
+		$command.="--ampx=$ampx ";
 	} else {
 		$command.="--bfactor ";
 	}

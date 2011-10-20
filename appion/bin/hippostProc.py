@@ -4,6 +4,7 @@
 import os
 import sys
 import re
+import subprocess
 from appionlib import appionScript
 from appionlib import apParam
 from appionlib import apDisplay
@@ -57,6 +58,8 @@ class PostProcScript(appionScript.AppionScript):
 			help="Zoom factor for snapshot rendering (1.5 by default)", metavar="#")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
 			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="#")
+		self.parser.add_option("--ampx", dest="ampx", type="float", default=0.3,
+			help="Amplitude scaling factor for low resolution down weighting", metavar="#")
 
 		#ints
 		self.parser.add_option("--mass", dest="mass", type="int",
@@ -65,6 +68,8 @@ class PostProcScript(appionScript.AppionScript):
 			help="RefinementData Id for this iteration (not the recon id)", metavar="#")
 		self.parser.add_option("--median", dest="median", type="int",
 			help="Median", metavar="#")
+		self.parser.add_option("--resol", dest="resol", type="int",
+			help="Resolution cut off for low resolution down weighting", metavar="#")
 
 		#true/false
 		self.parser.add_option("-y", "--yflip", dest="yflip", default=False,
@@ -77,6 +82,8 @@ class PostProcScript(appionScript.AppionScript):
 			action="store_true", help="Normalize the final density such that mean=0, sigma=1")
 		self.parser.add_option("--bfactor", dest="bfactor", default=False,
 			action="store_true", help="Apply B-factor correction using FSC curve")
+		self.parser.add_option("--lrdw", dest="lrdw", default=False,
+			action="store_true", help="Down weight low resolution data to specified amplitude")
 
 		return
 
@@ -194,6 +201,8 @@ class PostProcScript(appionScript.AppionScript):
 		### start the outfile name
 		fileroot = os.path.splitext(self.params['filename'])[0]
 		fileroot += "-"+self.timestamp
+		filename = self.params['file'].split('/')[-1]
+		filepath = self.params['file'].strip(filename)
 
 		self.params['box'] = apVolume.getModelDimensions(self.params['file'])
 
@@ -218,6 +227,10 @@ class PostProcScript(appionScript.AppionScript):
 			outfile = os.path.join( self.params['rundir'], "bfactor-fix.mrc" )
 			outfile = apAmpCorrect.applyBfactor(self.params['file'], fscfile=self.params['fscfile'], apix=self.params['apix'], mass=self.params['mass'], outfile=outfile)
 			curfile = outfile
+		elif self.params['lrdw'] is True:
+			lrdwcmd = "s_diffmap2 %s %s %s %s"%(self.params['filepath'],self.params['filename'],self.params['ampx'],self.params['resol'])
+			proc = subprocess.Popen(lrdwcmd)
+			print lrdwcmd
 		else :
 			### just run proc3d
 			curfile = self.params['file']
