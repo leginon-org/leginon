@@ -238,7 +238,7 @@ class Cluster
 												$pass);
 				break;
 		
-			case default:
+			default:
 				throw new Exception("Unknown login authentication method.");
 				
 		}
