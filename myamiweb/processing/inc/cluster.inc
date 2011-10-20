@@ -29,6 +29,12 @@ class Cluster
 	private $remoteOutputPath;
 	private $baseoutdir;
 	private $localHelperHost; // local host used by remote host to rsync results
+	private $loginMehtod;     //Method used to login to cluster curently only USERPASSWORD or SHAREDKEY
+	private $loginUserName;   //Username for shared logins
+	private $publicKey;		  //Location of publickey file(s)
+	private $privateKey;	  //Location of private key file(s)
+	private $passPhrase;	  //passPhrase if it is to be stored in cluster config
+	
 	
 	function __construct( $hostname )
 	{
@@ -61,6 +67,11 @@ class Cluster
 		$this->localHelperHost 	= $hostconfig['localhelperhost'];
 		$this->dirSeparator 	= $hostconfig['dirsep']; // eg. "/"	
 		$this->wrapperPath		= $hostconfig['wrapperpath'];	
+		$this->loginMehtod		= $hostconfig['loginmethod'];
+		$this->loginUsername	= $hostconfig['loginusername'];
+		$this->passPhrase		= $hostconfig['passphrase'];
+		$this->publicKey		= $hostconfig['publickey'];
+		$this->privateKey       = $hostconfig['privatekey'];
 	}
 	
 	function getHostName() 		{ return $this->hostname; }
@@ -78,6 +89,47 @@ class Cluster
 	function getWrapperPath()   { return $this->wrapperPath; }
 	function getRemoteOutputPath() 	{ return $this->remoteOutputPath; }
 	function getLocalHelperHost()   { return $this->localHelperHost; }
+ 	function getLoginMethod() 	{ return $this->loginMethod; }
+	function getUsername() 		{ return $this->loginUsername; }
+	function getPubkeyfile()	{ return $this->publicKey;}
+	function getPrikeyfile()	{ return $this->privateKey; }
+	function getPassphrase()	{ return $this->passPhrase; }
+
+   function setLoginMethod($method)
+   {
+      if ("SHAREDKEY" == $method || "USERPASSWORD" == $method)
+         $this->loginMethod = $method;
+      else
+         throw new Exception("Trying to set unknown login Method");
+   }
+   
+   function setUsername($userName)
+   {
+      $this->username = $userName;
+   }
+
+   function setPassphrase($passPhrase)
+   {
+      $this->passphrase = $passPhrase;
+   }
+
+   function setPubkeyfile($keyfile)
+   {
+      if (@is_file($keyfile)){
+         $this->publickeyFile = $keyfile;
+      }
+      else
+         throw new Exception("Can not read public key file.");
+   }
+
+   function setPrikeyfile($keyfile)
+   {
+      if (@is_file($keyfile)){
+         $this->privatekeyFile = $keyfile;
+      }
+      else
+         throw new  Exception("Can not read private key file");
+   }
 	
 	function setRemoteOutputPath()
 	{
@@ -110,6 +162,92 @@ class Cluster
 	{
 		$path = ereg($this->dirSeparator."$", $path) ? $path : $path.$this->dirSeparator;
 		return $path;
+	}
+	
+	function executeOnHost ($userName, $password, $command, $port=22)
+	{
+		$result = false;
+				
+		if (!$connection =$this->authenticateConnection($username, $password)){
+			throw new Exception("Authentication Failure, verify login credentials");
+		}
+		
+		if (!$stream = ssh2_exec($connection, $command)) {
+			throw new Exception("Could not run command on remote host $this->getHostName().");
+		}
+		
+		sleep(1.1);
+
+		stream_set_blocking($stream, false);
+		if (function_exists("stream_get_contents")) {		
+			$result = stream_get_contents($stream);
+		} else {
+			$result = fread($stream,4096);
+			fclose($stream);
+		}
+		
+		return $result;
+	}
+	
+	
+	function copyToHost	($username, $password, $localfile, $remotefile, $mode=0644, $port=22)
+	{
+		//Check that the local file exists
+		if (!@is_file($localfile)){
+			throw new EXception("File doesn't exists $localfile");
+		}
+		
+		
+		if (!$connection=$this->authenticatedConnection($username, $password)){
+			throw new Exception("Authentication Failure, verify login credentials");
+		}
+		
+		if (ssh2_scp_send($connection, $localfile, $remotefile, $mode)){
+		ssh2_exec($connection, 'exit');
+		$result = true;
+		}
+		else{
+			throw new Exception ("Could not copy file to host $this->getHostName().  Check permissions on remote file ordirectory");
+		}
+	
+		return $result;
+	}
+	
+	//returns an ssh connection object which has already been authenticated 
+	//the method specified by $this->loginMehod
+	private function authenticatedConnection($username, $password, $port=22)
+	{
+		
+		if (!$connection = ssh2_connect($this->hostname, $port)){
+			throw new Exception("Connection to remote host $this->getHostName()!");
+		}
+		
+		switch ($this->getLoginMethod()){
+			case "USERPASSWORD":
+				$result = ssh2_auth_password($connection, $username, $password);
+				break;
+			case "SHAREDKEY":
+				if (($pass=$this->getPassPrase()) === false)
+					$pass = $password;					
+				if (($user=$this->getUserName()) == "")
+					$user = $username;
+				$result = ssh2_auth_pubkey_file($connection, 
+												$user,
+												$this->getPublicKey(), 
+												$this->getPrivateKey(), 
+												$pass);
+				break;
+		
+			case default:
+				throw new Exception("Unknown login authentication method.");
+				
+		}
+		
+		if (!$result){
+			throw new Exception("Failure authenticating login to $this->getHostName(), verify login credentials");
+		}
+		
+		return $result;
 	}
 }
 ?>
