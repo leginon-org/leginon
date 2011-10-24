@@ -97,6 +97,8 @@ class DE12(ccdcamera.CCDCamera):
 		if not isinstance(image, numpy.ndarray):
 			raise ValueError('DE12 GetImage did not return array')
 		image = self.finalizeGeometry(image)
+		print 'Pausing, otherwise, no frames name when this returns.'
+		time.sleep(0.5)
 		return image
 
 	def finalizeGeometry(self, image):
@@ -166,8 +168,9 @@ class DE12(ccdcamera.CCDCamera):
 		self.setProperty('Autosave Raw Frames', value_string)
 
 	def getPreviousRawFramesName(self):
-		return self.getProperty('Autosave Raw Frames - Previous Dataset Name')
-
+		frames_name = self.getProperty('Autosave Frames - Previous Dataset Name')
+		return frames_name
+        
 	def getNumberOfFramesSaved(self):
 		nframes = self.getProperty('Autosave Raw Frames - Frames Written in Last Exposure')
 		return int(nframes)
@@ -192,3 +195,12 @@ class DE12(ccdcamera.CCDCamera):
 		nframes = int(nframes)
 		print 'SETTING SUM', time.time(), nframes
 		self.setProperty('Number of Frames To Sum', nframes)
+
+	def getFrameRate(self):
+		return self.getProperty('Frames Per Second')
+
+	def getReadoutDelay(self):
+		return self.getProperty('Sensor Readout Delay (milliseconds)')
+
+	def setReadoutDelay(self, milliseconds):
+		self.setProperty('Sensor Readout Delay (milliseconds)', milliseconds)
