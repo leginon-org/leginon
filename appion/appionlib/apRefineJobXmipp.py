@@ -123,12 +123,12 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["ReferenceIsCtfCorrected"]      =   True
 		protocolPrm["DoMask"]                       =   self.params['maskvol']>0
 		protocolPrm["DoSphericalMask"]              =   self.params['outerMaskRadius']>0
-		protocolPrm["MaskRadius"]                   =   self.params['outerMaskRadius'].split()[0]
+		protocolPrm["MaskRadius"]                   =   self.params['outerMaskRadius'].split()[0] / self.params['apix']
 		protocolPrm["MaskFileName"]                 =   self.params['maskvol']
 		protocolPrm["DoProjectionMatching"]         =   True
 		protocolPrm["DisplayProjectionMatching"]    =   False
-		protocolPrm["InnerRadius"]                  =   self.params['innerAlignRadius']
-		protocolPrm["OuterRadius"]                  =   self.params['outerAlignRadius']
+		protocolPrm["InnerRadius"]                  =   self.params['innerAlignRadius'] / self.params['apix']
+		protocolPrm["OuterRadius"]                  =   self.params['outerAlignRadius'] / self.params['apix']
 		protocolPrm["AvailableMemory"]              =   '%d' % self.calcRefineMem()
 #		protocolPrm["AngSamplingRateDeg"]           =   self.params['AngularSteps']
 		protocolPrm["AngSamplingRateDeg"]           =   self.params['angSampRate']
