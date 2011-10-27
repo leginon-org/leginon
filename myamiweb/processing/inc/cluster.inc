@@ -67,7 +67,7 @@ class Cluster
 		$this->localHelperHost 	= $hostconfig['localhelperhost'];
 		$this->dirSeparator 	= $hostconfig['dirsep']; // eg. "/"	
 		$this->wrapperPath		= $hostconfig['wrapperpath'];	
-		$this->loginMehtod		= $hostconfig['loginmethod'];
+		$this->loginMethod		= $hostconfig['loginmethod'];
 		$this->loginUsername	= $hostconfig['loginusername'];
 		$this->passPhrase		= $hostconfig['passphrase'];
 		$this->publicKey		= $hostconfig['publickey'];
@@ -91,9 +91,18 @@ class Cluster
 	function getLocalHelperHost()   { return $this->localHelperHost; }
  	function getLoginMethod() 	{ return $this->loginMethod; }
 	function getUsername() 		{ return $this->loginUsername; }
-	function getPubkeyfile()	{ return $this->publicKey;}
-	function getPrikeyfile()	{ return $this->privateKey; }
-	function getPassphrase()	{ return $this->passPhrase; }
+	function getPublicKey()	{ return $this->publicKey;}
+	function getPrivateKey()	{ return $this->privateKey; }
+	function getPassPhrase()	{ return $this->passPhrase; }
+	
+	function usesLoginMethod()
+	{
+		$method = $this->loginMethod;
+		if ("SHAREDKEY" == $method || "USERPASSWORD" == $method) {
+			return true;
+		}	
+		return false;
+	}
 
    function setLoginMethod($method)
    {
@@ -164,19 +173,20 @@ class Cluster
 		return $path;
 	}
 	
-	function executeOnHost ($userName, $password, $command, $port=22)
+	function executeOnHost ($username, $password, $command, $port=22)
 	{
 		$result = false;
 				
-		if (!$connection =$this->authenticateConnection($username, $password)){
+		if (!$connection = $this->authenticatedConnection($username, $password)) {
 			throw new Exception("Authentication Failure, verify login credentials");
 		}
 		
 		if (!$stream = ssh2_exec($connection, $command)) {
-			throw new Exception("Could not run command on remote host $this->getHostName().");
+			$msg = "Could not run command on remote host ".$this->getHostName().".";
+			throw new Exception($msg);
 		}
 		
-		sleep(1.1);
+		sleep(25.1);
 
 		stream_set_blocking($stream, false);
 		if (function_exists("stream_get_contents")) {		
@@ -194,20 +204,20 @@ class Cluster
 	{
 		//Check that the local file exists
 		if (!@is_file($localfile)){
-			throw new EXception("File doesn't exists $localfile");
+			throw new Exception("File doesn't exists $localfile");
 		}
 		
 		
-		if (!$connection=$this->authenticatedConnection($username, $password)){
+		if ( !($connection = $this->authenticatedConnection($username, $password)) ){
 			throw new Exception("Authentication Failure, verify login credentials");
 		}
 		
-		if (ssh2_scp_send($connection, $localfile, $remotefile, $mode)){
-		ssh2_exec($connection, 'exit');
-		$result = true;
-		}
-		else{
-			throw new Exception ("Could not copy file to host $this->getHostName().  Check permissions on remote file ordirectory");
+		if (ssh2_scp_send($connection, $localfile, $remotefile, $mode)) {
+			ssh2_exec($connection, 'exit');
+			$result = true;
+		} else {
+			$msg = "Could not copy file to host ".$this->getHostName().".  Check permissions on remote file ordirectory";
+			throw new Exception( $msg );
 		}
 	
 		return $result;
@@ -218,19 +228,25 @@ class Cluster
 	private function authenticatedConnection($username, $password, $port=22)
 	{
 		
-		if (!$connection = ssh2_connect($this->hostname, $port)){
-			throw new Exception("Connection to remote host $this->getHostName()!");
+		if ( !($connection = ssh2_connect($this->getHostName(), $port)) ) {
+			$msg = "Connection to remote host ". $this->getHostName()."!";
+			throw new Exception($msg);
 		}
 		
-		switch ($this->getLoginMethod()){
+		$loginMethod = $this->getLoginMethod();
+		switch ($loginMethod){
 			case "USERPASSWORD":
 				$result = ssh2_auth_password($connection, $username, $password);
 				break;
 			case "SHAREDKEY":
-				if (($pass=$this->getPassPrase()) === false)
+				$pass = $this->getPassPhrase();
+				if ($pass === false) {
 					$pass = $password;					
-				if (($user=$this->getUserName()) == "")
+				}
+				$user = $this->getUserName();
+				if ($user == "") {
 					$user = $username;
+				}
 				$result = ssh2_auth_pubkey_file($connection, 
 												$user,
 												$this->getPublicKey(), 
@@ -244,10 +260,11 @@ class Cluster
 		}
 		
 		if (!$result){
-			throw new Exception("Failure authenticating login to $this->getHostName(), verify login credentials");
+			$msg = "Failure authenticating login to ".$this->getHostName().", verify login credentials";
+			throw new Exception($msg);
 		}
 		
-		return $result;
+		return $connection;
 	}
 }
 ?>

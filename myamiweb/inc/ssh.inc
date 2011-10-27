@@ -7,14 +7,41 @@
  *      see  http://ami.scripps.edu/software/leginon-license
  */
 
+require_once "../processing/inc/cluster.inc";
+
 $showDebug = false;
 $showErrors = false;
 $connError = 'NOTSET';
+$errorMessage = "no error set";
+$testNewStuff = true;
 
-function exec_over_ssh($host, $username, $password, $command, $result=false, $port=22) {
+
+function exec_over_ssh($host, $username, $password, $command, $result=false, $port=22) 
+{
+	global $testNewStuff;
+	global $errorMessage;
+	
+	if ( $testNewStuff ) {
+		
+		$sshResult = true;
+		
+		$cluster = new Cluster($host);
+		if ( $cluster->usesLoginMethod() ) {			
+			try {
+				$sshResult = $cluster->executeOnHost($username, $password, $command, $port);
+			} catch(Exception $e) {
+	  			$errorMessage = 'Error executing over ssh on host: '.$host.' sending command: '.$command.' username: '.$username.' Error Message: ' .$e->getMessage();
+	  			$sshResult = false;
+			}
+			
+			return $sshResult;
+		}
+	}
+	
 	global $showDebug;
 	global $showErrors;
 	global $connError;
+	
 	
 	if($showDebug) { echo "'$host', '$username', '$command', '$result', '$port'<br/>\n"; }
 
@@ -45,7 +72,10 @@ function exec_over_ssh($host, $username, $password, $command, $result=false, $po
 
 	if (!$result)
 		return true;
-	sleep(1.1);
+	
+	// Not sure why this is here, but submission appears to fail without it.
+	// was set to 1.1, but having trouble. increasing sleep time to 5.1. AH
+	sleep(5.1);
 
 	//stream_set_blocking($stream, true);
 	// testing to see if this allows ssh to return after spawning a thread...
@@ -63,7 +93,28 @@ function exec_over_ssh($host, $username, $password, $command, $result=false, $po
 	return $result;
 }
 
-function scp($host, $username, $password, $localfile, $remotefile, $mode=0644, $port=22) {
+function scp($host, $username, $password, $localfile, $remotefile, $mode=0644, $port=22) 
+{
+	global $testNewStuff;
+	global $errorMessage;
+	
+	if ( $testNewStuff ) {
+		
+		$sshResult = true;
+		
+		$cluster = new Cluster($host);
+		if ( $cluster->usesLoginMethod() ) {			
+			try {
+				$sshResult = $cluster->copyToHost($username, $password, $localfile, $remotefile, $mode, $port);
+			} catch(Exception $e) {
+	  			$errorMessage = 'Error copying file over ssh on host: '.$host.' local file: '.$localfile.' remote file: '.$remotefile.' username: '.$username.' Error Message: ' .$e->getMessage();
+	  			$sshResult = false;
+			}
+			
+			return $sshResult;
+		}
+	}
+	
 	global $connError;
 	
 	if (!@is_file($localfile)){
@@ -109,6 +160,13 @@ function check_ssh($host, $username, $password, $port=22) {
 */
 function pconnError($errorno='NOTPASSED') 
 {
+	global $testNewStuff;
+	global $errorMessage;
+	// Testing new ssh methods
+	if ( $testNewStuff ) {	
+		return $errorMessage;
+	}
+	
 	global $connError;
 	
 	//If error code isn't supplied in fuction call, use global variable value.
