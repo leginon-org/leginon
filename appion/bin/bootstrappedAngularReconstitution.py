@@ -67,7 +67,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			help="scale the class averages to a boxsize of 64x64 prior to iterative model creation")
 			
 		### Angular Reconstitution
-		self.parser.add_option("--symmetry", dest="symid", type="int", default=25,
+		self.parser.add_option("--symmetry", dest="symid", type="int", default=1,
 			help="symmetry of the object (ID from Appion Database). This is automatically defaulted to the suggested C1 symmetry", metavar="INT")
 		self.parser.add_option("--num_volumes", dest="num_volumes", type="int",
 			help="number of volumes to create using angular reconstitution", metavar="INT")
@@ -264,19 +264,25 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 	#=====================
 	#=====================		
 	
-	def create_difference_matrix(self, ccc_matrix):
+	def create_difference_matrix(self, ccc_matrix, norm=False):
 		''' inverts the similarity matrix to create a difference matrix based on (diff=1-sim) metric '''
 
 		### take inverse of CCC & normalize
 		diff_matrix = numpy.where(ccc_matrix < 1, 1-ccc_matrix, 0)
-
-		return diff_matrix
+		if norm is True:
+			min = numpy.where(diff_matrix > 0, diff_matrix, 1).min()
+			max = diff_matrix.max()
+			norm_diff_matrix = numpy.where(diff_matrix > 0, (diff_matrix - (min+0.0001))/(max-min), 0)
+			norm_diff_matrix = numpy.where(diff_matrix == 1, 1 - numpy.random.uniform(0,1)*0.000001, diff_matrix)
+			return norm_diff_matrix
+		else:
+			return diff_matrix
 		
 	#=====================
 	#=====================
 	#=====================	
 
-	def calculate_sequence_of_addition(self, avgs, ccc_matrix):
+	def calculate_sequence_of_addition(self, avgs, ccc_matrix, first=None, normlist=False):
 		''' 
 		calculates a unique sequence of addition of class averages. function first initializes a random seed, then calculates
 		the rest of the sequence based on the resulting weighted probability matrix generated from each successive addition
@@ -285,35 +291,54 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		### initialize sequence (image queue) and weight matrix, which determines sequence calculation
 		probability_list = numpy.zeros(self.params['numpart'])
 		sequence = []
-
-		### create image list with all particles
-		im_list = []
-		for i in range(self.params['numpart']):
-			im_list.append(i)
 			
 		### if completely random sequence is desired, do that here
 		if self.params['non_weighted_sequence'] is True:
+			im_list = []
+			for i in range(self.params['numpart']):
+				im_list.append(i)		
 			while im_list:
 				r = numpy.random.randint(len(im_list))
 				sequence.append(im_list[r]+1)
 				del im_list[r]
-
-		### otherwise randomize first image selection and continue with weighted selection
-		else:
-			im_init = numpy.random.randint(low=0, high=self.params['numpart'])
+			return sequence
 			
+		else:	
+			### otherwise randomize first image selection and continue with weighted selection
+			im_queue = []
+			for i in range(self.params['numpart']):
+				im_queue.append(i)
+			if first != None and isinstance(first, int):
+				im_init = first
+			else:
+				im_init = numpy.random.randint(low=0, high=self.params['numpart'])
+
 			### create probability matrix from ccc matrix and append new image
-			diff_matrix = self.create_difference_matrix(ccc_matrix)
+			diff_matrix = self.create_difference_matrix(ccc_matrix, norm=False)
 			probability_list = self.create_probability_list(im_init, probability_list, diff_matrix)
 			sequence.append(im_init+1)
-			
+
 			### figure out the rest of the sequence, based on the first randomly selected image
-			for image in range(len(im_list)-1):
-				next_choice = self.weighted_random_pick(im_list, probability_list)
+			for image in range(len(im_queue)-1):
+				next_choice = self.weighted_random_pick(im_queue, probability_list)
 				probability_list = self.update_probability_list(next_choice, probability_list, diff_matrix)
+				
+				### check to make sure that the probability list does not contain all zeros (in which case there are duplicate images)
+				break_weighted_randomization = False
+				for item in probability_list:
+					if sum(probability_list) == 0:
+						break_weighted_randomization = True ### do not weight randomization, just add the remaining images
+						for i in range(len(im_queue)):
+							if i+1 not in sequence:
+								sequence.append(i+1)
+								
+				if break_weighted_randomization is True:
+					break
+				if normlist is True:
+					probability_list = self.normList(probability_list)
 				sequence.append(next_choice+1)
-			
-		return sequence
+				
+			return sequence
 
 	#=====================
 	#=====================
@@ -324,7 +349,8 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		
 		for i in range(len(probability_list)):
 			probability_list[i] += diff_matrix[i][selection]
-			
+#			if probability_list[i] == 0: ### slightly perturb to avoid identical selections in sequence
+#				probability_list[i] = 0 + numpy.random.uniform(0,1) * 0.000001			
 		return probability_list
 		
 	#=====================
@@ -336,10 +362,8 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 
 		for i in range(len(probability_list)):
 			if probability_list[i] != 0:
-				probability_list[i] = probability_list[i] * diff_matrix[i][selection]
+				probability_list[i] *= diff_matrix[i][selection]
 		probability_list[selection] = 0 ### don't use this selection anymore
-		if max(probability_list) != 0:
-			probability_list = self.normList(probability_list)
 
 		return probability_list
 
@@ -347,7 +371,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 	#=====================
 	#=====================
 
-	def weighted_random_pick(self, im_list, probability_list, ):
+	def weighted_random_pick(self, im_queue, probability_list):
 		''' 
 		based on the given probabilities of the existing choices, this function determines what the next image will be. 
 		It uses a weighted randomized decision-making strategy that takes into account how different the images are from each other
@@ -356,12 +380,22 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		weight_total = sum((p for p in probability_list))
 		n = numpy.random.uniform(0, weight_total)
 		cumulative_p = 0.0
-		for image, image_probability in zip(im_list, probability_list):
+		for image, image_probability in zip(im_queue, probability_list):
 			cumulative_p += image_probability
 			if n < cumulative_p: break
-			
+					
 		return image
 			
+	def check_for_duplicates_in_sequence(self, sequence):
+		### make sure that the sequence does not contain duplicate selections
+		for j, s1 in enumerate(sequence):
+			for k, s2 in enumerate(sequence):
+				if j == k: pass
+				else:
+					if s1 == s2:
+						apDisplay.printError("%d, %d, equivalent values in final sequence" % (s1, s2))
+		return			
+		
 	#=====================
 	#=====================
 	#=====================
@@ -443,6 +477,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		### 1st iteration of angular reconstitution using 3 initial projections for C1, OR simply 1st 3 additions for other symmetries
 		f.write(str(self.imagicroot)+"/angrec/euler.e <<EOF > 3d"+str(iteration)+".log\n")
 		f.write(symmetry+"\n")
+#		f.write("c1\n")
 		lowercase = str(symmetry).lower()
 		if lowercase != "c1":
 			f.write("0\n")
@@ -1307,6 +1342,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		apDisplay.printColor("Running multiple IMAGIC 3d0 creations", "cyan")
 		for i in range(self.params['num_volumes']):
 			sequence = self.calculate_sequence_of_addition(self.params['avgs'], ccc_matrix)
+			self.check_for_duplicates_in_sequence(sequence)
 			seqfile.write(str(sequence)+"\n")
 			### create IMAGIC batch file for each model construction & append them to be threaded
 			batchfile = self.imagic_batch_file(sequence, i+1)
