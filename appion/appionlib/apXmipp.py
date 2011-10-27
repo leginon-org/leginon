@@ -528,7 +528,8 @@ def readDocfile(docfile):
 	d = {}
 	for i in range(len(splitl)/2):
 		filename = splitl[i*2][1]
-		partnum = int(float(filename[-10:-4]))
+		m = re.search('part[0-9]{6}', filename)
+		partnum = int(float(m.group(0)[-6:]))
 		vals = splitl[i*2+1]
 		d[partnum] = {'filename':filename, 'values':vals}
 	return d
