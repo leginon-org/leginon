@@ -1,4 +1,6 @@
 <?php
+// compress this file if the browser accepts it.
+if (substr_count($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip')) ob_start("ob_gzhandler"); else ob_start();
 /**
  *      The Leginon software is Copyright 2007
  *      The Scripps Research Institute, La Jolla, CA
@@ -40,16 +42,15 @@ if (is_array($models) && count($models)>0) {
 		$modelvals = "$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$symdata[eman_name]";
 
 		// if we want to be able to select multiple models, use checkboxes instead of radio buttons
-		// for single model, we expct the format $name="model, $value="model_#"
-		// for multi model, we expect both the name and the value to be "model_#"		
-		$value = "model_".$modelid;
 		if ( $type == "multi" ) {
 			$controlType = "checkbox";
-			$name = $value;
 		} else {
 			$controlType = "radio";
-			$name = "model";
 		}
+		
+		// we expect both the name and the value to be "model_#"		
+		$value = "model_".$modelid;
+		$name = $value;
 		
 		$modelTable .= "<input type='$controlType' NAME='$name' value='$value' >\n";
 		$modelTable .= "Use<br/>Model\n";
