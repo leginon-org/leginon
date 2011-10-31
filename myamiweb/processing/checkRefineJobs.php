@@ -202,23 +202,19 @@ function showStatus($jobinfo) {
 		$status='Error';
 	} elseif ($jobinfo['status']=='D') {
 		$has_coran = checkCoranTarGz($jobinfo);
-		$dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('"
-			."$jobinfo[dmfpath]','$jobinfo[appath]',$has_coran)\" value='Get files from DMF'>&nbsp;\n";
 		if ($jobinfo['jobtype'] == 'emanrecon') {
-			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
+			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
 				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload EMAN results'>&nbsp;\n";
 		} elseif ($jobinfo['jobtype'] == 'frealignrecon') {
-			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
-				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
 //			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
-//				."uploadFrealign.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
+//				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
+			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
+				."uploadFrealign.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
 		} elseif ($jobinfo['jobtype'] == 'xmipprecon') {
-//			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
-//				."uploadXmippRecon.php?expId=$expId&jobId=$jobid')\" value='Upload Xmipp results'>&nbsp;\n";
-			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
+			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
 				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload Xmipp results'>&nbsp;\n";
 		} elseif ($jobinfo['jobtype'] == 'xmippml3d') {
-			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
+			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
 				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload Xmippml3d results'>&nbsp;\n";
 		}
 		if ($user == $job['user'] || is_null($job['user'])) {
