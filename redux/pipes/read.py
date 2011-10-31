@@ -4,6 +4,7 @@ import os
 # myami
 import pyami.mrc
 import pyami.numpil
+import pyami.imagic
 
 # local
 from redux.pipe import Pipe
@@ -25,6 +26,8 @@ class Read(Pipe):
 		if filename.endswith('mrc') or filename.endswith('MRC'):
 			## use MRC module to read
 			input_format = 'mrc'
+		elif filename[-3:].lower() in ('img', 'hed'):
+			input_format = 'imagic'
 		else:
 			## use PIL to read
 			input_format = 'PIL'
@@ -33,6 +36,8 @@ class Read(Pipe):
 		if input_format == 'mrc':
 			# use mrc
 			image_array = pyami.mrc.read(filename, frame)
+		elif input_format == 'imagic':
+			image_array = pyami.imagic.read(filename, frame)
 		elif input_format == 'PIL':
 			# use PIL
 			image_array = pyami.numpil.read(filename)
