@@ -252,13 +252,28 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if imgpath is None:
 			return None, None, None
 
-		### run batchboxer command
+		### run apBoxer
 		imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
 		#emancmd = ("batchboxer input=%s dbbox=%s output=%s newsize=%i" 
 		#	%(imgpath, emanboxfile, imgstackfile, self.params['boxsize']))
 		apDisplay.printMsg("boxing "+str(len(parttree))+" particles into temp file: "+imgstackfile)
 		t0 = time.time()
 		if self.params['rotate'] is True:
+			apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.params['boxsize'])
+			apXmipp.breakupStackIntoSingleFiles(imgstackfile, filetype="mrc")
+			rotcmd = "s_finealign %s %i" %(self.params['rundir'], self.params['boxsize'])
+			apParam.runCmd(rotcmd, "HIP", verbose=True)
+			# read in text file containing refined angles
+			anglepath = os.path.join(self.params['rundir'], 'partfiles/angles.out')
+			f = open(anglepath, 'r')
+			angles = f.readlines()
+			# loop through parttree and add refined angle to rough angle
+			for i in range(len(parttree)):
+				partdict = parttree[i]
+				fineangle = float(angles[i])
+				newangle = float(partdict['angle'])-fineangle
+				partdict['angle'] = newangle
+			# rerun apBoxer.boxerRotate with the new parttree containing final angles
 			apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.params['boxsize'])
 		else:
 			apBoxer.boxer(imgpath, parttree, imgstackfile, self.params['boxsize'])

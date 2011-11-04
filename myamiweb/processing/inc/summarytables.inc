@@ -172,6 +172,10 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 		$junksorted = True;
 	}
 
+	// if particles were masked, set mask variable
+	if ($stackdata['mask']) {
+		$mask = True;
+	}
 	$stacktable.= "<table border='0' width='700' >\n";
 	$stackavg = $stackdata['path']."/average.mrc";
 	$badstackavg = $stackdata['path']."/badaverage.mrc";
@@ -186,7 +190,7 @@ function stacksummarytable($stackid, $mini=false, $tiny=false, $showOptions=True
 			if (!$junksorted) $stacktable.= "<br /><a href='sortJunk.php?expId=$expId&sId=$stackid&junksort=1'>[Sort Junk]</a>\n";
 			if ($junksorted) $stacktable.= "<br /><a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&junksort=1'>[Apply Junk Cutoff]</a>\n";
 			$stacktable.= "<br/><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
-			if ($stackdata['rotate']) $stacktable.= "<br/><a href='boxmask.php?expId=$expId&sId=$stackid&vert=True'>[Mask Particles with Box]</a>\n";
+			if (!$mask) $stacktable.= "<br/><a href='boxmask.php?expId=$expId&sId=$stackid&vert=True'>[Mask Particles with Box]</a>\n";
 		}
 		$stacktable.= "</td>\n";
 		if ($centered && file_exists($badstackavg)) {

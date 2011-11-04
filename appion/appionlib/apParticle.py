@@ -243,6 +243,8 @@ def insertParticlePeaks(peaktree, imgdata, runname, msg=False):
 		particlesq['ycoord'] = int(round(peakdict['ycoord']))
 		if 'angle' in peakdict:
 			particlesq['angle'] = peakdict['angle']
+		if 'helicalstep' in peakdict:
+			particlesq['helicalstep'] = peakdict['helicalstep']
 		if 'diameter' in peakdict and peakdict['diameter'] is not None:
 				peakdict['diameter'] = round(peakdict['diameter'], 6)
 

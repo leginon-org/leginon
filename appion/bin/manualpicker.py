@@ -312,7 +312,7 @@ class PickerApp(wx.App):
 			apDisplay.printWarning("unknown pixel size")
 			return
 		### get helicalstep
-		ovrlp = self.appionloop.params['ovrlp']/100.00
+		ovrlp = 1 - (self.appionloop.params['ovrlp']/100.00)
 		if ovrlp == 0:
 			helicalstep = self.appionloop.params['helicalstep']
 		else:
@@ -323,7 +323,7 @@ class PickerApp(wx.App):
 
 		first = userarray[-2]
 		last = userarray[-1]
-		### Do tan(y,x) to be consistend with ruler tool, convert to x,y in makestack
+		### Do tan(y,x) to be consistent with ruler tool, convert to x,y in makestack
 		angle = math.degrees(math.atan2((last[1]*1.0 - first[1]),(last[0] - first[0])))
 		stats = {'angle': angle}	
 		pixeldistance = math.hypot(first[0] - last[0], first[1] - last[1])
@@ -422,6 +422,9 @@ class ManualPicker(particleLoop2.ParticleLoop):
 	def getParticleParamsData(self):
 		manparamsq=appiondata.ApManualParamsData()
 		manparamsq['trace'] = self.trace
+		if self.params['helicalstep'] is not None:
+			manparamsq['helicalstep'] = self.params['helicalstep']
+		manparamsq['diam'] = self.params['diam']
 		if self.params['pickrunid'] is not None:
 			manparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
 		return manparamsq

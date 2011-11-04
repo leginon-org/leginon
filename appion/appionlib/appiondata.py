@@ -187,6 +187,7 @@ class ApManualParamsData(Data):
 			('pixel_value_limit', float),
 			('oldselectionrun', ApSelectionRunData),
 			('trace', bool),
+			('helicalstep', int),
 		)
 	typemap = classmethod(typemap)
 

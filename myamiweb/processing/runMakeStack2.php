@@ -377,14 +377,20 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		$partrundata = $particle->getSelectionParams($partrunval);
 		$imgid = $particle->getImgIdFromSelectionRun($partrunval);
 		$partdiam = $partrundata[0]['diam'];
+		$helicalstep = $partrundata[0]['helicalstep'];
 		$pixelsize = $particle->getPixelSizeFromImgId($imgid)*1e10;
 		//echo "Diameter: $partdiam &Aring;<br/>\n";
 		//echo "Image id: $imgid<br/>\n";
 		//echo "Pixel size: $pixelsize &Aring;<br/>\n";
-		$pixdiam = (int) ($partdiam/$pixelsize);
-		//echo "Pixel diam: $pixdiam pixels<br/>\n";
-		$boxdiam = (int) ($partdiam/$pixelsize*1.4);
-		//echo "Box diam: $boxdiam pixels<br/>\n";
+		if ($helicalstep) {
+			$boxdiam = (int) ($helicalstep/$pixelsize);
+		}
+		else {
+			$pixdiam = (int) ($partdiam/$pixelsize);
+			//echo "Pixel diam: $pixdiam pixels<br/>\n";
+			$boxdiam = (int) ($partdiam/$pixelsize*1.4);
+			//echo "Box diam: $boxdiam pixels<br/>\n";
+		}
 		global $goodboxes;
 		foreach ($goodboxes as $box) {
 			if ($box >= $boxdiam) {

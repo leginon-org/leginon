@@ -146,7 +146,7 @@ function showReport () {
 	$html .= "<form name='averaging' method='post' action='$formAction'>\n";
 	$html .= "<br>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'Iter', 'Path', '', 'Res', 'cutfit.dek', 'chop.dek', 'List', 'Num Part', 'Layer Lines', 'Overplots', '', 'Snapshots of Map');
+	$display_keys = array ( 'Iter', 'Path', '', 'Res', 'cutfit.dek', 'chop.dek', 'List', 'Num Part', 'Num Sub', 'Layer Lines', 'Overplots', '', 'Snapshots of Map');
 	$numcols = count($display_keys);
 	foreach($display_keys as $key) {
 		$html .= "<td><center><span class='datafield0'>".$key."</span> </TD> ";
@@ -186,6 +186,7 @@ function showReport () {
 		$chop2 = $iteration['chop2'];
 		$listfile = $iteration['avglist_file'];
 		$fnumpart = $iteration['final_numpart'];
+		$asymsu = $iteration['asymsu'];
 		$avgfile = $iteration['avg_file'];	
 		$mapfile = $iteration['map_file'];
 		$mrcfile = $iteration['mrc_file'];
@@ -246,6 +247,7 @@ function showReport () {
 		$html .= "<td><a href='loadtxt.php?filename=$listfile' target='List'>\n"
 			.sprintf("<center>avglist3_%dp.list</center></a></td>\n", $rescut);
 		$html .= "<td><center>$fnumpart</center></td>\n";
+		$html .= "<td><center>$asymsu</center></td>\n";
 		$html .= "<td bgcolor='$bg'>\n";
 		foreach ($pngimages['pngfiles'] as $snapshot) {
 			if (eregi($llsnapfile,$snapshot)) {

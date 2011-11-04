@@ -176,6 +176,7 @@ function createHIPForm($extra=false, $title='HIP.py Launcher', $heading='Helical
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$replen = ($_POST['replen']) ? $_POST['replen'] : '';
+	$subunits = ($_POST['subunits']) ? $_POST['subunits'] : '';
 	$diam = ($_POST['diam']) ? $_POST['diam'] : '';
 	$diaminner = ($_POST['diaminner']) ? $_POST['diaminner'] : '';
 	$xlngth = ($_POST['xlngth']) ? $_POST['xlngth'] : '';
@@ -244,7 +245,7 @@ function createHIPForm($extra=false, $title='HIP.py Launcher', $heading='Helical
 	echo "";
 	echo "<br>";
 
-	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc'>\n";
+	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' DISABLED VALUE='$nproc'>\n";
 	echo "Number of Processors";
 
 	echo "<br/>\n";
@@ -275,6 +276,10 @@ function createHIPForm($extra=false, $title='HIP.py Launcher', $heading='Helical
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
 	echo "<br/>\n";
 
+	echo "<INPUT TYPE='text' NAME='subunits' VALUE='$subunits' SIZE='4'>\n";
+	echo docpop('subunits','Subunits per Repeat');
+	echo "<br/>\n";
+
 	echo "<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4' onChange='estimateyht2(step)'>\n";
 	echo docpop('diam','Diameter');
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
@@ -290,10 +295,11 @@ function createHIPForm($extra=false, $title='HIP.py Launcher', $heading='Helical
 	echo "<b>Processing Parameters</b>\n";
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='text' NAME='xlngth' VALUE='$xlngth' SIZE='4'>\n";
-	echo docpop('xlngth','Filament Segment Length');
-	echo "<font size='-2'>(Pixels)</font>\n";
-	echo "<br/>\n";
+//Hiding this input param because it should always be the same as boxsize
+	echo "<INPUT TYPE='hidden' NAME='xlngth' VALUE='$xlngth' SIZE='4'>\n";
+	//echo docpop('xlngth','Filament Segment Length');
+	//echo "<font size='-2'>(Pixels)</font>\n";
+	//echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='yht2' SIZE='4' VALUE='$yht2'>\n";
 	echo docpop('yht2','Box Height');
@@ -366,7 +372,7 @@ function createHIPForm($extra=false, $title='HIP.py Launcher', $heading='Helical
 
 	echo "<br/>\n";
 	echo "<INPUT TYPE='radio' NAME='risecheck' onClick='enablerise(this)' $risecheck >\n";
-	echo docpop('risecheck','Use rise and twist');
+	echo docpop('risecheck','Use Rise and Twist');
 	echo "<br/>\n";
 
 	if ($risecheck == 'checked') {
@@ -393,7 +399,7 @@ function createHIPForm($extra=false, $title='HIP.py Launcher', $heading='Helical
 
 	echo "<br/>\n";
 	echo "<INPUT TYPE='radio' NAME='llbocheck' onClick='enablellbo(this)' $llbocheck>\n";
-	echo docpop('llbocheck','Use layer line/bessel order');
+	echo docpop('llbocheck','Use Layer Line/Bessel Order');
 	echo "<br/>\n";
 
 	if ($llbocheck == 'checked') {
@@ -463,6 +469,7 @@ function runHIP() {
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
 	$numpart=$_POST['numpart'];
 	$replen=$_POST['replen'];
+	$subunits=$_POST['subunits'];
 	$diam=$_POST['diam'];
 	$diaminner=$_POST['diaminner'];
 	$xlngth=$_POST['xlngth'];
@@ -528,10 +535,10 @@ function runHIP() {
 
 	// Error checks
 	$onerep = floor($replen/$apix);
-	if ($xlngth < $onerep) {
-		createHIPForm("<B>ERROR:</B> Filament segment length must be greater than one helical"
-			." repeat ($onerep pixels)");
-	} 
+	//if ($xlngth < $onerep) {
+	//	createHIPForm("<B>ERROR:</B> Filament segment length must be greater than one helical"
+	//		." repeat ($onerep pixels)");
+	//} 
 	$calcyht2 = floor($diam/$apix);
 	$po2yht2 = round(pow(2, ceil(log($calcyht2, 2))));
 	if ($yht2 < $calcyht2) {
@@ -543,7 +550,7 @@ function runHIP() {
 	} 
 	$calcpad = round(pow(2, ceil(log($xlngth, 2))));
 	if ($padval < $calcpad) {
-		createHIPForm("<B>ERROR:</B> Pad value must be larger than filament segment length"
+		createHIPForm("<B>ERROR:</B> Pad value must be larger than box size"
 			." and must be a power of two");
 	} 
 	if ($nproc > 16)
@@ -570,6 +577,7 @@ function runHIP() {
 	if ($nproc && $nproc>1) $command.="--nproc=$nproc ";
 	$command.="--num-part=$numpart ";
 	$command.="--rep-len=$replen ";
+	$command.="--subunits=$subunits ";
 	$command.="--diam=$diam ";
 	$command.="--diam-inner=$diaminner ";
 	$command.="--xlngth=$xlngth ";
@@ -596,10 +604,10 @@ function runHIP() {
 	$headinfo = "";
 	$headinfo .= referenceBox("Helical Processing Using PHOELIX.", 1996, 
 		"Carragher B, Whittaker M, Milligan R.", 
-		"J Struct Biol.", 116, 1, 8742731, false, false, "img/appionlogo.jpg");
+		"J Struct Biol.", 116, 1, 8742731, false, false, "img/phoelix_icon.png");
 	$headinfo .= referenceBox("PHOELIX: a package for semi-automated helical reconstruction.", 1995, 
 		"Whittaker M, Carragher BO, Milligan RA.", "Ultramicroscopy.", 58, 
-		"3-4", 7571117, false, false, "img/appionlogo.jpg");
+		"3-4", 7571117, false, false, "img/phoelix_icon.png");
 	$headinfo .= "<table width='600' class='tableborder' border='1'>";
 	$headinfo .= "<tr><td colspan='2'><br/>\n";
 	

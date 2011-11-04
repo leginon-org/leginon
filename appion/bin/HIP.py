@@ -46,6 +46,8 @@ class HipScript(appionScript.AppionScript):
 			help="Number of filament segments to use", metavar="#")
 		self.parser.add_option("--rep-len", dest="replen", type="int",
 			help="Helical repeat length (in Angstroms)", metavar="#")
+		self.parser.add_option("--subunits", dest="subunits", type="int",
+			help="Number of subunits in one helical repeat", metavar="#")
 		self.parser.add_option("--diam", dest="diameter", type="int",
 			help="Outer diameter of the filament (in Angstroms)", metavar="#")
 		self.parser.add_option("--diam-inner", dest="diaminner", type="int",
@@ -89,24 +91,42 @@ class HipScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
 			apDisplay.printError("Stack id was not defined")
+		if self.params['mandir'] is None:
+			apDisplay.printError("Directory containing mandatory files was not defined")
 		if self.params['description'] is None:
 			apDisplay.printError("Run description was not defined")
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
-		print stackfile
+		if self.params['numpart'] is None:
+			self.params['numpart'] = apFile.numImagesInStack(stackfile)
+			apDisplay.printWarning("Number of particles not defined, processing full stack")
 		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])+" than available "+str(apFile.numImagesInStack(stackfile)))
 		if self.params['replen'] is None:
 			apDisplay.printError("Helical repeat was not defined")
+		if self.params['subunits'] is None:
+			apDisplay.printError("Number of subunits was not defined")
 		if self.params['diameter'] is None:
 			apDisplay.printError("Filament diameter was not defined")
 		if self.params['diaminner'] is None:
 			apDisplay.printError("Inner filament diameter was not defined")
+		if self.params['rescut'] is None:
+			apDisplay.printError("Phase residual cutoff was not defined")
+		if self.params['filval'] is None:
+			apDisplay.printError("Filter value was not defined")
+		if self.params['bin'] is None:
+			self.params['bin'] = 1
+			apDisplay.printWarning("Binning factor was not defined, binning by one")
+		if self.params['cont'] is None:
+			apDisplay.printError("Must specify if a contrast change is needed")
+		if self.params['prehip'] is None:
+			apDisplay.printError("Must specify if prehip needs to be executed or not")
 		step = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		self.params['step'] = step
 		onerep = math.floor(self.params['replen'] / step)
 		calcyht2 = math.floor(self.params['diameter'] / step)
 		boxsize = apStack.getStackBoxsize(self.params['stackid'])
+		self.params['boxsize'] = boxsize
 		if self.params['xlngth'] < onerep:
 			apDisplay.printError("Filament segment length can not be less than one helical repeat")
 		if self.params['xlngth'] > boxsize:
@@ -159,17 +179,6 @@ class HipScript(appionScript.AppionScript):
 		ydim = firstimage[0]['camera']['dimension']['y'] ###just for reference now
 
 	#=====================
-	def setPhoelixPath(self):
-		pathvars = os.environ['PATH']
-		if not re.search("apPhoelix", pathvars):
-			apDisplay.printMsg("apPhoelix path not found in Appion directory, setting path now")
-			appiondir = apParam.getAppionDirectory()
-			appiondir = os.path.join(appiondir, "appionlib", "apPhoelix")
-			os.environ['PATH'] = appiondir+":"+os.environ['PATH']
-		else:
-			apDisplay.printMsg("apPhoelix path found")
-
-	#=====================
 	def writeParams(self):
 		self.getimageData()
 		finalparams = {}
@@ -179,7 +188,8 @@ class HipScript(appionScript.AppionScript):
 		diameter = self.params['diameter']
 		diaminner = self.params['diaminner']
 		replen = self.params['replen']
-		finalparams.update(apHelicalParams.calculateParams(step, diameter, diaminner, replen))
+		padval = self.params['padval']
+		finalparams.update(apHelicalParams.calculateParams(step, diameter, diaminner, replen, padval))
 		filename = os.path.join(self.params['rundir'], "phoelix_params")
 		f = open(filename, 'w')
 		for (k, v) in finalparams.items():
@@ -199,12 +209,12 @@ class HipScript(appionScript.AppionScript):
 		maxbo = self.params['maxbo']
 		maxll = self.params['maxll']
 		
-		subs = math.ceil(replen/rise)
+		subunits = math.ceil(replen/rise)
 		if twist < 0:
-			turns = math.floor((twist * subs)/360)
+			turns = math.floor((twist * subunits)/360)
 		else:
-			turns = math.ceil((twist * subs)/360)
-		print "subunits=", subs, "turns=", turns
+			turns = math.ceil((twist * subunits)/360)
+		print "subunits=", subunits, "turns=", turns
 
 		print>>f, 0, 0
 		print>>f2, "ll= ", 0, "bo= ", 0
@@ -214,7 +224,7 @@ class HipScript(appionScript.AppionScript):
 			j = -1*maxbo
 			while j <= maxbo:
 				test = ((nfold * i) + (turns * j))
-				if test%subs == 0:
+				if test%subunits == 0:
 					bo = j
 					ll = i
 					print>>f, ll, bo
@@ -244,7 +254,8 @@ class HipScript(appionScript.AppionScript):
 		startbo = bo1 - (bo2 * 5)
 		lla = startll
 		boa = startbo
-		while lla <= self.params['maxll']:
+		subdict = []
+		while lla <= 200:
 			lla = startll + (ll2 * i)
 			boa = startbo + (bo2 * i)
 			ll = lla
@@ -256,6 +267,8 @@ class HipScript(appionScript.AppionScript):
 				if ll > 0 and ll <= self.params['maxll'] and bo >= -1*self.params['maxbo'] and bo <= self.params['maxbo']:
 					print>>f, ll, bo
 					print>>f2, "ll= ", ll, "bo= ", bo
+				if bo == 0:
+					subdict.append(ll)
 				j = j+1
 			i = i+1
 
@@ -264,7 +277,7 @@ class HipScript(appionScript.AppionScript):
 		startbo = 0
 		lla = startll
 		boa = startbo
-		while lla <= self.params['maxll'] and lla >= -1*ll1:
+		while lla <= 200 and lla >= -1*ll1:
 			lla = startll - (ll1 * i)
 			boa = startbo - (bo1 * i)
 			ll = lla
@@ -276,11 +289,14 @@ class HipScript(appionScript.AppionScript):
 				if ll > 0 and ll <= self.params['maxll'] and bo >= -1*self.params['maxbo'] and bo <= self.params['maxbo']:
 					print>>f, ll, bo
 					print>>f2, "ll= ", ll, "bo= ", bo
+				if bo == 0:
+					subdict.append(ll)
 				j = j+1
 			i = i+1
 
 		f.close()
 		f2.close()
+		subunits = subdict[0]
 
 	#=====================
 	def putFilesInStack(self):
@@ -310,7 +326,7 @@ class HipScript(appionScript.AppionScript):
 		f = open(fscpath, 'r')
 		xy = f.readlines()
 		lines = len(xy)
-		boxsize = (lines / 2.0)
+		boxsize = (lines * 2.0)
 		f.close()
 		# calculate the resolution:
 		halfres = apRecon.calcRes(fscpath, boxsize, self.params['step'])
@@ -385,6 +401,7 @@ class HipScript(appionScript.AppionScript):
 		HipParams['replen'] = self.params['replen']
 		HipParams['diam'] = self.params['diameter']
 		HipParams['diaminner'] = self.params['diaminner']
+		HipParams['subunits'] = self.params['subunits']
 		HipParams['xlngth'] = self.params['xlngth']
 		HipParams['yht2'] = self.params['yht2']
 		HipParams['padval'] = self.params['padval']
@@ -435,6 +452,7 @@ class HipScript(appionScript.AppionScript):
 			lines = f.readlines()
 			f.close()
 			HipIter['final_numpart'] = len(lines) 
+			HipIter['asymsu'] = int(((self.params['boxsize']*self.params['step'])/self.params['replen'])*self.params['subunits']*len(lines))
 			HipIter['avg_file'] = os.path.join(avgpath, "avglist3_%dp.avg"%(self.params['rescut']))
 			HipIter['map_file'] = os.path.join(avgpath, "avglist3_%dp.map"%(self.params['rescut']))
 			HipIter['mrc_file'] = os.path.join(avgpath, "avglist3_%dp.mrc"%(self.params['rescut']))
@@ -534,7 +552,6 @@ class HipScript(appionScript.AppionScript):
 		return
 	#=====================
 	def start(self):
-		self.setPhoelixPath()
 		self.writeParams()
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		stackpath = os.path.abspath(stackdata['path']['path']) 

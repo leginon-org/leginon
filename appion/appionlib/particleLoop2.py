@@ -157,6 +157,8 @@ class ParticleLoop(filterLoop.FilterLoop):
 			'median': 'median',
 			'defocpair': 'defocal_pairs',
 			'overlapmult': 'overlapmult',
+			'helicalinsert': 'helicalinsert',
+			'helicalstep': 'helicalstep',
 		}
 		paramQuery = self.getParticleParamsData()
 

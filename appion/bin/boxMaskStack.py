@@ -296,7 +296,7 @@ class boxMaskScript(appionScript.AppionScript):
 		# Upload results
 		if self.params['commit'] is True:
 			oldstackparts = apStack.getStackParticlesFromId(self.params['stackid'])
-			apStack.commitMaskedStack(self.params, oldstackparts)
+			apStack.commitMaskedStack(self.params, oldstackparts, newname='start.hed')
 
 		time.sleep(1)
 		return

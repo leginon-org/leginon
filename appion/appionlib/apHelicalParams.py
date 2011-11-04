@@ -17,16 +17,16 @@ def setupParams():
 	master_params['s_log'] = 1
 	master_params['tflag'] = 0
 	master_params['ctf'] = 0
-	master_params['fres'] = 15
-	master_params['rangefactor'] = 3
+	master_params['fres'] = 10
+	master_params['rangefactor'] = 2
 	master_params['cutres'] = 10
-	master_params['calling_method'] = 'mt'
-	master_params['radfil'] = 0
+	master_params['calling_method'] = 'pfo'
+	master_params['radfil'] = 5
 	master_params['Aradfilbg'] = 400
 	master_params['cs'] = 2.0
 	master_params['nsdev'] = 2
 	master_params['regno'] = 5
-	master_params['range'] = 4
+	master_params['range'] = 3
 	master_params['prow'] = 128
 	master_params['pcol'] = 600
 	master_params['pflag'] = 18
@@ -43,9 +43,9 @@ def setupParams():
 	master_params['width'] = 1
 	master_params['iphase'] = 0
 	master_params['nl1'] = 0
-	master_params['nl2'] = 128
+	master_params['nl2'] = 255
 	master_params['nr1'] = 0
-	master_params['nr2'] = 128
+	master_params['nr2'] = 255
 	master_params['delta_amp'] = 50.0
 	master_params['delta_radius'] = 5.0
 	master_params['delta_separation'] = 6.0
@@ -74,14 +74,12 @@ def setupParams():
 	master_params['maxresidset'] = '`echo 50 45 45 35 35 35 35 35 35 35`'
 	master_params['finalresid'] = 45.01
 	master_params['minupdown'] = 0.0
-	# need to write in an algorithm to calculate snifwidth based on padval, step, and strong layer line file
-	master_params['snifwidth'] = 2
 	master_params['auto_remove_files'] = 0
 
 	return master_params
 
 #=====================
-def calculateParams(step, diameter, diaminner, replen):
+def calculateParams(step, diameter, diaminner, replen, padval):
 	master_params = setupParams()
 	if step is None:
 		apDisplay.printError("No stepsize specified")
@@ -99,6 +97,10 @@ def calculateParams(step, diameter, diaminner, replen):
 		apDisplay.printError("No filament repleat length specified")
 	else:
 		master_params['replen'] = replen
+	if padval is None:
+		apDisplay.printError("No pad value specified")
+	else:
+		master_params['padval'] = padval
 	master_params['xover'] = replen
 	master_params['diamouter'] = diameter
 	master_params['irad'] = math.floor((diaminner / step)/2) - 5
@@ -110,7 +112,7 @@ def calculateParams(step, diameter, diaminner, replen):
 	master_params['srow'] = master_params['padrow']
 	master_params['frowsize'] = (master_params['srow'] * 2)
 	master_params['delbr'] = (1.0 / (master_params['frowsize'] * step))
-
+	master_params['snifwidth'] = int(math.ceil(((padval * step) / replen) / 2))
 
 	return master_params
 

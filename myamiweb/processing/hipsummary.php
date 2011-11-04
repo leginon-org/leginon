@@ -92,7 +92,7 @@ if ($hipRuns) {
 			$html .= "<td><a href='loadimg.php?filename=$bestimage' target='snapshot'>"
 				."<img src='loadimg.php?filename=$bestimage&h=64' height='64'></a></td>\n";
 		else
-			$html .= "<td></td>\n";
+			$html .= "<td>'$bestimage not found'</td>\n";
 
 		# add edit button to description if logged in
 		$descDiv = ($_SESSION['username']) ? editButton($hipid,$hiprun['description']) : $hiprun['description'];
