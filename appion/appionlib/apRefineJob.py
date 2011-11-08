@@ -376,6 +376,20 @@ class RefineJob(basicScript.BasicScript):
 		self.cputime = self.params['cput']
 		# TO Do: need to get appion bin dir from appionwrapper environment variable Appion_Bin_Dir
 		self.appion_bin_dir = ''
+		
+	def convertAngstromToPixel(self, angstromLength):
+		''' 
+		returns the equivalent length converted to pixels as an integer value. 
+		If the passed in value is not set, just forward it along. 
+		'''
+		if angstromLength:
+			floatValue = float(angstromLength) / self.params['apix']
+			intValue = int(round(floatValue))
+		else:
+			intValue = angstromLength	
+			
+		return intValue
+	       
 
 	def __initializeLog(self):
 		'''

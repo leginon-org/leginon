@@ -123,20 +123,13 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["ReferenceIsCtfCorrected"]      =   True
 		protocolPrm["DoMask"]                       =   self.params['maskvol']>0
 		protocolPrm["DoSphericalMask"]              =   self.params['outerMaskRadius']>0
-		# patching this up with a cast to float...there seems to be a problem further up the line as the split should not be needed
-		protocolPrm["MaskRadius"]                   =   float(self.params['outerMaskRadius'].split()[0]) / self.params['apix']
+		# there seems to be a problem further up the line as the split should not be needed	
+		protocolPrm["MaskRadius"]                   =   convertAngstromToPixel( self.params['outerMaskRadius'].split()[0] )
 		protocolPrm["MaskFileName"]                 =   self.params['maskvol']
 		protocolPrm["DoProjectionMatching"]         =   True
 		protocolPrm["DisplayProjectionMatching"]    =   False
-		# only divide by apix if radius is set
-		if self.params['innerAlignRadius']:
-			protocolPrm["InnerRadius"] =  self.params['innerAlignRadius'] / self.params['apix']
-		else:
-			 protocolPrm["InnerRadius"] =  self.params['innerAlignRadius']
-		if self.params['outerAlignRadius']:
-			protocolPrm["OuterRadius"] =  self.params['outerAlignRadius'] / self.params['apix']
-		else:
-			protocolPrm["OuterRadius"] = self.params['outerAlignRadius']
+		protocolPrm["InnerRadius"]                  =  convertAngstromToPixel( self.params['innerAlignRadius'] )
+		protocolPrm["OuterRadius"]                  =  convertAngstromToPixel( self.params['outerAlignRadius'] )
 		protocolPrm["AvailableMemory"]              =   '%d' % self.calcRefineMem()
 #		protocolPrm["AngSamplingRateDeg"]           =   self.params['AngularSteps']
 		protocolPrm["AngSamplingRateDeg"]           =   self.params['angSampRate']
