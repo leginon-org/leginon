@@ -124,12 +124,12 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["DoMask"]                       =   self.params['maskvol']>0
 		protocolPrm["DoSphericalMask"]              =   self.params['outerMaskRadius']>0
 		# there seems to be a problem further up the line as the split should not be needed	
-		protocolPrm["MaskRadius"]                   =   convertAngstromToPixel( self.params['outerMaskRadius'].split()[0] )
+		protocolPrm["MaskRadius"]                   =   self.convertAngstromToPixel( self.params['outerMaskRadius'].split()[0] )
 		protocolPrm["MaskFileName"]                 =   self.params['maskvol']
 		protocolPrm["DoProjectionMatching"]         =   True
 		protocolPrm["DisplayProjectionMatching"]    =   False
-		protocolPrm["InnerRadius"]                  =  convertAngstromToPixel( self.params['innerAlignRadius'] )
-		protocolPrm["OuterRadius"]                  =  convertAngstromToPixel( self.params['outerAlignRadius'] )
+		protocolPrm["InnerRadius"]                  =  self.convertAngstromToPixel( self.params['innerAlignRadius'] )
+		protocolPrm["OuterRadius"]                  =  self.convertAngstromToPixel( self.params['outerAlignRadius'] )
 		protocolPrm["AvailableMemory"]              =   '%d' % self.calcRefineMem()
 #		protocolPrm["AngSamplingRateDeg"]           =   self.params['AngularSteps']
 		protocolPrm["AngSamplingRateDeg"]           =   self.params['angSampRate']
