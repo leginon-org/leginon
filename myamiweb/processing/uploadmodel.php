@@ -306,7 +306,7 @@ function runUploadModel() {
 
 	// if error display them
 	if ($errors)
-		createAppionForm($errors);
+		createUploadModelForm($errors);
 	exit;
 }
 ?>
