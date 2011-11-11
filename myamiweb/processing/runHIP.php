@@ -570,7 +570,7 @@ function runHIP() {
 	$command ="HIP.py ";
 	$command.="--session=$sessionname ";
 	$command.="--mandir=$mandir ";
-	$command.="--description=\"'$description'\" ";
+	$command.="--description=\"$description\" ";
 	$command.="--stack=$stackid ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
