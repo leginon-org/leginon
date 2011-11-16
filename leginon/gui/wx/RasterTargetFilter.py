@@ -154,7 +154,6 @@ class ScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		## auto raster calculator
 		szcalc = wx.GridBagSizer(5,5)
-		sztype.AddGrowableCol(0)
 		szcalc.Add(self.autobut, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Preset for raster')
 		szcalc.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
