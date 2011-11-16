@@ -93,7 +93,8 @@ class modelFromPDB(appionScript.AppionScript):
 	def setRunDir(self):
 		path = os.path.abspath(self.sessiondata['image path'])
 		pieces = path.split('leginon')
-		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
+		if len(pieces) > 1:
+			path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
 		path = re.sub("/rawdata","",path)
 		self.params['rundir'] = os.path.join(path, "models/pdb",self.params['runname'])
 

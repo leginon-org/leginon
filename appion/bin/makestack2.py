@@ -965,7 +965,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		path = os.path.abspath(sessiondata['image path'])
 		pieces = path.split('leginon')
-		path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
+		if len(pieces) > 1:
+			path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
 		path = re.sub("/rawdata","",path)
 		path = os.path.join(path, self.processdirname, self.params['runname'])
 		self.params['rundir'] = path
