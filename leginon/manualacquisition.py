@@ -75,6 +75,7 @@ class ManualAcquisition(node.Node):
 		self.gridbox = None
 		self.grid = None
 		self.gridlabel = None
+		self.insertion = None
 
 		self.instrument = instrument.Proxy(self.objectservice,
 																				self.session,
@@ -225,14 +226,20 @@ class ManualAcquisition(node.Node):
 	def publishImageData(self, imagedata, save):
 		acquisitionimagedata = leginondata.AcquisitionImageData(initializer=imagedata)
 		if save:
+			griddata = leginondata.GridData()
 			if self.grid is not None:
 				gridinfo = self.gridmapping[self.grid]
-				griddata = leginondata.GridData()
 				griddata['grid ID'] = gridinfo['gridId']
 				emgriddata = leginondata.EMGridData(name=gridinfo['label'],project=gridinfo['projectId'])
 				griddata['emgrid'] = emgriddata
+				griddata['insertion'] = self.insertion
 				acquisitionimagedata['grid'] = griddata
-				self.gridlabel = gridlabeler.getGridLabel(griddata)	
+				self.gridlabel = gridlabeler.getGridLabel(griddata)
+			elif self.emgrid is not None:
+				# New style that uses emgridata only for grid entry
+				griddata['emgrid'] = self.emgrid
+				griddata['insertion'] = self.insertion
+				acquisitionimagedata['grid'] = griddata
 			else:
 				self.gridlabel = ''
 			acquisitionimagedata['label'] = self.settings['image label']
@@ -599,9 +606,13 @@ class ManualAcquisition(node.Node):
 			self.panel.onUnsetRobotGrid()
 			return
 		griddata = evt['grid']
-		self.getGrids(evt['tray label'])
-		self.grid = '%d - %s' % (evt['grid location'], griddata['emgrid']['name'])
+		self.insertion = griddata['insertion']
 		self.gridlabel = gridlabeler.getGridLabel(griddata)
+		if griddata['grid ID'] is not None:
+			self.getGrids(evt['tray label'])
+			self.grid = '%d - %s' % (evt['grid location'], griddata['emgrid']['name'])
+		else:
+			self.emgrid = griddata['emgrid']
 		self.logger.info('Add grid prefix as '+self.gridlabel)
 		self.panel.onSetRobotGrid()
 

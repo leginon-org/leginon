@@ -3,15 +3,15 @@
 - Application XML-Dump
 - http://ami.scripps.edu/ 
 -
-- Application :Manual (1.6)
-- Version     :1
-- Date : 05/14/2008
+- Application :Manual (2.2)
+- Version     :0
+- Date : 11/17/2011
 -
 -->
 
 <applicationdump>
  <definition>
-  <sqltable name="ApplicationData" >
+ <sqltable name="ApplicationData" >
     <field 
       name="DEF_id" 
       type="int(16)" 
@@ -22,6 +22,7 @@
       name="DEF_timestamp" 
       type="timestamp" 
       default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
     />
     <field 
       name="name" 
@@ -34,7 +35,7 @@
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
   </sqltable>
-  <sqltable name="BindingSpecData" >
+ <sqltable name="BindingSpecData" >
     <field 
       name="DEF_id" 
       type="int(16)" 
@@ -45,6 +46,7 @@
       name="DEF_timestamp" 
       type="timestamp" 
       default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
     />
     <field 
       name="event class string" 
@@ -66,7 +68,7 @@
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)</key>
   </sqltable>
-  <sqltable name="NodeSpecData" >
+ <sqltable name="NodeSpecData" >
     <field 
       name="DEF_id" 
       type="int(16)" 
@@ -77,6 +79,7 @@
       name="DEF_timestamp" 
       type="timestamp" 
       default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
     />
     <field 
       name="class string" 
@@ -101,141 +104,80 @@
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)</key>
-  </sqltable>
-  <sqltable name="BindingSpecData" >
-    <field 
-      name="DEF_id" 
-      type="int(16)" 
-      null="NOT NULL" 
-      extra="auto_increment" 
-    />
-    <field 
-      name="DEF_timestamp" 
-      type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
-    />
-    <field 
-      name="event class string" 
-      type="text" 
-    />
-    <field 
-      name="from node alias" 
-      type="text" 
-    />
-    <field 
-      name="to node alias" 
-      type="text" 
-    />
-    <field 
-      name="REF|ApplicationData|application" 
-      type="int(20)" 
-    />
-    <key>PRIMARY KEY (`DEF_id`)</key>
-    <key>KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)</key>
-    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
-  </sqltable>
-  <sqltable name="NodeSpecData" >
-    <field 
-      name="DEF_id" 
-      type="int(16)" 
-      null="NOT NULL" 
-      extra="auto_increment" 
-    />
-    <field 
-      name="DEF_timestamp" 
-      type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
-    />
-    <field 
-      name="class string" 
-      type="text" 
-    />
-    <field 
-      name="alias" 
-      type="text" 
-    />
-    <field 
-      name="launcher alias" 
-      type="text" 
-    />
-    <field 
-      name="SEQ|args" 
-      type="text" 
-    />
-    <field 
-      name="new process flag" 
-      type="int(20)" 
-    />
-    <field 
-      name="SEQ|dependencies" 
-      type="text" 
-    />
-    <field 
-      name="REF|ApplicationData|application" 
-      type="int(20)" 
-    />
-    <key>PRIMARY KEY (`DEF_id`)</key>
-    <key>KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)</key>
-    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
   </sqltable>
 
  </definition>
  <data>
   <!-- ApplicationData -->
     <sqltable name="ApplicationData" >
-        <field name="DEF_id" >540</field>
-        <field name="DEF_timestamp" >2008-05-14 14:59:17</field>
-        <field name="name" >Manual (1.6)</field>
-        <field name="version" >1</field>
+        <field name="DEF_id" >736</field>
+        <field name="DEF_timestamp" >2011-11-17 16:02:14</field>
+        <field name="name" >Manual (2.2)</field>
+        <field name="version" >0</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >
-        <field name="DEF_id" >12383</field>
-        <field name="DEF_timestamp" >2008-05-14 14:59:17</field>
+        <field name="DEF_id" >22389</field>
+        <field name="DEF_timestamp" >2011-11-17 16:02:14</field>
+        <field name="event class string" >MakeTargetListEvent</field>
+        <field name="from node alias" >Choose Grid</field>
+        <field name="to node alias" >Manual</field>
+        <field name="REF|ApplicationData|application" >736</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >22390</field>
+        <field name="DEF_timestamp" >2011-11-17 16:02:15</field>
         <field name="event class string" >AcquisitionImagePublishEvent</field>
         <field name="from node alias" >Manual</field>
         <field name="to node alias" >Power Spectrum</field>
-        <field name="REF|ApplicationData|application" >540</field>
+        <field name="REF|ApplicationData|application" >736</field>
     </sqltable>
   <!-- NodeSpecData -->
     <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >5515</field>
-        <field name="DEF_timestamp" >2008-05-14 14:59:17</field>
+        <field name="DEF_id" >8583</field>
+        <field name="DEF_timestamp" >2011-11-17 16:02:14</field>
+        <field name="class string" >GridEntry</field>
+        <field name="alias" >Choose Grid</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >736</field>
+    </sqltable>
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >8584</field>
+        <field name="DEF_timestamp" >2011-11-17 16:02:14</field>
         <field name="class string" >FFTMaker</field>
         <field name="alias" >Power Spectrum</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >540</field>
+        <field name="REF|ApplicationData|application" >736</field>
     </sqltable>
     <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >5516</field>
-        <field name="DEF_timestamp" >2008-05-14 14:59:17</field>
+        <field name="DEF_id" >8585</field>
+        <field name="DEF_timestamp" >2011-11-17 16:02:14</field>
         <field name="class string" >ManualAcquisition</field>
         <field name="alias" >Manual</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >540</field>
+        <field name="REF|ApplicationData|application" >736</field>
     </sqltable>
     <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >5517</field>
-        <field name="DEF_timestamp" >2008-05-14 14:59:17</field>
+        <field name="DEF_id" >8586</field>
+        <field name="DEF_timestamp" >2011-11-17 16:02:14</field>
         <field name="class string" >Corrector</field>
         <field name="alias" >Correction</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >540</field>
+        <field name="REF|ApplicationData|application" >736</field>
     </sqltable>
     <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >5518</field>
-        <field name="DEF_timestamp" >2008-05-14 14:59:17</field>
+        <field name="DEF_id" >8587</field>
+        <field name="DEF_timestamp" >2011-11-17 16:02:14</field>
         <field name="class string" >EM</field>
         <field name="alias" >Instrument</field>
         <field name="launcher alias" >scope</field>
         <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >540</field>
+        <field name="REF|ApplicationData|application" >736</field>
     </sqltable>
-  <!-- BindingSpecData -->
-  <!-- NodeSpecData -->
 
  </data>
 </applicationdump>

@@ -58,10 +58,10 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GRID,
-													'grid',
-													shortHelpString='Grid')
-		self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, False)
+		#self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_GRID,
+		#											'grid',
+		#											shortHelpString='Grid')
+		#self.toolbar.EnableTool(leginon.gui.wx.ToolBar.ID_GRID, False)
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(leginon.gui.wx.ToolBar.ID_MANUAL_DOSE,
 													'dose',
