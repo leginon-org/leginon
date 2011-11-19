@@ -263,11 +263,25 @@ class SessionSelectPage(WizardPage):
 		self.clientslabel.SetLabel(label)
 
 	def onEditClientsButton(self, evt):
+		sessiondata = self.getSelectedSession()
+		if sessiondata and self.checkPresetExistance(sessiondata):
+			self.clientEditWarningDialog()
 		dialog = EditClientsDialog(self, self.clients, self.history)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.setClients(dialog.listbox.getValues())
 		dialog.Destroy()
 
+	def clientEditWarningDialog(self):
+		dlg = wx.MessageDialog(self,
+											'You should not switch instrument hosts in this session. Addition is OK.',
+											'Preset Exists In This Session', wx.OK|wx.ICON_WARNING)
+		dlg.ShowModal()
+		dlg.Destroy()
+
+	def checkPresetExistance(self,sessiondata):
+		presets = self.GetParent().setup.getPresets(sessiondata)
+		return bool(presets)
+		
 	def onLimitChange(self, evt):
 		if self.IsShown():
 			self.Freeze()
@@ -807,6 +821,11 @@ class Setup(object):
 		if not userdatalist:
 			raise RuntimeError('No users in the database.')
 		return _indexBy(('firstname','lastname'), userdatalist)
+
+	def getPresets(self,sessiondata):
+		presetq = leginon.leginondata.PresetData(session=sessiondata)
+		presetdatalist = presetq.query()
+		return presetdatalist
 
 	def getSettings(self, userdata):
 		settingsclass = leginon.leginondata.SetupWizardSettingsData

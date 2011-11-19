@@ -1413,11 +1413,36 @@ class ImportDialog(wx.Dialog):
 		pquery = leginon.leginondata.PresetData(tem=tem, ccdcamera=ccd)
 		presets = self.node.research(pquery, timelimit=agestr)
 		self.sessiondict = OrderedDict()
+		badsessions = []
 		for p in presets:
 			sname = p['session']['name']
-			if sname:
-				self.sessiondict[sname] = p['session']
+			# reduce sessions to check for multiple TEM used in most recent preset
+			if sname not in self.sessiondict.keys() and sname not in badsessions:
+				if self.onlyOneTEMinSessionPresets(p['session']):
+					self.sessiondict[sname] = p['session']
+				else:
+					badsessions.append(sname)
 		self.session.setSessions(self.sessiondict.values())
+
+	def onlyOneTEMinSessionPresets(self,sessiondata):
+		'''
+		This function make sure all current presets are on the same tem host.
+		SetupWizard can not prevent users from switching instrument hosts in
+		the same session in order to allow camera switch.  As a result, it
+		could make a session to have presets from different
+		TEM.  This prevents that mistake to be imported to a new session.
+		'''
+		tems = []
+		presets = self.node.getSessionPresets(sessiondata)
+		for presetname in presets.keys():
+			q = leginon.leginondata.PresetData(session=sessiondata,name=presetname)
+			newestpreset = q.query(results=1)[0]
+			if newestpreset['tem'].dbid not in tems:
+				if len(tems) < 1:
+					tems.append(newestpreset['tem'].dbid)
+				else:
+					return False
+		return True
 
 	def onSessionSelected(self, evt):
 		name = evt.GetText()
