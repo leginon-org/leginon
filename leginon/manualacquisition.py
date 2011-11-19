@@ -76,6 +76,7 @@ class ManualAcquisition(node.Node):
 		self.grid = None
 		self.gridlabel = None
 		self.insertion = None
+		self.emgrid = None
 
 		self.instrument = instrument.Proxy(self.objectservice,
 																				self.session,
