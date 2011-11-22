@@ -371,9 +371,17 @@ class DoseCalibrationClient(CalibrationClient):
 		counts_per_electron = float(counts) / electrons_per_pixel
 		return counts_per_electron
 
-	def sensitivity_from_imagedata(self, imagedata, dose_rate):
+	def getTemCCDCameraFromImageData(self,imagedata):
 		tem = imagedata['scope']['tem']
+		if tem is None:
+			tem = self.instrument.getTEMData()
 		ccdcamera = imagedata['camera']['ccdcamera']
+		if ccdcamera is None:
+			ccdcamera = self.instrument.getCCDCameraData()
+		return tem,ccdcamera
+
+	def sensitivity_from_imagedata(self, imagedata, dose_rate):
+		tem,ccdcamera = self.getTemCCDCameraFromImageData(imagedata)
 		mag = imagedata['scope']['magnification']
 		self.node.logger.info('Magnification %.1f' % mag)
 		specimen_pixel_size = self.psizecal.retrievePixelSize(tem,
@@ -391,28 +399,50 @@ class DoseCalibrationClient(CalibrationClient):
 
 	def dose_from_imagedata(self, imagedata):
 		'''
-		imagedata indirectly contains most info needed to calc dose
+		dose in number of electrons per meter^2 in the duration of exposure time.
 		'''
-		tem = imagedata['scope']['tem']
-		if tem is None:
-			tem = self.instrument.getTEMData()
-		ccdcamera = imagedata['camera']['ccdcamera']
-		if ccdcamera is None:
-			ccdcamera = self.instrument.getCCDCameraData()
-		camera_pixel_size = imagedata['camera']['pixel size']['x']
-		ht = imagedata['scope']['high tension']
-		binning = imagedata['camera']['binning']['x']
+		pixel_totaldose = self.pixel_totaldose_from_imagedata(imagedata)
+		tem,ccdcamera = self.getTemCCDCameraFromImageData(imagedata)
 		mag = imagedata['scope']['magnification']
 		specimen_pixel_size = self.psizecal.retrievePixelSize(tem, ccdcamera, mag)
 		self.node.logger.debug('Specimen pixel size %.4e' % specimen_pixel_size)
+		totaldose = pixel_totaldose / specimen_pixel_size**2
+		return totaldose
+
+	def pixel_framedose_from_imagedata(self, imagedata):
+		'''
+		dose in number of electron per camera pixel.  For frame integration
+		camera such as DE-12, this is per frame.  For other camera, this is
+		per total integration time
+		'''
+		pixel_totaldose = self.pixel_totaldose_from_imagedata(imagedata)
+		nframes = imagedata['camera']['nframes']
+		if nframes is None:
+			nframes = 1
+			has_frames = False
+		else:
+			has_frames = True
+		self.node.logger.debug('Number of integration frames per exposure %d' % nframes)
+		pixel_framedose = pixel_totaldose / nframes
+		return has_frames,pixel_framedose
+
+	def pixel_totaldose_from_imagedata(self, imagedata):
+		'''
+		Dose per camera pixel. Binning does not affect the result.
+		Imagedata indirectly contains most info needed to calc dose
+		'''
+		tem,ccdcamera = self.getTemCCDCameraFromImageData(imagedata)
+		camera_pixel_size = imagedata['camera']['pixel size']['x']
+		ht = imagedata['scope']['high tension']
+		binning = imagedata['camera']['binning']['x']
 		exp_time = imagedata['camera']['exposure time'] / 1000.0
 		numdata = imagedata['image']
 		sensitivity = self.retrieveSensitivity(ht, tem, ccdcamera)
 		self.node.logger.debug('Sensitivity %.2f' % sensitivity)
 		mean_counts = arraystats.mean(numdata) / (binning**2)
 		self.node.logger.debug('Mean counts %.1f' % mean_counts)
-		totaldose = mean_counts / specimen_pixel_size**2 / sensitivity
-		return totaldose
+		pixel_totaldose = mean_counts / sensitivity
+		return pixel_totaldose
 
 
 class PixelSizeCalibrationClient(CalibrationClient):

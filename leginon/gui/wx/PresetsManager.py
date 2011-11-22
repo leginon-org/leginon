@@ -60,10 +60,10 @@ class SetParametersEvent(wx.PyCommandEvent):
 		self.parameters = parameters
 
 class SetDoseValueEvent(wx.PyEvent):
-	def __init__(self, dose):
+	def __init__(self, doses):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(SetDoseValueEventType)
-		self.dose = dose
+		self.doses = doses
 
 class SetCalibrationsEvent(wx.PyCommandEvent):
 	def __init__(self, times, source):
@@ -591,7 +591,7 @@ class EditPresets(leginon.gui.wx.Presets.PresetOrder):
 class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 	def __init__(self, parent):
 		leginon.gui.wx.Dialog.Dialog.__init__(self, parent, 'Dose Image', 'Dose Image')
-		self.dose = None
+		self.doses = [None,None]
 		self.parent = parent
 
 	def onInitialize(self):
@@ -600,6 +600,7 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 		self.image = leginon.gui.wx.ImagePanel.ImagePanel(self, -1,imagesize=(360,360))
 
 		self.doselabel = wx.StaticText(self, -1, '')
+		self.pixelframedoselabel = wx.StaticText(self, -1, '')
 
 		self.sz.Add(self.image, (0, 0), (1, 1), wx.EXPAND)
 
@@ -618,6 +619,7 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'e/A^2')
 		szmatch.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL )
 		self.sz.Add(szmatch, (1,0),(1,1), wx.ALIGN_RIGHT)
+		self.sz.Add(self.pixelframedoselabel, (2,0),(1,1), wx.ALIGN_RIGHT)
 
 		self.szbuttons.Add(self.doselabel, (0, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -628,23 +630,33 @@ class DoseDialog(leginon.gui.wx.Dialog.Dialog):
 		bcancel.Enable(True)
 		self.szbuttons.Add(bcancel,(0,2),(1,1), wx.ALIGN_CENTER_VERTICAL)
 		self.szbuttons.AddGrowableRow(0)
+		self.szbuttons.Add(self.pixelframedoselabel, (1, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		self.Bind(wx.EVT_BUTTON, self.onMatchDose, self.bmatch)
 		self.Bind(wx.EVT_BUTTON, self.onCancel, bcancel)
 		self.Bind(wx.EVT_CLOSE, self.onCancel)
 
-	def setDose(self, dose):
-		self.dose = dose
+	def setDose(self, doses):
+		self.doses = doses
+		dose = doses[0]
 		if dose is None:
 			dosestr = 'N/A'
 		else:
 			dosestr = '%.2f' % (dose/1e20)
 		dosestr = 'Use the measured dose %s e/A^2 for this preset?' % dosestr
+		if doses[1] is not None:
+			if doses[1][0]:
+				framestr = 'per frame'
+			else:
+				framestr = ''
+			pixelframedosestr = '( Dose on camera pixel %s: %.1f electrons )' % (framestr,doses[1][1])
+			self.pixelframedoselabel.SetLabel(pixelframedosestr)
 		self.doselabel.SetLabel(dosestr)
 
 	def onMatchDose(self,evt):
 		dose_to_match = self.dose_to_match.GetValue()
-		self.parent.onMatchDose(dose_to_match * 1e20,self.dose)
+		self.parent.onMatchDose(dose_to_match * 1e20,self.doses[0])
 
 	def onCancel(self,evt):
 		self.parent.onCancelDoseMeasure()
@@ -748,20 +760,20 @@ class Panel(leginon.gui.wx.Node.Panel, leginon.gui.wx.Instrument.SelectionMixin)
 			evt = leginon.gui.wx.Presets.PresetsChangedEvent(presets)
 			self.presets.GetEventHandler().AddPendingEvent(evt)
 
-	def setDoseValue(self, dose):
-		evt = SetDoseValueEvent(dose)
+	def setDoseValue(self, doses):
+		evt = SetDoseValueEvent(doses)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSetImage(self, evt):
 		self.dosedialog.image.setImage(evt.image)
 		if not self.dosedialog.IsShown():
 			if self.dosedialog.ShowModal() == wx.ID_OK:
-				self.node.saveDose(self.dosedialog.dose,
+				self.node.saveDose(self.dosedialog.doses[0],
 														self.presets.getSelectedPreset())
 			self.dosedialog.image.setImage(None)
 
 	def onSetDoseValue(self, evt):
-		self.dosedialog.setDose(evt.dose)
+		self.dosedialog.setDose(evt.doses)
 
 	def onAcquireDoseImage(self, evt):
 		presetname = self.presets.getSelectedPreset()

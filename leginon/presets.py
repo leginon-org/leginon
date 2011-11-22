@@ -1008,6 +1008,7 @@ class PresetsManager(node.Node):
 		## display
 		try:
 			dose = self.dosecal.dose_from_imagedata(imagedata)
+			pixel_framedose = self.dosecal.pixel_framedose_from_imagedata(imagedata)
 		except calibrationclient.NoPixelSizeError:
 			self.logger.error('No pixel size for this magnification')
 			return
@@ -1019,7 +1020,7 @@ class PresetsManager(node.Node):
 			self.logger.error('Invalid dose measurement result')
 		else:
 			if display:
-				self.panel.setDoseValue(dose)
+				self.panel.setDoseValue([dose,pixel_framedose])
 				self.setImage(imagedata['image'])
 			else:
 				self.saveDose(dose, self.currentpreset['name'])
