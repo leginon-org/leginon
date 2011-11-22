@@ -175,7 +175,7 @@ class form {
 		$str.='<input class="'.$this->formclass.'" '
 		.'type="text" '
 		.'name="'.$field.'" id="'.$field.'" '
-		.'size="'.$size.'" value="'.$value.'" maxlength="5" '
+		.'size="'.$size.'" value="'.$value.'" maxlength="8" '
 		.'>';
 		$str.='</li>';
 
@@ -335,7 +335,7 @@ class form {
 				."		ShowCalendar(el,el,null,'','') \n"
 				."} \n"
 				."function isTime(strtime) {  \n"
-				."	var re = /^\d{1,2}:\d{1,2}$/  \n"
+				."	var re = /^([0-9]|([01][0-9])|(2[0-3]))(:[0-5][0-9])+$/  \n"
 				."	if (re.test(strtime)) {  \n"
 				."		var dArr = strtime.split(':')  \n"
 /*				."		var dobj = new Date(strtime)  \n"
