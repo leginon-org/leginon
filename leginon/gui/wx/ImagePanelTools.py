@@ -372,7 +372,7 @@ class ImageTool(object):
 ##
 ##################################
 
-class FitShapeTool(ImageTool):
+class TraceTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
 		bitmap = getBitmap('ellipse.png')
 		tooltip = 'Toggle Fit Shape'
@@ -380,18 +380,9 @@ class FitShapeTool(ImageTool):
 		self.button.SetToggle(False)
 		self.start = None
 		self.xypath = []
-		self.shiftxypath = []
-		self.fitted_shape_points = []
 		self.leftisdown = False
-		self.shape_params = None
-		self.shapepoint = None
-		self.shapepointaxis = None
-		self.shapepointangle = None
-		self.start_shape_params = None
 		self.lastx = 0
 		self.lasty = 0
-		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_SHAPE_NEW_CENTER, self.onNewShapeCenter, self.imagepanel)
-		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_SHAPE_NEW_PARAMS, self.onNewShapeParams, self.imagepanel)
 
 	def OnLeftDown(self, evt):
 		if self.button.GetToggle():
@@ -404,6 +395,53 @@ class FitShapeTool(ImageTool):
 				x0, y0 = self.start
 				self.xypath.append((x,y))
 			self.start = self.imagepanel.view2image((evt.X, evt.Y))
+
+	def OnLeftClick(self, evt):
+		if self.button.GetToggle():
+			self.leftisdown = False
+			self.start = None
+			self.imagepanel.UpdateDrawing()
+
+	def OnRightClick(self, evt):
+		if self.button.GetToggle():
+			self.leftisdown = True
+			self.start = None
+
+	def OnMotion(self, evt, dc):
+		if self.button.GetToggle():
+			if self.leftisdown:
+				x,y = self.imagepanel.view2image((evt.X, evt.Y))
+				self.xypath.append((x,y))
+				return True
+		return False
+
+	def OnToggle(self, value):
+		if not value:
+			self.start = None
+			self.xypath = []
+			self.imagepanel.UpdateDrawing()
+
+	def Draw(self, dc):
+		if self.xypath:
+			dc.SetPen(wx.Pen(wx.RED, 3))
+			dc.SetBrush(wx.TRANSPARENT_BRUSH)
+			scaledpoints = map(self.imagepanel.image2view, self.xypath)
+			if len(scaledpoints) > 1:
+				dc.DrawLines(scaledpoints)
+
+class FitShapeTool(TraceTool):
+	def __init__(self, imagepanel, sizer):
+		TraceTool.__init__(self,imagepanel,sizer)
+		self.shiftxypath = []
+		self.fitted_shape_points = []
+		self.shape_params = None
+		self.shapepoint = None
+		self.shapepointaxis = None
+		self.shapepointangle = None
+		self.start_shape_params = None
+		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_SHAPE_NEW_CENTER, self.onNewShapeCenter, self.imagepanel)
+		self.imagepanel.Bind(leginon.gui.wx.ImagePanelTools.EVT_SHAPE_NEW_PARAMS, self.onNewShapeParams, self.imagepanel)
+
 
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
@@ -428,11 +466,6 @@ class FitShapeTool(ImageTool):
 
 	def distance(self, p1, p2):
 		return math.hypot(p2[0]-p1[0], p2[1]-p1[1])
-
-	def OnRightClick(self, evt):
-		if self.button.GetToggle():
-			self.leftisdown = True
-			self.start = None
 
 	def ellipsePoints(self, points):
 		try:
@@ -545,14 +578,6 @@ class FitShapeTool(ImageTool):
 			self.shiftxypath = []
 			self.imagepanel.UpdateDrawing()
 
-	#--------------------
-	def OnMotion(self, evt, dc):
-		if self.button.GetToggle():
-			if self.leftisdown:
-				x,y = self.imagepanel.view2image((evt.X, evt.Y))
-				self.xypath.append((x,y))
-				return True
-		return False
 
 	#--------------------
 	def OnToggle(self, value):
@@ -564,12 +589,7 @@ class FitShapeTool(ImageTool):
 			self.imagepanel.UpdateDrawing()
 
 	def Draw(self, dc):
-		if self.xypath:
-			dc.SetPen(wx.Pen(wx.RED, 3))
-			dc.SetBrush(wx.TRANSPARENT_BRUSH)
-			scaledpoints = map(self.imagepanel.image2view, self.xypath)
-			if len(scaledpoints) > 1:
-				dc.DrawLines(scaledpoints)
+		super(FitShapeTool,self).Draw(dc)
 		if self.shiftxypath:
 			dc.SetPen(wx.Pen(wx.RED, 3))
 			dc.SetBrush(wx.TRANSPARENT_BRUSH)
