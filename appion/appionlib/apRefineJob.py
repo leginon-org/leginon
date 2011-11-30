@@ -158,8 +158,9 @@ class RefineJob(basicScript.BasicScript):
 				if type(number) == type(0):
 					apDisplay.printWarning("%s is converted to next integer above if entered as float" % key)
 					self.params[key] = map((lambda x: int(math.ceil(x))),self.params[key])
-		#
-		maxmask = int(math.floor((self.params['boxsize'])/2.0))-2
+		# convert the stack boxsize from pixels to angstroms to find the maz outer mask radius
+		boxsizeAngstrom = self.params['boxsize'] * self.params['apix']
+		maxmask = int(math.floor(boxsizeAngstrom/2.0))-2
 		for iter in range(self.params['numiter']):
 			if 'symmetry' not in self.params.keys() or self.params['symmetry'][iter] == '':
 				apDisplay.printError("Symmetry was not defined")
