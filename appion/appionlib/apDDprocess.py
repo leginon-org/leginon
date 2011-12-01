@@ -6,7 +6,7 @@ import numpy
 import scipy.stats
 import scipy.ndimage as ndimage
 import numextension
-from pyami import mrc,imagefun,arraystats
+from pyami import mrc,imagefun,arraystats,numpil
 try:
 	#The faster tifffile module only works with python 2.6 and above
 	from pyami import tifffile
@@ -17,6 +17,10 @@ except:
 from leginon import correctorclient
 from appionlib import apDisplay
 
+# testing options
+save_jpg = False
+ddtype = 'thin'
+
 class DirectDetectorProcessing(object):
 	def __init__(self):
 		self.image = None
@@ -26,6 +30,7 @@ class DirectDetectorProcessing(object):
 		# change this to True for loading bias image for correction
 		self.use_bias = False
 		self.log = open('newref.log','w')
+		self.scalefile = open('darkscale.log','w')
 
 	def setImageId(self,imageid):
 		from leginon import leginondata
@@ -53,9 +58,28 @@ class DirectDetectorProcessing(object):
 		return self.scaleRefImage('bright',nframe)
 
 	def getSingleFrameDarkArray(self):
+		darkdata = self.__getRefImageData('dark')
+		nframes = darkdata['camera']['nframes']
+		return darkdata['image'] / nframes
+
+	def OldgetSingleFrameDarkArray(self):
+		# work around for the bug in DE server between 11sep07 and 11nov22
 		return self.__getRefImageData('dark')['image']
 
 	def getRawFrameDirFromImage(self,imagedata):
+		# strip off DOS path in rawframe directory name 
+		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
+		if not rawframename:
+			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
+		# raw frames are saved in a subdirctory of image path
+		imagepath = imagedata['session']['image path']
+		rawframedir = os.path.join(imagepath,'%s.frames' % imagedata['filename'])
+		if not os.path.exists(rawframedir):
+			apDisplay.printError('Raw Frame Directory %s does not exist' % rawframedir)
+		return rawframedir
+
+	def OldgetRawFrameDirFromImage(self,imagedata):
+		# works between 11sep07 and 11nov22
 		# strip off DOS path in rawframe directory name 
 		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
 		if not rawframename:
@@ -70,6 +94,7 @@ class DirectDetectorProcessing(object):
 	def __getRefImageData(self,reftype):
 		if not self.use_full_raw_area:
 			refdata = self.image[reftype]
+			#refdata = self.c_client.getAlternativeChannelReference(reftype,refdata)
 		else:
 			# use most recent CorrectorImageData
 			# TO DO: this should research only ones before the image is taken.
@@ -82,7 +107,6 @@ class DirectDetectorProcessing(object):
 		refdata = self.__getRefImageData(reftype)
 		ref_nframe = len(refdata['camera']['use frames'])
 		refscale = float(nframe) / ref_nframe
-		print reftype, ref_nframe, nframe, os.path.join(refdata['session']['image path'],refdata['filename']+'.mrc')
 		scaled_refarray = refdata['image'] * refscale
 		return scaled_refarray
 
@@ -101,7 +125,7 @@ class DirectDetectorProcessing(object):
 		# total number of frames saved
 		self.totalframe = self.getNumberOfFrameSaved()
 
-	def __setCameraInfo(self,nframe,use_full_raw_area):
+	def setCameraInfo(self,nframe,use_full_raw_area):
 		'''
 		set cemrainfo attributes with current values of the image
 		'''
@@ -165,7 +189,7 @@ class DirectDetectorProcessing(object):
 		crop_end = {'x': offset['x']+dimension['x']*bin['x'], 'y':offset['y']+dimension['y']*bin['y']}
 
 		rawframe_path = os.path.join(rawframe_dir,'RawImage_%d.tif'%frame_number)
-		print rawframe_path
+		apDisplay.printMsg('Raw frame path: %s' %  rawframe_path)
 		if not os.path.exists(rawframe_path):
 			return False
 		if use_tifffile:
@@ -206,7 +230,6 @@ class DirectDetectorProcessing(object):
 				if oneframe is False:
 					return False
 				rawarray += oneframe
-		print 'rawsum',arraystats.mean(rawarray),rawarray.min(),rawarray.max()
 		return rawarray
 
 	def correctFrameImage(self,start_frame,nframe,use_full_raw_area=False):
@@ -229,7 +252,7 @@ class DirectDetectorProcessing(object):
 		self.use_full_raw_area = use_full_raw_area
 		get_new_refs = self.__conditionChanged(nframe,use_full_raw_area)
 		if get_new_refs:
-			self.__setCameraInfo(nframe,use_full_raw_area)
+			self.setCameraInfo(nframe,use_full_raw_area)
 		self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
 		return False
 
@@ -238,7 +261,6 @@ class DirectDetectorProcessing(object):
 		b = darkarray.reshape(onedshape)
 		dark_scale = self.c_client.calculateDarkScale(rawarray,darkarray)
 		corrected = (rawarray - dark_scale * darkarray)
-		print 'before norm cc',numpy.corrcoef(corrected.reshape(onedshape),b)[(0,1)]
 		return corrected,dark_scale
 
 	def makeNorm(self,brightarray,darkarray,dark_scale):
@@ -277,7 +299,7 @@ class DirectDetectorProcessing(object):
 		# DARK CORRECTION
 		if get_new_refs:
 			# load dark 
-			self.__setCameraInfo(nframe,use_full_raw_area)
+			self.setCameraInfo(nframe,use_full_raw_area)
 			unscaled_darkarray = self.getSingleFrameDarkArray()
 			self.unscaled_darkarray = unscaled_darkarray
 		else:
@@ -287,10 +309,14 @@ class DirectDetectorProcessing(object):
 		rawarray = self.sumupFrames(self.rawframe_dir,start_frame,nframe)
 		if rawarray is False:
 			return False
-		#mrc.write(unscaled_darkarray,'dark.mrc')
-		#mrc.write(rawarray,'raw.mrc')
+		if save_jpg:
+			numpil.write(unscaled_darkarray,'%s_dark.jpg' % ddtype,'jpeg')
+			numpil.write(rawarray,'%s_raw.jpg' % ddtype,'jpeg')
 		corrected, dark_scale = self.darkCorrection(rawarray,unscaled_darkarray)
-
+		if save_jpg:
+			numpil.write(corrected,'%s_dark_corrected.jpg' % ddtype,'jpeg')
+		self.scalefile.write('%s\t%.4f\n' % (start_frame,dark_scale))
+		apDisplay.printMsg('Dark Scale= %.4f' % dark_scale)
 		# GAIN CORRECTION
 		if get_new_refs:
 			scaled_brightarray = self.getScaledBrightArray(nframe)
@@ -298,15 +324,18 @@ class DirectDetectorProcessing(object):
 			self.normarray = normarray
 		else:
 			normarray = self.normarray
-		#mrc.write(normarray,'norm.mrc')
-		#mrc.write(scaled_brightarray,'bright.mrc')
+		if save_jpg:
+			numpil.write(normarray,'%s_norm.jpg' % ddtype,'jpeg')
+			numpil.write(scaled_brightarray,'%s_bright.jpg' % ddtype,'jpeg')
 		corrected = corrected * normarray
 
-		# BAD PIXEL FIXTING
+		# BAD PIXEL FIXING
 		# This is commented out because it interferes with Gram-Schmidt process
 		#plan = self.c_client.retrieveCorrectorPlan(self.camerainfo)
 		#self.c_client.fixBadPixels(corrected,plan)
 		#corrected = numpy.clip(corrected,0,10000)
+		#if save_jpg:
+			#numpil.write(corrected,'%s_gain_corrected.jpg' % ddtype,'jpeg')
 		print 'corrected',arraystats.mean(corrected),corrected.min(),corrected.max()
 
 		if stripe_correction:
