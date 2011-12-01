@@ -31,15 +31,8 @@ def getShiftFromImage(imgdata, sessionname):
 ##===================
 ##===================
 def getDefocusPair(imgdata):
-	target = imgdata['target']
-	if target is None:
-		return None
-	qtarget = leginon.leginondata.AcquisitionImageTargetData()
-	qtarget['image'] = target['image']
-	qtarget['number'] = target['number']
-	qsibling = leginon.leginondata.AcquisitionImageData(target=qtarget)
 	origid = imgdata.dbid
-	allsiblings = qsibling.query(readimages=False)
+	allsiblings = getAllSiblings(imgdata)
 	defocpair = None
 	if len(allsiblings) > 1:
 		#could be multiple siblings but we are taking only the most recent
@@ -48,6 +41,20 @@ def getDefocusPair(imgdata):
 				defocpair=sib
 				break
 	return defocpair
+
+def getAllSiblings(imgdata):
+	'''
+	get all sibling image data, including itself, from the same parent
+	'''
+	target = imgdata['target']
+	if target is None or target['image'] is None:
+		return [imgdata]
+	qtarget = leginon.leginondata.AcquisitionImageTargetData()
+	qtarget['image'] = target['image']
+	qtarget['number'] = target['number']
+	qsibling = leginon.leginondata.AcquisitionImageData(target=qtarget)
+	allsiblings = qsibling.query(readimages=False)
+	return allsiblings
 
 ##===================
 ##===================
