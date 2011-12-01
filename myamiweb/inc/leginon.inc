@@ -2410,8 +2410,8 @@ class leginondata {
 
 
 		$q="SELECT "
-		."UNIX_TIMESTAMP(`s`.`DEF_timestamp`) as `unix_timestamp` , "
-		."`s`.`DEF_timestamp` as `timestamp` , `s`.`min`, `s`.`max`, "
+		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) as `unix_timestamp` , "
+		."`a`.`DEF_timestamp` as `timestamp` , `s`.`min`, `s`.`max`, "
 		."`s`.`REF|AcquisitionImageData|image` as `imageId`, "
 		."`s`.`stdev`, `s`.`mean` "
 		.$preselect 
@@ -2541,14 +2541,18 @@ class leginondata {
 		return $presults;
 	}
 
-	function getImageShift($sessionId, $preset="", $stats=false) {
+	function getImageScopeXYValues($sessionId, $preset="", $fieldname='image shift',$stats=false) {
 		$wherepreset=($preset) ? "AND `p`.name='$preset'" : "";
+		$displayname = str_replace(' ','_',$fieldname);
+		// pass also stage position z values
+		$qz = ($fieldname == 'stage position') ? ",`s`.`SUBD|".$fieldname."|z` AS `".$displayname."_z` ":"";
 		$q="SELECT "
 		."UNIX_TIMESTAMP(`a`.`DEF_timestamp`) AS `unix_timestamp`, "
 		."`a`.`DEF_timestamp` AS `timestamp`, "
 		."`p`.`name`, "
-		."`s`.`SUBD|image shift|x` AS `image_shift_x`, "
-		."`s`.`SUBD|image shift|y` AS `image_shift_y` "
+		."`s`.`SUBD|".$fieldname."|x` AS `".$displayname."_x`, "
+		."`s`.`SUBD|".$fieldname."|y` AS `".$displayname."_y` "
+		.$qz
 		."FROM "
 		."`AcquisitionImageData` AS `a` "
 		."LEFT JOIN `PresetData` AS `p` "
@@ -2559,7 +2563,10 @@ class leginondata {
 		."`a`.`REF|SessionData|session`=$sessionId "
 		.$wherepreset;
 		if ($stats) {
-			return array('x'=>$this->getStats("image_shift_x", $q),'y'=>$this->getStats("image_shift_y", $q));
+			$statsarray = array('x'=>$this->getStats($displayname."_x", $q),'y'=>$this->getStats($displayname."_y", $q));
+			if ($fieldname == 'stage position')
+				$statsarray['z'] = $this->getStats($displayname."_z", $q);
+			return $statsarray;
 		}
 		return $this->mysql->getSQLResult($q);
 	}

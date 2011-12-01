@@ -49,7 +49,7 @@ $expId = $sessionId;
 $imageshiftpresets = $leginondata->getImageShiftPresets($expId);
 if (!empty($imageshiftpresets)) {
 	foreach($imageshiftpresets as $preset) {
-		$stats = $leginondata->getImageShift($expId,$preset['name'],True);
+		$stats = $leginondata->getImageScopeXYValues($expId,$preset['name'],'image shift',True);
 		if (!$stats['x']['stddev']) continue;
 		echo "<tr><td colspan='3'>";
 		echo divtitle("Image Shift of Image Acquire by ".$preset['name']." Preset");

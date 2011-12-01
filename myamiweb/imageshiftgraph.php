@@ -21,31 +21,35 @@ $viewsql=$_GET['vs'];
 $width=$_GET['w'];
 $height=$_GET['h'];
 
+$fieldname = 'image shift';
+$displayname = str_replace(' ','_',$fieldname);
 $stats=false;
-$imageshiftdata=$leginondata->getImageShift($sessionId, $preset, $stats);
+$imageshiftdata=$leginondata->getImageScopeXYValues($sessionId, $preset, $fieldname, $stats);
 
 if ($viewsql) {
 	$sql = $leginondata->mysql->getSQLQuery();
 	echo $sql;
 	exit;
 }
-$axes = array('image_shift_x','image_shift_y');
+$display_x = $displayname.'_x';
+$display_y = $displayname.'_y';
+$axes = array($display_x,$display_y);
 if ($histogram == true && $histaxis == 'x') 
-	$axes = array('image_shift_y','image_shift_x');
+	$axes = array($display_y,$display_x);
 $dbemgraph=&new dbemgraph($imageshiftdata, $axes[0], $axes[1]);
 $dbemgraph->lineplot=False;
-$dbemgraph->title="image shift for preset $preset";
-$dbemgraph->yaxistitle=$axes[1]." (um)";
+$dbemgraph->title=$fieldname." for preset $preset";
+$dbemgraph->yaxistitle=$axes[1]." (mrad)";
 
 if ($viewdata) {
-	$dbemgraph->dumpData(array('image_shift_x', 'image_shift_y'));
+	$dbemgraph->dumpData(array($display_x, $display_y));
 }
 if ($histogram) {
 	$dbemgraph->histogram=true;
 }
 
-$dbemgraph->scalex(1e-6);
-$dbemgraph->scaley(1e-6);
+$dbemgraph->scalex(1e-3);
+$dbemgraph->scaley(1e-3);
 $dbemgraph->dim($width,$height);
 $dbemgraph->graph();
 

@@ -255,7 +255,7 @@ if (!empty($imageshiftpresets)) {
 		echo "</td>";
 	echo "</tr>";
 	foreach($imageshiftpresets as $preset) {
-		$stats = $leginondata->getImageShift($expId,$preset['name'],True);
+		$stats = $leginondata->getImageScopeXYValues($expId,$preset['name'],'image shift',True);
 		if (!$stats['x']['stddev']) continue;
 		echo "<tr><td colspan='2'>";
 		foreach (array_keys($stats) as $key) 
