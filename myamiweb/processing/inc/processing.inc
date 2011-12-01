@@ -656,13 +656,13 @@ function addProcessingHostParams( $command, $processhost, $nproc, $ppn, $nodes, 
 	$cput = $walltime * $nproc;
 	
 	if (!preg_match("/--ppn=/", $command))
-		$command .= "--ppn=$ppn ";
+		$command .= " --ppn=$ppn ";
 	if (!preg_match("/--nodes=/", $command))
-		$command .= "--nodes=$nodes ";
+		$command .= " --nodes=$nodes ";
 	if (!preg_match("/--walltime=/", $command))
-		$command .= "--walltime=$walltime ";
+		$command .= " --walltime=$walltime ";
 	if (!preg_match("/--cput=/", $command) && $cputime)
-		$command .= "--cput=$cputime ";
+		$command .= " --cput=$cputime ";
 		
 	return $command;		
 }
