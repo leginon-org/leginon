@@ -16,10 +16,7 @@ from appionlib import apDisplay
 ##===================
 ##===================
 def getShiftFromImage(imgdata, sessionname):
-	if imgdata['preset'] is not None and imgdata['preset']['name'] != 'upload':
-		sibling = getDefocusPair(imgdata)
-	else:
-		sibling = getManualDefocusPair(imgdata)
+	sibling = getDefocusPair(imgdata)
 	if sibling:
 		shiftpeak = getShift(imgdata, sibling)
 		recordShift(sessionname, imgdata, sibling, shiftpeak)
@@ -31,6 +28,13 @@ def getShiftFromImage(imgdata, sessionname):
 ##===================
 ##===================
 def getDefocusPair(imgdata):
+	if imgdata['preset'] is not None and imgdata['preset']['name'] != 'upload':
+		sibling = getDefocusPairFromTarget(imgdata)
+	else:
+		sibling = getManualDefocusPair(imgdata)
+	return sibling
+
+def getDefocusPairFromTarget(imgdata):
 	origid = imgdata.dbid
 	allsiblings = getAllSiblings(imgdata)
 	defocpair = None
@@ -44,7 +48,7 @@ def getDefocusPair(imgdata):
 
 def getAllSiblings(imgdata):
 	'''
-	get all sibling image data, including itself, from the same parent
+	get all sibling image data, including itself, from the same parent image and target number
 	'''
 	target = imgdata['target']
 	if target is None or target['image'] is None:
