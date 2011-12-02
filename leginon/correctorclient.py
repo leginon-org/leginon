@@ -110,44 +110,53 @@ class CorrectorClient(cameraclient.CameraClient):
 				break
 		return brightdata
 
-	def getAlternativeChannelNorm(self,normdata):
+	def createRefQuery(self,reftype,qcam,qscope,channel):
+		if reftype == 'norm':
+			q = leginondata.NormImageData(camera=qcam,scope=qscope,channel=channel)
+		elif reftype == 'bright':
+			q = leginondata.BrightImageData(camera=qcam,scope=qscope,channel=channel)
+		elif reftype == 'dark':
+			q = leginondata.DarkImageData(camera=qcam,scope=qscope,channel=channel)
+		return q
+
+	def getAlternativeChannelReference(self,reftype,refdata):
 		'''
 		Get norm image data of the other channel closest in time
 		'''
-		if normdata is None:
+		if refdata is None:
 			return None
-		timestamp = normdata.timestamp
-		normcam = normdata['camera']
-		qcam = leginondata.CameraEMData(dimension=normcam['dimension'],
-				offset=normcam['offset'], binning=normcam['binning'],
-				ccdcamera=normcam['ccdcamera'])
-		qcam['exposure time'] = normcam['exposure time']
-		qcam['energy filtered'] = normcam['energy filtered']
+		timestamp = refdata.timestamp
+		refcam = refdata['camera']
+		qcam = leginondata.CameraEMData(dimension=refcam['dimension'],
+				offset=refcam['offset'], binning=refcam['binning'],
+				ccdcamera=refcam['ccdcamera'])
+		qcam['exposure time'] = refcam['exposure time']
+		qcam['energy filtered'] = refcam['energy filtered']
 
-		normscope = normdata['scope']
-		qscope = leginondata.ScopeEMData(tem=normscope['tem'])
-		qscope['high tension'] = normscope['high tension']
-		altchannel = int(normdata['channel'] == 0)
-		q = leginondata.NormImageData(camera=qcam,scope=qscope,channel=altchannel)
-		normlist = q.query()
-		if len(normlist) == 0:
+		refscope = refdata['scope']
+		qscope = leginondata.ScopeEMData(tem=refscope['tem'])
+		qscope['high tension'] = refscope['high tension']
+		altchannel = int(refdata['channel'] == 0)
+		q = self.createRefQuery(reftype,qcam,qscope,altchannel)
+		reflist = q.query()
+		if len(reflist) == 0:
 			# Not to query exposure time if none found
 			qcam['exposure time'] = None
-			q = leginondata.NormImageData(camera=qcam,scope=qscope,channel=altchannel)
-			normlist = q.query()
-		for newnormdata in normlist:
-			if newnormdata.timestamp < timestamp:
+			q = self.createRefQuery(reftype,qcam,qscope,altchannel)
+			reflist = q.query()
+		for newrefdata in reflist:
+			if newrefdata.timestamp < timestamp:
 				break
-		before_norm = newnormdata
-		normlist.reverse()
-		for newnormdata in normlist:
-			if newnormdata.timestamp > timestamp:
+		before_ref = newrefdata
+		reflist.reverse()
+		for newrefdata in reflist:
+			if newrefdata.timestamp > timestamp:
 				break
-		after_norm = newnormdata
-		if after_norm.timestamp - timestamp > timestamp - before_norm.timestamp:
-			return before_norm
+		after_ref = newrefdata
+		if after_ref.timestamp - timestamp > timestamp - before_ref.timestamp:
+			return before_ref
 		else:
-			return after_norm
+			return after_ref
 
 	def formatCorrectorKey(self, key):
 		try:
@@ -224,9 +233,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 		try:
 			## NEED TO FIX
-			## DE12 always gives averaged frames to one frame
-			#darkframes = len(dark['use frames'])
-			darkframes = 1
+			darkframes = len(dark['use frames'])
 		except:
 			darkframes = 1
 		try:
