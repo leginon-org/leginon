@@ -137,11 +137,15 @@ class ImageLoader(appionLoop2.AppionLoop):
 			### only allows uploading more images if all images are uploaded through appion host.
 			instrumentq = leginon.leginondata.InstrumentData(hostname='appion',name='AppionTEM')
 			appiontems = instrumentq.query()
-			scopeemq = leginon.leginondata.ScopeEMData(session=sessiondatas[0],tem=appiontems[0])
-			appionscopeems = scopeemq.query()
+			allappionscopeems = []
+			for appiontem in appiontems:
+				scopeemq = leginon.leginondata.ScopeEMData(session=sessiondatas[0],tem=appiontem)
+				appionscopeems = scopeemq.query()
+				if appionscopeems:
+					allappionscopeems.extend(appionscopeems)
 			scopeemq = leginon.leginondata.ScopeEMData(session=sessiondatas[0])
 			allscopeems = scopeemq.query()
-			if len(allscopeems) > len(appionscopeems):
+			if len(allscopeems) > len(allappionscopeems):
 
 				apDisplay.printError("You can only add more images to an existing session that contains only appion uploads")
 		else:
