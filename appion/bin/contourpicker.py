@@ -15,7 +15,7 @@ import scipy
 from scipy import ndimage
 import threading
 #import pyami
-from pyami import arraystats
+from pyami import arraystats, douglaspeucker
 
 #import subprocess
 import manualpicker
@@ -51,9 +51,9 @@ pick_colors = [
 	(128,128,255),
 ]
 
-class ContourPickerPanel(TargetPanel.TargetImagePanel):
-	def __init__(self, parent, id, callback=None, tool=True):
-		TargetPanel.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool)
+class ContourPickerPanel(TargetPanel.TraceTargetImagePanel):
+	def __init__(self, parent, id, mode='horizontal'):
+		TargetPanel.TraceTargetImagePanel.__init__(self, parent, id, mode=mode)
 
 	def addTypeTool(self, name, **kwargs):
 		if self.selectiontool is None:
@@ -110,8 +110,14 @@ class ContourPickerPanel(TargetPanel.TargetImagePanel):
 
 	def _onLeftClick(self, evt):
 		if self.selectedtype is not None:
-			x, y = self.view2image((evt.m_x, evt.m_y))
-			self.addTarget(self.selectedtype.name, x, y)
+			x, y = self.view2image((evt.X, evt.Y))
+			has_tracetooltarget = False
+			for xy in self.tracetool.xypath:
+						self.addTarget(self.selectedtype.name, xy[0], xy[1])
+						has_tracetooltarget = True
+			if not has_tracetooltarget:
+				self.addTarget(self.selectedtype.name, x, y)
+			
 		self.picker.onEdgeFinding(evt)
 		#if self.selectedtype.name == self.picker.s:
 		#	self.picker.addManualPoint()
@@ -430,7 +436,7 @@ class PickerApp(wx.App):
 		self.deselectcolor = wx.Colour(40,40,40)
 
 		self.frame = wx.Frame(None, -1, 'Manual Object Tracer')
-		self.sizer = wx.FlexGridSizer(2,1)
+		self.sizer = wx.FlexGridSizer(3,1)
 
 		### VITAL STATS
 		self.vitalstats = wx.StaticText(self.frame, -1, "Vital Stats:  ", style=wx.ALIGN_LEFT)
@@ -499,7 +505,6 @@ class PickerApp(wx.App):
 					#del targets
 		except (ValueError,IndexError):
 			pass		
-		print 'ow'
 
 	def addManualPoint(self):
 		def dist(target1,target2):
@@ -707,8 +712,11 @@ class PickerApp(wx.App):
 		vertices = []
 		vertices = self.panel.getTargetPositions('Manually Create Contours');
 		if len(vertices)>0:
-			self.addPolyParticle(vertices);
-		self.panel.setTargets('Manually Create Contours', []);
+			# reduce the number of vertices before saving
+			vertices = self.appionloop.minimizeVerticesByDP(vertices)
+			self.addPolyParticle(vertices)
+		self.panel.setTargets('Manually Create Contours', [])
+		self.panel.xypath = []
 		
 	def onNext(self, evt):
 		self.appionloop.targets = {}
@@ -724,6 +732,8 @@ class PickerApp(wx.App):
 		self.panel.setTargets('Auto Create Contours', [])
 		self.panel.setTargets('Manually Create Contours', [])
 		self.particleTypeList = []
+		self.panel.tracetool.xypath = []
+		self.panel.UpdateDrawing()
 
 	#	for s in self.particles:
 	#		self.panel.setTargets(s, [])
@@ -866,6 +876,11 @@ class ContourPicker(manualpicker.ManualPicker):
 		for particle in self.app.polyTargets:
 				targetsList.append(particle)
 		return targetsList
+
+	def minimizeVerticesByDP(self,vertices):
+		verticesarray = douglaspeucker.douglas_peucker(vertices,1)
+		vertices = list(verticesarray)
+		return vertices
 
 if __name__ == '__main__':
 	imgLoop = ContourPicker()

@@ -375,6 +375,15 @@ class ShapeTargetImagePanel(TargetImagePanel):
 		self.sizer.Layout()
 		self.Fit()
 
+class TraceTargetImagePanel(TargetImagePanel):
+	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):
+		TargetImagePanel.__init__(self, parent, id, imagesize, mode)
+		self.tracetool = leginon.gui.wx.ImagePanelTools.TraceTool(self, self.toolsizer)
+		self.addTool(self.tracetool)
+		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
+		self.sizer.Layout()
+		self.Fit()
+
 ##################################
 class FFTTargetImagePanel(TargetImagePanel):
 	def __init__(self, parent, id, disable=False, imagesize=(512,512), mode="horizontal"):

@@ -381,12 +381,14 @@ class TraceTool(ImageTool):
 		self.start = None
 		self.xypath = []
 		self.leftisdown = False
+		self.rightisdown = False
 		self.lastx = 0
 		self.lasty = 0
 
 	def OnLeftDown(self, evt):
 		if self.button.GetToggle():
 			self.leftisdown = True
+			self.rightisdown = False
 			self.xypath = []
 			self.fitted_shape_points = []
 			if self.start is not None:
@@ -399,17 +401,19 @@ class TraceTool(ImageTool):
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
 			self.leftisdown = False
+			self.rightisdown = False
 			self.start = None
 			self.imagepanel.UpdateDrawing()
 
 	def OnRightClick(self, evt):
 		if self.button.GetToggle():
-			self.leftisdown = True
+			self.leftisdown = False
+			self.rightisdown = False
 			self.start = None
 
 	def OnMotion(self, evt, dc):
 		if self.button.GetToggle():
-			if self.leftisdown:
+			if self.leftisdown or self.rightisdown:
 				x,y = self.imagepanel.view2image((evt.X, evt.Y))
 				self.xypath.append((x,y))
 				return True
@@ -446,6 +450,7 @@ class FitShapeTool(TraceTool):
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
 			self.leftisdown = False
+			self.rightisdown = False
 			self.start = None
 			self.fitted_shape_points = self.ellipsePoints(self.xypath)
 			self.imagepanel.UpdateDrawing()
@@ -454,6 +459,7 @@ class FitShapeTool(TraceTool):
 		if not self.button.GetToggle():
 			return
 		self.leftisdown = False
+		self.rightisdown = False
 		self.shape_params['shape'] = 'rectangle'
 		x,y = self.imagepanel.view2image((evt.X, evt.Y))
 		if len(self.shiftxypath) > 1:

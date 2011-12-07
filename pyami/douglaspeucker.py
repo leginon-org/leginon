@@ -37,6 +37,8 @@ import numpy
 
 def pointToLineDistance(linepta, lineptb, point):
 	normalLength = numpy.sqrt((lineptb[0] - linepta[0]) * (lineptb[0] - linepta[0]) + (lineptb[1] - linepta[1]) * (lineptb[1] - linepta[1]))
+	if normalLength < 0.00000001:
+		return numpy.sqrt((point[0] - linepta[0]) * (point[0] - linepta[0]) + (point[1] - linepta[1]) * (point[1] - linepta[1]))
 	return numpy.absolute((point[0] - linepta[0]) * (lineptb[1] - linepta[1]) - (point[1] - linepta[1]) * (lineptb[0] - linepta[0])) / normalLength
 
 def douglas_peucker(points, epsilon):
