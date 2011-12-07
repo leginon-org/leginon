@@ -109,7 +109,7 @@ class PickerApp(wx.App):
 		### END IMAGE PANEL
 
 		### BEGIN BUTTONS ROW
-		self.buttonrow = wx.FlexGridSizer(1,8)
+		self.buttonrow = wx.FlexGridSizer(1,9)
 
 		self.next = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
 		self.next.SetMinSize((200,40))
