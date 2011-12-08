@@ -453,8 +453,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo"<input type='checkbox' name='selexcheck' onclick='enableselex(this)' $selexcheck>\n";
 	echo docpop('partcutoff','Particle Correlation Cutoff');
 	echo "<br />\n";
-	echo "Use Values Above:<input type='text' name='correlationmin' $selexdisable value='$selexminval' size='4'><br/>\n";
-	echo "Use Values Below:<input type='text' name='correlationmax' $selexdisable value='$selexmaxval' size='4'><br/>\n";
+	echo "Remove particles with CCC below:<input type='text' name='correlationmin' $selexdisable value='$selexminval' size='4'><br/>\n";
+	echo "Remove particles with CCC above:<input type='text' name='correlationmax' $selexdisable value='$selexmaxval' size='4'><br/>\n";
 	echo "<br/>\n";
 
 	echo "<b>Defocal pairs:</b>\n";
