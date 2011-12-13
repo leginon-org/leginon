@@ -427,7 +427,7 @@ class TraceTool(ImageTool):
 
 	def Draw(self, dc):
 		if self.xypath:
-			dc.SetPen(wx.Pen(wx.RED, 3))
+			dc.SetPen(wx.Pen(wx.RED, 1))
 			dc.SetBrush(wx.TRANSPARENT_BRUSH)
 			scaledpoints = map(self.imagepanel.image2view, self.xypath)
 			if len(scaledpoints) > 1:
@@ -597,12 +597,12 @@ class FitShapeTool(TraceTool):
 	def Draw(self, dc):
 		super(FitShapeTool,self).Draw(dc)
 		if self.shiftxypath:
-			dc.SetPen(wx.Pen(wx.RED, 3))
+			dc.SetPen(wx.Pen(wx.RED, 1))
 			dc.SetBrush(wx.TRANSPARENT_BRUSH)
 			scaledpoints = map(self.imagepanel.image2view, self.shiftxypath)
 			dc.DrawPointList(scaledpoints)
 		if self.fitted_shape_points:
-			dc.SetPen(wx.Pen(wx.GREEN, 3))
+			dc.SetPen(wx.Pen(wx.GREEN, 1))
 			dc.SetBrush(wx.TRANSPARENT_BRUSH)
 			polypoints = map(self.imagepanel.image2view, self.fitted_shape_points)
 			dc.DrawPolygon(polypoints)
