@@ -36,6 +36,7 @@ $view1->displayTagIcon(false);
 $view1->displayACEIcon(false);
 $view1->displayTargetIcon(false);
 $view1->displayExportLink(false);
+$view1->displayInfoIcon(false);
 $view1->setSize(512);
 
 $viewer->add($view1);
