@@ -9,8 +9,20 @@ import platform
 import webbrowser
 import stat
 import time
+import sha
+
 
 class CentosInstallation(object):
+
+    def setReleaseDependantValues(self):
+        # need to change to branch when release
+        self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-2.1 " + self.svnMyamiDir
+        
+        #self.svnCmd = "svn co http://ami.scripps.edu/svn/myami/trunk " + self.svnMyamiDir
+
+        # SHA-1 digest of a registration key provided by AMI. When we change the key that we give to
+        # registered users, we need to update this value.
+        self.regKeyHash = '4\xa3T\xf2KB\x0e\xd7\x1fk1\xfdb\xcd\x04\xdcH>\xcc\x8e'
 
     def checkDistro(self):
 
@@ -31,6 +43,25 @@ class CentosInstallation(object):
 
         print "Current OS Information: " + flavor
         self.writeToLog("CentOS info: " + flavor)
+	
+    def  determineNumberOfCPUs(self):
+	    """ Number of virtual or physical CPUs on this system """
+
+	    # Python 2.6+
+	    try:
+	        import multiprocessing
+	        return multiprocessing.cpu_count()
+	    except (ImportError,NotImplementedError):
+	        pass
+
+	    # POSIX
+	    try:
+	        res = int(os.sysconf('SC_NPROCESSORS_ONLN'))
+
+	        if res > 0:
+	            return res
+	    except (AttributeError,ValueError):
+	        pass
 
     def checkRoot(self):
 
@@ -274,9 +305,305 @@ class CentosInstallation(object):
 
         return True
 
+    def installExternalPackages(self):
+        self.writeToLog("--- Start install External Packages")
+        
+        self.installEman()
+        self.installSpider()
+        self.installXmipp()
+
+        return True
+
+    def installEman(self):
+        self.writeToLog("--- Start install Eman1")
+        cwd = os.getcwd()
+        
+		# select 32 or 64 bit file to download
+        if self.machine == "i686" or self.machine == "i386" :
+            fileLocation = "http://ami.scripps.edu/redmine/attachments/download/632/eman-linux-x86-cluster-1.9.tar.gz"
+            fileName = "eman-linux-x86-cluster-1.9.tar.gz"
+        else :
+            fileLocation = "http://ami.scripps.edu/redmine/attachments/download/631/eman-linux-x86_64-cluster-1.9.tar.gz"
+            fileName = "eman-linux-x86_64-cluster-1.9.tar.gz"
+
+        # download the tar file and unzip it
+        command = "wget -c " + fileLocation
+        self.runCommand(command)
+        command = "tar -zxvf " + fileName
+        self.runCommand(command)
+        
+        # move the unzipped folder to a global location
+        self.runCommand("mv -v EMAN /usr/local/")
+
+        # Run the EMAN installer, it sets up the EMAN python module (must be run from the EMAN directory)
+        emandir = "/usr/local/EMAN"
+        os.chdir(emandir)
+        self.runCommand("./eman-installer")
+
+        # set environment variables
+        # For BASH, create an eman.sh
+        f = open('eman.sh', 'w')
+        f.write('''export EMANDIR=/usr/local/EMAN\n
+            export PATH=${EMANDIR}/bin:${PATH}\n
+            export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${EMANDIR}/lib\n
+            export PYTHONPATH=${EMANDIR}/lib''')
+        f.close()
+
+        # For C shell, create an eman.csh
+        f = open('eman.csh', 'w')
+        f.write('''setenv EMANDIR /usr/local/EMAN\n
+            setenv PATH ${EMANDIR}/bin:${PATH}\n
+            setenv LD_LIBRARY_PATH ${EMANDIR}/lib\n
+            setenv PYTHONPATH ${EMANDIR}/lib''')
+        f.close()
+        
+        # add them to the global /etc/profile.d/ folder
+        shutil.copy("eman.sh", "/etc/profile.d/eman.sh")
+        shutil.copy("eman.csh", "/etc/profile.d/eman.csh")
+        os.chmod("/etc/profile.d/eman.sh", 0755)
+        os.chmod("/etc/profile.d/eman.csh", 0755)
+        
+        os.chdir(self.currentDir)
+                
+        return True
+
+    def installSpider(self):
+        self.writeToLog("--- Start install Spider")
+        
+        fileLocation = "http://ami.scripps.edu/redmine/attachments/download/638/spidersmall.18.10.tar.gz"
+        fileName = "spidersmall.18.10.tar.gz"
+
+        # download the tar file and unzip it
+        command = "wget -c " + fileLocation
+        self.runCommand(command)
+        print "-------------done with wget.------------"
+        command = "tar -zxvf " + fileName
+        self.runCommand(command)
+        
+        # move the unzipped folder to a global location
+        shutil.move("spider", "/usr/local/spider")
+        #self.runCommand("mv -v spider /usr/local/")
+
+		# select 32 or 64 bit file to install
+        if self.machine == "i686" or self.machine == "i386" :
+            if self.nproc == 1:
+                fileName = "spider_linux"
+            else:
+                fileName = "spider_linux_mp_intel"
+        else :
+            fileName = "spider_linux_mp_opt64"
+
+        # create a link to the selected file in /usr/local/bin
+        command = "ln -sv /usr/local/spider/bin/" + fileName + " /usr/local/bin/spider"
+        self.runCommand(command)
+
+        # set environment variables
+        # For BASH, create an spider.sh
+        f = open('spider.sh', 'w')
+        f.write('''export SPIDERDIR=/usr/local/spider
+export SPBIN_DIR=${SPIDERDIR}/bin/
+export SPPROC_DIR=${SPIDERDIR}/proc/
+export SPMAN_DIR=${SPIDERDIR}/man/
+''')
+        f.close()
+
+        # For C shell, create an spider.csh
+        f = open('spider.csh', 'w')
+        f.write('''setenv SPIDERDIR /usr/local/spider
+setenv SPMAN_DIR ${SPIDERDIR}/man/
+setenv SPPROC_DIR ${SPIDERDIR}/proc/
+setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
+        f.close()
+        
+        # add them to the global /etc/profile.d/ folder
+        shutil.copy("spider.sh", "/etc/profile.d/spider.sh")
+        shutil.copy("spider.csh", "/etc/profile.d/spider.csh")
+        os.chmod("/etc/profile.d/spider.sh", 0755)
+        os.chmod("/etc/profile.d/spider.csh", 0755)
+
+
+    def installXmipp(self):
+        self.writeToLog("--- Start install Xmipp")
+
+        cwd = os.getcwd()
+        
+        dirName = "Xmipp-2.4-src"
+        tarFileName = dirName + ".tar.gz"
+        tarFileLocation = "http://ami.scripps.edu/redmine/attachments/download/636/" + tarFileName
+
+        # download the source code tar file and unzip it
+        command = "wget -c " + tarFileLocation
+        self.runCommand(command)
+        command = "tar -zxvf " + tarFileName
+        self.runCommand(command)
+
+        # change directories to the unzipped xmipp dir
+        os.chdir(dirName)
+
+        #
+        # prepare Xmipp make files
+        # 
+        
+        # locate the mpi library
+        mpifile = "libmpi.so"
+        command = "locate " + mpifile
+        libMpiPath = self.runCommand(command)
+
+        # format mpi include and lib paths
+        if ( mpifile in libMpiPath ):
+            matchPattern = "lib/" + mpifile
+            libMpiPath = libMpiPath.split( matchPattern )
+            libMpiPath = libMpiPath[0]
+        
+        # make sure the path is what we expect, ending with gcc/
+        if ( not libMpiPath.endswith( "gcc/" ) ):
+            self.writeToLog("--- Error installing Xmipp. Could not locate and parse the path to %s" % (mpifile, ))
+            return False
+
+        includeDir = libMpiPath + "include/"
+        libDir = libMpiPath + "lib/"
+
+        # build new lines for the configuration file
+        mpiInclude = "opts.Add('MPI_INCLUDE', 'MPI headers dir ', '" + includeDir + "')"
+        mpiLibDir = "opts.Add('MPI_LIBDIR', 'MPI libraries dir ', '" + libDir + "')"
+        mpiLib = "opts.Add('MPI_LIB', 'MPI library', 'mpi')"
+
+        # create a backup of the SConstruct file and open it for writing
+        shutil.copy('SConstruct', 'SConstruct-backup')
+        shutil.move('SConstruct', 'SConstruct-tmp')
+        inf = open('SConstruct-backup', 'r')
+        outf = open('SConstruct', 'w')
+
+        # parse the SConstruct file to replace MPI paths with the new lines
+        for line in inf:
+            line = line.rstrip()
+            if line.startswith("opts.Add('MPI_INCLUDE', 'MPI headers dir ',"):
+                outf.write(mpiInclude + "\n")
+            elif line.startswith("opts.Add('MPI_LIBDIR', 'MPI libraries dir ',"):
+                outf.write(mpiLibDir + "\n")
+            elif line.startswith("opts.Add('MPI_LIB', 'MPI library',"):
+                outf.write(mpiLib + "\n")
+            else:
+                outf.write(line + '\n')
+
+        inf.close()
+        outf.close()
+        os.remove('SConstruct-tmp')
+
+        # configure
+
+        mpiCommand = "mpi-selector --verbose --yes --system --set `rpm --qf '%{NAME}-%{VERSION}-gcc-%{ARCH}\n' -q openmpi`"
+        self.runCommand(command)
+
+        binDir = libMpiPath + "bin/"
+        os.environ["PATH"] = binDir + ':' + os.environ["PATH"]
+
+        command = "./scons.configure"
+        output = self.runCommand(command)
+        if ( "Checking for MPI ... yes" not in output ):
+            self.writeToLog("--- Error installing Xmipp. Could not find MPI during configuration.")
+            return False
+
+        # compile
+        self.runCommand("./scons.compile")
+
+        # change directories to original working dir
+        os.chdir(cwd)
+
+        # move the main source code directory to global location, like /usr/local
+        self.writeToLog("--- Moving the Xmipp directory to /usr/local/Xmipp.")
+        os.rename(dirName, "/usr/local/Xmipp")
+
+        #
+        # set environment variables
+        #
+
+        bashFile = "xmipp.sh"
+        cShellFile = "xmipp.csh"
+        profileDir = "/etc/profile.d/"
+
+        # For BASH, create an xmipp.sh
+        f = open(bashFile, 'w')
+        f.write('''export XMIPPDIR=/usr/local/Xmipp
+export PATH=${XMIPPDIR}/bin:${PATH}
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${XMIPPDIR}/lib''')
+        f.close()
+
+        # For C shell, create an xmipp.csh
+        f = open(cShellFile, 'w')
+        f.write('''setenv XMIPPDIR /usr/local/Xmipp
+setenv PATH ${XMIPPDIR}/bin:${PATH}
+setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${XMIPPDIR}/lib''')
+        f.close()
+        
+        # add them to the global /etc/profile.d/ folder
+        self.writeToLog("--- Adding xmipp.sh and xmipp.csh to /etc/profile.d/.")
+        shutil.copy(bashFile, profileDir + bashFile)
+        shutil.copy(cShellFile, profileDir + cShellFile)
+        os.chmod(profileDir + bashFile, 0755)
+        os.chmod(profileDir + cShellFile, 0755)
+
+
+
+    def installFrealign(self):
+        self.writeToLog("--- Start install Frealign")
+        
+        fileLocation = "http://ami.scripps.edu/redmine/attachments/download/740/frealign_v8.09_110505.tar.gz"
+        fileName = "frealign_v8.09_110505.tar.gz"
+
+        # download the tar file and unzip it
+        command = "wget -c " + fileLocation
+        self.runCommand(command)
+        print "-------------done with wget.------------"
+        command = "tar -zxvf " + fileName
+        self.runCommand(command)
+        
+        # move the unzipped folder to a global location
+        shutil.move("frealign_v8.09", "/usr/local/")
+        #self.runCommand("mv -v spider /usr/local/")
+
+		# select 32 or 64 bit file to install
+        if self.machine == "i686" or self.machine == "i386" :
+            if self.nproc == 1:
+                fileName = "frealign_v8.exe"
+            else:
+                fileName = "frealign_v8_mp.exe"
+        else :
+            fileName = "frealign_v8.exe"
+
+        # create a link to the selected file in /usr/local/bin
+        command = "ln -sv /usr/local/frealign_v8.09/bin/" + fileName + " /usr/local/bin/frealign"
+        self.runCommand(command)
+
+        # set environment variables
+        # For BASH, create an spider.sh
+        f = open('spider.sh', 'w')
+        f.write('''export SPIDERDIR=/usr/local/spider
+export SPBIN_DIR=${SPIDERDIR}/bin/
+export SPPROC_DIR=${SPIDERDIR}/proc/
+export SPMAN_DIR=${SPIDERDIR}/man/
+''')
+        f.close()
+
+        # For C shell, create an spider.csh
+        f = open('spider.csh', 'w')
+        f.write('''setenv SPIDERDIR /usr/local/spider
+setenv SPMAN_DIR ${SPIDERDIR}/man/
+setenv SPPROC_DIR ${SPIDERDIR}/proc/
+setenv SPBIN_DIR ${SPIDERDIR}/bin/''')
+        f.close()
+        
+        # add them to the global /etc/profile.d/ folder
+        shutil.copy("spider.sh", "/etc/profile.d/spider.sh")
+        shutil.copy("spider.csh", "/etc/profile.d/spider.csh")
+        os.chmod("/etc/profile.d/spider.sh", 0755)
+        os.chmod("/etc/profile.d/spider.csh", 0755)
+
+
+
     def processServerYumInstall(self):
 
-        packagelist = ['ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb',]
+        packagelist = ['ImageMagick', 'MySQL-python', 'compat-gcc-34-g77', 'fftw3-devel', 'gcc-c++', 'gcc-gfortran', 'gcc-objc', 'gnuplot', 'grace', 'gsl-devel', 'libtiff-devel', 'netpbm-progs', 'numpy', 'openmpi-devel', 'python-devel', 'python-imaging', 'python-matplotlib', 'python-tools', 'scipy', 'wxPython', 'xorg-x11-server-Xvfb','libjpeg-devel','zlib-devel',]
         self.yumInstall(packagelist)
 
     def enableTorqueComputeNode(self):
@@ -531,12 +858,7 @@ class CentosInstallation(object):
         logfile.close()
             
     def getMyami(self):
-        # need to change to branch when release
-        #cmd = "svn co http://ami.scripps.edu/svn/myami/branches/myami-2.0 /tmp/myami-2.0/"
-        
-        cmd = "svn co http://ami.scripps.edu/svn/myami/trunk " + self.svnMyamiDir
-
-        self.runCommand(cmd)
+        self.runCommand(self.svnCmd)
 
     def getDefaultValues(self):
 
@@ -547,26 +869,53 @@ class CentosInstallation(object):
         print "Installing web server"
         print "===================================="
         print ""
+        
+        value = raw_input("Please enter the registration key. You must be registered at http://ami.scripps.edu/redmine to recieve a registration key: ")
+        value = value.strip()
+
+        self.regKey = value
+        # Note to user: We try to collect a small amount of information about who installs our software
+        # so that we may recieve funding for its continued support and development. We also pass this information
+        # on to the providers of EMAN, XMIPP, and SPIDER, which we install with this script, 
+        # to ensure their continued development as well. If you remove this check for the reg key, please
+        # remember to appropriatly cite any software that you find useful while processing your data.
+        result = self.checkRegistrationKey()
+        if result is False:
+            return False
+
+
         value = raw_input("Please enter an email address: ")
         value = value.strip()
 
         self.adminEmail = value
 
-        print ""
-        print "What is the spherical aberration (Cs) constant for the microsope (in millimeters)."
-        print "Example : 2.0"
-        print ""
-        value = raw_input("Please enter the spherical aberration (Cs) value : ")
-        value = float (value.strip())
+        # the Cs value is no longer needed in 2.2
+        #print ""
+        #print "What is the spherical aberration (Cs) constant for the microsope (in millimeters)."
+        #print "Example : 2.0"
+        #print ""
+        #value = raw_input("Please enter the spherical aberration (Cs) value : ")
+        #value = float (value.strip())
 
-        self.csValue = value
+        self.csValue = 2.0#value
         
-        print ""
-        print "Auto installtion required your system root password."
-        print ""        
-        password = raw_input("Please enter the system root password : ")
+        #print ""
+        #print ""
+        #print ""        
+        password = raw_input("Please enter the system root password: ")
         password = password.strip()
         self.serverRootPass = password
+
+        value = ""
+        while (value != "Y" and value != "y" and value != "N" and value != "n"): 
+            value = raw_input("Would you like to install EMAN, Xmipp, and Spider at this time?(Y/N): ")
+            value = value.strip()
+
+        if (value == "Y" or value == "y"):
+            self.doInstallExternalPackages = True
+        else:
+            self.doInstallExternalPackages = False
+        
         
     def downloadSampleImages(self):
        
@@ -575,6 +924,19 @@ class CentosInstallation(object):
         print getImageCmd
         proc = subprocess.Popen(getImageCmd, shell=True)
         proc.wait()
+
+    def checkRegistrationKey(self):
+        # using sha-1. This has been deprecated as of python 2.5. When AMI supports a newer version of python,
+        # we should use the hashlib instead: http://docs.python.org/library/hashlib.html#module-hashlib
+        if (sha.new(self.regKey).digest() != self.regKeyHash):
+            print "The registration key provided is incorrect. Exiting installation..."
+            self.writeToLog("ERROR: registration key (%s) is incorrect ---" % (self.regKey,))
+            return False
+
+        print "Registration Key confirmed."
+        self.writeToLog("Registration Key confirmed.")
+        return True
+        
         
     def run(self):
 
@@ -593,10 +955,14 @@ class CentosInstallation(object):
         self.mrc2any = '/usr/bin/mrc2any'
         self.imagesDir = '/myamiImages'
 
+        self.setReleaseDependantValues()
+
         self.hostname = self.getServerName()
         self.nproc = self.getNumProcessors()
+        # Don't think we need this anymore
+        #self.numCPUs = self.determineNumberOfCPUs()
+        self.machine = platform.machine()
 
-        
         result = self.checkDistro()
         if result is False:
             sys.exit(1)
@@ -615,6 +981,7 @@ class CentosInstallation(object):
         result = self.getDefaultValues()
         if result is False:
             sys.exit(1)
+        
 
         self.yumUpdate()
         self.yumInstall(['subversion'])
@@ -635,23 +1002,27 @@ class CentosInstallation(object):
         result = self.setupWebServer()
         if result is False:
             sys.exit(1)
-            
+
+        if (self.doInstallExternalPackages):
+            self.installExternalPackages()
+                    
         self.downloadSampleImages()
 
-        self.writeToLog("Installation Finish.")
+        self.writeToLog("Installation Complete.")
 
         print("========================")
-        print("Installation Finish.")
+        print("Installation Complete.")
         print("Appion will launch in your web browser momentarily.")
         print("You may launch Leginon with the following command: start-leginon.py")
         print("========================")
-        
+
+                
         setupURL = "http://localhost/myamiweb/setup/autoInstallSetup.php?password=" + self.serverRootPass
         webbrowser.open_new(setupURL)
         self.writeToLog("Myamiweb Started.")
         
-        #subprocess.Popen("start-leginon.py")
-        #self.writeToLog("Leginon Started")
+        subprocess.Popen("start-leginon.py")
+        self.writeToLog("Leginon Started")
         
 if __name__ == "__main__":
     a = CentosInstallation()
