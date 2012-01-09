@@ -11,6 +11,9 @@ class SchemaUpdate16182(schemabase.SchemaUpdate):
 	'''
 
 	def getSessionsWithSavedRawFrames(self):
+		if (not self.leginon_dbupgrade.columnExists('CameraEMData', 'frames name')) or (not self.leginon_dbupgrade.columnExists('CameraEMData', 'save frames')):
+			return []
+
 		groupSQL = (" Select `REF|SessionData|session` as sessionid " +
 				" from CameraEMData where `frames name` is not null  " +
 				" and `frames name` not like '' and `save frames`=1 " +
@@ -49,7 +52,6 @@ class SchemaUpdate16182(schemabase.SchemaUpdate):
 			if badsession:
 				badimagepaths.append(badsession['image path'])
 		print badimagepaths
-		sys.exit()
 
 if __name__ == "__main__":
 	update = SchemaUpdate16182()
