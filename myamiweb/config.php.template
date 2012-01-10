@@ -112,13 +112,32 @@ set_include_path(dirname(__FILE__).PATH_SEPARATOR
 // --- $PROCESSING_HOSTS[] = array('host' => 'host1.school.edu', 'nproc' => 4); -- //
 // --- $PROCESSING_HOSTS[] = array('host' => 'host2.school.edu', 'nproc' => 8); -- //
 
-// $PROCESSING_HOSTS[] = array('host' => '', 'nproc' => );
+// $PROCESSING_HOSTS[] = array('host' => '', 
+							'nproc' => 32,
+							'nodesdef' => '4',
+							'nodesmax' => '280',
+							'ppndef' => '32',
+							'ppnmax' => '32',
+							'reconpn' => '16',
+							'walltimedef' => '48',
+							'walltimemax' => '240',
+							'cputimedef' => '1536',
+							'cputimemax' => '10000',
+							'memorymax' => '',
+							'appionbin' => 'bin/',
+							'baseoutdir' => 'appion', 
+							'localhelperhost' => '',
+							'dirsep' => '/',
+							'wrapperpath' => 'appion',
+							'loginmethod' => 'SHAREDKEY',
+							// if the login and passphrase are false/null the username and 
+							// password that the user logs into appion with will be used.
+							'loginusername' => '',
+							'passphrase' => '',
+							'publickey' => 'rsa.pub',
+							'privatekey' => 'rsa'
+							);
 
-// --- register your cluster configure file below i.e (default_cluster) --- //
-// --- $CLUSTER_CONFIGS[] = 'cluster1'; -- //
-// --- $CLUSTER_CONFIGS[] = 'cluster2'; -- //
-
-// $CLUSTER_CONFIGS[]= '';
 
 // --- Microscope spherical aberration constant
 // --- Example : 2.0 --- //
