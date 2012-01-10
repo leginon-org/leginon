@@ -216,27 +216,42 @@ class Cluster
 			ssh2_exec($connection, 'exit');
 			$result = true;
 		} else {
-			$msg = "Could not copy file to host ".$this->getHostName().".  Check permissions on remote file ordirectory";
+			$msg = "Could not copy file to host ".$this->getHostName().".  Check permissions on remote file or directory";
 			throw new Exception( $msg );
 		}
 	
 		return $result;
 	}
 	
-	//returns an ssh connection object which has already been authenticated 
-	//the method specified by $this->loginMehod
+	// returns an ssh connection object which has already been authenticated 
+	// using the method specified by $this->loginMehod
 	private function authenticatedConnection($username, $password, $port=22)
 	{
 		
 		if ( !($connection = ssh2_connect($this->getHostName(), $port)) ) {
-			$msg = "Connection to remote host ". $this->getHostName()."!";
+			$msg = "Unable to establish a connection to remote host ". $this->getHostName()."!";
 			throw new Exception($msg);
 		}
 		
 		$loginMethod = $this->getLoginMethod();
-		switch ($loginMethod){
+		switch ($loginMethod) {
 			case "USERPASSWORD":
+
 				$result = ssh2_auth_password($connection, $username, $password);
+				
+				if (!$result) {
+					// check that the server has not blocked ssh2 password authentication
+					$auth_methods = ssh2_auth_none($connection, $username);
+					
+					if ($auth_methods === false) {
+	  					$msg = "Failure authenticating login to ".$this->getHostName().", for user ".$username.".";
+					} else if (in_array('password', $auth_methods)) {
+	  					$msg = "Failure authenticating login to ".$this->getHostName().", verify login credentials for user ".$username;
+					} else {
+						$msg = "Trying to connect to remote host using password based authentication which is not enabled by ". $this->getHostName().".";
+					}	
+					throw new Exception($msg);
+				}							
 				break;
 			case "SHAREDKEY":
 				$pass = $this->getPassPhrase();
@@ -252,18 +267,17 @@ class Cluster
 												$this->getPublicKey(), 
 												$this->getPrivateKey(), 
 												$pass);
+				if (!$result) {
+					$msg = "Failure authenticating login credentials for ".$user." on ".$this->getHostName()." using shared key. Verify login credentials.";
+					throw new Exception($msg);
+				}												
 				break;
 		
 			default:
-				throw new Exception("Unknown login authentication method.");
+				$msg = "Can not login to ".$this->getHostName().". Unknown login authentication method.";
+				throw new Exception($msg);		
+		}
 				
-		}
-		
-		if (!$result){
-			$msg = "Failure authenticating login to ".$this->getHostName().", verify login credentials";
-			throw new Exception($msg);
-		}
-		
 		return $connection;
 	}
 }
