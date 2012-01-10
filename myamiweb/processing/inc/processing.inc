@@ -575,15 +575,17 @@ function justShowCommandTable($command, $processhost, $skip_command=false) {
 	// which should be the function.
 	$command = trim($command);
 	
-	// tokenize the command on spaces, without splitting quoted tokens
+	// tokenize the command on spaces, without splitting quoted tokens.
+	// The first call to strtok gets the first token, following calls will return the next token. 
 	$token = strtok($command,' ');
 	while ($token) {
-		// find double quoted tokens
-		if ( preg_match('/([^"]*)"([^"]*)/', $token) ) { 
+		// find double quoted tokens, the second expression looks for the case of a single word description
+		// in which case both the begin and end quote is in a single token
+		if ( preg_match('/([^"]*)"([^"]*)/', $token) && !(preg_match('/([^"]*)"([^"]*)"/', $token)) ) { 
 			$token .= ' '.strtok('"').'"'; 
 		}
-		// find single quoted tokens
-		if ( preg_match("/([^']*)'([^']*)/", $token) ) { 
+		// find single quoted tokens, the second expression looks for the case of a single word description
+		if ( preg_match("/([^']*)'([^']*)/", $token) && !(preg_match("/([^']*)'([^']*)'/", $token)) ) { 
 			$token .= ' '.strtok("'")."'"; 
 		}
 		
