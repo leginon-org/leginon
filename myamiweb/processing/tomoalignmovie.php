@@ -8,12 +8,13 @@
  *	Display results for each iteration of a refinement
  */
 
-require "inc/particledata.inc";
-require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
-require "inc/summarytables.inc";
+require_once "inc/particledata.inc";
+require_once "inc/leginon.inc";
+require_once "inc/project.inc";
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
+require_once "inc/summarytables.inc";
+require_once "inc/movie.inc";
 
 define (PARTICLE_DB, $_SESSION['processingdb']);
 
@@ -26,7 +27,7 @@ if (!$refinedata) {
 	$refinedata = $particle->getAlignerInfo($alignerid);
 	$alignment = $particle->getTomoAlignmentInfo($refinedata[0]['alignrunid']);
 }
-$javascript="<script src='../js/viewer.js'></script>\n";
+$javascript = addFlashPlayerJS();
 
 processing_header("Tomogram Report","Tomogram Report Page", $javascript);
 if (!$alignerid) {
@@ -50,7 +51,6 @@ function getflvsize($filename) {
 if (!defined('FLASHPLAYER_URL')) {
 	echo "<p style='color: #FF0000'>FLASHPLAYER_URL is not defined in config.php</p>";
 }
-$swfstyle=FLASHPLAYER_URL . 'FlowPlayer.swf';
 if (!is_null($cycle)) {
 	$flvfile = $refinedata[0]['path']."/align/minialign".sprintf('%02d',$cycle).".flv";
 } else {
@@ -63,31 +63,9 @@ if (!is_null($cycle)) {
 if (file_exists($flvfile)) {
 	echo "<table><tr><td>Alignment Stack:</td></tr>\n";
 	echo "<tr><td>".$flvfile."</td></tr>\n";
-	if ($size=getflvsize($flvfile)) {
-		list($flvwidth, $flvheight)=$size;
-	}
-	$maxcolwidth = 400;
 	echo "<tr><td>";
-	$colwidth = $flvwidth;
-	$rowheight = $colwidth * $flvheight / $flvwidth;
-	echo '<object type="application/x-shockwave-flash" data="'
-		.$swfstyle.'" width="'.$colwidth.'" height="'.$rowheight.'" >
-	<param name="allowScriptAccess" value="sameDomain" />
-	<param name="movie" value="'.$swfstyle.'" />
-	<param name="quality" value="high" />
-	<param name="scale" value="noScale" />
-	<param name="wmode" value="transparent" />
-	<param name="allowNetworking" value="all" />
-	<param name="flashvars" value="config={ 
-		autoPlay: true, 
-		loop: true, 
-		initialScale: \'orig\',
-		videoFile: \'getflv.php?file='.$flvfile.'\',
-		hideControls: true,
-		showPlayList: false,
-		showPlayListButtons: false,
-		}" />
-	</object>';
+	list($colwidth,$rowheight) =  getMovieSize($flvfile);
+	echo getMovieHTML($flvfile,$colwidth,$rowheight,$subid=$axis);
 	echo "</td></tr>";	
 	echo "</table>";
 }

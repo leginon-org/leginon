@@ -9,7 +9,8 @@ require_once('config.php');
 
 	function getMovieSize($filename) {
 		if (!class_exists('getID3')) {
-			return false;
+			// give a default size to avoid error
+			return array(0,0);
 		}
 		$getID3 = new getID3;
 		$i = $getID3->analyze($filename);
@@ -45,6 +46,9 @@ require_once('config.php');
 		if (!defined('FLASHPLAYER_URL')) {
 			return "<p style='color: #FF0000'>FLASHPLAYER_URL is not defined in config.php</p>";
 		}
+		if ($display_width <=0 || $display_height <=0) {
+			return "<p style='color: #FF0000'>invalid display size</p>";
+		}
 		$html = '<a  
 			 href="'.BASE_URL.'getflv.php?file='.$moviefile.'"
 			 style="display:block;width:'.$display_width.'px;height:'.$display_height.'px"  
@@ -52,7 +56,7 @@ require_once('config.php');
 		</a> 
 		<!-- this will install flowplayer inside previous A- tag. -->
 		<script>
-			flowplayer("player'.$subid.'", "'.FLASHPLAYER_URL.'FlowPlayer.swf",
+			flowplayer("player'.$subid.'", "'.FLASHPLAYER_URL.'FlowPlayerJS.swf",
 				{
 					clip: {
 						autoPlay: true,
