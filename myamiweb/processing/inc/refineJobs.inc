@@ -211,7 +211,7 @@ abstract class RefineJobs
 	public function countUploadRefineDone()
 	{
 		$reconRuns = $this->getUploadRefineDone();
-		$refinesComplete = count($reconRuns);
+		$refinesComplete = ($reconRuns) ? count($reconRuns): 0;
 		
 		return $refinesComplete;
 	}
