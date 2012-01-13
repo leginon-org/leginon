@@ -196,23 +196,27 @@ function runDogPicker() {
 		$testimage = ereg_replace(" ","\ ",$testimage);
 	}
 
-	
 	/* *******************
-	PART 4: Do test image
+	PART 4: Create header info, i.e., references
 	******************** */
 
-	if ($testimage) {
-		if ($_POST['process']=="Run DogPicker") { 		
-			$_SESSION['processinghost']=$_POST['processinghost'];
-			$user = $_SESSION['username'];
-			$password = $_SESSION['password'];
-			
-			if (!($user && $password)) createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
-			 
-			$sub = submitAppionJob($command,$outdir,$runname,$expId,'dogpicker',$testimage);
-			// if errors:
-			if ($sub) createDogPickerForm("<b>ERROR:</b> $sub");
-		}
+	// Add reference to top of the page
+	$headinfo .= referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 
+	2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);	
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'dogpicker', $nproc, $testimage);
+
+	// if errors display them
+	if ($errors) {
+		createDogPickerForm($errors);
+		
+	} else if ($testimage) {
+		// add the appion wrapper to the command for display
 		$wrappedcmd = addAppionWrapper($command);
 			
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -224,40 +228,19 @@ function runDogPicker() {
 		$testjpg = ereg_replace(".mrc","",$_POST['testfilename']);
 		$jpgimg = $outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
 		
-		if ($_POST['process']=="Run DogPicker") {
+		if ($_POST['process'] != "Just Show Command") {
 			$dogmaplist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
 			$results .= writeTestResults($jpgimg, $dogmaplist, $_POST['bin']);
 		} else {
 			$ccclist=array();
 			$cccimg=$outdir.$runname."/maps/".$testjpg.".dogmap1.jpg";
 			$ccclist[]=$cccimg;
-			$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin'],$_POST['process']);			
-		}
-
-		createDogPickerForm(false, 'Particle Selection Test Results', 'Particle Selection Test Results', $results);
+			$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);			
+		}		
 		
-		exit;
+		createDogPickerForm(false, 'Particle Selection Test Results', 'Particle Selection Test Results', $results);
 	}
 	
-	/* *******************
-	PART 5: Create header info, i.e., references
-	******************** */
-
-	// Add reference to top of the page
-	$headinfo .= referenceBox("DoG Picker and TiltPicker: software tools to facilitate particle selection in single particle electron microscopy.", 
-	2009, "Voss NR, Yoshioka CK, Radermacher M, Potter CS, Carragher B.", "J Struct Biol.", 166, 2, 19374019, 2768396, false, false);
-
-	/* *******************
-	PART 6: Show or Run Command
-	******************** */
-
-	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'dogpicker', $nproc);
-
-	// if error display them
-	if ($errors)
-		//the sting $error already contains the Error tag don't need to add it here.
-		createDogPickerForm($errors);
 	exit;
 }
 

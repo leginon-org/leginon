@@ -78,11 +78,24 @@ function commafy($input) {
 	return $formatted_input;
 }
 
+function getProcessString() 
+{
+	return $_POST['process'];
+}
+
 function getHosts(){
 	global $PROCESSING_HOSTS;
 	if (is_array($PROCESSING_HOSTS))
 	return $PROCESSING_HOSTS;
 	return array();
+}
+
+function getSelectedProcessingHost() 
+{
+	if ($_POST['processinghost']) {
+		$_SESSION['processinghost'] = $_POST['processinghost'];
+	}
+	return $_SESSION['processinghost'];
 }
 
 function getHostForm() {
@@ -435,9 +448,12 @@ function getNumberOfRequiredNodes($nproc, $ppn)
 // Appion on a single machine.
 //
 //*****************************************************************************
-function addAppionWrapper($command, $processhost) 
+function addAppionWrapper($command, $processhost=false) 
 {
 	if ( USE_APPION_WRAPPER ) {
+		if ($processhost === false) {
+			$processhost = getSelectedProcessingHost();
+		}
 		$cluster = new Cluster( $processhost );
 		$wrapper = $cluster->getWrapperPath();
 		$wrapper = $wrapper ? $wrapper : APPION_WRAPPER_PATH;
@@ -446,8 +462,9 @@ function addAppionWrapper($command, $processhost)
 	return $command;
 }
 
+
 /**************************************/
-function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc) 
+function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc, $testimg=False) 
 {
 	/*
 		If user clicked run button it launches job on appion cluster
@@ -516,25 +533,25 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc)
 	$command .= "--jobtype=$jobtype ";
 	
 	// Get the processing host
-	if ($_POST['processinghost']) {
-		$_SESSION['processinghost'] = $_POST['processinghost'];
-	}
-	$processhost = $_SESSION['processinghost'];
+	$processhost = getSelectedProcessingHost();
 
 	// until uploadimage works with appionJob submission, it is not allowed to do so
 	if ($_POST['process'] != "Just Show Command" && $jobtype != 'uploadimage') {
 		// Option 1: selected the run button
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
+		if (!($user && $password)) {
+			return "<B>ERROR:</B> Enter a user name and password";
+		}
 
-		if (!($user && $password))
-		return "<B>ERROR:</B> Enter a user name and password";
-
-		$errors = submitAppionJob($command, $outdir, $runname, $expId, $jobtype, False, False, False, $nproc);
-
+		$errors = submitAppionJob($command, $outdir, $runname, $expId, $jobtype, $testimg, False, False, $nproc);
+		
 		// if errors:
-		if ($errors)
-		return "<B>ERROR:</B> $errors";
+		if ($errors) {
+			return "<B>ERROR:</B> $errors";
+		} else if ($testimg) {
+			return;
+		}
 
 		exit;
 	} elseif ($_POST['process'] != "Just Show Command" && $jobtype == 'uploadimage') {
@@ -547,11 +564,15 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc)
 		exec_over_ssh($processhost, $user, $pass, $wrappedcommand, TRUE);
 		processing_header("Upload image to project", "Upload image to project");
 		echo $headinfo;
-		echo "<B>uploadimage job submitted to ".$_SESSION['processinghost']." through ssh.</B>";
+		echo "<B>uploadimage job submitted to ".$processhost." through ssh.</B>";
 		echo "<p></p>\n";
 		echo justShowCommandTable($command, $processhost, true);
 		processing_footer();
 		exit;
+		
+	} elseif ($_POST['process'] == "Just Show Command" && $testimg) {		
+		// if we are testing an image with just show command, return to the parameter page 
+		return;
 		
 	} else {
 		// Option 2: just show command
@@ -560,7 +581,7 @@ function showOrSubmitCommand($command, $headinfo, $jobtype, $nproc)
 
 		processing_header("Just Show $function Command", "Just Show $function Command");
 		echo $headinfo;
-		echo justShowCommandTable($command, $processhost);
+		echo justShowCommandTable($command, $processhost);		
 		processing_footer();
 		exit;
 	}
@@ -717,10 +738,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	$allow_processing = checkExptAdminPrivilege($expId,'data');
 	if (!$allow_processing) return "processing not allowed by this user";
 
-	if ($_POST['processinghost']) {
-		$_SESSION['processinghost'] = $_POST['processinghost'];
-	}
-	$processhost = $_SESSION['processinghost'];
+	$processhost = getSelectedProcessingHost();
 	$webserver = $_SERVER['SERVER_ADDR'];
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
@@ -790,6 +808,19 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 		$errMsg = "Could not create run directory on $host: ";
 		$errMsg .= pconnError();
 		return $errMsg;
+	}
+	
+	if ($testimg) {
+		//submit directly to head node on cluster if testing 1 image
+		$cmd = "cd $rundir; $command; exit;";
+		$jobdata = exec_over_ssh($processhost, $user, $pass, $cmd, True);
+		if ( empty($jobdata) ) {		
+			$errMsg = "Job submission to $processhost failed for command: $command Message: ";
+			$errMsg .= pconnError();
+			return $errMsg;
+		} else {
+			return;
+		}
 	}
 
 	// set names of cluster job file and output log
@@ -880,6 +911,9 @@ function writeTestResults($jpg,$ccclist,$bin,$process_str=''){
 	if (!file_exists($jpg)) {
 		$base = basename($jpg);
 		$dir = dirname($jpg);
+		if ($process_str === '') {
+			$process_str = getProcessString();
+		}
 		if (preg_match('/[Ss]how/',$process_str)) {
 			return "<font color='#990000'>The test results are not ready for display. Refresh the page after the command is run successfully. </font><br />\n";
 		} else {

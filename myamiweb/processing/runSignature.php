@@ -388,6 +388,20 @@ function runSignaturePicker() {
 	$mirrors = ($_POST['mirrors']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 
 	$numtemplatesused = $_POST['numtemplatesused'];
+
+	if ($_POST['testimage']=="on") {
+		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
+		// replace other spaces with commas
+		$testimage = ereg_replace(" ",",",$testimage);
+		$testimage = ereg_replace(",,",",",$testimage);
+		
+		$nproc = 1;
+		if ($numtemplatesused >= 2 && $numtemplatesused <= 8)
+			$nproc = $numtemplatesused;
+		elseif ($numtemplatesused > 8)
+			$nproc = 8;
+	}
+	
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
@@ -431,38 +445,26 @@ function runSignaturePicker() {
 		$command.="--keepall ";
 	if ($_POST['mirrors']=='on')
 		$command.="--use-mirrors ";
-
-	/* *******************
-	PART 4: Do test image
-	******************** */
-		
-	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
-		// replace other spaces with commas
-		$testimage = ereg_replace(" ",",",$testimage);
-		$testimage = ereg_replace(",,",",",$testimage);
-	}
 	
-	if ($_POST['process']=="Run Signature" && $testimage) {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
+	$headinfo .= referenceBox("SIGNATURE: a single-particle selection system for molecular electron microscopy.", 2007, "Chen JZ, Grigorieff N.", "J Struct Biol.", 157, 1, 16870473, false, "img/signature.jpg");
+	
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-		if (!($user && $password)) createSigForm("<b>ERROR:</b> Enter a user name and password");
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'signature', $nproc, $testimage);
 
-		$nproc = 1;
-		if ($numtemplatesused >= 2 && $numtemplatesused <= 8)
-			$nproc = $numtemplatesused;
-		elseif ($numtemplatesused > 8)
-			$nproc = 8;
-		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'signature', $testimage, False, False, $nproc);
-
-		// if errors:
-		if ($sub) createSigForm("<b>ERROR:</b> $sub");
-		if (!$testimage) exit;
-	}
-
-	if ($testimage) {
+	// if error display them
+	if ($errors) {
+		createSigForm("<b>ERROR:</b> $errors");
+	} else if ($testimage) {
+		// add the appion wrapper to the command for display
 		$wrappedcmd = addAppionWrapper($command);
+		
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$results = "<table width='600' border='0'>\n";
 		$results.= "<tr><td>\n";
@@ -475,24 +477,9 @@ function runSignaturePicker() {
 		$ccclist = glob($outdir.$runname."/maps/".$testjpg."*.jpg");
 		$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin'],$_POST['process']);
 		createSigForm($false,'Particle Selection Results','Particle Selection Results',$results);
-		exit;
 	} 
 	
-	/* *******************
-	PART 5: Create header info, i.e., references
-	******************** */
-	$headinfo .= referenceBox("SIGNATURE: a single-particle selection system for molecular electron microscopy.", 2007, "Chen JZ, Grigorieff N.", "J Struct Biol.", 157, 1, 16870473, false, "img/signature.jpg");
-	
-	/* *******************
-	PART 6: Show or Run Command
-	******************** */
-
-	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'signature', $nproc);
-
-	// if error display them
-	if ($errors)
-		createSigForm("<b>ERROR:</b> $errors");
+	exit;
 }
 
 ?>

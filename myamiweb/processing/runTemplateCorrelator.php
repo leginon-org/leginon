@@ -368,6 +368,20 @@ function runTemplateCorrelator() {
 
 	$numtemplatesused = $_POST['numtemplatesused'];
 	
+	if ($_POST['testimage']=="on") {
+		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
+		// replace other spaces with commas
+		$testimage = ereg_replace(" ",",",$testimage);
+		$testimage = ereg_replace(",,",",",$testimage);
+		
+		$nproc = 1;
+		if ($numtemplatesused >= 2 && $numtemplatesused <= 8)
+			$nproc = $numtemplatesused;
+		elseif ($numtemplatesused > 8)
+			$nproc = 8;
+		
+	}
+	
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
@@ -430,35 +444,26 @@ function runTemplateCorrelator() {
 		$command.="--use-mirrors ";
 
 	/* *******************
-	PART 4: Do test image
+	PART 4: Create header info, i.e., references
 	******************** */
-		
-	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=trim($_POST['testfilename']);
-		// replace other spaces with commas
-		$testimage = ereg_replace(" ",",",$testimage);
-		$testimage = ereg_replace(",,",",",$testimage);
-	
 
-		if ($_POST['process']=="Run Correlator") {
-			$user = $_SESSION['username'];
-			$password = $_SESSION['password'];
-	
-			if (!($user && $password)) createTCForm("<b>ERROR:</b> Enter a user name and password");
-	
-			$nproc = 1;
-			if ($numtemplatesused >= 2 && $numtemplatesused <= 8)
-				$nproc = $numtemplatesused;
-			elseif ($numtemplatesused > 8)
-				$nproc = 8;
-			$sub = submitAppionJob($command, $outdir, $runname, $expId, 'templatecorrelator', $testimage, False, False, $nproc);
-	
-			// if errors:
-			if ($sub) createTCForm("<b>ERROR:</b> $sub");
-			if (!$testimage) exit;
-		}
-	
+	// Add reference to top of the page
+	$headinfo .= referenceBox("FindEM--a fast, efficient program for automatic selection of particles from electron micrographs.", 2004, "Roseman AM.", "J Struct Biol.", 145, "1-2", 15065677, false, false, "img/findem.png");
+
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
+
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'templatecorrelator', $nproc, $testimage);
+
+	// if error display them
+	if ($errors) {
+		createTCForm("<b>ERROR:</b> $errors");
+	} else if ($testimage) {
+		// add the appion wrapper to the command for display
 		$wrappedcmd = addAppionWrapper($command);
+		
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$results = "<table width='600' border='0'>\n";
 		$results.= "<tr><td>\n";
@@ -472,26 +477,9 @@ function runTemplateCorrelator() {
 
 		$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin'],$_POST['process']);
 		createTCForm($false,'Particle Selection Results','Particle Selection Results',$results);
-		exit;
 	}
-
-	/* *******************
-	PART 5: Create header info, i.e., references
-	******************** */
-
-	// Add reference to top of the page
-	$headinfo .= referenceBox("FindEM--a fast, efficient program for automatic selection of particles from electron micrographs.", 2004, "Roseman AM.", "J Struct Biol.", 145, "1-2", 15065677, false, false, "img/findem.png");
-
-	/* *******************
-	PART 6: Show or Run Command
-	******************** */
-
-	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'templatecorrelator', $nproc);
-
-	// if error display them
-	if ($errors)
-		createTCForm("<b>ERROR:</b> $errors");
+	
+	exit;
 }
 
 ?>

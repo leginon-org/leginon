@@ -231,22 +231,6 @@ function runjpgmaker() {
 	/* *******************
 	PART 4: Create header info, i.e., references
 	******************** */
-	if ($testimage) {
-		$images = "<table width='600' border='0'>\n";
-  		$images.= "<tr><td>";
-  		$images.= "<span style='font-size: larger;'> ";
-		$images.= "<b>You have chosen to test an image.</b><br />";
-		$images.= "Run the following command to test the image. <br />Ignore file not found errors if this command has not yet been run.<br />"; 
-		$images.= "Return to this page after running the command to see the result.<br /></br>";
-		$images.= "</span>";
-		$images.= "</td></tr></table>\n";
-		$images.= "<br />\n";
-		$jpgdir = 'jpgs/';
-		$testjpg=ereg_replace(".mrc","",$testimage);
-		$jpgimg=$outdir.$jpgdir.$testjpg.".jpg";
-		$images.= writeTestResults($jpgimg,array(),1);
-	}
-	
 	
 	// Add reference to top of the page
 	$headinfo .= $images;
@@ -261,15 +245,31 @@ function runjpgmaker() {
 	******************** */
 	
 	// submit command
-	$errors = showOrSubmitCommand($command, $headinfo, 'jpgmaker', $nproc);
-	
+	$errors = showOrSubmitCommand($command, $headinfo, 'jpgmaker', $nproc, $testimage);
 	
 	// if error display them
 	if ($errors) {
 		createJMForm("<b>ERROR:</b> $errors");
-		exit;
+	} else if ($testimage) {
+		// add the appion wrapper to the command for display
+		$wrappedcmd = addAppionWrapper($command);
+
+		$results = "<table width='600' border='0'>\n";
+  		$results.= "<tr><td>";
+  		$results.= "<span style='font-size: larger;'> ";
+		$results.= "<b>Run the following command to test the image:</b><br />";
+		$results.= $wrappedcmd;
+		$results.= "</span>";
+		$results.= "</td></tr></table>\n";
+		$results.= "<br />\n";
+		$jpgdir = 'jpgs/';
+		$testjpg=ereg_replace(".mrc","",$testimage);
+		$jpgimg=$outdir.$jpgdir.$testjpg.".jpg";
+		$results.= writeTestResults($jpgimg,array(),1);
+		
+		createJMForm(false,'JPEG Maker Test Results', 'JPEG Maker Test Results', $results);
 	}
-	
+	exit;
 }
 
 ?>
