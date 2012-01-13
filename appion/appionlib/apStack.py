@@ -86,6 +86,27 @@ def getNumberStackParticlesFromId(stackid, msg=True):
 	return numpart
 
 #===============
+def getImageIdsFromStack(stackid, msg=True):
+	if stackid < 1:
+		return []
+	t0 = time.time()
+	stackdata = appiondata.ApStackData.direct_query(stackid)
+	stackq=appiondata.ApStackParticleData()
+	stackq['stack'] = stackdata
+	stackparticledata=stackq.query()
+	stackimages = []
+	if msg is True:
+		apDisplay.printMsg("querying particle images from stackid="+str(stackid)+" on "+time.asctime())
+	for sp in stackparticledata:
+		spimagedata = sp['particle']['image']
+		spimageid = spimagedata.dbid
+		if spimageid not in stackimages:
+			stackimages.append(spimageid)
+	if msg is True:
+		apDisplay.printMsg("Found %d images from stackid=%d" % (len(stackimages),stackid))
+	return stackimages
+
+#===============
 def sortStackParts(a, b):
 	if a['particleNumber'] > b['particleNumber']:
 		return 1

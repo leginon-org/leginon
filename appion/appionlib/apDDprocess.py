@@ -209,8 +209,11 @@ class DirectDetectorProcessing(object):
 				a = imagefun.bin(a,bin['x'])
 			else:
 				apDisplay.printError("Binnings in x,y are different")
-		#a = a[:,::-1]
-		return numpy.fliplr(a)
+		# numarray gotten from tiffile is different from PIL
+		if use_tifffile:
+			return a[:,::-1]
+		else:
+			return a
 
 	def sumupFrames(self,rawframe_dir,start_frame,nframe):
 		'''
