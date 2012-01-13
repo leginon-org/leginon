@@ -1735,21 +1735,27 @@ class particledata {
 	}
 
 	function getParticles ($runId) {
-		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation, p.`REF|leginondata|AcquisitionImageData|image` "
+		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation, p.`REF|leginondata|AcquisitionImageData|image`, a.`filename` "
 			."from ApParticleData p "
+			."left join ".DB_LEGINON.".`AcquisitionImageData` a "
+			."on p.`REF|leginondata|AcquisitionImageData|image` = a.`DEF_id` "
 			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		$r=$this->mysql->getSQLResult($q);
+echo $q;
 		return $r;
 	}
 	
 	function getParticlesDataWithDeforcusPair($runId){
 		
-		$q="SELECT a.`DEF_id`,a.xcoord, a.ycoord, a.`REF|leginondata|acquisitionImageData|image` as imageNum, "
+		$q="SELECT p.`DEF_id`,p.xcoord, p.ycoord, p.`REF|leginondata|acquisitionImageData|image` as imageNum, "
+			."a.`filename`, "
 			."t.`REF|leginondata|AcquisitionImageData|image2` as pImage, t.shiftx, t.shifty "
-			."FROM ApParticleData as a "
+			."FROM ApParticleData as p "
 			."LEFT JOIN ApImageTransformationData t "
-			."ON (a.`REF|leginondata|acquisitionImageData|image` = t.`REF|leginondata|AcquisitionImageData|image1`) "
-			."WHERE a.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
+			."ON (p.`REF|leginondata|acquisitionImageData|image` = t.`REF|leginondata|AcquisitionImageData|image1`) "
+			."left join ".DB_LEGINON.".`AcquisitionImageData` a "
+			."on p.`REF|leginondata|AcquisitionImageData|image` = a.`DEF_id` "
+			."WHERE p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;	
 		

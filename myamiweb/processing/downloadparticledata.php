@@ -20,11 +20,11 @@ if (!$appiondb->hasParticleData($sessionId)) {
 }
 
 if ($preset == 'ef'){
-	$data[] = "particle#\tx_coord\ty_coord\timage#\tpImage#\tshiftX\tshiftY\n";
+	$data[] = "particle#\tx_coord\ty_coord\timage_name\tpImage#\tshiftX\tshiftY\n";
 	$partdatas = $appiondb->getParticlesDataWithDeforcusPair($particleSelectionId);
 } 
 else{ 
-	$data[] = "particle#\tx_coord\ty_coord\timage#\n";
+	$data[] = "particle#\tx_coord\ty_coord\timage_name\n";
 	$partdatas = $appiondb->getParticles($particleSelectionId);
 }
 
@@ -34,24 +34,25 @@ foreach ($partdatas as $partdata) {
 
 	switch($preset){
 		case 'ef':
-			$data[] = sprintf("%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+			$data[] = sprintf("%d\t%d\t%d\t%s\t%d\t%d\t%d\n",
 				$partdata['DEF_id'],
 				$partdata['xcoord'],
 				$partdata['ycoord'],
-				$partdata['imageNum'],
+				$partdata['filename'],
 				$partdata['pImage'],
 				$partdata['shiftx'],
 				$partdata['shifty']);			
 			break;
-		default:		
-			$data[] = sprintf("%d\t%d\t%d\t%d\n",
+		default:
+			$data[] = sprintf("%d\t%d\t%d\t%s\n",
 				$partdata['DEF_id'],
 				$partdata['xcoord'],
 				$partdata['ycoord'],
-				$partdata['REF|leginondata|AcquisitionImageData|image']);			
+				$partdata['filename']);
 			break;
 	}
 }
+
 $size = 0;
 foreach ($data as $line) {
 	$size += strlen($line);
@@ -65,10 +66,9 @@ header("Content-Transfer-Encoding: binary");
 header("Content-Length: $size");
 $downname = sprintf("particledata-%04d_%04d.dat", $sessionId, $particleSelectionId);
 header("Content-Disposition: attachment; filename=$downname;");
+
 foreach ($data as $line) {
 	echo $line;
 }
 
-
-
-
+?>
