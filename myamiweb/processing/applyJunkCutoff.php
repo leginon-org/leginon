@@ -137,7 +137,7 @@ function runApplyJunkCutoff() {
 	$command.="subStack.py ";
 	$command.="--no-meanplot ";
 	$command.="--sorted ";
-	$command.="--last $partnum ";
+	$command.="--last=$partnum ";
 	$command.="--old-stack-id=$stackId ";
 	$command.="--description=\"$description\" ";
 	$command.= ($commit=='on') ? "-C " : "--no-commit ";
