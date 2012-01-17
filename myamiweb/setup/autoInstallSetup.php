@@ -95,7 +95,7 @@ $project->mysql->SQLInsertIfNotExists('processingdb', $data);
  * TODO: need to change the username and password for the release.
  * Ask user instead of hard code
  */
-$command = 'imageloader.py --projectid=1 --session=sample --dir=/tmp/images --filetype=mrc --apix=1 --binx=1 --biny=1 --df=-1.5 --mag=50000 --kv=120 --scopeid=1 --cameraid=2 --description="Sample Session" --jobtype=uploadimage';
+$command = 'imageloader.py --projectid=1 --session=sample --dir=/tmp/images --filetype=mrc --apix=0.82 --binx=1 --biny=1 --df=-1.5 --mag=100000 --kv=120 --description="Sample Session" --jobtype=uploadimage';
 exec_over_ssh("localhost", "root", $_GET['password'], $command, TRUE);
 
 // wait 5 seconds for uploadimage to run
