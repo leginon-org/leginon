@@ -501,8 +501,8 @@ class CL2D(appionScript.AppionScript):
 		clusterrefq['path'] = appiondata.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clusterrefq['num_particles'] = len(partlist)
 		if self.params['align'] is True:
-			if classnum in self.resdict:
-				clusterrefq['ssnr_resolution'] = self.resdict[classnum]
+			if (classnum-1) in self.resdict:
+				clusterrefq['ssnr_resolution'] = self.resdict[classnum-1]
 		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
 		for i,partnum in enumerate(partlist):
 			cpartq = appiondata.ApClusteringParticleData()
