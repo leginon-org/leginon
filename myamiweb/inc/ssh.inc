@@ -12,7 +12,7 @@ require_once "../processing/inc/cluster.inc";
 $showDebug = false;
 $showErrors = false;
 $connError = 'NOTSET';
-$errorMessage = "no error set";
+$errorMessage = "No error code has been set by the system.";
 $testNewStuff = true;
 
 
