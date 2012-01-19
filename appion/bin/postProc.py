@@ -168,14 +168,14 @@ class PostProcScript(appionScript.AppionScript):
 		reconiterdata = appiondata.ApRefineIterData.direct_query(self.params['reconiterid'])
 		iternum = reconiterdata['iteration']
 		refinepath = reconiterdata['refineRun']['path']['path']
-		fscfilename = "fsc.eotest.%d"%(iternum)
+		
+		### look up the fsc file name in ApResolutionData
+		fscfilename = reconiterdata['resolution']['fscfile']
 		fscfile = os.path.join(refinepath, fscfilename)
-		if not os.path.isfile(fscfile):
-			### for FREALIGN
-			fscfilename = "iter%03d/fsc.eotest.%d"%(iternum,iternum)
-			fscfile = os.path.join(refinepath, fscfilename)
+
 		if not os.path.isfile(fscfile):
 			apDisplay.printError("failed to find fscfile: "+fscfile)
+
 
 		return fscfile
 
