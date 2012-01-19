@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from appionlib import appiondata
 from appionlib import apParam
+from appionlib import apDisplay
 
 def getScriptProgramRunFromRunname(runname,jobdata=None):
 	q = appiondata.ScriptProgramRun(runname=runname,job=jobdata)
