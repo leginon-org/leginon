@@ -207,7 +207,7 @@ class ctfEstimateLoop(appionLoop2.AppionLoop):
 		ctfprogproc.stdin.write(line2cmd)
 		ctfprogproc.stdin.write(line3cmd)
 		ctfprogproc.stdin.write(line4cmd)
-		ctfprogproc.wait()
+		ctfprogproc.communicate()
 		logf.close()
 
 		apDisplay.printMsg("ctf estimation completed in "+apDisplay.timeString(time.time()-t0))
