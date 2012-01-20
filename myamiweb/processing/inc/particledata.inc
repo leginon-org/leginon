@@ -4138,7 +4138,7 @@ echo $q;
 				$bits = explode(';',$subset);
 				$threeDref_num = $bits[0];
 				$twoDclass_num = $bits[1];
-				if (is_numeric($threeDref_num) && is_numeric($twoDclass_num) && $threeDref_num > 0 && $twoDclass_num > 0) 
+				if (is_numeric($threeDref_num) && is_numeric($twoDclass_num) && $threeDref_num > 0 && $twoDclass_num >= 0) 
 					$q.="AND (refinepart.`3Dref_num` = $threeDref_num AND refinepart.`2Dclass_num` = $twoDclass_num) ";
 			} else
 				$q.="AND refinepart.`refine_keep` = 1 ";
