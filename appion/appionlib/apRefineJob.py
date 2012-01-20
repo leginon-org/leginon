@@ -405,7 +405,7 @@ class RefineJob(basicScript.BasicScript):
 		Write the command list to a file for later use during upload.  Will overwrite exisiting ones.
 		'''
 		f = open(self.commandfile,'w')
-		f.write('Command List for %s with runname %s (jobid= %d)\n' % (self.jobtype.upper(),self.params['runname'],self.jobid))
+		f.write('#Command List for %s with runname %s (jobid= %d)\n' % (self.jobtype.upper(),self.params['runname'],self.jobid))
 		
 		for command in self.command_list:
 			f.write(command)
