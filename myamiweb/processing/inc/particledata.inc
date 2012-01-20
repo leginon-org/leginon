@@ -4134,7 +4134,13 @@ echo $q;
 		} else {
 			if ($subset=='bad')
 				$q.="AND (refinepart.`refine_keep` = 0 OR refinepart.`refine_keep` IS NULL) ";
-			else
+			elseif (stripos($subset,';')!==false) {
+				$bits = explode(';',$subset);
+				$threeDref_num = $bits[0];
+				$twoDclass_num = $bits[1];
+				if (is_numeric($threeDref_num) && is_numeric($twoDclass_num) && $threeDref_num > 0 && $twoDclass_num > 0) 
+					$q.="AND (refinepart.`3Dref_num` = $threeDref_num AND refinepart.`2Dclass_num` = $twoDclass_num) ";
+			} else
 				$q.="AND refinepart.`refine_keep` = 1 ";
 		}
 		$q.= "ORDER BY stackpart.`particleNumber` ASC ";
