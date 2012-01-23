@@ -176,25 +176,33 @@ class DE12(ccdcamera.CCDCamera):
 		return int(nframes)
 
 	def getUseFrames(self):
-		# Disabled for now, using all frames
-		return range(self.getNumberOfFrames())
-		#nframes = self.getProperty('Number of Frames To Sum')
-		#frames = range(nframes)
-		#return tuple(frames)
+		nsum = self.getProperty('Autosave Sum Frames - Sum Count')
+		first = self.getProperty('Autosave Sum Frames - Ignored Frames')
+		print 'NSUM', nsum
+		print 'FIRST', first
+		last = first + nsum
+		ntotal = self.getNumberOfFrames()
+		if last > ntotal:
+			last = ntotal
+		sumframes = range(first,last)
+		return tuple(sumframes)
 
 	def setUseFrames(self, frames):
-		# disabled for now
-		pass
 		total_frames = self.getNumberOfFrames()
 		if frames:
-			nframes = len(frames)
+			nskip = frames[0]
+			last = frames[-1]
 		else:
-			nframes = total_frames
-		if nframes > total_frames:
-			nframes = total_frames
-		nframes = int(nframes)
-		print 'SETTING SUM', time.time(), nframes
-		self.setProperty('Number of Frames To Sum', nframes)
+			nskip = 0
+			last = total_frames - 1
+		nsum = last - nskip + 1
+		if nsum > total_frames:
+			nsum = total_frames
+		nsum = int(nsum)
+		print 'NSUM', nsum
+		print 'NSKIP', nskip
+		self.setProperty('Autosave Sum Frames - Sum Count', nsum)
+		self.setProperty('Autosave Sum Frames - Ignored Frames', nskip)
 
 	def getFrameRate(self):
 		return self.getProperty('Frames Per Second')
