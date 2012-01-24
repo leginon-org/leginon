@@ -19,6 +19,7 @@ require_once "inc/project.inc";
 require_once "inc/summarytables.inc";
 
 require_once "inc/forms/stackPrepForm.inc";
+require_once "inc/forms/stackPrepFormFrealign.inc";
 require_once "inc/forms/runParametersForm.inc";
 
 if ($_POST['process']) {
@@ -121,7 +122,11 @@ function jobForm($extra=false) {
 	echo $runParametersForm->generateForm();
 	
 	// add stack preparation parameters
-	$stackPrepForm = new StackPrepForm();
+	if ( $reconMethod == "frealign" ) {
+		$stackPrepForm = new StackPrepFormFrealign($stackid);
+	} else {
+		$stackPrepForm = new StackPrepForm();
+	}
 	echo $stackPrepForm->generateForm();
 		
 	// add submit button
@@ -169,7 +174,11 @@ function createCommand ($extra=False)
 	$errorMsg = $runParametersForm->validate( $_POST );
 	
 	// validate stack preparation parameters
-	$stackPrepForm = new StackPrepForm();
+	if ( $_POST['method'] == "frealign" ) {
+		$stackPrepForm = new StackPrepFormFrealign();
+	} else { 
+		$stackPrepForm = new StackPrepForm();
+	}
 	$errorMsg .= $stackPrepForm->validate( $_POST );
 	
 	// reload the form with the error messages

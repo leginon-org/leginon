@@ -54,21 +54,6 @@ class FrealignRefineForm extends BasicRefineForm
 		}		
 		
 		$html .=  "<br />\n";
-		$html .=  "<b>Initial Orientations</b>\n";
-		$html .=  "<br />\n";
-		
-		$html .=  $paramSet->insertRadioField( "initmethod", "importrecon", "Import from EMAN reconstruction:");
-		$html .=  $this->addReconSelectBox();
-
-		$html .=  "<br />\n";
-		
-		$html .=  $paramSet->insertRadioField( "initmethod", "projmatch", "Determine with Frealign" );
-		$html .=  "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";		
-		$html .=  $paramSet->insertTextField( "dang", $shortSize );
-		$html .=  "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-		$html .=  $paramSet->insertTextField( "initlp", $shortSize );
-		
-		$html .=  "<br />\n";
 		$html .=  "<b>Card #2</b>\n";
 		$html .=  "<br />\n";
 	
@@ -94,67 +79,10 @@ class FrealignRefineForm extends BasicRefineForm
 		$html .=  $paramSet->insertTextField( "hp", $longSize, "(in &Aring;ngstroms)" );
 		$html .=  $paramSet->insertTextField( "lp", $longSize, "(in &Aring;ngstroms; default 2*Nyquist)" );
 		$html .=  $paramSet->insertTextField( "rbfact", $longSize, "(0 = off)" );
-		
-		// find if there are ctffind runs (for frealign option)
-		$showCTFFind = $this->particle->getCtfRunIds($_GET['expId'], $showHidden=False, $ctffind=True);
-		
-		// give option of only using ctffind runs
-		if ( $showCTFFind ) {
-			$html .=  "<br/>\n";
-			$html .=  $paramSet->insertCheckboxField( "ctffindonly" );
-			$html .=  "&nbsp;&nbsp;&nbsp;&nbsp;\n";
-		}
-		
+						
 		return $html;
 	}
 	
-	function addReconSelectBox()
-	{
-		$recons = $this->particle->getReconIterIdRelatedToStackid($stackid);
-		$html .=  "&nbsp;&nbsp;&nbsp; Reconstruction:\n";
-		if (!empty($recons)) {
-			$html .=  "<select name='importrecon' onchange='prepRefine.submit()'>\n";
-			$html .=  "   <option value='None'>Select Reconstruction</option>\n";
-			foreach ($recons as $r) {
-				$ropt = "<option value='".$r['DEF_id']."' ";
-				$ropt.= ($_POST['importrecon']==$r['DEF_id']) ? 'selected':'';
-				$ropt.= ">";
-				$ropt.= $r['name']." (id: ".$r['DEF_id'].") -- ".substr($r['description'],0,60);
-				$ropt.= "</option>\n";
-				$html .=  $ropt;
-			}
-		} else {
-			$html .=  "<i>no EMAN recons available to import Euler angles</i>\n";
-		}
-		$html .=  "</select>\n";
-		$html .=  "<br/>\n";
-		
-		// if a reconstruction has been selected, show iterations & resolutions
-		if ($_POST['importrecon'] && $_POST['importrecon']!='None') {
-			$html .=  "&nbsp;&nbsp;&nbsp; Iteration:\n";
-			$iterinfo = $this->particle->getRefinementData($_POST['importrecon']);
-			$html .=  "<select name='importiter'>\n";
-			if (is_array($iterinfo)) {
-				foreach ($iterinfo as $iter){
-					$iterstuff = $this->particle->getIterationInfo($_POST['importrecon'],$iter['iteration']);
-					$rmeas = $this->particle->getRMeasureInfo($iter['REF|ApRMeasureData|rMeasure']);
-					$fsc = $this->particle->getResolutionInfo($iter['REF|ApResolutionData|resolution']);
-					$iopt.="<option value='".$iter['DEF_id']."' ";
-					$iopt.= ($_POST['importiter']==$iter['DEF_id']) ? 'selected':'';
-					$iopt.= ">Iter ".$iter['iteration'];
-					$iopt.= ": Ang=".$iterstuff['ang'];
-					$iopt.= ", FSC=".sprintf('%.1f',$fsc['half']);
-					$iopt.= ", Rmeas=".sprintf('%.1f',$rmeas['rMeasure']);
-					$iopt.= "</option>\n";
-				}
-			}
-			$html .=  $iopt;
-			$html .=  "</select>\n";
-			$html .=  "<br/>\n";
-		}
-		
-		return $html;
-	}
 		
 	// display a selection box with any valid stacks. 
 	// compares stacks to the refine stack previously selected by the user
@@ -192,6 +120,7 @@ class FrealignRefineForm extends BasicRefineForm
 	}	
 	
 
+	// TODO: we should be able to remove this and just use the base class definition
 	public function buildCommand( $postArray )
 	{
 		$params = $this->getFormParams();
@@ -215,17 +144,6 @@ class FrealignRefineForm extends BasicRefineForm
 		$command = $this->addCommandFlag( $command, "hp" );
 		$command = $this->addCommandFlag( $command, "lp" );
 		$command = $this->addCommandFlag( $command, "rbfact" );
-		$command = $this->addCommandFlag( $command, "importiter" );
-		
-		// check which radio button was selected
-		if ( ($params->getParamValue('initmethod') == 'projmatch') ) {
-			$command = $this->addCommandFlag( $command, "dang" );
-			$command = $this->addCommandFlag( $command, "initlp" );
-		} 
-		
-		// see if checkbox was selected
-		$ctffindonly = $params->getParamValue("ctffindonly");
-		if ( $ctffindonly == 'on' ) $command.= "--ctfmethod=ctffind ";
 		
 		return $command;
 	}
@@ -264,23 +182,20 @@ class FrealignRefineForm extends BasicRefineForm
 		$hp 				= '50';
 		$lp 				= (ceil($apix*40))/10;
 		$rbfact 			= '0';
-		$ctffindonly  		= 'CHECKED';
 		$reconstackid		= '';
-		$initmethod			= '';
-		$importrecon		= '';
-		$dang				= '5';
-		$initlp				= '25';
-		$importiter			= '';
 		
+		// Create a parameter set with the values defined above.
 		$asymmSet = new FrealignParams( $id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
 							$wgh, $xstd, $pbc, $boff, $itmax, $ipmax, $target,
-							$thresh, $rrec, $hp, $lp, $rbfact, $ctffindonly, $reconstackid,
-							$initmethod, $importrecon, $dang, $initlp, $importiter );
+							$thresh, $rrec, $hp, $lp, $rbfact, $reconstackid );
+							
+		// Add this param set to the list that shows up in the GUI.
 		$this->addDefaultParams( $asymmSet );
 	}
 		
+	// This function is called by the base class when parameters are being imported from a previous refinement.
 	protected function addImportedRefineIter( $paramSet, $iter ) 
 	{
 		$paramSet->addIterationToValue( "wgh", $iter['wgh'] );
@@ -333,13 +248,7 @@ class FrealignRefineForm extends BasicRefineForm
 	      if (obj.hp) obj.hp.value = '50';
 	      if (obj.lp) obj.lp.value = $lp;
 	      if (obj.rbfact) obj.rbfact.value = '0';
-	      if (obj.ctffindonly) obj.ctffindonly.checked = '';
 	      if (obj.reconstackval) obj.reconstackid.value = '';
-	      if (obj.initmethod) obj.initmethod.value = '';
-	      if (obj.importrecon) obj.importrecon.value = '';
-	      if (obj.dang) obj.dang.value = '';
-	      if (obj.initlp) obj.initlp.value = '';
-	      if (obj.importiter) obj.importiter.value = '';
 	      
 	      return;
 	    }
@@ -349,7 +258,7 @@ class FrealignRefineForm extends BasicRefineForm
 		
 }
 
-// extend the RefineFormParameters class to add the xmipp 
+// extend the RefineFormParameters class to add the frealign 
 // advanced parameter default values. 
 class FrealignParams extends RefineFormParameters
 {
@@ -357,8 +266,7 @@ class FrealignParams extends RefineFormParameters
 							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
 							$wgh='', $xstd='', $pbc='', $boff='', $itmax='', $ipmax='', $target='', 
-							$thresh='', $rrec='', $hp='', $lp='', $rbfact='', $ctffindonly='', $reconstackid='', 
-							$initmethod='', $importrecon='', $dang='', $initlp='', $importiter='' ) 
+							$thresh='', $rrec='', $hp='', $lp='', $rbfact='', $reconstackid='') 
 	{
 		parent::__construct($id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
@@ -376,13 +284,7 @@ class FrealignParams extends RefineFormParameters
 		$this->addParam( "hp", $hp, "Lower resolution limit or high-pass filter (RMAX1)" );
 		$this->addParam( "lp", $lp, "Higher resolution limit or low-pass filter (RMAX2)" );
 		$this->addParam( "rbfact", $rbfact, "B-factor correction (RBFACT)" );
-		$this->addParam( "ctffindonly", $ctffindonly, "Only use CTFFIND values" );
 		$this->addParam( "reconstackid", $reconstackid, "Reconstruction Stack" );
-		$this->addParam( "initmethod", $initmethod, "Initial orientation method");
-		$this->addParam( "importrecon", $importrecon, "Import from EMAN Reconstruction" );
-		$this->addParam( "dang", $dang, "Angular increment" );
-		$this->addParam( "initlp", $initlp, "Initial LP filter" );
-		$this->addParam( "importiter", $importiter, "Recon import iteration number" );
 		
 		// disable any general params that do not apply to this method
 		$this->hideParam("outerAlignRadius");
@@ -396,20 +298,7 @@ class FrealignParams extends RefineFormParameters
 		
 		// add parameter requirements
 		$this->addValidation( "outerMaskRadius", "req" );	
-	}
-	
-	// add custom validations
-	function validate() 
-	{
-		$msg = parent::validate();
-
-		if ( ($this->params["initmethod"]["value"] == 'projmatch') && empty($this->params["dang"]["value"]) ) {
-			$msg .= "<b>Error:</b> Enter an angular increment";
-		}
-		
-		return $msg;
-	}
-	
+	}	
 }
 
 ?>
