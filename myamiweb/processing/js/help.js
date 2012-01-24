@@ -237,7 +237,8 @@ var help = {
 		'nfold' : 'Order of the symmetry axis. Default is 1-fold for no symmetry.',
 		'maxll' : 'Maximum layer line to include in the llbo.sa file',
 		'maxbo' : 'Maximum Bessel Order to include in the computation for llbo.sa',
-		'helicalcheck' : 'If you used helical insert in Manual Picker, check this box to apply the estimated rotation angle and align your helical segments vertically',
+		'helicalcheck' : 'If you used helical insert in Manual Picker, check this box to apply the estimated rotation angle and roughly align your helical segments vertically',
+		'finealigncheck' : 'If you used helical insert in Manual Picker, check this box to apply the estimated rotation angle and calculate a fine rotation angle in fourier space, which will align your helical segments vertically in a single interpolation. Warning: This process is slow!',
 		'resol' : 'All data up to this resolution will be amplitude scaled',
 		'ampx' : 'Low resolution data will be scaled to this factor. Ex. If you want 15&Aring features scaled to 30%, Resolution cutoff = 15 and Amplitude scaling = 0.3',
 

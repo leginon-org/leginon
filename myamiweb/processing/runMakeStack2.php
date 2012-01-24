@@ -172,6 +172,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$phasecheck = ($_POST['ctfcorrect']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 	$boxfilescheck = ($_POST['boxfiles']=='on') ? 'CHECKED' : '';
 	$helicalcheck = ($_POST['helicalcheck']=='on') ? 'CHECKED' : '';
+	$finealigncheck = ($_POST['finealigncheck']=='on') ? 'CHECKED' : '';
 	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 
@@ -498,10 +499,17 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<input type='checkbox' name='boxfiles' $boxfilescheck>\n";
 	echo docpop('boxfiles','Only create EMAN boxfiles');
 	echo "<br />\n";
+
+	echo "<br />\n";
+	echo "<b>Helical Alignment:</b>\n";
 	echo "<br />\n";
 	echo "<input type='checkbox' name='helicalcheck' $helicalcheck>\n";
-	echo docpop('helicalcheck','Apply helical rotation angles');
+	echo docpop('helicalcheck','Apply rough helical rotation angles');
 	echo "<br />\n";
+	echo "<input type='checkbox' name='finealigncheck' $finealigncheck>\n";
+	echo docpop('finealigncheck','Apply fine helical rotation angles');
+	echo "<br />\n";
+
 	echo "</td>\n";
 	echo "</tr>\n";
 	echo "<tr>\n";
@@ -544,6 +552,7 @@ function runMakestack() {
 	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
 	$boxfiles = ($_POST['boxfiles']);
 	$helicalcheck = ($_POST['helicalcheck']);
+	$finealigncheck = ($_POST['finealigncheck']);
 	$ctffindonly = ($_POST['ctffindonly'])=='on' ? True : False;
 	
 	// set image inspection selection
@@ -662,6 +671,10 @@ function runMakestack() {
 		if (!is_numeric($partlimit)) createMakestackForm("<b>ERROR:</b> Particle limit must be an integer");
 	} else $partlimit="none";
 
+	//helical alignment
+	if ($helicalcheck && $finealigncheck)
+		createMakestackForm("<b>ERROR:</b> Select either rough alignment or fine alignment, not both");
+
 	/* *******************
 	PART 3: Create program command
 	******************** */
@@ -697,6 +710,7 @@ function runMakestack() {
 	if (!empty($partlabel)) $command.="--label=\"$partlabel\" ";
 	if ($ctffindonly) $command.="--ctfmethod=ctffind ";
 	if ($helicalcheck == 'on') $command.="--rotate ";
+	if ($finealigncheck == 'on') $command.="--rotate --finealign ";
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {

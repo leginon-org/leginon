@@ -260,21 +260,22 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		t0 = time.time()
 		if self.params['rotate'] is True:
 			apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.params['boxsize'])
-			apXmipp.breakupStackIntoSingleFiles(imgstackfile, filetype="mrc")
-			rotcmd = "s_finealign %s %i" %(self.params['rundir'], self.params['boxsize'])
-			apParam.runCmd(rotcmd, "HIP", verbose=True)
-			# read in text file containing refined angles
-			anglepath = os.path.join(self.params['rundir'], 'partfiles/angles.out')
-			f = open(anglepath, 'r')
-			angles = f.readlines()
-			# loop through parttree and add refined angle to rough angle
-			for i in range(len(parttree)):
-				partdict = parttree[i]
-				fineangle = float(angles[i])
-				newangle = float(partdict['angle'])-fineangle
-				partdict['angle'] = newangle
-			# rerun apBoxer.boxerRotate with the new parttree containing final angles
-			apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.params['boxsize'])
+			if self.params['finealign'] is True:
+				apXmipp.breakupStackIntoSingleFiles(imgstackfile, filetype="mrc")
+				rotcmd = "s_finealign %s %i" %(self.params['rundir'], self.params['boxsize'])
+				apParam.runCmd(rotcmd, "HIP", verbose=True)
+				# read in text file containing refined angles
+				anglepath = os.path.join(self.params['rundir'], 'angles.out')
+				f = open(anglepath, 'r')
+				angles = f.readlines()
+				# loop through parttree and add refined angle to rough angle
+				for i in range(len(parttree)):
+					partdict = parttree[i]
+					fineangle = float(angles[i])
+					newangle = float(partdict['angle'])-fineangle
+					partdict['angle'] = newangle
+				# rerun apBoxer.boxerRotate with the new parttree containing final angles
+				apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.params['boxsize'])
 		else:
 			apBoxer.boxer(imgpath, parttree, imgstackfile, self.params['boxsize'])
 		self.batchboxertimes.append(time.time()-t0)
@@ -980,6 +981,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			action="store_true", help="Show extra ace2 information while running")
 		self.parser.add_option("--rotate", dest="rotate", default=False,
 			action="store_true", help="Apply helical rotation angles")
+		self.parser.add_option("--finealign", dest="finealign", default=False,
+			action="store_true", help="Align filaments vertically in a single interpolation")
 
 		### option based
 		#self.parser.add_option("--whole-image", dest="wholeimage", default=False,
