@@ -49,10 +49,11 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		return extname
 
 	def getStackRunParams(self):
-		stackruns = apStack.getStackRunsFromStack(self.stack['data'])
+		stackdata = self.stack['data']
+		stackruns = apStack.getStackRunsFromStack(stackdata)
 		stackrun = stackruns[0]
 		self.stackparamdata = stackrun['stackParams']
-		self.stackrunlogparams = apScriptLog.getScriptParamValuesFromRunname(stackrun['stackRunName'],jobdata=None)
+		self.stackrunlogparams = apScriptLog.getScriptParamValuesFromRunname(stackrun['stackRunName'],stackdata['path'],jobdata=None)
 
 	def preprocessStackWithProc2d(self):
 		self.getStackRunParams()

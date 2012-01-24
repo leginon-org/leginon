@@ -250,7 +250,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			'### END FREALIGN ###',
 			'echo "END FREALIGN"',
 			'',
-			'proc3d odd.mrc even.mrc fsc=fsc.eotest.1',
+			'proc3d odd.mrc even.mrc fsc=fsc.eotest.%d' % iter,
 			'/bin/cp -v threed.%03da.mrc ..' % iter,
 			'/bin/cp -v params.%03d.par ..' % iter,
 			]
@@ -352,7 +352,7 @@ class FrealignRefineJob(apRefineJob.RefineJob):
 			recon_file = self.writeReconShell(iter,inputlines_template,iterpath,self.ppn)	
 			tasks = self.addToTasks(tasks,recon_file,self.recon_mem,self.ppn)
 			tasks = self.addToTasks(tasks,'cd %s' % iterpath)
-			tasks = self.addToTasks(tasks,'getRes.pl 1 160 1.630 >> ../resolution.txt')
+			tasks = self.addToTasks(tasks,'getRes.pl %s %d %.3f >> ../resolution.txt' % (iter,self.params['boxsize'],self.params['apix']))
 			tasks = self.addToTasks(tasks,'cd %s' % self.params['recondir'])
 		return tasks
 

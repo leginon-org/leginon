@@ -374,7 +374,7 @@ def getStackParticleEulersForIteration(params,pnum):
 	particleid = stackp['particle'].dbid
 
 	# find particle in reference stack
-	refstackid = apStack.getStackIdFromIterationId(params['reconiterid'])
+	refstackid = apStack.getStackIdFromIterationId(params['reconiterid'],msg=False)
 	refstackp = apStack.getStackParticleFromParticleId(particleid,refstackid, nodie=True)
 	if not refstackp:
 		apDisplay.printWarning('No classification for stack particle %d in reconstruction iteration id: %d' % (pnum, params['reconiterid']))

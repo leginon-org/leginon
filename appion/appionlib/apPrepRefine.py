@@ -141,7 +141,7 @@ class Prep3DRefinement(appionScript.AppionScript):
 			self.stack['boxsize'] = clipsize / self.params['bin']
 		if self.invert:
 			need_modify = True
-			emancmd += 'invert'
+			emancmd += 'invert '
 
 		if need_modify:
 			apFile.removeStack(outstack, warn=False)

@@ -196,7 +196,7 @@ def checkForPreviousStack(stackname, stackpath=None):
 def getStackIdFromIterationId(iterid, msg=True):
 	iterdata = appiondata.ApRefineIterData.direct_query(iterid)
 	refrun = iterdata['refineRun'].dbid
-	stackid = getStackIdFromRecon(refrun)
+	stackid = getStackIdFromRecon(refrun,msg)
 	return stackid
 
 #===============

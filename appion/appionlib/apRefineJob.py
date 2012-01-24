@@ -246,11 +246,10 @@ class RefineJob(basicScript.BasicScript):
 	def __makeNewTrialScript(self):
 		'''
 		Function to make job script for tasks that set up files required to start a
-		clean refine/reconstruction trial, including removal of the old trial
+		clean refine/reconstruction trial, including removal of the old trial content
 		'''
 		pretasks = {}
 		pretasks = self.addToTasks(pretasks,'# setup directory')
-		#pretasks = self.addToTasks(pretasks,'/bin/rm -rf %s' % self.params['recondir'])
 		pretasks = self.addToTasks(pretasks,'mkdir -p %s' % self.params['recondir'])
 		pretasks = self.addToTasks(pretasks,'cd %s' % self.params['recondir'])
 		pretasks = self.addToTasks(pretasks,'')
@@ -462,6 +461,8 @@ class RefineJob(basicScript.BasicScript):
 		if self.params['startiter'] == 1:
 			self.addSimpleCommand('')
 			self.addToLog('....Setting up new refinement job trial....')
+			# removeReconDir is not included in NewTrialScript because it is needed 
+			# in setting up scripts even if it is not run.
 			self.__removeReconDir()
 			self.__makeNewTrialScript()
 			self.__createReconDir()
@@ -478,6 +479,7 @@ class RefineJob(basicScript.BasicScript):
 				self.addJobCommands(refinetasks)
 				self.addToLog('Done with iteration %d' % (iter))
 				self.addSimpleCommand('')
+		self.addSimpleCommand('cd %s' % self.params['remoterundir'])
 		self.__writeCommandListToFile()
 		self.addToLog('....Performing tasks after iterations....')
 		self.makePostIterationScript()
