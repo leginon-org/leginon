@@ -19,6 +19,7 @@ from appionlib import apDisplay
 
 # testing options
 save_jpg = False
+debug = False
 ddtype = 'thin'
 
 class DirectDetectorProcessing(object):
@@ -29,8 +30,9 @@ class DirectDetectorProcessing(object):
 		self.c_client = correctorclient.CorrectorClient()
 		# change this to True for loading bias image for correction
 		self.use_bias = False
-		self.log = open('newref.log','w')
-		self.scalefile = open('darkscale.log','w')
+		if debug:
+			self.log = open('newref.log','w')
+			self.scalefile = open('darkscale.log','w')
 
 	def setImageId(self,imageid):
 		from leginon import leginondata
@@ -163,18 +165,21 @@ class DirectDetectorProcessing(object):
 		# return True all the time to use Gram-Schmidt process to calculate darkarray scale
 		return True
 		if len(self.camerainfo.keys()) == 0:
-			self.log.write( 'first frame image to be processed\n ')
+			if debug:
+				self.log.write( 'first frame image to be processed\n ')
 			return True
 		if self.camerainfo['norm'].dbid != self.image['norm'].dbid:
-			self.log.write( 'fail norm %d vs %d test\n ' % (self.camerainfo['norm'].dbid,self.image['norm'].dbid))
+			if debug:
+				self.log.write( 'fail norm %d vs %d test\n ' % (self.camerainfo['norm'].dbid,self.image['norm'].dbid))
 			return True
 		if self.use_full_raw_area != new_use_full_raw_area:
-			self.log.write('fail full raw_area %s test\n ' % (new_use_full_raw_area))
+			if debug:
+				self.log.write('fail full raw_area %s test\n ' % (new_use_full_raw_area))
 			return True
 		else:
 			newcamerainfo = self.__getCameraInfoFromImage(new_nframe,new_use_full_raw_area)
 			for key in self.camerainfo.keys():
-				if key != 'ccdcamera' and self.camerainfo[key] != newcamerainfo[key]:
+				if key != 'ccdcamera' and self.camerainfo[key] != newcamerainfo[key] and debug:
 						self.log.write('fail %s test\n ' % (key))
 						return True
 		return False
@@ -256,7 +261,8 @@ class DirectDetectorProcessing(object):
 		get_new_refs = self.__conditionChanged(nframe,use_full_raw_area)
 		if get_new_refs:
 			self.setCameraInfo(nframe,use_full_raw_area)
-		self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
+		if debug:
+			self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
 		return False
 
 	def darkCorrection(self,rawarray,darkarray):
@@ -292,7 +298,8 @@ class DirectDetectorProcessing(object):
 			nframe = newnframe
 
 		get_new_refs = self.__conditionChanged(nframe,use_full_raw_area)
-		self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
+		if debug:
+			self.log.write('%s %s\n' % (self.image['filename'],get_new_refs))
 		if not get_new_refs and start_frame ==0:
 			apDisplay.printWarning("Imaging condition unchanged. Reference in memory will be used.")
 
@@ -318,7 +325,8 @@ class DirectDetectorProcessing(object):
 		corrected, dark_scale = self.darkCorrection(rawarray,unscaled_darkarray)
 		if save_jpg:
 			numpil.write(corrected,'%s_dark_corrected.jpg' % ddtype,'jpeg')
-		self.scalefile.write('%s\t%.4f\n' % (start_frame,dark_scale))
+		if debug:
+			self.scalefile.write('%s\t%.4f\n' % (start_frame,dark_scale))
 		apDisplay.printMsg('Dark Scale= %.4f' % dark_scale)
 		# GAIN CORRECTION
 		if get_new_refs:
