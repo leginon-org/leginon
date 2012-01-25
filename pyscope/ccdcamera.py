@@ -31,12 +31,18 @@ class CCDCamera(baseinstrument.BaseInstrument):
 	)
 
 	def __init__(self):
+		baseinstrument.BaseInstrument.__init__(self)
+		self.config_name = config.getNameByClass(self.__class__)
+		self.zplane = config.getConfigured()[self.config_name]['zplane']
 		self.buffer = {}
 		self.buffer_ready = {}
 		self.bufferlock = threading.Lock()
 		self.readoutcallback = None
 		self.callbacks = {}
 		self.exposure_timestamp = None
+
+	def getZplane(self):
+		return self.zplane
 
 	def calculateCenteredGeometry(self, dimension, binning):
 		camerasize = self.getCameraSize()
