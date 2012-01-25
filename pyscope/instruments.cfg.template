@@ -42,11 +42,12 @@
 
 ## You must enter a zplane number for every camera.  The zplane number
 ## establishes the relative height of all cameras in the TEM column.
-## The zplane numbers should increase from top to bottom in the column.
-## The actual values do not matter at this time.  It is just a way to know
-## which camera(s) needs to be retracted in the case of more than one camera.
-## If you have cameras hosted on other machines, be sure to coordinate 
-## the zplane values here with the other instruments.cfg.
+## The zplane numbers should increase from bottom to top in the column.
+## The actual values do not matter at this time, just their relative values.
+## It is just a way to know which camera(s) needs to be retracted in the
+## case of more than one camera.  If you have cameras hosted on other
+## machines, be sure to coordinate the zplane values here with the other
+## instruments.cfg.
 
 ## To avoid confusion, it is best not to configure simulation instruments
 ## and real instruments at same time.  Replace the following with your real
