@@ -23,14 +23,14 @@ __deserver_lock = threading.RLock()
 ##### Begin thread safe functions to operate on DE Server #####
 
 @locked
-def de_connect(cls):
+def de_connect():
 	if __deserver:
 		return
 	__deserver = DECameraClientLib.DECameraClientLib()
 	__deserver.connect()
 
 @locked
-def de_disconnect(cls):
+def de_disconnect():
 	if __deserver.connected:
 		__deserver.disconnect()
 
