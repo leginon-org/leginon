@@ -136,7 +136,7 @@ class DECameraBase(ccdcamera.CCDCamera):
 		return image
 
 	def getCameraSize(self):
-		return self.getDictProp('Image Size')
+		return self.getDictProp('Sensor Size')
 
 	def getExposureTime(self):
 		seconds = self.getProperty('Exposure Time (seconds)')
