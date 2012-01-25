@@ -7,6 +7,7 @@
 import time
 import threading
 import baseinstrument
+import config
 
 class GeometryError(Exception):
 	pass
