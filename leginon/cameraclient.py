@@ -44,11 +44,9 @@ class CameraClient(object):
 	def acquireCameraImageData(self, scopeclass=leginondata.ScopeEMData, allow_retracted=False):
 		'''Acquire a raw image from the currently configured CCD camera'''
 
-		## Retract the cameras that are above this one.
-		## We currently have no way to know the vertical order of the
-		## cameras, so just retract all others for now.
+		## Retract the cameras that are above this one (higher zplane)
 		for name,cam in self.instrument.ccdcameras.items():
-			if cam is not self.instrument.ccdcamera:
+			if cam.Zplane > self.instrument.ccdcamera.Zplane:
 				try:
 					if cam.Inserted:
 						cam.Inserted = False
