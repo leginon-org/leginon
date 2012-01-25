@@ -100,22 +100,22 @@ class DECameraBase(ccdcamera.CCDCamera):
 		self.setProperty('Correction Mode', 'Uncorrected Raw')
 
 	def getProperty(self, name):		
-		value = de_getProperty(self.de_name, name)
+		value = de_getProperty(self.name, name)
 		return value
 
 	def setProperty(self, name, value):		
-		value = de_setProperty(self.de_name, name, value)
+		value = de_setProperty(self.name, name, value)
 		return value
 
 	def getDictProp(self, name):		
-		return de_getDictProp(self,de_name, name)
+		return de_getDictProp(self.name, name)
 
 	def setDictProp(self, name, xydict):		
-		return de_setDictProp(self.de_name, name, xydict)
+		return de_setDictProp(self.name, name, xydict)
 
 	def _getImage(self):
 		t0 = time.time()
-		image = de_getImage(self.de_name)
+		image = de_getImage(self.name)
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
 		if not isinstance(image, numpy.ndarray):
@@ -271,7 +271,7 @@ class DECameraBase(ccdcamera.CCDCamera):
 #### Classes for specific cameras
 
 class DE12(DECameraBase):
-	de_name = 'DE12'
+	name = 'DE12'
 	def __init__(self):
 		DECameraBase.__init__(self)
 		self.dimension = {'x': 4096, 'y': 3072}
@@ -279,7 +279,7 @@ class DE12(DECameraBase):
 		self.setProperty('Preexposure Time (seconds)', 0.043)		
 
 class DE12Survey(DECameraBase):
-	de_name = 'DE12 Survey'
+	name = 'DE12 Survey'
 	def __init__(self):
 		DECameraBase.__init__(self)
 		self.dimension = {'x': 1024, 'y': 1024}
