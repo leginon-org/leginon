@@ -8,8 +8,11 @@ import threading
 ## decorator to put a thread lock around a function
 def locked(fun):
 	def newfun(*args, **kwargs):
-		with __deserver_lock:
+		__deserver_lock.acquire()
+		try:
 			return fun(*args, **kwargs)
+		finally:
+			__deserver_lock.release()
 	return newfun
 
 # Shared global connection to the DE Server
