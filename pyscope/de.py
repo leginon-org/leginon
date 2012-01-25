@@ -5,6 +5,11 @@ import pyami.imagefun
 import ccdcamera
 import threading
 
+# Shared global connection to the DE Server
+__deserver = None
+__active_camera = None
+__deserver_lock = threading.RLock()
+
 ## decorator to put a thread lock around a function
 def locked(fun):
 	def newfun(*args, **kwargs):
@@ -15,15 +20,11 @@ def locked(fun):
 			__deserver_lock.release()
 	return newfun
 
-# Shared global connection to the DE Server
-__deserver = None
-__active_camera = None
-__deserver_lock = threading.RLock()
-
 ##### Begin thread safe functions to operate on DE Server #####
 
 @locked
 def de_connect():
+	global __deserver
 	if __deserver:
 		return
 	__deserver = DECameraClientLib.DECameraClientLib()
@@ -31,50 +32,59 @@ def de_connect():
 
 @locked
 def de_disconnect():
+	global __deserver
 	if __deserver.connected:
 		__deserver.disconnect()
 
 @locked
 def de_setActiveCamera(de_name):
+	global __deserver
+	global __active_camera
 	if __active_camera != de_name:
 		__deserver.setActiveCamera(de_name)
 		__active_camera = de_name
 
 @locked
 def de_print_props(de_name):		
-	setActiveCamera(de_name)
+	global __deserver
+	de_setActiveCamera(de_name)
 	camera_properties = __deserver.getActiveCameraProperties()
 	for one_property in camera_properties:
 		print one_property, __deserver.getProperty(one_property)		
 
 @locked
 def de_getProperty(de_name, name):		
-	setActiveCamera(de_name)
+	global __deserver
+	de_setActiveCamera(de_name)
 	value = __deserver.getProperty(name)
 	return value
 
 @locked
 def de_setProperty(de_name, name, value):		
-	setActiveCamera(de_name)
+	global __deserver
+	de_setActiveCamera(de_name)
 	value = __deserver.setProperty(name, value)
 	return value
 
 @locked
 def de_getDictProp(de_name, name):		
-	setActiveCamera(de_name)
+	global __deserver
+	de_setActiveCamera(de_name)
 	x = int(__deserver.getProperty(name + ' X'))
 	y = int(__deserver.getProperty(name + ' Y'))
 	return {'x': x, 'y': y}
 
 @locked
 def de_setDictProp(de_name, name, xydict):		
-	setActiveCamera(de_name)
+	global __deserver
+	de_setActiveCamera(de_name)
 	__deserver.setProperty(name + ' X', int(xydict['x']))
 	__deserver.setProperty(name + ' Y', int(xydict['y']))		
 
 @locked
 def de_getImage(de_name):
-	setActiveCamera(de_name)
+	global __deserver
+	de_setActiveCamera(de_name)
 	image = __deserver.GetImage()
 	return image
 
@@ -119,7 +129,7 @@ class DECameraBase(ccdcamera.CCDCamera):
 		t1 = time.time()
 		self.exposure_timestamp = (t1 + t0) / 2.0
 		if not isinstance(image, numpy.ndarray):
-			raise ValueError('DE12 GetImage did not return array')
+			raise ValueError('GetImage did not return array')
 		image = self.finalizeGeometry(image)
 		print 'Pausing, otherwise, no frames name when this returns.'
 		time.sleep(0.5)
@@ -270,6 +280,12 @@ class DECameraBase(ccdcamera.CCDCamera):
 
 #### Classes for specific cameras
 
+class DE12Survey(DECameraBase):
+	name = 'DE12 Survey'
+	def __init__(self):
+		DECameraBase.__init__(self)
+		self.dimension = {'x': 1024, 'y': 1024}
+
 class DE12(DECameraBase):
 	name = 'DE12'
 	def __init__(self):
@@ -277,9 +293,3 @@ class DE12(DECameraBase):
 		self.dimension = {'x': 4096, 'y': 3072}
 		self.setProperty('Ignore Number of Frames', 0)
 		self.setProperty('Preexposure Time (seconds)', 0.043)		
-
-class DE12Survey(DECameraBase):
-	name = 'DE12 Survey'
-	def __init__(self):
-		DECameraBase.__init__(self)
-		self.dimension = {'x': 1024, 'y': 1024}
