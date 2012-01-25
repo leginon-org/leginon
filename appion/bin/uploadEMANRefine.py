@@ -343,11 +343,11 @@ class uploadEmanProjectionMatchingRefinementScript(reconUploader.generalReconUpl
 						refine_keptp = bool(int(ali[4]))
 
 					### write the results to Appion format
-					phi, theta, omega = apEulerCalc.convertEmanEulersToXmipp(float(eulers[i][0])), float(eulers[i][1])), float(other[0])*180./math.pi))
+					phi, theta, omega = apEulerCalc.convertEmanEulersToXmipp(float(eulers[i][0]), float(eulers[i][1]), float(other[0])*180./math.pi)
 					particledataf.write("%.6d\t" % (int(prtlnum)+1)) ### NOTE: IT IS IMPORTANT TO START WITH 1, OTHERWISE STACKMAPPING IS WRONG!!!
-					particledataf.write("%.6f\t" % phi
-					particledataf.write("%.6f\t" % theta
-					particledataf.write("%.6f\t" % omega
+					particledataf.write("%.6f\t" % phi)
+					particledataf.write("%.6f\t" % theta)
+					particledataf.write("%.6f\t" % omega)
 					particledataf.write("%.6f\t" % float(other[1]))
 					particledataf.write("%.6f\t" % float(other[2]))
 					particledataf.write("%.6d\t" % int(float(other[3])))
