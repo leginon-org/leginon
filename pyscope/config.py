@@ -36,18 +36,22 @@ def parse():
 	temclasses = []
 	cameraclasses = []
 	configured = {}
+	mods = {}
 
 	for name in names:
 		configured[name] = {}
 		cls_str = configparser.get(name, 'class')
 		modname,clsname = cls_str.split('.')
-		fullmodname = 'pyscope.' + modname
-		args = imp.find_module(modname, modpath)
-		try:
-			mod = imp.load_module(fullmodname, *args)
-		finally:
-			if args[0] is not None:
-				args[0].close()
+		if modname not in mods:
+			fullmodname = 'pyscope.' + modname
+			args = imp.find_module(modname, modpath)
+			try:
+				mod = imp.load_module(fullmodname, *args)
+			finally:
+				if args[0] is not None:
+					args[0].close()
+			mods[modname] = mod
+		mod = mods[modname]
 		cls = getattr(mod, clsname)
 		if issubclass(cls, pyscope.tem.TEM):
 			try:
@@ -58,6 +62,13 @@ def parse():
 			configured[name]['cs'] = cs_value
 			temclasses.append(cls)
 		if issubclass(cls, pyscope.ccdcamera.CCDCamera):
+			try:
+				z_str = configparser.get(name, 'zplane')
+				z_value = int(z_str)
+			except:
+				print '** WARNING:  you need to configure the camera zplane in your instruments.cfg... assuming 0'
+				z_value = 0
+			configured[name]['zplane'] = z_value
 			cameraclasses.append(cls)
 		configured[name]['class'] = cls
 
