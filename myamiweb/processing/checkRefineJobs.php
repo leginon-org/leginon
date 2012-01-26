@@ -99,7 +99,7 @@ function checkJobs($showjobs=False, $showall=False, $extra=False) {
 				if ($jobinfo['jobtype'] == 'emanrecon') {
 					// if recon is of type EMAN
 					showEMANJobInfo($jobinfo);
-				} elseif ($jobinfo['jobtype'] == 'runfrealign') {
+				} elseif ($jobinfo['jobtype'] == 'frealignrecon') {
 					// if recon is of type FREALIGN
 					showFrealignJobInfo($jobinfo);
 				} elseif ($jobinfo['jobtype'] == 'xmipprecon') {
