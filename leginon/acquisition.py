@@ -1,6 +1,6 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
+#       The Leginon software is Copyright 2003-2012
 #       The Scripps Research Institute, La Jolla, CA
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
