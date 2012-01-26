@@ -177,7 +177,6 @@ class DECameraBase(ccdcamera.CCDCamera):
 		assert self.binning['x'] == self.binning['y']
 		binning = self.binning['x']
 		bin_image = pyami.imagefun.bin(nobin_image, binning)
-		bin_image = numpy.fliplr(bin_image)
 		return bin_image
 
 	def getPixelSize(self):
@@ -293,3 +292,8 @@ class DE12(DECameraBase):
 		self.dimension = {'x': 4096, 'y': 3072}
 		self.setProperty('Ignore Number of Frames', 0)
 		self.setProperty('Preexposure Time (seconds)', 0.043)		
+
+	def finalizeGeometry(self, image):
+		image = DECameraBase.finalizeGeometry(self, image)
+		image = numpy.fliplr(image)
+		return image
