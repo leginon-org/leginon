@@ -207,7 +207,11 @@ class Tietz(object):
 		self.cameratype = getattr(win32com.client.constants, self.cameratypeattr)
 
 	def __getattribute__(self, attr_name):
-		if attr_name in object.__getattribute__(self, 'unsupported'):
+		try:
+			unsupported = object.__getattribute__(self, 'unsupported')
+		except:
+			unsupported = []
+		if attr_name in unsupported:
 			raise AttributeError('attribute not supported')
 		return object.__getattribute__(self, attr_name)
 
