@@ -180,8 +180,8 @@ class setupUtils{
 	 * $matchingStrings: An array of strings need to match with $inputString
 	 * $params: An array of Key and Value information need to fillin the inputString
 	 */
-	private function fillinDefineConstant($inputString, $matchingStrings, $params){
-
+	private function fillinDefineConstant($inputString, $matchingStrings, $params)
+	{
 		// if input string contain nothing. just return it.
 		if(empty($inputString))	return $inputString;
 
@@ -243,10 +243,31 @@ class setupUtils{
 
 				if($pos2 !== false){
 					$inputString = "";
-					foreach($value as $name)
+					foreach($value as $name) {
 						// build this string:
 						// $PROCESSING_HOSTS[] = array('host' => 'host1.school.edu', 'nproc' => 8);
-						$inputString .= $key." = array('host' => '".$name['host']."', 'nproc' => ".$name['nproc'].");\n";
+						$inputString .= $key." = array('host' => '".$name['host']."',\n";
+						$inputString .= "'nodesdef' => '".$name['nodesdef']."',\n";
+						$inputString .= "'nodesmax' => '".$name['nodesmax']."',\n";
+						$inputString .= "'ppndef' => '".$name['ppndef']."',\n";
+						$inputString .= "'ppnmax' => '".$name['ppnmax']."',\n";
+						$inputString .= "'reconpn' => '".$name['reconpn']."',\n";
+						$inputString .= "'walltimedef' => '".$name['walltimedef']."',\n";
+						$inputString .= "'walltimemax' => '".$name['walltimemax']."',\n";
+						$inputString .= "'cputimedef' => '".$name['cputimedef']."',\n";
+						$inputString .= "'cputimemax' => '".$name['cputimemax']."',\n";
+						$inputString .= "'memorymax' => '".$name['memorymax']."',\n";
+						$inputString .= "'appionbin' => '".$name['appionbin']."',\n";
+						$inputString .= "'baseoutdir' => '".$name['baseoutdir']."',\n";
+						$inputString .= "'localhelperhost' => '".$name['localhelperhost']."',\n";
+						$inputString .= "'dirsep' => '".$name['dirsep']."',\n";
+						$inputString .= "'wrapperpath' => '".$name['wrapperpath']."',\n";
+						$inputString .= "'loginmethod' => '".$name['loginmethod']."',\n";
+						$inputString .= "'loginusername' => '".$name['loginusername']."',\n";
+						$inputString .= "'passphrase' => '".$name['passphrase']."',\n";
+						$inputString .= "'publickey' => '".$name['publickey']."',\n";
+						$inputString .= "'privatekey' => '".$name['privatekey']."' );\n\n";		
+					}
 					break;
 				}
 			}
