@@ -230,7 +230,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 		</tr>
 		<TR>
 		<TD COLSPAN='2' ALIGN='CENTER'><hr>";
-	echo getSubmitForm("Run ManualPicker", false, true);
+	echo getSubmitForm("Run ManualPicker", true, true);
   echo "</TD>
 		</tr>
 		</table>
@@ -291,22 +291,26 @@ function runManualPicker() {
 		if (strlen($picklabel))
 			$command .= " --label=$picklabel";
 	}
+	
+	
+	/* *******************
+	PART 4: Create header info, i.e., references
+	******************** */
 
-	processing_header("Particle Selection Results","Particle Selection Results");
+	// Add reference to top of the page
+	$headinfo .= appionRef(); // main appion ref
 
-	echo appionRef();
+	/* *******************
+	PART 5: Show or Run Command
+	******************** */
 
-  echo"
-    <table WIDTH='600'>
-    <TR><TD COLSPAN='2'>
-    <B>Manual Picker Command:</B><br />
-    $command<HR>
-    </TD></tr>";
+	// submit command
+	$errors = showOrSubmitCommand($command, $headinfo, 'manualpicker', 1);
 
-  appionLoopSummaryTable();
-  particleLoopSummaryTable();
-  echo"</table>\n";
-  processing_footer();
+	// if error display them
+	if ($errors)
+		createManualPickerForm($errors);
+	exit;
 }
 
 ?>
