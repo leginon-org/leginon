@@ -1400,13 +1400,24 @@ class leginondata {
 		$newimage = array();
 		$relations = $this->getImageRelation($imgId, $type, $matchtargetnb);
 		foreach ($relations as $relation) {
-			if ($relation['siblingpreset']==$preset && $relation['parentId']) {
-				$newimage['id'] = $relation['siblingimageId'];
+			$siblingimageId = $relation['siblingimageId'];
+			$imagestatus = $this->getViewerImageStatus($siblingimageId);
+			if ($relation['siblingpreset']==$preset && $relation['parentId'] && 'hidden' != $imagestatus) {
+				$newimage['id'] = $siblingimageId;
 				$newimage['preset'] = $relation['siblingpreset'];
 				break;
 			}
 		}
 		return $newimage;
+	}
+
+	function getViewerImageStatus($imgId) {
+		if (!$this->mysql->isTable('ViewerImageStatus'))
+			return null;
+		$q = 'select status from ViewerImageStatus '
+				.'where `REF|AcquisitionImageData|image` = '.$imgId.' ';
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['status'];
 	}
 
 	function findImage($imgId, $preset="") {
@@ -1438,10 +1449,11 @@ class leginondata {
 		while ($parentId) {
 			$parent = $this->getParent($parentId);
 			$parentId = $parent['parentId'];
+			$parentstatus = $this->getViewerImageStatus($parentId);
 			$parentpreset=$parent['parentpreset'];
-			if ($parentpreset==$preset) {
-				$newimage['id'] = $parent['parentId'];
-				$newimage['preset'] = $parent['parentpreset'];
+			if ($parentpreset==$preset && $parentstatus !='hidden') {
+				$newimage['id'] = $parentId;
+				$newimage['preset'] = $parentpreset;
 				$newimage['childid'] = $parent['imageId'];
 				break;
 			}
