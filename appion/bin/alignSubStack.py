@@ -39,6 +39,14 @@ class subStackScript(appionScript.AppionScript):
 			help="list of EMAN style class numbers to include in sub-stack, e.g. --class-list-keep=0,5,3", metavar="#,#")
 		self.parser.add_option("--class-list-drop", dest="dropclasslist",
 			help="list of EMAN style class numbers to exclude in sub-stack, e.g. --class-list-drop=0,5,3", metavar="#,#")
+		self.parser.add_option("--keep-file", dest="keepfile",
+			help="File listing which particles to keep, EMAN style 0,1,...", metavar="FILE")
+
+		### True/False
+		self.parser.add_option("--save-bad", dest="savebad", default=False,
+			help="save discarded particles into a stack", action="store_true")
+		self.parser.add_option("--exclude-from", dest="excludefrom", default=False,
+			help="converts a keepfile into an exclude file", action="store_true")
 
 	#=====================
 	def checkConflicts(self):
@@ -66,7 +74,7 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printError("stackid was not defined")
 
 		### check that we have a keep or drop list and not both
-		if self.params['keepclasslist'] is None and self.params['dropclasslist'] is None:
+		if self.params['keepclasslist'] is None and self.params['dropclasslist'] is None and self.params['keepfile'] is None:
 			apDisplay.printError("class numbers to be included/excluded was not defined")
 		if self.params['keepclasslist'] is not None and self.params['dropclasslist'] is not None:
 			apDisplay.printError("both --class-list-keep and --class-list-drop were defined, only one is allowed")
@@ -86,8 +94,9 @@ class subStackScript(appionScript.AppionScript):
 		newstack = os.path.join(self.params['rundir'], stackdata['name'])
 		apStack.checkForPreviousStack(newstack)
 
-		### list of classes to be excluded
+		includelist = []
 		excludelist = []
+		### list of classes to be excluded
 		if self.params['dropclasslist'] is not None:
 			excludestrlist = self.params['dropclasslist'].split(",")
 			for excludeitem in excludestrlist:
@@ -95,11 +104,20 @@ class subStackScript(appionScript.AppionScript):
 		apDisplay.printMsg("Exclude list: "+str(excludelist))
 
 		### list of classes to be included
-		includelist = []
 		if self.params['keepclasslist'] is not None:
 			includestrlist = self.params['keepclasslist'].split(",")
 			for includeitem in includestrlist:
 				includelist.append(int(includeitem.strip()))
+
+		### or read from keepfile
+		elif self.params['keepfile'] is not None:
+			keeplistfile = open(self.params['keepfile'])
+			for line in keeplistfile:
+				if self.params['excludefrom'] is True:
+					excludelist.append(int(line.strip()))
+				else:
+					includelist.append(int(line.strip()))
+			keeplistfile.close()
 		apDisplay.printMsg("Include list: "+str(includelist))
 
 		### get particles from align or cluster stack
@@ -201,7 +219,7 @@ class subStackScript(appionScript.AppionScript):
 				% (numparticles, self.params['keepclasslist']))
 
 		### create the new sub stack
-		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=True)
+		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'], bad=self.params['savebad'])
 
 		if not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
