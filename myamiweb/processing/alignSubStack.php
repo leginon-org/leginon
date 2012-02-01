@@ -64,6 +64,7 @@ function createAlignSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	if (!$description) $description = $_POST['description'];
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunname;
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
+	$savebadcheck = ($_POST['savebad']=='on') ? 'checked' : '';		
 	$maxshift = $_POST['maxshift'] ? $_POST['maxshift'] : '';
 	$minscore = $_POST['minscore'] ? $_POST['minscore'] : '';
 
@@ -178,7 +179,6 @@ function createAlignSubStackForm($extra=false, $title='subStack.py Launcher', $h
 
 	echo docpop('minscore','<b>Minimum alignment score or spread:</b> ');
 	echo "<input type='text' name='minscore' value='$minscore'>\n";
-
 	if ($alignId) {
 		echo openRoundBorder();
 		echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
@@ -201,8 +201,9 @@ function createAlignSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	} else
 		echo "<input type='hidden' name='include' value=''>\n";
 
-	echo "<br/>\n";
-
+	echo "<br><input type='checkbox' name='savebad' $savebadcheck>Save discarded particles in a stack\n";
+	echo "<br>\n";
+	echo "<br>\n";
 	echo "<b>Description:</b><br />\n";
 	echo "<textarea name='description' rows='2' cols='60'>$description</textarea>\n";
 	echo "<br/>\n";
@@ -238,6 +239,7 @@ function runSubStack() {
 	$clusterId=$_POST['clusterId'];
 	$alignId=$_POST['alignId'];
 	$commit=$_POST['commit'];
+	$savebad=$_POST['savebad'];
 	$exclude=$_POST['exclude'];
 	$include=$_POST['include'];
 	$maxshift=$_POST['maxshift'];
@@ -279,7 +281,8 @@ function runSubStack() {
 		$command.="--min-score=$minscore ";
 	if ($maxshift)
 		$command.="--max-shift=$maxshift ";
-
+	if ($savebad=='on')
+		$command .="--save-bad ";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
 	/* *******************
