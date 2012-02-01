@@ -29,8 +29,14 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		super(FrealignPrep3DRefinement,self).setupParserOptions()
 		self.parser.add_option('--reconiterid', dest='reconiterid', type='int',
 			help="id for specific iteration from a refinement, used for retrieving particle orientations")
+		self.ctfestopts = ('ace2', 'ctffind')
 		self.parser.add_option('--noctf', dest='noctf', default=False, action='store_true',
 			help="choose if frealign should not perform ctf correction")
+		self.parser.add_option('--ctfmethod', dest='ctfmethod',
+			help="Only use ctf values coming from this method of estimation", metavar="TYPE",
+			type="choice", choices=self.ctfestopts)
+		self.parser.add_option('--paramonly', dest='paramonly', default=False, action='store_true',
+			help="only create parameter file")
 
 	def setRefineMethod(self):
 		self.refinemethod = 'frealignrecon'
@@ -107,6 +113,8 @@ class FrealignPrep3DRefinement(apPrepRefine.Prep3DRefinement):
 		'''
 		The stack is remaked without ctf correction and without invertion (ccd)
 		'''
+		if self.params['paramonly'] is True:
+			return
 		if self.no_ctf_correction:
 			self.ImagicStackToFrealignMrcStack()
 			self.setFrealignStack()
