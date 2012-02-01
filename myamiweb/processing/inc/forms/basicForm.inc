@@ -176,7 +176,9 @@ class BasicForm
 			$value = $this->formParams->getParamValue( $paramName );
 		}
 		if ( $value !== '' ) {
-			$flagString = "--".$flagName."=".$value." ";
+			// if the value is 'on' it is just a flag, with no value specified
+			if ( $value == 'on') $flagString = "--".$flagName;
+			else $flagString = "--".$flagName."=".$value." ";
 			$command = str_replace( $flagString,"", $command );
 		}
 		
