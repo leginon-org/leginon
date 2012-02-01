@@ -130,7 +130,7 @@ function jobForm($extra=false) {
 	echo $stackPrepForm->generateForm();
 		
 	// add submit button
-	echo "<br/><br/>\n";
+	echo "<br/>\n";
 	echo getSubmitForm("Prepare Refinement");
 
 	echo "</form>\n";

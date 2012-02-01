@@ -12,7 +12,7 @@ require_once "inc/particledata.inc";
 
 class StackPrepFormFrealign extends StackPrepForm
 {
-	function __construct( $stackid='', $lastParticle='', $lowpass='', $highpass='', $bin='', $reconiterid='', $noctf='', $dang='', $initlp='', $initmethod='', $ctffindonly='' ) 
+	function __construct( $stackid='', $lastParticle='', $lowpass='', $highpass='', $bin='', $reconiterid='', $noctf='', $dang='', $initlp='', $initmethod='', $ctffindonly='', $paramonly='' ) 
 	{
 		parent::__construct($lastParticle, $lowpass, $highpass, $bin);
 		$params = $this->getFormParams();
@@ -24,6 +24,7 @@ class StackPrepFormFrealign extends StackPrepForm
 		$params->addParam( "initlp", $initlp, "Initial LP filter" );
 		$params->addParam( "initmethod", $initmethod, "Initial orientation method" );
 		$params->addParam( "ctffindonly", $ctffindonly, "Only use CTFFIND values" );
+		$params->addParam( "paramonly", $paramonly, "Only create the Frealign paramter file, not the stack");
 		
 		$this->stackid = $stackid;
 	}
@@ -38,21 +39,6 @@ class StackPrepFormFrealign extends StackPrepForm
 		$params = $this->getFormParams();
 	
 		$html.= $params->insertCheckboxField("noctf");
-		
-		// Don't include the ctffindonly flag for now
-		$usectffindonly = false;
-		if ( $usectffindonly ) {
-			// find if there are ctffind runs (for frealign option)
-			$particle = new particledata();
-			$showCTFFind = $particle->getCtfRunIds($_GET['expId'], $showHidden=False, $ctffind=True);
-			
-			// give option of only using ctffind runs
-			if ( $showCTFFind ) {
-				$html .=  "<br/>\n";
-				$html .=  $params->insertCheckboxField( "ctffindonly" );
-				$html .=  "&nbsp;&nbsp;&nbsp;&nbsp;\n";
-			}
-		}
 		
 		$html .=  "<br />\n";
 		$html .=  "<b>Initial Orientations</b>\n";
@@ -71,6 +57,19 @@ class StackPrepFormFrealign extends StackPrepForm
 					
 		$html.= "<br/>\n";
 
+		// find if there are ctffind runs (for frealign option)
+		$particle = new particledata();
+		$showCTFFind = $particle->getCtfRunIds($_GET['expId'], $showHidden=False, $ctffind=True);
+			
+		// give option of only using ctffind runs
+		if ( $showCTFFind ) {
+			$html .=  "<br/>\n";
+			$html .=  $params->insertCheckboxField( "ctffindonly" );
+		}
+
+		$html.= "<br/>\n";
+
+		$html .= $params->insertCheckboxField( "paramonly");
 		return $html;
 	}
 	
@@ -98,6 +97,9 @@ class StackPrepFormFrealign extends StackPrepForm
 		$ctffindonly = $params->getParamValue("ctffindonly");
 		if ( $ctffindonly == 'on' ) $command.= "--ctfmethod=ctffind ";
 		
+		// see if paramonly checkbox was selected
+		$paramonly = $params->getParamValue("paramonly");
+
 		// remove params not needed in command
 		$command = $this->removeCommandFlag($command, "initmethod" );
 		$command = $this->removeCommandFlag($command, "ctffindonly" );
