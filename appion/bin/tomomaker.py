@@ -57,6 +57,10 @@ class tomoMaker(appionScript.AppionScript):
 		self.parser.add_option("--bin", "-b", dest="bin", default=1, type="int",
 			help="Extra binning from original images, e.g. --bin=2", metavar="int")
 
+		### true/false
+		self.parser.add_option("--sample", dest="sample", default=False,
+			action="store_true", help="make sample tomogram and prepare for etomo to reconstruct it manually")
+
 		### choices
 		self.methods = ( "imod-wbp", "xmipp-art", "upload" )
 		self.parser.add_option("--method", dest="method",
@@ -144,10 +148,29 @@ class tomoMaker(appionScript.AppionScript):
 		specimen_euler, tiltaz, origins, rotations = apTomo.getAlignmentFromDB(alignerdata,center)
 		imodaffines = apProTomo.convertProtomoToImod(specimen_euler, tiltaz, origins, rotations,centertuple)
 		apImod.writeTransformFile(processdir, seriesname,imodaffines,ext='xf')
+		imodlocalaffines = apTomo.convertGlobalToLocalAffines(imodaffines)
+		apImod.writeTransformFile(processdir, seriesname,imodlocalaffines,ext='prexf')
+		thickness = int(self.params['thickness'])
+		if self.params['sample']:
+			# Make Sample Tomogram for etomo manual positioning and exit
+			aligndir = alignerdata['alignrun']['path']['path']
+			templatedir = os.path.join(os.path.dirname(apImod.__file__),'data')
+			apImod.sampleRecon(stackdir, processdir, aligndir, seriesname, 10, 0.66, thickness, excludelist)
+			has_rotation = False
+			if alignerdata['protomo']:
+				if alignerdata['refine_cycle']['cycle'] > 0:
+					has_rotation = True
+			apImod.makeFilesForETomoSampleRecon(processdir, stackdir,aligndir, templatedir, seriesname, thickness, pixelsize,has_rotation)
+			apDisplay.printMsg('------------------------')
+			apDisplay.printWarning('You should run etomo and continue on "Tomogram Positioning" in %s with the .edf file of the tile series like this' % processdir)
+			apDisplay.printColor('cd %s' % processdir,'cyan')
+			apDisplay.printColor('etomo %s.edf' % seriesname,'cyan')
+			apDisplay.printMsg('------------------------')
+			return
+
 		# Create Aligned Stack
 		apImod.createAlignedStack(stackdir, processdir, seriesname,bin)
 		# Reconstruction
-		thickness = int(self.params['thickness'])
 		apImod.recon3D(stackdir, processdir, seriesname, imgshape, thickness/bin, False, excludelist)
 		# Full tomogram created with imod is left-handed XZY
 		voltransform = 'flipx'

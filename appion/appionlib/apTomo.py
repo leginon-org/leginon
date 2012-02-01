@@ -43,6 +43,14 @@ def getAlignerdata(alignerid):
 	alignerdata = q.direct_query(alignerid)
 	return alignerdata
 
+def getAligndir(alignerdata):
+	rundir = alignerdata['alignrun']['path']['path']
+	if alignerdata['protomo']:
+		aligndir = os.path.join(rundir,'align')
+	else:
+		aligndir = rundir
+	return aligndir
+
 def getAlignmentFromDB(alignerdata,center):
 	q = appiondata.ApProtomoModelData(aligner=alignerdata)
 	results = q.query(results=1)
@@ -262,6 +270,13 @@ def getGlobalShift(ordered_imagelist, corr_bin, refimg):
 	globalshifts = shiftHalfSeries(zeroshift, globalshifts, refimg)
 	return globalshifts
 		
+def convertGlobalToLocalAffines(affines):
+	localaffines = []
+	localaffines.append(affines[0] * affines[0].I)
+	for i in range(len(affines)-1):
+		localaffines.append(affines[i+1] * affines[i].I)
+	return localaffines
+
 def simpleCorrelation(array1,array2):
 	c = correlator.Correlator()
 	p = peakfinder.PeakFinder()

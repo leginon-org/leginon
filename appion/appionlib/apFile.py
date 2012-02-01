@@ -191,6 +191,28 @@ def numImagesInStack(imgfile, boxsize=None):
 		apDisplay.printError("numImagesInStack() requires an IMAGIC or SPIDER stacks")
 	return numimg
 
+def safeSymLink(source, destination):
+	''' create new symbolic link only if the destination is not a file'''
+	if (os.path.isfile(destination) and not os.path.islink(destination)):
+		apDisplay.printWarning('destination is a non-linked file, linking from %s to %s not performed' % (source,destination))
+		return False
+	else:
+		if (os.path.islink(destination)):
+			os.remove(destination)
+		os.symlink(source,destination)
+	return True
+
+def safeCopy(source, destination):
+	''' copy from source only if the destination is not a file'''
+	if (os.path.isfile(destination) and not os.path.islink(destination)):
+		apDisplay.printWarning('destination is a non-linked file, copying from %s to %s not performed' % (source,destination))
+		return False
+	else:
+		if (os.path.islink(destination)):
+			os.remove(destination)
+		shutil.copy(source,destination)
+	return True
+
 ####
 # This is a low-level file with NO database connections
 # Please keep it this way
