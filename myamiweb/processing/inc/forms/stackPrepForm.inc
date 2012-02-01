@@ -37,7 +37,7 @@ class StackPrepForm extends BasicForm
 	    <H4>Stack Preparation Parameters</H4>
 	    <hr />";
 	
-		$html.= $params->insertTextField( "lastParticle", 4 );
+		$html.= $params->insertTextField( "lastParticle", 4, "(leave blank for all particles)");
 		$html.= $params->insertTextField( "lowpass", 4, "(angstroms)" );
 		$html.= $params->insertTextField( "highpass", 4, "(angstroms)" );
 		$html.= $params->insertTextField( "bin", 4 );
