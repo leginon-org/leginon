@@ -148,7 +148,7 @@ function createTopolAlignForm($extra=false, $title='topologyAlignment.py Launche
 	$classitercheck = ($_POST['classiter']=='on') ? 'checked' : '';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
 	$msaproc = ($_POST['msaproc']) ? $_POST['msaproc'] : '8';
-	$iter = (isset($_POST['iter'])) ? $_POST['iter'] : '10';
+	$iter = (isset($_POST['iter'])) ? $_POST['iter'] : '5';
 	// topology alignment parameters
 	$itermult = ($_POST['itermult']) ? $_POST['itermult'] : '10';
 	$learn = ($_POST['learn']) ? $_POST['learn'] : '0.01';
