@@ -307,8 +307,6 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True, method=False):
 		### limit to specific method if requested:
 		if method=='ctffind' and ctfvalue['acerun']['ctftilt_params'] is None:
 			continue
-		if method=='ace2' and ctfvalue['ctfvalues_file'] is None:
-			continue
 
 		# get ctf values
 		conf1 = max(ctfvalue['confidence'],ctfvalue['cross_correlation'])
