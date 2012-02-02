@@ -67,6 +67,8 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			help="scale the class averages to a boxsize of 64x64 prior to iterative model creation")
 			
 		### Angular Reconstitution
+		self.parser.add_option("--first_image", dest="firstimage", type="int", default=None,
+			help="specify the first image (numbering starts with 0) to be used during C1 startup, rather than randomizing", metavar="INT")
 		self.parser.add_option("--symmetry", dest="symid", type="int", default=1,
 			help="symmetry of the object (ID from Appion Database). This is automatically defaulted to the suggested C1 symmetry", metavar="INT")
 		self.parser.add_option("--num_volumes", dest="num_volumes", type="int",
@@ -286,6 +288,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		''' 
 		calculates a unique sequence of addition of class averages. function first initializes a random seed, then calculates
 		the rest of the sequence based on the resulting weighted probability matrix generated from each successive addition
+		NOTE: image numbering starts with 0!
 		'''
 			
 		### initialize sequence (image queue) and weight matrix, which determines sequence calculation
@@ -294,6 +297,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			
 		### if completely random sequence is desired, do that here
 		if self.params['non_weighted_sequence'] is True:
+			apDisplay.printMsg("calculating random sequence of image addition")
 			im_list = []
 			for i in range(self.params['numpart']):
 				im_list.append(i)		
@@ -304,6 +308,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			return sequence
 			
 		else:	
+			apDisplay.printMsg("calculating weighted randomized sequence of image addition")
 			### otherwise randomize first image selection and continue with weighted selection
 			im_queue = []
 			for i in range(self.params['numpart']):
@@ -1341,7 +1346,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		seqfile = open(os.path.join(self.params['rundir'], "sequences_for_angular_reconstitution.dat"), "w")
 		apDisplay.printColor("Running multiple IMAGIC 3d0 creations", "cyan")
 		for i in range(self.params['num_volumes']):
-			sequence = self.calculate_sequence_of_addition(self.params['avgs'], ccc_matrix)
+			sequence = self.calculate_sequence_of_addition(self.params['avgs'], ccc_matrix, first=self.params['firstimage'])
 			self.check_for_duplicates_in_sequence(sequence)
 			seqfile.write(str(sequence)+"\n")
 			### create IMAGIC batch file for each model construction & append them to be threaded
