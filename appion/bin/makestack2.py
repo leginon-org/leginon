@@ -533,12 +533,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			self.badprocess = True
 			return None
 
-		# method=ace2 requires a ctfvalues_file
 		if bestctfvalue['ctfvalues_file'] is None:
-			if self.params['ctfmethod']=="ace2":
-				apDisplay.printWarning("No ctf file for current image")
-				self.badprocess = True
-				return None
+			# Since method=ace2 requires a ctfvalues_file,
+			# create file from database values
 
 			### cannot use ACE2 correction without CS value in database
 			if not 'cs' in bestctfvalue:
