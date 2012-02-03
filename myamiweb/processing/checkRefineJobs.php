@@ -206,10 +206,10 @@ function showStatus($jobinfo) {
 			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
 				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload EMAN results'>&nbsp;\n";
 		} elseif ($jobinfo['jobtype'] == 'frealignrecon') {
-//			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
-//				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
-			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
-				."uploadFrealign.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
+			$dlbuttons .= "<input type='button' onclick=\"parent.location=('"
+				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
+//			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
+//				."uploadFrealign.php?expId=$expId&jobId=$jobid')\" value='Upload FREALIGN results'>&nbsp;\n";
 		} elseif ($jobinfo['jobtype'] == 'xmipprecon') {
 			$dlbuttons = "<input type='button' onclick=\"parent.location=('"
 				."uploadrecon.php?expId=$expId&jobId=$jobid')\" value='Upload Xmipp results'>&nbsp;\n";
