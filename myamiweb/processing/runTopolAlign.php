@@ -410,6 +410,10 @@ function runTopolAlign() {
 	/* *******************
 	PART 2: Check for conflicts, if there is an error display the form again
 	******************** */
+	// if mask is bigger than box size, complain
+	$maxmsk = ($boxsz/2)-2;
+	if ($mask>$maxmsk)
+		createTopolAlignForm("<b>Error:</b> Maximum mask size is $maxmsk");
 	if (!$description)
 		createTopolAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
