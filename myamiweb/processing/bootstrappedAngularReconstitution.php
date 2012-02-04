@@ -172,11 +172,11 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 				echo "<b>Preparatory Parameters</b>\n";
 				echo "<br/>\n";
 	
-				echo "<INPUT TYPE='checkbox' NAME='scale' $scale\n";
+				echo "<INPUT TYPE='checkbox' NAME='scale' $scale<br/>\n";
 				echo docpop('scale','Scale class averages to 64x64 pixels');
 				echo "<br>";
 	
-				echo "<INPUT TYPE='checkbox' NAME='prealign' $prealign\n";
+				echo "<INPUT TYPE='checkbox' NAME='prealign' $prealign<br/>\n";
 				echo docpop('prealign','Iteratively align class averages to each other');
 				echo "<br>";
 	
@@ -184,11 +184,11 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 				echo "<b>Angular Reconstitution</b>\n";
 				echo "<br/>\n";
 		
-				echo "<INPUT TYPE='checkbox' NAME='weight' $weight\n";
+				echo "<INPUT TYPE='checkbox' NAME='weight' $weight<br/>\n";;
 				echo docpop('weight_randomization','Weight randomization based on image differences');
 				echo "<br>";
 			
-				echo "<INPUT TYPE='checkbox' NAME='asqfilt' $asqfilt\n";
+				echo "<INPUT TYPE='checkbox' NAME='asqfilt' $asqfilt<br/>\n";
 				echo docpop('asqfilt','ASQ filter the sinogram lines');
 				echo "<br/>\n";
 	
@@ -198,7 +198,7 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 				echo "<br/>\n";
 	
 				echo "<INPUT TYPE='text' NAME='anginc' VALUE='$anginc' SIZE='4'>\n";
-				echo docpop('ang_inc','Angular Increment of Search');
+				echo docpop('ang_inc2','Angular Increment of Search');
 				echo "<font size='-2'>(degrees)</font>\n";
 				echo "<br/>\n";
 		
@@ -224,7 +224,7 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 				echo "<b>3D Classification</b>\n";
 				echo "<br/>\n";
 		
-				echo "<INPUT TYPE='checkbox' NAME='usePCA' $usePCAcheck\n";
+				echo "<INPUT TYPE='checkbox' NAME='usePCA' $usePCAcheck<br/>\n";
 				echo docpop('usePCA','Use Principal Components Analysis');
 				echo "<br>";
 		
@@ -232,7 +232,7 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 				echo docpop('numeigens','Number of Eigenimages');
 				echo "<br/>\n";	
 
-				echo "<INPUT TYPE='checkbox' NAME='recalc' $recalc\n";
+				echo "<INPUT TYPE='checkbox' NAME='recalc' $recalc<br/>\n";
 				echo docpop('recalc','Recalculate volumes after PCA');
 				echo "<br><br>";
 	
