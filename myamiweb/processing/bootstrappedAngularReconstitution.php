@@ -77,6 +77,8 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 	$scale = ($_POST['scale']=='on' || !$_POST['scale']) ? 'checked' : '';
 	$nvol = ($_POST['nvol']) ? $_POST['nvol'] : '100';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
+	$asqfilt = ($_POST['asqfilt']=='on') ? 'checked' : '';
+	$linmask = ($_POST['linmask']) ? $_POST['linmask'] : '67';
 	$anginc = ($_POST['anginc']) ? $_POST['anginc'] : '2';
 	$keep_ordered = ($_POST['keep_ordered']) ? $_POST['keep_ordered'] : '90';
 	$filt3d = ($_POST['filt3d']) ? $_POST['filt3d'] : '20';
@@ -185,6 +187,15 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 				echo "<INPUT TYPE='checkbox' NAME='weight' $weight\n";
 				echo docpop('weight_randomization','Weight randomization based on image differences');
 				echo "<br>";
+			
+				echo "<INPUT TYPE='checkbox' NAME='asqfilt' $asqfilt\n";
+				echo docpop('asqfilt','ASQ filter the sinogram lines');
+				echo "<br/>\n";
+	
+				echo "<INPUT TYPE='text' NAME='linmask' VALUE='$linmask' SIZE='4'>\n";
+				echo docpop('linmask','Linear mask radius for sinograms');
+				echo "<font size='-2'>(fraction)</font>\n";
+				echo "<br/>\n";
 	
 				echo "<INPUT TYPE='text' NAME='anginc' VALUE='$anginc' SIZE='4'>\n";
 				echo docpop('ang_inc','Angular Increment of Search');
@@ -259,6 +270,8 @@ function runAngularReconstitution() {
 	$scale = ($_POST['scale']=="on") ? true : false;
 	$prealign = ($_POST['prealign']=="on") ? true : false;
 	$weight = ($_POST['weight']=="on") ? true : false;
+	$asqfilt = ($_POST['asqfilt']=="on") ? true : false;
+	$linmask = $_POST['linmask'];
 	$anginc = $_POST['anginc'];
 	$keep_ordered = $_POST['keep_ordered'];
 	$filt3d = $_POST['filt3d'];
@@ -304,6 +317,8 @@ function runAngularReconstitution() {
 	if ($scale) $command.="--scale ";
 	if ($prealign) $command.="--prealign ";
 	if (!$weight) $command.="--non_weighted_sequence ";
+	if ($asqfilt) $command.="--asqfilter ";
+	if ($linmask) $command.="--linear_mask=$linmask ";
 	if ($anginc) $command.="--ang_inc=$anginc ";
 	if ($keep_ordered) $command.="--keep_ordered=$keep_ordered ";
 	if ($filt3d) $command.="--3d_lpfilt=$filt3d ";
