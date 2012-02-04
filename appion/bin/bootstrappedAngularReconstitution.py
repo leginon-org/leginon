@@ -91,7 +91,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 			
 		### Principal Component Analysis (Multivariate Statistical Analysis)
 		self.parser.add_option("--numeigens", dest="numeigens", type="int", default=69,
-			help="number of 3D Eigenvectors (Eigenimages) to create during Principal Component Analysis for data reduction", metavar="INT")
+			help="number of 3D Eigenvectors (Eigenvolumes) to create during Principal Component Analysis for data reduction", metavar="INT")
 		self.parser.add_option("--PCA", dest="PCA", default=False, action="store_true",
 			help="use Principal Component Analysis to reduce the dimensionality of the resulting 3D volumes prior to clustering. \
 				the input coordinates will then be put into affinity propagation to determine 3D class averages")
@@ -762,7 +762,7 @@ class automatedAngularReconstitution(appionScript.AppionScript):
 		corresponding to the similarity of each point in factor space
 		'''
 		
-		### default number of eigenimages
+		### default number of eigenvolumes
 		self.params['rundir'] = os.getcwd()
 		if self.params['num_volumes'] < 69:
 			numeigens = self.params['num_volumes']
