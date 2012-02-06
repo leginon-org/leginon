@@ -496,9 +496,10 @@ def convertSymmetryNameForPackage(inputname):
 	
 #=======================
 #=======================
-def calculate_equivalent_Eulers_without_flip(m):
+def calculate_equivalent_Eulers_without_flip(phi, theta, psi):
 	''' takes transform matrix, multiplies by mirror_matrix, inverses sign of psi '''
 
+	m = EulersToRotationMatrixXmipp(phi, theta, psi)
 	mmirror = numpy.matrix([[-1,0,0],[0,-1,0],[0,0,-1]])
 	mnew = m * mmirror
 	newphi, newtheta, newpsi = apEulerCalc.rotationMatrixToEulersXmipp(mnew)
