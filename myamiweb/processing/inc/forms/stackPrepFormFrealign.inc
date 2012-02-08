@@ -12,7 +12,7 @@ require_once "inc/particledata.inc";
 
 class StackPrepFormFrealign extends StackPrepForm
 {
-	function __construct( $stackid='', $lastParticle='', $lowpass='', $highpass='', $bin='', $reconiterid='', $noctf='', $dang='', $initlp='', $initmethod='', $ctffindonly='', $paramonly='' ) 
+	function __construct( $stackid='', $lastParticle='', $lowpass='', $highpass='', $bin='', $reconiterid='', $noctf='', $emaninit='', $ctffindonly='', $paramonly='' ) 
 	{
 		parent::__construct($lastParticle, $lowpass, $highpass, $bin);
 		$params = $this->getFormParams();
@@ -20,9 +20,7 @@ class StackPrepFormFrealign extends StackPrepForm
 		// add a couple of params to the basic prep refine params
 		$params->addParam( "reconiterid", $reconiterid, "previous EMAN refinement iteration for initializing particle orientation" );
 		$params->addParam( "noctf", $noctf, "Allow Frealign to determine ctf estimation" );
-		$params->addParam( "dang", $dang, "Angular increment" );
-		$params->addParam( "initlp", $initlp, "Initial LP filter" );
-		$params->addParam( "initmethod", $initmethod, "Initial orientation method" );
+		$params->addParam( "emaninit", $emaninit, "Import initial orientations from EMAN reconstruction:" );
 		$params->addParam( "ctffindonly", $ctffindonly, "Only use CTFFIND values" );
 		$params->addParam( "paramonly", $paramonly, "Only create the Frealign paramter file, not the stack");
 		
@@ -38,25 +36,14 @@ class StackPrepFormFrealign extends StackPrepForm
 		$html = parent::generateForm();
 		$params = $this->getFormParams();
 	
-		$html.= $params->insertCheckboxField("noctf");
-		
-		$html .=  "<br />\n";
-		$html .=  "<b>Initial Orientations</b>\n";
-		$html .=  "<br />\n";
-		
-		$html .=  $params->insertRadioField( "initmethod", "importrecon", "Import from EMAN reconstruction:");
+				
+		$html .=  $params->insertCheckboxField( "emaninit");
 		$html .=  $this->addReconSelectBox();
-
-		$html .=  "<br />\n";
-		
-		$html .=  $params->insertRadioField( "initmethod", "projmatch", "Determine with Frealign" );
-		$html .=  "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";		
-		$html .=  $params->insertTextField( "dang", $shortSize );
-		$html .=  "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-		$html .=  $params->insertTextField( "initlp", $shortSize );
 					
 		$html.= "<br/>\n";
 
+		$html.= $params->insertCheckboxField("noctf");
+		
 		// find if there are ctffind runs (for frealign option)
 		$particle = new particledata();
 		$showCTFFind = $particle->getCtfRunIds($_GET['expId'], $showHidden=False, $ctffind=True);
@@ -73,52 +60,29 @@ class StackPrepFormFrealign extends StackPrepForm
 		return $html;
 	}
 	
-	// Override the basic build command function to include the 
-	// logic required for the initial orientation flags.
+	// Override the basic build command function to include the ctffind flag.
 	public function buildCommand( $postArray )
 	{
 		$command = parent::buildCommand($postArray);
 		$params = $this->getFormParams();
-		
-		// check which radio button was selected
-		// if neither were selected, remove all flags related to orientation
-		if ( $params->getParamValue("initmethod") == 'projmatch' ) {
-			$command = $this->removeCommandFlag($command, "reconiterid" );
-		} else if ( $params->getParamValue("initmethod") == 'importrecon' ) {
-			$command = $this->removeCommandFlag($command, "dang" );			
-			$command = $this->removeCommandFlag($command, "initlp" );			
-		} else {
-			$command = $this->removeCommandFlag($command, "dang" );			
-			$command = $this->removeCommandFlag($command, "initlp" );			
-			$command = $this->removeCommandFlag($command, "reconiterid" );
-		}
 						
 		// see if checkbox was selected
+		// TODO: use addCommandFlag()?
 		$ctffindonly = $params->getParamValue("ctffindonly");
 		if ( $ctffindonly == 'on' ) $command.= "--ctfmethod=ctffind ";
 		
-		// see if paramonly checkbox was selected
-		$paramonly = $params->getParamValue("paramonly");
+		// see if emaninit checkbox was selected
+		$emaninit = $params->getParamValue("emaninit");
+		if ( $emaninit != 'on' ) {
+			$command = $this->removeCommandFlag($command, "reconiterid" );		
+		}
 
 		// remove params not needed in command
-		$command = $this->removeCommandFlag($command, "initmethod" );
 		$command = $this->removeCommandFlag($command, "ctffindonly" );
+		$command = $this->removeCommandFlag($command, "emaninit" );
 		
 		return $command;
 	}	
-	
-	// add custom parameter validations
-	public function validate($postArray) 
-	{
-		$msg = parent::validate($postArray);
-		$params = $this->getFormParams();
-
-		if ( ($_POST['initmethod'] == 'projmatch') && $params->getParamValue("dang")=='' ) {
-			$msg .= "<b>Error:</b> Enter an angular increment";
-		}
-		
-		return $msg;
-	}
 	
 	function addReconSelectBox()
 	{

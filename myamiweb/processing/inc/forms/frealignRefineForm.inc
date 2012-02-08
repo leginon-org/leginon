@@ -19,8 +19,8 @@ class FrealignRefineForm extends BasicRefineForm
 	// an extension of the FormParameters class.
 	public function createFormParams() { return new FrealignParams(); }
 	
-	// This is where a form for this recon methods specific parameters is defined. 
-	// Outputs html. 
+	// This is where an html form for this recon method's specific parameters is defined. 
+	// Returns html. 
 	public function advancedParamForm()
 	{
 		// classes extended from BasicRefineForm should get the selected default values
@@ -51,7 +51,7 @@ class FrealignRefineForm extends BasicRefineForm
 		// TODO: add javascript so that this updates when a stack is selected
 		if ( $reconstackid ) {
 			$html .=  stacksummarytable( $reconstackid, true);
-		}		
+		}				
 		
 		$html .=  "<br />\n";
 		$html .=  "<b>Card #2</b>\n";
@@ -61,6 +61,7 @@ class FrealignRefineForm extends BasicRefineForm
 		$html .=  $paramSet->insertTextField( "xstd", $longSize, "(0 = no filtering)" );
 		$html .=  $paramSet->insertTextField( "pbc", $longSize );
 		$html .=  $paramSet->insertTextField( "boff", $longSize );
+		$html .=  $paramSet->insertTextField( "dang", $longSize );
 		$html .=  $paramSet->insertTextField( "itmax", $longSize );
 		$html .=  $paramSet->insertTextField( "ipmax", $longSize );
 				
@@ -119,35 +120,6 @@ class FrealignRefineForm extends BasicRefineForm
 		return $html;
 	}	
 	
-
-	// TODO: we should be able to remove this and just use the base class definition
-	public function buildCommand( $postArray )
-	{
-		$params = $this->getFormParams();
-		$params->getPostedValues( $postArray );
-		
-		$command = '';
-		$command = $this->addCommandFlag( $command, "outerMaskRadius" );
-		$command = $this->addCommandFlag( $command, "innerMaskRadius" );
-		$command = $this->addCommandFlag( $command, "endIter" );
-		$command = $this->addCommandFlag( $command, "symmetry" );
-		$command = $this->addCommandFlag( $command, "reconstackid" );
-		$command = $this->addCommandFlag( $command, "wgh" );
-		$command = $this->addCommandFlag( $command, "xstd");
-		$command = $this->addCommandFlag( $command, "pbc" );
-		$command = $this->addCommandFlag( $command, "boff" );
-		$command = $this->addCommandFlag( $command, "itmax" );
-		$command = $this->addCommandFlag( $command, "ipmax" );
-		$command = $this->addCommandFlag( $command, "target" );
-		$command = $this->addCommandFlag( $command, "thresh" );
-		$command = $this->addCommandFlag( $command, "rrec" );
-		$command = $this->addCommandFlag( $command, "hp" );
-		$command = $this->addCommandFlag( $command, "lp" );
-		$command = $this->addCommandFlag( $command, "rbfact" );
-		
-		return $command;
-	}
-	
 	protected function setImportParams()
 	{
 		$stackInfo 	= $this->getStackInfo();
@@ -189,7 +161,7 @@ class FrealignRefineForm extends BasicRefineForm
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
 							$filterEstimated, $filterResolution, $filterComputed, $filterConstant,
 							$wgh, $xstd, $pbc, $boff, $itmax, $ipmax, $target,
-							$thresh, $rrec, $hp, $lp, $rbfact, $reconstackid );
+							$thresh, $rrec, $hp, $lp, $rbfact, $reconstackid, $dang );
 							
 		// Add this param set to the list that shows up in the GUI.
 		$this->addDefaultParams( $asymmSet );
@@ -249,24 +221,44 @@ class FrealignRefineForm extends BasicRefineForm
 	      if (obj.lp) obj.lp.value = $lp;
 	      if (obj.rbfact) obj.rbfact.value = '0';
 	      if (obj.reconstackval) obj.reconstackid.value = '';
+	      if (obj.reconstackval) obj.dang.value = '';
 	      
 	      return;
 	    }
 	  </script>\n";
 		return $javafunc;
 	}
+	
+	// Override the basic build command function to include the mode flag.
+	public function buildCommand( $postArray )
+	{
+		$command = parent::buildCommand($postArray);
+		$params = $this->getFormParams();
+						
+		// figure out if the user selected an iteration during the prep step to
+		// import initial orientations
+		$dang = $params->getParamValue("dang");
+		if ( $dang == '' ) {
+			$command.= "--mode=1 ";
+		} else {
+			$command.= "--mode=3 ";
+		}
+			
+		return $command;
+	}		
+	
 		
 }
 
-// extend the RefineFormParameters class to add the frealign 
-// advanced parameter default values. 
+// extend the RefineFormParameters class so that we can add the frealign 
+// advanced parameter default values to the web form. 
 class FrealignParams extends RefineFormParameters
 {
 	function __construct( $id='', $label='', $outerMaskRadius='', $innerMaskRadius='', $outerAlignRadius='', 
 							$innerAlignRadius='', $symmetry='', $endIter='', $angSampRate='', $percentDiscard='',  
 							$filterEstimated='', $filterResolution='', $filterComputed='', $filterConstant='',
 							$wgh='', $xstd='', $pbc='', $boff='', $itmax='', $ipmax='', $target='', 
-							$thresh='', $rrec='', $hp='', $lp='', $rbfact='', $reconstackid='') 
+							$thresh='', $rrec='', $hp='', $lp='', $rbfact='', $reconstackid='', $dang='') 
 	{
 		parent::__construct($id, $label, $outerMaskRadius, $innerMaskRadius, $outerAlignRadius, 
 							$innerAlignRadius, $symmetry, $endIter, $angSampRate, $percentDiscard,  
@@ -285,6 +277,7 @@ class FrealignParams extends RefineFormParameters
 		$this->addParam( "lp", $lp, "Higher resolution limit or low-pass filter (RMAX2)" );
 		$this->addParam( "rbfact", $rbfact, "B-factor correction (RBFACT)" );
 		$this->addParam( "reconstackid", $reconstackid, "Reconstruction Stack" );
+		$this->addParam( "dang", $dang, "Angular increment (DANG)" );
 		
 		// disable any general params that do not apply to this method
 		$this->hideParam("outerAlignRadius");

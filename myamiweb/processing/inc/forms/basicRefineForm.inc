@@ -397,6 +397,7 @@ class RefineFormParameters extends FormParameters
 		// add parameter requirements
 		$this->addValidation( "endIter", "req" );
 		$this->addValidation( "endIter", "num" );
+		$this->addValidation( "symmetry", "req" );
 	}
 	
 	// update the value of a parameter to reflect an 
