@@ -234,6 +234,7 @@ class Agent (object):
         if not jobObject.getJobId():
             jobname = jobObject.getName()
             jobtype = jobObject.getJobType()
+            expid = jobObject.getExpId()
             cluster = os.uname()[1]
             user = os.getlogin()
                           
@@ -241,8 +242,8 @@ class Agent (object):
             dbConnection = MySQLdb.connect(**dbconf)          
             cursor = dbConnection.cursor()
            
-            insertQuery = "INSERT INTO ApAppionJobData (name, jobtype, cluster, clusterjobid, status, user) \
-                     VALUES ('%s','%s','%s','%s','%s','%s')" %(jobname, jobtype, cluster, job, 'Q', user)    
+            insertQuery = "INSERT INTO ApAppionJobData (name, jobtype, REF|leginondata|SessionData|session, cluster, clusterjobid, status, user) \
+                     VALUES ('%s','%s','%s','%s','%s','%s')" %(jobname, jobtype, expid, cluster, job, 'Q', user)    
 
             if cursor.execute (insertQuery):
                 jobObject.setJobId(cursor.lastrowid)   

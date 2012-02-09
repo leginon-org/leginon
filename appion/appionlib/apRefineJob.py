@@ -374,6 +374,7 @@ class RefineJob(basicScript.BasicScript):
 		self.logfile = os.path.join(self.params['remoterundir'],self.getName()+'.log')
 		self.commandfile = os.path.join(self.params['remoterundir'],self.getName()+'.commands')
 		self.cputime = self.params['cput']
+		self.expid = self.params['expid']
 		# TO Do: need to get appion bin dir from appionwrapper environment variable Appion_Bin_Dir
 		self.appion_bin_dir = ''
 		
@@ -494,7 +495,7 @@ class RefineJob(basicScript.BasicScript):
 	def getName(self):
 		return self.jobnamebase    
 	def setName(self, newname):
-		self.jobnamebase = newname + ".appionsub"               
+		self.jobnamebase = newname + ".appionsub.job"               
 	def getNodes(self):
 		return self.nodes
 	def getPPN(self):
@@ -521,6 +522,8 @@ class RefineJob(basicScript.BasicScript):
 		return self.params['projectid']
 	def getJobType(self):
 		return self.jobtype    
+	def getExpId(self):
+		return self.expid    
 	
 class Tester(RefineJob):
 	def makeRefineScript(self,iter):
