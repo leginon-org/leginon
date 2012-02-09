@@ -232,8 +232,10 @@ class Agent (object):
         
         #if jobId is not set, assume there is no entry in ApAppionJobData for this run
         if not jobObject.getJobId():
+            path = jobObject.getRundir()
             jobname = jobObject.getName()
             jobtype = jobObject.getJobType()
+            remoterundir = jobObject.getOutputDir()
             expid = jobObject.getExpId()
             cluster = os.uname()[1]
             user = os.getlogin()
@@ -242,8 +244,8 @@ class Agent (object):
             dbConnection = MySQLdb.connect(**dbconf)          
             cursor = dbConnection.cursor()
            
-            insertQuery = "INSERT INTO ApAppionJobData (name, jobtype, REF|leginondata|SessionData|session, cluster, clusterjobid, status, user) \
-                     VALUES ('%s','%s','%s','%s','%s','%s','%s')" %(jobname, jobtype, expid, cluster, job, 'Q', user)    
+            insertQuery = "INSERT INTO ApAppionJobData (REF|ApPathData|path, name, jobtype, REF|ApPathData|clusterpath, REF|leginondata|SessionData|session, cluster, clusterjobid, status, user) \
+                     VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(path, jobname, jobtype, remoterundir, expid, cluster, job, 'Q', user)    
 
             if cursor.execute (insertQuery):
                 jobObject.setJobId(cursor.lastrowid)   
