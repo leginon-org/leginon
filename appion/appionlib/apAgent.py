@@ -244,7 +244,7 @@ class Agent (object):
             dbConnection = MySQLdb.connect(**dbconf)          
             cursor = dbConnection.cursor()
            
-            insertQuery = "INSERT INTO ApAppionJobData (REF|ApPathData|path, name, jobtype, REF|ApPathData|clusterpath, REF|leginondata|SessionData|session, cluster, clusterjobid, status, user) \
+            insertQuery = "INSERT INTO ApAppionJobData (`REF|ApPathData|path`, name, jobtype, `REF|ApPathData|clusterpath`, `REF|leginondata|SessionData|session`, cluster, clusterjobid, status, user) \
                      VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(path, jobname, jobtype, remoterundir, expid, cluster, job, 'Q', user)    
 
             if cursor.execute (insertQuery):
