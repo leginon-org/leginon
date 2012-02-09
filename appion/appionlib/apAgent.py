@@ -243,7 +243,7 @@ class Agent (object):
             cursor = dbConnection.cursor()
            
             insertQuery = "INSERT INTO ApAppionJobData (name, jobtype, REF|leginondata|SessionData|session, cluster, clusterjobid, status, user) \
-                     VALUES ('%s','%s','%s','%s','%s','%s')" %(jobname, jobtype, expid, cluster, job, 'Q', user)    
+                     VALUES ('%s','%s','%s','%s','%s','%s','%s')" %(jobname, jobtype, expid, cluster, job, 'Q', user)    
 
             if cursor.execute (insertQuery):
                 jobObject.setJobId(cursor.lastrowid)   
