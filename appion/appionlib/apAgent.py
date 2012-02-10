@@ -243,7 +243,7 @@ class Agent (object):
             clustq = appiondata.ApAppionJobData()
             clustq['path'] = pathq
             clustq['jobtype'] = jobObject.getJobType()
-            clustq['name'] = jobObject.getName()
+            clustq['name'] = jobObject.getJobName()
             remoterundir = jobObject.getOutputDir()
             remoterundirq = appiondata.ApPathData(path=os.path.abspath(remoterundir))
             clustq['clusterpath'] = remoterundirq

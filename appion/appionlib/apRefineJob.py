@@ -496,7 +496,9 @@ class RefineJob(basicScript.BasicScript):
 	def getName(self):
 		return self.jobnamebase    
 	def setName(self, newname):
-		self.jobnamebase = newname + ".appionsub.job"               
+		self.jobnamebase = newname + ".appionsub"               
+	def getJobName(self):
+		return self.jobnamebase + ".job"    
 	def getNodes(self):
 		return self.nodes
 	def getPPN(self):
