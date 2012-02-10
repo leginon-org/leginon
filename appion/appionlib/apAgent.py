@@ -5,6 +5,8 @@ from appionlib import apRefineJobXmipp
 from appionlib import apRefineJobXmippML3D
 from appionlib import apGenericJob
 from appionlib import jobtest
+from appionlib import appiondata
+from appionlib import apDatabase
 import sys
 import re
 import time
@@ -232,26 +234,51 @@ class Agent (object):
         
         #if jobId is not set, assume there is no entry in ApAppionJobData for this run
         if not jobObject.getJobId():
-            path = jobObject.getRundir()
-            jobname = jobObject.getName()
-            jobtype = jobObject.getJobType()
+            
+            ### insert a cluster job
+            # TODO: what happens when this runs remotely???        
+            
+            rundir = jobObject.getRundir()
+            pathq = appiondata.ApPathData(path=os.path.abspath(rundir))
+            clustq = appiondata.ApAppionJobData()
+            clustq['path'] = pathq
+            clustq['jobtype'] = jobObject.getJobType()
+            clustq['name'] = jobObject.getName()
             remoterundir = jobObject.getOutputDir()
-            expid = jobObject.getExpId()
-            cluster = os.uname()[1]
-            user = os.getlogin()
-                          
-            dbconf = dbconfig.getConfig('appiondata')
-            dbConnection = MySQLdb.connect(**dbconf)          
-            cursor = dbConnection.cursor()
-           
-            insertQuery = "INSERT INTO ApAppionJobData (`REF|ApPathData|path`, name, jobtype, `REF|ApPathData|clusterpath`, `REF|leginondata|SessionData|session`, cluster, clusterjobid, status, user) \
-                     VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(path, jobname, jobtype, remoterundir, expid, cluster, job, 'Q', user)    
+            remoterundirq = appiondata.ApPathData(path=os.path.abspath(remoterundir))
+            clustq['clusterpath'] = remoterundirq
+            clustq['session'] = apDatabase.getSessionDataFromSessionId(jobObject.getExpId())
+            clustq['user'] = os.getlogin()
+            clustq['cluster'] = os.uname()[1]
+            clustq['clusterjobid'] = job
+            clustq['status'] = "Q"
+            clustq.insert()   
+            
 
-            if cursor.execute (insertQuery):
-                jobObject.setJobId(cursor.lastrowid)   
-
-            cursor.close()
-            dbConnection.close()
+#            rundir = jobObject.getRundir()
+#            pathq = appiondata.ApPathData(path=os.path.abspath(rundir))
+#            pathid = pathq.query()
+#            jobname = jobObject.getName()
+#            jobtype = jobObject.getJobType()
+#            remoterundir = jobObject.getOutputDir()
+#            remoterundirq = appiondata.ApPathData(path=os.path.abspath(remoterundir))
+#            remotepathid = remoterundirq.query()
+#            expid = jobObject.getExpId()
+#            cluster = os.uname()[1]
+#            user = os.getlogin()
+#                          
+#            dbconf = dbconfig.getConfig('appiondata')
+#            dbConnection = MySQLdb.connect(**dbconf)          
+#            cursor = dbConnection.cursor()
+#           
+#            insertQuery = "INSERT INTO ApAppionJobData (`REF|ApPathData|path`, name, jobtype, `REF|ApPathData|clusterpath`, `REF|leginondata|SessionData|session`, cluster, clusterjobid, status, user) \
+#                     VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(pathid, jobname, jobtype, remotepathid, expid, cluster, job, 'Q', user)    
+#
+#            if cursor.execute (insertQuery):
+#                jobObject.setJobId(cursor.lastrowid)   
+#
+#            cursor.close()
+#            dbConnection.close()
             
         return retValue
             
