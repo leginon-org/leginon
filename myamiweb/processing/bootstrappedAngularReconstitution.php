@@ -78,7 +78,7 @@ function createAngularReconstitutionForm($extra=False, $title='bootstrappedAngul
 	$nvol = ($_POST['nvol']) ? $_POST['nvol'] : '100';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '8';
 	$asqfilt = ($_POST['asqfilt']=='on') ? 'checked' : '';
-	$linmask = ($_POST['linmask']) ? $_POST['linmask'] : '67';
+	$linmask = ($_POST['linmask']) ? $_POST['linmask'] : '0.67';
 	$anginc = ($_POST['anginc']) ? $_POST['anginc'] : '2';
 	$keep_ordered = ($_POST['keep_ordered']) ? $_POST['keep_ordered'] : '90';
 	$filt3d = ($_POST['filt3d']) ? $_POST['filt3d'] : '20';
