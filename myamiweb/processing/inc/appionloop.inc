@@ -81,6 +81,7 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 			// make en selected by default
 			if ($preset==$presetval) echo "SELECTED";
 			echo ">$preset</OPTION>\n";
+			if (substr($preset,0,2) == 'ed') $has_ed=true;
 		}
 		echo"</SELECT><br/>\n";
 	} elseif ($presets) {
@@ -94,7 +95,7 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 			."processing ALL images</I><br/>\n";
 	}
 	// temporary raw frame processing gui assuming presetname is ed
-	if (substr($presetval,0,2) == 'ed' or ($presets && count($presets) == 1 && $presets[0]='ed')) {
+	if ($has_ed) {
 		echo "<b>Raw frame processing if available: </b><br/>\n";
 		echo "start frame:<input type='text' name='ddstartframe' value='$ddstartframe' size='3'>\n";
 		echo "total frame:<input type='text' name='ddnframe' value='$ddnframe' size='3'>\n";
