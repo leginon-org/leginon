@@ -208,6 +208,7 @@ class leginondata {
 				$ids[] = "s.`Name` like '$n'";
 		}
 		$sqlwhere = "where (".join(" OR ", $ids).")";
+		$sqlwhere .= " and a.`label`!='projection'";
 
 		$q="select "
 		."s.`DEF_id` as SessionId, "
@@ -215,6 +216,8 @@ class leginondata {
 		."s.comment as Purpose, "
 		."unix_timestamp(s.`DEF_timestamp`) as `Begin unixTimestamp`,"
 		."unix_timestamp(a.`DEF_timestamp`) as `End unixTimestamp`, "
+		."s.`DEF_timestamp` as `Begin sqlTimestamp`, "
+		."a.`DEF_timestamp` as `End sqlTimestamp`, "
 		."date_format(s.`DEF_timestamp`, '%Y-%d-%m %T') as `Begin Time`,"
 		."date_format(a.`DEF_timestamp`, '%Y-%d-%m %T') as `End Time`, "
 		."sec_to_time((Dayofyear(a.`DEF_timestamp`)-Dayofyear(s.`DEF_timestamp`))*86400-"
@@ -3214,13 +3217,26 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getSettingsData($user_id,$table,$name) {
+	function getNodeNames($settings_table) {
+		$sql = 'SELECT name from '.$settings_table.' group by `name` ';
+		$results = $this->mysql->getSQLResult($sql);
+		$names = array();
+		foreach ($results as $r)
+			if (strlen($r['name']) > 0 && substr($r['name'],0,1) === strtoupper(substr($r['name'],0,1))) 
+				$names[]=$r['name'];
+		return $names;
+	}
+	
+	function getSettingsData($user_id,$table,$name,$latest_timestamp=false) {
+		$qtime = ($latest_timestamp===false) ? '':" and a.`DEF_timestamp` <= '".$latest_timestamp."' ";
 		$sql = 'SELECT a.* from `'.$table.'` a'
         . ' left join `SessionData` s on a.`REF|SessionData|session`=s.`DEF_id`'
         . ' where s.`REF|UserData|user`='.$user_id.' and a.`name`=\''.$name.'\' '
+				. $qtime
         . ' ORDER BY a.`DEF_timestamp` DESC'
         . ' LIMIT 0,1';
 		$results = $this->mysql->getSQLResult($sql);
+		if (!is_array($results[0])) return array();
 		return $results[0];
 	}
 
@@ -3231,21 +3247,25 @@ class leginondata {
 		return $results[0];
 	}
 
-	function getUserFocusSequenceDataByName($user_id,$table,$name) {
+	function getUserFocusSequenceDataByName($user_id,$table,$name,$latest_timestamp=false) {
 		global $leginondata;
+		$qtime = ($latest_timestamp===false) ? '':" and a.`DEF_timestamp` <= '".$latest_timestamp."' ";
 		$sql = 'SELECT a.* from `'.$table.'` a'
 					. ' left join `SessionData` s on a.`REF|SessionData|session`=s.`DEF_id`'
 					. ' where s.`REF|UserData|user`='.$user_id.' and a.`node name`=\''.$name.'\' '
+					. $qtime
 					. ' ORDER BY a.`DEF_timestamp` DESC'
 					. ' LIMIT 0,1';
 		$results = $leginondata->mysql->getSQLResult($sql);
 		return $results;
 	}
 
-	function getUserFocusSettingDataByName($user_id,$nodename,$focusname) {
+	function getUserFocusSettingDataByName($user_id,$nodename,$focusname,$latest_timestamp=false) {
+		$qtime = ($latest_timestamp===false) ? '':" and a.`DEF_timestamp` <= '".$latest_timestamp."' ";
 		$sql = 'SELECT a.* from `FocusSettingData` a'
 					. ' left join `SessionData` s on a.`REF|SessionData|session`=s.`DEF_id`'
 					. ' where s.`REF|UserData|user`='.$user_id.' and a.`node name`=\''.$nodename.'\' and a.`name`=\''.$focusname.'\''
+					. $qtime
 					. ' ORDER BY a.`DEF_timestamp` DESC'
 					. ' LIMIT 0,1';
 		$results = $this->mysql->getSQLResult($sql);
