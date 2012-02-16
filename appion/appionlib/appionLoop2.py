@@ -131,18 +131,6 @@ class AppionLoop(appionScript.AppionScript):
 	#######################################################
 
 	#=====================
-	def setRunDir(self):
-		if self.params['sessionname'] is not None:
-			#auto set the output directory
-			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-			path = os.path.abspath(sessiondata['image path'])
-			pieces = path.split('leginon')
-			path = 'leginon'.join(pieces[:-1]) + 'appion' + pieces[-1]
-			path = re.sub("/rawdata","",path)
-			path = os.path.join(path, self.processdirname, self.params['runname'])
-			self.params['rundir'] = path
-
-	#=====================
 	def setupParserOptions(self):
 		"""
 		put in any additional parser options
@@ -270,8 +258,10 @@ class AppionLoop(appionScript.AppionScript):
 				+self.params['runname']+" vs. "+os.path.basename(self.params['rundir']))
 		if self.params['mrcnames'] and self.params['preset']:
 			apDisplay.printError("preset can not be specified if particular images have been specified")
-		if self.params['sessionname'] is None and self.params['mrcnames'] is None:
+		if (self.params['sessionname'] is None and self.params['expid'] is None) and self.params['mrcnames'] is None:
 			apDisplay.printError("please specify an mrc name or session")
+		if self.params['sessionname'] is None and self.params['expid'] is not None:
+			self.params['sessionname'] = apDatabase.getSessionDataFromSessionId(self.params['expid'])['name']
 		if self.params['sessionname'] is not None and self.params['projectid'] is not None:
 			### Check that project and images are in sync
 			imgproject = apProject.getProjectIdFromSessionName(self.params['sessionname'])
