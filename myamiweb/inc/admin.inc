@@ -105,7 +105,7 @@ function display($r, $display_fields=False) {
 	echo "</table>";
 }
 
-function defaultsettings_fileheader($user_id,$admin_init=false) {
+function defaultsettings_fileheader($user_id,$admin_init=false,$sessionname=false) {
 	global $filename;
 	$array = array();
 	$linebreak = "\n";
@@ -123,13 +123,17 @@ function defaultsettings_fileheader($user_id,$admin_init=false) {
 	$array[] = '$q = "insert into `SessionData` (`name`,`REF|UserData|user`,`comment`) "'.$linebreak;
 	$array[] = '      . " VALUES "'.$linebreak;
 	$array[] = '      . " ( concat(\'importsettings\', DATE_FORMAT(now(), \'%Y%m%d%H%i%s\')), "'.$linebreak;
-	$array[] = '			. " ".$user_id.",\'revert to default\' ) ";'.$linebreak;
+	if ($sessionname===false) {
+		$array[] = '			. " ".$user_id.",\'revert to default\' ) ";'.$linebreak;
+	} else {
+		$array[] = '			. " ".$user_id.",\'revert to '.$sessionname.'\' ) ";'.$linebreak;
+	}
 	$array[] = '$sessionId = $dbc->SQLQuery($q, true);'.$linebreak;
 	$array[] = $linebreak;
 	return $array;
 }
 
-function makeSettingsCode($user_id,$latest_timestamp=false,$test=false) {
+function makeSettingsCode($dest_user_id,$latest_timestamp=false,$session_user_id=0,$test=false) {
 	global $leginondata;
 	global $code_string;
 	$tables_to_search = array(
@@ -160,10 +164,9 @@ function makeSettingsCode($user_id,$latest_timestamp=false,$test=false) {
 	$lpfids = array();
 	$bfids = array();
 	$html = '';
-	defaultsettings_fileheader($user_id);
 	$aliases = array('edge lpf','template lpf','lpf');
 	$admin_id = $leginondata->getAdminUserId();
-	$source_user_id = ($latest_timestamp===false) ? $admin_id:$user_id;
+	$source_user_id = ($latest_timestamp===false) ? $admin_id:$session_user_id;
 	$extratables = array('LowPassFilterSettingsData','BlobFinderSettingsData','FocusSequenceData');
 	//Tables
 	if ($show_tables) {
@@ -180,10 +183,10 @@ function makeSettingsCode($user_id,$latest_timestamp=false,$test=false) {
 	foreach (array_keys($nodenames) as $table) {
 		foreach ($nodenames[$table] as $name) { 
 			$sqldata1 = $leginondata->getSettingsData($source_user_id,$table,$name,$latest_timestamp);
-			// If setting is changed from default after the specified time but not before,
+			// If setting is changed from default by the destinating user but not by the source user,
 			// the setting need to be reverted back to default.
 			if (!(is_array($sqldata1) && count($sqldata1) > 0)) {
-				$latersqldata1 = $leginondata->getSettingsData($source_user_id,$table,$name);
+				$latersqldata1 = $leginondata->getSettingsData($dest_user_id,$table,$name);
 				if (!(is_array($latersqldata1) && count($latersqldata1)))
 					$sqldata1 = $leginondata->getSettingsData($admin_id,$table,$name);
 			}
@@ -226,14 +229,16 @@ function makeSettingsCode($user_id,$latest_timestamp=false,$test=false) {
 		assembleResult($sqldata1,$table,$name,$test);
 		}
 	}
+
+	// FocusSettings are only reverted if they are in the source FocusSequence
 	$focusernodenames = $nodenames['FocuserSettingsData'];
 	$table = 'FocusSequenceData';
 	foreach ($focusernodenames as $name) { 
 		$sequence_results = $leginondata->getUserFocusSequenceDataByName($source_user_id,$table,$name,$latest_timestamp);
-		// If setting is changed from default after the specified time but not before,
+		// If setting is changed from default by the destinating user but not by the source user,
 		// the setting need to be reverted back to default.
 		if (!(is_array($sequence_results) && count($sequence_results) > 0)) {
-			$later_sequence_results = $leginondata->getUserFocusSequenceDataByName($source_user_id,$table,$name);
+			$later_sequence_results = $leginondata->getUserFocusSequenceDataByName($dest_user_id,$table,$name);
 			if (!(is_array($later_sequence_results) && count($later_sequence_results)))
 				$sequence_results = $leginondata->getUserFocusSequenceDataByName($admin_id,$table,$name);
 		}
@@ -243,10 +248,10 @@ function makeSettingsCode($user_id,$latest_timestamp=false,$test=false) {
 		foreach ($focusnames as $focusname) {
 			if (strlen($focusname)>2 && (strcmp($focusname,', u')!=0))  {
 				$focus_results = $leginondata->getUserFocusSettingDataByName($source_user_id,$name,$focusname,$latest_timestamp);
-				// If setting is changed from default after the specified time but not before,
+				// If setting is changed from default by the destinating user but not by the source user,
 				// the setting need to be reverted back to default.
 				if (!(is_array($focus_results) && count($focus_results) > 0)) {
-					$later_focus_results = $leginondata->getUserFocusSettingDataByName($source_user_id,$table,$name);
+					$later_focus_results = $leginondata->getUserFocusSettingDataByName($dest_user_id,$table,$name);
 					if (!(is_array($later_focus_results) && count($later_focus_results)))
 						$focus_results = $leginondata->getUserFocusSettingDataByName($admin_id,$table,$name);
 				}

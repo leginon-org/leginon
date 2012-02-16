@@ -11,6 +11,9 @@ require_once ("inc/leginon.inc");
 require_once "inc/dbemauth.inc";
 require('inc/admin.inc');
 
+// Change $test to true to print out the code_string without executing it.
+$test=false;
+
 $login_check = $dbemauth->is_logged();
 $is_admin = (privilege('users')>1);
 
@@ -33,7 +36,7 @@ function revertToDefaults($user_id,$test=false) {
 	global $leginondata;
 	$array = defaultsettings_fileheader($user_id,$admin_init=false);
 	addToGlobalString($array,$test);
-	$error_html = makeSettingsCode($user_id,false,$test);
+	$error_html = makeSettingsCode($user_id,false,false,$test);
 	if ($test) {
 		echo $code_string;
 	} else {
@@ -48,9 +51,9 @@ function revertToSession($user_id,$sessionid,$test=false) {
 	global $is_admin;
 	$sessioninfo = $leginondata->getSessionInfo($sessionid);
 	if ($sessioninfo['userId']!=$user_id && !$is_admin) return 'Error: Session does not belong to the user';
-	$array = defaultsettings_fileheader($user_id,$admin_init=false);
+	$array = defaultsettings_fileheader($user_id,$admin_init=false,$sessionname=$sessioninfo['Name']);
 	addToGlobalString($array,$test);
-	$error_html = makeSettingsCode($sessioninfo['userId'],$sessioninfo['End sqlTimestamp'],$test);
+	$error_html = makeSettingsCode($user_id,$sessioninfo['End sqlTimestamp'],$sessioninfo['userId'],$test);
 	if ($test) {
 		echo $code_string;
 	} else {
@@ -60,9 +63,6 @@ function revertToSession($user_id,$sessionid,$test=false) {
 }
 
 admin_header('onload="init()"');
-
-// Change $test to true to print out the code_string without executing it.
-$test=false;
 
 
 $title = "Revert Node Settings";
