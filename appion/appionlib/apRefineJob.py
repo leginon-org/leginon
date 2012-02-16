@@ -275,7 +275,7 @@ class RefineJob(basicScript.BasicScript):
 		lines.append('files_from_remote_host\n')
 		for line in lines:
 			filename = os.path.basename(line.replace('\n',''))
-			tasks = self.addToTasks(tasks,'rsync -rotouv --partial %s %s:%s/%s' % (filename,self.params['localhost'],self.params['rundir'],filename))
+			tasks = self.addToTasks(tasks,"rsync -e 'ssh -o StrictHostKeyChecking=no' -rotouv --partial %s %s:%s/%s" % (filename,self.params['localhost'],self.params['rundir'],filename))
 		return tasks
 
 	def __addCleanUpReconDirTasks(self,tasks):
