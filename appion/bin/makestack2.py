@@ -14,7 +14,7 @@ from scipy import stats
 from scipy import ndimage
 #appion
 from pyami import imagefun
-from appionlib import appionLoop2
+from appionlib import apParticleExtractor
 from appionlib import apImage
 from appionlib import apDisplay
 from appionlib import apDatabase
@@ -22,7 +22,6 @@ from appionlib import apCtf
 from appionlib import apStack
 from appionlib import apDefocalPairs
 from appionlib import appiondata
-from appionlib import apParticle
 from appionlib import apStackMeanPlot
 from appionlib import apEMAN
 from appionlib import apProject
@@ -35,27 +34,7 @@ from appionlib import apXmipp
 from appionlib import apBoxer
 from appionlib.apSpider import filters
 
-class Makestack2Loop(appionLoop2.AppionLoop):
-	############################################################
-	## Check pixel size
-	############################################################
-	def checkPixelSize(self):
-		# make sure that images all have same pixel size:
-		# first get pixel size of first image:
-		self.params['apix'] = None
-		for imgdata in self.imgtree:
-			# get pixel size
-			imgname = imgdata['filename']
-			if imgname in self.donedict:
-				continue
-			if self.params['apix'] is None:
-				self.params['apix'] = apDatabase.getPixelSize(imgdata)
-				apDisplay.printMsg("Stack pixelsize = %.3f A"%(self.params['apix']))
-			if apDatabase.getPixelSize(imgdata) != self.params['apix']:
-				apDisplay.printMsg("Image pixelsize %.3f A != Stack pixelsize %.3f A"%(apDatabase.getPixelSize(imgdata), self.params['apix']))
-				apDisplay.printMsg("Problem image name: %s"%(apDisplay.short(imgdata['filename'])))
-				apDisplay.printError("This particle selection run contains images of varying pixelsizes, a stack cannot be created")
-
+class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 	############################################################
 	## Retrive existing stack info
 	############################################################
@@ -82,137 +61,51 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		return numfilepart
 
-
-	############################################################
-	##  skip image if additional criteria is not met
-	############################################################
-	def rejectImage(self, imgdata):
-		shortname = apDisplay.short(imgdata['filename'])
-
-		if self.params['mag']:
-			if not apDatabase.checkMag(imgdata, self.params['mag']):
-				apDisplay.printColor(shortname+" was not at the specific magnification","cyan")
-				return False
-
-		return True
-
-	############################################################
-	## get CTF parameters and skip image if criteria is not met
-	############################################################
-	def checkCtfParams(self, imgdata):
-		shortname = apDisplay.short(imgdata['filename'])
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata,msg=False,method=self.params['ctfmethod'])
-
-		### check if we have values and if we care
-		if ctfvalue is None:
-			if self.params['ctfcutoff'] or self.params['mindefocus'] or self.params['maxdefocus'] or self.params['phaseflipped']:
-				#apDisplay.printColor(shortname+" was rejected because it has no CTF values\n","cyan")
-				return False
-			else:
-				#apDisplay.printWarning(shortname+" has no CTF values")
-				return True
-
-		### check that CTF estimation is above confidence threshold
-		if self.params['ctfcutoff'] and conf < self.params['ctfcutoff']:
-			#apDisplay.printColor(shortname+" is below CTF threshold (conf="+str(round(conf,3))+")\n","cyan")
-			return False
-
-		### get best defocus value
-		### defocus should be in negative meters
-		if ctfvalue['defocus2'] is not None and ctfvalue['defocus1'] != ctfvalue['defocus2']:
-			defocus = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
-		else:
-			defocus = ctfvalue['defocus1']
-		defocus = -1.0*abs(defocus)	
-
-		### assume defocus values are ALWAYS negative but mindefocus is greater than maxdefocus
-		if self.params['mindefocus']:
-			self.params['mindefocus'] = -abs( self.params['mindefocus'] )
-		if self.params['maxdefocus']:
-			self.params['maxdefocus'] = -abs( self.params['maxdefocus'] )
-		if self.params['mindefocus'] and self.params['maxdefocus']:
-			if self.params['maxdefocus'] > self.params['mindefocus']:
-				mindef = self.params['mindefocus']
-				maxdef = self.params['maxdefocus']
-				self.params['mindefocus'] = maxdef
-				self.params['maxdefocus'] = mindef
-		### skip micrograph that have defocus above or below min & max defocus levels
-		if self.params['mindefocus'] and defocus > self.params['mindefocus']:
-			#apDisplay.printColor(shortname+" defocus ("+str(round(defocus*1e6,2))+\
-			#	" um) is less than mindefocus ("+str(self.params['mindefocus']*1e6)+" um)\n","cyan")
-			return False
-		if self.params['maxdefocus'] and defocus < self.params['maxdefocus']:
-			#apDisplay.printColor(shortname+" defocus ("+str(round(defocus*1e6,2))+\
-			#	" um) is greater than maxdefocus ("+str(self.params['maxdefocus']*1e6)+" um)\n","cyan")
-			return False
-
-		return True
-
 	#=======================
-	def getParticlesFromStack(self, imgdata):
-		"""
-		For image (or defocal pair), imgdata get particles in corresponding stack
-		"""
-		if self.params['defocpair'] is True:
-			sibling, shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params['sessionname'])
-			if shiftpeak is None:
-				return []
-			shiftdata = {'shiftx':shiftpeak['shift'][0], 'shifty':shiftpeak['shift'][1], 'scale':shiftpeak['scalefactor']}
-			searchimgdata = sibling
-		else:
-			searchimgdata = imgdata
-			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}
+	def processParticles(self,imgdata,partdatas,shiftdata):
+		### run batchboxer
+		self.boxedpartdatas, self.imgstackfile, self.partmeantree = self.boxParticlesFromImage(imgdata,partdatas,shiftdata)
+		if self.boxedpartdatas is None:
+			apDisplay.printWarning("no particles were boxed from "+shortname+"\n")
+			self.badprocess = True
+			return None
 
-		partq = appiondata.ApParticleData()
-		partq['image'] = searchimgdata
+		self.stats['lastpeaks'] = len(self.boxedpartdatas)
 
-		stackpartq = appiondata.ApStackParticleData()
-		stackpartq['stack'] = appiondata.ApStackData.direct_query(self.params['fromstackid'])
-		stackpartq['particle'] = partq
-		
-		stackpartdatas = stackpartq.query()
+		apDisplay.printMsg("do not break function now otherwise it will corrupt run")
+		time.sleep(1.0)
 
-		partdatas = []
-		for stackpartdata in stackpartdatas:
-			partdata = stackpartdata['particle']
-			partdatas.append(partdata)
-		partdatas.reverse()
-		return partdatas, shiftdata
+		### merge image particles into big stack
+		totalpart = self.mergeImageStackIntoBigStack(self.imgstackfile, imgdata)
 
-	#=======================
-	def boxParticlesFromImage(self, imgdata):
+		### create a stack average every so often
+		if self.stats['lastpeaks'] > 0:
+			logpeaks = math.log(self.existingParticleNumber+self.stats['peaksum']+self.stats['lastpeaks'])
+			if logpeaks > self.logpeaks:
+				self.logpeaks = math.ceil(logpeaks)
+				numpeaks = math.ceil(math.exp(self.logpeaks))
+				apDisplay.printMsg("averaging stack, next average at %d particles"%(numpeaks))
+				stackpath = os.path.join(self.params['rundir'], "start.hed")
+				apStack.averageStack(stack=stackpath)
+		return totalpart
+
+	def getOriginalImagePath(self, imgdata):
+		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgdata['filename'])
-		if self.params['nframe'] == 0:
-			imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
-		else:
+		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
+		if self.params['nframe'] != 0:
 			self.params['uncorrected'] = True
+			### dark/bright correct image
+			tmpname = shortname+"-darknorm.dwn.mrc"
+			imgarray = apImage.correctImage(imgdata, self.params['sessionname'],self.params['startframe'],self.params['nframe'])
+			imgpath = os.path.join(self.params['rundir'], tmpname)
+			apImage.arrayToMrc(imgarray,imgpath)
+			print "processing", imgpath
+		return imgpath
 
-		### get the particle before image filtering
-		if self.params['defocpair'] is True and self.params['selectionid'] is not None:
-			# using defocal pairs and particle picks
-			partdatas, shiftdata = apParticle.getDefocPairParticles(imgdata, self.params['selectionid'], self.params['particlelabel'])
-		elif self.params['fromstackid'] is not None:
-			# using previous stack to make a new stack
-			partdatas, shiftdata = self.getParticlesFromStack(imgdata)
-		else:
-			# using particle picks
-			partdatas = apParticle.getParticles(imgdata, self.params['selectionid'], self.params['particlelabel'])
-			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}
-
-		apDisplay.printMsg("Found %d particles"%(len(partdatas)))
-
-		### apply correlation limits
-		if self.params['correlationmin'] or self.params['correlationmax']:
-			partdatas = self.eliminateMinMaxCCParticles(partdatas)
-
-		### apply masks
-		if self.params['checkmask']:
-			partdatas = self.eliminateMaskedParticles(partdatas, imgdata)
-
-		### check if we have particles
-		if len(partdatas) == 0:
-			apDisplay.printColor(shortname+" has no remaining particles and has been rejected\n","cyan")
-			return None, None, None
+	#=======================
+	def boxParticlesFromImage(self, imgdata,partdatas,shiftdata):
+		shortname = apDisplay.short(imgdata['filename'])
 
 		### convert database particle data to coordinates and write boxfile
 		boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
@@ -228,13 +121,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apDisplay.printColor(shortname+" has no remaining particles and has been rejected\n","cyan")
 			return None, None, None
 
-		if self.params['uncorrected']:
-			### dark/bright correct image
-			tmpname = shortname+"-darknorm.dwn.mrc"
-			imgarray = apImage.correctImage(imgdata, self.params['sessionname'],self.params['startframe'],self.params['nframe'])
-			imgpath = os.path.join(self.params['rundir'], tmpname)
-			apImage.arrayToMrc(imgarray,imgpath)
-			print "processing", imgpath
+		### get corrected leginon image path.  This will make corrected integrated frame image, too.
+		imgpath = self.getOriginalImagePath(imgdata)
 
 		t0 = time.time()
 		if self.params['phaseflipped'] is True:
@@ -682,52 +570,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 ############################################################
 ## General functions
 ############################################################
-
-	#=======================
-	def checkDefocus(self, defocus, shortname):
-		if defocus > 0:
-			apDisplay.printError("defocus is positive "+str(defocus)+" for image "+shortname)
-		elif defocus < -1.0e3:
-			apDisplay.printError("defocus is very big "+str(defocus)+" for image "+shortname)
-		elif defocus > -1.0e-3:
-			apDisplay.printError("defocus is very small "+str(defocus)+" for image "+shortname)
-
-	#=======================
-	def eliminateMinMaxCCParticles(self, particles):
-		newparticles = []
-		eliminated = 0
-		for prtl in particles:
-			if self.params['correlationmin'] and prtl['correlation'] < self.params['correlationmin']:
-				eliminated += 1
-			elif self.params['correlationmax'] and prtl['correlation'] > self.params['correlationmax']:
-				eliminated += 1
-			else:
-				newparticles.append(prtl)
-		if eliminated > 0:
-			apDisplay.printMsg(str(eliminated)+" particle(s) eliminated due to min or max correlation cutoff")
-		return newparticles
-
-	#=======================
-	def eliminateMaskedParticles(self, particles, imgdata):
-		newparticles = []
-		eliminated = 0
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
-		if self.params['defocpair']:
-			imgdata = apDefocalPairs.getTransformedDefocPair(imgdata,2)
-		maskimg,maskbin = apMask.makeInspectedMask(sessiondata,self.params['maskassess'],imgdata)
-		if maskimg is not None:
-			for prtl in particles:
-				binnedcoord = (int(prtl['ycoord']/maskbin),int(prtl['xcoord']/maskbin))
-				if maskimg[binnedcoord] != 0:
-					eliminated += 1
-				else:
-					newparticles.append(prtl)
-			apDisplay.printMsg("%i particle(s) eliminated due to masking"%eliminated)
-		else:
-			apDisplay.printMsg("no masking")
-			newparticles = particles
-		return newparticles
-
 	#=======================
 	def mergeImageStackIntoBigStack(self, imgstackfile, imgdata):
 		bigimgstack = os.path.join(self.params['rundir'], self.params['single'])
@@ -906,50 +748,24 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 	#=======================
 	def setupParserOptions(self):
-		self.flipoptions = ('emanimage', 'emanpart', 'emantilt', 'spiderimage', 'ace2image','ace2imagephase')
-		self.ctfestopts = ('ace2', 'ctffind')
+		super(Makestack2Loop,self).setupParserOptions()
 
+		self.flipoptions = ('emanimage', 'emanpart', 'emantilt', 'spiderimage', 'ace2image','ace2imagephase')
 		### values
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin the particles after boxing", metavar="#")
 		self.parser.add_option("--single", dest="single", default="start.hed",
 			help="create a single stack")
-		self.parser.add_option("--ctfcutoff", dest="ctfcutoff", type="float",
-			help="CTF cut off")
 		self.parser.add_option("--boxsize", dest="boxsize", type="int",
 			help="particle box size in pixel")
-		self.parser.add_option("--mincc", dest="correlationmin", type="float",
-			help="particle correlation mininum")
-		self.parser.add_option("--maxcc", dest="correlationmax", type="float",
-			help="particle correlation maximum")
-		self.parser.add_option("--mindef", dest="mindefocus", type="float",
-			help="minimum defocus")
-		self.parser.add_option("--maxdef", dest="maxdefocus", type="float",
-			help="maximum defocus")
-		self.parser.add_option("--selectionid", dest="selectionid", type="int",
-			help="particle picking runid")
-		self.parser.add_option("--fromstackid", dest="fromstackid", type="int",
-			help="redo a stack from a previous stack")
-		self.parser.add_option("--partlimit", dest="partlimit", type="int",
-			help="particle limit")
 		self.parser.add_option("--filetype", dest="filetype", default='imagic',
 			help="filetype, default=imagic")
 		self.parser.add_option("--lp", "--lowpass", dest="lowpass", type="float",
 			help="low pass filter")
 		self.parser.add_option("--hp", "--highpass", dest="highpass", type="float",
 			help="high pass filter")
-		self.parser.add_option("--mag", dest="mag", type="int",
-			help="process only images of magification, mag")
-		self.parser.add_option("--maskassess", dest="maskassess",
-			help="Assessed mask run name")
-		self.parser.add_option("--label", dest="particlelabel", type="str", default=None,
-			help="select particles by label within the same run name")
 		self.parser.add_option("--xmipp-normalize", dest="xmipp-norm", type="float",
 			help="normalize the entire stack using xmipp")
-		self.parser.add_option("--ddstartframe", dest="startframe", type="int", default=1,
-			help="starting frame for direct detector raw frame processing")
-		self.parser.add_option("--ddnframe", dest="nframe", type="int", default=0,
-			help="total frames to sum up for direct detector raw frame processing")
 
 		### true/false
 		self.parser.add_option("--phaseflip", dest="phaseflipped", default=False,
@@ -962,18 +778,12 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			action="store_true", help="create a spider stack")
 		self.parser.add_option("--normalized", dest="normalized", default=False,
 			action="store_true", help="normalize the entire stack")
-		self.parser.add_option("--defocpair", dest="defocpair", default=False,
-			action="store_true", help="select defocal pair")
 
 		self.parser.add_option("--no-meanplot", dest="meanplot", default=True,
 			action="store_false", help="do not make stack mean plot")
 
 		self.parser.add_option("--boxfiles", dest="boxfiles", default=False,
 			action="store_true", help="create only boxfiles, no stack")
-		self.parser.add_option("--checkmask", dest="checkmask", default=False,
-			action="store_true", help="Check masks")
-		self.parser.add_option("--keepall", dest="keepall", default=False,
-			action="store_true", help="Do not delete CTF corrected MRC files when finishing")
 		self.parser.add_option("--verbose", dest="verbose", default=False,
 			action="store_true", help="Show extra ace2 information while running")
 		self.parser.add_option("--rotate", dest="rotate", default=False,
@@ -981,19 +791,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		self.parser.add_option("--finealign", dest="finealign", default=False,
 			action="store_true", help="Align filaments vertically in a single interpolation")
 
-		### option based
-		#self.parser.add_option("--whole-image", dest="wholeimage", default=False,
-		#	action="store_true", help="whole image ctf correction with EMAN")
-		#self.parser.add_option("--acetwo", dest="acetwo", default=False,
-		#	action="store_true", help="whole image ctf correction with Ace 2")
-		#self.parser.add_option("--tiltedflip", dest="tiltedflip", default=False,
-		#	action="store_true", help="using tilted defocus estimation based on particle location")
 		self.parser.add_option("--flip-type", dest="fliptype",
 			help="CTF correction method", metavar="TYPE",
 			type="choice", choices=self.flipoptions, default="emanpart" )
-		self.parser.add_option("--ctfmethod", dest="ctfmethod",
-			help="Only use ctf values coming from this method of estimation", metavar="TYPE",
-			type="choice", choices=self.ctfestopts)
 
 	#=======================
 	def checkConflicts(self):
@@ -1034,98 +834,32 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apDisplay.printWarning("Rotate parameter is not set, helical filaments will not be aligned")
 			
 
-	#=======================
-	def preLoopFunctions(self):
-		self.batchboxertimes = []
-		self.ctftimes = []
-		self.mergestacktimes = []
-		self.meanreadtimes = []
-		self.insertdbtimes = []
-		self.noimages = False
-		if len(self.imgtree) == 0:
-			apDisplay.printWarning("No images were found to process")
-			self.noimages = True
-			return
-		self.checkPixelSize()
-		self.existingParticleNumber=0
+	def resetStack(self):
 		if self.params['commit'] is True:
 			self.insertStackRun()
+		else:
+			stackfile=os.path.join(self.params['rundir'], self.params['single'])
+			apFile.removeStack(stackfile)
+
+	def setStartingParticleNumber(self):
+		self.resetStack()
+		if self.params['commit'] is True:
 			self.particleNumber = self.getExistingStackInfo()
 			self.existingParticleNumber=self.particleNumber
 		else:
 			self.particleNumber = 0
-			stackfile=os.path.join(self.params['rundir'], self.params['single'])
-			apFile.removeStack(stackfile)
 
-		apDisplay.printMsg("Starting at particle number: "+str(self.particleNumber))
+	def checkRequireCtf():
+			return self.params['ctfcutoff'] or self.params['mindefocus'] or self.params['maxdefocus'] or self.params['phaseflipped']
 
-		if self.params['partlimit'] is not None and self.particleNumber > self.params['partlimit']:
-			apDisplay.printError("Number of particles in existing stack already exceeds limit!")
-		self.logpeaks = 2
+	#=======================
+	def preLoopFunctions(self):
+		super(Makestack2Loop,self).preLoopFunctions()
 
 		### create an edge map for edge statistics
 		box = int(self.params['boxsize'])
 		### use a radius one pixel less than the boxsize
 		self.edgemap = imagefun.filled_circle((box,box), box/2.0-1.0)
-
-	#=====================
-	def reprocessImage(self, imgdata):
-		"""
-		Returns
-		True, if an image should be reprocessed
-		False, if an image was processed and should NOT be reprocessed
-		None, if image has not yet been processed
-		e.g. a confidence less than 80%
-		"""
-		# check to see if image is rejected by other criteria
-		if self.rejectImage(imgdata) is False:
-			return False
-		# check CTF parameters for image and skip if criteria is not met
-		if self.checkCtfParams(imgdata) is False:
-			return False
-		return None
-
-	#=======================
-	def processImage(self, imgdata):
-		imgname = imgdata['filename']
-		shortname = apDisplay.short(imgdata['filename'])
-
-		### first remove any existing boxed files
-		shortfileroot = os.path.join(self.params['rundir'], shortname)
-		rmfiles = glob.glob(shortfileroot+"*")
-		for rmfile in rmfiles:
-			apFile.removeFile(rmfile)
-
-		### run batchboxer
-		self.boxedpartdatas, self.imgstackfile, self.partmeantree = self.boxParticlesFromImage(imgdata)
-		if self.boxedpartdatas is None:
-			apDisplay.printWarning("no particles were boxed from "+shortname+"\n")
-			self.badprocess = True
-			return
-
-		self.stats['lastpeaks'] = len(self.boxedpartdatas)
-
-		apDisplay.printMsg("do not break function now otherwise it will corrupt run")
-		time.sleep(1.0)
-
-		### merge image particles into big stack
-		totalpart = self.mergeImageStackIntoBigStack(self.imgstackfile, imgdata)
-
-		### check if particle limit is met
-		if self.params['partlimit'] is not None and totalpart > self.params['partlimit']:
-			apDisplay.printWarning("reached particle number limit of "+str(self.params['partlimit'])+" now stopping")
-			self.imgtree = []
-			self.notdone = False
-
-		### create a stack average every so often
-		if self.stats['lastpeaks'] > 0:
-			logpeaks = math.log(self.existingParticleNumber+self.stats['peaksum']+self.stats['lastpeaks'])
-			if logpeaks > self.logpeaks:
-				self.logpeaks = math.ceil(logpeaks)
-				numpeaks = math.ceil(math.exp(self.logpeaks))
-				apDisplay.printMsg("averaging stack, next average at %d particles"%(numpeaks))
-				stackpath = os.path.join(self.params['rundir'], "start.hed")
-				apStack.averageStack(stack=stackpath)
 
 	#=======================
 	def postLoopFunctions(self):
@@ -1235,13 +969,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 	#=======================
 	def loopCleanUp(self,imgdata):
-		### last remove any existing boxed files, reset global params
-		shortname = apDisplay.short(imgdata['filename'])
-		shortfileroot = os.path.join(self.params['rundir'], shortname)
-		rmfiles = glob.glob(shortfileroot+"*")
-		if not self.params['keepall']:
-			for rmfile in rmfiles:
-				apFile.removeFile(rmfile)
+		super(Makestack2Loop,self).loopCleanUp(imgdata)
+		### last remove any existing boxed files
 		self.imgstackfile = None
 		self.boxedpartdatas = []
 
