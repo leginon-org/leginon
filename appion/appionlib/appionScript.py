@@ -394,7 +394,7 @@ class AppionScript(basicScript.BasicScript):
 		"""
 		apDisplay.printError("you did not create a 'checkConflicts' function in your script")
 		if self.params['runname'] is None:
-			apDisplay.printError("enter a run name ID, e.g. --runname=run1")
+			apDisplay.printError("enter an unique run name, e.g. --runname=run1")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description, e.g. --description='awesome data'")
 
@@ -403,6 +403,11 @@ class AppionScript(basicScript.BasicScript):
 		self.processdirname = self.functionname
 
 	def getDefaultBaseAppionDir(self,sessiondata,subdirs=[]):
+		'''
+		This function sets default base appiondir using leginon.cfg image path settings when rundir
+		is not specified in the script. Such case will only occur if user construct the
+		script his/herself, not from web.
+		'''
 		path = leginon.leginonconfig.IMAGE_PATH
 		if path:
 			path = os.path.join(path,sessiondata['name'])
