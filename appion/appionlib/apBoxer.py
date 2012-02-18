@@ -14,6 +14,15 @@ from appionlib import apImagicFile	#write imagic stacks
 from appionlib import apDisplay
 from appionlib.apImage import imagefilter	#image clipping
 
+def getBoxStartPosition(imgdata,halfbox,partdata, shiftdata):
+	### xcoord is the upper left area corner of the particle box
+	start_x = int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
+	start_y = int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))	
+	return start_x,start_y
+
+def checkBoxInImage(imgdims,start_x,start_y,boxsize):
+	return ( (start_x > 0 and start_x+boxsize <= imgdims['x'])
+		and  (start_y > 0 and start_y+boxsize <= imgdims['y']) )
 ##=================
 def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=False):
 	"""
@@ -46,18 +55,16 @@ def processParticleData(imgdata, boxsize, partdatas, shiftdata, boxfile, rotate=
 			continue
 
 		### xcoord is the upper left area corner of the particle box
-		xcoord= int(round( shiftdata['scale']*(partdata['xcoord'] - shiftdata['shiftx']) - halfbox ))
-		ycoord= int(round( shiftdata['scale']*(partdata['ycoord'] - shiftdata['shifty']) - halfbox ))	
-		if ( (xcoord > 0 and xcoord+boxsize <= imgdims['x'])
-		and  (ycoord > 0 and ycoord+boxsize <= imgdims['y']) ):
+		start_x,start_y = getBoxStartPosition(imgdata,halfbox,partdata, shiftdata)
+		if checkBoxInImage(imgdims,start_x,start_y,boxsize):
 			partdict = {
-				'x_coord': xcoord,
-				'y_coord': ycoord,
+				'x_coord': start_x,
+				'y_coord': start_y,
 				'angle': partdata['angle'],
 			}
 			parttree.append(partdict)
 			boxedpartdatas.append(partdata)
-			f.write("%d\t%d\t%d\t%d\t-3\n"%(xcoord,ycoord,boxsize,boxsize))
+			f.write("%d\t%d\t%d\t%d\t-3\n"%(start_x,start_y,boxsize,boxsize))
 		else:
 			eliminated += 1
 	f.close()

@@ -34,7 +34,7 @@ from appionlib import apXmipp
 from appionlib import apBoxer
 from appionlib.apSpider import filters
 
-class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
+class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	############################################################
 	## Retrive existing stack info
 	############################################################
@@ -63,6 +63,7 @@ class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 
 	#=======================
 	def processParticles(self,imgdata,partdatas,shiftdata):
+		shortname = apDisplay.short(imgdata['filename'])
 		### run batchboxer
 		self.boxedpartdatas, self.imgstackfile, self.partmeantree = self.boxParticlesFromImage(imgdata,partdatas,shiftdata)
 		if self.boxedpartdatas is None:
@@ -109,7 +110,7 @@ class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 
 		### convert database particle data to coordinates and write boxfile
 		boxfile = os.path.join(self.params['rundir'], imgdata['filename']+".box")
-		parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.params['boxsize'], 
+		parttree, boxedpartdatas = apBoxer.processParticleData(imgdata, self.boxsize, 
 			partdatas, shiftdata, boxfile, rotate=self.params['rotate'])
 
 		if self.params['boxfiles']:
@@ -147,10 +148,10 @@ class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 		apDisplay.printMsg("boxing "+str(len(parttree))+" particles into temp file: "+imgstackfile)
 		t0 = time.time()
 		if self.params['rotate'] is True:
-			apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.params['boxsize'])
+			apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.boxsize)
 			if self.params['finealign'] is True:
 				apXmipp.breakupStackIntoSingleFiles(imgstackfile, filetype="mrc")
-				rotcmd = "s_finealign %s %i" %(self.params['rundir'], self.params['boxsize'])
+				rotcmd = "s_finealign %s %i" %(self.params['rundir'], self.boxsize)
 				apParam.runCmd(rotcmd, "HIP", verbose=True)
 				# read in text file containing refined angles
 				anglepath = os.path.join(self.params['rundir'], 'angles.out')
@@ -163,9 +164,9 @@ class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 					newangle = float(partdict['angle'])-fineangle
 					partdict['angle'] = newangle
 				# rerun apBoxer.boxerRotate with the new parttree containing final angles
-				apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.params['boxsize'])
+				apBoxer.boxerRotate(imgpath, parttree, imgstackfile, self.boxsize)
 		else:
-			apBoxer.boxer(imgpath, parttree, imgstackfile, self.params['boxsize'])
+			apBoxer.boxer(imgpath, parttree, imgstackfile, self.boxsize)
 		self.batchboxertimes.append(time.time()-t0)
 
 		### read mean and stdev
@@ -590,7 +591,7 @@ class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 		### bin images if specified
 		if self.params['bin'] > 1:
 			emancmd += " shrink=%d"%(self.params['bin'])
-		emancmd += " clip=%d,%d"%(self.params['boxsize'],self.params['boxsize'])
+		emancmd += " clip=%d,%d"%(self.boxsize,self.boxsize)
 		### unless specified, invert the images
 		if self.params['inverted'] is True:
 			emancmd += " invert"
@@ -604,8 +605,8 @@ class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 		self.mergestacktimes.append(time.time()-t0)
 
 		### count particles
-		bigcount = apFile.numImagesInStack(bigimgstack, self.params['boxsize']/self.params['bin'])
-		imgcount = apFile.numImagesInStack(imgstackfile, self.params['boxsize'])
+		bigcount = apFile.numImagesInStack(bigimgstack, self.boxsize/self.params['bin'])
+		imgcount = apFile.numImagesInStack(imgstackfile, self.boxsize)
 
 		### append to particle log file
 		partlogfile = os.path.join(self.params['rundir'], self.timestamp+"-particles.info")
@@ -756,8 +757,6 @@ class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 			help="Bin the particles after boxing", metavar="#")
 		self.parser.add_option("--single", dest="single", default="start.hed",
 			help="create a single stack")
-		self.parser.add_option("--boxsize", dest="boxsize", type="int",
-			help="particle box size in pixel")
 		self.parser.add_option("--filetype", dest="filetype", default='imagic',
 			help="filetype, default=imagic")
 		self.parser.add_option("--lp", "--lowpass", dest="lowpass", type="float",
@@ -786,8 +785,6 @@ class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 			action="store_true", help="create only boxfiles, no stack")
 		self.parser.add_option("--verbose", dest="verbose", default=False,
 			action="store_true", help="Show extra ace2 information while running")
-		self.parser.add_option("--rotate", dest="rotate", default=False,
-			action="store_true", help="Apply helical rotation angles")
 		self.parser.add_option("--finealign", dest="finealign", default=False,
 			action="store_true", help="Align filaments vertically in a single interpolation")
 
@@ -797,8 +794,7 @@ class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 
 	#=======================
 	def checkConflicts(self):
-		if self.params['boxsize'] is None:
-			apDisplay.printError("A boxsize has to be specified")
+		super(Makestack2Loop,self).checkConflicts()
 		if not apPrimeFactor.isGoodStack(self.params['boxsize']):
 			apDisplay.printWarning("Boxsize does not contain recommended prime numbers")
 			smallbox,bigbox = apPrimeFactor.getPrimeLimits(self.params['boxsize'])
@@ -849,7 +845,7 @@ class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 		else:
 			self.particleNumber = 0
 
-	def checkRequireCtf():
+	def checkRequireCtf(self):
 			return self.params['ctfcutoff'] or self.params['mindefocus'] or self.params['maxdefocus'] or self.params['phaseflipped']
 
 	#=======================
@@ -857,7 +853,7 @@ class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 		super(Makestack2Loop,self).preLoopFunctions()
 
 		### create an edge map for edge statistics
-		box = int(self.params['boxsize'])
+		box = self.boxsize
 		### use a radius one pixel less than the boxsize
 		self.edgemap = imagefun.filled_circle((box,box), box/2.0-1.0)
 
@@ -897,7 +893,7 @@ class Makestack2Loop(apParticleExtractor.ParticleExtractLoop):
 			xmippopts = ( " "
 				+" -i %s"%os.path.join(self.params['rundir'],selfile)
 				+" -method Ramp "
-				+" -background circle %i"%(int(self.params['boxsize']/self.params['bin']*0.4))
+				+" -background circle %i"%(self.boxsize/self.params['bin']*0.4)
 				+" -remove_black_dust"
 				+" -remove_white_dust"
 				+" -thr_black_dust -%.2f"%(self.params['xmipp-norm'])

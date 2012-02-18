@@ -20,6 +20,7 @@ from appionlib import appiondata
 from appionlib import apParticle
 from appionlib import apFile
 from appionlib import apMask
+from appionlib import apBoxer
 
 class ParticleExtractLoop(appionLoop2.AppionLoop):
 	############################################################
@@ -118,7 +119,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 	## get CTF parameters and skip image if criteria is not met
 	############################################################
 
-	def checkRequireCtf():
+	def checkRequireCtf(self):
 			return self.params['ctfcutoff'] or self.params['mindefocus'] or self.params['maxdefocus']
 
 	def checkCtfParams(self, imgdata):
@@ -343,6 +344,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		### check if we have particles
 		if len(partdatas) == 0:
 			apDisplay.printColor(shortname+" has no remaining particles and has been rejected\n","cyan")
+			total_processed_particles = None
 		else:
 			### process partdatas
 			total_processed_particles = self.processParticles(imgdata,partdatas,shiftdata)
@@ -359,9 +361,11 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 
 
 	def processParticles(self,imgdata,partdatas,shiftdata):
-		for partdata in partdatas:
-			print partdata['xcoord'],partdata['ycoord']
-		return None
+		"""
+		this is the main component
+		it should return the total number of processed particles if available otherwise, it returns None
+		"""
+		raise NotImplementedError()
 
 	#=======================
 	def loopCleanUp(self,imgdata):
@@ -373,8 +377,49 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			for rmfile in rmfiles:
 				apFile.removeFile(rmfile)
 
+############################################################################
+# PaeticleExtract with Elimination of boxed particle cropped by the image
+############################################################################
+class ParticleBoxLoop(ParticleExtractLoop):
+	def setupParserOptions(self):
+		super(ParticleBoxLoop,self).setupParserOptions()
+		self.parser.add_option("--boxsize", dest="boxsize", type="int",
+			help="particle box size in pixel")
+		self.parser.add_option("--rotate", dest="rotate", default=False,
+			action="store_true", help="Apply rotation angles of ,for example, helix")
+
+	def checkConflicts(self):
+		super(ParticleBoxLoop,self).checkConflicts()
+		if self.params['boxsize'] is None:
+			apDisplay.printError("A boxsize has to be specified")
+
+	def preLoopFunctions(self):
+		super(ParticleBoxLoop,self).preLoopFunctions()
+		self.boxsize = int(self.params['boxsize'])
+		if self.params['rotate'] is True:
+			### with rotate we use a bigger boxsize
+			self.half_box = int(1.5*self.boxsize/2)
+		else:
+			self.half_box = int(math.floor(self.boxsize / 2.0))
+
+	def getParticlesInImage(self,imgdata):
+		partdatas,shiftdata = super(ParticleBoxLoop,self).getParticlesInImage(imgdata)
+		imgdims = imgdata['camera']['dimension']
+		newpartdatas = []
+		for partdata in partdatas:
+			start_x,start_y = apBoxer.getBoxStartPosition(imgdata,self.half_box,partdata, shiftdata)
+			if apBoxer.checkBoxInImage(imgdims,start_x,start_y,self.boxsize):
+				newpartdatas.append(partdata)
+		return newpartdatas,shiftdata
+
+class Test(ParticleExtractLoop):
+	def processParticles(self,imgdata,partdatas,shiftdata):
+		for partdata in partdatas:
+			print partdata['xcoord'],partdata['ycoord']
+		return None
+
 if __name__ == '__main__':
-	makeStack = ParticleExtractLoop()
+	makeStack = Test()
 	makeStack.run()
 
 
