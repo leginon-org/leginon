@@ -22,6 +22,8 @@ class XmippRefineForm extends BasicRefineForm
 		// classes extended from BasicRefineForm should get the selected default values
 		$params = $this->getFormParams();
 		
+		$params->setHelpSection( "xmipp" );		
+		
 		$shortSize = 4;
 		$longSize = 20;
 		

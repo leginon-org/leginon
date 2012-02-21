@@ -517,6 +517,7 @@ var help = {
 		'setuponly' : 'If setuponly is specified, everything will be set up but frealign will not be run',
 	},
 	'cluster' : {
+		'processinghost' : 'The name of the processing computer to send this job to. ',
 		'nodes' : 'Nodes refers to the number of computer to process on simultaneously.  The more nodes you get the faster things will get process, but more nodes requires that you wait longer before being allowed to begin processing.',
 		'walltime' : 'Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock.  (The reference to a wall clock is how the term originally got its name.)',
 		'cput' : 'Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock.  (The reference to a wall clock is how the term originally got its name.)',
@@ -535,5 +536,16 @@ var help = {
 		'lowpass' : 'please add a description in help.js',
 		'highpass' : 'please add a description in help.js',
 		'bin' : 'please add a description in help.js',
+	},
+	'xmipp' : {
+		'mask' : 'Filename of a mask (0=outside particle; 1=inside particle)',
+		'maxAngularChange' : 'Maximum change in rot & tilt  (in +/- degrees). You must specify this option for each iteration. This can be done by a sequence of numbers (for instance, "1000 1000 10 10 " specifies 4 iterations, the first two set the value to 1000 (no restriction) and the last two to 10degrees. An alternative compact notation is ("2x1000 2x10", i.e., 2 iterations with value 1000, and 2 with value 10). Note: if there are less values than iterations the last value is reused. Note: if there are more values than iterations the extra value are ignored',
+		'maxChangeOffset' : 'Maximum allowed change in shift in the 3D+2D searches (in +/- pixels). Shifts larger than this value will be reset to (0,0) You must specify this option for each iteration.  This can be done by a sequence of numbers (for instance, "1000 1000 10 10 "  specifies 4 iterations, the first two set the value to 1000 (no restriction) and the last two to 10degrees. An alternative compact notation  is ("2x1000 2x10", i.e., 2 iterations with value 1000, and 2 with value 10). Note: if there are less values than iterations the last value is reused. Note: if there are more values than iterations the extra value are ignored',
+		'search5DShift' : 'Give search range from the image center for 5D searches (in +/- pixels). Values larger than 0 will results in 5D searches (which may be CPU-intensive) Give 0 for conventional 3D+2D searches.  Note that after the 5D search, for the optimal angles always  a 2D exhaustive search is performed anyway (making it ~5D+2D) Provide a sequence of numbers (for instance, "5 5 3 0" specifies 4 iterations, the first two set the value to 5, then one with 3, resp 0 pixels. An alternative compact notation is ("3x5 2x3 0", i.e., 3 iterations with value 5, and 2 with value 3 and the rest with 0). Note: if there are less values than iterations the last value is reused Note: if there are more values than iterations the extra value are ignored',
+		'search5DStep' : 'Provide a sequence of numbers (for instance, "2 2 1 1" specifies 4 iterations, the first two set the value to 2, then two with 1 pixel. An alternative compact notation is ("2x2 2x1", i.e., 2 iterations with value 2, and 2 with value 1). Note: if there are less values than iterations the last value is reused Note: if there are more values than iterations the extra value are ignored',
+		'reconMethod' : 'Provide a sequence of methods (fourier, wbp, art). See http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Wbp and http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Mpi_wbp and http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Art http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Fourier http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Mpi_fourier for details',
+		'ARTLambda' : 'IMPORTANT: you must specify a value of lambda for each iteration even if art has not been selected. IMPORTANT: NOte that we are using the WLS version of ART that  uses geater lambdas than the plain art. See http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Art for details You must specify this option for each iteration.  This can be done by a sequence of numbers (for instance, ".1 .1 .3 .3"  specifies 4 iterations, the first two set the value to 0.1  no restriction) and the last  two to .3. An alternative compact notation  is ("2x.1 2x.3"). Note: if there are less values than iterations the last value is reused Note: if there are more values than iterations the extra value are ignored',
+		'doComputeResolution' : '0=Do not compute resolution; 1=Compute resolution (FSC)',
+		'fourierMaxFrequencyOfInterest' : 'This number os only used in the first iteration.  From then on, it will be set to resolution computed in the resolution section',
 	}	
 }
