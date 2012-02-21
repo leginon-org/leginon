@@ -48,6 +48,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : '';
 	$lowpassvol = ($_POST['lowpassvol']) ? $_POST['lowpassvol'] : '10';
 	$highpasspart = ($_POST['highpasspart']) ? $_POST['highpasspart'] : '800';
+	$lowpasspart = ($_POST['lowpasspart']) ? $_POST['lowpasspart'] : '25';
 	$median = ($_POST['median']) ? $_POST['median'] : '3';
 	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '3';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '';
@@ -236,8 +237,14 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	echo "\n<br/>\n<br/>\n";
 
 	//High pass filter of particles
-	echo docpop('hpval','Particle High Pass Filter:<br/>');
+	echo docpop('rctparthp','Particle High Pass Filter:<br/>');
 	echo "<INPUT TYPE='text' NAME='highpasspart' SIZE='5' VALUE='$highpasspart'>\n";
+	echo "<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
+	echo "\n<br/>\n<br/>\n";
+
+	//Low pass filter of particles
+	echo docpop('rctpartlp','Particle Low Pass Filter:<br/>');
+	echo "<INPUT TYPE='text' NAME='lowpasspart' SIZE='5' VALUE='$lowpasspart'>\n";
 	echo "<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
 	echo "\n<br/>\n<br/>\n";
 
@@ -297,6 +304,7 @@ function runRctVolume() {
 	$maskrad = $_POST['maskrad'];
 	$lowpassvol = $_POST['lowpassvol'];
 	$highpasspart = $_POST['highpasspart'];
+	$lowpasspart = $_POST['lowpasspart'];
 	$median = $_POST['median'];
 	$numiter = $_POST['numiter'];
 	$numpart = $_POST['numpart'];
@@ -376,6 +384,7 @@ function runRctVolume() {
 		$command.="--contour=$contour ";
 	$command.="--lowpassvol=$lowpassvol ";
 	$command.="--highpasspart=$highpasspart ";
+	$command.="--lowpasspart=$lowpasspart ";
 	$command.="--median=$median ";
 	if ($minscore)
 		$command.="--min-score=$minscore ";

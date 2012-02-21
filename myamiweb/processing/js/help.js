@@ -176,6 +176,8 @@ var help = {
 		'tiltlist' : 'List the nominal tilt angles in the tilt series in degrees, separated by commas.  (ex. 0,10,20,30).',
 		'defociilist' : 'List the nominal defocii in the defocal series in microns, separated by commas.  (ex. -1,-2).',
 		'rctcenter' : 'In RCT, the particle Euler angles are fixed, but the particles are not centered. Through an interative process the volume is projected in the direction of the particle and cross-correlated, then the particle is shifted to its correct location.',
+		'rctpartlp' : 'low-pass filter the tilted particles prior to reconstructing',
+		'rctparthp' : 'high-pass filter the tilted particles prior to reconstructing',
 		'snapfilter' : 'Fixed low pass filter used in rendering volume snapshot, leave it blank to use the FSC 0.5 result for each iteration',
 		'snapzoom' : 'Zoom in the volume data to see the volume better for a large boxsize',
 		'roi' : 'Define inner and outher radii used to compute rotational spectra (power spectrun of Fourier transform in polar coordinates)',
