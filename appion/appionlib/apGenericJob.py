@@ -46,7 +46,8 @@ class genericJob(object):
                    'nodes'     : self.setNodes,
                    'ppn'       : self.setPPN,
                    'projectid' : self.setProjectId, 
-                   'jobtype'   : (lambda s:s)}
+                   'expid'     : self.setExpId, 
+                   'jobtype'   : self.setJobType}
         excludeList = ['jobid', 'walltime', 'cput', 'nodes', 'ppn', 'jobtype']
         optionKeys = options.keys()
         for opt in optList:
@@ -126,3 +127,17 @@ class genericJob(object):
         return self.projectId
     def setProjectId(self, id):
         self.projectId = int(id)
+    def setJobType(self, jobType):
+        self.jobType = jobType
+    def getJobType(self):
+        return self.jobType
+    def setExpId(self, expId):
+        self.expId = expId
+    def getExpId(self):
+        return self.expId
+    def getRundir(self):
+        return self.rundir
+    def getJobName(self):
+        return self.runname + ".job"
+    
+        

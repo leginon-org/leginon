@@ -254,31 +254,5 @@ class Agent (object):
             clustq['status'] = "Q"
             clustq.insert()   
             
-
-#            rundir = jobObject.getRundir()
-#            pathq = appiondata.ApPathData(path=os.path.abspath(rundir))
-#            pathid = pathq.query()
-#            jobname = jobObject.getName()
-#            jobtype = jobObject.getJobType()
-#            remoterundir = jobObject.getOutputDir()
-#            remoterundirq = appiondata.ApPathData(path=os.path.abspath(remoterundir))
-#            remotepathid = remoterundirq.query()
-#            expid = jobObject.getExpId()
-#            cluster = os.uname()[1]
-#            user = os.getlogin()
-#                          
-#            dbconf = dbconfig.getConfig('appiondata')
-#            dbConnection = MySQLdb.connect(**dbconf)          
-#            cursor = dbConnection.cursor()
-#           
-#            insertQuery = "INSERT INTO ApAppionJobData (`REF|ApPathData|path`, name, jobtype, `REF|ApPathData|clusterpath`, `REF|leginondata|SessionData|session`, cluster, clusterjobid, status, user) \
-#                     VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(pathid, jobname, jobtype, remotepathid, expid, cluster, job, 'Q', user)    
-#
-#            if cursor.execute (insertQuery):
-#                jobObject.setJobId(cursor.lastrowid)   
-#
-#            cursor.close()
-#            dbConnection.close()
-            
         return retValue
             
