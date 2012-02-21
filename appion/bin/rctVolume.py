@@ -194,8 +194,9 @@ class rctVolumeScript(appionScript.AppionScript):
 		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
 		boxsize = self.getBoxSize()
 		emancmd = ("proc2d "+emanstackfile+" "+tempstack
-			+" apix="+str(apix)+" hp="+str(self.params['highpasspart'])
-			+" ")
+			+" apix="+str(apix)+" ")
+		if self.params['highpasspart'] is not None and self.params['highpasspart'] > 0:
+			emancmd += "hp="+str(self.params['highpasspart'])+" "
 		if self.params['lowpasspart'] is not None and self.params['lowpasspart'] > 0:
 			emancmd += "lp="+str(self.params['lowpasspart'])+" "
 		if self.params['tiltbin'] > 1:
