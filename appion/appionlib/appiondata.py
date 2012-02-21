@@ -1074,6 +1074,7 @@ class ApRctRunData(Data):
 			('maskrad', int),
 			('lowpassvol', float),
 			('highpasspart', float),
+			('lowpasspart', float),
 			('median', int),
 			('description', str),
 			('numpart', int),
