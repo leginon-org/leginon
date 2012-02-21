@@ -48,7 +48,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : '';
 	$lowpassvol = ($_POST['lowpassvol']) ? $_POST['lowpassvol'] : '10';
 	$highpasspart = ($_POST['highpasspart']) ? $_POST['highpasspart'] : '800';
-	$lowpasspart = ($_POST['lowpasspart']) ? $_POST['lowpasspart'] : '25';
+	$lowpasspart = ($_POST['lowpasspart']) ? $_POST['lowpasspart'] : '0';
 	$median = ($_POST['median']) ? $_POST['median'] : '3';
 	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '3';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '';
@@ -383,8 +383,10 @@ function runRctVolume() {
 	else
 		$command.="--contour=$contour ";
 	$command.="--lowpassvol=$lowpassvol ";
-	$command.="--highpasspart=$highpasspart ";
-	$command.="--lowpasspart=$lowpasspart ";
+	if ($highpasspart && $highpasspart > 0)
+		$command.="--highpasspart=$highpasspart ";
+	if ($lowpasspart && $lowpasspart > 0)
+		$command.="--lowpasspart=$lowpasspart ";
 	$command.="--median=$median ";
 	if ($minscore)
 		$command.="--min-score=$minscore ";
