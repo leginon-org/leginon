@@ -231,7 +231,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	echo "\n<br/>\n<br/>\n";
 
 	//Low pass filter of volume
-	echo docpop('lpval','Volume Low Pass Filter:<br/>');
+	echo docpop('rctvollp','Volume Low Pass Filter:<br/>');
 	echo "<INPUT TYPE='text' NAME='lowpassvol' SIZE='3' VALUE='$lowpassvol'>\n";
 	echo "<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
 	echo "\n<br/>\n<br/>\n";
