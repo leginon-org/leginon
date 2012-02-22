@@ -253,6 +253,20 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 	############################################################
 
 	#=======================
+	def getCS(self, ctfvalue):
+		if ctfvalue['cs']:
+			cs = ctfvalue['cs']
+		elif ctfvalue['acerun']['ace2_params']:
+			cs=ctfvalue['acerun']['ace2_params']['cs']
+		elif ctfvalue['acerun']['ctftilt_params']:
+			cs=ctfvalue['acerun']['ctftilt_params']['cs']
+		if cs is None:
+			### apply hard coded value, in case of missing cs value
+			apDisplay.printWarning("No CS value found in database, setting to 2.0")
+			cs = 2.0
+		return cs
+
+	#=======================
 	def tiltPhaseFlipParticles(self, imgdata, imgstackfile, partdatas):
 		ctfvalue = apCtf.getBestTiltCtfValueForImage(imgdata)
 		if ctfvalue is None:
@@ -279,15 +293,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 			voltage = (imgdata['scope']['high tension'])/1000
 
 		# find cs
-		if ctfvalue['cs']:
-			cs = ctfvalue['cs']
-		elif ctfvalue['acerun']['ace2_params']:
-			cs=ctfvalue['acerun']['ace2_params']['cs']
-		elif ctfvalue['acerun']['ctftilt_params']:
-			cs=ctfvalue['acerun']['ctftilt_params']['cs']
-		if cs is None:
-			### apply hard coded value, in case of missing cs value
-			cs = 2.0
+		cs = self.getCS(ctfvalue)
 
 		imagicdata = apImagicFile.readImagic(imgstackfile)
 		ctfpartstack = []
@@ -341,16 +347,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		### get all CTF parameters, we also need to get the CS value from the database
 		ctfdata, score = apCtf.getBestCtfValueForImage(imgdata, msg=False, method=self.params['ctfmethod'])
 		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
+
 		# find cs
-		if ctfdata['cs']:
-			cs = ctfdata['cs']
-		elif ctfdata['acerun']['ace2_params']:
-			cs=ctfdata['acerun']['ace2_params']['cs']
-		elif ctfdata['acerun']['ctftilt_params']:
-			cs=ctfdata['acerun']['ctftilt_params']['cs']
-		if cs is None:
-			### apply hard coded value, in case of missing cs value
-			cs = 2.0
+		cs = self.getCS(ctfdata)
 
 		parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" %(defocus, ampconst, voltage, cs, apix))
 		emancmd = ("applyctf %s %s %s setparm flipphase" % (imgstackfile, ctfimgstackfile, parmstr))
@@ -378,17 +377,10 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		### get all CTF parameters, we also need to get the CS value from the database
 		ctfdata, score = apCtf.getBestCtfValueForImage(imgdata, msg=False, method=self.params['ctfmethod'])
 		#ampconst = ctfdata['amplitude_contrast'] ### we could use this too
+
 		# find cs
-		if ctfdata['cs']:
-			cs = ctfdata['cs']
-		elif ctfdata['acerun']['ace2_params']:
-			cs=ctfdata['acerun']['ace2_params']['cs']
-		elif ctfdata['acerun']['ctftilt_params']:
-			cs=ctfdata['acerun']['ctftilt_params']['cs']
-		if cs is None:
-			### apply hard coded value, in case of missing cs value
-			cs = 2.0
-			
+		cs = self.getCS(ctfdata)
+
 		parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,%.1f,%f" %(defocus, ampconst, voltage, cs, apix))
 		emancmd = ("applyctf %s %s %s setparm flipphase" % (inimgpath, outimgpath, parmstr))
 
@@ -536,19 +528,9 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		apix = apDatabase.getPixelSize(imgdata)
 		voltage = imgdata['scope']['high tension']
 		imgsize=imgdata['camera']['dimension']['y']
-		# find cs
-		if bestctfvalue['cs']:
-			cs = bestctfvalue['cs']
-		elif bestctfvalue['acerun']['ace2_params']:
-			cs=bestctfvalue['acerun']['ace2_params']['cs']
-		elif bestctfvalue['acerun']['ctftilt_params']:
-			cs=bestctfvalue['acerun']['ctftilt_params']['cs']
-		else:
-			apDisplay.printError("No cs value found in database")
 
-		# no astigmatism correction now
-		#angast = bestctfvalue['angle_astigmatism']*math.pi/180
-		#amp = bestctfvalue['amplitude_contrast']
+		# find cs
+		cs = self.getCS(bestctfvalue)
 
 		# convert image to spider
 		emancmd="proc2d %s %s spidersingle"%(inimgpath,spi_imgpath)
