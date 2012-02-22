@@ -471,10 +471,10 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getDatatypes($sessionId, $allpresets=true) {
+	function getDataTypes($sessionId, $allpresets=true) {
 		$q="select distinct name FROM AcquisitionImageData a "
 			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
-			." where a.`REF|SessionData|session` = '$sessionId'";
+			." where a.`REF|SessionData|session` = '$sessionId' order by magnification";
 		$Rdatatypes = $this->mysql->getSQLResult($q);
 		if ($Rdatatypes)
 		foreach ($Rdatatypes as $d) {
@@ -809,7 +809,7 @@ class leginondata {
 		."`AcquisitionImageData` AS `a` "
 		."WHERE `a`.`DEF_id`=$id";
 		list($R) = $this->mysql->getSQLResult($q);
-		
+
 		$q="SELECT "
 		."`a`.`DEF_id` as `id` "
 		."FROM "
