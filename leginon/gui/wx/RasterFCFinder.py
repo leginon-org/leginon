@@ -20,7 +20,7 @@ class Panel(gui.wx.RasterFinder.Panel):
 		# but needs to be repeated, probably for scope reasons
 		# (so the code can see the RasterFCFinder "versions" of
 		# the classes in RasterFCFinder.py).
-		gui.wx.TargetFinder.Panel.initialize(self)
+		gui.wx.RasterFinder.Panel.initialize(self)
 
 
 		self.SettingsDialog = gui.wx.TargetFinder.SettingsDialog

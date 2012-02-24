@@ -6,7 +6,7 @@
 #  "An approach to automated acquisition of cryoEM images from lacey
 #  carbon grids."
 
-import data
+import leginondata
 import targetfinder
 # WVN 19/1/08 - changes borrowed from v.1.4.1 rasterfinder.py
 # Apart from below changes in imports, other changes were in
@@ -36,7 +36,7 @@ import rasterfinder
 
 class RasterFCFinder(rasterfinder.RasterFinder):
 	panelclass = gui.wx.RasterFCFinder.Panel
-	settingsclass = data.RasterFCFinderSettingsData
+	settingsclass = leginondata.RasterFCFinderSettingsData
 	defaultsettings = dict(rasterfinder.RasterFinder.defaultsettings)
 	defaultsettings.update({
                'focus center x': 0,
@@ -80,7 +80,8 @@ class RasterFCFinder(rasterfinder.RasterFinder):
 		i0 = self.settings['ice thickness']
 		tmin = self.settings['ice min mean']
 		tmax = self.settings['ice max mean']
-		tstd = self.settings['ice max std']
+		tstdmax = self.settings['ice max std']
+		tstdmin = self.settings['ice min std']
 		boxsize = self.settings['ice box size']
 
 		self.icecalc.set_i0(i0)
@@ -88,17 +89,18 @@ class RasterFCFinder(rasterfinder.RasterFinder):
 		# calculate stats around each raster point
 		goodpoints = []
 		mylist = []
+		if self.polygonrasterpoints is None:
+			self.polygonrasterpoints= []
 		for rasterpoint in self.polygonrasterpoints:
 			# WVN 19/1/08 - change borrowed from v.1.4.1 rasterfinder.py
 			# box_stats = self.get_box_stats(self.original, rasterpoint, boxsize)
 			box_stats = self.get_box_stats(self.currentimagedata['image'], rasterpoint, boxsize)
 			t = self.icecalc.get_thickness(box_stats['mean'])
 			ts = self.icecalc.get_stdev_thickness(box_stats['std'], box_stats['mean'])
-			if (tmin <= t <= tmax) and (ts < tstd):
+			if (tmin <= t <= tmax) and (tstdmin <= ts <= tstdmax):
 				goodpoints.append(rasterpoint)
 				mylist.append( (rasterpoint, t, ts))
 
-		goodpoints = self.transpose_points(goodpoints)
 		self.logger.info('%s points with good ice' % (len(goodpoints),))
 
 		### run template convolution

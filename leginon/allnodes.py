@@ -41,6 +41,9 @@ noderegistry.registerNodeClass(HoleFinder,classtype)
 from rasterfinder import RasterFinder
 noderegistry.registerNodeClass(RasterFinder,classtype)
 
+from rasterfcfinder import RasterFCFinder
+noderegistry.registerNodeClass(RasterFCFinder,classtype)
+
 from stigacquisition import StigAcquisition
 noderegistry.registerNodeClass(StigAcquisition,classtype)
 
