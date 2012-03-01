@@ -115,6 +115,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 	def waitForUserCheck(self):
 			self.setStatus('user input')
+			self.twobeeps()
 			self.logger.info('Waiting for user to check targets...')
 			self.panel.submitTargets()
 			self.userpause.clear()

@@ -454,6 +454,11 @@ class Node(correctorclient.CorrectorClient):
 				sys.stdout.flush()
 		self.logger.info('[beep]')
 
+	def twobeeps(self):
+		self.beep()
+		time.sleep(0.2)
+		self.beep()
+
 	def setStatus(self, status):
 		self.panel.setStatus(status)
 
