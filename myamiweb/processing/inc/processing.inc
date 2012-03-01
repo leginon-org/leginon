@@ -805,7 +805,7 @@ $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0, $walltime="240", $cputime=
 	$cmd = "mkdir -p $rundir;";
 	$rvalue = exec_over_ssh($processhost, $user, $pass, $cmd, True);
 	if ($rvalue === false ){
-		$errMsg = "Could not create run directory on $host: ";
+		$errMsg = "Could not create run directory on $processhost: ";
 		$errMsg .= pconnError();
 		return $errMsg;
 	}
