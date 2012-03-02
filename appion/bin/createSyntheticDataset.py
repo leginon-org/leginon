@@ -668,7 +668,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			filename = line.strip().split()[0]
 
 			### apply CTF using ACE2
-			ace2cmd = (self.ace2correct+" -img %s -kv %d -cs %.1f -apix %.3f -df %.9f,%.9f,%.3f -apply -ampc %.3f"
+			ace2cmd = (self.ace2correct+" -img %s -kv %d -cs %.3f -apix %.3f -df %.9f,%.9f,%.3f -apply -ampc %.3f"
 				%(filename, self.params['kv'], self.params['cs'], self.params['apix'],
 				self.deflist1[partnum-1], self.deflist2[partnum-1], self.params['astigmatism'], self.params['amp']))
 			cmdlist.append(ace2cmd)
@@ -749,7 +749,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			filename = sline.split()[0]
 
 			### correct CTF using ACE2
-			ace2cmd = (self.ace2correct+" -img %s -kv %d -cs %.1f -apix %.3f -df %.9f,%.9f,%.3f -wiener 0.1 -ampc %.3f"
+			ace2cmd = (self.ace2correct+" -img %s -kv %d -cs %.3f -apix %.3f -df %.9f,%.9f,%.3f -wiener 0.1 -ampc %.3f"
 				%(filename, self.params['kv'], self.params['cs'], self.params['apix'],
 				self.deflist1c[partnum-1], self.deflist2c[partnum-1], self.params['astigmatism'], self.params['amp']))
 			cmdlist.append(ace2cmd)
