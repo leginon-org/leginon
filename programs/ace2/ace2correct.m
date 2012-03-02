@@ -127,7 +127,7 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 		{ 1,	NULL,	"Path to CTF estimate file",	 			"ctf",			1 },
 		{ 2,	NULL,	"Path to image file",	 					"img",			1 },
 		{ 3,	NULL,	"Microscope voltage in kilovolts",			"kv",			1 },
-		{ 4,	NULL,	"Microscope Spherical Aberration in mm",	"cs",			1 },
+		{ 4,	NULL,	"Microscope Spherical Aberration in meters",	"cs",			1 },
 		{ 5,	NULL,	"Angstroms per pixel",						"apix",			1 },
 		{ 6,	NULL,	"Defocus: x,y,angle in m,m,radians",		"df",			1 },
 		{ 7,	NULL,	"Correct only phase signs",	  				"phase",		0 },
