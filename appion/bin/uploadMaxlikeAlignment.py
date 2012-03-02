@@ -238,6 +238,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		runparams = cPickle.load(f)
 		if not 'localstack' in runparams:
 			runparams['localstack'] = self.params['timestamp']+".hed"
+		if not 'student' in runparams:
+			runparams['student'] = 0
 		return runparams
 
 	#=====================
