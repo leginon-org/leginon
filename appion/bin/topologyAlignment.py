@@ -37,8 +37,8 @@ class TopologyRepScript(appionScript.AppionScript):
 
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="Number of processor to use", metavar="#")
-		self.parser.add_option("--canproc", dest="canproc", type="int", default=1,
-			help="Number of processor to use for CAN", metavar="#")
+		self.parser.add_option("--msaproc", dest="msaproc", type="int", default=1,
+			help="Number of processor to use for MSA", metavar="#")
 
 		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
