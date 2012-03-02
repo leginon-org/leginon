@@ -91,8 +91,13 @@ class CL2D(appionScript.AppionScript):
 			self.clipsize = self.params['clipsize']
 		if self.params['numpart'] is None:
 			self.params['numpart'] = apFile.numImagesInStack(stackfile)
-		if self.checkMPI() is None:
+		self.mpirun = self.checkMPI()
+		if self.mpirun is None:
 			apDisplay.printError("There is no MPI installed")
+		if self.params['nproc'] is None:
+			self.params['nproc'] = apParam.getNumProcessors()
+		if self.params['nproc'] < 2:
+			apDisplay.printError("Only the MPI version of CL2D is currently supported, must run with > 1 CPU")
 
 	#=====================
 	def setRunDir(self):
@@ -572,19 +577,12 @@ class CL2D(appionScript.AppionScript):
 		if self.params['align']:
 			xmippopts += " -alignImages "
 
-		### find number of processors
-		if self.params['nproc'] is None:
-			nproc = nproc = apParam.getNumProcessors()
-		else:
-			nproc = self.params['nproc']
-		mpirun = self.checkMPI()
-		if nproc > 2 and mpirun is not None:
-			### use multi-processor
-			apDisplay.printColor("Using "+str(nproc)+" processors!", "green")
-			xmippexe = apParam.getExecPath("xmipp_mpi_class_averages", die=True)
-			mpiruncmd = mpirun+" -np "+str(nproc)+" "+xmippexe+" "+xmippopts
-			self.writeXmippLog(mpiruncmd)
-			apParam.runCmd(mpiruncmd, package="Xmipp", verbose=True, showcmd=True, logfile="xmipp.std")
+		### use multi-processor command
+		apDisplay.printColor("Using "+str(nproc)+" processors!", "green")
+		xmippexe = apParam.getExecPath("xmipp_mpi_class_averages", die=True)
+		mpiruncmd = mpirun+" -np "+str(nproc)+" "+xmippexe+" "+xmippopts
+		self.writeXmippLog(mpiruncmd)
+		apParam.runCmd(mpiruncmd, package="Xmipp", verbose=True, showcmd=True, logfile="xmipp.std")
 		self.params['runtime'] = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(self.params['runtime']))
 
