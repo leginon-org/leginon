@@ -67,13 +67,18 @@ class Panel(leginon.gui.wx.TargetFinder.Panel):
 		elif evt.name == 'Polygon Vertices':
 			dialog = PolygonSettingsDialog(self)
 		elif evt.name == 'acquisition':
-			dialog = FinalSettingsDialog(self)
+			dialog = self._FinalSettingsDialog(self)
 		elif evt.name == 'focus':
-			dialog = FinalSettingsDialog(self)
+			dialog = self._FinalSettingsDialog(self)
 
 		dialog.ShowModal()
 		dialog.Destroy()
 
+	def _FinalSettingsDialog(self,parent):
+		# This "private call" allows the class in the module containing
+		# a subclass to redefine it in that module
+		return FinalSettingsDialog(parent)
+	
 class OriginalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 	def initialize(self):
 		return OriginalScrolledSettings(self,self.scrsize,False)
@@ -292,6 +297,7 @@ class FinalSettingsDialog(leginon.gui.wx.Settings.Dialog):
 class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		leginon.gui.wx.Settings.ScrolledDialog.initialize(self)
+		print self.__module__
 		sb = wx.StaticBox(self, -1, 'Ice Analysis')
 		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Focus Targets')
@@ -345,15 +351,7 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 
 		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)
 
-		szft = wx.GridBagSizer(5, 5)
-		szft.Add(self.widgets['focus convolve'], (0, 0), (1, 2),
-			wx.ALIGN_CENTER_VERTICAL)
-		szft.Add(self.widgets['focus convolve template'], (1, 0), (1, 1),
-			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szft.Add(self.widgets['focus constant template'], (2, 0), (1, 1),
-			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szft.AddGrowableCol(0)
-
+		szft = self.FocusFilterSettingsPanel()
 		sbszft.Add(szft, 1, wx.EXPAND|wx.ALL, 5)
 
 		szat = wx.GridBagSizer(5, 5)
@@ -384,6 +382,19 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 		self.Bind(wx.EVT_BUTTON, self.onClearButton, self.cice)
 
 		return [sbszice, szt, szbutton]
+
+	
+	def FocusFilterSettingsPanel(self):
+		szft = wx.GridBagSizer(5, 5)
+		szft.Add(self.widgets['focus convolve'], (0, 0), (1, 2),
+			wx.ALIGN_CENTER_VERTICAL)
+		szft.Add(self.widgets['focus convolve template'], (1, 0), (1, 1),
+			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		szft.Add(self.widgets['focus constant template'], (2, 0), (1, 1),
+			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		szft.AddGrowableCol(0)
+
+		return szft
 
 	def onAnalyzeIceButton(self, evt):
 		self.dialog.setNodeSettings()
