@@ -163,3 +163,18 @@ def correctBeamTiltPhaseShift(imgarray,pixelsize,beamtilt,Cs,ht):
 		cfft = fft * correction
 		corrected_image = fftpack.ifft2(cfft)
 		return corrected_image
+
+if __name__ == '__main__':
+	a = mrc.read('test.mrc')
+	# pixel size in meters
+	pixelsize = 6e-10
+	Cs=2e-3
+	ht=300000
+	pow = imagefun.power(a)
+	mrc.write(pow,'pow.mrc')
+	dimension = {'x':a.shape[1],'y':a.shape[0]}
+	imagepixelsize = {'x':pixelsize,'y':pixelsize}
+	rpixelsize = {'x':1.0/(imagepixelsize['x']*dimension['x']),'y':1.0/(imagepixelsize['y']*dimension['y'])}
+	
+	ctfdata = fitFirstCTFNode(pow,rpixelsize['x'], None, ht)
+	print ctfdata
