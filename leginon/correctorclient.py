@@ -480,7 +480,7 @@ class CorrectorClient(cameraclient.CameraClient):
 				session_name = maybe_name
 				break
 		if session_name is None:
-			raise RuntimeError('not reference session name determined')
+			raise RuntimeError('no reference session name determined')
 
 		directory = leginon.leginonconfig.mapPath(leginon.leginonconfig.IMAGE_PATH)
 		imagedirectory = os.path.join(leginon.leginonconfig.unmapPath(directory), session_name, 'rawdata').replace('\\', '/')
@@ -488,7 +488,7 @@ class CorrectorClient(cameraclient.CameraClient):
 		initializer = {
 			'name': session_name,
 			'comment': 'reference images',
-			'user': None,
+			'user': self.session['user'],
 			'image path': imagedirectory,
 		}
 		session = leginondata.SessionData(initializer=initializer)
@@ -498,13 +498,18 @@ class CorrectorClient(cameraclient.CameraClient):
 		return session
 
 	def getReferenceSession(self):
-		refsession = leginondata.ReferenceSessionData()
-		try:
-			# using timelimit of 30 days
-			refsession = refsession.query(results=1, timelimit='-30 0:0:0')[0]
-		except:
-			refsession = None
+		qrefses = leginondata.ReferenceSessionData()
+		refsessions = qrefses.query(timelimit='-90 0:0:0')
 
+		# find one that is writable
+		refsession = None
+		for r in refsessions:
+			impath = r['session']['image path']
+			if os.access(impath, os.W_OK):
+				refsession = r
+				break
+
+		# if none are writable, create my own
 		if refsession is None:
 			session = self.createReferenceSession()
 		else:
