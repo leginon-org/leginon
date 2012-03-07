@@ -578,9 +578,9 @@ class CL2D(appionScript.AppionScript):
 			xmippopts += " -alignImages "
 
 		### use multi-processor command
-		apDisplay.printColor("Using "+str(nproc)+" processors!", "green")
+		apDisplay.printColor("Using "+str(self.params['nproc'])+" processors!", "green")
 		xmippexe = apParam.getExecPath("xmipp_mpi_class_averages", die=True)
-		mpiruncmd = mpirun+" -np "+str(nproc)+" "+xmippexe+" "+xmippopts
+		mpiruncmd = self.mpirun+" -np "+str(self.params['nproc'])+" "+xmippexe+" "+xmippopts
 		self.writeXmippLog(mpiruncmd)
 		apParam.runCmd(mpiruncmd, package="Xmipp", verbose=True, showcmd=True, logfile="xmipp.std")
 		self.params['runtime'] = time.time() - aligntime
