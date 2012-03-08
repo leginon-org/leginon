@@ -913,6 +913,12 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 	#=======================
 	def commitToDatabase(self, imgdata):
+		### first check if there are any particles to commit
+		try:
+			self.boxedpartdatas
+		except:
+			return
+
 		t0 = time.time()
 		### loop over the particles and insert
 		for i in range(len(self.boxedpartdatas)):
