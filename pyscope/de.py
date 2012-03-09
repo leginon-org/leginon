@@ -134,8 +134,10 @@ class DECameraBase(ccdcamera.CCDCamera):
 		image = self.finalizeGeometry(image)
 		## wait for frames name to be updated before returning
 		if self.getSaveRawFrames():
-			while self.getPreviousRawFramesName() == old_frames_name:
+			new_frames_name = self.getPreviousRawFramesName()
+			while not new_frames_name or (new_frames_name == old_frames_name):
 				time.sleep(1.0)
+				new_frames_name = self.getPreviousRawFramesName()
 		return image
 
 	def getCameraSize(self):
