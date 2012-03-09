@@ -8,7 +8,7 @@ import pyami.imagefun
 
 import ccdcamera
 class DE12(ccdcamera.CCDCamera):
-	name = 'DE12'
+	name = 'DE12OLD'
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
 		self.camera_name = 'DE12'
