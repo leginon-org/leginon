@@ -547,5 +547,12 @@ var help = {
 		'ARTLambda' : 'IMPORTANT: you must specify a value of lambda for each iteration even if art has not been selected. IMPORTANT: NOte that we are using the WLS version of ART that  uses geater lambdas than the plain art. See http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Art for details You must specify this option for each iteration.  This can be done by a sequence of numbers (for instance, ".1 .1 .3 .3"  specifies 4 iterations, the first two set the value to 0.1  no restriction) and the last  two to .3. An alternative compact notation  is ("2x.1 2x.3"). Note: if there are less values than iterations the last value is reused Note: if there are more values than iterations the extra value are ignored',
 		'doComputeResolution' : '0=Do not compute resolution; 1=Compute resolution (FSC)',
 		'fourierMaxFrequencyOfInterest' : 'This number is only used in the first iteration.  From then on, it will be set to resolution computed in the resolution section',
+	},
+	'xmippml3d' : {
+		'ImagesArePhaseFlipped' : 'Please update this message in help.js',
+		'ProjMatchSampling' : 'Please update this message in help.js',
+		'LowPassFilter' : 'Please update this message in help.js',
+		'NumberOfReferences' : 'Please update this message in help.js',
+		'DoCorrectGreyScale' : 'Please update this message in help.js',
 	}	
 }
