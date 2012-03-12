@@ -28,9 +28,9 @@ class EmanRefineForm extends BasicRefineForm
 		$shortSize = 4;
 		$longSize = 20;
 		$html .= $params->insertTextField( "imask", $longSize );
-		$html .= $params->insertTextField( "amask1", $longSize );
-		$html .= $params->insertTextField( "amask2", $longSize );
-		$html .= $params->insertTextField( "amask3", $longSize );
+		$html .= $params->insertTextField( "amask1", $longSize, '', "eman.amask" );
+		$html .= $params->insertTextField( "amask2", $longSize, '', "eman.amask" );
+		$html .= $params->insertTextField( "amask3", $longSize, '', "eman.amask" );
 		$html .= $params->insertTextField( "maxshift", $longSize );
 		$html .= $params->insertTextField( "hard", $longSize );
 		$html .= $params->insertTextField( "classkeep", $longSize );
