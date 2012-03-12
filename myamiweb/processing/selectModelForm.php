@@ -41,17 +41,19 @@ if (is_array($models) && count($models)>0) {
 		$symdata = $particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
 		$modelvals = "$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$symdata[eman_name]";
 
+		$value = "model_".$modelid;
+		
 		// if we want to be able to select multiple models, use checkboxes instead of radio buttons
 		if ( $type == "multi" ) {
 			$controlType = "checkbox";
+			// we expect both the name and the value to be "model_#"		
+			$name = $value;
 		} else {
 			$controlType = "radio";
+			// ensure that only a single model is selected for single model methods
+			$name = "model_";
 		}
-		
-		// we expect both the name and the value to be "model_#"		
-		$value = "model_".$modelid;
-		$name = $value;
-		
+				
 		$modelTable .= "<input type='$controlType' NAME='$name' value='$value' >\n";
 		$modelTable .= "Use<br/>Model\n";
 

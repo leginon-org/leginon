@@ -44,10 +44,10 @@ function jobForm($extra=false) {
 	// we expect both the key and the value to be "model_#"
 	foreach( $_POST as $key=>$value ) {
 		if (strpos($key,"model_" ) !== False) {
-			preg_match('/(\D+)_(\d+)/', $key, $matches);
+			preg_match('/(\D+)_(\d+)/', $value, $matches);
 			$id = $matches[2];
 			
-			$modelArray[] = array( 'name'=>$key, 'id'=>$id );
+			$modelArray[] = array( 'name'=>$value, 'id'=>$id );
 		}
 	}
 	
