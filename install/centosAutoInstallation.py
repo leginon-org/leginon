@@ -149,7 +149,7 @@ class CentosInstallation(object):
 	def yumUpdate(self):
 		print "Updating system files...."
 
-		self.runCommand("rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/`uname -i`/epel-release-5-4.noarch.rpm")
+		self.runCommand("rpm -Uvh http://dl.fedoraproject.org/pub/epel/5/`uname -i`/epel-release-5-4.noarch.rpm")
 
 		self.runCommand("yum -y update yum*")
 
