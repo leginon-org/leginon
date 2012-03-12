@@ -26,6 +26,9 @@ class FrealignRefineForm extends BasicRefineForm
 		// classes extended from BasicRefineForm should get the selected default values
 		$paramSet = $this->getFormParams();
 		
+		// make sure we are using the appropriate pop-up help messages
+		$paramSet->setHelpSection( "frealign" );	
+			
 		// set field sizes
 		$shortSize = 4;
 		$longSize = 20;
