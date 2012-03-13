@@ -549,10 +549,10 @@ var help = {
 		'fourierMaxFrequencyOfInterest' : 'This number is only used in the first iteration.  From then on, it will be set to resolution computed in the resolution section',
 	},
 	'xmippml3d' : {
-		'ImagesArePhaseFlipped' : 'Please update this message in help.js',
-		'ProjMatchSampling' : 'Please update this message in help.js',
-		'LowPassFilter' : 'Please update this message in help.js',
-		'NumberOfReferences' : 'Please update this message in help.js',
-		'DoCorrectGreyScale' : 'Please update this message in help.js',
+		'ImagesArePhaseFlipped' : 'The phases of the raw images have been flipped according to the CTF estimation. You can run MLF with or without having phase flipped the images',
+		'ProjMatchSampling' : 'Angular incremement of projections ONLY for the grey-scale correction. As the resolution of the intial reference should be low, this sampling can be relatively crude, e.g. 15.',
+		'LowPassFilter' : 'low-pass filter of the initial reference. It is highly recommended to low-pass filter your initial reference volume as much as you can',
+		'NumberOfReferences' : 'number of classes to compute',
+		'DoCorrectGreyScale' : 'Correct greyscale values for all images before performing ML3D. This is done using a single iteration of projection-matching with the ProjMatchSampling value specified. The probabilities computed during ML3D are based on squared differences, so that the absolute grey scale is important',
 	}	
 }
