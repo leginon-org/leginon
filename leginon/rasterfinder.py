@@ -295,7 +295,7 @@ class RasterFinder(targetfinder.TargetFinder):
 				focus_points = [goodpoints[0]]
 			else:
 				## pick first of original focus points
-				focus_points = [focus_points[0]]
+				focus_points = focus_points[0:1]
 
 		self.setTargets(acq_points, 'acquisition', block=True)
 		self.setTargets(focus_points, 'focus', block=True)
