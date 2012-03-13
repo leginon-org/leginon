@@ -7240,5 +7240,79 @@
 	<key>PRIMARY KEY (`DEF_id`)</key> 
 	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
 </sqltable>
+<sqltable name="ApPrepRefineData" >
+	<field 
+		name="DEF_id" 
+		type="int(16)" 
+		null="NOT NULL" 
+		extra="auto_increment" 
+	/> 
+	<field 
+		name="DEF_timestamp" 
+		type="timestamp" 
+		null="NOT NULL" 
+		default="DEFAULT 'CURRENT_TIMESTAMP' on update 'CURRENT_TIMESTAMP'" 
+	/> 
+	<field 
+		name="name" 
+		type="TEXT" 
+		null="NULL" 
+		default="NULL"
+	/> 
+	<field 
+		name="hidden" 
+		type="TINYINT(1)" 
+		null="NULL" 
+		default="0" 
+	/> 
+	<field 
+		name="REF|ApPathData|path" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApStackData|stack" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|ApAppionJobData|job" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="REF|leginondata|SessionData|session" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="method" 
+		type="TEXT" 
+		null="NULL" 
+		default="NULL"
+	/> 
+	<field 
+		name="REF|ApRefineIterData|paramiter" 
+		type="INT(20)" 
+		null="NULL" 
+		default="NULL" 
+	/> 
+	<field 
+		name="description" 
+		type="TEXT" 
+		null="NULL" 
+	/> 
+	<key>PRIMARY KEY (`DEF_id`)</key> 
+	<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key> 
+	<key>KEY `REF|ApPathData|path` (`REF|ApPathData|path`)</key> 
+	<key>KEY `REF|ApStackData|stack` (`REF|ApStackData|stack`)</key> 
+	<key>KEY `REF|ApAppionJobData|job` (`REF|ApAppionJobData|job`)</key> 
+	<key>KEY `REF|leginondata|SessionData|session` (`REF|leginondata|SessionData|session`)</key> 
+	<key>KEY `REF|ApRefineIterData|paramiter` (`REF|ApRefineIterData|paramiter`)</key> 
+</sqltable>
  </definition>
 </defaulttables>
