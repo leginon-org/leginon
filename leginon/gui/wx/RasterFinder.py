@@ -316,6 +316,7 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 			leginon.gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
 		self.widgets['focus constant template'] = \
 			leginon.gui.wx.TargetTemplate.Panel(self, 'Constant Template', targetname='Constant target')
+		self.widgets['focus one'] = wx.CheckBox(self, -1, 'Threshold to one focus target')
 		self.widgets['acquisition convolve'] = wx.CheckBox(self, -1, 'Convolve')
 		self.widgets['acquisition convolve template'] = \
 			leginon.gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
@@ -392,6 +393,8 @@ class FinalScrolledSettings(leginon.gui.wx.Settings.ScrolledDialog):
 			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szft.Add(self.widgets['focus constant template'], (2, 0), (1, 1),
 			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		szft.Add(self.widgets['focus one'], (3, 0), (1, 1),
+			wx.ALIGN_CENTER_VERTICAL)
 		szft.AddGrowableCol(0)
 
 		return szft

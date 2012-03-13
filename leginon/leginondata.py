@@ -1384,6 +1384,7 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 			('focus convolve', bool),
 			('focus convolve template', list),
 			('focus constant template', list),
+			('focus one', bool),
 			('acquisition convolve', bool),
 			('acquisition convolve template', list),
 			('acquisition constant template', list),

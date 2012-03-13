@@ -50,6 +50,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		'focus convolve': False,
 		'focus convolve template': [],
 		'focus constant template': [],
+		'focus one': False,
 		'acquisition convolve': False,
 		'acquisition convolve template': [],
 		'acquisition constant template': [],
@@ -250,7 +251,6 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		## calculate stats around each raster point
 		goodpoints = []
-		mylist = []
 		if self.polygonrasterpoints is None:
 			self.polygonrasterpoints= []
 		for rasterpoint in self.polygonrasterpoints:
@@ -259,7 +259,6 @@ class RasterFinder(targetfinder.TargetFinder):
 			ts = self.icecalc.get_stdev_thickness(box_stats['std'], box_stats['mean'])
 			if (tmin <= t <= tmax) and (tstdmin <= ts <= tstdmax):
 				goodpoints.append(rasterpoint)
-				mylist.append( (rasterpoint, t, ts))
 
 		self.logger.info('%s points with good ice' % (len(goodpoints),))
 
@@ -279,6 +278,24 @@ class RasterFinder(targetfinder.TargetFinder):
 		focus_points.extend(const_foc)
 		const_acq = self.settings['acquisition constant template']
 		acq_points.extend(const_acq)
+
+		## limit to one focus based on thresholds
+		focusone = self.settings['focus one']
+		if focusone:
+			## calculate stats around each focus point
+			goodpoints = []
+			for focuspoint in focus_points:
+				box_stats = self.get_box_stats(self.currentimagedata['image'], focuspoint, boxsize)
+				t = self.icecalc.get_thickness(box_stats['mean'])
+				ts = self.icecalc.get_stdev_thickness(box_stats['std'], box_stats['mean'])
+				if (tmin <= t <= tmax) and (tstdmin <= ts <= tstdmax):
+					goodpoints.append(focuspoint)
+			if goodpoints:
+				## pick first good focus point
+				focus_points = [goodpoints[0]]
+			else:
+				## pick first of original focus points
+				focus_points = [focus_points[0]]
 
 		self.setTargets(acq_points, 'acquisition', block=True)
 		self.setTargets(focus_points, 'focus', block=True)
