@@ -322,7 +322,7 @@ class RefineJob(basicScript.BasicScript):
 		result_tar = 'recon_results.tar.gz'
 
 		self.files_from_remote_host.append(result_tar)
-		tasks = self.addToTasks(tasks,'tar cvzf %s recon/' % (result_tar))
+		tasks = self.addToTasks(tasks,'tar cvzf %s %s recon/' % (result_tar, "*.pickle"))
 		self.files_from_remote_host.append(self.commandfile)
 		self.__saveFileListFromRemoteHost()
 		if self.params['remoterundir'] != self.params['rundir']:

@@ -33,6 +33,8 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 			help="This lowpass filter will be applied for the generation of the next reference", default=True)
 		self.parser.add_option("--DontUseFscForFilter", dest="usefscforfilter", action="store_false",
 			help="Use the FSC=0.5+Constant frequency for the filtration", default=True)
+		self.parser.add_option("--filterResolution", dest="filterResolution", type="float", 
+			help="just model to specified resolution (in Angstroms) after each iteration")
 
 	#================
 	def setIterationParamList(self):
@@ -55,13 +57,17 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 				{'name':"ARTLambda",
 					'help':"Relaxation factor for ART", 'default':"0.2"},
 				{'name':"filterConstant",
-					'help':"Use the FSC=0.5+Constant frequency for the filtration", 'default':"0.1"},
+					'help':"Use the FSC=0.5+Constant frequency for the filtration, in Angstroms", 'default':"0.1"},
 				])
 
 	def checkIterationConflicts(self):
 		super(XmippSingleModelRefineJob,self).checkIterationConflicts()
 		pad = int(self.params['boxsize']*1.25/2.0)*2
 		self.params['pad'] = map((lambda x: pad),range(self.params['numiter']))
+		if self.params['usefscforfilter'] is True and self.params['filterResolution'] is not None:
+			apDisplay.printWarning("cannot use FSC for filter AND specify a resolution to filter model, either set \
+				--DontUseFscForFilter to True or remove --filterResolution ... setting --DontUseFscForFilter to True")
+			self.params['usefscforfilter'] = False
 	
 	def convertSymmetryNameForPackage(self,inputname):
 		'''
@@ -165,7 +171,11 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["DisplayResolution"]            =   False
 		protocolPrm["DoLowPassFilter"]              =   self.params['dolowpassfilter']
 		protocolPrm["UseFscForFilter"]              =   self.params['usefscforfilter']
-		protocolPrm["ConstantToAddToFiltration"]    =   self.params['filterConstant']
+		if self.params['usefscforfilter'] is False:
+			protocolPrm["ConstantToAddToFiltration"] = self.params['apix'] / self.params['filterResolution']
+		else:
+			protocolPrm["ConstantToAddToFiltration"]    =   self.params['filterConstant']
+		print protocolPrm["ConstantToAddToFiltration"]
 		protocolPrm["NumberOfThreads"]              =   self.params['alwaysone']
 		protocolPrm["DoParallel"]                   =   self.params['nproc']>1
 		protocolPrm["NumberOfMpiProcesses"]         =   self.params['nproc']
@@ -194,8 +204,8 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		self.runparams['remoterundir'] = self.params['remoterundir']
 		self.runparams['reconstruction_working_dir'] = protocolPrm["WorkingDir"] 
 		self.runparams['package_params'] = protocolPrm
-		paramfile = os.path.join(self.params['remoterundir'], "xmipp_projection_matching_"+self.timestamp+"-params.pickle")
-		apParam.dumpParameters(self.runparams, paramfile)
+		self.picklefile = os.path.join(self.params['remoterundir'], "xmipp_projection_matching_"+self.timestamp+"-params.pickle")
+		apParam.dumpParameters(self.runparams, self.picklefile)
 		
 		### finished setup of input files, now run xmipp_protocols_ml3d.py from jobfile
 		apDisplay.printMsg("finished setting up input files, now ready to run protocol")
