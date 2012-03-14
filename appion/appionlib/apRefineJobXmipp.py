@@ -172,9 +172,9 @@ class XmippSingleModelRefineJob(apRefineJob.RefineJob):
 		protocolPrm["DoLowPassFilter"]              =   self.params['dolowpassfilter']
 		protocolPrm["UseFscForFilter"]              =   self.params['usefscforfilter']
 		if self.params['usefscforfilter'] is False:
-			protocolPrm["ConstantToAddToFiltration"] = self.params['apix'] / self.params['filterResolution']
+			protocolPrm["ConstantToAddToFiltration"] = str(self.params['apix'] / self.params['filterResolution'])
 		else:
-			protocolPrm["ConstantToAddToFiltration"]    =   self.params['filterConstant']
+			protocolPrm["ConstantToAddToFiltration"]    =   str(self.params['filterConstant'])
 		print protocolPrm["ConstantToAddToFiltration"]
 		protocolPrm["NumberOfThreads"]              =   self.params['alwaysone']
 		protocolPrm["DoParallel"]                   =   self.params['nproc']>1
