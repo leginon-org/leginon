@@ -101,7 +101,7 @@ class XmippRefineForm extends BasicRefineForm
 		$filterEstimated 	= ''; 
 		$filterResolution	= ''; 
 		$filterComputed 	= 'CHECKED'; 
-		$filterConstant 	= '2';
+		$filterConstant 	= '0.01';
 		$mask 				= ''; 
 		$maxAngularChange 	= '4x1000:2x20:2x9:2x6'; 
 		$maxChangeOffset 	= '1000';
@@ -177,7 +177,7 @@ class XmippRefineForm extends BasicRefineForm
 	      if (obj.filterEstimated) obj.filterEstimated.checked = false;
 	      if (obj.filterResolution) obj.filterResolution.value = '';
 	      if (obj.filterComputed ) obj.filterComputed.checked = true;
-	      if (obj.filterConstant) obj.filterConstant.value = '2';
+	      if (obj.filterConstant) obj.filterConstant.value = '0.01';
 	      if (obj.mask) obj.mask.value = '';
 	      if (obj.maxAngularChange) obj.maxAngularChange.value = '4x1000:2x20:2x9:2x6';
 	      if (obj.maxChangeOffset) obj.maxChangeOffset.value = '1000';

@@ -366,7 +366,7 @@ var help = {
 		'filterEstimated' : 'Filter reconstructed volume to the estimated resolution.',
 		'filterResolution' : 'The estimated resolution of the reconstruction.',
 		'filterComputed' : 'Filter the reconstructed volume to the resolution computed by FSC.',
-		'filterConstant' : 'Constant value to add to computed filter value.',		
+		'filterConstant' : 'Constant value to add to computed filter value. Units refer to the spectral index. For example, if your model has an FSC of 10 Angstroms with a pixel size of 1.63, the spectral index value is (1.63 / 10) = 0.163. Adding 0.01 to this means that the resulting model will be filtered to 1.63/(0.163+0.01) = 9.42 Angstroms. Keep this value relatively low.',		
 	},	
 	'eman' : {
 /**

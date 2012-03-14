@@ -283,7 +283,7 @@ abstract class BasicRefineForm extends BasicForm
 
 		$html .= $paramSet->insertCheckboxField( "filterComputed" );
 		$html .= "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-		$html .= $paramSet->insertTextField( "filterConstant", $shortSize, "(&Aring;ngstroms)" );
+		$html .= $paramSet->insertTextField( "filterConstant", $shortSize, "(<b>spectral index</b>)" );
 		
 		$html .= "<br/><br/>\n";
 		
@@ -357,7 +357,7 @@ abstract class BasicRefineForm extends BasicForm
 	      if (obj.filterEstimated) obj.filterEstimated.checked = false;
 	      if (obj.filterResolution) obj.filterResolution.value = '';
 	      if (obj.filterComputed ) obj.filterComputed.checked = true;
-	      if (obj.filterConstant) obj.filterConstant.value = '2';
+	      if (obj.filterConstant) obj.filterConstant.value = '0.01';
 	      return;
 	    }
 	  </script>\n";
