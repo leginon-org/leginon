@@ -357,7 +357,7 @@ abstract class BasicRefineForm extends BasicForm
 	      if (obj.filterEstimated) obj.filterEstimated.checked = false;
 	      if (obj.filterResolution) obj.filterResolution.value = '';
 	      if (obj.filterComputed ) obj.filterComputed.checked = true;
-	      if (obj.filterConstant) obj.filterConstant.value = '0.1';
+	      if (obj.filterConstant) obj.filterConstant.value = '2';
 	      return;
 	    }
 	  </script>\n";

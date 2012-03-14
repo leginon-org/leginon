@@ -64,18 +64,20 @@ class XmippRefineForm extends BasicRefineForm
 		$command = $this->addCommandFlag( $command, "reconMethod" );
 		$command = $this->addCommandFlag( $command, "ARTLambda" );
 		$command = $this->addCommandFlag( $command, "fourierMaxFrequencyOfInterest" );
-		$command = $this->addCommandFlag( $command, "filterConstant" );
 		
 	    $doComputeResolution 	= $params->getParamValue("doComputeResolution");
 	    $filterComputed 		= $params->getParamValue("filterComputed");
 	    $filterEstimated 		= $params->getParamValue("filterEstimated");
-	    
+
 	    if ( $doComputeResolution == 'on' )
 	        $command.=' --DoComputeResolution ';
-	    if ( $filterComputed == 'on' || $filterEstimated == 'on' ) 
+	    if ( $filterComputed == 'on') 
 	        $command.=' --DoLowPassFilter ';
+	        $command = $this->addCommandFlag( $command, "filterConstant" );
 	    if ( $filterEstimated == 'on' )
+	        $command.=' --DoLowPassFilter ';
 	        $command.=' --DontUseFscForFilter ';
+	        $command = $this->addCommandFlag( $command, "filterResolution" );
 	    			
 		return $command;
 	}
@@ -99,7 +101,7 @@ class XmippRefineForm extends BasicRefineForm
 		$filterEstimated 	= ''; 
 		$filterResolution	= ''; 
 		$filterComputed 	= 'CHECKED'; 
-		$filterConstant 	= '0.1';
+		$filterConstant 	= '2';
 		$mask 				= ''; 
 		$maxAngularChange 	= '4x1000:2x20:2x9:2x6'; 
 		$maxChangeOffset 	= '1000';
@@ -175,7 +177,7 @@ class XmippRefineForm extends BasicRefineForm
 	      if (obj.filterEstimated) obj.filterEstimated.checked = false;
 	      if (obj.filterResolution) obj.filterResolution.value = '';
 	      if (obj.filterComputed ) obj.filterComputed.checked = true;
-	      if (obj.filterConstant) obj.filterConstant.value = '0.1';
+	      if (obj.filterConstant) obj.filterConstant.value = '2';
 	      if (obj.mask) obj.mask.value = '';
 	      if (obj.maxAngularChange) obj.maxAngularChange.value = '4x1000:2x20:2x9:2x6';
 	      if (obj.maxChangeOffset) obj.maxChangeOffset.value = '1000';
