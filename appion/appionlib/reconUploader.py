@@ -181,8 +181,11 @@ class generalReconUploader(appionScript.AppionScript):
 		''' untar results, if this hasn't been done yet '''
 		if os.path.exists(os.path.join(self.params['rundir'], "recon_results.tar.gz")):
 			apParam.runCmd("tar -xvzf recon_results.tar.gz", "SHELL")
+			apParam.runCmd("rm recon_results.tar.gz", "SHELL")
 		if os.path.exists(os.path.join(self.params['rundir'], "volumes.tar.gz")):
 			apParam.runCmd("tar -xvzf volumes.tar.gz", "SHELL")
+			apParam.runCmd("rm volumes.tar.gz", "SHELL")
+		
 
 	#=====================
 	def tryToGetJobID(self):
