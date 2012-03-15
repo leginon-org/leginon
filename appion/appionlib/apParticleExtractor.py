@@ -222,6 +222,8 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		self.ctfestopts = ('ace2', 'ctffind')
 
 		### values
+		self.parser.add_option("--bin", dest="bin", type="int", default=1,
+			help="Bin the particles after extracting", metavar="#")
 		self.parser.add_option("--ctfcutoff", dest="ctfcutoff", type="float",
 			help="CTF cut off")
 		self.parser.add_option("--mincc", dest="correlationmin", type="float",
@@ -292,6 +294,9 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		self.insertdbtimes = []
 		self.noimages = False
 		self.totalpart = 0
+		self.selectiondata = None
+		if self.params['selectionid'] is not None:
+			self.selectiondata = apParticle.getSelectionRunDataFromID(self.params['selectionid'])
 		if len(self.imgtree) == 0:
 			apDisplay.printWarning("No images were found to process")
 			self.noimages = True

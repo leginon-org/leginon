@@ -644,8 +644,7 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 		runq = appiondata.ApStackRunData()
 		runq['stackRunName'] = self.params['runname']
 		runq['session'] = sessiondata
-		if self.params['selectionid'] is not None:
-			runq['selectionrun'] = appiondata.ApSelectionRunData.direct_query(self.params['selectionid'])
+		runq['selectionrun'] = self.selectiondata
       	### see if stack run already exists in the database (just checking runname & session)
 		uniqrundatas = runq.query(results=1)
 
