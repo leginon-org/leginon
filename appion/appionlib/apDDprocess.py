@@ -3,6 +3,7 @@
 import os
 import sys
 import numpy
+import time
 import scipy.stats
 import scipy.ndimage as ndimage
 import numextension
@@ -26,6 +27,7 @@ class DirectDetectorProcessing(object):
 	def __init__(self):
 		self.image = None
 		self.stripenorm_imageid = None
+		self.waittime = 0 # in minutes
 		self.camerainfo = {}
 		self.c_client = correctorclient.CorrectorClient()
 		# change this to True for loading bias image for correction
@@ -68,6 +70,15 @@ class DirectDetectorProcessing(object):
 		# work around for the bug in DE server between 11sep07 and 11nov22
 		return self.__getRefImageData('dark')['image']
 
+	def getRawFramesName(self):
+		return self.framesname
+
+	def setRawFrameDir(self,path):
+		self.rawframe_dir = path
+
+	def getRawFrameDir(self):
+		return self.rawframe_dir
+
 	def getRawFrameDirFromImage(self,imagedata):
 		# strip off DOS path in rawframe directory name 
 		rawframename = imagedata['camera']['frames name'].split('\\')[-1]
@@ -75,9 +86,16 @@ class DirectDetectorProcessing(object):
 			apDisplay.printWarning('No Raw Frame Saved for %s' % imagedata['filename'])
 		# raw frames are saved in a subdirctory of image path
 		imagepath = imagedata['session']['image path']
+
 		rawframedir = os.path.join(imagepath,'%s.frames' % imagedata['filename'])
-		if not os.path.exists(rawframedir):
-			apDisplay.printError('Raw Frame Directory %s does not exist' % rawframedir)
+		waitmin = 0
+		while not os.path.exists(rawframedir):
+			if self.waitime < 0.1:
+				apDisplay.printError('Raw Frame Directory %s does not exist.' % rawframedir)
+			apDisplay.printWarning('Raw Frame Directory %s does not exist. Wait for 3 min.' % rawframedir)
+			time.sleep(180)
+			waitmin += 3
+			apDisplay.printMsg('Waited for %d min so far' % waitmin)
 		return rawframedir
 
 	def OldgetRawFrameDirFromImage(self,imagedata):
@@ -119,9 +137,8 @@ class DirectDetectorProcessing(object):
 		imagedata = self.image
 		if not imagedata:
 			apDisplay.printError('No image set.')
-		rawframedir = self.getRawFrameDirFromImage(imagedata)
-		# set attribute values
-		self.rawframe_dir = rawframedir
+		# set rawframe path
+		self.setRawFrameDir(self.getRawFrameDirFromImage(imagedata))
 		# initialize self.nframe
 		self.nframe = self.getNumberOfFrameSaved()
 		# total number of frames saved
@@ -153,6 +170,7 @@ class DirectDetectorProcessing(object):
 		camerainfo['dimension'] = dimension
 		camerainfo['nframe'] = nframe
 		camerainfo['norm'] = self.image['norm']
+		print self.image['norm']['filename']
 		# Really should check frame rate but it is not saved now, so use exposure time
 		camerainfo['exposure time'] = self.image['camera']['exposure time']
 		return camerainfo
@@ -195,8 +213,17 @@ class DirectDetectorProcessing(object):
 
 		rawframe_path = os.path.join(rawframe_dir,'RawImage_%d.tif'%frame_number)
 		apDisplay.printMsg('Raw frame path: %s' %  rawframe_path)
-		if not os.path.exists(rawframe_path):
-			return False
+		waitmin = 0
+		while not os.path.exists(rawframe_path):
+			if self.waittime < 0.1:
+				apDisplay.printWarning('Raw Frame File %s does not exist.' % rawframe_path)
+				return False
+			apDisplay.printWarning('Raw Frame File %s does not exist. Wait for 3 min.' % rawframe_path)
+			time.sleep(180)
+			waitmin += 3
+			apDisplay.printMsg('Waited for %d min so far' % waitmin)
+			if waitmin > self.waittime:
+				return False
 		if use_tifffile:
 			# Use Faster tiff conversion to numpy module.
 			tif = tifffile.TIFFfile(rawframe_path)
@@ -383,7 +410,6 @@ class DirectDetectorProcessing(object):
 	def makeCorrectedRawFrameStack(self,rundir, use_full_raw_area=False):
 		sys.stdout.write('\a')
 		sys.stdout.flush()
-		rawframedir = self.getRawFrameDirFromImage(self.image)
 		framestackpath = os.path.join(rundir,self.image['filename']+'_st.mrc')
 		total_frames = self.getNumberOfFrameSaved()
 		half_way_frame = int(total_frames // 2)
