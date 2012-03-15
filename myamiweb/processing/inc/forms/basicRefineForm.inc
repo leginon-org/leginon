@@ -283,7 +283,7 @@ abstract class BasicRefineForm extends BasicForm
 
 		$html .= $paramSet->insertCheckboxField( "filterComputed" );
 		$html .= "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
-		$html .= $paramSet->insertTextField( "filterConstant", $shortSize, "(<b>spectral index</b>)" );
+		$html .= $paramSet->insertTextField( "filterConstant", $shortSize, "(<b>digital frequency</b>)" );
 		
 		$html .= "<br/><br/>\n";
 		
