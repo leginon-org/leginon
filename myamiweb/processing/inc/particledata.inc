@@ -2498,6 +2498,21 @@ echo $q;
 		return count($r);
 	}
 
+	function getParticleMovieRunFromId($movierunid) {
+		$q = "SELECT pr . `DEF_id` as runid , "
+		." pr . `movieRunName`, "
+		." path . `path`, "
+		." pr . `REF|leginondata|SessionData|session` as sessionId, "
+		." pr . `REF|ApSelectionRunData|selectionrun` as selectionId "
+		." FROM `ApParticleMovieRunData` pr "
+		." LEFT JOIN `ApPathData` path "
+		." ON pr.`REF|ApPathData|path` = path.`DEF_id` "
+		." WHERE pr.`DEF_id` = ".$movierunid." "
+		." ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getNumRefImages ($alignrun) {
 		$q = "SELECT count(DEF_id) as num "
 			."FROM `ApAlignReferenceData` "
