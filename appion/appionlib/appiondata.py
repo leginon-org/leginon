@@ -528,13 +528,11 @@ class ApStackRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
-class ApStackParamsData(Data):
+class ApParticleExtractorData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('boxSize', int),
 			('bin', int),
-			('phaseFlipped', bool),
-			('fliptype', str),
 			('aceCutoff', float),
 			('correlationMin', float),
 			('correlationMax', float),
@@ -543,15 +541,23 @@ class ApStackParamsData(Data):
 			('norejects', bool),
 			('minDefocus', float),
 			('maxDefocus', float),
+			('defocpair', bool),
+			('tiltangle', str),
+			('rotate', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApStackParamsData(ApParticleExtractorData):
+	def typemap(cls):
+		return ApParticleExtractorData.typemap() + (
+			('phaseFlipped', bool),
+			('fliptype', str),
 			('fileType', str),
 			('inverted', bool),
 			('normalized', bool),
 			('xmipp-norm', float),
-			('defocpair', bool),
 			('lowpass', float),
 			('highpass', float),
-			('tiltangle', str),
-			('rotate', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -616,6 +622,37 @@ class ApStackFormatData(Data):
 			('frealign', ApPathData),
 		)
 	typemap = classmethod(typemap)
+
+class ApParticleMovieRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('movieRunName', str),
+			('movieParams', ApParticleMovieParamsData),
+			('selectionrun', ApSelectionRunData),
+			('session', leginon.leginondata.SessionData),
+			('path', ApPathData),
+		)
+	typemap = classmethod(typemap)
+
+
+class ApParticleMovieParamsData(ApParticleExtractorData):
+	def typemap(cls):
+		return ApParticleExtractorData.typemap() + (
+			('frameavg', int),
+			('framestep', int),
+		)
+	typemap = classmethod(typemap)
+
+class ApParticleMovieData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('movieNumber', int),
+			('movieRun', ApParticleMovieRunData),
+			('particle', ApParticleData),
+			('format', str),
+		)
+	typemap = classmethod(typemap)
+
 ### END Stack tables ###
 ### START alignment tables  ###
 
