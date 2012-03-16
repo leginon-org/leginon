@@ -295,19 +295,18 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		self.insertdbtimes = []
 		self.noimages = False
 		self.totalpart = 0
-		self.selectiondata = None
-		if self.params['selectionid'] is not None:
-			self.selectiondata = apParticle.getSelectionRunDataFromID(self.params['selectionid'])
 		if len(self.imgtree) == 0:
 			apDisplay.printWarning("No images were found to process")
 			self.noimages = True
 			return
-		if self.params['particlelabel'] == 'fromtrace':
-			if (not self.selectiondata['manparams'] or not self.selectiondata['manparams']['trace']):
+		self.selectiondata = None
+		if self.params['selectionid'] is not None:
+			self.selectiondata = apParticle.getSelectionRunDataFromID(self.params['selectionid'])
+			if self.params['particlelabel'] == 'fromtrace':
+				if (not self.selectiondata['manparams'] or not self.selectiondata['manparams']['trace']):
 				apDisplay.printError("Can not use traced object center to extract boxed area without tracing")
-			else:
-				self.params['particlelabel'] = '_trace'
-		print 'preloop',self.params['particlelabel']
+				else:
+					self.params['particlelabel'] = '_trace'
 		self.checkPixelSize()
 		self.existingParticleNumber=0
 		self.setStartingParticleNumber()
@@ -355,7 +354,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 
 		### convert contours to particles
 		print self.params['particlelabel']
-		if self.params['particlelabel'] == '_trace':
+		if self.selectiondata and self.params['particlelabel'] == '_trace':
 			self.convertTraceToParticlePeaks(imgdata)
 
 		### get particles
