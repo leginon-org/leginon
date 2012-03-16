@@ -3,6 +3,8 @@ import os
 #appion
 from appionlib import appiondata
 from appionlib import apDatabase
+from appionlib import apParticle
+from leginon import polygon
 
 def getContourPickerDataFileName(sessionname,contourid):
 	q = appiondata.ApSelectionRunData()
@@ -24,6 +26,28 @@ def getImagePixelSizeFromContourId(contourid):
 	apix = apDatabase.getPixelSize(lastimagedata)
 	return apix
 
+def getContoursFromImageTraceRun(imagedata,tracerundata):
+	q = appiondata.ApContourData(image=imagedata,selectionrun=tracerundata)
+	r = q.query()
+	return r
+
+def getContourPointsFromContour(contourdata):
+	q = appiondata.ApContourPointData(contour=contourdata)
+	pointresults = q.query()
+	points = []
+	for pointdata in pointresults:
+		points.append((pointdata['x'],pointdata['y']))
+	return points	
+
+def makeParticleFromContour(imagedata,tracerundata,label='_trace'):
+	contours = getContoursFromImageTraceRun(imagedata,tracerundata)
+	peaktree = []
+	for contourdata in contours:
+		points = getContourPointsFromContour(contourdata)
+		center = polygon.getPolygonCenter(points)
+		peakdict = {'xcoord':center[0],'ycoord':center[1],'label':label,'peakarea':1}
+		peaktree.append(peakdict)
+	apParticle.insertParticlePeaks(peaktree, imagedata, tracerundata['name'], False)
 
 def analyzeArea(contourid):
 	return []

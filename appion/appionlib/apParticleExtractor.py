@@ -21,6 +21,7 @@ from appionlib import apParticle
 from appionlib import apFile
 from appionlib import apMask
 from appionlib import apBoxer
+from appionlib import apSizing
 
 class ParticleExtractLoop(appionLoop2.AppionLoop):
 	############################################################
@@ -301,6 +302,12 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			apDisplay.printWarning("No images were found to process")
 			self.noimages = True
 			return
+		if self.params['particlelabel'] == 'fromtrace':
+			if (not self.selectiondata['manparams'] or not self.selectiondata['manparams']['trace']):
+				apDisplay.printError("Can not use traced object center to extract boxed area without tracing")
+			else:
+				self.params['particlelabel'] = '_trace'
+		print 'preloop',self.params['particlelabel']
 		self.checkPixelSize()
 		self.existingParticleNumber=0
 		self.setStartingParticleNumber()
@@ -313,6 +320,9 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 	def setStartingParticleNumber(self):
 		self.particleNumber = self.existingParticleNumber
 
+	def convertTraceToParticlePeaks(self,imgdata):
+		apSizing.makeParticleFromContour(imgdata,self.selectiondata,'_trace')
+		
 	#=====================
 	def reprocessImage(self, imgdata):
 		"""
@@ -342,6 +352,11 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		rmfiles = glob.glob(shortfileroot+"*")
 		for rmfile in rmfiles:
 			apFile.removeFile(rmfile)
+
+		### convert contours to particles
+		print self.params['particlelabel']
+		if self.params['particlelabel'] == '_trace':
+			self.convertTraceToParticlePeaks(imgdata)
 
 		### get particles
 		partdatas,shiftdata = self.getParticlesInImage(imgdata)
@@ -422,6 +437,9 @@ class Test(ParticleExtractLoop):
 		for partdata in partdatas:
 			print partdata['xcoord'],partdata['ycoord']
 		return None
+
+	def commitToDatabase(self,imgdata):
+		pass
 
 if __name__ == '__main__':
 	makeStack = Test()
