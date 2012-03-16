@@ -471,6 +471,8 @@ class ManualPicker(particleLoop2.ParticleLoop):
 		# reserve '_trace' for particles created from center of the traced results
 		if '_trace' in self.params['labels']:
 			apDisplay.printError('"_trace" is a reserved label. Use another name')
+		if 'fromtrace' in self.params['labels']:
+			apDisplay.printWarning('"fromtrace" is a reserved label for centers created from traced object. You can cause confusion if you mean other things')
 		return
 
 
