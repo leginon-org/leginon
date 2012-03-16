@@ -826,6 +826,7 @@ class ContourPicker(manualpicker.ManualPicker):
 		except IndexError:
 			# the first image does not have rundata in the database, yet
 			rundata = self.commitRunToDatabase(imgdata['session'], True)
+		bin = rundata['manparams']['bin']
 		c = None
 		counter = 0
 		for i in range(len(targetsList)):
@@ -833,7 +834,8 @@ class ContourPicker(manualpicker.ManualPicker):
 			c.insert()
 			counter += 1
 			for point in targetsList[i]:
-				point1=appiondata.ApContourPointData(x=point[0], y=point[1], contour=c)
+				# save points in the scale of the original image, like particles
+				point1=appiondata.ApContourPointData(x=point[0]*bin, y=point[1]*bin, contour=c)
 				point1.insert()
 
 		return peaktree
