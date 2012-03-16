@@ -304,7 +304,7 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			self.selectiondata = apParticle.getSelectionRunDataFromID(self.params['selectionid'])
 			if self.params['particlelabel'] == 'fromtrace':
 				if (not self.selectiondata['manparams'] or not self.selectiondata['manparams']['trace']):
-				apDisplay.printError("Can not use traced object center to extract boxed area without tracing")
+					apDisplay.printError("Can not use traced object center to extract boxed area without tracing")
 				else:
 					self.params['particlelabel'] = '_trace'
 		self.checkPixelSize()
