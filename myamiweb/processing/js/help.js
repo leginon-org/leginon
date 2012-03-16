@@ -83,7 +83,7 @@ var help = {
 		'stacklim' : 'Makestack will continue processing micrographs and checking the stack size.  Once the number of particles matches or exceeds this limit, it will stop processing images.  Since all particles from a micrograph are added to the stack before checking, the final stack rarely has exactly the number of particles specified by the limit.  Leave blank to process all the micrographs.',
 		'maskrad' : 'Radius of external mask (in &Aring;ngstr&ouml;ms)',
 		'numpart' : 'Number of particles to use',
-		'numref' : 'Number of references to use',
+		'numref' : 'Number of references to generate in an ab initio manner. This will depend on the amount of preferred orientation within your data. A good range to aim for could be ~100-1000 particles per reference, but because ML algorithms are computationally intense, this may not always be feasible, depending on the size of your dataset.',
 		'numrefcl2d' : 'Number of references to create in 2D alignment. CL2D performs a sequential binary separation of classes. For example, if you specify 100 classes, CL2D will produce 2, 4, 8, 16, 32, 64, and 100 classes.',
 		'image2imagedistance' : 'How to measure the distance between two images. Correlation is perfectly adapted to Gaussian noise while correntropy is better suited to non-gaussian distributions',
 		'image2clusterdistance' : 'Minimum distance assigns an image to the cluster with minimum distance as measured by image to image distance. Intracluster distance assigns an image to the cluster where the image is less rare.',
