@@ -734,8 +734,6 @@ class Makestack2Loop(apParticleExtractor.ParticleBoxLoop):
 
 		self.flipoptions = ('emanimage', 'emanpart', 'emantilt', 'spiderimage', 'ace2image','ace2imagephase')
 		### values
-		self.parser.add_option("--bin", dest="bin", type="int", default=1,
-			help="Bin the particles after boxing", metavar="#")
 		self.parser.add_option("--single", dest="single", default="start.hed",
 			help="create a single stack")
 		self.parser.add_option("--filetype", dest="filetype", default='imagic',
