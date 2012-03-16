@@ -451,8 +451,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 						$linearpoints = array();
 						$pointcount = count($t);
 						foreach ($t as $point) {
-							$linearpoints[] = $point['x'] * $selectionparams['bin'] / $binning * $scalefactor ;
-							$linearpoints[] = $point['y'] * $selectionparams['bin'] / $binning * $scalefactor ;
+							$linearpoints[] = $point['x'] / $binning * $scalefactor ;
+							$linearpoints[] = $point['y'] / $binning * $scalefactor ;
 						}
 						drawpolygon($img,$linearpoints,$col,true);
 					}
