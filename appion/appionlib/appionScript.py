@@ -29,7 +29,7 @@ from pyami import version
 #=====================
 class AppionScript(basicScript.BasicScript):
 	#=====================
-	def __init__(self, useglobalparams=True):
+	def __init__(self,optargs=sys.argv[1:],quiet=False,useglobalparams=True):
 		"""
 		Starts a new function and gets all the parameters
 		"""
@@ -57,12 +57,7 @@ class AppionScript(basicScript.BasicScript):
 			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
 
 		### setup default parser: run directory, etc.
-		self.parser = OptionParser()
-		if useglobalparams is True:
-			self.setupGlobalParserOptions()
-		self.setupParserOptions()
-		self.params = apParam.convertParserToParams(self.parser)
-		self.checkForDuplicateCommandLineInputs()
+		self.setParams(optargs,useglobalparams)
 		#if 'outdir' in self.params and self.params['outdir'] is not None:
 		#	self.params['rundir'] = self.params['outdir']
 
@@ -332,6 +327,14 @@ class AppionScript(basicScript.BasicScript):
 			apWebScript.setJobToDone(clustdata.dbid)
 		self.successful_run = True
 
+
+	def setParams(self,optargs,useglobalparams=True):
+		self.parser = OptionParser()
+		if useglobalparams is True:
+			self.setupGlobalParserOptions()
+		self.setupParserOptions()
+		self.params = apParam.convertParserToParams(self.parser)
+		self.checkForDuplicateCommandLineInputs(optargs)
 
 	#=====================
 	def setupGlobalParserOptions(self):

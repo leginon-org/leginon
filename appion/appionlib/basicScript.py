@@ -44,11 +44,7 @@ class BasicScript(object):
 			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
 
 		### setup default parser: run directory, etc.
-		self.parser = OptionParser()
-		self.setupParserOptions()
-		self.params = apParam.convertParserToParams(self.parser)
-		self.checkForDuplicateCommandLineInputs(optargs)
-
+		self.setParams(optargs)
 		self.checkConflicts()
 
 		### write function log
@@ -56,6 +52,13 @@ class BasicScript(object):
 
 		### any custom init functions go here
 		self.onInit()
+
+	def setParams(self,optargs=sys.argv[1:]):
+		self.parser = OptionParser()
+		self.setupParserOptions()
+		self.params = apParam.convertParserToParams(self.parser)
+		self.checkForDuplicateCommandLineInputs(optargs)
+
 
 	#=====================
 	def checkForDuplicateCommandLineInputs(self,optargs=sys.argv[1:]):

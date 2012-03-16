@@ -372,7 +372,7 @@ def convertParserToParams(parser,optargs=sys.argv[1:]):
 	(options, args) = parser.parse_args(optargs)
 	if len(args) > 0:
 		apDisplay.printError("Unknown commandline options: "+str(args))
-	if len(sys.argv) < 2:
+	if len(optargs) < 1 or (len(optargs) == 1 and '--jobtype=' in optargs[0]):
 		parser.print_help()
 		parser.error("no options defined")
 

@@ -27,7 +27,7 @@ class AppionTiltSeriesLoop(appionScript.AppionScript):
 		Starts a new function and gets all the parameters
 		overrides appionScript
 		"""
-		appionScript.AppionScript.__init__(self, True)
+		appionScript.AppionScript.__init__(self)
 		### extra appionLoop functions:
 		self._addDefaultParams()
 		self.setFunctionResultKeys()
