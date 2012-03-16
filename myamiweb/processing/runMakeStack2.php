@@ -296,8 +296,14 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		}
 		echo "</select>\n";
 
+		// get particle selection parameters
+		$partrundata = $particle->getSelectionParams($partrunval);
 		// add particle label page
 		$particlelabels = $particle->getParticleLabels($partrunval);
+		// use fromtrace label to activate particle insertion from traced center
+		$traceconverted = false;
+		if ($partrundata[0]['trace'] == 1)
+			$particlelabels[]=array('label'=>'fromtrace');
 		if (!empty($particlelabels)) {
 			echo "<br/>\n";
 			echo"<input type='checkbox' name='labelcheck' onclick='enablelabel()' $labelcheck >\n";
@@ -305,6 +311,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			echo "<select name='partlabel' $labeldisable >\n";
 			foreach ($particlelabels as $row) {
 				$label=$row['label'];
+				if ($label == '_trace') $traceconverted = true;
+				if ($label == 'fromtrace' && $traceconverted == true) continue;
 				$sel = (trim($_POST['partlabel'])==$label) ? 'selected' : '';
 				echo '<option value="'.$label.'" '.$sel.' >'.$label."</option>\n";
 			}
@@ -375,7 +383,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// Determine best box size...
 
 	if (!$_POST['boxsize']) {
-		$partrundata = $particle->getSelectionParams($partrunval);
 		$imgid = $particle->getImgIdFromSelectionRun($partrunval);
 		$partdiam = $partrundata[0]['diam'];
 		$helicalstep = $partrundata[0]['helicalstep'];

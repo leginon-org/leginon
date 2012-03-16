@@ -27,6 +27,10 @@ if ($_POST['addpicklabel']) {
 	if (empty($_POST['editrunlabels']) && ($picklabel==$editrunname))
 		createManualPickerForm('Unlabeled Old Particle Pick is automatically labeled by its runname');
 	else {
+		$reserved_labels = array('fromtrace','_trace');
+		foreach ($reserved_labels as $rlabel)
+		if ($picklabel==$rlabel)
+			createManualPickerForm('"'.$rlabel.'" is a reserved label. Give another name');
 		if (!in_array($picklabel, $picklabels) && count($picklabels)<8) {
 			$_SESSION['picklabels'][]=$picklabel;
 		}
