@@ -69,15 +69,18 @@ class XmippRefineForm extends BasicRefineForm
 	    $filterComputed 		= $params->getParamValue("filterComputed");
 	    $filterEstimated 		= $params->getParamValue("filterEstimated");
 
-	    if ( $doComputeResolution == 'on' )
+	    if ( $doComputeResolution == 'on' ) {
 	        $command.=' --DoComputeResolution ';
-	    if ( $filterComputed == 'on') 
+	    }
+	    if ( $filterComputed == 'on') {
 	        $command.=' --DoLowPassFilter ';
 	        $command = $this->addCommandFlag( $command, "filterConstant" );
-	    if ( $filterEstimated == 'on' )
+	    }
+	    if ( $filterEstimated == 'on' ) {
 	        $command.=' --DoLowPassFilter ';
 	        $command.=' --DontUseFscForFilter ';
 	        $command = $this->addCommandFlag( $command, "filterResolution" );
+	    }
 	    			
 		return $command;
 	}
