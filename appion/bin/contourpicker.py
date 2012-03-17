@@ -857,6 +857,7 @@ class ContourPicker(manualpicker.ManualPicker):
 		singleTargets = []
 		tubePoints = []
 		self.maxVersion = -1
+		bin = float(self.params['bin'])
 		for i in partd:
 			if not i['version']==None and int(i['version'])>self.maxVersion and i['runname']==self.params['runname']:
 				self.maxVersion = int(i['version'])
@@ -869,7 +870,7 @@ class ContourPicker(manualpicker.ManualPicker):
 				point = points.query()
 				contourList = []
 				for j in point:
-					contourList.append((j['x'], j['y']))
+					contourList.append((int(j['x']/bin), int(j['y'])/bin))
 				oldPolyPoints.append(contourList)
 		return self.app.loadOld((contourPoints,oldPolyPoints,types))
 
