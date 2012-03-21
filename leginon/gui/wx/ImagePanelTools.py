@@ -392,11 +392,11 @@ class TraceTool(ImageTool):
 			self.xypath = []
 			self.fitted_shape_points = []
 			if self.start is not None:
-				x = evt.X #- self.imagepanel.offset[0]
-				y = evt.Y #- self.imagepanel.offset[1]
+				x = evt.GetX() #- self.imagepanel.offset[0]
+				y = evt.GetY() #- self.imagepanel.offset[1]
 				x0, y0 = self.start
 				self.xypath.append((x,y))
-			self.start = self.imagepanel.view2image((evt.X, evt.Y))
+			self.start = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
 
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
@@ -410,11 +410,12 @@ class TraceTool(ImageTool):
 			self.leftisdown = False
 			self.rightisdown = False
 			self.start = None
+			self.imagepanel.UpdateDrawing()
 
 	def OnMotion(self, evt, dc):
 		if self.button.GetToggle():
 			if self.leftisdown or self.rightisdown:
-				x,y = self.imagepanel.view2image((evt.X, evt.Y))
+				x,y = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
 				self.xypath.append((x,y))
 				return True
 		return False
@@ -461,7 +462,7 @@ class FitShapeTool(TraceTool):
 		self.leftisdown = False
 		self.rightisdown = False
 		self.shape_params['shape'] = 'rectangle'
-		x,y = self.imagepanel.view2image((evt.X, evt.Y))
+		x,y = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
 		if len(self.shiftxypath) > 1:
 			self.shiftxypath = []
 		self.shiftxypath.append((x,y))
@@ -659,7 +660,7 @@ class ResolutionTool(ValueTool):
 		self.hightension = evt.hightension
 
 	def OnLeftClick(self, evt):
-		xy = self.imagepanel.view2image((evt.X, evt.Y))
+		xy = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
 		idcevt = ImageClickedEvent(self.imagepanel, xy)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
@@ -742,8 +743,8 @@ class RulerTool(ImageTool):
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
 			if self.start is not None:
-				x = evt.X #- self.imagepanel.offset[0]
-				y = evt.Y #- self.imagepanel.offset[1]
+				x = evt.GetX() #- self.imagepanel.offset[0]
+				y = evt.GetY() #- self.imagepanel.offset[1]
 				x0, y0 = self.start
 				dx, dy = x - x0, y - y0
 				self.measurement = {
@@ -755,7 +756,7 @@ class RulerTool(ImageTool):
 				}
 				mevt = MeasurementEvent(self.imagepanel, dict(self.measurement))
 				self.imagepanel.GetEventHandler().AddPendingEvent(mevt)
-			self.start = self.imagepanel.view2image((evt.X, evt.Y))
+			self.start = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
 
 	#--------------------
 	def OnRightClick(self, evt):
@@ -781,8 +782,8 @@ class RulerTool(ImageTool):
 	#--------------------
 	def OnMotion(self, evt, dc):
 		if self.button.GetToggle() and self.start is not None:
-			x = evt.X #- self.imagepanel.offset[0]
-			y = evt.Y #- self.imagepanel.offset[1]
+			x = evt.GetX() #- self.imagepanel.offset[0]
+			y = evt.GetY() #- self.imagepanel.offset[1]
 			self.DrawRuler(dc, x, y)
 			return True
 		return False
@@ -832,12 +833,12 @@ class ZoomTool(ImageTool):
 	#--------------------
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
-			self.zoomIn(evt.X, evt.Y)
+			self.zoomIn(evt.GetX(), evt.GetY())
 
 	#--------------------
 	def OnRightClick(self, evt):
 		if self.button.GetToggle():
-			self.zoomOut(evt.X, evt.Y)
+			self.zoomOut(evt.GetX(), evt.GetY())
 
 	#--------------------
 	def zoom(self, level, viewcenter):
@@ -889,7 +890,7 @@ class ClickTool(ImageTool):
 			return
 		if self._disable:
 			self._disabled = True
-		xy = self.imagepanel.view2image((evt.X, evt.Y))
+		xy = self.imagepanel.view2image((evt.GetX(), evt.GetY()))
 		idcevt = ImageClickedEvent(self.imagepanel, xy)
 		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 

@@ -423,7 +423,7 @@ if __name__ == '__main__':
 
 	def onLeftUp(evt):
 		eventobject = evt.GetEventObject()
-		offset = eventobject.clientToBitmap(evt.X, evt.Y)
+		offset = eventobject.clientToBitmap(evt.GetX(), evt.GetY())
 		wx.CallAfter(eventobject.centerOffset, *offset)
 
 	def onRightUp(evt):

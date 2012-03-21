@@ -793,15 +793,15 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 	def OnMotion(self, evt):
 		if evt.LeftIsDown():
 			if self.draginfo is None:
-				self.ProcessEvent(LeftDragStartEvent(evt.X, evt.Y))
+				self.ProcessEvent(LeftDragStartEvent(evt.GetX(), evt.GetY()))
 			else:
-				self.ProcessEvent(LeftDragEvent(evt.X, evt.Y))
+				self.ProcessEvent(LeftDragEvent(evt.GetX(), evt.GetY()))
 		else:
 			if self.draginfo is None:
-				self.setCursor(evt.X, evt.Y)
+				self.setCursor(evt.GetX(), evt.GetY())
 			else:
 				self.ProcessEvent(LeftDragEndEvent())
-		self.ProcessEvent(MoveConnectionEvent(evt.X, evt.Y))
+		self.ProcessEvent(MoveConnectionEvent(evt.GetX(), evt.GetY()))
 
 	def OnLeave(self, evt):
 		self.SetCursor(wxSTANDARD_CURSOR)
@@ -1236,7 +1236,7 @@ class wxConnectionPointObject(wxRectangleObject):
 			connection.delete()
 
 	def OnMotion(self, evt):
-		self.ProcessEvent(MoveConnectionEvent(evt.X, evt.Y))
+		self.ProcessEvent(MoveConnectionEvent(evt.GetX(), evt.GetY()))
 
 	def OnLeftClick(self, evt):
 		self.ProcessEvent(EndConnectionEvent(self))
@@ -1311,18 +1311,18 @@ class wxObjectCanvas(wxScrolledWindow):
 		self.SetCursor(evt.cursor)
 
 	def OnLeftUp(self, evt):
-		shapeobject = self.master.getShapeObjectFromXY(evt.X, evt.Y)
+		shapeobject = self.master.getShapeObjectFromXY(evt.GetX(), evt.GetY())
 		if shapeobject is not None:
-			shapeobject.ProcessEvent(LeftClickEvent(shapeobject, evt.X, evt.Y))
+			shapeobject.ProcessEvent(LeftClickEvent(shapeobject, evt.GetX(), evt.GetY()))
 
 	def OnRightUp(self, evt):
-		shapeobject = self.master.getShapeObjectFromXY(evt.X, evt.Y)
+		shapeobject = self.master.getShapeObjectFromXY(evt.GetX(), evt.GetY())
 		if shapeobject is not None:
-			shapeobject.ProcessEvent(RightClickEvent(shapeobject, evt.X, evt.Y))
+			shapeobject.ProcessEvent(RightClickEvent(shapeobject, evt.GetX(), evt.GetY()))
 
 	def OnMotion(self, evt):
 		if self.lastshapeobject is None or self.lastshapeobject.draginfo is None:
-			shapeobject = self.master.getShapeObjectFromXY(evt.X, evt.Y)
+			shapeobject = self.master.getShapeObjectFromXY(evt.GetX(), evt.GetY())
 			if shapeobject != self.lastshapeobject:
 				if self.lastshapeobject is not None:
 					self.lastshapeobject.ProcessEvent(LeaveEvent(self.lastshapeobject, shapeobject))

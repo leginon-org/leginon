@@ -362,12 +362,12 @@ class Tray(wx.Panel):
 			self.updateDrawing()
 
 	def onLeftUp(self, evt):
-		position = self._clientToPosition(evt.X, evt.Y)
+		position = self._clientToPosition(evt.GetX(), evt.GetY())
 		if position is not None:
 			self._addGrid(position)
 
 	def onRightUp(self, evt):
-		position = self._clientToPosition(evt.X, evt.Y)
+		position = self._clientToPosition(evt.GetX(), evt.GetY())
 		try:
 			self.gridqueue.remove(position)
 			self.updateDrawing()
@@ -375,7 +375,7 @@ class Tray(wx.Panel):
 			pass
 
 	def onMiddleDown(self, evt):
-		position = self._clientToPosition(evt.X, evt.Y)
+		position = self._clientToPosition(evt.GetX(), evt.GetY())
 		try:
 			self.showlabel = position
 			self.updateDrawing()
