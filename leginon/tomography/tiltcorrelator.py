@@ -74,6 +74,9 @@ class Correlator(object):
 		camdata['binning'] = {'x':camdata['binning']['x']*self.correlation_binning, 'y':camdata['binning']['y']*self.correlation_binning}
 		newimagedata = leginon.leginondata.AcquisitionImageData(initializer=imagedata)
 		newimagedata['camera']=camdata
+		# numpy 2.0 does not allow inplace assignment involving different kinds
+		# convert to float first
+		image = image.astype(numpy.float)
 		mean = image.mean()
 		image -= mean
 
