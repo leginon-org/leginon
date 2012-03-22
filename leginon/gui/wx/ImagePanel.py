@@ -200,7 +200,8 @@ class ImagePanel(wx.Panel):
 		wximage = wx.EmptyImage(array.shape[1], array.shape[0])
 		normarray = array.astype(numpy.float32)
 		normarray = normarray.clip(min=clip[0], max=clip[1])
-		normarray = (normarray - clip[0]) / (clip[1] - clip[0]) * 255.0
+		if clip[1] - clip[0] != 0:
+			normarray = (normarray - clip[0]) / (clip[1] - clip[0]) * 255.0
 		if self.colormap is None:
 			normarray = normarray.astype(numpy.uint8)
 			h, w = normarray.shape[:2]

@@ -102,7 +102,6 @@ class ScrolledSettings(leginon.gui.wx.Acquisition.ScrolledSettings):
 
 		expsz.AddGrowableCol(0)
 		expsz.AddGrowableRow(0)
-		expsz.AddGrowableRow(1)
 		expsbsz.Add(expsz, 1, wx.EXPAND|wx.ALL, 5)
 		#misc
 		self.widgets['integer'] = wx.CheckBox(self, -1, 'Scale by')
