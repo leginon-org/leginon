@@ -47,7 +47,7 @@ class tomoMaker(appionScript.AppionScript):
 		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--exclude", dest="exclude",
-			help="Tilt images to be excluded (0,5,8)", metavar="0,1,...")
+			help="Tilt images to be excluded,start from 1 (1,5,8)", metavar="1,2,...")
 
 		### integers
 		self.parser.add_option("--alignerid", dest="alignerid", type="int",
@@ -125,7 +125,7 @@ class tomoMaker(appionScript.AppionScript):
 		if self.params['exclude']:
 			excludestrlist = self.params['exclude'].split(",")
 			for excld in excludestrlist:
-				excludelist.append(int(excld.strip()))
+				excludelist.append(int(excld.strip()) - 1)
 		apDisplay.printMsg("Exclude list: "+str(excludelist))
 		# Get image list and information
 		apDisplay.printMsg("getting imagelist")
