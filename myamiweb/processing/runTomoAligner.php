@@ -68,7 +68,7 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	$alignmethod = ($_POST['alignmethod']) ? $_POST['alignmethod'] : $defaultmethod;
 	$protomocheck = ($_POST['alignmethod'] == 'protomo') ? "CHECKED" : "";
 	$raptorcheck = ($_POST['alignmethod'] == 'raptor') ? "CHECKED" : "";
-	#$protomo2check = ($_POST['alignmethod'] == 'protomo2' || !($_POST['alignmethod'])) ? "CHECKED" : "";
+	$protomo2check = ($_POST['alignmethod'] == 'protomo2') ? "CHECKED" : "";
 	# For Jensen Lab
 	#$raptorcheck = ($_POST['alignmethod'] == 'raptor' || !($_POST['alignmethod'])) ? "CHECKED" : "";
 	#$protomo2check = ($_POST['alignmethod'] == 'protomo2') ? "CHECKED" : "";
@@ -223,8 +223,6 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
       <textarea name='description' ROWS='2' COLS='40'>$description</textarea>
 			<p>\n";
 	echo docpop('tomoalignmethod', 'Method');
-	#echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='protomo2' $protomo2check>\n";
-	#echo "Protomo 2<font size=-2><i>(default)</i></font>\n";
 	echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='protomo' $protomocheck>\n";
 	echo "Protomo refinement\n";
 	if (!$lastalignerId) {
@@ -233,6 +231,8 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 		if (HIDE_FEATURE === false) {
 			echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='raptor' $raptorcheck>\n";
 			echo "Raptor<font size=-2><i></i></font>\n";
+			echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='protomo2' $protomo2check>\n";
+			echo "Protomo 2<font size=-2><i>(default)</i></font>\n";
 		}
 		echo "<input type='hidden' name='lastalignmethod' value='$alignmethod'>\n";
 	}
