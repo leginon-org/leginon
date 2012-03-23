@@ -227,12 +227,12 @@ function createTomoAlignerForm($extra=false, $title='tomoaligner.py Launcher', $
 	echo "Protomo refinement\n";
 	if (!$lastalignerId) {
 		echo "&nbsp;<input type='radio' onClick=submit() name='alignmethod' value='imod-shift' $imodcheck>\n";
-		echo "Imod shift-only alignment (default)\n";
+		echo "Imod shift-only alignment <i>(default</i>)\n";
 		if (HIDE_FEATURE === false) {
 			echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='raptor' $raptorcheck>\n";
 			echo "Raptor<font size=-2><i></i></font>\n";
 			echo "&nbsp;<input type='radio'onClick=submit() name='alignmethod' value='protomo2' $protomo2check>\n";
-			echo "Protomo 2<font size=-2><i>(default)</i></font>\n";
+			echo "Protomo 2<font size=-2></font>\n";
 		}
 		echo "<input type='hidden' name='lastalignmethod' value='$alignmethod'>\n";
 	}
