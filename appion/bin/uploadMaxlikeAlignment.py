@@ -632,7 +632,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	maxLike = UploadMaxLikeScript(True)
+	maxLike = UploadMaxLikeScript()
 	maxLike.start()
 	maxLike.close()
 

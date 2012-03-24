@@ -622,6 +622,6 @@ class CL2D(appionScript.AppionScript):
 					
 #=====================
 if __name__ == "__main__":
-	cl2d = CL2D(True)
+	cl2d = CL2D()
 	cl2d.start()
 	cl2d.close()

@@ -303,6 +303,6 @@ class UploadCL2DScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	cl2d = UploadCL2DScript(True)
+	cl2d = UploadCL2DScript()
 	cl2d.start()
 	cl2d.close()

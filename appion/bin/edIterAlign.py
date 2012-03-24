@@ -554,7 +554,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	edIterAlign = EdIterAlignScript(True)
+	edIterAlign = EdIterAlignScript()
 	edIterAlign.start()
 	edIterAlign.close()
 

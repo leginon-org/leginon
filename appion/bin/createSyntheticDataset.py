@@ -1232,7 +1232,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	syntheticdataset = createSyntheticDatasetScript(True)
+	syntheticdataset = createSyntheticDatasetScript()
 	syntheticdataset.start()
 	syntheticdataset.close()
 

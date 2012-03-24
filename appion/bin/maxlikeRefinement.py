@@ -509,7 +509,7 @@ xmipp_mpi_reconstruct_wbp  -i CorrectGreyscale/corrected_reference_classes.sel -
 
 #=====================
 if __name__ == "__main__":
-	maxLike = MaximumLikelihoodScript(True)
+	maxLike = MaximumLikelihoodScript()
 	maxLike.start()
 	maxLike.close()
 

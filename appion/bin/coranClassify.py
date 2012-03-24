@@ -192,7 +192,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	coranClass = CoranClassifyScript(True)
+	coranClass = CoranClassifyScript()
 	coranClass.start()
 	coranClass.close()
 

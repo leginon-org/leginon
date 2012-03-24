@@ -1027,7 +1027,7 @@ class TopologyRepScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	topRep = TopologyRepScript(True)
+	topRep = TopologyRepScript()
 	topRep.start()
 	topRep.close()
 

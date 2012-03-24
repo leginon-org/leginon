@@ -404,7 +404,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	noRefAlign = NoRefAlignScript(True)
+	noRefAlign = NoRefAlignScript()
 	noRefAlign.start()
 	noRefAlign.close()
 
