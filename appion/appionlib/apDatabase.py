@@ -109,6 +109,15 @@ def getAllImagesFromDB(session):
 	return imgtree
 
 #================
+def getRefImageDataFromSpecificImageId(reftype,imageid):
+		q = leginon.leginondata.AcquisitionImageData()
+		imagedata = q.direct_query(imageid)
+		if imagedata:
+			return imagedata[reftype]
+		else:
+			apDisplay.printError('Image (id=%d) to retrieve reference image does not exist' % (imageid))
+
+#================
 def getAllTiltSeriesFromSessionName(sessionname):
 	"""
 	returns list of image data based on session name

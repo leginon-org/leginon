@@ -27,7 +27,7 @@ class MakeRawFrameStackLoop(appionLoop2.AppionLoop):
 
 	#=======================
 	def preLoopFunctions(self):
-		self.dd = apDDprocess.DirectDetectorProcessing()
+		self.dd = apDDprocess.DirectDetectorProcessing(self.params['wait'])
 		self.imageids = []
 		if self.params['stackid']:
 			self.imageids = apStack.getImageIdsFromStack(self.params['stackid'])

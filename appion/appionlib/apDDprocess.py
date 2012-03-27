@@ -16,7 +16,7 @@ except:
 	use_tifffile = False
 	import Image
 from leginon import correctorclient
-from appionlib import apDisplay
+from appionlib import apDisplay, apDatabase
 
 # testing options
 save_jpg = False
@@ -24,10 +24,12 @@ debug = False
 ddtype = 'thin'
 
 class DirectDetectorProcessing(object):
-	def __init__(self):
+	def __init__(self,wait_for_new=False):
 		self.image = None
 		self.stripenorm_imageid = None
 		self.waittime = 0 # in minutes
+		if wait_for_new:
+			self.waittime = 30 # in minutes
 		self.camerainfo = {}
 		self.c_client = correctorclient.CorrectorClient()
 		# change this to True for loading bias image for correction
@@ -90,7 +92,7 @@ class DirectDetectorProcessing(object):
 		rawframedir = os.path.join(imagepath,'%s.frames' % imagedata['filename'])
 		waitmin = 0
 		while not os.path.exists(rawframedir):
-			if self.waitime < 0.1:
+			if self.waittime < 0.1:
 				apDisplay.printError('Raw Frame Directory %s does not exist.' % rawframedir)
 			apDisplay.printWarning('Raw Frame Directory %s does not exist. Wait for 3 min.' % rawframedir)
 			time.sleep(180)
@@ -111,10 +113,14 @@ class DirectDetectorProcessing(object):
 			apDisplay.printError('Raw Frame Directory %s does not exist' % rawframedir)
 		return rawframedir
 
+
 	def __getRefImageData(self,reftype):
 		if not self.use_full_raw_area:
 			refdata = self.image[reftype]
 			#refdata = self.c_client.getAlternativeChannelReference(reftype,refdata)
+			#if self.image.dbid <= 1815252 and self.image.dbid >= 1815060:
+				# special case to back correct images with bad references
+				#refdata = apDatabase.getRefImageDataFromSpecificImageId(reftype,1815281)
 		else:
 			# use most recent CorrectorImageData
 			# TO DO: this should research only ones before the image is taken.
