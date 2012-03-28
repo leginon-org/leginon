@@ -21,7 +21,7 @@ $data3 = $leginondata->getFocusResultData($sessionId, 'both','all','bad');
 $data2 = $leginondata->getFocusResultData($sessionId, 'Stage Z','all','ok');
 $data1 = $leginondata->getFocusResultData($sessionId, 'both','all','ok');
 
-if(empty($data3) || empty($data2) || empty($data1))
+if(empty($data3) && empty($data2) && empty($data1))
 	exit();
 
 if ($viewsql) {
