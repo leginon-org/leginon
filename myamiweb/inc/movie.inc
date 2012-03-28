@@ -53,7 +53,7 @@ require_once('config.php');
 			 href="'.BASE_URL.'getflv.php?file='.$moviefile.'"
 			 style="display:block;width:'.$display_width.'px;height:'.$display_height.'px"  
 			 id="player'.$subid.'"> 
-		</a> 
+		</a>'."\n".' 
 		<!-- this will install flowplayer inside previous A- tag. -->
 		<script>
 			flowplayer("player'.$subid.'", "'.FLASHPLAYER_URL.'FlowPlayerJS.swf",
