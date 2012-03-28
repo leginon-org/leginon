@@ -286,8 +286,14 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 			apDisplay.printMsg("running mask assess")
 			self.params['checkmask'] = True
 
+	def checkIsDD(self):
+		if self.params['nframe'] > 0:
+			self.is_dd_frames = True
+
 	#=======================
 	def preLoopFunctions(self):
+		self.is_dd_frames = False
+		self.checkIsDD()
 		self.batchboxertimes = []
 		self.ctftimes = []
 		self.mergestacktimes = []
@@ -295,6 +301,9 @@ class ParticleExtractLoop(appionLoop2.AppionLoop):
 		self.insertdbtimes = []
 		self.noimages = False
 		self.totalpart = 0
+		if self.is_dd_frames:
+			from appionlib import apDDprocess
+			self.dd = apDDprocess.DirectDetectorProcessing()
 		if len(self.imgtree) == 0:
 			apDisplay.printWarning("No images were found to process")
 			self.noimages = True

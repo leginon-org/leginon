@@ -27,10 +27,12 @@ class MakeDDParticleMovieLoop(apParticleExtractor.ParticleBoxLoop):
 		self.parser.remove_option("--uncorrected")
 		self.parser.remove_option("--reprocess")
 
+	def checkIsDD(self):
+		self.is_dd_frames = True
+
 	#=======================
 	def preLoopFunctions(self):
 		super(MakeDDParticleMovieLoop,self).preLoopFunctions()
-		self.dd = apDDprocess.DirectDetectorProcessing()
 		self.frameavg = self.params['frameavg']
 		self.framestep = self.params['framestep']
 		if self.params['commit']:
