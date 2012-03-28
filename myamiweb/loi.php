@@ -20,7 +20,7 @@ $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 $imageId= $leginondata->getLastFilenameId($sessionId);
 
 // --- Get data type list
-$datatypes = $leginondata->getDatatypes($sessionId);
+$datatypes = $leginondata->getDataTypes($sessionId);
 
 $sessions = $leginondata->getSessions('description');
 

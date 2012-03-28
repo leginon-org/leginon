@@ -173,11 +173,11 @@ switch (count($ids)) {
 			$viewkey = true;
 			if ($matched) {
 				foreach ($matched as $match) {
-					$data[$match['name']] = $leginondata->getDatatypes($match['id']);
+					$data[$match['name']] = $leginondata->getDataTypes($match['id']);
 					$sqlqueries[]=$leginondata->mysql->getSQLquery(); 
 				}
 			} else {
-				$data = $leginondata->getDatatypes($id, true);
+				$data = $leginondata->getDataTypes($id, true);
 			}
 		} else if ($getinfo){
 			$title = "Session Info for id '$id'";

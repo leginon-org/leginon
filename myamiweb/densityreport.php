@@ -67,7 +67,7 @@ if (!empty($icethicknesspresets)) {
 	echo "</td>";
 	echo "</tr>";
 }
-$presets = $leginondata->getDatatypes($sessionId);
+$presets = $leginondata->getDataTypes($sessionId);
 ?>
 </tr>
 <tr>

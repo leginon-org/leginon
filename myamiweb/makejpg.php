@@ -30,7 +30,7 @@ $sessionId=$args['session'];
 $preset=$args['preset'];
 $sessioninfo=$leginondata->getSessionInfo($sessionId);
 $sessionId=$sessioninfo['SessionId'];
-$datatypes = $leginondata->getDatatypes($sessionId);
+$datatypes = $leginondata->getDataTypes($sessionId);
 if ($preset) {
 	if (!is_array($preset)) {
 		$preset=array($preset);

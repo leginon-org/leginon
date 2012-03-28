@@ -258,7 +258,7 @@ if (is_array($imageinfo) && $id=$imageinfo[parentId]) {
 	<td>
 <?php
 echo divtitle("Image Relations");
-$datatypes = $leginondata->getDatatypes($sessionId);
+$datatypes = $leginondata->getDataTypes($sessionId);
 echo "<table border='0'>";
 if (is_array($datatypes))
 	foreach ($datatypes as $datatype) {

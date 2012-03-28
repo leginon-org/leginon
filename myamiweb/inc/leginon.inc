@@ -487,13 +487,13 @@ class leginondata {
 	}
 
 	function getTruePresets($sessionId) {
-		return $this->getDatatypes($sessionId, false); 
+		return $this->getDataTypes($sessionId, false); 
 	}
 
 	function getAllDatatypes($sessionId) {
 		$defaulttypes = $this->defaulttypes;
 		if (privilege('data') < 2) $defaulttypes = array_diff($defaulttypes,array('hidden'));
-		$types = $this->getDatatypes($sessionId);
+		$types = $this->getDataTypes($sessionId);
 		return array_merge($defaulttypes, $types);
 	}
 
@@ -2655,7 +2655,7 @@ class leginondata {
 	}
 
 	function getTiming($sessionId, $preset="", $getquery=false) {
-		$datatype=($preset) ? array($preset):$this->getDatatypes($sessionId);
+		$datatype=($preset) ? array($preset):$this->getDataTypes($sessionId);
 		foreach ($datatype as $preset) {
 			$siblings=$this->getSiblingsfrompreset($sessionId, $preset);
 			$presetorder=array();
@@ -2815,7 +2815,7 @@ class leginondata {
 	}
 
 	function formatDose(&$dose) {
-		$dose = ($dose) ? number_format(($dose/1e20), 1,'.','').' e<SUP>&ndash;</SUP>/&Aring;<SUP>2</SUP>' : 'none' ;
+		$dose = ($dose) ? number_format(($dose/1e20), 2,'.','').' e<SUP>&ndash;</SUP>/&Aring;<SUP>2</SUP>' : 'none' ;
 		return $dose;
 	}
 

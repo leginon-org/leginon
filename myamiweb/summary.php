@@ -182,7 +182,7 @@ echo "<table border='0'>\n";
 echo "</table>\n";
 echo "</td>";
 echo "</tr>";
-$presets = $leginondata->getDatatypes($expId);
+$presets = $leginondata->getDataTypes($expId);
 	echo "<tr>";
 	echo "<td colspan='2'>";
 	echo divtitle("Image Stats");
